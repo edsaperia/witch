@@ -1,12 +1,14 @@
 // The builders' quick shot (app/shot.ts): each scene puts her where it says, and says why when it can't.
 import { describe, expect, it } from "vitest";
 import { TUNING } from "../rules/tuning";
-import { newGame } from "../rules/game";
+import { newGame as fullGame } from "../rules/game";
+import { smallWorld } from "../test/worlds";
 import { AREA_TYPES } from "../rules/map";
 import { deckOf, onFloor } from "../rules/treehouse";
 import { stationOf } from "../rules/stations";
 import { applyShot, shotParams } from "./shot";
 
+const newGame = smallWorld(fullGame, "Shot placement needs local rooms, a present area and injected specimens/finds, independent of world extent.");
 const game = () => newGame(123, TUNING);
 
 describe("?shot=", () => {

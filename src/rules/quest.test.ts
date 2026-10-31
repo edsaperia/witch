@@ -6,6 +6,7 @@ import { cellKey } from "./party";
 import { setupQuestDemo } from "./quest";
 import { TUNING, withTuning } from "./tuning";
 
+// Keep the radius route/population: a combat case recruits beyond 300 m, and questCap's near/far distribution is compared across the original seed matrix.
 const idle: Controls = { moveX: 0, moveZ: 0, toggleMode: false, zoom: 0, autoTalk: false };
 const run = (g: Game, secs: number, first: Controls = idle) => { for (let i = 0; i < Math.round(secs / STEP); i++) stepGame(g, i === 0 ? first : idle, STEP); };
 /** The demo set-up: beside the nearest sleeping legend with what it dreams of on her stack. */
@@ -45,9 +46,7 @@ describe("the first quest (Ed, 2026-10-04)", () => {
     run(g, 0.2, { ...idle, sigil: true });
     expect(L.quest!.done).toBeDefined();
     expect(L.legendState).toBe("happy");
-    expect(L.buffed).toBeFalsy();
     expect(g.islandsTonight).toEqual([L.species]);
-    expect(g.buffs.active.length).toBe(0);
   }, 60000);
 
   it("isn't taken once the party's over (Ed, 2026-10-18: permanent unlocks only while the party is on)", async () => {

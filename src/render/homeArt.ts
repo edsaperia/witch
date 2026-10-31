@@ -2,10 +2,12 @@
 // soundsystems and the treehouse. They were drawn on the page while the view was being built, before anything showed (some
 // 60% of that time); as jobs they're drawn off the page, alongside the forest, and kept in the browser's store like the
 // rest. The same drawing as before, so the same pictures.
-import * as Art from "../../art/generator.js";
-import { groundOf, witchLookOf, type Baked, type FrameGround, type MakeCanvas } from "./artBuild";
+import * as Art from "./homeArt.primitives";
+import { groundOf, witchLookOf } from "./artLook";
+import type { Baked, FrameGround, MakeCanvas } from "./artBuild";
 import type { Style } from "./style";
 import { HOUSE_CONFIG as HOUSE_PLAN } from "../rules/houseConfig";
+import type { HouseConfig } from "../rules/houseRooms";
 
 type Poses = Record<string, { towards: number[]; away: number[]; fps: number }>;
 /** Where her frames are in her atlas, pose by pose (render/assets.ts hands them to the view). */
@@ -41,10 +43,13 @@ export function witchSprites(style: Style, genome: unknown, bare: boolean, mk: M
   const drawn = new Map<string, { b: Baked; ground: FrameGround | null }>();
   const wb = (o: object) => {
     if (dry) { W.grounds.push(null); return DRY; }
-    if (quick) { // (the preview: her standing frame for this facing, drawn once)
-      const q = o as { facing?: string; heading?: string }, k = q.heading ? `h${q.heading}` : q.facing ?? "towards";
+    if (quick) { // (the preview: her standing frame for this facing, drawn once; and her walk, its six frames, so she steps as she
+      // walks off a station or out of bed before her whole set is in, not sliding on the standing frame: Ed's v5249 report, 2026-10-28;
+      // carrying her broom as well, the preview's broom left out as standing)
+      const q = o as { facing?: string; heading?: string; pose?: string; frame?: number }, f = q.heading ? `h${q.heading}` : q.facing ?? "towards";
+      const walk = q.pose === "walk" || q.pose === "walkBroom", k = walk ? `${f}-walk${q.frame ?? 0}` : f;
       let d = drawn.get(k);
-      if (!d) { const sp = (Art.witchSprite as (st: Style, o: object) => ReturnType<typeof Art.witchSprite>)(style, { pose: "idle", frame: 0, ...(q.heading ? { heading: q.heading } : { facing: k }), look }) as { anchors?: Record<string, number[]> }; drawn.set(k, (d = { b: Art.bake(sp as ReturnType<typeof Art.witchSprite>, wc, style, style.cOutline, mk) as Baked, ground: groundOf(sp.anchors) })); }
+      if (!d) { const sp = (Art.witchSprite as (st: Style, o: object) => ReturnType<typeof Art.witchSprite>)(style, { pose: walk ? "walk" : "idle", frame: walk ? q.frame ?? 0 : 0, ...(q.heading ? { heading: q.heading } : { facing: f }), look }) as { anchors?: Record<string, number[]> }; drawn.set(k, (d = { b: Art.bake(sp as ReturnType<typeof Art.witchSprite>, wc, style, style.cOutline, mk) as Baked, ground: groundOf(sp.anchors) })); }
       W.grounds.push(d.ground); return d.b;
     }
     const sp = (Art.witchSprite as (st: Style, o: object) => ReturnType<typeof Art.witchSprite>)(style, { ...o, look }) as { anchors?: Record<string, number[]> };
@@ -153,11 +158,12 @@ export interface TreehouseArt { base: { x: number; y: number }; seat: { x: numbe
 /** The treehouse Ent (Bravo's, art/ent.js) at the deck's height and radius: frames 0 its far half, 1 its near half (she stands
  *  between them), 2 on the DJ table alone, turning (drawn over her), then the knockdown candles, as the old treehouse's; and last,
  *  given a kind, the island's legend carrying it (art/carrier.js), the Ent's trunk that much shorter. */
-export function entTreehouseSprites(style: Style, mk: MakeCanvas, deckY: number, deckR: number, carrierKind: string | null = null, house = false): { sprites: Baked[]; treehouse: TreehouseArt } {
+export function entTreehouseSprites(style: Style, mk: MakeCanvas, deckY: number, deckR: number, carrierKind: string | null = null, house = false, layout?: HouseConfig): { sprites: Baked[]; treehouse: TreehouseArt } {
   type EntArt = { far: unknown; near: unknown; foreFrames: unknown[]; foreBox: { x: number; y: number }; candles: { x: number; y: number }[];
     anchors: { base: { x: number; y: number }; deck: { x: number; y: number }; table: { x: number; y: number }; circle?: { x: number; y: number }; balcony?: { x: number; y: number }; seat: { x: number; y: number }; platter?: { x: number; y: number }; camera: { x: number; y: number }; lights: { x: number; y: number; rgb: number[]; kind: string }[] } };
   // (the oak, config/house/ organic: the Terrace one of its trunk's rooms, its decks on the open rim; Ed, 2026-10-24)
-  const look = house && (HOUSE_PLAN as { organic?: boolean }).organic ? { organic: true, terrace: { ...(HOUSE_PLAN as unknown as { terrace: object }).terrace, r: 10 } } : house; // (the oak: its Terrace's layout the game's, config/house/base.json)
+  const plan = layout ?? HOUSE_PLAN;
+  const look = house && (plan as { organic?: boolean }).organic ? { organic: true, terrace: { ...(plan as unknown as { terrace: object }).terrace, r: 10 } } : house; // (the oak: its Terrace's layout the game's, config/house/base.json)
   const ent = (y: number) => Art.entSprite(style, { facing: "towards", deckY: y, deckR, house: look }) as EntArt, trunk = (a: EntArt) => a.anchors.base.y - a.anchors.deck.y;
   let e = ent(deckY);
   // The island's legend carrying it (art/carrier.js; Ed, 2026-10-10): grown at the Ent's own pixels a metre (its trunk's pixels

@@ -90,6 +90,12 @@
           "by": "Ed",
           "date": "2026-10-06",
           "quote": "I think we should remove the 0.5s cooldown between counted hits per creature - better to control this through the witch firing speed instead of having hits not register"
+        },
+        {
+          "by": "Ed",
+          "date": "2026-10-28",
+          "quote": "let's change the drain rate to 2% instead of 3%",
+          "rest": "0.02 after 4 s, a full meter in about 50 s; hearts from her animals' blows fade the same, in one queue with the 💌s (\"this should be the same speed as 💌s fade ... and they go in the same fade 'queue'\")"
         }
       ],
       "links": [
@@ -98,7 +104,49 @@
       "notes": "letters to fill it, by level (baby, young, adult); it drains drain of a full meter a second when not being hit, from config/states.json's affection.drainDelay seconds after the last [1]. Every letter that lands on an invitable creature counts [2]: how fast she invites is her firing rate (burst, burstGap, cooldown), nothing adaptive. Enraged creatures and legends block letters; scenery never stops them (Ed)."
     },
     "invites.fireSlow": {
-      "what": "her ground speed while firing, times this (Ram's Steady buff takes it away)."
+      "what": "her ground speed while firing, times this."
+    },
+    "invites.inaccuracy": {
+      "what": "degrees either side of her aim each 💌 may go (a fixed hash of its number, so the same throws go the same ways); 0, dead straight, and a bag adds its own (config/wardrobe.json invitesAdd).",
+      "decisions": [
+        {
+          "by": "Ed",
+          "date": "2026-10-29",
+          "quote": "For things with rapid rate of fire or shot-gun like clusters, we can also have accuracy/spread"
+        }
+      ]
+    },
+    "invites.bloomPer": {
+      "what": "degrees more inaccuracy each volley while she keeps firing (the bloom); 0, none, and a bag adds its own."
+    },
+    "invites.bloomDecay": {
+      "what": "degrees a second the bloom falls back by."
+    },
+    "invites.bloomMax": {
+      "what": "the most degrees the bloom can reach."
+    },
+    "invites.pierce": {
+      "what": "how many more creatures a 💌 flies on through after the first it lands on, each a hit as any letter's; 0, it stops at the first, and a bag adds its own (config/wardrobe.json invitesAdd).",
+      "decisions": [
+        {
+          "by": "Ed",
+          "date": "2026-10-29",
+          "quote": "pierce, yes"
+        }
+      ]
+    },
+    "invites.chain": {
+      "what": "how many hops a spent 💌 makes on to the nearest other invitable creature within chainRange metres (never one it has landed on, nor a stunned one), each a hit as any letter's; 0, none, and a bag adds its own (config/wardrobe.json invitesAdd).",
+      "decisions": [
+        {
+          "by": "Ed",
+          "date": "2026-10-29",
+          "quote": "chain"
+        }
+      ]
+    },
+    "invites.chainRange": {
+      "what": "how far (m) a chained 💌 looks for the next creature to hop to."
     },
     "invites.linger": {
       "what": "a 💌 that met no one rests where it came down this many seconds, fading over the last lingerFade, at most lingerMax at once (drawn only: it's no hit).",
@@ -119,20 +167,63 @@
           "quote": "the envelopes should spin like a frisbee"
         }
       ],
-      "links": [
-        "config/legend-buffs.json"
+      "notes": "a 💌 in flight lies flat and turns about the upright this many times a second (drawn only); when it lands it stops and lies flat."
+    },
+    "invites.impact": {
+      "what": "how a 💌 landing on a creature feels (drawn only): a white flash for flash seconds, a squash of squash springing back over squashSecs, its ring slot popping in by pop over popSecs, and hitstop seconds of held picture on the 💌 that fills the ring.",
+      "decisions": [
+        {
+          "by": "Ed",
+          "date": "2026-10-29",
+          "quote": "invitation impacts feel unsatisfying",
+          "rest": "full hit feedback for a 💌 landing on a creature: a white flash, a little squash, its ring slot popping in, a thunk rising as the ring fills, a hitstop on the 💌 that fills it; no flash and a gentler squash with reduce-flashing on"
+        }
       ],
-      "notes": "a 💌 in flight lies flat and turns about the upright this many times a second (drawn only); when it lands it stops and lies flat. Data, so legend buffs can change any of it (config/legend-buffs.json)."
+      "links": [
+        "src/render/impact.ts",
+        "src/render/comfort.ts"
+      ],
+      "notes": "With reduce-flashing on there's no flash and the squash is gentle instead. The hitstop holds the picture only (the last frame kept, starting from the frame that shows the flash); the rules run on."
+    },
+    "invites.cheer": {
+      "what": "one won over by her 💌s celebrates secs seconds by its body (render/cheer.ts), out of every fight meanwhile, a burst of that many hearts (hearts) off it.",
+      "decisions": [
+        {
+          "by": "Ed",
+          "date": "2026-10-29",
+          "quote": "when a creature is won over ... it celebrates for about 1 s in a way that suits its body type",
+          "rest": "hoppers a jump-spin, four-legged a roll-over, flyers a loop, the rest a wiggle-dance; hearts burst, the happy sting, its sigil flipping to the friends' colour with a pop; out of every fight meanwhile (a short rules hold)"
+        }
+      ],
+      "links": [
+        "src/render/cheer.ts",
+        "src/rules/affection.ts"
+      ]
     },
     "invites.orbit": {
-      "what": "the 💌 ring circles a creature at scale times its body radius (movement.json bodies) plus gap metres, at least min, and wider still when it holds many.",
+      "what": "the 💌 ring circles a creature at scale times its body radius (movement.json bodies) plus gap metres, at least min, and at least height times its drawn height (to its top as drawn) plus gap, so it rings the creature you see at any size; wider still when it holds many.",
       "decisions": [
+        {
+          "by": "Ed",
+          "date": "2026-10-28",
+          "quote": "the orbits are smaller than the size of the creatures; their size should adjust depending on how large the creatures are"
+        },
         {
           "by": "Ed's playtest",
           "date": "2026-10-06",
           "quote": "Invitation orbits are too tight around the creature"
+        },
+        {
+          "by": "Ed's playtest",
+          "date": "2026-10-29",
+          "quote": "damage orbits are too wide, bring them in by around 30%",
+          "rest": "scale 2 to 1.4, gap 1 to 0.7, min 2 to 1.4, height 0.9 to 0.63 (all x0.7); the soundsystem's 💥 ring 1.5 to 1.05 m outside it"
         }
-      ]
+      ],
+      "notes": "A soundsystem's 💥 ring sits 1.5 gaps outside its radius."
+    },
+    "invites.hard": {
+      "what": "the hard homing of the 💌s her Sentry and Slingshot hats throw: homing degrees a second, cone degrees either side it looks in, range metres it looks out to (was the legend buffs' charm, 420, 80 and 18)."
     },
     "invite": {
       "what": "The old proximity chat, now replaced by the 💌 invite: she talked with the nearest creature in emoji.",
@@ -186,7 +277,7 @@
         "docs/backlog/journey.md",
         "rules/guidance.ts"
       ],
-      "notes": "The end of the route [1][2]: the last wave landed, a pointer to the enraged animal nearest the centre while any lives (enraged legends don't count; retarget: seconds between re-picks); none left, the victory lap: the pulse races back along the route to home at lapSpeed m/s, every stone it passes firing its fireworks; home reached, the night won: the dealt legends wake (bar any still enraged, which go back to sleep, their islands not found) and dance in place on its far side [3], north of the dancefloor beyond the conga, behind everything from the north-facing camera: on arcs legendGap m outside the conga's circle, legendRow m apart, legendSpace m between them, from due north out to legendArc degrees across, clear of the treehouse, the island's sigil flares on the dancefloor (drawn on over flareDraw s, held flare s), every other animal joins one conga line round it (congaSpeed m/s, congaGap m apart, a circle of at least congaRadius m, as big as the line needs), walking to its place at joinSpeed m/s (out of her sight, seen m off, simply there); settleAfter seconds after, it settles: the guidance pins lead her home [4]. The conga follows her [5]: with follow on, while she's on the ground in the home area (not at the treehouse or in the treetops) the leader trails followLead m behind her along where she's walked and the rest follow single file congaGap apart, walking to their places at joinSpeed or followSpeed times her own speed, whichever is faster; anywhere else the line goes back round the dancefloor."
+      "notes": "The end of the route [1][2]: the last wave landed, a pointer to the enraged animal nearest the centre while any lives (enraged legends don't count; retarget: seconds between re-picks); none left, the victory lap: the pulse races back along the route to home at lapSpeed m/s, every stone it passes firing its fireworks; home reached, the night won: the dealt legends wake (bar any still enraged, which go back to sleep, their islands not found) and dance in place on its far side [3], north of the dancefloor beyond the conga, behind everything from the north-facing camera: on arcs legendGap m outside the conga's circle, legendRow m apart, legendSpace m between them, from due north out to legendArc degrees across, clear of the treehouse, the island's sigil flares on the dancefloor (drawn on over flareDraw s, held flare s), every other animal joins one conga line round it (congaSpeed m/s, congaGap m apart, a circle of at least congaRadius m, as big as the line needs), walking to its place at joinSpeed m/s (out of her sight, seen m off, simply there); once she reaches the party after the win (anywhere on the dancefloor, on foot or flying low: Ed, 2026-10-28), it settles: the guidance pins lead her home [4]. The conga follows her [5]: with follow on, while she's on the ground in the home area (not at the treehouse or in the treetops) the leader trails followLead m behind her along where she's walked and the rest follow single file congaGap apart, walking to their places at joinSpeed or followSpeed times her own speed, whichever is faster; anywhere else the line goes back round the dancefloor."
     },
     "leash": {},
     "leash.length": {
@@ -438,6 +529,39 @@
         }
       ],
       "notes": "how a creature shows its tie to its sigil (rim: a glow at its feet in the sigil's colour; sparks: one spark every sparkEvery seconds from sigil to creature, staggered; thread: a dotted line only under strain). The bond between her and her leashed creatures: rim, a glow at a creature's feet in its sigil's colour; sparks, one now and then from sigil to creature (every sparkEvery seconds, staggered); thread, a dotted line while a leash is under strain (past 0.85 of its length), bowing upward by threadArcSlack metres per metre of its length while slack, flattening to threadArcTaut as it goes taut [1][2], never more than threadArcMax metres."
+    },
+    "leash.placeMotes": {
+      "what": "A sigil put down or picked up: its burst of motes rising in its colour (render/leash.ts, drawn in render/leash/combat.ts): count, size (m), bright (times its colour), rise and life (times the old height and length).",
+      "decisions": [
+        {
+          "by": "the coordinator",
+          "date": "2026-10-29",
+          "quote": "Given current settings, the motes from sigils don't do much",
+          "rest": "Ed, relayed; the art director's motes pass, #1398 (tools/shot/motes.cjs measures them)"
+        }
+      ]
+    },
+    "leash.ranks.embers.bright": {
+      "what": "The embers rising off rank sigils (on the ground, in her stack, over the rune stones): their colour times this.",
+      "decisions": [
+        {
+          "by": "the coordinator",
+          "date": "2026-10-29",
+          "quote": "Given current settings, the motes from sigils don't do much",
+          "rest": "Ed, relayed; the art director's motes pass, #1398 (tools/shot/motes.cjs measures them)"
+        }
+      ]
+    },
+    "leash.ranks.embers.crowd": {
+      "what": "Past this many of her sigils put down, each one's embers thinned by the square root, so a crowd of them isn't noise (0: never).",
+      "decisions": [
+        {
+          "by": "the coordinator",
+          "date": "2026-10-29",
+          "quote": "Given current settings, the motes from sigils don't do much",
+          "rest": "Ed, relayed; the art director's motes pass, #1398 (tools/shot/motes.cjs measures them)"
+        }
+      ]
     }
   }
 }

@@ -5,6 +5,19 @@
 import type { SfxKit } from "./sfxKit";
 import { degree, grit, mtof } from "./dsp";
 
+/** A mushroom breaking the cauldron's surface: a falling hollow bubble and a little splash. */
+export function potionPlop(K: SfxKit, pan = 0, near = 1): void {
+  if (near <= 0 || !K.ready("potionPlop", .08)) return;
+  const c = K.ctx, at = c.currentTime + .005, out = K.voice(pan, .7);
+  const g = c.createGain(); g.connect(out); K.env(g, at, K.T.hit.volume * near, .003, .24);
+  const o = K.osc("sine", 440, at, .28, g);
+  o.frequency.exponentialRampToValueAtTime(85, at + .15);
+  const lp = c.createBiquadFilter(), splash = c.createGain();
+  lp.type = "lowpass"; lp.frequency.value = 1400; lp.connect(splash); splash.connect(out);
+  K.env(splash, at, K.T.hit.volume * near * .2, .002, .07);
+  K.noiseBurst(at, .09, lp, 61);
+}
+
 /** A 💌 landing: a small glassy chime (a bell's partials); a spent one (inside the creature's
  *  gap: no affection) just a faint tick. */
 export function hit(K: SfxKit, pan = 0, near = 1, spent = false): void {
@@ -17,6 +30,19 @@ export function hit(K: SfxKit, pan = 0, near = 1, spent = false): void {
     const g = c.createGain(); g.connect(out); K.env(g, at, vol * lvl, 0.002, spent ? dec * 0.4 : dec);
     K.osc("sine", f * ratio, at, dec + 0.05, g);
   }
+}
+
+/** A 💌 landing on a creature (Ed, 2026-10-29: "invitation impacts feel unsatisfying"): a soft, round thunk, a low sine dropping
+ *  quickly in pitch over a muffled tap, its pitch climbing the key from `low` to `high` semitones as the ring fills (0-1). */
+export function thunk(K: SfxKit, amount: number, pan = 0, near = 1): void {
+  const T = K.T.thunk;
+  if (!T || !K.ready("thunk", T.gap)) return;
+  const c = K.ctx, at = c.currentTime + 0.004, out = K.voice(pan, 0.8), vol = T.volume * near;
+  const f = mtof(K.root + 12 + T.low + (T.high - T.low) * Math.max(0, Math.min(1, amount)));
+  const g = c.createGain(); g.connect(out); K.env(g, at, vol, 0.002, 0.11);
+  const o = K.osc("sine", f * 1.6, at, 0.14, g); o.frequency.exponentialRampToValueAtTime(f, at + 0.05);
+  const lp = c.createBiquadFilter(), ng = c.createGain(); lp.type = "lowpass"; lp.frequency.value = 900 + f * 2; lp.Q.value = 0.7;
+  ng.connect(out); K.env(ng, at, vol * 0.35, 0.001, 0.03); lp.connect(ng); K.noiseBurst(at, 0.05, lp, Math.random());
 }
 
 /** The affection meter filling: a tick that climbs the key as it fills (0-1). */

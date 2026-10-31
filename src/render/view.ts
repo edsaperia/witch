@@ -2,13 +2,23 @@
 // (window size / pixel size) and stretched with nearest-neighbour by the browser, so every art
 // pixel stays a crisp square.
 import { RigView, rigOn } from "./rig/rigView";
+import { CauldronView } from "./cauldronView";
+import { FxMock } from "./fxMock";
+import { fxFor } from "./fx/system";
+import { bridgeNativeObject } from "./fx/native";
+const FX_MOCK_MODE = new URLSearchParams(globalThis.location?.search ?? "").get("fxmock");
 import type { RigGear } from "./rig/rigBuild";
 import type { Creature } from "../rules/creatures";
 import { partyGearOf } from "./artBuild";
 import { beatTime } from "../rules/beat";
 import * as THREE from "three";
+import { monitorProgramLink, waitForPrograms, type ReadyProgram } from "./programReadiness";
+import { installShaderDrawGate, materialProgramsReady, type ShaderDrawStatus } from "./shaderDrawGate";
+import { LandingArtFade, lateLandingReady } from './landingReadiness';
+import { captureProgramUses, mapProgramUses } from "./programInventory";
 import { carrierOf, deckOf } from "../rules/treehouse";
 import { HOUSE_LAYER } from "./post";
+import { StationBackdrop } from "./stationBackdrop";
 import type { MapTable } from "./mapTable";
 import { islandArtSeed } from "./artCache";
 import { biomeKey } from "../rules/lakeLooks";
@@ -65,7 +75,6 @@ import { SWOOP_TRAIL_DEFAULT, SwoopTrails } from "./swoopTrails";
 import { LOAD_DEFAULT, loadView } from "./load";
 import { HAND, InviteView, letterAt, type HerOffset } from "./invites";
 import { StateMarks } from "./looks";
-import { BuffHud } from "./buffhud";
 import type { Dancefloor } from "./dancefloor";
 import { PartyView } from "./party";
 import { MarkerArt, MarkerFx, type Mote } from "./markers";
@@ -100,7 +109,7 @@ import { packAtlas } from "./atlas";
 import { GpuLedger } from "./gpuLedger";
 import { keepUnderBudget, newGpuState } from "./view/gpuBudget";
 import { berrySprite } from "./berries";
-import { leyDrawnTo, shaderPulse, type LeyLines } from "./leylines";
+import { leyDrawnTo, RING_AFTER, shaderPulse, type LeyLines } from "./leylines";
 import { routeSeen } from "../rules/hatSpells";
 import { bootLineAt, bootPath, bootPulseAt } from "../rules/bootRing";
 import { Glades } from "./glades";
@@ -126,11 +135,15 @@ import { drawHatArt } from "./view/hatArt";
 import { drawFinds, findClear } from "./view/finds";
 import { drawMarkers, drawSpeakers, forgetCandles, placeTreehouse, entDeckDrawn } from "./view/home";
 import { miniTreehouse, ZooExitTag } from "./zooExit";
+import { CastTag } from "./castTag";
 import { lanternLights, relicLights, setLights, sigilLights, updateSources } from "./view/lights";
 import { placeCamera } from "./view/camera";
 import { setFrameUniforms } from "./view/frameUniforms";
 import { newReveal, setReveal } from "./view/reveal";
 import { drawWitch, houseShiftOf } from "./view/witch";
+import { MushroomView } from './mushrooms';
+import { PotionObserversView } from './potionObservers';
+import { chunkyPixelSize, potionStrength } from './potionEffects';
 import { drawPointers } from "./view/hud";
 import { workAhead } from "./view/ahead";
 import { winLit, winPulse, winPulseOut } from "../rules/win";
@@ -359,8 +372,14 @@ const TRACK_REACH = 140, TRACK_AHEAD = 320;
 const HOUSE_TILT_EASE = 0.6;
 
 export class View {
+  /** Diagnostic boundary for the renderer's opening camera anchor; no change when no recorder is attached. */
+  setIntroFocus: (game: Game, focus: Game["introFocus"]) => void = (game, focus) => { game.introFocus = focus; };
   readonly renderer: THREE.WebGLRenderer;
   scene = new THREE.Scene();
+  readonly magic = fxFor(this.scene);
+  private magicBlink = -Infinity;
+  /** Stage 0 art review only; absent in ordinary play. */
+  fxMock: FxMock | null = null;
   camera: THREE.PerspectiveCamera;
   /** The far haze as it was, while the circle-bug suspects have it off (tuning suspects.haze; render/view/frameUniforms.ts). */
   hazeKept: THREE.Vector2 | null = null;
@@ -368,6 +387,53 @@ export class View {
    *  dancefloor, the treehouse, the minimap and the map table; the View's names for them below are its. */
   island!: IslandLayers;
   get ground(): Ground { return this.island.ground; }
+  readonly shaderDrawStatus: ShaderDrawStatus = { active: false, skipped: {}, fallback: {} };
+  private readonly monitoredPrograms = new WeakSet<ReadyProgram>();
+  private readyPrograms(): ReadyProgram[] {
+    const programs = (this.renderer.info.programs ?? []) as unknown as ReadyProgram[];
+    for (const p of programs) if (!this.monitoredPrograms.has(p)) {
+      this.monitoredPrograms.add(p); monitorProgramLink(this.renderer.getContext(), p, message => console.error(message));
+    }
+    return programs;
+  }
+  private shaderEpoch = 0;
+  private shaderLandingDeadline = Infinity;
+  private shaderChartLanding = false;
+  shaderLandingLimited = false;
+  private landingFades = new LandingArtFade();
+  landingHouseShare = 1;
+  landingSleeping = false;
+  landingWakeReady(): boolean {
+    const A = this.assets;
+    return A.fullWitchReady && A.home.treehouse && this.treehouseBatch.atlas === A.treehouse.atlas && this.landingHouseShare === 1 &&
+      [...this.witchBatch.meshes, ...this.treehouseBatch.meshes].every(o => ([] as THREE.Material[]).concat((o as THREE.Mesh).material ?? []).every(m => materialProgramsReady(this.renderer.properties.get(m)))) &&
+      !!this.houseRooms?.landingReady(this.renderer);
+  }
+  beginLandingShaders(chart: boolean): void { this.shaderEpoch++; this.shaderLandingDeadline = Infinity; this.shaderChartLanding = chart; this.shaderLandingLimited = false; this.landingSleeping = false; this.landingFades.reset(); this.landingHouseShare = 1; }
+  private armLimitedLanding(): void {
+    if (this.shaderLandingLimited) return;
+    this.shaderLandingLimited = true; this.landingFades.arm(this.assets.home);
+    performance.mark('landing:limited');
+  }
+  limitedLandingReady(now = performance.now()): boolean {
+    const expired = now >= this.shaderLandingDeadline;
+    if (expired && !this.homeDone) this.armLimitedLanding();
+    if (!this.shaderLandingLimited) return false;
+    if (this.shaderLandingLimited && this.assets.fullWitchReady) this.swapHomeArt();
+    const programs = this.witchBatch.meshes.every(o => ([] as THREE.Material[]).concat((o as THREE.Mesh).material ?? []).every(m => materialProgramsReady(this.renderer.properties.get(m))));
+    return lateLandingReady(this.shaderLandingLimited, this.assets.fullWitchReady, programs);
+  }
+  async waitForLandingWitch(): Promise<void> {
+    if (this.limitedLandingReady()) return;
+    performance.mark('landing:witch-wait');
+    while (!this.limitedLandingReady()) { this.assets.work(4); await nextFrame(); }
+    performance.mark('landing:witch-ready');
+  }
+  startLandingShaderGrace(at = performance.now()): void {
+    if (this.shaderLandingDeadline !== Infinity) return;
+    this.shaderLandingDeadline = at + 15000;
+    performance.mark('chart:landing-due', { detail: { at, deadline: this.shaderLandingDeadline } });
+  }
   /** The rolling ground (height.ts): drawn only, the rules stay flat. */
   get heights(): HeightField { return this.island.heights; }
   /** The night sky that shows over the bend, in treetop mode. */
@@ -403,6 +469,8 @@ export class View {
   }
   private dark = { k: 1, at: NaN, door: null as { x: number; z: number } | null, enclosed: false, reveal: false, uv: new THREE.Vector2() };
   private behindHouse(g: Game): void {
+    // A late landing's house-only camera layer must still submit the critical ground to its readiness gate.
+    this.ground.mesh.layers[this.shaderLandingLimited && this.shaderDrawStatus.active ? 'enable' : 'disable'](HOUSE_LAYER);
     const D = this.dark, T = g.tuning.treehouse.house?.dark, deck = deckOf(g.map, g.tuning), w = g.witch;
     const inHouse = !!T?.on && !!deck?.house?.rooms && !!w.perch && w.mode === "ground" && !this.telescope; // (on foot: rising out of it, the forest comes back as she lifts off)
     const enclosed = inHouse && !g.islandReady;
@@ -444,6 +512,8 @@ export class View {
   private steamFor: { map: ForestMap; vents: Float32Array } | null = null;
   readonly assets: AssetLibrary;
   typeBatches = new Map<number, SpriteBatch>();
+  private readonly mushroomView = new MushroomView();
+  private readonly potionObservers = new PotionObserversView();
   decorBatches = new Map<string, SpriteBatch>();
   /** The biome the ground cover's tufts were drawn in (none: temperate): drawn again for a night on an island in another. */
   private tuftBiome: string | undefined;
@@ -459,8 +529,11 @@ export class View {
   entDeckDrawn(): { x: number; y: number; z: number } | null { return entDeckDrawn(this); }
   /** The treehouse's placeholder rooms (render/houseRooms.ts), with the house's rooms on. */
   houseRooms: HouseRoomsView | null = null;
+  private cauldronLook: CauldronView | null = null;
   /** The zoo's little treehouse's "exit" prompt (render/zooExit.ts), made in the zoo. */
   zooExitTag: ZooExitTag | null = null;
+  /** The spell's key prompt by its 🎶 (render/castTag.ts), made the first frame. */
+  castTag: CastTag | null = null;
   /** The great oak's crown over the house (render/crown.ts), with the house's rooms and treehouse.house.crown on. */
   crown: CrownView | null = null;
   /** The crown seen over the horizon from far off (render/crownLandmark.ts). */
@@ -504,7 +577,6 @@ export class View {
   /** Her flight trail: a ribbon of glow in the colour of the area she's over (render/trail.ts). */
   private trail!: WitchTrail;
   private trailRgb = new THREE.Vector3();
-  private buffHud = new BuffHud(document.body);
   shadow!: THREE.Mesh;
   mpp: number; // metres per art pixel
   /** ?scenery=<metres>: a fixed scenery radius instead of the adaptive one. */
@@ -563,8 +635,11 @@ export class View {
   hatPointers: StoneIndicator[] = [];
   /** The Dowsing hat's pointer toward the nearest relic (rules/hatSpells.ts). */
   dowsePointer: StoneIndicator | null = null;
-  /** The end of the route's pointer (rules/win.ts): toward the straggler nearest the centre, then the victory lap's pulse. */
-  winPointer: StoneIndicator | null = null;
+  /** The end of the route's two pointers (render/view/pointers.ts): the straggler's and the victory lap's (the party's). */
+  stragglerPointer: StoneIndicator | null = null;
+  partyPointer: StoneIndicator | null = null;
+  /** The awake legends' pointers. */
+  legendPointers: StoneIndicator[] = [];
   /** Pins anyone has put up (render/pins.ts: view.pin(target, look)), drawn with the pointers. */
   readonly pins = new Set<Pin>();
   pinsAt = Number.NaN;
@@ -598,12 +673,15 @@ export class View {
   /** The house object whose panel or close-up is open now (main.ts: a station, an instrument), or null: its use prompt is down and
    *  its light out while it's open (render/houseRooms.ts). */
   houseOpen: string | null = null;
-  /** What she plays with, for the use prompts' button (platform/input.ts device): E, the pad's □ or a tap on the prompt itself. */
+  /** What she plays with, for the use prompts' button (platform/input.ts device): the use button as bound (E, the pad's ✕) or a tap on the prompt itself. */
   useDevice: "keys" | "pad" | "touch" = "keys";
   /** A tap on a use prompt (touch): down and up, as the touch sigil button's (main.ts sets it). */
   onUse: ((down: boolean) => void) | null = null;
   /** In the house's rooms, her head on the page (CSS px) as the house places it (render/houseRooms.ts) and when (ms). */
   readonly herHouseHead = { x: 0, y: 0, at: -Infinity };
+  /** The use prompt's keycap over a house object as last drawn (render/houseRooms.ts): its object's id ("" with none shown, or
+   *  the house not drawn) and its top on the page: a guidance pin over the same object keeps its tip above it (render/view/guidance.ts). */
+  readonly usePrompt = { id: "", top: 0 };
   /** Off the treehouse's hub, how far the camera's aim moves to follow where she's drawn (render/view/witch.ts). */
   readonly houseCam = { x: 0, y: 0, z: 0 };
   /** Where she's drawn less where the rules have her, in the treehouse (render/view/witch.ts), her feet's world height as drawn: her
@@ -619,6 +697,10 @@ export class View {
   houseShift = 0;
   /** Her height as drawn (metres: her frame's, times her scale on the treehouse's floor): what a station's aim is a share of. */
   witchTall = 0;
+  /** Her height as drawn from her feet (her frame's ground) to its top (her hat's), last frame: a station frames her whole by it (render/view/camera.ts). */
+  witchFeetTop = 0;
+  /** The dark wash behind her at a station, her drawn again over it (render/stationBackdrop.ts). */
+  backdrop!: StationBackdrop;
   shadowList: ShadowInstance[] = [];
   /** The trunks' shadows from her glow and the fires, a batch an area type (render/trunkShadows.ts); and the scenery's, a batch
    *  an atlas (decor, relics, scenes: render/view/scenery.ts; the runestones, the soundsystems: render/view/home.ts, render/party.ts). */
@@ -653,6 +735,9 @@ export class View {
     this.castMap = new CastShadowMap(160, t.shadows.castRes ?? 1024);
     const prec = typeof location !== "undefined" ? new URLSearchParams(location.search).get("precision") : null; // (?precision=high|medium|low: every shader's float precision, for the circle bug; three.js takes high where the GPU has it)
     this.renderer = new THREE.WebGLRenderer({ canvas, antialias: false, powerPreference: "high-performance", preserveDrawingBuffer: true, ...(prec === "high" || prec === "medium" || prec === "low" ? { precision: prec === "high" ? "highp" : prec === "medium" ? "mediump" : "lowp" } as const : {}) });
+    // Three's first-use diagnostics read driver logs synchronously (498ms in proof64c95a287).
+    // Keep diagnostics in development; production keeps KHR gating without the blocking log queries.
+    this.renderer.debug.checkShaderErrors = import.meta.env.DEV;
     // A lost and restored GL context (a GPU reset, a tab long in the background on a phone): three.js would upload every texture
     // again from its pixels, which the atlases let go once uploaded (render/atlas.ts), so the art would come back black. The
     // page reloads instead (DECISION FOR ED: a run is lost either way; nothing handled it before, and the ground's own GPU-side
@@ -662,6 +747,7 @@ export class View {
     this.ledger = new GpuLedger(this.renderer.getContext(), () => canvas.width * canvas.height * 12); // (the canvas's back and front buffers and its depth: preserveDrawingBuffer)
     canvas.addEventListener("webglcontextlost", () => { this.ledger.reset(); this.onGpuEvent?.("context lost"); });
     this.renderer.setPixelRatio(1);
+    installShaderDrawGate(this.renderer, this.shaderDrawStatus, object => object === this.island?.ground.mesh ? this.ground.loadingFallback : null);
     this.renderer.info.autoReset = false; // count every pass of a frame, reset in render()
     this.renderer.outputColorSpace = THREE.LinearSRGBColorSpace; // colours are the art's own sRGB values, untouched
     this.mpp = metresPerArtPixel(t);
@@ -757,6 +843,7 @@ export class View {
     // her, a silhouette in her glow colour shows through, and tall things in front of her fade.
     const O = t.occlusion;
     this.witchBatch = this.makeWitchBatch();
+    this.backdrop = new StationBackdrop(this.scene);
     SPRITE_UNIFORMS.uOcc.value.set(O.fadeOpacity, O.edge, O.minHeight, O.on ? 1 : 0);
     // The treehouse, home: its base and its crown (the crown only from the treetops), its trunk's
     // foot on its spot. It fades like other tall things when she's behind it.
@@ -780,8 +867,11 @@ export class View {
     yield "parts";
     this.scene.add(this.grass.mesh);
     this.scene.add(this.spellFx.trail);
+    this.magic.legacyParty=(x,y,z,age)=>{this.spellFx.reset();this.spellFx.partyBurst(x,y,z,this.game.herTime-age);this.spellFx.update(this.game,this.game.herTime,y);};
     this.trail = new WitchTrail(game.tuning.trail ?? TRAIL_DEFAULT);
     this.scene.add(this.trail.mesh);
+    bridgeNativeObject(this.trail.mesh,"flightTrail");
+    bridgeNativeObject(this.spellFx.trail,"broomSpark");
     // The dancefloor's speakers: their batch comes with their art (drawSpeakers).
     this.assets.speakerArt();
     this.propBatch = new SpriteBatch(this.assets.props, this.mpp, { fade: true }).name("props");
@@ -804,9 +894,11 @@ export class View {
     yield;
     this.holograms = new SigilHolograms(t.holograms, glyphs);
     this.scene.add(this.holograms.group);
+    bridgeNativeObject(this.holograms.group,"hologram");
     yield "fireworks";
     this.fireworks = new Fireworks(SPRITE_UNIFORMS.uRes, this.mpp);
     this.scene.add(this.fireworks.mesh);
+    bridgeNativeObject(this.fireworks.mesh,"firework");
     yield "ley";
     this.island.buildLey();
     this.leyBase = M?.leyBright ?? 1;
@@ -822,6 +914,8 @@ export class View {
     this.lakeShore = new LakeShoreView(this.scene, this.mpp);
     this.swoopTrails = new SwoopTrails(game.tuning.swoopTrail ?? SWOOP_TRAIL_DEFAULT);
     this.scene.add(this.swoopTrails.mesh);
+    bridgeNativeObject(this.swoopTrails.mesh,"partySwoop");
+    bridgeNativeObject(this.markerFx.group,"runestone");
     this.inviteView = new InviteView(game);
     this.inviteView.herOffset = this.herOffset;
     // The 💌s and the invite rings hidden as the animals are, by what stands in front of them and the smoke (render/occlusion.ts;
@@ -867,9 +961,23 @@ export class View {
   private hazeBeforeTelescope: THREE.Vector2 | null = null;
   /** The picture's pixels this many times the pixel size (the telescope: 1 over its resolution, finer below 1; main.ts resizes). */
   pixelScale = 1;
+  /** A picture's pixel on the page, css pixels: the pixel size, snapped (pixels.snap) so it's a whole number of the screen's own
+   *  pixels (Ed, 2026-10-29: "the pixels are just hard to read"; at a DPR of 1.25 a pixel size of 3 was 3.75 device pixels, its
+   *  pixels drawn 3 and 4 wide by turns: 3.2 css, 4 device pixels, now). Set by resize. */
+  cssPixel = 1;
+  private pixelViewport = { w: 0, h: 0 };
+  private scenePixelSize(): number {
+    const t = this.game.tuning, dpr = typeof devicePixelRatio === 'number' && devicePixelRatio > 0 ? devicePixelRatio : 1;
+    const p0 = t.pixelSize * this.pixelScale;
+    const base = t.pixels?.snap !== false && this.pixelScale === 1 ? Math.max(1, Math.round(p0 * dpr)) / dpr : p0;
+    return chunkyPixelSize(base, dpr, potionStrength(this.game, 'chunky'));
+  }
   /** Fit the canvas to the window: the scene at low resolution, shown scaled up by the pixel size. */
   resize(cssW: number, cssH: number): void {
-    const p = this.game.tuning.pixelSize * this.pixelScale;
+    this.pixelViewport = { w: cssW, h: cssH };
+    // (to the nearest whole number of device pixels, Ed's pick: 4 at 1.25, 5 at 1.5; not through the telescope, finer by design)
+    const p = this.scenePixelSize();
+    this.cssPixel = p;
     this.width = Math.max(1, Math.ceil(cssW / p));
     this.height = Math.max(1, Math.ceil(cssH / p));
     // The canvas holds the low-resolution picture, which the browser scales up with nearest-neighbour.
@@ -888,8 +996,9 @@ export class View {
    *  (rules/arrive.ts diveReach): the area types drawn in that order, nearest first, under the loading mist; and the start waits only
    *  for the shaders (the hand-off's own ground is drawn by its first frames, main.ts warmAt): the house's art, the ground and the
    *  forest round it are made on through the dive (`homeDone`; app/arrive.ts eases the dive if they're due in view before then). */
-  async prepare(o: { dive?: (x: number, z: number) => number; track?: [number, number, number, number][] } = {}): Promise<void> {
+  async prepare(o: { sail?: boolean; dive?: (x: number, z: number) => number; track?: [number, number, number, number][] } = {}): Promise<void> {
     performance.mark("witch:prep-start");
+    if (o.sail) { this.homeDone = false; this.shaderDrawStatus.active = true; this.shaderDrawStatus.skipped = {}; this.shaderDrawStatus.fallback = {}; this.shaderDrawStatus.submitted = {}; if (!this.shaderChartLanding) this.startLandingShaderGrace(); }
     this.makeLoadingMist();
     { // tonight's own trees, if drawn ahead and kept (app/landingBake.ts), for the swap before she sees the island (retype)
       const m = this.game.map, types = new Set<number>();
@@ -911,17 +1020,18 @@ export class View {
       this.homeDone = false;
       this.prepared = true;
       this.askIsland(near); // (the workers drawing the dive's areas while the shaders link)
-      await this.compileAll();
+      await this.compileAll(o.sail);
       // The ground where the dive first sees the island (Ed, 2026-10-24: the dive's view needs the ground; Echo's island black through
       // the descent, its tiles not drawn yet): the first TRACK_AHEAD metres of its track in from the sea, TRACK_REACH each side, a few
       // tiles a frame under the chart; the rest of it as the dive goes, the view's own each frame (render/view/ahead.ts).
       const leg = o.track?.[0];
-      if (leg) {
+      if (leg && !this.shaderLandingLimited) {
         const [x0, z0] = leg, r = { minX: x0 - TRACK_REACH, maxX: x0 + TRACK_REACH, minZ: z0 - TRACK_AHEAD, maxZ: z0 + TRACK_REACH };
         while (this.ground.fill(this.renderer, r, x0, z0, 6) > 0) await nextFrame();
       }
       performance.mark("witch:prep-track");
-      void this.buildHome().catch(e => { console.error("the house's start after a sail went wrong", e); }).finally(() => { this.homeDone = true; });
+      const homeEpoch = this.shaderEpoch;
+      void this.buildHome(homeEpoch).catch(e => { console.error("the house's start after a sail went wrong", e); }).finally(() => { if (homeEpoch === this.shaderEpoch) { this.homeDone = true; performance.mark('landing:house-complete'); } });
       return;
     }
     await runSliced(this.warmSteps(), "warm"); // (the first frame's own lazy work made ahead, a slice at a time)
@@ -931,14 +1041,22 @@ export class View {
     { const rect = viewRect(this, this.game.tuning.haze.near, 20), w = this.game.witch; // (the ground round the start, a few tiles a frame: render/slices.ts)
       while (this.ground.fill(this.renderer, rect, w.x, w.z, 6) > 0) await nextFrame(); }
     performance.mark("witch:prep-ground");
-    await this.assets.homeArt(); // (the start's own art, drawn by the art workers: play never starts without her, home or the soundsystems)
+    if (o.sail) {
+      while (!this.assets.homeReady && performance.now() < this.shaderLandingDeadline) { this.assets.work(4); await nextFrame(); }
+      if (!this.assets.homeReady) {
+        this.armLimitedLanding(); this.prepared = true; await this.compileAll(true);
+        const homeEpoch = this.shaderEpoch;
+        void this.buildHome(homeEpoch).catch(e => { console.error("the house's start after a sail went wrong", e); }).finally(() => { if (homeEpoch === this.shaderEpoch) { this.homeDone = true; performance.mark('landing:house-complete'); } });
+        this.askIsland(near); return;
+      }
+    } else await this.assets.homeArt(); // initial boot still waits for all home art
     performance.mark("witch:prep-home");
     await this.assets.whenIdle(true); // (what the view asked for as needed now; the scenery kits and creatures draw on and fade in: the first-load hunt, 2026-10-20, half the cold load)
     performance.mark("witch:prep-idle");
     this.render(0, false);
     await runSliced(refreshSteps(this), "refresh"); // (refresh(this, true), a slice at a time)
     this.prepared = true;
-    await this.compileAll();
+    await this.compileAll(o.sail);
     this.askIsland(near);
     this.homeDone = true;
   }
@@ -966,15 +1084,19 @@ export class View {
 
   /** A sail's house made through the dive (prepare's `dive`): the forest round it, its art (drawn by the art workers, not on the
    *  page: the dive's frames go on), the ground round it, a few tiles a frame, and the view's batches made again with it. */
-  private async buildHome(): Promise<void> {
-    await runSliced(this.warmSteps(), "warm");
+  private async buildHome(epoch = this.shaderEpoch): Promise<void> {
+    const steps = this.warmSteps(), view = this;
+    await runSliced((function* (): Steps { while (epoch === view.shaderEpoch) { const step = steps.next(); if (step.done) return; yield step.value; } })(), "warm");
+    if (epoch !== this.shaderEpoch) return;
     performance.mark("witch:prep-warm");
-    while (!this.assets.homeReady) { this.assets.work(4); await nextFrame(); } // (its jobs sent to the workers a little a frame, under the chart too)
+    while (!this.assets.homeReady) { if (epoch !== this.shaderEpoch) return; this.assets.work(4); await nextFrame(); } // existing dispatch policy unchanged
     performance.mark("witch:prep-home");
     { const w = this.game.witch, R = this.game.tuning.haze.near + 20, r = { minX: w.x - R, maxX: w.x + R, minZ: w.z - R, maxZ: w.z + R }; // (round her, not the dive's view)
-      while (this.ground.fill(this.renderer, r, w.x, w.z, 3) > 0) await nextFrame(); }
+      while (epoch === this.shaderEpoch && this.ground.fill(this.renderer, r, w.x, w.z, 3) > 0) await nextFrame(); }
+    if (epoch !== this.shaderEpoch) return;
     performance.mark("witch:prep-ground");
-    await runSliced(refreshSteps(this), "refresh");
+    const refresh = refreshSteps(this);
+    await runSliced((function* (): Steps { while (epoch === view.shaderEpoch) { const step = refresh.next(); if (step.done) return; yield step.value; } })(), "refresh");
     performance.mark("witch:prep-house");
   }
 
@@ -1033,7 +1155,9 @@ export class View {
   }
 
   /** Every shader the scene holds compiled, and their programs' logs read, ahead of their first draw (prepare). */
-  private async compileAll(): Promise<void> {
+  private async compileAll(allowPartial = false): Promise<void> {
+    const epoch = ++this.shaderEpoch;
+    if (allowPartial && !this.shaderChartLanding) this.startLandingShaderGrace();
     this.setReadiness("compile", 0, 1);
     // Every shader the scene holds compiled now, in the Bedroom, not on the first frame each is drawn (overnight phase 2: ten
     // programs compiled mid-run before, a hitch each: on the first steps, the first rise and the first waves; after, one).
@@ -1045,28 +1169,71 @@ export class View {
     // play waits for them a few seconds at most, so on a GPU that compiles in parallel they're done in the Bedroom.
     const hidden: THREE.Object3D[] = [];
     const fx = this.post.fxScene; // (the smooth effects layer's own scene, and the post passes' quad: neither in the scene)
+    const telemetry = (globalThis as unknown as { __travelProbe?: { record(e: unknown): void } }).__travelProbe;
+    const originalUses = telemetry ? captureProgramUses([{ label: 'scene', root: this.scene }, ...(fx ? [{ label: 'effects', root: fx }] : [])]) : null;
     for (const sc of fx ? [this.scene, fx] : [this.scene]) sc.traverse(o => { if (!o.visible) { hidden.push(o); o.visible = true; } });
     // (and the occlusion pyramid's passes, which aren't in the scene: render/hiz.ts, built by the treehouse, where she starts)
     if (!this.hizOff && !this.hiz) this.hiz = new Hiz(this.renderer);
-    const compiled = Promise.all([this.renderer.compileAsync(this.scene, this.camera), fx && this.renderer.compileAsync(fx, this.camera), this.post.compile(), this.hiz?.ok && this.hiz.compile(this.renderer)]).catch(() => { /* (drawn as before: compiled on first use) */ });
+    const allPrograms = () => this.readyPrograms();
+    const before = new Set(allPrograms().map(p => p.id)), groups: Record<string, number[]> = {};
+    const launch = (group: string, fn: () => unknown) => {
+      const prior = new Set(allPrograms().map(p => p.id)), result = fn();
+      groups[group] = allPrograms().filter(p => !prior.has(p.id)).map(p => p.id);
+      return result;
+    };
+    const compiled = Promise.all([launch('scene', () => this.renderer.compileAsync(this.scene, this.camera)), fx && launch('effects', () => this.renderer.compileAsync(fx, this.camera)), launch('post', () => this.post.compile()), this.hiz?.ok && launch('hiz', () => this.hiz!.compile(this.renderer))]).catch(() => { /* readiness is still checked per program below */ });
+    // Diagnostic only: delay newly introduced sail programs, never the boot-warmed fallback/platform/witch programs.
+    const delay = allowPartial ? Math.max(0, Number((globalThis as unknown as { __witchShaderReadinessDelay?: number }).__witchShaderReadinessDelay) || 0) : 0;
+    if (delay) {
+      const due = performance.now() + Math.min(delay, 60000);
+      for (const p of allPrograms()) if (!before.has(p.id)) {
+        const ready = p.isReady.bind(p); p.isReady = () => performance.now() >= due && ready();
+      }
+    }
     for (const o of hidden) o.visible = false;
     performance.mark("witch:prep-compile0");
-    // Waited for till every program is ready (three asks the driver without waiting, KHR_parallel_shader_compile, every 10 ms):
-    // a cap of 4 s (Ed's laptop, 2026-10-21: reached every time) left the rest compiling, and the program logs read next waited on
-    // them, one task, 5 s with the chart frozen. A program the driver never finishes mustn't hold the start for good: 60 s.
-    // (the programs linked so far out of all of them, a loading screen's count: three's isReady, KHR_parallel_shader_compile's status)
-    const linked = () => { const all = (this.renderer.info.programs ?? []) as unknown as { isReady(): boolean }[]; this.setReadiness("compile", all.filter(p => p.isReady()).length, all.length); };
-    linked();
-    const counting = setInterval(linked, 50);
-    const t0 = performance.now(), capped = await Promise.race([compiled.then(() => false), new Promise<boolean>(r => setTimeout(() => r(true), 60000))]);
-    clearInterval(counting);
-    if (capped) console.warn(`view: the shaders weren't ready in ${Math.round(performance.now() - t0)} ms; play starts anyway`);
+    const parallel = this.renderer.extensions.has('KHR_parallel_shader_compile');
+    const usages = originalUses ? mapProgramUses(originalUses, material => (this.renderer.properties.get(material) as { currentProgram?: { id: number } }).currentProgram?.id) : undefined;
+    const record = (phase: string, pending: ReadyProgram[] = [], elapsed = 0) => {
+      const detail = { kind: 'shader-programs', phase, at: performance.now(), parallel, elapsed, groups,
+        programs: allPrograms().map(p => ({ id: p.id, name: p.name, type: p.type, ready: p.isReady(), added: !before.has(p.id), ...(usages?.[p.id] ? { sourceUses: usages[p.id] } : {}) })), pending: pending.map(p => p.id) };
+      performance.mark(`witch:shader-${phase}`, { detail });
+      telemetry?.record(detail);
+      return detail;
+    };
+    record('start');
+    // Ed6520617385: a sail may land after its15s grace; unfinished programs must never force a uniform read or draw.
+    const complete = await waitForPrograms(allPrograms, compiled, (ready, total) => this.setReadiness('compile', ready, total), (pending, elapsed) => {
+      console.warn('view: shaders still pending; keeping the chart up', record('pending', pending, elapsed));
+    }, undefined, undefined, () => allowPartial ? this.shaderLandingDeadline : Infinity);
+    if (!complete) {
+      this.armLimitedLanding();
+      record('landing-limit', allPrograms().filter(p => !p.isReady()), performance.now() - this.shaderLandingDeadline + 15000);
+      void (async () => {
+        await waitForPrograms(allPrograms, compiled, () => {}, () => {}, undefined, undefined, () => epoch === this.shaderEpoch ? Infinity : -Infinity);
+        if (epoch !== this.shaderEpoch) return;
+        const programs = [...(this.renderer.info.programs ?? [])];
+        await runSliced((function* (view: View) {
+          for (const p of programs) {
+            if (epoch !== view.shaderEpoch) return;
+            if ((p as unknown as ReadyProgram).isReady()) p.getUniforms();
+            yield;
+          }
+        })(this), 'background-programs');
+        if (epoch !== this.shaderEpoch) return;
+        record('background-ready'); this.shaderDrawStatus.active = false; releaseDisposals();
+      })().catch(error => console.error('background shader readiness failed; retaining safe fallback', error));
+      this.setReadiness('ready', 1, 1);
+      return; // no unfinished uniform reads, warm draws, uploads or GPU fence on the landing path
+    }
+    this.shaderDrawStatus.active = false;
+    record('ready');
     performance.mark("witch:prep-compiled");
     releaseDisposals(); // (the last night's materials, kept till now: render/retire.ts)
     // three reads a program's link and compile logs on its first draw (onFirstUse), a call that waits on the GPU: 0.1 to 2 s
     // in play the first time she rises, lands or comes near something new. Read them now, at load, for every program.
     const programs = [...(this.renderer.info.programs ?? [])], v = this; // (a program's log read a step at a time: render/slices.ts)
-    await runSliced((function* () { let i = 0; for (const p of programs) { v.setReadiness("programs", i++, programs.length); p.getUniforms(); yield; } })(), "programs");
+    await runSliced((function* () { let i = 0; for (const p of programs) { v.setReadiness("programs", i++, programs.length); if (!(p as unknown as ReadyProgram).isReady()) throw new Error('shader became unfinished before uniform preparation'); p.getUniforms(); yield; } })(), "programs");
     performance.mark("witch:prep-programs");
     // And every texture the scene's materials hold uploaded now, a texture a step (three uploads each on its first draw: on Ed's
     // laptop, 2026-10-21, most of the 2 s first frame after a sail; the cloud's first frame's 5 to 7 s), so the first frame
@@ -1167,10 +1334,12 @@ export class View {
     return runSliced(this.setGameSteps(game), "setGame", budgetMs);
   }
   private *setGameSteps(game: Game): Steps {
+    this.shaderEpoch++; // a previous island's background completion cannot release this island's gate
     const t = game.tuning, old = this.island;
     // The last night's: the scenery's rebuild under way, the creatures' caches, the candles; its area types' batches and their
     // shadows, and its soundsystems' (their atlases the art's: freed once, by reseat).
     cancelRefresh(this); resetCreatureCaches(); forgetCandles(this);
+    this.potionObservers.dispose(this);
     for (const b of this.typeBatches.values()) { this.scene.remove(...b.meshes); b.release(); }
     this.typeBatches.clear();
     for (const [k, b] of this.trunkShadowBatches) if (typeof k === "number") { this.scene.remove(...b.meshes); b.dispose(); this.trunkShadowBatches.delete(k); }
@@ -1210,7 +1379,7 @@ export class View {
     this.strings.setGame(game); this.leashView.setGame(game); this.lasers.setGame(game); this.borders.setGame(game); this.inviteView.setGame(game);
     this.partyObjects.reset(); this.rig?.reset(); this.holograms.reset(); this.glades.reset(); this.wisps?.reset();
     this.clouds.reseed(game.seed); this.lightRings?.reseed(game.map.seed);
-    this.fireworks.reset(); this.swoopTrails.reset(); this.spellFx.reset(); this.trail.newNight(); this.buffHud.reset(); this.combatLight.reset(); this.occlusion.reset();
+    this.fireworks.reset(); this.swoopTrails.reset(); this.spellFx.reset(); this.trail.newNight(); this.combatLight.reset(); this.occlusion.reset();
     this.assets.prefetchType(HOME_LOOK); // home's meadow floor (no trees ask for it)
   }
 
@@ -1343,6 +1512,7 @@ export class View {
     LIGHT_UNIFORMS.uMoon.value.set(this.moonBase.x * r * n, this.moonBase.y * gr * n, this.moonBase.z * b * n);
     const U = LIGHT_UNIFORMS.uMoonUp.value;
     U.set(this.moonUpBase.x * r * n, this.moonUpBase.y * gr * n, this.moonUpBase.z * b * n, U.w);
+    LIGHT_UNIFORMS.uUnlitDim.value = moodOf(g.tuning)?.unlit ?? 1; // (what nothing lights, darker: live from the pause page)
     return m;
   }
 
@@ -1388,6 +1558,14 @@ export class View {
   /** The start's own art, drawn by the art workers (fast start (b)): each batch built on a stand-in takes its set once it arrives. */
   private swapHomeArt(): void {
     const A = this.assets;
+    const now = performance.now();
+    const previousHouseShare = this.landingHouseShare;
+    this.landingHouseShare = this.landingFades.share('treehouse', A.home.treehouse, now);
+    if (this.shaderLandingLimited && previousHouseShare === 0 && this.landingHouseShare > 0) performance.mark('landing:house-fading');
+    if (this.shaderLandingLimited && previousHouseShare < 1 && this.landingHouseShare === 1) performance.mark('landing:house-faded');
+    this.treehouseBatch.arrivalFade.value = this.landingHouseShare;
+    this.propBatch.arrivalFade.value = this.landingFades.share('props', A.home.props, now);
+    this.soundBatch.arrivalFade.value = this.landingFades.share('soundsystems', A.home.soundsystems, now);
     if (!this.spin) { // (a twirl's in the clothes she had: render/spin.ts)
       if (this.witchBatch.atlas !== A.witch) this.witchBatch.setAtlas(A.witch);
       if (this.bareBatch && this.bareBatch.atlas !== A.witchBare()) this.bareBatch.setAtlas(A.witchBare());
@@ -1458,15 +1636,23 @@ export class View {
   private floorItems: { species: string; glint: number; look: FloorLook }[] = Array.from({ length: 6 }, () => ({ species: "", glint: 0, look: FALLBACK_LOOK }));
 
   render(time: number, draw = true): void {
+    // Allocate only when a whole display-pixel step changes, including Try/Stop and expiry.
+    if (this.pixelViewport.w > 0 && this.scenePixelSize() !== this.cssPixel) this.resize(this.pixelViewport.w, this.pixelViewport.h);
+    // Late art may introduce programs after compileAll's background pass has ended.
+    for (const p of this.readyPrograms()) p.isReady();
     this.assets.playing = this.game.party.spellAt !== null; // (the night playing: the art ahead of need shares the workers, render/assets.ts dispatch)
     this.ms = {}; this.lap = this.frameStart = performance.now();
     const g = this.game, t = g.tuning, P0 = poseOf(g), F = this.fly;
+    if (this.magic.galleryCamera !== null) { g.witch.mode=this.magic.galleryCamera?"treetop":"ground"; g.witch.lift=this.magic.galleryCamera?1:0; }
     // (arriving from the sea chart: the flight's shot, app/arrive.ts)
     const pose = F ? { ...P0, tx: F.tx, ty: F.ty, tz: F.tz, angle: F.angle, distance: F.distance, ...shotCamera(F) } : P0;
     this.prefetchWave();
     // Her clock (rules/slowTime.ts): she and everything of hers (her frames, blinks, trail, 💌s, sigils, the action bar) at full
     // speed, while the world (time) may run slow in a sleeping legend's circle; eased between steps as the world's is.
     const ht = Math.max(0, g.herTime - Math.max(0, g.clock.time - time) / Math.max(1e-3, g.timeScale));
+    this.magic.begin(ht, g.witch.x, g.witch.z, g);
+    this.magic.batches.mpp.value = this.mpp;
+    this.magic.batches.canopy = g.witch.lift > 0.5;
     // The scenery budget follows the real frame rate (only frames that are drawn count).
     if (draw) {
       const now = performance.now();
@@ -1521,24 +1707,24 @@ export class View {
       // The party's over (rules/partyOver.ts): the line fades to partyOver.leyFloor of itself, its pulse gone.
       const po = g.partyOver?.ease ?? 0, leyK = this.leyBase * (1 - (1 - t.partyOver.leyFloor) * po);
       if (leyK !== this.leyScaled) { this.leyScaled = leyK; this.ley.scale(leyK); }
-      // the wave's pulse along the current link, by the party's clock (as the HUD's pointer); while home boots, none drawn, but the
-      // line the boot branches off unlit ahead of where it will set off (as it is once the boot ends: no change as it does)
-      const bootPulse = g.party.spellAt !== null && time < g.party.bootUntil;
-      this.ley.pulse(g.partyOver ? null : bootPulse ? 0 : shaderPulse(g.party, g.map, time), !bootPulse);
+      // One line (Ed, 2026-10-29): the boot ring's link first, from the treehouse's front round the home ring (rules/bootRing.ts),
+      // the route on from where its lap ends. Its pulse: the boot's along the ring while home boots up (its share of the boot path,
+      // the stones turning as it passes), then the wave's along the current link, by the party's clock (as the HUD's pointer).
+      const B = bootPath(g.map), bootPulse = g.party.spellAt !== null && time < g.party.bootUntil;
+      this.ley.pulse(g.partyOver || bootPulse ? null : shaderPulse(g.party, g.map, time), g.partyOver || !bootPulse ? null : bootPulseAt(g.party, g.map, time) / B.length);
       this.ley.lap(winPulse(g)?.links ?? null, winPulseOut(g)?.links ?? null, winLit(g)); // (the victory lap: its sparklers racing home and on to the route's end from where the wave's pulse was, rules/win.ts)
-      // None till the party spell, nor before the boot's pulse reaches where the first link leaves the home ring (Ed, v2001 and
-      // 2026-10-07): there it branches off, an extension of the boot's line, out to the first stone as the boot goes on round
-      // (leyReveal, by the boot pulse's own progress), then on along the route.
+      // None till the party spell; then reveal times as far along the line as the pulse (the boot's, then the wave's: leyReveal and
+      // bootLineAt, the same measure), the tip round the ring first and on out along the route without a jump.
       this.ley.near(w.x, w.z);
       // (the Route-seer hat worn, rules/hatSpells.ts: the whole route, however far the reveal has grown)
-      this.ley.grow(leyDrawnTo(g.party, g.map, time, t.leyLines.reveal ?? 3, this.ley.branch(), routeSeen(g))); // (none before the party, the hat's too)
-      { // The boot's ring (rules/bootRing.ts): the line round the home ring at reveal x the pulse, the pulse turning the stones; faint after.
-        // (Its sparkler runs the whole lap, past the last stone to where it came on to the ring, at the pulse's speed, the boot
-        // ending as it gets there, and hands over to the wave's: Ed, 2026-10-07, "The two pulses or tips don't join correctly at
-        // the top of the speaker circle"; 2026-10-09, "Pure constant speed", boot included.)
-        const B = bootPath(g.map), live = g.party.spellAt !== null && (g.party.bootFrom === undefined || time < g.party.bootUntil);
-        this.ley.ring(live ? bootPulseAt(g.party, g.map, time) / B.length : null, bootLineAt(g.party, g.map, time, t.leyLines.reveal ?? 3) / B.length, (g.party.spellAt === null ? 0 : live ? 1 : 0.35) * (1 - (g.partyOver?.ease ?? 0)), this.leyRgb ?? undefined); // (the boot ring fades out too once the party's over)
-        this.ley.front(time, (beatTime(g.beat, time) * t.beat.bpm) / 60, 1 - (g.partyOver?.ease ?? 0)); // its front and pulses: pixel sparks, small lights, embers (render/leyHead.ts)
+      this.ley.grow(leyDrawnTo(g.party, g.map, time, t.leyLines.reveal ?? 3, routeSeen(g)), bootLineAt(g.party, g.map, time, t.leyLines.reveal ?? 3) / B.length); // (none before the party, the hat's too)
+      { // The ring's link: full while home boots up, faint round the speakers after (RING_AFTER), nothing before the spell; it fades out too once the party's over.
+        const live = g.party.spellAt !== null && (g.party.bootFrom === undefined || time < g.party.bootUntil);
+        this.ley.ring((g.party.spellAt === null ? 0 : live ? 1 : RING_AFTER) * (1 - (g.partyOver?.ease ?? 0)), this.leyRgb ?? undefined);
+        this.ley.front(time, (beatTime(g.beat, time) * t.beat.bpm) / 60, 1 - (g.partyOver?.ease ?? 0)); // its front and pulse: a pixel spark, its small light (render/sparkler.ts)
+        const tip=this.ley.pulseTip??this.ley.tip;
+        if(tip)this.magic.native("ley",tip.x,0.4,tip.z,1,920001,[tip.colour.x,tip.colour.y,tip.colour.z]);
+        this.leashView.ley = this.ley; // (the rainbow wave and the analyser behind the spark stand on the line as drawn: render/leash/rainbow.ts)
       }
     }
     // The sleeping legends' clearings: their twilight and motes, the nearest few (render/glades.ts).
@@ -1586,6 +1772,14 @@ export class View {
     const markerLights = drawMarkers(this, time);
     const speakerLights = drawSpeakers(this, time, pose.angle);
     this.spellFx.update(g, ht, witchHeight(w, t) + 0.6 + this.rideOff);
+    const speedForMagic=Math.hypot(w.vx,w.vz);
+    if(speedForMagic>2){this.magic.native("flightTrail",w.x,witchHeight(w,t),w.z,Math.min(1,speedForMagic/20),920002);this.magic.native("broomSpark",w.x,witchHeight(w,t),w.z,0.5,920003);}
+    const blink = g.witches[0].dash;
+    if (blink.at !== this.magicBlink && ht >= blink.at && Number.isFinite(blink.at)) {
+      this.magicBlink = blink.at;
+      this.magic.emit("moonlight", "aura", blink.fromX, 1.5, blink.fromZ, 1, 0.7, 0.5, 910001);
+      this.magic.emit("moonlight", "burst", blink.toX, 0.8, blink.toZ, 1, 0.7, 0.6, 910002);
+    }
     {
       // her trail: behind her broom, as long as she's fast, in the colour of the area under her (its creature's neon, as the
       // ley lines and runestones; home's own lavender)
@@ -1600,7 +1794,6 @@ export class View {
       loadView(g, t.load ?? LOAD_DEFAULT, dt, this.leashView.load);
       const Bp = this.leashView.bristle; Bp.x = w.x - w.vx * back; Bp.y = witchHeight(w, t) + 0.25 + this.rideOff; Bp.z = w.z - w.vz * back;
     }
-    this.buffHud.update(g, time);
     // Tufts part round her and the three nearest creatures.
     // (only those within reach made into objects: mapping every creature, a thousand late in a run, every frame was much of the frame's garbage)
     const near: { x: number; z: number; r: number; d: number }[] = [], GR = t.groundCover.radius;
@@ -1667,7 +1860,10 @@ export class View {
     }
     this.lightRings?.update(this.camera, w.x, witchHeight(w, t) + this.rideOff, w.z, canopyShown(w), time);
     const hatTop = drawWitch(this, time, ht, onTreehouse);
+    this.mushroomView.update(this);
+    this.ground.prepareCoast(this.renderer, this.camera, this.scene);
     this.houseRooms?.update(this, onTreehouse, ht);
+    this.potionObservers.update(this, onTreehouse);
     if (this.crown && (this.crown.lights !== (t.treehouse.house?.crown?.lights ?? 1) || (this.crown.crown.wrap ?? 0) !== (t.treehouse.house?.crown?.wrap ?? 0))) this.ensureCrown(this.game); // (its lights' density or their wrapping moved on the pause page: grown again)
     if (this.crown && deck) { // (the crown: in the world, or laid over the floors with her indoors: render/crown.ts)
       const W = this.crownWorld, a = ((HOUSE_ROOMS.turn ?? 0) * Math.PI) / 180, c = Math.cos(a), s = Math.sin(a);
@@ -1681,7 +1877,7 @@ export class View {
       this.crown.uniforms.uWarmK.value = CR?.warm ?? 0; // (the house's warm light up into it, live from the pause page)
       this.crown.update(this.camera, W, plan, here, dt, hole, CR?.cutFade ?? 0, { x: w.x, y: groundHeight(w.x, w.z) + witchHeight(w, t), z: w.z }); // (her: the oak hidden when she's behind it)
       if (this.crownFar) { // (and over the horizon from far off: its picture baked the first frame there is one)
-        this.crownFar.bake(this.renderer);
+        if (!this.shaderDrawStatus.active) this.crownFar.bake(this.renderer);
         const at = g.party.spellAt;
         this.crownFar.update(this.camera, W.o, W.ex, W.ez, at === null ? 1e9 : at === undefined ? -1e9 : at, this.crown.indoors);
       }
@@ -1706,7 +1902,11 @@ export class View {
     drawPointers(this, time);
     this.time("hud");
     this.leashView.update(ht, this.camera, this.canvas.clientWidth || window.innerWidth, this.canvas.clientHeight || window.innerHeight, hatTop, this.witchBodyY, this.witchFeetY, this.witchFrameH);
+    (this.castTag ??= new CastTag()).update(this); // (the spell's key prompt by its 🎶, drawn just now: render/castTag.ts)
     this.time("leash");
+    this.magic.finish(t.lightBudget);
+    this.stats.lights = LIGHT_UNIFORMS.uLightCount.value;
+    if (FX_MOCK_MODE) (this.fxMock ??= new FxMock(this, FX_MOCK_MODE)).update(this, ht);
     workAhead(this);
     if (this.debugCull) drawGhosts(this, time);
     if (!draw) return;
@@ -1718,7 +1918,11 @@ export class View {
     // (the cast-shadow map is the forest's: none while only the house is drawn)
     if (this.post.behind > 0) this.castMap.render(this.renderer, this.scene, this.game.witch.x, this.game.witch.z, this.castOn);
     this.occluders();
+    this.magic.hideBackdrop(this.scene);
+    if (this.game.cauldron || this.cauldronLook) (this.cauldronLook ??= new CauldronView()).update(this);
     this.post.render(this.scene, this.camera);
+    this.cauldronLook?.finish(this);
+    this.magic.restoreBackdrop(this.scene);
     this.occlusion.veil(); // (the smoke over the 💌s, once the frame's smoke is drawn)
     this.time("draw");
     this.drawEst += (Math.min(8, this.ms.draw) - this.drawEst) * 0.1; // (eased; a stalled frame counts for at most 8 ms)

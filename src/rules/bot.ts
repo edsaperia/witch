@@ -22,17 +22,27 @@ import { cellKey } from "./party";
 import { hexSpot, stackBottom, toBottom } from "./leash";
 import { groundedBy } from "./leashWeight";
 import { hasRune, runeNear, stateOf } from "./creatureStates";
+import { castingStone, castOf, castOn, castReady, castSpot, looseNear, stoneOpen } from "./stoneStacks";
 import { creatureValue, sideValue } from "./power";
 import type { Controls, Game } from "./game";
 import type { Creature } from "./creatures";
 import type { Cell } from "./partition";
+import { newExpert, type ExpertParams } from "../bots/expert";
 
 import { BOT_KINDS, type BotKind } from "./botKinds";
 import { isHomeKey } from "./speakers";
 import { winTarget } from "./win";
+import { bagTuning, setBag } from "./bags";
+/** The careful bots' bag: the far one (the purse). */
+const FAR_BAG = "purse";
+/** The other bots': the starter, the satchel (the base rate and reach, a little more homing: Ed, 2026-10-29). */
+const STARTER_BAG = "satchel";
 export { BOT_KINDS, type BotKind };
 
 export interface BotOptions {
+  /** Expert-only search parameters; baseline policies ignore these. */
+  expert?: Partial<ExpertParams>;
+  expertSeed?: number;
   /** Parks up to this many at the next soundsystem (skilled)... */
   guards?: number;
   /** ...keeping this many on her stack. */
@@ -45,6 +55,9 @@ export interface BotOptions {
   relics?: boolean;
   /** Which sleeping legend gets each relic (Ed, 2026-10-06: "you get to choose where relic allies are"): nearest her (the naive one), home (nearest the dancefloor), front (in an area the next wave wakes), far (the most remote: the worst). */
   relicPolicy?: "nearest" | "home" | "front" | "far";
+  /** Her bag (rules/bags.ts; Ed, 2026-10-29, chosen at the start: nobody plays bagless): a bag item's id. Absent, the careful bots
+   *  carry the far bag (the purse: her 💌s reach further, slower; she keeps her distance) and the others the satchel (the starter). */
+  bag?: string;
   /** At most this many quests, then she plays on as usual (a quick player does a few). */
   questMax?: number;
   /** At most this many relics brought, then she plays on (each is a long trip). */
@@ -149,7 +162,7 @@ export const BOT_GAME: Record<BotKind, BotOptions> = {
     guards: 3, keep: 1, feed: true, siege: true, regroup: true, blink: true, calm: true, calmRestless: true,
     knobs: { defendLead: 0, defendHold: 45, kite: 9.8, dashAt: 5.8, fireFrac: 0.95, closeFrac: 0.91, recruitRange: 926, feedMin: 4, feedRange: 535, feedWait: 20, siegeNear: 120, siegeMin: 11.8, concede: 0.73, siegeStand: 10.5, siegeSide: 1, homeWeight: 2.9, strandFar: 84, lead: 0.47, blinkLead: 0.43 },
   },
-  crude: {}, novice: {}, idle: {}, hover: {},
+  crude: {}, novice: {}, idle: {}, hover: {}, expert: {},
 };
 
 /** The skilled bot's strategies (Ed, 2026-10-06: "good play [should] involve a good balance of inviting, evolving
@@ -183,6 +196,7 @@ type Target = { cell: Cell; key: string; x: number; z: number };
 type QJob = { L: Creature; want: Creature; phase: "fetch" | "deliver"; since: number };
 
 export function newBot(kind: BotKind, o: BotOptions = {}): Bot {
+  if (kind === "expert") return newExpert(o.expert, o.expertSeed);
   const GUARDS = o.guards ?? 3, KEEP = o.keep ?? 2, careful = kind === "skilled" || kind === "champion", K = { ...BOT_KNOBS, ...o.knobs };
   // (the careful bots answer sieges, pick up guards left stranded and blink out of blows now: bots-again, 2026-10-11, the
   // islands' minute-a-wave pace; their stand before each wave is gone. Given options keep their own say.)
@@ -198,12 +212,15 @@ export function newBot(kind: BotKind, o: BotOptions = {}): Bot {
   let carried: number[] = [], letGo = new Set<number>(), fetching = -1, fetchSince = 0;
   let holding = null as string | null; // (the soundsystem the champion's holding)
   const seen = new Map<number, { x: number; z: number; at: number }>(); // (where she last saw each target: the champion leads moving ones)
+  let bagPicked = false;
   const bot: Bot = { kind, doing: "", done: { quests: [], relics: [] }, decide };
   return bot;
 
   function decide(g: Game): Controls {
-    const map = g.map, w = g.witches[0], b = w.body, time = g.clock.time, t = g.tuning, R = t.invites.range, H = t.witchHealth.hits;
-    const homeKey = cellKey(map.centreCell);
+    const w0 = g.witches[0];
+    if (!bagPicked) { bagPicked = true; const pick = o.bag ?? (careful ? FAR_BAG : STARTER_BAG); setBag(w0.spells, pick); } // (her bag, picked once: the same every game)
+    const map = g.map, w = w0, b = w.body, time = g.clock.time, t = g.tuning, R = bagTuning(t, w.spells.bag).invites.range, H = t.witchHealth.hits;
+    const homeKey = cellKey(map.centreCell), stacks = castOn(t);
     if (w.ko) { if (carried.length) { for (const id of carried) letGo.add(id); carried = []; } } else carried = [...w.leash.stack];
     legendOf ??= new Map(g.creatures.filter(c => c.boss).map(c => [cellKey(c.cell), c.id]));
     const LO = legendOf;
@@ -230,11 +247,14 @@ export function newBot(kind: BotKind, o: BotOptions = {}): Bot {
       for (const c of g.creatures) if (!c.gone && !c.boss && !c.leashed && c.fleeUntil === undefined && cellKey(c.cell) === key && c.species === sp) kin++;
       for (const c of g.creatures) {
         if (c.gone || c.boss || c.leashed || c.fleeUntil !== undefined || c.enraged || cellKey(c.cell) !== key) continue;
+        if (stacks && stateOf(c) === "happy") continue; // (won over already: its sigil waits in the stone's stack till she casts there)
         if (keepKin && c.species === sp && kin <= K.kinKeep) continue;
         out.push(c);
       }
       return out;
     };
+    /** Whether an area's stone holds any friend sigils (won over, waiting for her spell). */
+    const friendsAt = (key: string): boolean => g.creatures.some(c => !c.gone && !c.leashed && !c.boss && c.atStone && cellKey(c.cell) === key);
     /** Where to recruit next: the nearest wild area with someone she may invite (the careful ones: the next waves' first). */
     const ahead = new Set([...(g.party.next ?? []), ...(g.party.afterNext ?? [])].map(c => cellKey(c)));
     const pickRecruit = () => {
@@ -245,7 +265,7 @@ export function newBot(kind: BotKind, o: BotOptions = {}): Bot {
         const L = LO.get(key); if (L !== undefined && g.creatures[L].legendState === "angry") continue; // (keep out of an angry legend's area)
         const s = map.siteOf(i, j), d = Math.hypot(s.x - b.x, s.z - b.z);
         if (d > K.recruitRange) continue;
-        const open = inviteable(key, cell); if (!open.length) continue;
+        const open = inviteable(key, cell); if (!open.length && !(stacks && stoneOpen(g, key) && castReady(g, key) && friendsAt(key))) continue; // (or one to cast at, its fighters all won over: rules/stoneStacks.ts)
         // (the careful ones: ahead of the wave first, where there are fighters to win over, and the area she's on stays hers
         // while it has any: no flying back and forth as the waves move the front)
         const fighters = careful ? open.filter(c => c.level > 0).length : 1;
@@ -344,7 +364,7 @@ export function newBot(kind: BotKind, o: BotOptions = {}): Bot {
     }
     let calm = null as ReturnType<typeof calmJob>, cycle = false, straggler = null as Creature | null, back = null as Creature | null;
     let front = null as ReturnType<typeof siegeFront>, stray = null as ReturnType<typeof strandedGuard>;
-    let mx = 0, mz = 0, toggle = false, fire = false, aimX = 0, aimZ = 0, dash = false, sigil = false, place = false;
+    let mx = 0, mz = 0, toggle = false, fire = false, aimX = 0, aimZ = 0, dash = false, sigil = false, place = false, held = false, looseAt = -1;
     // Putting one down: the button picks up a sigil of hers she's standing on before it puts one down (rules/leash.ts), so a
     // bot pressing it every step put one down and picked it straight back up (Balance 2, 2026-10-07: 3,760 a run); she steps
     // off her own first, clear of leash.spacing.
@@ -568,6 +588,11 @@ export function newBot(kind: BotKind, o: BotOptions = {}): Bot {
           if (pk) pickUp(pk); else { feeding = null; feedAgain = time + 20; }
         }
         if (feeding && time - (feeding.until === Infinity ? time : feeding.until) > 40) { feeding.phase = "collect"; } // (never stuck waiting)
+      } else if (stacks && b.mode === "ground" && !b.seated && (looseAt = looseNear(g.loose.filter(p => !p.legend), b.x, b.z, 25)) >= 0) {
+        // A stone she's converted (rules/stoneStacks.ts): its friends' sigils lie scattered round it; she picks them up (E on each).
+        const p = g.loose.filter(q => !q.legend)[looseAt], rd = Math.hypot(p.x - b.x, p.z - b.z);
+        bot.doing = `gathering ${article(g.creatures[p.id].species)}'s sigil`;
+        if (rd > t.leash.pickRadius * 0.6) { mx = (p.x - b.x) / rd; mz = (p.z - b.z) / rd; } else if (step % 10 === 0) place = true;
       } else if (b.mode === "ground" && !b.seated && runeNear(g.creatures, b.x, b.z, 25, time, undefined, k => runeOffset(k, t))) {
         // One won over (happy): its sigil lies as a rune south of it; pick it up to leash it (E; Ed, 2026-10-06).
         const rn = runeNear(g.creatures, b.x, b.z, 25, time, undefined, k => runeOffset(k, t))!, rx = rn.x, rz = rn.z + runeOffset(rn, t), rd = Math.hypot(rx - b.x, rz - b.z); // (its rune lies south of it)
@@ -578,7 +603,14 @@ export function newBot(kind: BotKind, o: BotOptions = {}): Bot {
         bot.doing = target ? (there(target.x, target.z) ? `inviting the ${plural(species(target.cell))}` : `flying to the ${plural(species(target.cell))}`) : "looking for someone to invite";
         if (target && goTo(target.x, target.z, true)) {
           const open = inviteable(target.key, target.cell).filter(c => Math.hypot(c.x - b.x, c.z - b.z) < 140);
-          if (!open.length) { target = null; pickAt = time; }
+          if (stacks && stoneOpen(g, target.key) && castReady(g, target.key)) {
+            // Every fighter of its area won over (babies come with the stone; castReady): to its stone's spot, and the soundsystem
+            // spell (the sigil button held: rules/stoneStacks.ts); a hit breaks it, so she lets go a moment and holds again.
+            const s = castSpot(map.soundsystemSpot(target.cell[0], target.cell[1]), t), sd = Math.hypot(s.x - b.x, s.z - b.z); // (its spell spot, south of it)
+            bot.doing = `casting at the ${plural(species(target.cell))}' stone`;
+            if (castingStone(g, w)?.key === target.key) held = !w.castBlocked;
+            if (sd > castOf(t).radius * 0.5) { mx = (s.x - b.x) / sd; mz = (s.z - b.z) / sd; } else { mx = 0; mz = 0; } // (on the spot she stands still to cast)
+          } else if (!open.length) { target = null; pickAt = time; }
           else {
             let tg = open[0], td = Infinity, ts = Infinity;
             // (the careful ones: the young and adults first, the nearest of them: babies don't fight, nor besiege)
@@ -608,6 +640,6 @@ export function newBot(kind: BotKind, o: BotOptions = {}): Bot {
     const deck = deckOf(g.map, t);
     if (deck && !b.seated && b.perch && b.mode === "ground") toggle = true;
     else if (deck && toggle && b.mode === "treetop" && landsOn(deck, b.x, b.z)) toggle = false;
-    return { moveX: mx, moveZ: mz, toggleMode: toggle, zoom: 0, fire, aimX, aimZ, dash, sigil, place, ...(cycle ? { cycle } : {}), castParty: g.party.spellAt === null };
+    return { moveX: mx, moveZ: mz, toggleMode: toggle, zoom: 0, fire, aimX, aimZ, dash, sigil, place, ...(held ? { sigilHeld: true } : {}), ...(cycle ? { cycle } : {}), castParty: g.party.spellAt === null };
   }
 }

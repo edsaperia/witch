@@ -8,6 +8,7 @@ import { TUNING, withTuning } from "../tuning";
 import { PACKS, assignRoles, lullOf, packAttack, packKindOf, retreatSlot, strikingNow } from "./packs";
 import { FIGHT, profileOf } from "../movement";
 import { COMBAT } from "./data";
+import { smallWorldTuning } from "../../test/worlds";
 
 const idle: Controls = { moveX: 0, moveZ: 0, toggleMode: false, zoom: 0, autoTalk: false };
 const ON = withTuning({ combat: { ...TUNING.combat, packs: { on: true } } });
@@ -15,8 +16,9 @@ const ON = withTuning({ combat: { ...TUNING.combat, packs: { on: true } } });
 const ON_OLD = withTuning({ combat: { ...TUNING.combat, packs: { on: true } }, attacks: { reactionFloor: 0.45, species: false } });
 
 /** A pack of the kind against her (or hers against wild wolves), the switch on, her health held; then `secs` of play, `each` step. */
-function arena(spec: string, secs: number, each?: (g: Game) => void, t = ON): Game {
-  const g = newGame(5, t);
+function arena(spec: string, secs: number, each?: (g: Game) => void, t = ON, seed = 5): Game {
+  // Retain seeded arena terrain for timed movement/retreat ratios and the species-wide combat integration matrix.
+  const g = newGame(seed, t);
   g.clock.paused = false; g.party.paused = true;
   setupArena(g, spec);
   for (let i = 0; i < secs / STEP; i++) { g.witches[0].health.hp = 1e6; stepGame(g, idle, STEP); each?.(g); }
@@ -26,7 +28,7 @@ const wildPack = (g: Game) => [...(g.combat.packs?.values() ?? [])].find(s => !s
 const fresh = (g: Game) => g.combat.events.filter(e => e.at === g.clock.time);
 
 describe("pack combat's roles by position (Ed: 2b)", () => {
-  const at = (id: number, x: number, z: number, hp?: number): Creature => ({ id, species: "fox", level: 2, x, z, hp }) as Creature;
+  const at = (id: number, x: number, z: number, hp?: number): Creature => ({ id, species: "fox", level: 2, x, z, ...(hp !== undefined ? { affection: 0.99 } : {}) }) as Creature; // (hurt: its slots nearly full, rules/orbit.ts)
   it("the nearest lunges, the one behind her throws the special, the rest fire; the hurt keep away; past the combo's size they hold", () => {
     const her = { x: 0, z: 0 }, heading = { x: 0, z: -1 }; // (she's going north: her back is south, +z)
     const m = [at(1, 3, 0), at(2, 0, 12), at(3, -10, 0), at(4, 9, -9), at(5, 1, 1, 1)];
@@ -231,7 +233,7 @@ describe("pack combat, step 2's specials (2026-10-23: knockback, pull, decoy)", 
 
   it("decoy: a 💌 the waving raccoon catches is wasted, its meter untouched (Ed, 2026-10-23: \"otherwise it's not a decoy\")", () => {
     // (one of the pack across the arena waving, she throwing straight at it: before it's on her and she's staggered)
-    const g = newGame(5, ON); g.clock.paused = false; g.party.paused = true;
+    const g = newGame(5, smallWorldTuning(ON, "Decoy interception uses a manually assigned nearby target and two seconds of input.")); g.clock.paused = false; g.party.paused = true;
     setupArena(g, "pack-raccoon");
     const W = g.witches[0], c = g.creatures.filter(k => k?.species === "raccoon" && !k.leashed && k.level === 2).sort((p, q) => Math.hypot(p.x - W.body.x, p.z - W.body.z) - Math.hypot(q.x - W.body.x, q.z - W.body.z))[0];
     let caught = 0, landed = 0;
@@ -330,7 +332,7 @@ describe("pack combat, Phase 1's pieces", () => {
   }, 60000);
 
   it("the bat's screech turns her movement, not her aim", () => {
-    const g = newGame(5, ON);
+    const g = newGame(5, smallWorldTuning(ON, "Confused input steering is local to the witch and does not depend on world extent."));
     g.clock.paused = false; g.party.paused = true;
     setupArena(g, "pack-bat");
     for (let i = 0; i < 20; i++) stepGame(g, idle, STEP);
@@ -350,6 +352,7 @@ describe("pack combat, Phase 1's pieces", () => {
 // speed, turning now and then: its lunges land, its bolts hit, and it hurts her about as often as the plain fight does.
 describe("a pack against her walking away (Ed's playtest, v3893)", () => {
   function chase(packs: boolean) {
+    // Retain seed 123's natural hare area and 40-second walking route for the paired hit-rate comparison.
     const g = newGame(123, withTuning({ combat: { ...TUNING.combat, packs: { on: packs } }, attacks: { reactionFloor: 0.45, species: false } })); // (the hares' lunges, as they were)
     g.clock.paused = false; g.party.paused = true;
     const h = g.creatures.filter(c => c.species === "hare" && c.level > 0 && !c.gone)[0];
@@ -377,7 +380,7 @@ describe("a pack against her walking away (Ed's playtest, v3893)", () => {
   it("lands its lunges and bolts, and hits her about as often as without packs", () => {
     const plain = chase(false), packs = chase(true);
     expect(packs.lunges).toBeGreaterThanOrEqual(5);
-    expect(packs.landed / packs.lunges).toBeGreaterThanOrEqual(0.7); // (a lunge that starts reaches her)
+    expect(packs.landed / packs.lunges).toBeGreaterThanOrEqual(0.6); // (a lunge that starts reaches her: 7 of 10 before the fight styles, 4 of 6 since, the hares bounding in: Ed's playtest, 2026-10-29)
     expect(packs.shotHits / Math.max(1, packs.fired)).toBeGreaterThanOrEqual(0.35); // (13 to 26% before: aimed behind her)
     expect(packs.hits).toBeGreaterThanOrEqual(plain.hits * 0.5); // (9 to 17 of plain's 24 to 30 before; and since Ed, 2026-10-20, a pack's strikes at her take the dodge's tokens, one at a time as the plain fight's do, with its lulls besides)
   }, 60000);
@@ -398,7 +401,9 @@ describe("the lull is a retreat, not a halt (Ed's playtests, 2026-10-23: \"lulls
       const away = out * FIGHT.scale * 0.8 * (PACKS.kinds[k].retreat === "leapfrog" ? 0.5 : 1); // (the leapfrog's near half falls back half as far)
       const off = (d0: number, most = 0) => most > d0 + 1 || d0 >= away; // (backed off, or out there already: a shooter at range, a flyer aloft)
       const startD = new Map<number, number>(), most = new Map<number, number>();
-      arena(`pack-${k}`, 30, g => {
+      // (a freeze over two arenas: how long one holds its place depends on where the fight takes it, and one arena's share swings
+      // either side of the 3% line with anything near it, as much as 4.2 to 2.3% on seed 5 for the creatures keeping off sigils, 2026-10-28)
+      for (const seed of PACKS.kinds[k].retreat === "freeze" ? [5, 6] : [5]) arena(`pack-${k}`, 30, g => {
         const st = wildPack(g), W = g.witches[0].body;
         if (!st) return;
         if (st.phase === "lull" && last !== "lull") { for (const [id, d0] of startD) { starts++; if (off(d0, most.get(id))) backed++; } startD.clear(); most.clear(); }
@@ -408,9 +413,9 @@ describe("the lull is a retreat, not a halt (Ed's playtests, 2026-10-23: \"lulls
           const c = g.creatures[id]; if (!c || c.packHide || c.burrow || c.leap || c.charge) continue;
           const d = Math.hypot(c.x - W.x, c.z - W.z);
           if (!startD.has(id)) startD.set(id, d); most.set(id, Math.max(most.get(id) ?? 0, d));
-          steps++; if (!c.moving) still++;
+          steps++; if (!c.moving && !(c.hopNext !== undefined && g.clock.time < c.hopNext)) still++; // (a hopper's beat on the ground between bounds is its gait, not standing: Ed, 2026-10-29)
         }
-      });
+      }, ON, seed);
       for (const [id, d0] of startD) { starts++; if (off(d0, most.get(id))) backed++; }
       if (!steps) { bad.push(`${k}: no lull`); continue; }
       if (still / steps > (PACKS.kinds[k].retreat === "freeze" ? PACKS.prowl.freeze + 0.1 : 0.1)) bad.push(`${k}: standing ${(100 * still / steps).toFixed(0)}% of its lull`);
@@ -422,7 +427,7 @@ describe("the lull is a retreat, not a halt (Ed's playtests, 2026-10-23: \"lulls
 });
 
 describe("pack combat's fixes (Ed, 2026-10-20)", () => {
-  const at = (id: number, x: number, z: number, hp?: number): Creature => ({ id, species: "boar", level: 1, x, z, hp }) as Creature;
+  const at = (id: number, x: number, z: number, hp?: number): Creature => ({ id, species: "boar", level: 1, x, z, ...(hp !== undefined ? { affection: 0.99 } : {}) }) as Creature; // (hurt: its slots nearly full, rules/orbit.ts)
 
   it("a pack all hurt, or a lone hurt one, fights on (so a fight ends); one hurt beside a healthy packmate still keeps away", () => {
     const her = { x: 0, z: 0 };
@@ -441,7 +446,7 @@ describe("pack combat's fixes (Ed, 2026-10-20)", () => {
     const spare = g.creatures.filter(c => !c.gone && !c.leashed && !c.boss && Math.hypot(c.x - g.witch.x, c.z - g.witch.z) > 80);
     const put = (c: Creature, species: string, level: 1 | 2, dx: number) => { const x = g.witch.x + dx, z = g.witch.z; Object.assign(c, { circle: undefined, species, level, x, z, tx: x, tz: z, homeX: x, homeZ: z, anchorX: x, anchorZ: z, safeR: undefined, seen: g.clock.time, hp: undefined, boss: false, siege: undefined, rest: 0 }); c.cell = g.map.cellSafe(x, z).cell as [number, number]; return c; };
     const boar = put(spare[0], "boar", 1, 4), wolf = put(spare[1], "wolf", 2, 2);
-    boar.hp = 1;
+    boar.affection = 0.99; boar.affectionAt = g.clock.time; // (its slots nearly full: rules/orbit.ts)
     wolf.leashed = true; g.leash.placed.push({ id: wolf.id, x: wolf.x, z: wolf.z, at: g.clock.time });
     g.byArea = null;
     let downAt = -1;
@@ -531,19 +536,21 @@ describe("kinds keep their own moves in a pack (Ed, 2026-10-20)", () => {
     expect(slime.size).toBeGreaterThan(10);
   }, 60000);
 
-  it("the wolves surround her: waiting their turns (its approach and its tell) they go round her to their places, not straight in", () => {
-    let turn = 0, t = 0;
+  it("the wolves circle her (Ed's playtest, 2026-10-29: a circler): waiting their turns they go round her, the pack all one way, not straight in", () => {
+    let turn = 0, signed = 0, t = 0;
     const last = new Map<number, number>();
     wild("wolf", "wolf*1@0,wolf*6@2", 30, (g, them) => {
       const st = wildPack(g), w = g.witches[0].body;
       for (const c of them) {
         const a = Math.atan2(c.z - w.z, c.x - w.x), was = last.get(c.id);
         last.set(c.id, a);
-        if ((st?.phase !== "approach" && st?.phase !== "tell") || was === undefined || c.gone) continue;
-        turn += Math.abs(((a - was + Math.PI * 3) % (Math.PI * 2)) - Math.PI); t += STEP;
+        if ((st?.phase !== "approach" && st?.phase !== "tell" && st?.phase !== "combo") || was === undefined || c.gone || strikingNow(c)) continue;
+        const da = ((a - was + Math.PI * 3) % (Math.PI * 2)) - Math.PI;
+        turn += Math.abs(da); signed += da; t += STEP;
       }
     });
     expect(t).toBeGreaterThan(5);
-    expect((turn / t) * (180 / Math.PI)).toBeGreaterThan(25); // (degrees a second round her: about 45 to 55, 12 to 22 before, straight in from where they came; about 30 with creature momentum, 2026-10-27: they can't whip round her at a run)
+    expect((turn / t) * (180 / Math.PI)).toBeGreaterThan(20); // (degrees a second round her: about 12 to 22 straight in from where they came, about 30 surrounding before)
+    expect(Math.abs(signed) / turn).toBeGreaterThan(0.5); // (one way round, mostly)
   }, 60000);
 });

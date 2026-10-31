@@ -8,6 +8,7 @@ import { TUNING } from "../rules/tuning";
 import { floorClearing } from "../rules/speakers";
 import { HeightField, hillsAt, N, RES, SLOPE_SCALE } from "./height";
 
+// Keep these spatial regression worlds: height windows move 1200 m and path-slope checks require many seeded path samples.
 const map = generateMap(123, TUNING), forest = new Forest(map);
 // (the 40 m hills' checks on a map of their own: the slope limit still lets a few spots past the sightline on some maps' paths,
 // seeds 1, 2, 3, 5, 7, 9, 11 and 12 among them, before and after the land map changed 123's: a known gap, its own task)
@@ -28,6 +29,19 @@ function shaderRead(x: number, z: number): number {
 }
 
 describe("rolling ground", () => {
+  it("relocates the arrival window in slices with exactly the synchronous samples", () => {
+    const a = new HeightField(map, forest, { ...H, maxSlope: PITCH }), b = new HeightField(map, forest, { ...H, maxSlope: PITCH });
+    for (const [x, z] of [[df.x, df.z], [df.x + 1200, df.z + 900], [df.x + 1168, df.z + 868], [df.x, df.z]]) {
+      a.follow(x, z);
+      const before = (b.texture.image.data as Uint16Array).slice();
+      let steps = 0;
+      for (const _ of b.fillSteps(x, z)) { steps++; if (steps === 300 && z !== df.z) expect(b.texture.image.data).toEqual(before); }
+      expect(steps).toBeGreaterThan(1);
+      expect(b.texture.image.data).toEqual(a.texture.image.data);
+      expect(b.follow(x, z)).toBe(false);
+    }
+    a.dispose(); b.dispose();
+  });
   it("the hills' noise stays within its amplitude and is seeded", () => {
     for (let i = 0; i < 500; i++) { const v = hillsAt(i * 7.3, i * 3.1, 9, H); expect(Math.abs(v)).toBeLessThanOrEqual(H.amplitude + 1e-9); }
     expect(hillsAt(12, 34, 9, H)).toBe(hillsAt(12, 34, 9, H));

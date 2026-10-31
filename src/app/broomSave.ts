@@ -8,26 +8,37 @@
 // nothing of it is owned). Once, then witch.broom says it's done.
 import { PART_IDS, SLOTS, bareBroom, partById, type Fitted } from "../rules/broomParts";
 import { LOADOUT_KEY } from "./loadout";
+import { unlockAll } from "./debugUnlock";
+import { defaultBroom, newWitch } from "./defaultLook";
+import { fallbackStorage } from "./storageFallback";
 
 export const BROOM_KEY = "witch.broom";
 const GENOME_KEY = "witch.genome";
 export interface BroomSave { v: 1; found: string[]; fitted: Fitted }
 type Store = Pick<Storage, "getItem" | "setItem">;
-const storeOf = (s?: Store | null): Store | null => { try { return s ?? globalThis.localStorage ?? null; } catch { return null; } };
+const storeOf = fallbackStorage;
 
 /** Her broom as saved: the parts found (known ones only) and those fitted (a found part, in its own slot). */
 export function loadBroom(storage?: Store | null): BroomSave {
   const out: BroomSave = { v: 1, found: [], fitted: bareBroom() };
+  if (newWitch()) return firstBroom(); // (?newWitch=1: app/defaultLook.ts)
   try {
     const o = JSON.parse(storeOf(storage)?.getItem(BROOM_KEY) ?? "null") as Partial<BroomSave> | null;
-    if (!o) return out;
+    if (!o) return firstBroom();
     out.found = PART_IDS.filter(id => Array.isArray(o.found) && o.found.includes(id));
-    for (const s of SLOTS) { const id = o.fitted?.[s]; if (id && out.found.includes(id) && partById(id)?.slot === s) out.fitted[s] = id; }
+    for (const s of SLOTS) { const id = o.fitted?.[s]; if (id && (out.found.includes(id) || unlockAll()) && partById(id)?.slot === s) out.fitted[s] = id; } // (one she hasn't found, fitted under the pause page's Unlock everything, stays while it's on: app/debugUnlock.ts)
   } catch { /* spoilt: a bare broom */ }
   return out;
 }
 
+/** A first game's broom: the game's default parts (config/default-look.json; a bare broom by default), fitted and found. */
+export function firstBroom(): BroomSave {
+  const fitted = defaultBroom();
+  return { v: 1, found: SLOTS.map(s => fitted[s]).filter((id): id is string => !!id), fitted };
+}
+
 export function saveBroom(b: BroomSave, storage?: Store | null): void {
+  if (newWitch()) return;
   try { storeOf(storage)?.setItem(BROOM_KEY, JSON.stringify({ v: 1, found: [...new Set(b.found)].sort(), fitted: b.fitted })); } catch { /* storage blocked: this run only */ }
 }
 
@@ -43,7 +54,7 @@ export function partFound(id: string, storage?: Store | null): BroomSave {
  *  ?parts= can fit for a load, isn't kept). */
 export function fitBroom(fitted: Fitted, storage?: Store | null): BroomSave {
   const b = loadBroom(storage);
-  for (const s of SLOTS) { const id = fitted[s]; b.fitted[s] = id && b.found.includes(id) && partById(id)?.slot === s ? id : null; }
+  for (const s of SLOTS) { const id = fitted[s]; b.fitted[s] = id && (b.found.includes(id) || unlockAll()) && partById(id)?.slot === s ? id : null; }
   saveBroom(b, storage);
   return loadBroom(storage);
 }
@@ -59,7 +70,7 @@ export function migrateBroom(storage?: Store | null): boolean {
     if (g?.broom && g.broom.kind && g.broom.kind !== "classic") { g.broom.kind = "classic"; st.setItem(GENOME_KEY, JSON.stringify(g)); changed = true; }
     const l = JSON.parse(st.getItem(LOADOUT_KEY) ?? "null") as { hat?: string; broom?: string } | null;
     if (l && "broom" in l) { const { broom, ...rest } = l; st.setItem(LOADOUT_KEY, JSON.stringify(rest)); changed ||= !!broom && broom !== "none"; }
-    saveBroom({ v: 1, found: [], fitted: bareBroom() }, st);
+    saveBroom(firstBroom(), st);
     return changed;
   } catch { return false; }
 }

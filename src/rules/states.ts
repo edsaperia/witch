@@ -22,7 +22,6 @@ import { bootSeconds } from "./bootRing";
 import { stretchSeconds } from "./pulseRoute";
 import { hash2 } from "./random";
 import { homeHealth, homeReach } from "./speakers";
-import { crowdTime, INVITE_FIRE, movement, throughput, type Buff, type Limits } from "./throughput";
 
 /** How she splits her invites (issue #87): every one a defender; every third leashed; every one
  *  leashed; the babies leashed (they grow) and the young and adults left as defenders; or (relay,
@@ -47,8 +46,8 @@ export interface StatesOptions {
   /** Seconds for the second step, happy to leashed (a guess: 2). */
   leashTime?: number;
   /** Relics on the map (3 or 4 by the seed, Ed 2026-10-05), one found every relicEvery waves (4),
-   *  each placed by the legend of the next area the wave wakes (relicTime s, 5). Quests only give a
-   *  buff now (the legend sleeps on), which the model leaves out. */
+   *  each placed by the legend of the next area the wave wakes (relicTime s, 5). Quests give nothing
+   *  now (the legend sleeps on), so the model leaves them out. */
   relics?: number;
   relicEvery?: number;
   relicTime?: number;
@@ -69,7 +68,7 @@ export interface StatesOptions {
   /** A new soundsystem's health (the tuning's combat.soundsystemHealth). */
   soundHealth?: number;
   /** A happy legend's health, times its level's (1). Enraged animals in reach wear it down; beaten,
-   *  it goes back to sleep (Ed, 2026-10-05; she keeps its buff). */
+   *  it goes back to sleep (Ed, 2026-10-05). */
   legendDefence?: number;
   /** A legend's shot (happy or angry, Ed 2026-10-05: slow, far-reaching, less damage): legendShot
    *  damage to up to legendAoe targets every legendEvery seconds (10 every 15 s: tuned so relics help, REPORT 2026-10-05). */
@@ -86,10 +85,6 @@ export interface StatesOptions {
   /** She defends (takes her army to a siege) when it is worth at most this share of her army's F (0.9). */
   margin?: number;
   dt?: number;
-  /** 💌 invites (Ed, 2026-10-05, PR #89) in place of the talk times: she fills a crowd of up to
-   *  `crowd` (4) wild ones at once, at her build's throughput (rules/throughput.ts: her legend
-   *  buffs, the per-animal hit gap and any limits); skill scales how many letters land. */
-  letters?: { buffs: Buff[]; limits?: Limits; crowd?: number };
   /** Record the run every this many seconds (for the point of no return; off). */
   trace?: number;
   /** Once the soundsystems standing fall to this share of their peak, the enraged march and hit
@@ -231,6 +226,7 @@ export function simulateStates(map: ForestMap, o: StatesOptions): StatesResult {
   };
   const grow = (key: string, cell: Cell, wave: number) => {
     const G = t.population.growth, species = AREA_TYPES[map.typeOf(cell[0], cell[1])].creature, site = map.siteOf(cell[0], cell[1]);
+    if (!G.on) return; // (off, as the game: no growth in a night, Ed 2026-10-07 and 2026-10-28)
     for (let n = 0; n < grownAt(wave, G.perWave, countScale(species)); n++) {
       const level = growthLevel(map.seed, cell, wave, n, G.weights), a = hash2(wave * 31 + n, cell[0] * 97 + cell[1], map.seed + 404) * Math.PI * 2, r = size * 0.35 * Math.sqrt(hash2(wave * 17 + n, cell[1] * 89 + cell[0], map.seed + 405));
       add(make(nextId++, species, key, site.x + Math.cos(a) * r, site.z + Math.sin(a) * r, level));
@@ -255,13 +251,9 @@ export function simulateStates(map: ForestMap, o: StatesOptions): StatesResult {
     for (const u of wild(key)) if (!best || u.level > best.level) best = u;
     return best;
   };
-  // Who she invites at once: one at a time by talking; with 💌s, a crowd of up to `crowd`, biggest first.
-  const LT = o.letters, TP = LT ? throughput(LT.buffs, undefined, LT.limits ?? {}) : null, MV = LT ? movement(LT.buffs) : { treetop: 1, land: 1, approach: 1 };
-  const group = (key: string): Unit[] => {
-    if (!LT) { const u = pick(key); return u ? [u] : []; }
-    return wild(key).sort((a, b) => b.level - a.level).slice(0, LT.crowd ?? 4);
-  };
-  const inviteTime = (us: Unit[]) => (TP ? crowdTime(us.map(u => INVITE_FIRE.hits[u.level]), TP, o.skill) : talk[us[0].level] / o.skill);
+  // Who she invites at once: one at a time, by talking.
+  const group = (key: string): Unit[] => { const u = pick(key); return u ? [u] : []; };
+  const inviteTime = (us: Unit[]) => talk[us[0].level] / o.skill;
   const leashQueue: Unit[] = [];
   const dazedNear = (x: number, z: number) => units.find(u => u.state === "dazed" && Math.hypot(u.x - x, u.z - z) < GR * 1.5) ?? null;
   const leashIt = (u: Unit) => {
@@ -271,7 +263,7 @@ export function simulateStates(map: ForestMap, o: StatesOptions): StatesResult {
     if (o.policy === "relay" || o.policy === "mass") return !party.next.some(c => cellKey(c) === u.cell);
     return false;
   };
-  const fly = (to: string, x: number, z: number, time: number): Task => ({ kind: "fly", to, x, z, until: time + Math.hypot(x - witch.x, z - witch.z) / (witchSpeed * MV.treetop) + land * MV.land + cross * MV.approach });
+  const fly = (to: string, x: number, z: number, time: number): Task => ({ kind: "fly", to, x, z, until: time + Math.hypot(x - witch.x, z - witch.z) / witchSpeed + land + cross });
   // Angry legends' reach: their blasts at her and her posse.
   const inReach = (x: number, z: number) => legends.some(L => L.mood === "angry" && L.state === "wild" && Math.abs(L.x - x) < LR && Math.abs(L.z - z) < LR && Math.hypot(L.x - x, L.z - z) < LR);
   const siteOfKey = (k: string) => { const [cx, cy] = k.split(",").map(Number); return map.siteOf(cx, cy); };
@@ -421,7 +413,7 @@ export function simulateStates(map: ForestMap, o: StatesOptions): StatesResult {
             if (relicsHeld > 0 && party.next.some(c => cellKey(c) === area) && legends.some(u => u.cell === area && u.state === "wild")) task = { kind: "relic", key: area, until: time + relicTime };
             if (!task) {
               const us = group(area), slow = inReach(witch.x, witch.z) ? hazard : 1;
-              if (us.length) { const dur = (inviteTime(us) + approach * MV.approach) * slow; task = { kind: "talk", us, until: time + dur }; if (slow > 1) legendStats.hazardTime += dur; }
+              if (us.length) { const dur = (inviteTime(us) + approach) * slow; task = { kind: "talk", us, until: time + dur }; if (slow > 1) legendStats.hazardTime += dur; }
             }
           }
         }
@@ -455,7 +447,7 @@ export function simulateStates(map: ForestMap, o: StatesOptions): StatesResult {
         if (!foes.length) { H.hp = Math.min(fullHp(LEGEND, 1) * LD, H.hp + ((fullHp(LEGEND, 1) * LD) / 120) * dt); continue; } // (healing over 2 minutes with none near)
         for (const f of foes) held.add(f);
         H.hp -= foes.reduce((a, u) => a + u.dps, 0) * dt;
-        if (H.hp <= 0) { H.state = "wild"; H.mood = "asleep"; H.hp = fullHp(LEGEND, 1); legendStats.beaten++; } // back to sleep (her buff stays)
+        if (H.hp <= 0) { H.state = "wild"; H.mood = "asleep"; H.hp = fullHp(LEGEND, 1); legendStats.beaten++; } // back to sleep
       }
       const L = leashed();
       if (L.length && task?.kind !== "defend") zones.push({ x: army.x, z: army.z, side: L }); // (not while walking to a siege)

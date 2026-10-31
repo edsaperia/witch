@@ -5,19 +5,19 @@ import { describe, expect, it } from "vitest";
 import { TUNING } from "./tuning";
 import { affectionOf, hitWitch, newGame, stepGame, STEP, type Game } from "./game";
 import { endParty, partyOverEase } from "./partyOver";
-import { cellKey } from "./party";
 import { targetable } from "./combat";
 import type { Creature } from "./creatures";
 
 const C = { moveX: 0, moveZ: 0, toggleMode: false, zoom: 0 };
 const run = (g: Game, s: number, c: Partial<typeof C> = {}) => { for (let i = 0; i < s / STEP; i++) stepGame(g, { ...C, ...c }, STEP); };
 function game(): Game {
+  // Keep this spatial regression world: the sleep transition checks more than ten creatures beyond haze.far + 200 m.
   const g = newGame(123, TUNING);
   g.clock.paused = false; g.party.spellAt = undefined;
   g.witch = { ...g.witch, seated: false, perch: false };
   return g;
 }
-const inOwnArea = (g: Game, c: Creature) => cellKey(g.map.cellSafe(c.x, c.z).cell) === cellKey(c.cell);
+const inOwnArea = (g: Game, c: Creature) => g.map.sameArea(g.map.cellSafe(c.x, c.z).cell, c.cell);
 
 describe("the party's over", () => {
   it("starts when the dancefloor's ring of speakers is down, and not before", () => {

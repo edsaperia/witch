@@ -31,6 +31,8 @@
 //   node art/preview.mjs partywitches poses|outfits|pairs|lean art/previews/party-witches.png [scale]   (her party poses, a row per facing; the party outfits; pairs put together at their anchors; her lean cycle. ANCHORS=1, POSES=...)
 //   node art/preview.mjs treeheights fern-forest,garden art/previews/tree-heights.png [scale]
 //   node art/preview.mjs lights all art/previews/light-sources.png [scale]
+//   node art/preview.mjs stumps all|<species> art/previews/stumps.png [scale]   (the great stumps, art/props/stumps.js: each species a row of PER (default 4) seeds, each from its own angle, the witch for scale; NIGHT=1 lit only by its sigils above it, enemy reds and friend blues)
+//   node art/preview.mjs stumpareas all|<areas> art/previews/stump-areas.png [scale]   (each area type's great stump on its own ground: its main tree's form and bark, its ground's moss and earth; BIOME=<key> as an island in that biome; PER=n to a row)
 //   node art/preview.mjs runestones all|<species> art/previews/runestones.png [scale]   (each species' rune stone with its sigil in its neon; NIGHT=1; PER=n to a row)
 //   node art/preview.mjs runestoneforms <species> <png> [scale]   (today's stone, its 20 seeded forms, and four of them beside their mirror images)
 //   node art/preview.mjs party wolf,fox,owl art/previews/party.png [scale]
@@ -42,6 +44,8 @@
 //   node art/preview.mjs wind <species> art/previews/wind.png [scale]   (each species' mature tree in the pixel wind: 6 moments of a strong gust, each region (a blob) moving whole, by whole pixels; then the same with the smooth sway; CHANGES=1 colours each pixel by how far it moved)
 //   node art/preview.mjs props all|standingStone,cairn,pool,brokenTrunk art/previews/props.png [scale]   (the prop generator: a row of seeded variants per kind, the witch for scale; PER=n, AREA=<id> its grass, BOG=1 bog pools)
 //   node art/preview.mjs areaprops moor,muddy-forest art/previews/area-props.png [scale]   (each area's props as hand-made, then from the prop generator (?props=gen), a row each, the witch for scale)
+//   node art/preview.mjs witch band art/previews/band.png [scale]   (her hats' band and plume in three colours; the cloaks' lengths each side of the knee)
+//   node art/preview.mjs witch nightie art/previews/nightie.png [scale]   (her nightie: standing, walking, talking and sat, facing us and away)
 //   node art/preview.mjs witchgen 15|<seeds> art/previews/witches.png [scale]   (ours, then generated witches from their genomes: each hovering, leaning and standing; PER to a row)
 //   node art/preview.mjs sway <areas> art/previews/sway.png [scale]   (each area's trees and leafy props beside their sway masks: black is rigid, white sways most)
 //   node art/preview.mjs disco all|<ids> art/previews/dancefloor-patterns.png [scale]   (every dancefloor pattern's key frame from above, named, grouped by kind; PER=n to a row)
@@ -238,6 +242,21 @@ const url = await b.page.evaluate(async ({ gen, lighting, what, list, scale }) =
     const bg = big.getContext("2d"); bg.imageSmoothingEnabled = false; bg.drawImage(c, 0, 0, W * scale, H * scale);
     return big.toDataURL("image/png");
   }
+  if (what === "stumps") { // the great stumps (art/props/stumps.js): a row per species, PER seeds each from its own angle, the witch for scale; at NIGHT lit only by a stack of sigils over each (Ed, 2026-10-29: "they will be lit by the sigils that float above them")
+    const ids = list === "all" ? Object.keys(G.STUMP_GENOMES) : list.split(","), per = window.PER || 4, wsp = G.witchSprite(st, { pose: "stand", frame: 0 }), wit = G.bake(wsp, G.witchColours(st), st, st.cOutline), def = G.AREA_BY_ID[window.AREA || "old-oaks"] ?? null;
+    const STACK = [[255, 140, 30], [255, 40, 40], [110, 190, 255], [190, 150, 255]], gap = 8, rows2 = [];
+    for (const id of ids) rows2.push([...Array(per).keys()].map(seed => { const p = G.stumpPiece(id, { seed }, def, st); return { b: G.bake(p.sp, p.colours, st, "none"), top: p.top }; }));
+    const w = Math.max(...rows2.map(r => r.reduce((a, c) => a + c.b.w + gap, gap))) + wit.w + gap, rh = rows2.map(r => Math.max(...r.map(c => c.b.h)) + gap), h = rh.reduce((a, v) => a + v, gap);
+    const mk = () => { const c = document.createElement("canvas"); c.width = w; c.height = h; return c; };
+    const A = mk(), N = mk(), a = A.getContext("2d"), n = N.getContext("2d"), lights = [];
+    a.fillStyle = `rgb(${G.hsv2rgb(st.groundHue, .4, window.NIGHT ? st.groundVal * .35 : st.groundVal)})`; a.fillRect(0, 0, w, h); n.fillStyle = "rgb(128,75,240)"; n.fillRect(0, 0, w, h);
+    const ppm = G.witchPixelsPerUnit(st) / 1.9;
+    let y = gap;
+    rows2.forEach((r, i) => { let x = gap; y += rh[i] - gap; for (const c of r) { a.drawImage(c.b.A, x, y - c.b.h); n.drawImage(c.b.N, x, y - c.b.h); STACK.forEach((rgb, k) => lights.push({ x: x + c.top.x, y: y - c.b.h + c.top.y, z: ppm * (4.5 + k * 2.3), R: ppm * 16, power: .55, rgb })); x += c.b.w + gap; } a.drawImage(wit.A, x, y - wit.h); n.drawImage(wit.N, x, y - wit.h); y += gap; });
+    let lit = mk(); shade({ a, n, w, h }, lit, window.NIGHT ? st : studio, window.NIGHT ? lights : [], [0, 0, w, h]);
+    const big = document.createElement("canvas"); big.width = w * scale; big.height = h * scale; const g = big.getContext("2d"); g.imageSmoothingEnabled = false; g.drawImage(lit, 0, 0, w * scale, h * scale);
+    return big.toDataURL("image/png");
+  }
   if (what === "ent") { // the treehouse Ent (art/ent.js): towards and away, the witch at the decks (dj frame `list`) between its far and near halves; then the deck up close
     const wc = G.witchColours(st), hc = G.entColours(st), panels = [], wsp = G.witchSprite(st, { pose: "dj", frame: +list || 0 }), wit = G.bake(wsp, wc, st, st.cOutline);
     for (const facing of ["towards", "away"]) {
@@ -366,6 +385,15 @@ const url = await b.page.evaluate(async ({ gen, lighting, what, list, scale }) =
     const mark = (sp, bk) => { if (window.ANCHORS && sp.anchors) { const g = bk.A.getContext("2d"); for (const [k, c] of [["hand", "#0ff"], ["hatTip", "#f0f"], ["pair", "#ff0"], ["back", "#fff"], ["cup", "#f80"]]) { if (!sp.anchors[k]) continue; const [x, y] = sp.anchors[k]; g.fillStyle = c; g.fillRect(Math.round(x) - 1, Math.round(y) - 1, 3, 3); } } return bk; };
     const fb = o => { const sp = G.witchSprite(st, o); return mark(sp, G.bake(sp, wc, st, st.cOutline)); };
     if (list === "headings") for (const heading of ["away", "towards"]) rows.push([b({}), ...[0, 1, 2].map(frame => fb({ heading, frame })), fb({ heading, lean: true }), ...[0, 1, 2].map(frame => fb({ heading, pose: "fast", frame })), ...[0, 1].map(frame => fb({ heading, pose: "brake", frame }))]); // the side view for comparison, then heading straight up (away) and down (towards) the screen: hover x3, lean, fast x3, brake x2
+    else if (list === "nightie") { // her as she wakes (rules/clothesPile.ts): in her nightie, barefoot, no hat; standing, walking, talking, sat on her bed's edge, both facings
+      const look = { ...G.genomeLook(G.WITCH_GENOME).look, nightie: true, barefoot: true, hat: "none" }, P = G.WITCH_FOOT_POSES;
+      for (const facing of ["towards", "away"]) rows.push(["stand", "walk", "talk", "sit"].filter(p => P[p]).flatMap(pose => [...Array(Math.min(P[pose].frames, pose === "walk" ? 4 : 2)).keys()].map(frame => fb({ facing, pose, frame, look }))));
+    }
+    else if (list === "band") { // the Band card (Ed, 2026-10-29): her hats with the band and plume in hers, red, then blue (the genome's plume); then each cloak at its shortest and longest, standing
+      const base = G.genomeLook(G.WITCH_GENOME).look;
+      for (const hat of ["classic", "musketeer", "top", "crown"]) rows.push([null, [.0, .8, 1], [.6, .7, 1]].map(pl => { const outfit = { ...G.DEFAULT_OUTFIT, ...(pl ? { plume: pl } : {}) }; return G.bake(G.witchSprite(st, { look: { ...base, hat }, facing: "towards" }), G.witchColours(st, outfit), st, st.cOutline); }));
+      rows.push([["short", .6], ["short", 6], ["long", .6], ["long", 6]].map(([cloak, cloakLength]) => fb({ facing: "away", pose: "stand", frame: 0, look: { ...base, cloak, cloakLength } }))); // (each cloak's shortest and longest: the short at most to her knee, the long at least)
+    }
     else if (list === "foot") for (const facing of window.FACINGS || ["towards", "away"]) rows.push([b({ facing }), ...Object.entries(G.WITCH_FOOT_POSES).filter(([pose, P]) => window.POSES ? window.POSES.includes(pose) : !P.party).flatMap(([pose, { frames }]) => [...Array(frames).keys()].map(frame => fb({ facing, pose, frame })))]);
     else for (const facing of ["towards", "away"]) rows.push(list === "fast" ? [b({ facing }), b({ facing, lean: true }), ...[0, 1, 2].map(frame => b({ facing, pose: "fast", frame })), ...[0, 1].map(frame => b({ facing, pose: "brake", frame }))] // hover, lean, fast's three frames, brake's two
       : [b({ facing }), b({ facing, pose: "rise", frame: 0 }), b({ facing, pose: "rise", frame: 1 }), b({ facing, pose: "descend", frame: 0 }), b({ facing, pose: "descend", frame: 1 })]);
@@ -466,6 +494,16 @@ const url = await b.page.evaluate(async ({ gen, lighting, what, list, scale }) =
   } else if (what === "rim") { // the legend clearings' rim kit: each area (all, or listed) a row of its 6 rim pieces, the witch closing each row
     const ids = list === "all" ? G.AREAS.map(a => a.id) : list.split(","), wit = G.bake(G.witchSprite(st), G.witchColours(st), st, st.cOutline);
     for (const id of ids) rows.push([...G.areaAssets(id, st).rim.map(b => b.sp), wit]);
+  } else if (what === "stumpareas") { // each area type's great stump (art/props/stumps.js stumpForArea) on a patch of its own floor, PER (default 6) to a row
+    const ids = list === "all" ? G.AREAS.map(a => a.id) : list.split(","), per = window.PER || 6, bst = window.BIOME ? { ...st, biome: window.BIOME } : st, items = [];
+    for (const id of ids) {
+      const def = G.AREA_BY_ID[id], form = G.stumpForArea(def, bst.biome), p = G.stumpPiece(form, { seed: 1 }, def, bst), b = G.bake(p.sp, p.colours, bst, "none");
+      const tile = G.areaAssets(id, bst).floor.sp, w = b.w + 16, h = b.h + 16, A = document.createElement("canvas"), N = document.createElement("canvas"); A.width = N.width = w; A.height = N.height = h;
+      const a = A.getContext("2d"), n = N.getContext("2d"); for (let y = 0; y < h; y += tile.h) for (let x = 0; x < w; x += tile.w) { a.drawImage(tile.A, x, y); n.drawImage(tile.N, x, y); }
+      a.drawImage(b.A, 8, 8); n.drawImage(b.N, 8, 8); a.fillStyle = "#fff"; a.font = "10px monospace"; a.fillText(`${id} (${form})`, 4, h - 4);
+      items.push({ A, N, w, h });
+    }
+    for (let i = 0; i < items.length; i += per) rows.push(items.slice(i, i + per));
   } else if (what === "props") { // the prop generator (art/props/): each kind (all, or listed), a row of variants (PER, default 8) from seeds 0.., the witch closing each row; AREA=moor for its grass
     const kinds = list === "all" ? G.PROP_KINDS : list.split(","), per = window.PER || 8, wit = G.bake(G.witchSprite(st), G.witchColours(st), st, st.cOutline), def = G.AREA_BY_ID[window.AREA || "moor"];
     for (const kind of kinds) rows.push([...[...Array(per).keys()].map(seed => { const p = G.propPiece(kind, { seed, ...(window.BOG ? { bog: true } : {}) }, def, st); return G.bake(p.sp, p.colours, st, "none"); }), wit]);

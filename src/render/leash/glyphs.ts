@@ -43,9 +43,10 @@ attribute float iSize;
 attribute vec4 iUv;
 attribute vec4 iCol;
 attribute float iDraw;
+attribute float iShine;
 varying vec2 vUv, vP;
 varying vec4 vCol;
-varying float vDraw;
+varying float vDraw, vShine;
 varying vec3 vWorld;
 varying float vPix, vN;
 ${HEIGHT_VERT_GLSL}
@@ -56,7 +57,7 @@ void main() {
   vec3 w = uFlat > 0.5 ? onGround(iPos + vec3(p.x * iSize, 0.04, -p.y * iSize)) : onGround(iPos) + uRight * (p.x * iSize) + uUp * (p.y * iSize);
   vUv = vec2(mix(iUv.x, iUv.z, uv.x), mix(iUv.w, iUv.y, uv.y));
   bool glow = iDraw > 1.5;
-  vP = p; vCol = iCol; vDraw = glow ? iDraw - 2.0 : iDraw; vWorld = w;
+  vP = p; vCol = iCol; vDraw = glow ? iDraw - 2.0 : iDraw; vWorld = w; vShine = iShine;
   vPix = !glow && iUv.z < 0.07 && iUv.y > 0.99 && iSize <= uDotMax ? 1.0 : 0.0; // (the soft dot, as an object)
   vN = max(1.0, floor(iSize / uMpp + 0.5)); // its art pixels across
   gl_Position = clipOf(w);
@@ -66,17 +67,19 @@ void main() {
 }`;
 
 export const FRAG = /* glsl */ `
-uniform sampler2D uGlyphs;
+uniform sampler2D uGlyphs, uGlyphsPal;
+uniform float uGlyphIdx; // 1: uGlyphs is an index plane, its colours in uGlyphsPal (render/palette.ts; the attack look's atlas)
 uniform float uSolid;
 uniform float uRgb; // the texture's own colours, times the instance's (the attack look's atlas: render/leash/attackLook.ts); else its colour alone
 varying vec2 vUv, vP;
 varying vec4 vCol;
-varying float vDraw;
+varying float vDraw, vShine;
 varying vec3 vWorld;
 varying float vPix, vN;
 ${LIGHT_GLSL}
 void main() {
   vec4 tx = texture2D(uGlyphs, vUv);
+  if (uGlyphIdx > 0.5) tx = texelFetch(uGlyphsPal, ivec2(int(tx.r * 255.0 + 0.5), 0), 0);
   float a = tx.a * vCol.a;
   vec3 rgb = uRgb > 0.5 ? tx.rgb * vCol.rgb : vCol.rgb;
   if (vPix > 0.5) {
@@ -85,6 +88,12 @@ void main() {
     vec2 q = (floor((vP + 0.5) * vN) + 0.5) / vN - 0.5;
     float r = length(q) * 2.0;
     a = (vN < 2.5 ? 1.0 : r < 0.55 ? 1.0 : r < 0.95 ? 0.5 : 0.0) * vCol.a;
+  }
+  if (vShine > 1.5) {
+    // A legend's glyph, shiny (render/leash/ranks.ts legendShine): the glint, a band of whole atlas pixels toward white, sweeping
+    // across it corner to corner. (No rim: its strokes are thin, and a rim lit the whole glyph pale, losing its vivid colour.)
+    vec2 q = (floor((vP + 0.5) * ${SLOT}.0) + 0.5) / ${SLOT}.0;
+    if (abs((q.x + q.y) * 0.5 - (vShine - 2.0)) < 0.13) rgb = mix(rgb, vec3(1.0), 0.9);
   }
   // Written on: revealed clockwise from the top as vDraw goes 0 to 1.
   float ang = fract(atan(vP.x, vP.y) / 6.2831853 + 1.0);
@@ -105,7 +114,7 @@ export function maskOf(m: THREE.ShaderMaterial): THREE.ShaderMaterial {
   });
 }
 
-const INSTANCE_ATTRS = ["iPos", "iSize", "iUv", "iCol", "iDraw"];
+const INSTANCE_ATTRS = ["iPos", "iSize", "iUv", "iCol", "iDraw", "iShine"];
 
 /** Whether an atlas rect is a sigil's glyph (every slot but the soft dot in slot 0, the backing disc and the solid square in the last). */
 export function isGlyph(uv: number[]): boolean {
@@ -121,8 +130,8 @@ export class Instances {
   private geo = new THREE.InstancedBufferGeometry();
   private cap = 0;
   private n = 0;
-  private dirty = [new Dirty(), new Dirty(), new Dirty(), new Dirty(), new Dirty()];
-  private pos!: Float32Array; private size!: Float32Array; private uv!: Float32Array; private col!: Float32Array; private draw!: Float32Array;
+  private dirty = [new Dirty(), new Dirty(), new Dirty(), new Dirty(), new Dirty(), new Dirty()];
+  private pos!: Float32Array; private size!: Float32Array; private uv!: Float32Array; private col!: Float32Array; private draw!: Float32Array; private shine!: Float32Array;
 
   constructor(mat: THREE.ShaderMaterial) {
     const q = new THREE.PlaneGeometry(1, 1);
@@ -137,16 +146,17 @@ export class Instances {
 
   private grow(cap: number): void {
     const keep = (a: Float32Array | undefined, k: number) => { const b = new Float32Array(cap * k); if (a) b.set(a); return b; };
-    this.pos = keep(this.pos, 3); this.size = keep(this.size, 1); this.uv = keep(this.uv, 4); this.col = keep(this.col, 4); this.draw = keep(this.draw, 1);
+    this.pos = keep(this.pos, 3); this.size = keep(this.size, 1); this.uv = keep(this.uv, 4); this.col = keep(this.col, 4); this.draw = keep(this.draw, 1); this.shine = keep(this.shine, 1);
     this.cap = cap;
     this.geo.dispose(); // or three.js keeps drawing only the old capacity (see SpriteBatch.grow)
     const at = (name: string, a: Float32Array, k: number) => this.geo.setAttribute(name, new THREE.InstancedBufferAttribute(a, k).setUsage(THREE.DynamicDrawUsage));
-    at("iPos", this.pos, 3); at("iSize", this.size, 1); at("iUv", this.uv, 4); at("iCol", this.col, 4); at("iDraw", this.draw, 1);
+    at("iPos", this.pos, 3); at("iSize", this.size, 1); at("iUv", this.uv, 4); at("iCol", this.col, 4); at("iDraw", this.draw, 1); at("iShine", this.shine, 1);
   }
 
   begin(): void { this.n = 0; }
-  /** glow: drawn as light, smooth (a soft dot otherwise draws as an object, in art pixels, up to PIXEL_DOT_MAX metres). */
-  add(x: number, y: number, z: number, size: number, uv: number[], r: number, g: number, b: number, a: number, draw = 1, glow = false): void {
+  /** glow: drawn as light, smooth (a soft dot otherwise draws as an object, in art pixels, up to PIXEL_DOT_MAX metres); shine: a
+   *  legend's glyph's (render/leash/ranks.ts legendShine), 0 for the rest. */
+  add(x: number, y: number, z: number, size: number, uv: number[], r: number, g: number, b: number, a: number, draw = 1, glow = false, shine = 0): void {
     if (this.n >= this.cap) this.grow(this.cap * 2);
     if (this.glyphGain !== 1 && isGlyph(uv)) { r *= this.glyphGain; g *= this.glyphGain; b *= this.glyphGain; }
     // (each attribute written, and sent, only where it changed: dirty.ts; no arrays made per instance)
@@ -158,6 +168,7 @@ export class Instances {
     if (U[j] !== uv[0] || U[j + 1] !== uv[1] || U[j + 2] !== uv[2] || U[j + 3] !== uv[3]) { U[j] = uv[0]; U[j + 1] = uv[1]; U[j + 2] = uv[2]; U[j + 3] = uv[3]; d[2].touch(i); }
     if (C[j] !== r || C[j + 1] !== g || C[j + 2] !== b || C[j + 3] !== a) { C[j] = r; C[j + 1] = g; C[j + 2] = b; C[j + 3] = a; d[3].touch(i); }
     if (this.draw[i] !== dr) { this.draw[i] = dr; d[4].touch(i); }
+    if (this.shine[i] !== shine) { this.shine[i] = shine; d[5].touch(i); }
   }
   end(): void {
     this.geo.instanceCount = this.n;

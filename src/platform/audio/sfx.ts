@@ -28,11 +28,16 @@ import * as chimes from "./chimes";
 import { SfxKit, type SfxTuning } from "./sfxKit";
 import type { CreatureVoice, Mood } from "./voices";
 import { Whale } from "./whale";
+import { CreaturePitch, PotionAudio } from "./potionAudio";
 
 export type { SfxTuning } from "./sfxKit";
 
 export class Sfx {
   private k: SfxKit;
+  private creatures: SfxKit;
+  private creatureBabble: Babble;
+  private potionAudio: PotionAudio;
+  private creaturePitch: CreaturePitch;
   private babble: Babble;
   private whales: Whale;
   private charging: Charge;
@@ -56,9 +61,14 @@ export class Sfx {
 
   constructor(ctx: AudioContext | OfflineAudioContext, volume: number, T: SfxTuning, root = 57, dest?: AudioNode) {
     this.k = new SfxKit(ctx, volume, T, root, dest);
-    this.whales = new Whale(this.k);
+    const bypass = this.k.creatureKit();
+    this.creaturePitch = new CreaturePitch(ctx, bypass.out);
+    this.creatures = this.k.creatureKit(this.creaturePitch.input);
+    this.potionAudio = new PotionAudio(bypass);
+    this.whales = new Whale(this.creatures);
+    this.creatureBabble = new Babble(this.creatures, (mood, pan, near) => this.whales.whale(mood, pan, near));
     this.babble = new Babble(this.k, (mood, pan, near) => this.whales.whale(mood, pan, near));
-    this.charging = new Charge(this.k);
+    this.charging = new Charge(this.creatures);
     this.home = new Meadow(this.k);
     this.pondBed = new Pond(this.k);
     this.picnicBed = new Picnic(this.k);
@@ -74,9 +84,13 @@ export class Sfx {
   /** Silenced for good and let go (the watchdog building afresh). */
   /** Build ahead what is slow to build the first time (the legends' long reverb: tens of milliseconds on the main thread, once
    *  mid-play when the first stone powered up; the audit's phase 2), so it's ready before play. */
-  prewarm(): void { this.k.space(); }
-  dispose(): void { try { this.k.final.disconnect(); } catch { /* gone */ } }
+  prewarm(): void { this.k.space(); this.creatures.space(); }
+  dispose(): void { this.potionAudio.dispose(); this.creaturePitch.dispose(); try { this.k.final.disconnect(); } catch { /* gone */ } }
   setVolume(v: number): void { this.k.setVolume(v); }
+  setOrdinaryGain(level: number): void { this.k.ordinaryGain(level); }
+  setCreaturePitch(strength: number): void { this.creaturePitch.set(strength); }
+  nightVisionStart(): void { this.potionAudio.startup(); }
+  heatBreathing(level: number, rate: number, time: number): void { this.potionAudio.breathing(level, rate, time); }
   /** A new night's tuning (sfxKit.ts retune): every effect reads its sfx knobs from then on. */
   retune(T: SfxTuning): void { this.k.retune(T); }
 
@@ -84,9 +98,12 @@ export class Sfx {
   letter(pan = 0, near = 1): void { this.babble.letter(pan, near); }
   hit(pan = 0, near = 1, spent = false): void { chimes.hit(this.k, pan, near, spent); }
   fill(amount: number, pan = 0, near = 1): void { chimes.fill(this.k, amount, pan, near); }
+  /** A 💌 landing on a creature: a soft thunk rising as its ring fills (chimes.ts thunk). */
+  thunk(amount: number, pan = 0, near = 1): void { chimes.thunk(this.k, amount, pan, near); }
   invited(level: number, pan = 0, near = 1): void { chimes.invited(this.k, level, pan, near); }
   /** A 💌 coming down on the ground, having met no one. */
   land(pan = 0, near = 1): void { chimes.land(this.k, pan, near); }
+  potionPlop(pan = 0, near = 1): void { chimes.potionPlop(this.k, pan, near); }
   /** An area cleared early: the "cleared!" sting (chimes.ts cleared). */
   cleared(pan = 0, near = 1): void { chimes.cleared(this.k, pan, near); }
   /** A sigil refused (too near one already down). */
@@ -96,13 +113,13 @@ export class Sfx {
   /** Her phone's alarm ringing once (the wake-up: chimes.ts alarm). */
   alarm(): void { chimes.alarm(this.k); }
   /** A 💌 refused by an enraged animal: its whine (chimes.ts refused). */
-  refused(pan = 0, near = 1): void { chimes.refused(this.k, pan, near); }
-  reply(v: CreatureVoice, amount: number, pan = 0, near = 1): void { this.babble.reply(v, amount, pan, near); }
+  refused(pan = 0, near = 1): void { chimes.refused(this.creatures, pan, near); }
+  reply(v: CreatureVoice, amount: number, pan = 0, near = 1): void { this.creatureBabble.reply(v, amount, pan, near); }
 
   // ——— creatures ———
-  speak(v: CreatureVoice, mood: Mood, pan = 0, near = 1, prio = near): void { this.babble.speak(v, mood, pan, near, prio); }
-  howl(v: CreatureVoice, pan = 0, near = 1): void { this.babble.howl(v, pan, near); }
-  enraged(pan = 0, near = 1, many = 1): void { chimes.enraged(this.k, pan, near, many); }
+  speak(v: CreatureVoice, mood: Mood, pan = 0, near = 1, prio = near): void { this.creatureBabble.speak(v, mood, pan, near, prio); }
+  howl(v: CreatureVoice, pan = 0, near = 1): void { this.creatureBabble.howl(v, pan, near); }
+  enraged(pan = 0, near = 1, many = 1): void { chimes.enraged(this.creatures, pan, near, many); }
   happy(pan = 0, near = 1): void { chimes.happy(this.k, pan, near); }
 
   // ——— the witch ———
@@ -115,7 +132,7 @@ export class Sfx {
   windup(pan = 0, near = 1): void { this.whales.windup(pan, near); }
   legends(sleep: number, breath: number, unease: number, pan = 0): void { this.whales.legends(sleep, breath, unease, pan); }
   /** A restless legend calling out sadly in its own voice (`urgency` its restlessness). */
-  lament(v: CreatureVoice, urgency: number, pan = 0, near = 1): void { this.babble.lament(v, urgency, pan, near); }
+  lament(v: CreatureVoice, urgency: number, pan = 0, near = 1): void { this.creatureBabble.lament(v, urgency, pan, near); }
   bellow(pan = 0, near = 1): void { this.charging.bellow(pan, near); }
   hoof(pan = 0, near = 1, light = false): void { this.charging.hoof(pan, near, light); }
   charge(rumble: number, skid: number, pan = 0): void { this.charging.update(rumble, skid, pan); }
@@ -131,17 +148,17 @@ export class Sfx {
   stir(): void { chimes.stir(this.k); }
   meadow(level: number): void { this.home.update(level * this.beds); }
   /** A legend turning angry: its roar. */
-  roar(pan = 0, near = 1): void { roar(this.k, pan, near); }
+  roar(pan = 0, near = 1): void { roar(this.creatures, pan, near); }
   /** Dancers' party shoes tapping on the beat. */
-  taps(n: number, pan = 0, near = 1): void { taps(this.k, n, pan, near); }
+  taps(n: number, pan = 0, near = 1): void { taps(this.creatures, n, pan, near); }
   /** By a pond, a picnic in a partified area, in the creator's room: each frame, by how near (0-1). */
   pond(level: number, pan = 0): void { this.pondBed.update(level * this.beds, pan); }
   picnic(level: number, pan = 0): void { this.picnicBed.update(level * this.beds, pan); }
   room(level: number): void { this.roomBed.update(level); }
   /** The sea's life off the beach (seaLife.ts): a dolphin's leap (its splash `fall` seconds after), the kraken's groan and the water pouring off it. */
-  splash(size = 0.5, pan = 0, near = 1, fall = 0.9): void { splash(this.k, size, pan, near, fall); }
-  krakenGroan(pan = 0, near = 1): void { groan(this.k, pan, near); }
-  krakenPour(dur = 4, pan = 0, near = 1): void { pour(this.k, dur, pan, near); }
+  splash(size = 0.5, pan = 0, near = 1, fall = 0.9): void { splash(this.creatures, size, pan, near, fall); }
+  krakenGroan(pan = 0, near = 1): void { groan(this.creatures, pan, near); }
+  krakenPour(dur = 4, pan = 0, near = 1): void { pour(this.creatures, dur, pan, near); }
   /** Knocked down (knockdown.ts): the sad trumpet as her hat drops (`full`; with no hat, its shorter "wah-waaah"); then the
    *  rewind as she's whisked to her decks, a backwards scratch cutting the trumpet off (never before its last note has had
    *  sadTrumpet.cutAfter seconds). */
@@ -163,7 +180,8 @@ export class Sfx {
   /** Her decks (deck.ts): a stroke of the record under her hand; her hype. */
   scratch(forward: boolean, pan = 0, near = 1): void { scratch(this.k, forward, pan, near); }
   /** Her routine's strokes (art/witch.js DJ_ROUTINE): the tonearm lifted and dropped, a stroke, a chirp, the spin-back, her hype. */
-  deck(stroke: "lift" | "drop" | "f" | "b" | "chirp" | "spin" | "hype" | "trans" | "flare" | "tear" | "stab", pan = 0, near = 1): void {
+  deck(stroke: "lift" | "drop" | "f" | "b" | "chirp" | "spin" | "hype" | "trans" | "flare" | "tear" | "stab", pan = 0, near = 1, bpm = 120): void {
+    this.k.pace = Math.min(1, 120 / Math.max(1, bpm)); // (a faster record's strokes shorter: none longer than at 120)
     if (stroke === "hype") this.babble.whoop(pan, near);
     else if (stroke === "trans" || stroke === "flare" || stroke === "tear" || stroke === "stab") technique(this.k, stroke, pan, near);
     else if (stroke === "lift" || stroke === "drop") needle(this.k, stroke, pan, near);
@@ -198,10 +216,11 @@ export class Sfx {
   /** The party's over: the area's night (`kind`, at `level` 0-1), made the first time it's heard (most runs, never). */
   night(kind: NightKind | null, level: number): void { if (level > 0.001 || this.nightBed) (this.nightBed ??= new Night(this.k)).update(kind, level); }
   /** A sleeping animal's snore (`size` 0 a baby to 1 a legend). */
-  snore(size: number, pan = 0, near = 1): void { (this.nightBed ??= new Night(this.k)).snore(size, pan, near); }
+  snore(size: number, pan = 0, near = 1): void { (this.creatureNight ??= new Night(this.creatures)).snore(size, pan, near); }
   /** Whether the night's sounds are built. */
   get nightBuilt(): boolean { return !!this.nightBed?.built; }
   private nightBed: Night | null = null;
+  private creatureNight: Night | null = null;
   /** Each area's ambience in play (night.ts layers without their bed): `kind` her area's, at `level` (0-1). Built when first heard. */
   ambience(kind: NightKind | null, level: number): void { level *= this.beds; if (level > 0.001 || this.ambienceBed) (this.ambienceBed ??= new Night(this.k, () => this.k.T.ambience)).update(kind, level); }
   private ambienceBed: Night | null = null;

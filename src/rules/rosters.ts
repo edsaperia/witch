@@ -3,8 +3,12 @@
 // its bearing from home; the island's seed comes from where it lies (its bearing and phase ring), so its shape, size and roster
 // all follow from islandOf(K) alone. Its roster (its mix of area types, a kind being an area type's species): K plentiful (about
 // 1 area in 6), 1-3 kinds new to phase p from nearby on the chart, the rest by weight (nearby bearings strongly, opposite ones
-// almost never, recently introduced kinds favoured), about a third as many kinds as areas. Each night's legends (1 in 5 areas)
+// almost never, recently introduced kinds favoured), every other kind on at most 2 areas (Ed, 2026-10-28: "we should reduce the
+// number of repeats. Of its own kind, we should have about 1 in 6 as we have now. Of other kinds, there should be no more than 2";
+// it was about a third as many kinds as areas, each about three times), so about half as many kinds as areas. Each night's legends (1 in 5 areas)
 // are dealt from the roster, favouring kinds whose islands aren't found yet, never K. Home: one area per kind she knows.
+// Where each type lies is the night's (Ed, 2026-10-28, rules/deal.ts): the island's shapes are its world's, and each night its types are
+// dealt onto them along that night's route, K first, no kind twice in a row.
 import { archipelago, rememberArchipelago, type Archipelago } from "./archipelago";
 import { KINDS_TABLE, type KindInfo } from "./kinds";
 export type { KindInfo };
@@ -87,11 +91,17 @@ export function homeIsland(world = 0, known: readonly string[] = homeKinds(), si
   return { kind: "home", phase: 0, bearing: 0, size: n, seed: islandSeed(0, 0, world), roster: [...counts].map(([kind, areas]) => ({ kind, areas })), patch: worldOf(world).islands.get("home")?.patch, turn: worldOf(world).islands.get("home")?.turn };
 }
 
+/** The most areas any kind but the island's own has on its roster (Ed, 2026-10-28). */
+export const OTHERS_MAX = 2;
+/** The island's own kind's areas: about 1 in 6, at least 2. */
+export const ownAreas = (size: number) => Math.max(2, Math.round(size / 6));
+
 /** Kind K's island's roster (the rule above), seeded. */
 export function rosterOf(K: string, phase: number, bearing: number, size: number, seed: number): { kind: string; areas: number }[] {
   // (only designed kinds: a placeholder's island's roster is made of the designed kinds alone, never itself)
   const r = rng(seed ^ 0x5eed), eligible = REAL_KINDS.filter(k => KINDS[k].phase <= phase), real = !isPlaceholder(K);
-  const want = Math.max(2, Math.min(eligible.length, Math.ceil(size / 3)));
+  // (enough kinds that none but K is on more than OTHERS_MAX areas, if the eligible kinds run to it)
+  const own = real ? ownAreas(size) : 0, want = Math.max(2, Math.min(eligible.length, (real ? 1 : 0) + Math.ceil((size - own) / OTHERS_MAX)));
   const chosen: string[] = real ? [K] : [];
   // 1-3 kinds new to this phase (more on bigger islands), the nearest on the chart first, a little seeded jitter
   const fresh = eligible.filter(k => k !== K && KINDS[k].phase === phase)
@@ -111,12 +121,11 @@ export function rosterOf(K: string, phase: number, bearing: number, size: number
     while (i < rest.length - 1 && (x -= ws[i]) > 0) i++;
     chosen.push(rest.splice(i, 1)[0]);
   }
-  // K plentiful (about 1 area in 6, at least 2), the other areas shared as evenly as they go, the extras by the seed
+  // K plentiful (about 1 area in 6, at least 2), the other areas shared as evenly as they go (1 or 2 each), the extras by the seed
   if (!real) return shareOut(chosen, size, seed);
-  const own = Math.min(size - (chosen.length - 1), Math.max(2, Math.round(size / 6)));
-  const left = size - own, others = chosen.slice(1), base = Math.floor(left / others.length);
+  const mine = Math.min(size - (chosen.length - 1), own), left = size - mine, others = chosen.slice(1), base = Math.floor(left / others.length);
   const extra = left - base * others.length, order = others.map((k, i) => ({ k, h: hash2(i, seed, 7349) })).sort((a, b) => a.h - b.h).map(x => x.k);
-  return [{ kind: K, areas: own }, ...others.map(k => ({ kind: k, areas: base + (order.indexOf(k) < extra ? 1 : 0) }))];
+  return [{ kind: K, areas: mine }, ...others.map(k => ({ kind: k, areas: base + (order.indexOf(k) < extra ? 1 : 0) }))];
 }
 
 /** `size` areas shared among `kinds` as evenly as they go, the extras by the seed. */

@@ -72,6 +72,9 @@ const REPLACED = new Set(DEFS.flatMap(d => (d as PartyDef & { replaces?: string[
 export const leftOut = (id: string, t: Tuning) => t.partyObjects.exclude.includes(id) || (id.startsWith("gen-") ? !t.partyObjects.generated : t.partyObjects.generated && REPLACED.has(id));
 export const excluded = (ref: string, t: Tuning) => leftOut(pieceId(ref), t);
 
+/** A loose piece kept out of the stones' keep-clear zones (Ed, 2026-10-29): a campfire or a picnic's. */
+const keptAway = (ref: string) => { const d = partyDef(ref); return !!d && (d.cls === "picnic" || d.id.includes("campfire")); };
+
 /** The party objects of a partified area (seeded by its cell). */
 export function dressingOf(map: ForestMap, cell: Cell, t: Tuning): Dressing {
   const pool = POOL.filter(d => !leftOut(d.id, t)), sets = SETS.filter(d => !leftOut(d.id, t));
@@ -80,7 +83,8 @@ export function dressingOf(map: ForestMap, cell: Cell, t: Tuning): Dressing {
   const taken: { x: number; z: number; r: number }[] = [];
   // A free spot in the area: out from its clearing's middle, not on a path, kept ground, the
   // dancefloor's clearing, its soundsystem or anything already placed.
-  const spotFor = (gap: number, from = 0.08, to = 0.45, round?: { x: number; z: number; near: number; far: number }): { x: number; z: number } | null => {
+  // `away`: out of every stone's keep-clear zone too (Ed, 2026-10-29: the clusters, picnics, set dressing and campfires; map.clearOfStones).
+  const spotFor = (gap: number, from = 0.08, to = 0.45, round?: { x: number; z: number; near: number; far: number }, away = false): { x: number; z: number } | null => {
     for (let k = 0; k < 40; k++) {
       const a = r() * Math.PI * 2, dist = round ? round.near + r() * (round.far - round.near) : map.areaSize * (from + r() * (to - from)), x = (round ?? site).x + Math.cos(a) * dist, z = (round ?? site).z + Math.sin(a) * dist;
       const at = map.areaAt(x, z);
@@ -90,6 +94,7 @@ export function dressingOf(map: ForestMap, cell: Cell, t: Tuning): Dressing {
       if (Math.hypot(x - d.x, z - d.z) < clear || Math.hypot(x - ss.x, z - ss.z) < 4) continue;
       if (Math.hypot(x - map.treehouse.x, z - map.treehouse.z) < t.treehouse.clear + 2 || Math.hypot(x - map.start.x, z - map.start.z) < 4) continue;
       if (taken.some(q => Math.hypot(q.x - x, q.z - z) < q.r + gap)) continue;
+      if (away && !map.clearOfStones(x, z, gap)) continue;
       taken.push({ x, z, r: gap });
       return { x, z };
     }
@@ -107,13 +112,17 @@ export function dressingOf(map: ForestMap, cell: Cell, t: Tuning): Dressing {
   const home = cell[0] === map.centreCell[0] && cell[1] === map.centreCell[1];
   if (home) return homeDressing(map, t, r, out, ref);
   for (let i = 0, n = between(P.clusters); i < n; i++) {
-    const s = spotFor(4);
+    const s = spotFor(4, 0.08, 0.45, undefined, true);
     if (s) out.clusters.push({ id: WILD_CLUSTERS[Math.floor(r() * WILD_CLUSTERS.length)].id, ...s, mirror: r() < 0.5 });
   }
-  if (r() < P.setChance && sets.length) { const s = spotFor(3); if (s) out.loose.push({ ref: ref(sets[Math.floor(r() * sets.length)], r), ...s, flip: r() < 0.5 }); }
+  if (r() < P.setChance && sets.length) { const s = spotFor(3, 0.08, 0.45, undefined, true); if (s) out.loose.push({ ref: ref(sets[Math.floor(r() * sets.length)], r), ...s, flip: r() < 0.5 }); }
   for (let i = 0, n = between(P.loose); i < n; i++) {
-    const s = spotFor(0.6, 0.05, 0.5);
-    if (s) out.loose.push({ ref: ref(pool[Math.floor(r() * pool.length)], r), ...s, flip: r() < 0.5 });
+    let s = spotFor(0.6, 0.05, 0.5);
+    if (!s) continue;
+    const piece = ref(pool[Math.floor(r() * pool.length)], r), flip = r() < 0.5;
+    // (a campfire or a picnic's piece out of the stones' keep-clear zones, Ed 2026-10-29: moved out, or left out with no room)
+    if (keptAway(piece) && !map.clearOfStones(s.x, s.z, 0.6)) { taken.pop(); s = spotFor(0.6, 0.05, 0.5, undefined, true); if (!s) continue; }
+    out.loose.push({ ref: piece, ...s, flip });
   }
   const hangs = HANGING.filter(d => !leftOut(d.id, t));
   for (let i = 0, n = hangs.length ? between(P.hanging) : 0; i < n; i++) { const s = spotFor(2, 0.1, 0.5); if (s) out.hanging.push({ ref: ref(hangs[Math.floor(r() * hangs.length)], r), ...s, flip: r() < 0.5 }); }

@@ -17,6 +17,9 @@ const ok = (cond, what) => { console.log(`${cond ? "ok  " : "FAIL"} ${what}`); i
 // that walks the species or the areas to those ids (a builder's own creature and area), --no-lab skips the two lab pages (minutes each);
 // --times prints what each task and pass took.
 const argv = process.argv.slice(2), opt = name => { const i = argv.indexOf("--" + name); return i < 0 ? null : argv[i + 1] ?? ""; }, flag = name => argv.includes("--" + name);
+// PR result caching separates named sprite tasks from the remaining checks.
+// The normal command still runs both, including lab pages, without caching.
+if (flag("sprite-only") && (flag("aux-only") || !flag("no-lab"))) throw new Error("--sprite-only requires --no-lab and excludes --aux-only");
 const PAGES = Math.max(1, Number(opt("pages") || process.env.PAGES) || Math.max(1, cpus().length - 1));
 const ONLY = opt("only")?.split(",").map(s => s.trim()).filter(Boolean) ?? null, TASKS = opt("tasks")?.split(",").map(s => s.trim()).filter(Boolean) ?? null;
 const T0 = performance.now(), laps = [];
@@ -303,7 +306,7 @@ const SPRITE_CHECKS = async ({ names, only }) => {
       if (!Lk.hat.includes(L.hat) || !Lk.hair.includes(L.hair) || !Lk.top.includes(L.top)) bad.push(`${o.id} look`);
       const pw = G.partyWitch(1, { outfit: o.id }), col = pw.colours(st);
       for (const opts of [{ frame: 0 }, { pose: "lean", frame: 1 }, { pose: "rise", frame: 0 }, { pose: "stand", frame: 0 }, ...Object.entries(G.WITCH_FOOT_POSES).map(([pose, { frames }]) => ({ pose, frame: frames - 1 }))]) {
-        const sp = G.witchSprite(st, { ...opts, look: pw.look }), s2 = stats(sp), band = [...sp.m].filter(m => m === G.M.MAGIC).length + (opts.pose === undefined || (opts.pose === "stand" && opts.frame === 0) ? 0 : 1), hat = [...sp.m].some(m => m === G.M.HAT), magenta = [...sp.m].some(m => m && !col[m] && m !== G.M.LINE);
+        const sp = G.witchSprite(st, { ...opts, look: pw.look }), s2 = stats(sp), band = [...sp.m].filter(m => m === G.M.MAGIC || m === G.M.RUNE).length + (opts.pose === undefined || (opts.pose === "stand" && opts.frame === 0) ? 0 : 1), hat = [...sp.m].some(m => m === G.M.HAT), magenta = [...sp.m].some(m => m && !col[m] && m !== G.M.LINE);
         if (!(s2.n > 150 && s2.bottom > 0 && (opts.pose === "rise" || !opts.pose || Math.abs(sp.scale - scale) < 1e-6) && band > 0 && hat && !magenta && ![...sp.n].some(Number.isNaN))) bad.push(`${o.id} ${opts.pose || "hover"}${magenta ? " (a part without a colour)" : ""}${band ? "" : " (no hatband)"}${hat ? "" : " (no hat)"}`);
       }
     }
@@ -735,6 +738,29 @@ const SPRITE_CHECKS = async ({ names, only }) => {
     }
     res.push({ what: "generated bridges: footbridges, rope bridges and root bridges, 8 variants each, standing, none alike, within a third of the hand-made piece's size, unlit; fingerposts 8 variants, standing, none alike, 1.4 to 3 m, unlit", good: !bad.length, info: bad.slice(0, 6).join("; ") });
   });
+  task("stumps", async () => { // the great stumps (art/props/stumps.js; Ed, 2026-10-29): every species' 4 seeded stumps draw, nothing NaN, none alike, nothing
+    // glowing (the sigils over them light them), its roots 14 to 32 m across, its cut 0.6 to 1.6 m high, the cut's middle and the ground under it on
+    // the sprite; and every biome grows one
+    const bad = [], EM = new Set([...G.EMISSIVE]), ppm = G.witchPixelsPerUnit(st) / 1.9;
+    for (const species of Object.keys(G.STUMP_GENOMES)) {
+      const seen = new Set();
+      for (let seed = 0; seed < 4; seed++) {
+        const p = G.stumpPiece(species, { seed }, null, st), sp = p.sp, n = sp.m.filter(Boolean).length, key = sp.w + "x" + sp.h + ":" + Array.from(sp.m).join("");
+        if (n < 2000 || !Array.from(sp.n).every(Number.isFinite)) { bad.push(`${species} ${seed}: ${n} px`); continue; }
+        if (seen.has(key)) bad.push(`${species} ${seed} repeats another`); seen.add(key);
+        if (sp.m.some(m => EM.has(m))) bad.push(`${species} ${seed} glows`);
+        const across = sp.w / ppm, h = p.variant.height; if (across < 14 || across > 32 || h < .6 || h > 1.6) bad.push(`${species} ${seed}: ${across.toFixed(1)} m across, cut ${h.toFixed(2)} m`);
+        for (const [k, q] of [["top", p.top], ["origin", p.origin]]) if (!(q.x >= 0 && q.x <= sp.w && q.y >= 0 && q.y <= sp.h)) bad.push(`${species} ${seed}: ${k} off it`);
+        // (its root area's outline, for the cast's analyser: every angle measured, past the trunk, within the sprite's width; it lies on the ground by its depth)
+        if (p.roots?.length !== G.ROOT_ANGLES || p.roots.some(r => !(r > 0 && r <= sp.w))) bad.push(`${species} ${seed}: root outline ${p.roots?.length ?? "none"}`);
+        if (!(p.depth > 1.5 && p.depth < 2.5)) bad.push(`${species} ${seed}: depth ${p.depth}`);
+      }
+    }
+    for (const biome of ["temperate", "cold", "mountains and glaciers", "volcanic", "badlands", "hot", "mangrove swamp", "jungle", "cold rainforest"]) if (!G.STUMP_GENOMES[G.stumpSpecies(biome)]) bad.push(`no stump for ${biome}`);
+    // every area type's own stump (stumpForArea: its main tree's form, its bark and ground) draws, fitted (Ed, 2026-10-29: "a different stump per area type")
+    for (const def of G.AREAS) { const form = G.stumpForArea(def, undefined); if (!G.STUMP_GENOMES[form]) { bad.push(`${def.id}: no form`); continue; } const p = G.stumpPiece(form, { seed: 1 }, def, st); if (p.sp.m.filter(Boolean).length < 2000 || !Object.values(p.colours).every(c => c.every(Number.isFinite))) bad.push(`${def.id} (${form}) doesn't draw`); }
+    res.push({ what: "great stumps: every species' 4 seeded stumps draw, none alike, nothing glowing, 14 to 32 m across, cut 0.6 to 1.6 m high, its cut and foot on the sprite, its root area's outline whole; a stump for every biome and every area type, fitted to it", good: !bad.length, info: bad.slice(0, 8).join("; ") || `${Object.keys(G.STUMP_GENOMES).length} species` });
+  });
   task("set-piece-generator", async () => { // the set-piece generator (art/props/sets.js): every kind's 12 seeded variants draw, stand on their bottom row, nothing NaN, none alike, landmark-sized
     // (6 to 12 m across or tall) with their origin on the sprite, one warm glowing touch at most (a lantern, embers), a punt's and a jetty's pool mostly water;
     // and an area naming one as its set piece gets it built (setPiece3d)
@@ -922,6 +948,20 @@ const SPRITE_CHECKS = async ({ names, only }) => {
     const ap = G.areaPathKinds(), none = AREAS.filter(A => !(ap[A.id] || []).length).map(A => A.id);
     res.push({ what: "paths: 10 kinds, each strip tiling with its end, Y and T; only the magic trail glows; railway variants, points, broken end, crossing; the 3D pieces stand, only flagged ones glow; every area suits a path kind", good: !bad.length && !none.length && G.PATH_IDS.length >= 10, info: [...bad, ...none.map(a => a + " has no path kind")].join(", ") || `${G.PATH_IDS.length} kinds, ${G.PATH_PIECES.length} pieces` });
   });
+  task("mushrooms", async () => {
+    const bad = [];
+    for (const type of Object.keys(G.MUSHROOM_TYPES)) for (const pixel of [3, 4, 5]) {
+      const style = { ...st, pixel }, opts = { type, seed: 17 }, sp = G.mushroomSprite(style, opts);
+      const baked = G.bakeMushroom(style, opts), col = G.mushroomColours(type);
+      const a = baked.A.getContext("2d").getImageData(0, 0, baked.w, baked.h).data;
+      let glow = 0;
+      for (let i = 3; i < a.length; i += 4) if (a[i] === 254) glow++;
+      if (!glow || !sp.m.some(Boolean) || baked.scale !== 1) bad.push(`${type}/${pixel}: empty, unlit or scaled`);
+      if (baked.N.width !== baked.w || baked.NF.height !== baked.h) bad.push(`${type}/${pixel}: normal dimensions`);
+      for (const m of new Set(sp.m)) if (m && !col[m]) bad.push(`${type}/${pixel}: uncoloured ${m}`);
+    }
+    res.push({ what: "mushrooms: nine colour families at pixel 3/4/5 bake with emissive spots, coloured materials and matching normal maps", good: !bad.length, info: bad.join(", ") });
+  });
   task("generators", async () => { // every generator draws (phase 1: the ones no other check reached): every beach find and print (prints at every heading), the bedroom,
     // every broom kind under the witch, her hat alone both ways, every species' rune stone, a party patch, every legend's sprites; each
     // non-empty, nothing NaN in its normals, every material it uses coloured, its origin (where it has one) on the sprite
@@ -965,13 +1005,18 @@ const SPRITE_CHECKS = async ({ names, only }) => {
   for (const t of tasks) if (!names || names.includes(t.name)) { const t0 = performance.now(), n0 = res.length; await t.fn(); timings.push([t.name, performance.now() - t0, res.length - n0]); }
   return { res, timings, names: tasks.map(t => t.name) };
 };
-const report = await runSpriteChecks(b, SPRITE_CHECKS);
+const report = flag("aux-only") ? [] : await runSpriteChecks(b, SPRITE_CHECKS);
 for (const lines of await Promise.all(LABS)) for (const [cond, what] of lines) ok(cond, what);
 lap("lab pages (the rest)");
 for (const r of report) if (!r.good) ok(false, `${r.what} (${r.info})`);
 for (const r of report) if (r.good && r.warn) console.log(`WARN ${r.what} — ${r.warn}`); // (a warning: reported, not failed)
 if (flag("info")) for (const r of report) if (r.good && r.info) console.log(`info ${r.what} — ${r.info}`); // (--info: what a passing check measured)
 ok(report.every(r => r.good), `${report.length} sprite checks`);
+if (flag("sprite-only")) {
+  const errs = b.errors.filter(e => !ignore(e));
+  ok(!errs.length, `no script errors${errs.length ? " — " + errs.join("; ") : ""}`);
+  await b.close(); process.exit(failed ? 1 : 0);
+}
 // the detailed sigils (Ed, 2026-10-12, the sea chart's island runes: "more detailed versions of the rune itself", no circles):
 // every species' and home's World Tree, at each tier: ink, crisp (every pixel ink or not), clear of its box's edge (no circle
 // reaching it), each tier different and the carved ones more detailed than the plain glyph (more edges), not a solid disc
@@ -1090,7 +1135,7 @@ lap("pixel-wind");
     for (const o of [{ frame: 0 }, { pose: "lean", frame: 2 }, { pose: "rise", frame: 0 }, { pose: "descend", frame: 1 }, { pose: "brake", frame: 0 }, { pose: "fast", frame: 0 }, { pose: "stand", frame: 1 }, { pose: "takeoff", frame: 0 }, { pose: "twoStep", frame: 2 }]) {
       const sp = W.witchSprite(st, { ...o, look }), n = sp.m.filter(Boolean).length, a = sp.anchors || {}, inside = p => p && p[0] >= 0 && p[1] >= 0 && p[0] < sp.w && p[1] < sp.h;
       if (n < 200 || !inside(a.hand) || !inside(a.hatTip)) bad.push(`seed ${seed} ${o.pose || "hover"}: ${n} px, anchors ${JSON.stringify(a)}`);
-      if (!o.pose) { if (g.hat.shape !== "none" && !sp.m.some(v => v === M.MAGIC || v === M.MAGIC2 || v === M.COLLAR)) bad.push(`seed ${seed}: no glowing hatband`); if (sp.h < herH * .7 || sp.h > herH * 1.7) bad.push(`seed ${seed}: ${sp.h} px tall (hers ${herH})`); const k = key(sp); if (seen.has(k)) bad.push(`seed ${seed} looks like another`); seen.add(k); }
+      if (!o.pose) { if (g.hat.shape !== "none" && !sp.m.some(v => v === M.MAGIC || v === M.RUNE || v === M.MAGIC2 || v === M.COLLAR)) bad.push(`seed ${seed}: no glowing hatband`); if (sp.h < herH * .7 || sp.h > herH * 1.7) bad.push(`seed ${seed}: ${sp.h} px tall (hers ${herH})`); const k = key(sp); if (seen.has(k)) bad.push(`seed ${seed} looks like another`); seen.add(k); }
     }
   }
   ok(!bad.length, `witch generator: her genome draws her exactly; 20 generated witches within limits, drawn in flight and on foot, anchors inside, hatband glowing, 0.7 to 1.7 times her height (no hat to a wizard's), none alike${bad.length ? " — " + bad.slice(0, 6).join("; ") : ""}`);
@@ -1107,7 +1152,7 @@ lap("pixel-wind");
   for (const hat of Gn.WITCH_AXES.hatShape) for (const ex of [{}, { hatHeight: Gn.WITCH_AXES.hatHeight[1], hatBrim: Gn.WITCH_AXES.hatBrim[1] }, { hatHeight: Gn.WITCH_AXES.hatHeight[0], hatBrim: Gn.WITCH_AXES.hatBrim[0] }]) for (const o of [{ frame: 0 }, { pose: "stand", frame: 0 }, { pose: "lean", frame: 1 }]) {
     const look = { ...Gn.genomeLook(Gn.WITCH_GENOME).look, hat, ...ex, scarf: true, scarfLength: 3, bagSize: Gn.WITCH_AXES.bagSize[1], satchel: true, backpackSize: Gn.WITCH_AXES.backpackSize[1], cloak: "long", cloakLength: Gn.WITCH_AXES.cloakLength[1] };
     const sp = W.witchSprite(st, { ...o, look }), a = sp.anchors || {}, inside = q => q && q[0] >= 0 && q[1] >= 0 && q[0] < sp.w && q[1] < sp.h;
-    if (sp.m.filter(Boolean).length < 200 || !inside(a.hatTip) || (hat !== "none" && !sp.m.some(v => v === M.MAGIC || v === M.MAGIC2 || v === M.COLLAR))) pbad.push(`hat ${hat} ${JSON.stringify(ex)} ${o.pose || "hover"}`);
+    if (sp.m.filter(Boolean).length < 200 || !inside(a.hatTip) || (hat !== "none" && !sp.m.some(v => v === M.MAGIC || v === M.RUNE || v === M.MAGIC2 || v === M.COLLAR))) pbad.push(`hat ${hat} ${JSON.stringify(ex)} ${o.pose || "hover"}`);
   }
   ok(!missing.length && !("familiar" in Gn.WITCH_GENOME.accessories) && !Gn.WITCH_AXES.familiar && bigBrim >= 12 && longCloak >= 12 && !pbad.length, `witch variety (Ed): over 60 generated witches every accessory shows (${want.join(", ")}) and none has a familiar (Ed, 2026-10-08); ${bigBrim} brims over 1.5 times hers, ${longCloak} cloaks over 1.4 times; 12 party witches are generated witches, drawn in every party pose with their hand inside; every hat (${Gn.WITCH_AXES.hatShape.length}) draws flying and on foot at the sliders' ends, its tip inside, glowing but none, with the longest scarf, cloak, biggest bag and backpack${missing.length || pbad.length ? " — " + [...missing.map(k => "no " + k), ...pbad.slice(0, 4)].join("; ") : ""}`);
   // Ed (2026-10-06): every broom kind (art/brooms.js) draws in every flight pose and frame, both facings, and on foot (standing, landing,

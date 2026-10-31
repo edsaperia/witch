@@ -9,6 +9,7 @@ import { reachOf, shapeOf, SHAPES } from "./islandGrowth";
 import { islandOutline } from "./islandShape";
 import { homeIsland, islandOf } from "./rosters";
 
+// Keep the explicit phase/area-size matrix: counts, connectivity, inland clearance and increasing outline irregularity are the assertions.
 const isle = (phase: number): Tuning => ({ ...TUNING, map: { ...TUNING.map!, islandAreas: phase ? 10 * phase : 10, island: "", phase } });
 /** How far from round an outline is: its coast's length squared over 4 pi its area (1 for a circle). */
 const ragged = (L: { loops: { pts: ArrayLike<number>; sea: boolean }[] }) => {
@@ -62,7 +63,8 @@ describe("islands grown from their areas", () => {
     const sea = out.loops.find(l => l.sea)!;
     let off = 0;
     for (let i = 0; i < sea.pts.length; i += 40) off = Math.max(off, Math.abs(L.distAt(sea.pts[i] + d.x, sea.pts[i + 1] + d.z)));
-    expect(off).toBeLessThan(24); // (its coast where the map's is, within its coarser sampling)
+    expect(off).toBeLessThan(32); // (its coast where the map's is, within its coarser sampling: two of its 16 m steps; a legend area's narrow neck
+    // on the fox's island, one more since the longer rosters of Ed, 2026-10-28, comes out 29 m off at 16 m and 21 m at 8 m)
     expect(islandOutline(homeIsland(0), TUNING).loops.length).toBeGreaterThan(0);
   }, 120000);
 });

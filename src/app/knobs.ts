@@ -24,14 +24,13 @@ const fightDefault = () => (fightBuilt ??= { ...TUNING.fight });
 // pause page's sliders; ?fightScale=, ?fightSpeed= and ?fightMomentum= set where they start.
 function setFight({ tuning, playtest }: KnobNight, scale: number, speed: number, log = true, momentum = tuning.fight.momentum): void {
   const clamp = (x: number) => Math.round(Math.min(3, Math.max(0.25, x)) * 100) / 100;
-  tuning.fight.scale = clamp(scale); tuning.fight.speed = clamp(speed); tuning.fight.momentum = clamp(momentum); // (shared with the buffed tuning: live mid-fight)
+  tuning.fight.scale = clamp(scale); tuning.fight.speed = clamp(speed); tuning.fight.momentum = clamp(momentum); // (live mid-fight)
   if (log) playtest.fight(tuning.fight.scale, tuning.fight.speed, tuning.fight.momentum);
 }
 // Treetop speed, live (the world's knobs: see WORLD_DEFAULT in main.ts); area size and the map's are the link's (a new map).
-function setTreetop({ tuning, game, world, playtest }: KnobNight, speed: number, log = true): void {
+function setTreetop({ tuning, world, playtest }: KnobNight, speed: number, log = true): void {
   world.treetopSpeed = Math.round(Math.min(300, Math.max(8, speed)));
   tuning.treetopSpeed = world.treetopSpeed;
-  (game.buffs as { base?: unknown }).base = undefined; // (a legend's buffed copy is made afresh with it)
   if (log) playtest.world(world.areaSize, world.treetopSpeed, world.mapAreas);
 }
 
@@ -49,19 +48,19 @@ export function startKnobs(n: KnobNight, WORLD_DEFAULT: World, params: URLSearch
 }
 
 /** Wires the knobs' keys up, once a page, on whichever night is on (`at`); returns the pause page's live setters for them, by the link's param. */
-export function setupKnobs(at: () => KnobNight): Record<string, (v: string) => void> {
+export function setupKnobs(at: () => KnobNight, mutate: (label: string, action: () => void) => void = (_label, action) => action()): Record<string, (v: string) => void> {
   window.addEventListener("keydown", e => {
     const k = { BracketLeft: [1 / 1.1, 1, 1], BracketRight: [1.1, 1, 1], Semicolon: [1, 1 / 1.1, 1], Quote: [1, 1.1, 1], Comma: [1, 1, 1 / 1.1], Period: [1, 1, 1.1] }[e.code];
     if (!k) return;
     const n = at(), { tuning } = n, FIGHT_DEFAULT = fightDefault();
-    setFight(n, tuning.fight.scale * k[0], tuning.fight.speed * k[1], true, tuning.fight.momentum * k[2]);
+    mutate("fight keyboard tuning", () => setFight(n, tuning.fight.scale * k[0], tuning.fight.speed * k[1], true, tuning.fight.momentum * k[2]));
     keep("fightScale", tuning.fight.scale, FIGHT_DEFAULT.scale); keep("fightSpeed", tuning.fight.speed, FIGHT_DEFAULT.speed); keep("fightMomentum", tuning.fight.momentum, FIGHT_DEFAULT.momentum);
   });
   const f = () => at().tuning.fight;
   return {
-    fightScale: v => setFight(at(), +v, f().speed),
-    fightSpeed: v => setFight(at(), f().scale, +v),
-    fightMomentum: v => setFight(at(), f().scale, f().speed, true, +v),
-    treetopSpeed: v => setTreetop(at(), +v),
+    fightScale: v => mutate("fight scale", () => setFight(at(), +v, f().speed)),
+    fightSpeed: v => mutate("fight speed", () => setFight(at(), f().scale, +v)),
+    fightMomentum: v => mutate("fight momentum", () => setFight(at(), f().scale, f().speed, true, +v)),
+    treetopSpeed: v => mutate("treetop speed", () => setTreetop(at(), +v)),
   };
 }

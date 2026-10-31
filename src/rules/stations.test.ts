@@ -2,7 +2,9 @@
 // one at a time, with a little slack at the edge; never off foot in the house.
 import { describe, expect, it } from "vitest";
 import { TUNING } from "./tuning";
-import { newGame, stepGame, STEP, type Controls, type Game } from "./game";
+import { newGame as fullGame, stepGame, STEP, type Controls, type Game } from "./game";
+import { smallWorld } from "../test/worlds";
+const newGame = smallWorld(fullGame, "Dressing station proximity and camera framing use one house, independent of distant areas.");
 import { deckOf } from "./treehouse";
 import { HOUSE_ROOMS, objectFrontAt } from "./houseRooms";
 import { STATION_SLACK, broomWhere, stationAt, stationOf, tableOf } from "./stations";
@@ -29,7 +31,8 @@ function inHouse(dx: number, dz: number): Game {
 
 describe("the dressing stations by nearness", () => {
   it("are the creator's stations, and there are some", () => {
-    expect(STATIONS.map(o => o.id)).toEqual(expect.arrayContaining(["mirror", "wardrobe", "cloakPegs", "shoeRack", "bags", "broomBay", "lathe", "pegboard", "dressingTable"]));
+    expect(STATIONS.map(o => o.id)).toEqual(expect.arrayContaining(["mirror", "wardrobe", "cloakPegs", "shoeRack", "bags", "lathe", "dressingTable"]));
+    expect(STATIONS.map(o => o.id)).not.toContain("broomBay"); expect(STATIONS.map(o => o.id)).not.toContain("pegboard"); // (the broom one station, at the lathe: Ed, 2026-10-29)
   });
 
   it("in the game, each bedroom station (dressed before the door: Ed, 2026-10-21) opens with her standing at it", () => {
@@ -85,8 +88,23 @@ describe("the dressing stations by nearness", () => {
     expect(stationOf(g, "mirror")).toBeNull();
   });
 
-  it("choosing there, the camera eases in on her and aside from the panel; walking off, back out", () => {
+  it("choosing there, with her whole framed (camera.station.whole), the rules leave the camera's distance and aim to the view (render/view/camera.ts) but ease in and out", () => {
     const p = objectFrontAt(obj("wardrobe"), at, 0.5), g = inHouse(p.x, p.z), S = g.tuning.camera.station!;
+    expect(S.whole?.on).toBe(true);
+    const pose = () => cameraPose(g.camera, g.witch.lift, g.tuning);
+    for (let i = 0; i < 4 / STEP; i++) stepGame(g, idle, STEP);
+    const before = pose();
+    for (let i = 0; i < 3 * S.ease / STEP; i++) stepGame(g, { ...idle, framing: true }, STEP);
+    expect(g.camera.station).toBeGreaterThan(0.95);
+    expect(pose().distance).toBeCloseTo(before.distance, 3); expect(pose().aim ?? 0).toBe(0);
+    for (let i = 0; i < 3 * S.ease / STEP; i++) stepGame(g, idle, STEP);
+    expect(g.camera.station).toBeLessThan(0.01);
+  });
+
+  // (with the whole framing off: the old zoom on the part being chosen, kept behind its switch)
+  const partsZoom = (g: Game) => { (g as { tuning: Game["tuning"] }).tuning = JSON.parse(JSON.stringify(g.tuning)); g.tuning.camera.station!.whole!.on = false; return g; };
+  it("choosing there (whole framing off), the camera eases in on her and aside from the panel; walking off, back out", () => {
+    const p = objectFrontAt(obj("wardrobe"), at, 0.5), g = partsZoom(inHouse(p.x, p.z)), S = g.tuning.camera.station!;
     const pose = () => cameraPose(g.camera, g.witch.lift, g.tuning);
     for (let i = 0; i < 4 / STEP; i++) stepGame(g, idle, STEP); // (the house's own view settled)
     const before = pose();
@@ -99,10 +117,10 @@ describe("the dressing stations by nearness", () => {
     expect(g.camera.station).toBeLessThan(0.01);
   });
 
-  it("choosing a row, the camera zooms on the part of her it's about (camera.station.parts): each part's own aim and distance", () => {
+  it("choosing a row (whole framing off), the camera zooms on the part of her it's about (camera.station.parts): each part's own aim and distance", () => {
     const P = TUNING.camera.station!.parts!;
     const settle = (part: string) => {
-      const p = objectFrontAt(obj("wardrobe"), at, 0.5), g = inHouse(p.x, p.z), S = g.tuning.camera.station!;
+      const p = objectFrontAt(obj("wardrobe"), at, 0.5), g = partsZoom(inHouse(p.x, p.z)), S = g.tuning.camera.station!;
       for (let i = 0; i < 4 * S.ease / STEP; i++) stepGame(g, { ...idle, framing: true, framePart: part }, STEP);
       return { pose: cameraPose(g.camera, g.witch.lift, g.tuning), cam: g.camera };
     };
@@ -126,7 +144,7 @@ describe("the dressing stations by nearness", () => {
     expect(at_.head.pose.distance).toBeLessThan(at_.feet.pose.distance);
     // the zoom and the station's never stack: zoomed all the way in first, the station frames her no closer than from the start's zoom
     const zoomedIn = (() => {
-      const p = objectFrontAt(obj("wardrobe"), at, 0.5), g = inHouse(p.x, p.z), S = g.tuning.camera.station!;
+      const p = objectFrontAt(obj("wardrobe"), at, 0.5), g = partsZoom(inHouse(p.x, p.z)), S = g.tuning.camera.station!;
       for (let i = 0; i < 20; i++) stepGame(g, { ...idle, zoom: -1 }, STEP);
       for (let i = 0; i < 4 * S.ease / STEP + 600; i++) stepGame(g, { ...idle, framing: true, framePart: "head" }, STEP);
       return cameraPose(g.camera, g.witch.lift, g.tuning);
@@ -158,8 +176,9 @@ describe("the dressing stations by nearness", () => {
 
 describe("where her broom is on foot in the house (Ed, 2026-10-23: \"only while she's at the bay. otherwise she holds it when she's on the terrace\")", () => {
   const where = (g: Game) => broomWhere(g, stationOf(g, null)?.id ?? null);
-  it("resting on the bay while she stands at the bay, on the lathe while she's at the lathe", () => {
-    for (const [id, want] of [["broomBay", "bay"], ["lathe", "lathe"]] as const) { const p = before(id, 0.5), g = inHouse(p.x, p.z); expect(stationOf(g, null)?.id, id).toBe(id); expect(where(g), id).toBe(want); }
+  it("on the lathe while she's at the lathe (the broom's one station since 2026-10-29); by the bay, not a station now, none", () => {
+    const p = before("lathe", 0.5), g = inHouse(p.x, p.z); expect(stationOf(g, null)?.id).toBe("lathe"); expect(where(g)).toBe("lathe");
+    const b = before("broomBay", 0.5); expect(stationOf(inHouse(b.x, b.z), null)).toBeNull(); expect(where(inHouse(b.x, b.z))).toBe("none");
   });
   it("in her hand on the Terrace (the hub's floor)", () => {
     const d = deck(newGame(123, TUNING)), g = inHouse(0, d.r * 0.3);

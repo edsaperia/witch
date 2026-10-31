@@ -697,6 +697,21 @@
     "lightRings.strength": {
       "what": "a band at its brightest (in the moon's hue, paled), added as light."
     },
+    "light.spooky.unlit": {
+      "what": "How dark the forest is where nothing lights it: the ambient and the moonlight on ground, trees, bushes and creatures times this, while the lights (her glow, the party's, fires, lava, runestones, sigils) stay as they are (1 as before).",
+      "decisions": [
+        {
+          "by": "Ed's playtest",
+          "date": "2026-10-29",
+          "quote": "Contrast on the visuals seems low; the important parts of the scene don't stand out very well. The unlit forest needs to be darker.",
+          "rest": "v5399; measured with tools/shot/contrast.cjs"
+        }
+      ],
+      "links": [
+        "render/lighting.ts",
+        "render/view.ts"
+      ]
+    },
     "holograms": {
       "what": "Each soundsystem projects a turning hologram of its area's animal sigil into the sky above the trees.",
       "decisions": [
@@ -841,7 +856,15 @@
       ]
     },
     "tiltShift.strength": {
-      "what": "the blur at the screen's edges, in pixels."
+      "what": "the blur at the screen's edges, in pixels.",
+      "decisions": [
+        {
+          "by": "Ed",
+          "date": "2026-10-29",
+          "quote": "reduce the tilt shift effect at top and bottom by 50%",
+          "rest": "via the coordinator, after the art director's measurement of \"the pixels are just hard to read\" (previews/ed/blur/); 1.5 → 0.75"
+        }
+      ]
     },
     "tiltShift.band": {
       "what": "the height of the sharp band (0-1 of the screen)."
@@ -866,6 +889,47 @@
         }
       ],
       "notes": "the strength and band over the treetops (Ed, v160: a stronger miniature look there), blended in as she rises [1]; ?tilt=<strength>,<band> tries treetop values live; It blurs at the low resolution, before the pixels are scaled up; ?tilt=off turns it off. The night sky over the bend is blurred with the rest, the tilt-shift the last thing done to the finished, bent picture [2]."
+    },
+    "tiltShift.treetop.strength": {
+      "what": "The tilt-shift's blur over the treetops, in pixels, blended in by lift.",
+      "decisions": [
+        {
+          "by": "Ed",
+          "date": "2026-10-29",
+          "quote": "reduce the tilt shift effect at top and bottom by 50%",
+          "rest": "via the coordinator, after the art director's measurement of \"the pixels are just hard to read\" (previews/ed/blur/); 3 → 1.5"
+        }
+      ]
+    },
+    "sigilSpill.stack": {
+      "what": "The light the bottom sigil of her stack throws from over her hat, in its colour (0 none).",
+      "decisions": [
+        {
+          "by": "Ed",
+          "date": "2026-10-29",
+          "quote": "the warm light is probably the sigil stack lighting; it takes the colour of the bottom sigil. We're replacing this with the wisps.",
+          "rest": "0.35 → 0"
+        }
+      ]
+    },
+    "light.spooky.wildGlow": {
+      "what": "Her glow cooled toward a teal while she's in an area the party hasn't reached, eased in and out as she crosses.",
+      "decisions": [
+        {
+          "by": "Ed",
+          "date": "2026-10-29",
+          "quote": "the overall lighting palette should be an eerie blue/green; this is to contrast with the bright and warm post-soundsystem lighting"
+        }
+      ]
+    },
+    "light.spooky.wildGlow.mix": {
+      "what": "How far her glow is cooled in the wild (0 her own colour everywhere)."
+    },
+    "light.spooky.wildGlow.colour": {
+      "what": "The colour (0-255) her glow cools toward in the wild."
+    },
+    "light.spooky.wildGlow.ease": {
+      "what": "How long (s) her glow takes to cool or warm as she crosses into or out of the party's ground."
     }
   }
 }

@@ -1,0 +1,83 @@
+{
+  "sourceHead": "395a07f918de74356badd7abd8b415d06a805503",
+  "base": "909f00aeed24a72654b1a48c04faad4ac558e865",
+  "since": "2026-10-23T12:00:00Z",
+  "until": "2026-10-30T12:00:00Z",
+  "finished": true,
+  "rows": 1456,
+  "unsupported": 0,
+  "elapsedMs": 535370.9201999999,
+  "analyses": 768,
+  "reused": 2144,
+  "metrics": {
+    "reachable": {
+      "house": {
+        "comparable": 922,
+        "oldGlobal": 168,
+        "perKind": 162,
+        "avoided": 30,
+        "additional": 24
+      },
+      "creature": {
+        "comparable": 1456,
+        "oldGlobal": 294,
+        "perKind": 252,
+        "avoided": 76,
+        "additional": 34
+      },
+      "type": {
+        "comparable": 1456,
+        "oldGlobal": 294,
+        "perKind": 273,
+        "avoided": 55,
+        "additional": 34
+      },
+      "all": {
+        "comparable": 1443,
+        "oldGlobal": 281,
+        "perKind": 239,
+        "avoided": 76,
+        "additional": 34
+      }
+    },
+    "firstParent": {
+      "house": {
+        "comparable": 200,
+        "oldGlobal": 44,
+        "perKind": 43,
+        "avoided": 9,
+        "additional": 8
+      },
+      "creature": {
+        "comparable": 304,
+        "oldGlobal": 74,
+        "perKind": 61,
+        "avoided": 23,
+        "additional": 10
+      },
+      "type": {
+        "comparable": 304,
+        "oldGlobal": 74,
+        "perKind": 65,
+        "avoided": 19,
+        "additional": 10
+      },
+      "all": {
+        "comparable": 301,
+        "oldGlobal": 71,
+        "perKind": 58,
+        "avoided": 23,
+        "additional": 10
+      }
+    }
+  },
+  "limits": [
+    "Fixed pinned-909 global input rule; not historical hash implementations or release counts.",
+    "Each historical source layout is analyzed; the new helper split is not assumed to have existed all week.",
+    "Source fingerprints only; existing runtime style/id/seed/scale salts and actual browser storage/hit timing are not replayed.",
+    "House is comparable only where both revisions have housePiece. All-kind rows require equal kind sets.",
+    "Type exists in every cached historical kind set; party fingerprints are counted as source kinds although party sheets are not persisted.",
+    "All-creature walking and fox use the same conservative creature-kind fingerprint; no per-species pruning.",
+    "Avoided and additional source invalidations are separate; additional conservative misses are not proof that pixels changed."
+  ]
+}

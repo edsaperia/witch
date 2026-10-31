@@ -8,8 +8,11 @@ import { generateMap } from "./map";
 import { Forest } from "./forest";
 import { LEGENDS, placeRelics, relicKinds } from "./legends";
 import { PARTY_RELICS } from "../../art/partyRelics.js";
-import { newGame, stepGame } from "./game";
+import { newGame as fullGame, stepGame } from "./game";
+import { smallWorld } from "../test/worlds";
 
+const newGame = smallWorld(fullGame, "Drinking a relic checks one local flask/sigil and four relocated followers, independent of world extent.");
+// Keep placement's radius seed matrix and explicit 10–64-area islands: remoteness, minimum gaps and relic counts depend on those sizes.
 const SEEDS = [1, 2, 3, 7, 42, 123, 999, 4242, 31337, 165272, 922199, 2026];
 
 describe("legend relics on the map", () => {

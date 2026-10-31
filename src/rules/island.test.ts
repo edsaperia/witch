@@ -11,6 +11,7 @@ import { routeOf } from "./party";
 import { newGame, stepGame, STEP } from "./game";
 import { spawnCreatures } from "./creatures";
 
+// Keep the explicit 10–50-area matrix: exact area counts, coast reach, route exhaustion and size-independent swarm scaling are tested against it.
 const island = (n: number): Tuning => ({ ...TUNING, map: { ...TUNING.map!, islandAreas: n } });
 
 describe("islands by area count (map.islandAreas)", () => {

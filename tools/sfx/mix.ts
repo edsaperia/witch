@@ -32,7 +32,7 @@ const chatter = (at: number, bursts: number, g = "💌 chatter", gh = "💌 hits
   for (let b = 0; b < bursts; b++) for (let i = 0; i < 3; i++) {
     const t = at + b * 0.6 + i * 0.12, k = (b * 3 + i) / (bursts * 3);
     out.push({ at: t, g, play: s => s.letter(0) });
-    out.push({ at: t + 0.25, g: gh, play: s => { s.hit(0.2); s.fill(Math.min(1, k), 0.2); if (i === 1) s.reply(v("hare", 0), k, 0.2); } });
+    out.push({ at: t + 0.25, g: gh, play: s => { s.hit(0.2); s.fill(Math.min(1, k), 0.2); s.thunk(Math.min(1, k), 0.2); if (i === 1) s.reply(v("hare", 0), k, 0.2); } });
   }
   return out;
 };

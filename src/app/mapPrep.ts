@@ -6,11 +6,13 @@
 // IndexedDB under the build, the seed and the tuning. The page, landing (&arrive=1), takes them if they match and makes the map
 // from them (the same map: src/rules/mapPrep.test.ts); if none is ready, or it doesn't match, it makes the map as before.
 import { generateMap, hydrateMap, prepProblem, type ForestMap, type MapPrep } from "../rules/map";
+import { postTracedJob } from "./workerJobTrace";
 import { rememberWorld } from "../rules/rosters";
 import type { Tuning } from "../rules/tuning";
 import { hashText } from "../render/artCache";
 import { tuningFromLink } from "./linkParams";
 import { applySavedSettings } from "./settings";
+import { applySettings, currentSettings } from "./playerSettings";
 import { applyLoadRungs } from "./ladder";
 import { getPrep, type PrepAsk, type PrepRecord } from "./mapPrepStore";
 
@@ -28,6 +30,7 @@ export function sailTuning(island: string, world: number | undefined, seed: numb
   const { tuning } = tuningFromLink(params);
   applySavedSettings(tuning, undefined, new Set());
   applyLoadRungs(tuning);
+  applySettings(currentSettings(), tuning); // (as the night's will be: app/night.ts)
   return tuning;
 }
 
@@ -36,22 +39,27 @@ export let prepUsed: "worker" | "none" | "stale" | "unsound" | "failed" = "none"
 /** The worker's own time making it (ms), and the hydrate's here: one slower than the other is logged (?timing=1 has the step too). */
 let workerMs = 0;
 export let hydrateMs = 0;
+const prepMark = (seed: number, ms = 0): void => { try { performance.mark('witch:map-prep-source', { detail: { seed, status: prepUsed, workerMs, hydrateMs, checkMs: ms } }); } catch { /* no performance timeline */ } };
 
 /** A ready map for this night (the worker's record, from IndexedDB or straight from the worker), checked: if it's this night's (the
  *  build, the seed and the whole tuning), its archipelago is taken as worldOf's and its prep returned, for newGame (or a night
  *  started in place: docs/plans/sail-without-reload.md, startNight) to make the map from; else null, and the map's made as ever. */
 export function useReadyMap(rec: PrepRecord | null, seed: number, tuning: Tuning): MapPrep | null {
-  if (!rec) return null;
+  const t0 = performance.now();
+  prepUsed = 'none'; workerMs = 0; hydrateMs = 0; // diagnostics belong to this night, not the preceding successful prep
+  if (!rec) { prepMark(seed); return null; }
   if (rec.key !== prepKey(seed, tuning)) {
     prepUsed = "stale";
+    prepMark(seed, performance.now() - t0);
     // (which of the tuning's groups differ, if it was this seed's: a sailing whose tuning the chart didn't foresee)
     if (rec.key.split("|")[1] === String(seed) && rec.tuning) console.info("map prep: another tuning's", Object.keys(tuning).filter(k => JSON.stringify((tuning as unknown as Record<string, unknown>)[k]) !== JSON.stringify((rec.tuning as unknown as Record<string, unknown>)[k])));
     return null;
   }
   const bad = prepProblem(rec.prep);
-  if (bad) { prepUsed = "unsound"; console.warn("map prep: unsound, made afresh:", bad); return null; }
+  if (bad) { prepUsed = "unsound"; prepMark(seed, performance.now() - t0); console.warn("map prep: unsound, made afresh:", bad); return null; }
   rememberWorld(rec.arch);
   prepUsed = "worker"; workerMs = rec.ms;
+  prepMark(seed, performance.now() - t0);
   return rec.prep;
 }
 
@@ -63,10 +71,11 @@ export function readyMap(seed: number, tuning: Tuning, prep: MapPrep | null): Fo
     try {
       const map = hydrateMap(seed, tuning, prep);
       hydrateMs = performance.now() - t0;
+      try { performance.mark('witch:map-hydrated', { detail: { seed, ms: hydrateMs, workerMs } }); } catch { /* no timeline */ }
       // (by construction a hydrate skips the work the worker did: one slower than the worker's whole making is a regression to see)
       if (workerMs > 0 && hydrateMs > workerMs) console.warn(`map prep: hydrate ${Math.round(hydrateMs)} ms, slower than making it (${Math.round(workerMs)} ms in the worker)`);
       return map;
-    } catch (err) { prepUsed = "failed"; console.warn("map prep: hydrate failed, made afresh:", err); }
+    } catch (err) { prepUsed = "failed"; prepMark(seed); console.warn("map prep: hydrate failed, made afresh:", err); }
   }
   return generateMap(seed, tuning);
 }
@@ -74,7 +83,7 @@ export function readyMap(seed: number, tuning: Tuning, prep: MapPrep | null): Fo
 /** The page's, after a reload: the ready map the worker kept for this night, if any (useReadyMap); never waits more than `ms`
  *  for IndexedDB. */
 export async function takeMapPrep(seed: number, tuning: Tuning, ms = 1500): Promise<MapPrep | null> {
-  if (typeof indexedDB === "undefined") return null;
+  if (typeof indexedDB === "undefined") return useReadyMap(null, seed, tuning);
   return useReadyMap(await Promise.race([getPrep(), new Promise<null>(res => setTimeout(() => res(null), ms))]), seed, tuning);
 }
 
@@ -88,7 +97,7 @@ function prepInWorker(seed: number, tuning: Tuning, send: boolean, keep = true):
     worker = new Worker(new URL("./mapPrep.worker.ts", import.meta.url), { type: "module" });
     worker.onmessage = (e: MessageEvent<{ ok: boolean; rec?: PrepRecord }>) => { finish(e.data.rec ?? e.data.ok); worker?.terminate(); worker = null; };
     worker.onerror = () => { finish(null); worker?.terminate(); worker = null; };
-    worker.postMessage({ key: prepKey(seed, tuning), seed, tuning, send, noKeep: !keep } satisfies PrepAsk);
+    postTracedJob(worker, { key: prepKey(seed, tuning), seed, tuning, send, noKeep: !keep } satisfies PrepAsk, 'map-prep', seed);
   } catch { finish(null); }
   return { done, stop() { worker?.terminate(); worker = null; finish(null); } };
 }
@@ -111,6 +120,7 @@ export function startBootMapPrep(seed: number, params: URLSearchParams, ms = 100
     const linkSets = new Set((params.get("set") ?? "").split(";").map(p => p.split("=")[0]).filter(Boolean));
     applySavedSettings(tuning, undefined, linkSets);
     applyLoadRungs(tuning, linkSets); // (as the night's will be: app/night.ts)
+    applySettings(currentSettings(), tuning);
     const job = prepInWorker(seed, tuning, true, false);
     const late = setTimeout(() => job.stop(), ms);
     return job.done.then(r => { clearTimeout(late); return r && typeof r === "object" ? r : null; });

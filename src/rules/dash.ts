@@ -44,14 +44,6 @@ export function rechargeDash(d: DashState, time: number, max: number, cooldown: 
   if (d.charges < 1) d.readyAt = Math.max(d.readyAt, d.chargeAt);
 }
 
-/** A charge given back (Stoat's Frenzy: an animal won over). */
-export function refundDash(d: DashState, time: number, max: number): void {
-  if (d.charges >= max) return;
-  d.charges++;
-  if (d.charges >= max) d.chargeAt = Infinity;
-  d.readyAt = Math.min(d.readyAt, time);
-}
-
 /** How long a blink keeps her gone (dash.gone; with committed strikes on, long enough to blink through a lunge: dodge.a.gone). */
 export const blinkGone = (t: Tuning): number => (t.dodge?.a.on ? Math.max(t.dash.gone, t.dodge.a.gone) : t.dash.gone);
 

@@ -19,13 +19,17 @@ import { TUNING } from "../rules/tuning";
 import { islandSigil } from "../../art/sigils.js";
 import { CHART_PIXEL, releaseSeaChart, SeaChart, takeSeaChart, type ChartIsland, type FlightEnd, type FlyOptions } from "../render/chart/seaChart";
 import { loadSave, unlocked, unvisited, type ChartSave } from "./chartSave";
+import { unlockAll } from "./debugUnlock";
 import { ChartPin } from "../render/chart/chartPin";
 import { islandAt } from "./chartLayout";
 import { stepTo } from "./chartNav";
 import type { OutlineAsk, OutlineDone } from "./chartOutlines.worker";
+import { postTracedJob } from "./workerJobTrace";
 import { writeArrival } from "./arrival";
 import { chartOrder, islandPhase, OUTLINE_STEP } from "./chartWarm";
-import { chartChoice, type ChartHere } from "./sail";
+import { chartChoice, chartOpensOn, type ChartHere } from "./sail";
+import { bindings, type ActionId } from "../platform/bindings";
+import { chartHint, type HintDevice } from "../ui/deviceHints";
 
 export type ChartMode = "look" | "sail" | "miniature";
 /** Where the chart's flight hands over to the game's dive (the tuning's arrive.handoff; Ed, 2026-10-24: "maybe it comes from further
@@ -55,6 +59,7 @@ export interface ChartViewOptions {
    *  first frames to be drawn there ahead); resolves once it's ready for the dive. The flight slows to wait for it (seaChart.ts
    *  FlyOptions, the tuning's arrive.hold), then `onSail` as ever. */
   onDepart?: (island: string, seed: number, at: FlightEnd["cam"] | null) => Promise<void>;
+  onLandingDue?: (dueAt: number) => void;
   /** Look and sail modes: a Close button and Esc. */
   onClose?: () => void;
   /** Sail mode over a night (the map table's, the cards'): the island she's on, and its button's words ("Back to the party"):
@@ -184,11 +189,13 @@ export function mountChart(host: HTMLElement, opts: ChartViewOptions): ChartView
   }
   ($("home") as HTMLElement).hidden = !sailing || !!table; $("sail-any").hidden = !sailing; $("close").hidden = !opts.onClose || !!table;
   if (table) { root.classList.add("table"); $("top").hidden = true; $("world").hidden = true; $("zoom-in").hidden = true; $("zoom-out").hidden = true; $("corner").append($("sail-any")); }
-  $("hint").textContent = table
-    ? "point, or the arrows / d-pad / right stick, to choose · hold the mouse, Space or Enter (✕ on a pad) on an island to sail · E (□) to put it down · sigils: islands you can sail to · gold rings: won"
-    : sailing
-    ? "Tap an island to look at it, again to sail · arrows / stick to choose, Enter / A to sail · sigils: islands you can sail to · gold rings: won"
-    : "Tap an island to look at it · arrows / stick to choose · sigils: islands you can sail to · gold rings: won";
+  let hintDevice: HintDevice = "keys";
+  const hint = $("hint");
+  const showHint = () => { const text = chartHint(hintDevice, !!table, sailing); if (hint.textContent !== text) hint.textContent = text; };
+  const useDevice = (device: HintDevice) => { hintDevice = device; showHint(); };
+  showHint();
+  root.addEventListener("pointerdown", e => useDevice(e.pointerType === "touch" ? "touch" : "keys"), on);
+  root.addEventListener("pointermove", e => { if (e.pointerType === "mouse") useDevice("keys"); }, on);
 
   if (mini) chart.orbit = 0.12;
   let save = opts.save ?? loadSave(), islands: ChartIsland[] = [];
@@ -258,7 +265,7 @@ export function mountChart(host: HTMLElement, opts: ChartViewOptions): ChartView
     performance.mark("chart:sail");
     bakeFor(id); // (sailing straight there: drawn through the flight)
     const early = !!opts.onDepart && !!opts.onSail && chart.flightEnd(id!, dive) !== null;
-    const hold = early ? { hold: () => departed?.island !== id || !departed.ready, slow: TUNING.arrive?.hold } : {};
+    const hold = early ? { hold: () => departed?.island !== id || !departed.ready, slow: TUNING.arrive?.hold, landingDue: opts.onLandingDue } : {};
     if (!chart.fly(id!, end => { writeArrival(id!, w, end); void go(id!, end); }, { ...dive, ...hold })) { void go(id!); return; }
     if (early) void depart(id!);
     root.classList.add("flying");
@@ -306,21 +313,21 @@ export function mountChart(host: HTMLElement, opts: ChartViewOptions): ChartView
   /** An island's fine grid for the close zoom: kept, or made (the worker given the world first if it's new). */
   function detail(id: string): void {
     const fresh = !worker, wk = make();
-    if (fresh) wk?.postMessage({ world: worldNow(), found: [...save.found], ids: [], step: OUTLINE_STEP } satisfies OutlineAsk);
-    wk?.postMessage({ detail: id } satisfies OutlineAsk);
+    if (fresh && wk) postTracedJob(wk, { world: worldNow(), found: [...save.found], ids: [], step: OUTLINE_STEP } satisfies OutlineAsk, 'chart:request', 'initialize');
+    if (wk) postTracedJob(wk, { detail: id } satisfies OutlineAsk, 'chart:request', id);
   }
   function outlines(): void {
     const w = worldNow(), found = [...save.found];
     const from = islands.find(i => i.id === (chart.selected ?? save.voyages.at(-1)?.to ?? "home")) ?? islands[0];
     const ids = chartOrder(islands.filter(i => !i.outline && !waiting.has(i.id)), from); // (home and hers first, then by phase, earliest first, the nearest the chosen first within one: Ed, 2026-10-19)
     if (!ids.length) { if (poll) { clearInterval(poll); poll = null; } return; }
-    make()?.postMessage({ world: w, found, ids, step: OUTLINE_STEP, cacheOnly: mini } satisfies OutlineAsk);
+    const wk = make(); if (wk) postTracedJob(wk, { world: w, found, ids, step: OUTLINE_STEP, cacheOnly: mini } satisfies OutlineAsk, 'chart:request', 'outlines', ids.length);
     if (mini && !poll) poll = setInterval(outlines, 4000);
   }
 
   /** Every island, always: home and each found with its sigil, sailable; the rest bare land, the placeholders dimmest. */
   function build(): void {
-    const open = new Set(sailAny ? ["home", ...REAL_KINDS] : unlocked(save)), won = new Set(save.won), w = worldNow(), fresh = new Set(unvisited(save, opts.here?.island));
+    const open = new Set(sailAny || unlockAll() ? ["home", ...REAL_KINDS] : unlocked(save)) /* (or the pause page's Unlock everything: app/debugUnlock.ts) */, won = new Set(save.won), w = worldNow(), fresh = new Set(unvisited(save, opts.here?.island));
     const one = (id: string, radii: ArrayLike<number>, sigil: string): ChartIsland => {
       const at = islandAt(id, w)!, unknown = isPlaceholder(id);
       return { id, x: at.x, y: at.y, phase: islandPhase(id, w), radii, sail: open.has(id) && !unknown, unknown, won: won.has(id), fresh: open.has(id) && !unknown && fresh.has(id), sigil };
@@ -344,7 +351,7 @@ export function mountChart(host: HTMLElement, opts: ChartViewOptions): ChartView
   function choose(id: string | null, instant = false, aim = true): void {
     chart.select(id, instant); ranked();
     if (aim) bakeFor(id); // (her choice: drawn ahead; the chart's own first selection isn't hers, likely() is)
-    if (id && worker && !islands.find(i => i.id === id)?.outline && !waiting.has(id)) worker.postMessage({ first: id } satisfies OutlineAsk);
+    if (id && worker && !islands.find(i => i.id === id)?.outline && !waiting.has(id)) postTracedJob(worker, { first: id } satisfies OutlineAsk, 'chart:request', id);
     // and its fine grid for the close zoom, made next (only the chosen island's: about 0.5 to 2 s)
     if (id && !mini && !((waiting.get(id) ?? islands.find(i => i.id === id)?.outline) as OutlineDone | undefined)?.detail) detail(id);
     const isl = islands.find(i => i.id === id), card = $("card"), sail = $<HTMLAnchorElement>("sail");
@@ -399,6 +406,7 @@ export function mountChart(host: HTMLElement, opts: ChartViewOptions): ChartView
   // Keys: the arrows step island to island, Enter or Space sails, + and - zoom, Esc closes.
   const step = (dx: number, dy: number) => { const next = stepTo(islands, chart.selected ?? "home", dx, dy); if (next) choose(next); };
   const onKey = (e: KeyboardEvent) => {
+    useDevice("keys");
     if (chart.flying) { e.preventDefault(); chart.skipFlight(); return; } // (any key: on to the end of the flight)
     if ((e.target as HTMLElement)?.closest?.("input")) return; // (typing a seed)
     if ((e.target as HTMLElement)?.closest?.("button, a") && (e.key === "Enter" || e.key === " ")) return; // (a focused button's own)
@@ -416,25 +424,26 @@ export function mountChart(host: HTMLElement, opts: ChartViewOptions): ChartView
   const onKeyUp = (e: KeyboardEvent) => { if (table && (e.key === "Enter" || e.key === " ")) holdEnd("key"); };
   if (table) addEventListener("keyup", onKeyUp);
 
-  // A gamepad: the d-pad or the left stick steps (repeating while held), A sails, B closes, the shoulders zoom.
-  let padWait = 0, squareWas = true; // (square: held, as it brought the chart up, till it's let go)
+  // A gamepad, as bound (platform/bindings.ts, Ed's layout 2026-10-28): the menu's directions step (the d-pad or the left stick,
+  // repeating while held), choose (cross) sails, back (circle) closes or puts it down, its zoom (the triggers) zooms.
+  let padWait = 0, chooseWas = true, padButtons: boolean[] = []; // (choose: held, as the use button that brought the chart up is cross too, till it's let go)
   function pad(dt: number): void {
     const p = [...(navigator.getGamepads?.() ?? [])].find(g => g?.connected); if (!p) return;
+    const pressed = p.buttons.map(b => b.pressed);
+    if (pressed.some((b, i) => b && !padButtons[i]) || p.axes.some(a => Math.abs(a) > 0.5)) useDevice("pad");
+    padButtons = pressed;
     padWait -= dt;
     if (chart.flying) { if (p.buttons.some(x => x.pressed)) chart.skipFlight(); return; }
-    const b = (i: number) => !!p.buttons[i]?.pressed;
-    // (at a table either stick chooses, she standing still at it; elsewhere the left)
     if (left) return;
-    const big = (i: number) => (table && Math.abs(p.axes[i + 2] ?? 0) > Math.abs(p.axes[i] ?? 0) ? p.axes[i + 2] : p.axes[i]) ?? 0;
-    const ax = big(0), ay = big(1);
-    const dx = b(15) ? 1 : b(14) ? -1 : Math.abs(ax) > 0.5 ? Math.sign(ax) : 0, dy = b(13) ? 1 : b(12) ? -1 : Math.abs(ay) > 0.5 ? Math.sign(ay) : 0;
+    const buttons = p.buttons.map(x => x.pressed), held = (id: ActionId) => bindings.padHeld(id, buttons, p.axes);
+    const dx = held("menu.right") ? 1 : held("menu.left") ? -1 : 0, dy = held("menu.down") ? 1 : held("menu.up") ? -1 : 0;
     if ((dx || dy) && padWait <= 0) { step(dx, dy); padWait = 0.28; } else if (!dx && !dy) padWait = 0;
-    if (table && b(2) && !squareWas) { leave(); return; } // (square, the use button, again: put away)
-    squareWas = b(2);
-    if (table) { if (b(0)) holdStart(chart.selected, "pad"); else holdEnd("pad"); } // (at a table cross held sails, as Space)
-    else if (b(0) && padWait <= 0) { sailTo(chart.selected); padWait = 0.5; }
-    if (b(1) && padWait <= 0) { if (table) leave(); else if (opts.onClose) opts.onClose(); padWait = 0.5; }
-    if (b(4)) chart.zoom(1 + dt); if (b(5)) chart.zoom(1 - dt * 0.8);
+    const choose = held("menu.choose") && !chooseWas;
+    if (!held("menu.choose")) chooseWas = false;
+    if (table) { if (held("menu.choose") && !chooseWas) holdStart(chart.selected, "pad"); else holdEnd("pad"); } // (at a table choose held sails, as Space)
+    else if (choose && padWait <= 0) { sailTo(chart.selected); padWait = 0.5; }
+    if (held("menu.back") && padWait <= 0) { if (table) leave(); else if (opts.onClose) opts.onClose(); padWait = 0.5; }
+    if (held("menu.zoomOut")) chart.zoom(1 + dt); if (held("menu.zoomIn")) chart.zoom(1 - dt * 0.8);
   }
 
   // Testing (Ed, 2026-10-12: "please give a button that lets me go to island even if I haven't unlocked them yet"): every island
@@ -460,14 +469,14 @@ export function mountChart(host: HTMLElement, opts: ChartViewOptions): ChartView
   setTimeout(() => {
     if (disposed) return;
     build();
-    choose(opts.start ?? save.voyages.at(-1)?.to ?? "home", true, false);
+    choose(chartOpensOn(opts.start, opts.here, worldNow(), save.voyages.at(-1)?.to), true, false); // (the island she's on, however it's opened: app/sail.ts)
     bakeFor(likely()); // (the next island's trees drawn ahead from the moment the chart opens: app/landingBake.ts)
   }, 50);
 
   return {
     canvas, chart,
     islands: () => islands,
-    update(dt, time) { if (!mini) pad(dt); holdFrame(); wrapOne(); chart.frame(dt, time); const box = canvas.getBoundingClientRect(); for (const [id, p] of pins) p.update(!chart.flying && !left ? chart.screenTopOf(id) : null, box, time, id === chart.selected ? 0 : 1, dt); }, // (each 🧭 over its island's top, never on it; faded while its island's the one chosen)
+    update(dt, time) { if (!mini) { pad(dt); showHint(); } holdFrame(); wrapOne(); chart.frame(dt, time); const box = canvas.getBoundingClientRect(); for (const [id, p] of pins) p.update(!chart.flying && !left ? chart.screenTopOf(id) : null, box, time, id === chart.selected ? 0 : 1, dt); }, // (each 🧭 over its island's top, never on it; faded while its island's the one chosen)
     resize, choose,
     dispose() {
       disposed = true; waiting.clear();

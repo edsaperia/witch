@@ -1,0 +1,89 @@
+{
+  "sha": "523b5cec0",
+  "measurement": "Source-only reconstruction; no GLSL/ANGLE compilation, browser run or runtime shader change",
+  "fixture": {
+    "seed": 424242,
+    "world": 0,
+    "island": "fox",
+    "phase": 1,
+    "zoo": false,
+    "lakes": true,
+    "lakeLooks": [
+      "water"
+    ],
+    "lakeCount": 1
+  },
+  "source": {
+    "rawChars": 67567,
+    "fingerprint": "67567:ccd080b1",
+    "activePlainLakesChars": 55391,
+    "activeNoCommentsChars": 39299,
+    "conditionalBlocks": [
+      {
+        "define": "GROUND_LAKES",
+        "chars": 12620
+      },
+      {
+        "define": "GROUND_BEACH",
+        "chars": 12098
+      },
+      {
+        "define": "GROUND_LAKES",
+        "chars": 5451
+      }
+    ],
+    "sharedChunks": {
+      "LIGHT_GLSL": {
+        "chars": 8405,
+        "noComments": 4968
+      },
+      "FX_FIELD_GLSL": {
+        "chars": 807,
+        "noComments": 807
+      },
+      "NATIVE_GLSL": {
+        "chars": 510,
+        "noComments": 412
+      },
+      "HEIGHT_GLSL": {
+        "chars": 629,
+        "noComments": 629
+      },
+      "AREA_GLSL": {
+        "chars": 785,
+        "noComments": 662
+      },
+      "VALUE_NOISE_GLSL": {
+        "chars": 372,
+        "noComments": 372
+      },
+      "BAYER_GLSL": {
+        "chars": 152,
+        "noComments": 152
+      },
+      "LAKE_LOOKS_GLSL": {
+        "chars": 12087,
+        "noComments": 10042
+      }
+    }
+  },
+  "candidate": {
+    "name": "Compile out biome-lake library and LK-special branch when immutable lakeLooks.any contains only water",
+    "libraryChars": 12087,
+    "specialBranchChars": 507,
+    "estimatedActiveChars": 42797,
+    "estimatedActiveNoCommentsChars": 28750,
+    "removedChars": 12594,
+    "removedNoCommentsChars": 10549
+  },
+  "deadForFixture": [
+    "GROUND_BEACH already excluded by preprocessing",
+    "non-water lake-look branches: reconstructed look set is water only",
+    "zoo plaza/streets/sigil branches: fox is not zoo, constructor flags/radii remain zero"
+  ],
+  "compileTimeAttribution": {
+    "perFeatureMilliseconds": null,
+    "reason": "Readiness spans include driver work and contention; no ablation or compiler CPU profile exists. Source size is not proportional to compile time."
+  },
+  "proposalOnly": true
+}

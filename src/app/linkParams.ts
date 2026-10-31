@@ -1,3 +1,4 @@
+import { slotStorage } from "./saveSlots";
 // The link's switches (?px=, ?tilt=, ?music=, ?hills=, ?shape=, ...): the tuning for this load, made from the tuning file
 // and the page's query parameters (and the world's knobs kept on this browser). Called once, before the game is made.
 import { TUNING } from "../rules/tuning";
@@ -8,20 +9,23 @@ import { zooCoastsHeld } from "./zooCoasts";
 import { applySet } from "./repro";
 import { loadoutFrom } from "./loadout";
 import { hatsFrom } from "./hatSave";
+import { unlockAll } from "./debugUnlock";
 import { loadBroom } from "./broomSave";
 import { applyOwn } from "./finds";
 import { fittedParts } from "../rules/broomParts";
+import { bagOf } from "../rules/bags";
 import type { MusicCue } from "../rules/musicPlan";
 import type { MusicStyle } from "../rules/musicScore";
 import musicStyleJson from "../../config/music-style.json";
 import { applyKnobParams } from "../ui/decisions";
+import { defaultGenome, newWitch } from "./defaultLook";
 
 /** The browser keys that once remembered knobs which change the world or the balance: the world's shape and travel speed
  *  (witch.world: area size, map areas, treetop speed) and the fight's scale, speed and momentum (witch.fight). They're the
  *  link's alone now (2026-10-07: a 14 x 14 map left in Ed's browser gave every PR build 196 areas and threw off each
  *  playtest's balance), so a load forgets them. */
 export const FORGOTTEN_KEYS = ["witch.world", "witch.fight", "witch.wave"]; // (and the waves' pace, 2026-10-08: Ed, "stop remembering it")
-export function forgetRuleKnobs(storage: Pick<Storage, "removeItem"> | undefined = globalThis.localStorage): void {
+export function forgetRuleKnobs(storage: Pick<Storage, "removeItem"> | undefined = slotStorage): void {
   for (const k of FORGOTTEN_KEYS) try { storage?.removeItem(k); } catch { /* storage blocked */ }
 }
 
@@ -84,6 +88,8 @@ export function tuningFromLink(params: URLSearchParams) {
   // ?tilt=<strength>,<band>: the treetops' tilt-shift, to try values live (e.g. ?tilt=6,0.28).
   else if (tilt && /^[\d.]+(,[\d.]+)?$/.test(tilt)) { const [st, bd] = tilt.split(",").map(Number); tuning.tiltShift.on = true; tuning.tiltShift.treetop.strength = st; if (bd > 0) tuning.tiltShift.treetop.band = bd; }
   if (params.get("bloom") === "off") tuning.bloom.on = false;
+  // ?snap=0: the picture's pixels as the pixel size has them, not snapped to whole device pixels (render/view.ts resize), to compare.
+  if (params.get("snap") === "0") tuning.pixels = { ...tuning.pixels, snap: false };
   if (params.get("moonbeams") === "on") tuning.moonbeams = 1;
   const witchesParam = Number(params.get("witches")); // debug: this many more party witches
   if (witchesParam > 0) tuning.partyWitches = { ...tuning.partyWitches, debugExtra: Math.min(500, Math.floor(witchesParam)) };
@@ -175,6 +181,9 @@ export function tuningFromLink(params: URLSearchParams) {
   // The map's shape (Ed, 2026-10-06: circular, with a buffer ring): ?shape=square brings back the old square map to compare.
   const shapeParam = params.get("shape");
   if ((shapeParam === "square" || shapeParam === "circle") && tuning.map) tuning.map = { ...tuning.map, shape: shapeParam };
+  // The runestone stacks and the soundsystem spell (Ed, 2026-10-28; rules/stoneStacks.ts): off by default till their view lands
+  // (areas clearing by themselves once their wild are gone); ?cast=1 turns them on, ?cast=0 off.
+  { const v = params.get("cast"); if ((v === "1" || v === "0") && tuning.cast) tuning.cast = { ...tuning.cast, on: v === "1" }; }
   // Legend circles slow time (Ed, 2026-10-06; rules/slowTime.ts): ?slow=0 turns it off, ?slow=<scale> tries another speed.
   { const v = params.get("slow"); if (v !== null && tuning.legendCircle) { const k = Number(v); tuning.legendCircle = { slow: { ...tuning.legendCircle.slow, on: k > 0 && k < 1, scale: k > 0 && k < 1 ? k : tuning.legendCircle.slow.scale } }; } }
 
@@ -221,9 +230,13 @@ export function tuningFromLink(params: URLSearchParams) {
   tuning.paths = { ...tuning.paths, fingerposts: true };
   // Rank sigils (render/leash/ranks.ts; the default since Ed, 2026-10-27: "go ahead and push all the new sigil work"): every leash
   // sigil its bare glyph in its rank's colour with embers, the rune stones in their areas' top ranks', and the leash hex grid at
-  // leash.ranks.hex metres (6). ?sigils=old brings back the old sigils and their 4 m grid (OLD_HEX); ?sigils=new, the default.
+  // leash.ranks.hex metres (6). ?sigils=old brings back the old sigils and their 4 m grid (OLD_HEX); ?sigils=new, the default;
+  // ?sigils=bold, rank sigils drawn bold (leash.ranks.bold, the default since every species has one: Ed, 2026-10-29); ?sigils=thin,
+  // rank sigils in their monoline glyphs, to compare.
   { const v = params.get("sigils"), R = tuning.leash.ranks;
     if (R && (v === "new" || v === "old")) tuning.leash = { ...tuning.leash, ranks: { ...R, on: v === "new" } };
+    if (R && v === "bold") tuning.leash = { ...tuning.leash, ranks: { ...R, on: true, bold: true } }; // (the bold sigils, where a species has one: art/sigils.js BOLD)
+    if (R && v === "thin") tuning.leash = { ...tuning.leash, ranks: { ...R, on: true, bold: false } };
     if (R && tuning.leash.hex) tuning.leash = { ...tuning.leash, hex: { ...tuning.leash.hex, size: tuning.leash.ranks!.on ? R.hex : OLD_HEX } }; }
   applyKnobParams(tuning, params); // (Ed's decisions panel: its knobs' choices kept in the URL as d_<id>)
   // The sea chart's save (app/chartSave.ts): the islands she's found, so the night's legends favour the others (rules/rosters.ts).
@@ -236,10 +249,16 @@ export function tuningFromLink(params: URLSearchParams) {
   { const own = params.get("own"); if (own !== null) applyOwn(own); }
   // Her hat's spell (app/loadout.ts): the creator's, kept on this browser, or ?hat=; her hats (app/hatSave.ts; Ed, 2026-10-23: the
   // plain hat hers, the rest found): a saved hat she doesn't own is the plain one.
-  { const L = loadoutFrom(params), hats = hatsFrom(params, L.hat), hat = hats === "*" || L.hat === "none" || hats.split(",").includes(L.hat) ? L.hat : "none"; tuning.spells = { ...tuning.spells, hat, hats }; }
+  { const L = loadoutFrom(params), hats = unlockAll() ? "*" : hatsFrom(params, L.hat), hat = hats === "*" || L.hat === "none" || hats.split(",").includes(L.hat) ? L.hat : "none"; tuning.spells = { ...tuning.spells, hat, hats }; }
   // Her broom's parts (app/broomSave.ts; the Workshop, Ed 2026-10-23): those fitted at the bay on this browser, or
   // ?parts=missile,ladder,nozzles for one load (any parts, found or not: for testing). Her broom's spell is the set they complete.
   { const P = params.get("parts"); tuning.spells = { ...tuning.spells, parts: P !== null ? P : fittedParts(loadBroom().fitted).map(p => p.id).join(",") }; }
+  // Her bag (rules/bags.ts; Ed, 2026-10-29: a Bumbag and a Far bag to choose from): the one her saved look wears (localStorage
+  // witch.genome, chosen at the bags station), or ?bag=starter, ?bag=quick, ?bag=far (or a bag item's id; ?bag=none for none) for one load.
+  { const B = params.get("bag"), ids: Record<string, string> = { starter: "satchel", quick: "bumbag", far: "purse", none: "" };
+    let look: Record<string, unknown> | null = null; try { look = newWitch() ? null : JSON.parse(slotStorage.getItem("witch.genome") ?? "null"); } catch { /* storage blocked or spoilt: none */ }
+    look ??= defaultGenome(); // (a brand-new witch: the game's default look's bag, app/defaultLook.ts)
+    tuning.spells = { ...tuning.spells, bag: B !== null ? ids[B] ?? B : bagOf(look) }; }
   // ?set=path=value;path=value (the repro link's: every setting changed from the build's, app/repro.ts), last, over the rest.
   applySet(tuning, params.get("set"));
   return { tuning, musicStyle, musicCue: musicCueNow, world, WORLD_DEFAULT };

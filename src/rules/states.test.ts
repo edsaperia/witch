@@ -9,6 +9,7 @@ import { TUNING, withTuning } from "./tuning";
 const SAVED_STRENGTH = { ...COMBAT.strength!.species };
 const plainStrength = () => { for (const k of Object.keys(COMBAT.strength!.species)) delete COMBAT.strength!.species[k]; };
 const restoreStrength = () => Object.assign(COMBAT.strength!.species, SAVED_STRENGTH);
+// Keep the full seeded route/population: these multi-wave policy comparisons include 40-wave survival and relics found every four waves.
 const PEOPLED = withTuning({ population: { ...TUNING.population, start: { ...TUNING.population.start, young: 1 } } }); // (a young in every area, whatever the tuning's curve: the mechanics, not the balance)
 
 // The creature-state model (issue #87): invite only, happy defenders, leashed army, enraged sieges.
@@ -36,8 +37,8 @@ describe("the creature-state model (rules/states.ts, tools/balance/states.mjs)",
     expect(a.local[0].defendersF).toBe(0); // nobody invited
     expect(a.targets.own).toBeGreaterThan(a.targets.other);
     expect(a.waves[a.waves.length - 1].enraged).toBeGreaterThan(0);
-    // The pool: wild creatures keep growing in the areas without a soundsystem.
-    expect(a.waves[a.waves.length - 1].pool).toBeGreaterThan(a.waves[1].pool);
+    // The pool: no wild creature grows in a night (Ed, 2026-10-28: population.growth off), so it never grows.
+    expect(a.waves[a.waves.length - 1].pool).toBeLessThanOrEqual(a.waves[1].pool);
   }, 30000);
 
   it("never lets kin fight kin (Ed, 2026-10-05): her happy defenders don't beat their own area's enraged", () => {
@@ -48,7 +49,7 @@ describe("the creature-state model (rules/states.ts, tools/balance/states.mjs)",
   }, 60000);
 
   it("wakes no legends with soundsystems; one turns angry only once its area has none of its kind", () => {
-    const map = generateMap(1000, withTuning({ ...PEOPLED, legends: { ...TUNING.legends, share: 1 } })); // (a legend in every area, as this was written: with legends.share 0.5 the first waves' areas may have none)
+    const map = generateMap(1000, withTuning({ ...PEOPLED, legends: { ...TUNING.legends, share: 1 }, population: { ...PEOPLED.population, growth: { ...PEOPLED.population.growth, on: true } } })); // (a legend in every area, as this was written: with legends.share 0.5 the first waves' areas may have none) // (and the areas growing, as written: the pressure that makes legends angry and uses the relics, the mechanics; growth's off in the tuning since 2026-10-28)
     const a = simulateStates(map, { interval: 300, maxWaves: 8, policy: "leash", skill: 1, dt: 1, relics: 0 });
     const d = simulateStates(map, { interval: 300, maxWaves: 8, policy: "defend", skill: 1, dt: 1, relics: 0 });
     expect(a.legends.angry).toBeGreaterThan(d.legends.angry); // leashing everything empties areas of their kind

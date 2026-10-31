@@ -5,34 +5,20 @@
 // (assets: partyArt with or without the collar), and so are the faces (expression below); the 💢 and the daze
 // stars are marks drawn over the sprite.
 import * as THREE from "three";
-import type { Game } from "../rules/game";
 import type { Creature, CreatureState } from "../rules/creatures";
-import { LEGEND } from "../rules/creatures";
-import { cellKey } from "../rules/party";
+import type { Game } from "../rules/game";
+import { lookOf } from "../rules/creatureCues";
+export { isHappy, lookOf, dances, type Look } from "../rules/creatureCues";
 import { placed, shownOverBend } from "./height";
 import { stunned } from "../rules/knock";
 import { witchHeight } from "../rules/witch";
 import type { Tuning } from "../rules/tuning";
 import { bubbleScale } from "./bubbles";
 
-export type Look = CreatureState | "legend";
 
 /** The state machine's fields (issue #87), read if present; today's flags otherwise. */
 type WithState = Creature & { state?: CreatureState; dazedUntil?: number };
 
-export function isHappy(c: Creature): boolean {
-  const s = (c as WithState).state;
-  if (s) return s === "happy";
-  return !c.leashed && !!c.friendly; // (today: a quest-done area's creatures)
-}
-
-export function lookOf(c: Creature): Look {
-  if (c.boss || c.level === LEGEND) return c.leashed ? "leashed" : c.enraged ? "enraged" : "legend";
-  const s = (c as WithState).state;
-  if (s === "leashed" || c.leashed) return "leashed";
-  if (s === "enraged" || c.enraged) return "enraged";
-  return isHappy(c) ? "happy" : "wild";
-}
 
 /** Enraged creatures' red tint (Ed, 2026-10-05: "a red tint so that they're easy to tell apart"):
  *  one uniform shared by every enraged batch, set from tuning looks.enragedTint each frame (amount 0: off). */
@@ -64,11 +50,6 @@ export function expression(c: Creature, time: number): Expression {
 export const isDazed = (c: Creature, time: number) => ((c as WithState).dazedUntil ?? -Infinity) > time;
 
 /** Whether it dances on the beat: party animals, and happy ones in an area with a soundsystem. */
-export function dances(g: Game, c: Creature): boolean {
-  if (c.asleep) return false; // (asleep: the party's over, rules/partyOver.ts)
-  if (c.leashed || c.partyLegend) return true; // (a party legend dances where it stands: the Easter egg)
-  return lookOf(c) === "happy" && g.party.areas.has(cellKey(c.cell)) && !g.combat.ruined.has(cellKey(c.cell)) && !c.fight;
-}
 
 /** A tiny pixel canvas as a texture. */
 function pixels(w: number, h: number, draw: (x: CanvasRenderingContext2D) => void): THREE.CanvasTexture {
@@ -94,11 +75,11 @@ const STAR = (): THREE.CanvasTexture => pixels(5, 5, x => {
   x.fillStyle = "#ffffff"; x.fillRect(2, 2, 1, 1);
 });
 
-/** The anger mark 💢, a pixel emoji (hard-edged). */
-function angerMark(n: number): THREE.CanvasTexture {
+/** The anger mark 💢 (or the running-away mark 💧), a pixel emoji (hard-edged). */
+function angerMark(n: number, e = "💢"): THREE.CanvasTexture {
   return pixels(n, n, x => {
     x.font = `${n - 1}px sans-serif`; x.textAlign = "center"; x.textBaseline = "middle";
-    x.fillText("💢", n / 2, n / 2 + 0.5);
+    x.fillText(e, n / 2, n / 2 + 0.5);
     const d = x.getImageData(0, 0, n, n);
     for (let i = 3; i < d.data.length; i += 4) d.data[i] = d.data[i] < 110 ? 0 : 255;
     x.putImageData(d, 0, 0);
@@ -108,6 +89,7 @@ function angerMark(n: number): THREE.CanvasTexture {
 export class StateMarks {
   private star: THREE.SpriteMaterial;
   private anger: THREE.SpriteMaterial;
+  private drop: THREE.SpriteMaterial;
   private sparkle: THREE.SpriteMaterial;
   private pool: THREE.Sprite[] = [];
   private used = 0;
@@ -116,7 +98,7 @@ export class StateMarks {
 
   constructor(scene: THREE.Scene, private mpp: number) {
     const mat = (map: THREE.Texture) => new THREE.SpriteMaterial({ map, transparent: true, depthTest: false, depthWrite: false });
-    this.star = mat(STAR()); this.anger = mat(angerMark(11));
+    this.star = mat(STAR()); this.anger = mat(angerMark(11)); this.drop = mat(angerMark(11, "💧"));
     this.sparkle = new THREE.SpriteMaterial({ map: SPARKLE(), transparent: true, depthTest: true, depthWrite: false, blending: THREE.AdditiveBlending });
     this.group.renderOrder = 12;
     // One sprite never shown, so the Bedroom's shader warm-up (View.prepare) compiles the marks' shader too; the pool's own
@@ -171,6 +153,11 @@ export class StateMarks {
           const pulse = (time * 1.6 + c.id * 0.31) % 1, pop = pulse < 0.15 ? 1 + 0.5 * (1 - pulse / 0.15) : 1, k = bubbleScale(g.tuning, c.level) * A.size * pop;
           this.put(this.anger, c.x + c.facing * (0.35 + top * 0.25), top + 0.1, c.z, 11 * px * k, 11 * px * k);
         }
+      }
+      if (c.ranOff && c.fleeUntil && A.on) {
+        // 💧 (Ed, 2026-10-28): running away for good (a stunned hostile, a friend full of 💧s), the 💢's size and place.
+        const pulse = (time * 1.6 + c.id * 0.31) % 1, pop = pulse < 0.15 ? 1 + 0.5 * (1 - pulse / 0.15) : 1, k = bubbleScale(g.tuning, c.level) * A.size * pop;
+        this.put(this.drop, c.x + c.facing * (0.35 + top * 0.25), top + 0.1, c.z, 11 * px * k, 11 * px * k);
       }
       if (isDazed(c, time)) { // (a stun's stars are leash.ts's)
         for (let i = 0; i < 3; i++) {

@@ -2113,6 +2113,11 @@
       "minimum": 0,
       "description": "See setPieceFootprint."
     },
+    "stoneKeepClear": {
+      "type": "number",
+      "minimum": 0,
+      "description": "The keep-clear zone round each area's stone (its great stump, or its runestone with the stumps off), in metres from its middle."
+    },
     "treeMarginFromSoundsystem": {
       "type": "number",
       "minimum": 0,
@@ -2310,10 +2315,39 @@
         "gap": {
           "type": "number",
           "minimum": 0
+        },
+        "plate": {
+          "type": "number",
+          "minimum": 0,
+          "description": "A dark plate behind each edge pointer's ring and round its arrow, its opacity, so the pointers read on any ground (0 none, as before)."
+        },
+        "vivid": {
+          "type": "number",
+          "minimum": 0,
+          "description": "How much of the pointers' calming toward the night is taken back: 0 as calmed, 1 the area's neon itself."
+        },
+        "pulse": {
+          "type": "number",
+          "minimum": 0,
+          "description": "How much the morning's guidance pins breathe, from waking up till the party spell: their size swells by up to this share and back (0 still; half as much with reduce flashing)."
+        },
+        "pulseRate": {
+          "type": "number",
+          "minimum": 0,
+          "description": "How many times a second the morning's guidance pins breathe."
+        },
+        "track": {
+          "type": "number",
+          "minimum": 0
         }
       },
       "required": [
-        "gap"
+        "gap",
+        "plate",
+        "vivid",
+        "pulse",
+        "pulseRate",
+        "track"
       ],
       "additionalProperties": false,
       "description": "The HUD's pointers as map pins over their subject (render/indicator.ts): gap is how far (screen pixels) the arrow's tip floats over the subject's drawn top."
@@ -2875,6 +2909,11 @@
           "type": "number",
           "minimum": 0
         },
+        "chain": {
+          "type": "number",
+          "minimum": 0,
+          "description": "the least time, seconds, from one blink to the next, whatever her charges or the shared cooldown say (it keeps a Double blink's two apart; the legend buffs' blink chain, 0.2, before they were removed)."
+        },
         "toCursor": {
           "type": "boolean",
           "description": "on, she blinks toward the ground under the cursor (or the way the right stick points), the way she faces when the cursor is within aimDead metres of her, and with nothing to aim by (touch) the way she's steering; off, always the way she's steering."
@@ -2923,6 +2962,7 @@
         "cooldown",
         "buffer",
         "charges",
+        "chain",
         "toCursor",
         "aimDead",
         "clear"
@@ -2944,6 +2984,10 @@
         "parts": {
           "type": "string",
           "description": "her broom's parts, a comma list of ids from config/broom-parts.json (the page sets it from her save, localStorage witch.broom, fitted at the Workshop's bay; ?parts= for one load); the bare broom, none, has no spell and no quick take-off, and a complete set gives its spell."
+        },
+        "bag": {
+          "type": "string",
+          "description": "her bag, a config/wardrobe.json bag item's id or empty for none, whose invites multiply invites.cooldown and invites.range while she carries it (rules/bags.ts)."
         },
         "speed": {
           "type": "object",
@@ -3322,6 +3366,7 @@
         "hat",
         "hats",
         "parts",
+        "bag",
         "speed",
         "healing",
         "helmet",
@@ -3627,6 +3672,41 @@
           "type": "number",
           "minimum": 0
         },
+        "inaccuracy": {
+          "type": "number",
+          "minimum": 0,
+          "description": "degrees either side of her aim each 💌 may go (a fixed hash of its number, so the same throws go the same ways); 0, dead straight, and a bag adds its own (config/wardrobe.json invitesAdd)."
+        },
+        "bloomPer": {
+          "type": "number",
+          "minimum": 0,
+          "description": "degrees more inaccuracy each volley while she keeps firing (the bloom); 0, none, and a bag adds its own."
+        },
+        "bloomDecay": {
+          "type": "number",
+          "minimum": 0,
+          "description": "degrees a second the bloom falls back by."
+        },
+        "bloomMax": {
+          "type": "number",
+          "minimum": 0,
+          "description": "the most degrees the bloom can reach."
+        },
+        "pierce": {
+          "type": "number",
+          "minimum": 0,
+          "description": "how many more creatures a 💌 flies on through after the first it lands on, each a hit as any letter's; 0, it stops at the first, and a bag adds its own (config/wardrobe.json invitesAdd)."
+        },
+        "chain": {
+          "type": "number",
+          "minimum": 0,
+          "description": "how many hops a spent 💌 makes on to the nearest other invitable creature within chainRange metres (never one it has landed on, nor a stunned one), each a hit as any letter's; 0, none, and a bag adds its own (config/wardrobe.json invitesAdd)."
+        },
+        "chainRange": {
+          "type": "number",
+          "minimum": 0,
+          "description": "how far (m) a chained 💌 looks for the next creature to hop to."
+        },
         "radius": {
           "type": "number",
           "minimum": 0
@@ -3651,7 +3731,7 @@
           "type": "number",
           "minimum": 0,
           "maximum": 1,
-          "description": "her ground speed while firing, times this (Ram's Steady buff takes it away)."
+          "description": "her ground speed while firing, times this."
         },
         "linger": {
           "type": "number",
@@ -3671,6 +3751,69 @@
           "minimum": 0,
           "description": "How fast a 💌 spins in flight."
         },
+        "impact": {
+          "type": "object",
+          "properties": {
+            "flash": {
+              "type": "number",
+              "minimum": 0
+            },
+            "squash": {
+              "type": "number",
+              "minimum": 0
+            },
+            "gentle": {
+              "type": "number",
+              "minimum": 0
+            },
+            "squashSecs": {
+              "type": "number",
+              "minimum": 0
+            },
+            "pop": {
+              "type": "number",
+              "minimum": 0
+            },
+            "popSecs": {
+              "type": "number",
+              "minimum": 0
+            },
+            "hitstop": {
+              "type": "number",
+              "minimum": 0
+            }
+          },
+          "required": [
+            "flash",
+            "squash",
+            "gentle",
+            "squashSecs",
+            "pop",
+            "popSecs",
+            "hitstop"
+          ],
+          "additionalProperties": false,
+          "description": "how a 💌 landing on a creature feels (drawn only): a white flash for flash seconds, a squash of squash springing back over squashSecs, its ring slot popping in by pop over popSecs, and hitstop seconds of held picture on the 💌 that fills the ring."
+        },
+        "cheer": {
+          "type": "object",
+          "properties": {
+            "secs": {
+              "type": "number",
+              "minimum": 0
+            },
+            "hearts": {
+              "type": "number",
+              "minimum": 0
+            }
+          },
+          "required": [
+            "secs",
+            "hearts"
+          ],
+          "additionalProperties": false,
+          "description": "one won over by her 💌s celebrates secs seconds by its body (render/cheer.ts), out of every fight meanwhile, a burst of that many hearts (hearts) off it."
+        },
         "orbit": {
           "type": "object",
           "properties": {
@@ -3685,15 +3828,44 @@
             "min": {
               "type": "number",
               "minimum": 0
+            },
+            "height": {
+              "type": "number",
+              "minimum": 0
             }
           },
           "required": [
             "scale",
             "gap",
-            "min"
+            "min",
+            "height"
           ],
           "additionalProperties": false,
-          "description": "the 💌 ring circles a creature at scale times its body radius (movement.json bodies) plus gap metres, at least min, and wider still when it holds many."
+          "description": "the 💌 ring circles a creature at scale times its body radius (movement.json bodies) plus gap metres, at least min, and at least height times its drawn height (to its top as drawn) plus gap, so it rings the creature you see at any size; wider still when it holds many."
+        },
+        "hard": {
+          "type": "object",
+          "properties": {
+            "homing": {
+              "type": "number",
+              "minimum": 0
+            },
+            "cone": {
+              "type": "number",
+              "minimum": 0
+            },
+            "range": {
+              "type": "number",
+              "minimum": 0
+            }
+          },
+          "required": [
+            "homing",
+            "cone",
+            "range"
+          ],
+          "additionalProperties": false,
+          "description": "the hard homing of the 💌s her Sentry and Slingshot hats throw: homing degrees a second, cone degrees either side it looks in, range metres it looks out to (was the legend buffs' charm, 420, 80 and 18)."
         }
       },
       "required": [
@@ -3709,6 +3881,13 @@
         "homingRange",
         "multiShot",
         "spread",
+        "inaccuracy",
+        "bloomPer",
+        "bloomDecay",
+        "bloomMax",
+        "pierce",
+        "chain",
+        "chainRange",
         "radius",
         "amount",
         "hits",
@@ -3718,10 +3897,100 @@
         "lingerFade",
         "lingerMax",
         "spin",
-        "orbit"
+        "impact",
+        "cheer",
+        "orbit",
+        "hard"
       ],
       "additionalProperties": false,
       "description": "The 💌 invite: on the ground she fires spinning love letters at creatures to win them over."
+    },
+    "cast": {
+      "type": "object",
+      "properties": {
+        "on": {
+          "type": "boolean",
+          "description": "on (the default since their view landed, #1378): the stacks and the spell; off (?cast=0): areas clear by themselves once their wild are gone, as before."
+        },
+        "time": {
+          "type": "number",
+          "minimum": 0,
+          "description": "seconds of holding the sigil button at a stone to convert it; a hit stops the cast."
+        },
+        "drain": {
+          "type": "number",
+          "minimum": 0,
+          "description": "how much of a full cast her progress on a stone loses a second while she isn't casting it (holding again resumes from there)."
+        },
+        "spot": {
+          "type": "number",
+          "minimum": 0
+        },
+        "radius": {
+          "type": "number",
+          "minimum": 0,
+          "description": "how near the stone (m) she has to stand to cast; there the sigil button casts rather than putting down or picking up."
+        },
+        "show": {
+          "type": "number",
+          "minimum": 0,
+          "description": "how near the stone (m) the spell's music-note sigil shows."
+        },
+        "scatter": {
+          "type": "object",
+          "properties": {
+            "min": {
+              "type": "number",
+              "minimum": 0
+            },
+            "reach": {
+              "type": "number",
+              "minimum": 0
+            },
+            "open": {
+              "type": "number",
+              "minimum": 0
+            },
+            "hide": {
+              "type": "object",
+              "properties": {
+                "width": {
+                  "type": "number",
+                  "minimum": 0
+                },
+                "depth": {
+                  "type": "number",
+                  "minimum": 0
+                }
+              },
+              "required": [
+                "width",
+                "depth"
+              ],
+              "additionalProperties": false
+            }
+          },
+          "required": [
+            "min",
+            "reach",
+            "open",
+            "hide"
+          ],
+          "additionalProperties": false,
+          "description": "where a converted stone's friend sigils scatter: free hex cells of its clearing between min and reach metres, never in the hidden wedge just north of the soundsystem (hide.width either side, hide.depth behind)."
+        }
+      },
+      "required": [
+        "on",
+        "time",
+        "drain",
+        "spot",
+        "radius",
+        "show",
+        "scatter"
+      ],
+      "additionalProperties": false,
+      "description": "The runestone stacks and the soundsystem spell: she converts a stone by holding the sigil button at it."
     },
     "invite": {
       "type": "object",
@@ -3830,10 +4099,6 @@
           "type": "number",
           "minimum": 0
         },
-        "settleAfter": {
-          "type": "number",
-          "minimum": 0
-        },
         "retarget": {
           "type": "number",
           "minimum": 0
@@ -3855,7 +4120,6 @@
         "legendArc",
         "flareDraw",
         "flare",
-        "settleAfter",
         "retarget"
       ],
       "additionalProperties": false,
@@ -3931,6 +4195,40 @@
           ],
           "additionalProperties": false,
           "description": "A dark patch under every sigil on the ground, so it reads clearly."
+        },
+        "placeMotes": {
+          "type": "object",
+          "properties": {
+            "count": {
+              "type": "number",
+              "minimum": 0
+            },
+            "size": {
+              "type": "number",
+              "minimum": 0
+            },
+            "bright": {
+              "type": "number",
+              "minimum": 0
+            },
+            "rise": {
+              "type": "number",
+              "minimum": 0
+            },
+            "life": {
+              "type": "number",
+              "minimum": 0
+            }
+          },
+          "required": [
+            "count",
+            "size",
+            "bright",
+            "rise",
+            "life"
+          ],
+          "additionalProperties": false,
+          "description": "A sigil put down or picked up: its burst of motes rising in its colour (render/leash.ts, drawn in render/leash/combat.ts): count, size (m), bright (times its colour), rise and life (times the old height and length)."
         },
         "runeGap": {
           "type": "number",
@@ -4137,6 +4435,23 @@
                 }
               }
             },
+            "enemy": {
+              "type": "array",
+              "items": {
+                "type": "array",
+                "items": {
+                  "type": "number",
+                  "minimum": 0
+                }
+              }
+            },
+            "sizes": {
+              "type": "array",
+              "items": {
+                "type": "number",
+                "minimum": 0
+              }
+            },
             "embers": {
               "type": "object",
               "properties": {
@@ -4164,13 +4479,25 @@
                 "stack": {
                   "type": "number",
                   "minimum": 0
+                },
+                "bright": {
+                  "type": "number",
+                  "minimum": 0,
+                  "description": "The embers rising off rank sigils (on the ground, in her stack, over the rune stones): their colour times this."
+                },
+                "crowd": {
+                  "type": "number",
+                  "minimum": 0,
+                  "description": "Past this many of her sigils put down, each one's embers thinned by the square root, so a crowd of them isn't noise (0: never)."
                 }
               },
               "required": [
                 "count",
                 "size",
                 "rise",
-                "stack"
+                "stack",
+                "bright",
+                "crowd"
               ],
               "additionalProperties": false
             },
@@ -4181,6 +4508,122 @@
             "stoneGlow": {
               "type": "number",
               "minimum": 0
+            },
+            "standScale": {
+              "type": "number",
+              "minimum": 0
+            },
+            "bold": {
+              "type": "boolean"
+            },
+            "stones": {
+              "type": "object",
+              "properties": {
+                "range": {
+                  "type": "number",
+                  "minimum": 0
+                },
+                "fade": {
+                  "type": "number",
+                  "minimum": 0
+                },
+                "size": {
+                  "type": "number",
+                  "minimum": 0
+                },
+                "near": {
+                  "type": "number",
+                  "minimum": 0
+                },
+                "far": {
+                  "type": "number",
+                  "minimum": 0
+                },
+                "bars": {
+                  "type": "number",
+                  "minimum": 0
+                },
+                "radius": {
+                  "type": "number",
+                  "minimum": 0
+                },
+                "cell": {
+                  "type": "number",
+                  "minimum": 0
+                },
+                "convert": {
+                  "type": "number",
+                  "minimum": 0
+                },
+                "ringTilt": {
+                  "type": "number",
+                  "minimum": 0
+                }
+              },
+              "required": [
+                "range",
+                "fade",
+                "size",
+                "near",
+                "far",
+                "bars",
+                "radius",
+                "cell",
+                "convert",
+                "ringTilt"
+              ],
+              "additionalProperties": false
+            },
+            "chain": {
+              "type": "object",
+              "properties": {
+                "link": {
+                  "type": "array",
+                  "items": {
+                    "type": "number",
+                    "minimum": 0
+                  }
+                },
+                "tether": {
+                  "type": "number",
+                  "minimum": 0
+                },
+                "slack": {
+                  "type": "number",
+                  "minimum": 0
+                },
+                "damping": {
+                  "type": "number",
+                  "minimum": 0
+                },
+                "gravity": {
+                  "type": "number",
+                  "minimum": 0
+                },
+                "arcPull": {
+                  "type": "number",
+                  "minimum": 0
+                },
+                "iterations": {
+                  "type": "number",
+                  "minimum": 0
+                },
+                "jump": {
+                  "type": "number",
+                  "minimum": 0
+                }
+              },
+              "required": [
+                "link",
+                "tether",
+                "slack",
+                "damping",
+                "gravity",
+                "arcPull",
+                "iterations",
+                "jump"
+              ],
+              "additionalProperties": false
             }
           },
           "required": [
@@ -4188,9 +4631,15 @@
             "hex",
             "glyph",
             "colours",
+            "enemy",
+            "sizes",
             "embers",
             "dotsPerRow",
-            "stoneGlow"
+            "stoneGlow",
+            "standScale",
+            "bold",
+            "stones",
+            "chain"
           ],
           "additionalProperties": false,
           "description": "Leash sigils drawn as bare glyphs in their rank's colour (baby, youth, adult, legend) with embers rising off them, so ranks are easy to tell apart at a glance."
@@ -4207,6 +4656,7 @@
         "sigilGlyph",
         "sigilHalo",
         "sigilBacking",
+        "placeMotes",
         "runeGap",
         "hex",
         "runs",
@@ -4547,10 +4997,38 @@
           "properties": {
             "on": {
               "type": "boolean"
+            },
+            "shadow": {
+              "type": "object",
+              "properties": {
+                "shade": {
+                  "type": "number",
+                  "minimum": 0,
+                  "description": "How dark: 0 its own colours, 1 black."
+                },
+                "opacity": {
+                  "type": "number",
+                  "minimum": 0,
+                  "description": "How opaque the shadow is (0 invisible, 1 solid)."
+                },
+                "fade": {
+                  "type": "number",
+                  "minimum": 0,
+                  "description": "Seconds to turn from solid to shadow as it hides, and back as it comes out."
+                }
+              },
+              "required": [
+                "shade",
+                "opacity",
+                "fade"
+              ],
+              "additionalProperties": false,
+              "description": "A pack member hiding in its lull (in the trees, underground, under water, in the branches, or scattered) is drawn as a shadow of itself, not left out."
             }
           },
           "required": [
-            "on"
+            "on",
+            "shadow"
           ],
           "additionalProperties": false,
           "description": "Pack kinds fight in combos (the nearest lunges, the ranged fire where she'd dodge, one behind her throws its special) and fall back between them."
@@ -4936,6 +5414,26 @@
       ],
       "additionalProperties": false,
       "description": "A wild area's hostile creatures gather and roam near its runestone."
+    },
+    "sigilAvoid": {
+      "type": "object",
+      "properties": {
+        "on": {
+          "type": "boolean",
+          "description": "false lets them stand on sigils as before."
+        },
+        "pad": {
+          "type": "number",
+          "minimum": 0,
+          "description": "Metres past a sigil's edge a creature's middle still counts as on it."
+        }
+      },
+      "required": [
+        "on",
+        "pad"
+      ],
+      "additionalProperties": false,
+      "description": "Idling and dancing creatures keep off the sigils lying on the floor."
     },
     "wildWatch": {
       "type": "object",
@@ -5468,10 +5966,6 @@
           "type": "boolean",
           "description": "Each legend gets an area of its own beside one of its kind's areas."
         },
-        "buffPower": {
-          "type": "number",
-          "minimum": 0
-        },
         "happyRange": {
           "type": "number",
           "minimum": 0
@@ -5479,11 +5973,6 @@
         "questCap": {
           "type": "number",
           "minimum": 0
-        },
-        "questRoll": {
-          "type": "number",
-          "minimum": 0,
-          "description": "(the same: \"the difficulty of the encounter is the slot machine, not the reward size\"): a done quest's buff is this many times as strong as written, whatever its dream's distance (it was 1 to 1.5 by distance, questFar; a relic's stays as written)."
         },
         "questLater": {
           "type": "boolean",
@@ -5550,10 +6039,8 @@
         "share",
         "earlyQuest",
         "areas",
-        "buffPower",
         "happyRange",
         "questCap",
-        "questRoll",
         "questLater",
         "bombard",
         "stomp",
@@ -5563,7 +6050,7 @@
         "partyReach"
       ],
       "additionalProperties": false,
-      "description": "Which areas have a legend, and how strong legends' buffs are."
+      "description": "Which areas have a legend, and how far a happy one reaches."
     },
     "wildLegends": {
       "type": "object",
@@ -5666,7 +6153,7 @@
         "seen"
       ],
       "additionalProperties": false,
-      "description": "What legends are for: optional quests that give buffs, relics for powerful allies, and danger to her babies in sieges."
+      "description": "What legends are for: optional quests, relics for powerful allies, and danger to her babies in sieges."
     },
     "legendSpeed": {
       "type": "number",
@@ -5780,6 +6267,76 @@
         "minRadius": {
           "type": "number",
           "minimum": 0
+        },
+        "rainbow": {
+          "type": "object",
+          "properties": {
+            "on": {
+              "type": "boolean"
+            },
+            "speed": {
+              "type": "number",
+              "minimum": 0
+            },
+            "max": {
+              "type": "number",
+              "minimum": 0
+            },
+            "bars": {
+              "type": "number",
+              "minimum": 0
+            },
+            "spacing": {
+              "type": "number",
+              "minimum": 0
+            },
+            "cell": {
+              "type": "number",
+              "minimum": 0
+            },
+            "height": {
+              "type": "number",
+              "minimum": 0
+            },
+            "route": {
+              "type": "object",
+              "properties": {
+                "on": {
+                  "type": "boolean"
+                },
+                "spacing": {
+                  "type": "number",
+                  "minimum": 0
+                },
+                "height": {
+                  "type": "number",
+                  "minimum": 0
+                },
+                "cell": {
+                  "type": "number",
+                  "minimum": 0
+                }
+              },
+              "required": [
+                "on",
+                "spacing",
+                "height",
+                "cell"
+              ],
+              "additionalProperties": false
+            }
+          },
+          "required": [
+            "on",
+            "speed",
+            "max",
+            "bars",
+            "spacing",
+            "cell",
+            "height",
+            "route"
+          ],
+          "additionalProperties": false
         }
       },
       "required": [
@@ -5797,7 +6354,8 @@
         "valley",
         "flow",
         "depart",
-        "minRadius"
+        "minRadius",
+        "rainbow"
       ],
       "additionalProperties": false,
       "description": "The glowing line on the ground that joins the runestones in the order the waves wake them, a pulse flowing along it to the next one."
@@ -6172,10 +6730,6 @@
           "type": "number",
           "minimum": 0
         },
-        "maxTilt": {
-          "type": "number",
-          "minimum": 0
-        },
         "sweep": {
           "type": "number",
           "minimum": 0
@@ -6222,7 +6776,6 @@
         "maxCount",
         "length",
         "spread",
-        "maxTilt",
         "sweep",
         "sweepBeats",
         "openBars",
@@ -6305,12 +6858,28 @@
             "minimum": 0
           },
           "description": "a creature's bubble, emoji and outline together, times this by its level (baby, young, adult, legend); the witch's stays at 1."
+        },
+        "near": {
+          "type": "number",
+          "minimum": 0,
+          "description": "How close (metres) she must be on the ground to see a creature's speech or thought bubble; none from the treetops or the treehouse."
+        },
+        "fade": {
+          "type": "number",
+          "minimum": 0
+        },
+        "ease": {
+          "type": "number",
+          "minimum": 0
         }
       },
       "required": [
         "emojiPixels",
         "scale",
-        "levelScale"
+        "levelScale",
+        "near",
+        "fade",
+        "ease"
       ],
       "additionalProperties": false,
       "description": "The speech and thought bubbles: outline only, with pixel emoji, sized by the speaker's level."
@@ -6420,6 +6989,21 @@
             "moteBuild": {
               "type": "number",
               "minimum": 0
+            },
+            "moteSize": {
+              "type": "number",
+              "minimum": 0,
+              "description": "The motes rising off an awake runestone: their size in the picture's pixels (render/markers.ts)."
+            },
+            "moteBright": {
+              "type": "number",
+              "minimum": 0,
+              "description": "The motes rising off an awake runestone: their brightness, times its colour."
+            },
+            "moteRise": {
+              "type": "number",
+              "minimum": 0,
+              "description": "How high (m) an awake runestone's motes rise before they fade."
             }
           },
           "required": [
@@ -6429,7 +7013,10 @@
             "reach",
             "beam",
             "motes",
-            "moteBuild"
+            "moteBuild",
+            "moteSize",
+            "moteBright",
+            "moteRise"
           ],
           "additionalProperties": false
         },
@@ -6450,6 +7037,268 @@
             "light"
           ],
           "additionalProperties": false
+        },
+        "stump": {
+          "type": "object",
+          "properties": {
+            "on": {
+              "type": "boolean"
+            },
+            "variants": {
+              "type": "number",
+              "minimum": 0
+            },
+            "irregular": {
+              "type": "number",
+              "minimum": 0,
+              "description": "How irregular each great stump grows, from 0 (round and even, as first drawn) to 1."
+            },
+            "clear": {
+              "type": "number",
+              "minimum": 0
+            },
+            "stack": {
+              "type": "number",
+              "minimum": 0
+            },
+            "ring": {
+              "type": "object",
+              "properties": {
+                "inner": {
+                  "type": "number",
+                  "minimum": 0
+                },
+                "fill": {
+                  "type": "number",
+                  "minimum": 0
+                },
+                "cell": {
+                  "type": "number",
+                  "minimum": 0
+                },
+                "glow": {
+                  "type": "number",
+                  "minimum": 0
+                },
+                "light": {
+                  "type": "object",
+                  "properties": {
+                    "reach": {
+                      "type": "number",
+                      "minimum": 0
+                    },
+                    "strength": {
+                      "type": "number",
+                      "minimum": 0
+                    },
+                    "height": {
+                      "type": "number",
+                      "minimum": 0
+                    }
+                  },
+                  "required": [
+                    "reach",
+                    "strength",
+                    "height"
+                  ],
+                  "additionalProperties": false
+                },
+                "wave": {
+                  "type": "object",
+                  "properties": {
+                    "hold": {
+                      "type": "number",
+                      "minimum": 0
+                    },
+                    "fade": {
+                      "type": "number",
+                      "minimum": 0
+                    }
+                  },
+                  "required": [
+                    "hold",
+                    "fade"
+                  ],
+                  "additionalProperties": false
+                }
+              },
+              "required": [
+                "inner",
+                "fill",
+                "cell",
+                "glow",
+                "light",
+                "wave"
+              ],
+              "additionalProperties": false
+            },
+            "wisps": {
+              "type": "object",
+              "properties": {
+                "on": {
+                  "type": "boolean",
+                  "description": "The wild stumps' wisps on or off."
+                },
+                "count": {
+                  "type": "number",
+                  "minimum": 0,
+                  "description": "How many wisps a wild stump has."
+                },
+                "colours": {
+                  "type": "array",
+                  "items": {
+                    "type": "array",
+                    "items": {
+                      "type": "number",
+                      "minimum": 0
+                    }
+                  },
+                  "description": "The wisps' colours (0-255), a wisp each in turn: blue, green and teal."
+                },
+                "radius": {
+                  "type": "number",
+                  "minimum": 0,
+                  "description": "How far (m) from the stump's middle a wisp wanders at most."
+                },
+                "inner": {
+                  "type": "number",
+                  "minimum": 0,
+                  "description": "How near the middle a wisp comes, times the radius."
+                },
+                "height": {
+                  "type": "number",
+                  "minimum": 0,
+                  "description": "How high (m) the wisps float."
+                },
+                "bob": {
+                  "type": "number",
+                  "minimum": 0,
+                  "description": "How much (m) the wisps rise and fall as they drift."
+                },
+                "speed": {
+                  "type": "number",
+                  "minimum": 0,
+                  "description": "How fast (m/s) the wisps drift round the clearing."
+                },
+                "reach": {
+                  "type": "number",
+                  "minimum": 0,
+                  "description": "How far (m) a wisp's light reaches."
+                },
+                "strength": {
+                  "type": "number",
+                  "minimum": 0,
+                  "description": "How bright a wisp's light is."
+                },
+                "lights": {
+                  "type": "number",
+                  "minimum": 0,
+                  "description": "How many of the nearest wisps light the ground at once."
+                },
+                "lightRange": {
+                  "type": "number",
+                  "minimum": 0,
+                  "description": "How near her (m) a stump must be for its wisps to light the ground."
+                },
+                "breathe": {
+                  "type": "number",
+                  "minimum": 0,
+                  "description": "How much the wisps swell brighter and dimmer, slowly (0 steady; steady anyway with reduce flashing)."
+                },
+                "bright": {
+                  "type": "number",
+                  "minimum": 0,
+                  "description": "How bright a wisp's mote is drawn."
+                },
+                "trail": {
+                  "type": "number",
+                  "minimum": 0,
+                  "description": "How many fading motes trail behind each wisp."
+                },
+                "size": {
+                  "type": "number",
+                  "minimum": 0,
+                  "description": "How big (m) a wisp's glow is."
+                },
+                "fade": {
+                  "type": "array",
+                  "items": {
+                    "type": "number",
+                    "minimum": 0
+                  },
+                  "description": "The distances from her (m) over which a stump's wisps and their light fade out: all within the first, none past the second."
+                },
+                "fill": {
+                  "type": "object",
+                  "properties": {
+                    "colour": {
+                      "type": "array",
+                      "items": {
+                        "type": "number",
+                        "minimum": 0
+                      },
+                      "description": "The clearing's moonlight colour (0-255)."
+                    },
+                    "reach": {
+                      "type": "number",
+                      "minimum": 0,
+                      "description": "How far (m) the clearing's moonlight reaches."
+                    },
+                    "strength": {
+                      "type": "number",
+                      "minimum": 0,
+                      "description": "How bright the clearing's moonlight is (0 none)."
+                    },
+                    "height": {
+                      "type": "number",
+                      "minimum": 0,
+                      "description": "How high (m) over the stump the clearing's moonlight hangs."
+                    }
+                  },
+                  "required": [
+                    "colour",
+                    "reach",
+                    "strength",
+                    "height"
+                  ],
+                  "additionalProperties": false,
+                  "description": "The wild clearing's own dim teal moonlight over the stump's middle."
+                }
+              },
+              "required": [
+                "on",
+                "count",
+                "colours",
+                "radius",
+                "inner",
+                "height",
+                "bob",
+                "speed",
+                "reach",
+                "strength",
+                "lights",
+                "lightRange",
+                "breathe",
+                "bright",
+                "trail",
+                "size",
+                "fade",
+                "fill"
+              ],
+              "additionalProperties": false,
+              "description": "A wild stump's will-o'-the-wisps, drifting round its clearing before its soundsystem, in place of its own light."
+            }
+          },
+          "required": [
+            "on",
+            "variants",
+            "irregular",
+            "clear",
+            "stack",
+            "ring",
+            "wisps"
+          ],
+          "additionalProperties": false
         }
       },
       "required": [
@@ -6460,7 +7309,8 @@
         "lightRange",
         "dormant",
         "awake",
-        "flare"
+        "flare",
+        "stump"
       ],
       "additionalProperties": false,
       "description": "The rune stones marking where soundsystems will come, glowing, and pulsing on the beat when the next wave is coming to them."
@@ -7319,6 +8169,34 @@
           "additionalProperties": false,
           "description": "a 💌 that met no one landing on the ground, a soft puff (at most one every gap seconds)."
         },
+        "thunk": {
+          "type": "object",
+          "properties": {
+            "volume": {
+              "type": "number",
+              "minimum": 0
+            },
+            "gap": {
+              "type": "number",
+              "minimum": 0
+            },
+            "low": {
+              "type": "number"
+            },
+            "high": {
+              "type": "number",
+              "minimum": 0
+            }
+          },
+          "required": [
+            "volume",
+            "gap",
+            "low",
+            "high"
+          ],
+          "additionalProperties": false,
+          "description": "a 💌 landing on a creature, a soft thunk at volume (at most one every gap seconds), its pitch climbing from low to high semitones off the key as the ring fills."
+        },
         "nope": {
           "type": "object",
           "properties": {
@@ -7864,6 +8742,7 @@
         "deck",
         "spell",
         "land",
+        "thunk",
         "nope",
         "thud",
         "alarm",
@@ -9207,6 +10086,10 @@
             "speed": {
               "type": "number",
               "minimum": 0
+            },
+            "maxSecs": {
+              "type": "number",
+              "minimum": 0
             }
           },
           "required": [
@@ -9216,7 +10099,8 @@
             "decay",
             "maxOffsetPx",
             "maxRotDeg",
-            "speed"
+            "speed",
+            "maxSecs"
           ],
           "additionalProperties": false,
           "description": "The screen shakes when she's hit, harder for each hit she was already missing and hardest on a knockdown."
@@ -9319,6 +10203,34 @@
           "properties": {
             "on": {
               "type": "boolean"
+            },
+            "whole": {
+              "type": "object",
+              "properties": {
+                "on": {
+                  "type": "boolean"
+                },
+                "margin": {
+                  "type": "number",
+                  "minimum": 0
+                },
+                "at": {
+                  "type": "number",
+                  "minimum": 0
+                }
+              },
+              "required": [
+                "on",
+                "margin",
+                "at"
+              ],
+              "additionalProperties": false,
+              "description": "At a dressing station the camera frames her whole, top of her hat to the soles of her shoes, in the right half of the screen while the panel takes the left half."
+            },
+            "dim": {
+              "type": "number",
+              "minimum": 0,
+              "description": "How dark the picture behind her goes while she's framed at a station, so she stands out: 0 leaves it as it is, 1 makes it black."
             },
             "distance": {
               "type": "number",
@@ -9482,6 +10394,8 @@
           },
           "required": [
             "on",
+            "whole",
+            "dim",
             "distance",
             "side",
             "ease",
@@ -10729,7 +11643,8 @@
         },
         "stack": {
           "type": "number",
-          "minimum": 0
+          "minimum": 0,
+          "description": "The light the bottom sigil of her stack throws from over her hat, in its colour (0 none)."
         },
         "stackReach": {
           "type": "number",
@@ -11000,7 +11915,11 @@
       "type": "object",
       "properties": {
         "mood": {
-          "type": "string"
+          "type": "string",
+          "enum": [
+            "spooky",
+            "plain"
+          ]
         },
         "spooky": {
           "type": "object",
@@ -11012,6 +11931,41 @@
             "ambient": {
               "type": "number",
               "minimum": 0
+            },
+            "unlit": {
+              "type": "number",
+              "minimum": 0,
+              "description": "How dark the forest is where nothing lights it: the ambient and the moonlight on ground, trees, bushes and creatures times this, while the lights (her glow, the party's, fires, lava, runestones, sigils) stay as they are (1 as before)."
+            },
+            "wildGlow": {
+              "type": "object",
+              "properties": {
+                "mix": {
+                  "type": "number",
+                  "minimum": 0,
+                  "description": "How far her glow is cooled in the wild (0 her own colour everywhere)."
+                },
+                "colour": {
+                  "type": "array",
+                  "items": {
+                    "type": "number",
+                    "minimum": 0
+                  },
+                  "description": "The colour (0-255) her glow cools toward in the wild."
+                },
+                "ease": {
+                  "type": "number",
+                  "minimum": 0,
+                  "description": "How long (s) her glow takes to cool or warm as she crosses into or out of the party's ground."
+                }
+              },
+              "required": [
+                "mix",
+                "colour",
+                "ease"
+              ],
+              "additionalProperties": false,
+              "description": "Her glow cooled toward a teal while she's in an area the party hasn't reached, eased in and out as she crosses."
             },
             "moonHue": {
               "type": "number",
@@ -11784,6 +12738,8 @@
           "required": [
             "ambientHue",
             "ambient",
+            "unlit",
+            "wildGlow",
             "moonHue",
             "moonSat",
             "moon",
@@ -12498,6 +13454,20 @@
       "additionalProperties": false,
       "description": "a gentle glow round bright things (strength 0 or on false turns it off; threshold: how bright a pixel must be to glow)."
     },
+    "pixels": {
+      "type": "object",
+      "properties": {
+        "snap": {
+          "type": "boolean",
+          "description": "Each of the picture's pixels drawn a whole number of the screen's own pixels, the pixel size rounded to the nearest (render/view.ts resize; ?snap=0 off)."
+        }
+      },
+      "required": [
+        "snap"
+      ],
+      "additionalProperties": false,
+      "description": "The picture's pixels on the screen."
+    },
     "tiltShift": {
       "type": "object",
       "properties": {
@@ -12533,7 +13503,8 @@
           "properties": {
             "strength": {
               "type": "number",
-              "minimum": 0
+              "minimum": 0,
+              "description": "The tilt-shift's blur over the treetops, in pixels, blended in by lift."
             },
             "band": {
               "type": "number",
@@ -12598,6 +13569,7 @@
     "setPieceFootprint",
     "soundsystemFootprint",
     "reserveMargin",
+    "stoneKeepClear",
     "treeMarginFromSoundsystem",
     "treeDensity",
     "leafJitter",
@@ -12639,6 +13611,7 @@
     "swoopTrail",
     "berries",
     "invites",
+    "cast",
     "invite",
     "win",
     "leash",
@@ -12650,6 +13623,7 @@
     "notice",
     "dodge",
     "stoneIdle",
+    "sigilAvoid",
     "wildWatch",
     "hunt",
     "naps",
@@ -12735,6 +13709,7 @@
     "looks",
     "tone",
     "bloom",
+    "pixels",
     "tiltShift"
   ],
   "additionalProperties": false

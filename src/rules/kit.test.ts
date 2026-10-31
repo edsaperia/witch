@@ -2,18 +2,20 @@
 // invitations her 💌s don't fly; without a broom she falls off the Terrace (a thud, then back at the magic circle); E takes each.
 import { describe, expect, it } from "vitest";
 import { TUNING, withTuning } from "./tuning";
-import { hitWitch, newGame, stepGame, STEP, type Game } from "./game";
+import { hitWitch, newGame as fullGame, stepGame, STEP, type Game } from "./game";
+import { smallWorld } from "../test/worlds";
+const newGame = smallWorld(fullGame, "Kit pickup and Terrace falls use one house and nearby open ground, independent of distant areas.");
 import { deckOf } from "./treehouse";
 import { HOUSE_ROOMS, objectFront } from "./houseRooms";
-import { broomsLeft, hasBroom, hasInvites, KIT_BROOMS, newKit, takeBroom, takeInvites } from "./kit";
+import { broomsLeft, hasBag, hasBroom, hasInvites, KIT_BROOMS, needsBag, newKit, takeBroom, takeInvites } from "./kit";
 
 const run = (g: Game, secs: number, c: object = {}) => { for (let i = 0; i < Math.round(secs / STEP); i++) stepGame(g, { moveX: 0, moveZ: 0, toggleMode: false, zoom: 0, ...c } as Parameters<typeof stepGame>[1], STEP); };
 const events = (g: Game, kind: string) => g.leashEvents.filter(e => e.kind === kind);
 const DEG = Math.PI / 180;
 // (on the Jet nozzles, as treehouse.test.ts: its walk off the rim is timed by them)
 const JETS = withTuning({ spells: { ...TUNING.spells, parts: "nozzles" } });
-/** A night waiting for her spell, so with a kit to take: she's at her decks. */
-const night = (T = JETS) => { const g = newGame(123, T); g.clock.paused = false; for (const W of g.witches) W.kit = newKit(true); return g; };
+/** A night waiting for her spell, so with a kit to take: she's at her decks, carrying a bag (or `bag` "": none). */
+const night = (T = JETS, bag = "satchel") => { const g = newGame(123, T); g.clock.paused = false; for (const W of g.witches) { W.kit = newKit(true); W.spells.bag = bag || undefined; } return g; };
 /** Puts her in front of a house object, on its floor. */
 const at = (g: Game, id: string) => {
   const d = deckOf(g.map, g.tuning)!, o = HOUSE_ROOMS.objects.find(q => q.id === id)!, f = objectFront(o, d, 0.4), W = g.witches[0];
@@ -49,12 +51,30 @@ describe("her night's kit", () => {
     expect(broomsLeft(g)).toBe(KIT_BROOMS - 1);
   });
 
+  it("won't give her invitations till she carries a bag (Ed, 2026-10-29: \"you can't pick up invitations until you're carrying a bag\"): the desk says why", () => {
+    const g = night(JETS, ""), W = g.witches[0];
+    expect([needsBag(W), hasBag(W)]).toEqual([true, false]);
+    expect(takeInvites(W)).toBe(false);
+    at(g, "invitations"); run(g, 0.2);
+    run(g, STEP, { place: true, sigilHeld: true });
+    expect(hasInvites(W)).toBe(false);
+    expect(events(g, "needBag").map(e => e.obj)).toEqual(["invitations"]);
+    expect(events(g, "kit")).toEqual([]);
+    W.spells.bag = "bumbag"; // (a bag chosen at the bags station)
+    run(g, 0.3);
+    run(g, STEP, { place: true, sigilHeld: true });
+    expect(hasInvites(W)).toBe(true);
+    expect(needsBag(W)).toBe(false);
+    // a night with no kit (the tools, the bots) has her invitations, bag or none
+    expect(hasInvites(newGame(123, JETS).witches[0])).toBe(true);
+  });
+
   it("without her invitations, her 💌 key throws nothing; with them, as ever (Ed: \"no ammo that runs out\")", () => {
     const g = newGame(123, JETS), W = g.witches[0];
     g.clock.paused = false; g.party.paused = true;
     run(g, 0.3, { moveZ: -1 }); // (off her seat)
     W.body = { ...W.body, x: g.map.dancefloor.x + 40, z: g.map.dancefloor.z + 40, perch: undefined, mode: "ground", lift: 0, seated: false, vx: 0, vz: 0 };
-    W.kit = newKit(true);
+    W.kit = newKit(true); W.spells.bag = "satchel";
     run(g, 1, { fire: true, aimX: W.body.x + 10, aimZ: W.body.z });
     expect(W.invites.letters.length).toBe(0);
     takeInvites(W);

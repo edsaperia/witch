@@ -1,0 +1,116 @@
+{
+  "sha": "75b937f170a7d6d20e2a0987386a86aa3701bd55",
+  "baseSha": "a4aad736dd9c4f1a4e52b5a5eecd8218465d6837",
+  "preparationOnly": false,
+  "complete": true,
+  "rows": [
+    {
+      "name": "baseline",
+      "gpu": "ANGLE (Intel, Intel(R) UHD Graphics (0x0000A720) Direct3D11 vs_5_0 ps_5_0, D3D11)",
+      "island": "home",
+      "seed": 424242,
+      "build": "a4aad736dd9c4f1a4e52b5a5eecd8218465d6837",
+      "workerWallMs": 846.5999999046326,
+      "workerComputeMs": 735.9000000953674,
+      "checkMs": 0.9000000953674316,
+      "hydrateMs": 473.59999990463257,
+      "forestMs": 68,
+      "heightMs": 340.5,
+      "pathMs": 3.8000001907348633,
+      "consumerCpuMs": 886.8000001907349,
+      "heightSteps": 100,
+      "heightPrepSource": null,
+      "pathPrepared": false,
+      "heightPrepared": false,
+      "heightHash": "d3d8f4a819ab90618dc8057a2104928eae05a1a90ea8c2344072d923b72b8291",
+      "pathHash": "8a50d7ea04fdf0d9cbe877f5bedc3a2ddb95741e3f45d424ba53bd2abce62ecf",
+      "pathGroups": 6
+    },
+    {
+      "name": "baseline",
+      "gpu": "ANGLE (Intel, Intel(R) UHD Graphics (0x0000A720) Direct3D11 vs_5_0 ps_5_0, D3D11)",
+      "island": "fox",
+      "seed": 424242,
+      "build": "a4aad736dd9c4f1a4e52b5a5eecd8218465d6837",
+      "workerWallMs": 755.4000000953674,
+      "workerComputeMs": 681.4000000953674,
+      "checkMs": 0.2999999523162842,
+      "hydrateMs": 125.29999995231628,
+      "forestMs": 80.90000009536743,
+      "heightMs": 400.59999990463257,
+      "pathMs": 5.400000095367432,
+      "consumerCpuMs": 612.5,
+      "heightSteps": 100,
+      "heightPrepSource": null,
+      "pathPrepared": false,
+      "heightPrepared": false,
+      "heightHash": "02dbc1296e91f85ff344019f140cf7a927931119b29179702772383ce07fc888",
+      "pathHash": "b54f5f8cf63b97aa0a3e408c742fd63b455b1325e099e323897677461a90703a",
+      "pathGroups": 8
+    },
+    {
+      "name": "candidate",
+      "gpu": "ANGLE (Intel, Intel(R) UHD Graphics (0x0000A720) Direct3D11 vs_5_0 ps_5_0, D3D11)",
+      "island": "home",
+      "seed": 424242,
+      "build": "75b937f170a7d6d20e2a0987386a86aa3701bd55",
+      "workerWallMs": 1120.2000000476837,
+      "workerComputeMs": 1044.5,
+      "checkMs": 8.299999952316284,
+      "hydrateMs": 424.2999999523163,
+      "forestMs": 58.40000009536743,
+      "heightMs": 13.599999904632568,
+      "pathMs": 0,
+      "consumerCpuMs": 504.59999990463257,
+      "heightSteps": 0,
+      "heightPrepSource": "worker",
+      "pathPrepared": true,
+      "heightPrepared": true,
+      "heightHash": "d3d8f4a819ab90618dc8057a2104928eae05a1a90ea8c2344072d923b72b8291",
+      "pathHash": "8a50d7ea04fdf0d9cbe877f5bedc3a2ddb95741e3f45d424ba53bd2abce62ecf",
+      "pathGroups": 6
+    },
+    {
+      "name": "candidate",
+      "gpu": "ANGLE (Intel, Intel(R) UHD Graphics (0x0000A720) Direct3D11 vs_5_0 ps_5_0, D3D11)",
+      "island": "fox",
+      "seed": 424242,
+      "build": "75b937f170a7d6d20e2a0987386a86aa3701bd55",
+      "workerWallMs": 1276.5999999046326,
+      "workerComputeMs": 1202.7999999523163,
+      "checkMs": 5.1000001430511475,
+      "hydrateMs": 101.5,
+      "forestMs": 72.70000004768372,
+      "heightMs": 11.299999952316284,
+      "pathMs": 0,
+      "consumerCpuMs": 190.60000014305115,
+      "heightSteps": 0,
+      "heightPrepSource": "worker",
+      "pathPrepared": true,
+      "heightPrepared": true,
+      "heightHash": "02dbc1296e91f85ff344019f140cf7a927931119b29179702772383ce07fc888",
+      "pathHash": "b54f5f8cf63b97aa0a3e408c742fd63b455b1325e099e323897677461a90703a",
+      "pathGroups": 8
+    }
+  ],
+  "sources": {
+    "baseline": {
+      "main.js": "ad41f5a87701a6fdb95ccf22c77a37f2a9554862c1534a33d2eeb5bfcaa31cd9",
+      "worker.js": "7cc870d4c8d73d467e3c9b2405fb71cae443e5d4c0241ce645dcecf58bbffc4e"
+    },
+    "candidate": {
+      "main.js": "e1a8359d3036f07392bda67f8d953e3ea6cc0688f1cd2cdd6b70d7b4bc91045c",
+      "worker.js": "577d9b5815fd212745430ca74b7a9b9d7f713569717472685b4e44b34e7c078a"
+    }
+  },
+  "note": "Actual mapPrep worker followed by checked map hydration, Forest, HeightField and pure path-ribbon consumption. Fixed Home/Fox, seed424242, world0. No game boot, art bakes, uploads, coast or travel-speed claim. One ordered pair, no cache purge.",
+  "cpuStart": {
+    "at": "2026-10-30T20:33:47.846Z",
+    "percent": 47.02295374547618
+  },
+  "cpuEnd": {
+    "at": "2026-10-30T20:33:59.442Z",
+    "percent": 9.808060478130676
+  },
+  "timingsContaminated": false
+}

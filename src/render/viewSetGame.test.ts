@@ -4,7 +4,9 @@
 // island's layers that bake on a canvas stand-ins too.)
 import { afterEach, describe, expect, it, vi } from "vitest";
 import * as THREE from "three";
-import { newGame, type Game } from "../rules/game";
+import { newGame as fullGame, type Game } from "../rules/game";
+import { smallWorld } from "../test/worlds";
+const newGame = smallWorld(fullGame, "Headless view reset tests mock island layers and assert disposal/order, independent of area diversity.");
 import { TUNING } from "../rules/tuning";
 import { islandArtSeed } from "./artCache";
 import { groundHeight } from "./height";
@@ -60,9 +62,9 @@ function standInView(g: Game, log: string[]): View {
     appearing: new Map([[decor, 0]]),
     markerCache: { wave: 3, n: 9, list: [] }, plan: { key: "old", waves: new Map() }, prepared: true,
     assets: { reseat: (o: { seed: number; typeSeed: number }) => log.push(`assets.reseat(${o.seed},${o.typeSeed})`), prefetchType: () => {} },
-    partyView: { gen: recorder("soundsystemGen", log) }, houseRooms: null,
+    partyView: { gen: recorder("soundsystemGen", log) }, houseRooms: null, potionObservers: recorder("potionObservers", log),
   });
-  for (const k of ["beachView", "grass", "strings", "leashView", "lasers", "borders", "inviteView", "partyObjects", "rig", "holograms", "glades", "wisps", "clouds", "lightRings", "fireworks", "swoopTrails", "spellFx", "trail", "buffHud", "combatLight", "occlusion"])
+  for (const k of ["beachView", "grass", "strings", "leashView", "lasers", "borders", "inviteView", "partyObjects", "rig", "holograms", "glades", "wisps", "clouds", "lightRings", "fireworks", "swoopTrails", "spellFx", "trail", "combatLight", "occlusion"])
     v[k] = recorder(k, log);
   // (when the old island is let go, and what's in the scene then)
   const dispose = island.dispose.bind(island);
@@ -102,6 +104,7 @@ describe("View.setGame (another night in the same view)", () => {
     expect(v.typeBatches.size).toBe(0);
     expect([...v.trunkShadowBatches.keys()]).toEqual(["decor"]);
     expect(log).toContain("soundsystemGen.reset");
+    expect(log).toContain("potionObservers.dispose");
     // its own records afresh, and the game re-pointed everywhere
     expect(v.game).toBe(b);
     expect(v.markerCache.wave).toBe(-1);
@@ -109,7 +112,7 @@ describe("View.setGame (another night in the same view)", () => {
     expect(v.appearing.size).toBe(0);
     expect(creatureCacheSizes()).toEqual([0, 0, 0, 0]);
     for (const k of ["strings", "leashView", "lasers", "borders", "inviteView"]) expect(log).toContain(`${k}.setGame(456)`);
-    for (const k of ["partyObjects", "rig", "holograms", "glades", "wisps", "fireworks", "swoopTrails", "spellFx", "buffHud", "combatLight", "occlusion"]) expect(log).toContain(`${k}.reset`);
+    for (const k of ["partyObjects", "rig", "holograms", "glades", "wisps", "fireworks", "swoopTrails", "spellFx", "combatLight", "occlusion"]) expect(log).toContain(`${k}.reset`);
     for (const k of ["beachView.setGround", "grass.setMap", "clouds.reseed", "lightRings.reseed", "trail.newNight"]) expect(at(k)).toBeGreaterThan(-1);
     expect(at("beachView.setGround")).toBeLessThan(at("old.dispose")); // (off the old ground before it's let go)
     // this island's treehouse has the house's rooms: made, in the scene

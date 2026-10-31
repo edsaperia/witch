@@ -1,0 +1,15 @@
+{
+  "fire": { "ramp": ["#49141e", "#b43216", "#ff7826", "#fff0af"], "contrast": "#77bbee", "motion": 0, "imprint": "scorch", "sound": "fire" },
+  "frost": { "ramp": ["#163b64", "#397cbb", "#9dd8ed", "#f0fbff"], "contrast": "#ffffff", "motion": 1, "imprint": "frost", "sound": "ice" },
+  "venom": { "ramp": ["#193116", "#467d23", "#a7d73a", "#f1fac1"], "contrast": "#a366bb", "motion": 2, "imprint": "wet", "sound": "water" },
+  "moonlight": { "ramp": ["#302749", "#7774b8", "#c4c3eb", "#f6efff"], "contrast": "#94cfed", "motion": 3, "imprint": "charge", "sound": "light" },
+  "storm": { "ramp": ["#22254e", "#525fbd", "#91c3f1", "#f2faff"], "contrast": "#e6bf78", "motion": 4, "imprint": "charge", "sound": "storm" },
+  "earth": { "ramp": ["#30221d", "#81532d", "#ce9b55", "#f3d9a4"], "contrast": "#95b88b", "motion": 5, "imprint": "push", "sound": "earth" },
+  "shadow": { "ramp": ["#20192f", "#674878", "#b289c1", "#f1d8f5"], "contrast": "#b9a2d3", "motion": 6, "imprint": "scorch", "sound": "void" },
+  "bloom": { "ramp": ["#273426", "#518551", "#d895b6", "#f6dddc"], "contrast": "#b1d97d", "motion": 7, "imprint": "bloom", "sound": "nature" },
+  "water": { "ramp": ["#173646", "#28799c", "#6fc9db", "#dbf6ee"], "contrast": "#b5dce5", "motion": 2, "imprint": "wet", "sound": "water" },
+  "sand": { "ramp": ["#41302c", "#9b7142", "#dcb67a", "#f4e1b2"], "contrast": "#bba38c", "motion": 5, "imprint": "push", "sound": "earth" },
+  "wood": { "ramp": ["#233025", "#536542", "#a1a66a", "#e2d7a6"], "contrast": "#c6a26f", "motion": 7, "imprint": "bloom", "sound": "nature" },
+  "wind": { "ramp": ["#283c41", "#629298", "#abd1cf", "#edf2da"], "contrast": "#e0d8b1", "motion": 3, "imprint": "push", "sound": "wind" },
+  "party": { "ramp": ["#352239", "#a65879", "#dfad66", "#fff0c2"], "contrast": "#e598bb", "motion": 7, "imprint": "bloom", "sound": "party" }
+}

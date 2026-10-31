@@ -9,12 +9,6 @@ export const CREATURE_POLARBEAR = {
   },
   radius: 1.4,
   voice: { family: "big", pitch: 0.9, noise: 0.35, volume: 1.2 },
-  buff: {
-    name: "Blizzard",
-    kind: "shot",
-    scale: { "invites.range": 1.25, "invites.radius": 1.3 },
-    label: "Polar bear's Blizzard: 💌s fly further and land more easily"
-  },
   character: { posture: { head: [0.05, -0.02], body: 0 }, quirk: "sniff", every: [5, 9], for: 1.4 },
   pack: {
     melee: { attacks: [null, "swipe", "bigswipe"] },

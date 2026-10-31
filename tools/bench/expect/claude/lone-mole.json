@@ -1,0 +1,10 @@
+{
+  "reason": "Golf's #1405 (a lone pack-kind creature throws its own attack at the pack shooters' cadence) on today's prototype, plus a hidden pack member's way round (rules/combat.ts): it arrives at where it comes back down as its hide ends, round her, not through her, at most 48 m/s, instead of running straight at its own pace and coming up short.",
+  "frames": {
+    "*": "in fights with a lone pack-kind creature, or a hiding or scattering kind, creatures stand and strike elsewhere"
+  },
+  "rules": {
+    "creatures": "lone pack-kind creatures' attacks, and hidden pack members' positions through a hide",
+    "*": "anything downstream of where those creatures stand and what they throw"
+  }
+}

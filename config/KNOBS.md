@@ -761,6 +761,17 @@ See `setPieceFootprint`.
 |---|---|---|
 | `reserveMargin` | number | 0 to … |
 
+### `stoneKeepClear`
+
+The keep-clear zone round each area's stone (its great stump, or its runestone with the stumps off), in metres from its middle.
+
+1. Ed, 2026-10-29: "No special areas should appear so close to stump/runestone areas; no special scenery, no finds or flasks, no legend circles" (and the party relics, walls and ruins, ponds, picnics and campfires, and the playgrounds too)
+Nothing special within it: no scene or set piece, ruin or freak tree (the giant mushroom), modern relic, the night's find, flask (party relic), legend's clearing, wall or stone ring, pond, campfire or magic stone, the party's picnics, clusters, set dressing and campfires, or ground (playgrounds and sports grounds): each keeps its whole footprint out (clearOfStones in rules/map.ts). Ordinary trees, bushes, rocks and groundcover may stand in it; the stump's own clearing (runeMarkers.stump.clear) keeps the trees off its roots. A legend's clearing that can't fit out of it (a small area) goes at the farthest spot it fits, and the map says so in the log. The 40 m: the stump's 17 m clearing and a margin.
+
+| knob | type | range |
+|---|---|---|
+| `stoneKeepClear` | number | 0 to … |
+
 ### `treeMarginFromSoundsystem`
 
 See `setPieceFootprint`.
@@ -888,9 +899,23 @@ The HUD's pointers as map pins over their subject (render/indicator.ts): gap is 
 1. Ed, 2026-10-26: "pins should be a bit higher"
 Code: `render/indicator.ts`
 
+- **`pins.plate`**: A dark plate behind each edge pointer's ring and round its arrow, its opacity, so the pointers read on any ground (0 none, as before).
+  1. Ed's playtest, 2026-10-29: "Also, it's easy to miss the pointers"
+  Code: `render/indicator.ts`, `render/view/hud.ts`
+- **`pins.vivid`**: How much of the pointers' calming toward the night is taken back: 0 as calmed, 1 the area's neon itself.
+- **`pins.pulse`, `pins.pulseRate`**: How much the morning's guidance pins breathe, from waking up till the party spell: their size swells by up to this share and back (0 still; half as much with reduce flashing).
+  1. Ed, 2026-10-29: "morning routine pointers should pulse slightly (wake up to spell)"
+  Code: `render/view/guidance.ts`, `render/indicator.ts`
+- **`pins.pulseRate`**: How many times a second the morning's guidance pins breathe.
+
 | knob | type | range |
 |---|---|---|
 | `pins.gap` | number | 0 to … |
+| `pins.plate` | number | 0 to … |
+| `pins.vivid` | number | 0 to … |
+| `pins.pulse` | number | 0 to … |
+| `pins.pulseRate` | number | 0 to … |
+| `pins.track` | number | 0 to … |
 
 ### `crownWidth`
 
@@ -1205,6 +1230,7 @@ The dash, a blink [1]: on the ground only, she vanishes and reappears distance m
 - **`dash.toCursor`**: on, she blinks toward the ground under the cursor (or the way the right stick points), the way she faces when the cursor is within aimDead metres of her, and with nothing to aim by (touch) the way she's steering; off, always the way she's steering.
   1. Ed's playtest, 2026-10-06
   2. 2026-10-11: off since
+- **`dash.chain`**: the least time, seconds, from one blink to the next, whatever her charges or the shared cooldown say (it keeps a Double blink's two apart; the legend buffs' blink chain, 0.2, before they were removed).
 
 | knob | type | range |
 |---|---|---|
@@ -1213,6 +1239,7 @@ The dash, a blink [1]: on the ground only, she vanishes and reappears distance m
 | `dash.cooldown` | number | 0 to … |
 | `dash.buffer` | number | 0 to … |
 | `dash.charges` | number | 0 to … |
+| `dash.chain` | number | 0 to … |
 | `dash.toCursor` | boolean |  |
 | `dash.aimDead` | number | 0 to … |
 | `dash.clear.tree` | number | 0 to … |
@@ -1237,6 +1264,10 @@ Code: `rules/spells.ts`, `docs/backlog/unlocks.md`, `rules/hat.ts`, `config/broo
 - **`spells.parts`**: her broom's parts, a comma list of ids from config/broom-parts.json (the page sets it from her save, localStorage witch.broom, fitted at the Workshop's bay; ?parts= for one load); the bare broom, none, has no spell and no quick take-off [1], and a complete set gives its spell.
   1. Ed, 2026-10-23
   Code: `config/broom-parts.json`
+- **`spells.bag`**: her bag, a config/wardrobe.json bag item's id or empty for none, whose invites multiply invites.cooldown and invites.range while she carries it (rules/bags.ts).
+  1. Ed, 2026-10-29: "We should start with a choice of two bags; faster rate of fire but shorter range, and slower rate of fire but longer range"
+  The page sets it from her look (localStorage witch.genome, chosen at the bags station; ?bag=starter, quick or far for one load). The Satchel (the starter) throws at the base rate and reach with a little more homing, the Bumbag faster and shorter, the Purse slower and further; none, the tuning's own, and no invitations at the desk till she carries one (rules/kit.ts).
+  Code: `config/wardrobe.json`
 - **`spells.speed`**: the Speed broom, her speed times mult for duration seconds, then cooldown seconds to recharge.
 - **`spells.healing`**: The Healing ring heals her while she stands near it, and the Helmet takes the first blow for her.
   the Healing ring, within radius m of it she heals a hit every `every` seconds while hurt. The Helmet: the first blow knocks it off beside her instead of costing a hit; she picks it up (E) to wear it again.
@@ -1267,6 +1298,7 @@ Code: `rules/spells.ts`, `docs/backlog/unlocks.md`, `rules/hat.ts`, `config/broo
 | `spells.hat` | string |  |
 | `spells.hats` | string |  |
 | `spells.parts` | string |  |
+| `spells.bag` | string |  |
 | `spells.speed.mult` | number | 0 to … |
 | `spells.speed.duration` | number | 0 to … |
 | `spells.speed.cooldown` | number | 0 to … |
@@ -1410,17 +1442,38 @@ The 💌 invite [1], replacing the proximity chat when on: on the ground she sho
 - **`invites.hits`**: How many letters it takes to win a creature over by its level, and how fast its meter drains when not being hit.
   1. Ed, 2026-10-06: "the invitation dropoff rate (the speed at which animals become less invited) is too fast" (0.03 after 4 s, a full meter in about 33 s; it was states.json's 0.08 after 1.5 s, this knob unread)
   2. Ed, 2026-10-06: "I think we should remove the 0.5s cooldown between counted hits per creature - better to control this through the witch firing speed instead of having hits not register"
+  3. Ed, 2026-10-28: "let's change the drain rate to 2% instead of 3%" (0.02 after 4 s, a full meter in about 50 s; hearts from her animals' blows fade the same, in one queue with the 💌s ("this should be the same speed as 💌s fade ... and they go in the same fade 'queue'"))
   letters to fill it, by level (baby, young, adult); it drains drain of a full meter a second when not being hit, from config/states.json's affection.drainDelay seconds after the last [1]. Every letter that lands on an invitable creature counts [2]: how fast she invites is her firing rate (burst, burstGap, cooldown), nothing adaptive. Enraged creatures and legends block letters; scenery never stops them (Ed).
   Code: `config/states.json`
-- **`invites.fireSlow`**: her ground speed while firing, times this (Ram's Steady buff takes it away).
+- **`invites.fireSlow`**: her ground speed while firing, times this.
+- **`invites.inaccuracy`**: degrees either side of her aim each 💌 may go (a fixed hash of its number, so the same throws go the same ways); 0, dead straight, and a bag adds its own (config/wardrobe.json invitesAdd).
+  1. Ed, 2026-10-29: "For things with rapid rate of fire or shot-gun like clusters, we can also have accuracy/spread"
+- **`invites.bloomPer`**: degrees more inaccuracy each volley while she keeps firing (the bloom); 0, none, and a bag adds its own.
+- **`invites.bloomDecay`**: degrees a second the bloom falls back by.
+- **`invites.bloomMax`**: the most degrees the bloom can reach.
+- **`invites.pierce`**: how many more creatures a 💌 flies on through after the first it lands on, each a hit as any letter's; 0, it stops at the first, and a bag adds its own (config/wardrobe.json invitesAdd).
+  1. Ed, 2026-10-29: "pierce, yes"
+- **`invites.chain`**: how many hops a spent 💌 makes on to the nearest other invitable creature within chainRange metres (never one it has landed on, nor a stunned one), each a hit as any letter's; 0, none, and a bag adds its own (config/wardrobe.json invitesAdd).
+  1. Ed, 2026-10-29: "chain"
+- **`invites.chainRange`**: how far (m) a chained 💌 looks for the next creature to hop to.
 - **`invites.linger`**: a 💌 that met no one rests where it came down this many seconds, fading over the last lingerFade, at most lingerMax at once (drawn only: it's no hit).
   1. Ed's playtest, 2026-10-06: "invitations should sit on the ground for a little while before they fade away"
 - **`invites.spin`**: How fast a 💌 spins in flight.
   1. Ed, 2026-10-06: "the envelopes should spin like a frisbee"
-  a 💌 in flight lies flat and turns about the upright this many times a second (drawn only); when it lands it stops and lies flat. Data, so legend buffs can change any of it (config/legend-buffs.json).
-  Code: `config/legend-buffs.json`
-- **`invites.orbit`**: the 💌 ring circles a creature at scale times its body radius (movement.json bodies) plus gap metres, at least min, and wider still when it holds many.
-  1. Ed's playtest, 2026-10-06: "Invitation orbits are too tight around the creature"
+  a 💌 in flight lies flat and turns about the upright this many times a second (drawn only); when it lands it stops and lies flat.
+- **`invites.impact`**: how a 💌 landing on a creature feels (drawn only): a white flash for flash seconds, a squash of squash springing back over squashSecs, its ring slot popping in by pop over popSecs, and hitstop seconds of held picture on the 💌 that fills the ring.
+  1. Ed, 2026-10-29: "invitation impacts feel unsatisfying" (full hit feedback for a 💌 landing on a creature: a white flash, a little squash, its ring slot popping in, a thunk rising as the ring fills, a hitstop on the 💌 that fills it; no flash and a gentler squash with reduce-flashing on)
+  With reduce-flashing on there's no flash and the squash is gentle instead. The hitstop holds the picture only (the last frame kept, starting from the frame that shows the flash); the rules run on.
+  Code: `src/render/impact.ts`, `src/render/comfort.ts`
+- **`invites.cheer`**: one won over by her 💌s celebrates secs seconds by its body (render/cheer.ts), out of every fight meanwhile, a burst of that many hearts (hearts) off it.
+  1. Ed, 2026-10-29: "when a creature is won over ... it celebrates for about 1 s in a way that suits its body type" (hoppers a jump-spin, four-legged a roll-over, flyers a loop, the rest a wiggle-dance; hearts burst, the happy sting, its sigil flipping to the friends' colour with a pop; out of every fight meanwhile (a short rules hold))
+  Code: `src/render/cheer.ts`, `src/rules/affection.ts`
+- **`invites.orbit`**: the 💌 ring circles a creature at scale times its body radius (movement.json bodies) plus gap metres, at least min, and at least height times its drawn height (to its top as drawn) plus gap, so it rings the creature you see at any size; wider still when it holds many.
+  1. Ed, 2026-10-28: "the orbits are smaller than the size of the creatures; their size should adjust depending on how large the creatures are"
+  2. Ed's playtest, 2026-10-06: "Invitation orbits are too tight around the creature"
+  3. Ed's playtest, 2026-10-29: "damage orbits are too wide, bring them in by around 30%" (scale 2 to 1.4, gap 1 to 0.7, min 2 to 1.4, height 0.9 to 0.63 (all x0.7); the soundsystem's 💥 ring 1.5 to 1.05 m outside it)
+  A soundsystem's 💥 ring sits 1.5 gaps outside its radius.
+- **`invites.hard`**: the hard homing of the 💌s her Sentry and Slingshot hats throw: homing degrees a second, cone degrees either side it looks in, range metres it looks out to (was the legend buffs' charm, 420, 80 and 18).
 
 | knob | type | range |
 |---|---|---|
@@ -1436,6 +1489,13 @@ The 💌 invite [1], replacing the proximity chat when on: on the ground she sho
 | `invites.homingRange` | number | 0 to … |
 | `invites.multiShot` | number | 0 to … |
 | `invites.spread` | number | 0 to … |
+| `invites.inaccuracy` | number | 0 to … |
+| `invites.bloomPer` | number | 0 to … |
+| `invites.bloomDecay` | number | 0 to … |
+| `invites.bloomMax` | number | 0 to … |
+| `invites.pierce` | number | 0 to … |
+| `invites.chain` | number | 0 to … |
+| `invites.chainRange` | number | 0 to … |
 | `invites.radius` | number | 0 to … |
 | `invites.amount` | number | 0 to … |
 | `invites.hits` | array of number |  |
@@ -1445,9 +1505,22 @@ The 💌 invite [1], replacing the proximity chat when on: on the ground she sho
 | `invites.lingerFade` | number | 0 to … |
 | `invites.lingerMax` | number | 0 to … |
 | `invites.spin` | number | 0 to … |
+| `invites.impact.flash` | number | 0 to … |
+| `invites.impact.squash` | number | 0 to … |
+| `invites.impact.gentle` | number | 0 to … |
+| `invites.impact.squashSecs` | number | 0 to … |
+| `invites.impact.pop` | number | 0 to … |
+| `invites.impact.popSecs` | number | 0 to … |
+| `invites.impact.hitstop` | number | 0 to … |
+| `invites.cheer.secs` | number | 0 to … |
+| `invites.cheer.hearts` | number | 0 to … |
 | `invites.orbit.scale` | number | 0 to … |
 | `invites.orbit.gap` | number | 0 to … |
 | `invites.orbit.min` | number | 0 to … |
+| `invites.orbit.height` | number | 0 to … |
+| `invites.hard.homing` | number | 0 to … |
+| `invites.hard.cone` | number | 0 to … |
+| `invites.hard.range` | number | 0 to … |
 
 ### `invite`
 
@@ -1475,7 +1548,7 @@ The end of the route: after the last wave a pointer leads her to the remaining e
 3. Ed, 2026-10-11: a ring inside the conga's hid it from the ground
 4. 2026-10-26: "Remove the end cards" (rules/guidance.ts; no card since Ed's)
 5. Ed's playtest, 2026-10-26: "when you're on the ground in the home area, the line should follow you"
-The end of the route [1][2]: the last wave landed, a pointer to the enraged animal nearest the centre while any lives (enraged legends don't count; retarget: seconds between re-picks); none left, the victory lap: the pulse races back along the route to home at lapSpeed m/s, every stone it passes firing its fireworks; home reached, the night won: the dealt legends wake (bar any still enraged, which go back to sleep, their islands not found) and dance in place on its far side [3], north of the dancefloor beyond the conga, behind everything from the north-facing camera: on arcs legendGap m outside the conga's circle, legendRow m apart, legendSpace m between them, from due north out to legendArc degrees across, clear of the treehouse, the island's sigil flares on the dancefloor (drawn on over flareDraw s, held flare s), every other animal joins one conga line round it (congaSpeed m/s, congaGap m apart, a circle of at least congaRadius m, as big as the line needs), walking to its place at joinSpeed m/s (out of her sight, seen m off, simply there); settleAfter seconds after, it settles: the guidance pins lead her home [4]. The conga follows her [5]: with follow on, while she's on the ground in the home area (not at the treehouse or in the treetops) the leader trails followLead m behind her along where she's walked and the rest follow single file congaGap apart, walking to their places at joinSpeed or followSpeed times her own speed, whichever is faster; anywhere else the line goes back round the dancefloor.
+The end of the route [1][2]: the last wave landed, a pointer to the enraged animal nearest the centre while any lives (enraged legends don't count; retarget: seconds between re-picks); none left, the victory lap: the pulse races back along the route to home at lapSpeed m/s, every stone it passes firing its fireworks; home reached, the night won: the dealt legends wake (bar any still enraged, which go back to sleep, their islands not found) and dance in place on its far side [3], north of the dancefloor beyond the conga, behind everything from the north-facing camera: on arcs legendGap m outside the conga's circle, legendRow m apart, legendSpace m between them, from due north out to legendArc degrees across, clear of the treehouse, the island's sigil flares on the dancefloor (drawn on over flareDraw s, held flare s), every other animal joins one conga line round it (congaSpeed m/s, congaGap m apart, a circle of at least congaRadius m, as big as the line needs), walking to its place at joinSpeed m/s (out of her sight, seen m off, simply there); once she reaches the party after the win (anywhere on the dancefloor, on foot or flying low: Ed, 2026-10-28), it settles: the guidance pins lead her home [4]. The conga follows her [5]: with follow on, while she's on the ground in the home area (not at the treehouse or in the treetops) the leader trails followLead m behind her along where she's walked and the rest follow single file congaGap apart, walking to their places at joinSpeed or followSpeed times her own speed, whichever is faster; anywhere else the line goes back round the dancefloor.
 Code: `rules/win.ts`, `docs/backlog/journey.md`, `rules/guidance.ts`
 
 | knob | type | range |
@@ -1495,7 +1568,6 @@ Code: `rules/win.ts`, `docs/backlog/journey.md`, `rules/guidance.ts`
 | `win.legendArc` | number | 0 to … |
 | `win.flareDraw` | number | 0 to … |
 | `win.flare` | number | 0 to … |
-| `win.settleAfter` | number | 0 to … |
 | `win.retarget` | number | 0 to … |
 
 ### `leash`
@@ -1560,6 +1632,12 @@ Code: `rules/win.ts`, `docs/backlog/journey.md`, `rules/guidance.ts`
   2. Ed, 2026-10-27: "go ahead and push all the new sigil work" (the default since; ?sigils=old turns them off and the hex grid back to 4 m)
   on [2], every leash sigil (her stack, placed sigils, happy runes, the ghost, the treetop projection, the bond) is its bare glyph, no ring or disc, glyph metres across on the ground, in its rank's colour (colours: baby, youth, adult, legend; the species' neon stays the world's: borders, stones, fireworks, dancefloor, holograms, chart), with embers rising off its strokes (embers.count at once, each size metres, rising rise metres, by rank; in her stack stack of that), under a dark shade in the glyph's own shape (not a disc); a youth in her stack shows two rows of round dots off to its right, one a berry it eats on the move (toEvolve less the last, eaten at a placed sigil), at most dotsPerRow a row, bright eaten and dim not, pulsing when ready; and the hex grid is hex metres (leash.hex.size).
   Code: `render/leash/ranks.ts`
+- **`leash.placeMotes`**: A sigil put down or picked up: its burst of motes rising in its colour (render/leash.ts, drawn in render/leash/combat.ts): count, size (m), bright (times its colour), rise and life (times the old height and length).
+  1. the coordinator, 2026-10-29: "Given current settings, the motes from sigils don't do much" (Ed, relayed; the art director's motes pass, #1398 (tools/shot/motes.cjs measures them))
+- **`leash.ranks.embers.bright`**: The embers rising off rank sigils (on the ground, in her stack, over the rune stones): their colour times this.
+  1. the coordinator, 2026-10-29: "Given current settings, the motes from sigils don't do much" (Ed, relayed; the art director's motes pass, #1398 (tools/shot/motes.cjs measures them))
+- **`leash.ranks.embers.crowd`**: Past this many of her sigils put down, each one's embers thinned by the square root, so a crowd of them isn't noise (0: never).
+  1. the coordinator, 2026-10-29: "Given current settings, the motes from sigils don't do much" (Ed, relayed; the art director's motes pass, #1398 (tools/shot/motes.cjs measures them))
 
 | knob | type | range |
 |---|---|---|
@@ -1575,6 +1653,11 @@ Code: `rules/win.ts`, `docs/backlog/journey.md`, `rules/guidance.ts`
 | `leash.sigilBacking.dark` | number | 0 to … |
 | `leash.sigilBacking.size` | number | 0 to … |
 | `leash.sigilBacking.ink` | number | 0 to … |
+| `leash.placeMotes.count` | number | 0 to … |
+| `leash.placeMotes.size` | number | 0 to … |
+| `leash.placeMotes.bright` | number | 0 to … |
+| `leash.placeMotes.rise` | number | 0 to … |
+| `leash.placeMotes.life` | number | 0 to … |
 | `leash.runeGap` | number | 0 to … |
 | `leash.hex.size` | number | 0 to … |
 | `leash.hex.stone` | number | 0 to … |
@@ -1604,12 +1687,36 @@ Code: `rules/win.ts`, `docs/backlog/journey.md`, `rules/guidance.ts`
 | `leash.ranks.hex` | number | 0 to … |
 | `leash.ranks.glyph` | number | 0 to … |
 | `leash.ranks.colours` | array of array |  |
+| `leash.ranks.enemy` | array of array |  |
+| `leash.ranks.sizes` | array of number |  |
 | `leash.ranks.embers.count` | array of number |  |
 | `leash.ranks.embers.size` | array of number |  |
 | `leash.ranks.embers.rise` | array of number |  |
 | `leash.ranks.embers.stack` | number | 0 to … |
+| `leash.ranks.embers.bright` | number | 0 to … |
+| `leash.ranks.embers.crowd` | number | 0 to … |
 | `leash.ranks.dotsPerRow` | number | 0 to … |
 | `leash.ranks.stoneGlow` | number | 0 to … |
+| `leash.ranks.standScale` | number | 0 to … |
+| `leash.ranks.bold` | boolean |  |
+| `leash.ranks.stones.range` | number | 0 to … |
+| `leash.ranks.stones.fade` | number | 0 to … |
+| `leash.ranks.stones.size` | number | 0 to … |
+| `leash.ranks.stones.near` | number | 0 to … |
+| `leash.ranks.stones.far` | number | 0 to … |
+| `leash.ranks.stones.bars` | number | 0 to … |
+| `leash.ranks.stones.radius` | number | 0 to … |
+| `leash.ranks.stones.cell` | number | 0 to … |
+| `leash.ranks.stones.convert` | number | 0 to … |
+| `leash.ranks.stones.ringTilt` | number | 0 to … |
+| `leash.ranks.chain.link` | array of number |  |
+| `leash.ranks.chain.tether` | number | 0 to … |
+| `leash.ranks.chain.slack` | number | 0 to … |
+| `leash.ranks.chain.damping` | number | 0 to … |
+| `leash.ranks.chain.gravity` | number | 0 to … |
+| `leash.ranks.chain.arcPull` | number | 0 to … |
+| `leash.ranks.chain.iterations` | number | 0 to … |
+| `leash.ranks.chain.jump` | number | 0 to … |
 
 ### `bond`
 
@@ -1739,6 +1846,12 @@ How creatures fight: who goes for whom, how fast they run and chase, and how muc
 Combat (Stage 4; the attacks themselves are data in config/combat.json; lengths and speeds at the fight's scale: see fight). Wild creatures attack party animals of other kinds within aggro metres. They go for the witch on the ground as soon as she's in their area or within their attack's range [1], and let her go when she rises to the treetops, or once she's out of their area, out of their range and at least witchLose metres away; then they walk back to their spot. The one she's inviting holds its fire on her (its friends don't). Party animals following her take on what attacks her or her party; parked ones (at a sigil) guard within guard.radius of it. Babies are never attacked, by either side. Marching on a soundsystem, its own area's or marching on after a fall, a creature moves at marchShare of its top (fight) speed: its movement profile's, else fightRun, a legend legendRun [2]. Against a soundsystem or speaker, charging kinds don't charge and swoopers don't swoop: they land and use their ordinary attack [3]. A beaten creature, wild or party, runs off the map at fleeMult times its speed and is gone for good [4]; a party animal is lost for the run. A soundsystem has soundsystemHealth, passive, and is hit within soundsystemRadius metres: sieges should outlast the wave gap. A soundsystem has 500 [5]. Home is its ring of speakers [6], each a soundsystem of speakerHealth, hit within speakerRadius metres, the besiegers going for the nearest standing one; home falls when every one has (its old homeHealth 8000 and homeRadius 9 gone).
 Code: `config/combat.json`, `rules/speakers.ts`
 
+- **`combat.packs.shadow`**: A pack member hiding in its lull (in the trees, underground, under water, in the branches, or scattered) is drawn as a shadow of itself, not left out.
+  1. Ed, 2026-10-29: "'hiding' maybe should look like the animal becoming a shadow (dark and transparent), rather than teleporting"
+  Hiding looks like a shadow [1]: while it's hidden (and can't be hit) it's drawn as its own sprite darkened by shade (0 its own colours, 1 black) at opacity, running round to where it comes back, fading from solid to shadow over fade seconds as it hides and back as it comes out (render/view/creatures.ts).
+- **`combat.packs.shadow.shade`**: How dark: 0 its own colours, 1 black.
+- **`combat.packs.shadow.opacity`**: How opaque the shadow is (0 invisible, 1 solid).
+- **`combat.packs.shadow.fade`**: Seconds to turn from solid to shadow as it hides, and back as it comes out.
 - **`combat.packs`**: Pack kinds fight in combos (the nearest lunges, the ranged fire where she'd dodge, one behind her throws its special) and fall back between them.
   1. Ed, 2026-10-19: docs/backlog/combat.md, build step 1
   2. Ed, 2026-10-20: "Turn pack combat on by default"
@@ -1765,6 +1878,9 @@ Code: `config/combat.json`, `rules/speakers.ts`
 | knob | type | range |
 |---|---|---|
 | `combat.packs.on` | boolean |  |
+| `combat.packs.shadow.shade` | number | 0 to … |
+| `combat.packs.shadow.opacity` | number | 0 to … |
+| `combat.packs.shadow.fade` | number | 0 to … |
 | `combat.aggro` | number | 0 to … |
 | `combat.witchLose` | number | 0 to … |
 | `combat.leaveArea` | number | 0 to … |
@@ -1861,6 +1977,21 @@ Hostile creatures gather near the runestone [1]: a wild area's own hostile young
 | `stoneIdle.radius` | number | 0 to … |
 | `stoneIdle.clear` | number | 0 to … |
 
+### `sigilAvoid`
+
+Idling and dancing creatures keep off the sigils lying on the floor.
+
+1. Ed, 2026-10-28: "When idling or dancing, creatures should try and avoid standing on floor sigils"
+Creatures keep off floor sigils [1]: wild idlers, happy ones at their area, dancers and parked ones roaming round their sigil choose where to stand next off every sigil on the floor (her placed sigils, happy creatures' runes, relics' sigils, her hats lying down), and one resting on a sigil moves on. Only a nudge: with nowhere clear in a dozen tries it stands where it would have; moving, chasing, fighting and marching are untouched.
+
+- **`sigilAvoid.on`**: false lets them stand on sigils as before.
+- **`sigilAvoid.pad`**: Metres past a sigil's edge a creature's middle still counts as on it.
+
+| knob | type | range |
+|---|---|---|
+| `sigilAvoid.on` | boolean |  |
+| `sigilAvoid.pad` | number | 0 to … |
+
 ### `wildWatch`
 
 On her first landing in a wild area its creatures stare and redden for a few seconds before they attack, and how far they chase her after.
@@ -1951,7 +2082,8 @@ How many wild creatures each area starts with, more along the waves' route so th
 3. Ed, 2026-10-07: "no population growth on a clock" (his new core design)
 4. Ed, 2026-10-08: the swarm plan's phase 1: its own young and adults, the ones a wave enrages and sets marching; rules/swarm.ts
 5. 2026-10-06: a fraction carries over: 0.5 is one every other wave; balance, DECISION FOR ED: 0.5, from 1, so a player's defence can hold the early sieges and playing well matters
-Wild creatures [1]: every area starts with the same population, population.start [2], and, from the start [3], more by its place on the waves' route (Balance 2's shape; rules/growth.ts routePopulation): byRoute's threat (since removed: the hostile swarm below does this now), [route index, F] points (1 the first wave's stone; straight lines between, flat past the ends), is the extra fighting value its young and adults add (F by Lanchester, young 11.6, adult 40, babies 0; about what an area woken at that wave grew to before); its kind spends it by its profile (byRoute's profiles by species (removed with it), else default: the shares of its extra creatures as babies, young and adults), so many more of a swarm's young than of a heavy kind's adults, at the same danger: count = threat ÷ the profile's mean F a creature × the area's count scale, rounded, split by the shares (largest remainder, ties by the seed). The hostile swarm [4]: its challenge grows with the area's place p in the runestone order (0 the first stone, 1 the last), whatever its species. Each area fields, of every size up to its species' cap (capScales: the cap grown along the same curve, at least 2) and every young/adult split, the one nearest the target; among those within swarm.mixTolerance (10%) of the nearest, a mix of young and adults first. A simulated power (config/swarm-power.json, empty in phase 1) stands in for the estimate where it has the swarm. So a default map (about 100 areas) holds about 540 hostiles: the curve's average, 5.8 an area. growth is the old growth on a clock, which the game no longer reads (the balance simulators still do): every wave, each area the party hasn't reached gained growth.perWave more [5], each at a random level by growth.weights (baby, young, adult: equal thirds), so the areas the party reaches late are the ones to fear. Areas already partified don't grow. New ones arrive out of the witch's sight (beyond the haze's far edge plus growth.hide metres), never popping in on screen; areas far from every witch keep them as counts only, made real (from the seed) when a witch comes within creatureSimRadius of the area or it wakes. The home area holds none. Fighting value (DESIGN.md, Balance): a young is worth 15.5, an adult 29, a legend 76; so an area woken at wave n brings about 1 + n/3 young and 1 + n/3 adults (F about 44.5 + 14.8 n), besides its legend (wildLegends). Only creatures whose home is within creatureSimRadius metres of the witch move. node tools/balance/sim.mjs forecasts the sieges these numbers make.
+6. Ed, 2026-10-28: "during a night, no creatures are created and none are destroyed" (growth.on off, so the balance simulators match the game; a creature that runs off sleeps on the beach (rules/runaway.ts))
+Wild creatures [1]: every area starts with the same population, population.start [2], and, from the start [3], more by its place on the waves' route (Balance 2's shape; rules/growth.ts routePopulation): byRoute's threat (since removed: the hostile swarm below does this now), [route index, F] points (1 the first wave's stone; straight lines between, flat past the ends), is the extra fighting value its young and adults add (F by Lanchester, young 11.6, adult 40, babies 0; about what an area woken at that wave grew to before); its kind spends it by its profile (byRoute's profiles by species (removed with it), else default: the shares of its extra creatures as babies, young and adults), so many more of a swarm's young than of a heavy kind's adults, at the same danger: count = threat ÷ the profile's mean F a creature × the area's count scale, rounded, split by the shares (largest remainder, ties by the seed). The hostile swarm [4]: its challenge grows with the area's place p in the runestone order (0 the first stone, 1 the last), whatever its species. Each area fields, of every size up to its species' cap (capScales: the cap grown along the same curve, at least 2) and every young/adult split, the one nearest the target; among those within swarm.mixTolerance (10%) of the nearest, a mix of young and adults first. A simulated power (config/swarm-power.json, empty in phase 1) stands in for the estimate where it has the swarm. So a default map (about 100 areas) holds about 540 hostiles: the curve's average, 5.8 an area. growth is the old growth on a clock, which the game no longer reads, off since [6] (the balance simulators read it only when on): every wave, each area the party hasn't reached gained growth.perWave more [5], each at a random level by growth.weights (baby, young, adult: equal thirds), so the areas the party reaches late are the ones to fear. Areas already partified don't grow. New ones arrive out of the witch's sight (beyond the haze's far edge plus growth.hide metres), never popping in on screen; areas far from every witch keep them as counts only, made real (from the seed) when a witch comes within creatureSimRadius of the area or it wakes. The home area holds none. Fighting value (DESIGN.md, Balance): a young is worth 15.5, an adult 29, a legend 76; so an area woken at wave n brings about 1 + n/3 young and 1 + n/3 adults (F about 44.5 + 14.8 n), besides its legend (wildLegends). Only creatures whose home is within creatureSimRadius metres of the witch move. node tools/balance/sim.mjs forecasts the sieges these numbers make.
 Code: `rules/growth.ts`, `rules/swarm.ts`, `config/swarm-power.json`, `tools/balance/sim.mjs`
 
 - **`population.byRoute.babies`**: babies in every area, start's included [1], at most babyCap.
@@ -2030,7 +2162,7 @@ Ed [1]: the witch is much faster than almost all creatures (she flies at groundS
 
 ## Legends
 
-Legends: their circles, dreams, quests, buffs, rage and the wild ones.
+Legends: their circles, dreams, quests, rage and the wild ones.
 
 ### `legendCircle`
 
@@ -2077,11 +2209,11 @@ A sleeping legend's dream (or nightmare) bubble, and its pointer to the nearest 
 
 ### `legends`
 
-Which areas have a legend, and how strong legends' buffs are.
+Which areas have a legend, and how far a happy one reaches.
 
 1. Ed, 2026-10-06: "Legends should only appear in about half of areas (we can test this ratio); every area makes them too common." … "it should be more like 1/5" (share: the fraction of the areas (home never) with a sleeping legend (Ed, 2026-10-08:; 0.5 before), seeded per map and spread so they don't clump (no more than two neighbouring areas together where the map allows))
 2. 2026-10-06
-. The rest have no legend: no clearing, quest, restlessness or legend music. Read as the map is made: the decisions panel reloads. Ed's answers on #259 [2]: buffPower, every legend's buff's strength ("Bigger buffs", for quests worth their cost; 1 as written: a scale of v is 1 + (v - 1) x buffPower, an add v x buffPower, a behaviour's count rounded up by it, its limits still holding); happyRange, a happy legend's reach in metres (relic allies: "They stay home, but if they're not useful enough right now, make their range longer").
+. The rest have no legend: no clearing, quest, restlessness or legend music. Read as the map is made: the decisions panel reloads. Ed's answers on #259 [2]: happyRange, a happy legend's reach in metres (relic allies: "They stay home, but if they're not useful enough right now, make their range longer").
 
 - **`legends.earlyQuest`**: One of the first areas the waves wake has a legend dreaming of a creature from a nearby area, so there's an early quest.
   1. Ed, 2026-10-07: "for variety we could fix one of [first, second, third] having a legend that wants one of the first three [not itself] so there's always an easy quest to do in the first third"
@@ -2091,7 +2223,6 @@ Which areas have a legend, and how strong legends' buffs are.
   1. Ed, 2026-10-26: "legends are spawned in additional areas that have legend circles where runestones usually are" (all legends in them)
   on, each of the night's legends gets an area of its own grown out of the island beside one of its kind's areas (its pair), taking its kind and look, with no runestone, soundsystem or route stop, its circle at its heart; the island grows by them; the pair counts as one area for a legend's rage and for creatures attacking and defending (rules/map.ts areaOf); false: legends in their own kind's areas as before.
   Code: `rules/map.ts`
-- **`legends.questRoll`**: (the same: "the difficulty of the encounter is the slot machine, not the reward size"): a done quest's buff is this many times as strong as written, whatever its dream's distance (it was 1 to 1.5 by distance, questFar; a relic's stays as written).
 - **`legends.questLater`**: a legend dreams only of a kind living in an area later on the route than its own, within questCap areas; failing that, the kind of the nearest later area; with no later area, any kind (the early easy quest keeps its own pick); false: any kind as before.
   1. Ed's core design, 2026-10-07: relayed by the coordinator: quests point to later areas, deeper in and wilder now the forest is grown before the waves
 - **`legends.bombard`**: ("Legend bombards, but prioritises you"): an angry legend with no witch in its reach throws the first lob or beam of its volley at the nearest standing soundsystem within range metres, damage a hit (of combat.soundsystemHealth); a charging legend lobs at it rather than charge.
@@ -2099,7 +2230,7 @@ Which areas have a legend, and how strong legends' buffs are.
   1. Ed, 2026-10-06: "perhaps" … "an angry legend simply stamps on the soundsystem in its area, destroying immediately. The angry legend waking timer may have to be longer" (a)
   2. Ed, 2026-10-06: "It would be funny if you could leash an elder, but it's so heavy that it stops you moving at all outside the leash slack distance, and it doesn't move towards you at all. Maybe you should be able to turn a happy legend into a party legend with an absurd number of invites (100?) and then pick up its sigil but it's totally useless" (rules/partyLegend.ts)
   3. Ed, 2026-10-06: "They're a high-roll mechanic; you don't know how hard the quest will be before you go off to try and find the creature" (the gamble kept)
-  on, a legend turning angry while its own area's soundsystem stands destroys it at once (ruined, as any fallen one), and legends are restless angryAfter seconds before they anger (legends.json angryAfter otherwise). The party-legend Easter egg [2]: partyEgg turns it on; a happy legend (by its relic or its quest) then takes 💌s, its meter partyHits long, draining partyDrain of a full meter a second; full, it's a party legend (it keeps its buff, dances in place, fights no one, its rune at its feet); picked up, she can go anywhere within partyReach metres of it (the leash's slack: 0.85 of leash.length) and not a step further, and it never comes to her; put down (E), it's let go where it stands. questNear: 0, a legend dreams of any kind on the map [3]; N, one of the N nearest other kinds round it, an area nearer home counting as nearer (a knob for trying it).
+  on, a legend turning angry while its own area's soundsystem stands destroys it at once (ruined, as any fallen one), and legends are restless angryAfter seconds before they anger (legends.json angryAfter otherwise). The party-legend Easter egg [2]: partyEgg turns it on; a happy legend (by its relic or its quest) then takes 💌s, its meter partyHits long, draining partyDrain of a full meter a second; full, it's a party legend (it dances in place, fights no one, its rune at its feet); picked up, she can go anywhere within partyReach metres of it (the leash's slack: 0.85 of leash.length) and not a step further, and it never comes to her; put down (E), it's let go where it stands. questNear: 0, a legend dreams of any kind on the map [3]; N, one of the N nearest other kinds round it, an area nearer home counting as nearer (a knob for trying it).
   Code: `rules/partyLegend.ts`
 
 | knob | type | range |
@@ -2107,10 +2238,8 @@ Which areas have a legend, and how strong legends' buffs are.
 | `legends.share` | number | 0 to … |
 | `legends.earlyQuest` | boolean |  |
 | `legends.areas` | boolean |  |
-| `legends.buffPower` | number | 0 to … |
 | `legends.happyRange` | number | 0 to … |
 | `legends.questCap` | number | 0 to … |
-| `legends.questRoll` | number | 0 to … |
 | `legends.questLater` | boolean |  |
 | `legends.bombard.on` | boolean |  |
 | `legends.bombard.range` | number | 0 to … |
@@ -2124,14 +2253,14 @@ Which areas have a legend, and how strong legends' buffs are.
 
 ### `wildLegends`
 
-What legends are for: optional quests that give buffs, relics for powerful allies, and danger to her babies in sieges.
+What legends are for: optional quests, relics for powerful allies, and danger to her babies in sieges.
 
 1. Ed, 2026-10-06
 2. Ed, 2026-10-04
 3. 2026-10-05: "Legends, redesigned" (redesigned, DESIGN.md)
 4. Ed, 2026-10-08: legends.share, never home; half before
 5. 2026-10-04: wake seconds of heaving out of the ground when its wave woke it; heal hp a second while no enemy was near
-What legends are for [1]: a mostly optional layer of tasks; quick players get buffs from their quests (open as long as a legend sleeps), lucky ones find relics for powerful allies, and a losing player sees their babies hurt in sieges and them enraged, the loss spiral faster and more dramatic (his words in DESIGN.md, "Legends, redesigned", and config/legends.json). Area legends [2][3]: about a fifth of the areas [4] have one legend of its kind, sleeping, sunk into the ground like scenery (sink: the share of it under the ground, moss: how far its colours go toward moss). Waves no longer wake it: it grows restless, then angry, while its area has none of its kind, and a relic by it makes it happy (config/legends.json). A happy legend defends against the enraged within guard metres of where it stands; worn down, it goes back to sleep, any buff it gave kept. wake and heal are the first design's [5]; the redesigned rules don't read them (a happy one heals over legends.json healTime). Drawn scale times a legend's size, swelling by breathe as it breathes (once every breathEvery seconds); awake, an aura on the ground aura metres across and, from the treetops, a glow over the canopy (glow its strength) in a dark mix of its sigil's colour.
+What legends are for [1]: a mostly optional layer of tasks; quick players do their quests (open as long as a legend sleeps; legend buffs designed 5 Oct, #87, removed 28 Oct), lucky ones find relics for powerful allies, and a losing player sees their babies hurt in sieges and them enraged, the loss spiral faster and more dramatic (his words in DESIGN.md, "Legends, redesigned", and config/legends.json). Area legends [2][3]: about a fifth of the areas [4] have one legend of its kind, sleeping, sunk into the ground like scenery (sink: the share of it under the ground, moss: how far its colours go toward moss). Waves no longer wake it: it grows restless, then angry, while its area has none of its kind, and a relic by it makes it happy (config/legends.json). A happy legend defends against the enraged within guard metres of where it stands; worn down, it goes back to sleep, any buff it gave kept. wake and heal are the first design's [5]; the redesigned rules don't read them (a happy one heals over legends.json healTime). Drawn scale times a legend's size, swelling by breathe as it breathes (once every breathEvery seconds); awake, an aura on the ground aura metres across and, from the treetops, a glow over the canopy (glow its strength) in a dark mix of its sigil's colour.
 Code: `config/legends.json`
 
 - **`wildLegends.seen.dark`, `wildLegends.seen.liftMax`**: a legend whose floored look (seen.floor times its coat's luminance, its body colour as baked: render/legendLight.ts) is under seen.dark has its floor raised to seen.dark over that luminance, at most seen.liftMax; the bear, the boar and the others as dark are caught, lighter legends stay as they are.
@@ -2167,6 +2296,35 @@ Code: `config/legends.json`
 ## Party
 
 The party: the beat, waves, soundsystems, the dancefloor, its lights and objects, the party witches, the ley lines, music and sound, and the end.
+
+### `cast`
+
+The runestone stacks and the soundsystem spell: she converts a stone by holding the sigil button at it.
+
+1. Ed, 2026-10-28: "It's a spell that you're choosing to cast on this stone, rather than a property of the area/stone itself." (every wild creature's sigil in its stone's stack (friends above enemies); no auto-clearing; the spell or a wave converts the stone, its friend sigils scattering round it for anyone to pick up)
+Code: `src/rules/stoneStacks.ts`
+
+- **`cast.on`**: on (the default since their view landed, #1378): the stacks and the spell; off (?cast=0): areas clear by themselves once their wild are gone, as before.
+- **`cast.time`**: seconds of holding the sigil button at a stone to convert it; a hit stops the cast.
+- **`cast.drain`**: how much of a full cast her progress on a stone loses a second while she isn't casting it (holding again resumes from there).
+- **`cast.radius`**: how near the stone (m) she has to stand to cast; there the sigil button casts rather than putting down or picking up.
+- **`cast.show`**: how near the stone (m) the spell's music-note sigil shows.
+- **`cast.scatter`**: where a converted stone's friend sigils scatter: free hex cells of its clearing between min and reach metres, never in the hidden wedge just north of the soundsystem (hide.width either side, hide.depth behind).
+  Ed, 2026-10-28: "It's fine if they're scattered around the whole runestone clearing"; "they also shouldn't fall immediately behind the soundsystem where they could be hidden". Open ground first (a tree's chance there at most open times the forest's density), in a seeded order so they spread however many there are; the wedge is where the soundsystem's sprite hides the ground from the camera, which looks north.
+
+| knob | type | range |
+|---|---|---|
+| `cast.on` | boolean |  |
+| `cast.time` | number | 0 to … |
+| `cast.drain` | number | 0 to … |
+| `cast.spot` | number | 0 to … |
+| `cast.radius` | number | 0 to … |
+| `cast.show` | number | 0 to … |
+| `cast.scatter.min` | number | 0 to … |
+| `cast.scatter.reach` | number | 0 to … |
+| `cast.scatter.open` | number | 0 to … |
+| `cast.scatter.hide.width` | number | 0 to … |
+| `cast.scatter.hide.depth` | number | 0 to … |
 
 ### `beat`
 
@@ -2227,6 +2385,17 @@ Code: `config/decisions/953-waves.json`, `app/settings.ts`
 | `leyLines.flow` | array of number |  |
 | `leyLines.depart.avoid` | number | 0 to … |
 | `leyLines.minRadius` | number | 0 to … |
+| `leyLines.rainbow.on` | boolean |  |
+| `leyLines.rainbow.speed` | number | 0 to … |
+| `leyLines.rainbow.max` | number | 0 to … |
+| `leyLines.rainbow.bars` | number | 0 to … |
+| `leyLines.rainbow.spacing` | number | 0 to … |
+| `leyLines.rainbow.cell` | number | 0 to … |
+| `leyLines.rainbow.height` | number | 0 to … |
+| `leyLines.rainbow.route.on` | boolean |  |
+| `leyLines.rainbow.route.spacing` | number | 0 to … |
+| `leyLines.rainbow.route.height` | number | 0 to … |
+| `leyLines.rainbow.route.cell` | number | 0 to … |
 
 ### `partyObjects`
 
@@ -2333,7 +2502,7 @@ The dancefloor ring's lasers [1]: a single beam from each playing speaker, at mo
 
 Each playing soundsystem's laser show, its beams fanning and sweeping in time with the music.
 
-Each playing soundsystem's laser show: bursts of blockBars bars, on about duty of the time (seeded per soundsystem), up to maxCount beams stepping on the bars, fanned over spread degrees (no beam tilting more than maxTilt from straight up), swinging sweep degrees once every sweepBeats beats (slow, like searchlights), opening and closing the fan every openBars bars, length metres tall, opacity 0-1, fading in over fadeIn and out over fadeOut seconds, and fading with distance from fadeNear to fadeFar metres. Glow only: no light, nothing from the light budget.
+Each playing soundsystem's laser show: bursts of blockBars bars, on about duty of the time (seeded per soundsystem), up to maxCount beams stepping on the bars, fanned over spread degrees, swinging sweep degrees once every sweepBeats beats (slow, like searchlights), opening and closing the fan every openBars bars, length metres tall, opacity 0-1, fading in over fadeIn and out over fadeOut seconds, and fading with distance from fadeNear to fadeFar metres. Glow only: no light, nothing from the light budget.
 
 | knob | type | range |
 |---|---|---|
@@ -2341,7 +2510,6 @@ Each playing soundsystem's laser show: bursts of blockBars bars, on about duty o
 | `lasers.maxCount` | number | 0 to … |
 | `lasers.length` | number | 0 to … |
 | `lasers.spread` | number | 0 to … |
-| `lasers.maxTilt` | number | 0 to … |
 | `lasers.sweep` | number | 0 to … |
 | `lasers.sweepBeats` | number | 0 to … |
 | `lasers.openBars` | number | 0 to … |
@@ -2384,12 +2552,19 @@ Code: `render/bubbles.ts`
 
 - **`bubbles.levelScale`**: a creature's bubble, emoji and outline together, times this by its level (baby, young, adult, legend); the witch's stays at 1.
   1. Ed, 2026-10-05: "the speech bubbles should scale with the level of the animal, with the legends as the largest"
+- **`bubbles.near`, `bubbles.fade`, `bubbles.ease`**: How close (metres) she must be on the ground to see a creature's speech or thought bubble; none from the treetops or the treehouse.
+  1. Ed, 2026-10-28: "Animal speech bubbles / thought bubbles should fade into view when the witch gets close. I shouldn't see them on the ground when I'm at the treetops. I shouldn't see them on the ground when I'm in the treehouse."
+  Whole within near less fade, fading to nothing at near; eased in and out over ease seconds, so rising, landing and going indoors fade them. 38 and 8 to start: whole to 30 m, about the letters' reach (invites.range 33), so any creature she can throw at answers where she can read it, and gone by 38. The 💌 replies, the talk and the sleepers' 😴s go by it; a legend's dream (dreams.range) and the night won's island dreams (twice that) keep their own ranges, fading at their edge and hidden from the treetops and the treehouse the same.
+  Code: `render/bubbleSight.ts`
 
 | knob | type | range |
 |---|---|---|
 | `bubbles.emojiPixels` | number | 0 to … |
 | `bubbles.scale` | number | 0 to … |
 | `bubbles.levelScale` | array of number |  |
+| `bubbles.near` | number | 0 to … |
+| `bubbles.fade` | number | 0 to … |
+| `bubbles.ease` | number | 0 to … |
 
 ### `runeMarkers`
 
@@ -2404,6 +2579,42 @@ Spawn markers (Ed, v147): a rune stone on every spot where a soundsystem will co
   Code: `rules/runestones.ts`
 - **`runeMarkers.beamHeight`**: the beacon's height (metres).
 - **`runeMarkers.lightRange`**: stones within this many metres light the scene.
+- **`runeMarkers.awake.moteSize`**: The motes rising off an awake runestone: their size in the picture's pixels (render/markers.ts).
+  1. the coordinator, 2026-10-29: "Given current settings, the motes from sigils don't do much" (Ed, relayed; the art director's motes pass, #1398 (tools/shot/motes.cjs measures them))
+- **`runeMarkers.awake.moteBright`**: The motes rising off an awake runestone: their brightness, times its colour.
+  1. the coordinator, 2026-10-29: "Given current settings, the motes from sigils don't do much" (Ed, relayed; the art director's motes pass, #1398 (tools/shot/motes.cjs measures them))
+- **`runeMarkers.awake.moteRise`**: How high (m) an awake runestone's motes rise before they fade.
+  1. the coordinator, 2026-10-29: "Given current settings, the motes from sigils don't do much" (Ed, relayed; the art director's motes pass, #1398 (tools/shot/motes.cjs measures them))
+- **`runeMarkers.stump.irregular`**: How irregular each great stump grows, from 0 (round and even, as first drawn) to 1.
+  1. Ed, 2026-10-29: "The trunk shape and rings are a bit even, can they be more irregular? (I have mostly been looking on the home island)" (via the coordinator (art/props/stumps.js))
+  At 1: a wobblier cut with knuckles of wood, maybe a flattened side or a notch, its heart off the middle, its rings unevenly spaced and wavering, sometimes a long split; seeded per stump. The cut where she casts follows it.
+- **`runeMarkers.stump.wisps`**: A wild stump's will-o'-the-wisps, drifting round its clearing before its soundsystem, in place of its own light.
+  1. Ed, 2026-10-29: "pre-soundsystem stump area lighting should change to be more like eerie moonlight; maybe it can be lit by a mix of blue/green/white wisps or something like that, that move around the stump area? Remove the current lighting. Decide on something and make it, no need for me to review." (via the coordinator; the art director's design (render/stumpWisps.ts))
+- **`runeMarkers.stump.wisps.on`**: The wild stumps' wisps on or off.
+- **`runeMarkers.stump.wisps.count`**: How many wisps a wild stump has.
+- **`runeMarkers.stump.wisps.colours`**: The wisps' colours (0-255), a wisp each in turn: blue, green and teal.
+- **`runeMarkers.stump.wisps.radius`**: How far (m) from the stump's middle a wisp wanders at most.
+- **`runeMarkers.stump.wisps.inner`**: How near the middle a wisp comes, times the radius.
+- **`runeMarkers.stump.wisps.height`**: How high (m) the wisps float.
+- **`runeMarkers.stump.wisps.bob`**: How much (m) the wisps rise and fall as they drift.
+- **`runeMarkers.stump.wisps.speed`**: How fast (m/s) the wisps drift round the clearing.
+- **`runeMarkers.stump.wisps.reach`**: How far (m) a wisp's light reaches.
+- **`runeMarkers.stump.wisps.strength`**: How bright a wisp's light is.
+- **`runeMarkers.stump.wisps.lights`**: How many of the nearest wisps light the ground at once.
+- **`runeMarkers.stump.wisps.lightRange`**: How near her (m) a stump must be for its wisps to light the ground.
+- **`runeMarkers.stump.wisps.breathe`**: How much the wisps swell brighter and dimmer, slowly (0 steady; steady anyway with reduce flashing).
+- **`runeMarkers.stump.wisps.bright`**: How bright a wisp's mote is drawn.
+- **`runeMarkers.stump.wisps.trail`**: How many fading motes trail behind each wisp.
+- **`runeMarkers.stump.wisps.size`**: How big (m) a wisp's glow is.
+  1. Ed, 2026-10-29: "I can see the trunk area wisps from far away and they look like big squares." (via the coordinator (render/markers.ts motePoints))
+  A soft round point that shrinks with the world as it's seen from farther, dimming once it's under a pixel (absent: 4 of the picture's pixels at every zoom, as first drawn).
+- **`runeMarkers.stump.wisps.fade`**: The distances from her (m) over which a stump's wisps and their light fade out: all within the first, none past the second.
+- **`runeMarkers.stump.wisps.fill`**: The wild clearing's own dim teal moonlight over the stump's middle.
+  1. Ed, 2026-10-29: "the overall lighting palette should be an eerie blue/green; this is to contrast with the bright and warm post-soundsystem lighting"
+- **`runeMarkers.stump.wisps.fill.colour`**: The clearing's moonlight colour (0-255).
+- **`runeMarkers.stump.wisps.fill.reach`**: How far (m) the clearing's moonlight reaches.
+- **`runeMarkers.stump.wisps.fill.strength`**: How bright the clearing's moonlight is (0 none).
+- **`runeMarkers.stump.wisps.fill.height`**: How high (m) over the stump the clearing's moonlight hangs.
 
 | knob | type | range |
 |---|---|---|
@@ -2425,8 +2636,46 @@ Spawn markers (Ed, v147): a rune stone on every spot where a soundsystem will co
 | `runeMarkers.awake.beam` | number | 0 to … |
 | `runeMarkers.awake.motes` | number | 0 to … |
 | `runeMarkers.awake.moteBuild` | number | 0 to … |
+| `runeMarkers.awake.moteSize` | number | 0 to … |
+| `runeMarkers.awake.moteBright` | number | 0 to … |
+| `runeMarkers.awake.moteRise` | number | 0 to … |
 | `runeMarkers.flare.time` | number | 0 to … |
 | `runeMarkers.flare.light` | number | 0 to … |
+| `runeMarkers.stump.on` | boolean |  |
+| `runeMarkers.stump.variants` | number | 0 to … |
+| `runeMarkers.stump.irregular` | number | 0 to … |
+| `runeMarkers.stump.clear` | number | 0 to … |
+| `runeMarkers.stump.stack` | number | 0 to … |
+| `runeMarkers.stump.ring.inner` | number | 0 to … |
+| `runeMarkers.stump.ring.fill` | number | 0 to … |
+| `runeMarkers.stump.ring.cell` | number | 0 to … |
+| `runeMarkers.stump.ring.glow` | number | 0 to … |
+| `runeMarkers.stump.ring.light.reach` | number | 0 to … |
+| `runeMarkers.stump.ring.light.strength` | number | 0 to … |
+| `runeMarkers.stump.ring.light.height` | number | 0 to … |
+| `runeMarkers.stump.ring.wave.hold` | number | 0 to … |
+| `runeMarkers.stump.ring.wave.fade` | number | 0 to … |
+| `runeMarkers.stump.wisps.on` | boolean |  |
+| `runeMarkers.stump.wisps.count` | number | 0 to … |
+| `runeMarkers.stump.wisps.colours` | array of array |  |
+| `runeMarkers.stump.wisps.radius` | number | 0 to … |
+| `runeMarkers.stump.wisps.inner` | number | 0 to … |
+| `runeMarkers.stump.wisps.height` | number | 0 to … |
+| `runeMarkers.stump.wisps.bob` | number | 0 to … |
+| `runeMarkers.stump.wisps.speed` | number | 0 to … |
+| `runeMarkers.stump.wisps.reach` | number | 0 to … |
+| `runeMarkers.stump.wisps.strength` | number | 0 to … |
+| `runeMarkers.stump.wisps.lights` | number | 0 to … |
+| `runeMarkers.stump.wisps.lightRange` | number | 0 to … |
+| `runeMarkers.stump.wisps.breathe` | number | 0 to … |
+| `runeMarkers.stump.wisps.bright` | number | 0 to … |
+| `runeMarkers.stump.wisps.trail` | number | 0 to … |
+| `runeMarkers.stump.wisps.size` | number | 0 to … |
+| `runeMarkers.stump.wisps.fade` | array of number |  |
+| `runeMarkers.stump.wisps.fill.colour` | array of number |  |
+| `runeMarkers.stump.wisps.fill.reach` | number | 0 to … |
+| `runeMarkers.stump.wisps.fill.strength` | number | 0 to … |
+| `runeMarkers.stump.wisps.fill.height` | number | 0 to … |
 
 ### `sfx`
 
@@ -2476,6 +2725,9 @@ The sound effects, all synthesised in the music's key [1]: volume over the music
   1. Ed, 2026-10-07: the needle dropped and a little scratching
   her decks while she stands behind them (the DJ witch): a stroke of the record on each half-beat of her scratch bars (scratch, its hiss under the stylus hiss, a stroke stroke seconds long) and her "woo-hoo!" when she throws a hand up (hype), and in her routine [1] the tonearm's tick and the needle's drop (needle), times volume.
 - **`sfx.land`**: a 💌 that met no one landing on the ground, a soft puff (at most one every gap seconds).
+- **`sfx.thunk`**: a 💌 landing on a creature, a soft thunk at volume (at most one every gap seconds), its pitch climbing from low to high semitones off the key as the ring fills.
+  1. Ed, 2026-10-29: "invitation impacts feel unsatisfying" (full hit feedback for a 💌 landing on a creature: a white flash, a little squash, its ring slot popping in, a thunk rising as the ring fills, a hitstop on the 💌 that fills it; no flash and a gentler squash with reduce-flashing on)
+  Code: `src/platform/audio/chimes.ts`
 - **`sfx.nope`**: a soft two-note "uh-uh" at volume, at most one each gap seconds.
   1. Ed, 2026-10-07: a sigil refused, put down too near one already down, now heard and not drawn
 - **`sfx.alarm`**: her phone ringing in the dark, a run of six bright plucks at volume, rung again every gap seconds while it rings.
@@ -2621,6 +2873,10 @@ The sound effects, all synthesised in the music's key [1]: volume over the music
 | `sfx.spell.burst` | number | 0 to … |
 | `sfx.land.volume` | number | 0 to … |
 | `sfx.land.gap` | number | 0 to … |
+| `sfx.thunk.volume` | number | 0 to … |
+| `sfx.thunk.gap` | number | 0 to … |
+| `sfx.thunk.low` | number |  |
+| `sfx.thunk.high` | number | 0 to … |
 | `sfx.nope.volume` | number | 0 to … |
 | `sfx.nope.gap` | number | 0 to … |
 | `sfx.thud.volume` | number | 0 to … |
@@ -3093,7 +3349,8 @@ Near-isometric on the ground, after Transistor; the game opens close in on the w
   1. Ed, 2026-10-05: treetop mode much faster, for travel
 - **`camera.shake`**: The screen shakes when she's hit, harder for each hit she was already missing and hardest on a knockdown.
   1. Ed, 2026-10-05: "Screen should shake when the witch is hit. More shake when you are on lower health"
-  each hit adds trauma (0-1), base on her first, perMissingHit more for each hit she was already missing, knockdown on the hit that knocks her down; it falls away at decay a second, and the screen shakes by trauma squared times maxOffsetPx (screen pixels, whole ones) and maxRotDeg, smooth noise wandering speed times a second. ?shake=0 (or the start screen's toggle) turns it off.
+  2. Ed's playtest, 2026-10-29: "I replicated screen shake - it's from the witch being hit by an enemy creature, I guess the effect is activated and then doesn't switch off properly." (on the world's clock it ran ten times as long in a sleeping legend's circle or on the deck; now on hers, and capped at maxSecs)
+  each hit adds trauma (0-1), base on her first, perMissingHit more for each hit she was already missing, knockdown on the hit that knocks her down; it falls away at decay a second, and the screen shakes by trauma squared times maxOffsetPx (screen pixels, whole ones) and maxRotDeg, smooth noise wandering speed times a second. ?shake=0 (or the start screen's toggle) turns it off. It runs on her clock (a pause holds it, a slowed world doesn't stretch it), and a bout of hits shakes for maxSecs seconds at most from its first (a knockdown starts a new bout).
 - **`camera.circle`**: In a legend's circle the camera tilts and frames her and the legend together.
   1. Ed, 2026-10-08: "lowering the camera angle while you're in the circle to make them seem more looming" (considering it; legends being hard to make out in their circles)
   on the ground in a legend's circle the camera eases over ease seconds to angle degrees (from the ground view's 30 to 36), its distance times distance, aimed frame of the way from her to the legend and look metres higher, so the legend stands large over her; it eases back as she leaves. on false turns it off.
@@ -3108,6 +3365,14 @@ Near-isometric on the ground, after Transistor; the game opens close in on the w
   2. Ed's playtest, 2026-10-23: aimed by metres from her feet, her head went off the top of the screen up close; by her height it stays on the part chosen at any zoom
   for the part of her the row in focus is about (config/wardrobe.json's frame: head, hat, top, legs, feet, broom; board, the Workshop's pegboard, the wall behind her, so aimed up over her to it), aimed aim of her height (as drawn: 0 her feet, 1 the top of her hat) up her and look metres higher (a thing by her: the board, the broom), and its distance times distance in place of the station's own, eased from part to part as the cursor moves [2].
   Code: `config/wardrobe.json`
+- **`camera.station.whole`**: At a dressing station the camera frames her whole, top of her hat to the soles of her shoes, in the right half of the screen while the panel takes the left half.
+  1. Ed, 2026-10-29: "Menus should be left half of the screen, and the witch right half of the screen, and she should be nicely centred and visible top of hat to bottom of shoes."
+  margin is the share of the screen's height left clear above and below her; at is where across the screen's width she stands (0.75: the right half's middle). On, it replaces distance, side, aim and parts (the zoom on the part of her being chosen), which stay for it off.
+  Code: `src/render/view/camera.ts`, `src/ui/stationPanel.ts`
+- **`camera.station.dim`**: How dark the picture behind her goes while she's framed at a station, so she stands out: 0 leaves it as it is, 1 makes it black.
+  1. Ed, 2026-10-29: "When the witch opens a station, make the background behind her darker so that she stands out more clearly"
+  a black wash over the whole picture, eased in with the framing, and her drawn again over it at full light; the panel's own wash on the left half is separate (ui/stationPanel.ts).
+  Code: `src/render/stationBackdrop.ts`
 
 | knob | type | range |
 |---|---|---|
@@ -3139,6 +3404,7 @@ Near-isometric on the ground, after Transistor; the game opens close in on the w
 | `camera.shake.maxOffsetPx` | number | 0 to … |
 | `camera.shake.maxRotDeg` | number | 0 to … |
 | `camera.shake.speed` | number | 0 to … |
+| `camera.shake.maxSecs` | number | 0 to … |
 | `camera.follow` | number | 0 to … |
 | `camera.intro.distance` | number | 0 to … |
 | `camera.intro.angle` | number | 0 to … |
@@ -3154,6 +3420,10 @@ Near-isometric on the ground, after Transistor; the game opens close in on the w
 | `camera.house.distance` | number | 0 to … |
 | `camera.house.ease` | number | 0 to … |
 | `camera.station.on` | boolean |  |
+| `camera.station.whole.on` | boolean |  |
+| `camera.station.whole.margin` | number | 0 to … |
+| `camera.station.whole.at` | number | 0 to … |
+| `camera.station.dim` | number | 0 to … |
 | `camera.station.distance` | number | 0 to … |
 | `camera.station.side` | number |  |
 | `camera.station.ease` | number | 0 to … |
@@ -3469,6 +3739,17 @@ Finding wild creatures in the dark (Ed, v244: 'quite hard to see in the forest..
 | `find.moonHue` | number | 0 to … |
 | `find.moonSat` | number | 0 to … |
 
+### `pixels`
+
+The picture's pixels on the screen.
+
+- **`pixels.snap`**: Each of the picture's pixels drawn a whole number of the screen's own pixels, the pixel size rounded to the nearest (render/view.ts resize; ?snap=0 off).
+  1. Ed, 2026-10-29: "the pixels are just hard to read" (via the coordinator: measured at his 1.25 DPR as 3.75 device pixels a pixel, drawn 3 and 4 wide by turns (previews/ed/blur/); Ed picked rounding to the nearest)
+
+| knob | type | range |
+|---|---|---|
+| `pixels.snap` | boolean |  |
+
 ## Light
 
 Light, sky and mood (drawing only): glow, lights, shadows, haze, mist, smoke, the sky and moon, the looks, tone, bloom and tilt-shift.
@@ -3640,6 +3921,9 @@ Placed sigils glow like small lights in their creature's neon, tinting the grass
 
 The sigils' neon spilling onto the world (overnight phase 3, the art pass): each placed sigil is a small light in its creature's neon, height metres over its rune, reaching reach metres (15% more a level) at strength (0: off), eased in as it's written and breathing with the rune's pulse, so the grass round it, the ground and whoever stands near take its colour; the bottom sigil of her stack is a fainter one (stack, 0 off) reaching stackReach metres, stackHeight metres over her, tinting her and the ground under her as she carries it.
 
+- **`sigilSpill.stack`**: The light the bottom sigil of her stack throws from over her hat, in its colour (0 none).
+  1. Ed, 2026-10-29: "the warm light is probably the sigil stack lighting; it takes the colour of the bottom sigil. We're replacing this with the wisps." (0.35 → 0)
+
 | knob | type | range |
 |---|---|---|
 | `sigilSpill.strength` | number | 0 to … |
@@ -3802,12 +4086,24 @@ Code: `render/mood.ts`
 - **`light.spooky.areaEase`**: how fast the mood eases from one area's to the next (a second).
 - **`light.spooky.areas`**: Each kind of area's own fog colour, tint and mist (teal over bogs, violet in dead woods, pale mist on the moor and so on).
   each area type's own fog (hazeHue, hazeSat, haze), grade tint (gradeHue, gradeSat) and mist over the above, by area id ("home" for home): misty teal over the bogs and water, violet-grey in the dead and ancient woods, blue-violet in the bluebells, pale mist on the open moor, darker in the rocky places, near-black green under the pines, rosy in the honeysuckle and gardens, home a little less cold.
+- **`light.spooky.unlit`**: How dark the forest is where nothing lights it: the ambient and the moonlight on ground, trees, bushes and creatures times this, while the lights (her glow, the party's, fires, lava, runestones, sigils) stay as they are (1 as before).
+  1. Ed's playtest, 2026-10-29: "Contrast on the visuals seems low; the important parts of the scene don't stand out very well. The unlit forest needs to be darker." (v5399; measured with tools/shot/contrast.cjs)
+  Code: `render/lighting.ts`, `render/view.ts`
+- **`light.spooky.wildGlow`**: Her glow cooled toward a teal while she's in an area the party hasn't reached, eased in and out as she crosses.
+  1. Ed, 2026-10-29: "the overall lighting palette should be an eerie blue/green; this is to contrast with the bright and warm post-soundsystem lighting"
+- **`light.spooky.wildGlow.mix`**: How far her glow is cooled in the wild (0 her own colour everywhere).
+- **`light.spooky.wildGlow.colour`**: The colour (0-255) her glow cools toward in the wild.
+- **`light.spooky.wildGlow.ease`**: How long (s) her glow takes to cool or warm as she crosses into or out of the party's ground.
 
 | knob | type | range |
 |---|---|---|
-| `light.mood` | string |  |
+| `light.mood` | string | "spooky" / "plain" |
 | `light.spooky.ambientHue` | number | 0 to … |
 | `light.spooky.ambient` | number | 0 to … |
+| `light.spooky.unlit` | number | 0 to … |
+| `light.spooky.wildGlow.mix` | number | 0 to … |
+| `light.spooky.wildGlow.colour` | array of number |  |
+| `light.spooky.wildGlow.ease` | number | 0 to … |
 | `light.spooky.moonHue` | number | 0 to … |
 | `light.spooky.moonSat` | number | 0 to … |
 | `light.spooky.moon` | number | 0 to … |
@@ -4227,12 +4523,15 @@ blurs the top and bottom of the screen so the forest looks like a miniature.
   1. Ed, 2026-10-27: "stacks should not be affected by the tilt shift" (render/post.ts Post.sharp)
   Code: `render/post.ts`
 - **`tiltShift.strength`**: the blur at the screen's edges, in pixels.
+  1. Ed, 2026-10-29: "reduce the tilt shift effect at top and bottom by 50%" (via the coordinator, after the art director's measurement of "the pixels are just hard to read" (previews/ed/blur/); 1.5 → 0.75)
 - **`tiltShift.band`**: the height of the sharp band (0-1 of the screen).
 - **`tiltShift.centre`**: where it sits (0 top, 0.5 middle, 1 bottom).
 - **`tiltShift.treetop`**: A stronger miniature-world blur when she's up in the treetops.
   1. Ed, 2026-10-06: "reduce the intensity of the tilt-shift effect" (both halved and their sharp bands widened)
   2. Ed: "the tilt shift isn't blurring the sky - the tilt shift effect has to be applied after the bend shader rather than before" (round 12)
   the strength and band over the treetops (Ed, v160: a stronger miniature look there), blended in as she rises [1]; ?tilt=<strength>,<band> tries treetop values live; It blurs at the low resolution, before the pixels are scaled up; ?tilt=off turns it off. The night sky over the bend is blurred with the rest, the tilt-shift the last thing done to the finished, bent picture [2].
+- **`tiltShift.treetop.strength`**: The tilt-shift's blur over the treetops, in pixels, blended in by lift.
+  1. Ed, 2026-10-29: "reduce the tilt shift effect at top and bottom by 50%" (via the coordinator, after the art director's measurement of "the pixels are just hard to read" (previews/ed/blur/); 3 → 1.5)
 
 | knob | type | range |
 |---|---|---|

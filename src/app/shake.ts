@@ -1,3 +1,4 @@
+import { slotStorage } from "./saveSlots";
 // Screen shake when she's hit (Ed, 2026-10-05; render/shake.ts), laid on the canvas as a transform with the camera's sub-pixel
 // glide. For comfort it can be turned off: ?shake=0, or the start screen's toggle (remembered here).
 import { Shake } from "../render/shake";
@@ -13,7 +14,7 @@ export class ScreenShake {
 
   constructor(private game: Game, private tuning: Tuning, private view: View, private canvas: HTMLCanvasElement, params: URLSearchParams) {
     let shakeOn = params.get("shake") !== "0";
-    try { if (params.get("shake") === null && localStorage.getItem("witch.shake") === "0") shakeOn = false; } catch { /* fine */ }
+    try { if (params.get("shake") === null && slotStorage.getItem("witch.shake") === "0") shakeOn = false; } catch { /* fine */ }
     this.shake = new Shake(tuning.camera.shake, shakeOn);
     this.option = document.getElementById("shake-opt");
     this.showOption();
@@ -22,13 +23,13 @@ export class ScreenShake {
       const b = (e.target as HTMLElement).closest("button");
       if (!b) return;
       this.shake.on = b.dataset.v === "1";
-      try { localStorage.setItem("witch.shake", this.shake.on ? "1" : "0"); } catch { /* fine */ }
+      try { slotStorage.setItem("witch.shake", this.shake.on ? "1" : "0"); } catch { /* fine */ }
       this.showOption();
     });
   }
 
-  /** A new night on the same page (app/night.ts): its game and tuning from here on (the shake's own feel kept). */
-  retarget(game: Game, tuning: Tuning): void { this.game = game; this.tuning = tuning; }
+  /** A new night on the same page (app/night.ts): its game and tuning from here on (the shake's own feel kept), still, its clock new. */
+  retarget(game: Game, tuning: Tuning): void { this.game = game; this.tuning = tuning; this.shake.reset(); }
 
   private showOption(): void {
     const on = this.shake.on;
@@ -37,14 +38,16 @@ export class ScreenShake {
 
   /** The camera's sub-pixel glide (view.subpixel): the snap it took off, given back in whole screen pixels. */
   glide(): { gx: number; gy: number } {
-    const p = this.tuning.pixelSize, s = this.view.subpixel;
-    return { gx: Math.round(s.x * p), gy: Math.round(s.y * p) };
+    // (in whole device pixels: a css pixel at a DPR of 1.25 is 1.25 of them, and the canvas moved by part of one is resampled, blurred)
+    const p = this.view.cssPixel, s = this.view.subpixel, d = typeof devicePixelRatio === "number" && devicePixelRatio > 0 ? devicePixelRatio : 1;
+    return { gx: Math.round(s.x * p * d) / d, gy: Math.round(s.y * p * d) / d };
   }
 
   apply(): void {
     const game = this.game, canvas = this.canvas, W = game.witches[0];
-    this.shake.watch(W.health, !!W.ko, this.tuning.witchHealth.hits, game.clock.time);
-    const o = this.shake.offset(game.clock.time, this.tuning.pixelSize);
+    // (on her clock, as her hits are: the world's runs at a tenth in a sleeping legend's circle and on the deck, render/shake.ts)
+    this.shake.watch(W.health, !!W.ko, this.tuning.witchHealth.hits, game.herTime);
+    const o = this.shake.offset(game.herTime, this.view.cssPixel);
     const { gx, gy } = this.glide();
     if (o.amount <= 0) {
       if (gx || gy) { canvas.style.transform = `translate(${gx}px, ${gy}px)`; this.shaken = true; }

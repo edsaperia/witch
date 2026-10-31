@@ -12,17 +12,17 @@ import { FURNITURE_IDS } from "../../art/furniture.js";
 import type { Game } from "../rules/game";
 import type { Style } from "./style";
 import { housePiece, litCanvas as piecesLit, type Drawn, type PiecePixels } from "./housePieces";
-export { standing, type Drawn } from "./housePieces";
+export { placedStanding as standing, type Drawn } from "./housePieces";
 
 /** Whether the house's objects are drawn as art (`?furniture=0`: the boxes, as before). */
 export const furnitureOn = typeof location === "undefined" || new URLSearchParams(location.search).get("furniture") !== "0";
 /** House objects drawn by someone else's art, never as furniture nor as a box: the clothes pile by her bed (Golf's, from her outfit:
  *  art/witch.js clothesPileSprite). */
-export const DRAWN_ELSEWHERE = new Set<string>(["clothesPile"]);
+export const DRAWN_ELSEWHERE = new Set<string>(["clothesPile", "cauldron"]);
 /** House objects still boxes until their art is drawn (a new object's placeholder: add its id here, take it off with its art). */
 export const PENDING = new Set<string>([]);
 /** The objects drawn as art. */
-export const FURNITURE = new Set<string>(furnitureOn ? FURNITURE_IDS : []);
+export const FURNITURE = new Set<string>(furnitureOn ? FURNITURE_IDS.filter((id: string) => id !== 'cauldron') : []);
 
 /** A drawn piece baked and lit on the page's own canvas (render/housePieces.ts litCanvas): the dream's and the Workshop's. */
 export const litCanvas = (d: Drawn, room: string, st: Style, dim = 1, id = "", over: Record<string, number[]> = {}): HTMLCanvasElement =>

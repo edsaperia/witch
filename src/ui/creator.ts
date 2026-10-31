@@ -1,3 +1,4 @@
+import { slotStorage } from "../app/saveSlots";
 // The character creator (Ed, 2026-10-05: "Our witch should be generated too. Then we can have a
 // character creator at the start of the game where she is in her house and you can tweak the sliders
 // to change her outfit!"). She stands in her treehouse room, big, hovering and standing, redrawn live
@@ -21,6 +22,7 @@ import { button, h } from "./dom";
 import { HAT_SPELLS, ownsHat } from "../rules/spells";
 import { HAT_ICONS } from "../render/hatIcons";
 import { runSliced, type Steps } from "../render/slices";
+import { defaultGenome, newWitch } from "../app/defaultLook";
 
 type Genome = { hat: Record<string, number | string>; hair: string; top: string; cloak: string; broom: Record<string, number | string>; accessories: Record<string, boolean | string>; palette: Record<string, number[]> | null; scarfLength?: number; bagSize?: number; backpackSize?: number; [k: string]: unknown };
 
@@ -31,17 +33,20 @@ const clone = <T>(v: T): T => JSON.parse(JSON.stringify(v));
 /** A saved genome with every field it lacks taken from hers (art/witchGenome.js upgradeGenome). */
 export const upgrade = (g: unknown): Genome => (Art.upgradeGenome as (g: unknown) => Genome)(g);
 
-/** Her saved look, if any and still a witch by the generator's rules. */
+/** Her saved look, if any and still a witch by the generator's rules; else the game's default look (config/default-look.json:
+ *  null, the classic witch). ?newWitch=1: the default, whatever she saved (app/defaultLook.ts). */
 export function loadGenome(): Genome | null {
+  const fresh = () => defaultGenome() as Genome | null;
+  if (newWitch()) return fresh();
   try {
-    const raw = localStorage.getItem(KEY);
-    if (!raw) return null;
+    const raw = slotStorage.getItem(KEY);
+    if (!raw) return fresh();
     const g = upgrade(JSON.parse(raw)); // a save from before round 2 gets the new fields as hers
     g.palette = snapPalette(g.palette); // (a save from the rainbow pickers' days: each colour to its nearest swatch)
-    return (Art.witchGenomeProblems as (g: unknown) => string[])(g).length ? null : g;
-  } catch { return null; }
+    return (Art.witchGenomeProblems as (g: unknown) => string[])(g).length ? fresh() : g;
+  } catch { return fresh(); }
 }
-export function saveGenome(g: Genome): void { try { localStorage.setItem(KEY, JSON.stringify(g)); } catch { /* storage blocked: this run only */ } }
+export function saveGenome(g: Genome): void { if (newWitch()) return; try { slotStorage.setItem(KEY, JSON.stringify(g)); } catch { /* storage blocked: this run only */ } }
 
 /** Where an axis lives in the genome: hatHeight is hat.height, broom is broom.kind, broomLength is
  *  broom.length, bristles is broom.bristles, hair is hair; a new axis follows the same pattern. */
@@ -65,7 +70,7 @@ export const BOXES: { id: string; name: string; axes: string[]; wear: string[]; 
   { id: "shoes", name: "👟 Shoes", axes: [], wear: ["chunky"], parts: ["sneakers"] },
   { id: "broom", name: "🧹 Broom", axes: ["broomLength", "broomThickness", "broomBend", "bristles"], wear: [], parts: ["broom", "bristles"] }, // (Classic only, no power: its parts and their set's spell are the Workshop's, Ed 2026-10-23)
   { id: "scarf", name: "🧣 Scarf", axes: ["scarfLength"], wear: ["scarf"], parts: ["scarf"] },
-  { id: "bag", name: "👜 Bag", axes: ["bagSize"], wear: ["satchel", "bumbag"], parts: ["satchel"] },
+  { id: "bag", name: "👜 Bag", axes: ["bagSize"], wear: ["satchel", "bumbag", "purse", "tote", "duffel", "briefcase", "clutch", "messenger"], parts: ["satchel"] },
   { id: "backpack", name: "🎒 Backpack", axes: ["backpackSize"], wear: [], parts: ["backpack"] },
   { id: "phones", name: "🎧 Headphones", axes: [], wear: ["phones"], parts: ["headphones"] },
   { id: "more", name: "✨ Magic and more", axes: [], wear: ["lantern", "vial", "book", "glowsticks", "wristband"], parts: [] },
@@ -82,7 +87,7 @@ const NAMES: Record<string, string> = { conical: "farmer's", boppers: "deely bop
 const BROOM_NAMES: Record<string, string> = { curl: "curled tip", hobbyhorse: "hobby horse", jetbike: "jet bike", speeder: "speeder bike", drone: "quad drone" };
 const optName = (axis: string, opt: string) => axis === "hatShape" ? (opt === "none" ? "no hat" : NAMES[opt] ?? opt) : axis === "broom" ? BROOM_NAMES[opt] ?? opt : opt;
 /** What a toggle or a colour part is called in its box (its genome name otherwise). */
-const WEAR_NAMES: Record<string, string> = { phones: "wearing them", shades: "sunglasses", scarf: "wearing it", satchel: "satchel", bumbag: "bum bag", chunky: "chunky trainers", glowsticks: "glow sticks", vial: "potion vial", book: "spellbook", patches: "cloak patches" };
+const WEAR_NAMES: Record<string, string> = { phones: "wearing them", shades: "sunglasses", scarf: "wearing it", satchel: "satchel", bumbag: "bum bag", purse: "purse", tote: "tote", duffel: "duffel", clutch: "clutch", messenger: "messenger bag", briefcase: "briefcase", chunky: "chunky trainers", glowsticks: "glow sticks", vial: "potion vial", book: "spellbook", patches: "cloak patches" };
 const PART_NAMES: Record<string, string> = { jacket: "jacket", cloak: "cloak", top: "top", jeans: "jeans", hat: "hat", plume: "plume", broom: "handle / body", bristles: "bristles / trim" };
 /** The accessory a slider belongs to: moving it puts that on. */
 const WEARS: Record<string, string> = { scarfLength: "scarf", bagSize: "satchel" };
@@ -128,8 +133,8 @@ const css = ([h, s, v]: number[]) => { const [r, g, b] = (Art.hsv2rgb as (h: num
 
 /** The open box, kept on this browser (localStorage witch.creator.box); at first, the hat. "" for none. */
 const BOX_KEY = "witch.creator.box";
-function openBox(): string { try { const v = localStorage.getItem(BOX_KEY); if (v !== null) return v; } catch { /* storage blocked */ } return "hat"; }
-function saveOpenBox(id: string): void { try { localStorage.setItem(BOX_KEY, id); } catch { /* storage blocked: this run only */ } }
+function openBox(): string { try { const v = slotStorage.getItem(BOX_KEY); if (v !== null) return v; } catch { /* storage blocked */ } return "hat"; }
+function saveOpenBox(id: string): void { try { slotStorage.setItem(BOX_KEY, id); } catch { /* storage blocked: this run only */ } }
 
 /** The night round the treehouse, behind the room: deep blue in steps, stars, and the giant tree's leaves at the edges,
  *  painted small (one art pixel per pixel) and shown big. */

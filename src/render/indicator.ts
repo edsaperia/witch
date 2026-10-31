@@ -17,7 +17,7 @@
 //    tip just over the subject's top, bobbing gently, kept on the screen, side by side with another over the same spot.
 // Directions are in screen space, y down: an angle a points along (cos a, sin a) on the canvas.
 import * as THREE from "three";
-import { sigilGlyph } from "../../art/generator.js";
+import { boldGlyph, crownGlyph, sigilGlyph } from "../../art/generator.js";
 import { groundHeight, HEIGHT_UNIFORMS, placed, seenOverBend } from "./height";
 import { pixelEmojiData } from "./bubbles";
 
@@ -167,7 +167,16 @@ export function paintPin(c: PixelCue, rgb: number[], emoji: string, angle = Math
 /** The pin's ring radius and its arrow's tip, from its middle (art pixels): where its tip lands. */
 export const PIN_TIP = RING_R + 7;
 
+/** A rainbow hue, 0 to 1 round (0-1 rgb): the soundsystem spell's cycling colour (render/leash/stones.ts, the wave pointer). */
+export const rainbow = (h: number): [number, number, number] => { const f = (n: number) => { const q = (((n + h * 6) % 6) + 6) % 6; return 1 - Math.max(0, Math.min(1, Math.min(q, 4 - q))); }; return [f(5), f(3), f(1)]; };
+
 /** An area's neon calmed for the HUD: a little less saturated and bright, so it sits on the dark forest. */
+/** How the edge pointers stand out (Ed's v5399 playtest, 2026-10-29: "it's easy to miss the pointers"; the tuning's pins, set each frame
+ *  by render/view/hud.ts): `plate` a dark disc behind the ring and an outline round the arrow, its opacity (0 none, as before), so they
+ *  read on any ground; `vivid` how much of the calming toward the night (calm) is taken back, 0 as calmed, 1 the neon itself. */
+export const PIN_LOOK = { plate: 0, vivid: 0, track: 0.55 };
+const PLATE_RGB = [10, 8, 20];
+
 export const calm = (c: number[]) => {
   // by saturation, not value (the art director, #188: "keep its value up … take the calm from lower saturation"): half way to
   // its grey, then lifted back so its lightest channel is near the neon's own
@@ -190,24 +199,6 @@ export const NOTES = [
   "#####...######.",
   "#####...######.",
   ".###.....####..",
-];
-
-/** 🎉 in pixels: a party popper, its cone (`#`) bursting streamers and confetti (`+`) up to the right (the wave pointer's middle
- *  for the route's last stone: Ed, 2026-10-10, "Last call"; and the victory lap's pointer). */
-export const PARTY = [
-  "..........+...+",
-  "......+.....+..",
-  "...........+...",
-  ".......+.+.....",
-  "....##....+..+.",
-  "...####.+......",
-  "..######...+...",
-  "..#######......",
-  ".########..+...",
-  ".#########.....",
-  "###########....",
-  "##########.....",
-  "########.......",
 ];
 
 /** 🎩 in pixels: her hat, a tall crown leaning back over a wide brim, its band (`+`) a lighter line (the dropped hat's pointer, rules/hat.ts). */
@@ -263,10 +254,28 @@ export const FLASK = [
   "...#########...",
 ];
 
+/** 🪩 in pixels: a mirror ball on its hanger, its facets a grid of lines (`#`) over lighter tiles (`+`) (the party pointer: Ed,
+ *  2026-10-28, "🪩 not 🎉"). */
+export const MIRRORBALL: readonly string[] = (() => {
+  const rows: string[] = [];
+  for (let y = 0; y < 15; y++) {
+    let row = "";
+    for (let x = 0; x < 15; x++) {
+      const r = Math.hypot(x - 7, (y - 8.5) * 1.05);
+      row += y < 2 ? (x === 7 ? "#" : ".") : r > 6.5 ? "." : r > 5.6 || x % 3 === 1 || y % 3 === 0 ? "#" : "+";
+    }
+    rows.push(row);
+  }
+  return rows;
+})();
+
 /** A pin's arrow tip over its subject's top (CSS pixels), and how far it bobs either way. */
 const PIN_GAP = 20, PIN_BOB = 3;
 /** Angle `a` turned toward `b` by share `k`, the short way round. */
 const turnToward = (a: number, b: number, k: number) => a + Math.atan2(Math.sin(b - a), Math.cos(b - a)) * k;
+
+/** Pixels a pin's tip keeps over a use prompt under it (StoneIndicator.update's `above`). */
+const ABOVE_GAP = 6;
 
 export class StoneIndicator {
   private cue: PixelCue;
@@ -287,11 +296,13 @@ export class StoneIndicator {
     this.shown = a;
     const o = `${(a * this.opacity).toFixed(2)}`;
     this.cue.canvas.style.opacity = o; this.cue.label.style.opacity = o;
+    // Opacity alone leaves invisible distance labels in the accessibility tree (first morning, #1469).
+    this.cue.canvas.style.visibility = this.cue.label.style.visibility = o === "0.00" ? "hidden" : "visible";
   }
 
   /** Point at the next waking stone at (x, z), its area's creature `species` and neon (rgb 0-1);
    *  `fill`: how far the countdown to the next wave has run (0 just after one, 1 as it comes). null hides it. */
-  update(camera: THREE.Camera, width: number, height: number, at: { x: number; z: number; colour: THREE.Vector3; species: string; notes?: boolean; glyph?: readonly string[]; /** an emoji in its middle, drawn in pixels in its own colours (render/bubbles.ts, as the thrown 💌; the guidance pins: render/view/guidance.ts), else the glyph */ emoji?: string; /** the glyph in its own colour (her hats' pointers), the ring in `colour` */ glyphColour?: THREE.Vector3; /** how tall the subject stands (m): the pin hovers over its top (a stone's 3.2 m by default) */ top?: number; /** screen pixels from the arrow's tip up to that top (tuning pins.gap) */ gap?: number } | null, wx: number, wz: number, time: number, bpm: number, fill: number, label?: string): void {
+  update(camera: THREE.Camera, width: number, height: number, at: { x: number; z: number; colour: THREE.Vector3; species: string; notes?: boolean; glyph?: readonly string[]; /** an emoji in its middle, drawn in pixels in its own colours (render/bubbles.ts, as the thrown 💌; the guidance pins: render/view/guidance.ts), else the glyph */ emoji?: string; /** the glyph in its own colour (her hats' pointers), the ring in `colour` */ glyphColour?: THREE.Vector3; /** the ring and its glyph cycling through the rainbow, as the soundsystem spell's spot does (the wave pointer: Ed, 2026-10-28) */ rainbow?: boolean; /** the creature's sigil this many art pixels across (its rank's size: 17 an adult's) */ sigilSize?: number; /** its bold sigil where it has one (leash.ranks.bold: art/sigils.js BOLD) */ bold?: boolean; /** a legend's: the crown just above its sigil (art/sigils.js LEGEND_CROWN; Ed, 2026-10-29) */ crown?: boolean; /** no ring, no plate round it: just the sigil and the arrow (the legend pointers: Ed, 2026-10-29) */ bare?: boolean; /** the sigil a legend's: its colour full, not calmed, and a glint sweeping across it (render/leash/ranks.ts legendShine) */ shine?: boolean; /** how tall the subject stands (m): the pin hovers over its top (a stone's 3.2 m by default) */ top?: number; /** screen pixels from the arrow's tip up to that top (tuning pins.gap) */ gap?: number; /** the page's y its tip stays above, in view (a use prompt under it: render/view/guidance.ts) */ above?: number; /** times its size (the morning's guidance pins breathing: render/view/guidance.ts) */ scale?: number } | null, wx: number, wz: number, time: number, bpm: number, fill: number, label?: string): void {
     const c = this.cue;
     // The party spread (the countdown went back to the start): a flash.
     if (fill < this.lastFill - 0.5) this.flashAt = time;
@@ -305,9 +316,10 @@ export class StoneIndicator {
     // distance gone within 20 m.
     const top = at.top ?? 3.2, e = edgeSpot(this.v, camera, width, height, at.x, at.z, wx, wz, top);
     const dist = Math.hypot(at.x - wx, at.z - wz), over = 1 - e.show, ease = over * over * (3 - 2 * over);
-    const size = 1 - 0.3 * ease * (1 - Math.min(1, Math.max(0, (dist - 12) / 28)));
+    const size = (1 - 0.3 * ease * (1 - Math.min(1, Math.max(0, (dist - 12) / 28)))) * (at.scale ?? 1);
     const px = c.scale * size, half = (N * px) / 2, bob = ease * PIN_BOB * Math.sin(time * Math.PI); // (a bob every two beats)
-    const pinY = Math.max(half + 4, e.sy - (at.gap ?? PIN_GAP) - (RING_R + 7) * px) + bob; // (the arrow's tip the gap over its top)
+    const tip = Math.min(e.sy - (at.gap ?? PIN_GAP), (at.above ?? Infinity) - ABOVE_GAP); // (the arrow's tip the gap over its top; over a use prompt there, clear of it)
+    const pinY = Math.max(half + 4, tip - (RING_R + 7) * px) + bob;
     let cx = e.ex + (e.sx - e.ex) * ease, cy = e.ey + (pinY - e.ey) * ease;
     // (pins side by side where they'd overlap, as the edge's cues are along the edge)
     const arrow = turnToward(e.angle, Math.PI / 2, ease);
@@ -317,12 +329,26 @@ export class StoneIndicator {
     const beat = (time * bpm) / 60, pulse = Math.pow(0.5 + 0.5 * Math.cos((beat % 1) * Math.PI * 2), 2);
     const flash = Math.max(0, 1 - (time - this.flashAt) / 0.5);
     // in the area's colour, calmed toward the night (art review round 1: the UI's yellow and magenta shouted over the art)
-    const neon = calm([at.colour.x * 255, at.colour.y * 255, at.colour.z * 255]), bright = neon.map(v => Math.min(255, v * (0.9 + 0.15 * pulse) + 255 * flash * 0.4));
+    // (rainbow: the spell spot's own cycling hue, render/leash/stones.ts; its ring a wheel of it, turning)
+    // (less calmed by pins.vivid, so they stand out: Ed's v5399 playtest)
+    const calmed = (c: number[]) => { const k = calm(c), v = PIN_LOOK.vivid; return v > 0 ? k.map((x, i) => Math.min(255, x + (c[i] - x) * v)) : k; };
+    const hueAt = (h: number) => { const r = rainbow(h); return calmed([r[0] * 255, r[1] * 255, r[2] * 255]); };
+    const neon = at.rainbow ? hueAt(time * 0.25) : calmed([at.colour.x * 255, at.colour.y * 255, at.colour.z * 255]), lift = (n: number[]) => n.map(v => Math.min(255, v * (0.9 + 0.15 * pulse) + 255 * flash * 0.4)), bright = lift(neon);
+    // A dark plate behind the ring and round the arrow (pins.plate: Ed's v5399 playtest, "it's easy to miss the pointers"), first, so
+    // the ring, the glyph and the arrow (drawn whole over it) read on any ground, the forest's dark or a lit floor.
+    if (PIN_LOOK.plate > 0 && !at.bare) {
+      const pr = RING_R + 2.2;
+      for (let y = 0; y < N; y++) for (let x = 0; x < N; x++) if (Math.hypot(x + 0.5 - N / 2, y + 0.5 - N / 2) <= pr) c.dot(x, y, PLATE_RGB, PIN_LOOK.plate);
+      drawArrow(c, arrow, N, RING_R + 1, RING_R + 8.5, 5, PLATE_RGB, PIN_LOOK.plate);
+    }
     // The ring: dim all round, bright neon clockwise from 12 o'clock as far as the countdown has run.
-    const R = RING_R, ring = ringPixels(), dim = neon.map(v => v * 0.55); // the rest of the ring: dimmer, but still there on dark grass
-    for (let k = 0; k < ring.length; k += 3) {
-      if (ring[k + 2] <= fill || flash > 0) c.dot(ring[k], ring[k + 1], bright, 1);
-      else c.dot(ring[k], ring[k + 1], dim, 0.9);
+    // (the rest of the ring, not yet filled: a dark, greyed track, pins.track bright, so the fill reads at a glance; Ed, 2026-10-29)
+    const track = (n: number[]) => { const grey = (n[0] + n[1] + n[2]) / 3, T = PIN_LOOK.track, sat = Math.min(1, T * 0.8); return n.map(v => (grey + (v - grey) * sat) * T); };
+    const R = RING_R, ring = ringPixels(), dim = track(neon); // the rest of the ring: dimmer, but still there on dark grass
+    for (let k = 0; k < (at.bare ? 0 : ring.length); k += 3) {
+      const own = at.rainbow ? hueAt(ring[k + 2] + time * 0.25) : null;
+      if (ring[k + 2] <= fill || flash > 0) c.dot(ring[k], ring[k + 1], own ? lift(own) : bright, 1);
+      else c.dot(ring[k], ring[k + 1], own ? track(own) : dim, 0.9);
     }
     // In the middle: 🎶 (the wave pointer), or the rune: the area's creature's sigil, in its neon.
     const E = at.emoji ? pixelEmojiData(at.emoji, EMOJI_PX) : null;
@@ -334,10 +360,30 @@ export class StoneIndicator {
       const G = at.glyph ?? NOTES, ox = Math.floor((N - G[0].length) / 2), oy = Math.floor((N - G.length) / 2), band = ink.map(v => Math.min(255, v * 0.6 + 255 * 0.4));
       for (let y = 0; y < G.length; y++) { const row = G[y]; for (let x = 0; x < row.length; x++) { const on = row[x]; if (on === "#") c.dot(ox + x, oy + y, ink, 1); else if (on === "+") c.dot(ox + x, oy + y, band, 1); } }
     } else if (at.species) {
-      let g = this.glyphs.get(at.species);
-      if (!g) { g = sigilGlyph(at.species, 17) as { w: number; m: Uint8Array }; this.glyphs.set(at.species, g); }
-      const o = Math.floor((N - g.w) / 2);
-      for (let y = 0; y < g.w; y++) for (let x = 0; x < g.w; x++) if (g.m[y * g.w + x]) c.dot(o + x, o + y, bright, 1);
+      const gs = Math.max(8, Math.min(N - 6, Math.round(at.sigilSize ?? 17))), gk = `${at.species}:${gs}${at.bold ? ":bold" : ""}`;
+      let g = this.glyphs.get(gk);
+      if (!g) { g = ((at.bold && boldGlyph(at.species, gs)) || sigilGlyph(at.species, gs)) as { w: number; m: Uint8Array }; this.glyphs.set(gk, g); }
+      const w = g.w, m = g.m, C = at.crown ? crownGlyph(Math.round(w * 0.7)) : null, o = Math.floor((N - g.w) / 2), oy = C ? Math.floor((N - (w + C.h + 1)) / 2) + C.h + 1 : o;
+      // (a legend's crown: just above its sigil, the pair kept in the middle, in the sigil's colour; Ed, 2026-10-29)
+      const cm = C ? { ox: Math.floor((N - C.w) / 2), oy: oy - C.h - 1 } : null;
+      if (at.bare && PIN_LOOK.plate > 0) { // (no plate disc: a dark edge a pixel round the sigil and its crown, so they read on any ground)
+        const ink = (x: number, y: number) => (x >= o && y >= oy && x < o + w && y < oy + w && !!m[(y - oy) * w + x - o]) || (!!C && !!cm && x >= cm.ox && y >= cm.oy && x < cm.ox + C.w && y < cm.oy + C.h && !!C.m[(y - cm.oy) * C.w + x - cm.ox]);
+        for (let y = 0; y < N; y++) for (let x = 0; x < N; x++) if (!ink(x, y) && (ink(x - 1, y) || ink(x + 1, y) || ink(x, y - 1) || ink(x, y + 1) || ink(x - 1, y - 1) || ink(x + 1, y + 1) || ink(x - 1, y + 1) || ink(x + 1, y - 1))) c.dot(x, y, PLATE_RGB, PIN_LOOK.plate);
+      }
+      if (at.shine) {
+        // (a legend's: its full colour, and every 2.6 s a glint corner to corner, as in the world)
+        const full = lift([at.colour.x * 255, at.colour.y * 255, at.colour.z * 255]), white = (k: number) => full.map(v => v + (255 - v) * k);
+        const ph = (time / 2.6) % 1, sweep = ph < 0.4 ? (ph / 0.4) * 1.6 - 0.3 : -9;
+        for (let y = 0; y < w; y++) for (let x = 0; x < w; x++) {
+          if (!m[y * w + x]) continue;
+          const glint = Math.abs(((x + 0.5) / w + 1 - (y + 0.5) / w) / 2 - sweep) < 0.13;
+          c.dot(o + x, oy + y, glint ? white(0.85) : full, 1);
+        }
+        if (C && cm) for (let y = 0; y < C.h; y++) for (let x = 0; x < C.w; x++) if (C.m[y * C.w + x]) c.dot(cm.ox + x, cm.oy + y, full, 1);
+      } else {
+        for (let y = 0; y < w; y++) for (let x = 0; x < w; x++) if (m[y * w + x]) c.dot(o + x, oy + y, bright, 1);
+        if (C && cm) for (let y = 0; y < C.h; y++) for (let x = 0; x < C.w; x++) if (C.m[y * C.w + x]) c.dot(cm.ox + x, cm.oy + y, bright, 1);
+      }
     }
     // The arrowhead outside the ring: toward the subject at the edge, straight down at it as a pin.
     drawArrow(c, arrow, N, R + 2, R + 7, 3.5, bright, 1);

@@ -9,7 +9,7 @@ import { FIGHT, profileOf } from "../movement";
 import { type Delivery, type Target, type CombatState, attackOf, type CombatWorld } from "./data";
 
 /** Whether a creature takes part in fights now: alive, not wandering home neutral, not asleep. */
-export const fighting = (c: Creature) => !c.gone && !c.asleep && !c.bed && !c.fleeUntil && !c.wanderTo && !c.dazed && !(c.leashed && c.travelling); // (a dazed one lies still: rules/creatureStates.ts) // (a travelling party animal is quiet both ways: rules/travel.ts)
+export const fighting = (c: Creature) => c.cheerUntil === undefined && !c.gone && !c.asleep && !c.bed && !c.fleeUntil && !c.wanderTo && !c.dazed && !(c.leashed && c.travelling); // (a dazed one lies still: rules/creatureStates.ts) // (one won over celebrates first: rules/affection.ts) // (a travelling party animal is quiet both ways: rules/travel.ts)
 
 /** Whether anything may attack it: fighting, and not a baby (Ed, 2026-10-04: "No animals should
  *  attack babies"; shots and quakes pass them by, and they can't be beaten in a fight). */

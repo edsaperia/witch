@@ -147,9 +147,15 @@
           "by": "Ed",
           "date": "2026-10-05",
           "quote": "Screen should shake when the witch is hit. More shake when you are on lower health"
+        },
+        {
+          "by": "Ed's playtest",
+          "date": "2026-10-29",
+          "quote": "I replicated screen shake - it's from the witch being hit by an enemy creature, I guess the effect is activated and then doesn't switch off properly.",
+          "rest": "on the world's clock it ran ten times as long in a sleeping legend's circle or on the deck; now on hers, and capped at maxSecs"
         }
       ],
-      "notes": "each hit adds trauma (0-1), base on her first, perMissingHit more for each hit she was already missing, knockdown on the hit that knocks her down; it falls away at decay a second, and the screen shakes by trauma squared times maxOffsetPx (screen pixels, whole ones) and maxRotDeg, smooth noise wandering speed times a second. ?shake=0 (or the start screen's toggle) turns it off."
+      "notes": "each hit adds trauma (0-1), base on her first, perMissingHit more for each hit she was already missing, knockdown on the hit that knocks her down; it falls away at decay a second, and the screen shakes by trauma squared times maxOffsetPx (screen pixels, whole ones) and maxRotDeg, smooth noise wandering speed times a second. ?shake=0 (or the start screen's toggle) turns it off. It runs on her clock (a pause holds it, a slowed world doesn't stretch it), and a bout of hits shakes for maxSecs seconds at most from its first (a knockdown starts a new bout)."
     },
     "camera.circle": {
       "what": "In a legend's circle the camera tilts and frames her and the legend together.",
@@ -207,6 +213,35 @@
         "config/wardrobe.json"
       ],
       "notes": "for the part of her the row in focus is about (config/wardrobe.json's frame: head, hat, top, legs, feet, broom; board, the Workshop's pegboard, the wall behind her, so aimed up over her to it), aimed aim of her height (as drawn: 0 her feet, 1 the top of her hat) up her and look metres higher (a thing by her: the board, the broom), and its distance times distance in place of the station's own, eased from part to part as the cursor moves [2]."
+    },
+    "camera.station.whole": {
+      "what": "At a dressing station the camera frames her whole, top of her hat to the soles of her shoes, in the right half of the screen while the panel takes the left half.",
+      "decisions": [
+        {
+          "by": "Ed",
+          "date": "2026-10-29",
+          "quote": "Menus should be left half of the screen, and the witch right half of the screen, and she should be nicely centred and visible top of hat to bottom of shoes."
+        }
+      ],
+      "links": [
+        "src/render/view/camera.ts",
+        "src/ui/stationPanel.ts"
+      ],
+      "notes": "margin is the share of the screen's height left clear above and below her; at is where across the screen's width she stands (0.75: the right half's middle). On, it replaces distance, side, aim and parts (the zoom on the part of her being chosen), which stay for it off."
+    },
+    "camera.station.dim": {
+      "what": "How dark the picture behind her goes while she's framed at a station, so she stands out: 0 leaves it as it is, 1 makes it black.",
+      "decisions": [
+        {
+          "by": "Ed",
+          "date": "2026-10-29",
+          "quote": "When the witch opens a station, make the background behind her darker so that she stands out more clearly"
+        }
+      ],
+      "links": [
+        "src/render/stationBackdrop.ts"
+      ],
+      "notes": "a black wash over the whole picture, eased in with the framing, and her drawn again over it at full light; the panel's own wash on the left half is separate (ui/stationPanel.ts)."
     },
     "pixelSize": {
       "what": "How many screen pixels each art pixel takes up, the size of the game's chunky pixels.",
@@ -481,6 +516,20 @@
     "find": {
       "what": "Wild creatures are easier to find in the dark: their eyes shine pale gold in her light and they never go fully dark.",
       "notes": "Finding wild creatures in the dark (Ed, v244: 'quite hard to see in the forest... I don't want to go overboard'): eyeshine, their eyes catching the light in pale gold (strength over their own colour, out to range metres from her, blinking about blink of the time; woken creatures' red eyes stay red); lightFloor, never darker than that share of their unlit look; rim, a faint rim from her glow on the edge facing her; and in place of tone.ambient, ambient, with a cooler, more coloured moon (moonHue, moonSat)."
+    },
+    "pixels": {
+      "what": "The picture's pixels on the screen."
+    },
+    "pixels.snap": {
+      "what": "Each of the picture's pixels drawn a whole number of the screen's own pixels, the pixel size rounded to the nearest (render/view.ts resize; ?snap=0 off).",
+      "decisions": [
+        {
+          "by": "Ed",
+          "date": "2026-10-29",
+          "quote": "the pixels are just hard to read",
+          "rest": "via the coordinator: measured at his 1.25 DPR as 3.75 device pixels a pixel, drawn 3 and 4 wide by turns (previews/ed/blur/); Ed picked rounding to the nearest"
+        }
+      ]
     }
   }
 }

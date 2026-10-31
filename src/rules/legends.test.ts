@@ -4,23 +4,24 @@ import { newGame, stepGame, STEP, type Controls, type Game } from "./game";
 import { TUNING, withTuning, type Tuning } from "./tuning";
 // (she stands by the legends here: their own timers are under test, so the circle's slowed time (rules/slowTime.ts, its own tests) is off)
 const NO_SLOW = { ...TUNING, legendCircle: { slow: { ...TUNING.legendCircle!.slow, on: false } } };
-import { LEGEND_BUFFS } from "./buffs";
 import { LEGENDS, anger, canopyOver, lull, relicGlints, stepLegendStates } from "./legends";
 import { cellKey } from "./party";
 import { setupQuestDemo } from "./quest";
 import { inLegendClearing } from "./map";
 import { stateOf } from "./creatureStates";
+import { smallWorldTuning } from "../test/worlds";
 const PEOPLED = withTuning({ population: { ...TUNING.population, start: { ...TUNING.population.start, young: 1 } } }); // (a young in every area, whatever the tuning's curve: the mechanics, not the balance)
 
 // Legends, redesigned (Ed, 2026-10-05; issue #87).
 const idle: Controls = { moveX: 0, moveZ: 0, toggleMode: false, zoom: 0, autoTalk: false };
 const run = (g: Game, secs: number, first: Controls = idle, each?: () => void) => { for (let i = 0; i < Math.round(secs / STEP); i++) { stepGame(g, i === 0 ? first : idle, STEP); each?.(); } };
-/** The witch on the ground beside a sleeping legend (one with a buff), everything else round it gone but one of its kind. */
+/** The witch on the ground beside a sleeping legend, everything else round it gone but one of its kind. */
 function beside(kin = true, t: Tuning = NO_SLOW): { g: Game; L: Creature; mate: Creature | null } {
+  // Retain >300 m recruits, 700 m neighbouring-legend exclusion and the second relic for the long-range combat fixtures.
   const g = newGame(123, t);
   g.clock.paused = false; g.party.paused = true;
   g.clearedAt = Infinity; // (no area clears: this empties areas by hand; rules/clear.ts)
-  const L = g.creatures.find(c => c.boss && c.legendState === "asleep" && LEGEND_BUFFS.species[c.species] && !LEGENDS.charge.species.includes(c.species))!; // (one that lobs or beams: chargers below)
+  const L = g.creatures.find(c => c.boss && c.legendState === "asleep" && !LEGENDS.charge.species.includes(c.species))!; // (one that lobs or beams: chargers below)
   const site = g.map.siteOf(L.cell[0], L.cell[1]), d = Math.hypot(site.x - L.x, site.z - L.z) || 1;
   g.witch = { ...g.witch, seated: false, x: L.x + ((site.x - L.x) / d) * 4, z: L.z + ((site.z - L.z) / d) * 4, mode: "ground", lift: 0 };
   for (const c of g.creatures) if (!c.boss && cellKey(c.cell) === cellKey(L.cell)) c.gone = true;
@@ -90,7 +91,8 @@ describe("legends, redesigned (Ed, 2026-10-05; #87)", () => {
     const happy = put(g, L.species === "wolf" ? "boar" : "wolf", 2, out.x + 2, out.z, g.map.cellSafe(out.x, out.z).cell as [number, number]); happy.state = "happy";
     g.combat.sounds.set("test", { hp: 50, max: 50, x: out.x - 2, z: out.z, radius: 2 });
     let shots = 0;
-    run(g, LEGENDS.attack.interval * 2 + LEGENDS.attack.windup + LEGENDS.attack.lobFlight + 1, idle, () => { for (const e of g.combat.events) if (e.id === L.id && e.at === g.clock.time && (e.kind === "shot" || e.kind === "beam")) shots++; });
+    // (its kind's attack exaggerated, released by the attack engine, rules/attacks/species.ts legendOf; the old throw or beam with ?attacks=old)
+    run(g, LEGENDS.attack.interval * 2 + LEGENDS.attack.windup + LEGENDS.attack.lobFlight + 1, idle, () => { for (const e of g.combat.events) if (e.id === L.id && e.at === g.clock.time && (e.kind === "shot" || e.kind === "beam")) shots++; for (const e of g.combat.spells?.events ?? []) if (e.source === L.id && e.kind === "release") shots++; });
     expect(cellKey(g.map.cellSafe(g.witch.x, g.witch.z).cell)).not.toBe(cellKey(L.cell));
     expect(shots).toBeGreaterThanOrEqual(1);
     expect(shots).toBeLessThanOrEqual(3); // slow
@@ -149,18 +151,22 @@ describe("legends, redesigned (Ed, 2026-10-05; #87)", () => {
     g.witch = { ...g.witch, mode: "treetop", lift: 1 }; // (her posse only)
     const posse = [0, 1, 2, 3, 4].map(i => { const k = put(g, L.species === "wolf" ? "boar" : "wolf", 2, L.x + 60 + i * 12, L.z + 30); k.leashed = true; g.leash.placed.push({ id: k.id, x: k.x, z: k.z, at: 0 }); return k; });
     let volley = 0;
-    run(g, LEGENDS.attack.interval + LEGENDS.attack.windup + 1, idle, () => { if (!volley && g.combat.events.some(e => e.id === L.id && e.at === g.clock.time && (e.kind === "shot" || e.kind === "beam"))) volley = g.combat.shots.filter(q => q.from === L.id).length + g.combat.beams.filter(q => q.from === L.id).length; });
+    // (each aim its own cast of its kind's attack exaggerated, released together: rules/combat/legend.ts; or, ?attacks=old, the old volley)
+    run(g, LEGENDS.attack.interval + LEGENDS.attack.windup + 1, idle, () => {
+      if (!volley && g.combat.events.some(e => e.id === L.id && e.at === g.clock.time && (e.kind === "shot" || e.kind === "beam"))) volley = g.combat.shots.filter(q => q.from === L.id).length + g.combat.beams.filter(q => q.from === L.id).length;
+      if (!volley) volley = (g.combat.spells?.events ?? []).filter(e => e.source === L.id && e.kind === "release").length;
+    });
     expect(volley).toBeGreaterThanOrEqual(2);
     expect(volley).toBeLessThanOrEqual(LEGENDS.attack.targets);
     void posse;
   }), 60000);
 
-  it("worn down, go back to sleep (angry or happy), keeping a buff she has from them", () => withAngryAfter(0.5, () => {
+  it("worn down, go back to sleep (angry or happy)", () => withAngryAfter(0.5, () => {
     const { g, L, mate } = beside();
     mate!.gone = true;
     run(g, 1.2);
     expect(L.legendState).toBe("angry");
-    L.hp = 1;
+    L.affection = 0.999; L.affectionAt = g.clock.time; // (its slots nearly full of hearts: rules/orbit.ts)
     const wolf = put(g, L.species === "wolf" ? "boar" : "wolf", 2, L.x + 2, L.z);
     wolf.leashed = true; g.leash.placed.push({ id: wolf.id, x: wolf.x, z: wolf.z, at: g.clock.time });
     let slept = false;
@@ -182,7 +188,6 @@ describe("legends, redesigned (Ed, 2026-10-05; #87)", () => {
     expect(g.leash.relics).toEqual([]);
     expect(pup.level).toBe(2);
     expect(L.legendState).not.toBe("happy");
-    expect(g.buffs.active).toEqual([]);
   }, 60000);
 
   it("take a quest sigil only inside their clearing: the right creature put down elsewhere in its area does nothing but cue", () => {
@@ -220,14 +225,13 @@ describe("legends, redesigned (Ed, 2026-10-05; #87)", () => {
     const dx = g.map.dancefloor.x - L.x, dz = g.map.dancefloor.z - L.z, dd = Math.hypot(dx, dz) || 1;
     const far = put(g, L.species === "boar" ? "wolf" : "boar", 1, L.x + (dx / dd) * 120, L.z + (dz / dd) * 120); far.enraged = true; far.state = "enraged"; far.siege = "home";
     let hitFar = false;
-    run(g, LEGENDS.attack.interval + LEGENDS.attack.windup + LEGENDS.attack.lobFlight + 2, idle, () => { if (far.hp !== undefined) hitFar = true; });
+    run(g, LEGENDS.attack.interval + LEGENDS.attack.windup + LEGENDS.attack.lobFlight + 2, idle, () => { if (far.hurtAt !== undefined) hitFar = true; });
     expect(hitFar).toBe(true);
     // Worn down by an enraged one beside it.
-    L.hp = 0.5;
+    L.drops = 0.999; // (its slots nearly full of 💧s: rules/orbit.ts)
     const near = put(g, L.species === "boar" ? "wolf" : "boar", 2, L.x + 1.5, L.z, L.cell); near.enraged = true; near.state = "enraged";
     run(g, 10);
     expect(L.legendState).toBe("asleep");
-    expect(g.buffs.active).toEqual([]); // (no buff from legends: Ed, 2026-10-18)
   }, 60000);
 
   it("has the dream quest wake it happy, fighting for her, no buff (Ed, 2026-10-18; the creature stays hers), and stay open while it sleeps, soundsystem on or not (Ed, 2026-10-06)", () => {
@@ -245,7 +249,6 @@ describe("legends, redesigned (Ed, 2026-10-05; #87)", () => {
     expect(L.questOpen).toBe(false);
     expect(gift.leashed).toBe(true); // hers, parked there
     expect(g.leash.placed.map(p => p.id)).toContain(gift.id);
-    expect(g.buffs.active).toEqual([]);
     expect(g.islandsTonight).toEqual([L.species]);
     // Another legend: its area's soundsystem on, its quest stays open while it sleeps; awake (angry), it's closed.
     const M = g.creatures.find(c => c.boss && c !== L && c.legendState === "asleep" && c.quest)!;
@@ -361,7 +364,7 @@ describe("a wave on a legend's area (#87, found by the overnight playthrough)", 
 describe("an awake legend with nothing in reach (balance, 2026-10-06)", () => {
   it("looks again every attack.recheck seconds, not every step", async () => {
     const { cheer } = await import("./legends");
-    const g = newGame(1000, TUNING);
+    const g = newGame(1000, smallWorldTuning(TUNING, "An awake legend's empty-target recheck timer is independent of world extent."));
     g.clock.paused = false; g.witch = { ...g.witch, seated: false, mode: "treetop", lift: 1 };
     const L = g.creatures.find(c => c.boss)!;
     cheer(L, 0); // (happy: it shoots the enraged, and there are none)
@@ -374,6 +377,7 @@ describe("an awake legend with nothing in reach (balance, 2026-10-06)", () => {
 
 describe("legends going back to sleep (Ed, 2026-10-06)", () => {
   it("look for their kind every legends.check seconds (5), each on its own beat, not all on one frame", () => {
+    // Retain the full dealt legend population to check that independent looks do not bunch on one frame.
     expect(LEGENDS.check).toBe(5);
     const g = newGame(123, NO_SLOW), ids = g.creatures.filter(c => c.boss).map(c => c.id).slice(0, 40);
     for (const c of g.creatures) if (!c.boss) c.gone = true; // (none of anyone's kind anywhere: each turns restless on its first look)
@@ -409,19 +413,17 @@ describe("legends going back to sleep (Ed, 2026-10-06)", () => {
     expect(L.legendState).toBe("asleep");
     expect(steps * STEP).toBeGreaterThan(Math.hypot(30, 10) / LEGENDS.homeSpeed - 0.5); // (at homeSpeed m/s)
   }, 60000);
-  it("calm when angry as soon as one of their kind is back in their area: asleep, restlessness 0, a buff once earned kept, and home first", () => withAngryAfter(0.5, () => {
+  it("calm when angry as soon as one of their kind is back in their area: asleep, restlessness 0, and home first", () => withAngryAfter(0.5, () => {
     const { g, L, mate } = beside();
     const home = { x: L.x, z: L.z };
     mate!.gone = true;
     run(g, 1.5);
     expect(L.legendState).toBe("angry");
-    L.buffed = true;
     Object.assign(L, { x: home.x + 12, z: home.z - 6 });
     mate!.gone = false; // one of its kind back
     run(g, LEGENDS.check + 0.1);
     expect(L.legendState).toBe("asleep");
     expect(L.restlessness).toBe(0);
-    expect(L.buffed).toBe(true);
     run(g, 6);
     expect(L.homing).toBeFalsy();
     expect([L.x, L.z]).toEqual([home.x, home.z]);

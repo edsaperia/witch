@@ -11,6 +11,7 @@ import { hatMarkers, wearing } from "./hat";
 
 const C: Controls = { moveX: 0, moveZ: 0, toggleMode: false, zoom: 0 };
 function game(t: Tuning): Game {
+  // Keep this spatial fixture: a left-behind hat must still act while its witch stands 200 m away.
   const g = newGame(123, t);
   g.clock.paused = false; g.party.paused = true;
   g.party.spellAt = undefined;

@@ -21,20 +21,20 @@ import { affectionOf, type Game } from "../../rules/game";
 import { nightEase, relicsOut } from "../../rules/partyOver";
 import type { Creature } from "../../rules/creatures";
 import { restlessness } from "../../rules/dream";
-import { bossBreath } from "../../render/leash";
+import { bossBreath, dances } from "../../rules/creatureCues";
 import type { CombatEventKind } from "../../rules/combat";
 import type { Sfx } from "./sfx";
 import { beachOf, type Beach } from "../../rules/mapShape";
 import { dolphinLeaps, krakenRising } from "../../rules/seaLife";
 import { speechMood, voiceOf } from "./voices";
-import { dances } from "../../render/looks";
-import { beatAt, timeAt } from "../../rules/beat";
+import { beatAt, bpmAt, timeAt } from "../../rules/beat";
 import { cellKey } from "../../rules/party";
 import { dressingOf, partyDef, type Dressing } from "../../rules/partyDressing";
 import { musicMix, partyOverEase } from "../../rules/music";
 import { PARTY_CAST } from "../../rules/party";
 import { djGesture } from "../../../art/witch.js";
 import { djRoutineAt, djStrokes } from "../../rules/djSet";
+import { kitchenLayout } from "../../rules/mushrooms";
 
 /** ?partyover=<s>: the party over from that game time (debug; as the look's, render/view.ts). */
 export const OVER_DEBUG: number | null = (() => { const v = new URLSearchParams(globalThis.location?.search ?? "").get("partyover"); return v === null ? null : Number(v) || 0; })();
@@ -53,6 +53,8 @@ const happyNow = (c: Creature) => !c.leashed && !c.gone && (!!c.friendly || (!!c
 interface Here { g: Game; time: number; near: (x: number, z: number) => number; pan: (x: number) => number }
 
 export class SfxCues {
+  private potionGame: Game | null = null;
+  private potionPlopSeen = -1;
   /** Her failed take-off's landing, due at `at` (the "grounded" leash event): the thud as her leashes pull her down. */
   private yank: { at: number; pan: number } | null = null;
   /** Taken note of on the first frame, so nothing already so sounds as though it just turned. */
@@ -104,6 +106,12 @@ export class SfxCues {
   update(g: Game, time: number): void {
     const w = g.witch, hear = Math.max(1, g.tuning.sfx.hear);
     const h: Here = { g, time, near: (x, z) => Math.max(0, 1 - Math.hypot(x - w.x, z - w.z) / hear), pan: x => (x - w.x) / 30 };
+    if (this.potionGame !== g) { this.potionGame = g; this.potionPlopSeen = -1; }
+    for (const e of g.mushrooms?.plops ?? []) if (e.id > this.potionPlopSeen) {
+      const k = kitchenLayout(g).cauldron;
+      this.sfx.potionPlop(h.pan(k.x), h.near(k.x, k.z));
+      this.potionPlopSeen = e.id;
+    }
     this.invites(h);
     if (this.yank && time >= this.yank.at) { this.sfx.land(this.yank.pan, 1); this.yank = null; }
     // (the legends gathered once a frame for the four that look only at them: not four passes over every creature)
@@ -147,7 +155,7 @@ export class SfxCues {
       else if (e.kind === "hit") {
         S.hit(pan(e.x), k, !!e.spent);
         const m = e.id !== undefined && g.creatures[e.id] ? affectionOf(g).affection(g.creatures[e.id]) ?? undefined : undefined; // (its meter after the hit: rules/affection.ts)
-        if (!e.spent && m !== undefined) S.fill(m, pan(e.x), k);
+        if (!e.spent && m !== undefined) { S.fill(m, pan(e.x), k); S.thunk(m, pan(e.x), k); } // (and its thunk, rising as the ring fills: Ed, 2026-10-29)
         const c = e.id !== undefined ? g.creatures[e.id] : undefined;
         if (c && !e.spent && this.ready(c.id, time, 0.3)) S.reply(voiceOf(c, g.tuning), m ?? 0, pan(e.x), k);
       } else if (e.kind === "happy" && e.id !== undefined) this.flourish(g, e.id, time, k, pan(e.x));
@@ -345,7 +353,7 @@ export class SfxCues {
       this.deckUpTo = time; this.deckHalf = Math.floor(beatAt(g.beat, time) * 2);
       // (her wait after a knockdown, the music silent: her scratching on the new record the show, sfx.deck.respawn louder)
       const loud = g.witches[0]?.ko ? g.tuning.sfx.deck.respawn ?? 1 : 1;
-      if (this.primed) for (const s of djStrokes(g, from + 1e-9, time + 1e-9)) this.sfx.deck(s.stroke, 0.1, loud);
+      if (this.primed) for (const s of djStrokes(g, from + 1e-9, time + 1e-9)) this.sfx.deck(s.stroke, 0.1, loud, bpmAt(g.beat, time));
       const hype = r.gesture === "hype";
       if (hype && !this.deckHype && this.primed) this.sfx.whoop(0.1);
       this.deckHype = hype;

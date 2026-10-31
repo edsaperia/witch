@@ -70,7 +70,7 @@ export const relicGlints = (forest: { treesNear(x: number, z: number, r: number)
 export function placeRelics(map: ForestMap, forest: { treesNear(x: number, z: number, r: number): Plant[] }, data: LegendsData = LEGENDS): Relic[] {
   const R = data.relics, b = map.bounds, inside = (x: number, z: number) => isInside(b, x, z, 60);
   const woods = (px: number, pz: number) => forest.treesNear(px, pz, 14).filter(t => Math.hypot(t.x - px, t.z - pz) < 14).length >= 3;
-  const out: Relic[] = [];
+  const out: Relic[] = [], keep = 4 + R.sigilOffset; // (the bottle and its sigil, south of it, out of every stone's keep-clear zone: Ed, 2026-10-29)
   const gapTo = (x: number, z: number) => out.reduce((m, r) => Math.min(m, Math.hypot(r.x - x, r.z - z)), Infinity);
   // How many (Ed, 2026-10-11: one per relics.perAreas areas the waves reach, at least home's), and which: the kinds in a seeded
   // order (relicKinds: bottle, mirrored or not, colour), never one bottle twice in a colour while they last (Ed: "We shouldn't use
@@ -101,7 +101,7 @@ export function placeRelics(map: ForestMap, forest: { treesNear(x: number, z: nu
         for (let r = map.homeRadius; r < 600; r += 4) if (!inHome(home.x + dx * r, home.z + dz * r)) { edge = r; break; }
         if (edge < 0) continue;
         const r = edge + side * R.homeInset, x = home.x + dx * r, z = home.z + dz * r;
-        if (r > map.homeRadius + 5 && Math.hypot(x - map.treehouse.x, z - map.treehouse.z) >= R.clearOfTreehouse && inside(x, z) && !map.hardClear(x, z) && inHome(x, z) === (side < 0)) spot = { x, z };
+        if (r > map.homeRadius + 5 && Math.hypot(x - map.treehouse.x, z - map.treehouse.z) >= R.clearOfTreehouse && inside(x, z) && !map.hardClear(x, z) && map.clearOfStones(x, z, keep) && inHome(x, z) === (side < 0)) spot = { x, z };
       }
       if (spot) break;
     }
@@ -116,7 +116,7 @@ export function placeRelics(map: ForestMap, forest: { treesNear(x: number, z: nu
     for (const r of [55, 70, 45, 85, 40, 30, 20]) {
       for (let k = 0; k < 12 && found < 2; k++) {
         const a = a0 + (k / 12) * Math.PI * 2, px = site.x + Math.cos(a) * r, pz = site.z + Math.sin(a) * r, kc = map.cellSafe(px, pz).cell;
-        if (kc[0] !== cell[0] || kc[1] !== cell[1] || !inside(px, pz) || map.hardClear(px, pz)) continue;
+        if (kc[0] !== cell[0] || kc[1] !== cell[1] || !inside(px, pz) || map.hardClear(px, pz) || !map.clearOfStones(px, pz, keep)) continue; // (out of every stone's keep-clear zone: Ed, 2026-10-29)
         const lc = map.legendClearing(cell[0], cell[1]); // (the whole bottle off its legend's circle, not just its middle: Ed, v1628)
         if (lc && Math.hypot(px - lc.x, pz - lc.z) < lc.r + (R.clearOfCircle ?? 0)) continue;
         const inWoods = woods(px, pz), want = inWoods && canopyOver(forest, map, px, pz) !== gap;
@@ -179,7 +179,7 @@ export function stepLegendStates(w: LegendWorld, ids: number[], data: LegendsDat
     const phase = ((c.id * 0.6180339887) % 1) * data.check;
     if (Math.floor((w.time + phase) / data.check) !== Math.floor((w.time - w.dt + phase) / data.check)) {
       const kin = hasKin(w, c, key);
-      if (c.legendState === "angry" && kin) lull(c, w.time); // (Ed, 2026-10-06: "Angry legends should go back to sleep once one of their own species is back in their area"; its buff, if earned, kept)
+      if (c.legendState === "angry" && kin) lull(c, w.time); // (Ed, 2026-10-06: "Angry legends should go back to sleep once one of their own species is back in their area")
       else if (c.legendState === "asleep" || c.legendState === "restless") {
         if (kin) { c.legendState = "asleep"; c.restlessness = 0; }
         else if (c.legendState === "asleep") { c.legendState = "restless"; c.stateAt = w.time; c.restlessness = c.restlessness ?? 0; }
@@ -220,18 +220,12 @@ export function cheer(c: Creature, time: number): void {
   Object.assign(c, { legendState: "happy", stateAt: time, enraged: false, state: undefined, hp: undefined, fight: undefined, siege: undefined, restlessness: 0, questOpen: false, charge: undefined, legend: undefined });
 }
 
-/** Back to sleep (worn down, or calmed by one of its kind back in its area), its buff (if earned)
- *  kept; away from where it lay, it walks home first (homing; Ed, 2026-10-06). */
+/** Back to sleep (worn down, or calmed by one of its kind back in its area); away from where it lay, it walks home first (homing; Ed, 2026-10-06). */
 export function lull(c: Creature, time: number): void {
   heal(c, time);
   const away = c.lairX !== undefined && c.lairZ !== undefined && Math.hypot(c.x - c.lairX, c.z - c.lairZ) > 0.5;
   Object.assign(c, { legendState: "asleep", stateAt: time, enraged: false, state: undefined, hp: undefined, fight: undefined, siege: undefined, restlessness: 0, charge: undefined, run: undefined, legend: undefined, slowUntil: undefined, stunUntil: undefined, kx: 0, kz: 0, homing: away || undefined, questOpen: false });
 }
-
-/** Whether a legend gives its buff: never now (Ed, 2026-10-18: "Finishing quests no longer gives boons"; a happy legend and a
- *  flask give none either; Ed, 2026-10-24: nor a legend on her leash, rules/buffs.ts partyLegends). Kept as the one place to
- *  turn every legend's power back on. */
-export const buffing = (_c: Creature): boolean => false;
 
 /** The flask (a party relic, Ed 2026-10-18: "All flasks give growth spurt"): the one lying within pickRadius of (x, z), whose
  *  sigil she stands on, else null. Drinking it is the sigil button's (rules/sigilButton.ts): it isn't carried, and a legend is

@@ -21,6 +21,9 @@ export interface BeatClock {
   bonus?: number;
   /** The beat her latest knockdown's rise starts on (the next bar line after it): the music lands a crowd cue there. */
   bonusAt?: number;
+  /** BPM the night's whole arc is shifted by: the record she put on at her DJ booth less the arc's first tempo (Ed, 2026-10-29:
+   *  "select a record (each record has a bpm ...)"; recordTempo). 0 or unset: the arc as it is. */
+  shift?: number;
 }
 
 export function newBeatClock(base: number, bpm = base): BeatClock {
@@ -116,12 +119,24 @@ export function blockLineAfter(beat: number, blockBars: number): number {
   return beat - b <= 1 ? b : b + B;
 }
 
-/** The tempo the clock is heading for: its wave's, plus her knockdowns' bonus. */
-export const targetTempo = (c: BeatClock, t: Pick<Tuning, "beat">): number => waveTempo(t, c.wave) + (c.bonus ?? 0);
+/** The tempo the clock is heading for: its wave's, shifted by her record (shift), plus her knockdowns' bonus. */
+export const targetTempo = (c: BeatClock, t: Pick<Tuning, "beat">): number => waveTempo(t, c.wave) + (c.shift ?? 0) + (c.bonus ?? 0);
 
-/** How much faster than its wave's own tempo the party runs (her knockdowns' bonus over the wave's tempo): the wave
- *  countdown and the ley line's pulse run this many times as fast (Ed, 2026-10-07: the pulse travels at the tempo). */
-export const tempoRate = (c: BeatClock, t: Pick<Tuning, "beat">): number => 1 + (c.bonus ?? 0) / Math.max(1, waveTempo(t, c.wave));
+/** The record she put on at her DJ booth (Ed, 2026-10-29) at `time`, before the party: the night's arc shifted to start at its
+ *  `bpm` (the arc's rise and her knockdowns' steps kept on top), the tempo there at once (nothing's playing yet: the needle drop's
+ *  routine, rules/djSet.ts, plays at it). Beat-time's base is unchanged, so nothing reckoned in beats moves. */
+export function recordTempo(c: BeatClock, t: Pick<Tuning, "beat">, bpm: number, time: number): void {
+  c.shift = bpm - waveTempo(t, 0);
+  rampTo(c, beatAt(c, time), targetTempo(c, t), 0);
+  const s = c.segs[c.segs.length - 1]; s.bpm = s.bpmTo; // (at once: from this moment, not eased from the old)
+}
+
+/** How much faster than its wave's own tempo the party runs (her record's shift and her knockdowns' bonus over the wave's
+ *  tempo): the wave countdown and the ley line's pulse run this many times as fast (Ed, 2026-10-07: the pulse travels at the
+ *  tempo; 2026-10-29, the record: "Even at 200bpm the spark seems to be moving quite slowly, certainly not twice as fast as it
+ *  does at 100bpm"). */
+export const tempoRate = (c: BeatClock, t: Pick<Tuning, "beat">): number =>
+  Math.max(0.1, 1 + ((c.shift ?? 0) + (c.bonus ?? 0)) / Math.max(1, waveTempo(t, c.wave)));
 
 /** She's been knocked down at `time` (Ed, 2026-10-07: "the BPM goes up by 1 each time you die"): the bonus rises by
  *  knockout.bpmStep (to knockout.bpmCap, if set), eased in over beat.knockBeats (a bar) from the next bar line (bonusAt), so

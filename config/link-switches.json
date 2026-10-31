@@ -1,7 +1,106 @@
 {
- "_": "Every ?name=value the game reads from its link (Ed, 2026-10-28: \"Reformat prose into data where you can\"). Each: name; values (\"\" for the bare switch); does, in one plain sentence; group (run, view, debug, compare: brings back how something was before, to compare); since (the date it is first seen read where it's read now, from git; the oldest are the 2026-10-07 survey's); readIn (written by tools/config/linkSwitches.mjs from the code: don't edit); decision (Ed's, if any). docs/LINK-SWITCHES.md is written from this; src/linkSwitches.test.ts checks it against the code.",
+ "_": "Registry of every supported link switch, its purpose, readers and status. Detailed notes and decisions: docs/notes/config-history/link-switches.md.",
  "intro": "Every `?name=value` the game reads from its link, and where it reads it. Most are read once as the page loads (`src/app/linkParams.ts` for the tuning, `src/app/gameParams.ts` for the game, `src/app/viewParams.ts` for the view, `src/main.ts` for the page); a few are read where they're used. Several can be combined: `?seed=123&wave=30&creator=0`. This page is written from `config/link-switches.json`, and a test checks that file against the code.",
  "switches": [
+  {
+   "name": "layout",
+   "values": [
+    "ed"
+   ],
+   "does": "Opt-in Ed house layout preview; the default house stays unchanged.",
+   "group": "debug",
+   "since": "2026-10-31",
+   "readIn": [
+    "src/main.ts"
+   ]
+  },
+  {
+   "name": "recording",
+   "values": [
+    "0",
+    "1"
+   ],
+   "does": "Profile-only: 0 disables input recording and incremental log journalling; ordinary games keep both enabled.",
+   "group": "debug",
+   "since": "2026-10-30",
+   "readIn": [
+    "src/platform/diagnosticMode.ts"
+   ]
+  },
+  {
+   "name": "restore",
+   "values": [
+    "comment"
+   ],
+   "does": "Builder loader: consume the comment snapshot selected on the pause page, restoring that exact saved moment paused on the same build.",
+   "group": "debug",
+   "since": "2026-10-30",
+   "readIn": [
+    "src/main.ts"
+   ]
+  },
+  {
+   "name": "poolreadability",
+   "values": [
+    "0",
+    "1"
+   ],
+   "does": "Review-only dark-creature lighting inside the witch's light pool (1 enables it; off by default).",
+   "group": "debug",
+   "since": "2026-10-30",
+   "readIn": [
+    "src/render/sprites.ts"
+   ]
+  },
+  {
+   "name": "heldInputMs",
+   "values": [
+    "<milliseconds>"
+   ],
+   "does": "The online prototype holds the last guest movement input for this long before returning it to neutral (250 ms by default).",
+   "group": "debug",
+   "since": "2026-10-30",
+   "readIn": [
+    "src/platform/online/entry.ts"
+   ]
+  },
+  {
+   "name": "invite",
+   "values": [
+    "<token>"
+   ],
+   "does": "The online prototype reads this invitation token from the URL fragment to join the host's room.",
+   "group": "debug",
+   "since": "2026-10-30",
+   "readIn": [
+    "src/platform/online/entry.ts"
+   ]
+  },
+  {
+   "name": "online",
+   "values": [
+    "host",
+    "guest"
+   ],
+   "does": "The separate online prototype page hosts a night or joins an invitation.",
+   "group": "debug",
+   "since": "2026-10-30",
+   "readIn": [
+    "src/platform/online/entry.ts"
+   ]
+  },
+  {
+   "name": "relay",
+   "values": [
+    "<WebSocket URL>"
+   ],
+   "does": "The separate online prototype page connects to this relay (ws://localhost:8787 by default).",
+   "group": "debug",
+   "since": "2026-10-30",
+   "readIn": [
+    "src/platform/online/entry.ts"
+   ]
+  },
   {
    "name": "all",
    "values": [
@@ -141,6 +240,22 @@
    ]
   },
   {
+   "name": "bag",
+   "values": [
+    "starter",
+    "quick",
+    "far",
+    "none",
+    "<bag item id>"
+   ],
+   "does": "Her bag for one load: the Satchel (the starter: base rate and reach, a little homing), the Bumbag (faster 💌s, shorter reach) or the Purse (slower, further); none, no bag.",
+   "group": "debug",
+   "since": "2026-10-29",
+   "readIn": [
+    "src/app/linkParams.ts"
+   ]
+  },
+  {
    "name": "bare",
    "values": [
     "1",
@@ -192,6 +307,18 @@
    ]
   },
   {
+   "name": "snap",
+   "values": [
+    "0"
+   ],
+   "does": "The picture's pixels as the pixel size has them, not snapped to whole device pixels (pixels.snap), to compare.",
+   "group": "compare",
+   "since": "2026-10-29",
+   "readIn": [
+    "src/app/linkParams.ts"
+   ]
+  },
+  {
    "name": "border",
    "values": [
     "<twinkle>,<swapRate>,<swapBeat>"
@@ -218,19 +345,6 @@
    ]
   },
   {
-   "name": "buffs",
-   "values": [
-    "fox,toad",
-    "all"
-   ],
-   "does": "These legends' buffs on from the start.",
-   "group": "debug",
-   "since": "2026-10-07",
-   "readIn": [
-    "src/app/gameParams.ts"
-   ]
-  },
-  {
    "name": "canopy",
    "values": [
     "off"
@@ -253,6 +367,18 @@
    "since": "2026-10-12",
    "readIn": [
     "src/app/linkParams.ts"
+   ]
+  },
+  {
+   "name": "cauldron",
+   "values": [
+    "0"
+   ],
+   "does": "Mushroom collecting and the kitchen cauldron (two home mushroom clusters, shared baskets and pot, and the BBB Mirror Floor trip) are on by default; 0 turns them off.",
+   "group": "debug",
+   "since": "2026-10-30",
+   "readIn": [
+    "src/main.ts"
    ]
   },
   {
@@ -304,8 +430,10 @@
    "readIn": [
     "src/app/fightArena.ts",
     "src/app/gameParams.ts",
+    "src/app/nightSave.ts",
     "src/app/opening.ts",
-    "src/main.ts"
+    "src/main.ts",
+    "src/render/ground.ts"
    ]
   },
   {
@@ -373,7 +501,8 @@
     "src/app/night.ts",
     "src/app/playerPick.ts",
     "src/app/viewParams.ts",
-    "src/main.ts"
+    "src/main.ts",
+    "src/render/ground.ts"
    ]
   },
   {
@@ -577,6 +706,7 @@
    "group": "run",
    "since": "2026-10-11",
    "readIn": [
+    "src/app/debugUnlock.ts",
     "src/app/hatSave.ts",
     "src/app/loadout.ts"
    ]
@@ -645,7 +775,8 @@
    "readIn": [
     "src/app/linkParams.ts",
     "src/app/sail.ts",
-    "src/main.ts"
+    "src/main.ts",
+    "src/platform/online/entry.ts"
    ]
   },
   {
@@ -786,13 +917,42 @@
    "name": "lookdemo",
    "values": [
     "telegraphs",
-    "elements"
+    "elements",
+    "fx",
+    "fx:<element>"
    ],
-   "does": "The attack looks' showcase round her.",
+   "does": "The attack looks' showcase round her; fx shows the production magic family and intensity ladder with ground and camera controls.",
    "group": "debug",
    "since": "2026-10-27",
    "readIn": [
     "src/render/leash/combat.ts"
+   ]
+  },
+  {
+   "name": "magic",
+   "values": [
+    "old",
+    "layers"
+   ],
+   "does": "Compare the old attack artwork with the layered magic effects.",
+   "group": "compare",
+   "since": "2026-10-30",
+   "readIn": [
+    "src/render/fx/system.ts"
+   ]
+  },
+  {
+   "name": "fxmock",
+   "values": [
+    "1",
+    "iso",
+    "frost"
+   ],
+   "does": "Show the original fire and frost mock for comparison with the production effects.",
+   "group": "debug",
+   "since": "2026-10-29",
+   "readIn": [
+    "src/render/view.ts"
    ]
   },
   {
@@ -1102,7 +1262,8 @@
    "group": "debug",
    "since": "2026-10-07",
    "readIn": [
-    "src/app/viewParams.ts"
+    "src/app/viewParams.ts",
+    "src/platform/online/relayClient.ts"
    ]
   },
   {
@@ -1151,10 +1312,11 @@
    "values": [
     "<S>"
    ],
-   "does": "The creator's room drawn at this scale.",
+   "does": "The creator's room drawn at this scale, or the online prototype's seven-digit room number.",
    "group": "run",
    "since": "2026-10-06",
    "readIn": [
+    "src/platform/online/entry.ts",
     "src/ui/creator.ts"
    ]
   },
@@ -1193,7 +1355,8 @@
    "since": "2026-10-04",
    "readIn": [
     "src/app/sail.ts",
-    "src/main.ts"
+    "src/main.ts",
+    "src/platform/online/entry.ts"
    ]
   },
   {
@@ -1284,9 +1447,10 @@
    "name": "sigils",
    "values": [
     "new",
-    "old"
+    "old",
+    "bold"
    ],
-   "does": "Rank sigils and the 6 m leash grid (new, the default), or the old sigils and their 4 m grid.",
+   "does": "Rank sigils and the 6 m leash grid (new, the default), or the old sigils and their 4 m grid; bold, the rank sigils drawn bold where a species has its bold sigil (art/sigils.js BOLD).",
    "group": "compare",
    "since": "2026-10-27",
    "readIn": [
@@ -1302,6 +1466,20 @@
    "does": "The night sky off.",
    "group": "view",
    "since": "2026-10-07",
+   "readIn": [
+    "src/app/linkParams.ts"
+   ]
+  },
+  {
+   "name": "cast",
+   "values": [
+    "1",
+    "0"
+   ],
+   "does": "The runestone stacks and the soundsystem spell on (1, the default since their view landed) or off (0): off, areas clear by themselves once their wild are gone, as before.",
+   "group": "compare",
+   "since": "2026-10-28",
+   "decision": "On by default with Rendering’s view of the stacks (#1378; off till then, the coordinator, 2026-10-28)",
    "readIn": [
     "src/app/linkParams.ts"
    ]
@@ -1547,6 +1725,31 @@
    "since": "2026-10-14",
    "readIn": [
     "src/app/repro.ts"
+   ]
+  },
+  {
+   "name": "newWitch",
+   "values": [
+    "1"
+   ],
+   "does": "This load as a brand-new witch (the pause page's Try as a new witch): the game's default look (config/default-look.json), the starting wardrobe, the default broom and no hats found, her saves of those neither read nor written.",
+   "group": "debug",
+   "since": "2026-10-29",
+   "readIn": [
+    "src/app/defaultLook.ts"
+   ]
+  },
+  {
+   "name": "resume",
+   "values": [
+    "0",
+    "1"
+   ],
+   "does": "Disable night saves, or explicitly enable them on a debug or automated link.",
+   "group": "run",
+   "since": "2026-10-29",
+   "readIn": [
+    "src/app/nightSave.ts"
    ]
   }
  ],

@@ -16,12 +16,13 @@
 // pack engages from that move's reach, reachOf); a kiter's strike is its shot, never a lunge; the slime trail runs on; and while it
 // waits its turn its kind's tactic places it (the wolves' surround: rules/combat.ts).
 import raw from "../../../config/packs.json";
+import { observeAttack } from "../attackObservation";
 import { sectionOf } from "../creatureConfig";
 import { type Creature, type Level } from "../creatures";
 import { foes, huntsWitch } from "../creatureStates";
 import { hash2 } from "../random";
 import { FIGHT, type Move as OwnMove, profileOf, startCharge, swoopStriking } from "../movement";
-import { type Attack, COMBAT, type CombatState, type CombatWorld, type Target, creatureMaxHp, scaled, strengthOf } from "./data";
+import { type Attack, COMBAT, type CombatState, type CombatWorld, type Target, scaled, strengthOf, stunWorth } from "./data";
 import { fighting, sideOf, targetPos, targetable } from "./targeting";
 
 export type Role = "lunger" | "shooter" | "special" | "hold" | "hurt";
@@ -53,10 +54,25 @@ export interface PacksData {
   hers: { hold: number; stun: number };
   /** The lull's prowl round her once at its place: near (m), pace (times its speed); freeze, the share of the lull a freeze holds first. */
   prowl: { near: number; pace: number; freeze: number };
+  /** The styles' numbers (packs.json _styles) and each kind's style. */
+  styles: StylesData;
+  style: Record<string, Style>;
+}
+/** A kind's way of moving in a fight (Ed's playtest, 2026-10-29; packs.json _styles). */
+export type Style = "charger" | "circler" | "flanker" | "hopper" | "steady";
+export interface StylesData {
+  lullOut: number; lullGap: number; jitter: number;
+  charger: { wheel: number; carrot: number };
+  circler: { orbit: number; carrot: number; spiral: number };
+  flanker: { from: number; to: number; out: number };
+  hopper: { length: number; time: number; height: number; pause: number; ring: number };
+  friends: { on: boolean };
 }
 /** packs.json, its kinds each creature's own `pack` (art/creatures/<id>/creature.js, 2026-10-23: so builders adding kinds don't
  *  collide), spread over any the file still holds. */
 export const PACKS = { ...(raw as unknown as PacksData), kinds: { ...(raw as unknown as PacksData).kinds, ...(sectionOf("pack") as Record<string, PackKind>) } } as PacksData;
+/** A kind's style (packs.json style; steady if not listed). */
+export const styleOf = (species: string, data: PacksData = PACKS): Style => data.style?.[species] ?? "steady";
 /** A kind's pack entry, or null (it fights as before). */
 export const packKindOf = (species: string, data: PacksData = PACKS): PackKind | null => data.kinds[species] ?? null;
 /** A kind's special's numbers: the special's, with the kind's own variant over them. */
@@ -154,7 +170,8 @@ export const packMoveOf = (c: Creature): { attack: Attack; name: string } | null
 // ---- Roles by position -----------------------------------------------------------------------------------------------------
 
 /** Whether a member is hurt (under limits.hurt of its health): it leaves the combo and keeps away. */
-export const hurt = (c: Creature, data: PacksData = PACKS): boolean => (c.hp ?? Infinity) < creatureMaxHp(c) * data.limits.hurt;
+/** Hurt: its slots filled past the share limits.hurt leaves (hearts on one of the wild, 💧s on one of hers: rules/orbit.ts). */
+export const hurt = (c: Creature, data: PacksData = PACKS): boolean => (c.leashed || c.state === "happy" ? c.drops ?? 0 : c.dazed ? 1 : c.affection ?? 0) > 1 - data.limits.hurt + 1e-9;
 
 /** Roles by position (Ed: 2b): the nearest healthy member lunges (and any other within limits.close of her), the one behind her
  *  (else the furthest) throws the special, the rest at range fire; the hurt keep away while a healthy one fights (all of them hurt,
@@ -224,7 +241,7 @@ export function stepPacks(s: CombatState, w: CombatWorld, pw: PackWorld = {}, da
   }
   // Hidden ones come back down round her (the squirrels' scatter, the trees, the burrow) once their time is up.
   for (const c of w.active) {
-    if (c.packHide && time >= c.packHide.until) { if (c.packHide.tx !== undefined) { c.x = c.packHide.tx; c.z = c.packHide.tz!; } c.packHide = undefined; }
+    if (c.packHide && time >= c.packHide.until) c.packHide = undefined; // (where its way round got it to: rules/combat.ts)
     if (c.packShell !== undefined && time >= c.packShell) c.packShell = undefined;
     if (c.packSync !== undefined && time >= c.packSync) c.packSync = undefined;
     if (c.mind && time >= c.mind.until) { c.mind = undefined; if (c.fight?.target?.kind === "witch" && c.leashed) c.fight.target = null; } // (her animal turned on her is hers again)
@@ -241,7 +258,7 @@ export function stepPacks(s: CombatState, w: CombatWorld, pw: PackWorld = {}, da
     const heading = headingFor(w, tg), roles = assignRoles(members, p, heading, data), young = members.every(m => m.level === 1);
     // A loss (one of them knocked down, invited or run off): the rest scatter and regroup (Ed: 7d).
     // (lost: one of last step's members knocked down, run off, dazed or invited away; not one that has only turned on someone else)
-    const lostOne = st.members.some((id: number) => { const o = w.creatures[id]; return !o || o.gone || !!o.fleeUntil || !!o.dazed || !!o.leashed !== st!.hers || (o.hp ?? 1) <= 0; });
+    const lostOne = st.members.some((id: number) => { const o = w.creatures[id]; return !o || o.gone || !!o.fleeUntil || !!o.dazed || !!o.leashed !== st!.hers; });
     st.size = members.length; st.members = members.map(m => m.id);
     const healthy = members.filter(m => roles.get(m.id) !== "hurt" && roles.get(m.id) !== "hold");
     // (a member whose strike is its own move engages from that move's reach: a charge's or a leap's furthest, a burrow's start, a
@@ -347,10 +364,10 @@ export function stepPacks(s: CombatState, w: CombatWorld, pw: PackWorld = {}, da
         d.slot = { x: p.x + Math.cos(a) * out2, z: p.z + Math.sin(a) * out2 };
       } else if (st!.phase === "lull" && !st!.hers) {
         const k = Math.min(1, (time - st!.at) / Math.max(0.1, st!.until - st!.at));
-        d.slot = retreatSlot(K.retreat, st!, R2, m, i, n, p, k, time);
+        d.slot = styleOf(m.species, data) === "charger" && tg.kind === "witch" && !R2.still && !st!.lost ? wheelSlot(st!, R2, m, p, data) : retreatSlot(K.retreat, st!, R2, m, i, n, p, k, time);
         d.still = !!R2.still; d.freeze = K.retreat === "freeze" && !st!.lost && k < data.prowl.freeze; // (a freeze holds only the lull's first part, then prowls: Ed, 2026-10-23)
         // Out of sight in the trees or underground for the lull's middle, back down from another side (rules here, drawing: not drawn).
-        if ((R2.hide === true || (R2.hide === "half" && i % 2 === 0)) && !m.packHide && k > 0.3 && k < 0.5) { const a = st!.seed * Math.PI * 2 + Math.PI + (i / n) * Math.PI * 2, r = (R2.out * 0.8) * FIGHT.scale; m.packHide = { until: st!.until, tx: p.x + Math.cos(a) * r, tz: p.z + Math.sin(a) * r }; }
+        if ((R2.hide === true || (R2.hide === "half" && i % 2 === 0)) && !m.packHide && k > 0.3 && k < 0.5) { const a = st!.seed * Math.PI * 2 + Math.PI + (i / n) * Math.PI * 2, r = (R2.out * 0.8) * FIGHT.scale; m.packHide = { until: st!.until, tx: p.x + Math.cos(a) * r, tz: p.z + Math.sin(a) * r, at: time }; }
         if (K.retreat === "shell" && !m.packShell) m.packShell = Math.min(st!.until, time + 2); // (the snail: into its shell, untouchable 2 s)
         if (K.retreat === "hold" && (m.dug === undefined || time >= m.dug)) m.dug = st!.until; // (the badger: digs in and waits)
       } else if (st!.phase === "combo") {
@@ -360,8 +377,33 @@ export function stepPacks(s: CombatState, w: CombatWorld, pw: PackWorld = {}, da
       }
       out.set(m.id, d);
     });
+    if (st.phase === "lull" && !st.hers && !R2.still && tg.kind === "witch") spreadLull(members.map(m => ({ m, d: out.get(m.id)! })).filter(e => e.d.slot && e.d.role !== "hurt"), p, data, K.retreat === "freeze" && !st.lost ? 1 : undefined); // (a freeze holds near its own place: only spread apart)
   }
   return out;
+}
+
+/** A charger's place in the lull (packs.json styles.charger): on past her and wheeling round wide, `carrot` radians ahead of where it
+ *  is round her at `wheel` times the lull's distance, the pack all one way round (by its seed), so it comes again from the far side. */
+export function wheelSlot(st: { seed: number }, R: { out: number }, m: Creature, p: { x: number; z: number }, data: PacksData = PACKS): { x: number; z: number } {
+  const C = data.styles.charger, dir = st.seed < 0.5 ? 1 : -1, a = Math.atan2(m.z - p.z, m.x - p.x) + dir * C.carrot, r = R.out * C.wheel * FIGHT.scale;
+  return { x: p.x + Math.cos(a) * r, z: p.z + Math.sin(a) * r };
+}
+
+/** The lull's places spread out (Ed's playtest, 2026-10-29: "their lulls are too close"): each member's place out lullOut times as far
+ *  from her (`out`: a freeze 1), its own radius within jitter (by its id), then pushed apart to at least lullGap metres from each other. Pure but for the
+ *  slots it moves. */
+export function spreadLull(es: { m: Creature; d: { slot?: { x: number; z: number } } }[], p: { x: number; z: number }, data: PacksData = PACKS, out = data.styles.lullOut): void {
+  const Y = data.styles, gap = Y.lullGap * FIGHT.scale;
+  for (const { m, d } of es) {
+    const ox = d.slot!.x - p.x, oz = d.slot!.z - p.z, k = out === 1 ? 1 : out * (1 - Y.jitter + 2 * Y.jitter * hash2(m.id, 3, 1029));
+    d.slot = { x: p.x + ox * k, z: p.z + oz * k };
+  }
+  for (let it = 0; it < 4; it++) for (let a = 0; a < es.length; a++) for (let b = a + 1; b < es.length; b++) {
+    const A = es[a].d.slot!, B = es[b].d.slot!, dx = B.x - A.x, dz = B.z - A.z, dd = Math.hypot(dx, dz);
+    if (dd >= gap) continue;
+    const ux = dd > 1e-3 ? dx / dd : Math.cos(a + b), uz = dd > 1e-3 ? dz / dd : Math.sin(a + b), push = (gap - dd) / 2;
+    es[a].d.slot = { x: A.x - ux * push, z: A.z - uz * push }; es[b].d.slot = { x: B.x + ux * push, z: B.z + uz * push };
+  }
 }
 
 /** May it start a wind-up now: its turn, and room under its pack's pressure (Ed: 5), never more than limits.lanes melee strikes and
@@ -426,7 +468,7 @@ function special(s: CombatState, w: CombatWorld, pw: PackWorld, st: PackState, K
       if (tg.kind === "witch" && huntsWitch(side)) { st.callUntil = time + T; st.struck = []; break; }
       const P = profileOf(by.species)?.move; for (const m of healthy) if (P?.kind === "charge" && !m.charge && m.fight && !m.fight.lunge && m.fight.windupUntil === 0) startCharge(m, P, p.x, p.z, time); break;
     }
-    case "scatter": { const n = healthy.length; healthy.forEach((m, i) => { const a = st.seed * Math.PI * 2 + (i / Math.max(1, n)) * Math.PI * 2, r = Math.max(6 * S, (packAttack(m.species, m.level, "ranged", data)?.attack.range ?? 10) * 0.6) * (sp.ring ?? 1); if (m.fight && !m.fight.lunge && m.fight.windupUntil === 0) m.packHide = { until: time + T, tx: p.x + Math.cos(a) * r, tz: p.z + Math.sin(a) * r }; }); break; }
+    case "scatter": { const n = healthy.length; healthy.forEach((m, i) => { const a = st.seed * Math.PI * 2 + (i / Math.max(1, n)) * Math.PI * 2, r = Math.max(6 * S, (packAttack(m.species, m.level, "ranged", data)?.attack.range ?? 10) * 0.6) * (sp.ring ?? 1); if (m.fight && !m.fight.lunge && m.fight.windupUntil === 0) m.packHide = { until: time + T, tx: p.x + Math.cos(a) * r, tz: p.z + Math.sin(a) * r, at: time }; }); break; }
     case "call": st.callUntil = time + T; st.struck = []; break;
     case "feint": break; // (it feints at the combo's start: stepPacks)
     case "confusion": {
@@ -488,7 +530,7 @@ function special(s: CombatState, w: CombatWorld, pw: PackWorld, st: PackState, K
         const turn = fought && fought.leashed && !fought.boss && !fought.mind ? fought : w.active.filter(o => o.leashed && !o.gone && !o.boss && o.level > 0 && !o.mind && d(o) <= Rr).sort((a, b) => d(a) - d(b))[0];
         if (turn && v) { turn.mind = { until: time + T, of: owner }; s.events.push({ kind: "packMind", x: turn.x, z: turn.z, at: time, id: turn.id }); }
         else if (v && tg.kind === "witch" && healthy.some(m => Math.hypot(m.x - v.x, m.z - v.z) <= Rr)) pw.confuse?.(owner, time + T, ((sp.drift ?? 30) * Math.PI) / 180);
-      } else if (tg.kind === "creature") { const o = w.creatures[tg.id]; if (o && !o.boss) { o.stunUntil = Math.max(o.stunUntil ?? 0, time + data.hers.stun); if (o.fight) o.fight.windupUntil = 0; s.events.push({ kind: "stunned", x: o.x, z: o.z, at: time, id: o.id }); } }
+      } else if (tg.kind === "creature") { const o = w.creatures[tg.id]; if (o && !o.boss) observeAttack(w, s, tg, { source: by.id, attack: "pack:mind", delivery: "special", phase: "effect" }, 0, () => { o.stunUntil = Math.max(o.stunUntil ?? 0, time + data.hers.stun); if (o.fight) o.fight.windupUntil = 0; s.events.push({ kind: "stunned", x: o.x, z: o.z, at: time, id: o.id }); }); }
       break;
     }
     case "decoy": (s.decoys ??= []).push({ id: by.id, until: time + T, r: Rr, side }); break; // (the raccoon waving: her 💌s in its way go to it: rules/game.ts)
@@ -500,7 +542,7 @@ function special(s: CombatState, w: CombatWorld, pw: PackWorld, st: PackState, K
       for (let q = -L / 2; q <= L / 2 + 1e-6; q += r * 1.2) s.trails.push({ x: cx - hz * q, z: cz + hx * q, r, until: time + T, side, slow: sp.slow ?? 0.5, from: by.id });
       break;
     }
-    case "rally": for (const m of members) if (Math.hypot(m.x - by.x, m.z - by.z) <= Rr) { const max = creatureMaxHp(m), one = COMBAT.levels.dps[m.level] * 1.5 * (sp.heal ?? 1); m.hp = Math.min(max, (m.hp ?? max) + one); m.slowUntil = undefined; } break;
+    case "rally": for (const m of members) if (Math.hypot(m.x - by.x, m.z - by.z) <= Rr) { const max = stunWorth(m), one = COMBAT.levels.dps[m.level] * 1.5 * (sp.heal ?? 1); const off = one / max; if (m.leashed || m.state === "happy") m.drops = Math.max(0, (m.drops ?? 0) - off) || undefined; else m.affection = Math.max(0, (m.affection ?? 0) - off) || undefined; m.slowUntil = undefined; } break; // (its 💧s taken off, or its slots' newest: rules/orbit.ts)
     case "cover": {
       // Digs in by a hurt packmate (else the one her 💌 reached, else where it stands) and takes its hits.
       const ward = members.find(m => roles.get(m.id) === "hurt") ?? hit ?? null, coverer = ward ? healthy.filter(m => m !== ward).sort((a, b) => Math.hypot(a.x - ward.x, a.z - ward.z) - Math.hypot(b.x - ward.x, b.z - ward.z))[0] ?? by : by;

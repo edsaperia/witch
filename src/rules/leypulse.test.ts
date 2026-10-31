@@ -5,10 +5,12 @@ import { describe, expect, it } from "vitest";
 import { TUNING } from "./tuning";
 import { newGame } from "./game";
 import { awaitingSpell, clockSeconds, clockStart, clockText, columnShown, leyPulse, leyReachTimes, routeLengths, TIP_PACE, pointAlong, POINTER_FADE, pointerShown, pulseProgress, straightLink } from "./leypulse";
+import { bootPath } from "./bootRing";
 import { bootSeconds } from "./bootRing";
 import { stretchLengths } from "./pulseRoute";
 import { castPartySpell, cellKey, spawnMarkers, waveCountdown } from "./party";
 
+// Keep the seeded radius route: first/third stone arrival and far-half-of-map reveal timing depend on its complete boot-plus-route geometry.
 describe("the game clock", () => {
   it("counts mm:ss from 0, whole seconds down, minutes running past 99", () => {
     expect(clockText(0)).toBe("00:00");
@@ -85,10 +87,14 @@ describe("a runestone's column of light (Ed, 2026-10-06: \"first appears when th
     castPartySpell(p, g.map, 10);
     const times = leyReachTimes(p, g.map)!, pace = TUNING.leyLines.reveal ?? TIP_PACE, v = TUNING.leyLines.pulseSpeed, step = 100 / (pace * v); // (a 100 m link at the front's pace)
     const markers = spawnMarkers(p, g.map), next = markers.find(m => m.stage === "next")!, at = times.get(next.key)!;
-    expect(at).toBeCloseTo(p.bootUntil); // the first stone after home: the line branched off the boot ring and reaches it as the boot ends (Ed, 2026-10-07)
-    // the third: when the front (pace times the pulse's distance along the route, from the first stone till that catches up) gets there
-    const lens = routeLengths(p, g.map), C1 = lens[0], C3 = lens[0] + lens[1] + lens[2], m3 = C3 < pace * C1 ? (C3 - C1) / (pace - 1) : C3 / pace;
-    expect(times.get([...times.keys()][3])!).toBeCloseTo(p.pulse.at + m3 / v, 6);
+    // The ring and the route are one path (Ed, 2026-10-29): a stone is reached when the front, pace times the pulse's distance along
+    // it, gets there: while home boots up by the boot pulse's own speed (from when she leaves her decks: here not yet, so from
+    // the boot's end back), after by the wave's.
+    const B = bootPath(g.map).length, vb = TUNING.boot.speed!, lens = routeLengths(p, g.map), C1 = lens[0], C3 = lens[0] + lens[1] + lens[2];
+    const when = (C: number) => { const X = (B + C) / pace; return X <= B ? p.bootUntil - B / vb + X / vb : p.pulse.at + (X - B) / v; };
+    expect(at).toBeCloseTo(when(C1), 6);
+    expect(at).toBeLessThan(p.bootUntil); // (the first stone, a link or so out: the tip is there before the boot ends)
+    expect(times.get([...times.keys()][3])!).toBeCloseTo(when(C3), 6);
     expect(times.get(cellKey(g.map.centreCell))).toBe(-Infinity); // home, reached from the start
     expect(columnShown(at, at - 0.01, F)).toBeNull(); // no column before the tip arrives
     const arrive = columnShown(at, at, F)!;

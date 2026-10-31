@@ -7,7 +7,7 @@
 // pointed hat with its glowing band, a broom, a face that reads, a palette that holds together (a dark hat so the band shines,
 // the hat and cloak in neighbouring hues, the jacket against them).
 import { rng } from "./core.js";
-import { DEFAULT_OUTFIT, DEFAULT_LOOK } from "./witch.js";
+import { DEFAULT_OUTFIT, DEFAULT_LOOK, CLOAK_KNEE, cloakDrop, cloakLengthIn } from "./witch.js";
 import { NEW_BROOMS } from "./brooms.js";
 
 // Ours: every axis as she is.
@@ -16,7 +16,7 @@ export const WITCH_GENOME = {
   hair: "long", top: "jacket", cloak: "none",
   broom: { kind: "classic", length: 1, bend: 0, bristles: 1, thickness: 1 },
   accessories: { phones: true, shades: false, glowsticks: false, scarf: false, satchel: false, pendant: false, earrings: false,
-    lantern: false, vial: false, book: false, patches: false, bumbag: false, wristband: false, chunky: false },
+    lantern: false, vial: false, book: false, patches: false, bumbag: false, purse: false, tote: false, duffel: false, briefcase: false, clutch: false, messenger: false, wristband: false, chunky: false },
   cloakLength: 1, scarfLength: 1, bagSize: 1, backpackSize: 0,
   palette: null, // null: hers (DEFAULT_OUTFIT, the style's hues on top)
 };
@@ -31,6 +31,8 @@ export const WITCH_AXES = {
   scarfLength: [0, 7], bagSize: [.4, 2.6], backpackSize: [0, 2.5],
   cloakLength: [.6, 6], // (Ed, on #98: "Longer cloaks."; 2026-10-06: "allow a longer cloak and a longer scarf". No familiar since 2026-10-08, Ed: "Remove familiars from the character creator", the game being about animals)
 };
+/** A cloak's Length slider's range (Ed, 2026-10-29): the short one up to her knee, the long ones from it (witch.js CLOAK_KNEE). */
+export function cloakRange(cloak) { const [lo, hi] = WITCH_AXES.cloakLength; return cloak === "short" ? [lo, cloakLengthIn("short", hi, lo, hi)] : [cloakLengthIn(cloak, lo, lo, hi), hi]; }
 // Which of the sliders draw nothing on which of the options (Ed, 2026-10-06: "make sure that all the sliders do something for all
 // of the options"): the creator greys these out while that option is chosen, and tools/witch/slider-audit.mjs checks that every
 // other slider changes her at every option (and these indeed don't). No hat has no hat to shape; the brimless hats have no brim,
@@ -77,7 +79,7 @@ export function witchGenome(seed = 0, { party = false } = {}) {
   const k = party ? 1.6 : 1, fk = r(); // (where a familiar was drawn: no familiars since 2026-10-08, its draws kept so every other choice of a seed is as it was)
   const accessories = { phones: chance(.55), shades: chance(.25 * k) ? (chance(.5) ? "round" : true) : false, glowsticks: chance(.2 * k), scarf: chance(.35), satchel: chance(.3), pendant: chance(.3), earrings: chance(.4),
     lantern: chance(.22), vial: chance(.3), book: chance(.2), patches: cloak !== "none" && chance(.35), bumbag: chance(.22 * k), wristband: chance(.3 * k), chunky: chance(.35) };
-  const cloakLength = cloak === "none" ? 1 : cloak === "short" ? uni([1, 1.4]) : uni([1.2, 1.75]); // and long
+  const cloakLength = cloak === "none" ? 1 : cloak === "short" ? uni([1, 1.4]) : Math.max(CLOAK_KNEE / cloakDrop(cloak), uni([1.2, 1.75])); // and long (none above or below the knee: cloakRange)
   const scarfLength = accessories.scarf ? uni([.6, 2.2]) : 1, bagSize = uni([.8, 1.5]), backpackSize = chance(.18) ? uni([.75, 1.3]) : 0;
   if (fk >= .5) r(); // (its colours' draw)
   palette.backpack = [r(), uni([.35, .7]), uni([.4, .75])]; palette.plume = [r(), uni([0, .5]), uni([.85, 1])]; palette.gold = [uni([.1, .14]), uni([.6, .8]), uni([.85, 1])];

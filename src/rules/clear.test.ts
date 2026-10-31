@@ -15,13 +15,15 @@ import { befriend } from "./creatureStates";
 import { leyChain, waveReached } from "./leylines";
 import { leyPulse, leyReachTimes, straightLink } from "./leypulse";
 import { leyReveal } from "../render/leylines";
+import { smallWorldTuning } from "../test/worlds";
 
 const still: Controls = { moveX: 0, moveZ: 0, toggleMode: false, zoom: 0, autoTalk: false };
 const run = (g: Game, secs: number, c: Controls = still) => { for (let i = 0; i < Math.round(secs * 60); i++) stepGame(g, c, 1 / 60); };
 
 /** A game under way, the witch high over home (out of every fight), the boot long done. */
-function game(seed = 123, t = TUNING): Game {
-  const g = newGame(seed, t);
+function game(seed = 123, t = TUNING, fullRoute = false): Game {
+  const fixture = fullRoute ? t : smallWorldTuning(t, "Local clearing and wave-state transitions need only the first few route stops.");
+  const g = newGame(seed, { ...fixture, cast: { ...t.cast, on: false } }); // (these test the areas clearing by themselves and the runes at the feet: the game as it was, ?cast=0, rules/stoneStacks.ts)
   g.clock.paused = false; g.party.spellAt = undefined;
   g.witch = { ...g.witch, seated: false, mode: "treetop", lift: 1 };
   g.witches[0].health.hp = 1e6;
@@ -111,6 +113,7 @@ describe("the hostile swarms by the runestone order (Ed, 2026-10-08: the swarm p
   });
 
   it("peoples every area from the start by its place on the route, the later the more, the same from the same seed", () => {
+    // Retain the full route to compare disjoint first/last five-stop population samples.
     const map = generateMap(123, TUNING), all = spawnCreatures(map), order = routeOf(map).order, at = routeIndex(order), T = TUNING.population;
     expect(order.length).toBe(map.cells.length - 1); // (every area but home)
     const levels = (key: string) => [0, 1, 2].map(l => all.filter(c => cellKey(c.cell) === key && !c.boss && !c.circle && c.level === l).length);
@@ -300,7 +303,8 @@ describe("what's left to clear (Ed's playtest, 2026-10-07: the HUD's count, and 
 
 describe("only an area's natives count (Ed, 2026-10-07: visitors from next door 'wouldn't get enraged when the runestone transforms')", () => {
   it("a visitor standing in a cleared area doesn't block it, isn't counted, and isn't touched when its stone transforms; a native wandered off still holds it", () => {
-    const g = game(), order = routeOf(g.map).order, other = order[6];
+    // Retain enough distinct populated areas for a native elsewhere and an unrelated visitor from stop seven.
+    const g = game(123, TUNING, true), order = routeOf(g.map).order, other = order[6];
     // an area of two or more young and adults (the first ring's may hold only minHostile's one)
     const key = order.slice(1).find(k => k !== other && wildLeft(g.creatures, k.split(",").map(Number) as [number, number]).length >= 2)!;
     const [cx, cy] = key.split(",").map(Number) as [number, number];

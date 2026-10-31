@@ -286,6 +286,7 @@ function decorCandidate(map: ForestMap, i: number, j: number): Cand<Decor> | nul
   const open = 1 - Math.min(1, treeChance(map, x, z, a.type) / 0.8);
   if (hash2(i, j, s + 504) > 0.35 + 0.65 * open) return null;
   const f = (roll / totalM) * sumM, family: DecorFamily = f < wm[0] ? "ruins" : f < wm[0] + wm[1] ? "rocks" : "freak";
+  if (family !== "rocks" && !map.clearOfStones(x, z, D.footprint)) return null; // (ruins and freak trees out of the stones' keep-clear zones: Ed, 2026-10-29)
   return { x, z, family, variant: Math.floor(hash2(i, j, s + 505) * 1e6), flip: hash2(i, j, s + 506) < 0.5, rank: hash2(i, j, s + 507), i, j };
 }
 
@@ -332,7 +333,7 @@ function relicCandidate(map: ForestMap, i: number, j: number): Cand<Relic> | nul
   const near = map.paths.at(x, z, 20), byRoad = near && (near.kind === "road" || near.kind === "rail") ? R.nearRoad : 1;
   if (roll >= odds * byRoad) return null;
   if (a.openness < map.tuning.decor.clearing || map.hardClear(x, z) || map.paths.at(x, z, 2) || map.paths.pieceAt(x, z)) return null;
-  if (map.reserved(x, z, map.tuning.decor.footprint)) return null; // its footprint clear of the gameplay, set pieces and grounds
+  if (map.reserved(x, z, map.tuning.decor.footprint) || !map.clearOfStones(x, z, map.tuning.decor.footprint)) return null; // its footprint clear of the gameplay, set pieces, grounds and the stones' keep-clear zones
   if (Math.hypot(x - map.dancefloor.x, z - map.dancefloor.z) < floorClearing(map.tuning) + 6) return null;
   return { x, z, variant: Math.floor(hash2(i, j, s + 884) * 1e6), flip: hash2(i, j, s + 885) < 0.5, rank: hash2(i, j, s + 886), i, j };
 }
@@ -414,7 +415,7 @@ function lightsInChunk(map: ForestMap, ci: number, cj: number): LightSource[] {
     const wet = AREA_TYPES[a.type].ponds || !!AREA_TYPES[a.type].layout.terrain?.includes("pools");
     const pond = (wet ? L.wetPond : L.pond) * where, fire = L.campfire * where, stone = L.magicStone * where;
     const kind: LightKind | null = roll < pond ? "pond" : roll < pond + fire ? "campfire" : roll < pond + fire + stone ? "stone" : null;
-    if (kind) out.push({ x, z, kind, size: 0.75 + hash2(i, j, s + 404) * 0.5 });
+    if (kind && map.clearOfStones(x, z, map.tuning.decor.footprint)) out.push({ x, z, kind, size: 0.75 + hash2(i, j, s + 404) * 0.5 }); // (none in a stone's keep-clear zone: Ed, 2026-10-29)
   }
   return out;
 }
@@ -465,6 +466,17 @@ export class Forest {
       for (const p of this.chunk(cache, make, ci, cj)) if (Math.abs(p.x - x) <= radius && Math.abs(p.z - z) <= radius) out.push(p);
     return out;
   }
+  /** The same query and chunk order as gather, yielding between chunks so a view can budget
+   *  cold queries too. Eager callers keep gather; generation and the shared caches are unchanged. */
+  private *gatherChunks<T extends { x: number; z: number }>(cache: Map<string, T[]>, make: (ci: number, cj: number) => T[], x: number, z: number, radius: number): Generator<T[], void, void> {
+    this.centre = { x, z };
+    this.evict(cache);
+    for (const [ci, cj] of this.chunks(x, z, radius)) {
+      const out: T[] = [];
+      for (const p of this.chunk(cache, make, ci, cj)) if (Math.abs(p.x - x) <= radius && Math.abs(p.z - z) <= radius) out.push(p);
+      yield out;
+    }
+  }
   private kinds(): [Map<string, { x: number; z: number }[]>, (ci: number, cj: number) => { x: number; z: number }[]][] {
     const m = this.map;
     return [[this.trees, (i, j) => treesInChunk(m, i, j)], [this.bushes, (i, j) => bushesInChunk(m, i, j)],
@@ -514,8 +526,14 @@ export class Forest {
   treesNear(x: number, z: number, radius: number): Plant[] {
     return this.gather(this.trees, (i, j) => treesInChunk(this.map, i, j), x, z, radius);
   }
+  treesNearChunks(x: number, z: number, radius: number): Generator<Plant[], void, void> {
+    return this.gatherChunks(this.trees, (i, j) => treesInChunk(this.map, i, j), x, z, radius);
+  }
   bushesNear(x: number, z: number, radius: number): Plant[] {
     return this.gather(this.bushes, (i, j) => bushesInChunk(this.map, i, j), x, z, radius);
+  }
+  bushesNearChunks(x: number, z: number, radius: number): Generator<Plant[], void, void> {
+    return this.gatherChunks(this.bushes, (i, j) => bushesInChunk(this.map, i, j), x, z, radius);
   }
   lightsNear(x: number, z: number, radius: number): LightSource[] {
     return this.gather(this.lights, (i, j) => lightsInChunk(this.map, i, j), x, z, radius);

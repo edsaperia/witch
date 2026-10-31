@@ -8,12 +8,16 @@ import { TUNING, type Tuning } from "./tuning";
 import { newGame, stepGame, type Game } from "./game";
 import { hexCell, hexCentre } from "./leash";
 import { wearing } from "./hat";
+import { deckOf } from "./treehouse";
+import { HOUSE_ROOMS, objectFront } from "./houseRooms";
+import { smallWorldTuning } from "../test/worlds";
 
 const C = { moveX: 0, moveZ: 0, toggleMode: false, zoom: 0 };
 const H = TUNING.leash.hex!;
 
-function game(t: Tuning = TUNING): Game {
-  const g = newGame(123, t);
+function game(t: Tuning = TUNING, station = false): Game {
+  // Run fixtures retain their 200 m displaced recruits and multi-hex terrain; station input stays inside home.
+  const g = newGame(123, station ? smallWorldTuning(t, "Holding Use at home stations depends on input handling, not the surrounding world.") : t);
   g.clock.paused = false;
   g.party.spellAt = undefined;
   const d = g.map.dancefloor;
@@ -34,6 +38,21 @@ const cellEast = (g: Game, dq: number) => { const h = hexCell(g.witch.x, g.witch
 const kinds = (g: Game) => g.leash.events.map(e => e.kind);
 
 describe("placing in a run", () => {
+  it("holding Use at every morning dressing station and the booth never drops her hat", () => {
+    const g = game(TUNING, true), W = g.witches[0], deck = deckOf(g.map, g.tuning)!;
+    const stations = ["dressingTable", "wardrobe", "shoeRack", "bags", "cloakPegs", "lathe"];
+    const targets = stations.map(id => objectFront(HOUSE_ROOMS.objects.find(o => o.id === id)!, deck, .6));
+    targets.push(deck.seat);
+    for (const p of targets) {
+      at(g, p.x, p.z); g.witch.perch = true;
+      W.hat.hold = g.herTime - 10;
+      step(g, { sigil: true, sigilHeld: true, hatHold: true });
+      for (let i = 0; i < Math.ceil(TUNING.leash.hatHold! * 60) + 2; i++) step(g, { sigilHeld: true, hatHold: true });
+      expect(W.hat.down).toBeNull();
+      expect(W.hat.hold).toBeUndefined();
+    }
+  });
+
   it("a press puts one down; moving into each empty hex while holding puts down the next; letting go ends it", () => {
     const g = game(), ids = stack(g, 3);
     expect(TUNING.leash.runs).toBe(true);

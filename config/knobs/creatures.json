@@ -166,6 +166,20 @@
       ],
       "notes": "Combat (Stage 4; the attacks themselves are data in config/combat.json; lengths and speeds at the fight's scale: see fight). Wild creatures attack party animals of other kinds within aggro metres. They go for the witch on the ground as soon as she's in their area or within their attack's range [1], and let her go when she rises to the treetops, or once she's out of their area, out of their range and at least witchLose metres away; then they walk back to their spot. The one she's inviting holds its fire on her (its friends don't). Party animals following her take on what attacks her or her party; parked ones (at a sigil) guard within guard.radius of it. Babies are never attacked, by either side. Marching on a soundsystem, its own area's or marching on after a fall, a creature moves at marchShare of its top (fight) speed: its movement profile's, else fightRun, a legend legendRun [2]. Against a soundsystem or speaker, charging kinds don't charge and swoopers don't swoop: they land and use their ordinary attack [3]. A beaten creature, wild or party, runs off the map at fleeMult times its speed and is gone for good [4]; a party animal is lost for the run. A soundsystem has soundsystemHealth, passive, and is hit within soundsystemRadius metres: sieges should outlast the wave gap. A soundsystem has 500 [5]. Home is its ring of speakers [6], each a soundsystem of speakerHealth, hit within speakerRadius metres, the besiegers going for the nearest standing one; home falls when every one has (its old homeHealth 8000 and homeRadius 9 gone)."
     },
+    "combat.packs.shadow": {
+      "what": "A pack member hiding in its lull (in the trees, underground, under water, in the branches, or scattered) is drawn as a shadow of itself, not left out.",
+      "decisions": [
+        {
+          "by": "Ed",
+          "date": "2026-10-29",
+          "quote": "'hiding' maybe should look like the animal becoming a shadow (dark and transparent), rather than teleporting"
+        }
+      ],
+      "notes": "Hiding looks like a shadow [1]: while it's hidden (and can't be hit) it's drawn as its own sprite darkened by shade (0 its own colours, 1 black) at opacity, running round to where it comes back, fading from solid to shadow over fade seconds as it hides and back as it comes out (render/view/creatures.ts)."
+    },
+    "combat.packs.shadow.shade": { "what": "How dark: 0 its own colours, 1 black." },
+    "combat.packs.shadow.opacity": { "what": "How opaque the shadow is (0 invisible, 1 solid)." },
+    "combat.packs.shadow.fade": { "what": "Seconds to turn from solid to shadow as it hides, and back as it comes out." },
     "combat.packs": {
       "what": "Pack kinds fight in combos (the nearest lunges, the ranged fire where she'd dodge, one behind her throws its special) and fall back between them.",
       "decisions": [
@@ -303,6 +317,23 @@
     },
     "stoneIdle.on": {
       "what": "false lets them roam the whole area as before."
+    },
+    "sigilAvoid": {
+      "what": "Idling and dancing creatures keep off the sigils lying on the floor.",
+      "decisions": [
+        {
+          "by": "Ed",
+          "date": "2026-10-28",
+          "quote": "When idling or dancing, creatures should try and avoid standing on floor sigils"
+        }
+      ],
+      "notes": "Creatures keep off floor sigils [1]: wild idlers, happy ones at their area, dancers and parked ones roaming round their sigil choose where to stand next off every sigil on the floor (her placed sigils, happy creatures' runes, relics' sigils, her hats lying down), and one resting on a sigil moves on. Only a nudge: with nowhere clear in a dozen tries it stands where it would have; moving, chasing, fighting and marching are untouched."
+    },
+    "sigilAvoid.on": {
+      "what": "false lets them stand on sigils as before."
+    },
+    "sigilAvoid.pad": {
+      "what": "Metres past a sigil's edge a creature's middle still counts as on it."
     },
     "wildWatch": {
       "what": "On her first landing in a wild area its creatures stare and redden for a few seconds before they attack, and how far they chase her after.",
@@ -464,6 +495,12 @@
           "by": null,
           "date": "2026-10-06",
           "rest": "a fraction carries over: 0.5 is one every other wave; balance, DECISION FOR ED: 0.5, from 1, so a player's defence can hold the early sieges and playing well matters"
+        },
+        {
+          "by": "Ed",
+          "date": "2026-10-28",
+          "quote": "during a night, no creatures are created and none are destroyed",
+          "rest": "growth.on off, so the balance simulators match the game; a creature that runs off sleeps on the beach (rules/runaway.ts)"
         }
       ],
       "links": [
@@ -472,7 +509,7 @@
         "config/swarm-power.json",
         "tools/balance/sim.mjs"
       ],
-      "notes": "Wild creatures [1]: every area starts with the same population, population.start [2], and, from the start [3], more by its place on the waves' route (Balance 2's shape; rules/growth.ts routePopulation): byRoute's threat (since removed: the hostile swarm below does this now), [route index, F] points (1 the first wave's stone; straight lines between, flat past the ends), is the extra fighting value its young and adults add (F by Lanchester, young 11.6, adult 40, babies 0; about what an area woken at that wave grew to before); its kind spends it by its profile (byRoute's profiles by species (removed with it), else default: the shares of its extra creatures as babies, young and adults), so many more of a swarm's young than of a heavy kind's adults, at the same danger: count = threat ÷ the profile's mean F a creature × the area's count scale, rounded, split by the shares (largest remainder, ties by the seed). The hostile swarm [4]: its challenge grows with the area's place p in the runestone order (0 the first stone, 1 the last), whatever its species. Each area fields, of every size up to its species' cap (capScales: the cap grown along the same curve, at least 2) and every young/adult split, the one nearest the target; among those within swarm.mixTolerance (10%) of the nearest, a mix of young and adults first. A simulated power (config/swarm-power.json, empty in phase 1) stands in for the estimate where it has the swarm. So a default map (about 100 areas) holds about 540 hostiles: the curve's average, 5.8 an area. growth is the old growth on a clock, which the game no longer reads (the balance simulators still do): every wave, each area the party hasn't reached gained growth.perWave more [5], each at a random level by growth.weights (baby, young, adult: equal thirds), so the areas the party reaches late are the ones to fear. Areas already partified don't grow. New ones arrive out of the witch's sight (beyond the haze's far edge plus growth.hide metres), never popping in on screen; areas far from every witch keep them as counts only, made real (from the seed) when a witch comes within creatureSimRadius of the area or it wakes. The home area holds none. Fighting value (DESIGN.md, Balance): a young is worth 15.5, an adult 29, a legend 76; so an area woken at wave n brings about 1 + n/3 young and 1 + n/3 adults (F about 44.5 + 14.8 n), besides its legend (wildLegends). Only creatures whose home is within creatureSimRadius metres of the witch move. node tools/balance/sim.mjs forecasts the sieges these numbers make."
+      "notes": "Wild creatures [1]: every area starts with the same population, population.start [2], and, from the start [3], more by its place on the waves' route (Balance 2's shape; rules/growth.ts routePopulation): byRoute's threat (since removed: the hostile swarm below does this now), [route index, F] points (1 the first wave's stone; straight lines between, flat past the ends), is the extra fighting value its young and adults add (F by Lanchester, young 11.6, adult 40, babies 0; about what an area woken at that wave grew to before); its kind spends it by its profile (byRoute's profiles by species (removed with it), else default: the shares of its extra creatures as babies, young and adults), so many more of a swarm's young than of a heavy kind's adults, at the same danger: count = threat ÷ the profile's mean F a creature × the area's count scale, rounded, split by the shares (largest remainder, ties by the seed). The hostile swarm [4]: its challenge grows with the area's place p in the runestone order (0 the first stone, 1 the last), whatever its species. Each area fields, of every size up to its species' cap (capScales: the cap grown along the same curve, at least 2) and every young/adult split, the one nearest the target; among those within swarm.mixTolerance (10%) of the nearest, a mix of young and adults first. A simulated power (config/swarm-power.json, empty in phase 1) stands in for the estimate where it has the swarm. So a default map (about 100 areas) holds about 540 hostiles: the curve's average, 5.8 an area. growth is the old growth on a clock, which the game no longer reads, off since [6] (the balance simulators read it only when on): every wave, each area the party hasn't reached gained growth.perWave more [5], each at a random level by growth.weights (baby, young, adult: equal thirds), so the areas the party reaches late are the ones to fear. Areas already partified don't grow. New ones arrive out of the witch's sight (beyond the haze's far edge plus growth.hide metres), never popping in on screen; areas far from every witch keep them as counts only, made real (from the seed) when a witch comes within creatureSimRadius of the area or it wakes. The home area holds none. Fighting value (DESIGN.md, Balance): a young is worth 15.5, an adult 29, a legend 76; so an area woken at wave n brings about 1 + n/3 young and 1 + n/3 adults (F about 44.5 + 14.8 n), besides its legend (wildLegends). Only creatures whose home is within creatureSimRadius metres of the witch move. node tools/balance/sim.mjs forecasts the sieges these numbers make."
     },
     "population.byRoute.babies": {
       "what": "babies in every area, start's included [1], at most babyCap.",

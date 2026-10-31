@@ -21,6 +21,7 @@ import { buildIslandMesh, meshBuffers, type IslandMesh } from "../render/chart/i
 import { K, SIGIL_TIERS } from "../render/chart/chartScale";
 import { islandSigil } from "../../art/sigils.js";
 import { sigilDetail } from "../../art/sigilDetail.js";
+import { readWorkerTrace, WorkerJobTrace, traceAsync, traceSync, workerEpoch, type WorkerTraceMeta } from "./workerJobTrace";
 
 /** The page's asks: the islands to make (`ids` in order), or one to make next. */
 /** The islands for a world (the closest first), the kinds she's found (home's size), the grid; `warm`: make and keep them only
@@ -39,6 +40,13 @@ export interface OutlineDone { id: string; world: number; loops: { pts: Float32A
 
 let queue: string[] = [], detail: string | null = null, job: { world: number; found: string[]; step: number; warm?: boolean; cacheOnly?: boolean } | null = null, busy = false;
 let warmMade = 0, warmKept = 0;
+const queueTraces = new Map<string, WorkerJobTrace>();
+let detailTrace: WorkerJobTrace | null = null;
+function childTrace(meta: WorkerTraceMeta | null, id: string, fine: boolean, depth: number): WorkerJobTrace | null {
+  if (!meta) return null;
+  const trace = new WorkerJobTrace({ ...meta, jobId: `${meta.jobId}/${fine ? 'detail' : 'outline'}/${id}`, jobKind: fine ? 'chart:detail' : 'chart:outline', id, queueDepth: depth });
+  trace.enqueue(); return trace;
+}
 void cachePrune(CACHE_PREFIX);
 const post = (m: OutlineDone, t: Transferable[]) => (self as unknown as { postMessage(m: unknown, t: Transferable[]): void }).postMessage(m, t);
 
@@ -228,7 +236,7 @@ function outlineOf(id: string, world: number, src: Source, across: number): Outl
 }
 
 /** An island sent to the page, its buffers handed over (not copied). */
-const send = (o: OutlineDone) => post(o, [...o.loops.map(l => l.pts.buffer), o.ground.h.buffer, o.ground.rgb.buffer, o.ground.water.buffer, o.ground.level.buffer, o.ground.looks.buffer, ...meshBuffers(o.mesh), ...(o.sigils ?? []).map(s => s.ink.buffer)]);
+const send = (o: OutlineDone, trace?: WorkerJobTrace | null) => { trace?.finish(); post(o, [...o.loops.map(l => l.pts.buffer), o.ground.h.buffer, o.ground.rgb.buffer, o.ground.water.buffer, o.ground.level.buffer, o.ground.looks.buffer, ...meshBuffers(o.mesh), ...(o.sigils ?? []).map(s => s.ink.buffer)]); };
 
 /** What's kept of the queue, sent first (an island kept comes in a few ms; one to make in a second or two, and would hold the
  *  kept ones behind it); the rest left in the queue to make, unless the ask was for what's kept alone. */
@@ -237,15 +245,23 @@ async function serveKept(): Promise<void> {
   const ids = [...queue], left: string[] = [];
   for (const id of ids) {
     if (job !== j) return; // (a new ask: it serves its own)
-    const o = await cacheGet<OutlineDone>(cacheKey(id, j.world, j.found, j.step, ACROSS));
-    if (o && o.mesh && o.sigils) { void keepCoast(id, j.world, o.loops); send(o); } else left.push(id); // (its coast kept for the zoo too, app/chartCache.ts keepCoast)
+    const trace = queueTraces.get(id);
+    const o = await traceAsync(trace, 'cache-read:coarse-scan', () => cacheGet<OutlineDone>(cacheKey(id, j.world, j.found, j.step, ACROSS)));
+    if (o && o.mesh && o.sigils) {
+      if (trace) {
+        const coast = new WorkerJobTrace({ ...trace.meta, jobId: `${trace.meta.jobId}/coast`, jobKind: 'chart:coast-cache', enqueuedEpochMs: workerEpoch(), queueDepth: 0 }); coast.enqueue();
+        void traceAsync(coast, 'cache-write:coast', () => keepCoast(id, j.world, o.loops)).then(() => coast.finish(), () => coast.finish('error'));
+      } else void keepCoast(id, j.world, o.loops);
+      trace?.finish('cached'); send(o, trace); if (queueTraces.get(id) === trace) queueTraces.delete(id);
+    } else { left.push(id); if (job === j) trace?.defer(); else trace?.finish('superseded'); } // (its coast kept for the zoo too, app/chartCache.ts keepCoast)
   }
   queue = queue.filter(id => left.includes(id)); // (a `first` meanwhile keeps its place)
-  if (j.cacheOnly) queue = [];
+  if (j.cacheOnly) { for (const id of queue) { queueTraces.get(id)?.finish('cache-miss'); queueTraces.delete(id); } queue = []; }
 }
 
 async function next(): Promise<void> {
   const close = detail; detail = null; // (a close-up asked for goes first)
+  const trace = close ? detailTrace : null; if (close) detailTrace = null;
   const id = close ?? queue.shift();
   if (!id || !job) {
     busy = false;
@@ -253,22 +269,28 @@ async function next(): Promise<void> {
     return;
   }
   const j = job, across = close ? DETAIL_ACROSS : ACROSS, key = cacheKey(id, j.world, j.found, j.step, across);
+  const currentTrace = trace ?? queueTraces.get(id); if (!close) queueTraces.delete(id);
   try {
-    let o = await cacheGet<OutlineDone>(key), made = false;
+    let o = await traceAsync(currentTrace, 'cache-read', () => cacheGet<OutlineDone>(key)), made = false;
     if (o && !(o.mesh && o.sigils)) o = null; // (kept before the meshes and the sigil's ink came with the ground: made again)
-    if (!o && !j.cacheOnly) { o = make(id, j.world, j.found, j.step, across); made = !!o; if (o) await cachePut(key, o); } // (copied as it's put, before its buffers are sent on)
-    if (o && !close) await keepCoast(id, j.world, o.loops); // (its coast kept for the zoo: app/chartCache.ts)
-    if (j.warm && !close) { if (made) warmMade++; else warmKept++; note({ warmed: id, made }); }
-    else if (o) send(o);
-  } catch (e) { console.warn(`sea chart: ${id}'s island`, e); }
+    if (!o && !j.cacheOnly) { o = traceSync(currentTrace, 'compute:outline', () => make(id, j.world, j.found, j.step, across)); made = !!o; if (o) await traceAsync(currentTrace, 'cache-write:outline', () => cachePut(key, o)); } // (copied as it's put, before its buffers are sent on)
+    if (o && !close) await traceAsync(currentTrace, 'cache-write:coast', () => keepCoast(id, j.world, o.loops)); // (its coast kept for the zoo: app/chartCache.ts)
+    if (j.warm && !close) { if (made) warmMade++; else warmKept++; currentTrace?.finish(); note({ warmed: id, made }); }
+    else if (o) send(o, currentTrace);
+    else currentTrace?.finish('cache-miss');
+  } catch (e) { currentTrace?.finish('error'); console.warn(`sea chart: ${id}'s island`, e); }
   setTimeout(next, 0); // (between islands, so a `first` can come in)
 }
 const note = (m: WarmNote) => (self as unknown as { postMessage(m: unknown): void }).postMessage(m);
 
 self.onmessage = (e: MessageEvent<OutlineAsk>) => {
   const m = e.data;
-  if ("detail" in m) { detail = m.detail; if (!busy && job) { busy = true; setTimeout(next, 0); } return; }
+  const meta = readWorkerTrace(m);
+  if (meta) { const request = new WorkerJobTrace(meta); request.start(); request.finish('request-received'); }
+  if ("detail" in m) { detailTrace?.finish('superseded'); detailTrace = childTrace(meta, m.detail, true, queue.length); detail = m.detail; if (!busy && job) { busy = true; setTimeout(next, 0); } return; }
   if ("first" in m) { const i = queue.indexOf(m.first); if (i > 0) { queue.splice(i, 1); queue.unshift(m.first); } return; }
   job = { world: m.world, found: m.found, step: m.step, warm: m.warm, cacheOnly: m.cacheOnly }; queue = [...m.ids];
+  for (const trace of queueTraces.values()) if (!trace.active) trace.finish('superseded'); queueTraces.clear();
+  if (meta) for (const [index, id] of queue.entries()) { const trace = childTrace(meta, id, false, index + (detail ? 1 : 0))!; queueTraces.set(id, trace); }
   if (!busy) { busy = true; void (m.warm ? Promise.resolve() : serveKept()).then(() => setTimeout(next, 0)); }
 };

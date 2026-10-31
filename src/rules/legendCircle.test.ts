@@ -2,10 +2,13 @@
 // fading in as she walks in and out as she walks out, and its words follow the legend's state.
 import { describe, expect, it } from "vitest";
 import { newGame } from "./game";
-import { TUNING } from "./tuning";
-import { boonWords, circleLines, circleShown, circleReach, legendCircleNear, sigilWords } from "./legendCircle";
+import { TUNING as gameTuning } from "./tuning";
+import { largestWorldTuning } from "../test/worlds";
+import { circleLines, circleShown, circleReach, legendCircleNear, sigilWords } from "./legendCircle";
 import { legendCircleAt } from "./musicPlan";
-import { LEGEND_BUFFS } from "./buffs";
+
+// Largest shipped world: compare indexed circle lookup against every legend's actual clearing across the full available roster.
+const TUNING = largestWorldTuning(gameTuning);
 
 describe("the legend circle's explainer", () => {
   const setup = () => { const g = newGame(123, TUNING), L = g.creatures.find(c => c.boss && !c.gone && c.legendState === "asleep")!; return { g, L }; };
@@ -76,19 +79,12 @@ describe("the legend circle's explainer", () => {
     for (const s of ["asleep", "restless", "angry", "happy"] as const) { L.legendState = s; for (const w of words()) { expect(w).not.toMatch(/kill|die|dead|elder|kin\b|slumber|boon|bring .* into/i); expect(w.length).toBeLessThan(90); } }
   });
 
-  it("asks for its kind with no age and names no boon (Ed, 2026-10-18); boonWords still words the buffs", () => {
+  it("asks for its kind with no age and names no boon (Ed, 2026-10-18)", () => {
     const { L } = setup();
     L.quest!.done = undefined; L.legendState = "asleep";
     const line = circleLines(L).find(l => l.text.includes("{sigil}"))!.text;
-    expect(line).not.toContain("{boon}");
     expect(line).toMatch(/any age/);
     expect(line).toMatch(/^Put down \{sigil\} an? [a-z ]+'s sigil, any age, inside this circle\.$/);
     expect(line).not.toMatch(/\b(baby|young|adult)\b/);
-    for (const sp of Object.keys(LEGEND_BUFFS.species)) {
-      const w = boonWords(sp)!;
-      expect(w.length).toBeGreaterThan(5);
-      expect(w).not.toMatch(/'s [A-Z].*:/); // (the label's "Species's Name:" gone)
-    }
-    expect(boonWords("no-such-creature")).toBeNull();
   });
 });

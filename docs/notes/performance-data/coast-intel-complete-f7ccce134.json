@@ -1,0 +1,1589 @@
+{
+  "coordinatorGrant": 6535460090,
+  "slotRelease": "https://github.com/edsaperia/witch/pull/1498#issuecomment-6535545974",
+  "cpuLoad": {
+    "startedAt": "2026-10-30T23:14:23.615Z",
+    "during": [
+      {
+        "at": "2026-10-30T23:14:35.674Z",
+        "percent": 25.81766869928942
+      },
+      {
+        "at": "2026-10-30T23:14:45.752Z",
+        "percent": 50.37983097521603
+      },
+      {
+        "at": "2026-10-30T23:14:55.818Z",
+        "percent": 46.67714933173011
+      },
+      {
+        "at": "2026-10-30T23:15:05.713Z",
+        "percent": 50.37899430270003
+      },
+      {
+        "at": "2026-10-30T23:15:15.727Z",
+        "percent": 22.235588972431074
+      },
+      {
+        "at": "2026-10-30T23:15:25.744Z",
+        "percent": 27.215001488242883
+      },
+      {
+        "at": "2026-10-30T23:15:35.853Z",
+        "percent": 60.17400157341848
+      },
+      {
+        "at": "2026-10-30T23:15:47.532Z",
+        "percent": 50.77391165908971
+      },
+      {
+        "at": "2026-10-30T23:15:55.793Z",
+        "percent": 43.39494163424125
+      }
+    ],
+    "start": {
+      "at": "2026-10-30T23:14:24.626Z",
+      "percent": 9.228021432823974
+    },
+    "exitCode": 0,
+    "end": {
+      "at": "2026-10-30T23:16:02.513Z",
+      "percent": 25.284771449523348
+    },
+    "endedAt": "2026-10-30T23:16:02.513Z",
+    "wallMs": 98898,
+    "timingsContaminated": false
+  },
+  "result": {
+    "baselineSha": "5e51a00c470d84deec3b8f2ca05d04e45ef771b7",
+    "candidateSha": "f7ccce134bbc8bd14cb534769d52993461c54f37",
+    "rows": [
+      {
+        "name": "baseline",
+        "version": {
+          "version": "dev · 5e51a00",
+          "built": "2026-10-30T17:42:31.561Z"
+        },
+        "bootWallMs": 50085.59999990463,
+        "playReadyAt": 51088.699999809265,
+        "elapsedWallMs": 52360,
+        "before": {
+          "at": 51088.699999809265,
+          "gpu": "ANGLE (Intel, Intel(R) UHD Graphics (0x0000A720) Direct3D11 vs_5_0 ps_5_0, D3D11)",
+          "programs": 70,
+          "beachExists": true,
+          "beachOn": true,
+          "coastReadiness": null,
+          "unsafeReads": [],
+          "coastProgramIds": [
+            3
+          ],
+          "coastMarks": [],
+          "methods": {
+            "getActiveUniform": {
+              "count": 1540,
+              "longestMs": 1
+            },
+            "getUniformLocation": {
+              "count": 1540,
+              "longestMs": 0.5
+            },
+            "getUniforms": {
+              "count": 2936,
+              "longestMs": 1.3000001907348633
+            },
+            "getAttributes": {
+              "count": 2093,
+              "longestMs": 0.10000014305114746
+            }
+          },
+          "links": [
+            {
+              "at": 11232,
+              "callMs": 3.299999952316284,
+              "readyAt": 11821.699999809265,
+              "parallel": true,
+              "readyWallMs": 589.6999998092651
+            },
+            {
+              "at": 11492.699999809265,
+              "callMs": 0.10000014305114746,
+              "readyAt": 11822.299999952316,
+              "parallel": true,
+              "readyWallMs": 329.60000014305115
+            },
+            {
+              "at": 23334.699999809265,
+              "callMs": 0.10000014305114746,
+              "readyAt": 25269.5,
+              "parallel": true,
+              "readyWallMs": 1934.8000001907349
+            },
+            {
+              "at": 23337.89999985695,
+              "callMs": 0,
+              "readyAt": 49644.699999809265,
+              "parallel": true,
+              "readyWallMs": 26306.799999952316
+            },
+            {
+              "at": 23338.599999904633,
+              "callMs": 0,
+              "readyAt": 25269.5,
+              "parallel": true,
+              "readyWallMs": 1930.9000000953674
+            },
+            {
+              "at": 23339.099999904633,
+              "callMs": 0,
+              "readyAt": 25269.5,
+              "parallel": true,
+              "readyWallMs": 1930.4000000953674
+            },
+            {
+              "at": 23378.099999904633,
+              "callMs": 0.09999990463256836,
+              "readyAt": 25269.5,
+              "parallel": true,
+              "readyWallMs": 1891.4000000953674
+            },
+            {
+              "at": 23379.39999985695,
+              "callMs": 0.10000014305114746,
+              "readyAt": 29548.299999952316,
+              "parallel": true,
+              "readyWallMs": 6168.900000095367
+            },
+            {
+              "at": 23380.89999985695,
+              "callMs": 0.10000014305114746,
+              "readyAt": 29523.39999985695,
+              "parallel": true,
+              "readyWallMs": 6142.5
+            },
+            {
+              "at": 23382.699999809265,
+              "callMs": 0,
+              "readyAt": 25269.699999809265,
+              "parallel": true,
+              "readyWallMs": 1887
+            },
+            {
+              "at": 23383.199999809265,
+              "callMs": 0,
+              "readyAt": 25269.699999809265,
+              "parallel": true,
+              "readyWallMs": 1886.5
+            },
+            {
+              "at": 23446.5,
+              "callMs": 0,
+              "readyAt": 25270,
+              "parallel": true,
+              "readyWallMs": 1823.5
+            },
+            {
+              "at": 23661.199999809265,
+              "callMs": 0.10000014305114746,
+              "readyAt": 25270.099999904633,
+              "parallel": true,
+              "readyWallMs": 1608.9000000953674
+            },
+            {
+              "at": 23662.89999985695,
+              "callMs": 0,
+              "readyAt": 25270.199999809265,
+              "parallel": true,
+              "readyWallMs": 1607.2999999523163
+            },
+            {
+              "at": 23663.299999952316,
+              "callMs": 0,
+              "readyAt": 25270.199999809265,
+              "parallel": true,
+              "readyWallMs": 1606.8999998569489
+            },
+            {
+              "at": 23663.599999904633,
+              "callMs": 0,
+              "readyAt": 25270.199999809265,
+              "parallel": true,
+              "readyWallMs": 1606.5999999046326
+            },
+            {
+              "at": 23664.099999904633,
+              "callMs": 0.09999990463256836,
+              "readyAt": 26222.39999985695,
+              "parallel": true,
+              "readyWallMs": 2558.2999999523163
+            },
+            {
+              "at": 23664.5,
+              "callMs": 0,
+              "readyAt": 25270.199999809265,
+              "parallel": true,
+              "readyWallMs": 1605.6999998092651
+            },
+            {
+              "at": 23664.799999952316,
+              "callMs": 0,
+              "readyAt": 25270.199999809265,
+              "parallel": true,
+              "readyWallMs": 1605.3999998569489
+            },
+            {
+              "at": 23665.299999952316,
+              "callMs": 0,
+              "readyAt": 25270.199999809265,
+              "parallel": true,
+              "readyWallMs": 1604.8999998569489
+            },
+            {
+              "at": 23665.699999809265,
+              "callMs": 0,
+              "readyAt": 25270.199999809265,
+              "parallel": true,
+              "readyWallMs": 1604.5
+            },
+            {
+              "at": 23666.099999904633,
+              "callMs": 0,
+              "readyAt": 25270.199999809265,
+              "parallel": true,
+              "readyWallMs": 1604.0999999046326
+            },
+            {
+              "at": 23666.299999952316,
+              "callMs": 0.09999990463256836,
+              "readyAt": 25270.199999809265,
+              "parallel": true,
+              "readyWallMs": 1603.8999998569489
+            },
+            {
+              "at": 23787.199999809265,
+              "callMs": 0.10000014305114746,
+              "readyAt": 25270.199999809265,
+              "parallel": true,
+              "readyWallMs": 1483
+            },
+            {
+              "at": 23788.39999985695,
+              "callMs": 0.10000014305114746,
+              "readyAt": 25270.199999809265,
+              "parallel": true,
+              "readyWallMs": 1481.7999999523163
+            },
+            {
+              "at": 23909.5,
+              "callMs": 0.09999990463256836,
+              "readyAt": 25270.89999985695,
+              "parallel": true,
+              "readyWallMs": 1361.3999998569489
+            },
+            {
+              "at": 23910.5,
+              "callMs": 0,
+              "readyAt": 25271,
+              "parallel": true,
+              "readyWallMs": 1360.5
+            },
+            {
+              "at": 23911.299999952316,
+              "callMs": 0.09999990463256836,
+              "readyAt": 25271,
+              "parallel": true,
+              "readyWallMs": 1359.7000000476837
+            },
+            {
+              "at": 23912,
+              "callMs": 0.09999990463256836,
+              "readyAt": 25271,
+              "parallel": true,
+              "readyWallMs": 1359
+            },
+            {
+              "at": 23912.299999952316,
+              "callMs": 0.09999990463256836,
+              "readyAt": 25271,
+              "parallel": true,
+              "readyWallMs": 1358.7000000476837
+            },
+            {
+              "at": 24161.099999904633,
+              "callMs": 0.20000004768371582,
+              "readyAt": 25274,
+              "parallel": true,
+              "readyWallMs": 1112.9000000953674
+            },
+            {
+              "at": 24162.199999809265,
+              "callMs": 0.10000014305114746,
+              "readyAt": 25274,
+              "parallel": true,
+              "readyWallMs": 1111.8000001907349
+            },
+            {
+              "at": 24328.599999904633,
+              "callMs": 0,
+              "readyAt": 25274.5,
+              "parallel": true,
+              "readyWallMs": 945.9000000953674
+            },
+            {
+              "at": 24333.89999985695,
+              "callMs": 0.10000014305114746,
+              "readyAt": 25274.599999904633,
+              "parallel": true,
+              "readyWallMs": 940.7000000476837
+            },
+            {
+              "at": 24335.39999985695,
+              "callMs": 0,
+              "readyAt": 25274.599999904633,
+              "parallel": true,
+              "readyWallMs": 939.2000000476837
+            },
+            {
+              "at": 24336.799999952316,
+              "callMs": 0,
+              "readyAt": 25274.599999904633,
+              "parallel": true,
+              "readyWallMs": 937.7999999523163
+            },
+            {
+              "at": 24357.599999904633,
+              "callMs": 0.09999990463256836,
+              "readyAt": 25275.099999904633,
+              "parallel": true,
+              "readyWallMs": 917.5
+            },
+            {
+              "at": 24358.099999904633,
+              "callMs": 0,
+              "readyAt": 25275.099999904633,
+              "parallel": true,
+              "readyWallMs": 917
+            },
+            {
+              "at": 24358.5,
+              "callMs": 0,
+              "readyAt": 25275.099999904633,
+              "parallel": true,
+              "readyWallMs": 916.5999999046326
+            },
+            {
+              "at": 24358.89999985695,
+              "callMs": 0,
+              "readyAt": 25275.099999904633,
+              "parallel": true,
+              "readyWallMs": 916.2000000476837
+            },
+            {
+              "at": 24536.099999904633,
+              "callMs": 0.09999990463256836,
+              "readyAt": 25275.599999904633,
+              "parallel": true,
+              "readyWallMs": 739.5
+            },
+            {
+              "at": 24536.599999904633,
+              "callMs": 0,
+              "readyAt": 25275.599999904633,
+              "parallel": true,
+              "readyWallMs": 739
+            },
+            {
+              "at": 24537,
+              "callMs": 0.09999990463256836,
+              "readyAt": 25275.599999904633,
+              "parallel": true,
+              "readyWallMs": 738.5999999046326
+            },
+            {
+              "at": 24537.39999985695,
+              "callMs": 0,
+              "readyAt": 25275.599999904633,
+              "parallel": true,
+              "readyWallMs": 738.2000000476837
+            },
+            {
+              "at": 24537.599999904633,
+              "callMs": 0,
+              "readyAt": 25275.599999904633,
+              "parallel": true,
+              "readyWallMs": 738
+            },
+            {
+              "at": 24538.39999985695,
+              "callMs": 0,
+              "readyAt": 25275.599999904633,
+              "parallel": true,
+              "readyWallMs": 737.2000000476837
+            },
+            {
+              "at": 24538.699999809265,
+              "callMs": 0,
+              "readyAt": 25275.599999904633,
+              "parallel": true,
+              "readyWallMs": 736.9000000953674
+            },
+            {
+              "at": 24539.199999809265,
+              "callMs": 0,
+              "readyAt": 25275.599999904633,
+              "parallel": true,
+              "readyWallMs": 736.4000000953674
+            },
+            {
+              "at": 24661.199999809265,
+              "callMs": 0.10000014305114746,
+              "readyAt": 25275.699999809265,
+              "parallel": true,
+              "readyWallMs": 614.5
+            },
+            {
+              "at": 24661.599999904633,
+              "callMs": 0.09999990463256836,
+              "readyAt": 25275.699999809265,
+              "parallel": true,
+              "readyWallMs": 614.0999999046326
+            },
+            {
+              "at": 24662.099999904633,
+              "callMs": 0,
+              "readyAt": 25275.699999809265,
+              "parallel": true,
+              "readyWallMs": 613.5999999046326
+            },
+            {
+              "at": 24662.5,
+              "callMs": 0,
+              "readyAt": 25363.699999809265,
+              "parallel": true,
+              "readyWallMs": 701.1999998092651
+            },
+            {
+              "at": 24662.699999809265,
+              "callMs": 0.10000014305114746,
+              "readyAt": 25275.799999952316,
+              "parallel": true,
+              "readyWallMs": 613.1000001430511
+            },
+            {
+              "at": 24663,
+              "callMs": 0.09999990463256836,
+              "readyAt": 25275.799999952316,
+              "parallel": true,
+              "readyWallMs": 612.7999999523163
+            },
+            {
+              "at": 24663.299999952316,
+              "callMs": 0,
+              "readyAt": 25275.89999985695,
+              "parallel": true,
+              "readyWallMs": 612.5999999046326
+            },
+            {
+              "at": 24664,
+              "callMs": 0,
+              "readyAt": 25275.89999985695,
+              "parallel": true,
+              "readyWallMs": 611.8999998569489
+            },
+            {
+              "at": 24784.599999904633,
+              "callMs": 0,
+              "readyAt": 25276.199999809265,
+              "parallel": true,
+              "readyWallMs": 491.59999990463257
+            },
+            {
+              "at": 24785.099999904633,
+              "callMs": 0.09999990463256836,
+              "readyAt": 25276.199999809265,
+              "parallel": true,
+              "readyWallMs": 491.09999990463257
+            },
+            {
+              "at": 24785.699999809265,
+              "callMs": 0.10000014305114746,
+              "readyAt": 25276.199999809265,
+              "parallel": true,
+              "readyWallMs": 490.5
+            },
+            {
+              "at": 24786.199999809265,
+              "callMs": 0,
+              "readyAt": 25276.199999809265,
+              "parallel": true,
+              "readyWallMs": 490
+            },
+            {
+              "at": 24786.599999904633,
+              "callMs": 0,
+              "readyAt": 25276.199999809265,
+              "parallel": true,
+              "readyWallMs": 489.59999990463257
+            },
+            {
+              "at": 25036.5,
+              "callMs": 0,
+              "readyAt": 25276.599999904633,
+              "parallel": true,
+              "readyWallMs": 240.09999990463257
+            },
+            {
+              "at": 25037.39999985695,
+              "callMs": 0,
+              "readyAt": 25276.599999904633,
+              "parallel": true,
+              "readyWallMs": 239.20000004768372
+            },
+            {
+              "at": 25037.599999904633,
+              "callMs": 0,
+              "readyAt": 25276.599999904633,
+              "parallel": true,
+              "readyWallMs": 239
+            },
+            {
+              "at": 25037.799999952316,
+              "callMs": 0,
+              "readyAt": 25276.599999904633,
+              "parallel": true,
+              "readyWallMs": 238.79999995231628
+            },
+            {
+              "at": 25159,
+              "callMs": 0.19999980926513672,
+              "readyAt": 25461.89999985695,
+              "parallel": true,
+              "readyWallMs": 302.89999985694885
+            },
+            {
+              "at": 25159.5,
+              "callMs": 0.09999990463256836,
+              "readyAt": 25277,
+              "parallel": true,
+              "readyWallMs": 117.5
+            },
+            {
+              "at": 25160.299999952316,
+              "callMs": 0,
+              "readyAt": 25277,
+              "parallel": true,
+              "readyWallMs": 116.70000004768372
+            },
+            {
+              "at": 25160.699999809265,
+              "callMs": 0,
+              "readyAt": 25277,
+              "parallel": true,
+              "readyWallMs": 116.30000019073486
+            },
+            {
+              "at": 25161,
+              "callMs": 0.09999990463256836,
+              "readyAt": 25277,
+              "parallel": true,
+              "readyWallMs": 116
+            }
+          ]
+        },
+        "coast": {
+          "at": 51166.59999990463,
+          "point": {
+            "x": 3944.6744699698647,
+            "z": 2747.014202599505,
+            "nx": 1,
+            "nz": 0
+          }
+        },
+        "result": {
+          "at": 52348.199999809265,
+          "coastReadiness": null,
+          "methods": {
+            "getUniforms": {
+              "count": 1670,
+              "longestMs": 0.10000014305114746
+            },
+            "getAttributes": {
+              "count": 1658,
+              "longestMs": 0.10000014305114746
+            }
+          },
+          "unsafeReads": [],
+          "startScreenHidden": true,
+          "firstFallbackAt": null,
+          "firstFullAt": null,
+          "coastProgramIds": [
+            3
+          ],
+          "links": [],
+          "worstCoastFrameMs": 591.7000000000044,
+          "groundSubmissions": [
+            {
+              "at": 51740.89999985695,
+              "material": "ShaderMaterial",
+              "beach": true,
+              "share": null
+            },
+            {
+              "at": 51792.59999990463,
+              "material": "ShaderMaterial",
+              "beach": true,
+              "share": null
+            },
+            {
+              "at": 51832.799999952316,
+              "material": "ShaderMaterial",
+              "beach": true,
+              "share": null
+            },
+            {
+              "at": 51877.199999809265,
+              "material": "ShaderMaterial",
+              "beach": true,
+              "share": null
+            },
+            {
+              "at": 51912.39999985695,
+              "material": "ShaderMaterial",
+              "beach": true,
+              "share": null
+            },
+            {
+              "at": 51947,
+              "material": "ShaderMaterial",
+              "beach": true,
+              "share": null
+            },
+            {
+              "at": 51978,
+              "material": "ShaderMaterial",
+              "beach": true,
+              "share": null
+            },
+            {
+              "at": 52021.89999985695,
+              "material": "ShaderMaterial",
+              "beach": true,
+              "share": null
+            },
+            {
+              "at": 52059,
+              "material": "ShaderMaterial",
+              "beach": true,
+              "share": null
+            },
+            {
+              "at": 52101.799999952316,
+              "material": "ShaderMaterial",
+              "beach": true,
+              "share": null
+            },
+            {
+              "at": 52152.199999809265,
+              "material": "ShaderMaterial",
+              "beach": true,
+              "share": null
+            },
+            {
+              "at": 52176.699999809265,
+              "material": "ShaderMaterial",
+              "beach": true,
+              "share": null
+            },
+            {
+              "at": 52226.799999952316,
+              "material": "ShaderMaterial",
+              "beach": true,
+              "share": null
+            },
+            {
+              "at": 52284.699999809265,
+              "material": "ShaderMaterial",
+              "beach": true,
+              "share": null
+            },
+            {
+              "at": 52305.799999952316,
+              "material": "ShaderMaterial",
+              "beach": true,
+              "share": null
+            }
+          ],
+          "marks": []
+        },
+        "errors": []
+      },
+      {
+        "name": "candidate",
+        "version": {
+          "version": "dev · f7ccce1",
+          "built": "2026-10-30T20:49:07.946Z"
+        },
+        "bootWallMs": 39554.299999952316,
+        "playReadyAt": 40615.5,
+        "elapsedWallMs": 42154,
+        "before": {
+          "at": 40615.5,
+          "gpu": "ANGLE (Intel, Intel(R) UHD Graphics (0x0000A720) Direct3D11 vs_5_0 ps_5_0, D3D11)",
+          "programs": 70,
+          "beachExists": true,
+          "beachOn": true,
+          "coastReadiness": {
+            "requested": true,
+            "linked": true,
+            "share": 0.3125,
+            "fallbackMs": 30676.10000014305,
+            "launched": true,
+            "last": 40559.90000009537,
+            "fadeMs": 250,
+            "fallbackShown": true
+          },
+          "unsafeReads": [],
+          "coastProgramIds": [
+            0
+          ],
+          "coastMarks": [
+            {
+              "name": "ground:coast-constructed",
+              "at": 2828.7999999523163,
+              "detail": {
+                "seed": 424242,
+                "beachExists": false
+              }
+            },
+            {
+              "name": "ground:coast-demand",
+              "at": 9883.5,
+              "detail": {
+                "seed": 424242,
+                "trigger": "near-coast-witch",
+                "witch": {
+                  "x": 3172.43871836629,
+                  "z": 2793.326777190793,
+                  "intoSand": -432.19824621020325,
+                  "shown": 450
+                },
+                "camera": null
+              }
+            },
+            {
+              "name": "ground:coast-requested",
+              "at": 9884.100000143051,
+              "detail": null
+            },
+            {
+              "name": "ground:coast-ready",
+              "at": 39408.799999952316,
+              "detail": {
+                "fallbackMs": 16793.5
+              }
+            }
+          ],
+          "methods": {
+            "getActiveUniform": {
+              "count": 1541,
+              "longestMs": 0.3000001907348633
+            },
+            "getUniformLocation": {
+              "count": 1541,
+              "longestMs": 0.10000014305114746
+            },
+            "getUniforms": {
+              "count": 2899,
+              "longestMs": 1.5
+            },
+            "getAttributes": {
+              "count": 2068,
+              "longestMs": 0.20000004768371582
+            }
+          },
+          "links": [
+            {
+              "at": 9960.5,
+              "callMs": 0.40000009536743164,
+              "readyAt": 38761.5,
+              "parallel": true,
+              "readyWallMs": 28801
+            },
+            {
+              "at": 10787.299999952316,
+              "callMs": 0,
+              "readyAt": 11345.400000095367,
+              "parallel": true,
+              "readyWallMs": 558.1000001430511
+            },
+            {
+              "at": 11016.600000143051,
+              "callMs": 0,
+              "readyAt": 11345.5,
+              "parallel": true,
+              "readyWallMs": 328.89999985694885
+            },
+            {
+              "at": 26770.5,
+              "callMs": 0.10000014305114746,
+              "readyAt": 29028.700000047684,
+              "parallel": true,
+              "readyWallMs": 2258.2000000476837
+            },
+            {
+              "at": 26773.700000047684,
+              "callMs": 0.09999990463256836,
+              "readyAt": 29028.700000047684,
+              "parallel": true,
+              "readyWallMs": 2255
+            },
+            {
+              "at": 26774.799999952316,
+              "callMs": 0,
+              "readyAt": 29028.700000047684,
+              "parallel": true,
+              "readyWallMs": 2253.9000000953674
+            },
+            {
+              "at": 26775.5,
+              "callMs": 0,
+              "readyAt": 29028.700000047684,
+              "parallel": true,
+              "readyWallMs": 2253.2000000476837
+            },
+            {
+              "at": 26777.5,
+              "callMs": 0,
+              "readyAt": 33354.40000009537,
+              "parallel": true,
+              "readyWallMs": 6576.900000095367
+            },
+            {
+              "at": 26778.60000014305,
+              "callMs": 0,
+              "readyAt": 33382.200000047684,
+              "parallel": true,
+              "readyWallMs": 6603.599999904633
+            },
+            {
+              "at": 26779.900000095367,
+              "callMs": 0,
+              "readyAt": 29028.900000095367,
+              "parallel": true,
+              "readyWallMs": 2249
+            },
+            {
+              "at": 26780.799999952316,
+              "callMs": 0,
+              "readyAt": 29029,
+              "parallel": true,
+              "readyWallMs": 2248.2000000476837
+            },
+            {
+              "at": 26846.900000095367,
+              "callMs": 0.09999990463256836,
+              "readyAt": 29029,
+              "parallel": true,
+              "readyWallMs": 2182.0999999046326
+            },
+            {
+              "at": 27086,
+              "callMs": 0.10000014305114746,
+              "readyAt": 29029.200000047684,
+              "parallel": true,
+              "readyWallMs": 1943.2000000476837
+            },
+            {
+              "at": 27086.5,
+              "callMs": 0,
+              "readyAt": 29029.200000047684,
+              "parallel": true,
+              "readyWallMs": 1942.7000000476837
+            },
+            {
+              "at": 27086.900000095367,
+              "callMs": 0,
+              "readyAt": 29029.200000047684,
+              "parallel": true,
+              "readyWallMs": 1942.2999999523163
+            },
+            {
+              "at": 27087.200000047684,
+              "callMs": 0,
+              "readyAt": 29029.200000047684,
+              "parallel": true,
+              "readyWallMs": 1942
+            },
+            {
+              "at": 27087.799999952316,
+              "callMs": 0,
+              "readyAt": 30107.5,
+              "parallel": true,
+              "readyWallMs": 3019.7000000476837
+            },
+            {
+              "at": 27088,
+              "callMs": 0.10000014305114746,
+              "readyAt": 29029.200000047684,
+              "parallel": true,
+              "readyWallMs": 1941.2000000476837
+            },
+            {
+              "at": 27088.299999952316,
+              "callMs": 0,
+              "readyAt": 29029.200000047684,
+              "parallel": true,
+              "readyWallMs": 1940.9000000953674
+            },
+            {
+              "at": 27088.799999952316,
+              "callMs": 0,
+              "readyAt": 29029.200000047684,
+              "parallel": true,
+              "readyWallMs": 1940.4000000953674
+            },
+            {
+              "at": 27089.10000014305,
+              "callMs": 0,
+              "readyAt": 29029.200000047684,
+              "parallel": true,
+              "readyWallMs": 1940.0999999046326
+            },
+            {
+              "at": 27089.5,
+              "callMs": 0,
+              "readyAt": 29029.200000047684,
+              "parallel": true,
+              "readyWallMs": 1939.7000000476837
+            },
+            {
+              "at": 27089.700000047684,
+              "callMs": 0,
+              "readyAt": 29029.200000047684,
+              "parallel": true,
+              "readyWallMs": 1939.5
+            },
+            {
+              "at": 27208,
+              "callMs": 0.10000014305114746,
+              "readyAt": 29029.400000095367,
+              "parallel": true,
+              "readyWallMs": 1821.4000000953674
+            },
+            {
+              "at": 27327.60000014305,
+              "callMs": 0.09999990463256836,
+              "readyAt": 29029.799999952316,
+              "parallel": true,
+              "readyWallMs": 1702.1999998092651
+            },
+            {
+              "at": 27477.10000014305,
+              "callMs": 0.2999999523162842,
+              "readyAt": 29030,
+              "parallel": true,
+              "readyWallMs": 1552.8999998569489
+            },
+            {
+              "at": 27479.400000095367,
+              "callMs": 0.20000004768371582,
+              "readyAt": 29030,
+              "parallel": true,
+              "readyWallMs": 1550.5999999046326
+            },
+            {
+              "at": 27481,
+              "callMs": 0,
+              "readyAt": 29030,
+              "parallel": true,
+              "readyWallMs": 1549
+            },
+            {
+              "at": 27598.900000095367,
+              "callMs": 0.20000004768371582,
+              "readyAt": 29033.799999952316,
+              "parallel": true,
+              "readyWallMs": 1434.8999998569489
+            },
+            {
+              "at": 27599.60000014305,
+              "callMs": 0,
+              "readyAt": 29033.799999952316,
+              "parallel": true,
+              "readyWallMs": 1434.1999998092651
+            },
+            {
+              "at": 27834.10000014305,
+              "callMs": 0,
+              "readyAt": 29034.60000014305,
+              "parallel": true,
+              "readyWallMs": 1200.5
+            },
+            {
+              "at": 27835.10000014305,
+              "callMs": 0,
+              "readyAt": 29034.60000014305,
+              "parallel": true,
+              "readyWallMs": 1199.5
+            },
+            {
+              "at": 27937.400000095367,
+              "callMs": 0.20000004768371582,
+              "readyAt": 29035,
+              "parallel": true,
+              "readyWallMs": 1097.5999999046326
+            },
+            {
+              "at": 27939.799999952316,
+              "callMs": 0.10000014305114746,
+              "readyAt": 29035,
+              "parallel": true,
+              "readyWallMs": 1095.2000000476837
+            },
+            {
+              "at": 27944.10000014305,
+              "callMs": 0,
+              "readyAt": 29035.200000047684,
+              "parallel": true,
+              "readyWallMs": 1091.0999999046326
+            },
+            {
+              "at": 27945.60000014305,
+              "callMs": 0.2999999523162842,
+              "readyAt": 29035.200000047684,
+              "parallel": true,
+              "readyWallMs": 1089.5999999046326
+            },
+            {
+              "at": 28196.900000095367,
+              "callMs": 0.2999999523162842,
+              "readyAt": 29036.200000047684,
+              "parallel": true,
+              "readyWallMs": 839.2999999523163
+            },
+            {
+              "at": 28200.799999952316,
+              "callMs": 0.10000014305114746,
+              "readyAt": 29037.299999952316,
+              "parallel": true,
+              "readyWallMs": 836.5
+            },
+            {
+              "at": 28201.5,
+              "callMs": 0,
+              "readyAt": 29037.400000095367,
+              "parallel": true,
+              "readyWallMs": 835.9000000953674
+            },
+            {
+              "at": 28336.400000095367,
+              "callMs": 0,
+              "readyAt": 29037.700000047684,
+              "parallel": true,
+              "readyWallMs": 701.2999999523163
+            },
+            {
+              "at": 28336.900000095367,
+              "callMs": 0,
+              "readyAt": 29037.700000047684,
+              "parallel": true,
+              "readyWallMs": 700.7999999523163
+            },
+            {
+              "at": 28337.200000047684,
+              "callMs": 0,
+              "readyAt": 29037.700000047684,
+              "parallel": true,
+              "readyWallMs": 700.5
+            },
+            {
+              "at": 28426,
+              "callMs": 0,
+              "readyAt": 29062.400000095367,
+              "parallel": true,
+              "readyWallMs": 636.4000000953674
+            },
+            {
+              "at": 28426.700000047684,
+              "callMs": 0,
+              "readyAt": 29037.799999952316,
+              "parallel": true,
+              "readyWallMs": 611.0999999046326
+            },
+            {
+              "at": 28427.10000014305,
+              "callMs": 0,
+              "readyAt": 29037.799999952316,
+              "parallel": true,
+              "readyWallMs": 610.6999998092651
+            },
+            {
+              "at": 28428.200000047684,
+              "callMs": 0.09999990463256836,
+              "readyAt": 29037.799999952316,
+              "parallel": true,
+              "readyWallMs": 609.5999999046326
+            },
+            {
+              "at": 28429.10000014305,
+              "callMs": 0,
+              "readyAt": 29037.799999952316,
+              "parallel": true,
+              "readyWallMs": 608.6999998092651
+            },
+            {
+              "at": 28429.60000014305,
+              "callMs": 0,
+              "readyAt": 29037.799999952316,
+              "parallel": true,
+              "readyWallMs": 608.1999998092651
+            },
+            {
+              "at": 28430.799999952316,
+              "callMs": 0,
+              "readyAt": 29038,
+              "parallel": true,
+              "readyWallMs": 607.2000000476837
+            },
+            {
+              "at": 28431.400000095367,
+              "callMs": 0,
+              "readyAt": 29038.900000095367,
+              "parallel": true,
+              "readyWallMs": 607.5
+            },
+            {
+              "at": 28431.700000047684,
+              "callMs": 0.09999990463256836,
+              "readyAt": 29038.900000095367,
+              "parallel": true,
+              "readyWallMs": 607.2000000476837
+            },
+            {
+              "at": 28432.200000047684,
+              "callMs": 0,
+              "readyAt": 29107.60000014305,
+              "parallel": true,
+              "readyWallMs": 675.4000000953674
+            },
+            {
+              "at": 28646.799999952316,
+              "callMs": 0.10000014305114746,
+              "readyAt": 29040.10000014305,
+              "parallel": true,
+              "readyWallMs": 393.30000019073486
+            },
+            {
+              "at": 28647.10000014305,
+              "callMs": 0,
+              "readyAt": 29040.10000014305,
+              "parallel": true,
+              "readyWallMs": 393
+            },
+            {
+              "at": 28647.299999952316,
+              "callMs": 0,
+              "readyAt": 29040.10000014305,
+              "parallel": true,
+              "readyWallMs": 392.80000019073486
+            },
+            {
+              "at": 28647.700000047684,
+              "callMs": 0.09999990463256836,
+              "readyAt": 29040.10000014305,
+              "parallel": true,
+              "readyWallMs": 392.40000009536743
+            },
+            {
+              "at": 28648,
+              "callMs": 0,
+              "readyAt": 29040.200000047684,
+              "parallel": true,
+              "readyWallMs": 392.2000000476837
+            },
+            {
+              "at": 28648.10000014305,
+              "callMs": 0,
+              "readyAt": 29040.200000047684,
+              "parallel": true,
+              "readyWallMs": 392.09999990463257
+            },
+            {
+              "at": 28648.299999952316,
+              "callMs": 0,
+              "readyAt": 29040.200000047684,
+              "parallel": true,
+              "readyWallMs": 391.90000009536743
+            },
+            {
+              "at": 28648.5,
+              "callMs": 0,
+              "readyAt": 29040.200000047684,
+              "parallel": true,
+              "readyWallMs": 391.7000000476837
+            },
+            {
+              "at": 28648.60000014305,
+              "callMs": 0,
+              "readyAt": 29040.200000047684,
+              "parallel": true,
+              "readyWallMs": 391.59999990463257
+            },
+            {
+              "at": 28767.799999952316,
+              "callMs": 0.10000014305114746,
+              "readyAt": 29040.299999952316,
+              "parallel": true,
+              "readyWallMs": 272.5
+            },
+            {
+              "at": 28768.700000047684,
+              "callMs": 0,
+              "readyAt": 29040.299999952316,
+              "parallel": true,
+              "readyWallMs": 271.59999990463257
+            },
+            {
+              "at": 28768.900000095367,
+              "callMs": 0,
+              "readyAt": 29040.400000095367,
+              "parallel": true,
+              "readyWallMs": 271.5
+            },
+            {
+              "at": 28886.299999952316,
+              "callMs": 0.10000014305114746,
+              "readyAt": 29041,
+              "parallel": true,
+              "readyWallMs": 154.70000004768372
+            },
+            {
+              "at": 28886.799999952316,
+              "callMs": 0,
+              "readyAt": 29199.5,
+              "parallel": true,
+              "readyWallMs": 312.7000000476837
+            },
+            {
+              "at": 28887,
+              "callMs": 0,
+              "readyAt": 29041,
+              "parallel": true,
+              "readyWallMs": 154
+            },
+            {
+              "at": 28887.799999952316,
+              "callMs": 0.10000014305114746,
+              "readyAt": 29041.10000014305,
+              "parallel": true,
+              "readyWallMs": 153.30000019073486
+            },
+            {
+              "at": 28888.200000047684,
+              "callMs": 0,
+              "readyAt": 29041.10000014305,
+              "parallel": true,
+              "readyWallMs": 152.90000009536743
+            },
+            {
+              "at": 28888.5,
+              "callMs": 0.10000014305114746,
+              "readyAt": 29041.10000014305,
+              "parallel": true,
+              "readyWallMs": 152.60000014305115
+            }
+          ]
+        },
+        "coast": {
+          "at": 40700.5,
+          "point": {
+            "x": 3944.6744699698647,
+            "z": 2747.014202599505,
+            "nx": 1,
+            "nz": 0
+          }
+        },
+        "result": {
+          "at": 42143.299999952316,
+          "coastReadiness": {
+            "requested": true,
+            "linked": true,
+            "share": 1,
+            "fallbackMs": 31911.300000190735,
+            "launched": true,
+            "last": 42128.5,
+            "fadeMs": 1135.2999997138977,
+            "fallbackShown": true
+          },
+          "methods": {
+            "getUniforms": {
+              "count": 2280,
+              "longestMs": 0.10000014305114746
+            },
+            "getAttributes": {
+              "count": 2276,
+              "longestMs": 0.10000014305114746
+            }
+          },
+          "unsafeReads": [],
+          "startScreenHidden": true,
+          "firstFallbackAt": 41342.60000014305,
+          "firstFullAt": 41803.700000047684,
+          "coastProgramIds": [
+            0
+          ],
+          "links": [],
+          "worstCoastFrameMs": 666.6999999999971,
+          "groundSubmissions": [
+            {
+              "at": 41342.60000014305,
+              "material": "Loading ground and lake surfaces",
+              "beach": false,
+              "share": 0.4375
+            },
+            {
+              "at": 41398.700000047684,
+              "material": "Loading ground and lake surfaces",
+              "beach": false,
+              "share": 0.5
+            },
+            {
+              "at": 41449.40000009537,
+              "material": "Loading ground and lake surfaces",
+              "beach": false,
+              "share": 0.5484999999403953
+            },
+            {
+              "at": 41480.5,
+              "material": "Loading ground and lake surfaces",
+              "beach": false,
+              "share": 0.6026249998807907
+            },
+            {
+              "at": 41509.5,
+              "material": "Loading ground and lake surfaces",
+              "beach": false,
+              "share": 0.637999999821186
+            },
+            {
+              "at": 41559.10000014305,
+              "material": "Loading ground and lake surfaces",
+              "beach": false,
+              "share": 0.700499999821186
+            },
+            {
+              "at": 41591,
+              "material": "Loading ground and lake surfaces",
+              "beach": false,
+              "share": 0.7412499997019768
+            },
+            {
+              "at": 41623.40000009537,
+              "material": "Loading ground and lake surfaces",
+              "beach": false,
+              "share": 0.7813749995827675
+            },
+            {
+              "at": 41656.299999952316,
+              "material": "Loading ground and lake surfaces",
+              "beach": false,
+              "share": 0.8209999996423721
+            },
+            {
+              "at": 41695.90000009537,
+              "material": "Loading ground and lake surfaces",
+              "beach": false,
+              "share": 0.8716249996423722
+            },
+            {
+              "at": 41737,
+              "material": "Loading ground and lake surfaces",
+              "beach": false,
+              "share": 0.9249999997019768
+            },
+            {
+              "at": 41760.60000014305,
+              "material": "Loading ground and lake surfaces",
+              "beach": false,
+              "share": 0.9532499995827675
+            },
+            {
+              "at": 41803.700000047684,
+              "material": "ShaderMaterial",
+              "beach": true,
+              "share": 1
+            },
+            {
+              "at": 41856.10000014305,
+              "material": "ShaderMaterial",
+              "beach": true,
+              "share": 1
+            },
+            {
+              "at": 41904.60000014305,
+              "material": "ShaderMaterial",
+              "beach": true,
+              "share": 1
+            },
+            {
+              "at": 41955.5,
+              "material": "ShaderMaterial",
+              "beach": true,
+              "share": 1
+            },
+            {
+              "at": 41974.40000009537,
+              "material": "ShaderMaterial",
+              "beach": true,
+              "share": 1
+            },
+            {
+              "at": 42026.700000047684,
+              "material": "ShaderMaterial",
+              "beach": true,
+              "share": 1
+            },
+            {
+              "at": 42050.40000009537,
+              "material": "ShaderMaterial",
+              "beach": true,
+              "share": 1
+            },
+            {
+              "at": 42073.60000014305,
+              "material": "ShaderMaterial",
+              "beach": true,
+              "share": 1
+            },
+            {
+              "at": 42090.700000047684,
+              "material": "ShaderMaterial",
+              "beach": true,
+              "share": 1
+            },
+            {
+              "at": 42105.90000009537,
+              "material": "ShaderMaterial",
+              "beach": true,
+              "share": 1
+            },
+            {
+              "at": 42121.40000009537,
+              "material": "ShaderMaterial",
+              "beach": true,
+              "share": 1
+            },
+            {
+              "at": 42137.700000047684,
+              "material": "ShaderMaterial",
+              "beach": true,
+              "share": 1
+            }
+          ],
+          "marks": [
+            {
+              "name": "ground:coast-full",
+              "at": 1094.7000000476837,
+              "detail": {
+                "fallbackMs": 31911.300000190735
+              }
+            }
+          ],
+          "firstDemand": {
+            "name": "ground:coast-demand",
+            "at": 9883.5,
+            "detail": {
+              "seed": 424242,
+              "trigger": "near-coast-witch",
+              "witch": {
+                "x": 3172.43871836629,
+                "z": 2793.326777190793,
+                "intoSand": -432.19824621020325,
+                "shown": 450
+              },
+              "camera": null
+            }
+          },
+          "visibleFallbackMs": 461.09999990463257
+        },
+        "errors": []
+      }
+    ],
+    "note": "One ordered baseline/candidate pair, fresh contexts, no OS shader-cache purge. Static normal-game coast visit, no simulation advancement; not a travel speedup benchmark. Screenshots can perturb timing.",
+    "httpFailures": [],
+    "bootDemands": [
+      {
+        "name": "baseline",
+        "version": {
+          "version": "dev · 5e51a00",
+          "built": "2026-10-30T17:42:31.561Z"
+        },
+        "at": 50085.59999990463,
+        "beachExists": true,
+        "beachOn": true,
+        "coastReadiness": null,
+        "fly": null,
+        "coastMarks": []
+      },
+      {
+        "name": "candidate",
+        "version": {
+          "version": "dev · f7ccce1",
+          "built": "2026-10-30T20:49:07.946Z"
+        },
+        "at": 39554.299999952316,
+        "beachExists": true,
+        "beachOn": true,
+        "coastReadiness": {
+          "requested": true,
+          "linked": true,
+          "share": 0.0625,
+          "fallbackMs": 29525.200000047684,
+          "launched": true,
+          "last": 39409,
+          "fadeMs": 50,
+          "fallbackShown": true
+        },
+        "fly": null,
+        "coastMarks": [
+          {
+            "name": "ground:coast-constructed",
+            "at": 2828.7999999523163,
+            "detail": {
+              "seed": 424242,
+              "beachExists": false
+            }
+          },
+          {
+            "name": "ground:coast-demand",
+            "at": 9883.5,
+            "detail": {
+              "seed": 424242,
+              "trigger": "near-coast-witch",
+              "witch": {
+                "x": 3172.43871836629,
+                "z": 2793.326777190793,
+                "intoSand": -432.19824621020325,
+                "shown": 450
+              },
+              "camera": null
+            }
+          },
+          {
+            "name": "ground:coast-requested",
+            "at": 9884.100000143051,
+            "detail": null
+          },
+          {
+            "name": "ground:coast-ready",
+            "at": 39408.799999952316,
+            "detail": {
+              "fallbackMs": 16793.5
+            }
+          }
+        ]
+      }
+    ],
+    "complete": true
+  }
+}

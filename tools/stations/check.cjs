@@ -1,9 +1,12 @@
 // The dressing stations in the built game (Ed's playtest of v4273, 2026-10-23: "When the camera zooms in on the witch, it aims at her
 // feet, and so when you're zoomed close her head is off screen"; "When choosing clothes etc I can't select them, I can only move the
 // selector around"). For each of her dressing stations (the bedroom's, and the cloak pegs in the Cloakroom; ?shot=object:<id>, app/shot.ts), the loop running as in play:
-//  - framing: once she's choosing, all of her is on screen and the part being chosen near the middle (camera.station.parts), at the
-//    start's zoom and again with the zoom all the way in (Z);
-//  - choosing: the arrow keys and a click each put an owned item on her, and her drawn look follows (the view's assets: her look now,
+//  - framing: once she's choosing, all of her on screen, whole, in the right half (camera.station.whole; Ed, 2026-10-29: "the witch
+//    right half of the screen, and she should be nicely centred and visible top of hat to bottom of shoes"): her middle near the
+//    screen's, her height most of it, and her across about three quarters of the way, at the start's zoom and with the zoom all the
+//    way in (Z); the panel the left half, a card a shelf;
+//  - the pad (a stubbed one): the d-pad moves the focus and changes nothing, ✕ chooses, R1 jumps to the next card;
+//  - choosing: a click, and Space after the arrow keys move the focus (the arrows alone changing nothing), each put an owned item on her, and her drawn look follows (the view's assets: her look now,
 //    and at a hat-off station her hat-off frames for it); Enter, E and Space choose in the panel, not in the game (she neither rises
 //    nor puts anything down), a locked item saying it isn't found yet.
 // Fails on any of those or a page error; writes <out>/<station>-<zoom>.png.
@@ -27,6 +30,12 @@ const t0 = Date.now(), log = (...a) => console.log(`[${((Date.now() - t0) / 1000
     for (const id of STATIONS) {
       if (ONLY && !ONLY.includes(id)) continue;
       const page = await browser.newPage({ viewport: { width: W, height: H } });
+      // a pad the page can read, its buttons set from here (window.__pad), as tools/settings/shots.cjs
+      await page.addInitScript(() => {
+        window.__pad = { buttons: Array.from({ length: 17 }, () => false), axes: [0, 0, 0, 0] };
+        const real = navigator.getGamepads ? navigator.getGamepads.bind(navigator) : null;
+        Object.defineProperty(navigator, "getGamepads", { configurable: true, writable: true, value: () => (window.__padOn ? [{ id: "DualSense (STANDARD GAMEPAD Vendor: 054c)", index: 0, connected: true, mapping: "standard", timestamp: performance.now(), axes: window.__pad.axes, buttons: window.__pad.buttons.map(p => ({ pressed: p, touched: p, value: p ? 1 : 0 })) }] : real ? real() : []) });
+      });
       page.on("pageerror", e => fails.push(`${id}: page error ${e.message}`));
       await page.goto(`http://127.0.0.1:${server.address().port}/?shot=object:${id}&seed=123`);
       await page.waitForFunction(() => window.witch && window.witch.ready, null, { timeout: 900000, polling: 500 });
@@ -36,22 +45,50 @@ const t0 = Date.now(), log = (...a) => console.log(`[${((Date.now() - t0) / 1000
       const panelIn = () => page.evaluate(() => !!document.querySelector("#station-panel")?.classList.contains("in") && !window.witch.game.clock.paused);
       for (let i = 0; i < 300 && !(await panelIn()); i++) { if (await page.evaluate(() => !window.witch.game.clock.paused)) { await page.keyboard.press("KeyE"); for (let j = 0; j < 40 && !(await panelIn()); j++) await page.waitForTimeout(500); } else await page.waitForTimeout(1000); } /* (one E, then up to 20 s for a slow frame to see it: E closes it too) */
       await page.waitForFunction(() => document.querySelector("#station-panel")?.classList.contains("in") && !window.witch.game.clock.paused, null, { timeout: 30000, polling: 500 });
-      const settle = async () => { await page.waitForTimeout(1500); await page.waitForFunction(() => window.witch.view.assets.pending === 0, null, { timeout: 900000, polling: 500 }); await page.waitForTimeout(3000); };
+      // (her art and the house's in: the outdoor world's jobs left out, which in the house never land under a software GL, on
+      // claude/prototype too: party objects, relics, creatures; 2026-10-29)
+      // (and the camera eased in on her, once she's choosing)
+      const settle = async () => {
+        await page.waitForTimeout(1500);
+        try { await page.waitForFunction(bare => [...window.witch.view.assets.inFlight].every(k => /^(partyObjects|relics|creature)s?:/.test(k) || (bare === false && /-bare/.test(k))) && (!document.querySelector("#station-panel.in") || (window.witch.game.camera.station ?? 0) > 0.99), id !== "dressingTable" ? false : null, { timeout: 180000, polling: 500 }); }
+        catch { log(id, "settle: still in flight", JSON.stringify([...await page.evaluate(() => [...window.witch.view.assets.inFlight])]), "station", await page.evaluate(() => window.witch.game.camera.station)); }
+        await page.waitForTimeout(3000);
+      };
       // Where she's drawn on screen: her feet (the view's witchBase) and her top (up her sprite by her drawn height).
       const her = () => page.evaluate(([W, H]) => {
         const v = window.witch.view, c = v.camera, b = v.witchBase, up = window.witch.spriteUp(), V = c.position.constructor;
         const at = k => { const p = new V(b.x + up.x * v.witchTall * k, b.y + up.y * v.witchTall * k, b.z + up.z * v.witchTall * k).project(c); return [(p.x * 0.5 + 0.5) * W, (-p.y * 0.5 + 0.5) * H]; };
-        return { feet: at(0), top: at(1), aim: window.witch.game.camera.stationAim ?? 0, choosing: window.witch.game.camera.station ?? 0 };
+        const tall = v.witchFeetTop / v.witchTall; // (her feet to her hat's top, of her frame's height)
+        return { feet: at(0), top: at(tall), choosing: window.witch.game.camera.station ?? 0 };
       }, [W, H]);
       for (const zoom of ["start", "closest"]) {
         if (zoom === "closest") { for (let i = 0; i < 10; i++) { await page.keyboard.press("KeyZ"); await page.waitForTimeout(150); } }
         await settle();
-        const h = await her(), mid = h.feet[1] + (h.top[1] - h.feet[1]) * h.aim;
-        await page.screenshot({ path: path.join(out, `${id}-${zoom}.png`) });
-        log(id, zoom, JSON.stringify({ feet: h.feet.map(Math.round), top: h.top.map(Math.round), aim: +h.aim.toFixed(2), choosing: +h.choosing.toFixed(2) }));
+        const h = await her(), mid = (h.feet[1] + h.top[1]) / 2, x = (h.feet[0] + h.top[0]) / 2, tall = h.feet[1] - h.top[1];
+        await page.screenshot({ path: path.join(out, `${id}-${zoom}.png`), timeout: 300000 });
+        log(id, zoom, JSON.stringify({ feet: h.feet.map(Math.round), top: h.top.map(Math.round), choosing: +h.choosing.toFixed(2) }));
         ok(h.choosing > 0.9, `${id} (${zoom} zoom): the camera's in on her, choosing`);
-        ok(h.top[1] >= 0 && h.feet[1] <= H, `${id} (${zoom} zoom): all of her on screen (top ${Math.round(h.top[1])}, feet ${Math.round(h.feet[1])} of ${H})`);
-        ok(Math.abs(mid - H / 2) < H * 0.12, `${id} (${zoom} zoom): the part chosen near the middle (${Math.round(mid)} of ${H})`);
+        ok(h.top[1] >= 0 && h.feet[1] <= H, `${id} (${zoom} zoom): all of her on screen, hat to shoes (top ${Math.round(h.top[1])}, feet ${Math.round(h.feet[1])} of ${H})`);
+        ok(Math.abs(mid - H / 2) < H * 0.06, `${id} (${zoom} zoom): her middle at the screen's (${Math.round(mid)} of ${H})`);
+        const margin = await page.evaluate(() => window.witch.game.tuning.camera.station.whole.margin);
+        ok(Math.abs(tall - H * (1 - 2 * margin)) < H * 0.05, `${id} (${zoom} zoom): she fills its height but the margin above and below (${Math.round(tall)} of ${H}, margin ${margin})`);
+        ok(Math.abs(x - W * 0.75) < W * 0.06, `${id} (${zoom} zoom): she stands in the right half's middle (${Math.round(x)} of ${W})`);
+        const P = await page.evaluate(() => { const p = document.querySelector("#station-panel").getBoundingClientRect(); return { w: p.width, cards: document.querySelectorAll("#station-panel .sp-shelf").length, titled: [...document.querySelectorAll("#station-panel .sp-shelf")].every(c => c.querySelector(".sp-lab b")?.textContent.trim()) }; });
+        ok(Math.abs(P.w - W / 2) < 4 && P.cards >= 1 && P.titled, `${id}: the panel the left half (${Math.round(P.w)} px), ${P.cards} titled cards`);
+      }
+      // The pad: the d-pad moves the focus (nothing on her changes), R1 the next card, ✕ chooses.
+      {
+        // (each button held till the focus moves, up to 20 s: in the house under a software GL a frame can take seconds, and a fixed
+        // press fell between frames)
+        const focusNow = () => page.evaluate(() => { const f = document.querySelector("#station-panel .focus"); return f ? { at: `${f.dataset.line}:${f.dataset.col}`, card: f.closest(".sp-shelf")?.dataset.shelf, worn: [...document.querySelectorAll("#station-panel .worn, #station-panel .sel")].map(e => `${e.dataset.line}:${e.dataset.col}`).join(",") } : null; });
+        const press = async b => { const was = (await focusNow())?.at; await page.evaluate(b => { window.__pad.buttons[b] = true; }, b); for (let t = 0; t < 40 && (await focusNow())?.at === was; t++) await page.waitForTimeout(500); await page.evaluate(b => { window.__pad.buttons[b] = false; }, b); await page.waitForTimeout(1500); };
+        await page.evaluate(() => { window.__padOn = true; }); await page.waitForTimeout(600);
+        const a = await focusNow(); await press(15); const b = await focusNow();
+        ok(a && b && a.at !== b.at && a.worn === b.worn, `${id}: the pad's d-pad moves the focus and changes nothing (${a?.at} → ${b?.at})`);
+        const cards = await page.evaluate(() => document.querySelectorAll("#station-panel .sp-shelf").length);
+        if (cards > 1) { await press(5); const c = await focusNow(); ok(c && c.card !== b.card, `${id}: R1 jumps to the next card (${b?.card} → ${c?.card})`); await press(4); }
+        await page.keyboard.press("ArrowLeft"); await page.waitForTimeout(800); // (back where it was: the keys, at once)
+        await page.evaluate(() => { window.__padOn = false; }); await page.waitForTimeout(600);
       }
       // Choosing: what's in focus, what she wears, and what's drawn on her.
       const state = () => page.evaluate(() => { const p = document.querySelector("#station-panel"), f = p.querySelector(".focus"); return { worn: [...p.querySelectorAll(".sp-card.worn")].map(e => `${e.dataset.line}:${e.dataset.col}`), focus: f ? `${f.dataset.line}:${f.dataset.col}` : null, locked: !!f?.classList.contains("locked"), detail: p.querySelector(".sp-detail")?.innerText ?? "", saved: localStorage.getItem("witch.genome"), drawn: JSON.stringify(window.witch.view.assets.witchGenome ?? null), witch: { y: window.witch.game.witch.mode, perch: !!window.witch.game.witch.perch } }; });
@@ -67,10 +104,16 @@ const t0 = Date.now(), log = (...a) => console.log(`[${((Date.now() - t0) / 1000
         ok(s.worn.includes(other), `${id}: a click on an owned item puts it on her (worn ${s.worn})`);
         ok(s.saved && JSON.stringify(JSON.parse(s.saved)) === s.drawn, `${id}: her drawn look is the one chosen`);
         await page.mouse.move(W - 20, H - 20); // (the pointer off the panel: the arrows next)
+        // (Ed, 2026-10-28: "she should change only when I press the 'choose' button": an arrow only moves the focus, Space puts it on)
         await page.keyboard.press("ArrowLeft"); await settle();
         s = await state();
-        ok(!s.worn.includes(other), `${id}: an arrow key onto another owned item puts that on instead (worn ${s.worn})`);
-        ok(s.saved && JSON.stringify(JSON.parse(s.saved)) === s.drawn, `${id}: her drawn look follows the arrow key's choice`);
+        ok(s.worn.includes(other) && s.focus !== other, `${id}: an arrow key moves the focus and changes nothing on her (worn ${s.worn}, focus ${s.focus})`);
+        const to = s.focus;
+        await page.keyboard.press("Space"); await settle();
+        s = await state();
+        if (owned.includes(to)) ok(!s.worn.includes(other) && s.worn.includes(to), `${id}: Space puts on what's in focus instead (worn ${s.worn})`);
+        else log(id, `the arrow landed on ${to}, not an owned card: Space's choice not checked here`);
+        ok(s.saved && JSON.stringify(JSON.parse(s.saved)) === s.drawn, `${id}: her drawn look follows the choice`);
       } else log(id, `fewer than two owned items in its first row (${owned.length}): click and arrows on items skipped`);
       // Enter and Space: chosen in the panel, never the game's (no rise, nothing put down); on a locked item, not found yet. (E closes
       // it: Ed, 2026-10-26, "I think E should also close, and we can have spacebar to select"; below.)

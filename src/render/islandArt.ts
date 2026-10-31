@@ -1,7 +1,7 @@
 // Two of the island build's own drawings, as pure art (no Three.js, no page), so the art workers can draw them while the page goes on
 // (render/slices.ts; Ed's laptop, 2026-10-20: the View's island build was one 10 s task): the dancefloor's looks (render/ground.ts)
 // and an island's runestones (render/markers.ts). On the page (no workers, or a build run straight through) they're drawn the same way.
-import * as Art from "../../art/generator.js";
+import * as Art from "./islandArt.primitives";
 import type { Baked, MakeCanvas } from "./artBuild";
 import type { Style } from "./style";
 

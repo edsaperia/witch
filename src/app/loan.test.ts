@@ -2,7 +2,9 @@
 // the night is won. Its saves are this browser's (a localStorage of our own for each test), as app/finds.test.ts's.
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { TUNING } from "../rules/tuning";
-import { newGame, stepGame, type Controls, type Game } from "../rules/game";
+import { newGame as fullGame, stepGame, type Controls, type Game } from "../rules/game";
+import { smallWorld } from "../test/worlds";
+const newGame = smallWorld(fullGame, "Find loans and saved ownership use one placed trunk and witch, independent of island size.");
 import { FINDABLE, fillTrunk, loanFind, type FindKindId } from "../rules/finds";
 import { itemById, wear, wears } from "../rules/wardrobe";
 import { bareBroom, type Fitted } from "../rules/broomParts";
@@ -72,7 +74,7 @@ describe("a find on loan", () => {
   });
 
   it("writes nothing while it's on loan: no save holds it, so a reload mid-night keeps nothing", () => {
-    for (const [kind, item] of [["wearable", top.id], ["hat", "sentry"], ["part", "nozzles"], ["bag", "bumbag"]] as [FindKindId, string][]) {
+    for (const [kind, item] of [["wearable", top.id], ["hat", "sentry"], ["part", "nozzles"], ["bag", "backpack"]] as [FindKindId, string][]) {
       store.clear();
       const p = new Page(night(kind, item));
       p.take();
@@ -93,7 +95,7 @@ describe("a find on loan", () => {
   });
 
   it("goes back to the sky on a lost night: nothing kept, and she owns tonight only what her save says", () => {
-    for (const [kind, item] of [["wearable", top.id], ["hat", "sentry"], ["part", "nozzles"], ["bag", "bumbag"]] as [FindKindId, string][]) {
+    for (const [kind, item] of [["wearable", top.id], ["hat", "sentry"], ["part", "nozzles"], ["bag", "backpack"]] as [FindKindId, string][]) {
       store.clear();
       const p = new Page(night(kind, item));
       p.take();
@@ -165,7 +167,7 @@ describe("a find on loan", () => {
     const st = (id: string) => (id.startsWith("top") ? ["wardrobe"] : id.startsWith("shoes") ? ["shoeRack"] : ["cloakPegs"]);
     expect(homeOf({ kind: "hat", id: "sentry" }, st)).toBe("hats");
     expect(homeOf({ kind: "part", id: "nozzles" }, st)).toBe("pegboard");
-    expect(homeOf({ kind: "bag", id: "bumbag" }, st)).toBe("bags");
+    expect(homeOf({ kind: "bag", id: "backpack" }, st)).toBe("bags");
     expect(homeOf({ kind: "wearable", id: "top-cape" }, st)).toBe("wardrobe");
   });
 });

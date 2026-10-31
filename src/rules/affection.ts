@@ -1,26 +1,29 @@
 // The 💌 invite meter (issue #87; the interface agreed with the rendering builder there). Each 💌
 // that lands on an invitable creature adds to its affection; higher levels need more hits
 // (states.affection.hits); at most one 💌 counts every affection.gap seconds on any one creature;
-// once hits stop it drains slowly. Full, a wild one becomes happy; a happy one (states.leash
-// "again") is leashed to her. Enraged ones and legends stop 💌s dead. No drawing here.
+// once hits stop it drains slowly. Full, a wild one is stunned (Ed, 2026-10-28: combat as orbit slots, rules/orbit.ts: hearts from
+// her animals' blows fill the same slots), and her next 💌 on it, stunned, befriends it; a happy one (states.leash "again") is leashed
+// to her. Enraged ones and legends stop 💌s dead. No drawing here.
 import { LEGEND, type Creature } from "./creatures";
 import { befriend, invitableNow, makePartyLegend, stateOf, STATES, type StatesData } from "./creatureStates";
+import { addLetters, fillOf, stun } from "./orbit";
 
-/** What the meter needs of the game: the time, and leashing a happy creature to her. */
-export interface AffectionWorld { time: number; leash: (c: Creature) => void }
+/** What the meter needs of the game: the time, leashing a happy creature to her, and how long a full meter stuns (s: the tuning's
+ *  combat.daze). */
+export interface AffectionWorld { time: number; leash: (c: Creature) => void; stunFor?: number; /** Seconds one won over celebrates, out of every fight (invites.cheer.secs). */ cheerFor?: number }
 
-/** A 💌 landed on creature c (amount 1 per letter, times any buff). Returns whether it counted. */
+/** A 💌 landed on creature c (amount 1 per letter). Returns whether it counted. */
 export function hit(g: AffectionWorld, c: Creature, amount: number, time: number = g.time, data: StatesData = STATES): boolean {
   if (!invitableNow(c, data)) return false;
   const A = data.affection;
   if (c.affectionAt !== undefined && time - c.affectionAt < A.gap) return false; // (one 💌 at a time per creature)
-  const now = drained(c, time, data);
-  c.affection = Math.min(1, now + amount / Math.max(1, A.hits[Math.min(c.level, A.hits.length - 1)]));
-  c.affectionAt = time;
-  if (c.affection >= 1 - 1e-9) {
+  // (stunned, its slots full: this 💌 converts it, Ed 2026-10-28)
+  if (c.dazed && stateOf(c) === "wild" && !c.boss) { c.dazed = false; c.fills = undefined; befriend(c, time); if (g.cheerFor) c.cheerUntil = time + g.cheerFor; return true; } // (won over: it celebrates a moment, Ed 2026-10-29)
+  const fill = addLetters(c, amount / Math.max(1, A.hits[Math.min(c.level, A.hits.length - 1)]), time, A); // (in one queue with its hearts: rules/orbit.ts)
+  if (fill >= 1 - 1e-9) {
     if (c.boss) { makePartyLegend(c, time); return true; } // (the Easter egg's 100th 💌)
-    if (stateOf(c) === "happy") { c.affection = undefined; g.leash(c); }
-    else befriend(c, time);
+    if (stateOf(c) === "happy") { c.affection = undefined; c.fills = undefined; g.leash(c); }
+    else stun(c, time, time + (g.stunFor ?? 20)); // (the last slot only stuns: her next 💌 converts)
     return true;
   }
   return true;
@@ -52,7 +55,5 @@ export function affection(g: { time: number } | { clock: { time: number } }, c: 
 
 /** Its affection now, after draining since its last hit. */
 function drained(c: Creature, time: number, data: StatesData): number {
-  if (!c.affection || c.affectionAt === undefined) return 0;
-  const idle = time - c.affectionAt - data.affection.drainDelay;
-  return Math.max(0, c.affection - Math.max(0, idle) * (c.boss && data.affection.legendDrain !== undefined ? data.affection.legendDrain : data.affection.drain));
+  return fillOf(c, time, data.affection).fill; // (stunned: its slots held full; hearts in the queue too: rules/orbit.ts)
 }

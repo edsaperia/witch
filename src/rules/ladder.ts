@@ -25,6 +25,11 @@ export const RUNGS: readonly Rung[] = [
   { id: "squeeze", label: "tall trees squeezed", when: "live", built: true },
   { id: "still", label: "leaves still, no trunk shadows", when: "live", built: true },
   { id: "hardCut", label: "the cut-away's crowns solid", when: "live", built: true },
+  { id: "fxDistort", label: "magic shimmer off", when: "live", built: true },
+  { id: "fxImprints", label: "temporary magic scenery marks off", when: "live", built: true },
+  { id: "fxSecondary", label: "magic secondary detail off", when: "live", built: true },
+  { id: "fxLights", label: "at most two magic lights", when: "live", built: true },
+  { id: "fxParticles", label: "half the magic particles", when: "live", built: true },
   { id: "density80", label: "trees ×0.8", when: "load", built: true },
   { id: "cap30", label: "a steady 30 fps", when: "live", built: true },
   { id: "px4", label: "chunkier pixels (px 4)", when: "load", built: true },
@@ -46,10 +51,15 @@ export interface LadderKnobs {
   settle: number;
   /** Reversals (down after up, or up after down) within `flipWindow` seconds that stop the climbing for the night. */
   flips: number; flipWindow: number;
-  /** A rung above is only tried again if its last measured cost was under this share of the budget (unknown: tried). */
-  fit: number;
+  /** A rung above is tried again at once if its last measured cost was under this share of the budget (unknown: tried); else
+   *  only `retry` seconds after it was last left, doubling each time it's left again, up to `retryMax` (a spike or a stall that
+   *  pushed it down isn't held against it for the night: Ed's playtest, 2026-10-29, the soft cut-away gone at 4.4 ms of 16.7). */
+  fit: number; retry: number; retryMax: number;
+  /** Where the GPU can't be timed, frame time: it waits on the display's refresh, so a frame that keeps up reads the whole
+   *  budget. A window is slow only over `missed` of the budget (frames being missed), roomy under `kept` (keeping up). */
+  missed: number; kept: number;
 }
-export const LADDER_KNOBS: LadderKnobs = { over: 0.9, under: 0.7, downAfter: 3, upAfter: 10, settle: 2, flips: 3, flipWindow: 60, fit: 0.85 };
+export const LADDER_KNOBS: LadderKnobs = { over: 0.9, under: 0.7, downAfter: 3, upAfter: 10, settle: 2, flips: 3, flipWindow: 60, fit: 0.85, retry: 60, retryMax: 480, missed: 1.25, kept: 1.1 };
 
 export interface LadderState {
   /** How far down the ladder (an index into RUNGS): every rung at or above it that's built is in effect, live ones now. */
@@ -64,13 +74,15 @@ export interface LadderState {
   locked: boolean;
   /** Each rung's last measured cost (ms a frame), eased. */
   cost: number[];
+  /** Each rung's times left for being slow, and when it was last left (seconds of windows), for its retry. */
+  left: number[]; leftAt: number[];
   /** Seconds of windows seen. */
   t: number;
 }
 
 export const newLadder = (rung = 0, mode: LadderState["mode"] = "auto"): LadderState => {
   const r = clampRung(rung);
-  return { rung: r, loaded: r, mode, slow: 0, roomy: 0, since: 0, last: -Infinity, dir: 0, reversals: [], locked: false, cost: RUNGS.map(() => NaN), t: 0 };
+  return { rung: r, loaded: r, mode, slow: 0, roomy: 0, since: 0, last: -Infinity, dir: 0, reversals: [], locked: false, cost: RUNGS.map(() => NaN), left: RUNGS.map(() => 0), leftAt: RUNGS.map(() => NaN), t: 0 };
 };
 
 export const clampRung = (r: number): number => Math.max(0, Math.min(RUNGS.length - 1, Math.round(Number.isFinite(r) ? r : 0)));
@@ -110,18 +122,25 @@ function nextUp(s: LadderState): number {
 }
 
 /** One window of `seconds` (about one second): `ms` the frames' cost (GPU time a frame, or frame time), `budget` the frame's
- *  budget (ms), `skip` a window that says nothing (paused, loading, a hidden tab, a hitch). Returns the new state. */
-export function stepLadder(s: LadderState, ms: number, budget: number, seconds = 1, skip = false, K: LadderKnobs = LADDER_KNOBS): LadderState {
+ *  budget (ms), `skip` a window that says nothing (paused, loading, a hidden tab, a hitch), `timed` whether `ms` is the GPU's
+ *  time (else frame time, which can't show room under the refresh). Returns the new state. */
+export function stepLadder(s: LadderState, ms: number, budget: number, seconds = 1, skip = false, K: LadderKnobs = LADDER_KNOBS, timed = true): LadderState {
   const n: LadderState = { ...s, t: s.t + seconds, since: s.since + seconds, cost: s.cost.slice(), reversals: s.reversals.filter(t => s.t + seconds - t <= K.flipWindow) };
-  if (n.mode !== "auto" || skip || !(ms > 0) || !(budget > 0) || n.since <= K.settle) return n;
+  if (n.mode !== "auto") return n;
+  // (a window that says nothing breaks a run of slow ones, and the frames just after it settle as after a change: a load, a
+  // pause or a hidden tab ends in shader compiles and uploads that say nothing of the night's cost)
+  if (skip) return { ...n, since: 0, slow: 0 };
+  if (!(ms > 0) || !(budget > 0) || n.since <= K.settle) return n;
   const c = n.cost[n.rung];
   n.cost[n.rung] = Number.isFinite(c) ? c + (ms - c) * 0.3 : ms;
-  n.slow = ms > budget * K.over ? n.slow + 1 : 0;
-  n.roomy = ms < budget * K.under ? n.roomy + seconds : 0;
+  n.slow = ms > budget * (timed ? K.over : K.missed) ? n.slow + 1 : 0;
+  n.roomy = ms < budget * (timed ? K.under : K.kept) ? n.roomy + seconds : 0;
   const move = (to: number, dir: number): LadderState => {
     if (n.dir && dir !== n.dir && n.t - n.last <= K.flipWindow) n.reversals.push(n.t);
     const locked = n.locked || n.reversals.length >= K.flips;
-    return { ...n, rung: to, dir, last: n.t, since: 0, slow: 0, roomy: 0, locked };
+    const left = n.left.slice(), leftAt = n.leftAt.slice();
+    if (dir < 0) { left[n.rung]++; leftAt[n.rung] = n.t; }
+    return { ...n, rung: to, dir, last: n.t, since: 0, slow: 0, roomy: 0, locked, left, leftAt };
   };
   if (n.slow >= K.downAfter) {
     const d = nextDown(n);
@@ -130,14 +149,19 @@ export function stepLadder(s: LadderState, ms: number, budget: number, seconds =
   } else if (n.roomy >= K.upAfter && !n.locked) {
     const u = nextUp(n);
     if (u >= 0) {
-      // (tried again only if it fitted last time it was measured, or it never was)
+      // (tried again at once if it fitted last time it was measured, or it never was; else once its retry's come)
       const known = n.cost[u];
-      if (!Number.isFinite(known) || known < budget * K.fit) return move(u, 1);
+      if (!Number.isFinite(known) || known < budget * K.fit || n.t - n.leftAt[u] >= retryAfter(n, u, K)) return move(u, 1);
       n.roomy = 0;
     }
   }
   return n;
 }
+
+/** Seconds after rung `i` was last left for being slow before it's tried again although it didn't fit: `retry`, doubling each
+ *  time it's been left, up to `retryMax`. */
+export const retryAfter = (s: LadderState, i: number, K: LadderKnobs = LADDER_KNOBS): number =>
+  Math.min(K.retryMax, K.retry * 2 ** Math.max(0, (s.left[i] ?? 0) - 1));
 
 /** The ladder pinned at a rung (the pause page, ?ladder=<n>), off (?ladder=off: full quality, never stepping), or back on auto. */
 export function setMode(s: LadderState, mode: LadderState["mode"], rung = s.rung): LadderState {

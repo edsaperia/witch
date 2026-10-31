@@ -5,12 +5,14 @@
 // spell cast, everything gets up as a night that never waited has it.
 import { describe, expect, it } from "vitest";
 import { TUNING } from "./tuning";
+// Keep this existing sleep fixture until the separately assigned largest-world cell-placement bug is fixed (docs/notes/testing.md).
 import { cellKey } from "./party";
 import { newGame, stepGame, STEP, type Controls, type Game } from "./game";
 import { fillTrunk } from "./finds";
 import { endParty, nightEase, relicsOut, worldAsleep } from "./partyOver";
 import type { Creature } from "./creatures";
 import { circleLines } from "./legendCircle";
+import { sleepCellAudit } from "../test/sleepCells";
 
 const C: Controls = { moveX: 0, moveZ: 0, toggleMode: false, zoom: 0 };
 const run = (g: Game, s: number, c: Partial<Controls> = {}) => { for (let i = 0; i < Math.round(s / STEP); i++) stepGame(g, { ...C, ...c }, STEP); };
@@ -51,9 +53,10 @@ describe("the world before the party is the afterparty's (Ed, 2026-10-26)", () =
       expect(worldAsleep(g)).toBe(true);
       const all = them(g);
       expect(all.length).toBeGreaterThan(20);
+      expect(sleepCellAudit(g.map, all).mismatches).toEqual([]);
       for (const c of all) {
         expect(deepAsleep(c), `${c.species} ${c.id}`).toBe(true);
-        expect(cellKey(g.map.cellSafe(c.x, c.z).cell), `${c.species} ${c.id} in its own area`).toBe(cellKey(c.cell));
+        expect(g.map.sameArea(g.map.cellSafe(c.x, c.z).cell, c.cell), `${c.species} ${c.id} in its own area`).toBe(true);
         if (c.boss) expect(c.legendState).toBe("asleep");
       }
     }

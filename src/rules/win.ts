@@ -21,6 +21,7 @@
 //     won night keeps them), then to bed (rules/guidance.ts).
 // The losing still comes first: home's speakers down before the win, the party's over as ever (rules/partyOver.ts). No drawing.
 import type { Game } from "./game";
+import { runawayArrives } from "./runaway";
 import type { Creature } from "./creatures";
 import { LEGEND } from "./creatures";
 import { befriend } from "./creatureStates";
@@ -32,9 +33,12 @@ import { pulseProgress } from "./leypulse";
 import { goneAtWin } from "./finds";
 import { homeArea } from "./homeArea";
 import { updateTrail } from "./babies";
+import { bootPath } from "./bootRing";
 
 /** A point on one of the lap's pulses' runs: a stone (its key; "" for where it set off), where it stands, when the pulse passes
- *  it, and its place along the ley route as drawn (links: home's stone 0, the route's j-th stone j). */
+ *  it, and its place along the ley route (links: the route's j-th stone j, from where the boot ring's lap ends; home's stone, the
+ *  treehouse's front, -1: the boot ring's path is the line's way back there from the route's start, one line, and the lap's
+ *  pulse home runs it: render/leylines.ts ringLinks; Ed's quick win, 2026-10-29: "The pulse ended in a strange place"). */
 export interface LapPoint { key: string; x: number; z: number; at: number; links: number }
 
 export type WinPhase = "stragglers" | "lap" | "won";
@@ -63,7 +67,7 @@ export interface WinState {
    *  the sea chart's), and the night's dealt legends still enraged at the end (calmed, back to sleep), by kind. */
   found: string[];
   lost: string[];
-  /** The finale has settled (win.settleAfter seconds after the win): the guidance pins lead her home (rules/guidance.ts) and the
+  /** The finale has settled (once she's reached the party after the win: atTheParty; Ed, 2026-10-28): the guidance pins lead her home (rules/guidance.ts) and the
    *  night is recorded on the sea chart. */
   settled: boolean;
   /** The conga: the leader's starting angle round the dancefloor (towards her, as the night's won), and how many dance in it. */
@@ -100,12 +104,11 @@ export interface WinTuning {
   /** The island's sigil on the dancefloor as it's won: seconds to draw it on, and how long it holds. */
   flareDraw: number;
   flare: number;
-  /** Seconds from the win until it settles (the pins lead her home); how often the stragglers' pointer re-picks. */
-  settleAfter: number;
+  /** How often the stragglers' pointer re-picks (s). */
   retarget: number;
 }
 
-export const WIN_DEFAULT: WinTuning = { lapSpeed: 120, congaSpeed: 2.5, congaGap: 2.4, congaRadius: 34, joinSpeed: 14, seen: 120, follow: true, followLead: 5, followSpeed: 1.25, legendGap: 12, legendRow: 14, legendSpace: 14, legendArc: 150, flareDraw: 3, flare: 16, settleAfter: 20, retarget: 0.25 };
+export const WIN_DEFAULT: WinTuning = { lapSpeed: 120, congaSpeed: 2.5, congaGap: 2.4, congaRadius: 34, joinSpeed: 14, seen: 120, follow: true, followLead: 5, followSpeed: 1.25, legendGap: 12, legendRow: 14, legendSpace: 14, legendArc: 150, flareDraw: 3, flare: 16, retarget: 0.25 };
 const tuningOf = (g: Game): WinTuning => ({ ...WIN_DEFAULT, ...(g.tuning.win ?? {}) });
 
 /** A legend (an area's, or any at the legend level). */
@@ -159,9 +162,12 @@ function lapRuns(g: Game, from: number, speed: number): { home: LapPoint[]; out:
   const links = Math.max(0, Math.min(n - 1, c.current + (routeDone(g) ? 0 : pulseProgress(p, g.map, from))));
   const k = Math.floor(links), a = S[k], b = S[Math.min(n - 1, k + 1)], f = links - k;
   const start: LapPoint = { key: "", x: a.x + (b.x - a.x) * f, z: a.z + (b.z - a.z) * f, at: from, links };
+  // (Home's stone is the treehouse's front, the boot ring's path away from where the route starts: the pulse home runs the ring
+  // back round to it, that much further, to links -1: one line.)
+  const ring = S[0]?.depart ? bootPath(g.map).length : 0;
   const run = (stones: number[]): LapPoint[] => {
     let d = 0, prev: { x: number; z: number } = start;
-    return [start, ...stones.map(i => { const s = S[i]; d += Math.hypot(s.x - prev.x, s.z - prev.z); prev = s; return { key: i === 0 ? "home" : cellKey(s.cell), x: s.x, z: s.z, at: from + d / speed, links: i }; })];
+    return [start, ...stones.map(i => { const s = S[i]; d += Math.hypot(s.x - prev.x, s.z - prev.z) + (i === 0 ? ring : 0); prev = s; return { key: i === 0 ? "home" : cellKey(s.cell), x: s.x, z: s.z, at: from + d / speed, links: i === 0 && ring > 0 ? -1 : i }; })];
   };
   const home: number[] = [], out: number[] = [];
   for (let i = k; i >= 0; i--) home.push(i);
@@ -250,6 +256,9 @@ function win(g: Game, time: number): void {
     if (c.legendState === "angry" || c.enraged) { lull(c, time); w.lost.push(c.species); continue; }
     woken.push(c);
   }
+  // One still running for the beach (rules/runaway.ts): there at once, asleep, as it stays (Ed, 2026-10-28: "stay there if it's won");
+  // nothing fights after the win, so its run would stop where it stood, and the line would have it back.
+  for (const c of g.creatures) if (c.fleeUntil && c.beach && !c.gone) runawayArrives(c, time);
   // Every other animal: a party animal, in the line.
   w.lead = Math.atan2(g.witch.z - d0.z, g.witch.x - d0.x);
   const line = congaOrder(g, w.lead);
@@ -345,7 +354,15 @@ export function stepWin(g: Game, dt: number): void {
     } else if (c.finale >= 0) { const p = congaPlace(g, c.finale, n, time); toward(g, c, p, dt, T); if (Math.hypot(p.x - c.x, p.z - c.z) < 0.5) { c.facing = p.facing; c.away = p.away; c.moving = true; } }
     else { toward(g, c, { x: c.anchorX, z: c.anchorZ }, dt, T); if (!c.moving) c.away = false; } // (there: facing us, dancing in place)
   }
-  if (!w.settled && time >= (w.wonAt ?? Infinity) + T.settleAfter) w.settled = true;
+  if (!w.settled && atTheParty(g)) w.settled = true; // (Ed, 2026-10-28: once she reaches the party; at once if she's there at the win)
+}
+
+/** Whether she's reached the party (Ed, 2026-10-28: "anywhere on the dancefloor, on foot or flying low over it"): within its radius,
+ *  no higher than its tiles light under her (dancefloor.tiles.witchLift). The won night settles then: the guidance pins lead her
+ *  home (rules/guidance.ts), the party pointer's 🪩 gone (render/view/pointers.ts). */
+export function atTheParty(g: Pick<Game, "witch" | "map" | "tuning">): boolean {
+  const W = g.witch, d = g.map.dancefloor;
+  return Math.hypot(W.x - d.x, W.z - d.z) <= d.radius && W.lift < (g.tuning.dancefloor.tiles?.witchLift ?? 0.3);
 }
 
 /** Whether the night's won (nothing fights, no waves, nothing hurts her). */

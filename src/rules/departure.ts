@@ -5,29 +5,27 @@
 import type { ForestMap } from "./map";
 import { speakerRadius } from "./speakers";
 
-/** The first line's way out from home (Ed, 2026-10-06: "The leyline shouldn't cross the dancefloor. After going around
- *  the speaker circle it should go off to the right and loop around to whatever direction it needs to go"; before, from
- *  2026-10-05, it ran due south straight across the floor): from the treehouse's front in to the ring of speakers and round
- *  it, on the boot ring's own circle (Ed, 2026-10-07; `avoid` no longer widens it), on the first objective's side (clockwise on the
- *  screen, off to the right, for one east of home; the other way round for one west of it), to the ring's east (or
- *  west) side, or sooner if the objective lies that way; then off the ring, heading out, looping on round the same way
- *  as it goes out to the objective. Points every `step` metres, from the front to `to`, none inside the ring. */
+/** The first line's way out from home, one path with the boot's ring (Ed, 2026-10-29: "the boot-line/leyline/pulse goes around the
+ *  dancefloor and then should continue smoothly in the same direction"; before, from 2026-10-06, it went round the ring on the first
+ *  objective's side, the other way to the boot for one west of home, and off to that side): from where the boot's lap ends (where its
+ *  way down from the treehouse's front came on to the ring, just past its top: ringApproach, rules/bootRing.ts), on round the ring
+ *  the same way (clockwise on the screen) until the objective lies straight out to the side (its bearing round home; at most
+ *  EXIT_MOST round, the rest of the way in the turn off), then off the ring: a sweep outward no tighter than the line's other turns
+ *  (exitTurn), never back over the ring, and straight on to it. Points every `step` metres, from the lap's end to `to`, none inside
+ *  the ring. (The way from the front to the ring and the lap round it are the boot's own path, not this line's.) */
 export function departureRoute(map: ForestMap, to: { x: number; z: number }, _avoid: number, step: number): [number, number][] {
-  const d = map.dancefloor, f = map.treehouseFront, TAU = Math.PI * 2;
+  const d = map.dancefloor, TAU = Math.PI * 2;
   // Angles round home: 0 south (+z, down the screen), PI/2 east (+x); clockwise on the screen is decreasing.
   const ang = (x: number, z: number) => Math.atan2(x - d.x, z - d.z), at = (a: number, r: number): [number, number] => [d.x + Math.sin(a) * r, d.z + Math.cos(a) * r];
-  const s = to.x >= d.x ? -1 : 1, sweep = (a0: number, a1: number) => (((s * (a1 - a0)) % TAU) + TAU) % TAU;
-  const rho = speakerCircle(map), af = ang(f.x, f.z); // (the boot ring: the speakers' own circle; Ed, 2026-10-07)
-  const aTo = ang(to.x, to.z), toTo = sweep(af, aTo), toExit = sweep(af, s < 0 ? Math.PI / 2 : -Math.PI / 2);
-  const ring = Math.min(toTo, toExit); // (round the ring, then off it, turning on round as it goes out)
-  // From the front onto the ring, meeting it along it (the boot ring's own way on: rules/bootRing.ts), round it, then off it.
-  const ap = ringApproach(map, rho, s, step, ring), span = s * (ap.at - af), pts = ap.pts.slice();
-  const rest = Math.max(0, ring - span), nRing = Math.ceil((rest * rho) / step);
-  for (let i = 1; i <= nRing; i++) pts.push(at(af + s * (span + (rest * i) / nRing), rho));
+  const s = -1, sweep = (a0: number, a1: number) => (((s * (a1 - a0)) % TAU) + TAU) % TAU; // (clockwise, as the boot goes round)
+  const rho = speakerCircle(map), start = ringApproach(map, rho, s, step).at; // (the boot ring: the speakers' own circle; its lap ends where it came on)
+  const ring = Math.min(sweep(start, ang(to.x, to.z)), EXIT_MOST); // (round until the objective lies out to the side, then off)
+  const nRing = Math.ceil((ring * rho) / step), pts: [number, number][] = [at(start, rho)];
+  for (let i = 1; i <= nRing; i++) pts.push(at(start + s * (ring * i) / nRing, rho));
   // Off the ring along it (Ed, 2026-10-06: no right angle, no jog where it leaves), turning toward the objective no tighter than
   // the rest of the line turns (exitTurn), always outward (so never back over the ring: round the long way if it must), then
   // straight on to it.
-  const a0 = af + s * ring, turn = exitTurn(map);
+  const a0 = start + s * ring, turn = exitTurn(map);
   let p = at(a0, rho), h = Math.atan2(-s * Math.sin(a0), s * Math.cos(a0)); // (heading along the ring, as it goes round)
   const out = Math.sign(Math.cos(h) * Math.cos(a0) - Math.sin(h) * Math.sin(a0)) || 1; // (the turn that heads away from home)
   for (let k = 0; k < 600; k++) {
@@ -50,6 +48,11 @@ export function departureRoute(map: ForestMap, to: { x: number; z: number }, _av
   }
   return pts;
 }
+
+/** The most of the ring (radians) the first line goes on round after the boot's lap before it must leave: three quarters. An objective
+ *  lying further back round (within the last quarter, just short of where the lap ends) is reached by turning on outward off the ring
+ *  rather than by nearly another lap (at the waves' 1 m/s, two more minutes to the first wave). */
+const EXIT_MOST = (Math.PI * 3) / 2;
 
 /** How far round home (radians) the way from a front outside the ring swings as it comes down on to it: about 10°. */
 const DROP_SPAN = 0.18;

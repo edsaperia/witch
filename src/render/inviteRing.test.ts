@@ -2,13 +2,15 @@
 // its filled slots are the meter's hits, a full ring turns to hearts, and the drain drops envelopes one at a time.
 import { describe, expect, it } from "vitest";
 import { TUNING } from "../rules/tuning";
-import { affectionOf, newGame, stepGame } from "../rules/game";
+import { affectionOf, newGame as fullGame, stepGame } from "../rules/game";
+import { smallWorld } from "../test/worlds";
+const newGame = smallWorld(fullGame, "Invitation ring fill and drain track one creature's affection, independent of distant areas.");
 import { hasRune, STATES, stateOf } from "../rules/creatureStates";
 import type { Creature } from "../rules/creatures";
 import { RingModel, ringOf, type RingChange } from "./inviteRing";
 
 function setup(level: number) {
-  const g = newGame(123, TUNING), A = affectionOf(g);
+  const g = newGame(123, { ...TUNING, cast: { ...TUNING.cast, on: false } }), A = affectionOf(g); // (its rune at its feet: the game without the stone stacks, ?cast=0)
   const c = g.creatures.find(k => !k.boss && k.level < 3 && stateOf(k) === "wild")!;
   c.level = level as Creature["level"]; // (a baby, a young or an adult, whichever the map has to hand)
   const ring = (_time: number) => ringOf(c.level, A.affection(c), TUNING.invites.hits);
@@ -27,7 +29,7 @@ describe("the 💌 ring", () => {
     }
   });
 
-  it("joins one envelope a hit into the next gap, and a full ring turns to hearts as the creature is won over (then its rune, not a second ring)", () => {
+  it("joins one envelope a hit into the next gap, a full ring stuns it, and the next 💌 turns the ring to hearts as the creature is won over (then its rune, not a second ring)", () => {
     const { g, A, c, hits } = setup(1), M = new RingModel(), now = (k: Creature) => ringOf(k.level, A.affection(k), TUNING.invites.hits);
     const all: RingChange[] = [];
     for (let k = 1; k < hits; k++) {
@@ -36,7 +38,11 @@ describe("the 💌 ring", () => {
       expect(ch).toEqual([{ kind: "join", id: c.id, slot: k - 1, slots: hits }]);
       all.push(...ch);
     }
-    // The last hit fills it: the creature is happy, its meter gone, and the whole ring goes to hearts.
+    // The last hit fills it: stunned (Ed, 2026-10-28: rules/orbit.ts), the ring full.
+    A.hit(c, TUNING.invites.amount, g.clock.time);
+    expect(stateOf(c)).toBe("wild"); expect(c.dazed).toBe(true);
+    expect(M.update([c], now, [])).toEqual([{ kind: "join", id: c.id, slot: hits - 1, slots: hits }]);
+    // The next converts it: happy, its meter gone, and the whole ring goes to hearts.
     A.hit(c, TUNING.invites.amount, g.clock.time);
     expect(stateOf(c)).toBe("happy");
     expect(M.update([c], now, [c.id])).toEqual([{ kind: "hearts", id: c.id, slots: hits }]);

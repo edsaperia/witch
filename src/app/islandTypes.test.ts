@@ -10,6 +10,7 @@ describe("an island's area types", () => {
   for (const island of ["wolf", "fox", "home"]) {
     it(`are all its roster's, ring and sea too (${island})`, () => {
       const { tuning } = tuningFromLink(new URLSearchParams({ island })); // (as the game's link makes it)
+      // Keep each authored island's extent and roster: buffer-ring and sea type assignment are the subject of this test.
       for (const seed of [1, 4242]) {
         const m = generateMap(seed, tuning);
         const want = typesOf((island === "home" ? homeIsland(0, knownKinds(tuning.map?.found ?? []), 999) : islandOf(island, 0)!).roster);

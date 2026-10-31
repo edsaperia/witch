@@ -9,12 +9,6 @@ export const CREATURE_CROCODILE = {
   },
   radius: 1.2,
   voice: { family: "big", pitch: 0.6, noise: 0.5, am: [18, 0.7], volume: 1.2 },
-  buff: {
-    name: "Snap",
-    kind: "move",
-    scale: { "dash.cooldown": 0.6 },
-    label: "Crocodile's Snap: your blink comes back quicker"
-  },
   character: { posture: { head: [0.02, -0.03], body: -0.01 }, quirk: "tailflick", every: [6, 11], for: 1 },
   pack: {
     melee: { attacks: [null, "nip", "maul"] },

@@ -34,6 +34,10 @@ The canopy's hole round her in ground mode: the built game at Ed's window, on th
 npm run build && node tools/smoke/canopy-hole.cjs [out dir] [seed] [query]   (SPOT=x,z: just there; ZOOMS=1: every zoom step too; TREETOPS=1: up over the treetops and out)
 ```
 
+## `cheer-shots.cjs`
+
+Frames of creatures won over celebrating: the built game in headless Chromium, the debug arena, her put down beside it, every one set celebrating, a frame at each of AT into OUT.
+
 ## `creator-menus.cjs`
 
 The character creator's boxes: the built game at 1600×900; opens each box in turn, picks a colour in the hat's own picker, then walks her up to her things in the room checking each opens its box; screenshots and a GIF.
@@ -62,6 +66,10 @@ The sleeping legends' dream bubbles: the built game at 1280×720 on a seed; the 
 npm run build && node tools/smoke/dreams.cjs [out dir] [seed]
 ```
 
+## `effects-scene.cjs`
+
+Executed in the page: require a complete forest and a nonblank drawn canvas, not elapsed wall time.
+
 ## `flask-stack.cjs`
 
 The flask in her sigil stack: the built game at 1280×720 on a seed; three creatures leashed to her and the first relic carried, on the ground at home; a crop of her stack before, after one cycle and after another.
@@ -84,6 +92,14 @@ The party's tempo on screen.
 
 ```
 npm run build && node tools/smoke/knockdown-bpm.cjs [out dir] [seed]
+```
+
+## `large-world.cjs`
+
+Largest shipped world: art loading/drawing can depend on area diversity and world extent.
+
+```
+NODE_PATH=.pw/node_modules node tools/smoke/large-world.cjs
 ```
 
 ## `legend-attack.cjs`
@@ -149,6 +165,10 @@ npm run build && node tools/smoke/magic-sigils.cjs <out dir> [seed]
 ## `music-lab-pause.cjs`
 
 The Music Lab on the pause page: the built game at the decks, Esc, the pause page's 🎛 button, the panel open down the right edge; a part muted, its channel's gain at 0; a jump to a section, the cue forced; Esc again, the panel still up; ✕, closed.
+
+## `orbit-combat.cjs`
+
+Frames of a busy fight under combat as orbit slots: the built game in headless Chromium, the debug arena, her put down beside it, a frame every STEP seconds of game time for SECS seconds into OUT, so hearts, 💧s and 💌s can be judged together.
 
 ## `packs.cjs`
 

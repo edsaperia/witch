@@ -13,10 +13,13 @@ import { witchHeight } from "../rules/witch";
 import { hash2 } from "../rules/random";
 import { groundHeight, placed, shownOverBend } from "./height";
 import { pixelEmoji, pixelEmojiData, pixelSprite, sizeBubble, speechBubble } from "./bubbles";
+import { BubbleFader, sightOf } from "./bubbleSight";
 
 import { bodyRadius } from "../rules/spacing";
 import type { Creature } from "../rules/creatures";
-import { RingModel, ringOf } from "./inviteRing";
+import { RingModel, ringOf, slotKind } from "./inviteRing";
+import { drainOf, fillsOf } from "../rules/orbit";
+import { letterLanded, popScale, ringFilled } from "./impact";
 import { beachOf } from "../rules/mapShape";
 import { tiltFilter } from "./overlayTilt";
 import type { OcclusionProbes } from "./occlusion";
@@ -101,15 +104,18 @@ export class InviteView {
   herOffset?: HerOffset;
   private root = document.createElement("div");
   private letters: HTMLImageElement[] = [];
-  private lanterns: HTMLElement[] = [];
   /** The rings (render/inviteRing.ts): what each holds, and its envelopes and gap marks by creature. */
   private ringModel = new RingModel();
   private rings = new Map<number, { imgs: HTMLImageElement[]; dots: HTMLElement[]; joined: number[] }>();
   /** Envelopes falling out of orbit (then resting), and hearts rising off a full ring. */
   private falling: { x: number; y: number; z: number; at: number; tilt: number; el: HTMLImageElement }[] = [];
   private hearts: { x: number; y: number; z: number; at: number; el: HTMLImageElement }[] = [];
+  /** Each soundsystem's 💥s (Ed, 2026-10-28: its health as a ring of them, one a tenth of it left). */
+  private booms = new Map<string, HTMLImageElement[]>();
   private hers: Bubble;
   private replies = new Map<number, Bubble>();
+  /** The replies faded in and out by how near she is, on the ground only (render/bubbleSight.ts; Ed, 2026-10-28). */
+  private sight = new BubbleFader();
   private lastHers = -Infinity;
   /** Little pops where letters land: { element, where, when }. */
   private pops: { el: HTMLImageElement; e: string; x: number; y: number; z: number; at: number }[] = [];
@@ -149,7 +155,7 @@ export class InviteView {
   setGame(game: Game): void {
     this.game = game;
     this.root.replaceChildren();
-    this.letters = []; this.lanterns = []; this.ringModel = new RingModel(); this.rings.clear(); this.falling = []; this.hearts = [];
+    this.letters = []; this.ringModel = new RingModel(); this.rings.clear(); this.falling = []; this.hearts = [];
     this.replies.clear(); this.lastHers = -Infinity; this.pops = []; this.crumples = []; this.lastTime = -1; this.resting = [];
     this.spins.clear(); this.restImgs = []; this.seen.clear();
     this.hers = this.bubble(-1);
@@ -227,7 +233,7 @@ export class InviteView {
 
     // The bubbles: hers on a shot (at most one every bubbleEvery seconds, replacing the last); a
     // creature's reply on a hit or a block (one per creature, replacing its last).
-    const A = affectionOf(g), won: number[] = [];
+    const A = affectionOf(g), won: number[] = [], landedNow = new Set<number>();
     for (const e of I.events) {
       const key = `${e.kind}:${e.n ?? ""}:${e.id ?? ""}:${e.at}`;
       if (this.seen.has(key)) continue;
@@ -246,6 +252,7 @@ export class InviteView {
         if (e.kind === "blocked") { this.pop("💢", e.x, head(e.id) * 0.6 + 0.5, e.z, time); this.crumple(e, head(e.id) * 0.5, time); }
         if (e.kind === "happy") won.push(e.id);
         if (e.spent) continue;
+        if (e.kind === "hit") { letterLanded(e.id); landedNow.add(e.id); } // (its flash and squash: render/impact.ts)
         let b = this.replies.get(e.id);
         if (!b) { b = this.bubble(e.id); this.replies.set(e.id, b); }
         if (e.kind !== "happy" && b.until > time + 0.4) continue; // (still showing its last)
@@ -302,6 +309,9 @@ export class InviteView {
       if (time >= b.until || c.gone) { b.el.remove(); this.replies.delete(id); continue; }
       const hd = heads?.get(id); // (its tail over its head: Ed, 2026-10-12)
       place(b.el, hd?.x ?? c.x, head(id) + 0.9, hd?.z ?? c.z);
+      const seen = this.sight.step(`r${id}`, sightOf(w, c.x, c.z, t.bubbles.near, t.bubbles.fade), performance.now() / 1000, t.bubbles.ease);
+      b.el.style.opacity = seen.toFixed(2);
+      if (seen < 0.01) b.el.style.visibility = "hidden";
     }
 
     // Flat on the ground, seen from the camera: squashed top to bottom by how steeply it looks down.
@@ -343,41 +353,29 @@ export class InviteView {
       const L = I.letters[i];
       if (!L) { im.style.display = "none"; return; }
       im.style.display = "block";
-      // A cache waits on the ground, bobbing; an orbiting one circles at her hand; the rest fly.
-      const y = L.kind === "cache" ? 0.35 + 0.12 * Math.sin((time - L.at) * 4 + L.n) : L.kind === "orbit" || L.kind === "sling" ? 1.3 : lobHeight(L.flown, L.range ?? this.game.tuning.invites.range, this.game.tuning.invites.arc ?? 0);
+      // One circling a Slingshot hat at hand height; the rest fly.
+      const y = L.kind === "sling" ? 1.3 : lobHeight(L.flown, L.range ?? this.game.tuning.invites.range, this.game.tuning.invites.arc ?? 0);
       const [lx, ly, lz] = letterAt(this.herOffset, L.x, y, L.z); // (in the house, from her hand as drawn)
       place(im, lx, ly, lz);
       // Like a frisbee (Ed, 2026-10-06: "the envelopes should spin like a frisbee"): lying flat, turning
       // about the upright at invites.spin turns a second (snapped to sixteenths, pixel-like), laid flat
-      // for the camera; a small one (Spawn) smaller; a cache still.
-      const turns = L.kind === "cache" ? 0 : Math.round(((time - L.at) * t.invites.spin + L.n * 0.37) * 16) / 16, deg = (turns % 1) * 360, sz = L.small ? 0.6 : 1;
+      // for the camera.
+      const turns = Math.round(((time - L.at) * t.invites.spin + L.n * 0.37) * 16) / 16, deg = (turns % 1) * 360, sz = 1;
       if (!L.kind) this.spins.set(L.n, deg);
       showTurned(im, "💌", n, sz, sz * flat, deg, k); // (in art pixels, on the grid: Ed, round 14)
       hide(im, `l${L.n}`, lx, ly, lz);
     });
     if (this.spins.size > 64) { const live = new Set(I.letters.map(L => L.n)); for (const n of this.spins.keys()) if (!live.has(n)) this.spins.delete(n); }
-    // Paw prints (Wildcat): little glowing hearts where the letters flew, fading out.
-    while (this.lanterns.length < I.lanterns.length) {
-      const d = document.createElement("div");
-      Object.assign(d.style, { position: "absolute", width: `${k * 2}px`, height: `${k * 2}px`, marginLeft: `${-k}px`, marginTop: `${-k}px`, background: "#f3cf9a", boxShadow: "0 0 6px 2px rgba(217,120,158,.7)" });
-      this.root.append(d);
-      this.lanterns.push(d);
-    }
-    this.lanterns.forEach((d, i) => {
-      const p = I.lanterns[i];
-      if (!p) { d.style.display = "none"; return; }
-      d.style.display = "block";
-      place(d, p.x, 1.1, p.z);
-      d.style.opacity = Math.max(0, Math.min(1, (p.until - time) / 0.3)).toFixed(2);
-    });
 
     // The rings: one slot a hit each creature's meter needs (invites.hits by its level), the envelopes it holds
     // orbiting it, flat and spinning, the gaps faint marks; turning slowly round it at about its middle.
-    const near = g.creatures.filter(c => !c.gone && Math.abs(c.x - w.x) < 60 && Math.abs(c.z - w.z) < 60 && (c.affection || this.ringModel.rings.has(c.id)));
-    const changes = this.ringModel.update(near, c => ringOf(c.level, A.affection(c), meterHits(t)), won);
-    // (clear of it, by its size: Ed's playtest, 2026-10-06, "Invitation orbits are too tight around the creature"; invites.orbit)
+    // (and its hearts and 💧s: combat as orbit slots, Ed 2026-10-28, rules/orbit.ts)
+    const near = g.creatures.filter(c => !c.gone && Math.abs(c.x - w.x) < 60 && Math.abs(c.z - w.z) < 60 && (c.affection || c.drops || c.dazed || this.ringModel.rings.has(c.id))), D = drainOf(t);
+    const changes = this.ringModel.update(near, c => ringOf(c.level, c.dazed ? 1 : A.affection(c), meterHits(t), fillsOf(c, g.clock.time, D), c.drops ?? 0), won);
+    // (clear of it, by its size: Ed's playtest, 2026-10-06, "Invitation orbits are too tight around the creature"; invites.orbit;
+    // and by its size as drawn, Ed 2026-10-28: "their size should adjust depending on how large the creatures are")
     const ringAt = (c: Creature, slot: number, slots: number) => {
-      const O = t.invites.orbit, r = Math.max(bodyRadius(c) * O.scale + O.gap, O.min, (slots * 0.42) / (Math.PI * 2)), a = time * 0.7 + (slot / slots) * Math.PI * 2;
+      const O = t.invites.orbit, r = Math.max(bodyRadius(c) * O.scale + O.gap, O.min, (tops.get(c.id) ?? 0) * (O.height ?? 0) + O.gap, (slots * 0.42) / (Math.PI * 2)), a = time * 0.7 + (slot / slots) * Math.PI * 2;
       return { x: c.x + Math.cos(a) * r, y: Math.max(0.5, head(c.id) * 0.55), z: c.z + Math.sin(a) * r };
     };
     const envSize = (slots: number) => (slots > 12 ? 0.55 : slots > 6 ? 0.7 : 0.85); // (smaller as they crowd: 18 still distinct)
@@ -394,6 +392,7 @@ export class InviteView {
         let r = R;
         if (!r) { r = { imgs: [], dots: [], joined: [] }; this.rings.set(ch.id, r); }
         r.joined[ch.slot] = time;
+        if (ch.slot === ch.slots - 1 && landedNow.has(ch.id)) ringFilled(t.invites.impact?.hitstop ?? 0); // (the 💌 that fills its ring: a hitstop, render/impact.ts)
       } else if (ch.kind === "drop" && c) {
         // Out of orbit: it falls from where it was to the ground, then rests a moment there (no piling up).
         const p = ringAt(c, ch.slot, ch.slots);
@@ -402,6 +401,12 @@ export class InviteView {
         // Full: the envelopes' paper vanishes, leaving each its ❤️, rising and fading.
         for (let s = 0; s < ch.slots; s++) this.hearts.push({ ...ringAt(c, s, ch.slots), at: time, el: img("❤️", Math.max(5, Math.round(n * envSize(ch.slots) * 0.75))) });
       }
+    }
+    // Won over: a burst of hearts off it besides its ring's, as it celebrates (render/cheer.ts; invites.cheer.hearts).
+    for (const id of won) {
+      const c = g.creatures[id], N = t.invites.cheer?.hearts ?? 0;
+      if (!c) continue;
+      for (let i = 0; i < N; i++) { const a = (i / N) * Math.PI * 2 + hash2(id, i, 23), r = 0.6 + 0.8 * hash2(id, i, 29); this.hearts.push({ x: c.x + Math.cos(a) * r, y: head(id) * (0.4 + 0.5 * hash2(id, i, 31)), z: c.z + Math.sin(a) * r * 0.6, at: time, el: img("❤️", Math.max(5, Math.round(n * 0.6))) }); }
     }
     for (const [id, r] of this.rings) {
       const now = this.ringModel.rings.get(id), c = g.creatures[id];
@@ -418,7 +423,7 @@ export class InviteView {
         this.root.append(d); r.dots.push(d);
       }
       for (let s = 0; s < r.imgs.length; s++) {
-        const im = r.imgs[s], d = r.dots[s], on = s < now.filled, there = s < now.slots;
+        const im = r.imgs[s], d = r.dots[s], on = s < now.filled, there = s < now.slots, kind = slotKind(now, s);
         im.style.display = on ? "block" : "none";
         d.style.display = there && !on ? "block" : "none";
         if (!there) continue;
@@ -426,12 +431,32 @@ export class InviteView {
         if (on) {
           place(im, p.x, p.y, p.z);
           hide(im, rkey, rx, ry, rz);
-          const pop = Math.min(1, (time - (r.joined[s] ?? -9)) / 0.25), grow = pop < 1 ? 1.4 - 0.4 * pop : 1; // (joining: a little pop)
+          const grow = popScale(time - (r.joined[s] ?? -9), t.invites.impact); // (joining: a pop, overshooting and settling: render/impact.ts)
           const deg = ((Math.round((time * t.invites.spin * 0.5 + s * 0.13) * 16) / 16) % 1) * 360;
-          showTurned(im, "💌", n, sz * grow, sz * grow * flat, deg, k);
+          // (a heart or a 💧 stands upright, bobbing, in its own glow, so the three read apart: 💌 flat and spinning, warm)
+          if (kind === "letter") { showTurned(im, "💌", n, sz * grow, sz * grow * flat, deg, k); im.style.filter = "drop-shadow(0 0 2px rgba(232,180,106,.6))"; }
+          else { showTurned(im, kind === "drop" ? "💧" : "❤️", n, sz * grow * 0.9, sz * grow * 0.9, 0, k); im.style.filter = kind === "drop" ? "drop-shadow(0 0 2px rgba(110,170,255,.9))" : "drop-shadow(0 0 2px rgba(255,90,150,.8))"; }
         } else { place(d, p.x, p.y, p.z); hide(d, rkey, rx, ry, rz); }
       }
     }
+    // A soundsystem hurt: its health as a ring of 💥s round it, one a tenth of what's left, turning slowly (Ed, 2026-10-28; it was a
+    // bar over it).
+    const boomsSeen = new Set<string>();
+    for (const [key, h] of g.combat.sounds) {
+      if (h.hp >= h.max || h.hp <= 0 || Math.abs(h.x - w.x) > 120 || Math.abs(h.z - w.z) > 120) continue;
+      boomsSeen.add(key);
+      const nb = Math.max(1, Math.ceil((10 * h.hp) / h.max)), els = this.booms.get(key) ?? [];
+      while (els.length < 10) { const im = img("💥", n); im.style.filter = "drop-shadow(0 0 2px rgba(255,170,60,.8))"; els.push(im); }
+      this.booms.set(key, els);
+      const r = h.radius + t.invites.orbit.gap * 1.5, y = h.radius > 5 ? 6 : 4; // (just outside it, by the orbits' gap)
+      els.forEach((im, i) => {
+        if (i >= nb) { im.style.display = "none"; return; }
+        const a = time * 0.4 + (i / 10) * Math.PI * 2, x = h.x + Math.cos(a) * r, z = h.z + Math.sin(a) * r;
+        im.style.display = "block"; place(im, x, y, z); hide(im, `boom${key}`, h.x, y, h.z);
+        showTurned(im, "💥", n, 0.95, 0.95, 0, k);
+      });
+    }
+    for (const [key, els] of this.booms) if (!boomsSeen.has(key)) { for (const im of els) im.remove(); this.booms.delete(key); }
     // Falling out of orbit (0.45 s), then resting where it came down with the other resting 💌s.
     this.falling = this.falling.filter(f => {
       const u = (time - f.at) / 0.45;

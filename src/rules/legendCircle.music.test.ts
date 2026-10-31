@@ -6,6 +6,7 @@ import { circleCue, legendCircleAt } from "./musicPlan";
 import { mixAt, muffled } from "./music";
 import { circleParts, notesAt, type BlockPlan, type MusicStyle } from "./musicScore";
 
+// Keep the seeded multi-clearing radius map: music lookup is checked at every clearing and against the original legend-radius boundary regression.
 const style = styleJson as unknown as MusicStyle;
 
 describe("a sleeping legend's clearing in the music (Ed, 2026-10-06)", () => {

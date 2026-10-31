@@ -10,7 +10,6 @@
 // the oldest giving way), made only for creatures within blood.range of her; drawing only, seeded (no Math.random).
 import { GENOMES } from "../../../art/genome/species.js";
 import { sigilColour } from "../../../art/generator.js";
-import { creatureMaxHp } from "../../rules/combat";
 import type { Creature } from "../../rules/creatures";
 import { hash2 } from "../../rules/random";
 import { metresPerArtPixel } from "../sprites";
@@ -64,8 +63,8 @@ export class BloodPool {
       if (!tr) { this.tracks.set(c.id, { x: c.x, z: c.z, walked: 0, step: 0, drip: 0 }); continue; }
       const moved = Math.hypot(c.x - tr.x, c.z - tr.z), dx = c.x - tr.x, dz = c.z - tr.z;
       tr.x = c.x; tr.z = c.z;
-      if (c.hp === undefined || c.asleep) { tr.walked = 0; tr.drip = 0; continue; } // (whole: none)
-      const h = Math.max(0, Math.min(1, 1 - c.hp / creatureMaxHp(c))); // how hurt, 0 to 1
+      if (!c.drops || c.asleep) { tr.walked = 0; tr.drip = 0; continue; } // (whole: none)
+      const h = Math.max(0, Math.min(1, c.drops)); // how hurt, 0 to 1: its 💧s (rules/orbit.ts)
       if (h <= 0 || moved > 6) continue; // (a teleport or a respawn isn't a walk)
       const size = top(c), gait = GAIT.get(c.species) ?? "prints", rgb = K.colour === "neon" ? neonBlood(c.species) : BLOOD_RED;
       const stride = Math.max(0.45, size * 0.7), side = Math.max(0.12, size * 0.16), big = size >= 2.6 ? 3 : 2;

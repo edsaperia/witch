@@ -23,18 +23,12 @@ export const CREATURE_IBEX = {
   radius: 0.85,
   temperament: "skittish",
   voice: { family: "big", pitch: 1.85, am: [16, 0.45], vowel: 0.8, noise: 0.15 },
-  buff: {
-    name: "Sure-footed",
-    kind: "move",
-    scale: { groundAcceleration: 1.4, riseTime: 0.75 },
-    label: "Ibex's Sure-footed: quicker starts on foot, and a quicker climb to the treetops"
-  },
   character: { posture: { head: [0.05, 0.02], body: 0 }, quirk: "stomp", every: [5, 9], for: 0.9 },
   pack: {
     melee: { attacks: [null, "nip", "maul"], knockback: 6 },
     ranged: { name: "dislodged stone", range: 14, shots: [0, 1, 1], tint: "red" },
     special: "knockback",
-    retreat: "trees",
+    retreat: "leapfrog", // (Ed, 2026-10-29: bounding back uphill, half behind the other half, never hidden: "trees" put it out of sight and back at once)
     rhythm: "steady",
     pressure: 1,
     call: "backs off uphill",

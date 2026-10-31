@@ -2,7 +2,9 @@
 // from berries"): each path sets healedAt through heal or healBy (rules/creatures.ts).
 import { describe, expect, it } from "vitest";
 import { heal, healBy, HEAL_TRICKLE_GAP, LEGEND, type Creature } from "./creatures";
-import { newGame, type Game } from "./game";
+import { newGame as fullGame, type Game } from "./game";
+import { smallWorld } from "../test/worlds";
+const newGame = smallWorld(fullGame, "Heal markers are checked on a few explicitly hurt creatures, independent of distant area diversity.");
 import { TUNING } from "./tuning";
 import { feed } from "./berries";
 import { befriend } from "./creatureStates";
@@ -12,19 +14,19 @@ import { startPartyOver } from "./partyOver";
 import { creatureMaxHp } from "./combat";
 
 const game = (): Game => newGame(77, TUNING);
-const hurt = (g: Game, i: number, patch: Partial<Creature> = {}): Creature => { const c = g.creatures.filter(k => !k.gone)[i]; Object.assign(c, { healedAt: undefined, healedSmall: undefined, ...patch }); c.hp = creatureMaxHp(c) * 0.3; return c; };
+const hurt = (g: Game, i: number, patch: Partial<Creature> = {}): Creature => { const c = g.creatures.filter(k => !k.gone)[i]; Object.assign(c, { healedAt: undefined, healedSmall: undefined, ...patch }); c.drops = 0.7; return c; }; // (its slots 70% 💧s: rules/orbit.ts)
 
 describe("every heal shows", () => {
   it("heal: whole again, healedAt set, a full heal; nothing for one already whole", () => {
     const g = game(), c = hurt(g, 0);
     expect(heal(c, 12)).toBe(true);
-    expect(c.hp).toBeUndefined(); expect(c.healedAt).toBe(12); expect(c.healedSmall).toBe(false);
+    expect(c.drops).toBeUndefined(); expect(c.healedAt).toBe(12); expect(c.healedSmall).toBe(false);
     expect(heal(c, 20)).toBe(false); expect(c.healedAt).toBe(12);
   });
   it("a berry", () => {
     const g = game(), c = hurt(g, 1, { leashed: true });
     feed(g.berries, c, 5, TUNING);
-    expect(c.healedAt).toBe(5); expect(c.hp).toBeUndefined();
+    expect(c.healedAt).toBe(5); expect(c.drops).toBeUndefined();
   });
   it("invited (happy)", () => {
     const g = game(), c = hurt(g, 2);
@@ -44,14 +46,14 @@ describe("every heal shows", () => {
   it("bedtime when the party's over", () => {
     const g = game(), c = hurt(g, 6);
     startPartyOver(g, 10);
-    expect(c.healedAt).toBe(10); expect(c.hp).toBeUndefined();
+    expect(c.healedAt).toBe(10); expect(c.drops).toBeUndefined();
   });
   it("a slow mend (a happy legend's regeneration, game.ts): a small one every HEAL_TRICKLE_GAP, a full one when whole", () => {
     const g = game(), c = hurt(g, 7), max = creatureMaxHp(c), step = 1 / 60, per = (max * 0.05) * step;
     const at: number[] = [];
-    for (let t = 0; c.hp !== undefined && t < 60; t += step) { const was = c.healedAt; healBy(c, per, max, t); if (c.healedAt !== was) at.push(c.healedAt!); }
+    for (let t = 0; c.drops !== undefined && t < 60; t += step) { const was = c.healedAt; healBy(c, per, max, t); if (c.healedAt !== was) at.push(c.healedAt!); }
     expect(at.length).toBeGreaterThan(3);
     for (let i = 1; i < at.length - 1; i++) expect(at[i] - at[i - 1]).toBeGreaterThanOrEqual(HEAL_TRICKLE_GAP - 1e-9);
-    expect(c.hp).toBeUndefined(); expect(c.healedSmall).toBe(false); // (the last: whole)
+    expect(c.drops).toBeUndefined(); expect(c.healedSmall).toBe(false); // (the last: whole)
   });
 });

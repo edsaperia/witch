@@ -15,12 +15,6 @@ export const CREATURE_MEERKAT = {
   },
   radius: 0.4,
   voice: { family: "small", pitch: 1.35, extra: 2, gap: 0.2 },
-  buff: {
-    name: "Lookout",
-    kind: "shot",
-    scale: { "invites.range": 1.3 },
-    label: "Meerkat's Lookout: 💌s reach further"
-  },
   character: { posture: { head: [0, 0.06], body: 0.01 }, quirk: "sentinel", every: [5, 9], for: 3.5 },
   pack: {
     melee: { attacks: [null, "nip", "maul"] },

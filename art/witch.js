@@ -23,13 +23,17 @@ export const DEFAULT_OUTFIT = {
   pattern: [.13, .1, 1], trim: [.0, .6, .8], flower: [.95, .45, .98], flower2: [.15, .6, 1], cup: [.99, .75, .85], glow: [.88, .75, 1], glow2: [.33, .8, 1], shades: [.7, .4, .14], frame: [.13, .6, .9],
   cloak: [.74, .5, .4], scarf: [.98, .6, .85], satchel: [.07, .55, .5],
   lantern: [.08, .3, .3], book: [.98, .55, .35], bumbag: [.5, .5, .55], band: [.95, .6, .9], vial: [.55, .15, .95],
-  plume: [.05, .1, .97], gold: [.12, .75, .95], backpack: [.33, .55, .5],
+  plume: [.13, .5, 1], gold: [.12, .75, .95], backpack: [.33, .55, .5],
 };
+// Her hat's glowing band (and a hat's glowing bits: a bead, a crown's jewels) in the plume's colour (Ed, 2026-10-29: "There is a
+// setting called 'plume' ... This should be renamed to 'band'. It should pick the colour of both the band and the plume"): its own
+// glowing material, so the rest of her glow (a pendant, the broom's) keeps the style's.
+const BAND = M.RUNE;
 // styleHues false: the outfit's own hues, whatever the style's (a party witch's colours are her own)
 export function witchColours(st, outfit = DEFAULT_OUTFIT, { styleHues = true } = {}) {
   const o = { ...DEFAULT_OUTFIT, ...outfit }, hue = styleHues ? { hair: st.hairHue, jacket: st.cloakHue, hat: st.hatHue, top: st.topHue, jeans: st.jeansHue, sneakers: st.shoeHue, headphones: st.phonesHue } : {};
   const c = {}; for (const [part, mat] of Object.entries(WITCH_PARTS)) { const [h, s, v] = o[part]; c[mat] = hsv2rgb(hue[part] ?? h, s, v); }
-  c[M.EYE] = [24, 18, 30]; c[M.GLINT] = [255, 255, 245]; c[M.NOSE] = [20, 16, 24]; c[M.MAGIC] = hsv2rgb(st.glowHue ?? .13, .5, 1); c[M.MAGIC2] = hsv2rgb(st.glowHue ?? .13, .15, 1);
+  c[M.EYE] = [24, 18, 30]; c[M.GLINT] = [255, 255, 245]; c[M.NOSE] = [20, 16, 24]; c[M.MAGIC] = hsv2rgb(st.glowHue ?? .13, .5, 1); c[M.MAGIC2] = hsv2rgb(st.glowHue ?? .13, .15, 1); c[BAND] = c[M.WEB];
   c[M.BELLY] = [245, 245, 240]; // sneaker soles, headphone band highlights
   return c;
 }
@@ -49,7 +53,7 @@ export const DEFAULT_LOOK = { hat: "classic", hair: "long", top: "jacket", phone
   hatHeight: 1, hatBrim: 1, hatTilt: 0, hatBand: 1, broom: "classic", broomLength: 1, broomBend: 0, bristles: 1, broomThickness: 1, cloak: "none", scarf: false, satchel: false, pendant: false, earrings: false,
   // its accessories (Ed: "both witchy and modern"): the cloak's length (times its kind's), patches on it; a lantern at her hip, a potion vial and a spellbook at her belt; a bum bag, a festival
   // wristband, chunky trainers, round sunglasses (shades "round")
-  cloakLength: 1, patches: false, lantern: false, vial: false, book: false, bumbag: false, wristband: false, chunky: false,
+  cloakLength: 1, patches: false, lantern: false, vial: false, book: false, bumbag: false, purse: false, tote: false, duffel: false, briefcase: false, clutch: false, messenger: false, wristband: false, chunky: false,
   // the creator's (Ed, round 11): the scarf's length (times hers; 0 none, 3 trailing on the ground), the satchel's size, a backpack's size (0 none)
   scarfLength: 1, bagSize: 1, backpackSize: 0 };
 const shoeR = L => L.chunky ? [.095, .056, .056] : [.08, .04, .045]; // her sneakers, or chunky trainers
@@ -103,18 +107,18 @@ function drawHat(m, L, brim, dir, mid, tip) {
   mid = hatPt(L, brim, mid); tip = hatPt(L, brim, tip);
   if (NEW_HATS[L.hat]) { const T = tilted(m, brim, L.hatTilt || 0); return T.turn ? T.turn(NEW_HATS[L.hat](T, L, brim, dir, up)) : NEW_HATS[L.hat](m, L, brim, dir, up); }
   const bandK = (L.hatBand ?? 1) * Math.max(1, 1 + ((L.hatBrim ?? 1) - 1) * .8); // (a broad brim would hide a narrow band from above: the band deepens with it)
-  const band = p => p[1] < brim[1] + (L.hat === "classic" ? .045 : .065) * bandK ? M.MAGIC : undefined, from = (p, k, d = [0, 0, 0]) => v3.add(v3.add(brim, v3.mul(v3.sub(p, brim), k)), d);
+  const band = p => p[1] < brim[1] + (L.hat === "classic" ? .045 : .065) * bandK ? BAND : undefined, from = (p, k, d = [0, 0, 0]) => v3.add(v3.add(brim, v3.mul(v3.sub(p, brim), k)), d);
   if (L.hat === "bucket") { // a soft bucket hat with cat ears, a glowing band round it
     const c = v3.add(brim, [-.01, .05, 0]);
     m.ell(brim, [.15, .016, .145], M.HAT, { dir, group: 11 });
-    m.ell(c, [.115, .07, .11], M.HAT, { group: 11, paint: p => p[1] < brim[1] + .07 && p[1] > brim[1] + .02 ? M.MAGIC : undefined });
+    m.ell(c, [.115, .07, .11], M.HAT, { group: 11, paint: p => p[1] < brim[1] + .07 && p[1] > brim[1] + .02 ? BAND : undefined });
     for (const s of [-1, 1]) m.seg(v3.add(c, [-.01, .04, s * .065]), v3.add(c, [-.02, .15, s * .085]), .04, .012, M.HAT, { group: 11 });
     return v3.add(c, [-.02, .16, 0]);
   }
   if (L.hat === "small") { // a little hat, tipped over to the near side (its crown by hatHeight, its brim by hatBrim, leaning by hatTilt)
     const T = tilted(m, brim, L.hatTilt || 0), k = L.hatHeight ?? 1, b = v3.add(brim, [.01, .015, .065]), t = v3.add(b, v3.mul([-.07, .17, .07], k));
     T.ell(b, brimR(L, [.1, .013, .095]), M.HAT, { dir: [1, .25, .45], group: 11 });
-    T.chain([[...v3.add(b, [0, .01, .005]), .055], [...v3.add(b, v3.mul([-.03, .09, .035], k)), .032], [...t, .011]], M.HAT, { group: 11, paint: p => p[1] < b[1] + Math.min(.055 * (L.hatBand ?? 1), .1 * k) ? M.MAGIC : undefined });
+    T.chain([[...v3.add(b, [0, .01, .005]), .055], [...v3.add(b, v3.mul([-.03, .09, .035], k)), .032], [...t, .011]], M.HAT, { group: 11, paint: p => p[1] < b[1] + Math.min(.055 * (L.hatBand ?? 1), .1 * k) ? BAND : undefined });
     return T.turn ? T.turn(t) : t;
   }
   if (L.hat === "floppy") { // a wide brim drooping all round, a short crown
@@ -145,7 +149,7 @@ const NEW_HATS = {
   top(m, L, brim, dir, up) { // a top hat: a narrow brim, a tall straight crown, a glowing band
     const h = .22 * (L.hatHeight ?? 1), bk = L.hatBrim ?? 1;
     m.ell(brim, [.13 * bk, .013, .12 * bk], M.HAT, { dir, group: 11 });
-    m.seg(hatAt(brim, up, .005), hatAt(brim, up, h), .078, .082, M.HAT, { group: 11, paint: p => v3.dot(v3.sub(p, brim), up) < .045 * (L.hatBand ?? 1) ? M.MAGIC : undefined });
+    m.seg(hatAt(brim, up, .005), hatAt(brim, up, h), .078, .082, M.HAT, { group: 11, paint: p => v3.dot(v3.sub(p, brim), up) < .045 * (L.hatBand ?? 1) ? BAND : undefined });
     m.ell(hatAt(brim, up, h), [.082, .01, .082], M.HAT2, { dir: [1, 0, 0], up, group: 11 });
     return hatAt(brim, up, h + .01);
   },
@@ -153,7 +157,7 @@ const NEW_HATS = {
     const h = .13 * (L.hatHeight ?? 1), bk = L.hatBrim ?? 1;
     m.ell(brim, [.2 * bk, .014, .17 * bk], M.HAT, { dir, group: 11 });
     for (const s2 of [-1, 1]) m.ell(v3.add(brim, [0, .03, s2 * .16 * bk]), [.13 * bk, .012, .04], M.HAT, { dir: [1, 0, 0], up: [0, 1, -s2 * .9], group: 11 });
-    m.ell(hatAt(brim, up, h * .55), [.095, h * .55, .085], M.HAT, { group: 11, paint: p => v3.dot(v3.sub(p, brim), up) < .05 * (L.hatBand ?? 1) * Math.max(1, 1 + (bk - 1) * .5) ? M.MAGIC : Math.abs(p[2] - brim[2]) < .012 && v3.dot(v3.sub(p, brim), up) > h * .8 ? M.HAT2 : undefined });
+    m.ell(hatAt(brim, up, h * .55), [.095, h * .55, .085], M.HAT, { group: 11, paint: p => v3.dot(v3.sub(p, brim), up) < .05 * (L.hatBand ?? 1) * Math.max(1, 1 + (bk - 1) * .5) ? BAND : Math.abs(p[2] - brim[2]) < .012 && v3.dot(v3.sub(p, brim), up) > h * .8 ? M.HAT2 : undefined });
     return hatAt(brim, up, h * 1.1);
   },
   conical(m, L, brim, dir, up) { // the wide straw cone, a glowing bead at its point
@@ -162,7 +166,7 @@ const NEW_HATS = {
     m.ell(hatAt(brim, up, h * .25), [.21 * bk, h * .3, .2 * bk], M.HAT, { dir: [1, 0, 0], up, group: 11, paint: rib }); // a wide, shallow cone: a flat disc
     m.seg(hatAt(brim, up, h * .3), hatAt(brim, up, h), .1 * Math.min(1.3, bk), .012, M.HAT, { group: 11, paint: rib }); // rising to its point
     const br = .03 * Math.sqrt(Math.max(1, L.hatHeight ?? 1, bk)); // (a bigger bead on a bigger hat, so it still shows; at least a pixel and a half across at her size)
-    m.ell(hatAt(brim, up, h + .01), [br, br, br], M.MAGIC, { group: 11 });
+    m.ell(hatAt(brim, up, h + .01), [br, br, br], BAND, { group: 11 });
     return hatAt(brim, up, h + .01 + br * .95);
   },
   boppers(m, L, brim, dir, up) { // deely boppers: a headband, two springs, two glowing balls
@@ -174,15 +178,15 @@ const NEW_HATS = {
   },
   party(m, L, brim, dir, up) { // a striped party cone with a pompom, a glowing band at its rim
     const h = .24 * (L.hatHeight ?? 1), bk = L.hatBrim ?? 1;
-    m.seg(hatAt(brim, up, 0), hatAt(brim, up, h), .075 * Math.min(1.4, bk), .008, M.HAT, { group: 11, paint: p => { const t = v3.dot(v3.sub(p, brim), up); return t < .045 * (L.hatBand ?? 1) ? M.MAGIC : Math.floor(t * 30) % 2 ? M.HAT2 : undefined; } });
+    m.seg(hatAt(brim, up, 0), hatAt(brim, up, h), .075 * Math.min(1.4, bk), .008, M.HAT, { group: 11, paint: p => { const t = v3.dot(v3.sub(p, brim), up); return t < .045 * (L.hatBand ?? 1) ? BAND : Math.floor(t * 30) % 2 ? M.HAT2 : undefined; } });
     m.ell(hatAt(brim, up, h + .015), [.03, .03, .03], M.POM, { group: 11 });
-    if (h < .1) m.ell(hatAt(brim, up, .012), [.045, .016, .045], M.MAGIC, { group: 11 }); // (a tiny one: its band a ring round the rim, so it still shows)
+    if (h < .1) m.ell(hatAt(brim, up, .012), [.045, .016, .045], BAND, { group: 11 }); // (a tiny one: its band a ring round the rim, so it still shows)
     return hatAt(brim, up, h + .045);
   },
   musketeer(m, L, brim, dir, up) { // a wide brim pinned up on one side, a round crown, a great curling plume
     const h = .11 * (L.hatHeight ?? 1), bk = L.hatBrim ?? 1;
     m.ell(brim, [.22 * bk, .014, .19 * bk], M.HAT, { dir: v3.add(dir, [0, .25, 0]), group: 11 });
-    m.ell(hatAt(brim, up, h * .5), [.1, h * .55, .095], M.HAT, { group: 11, paint: p => v3.dot(v3.sub(p, brim), up) < .05 * (L.hatBand ?? 1) * Math.max(1, 1 + (bk - 1) * .8) ? M.MAGIC : undefined });
+    m.ell(hatAt(brim, up, h * .5), [.1, h * .55, .095], M.HAT, { group: 11, paint: p => v3.dot(v3.sub(p, brim), up) < .05 * (L.hatBand ?? 1) * Math.max(1, 1 + (bk - 1) * .8) ? BAND : undefined });
     const p0 = hatAt(brim, up, h * .7, [.03, 0, .06]), pts = [];
     for (let k = 0; k <= 6; k++) { const t = k / 6, a = .6 + t * 2.2; pts.push([...v3.add(p0, [-Math.sin(a) * .2 * t - .02, Math.cos(a) * -.12 * t + .13 * t, .05 * t]), .035 * (1 - t * .6)]); }
     m.chain(pts, M.WEB, { group: 11 });
@@ -191,25 +195,25 @@ const NEW_HATS = {
   wizard(m, L, brim, dir, up) { // a tall starry cone, its tip drooping, a wide brim
     const h = .4 * (L.hatHeight ?? 1), bk = L.hatBrim ?? 1, a = hatAt(brim, up, h * .7), t = v3.add(hatAt(brim, up, h), [-.08, -.03, 0]);
     m.ell(brim, [.17 * bk, .013, .16 * bk], M.HAT, { dir, group: 11 });
-    const star = p => hash2(Math.floor(p[0] * 40), Math.floor(p[1] * 40) + Math.floor(p[2] * 40) * 7, 31) < .1 ? M.MAGIC2 : v3.dot(v3.sub(p, brim), up) < .04 * (L.hatBand ?? 1) ? M.MAGIC : undefined;
+    const star = p => hash2(Math.floor(p[0] * 40), Math.floor(p[1] * 40) + Math.floor(p[2] * 40) * 7, 31) < .1 ? M.MAGIC2 : v3.dot(v3.sub(p, brim), up) < .04 * (L.hatBand ?? 1) ? BAND : undefined;
     m.chain([[...hatAt(brim, up, .01), .085], [...a, .03], [...t, .01]], M.HAT, { group: 11, paint: star });
     return t;
   },
   beanie(m, L, brim, dir, up) { // a ribbed beanie hugging her head, a folded glowing cuff, a bobble
     const h = .07 * (L.hatHeight ?? 1);
-    m.ell(hatAt(brim, up, h * .3), [.118, .075 + h * .4, .114], M.HAT, { group: 11, paint: p => { const t = v3.dot(v3.sub(p, brim), up); return t < .02 * (L.hatBand ?? 1) ? M.MAGIC : Math.floor((Math.atan2(p[2] - brim[2], p[0] - brim[0]) + 4) * 6) % 2 ? M.HAT1 : undefined; } });
+    m.ell(hatAt(brim, up, h * .3), [.118, .075 + h * .4, .114], M.HAT, { group: 11, paint: p => { const t = v3.dot(v3.sub(p, brim), up); return t < .02 * (L.hatBand ?? 1) ? BAND : Math.floor((Math.atan2(p[2] - brim[2], p[0] - brim[0]) + 4) * 6) % 2 ? M.HAT1 : undefined; } });
     const b = hatAt(brim, up, .1 + h * .9); m.ell(b, [.04, .04, .04], M.POM, { group: 11 });
     return v3.add(b, [0, .035, 0]);
   },
   crown(m, L, brim, dir, up) { // a golden crown, its points tipped with glowing jewels
     const h = .07 * (L.hatHeight ?? 1), bk = Math.min(1.3, L.hatBrim ?? 1);
-    m.seg(hatAt(brim, up, 0), hatAt(brim, up, h), .085 * bk, .09 * bk, M.BARKL, { group: 11, paint: p => Math.abs(v3.dot(v3.sub(p, brim), up) - h * .5) < .008 * Math.min(2.5, L.hatBand ?? 1) ? M.MAGIC : undefined });
-    for (let k = 0; k < 5; k++) { const a2 = k / 5 * Math.PI * 2, o = [Math.cos(a2) * .085 * bk, 0, Math.sin(a2) * .085 * bk], b = hatAt(v3.add(brim, o), up, h), t = hatAt(v3.add(brim, o), up, h + .05); m.seg(b, t, .022, .006, M.BARKL, { group: 11 }); m.ell(t, [.012, .012, .012], M.MAGIC, { group: 11 }); }
+    m.seg(hatAt(brim, up, 0), hatAt(brim, up, h), .085 * bk, .09 * bk, M.BARKL, { group: 11, paint: p => Math.abs(v3.dot(v3.sub(p, brim), up) - h * .5) < .008 * Math.min(2.5, L.hatBand ?? 1) ? BAND : undefined });
+    for (let k = 0; k < 5; k++) { const a2 = k / 5 * Math.PI * 2, o = [Math.cos(a2) * .085 * bk, 0, Math.sin(a2) * .085 * bk], b = hatAt(v3.add(brim, o), up, h), t = hatAt(v3.add(brim, o), up, h + .05); m.seg(b, t, .022, .006, M.BARKL, { group: 11 }); m.ell(t, [.012, .012, .012], BAND, { group: 11 }); }
     return hatAt(brim, up, h + .07);
   },
   mushroom(m, L, brim, dir, up) { // a spotted mushroom cap, its gills glowing underneath
     const h = .09 * (L.hatHeight ?? 1), bk = L.hatBrim ?? 1;
-    m.ell(hatAt(brim, up, h * .45), [.19 * bk, h, .18 * bk], M.HAT, { group: 11, paint: p => v3.dot(v3.sub(p, brim), up) < Math.max(.045, h * .15) * Math.min(2, L.hatBand ?? 1) ? M.MAGIC : spotPaint(p) ? M.HAT2 : undefined });
+    m.ell(hatAt(brim, up, h * .45), [.19 * bk, h, .18 * bk], M.HAT, { group: 11, paint: p => v3.dot(v3.sub(p, brim), up) < Math.max(.045, h * .15) * Math.min(2, L.hatBand ?? 1) ? BAND : spotPaint(p) ? M.HAT2 : undefined });
     return hatAt(brim, up, h * 1.5);
   },
   traffic(m, L, brim, dir, up) { // a traffic cone, its stripes glowing like reflectors
@@ -292,12 +296,20 @@ function longCloak(m, L, sh, dir, back, len, flying, patch) {
   }
   m.ell(pts[n], [.05, .025, cloakWidth(len) + .03], M.CLOTH, { dir: v3.norm(v3.sub(pts[n], pts[n - 1])), up: flying || pts[n][1] <= .031 ? [0, 1, 0] : back, group: 14, extra: true });
 }
+// Each cloak's own Length (Ed, 2026-10-29: "the short cape should not be able to be as long as the long one ... Longest short cape
+// and shortest long cape should be at knee length"): a cloak hangs CLOAK_DROP metres times her cloakLength, the short one at most
+// to her knee, the long ones at least to it. CLOAK_KNEE: from where it hangs to her knee joint, standing (footModel's stand: the
+// hang at y .77, the knee at .265, the cloak falling a little back).
+export const CLOAK_KNEE = .51;
+export const cloakDrop = cloak => cloak === "short" ? .22 : .42;
+/** A cloak's cloakLength kept on its own side of the knee (lo and hi: the slider's whole range, witchGenome.js WITCH_AXES). */
+export const cloakLengthIn = (cloak, k, lo = .6, hi = 6) => { const knee = CLOAK_KNEE / cloakDrop(cloak); return cloak === "short" ? Math.max(lo, Math.min(knee, k)) : Math.max(knee, Math.min(hi, k)); };
 // The witch generator's extras: a cloak from her shoulders (short, long, or long with a hood), streaming out behind in flight or
 // hanging down her back; a scarf round her neck, its end flying; a satchel on her near hip on a strap across her; a glowing pendant.
 function drawExtras(m, L, chest, fwd, spine, flying) {
   const back = v3.mul(fwd, -1), side = [0, 0, 1], neck = v3.add(chest, v3.mul(spine, .14));
   if (L.cloak && L.cloak !== "none") {
-    const len = (L.cloak === "short" ? .22 : .42) * (L.cloakLength || 1), sh = v3.add(chest, v3.add(v3.mul(spine, .1), v3.mul(back, .07)));
+    const len = cloakDrop(L.cloak) * cloakLengthIn(L.cloak, L.cloakLength || 1), sh = v3.add(chest, v3.add(v3.mul(spine, .1), v3.mul(back, .07)));
     const dir = flying ? v3.norm(v3.add(back, v3.mul(spine, -.15))) : v3.norm(v3.add(v3.mul(spine, -1), v3.mul(back, .18)));
     const mid = v3.add(sh, v3.mul(dir, len * .5)), end = v3.add(sh, v3.mul(dir, len));
     const patch = L.patches ? p => hash2(Math.floor(p[0] * 11), Math.floor(p[1] * 11) + Math.floor(p[2] * 11) * 17, 23) < .14 ? M.HAT2 : undefined : undefined; // patched: squares of another cloth
@@ -335,7 +347,7 @@ function drawExtras(m, L, chest, fwd, spine, flying) {
 }
 // The witch generator's accessories (Ed: "both witchy and modern"), all ellipsoids and limbs so the posed flight turns them: a
 // lantern hanging at her far hip (lit), a potion vial (glowing) and a spellbook at her
-// belt, a bum bag at her front.
+// belt, a bum bag at her front, a purse at her far hip (Ed, 2026-10-29: the third bag, "in between").
 function drawAccessories(m, L, chest, fwd, spine, flying) {
   const side = [0, 0, 1], back = v3.mul(fwd, -1), at = (u, f, s) => v3.add(chest, v3.add(v3.mul(spine, u), v3.add(v3.mul(fwd, f), v3.mul(side, s))));
   const waist = -.16;
@@ -346,6 +358,37 @@ function drawAccessories(m, L, chest, fwd, spine, flying) {
   }
   if (L.vial) { const c = at(waist - .02, .07, .1); m.ell(c, [.018, .03, .018], M.CRYSTAL, { group: 20, paint: p => p[1] < c[1] ? M.GLOW : undefined }); m.ell(v3.add(c, v3.mul(spine, .035)), [.009, .009, .009], M.WOOD, { group: 20 }); }
   if (L.book) { const c = at(waist, -.07, .1); m.ell(c, [.05, .062, .022], M.BARKD, { dir: fwd, up: spine, group: 21, paint: p => Math.abs(p[1] - c[1]) < .01 ? M.FRAME : undefined }); }
+  if (L.purse) { // a small purse on a thin crossbody strap, high at her near side, in her hat's trim colour (so it reads apart from the brown satchel), a gold clasp
+    const c = at(waist + .07, .06, .115);
+    m.ell(c, [.05, .038, .024], M.HAT1, { dir: fwd, up: spine, group: 24 });
+    m.ell(v3.add(c, v3.add(v3.mul(spine, .025), v3.mul(fwd, .024))), [.014, .011, .011], M.FRAME, { group: 24 });
+    m.chain([[...at(.13, .0, -.08), .006], [...at(.07, .1, .0), .006], [...v3.add(c, v3.mul(spine, .032)), .006]], M.FRAME, { group: 24 });
+  }
+  if (L.tote) { // a tall canvas tote hanging from her near shoulder by two straps (Ed, 2026-10-29: a found bag)
+    const c = at(waist - .05, .04, .16);
+    m.ell(c, [.07, .09, .026], M.WEB, { dir: fwd, up: spine, group: 24 });
+    for (const f of [-.03, .03]) m.chain([[...at(.14, f, .09), .006], [...v3.add(c, v3.add(v3.mul(spine, .07), v3.mul(fwd, f))), .006]], M.HAT1, { group: 24 });
+  }
+  if (L.duffel) { // a long duffel slung at her near hip, end to end along her, its strap over the far shoulder, its ends in her trim colour
+    const c = at(waist - .03, .0, .17);
+    m.ell(c, [.13, .055, .05], M.STONED, { dir: fwd, up: spine, group: 24, paint: p => Math.abs(v3.dot(v3.sub(p, c), fwd)) > .1 ? M.HAT1 : undefined });
+    m.chain([[...at(.13, .0, -.08), .007], [...at(.06, .1, .02), .007], [...v3.add(c, v3.mul(spine, .04)), .007]], M.STONED, { group: 24 });
+  }
+  if (L.briefcase) { // a briefcase at her near side, flat and square, a gold clasp and handle
+    const c = at(waist - .12, .04, .18);
+    m.ell(c, [.085, .065, .02], M.BARKD, { dir: fwd, up: spine, group: 24 });
+    m.ell(v3.add(c, v3.mul(spine, .07)), [.025, .012, .01], M.FRAME, { group: 24 });
+    m.ell(v3.add(c, v3.add(v3.mul(spine, .03), v3.mul(fwd, .02))), [.01, .008, .008], M.FRAME, { group: 24 });
+  }
+  if (L.clutch) { // a slim clutch tucked under her near arm, long and flat, a gold flap along its top (Ed, 2026-10-29: the sniper's bag)
+    const c = at(-.03, .05, .2);
+    m.ell(c, [.095, .045, .02], M.SHOES, { dir: fwd, up: spine, group: 24, paint: p => v3.dot(v3.sub(p, c), spine) > .02 ? M.FRAME : undefined });
+  }
+  if (L.messenger) { // a messenger bag on a wide strap across her, hung at her near hip, its big flap in her trim colour (Ed, 2026-10-29: the chain's bag)
+    const c = at(waist - .07, -.02, .17);
+    m.ell(c, [.09, .07, .028], M.POM, { dir: fwd, up: spine, group: 24, paint: p => v3.dot(v3.sub(p, c), spine) > -.01 ? M.HAT1 : undefined });
+    m.chain([[...at(.14, -.02, -.08), .009], [...at(.06, .09, .04), .009], [...v3.add(c, v3.mul(spine, .06)), .009]], M.HAT1, { group: 24 });
+  }
   if (L.bumbag) { const c = at(waist - .03, .1, .03); m.ell(c, [.035, .03, .065], M.EAR, { dir: fwd, up: spine, group: 22 }); m.chain([[...at(waist - .02, .07, -.08), .008], [...c, .008], [...at(waist - .02, .07, .1), .008]], M.EAR, { group: 22 }); }
 }
 // Every part (those `only` picks), flat and anchor of m turned by angle a about the vertical ("y") or the side-to-side ("z") axis through P.
@@ -419,7 +462,7 @@ function fastModel(frame, L = DEFAULT_LOOK) {
   // the hat, nearly blown off: lifted up and tipped back, held by its chin strap
   const brim = v3.add(H, [-.1 + j[0], .2 + j[1] * 2, 0]);
   m.ell(brim, brimR(L, [.16, .014, .15]), M.HAT, { dir: [1, .9, 0], group: 11 });
-  m.chain([[...v3.add(brim, [-.02, .02, 0]), .08], [...hatPt(L, brim, v3.add(brim, [-.14, .13, 0])), .04], [...hatPt(L, brim, v3.add(brim, [-.3, .14 + j[2] * 2, 0])), .012]], M.HAT, { group: 11, paint: p => Math.hypot(p[0] - brim[0], p[1] - brim[1]) < .06 * (L.hatBand ?? 1) ? M.MAGIC : undefined });
+  m.chain([[...v3.add(brim, [-.02, .02, 0]), .08], [...hatPt(L, brim, v3.add(brim, [-.14, .13, 0])), .04], [...hatPt(L, brim, v3.add(brim, [-.3, .14 + j[2] * 2, 0])), .012]], M.HAT, { group: 11, paint: p => Math.hypot(p[0] - brim[0], p[1] - brim[1]) < .06 * (L.hatBand ?? 1) ? BAND : undefined });
   m.seg(v3.add(brim, [.08, -.02, .08]), v3.add(H, [.04, -.09, .08]), .008, .008, M.HAT, { group: 11 }); // the chin strap, pulled taut
   m.anchors.hand = hands[1]; m.anchors.hatTip = v3.add(brim, [-.3, .14 + j[2] * 2, 0]);
   // speed: a few small streaks trailing from the bristles and from her
@@ -703,7 +746,7 @@ function footModel(pose, frame, L = DEFAULT_LOOK) {
     const foot = given ? [given[0], given[1] + hop, given[2]] : K.sit ? [.24 + swing, .09 + Math.max(0, swing) * .6, side * .1] : side > 0 && K.legUp ? K.legUp : [(side > 0 ? .05 : -.01) + (K.toes ? -.03 : 0), .07 + (K.toes ? hop * .4 : hop), side * .1];
     const knee = K.sit && !given ? [.21, hipY + .01, side * .09] : kneeOf(hip, foot, .21);
     const toe = K.toes ? [.03, -.045, 0] : [.05, -.03, 0];
-    // in her nightie (Ed, 2026-10-23: "When waking up she wears only a nightie"): bare legs below its hem; barefoot till her shoes are on
+    // in her nightie (Ed, 2026-10-23: "When waking up she wears only a nightie"; mid-thigh since 2026-10-29): bare legs below its hem; barefoot till her shoes are on
     if (L.nightie) { m.seg(hip, knee, .05, .04, M.SKIN, { group: g }); m.seg(knee, foot, .04, .033, M.SKIN, { group: g }); }
     else { m.seg(hip, knee, .055, .045, M.JEANS, { group: g }); m.seg(knee, foot, .045, .04, M.JEANS, { group: g }); }
     if (L.barefoot) m.ell(v3.add(foot, [.035, -.035, 0]), [.06, .026, .036], M.SKIN, { dir: K.toes ? [1, -.6, 0] : [1, 0, 0], group: g });
@@ -713,11 +756,22 @@ function footModel(pose, frame, L = DEFAULT_LOOK) {
   const spine = v3.norm([Math.sin(K.bend), Math.cos(K.bend), Math.sin(K.roll)]), fwd = [Math.cos(K.bend), -Math.sin(K.bend), 0];
   const hips = [hipX, hipY + .03, 0];
   const chest = v3.add(hips, v3.add(v3.mul(spine, .19), [0, K.breathe, 0]));
-  if (L.nightie) { // a long white nightdress: its bodice, its skirt flaring from her hips to below her knees, its hem trimmed in her jacket's colour and a ribbon at her waist in her hat's (her own colours on it)
-    m.ell(chest, [.095, .15 + K.breathe * .5, .11], M.BELLY, { dir: fwd, group: 1, paint: p => (v3.dot(v3.sub(p, chest), spine) > .1 && v3.dot(v3.sub(p, chest), fwd) > .04 ? M.SKIN : undefined) });
-    const hem = K.sit ? v3.add(hips, [.2, -.04, 0]) : v3.add(hips, [.01 - sway * .3, -Math.min(.33, hipY - .1), 0]);
-    m.seg(v3.add(hips, v3.mul(spine, .06)), hem, .1, .14, M.BELLY, { group: 1, paint: p => { const t = v3.dot(v3.sub(p, hem), v3.norm(v3.sub(hips, hem))); return t < .02 ? M.JACKET : undefined; } });
-    m.ell(v3.add(hips, v3.mul(spine, .1)), [.1, .02, .112], M.HAT, { group: 1 });
+  if (L.nightie) { // a short white cotton chemise (Ed's reference, 2026-10-29): thin straps over bare shoulders, a lace-edged V at the neck, gathered under the bust, falling loose to mid-thigh and a ruffled tier at its hem, all white
+    const up = p => v3.dot(v3.sub(p, chest), spine), front = p => v3.dot(v3.sub(p, chest), fwd) > .015, across = p => Math.abs(p[2] - chest[2]);
+    // the bodice: bare above its neckline, a V at the front and straight across at the back (the straps carry it); no lines drawn on it
+    // (its lace and its seams too fine for her few pixels: dashes along the edge, a ring under the bust, read as dirt)
+    const neck = p => (front(p) ? .02 + across(p) * 1.1 : .075);
+    m.ell(chest, [.095, .15 + K.breathe * .5, .11], M.BELLY, { dir: fwd, group: 1, paint: p => (up(p) > neck(p) ? M.SKIN : undefined) });
+    for (const side of [-1, 1]) { // (its straps, over each shoulder, front to back)
+      const at = (f, u) => v3.add(chest, v3.add(v3.mul(fwd, f), v3.add(v3.mul(spine, u), [0, 0, side * .075])));
+      m.seg(at(.06, .1), at(0, .15), .011, .011, M.BELLY, { group: 1 }); m.seg(at(0, .15), at(-.06, .09), .011, .011, M.BELLY, { group: 1 });
+    }
+    // the skirt: from under the bust, loose and flaring to mid-thigh (sat, over her lap), its ruffled tier flared wider (the step in its
+    // outline is the ruffle)
+    const top = v3.add(chest, v3.mul(spine, -.06)), hem = K.sit ? v3.add(hips, [.15, -.02, 0]) : v3.add(hips, [.01 - sway * .3, -Math.min(.17, hipY - .1), 0]);
+    const axis = v3.norm(v3.sub(top, hem)), tier = v3.add(hem, v3.mul(axis, .055)), low = v3.add(hem, v3.mul(axis, -.012));
+    m.seg(top, tier, .1, .135, M.BELLY, { group: 1 });
+    m.seg(tier, low, .145, .172, M.BELLY, { group: 1 });
   } else m.ell(hips, [.1, .08, .105], M.JEANS, { group: 1 });
   if (!L.nightie) m.ell(chest, [.1, .15 + K.breathe * .5, .115], M.JACKET, { dir: fwd, group: 1, paint: torsoPaint(L, chest, fwd) });
   // the jacket's hem hanging behind, stirring (a poncho or a cape instead)
@@ -732,7 +786,7 @@ function footModel(pose, frame, L = DEFAULT_LOOK) {
   for (const side of [-1, 1]) {
     const g = side > 0 ? 7 : 5, sh = shoulder(side), hand = side > 0 ? free : K.far || grip || [hipX + .03, hipY + .02, -.16]; // (no broom to hold: at her side)
     const elbow = side > 0 && K.elbow ? K.elbow : side < 0 && K.farElbow ? K.farElbow : v3.add(v3.lerp(sh, hand, .5), [-.03, -.02, side * .05]);
-    if (L.nightie) { m.ell(sh, [.05, .045, .05], M.BELLY, { group: g }); m.seg(sh, elbow, .033, .029, M.SKIN, { group: g }); m.seg(elbow, hand, .029, .025, M.SKIN, { group: g }); } // (a puff sleeve, bare arms)
+    if (L.nightie) { m.ell(sh, [.036, .034, .036], M.SKIN, { group: g }); m.seg(sh, elbow, .031, .028, M.SKIN, { group: g }); m.seg(elbow, hand, .028, .025, M.SKIN, { group: g }); } // (bare shoulders and arms: only its straps over them)
     else { m.seg(sh, elbow, .04, .035, M.JACKET, { group: g }); m.seg(elbow, hand, .035, .03, M.JACKET, { group: g }); }
     drawHand(m, side > 0 ? (astride ? "grip" : K.hand) : K.farHand || "grip", hand, g);
     drawGlowsticks(m, L, elbow, hand, side, g);

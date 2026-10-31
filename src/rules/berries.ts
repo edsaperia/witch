@@ -8,7 +8,7 @@
 // of berries never changes. A party animal that has eaten enough evolves: the berries its next
 // level's strength costs (toEvolve: 4 and 4 for a species of normal strength); evolving stops at adult (Ed, 2026-10-04: legends are the areas'
 // own, never grown). It evolves on the next bar line of the music, so the view can make a show of it. No drawing here.
-import { COMBAT, creatureMaxHp, strengthOf } from "./combat";
+import { COMBAT, strengthOf } from "./combat";
 import { beatAt, timeAt, type BeatClock } from "./beat";
 import { LEGEND, heal, type Creature, type Level } from "./creatures";
 import { gaitRate, leashSpeed } from "./leash";
@@ -68,20 +68,19 @@ export function strengthGain(level: Level, species: string | undefined, t: Tunin
 }
 
 /** Berries needed to go up from a level (Ed, 2026-10-05: "tie the cost to strength"): the strength
- *  it gains, at berries.cost.per a berry, rounded, at least one (times cost.scale, the legends'
- *  evolve-faster buff). By fighting value (cost.by "value") a species of normal strength pays 4 and 4. Adults and
+ *  it gains, at berries.cost.per a berry, rounded, at least one. By fighting value (cost.by "value") a species of normal strength pays 4 and 4. Adults and
  *  legends don't evolve. */
 export const toEvolve = (level: Level, t: Tuning, species?: string): number => {
   if (level >= TOP_LEVEL) return Infinity;
   if (level === 0 && t.berries.babyCost !== undefined) return Math.max(1, t.berries.babyCost); // (one berry makes a baby a youth: Ed, 2026-10-11)
   const C = t.berries.cost;
-  return Math.max(1, Math.round((strengthGain(level, species, t) / C.per) * (C.scale ?? 1)));
+  return Math.max(1, Math.round(strengthGain(level, species, t) / C.per));
 };
 /** Who may eat berries: party animals that aren't legends (and aren't already evolving). */
 /** Whether a party animal goes for berries: not mid-fight or evolving; still able to evolve
  *  (below adult), or hurt (a berry heals it to full, Ed 2026-10-04: so a hurt one wants one whatever its level). */
 export const canEat = (c: Creature, s: BerryState): boolean => c.leashed && !c.travelling && !s.evolving.has(c.id) && !c.fight?.target && (c.level < TOP_LEVEL || hurtNow(c));
-const hurtNow = (c: Creature) => c.hp !== undefined && c.hp < creatureMaxHp(c);
+const hurtNow = (c: Creature) => !!c.drops; // (its 💧s: rules/orbit.ts)
 /** Whether its next berry would make it an adult (Ed, 2026-10-27: adults are strong and heavy, she can't fly with one, so "a youth
  *  eats up until it's one berry away from adult, and that last berry has to be manual"): following her, it leaves that berry,
  *  hurt or not; only at a sigil she's put down does it eat it. */
@@ -193,7 +192,8 @@ function release(s: BerryState, id: number): void {
 /** Count one berry eaten; at the threshold, start evolving on the next bar line. */
 export function feed(s: BerryState, c: Creature, time: number, t: Tuning, clock?: BeatClock): void {
   // A berry heals a party animal to full (Ed, 2026-10-04), as well as counting toward evolving.
-  if (c.leashed && hurtNow(c)) heal(c, time);
+  // (Ed, 2026-10-28: one berry takes all its 💧s, and counts toward growing up only when it had none)
+  if (c.leashed && hurtNow(c)) { heal(c, time); return; }
   if (c.level >= TOP_LEVEL || s.evolving.has(c.id)) return;
   const n = (s.fed.get(c.id) ?? 0) + 1;
   s.ateAt.set(c.id, time);

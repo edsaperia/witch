@@ -6,9 +6,12 @@ import { generateMap } from "./map";
 import { TUNING, withTuning } from "./tuning";
 import { newParty, spreadWave, cellKey } from "./party";
 import { departureRoute, leyChain, leyKey, onAreaDone } from "./leylines";
+import { polylinesMeet } from "./crossing";
+import { bootPath } from "./bootRing";
 import { speakerCircle } from "./departure";
 import { leyRadius } from "./leyroute";
 
+// Retain the full route: seven distinct stones and five/six advancing waves must not exhaust the fixture.
 const map = generateMap(123, TUNING);
 /** The same map with leyLines.advance "first": a quest done moves the line on (the default since Ed, 2026-10-08, is "wave": it doesn't). */
 const firstMap = generateMap(123, withTuning({ leyLines: { ...TUNING.leyLines, advance: "first" } }));
@@ -94,6 +97,7 @@ describe("the whole route, the whole time (Ed, 2026-10-06: \"I think the leyline
 });
 
 describe("the first ley line leaves the treehouse's front, towards the dancefloor (Ed, 2026-10-05; the oak north-west of it, 2026-10-24)", () => {
+  // Retain seeded first objectives: the departure sweeps are checked against their actual bearings and boot paths.
   const D = TUNING.leyLines.depart;
   it("starts at the treehouse's front at the start of a run", () => {
     const m = generateMap(123, TUNING), p = newParty(m), first = ahead(p, m, 2)[0];
@@ -110,33 +114,30 @@ describe("the first ley line leaves the treehouse's front, towards the dancefloo
       expect(edge - ring).toBeCloseTo(TUNING.treehouse.gap, 6);
     }
   });
-  it("never crosses the dancefloor: round the speakers from the treehouse on the objective's side, then off and round to it, smoothly (Ed, 2026-10-06)", () => {
-    let east = 0, west = 0;
-    // (The noisy picker's first objective lies anywhere round home; the route's on the side it leaves by.)
+  it("never crosses the dancefloor: on from where the boot's lap ends, round the speakers the same way (clockwise) till the objective lies out to the side, then off and round to it, smoothly, never across the boot's way down (Ed, 2026-10-06; 2026-10-29)", () => {
+    // (The noisy picker's first objective lies anywhere round home.)
     for (const T of [TUNING, { ...TUNING, party: { ...TUNING.party, picker: "noisy" } }]) for (const seed of [123, 293912, 7, 1000, 42, 31337, 5, 99]) {
-      const m = generateMap(seed, T), p = newParty(m), [a, b] = ahead(p, m, 2), d = m.dancefloor;
+      const m = generateMap(seed, T), p = newParty(m), [, b] = ahead(p, m, 2), d = m.dancefloor, Q = bootPath(m);
       const pts = departureRoute(m, b, D.avoid, 4), R = speakerCircle(m) - 0.6; // (on the speakers' own circle at the closest: the boot ring's, Ed 2026-10-07)
-      expect(pts[0]).toEqual([a.x, a.z]);
+      expect(pts[0]).toEqual(Q.path[Q.path.length - 1]); // (from where the boot's lap ends)
       const last = pts[pts.length - 1];
       expect(Math.hypot(last[0] - b.x, last[1] - b.z)).toBeLessThan(1);
       // Never over the dancefloor, nor inside its ring of speakers.
       for (const q of pts) expect(Math.hypot(q[0] - d.x, q[1] - d.z), `seed ${seed}`).toBeGreaterThanOrEqual(R - 1e-6);
-      // Round the ring on the objective's side: clockwise on the screen (eastward first, from the treehouse's front up the screen)
-      // for one east of home. (From where it meets the ring: the front stands off it, to the north-west, so the way in drops
-      // towards home either way.)
-      const ang = (q: readonly number[]) => Math.atan2(q[0] - d.x, q[1] - d.z), on = Math.max(0, pts.findIndex(q => Math.hypot(q[0] - d.x, q[1] - d.z) <= R + 2));
-      const k = Math.min(on + 4, pts.length - 1), turn = Math.atan2(Math.sin(ang(pts[k]) - ang(pts[on])), Math.cos(ang(pts[k]) - ang(pts[on]))), goesEast = turn < 0; // (clockwise on the screen: the angle round home, 0 south, falling)
-      expect(goesEast, `seed ${seed}`).toBe(b.x >= d.x);
-      if (goesEast) east++; else west++;
+      // On round the ring the way the boot goes: clockwise on the screen (the angle round home, 0 south, falling), whichever side the objective is.
+      const ang = (q: readonly number[]) => Math.atan2(q[0] - d.x, q[1] - d.z);
+      const k = Math.min(4, pts.length - 1), turn = Math.atan2(Math.sin(ang(pts[k]) - ang(pts[0])), Math.cos(ang(pts[k]) - ang(pts[0])));
+      expect(turn, `seed ${seed}: clockwise`).toBeLessThan(0);
       // Smooth: no sharp corners.
       for (let i = 2; i < pts.length; i++) {
         const u = [pts[i - 1][0] - pts[i - 2][0], pts[i - 1][1] - pts[i - 2][1]], v = [pts[i][0] - pts[i - 1][0], pts[i][1] - pts[i - 1][1]];
         const cos = (u[0] * v[0] + u[1] * v[1]) / ((Math.hypot(u[0], u[1]) * Math.hypot(v[0], v[1])) || 1);
         expect(cos, `seed ${seed} at ${i}`).toBeGreaterThan(Math.cos((50 * Math.PI) / 180));
       }
+      // Off the ring, it never crosses the boot's own way down from the treehouse's front (the one path never meets itself).
+      const r = (q: readonly number[]) => Math.hypot(q[0] - d.x, q[1] - d.z), approach = Q.path.slice(0, Q.path.length - 72), off = pts.slice(Math.max(0, pts.findIndex(q => r(q) > R + 2)));
+      expect(polylinesMeet(approach, off), `seed ${seed}: across the way down`).toBe(false);
     }
-    expect(east, "some leave to the east (off to the right)").toBeGreaterThan(0);
-    expect(west, "and some to the west").toBeGreaterThan(0);
   }, 60000);
   it("leaves the ring in a sweep no tighter than the line's own radius, like every other turn (Ed, 2026-10-23)", () => {
     // (the turn's radius by three points 12 m apart along it, from where it leaves the speakers' circle to the first stone)

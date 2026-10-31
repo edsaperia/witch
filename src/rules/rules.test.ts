@@ -36,15 +36,19 @@ import { RELICS } from "../../art/relics.js";
 import { SCENES, sceneLayout } from "../../art/scenes.js";
 import { COUNTRY } from "../../art/country.js";
 import { runeOffset } from "./runeOffset";
+import { smallWorldTuning } from "../test/worlds";
 // The rules' every kind of scenery on, as before the small islands' cuts (Ed, 2026-10-11: no set pieces, sports grounds, rocks, freak
 // trees or path pieces; ruins twice): this file tests how each is placed, so it keeps them all; "the small islands' scenery" below
 // checks the game's own tuning.
 const TUNING: Tuning = { ...GAME_TUNING, setPieceChance: 0.25, grounds: { ...GAME_TUNING.grounds, kinds: ["playground", "tennis", "baseball", "football", "basketball"] }, decor: { ...GAME_TUNING.decor, mix: { ruins: 1, rocks: 1, freak: 1 } }, paths: { ...GAME_TUNING.paths, pieces: true }, scenes: { ...GAME_TUNING.scenes, featured: undefined } };
 const withTuning = (over: Partial<Tuning>): Tuning => ({ ...TUNING, ...over, camera: { ...TUNING.camera, ...(over.camera ?? {}) } });
+const LOCAL_TUNING = smallWorldTuning(TUNING, "Local controls, home speaker boot and relative treehouse clearances do not require distant areas.");
 const MODERN_POOL = [...RELICS.filter(r => r.family === "modern" && (r as { scatter?: boolean }).scatter !== false), ...(COUNTRY as { id: string; family: string }[]).filter(d => d.family === "farm" || d.family === "street")].map(d => d.id); // the scattered modern finds, in the view's order (the bits of highway left out: Ed, round 13)
 const MODERN = MODERN_POOL.length;
 
+// Retain this shared full map for explicit area-count, >1000-neighbour, 25-kind and scenery-distribution assertions.
 const map = generateMap(123, TUNING);
+// Retain full extent for >5-area railway crossings, >20 paths and 600 m corridor/distribution samples.
 // A map with plenty of paths and railways, for the tests of how they behave (the game's own numbers make few: Ed, 2026-10-11).
 const NET = { ...TUNING, paths: { ...TUNING.paths, rails: [2, 4] as [number, number], linkChance: 0.55, deadEndChance: 0.3 } }, NET_MAP = generateMap(123, NET);
 
@@ -231,11 +235,11 @@ describe("the map", () => {
     expect(Math.hypot(map.start.x - th.x - seatOffset(TUNING).x, map.start.z - th.z - seatOffset(TUNING).z)).toBeLessThan(1e-9); // (at her decks: on the balcony or the deck, rules/treehouse.ts)
   });
   it("starts the witch seated on the terrace; she stays put till the first move or rise", () => {
-    const g = newGame(5, TUNING);
+    const g = newGame(5, LOCAL_TUNING);
     expect(g.witch.seated).toBe(true);
-    const still = stepWitch(g.witch, NO_INTENT, 1, TUNING, map.bounds);
+    const still = stepWitch(g.witch, NO_INTENT, 1, g.tuning, g.map.bounds);
     expect(still.seated).toBe(true);
-    const off = stepWitch(g.witch, { ...NO_INTENT, moveX: 1 }, 0.1, TUNING, map.bounds);
+    const off = stepWitch(g.witch, { ...NO_INTENT, moveX: 1 }, 0.1, g.tuning, g.map.bounds);
     expect(off.seated).toBeFalsy();
     expect(off.x).toBeGreaterThan(g.witch.x);
   });
@@ -782,7 +786,7 @@ describe("the game clock and a whole step", () => {
   });
 
   it("flies the witch and the camera follows", () => {
-    const g = newGame(5, TUNING);
+    const g = newGame(5, LOCAL_TUNING);
     g.clock.paused = false;
     const x0 = g.witch.x;
     for (let i = 0; i < 120; i++) stepGame(g, { moveX: 1, moveZ: 0, toggleMode: false, zoom: 0 }, 1 / 60);
@@ -798,7 +802,7 @@ describe("inviting and leashing", () => {
   beforeEach(() => { savedLeash = STATES.leash; STATES.leash = "again"; });
   afterEach(() => { STATES.leash = savedLeash; });
   // (Every level to talk to: a baby, a young and an adult in each area.)
-  const creatures = spawnCreatures(generateMap(123, withTuning({ population: { ...TUNING.population, start: { babies: 1, young: 1, adults: 1 } } })));
+  const creatures = spawnCreatures(generateMap(123, smallWorldTuning(withTuning({ population: { ...TUNING.population, start: { babies: 1, young: 1, adults: 1 } } }), "Conversation and leash transitions need a few creatures of each level, not a full world.")));
   const fresh = () => creatures.map(c => ({ ...c, rand: (() => { let k = c.id * 7 + 1; return () => (k = (k * 16807) % 2147483647) / 2147483647; })() }));
   const none: LeashControls = { sigil: false };
   // Stand the witch next to a creature of the given level and talk until it is invited.
@@ -973,7 +977,7 @@ describe("inviting and leashing", () => {
   });
 
   it("goes through the game: the debug invite and the sigil button in its controls", () => {
-    const g = newGame(123, TUNING);
+    const g = newGame(123, LOCAL_TUNING);
     g.clock.paused = false; g.witch.perch = false; // (down on the ground, off the treehouse deck)
     stepGame(g, { ...NO_INTENT, zoom: 0, inviteNearest: true }, 1 / 60);
     expect(g.leash.stack.length).toBe(1);
@@ -1332,13 +1336,13 @@ describe("the dancefloor's speakers (Ed, v160)", () => {
   });
   it("keep the treehouse outside their ring and the floor's clearing, over seeds", () => {
     for (const seed of [1, 2, 3, 4, 5, 6, 7, 8]) {
-      const m = generateMap(seed, TUNING), d = Math.hypot(m.treehouse.x - m.dancefloor.x, m.treehouse.z - m.dancefloor.z);
+      const m = generateMap(seed, LOCAL_TUNING), d = Math.hypot(m.treehouse.x - m.dancefloor.x, m.treehouse.z - m.dancefloor.z);
       expect(d - TUNING.treehouse.clear).toBeGreaterThan(speakerRadius(TUNING) + S.footprint); // its footprint clear of the ring
       expect(d).toBeGreaterThan(floorClearing(TUNING));
       for (const p of m.dancefloor.speakers) expect(Math.hypot(m.treehouse.x - p.x, m.treehouse.z - p.z)).toBeGreaterThan(TUNING.treehouse.clear + S.footprint);
     }
     // More of them, further out: still outside.
-    const T2 = withTuning({ dancefloor: { ...D, speakers: { ...S, count: 20, radiusFactor: 3 } } }), m = generateMap(1, T2);
+    const T2 = smallWorldTuning(withTuning({ dancefloor: { ...D, speakers: { ...S, count: 20, radiusFactor: 3 } } }), "Expanded home speaker-ring clearance is local geometry."), m = generateMap(1, T2);
     expect(Math.hypot(m.treehouse.x - m.dancefloor.x, m.treehouse.z - m.dancefloor.z) - T2.treehouse.clear).toBeGreaterThan(speakerRadius(T2) + S.footprint);
   }, 30000); // (nine maps)
   it("are the dancefloor's only sound: no soundsystem stands in their ring or the floor's clearing, over seeds (Ed, v183)", () => {
@@ -1361,7 +1365,7 @@ describe("the dancefloor's speakers (Ed, v160)", () => {
     expect(nextSpeakerState("playing")).toBe("damaged");
     expect(nextSpeakerState("damaged")).toBe("destroyed");
     expect(nextSpeakerState("destroyed")).toBe("playing");
-    const g = newGame(5, TUNING);
+    const g = newGame(5, LOCAL_TUNING);
     expect(g.speakers.every(s => s === "playing")).toBe(true); // (works with the clock paused too)
     stepGame(g, { ...NO_INTENT, zoom: 0, cycleSpeakers: true }, 1 / 60);
     expect(g.speakers.every(s => s === "damaged")).toBe(true);
@@ -1370,7 +1374,7 @@ describe("the dancefloor's speakers (Ed, v160)", () => {
 
 describe("the home speakers start as runestones (Ed, 2026-10-06)", () => {
   it("turn into speakers one by one as the boot reaches them, each over boot.transform, all of them by its end", () => {
-    const g = newGame(3, TUNING), n = g.speakerBoot.length, T = TUNING.boot.transform;
+    const g = newGame(3, LOCAL_TUNING), n = g.speakerBoot.length, T = TUNING.boot.transform;
     g.clock.paused = false;
     expect(n).toBe(12);
     for (let i = 0; i < 30; i++) stepGame(g, { ...NO_INTENT, zoom: 0 }, 1 / 60);
@@ -1388,7 +1392,7 @@ describe("the home speakers start as runestones (Ed, 2026-10-06)", () => {
     expect(g.speakerBoot.every((_, k) => speakerBoot(g, k) === 1)).toBe(true);
   });
   it("can be booted by the pulse: bootSpeaker turns one now, once", () => {
-    const g = newGame(3, TUNING);
+    const g = newGame(3, LOCAL_TUNING);
     g.clock.time = 5;
     bootSpeaker(g, 7);
     expect(g.speakerBoot[7]).toBe(5);
@@ -1403,7 +1407,7 @@ describe("the dancefloor's tile lights (Ed, v160)", () => {
   const inputs = (time: number, o: Partial<FloorInputs> = {}): FloorInputs => ({ time, seed: 7, level: 2, partifiedAreas: new Set(), witch: { x: -50, y: -50, lift: 1, rgb: [255, 238, 70] }, dancers: [], ...o });
   const run = (f: ReturnType<typeof newFloor>, from: number, to: number, o: Partial<FloorInputs> = {}) => { for (let t = from; t <= to; t += 1 / 30) stepFloor(f, inputs(t, o), TUNING); };
   it("shows only the moon before the first wave (with the island's sigil off), in its twilight palette, and switches on, once, when the first wave comes", () => {
-    const T = withTuning({ dancefloor: { ...TUNING.dancefloor, island: { ...TUNING.dancefloor.island, on: false } } }), g = newGame(3, T), P = TUNING.moon.floor.palette.map(c => c.join());
+    const T = smallWorldTuning(withTuning({ dancefloor: { ...TUNING.dancefloor, island: { ...TUNING.dancefloor.island, on: false } } }), "First-wave floor lighting needs the home floor and its initial pulse, not distant areas."), g = newGame(3, T), P = TUNING.moon.floor.palette.map(c => c.join());
     g.clock.paused = false;
     const colours = () => { const o = composeFloor(g.floor, floorInputs(g), T).rgbi, seen = new Set<string>(); let max = 0; for (let i = 0; i < o.length; i += 4) if (o[i + 3]) { seen.add(`${o[i]},${o[i + 1]},${o[i + 2]}`); max = Math.max(max, o[i + 3]); } return { seen, max }; };
     for (let i = 0; i < 30; i++) stepGame(g, { ...NO_INTENT, zoom: 0 }, 1 / 60);
@@ -1430,7 +1434,7 @@ describe("the dancefloor's tile lights (Ed, v160)", () => {
   it("shows the island's sigil through the boot (home's: the World Tree), written on as the pulse goes round, the moon before", () => {
     expect(islandSigilOf({})).toBe("worldTree");
     expect(islandSigilOf({ island: "nowhere" })).toBe("worldTree"); // an island without its own sigil yet: home's
-    const g = newGame(3, TUNING), ghost = TUNING.moon.floor.palette[0].join(), moon = TUNING.moon.floor.palette.map(c => c.join());
+    const g = newGame(3, smallWorldTuning(TUNING, "The home sigil's boot progress and tile drawing are independent of distant areas.")), ghost = TUNING.moon.floor.palette[0].join(), moon = TUNING.moon.floor.palette.map(c => c.join());
     g.clock.paused = false;
     const tiles = () => { const o = composeFloor(g.floor, floorInputs(g), TUNING).rgbi; let lit = 0, faint = 0, other = 0; for (let i = 0; i < o.length; i += 4) { if (!o[i + 3]) continue; const c = `${o[i]},${o[i + 1]},${o[i + 2]}`; if (o[i + 3] >= 2 && !moon.includes(c)) lit++; else if (c === ghost) faint++; else other++; } return { lit, faint, other }; };
     for (let i = 0; i < 30; i++) stepGame(g, { ...NO_INTENT, zoom: 0 }, 1 / 60);
@@ -1526,6 +1530,7 @@ describe("ground cover (Ed, v171)", () => {
 
 describe("music by proximity (Ed, 2026-10-04)", () => {
   const M = TUNING.music;
+  // Retain extent: farDist and 2*farDist listener samples must keep the original coastal attenuation geometry.
   const g0 = newGame(6, TUNING), map = g0.map; // the game's own map
   g0.party.bootFrom = 0; g0.party.bootUntil = bootSeconds(map); // (off her decks at the start)
   const atW = (x: number, z: number, time: number) => { const g = at(x, z, time); return [g, g.witch] as const; };
@@ -1554,7 +1559,7 @@ describe("music by proximity (Ed, 2026-10-04)", () => {
 });
 
 describe("the Speed broom (Ed, 2026-10-04; a broom since 2026-10-11)", () => {
-  const S = TUNING.spells.speed, SPEED = withTuning({ spells: { ...TUNING.spells, parts: "missile,fairing,nozzles" } });
+  const S = TUNING.spells.speed, SPEED = smallWorldTuning(withTuning({ spells: { ...TUNING.spells, parts: "missile,fairing,nozzles" } }), "A one-second boosted velocity comparison needs local movement space, not distant areas.");
   it("casts the speed boost: much faster for its duration, then recharges over its cooldown", () => {
     const s = newSpells(SPEED);
     expect(s.broom).toBe("speed");
@@ -1585,8 +1590,9 @@ describe("creature speeds (Ed, 2026-10-04: she is much faster than almost all of
 });
 
 describe("E cycles the sigils in the treetops (Ed, 2026-10-05)", () => {
+  const cycleMap = generateMap(123, smallWorldTuning(TUNING, "Cycling and placing three sigils needs a few creatures, not a full world."));
   it("in the air sends the bottom sigil of the stack to the top, and never places or lifts", () => {
-    const s = newLeash(), none: LeashControls = { sigil: false }, cs = spawnCreatures(map);
+    const s = newLeash(), none: LeashControls = { sigil: false }, cs = spawnCreatures(cycleMap);
     s.stack.push(1, 2, 3); // 3 is the bottom (next down)
     for (const id of s.stack) cs[id].leashed = true;
     stepLeash(s, cs, { sigil: true }, { x: 0, z: 0 }, false, 1, 1 / 60, TUNING);
@@ -1598,7 +1604,7 @@ describe("E cycles the sigils in the treetops (Ed, 2026-10-05)", () => {
     expect(s.stack).toEqual([3, 1, 2]);
   });
   it("on the ground never cycles: it puts the bottom sigil down", () => {
-    const s = newLeash(), cs = spawnCreatures(map);
+    const s = newLeash(), cs = spawnCreatures(cycleMap);
     s.stack.push(1, 2, 3);
     for (const id of s.stack) cs[id].leashed = true;
     stepLeash(s, cs, { sigil: true }, { x: 0, z: 0 }, true, 1, 1 / 60, TUNING);
@@ -1652,6 +1658,7 @@ describe("spawn markers", () => {
 });
 
 describe("the simulation (Stage 4)", () => {
+  const simulationTuning = smallWorldTuning(TUNING, "Fixed-step timing, buffered presses, player setup and seed determinism do not require distant areas.");
   // A digest of the game's state: every witch, creature, the party and the clock.
   const digest = (g: ReturnType<typeof newGame>) => {
     const parts: number[] = [g.clock.time, g.party.wave, g.party.areas.size];
@@ -1662,7 +1669,7 @@ describe("the simulation (Stage 4)", () => {
     return (h >>> 0).toString(16);
   };
   const play = (frames: number[]) => {
-    const g = newGame(321, TUNING);
+    const g = newGame(321, simulationTuning);
     g.clock.paused = false;
     frames.forEach((dt, i) => stepGame(g, { moveX: Math.sin(i / 40), moveZ: Math.cos(i / 55), toggleMode: i === 200, zoom: 0, spell: i === 90 }, dt));
     return g;
@@ -1674,7 +1681,7 @@ describe("the simulation (Stage 4)", () => {
   }, 60000);
 
   it("steps in fixed steps: a frame's length only decides how many", () => {
-    const g = newGame(321, TUNING);
+    const g = newGame(321, simulationTuning);
     g.clock.paused = false;
     stepGame(g, { moveX: 0, moveZ: 0, toggleMode: false, zoom: 0 }, 1 / 120);
     expect(g.clock.time).toBe(0); // half a step: nothing yet, eased between
@@ -1686,7 +1693,7 @@ describe("the simulation (Stage 4)", () => {
   });
 
   it("keeps a press made in a frame too short for a step for the next step", () => {
-    const g = newGame(321, TUNING);
+    const g = newGame(321, simulationTuning);
     g.clock.paused = false;
     g.witch = { ...g.witch, seated: false, perch: false };
     g.witches[0].cool.left = 0; // (the shared cooldown empty: the bare broom's take-off needs all its room, Ed 2026-10-23)
@@ -1697,7 +1704,7 @@ describe("the simulation (Stage 4)", () => {
   });
 
   it("applies a press once, however many steps a slow frame runs", () => {
-    const g = newGame(321, TUNING);
+    const g = newGame(321, simulationTuning);
     g.clock.paused = false;
     g.witch = { ...g.witch, seated: false, perch: false };
     g.witches[0].cool.left = 0; // (the shared cooldown empty: the bare broom's take-off needs all its room, Ed 2026-10-23)
@@ -1706,7 +1713,7 @@ describe("the simulation (Stage 4)", () => {
   });
 
   it("has a witch per player, the first the camera's", () => {
-    const g = newGame(321, TUNING, 3);
+    const g = newGame(321, simulationTuning, 3);
     expect(g.witches.length).toBe(3);
     expect(g.witch).toBe(g.witches[0].body);
     expect(g.leash).toBe(g.witches[0].leash);
@@ -1714,17 +1721,17 @@ describe("the simulation (Stage 4)", () => {
 });
 
 describe("the dash (Ed, 2026-10-04)", () => {
-  const ready = () => { const g = newGame(321, TUNING); g.clock.paused = false; g.witch = { ...g.witch, seated: false, perch: false }; return g; };
+  const ready = (local = false) => { const g = newGame(321, local ? smallWorldTuning(TUNING, "Dash timing, buffering and immunity need local movement space only.") : TUNING); g.clock.paused = false; g.witch = { ...g.witch, seated: false, perch: false }; return g; };
   const run = (g: ReturnType<typeof newGame>, n: number, c: Partial<Parameters<typeof stepGame>[1]> = {}) => { for (let i = 0; i < n; i++) stepGame(g, { moveX: 0, moveZ: 0, toggleMode: false, zoom: 0, ...c }, STEP); };
 
   it("blinks dash.distance metres the way she steers in one step, gone for a moment, then waits out its cooldown", () => {
-    const g = ready(), x0 = g.witch.x, z0 = g.witch.z;
+    const g = ready(true), x0 = g.witch.x, z0 = g.witch.z;
     run(g, 1, { dash: true, moveX: 0, moveZ: -1 });
     // One step: there already, no travel between.
     expect(z0 - g.witch.z).toBeGreaterThan(TUNING.dash.distance * 0.8);
     expect(Math.abs(g.witch.x - x0)).toBeLessThan(0.5);
     expect(dashing(g.witches[0].dash, g.clock.time)).toBe(true); // gone: not drawn, not hit
-    run(g, Math.ceil(blinkGone(g.buffs.tuning) / STEP) + 1); // (the home legend's buff may be Curl; committed strikes make it longer)
+    run(g, Math.ceil(blinkGone(g.tuning) / STEP) + 1); // (committed strikes make it longer)
     expect(dashing(g.witches[0].dash, g.clock.time)).toBe(false);
     const z1 = g.witch.z;
     run(g, 1, { dash: true, moveX: 0, moveZ: -1 }); // still cooling down: no blink
@@ -1733,11 +1740,11 @@ describe("the dash (Ed, 2026-10-04)", () => {
   });
 
   it("holds a press made just before it's ready (dash.buffer), and lets go of one made too early", () => {
-    const g = ready(), D = g.witches[0].dash;
+    const g = ready(true), D = g.witches[0].dash;
     run(g, 1, { dash: true, moveX: 0, moveZ: -1 });
     const first = D.at;
     // Too early: pressed well over dash.buffer before it's ready, it's forgotten.
-    while (g.clock.time < D.readyAt - g.buffs.tuning.dash.buffer - 0.2) run(g, 1);
+    while (g.clock.time < D.readyAt - g.tuning.dash.buffer - 0.2) run(g, 1);
     run(g, 1, { dash: true, moveX: 0, moveZ: -1 });
     while (g.clock.time < D.readyAt + 0.1) run(g, 1);
     expect(D.at).toBe(first);
@@ -1745,7 +1752,7 @@ describe("the dash (Ed, 2026-10-04)", () => {
     run(g, 1, { dash: true, moveX: 0, moveZ: -1 }); // (ready now: this one goes at once)
     const second = D.at;
     expect(second).toBeGreaterThan(first);
-    while (g.clock.time < D.readyAt - g.buffs.tuning.dash.buffer / 2) run(g, 1);
+    while (g.clock.time < D.readyAt - g.tuning.dash.buffer / 2) run(g, 1);
     run(g, 1, { dash: true, moveX: 0, moveZ: -1 });
     while (g.clock.time < D.readyAt + 2 * STEP) run(g, 1);
     expect(D.at).toBeGreaterThan(second);
@@ -1780,6 +1787,7 @@ describe("the dash (Ed, 2026-10-04)", () => {
   });
 
   it("never lands in a tree trunk", () => {
+    // Retain extent: searches the seeded forest beyond home's meadow for twelve collision candidates.
     const g = ready();
     const out = g.map.homeRadius + 60, trees = [[1, 1], [1, -1], [-1, 1], [-1, -1]].map(([sx, sz]) => g.forest.treesNear(g.witch.x + sx * out, g.witch.z + sz * out, 40)).find(t => t.length > 0) ?? []; // (beyond home's meadow, where trees grow: the first way off it with some)
     expect(trees.length).toBeGreaterThan(0);
@@ -1798,18 +1806,18 @@ describe("the dash (Ed, 2026-10-04)", () => {
   });
 
   it("can't be hit while she's gone", () => {
-    const g = ready(), W = g.witches[0], hp = () => JSON.stringify(W.health);
+    const g = ready(true), W = g.witches[0], hp = () => JSON.stringify(W.health);
     run(g, 1, { dash: true, moveX: 1, moveZ: 0 });
     const before = hp();
     hitWitch(g, 0, g.clock.time);
     expect(hp()).toBe(before);
-    run(g, Math.ceil(blinkGone(g.buffs.tuning) / STEP) + 1); // (the home legend's buff may be Curl; committed strikes make it longer)
+    run(g, Math.ceil(blinkGone(g.tuning) / STEP) + 1); // (committed strikes make it longer)
     hitWitch(g, 0, g.clock.time + 0.01); // back: hittable as ever
     expect(hp()).not.toBe(before);
   });
 
   it("does nothing over the treetops or while she sits", () => {
-    const g = newGame(321, TUNING); g.clock.paused = false;
+    const g = newGame(321, smallWorldTuning(TUNING, "Seated and treetop dash eligibility is independent of world extent.")); g.clock.paused = false;
     const x0 = g.witch.x;
     run(g, 1, { dash: true });
     expect(g.witches[0].dash.until).toBe(-Infinity);

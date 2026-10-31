@@ -3,13 +3,19 @@
 // Sets are asked for as the witch nears them and drawn by a few Web Workers in the background;
 // where workers or OffscreenCanvas are missing, they are drawn on the page, one per frame.
 import * as Art from "../../art/generator.js";
-import { atlasFromPixels, placeholderAtlas, type Atlas } from "./atlas";
+import { enqueueWorkerTrace, postTracedJob, cancelWorkerTrace } from "../app/workerJobTrace";
+import { atlasBytes, atlasFromPixels, placeholderAtlas, type Atlas } from "./atlas";
+import { channelAt } from "./palette";
 import type { GpuKind } from "./gpuLedger";
+import { HOUSE_ROOMS } from "../rules/houseRooms";
+import { houseArtLayout } from "../rules/housePlacement";
 import { witchSprites, type SoundsystemGenArt, type TreehouseArt, type WitchArt } from "./homeArt";
-import { creatureFrame, walkGait, runJob, type ArtJob, type ArtResult, type BeachArt, type BeachEdgeArt, type LakeShoreArt, type DecorPiece, type PartyWitchArt, type PartyArt, type PathPieceArt, type RelicArt, type RelicLayouts, type SceneArt, type SpeakerArt, type TilePixels, type TypeLayout } from "./artBuild";
+import { creatureFrame, walkGait, runJob, stumpId, type StumpArt, type StumpSpec, type ArtJob, type ArtResult, type BeachArt, type BeachEdgeArt, type LakeShoreArt, type DecorPiece, type PartyWitchArt, type PartyArt, type PathPieceArt, type RelicArt, type RelicLayouts, type SceneArt, type SpeakerArt, type TilePixels, type TypeLayout } from "./artBuild";
 import type { Style } from "./style";
 import { artCacheKey, cachePut, hashText, type CacheHint } from "./artCache";
 import { rigGearKey, type RigGear, type RigMeta } from "./rig/rigBuild";
+import { partyGearOf } from "./creatureArt";
+import { partySheetKey, partySheetFrame } from "./partySheet";
 import { trunkCut } from "./trunkCut";
 
 export interface TypeArt {
@@ -18,6 +24,8 @@ export interface TypeArt {
    *  frame's height from its top (the trunk fades out below it in ground mode, Ed v149). */
   cut: Map<number, number>;
 }
+/** Shared party sheet identity includes its outfit and current age. */
+export interface CreatureArt { key?: string }
 export interface RelicSet { atlas: Atlas; byId: Record<string, RelicArt>; modern: RelicArt[]; layouts: RelicLayouts }
 export interface DecorArt { atlas: Atlas; pieces: DecorPiece[]; families: Record<string, DecorPiece[]>; /** the island biome it was drawn in (none: temperate) */ biome?: string }
 export interface CreatureArt { atlas: Atlas; frame: (level: number, frame: number, away?: boolean) => number; /** Its walk (art/creatures.js walkGait): frames in the cycle, and how far it moves between them (a share of its width). */ walk?: { frames: number; step: number }; /** A sleeping legend's ground line in each frame (rows from its top): drawn with that row on the ground. */ ground?: number[]; /** And how far its body's middle lies right of the frame's middle in each frame (pixels): drawn with its middle on its place. */ centre?: number[] }
@@ -44,7 +52,7 @@ export function prewarmArtWorkers(): void {
 /** An art set's row in the GPU ledger (render/gpuLedger.ts), by its job's kind. */
 const LEDGER_KINDS: Record<string, GpuKind> = { type: "trees", creature: "creatures", sleep: "creatures", nap: "creatures", glide: "creatures", woken: "creatures", face: "creatures", party: "creatures", rig: "creatures", witch: "witch", hat: "witch", partyWitch: "witch", treehouse: "house" };
 const ledgerKind = (k: string): GpuKind => LEDGER_KINDS[k] ?? "props";
-const ISLAND_KINDS = new Set<string>(["type", "treehouse", "soundsystem"]);
+const ISLAND_KINDS = new Set<string>(["type", "treehouse", "soundsystem", "stump"]);
 /** A job, or a waiting job's key ("kind:id..."), of the island's own. */
 export const islandBound = (j: ArtJob | string): boolean => ISLAND_KINDS.has(typeof j === "string" ? j.slice(0, j.indexOf(":")) : j.kind);
 /** A job as asked: the art's generation it was asked in (reseat). */
@@ -69,6 +77,8 @@ export class AssetLibrary {
   private rigs = new Map<string, RigArt>();
   private partyWitches = new Map<string, PartyWitchArt & { atlas: Atlas }>();
   private soundsystemsGen = new Map<string, SoundsystemGenArt & { atlas: Atlas }>();
+  /** The great stumps baked so far (render/markers.ts stumpDeal), by their spec's id. */
+  private stumps = new Map<string, { atlas: Atlas; art: StumpArt }>();
   private party: (PartyArt & { atlas: Atlas }) | undefined;
   private decor: DecorArt | undefined;
   /** The beach's edge of the woods (render/beach.ts): asked for only when she comes near the sand. */
@@ -115,6 +125,8 @@ export class AssetLibrary {
   /** The start's own art (fast start (b)): which of it has arrived from the art workers. Play waits for it (prepare's whenIdle). */
   readonly home = { witch: false, props: false, soundsystems: false, treehouse: false };
   get homeReady(): boolean { const h = this.home; return h.witch && h.props && h.soundsystems && h.treehouse; }
+  /** A quick outfit preview is drawn art, but is not the complete witch required for a limited landing. */
+  get fullWitchReady(): boolean { return this.home.witch && this.preview === null && this.witchLooks.has(JSON.stringify(this.witchGenome ?? null)); }
   /** Resolves once the start's own art has arrived (her frames, the light props, the soundsystems, the treehouse). */
   homeArt(): Promise<void> {
     return new Promise(resolve => { const check = () => { if (this.homeReady) resolve(); else { this.work(50); setTimeout(check, 30); } }; check(); });
@@ -184,11 +196,14 @@ export class AssetLibrary {
     w.onmessage = (e: MessageEvent<Reply>) => { slot.busy = false; slot.job = undefined; this.receive(e.data); this.dispatch(); };
     w.onerror = () => { // the worker itself failed (no module workers, say): draw on the page
       this.useWorkers = false;
-      if (slot.job) this.queue.unshift(slot.job);
+      if (slot.job) { cancelWorkerTrace(slot.job, 'worker-error'); this.queue.unshift(slot.job); }
       slot.busy = false; slot.job = undefined;
     };
   }
-  private key = (j: ArtJob) => j.kind + ":" + j.id + (j.kind === "type" && j.seed !== this.typeSeed ? `@${j.seed}` : ""); // (tonight's sets apart from the island's)
+  private key = (j: ArtJob) => {
+    const layout = j.kind === "treehouse" || j.kind === "housePiece" ? j.layout ?? houseArtLayout(HOUSE_ROOMS) : undefined;
+    return j.kind + ":" + j.id + (j.kind === "type" && j.seed !== this.typeSeed ? `@${j.seed}` : "") + (layout ? `@layout:${layout.identity}` : "");
+  }; // (tonight's sets apart from the island's; opt-in layouts never share a job)
   /** Where a set is kept between visits (render/artCache.ts). */
   private cacheKey = (j: ArtJob) => artCacheKey(j, this.styleHash);
   /** Ask for a set: from the browser's store if it was drawn before, else drawn by a worker. An
@@ -200,6 +215,7 @@ export class AssetLibrary {
   /** Where an urgent job goes in the queue: after the start's own (`home`) still waiting, ahead of the rest. */
   private get front(): number { const i = this.queue.findIndex(q => !(q as ArtJob & { home?: boolean }).home); return i < 0 ? this.queue.length : i; }
   private ask(job: ArtJob, urgent = false, home = false): void {
+    if ((job.kind === "treehouse" || job.kind === "housePiece") && HOUSE_ROOMS.layout && !job.layout) job = { ...job, layout: houseArtLayout(HOUSE_ROOMS) };
     const k = this.key(job);
     if (this.inFlight.has(k)) {
       // (an urgent job asked for again while waiting is moved to the front once: asked for every creature every frame, searching
@@ -222,6 +238,7 @@ export class AssetLibrary {
     (job as ArtJob & CacheHint).cacheKey = this.cacheKey(job);
     (job as ArtJob & { urgent?: boolean }).urgent = urgent;
     (job as Stamped).gen = this.gen;
+    enqueueWorkerTrace(job, `art:${job.kind}`, job.id, this.queue.length);
     if (home || urgent || this.promoted.has(k)) this.queue.splice(this.front, 0, job); else this.queue.push(job);
     this.dispatch();
   }
@@ -243,7 +260,7 @@ export class AssetLibrary {
       if (i < 0) break;
       slot.busy = true;
       slot.job = this.queue.splice(i, 1)[0];
-      slot.w.postMessage(slot.job);
+      postTracedJob(slot.w, slot.job, `art:${slot.job.kind}`, slot.job.id);
     }
   }
   /** One-off asks (oneOff), by their key: what each is waiting for. */
@@ -339,6 +356,8 @@ export class AssetLibrary {
       this.party = { atlas, ...r.result.party! };
     } else if (r.job.kind === "soundsystem") {
       this.soundsystemsGen.set(r.job.id, { atlas, ...r.result.ss! });
+    } else if (r.job.kind === "stump") {
+      this.stumps.set(r.job.id, { atlas, art: r.result.stumps![0] });
     } else if (r.job.kind === "find") {
       this.finds.set(r.job.id, { atlas, ...r.result.scenes! });
     } else if (r.job.kind === "hat") {
@@ -367,7 +386,7 @@ export class AssetLibrary {
       for (const p of r.result.layout!.big) {
         if (p.top === null) continue;
         const counts = (k: number) => { const f = px.frames[k], x0 = Math.round(f.uv[0] * px.width), y0 = Math.round(f.uv[1] * px.height), rows = new Array<number>(f.h).fill(0);
-          for (let y = 0; y < f.h; y++) for (let x = 0; x < f.w; x++) if (px.albedo[((y0 + y) * px.width + x0 + x) * 4 + 3] > 0) rows[y]++;
+          for (let y = 0; y < f.h; y++) for (let x = 0; x < f.w; x++) if (channelAt(px.albedo, px.albedoPal, (y0 + y) * px.width + x0 + x, 3) > 0) rows[y]++;
           return rows; };
         const c = trunkCut(counts(p.top), counts(p.bot), share); // (never above the trunk's own top: trunkCut.ts)
         if (c !== undefined) cut.set(p.bot, c);
@@ -380,6 +399,8 @@ export class AssetLibrary {
     } else if (r.job.kind === "sleep") this.creatures.set(r.job.id, { atlas, frame: (_level, f) => f % 2, ground: r.result.ground, centre: r.result.centre });
     else if (r.job.kind === "nap") this.creatures.set(r.job.id, { atlas, frame: napFrame, ground: r.result.ground, centre: r.result.centre });
     else if (r.job.kind === "glide") this.creatures.set(r.job.id, { atlas, frame: napFrame });
+    else if (r.job.kind === "party") { const G = walkGait(r.job.species);
+      this.creatures.set(r.job.id, { atlas, key: r.job.id, frame: (_l, f, away) => partySheetFrame(f, away, G.frames), walk: G }); }
     else { const G = walkGait("species" in r.job ? r.job.species : r.job.id); // (its walk's frames: a party look's, woken or a face's are its species')
       this.creatures.set(r.job.id, { atlas, frame: (l: number, f: number, away?: boolean) => creatureFrame(l, f, away, G.frames), walk: G }); }
     this.inFlight.delete(this.key(r.job)); this.promoted.delete(this.key(r.job)); this.urgentKeys.delete(this.key(r.job));
@@ -457,7 +478,7 @@ export class AssetLibrary {
     // Only the four-legged and the snakes have rig parts (art/genome/parts.js); a page that came back without any (a squat
     // mole's, say) was asked for again every frame, a job at the head of the queue each round for the whole night (2026-10-14).
     const template = (g as { template?: string }).template;
-    if ((template !== "quadruped" && template !== "serpent") || this.noRig.has(k)) return undefined;
+    if ((!gear?.stilt && template !== "quadruped" && template !== "serpent") || this.noRig.has(k)) return undefined;
     this.ask({ kind: "rig", id: k, species, level, style: this.style, ...(gear ? { gear } : {}) }, true); // gameplay: ahead of the scenery
     return undefined;
   }
@@ -481,10 +502,10 @@ export class AssetLibrary {
     for (const [k, a] of this.creatures) if (a.atlas === atlas) this.creatures.delete(k);
     atlas.albedo.dispose(); atlas.normal.dispose();
   }
-  /** The rig pages held and their size in bytes (albedo and normal), for the debug overlay. */
+  /** The rig pages held and their size in bytes (albedo and normal, as stored: render/atlas.ts atlasBytes), for the debug overlay. */
   rigStats(): { pages: number; bytes: number } {
     let bytes = 0;
-    for (const v of this.rigs.values()) bytes += (v.atlas.albedo.image.width * v.atlas.albedo.image.height) * 8;
+    for (const v of this.rigs.values()) bytes += atlasBytes(v.atlas);
     return { pages: this.rigs.size, bytes };
   }
   creatureArt(species: string): CreatureArt | undefined {
@@ -538,15 +559,15 @@ export class AssetLibrary {
     return a;
   }
   /** An invited creature's party look (its gear seeded by its id), or undefined (and asked for). */
-  partyArt(species: string, id: number, colour: number[]): CreatureArt | undefined {
-    const k = `party-${species}-${id}`, a = this.creatures.get(k); // (the species in the key: an id is a creature only within one map)
-    if (!a) this.ask({ kind: "party", id: k, species, seed: id, colour, style: this.style });
+  partyArt(species: string, id: number, colour: number[], level: number): CreatureArt | undefined {
+    const gear = partyGearOf(id, colour), k = partySheetKey(species, level, gear), a = this.creatures.get(k);
+    if (!a) this.ask({ kind: "party", id: k, species, level, gear, style: this.style });
     return a;
   }
   /** A happy creature's look (issue #87): party clothes, no glowing collar; or undefined (and asked for). */
-  happyArt(species: string, id: number): CreatureArt | undefined {
-    const k = `happy-${species}-${id}`, a = this.creatures.get(k);
-    if (!a) this.ask({ kind: "party", id: k, species, seed: id, colour: null, style: this.style });
+  happyArt(species: string, id: number, level: number): CreatureArt | undefined {
+    const gear = partyGearOf(id, null), k = partySheetKey(species, level, gear), a = this.creatures.get(k);
+    if (!a) this.ask({ kind: "party", id: k, species, level, gear, style: this.style });
     return a;
   }
   /** The party objects' art (#38), or undefined (and asked for). */
@@ -579,7 +600,7 @@ export class AssetLibrary {
     // witch immediately")
     const mine = JSON.stringify(genome ?? null);
     const stale = (q?: ArtJob) => q?.kind === "witch" && JSON.stringify(q.genome ?? null) !== mine;
-    const forget = (q: ArtJob) => { const k = this.key(q); this.inFlight.delete(k); this.promoted.delete(k); this.urgentKeys.delete(k); };
+    const forget = (q: ArtJob) => { cancelWorkerTrace(q, 'witch-look-superseded'); const k = this.key(q); this.inFlight.delete(k); this.promoted.delete(k); this.urgentKeys.delete(k); };
     this.queue = this.queue.filter(q => !stale(q) || (forget(q), false));
     // and one already drawing, if it's a whole set (seconds of a worker's time; tens in the cloud): its worker let go for another
     for (const slot of this.workers) if (stale(slot.job) && !(slot.job as { quick?: boolean }).quick) {
@@ -658,6 +679,12 @@ export class AssetLibrary {
     if (!a) this.ask({ kind: "soundsystem", id: k, style: this.style, genome, yaw, size, part }, urgent);
     return a;
   }
+  /** An area's great stump (runeMarkers.stump; render/markers.ts stumpDeal's spec), baked as it's wanted: undefined till it lands. */
+  stumpArt(spec: StumpSpec, urgent = true): { atlas: Atlas; art: StumpArt } | undefined {
+    const id = stumpId(spec), a = this.stumps.get(id);
+    if (!a) this.ask({ kind: "stump", id, style: this.style, stump: spec }, urgent);
+    return a;
+  }
   /** Ask for a set ahead of need, without using it. */
   prefetchType(t: number): void { if (!this.types.has(t)) this.ask({ kind: "type", id: t, style: this.style, seed: this.typeSeed, K: this.K, biome: this.typeBiome }); }
   /** Tonight's own trees (the night's seed), for the area types `types`, if they were drawn ahead and kept (app/landingBake.ts):
@@ -700,13 +727,14 @@ export class AssetLibrary {
    *  afresh as they're wanted (from the browser's store, if drawn before). */
   reseat(o: { seed: number; typeSeed: number; typeBiome?: string; treehouse: string }): void {
     this.gen++;
-    this.queue = this.queue.filter(j => !islandBound(j));
+    this.queue = this.queue.filter(j => !islandBound(j) || (cancelWorkerTrace(j, 'island-reseated'), false));
     for (const k of [...this.inFlight]) if (islandBound(k)) { this.inFlight.delete(k); this.promoted.delete(k); this.urgentKeys.delete(k); }
     const free = (a: Atlas) => { a.albedo.dispose(); a.normal.dispose(); };
     for (const a of this.types.values()) free(a.atlas);
     for (const a of this.tonightTypes.values()) free(a.atlas);
     for (const a of this.soundsystemsGen.values()) free(a.atlas);
-    this.types.clear(); this.tonightTypes.clear(); this.soundsystemsGen.clear(); this.typeLog.clear(); this.typeNext = 0;
+    for (const a of this.stumps.values()) free(a.atlas);
+    this.types.clear(); this.tonightTypes.clear(); this.soundsystemsGen.clear(); this.stumps.clear(); this.typeLog.clear(); this.typeNext = 0;
     this.tonightShut = false;
     this.seed = o.seed; this.typeSeed = o.typeSeed; this.typeBiome = o.typeBiome;
     if (o.treehouse !== this.treehouseId || !this.home.treehouse) { // (another, or this one still being drawn: asked again, the last ask dropped)

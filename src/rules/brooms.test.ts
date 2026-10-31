@@ -10,12 +10,14 @@ import { SETS, fittedOf, partsPull } from "./broomParts";
 import { inviteCreature } from "./leash";
 import { cellKey } from "./party";
 import type { Creature } from "./creatures";
+import { smallWorldTuning } from "../test/worlds";
 
 const C: Controls = { moveX: 0, moveZ: 0, toggleMode: false, zoom: 0 };
 /** Riding the set that gives `spell` (its parts fitted: the Workshop's bay). */
 const riding = (spell: string): Tuning => ({ ...TUNING, spells: { ...TUNING.spells, parts: SETS.find(s => s.spell === spell)!.pieces.join(",") } });
-function game(t: Tuning): Game {
-  const g = newGame(123, t);
+function game(t: Tuning, local = false): Game {
+  // Ley jump follows the seeded area's pulse; stealth searches for a wild area over 150 m from home.
+  const g = newGame(123, local ? smallWorldTuning(t, "Blink, pull and pound use explicitly placed creatures near one point.") : t);
   g.clock.paused = false; g.party.paused = true;
   g.party.spellAt = undefined;
   g.witch = { ...g.witch, seated: false, mode: "ground", lift: 0, vx: 0, vz: 0 };
@@ -37,7 +39,7 @@ const spot = (g: Game) => ({ x: g.map.dancefloor.x + 40, z: g.map.dancefloor.z +
 
 describe("Battering (Ed, 2026-10-12: 'blinks stun creatures in her path')", () => {
   it("a blink stuns the creatures on its line, not those off it", () => {
-    const g = game(riding("battering")), p = spot(g);
+    const g = game(riding("battering"), true), p = spot(g);
     at(g, p.x, p.z);
     step(g, 1.1); // (its first blink charged)
     at(g, p.x, p.z);
@@ -73,7 +75,7 @@ describe("Ley jump", () => {
 describe("the Canoe hull (Haul's old job, a part since the Workshop: Ed, 2026-10-23)", () => {
   it("her sigils pull on her less: times its pull", () => {
     const pulled = (t: Tuning) => {
-      const g = game(t), p = spot(g), W = g.witches[0];
+      const g = game(t, true), p = spot(g), W = g.witches[0];
       at(g, p.x, p.z);
       for (const k of [0, 1, 2]) { const c = wild(g, p.x + 30 + k, p.z, 2); inviteCreature(W.leash, c, c.x, c.z, g.clock.time); }
       return leashLoad(g).total;
@@ -87,7 +89,7 @@ describe("the Canoe hull (Haul's old job, a part since the Workshop: Ed, 2026-10
 
 describe("Ground pound (Ed, 2026-10-12: the Updraft renamed; 'its landing should also briefly stun')", () => {
   it("on the ground, up at once, knocking creatures back; in the treetops, down at once, knocking them back and stunning them", () => {
-    const g = game(riding("pound")), p = spot(g), W = g.witches[0], P = TUNING.spells.pound!;
+    const g = game(riding("pound"), true), p = spot(g), W = g.witches[0], P = TUNING.spells.pound!;
     at(g, p.x, p.z);
     const c = wild(g, p.x + 3, p.z);
     stepGame(g, { ...C, spell: true }, 1 / 60);

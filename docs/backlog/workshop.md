@@ -81,7 +81,7 @@ Slot themes, as unlocks.md proposed, so a slot tells you roughly what a part cha
 | Exhaust | **Twig bristles** | the twig broom's long bundle and stray twigs | one more dodge: 2 → 3 charges (the Double blink broom) | boost builds slower: 2 → 3 s | Hedge |
 | Exhaust | **Oar blade** | the oar's flat blade | sharp on foot: ground pick-up 28 → 40 | blinks 15 → 12 m | Ferry |
 
-Today's passive brooms become part stats (Long → the Curled tip, Double blink → the Twig bristles, Haul → the Canoe hull; the plain broom's quick take-off → the bare broom and the Jet nozzles), and the movement boons unlocks.md set aside for the garage land here too (the Hare's blink charges → Twig bristles, the Mole's fast rise → Ladder, the Raven's treetop speed → Missile nose). Stats from different parts add up (a Missile nose and a Hobby-horse head can't both be fitted, so no slot fights itself).
+Today's passive brooms become part stats (Long → the Curled tip, Double blink → the Twig bristles, Haul → the Canoe hull; the plain broom's quick take-off → the bare broom and the Jet nozzles), and the movement boons (removed from the game, 2026-10-28) unlocks.md set aside for the garage land here too (the Hare's blink charges → Twig bristles, the Mole's fast rise → Ladder, the Raven's treetop speed → Missile nose). Stats from different parts add up (a Missile nose and a Hobby-horse head can't both be fitted, so no slot fights itself).
 
 **The next nine**, for later batches (the other shapes, one slot each): tips Handlebars, Speeder prongs, Gyro bubble nose; chassis Bicycle frame, Drone plate, Gyro keel; exhausts Fan or Round bristles, Mop head, Pitchfork tines, Speeder engine, Gyro pusher prop. The Classic stays the bare broom's look.
 

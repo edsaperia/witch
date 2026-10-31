@@ -36,9 +36,13 @@ Written from `FIND_KINDS`, so it can't drift: `src/rules/findsList.test.ts` fail
 - edgeseer (`edgeseer`), drawn as `find-hat`
 - routeseer (`routeseer`), drawn as `find-hat`
 
-### bag: found as a bag (2)
+### bag: found as a bag (6)
 
-- bumbag (`bumbag`), drawn as `find-bag`
+- tote (`tote`), drawn as `find-bag`
+- duffel (`duffel`), drawn as `find-bag`
+- briefcase (`briefcase`), drawn as `find-bag`
+- clutch (`clutch`), drawn as `find-bag`
+- messenger (`messenger`), drawn as `find-bag`
 - backpack (`backpack`), drawn as `find-bag`
 
 ### part: found as a broom part (9)
@@ -52,6 +56,18 @@ Written from `FIND_KINDS`, so it can't drift: `src/rules/findsList.test.ts` fail
 - Jet nozzles (`nozzles`), drawn as `find-part-nozzles`
 - Twig bristles (`twigs`), drawn as `find-part-twigs`
 - Oar blade (`oar`), drawn as `find-part-oar`
+
+### record: found as a record (9)
+
+- record-110 (`record-110`), drawn as `find-record`
+- record-130 (`record-130`), drawn as `find-record`
+- record-140 (`record-140`), drawn as `find-record`
+- record-150 (`record-150`), drawn as `find-record`
+- record-160 (`record-160`), drawn as `find-record`
+- record-170 (`record-170`), drawn as `find-record`
+- record-180 (`record-180`), drawn as `find-record`
+- record-190 (`record-190`), drawn as `find-record`
+- record-200 (`record-200`), drawn as `find-record`
 <!-- finds:end -->
 
 

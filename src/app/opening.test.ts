@@ -1,7 +1,7 @@
 // The opening's first load (app/opening.ts; Ed, 2026-10-23: "the first screen should be the witch waking up in her bedroom on the
 // home island instead of the map"): which loads wake in her bedroom, and that a first game's chart has only home to sail to.
 import { describe, expect, it } from "vitest";
-import { openingWay, opensInBedroom, sailLandsInBed } from "./opening";
+import { openingWay, opensDirectly, opensInBedroom, opensWithCreator, sailLandsInBed } from "./opening";
 import { emptySave, recordNight, unlocked } from "./chartSave";
 import { TUNING } from "../rules/tuning";
 
@@ -9,6 +9,25 @@ const on = { opening: { bedroom: true } }, off = { opening: { bedroom: false } }
 const link = (q: string) => new URLSearchParams(q);
 
 describe("the first load waking in her bedroom", () => {
+  it("starts resumed, creator=0 and ready bot nights directly, retaining bedroom/arrival and pending-bot gates", () => {
+    const state = { bedroom: false, arriving: false, resuming: false, bot: "off" as const };
+    expect(opensDirectly(link(""), { ...state, resuming: true })).toBe(true);
+    expect(opensDirectly(link("creator=0"), state)).toBe(true);
+    expect(opensDirectly(link("bot=skilled"), { ...state, bot: "ready" })).toBe(true);
+    expect(opensDirectly(link("creator=0&bot=skilled"), { ...state, bot: "loading" })).toBe(false);
+    expect(opensDirectly(link("creator=0"), { ...state, arriving: true })).toBe(false);
+    expect(opensDirectly(link(""), { ...state, bedroom: true })).toBe(false);
+    expect(opensDirectly(link("opening=old"), state)).toBe(false);
+  });
+  it("resumes directly into play instead of opening the creator that prevents start from unpausing", () => {
+    for (const query of ["", "opening=old", "opening=bedroom", "creator=0"]) {
+      const params = link(query);
+      expect(opensWithCreator(params, { bedroom: false, arriving: false, resuming: true }), query).toBe(false);
+    }
+    expect(opensWithCreator(link("opening=old"), { bedroom: false, arriving: false, resuming: false })).toBe(true);
+    expect(opensWithCreator(link(""), { bedroom: true, arriving: false, resuming: false })).toBe(false);
+    expect(opensWithCreator(link("arrive=1"), { bedroom: false, arriving: true, resuming: false })).toBe(false);
+  });
   it("is the tuning's way, or the link's ?opening=bedroom|old for one load", () => {
     expect(openingWay(link(""), off)).toBe("old");
     expect(openingWay(link(""), on)).toBe("bedroom");

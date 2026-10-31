@@ -6,9 +6,9 @@ import { AREA_TYPES } from "./map";
 import { configData } from "./configData";
 
 // The other config files (housekeeping, issue #122): each against its schema, and the names in them
-// pointing at real things (species, attacks, area types, buffed knobs).
+// pointing at real things (species, attacks, area types).
 const load = (f: string) => JSON.parse(readFileSync(f, "utf8"));
-// (combat, movement and legend-buffs as the game assembles them: their per-species entries live in art/creatures/<id>/creature.js)
+// (combat and movement as the game assembles them: their per-species entries live in art/creatures/<id>/creature.js)
 const data = Object.fromEntries(CONFIGS.map(c => [c.name, configData(c.name, c.file) as any]));
 const SPECIES = new Set(AREA_TYPES.map(t => t.creature)), AREAS = new Set(AREA_TYPES.map(t => t.id));
 const unknown = (names: Iterable<string>, known: Set<string>) => [...names].filter(n => !known.has(n));
@@ -40,18 +40,4 @@ describe("the names the config files use", () => {
     expect(unknown(Object.keys(data["area-types"].types), AREAS)).toEqual([]);
   });
 
-  it("legend-buffs.json: every species real; every tuning number and behaviour a buff changes has limits, and its own value is within them", () => {
-    const B = data["legend-buffs"], bad: string[] = [];
-    expect(unknown(Object.keys(B.species), SPECIES)).toEqual([]);
-    type Def = { scale?: Record<string, number>; add?: Record<string, number>; mods?: Record<string, number> };
-    for (const [sp, b] of Object.entries(B.species as Record<string, Def>)) {
-      for (const p of [...Object.keys(b.scale ?? {}), ...Object.keys(b.add ?? {})]) if (!B.limits[p]) bad.push(`${sp}: ${p} has no limits`);
-      for (const [k, v] of Object.entries(b.mods ?? {})) {
-        const lim = B.limits[`mods.${k}`] as [number, number] | undefined;
-        if (!lim) bad.push(`${sp}: mods.${k} has no limits`);
-        else if (v < lim[0] || v > lim[1]) bad.push(`${sp}: mods.${k} ${v} outside ${lim[0]}–${lim[1]}`);
-      }
-    }
-    expect(bad).toEqual([]);
-  });
 });

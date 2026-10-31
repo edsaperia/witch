@@ -1,0 +1,569 @@
+# ladder-000; 40 cases; world/night pairs 910000/79191000
+node tools/balance/survey.mjs run --manifest tools/balance/surveys/ladder.json --shard ladder-000 --lock trained-expert-lock.json --out results/ladder/ladder-000.jsonl
+
+# ladder-001; 40 cases; world/night pairs 910000/79191000
+node tools/balance/survey.mjs run --manifest tools/balance/surveys/ladder.json --shard ladder-001 --lock trained-expert-lock.json --out results/ladder/ladder-001.jsonl
+
+# ladder-002; 40 cases; world/night pairs 910000/79191000
+node tools/balance/survey.mjs run --manifest tools/balance/surveys/ladder.json --shard ladder-002 --lock trained-expert-lock.json --out results/ladder/ladder-002.jsonl
+
+# ladder-003; 40 cases; world/night pairs 910000/79191000
+node tools/balance/survey.mjs run --manifest tools/balance/surveys/ladder.json --shard ladder-003 --lock trained-expert-lock.json --out results/ladder/ladder-003.jsonl
+
+# ladder-004; 40 cases; world/night pairs 910000/79191000
+node tools/balance/survey.mjs run --manifest tools/balance/surveys/ladder.json --shard ladder-004 --lock trained-expert-lock.json --out results/ladder/ladder-004.jsonl
+
+# ladder-005; 40 cases; world/night pairs 910000/79191000
+node tools/balance/survey.mjs run --manifest tools/balance/surveys/ladder.json --shard ladder-005 --lock trained-expert-lock.json --out results/ladder/ladder-005.jsonl
+
+# ladder-006; 40 cases; world/night pairs 910000/79191000
+node tools/balance/survey.mjs run --manifest tools/balance/surveys/ladder.json --shard ladder-006 --lock trained-expert-lock.json --out results/ladder/ladder-006.jsonl
+
+# ladder-007; 40 cases; world/night pairs 910000/79191000
+node tools/balance/survey.mjs run --manifest tools/balance/surveys/ladder.json --shard ladder-007 --lock trained-expert-lock.json --out results/ladder/ladder-007.jsonl
+
+# ladder-008; 40 cases; world/night pairs 910000/79191000
+node tools/balance/survey.mjs run --manifest tools/balance/surveys/ladder.json --shard ladder-008 --lock trained-expert-lock.json --out results/ladder/ladder-008.jsonl
+
+# ladder-009; 40 cases; world/night pairs 910000/79191000
+node tools/balance/survey.mjs run --manifest tools/balance/surveys/ladder.json --shard ladder-009 --lock trained-expert-lock.json --out results/ladder/ladder-009.jsonl
+
+# ladder-010; 40 cases; world/night pairs 910000/79191000
+node tools/balance/survey.mjs run --manifest tools/balance/surveys/ladder.json --shard ladder-010 --lock trained-expert-lock.json --out results/ladder/ladder-010.jsonl
+
+# ladder-011; 40 cases; world/night pairs 910000/79191000
+node tools/balance/survey.mjs run --manifest tools/balance/surveys/ladder.json --shard ladder-011 --lock trained-expert-lock.json --out results/ladder/ladder-011.jsonl
+
+# ladder-012; 40 cases; world/night pairs 910000/79191000
+node tools/balance/survey.mjs run --manifest tools/balance/surveys/ladder.json --shard ladder-012 --lock trained-expert-lock.json --out results/ladder/ladder-012.jsonl
+
+# ladder-013; 40 cases; world/night pairs 910001/79198919
+node tools/balance/survey.mjs run --manifest tools/balance/surveys/ladder.json --shard ladder-013 --lock trained-expert-lock.json --out results/ladder/ladder-013.jsonl
+
+# ladder-014; 40 cases; world/night pairs 910001/79198919
+node tools/balance/survey.mjs run --manifest tools/balance/surveys/ladder.json --shard ladder-014 --lock trained-expert-lock.json --out results/ladder/ladder-014.jsonl
+
+# ladder-015; 40 cases; world/night pairs 910001/79198919
+node tools/balance/survey.mjs run --manifest tools/balance/surveys/ladder.json --shard ladder-015 --lock trained-expert-lock.json --out results/ladder/ladder-015.jsonl
+
+# ladder-016; 40 cases; world/night pairs 910001/79198919
+node tools/balance/survey.mjs run --manifest tools/balance/surveys/ladder.json --shard ladder-016 --lock trained-expert-lock.json --out results/ladder/ladder-016.jsonl
+
+# ladder-017; 40 cases; world/night pairs 910001/79198919
+node tools/balance/survey.mjs run --manifest tools/balance/surveys/ladder.json --shard ladder-017 --lock trained-expert-lock.json --out results/ladder/ladder-017.jsonl
+
+# ladder-018; 40 cases; world/night pairs 910001/79198919
+node tools/balance/survey.mjs run --manifest tools/balance/surveys/ladder.json --shard ladder-018 --lock trained-expert-lock.json --out results/ladder/ladder-018.jsonl
+
+# ladder-019; 40 cases; world/night pairs 910001/79198919
+node tools/balance/survey.mjs run --manifest tools/balance/surveys/ladder.json --shard ladder-019 --lock trained-expert-lock.json --out results/ladder/ladder-019.jsonl
+
+# ladder-020; 40 cases; world/night pairs 910001/79198919
+node tools/balance/survey.mjs run --manifest tools/balance/surveys/ladder.json --shard ladder-020 --lock trained-expert-lock.json --out results/ladder/ladder-020.jsonl
+
+# ladder-021; 40 cases; world/night pairs 910001/79198919
+node tools/balance/survey.mjs run --manifest tools/balance/surveys/ladder.json --shard ladder-021 --lock trained-expert-lock.json --out results/ladder/ladder-021.jsonl
+
+# ladder-022; 40 cases; world/night pairs 910001/79198919
+node tools/balance/survey.mjs run --manifest tools/balance/surveys/ladder.json --shard ladder-022 --lock trained-expert-lock.json --out results/ladder/ladder-022.jsonl
+
+# ladder-023; 40 cases; world/night pairs 910001/79198919
+node tools/balance/survey.mjs run --manifest tools/balance/surveys/ladder.json --shard ladder-023 --lock trained-expert-lock.json --out results/ladder/ladder-023.jsonl
+
+# ladder-024; 40 cases; world/night pairs 910001/79198919
+node tools/balance/survey.mjs run --manifest tools/balance/surveys/ladder.json --shard ladder-024 --lock trained-expert-lock.json --out results/ladder/ladder-024.jsonl
+
+# ladder-025; 40 cases; world/night pairs 910001/79198919
+node tools/balance/survey.mjs run --manifest tools/balance/surveys/ladder.json --shard ladder-025 --lock trained-expert-lock.json --out results/ladder/ladder-025.jsonl
+
+# ladder-026; 40 cases; world/night pairs 910002/79206838
+node tools/balance/survey.mjs run --manifest tools/balance/surveys/ladder.json --shard ladder-026 --lock trained-expert-lock.json --out results/ladder/ladder-026.jsonl
+
+# ladder-027; 40 cases; world/night pairs 910002/79206838
+node tools/balance/survey.mjs run --manifest tools/balance/surveys/ladder.json --shard ladder-027 --lock trained-expert-lock.json --out results/ladder/ladder-027.jsonl
+
+# ladder-028; 40 cases; world/night pairs 910002/79206838
+node tools/balance/survey.mjs run --manifest tools/balance/surveys/ladder.json --shard ladder-028 --lock trained-expert-lock.json --out results/ladder/ladder-028.jsonl
+
+# ladder-029; 40 cases; world/night pairs 910002/79206838
+node tools/balance/survey.mjs run --manifest tools/balance/surveys/ladder.json --shard ladder-029 --lock trained-expert-lock.json --out results/ladder/ladder-029.jsonl
+
+# ladder-030; 40 cases; world/night pairs 910002/79206838
+node tools/balance/survey.mjs run --manifest tools/balance/surveys/ladder.json --shard ladder-030 --lock trained-expert-lock.json --out results/ladder/ladder-030.jsonl
+
+# ladder-031; 40 cases; world/night pairs 910002/79206838
+node tools/balance/survey.mjs run --manifest tools/balance/surveys/ladder.json --shard ladder-031 --lock trained-expert-lock.json --out results/ladder/ladder-031.jsonl
+
+# ladder-032; 40 cases; world/night pairs 910002/79206838
+node tools/balance/survey.mjs run --manifest tools/balance/surveys/ladder.json --shard ladder-032 --lock trained-expert-lock.json --out results/ladder/ladder-032.jsonl
+
+# ladder-033; 40 cases; world/night pairs 910002/79206838
+node tools/balance/survey.mjs run --manifest tools/balance/surveys/ladder.json --shard ladder-033 --lock trained-expert-lock.json --out results/ladder/ladder-033.jsonl
+
+# ladder-034; 40 cases; world/night pairs 910002/79206838
+node tools/balance/survey.mjs run --manifest tools/balance/surveys/ladder.json --shard ladder-034 --lock trained-expert-lock.json --out results/ladder/ladder-034.jsonl
+
+# ladder-035; 40 cases; world/night pairs 910002/79206838
+node tools/balance/survey.mjs run --manifest tools/balance/surveys/ladder.json --shard ladder-035 --lock trained-expert-lock.json --out results/ladder/ladder-035.jsonl
+
+# ladder-036; 40 cases; world/night pairs 910002/79206838
+node tools/balance/survey.mjs run --manifest tools/balance/surveys/ladder.json --shard ladder-036 --lock trained-expert-lock.json --out results/ladder/ladder-036.jsonl
+
+# ladder-037; 40 cases; world/night pairs 910002/79206838
+node tools/balance/survey.mjs run --manifest tools/balance/surveys/ladder.json --shard ladder-037 --lock trained-expert-lock.json --out results/ladder/ladder-037.jsonl
+
+# ladder-038; 40 cases; world/night pairs 910002/79206838
+node tools/balance/survey.mjs run --manifest tools/balance/surveys/ladder.json --shard ladder-038 --lock trained-expert-lock.json --out results/ladder/ladder-038.jsonl
+
+# ladder-039; 40 cases; world/night pairs 910003/79214757
+node tools/balance/survey.mjs run --manifest tools/balance/surveys/ladder.json --shard ladder-039 --lock trained-expert-lock.json --out results/ladder/ladder-039.jsonl
+
+# ladder-040; 40 cases; world/night pairs 910003/79214757
+node tools/balance/survey.mjs run --manifest tools/balance/surveys/ladder.json --shard ladder-040 --lock trained-expert-lock.json --out results/ladder/ladder-040.jsonl
+
+# ladder-041; 40 cases; world/night pairs 910003/79214757
+node tools/balance/survey.mjs run --manifest tools/balance/surveys/ladder.json --shard ladder-041 --lock trained-expert-lock.json --out results/ladder/ladder-041.jsonl
+
+# ladder-042; 40 cases; world/night pairs 910003/79214757
+node tools/balance/survey.mjs run --manifest tools/balance/surveys/ladder.json --shard ladder-042 --lock trained-expert-lock.json --out results/ladder/ladder-042.jsonl
+
+# ladder-043; 40 cases; world/night pairs 910003/79214757
+node tools/balance/survey.mjs run --manifest tools/balance/surveys/ladder.json --shard ladder-043 --lock trained-expert-lock.json --out results/ladder/ladder-043.jsonl
+
+# ladder-044; 40 cases; world/night pairs 910003/79214757
+node tools/balance/survey.mjs run --manifest tools/balance/surveys/ladder.json --shard ladder-044 --lock trained-expert-lock.json --out results/ladder/ladder-044.jsonl
+
+# ladder-045; 40 cases; world/night pairs 910003/79214757
+node tools/balance/survey.mjs run --manifest tools/balance/surveys/ladder.json --shard ladder-045 --lock trained-expert-lock.json --out results/ladder/ladder-045.jsonl
+
+# ladder-046; 40 cases; world/night pairs 910003/79214757
+node tools/balance/survey.mjs run --manifest tools/balance/surveys/ladder.json --shard ladder-046 --lock trained-expert-lock.json --out results/ladder/ladder-046.jsonl
+
+# ladder-047; 40 cases; world/night pairs 910003/79214757
+node tools/balance/survey.mjs run --manifest tools/balance/surveys/ladder.json --shard ladder-047 --lock trained-expert-lock.json --out results/ladder/ladder-047.jsonl
+
+# ladder-048; 40 cases; world/night pairs 910003/79214757
+node tools/balance/survey.mjs run --manifest tools/balance/surveys/ladder.json --shard ladder-048 --lock trained-expert-lock.json --out results/ladder/ladder-048.jsonl
+
+# ladder-049; 40 cases; world/night pairs 910003/79214757
+node tools/balance/survey.mjs run --manifest tools/balance/surveys/ladder.json --shard ladder-049 --lock trained-expert-lock.json --out results/ladder/ladder-049.jsonl
+
+# ladder-050; 40 cases; world/night pairs 910003/79214757
+node tools/balance/survey.mjs run --manifest tools/balance/surveys/ladder.json --shard ladder-050 --lock trained-expert-lock.json --out results/ladder/ladder-050.jsonl
+
+# ladder-051; 40 cases; world/night pairs 910003/79214757
+node tools/balance/survey.mjs run --manifest tools/balance/surveys/ladder.json --shard ladder-051 --lock trained-expert-lock.json --out results/ladder/ladder-051.jsonl
+
+# ladder-052; 40 cases; world/night pairs 910004/79222676
+node tools/balance/survey.mjs run --manifest tools/balance/surveys/ladder.json --shard ladder-052 --lock trained-expert-lock.json --out results/ladder/ladder-052.jsonl
+
+# ladder-053; 40 cases; world/night pairs 910004/79222676
+node tools/balance/survey.mjs run --manifest tools/balance/surveys/ladder.json --shard ladder-053 --lock trained-expert-lock.json --out results/ladder/ladder-053.jsonl
+
+# ladder-054; 40 cases; world/night pairs 910004/79222676
+node tools/balance/survey.mjs run --manifest tools/balance/surveys/ladder.json --shard ladder-054 --lock trained-expert-lock.json --out results/ladder/ladder-054.jsonl
+
+# ladder-055; 40 cases; world/night pairs 910004/79222676
+node tools/balance/survey.mjs run --manifest tools/balance/surveys/ladder.json --shard ladder-055 --lock trained-expert-lock.json --out results/ladder/ladder-055.jsonl
+
+# ladder-056; 40 cases; world/night pairs 910004/79222676
+node tools/balance/survey.mjs run --manifest tools/balance/surveys/ladder.json --shard ladder-056 --lock trained-expert-lock.json --out results/ladder/ladder-056.jsonl
+
+# ladder-057; 40 cases; world/night pairs 910004/79222676
+node tools/balance/survey.mjs run --manifest tools/balance/surveys/ladder.json --shard ladder-057 --lock trained-expert-lock.json --out results/ladder/ladder-057.jsonl
+
+# ladder-058; 40 cases; world/night pairs 910004/79222676
+node tools/balance/survey.mjs run --manifest tools/balance/surveys/ladder.json --shard ladder-058 --lock trained-expert-lock.json --out results/ladder/ladder-058.jsonl
+
+# ladder-059; 40 cases; world/night pairs 910004/79222676
+node tools/balance/survey.mjs run --manifest tools/balance/surveys/ladder.json --shard ladder-059 --lock trained-expert-lock.json --out results/ladder/ladder-059.jsonl
+
+# ladder-060; 40 cases; world/night pairs 910004/79222676
+node tools/balance/survey.mjs run --manifest tools/balance/surveys/ladder.json --shard ladder-060 --lock trained-expert-lock.json --out results/ladder/ladder-060.jsonl
+
+# ladder-061; 40 cases; world/night pairs 910004/79222676
+node tools/balance/survey.mjs run --manifest tools/balance/surveys/ladder.json --shard ladder-061 --lock trained-expert-lock.json --out results/ladder/ladder-061.jsonl
+
+# ladder-062; 40 cases; world/night pairs 910004/79222676
+node tools/balance/survey.mjs run --manifest tools/balance/surveys/ladder.json --shard ladder-062 --lock trained-expert-lock.json --out results/ladder/ladder-062.jsonl
+
+# ladder-063; 40 cases; world/night pairs 910004/79222676
+node tools/balance/survey.mjs run --manifest tools/balance/surveys/ladder.json --shard ladder-063 --lock trained-expert-lock.json --out results/ladder/ladder-063.jsonl
+
+# ladder-064; 40 cases; world/night pairs 910004/79222676
+node tools/balance/survey.mjs run --manifest tools/balance/surveys/ladder.json --shard ladder-064 --lock trained-expert-lock.json --out results/ladder/ladder-064.jsonl
+
+# tempo-000; 15 cases; world/night pairs 910000/79191000
+node tools/balance/survey.mjs run --manifest tools/balance/surveys/tempo.json --shard tempo-000 --lock trained-expert-lock.json --out results/tempo/tempo-000.jsonl
+
+# tempo-001; 15 cases; world/night pairs 910000/79191000
+node tools/balance/survey.mjs run --manifest tools/balance/surveys/tempo.json --shard tempo-001 --lock trained-expert-lock.json --out results/tempo/tempo-001.jsonl
+
+# tempo-002; 15 cases; world/night pairs 910000/79191000
+node tools/balance/survey.mjs run --manifest tools/balance/surveys/tempo.json --shard tempo-002 --lock trained-expert-lock.json --out results/tempo/tempo-002.jsonl
+
+# tempo-003; 15 cases; world/night pairs 910001/79198919
+node tools/balance/survey.mjs run --manifest tools/balance/surveys/tempo.json --shard tempo-003 --lock trained-expert-lock.json --out results/tempo/tempo-003.jsonl
+
+# tempo-004; 15 cases; world/night pairs 910001/79198919
+node tools/balance/survey.mjs run --manifest tools/balance/surveys/tempo.json --shard tempo-004 --lock trained-expert-lock.json --out results/tempo/tempo-004.jsonl
+
+# tempo-005; 15 cases; world/night pairs 910001/79198919
+node tools/balance/survey.mjs run --manifest tools/balance/surveys/tempo.json --shard tempo-005 --lock trained-expert-lock.json --out results/tempo/tempo-005.jsonl
+
+# tempo-006; 15 cases; world/night pairs 910002/79206838
+node tools/balance/survey.mjs run --manifest tools/balance/surveys/tempo.json --shard tempo-006 --lock trained-expert-lock.json --out results/tempo/tempo-006.jsonl
+
+# tempo-007; 15 cases; world/night pairs 910002/79206838
+node tools/balance/survey.mjs run --manifest tools/balance/surveys/tempo.json --shard tempo-007 --lock trained-expert-lock.json --out results/tempo/tempo-007.jsonl
+
+# tempo-008; 15 cases; world/night pairs 910002/79206838
+node tools/balance/survey.mjs run --manifest tools/balance/surveys/tempo.json --shard tempo-008 --lock trained-expert-lock.json --out results/tempo/tempo-008.jsonl
+
+# tempo-009; 15 cases; world/night pairs 910003/79214757
+node tools/balance/survey.mjs run --manifest tools/balance/surveys/tempo.json --shard tempo-009 --lock trained-expert-lock.json --out results/tempo/tempo-009.jsonl
+
+# tempo-010; 15 cases; world/night pairs 910003/79214757
+node tools/balance/survey.mjs run --manifest tools/balance/surveys/tempo.json --shard tempo-010 --lock trained-expert-lock.json --out results/tempo/tempo-010.jsonl
+
+# tempo-011; 15 cases; world/night pairs 910003/79214757
+node tools/balance/survey.mjs run --manifest tools/balance/surveys/tempo.json --shard tempo-011 --lock trained-expert-lock.json --out results/tempo/tempo-011.jsonl
+
+# tempo-012; 15 cases; world/night pairs 910004/79222676
+node tools/balance/survey.mjs run --manifest tools/balance/surveys/tempo.json --shard tempo-012 --lock trained-expert-lock.json --out results/tempo/tempo-012.jsonl
+
+# tempo-013; 15 cases; world/night pairs 910004/79222676
+node tools/balance/survey.mjs run --manifest tools/balance/surveys/tempo.json --shard tempo-013 --lock trained-expert-lock.json --out results/tempo/tempo-013.jsonl
+
+# tempo-014; 15 cases; world/night pairs 910004/79222676
+node tools/balance/survey.mjs run --manifest tools/balance/surveys/tempo.json --shard tempo-014 --lock trained-expert-lock.json --out results/tempo/tempo-014.jsonl
+
+# equipment-000; 8 cases; world/night pairs 910000/79191000
+node tools/balance/survey.mjs run --manifest tools/balance/surveys/equipment.json --shard equipment-000 --lock trained-expert-lock.json --out results/equipment/equipment-000.jsonl
+
+# equipment-001; 8 cases; world/night pairs 910000/79191000
+node tools/balance/survey.mjs run --manifest tools/balance/surveys/equipment.json --shard equipment-001 --lock trained-expert-lock.json --out results/equipment/equipment-001.jsonl
+
+# equipment-002; 8 cases; world/night pairs 910000/79191000
+node tools/balance/survey.mjs run --manifest tools/balance/surveys/equipment.json --shard equipment-002 --lock trained-expert-lock.json --out results/equipment/equipment-002.jsonl
+
+# equipment-003; 8 cases; world/night pairs 910000/79191000
+node tools/balance/survey.mjs run --manifest tools/balance/surveys/equipment.json --shard equipment-003 --lock trained-expert-lock.json --out results/equipment/equipment-003.jsonl
+
+# equipment-004; 8 cases; world/night pairs 910000/79191000
+node tools/balance/survey.mjs run --manifest tools/balance/surveys/equipment.json --shard equipment-004 --lock trained-expert-lock.json --out results/equipment/equipment-004.jsonl
+
+# equipment-005; 8 cases; world/night pairs 910000/79191000
+node tools/balance/survey.mjs run --manifest tools/balance/surveys/equipment.json --shard equipment-005 --lock trained-expert-lock.json --out results/equipment/equipment-005.jsonl
+
+# equipment-006; 8 cases; world/night pairs 910000/79191000
+node tools/balance/survey.mjs run --manifest tools/balance/surveys/equipment.json --shard equipment-006 --lock trained-expert-lock.json --out results/equipment/equipment-006.jsonl
+
+# equipment-007; 8 cases; world/night pairs 910000/79191000
+node tools/balance/survey.mjs run --manifest tools/balance/surveys/equipment.json --shard equipment-007 --lock trained-expert-lock.json --out results/equipment/equipment-007.jsonl
+
+# equipment-008; 8 cases; world/night pairs 910001/79198919
+node tools/balance/survey.mjs run --manifest tools/balance/surveys/equipment.json --shard equipment-008 --lock trained-expert-lock.json --out results/equipment/equipment-008.jsonl
+
+# equipment-009; 8 cases; world/night pairs 910001/79198919
+node tools/balance/survey.mjs run --manifest tools/balance/surveys/equipment.json --shard equipment-009 --lock trained-expert-lock.json --out results/equipment/equipment-009.jsonl
+
+# equipment-010; 8 cases; world/night pairs 910001/79198919
+node tools/balance/survey.mjs run --manifest tools/balance/surveys/equipment.json --shard equipment-010 --lock trained-expert-lock.json --out results/equipment/equipment-010.jsonl
+
+# equipment-011; 8 cases; world/night pairs 910001/79198919
+node tools/balance/survey.mjs run --manifest tools/balance/surveys/equipment.json --shard equipment-011 --lock trained-expert-lock.json --out results/equipment/equipment-011.jsonl
+
+# equipment-012; 8 cases; world/night pairs 910001/79198919
+node tools/balance/survey.mjs run --manifest tools/balance/surveys/equipment.json --shard equipment-012 --lock trained-expert-lock.json --out results/equipment/equipment-012.jsonl
+
+# equipment-013; 8 cases; world/night pairs 910001/79198919
+node tools/balance/survey.mjs run --manifest tools/balance/surveys/equipment.json --shard equipment-013 --lock trained-expert-lock.json --out results/equipment/equipment-013.jsonl
+
+# equipment-014; 8 cases; world/night pairs 910001/79198919
+node tools/balance/survey.mjs run --manifest tools/balance/surveys/equipment.json --shard equipment-014 --lock trained-expert-lock.json --out results/equipment/equipment-014.jsonl
+
+# equipment-015; 8 cases; world/night pairs 910001/79198919
+node tools/balance/survey.mjs run --manifest tools/balance/surveys/equipment.json --shard equipment-015 --lock trained-expert-lock.json --out results/equipment/equipment-015.jsonl
+
+# equipment-016; 8 cases; world/night pairs 910002/79206838
+node tools/balance/survey.mjs run --manifest tools/balance/surveys/equipment.json --shard equipment-016 --lock trained-expert-lock.json --out results/equipment/equipment-016.jsonl
+
+# equipment-017; 8 cases; world/night pairs 910002/79206838
+node tools/balance/survey.mjs run --manifest tools/balance/surveys/equipment.json --shard equipment-017 --lock trained-expert-lock.json --out results/equipment/equipment-017.jsonl
+
+# equipment-018; 8 cases; world/night pairs 910002/79206838
+node tools/balance/survey.mjs run --manifest tools/balance/surveys/equipment.json --shard equipment-018 --lock trained-expert-lock.json --out results/equipment/equipment-018.jsonl
+
+# equipment-019; 8 cases; world/night pairs 910002/79206838
+node tools/balance/survey.mjs run --manifest tools/balance/surveys/equipment.json --shard equipment-019 --lock trained-expert-lock.json --out results/equipment/equipment-019.jsonl
+
+# equipment-020; 8 cases; world/night pairs 910002/79206838
+node tools/balance/survey.mjs run --manifest tools/balance/surveys/equipment.json --shard equipment-020 --lock trained-expert-lock.json --out results/equipment/equipment-020.jsonl
+
+# equipment-021; 8 cases; world/night pairs 910002/79206838
+node tools/balance/survey.mjs run --manifest tools/balance/surveys/equipment.json --shard equipment-021 --lock trained-expert-lock.json --out results/equipment/equipment-021.jsonl
+
+# equipment-022; 8 cases; world/night pairs 910002/79206838
+node tools/balance/survey.mjs run --manifest tools/balance/surveys/equipment.json --shard equipment-022 --lock trained-expert-lock.json --out results/equipment/equipment-022.jsonl
+
+# equipment-023; 8 cases; world/night pairs 910002/79206838
+node tools/balance/survey.mjs run --manifest tools/balance/surveys/equipment.json --shard equipment-023 --lock trained-expert-lock.json --out results/equipment/equipment-023.jsonl
+
+# equipment-024; 8 cases; world/night pairs 910003/79214757
+node tools/balance/survey.mjs run --manifest tools/balance/surveys/equipment.json --shard equipment-024 --lock trained-expert-lock.json --out results/equipment/equipment-024.jsonl
+
+# equipment-025; 8 cases; world/night pairs 910003/79214757
+node tools/balance/survey.mjs run --manifest tools/balance/surveys/equipment.json --shard equipment-025 --lock trained-expert-lock.json --out results/equipment/equipment-025.jsonl
+
+# equipment-026; 8 cases; world/night pairs 910003/79214757
+node tools/balance/survey.mjs run --manifest tools/balance/surveys/equipment.json --shard equipment-026 --lock trained-expert-lock.json --out results/equipment/equipment-026.jsonl
+
+# equipment-027; 8 cases; world/night pairs 910003/79214757
+node tools/balance/survey.mjs run --manifest tools/balance/surveys/equipment.json --shard equipment-027 --lock trained-expert-lock.json --out results/equipment/equipment-027.jsonl
+
+# equipment-028; 8 cases; world/night pairs 910003/79214757
+node tools/balance/survey.mjs run --manifest tools/balance/surveys/equipment.json --shard equipment-028 --lock trained-expert-lock.json --out results/equipment/equipment-028.jsonl
+
+# equipment-029; 8 cases; world/night pairs 910003/79214757
+node tools/balance/survey.mjs run --manifest tools/balance/surveys/equipment.json --shard equipment-029 --lock trained-expert-lock.json --out results/equipment/equipment-029.jsonl
+
+# equipment-030; 8 cases; world/night pairs 910003/79214757
+node tools/balance/survey.mjs run --manifest tools/balance/surveys/equipment.json --shard equipment-030 --lock trained-expert-lock.json --out results/equipment/equipment-030.jsonl
+
+# equipment-031; 8 cases; world/night pairs 910003/79214757
+node tools/balance/survey.mjs run --manifest tools/balance/surveys/equipment.json --shard equipment-031 --lock trained-expert-lock.json --out results/equipment/equipment-031.jsonl
+
+# equipment-032; 8 cases; world/night pairs 910004/79222676
+node tools/balance/survey.mjs run --manifest tools/balance/surveys/equipment.json --shard equipment-032 --lock trained-expert-lock.json --out results/equipment/equipment-032.jsonl
+
+# equipment-033; 8 cases; world/night pairs 910004/79222676
+node tools/balance/survey.mjs run --manifest tools/balance/surveys/equipment.json --shard equipment-033 --lock trained-expert-lock.json --out results/equipment/equipment-033.jsonl
+
+# equipment-034; 8 cases; world/night pairs 910004/79222676
+node tools/balance/survey.mjs run --manifest tools/balance/surveys/equipment.json --shard equipment-034 --lock trained-expert-lock.json --out results/equipment/equipment-034.jsonl
+
+# equipment-035; 8 cases; world/night pairs 910004/79222676
+node tools/balance/survey.mjs run --manifest tools/balance/surveys/equipment.json --shard equipment-035 --lock trained-expert-lock.json --out results/equipment/equipment-035.jsonl
+
+# equipment-036; 8 cases; world/night pairs 910004/79222676
+node tools/balance/survey.mjs run --manifest tools/balance/surveys/equipment.json --shard equipment-036 --lock trained-expert-lock.json --out results/equipment/equipment-036.jsonl
+
+# equipment-037; 8 cases; world/night pairs 910004/79222676
+node tools/balance/survey.mjs run --manifest tools/balance/surveys/equipment.json --shard equipment-037 --lock trained-expert-lock.json --out results/equipment/equipment-037.jsonl
+
+# equipment-038; 8 cases; world/night pairs 910004/79222676
+node tools/balance/survey.mjs run --manifest tools/balance/surveys/equipment.json --shard equipment-038 --lock trained-expert-lock.json --out results/equipment/equipment-038.jsonl
+
+# equipment-039; 8 cases; world/night pairs 910004/79222676
+node tools/balance/survey.mjs run --manifest tools/balance/surveys/equipment.json --shard equipment-039 --lock trained-expert-lock.json --out results/equipment/equipment-039.jsonl
+
+# census-000; 200 cases; world/night pairs 910000/79191000,910001/79198919,910002/79206838,910003/79214757,910004/79222676
+node tools/balance/survey.mjs run --manifest tools/balance/surveys/census.json --shard census-000 --lock trained-expert-lock.json --out results/census/census-000.jsonl
+
+# census-001; 200 cases; world/night pairs 910000/79191000,910001/79198919,910002/79206838,910003/79214757,910004/79222676
+node tools/balance/survey.mjs run --manifest tools/balance/surveys/census.json --shard census-001 --lock trained-expert-lock.json --out results/census/census-001.jsonl
+
+# census-002; 200 cases; world/night pairs 910000/79191000,910001/79198919,910002/79206838,910003/79214757,910004/79222676
+node tools/balance/survey.mjs run --manifest tools/balance/surveys/census.json --shard census-002 --lock trained-expert-lock.json --out results/census/census-002.jsonl
+
+# census-003; 200 cases; world/night pairs 910000/79191000,910001/79198919,910002/79206838,910003/79214757,910004/79222676
+node tools/balance/survey.mjs run --manifest tools/balance/surveys/census.json --shard census-003 --lock trained-expert-lock.json --out results/census/census-003.jsonl
+
+# census-004; 200 cases; world/night pairs 910000/79191000,910001/79198919,910002/79206838,910003/79214757,910004/79222676
+node tools/balance/survey.mjs run --manifest tools/balance/surveys/census.json --shard census-004 --lock trained-expert-lock.json --out results/census/census-004.jsonl
+
+# census-005; 200 cases; world/night pairs 910000/79191000,910001/79198919,910002/79206838,910003/79214757,910004/79222676
+node tools/balance/survey.mjs run --manifest tools/balance/surveys/census.json --shard census-005 --lock trained-expert-lock.json --out results/census/census-005.jsonl
+
+# census-006; 200 cases; world/night pairs 910000/79191000,910001/79198919,910002/79206838,910003/79214757,910004/79222676
+node tools/balance/survey.mjs run --manifest tools/balance/surveys/census.json --shard census-006 --lock trained-expert-lock.json --out results/census/census-006.jsonl
+
+# census-007; 200 cases; world/night pairs 910000/79191000,910001/79198919,910002/79206838,910003/79214757,910004/79222676
+node tools/balance/survey.mjs run --manifest tools/balance/surveys/census.json --shard census-007 --lock trained-expert-lock.json --out results/census/census-007.jsonl
+
+# census-008; 200 cases; world/night pairs 910000/79191000,910001/79198919,910002/79206838,910003/79214757,910004/79222676
+node tools/balance/survey.mjs run --manifest tools/balance/surveys/census.json --shard census-008 --lock trained-expert-lock.json --out results/census/census-008.jsonl
+
+# census-009; 200 cases; world/night pairs 910000/79191000,910001/79198919,910002/79206838,910003/79214757,910004/79222676
+node tools/balance/survey.mjs run --manifest tools/balance/surveys/census.json --shard census-009 --lock trained-expert-lock.json --out results/census/census-009.jsonl
+
+# census-010; 200 cases; world/night pairs 910000/79191000,910001/79198919,910002/79206838,910003/79214757,910004/79222676
+node tools/balance/survey.mjs run --manifest tools/balance/surveys/census.json --shard census-010 --lock trained-expert-lock.json --out results/census/census-010.jsonl
+
+# census-011; 200 cases; world/night pairs 910000/79191000,910001/79198919,910002/79206838,910003/79214757,910004/79222676
+node tools/balance/survey.mjs run --manifest tools/balance/surveys/census.json --shard census-011 --lock trained-expert-lock.json --out results/census/census-011.jsonl
+
+# census-012; 200 cases; world/night pairs 910000/79191000,910001/79198919,910002/79206838,910003/79214757,910004/79222676
+node tools/balance/survey.mjs run --manifest tools/balance/surveys/census.json --shard census-012 --lock trained-expert-lock.json --out results/census/census-012.jsonl
+
+# census-013; 200 cases; world/night pairs 910000/79191000,910001/79198919,910002/79206838,910003/79214757,910004/79222676
+node tools/balance/survey.mjs run --manifest tools/balance/surveys/census.json --shard census-013 --lock trained-expert-lock.json --out results/census/census-013.jsonl
+
+# census-014; 200 cases; world/night pairs 910000/79191000,910001/79198919,910002/79206838,910003/79214757,910004/79222676
+node tools/balance/survey.mjs run --manifest tools/balance/surveys/census.json --shard census-014 --lock trained-expert-lock.json --out results/census/census-014.jsonl
+
+# census-015; 200 cases; world/night pairs 910000/79191000,910001/79198919,910002/79206838,910003/79214757,910004/79222676
+node tools/balance/survey.mjs run --manifest tools/balance/surveys/census.json --shard census-015 --lock trained-expert-lock.json --out results/census/census-015.jsonl
+
+# census-016; 200 cases; world/night pairs 910000/79191000,910001/79198919,910002/79206838,910003/79214757,910004/79222676
+node tools/balance/survey.mjs run --manifest tools/balance/surveys/census.json --shard census-016 --lock trained-expert-lock.json --out results/census/census-016.jsonl
+
+# census-017; 200 cases; world/night pairs 910000/79191000,910001/79198919,910002/79206838,910003/79214757,910004/79222676
+node tools/balance/survey.mjs run --manifest tools/balance/surveys/census.json --shard census-017 --lock trained-expert-lock.json --out results/census/census-017.jsonl
+
+# census-018; 200 cases; world/night pairs 910000/79191000,910001/79198919,910002/79206838,910003/79214757,910004/79222676
+node tools/balance/survey.mjs run --manifest tools/balance/surveys/census.json --shard census-018 --lock trained-expert-lock.json --out results/census/census-018.jsonl
+
+# census-019; 200 cases; world/night pairs 910000/79191000,910001/79198919,910002/79206838,910003/79214757,910004/79222676
+node tools/balance/survey.mjs run --manifest tools/balance/surveys/census.json --shard census-019 --lock trained-expert-lock.json --out results/census/census-019.jsonl
+
+# census-020; 200 cases; world/night pairs 910000/79191000,910001/79198919,910002/79206838,910003/79214757,910004/79222676
+node tools/balance/survey.mjs run --manifest tools/balance/surveys/census.json --shard census-020 --lock trained-expert-lock.json --out results/census/census-020.jsonl
+
+# census-021; 200 cases; world/night pairs 910000/79191000,910001/79198919,910002/79206838,910003/79214757,910004/79222676
+node tools/balance/survey.mjs run --manifest tools/balance/surveys/census.json --shard census-021 --lock trained-expert-lock.json --out results/census/census-021.jsonl
+
+# census-022; 200 cases; world/night pairs 910000/79191000,910001/79198919,910002/79206838,910003/79214757,910004/79222676
+node tools/balance/survey.mjs run --manifest tools/balance/surveys/census.json --shard census-022 --lock trained-expert-lock.json --out results/census/census-022.jsonl
+
+# census-023; 200 cases; world/night pairs 910000/79191000,910001/79198919,910002/79206838,910003/79214757,910004/79222676
+node tools/balance/survey.mjs run --manifest tools/balance/surveys/census.json --shard census-023 --lock trained-expert-lock.json --out results/census/census-023.jsonl
+
+# census-024; 200 cases; world/night pairs 910000/79191000,910001/79198919,910002/79206838,910003/79214757,910004/79222676
+node tools/balance/survey.mjs run --manifest tools/balance/surveys/census.json --shard census-024 --lock trained-expert-lock.json --out results/census/census-024.jsonl
+
+# census-025; 200 cases; world/night pairs 910000/79191000,910001/79198919,910002/79206838,910003/79214757,910004/79222676
+node tools/balance/survey.mjs run --manifest tools/balance/surveys/census.json --shard census-025 --lock trained-expert-lock.json --out results/census/census-025.jsonl
+
+# census-026; 200 cases; world/night pairs 910000/79191000,910001/79198919,910002/79206838,910003/79214757,910004/79222676
+node tools/balance/survey.mjs run --manifest tools/balance/surveys/census.json --shard census-026 --lock trained-expert-lock.json --out results/census/census-026.jsonl
+
+# census-027; 200 cases; world/night pairs 910000/79191000,910001/79198919,910002/79206838,910003/79214757,910004/79222676
+node tools/balance/survey.mjs run --manifest tools/balance/surveys/census.json --shard census-027 --lock trained-expert-lock.json --out results/census/census-027.jsonl
+
+# census-028; 200 cases; world/night pairs 910000/79191000,910001/79198919,910002/79206838,910003/79214757,910004/79222676
+node tools/balance/survey.mjs run --manifest tools/balance/surveys/census.json --shard census-028 --lock trained-expert-lock.json --out results/census/census-028.jsonl
+
+# census-029; 200 cases; world/night pairs 910000/79191000,910001/79198919,910002/79206838,910003/79214757,910004/79222676
+node tools/balance/survey.mjs run --manifest tools/balance/surveys/census.json --shard census-029 --lock trained-expert-lock.json --out results/census/census-029.jsonl
+
+# census-030; 200 cases; world/night pairs 910000/79191000,910001/79198919,910002/79206838,910003/79214757,910004/79222676
+node tools/balance/survey.mjs run --manifest tools/balance/surveys/census.json --shard census-030 --lock trained-expert-lock.json --out results/census/census-030.jsonl
+
+# census-031; 200 cases; world/night pairs 910000/79191000,910001/79198919,910002/79206838,910003/79214757,910004/79222676
+node tools/balance/survey.mjs run --manifest tools/balance/surveys/census.json --shard census-031 --lock trained-expert-lock.json --out results/census/census-031.jsonl
+
+# census-032; 200 cases; world/night pairs 910000/79191000,910001/79198919,910002/79206838,910003/79214757,910004/79222676
+node tools/balance/survey.mjs run --manifest tools/balance/surveys/census.json --shard census-032 --lock trained-expert-lock.json --out results/census/census-032.jsonl
+
+# census-033; 200 cases; world/night pairs 910000/79191000,910001/79198919,910002/79206838,910003/79214757,910004/79222676
+node tools/balance/survey.mjs run --manifest tools/balance/surveys/census.json --shard census-033 --lock trained-expert-lock.json --out results/census/census-033.jsonl
+
+# census-034; 200 cases; world/night pairs 910000/79191000,910001/79198919,910002/79206838,910003/79214757,910004/79222676
+node tools/balance/survey.mjs run --manifest tools/balance/surveys/census.json --shard census-034 --lock trained-expert-lock.json --out results/census/census-034.jsonl
+
+# census-035; 200 cases; world/night pairs 910000/79191000,910001/79198919,910002/79206838,910003/79214757,910004/79222676
+node tools/balance/survey.mjs run --manifest tools/balance/surveys/census.json --shard census-035 --lock trained-expert-lock.json --out results/census/census-035.jsonl
+
+# census-036; 200 cases; world/night pairs 910000/79191000,910001/79198919,910002/79206838,910003/79214757,910004/79222676
+node tools/balance/survey.mjs run --manifest tools/balance/surveys/census.json --shard census-036 --lock trained-expert-lock.json --out results/census/census-036.jsonl
+
+# census-037; 200 cases; world/night pairs 910000/79191000,910001/79198919,910002/79206838,910003/79214757,910004/79222676
+node tools/balance/survey.mjs run --manifest tools/balance/surveys/census.json --shard census-037 --lock trained-expert-lock.json --out results/census/census-037.jsonl
+
+# census-038; 200 cases; world/night pairs 910000/79191000,910001/79198919,910002/79206838,910003/79214757,910004/79222676
+node tools/balance/survey.mjs run --manifest tools/balance/surveys/census.json --shard census-038 --lock trained-expert-lock.json --out results/census/census-038.jsonl
+
+# census-039; 200 cases; world/night pairs 910000/79191000,910001/79198919,910002/79206838,910003/79214757,910004/79222676
+node tools/balance/survey.mjs run --manifest tools/balance/surveys/census.json --shard census-039 --lock trained-expert-lock.json --out results/census/census-039.jsonl
+
+# census-040; 200 cases; world/night pairs 910000/79191000,910001/79198919,910002/79206838,910003/79214757,910004/79222676
+node tools/balance/survey.mjs run --manifest tools/balance/surveys/census.json --shard census-040 --lock trained-expert-lock.json --out results/census/census-040.jsonl
+
+# census-041; 200 cases; world/night pairs 910000/79191000,910001/79198919,910002/79206838,910003/79214757,910004/79222676
+node tools/balance/survey.mjs run --manifest tools/balance/surveys/census.json --shard census-041 --lock trained-expert-lock.json --out results/census/census-041.jsonl
+
+# census-042; 200 cases; world/night pairs 910000/79191000,910001/79198919,910002/79206838,910003/79214757,910004/79222676
+node tools/balance/survey.mjs run --manifest tools/balance/surveys/census.json --shard census-042 --lock trained-expert-lock.json --out results/census/census-042.jsonl
+
+# census-043; 200 cases; world/night pairs 910000/79191000,910001/79198919,910002/79206838,910003/79214757,910004/79222676
+node tools/balance/survey.mjs run --manifest tools/balance/surveys/census.json --shard census-043 --lock trained-expert-lock.json --out results/census/census-043.jsonl
+
+# census-044; 200 cases; world/night pairs 910000/79191000,910001/79198919,910002/79206838,910003/79214757,910004/79222676
+node tools/balance/survey.mjs run --manifest tools/balance/surveys/census.json --shard census-044 --lock trained-expert-lock.json --out results/census/census-044.jsonl
+
+# census-045; 200 cases; world/night pairs 910000/79191000,910001/79198919,910002/79206838,910003/79214757,910004/79222676
+node tools/balance/survey.mjs run --manifest tools/balance/surveys/census.json --shard census-045 --lock trained-expert-lock.json --out results/census/census-045.jsonl
+
+# census-046; 200 cases; world/night pairs 910000/79191000,910001/79198919,910002/79206838,910003/79214757,910004/79222676
+node tools/balance/survey.mjs run --manifest tools/balance/surveys/census.json --shard census-046 --lock trained-expert-lock.json --out results/census/census-046.jsonl
+
+# census-047; 200 cases; world/night pairs 910000/79191000,910001/79198919,910002/79206838,910003/79214757,910004/79222676
+node tools/balance/survey.mjs run --manifest tools/balance/surveys/census.json --shard census-047 --lock trained-expert-lock.json --out results/census/census-047.jsonl
+
+# census-048; 200 cases; world/night pairs 910000/79191000,910001/79198919,910002/79206838,910003/79214757,910004/79222676
+node tools/balance/survey.mjs run --manifest tools/balance/surveys/census.json --shard census-048 --lock trained-expert-lock.json --out results/census/census-048.jsonl
+
+# census-049; 200 cases; world/night pairs 910000/79191000,910001/79198919,910002/79206838,910003/79214757,910004/79222676
+node tools/balance/survey.mjs run --manifest tools/balance/surveys/census.json --shard census-049 --lock trained-expert-lock.json --out results/census/census-049.jsonl
+
+# census-050; 200 cases; world/night pairs 910000/79191000,910001/79198919,910002/79206838,910003/79214757,910004/79222676
+node tools/balance/survey.mjs run --manifest tools/balance/surveys/census.json --shard census-050 --lock trained-expert-lock.json --out results/census/census-050.jsonl
+
+# census-051; 200 cases; world/night pairs 910000/79191000,910001/79198919,910002/79206838,910003/79214757,910004/79222676
+node tools/balance/survey.mjs run --manifest tools/balance/surveys/census.json --shard census-051 --lock trained-expert-lock.json --out results/census/census-051.jsonl
+
+# census-052; 200 cases; world/night pairs 910000/79191000,910001/79198919,910002/79206838,910003/79214757,910004/79222676
+node tools/balance/survey.mjs run --manifest tools/balance/surveys/census.json --shard census-052 --lock trained-expert-lock.json --out results/census/census-052.jsonl
+
+# census-053; 200 cases; world/night pairs 910000/79191000,910001/79198919,910002/79206838,910003/79214757,910004/79222676
+node tools/balance/survey.mjs run --manifest tools/balance/surveys/census.json --shard census-053 --lock trained-expert-lock.json --out results/census/census-053.jsonl
+
+# census-054; 200 cases; world/night pairs 910000/79191000,910001/79198919,910002/79206838,910003/79214757,910004/79222676
+node tools/balance/survey.mjs run --manifest tools/balance/surveys/census.json --shard census-054 --lock trained-expert-lock.json --out results/census/census-054.jsonl
+
+# census-055; 200 cases; world/night pairs 910000/79191000,910001/79198919,910002/79206838,910003/79214757,910004/79222676
+node tools/balance/survey.mjs run --manifest tools/balance/surveys/census.json --shard census-055 --lock trained-expert-lock.json --out results/census/census-055.jsonl
+
+# census-056; 200 cases; world/night pairs 910000/79191000,910001/79198919,910002/79206838,910003/79214757,910004/79222676
+node tools/balance/survey.mjs run --manifest tools/balance/surveys/census.json --shard census-056 --lock trained-expert-lock.json --out results/census/census-056.jsonl
+
+# census-057; 200 cases; world/night pairs 910000/79191000,910001/79198919,910002/79206838,910003/79214757,910004/79222676
+node tools/balance/survey.mjs run --manifest tools/balance/surveys/census.json --shard census-057 --lock trained-expert-lock.json --out results/census/census-057.jsonl
+
+# census-058; 200 cases; world/night pairs 910000/79191000,910001/79198919,910002/79206838,910003/79214757,910004/79222676
+node tools/balance/survey.mjs run --manifest tools/balance/surveys/census.json --shard census-058 --lock trained-expert-lock.json --out results/census/census-058.jsonl
+
+# census-059; 200 cases; world/night pairs 910000/79191000,910001/79198919,910002/79206838,910003/79214757,910004/79222676
+node tools/balance/survey.mjs run --manifest tools/balance/surveys/census.json --shard census-059 --lock trained-expert-lock.json --out results/census/census-059.jsonl
+
+# census-060; 200 cases; world/night pairs 910000/79191000,910001/79198919,910002/79206838,910003/79214757,910004/79222676
+node tools/balance/survey.mjs run --manifest tools/balance/surveys/census.json --shard census-060 --lock trained-expert-lock.json --out results/census/census-060.jsonl
+
+# census-061; 200 cases; world/night pairs 910000/79191000,910001/79198919,910002/79206838,910003/79214757,910004/79222676
+node tools/balance/survey.mjs run --manifest tools/balance/surveys/census.json --shard census-061 --lock trained-expert-lock.json --out results/census/census-061.jsonl
+
+# census-062; 200 cases; world/night pairs 910000/79191000,910001/79198919,910002/79206838,910003/79214757,910004/79222676
+node tools/balance/survey.mjs run --manifest tools/balance/surveys/census.json --shard census-062 --lock trained-expert-lock.json --out results/census/census-062.jsonl
+
+# census-063; 200 cases; world/night pairs 910000/79191000,910001/79198919,910002/79206838,910003/79214757,910004/79222676
+node tools/balance/survey.mjs run --manifest tools/balance/surveys/census.json --shard census-063 --lock trained-expert-lock.json --out results/census/census-063.jsonl
+
+# map-luck-000; 5 cases; world/night pairs 910000/79191000,910001/79198919,910002/79206838,910003/79214757,910004/79222676
+node tools/balance/survey.mjs run --manifest tools/balance/surveys/map-luck.json --shard map-luck-000 --lock trained-expert-lock.json --out results/map-luck/map-luck-000.jsonl
+
+# map-luck-001; 5 cases; world/night pairs 910005/79230595,910006/79238514,910007/79246433,910008/79254352,910009/79262271
+node tools/balance/survey.mjs run --manifest tools/balance/surveys/map-luck.json --shard map-luck-001 --lock trained-expert-lock.json --out results/map-luck/map-luck-001.jsonl
+
+# map-luck-002; 5 cases; world/night pairs 910010/79270190,910011/79278109,910012/79286028,910013/79293947,910014/79301866
+node tools/balance/survey.mjs run --manifest tools/balance/surveys/map-luck.json --shard map-luck-002 --lock trained-expert-lock.json --out results/map-luck/map-luck-002.jsonl
+
+# map-luck-003; 5 cases; world/night pairs 910015/79309785,910016/79317704,910017/79325623,910018/79333542,910019/79341461
+node tools/balance/survey.mjs run --manifest tools/balance/surveys/map-luck.json --shard map-luck-003 --lock trained-expert-lock.json --out results/map-luck/map-luck-003.jsonl
+
+# map-luck-004; 5 cases; world/night pairs 910020/79349380,910021/79357299,910022/79365218,910023/79373137,910024/79381056
+node tools/balance/survey.mjs run --manifest tools/balance/surveys/map-luck.json --shard map-luck-004 --lock trained-expert-lock.json --out results/map-luck/map-luck-004.jsonl
+
+# map-luck-005; 5 cases; world/night pairs 910025/79388975,910026/79396894,910027/79404813,910028/79412732,910029/79420651
+node tools/balance/survey.mjs run --manifest tools/balance/surveys/map-luck.json --shard map-luck-005 --lock trained-expert-lock.json --out results/map-luck/map-luck-005.jsonl

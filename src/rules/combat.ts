@@ -7,11 +7,13 @@
 // defend against wild wolves). Sieges: when a wave wakes an area, its wild creatures march on its
 // new soundsystem; survivors of a won siege march on to the next-nearest. No drawing here.
 import { LEGEND, type Creature } from "./creatures";
+import { runawayArrives } from "./runaway";
 import { type Cell } from "./partition";
 import { enrage, foes, huntsWitch, stateOf } from "./creatureStates";
 import { LEGENDS } from "./legends";
-import { FIGHT, landSwoop, legendSetOf, packsOf, profileOf, startCharge, steer, stepBurrow, stepCharge, stepLeap, stepSwoop, swoopStriking } from "./movement";
+import { FIGHT, advanceHop, landSwoop, legendSetOf, packsOf, profileOf, startCharge, startHop, steer, stepBurrow, stepCharge, stepLeap, stepSwoop, swoopStriking } from "./movement";
 import { type Tuning } from "./tuning";
+import { hash2 } from "./random";
 import { isHomeKey } from "./speakers";
 import { type Attack, type CombatData, COMBAT, traitsOf, type CombatState, attackOf, attackNamed, type CombatWorld, type Target } from "./combat/data";
 import { fighting, targetable, sideOf, truce, targetPos, headingOf, lightsNear, sheltered, gaveUp, valid, acquire, Grid, moveToward, nearestSound } from "./combat/targeting";
@@ -19,19 +21,27 @@ import { contacted, touch, land, area, stepKnock, useData } from "./combat/hits"
 import { stepLegendAttack, stepLegend } from "./combat/legend";
 import { ATTACK_LIB } from "./attacks/index";
 import { cast as castSpell, newSpells, stepSpells } from "./attacks/engine";
-import { hittableOf, meleeExtras, spellAttack, speciesSpell, spellWorld } from "./attacks/combatWorld";
-import { PACKS, stepPacks, packsOn, packKindOf, packAttack, packGate, markStrike, dodgeAim, strikingNow, ownStrike, type Directive } from "./combat/packs";
+import { getUp } from "./orbit";
+import { bodyReach, hittableOf, meleeExtras, reachingFurther, spellAttack, speciesSpell, spellWorld } from "./attacks/combatWorld";
+import { observeAttack } from "./attackObservation";
+import type { AttackSpec } from "./attacks/types";
+import { PACKS, stepPacks, packsOn, packKindOf, packAttack, packGate, markStrike, dodgeAim, strikingNow, ownStrike, styleOf, type Directive } from "./combat/packs";
 import { chaseAt, limitTurn, momentumOf, noteWitches } from "./momentum";
 
 /** A species' own attack as a pack member's strike: a lunger's if it's close (a lunge, or an area round itself), a shooter's if it's
  *  from afar (moving and timed as its pack's shooters, reaching as far) and its pack's shot is the plain bolt, not one of its own (the
- *  toad's spores); else none, its pack's own move. Out of a pack, always. */
+ *  toad's spores); else none, its pack's own move. Out of a pack, always. Alone (a pack of one: no combo to keep) too, a far one
+ *  timed as its pack's shooters, unless its pack's shot is one of its own (Ed's playtest, 2026-10-29, "I didn't seem to see any
+ *  projectile attacks": a lone fox, marten or dormouse was its own lunger and never threw its bolt). */
 function roleSpell(sp: SpeciesSpell | null, c: Creature, kind: ReturnType<typeof packKindOf> | null, pd: Directive | undefined): SpeciesSpell | null {
   if (!sp || !pd || !kind) return sp;
-  const close = sp.attack.delivery === "melee" || sp.attack.delivery === "pulse";
-  if (pd.move === "melee") return close ? sp : null;
-  if (close && kind.melee) return null;
-  if (kind.ranged && (kind.ranged.patch || kind.ranged.attacks || kind.ranged.delivery === "lob")) return null; // (its pack's own designed shot stays: the toad's spores)
+  const close = sp.attack.delivery === "melee" || sp.attack.delivery === "pulse", alone = pd.state.size < 2;
+  const designed = !!kind.ranged && !!(kind.ranged.patch || kind.ranged.attacks || kind.ranged.delivery === "lob"); // (its pack's own designed shot: the toad's spores, the salamander's beam)
+  if (!alone) {
+    if (pd.move === "melee") return close ? sp : null;
+    if (close && kind.melee) return null;
+    if (designed) return null; // (its pack's shot stays)
+  } else if (designed && !close) return null; // (alone too: its pack's designed shot, not its own)
   const P = packAttack(c.species, c.level, "ranged");
   if (close || !P) return sp;
   const key = `${sp.name}/${c.level}`;
@@ -46,11 +56,14 @@ function roleSpell(sp: SpeciesSpell | null, c: Creature, kind: ReturnType<typeof
 }
 type SpeciesSpell = NonNullable<ReturnType<typeof speciesSpell>>;
 const FAR = new Map<string, SpeciesSpell>();
+/** Each attack in the grammar as thrown (stepCombat's thrown): at her (by dodge.b.range) or at anything else. */
+type Thrown = { base: Attack; k: number; spec: AttackSpec; attack: Attack };
+const THROWN = new WeakMap<AttackSpec, { her?: Thrown; any?: Thrown }>();
 // (split into rules/combat/: data, targeting, hits, legend; everything public is still exported from here)
 /** A wild flyer that swoops (its profile's move; hostile: wild or enraged, never hers or happy). */
 const swoops = (c: Creature): boolean => !c.leashed && profileOf(c.species)?.move?.kind === "swoop" && (stateOf(c) === "wild" || stateOf(c) === "enraged");
 
-export { COMBAT, traitsOf, counterOf, newCombat, strengthOf, attackOf, scaled, attackNamed, maxHp, creatureMaxHp } from "./combat/data";
+export { COMBAT, traitsOf, counterOf, newCombat, strengthOf, attackOf, scaled, attackNamed, maxHp, creatureMaxHp, stunWorth } from "./combat/data";
 export type { Delivery, Modifier, Attack, CombatData, Trait, Target, Fight, Shot, Beam, CombatEventKind, CombatEvent, SoundHealth, CombatState, Trail, CombatWorld } from "./combat/data";
 export { fighting, targetable, truce, guardOf, nearestSound } from "./combat/targeting";
 
@@ -151,6 +164,12 @@ export function stepCombat(s: CombatState, w: CombatWorld, data: CombatData = CO
   // How many of her posse are on each creature (acquire spreads them over her attackers: Ed, 2026-10-09).
   const claims = new Map<number, number>();
   for (const o of w.active) if (o.leashed && o.fight?.target?.kind === "creature" && !w.parked(o.id)) claims.set(o.fight.target.id, (claims.get(o.fight.target.id) ?? 0) + 1);
+  // Friends' places round what they fight (Ed's playtest, 2026-10-29: "friends, even more, bunch up"; packs.json styles.friends): hers
+  // and happy ones on one creature, by id, each its own place evenly round it.
+  const YS = PACKS.styles, onFoe = new Map<number, number[]>();
+  if (YS?.friends.on) for (const o of w.active) if (foes("enraged", sideOf(o)) && o.fight?.target?.kind === "creature" && !w.parked(o.id)) { const id = o.fight.target.id, l = onFoe.get(id); if (l) l.push(o.id); else onFoe.set(id, [o.id]); }
+  /** A hopper's bounds at its run (m/s): each as long as its run takes it over a bound and a beat, so it keeps its own pace, at least styles.hopper.length. */
+  const hopOf = (run: number) => { const H = YS.hopper, L = Math.max(H.length, (run * (H.time + H.pause)) / (FIGHT.scale * FIGHT.speed)); return L === H.length ? H : { ...H, length: L }; };
   const claim = (tg: { kind: string; id?: number } | null | undefined, k: number) => { if (tg?.kind === "creature" && tg.id !== undefined) claims.set(tg.id, (claims.get(tg.id) ?? 0) + k); };
 
   // Dodging matters (Ed, 2026-10-08; tuning dodge): against the witch, committed strikes (a), predictive aim (b), packs
@@ -168,10 +187,10 @@ export function stepCombat(s: CombatState, w: CombatWorld, data: CombatData = CO
   }
   /** An attack in the grammar starts its windup: its telegraphs and its cast with the engine, released at the windup's end (its own
    *  windup, whatever shortens other shots'). */
-  const startSpell = (c: Creature, f: NonNullable<Creature["fight"]>, atk: { name: string; damage: number; spec: import("./attacks/types").AttackSpec }) => {
-    const S = (s.spells ??= newSpells());
+  const startSpell = (c: Creature, f: NonNullable<Creature["fight"]>, atk: { name: string; damage: number; attack: Attack; spec: AttackSpec }) => {
+    const S = (s.spells ??= newSpells()), spec = f.target ? thrown(atk, f.target).spec : atk.spec;
     f.windupUntil = time + (atk.spec.cast?.windup ?? 0.6);
-    f.spellCast = castSpell(S, spellWorld(w, s, grid, S.seed, data), atk.spec, atk.name, { id: c.id, x: c.x, z: c.z, side: sideOf(c), species: c.species, heading: Math.atan2(f.aimZ - c.z, f.aimX - c.x) }, hittableOf(w, s, f.target), time, atk.damage, f.windupUntil);
+    f.spellCast = castSpell(S, spellWorld(w, s, grid, S.seed, data), spec, atk.name, { id: c.id, x: c.x, z: c.z, side: sideOf(c), species: c.species, heading: Math.atan2(f.aimZ - c.z, f.aimX - c.x) }, hittableOf(w, s, f.target), time, atk.damage, f.windupUntil);
   };
   /** May it start a strike at tg now (a token free; only her strikers are counted)? Takes the token if so. A pack member takes one as
    *  well as its pack's turn and pressure, its call too (Ed, 2026-10-20: the dodge's limit holds inside a pack; fights between
@@ -188,6 +207,19 @@ export function stepCombat(s: CombatState, w: CombatWorld, data: CombatData = CO
     let L = longer.get(A);
     if (!L) longer.set(A, (L = { ...A, range: A.range * DB.range }));
     return L;
+  };
+  /** An attack in the grammar thrown at tg: a shot at her reaching dodge.b.range times as far, its bolt too (rules/attacks/combatWorld.ts
+   *  reachingFurther), and fired from no further than its bolt really gets (bodyReach: a frost shard that ends short and bursts, a
+   *  roller that slows or stops and goes), so no shot is fired that can't reach. */
+  const thrown = (sp: { attack: Attack; spec: AttackSpec }, tg: Target): Thrown => {
+    const her = !!DB && tg.kind === "witch" && sp.attack.delivery === "shot", k = her ? DB!.range : 1;
+    let m = THROWN.get(sp.spec);
+    if (!m) THROWN.set(sp.spec, (m = {}));
+    const hit = her ? m.her : m.any;
+    if (hit && hit.base === sp.attack && hit.k === k) return hit;
+    const spec = reachingFurther(sp.spec, k), A = reachOf(sp.attack, tg), reach = bodyReach(spec), out: Thrown = { base: sp.attack, k, spec, attack: reach < A.range ? { ...A, range: reach } : A };
+    if (her) m.her = out; else m.any = out;
+    return out;
   };
   /** The heavies (dodge.a.heavy; Ed, 2026-10-09: "Maybe heavies can have a higher top speed, but slow acceleration?"): chasing her,
    *  a top speed above her walk built up slowly, so a burst or a blink gets clear and a long straight retreat is run down. */
@@ -222,21 +254,28 @@ export function stepCombat(s: CombatState, w: CombatWorld, data: CombatData = CO
   };
   const ownStruck = (pd: Directive | undefined, c: Creature, tg: Target): void => { if (pd) { take(tg); markStrike(pd, c); } };
   for (const c of w.active) {
+    if (c.cheerUntil !== undefined && time >= c.cheerUntil) c.cheerUntil = undefined; // (its celebration over: back in the fight, rules/affection.ts)
     stepKnock(c, dt);
     if (c.gone) continue;
+    // A leap under way flies on whatever holds it this step (a stun, a daze, its pack's turn): its arc goes by the time, so steps
+    // missed would put it the rest of the way at once (Ed's playtest, 2026-10-29: "some animals seem to teleport"). It lands as ever.
+    if (c.leap && c.fight) { const L = c.leap, k = Math.min(1, (time - L.at) / Math.max(0.01, L.lands - L.at)); c.x = L.fx + (L.tx - L.fx) * k; c.z = L.fz + (L.tz - L.fz) * k; }
+    const aloft = !!c.hop; advanceHop(c, time); // (a hopper's bound flies on by the time, whatever else holds it, landing this step or later: rules/movement.ts)
     // A flyer swooping that's no longer a wild one in a fight (invited, leashed, dazed, running off, asleep) glides down (rules/movement.ts).
     if (c.swoop && (!swoops(c) || !fighting(c) || w.asleep(c))) landSwoop(c, time);
     if (c.dazed) {
       // Dazed: it lies still till its daze is over (invited meanwhile, it's whole and happy: states.befriend), then runs off.
       if (stateOf(c) !== "wild") { c.dazed = false; c.dazedUntil = undefined; }
-      else if (time >= (c.dazedUntil ?? 0)) { c.dazed = false; c.dazedUntil = undefined; const out = w.exit(c.x, c.z); c.fleeUntil = Infinity; c.fleeX = out.x; c.fleeZ = out.z; c.fight = undefined; c.siege = undefined; s.events.push({ kind: "fled", x: c.x, z: c.z, at: time, id: c.id }); }
+      else if (time >= (c.dazedUntil ?? 0)) { getUp(c, time); s.events.push({ kind: "up", x: c.x, z: c.z, at: time, id: c.id }); } // (not converted: up again, wild, its slots draining: rules/orbit.ts)
       else { c.moving = false; continue; }
     }
-    // Beaten: it runs for the map's edge, and is gone once it's off the map or out of every witch's sight.
+    // Beaten: it runs for its spot on the beach (rules/runaway.ts; no beach, the map's edge), and lies down asleep there once it's
+    // there or out of every witch's sight (gone, off the map's edge, with no beach).
     if (c.fleeUntil) {
       const ax = (c.fleeX ?? c.x) - c.x, az = (c.fleeZ ?? c.z) - c.z, d = Math.hypot(ax, az);
-      if (d < 1 || w.unseen(c.x, c.z)) { c.gone = true; continue; }
-      c.x += (ax / d) * c.speed * C.fleeMult * dt; c.z += (az / d) * c.speed * C.fleeMult * dt;
+      if (d < 1 || w.unseen(c.x, c.z)) { runawayArrives(c, time); continue; }
+      const run = Math.max(c.speed * C.fleeMult, t.leash.babies?.farSpeed ?? 0); // (running away: at a baby's run, Ed 2026-10-28)
+      c.x += (ax / d) * run * dt; c.z += (az / d) * run * dt;
       c.facing = ax > 0 ? 1 : -1; c.away = az < -Math.abs(ax);
       c.moving = true; c.walk += dt * 8;
       continue;
@@ -249,7 +288,28 @@ export function stepCombat(s: CombatState, w: CombatWorld, data: CombatData = CO
     // Stunned (an armoured one knocked over): it does nothing for a moment.
     if (c.stunUntil !== undefined && time < c.stunUntil) { c.moving = false; c.vx = 0; c.vz = 0; continue; }
     const pd = c.spell === undefined ? PK?.get(c.id) : undefined; // (one given an attack in the grammar (the arena's) fights on its own; a species' own keeps its pack's turns)
-    if (c.packHide && PK) { c.moving = false; c.vx = 0; c.vz = 0; continue; } // (up the trees or underground: rules/combat/packs.ts)
+    // Up the trees, underground or under water (rules/combat/packs.ts): out of sight, it makes its way round to where it comes back down
+    // (Ed's playtest, 2026-10-29: "some animals seem to teleport": it was put there at once), arriving as its hide ends: round her, not
+    // through her, a share of what's left each step (at its own run, straight, it crossed her and came up short and close: a lone mole
+    // burrowing again under her where it should have thrown from out there, #1405), never faster than 48 m/s (under a lunge's 60, the
+    // room left for the spacing's nudge: a short hide, a squirrel's scatter, comes back where that got it, a little short).
+    if (c.packHide && PK) {
+      const H = c.packHide;
+      if (H.tx !== undefined && !c.leap && !aloft) { // (a leap or a bound under way carries it: both at once would be a jump)
+        const k = Math.min(1, dt / Math.max(dt, H.until - time)), tg = c.fight?.target ? targetPos(w, s, c.fight.target) : null, x0 = c.x, z0 = c.z;
+        if (tg) {
+          const a0 = Math.atan2(c.z - tg.z, c.x - tg.x), r0 = Math.hypot(c.x - tg.x, c.z - tg.z), a1 = Math.atan2(H.tz! - tg.z, H.tx - tg.x), r1 = Math.hypot(H.tx - tg.x, H.tz! - tg.z);
+          let da = a1 - a0; while (da > Math.PI) da -= Math.PI * 2; while (da < -Math.PI) da += Math.PI * 2;
+          const a = a0 + da * k, r = r0 + (r1 - r0) * k;
+          c.x = tg.x + Math.cos(a) * r; c.z = tg.z + Math.sin(a) * r;
+        } else { c.x += (H.tx - c.x) * k; c.z += (H.tz! - c.z) * k; }
+        const most = 48 * FIGHT.speed * dt, mv = Math.hypot(c.x - x0, c.z - z0);
+        if (mv > most) { c.x = x0 + ((c.x - x0) * most) / mv; c.z = z0 + ((c.z - z0) * most) / mv; }
+        if (Math.abs(c.x - x0) > 0.02) c.facing = c.x > x0 ? 1 : -1;
+        c.moving = Math.hypot(c.x - x0, c.z - z0) > 1e-3; c.walk += dt * 5; // (its shadow runs: render/view/creatures.ts)
+      } else if (!c.leap && !aloft) c.moving = false;
+      c.vx = 0; c.vz = 0; continue;
+    }
     // (an attack in the grammar given it, rules/attacks/; else its species' own, the default since step 5: ?attacks=old for the old)
     // (its species' own: against a soundsystem its old attack, so the sieges stay as balanced; in a pack, as its role's strike when its
     // range suits the role, a lunger's close (a lunge, or an area round itself), a shooter's from afar, else its pack's own move, so the
@@ -319,20 +379,20 @@ export function stepCombat(s: CombatState, w: CombatWorld, data: CombatData = CO
       if (c.swoop) landSwoop(c, time); // (a flyer glides down)
       c.sprung = undefined; // (an ambusher lies in wait again)
       if (c.burrow) c.burrow = undefined; // (a burrower comes up)
-      if (c.leap) { c.x = c.leap.tx; c.z = c.leap.tz; c.leap = undefined; } // (a leaper comes down)
+      if (c.leap) { const L = c.leap, k = Math.min(1, (time - L.at) / Math.max(0.01, L.lands - L.at)); c.x = L.fx + (L.tx - L.fx) * k; c.z = L.fz + (L.tz - L.fz) * k; if (k >= 1) c.leap = undefined; } // (a leaper comes down, the rest of its arc: not put there at once)
       c.dug = undefined; c.brace = undefined; // (a digger comes up, a blocker lowers its tail)
       continue;
     }
     const p = targetPos(w, s, f.target);
     if (!p) { f.target = null; f.windupUntil = 0; continue; } // (it fell this very step)
-    const d = Math.hypot(p.x - c.x, p.z - c.z), A = reachOf(atk.attack, f.target), K = data.kite, kites = A.delivery === "shot" && K.species.includes(c.species);
+    const d = Math.hypot(p.x - c.x, p.z - c.z), A = spell ? thrown(spell, f.target).attack : reachOf(atk.attack, f.target), K = data.kite, kites = A.delivery === "shot" && K.species.includes(c.species);
     // Momentum chasing her (tuning creatureMomentum; rules/momentum.ts): its turn limit and reaction delay, and its telegraphed
     // attacks' lead times its strikeLead (lead: her velocity so scaled).
     const mo = f.target.kind === "witch" && c.level !== LEGEND ? momentumOf(c.species, t) : null, sl = mo?.strikeLead ?? 1;
     const lead = (tg: Target) => { const v = velOf(tg); return { vx: v.vx * sl, vz: v.vz * sl }; };
     // (a shooter keeps its usual distance, A0's, however far it may now fire at her: so she can still reach it with her 💌s)
     const A0 = atk.attack;
-    let want = A.delivery === "shot" || A.delivery === "lob" || A.delivery === "beam" ? A0.range * (kites ? K.far : 0.8) : A.delivery === "pulse" ? Math.max(0.8, (A.radius ?? 2) * 0.6) : A.range + p.r + (A.lunge ?? 0) * 0.85 - 0.3;
+    let want = A.delivery === "shot" || A.delivery === "lob" || A.delivery === "beam" ? Math.min(A0.range * (kites ? K.far : 0.8), A.range * 0.9) : A.delivery === "pulse" ? Math.max(0.8, (A.radius ?? 2) * 0.6) : A.range + p.r + (A.lunge ?? 0) * 0.85 - 0.3;
     // A pack member whose strike is its own move (a charge, a leap, a burrow: config/movement.json), the move ready, waits its turn
     // where that move sets off from, not on top of her: where it stands, if that's in the move's reach (so its turn come it charges,
     // leaps or goes under from there: rules/combat/packs.ts).
@@ -350,7 +410,7 @@ export function stepCombat(s: CombatState, w: CombatWorld, data: CombatData = CO
       if (f.target.kind === "creature" && !traitsOf(w.creatures[f.target.id]?.species ?? "", data).includes("flier")) { const hx = p.x - c.x, hz = p.z - c.z, hd = Math.hypot(hx, hz); if (hd > 1e-3) { L.dx = hx / hd; L.dz = hz / hd; L.left = Math.min(L.left, Math.max(0, hd - A.range * 0.5)); } }
       c.x += L.dx * step; c.z += L.dz * step; L.left -= step; c.moving = true; c.walk += dt * 12; c.facing = L.dx >= 0 ? 1 : -1;
       c.vx = L.dx * v; c.vz = L.dz * v;
-      if (L.left <= 1e-6) { f.lunge = undefined; if (Math.hypot(p.x - c.x, p.z - c.z) <= A.range * widthOf(f.target) + p.r) { land(w, s, c, f.target, atk.damage, A, c.x, c.z); if (spell) meleeExtras(w, s, f.target, spell.spec, c.x, c.z); } if (c.taunt && time < c.taunt.until && w.creatures[c.taunt.by]) f.target = { kind: "creature", id: c.taunt.by }; } // (taunted mid-lunge: its lunge done, it turns on the taunter)
+      if (L.left <= 1e-6) { f.lunge = undefined; if (Math.hypot(p.x - c.x, p.z - c.z) <= A.range * widthOf(f.target) + p.r) { const observation = { source: c.id, attack: spell?.name ?? null, delivery: "melee", phase: "damage" as const }; land(w, s, c, f.target, atk.damage, A, c.x, c.z, observation); if (spell) meleeExtras(w, s, f.target, spell.spec, c.x, c.z, c, observation); } if (c.taunt && time < c.taunt.until && w.creatures[c.taunt.by]) f.target = { kind: "creature", id: c.taunt.by }; } // (taunted mid-lunge: its lunge done, it turns on the taunter)
       continue;
     }
     // Just noticed: it turns to look a moment before it goes (combat.reaction).
@@ -379,6 +439,8 @@ export function stepCombat(s: CombatState, w: CombatWorld, data: CombatData = CO
           [tx, tz] = at(a);
           if (Math.hypot(tx - c.x, tz - c.z) <= PW.near * S) { a += (c.id % 2 ? 1 : -1) * (speed * PW.pace * dt) / R; c.packProwl = a; [tx, tz] = at(a); }
         }
+        if (c.hop) continue; // (in the air: rules/movement.ts)
+        if (styleOf(c.species) === "hopper" && f.target.kind === "witch" && !pd.state.hers) { if (pd.freeze || !startHop(c, tx, tz, time, hopOf(speed))) { c.moving = false; c.vx = 0; c.vz = 0; c.facing = p.x >= c.x ? 1 : -1; } continue; } // (a hopper bounds round its lull ring, a beat on the ground between)
         moveToward(c, tx, tz, 0.1, speed, dt);
         continue;
       }
@@ -410,7 +472,7 @@ export function stepCombat(s: CombatState, w: CombatWorld, data: CombatData = CO
         if (heavy && !was && c.charge) c.charge.home = (DA!.heavy.home * Math.PI) / 180; // (a heavy runs her down: its lane swings toward her)
         // A charge that missed (Ed, 2026-10-06: "reward skilful use of blink and accurate invitation aiming"): it stands
         // winded for fight.charge.miss seconds, stars round its head, an opening for her 💌s.
-        if (was && !c.charge && !was.struck && !was.hit?.length && (FIGHT.charge.miss ?? 0) > 0) { c.stunUntil = time + FIGHT.charge.miss!; c.vx = 0; c.vz = 0; s.events.push({ kind: "stunned", x: c.x, z: c.z, at: time, id: c.id }); }
+        if (was && !c.charge && !was.struck && !was.hit?.length && (FIGHT.charge.miss ?? 0) > 0) observeAttack(w, s, { kind: "creature", id: c.id }, { source: c.id, attack: "move:charge", delivery: "melee", phase: "self-miss" }, 0, () => { c.stunUntil = time + FIGHT.charge.miss!; c.vx = 0; c.vz = 0; s.events.push({ kind: "stunned", x: c.x, z: c.z, at: time, id: c.id }); });
         // A pair (the stags): its pack mates whose charge is ready set off with it, side by side.
         if (P.move.pair && !was && c.charge) for (const m of packs.get(c.id)?.members ?? []) if (m !== c && !m.charge && time >= (m.moveReadyAt ?? 0) && m.fight?.windupUntil === 0 && !m.fight.lunge) startCharge(m, P.move, p.x, p.z, time);
         const ram: Attack = { ...A, modifier: "knockback", knockback: 15 * S };
@@ -535,7 +597,36 @@ export function stepCombat(s: CombatState, w: CombatWorld, data: CombatData = CO
       // the run-in and the wind-up, never the committed lunge, which goes where the wind-up aimed.)
       const chase = mo;
       const herAt = chase && f.target.kind === "witch" ? chaseAt(s, f.target.id, time, chase) ?? p : p;
-      const may = steer(c, heavy ? heavyOf(c, P) : P, { px: herAt.x, pz: herAt.z, pr: p.r, want, range: A0.range, fire: A.range, speed: cutoff ? Math.max(run * burst, DC!.sprint * FIGHT.speed) : run * burst, time, dt, pack: pd ? tactic : pk, neighbours: grid.near(c.x, c.z, 12 * S), threats: s.shots, side: sideOf(c), ready: time >= f.readyAt, beat: 60 / t.beat.bpm, heading, lights, cutoff, arriveAt: DA && A.delivery === "melee" && f.target.kind === "witch" && !ownFrom ? A.range + p.r : undefined, momentum: chase, now: herAt === p ? undefined : p });
+      // Its fight style's place while it waits its turn (packs.json _styles; Ed's playtest, 2026-10-29: "circling, flanking, more
+      // dynamic"), a wild pack's melee member in the tell and the combo; or a friend's place round what it fights.
+      const sty0 = pd && !pd.state.hers && f.target.kind === "witch" ? styleOf(c.species) : "steady"; // (at her: between creatures, as before)
+      const sty = pd && (pd.phase === "tell" || pd.phase === "combo" || (sty0 === "circler" && pd.phase === "approach")) ? sty0 : "steady"; // (a circler spirals in on its approach)
+      // (a shooter keeps its place and fires from it, at its own range; a melee one leaves it when its turn comes, and strikes)
+      const shooter = pd?.move === "ranged", myTurn = !shooter && !!pd && packGate(pd) && free(f.target), keep = (r: number) => (shooter ? want : r);
+      let place: { x: number; z: number } | null = null;
+      const ring = (r: number, carrot: number) => { const dir = (pd ? pd.state.seed : hash2(c.id, 5, 7)) < 0.5 ? 1 : -1, a = Math.atan2(c.z - p.z, c.x - p.x) + dir * carrot; return { x: p.x + Math.cos(a) * r, z: p.z + Math.sin(a) * r }; };
+      const behind = !!heading && (c.x - p.x) * heading.x + (c.z - p.z) * heading.z < 0; // (behind her as she goes: a circler runs her down)
+      if (sty === "circler" && !myTurn && !behind && !(pd!.phase === "approach" && d > keep(want + YS.circler.orbit * S) + YS.circler.spiral * 2 * S)) place = ring(Math.max(keep(want + YS.circler.orbit * S), pd!.phase === "approach" ? d - YS.circler.spiral * S : 0), YS.circler.carrot);
+      else if (sty === "hopper" && !myTurn) place = ring(keep(want + YS.hopper.ring * S), 0.5);
+      else if (sty === "flanker" && !myTurn && pk) {
+        // (behind or beside her by her heading; standing, by the way she faces her pack)
+        const i = Math.max(0, pk.members.indexOf(c)), h = heading ?? { x: pk.cx - p.x, z: pk.cz - p.z }, front = Math.atan2(h.z, h.x), F = YS.flanker;
+        const off = ((F.from + (F.to - F.from) * ((Math.floor(i / 2) * 0.618 + 0.25) % 1)) * Math.PI) / 180, a = front + (i % 2 ? 1 : -1) * off, R = Math.max(keep(want * F.out), 1);
+        place = { x: p.x + Math.cos(a) * R, z: p.z + Math.sin(a) * R };
+      }
+      if (!place && f.target.kind === "creature" && foes("enraged", sideOf(c))) {
+        const l = onFoe.get(f.target.id), i = l ? l.indexOf(c.id) : -1;
+        if (l && l.length > 1 && i >= 0) { const a = hash2(f.target.id, 7, 1029) * Math.PI * 2 + (i / l.length) * Math.PI * 2, R = Math.max(want * 0.95, 1); place = { x: p.x + Math.cos(a) * R, z: p.z + Math.sin(a) * R }; }
+      }
+      // (a hopper bounds there, or in toward her for its strike, a beat on the ground between; the last stretch, it runs in and
+      // strikes as any)
+      if (sty0 === "hopper") {
+        if (c.hop) continue;
+        const shoot = shooter && time >= f.readyAt && d <= A.range * 0.95; // (a shooter fires between bounds when it's ready: below)
+        const g = shoot ? null : place ?? (Math.hypot(p.x - c.x, p.z - c.z) > want + YS.hopper.ring * S ? { x: p.x + ((c.x - p.x) / Math.max(1e-3, d)) * (want + YS.hopper.ring * S * 0.5), z: p.z + ((c.z - p.z) / Math.max(1e-3, d)) * (want + YS.hopper.ring * S * 0.5) } : null);
+        if (g && Math.hypot(g.x - c.x, g.z - c.z) > 2 * S) { if (!startHop(c, g.x, g.z, time, hopOf(speed))) { c.moving = false; c.vx = 0; c.vz = 0; c.facing = p.x >= c.x ? 1 : -1; } continue; }
+      }
+      const may = steer(c, heavy ? heavyOf(c, P) : P, { px: herAt.x, pz: herAt.z, pr: p.r, want, range: A0.range, fire: A.range, speed: cutoff ? Math.max(run * burst, DC!.sprint * FIGHT.speed) : run * burst, time, dt, pack: pd ? tactic : pk, neighbours: grid.near(c.x, c.z, 12 * S), threats: s.shots, side: sideOf(c), ready: time >= f.readyAt, beat: 60 / t.beat.bpm, heading, lights, cutoff, arriveAt: DA && A.delivery === "melee" && f.target.kind === "witch" && !ownFrom ? A.range + p.r : undefined, momentum: chase, now: herAt === p ? undefined : p, style: place });
       if (may && time >= f.readyAt && strikeNow(pd, f.target)) {
         if (pd) markStrike(pd, c);
         f.windupUntil = time + windupOf(A, f.target); f.aimX = p.x; f.aimZ = p.z; // (it glides to a stop as it winds up: below)

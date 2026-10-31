@@ -12,11 +12,17 @@
 // Studio instrument Esc is still hers first: Ed, 2026-10-23, "Esc steps her away, the next Esc pauses", main.ts freeze.started); and the gamepad reads as none to all but the freeze (navigator.getGamepads wrapped), so
 // an overlay's own pad loop doesn't move under the pause. Thawed, everything is as it was: the overlay open as it was left.
 import { areaUnderWitch, STEP, stepGame, type Controls, type Game } from "../rules/game";
+import { bindings } from "./bindings";
+import { textEntry } from "./inputTarget";
+import { inputStack, type InputLayer } from "./inputStack";
+
+/** Start always reaches pause, even after its configurable binding is changed or cleared. */
+export const padPauseHeld = (buttons: readonly boolean[], axes: readonly number[]): boolean => !!buttons[9] || bindings.padHeld("global.pause", buttons, axes);
 
 const STILL: Controls = { moveX: 0, moveZ: 0, toggleMode: false, zoom: 0 };
 /** The pause page's own pieces: above the shield while frozen, and the only things keys and the mouse reach then (its test
  *  sliders, its Controls / What's new / Options buttons and their panel, the Music Lab, the new-build notice, the freeze's stamp). */
-export const PAUSE_UI = ["#pause-sliders", "#pause-btns", ".corner-panel", "#music-lab", "#new-build", "#freeze-marker", "#freeze-stamp"];
+export const PAUSE_UI = ["#settings-page", "#potion-lab", "#pause-sliders", "#pause-btns", ".corner-panel", "#music-lab", "#new-build", "#freeze-marker", "#freeze-stamp"];
 /** Over every overlay (the highest is the corner panel's 62). */
 const PAUSE_Z = 1000;
 const LAYER_CSS = `#pause-shield { position: fixed; inset: 0; z-index: ${PAUSE_Z}; display: none; }
@@ -27,10 +33,26 @@ body.paused :is(${PAUSE_UI.join(", ")}) { z-index: ${PAUSE_Z + 1} !important; }`
 const realPads = typeof navigator !== "undefined" && navigator.getGamepads ? navigator.getGamepads.bind(navigator) : null;
 
 export class Freeze {
+  mutate: (label: string, action: () => void) => void = (_label, action) => action();
+  advance: (game: Game, controls: Controls, dt: number) => void = stepGame;
   frozen = false;
+  private readonly layer: InputLayer = {
+    id: "pause",
+    // Native pause controls keep browser defaults (typing, slider arrows, Enter clicks) without propagating to game/panels.
+    // Settings retains its window key handler until its separately released migration.
+    acceptsKey: e => !!(e.target as Element | null)?.closest?.("#settings-page, #potion-lab") || e.code === 'Escape' && !!document.querySelector('#potion-lab.open'),
+    key: e => e.type === "keydown" && this.shortcut(e),
+  };
   /** Whether the game was already paused (the start screen, the end) when it froze. */
   private wasPaused = false;
   private padPrev = false;
+  /** The pad's buttons held as the pause ended, hidden from every reader until let go: the press that resumed (the pause page's
+   *  Back, ui/menuFocus.ts) is the resume and nothing else, not a fresh press to the chart or a station under it (pause-on-top). */
+  private heldAtThaw = new Set<number>();
+  /** The pad's buttons held as the pause began, for the pause page's first frame (ui/menuFocus.ts primes on these, not on what's
+   *  held by then): a slow frame can come seconds after Esc, and a B pressed in between is a press, not the one that opened the
+   *  page (the pause-on-top B flake, 2026-10-30: the first paused frame 3 s after Esc, B already down, swallowed). Taken once. */
+  private openPad: boolean[] | null = null;
   private readonly marker = document.createElement("div");
   private readonly stamp = document.createElement("pre");
   private readonly copy = document.createElement("button");
@@ -62,43 +84,104 @@ export class Freeze {
     document.body.append(this.marker, this.stamp, shield);
     // Before the game's own input and every overlay's (capture, and made first), so a press while frozen never starts, flies or
     // chooses anything: Esc is the pause's alone; frozen, only the pause page's own pieces have keys.
-    window.addEventListener("keydown", e => {
-      if (e.code === "Escape" && this.ownsEsc() && (this.frozen || this.started())) {
-        e.preventDefault(); e.stopImmediatePropagation();
-        if (!e.repeat) this.toggle();
+    const key = (e: KeyboardEvent) => {
+      // Track the opening press before push(), so its repeats cannot close the new owner.
+      if (inputStack.key(e) || !inputStack.top && e.type === "keydown" && this.shortcut(e)) {
+        // Stopping listeners does not stop Enter/Space activating a focused native control behind pause.
+        if (this.frozen && inputStack.top === this.layer && ["Enter", "NumpadEnter", "Space"].includes(e.code)
+          && (!(e.target as Element | null)?.closest?.(PAUSE_UI.join(","))
+            || (e.target as Element | null)?.matches?.("#pause-btns"))) e.preventDefault();
+        e.stopImmediatePropagation();
       }
-      // While frozen . steps (and isn't also the fight-momentum debug key); otherwise it's that key.
-      else if (e.code === "Period" && this.frozen) { e.preventDefault(); e.stopImmediatePropagation(); this.step(e.shiftKey ? 10 : 1); }
-      else if (this.frozen && !(e.target as Element | null)?.closest?.(PAUSE_UI.join(","))) e.stopImmediatePropagation();
-    }, { capture: true });
+    };
+    window.addEventListener("keydown", key, { capture: true });
+    window.addEventListener("keyup", key, { capture: true });
+    window.addEventListener("blur", () => inputStack.release());
+    document.addEventListener("visibilitychange", () => { if (document.hidden) inputStack.release(); });
     // The gamepad, while frozen, the freeze's alone (pollPad's Start): every other reader of it sees none.
-    if (realPads) Object.defineProperty(navigator, "getGamepads", { configurable: true, writable: true, value: () => (this.frozen ? [] : realPads()) });
+    if (realPads) Object.defineProperty(navigator, "getGamepads", { configurable: true, writable: true, value: () => (inputStack.owns(null) ? this.thawed(realPads()) : []) });
+  }
+
+  /** Pause shortcuts belong to this layer; Settings and Studio retain their existing exceptions. */
+  private shortcut(e: KeyboardEvent): boolean {
+    if (this.frozen && textEntry(e.target) && e.code !== "Escape") return false;
+    if (bindings.keys("global.pause").includes(e.code) && this.ownsEsc() && (this.frozen || this.started())) {
+      e.preventDefault();
+      if (!e.repeat) this.toggle();
+      return true;
+    }
+    if (e.code === "Period" && this.frozen && !textEntry(e.target) && !document.querySelector('#potion-lab.open')) {
+      e.preventDefault(); this.step(e.shiftKey ? 10 : 1); return true;
+    }
+    return false;
   }
 
   /** A new night on the same page (app/night.ts): its game and seed from here on. */
   retarget(game: Game, seed: number): void { this.game = game; this.seed = seed; }
 
   toggle(): void {
+    this.mutate("pause page", () => this.toggleNow());
+  }
+  private toggleNow(): void {
     if (!this.frozen && !this.started()) return;
     this.frozen = !this.frozen;
     const g = this.game;
-    if (this.frozen) { this.wasPaused = g.clock.paused; g.clock.paused = true; }
-    else g.clock.paused = this.wasPaused;
+    if (this.frozen) { this.wasPaused = g.clock.paused; g.clock.paused = true; this.openPad = this.pad()?.buttons.map(b => b.pressed) ?? []; }
+    else { this.openPad = null; g.clock.paused = this.wasPaused; this.heldAtThaw = new Set([...(realPads?.() ?? [])].find(p => p)?.buttons.flatMap((b, i) => (b.pressed ? [i] : [])) ?? []); }
+    if (this.frozen) inputStack.push(this.layer); else inputStack.remove(this.layer);
     document.body.classList.toggle("paused", this.frozen);
+    const focused = document.activeElement;
+    if (this.frozen && focused && focused instanceof HTMLElement && !focused.closest(PAUSE_UI.join(","))) focused.blur();
+    // (thawed, a pause-page control the pad or mouse focused lets go: it kept every key from her after, E opening nothing; pause-on-top)
+    if (!this.frozen && document.activeElement instanceof HTMLElement && document.activeElement.closest(PAUSE_UI.join(","))) document.activeElement.blur();
     this.onToggle(this.frozen);
+    // Start on the non-activating container: Tab reaches Controls, but an immediate Enter/Space opens nothing.
+    // Keeping the corner panel closed lets the existing pad Back callback resume instead of closing Controls.
+    if (this.frozen) {
+      const panel = document.querySelector<HTMLElement>("#pause-btns");
+      if (panel?.getClientRects().length) { panel.tabIndex = -1; panel.focus(); }
+    }
     this.marker.style.display = this.stamp.style.display = this.frozen && !this.quiet ? "block" : "none";
+  }
+
+  /** The pads as every other reader sees them: the buttons held at the thaw read as up until they're let go. */
+  private thawed(pads: (Gamepad | null)[]): (Gamepad | null)[] {
+    if (!this.heldAtThaw.size) return pads;
+    const pad = [...pads].find(p => p);
+    if (!pad) { this.heldAtThaw.clear(); return pads; }
+    for (const i of [...this.heldAtThaw]) if (!pad.buttons[i]?.pressed) this.heldAtThaw.delete(i);
+    if (!this.heldAtThaw.size) return pads;
+    const up = { pressed: false, touched: false, value: 0 } as GamepadButton;
+    const masked = { connected: pad.connected, id: pad.id, index: pad.index, mapping: pad.mapping, timestamp: pad.timestamp, axes: pad.axes, vibrationActuator: pad.vibrationActuator, buttons: pad.buttons.map((b, i) => (this.heldAtThaw.has(i) ? up : b)) } as unknown as Gamepad;
+    return [...pads].map(p => (p === pad ? masked : p));
   }
 
   /** Advance exactly n fixed steps, with no controls held. */
   step(n: number): void {
     const g = this.game;
-    for (let i = 0; i < n; i++) { g.clock.paused = false; stepGame(g, STILL, STEP); g.clock.paused = true; }
+    for (let i = 0; i < n; i++) {
+      this.mutate("single step: resume", () => { g.clock.paused = false; });
+      this.advance(g, STILL, STEP);
+      this.mutate("single step: pause", () => { g.clock.paused = true; });
+    }
   }
 
-  /** Gamepad Start (standard button 9) toggles, read once a frame. */
+  /** Pause and its legacy Settings child read the real pad only while this layer owns it (or before opening). */
+  pad(): Gamepad | null {
+    if (!inputStack.owns(null) && !inputStack.owns(this.layer)) return null;
+    return [...(realPads?.() ?? [])].find(p => p) ?? null;
+  }
+
+  /** The buttons held as the pause began, once (the pause page's first frame), then undefined. */
+  takeOpenPad(): boolean[] | undefined { const o = this.openPad ?? undefined; this.openPad = null; return o; }
+
+  /** The pad's pause (Options, standard button 9: platform/bindings.ts global.pause) toggles, read once a frame. */
   pollPad(): void {
-    const pad = [...(realPads?.() ?? [])].find(p => p), down = !!pad?.buttons[9]?.pressed;
-    if (down && !this.padPrev) this.toggle();
+    const pad = [...(realPads?.() ?? [])].find(p => p), down = !!pad && padPauseHeld(pad.buttons.map(b => b.pressed), pad.axes);
+    if (down && !this.padPrev) {
+      if (document.querySelector('#potion-lab.open')) document.querySelector('#potion-lab.open')!.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', code: 'Escape', bubbles: true }));
+      else this.toggle();
+    }
     this.padPrev = down;
   }
 

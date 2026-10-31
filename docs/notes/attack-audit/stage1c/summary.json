@@ -1,0 +1,24 @@
+{
+  "species": 64,
+  "minimumYoungWarning": 0.45,
+  "minimumAdultWarning": 0.45,
+  "parseErrors": 0,
+  "engineReactionAssessed": 54,
+  "engineReactionStillContactAfterBlink": [
+    "marten",
+    "polarbear"
+  ],
+  "arenaCases": 0,
+  "repeatedCaseMatches": null,
+  "reactionBudget": {
+    "reaction": 0.25,
+    "inputInterval": 0.125,
+    "worstQuantizedPlusStep": 0.39166666666666666
+  },
+  "limits": [
+    "No general dodge guarantee",
+    "No arena dominance ranking from three small paired matches",
+    "No invisible-source or real terrain proof from flat engine fixtures",
+    "No current validation of seven impossible solo stuns; historical protected-health cutoff is not impossibility"
+  ]
+}

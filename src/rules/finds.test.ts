@@ -1,5 +1,6 @@
 // Things to wear found in the forest (rules/finds.ts; Ed, 2026-10-21): tonight's travel trunk, what's in it, taking it, and the
 // crystal ball's way to it.
+import { RECORD_FINDS } from "./records";
 import { describe, expect, it } from "vitest";
 import { TUNING } from "./tuning";
 import { newGame, stepGame, type Controls, type Game } from "./game";
@@ -9,9 +10,11 @@ import { newSpells, ownsHat } from "./spells";
 import { COUNTRY_BY_ID } from "../../art/country.js";
 import { PART_IDS, fittedKey } from "./broomParts";
 import { deckOf, onFloor } from "./treehouse";
+import { smallWorldTuning } from "../test/worlds";
 
 const C: Controls = { moveX: 0, moveZ: 0, toggleMode: false, zoom: 0 };
 function game(seed = 123): Game {
+  // Retain seeded trunk/relic placement and dev-spawn terrain probes up to 300 m from home.
   const g = newGame(seed, TUNING);
   g.clock.paused = false; g.party.paused = true; g.party.spellAt = undefined;
   return g;
@@ -45,7 +48,7 @@ describe("tonight's travel trunk", () => {
     expect(FINDABLE.length).toBeGreaterThan(5);
     for (const i of FINDABLE) { expect(i.start, i.id).toBeFalsy(); expect(i.set["broom.kind"], i.id).toBeUndefined(); } // (no broom shapes: brooms are parts)
     const wearables = new Set(FINDABLE.map(i => i.id)), parts = new Set(PART_IDS), hats = new Set(HAT_FINDS), bags = new Set(BAG_ITEMS);
-    const of = { wearable: wearables, part: parts, hat: hats, bag: bags } as const;
+    const of = { wearable: wearables, part: parts, hat: hats, bag: bags, record: new Set(RECORD_FINDS) } as const;
     // the same night, the same find; nights differ, and over many both kinds come up
     const pick = nightPick(123, {})!;
     expect(nightPick(123, {})).toEqual(pick);
@@ -55,7 +58,7 @@ describe("tonight's travel trunk", () => {
     for (const p of picks) expect(of[p.kind].has(p.item), p.item).toBe(true);
     // what she has is never drawn; a kind with nothing left never comes up
     expect(nightPick(123, { [pick.kind]: new Set([pick.item]) })).not.toEqual(pick);
-    for (let s = 1; s <= 40; s++) { expect(nightPick(s, { part: parts, hat: hats, bag: bags })!.kind).toBe("wearable"); expect(nightPick(s, { wearable: wearables, hat: hats, bag: bags })!.kind).toBe("part"); }
+    for (let s = 1; s <= 40; s++) { expect(nightPick(s, { part: parts, hat: hats, bag: bags, record: of.record })!.kind).toBe("wearable"); expect(nightPick(s, { wearable: wearables, hat: hats, bag: bags, record: of.record })!.kind).toBe("part"); }
     // everything found: nothing to find, and no trunk or wreck tonight
     expect(nightPick(5, of)).toBeNull();
     const g = game(); fillTrunk(g, of);
@@ -66,14 +69,14 @@ describe("tonight's travel trunk", () => {
     expect(findPiece(h.trunk!)).toBe(FIND_KINDS.find(k => k.id === h.trunk!.kind)!.piece(h.trunk!.item!));
   });
 
-  it("finds hats and bags each on its own (Ed, 2026-10-23): every spell hat but the plain one, the bum bag and the backpack, out of the trunk", () => {
+  it("finds hats and bags each on its own (Ed, 2026-10-23): every spell hat but the plain one, and the found bags (the Satchel, Bumbag and Purse hers from the start: Ed, 2026-10-29), out of the trunk", () => {
     expect(HAT_FINDS).not.toContain("none");
     expect(HAT_FINDS.length).toBe(14);
-    expect([...BAG_ITEMS].sort()).toEqual(["backpack", "bumbag"]);
+    expect([...BAG_ITEMS].sort()).toEqual(["backpack", "briefcase", "clutch", "duffel", "messenger", "tote"]);
     for (const b of BAG_ITEMS) expect(FINDABLE.some(i => i.id === b), b).toBe(false); // (no longer in the trunk)
     for (const k of FIND_KINDS) for (const id of k.items) { expect(COUNTRY_BY_ID[k.piece(id)], k.piece(id)).toBeDefined(); } // (every find drawn: art/country.js)
     const hat = FIND_KINDS.find(k => k.id === "hat")!, bag = FIND_KINDS.find(k => k.id === "bag")!;
-    expect(hat.piece("sentry")).toBe("find-hat"); expect(bag.piece("bumbag")).toBe("find-bag");
+    expect(hat.piece("sentry")).toBe("find-hat"); expect(bag.piece("backpack")).toBe("find-bag");
     // taken, the piece stands on without it
     const g = game(); g.trunk = { ...g.trunk!, kind: "hat", item: "sentry", found: false };
     expect(findPiece(g.trunk)).toBe("find-hat");
@@ -139,7 +142,7 @@ describe("the way to the trunk (never how far)", () => {
 describe("tonight's wreck (the Workshop, Ed 2026-10-23: a broom part to find)", () => {
   /** A night whose find is a wreck holding `part`. */
   const wreck = (part: string, t = TUNING) => {
-    const g = newGame(123, t);
+    const g = newGame(123, smallWorldTuning(t, "Wreck pickup changes ownership and fitted parts at one find, independent of map size."));
     g.clock.paused = false; g.party.paused = true; g.party.spellAt = undefined;
     fillTrunk(g, {}); g.trunk!.kind = "part"; g.trunk!.item = part;
     return g;

@@ -10,7 +10,9 @@ import { hatSpell, setLoadout, setParts, type SpellState } from "../rules/spells
 import { itemById } from "../rules/wardrobe";
 import { loadOwned, saveOwned } from "./owned";
 import { loadBroom, partFound, saveBroom } from "./broomSave";
-import { HATS_KEY, hatFound, loadHats } from "./hatSave";
+import { hatDropped, hatFound } from "./hatSave";
+import { foundRecords, recordDropped, recordFound } from "./recordSave";
+import { recordById } from "../rules/records";
 
 /** What a keeper works on: her spells (a broom part's claim fits it there) and what she owns to wear (the page's set, kept). */
 export interface FindsCtx { spells: Pick<SpellState, "parts" | "broom" | "activeUntil" | "readyAt" | "castAt"> & Partial<Pick<SpellState, "hat" | "hats">>; owned(): Set<string> }
@@ -39,7 +41,7 @@ export const KEEPERS: Record<FindKindId, Keeper> = {
     has: c => new Set(c.spells.hats ?? HAT_FINDS),
     keep: (_c, id) => { hatFound(id); },
     drop: (c, id) => {
-      try { localStorage.setItem(HATS_KEY, JSON.stringify(loadHats().filter(h => h !== id))); } catch { /* storage blocked: this run only */ }
+      hatDropped(id);
       const s = c.spells; if (s.hats) s.hats = s.hats.filter(h => h !== id);
       if (s.hat === id) setLoadout(s as SpellState, "none"); // (off her if she wears it)
     },
@@ -62,6 +64,13 @@ export const KEEPERS: Record<FindKindId, Keeper> = {
       saveBroom(b);
       if (slot && c.spells.parts[slot] === id) setParts(c.spells as SpellState, { ...c.spells.parts, [slot]: null });
     },
+  },
+  // (the records she plays at her DJ booth: app/recordSave.ts's witch.records; the starting ones aren't finds)
+  record: {
+    label: id => recordById(id)?.name ?? id,
+    has: () => new Set(foundRecords()),
+    keep: (_c, id) => { recordFound(id); },
+    drop: (_c, id) => { recordDropped(id); },
   },
 };
 

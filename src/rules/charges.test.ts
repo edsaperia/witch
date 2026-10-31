@@ -14,6 +14,7 @@ const OLD = withTuning({ fight: { ...TUNING.fight, charge: { reach: 1, turn: 1, 
 
 /** A quiet game, the witch on the ground away from everything, too tough to knock out. */
 function quiet(t: Tuning = TUNING): Game {
+  // Keep the spatial fixture: attacks recruit creatures over 200 m away and test pursuit across area edges.
   const g = newGame(77, t);
   g.clock.paused = false;
   const d = g.map.dancefloor;
@@ -72,7 +73,7 @@ describe("charges and leaps go further (Ed, 2026-10-06)", () => {
       last = W.health.hp;
     });
     expect(charging).toBe(true);
-    expect(mate.hp ?? Infinity).toBeLessThan(1e9); // (struck: its health set below its whole)
+    expect(mate.drops ?? 0).toBeGreaterThan(0); // (struck: 💧s in its slots, rules/orbit.ts)
     expect(most).toBeLessThanOrEqual(1); // (one charge, one hit: the grace, #197)
     expect(W.health.hp).toBeLessThan(hp0);
   }, 60000);

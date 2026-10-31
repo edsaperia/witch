@@ -12,6 +12,7 @@ import { exitPoint, isInside, keepIn, makeCoast, softEdge } from "./mapShape";
 import { newWitch, stepWitch, type WitchState } from "./witch";
 import { TUNING } from "./tuning";
 
+// Keep radius-5.6 and legacy square fixtures: 80–115 playable cells, full buffer/coast and 40-second radial flight are explicit size/shape assertions.
 const SEEDS = [1, 123, 4242, 90210, 925469];
 
 describe("the circular map", () => {

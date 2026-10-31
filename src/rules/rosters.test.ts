@@ -1,11 +1,12 @@
 // The journey's rosters (Ed, 2026-10-11; docs/backlog/journey.md "Rosters", rules/rosters.ts): each kind's island, its roster
 // and its night's legends; and the map they make.
 import { describe, expect, it } from "vitest";
-import { dealLegends, homeIsland, homeKinds, isPlaceholder, islandOf, KIND_NAMES, KINDS, legendsFor, playableIsland, REAL_KINDS } from "./rosters";
+import { dealLegends, homeIsland, OTHERS_MAX, homeKinds, isPlaceholder, islandOf, KIND_NAMES, KINDS, legendsFor, playableIsland, REAL_KINDS } from "./rosters";
 import { AREA_TYPES, generateMap } from "./map";
 import { TUNING, type Tuning } from "./tuning";
 import { newGame } from "./game";
 
+// Keep authored island sizes/rosters and placeholder fallback: exact area multiplicities, dealt legends and coast identity are the behavior under test.
 const onIsland = (island: string, found: string[] = []): Tuning => ({ ...TUNING, map: { ...TUNING.map!, island, found } });
 const kindOfCell = (map: ReturnType<typeof generateMap>, k: string) => { const [x, y] = k.split(",").map(Number); return AREA_TYPES[map.typeOf(x, y)].creature; };
 
@@ -23,13 +24,14 @@ describe("islands by kind (islandOf)", () => {
     expect(new Set(KIND_NAMES.map(k => islandOf(k)!.seed)).size).toBe(KIND_NAMES.length);
   });
 
-  it("gives each a roster by the rule: its kind plentiful, 1-3 new to its phase, only kinds of its phase or before, a third as many kinds as areas", () => {
+  it("gives each a roster by the rule: its kind plentiful, 1-3 new to its phase, only kinds of its phase or before, each other kind on at most 2 areas (Ed, 2026-10-28)", () => {
     for (const k of REAL_KINDS) {
       const i = islandOf(k)!, kinds = i.roster.map(r => r.kind), own = i.roster.find(r => r.kind === k)!;
       expect(i.roster.reduce((a, r) => a + r.areas, 0)).toBe(i.size);
       expect(new Set(kinds).size).toBe(kinds.length);
       expect(own.areas).toBe(Math.max(2, Math.round(i.size / 6)));
-      expect(kinds.length).toBe(Math.ceil(i.size / 3));
+      expect(kinds.length).toBe(1 + Math.ceil((i.size - own.areas) / OTHERS_MAX));
+      for (const r of i.roster) if (r.kind !== k) expect(r.areas, `${k}'s island: ${r.kind}`).toBeLessThanOrEqual(OTHERS_MAX);
       for (const r of i.roster) { expect(KINDS[r.kind].phase).toBeLessThanOrEqual(i.phase); expect(r.areas).toBeGreaterThan(0); }
       const fresh = kinds.filter(x => x !== k && KINDS[x].phase === i.phase).length;
       if (REAL_KINDS.some(x => KINDS[x].phase === i.phase)) { expect(fresh).toBeGreaterThanOrEqual(1); }

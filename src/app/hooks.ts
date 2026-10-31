@@ -1,12 +1,13 @@
 // window.witch: the game's hooks for the smoke test, the tools (tools/smoke, tools/feel, tools/sfx, tools/bench) and for poking
 // at in the console.
+import { metresToLinks, pulseRouteMetres, routeLengths } from "../rules/leypulse";
 import type { FrameStats } from "../platform/frameStats";
 import type { QualityLadder } from "./ladder";
 import { Vector3 } from "three";
 import { arenaAttack, setupArena } from "../rules/arena";
 import { lastShot, takeShot } from "./shot";
 import { cellKey } from "../rules/party";
-import { areaUnderWitch, hitWitch, interpolated, joinParty, loseSoundsystem, STEP, stepGame, type Game } from "../rules/game";
+import { areaUnderWitch, hitWitch, interpolated, joinParty, loseSoundsystem, STEP, stepGame as baseStepGame, type Game } from "../rules/game";
 import { AREA_TYPES } from "../rules/map";
 import { coastFacing } from "../rules/land";
 import { musicCue, type MusicCue } from "../rules/musicPlan";
@@ -28,6 +29,7 @@ import { sliceLog } from "../render/slices";
 export interface HookNight { game: Game; tuning: Tuning; hud: Hud }
 
 export interface HookDeps {
+  advance?: typeof baseStepGame;
   night: () => HookNight; view: View; sound: Sound; meter: OutputMeter; shake: ScreenShake;
   /** The frames' own stats (the overlay's fps, cpu and gpu lines), for the probes. */
   frameStats: FrameStats;
@@ -38,7 +40,8 @@ export interface HookDeps {
   loop: { manual: boolean; readonly bot: Bot | null; readonly botTag: BotTag | null; readonly ready: boolean };
 }
 
-export function installHooks({ night, view, sound, meter, shake, frameStats, ladder, loadTimes, loop }: HookDeps): void {
+export function installHooks({ night, view, sound, meter, shake, frameStats, ladder, loadTimes, loop, advance = baseStepGame }: HookDeps): void {
+  const stepGame = advance;
   let soundCue: MusicCue | undefined; // (the audit's own: the loop keeps its own cue)
   const applyShake = () => shake.apply();
   (window as unknown as { witch: unknown }).witch = { get game() { return night().game; }, view, get tuning() { return night().tuning; }, frameStats, ladder, sound, slices: sliceLog, // (the sliced builds' longest steps: render/slices.ts, tools/view/build-budget.cjs)
@@ -50,6 +53,9 @@ export function installHooks({ night, view, sound, meter, shake, frameStats, lad
     guest: (id: number) => { const { game } = night(), c = game.creatures[id], a = game.party.areas.get(cellKey(c.cell)); if (!c || !a) return false; c.state = "happy"; c.enraged = false; c.siege = undefined; joinParty(game, c, a.soundsystem ?? game.map.dancefloor, a.cell); return true; },
     /** A debug hook: lose a soundsystem now (its key, "home" the dancefloor's whole ring, "home:<i>" one speaker), as if destroyed. */
     lose: (key = "home") => { const { game, hud } = night(), s = game.combat.sounds.get(key); if (s) s.hp = 0; if (key === "home") for (const [k, h] of game.combat.sounds) if (isHomeKey(k)) h.hp = 0; loseSoundsystem(game, key, s?.x ?? 0, s?.z ?? 0); const e = game.waveEvents[game.waveEvents.length - 1]; if (e?.kind === "soundsystemLost") hud.showLoss(e); return e; },
+    /** A debug hook (the rainbow wave's previews, rules/rainbow.ts): a wave sets off now from `ahead` metres past the spark along the
+     *  route, as an early clear's from its stone would; its place along the route comes back (m, and in links: render/leylines.ts placeAt). */
+    rainbow: (ahead = 150) => { const { game } = night(), from = pulseRouteMetres(game.party, game.map, game.clock.time) + ahead; (game.rainbows ??= []).push({ at: game.clock.time, from }); return { from, links: metresToLinks(routeLengths(game.party, game.map), from) }; },
     /** A debug hook (the dropped hat's previews): a hit on her now, as a creature's would be (her last one knocks her out). */
     hit: () => { const { game } = night(); hitWitch(game, 0, game.clock.time); return !!game.witches[0].ko; },
     get manual() { return loop.manual; }, set manual(on: boolean) { loop.manual = on; },
@@ -65,9 +71,9 @@ export function installHooks({ night, view, sound, meter, shake, frameStats, lad
      *  things landed on screen, in screen pixels as drawn (the art-pixel snap and the canvas's shift):
      *  the witch, ground points (probes, metres) and creatures (ids). */
     frameLive: (c: Parameters<typeof stepGame>[1], dt: number, probes: { x: number; z: number }[] = [], ids: number[] = []) => {
-      const { game, tuning } = night(), t0 = game.clock.time;
+      const { game } = night(), t0 = game.clock.time;
       stepGame(game, c, dt);
-      const steps = Math.round((game.clock.time - t0) / STEP), alpha = game.alpha, P = tuning.pixelSize;
+      const steps = Math.round((game.clock.time - t0) / STEP), alpha = game.alpha, P = view.cssPixel;
       const v = new Vector3(), ndc = (x: number, y: number, z: number) => { placed(v.set(x, y, z)).project(view.camera); return v; };
       const snap = (n: Vector3) => [(Math.floor((n.x * 0.5 + 0.5) * view.width) + 0.5) * P, (Math.floor((-n.y * 0.5 + 0.5) * view.height) + 0.5) * P];
       let at: { witch: number[]; probes: number[][]; creatures: (number[] | null)[]; witchWorld: number[] } = { witch: [], probes: [], creatures: [], witchWorld: [] };

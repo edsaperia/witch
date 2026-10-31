@@ -6,7 +6,5 @@
   "x": 0,
   "z": 0,
   "r": 12.5,
-  "objects": [
-    {"id":"recordShelf","label":"Record shelf","use":{"kind":"say","line":"The shelf waits for records."},"offset":[0,10.6],"box":{"w":4.8,"d":1.8,"h":4.8}}
-  ]
+  "objects": []
 }

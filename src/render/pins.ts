@@ -47,6 +47,10 @@ export class Pin {
   private shown = 0;
   /** Its strength now (0 to 1, eased in and out by show and hide). */
   get strength(): number { return this.shown; }
+  /** The page's y its tip stays above while in view (a use prompt under it: render/view/guidance.ts), or null. */
+  above: number | null = null;
+  /** Times its size this frame (1 as drawn; the morning's guidance pins breathe: render/view/guidance.ts). */
+  scale = 1;
   constructor(public target: PinTarget, public look: PinLook, parent: HTMLElement = document.body) { this.ind = new StoneIndicator(parent, 3); }
   show(): void { this.want = 1; }
   hide(): void { this.want = 0; }
@@ -56,7 +60,7 @@ export class Pin {
     if (Math.abs(this.shown - this.want) < 0.01) this.shown = this.want;
     this.ind.fade(this.shown * calm);
     const L = this.look;
-    this.ind.update(camera, width, height, spot && this.shown > 0 ? { x: spot.x, z: spot.z, top: spot.top, gap, colour: L.colour, species: L.species ?? "", glyph: L.glyph, glyphColour: L.glyphColour, emoji: L.emoji } : null, wx, wz, beat, bpm, 1, L.label ?? "");
+    this.ind.update(camera, width, height, spot && this.shown > 0 ? { x: spot.x, z: spot.z, top: spot.top, gap, above: this.above ?? undefined, scale: this.scale, colour: L.colour, species: L.species ?? "", glyph: L.glyph, glyphColour: L.glyphColour, emoji: L.emoji } : null, wx, wz, beat, bpm, 1, L.label ?? "");
   }
   /** Gone for good (its canvas and label off the page). */
   dispose(): void { this.ind.dispose(); }

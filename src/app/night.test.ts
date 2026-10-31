@@ -1,6 +1,7 @@
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { endNight, startNight, type Page } from "./night";
 import { stepGame } from "../rules/game";
+import { restoreGame, snapshotGame } from "../rules/nightSnapshot";
 import { DECISION_LIST, knobAt, setKnob } from "../ui/decisions";
 import { installHooks, type HookDeps } from "./hooks";
 import type { Hud } from "./hud";
@@ -15,19 +16,50 @@ const G = globalThis as unknown as Record<string, unknown>;
 const had = { document: "document" in G, window: "window" in G };
 beforeAll(() => {
   if (!had.document) G.document = { getElementById: () => fakeEl(), body: fakeEl(), querySelectorAll: () => [] };
-  if (!had.window) G.window = {};
+  // startNight owns a browser timer and pagehide listener for campaign mushroom stock.
+  // Keep them inert here: this fixture exercises night lifecycle, not real wall-clock timers.
+  if (!had.window) G.window = { setInterval: () => 1, clearInterval() {}, addEventListener() {}, removeEventListener() {} };
 });
 afterAll(() => {
   if (!had.document) delete G.document;
   if (!had.window) delete G.window;
 });
 
-const spec = (seed: number) => ({ how: "boot" as const, island: "home", seed, params: new URLSearchParams({ island: "home", seed: String(seed), creator: "0" }) });
+// Four areas suffice for lifecycle, cleanup and hook retargeting; explicit home/link contracts keep their authored island.
+const spec = (seed: number, island = "4") => ({ how: "boot" as const, island, seed, params: new URLSearchParams({ island, seed: String(seed), creator: "0" }) });
 
 describe("startNight (docs/plans/sail-without-reload.md B)", () => {
+  it("resumes the saved rules and tuning without replaying the link's fresh-night switches", async () => {
+    const original = await startNight({ night: null, build: "test", look: () => null }, spec(123, "home"));
+    original.game.clock.time = original.game.herTime = 37;
+    original.game.party.wave = 3;
+    original.game.witch.x += 12;
+    original.game.witches[0].health.hp = 1;
+    original.game.witches[0].hat.has = false;
+    original.tuning.fight.scale = 1.77;
+    original.tuning.treetopSpeed = 42;
+    original.tuning.music.volume = 0.123;
+    const resumed = restoreGame(JSON.parse(JSON.stringify(snapshotGame(original.game)))), before = snapshotGame(resumed);
+    const page: Page = { night: null, build: "test", look: () => ({ hat: { shape: "conical" } }) };
+    const params = new URLSearchParams({ island: "home", seed: "123", creator: "0", wave: "9", hat: "harvest", fightScale: "0.5", treetopSpeed: "12", arrive: "1", spell: "wait" });
+    const n = await startNight(page, { ...spec(123), params, resume: resumed });
+    expect(n.game).toBe(resumed);
+    expect(n.tuning).toBe(resumed.tuning);
+    expect(n.arrival).toBeNull();
+    expect(snapshotGame(n.game)).toEqual(before);
+    expect(n.game.party.wave).toBe(3);
+    expect(n.game.witches[0].hat.has).toBe(false);
+    expect(n.tuning.fight.scale).toBe(1.77);
+    expect(n.tuning.music.volume).toBe(0.123);
+    // Live controls must still change the exact object read by the restored rules and map.
+    n.tuning.treetopSpeed = 51;
+    expect(n.game.tuning.treetopSpeed).toBe(51);
+    expect(n.game.map.tuning).toBe(n.tuning);
+  });
+
   it("makes a night from its spec: its seed, island and tuning, fresh flags, held in page.night", async () => {
     const page: Page = { night: null, build: "test", look: () => null };
-    const n = await startNight(page, spec(4321));
+    const n = await startNight(page, spec(4321, "home"));
     expect(page.night).toBe(n);
     expect(n.seed).toBe(4321);
     expect(n.game.seed).toBe(4321);
@@ -84,7 +116,7 @@ describe("startNight (docs/plans/sail-without-reload.md B)", () => {
 
   it("a sail after endNight: the ended night kept as page.last meanwhile, then carried on from (its sliders but its link's own), and let go", async () => {
     const page: Page = { night: null, build: "test", look: () => null };
-    const a = await startNight(page, spec(41));
+    const a = await startNight(page, spec(41, "home"));
     const flash = DECISION_LIST.find(d => d.id === "legendFlash")!, grace = DECISION_LIST.find(d => d.id === "grace")!;
     setKnob(a.tuning, flash.apply.knob!, 0.123); setKnob(a.tuning, grace.apply.knob!, 0.9); // (two sliders moved on the pause page)
     endNight(page, true);

@@ -1,0 +1,10 @@
+{
+  "reason": "The ibex bounds back (leapfrog) in its lull instead of hiding in the trees (the coordinator, 2026-10-29). No creature jumps in a fight (Ed's playtest, 2026-10-29: \"some animals seem to teleport\"): a pack member hidden in its lull (trees, burrow, water, branches) or scattered runs, unseen, toward where it comes back down instead of being put there when its hide ends; a leap goes on along its arc through steps something else holds it (a stun), and one whose target is lost finishes its arc instead of being put at its landing. A hiding pack member is drawn as a see-through shadow of itself (combat.packs.shadow), not left out.",
+  "frames": {
+    "*": "in a fight with a hiding, scattering or leaping kind, those creatures stand somewhere else after their lull or leap; a hiding one shows as a dark see-through shadow instead of nothing"
+  },
+  "rules": {
+    "creatures": "the positions of pack members after a hide or scatter, and of leapers stunned or left without a target mid-leap",
+    "*": "anything downstream of where those creatures stand (the fight's hits, who's near her)"
+  }
+}

@@ -5,6 +5,7 @@
 const http = require("http");
 const fs = require("fs");
 const path = require("path");
+const { effectsScene } = require("./effects-scene.cjs");
 let playwright;
 try { playwright = require("playwright"); } catch { playwright = require("/opt/node22/lib/node_modules/playwright"); }
 
@@ -97,6 +98,7 @@ async function main() {
     else page = await browser.newPage({ viewport: size, deviceScaleFactor: dpr || 1, hasTouch: !!hasTouch, isMobile: !!hasTouch });
     page.on("pageerror", e => errors.push(`${name}: page error: ${e.message}`));
     page.on("console", m => { if (m.type() === "error") errors.push(`${name}: console error: ${m.text()}`); });
+    // Preserve each scenario's authored island/seed: pop, terrain, long-flight and species-specific checks depend on its geometry.
     await page.goto(`http://127.0.0.1:${port}/?creator=0&pixels=keep&${/(^|&)seed=/.test(query || "") ? (query || "").replace(/^&/, "") : `seed=${seed}${query || "&debug"}`}`); // (a run may ask for its own seed; pixels=keep: the floating checks read the atlases' pixels, which the game lets go once uploaded)
     await page.waitForFunction(() => window.witch && window.witch.ready, null, { timeout: 300000 });
     // All the art is drawn in the background after start; the software renderer here starves the
@@ -263,6 +265,7 @@ async function main() {
     check(popCount === 0, `nothing pops in or out in clear view in the Heath, flying through every zoom level in both modes (${popCount})${popCount ? ": " + pops.join("; ") : ""}`, "pops");
   }, "&debug&island=moth");
 
+  // Four areas: local touch movement/rise does not need distant scenery or area diversity.
   await run("phone", { width: 390, height: 844, hasTouch: true }, async page => {
     await page.touchscreen.tap(200, 400);
     await sleep(300);
@@ -287,9 +290,9 @@ async function main() {
     await page.waitForFunction(() => window.witch.game.witch.mode !== "ground" && window.witch.game.witch.mode === "treetop", null, { timeout: 400000, polling: 50 }).catch(() => {});
     check((await state(page)).mode === "treetop", "the round button rises to treetop mode");
     await shot(page, "11-phone-treetop.png");
-  });
+  }, "&debug&island=4");
 
-  // The tilt-shift both ways, and off, from the same spot, for Ed to compare.
+  // The tilt-shift both ways, and off, from the same spot, for Ed to compare; four areas suffice for this local view.
   for (const tilt of ["before", "after", "off"]) {
     await run(`tilt-${tilt}`, { width: 1280, height: 720 }, async page => {
       await page.keyboard.press("Enter");
@@ -298,7 +301,7 @@ async function main() {
       await page.waitForFunction(() => window.witch.game.witch.mode === "treetop", null, { timeout: 240000 });
       await sleep(600);
       await shot(page, `2${["before", "after", "off"].indexOf(tilt)}-tilt-${tilt}.png`);
-    }, `&tilt=${tilt}`);
+    }, `&island=4&tilt=${tilt}`);
   }
 
   // The dancefloor from the ground and from the treetops.
@@ -335,17 +338,27 @@ async function main() {
 
   // The ground effects (tree shadows, canopy shadow, mist) off and on, from the same spot, and a
   // short recording in motion with them on.
+  // Retain the authored default island: this walk must frame its ground, paths and forest. The four-area trial
+  // produced mostly empty effects frames in the coordinator's comparison (6537756688), so it is not equivalent coverage.
   for (const [name, q] of [["effects-off", "&shadows=off&canopy=off&mist=off"], ["effects-on", ""]]) {
     await run(name, { width: 1280, height: 720 }, async page => {
       await page.keyboard.press("Enter");
       await offHouse(page);
       await hold(page, "ArrowRight", 1.5);
-      await sleep(300);
-      await shot(page, `30-ground-${name}.png`);
+      const effectsShot = async (mode, file) => {
+        await settleArt(page, { forest: true, trees: true, ground: true });
+        const drawn = await page.waitForFunction(effectsScene, mode, { timeout: 240000, polling: "raf" });
+        const evidence = await drawn.jsonValue(); await drawn.dispose();
+        check(!!evidence, `${name} ${mode}: complete forest and nonblank canvas (${JSON.stringify(evidence)})`);
+        // Keep this proven frame still for the screenshot, then release the normal loop even on a capture failure.
+        await page.evaluate(() => { window.witch.manual = true; });
+        try { await page.screenshot({ path: path.join(out, file), timeout: 300000 }); results.push(`shot previews/${file}`); }
+        finally { await page.evaluate(() => { window.witch.manual = false; }); }
+      };
+      await effectsShot("ground", `30-ground-${name}.png`);
       await page.keyboard.press("Space");
       await page.waitForFunction(() => window.witch.game.witch.mode === "treetop", null, { timeout: 240000 });
-      await sleep(600);
-      await shot(page, `31-treetop-${name}.png`);
+      await effectsShot("treetop", `31-treetop-${name}.png`);
     }, q);
   }
   // The party spreading: one area partifying (shots through its transition, from the treetops),
@@ -430,10 +443,17 @@ async function main() {
     await page.keyboard.press("Enter");
     const drawn = () => page.evaluate(() => { const L = window.witch.view.ley, c = L.chain, k = L.current, at = i => c[i]?.cell.join(","); return { visible: L.meshes[0].visible, links: c.length - 1, areas: window.witch.game.map.cells.length, current: k, tris: (L.meshes[0].geometry.index?.count ?? 0) / 3, here: at(k), next: at(k + 1), after: at(k + 2), stones: c.map(s => s.cell.join(",")), cues: window.witch.view.nextStones.length, after2: "afterNextStones" in window.witch.view, waking: window.witch.game.party.next.length }; });
     await page.waitForFunction(() => window.witch.view.ley.chain.length > 1, null, { timeout: 300000, polling: 200 });
+    const before = await drawn();
+    check(!before.visible && before.current === 0 && before.links === before.areas - 1 && before.tris > 20 * before.links,
+      `before the party, the ley line is not visible but its chain is built (${before.links} sections for ${before.areas} areas, ${before.tris} triangles)`);
+    // Enter after play begins casts the party spell; KeyN below still advances the same real waves.
+    await page.evaluate(() => { const g = window.witch.game; g.witch = { ...g.witch, seated: false }; });
+    await page.waitForFunction(() => window.witch.game.clock.time > 0.3, null, { timeout: 120000, polling: 200 });
+    await page.keyboard.press("Enter");
+    await page.waitForFunction(() => window.witch.game.party.spellAt !== null && window.witch.view.ley.meshes[0].visible, null, { timeout: 120000, polling: 200 });
     const a = await drawn();
     check(a.visible && a.current === 0 && a.links === a.areas - 1 && a.tris > 20 * a.links, `the ley line is drawn from home through every area (${a.links} sections for ${a.areas} areas), the last reached at ${a.current} (${a.tris} triangles)`);
     check(a.cues <= Math.max(1, a.waking) && !a.after2, `only the next stone has a HUD indicator (${a.cues} for the ${a.waking} waking next${a.after2 ? "; an after-next one is still there" : ""})`);
-    await page.evaluate(() => { const g = window.witch.game; g.witch = { ...g.witch, seated: false }; });
     await sleep(2500);
     await shot(page, "62-ley-ground.png");
     for (let i = 0; i < 2; i++) { await page.keyboard.press("KeyN"); await sleep(600); }
@@ -757,7 +777,7 @@ async function main() {
     check(r.besiegers > 0 && r.hit && r.fell && r.ended && r.marched, `a woken area's creatures besiege its soundsystem, bring it down, end its party and march on to the dancefloor (${JSON.stringify(r)})`);
     check(r.over && screen, `when home's speakers have fallen the party's over and the 💤 pin leads her to bed, no card (${r.over}, ${screen})`);
     check(r.fighting === 0 && r.awake === 0 && r.asleep > 0, `the afterparty: nothing fights, everyone's asleep or walking home to bed (${JSON.stringify({ fighting: r.fighting, awake: r.awake, asleep: r.asleep })})`);
-  });
+  }, "&debug&island=4"); // First-area siege and its return to home need four areas, not the full island.
 
   await run("boost", { width: 1900, height: 1240 }, async page => {
     await page.keyboard.press("Enter");
@@ -875,8 +895,9 @@ async function main() {
     await shot(page, "ground-cave-mouth.png");
     const r = await page.evaluate(() => {
       const v = window.witch.view, out = { n: 0, worst: 0, bad: [] };
+      const rgba = (t, p, on) => { const d = t.image.data; if (!on || !d) return d; const P = p.image.data, o = new Uint8Array(d.length * 4); for (let i = 0; i < d.length; i++) { const k = d[i] * 4; o[i * 4] = P[k]; o[i * 4 + 1] = P[k + 1]; o[i * 4 + 2] = P[k + 2]; o[i * 4 + 3] = P[k + 3]; } return o; }; // (an indexed plane as RGBA: render/palette.ts)
       for (const [type, b] of [...v.typeBatches, ...[...v.decorBatches].filter(([k]) => k !== "decals" && k !== "sceneDecals"), ["treehouse", v.treehouseBatch]]) { // decals lie flat
-        const img = b.atlas.albedo.image, W = img.width, H = img.height, D = img.data;
+        const img = b.atlas.albedo.image, W = img.width, H = img.height, D = rgba(b.atlas.albedo, b.atlas.albedoPal, b.atlas.indexed.x > 0.5);
         for (const it of b.items) {
           if (it.top || it.overlay) continue; // (crowns, and the treehouse's DJ table drawn over it, stand on their trunk)
           if (type === "treehouse" && it.scale !== undefined) continue; // (the Ent's halves, moved along the camera's rays to land on their own pixels: render/view/home.ts alongRay; their y isn't a ground height)
@@ -900,8 +921,9 @@ async function main() {
     // in the slope; where the ground at an end of its drawn foot is lower than that, the end floats. None may float past 1 art px.
     const hr = await page.evaluate(() => {
       const v = window.witch.view, h = window.witch.groundHeight, R = window.witch.spriteRight(), out = { n: 0, worst: 0, bad: [], hilly: 0 };
+      const rgba = (t, p, on) => { const d = t.image.data; if (!on || !d) return d; const P = p.image.data, o = new Uint8Array(d.length * 4); for (let i = 0; i < d.length; i++) { const k = d[i] * 4; o[i * 4] = P[k]; o[i * 4 + 1] = P[k + 1]; o[i * 4 + 2] = P[k + 2]; o[i * 4 + 3] = P[k + 3]; } return o; }; // (an indexed plane as RGBA: render/palette.ts)
       for (const [type, b] of [...v.typeBatches, ...v.creatureBatches, ...[...v.decorBatches].filter(([k]) => k !== "decals"), ["treehouse", v.treehouseBatch]]) { // (she hovers)
-        const img = b.atlas.albedo.image, W = img.width, D = img.data;
+        const img = b.atlas.albedo.image, W = img.width, D = rgba(b.atlas.albedo, b.atlas.albedoPal, b.atlas.indexed.x > 0.5);
         for (const it of b.items) {
           if (it.top || it.overlay) continue; // (crowns, and the treehouse's DJ table drawn over it, stand on their trunk)
           if (type === "treehouse" && it.scale !== undefined) continue; // (the Ent's halves along the rays, as above)

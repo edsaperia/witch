@@ -5,7 +5,7 @@
 import * as THREE from "three";
 import { SpriteBatch, SPRITE_UNIFORMS, type SpriteInstance } from "../sprites";
 import type { AssetLibrary, RigArt } from "../assets";
-import { RigBody, RigOut, type RigDrive } from "./rig";
+import { RigBody, RigOut, stiltLift, type RigDrive } from "./rig";
 import type { Creature } from "../../rules/creatures";
 import type { RigFace, RigGear, RigMeta } from "./rigBuild";
 import type { Tuning } from "../../rules/tuning";
@@ -20,6 +20,15 @@ export const rigOn = (): boolean => typeof location === "undefined" || new URLSe
  *  The tuning's rig.minPx overrides it; its rig.alwaysLevels are rigged at any size (legends). */
 export const RIG_MIN_PX = 40;
 const RIG_LEVELS = ["baby", "young", "adult", "legend"];
+const STILT_GEAR: RigGear = { stilt: true };
+const stiltGears = new WeakMap<RigGear, RigGear>();
+function withStiltGear(gear: RigGear | undefined): RigGear {
+  if (!gear) return STILT_GEAR;
+  let result = stiltGears.get(gear);
+  if (!result) { result = { ...gear, stilt: true }; stiltGears.set(gear, result); }
+  return result;
+}
+export interface RigLook { stiltLength?: number; stiltTip?: number; stiltStrength?: number }
 
 /** A meta with its head piece in an expression (made once per meta and face, so a frame allocates nothing). */
 const faceMetas = new WeakMap<RigMeta, Partial<Record<RigFace, RigMeta>>>();
@@ -30,6 +39,8 @@ export function withFace(meta: RigMeta, face: RigFace | undefined): RigMeta {
   return (by[face!] ??= { ...meta, head });
 }
 export interface RigLook { /** extra height (a dance, a hop, sinking) in metres */ y: number; /** a party animal tapping its feet on the beat while it stands: -1..1, a front foot (far or near) lifted */ tap?: number; scale: number; glow: number; fresh: boolean; /** its ordinary frame's height in art pixels */ h: number; /** its expression (render/looks.ts expression(c), #89): the head piece with that face */ face?: RigFace; /** a party animal's gear (render/artBuild.ts partyGearOf): its rig page wears it */ gear?: RigGear; /** an attack's feel (render/attackFeel.ts): squash and stretch about its feet, its wind-up's crouch, mid-lunge */ sx?: number; sy?: number; crouch?: number; lunging?: boolean; /** a sleeping legend (render/legendSleep.ts): lying asleep, its head down, a nightmare's fits, each 0..1 */ sleep?: number; droop?: number; twitch?: number; /** its character (render/character.ts): its posture, and its idle quirk and how far through it (-1: none) */ posture?: { hx: number; hy: number; by: number }; quirk?: string; quirkK?: number; /** standing, it turns to look at this (rules/wildWatch.ts: a wild area watching her come down) */ lookAt?: { x: number; z: number }; /** drawn this far (m) from its place (the conga's lean onto the one ahead, render/conga.ts) */ dx?: number; dz?: number }
+
+export interface RigLook { heat?: number }
 
 export class RigView {
   private bodies = new Map<number, RigBody>();
@@ -62,10 +73,13 @@ export class RigView {
   /** Lays out a creature with the rig, if its template has one and its parts are baked: true when drawn. */
   /** Each creature's head as the rig last drew it (its head piece's joint, on the ground plane). */
   readonly heads = new Map<number, { x: number; z: number }>();
+  /** Added body height in metres, for labels to follow the actual rig instead of its ordinary frame. */
+  readonly stiltRises = new Map<number, number>();
   add(c: Creature, look: RigLook): boolean {
-    if ((!this.ground || look.h * look.scale < this.minPx) && !this.always.includes(c.level)) return false; // (legends always: Ed, 2026-10-05)
+    const stilts = (look.stiltLength ?? 1) > 1;
+    if (!stilts && (!this.ground || look.h * look.scale < this.minPx) && !this.always.includes(c.level)) return false; // (legends always: Ed, 2026-10-05)
     if (hasOverride(c.species, c.level)) return false; // (a hand-drawn level: its own frames, art/overrides)
-    const t0 = performance.now(), art = this.assets.rigArt(c.species, c.level, look.gear);
+    const t0 = performance.now(), art = this.assets.rigArt(c.species, c.level, stilts ? withStiltGear(look.gear) : look.gear);
     if (!art) return false;
     let body = this.bodies.get(c.id);
     if (!body) this.bodies.set(c.id, (body = new RigBody()));
@@ -76,6 +90,7 @@ export class RigView {
     const drive = this.drive(c, this.time, look), u2m = this.mpp * art.meta.s * look.scale; // metres per model unit
     this.out.reset();
     const meta = withFace(art.meta, look.face);
+    this.stiltRises.set(c.id, stiltLift(meta, look.stiltLength ?? 1) * u2m);
     if (meta.template === "quadruped") body.quadruped(meta, u2m, this.dt, drive, this.out);
     else body.serpent(meta, u2m, this.dt, drive, this.out);
     this.place(c, art, look, u2m);
@@ -101,7 +116,7 @@ export class RigView {
     let air = 0, crouch = winding;
     if (lp) { const k = (time - lp.at) / Math.max(0.01, lp.lands - lp.at); if (k < 0) crouch = Math.max(crouch, 1 + k * 3); else if (k <= 1) air = Math.sin(k * Math.PI); else crouch = Math.max(crouch, Math.max(0, 1 - (k - 1) * 4)); }
     crouch = Math.max(crouch, (look.crouch ?? 0) * 0.8); // an attack's wind-up crouches it too (render/attackFeel.ts)
-    return { crouch: Math.max(0, Math.min(1, crouch)), charging: charging || !!look.lunging, air, tap: look.tap ?? 0, sleep: look.sleep ?? 0, droop: look.droop ?? look.sleep ?? 0, twitch: look.twitch ?? 0, posture: look.posture, quirk: look.quirk, quirkK: look.quirkK ?? -1 };
+    return { crouch: Math.max(0, Math.min(1, crouch)), charging: charging || !!look.lunging, air, tap: look.tap ?? 0, sleep: look.sleep ?? 0, droop: look.droop ?? look.sleep ?? 0, twitch: look.twitch ?? 0, posture: look.posture, quirk: look.quirk, quirkK: look.quirkK ?? -1, stiltLength: look.stiltLength, stiltTip: look.stiltTip, stiltStrength: look.stiltStrength };
   }
 
   /** Each item as an instance: the sprite placed so its pivot pixel lands on the item's world point. The limbs' discs go in a batch of
@@ -116,13 +131,15 @@ export class RigView {
     for (let k = 0; k < this.out.n; k++) {
       const it = this.out.items[k], f = art.atlas.frames[it.piece.frame];
       if (!f) continue;
-      const px = it.flip ? f.w - it.piece.px : it.piece.px, dx = (px - f.w / 2) * m, dy = (f.h - it.piece.py) * m, b = it.bias * u2m;
+      const pieceScale = it.scale ?? 1;
+      const px = it.flip ? f.w - it.piece.px : it.piece.px, dx = (px - f.w / 2) * m * pieceScale, dy = (f.h - it.piece.py) * m * pieceScale, b = it.bias * u2m;
       const w = discs.has(it.piece.frame) ? 1 : 0, pool = pools[w], n = ns[w]++;
       let s = pool[n];
       if (!s) pool[n] = s = { x: 0, y: 0, z: 0, frame: f, flip: false };
       s.x = ox + it.x - R.x * dx - U.x * dy + F.x * b; s.y = look.y + it.y - R.y * dx - U.y * dy + F.y * b; s.z = oz + it.z - R.z * dx - U.z * dy + F.z * b;
       if (sx !== 1 || sy !== 1) { s.x = ox + (s.x - ox) * sx; s.z = oz + (s.z - oz) * sx; s.y = look.y + (s.y - look.y) * sy; } // squashed or stretched about its feet
-      s.frame = f; s.flip = it.flip; s.fresh = look.fresh; s.glow = look.glow; s.scale = look.scale; s.sx = sx; s.sy = sy;
+      s.frame = f; s.flip = it.flip; s.fresh = look.fresh; s.glow = look.glow; s.scale = look.scale * pieceScale; s.sx = sx; s.sy = sy;
+      s.heat = look.heat;
     }
     this.used.set(key, ns[0]); this.used.set(dkey, ns[1]);
     this.stats.instances += this.out.n;
@@ -130,14 +147,14 @@ export class RigView {
 
   /** Another night (View.setGame): no bodies, nothing drawn (the pages' batches, by species, stay). */
   reset(): void {
-    this.bodies.clear(); this.seen.clear(); this.heads.clear(); this.time = 0; this.dt = 0;
+    this.bodies.clear(); this.seen.clear(); this.heads.clear(); this.stiltRises.clear(); this.time = 0; this.dt = 0;
     for (const [k, b] of this.batches) { const p = this.pool.get(k); if (p) p.length = 0; this.used.set(k, 0); b.set([]); }
   }
 
   /** Hands every batch its instances; forgets creatures no longer drawn. */
   end(): void {
     for (const [k, b] of this.batches) { const pool = this.pool.get(k) ?? [], n = this.used.get(k) ?? 0; if (pool.length > n) pool.length = n; b.set(pool); } // (trimmed to this frame's: the batch draws them all)
-    for (const id of this.bodies.keys()) if (!this.seen.has(id)) { this.bodies.delete(id); this.heads.delete(id); }
+    for (const id of this.bodies.keys()) if (!this.seen.has(id)) { this.bodies.delete(id); this.heads.delete(id); this.stiltRises.delete(id); }
   }
 }
 

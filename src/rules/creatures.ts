@@ -17,6 +17,7 @@ import { facingAway } from "./witch";
 import type { Tuning } from "./tuning";
 import type { Fight } from "./combat";
 import { glideOf } from "./movement";
+import { offSigils, onFloorSigil } from "./sigilAvoid";
 
 export type Level = 0 | 1 | 2 | 3;
 export const LEGEND = 3;
@@ -78,6 +79,11 @@ export interface Creature {
   /** Burrowed (the mole, Stage 5): under the ground until, untouchable. */
   burrow?: { until: number };
   /** Leaping (the toad, Stage 5): from, to, when it took off and lands, how high. */
+  /** A hopper's bound (Ed, 2026-10-29: "Enemies that move in big hops were fun to fight"; rules/movement.ts stepHop): from (fx, fz)
+   *  to (tx, tz), leaving the ground at `at` and landing at `lands`, `height` m at its top; harmless, its way of moving in a fight. */
+  hop?: { fx: number; fz: number; tx: number; tz: number; at: number; lands: number; height: number };
+  /** When a hopper may take its next bound (a beat on the ground between them). */
+  hopNext?: number;
   leap?: { fx: number; fz: number; tx: number; tz: number; at: number; lands: number; height: number; /** whom a pounce has touched on the way (fight.leap.contact) */ hit?: number[]; /** the toad pack's cloud leap: it lands harmless, its cloud coming down (rules/combat/packs.ts) */ cloud?: boolean };
   /** A wild flyer's swoop (the owl, the bat, the raven: rules/movement.ts stepSwoop): circling out of reach, telegraphing, diving at
    *  her and pulling back up. `up` while it's out of reach (no 💌, blow or talk reaches it). */
@@ -109,7 +115,7 @@ export interface Creature {
    *  underground: untouchable, not drawn) till then, coming back down at (tx, tz); in its shell (untouchable) till then; faking a
    *  lunge's tell till then (the fox's feint); and a packmate dug in beside it taking its hits (the badger's cover) till then. */
   packGlow?: number;
-  packHide?: { until: number; tx?: number; tz?: number };
+  packHide?: { until: number; tx?: number; tz?: number; /** when it went into hiding (the view fades it to a shadow from then) */ at?: number };
   packShell?: number;
   /** Its lull's prowl (rules/combat.ts): how far round her (radians) its place has moved since it got there, this lull. */
   packProwl?: number;
@@ -131,6 +137,11 @@ export interface Creature {
   /** A party legend (Ed's Easter egg, 2026-10-06; tuning legends.partyEgg): a happy legend won over by an absurd number of
    *  💌s (legends.partyHits). It dances in place, fights no one, carries its (legendary) rune, and leashed it pins her to it. */
   partyLegend?: boolean;
+  /** Its sigil is in its stone's stack, friend-coloured (rules/stoneStacks.ts; Ed, 2026-10-28): made happy before its area's
+   *  conversion, so no rune at its feet; its sigil falls among the loose ones at the conversion. */
+  atStone?: boolean;
+  /** Its sigil lies loose on the ground, scattered at its stone's conversion (g.loose), for any witch to pick up. */
+  loose?: boolean;
   /** Knocked down while wild: dazed (nothing attacks it, it can still be invited) until then, then it runs off. */
   dazed?: boolean;
   /** Happy, in an area with a soundsystem: it keeps round it, dancing (rules/creatureStates.ts danceAt). */
@@ -138,16 +149,23 @@ export interface Creature {
   /** The night won (rules/win.ts): its place in the conga line (0 the leader), or, a woken legend, -1 - its place in the ring at home. */
   finale?: number;
   /** A legend (rules/legends.ts): its restlessness 0..1 (no kin in its area: a nightmare), whether its
-   *  dream quest can still be done (its dream shows), and whether it gives its buff (for good). */
+   *  dream quest can still be done (its dream shows). */
   restlessness?: number;
   questOpen?: boolean;
-  buffed?: boolean;
   /** A legend winding up a volley: where each shot is aimed, and at whom. */
   aims?: { x: number; z: number; target: import("./combat").Target }[];
   dazedUntil?: number;
   /** Its 💌 invite meter (0..1 at its last hit) and when that was (rules/affection.ts). */
   affection?: number;
   affectionAt?: number;
+  /** Combat as orbit slots (rules/orbit.ts): its 💌 meter's slots as one queue in the order they came, + a 💌's share, − a heart's
+   *  (draining from the newest); its 💧s (0..1 of its slots, never draining); whether it ran away from a stun or a full set of 💧s
+   *  (its 💧 marker). */
+  fills?: number[];
+  drops?: number;
+  ranOff?: boolean;
+  /** Won over just now (Ed, 2026-10-29): celebrating till then, out of every fight (rules/affection.ts; drawn by render/cheer.ts). */
+  cheerUntil?: number;
   /** The invite button held on it (states.leash "hold"): for how long, till when. */
   holdT?: number;
   holdAt?: number;
@@ -164,8 +182,12 @@ export interface Creature {
   asleepAt?: number;
   /** The party's over and it's walking home to bed here (rules/partyOver.ts): then it lies down. */
   bed?: { x: number; z: number };
-  /** Gone for the run: a beaten creature that ran off the map. */
+  /** Gone for the run: a beaten creature that ran off the map, or lies asleep on the beach (`beached`). */
   gone?: boolean;
+  /** Beaten, the spot on the beach it's running to, to sleep there (rules/runaway.ts); kept while it lies there. */
+  beach?: { x: number; z: number };
+  /** Asleep at its spot on the beach (rules/runaway.ts): `gone` for the rules, but drawn there. */
+  beached?: boolean;
   /** Marching on a soundsystem (its area's key, "home" for the dancefloor): a siege. */
   siege?: string;
   /** Let go when its witch was knocked out (Ed, 2026-10-04): neutral, walking to this area of its
@@ -186,8 +208,8 @@ export interface Creature {
   boss?: boolean;
   /** A legend's state (DESIGN.md, "Sleeping legends"): asleep (sunk in the ground, scenery) →
    *  its area's wave → waking (wildLegends.wake seconds, untouchable) → awake (angry, guarding its
-   *  area) → beaten → slept (asleep for good). Asleep or awake → (later: mollified) → happy (its
-   *  buff on, at home in its area). And when it last changed. */
+   *  area) → beaten → slept (asleep for good). Asleep or awake → (later: mollified) → happy (at
+   *  home in its area). And when it last changed. */
   legendState?: LegendState;
   stateAt?: number;
   /** A legend's quest (rules/quest.ts): the creature it dreams of, and whether it was brought. */
@@ -259,14 +281,14 @@ export function makeCreature(map: ForestMap, cell: [number, number], level: Leve
     retreat: undefined, retreatFrom: undefined, fleeX: undefined, fleeZ: undefined, vx: undefined, vz: undefined,
     run: undefined, lairX: undefined, lairZ: undefined, homing: undefined, charge: undefined, dug: undefined,
     travelling: undefined, state: undefined, happyAt: undefined, partyLegend: undefined, dazed: undefined,
-    dancing: undefined, restlessness: undefined, questOpen: undefined, buffed: undefined, aims: undefined,
-    dazedUntil: undefined, affection: undefined, affectionAt: undefined, holdT: undefined, holdAt: undefined,
+    dancing: undefined, restlessness: undefined, questOpen: undefined, atStone: undefined, loose: undefined, aims: undefined,
+    dazedUntil: undefined, affection: undefined, affectionAt: undefined, fills: undefined, drops: undefined, ranOff: undefined, cheerUntil: undefined, holdT: undefined, holdAt: undefined,
     route: undefined, engagedUntil: undefined, brace: undefined, legend: undefined, moveReadyAt: undefined,
-    sprung: undefined, enraged: undefined, asleepAt: undefined, bed: undefined, gone: undefined, siege: undefined,
+    sprung: undefined, enraged: undefined, asleepAt: undefined, bed: undefined, gone: undefined, beach: undefined, beached: undefined, siege: undefined,
     wanderTo: undefined, circle: undefined, dropped: undefined, healedAt: undefined, healedSmall: undefined, boss: undefined, legendState: undefined,
     stateAt: undefined, quest: undefined, friendly: undefined, asleep: undefined, napUntil: undefined, lulled: undefined,
     wakeUntil: undefined, safeX: undefined, safeZ: undefined, safeR: undefined, watchUntil: undefined, hunting: undefined, taunt: undefined, swoop: undefined, finale: undefined,
-    packGlow: undefined, packHide: undefined, packShell: undefined, packProwl: undefined, feintUntil: undefined, coverBy: undefined, packSync: undefined, packThrow: undefined, mind: undefined, spell: undefined,
+    packGlow: undefined, packHide: undefined, packShell: undefined, packProwl: undefined, feintUntil: undefined, coverBy: undefined, packSync: undefined, packThrow: undefined, mind: undefined, spell: undefined, hop: undefined, hopNext: undefined,
   };
   if (level === LEGEND) { c.boss = true; c.legendState = "asleep"; c.stateAt = 0; }
   return c;
@@ -274,7 +296,7 @@ export function makeCreature(map: ForestMap, cell: [number, number], level: Leve
 
 /** Every optional field of a Creature, in the order makeCreature's literal lists them (one shape for all; creatures.test.ts checks the order). A field added to
  *  Creature and not here fails the typecheck (OptionalMissing). */
-export const CREATURE_OPTIONAL = ["lod", "hp", "hurtAt", "kx", "kz", "slowUntil", "stunUntil", "burrow", "leap", "fight", "fleeUntil", "retreat", "retreatFrom", "fleeX", "fleeZ", "vx", "vz", "run", "lairX", "lairZ", "homing", "charge", "dug", "travelling", "state", "happyAt", "partyLegend", "dazed", "dancing", "restlessness", "questOpen", "buffed", "aims", "dazedUntil", "affection", "affectionAt", "holdT", "holdAt", "route", "engagedUntil", "brace", "legend", "moveReadyAt", "sprung", "enraged", "asleepAt", "bed", "gone", "siege", "wanderTo", "circle", "dropped", "healedAt", "healedSmall", "boss", "legendState", "stateAt", "quest", "friendly", "asleep", "napUntil", "lulled", "wakeUntil", "safeX", "safeZ", "safeR", "watchUntil", "hunting", "taunt", "swoop", "finale", "packGlow", "packHide", "packShell", "packProwl", "feintUntil", "coverBy", "packSync", "packThrow", "mind", "spell"] as const satisfies readonly (keyof Creature)[];
+export const CREATURE_OPTIONAL = ["lod", "hp", "hurtAt", "kx", "kz", "slowUntil", "stunUntil", "burrow", "leap", "fight", "fleeUntil", "retreat", "retreatFrom", "fleeX", "fleeZ", "vx", "vz", "run", "lairX", "lairZ", "homing", "charge", "dug", "travelling", "state", "happyAt", "partyLegend", "dazed", "dancing", "restlessness", "questOpen", "atStone", "loose", "aims", "dazedUntil", "affection", "affectionAt", "fills", "drops", "ranOff", "cheerUntil", "holdT", "holdAt", "route", "engagedUntil", "brace", "legend", "moveReadyAt", "sprung", "enraged", "asleepAt", "bed", "gone", "beach", "beached", "siege", "wanderTo", "circle", "dropped", "healedAt", "healedSmall", "boss", "legendState", "stateAt", "quest", "friendly", "asleep", "napUntil", "lulled", "wakeUntil", "safeX", "safeZ", "safeR", "watchUntil", "hunting", "taunt", "swoop", "finale", "packGlow", "packHide", "packShell", "packProwl", "feintUntil", "coverBy", "packSync", "packThrow", "mind", "spell", "hop", "hopNext"] as const satisfies readonly (keyof Creature)[];
 type RequiredKeys = "id" | "species" | "cell" | "level" | "homeX" | "homeZ" | "range" | "anchorX" | "anchorZ" | "x" | "z" | "tx" | "tz" | "rest" | "speed" | "facing" | "away" | "moving" | "walk" | "seen" | "leashed" | "rand";
 type OptionalMissing = Exclude<keyof Creature, RequiredKeys | (typeof CREATURE_OPTIONAL)[number]>;
 const _everyField: [OptionalMissing] extends [never] ? true : OptionalMissing = true;
@@ -346,7 +368,13 @@ export function pointInCircle(k: NonNullable<Creature["circle"]>, r: () => numbe
 export const idlesAtStone = (c: Partial<Pick<Creature, "level" | "boss" | "friendly" | "leashed" | "state" | "enraged" | "circle">> & { dancing?: boolean }) =>
   (c.level ?? 0) > 0 && c.level !== LEGEND && !c.boss && !c.friendly && !c.leashed && !c.enraged && !c.dancing && !c.circle && c.state !== "happy";
 
-export function pointInArea(map: ForestMap, c: Pick<Creature, "cell" | "homeX" | "homeZ" | "range" | "anchorX" | "anchorZ"> & Partial<Pick<Creature, "circle" | "leashed" | "state" | "enraged" | "level" | "boss" | "friendly" | "dropped">> & { dancing?: boolean; anywhere?: boolean }, r: () => number): [number, number] {
+type AreaPick = Pick<Creature, "cell" | "homeX" | "homeZ" | "range" | "anchorX" | "anchorZ"> & Partial<Pick<Creature, "id" | "circle" | "leashed" | "state" | "enraged" | "level" | "boss" | "friendly" | "dropped">> & { dancing?: boolean; anywhere?: boolean };
+
+/** Where it roams to next: a spot in its area (pickInArea), off the sigils lying on the floor where it can (Ed, 2026-10-28:
+ *  rules/sigilAvoid.ts; with none on the floor, exactly as before). */
+export const pointInArea = (map: ForestMap, c: AreaPick, r: () => number): [number, number] => offSigils(() => pickInArea(map, c, r), c.id)!;
+
+function pickInArea(map: ForestMap, c: AreaPick, r: () => number): [number, number] {
   if (c.dropped && !c.anywhere) { // (let go at her knockout: a spot near where it was dropped, never on a lake's water)
     const D = c.dropped, shore = map.bounds.lakes ? lakeKnobs(map.tuning).shore : 0;
     for (let i = 0; i < 12; i++) { const a = r() * Math.PI * 2, d = Math.sqrt(r()) * D.r, x = D.x + Math.cos(a) * d, z = D.z + Math.sin(a) * d; if (!onLake(map.bounds, x, z, shore)) return [x, z]; }
@@ -375,7 +403,7 @@ export function pointInArea(map: ForestMap, c: Pick<Creature, "cell" | "homeX" |
 export function spawnCreatures(map: ForestMap): Creature[] {
   const out: Creature[] = [], pop = population(map);
   // The home area holds no creatures (Ed, 2026-10-03) and no legend (Ed, 2026-10-05: "Home area
-  // shouldn't have a legend": so no buff at the start). The areas map.hasLegend picks (legends.share of them, Ed 2026-10-06) have their legend, sleeping in its clearing.
+  // shouldn't have a legend"). The areas map.hasLegend picks (legends.share of them, Ed 2026-10-06) have their legend, sleeping in its clearing.
   const [hx, hy] = map.centreCell, early = earlyQuest(map), route = routeIndex(routeOf(map).order);
   for (const [cx, cy] of map.cells) {
     const home = cx === hx && cy === hy;
@@ -437,6 +465,8 @@ export function stepCreature(c: Creature, dt: number, map: ForestMap, time?: num
     if (k >= 1) { c.leap = undefined; c.tx = c.x; c.tz = c.z; c.rest = 0.5 + c.rand() * 2; }
     return;
   }
+  // Resting on a sigil on the floor (put down beside it, or a rune come by), it moves on to its next spot (rules/sigilAvoid.ts).
+  if (c.rest > 0 && onFloorSigil(c.x, c.z, c.id)) { c.rest = 0; if (Math.hypot(c.tx - c.x, c.tz - c.z) < 0.05) [c.tx, c.tz] = pointInArea(map, c, c.rand); }
   if (c.rest > 0) { c.rest -= dt; c.moving = false; c.away = false; return; }
   const dx = c.tx - c.x, dz = c.tz - c.z, d = Math.hypot(dx, dz);
   if (d < 0.05) {
@@ -483,7 +513,7 @@ export function wakeUp(c: Creature, time: number, wake: number): void {
  *  while is put where it would plausibly be by now (a point in its area chosen from its id and
  *  the time), rather than where it was left. A `dormant` one (a wild legend still asleep) stays
  *  where it lies. */
-export function stepCreaturesNear(all: Creature[], x: number, z: number, radius: number, dt: number, time: number, map: ForestMap, dormant: (c: Creature) => boolean = () => false, lod: { full: number; band: number; every: number } = { full: Infinity, band: 0, every: 1 }, counts?: LodCounts, naps?: NapRules, watch?: { hangBack: number }): void {
+export function stepCreaturesNear(all: Creature[], x: number, z: number, radius: number, dt: number, time: number, map: ForestMap, dormant: (c: Creature) => boolean = () => false, lod: { full: number; band: number; every: number } = { full: Infinity, band: 0, every: 1 }, counts?: LodCounts, naps?: NapRules, watch?: { hangBack: number }, watchers?: readonly { x: number; z: number; radius: number; full: number }[]): void {
   // In full within lod.full of her (what the view can show); beyond, coarsely (rules/simLod.ts):
   // once every lod.every steps, by that many steps at once, taking turns by id; past `radius`
   // (by its home) not at all.
@@ -492,17 +522,25 @@ export function stepCreaturesNear(all: Creature[], x: number, z: number, radius:
     // A napper up when it's time, when she's on the ground in its area, or when it may nap no longer (wherever it is).
     if (c.napUntil !== undefined && (time >= c.napUntil || !napper(c) || (!c.lulled && (!naps || !naps.wild(c) || naps.roused(c))))) wakeUp(c, time, naps?.wake ?? 0); // (a lulled one: only its own end, or a 💌)
     if (c.leashed || c.gone) continue;
-    const ax = Math.abs((c.dropped?.x ?? c.homeX) - x), az = Math.abs((c.dropped?.z ?? c.homeZ) - z); // (one let go at a knockout: by where it was dropped)
-    if (ax > radius || az > radius) { if (counts) counts.frozen++; continue; }
+    let nearest: NonNullable<typeof watchers>[number] | undefined, distance = Infinity, inside = Infinity;
+    if (watchers) for (const w of watchers) {
+      if (Math.abs((c.dropped?.x ?? c.homeX) - w.x) > w.radius || Math.abs((c.dropped?.z ?? c.homeZ) - w.z) > w.radius) continue;
+      const d = (c.x - w.x) ** 2 + (c.z - w.z) ** 2;
+      if (d < distance) { distance = d; nearest = w; }
+      inside = Math.min(inside, Math.max(Math.abs(c.x - w.x), Math.abs(c.z - w.z)) - w.full);
+    }
+    const wx = nearest?.x ?? x, wz = nearest?.z ?? z;
+    const ax = Math.abs((c.dropped?.x ?? c.homeX) - wx), az = Math.abs((c.dropped?.z ?? c.homeZ) - wz); // (one let go at a knockout: by where it was dropped)
+    if (watchers ? !nearest : ax > radius || az > radius) { if (counts) counts.frozen++; continue; }
     if (heldByCombat(c)) { c.seen = time; continue; } // fighting, fleeing, marching or walking home: moved by combat and knockout
-    const full = inFull(c, Math.max(Math.abs(c.x - x), Math.abs(c.z - z)), lod.full, lod.band);
+    const full = watchers ? inFull(c, inside, 0, lod.band) : inFull(c, Math.max(Math.abs(c.x - wx), Math.abs(c.z - wz)), lod.full, lod.band);
     if (counts) { if (full) counts.full++; else counts.coarse++; }
     if (!full && !coarseTurn(tick, c.id, lod.every) && time - c.seen <= 3) continue; // (its turn comes well within 3 s: `seen` is kept fresh by it)
     if (dormant(c)) { c.seen = time; c.moving = false; c.away = false; continue; }
     // Asleep or getting up: lying where it is, no roam (and no AI: combat leaves it out too).
     if (napping(c, time)) { c.seen = time; c.moving = false; c.away = false; continue; }
     // Watching her, just come down in its wild area (rules/wildWatch.ts): still, turned to her, backing off if she's close.
-    if (watch && c.watchUntil !== undefined && time < c.watchUntil) { c.seen = time; watchStep(c, x, z, dt, watch.hangBack); continue; }
+    if (watch && c.watchUntil !== undefined && time < c.watchUntil) { c.seen = time; watchStep(c, wx, wz, dt, watch.hangBack); continue; }
     c.wakeUntil = undefined;
     if (time - c.seen > 3) {
       const r = rng(c.id * 7919 + Math.floor(time / 20) * 131 + 5);
@@ -544,16 +582,16 @@ export function stepNotice(list: Iterable<Creature>, witches: { x: number; z: nu
 /** Every heal goes through these two (Ed, 2026-10-09: "Whenever a creature is healed they should get the green +s"), so the
  *  view's "+"s follow every one. Whole again (a berry, invited, leashed, a legend's turn, bedtime): true if it was hurt. */
 export function heal(c: Creature, time: number): boolean {
-  if (c.hp === undefined) return false;
-  c.hp = undefined; c.healedAt = time; c.healedSmall = false;
+  if (c.hp === undefined && !c.drops) return false;
+  c.hp = undefined; c.drops = undefined; c.healedAt = time; c.healedSmall = false; // (its 💧s all gone: rules/orbit.ts)
   return true;
 }
 /** How often a slow mend (healBy) shows its one small "+", seconds. */
 export const HEAL_TRICKLE_GAP = 1.5;
 /** Mended a little (a happy legend's regeneration): whole at `max`, with a small "+" every HEAL_TRICKLE_GAP seconds meanwhile. */
 export function healBy(c: Creature, amount: number, max: number, time: number): void {
-  if (c.hp === undefined || amount <= 0) return;
-  c.hp += amount;
-  if (c.hp >= max) { heal(c, time); return; }
+  if (!c.drops || amount <= 0) return;
+  c.drops -= amount / Math.max(1e-9, max); // (its 💧s taken off a little at a time: rules/orbit.ts)
+  if (c.drops <= 1e-9) { heal(c, time); return; }
   if (c.healedAt === undefined || time - c.healedAt >= HEAL_TRICKLE_GAP) { c.healedAt = time; c.healedSmall = true; }
 }

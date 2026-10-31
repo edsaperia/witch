@@ -10,6 +10,8 @@ import { TrunkShadowBatch, type TrunkShadow } from "../trunkShadows";
 import type { Atlas } from "../atlas";
 import type { TypeArt } from "../assets";
 import { hash2 } from "../../rules/random";
+import { potionStrength } from "../potionEffects";
+import { potionSettings } from "../../rules/potionSettings";
 
 /** A tree's own leaf-colour jitter seeds, -1 to 1 for hue and for value, from where it stands (Ed, 2026-10-16: "a small amount of
  *  per-tree colour jitter"; the amount is the tuning's leafJitter, applied to its leaves in the sprite shader). One pair a tree,
@@ -30,6 +32,7 @@ import { focusOf, inView, viewRect } from "./culling";
 import { checkPops, mark } from "./pops";
 import { BarkFaces } from "../barkFaces";
 import { relicsOut } from "../../rules/partyOver";
+import { advanceScenery, type SceneryJob } from "./scenerySchedule";
 
 /** The scenery's own trunk-shadow batches, by the key they're kept under in View.trunkShadowBatches (the area types' by number). */
 const SCENERY_CASTS = new Set(["decor", "relics", "scenes"]);
@@ -48,7 +51,7 @@ function pickWeighted(w: number[], seed: number): number {
 }
 
 /** A rebuild under way, for each view: the rest of it, a part each frame. */
-const jobs = new WeakMap<View, { run: Generator<void, void, void>; frames: number; art: boolean }>();
+const jobs = new WeakMap<View, SceneryJob>();
 /** Another night in the view (View.setGame): a rebuild under way dropped (it lists the last night's island). */
 export function cancelRefresh(v: View): void { jobs.delete(v); }
 
@@ -56,44 +59,40 @@ export function cancelRefresh(v: View): void { jobs.delete(v); }
  *  at most SLICE_MS a frame (the trees, then the undergrowth, walls, set pieces and the rest, then
  *  each kind's batch handed its list, nearest first), so no frame takes the whole of it (Ed,
  *  2026-10-06: a rebuild was 5 ms on average and up to 11, the biggest spike left late in a run).
- *  Each batch keeps its old list until its new one is ready. A rebuild under way is finished at
- *  once when another is already due (she has flown, turned or zoomed on past what it was listed
- *  for: slow frames, like the software renderer's, cover a lot of ground each) or after MAX_FRAMES,
- *  so what it lists is never older than an unsliced rebuild's would be by much. `force`: all of it now. */
+ *  Each batch keeps its old list until its new one is ready. A rebuild under way finishes in
+ *  slices even when another is due: draining it synchronously made the slow frames that forced
+ *  the next rebuild to drain too. The next frame checks the current camera and art again.
+ *  `force`: all of it now (explicit preparation, before the island is shown). */
 /** An area type's rim kit as whole pieces, made once a layout. */
 const rimCache = new WeakMap<TypeArt["layout"], Piece[]>();
 const rimPieces = (l: TypeArt["layout"]): Piece[] => { let r = rimCache.get(l); if (!r) rimCache.set(l, (r = (l.rim ?? []).map(k => ({ bot: k.frame, top: null })))); return r; };
 
 export function refresh(v: View, force = false): void {
-  // Below SLICE_FPS a frame covers so much flight that a rebuild spread over frames would be
-  // stale when handed over (pops): then it's done whole, as it always was.
-  // (a rebuild for new art alone, with nothing moved: never stale however long it takes, so always sliced and given ART_FRAMES;
-  // whole, each set of a new island's art coming in was a whole rebuild a frame, 130 to 190 ms each on Ed's laptop after a sail,
-  // its frames slow so the next was whole too: his playtest of v4821, "sailing transition loading was slow")
-  const slow = v.budget.fps > 0 && v.budget.fps < SLICE_FPS, job = jobs.get(v);
-  if (job) {
-    const next = due(v);
-    if (!force && (!next || (job.art && next.art)) && ++job.frames < (job.art ? ART_FRAMES : MAX_FRAMES) && !(slow && !job.art)) { if (job.run.next().done) jobs.delete(v); return; }
-    while (!job.run.next().done);
-    jobs.delete(v);
-  }
-  const d = due(v);
-  if (!d && !force) return;
-  const art = !force && !!d?.art, run = rebuild(v, d ?? due(v, true)!, force);
-  if (force || (slow && !art)) { while (!run.next().done); return; }
-  if (!run.next().done) jobs.set(v, { run, frames: 1, art });
+  const job = advanceScenery(jobs.get(v), () => {
+    const d = due(v, force);
+    return d ? rebuild(v, d, force) : null;
+  }, force);
+  if (job) jobs.set(v, job); else jobs.delete(v);
 }
 
 /** refresh(v, true) in steps (render/slices.ts: the start's, View.prepare): the rebuild under way finished, then a whole one, a
  *  slice of it at a time (nothing is drawn meanwhile: the start's frames wait for it). */
 export function* refreshSteps(v: View): Steps {
   const job = jobs.get(v);
-  if (job) { while (!job.run.next().done) yield; jobs.delete(v); }
+  if (job) { while (!job.next().done) yield; jobs.delete(v); }
   const run = rebuild(v, due(v) ?? due(v, true)!, true);
   while (!run.next().done) yield;
 }
 
-const SLICE_MS = 2.5, MAX_FRAMES = 4, ART_FRAMES = 120, SLICE_FPS = 30;
+const SLICE_MS = 2.5;
+const potionBuild = new WeakMap<View, string>();
+const bendPotionKey = (v: View): string => {
+  const g = v.game, trip = g.mushrooms?.trips[g.witches[0]?.id ?? 0];
+  const effect = potionStrength(g, 'ravine') > 0 ? 'ravine' : potionStrength(g, 'little-planet') > 0 ? 'little-planet' : null;
+  if (!trip || !effect) return '';
+  const settings = potionSettings(effect);
+  return `${trip.key}:${trip.at}:${settings.minimumBend}:${settings.bendMultiplier}`;
+};
 
 /** The tallest trees' squeeze (treeCap) as one number, to see it change. */
 const treeCapKey = (t: View["game"]["tuning"]): number => t.treeCap.from * 1e3 + t.treeCap.keep;
@@ -102,6 +101,8 @@ const lyingRelics = (g: View["game"]): number => { let m = 0; for (const r of re
 
 /** What a rebuild needs, if one is due now (she has moved, turned or zoomed, the scenery's radius has grown, or new art is in), else null; `force`: anyway. */
 function due(v: View, force = false) {
+  // Rebuild on a bend trip's start/replacement/end, not on every fading frame.
+  force ||= (potionBuild.get(v) ?? '') !== bendPotionKey(v);
   // The margin grows with her speed (a quarter second's flight), so at full boost the batches are
   // rebuilt every 10 m or so rather than every 4 (Ed, v256: dropped frames boosting over the treetops).
   const g = v.game, t = g.tuning, cam = v.camera, margin = Math.max(t.viewMargin, Math.hypot(g.witch.vx, g.witch.vz) * 0.25), pose = poseOf(g);
@@ -130,6 +131,7 @@ function* rebuild(v: View, { margin, pose, key, lift, radius, reach, canopy, tel
   let t0 = performance.now();
   const sliceDone = () => performance.now() - t0 > SLICE_MS, resume = () => { t0 = performance.now(); };
   const g = v.game, t = g.tuning;
+  potionBuild.set(v, bendPotionKey(v));
   v.lastBuild = { ...key, version: v.assets.version, radius, canopy, relics: lyingRelics(v.game), cap: treeCapKey(t) };
   v.lastPose = { distance: pose.distance, angle: pose.angle, zoomStep: g.camera.zoomStep, lift, tele };
   // Through the telescope, the whole circle round her at once (it pans with nothing listed again; inView passes all within reach).
@@ -162,7 +164,19 @@ function* rebuild(v: View, { margin, pose, key, lift, radius, reach, canopy, tel
   let nt = 0, nb = 0;
   const TS = t.telescope, eye = focusOf(v);
   const rc = canopy > reach ? (tele ? round(canopy) : viewRect(v, canopy, margin)) : r, ccx = (rc.minX + rc.maxX) / 2, ccz = (rc.minZ + rc.maxZ) / 2, chalf = Math.max(rc.maxX - rc.minX, rc.maxZ - rc.minZ) / 2;
-  for (const p of g.forest.treesNear(ccx, ccz, chalf)) {
+  const collect = function* (chunks: Iterable<Plant[]>): Generator<void, Plant[], void> {
+    const out: Plant[] = [];
+    for (const chunk of chunks) {
+      for (const p of chunk) out.push(p);
+      if (sliceDone()) { yield; resume(); }
+    }
+    return out;
+  };
+  const trees = yield* collect(g.forest.treesNearChunks(ccx, ccz, chalf));
+  for (const p of trees) {
+    // Rejected/off-screen trees count towards the slice too: checking only after an accepted
+    // sprite lets a whole forest with missing art run straight through without yielding.
+    if (sliceDone()) { yield; resume(); }
     // (its area type's art asked for only if the tree may be on screen, by the biggest a tree is drawn: the first frame's art
     // first, not every type in the canopy's square; the island's others come ahead of need, view.ts askIsland)
     if (!v.assets.hasType(p.type) && !inView(v, p.x, p.z, TREE_MAX.w, TREE_MAX.h, margin, Math.max(reach, canopy))) continue;
@@ -199,6 +213,7 @@ function* rebuild(v: View, { margin, pose, key, lift, radius, reach, canopy, tel
   }
   const scatter = function* (kind: string, list: Plant[], pick: (l: TypeArt["layout"]) => Piece[]): Generator<void, void, void> {
     for (const p of list) {
+      if (sliceDone()) { yield; resume(); }
       if (!v.assets.hasType(p.type) && !inView(v, p.x, p.z, TREE_MAX.w, TREE_MAX.h, margin, reach)) continue; // (as the trees: asked for only if it may be on screen)
       const art = v.assets.typeArt(p.type);
       if (!art) continue;
@@ -219,8 +234,9 @@ function* rebuild(v: View, { margin, pose, key, lift, radius, reach, canopy, tel
       const fresh = mark(v, kind, p.x, p.z, whole.h * m);
       const at = stand(x, z, frame, m);
       const sway = kind === "small" ? 1 : 0; // undergrowth sways; walls and set pieces stand still
-      add(p.type, { ...at, frame, flip: p.flip, fresh, scale, sway });
-      if (piece.top !== null) add(p.type, { ...at, frame: f[piece.top], flip: p.flip, top: true, fresh, scale, sway, foot: f[piece.bot].foot });
+      const small = kind === 'small' || kind === 'berrybush';
+      add(p.type, { ...at, frame, flip: p.flip, fresh, scale, sway, small });
+      if (piece.top !== null) add(p.type, { ...at, frame: f[piece.top], flip: p.flip, top: true, fresh, scale, sway, small, foot: f[piece.bot].foot });
       // Set pieces model their own ground: no blob under them (it read as a hard dark oval).
       // Its shadow lies under it, its front edge at its base (not centred on its bottom edge,
       // which leaves half of it in front, reading as a shadow below something hovering); one
@@ -232,7 +248,8 @@ function* rebuild(v: View, { margin, pose, key, lift, radius, reach, canopy, tel
       if (sliceDone()) { yield; resume(); }
     }
   };
-  yield* scatter("small", g.forest.bushesNear(cx, cz, half), l => l.small);
+  const bushes = yield* collect(g.forest.bushesNearChunks(cx, cz, half));
+  yield* scatter("small", bushes, l => l.small);
   yield* scatter("small", g.forest.bedsNear(cx, cz, half), l => l.small); // a formal garden's beds, in rows
   // Berry bushes (rules/berries.ts): normal bushes of their area, a berry on some of them.
   yield* scatter("berrybush", g.berries.bushes.filter(b => !b.harvest && Math.abs(b.x - cx) <= half && Math.abs(b.z - cz) <= half), l => l.small);

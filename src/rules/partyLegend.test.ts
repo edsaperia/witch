@@ -1,15 +1,17 @@
 // The party-legend Easter egg (Ed, 2026-10-06; rules/partyLegend.ts): only a happy legend takes 💌s, 100 of them, draining
-// slowly; full, it's a party legend (its buff kept, fighting no one, its rune south of it, by its size); picked up, it never comes to
+// slowly; full, it's a party legend (fighting no one, its rune south of it, by its size); picked up, it never comes to
 // her and she can't go a step past legends.partyReach of it, on the ground, over the treetops or by a blink; put down,
 // it's let go where it stands and she's free; knocked out, it's let go too.
 import { describe, expect, it } from "vitest";
 import { TUNING, withTuning } from "./tuning";
-import { affectionOf, hitWitch, newGame, stepGame, type Game } from "./game";
+import { affectionOf, hitWitch, newGame as fullGame, stepGame, type Game } from "./game";
+import { smallWorld } from "../test/worlds";
 import { hasRune, stateOf } from "./creatureStates";
 import { targetable } from "./combat";
 import type { Creature } from "./creatures";
 import { runeOffset } from "./runeOffset";
 
+const newGame = smallWorld(fullGame, "Party-legend affection, local tether/drop and knockout release need one nearby legend, independent of world extent.");
 const C = { moveX: 0, moveZ: 0, toggleMode: false, zoom: 0 };
 const E = TUNING.legends;
 
@@ -30,7 +32,7 @@ const run = (g: Game, s: number, c: Partial<typeof C> & Record<string, unknown> 
 /** A party legend leashed to her, she beside it. */
 function leashed(): { g: Game; L: Creature } {
   const { g, L } = game();
-  L.legendState = "happy"; L.buffed = true;
+  L.legendState = "happy";
   fill(g, L, E.partyHits);
   g.witch = { ...g.witch, x: L.x + 1, z: L.z + runeOffset(L, TUNING) }; // (on its rune, south of it)
   press(g);
@@ -50,9 +52,9 @@ describe("the party legend (Easter egg)", () => {
     expect(affectionOf(off.g).invitable(off.L)).toBe(false);
   });
 
-  it("takes partyHits 💌s (99 aren't enough), draining slowly; the 100th makes it a party legend, buff kept, its rune at its feet", () => {
+  it("takes partyHits 💌s (99 aren't enough), draining slowly; the 100th makes it a party legend, its rune at its feet", () => {
     const { g, L } = game(), A = affectionOf(g);
-    L.legendState = "happy"; L.buffed = true;
+    L.legendState = "happy";
     fill(g, L, E.partyHits - 1);
     expect(L.partyLegend).toBeFalsy();
     expect(A.affection(L)).toBeCloseTo((E.partyHits - 1) / E.partyHits, 5);
@@ -60,7 +62,6 @@ describe("the party legend (Easter egg)", () => {
     expect(A.affection(L)!).toBeGreaterThan(0.85); // (slow: a common meter would be empty by now)
     for (let i = 0; i < E.partyHits && !L.partyLegend; i++) fill(g, L, 1); // (topped up past what drained)
     expect(L.partyLegend).toBe(true);
-    expect(L.buffed).toBe(true);
     expect(stateOf(L)).toBe("happy");
     expect(hasRune(L, g.clock.time)).toBe(true);
     expect(targetable(L)).toBe(false); // (out of every fight)

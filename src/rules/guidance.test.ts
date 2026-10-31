@@ -1,17 +1,19 @@
 // Guidance pins (rules/guidance.ts; Ed's list, 2026-10-26): one at a time, in order: the bed after a lost night; her first night's
-// dressing, station by station; the invitations desk and the lathe (her night's kit, rules/kit.ts); something new till
+// morning in Ed's order (2026-10-29: the dressing table, wardrobe, shoes, bags, invitations, cloak, hat, broom); later mornings the invitations desk and the lathe (her night's kit, rules/kit.ts); something new till
 // she's been to it; the map table for an island found she hasn't seen; the decks. Each gone once it's done, hidden at its target.
 import { newKit, takeBroom, takeInvites } from "./kit";
 import { describe, expect, it } from "vitest";
 import { TUNING } from "./tuning";
-import { newGame, stepGame, STEP, type Controls, type Game } from "./game";
+import { newGame as fullGame, stepGame, STEP, type Controls, type Game } from "./game";
+import { smallWorld } from "../test/worlds";
 import { HOUSE_ROOMS, objectFront } from "./houseRooms";
 import { wakeInBedroom } from "./opening";
 import { startWake, WAKE_DEFAULT } from "./wakeUp";
 import { wearFromStation } from "./clothesPile";
 import { deckOf } from "./treehouse";
-import { atGuide, emptyGuide, guidanceOf, guideShows, seeGuide, GUIDANCE_HOOKS, type GuideSave } from "./guidance";
+import { atGuide, emptyGuide, guidanceOf, seeGuide, GUIDANCE_HOOKS, type GuideSave } from "./guidance";
 
+const newGame = smallWorld(fullGame, "Guidance pin ordering and home-station targets use supplied progress flags, not the surrounding world.");
 const idle: Controls = { moveX: 0, moveZ: 0, toggleMode: false, zoom: 0, autoTalk: false };
 const run = (g: Game, s: number, c: Partial<Controls> = {}) => { for (let i = 0; i < Math.round(s / STEP); i++) stepGame(g, { ...idle, ...c }, STEP); };
 /** Up in her bedroom: a game's first morning, or (`later`) after a night played (one wake-up for every morning: Ed, 2026-10-26). */
@@ -33,17 +35,37 @@ describe("guidance pins", () => {
     expect(of(g)).toBeNull();
   });
 
-  it("her first night: the dressing stations in turn, the wardrobe first, till she's dressed; then the decks", () => {
+  it("a game's first morning, in Ed's order (2026-10-29): the dressing table (skin, hair), wardrobe, shoes, bags, the invitations, the cloak, her hat, her broom; then the decks", () => {
     const g = up();
     expect(g.wake!.open).toBe(true);
-    expect(of(g)).toEqual({ kind: "dress", target: { object: "wardrobe" } });
+    let inv = false, broom = false;
+    const hooks = { invitationsReady: () => inv, broomTaken: () => broom }, at = () => { const G = guidanceOf(g, 0, emptyGuide(), [], hooks)!; return "object" in G.target ? G.target.object : G.kind; };
+    expect(guidanceOf(g, 0, emptyGuide(), [], hooks)).toEqual({ kind: "dress", target: { object: "dressingTable" } });
+    g.wake!.styled = true;
+    expect(at()).toBe("wardrobe");
     wearFromStation(g.wake!, "wardrobe");
-    expect(of(g)?.target).toEqual({ object: "shoeRack" });
-    wearFromStation(g.wake!, "shoeRack"); wearFromStation(g.wake!, "cloakPegs"); wearFromStation(g.wake!, "bags");
-    expect(of(g)?.target).toEqual({ object: "hats" });
+    expect(at()).toBe("shoeRack");
+    wearFromStation(g.wake!, "shoeRack");
+    expect(at()).toBe("bags");
+    wearFromStation(g.wake!, "bags");
+    expect(at()).toBe("invitations");
+    inv = true;
+    expect(at()).toBe("cloakPegs");
+    wearFromStation(g.wake!, "cloakPegs");
+    expect(at()).toBe("hats");
     g.wake!.pile = [];
-    const d = deckOf(g.map, g.tuning)!;
-    expect(of(g)).toEqual({ kind: "decks", target: { x: d.house!.desk.x, z: d.house!.desk.z } });
+    expect(at()).toBe("lathe");
+    broom = true;
+    expect(at()).toBe("decks");
+  });
+
+  it("the dressing table's step is done once she's used it: E there (its panel opened)", () => {
+    const g = up();
+    expect(of(g)?.target).toEqual({ object: "dressingTable" });
+    standAt(g, "dressingTable");
+    run(g, STEP, { place: true } as Partial<Controls>);
+    expect(g.wake!.styled).toBe(true);
+    expect(of(g)?.target).toEqual({ object: "wardrobe" });
   });
 
   it("no dressing pin after a night played: last night's clothes are in their pile; straight to the decks", () => {
@@ -56,6 +78,8 @@ describe("guidance pins", () => {
     const g = newGame(123, TUNING);
     g.party.spellAt = null; g.clock.paused = false; wakeInBedroom(g); startWake(g, g.herTime, { mirrored: true });
     run(g, 0.1, { moveX: 1 }); run(g, WAKE_DEFAULT.stretch + 0.1);
+    expect(of(g)).toEqual({ kind: "dress", target: { object: "dressingTable" } });
+    g.wake!.styled = true;
     expect(of(g)).toEqual({ kind: "dress", target: { object: "wardrobe" } });
     for (const st of ["wardrobe", "shoeRack", "cloakPegs", "bags"]) wearFromStation(g.wake!, st);
     expect(of(g)).toEqual({ kind: "dress", target: { object: "hats" } });
@@ -73,6 +97,9 @@ describe("guidance pins", () => {
     // (the hooks are her night's kit, rules/kit.ts: a night with none has both; one that waits for her spell, each till she takes it)
     expect(GUIDANCE_HOOKS.invitationsReady(g, 0) && GUIDANCE_HOOKS.broomTaken(g, 0)).toBe(true);
     g.witches[0].kit = newKit(true);
+    // no bag yet (Ed, 2026-10-29: invitations need a bag): the pin leads to the bags first, then the desk
+    expect(guidanceOf(g, 0, emptyGuide(), [])).toEqual({ kind: "dress", target: { object: "bags" } });
+    g.witches[0].spells.bag = "satchel";
     expect(guidanceOf(g, 0, emptyGuide(), [])).toEqual({ kind: "desk", target: { object: "invitations" } });
     takeInvites(g.witches[0]);
     expect(guidanceOf(g, 0, emptyGuide(), [])).toEqual({ kind: "lathe", target: { object: "lathe" } });
@@ -81,14 +108,14 @@ describe("guidance pins", () => {
   });
 
   it("something new, newest first, till she's been to it; never the map table during the night, new islands or not (Ed, 2026-10-26: \"You don't see it all night\")", () => {
-    const g = up(true), s: GuideSave = { unseen: [{ kind: "part", id: "p", at: "broomBay" }, { kind: "hat", id: "h", at: "hats" }] };
+    const g = up(true), s: GuideSave = { unseen: [{ kind: "part", id: "p", at: "lathe" }, { kind: "hat", id: "h", at: "hats" }] };
     expect(of(g, s, ["tiger", "lion"])).toEqual({ kind: "hat", target: { object: "hats" } });
-    standAt(g, "lathe");
+    standAt(g, "bags");
     expect(seeGuide(g, 0, s)).toBe(false);
     standAt(g, "hats");
     expect(seeGuide(g, 0, s)).toBe(true);
-    expect(of(g, s, ["tiger", "lion"])).toEqual({ kind: "part", target: { object: "broomBay" } });
-    standAt(g, "broomBay"); seeGuide(g, 0, s);
+    expect(of(g, s, ["tiger", "lion"])).toEqual({ kind: "part", target: { object: "lathe" } });
+    standAt(g, "lathe"); seeGuide(g, 0, s);
     expect(s.unseen).toEqual([]);
     expect(of(g, s, ["tiger", "lion"])?.kind).toBe("decks"); // (islands she hasn't been to: still the decks, not the map table)
   });
@@ -115,8 +142,7 @@ describe("guidance pins", () => {
     // "No 💤 if there are new islands, just 🧭 towards islands the player can go to and hasn't visited yet"
     expect(after(g, ["lion"], s)).toEqual(MAP);
     g.witches[0].body = { ...g.witches[0].body, perch: null as never };
-    expect(guideShows(g, 0, after(g, [], s)!)).toBe(true);
-    expect(guideShows(g, 0, after(g, ["lion"], s)!)).toBe(true); // (the 🧭 too, from anywhere: leading her home)
+    expect(after(g, ["lion"], s)).toEqual(MAP); // (the 🧭 too, from anywhere: leading her home)
   });
 
   it("after a won night, once its finale's settled: the map table while there's an island she hasn't been to, even after the chart's opened; then the bed; shown from anywhere (Ed, 2026-10-26)", () => {
@@ -135,24 +161,23 @@ describe("guidance pins", () => {
     // (out in the world, off the treehouse: still shown, pointing her home)
     W.body = { ...W.body, perch: null as never };
     win(["lion"], true);
-    expect(guideShows(g, 0, after(g, ["lion"])!)).toBe(true);
+    expect(after(g, ["lion"])).toEqual(MAP);
     // (a new night: none of it)
     g.win = null;
     expect(after(g, ["lion"])).toBeNull();
   });
 
-  it("shows only in the treehouse, and hides at its target", () => {
+  it("stays the same off the treehouse (Ed, 2026-10-28: \"Whatever pin you had before leaving the treehouse still shows\"), and knows when she's at its target (where the pin stays, over it)", () => {
     const g = up();
     const G = of(g)!;
-    expect(guideShows(g, 0, G)).toBe(true);
     expect(atGuide(g, 0, G)).toBe(false);
-    standAt(g, "wardrobe");
+    standAt(g, "dressingTable"); // (her first morning's first pin: Ed, 2026-10-29)
     expect(atGuide(g, 0, G)).toBe(true);
     const d = deckOf(g.map, g.tuning)!, D = { kind: "decks" as const, target: { x: d.house!.desk.x, z: d.house!.desk.z } }; // (over the desk; at it, at her seat)
     expect(atGuide(g, 0, D)).toBe(false);
     g.witches[0].body = { ...g.witches[0].body, x: d.seat.x + 1, z: d.seat.z };
     expect(atGuide(g, 0, D)).toBe(true);
-    g.witches[0].body = { ...g.witches[0].body, perch: null as never };
-    expect(guideShows(g, 0, D)).toBe(false);
+    g.witches[0].body = { ...g.witches[0].body, perch: null as never, x: g.witches[0].body.x + 40 };
+    expect(of(g)).toEqual(G); // (off the treehouse, out in the world: the same pin, still to show; main.ts hides it only under the creator, the chart or a sail)
   });
 });

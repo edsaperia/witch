@@ -3,6 +3,7 @@
 // and it's leashed at the bottom of her stack. 💌s no longer fill a second meter. Her hat comes first, then a placed
 // sigil of hers, then the nearest rune. Only happy legends (and legends) have none; pickupDelay holds it back.
 import { afterEach, describe, expect, it } from "vitest";
+// Keep this spatial regression fixture: directional rune-pull cases recruit untouched creatures more than 200 m away.
 import { TUNING } from "./tuning";
 import { affectionOf, newGame, stepGame, type Game } from "./game";
 import { hasRune, runeNear, stateOf, STATES } from "./creatureStates";
@@ -14,7 +15,8 @@ const saved = { leash: STATES.leash, delay: STATES.pickupDelay };
 afterEach(() => { STATES.leash = saved.leash; STATES.pickupDelay = saved.delay; });
 
 /** The old 4 m hex grid (?sigils=old; the rank sigils' default is 6 m, leash.ranks.hex): these tests place her and her sigils by it. */
-const OLD_GRID = { ...TUNING, leash: { ...TUNING.leash, hex: { ...TUNING.leash.hex!, size: 4 } } };
+// (these test the areas clearing by themselves and the runes at the feet: the game as it was, ?cast=0, rules/stoneStacks.ts)
+const OLD_GRID = { ...TUNING, leash: { ...TUNING.leash, hex: { ...TUNING.leash.hex!, size: 4 } }, cast: { ...TUNING.cast, on: false } };
 
 function game(): Game {
   const g = newGame(123, OLD_GRID);

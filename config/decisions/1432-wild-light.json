@@ -1,0 +1,57 @@
+{
+  "pr": 1432,
+  "group": "Wild light",
+  "decisions": [
+    {
+      "id": "wildGlowMix",
+      "pr": 1432,
+      "group": "Wild light",
+      "label": "Her glow in the wild (cool)",
+      "note": "How far her glow cools toward teal in an area the party hasn't reached (light.spooky.wildGlow.mix; Ed, 2026-10-29: \"the overall lighting palette should be an eerie blue/green; this is to contrast with the bright and warm post-soundsystem lighting\"): 0 her own colour everywhere, 0.7 as built, 1 all teal. Eased in and out as she crosses. Live.",
+      "control": {
+        "type": "slider",
+        "min": 0,
+        "max": 1,
+        "step": 0.05
+      },
+      "default": 0.7,
+      "apply": {
+        "knob": "light.spooky.wildGlow.mix"
+      }
+    },
+    {
+      "id": "stumpWispLight",
+      "pr": 1432,
+      "group": "Wild light",
+      "label": "Stump wisps' light",
+      "note": "How bright each wild stump wisp's light is (runeMarkers.stump.wisps.strength; Ed: \"lit by a mix of blue/green/white wisps ... that move around the stump area\"). Live.",
+      "control": {
+        "type": "slider",
+        "min": 0,
+        "max": 3,
+        "step": 0.1
+      },
+      "default": 1.2,
+      "apply": {
+        "knob": "runeMarkers.stump.wisps.strength"
+      }
+    },
+    {
+      "id": "stumpFill",
+      "pr": 1432,
+      "group": "Wild light",
+      "label": "Wild clearing moonlight",
+      "note": "The dim teal moonlight over a wild stump's middle (runeMarkers.stump.wisps.fill.strength): 0 none. Live.",
+      "control": {
+        "type": "slider",
+        "min": 0,
+        "max": 2,
+        "step": 0.1
+      },
+      "default": 0.7,
+      "apply": {
+        "knob": "runeMarkers.stump.wisps.fill.strength"
+      }
+    }
+  ]
+}

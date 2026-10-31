@@ -52,9 +52,10 @@ const DENSE = 0.75, THIN = 0.3;
     const perTree = () => page.evaluate(() => {
       const w = window.witch, v = w.view, L = w.game.tuning.leafJitter, out = [], hueOf = new Map();
       const hsv = (r, g, b) => { const mx = Math.max(r, g, b), mn = Math.min(r, g, b), d = mx - mn; let h = 0; if (d > 0) { h = mx === r ? ((g - b) / d) % 6 : mx === g ? (b - r) / d + 2 : (r - g) / d + 4; h = (h * 60 + 360) % 360; } return [h, mx ? d / mx : 0, mx / 255]; };
+      const rgba = (t, p, on) => { const d = t.image.data; if (!on || !d) return d; const P = p.image.data, o = new Uint8Array(d.length * 4); for (let i = 0; i < d.length; i++) { const k = d[i] * 4; o[i * 4] = P[k]; o[i * 4 + 1] = P[k + 1]; o[i * 4 + 2] = P[k + 2]; o[i * 4 + 3] = P[k + 3]; } return o; }; // (an indexed plane as RGBA: render/palette.ts)
       for (const [type, b] of v.typeBatches) {
         const art = v.assets.typeArt(type); if (!art) continue;
-        const A = art.atlas.albedo.image, N = art.atlas.normal.image, W = A.width, H = A.height, ad = A.data, nd = N.data; if (!ad || !nd) continue;
+        const A = art.atlas.albedo.image, W = A.width, H = A.height, ad = rgba(art.atlas.albedo, art.atlas.albedoPal, art.atlas.indexed.x > 0.5), nd = rgba(art.atlas.normal, art.atlas.normalPal, art.atlas.indexed.y > 0.5); if (!ad || !nd) continue;
         for (const it of b.items) {
           if (!it.jitter || !it.top) continue; // (a tree's crown: one a tree)
           const key = `${type}:${it.frame.uv.join(",")}`;

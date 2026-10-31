@@ -8,9 +8,13 @@ export type SfxTuning = Tuning["sfx"];
 
 export class SfxKit {
   readonly out: GainNode;
+  private readonly master: GainNode;
   /** The last node before the speakers (its limiter): the watchdog taps it. */
   readonly final: DynamicsCompressorNode;
   readonly noise: AudioBuffer;
+  /** Her routine's strokes' length, times (audio/deck.ts): 1 at 120 bpm and slower, shorter at a faster record's tempo so the
+   *  strokes of a quick bar don't run over each other (sfxCues.ts sets it from the beat; Ed's DJ booth records, 2026-10-29). */
+  pace = 1;
   private lastAt = new Map<string, number>();
   /** The legends' big space (a long generated reverb), built when one first sings. */
   private ocean: GainNode | null = null;
@@ -18,14 +22,28 @@ export class SfxKit {
   /** `T`: the tuning's sfx, read live by every effect (a new night re-points it: retune). */
   constructor(readonly ctx: AudioContext | OfflineAudioContext, public volume: number, public T: SfxTuning, readonly root: number, dest?: AudioNode) {
     const c = ctx;
-    this.out = c.createGain(); this.out.gain.value = volume * T.volume;
+    this.master = c.createGain(); this.master.gain.value = volume * T.volume;
+    this.out = c.createGain(); this.out.connect(this.master);
     const limit = c.createDynamicsCompressor();
     limit.threshold.value = -10; limit.knee.value = 6; limit.ratio.value = 8; limit.attack.value = 0.003; limit.release.value = 0.12;
-    this.out.connect(limit); limit.connect(dest ?? c.destination); this.final = limit;
+    this.master.connect(limit); limit.connect(dest ?? c.destination); this.final = limit;
     this.noise = noiseBuffer(c, 1, 777);
   }
 
-  setVolume(v: number): void { this.volume = v; this.out.gain.setTargetAtTime(v * this.T.volume, this.ctx.currentTime, 0.05); }
+  setVolume(v: number): void { this.volume = v; this.master.gain.setTargetAtTime(v * this.T.volume, this.ctx.currentTime, 0.05); }
+  /** A separate route, sharing tuning, voice budgets and master volume. Its reverb stays on its own route. */
+  creatureKit(destination?: AudioNode): SfxKit {
+    const branch = Object.create(this) as SfxKit, out = this.ctx.createGain();
+    out.connect(destination ?? this.master);
+    Object.defineProperty(branch, 'out', { value: out });
+    Object.defineProperty(branch, 'ocean', { value: null, writable: true });
+    return branch;
+  }
+  /** Isolate creature sounds without touching the player's volume or active creature voices. */
+  ordinaryGain(level: number): void {
+    const gain = this.out.gain, at = this.ctx.currentTime;
+    gain.cancelScheduledValues(at); gain.setValueAtTime(Math.max(0, Math.min(1, level)), at);
+  }
 
   /** A new night's tuning (docs/plans/sail-without-reload.md, A4): its sfx knobs from now on, its volume eased to. */
   retune(T: SfxTuning): void { if (T === this.T) return; this.T = T; this.setVolume(this.volume); }

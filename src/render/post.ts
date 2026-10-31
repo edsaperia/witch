@@ -9,6 +9,8 @@ import * as THREE from "three";
 import { gradeInto, moodOf } from "./mood";
 import { runSync, type Steps } from "./slices";
 import { hsv2rgb } from "../../art/generator.js";
+import { potionBloom, potionLevels, miniatureTilt, hueRotation, nightVisionLevels } from "./potionEffects";
+import { potionSettings } from "../rules/potionSettings";
 
 /** The camera layer the house's own meshes are on as well as the scene's (its rooms, the Ent's art, her): drawn alone behind the
  *  enclosed rooms (Post.behind). */
@@ -55,7 +57,19 @@ void main() {
 const POOL_SPARE = 0.8;
 
 const COMPOSITE = /* glsl */ `
-uniform sampler2D uScene, uBloom, uFx; uniform vec2 uLow; uniform float uBloomStrength, uBlack, uGamma, uFxOn, uKoDim, uBroken; uniform vec4 uGrade, uPool, uIris, uIris2; uniform vec3 uGradeTint; varying vec2 vUv;
+uniform vec4 uPotionStyle; // saturation boost, edges, edge threshold, edge upper threshold
+uniform float uPotionBackground, uPotionTime, uNightVision;
+uniform vec4 uPotionHue; // cyclic RGB rotation coefficients, blend strength
+uniform vec4 uPotionWobble; // amplitude in art pixels, speed, wave size, edge reach
+uniform sampler2D uScene, uBloom, uFx; uniform vec2 uLow; uniform float uBloomStrength, uBlack, uGamma, uFxOn, uKoDim, uBroken, uPotionFade; uniform vec4 uGrade, uPool, uIris, uIris2; uniform vec3 uGradeTint; varying vec2 vUv;
+float edgeLuma(vec2 p) { return dot(texture2D(uScene, p).rgb, vec3(0.3, 0.55, 0.15)); }
+float potionEdge(vec2 p) {
+  vec2 d = 1.0 / uLow;
+  float tl = edgeLuma(p + d * vec2(-1.0, 1.0)), tc = edgeLuma(p + d * vec2(0.0, 1.0)), tr = edgeLuma(p + d);
+  float ml = edgeLuma(p + d * vec2(-1.0, 0.0)), mr = edgeLuma(p + d * vec2(1.0, 0.0));
+  float bl = edgeLuma(p - d), bc = edgeLuma(p + d * vec2(0.0, -1.0)), br = edgeLuma(p + d * vec2(1.0, -1.0));
+  return smoothstep(uPotionStyle.z, max(uPotionStyle.z + 0.001, uPotionStyle.w), length(vec2(tr + 2.0 * mr + br - tl - 2.0 * ml - bl, tl + 2.0 * tc + tr - bl - 2.0 * bc - br)));
+}
 float irisHash(float n) { return fract(sin(n * 91.345) * 47453.21); }
 // The knockout's iris and its record at a pixel q from its centre (low-res pixels), over the picture's colour there.
 vec3 irisShade(vec2 q, vec3 base) {
@@ -73,6 +87,11 @@ vec3 irisShade(vec2 q, vec3 base) {
 }
 void main() {
   vec2 p = (floor(vUv * uLow) + 0.5) / uLow;
+  if (uPotionWobble.x > 0.0 && uPotionWobble.w > 0.0) {
+    float edge = smoothstep(1.0 - uPotionWobble.w, 1.0, max(abs(vUv.x * 2.0 - 1.0), abs(vUv.y * 2.0 - 1.0)));
+    vec2 wave = sin(vec2(vUv.y, vUv.x) * (6.2831853 / uPotionWobble.z) + uPotionTime * uPotionWobble.y + vec2(0.0, 1.7));
+    p = clamp(p + wave * edge * uPotionWobble.x / uLow, 0.5 / uLow, 1.0 - 0.5 / uLow);
+  }
   vec3 c = texture2D(uScene, p).rgb;
   // (the circle hunt: a scene pixel that's not a number, infinite or negative shows red, magenta or yellow)
   if (uBroken > 0.5) { bool nan = !(c.r == c.r) || !(c.g == c.g) || !(c.b == c.b) || any(isnan(c)); if (nan) { gl_FragColor = vec4(1.0, 0.0, 0.0, 1.0); return; } if (any(isinf(c)) || max(c.r, max(c.g, c.b)) > 60000.0) { gl_FragColor = vec4(1.0, 0.0, 1.0, 1.0); return; } if (min(c.r, min(c.g, c.b)) < 0.0) { gl_FragColor = vec4(1.0, 1.0, 0.0, 1.0); return; } }
@@ -90,7 +109,22 @@ void main() {
     float pool = uPool.z > 0.0 ? 1.0 - smoothstep(0.35, 1.0, length((vUv - uPool.xy) / uPool.zw)) : 0.0;
     c = mix(c, mix(c, vec3(l), uGrade.y) * uGradeTint, uGrade.x * (1.0 - smoothstep(0.0, uGrade.z, l)) * (1.0 - ${POOL_SPARE.toFixed(2)} * pool));
   }
-  c += texture2D(uBloom, vUv).rgb * uBloomStrength;
+  c += texture2D(uBloom, uPotionWobble.x > 0.0 ? p : vUv).rgb * uBloomStrength;
+  if (uPotionStyle.x != 0.0) c = max(vec3(0.0), mix(vec3(dot(c, vec3(0.3, 0.55, 0.15))), c, 1.0 + uPotionStyle.x));
+  if (uPotionStyle.y > 0.0) {
+    float edge = potionEdge(p);
+    vec3 tint = 0.25 + 0.75 * (0.5 + 0.5 * cos(vec3(0.0, 2.1, 4.2) + (vUv.x + vUv.y) * 7.0));
+    c = mix(c, c * uPotionBackground + tint * edge, uPotionStyle.y);
+  }
+  if (uPotionHue.w > 0.0) {
+    vec3 spun = vec3(dot(c, uPotionHue.xyz), dot(c, uPotionHue.zxy), dot(c, uPotionHue.yzx));
+    c = mix(c, max(vec3(0.0), spun), uPotionHue.w);
+  }
+  if (uNightVision > 0.0) {
+    float phosphor = clamp(dot(c, vec3(0.3, 0.55, 0.15)), 0.0, 1.0);
+    vec3 green = mix(vec3(0.025, 0.95, 0.12) * phosphor, vec3(0.78, 1.0, 0.72), smoothstep(0.65, 1.0, phosphor));
+    c = mix(c, green, uNightVision);
+  }
   // Knocked down with her hat on (Ed, 2026-10-07): the rest of the screen dims, her spot and her hat floating down left lit
   // (round her light's pool, uPool, and well above it, where the hat starts).
   if (uKoDim > 0.0) { vec2 q = (vUv - uPool.xy - vec2(0.0, 0.06)) * vec2(uLow.x / uLow.y, 1.0); c *= 1.0 - uKoDim * smoothstep(0.12, 0.32, uPool.z > 0.0 ? length(q) : 9.0); } // (her spot lit: about a tenth of the screen's height round her, a little above her feet)
@@ -106,7 +140,7 @@ void main() {
       if (mod(floor(vUv.y * uLow.y), 2.0) < 1.0) c *= 1.0 - 0.3 * uIris2.z; // (scanlines, a tape winding back)
     } else c = irisShade(q, c);
   }
-  gl_FragColor = vec4(min(c, vec3(1.0)), 1.0);
+  gl_FragColor = vec4(min(c, vec3(1.0)) * (1.0 - uPotionFade), 1.0);
 }`;
 
 // One direction of the tilt-shift: the blur grows with distance from the sharp band.
@@ -178,12 +212,30 @@ export class Post {
       composite: m(COMPOSITE, { uScene: { value: null }, uBloom: { value: null }, uLow: { value: new THREE.Vector2() }, uBloomStrength: { value: 0 }, uKoDim: { value: 0 }, uBlack: { value: 0 }, uGamma: { value: 1 }, uFx: { value: null }, uFxOn: { value: 0 }, uBroken: { value: 0 }, uGrade: { value: new THREE.Vector4() }, uPool: { value: new THREE.Vector4() }, uIris: { value: new THREE.Vector4() }, uIris2: { value: new THREE.Vector4() }, uGradeTint: { value: new THREE.Vector3(1, 1, 1) } }),
       tilt: m(TILT, { uSrc: { value: null }, uDepth: { value: null }, uTexel: { value: new THREE.Vector2() }, uDir: { value: new THREE.Vector2() }, uStrength: { value: 0 }, uBand: { value: 0.4 }, uCentre: { value: 0.5 }, uSkyBlur: { value: 1 }, uSharp: { value: null }, uSharpOn: { value: 0 } }),
     };
+    this.mats.composite.uniforms.uPotionFade = { value: 0 };
+    this.mats.composite.uniforms.uPotionStyle = { value: new THREE.Vector4() };
+    this.mats.composite.uniforms.uPotionBackground = { value: .035 };
+    this.mats.composite.uniforms.uPotionHue = { value: new THREE.Vector4(1, 0, 0, 0) };
+    this.mats.composite.uniforms.uNightVision = { value: 0 };
+    this.mats.composite.uniforms.uPotionTime = { value: 0 };
+    this.mats.composite.uniforms.uPotionWobble = { value: new THREE.Vector4() };
     this.quad = new THREE.Mesh(new THREE.PlaneGeometry(2, 2), this.mats.composite);
     this.quad.frustumCulled = false;
   }
 
   /** How far the witch is risen (0 ground, 1 treetops): the tilt-shift blends from the ground's to the treetops'. */
   lift = 0;
+  /** Temporary local bloom boost; normal settings are untouched. */
+  potionGlow = 0;
+  potionCanopy = 0;
+  potionNightVision = 0;
+  potionVertigo = 0;
+  potionMiniature = 0;
+  potionHue = 0;
+  potionHuePhase = 0;
+  potionEdges = 0;
+  potionWobble = 0;
+  potionTime = 0;
   /** How much of the tilt-shift's blur is on (0 none, 1 all): none in the treehouse (render/view.ts houseTilt). */
   tilt = 1;
   /** Her light's pool on screen (0 to 1, y up): its centre and half-widths, spared from the grade (z 0: none). */
@@ -193,6 +245,7 @@ export class Post {
   get iris2(): THREE.Vector4 { return this.mats.composite.uniforms.uIris2.value; }
   /** How much the screen dims round her while she's knocked down with her hat floating off (0 none: render/view/witch.ts). */
   set koDim(k: number) { this.mats.composite.uniforms.uKoDim.value = k; }
+  set potionFade(k: number) { this.mats.composite.uniforms.uPotionFade.value = Math.max(0, Math.min(1, k)); }
 
   /** The scene's own target (View.warmDraws draws into it ahead). */
   get sceneTarget(): THREE.WebGLRenderTarget { return this.scene; }
@@ -284,10 +337,11 @@ export class Post {
     yield;
 
     // Bloom: the bright parts, at half resolution, blurred twice each way.
-    const bloomOn = t.bloom.on && t.bloom.strength > 0;
+    const bloom = potionBloom(t.bloom.threshold, t.bloom.on ? t.bloom.strength : 0, this.potionGlow);
+    const bloomOn = bloom.strength > 0;
     if (bloomOn) {
       const bw = this.bright.width, bh = this.bright.height;
-      this.pass("bright", this.bright, u => { u.uScene.value = this.scene.texture; u.uThreshold.value = t.bloom.threshold; });
+      this.pass("bright", this.bright, u => { u.uScene.value = this.scene.texture; u.uThreshold.value = bloom.threshold; });
       yield;
       for (let i = 0; i < 2; i++) {
         this.pass("blur", this.bloomB, u => { u.uSrc.value = this.bright.texture; u.uStep.value.set(1 / bw, 0); });
@@ -310,12 +364,26 @@ export class Post {
       this.pass("blur", this.fx, u => { u.uSrc.value = this.fxB.texture; u.uStep.value.set(0, 0.6 / lh); });
       yield;
     }
-    const tilt = t.tiltShift.on && t.tiltShift.strength > 0 && this.tilt > 0;
+    const effectiveTilt = miniatureTilt(t.tiltShift, this.potionMiniature);
+    const tilt = (effectiveTilt.on && effectiveTilt.strength > 0 || this.potionVertigo > 0) && this.tilt > 0;
     this.pass("composite", tilt ? this.a : out, u => {
-      u.uScene.value = this.scene.texture; u.uBloom.value = this.bright.texture; u.uLow.value.copy(this.low); u.uBloomStrength.value = bloomOn ? t.bloom.strength : 0;
-      u.uBlack.value = t.tone.black; u.uGamma.value = t.tone.gamma;
+      u.uScene.value = this.scene.texture; u.uBloom.value = this.bright.texture; u.uLow.value.copy(this.low); u.uBloomStrength.value = bloomOn ? bloom.strength : 0;
+      const levels = potionLevels(t.tone.black, t.tone.gamma, this.potionCanopy);
+      u.uBlack.value = levels.black; u.uGamma.value = levels.gamma;
+      const edges = potionSettings('aurora-outlines'), wobble = potionSettings('trip-indicator');
+      u.uPotionStyle.value.set(levels.saturation - 1, this.potionEdges * edges.strength, edges.edgeLow, edges.edgeHigh);
+      u.uPotionBackground.value = edges.background;
+      u.uNightVision.value = this.potionNightVision;
+      u.uPotionTime.value = this.potionTime;
+      const hue = hueRotation(this.potionHuePhase);
+      u.uPotionHue.value.set(...hue, this.potionHue * potionSettings('hue-spin').strength);
+      u.uPotionWobble.value.set(wobble.strength * this.potionWobble, wobble.speed, wobble.waveSize, wobble.reach);
       u.uFx.value = this.fx.texture; u.uFxOn.value = fxOn ? 1 : 0; u.uBroken.value = t.suspects.showBroken ? 1 : 0;
       this.setGrade(u);
+      if (this.potionNightVision > 0) {
+        const night = nightVisionLevels(u.uBlack.value, u.uGamma.value, u.uGrade.value.x, this.potionNightVision);
+        u.uBlack.value = night.black; u.uGamma.value = night.gamma; u.uGrade.value.x = night.grade;
+      }
     });
     if (!tilt) return;
     yield;
@@ -323,8 +391,12 @@ export class Post {
     // The blur at the low resolution, before the browser scales the picture up.
     const w = this.a.width, h = this.a.height;
     const common = (u: Record<string, THREE.IUniform>) => {
-      const T = t.tiltShift, k = Math.max(0, Math.min(1, this.lift)), k2 = k * k * (3 - 2 * k);
+      const T = effectiveTilt, k = Math.max(0, Math.min(1, this.lift)), k2 = k * k * (3 - 2 * k);
       u.uDepth.value = this.scene.depthTexture; u.uTexel.value.set(1 / w, 1 / h); u.uStrength.value = (T.strength + (T.treetop.strength - T.strength) * k2) * this.tilt; u.uBand.value = T.band + (T.treetop.band - T.band) * k2; u.uCentre.value = 1 - T.centre;
+      if (!T.on) u.uStrength.value = 0;
+      const vertigo = potionSettings('vertigo');
+      u.uStrength.value += vertigo.blur * this.potionVertigo * this.tilt;
+      u.uBand.value *= 1 + (vertigo.band - 1) * this.potionVertigo;
       u.uSkyBlur.value = T.skyBlur ?? 1;
       u.uSharp.value = this.sharpMask.texture; u.uSharpOn.value = sharpOn ? 1 : 0;
     };

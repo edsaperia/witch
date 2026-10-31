@@ -1,18 +1,18 @@
 {
-  "_": "Pack combat (docs/backlog/combat.md, build step 1; Ed, 2026-10-15 and 2026-10-19), behind the tuning's combat.packs.on. A pack is one kind on one side after one target; it runs in phases: approach, the pack tell (every member glows, its call), a combo (the lunger, then the shooters, then the special: roles by position each step), a lull (its kind's retreat pattern), again. A new kind is a `pack` section in its creature's creature.js (art/creatures/<id>/, its `kinds` entry as was): its melee and ranged moves, its special (one of the specials below), its retreat (one of the retreats below), its rhythm and its pressure (how many of it may wind up or strike at her at once; never more than the tuning's dodge.a tokens, Ed 2026-10-20). Not at a soundsystem or speaker: there a creature fights as before packs (Ed, 2026-10-20). Moves are on the level's power budget (combat.json levels): a move's damage is the level's dps times its cooldown, split over its shots.",
-  "_rhythms": "By kind (Ed: 'a wolf pack combos fast and tight, a snail pack slow and wide'): tell, seconds every member glows before a combo; gap, seconds between a combo's steps (the lunge, the shots, the special); lull, seconds it falls back after a combo, plus perMember for each member past the first (Ed: 'a pair comes back in a second, a pack of eight takes a few'); timeout, the longest a combo runs.",
+  "_": "Pack-combat rhythms, specials, retreats and movement styles; source decisions and detailed field notes: docs/notes/config-history/packs.md.",
+  "_rhythms": "Per-kind tell, combo gap, lull and timeout; detailed field notes: docs/notes/config-history/packs.md#rhythms.",
   "rhythms": {
     "tight": { "tell": 0.5, "gap": 0.35, "lull": 1.2, "perMember": 0.35, "timeout": 5 },
     "steady": { "tell": 0.75, "gap": 0.55, "lull": 1.8, "perMember": 0.45, "timeout": 6 },
     "slow": { "tell": 1, "gap": 0.8, "lull": 2.4, "perMember": 0.6, "timeout": 7 }
   },
-  "_young": "A young one's moves (Ed, 2026-10-15: 'young moves weak and slow'; the master curve: home's packs young, small and slow): its wind-ups times windup, its bolts' speed times speed and reach times range, its special's radius and time times special, and a pack of young lulls times lull longer.",
+  "_young": "Young packs scale wind-up, speed, range, special and lull; decisions: docs/notes/config-history/packs.md#young.",
   "young": { "windup": 1.3, "speed": 0.8, "range": 0.85, "special": 0.7, "lull": 1.3 },
-  "_limits": "Performance and readability (combat.md): at most combo members in a combo (the rest hold back), at most lanes melee strikes and lines shots at her at once, at most shots of a pack's in the air; hurt, the share of its health under which a member leaves the combo and keeps its distance, while a healthy packmate fights (alone, or all hurt, they fight on: Ed, 2026-10-20); engage, metres past its reach at which a pack ends its approach; split, metres within which one of her party going for a member splits the pack; close, metres from her within which a member (but the special's) lunges too, not only the nearest (Ed's playtest, v3893: 'they miss me': a pack of hares round her fired bolts from point-blank and one lunged a combo).",
+  "_limits": "Readability and pressure limits for simultaneous pack attacks; detailed field notes: docs/notes/config-history/packs.md#limits.",
   "limits": { "combo": 8, "lanes": 1, "lines": 2, "shots": 6, "hurt": 0.5, "engage": 6, "split": 18, "close": 8 },
   "_bolt": "Every magic bolt (combat.md: 'one projectile sprite tinted'): the base its kinds' ranged moves are built on (range, shots and spread by kind).",
   "bolt": { "delivery": "shot", "range": 12, "speed": 22, "radius": 0.6, "windup": 0.7, "cooldown": 2.6, "modifier": "none" },
-  "_specials": "Each special's numbers (the young times young.special): radius, metres it reaches; time, seconds it lasts; cooldown, seconds before the pack may use it again. call: all may strike within time (at her one at a time still, the tuning's dodge.a tokens); feint: the fake tell's seconds (lead); confusion: her aim turns up to drift degrees; cloud: hides the tells inside it; wall: a line length long of patches that slow her to slow; rally: heals heal hits' worth; cover: digs in by a hurt packmate (else the one she's inviting) and takes its hits, armour its damage times; scatter: hidden time, then round her at ring times its reach; stampede: rolls at her curled up, as the kind's charge; at her, every member's turn to charge for time, one after another as her dodge tokens free (Ed, 2026-10-20), hers on the wild all at once. Phase 1's (Echo, 2026-10-19): mirage: images (young, adult) of the flock round her, ring times 8 m out, each taking a 💌 meant for them and bursting, for time; sync: for time, each blink of hers brings count of the pack blinking in ring metres from where it put her, striking at once. A kind's specialWith is its own variant over these: confusion's move (her movement turned, not her aim: the bat's), cloud's flash (it confuses her aim inside it: the moth's) and leap (its thrower leaps at her and it comes down where it lands: the toad's), cover's both (two lock shells, both dug in: the beetle's). Step 2 (2026-10-23): knockback: the run-up and ram, the special one charging her by its own charge, that blow throwing her throw metres (the ram, the ibex, the rhino 12); pull: within reach metres of it she's dragged pull metres toward it, no hurt, a blink dodging it (the spider's web line, the crocodile's current, the griffin's gust; hers on the wild drags them in); decoy: the one waving catches her 💌s that fly within radius of it for time, its meter untouched (the raccoon); mind (adults only): the nearest of her animals within radius turns on her for time, none near, her aim drifts drift degrees; hers on the wild, its foe stunned hers.stun s (the owl, the unicorn).",
+  "_specials": "Shared special defaults, overridden by each kind; detailed field notes: docs/notes/config-history/packs.md#specials.",
   "specials": {
     "stampede": { "time": 4, "cooldown": 9, "tint": "red" },
     "scatter": { "time": 0.6, "ring": 1.1, "cooldown": 8, "tint": "white" },
@@ -30,7 +30,7 @@
     "decoy": { "time": 3, "radius": 3, "cooldown": 9, "tint": "white" },
     "mind": { "time": 3, "radius": 14, "drift": 30, "cooldown": 10, "tint": "violet" }
   },
-  "_retreats": "Each retreat pattern (the lull's movement, round her): out, metres from her it falls back to; hide, whether it's out of sight (untouchable, not drawn) for the middle of the lull and back from another side (half: every other member, the rest staying down); still, whether it stands where it is. Phase 1's (Echo): flanks (the wolves: two groups to her sides), backLine (the boars: backing off slowly in a line facing her), branches (the ravens: half up into the branches), water (the newts and otters: under, back out elsewhere; out of sight like a burrow, wherever the water is: no water map yet), huddle (the beetles: into one huddle), arcs (the toads: hopping off apart in arcs), swirl (the moths: round her, quicker than a circle).",
+  "_retreats": "Retreat patterns used during a pack lull; detailed field notes: docs/notes/config-history/packs.md#retreats.",
   "retreats": {
     "rollApart": { "out": 22 },
     "trees": { "out": 18, "hide": true },
@@ -50,10 +50,21 @@
     "arcs": { "out": 22 },
     "swirl": { "out": 12 }
   },
-  "_kinds": "Each kind's entry is its creature's own `pack` (art/creatures/<id>/creature.js, 2026-10-23: so builders adding kinds don't collide; `node tools/creatures.mjs adopt` moves any a merge puts back here), spread over any left here. Home's ten (combat.md's table), then Phase 1's eleven (Echo, 2026-10-19: wolf to toad; a heron's stab and a toad's tongue are their melee on the ground). Kinds keep their own moves (config/movement.json) in a pack (Ed, 2026-10-20): a member's strike, its turn come, is its kind's own move where it has one (a charge, a toad's leap, a mole's burrow in, a wild bat's or raven's dive from its circle aloft, its pack's lull too), taking the pack's turn and her dodge token; a kiter's (the raven's) strike is its shot; the snail's slime runs on; and while it waits its turn its kind's tactic places it (the wolves' surround). The bat's melee is its own screech, a pulse all round it. melee: an attack in combat.json by level [baby, young, adult] (null: none; absent: the kind's own), knockback metres added; ranged: a bolt's reach, shots by level, spread degrees, size times, tint (null: none); special and retreat by name; rhythm; pressure; call and tell for the view and the sounds (what the pack does as its tell, and each move's tell).",
+  "_kinds": "Per-kind pack definitions live in art/creatures/<id>/creature.js; detailed field notes: docs/notes/config-history/packs.md#kinds.",
   "kinds": {},
-  "_hers": "Her own pack (Ed, 2026-10-15: 'the same combos, but no retreats or scatters'): between combos it holds where it is for hold seconds instead of a lull; a special the wild side uses on her it uses on the wild (a confusion slows them, mind control becomes a stun for stun seconds).",
+  "_hers": "Her packs hold between combos and use specials on the wild; decisions: docs/notes/config-history/packs.md#hers.",
   "hers": { "hold": 1.2, "stun": 1.5 },
-  "_prowl": "The lull's prowl (Ed's playtests, 2026-10-23: \"lulls between pack attacks seem to have the animals stand still instead of retreat\"): a member that has fallen back to its place (within near metres of it) doesn't halt there but prowls round her at that distance (its place moving on, each its own way round), at pace times its speed, till its pack comes again. Not the retreats that stand (still: the snail's shell, the badger's hold); a freeze holds its place for the lull's first freeze share, hard to see, then prowls like the rest (Ed, 2026-10-23).",
-  "prowl": { "near": 1.5, "pace": 0.45, "freeze": 0.4 }
+  "_prowl": "Members prowl after reaching their lull places, except standing retreats; decisions: docs/notes/config-history/packs.md#prowl.",
+  "prowl": { "near": 1.5, "pace": 0.45, "freeze": 0.4 },
+  "_styles": "Species movement styles place members while waiting and in the lull; detailed field notes: docs/notes/config-history/packs.md#styles.",
+  "styles": {
+    "lullOut": 1.5, "lullGap": 8, "jitter": 0.2,
+    "charger": { "wheel": 1.4, "carrot": 0.9 },
+    "circler": { "orbit": 9, "carrot": 0.7, "spiral": 6 },
+    "flanker": { "from": 70, "to": 160, "out": 1.25 },
+    "hopper": { "length": 7, "time": 0.5, "height": 2.2, "pause": 0.25, "ring": 6 },
+    "friends": { "on": true }
+  },
+  "_style": "Each kind's style (styles above); a kind not here is steady.",
+  "style": { "arcticfox": "hopper", "armadillo": "charger", "bat": "circler", "boar": "charger", "cat": "flanker", "cheetah": "charger", "dormouse": "circler", "dragonfly": "circler", "elephant": "charger", "elk": "charger", "fennec": "circler", "flyingsquirrel": "hopper", "fox": "flanker", "frostwyrm": "flanker", "griffin": "charger", "hare": "hopper", "hedgehog": "charger", "heron": "circler", "ibex": "charger", "jaguar": "flanker", "komodo": "flanker", "lion": "charger", "lynx": "flanker", "marten": "circler", "meerkat": "circler", "otter": "circler", "owl": "circler", "penguin": "charger", "polarbear": "charger", "raccoon": "flanker", "ram": "charger", "raven": "circler", "redpanda": "hopper", "rhino": "charger", "roe": "hopper", "snowleopard": "flanker", "sphinx": "flanker", "squirrel": "hopper", "stag": "charger", "stegosaurus": "charger", "stoat": "circler", "tiger": "flanker", "toad": "hopper", "unicorn": "charger", "wolf": "circler", "woodlouse": "charger" }
 }

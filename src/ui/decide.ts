@@ -9,10 +9,16 @@
 import { button, h } from "./dom";
 import { byPr, changedIn, DECISION_LIST, decisionLine, groupOf, issueUrl, knobAt, knobParam, openGroups, saveOpenGroups, setKnob, currentValue, valuesText, type Decision } from "./decisions";
 import { saveSetting } from "../app/settings";
+import { devVolume } from "../app/playerSettings";
+import { commentControls } from "./playtestComment";
+export interface DecideHost { saveComment?: (text: string) => Promise<string>; restoreComment?: (file: File) => Promise<void> }
+export interface DecideHost { mutate?: (label: string, action: () => void) => void }
+export interface DecideHost { downloadReadableLog?: () => void }
 export * from "./decisions";
+export interface DecideHost { potionLab?: () => void }
 
 /** What the panel needs from the game. */
-export interface DecideHost { tuning: object; seed: number; version: string; /** URL switches the game can take while running (no reload), by param. */ live: Record<string, (v: string) => void>; /** The Report for a visual bug (ui/visualReport.ts), if the game offers it. */ report?: () => Promise<string>; /** Opens the Music Lab panel (ui/musicLabPanel.ts; Ed, 2026-10-15), if the game offers it. */ musicLab?: () => void; /** Opens the audio capacity test (tools/audio-test; Ed, 2026-10-26: "link to the page from the pause menu"), if the game offers it. */ audioTest?: () => void; /** Opens the Fight Arena in a new tab (app/fightArena.ts; Ed, 2026-10-27), if the game offers it. */ fightArena?: () => void; /** Opens the finds' dev control (ui/findsPanel.ts; Ed, 2026-10-23), shown only while `findsShown` (dev tools on). */ finds?: () => void; findsShown?: () => boolean; /** The quality ladder (app/ladder.ts): its state in lines, its choices (auto, off, a rung to pin) and the one chosen. */ quality?: { lines(): string[]; options(): { value: string; label: string }[]; current(): string; choose(v: string): void } }
+export interface DecideHost { /** the Settings page (ui/settingsMenu.ts: Ed, 2026-10-28, its button at the very top for now) */ settings?: () => void; tuning: object; seed: number; version: string; /** URL switches the game can take while running (no reload), by param. */ live: Record<string, (v: string) => void>; /** The Report for a visual bug (ui/visualReport.ts), if the game offers it. */ report?: () => Promise<string>; /** Opens the Music Lab panel (ui/musicLabPanel.ts; Ed, 2026-10-15), if the game offers it. */ musicLab?: () => void; /** Opens the audio capacity test (tools/audio-test; Ed, 2026-10-26: "link to the page from the pause menu"), if the game offers it. */ audioTest?: () => void; /** Opens the Fight Arena in a new tab (app/fightArena.ts; Ed, 2026-10-27), if the game offers it. */ fightArena?: () => void; /** Saves the playtest log as JSON (platform/playtestLog.ts; Ed, 2026-10-29: "The \"download log\" L should also be a button on the pause menu rather than a key"), if the game offers it. */ downloadLog?: () => void; /** The debug switch "Unlock everything" (app/debugUnlock.ts; Ed, 2026-10-29): every outfit, bag, broom part, hat and island to choose, whatever she's found. */ unlockAll?: { get(): boolean; set(on: boolean): void }; /** The default look's dev tool (app/defaultLook.ts; Ed, 2026-10-29: "an easy way to select character creation defaults"): the defaults file's text from how she's dressed now, a new tab as a brand-new witch, and whether to show them (debug or Unlock everything on). */ defaults?: { text(): string; tryIt(): void; shown(): boolean }; /** Opens the finds' dev control (ui/findsPanel.ts; Ed, 2026-10-23), shown only while `findsShown` (dev tools on). */ finds?: () => void; findsShown?: () => boolean; /** The quality ladder (app/ladder.ts): its state in lines, its choices (auto, off, a rung to pin) and the one chosen. */ quality?: { lines(): string[]; options(): { value: string; label: string }[]; current(): string; choose(v: string): void } }
 
 const CSS = `
 #decide { position: fixed; top: 64px; right: 0; z-index: 30; display: flex; align-items: flex-start; font: 12px/1.35 ui-monospace, Menlo, Consolas, monospace; color: var(--ink, #e8e2f4); pointer-events: auto; }
@@ -115,6 +121,10 @@ export class DecidePanel {
 /** Put a choice into the game, and keep it in the URL: a knob live on the running game (reloading for one the game reads only as
  *  it starts), a URL switch live where the game can take it, else by reloading with it. The decisions panel's and the pause page's. */
 export function applyDecision(host: DecideHost, d: Decision, v: string | number | boolean): void {
+  if (host.mutate) { host.mutate(`tuning: ${d.id}`, () => applyDecisionNow(host, d, v)); return; }
+  applyDecisionNow(host, d, v);
+}
+function applyDecisionNow(host: DecideHost, d: Decision, v: string | number | boolean): void {
   const url = new URL(location.href), isDefault = v === d.default;
   if (d.apply.knob) {
     setKnob(host.tuning, d.apply.knob, v);
@@ -186,6 +196,7 @@ export class PauseSliders {
   private values = new Map<string, string | number | boolean>();
   private readonly status = h("div", { class: "status" });
   private findsBtn: HTMLButtonElement | null = null;
+  private defaultBtns: HTMLButtonElement[] = [];
   private readonly stamp = h("pre", { class: "stamp" });
   private readonly paints: (() => void)[] = [];
   private readonly heads: (() => void)[] = [];
@@ -196,8 +207,24 @@ export class PauseSliders {
     const params = new URLSearchParams(location.search);
     for (const d of list) this.values.set(d.id, currentValue(d, host.tuning, params));
     const copy = button("Copy values", () => this.copy(), { class: "copyall", title: "Copy every slider's name, key, value and built default, to paste to the coordinator" });
-    const top = h("div", { class: "top", html: `<div class="title">❚❚ Paused · test sliders</div><p class="hint">Esc resumes · . steps (Shift+. ten) · changes show now; double-click a slider for its built value</p>` }, copy, ...(host.report ? [button("Report", () => { this.status.textContent = "drawing the frame with each neutral pair…"; void host.report!().then(t => { this.status.textContent = t; }, e => { this.status.textContent = `report failed: ${e}`; }); }, { class: "copyall", title: "For a visual bug: draw this frame with each neutral pair of settings and save a picture and a JSON (where they differ, the GPU, her place, the repro link)" })] : []), ...(host.musicLab ? [button("🎛 Music Lab", () => host.musicLab!(), { class: "copyall", title: "The night's own music with the lab's sliders, down the right edge: the singer, the levels, a jump to any wave or section; Esc resumes with it up" })] : []), ...(host.audioTest ? [button("🔊 Audio test", () => host.audioTest!(), { class: "copyall", title: "About two minutes in a new tab: the game's music under a rising sound load, with and without AudioWorklets, then Copy results for the builders" })] : []), ...(host.fightArena ? [button("⚔ Fight arena", () => host.fightArena!(), { class: "copyall", title: "In a new tab: her alone against a random wild pack (a seed you can share), with slow motion and today's attacks" })] : []), ...(host.finds ? [this.findsBtn = button("🧪 Finds", () => host.finds!(), { class: "copyall", title: "Dev: give yourself finds, or spawn one near her (the debug overlay's tools are on)" })] : []), this.status);
+    const settingsBtn = host.settings ? [button("⚙ Show settings page", () => host.settings!(), { class: "copyall", title: "The player's Settings page: controls, sound, display, accessibility" })] : [];
+    const U = host.unlockAll, unlockBtn = U ? button("", () => { U.set(!U.get()); paintUnlock(); this.paintDefaults(); }, { class: "copyall", title: "Debug: every outfit, bag, broom part, hat and island to choose, whatever she's found. Nothing is saved as found; off, the normal rules come back (what she wears now stays for this session)" }) : null;
+    const paintUnlock = () => { if (!U || !unlockBtn) return; const on = U.get(); unlockBtn.textContent = on ? "🔓 Unlock everything: on" : "🔒 Unlock everything: off"; unlockBtn.setAttribute("aria-pressed", String(on)); unlockBtn.classList.toggle("on", on); };
+    paintUnlock();
+    const D = host.defaults;
+    this.defaultBtns = D ? [
+      button("👗 Copy look as defaults", () => { const t = D.text(), done = () => { this.status.textContent = "copied: config/default-look.json's text, to paste to the coordinator"; }; if (navigator.clipboard?.writeText) navigator.clipboard.writeText(t).then(done, () => { this.status.textContent = t; }); else this.status.textContent = t; }, { class: "copyall", title: "Dev: how she's dressed now (her look and colours, her bag, her broom's parts) as the game's default look, what a brand-new witch starts with: config/default-look.json's text, to paste back. Nothing is saved" }),
+      button("✨ Try as a new witch", () => D.tryIt(), { class: "copyall", title: "Dev: a new tab playing as a brand-new witch (?newWitch=1): the default look, the starting wardrobe and broom, no hats found. Nothing of hers is read or saved there" }),
+    ] : [];
+    const logBtn = host.downloadLog ? [button("⬇ Download log", () => {
+      this.status.textContent = "Preparing playtest log…";
+      void Promise.resolve().then(() => host.downloadLog!()).then(() => { this.status.textContent = "playtest log saved"; }, error => { this.status.textContent = error instanceof Error ? error.message : "The playtest log could not be saved."; });
+    }, { class: "copyall", title: "Save the playtest log (this browser's last few runs) as JSON, for the builders" })] : [];
+    if (host.downloadReadableLog) logBtn.push(button("⬇ Download readable log", () => host.downloadReadableLog!(), { class: "copyall", title: "Save a text copy to read; use Download log for a builder's restore bundle" }));
+    const top = h("div", { class: "top", html: `<div class="title">❚❚ Paused · test sliders</div><p class="hint">Esc resumes · . steps (Shift+. ten) · changes show now; double-click a slider for its built value</p>` }, ...settingsBtn, copy, ...logBtn, ...(unlockBtn ? [unlockBtn] : []), ...this.defaultBtns, ...(host.report ? [button("Report", () => { this.status.textContent = "drawing the frame with each neutral pair…"; void host.report!().then(t => { this.status.textContent = t; }, e => { this.status.textContent = `report failed: ${e}`; }); }, { class: "copyall", title: "For a visual bug: draw this frame with each neutral pair of settings and save a picture and a JSON (where they differ, the GPU, her place, the repro link)" })] : []), ...(host.musicLab ? [button("🎛 Music Lab", () => host.musicLab!(), { class: "copyall", title: "The night's own music with the lab's sliders, down the right edge: the singer, the levels, a jump to any wave or section; Esc resumes with it up" })] : []), ...(host.audioTest ? [button("🔊 Audio test", () => host.audioTest!(), { class: "copyall", title: "About two minutes in a new tab: the game's music under a rising sound load, with and without AudioWorklets, then Copy results for the builders" })] : []), ...(host.fightArena ? [button("⚔ Fight arena", () => host.fightArena!(), { class: "copyall", title: "In a new tab: her alone against a random wild pack (a seed you can share), with slow motion and today's attacks" })] : []), ...(host.finds ? [this.findsBtn = button("🧪 Finds", () => host.finds!(), { class: "copyall", title: "Dev: give yourself finds, or spawn one near her (the debug overlay's tools are on)" })] : []), this.status);
+    if (host.potionLab) top.append(button('Potion lab', () => host.potionLab!(), { class: 'copyall' }));
     const body = h("div", { class: "list" });
+    if (host.saveComment && host.restoreComment) body.append(commentControls(host.saveComment, host.restoreComment));
     // (by the PR that added them, newest first: Ed, 2026-10-12, "The panel shows all the sliders in PR order")
     const ordered = byPr(list);
     // (each PR's group under a header that folds it, every one folded at first: Ed, 2026-10-26, "Can all the menu settings be grouped
@@ -230,6 +257,7 @@ export class PauseSliders {
     if (!on) return;
     this.status.textContent = "";
     if (this.findsBtn) this.findsBtn.style.display = this.host.findsShown?.() ? "" : "none";
+    this.paintDefaults();
     // (afresh as it opens: a key may have moved a knob since, the fight's [ ] ; ' , . keys among them)
     const params = new URLSearchParams(location.search);
     for (const d of this.list) this.values.set(d.id, currentValue(d, this.host.tuning, params));
@@ -256,6 +284,9 @@ export class PauseSliders {
   /** Every value as plain text (Copy values). */
   text(): string { return valuesText(this.values, this.host.version, this.host.seed); }
 
+  /** The default look's buttons, only with the debug overlay or Unlock everything on. */
+  private paintDefaults(): void { const on = !!this.host.defaults?.shown(); for (const b of this.defaultBtns) b.style.display = on ? "" : "none"; }
+
   private copy(): void {
     const t = this.text();
     const done = () => { this.status.textContent = "copied: paste it to the coordinator"; };
@@ -279,7 +310,7 @@ export class PauseSliders {
       const sw = ctl.querySelector<HTMLElement>(".swatch"), S = d.control.type === "slider" ? d.control.swatch : undefined;
       if (sw && S) sw.style.background = swatchCss(Number(knobAt(this.host.tuning, S.hue)), Number(knobAt(this.host.tuning, S.sat)));
     };
-    const set = (v: string | number | boolean) => { this.values.set(d.id, v); applyDecision(this.host, d, v); saveSetting(d, v); if (d.control.type === "slider" && d.control.swatch) for (const p of this.paints) p(); else paint(); this.paintHeads(); this.status.textContent = ""; }; // (a colour's swatch shows on its hue's and saturation's rows both) // (a persisted one, the volumes, remembered: app/settings.ts)
+    const set = (v: string | number | boolean) => { this.values.set(d.id, v); applyDecision(this.host, d, v); saveSetting(d, v); if (d.persist) devVolume(d.apply.knob, v); if (d.control.type === "slider" && d.control.swatch) for (const p of this.paints) p(); else paint(); this.paintHeads(); this.status.textContent = ""; }; // (a colour's swatch shows on its hue's and saturation's rows both) // (a persisted one, the volumes, remembered: app/settings.ts)
     if (d.control.type === "slider") {
       const c = d.control, r = h("input", { type: "range" }), out = h("span");
       r.min = String(c.min); r.max = String(c.max); r.step = String(c.step); out.className = "val";

@@ -9,6 +9,7 @@ import { isHomeKey } from "./speakers";
 import { cellKey } from "./party";
 import { nearestSound } from "./combat/targeting";
 
+// Keep the smoke's seed-123 radius route: tests compare inward/outward second-wave targets and require >60 m of real march toward home.
 const idle = { moveX: 0, moveZ: 0, toggleMode: false, zoom: 0, autoTalk: false };
 /** Seed 123 (the smoke's), the waves held, wave 1 brought on with its area's creatures grown to young, its soundsystem cut
  *  short and its besiegers beside it; stepped till it falls. */

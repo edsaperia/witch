@@ -8,28 +8,37 @@
 // walks on them; drawn only while she's in the house (from outside the house isn't seen: treehouse.md). Over them, on the page:
 // the object she's at, its name and E; a placeholder's line in a bubble a few seconds when she uses it; the bed's ring filling as
 // E is held (rules/houseRooms.ts stepBed).
+import { NEED_BAG } from "../rules/kit";
 import * as THREE from "three";
 import { gpuKind } from "./gpuLedger";
 import type { View } from "./view";
 import { deckOf, type Deck } from "../rules/treehouse";
-import { fromPlan, toPlan, HOUSE_ROOMS, hatsOnFloor, hatSlots, objectAt, type HouseObject } from "../rules/houseRooms";
+import { fromPlan, toPlan, HOUSE_ROOMS, hatsOnFloor, hatSlots, hatToTake, objectAt, type HouseObject } from "../rules/houseRooms";
+import { houseArtLayout, objectOffset } from "../rules/housePlacement";
 import { groundHeight } from "./height";
 import { alongRay } from "./view/home";
-import { standing, type FloorPixels } from "./houseArt";
+import type { FloorPixels } from "./houseArt";
+import houseStanding from "virtual:house-standing";
 import { paintFloorOff } from "./houseFloor";
 import type { PlanMap } from "./crown";
 import { bakePieceHere, furnitureState, furnitureStates, pieceArt, standing as facing, DRAWN_ELSEWHERE, FURNITURE, type FurnitureArt } from "./houseFurniture";
+import { BrewingView } from './brewing';
+import { basketNear } from '../rules/mushrooms';
 import { WorkshopArt } from "./workshopArt";
 import { broomWhere, stationOf } from "../rules/stations";
 import * as Art from "../../art/generator.js";
 import { witchLookOf } from "./artBuild";
 import { pileOut } from "../rules/clothesPile";
-import { DECOR_ROOMS } from "./houseDecor";
+import { DECOR_ROOMS, placedDecorPlan } from "./houseDecor";
 import { Spotlight } from "./spotlight";
 import { LoanSparkle } from "./loanSparkle";
 import { UseGlow } from "./useGlow";
-import { keycapCanvas, wasdCanvas, type KeycapGlyph } from "../ui/keyHint";
+import { glyphOf, keycapCanvas, wasdCanvas, type KeycapGlyph } from "../ui/keyHint";
 import { atDecks } from "../rules/wakeUp";
+import { loadingFloorBounds } from './landingReadiness';
+import { LIGHT_UNIFORMS } from './lighting';
+import { LOADING_LIGHT_GLSL } from './loadingLight';
+import { materialProgramsReady } from './shaderDrawGate';
 import { loanFind } from "../rules/finds";
 
 type V3 = { x: number; y: number; z: number };
@@ -38,7 +47,7 @@ type V3 = { x: number; y: number; z: number };
  *  within it, `depth`: how far south its nearest point is in the world (the far drawn first). */
 interface Quad { p: [number, number, number][]; rgb: [number, number, number]; obj?: string; layer: number; depth: number }
 
-const KIND: Record<HouseObject["use"]["kind"], [number, number, number]> = { creator: [0.32, 0.62, 0.45], hats: [0.32, 0.62, 0.45], zoo: [0.32, 0.62, 0.45], telescope: [0.32, 0.62, 0.45], bed: [0.82, 0.62, 0.3], say: [0.48, 0.42, 0.56], chart: [0.32, 0.62, 0.45], instrument: [0.62, 0.36, 0.7], invites: [0.32, 0.62, 0.45], pile: [0.32, 0.62, 0.45] };
+const KIND: Record<HouseObject["use"]["kind"], [number, number, number]> = { creator: [0.32, 0.62, 0.45], hats: [0.32, 0.62, 0.45], zoo: [0.32, 0.62, 0.45], telescope: [0.32, 0.62, 0.45], bed: [0.82, 0.62, 0.3], say: [0.48, 0.42, 0.56], chart: [0.32, 0.62, 0.45], instrument: [0.62, 0.36, 0.7], invites: [0.32, 0.62, 0.45], pile: [0.32, 0.62, 0.45], scenery: [0.48, 0.42, 0.56] };
 /** How long a placeholder's line stays up (s). */
 const SAY_FOR = 3.5;
 
@@ -52,7 +61,7 @@ const inOrder = (q: Quad[]) => q.sort((a, b) => a.layer - b.layer || a.depth - b
  *  objects' boxes. */
 function buildQuads(): Quad[] {
   const q: Quad[] = [];
-  for (const u of standing(HOUSE_ROOMS)) q.push(quad(u.p, u.rgb, u.layer));
+  for (const u of houseStanding) q.push(quad(u.p, u.rgb, u.layer));
   objects(q);
   return inOrder(q);
 }
@@ -60,7 +69,7 @@ function buildQuads(): Quad[] {
 /** The objects: a box each (its two near sides and its top: the plan's x0 and z1 faces); the hats' floor a rug. */
 function objects(q: Quad[]): void {
   for (const o of HOUSE_ROOMS.objects) {
-    if (FURNITURE.has(o.id) || DRAWN_ELSEWHERE.has(o.id)) continue; // (drawn as art: render/houseFurniture.ts, or by another's)
+    if (FURNITURE.has(o.id) || DRAWN_ELSEWHERE.has(o.id) || o.id.startsWith("mushroom-basket:")) continue; // (drawn as art: render/houseFurniture.ts, or by another's)
     const c = KIND[o.use.kind], x0 = o.x - o.w / 2, x1 = o.x + o.w / 2, z0 = o.z - o.d / 2, z1 = o.z + o.d / 2, top: [number, number, number] = [c[0] * 1.15, c[1] * 1.15, c[2] * 1.15];
     if (o.use.kind === "hats") { q.push(quad([[x0, z0, 0.01], [x1, z0, 0.01], [x1, z1, 0.01], [x0, z1, 0.01]], [0.36, 0.16, 0.26], 2, o.id)); continue; }
     const box = [quad([[x0, z0, 0], [x0, z1, 0], [x0, z1, o.h], [x0, z0, o.h]], c, 2, o.id), quad([[x0, z1, 0], [x1, z1, 0], [x1, z1, o.h], [x0, z1, o.h]], [c[0] * 0.72, c[1] * 0.72, c[2] * 0.72], 2, o.id), quad([[x0, z0, o.h], [x1, z0, o.h], [x1, z1, o.h], [x0, z1, o.h]], top, 2, o.id)];
@@ -169,7 +178,7 @@ export class HouseRoomsView {
   private readonly wakeL: HTMLDivElement;
   private readonly wakeR: HTMLDivElement;
   private wakeKey = "";
-  private said: { obj: HouseObject; at: number } | null = null;
+  private said: { obj: HouseObject; at: number; line: string } | null = null;
   private readonly labels: { el: HTMLDivElement; x: number; z: number }[] = [];
   /** The furniture drawn as art (render/houseFurniture.ts): each piece's picture and its quad, baked a piece a frame as she first comes in. */
   private readonly furniture = new THREE.Group();
@@ -178,6 +187,7 @@ export class HouseRoomsView {
   private readonly pieces = new Map<string, { art: FurnitureArt; mesh: THREE.Mesh; pos: Float32Array; id: string; x: number; z: number }>();
   /** The Workshop's: her broom on the bay (or the lathe) and the parts on the pegboard, laid on those pieces' marks (render/workshopArt.ts). */
   private readonly workshop = new WorkshopArt();
+  private readonly brewing = new BrewingView();
   /** Pieces baked to nothing (a room with no dressing), not tried again. */
   private readonly empty = new Set<string>();
   /** The pieces asked of the art workers (render/housePieces.ts), by key; those that came back, waiting for their meshes; and those
@@ -193,6 +203,13 @@ export class HouseRoomsView {
   private readonly spot = new Spotlight();
   // (the Ent's own floors, painted: render/houseArt.ts; a grid laid on the house's plane, an art pixel a texel)
   private readonly floor = new THREE.Mesh(new THREE.BufferGeometry(), new THREE.MeshBasicMaterial({ transparent: true, depthWrite: false, depthTest: false, side: THREE.DoubleSide }));
+  readonly loadingFloor = new THREE.Mesh(new THREE.BufferGeometry(), new THREE.ShaderMaterial({
+    uniforms: { ...LIGHT_UNIFORMS, uLoadingOpacity: { value: 1 } }, transparent: true, depthWrite: false, side: THREE.DoubleSide,
+    vertexShader: `varying vec3 vWorld; void main() { vec4 p = modelMatrix * vec4(position, 1.0); vWorld = p.xyz; gl_Position = projectionMatrix * viewMatrix * p; }`,
+    fragmentShader: `varying vec3 vWorld; uniform float uLoadingOpacity; ${LOADING_LIGHT_GLSL} void main() { gl_FragColor = vec4(loadingLight(vec3(0.62, 0.53, 0.37), vWorld), uLoadingOpacity); }`,
+  }));
+  private floorArrivalAt = -Infinity;
+  private floorCompiled = true;
   private floorArt: FloorPixels | null = null;
   /** The floor being painted off the page's thread (render/houseFloor.ts), and what came back. */
   private floorAsked = false;
@@ -216,7 +233,9 @@ export class HouseRoomsView {
     this.floor.frustumCulled = false; this.floor.visible = false; this.floor.renderOrder = 19.925;
     this.terraceFloor.frustumCulled = false; this.terraceFloor.visible = false;
     this.furniture.add(this.spot.mesh, this.glow.mesh);
-    this.meshes = [this.floor, this.terraceFloor, ...this.parts.map(p => p.mesh), this.furniture, this.workshop.group, ...programTwins()];
+    this.loadingFloor.name = 'Loading house platform'; this.loadingFloor.visible = false; this.loadingFloor.frustumCulled = false; this.loadingFloor.renderOrder = 19.924;
+    this.loadingFloor.geometry.setAttribute('position', new THREE.BufferAttribute(new Float32Array(12), 3)); this.loadingFloor.geometry.setIndex([0, 1, 2, 0, 2, 3]);
+    this.meshes = [this.loadingFloor, this.floor, this.terraceFloor, ...this.parts.map(p => p.mesh), this.furniture, this.workshop.group, this.brewing.group, ...programTwins()];
     this.box = document.createElement("div");
     this.box.id = "house-tags"; // (hidden under a table's chart: ui/chartOverlay.ts)
     this.box.style.cssText = "position:fixed;inset:0;pointer-events:none;z-index:11;display:none";
@@ -242,15 +261,25 @@ export class HouseRoomsView {
 
   /** Another night at a house with rooms (View.setGame): its plan made afresh, nothing said. */
   reset(): void {
+    this.loadingFloor.visible = false;
     this.hub = -1; this.quads = []; this.hatsKey = ""; this.said = null; this.box.style.display = "none";
     for (const p of this.parts) p.mesh.visible = false;
   }
+  /** The actual floor and bed, not optional props/ground/detail programs. */
+  landingReady(renderer: THREE.WebGLRenderer): boolean {
+    const bed = HOUSE_ROOMS.objects.find(o => o.use.kind === 'bed');
+    const piece = [...this.pieces.values()].find(p => p.id === bed?.id && p.mesh.visible);
+    return !!(this.floorArt && this.floorCompiled && this.floor.visible && piece &&
+      [this.floor, this.terraceFloor, piece.mesh, ...this.parts.map(p => p.mesh).filter(o => o.visible)].every(o => materialProgramsReady(renderer.properties.get(o.material))));
+  }
   /** Off the page (an island whose treehouse has no rooms): its meshes' geometry and material let go, its labels taken off. */
   dispose(): void {
+    this.loadingFloor.geometry.dispose(); this.loadingFloor.material.dispose();
     for (const p of this.parts) p.geo.dispose();
     this.mat.dispose(); this.box.remove();
     for (const { art, mesh } of this.pieces.values()) { art.tex.dispose(); mesh.geometry.dispose(); (mesh.material as THREE.Material).dispose(); }
     this.workshop.dispose();
+    this.brewing.dispose();
     this.spot.dispose();
     this.sparkle?.canvas.remove();
   }
@@ -259,11 +288,69 @@ export class HouseRoomsView {
   update(v: View, onTreehouse: (px: number, py: number) => V3, ht: number): void {
     const g = v.game, w = g.witch, t = g.tuning, T = v.assets.treehouse, d = deckOf(g.map, t);
     const shown = !!(d?.house?.rooms && T.ent && w.perch && (w.mode === "ground" || w.mode === "descending")); // (at her decks too: the Terrace the oak's floor, render/houseArt.ts)
+    const late = v.shaderLandingLimited, share = v.landingHouseShare, arrivalNow = performance.now();
+    const world = (px: number, pz: number, h: number): V3 => { const p = fromPlan(d!, px, pz); return { ...p, y: groundHeight(p.x, p.z) + d!.h + h }; };
+    const g0 = d ? groundHeight(d.x, d.z) : 0;
+    const ky = T.ent && d ? (T.seat.y - T.ent.deck.y) / Math.max(0.1, d.seat.z - d.z) : 0;
+    const toWorld = (px: number, pz: number, h: number): V3 => {
+      if (!T.ent) return world(px, pz, h);
+      const { x, z } = fromPlan({ x: 0, z: 0 }, px, pz), p = onTreehouse(T.ent.deck.x + x / v.mpp, T.ent.deck.y + z * ky + v.houseShift - h / v.mpp);
+      const b = alongRay(v, { x: p.x, y: p.y + g0, z: p.z }, z);
+      if (!late || share >= 1) return b;
+      const a = world(px, pz, h);
+      return { x: a.x + (b.x - a.x) * share, y: a.y + (b.y - a.y) * share, z: a.z + (b.z - a.z) * share };
+    };
+    const floorShare = this.floorArt && this.floorCompiled ? Math.min(1, Math.max(0, (arrivalNow - this.floorArrivalAt) / 800)) : 0;
+    const terraceMaterial = this.terraceFloor.material as THREE.MeshBasicMaterial;
+    if (terraceMaterial.transparent !== late) { terraceMaterial.transparent = late; terraceMaterial.needsUpdate = true; }
+    this.loadingFloor.visible = !!(late && d?.house?.rooms && w.perch && share * floorShare < 1);
+    if (this.loadingFloor.visible) {
+      const b = loadingFloorBounds([...HOUSE_ROOMS.rooms, ...HOUSE_ROOMS.corridors], d!.r), pos = this.loadingFloor.geometry.getAttribute('position') as THREE.BufferAttribute;
+      [[b.x0, b.z0], [b.x1, b.z0], [b.x1, b.z1], [b.x0, b.z1]].forEach(([x, z], i) => { const p = toWorld(x, z, 0); pos.setXYZ(i, p.x, p.y, p.z); });
+      pos.needsUpdate = true; this.loadingFloor.material.uniforms.uLoadingOpacity.value = 1 - share * floorShare;
+    }
+    this.mat.opacity = late ? share : 1;
     for (const p of this.parts) p.mesh.visible = shown;
     this.furniture.visible = shown;
     this.workshop.group.visible = shown;
+    this.brewing.group.visible = shown;
     this.floor.visible = this.terraceFloor.visible = shown;
-    if (!shown) { this.box.style.display = "none"; this.plan = null; this.sparkle?.draw([], 0, 1); return; }
+    if (!shown) {
+      this.box.style.display = "none"; this.plan = null; this.sparkle?.draw([], 0, 1); v.usePrompt.id = "";
+      for (const el of [this.ring, this.wakeL, this.wakeR, ...this.labels.map(l => l.el)]) el.style.display = 'none';
+      if (v.landingSleeping && d?.house?.rooms) {
+        // Retain the boot's already-drawn bed while the next house atlas is still absent.
+        const bed = HOUSE_ROOMS.objects.find(o => o.use.kind === 'bed'), M = v.camera.matrixWorld.elements;
+        let used = false;
+        for (const { id, art, mesh, pos } of this.pieces.values()) {
+          mesh.visible = !used && id === bed?.id;
+          if (!mesh.visible || !bed) continue;
+          used = true; this.furniture.visible = true;
+          mesh.userData.loadingOrder ??= mesh.renderOrder; mesh.renderOrder = 9.99;
+          (mesh.material as THREE.MeshBasicMaterial).opacity = 1;
+          const anchor = world(bed.x, bed.z, 0);
+          [[-art.ox, -art.oy], [art.w - art.ox, -art.oy], [art.w - art.ox, art.h - art.oy], [-art.ox, art.h - art.oy]].forEach(([dx, dy], i) => {
+            const x = dx * v.mpp, y = -dy * v.mpp;
+            pos[i * 3] = anchor.x + M[0] * x + M[4] * y;
+            pos[i * 3 + 1] = anchor.y + M[1] * x + M[5] * y;
+            pos[i * 3 + 2] = anchor.z + M[2] * x + M[6] * y;
+          });
+          (mesh.geometry.getAttribute('position') as THREE.BufferAttribute).needsUpdate = true;
+        }
+      } else if (late && d?.house?.rooms && w.perch) {
+        const at = objectAt(d, w.x, w.z);
+        if (at && at.use.kind !== 'scenery') {
+          const p = toWorld(at.x, at.z, 1.5), s = v.v3.set(p.x, p.y, p.z).project(v.camera), cv = v.canvas.getBoundingClientRect();
+          this.box.style.display = 'block'; this.tag.style.display = this.bubble.style.display = 'block';
+          this.tag.replaceChildren(keycapCanvas(useGlyph(v.useDevice), Math.max(2, Math.round(cv.width / Math.max(1, v.width)))));
+          for (const el of [this.tag, this.bubble]) { el.style.left = `${cv.left + (s.x + 1) * cv.width / 2}px`; el.style.top = `${cv.top + (1 - s.y) * cv.height / 2}px`; }
+          this.bubble.style.top = `${cv.top + (1 - s.y) * cv.height / 2 + 28}px`;
+          this.bubble.textContent = this.said?.line ?? at.label; v.usePrompt.id = at.id; v.usePrompt.top = cv.top + (1 - s.y) * cv.height / 2 - this.tag.offsetHeight;
+          this.tapUse = v.useDevice === 'touch' ? v.onUse : null; this.tag.style.pointerEvents = this.tapUse ? 'auto' : 'none';
+        }
+      }
+      return;
+    }
     const D = d as Deck & { house: NonNullable<Deck["house"]> };
     if (this.hub !== D.r) { this.hub = D.r; this.quads = buildQuads(); this.hatsKey = ""; }
     // her hats on the hats' floor (rules/houseRooms.ts floorHats: laid out the first time she comes in)
@@ -279,18 +366,19 @@ export class HouseRoomsView {
       this.parts[4].set(this.quads.filter(hat));
     }
     // the house's plane (render/view/witch.ts): x across the Ent's art in its pixels, z down it, h up it; along the ray by z
-    const ky = (T.seat.y - T.ent!.deck.y) / Math.max(0.1, D.seat.z - D.z), g0 = groundHeight(D.x, D.z);
     // (each point of the plan turned into the house's metres first: rules/houseRooms.ts fromPlan)
-    const toWorld = (px: number, pz: number, h: number): V3 => { const { x, z } = fromPlan({ x: 0, z: 0 }, px, pz), p = onTreehouse(T.ent!.deck.x + x / v.mpp, T.ent!.deck.y + z * ky + v.houseShift - h / v.mpp); return alongRay(v, { x: p.x, y: p.y + g0, z: p.z }, z); }; // (slid up the plane with her: render/view/witch.ts houseShift)
     if (this.floor.visible && !this.floorArt) {
       // (painted by workers, the first time it's shown: the boot freeze, 2026-10-25; the floor shows once it's come)
       if (!this.floorAsked) { this.floorAsked = true; const p = paintFloorOff(v.mpp).then(F => { this.floorCame = F; }); v.assets.track("houseFloor", p); }
       if (!this.floorCame) this.floor.visible = this.terraceFloor.visible = false;
     }
+    let floorCreated = false;
     if (this.floor.visible) {
       const N = 48;
       if (!this.floorArt) {
         const A = (this.floorArt = this.floorCame!);
+        floorCreated = true;
+        this.floorArrivalAt = late ? arrivalNow : -Infinity;
         for (const [mesh, px] of [[this.floor, A.rest], [this.terraceFloor, A.terrace]] as const) {
           const tex = gpuKind(new THREE.DataTexture(px, A.w, A.h, THREE.RGBAFormat), "house");
           tex.magFilter = THREE.NearestFilter; tex.minFilter = THREE.NearestFilter; tex.generateMipmaps = false; tex.flipY = false; tex.colorSpace = THREE.NoColorSpace; tex.needsUpdate = true; // (its colours as the quads' vertex colours are: as they are)
@@ -306,15 +394,27 @@ export class HouseRoomsView {
       for (let j = 0, k = 0; j <= N; j++) for (let i = 0; i <= N; i++, k++) { const p = toWorld(A.x0 + (A.ww * i) / N, A.z0 + (A.hh * j) / N, 0); pos.setXYZ(k, p.x, p.y, p.z); }
       pos.needsUpdate = true;
     }
+    if (late && floorCreated) {
+      this.floorCompiled = false;
+      void Promise.all([v.renderer.compileAsync(this.floor, v.camera, v.scene), v.renderer.compileAsync(this.terraceFloor, v.camera, v.scene)]).then(() => { this.floorCompiled = true; this.floorArrivalAt = performance.now(); }, () => {});
+    }
+    const nativeShare = late ? share * (this.floorArt && this.floorCompiled ? Math.min(1, Math.max(0, (arrivalNow - this.floorArrivalAt) / 800)) : 0) : 1;
+    (this.floor.material as THREE.MeshBasicMaterial).opacity = nativeShare;
+    terraceMaterial.opacity = nativeShare;
     // (the floors' map without the push along the camera's rays, which moves nothing on the screen: what's laid over them in their
     // plane, the crown, is drawn after them with no depth)
     { const flat = (px: number, pz: number, h: number) => { const { x, z } = fromPlan({ x: 0, z: 0 }, px, pz), p = onTreehouse(T.ent!.deck.x + x / v.mpp, T.ent!.deck.y + z * ky + v.houseShift - h / v.mpp); return new THREE.Vector3(p.x, p.y + g0, p.z); }; // (slid with the rooms: houseShift)
       const o = flat(0, 0, 0); this.plan = { o, ex: flat(1, 0, 0).sub(o), ey: flat(0, 0, 1).sub(o), ez: flat(0, 1, 0).sub(o) }; }
-    const at = objectAt(D, w.x, w.z), lit = at && at.id !== v.houseOpen ? at.id : undefined; // (lit, the one she can use; out while it's open)
+    // (the hats' floor isn't a thing to use: the hat she's by is, hatToTake; Ed, 2026-10-29: "just an area where normal hat objects
+    // are placed")
+    const at0 = objectAt(D, w.x, w.z), hatBy = at0?.use.kind === "hats" || HOUSE_ROOMS.layout ? hatToTake(W, D, w.x, w.z, g.tuning.leash.runeRadius) : null;
+    const hatArea = HOUSE_ROOMS.objects.find(o => o.use.kind === "hats");
+    const at = hatBy && HOUSE_ROOMS.layout && hatArea ? { ...hatArea, ...toPlan(D, hatBy.x, hatBy.z) } : at0?.use.kind === "hats" && !hatBy ? null : at0;
+    const lit = at && at.id !== v.houseOpen ? (hatBy ? (hatBy.slot !== undefined ? `hat:${hatBy.slot}` : "") : at.id) : undefined; // (lit, the one she can use; out while it's open)
     for (const P of this.parts) {
       let k = 0;
       for (const q of P.quads) {
-        const glow = q.obj && (q.obj === lit || (lit === "hats" && q.obj.startsWith("hat:"))) ? 1.45 : 1;
+        const glow = q.obj && q.obj === lit ? 1.45 : 1;
         for (const [x, z, h] of q.p) { const p = toWorld(x, z, h); P.pos[k] = p.x; P.pos[k + 1] = p.y; P.pos[k + 2] = p.z; P.col[k] = Math.min(1, q.rgb[0] * glow); P.col[k + 1] = Math.min(1, q.rgb[1] * glow); P.col[k + 2] = Math.min(1, q.rgb[2] * glow); k += 3; }
       }
       (P.geo.getAttribute("position") as THREE.BufferAttribute).needsUpdate = true;
@@ -331,14 +431,15 @@ export class HouseRoomsView {
     const here = toPlanAt0(w.x - D.x, w.z - D.z), pitch = Math.asin(Math.min(.95, Math.max(.2, ky * v.mpp))), ppm = 1 / v.mpp;
     const wanted: { key: string; x: number; z: number }[] = [];
     for (const o of HOUSE_ROOMS.objects) if (FURNITURE.has(o.id)) wanted.push({ key: pieceKey(o), x: o.x, z: o.z });
-    for (const r of DECOR_ROOMS) wanted.push({ key: `decor:${r.id}`, x: (r.x0 + r.x1) / 2, z: (r.z0 + r.z1) / 2 });
+    const decorRooms = HOUSE_ROOMS.layout ? HOUSE_ROOMS.rooms.filter(r => placedDecorPlan(r).length) : DECOR_ROOMS;
+    for (const r of decorRooms) wanted.push({ key: `decor:${r.id}`, x: (r.x0 + r.x1) / 2, z: (r.z0 + r.z1) / 2 });
     // (and every other state a piece can be in, after the rest: rules/kit.ts's desk and lathe, swapped at once when she takes from them)
     const spare = HOUSE_ROOMS.objects.filter(o => FURNITURE.has(o.id)).flatMap(o => furnitureStates(o.id).map(st => ({ key: `${o.id}|${st}`, x: o.x, z: o.z })).filter(q => !wanted.some(w => w.key === q.key)));
     const near = (a: { x: number; z: number }) => Math.hypot(a.x - here.x, a.z - here.z);
     wanted.push(...spare);
     for (const q of wanted.filter(q => !this.asked.has(q.key)).sort((a, b) => (spare.includes(a) ? 1e6 : 0) + near(a) - (spare.includes(b) ? 1e6 : 0) - near(b))) {
       this.asked.add(q.key);
-      const p = v.assets.oneOff({ kind: "housePiece", id: `${q.key}@${ppm.toFixed(4)}:${pitch.toFixed(4)}`, style: v.assets.style, ppm, pitch })
+      const p = v.assets.oneOff({ kind: "housePiece", id: `${q.key}@${ppm.toFixed(4)}:${pitch.toFixed(4)}`, style: v.assets.style, ppm, pitch, ...(HOUSE_ROOMS.layout ? { layout: houseArtLayout(HOUSE_ROOMS) } : {}) })
         .then(r => { this.came.push({ key: q.key, art: r.housePiece ? pieceArt(r.housePiece) : null }); }, () => { this.toBakeHere.push(q.key); });
       v.assets.track(`housePiece:${q.key}`, p);
     }
@@ -356,12 +457,23 @@ export class HouseRoomsView {
       // (after its part's floors and walls, before its near rails; nearer pieces later; a room's dressing before all furniture)
       const mesh = new THREE.Mesh(geo, mat);
       mesh.frustumCulled = false; mesh.renderOrder = furnitureOrder(south(at.x, at.z), decor);
+      if (late) mesh.userData.landingAppearAt = arrivalNow;
       this.furniture.add(mesh); this.pieces.set(key, { art, mesh, pos, id, x: at.x, z: at.z });
     }
-    const pxWorld = (px: number, pz: number, dx: number, dy: number): V3 => { const { x, z } = fromPlan({ x: 0, z: 0 }, px, pz), p = onTreehouse(T.ent!.deck.x + x / v.mpp + dx, T.ent!.deck.y + z * ky + v.houseShift + dy); return alongRay(v, { x: p.x, y: p.y + g0, z: p.z }, z); };
+    const pxWorld = (px: number, pz: number, dx: number, dy: number): V3 => {
+      const { x, z } = fromPlan({ x: 0, z: 0 }, px, pz), p = onTreehouse(T.ent!.deck.x + x / v.mpp + dx, T.ent!.deck.y + z * ky + v.houseShift + dy);
+      const b = alongRay(v, { x: p.x, y: p.y + g0, z: p.z }, z);
+      if (!late || share >= 1) return b;
+      const anchor = toWorld(px, pz, 0);
+      // Carry the whole painted piece with its moving floor anchor; retain its own pixel offsets.
+      const q = onTreehouse(T.ent!.deck.x + x / v.mpp, T.ent!.deck.y + z * ky + v.houseShift), full = alongRay(v, { x: q.x, y: q.y + g0, z: q.z }, z);
+      return { x: b.x + anchor.x - full.x, y: b.y + anchor.y - full.y, z: b.z + anchor.z - full.z };
+    };
+    this.brewing.update(v, pxWorld, ky * v.mpp);
     let glowed = false;
     const now = performance.now() / 1000;
     for (const [k, { art, mesh, pos, id, x, z }] of this.pieces) {
+      if (mesh.userData.loadingOrder !== undefined) { mesh.renderOrder = mesh.userData.loadingOrder; delete mesh.userData.loadingOrder; }
       const o = HOUSE_ROOMS.objects.find(q => q.id === id);
       // (a piece in another state than now's, hidden, unless now's isn't in yet: the last one shown stays till it is; a room's dressing always)
       const cur = o ? pieceKey(o) : k;
@@ -374,6 +486,7 @@ export class HouseRoomsView {
       this.marks.set(`${id}.top`, pxWorld(x, z, art.top.x - art.ox, art.top.y - art.oy)); // (its top as drawn: pins clear it, render/pins.ts)
       (mesh.geometry.getAttribute("position") as THREE.BufferAttribute).needsUpdate = true;
       (mesh.material as THREE.MeshBasicMaterial).color.setScalar(id === lit ? 1.15 : 1);
+      (mesh.material as THREE.MeshBasicMaterial).opacity = late ? share * Math.min(1, Math.max(0, (arrivalNow - (mesh.userData.landingAppearAt ?? -Infinity)) / 800)) : 1;
       if (id === lit) { this.glow.set(art.tex, art.w, art.h, -art.ox, -art.oy, (dx, dy) => pxWorld(x, z, dx, dy), mesh.renderOrder, now); glowed = true; }
     }
     // the Workshop's (render/workshopArt.ts): her broom resting on the bay while she's at it, on the lathe while she's at that (Ed,
@@ -423,7 +536,11 @@ export class HouseRoomsView {
     } else if (this.pile) this.pile.mesh.visible = false;
     if (!glowed) this.glow.set(null);
     // on the page: the object she's at, a placeholder's line, the bed's ring
-    for (const e of g.leashEvents) if (e.kind === "house" && e.obj) { const o = HOUSE_ROOMS.objects.find(q => q.id === e.obj); if (o?.use.kind === "say") this.said = { obj: o, at: ht }; }
+    for (const e of g.leashEvents) if ((e.kind === "house" || e.kind === "needBag") && e.obj) {
+      const o = HOUSE_ROOMS.objects.find(q => q.id === e.obj);
+      if (o && e.kind === "needBag") this.said = { obj: o, at: ht, line: NEED_BAG }; // (the desk with no bag to carry them: rules/kit.ts)
+      else if (o?.use.kind === "say" && this.said?.at !== ht) this.said = { obj: o, at: ht, line: o.use.line };
+    }
     if (this.said && (ht - this.said.at > SAY_FOR || this.said.at > ht)) this.said = null;
     const cv = v.canvas.getBoundingClientRect(), screen = (o: HouseObject, up: number) => { const p = toWorld(o.x, o.z, o.h + up), s = v.v3.set(p.x, p.y, p.z).project(v.camera); return [cv.left + (s.x + 1) / 2 * cv.width, cv.top + (1 - s.y) / 2 * cv.height]; };
     const place = (el: HTMLElement, o: HouseObject | null, up: number, text?: string) => {
@@ -446,16 +563,23 @@ export class HouseRoomsView {
     const waking = !!g.wake && (!g.wake.open || (at?.use.kind === "bed" && g.party.spellAt === null)); // (the new opening's wake-up, rules/wakeUp.ts: no tag while she's in bed; the bed's not for sleeping yet)
     // over it, the button that uses it (Ed's playtest, 2026-10-26: "there's a prompt showing the button to press to open it"; then
     // "Please remove words from the station tags. We used to have little keys to show 'WASD', can we use these for E"): a keycap
-    // alone, the old walking keys' (ui/keyHint.ts), E, the pad's □, or on a touch screen the keycap itself to tap; none while it's
+    // alone, the old walking keys' (ui/keyHint.ts), the use button as bound (E, the pad's ✕: ui/keyHint.ts glyphOf), or on a touch screen the keycap itself to tap; none while it's
     // open. Up at her decks before the party, E there starts it (rules/wakeUp.ts atDecks).
     const decks = !at && g.wake?.open && g.party.spellAt === null && atDecks(g) ? decksSpot(D) : null;
-    const tagged = decks ?? (at && !this.said && !waking && !(at.use.kind === "pile" && !pileOut(g.wake)) ? at : null);
-    const usable = tagged && tagged.id !== v.houseOpen ? tagged : null, px = Math.max(2, Math.round(cv.width / Math.max(1, v.width))), glyph = USE_GLYPH[v.useDevice], cap = `${glyph}|${px}`;
+    const basket = g.mushrooms && !g.cauldron ? basketNear(g) : null;
+    const basketTag: HouseObject | null = basket && !g.mushrooms.smoke && !g.mushrooms.affected[W.id] ? {
+      id: `mushroom-basket:${basket.type}`, room: 'kitchen', label: `${basket.type} mushrooms`,
+      ...toPlanAt0(basket.x - D.x, basket.z - D.z), w: 1.4, d: 1.4, h: 1.5, use: { kind: 'scenery' },
+    } : null;
+    const tagged = basketTag ?? decks ?? (at && at.use.kind !== "scenery" && !this.said && !waking && !(at.use.kind === "pile" && !pileOut(g.wake)) ? at : null);
+    const usable0 = tagged && tagged.id !== v.houseOpen ? tagged : null, usable = usable0 && hatBy && usable0 === at ? { ...usable0, ...toPlanAt0(hatBy.x - D.x, hatBy.z - D.z), h: 0 } : usable0, px = Math.max(2, Math.round(cv.width / Math.max(1, v.width))), glyph = useGlyph(v.useDevice), cap = `${glyph}|${px}`;
     if (cap !== this.tagKey) { this.tagKey = cap; this.tag.replaceChildren(keycapCanvas(glyph, px)); }
     this.tapUse = usable && v.useDevice === "touch" ? v.onUse : null;
     this.tag.style.pointerEvents = this.tapUse ? "auto" : "none";
     place(this.tag, usable, decks ? 1.9 : tagHeight(usable?.use.kind));
-    place(this.bubble, this.said?.obj ?? null, 0.6, this.said?.obj.use.kind === "say" ? this.said.obj.use.line : "");
+    v.usePrompt.id = usable?.id ?? ""; // (none shown: none for a pin to keep clear of)
+    if (usable) v.usePrompt.top = screen(usable, decks ? 1.9 : tagHeight(usable.use.kind))[1] - this.tag.offsetHeight; // (the keycap stands on that point: translate -100%)
+    place(this.bubble, this.said?.obj ?? null, 0.6, this.said?.line ?? "");
     const from = W.house?.bedFrom, bed = at?.use.kind === "bed" ? at : null;
     if (bed && from !== undefined) {
       const f = Math.min(1, (ht - from) / Math.max(1e-6, HOUSE_ROOMS.bed.hold));
@@ -465,25 +589,26 @@ export class HouseRoomsView {
     } else this.ring.style.display = "none";
     // the wake-up in bed (rules/wakeUp.ts; Ed, 2026-10-26: "This should just be WASD in keycaps to the left of the bed and 'E
     // snooooze' to the right", "or the equivalent for controller"), in place of the card at the foot of the screen: the walking keys
-    // (a pad's left stick) beside the bed's left, its snooze key (a pad's □) and "snooooze" beside its right while it rings (not
+    // (a pad's left stick) beside the bed's left, its snooze key (the use button as bound) and "snooooze" beside its right while it rings (not
     // snoozing; every morning alike since Ed's playtest of v4821, one wake-up); the keys follow the device she last played with
     const wk = g.wake, inBed = !!wk && !wk.open && (wk.beat === "alarm" || wk.beat === "snooze"), bedObj = inBed ? HOUSE_ROOMS.objects.find(o => o.use.kind === "bed") ?? null : null;
-    const pad = v.useDevice === "pad", snooze = inBed && wk!.beat === "alarm", wkey = `${pad}|${px}`;
+    const pad = v.useDevice === "pad", snooze = inBed && wk!.beat === "alarm", wkey = `${pad}|${px}|${useGlyph(v.useDevice)}|${glyphOf("game.moveUp", "keys")}`;
     if (bedObj && wkey !== this.wakeKey) {
       this.wakeKey = wkey;
-      this.wakeL.replaceChildren(pad ? keycapCanvas("STICK", px) : wasdCanvas(px));
+      this.wakeL.replaceChildren(pad ? keycapCanvas(glyphOf("game.moveUp", "pad"), px) : wasdCanvas(px));
       const word = document.createElement("span"); word.textContent = "snooooze";
-      this.wakeR.replaceChildren(keycapCanvas(pad ? "SQ" : "E", px), word);
+      this.wakeR.replaceChildren(keycapCanvas(useGlyph(pad ? "pad" : "keys"), px), word);
     }
     const gap = 1.5; // (metres out from the bed's sides)
-    place(this.wakeL, bedObj && { ...bedObj, x: bedObj.x - bedObj.w / 2 - gap }, 0.2);
-    place(this.wakeR, snooze && bedObj ? { ...bedObj, x: bedObj.x + bedObj.w / 2 + gap } : null, 0.2);
+    const side = (sign: number) => { if (!bedObj) return null; const d = objectOffset(bedObj, sign * (bedObj.w / 2 + gap), 0); return { ...bedObj, x: bedObj.x + d.x, z: bedObj.z + d.z }; };
+    place(this.wakeL, side(-1), 0.2);
+    place(this.wakeR, snooze ? side(1) : null, 0.2);
     if (snooze && bedObj) this.wakeR.style.display = "flex";
   }
 }
 
-/** The use prompt's keycap on each device: E, the pad's left face button (the sigil's, platform/input.ts PAD), a tap. */
-export const USE_GLYPH: Record<"keys" | "pad" | "touch", KeycapGlyph> = { keys: "E", pad: "SQ", touch: "TAP" };
+/** The use prompt's keycap on each device: the use action's as bound now (platform/bindings.ts: E, the pad's cross), a tap. */
+export const useGlyph = (device: "keys" | "pad" | "touch"): KeycapGlyph => glyphOf("game.use", device);
 
 /** Her decks' spot for a tag, as a house object's (on the plan: rules/houseRooms.ts), just behind her seat. */
 function decksSpot(D: Deck): HouseObject {

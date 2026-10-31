@@ -3,19 +3,22 @@
 import { describe, expect, it } from "vitest";
 import { hitWitch, newGame, stepGame, type Controls, type Game } from "./game";
 import { TUNING } from "./tuning";
+// (these test the areas clearing by themselves and the runes at the feet: the game as it was, ?cast=0, rules/stoneStacks.ts)
+const NOCAST = { ...TUNING, cast: { ...TUNING.cast, on: false } };
 import { cellKey } from "./party";
 import { befriend } from "./creatureStates";
 import { holdsArea, wildLeft } from "./clear";
 import type { Creature } from "./creatures";
 import { calmRingAt } from "./slowTime";
 
+// Keep the seeded radius population/geometry: the regression walks 220 m out of an area and searches ±400 m for far-end ambusher approach coverage.
 const still: Controls = { moveX: 0, moveZ: 0, toggleMode: false, zoom: 0, autoTalk: false };
 const run = (g: Game, secs: number, each?: () => void) => { for (let i = 0; i < Math.round(secs * 60); i++) { stepGame(g, still, 1 / 60); each?.(); } };
 const W = TUNING.wildWatch!;
 
 /** A game under way, she landed by a wild area's young or adult (an area with at least two of them), her health endless. */
 function landed(): { g: Game; key: string; natives: () => Creature[] } {
-  const g = newGame(123, TUNING);
+  const g = newGame(123, NOCAST);
   g.clock.paused = false; g.party.spellAt = undefined;
   g.witches[0].health.hp = 1e6;
   run(g, 0.1);
@@ -93,7 +96,7 @@ describe("the hunt (Ed, 2026-10-07: 'fight with me until either I die or they ar
   // trigger, hunting or not: from the far end of their area they never set off.
   it("from the far end of the area, every hunter comes for her (the ambushers too)", () => {
     for (const species of ["spider", "snake", "wolf"]) {
-      const g = newGame(123, TUNING);
+      const g = newGame(123, NOCAST);
       g.clock.paused = false; g.party.spellAt = undefined; g.witches[0].health.hp = 1e6;
       run(g, 0.1);
       const home = cellKey(g.map.centreCell), counts = new Map<string, number>();

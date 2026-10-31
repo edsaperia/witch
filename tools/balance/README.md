@@ -2,20 +2,20 @@
 
 <!-- written by tools/inventory.mjs; edit the scripts' header comments, then run it again -->
 
+## `bagstun.mjs`
+
+Each bag's 💌s against one wild creature: the real rules headless, her standing still at a distance from one wild creature of a kind and rank, throwing at it all the while, the letters that land counted and the seconds till its ring is full taken.
+
+```
+node tools/balance/bagstun.mjs [--bags satchel,bumbag,...] [--species fox] [--levels 1,2] [--dists 10,20,30] [--seeds 2] [--time 60] [--pack 1]
+```
+
 ## `bottrace.mjs`
 
 A bot's run, as a trace: every change in what it's doing, with the clock, her place, mode, hits, stack, the wave and the soundsystems standing; for reading why a bot plays as it does.
 
 ```
 node tools/balance/bottrace.mjs [--seed 1000] [--bot skilled] [--island 10] [--kind badger (that kind's island)] [--time 900] [--every 0 (also a line every N s)] [--game (the bot game's options)] [--feed]
-```
-
-## `buffs.mjs`
-
-💌 throughput under stacked legend buffs: how fast she can fill a crowd's affection with no buffs, typical builds and worst-case stacks, with the per-animal hit gap and other limits; then waves survived in the creature-state model with each build.
-
-```
-node tools/balance/buffs.mjs [--seeds 4] [--gap 120] [--cap 60] [--skills 0.5,1] [--policies defend,leash] [--relics 0] [--no-sim]
 ```
 
 ## `charges.mjs`
@@ -58,6 +58,74 @@ How long losing takes.
 ```
 node tools/balance/endgame.mjs [--seeds 4] [--gaps 300,120] [--skills 0.1,0.25,0.5,1] [--policies defend,leash,relay,mass] [--cap 60] [--hurry 0.5,3] [--relics 0]
 ```
+
+## `expert-calibrate.mjs`
+
+One approved full-night throughput case, never a training batch.
+
+## `expert-contract.mjs`
+
+#1475 owns survey manifests/shards/merge; this owns one strict real-rules case.
+
+## `expert-coverage-screen.mjs`
+
+One final fixed diagnostic screen, coordinator6519419386.
+
+## `expert-delivery-screen.mjs`
+
+Coordinator6520516411: one correctness ablation, no parameter search.
+
+## `expert-diagnostic-trace.mjs`
+
+Paired diagnostic trace: one bot, the report-runtime.mjs `make` setup stated explicitly, JSONL out.
+
+```
+node tools/balance/expert-diagnostic-trace.mjs --bot expert|skilled --out file.jsonl [--limit 600] [--wall 900]
+```
+
+## `expert-evaluate.mjs`
+
+Approved staged evaluation: baseline once, then exactly one fixed vector/job.
+
+## `expert-evaluation-core.mjs`
+
+Pure fixed-vector evaluation contracts.
+
+## `expert-guarded-coverage-screen.mjs`
+
+Screens guarded expert-search coverage against the frozen study requirements.
+
+## `expert-known-quest-screen.mjs`
+
+Fixed coordinator6520033543 screen.
+
+## `expert-progress.mjs`
+
+Observed outcome events only.
+
+## `expert-quest-trace.mjs`
+
+Approved fixed diagnostics.
+
+## `expert-search-core.mjs`
+
+Deterministic, evaluation-independent coordinate search.
+
+## `expert-search.mjs`
+
+Single-worker, bounded real-rules expert search and disjoint held-out evaluation.
+
+```
+node tools/balance/expert-search.mjs --out docs/notes/expert-results/pilot --time 60 --iterations 3 --train-seeds 1 --held-seeds 1 --wall-seconds 480
+```
+
+## `expert-space.mjs`
+
+Bounds cover existing skilled choices; perception/human floors are not searched.
+
+## `expert-throughput.mjs`
+
+Small, single-worker calibration only; not training or evidence of strong play.
 
 ## `fight.mjs`
 
@@ -127,6 +195,24 @@ The waves' gaps with the ley pulse at a constant speed: on each seed's map, the 
 node tools/balance/pulsegaps.mjs [--seeds 10] [--speed 4] [--interval 60] [--boot 30]
 ```
 
+## `report-core.mjs`
+
+Observation and presentation only: no combat, progression or wave model lives here.
+
+## `report-runtime.mjs`
+
+Real-rule runner and isolated invitation fixtures for report.mjs; no simulated combat model.
+
+## `report.mjs`
+
+Real-rules reports and restartable matched experiments.
+
+```
+node tools/balance/report.mjs runs --seeds 200 --bots sloppy,crude,skilled --islands home --bpms 100,120,160,200 --bags satchel --time 4200 --out balance.jsonl --build v5655
+node tools/balance/report.mjs stuns --species all --levels 1,2 --bags all --bpms 100,120,160,200 --seeds 2 --time 60 --out stuns.jsonl --build v5655
+node tools/balance/report.mjs report --out balance.jsonl
+```
+
 ## `runbot.mjs`
 
 Full runs: a bot plays the real rules headless for the first --time seconds of a run, and we read off what a playtester would feel: when she's first knocked out, how much of each woken area she'd invited before its wave, how many legends are angry, and how…
@@ -151,6 +237,24 @@ The creature-state model's report: src/rules/states.ts on the real maps.
 node tools/balance/states.mjs [--seeds 6] [--gap 60|4m/s] [--skills 0.5,1,2,4] [--policies defend,third,leash,babies,relay] [--cap 40]
 ```
 
+## `stunhits.mjs`
+
+Hits to stun: the real rules headless, her adult wolf parked beside one wild creature of each species and rank, the blows it lands counted till the creature is down, and the seconds that took.
+
+```
+node tools/balance/stunhits.mjs [--species wolf,boar,...] [--levels 1,2] [--seeds 2] [--time 120]
+```
+
+## `survey.mjs`
+
+Frozen wide/shallow survey design, cloud shards and strict result merging; never tunes game rules.
+
+```
+node tools/balance/survey.mjs design
+node tools/balance/survey.mjs check
+node tools/balance/survey.mjs merge --manifest tools/balance/surveys/ladder.json --dir results/ladder --out results/ladder.jsonl
+```
+
 ## `sweep.mjs`
 
 Bot sweeps: every bot kind over many seeds, the real rules headless, with a tuning overlay, out to a CSV and a summary.
@@ -168,3 +272,19 @@ Faster waves for the endgame, against the siege hurry: waves rushing once the ru
 node tools/balance/waves.mjs [--seeds 3] [--gap 300] [--skills 0.1,0.25,0.5] [--policies defend,leash,relay,mass] [--cap 60 (waves at the starting gap: the runs stop at cap × gap seconds)] [--json out.json]
 node tools/balance/waves.mjs --report a.json,b.json,...   (merge several runs' JSON into the tables)
 ```
+
+## Also here
+
+- `expert-contract.test.mjs`
+- `expert-coverage-screen.test.mjs`
+- `expert-delivery-screen.test.mjs`
+- `expert-evaluation-core.test.mjs`
+- `expert-evaluation-vectors.json`
+- `expert-guarded-coverage-screen.test.mjs`
+- `expert-known-quest-screen.test.mjs`
+- `expert-progress.test.mjs`
+- `expert-search-core.test.mjs`
+- `expert-space.test.mjs`
+- `report.test.mjs`
+- `survey.test.mjs`
+- `surveys`

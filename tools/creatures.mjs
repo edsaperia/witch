@@ -8,15 +8,16 @@
 //                                            GENOMES, art/sigils.js's SIGILS and SIGIL_NEON, art/legends.js's LEGEND_POSES,
 //                                            art/naps.js's NAP_POSES, and the config files' per-species entries: movement.json's
 //                                            profiles, legends.bySpecies and bodies.radius, combat.json's bySpecies, strength,
-//                                            ranged, kite, temperament and traits, creature-voices.json's, legend-buffs.json's
+//                                            ranged, kite, temperament and traits, creature-voices.json's,
 //                                            character.json's species, and packs.json's kinds: a merge bringing an old-style one back) into its
 //                                            folder, and writes the index
 //   node tools/creatures.mjs show <id>       everything the game knows about one species, section by section
 // A new creature: make art/creatures/<id>/genome.js (`export const GENOME_<ID> = { id, name, template, builder, ... }`: the
 // record as species.js documents it, its name the id in capitals), its sigil.js (`SIGIL_<ID> = { neon, strokes }`, the strokes
 // from art/sigils/strokes.js's building blocks), legend.js (`LEGEND_<ID>`, the sleeping form as legends.js documents it) and,
-// if it isn't the default lie, nap.js (`NAP_<ID>`), and creature.js (`CREATURE_<ID>`: its movement profile, body radius,
-// legend moves, attacks, strength, traits, temperament, voice, buff, character and pack, the config files' sections: the schema is
+// if it isn't the default lie, nap.js (`NAP_<ID>`), its bold.js if it has one (`BOLD_<ID> = { strokes }`: the bold sigil for stacks,
+// runes and pointers, art/sigils.js BOLD; docs/notes/art-checks.md **Bold sigils**), and creature.js (`CREATURE_<ID>`: its movement profile, body radius,
+// legend moves, attacks, strength, traits, temperament, voice, character and pack, the config files' sections: the schema is
 // config/schema/creature.schema.json), run `node tools/creatures.mjs index`, and commit the lot. Not here: its island in
 // its area's art/areas/<id>/kind.json (its line of the kinds table: it takes a placeholder's slot, and that placeholder's
 // config/kinds/<id>.json goes; tools/data.mjs areas) and the tuning file's heavy and swarm-class lists.
@@ -43,6 +44,8 @@ const PARTS = [
 ];
 const partName = (part, id) => part.prefix + id.toUpperCase().replace(/[^A-Z0-9]/g, "_");
 const has = (id, file) => existsSync(join(DIR, id, file));
+/** A bold sigil's export name (bold.js, `BOLD_<ID> = { strokes }`: art/sigils.js BOLD; no registry of its own to adopt from). */
+const boldName = id => "BOLD_" + id.toUpperCase().replace(/[^A-Z0-9]/g, "_");
 
 const HELPER_NAMES = ["L", "A", "D", "C", "E", "at", "stave", "FOOT", "mirror", "pair", "bow", "wave", "spiral", "rays"];
 const helpersUsed = text => { const t = text.replace(/\.\.\./g, " "); return HELPER_NAMES.filter(h => new RegExp(`(^|[^\\w$.])${h}(?=[^\\w$]|$)`).test(t)); }; // (a spread's dots are not a property access)
@@ -89,7 +92,6 @@ const CONFIG_SECTIONS = [
   { file: "config/combat.json", path: ["temperament"], key: "temperament", by: true },
   { file: "config/combat.json", path: ["traits"], key: "traits", by: true, many: true },
   { file: "config/creature-voices.json", path: ["species"], key: "voice" },
-  { file: "config/legend-buffs.json", path: ["species"], key: "buff" },
   { file: "config/character.json", path: ["species"], key: "character" },
   { file: "config/packs.json", path: ["kinds"], key: "pack" },
 ];
@@ -164,6 +166,8 @@ ${PARTS.flatMap(part => list.filter(id => has(id, part.file)).map(id => `import 
 export const CREATURE_GENOMES = [${list.map(ident).join(", ")}];
 ${PARTS.map(part => `export const ${part.assembled} = { ${list.filter(id => has(id, part.file)).map(id => `${id}: ${partName(part, id)}${part.object === "SIGILS" ? ".strokes" : ""}`).join(", ")} };`).join("\n")}
 export const CREATURE_NEONS = { ${list.filter(id => has(id, "sigil.js")).map(id => `${id}: ${partName(PARTS[0], id)}.neon`).join(", ")} };
+${list.filter(id => has(id, "bold.js")).map(id => `import { ${boldName(id)} } from "./${id}/bold.js";`).join("\n")}
+export const CREATURE_BOLD = { ${list.filter(id => has(id, "bold.js")).map(id => `${id}: ${boldName(id)}.strokes`).join(", ")} };
 ${list.filter(id => has(id, "creature.js")).map(id => `import { ${configName(id)} } from "./${id}/creature.js";`).join("\n")}
 export const CREATURE_CONFIGS = { ${list.filter(id => has(id, "creature.js")).map(id => `${id}: ${configName(id)}`).join(", ")} };
 `;
