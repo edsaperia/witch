@@ -505,8 +505,8 @@ export interface Tuning {
   dreams: { range: number; nightmare: { at: number[]; faces: string[] }; /** a sleeping legend's face while its dream is open: mostly face, now and then one of faces for a turn of every seconds */ sleepy?: { face: string; weight: number; every: number; faces: string[]; fallback: string }; /** Its thought bubble's one symbol at a time (Ed, 2026-10-08): turns of hold seconds, the emoji then the quest sigil (the flask's relic sigil instead, a flask share of those turns), each fading over fade seconds at its ends (render/thoughtCloud.ts dreamSymbol). */ cycle?: { hold: number; fade: number; flask: number } };
   /** Which areas have a legend (Ed, 2026-10-06: "only in about half of areas (we can test this ratio)"): share of them, seeded per map and spread out (rules/map.ts chooseLegendCells); the map's, so a change needs a new map. */
   legends: { share: number;
-    /** A happy legend's reach, metres (Ed, 2026-10-06, on relic allies: "They stay home, but if they're not useful enough right now, make their range longer"); an angry one's is legends.json attack.range. */
-    happyRange: number;
+    /** Friendly legends defend witches and engage enemies within this many metres (Ed, 2026-10-31); angry reach stays in legends.json. */
+    friendRange: number;
     /** A legend dreams of any other kind on the map, equally likely, but none whose nearest area lies over questCap areas away (about the farthest tenth at 5; 0: no cap). */
     questCap: number;
     /** A legend dreams only of a kind living in an area later on the route than its own (else the nearest later area's, else any). */

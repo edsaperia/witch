@@ -41,6 +41,29 @@ const isLegend = (c: Creature) => !!c.boss || c.level === LEGEND;
 const calmAll = (g: Game) => { for (const c of g.creatures) if (straggler(c)) befriend(c, g.clock.time); };
 
 describe("the end of the route (rules/win.ts)", () => {
+  it("every incomplete legend sleeps in its circle at win, even if happy or a party legend; completed quests still dance", () => {
+    for (const state of ["asleep", "restless", "happy", "angry"] as const) {
+      const { g } = toTheEnd(), legends = g.creatures.filter(c => c.boss && !c.gone), c = legends[0];
+      for (const other of legends) other.quest = { species: "otter", done: 0 };
+      c.quest = { species: "fox" };
+      Object.assign(c, { legendState: state, partyLegend: state === "happy", finale: undefined, lairX: c.x, lairZ: c.z });
+      if (state === "angry") c.enraged = true;
+      stepGame(g, idle, STEP); calmAll(g); stepGame(g, idle, STEP);
+      expect(g.win?.phase).toBe("lap");
+      // Bring the victory lap to its end; the win's state transitions are the subject, not pulse travel time.
+      for (const p of g.win!.lap) p.at = g.clock.time;
+      stepGame(g, idle, STEP);
+      expect(g.win?.phase).toBe("won");
+      expect(c.legendState).toBe("asleep"); expect(c.partyLegend).toBeFalsy(); expect(c.finale).toBeUndefined();
+      const home = { x: c.lairX!, z: c.lairZ! };
+      // A displaced legend must finish its lull walk even though ordinary legend stepping has stopped.
+      c.x += 10; c.homing = true;
+      run(g, 5);
+      expect(c.x).toBeCloseTo(home.x); expect(c.z).toBeCloseTo(home.z); expect(c.homing).toBeFalsy();
+      for (const other of legends) if (other !== c) expect(other.partyLegend).toBe(true);
+    }
+  }, 60000);
+
   it("last call: the final stone is flagged before its wave; after it the route is done", () => {
     const { g, finalSeen } = toTheEnd();
     expect(finalSeen).toBe(true);
@@ -150,6 +173,7 @@ describe("the end of the route (rules/win.ts)", () => {
   it("the win: the dealt legends woken and home (an enraged one lulled), everyone else in the conga, her leash let go, nothing fighting; the islands found only tonight's quests' (Ed, 2026-10-18); then the card", () => {
     const { g } = toTheEnd();
     const legends = g.creatures.filter(c => c.boss && !c.gone), angry = legends[0];
+    for (const c of legends) if (c !== angry) c.quest = { species: "otter", done: 0 }; // timestamp zero is a completed quest
     g.islandsTonight = ["otter"]; // (a quest done tonight: its island, and only it, found)
     // (kept angry till the win: left to itself, a legend whose kin are about calms of its own accord, rules/legends.ts)
     const keepAngry = () => { if (g.win?.phase !== "won" && angry.legendState !== "angry") anger(angry, g.clock.time); };

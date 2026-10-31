@@ -509,7 +509,7 @@ describe("Ed's Stage 4 rulings", () => {
     expect(wild.drops).toBeUndefined();
   }, 60000);
 
-  it("leaves a woken area's babies out of its siege: they stay home, happy, and can still be leashed (their rune)", () => {
+  it("leaves a woken area's babies out of its siege: they stay home, happy, with no invitation or personal rune", () => {
     const g = newGame(77, { ...TUNING, cast: { ...TUNING.cast, on: false } }); // (their runes at their feet: the game without the stone stacks, ?cast=0)
     g.clock.paused = false;
     g.witch = { ...g.witch, seated: false, mode: "treetop", lift: 1 };
@@ -519,7 +519,8 @@ describe("Ed's Stage 4 rulings", () => {
     stepGame(g, { ...idle, nextWave: true }, STEP);
     expect(baby.siege).toBeUndefined();
     expect(here.slice(1).every(c => c.siege)).toBe(true);
-    expect(invitable(baby) || hasRune(baby, g.clock.time)).toBe(true); // (happy at its soundsystem: leashed by picking up its rune, Ed 2026-10-06)
+    expect(baby.state).toBe("happy");
+    expect(invitable(baby) || hasRune(baby, g.clock.time)).toBe(false); // Ed, 2026-10-31: no baby invitations or personal runes.
   }, 60000);
 
   it("has kiting kinds (the raven) keep their distance while they shoot (hers: wild ravens swoop, swoop.test.ts)", () => {

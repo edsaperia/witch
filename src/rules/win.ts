@@ -8,9 +8,8 @@
 //     racing back along the route to home (winPulse), the other on to the route's end (winPulseOut), every stone either passes
 //     firing its fireworks (a waveCelebrate event, as a celebrated wave's), the music on to its victory section (musicPlan's
 //     cue). The waves stop as the lap sets off.
-//   The win, as the lap reaches home: the island's sigil (islandSigil), the night's legends woken (Ed, 2026-10-11: not in the
-//     conga, but they come home and dance there as party legends) save any still enraged, which calm and go back to sleep in
-//     their clearing; every other animal on the island a party animal in one giant conga line round
+//   The win, as the lap reaches home: only quest-complete legends dance as party legends; all others sleep in their circles
+//     (Ed, 2026-10-31). Every other animal on the island becomes a party animal in one giant conga line round
 //     the dancefloor; fireworks from every standing soundsystem. Nothing fights after; the waves are over.
 //   The conga follows her (Ed's playtest, 2026-10-26: "when you're on the ground in the home area, the line should follow
 //     you"): while she's on the ground in the home area (not up at the treehouse, nor in the treetops), the line's leader
@@ -25,7 +24,7 @@ import { runawayArrives } from "./runaway";
 import type { Creature } from "./creatures";
 import { LEGEND } from "./creatures";
 import { befriend } from "./creatureStates";
-import { lull } from "./legends";
+import { LEGENDS, lull } from "./legends";
 import { islandSigilOf } from "./dancefloor";
 import { allReached, cellKey } from "./party";
 import { leyChain } from "./leylines";
@@ -249,11 +248,14 @@ function win(g: Game, time: number): void {
   // Her leash let go: every one of them dances in the line now.
   for (const W of g.witches) { for (const id of [...W.leash.stack, ...W.leash.placed.map(p => p.id)]) g.creatures[id].leashed = false; W.leash.stack = []; W.leash.placed = []; W.leash.talk = null; }
   g.combat.busy.clear();
-  // The night's legends: the enraged ones calm and sleep again; the rest wake and come home to dance.
+  // Ed, 2026-10-31: only completed quests bring legends to the dancefloor; all others sleep in their circles.
   const legends = dealtLegends(g), woken: Creature[] = [];
   w.found = [...(g.islandsTonight ?? [])]; // (only the quests done tonight find islands: Ed, 2026-10-18)
   for (const c of legends) {
-    if (!c.quest?.done) { lull(c, time); w.lost.push(c.species); continue; }
+    if (c.quest?.done === undefined) {
+      lull(c, time); c.partyLegend = undefined; c.finale = undefined; c.dancing = false;
+      w.lost.push(c.species); continue;
+    }
     woken.push(c);
   }
   // One still running for the beach (rules/runaway.ts): there at once, asleep, as it stays (Ed, 2026-10-28: "stay there if it's won");
@@ -345,6 +347,11 @@ export function stepWin(g: Game, dt: number): void {
   }
   const pace = follow ? Math.max(T.joinSpeed, T.followSpeed * Math.hypot(W.vx, W.vz)) : T.joinSpeed;
   for (const c of g.creatures) {
+    // Legend state stepping stops after the win, so finish each incomplete legend's lull walk here.
+    if (c.boss && c.legendState === "asleep" && c.homing) {
+      toward(g, c, { x: c.lairX ?? c.x, z: c.lairZ ?? c.z }, dt, T, LEGENDS.homeSpeed);
+      if (!c.moving) c.homing = undefined;
+    }
     if (c.finale === undefined || c.gone) continue;
     if (c.finale >= 0 && follow) {
       const p = { x: PLACES[c.finale * 2], z: PLACES[c.finale * 2 + 1] };

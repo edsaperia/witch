@@ -13,7 +13,7 @@ export const fighting = (c: Creature) => c.cheerUntil === undefined && !c.gone &
 
 /** Whether anything may attack it: fighting, and not a baby (Ed, 2026-10-04: "No animals should
  *  attack babies"; shots and quakes pass them by, and they can't be beaten in a fight). */
-export const targetable = (c: Creature) => fighting(c) && c.level > 0 && !c.swoop?.up && !c.burrow && !c.partyLegend && !c.asleep && !c.packHide && c.packShell === undefined; // (in a pack, out of sight or in its shell: rules/combat/packs.ts, which lets them go when their time's up) // (a party legend's out of it all: the Easter egg) // (a burrower underground can't be hit)
+export const targetable = (c: Creature) => fighting(c) && c.level > 0 && c.legendState !== "happy" && !c.swoop?.up && !c.burrow && !c.partyLegend && !c.asleep && !c.packHide && c.packShell === undefined; // Friendly legends cannot be pursued or provoked (Ed, 2026-10-31).
 
 /** Whose side: hers (on her leash, at a sigil, or a happy area legend: Ed, 2026-10-04) or the wild's. */
 export const sideOf = (c: Creature): State => stateOf(c); // (its state: who fights whom is foes(), rules/creatureStates.ts)
@@ -72,7 +72,7 @@ export const inviting = (w: CombatWorld, c: Creature, o: Creature) => !huntsWitc
  *  she's risen to the treetops, or it (her or a party animal) is past its band beyond its area's edge. */
 export function gaveUp(w: CombatWorld, c: Creature, tg: Target): boolean {
   if (tg.kind === "witch" && c.hunting === tg.id) return false; // (a hunter never gives her up while she's in its area: rules/hunt.ts; out of it, the hunt ends and this rule applies)
-  if (tg.kind === "witch") { const v = w.witches[tg.id]; return !!v && !v.down && (!v.onGround || sheltered(v, c) || pastEdge(w, c, v.x, v.z)); }
+  if (tg.kind === "witch") { const v = w.witches[tg.id]; return !!v && !v.down && (!v.onGround || sheltered(v, c)); }
   if (tg.kind === "creature") { const o = w.creatures[tg.id]; return !!o && !o.gone && pastEdge(w, c, o.x, o.z); }
   return false;
 }
@@ -92,7 +92,7 @@ export function valid(w: CombatWorld, s: CombatState, c: Creature, tg: Target): 
     if (!huntsWitch(sideOf(c)) || !v || !v.onGround || v.down || w.talkingTo(c.id) === tg.id || sheltered(v, c)) return false;
     if (v.hidden !== undefined && Math.hypot(v.x - c.x, v.z - c.z) > v.hidden) return false; // (her Stealth broom: out of its range, it's lost her)
     if (c.hunting === tg.id) return true; // (hunting her: she's in its area, rules/hunt.ts; once she leaves it the hunt ends and pastEdge applies, 30 m)
-    if (!c.siege) return !pastEdge(w, c, v.x, v.z);
+    if (!c.siege) return true; // Ed, 2026-10-31: ordinary pursuers follow anywhere on the ground until take-off.
     const d = Math.hypot(v.x - c.x, v.z - c.z), range = attackOf(c.species, c.level)?.attack.range ?? 0;
     return !(d > range && d >= w.t.combat.witchLose * FIGHT.scale && !w.inArea(c, v.x, v.z));
   }

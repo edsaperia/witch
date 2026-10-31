@@ -2215,6 +2215,8 @@ Which areas have a legend, and how far a happy one reaches.
 2. 2026-10-06
 . The rest have no legend: no clearing, quest, restlessness or legend music. Read as the map is made: the decisions panel reloads. Ed's answers on #259 [2]: happyRange, a happy legend's reach in metres (relic allies: "They stay home, but if they're not useful enough right now, make their range longer").
 
+- **`legends.friendRange`**: A friendly legend defends a witch within this many metres, otherwise engages enemies in this range before walking towards the ley line tip.
+  1. Ed, 2026-10-31: "about the average radius of an area" (85 m; replaces happyRange 420 m. Defend, engage, then walk the route towards its drawing tip.)
 - **`legends.earlyQuest`**: One of the first areas the waves wake has a legend dreaming of a creature from a nearby area, so there's an early quest.
   1. Ed, 2026-10-07: "for variety we could fix one of [first, second, third] having a legend that wants one of the first three [not itself] so there's always an easy quest to do in the first third"
   one of the first three areas the waves wake (seeded), one with a legend, dreams of the baby of another of those three's kind (rules/quest.ts earlyQuest); if none of them has a legend, one of them (seeded, one whose kind another of the three lacks) is given one as the map is made, moved from the legend area the route reaches last (or, where that would clump legend areas together, from the one beside it), so share holds (rules/map.ts); false: every dream as before.
@@ -2238,7 +2240,7 @@ Which areas have a legend, and how far a happy one reaches.
 | `legends.share` | number | 0 to … |
 | `legends.earlyQuest` | boolean |  |
 | `legends.areas` | boolean |  |
-| `legends.happyRange` | number | 0 to … |
+| `legends.friendRange` | number | 0 to … |
 | `legends.questCap` | number | 0 to … |
 | `legends.questLater` | boolean |  |
 | `legends.bombard.on` | boolean |  |

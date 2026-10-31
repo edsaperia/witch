@@ -216,14 +216,14 @@ describe("legends, redesigned (Ed, 2026-10-05; #87)", () => {
     }
   }, 60000);
 
-  it("when happy, shoot the enraged from afar; worn down by them, sleep again", () => {
+  it("when happy, engages an enraged enemy within 85 m and cannot itself be pursued or provoked", () => {
     const { g, L } = beside();
     run(g, 0.2, { ...idle, happyNearest: true });
     expect(L.legendState).toBe("happy");
     g.witch = { ...g.witch, mode: "treetop", lift: 1 };
     // (120 m off toward the map's middle, wherever in its clearing the legend lies)
     const dx = g.map.dancefloor.x - L.x, dz = g.map.dancefloor.z - L.z, dd = Math.hypot(dx, dz) || 1;
-    const far = put(g, L.species === "boar" ? "wolf" : "boar", 1, L.x + (dx / dd) * 120, L.z + (dz / dd) * 120); far.enraged = true; far.state = "enraged"; far.siege = "home";
+    const far = put(g, L.species === "boar" ? "wolf" : "boar", 1, L.x + (dx / dd) * 60, L.z + (dz / dd) * 60); far.enraged = true; far.state = "enraged"; far.siege = "home";
     let hitFar = false;
     run(g, LEGENDS.attack.interval + LEGENDS.attack.windup + LEGENDS.attack.lobFlight + 2, idle, () => { if (far.hurtAt !== undefined) hitFar = true; });
     expect(hitFar).toBe(true);
@@ -231,7 +231,8 @@ describe("legends, redesigned (Ed, 2026-10-05; #87)", () => {
     L.drops = 0.999; // (its slots nearly full of 💧s: rules/orbit.ts)
     const near = put(g, L.species === "boar" ? "wolf" : "boar", 2, L.x + 1.5, L.z, L.cell); near.enraged = true; near.state = "enraged";
     run(g, 10);
-    expect(L.legendState).toBe("asleep");
+    expect(L.legendState).toBe("happy");
+    expect(near.fight?.target?.kind === "creature" && near.fight.target.id === L.id).toBe(false);
   }, 60000);
 
   it("has the dream quest wake it happy, fighting for her, no buff (Ed, 2026-10-18; the creature stays hers), and stay open while it sleeps, soundsystem on or not (Ed, 2026-10-06)", () => {

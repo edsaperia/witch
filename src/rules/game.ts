@@ -413,6 +413,7 @@ export const affectionOf = (g: Game, W: Witch = g.witches[0]): Affection => {
     invitable: c => (napper(c) ? invitableNow({ ...c, asleep: false }, data) : invitableNow(c, data)), // (as if up: the letter wakes it)
     blocksLetters: c => !c.partyLegend && !c.asleep && !invitableNow(c, data) && blocksLetters(c), // (the egg: a happy legend takes them; a party legend lets them by)
     hit(c, amount, at) {
+      if (c.level === 0) return; // Ed, 2026-10-31: no baby invitation, wake or meter.
       // (the creature's meter on the world's clock; her letters' events on hers: rules/slowTime.ts)
       if (napper(c)) Object.assign(c, { asleep: false, napUntil: undefined, lulled: undefined, wakeUntil: undefined, rest: 0 }); // (roused by it: up at once, as rules/inviteWakes.ts wakes its area)
       const was = stateOf(c), time = g.clock.time, party = !!c.partyLegend;
@@ -420,7 +421,7 @@ export const affectionOf = (g: Game, W: Witch = g.witches[0]): Affection => {
       if (was !== "happy" && castOn(t)) markAtStone(g, c); // (its sigil friend-coloured in its stone's stack: rules/stoneStacks.ts)
       if (stateOf(c) !== was || (c.partyLegend && !party)) s.events.push({ kind: "happy", x: c.x, z: c.z, at, id: c.id }); // (happy, or leashed; or a party legend)
     },
-    affection: c => affection({ time: g.clock.time }, c, data),
+    affection: c => c.level === 0 ? null : affection({ time: g.clock.time }, c, data),
   };
 };
 
@@ -801,7 +802,7 @@ function napRules(g: Game): NapRules | undefined {
   if (!N?.on) return undefined;
   const roused = new Set<string>(), down = g.witches.filter(w => w.body.mode === "ground" && !w.body.seated && !w.body.perch && !w.ko).map(w => w.body);
   for (const b of down) roused.add(cellKey(areaCellAt(g.map, b.x, b.z)));
-  // A legend circle's baby (naps.circle) wakes only for a witch at its circle (so she can still invite it), not anywhere in its area.
+  // A legend circle's baby (naps.circle) wakes for a witch at its circle; it joins only when its area is soundsystemed.
   const C = N.circle, atCircle = (c: Creature) => down.some(b => Math.hypot(b.x - c.circle!.x, b.z - c.circle!.z) <= c.circle!.r + C!.reach);
   return { chance: N.chance, length: N.length, wake: N.wake, circle: C, wild: c => !g.party.areas.has(cellKey(c.cell)), roused: c => C && keepsToCircle(c) ? atCircle(c) : roused.size > 0 && roused.has(cellKey(c.cell)) };
 }

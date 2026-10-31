@@ -61,7 +61,7 @@ export function invitableNow(c: Creature, data: StatesData = STATES): boolean {
   if (c.asleep || c.bed) return false; // (asleep, or walking home to bed: rules/partyOver.ts)
   if (inConga(c)) return false; // (the won night's line: never hers again)
   if (c.swoop?.up) return false; // (a wild flyer up in the air, out of reach: 💌s pass under it; rules/movement.ts stepSwoop)
-  if (data.partyEgg && partyEggOpen(c)) return true; // (the Easter egg: a happy legend takes 💌s, 100 of them)
+  if (data.partyEgg && partyEggOpen(c)) return true; // Existing optional exception; coordinator ruling requested on #1552 before changing it.
   if (c.gone || c.leashed || (c.fleeUntil && !c.dazedUntil) || c.level === LEGEND || c.boss) return false;
   const s = stateOf(c);
   if (s === "wild") return !c.wanderTo;

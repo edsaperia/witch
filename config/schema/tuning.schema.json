@@ -5966,9 +5966,10 @@
           "type": "boolean",
           "description": "Each legend gets an area of its own beside one of its kind's areas."
         },
-        "happyRange": {
+        "friendRange": {
           "type": "number",
-          "minimum": 0
+          "minimum": 0,
+          "description": "A friendly legend defends a witch within this many metres, otherwise engages enemies in this range before walking towards the ley line tip."
         },
         "questCap": {
           "type": "number",
@@ -6039,7 +6040,7 @@
         "share",
         "earlyQuest",
         "areas",
-        "happyRange",
+        "friendRange",
         "questCap",
         "questLater",
         "bombard",
