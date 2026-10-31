@@ -1,4 +1,4 @@
-PARTIAL 0/23 done (laptop: FAIL, timeout crash)
+PARTIAL 0/23 done (laptop: FAIL timeout crash; tilt-before: TIMEOUT)
 
 # Full smoke run on 003eb8cc0fad18014fe1d8430784d649fc5e4a0d
 
@@ -34,4 +34,34 @@ page.waitForFunction: Timeout 240000ms exceeded.
 ```
 
 Note: the run threw in `laptop` (an uncaught `page.waitForFunction` timeout in `hold`, smoke.cjs:138 via flyPath at :214), and smoke.cjs aborts the whole run on an uncaught error, so no ok/FAIL lines were printed and heath, phone, tilt-before, tilt-after and tilt-off never ran. They are rerun without laptop as batch 1b.
+
+### Batch 1b: heath,phone,tilt-before,tilt-after,tilt-off
+
+- exit code: 124 (timed out)
+- wall time: 2701s (12:12 UTC end)
+
+```
+```
+
+Error (trimmed):
+```
+page.screenshot: Target page, context or browser has been closed
+Call log:
+[2m  - taking page screenshot[22m
+[2m  - waiting for fonts to load...[22m
+[2m  - fonts loaded[22m
+
+    at shot (/home/user/witch/tools/smoke/smoke.cjs:153:69)
+    at async /home/user/witch/tools/smoke/smoke.cjs:303:7
+    at async run (/home/user/witch/tools/smoke/smoke.cjs:107:5)
+    at async main (/home/user/witch/tools/smoke/smoke.cjs:297:5) {
+  log: [
+    '  - taking page screenshot',
+    '  - waiting for fonts to load...',
+    '  - fonts loaded'
+  ]
+}
+```
+
+Note: 1b hit its 2700 s cap inside tilt-before's first screenshot (smoke.cjs:303). heath and phone had run (their screenshots 08, 10, 11 were written), but smoke.cjs prints ok/FAIL only at the end of a run, so their checks are lost. tilt-before: TIMEOUT (more than ~13 min, still in its first shot). From here, one scene per run (cap 900 s), so a slow scene can't take others' results with it.
 
