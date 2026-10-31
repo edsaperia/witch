@@ -33,7 +33,7 @@ export function refractionDepth(p: readonly [number, number], low: readonly [num
 }
 
 /** CPU reference for capture diagnostics/tests, using the same projected uniforms as the composite.
- * The supplied coordinate is AFTER potion wobble; OFF returns it exactly without reading depth. */
+ * The supplied coordinate is the base quantized UV BEFORE potion wobble; OFF returns it exactly without reading depth. */
 export function refractionCoordinate(p: readonly [number, number], low: readonly [number, number], shapes: readonly (readonly number[])[], states: readonly (readonly number[])[], count: number, depthAt: (p: readonly [number, number]) => number): readonly [number, number] {
   if (count === 0) return p;
   let depth = -1, dx = 0, dy = 0, guard = 0;

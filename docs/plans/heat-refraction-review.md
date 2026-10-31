@@ -1,7 +1,8 @@
 # Heat/refraction review handoff (PR #1543)
 
 The code is a default-OFF preview, not accepted visual/performance work. Root
-reservation 6544780920 permits the additive shared integration; canonical owns
+reservation 6544780920 permits the additive shared integration; canonical order
+6545181860 supersedes its earlier potion-before-refraction order. Canonical owns
 normal merges, compiled-shader checks, art, cloud captures, GPU/memory and release.
 No builder browser allocation or local browser run was made.
 
@@ -46,21 +47,26 @@ the helper's PNG byte flags alone are not the required visual measurement.
    `FX_QUALITY.distortion=false`, reduced flashing, and default/no URL flag disable
    the preview. The existing quality rung is “magic shimmer off”.
 5. Same frame with ordinary potion wobble OFF/ON crossed with refraction OFF/ON.
-   Existing quantised sample and potion wobble execute first; destination depth
-   and the world mask use that resulting scene coordinate. Only the final scene
-   fetch is refracted. **Bloom, smooth FX overlays, potion outlines, grade and
-   tilt-shift retain their previous coordinates/order.** Inspect fire glow, mist,
+   Base quantized UV -> guarded refraction -> unchanged potion wobble -> existing
+   grading/composite. Refraction source/destination depth and the world mask use
+   the base/refraction coordinates before potion wobble. **No potion-owned lines
+   move or change.** Existing bloom and outlines consume the resulting p as before;
+   smooth FX keeps vUv and grading/tilt-shift keep their order. Inspect fire glow, mist,
    pressure-wave edges and outline seams explicitly; do not assume those layers
    move with the scene. On the combined build repeat with Night Vision, Miniature
-   and Hue Spin while preserving their existing implementations.
+   and Hue Spin while preserving their existing implementations. Normal-merge
+   prototype after #1539 is verified LIVE before the next REPORT/combined run.
+   OFF-return stability and source-code identity do not establish OFF pixel
+   identity against the unmodified composite: measure that separately in the
+   canonical runner, including refraction+wobble+one grading potion simultaneously.
 6. Crowded real scene, ground and treetop camera: paired frame/GPU timing and GPU
    allocation bytes, not just texture count. There is no extra rendering pass or
    texture allocation in this implementation; that is a code audit, not a measured
    zero-cost claim. Up to four form slots; current slice uses one fire and one cast.
    Depth is read only within a local mask and again for a displaced source.
-   Fractional potion coordinates guard all four linearly participating scene
-   texels (up to four destination reads plus one snapped-source read); ordinary
-   art-texel centres use one destination plus one source read. Measure that cost.
+   Base art-texel centres use one destination plus one source read; the helper's
+   defensive fractional-coordinate path can use four destination reads. Measure
+   real GPU cost, including when wobble and grading are also active.
 
 Capture/compile failures remain real findings. Do not enable by default or claim
 acceptance until canonical reviews these actual images and measured costs.

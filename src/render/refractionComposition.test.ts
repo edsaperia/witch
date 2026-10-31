@@ -4,7 +4,7 @@ import { refractionCoordinate } from "./refractionMath";
 const size = [320, 180] as const;
 const shapes = [[0.5, 0.5, 0.2, 0.2]];
 const states = [[0.6, 0, Math.PI / 6, 2]]; // plume centre has one maximum leftward sample
-it("OFF is exact identity after arbitrary potion wobble and performs zero depth reads", () => {
+it("OFF is exact coordinate identity before potion wobble and performs zero depth reads", () => {
   const p = [0.517234, 0.481725] as const, depth = vi.fn(() => 0.9);
   expect(refractionCoordinate(p, size, shapes, states, 0, depth)).toBe(p);
   expect(depth).not.toHaveBeenCalled();
@@ -14,7 +14,7 @@ it("pixels outside every local form stay exact and do not read depth", () => {
   expect(refractionCoordinate(p, size, shapes, states, 1, depth)).toBe(p);
   expect(depth).not.toHaveBeenCalled();
 });
-it("samples and guards the post-potion destination, then the actual snapped source", () => {
+it("samples and guards the base quantized destination, then the actual snapped source before potion wobble", () => {
   const p = [160.5 / 320, 90.5 / 180] as const, reads: (readonly [number, number])[] = [];
   const moved = refractionCoordinate(p, size, shapes, states, 1, q => { reads.push(q); return 0.9; });
   expect(moved).not.toEqual(p); expect(reads[0]).toBe(p); expect(reads[1]).toEqual(moved);
@@ -24,7 +24,7 @@ it("samples and guards the post-potion destination, then the actual snapped sour
   const foregroundSource = refractionCoordinate(p, size, shapes, states, 1, q => q === p ? 0.9 : 0.4);
   expect(foregroundSource).toBe(p);
 });
-it("protects foreground in a neighbouring scene texel participating in fractional potion sampling", () => {
+it("also protects neighbouring foreground when a diagnostic caller supplies a fractional coordinate", () => {
   const p = [0.5, 0.5] as const;
   const depth = (q: readonly [number, number]) => q[0] < 0.5 ? 0.3 : 0.9;
   expect(depth(p)).toBe(0.9); // A nearest-only guard would miss the foreground mixed into this colour.

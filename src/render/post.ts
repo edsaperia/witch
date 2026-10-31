@@ -89,12 +89,13 @@ vec3 irisShade(vec2 q, vec3 base) {
 }
 void main() {
   vec2 p = (floor(vUv * uLow) + 0.5) / uLow;
+  p = refractScene(p);
   if (uPotionWobble.x > 0.0 && uPotionWobble.w > 0.0) {
     float edge = smoothstep(1.0 - uPotionWobble.w, 1.0, max(abs(vUv.x * 2.0 - 1.0), abs(vUv.y * 2.0 - 1.0)));
     vec2 wave = sin(vec2(vUv.y, vUv.x) * (6.2831853 / uPotionWobble.z) + uPotionTime * uPotionWobble.y + vec2(0.0, 1.7));
     p = clamp(p + wave * edge * uPotionWobble.x / uLow, 0.5 / uLow, 1.0 - 0.5 / uLow);
   }
-  vec3 c = texture2D(uScene, refractScene(p)).rgb;
+  vec3 c = texture2D(uScene, p).rgb;
   // (the circle hunt: a scene pixel that's not a number, infinite or negative shows red, magenta or yellow)
   if (uBroken > 0.5) { bool nan = !(c.r == c.r) || !(c.g == c.g) || !(c.b == c.b) || any(isnan(c)); if (nan) { gl_FragColor = vec4(1.0, 0.0, 0.0, 1.0); return; } if (any(isinf(c)) || max(c.r, max(c.g, c.b)) > 60000.0) { gl_FragColor = vec4(1.0, 0.0, 1.0, 1.0); return; } if (min(c.r, min(c.g, c.b)) < 0.0) { gl_FragColor = vec4(1.0, 1.0, 0.0, 1.0); return; } }
   if (uFxOn > 0.5) { vec4 f = texture2D(uFx, vUv); c = c * (1.0 - f.a) + f.rgb; }

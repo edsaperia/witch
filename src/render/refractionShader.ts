@@ -7,7 +7,7 @@ uniform int uRefractionCount;
 uniform vec4 uRefractionShape[${REFRACTION_LIMIT}]; // centre uv, half-width/height uv
 uniform vec4 uRefractionState[${REFRACTION_LIMIT}]; // protected support depth, kind (plume/ring), clock/phase, art-pixel strength
 float refractionDepthAt(vec2 p) {
-  // Existing potion wobble can linearly sample four scene texels. Protect every participating foreground texel.
+  // Protect every participating foreground texel if diagnostic callers supply a fractional coordinate.
   vec2 cell = p * uLow - 0.5, nearest = floor(cell + 0.5);
   if (all(lessThan(abs(cell - nearest), vec2(0.0001)))) return texture2D(uRefractionDepth, p).r;
   vec2 base = floor(cell), lo = clamp((base + 0.5) / uLow, 0.5 / uLow, 1.0 - 0.5 / uLow);
@@ -43,7 +43,7 @@ vec2 refractScene(vec2 p) {
   offset = floor(clamp(offset, vec2(-${REFRACTION_MAX_PIXELS.toFixed(1)}), vec2(${REFRACTION_MAX_PIXELS.toFixed(1)})) + 0.5);
   if (all(equal(offset, vec2(0.0)))) return p;
   vec2 at = (clamp(floor(p * uLow) + offset, vec2(0.0), uLow - 1.0) + 0.5) / uLow;
-  // Potion wobble can supply a fractional p. Keep the final displacement bounded even when snapping it.
+  // Keep the refraction displacement bounded even for diagnostic fractional coordinates.
   if (any(greaterThan(abs(at - p) * uLow, vec2(${REFRACTION_MAX_PIXELS.toFixed(1)} + 0.0001)))) return p;
   float sourceDepth = refractionDepthAt(at);
   // Conservative source guard too: background heat cannot pull a foreground silhouette sideways.

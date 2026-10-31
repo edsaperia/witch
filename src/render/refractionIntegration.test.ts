@@ -21,8 +21,17 @@ it("binds existing depth plus bounded form uniforms in the real Post composite w
   expect(composite.uniforms.uRefractionCount.value).toBe(2);
   expect(composite.uniforms.uRefractionDepth.value).toBe(post.scene.depthTexture);
   expect(composite.uniforms.uRefractionShape.value).toBe(post.refraction.shapes);
-  // The scene call alone changes its coordinate; bloom/FX and the existing potion p remain unchanged.
-  expect(composite.fragmentShader).toContain("texture2D(uScene, refractScene(p))");
+  // Canonical6545181860: one additive seam, before the unchanged potion block.
+  const shader = composite.fragmentShader;
+  const base = shader.indexOf("vec2 p = (floor(vUv * uLow) + 0.5) / uLow;");
+  const refraction = shader.indexOf("p = refractScene(p);", base);
+  const wobble = shader.indexOf("if (uPotionWobble.x > 0.0", base);
+  const scene = shader.indexOf("vec3 c = texture2D(uScene, p).rgb;", base);
+  const grading = shader.indexOf("if (uGrade.x > 0.0)", base);
+  expect(base).toBeGreaterThan(0); expect(refraction).toBeGreaterThan(base);
+  expect(wobble).toBeGreaterThan(refraction); expect(scene).toBeGreaterThan(wobble);
+  expect(grading).toBeGreaterThan(scene);
+  expect(shader.match(/p = refractScene\(p\);/g)).toHaveLength(1);
   expect(composite.fragmentShader).toContain("texture2D(uBloom, uPotionWobble.x > 0.0 ? p : vUv)");
   expect(composite.fragmentShader).toContain("texture2D(uFx, vUv)");
 });

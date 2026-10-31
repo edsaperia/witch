@@ -5,8 +5,10 @@ off by default pending visual/GPU acceptance. One nearest visible campfire plume
 and one party-cast pressure wave use namespaced uniforms in the existing Post
 composite, with the scene's existing depth texture. Whole art-pixel offsets are
 bounded/clamped; emitter support depth protects foreground at destination and
-borrowed source. Existing potion wobble runs first; only the scene sample moves,
-while bloom, smooth FX, potion outlines/grade and tilt-shift keep their old paths.
+borrowed source. Canonical order (6545181860): base quantized UV, guarded
+refraction, unchanged potion wobble, existing grading/composite. Potion-owned
+lines stay intact; bloom/outlines use the resulting p, smooth FX keeps vUv,
+and grade/tilt-shift retain their order. OFF pixel identity is still unmeasured.
 World-clock lifetimes freeze/slow with play; the cast's actual rendered pose and
 original timestamp are captured once, and island swaps clear it. `FX_QUALITY.distortion`
 and reduced flashing disable it. No extra pass/target or gameplay change. See
