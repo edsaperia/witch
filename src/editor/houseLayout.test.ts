@@ -7,6 +7,7 @@ import { M } from "../../art/core.js";
 import { FURNITURE_IDS } from "../../art/furniture.js";
 import legacy from "../../config/house/layouts/editor-v1-baseline.json";
 import supplied from "../../docs/evidence/treehouse-layout-ed-2026-10-31.v1.json";
+import proposal from "../../docs/evidence/treehouse-layout-ed-2026-10-31.v2-proposal.json";
 import { artKey, attachedPoint, cameraYaw, corners, defaultLayout, exportLayout, floorplanKey, hitItem, LayoutHistory, layoutItems, normalAngle, parseLayout, physicalRoom, rotate } from "./houseLayout";
 
 const items = layoutItems(), key = floorplanKey(HOUSE_ROOMS, items), defaults = () => defaultLayout(items, key);
@@ -78,6 +79,7 @@ describe("treehouse authoring layouts", () => {
     expect(converted.objects.filter(p => p.id.startsWith("clutter:")).length).toBeGreaterThan(20);
     expect(converted.objects.find(p => p.id === "terrace:decks")!.rotation).toBe(45); // camera proxy was already +45, not a model using subtraction
     expect(parseLayout(exportLayout(converted, items), items, key)).toEqual(converted);
+    expect(proposal).toEqual(exportLayout(converted, items));
   });
   it("separates clutter into stable selectable/exportable pieces and changes room lighting identity without changing station function", () => {
     const clutter = items.filter(o => o.decor), repeated = layoutItems().filter(o => o.decor);
