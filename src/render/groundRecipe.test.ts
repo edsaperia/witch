@@ -12,7 +12,9 @@ import {lakeLooksOf} from './lakeLooks';
 import {lakeKnobs} from '../rules/lakes';
 it('retains the accepted shader source and normal material defaults for warm and live ground',()=>{
   const warm=groundProgramMaterial({GROUND_SPECIALIZED:''},{}), live=groundProgramMaterial({GROUND_SPECIALIZED:''},{uTime:{value:1}}), defaults=new ShaderMaterial();
-  expect(createHash('sha256').update(warm.vertexShader+warm.fragmentShader).digest('hex')).toBe('889fbd827f7b9ee5a7188bac0a532694c03ba72b97e058aacfbd77fd95adf98f');
+  // #1523 adds the POTION_SKY-gated wrapper; ordinary active tokens retain their independent baseline.
+  expect(createHash('sha256').update(warm.vertexShader+warm.fragmentShader).digest('hex')).toBe('5c408926d1596622fd9dd0ea8113090eaaf0e4ffb2705a96e203b437f3bc3bef');
+  expect(warm.defines).not.toHaveProperty('POTION_SKY'); expect(live.defines).not.toHaveProperty('POTION_SKY');
   expect(warm.vertexShader).toBe(live.vertexShader); expect(warm.fragmentShader).toBe(live.fragmentShader); expect(warm.customProgramCacheKey()).toBe(live.customProgramCacheKey());
   for(const key of ['precision','side','shadowSide','transparent','alphaTest','alphaHash','toneMapped','fog','lights','glslVersion','vertexColors'] as const)expect(warm[key]).toBe(defaults[key]);
   warm.dispose();live.dispose();defaults.dispose();
@@ -25,6 +27,7 @@ it('matches the pre-extraction uniform feature expressions without preparing tex
     expect(groundPavementRadius(map)).toBe(radius);
     const extras=groundExtras({zoo,dancefloor:!zoo&&map.dancefloor.radius>0,pavement:!zoo&&radius>0,legends:map.legendClearings.length>0,legendFloor:!!t.legendClearing.floor?.on,koi:groundKoi(map,lakeKnobs(t).koi).some(k=>k.r>0),bare:(t.bare??0)>1.5});
     expect(groundProgramDefines(map)).toEqual(groundDefines(groundFamily(!!map.bounds.lakes,map.bounds.lakes?lakeLooksOf(map)?.any??null:null,false,zoo,false),false,extras));
+    expect(groundProgramDefines(map)).not.toHaveProperty('POTION_SKY');
     expect(groundProgramDefines(map,new URLSearchParams('debug=1'))).toHaveProperty('GROUND_BARE');
   }
 });
