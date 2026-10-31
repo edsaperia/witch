@@ -15,6 +15,7 @@ import { visitLifecycle } from "./app/visitLifecycle";
 import { visitUnlocks } from "./app/visitUnlocks";
 import { stationAuthority } from "./platform/online/stationAuthority";
 import { remoteWitchAppearance } from "./platform/online/remoteAppearance";
+import { appearance } from "./platform/online/appearance";
 import { currentSettings } from "./app/playerSettings";
 import { wavesOver } from "./rules/win";
 import { chartOpen, closeChart, openChart, prepareChart, finishChartFlight, type Sailed } from "./ui/chartOverlay";
@@ -372,6 +373,7 @@ let hostedUnlocks: ReturnType<typeof visitUnlocks> | null = null;
 const remoteArt = remoteWitchAppearance(view);
 const phone = telephoneStation({ storage: (() => { try { return localStorage; } catch { return null; } })(), session: {
   build: BUILD, hostGame: () => N().game,
+  appearance: () => appearance(page.look()) ?? appearance({}),
   attach: game => { if (!guestAccess.ready) throw new Error("The guest room isn't ready yet."); callArrival.attach(game); if (remoteArt.has(1)) void remoteArt.start(game, 0).catch(error => { logCaughtError(error, "host remote appearance"); phone.hangUp(); }); },
   detach: game => callArrival.detach(game),
   prepareGuest: (game, signal, advanced) => {
