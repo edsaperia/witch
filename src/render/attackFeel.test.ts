@@ -1,10 +1,29 @@
 import { describe, expect, it } from "vitest";
+import { createHash } from "node:crypto";
 import { attackFeel, newFeel, ATTACK_FX_DEFAULT as T } from "./attackFeel";
 import type { Creature } from "../rules/creatures";
 
 const make = (o: Partial<Creature> = {}): Creature => ({ id: 1, species: "wolf", level: 2, x: 0, z: 0, ...o }) as Creature;
 
 describe("attack feel", () => {
+  it.each(["rhino", "unicorn"])("%s long-charge windup crouches, run/brake stretch, and home releases the pose", species => {
+    const run: NonNullable<Creature["run"]> = { phase: "windup", at: 10, angle: 0, speed: 0, turn: 1, target: null, tx: 10, tz: 0, ran: 0, hit: [], fromX: 0, fromZ: 0 };
+    const c = make({ species, level: 3, run });
+    expect(attackFeel(c, 10, T, newFeel()).crouch).toBe(0);
+    const winding = attackFeel(c, 12.4, T, newFeel());
+    expect(winding.crouch).toBeGreaterThan(0.9); expect(winding.sy).toBeLessThan(1); expect(winding.sx).toBeGreaterThan(1);
+    for (const phase of ["run", "brake"] as const) {
+      run.phase = phase; const f = attackFeel(c, 13, T, newFeel());
+      expect(f.lunging).toBe(true); expect(f.sx).toBe(1 + T.lungeStretch); expect(f.sy).toBe(1 - T.lungeStretch * 0.5);
+    }
+    run.phase = "home"; expect(attackFeel(c, 14, T, newFeel())).toEqual(newFeel());
+  });
+  it("pins no-run output bytes across idle, windup, lunge, hit and tumble", () => {
+    const fight = { target: null, readyAt: 0, windupUntil: 2.5, aimX: 0, aimZ: 0 };
+    const cases = [make(), make({ fight }), make({ fight: { ...fight, windupUntil: 0, lunge: { dx: 1, dz: 0, left: 5 } } }), make({ hurtAt: 1 }), make({ hurtAt: 1, kx: 72, kz: 0 }), make({ charge: { dx: 1, dz: 0, speed: 10, from: 1, until: 3 } })];
+    const bytes = JSON.stringify(cases.map(c => [0, 0.5, 1, 1.1, 1.25, 1.5, 2, 2.4, 2.6, 3].map(t => ({ ...attackFeel(c, t, T, newFeel()) }))));
+    expect(createHash("sha256").update(bytes).digest("hex")).toBe("3d0690a11e64fcb6dfb91f03c3812a3def511ff050f0033168c73441e5e18324");
+  });
   it("is plain when nothing's happening, and fills the Feel it's given", () => {
     const out = newFeel(), f = attackFeel(make(), 5, T, out);
     expect(f).toBe(out);

@@ -5,6 +5,7 @@
 // pixels (sprites.ts rounds them: one pixel scale on screen). A party, not a fight to the death: nobody is hurt,
 // they're bowled over and bounce back up. Timings and sizes are the tuning's attackFx knobs. Allocation-free: callers
 // pass a Feel to fill, and the wind-up starts are kept per fight object (a WeakMap, so they go with it).
+import legends from "../../config/legends.json";
 import type { Creature } from "../rules/creatures";
 import type { Tuning } from "../rules/tuning";
 
@@ -35,8 +36,15 @@ export function attackFeel(c: Creature, time: number, T: AttackFx | undefined, o
     out.crouch = Math.max(0, Math.min(1, p)); const e = out.crouch * out.crouch;
     out.sy *= 1 - k.windupSquash * e; out.sx *= 1 + k.windupSquash * 0.7 * e;
   }
+  // Long legend charges use run, not ordinary charge; reuse the same rig/sprite anticipation and stretch.
+  const run = c.run;
+  if (run?.phase === "windup") {
+    const p = Math.max(0, Math.min(1, (time - run.at) / Math.max(0.05, legends.charge.windup)));
+    out.crouch = Math.max(out.crouch, p);
+    out.sy *= 1 - k.windupSquash * p * p; out.sx *= 1 + k.windupSquash * 0.7 * p * p;
+  }
   // the strike: stretched out along its lunge
-  if (f?.lunge && f.lunge.left > 0.05) { out.lunging = true; out.sx *= 1 + k.lungeStretch; out.sy *= 1 - k.lungeStretch * 0.5; }
+  if ((f?.lunge && f.lunge.left > 0.05) || run?.phase === "run" || run?.phase === "brake") { out.lunging = true; out.sx *= 1 + k.lungeStretch; out.sy *= 1 - k.lungeStretch * 0.5; }
   // hit: squashed flat, then springing back past its shape and settling (a damped bounce)
   if (c.hurtAt !== undefined && time >= c.hurtAt && time - c.hurtAt < k.squashSecs) {
     const t = (time - c.hurtAt) / k.squashSecs, amp = k.squash * Math.exp(-3 * t) * Math.cos(t * Math.PI * 2.5);
