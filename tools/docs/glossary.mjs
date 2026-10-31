@@ -20,7 +20,7 @@ export function entriesOf(text) {
 }
 
 /** A note's title: its first `# ` heading. */
-export const titleOf = text => /^# (.+)$/m.exec(text)?.[1].trim() ?? "";
+export const titleOf = text => /^# (.+)$/m.exec(text.replace(/\r\n/g, "\n"))?.[1].trim() ?? "";
 
 /** The notes (docs/notes/*.md but the index), by file name. */
 export function notes(dir = NOTES) {
@@ -44,7 +44,7 @@ export function indexText(list = notes()) {
 }
 
 if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
-  const want = indexText(), have = fs.existsSync(INDEX) ? fs.readFileSync(INDEX, "utf8") : "";
+  const want = indexText(), have = fs.existsSync(INDEX) ? fs.readFileSync(INDEX, "utf8").replace(/\r\n/g, "\n") : "";
   if (process.argv.includes("--write")) { if (want !== have) fs.writeFileSync(INDEX, want); console.log(`${path.relative(ROOT, INDEX)}: ${want === have ? "already up to date" : "written"}`); }
   else if (want !== have) { console.error(`${path.relative(ROOT, INDEX)} is out of date with the notes: node tools/docs/glossary.mjs --write`); process.exit(1); }
   else console.log(`${path.relative(ROOT, INDEX)}: up to date`);

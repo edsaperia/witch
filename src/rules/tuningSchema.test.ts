@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import raw from "../../config/tuning.json";
 import schemaJson from "../../config/schema/tuning.schema.json";
 import { validate, type Schema } from "./schema";
+import { TUNING } from "./tuning";
 
 // The tuning file's schema (housekeeping, issue #122); its words and the knob reference: knobDocs.test.ts.
 const schema = schemaJson as Schema;
@@ -11,6 +12,7 @@ const FIX = "the tuning file and its schema differ: after adding, renaming or re
 describe("the tuning schema (config/schema/tuning.schema.json)", () => {
   it("holds config/tuning.json: every knob known, of its type, in its range", () => {
     expect(validate(raw, schema, "tuning"), FIX).toEqual([]);
+    expect(TUNING).toStrictEqual(raw);
   });
 
   it("catches a new knob, a wrong type, an out-of-range number and a bad choice", () => {

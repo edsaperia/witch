@@ -1,0 +1,12 @@
+{
+  "tools/art-cache/map.mjs": "Reports art-cache dependency scopes and inputs as JSON.",
+  "tools/art-cache/parity.mjs": "Captures or compares serialized art jobs for cache parity.",
+  "tools/attacks/audit-report.mjs": "Writes the attack-system audit report from its collected evidence.",
+  "tools/attacks/audit-screen.mjs": "Screens attack audit deliveries and records their evidence.",
+  "tools/balance/expert-guarded-coverage-screen.mjs": "Screens guarded expert-search coverage against the frozen study requirements.",
+  "tools/bench/house-profile-summary.mjs": "Summarises a saved house CPU profile.",
+  "tools/bench/house-route.cjs": "Defines the shared deterministic house benchmark route.",
+  "tools/bench/worker-compute-entry.ts": "Runs map-preparation worker computations for the benchmark harness.",
+  "tools/robustness/poll.mjs": "Polls robustness pull-request coordination and records receipts.",
+  "tools/robustness/rules-layer.mjs": "Reports rules-layer dependency boundaries."
+}
