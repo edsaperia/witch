@@ -9,11 +9,12 @@ import { bindings } from "./platform/bindings";
 import { Rumble } from "./platform/rumble";
 import { telephoneStation } from "./app/telephoneStation";
 import { guestArrival } from "./platform/online/guestArrival";
-import { pendingGuestAccess } from "./platform/online/guestAccess";
+import { guestAccess } from "./platform/online/guestAccess";
 import { visitSaves } from "./app/visitSaves";
 import { visitLifecycle } from "./app/visitLifecycle";
 import { visitUnlocks } from "./app/visitUnlocks";
 import { stationAuthority } from "./platform/online/stationAuthority";
+import { remoteWitchAppearance } from "./platform/online/remoteAppearance";
 import { currentSettings } from "./app/playerSettings";
 import { wavesOver } from "./rules/win";
 import { chartOpen, closeChart, openChart, prepareChart, finishChartFlight, type Sailed } from "./ui/chartOverlay";
@@ -200,7 +201,8 @@ let lookNow = JSON.stringify(resumeSave?.look ?? savedLook);
 // nightie, bare feet, no hat...); shown whenever her look or the pile changes (`shownLook`: what the view was last given).
 let shownLook = "";
 function showLook(): void {
-  const pile = (page.night ?? page.last)?.game.wake?.pile, key = `${lookNow}|${pile?.join() ?? ""}`;
+  const canonical = (page.night ?? page.last)?.game;
+  const pile = canonical ? (page.presentationGame?.(canonical) ?? canonical).wake?.pile : undefined, key = `${lookNow}|${pile?.join() ?? ""}`;
   if (key === shownLook) return;
   const look = JSON.parse(lookNow) as unknown;
   if (view.houseRooms) view.houseRooms.outfit = look;
@@ -367,9 +369,10 @@ const callArrival = guestArrival({ room: "bedroom2", equipment: game => {
 } });
 let returnedUnlocks: ReturnType<typeof visitUnlocks> | null = null;
 let hostedUnlocks: ReturnType<typeof visitUnlocks> | null = null;
+const remoteArt = remoteWitchAppearance(view);
 const phone = telephoneStation({ storage: (() => { try { return localStorage; } catch { return null; } })(), session: {
   build: BUILD, hostGame: () => N().game,
-  attach: game => { if (!pendingGuestAccess.ready) throw new Error("The guest room isn't ready yet."); callArrival.attach(game); },
+  attach: game => { if (!guestAccess.ready) throw new Error("The guest room isn't ready yet."); callArrival.attach(game); if (remoteArt.has(1)) void remoteArt.start(game, 0).catch(error => { logCaughtError(error, "host remote appearance"); phone.hangUp(); }); },
   detach: game => callArrival.detach(game),
   prepareGuest: (game, signal, advanced) => {
     if (!ordinaryVisit) return Promise.reject(new Error("This browser isn't ready to protect your saved night."));
@@ -377,6 +380,7 @@ const phone = telephoneStation({ storage: (() => { try { return localStorage; } 
   },
   synchronized: game => { void ordinaryVisit?.synchronized(game).catch(error => { logCaughtError(error, "visit confirmation"); phone.hangUp(); }); },
   ended: (role, game) => {
+    remoteArt.clear();
     if (role === "guest") {
       try { returnedUnlocks = game && game.witches.some(w => w.id === 1) ? visitUnlocks(game, 1) : null; }
       catch (error) { returnedUnlocks = null; logCaughtError(error, "visit unlock capture"); }
@@ -399,6 +403,11 @@ const phone = telephoneStation({ storage: (() => { try { return localStorage; } 
       creator.loadout = { hat: witch.spells.hat };
       if (!phone.visiting) saveLoadout({ hat: hatWithoutLoan(witch.spells.hat, loan) as typeof witch.spells.hat });
     } else if (choice.kind === "broom" && !phone.visiting) fitBroom(partsWithoutLoan(witch.spells.parts, loan));
+  },
+  appearanceApplied: (player, look) => {
+    void remoteArt.look(player, look).then(() => {
+      if (phone.active && !phone.visiting && N().game.witches.length === 2) return remoteArt.start(N().game, 0);
+    }).catch(error => { logCaughtError(error, "remote appearance"); phone.hangUp(); });
   },
 } });
 let guestAudioGame: Game | null = null;
@@ -865,6 +874,7 @@ const ordinaryVisit = visitNightSaves ? visitLifecycle({
     const p = new URLSearchParams(N().params); p.delete("arrive");
     await startNight(page, { how: "bed", island: game.tuning.map?.island ?? "home", seed: game.seed, world: game.tuning.map?.world, params: p, resume: game, borrowed: true });
     advanced(); signal.throwIfAborted();
+    if (remoteArt.has(0)) { await remoteArt.start(game, 1, signal); advanced(); }
     const markAt = performance.now(), timingAt = view.assets.timings.length;
     const landedAt = new Set([...view.assets.typeLog].filter(([, v]) => v.landed !== undefined).map(([id]) => id)); let best = 0;
     const progress = () => {

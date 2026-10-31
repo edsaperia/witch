@@ -1,5 +1,6 @@
 // The whole game state, and one step of it. No drawing here: the Three.js layer reads this.
 import { creaturesAshore, lakeKnobs, onLake, roundLakes } from "./lakes";
+import { guestDeck } from "../platform/online/guestDeck";
 import { newMushrooms, potionPhase, stepMushrooms, type MushroomState } from "./mushrooms";
 import { runawaySpot, runOff } from "./runaway";
 import { stepWildWatch, type WildEntry } from "./wildWatch";
@@ -640,7 +641,7 @@ function fixedStep(g: Game, controls: readonly Controls[]): void {
       if (shared) coolSpend(W.cool, tw.dash.cooldown, room); // (the dodge's share of the one cooldown)
       if (W.spells.broom === "battering") batter(g, W.dash.fromX, W.dash.fromZ, W.dash.toX, W.dash.toZ, t); // (Battering: what's in her path is stunned)
     }
-    const deck = deckOf(g.map, t), fallsOff = deck?.house && !hasBroom(W) ? { ...deck, house: { ...deck.house, fall: { ...deck.house.fall, on: true } } } : deck; // (no broom: off the Terrace she falls, rules/kit.ts)
+    const deck = guestDeck(deckOf(g.map, t), g, W), fallsOff = deck?.house && !hasBroom(W) ? { ...deck, house: { ...deck.house, fall: { ...deck.house.fall, on: true } } } : deck; // Movement-only guest floor; no broom still falls off the Terrace.
     if (!potionPhase(g, W)) W.body = applyDash(W.dash, stepWitch(was, c, hdt, boost === 1 ? tw : { ...tw, groundSpeed: tw.groundSpeed * boost, treetopSpeed: tw.treetopSpeed * boost }, g.map.bounds, loadOf(W.leash.stack, g.creatures, was, t, pullOf(W.spells), !!W.leash.scatter), fallsOff)); // (her sigils' pull: rules/leashWeight.ts; the treehouse deck: rules/treehouse.ts)
     // (the zoo: flying or walking on out against its edge, over the waterfall, takes her out of it, Ed 2026-10-26: "If you fly off the
     // edge of the map in the zoo you exit as well"): pushing on outward where the edge's soft hold has her (its last map.push metres,

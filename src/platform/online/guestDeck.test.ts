@@ -18,7 +18,9 @@ it("preserves solo/host/default deck identity and copies only the assigned guest
   expect(access.roomAccessFor).toHaveBeenLastCalledWith(floor, 1, { player: 1, room: "bedroom2" });
   expect(view).not.toBe(deck); expect(view.house!.rooms).toBe(alternate); expect(JSON.stringify(deck)).toBe(before);
   expect(deck.house!.rooms).toBe(floor); expect(deckOf(game.map, game.tuning)!.house!.rooms!.shape).toBe(floor.shape);
-  expect(guestDeck(deck, game, guest)).toBe(deck); // unavailable default hook grants nothing
+  const assigned = guestDeck(deck, game, guest)!;
+  expect(assigned).not.toBe(deck); expect(assigned.house!.rooms!.shape.branches.find(r => r.id === "bedroom2")!.locked).toBe(false);
+  expect(floor.shape.branches.find(r => r.id === "bedroom2")!.locked).toBe(true);
 });
 it("leaves a solo stepGame replay byte-identical after movement adapter reads", () => {
   const a = newGame(456, tuning()), b = newGame(456, tuning()); a.clock.paused = b.clock.paused = false;
