@@ -11,7 +11,8 @@ export interface TelephoneOptions {
   connected(role: "host" | "guest", connection: TelephoneConnection, peer: string, signal: AbortSignal): Promise<void>;
   message(message: Record<string, unknown>): void;
   departed(): void;
-  pause(): void;
+  /** Ordinary mounting keeps calls off until guest/save binding and the reviewed relay deployment are ready. */
+  callsEnabled?: boolean;
   endpoint?: string; socket?: (url: string) => RelaySocket; menu?: (actions: TelephoneActions) => Menu;
   digit?: (digit: string) => void; face?: (number: string) => Node | null;
 }
@@ -35,11 +36,11 @@ export function telephone(options: TelephoneOptions) {
     answer() { if (state.status === "ringing" && connection) { intent = "guest"; connection.answer(); } }, decline() { connection?.decline(); }, hangUp,
     close() { void api.show(false); }, retry() { if (!role) void api.show(false).then(() => api.show(true)); },
     confirmIdentity() { if (state.status === "confirming") { try { agree(); } catch (error) { fail(error); } } },
-    digit: options.digit, face: options.face, pause: options.pause,
+    digit: options.digit, face: options.face,
   };
   const menu = options.menu?.(actions) ?? new TelephonePanel(actions);
   const api = {
-    get number() { return book.number; }, get state(): Readonly<TelephoneState> { return state; },
+    get number() { return book.number; }, get open() { return open; }, get state(): Readonly<TelephoneState> { return state; },
     /** Await current identity checks in page adapters/tests; never includes private material in public state. */
     settled: () => identityQueue,
     async show(on: boolean): Promise<void> {
@@ -55,7 +56,9 @@ export function telephone(options: TelephoneOptions) {
         identity ??= (options.loadIdentity ?? (() => loadTelephoneIdentity(browserTelephoneIdentityStore())))();
         const own = await identity, number = await numberForKey(own.publicKey);
         if (current !== generation || !open) return;
-        book.assigned(number); paint({ own: number }); trust = telephoneTrust(own, book.pinned);
+        book.assigned(number); paint({ own: number });
+        if (options.callsEnabled === false) { paint({ status: "preparing" }); return; }
+        trust = telephoneTrust(own, book.pinned);
         connection = connectRelay({ endpoint: options.endpoint ?? "wss://witch-relay.onrender.com", room: number, telephone: true, telephonePublicKey: own.publicKey, socket: options.socket,
           onError(error) { if (current === generation) fail(error); },
           onClose() {

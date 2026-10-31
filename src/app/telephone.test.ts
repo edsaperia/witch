@@ -19,7 +19,7 @@ async function fixture(pinWrongFriend = false) {
   vi.useFakeTimers(); const ws = new Socket(), connected = vi.fn<TelephoneOptions["connected"]>(async () => {}), departed = vi.fn(), show = vi.fn(); let actions!: TelephoneActions;
   const data = new Map<string, string>();
   if (pinWrongFriend) { const old = await make(); data.set("witch.telephone.v1", JSON.stringify({ recent: [peerNumber], contacts: [{ number: peerNumber, publicKey: old.publicKey }] })); }
-  const phone = telephone({ storage: { getItem: k => data.get(k) ?? null, setItem: (k, v) => { data.set(k, v); } }, loadIdentity: async () => own, socket: () => ws, connected, message: vi.fn(), departed, pause: vi.fn(),
+  const phone = telephone({ storage: { getItem: k => data.get(k) ?? null, setItem: (k, v) => { data.set(k, v); } }, loadIdentity: async () => own, socket: () => ws, connected, message: vi.fn(), departed,
     menu: a => { actions = a; return { show, render: vi.fn(), redial: vi.fn() }; } });
   const start = async () => { await phone.show(true); ws.open(); ws.receive({ type: "telephone-ready", number: ownNumber }); };
   const verify = async () => {
