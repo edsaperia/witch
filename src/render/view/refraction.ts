@@ -13,11 +13,13 @@ export function captureRefractionCast(v: View, at: number, x: number, feetY: num
 
 /** A separate drawing-only hook: no ForestLight/worker metadata or potion state is changed. */
 export function updateRefraction(v: View, time: number): void {
+  const refraction = v.post?.refraction;
+  if (!refraction) return; // Headless island-reset views need not construct a WebGL Post.
   const g = v.game, source = casts.get(v);
   const cast = source?.world === g && source.cast.at === g.party.spellAt ? source.cast : null;
-  v.post.refraction.update(g, time, v.post.refractionEnabled && FX_QUALITY.distortion && !comfort.reduceFlashing && !g.tuning.bare,
+  refraction.update(g, time, v.post.refractionEnabled && FX_QUALITY.distortion && !comfort.reduceFlashing && !g.tuning.bare,
     v.worldFires, cast, v.camera, placed, g.witch);
 }
 
 /** No event or projected form may survive an island swap into its first warm-drawn frame. */
-export function resetRefraction(v: View): void { casts.delete(v); v.post.refraction.reset(); }
+export function resetRefraction(v: View): void { casts.delete(v); v.post?.refraction?.reset(); }
