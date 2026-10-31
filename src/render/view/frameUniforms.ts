@@ -2,7 +2,7 @@
 // the trunks' fade, finding creatures in the dark, the wind, her glow's reach and place, and the mood where she is.
 import * as THREE from "three";
 import type { View } from "../view";
-import { potionStrength } from "../potionEffects";
+import { potionStrength, potionWatching } from "../potionEffects";
 import { potionSettings } from "../../rules/potionSettings";
 import { forestCountTime } from "../../rules/forestCounts";
 import { AREA_TYPES } from "../../rules/map";
@@ -108,7 +108,7 @@ export function setFrameUniforms(v: View, time: number, up: THREE.Vector3): void
   SPRITE_UNIFORMS.uWind.value.set(W.on ? W.strength * (1 + (W.treetop - 1) * lifted) : 0, W.speed, W.gustScale, sceneryTime);
   v.mist?.setTimeOverride(counting > 0 ? sceneryTime : -1);
   // The trees watching her (Ed, 2026-10-07; render/sprites.ts uWatch): where she was a beat ago, eased lag seconds behind.
-  const Wt = t.watching, at = v.watch;
+  const Wt = potionWatching(t.watching, potionStrength(g, 'the-audience')), at = v.watch;
   if (Wt?.on) {
     if (Number.isNaN(at.x)) { at.x = g.witch.x; at.z = g.witch.z; }
     else { const k = 1 - Math.exp(-Math.min(0.5, Math.max(0, time - at.t)) / Math.max(0.05, Wt.lag)); at.x += (g.witch.x - at.x) * k; at.z += (g.witch.z - at.z) * k; }

@@ -35,6 +35,7 @@ import { attackFeel, newFeel } from "../attackFeel";
 import { impactOf } from "../impact";
 import { cheerKind, cheerPose, type CheerPose } from "../cheer";
 import { legendSleep, newSleepTrack, type SleepPose } from "../legendSleep";
+import { potionStrength, stiltwalkerShape } from '../potionEffects';
 /** How near her (m) a rattlesnake rattles its warning (config/character.json's "rattle" quirk). */
 const RATTLE_NEAR = 14;
 const SQ = { hop: 0, x: 0, sx: 1, sy: 1, turned: false }; // (a baked frame's idle quirk, filled each creature: no allocation)
@@ -128,6 +129,7 @@ export function drawBerries(v: View, time: number): void {
 
 export function drawCreatures(v: View, time = 0): void {
   const g = v.game, R = g.tuning.haze.far + 20;
+  const stilts = stiltwalkerShape(potionStrength(g, 'stiltwalkers'));
   const per = PER, arts = ARTS, legendKeys = LEGEND_KEYS; // (kept and refilled)
   if (v !== LAST_VIEW) { LAST_VIEW = v; per.clear(); arts.clear(); legendKeys.clear(); RING_OF.clear(); }
   per.forEach(emptyList);
@@ -152,7 +154,7 @@ export function drawCreatures(v: View, time = 0): void {
     const shadowK = hide && SH ? Math.max(0, Math.min(1, (g.clock.time - (hide.at ?? -Infinity)) / Math.max(1e-3, SH.fade), (hide.until - g.clock.time) / Math.max(1e-3, SH.fade))) : 0;
     // (its species' art asked for only once it may be on screen, by the biggest a creature is drawn, a legend's: the first
     // frame's creatures first, not every one within the haze; the island's own come ahead of need, view.ts askIsland)
-    if (!v.assets.hasCreature(c.species) && !inView(v, c.x, c.z, 40, 50, 4)) continue;
+    if (!v.assets.hasCreature(c.species) && !inView(v, c.x, c.z, 40, 50 * stilts.length, 4)) continue;
     if (g.map.zoo?.layout && !v.assets.hasCreature(c.species)) v.assets.hurryCreature(c.species); // (the zoo: on screen, ahead of all its islands' art asked ahead)
     // Invited creatures are party animals: their party gear once it's drawn (the wild look till then).
     // Happy ones (issue #87) in party clothes without the collar; legends never dressed up (render/looks.ts).
@@ -203,7 +205,7 @@ export function drawCreatures(v: View, time = 0): void {
     const boss = c.boss && !c.leashed ? g.tuning.wildLegends : null;
     // (its size a constant, so its pixels stay the scene's: its breath a squash in whole art pixels, sy, not a swelling; Ed's round 14 playtest)
     const breath = boss ? 1 + boss.breathe * bossBreath(time, c.id, boss.breathEvery * (dormant(g, c) ? 1.5 : 1)) : 1, bossScale = boss ? boss.scale * (boss.seen ? 1 : breath) : 1, breathY = boss?.seen ? breath : 1;
-    if (!inView(v, c.x, c.z, frame.w * v.mpp * bossScale, frame.h * v.mpp * bossScale, 4)) continue;
+    if (!inView(v, c.x, c.z, frame.w * v.mpp * bossScale, frame.h * v.mpp * bossScale * stilts.length, 4)) continue;
     const fresh = mark(v, "creature", c.x, c.z, frame.h * v.mpp * (boss ? boss.scale : 1), c.id);
     let l = per.get(lk);
     if (!l) per.set(lk, (l = []));
@@ -298,9 +300,10 @@ export function drawCreatures(v: View, time = 0): void {
     const flip = ((c.facing < 0) !== (toss > 0.5 && Math.floor(time * 0.35 + c.id * 0.13) % 2 === 1)) !== feel.flip, mid = (slept ?? napped)?.centre?.[fi] ?? 0, RT = SPRITE_UNIFORMS.uRight.value;
     let rigged = false;
     if (hide) glow = shadowK; // (a shadow batch's glow: how far gone to its shadow)
-    if (v.rig && !form && !idlePose && !glided && !hide) { // the rig draws it, if it can (its look record filled in place: one for every creature)
+    if (v.rig && !hide && (stilts.length > 1 || (!form && !idlePose && !glided))) { // the rig draws it, if it can (its look record filled in place: one for every creature)
       const L = LOOK;
-      L.y = dance + hop + (st ? rigSunk : sunk); L.tap = tap; L.scale = scale; L.glow = glow; L.fresh = fresh; L.h = frame.h - (frame.pad ?? 0); L.face = lying > 0.5 ? "asleep" : face; L.sleep = lying; L.droop = droop; L.twitch = toss;
+      L.stiltLength = stilts.length; L.stiltTip = stilts.tip; L.stiltStrength = stilts.strength;
+      L.y = dance + hop + (st ? rigSunk : stilts.length > 1 ? 0 : sunk); L.tap = tap; L.scale = scale; L.glow = glow; L.fresh = fresh; L.h = frame.h - (frame.pad ?? 0); L.face = lying > 0.5 ? "asleep" : face; L.sleep = lying; L.droop = droop; L.twitch = toss;
       L.sx = feel.sx * csx; L.sy = feel.sy * breathY * csy; L.dx = cx; L.dz = cz; L.crouch = feel.crouch; L.lunging = feel.lunging; L.gear = party ? v.rigGear(c, look === "leashed") : c.enraged ? WOKEN_GEAR : undefined; L.posture = ch.rig; L.quirk = ch.quirk; L.quirkK = quirkK; L.lookAt = watching ? g.witch : undefined;
       rigged = v.rig.add(c, L);
     }
@@ -310,7 +313,7 @@ export function drawCreatures(v: View, time = 0): void {
       const near = below * toward - (form || napped ? U.z * padM : 0), nx = form || napped ? -U.x * padM : 0;
       l.push(inst(INST_POOL, ni++, c.x + cx + sway + fit * 0.35 * Math.sin(time * 11 + c.id) + RT.x * k + nx, dance + hop + sunk + SQ.hop * fh, c.z + cz + RT.z * k + near, frame, turned, fresh, glow, scale, feel.sx * SQ.sx * csx, feel.sy * breathY * SQ.sy * csy));
     }
-    v.leashView.tops.set(c.id, (frame.h - (frame.pad ?? 0)) * v.mpp * scale + dance + hop + sunk); // its health bar goes over it
+    v.leashView.tops.set(c.id, (frame.h - (frame.pad ?? 0)) * v.mpp * scale + dance + hop + sunk + (rigged ? v.rig!.stiltRises.get(c.id) ?? 0 : 0)); // its health bar goes over it
     v.leashView.halfW.set(c.id, frame.w * v.mpp * scale * 0.5);
     // Where its head is (Ed, 2026-10-12: bubbles' tails "point at creatures' heads"): its frame's head point (render/artBuild.ts
     // headPoint), mirrored with it, along the camera's right from where it's drawn; bubbles stand over it.

@@ -21,6 +21,6 @@ describe('potion lab', () => {
     expect(snapshot.recipe.id).toBe(recipe.id);
     expect(snapshot.seed).toBe(61);
     expect(snapshot.settings.effects['trip-indicator']).toBeDefined();
-    expect(Object.keys(snapshot.settings.effects)).toEqual(Object.keys(POTION_PARAMETERS));
+    expect(Object.keys(snapshot.settings.effects).sort()).toEqual(Object.keys(POTION_PARAMETERS).sort());
   });
 });
