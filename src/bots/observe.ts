@@ -8,7 +8,8 @@ import { stateOf, hasRune } from "../rules/creatureStates";
 import { runeOffset } from "../rules/runeOffset";
 import { bagTuning } from "../rules/bags";
 import { winTarget, winPulse, won } from "../rules/win";
-import { pointerShown } from "../rules/leypulse";
+import { pointerShown, leyReachTimes } from "../rules/leypulse";
+import { leyChain } from "../rules/leylines";
 import { questOpen, dreamStone, dreamWay } from "../rules/dream";
 import { ALARM_DEFAULTS, newAlarms, shownAlarms, stepAlarms } from "../rules/alarms";
 
@@ -16,6 +17,15 @@ export interface Point { x: number; z: number }
 export interface SeenCreature extends Point { id: number; species: string; level: number; boss: boolean; friendly: boolean; angry: boolean; stunned: boolean; area: string; rune: Point | null }
 export interface SeenStone extends Point { key: string; open: boolean; ready: boolean; cast: Point }
 export interface Observation {
+  campaign?: {
+    equipment?: { hat: string; hatDown: Point | null; broom: string; ready: boolean };
+    legendTrails?: (Point & { id: number; way: Point | null })[];
+    berries: Point[]; flasks: Point[];
+    troops: (Point & { id: number; species: string; level: number; hurt: boolean; placed: Point | null })[];
+    route: (Point & { key: string; captured: boolean })[];
+    areas?: (Point & { key: string; captured: boolean })[];
+    sigils: (Point & { id: number; species: string; level: number })[];
+  };
   view: { halfWidth: number; halfDepth: number };
   playerTime: number; worldTime: number; self: Point & { mode: Game["witches"][number]["body"]["mode"]; hp: number; ko: boolean; seated: boolean; perched: boolean; grounded: boolean };
   range: number; pickRadius: number; spacing: number; castRadius: number; castBlocked: boolean; waiting: boolean; home: Point;
@@ -53,6 +63,12 @@ export function newObserver() {
     stepAlarms(alarms, g.combat.sounds, g.combat.events, time, A);
     const nextCell = pointerShown(g.party, g.map, time) > 0 ? g.party.next?.[0] : undefined;
     const next = nextCell ? g.map.soundsystemSpot(nextCell[0], nextCell[1]) : null;
+    // Only columns whose public reveal has happened AND whose position is in
+    // the approximate camera rectangle. Never export the hidden wave plan.
+    const reach = leyReachTimes(g.party, g.map, time);
+    const routeSeer = w.hat.has && !w.hat.down && w.spells.hat === "routeseer";
+    const route = leyChain(g.party, g.map).stones.filter(s => visible(s) && (routeSeer && g.party.spellAt !== null || (reach?.get(cellKey(s.cell)) ?? Infinity) <= time))
+      .map(s => ({ x: s.x, z: s.z, key: cellKey(s.cell), captured: g.party.areas.has(cellKey(s.cell)) }));
     const straggler = winTarget(g); // The public straggler pointer, not a full entity.
     const quests: Observation["quests"] = [];
     const dreamers = g.creatures.filter(c => c.boss && !c.gone && c.quest && visible(c) && Math.hypot(c.x - b.x, c.z - b.z) <= t.dreams.range).sort((a, c) => Math.hypot(a.x - b.x, a.z - b.z) - Math.hypot(c.x - b.x, c.z - b.z)).slice(0, 4);
@@ -68,6 +84,24 @@ export function newObserver() {
       quests.push({ id: c.id, wants: open ? c.quest!.species : "", open, delivery: clearing ? { x: clearing.x, z: clearing.z } : { x: c.x + 4, z: c.z + 4 }, hint: way ? { x: b.x + Math.sin(angle) * metres, z: b.z - Math.cos(angle) * metres } : null });
     }
     return {
+      campaign: {
+        // A loose crowned sigil reveals no legend location. Only after picking
+        // it up does its drawn tether supply a direction, not a remote endpoint.
+        legendTrails: w.leash.tether ? (() => {
+          const c = g.creatures[w.leash.tether!.id], d = Math.hypot(c.x - b.x, c.z - b.z) || 1;
+          return [{ id: c.id, x: b.x, z: b.z, way: { x: b.x + (c.x - b.x) / d * 40, z: b.z + (c.z - b.z) / d * 40 } }];
+        })() : g.loose.filter(p => p.legend && visible(p)).map(p => ({ id: p.id, x: p.x, z: p.z, way: null })),
+        equipment: { hat: w.spells.hat, hatDown: w.hat.down ? { x: w.hat.down.x, z: w.hat.down.z } : null, broom: w.spells.broom, ready: time >= w.spells.readyAt },
+        route,
+        areas: stones.map(s => ({ key: s.key, x: s.x, z: s.z, captured: g.party.areas.has(s.key) })),
+        berries: g.berries.berries.filter(r => !r.gone && r.claimedBy === null && visible(g.berries.bushes[r.bush])).map(r => { const p = g.berries.bushes[r.bush]; return { x: p.x, z: p.z }; }),
+        flasks: g.relics.filter(r => r.state === "lying" && visible({ x: r.sx, z: r.sz })).map(r => ({ x: r.sx, z: r.sz })),
+        troops: g.creatures.filter(c => c.leashed && !c.gone && (w.leash.stack.includes(c.id) || visible(c))).map(c => {
+          const p = w.leash.placed.find(p => p.id === c.id);
+          return { id: c.id, species: c.species, level: c.level, hurt: visible(c) && !!c.drops, x: visible(c) ? c.x : b.x, z: visible(c) ? c.z : b.z, placed: p && visible(p) ? { x: p.x, z: p.z } : null };
+        }),
+        sigils: g.loose.filter(p => !p.legend && visible(p)).map(p => ({ id: p.id, species: g.creatures[p.id].species, level: g.creatures[p.id].level, x: p.x, z: p.z })),
+      },
       view: { ...ext },
       playerTime: g.herTime, worldTime: time,
       self: { x: b.x, z: b.z, mode: b.mode, hp: w.health.hp, ko: !!w.ko, seated: !!b.seated, perched: !!b.perch,

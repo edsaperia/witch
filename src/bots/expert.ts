@@ -7,6 +7,8 @@ import { newCoverage } from "./coverage";
 import { newKnownQuestJob } from "./knownQuest";
 import { newQuestOffering } from "./questOffering";
 import { newCoverageGuard } from "./coverageGuard";
+import { newCampaign } from "./campaign";
+import { useBroom } from "./equipment";
 
 export const EXPERT_DEFAULTS = {
   healAt: 1, healTo: 3, kite: 9, dashAt: 5, fireFrac: 0.95, closeFrac: 0.8,
@@ -51,6 +53,11 @@ export function newExpert(params: Partial<ExpertParams> = {}, seed = 1, limits: 
   // Candidate stays opt-in until the coordinator disposes of the fixed test.
   const questJob = newKnownQuestJob(options.knownQuestPriority === true);
   const deliverySelection = newQuestOffering(), deliveryRepair = options.questDeliveryRepair !== false;
+  const campaign = newCampaign();
+  let campaignCycle: { stack: string; at: number } | null = null;
+  let campaignPress: { key: string; at: number } | null = null;
+  let trailJob: { id: number; until: number } | null = null;
+  const triedTrails = new Set<number>();
   const bot: Bot = { kind: "expert", doing: "waiting for observations", done: { quests: [], relics: [] }, decide };
   return bot;
 
@@ -58,10 +65,11 @@ export function newExpert(params: Partial<ExpertParams> = {}, seed = 1, limits: 
     const now = observe(g); queue.push(now);
     let seen: Observation | null = null;
     while (queue.length && queue[0].playerTime <= now.playerTime - limits.reactionSeconds + 1e-9) seen = queue.shift()!;
-    if (now.playerTime + 1e-9 < nextInput || !seen) return { ...controls, toggleMode: false, sigil: false, place: false, cycle: false, castParty: false };
+    if (now.playerTime + 1e-9 < nextInput || !seen) return { ...controls, toggleMode: false, sigil: false, place: false, cycle: false, cycleBack: false, castParty: false, hat: false, spell: false };
     nextInput = now.playerTime + 1 / limits.inputHz;
     const observed = trace ? structuredClone(seen) : null;
     controls = policy(seen);
+    useBroom(seen, controls);
     // Delayed feedback must acknowledge a toggle before another press. Otherwise
     // two old "treetop" observations reverse the same landing back into a rise.
     if (modePending && (seen.self.mode !== modePending.from || now.playerTime - modePending.at >= 2)) modePending = null;
@@ -69,7 +77,7 @@ export function newExpert(params: Partial<ExpertParams> = {}, seed = 1, limits: 
       if (modePending) controls.toggleMode = false;
       else modePending = { from: seen.self.mode, at: now.playerTime };
     }
-    if (controls.fire) {
+    if (controls.fire || controls.spell) {
       random = (Math.imul(random, 1664525) + 1013904223) >>> 0;
       const angle = random / 4294967296 * 2 * Math.PI;
       controls.aimX = (controls.aimX ?? 0) + Math.cos(angle) * limits.aimErrorMetres;
@@ -81,6 +89,7 @@ export function newExpert(params: Partial<ExpertParams> = {}, seed = 1, limits: 
   }
 
   function policy(o: Observation): Controls {
+    campaign.observe(o);
     coverage.observe(o);
     selectedQuest = null;
     visitingLegend = null;
@@ -121,6 +130,15 @@ export function newExpert(params: Partial<ExpertParams> = {}, seed = 1, limits: 
     if (w.hp <= K.healAt) healing = true;
     if (w.hp >= K.healTo) healing = false;
     if (healing) {
+      const gear = o.campaign?.equipment;
+      if (gear?.hat === "healing") {
+        bot.doing = "using her healing hat";
+        if (gear.hatDown) go(gear.hatDown, 3, false);
+        else if (w.mode === "ground") {
+          if (!campaignPress || o.playerTime - campaignPress.at >= 1) { c.hat = true; campaignPress = { key: "healing-hat", at: o.playerTime }; }
+        } else if (w.mode === "treetop") c.toggleMode = true;
+        return c;
+      }
       bot.doing = "rising to heal";
       if (w.grounded) putDown();
       else if (w.mode === "ground") c.toggleMode = true;
@@ -131,6 +149,10 @@ export function newExpert(params: Partial<ExpertParams> = {}, seed = 1, limits: 
       const dx = w.x - cue.x, dz = w.z - cue.z, d = Math.hypot(dx, dz) || 1;
       c.moveX = -dz / d; c.moveZ = dx / d; c.dash = true; c.aimX = c.moveX * 10; c.aimZ = c.moveZ * 10;
       bot.doing = "dodging an audible wind-up"; return c;
+    }
+    if (o.alarms[0] && dist(w, o.alarms[0]) > 35) {
+      bot.doing = "bringing the mobile party to defend an alarm";
+      go(o.alarms[0], 25, true); return c;
     }
     if (o.find && !job) { bot.doing = "collecting tonight's find"; if (go(o.find, o.pickRadius * K.pickRadiusFrac)) c.place = true; return c; }
     const quest = job?.quest ?? [...quests.values()].filter(q => dist(w, q.delivery) <= K.questRange).sort((a, b) => dist(w, a.delivery) - dist(w, b.delivery))[0];
@@ -148,7 +170,7 @@ export function newExpert(params: Partial<ExpertParams> = {}, seed = 1, limits: 
     }
     // Learning a quest needs a visit: sleeping legends have no remote quest
     // pointer. Only approach one actually seen, then read its ground-level dream.
-    const sleeper = !quests.size && heardDreams.size < K.questMax ? o.creatures.filter(a => a.boss && !a.friendly && !a.angry && !heardDreams.has(a.id) && (!rememberDreamVisits || !abandonedVisits.has(a.id)) && dist(w, a) <= K.questRange).sort((a, b) => dist(w, a) - dist(w, b))[0] : null;
+    const sleeper = !quests.size && (o.campaign || heardDreams.size < K.questMax) ? o.creatures.filter(a => a.boss && !a.friendly && !a.angry && !heardDreams.has(a.id) && (!rememberDreamVisits || !abandonedVisits.has(a.id)) && dist(w, a) <= K.questRange).sort((a, b) => dist(w, a) - dist(w, b))[0] : null;
     if (rememberDreamVisits && !dreamVisit && sleeper) dreamVisit = { id: sleeper.id, x: sleeper.x, z: sleeper.z, until: o.playerTime + 30 };
     if (rememberDreamVisits && dreamVisit) {
       visitingLegend = dreamVisit.id;
@@ -171,17 +193,53 @@ export function newExpert(params: Partial<ExpertParams> = {}, seed = 1, limits: 
     // The candidate may interrupt only lower-priority ordinary work. Missing
     // cells are unobserved, not known walkable terrain. No map query is made.
     const requestedVisible = quest && o.creatures.some(a => !a.boss && !a.friendly && !a.rune && a.species === quest.wants);
-    if (coverageEnabled && safeCoverage && !requestedVisible && !o.stones.some(s => s.open && s.ready) && !o.alarms.length && !o.straggler) {
+    if (coverageEnabled && safeCoverage && !requestedVisible && !o.next && !o.campaign?.route.some(s => !s.captured) && !o.stones.some(s => s.open && s.ready) && !o.alarms.length && !o.straggler) {
       const point = coverage.waypoint(o);
       if (point) { bot.doing = "exploring a less-seen direction"; go(point, 10, true); return c; }
     }
-    const loot = [...o.loose, ...o.creatures.flatMap(a => a.rune ? [a.rune] : [])].sort((a, b) => dist(w, a) - dist(w, b))[0];
+    const gear = o.campaign?.equipment;
+    const patient = o.campaign?.troops.some(a => o.carried.some(c => c.id === a.id) && (a.level === 0 || a.hurt));
+    if (!job && !o.alarms.length && !o.windups.length && w.hp >= 3 && gear?.hat === "harvest" && !gear.hatDown && patient && !o.campaign?.berries.length && w.mode === "ground") {
+      bot.doing = "growing berries with her Harvest hat";
+      if (!campaignPress || o.playerTime - campaignPress.at >= 1) { c.hat = true; campaignPress = { key: "harvest-hat", at: o.playerTime }; }
+      return c;
+    }
+    if (gear?.hatDown && (gear.hat === "harvest" || gear.hat === "healing" && w.hp >= K.healTo) && dist(w, gear.hatDown) < 60) {
+      bot.doing = "collecting her useful hat";
+      if (go(gear.hatDown, 3, false) && (!campaignPress || o.playerTime - campaignPress.at >= 1)) { c.hat = true; campaignPress = { key: "collect-hat", at: o.playerTime }; }
+      return c;
+    }
+    const strategy = !job && !o.straggler && !o.stones.some(s => s.open && s.ready) ? campaign.choose(o) : null;
+    if (strategy) {
+      bot.doing = strategy.doing;
+      if (!go(strategy.at, strategy.kind === "pickup" ? o.pickRadius * K.pickRadiusFrac : 3, true)) return c;
+      if (strategy.kind === "drop") {
+        const stack = o.carried.map(a => a.id).join(",");
+        if (o.carried.at(-1)?.id === strategy.id) {
+          campaignCycle = null;
+          const key = `drop:${strategy.id}:${stack}`;
+          if (!campaignPress || campaignPress.key !== key || o.playerTime - campaignPress.at >= 1) { putDown(); if (c.sigil) campaignPress = { key, at: o.playerTime }; }
+        }
+        else if (!campaignCycle || campaignCycle.stack !== stack || o.playerTime - campaignCycle.at > 2) {
+          c.cycle = true; campaignCycle = { stack, at: o.playerTime };
+        }
+      } else if (strategy.kind === "pickup" || strategy.kind === "flask") {
+        const key = `${strategy.kind}:${strategy.id ?? ""}:${o.carried.map(a => a.id).join(",")}`;
+        if (!campaignPress || campaignPress.key !== key || o.playerTime - campaignPress.at >= 1) { c.place = true; campaignPress = { key, at: o.playerTime }; }
+      }
+      return c;
+    }
+    const loose = o.loose.filter(a => {
+      const animal = o.campaign?.sigils.find(s => s.id === a.id);
+      return !campaign.reserve(o, a.id) && (!animal || campaign.carryUseful(o, animal, quest?.wants));
+    });
+    const loot = [...loose, ...o.creatures.filter(a => !campaign.reserve(o, a.id) && (!o.campaign || campaign.carryUseful(o, a, quest?.wants))).flatMap(a => a.rune ? [a.rune] : [])].sort((a, b) => dist(w, a) - dist(w, b))[0];
     if (!job && loot && dist(w, loot) < 25) {
       bot.doing = "gathering a sigil";
       if (go(loot, o.pickRadius * K.pickRadiusFrac)) c.place = true;
       return c;
     }
-    if (!job && o.carried.length > K.follow && dist(w, o.home) < K.homeRange) {
+    if (!o.campaign && !job && o.carried.length > K.follow && dist(w, o.home) < K.homeRange) {
       bot.doing = "posting guards at home";
       if (go({ x: o.home.x, z: o.home.z + K.homeStand }, 8, true)) putDown();
       return c;
@@ -192,8 +250,23 @@ export function newExpert(params: Partial<ExpertParams> = {}, seed = 1, limits: 
       if (go(ready.cast, o.castRadius * K.castMoveFrac)) c.sigilHeld = !o.castBlocked;
       return c;
     }
-    const candidates = o.creatures.filter(a => !a.boss && !a.friendly && !a.rune && (job ? a.id === job.creatureId : a.level > 0 || a.species === quest?.wants));
-    const score = (a: typeof candidates[number]) => dist(w, a) - (a.area === lastArea ? K.stick : 0) - (o.next && dist(a, o.next) < 100 ? K.ahead : 0) - (a.species === quest?.wants ? K.questBias : 0);
+    if (!quest && !o.straggler && !o.alarms.length && w.hp >= 3) {
+      if (trailJob && (o.playerTime >= trailJob.until || heardDreams.has(trailJob.id))) { triedTrails.add(trailJob.id); trailJob = null; }
+      const trail = o.campaign?.legendTrails?.find(p => trailJob ? p.id === trailJob.id : !triedTrails.has(p.id));
+      if (trail) {
+        trailJob ??= { id: trail.id, until: o.playerTime + 30 };
+        bot.doing = "following a legend sigil's visible leash";
+        if (trail.way) go(trail.way, 5, true);
+        else if (go(trail, o.pickRadius * K.pickRadiusFrac)) {
+          const key = `legend:${trail.id}`;
+          if (!campaignPress || campaignPress.key !== key || o.playerTime - campaignPress.at >= 1) { c.place = true; campaignPress = { key, at: o.playerTime }; }
+        }
+        return c;
+      }
+    }
+    const candidates = o.creatures.filter(a => !a.boss && !a.friendly && !a.rune && (job ? a.id === job.creatureId : a.level > 0 || a.species === quest?.wants || !!o.campaign?.berries.length && o.carried.filter(c => c.level === 1).length < 3))
+      .filter(a => !o.campaign || !o.next || o.carried.filter(c => c.level === 1).length < 3 || a.species === quest?.wants || dist(a, o.next) < 150 || dist(w, a) < K.kite);
+    const score = (a: typeof candidates[number]) => campaign.recruitScore(o, a, quest?.wants) - (a.area === lastArea ? K.stick : 0) - (o.next && dist(a, o.next) < 100 ? K.ahead : 0);
     if (o.playerTime >= retargetAt || !candidates.some(a => a.id === target)) {
       target = [...candidates].sort((a, b) => score(a) - score(b) || a.id - b.id)[0]?.id ?? null;
       retargetAt = o.playerTime + K.retargetSeconds;

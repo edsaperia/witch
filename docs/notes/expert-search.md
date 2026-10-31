@@ -1,5 +1,40 @@
 # Expert search: implementation and fairness audit
 
+## Campaign strategy (Ed's direct brief, 2026-10-31)
+
+`bots/campaign.ts` adds bounded age/species decisions to the expert only. It
+recruits babies when a mobile youth force is short and observed berries can grow
+them, retains three travelling youths, considers species that can fight the known
+opposition, and places adults at a nearby future battlefield or a captured area.
+Nearer previously observed hostile areas can be prepared before the next route
+area. Growth to adult is deliberate near a post with spare youths; berries also
+heal observed injured allies. Feeding/placement jobs expire after40 player seconds
+and yield to danger. Real-game fixtures exercise baby placement, growth and
+retrieval, and adult placement without immediate pickup. This is rule-based
+planning, not evidence of stronger full-night play or a trained model.
+
+The adapter exposes only ripe berries/flasks in the approved approximate view,
+visible ally condition and sigils, and carried age/species. Off-screen carried
+positions are represented by the witch, not actual hidden follower locations.
+Visible captured-area markers and revealed route columns are remembered. Route
+columns use the renderer's `leyReachTimes` gate (or a worn Route-seer); a hidden
+wave-plan endpoint never escapes. Clearing early is prioritized through ready
+casts and newly visible route/capture information is consumed on subsequent
+delayed snapshots. This does not make the internal future route known or change
+the game's pulse/early-clear reveal behavior. A picked-up legend sigil provides
+only the drawn tether's direction in40m steps; a loose crowned sigil alone gives
+no remote legend coordinate. Encountered dreams retain the existing request and
+delivery controls; their deliberate discovery is no longer limited to one per
+night when campaign observation is present.
+
+Growth flasks are used only for a useful group close to its intended battlefield,
+not during distant travel. Equipped Harvest/healing hats and suitable ready broom
+spells are used through ordinary buttons. Changing Workshop/wardrobe loadouts is
+not expressible in the current bot control interface: QUESTION6544266067 requests
+canonical ownership for that separate station adapter. No direct loadout mutation,
+new unlock, mushroom action, skilled policy or game tuning is added. The new work
+does not authorize replaying historical searches/pilots or touching protected cases.
+
 Guarded coverage (coordinators6521109755/6521665224, 2026-10-30) is default on
 after fixed pilot59bc20ce passed its coverage/KO gate. Explicit
 `guardedCoverageExploration:false` retains the OFF comparison. The same

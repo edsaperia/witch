@@ -56,7 +56,7 @@ describe("expert observation and human input boundary", () => {
   it("delays the first action, emits only controls and never edits the leash", () => {
     const g = newGame(1000, TUNING), bot = newExpert();
     const stack = JSON.stringify(g.witches[0].leash), spells = JSON.stringify(g.witches[0].spells);
-    expect(bot.decide(g)).toEqual({ moveX: 0, moveZ: 0, toggleMode: false, zoom: 0, sigil: false, place: false, cycle: false, castParty: false });
+    expect(bot.decide(g)).toEqual({ moveX: 0, moveZ: 0, toggleMode: false, zoom: 0, sigil: false, place: false, cycle: false, cycleBack: false, castParty: false, hat: false, spell: false });
     g.herTime = 0.249; expect(bot.decide(g).fire).toBeUndefined();
     g.herTime = 0.25; const c = bot.decide(g);
     expect(Object.keys(c).every(k => ["moveX", "moveZ", "toggleMode", "zoom", "fire", "aimX", "aimZ", "dash", "sigil", "place", "cycle", "sigilHeld", "castParty"].includes(k))).toBe(true);
