@@ -12,12 +12,13 @@ afterEach(() => { for (const d of dirs.splice(0)) rmSync(d, { recursive: true, f
 const temp = () => { const d = mkdtempSync(join(tmpdir(), "witch-art-check-")); dirs.push(d); return d; };
 
 describe("affected art checks", () => {
-  it("always runs full checks for pushes and either release-check identifier", () => {
-    expect(fullCheck("push", "claude/prototype")).toBe(true);
-    expect(fullCheck("push", "main")).toBe(true);
-    expect(fullCheck("pull_request", "claude/rel-test", "ordinary")).toBe(true);
-    expect(fullCheck("pull_request", "codex/x", "Release check: x")).toBe(true);
+  it("allows exact successful fingerprints on releases and pushes, retaining full fallback for unknown events", () => {
+    expect(fullCheck("push", "claude/prototype")).toBe(false);
+    expect(fullCheck("push", "main")).toBe(false);
+    expect(fullCheck("pull_request", "claude/rel-test", "ordinary")).toBe(false);
+    expect(fullCheck("pull_request", "codex/x", "Release check: x")).toBe(false);
     expect(fullCheck("pull_request", "codex/x", "ordinary")).toBe(false);
+    expect(fullCheck("unexpected")).toBe(true);
   });
   it("derives every real registered task once without executing the check", () => {
     const source = readFileSync("art/check.mjs", "utf8");
@@ -31,9 +32,9 @@ describe("affected art checks", () => {
     expect(() => taskDispatcher(source.replace('task("species-sprites", async', 'if (true) task("species-sprites", async'))).toThrow();
     const workflow = readFileSync(".github/workflows/art-check.yml", "utf8");
     expect(workflow).toContain("branches: [claude/prototype, main]");
-    expect(workflow).toContain("types: [opened, synchronize, reopened, edited]");
-    expect(workflow).toContain("[[ \"$CHECK_BRANCH\" != claude/rel-* ]]");
-    expect(workflow).toContain("[[ \"$CHECK_TITLE\" != 'Release check:'* ]]");
+    expect(workflow).toContain("types: [opened, synchronize, reopened]");
+    expect(workflow).not.toContain("claude/rel-*");
+    expect(workflow).toContain('if: steps.checked.outputs.run == \'\'');
   });
   it("accepts only an exact successful result and reruns misses, failures and corrupt entries", () => {
     const d = temp(), key = sha("inputs");
