@@ -291,7 +291,6 @@ export type SchemaTuning = {
       };
       "terraceRoom": boolean;
     };
-    "carrier": string;
   };
   "home": {
     "margin": number;
@@ -1173,7 +1172,7 @@ export type SchemaTuning = {
     "share": number;
     "earlyQuest": boolean;
     "areas": boolean;
-    "happyRange": number;
+    "friendRange": number;
     "questCap": number;
     "questLater": boolean;
     "bombard": {

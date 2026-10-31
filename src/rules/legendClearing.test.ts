@@ -78,7 +78,7 @@ describe("legend clearings", () => {
   // "happy creatures don't follow you - only leashed creatures do".
   // Ed (2026-10-06): "Happy Circle baby should stay in its circle, though it can dance there"; "There's no way to release a
   // leashed animal."
-  it("its baby, invited, stays in the circle when she leaves, and dances there when its area's party comes; only leashed does it follow her", () => {
+  it("its befriended baby stays in the circle and dances there; only loose-sigil pickup makes it follow her", () => {
     const idle: Controls = { moveX: 0, moveZ: 0, toggleMode: false, zoom: 0, autoTalk: false };
     const run = (g: Game, secs: number, each?: () => void) => { for (let i = 0; i < Math.round(secs / STEP); i++) { stepGame(g, idle, STEP); each?.(); } };
     const g = newGame(123, PEOPLED);
@@ -98,7 +98,7 @@ describe("legend clearings", () => {
     expect(Math.hypot(B.anchorX - k.x, B.anchorZ - k.z)).toBeLessThan(k.r);
     run(g, 30, () => expect(dist()).toBeLessThan(k.r + 0.5));
     // leashed, it follows her out of its circle
-    inviteCreature(g.leash, B, B.x, B.z, g.clock.time);
+    inviteCreature(g.leash, B, B.x, B.z, g.clock.time, "picked");
     g.witch = { ...g.witch, x: k.x + k.r + 40, z: k.z, mode: "ground", lift: 0 };
     // (the next area's swarm, made real as she comes near, kept off her: in a fight a baby scatters instead, rules/babies.ts)
     run(g, 25, () => { for (const o of g.creatures) if (!o.leashed && !o.boss && o.level > 0 && o.fight?.target?.kind === "witch") o.gone = true; });
@@ -124,7 +124,8 @@ describe("legend clearings", () => {
     const spare = g.creatures.filter(o => !o.boss && !o.circle && !o.gone && !same(o) && Math.hypot(o.x - L.x, o.z - L.z) > 400).slice(0, 4);
     spare.forEach((o, i) => Object.assign(o, { species: S, level: i < 2 ? 0 : 2, cell: [next[0], next[1]], x: L.x + 6 + i * 2, z: L.z + 12, tx: L.x + 6 + i * 2, tz: L.z + 12, homeX: L.x, homeZ: L.z + 12, anchorX: L.x, anchorZ: L.z + 12, state: undefined, enraged: false, hp: undefined }));
     const [baby2, leashed, a1, a2] = spare;
-    inviteCreature(g.leash, leashed, leashed.x, leashed.z, g.clock.time);
+    befriend(leashed, g.clock.time); // already-converted follower fixture, not a baby invitation
+    inviteCreature(g.leash, leashed, leashed.x, leashed.z, g.clock.time, "picked");
     // the wave brings its soundsystem: its wild babies turn happy and dance (the circle's in its circle), its adults are enraged and besiege it
     stepGame(g, { ...idle, nextWave: true }, STEP);
     for (let i = 0; i < 20; i++) stepGame(g, idle, STEP);

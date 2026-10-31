@@ -1,17 +1,7 @@
-// The hunt (Ed, 2026-10-07): "When I go to a wild area, after they are awoken all of the wild creatures from that area should
-// fight with me until either I die or they are invited. When they are all invited, the runestone transforms into a
-// soundsystem. The legend and the circle baby are the exceptions"; and "they should lose interest and go home if you leave
-// their area, as they did before". Once a wild area's watch is over with her still on the ground in it (rules/wildWatch.ts;
-// at once with the watch off), every one of its own awake young and adults hunts her (c.hunting): wherever it is in the area,
-// it goes for her, never giving up or napping while she's in the area; with her over the treetops there it holds (it can't
-// reach her) and comes on again as soon as she lands. Babies don't fight (they never attack), the legend and its circle's
-// baby keep to their own rules. A hunt ends for one creature when it's invited (happy or leashed), enraged by a wave,
-// knocked down and run off, or gone; for all of an area's hunters when she leaves the area (on the ground or over the
-// treetops): they're ordinary wild creatures again, giving up combat.leaveArea metres past their edge and walking home, as
-// before; and for all of a witch's hunters when she's knocked out: they give up, walk back into their own area and roam
-// (and may nap) as before, and the area is forgotten, so her next visit starts with its watch again. Back in an area she
-// left, it hunts her again at once while it's remembered (wildWatch.forget seconds after she was last on the ground in it),
-// else its watch plays again. Hunters are stepped by combat wherever they are (its busy set). No drawing here.
+// The hunt (Ed, 2026-10-07; clarified 2026-10-31): after the watch, awake wild youths and adults hunt her.
+// On the ground they pursue beyond their area; airborne over it they hold and resume on landing. Airborne outside it,
+// every hunter gives up and walks home, and the area watch plays on her next visit. Invite, enrage, knock-down/run-off,
+// gone, knockout and Stealth endings remain. Babies and legends never hunt. No drawing here.
 import type { Game } from "./game";
 import { areaCellAt } from "./map";
 import type { Tuning } from "./tuning";
@@ -36,7 +26,11 @@ export function stepHunts(g: Game, t: Tuning): void {
       g.wildEntry.delete(cellKey(c.cell));
       c.hunting = undefined; c.retreat = true; c.retreatFrom = undefined; if (c.fight) c.fight.target = null;
       hunts.delete(id);
-    } else if (c.hunting === undefined || !hunter(c) || c.fleeUntil !== undefined || c.gone || (v && (at[c.hunting][0] !== c.cell[0] || at[c.hunting][1] !== c.cell[1])) || (v && stealthed(v.spells, v.time ?? g.herTime) && Math.hypot(v.body.x - c.x, v.body.z - c.z) > (t.spells.stealth?.range ?? 25))) { // (hidden by Stealth and out of its range: it's lost her)
+    } else if (c.hunting === undefined || !hunter(c) || c.fleeUntil !== undefined || c.gone || (v && v.body.mode !== "ground" && (at[c.hunting][0] !== c.cell[0] || at[c.hunting][1] !== c.cell[1])) || (v && stealthed(v.spells, v.time ?? g.herTime) && Math.hypot(v.body.x - c.x, v.body.z - c.z) > (t.spells.stealth?.range ?? 25))) { // (hidden by Stealth and out of its range: it's lost her)
+      if (v && v.body.mode !== "ground" && (at[c.hunting!][0] !== c.cell[0] || at[c.hunting!][1] !== c.cell[1])) {
+        g.wildEntry.delete(cellKey(c.cell)); c.retreat = true; c.retreatFrom = undefined;
+        if (c.fight) c.fight.target = null;
+      }
       c.hunting = undefined; hunts.delete(id); // (she's left its area: it loses interest, as before)
     }
   }
