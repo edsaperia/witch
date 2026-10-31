@@ -11,6 +11,8 @@ it('generates the same readable inventory from CRLF and LF and detects drift', (
   try {
     fs.mkdirSync(path.join(root, 'tools/demo'), { recursive: true });
     fs.writeFileSync(path.join(root, 'tools/inventory-notes.json'), '{}');
+    fs.writeFileSync(path.join(root, 'tools/demo/effects-scene.test.ts'), '');
+    fs.writeFileSync(path.join(root, 'tools/demo/PLAN.md'), '');
     const script = path.join(root, 'tools/demo/example.mjs');
     const text = '// Describes a useful example tool.\n//   node tools/demo/example.mjs\nexport {};\n';
     fs.writeFileSync(script, text.replace(/\n/g, '\r\n'));
@@ -19,6 +21,7 @@ it('generates the same readable inventory from CRLF and LF and detects drift', (
     const have = fs.readFileSync(output, 'utf8');
     expect(have).toContain('Describes a useful example tool.');
     expect(have).toContain('# tools/demo');
+    expect(have).toContain('- `PLAN.md`\n- `effects-scene.test.ts`');
     fs.writeFileSync(script, text);
     fs.writeFileSync(output, have.replace(/\n/g, '\r\n'));
     expect(run('--check').status).toBe(0);

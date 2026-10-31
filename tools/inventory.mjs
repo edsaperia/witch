@@ -30,7 +30,7 @@ const header = file => {
 const dirs = fs.readdirSync(ROOT, { withFileTypes: true }).filter(e => e.isDirectory()).map(e => e.name).sort(), index = [];
 for (const d of dirs) {
   const dir = join(ROOT, d), files = fs.readdirSync(dir).filter(f => SCRIPT.test(f) && fs.statSync(path.join(dir, f)).isFile()).sort();
-  const others = fs.readdirSync(dir).filter(f => !SCRIPT.test(f) && f !== "README.md" && !ignored(path.join(dir, f))); // (not what a build leaves, a lab's dist/: git ignores it, so the READMEs read the same built or not)
+  const others = fs.readdirSync(dir).filter(f => !SCRIPT.test(f) && f !== "README.md" && !ignored(path.join(dir, f))).sort(); // (fixed code-unit order on Windows and Linux; ignored build products never enter the inventory)
   if (!files.length && !others.length) continue; // (an emptied directory: nothing to list)
   const own = fs.existsSync(path.join(dir, "README.md")) && !fs.readFileSync(path.join(dir, "README.md"), "utf8").includes(MARK);
   const rows = files.map(f => { const h = header(path.join(dir, f)); if (!h.first) { console.error(`no header comment: ${dir}/${f}`); stale++; } return { f, ...h }; });
