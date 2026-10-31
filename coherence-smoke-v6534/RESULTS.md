@@ -133,3 +133,12 @@ page.waitForFunction: Target page, context or browser has been closed
 }
 ```
 
+### Batch s-cull: cull
+
+- exit code: 0
+- wall time: 243s (12:56 UTC end)
+
+```
+smoke test passed
+```
+
