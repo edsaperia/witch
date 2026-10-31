@@ -4,7 +4,7 @@ import { TUNING } from "../rules/tuning";
 import { snapshotGame } from "../rules/nightSnapshot";
 import { captureNight } from "../app/nightSave";
 import { restoreSettingsBase } from "../app/playerSettings";
-import { InputRecorder, localControls, replayRecording, type InputRecording } from "./inputRecording";
+import { InputRecorder, localControls, replayRecording, type InputRecording, type RecordedEvent } from "./inputRecording";
 import { packLog, unpackLog } from "./logCodec";
 
 function fixture(persist?: (kind: string, payload: unknown, context: { build: string; t: number; island: string }) => void) {
@@ -23,7 +23,8 @@ it("keeps a ten-minute paused tape exact without expanding paused frames into th
     recorder.mutate("pause", () => { game.clock.paused = true; });
     const before = snapshotGame(game);
     for (let second = 0; second < 600; second++) {
-      for (let frame = 0; frame < 60; frame++) recorder.step(idle, 1 / 60);
+      // A browser's paused dt jitters, which splits the in-memory runs; the journal must not care.
+      for (let frame = 0; frame < 60; frame++) recorder.step(idle, frame % 3 ? 1 / 60 : 1 / 59);
       vi.advanceTimersByTime(1000);
     }
     const tape = recorder.export();
@@ -32,6 +33,19 @@ it("keeps a ten-minute paused tape exact without expanding paused frames into th
     expect(streamed.filter(e => e.kind === "recording:event").every(e => (e.payload as { event: { kind: string } }).event.kind !== "frame")).toBe(true);
     expect(snapshotGame(game)).toEqual(before);
     expect(snapshotGame(replayRecording(tape, "test"))).toEqual(before);
+    expect(streamed.length).toBeLessThan(10);
+    recorder.mutate("resume", () => { game.clock.paused = false; });
+    for (let frame = 0; frame < 4; frame++) recorder.step(idle, 1 / 120);
+    vi.advanceTimersByTime(1000);
+    const resumed = streamed.filter(e => e.kind === "recording:resumed");
+    expect(resumed).toHaveLength(1); expect((resumed[0].payload as { frames: number }).frames).toBe(36_000);
+    // Unpaused zero-step frames are counted onto the next row, not written one by one.
+    const rows = streamed.filter(e => e.kind === "recording:event").map(e => e.payload as { event: { kind: string; fromStep: number; toStep: number }; zeroStepBefore?: number });
+    const frames = rows.filter(r => r.event.kind === "frame");
+    expect(frames.every(r => r.event.toStep > r.event.fromStep)).toBe(true);
+    expect(frames.reduce((n, r) => n + (r.zeroStepBefore ?? 0), 0) + frames.length).toBeLessThanOrEqual(4);
+    expect(snapshotGame(replayRecording(recorder.export(), "test"))).toEqual(snapshotGame(game));
+    vi.advanceTimersByTime(1000);
     expect(vi.getTimerCount()).toBe(0);
   } finally { vi.useRealTimers(); }
 });
@@ -46,7 +60,11 @@ it("records a scripted fractional-frame run, retains local aim/zoom/framing, and
   recorder.mutate("pause", () => { game.clock.paused = true; });
   const tape = JSON.parse(JSON.stringify(recorder.export()));
   expect(streamed[0]).toMatchObject({ kind: "recording:start", payload: { build: "test", seed: 123, startingSave: tape.startingSave } });
-  expect(streamed.slice(1).map(row => (row.payload as { event: unknown }).event)).toEqual(tape.events);
+  // The journal is diagnostic, not the tape (crash1823): zero-step frames are counted, not written.
+  const journaled = streamed.slice(1).map(row => row.payload as { event: RecordedEvent; zeroStepBefore?: number });
+  const stepping = (tape.events as RecordedEvent[]).filter(e => e.kind !== "frame" || e.toStep > e.fromStep);
+  expect(journaled.map(row => row.event)).toEqual(stepping);
+  expect(journaled.reduce((n, row) => n + (row.zeroStepBefore ?? 0), 0)).toBe(tape.events.length - stepping.length);
   const first = tape.events[0]; expect(first.frame.inputs[0]).toMatchObject({ aimX: 12.25, aimZ: -3.75, zoom: 1, framing: true, framePart: "hat" });
   expect(first.fromStep).toBe(0); expect(first.toStep).toBe(0);
   const decoded = await unpackLog(await packLog({ recording: tape })) as { recording: InputRecording };
@@ -121,7 +139,11 @@ it("retains unchanged frames without hot-path serialization/cloning, drains boun
     recorder.mutate("pause", () => { game.clock.paused = true; });
     const tape = recorder.export();
     expect(tape.events.filter(event => event.kind === "frame")).toHaveLength(311);
-    expect(streamed.slice(1).map(row => (row.payload as { event: unknown }).event)).toEqual(tape.events);
+    // The journal is diagnostic, not the tape (crash1823): zero-step frames are counted, not written.
+  const journaled = streamed.slice(1).map(row => row.payload as { event: RecordedEvent; zeroStepBefore?: number });
+  const stepping = (tape.events as RecordedEvent[]).filter(e => e.kind !== "frame" || e.toStep > e.fromStep);
+  expect(journaled.map(row => row.event)).toEqual(stepping);
+  expect(journaled.reduce((n, row) => n + (row.zeroStepBefore ?? 0), 0)).toBe(tape.events.length - stepping.length);
     expect(snapshotGame(replayRecording(tape, "test"))).toEqual(snapshotGame(game));
     expect(vi.getTimerCount()).toBe(0);
   } finally { vi.restoreAllMocks(); vi.useRealTimers(); }
