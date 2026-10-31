@@ -1,5 +1,7 @@
 # Art cache follow-ups
 
+COMPLETED in PR #1500, included in v6478 (2026-10-31): cache-first worker import and conservative affected-art-check reuse. The accepted fingerprint work remains intact. The instructions/checkpoints below describe that completed assignment, not new work; current check behavior is in [art-check notes](../notes/art-checks.md).
+
 COORDINATOR6526799842 accepts fingerprint FINAL3b2f96be and explicitly opens
 these milestones now, without waiting for release. This branch starts at exact
 3b2f96beb3f1b27d1371c9838387615cc9169132 and preserves that accepted work.
