@@ -1,0 +1,2405 @@
+[
+ {
+  "run": 1,
+  "steps": [
+   {
+    "step": "4 focused",
+    "activeIsClose": true,
+    "active": "BUTTON[data-act=close]",
+    "clicks": 0,
+    "findsOpen": true,
+    "bodyPaused": false,
+    "slidersOpen": false,
+    "shieldShown": false,
+    "middleHit": "game",
+    "clockPaused": false,
+    "keys": []
+   },
+   {
+    "step": "5 after Esc (pause)",
+    "activeIsClose": false,
+    "active": "BUTTON",
+    "clicks": 0,
+    "findsOpen": true,
+    "bodyPaused": true,
+    "slidersOpen": true,
+    "shieldShown": true,
+    "middleHit": "pause-shield",
+    "clockPaused": true,
+    "keys": [
+     {
+      "type": "keydown",
+      "key": "Escape",
+      "defaultPrevented": true
+     },
+     {
+      "type": "keyup",
+      "key": "Escape",
+      "defaultPrevented": false
+     }
+    ]
+   },
+   {
+    "step": "6 after Enter (paused)",
+    "activeIsClose": false,
+    "active": "BUTTON",
+    "clicks": 0,
+    "findsOpen": true,
+    "bodyPaused": true,
+    "slidersOpen": true,
+    "shieldShown": true,
+    "middleHit": "pause-shield",
+    "clockPaused": true,
+    "keys": [
+     {
+      "type": "keydown",
+      "key": "Enter",
+      "defaultPrevented": false
+     },
+     {
+      "type": "keyup",
+      "key": "Enter",
+      "defaultPrevented": false
+     }
+    ]
+   },
+   {
+    "step": "7 after Space (paused)",
+    "activeIsClose": false,
+    "active": "BUTTON",
+    "clicks": 0,
+    "findsOpen": true,
+    "bodyPaused": true,
+    "slidersOpen": true,
+    "shieldShown": true,
+    "middleHit": "pause-shield",
+    "clockPaused": true,
+    "keys": [
+     {
+      "type": "keydown",
+      "key": " ",
+      "defaultPrevented": false
+     },
+     {
+      "type": "keyup",
+      "key": " ",
+      "defaultPrevented": false
+     }
+    ]
+   },
+   {
+    "step": "8 after Esc (resume)",
+    "activeIsClose": false,
+    "active": "BODY",
+    "clicks": 0,
+    "findsOpen": true,
+    "bodyPaused": false,
+    "slidersOpen": false,
+    "shieldShown": false,
+    "middleHit": "game",
+    "clockPaused": false,
+    "keys": [
+     {
+      "type": "keydown",
+      "key": "Escape",
+      "defaultPrevented": true
+     },
+     {
+      "type": "keyup",
+      "key": "Escape",
+      "defaultPrevented": false
+     }
+    ]
+   },
+   {
+    "step": "9 re-paused",
+    "activeIsClose": false,
+    "active": "BUTTON",
+    "clicks": 0,
+    "findsOpen": true,
+    "bodyPaused": true,
+    "slidersOpen": true,
+    "shieldShown": true,
+    "middleHit": "pause-shield",
+    "clockPaused": true,
+    "keys": [
+     {
+      "type": "keydown",
+      "key": "Escape",
+      "defaultPrevented": true
+     },
+     {
+      "type": "keyup",
+      "key": "Escape",
+      "defaultPrevented": false
+     }
+    ]
+   },
+   {
+    "step": "10 Tab x3",
+    "activeIsClose": false,
+    "active": "BUTTON",
+    "clicks": 0,
+    "findsOpen": true,
+    "bodyPaused": true,
+    "slidersOpen": true,
+    "shieldShown": true,
+    "middleHit": "pause-shield",
+    "clockPaused": true,
+    "keys": [
+     {
+      "type": "keydown",
+      "key": "Tab",
+      "defaultPrevented": false
+     },
+     {
+      "type": "keyup",
+      "key": "Tab",
+      "defaultPrevented": false
+     },
+     {
+      "type": "keydown",
+      "key": "Tab",
+      "defaultPrevented": false
+     },
+     {
+      "type": "keyup",
+      "key": "Tab",
+      "defaultPrevented": false
+     },
+     {
+      "type": "keydown",
+      "key": "Tab",
+      "defaultPrevented": false
+     },
+     {
+      "type": "keyup",
+      "key": "Tab",
+      "defaultPrevented": false
+     }
+    ],
+    "tabPath": [
+     "BUTTON:❔ Controls@pause-btns",
+     "BUTTON:⚙ Options@pause-btns",
+     "BUTTON:⚙ Show setting@pause-sliders",
+     "BUTTON:Copy values@pause-sliders"
+    ],
+    "inPause": true
+   },
+   {
+    "step": "10a Shift+Tab x2",
+    "activeIsClose": false,
+    "active": "BUTTON",
+    "clicks": 0,
+    "findsOpen": true,
+    "bodyPaused": true,
+    "slidersOpen": true,
+    "shieldShown": true,
+    "middleHit": "pause-shield",
+    "clockPaused": true,
+    "keys": [
+     {
+      "type": "keydown",
+      "key": "Shift",
+      "defaultPrevented": false
+     },
+     {
+      "type": "keydown",
+      "key": "Tab",
+      "defaultPrevented": false
+     },
+     {
+      "type": "keyup",
+      "key": "Tab",
+      "defaultPrevented": false
+     },
+     {
+      "type": "keyup",
+      "key": "Shift",
+      "defaultPrevented": false
+     },
+     {
+      "type": "keydown",
+      "key": "Shift",
+      "defaultPrevented": false
+     },
+     {
+      "type": "keydown",
+      "key": "Tab",
+      "defaultPrevented": false
+     },
+     {
+      "type": "keyup",
+      "key": "Tab",
+      "defaultPrevented": false
+     },
+     {
+      "type": "keyup",
+      "key": "Shift",
+      "defaultPrevented": false
+     }
+    ],
+    "shiftTabPath": [
+     "BUTTON:Copy values@pause-sliders",
+     "BUTTON:⚙ Show setting@pause-sliders",
+     "BUTTON:⚙ Options@pause-btns"
+    ],
+    "inPause": true
+   },
+   {
+    "step": "10b Tab to Controls",
+    "activeIsClose": false,
+    "active": "BUTTON",
+    "clicks": 0,
+    "findsOpen": true,
+    "bodyPaused": true,
+    "slidersOpen": true,
+    "shieldShown": true,
+    "middleHit": "pause-shield",
+    "clockPaused": true,
+    "keys": [
+     {
+      "type": "keydown",
+      "key": "Tab",
+      "defaultPrevented": false
+     },
+     {
+      "type": "keyup",
+      "key": "Tab",
+      "defaultPrevented": false
+     },
+     {
+      "type": "keydown",
+      "key": "Tab",
+      "defaultPrevented": false
+     },
+     {
+      "type": "keyup",
+      "key": "Tab",
+      "defaultPrevented": false
+     },
+     {
+      "type": "keydown",
+      "key": "Tab",
+      "defaultPrevented": false
+     },
+     {
+      "type": "keyup",
+      "key": "Tab",
+      "defaultPrevented": false
+     },
+     {
+      "type": "keydown",
+      "key": "Tab",
+      "defaultPrevented": false
+     },
+     {
+      "type": "keyup",
+      "key": "Tab",
+      "defaultPrevented": false
+     },
+     {
+      "type": "keydown",
+      "key": "Tab",
+      "defaultPrevented": false
+     },
+     {
+      "type": "keyup",
+      "key": "Tab",
+      "defaultPrevented": false
+     },
+     {
+      "type": "keydown",
+      "key": "Tab",
+      "defaultPrevented": false
+     },
+     {
+      "type": "keyup",
+      "key": "Tab",
+      "defaultPrevented": false
+     },
+     {
+      "type": "keydown",
+      "key": "Tab",
+      "defaultPrevented": false
+     },
+     {
+      "type": "keyup",
+      "key": "Tab",
+      "defaultPrevented": false
+     },
+     {
+      "type": "keydown",
+      "key": "Tab",
+      "defaultPrevented": false
+     },
+     {
+      "type": "keyup",
+      "key": "Tab",
+      "defaultPrevented": false
+     },
+     {
+      "type": "keydown",
+      "key": "Tab",
+      "defaultPrevented": false
+     },
+     {
+      "type": "keyup",
+      "key": "Tab",
+      "defaultPrevented": false
+     },
+     {
+      "type": "keydown",
+      "key": "Tab",
+      "defaultPrevented": false
+     },
+     {
+      "type": "keyup",
+      "key": "Tab",
+      "defaultPrevented": false
+     },
+     {
+      "type": "keydown",
+      "key": "Tab",
+      "defaultPrevented": false
+     },
+     {
+      "type": "keyup",
+      "key": "Tab",
+      "defaultPrevented": false
+     },
+     {
+      "type": "keydown",
+      "key": "Tab",
+      "defaultPrevented": false
+     },
+     {
+      "type": "keyup",
+      "key": "Tab",
+      "defaultPrevented": false
+     },
+     {
+      "type": "keydown",
+      "key": "Tab",
+      "defaultPrevented": false
+     },
+     {
+      "type": "keyup",
+      "key": "Tab",
+      "defaultPrevented": false
+     },
+     {
+      "type": "keydown",
+      "key": "Tab",
+      "defaultPrevented": false
+     },
+     {
+      "type": "keyup",
+      "key": "Tab",
+      "defaultPrevented": false
+     },
+     {
+      "type": "keydown",
+      "key": "Tab",
+      "defaultPrevented": false
+     },
+     {
+      "type": "keyup",
+      "key": "Tab",
+      "defaultPrevented": false
+     },
+     {
+      "type": "keydown",
+      "key": "Tab",
+      "defaultPrevented": false
+     },
+     {
+      "type": "keyup",
+      "key": "Tab",
+      "defaultPrevented": false
+     },
+     {
+      "type": "keydown",
+      "key": "Tab",
+      "defaultPrevented": false
+     },
+     {
+      "type": "keyup",
+      "key": "Tab",
+      "defaultPrevented": false
+     },
+     {
+      "type": "keydown",
+      "key": "Tab",
+      "defaultPrevented": false
+     },
+     {
+      "type": "keyup",
+      "key": "Tab",
+      "defaultPrevented": false
+     },
+     {
+      "type": "keydown",
+      "key": "Tab",
+      "defaultPrevented": false
+     },
+     {
+      "type": "keyup",
+      "key": "Tab",
+      "defaultPrevented": false
+     },
+     {
+      "type": "keydown",
+      "key": "Tab",
+      "defaultPrevented": false
+     },
+     {
+      "type": "keyup",
+      "key": "Tab",
+      "defaultPrevented": false
+     },
+     {
+      "type": "keydown",
+      "key": "Tab",
+      "defaultPrevented": false
+     },
+     {
+      "type": "keyup",
+      "key": "Tab",
+      "defaultPrevented": false
+     },
+     {
+      "type": "keydown",
+      "key": "Tab",
+      "defaultPrevented": false
+     },
+     {
+      "type": "keyup",
+      "key": "Tab",
+      "defaultPrevented": false
+     },
+     {
+      "type": "keydown",
+      "key": "Tab",
+      "defaultPrevented": false
+     },
+     {
+      "type": "keyup",
+      "key": "Tab",
+      "defaultPrevented": false
+     },
+     {
+      "type": "keydown",
+      "key": "Tab",
+      "defaultPrevented": false
+     },
+     {
+      "type": "keyup",
+      "key": "Tab",
+      "defaultPrevented": false
+     },
+     {
+      "type": "keydown",
+      "key": "Tab",
+      "defaultPrevented": false
+     },
+     {
+      "type": "keyup",
+      "key": "Tab",
+      "defaultPrevented": false
+     },
+     {
+      "type": "keydown",
+      "key": "Tab",
+      "defaultPrevented": false
+     },
+     {
+      "type": "keyup",
+      "key": "Tab",
+      "defaultPrevented": false
+     },
+     {
+      "type": "keydown",
+      "key": "Tab",
+      "defaultPrevented": false
+     },
+     {
+      "type": "keyup",
+      "key": "Tab",
+      "defaultPrevented": false
+     },
+     {
+      "type": "keydown",
+      "key": "Tab",
+      "defaultPrevented": false
+     },
+     {
+      "type": "keyup",
+      "key": "Tab",
+      "defaultPrevented": false
+     },
+     {
+      "type": "keydown",
+      "key": "Tab",
+      "defaultPrevented": false
+     },
+     {
+      "type": "keyup",
+      "key": "Tab",
+      "defaultPrevented": false
+     },
+     {
+      "type": "keydown",
+      "key": "Tab",
+      "defaultPrevented": false
+     },
+     {
+      "type": "keyup",
+      "key": "Tab",
+      "defaultPrevented": false
+     },
+     {
+      "type": "keydown",
+      "key": "Tab",
+      "defaultPrevented": false
+     },
+     {
+      "type": "keyup",
+      "key": "Tab",
+      "defaultPrevented": false
+     },
+     {
+      "type": "keydown",
+      "key": "Tab",
+      "defaultPrevented": false
+     },
+     {
+      "type": "keyup",
+      "key": "Tab",
+      "defaultPrevented": false
+     },
+     {
+      "type": "keydown",
+      "key": "Tab",
+      "defaultPrevented": false
+     },
+     {
+      "type": "keyup",
+      "key": "Tab",
+      "defaultPrevented": false
+     },
+     {
+      "type": "keydown",
+      "key": "Tab",
+      "defaultPrevented": false
+     },
+     {
+      "type": "keyup",
+      "key": "Tab",
+      "defaultPrevented": false
+     },
+     {
+      "type": "keydown",
+      "key": "Tab",
+      "defaultPrevented": false
+     },
+     {
+      "type": "keyup",
+      "key": "Tab",
+      "defaultPrevented": false
+     },
+     {
+      "type": "keydown",
+      "key": "Tab",
+      "defaultPrevented": false
+     },
+     {
+      "type": "keyup",
+      "key": "Tab",
+      "defaultPrevented": false
+     },
+     {
+      "type": "keydown",
+      "key": "Tab",
+      "defaultPrevented": false
+     },
+     {
+      "type": "keyup",
+      "key": "Tab",
+      "defaultPrevented": false
+     },
+     {
+      "type": "keydown",
+      "key": "Tab",
+      "defaultPrevented": false
+     },
+     {
+      "type": "keyup",
+      "key": "Tab",
+      "defaultPrevented": false
+     },
+     {
+      "type": "keydown",
+      "key": "Tab",
+      "defaultPrevented": false
+     },
+     {
+      "type": "keyup",
+      "key": "Tab",
+      "defaultPrevented": false
+     },
+     {
+      "type": "keydown",
+      "key": "Tab",
+      "defaultPrevented": false
+     },
+     {
+      "type": "keyup",
+      "key": "Tab",
+      "defaultPrevented": false
+     }
+    ],
+    "tabbed": false,
+    "tabPath": [
+     "BUTTON:⚙ Show setting@pause-sliders",
+     "BUTTON:Copy values@pause-sliders",
+     "BUTTON:⬇ Download log@pause-sliders",
+     "BUTTON:⬇ Download rea@pause-sliders",
+     "BUTTON:🔒 Unlock ever@pause-sliders",
+     "BUTTON:Report@pause-sliders",
+     "BUTTON:🎛 Music Lab@pause-sliders",
+     "BUTTON:🔊 Audio test@pause-sliders",
+     "BUTTON:⚔ Fight arena@pause-sliders",
+     "BUTTON:🧪 Finds@pause-sliders",
+     "BUTTON:Potion lab@pause-sliders",
+     "SELECT:AutoOff (full @pause-sliders",
+     "TEXTAREA#playtest-comment@pause-sliders",
+     "BUTTON:Save comment@pause-sliders",
+     "BUTTON:Builder: resto@pause-sliders",
+     "BUTTON:▸Waves@pause-sliders",
+     "BUTTON:▸Volume@pause-sliders",
+     "BUTTON:▸#1432 Wild li@pause-sliders",
+     "BUTTON:▸#1398 Contras@pause-sliders",
+     "BUTTON:▸#1303 Creatur@pause-sliders",
+     "BUTTON:▸#1301 Oak cro@pause-sliders",
+     "BUTTON:▸#1300 Rune st@pause-sliders",
+     "BUTTON:▸#1233 Oak cro@pause-sliders",
+     "BUTTON:▸#1227 Hidden @pause-sliders",
+     "BUTTON:▸#1194 Loading@pause-sliders",
+     "BUTTON:▸#1182 House m@pause-sliders",
+     "BUTTON:▸#1177 Pointer@pause-sliders",
+     "BUTTON:▸#1176 Places @pause-sliders",
+     "BUTTON:▸#1162 Telesco@pause-sliders",
+     "BUTTON:▸#1149 Area bl@pause-sliders",
+     "BUTTON:▸#1127 Tree he@pause-sliders",
+     "BUTTON:▸#956 Pack com@pause-sliders",
+     "BUTTON:▸#950 Leaf jit@pause-sliders",
+     "BUTTON:▸#940 One cool@pause-sliders",
+     "BUTTON:▸#938 Sigil ru@pause-sliders",
+     "BUTTON:▸#937 Stack si@pause-sliders",
+     "BUTTON:▸#936 Leash ar@pause-sliders",
+     "BUTTON:▸#923 Bounce-o@pause-sliders",
+     "BUTTON:▸#922 Treehous@pause-sliders",
+     "BUTTON:▸#916 Flying c@pause-sliders"
+    ]
+   },
+   {
+    "step": "10c focused Controls by script (Tab didn't reach)",
+    "activeIsClose": false,
+    "active": "BUTTON",
+    "clicks": 0,
+    "findsOpen": true,
+    "bodyPaused": true,
+    "slidersOpen": true,
+    "shieldShown": true,
+    "middleHit": "pause-shield",
+    "clockPaused": true,
+    "keys": []
+   },
+   {
+    "step": "11 Enter on pause control",
+    "activeIsClose": false,
+    "active": "BUTTON",
+    "clicks": 0,
+    "findsOpen": true,
+    "bodyPaused": true,
+    "slidersOpen": true,
+    "shieldShown": true,
+    "middleHit": "pause-shield",
+    "clockPaused": true,
+    "keys": [
+     {
+      "type": "keydown",
+      "key": "Enter",
+      "defaultPrevented": false
+     },
+     {
+      "type": "keyup",
+      "key": "Enter",
+      "defaultPrevented": false
+     }
+    ],
+    "target": "BUTTON:❔ Controls",
+    "before": {
+     "panel": null,
+     "value": ""
+    },
+    "afterEnter": {
+     "panel": {
+      "shown": true,
+      "text": "CONTROLS×\n        Keyboard and mouse WAS"
+     },
+     "value": ""
+    }
+   },
+   {
+    "step": "12 Space on pause control",
+    "activeIsClose": false,
+    "active": "BUTTON",
+    "clicks": 0,
+    "findsOpen": true,
+    "bodyPaused": true,
+    "slidersOpen": true,
+    "shieldShown": true,
+    "middleHit": "pause-shield",
+    "clockPaused": true,
+    "keys": [
+     {
+      "type": "keydown",
+      "key": " ",
+      "defaultPrevented": false
+     },
+     {
+      "type": "keyup",
+      "key": " ",
+      "defaultPrevented": false
+     }
+    ],
+    "target": "BUTTON:❔ Controls",
+    "afterSpace": {
+     "panel": null
+    }
+   },
+   {
+    "step": "13 Esc",
+    "activeIsClose": false,
+    "active": "BODY",
+    "clicks": 0,
+    "findsOpen": true,
+    "bodyPaused": false,
+    "slidersOpen": false,
+    "shieldShown": false,
+    "middleHit": "game",
+    "clockPaused": false,
+    "keys": [
+     {
+      "type": "keydown",
+      "key": "Escape",
+      "defaultPrevented": true
+     },
+     {
+      "type": "keyup",
+      "key": "Escape",
+      "defaultPrevented": false
+     }
+    ]
+   }
+  ],
+  "errors": []
+ },
+ {
+  "run": 2,
+  "steps": [
+   {
+    "step": "4 focused",
+    "activeIsClose": true,
+    "active": "BUTTON[data-act=close]",
+    "clicks": 0,
+    "findsOpen": true,
+    "bodyPaused": false,
+    "slidersOpen": false,
+    "shieldShown": false,
+    "middleHit": "game",
+    "clockPaused": false,
+    "keys": []
+   },
+   {
+    "step": "5 after Esc (pause)",
+    "activeIsClose": false,
+    "active": "BUTTON",
+    "clicks": 0,
+    "findsOpen": true,
+    "bodyPaused": true,
+    "slidersOpen": true,
+    "shieldShown": true,
+    "middleHit": "pause-shield",
+    "clockPaused": true,
+    "keys": [
+     {
+      "type": "keydown",
+      "key": "Escape",
+      "defaultPrevented": true
+     },
+     {
+      "type": "keyup",
+      "key": "Escape",
+      "defaultPrevented": false
+     }
+    ]
+   },
+   {
+    "step": "6 after Enter (paused)",
+    "activeIsClose": false,
+    "active": "BUTTON",
+    "clicks": 0,
+    "findsOpen": true,
+    "bodyPaused": true,
+    "slidersOpen": true,
+    "shieldShown": true,
+    "middleHit": "pause-shield",
+    "clockPaused": true,
+    "keys": [
+     {
+      "type": "keydown",
+      "key": "Enter",
+      "defaultPrevented": false
+     },
+     {
+      "type": "keyup",
+      "key": "Enter",
+      "defaultPrevented": false
+     }
+    ]
+   },
+   {
+    "step": "7 after Space (paused)",
+    "activeIsClose": false,
+    "active": "BUTTON",
+    "clicks": 0,
+    "findsOpen": true,
+    "bodyPaused": true,
+    "slidersOpen": true,
+    "shieldShown": true,
+    "middleHit": "pause-shield",
+    "clockPaused": true,
+    "keys": [
+     {
+      "type": "keydown",
+      "key": " ",
+      "defaultPrevented": false
+     },
+     {
+      "type": "keyup",
+      "key": " ",
+      "defaultPrevented": false
+     }
+    ]
+   },
+   {
+    "step": "8 after Esc (resume)",
+    "activeIsClose": false,
+    "active": "BODY",
+    "clicks": 0,
+    "findsOpen": true,
+    "bodyPaused": false,
+    "slidersOpen": false,
+    "shieldShown": false,
+    "middleHit": "game",
+    "clockPaused": false,
+    "keys": [
+     {
+      "type": "keydown",
+      "key": "Escape",
+      "defaultPrevented": true
+     },
+     {
+      "type": "keyup",
+      "key": "Escape",
+      "defaultPrevented": false
+     }
+    ]
+   },
+   {
+    "step": "9 re-paused",
+    "activeIsClose": false,
+    "active": "BUTTON",
+    "clicks": 0,
+    "findsOpen": true,
+    "bodyPaused": true,
+    "slidersOpen": true,
+    "shieldShown": true,
+    "middleHit": "pause-shield",
+    "clockPaused": true,
+    "keys": [
+     {
+      "type": "keydown",
+      "key": "Escape",
+      "defaultPrevented": true
+     },
+     {
+      "type": "keyup",
+      "key": "Escape",
+      "defaultPrevented": false
+     }
+    ]
+   },
+   {
+    "step": "10 Tab x3",
+    "activeIsClose": false,
+    "active": "BUTTON",
+    "clicks": 0,
+    "findsOpen": true,
+    "bodyPaused": true,
+    "slidersOpen": true,
+    "shieldShown": true,
+    "middleHit": "pause-shield",
+    "clockPaused": true,
+    "keys": [
+     {
+      "type": "keydown",
+      "key": "Tab",
+      "defaultPrevented": false
+     },
+     {
+      "type": "keyup",
+      "key": "Tab",
+      "defaultPrevented": false
+     },
+     {
+      "type": "keydown",
+      "key": "Tab",
+      "defaultPrevented": false
+     },
+     {
+      "type": "keyup",
+      "key": "Tab",
+      "defaultPrevented": false
+     },
+     {
+      "type": "keydown",
+      "key": "Tab",
+      "defaultPrevented": false
+     },
+     {
+      "type": "keyup",
+      "key": "Tab",
+      "defaultPrevented": false
+     }
+    ],
+    "tabPath": [
+     "BUTTON:❔ Controls@pause-btns",
+     "BUTTON:⚙ Options@pause-btns",
+     "BUTTON:⚙ Show setting@pause-sliders",
+     "BUTTON:Copy values@pause-sliders"
+    ],
+    "inPause": true
+   },
+   {
+    "step": "10a Shift+Tab x2",
+    "activeIsClose": false,
+    "active": "BUTTON",
+    "clicks": 0,
+    "findsOpen": true,
+    "bodyPaused": true,
+    "slidersOpen": true,
+    "shieldShown": true,
+    "middleHit": "pause-shield",
+    "clockPaused": true,
+    "keys": [
+     {
+      "type": "keydown",
+      "key": "Shift",
+      "defaultPrevented": false
+     },
+     {
+      "type": "keydown",
+      "key": "Tab",
+      "defaultPrevented": false
+     },
+     {
+      "type": "keyup",
+      "key": "Tab",
+      "defaultPrevented": false
+     },
+     {
+      "type": "keyup",
+      "key": "Shift",
+      "defaultPrevented": false
+     },
+     {
+      "type": "keydown",
+      "key": "Shift",
+      "defaultPrevented": false
+     },
+     {
+      "type": "keydown",
+      "key": "Tab",
+      "defaultPrevented": false
+     },
+     {
+      "type": "keyup",
+      "key": "Tab",
+      "defaultPrevented": false
+     },
+     {
+      "type": "keyup",
+      "key": "Shift",
+      "defaultPrevented": false
+     }
+    ],
+    "shiftTabPath": [
+     "BUTTON:Copy values@pause-sliders",
+     "BUTTON:⚙ Show setting@pause-sliders",
+     "BUTTON:⚙ Options@pause-btns"
+    ],
+    "inPause": true
+   },
+   {
+    "step": "10b Tab to Controls",
+    "activeIsClose": false,
+    "active": "BUTTON",
+    "clicks": 0,
+    "findsOpen": true,
+    "bodyPaused": true,
+    "slidersOpen": true,
+    "shieldShown": true,
+    "middleHit": "pause-shield",
+    "clockPaused": true,
+    "keys": [
+     {
+      "type": "keydown",
+      "key": "Tab",
+      "defaultPrevented": false
+     },
+     {
+      "type": "keyup",
+      "key": "Tab",
+      "defaultPrevented": false
+     },
+     {
+      "type": "keydown",
+      "key": "Tab",
+      "defaultPrevented": false
+     },
+     {
+      "type": "keyup",
+      "key": "Tab",
+      "defaultPrevented": false
+     },
+     {
+      "type": "keydown",
+      "key": "Tab",
+      "defaultPrevented": false
+     },
+     {
+      "type": "keyup",
+      "key": "Tab",
+      "defaultPrevented": false
+     },
+     {
+      "type": "keydown",
+      "key": "Tab",
+      "defaultPrevented": false
+     },
+     {
+      "type": "keyup",
+      "key": "Tab",
+      "defaultPrevented": false
+     },
+     {
+      "type": "keydown",
+      "key": "Tab",
+      "defaultPrevented": false
+     },
+     {
+      "type": "keyup",
+      "key": "Tab",
+      "defaultPrevented": false
+     },
+     {
+      "type": "keydown",
+      "key": "Tab",
+      "defaultPrevented": false
+     },
+     {
+      "type": "keyup",
+      "key": "Tab",
+      "defaultPrevented": false
+     },
+     {
+      "type": "keydown",
+      "key": "Tab",
+      "defaultPrevented": false
+     },
+     {
+      "type": "keyup",
+      "key": "Tab",
+      "defaultPrevented": false
+     },
+     {
+      "type": "keydown",
+      "key": "Tab",
+      "defaultPrevented": false
+     },
+     {
+      "type": "keyup",
+      "key": "Tab",
+      "defaultPrevented": false
+     },
+     {
+      "type": "keydown",
+      "key": "Tab",
+      "defaultPrevented": false
+     },
+     {
+      "type": "keyup",
+      "key": "Tab",
+      "defaultPrevented": false
+     },
+     {
+      "type": "keydown",
+      "key": "Tab",
+      "defaultPrevented": false
+     },
+     {
+      "type": "keyup",
+      "key": "Tab",
+      "defaultPrevented": false
+     },
+     {
+      "type": "keydown",
+      "key": "Tab",
+      "defaultPrevented": false
+     },
+     {
+      "type": "keyup",
+      "key": "Tab",
+      "defaultPrevented": false
+     },
+     {
+      "type": "keydown",
+      "key": "Tab",
+      "defaultPrevented": false
+     },
+     {
+      "type": "keyup",
+      "key": "Tab",
+      "defaultPrevented": false
+     },
+     {
+      "type": "keydown",
+      "key": "Tab",
+      "defaultPrevented": false
+     },
+     {
+      "type": "keyup",
+      "key": "Tab",
+      "defaultPrevented": false
+     },
+     {
+      "type": "keydown",
+      "key": "Tab",
+      "defaultPrevented": false
+     },
+     {
+      "type": "keyup",
+      "key": "Tab",
+      "defaultPrevented": false
+     },
+     {
+      "type": "keydown",
+      "key": "Tab",
+      "defaultPrevented": false
+     },
+     {
+      "type": "keyup",
+      "key": "Tab",
+      "defaultPrevented": false
+     },
+     {
+      "type": "keydown",
+      "key": "Tab",
+      "defaultPrevented": false
+     },
+     {
+      "type": "keyup",
+      "key": "Tab",
+      "defaultPrevented": false
+     },
+     {
+      "type": "keydown",
+      "key": "Tab",
+      "defaultPrevented": false
+     },
+     {
+      "type": "keyup",
+      "key": "Tab",
+      "defaultPrevented": false
+     },
+     {
+      "type": "keydown",
+      "key": "Tab",
+      "defaultPrevented": false
+     },
+     {
+      "type": "keyup",
+      "key": "Tab",
+      "defaultPrevented": false
+     },
+     {
+      "type": "keydown",
+      "key": "Tab",
+      "defaultPrevented": false
+     },
+     {
+      "type": "keyup",
+      "key": "Tab",
+      "defaultPrevented": false
+     },
+     {
+      "type": "keydown",
+      "key": "Tab",
+      "defaultPrevented": false
+     },
+     {
+      "type": "keyup",
+      "key": "Tab",
+      "defaultPrevented": false
+     },
+     {
+      "type": "keydown",
+      "key": "Tab",
+      "defaultPrevented": false
+     },
+     {
+      "type": "keyup",
+      "key": "Tab",
+      "defaultPrevented": false
+     },
+     {
+      "type": "keydown",
+      "key": "Tab",
+      "defaultPrevented": false
+     },
+     {
+      "type": "keyup",
+      "key": "Tab",
+      "defaultPrevented": false
+     },
+     {
+      "type": "keydown",
+      "key": "Tab",
+      "defaultPrevented": false
+     },
+     {
+      "type": "keyup",
+      "key": "Tab",
+      "defaultPrevented": false
+     },
+     {
+      "type": "keydown",
+      "key": "Tab",
+      "defaultPrevented": false
+     },
+     {
+      "type": "keyup",
+      "key": "Tab",
+      "defaultPrevented": false
+     },
+     {
+      "type": "keydown",
+      "key": "Tab",
+      "defaultPrevented": false
+     },
+     {
+      "type": "keyup",
+      "key": "Tab",
+      "defaultPrevented": false
+     },
+     {
+      "type": "keydown",
+      "key": "Tab",
+      "defaultPrevented": false
+     },
+     {
+      "type": "keyup",
+      "key": "Tab",
+      "defaultPrevented": false
+     },
+     {
+      "type": "keydown",
+      "key": "Tab",
+      "defaultPrevented": false
+     },
+     {
+      "type": "keyup",
+      "key": "Tab",
+      "defaultPrevented": false
+     },
+     {
+      "type": "keydown",
+      "key": "Tab",
+      "defaultPrevented": false
+     },
+     {
+      "type": "keyup",
+      "key": "Tab",
+      "defaultPrevented": false
+     },
+     {
+      "type": "keydown",
+      "key": "Tab",
+      "defaultPrevented": false
+     },
+     {
+      "type": "keyup",
+      "key": "Tab",
+      "defaultPrevented": false
+     },
+     {
+      "type": "keydown",
+      "key": "Tab",
+      "defaultPrevented": false
+     },
+     {
+      "type": "keyup",
+      "key": "Tab",
+      "defaultPrevented": false
+     },
+     {
+      "type": "keydown",
+      "key": "Tab",
+      "defaultPrevented": false
+     },
+     {
+      "type": "keyup",
+      "key": "Tab",
+      "defaultPrevented": false
+     },
+     {
+      "type": "keydown",
+      "key": "Tab",
+      "defaultPrevented": false
+     },
+     {
+      "type": "keyup",
+      "key": "Tab",
+      "defaultPrevented": false
+     },
+     {
+      "type": "keydown",
+      "key": "Tab",
+      "defaultPrevented": false
+     },
+     {
+      "type": "keyup",
+      "key": "Tab",
+      "defaultPrevented": false
+     },
+     {
+      "type": "keydown",
+      "key": "Tab",
+      "defaultPrevented": false
+     },
+     {
+      "type": "keyup",
+      "key": "Tab",
+      "defaultPrevented": false
+     },
+     {
+      "type": "keydown",
+      "key": "Tab",
+      "defaultPrevented": false
+     },
+     {
+      "type": "keyup",
+      "key": "Tab",
+      "defaultPrevented": false
+     },
+     {
+      "type": "keydown",
+      "key": "Tab",
+      "defaultPrevented": false
+     },
+     {
+      "type": "keyup",
+      "key": "Tab",
+      "defaultPrevented": false
+     },
+     {
+      "type": "keydown",
+      "key": "Tab",
+      "defaultPrevented": false
+     },
+     {
+      "type": "keyup",
+      "key": "Tab",
+      "defaultPrevented": false
+     },
+     {
+      "type": "keydown",
+      "key": "Tab",
+      "defaultPrevented": false
+     },
+     {
+      "type": "keyup",
+      "key": "Tab",
+      "defaultPrevented": false
+     },
+     {
+      "type": "keydown",
+      "key": "Tab",
+      "defaultPrevented": false
+     },
+     {
+      "type": "keyup",
+      "key": "Tab",
+      "defaultPrevented": false
+     },
+     {
+      "type": "keydown",
+      "key": "Tab",
+      "defaultPrevented": false
+     },
+     {
+      "type": "keyup",
+      "key": "Tab",
+      "defaultPrevented": false
+     }
+    ],
+    "tabbed": false,
+    "tabPath": [
+     "BUTTON:⚙ Show setting@pause-sliders",
+     "BUTTON:Copy values@pause-sliders",
+     "BUTTON:⬇ Download log@pause-sliders",
+     "BUTTON:⬇ Download rea@pause-sliders",
+     "BUTTON:🔒 Unlock ever@pause-sliders",
+     "BUTTON:Report@pause-sliders",
+     "BUTTON:🎛 Music Lab@pause-sliders",
+     "BUTTON:🔊 Audio test@pause-sliders",
+     "BUTTON:⚔ Fight arena@pause-sliders",
+     "BUTTON:🧪 Finds@pause-sliders",
+     "BUTTON:Potion lab@pause-sliders",
+     "SELECT:AutoOff (full @pause-sliders",
+     "TEXTAREA#playtest-comment@pause-sliders",
+     "BUTTON:Save comment@pause-sliders",
+     "BUTTON:Builder: resto@pause-sliders",
+     "BUTTON:▸Waves@pause-sliders",
+     "BUTTON:▸Volume@pause-sliders",
+     "BUTTON:▸#1432 Wild li@pause-sliders",
+     "BUTTON:▸#1398 Contras@pause-sliders",
+     "BUTTON:▸#1303 Creatur@pause-sliders",
+     "BUTTON:▸#1301 Oak cro@pause-sliders",
+     "BUTTON:▸#1300 Rune st@pause-sliders",
+     "BUTTON:▸#1233 Oak cro@pause-sliders",
+     "BUTTON:▸#1227 Hidden @pause-sliders",
+     "BUTTON:▸#1194 Loading@pause-sliders",
+     "BUTTON:▸#1182 House m@pause-sliders",
+     "BUTTON:▸#1177 Pointer@pause-sliders",
+     "BUTTON:▸#1176 Places @pause-sliders",
+     "BUTTON:▸#1162 Telesco@pause-sliders",
+     "BUTTON:▸#1149 Area bl@pause-sliders",
+     "BUTTON:▸#1127 Tree he@pause-sliders",
+     "BUTTON:▸#956 Pack com@pause-sliders",
+     "BUTTON:▸#950 Leaf jit@pause-sliders",
+     "BUTTON:▸#940 One cool@pause-sliders",
+     "BUTTON:▸#938 Sigil ru@pause-sliders",
+     "BUTTON:▸#937 Stack si@pause-sliders",
+     "BUTTON:▸#936 Leash ar@pause-sliders",
+     "BUTTON:▸#923 Bounce-o@pause-sliders",
+     "BUTTON:▸#922 Treehous@pause-sliders",
+     "BUTTON:▸#916 Flying c@pause-sliders"
+    ]
+   },
+   {
+    "step": "10c focused Controls by script (Tab didn't reach)",
+    "activeIsClose": false,
+    "active": "BUTTON",
+    "clicks": 0,
+    "findsOpen": true,
+    "bodyPaused": true,
+    "slidersOpen": true,
+    "shieldShown": true,
+    "middleHit": "pause-shield",
+    "clockPaused": true,
+    "keys": []
+   },
+   {
+    "step": "11 Enter on pause control",
+    "activeIsClose": false,
+    "active": "BUTTON",
+    "clicks": 0,
+    "findsOpen": true,
+    "bodyPaused": true,
+    "slidersOpen": true,
+    "shieldShown": true,
+    "middleHit": "pause-shield",
+    "clockPaused": true,
+    "keys": [
+     {
+      "type": "keydown",
+      "key": "Enter",
+      "defaultPrevented": false
+     },
+     {
+      "type": "keyup",
+      "key": "Enter",
+      "defaultPrevented": false
+     }
+    ],
+    "target": "BUTTON:❔ Controls",
+    "before": {
+     "panel": null,
+     "value": ""
+    },
+    "afterEnter": {
+     "panel": {
+      "shown": true,
+      "text": "CONTROLS×\n        Keyboard and mouse WAS"
+     },
+     "value": ""
+    }
+   },
+   {
+    "step": "12 Space on pause control",
+    "activeIsClose": false,
+    "active": "BUTTON",
+    "clicks": 0,
+    "findsOpen": true,
+    "bodyPaused": true,
+    "slidersOpen": true,
+    "shieldShown": true,
+    "middleHit": "pause-shield",
+    "clockPaused": true,
+    "keys": [
+     {
+      "type": "keydown",
+      "key": " ",
+      "defaultPrevented": false
+     },
+     {
+      "type": "keyup",
+      "key": " ",
+      "defaultPrevented": false
+     }
+    ],
+    "target": "BUTTON:❔ Controls",
+    "afterSpace": {
+     "panel": null
+    }
+   },
+   {
+    "step": "13 Esc",
+    "activeIsClose": false,
+    "active": "BODY",
+    "clicks": 0,
+    "findsOpen": true,
+    "bodyPaused": false,
+    "slidersOpen": false,
+    "shieldShown": false,
+    "middleHit": "game",
+    "clockPaused": false,
+    "keys": [
+     {
+      "type": "keydown",
+      "key": "Escape",
+      "defaultPrevented": true
+     },
+     {
+      "type": "keyup",
+      "key": "Escape",
+      "defaultPrevented": false
+     }
+    ]
+   }
+  ],
+  "errors": []
+ },
+ {
+  "run": 3,
+  "steps": [
+   {
+    "step": "4 focused",
+    "activeIsClose": true,
+    "active": "BUTTON[data-act=close]",
+    "clicks": 0,
+    "findsOpen": true,
+    "bodyPaused": false,
+    "slidersOpen": false,
+    "shieldShown": false,
+    "middleHit": "game",
+    "clockPaused": false,
+    "keys": []
+   },
+   {
+    "step": "5 after Esc (pause)",
+    "activeIsClose": false,
+    "active": "BUTTON",
+    "clicks": 0,
+    "findsOpen": true,
+    "bodyPaused": true,
+    "slidersOpen": true,
+    "shieldShown": true,
+    "middleHit": "pause-shield",
+    "clockPaused": true,
+    "keys": [
+     {
+      "type": "keydown",
+      "key": "Escape",
+      "defaultPrevented": true
+     },
+     {
+      "type": "keyup",
+      "key": "Escape",
+      "defaultPrevented": false
+     }
+    ]
+   },
+   {
+    "step": "6 skipped (Space-only run)"
+   },
+   {
+    "step": "7 after Space (paused)",
+    "activeIsClose": false,
+    "active": "BUTTON",
+    "clicks": 0,
+    "findsOpen": true,
+    "bodyPaused": true,
+    "slidersOpen": true,
+    "shieldShown": true,
+    "middleHit": "pause-shield",
+    "clockPaused": true,
+    "keys": [
+     {
+      "type": "keydown",
+      "key": " ",
+      "defaultPrevented": false
+     },
+     {
+      "type": "keyup",
+      "key": " ",
+      "defaultPrevented": false
+     }
+    ]
+   },
+   {
+    "step": "8 after Esc (resume)",
+    "activeIsClose": false,
+    "active": "BODY",
+    "clicks": 0,
+    "findsOpen": true,
+    "bodyPaused": false,
+    "slidersOpen": false,
+    "shieldShown": false,
+    "middleHit": "game",
+    "clockPaused": false,
+    "keys": [
+     {
+      "type": "keydown",
+      "key": "Escape",
+      "defaultPrevented": true
+     },
+     {
+      "type": "keyup",
+      "key": "Escape",
+      "defaultPrevented": false
+     }
+    ]
+   },
+   {
+    "step": "9 re-paused",
+    "activeIsClose": false,
+    "active": "BUTTON",
+    "clicks": 0,
+    "findsOpen": true,
+    "bodyPaused": true,
+    "slidersOpen": true,
+    "shieldShown": true,
+    "middleHit": "pause-shield",
+    "clockPaused": true,
+    "keys": [
+     {
+      "type": "keydown",
+      "key": "Escape",
+      "defaultPrevented": true
+     },
+     {
+      "type": "keyup",
+      "key": "Escape",
+      "defaultPrevented": false
+     }
+    ]
+   },
+   {
+    "step": "10 Tab x3",
+    "activeIsClose": false,
+    "active": "BUTTON",
+    "clicks": 0,
+    "findsOpen": true,
+    "bodyPaused": true,
+    "slidersOpen": true,
+    "shieldShown": true,
+    "middleHit": "pause-shield",
+    "clockPaused": true,
+    "keys": [
+     {
+      "type": "keydown",
+      "key": "Tab",
+      "defaultPrevented": false
+     },
+     {
+      "type": "keyup",
+      "key": "Tab",
+      "defaultPrevented": false
+     },
+     {
+      "type": "keydown",
+      "key": "Tab",
+      "defaultPrevented": false
+     },
+     {
+      "type": "keyup",
+      "key": "Tab",
+      "defaultPrevented": false
+     },
+     {
+      "type": "keydown",
+      "key": "Tab",
+      "defaultPrevented": false
+     },
+     {
+      "type": "keyup",
+      "key": "Tab",
+      "defaultPrevented": false
+     }
+    ],
+    "tabPath": [
+     "BUTTON:❔ Controls@pause-btns",
+     "BUTTON:⚙ Options@pause-btns",
+     "BUTTON:⚙ Show setting@pause-sliders",
+     "BUTTON:Copy values@pause-sliders"
+    ],
+    "inPause": true
+   },
+   {
+    "step": "10a Shift+Tab x2",
+    "activeIsClose": false,
+    "active": "BUTTON",
+    "clicks": 0,
+    "findsOpen": true,
+    "bodyPaused": true,
+    "slidersOpen": true,
+    "shieldShown": true,
+    "middleHit": "pause-shield",
+    "clockPaused": true,
+    "keys": [
+     {
+      "type": "keydown",
+      "key": "Shift",
+      "defaultPrevented": false
+     },
+     {
+      "type": "keydown",
+      "key": "Tab",
+      "defaultPrevented": false
+     },
+     {
+      "type": "keyup",
+      "key": "Tab",
+      "defaultPrevented": false
+     },
+     {
+      "type": "keyup",
+      "key": "Shift",
+      "defaultPrevented": false
+     },
+     {
+      "type": "keydown",
+      "key": "Shift",
+      "defaultPrevented": false
+     },
+     {
+      "type": "keydown",
+      "key": "Tab",
+      "defaultPrevented": false
+     },
+     {
+      "type": "keyup",
+      "key": "Tab",
+      "defaultPrevented": false
+     },
+     {
+      "type": "keyup",
+      "key": "Shift",
+      "defaultPrevented": false
+     }
+    ],
+    "shiftTabPath": [
+     "BUTTON:Copy values@pause-sliders",
+     "BUTTON:⚙ Show setting@pause-sliders",
+     "BUTTON:⚙ Options@pause-btns"
+    ],
+    "inPause": true
+   },
+   {
+    "step": "10b Tab to Controls",
+    "activeIsClose": false,
+    "active": "BUTTON",
+    "clicks": 0,
+    "findsOpen": true,
+    "bodyPaused": true,
+    "slidersOpen": true,
+    "shieldShown": true,
+    "middleHit": "pause-shield",
+    "clockPaused": true,
+    "keys": [
+     {
+      "type": "keydown",
+      "key": "Tab",
+      "defaultPrevented": false
+     },
+     {
+      "type": "keyup",
+      "key": "Tab",
+      "defaultPrevented": false
+     },
+     {
+      "type": "keydown",
+      "key": "Tab",
+      "defaultPrevented": false
+     },
+     {
+      "type": "keyup",
+      "key": "Tab",
+      "defaultPrevented": false
+     },
+     {
+      "type": "keydown",
+      "key": "Tab",
+      "defaultPrevented": false
+     },
+     {
+      "type": "keyup",
+      "key": "Tab",
+      "defaultPrevented": false
+     },
+     {
+      "type": "keydown",
+      "key": "Tab",
+      "defaultPrevented": false
+     },
+     {
+      "type": "keyup",
+      "key": "Tab",
+      "defaultPrevented": false
+     },
+     {
+      "type": "keydown",
+      "key": "Tab",
+      "defaultPrevented": false
+     },
+     {
+      "type": "keyup",
+      "key": "Tab",
+      "defaultPrevented": false
+     },
+     {
+      "type": "keydown",
+      "key": "Tab",
+      "defaultPrevented": false
+     },
+     {
+      "type": "keyup",
+      "key": "Tab",
+      "defaultPrevented": false
+     },
+     {
+      "type": "keydown",
+      "key": "Tab",
+      "defaultPrevented": false
+     },
+     {
+      "type": "keyup",
+      "key": "Tab",
+      "defaultPrevented": false
+     },
+     {
+      "type": "keydown",
+      "key": "Tab",
+      "defaultPrevented": false
+     },
+     {
+      "type": "keyup",
+      "key": "Tab",
+      "defaultPrevented": false
+     },
+     {
+      "type": "keydown",
+      "key": "Tab",
+      "defaultPrevented": false
+     },
+     {
+      "type": "keyup",
+      "key": "Tab",
+      "defaultPrevented": false
+     },
+     {
+      "type": "keydown",
+      "key": "Tab",
+      "defaultPrevented": false
+     },
+     {
+      "type": "keyup",
+      "key": "Tab",
+      "defaultPrevented": false
+     },
+     {
+      "type": "keydown",
+      "key": "Tab",
+      "defaultPrevented": false
+     },
+     {
+      "type": "keyup",
+      "key": "Tab",
+      "defaultPrevented": false
+     },
+     {
+      "type": "keydown",
+      "key": "Tab",
+      "defaultPrevented": false
+     },
+     {
+      "type": "keyup",
+      "key": "Tab",
+      "defaultPrevented": false
+     },
+     {
+      "type": "keydown",
+      "key": "Tab",
+      "defaultPrevented": false
+     },
+     {
+      "type": "keyup",
+      "key": "Tab",
+      "defaultPrevented": false
+     },
+     {
+      "type": "keydown",
+      "key": "Tab",
+      "defaultPrevented": false
+     },
+     {
+      "type": "keyup",
+      "key": "Tab",
+      "defaultPrevented": false
+     },
+     {
+      "type": "keydown",
+      "key": "Tab",
+      "defaultPrevented": false
+     },
+     {
+      "type": "keyup",
+      "key": "Tab",
+      "defaultPrevented": false
+     },
+     {
+      "type": "keydown",
+      "key": "Tab",
+      "defaultPrevented": false
+     },
+     {
+      "type": "keyup",
+      "key": "Tab",
+      "defaultPrevented": false
+     },
+     {
+      "type": "keydown",
+      "key": "Tab",
+      "defaultPrevented": false
+     },
+     {
+      "type": "keyup",
+      "key": "Tab",
+      "defaultPrevented": false
+     },
+     {
+      "type": "keydown",
+      "key": "Tab",
+      "defaultPrevented": false
+     },
+     {
+      "type": "keyup",
+      "key": "Tab",
+      "defaultPrevented": false
+     },
+     {
+      "type": "keydown",
+      "key": "Tab",
+      "defaultPrevented": false
+     },
+     {
+      "type": "keyup",
+      "key": "Tab",
+      "defaultPrevented": false
+     },
+     {
+      "type": "keydown",
+      "key": "Tab",
+      "defaultPrevented": false
+     },
+     {
+      "type": "keyup",
+      "key": "Tab",
+      "defaultPrevented": false
+     },
+     {
+      "type": "keydown",
+      "key": "Tab",
+      "defaultPrevented": false
+     },
+     {
+      "type": "keyup",
+      "key": "Tab",
+      "defaultPrevented": false
+     },
+     {
+      "type": "keydown",
+      "key": "Tab",
+      "defaultPrevented": false
+     },
+     {
+      "type": "keyup",
+      "key": "Tab",
+      "defaultPrevented": false
+     },
+     {
+      "type": "keydown",
+      "key": "Tab",
+      "defaultPrevented": false
+     },
+     {
+      "type": "keyup",
+      "key": "Tab",
+      "defaultPrevented": false
+     },
+     {
+      "type": "keydown",
+      "key": "Tab",
+      "defaultPrevented": false
+     },
+     {
+      "type": "keyup",
+      "key": "Tab",
+      "defaultPrevented": false
+     },
+     {
+      "type": "keydown",
+      "key": "Tab",
+      "defaultPrevented": false
+     },
+     {
+      "type": "keyup",
+      "key": "Tab",
+      "defaultPrevented": false
+     },
+     {
+      "type": "keydown",
+      "key": "Tab",
+      "defaultPrevented": false
+     },
+     {
+      "type": "keyup",
+      "key": "Tab",
+      "defaultPrevented": false
+     },
+     {
+      "type": "keydown",
+      "key": "Tab",
+      "defaultPrevented": false
+     },
+     {
+      "type": "keyup",
+      "key": "Tab",
+      "defaultPrevented": false
+     },
+     {
+      "type": "keydown",
+      "key": "Tab",
+      "defaultPrevented": false
+     },
+     {
+      "type": "keyup",
+      "key": "Tab",
+      "defaultPrevented": false
+     },
+     {
+      "type": "keydown",
+      "key": "Tab",
+      "defaultPrevented": false
+     },
+     {
+      "type": "keyup",
+      "key": "Tab",
+      "defaultPrevented": false
+     },
+     {
+      "type": "keydown",
+      "key": "Tab",
+      "defaultPrevented": false
+     },
+     {
+      "type": "keyup",
+      "key": "Tab",
+      "defaultPrevented": false
+     },
+     {
+      "type": "keydown",
+      "key": "Tab",
+      "defaultPrevented": false
+     },
+     {
+      "type": "keyup",
+      "key": "Tab",
+      "defaultPrevented": false
+     },
+     {
+      "type": "keydown",
+      "key": "Tab",
+      "defaultPrevented": false
+     },
+     {
+      "type": "keyup",
+      "key": "Tab",
+      "defaultPrevented": false
+     },
+     {
+      "type": "keydown",
+      "key": "Tab",
+      "defaultPrevented": false
+     },
+     {
+      "type": "keyup",
+      "key": "Tab",
+      "defaultPrevented": false
+     },
+     {
+      "type": "keydown",
+      "key": "Tab",
+      "defaultPrevented": false
+     },
+     {
+      "type": "keyup",
+      "key": "Tab",
+      "defaultPrevented": false
+     },
+     {
+      "type": "keydown",
+      "key": "Tab",
+      "defaultPrevented": false
+     },
+     {
+      "type": "keyup",
+      "key": "Tab",
+      "defaultPrevented": false
+     },
+     {
+      "type": "keydown",
+      "key": "Tab",
+      "defaultPrevented": false
+     },
+     {
+      "type": "keyup",
+      "key": "Tab",
+      "defaultPrevented": false
+     },
+     {
+      "type": "keydown",
+      "key": "Tab",
+      "defaultPrevented": false
+     },
+     {
+      "type": "keyup",
+      "key": "Tab",
+      "defaultPrevented": false
+     },
+     {
+      "type": "keydown",
+      "key": "Tab",
+      "defaultPrevented": false
+     },
+     {
+      "type": "keyup",
+      "key": "Tab",
+      "defaultPrevented": false
+     },
+     {
+      "type": "keydown",
+      "key": "Tab",
+      "defaultPrevented": false
+     },
+     {
+      "type": "keyup",
+      "key": "Tab",
+      "defaultPrevented": false
+     },
+     {
+      "type": "keydown",
+      "key": "Tab",
+      "defaultPrevented": false
+     },
+     {
+      "type": "keyup",
+      "key": "Tab",
+      "defaultPrevented": false
+     }
+    ],
+    "tabbed": false,
+    "tabPath": [
+     "BUTTON:⚙ Show setting@pause-sliders",
+     "BUTTON:Copy values@pause-sliders",
+     "BUTTON:⬇ Download log@pause-sliders",
+     "BUTTON:⬇ Download rea@pause-sliders",
+     "BUTTON:🔒 Unlock ever@pause-sliders",
+     "BUTTON:Report@pause-sliders",
+     "BUTTON:🎛 Music Lab@pause-sliders",
+     "BUTTON:🔊 Audio test@pause-sliders",
+     "BUTTON:⚔ Fight arena@pause-sliders",
+     "BUTTON:🧪 Finds@pause-sliders",
+     "BUTTON:Potion lab@pause-sliders",
+     "SELECT:AutoOff (full @pause-sliders",
+     "TEXTAREA#playtest-comment@pause-sliders",
+     "BUTTON:Save comment@pause-sliders",
+     "BUTTON:Builder: resto@pause-sliders",
+     "BUTTON:▸Waves@pause-sliders",
+     "BUTTON:▸Volume@pause-sliders",
+     "BUTTON:▸#1432 Wild li@pause-sliders",
+     "BUTTON:▸#1398 Contras@pause-sliders",
+     "BUTTON:▸#1303 Creatur@pause-sliders",
+     "BUTTON:▸#1301 Oak cro@pause-sliders",
+     "BUTTON:▸#1300 Rune st@pause-sliders",
+     "BUTTON:▸#1233 Oak cro@pause-sliders",
+     "BUTTON:▸#1227 Hidden @pause-sliders",
+     "BUTTON:▸#1194 Loading@pause-sliders",
+     "BUTTON:▸#1182 House m@pause-sliders",
+     "BUTTON:▸#1177 Pointer@pause-sliders",
+     "BUTTON:▸#1176 Places @pause-sliders",
+     "BUTTON:▸#1162 Telesco@pause-sliders",
+     "BUTTON:▸#1149 Area bl@pause-sliders",
+     "BUTTON:▸#1127 Tree he@pause-sliders",
+     "BUTTON:▸#956 Pack com@pause-sliders",
+     "BUTTON:▸#950 Leaf jit@pause-sliders",
+     "BUTTON:▸#940 One cool@pause-sliders",
+     "BUTTON:▸#938 Sigil ru@pause-sliders",
+     "BUTTON:▸#937 Stack si@pause-sliders",
+     "BUTTON:▸#936 Leash ar@pause-sliders",
+     "BUTTON:▸#923 Bounce-o@pause-sliders",
+     "BUTTON:▸#922 Treehous@pause-sliders",
+     "BUTTON:▸#916 Flying c@pause-sliders"
+    ]
+   },
+   {
+    "step": "10c focused Controls by script (Tab didn't reach)",
+    "activeIsClose": false,
+    "active": "BUTTON",
+    "clicks": 0,
+    "findsOpen": true,
+    "bodyPaused": true,
+    "slidersOpen": true,
+    "shieldShown": true,
+    "middleHit": "pause-shield",
+    "clockPaused": true,
+    "keys": []
+   },
+   {
+    "step": "11 Enter on pause control",
+    "activeIsClose": false,
+    "active": "BUTTON",
+    "clicks": 0,
+    "findsOpen": true,
+    "bodyPaused": true,
+    "slidersOpen": true,
+    "shieldShown": true,
+    "middleHit": "pause-shield",
+    "clockPaused": true,
+    "keys": [
+     {
+      "type": "keydown",
+      "key": "Enter",
+      "defaultPrevented": false
+     },
+     {
+      "type": "keyup",
+      "key": "Enter",
+      "defaultPrevented": false
+     }
+    ],
+    "target": "BUTTON:❔ Controls",
+    "before": {
+     "panel": null,
+     "value": ""
+    },
+    "afterEnter": {
+     "panel": {
+      "shown": true,
+      "text": "CONTROLS×\n        Keyboard and mouse WAS"
+     },
+     "value": ""
+    }
+   },
+   {
+    "step": "12 Space on pause control",
+    "activeIsClose": false,
+    "active": "BUTTON",
+    "clicks": 0,
+    "findsOpen": true,
+    "bodyPaused": true,
+    "slidersOpen": true,
+    "shieldShown": true,
+    "middleHit": "pause-shield",
+    "clockPaused": true,
+    "keys": [
+     {
+      "type": "keydown",
+      "key": " ",
+      "defaultPrevented": false
+     },
+     {
+      "type": "keyup",
+      "key": " ",
+      "defaultPrevented": false
+     }
+    ],
+    "target": "BUTTON:❔ Controls",
+    "afterSpace": {
+     "panel": null
+    }
+   },
+   {
+    "step": "13 Esc",
+    "activeIsClose": false,
+    "active": "BODY",
+    "clicks": 0,
+    "findsOpen": true,
+    "bodyPaused": false,
+    "slidersOpen": false,
+    "shieldShown": false,
+    "middleHit": "game",
+    "clockPaused": false,
+    "keys": [
+     {
+      "type": "keydown",
+      "key": "Escape",
+      "defaultPrevented": true
+     },
+     {
+      "type": "keyup",
+      "key": "Escape",
+      "defaultPrevented": false
+     }
+    ]
+   }
+  ],
+  "errors": []
+ }
+]
