@@ -51,20 +51,20 @@
       }
     },
     {
-      "id": "happyRange",
+      "id": "friendRange",
       "pr": 290,
       "group": "Legend layers",
-      "label": "Happy legend reach (m)",
-      "note": "How far a happy legend (a relic's ally) reaches from its lair to hit the enraged: about 2 areas at 420.",
+      "label": "Friendly legend reach (m)",
+      "note": "A friendly legend defends you first and engages enemies within this distance, then walks along the ley line towards its growing tip. Default 85 m: about the average radius of an area.",
       "control": {
         "type": "slider",
-        "min": 420,
+        "min": 0,
         "max": 1500,
-        "step": 60
+        "step": 5
       },
-      "default": 420,
+      "default": 85,
       "apply": {
-        "knob": "legends.happyRange"
+        "knob": "legends.friendRange"
       }
     }
   ]

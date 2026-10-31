@@ -357,19 +357,6 @@
    ]
   },
   {
-   "name": "carrier",
-   "values": [
-    "<kind>",
-    "none"
-   ],
-   "does": "That kind's legend carries the treehouse Ent, wherever she is; none, no one.",
-   "group": "view",
-   "since": "2026-10-12",
-   "readIn": [
-    "src/app/linkParams.ts"
-   ]
-  },
-  {
    "name": "cauldron",
    "values": [
     "0"
@@ -1794,6 +1781,15 @@
  ],
  "retiredIntro": "Switches that brought back an older look or behaviour, to compare against what replaced it, gone with their old code paths (2026-10-07, the coordinator's recommendation to Ed). A link that still names one plays as the default does.",
  "retired": [
+  {
+   "name": "carrier",
+   "values": [
+    "<kind>",
+    "none"
+   ],
+   "broughtBack": "a legend carrying the treehouse",
+   "stays": "removed: the island-kind legend guards home instead (Ed, 2026-10-31)"
+  },
   {
    "name": "tilt",
    "values": [
