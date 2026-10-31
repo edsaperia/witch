@@ -39,6 +39,7 @@ export function placeCamera(v: View, time: number, pose: ReturnType<typeof poseO
   const tripCamera = potionCamera(pose.angle, pose.distance, t.camera.fov, vertigo);
   pose = { ...pose, angle: tripCamera.angle, distance: tripCamera.distance };
   v.post.potionVertigo = vertigo;
+  v.post.potionMiniature = potionStrength(g, 'miniature');
   v.post.potionCanopy = potionStrength(g, 'thick-canopy');
   v.post.potionEdges = potionStrength(g, 'aurora-outlines');
   v.post.potionWobble = tripIndicatorStrength(g);

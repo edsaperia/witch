@@ -2,6 +2,17 @@
 import type { Game } from '../rules/game';
 import { effectEnvelope, potionRecipe } from '../rules/potionRecipes';
 import { potionSettings } from '../rules/potionSettings';
+import type { PostTuning } from './post';
+
+/** Same effective tilt settings for the scene and its world-space DOM overlays. */
+export function miniatureTilt(base: PostTuning['tiltShift'], amount: number): PostTuning['tiltShift'] {
+  const k = Math.max(0, Math.min(1, amount));
+  if (!k) return base;
+  const p = potionSettings('miniature'), mix = (a: number, b: number) => a + (b - a) * k;
+  return { ...base, on: true, strength: mix(base.on ? base.strength : 0, p.blur),
+    band: mix(base.band, p.band), centre: mix(base.centre, p.centre),
+    treetop: { ...base.treetop, strength: mix(base.on ? base.treetop.strength : 0, p.blur), band: mix(base.treetop.band, p.band) } };
+}
 
 export const tripIndicatorStrength = (g: Game): number => effectEnvelope(g.mushrooms?.trips[g.witches[0]?.id ?? 0], g.clock.time);
 

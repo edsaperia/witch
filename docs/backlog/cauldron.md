@@ -136,7 +136,7 @@ Cheap, from how the game draws (low-res target scaled up, bloom, tilt-shift, ben
 
 - **Hall of Mirrors:** don't clear the screen; everything smears into endless trails.
 - **Glow Up:** bloom threshold 0; everything blazes.
-- **Miniature:** tilt-shift at full: a toy world.
+- **Miniature:** tilt-shift at full: a toy world. PR1536 implements recipe 102 with shared scene/overlay focus settings and thin small-speaker audio, adjustable in the Potion Lab; audio render and visual judgement pending.
 - **Little Planet:** the bend cranked up.
 - **Wireframe:** one material flag.
 - **Mix-up:** creatures drawn from the wrong part of the sprite sheet.

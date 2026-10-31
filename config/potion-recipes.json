@@ -1322,7 +1322,7 @@
     "effect": "miniature",
     "name": "Miniature",
     "description": "The island looks like a tiny toy world.",
-    "comingSoon": true,
+    "comingSoon": false,
     "id": 102
   },
   {

@@ -9,7 +9,7 @@ import * as THREE from "three";
 import { gradeInto, moodOf } from "./mood";
 import { runSync, type Steps } from "./slices";
 import { hsv2rgb } from "../../art/generator.js";
-import { potionBloom, potionLevels } from "./potionEffects";
+import { potionBloom, potionLevels, miniatureTilt } from "./potionEffects";
 import { potionSettings } from "../rules/potionSettings";
 
 /** The camera layer the house's own meshes are on as well as the scene's (its rooms, the Ent's art, her): drawn alone behind the
@@ -217,6 +217,7 @@ export class Post {
   potionGlow = 0;
   potionCanopy = 0;
   potionVertigo = 0;
+  potionMiniature = 0;
   potionEdges = 0;
   potionWobble = 0;
   potionTime = 0;
@@ -348,7 +349,8 @@ export class Post {
       this.pass("blur", this.fx, u => { u.uSrc.value = this.fxB.texture; u.uStep.value.set(0, 0.6 / lh); });
       yield;
     }
-    const tilt = (t.tiltShift.on && t.tiltShift.strength > 0 || this.potionVertigo > 0) && this.tilt > 0;
+    const effectiveTilt = miniatureTilt(t.tiltShift, this.potionMiniature);
+    const tilt = (effectiveTilt.on && effectiveTilt.strength > 0 || this.potionVertigo > 0) && this.tilt > 0;
     this.pass("composite", tilt ? this.a : out, u => {
       u.uScene.value = this.scene.texture; u.uBloom.value = this.bright.texture; u.uLow.value.copy(this.low); u.uBloomStrength.value = bloomOn ? bloom.strength : 0;
       const levels = potionLevels(t.tone.black, t.tone.gamma, this.potionCanopy);
@@ -367,7 +369,7 @@ export class Post {
     // The blur at the low resolution, before the browser scales the picture up.
     const w = this.a.width, h = this.a.height;
     const common = (u: Record<string, THREE.IUniform>) => {
-      const T = t.tiltShift, k = Math.max(0, Math.min(1, this.lift)), k2 = k * k * (3 - 2 * k);
+      const T = effectiveTilt, k = Math.max(0, Math.min(1, this.lift)), k2 = k * k * (3 - 2 * k);
       u.uDepth.value = this.scene.depthTexture; u.uTexel.value.set(1 / w, 1 / h); u.uStrength.value = (T.strength + (T.treetop.strength - T.strength) * k2) * this.tilt; u.uBand.value = T.band + (T.treetop.band - T.band) * k2; u.uCentre.value = 1 - T.centre;
       if (!T.on) u.uStrength.value = 0;
       const vertigo = potionSettings('vertigo');
