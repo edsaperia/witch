@@ -57,3 +57,12 @@ for a ground anchor below the opaque box, preserving the anchor and every drawn
 pixel; the existing awake-height budget includes this margin. Carriers retain
 their original limits, with at most two additional measured correction passes
 after the original two guesses when integer native-size steps overshoot.
+
+Rig capture-only forms use the same sparse occupied-body fit as whole sprites,
+but consume only its scale and geometry. They omit the full body raster that
+the rig immediately discarded; ordinary sprites and snow-leopard mote fallback
+still draw normally. This preserves all-species/all-age Stiltwalkers coverage
+without increasing test timeouts. Paired native captures of wolf, woodlouse and
+rhino legends kept exactly the same scales and geometry records; measured
+construction fell from1092/1843/4270ms to147/168/88ms on this laptop (sample
+timings, not a runtime frame-rate guarantee).

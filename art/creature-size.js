@@ -41,7 +41,7 @@ export function occupiedHeight(sp) {
   return Math.max(0,bottom-top+1);
 }
 const fittedScales=new Map();
-export function fitOccupiedCreature(model,options,S,level,st,decorate) {
+export function fitOccupiedCreature(model,options,S,level,st,decorate,measureOnly=false) {
   const stats={rasters:0,probes:0};
   const draw=(model,opts)=>{stats[opts.occupiedOnly?"probes":"rasters"]++;return render(model,opts);};
   const key=JSON.stringify([S,level,st,model.parts,model.flats,options.facing]);
@@ -74,6 +74,9 @@ export function fitOccupiedCreature(model,options,S,level,st,decorate) {
       reset();const candidate=best.scale*multiplier,height=probe({...options,scale:candidate,samplePhaseY:0}),error=Math.max(range[0]-height,height-range[1],0);
       if(error<best.error)best={scale:candidate,height,error,samplePhaseY:0};if(!error)break;
     }
+    // Rig capture consumes scale/joints, never this whole-body sprite. The
+    // same sparse fit already measured height; avoid a discarded native raster.
+    if(measureOnly){reset();return {options:{...options,scale:best.scale,samplePhaseY:best.samplePhaseY},stats:{...stats,bodyHeight:best.height}};}
     reset();const sp=draw(model,{...options,scale:best.scale,samplePhaseY:best.samplePhaseY}).sp;decorate(sp);
     return {options:{...options,scale:best.scale,samplePhaseY:best.samplePhaseY},sprite:sp,stats};
   }

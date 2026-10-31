@@ -14,9 +14,11 @@ function context(minPx=1.5){const record=catCaptureGenome(GENOME_BY_ID.snowleopa
 function draw(style:Style,frame:number,facing:string){const build=()=>critter("snowleopard",2,frame,style,facing==="top"?"towards":facing);return facing==="top"?withView({yaw:.6,pitch:Math.PI/2},build):build();}
 describe("snow leopard subpixel whisker attachment",()=>{
   it("pins projected-fit Current material and normal bytes with the control absent",()=>{
-    const hash=createHash("sha256");for(const facing of ["towards","away","top"]){const sp=draw(current,0,facing);hash.update(JSON.stringify([sp.w,sp.h]));for(const bytes of [sp.m,sp.n])hash.update(Buffer.from(bytes.buffer,bytes.byteOffset,bytes.byteLength));}
-    // Projected-fit baseline (6519883775), rather than the superseded sphere-fit grid.
-    expect(hash.digest("hex")).toBe("6f9d194fb4de811558c6052f18f259207d3d106ba3a73db2c73ce0ab20a741c8");
+    // Ed's adopted sizes change the native grid; creatureSizeCandidate=0 reproduces the old pin exactly.
+    for(const [flag,expected]of [[0,"6f9d194fb4de811558c6052f18f259207d3d106ba3a73db2c73ce0ab20a741c8"],[1,"c703beb4ae1781adf18541b27c0247e1a13ec935f81619fb2978f3316f3d5bd3"]] as const){
+    const hash=createHash("sha256");for(const facing of ["towards","away","top"]){const sp=draw({...current,creatureSizeCandidate:flag},0,facing);hash.update(JSON.stringify([sp.w,sp.h]));for(const bytes of [sp.m,sp.n])hash.update(Buffer.from(bytes.buffer,bytes.byteOffset,bytes.byteLength));}
+    expect(hash.digest("hex")).toBe(expected);
+    }
   });
   it("keeps top-view attachment non-worsening with the pixel floor on the projected grid",()=>{
     const baseline=draw(current,0,"top"),before=connectivityRegression(baseline,draw(context(0),0,"top")),after=connectivityRegression(baseline,draw(context(),0,"top"));
