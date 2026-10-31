@@ -5,6 +5,19 @@
 import type { SfxKit } from "./sfxKit";
 import { degree, grit, mtof } from "./dsp";
 
+/** A mushroom breaking the cauldron's surface: a falling hollow bubble and a little splash. */
+export function potionPlop(K: SfxKit, pan = 0, near = 1): void {
+  if (near <= 0 || !K.ready("potionPlop", .08)) return;
+  const c = K.ctx, at = c.currentTime + .005, out = K.voice(pan, .7);
+  const g = c.createGain(); g.connect(out); K.env(g, at, K.T.hit.volume * near, .003, .24);
+  const o = K.osc("sine", 440, at, .28, g);
+  o.frequency.exponentialRampToValueAtTime(85, at + .15);
+  const lp = c.createBiquadFilter(), splash = c.createGain();
+  lp.type = "lowpass"; lp.frequency.value = 1400; lp.connect(splash); splash.connect(out);
+  K.env(splash, at, K.T.hit.volume * near * .2, .002, .07);
+  K.noiseBurst(at, .09, lp, 61);
+}
+
 /** A 💌 landing: a small glassy chime (a bell's partials); a spent one (inside the creature's
  *  gap: no affection) just a faint tick. */
 export function hit(K: SfxKit, pan = 0, near = 1, spent = false): void {

@@ -8,7 +8,8 @@ import { slotStorage } from "./saveSlots";
 // found stays on her across loads; turned off, what she's wearing stays for the session, and from the next load the normal rules apply.
 import { ITEMS } from "../rules/wardrobe";
 import { PART_IDS } from "../rules/broomParts";
-import type { Witch } from "../rules/game";
+import { MUSHROOM_COLOURS } from "../rules/mushrooms";
+import type { Game, Witch } from "../rules/game";
 import { HAT_FLOOR } from "../rules/houseRooms";
 import { ownsHat } from "../rules/spells";
 import { hatsFrom } from "./hatSave";
@@ -23,6 +24,11 @@ export function unlockAll(storage?: Store | null): boolean {
 }
 export function setUnlockAll(on: boolean, storage?: Store | null): void {
   try { const s = storeOf(storage); if (on) s?.setItem(UNLOCK_KEY, "1"); else s?.removeItem(UNLOCK_KEY); } catch { /* storage blocked */ }
+}
+
+/** One click supplies testing stock; never reduces a basket that already holds more. */
+export function stockMushroomBaskets(g: Pick<Game, 'mushrooms'>): void {
+  for (const type of MUSHROOM_COLOURS) g.mushrooms.baskets[type] = Math.max(20, g.mushrooms.baskets[type]);
 }
 
 /** The wardrobe items a station offers: hers, or with the switch on every item on every shelf (a new set: hers is never changed). */

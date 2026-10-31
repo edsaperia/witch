@@ -151,7 +151,12 @@ float lakeSigil(vec2 p) {
   return 0.0;
 }
 #endif
+#ifdef POTION_SKY
+uniform float uPotionSky;
+void floorMain() {
+#else
 void main() {
+#endif
   vec2 px = floor(vWorld.xz / uPixel);           // the art pixel this fragment is in
   vec2 p = (px + 0.5) * uPixel;                   // its centre, in metres
   // Wobble the lookup a little so area borders read as ragged, not as the texture's grid.
@@ -677,10 +682,18 @@ void main() {
   if (plazaLine + plazaHalo > 0.0) lit = mix(lit, vec3(0.36, 0.62, 0.52), plazaLine * 0.55) + vec3(0.04, 0.16, 0.11) * plazaHalo * (1.0 - plazaLine) * 0.4; // (the plaza's sigil, its own light)
   gl_FragColor = vec4(haze(lit, vWorld), 1.0); // (her pool in her light's colour)
 }
+#ifdef POTION_SKY
+// Blend only colour: the bent floor continues writing depth beyond its horizon.
+void main() {
+  if (uPotionSky >= 1.0) { gl_FragColor = vec4(0.0); return; }
+  floorMain();
+  gl_FragColor.a *= 1.0 - uPotionSky;
+}
+#endif
 `;
 
 /** At full share this is the exact ground shader; the added dither only runs during coast handover. */
-const BEACH_FRAG = FRAG.replace('void main() {', 'uniform float uCoastAppear;\nvoid main() {\n  if (uCoastAppear < 0.999 && bayer4(gl_FragCoord.xy) >= uCoastAppear) discard;');
+const BEACH_FRAG = FRAG.replaceAll('void main() {', 'uniform float uCoastAppear;\nvoid main() {\n  if (uCoastAppear < 0.999 && bayer4(gl_FragCoord.xy) >= uCoastAppear) discard;');
 
 /** Both real ground and precompile use this factory; no substitute shader or custom cache key. */
 export const groundProgramMaterial = (defines: Record<string, string>, uniforms: Record<string, THREE.IUniform>) =>
@@ -735,6 +748,7 @@ export class Ground {
     this.beachDefines = defines(true);
     const mat = groundProgramMaterial(defines(false), {
         ...LIGHT_UNIFORMS, ...HEIGHT_UNIFORMS, ...FX_UNIFORMS, ...nativeFxUniforms("lake"),
+        uPotionSky: { value: 0 },
         uAreas: { value: this.near.texture }, uAreasFar: { value: this.far.texture },
         uExtent: { value: this.near.extent }, uExtentFar: { value: this.far.extent },
         uAreaWin: { value: this.near.box }, uAreaWinFar: { value: this.far.box },
@@ -819,6 +833,21 @@ void main() {
 
   /** Keep the grid round (x, z), snapped to its squares so the hills don't swim. */
   follow(x: number, z: number): void { this.mesh.position.set(Math.round(x / GRID) * GRID, 0, Math.round(z / GRID) * GRID); }
+  potionSky(amount: number): void {
+    this.plain.uniforms.uPotionSky.value = amount;
+    for (const mat of [this.plain, this.beach]) {
+      if (!mat) continue; // The coast material is now created lazily on first approach.
+      const enabled = amount > 0;
+      if (enabled !== ('POTION_SKY' in mat.defines)) {
+        if (enabled) mat.defines.POTION_SKY = ''; else delete mat.defines.POTION_SKY;
+        mat.needsUpdate = true;
+      }
+      mat.blending = amount > 0 ? THREE.CustomBlending : THREE.NormalBlending;
+      mat.blendSrc = THREE.SrcAlphaFactor; mat.blendDst = THREE.OneMinusSrcAlphaFactor;
+    }
+    this.mesh.renderOrder = amount > 0 ? -90 : 0;
+    if (this.coastSurface) this.coastSurface.renderOrder = this.mesh.renderOrder + 0.00001;
+  }
 
   /** This frame's dancefloor tiles: per tile r, g, b and intensity (0 to 3), row by row (rules/dancefloor.ts). */
   setFloorTiles(rgbi: Uint8Array): void {
@@ -877,7 +906,9 @@ void main() {
     this.coastReadiness.request(!!b, performance.now());
     if (!b) { this.mesh.material = this.plain; if (this.coastSurface) this.coastSurface.visible = false; v.set(0, 0, 0, 0); return; }
     if (!this.beach) {
-      this.beach = new THREE.ShaderMaterial({ vertexShader: VERT, fragmentShader: BEACH_FRAG, defines: this.beachDefines, uniforms: { ...u, uCoastAppear: { value: 0 } } });
+      this.beach = new THREE.ShaderMaterial({ vertexShader: VERT, fragmentShader: BEACH_FRAG, defines: { ...this.beachDefines, ...('POTION_SKY' in this.plain.defines ? { POTION_SKY: '' } : {}) }, uniforms: { ...u, uCoastAppear: { value: 0 } } });
+      // A coast first appearing mid-trip inherits the floor's blend before its first draw.
+      this.beach.blending = this.plain.blending; this.beach.blendSrc = this.plain.blendSrc; this.beach.blendDst = this.plain.blendDst;
       this.coastSurface = new THREE.Mesh(this.mesh.geometry, this.beach);
       this.coastSurface.name = 'Deferred coast surface'; this.coastSurface.frustumCulled = false; this.coastSurface.visible = false;
       this.coastSurface.renderOrder = this.mesh.renderOrder + 0.00001; this.mesh.add(this.coastSurface);

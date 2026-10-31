@@ -1,0 +1,24 @@
+<style>
+#mushroom-explorer{display:flex;flex-direction:column;gap:calc(var(--font-size-base,14px)*1);color:var(--foreground)}
+#mushroom-explorer .specimens{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:calc(var(--font-size-base,14px)*1)}
+#mushroom-explorer canvas{display:block;width:100%;height:auto;image-rendering:pixelated;background:#000}
+#mushroom-explorer .specimen{min-width:0}
+#mushroom-explorer .range-row{display:grid;grid-template-columns:minmax(0,1fr) 80px 80px;gap:8px;align-items:center;margin-bottom:8px}
+#mushroom-explorer details>summary{margin-bottom:12px}
+@media(max-width:540px){#mushroom-explorer .specimens{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:360px){#mushroom-explorer .specimens{grid-template-columns:minmax(0,1fr)}}
+</style>
+<div id="mushroom-explorer">
+<div class="viz-controls">
+<label class="form-label">Seed<input class="form-control" data-seed type="number" value="64" step="1"></label>
+<label class="form-label">Pixel grid<select class="form-select" data-pixel><option value="3">3 · game default</option><option value="4">4 · coarser</option><option value="5">5 · coarsest</option></select></label>
+<label class="form-label">Lighting<select class="form-select" data-light><option value="studio">Studio</option><option value="night" selected>Night</option></select></label>
+<button class="btn btn-primary" type="button" data-next>New specimens</button>
+<button class="btn" type="button" data-copy>Copy settings</button>
+</div>
+<div data-export hidden><label class="form-label">Settings to copy<textarea class="form-control" data-settings readonly rows="6"></textarea></label><span class="text-small" data-copy-status aria-live="polite"></span></div>
+<div><div class="range-row text-small"><span>Shape ranges</span><span>Minimum</span><span>Maximum</span></div><div data-main-ranges></div></div>
+<details open><summary>More shape and spot ranges</summary><div class="range-row text-small"><span>Range</span><span>Minimum</span><span>Maximum</span></div><div data-extra-ranges></div></details>
+<div class="text-small" data-status aria-live="polite"></div>
+<div class="specimens" data-grid></div>
+</div>
