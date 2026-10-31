@@ -107,7 +107,7 @@ All potions last ten minutes of game time, start at full strength on waking, and
 | 99 | pink + orange + white | Growing Personalities | Coming soon | Mushrooms become impossibly tall, squat or twisted, with curling stems and lifted cap rims. |
 | 100 | pink + yellow + yellow | Hall of Mirrors | Coming soon | Every movement leaves an endless trail of overlapping images. |
 | 101 | pink + yellow + green | Glow Up | Implemented | Everything glows until the forest blazes with light. |
-| 102 | pink + yellow + turquoise | Miniature | Coming soon | The island looks like a tiny toy world. |
+| 102 | pink + yellow + turquoise | Miniature | Implemented | The island looks like a tiny toy world. |
 | 103 | pink + yellow + white | Little Planet | Implemented | The world curves sharply away like a tiny planet. |
 | 104 | pink + green + green | Wireframe | Coming soon | The world becomes a web of fine lines tracing every surface. |
 | 105 | pink + green + turquoise | Mix-up | Coming soon | Creatures wear mismatched fragments of other creatures’ appearances. |

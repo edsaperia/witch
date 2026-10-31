@@ -4,6 +4,8 @@ const p = (key: string, label: string, value: number, min: number, max: number, 
 export const POTION_PARAMETERS: Record<string, readonly PotionParameter[]> = {
   'the-audience': [p('radius', 'Watching distance (metres)', 35, 0, 100, 1), p('lean', 'Tree lean (metres)', 4, 0, 12, .1), p('lag', 'Following delay (seconds)', 2, .05, 8, .05)],
   'chunky': [p('multiplier', 'Pixel size × normal', 4, 1, 12, .25)],
+  'trip-audio': [p('mix', 'Trip sound treatment', 1, 0, 1), p('cutoff', 'Sound brightness (Hz)', 2600, 200, 12000, 100), p('motion', 'Sound brightness motion (octaves)', .6, 0, 2, .05), p('speed', 'Sound motion speed (Hz)', .18, .02, 2, .02), p('flutter', 'Sound flutter', .18, 0, .7, .01)],
+  'miniature': [p('blur', 'Toy-world blur', 7, 0, 16, .1), p('band', 'Sharp strip width', .12, .02, 1, .01), p('centre', 'Focus position from top', .55, 0, 1, .01)],
   'trip-indicator': [p('strength', 'Edge wobble (art pixels)', 1.5, 0, 30, .1), p('speed', 'Wobble speed', 1.2, 0, 12, .1), p('waveSize', 'Wave size (screen fraction)', .3, .02, 2, .01), p('reach', 'Reach from screen edges', .2, 0, 1, .01)],
   'ravine': [p('bendMultiplier', 'Upward bend × treetop bend', 2, 0, 30, .1), p('minimumBend', 'Minimum upward bend', .001, 0, .03, .0001)],
   'little-planet': [p('bendMultiplier', 'Extra bend × treetop bend', 6, 0, 50, .1), p('minimumBend', 'Minimum extra bend', .002, 0, .05, .0001)],
