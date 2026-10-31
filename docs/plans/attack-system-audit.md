@@ -1,5 +1,7 @@
 # Attack system Stage1 audit and implementation plan
 
+STATUS 2026-10-31: PR #1480's bounded target-identity, sheltered-effects and momentum fixes plus accepted-outcome audit landed in v6478. Original Stage1 observations and later metric qualifications below remain historical evidence, not a fresh Stage2 assignment. Any new correctness finding belongs to coherence Track R (#1519); no balance change or larger sweep is opened by this document.
+
 2026-10-30. Audit source and bounded fixture results, before any attack rule/configuration changes. This is Stage1, not a balance pass or a claim of combat strength. Original 18:02 UTC reporting target was interrupted by canonical PR1500 CI correction COORDINATOR6529220446; that correction is pushed and reported as6529629457.
 
 ## Findings and order of work

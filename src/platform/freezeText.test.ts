@@ -5,7 +5,7 @@ it("typing a period in the paused comment does not advance the simulation, while
   let keydown: (e: KeyboardEvent) => void = () => {};
   vi.stubGlobal("window", { addEventListener(type: string, handler: (e: KeyboardEvent) => void) { if (type === "keydown") keydown = handler; } });
   vi.stubGlobal("navigator", {});
-  vi.stubGlobal("document", { addEventListener() {}, createElement: () => ({ style: {}, addEventListener() {} }), head: { append() {} }, body: { append() {}, classList: { toggle() {} } } });
+  vi.stubGlobal("document", { querySelector: () => null, addEventListener() {}, createElement: () => ({ style: {}, addEventListener() {} }), head: { append() {} }, body: { append() {}, classList: { toggle() {} } } });
   const { Freeze } = await import("./freeze");
   const freeze = new Freeze({ clock: { paused: true } } as Game, 1, "test"); freeze.toggle();
   const step = vi.spyOn(freeze, "step").mockImplementation(() => {});

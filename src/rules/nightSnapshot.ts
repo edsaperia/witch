@@ -111,6 +111,9 @@ export function restoreGame(input: unknown): Game {
   if (!Array.isArray(state.witches) || state.witches.length < 1 || state.witches.length > 3 || !Array.isArray(state.creatures) || !state.clock || !state.party || !(state.friendly instanceof Set) || !(state.wildEntry instanceof Map)) return invalid();
   const tuning = JSON.parse(JSON.stringify(snapshot.tuning)) as Tuning;
   const game = newGame(snapshot.seed, tuning, state.witches.length);
+  // Saved nights from before the nine-colour mushroom system retain their exact night;
+  // only the new subsystem starts fresh, deterministically placed from the saved seed.
+  if (!Object.hasOwn(state, 'mushrooms')) state.mushrooms = game.mushrooms;
   // A compatible save has every non-optional field made by newGame. Extra fields are allowed only
   // if they belong to Game (optional fields aren't all present on a new night).
   for (const key of Object.keys(game)) if (!OMIT.has(key) && !Object.hasOwn(state, key)) return invalid();

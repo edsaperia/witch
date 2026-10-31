@@ -2,7 +2,7 @@
 const fs = require('fs'), path = require('path'), zlib = require('zlib');
 const ts = require('typescript');
 const { decode } = require('@jridgewell/sourcemap-codec');
-const baseline = JSON.parse(fs.readFileSync('docs/rare-screens-startup-before.json'));
+const baseline = JSON.parse(fs.readFileSync('docs/archive/rare-screens/startup-before.json'));
 const creatorRetain = new Set(['loadGenome','saveGenome','classicPalette','cpuCanvas','slot','swatchAt']);
 const creatorText = fs.readFileSync('src/ui/creator.ts','utf8');
 const tree = ts.createSourceFile('creator.ts',creatorText,ts.ScriptTarget.Latest,true), declarations = new Map();
@@ -58,4 +58,4 @@ const result={sourceSha:baseline.sourceSha,method:'Source-map spans removed from
 for(const row of Object.values(result.groups)) for(const [source,bytes]of Object.entries(row.bySource)) {
  const base=baseline.sources.find(s=>s.source===source);if(!base||bytes>base.generatedBytes)throw Error('Attribution exceeds baseline: '+source);
 }
-fs.writeFileSync('docs/rare-screens-value-estimate.json',JSON.stringify(result,null,2)+'\n');console.log(JSON.stringify(result,null,2));
+fs.writeFileSync('docs/archive/rare-screens/value-estimate.json',JSON.stringify(result,null,2)+'\n');console.log(JSON.stringify(result,null,2));

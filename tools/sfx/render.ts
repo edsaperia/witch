@@ -36,6 +36,7 @@ const SOUNDS: [string, number, Play][] = [
   ["soundsystem-lost", 3, s => s.lost()],
   ["soundsystem-lost-urgent", 3, s => s.lost(true)],
   ["hit", 0.8, s => s.hit(0)],
+  ["potion-plop", .8, s => s.potionPlop()],
   ["hit-spent", 0.5, s => s.hit(0, 1, true)],
   ["fill-0", 0.3, s => s.fill(0)],
   ["fill-1", 0.3, s => s.fill(1)],

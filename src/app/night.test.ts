@@ -16,7 +16,9 @@ const G = globalThis as unknown as Record<string, unknown>;
 const had = { document: "document" in G, window: "window" in G };
 beforeAll(() => {
   if (!had.document) G.document = { getElementById: () => fakeEl(), body: fakeEl(), querySelectorAll: () => [] };
-  if (!had.window) G.window = {};
+  // startNight owns a browser timer and pagehide listener for campaign mushroom stock.
+  // Keep them inert here: this fixture exercises night lifecycle, not real wall-clock timers.
+  if (!had.window) G.window = { setInterval: () => 1, clearInterval() {}, addEventListener() {}, removeEventListener() {} };
 });
 afterAll(() => {
   if (!had.document) delete G.document;
