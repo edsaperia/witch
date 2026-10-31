@@ -160,3 +160,24 @@ FAILED:
 the ley line is drawn from home through every area (10 sections for 11 areas), the last reached at 0 (2798 triangles)
 ```
 
+### Batch rerun-laptop: laptop
+
+- exit code: 1
+- wall time: 1185s (13:20 UTC end)
+
+```
+```
+
+Error (trimmed):
+```
+page.waitForFunction: Timeout 240000ms exceeded.
+    at hold (/home/user/witch/tools/smoke/smoke.cjs:138:16)
+    at async flyPath (/home/user/witch/tools/smoke/smoke.cjs:163:9)
+    at async /home/user/witch/tools/smoke/smoke.cjs:214:5
+    at async run (/home/user/witch/tools/smoke/smoke.cjs:107:5)
+    at async main (/home/user/witch/tools/smoke/smoke.cjs:173:3) {
+  log: [],
+  name: 'TimeoutError'
+}
+```
+
