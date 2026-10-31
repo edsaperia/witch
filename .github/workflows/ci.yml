@@ -51,6 +51,9 @@ jobs:
         env:
           WITCH_VERSION: ${{ github.run_number }}
           WITCH_SHA: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.sha || github.sha }}
+      - name: Failure annotation totals
+        if: always()
+        run: node tools/ci/annotations.cjs --summary
       - uses: actions/upload-artifact@v4
         with:
           name: game-dist
@@ -202,6 +205,9 @@ jobs:
       - name: Full or related unit tests
         run: node tools/ci/run-unit.mjs
       - run: npm run typecheck
+      - name: Failure annotation totals
+        if: always()
+        run: node tools/ci/annotations.cjs --summary
       - name: Unit selection and wall-clock evidence
         if: always()
         uses: actions/upload-artifact@v4
@@ -241,11 +247,14 @@ jobs:
         shell: bash
         run: |
           mkdir -p quick
-          NODE_PATH=$PWD/.pw/node_modules QUICK_OUT=quick/quick.png node tools/smoke/quick.cjs 2>&1 | tee quick/log.txt
+          NODE_PATH=$PWD/.pw/node_modules QUICK_OUT=quick/quick.png node tools/ci/report-command.cjs --kind smoke -- node tools/smoke/quick.cjs 2>&1 | tee quick/log.txt
       - name: Music check
-        run: NODE_PATH=$PWD/.pw/node_modules node tools/music-lab/check.cjs
+        run: NODE_PATH=$PWD/.pw/node_modules node tools/ci/report-command.cjs --kind smoke -- node tools/music-lab/check.cjs
       - name: Pause over the overlays
-        run: NODE_PATH=$PWD/.pw/node_modules node tools/smoke/pause-on-top.cjs dist
+        run: NODE_PATH=$PWD/.pw/node_modules node tools/ci/report-command.cjs --kind smoke -- node tools/smoke/pause-on-top.cjs dist
+      - name: Failure annotation totals
+        if: always()
+        run: node tools/ci/annotations.cjs --summary
       - uses: actions/upload-artifact@v4
         if: always()
         with:
@@ -284,7 +293,10 @@ jobs:
       - name: Load and draw diverse art on the largest shipped world
         env:
           EXPECTED_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
-        run: NODE_PATH=$PWD/.pw/node_modules node tools/smoke/large-world.cjs
+        run: NODE_PATH=$PWD/.pw/node_modules node tools/ci/report-command.cjs --kind smoke -- node tools/smoke/large-world.cjs
+      - name: Failure annotation totals
+        if: always()
+        run: node tools/ci/annotations.cjs --summary
       - if: always()
         uses: actions/upload-artifact@v4
         with:
@@ -346,6 +358,9 @@ jobs:
           NODE_PATH=$GITHUB_WORKSPACE/.pw/node_modules node head/tools/bench/compare.cjs out/base out/head $([ -f "$EXPECT" ] && echo --expect "$EXPECT") | tee out/compare.md
       - if: always()
         run: '[ -f out/compare.md ] && cat out/compare.md >> "$GITHUB_STEP_SUMMARY" || true'
+      - name: Failure annotation totals
+        if: always()
+        run: node head/tools/ci/annotations.cjs --summary
       - uses: actions/upload-artifact@v4
         if: always()
         with:

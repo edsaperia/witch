@@ -68,10 +68,13 @@ jobs:
           set -o pipefail
           mkdir -p out
           if [ "$CHECK_MODE" = "full" ]; then
-            NODE_PATH=$PWD/.pw/node_modules node art/check.mjs --times 2>&1 | tee out/log.txt
+            NODE_PATH=$PWD/.pw/node_modules node tools/ci/report-command.cjs --kind art -- node art/check.mjs --times 2>&1 | tee out/log.txt
           else
-            NODE_PATH=$PWD/.pw/node_modules node tools/art-check/affected.mjs --run out/art-check-plan.json 2>&1 | tee out/log.txt
+            NODE_PATH=$PWD/.pw/node_modules node tools/ci/report-command.cjs --kind art -- node tools/art-check/affected.mjs --run out/art-check-plan.json 2>&1 | tee out/log.txt
           fi
+      - name: Failure annotation totals
+        if: always()
+        run: node tools/ci/annotations.cjs --summary
       - uses: actions/upload-artifact@v4
         if: always()
         with:
