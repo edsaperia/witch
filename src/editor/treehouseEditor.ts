@@ -1,6 +1,5 @@
-import { HOUSE_ROOMS } from "../rules/houseRooms";
 import { field } from "../../config/house/shape.js";
-import { attachedPoint, defaultLayout, exportLayout, floorplanKey, hitItem, isHatZone, itemKind, LayoutHistory, layoutItems, normalAngle, parseLayout, physicalRoom } from "./houseLayout";
+import { EDITOR_HOUSE as HOUSE_ROOMS, attachedPoint, defaultLayout, exportLayout, floorplanKey, hitItem, isHatZone, itemKind, LayoutHistory, layoutItems, normalAngle, parseLayout, physicalRoom } from "./houseLayout";
 import { HousePreview, type Frame, type Mapping } from "./housePreview";
 import "./treehouseEditor.css";
 
@@ -10,7 +9,7 @@ const bounds = { x0: Math.min(...HOUSE_ROOMS.rooms.map(r => r.x0)) - 3, x1: Math
 const fullFrame = (): Frame => ({ x: (bounds.x0 + bounds.x1) / 2, z: (bounds.z0 + bounds.z1) / 2, width: bounds.x1 - bounds.x0, height: bounds.z1 - bounds.z0 });
 let frame = fullFrame(), map: Mapping;
 document.body.innerHTML = `<header><div><span class="eyebrow">WITCH · AUTHORING</span><h1>Treehouse layout</h1></div><p>Arrange the furniture. Copy the layout when it feels right.<br><small>The published house stays unchanged. Rooms and walls are fixed.</small></p></header>
-<main><aside><label>Room <select id="room"><option value="">All rooms</option></select></label><label>Furniture / station / clutter / zone <select id="object" size="9" aria-label="Objects, stations, room clutter and spawn zones"></select></label>
+<main><aside><label>Room <select id="room"><option value="">All rooms</option></select></label><label>Furniture / station / clutter / hat point <select id="object" size="9" aria-label="Objects, stations, room clutter and hat spawn points"></select></label>
 <section><h2 id="name"></h2><p id="kind"></p><div class="numbers"><label>X · metres<input id="x" type="number" step="0.1"></label><label>Z · metres<input id="z" type="number" step="0.1"></label><label>Rotation · degrees<input id="rotation" type="number" step="1"></label></div>
 <div class="buttons"><button id="left">↶ 15°</button><button id="right">↷ 15°</button><button id="restore">Reset object</button></div><p id="anchor"></p><p id="warning" role="status"></p></section>
 <div class="buttons"><button id="undo">Undo</button><button id="redo">Redo</button><button id="reset">Reset all</button></div>
@@ -26,7 +25,7 @@ const status = (s: string) => { get("status").textContent = s; };
 for (const r of HOUSE_ROOMS.rooms) room.add(new Option(r.label, r.id));
 function list(): void {
   object.replaceChildren();
-  for (const o of items.filter(o => !room.value || room.value === physicalRoom(history.value.objects.find(p => p.id === o.id)!))) object.add(new Option(o.label, o.id));
+  for (const o of items.filter(o => !isHatZone(o) && (!room.value || room.value === physicalRoom(history.value.objects.find(p => p.id === o.id)!)))) object.add(new Option(o.label, o.id));
   if (![...object.options].some(o => o.value === selected)) selected = object.options[0]?.value ?? items[0].id;
   object.value = selected;
 }
@@ -36,8 +35,9 @@ function inspector(): void {
   const destination = physicalRoom(p);
   get("name").textContent = o.label; get("kind").textContent = `${HOUSE_ROOMS.rooms.find(r => r.id === destination)?.label ?? "Branch / outside rooms"} · ${itemKind(o)}`;
   for (const k of ["x", "z", "rotation"] as const) get<HTMLInputElement>(k).value = String(+p[k].toFixed(4));
-  get("anchor").textContent = isHatZone(o) ? "Hat spawn zone, not a station. Dots show future hat positions; each actual hat is picked up separately. Moving this zone changes the exported spawn positions, not hats already lying in play." : o.decor ? "Room clutter has no station interaction. Its identity stays the same when moved to another room." : `Use position: X ${a.x.toFixed(2)}, Z ${a.z.toFixed(2)} m. Rotation is clockwise; 0° faces south. Room names do not change its function.`;
-  get("warning").textContent = field(HOUSE_ROOMS.shape, p.x, p.z, true) > 0 ? "Outside the walkable floor. You can keep arranging it or move it back inside." : "";
+  get<HTMLInputElement>("rotation").disabled = !!o.hatPoint; get<HTMLButtonElement>("left").disabled = !!o.hatPoint; get<HTMLButtonElement>("right").disabled = !!o.hatPoint;
+  get("anchor").textContent = o.kitchen ? `Current potion kitchen: ${o.kitchen.kind === "basket" ? `${o.kitchen.colour} mushrooms · unload / ingredient use` : "large cauldron · ingredients and smoke follow its centre"}. Preview shows empty containers. Placement is exported for runtime review.` : o.hatPoint ? `Spawn point ${o.hatPoint}. A new hat takes the lowest empty point. Each hat is picked up separately; this is not a station.` : o.decor ? "Room clutter has no station interaction. Its identity stays the same when moved to another room." : `Use position: X ${a.x.toFixed(2)}, Z ${a.z.toFixed(2)} m. Rotation is clockwise; 0° faces south. Room names do not change its function.`;
+  get("warning").textContent = field(HOUSE_ROOMS.shape, p.x, p.z, true) > 0 ? "Outside the walkable floor. You can keep arranging it or move it back inside." : o.kitchen && destination !== "kitchen" ? "Outside the kitchen. Potion interactions currently require the kitchen room; review this placement before adoption." : "";
 }
 function draw(): void {
   map = preview.draw(plan, items, history.value, selected, frame, false, zoom);

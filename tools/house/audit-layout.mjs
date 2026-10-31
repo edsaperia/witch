@@ -11,6 +11,7 @@ await build({ stdin: { contents: 'export * from "./src/editor/houseLayout.ts"; e
 const { layoutItems, floorplanKey, defaultLayout, parseLayout, exportLayout, auditLayout, HOUSE_ROOMS } = createRequire(import.meta.url)(modulePath);
 const items = layoutItems(), layout = parseLayout(JSON.parse(readFileSync(input, 'utf8')), items, floorplanKey(HOUSE_ROOMS, items)), audit = auditLayout(layout, items);
 const baseline = auditLayout(defaultLayout(items, layout.floorplan), items);
+audit.overlapComparison = { baseline: baseline.overlaps, added: audit.overlaps.filter(pair => !baseline.overlaps.some(b => b[0] === pair[0] && b[1] === pair[1])) };
 audit.corridorComparison = { baseline: baseline.corridors, added: audit.corridors.flatMap(c => c.footprintCrossings.filter(id => !baseline.corridors.some(b => b.corridor === c.corridor && b.footprintCrossings.includes(id))).map(id => ({ corridor: c.corridor, id }))) };
 for (const [name, value] of [['converted-layout.json', exportLayout(layout, items)], ['audit.json', audit]]) {
   const file = resolve(output, name); if (file === resolve(input)) throw Error('Refusing to overwrite the supplied layout');

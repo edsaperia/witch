@@ -4,6 +4,9 @@ import { decorPlan, type DecorItem } from "../render/houseDecor";
 import { standing } from "../render/housePieces";
 import { FURNITURE_IDS } from "../../art/furniture.js";
 import legacy from "../../config/house/layouts/editor-v1-baseline.json";
+import { kitchenPlan, type MushroomColour } from "../rules/mushrooms";
+import { HOUSE_CONFIG } from "../rules/houseConfig";
+export const EDITOR_HOUSE = HOUSE_CONFIG as HouseConfig;
 
 export interface Placement { id: string; x: number; z: number; rotation: number }
 export interface Layout { version: 2; floorplan: string; objects: Placement[]; migration?: { from: 1; cameraPreserved: true; held: Placement[] } }
@@ -11,17 +14,36 @@ export interface LayoutItem extends HouseObject {
   anchor: { x: number; z: number }; synthetic?: boolean;
   facing: { yaw: number; foot: { w: number; d: number; h: number }; curve: number };
   decor?: DecorItem;
+  hatPoint?: number;
+  kitchen?: { kind: "cauldron" } | { kind: "basket"; colour: MushroomColour; index: number };
 }
 export const isHatZone = (o: LayoutItem): boolean => o.use.kind === "hats";
-export const itemKind = (o: LayoutItem): string => isHatZone(o) ? "Hat spawn zone" : o.decor ? "Room clutter" : o.use.kind === "creator" ? "Dressing station" : "Furniture";
+export const itemKind = (o: LayoutItem): string => o.kitchen ? o.kitchen.kind === "basket" ? "Mushroom basket" : "Potion cauldron" : o.hatPoint ? "Hat spawn point" : isHatZone(o) ? "Hat spawn zone" : o.decor ? "Room clutter" : o.use.kind === "creator" ? "Dressing station" : "Furniture";
 export const normalAngle = (angle: number): number => ((angle % 360) + 540) % 360 - 180;
 export function rotate(x: number, z: number, angle: number): { x: number; z: number } {
   const a = angle * Math.PI / 180;
   return { x: x * Math.cos(a) - z * Math.sin(a), z: x * Math.sin(a) + z * Math.cos(a) };
 }
 /** Authoring data only. Never writes HOUSE_ROOMS or the player's saves. */
-export function layoutItems(H = HOUSE_ROOMS): LayoutItem[] {
+export function layoutItems(H = EDITOR_HOUSE): LayoutItem[] {
   const items: LayoutItem[] = H.objects.map(o => ({ ...structuredClone(o), ...(o.use.kind === "hats" ? { label: "Hat spawn zone" } : {}), facing: standing(o), anchor: toPlan({ x: 0, z: 0 }, ...point(objectFront(o, { x: 0, z: 0 }, .5, H)), H.turn ?? 0) }));
+  const kitchen = kitchenPlan(false), pot = items.find(o => o.id === "cauldron");
+  if (pot) { Object.assign(pot, kitchen.cauldron); pot.kitchen = { kind: "cauldron" }; pot.anchor = { ...kitchen.cauldron }; pot.facing = { yaw: 0, foot: { w: pot.w, d: pot.d, h: pot.h }, curve: 0 }; }
+  kitchen.baskets.forEach((p, index) => {
+    // Current runtime basket tag footprint/height, not the removed small-pot furniture art.
+    const foot = { w: 1.4, d: 1.4, h: 1.5 };
+    items.push({ id: `mushroom-basket:${p.type}`, room: "kitchen", label: `${p.type} mushroom basket`, ...foot, x: p.x, z: p.z,
+      synthetic: true, use: { kind: "scenery" }, anchor: { x: p.x, z: p.z }, facing: { yaw: 0, foot, curve: 0 }, kitchen: { kind: "basket", colour: p.type, index } });
+  });
+  hatSlots({ x: 0, z: 0 }, H).forEach((p, i) => {
+    const at = toPlan({ x: 0, z: 0 }, p.x, p.z, H.turn ?? 0), foot = { w: .4, d: .4, h: 0 };
+    items.push({ id: `hat-point:${i + 1}`, label: `Hat spawn point ${i + 1}`, hatPoint: i + 1, room: "cloakroom", ...at, ...foot,
+      use: { kind: "scenery" }, anchor: at, facing: { yaw: 0, foot, curve: 0 } });
+  });
+  if (!H.layout) {
+    const zone = items.find(isHatZone);
+    if (zone) { const n = items.filter(o => o.hatPoint).length + 1, foot = { w: .4, d: .4, h: 0 }; items.push({ ...zone, id: `hat-point:${n}`, label: `Hat spawn point ${n}`, use: { kind: "scenery" }, hatPoint: n, ...foot, anchor: { x: zone.x, z: zone.z }, facing: { yaw: 0, foot, curve: 0 } }); }
+  }
   const t = H.rooms.find(r => r.id === "terrace");
   if (t) items.push({ ...H.terrace.decks, id: "terrace:decks", label: "DJ decks + seat", room: t.id, x: t.x + H.terrace.decks.x, z: t.z + H.terrace.decks.z,
     h: 1.5, use: { kind: "say", line: "DJ decks" }, synthetic: true, facing: { yaw: 0, foot: { ...H.terrace.decks, h: 1.5 }, curve: 0 },
@@ -93,20 +115,29 @@ export function migrateCameraV1(raw: unknown, items: LayoutItem[], floorplan: st
     const parent = result.objects.find(p => p.id === item.decor!.of), p = result.objects.find(p => p.id === item.id);
     if (parent && p) Object.assign(p, { x: parent.x, z: parent.z, rotation: parent.rotation });
   }
+  const zone = items.find(isHatZone), zonePose = result.objects.find(p => p.id === zone?.id);
+  if (zone && zonePose) for (const point of zoneSlots(zone, zonePose)) {
+    const target = result.objects.find(p => p.id === `hat-point:${point.slot + 1}`);
+    if (target) Object.assign(target, { x: point.x, z: point.z });
+  }
   result.migration = { from: 1, cameraPreserved: true, held };
   return result;
 }
 export function exportLayout(layout: Layout, items: LayoutItem[]): object {
   return { ...layout, coordinates: "house-plan-metres", rotationMode: "absolute-clockwise-degrees-south-zero",
+    kitchenPlacements: items.filter(o => o.kitchen).map(o => { const p = layout.objects.find(p => p.id === o.id)!; return { ...p, ...o.kitchen, footprint: o.facing.foot, interactionAnchor: { x: p.x, z: p.z } }; }),
+    hatSpawnPoints: items.filter(o => o.hatPoint).map(o => { const p = layout.objects.find(p => p.id === o.id)!; return { id: o.hatPoint!, x: p.x, z: p.z }; }).sort((a, b) => a.id - b.id),
     objects: layout.objects.map(p => {
       const item = items.find(o => o.id === p.id)!;
-      return { ...p, physicalRoom: physicalRoom(p), lightingRoom: lightingRoom(p), ...(isHatZone(item) ? { kind: "hat-spawn-zone", spawnSlots: zoneSlots(item, p) } : { useAnchor: attachedPoint(item, p) }) };
+      return { ...p, physicalRoom: physicalRoom(p), lightingRoom: lightingRoom(p), ...(item.hatPoint ? { kind: "hat-spawn-point", order: item.hatPoint } : isHatZone(item) ? { kind: "hat-spawn-zone" } : { useAnchor: attachedPoint(item, p) }) };
     }) };
 }
 /** Future spawn positions, not hats or interaction points. Keep runtime's slot identities/order. */
 export function zoneSlots(item: LayoutItem, pose: Placement, H = HOUSE_ROOMS): { slot: number; x: number; z: number }[] {
   if (!isHatZone(item)) return [];
-  return hatSlots({ x: 0, z: 0 }, H).map((p, slot) => ({ slot, ...attachedPoint(item, pose, toPlan({ x: 0, z: 0 }, p.x, p.z, H.turn ?? 0)) }));
+  const slots = hatSlots({ x: 0, z: 0 }, H).map((p, slot) => ({ slot, ...attachedPoint(item, pose, toPlan({ x: 0, z: 0 }, p.x, p.z, H.turn ?? 0)) }));
+  if (!H.layout) slots.push({ slot: slots.length, x: pose.x, z: pose.z });
+  return slots;
 }
 /** All attachments (including a station's standing point / decks' seat) use one rigid transform. */
 export function attachedPoint(item: LayoutItem, pose: Placement, p = item.anchor): { x: number; z: number } {
@@ -119,7 +150,7 @@ export function corners(item: LayoutItem, p: Placement): { x: number; z: number 
 export function hitItem(items: LayoutItem[], layout: Layout, x: number, z: number): string | null {
   const floor = (id: string) => isHatZone(items.find(o => o.id === id)!) || ["rug", "mess"].includes(items.find(o => o.id === id)?.decor?.kind ?? "");
   // Match drawing order: floor spills/rugs must not steal a station's drag target.
-  for (const p of [...layout.objects].sort((a, b) => Number(floor(b.id)) - Number(floor(a.id)) || a.z - b.z).reverse()) {
+  for (const p of [...layout.objects].filter(p => !isHatZone(items.find(o => o.id === p.id)!)).sort((a, b) => Number(!!items.find(o => o.id === a.id)!.hatPoint) - Number(!!items.find(o => o.id === b.id)!.hatPoint) || Number(floor(b.id)) - Number(floor(a.id)) || a.z - b.z).reverse()) {
     const o = items.find(o => o.id === p.id)!, d = rotate(x - p.x, z - p.z, -p.rotation);
     if (Math.abs(d.x) <= Math.max(o.facing.foot.w / 2, .65) && Math.abs(d.z) <= Math.max(o.facing.foot.d / 2, .65)) return o.id;
   }

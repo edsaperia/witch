@@ -1,6 +1,6 @@
 {
   "version": 2,
-  "floorplan": "oak-e553ed9b",
+  "floorplan": "oak-ab9acc10",
   "objects": [
     {
       "id": "teaTable",
@@ -179,7 +179,7 @@
       "lightingRoom": "kitchen",
       "useAnchor": {
         "x": -70,
-        "z": 46.5
+        "z": 42.5
       }
     },
     {
@@ -201,79 +201,7 @@
       "rotation": 45.000000000000114,
       "physicalRoom": "cloakroom",
       "lightingRoom": "cloakroom",
-      "kind": "hat-spawn-zone",
-      "spawnSlots": [
-        {
-          "slot": 0,
-          "x": 27.907142857142855,
-          "z": -10.35
-        },
-        {
-          "slot": 1,
-          "x": 28.42142857142857,
-          "z": -10.35
-        },
-        {
-          "slot": 2,
-          "x": 28.935714285714283,
-          "z": -10.35
-        },
-        {
-          "slot": 3,
-          "x": 29.45,
-          "z": -10.35
-        },
-        {
-          "slot": 4,
-          "x": 29.96428571428571,
-          "z": -10.35
-        },
-        {
-          "slot": 5,
-          "x": 30.478571428571424,
-          "z": -10.35
-        },
-        {
-          "slot": 6,
-          "x": 30.992857142857144,
-          "z": -10.35
-        },
-        {
-          "slot": 7,
-          "x": 27.907142857142855,
-          "z": -8.729999999999999
-        },
-        {
-          "slot": 8,
-          "x": 28.42142857142857,
-          "z": -8.729999999999999
-        },
-        {
-          "slot": 9,
-          "x": 28.935714285714283,
-          "z": -8.729999999999999
-        },
-        {
-          "slot": 10,
-          "x": 29.45,
-          "z": -8.729999999999999
-        },
-        {
-          "slot": 11,
-          "x": 29.96428571428571,
-          "z": -8.729999999999999
-        },
-        {
-          "slot": 12,
-          "x": 30.478571428571424,
-          "z": -8.729999999999999
-        },
-        {
-          "slot": 13,
-          "x": 30.992857142857144,
-          "z": -8.729999999999999
-        }
-      ]
+      "kind": "hat-spawn-zone"
     },
     {
       "id": "cloakPegs",
@@ -478,6 +406,264 @@
         "x": 38.69,
         "z": -32.07
       }
+    },
+    {
+      "id": "mushroom-basket:blue",
+      "x": -75.85,
+      "z": 44,
+      "rotation": 0,
+      "physicalRoom": "kitchen",
+      "lightingRoom": "kitchen",
+      "useAnchor": {
+        "x": -75.85,
+        "z": 44
+      }
+    },
+    {
+      "id": "mushroom-basket:purple",
+      "x": -75.40469526519102,
+      "z": 46.23869807933578,
+      "rotation": 0,
+      "physicalRoom": "kitchen",
+      "lightingRoom": "kitchen",
+      "useAnchor": {
+        "x": -75.40469526519102,
+        "z": 46.23869807933578
+      }
+    },
+    {
+      "id": "mushroom-basket:pink",
+      "x": -74.1365746699413,
+      "z": 48.136574669941304,
+      "rotation": 0,
+      "physicalRoom": "kitchen",
+      "lightingRoom": "kitchen",
+      "useAnchor": {
+        "x": -74.1365746699413,
+        "z": 48.136574669941304
+      }
+    },
+    {
+      "id": "mushroom-basket:red",
+      "x": -72.23869807933578,
+      "z": 49.40469526519103,
+      "rotation": 0,
+      "physicalRoom": "kitchen",
+      "lightingRoom": "kitchen",
+      "useAnchor": {
+        "x": -72.23869807933578,
+        "z": 49.40469526519103
+      }
+    },
+    {
+      "id": "mushroom-basket:orange",
+      "x": -70,
+      "z": 49.85,
+      "rotation": 0,
+      "physicalRoom": "kitchen",
+      "lightingRoom": "kitchen",
+      "useAnchor": {
+        "x": -70,
+        "z": 49.85
+      }
+    },
+    {
+      "id": "mushroom-basket:yellow",
+      "x": -67.76130192066422,
+      "z": 49.40469526519103,
+      "rotation": 0,
+      "physicalRoom": "kitchen",
+      "lightingRoom": "kitchen",
+      "useAnchor": {
+        "x": -67.76130192066422,
+        "z": 49.40469526519103
+      }
+    },
+    {
+      "id": "mushroom-basket:green",
+      "x": -65.8634253300587,
+      "z": 48.136574669941304,
+      "rotation": 0,
+      "physicalRoom": "kitchen",
+      "lightingRoom": "kitchen",
+      "useAnchor": {
+        "x": -65.8634253300587,
+        "z": 48.136574669941304
+      }
+    },
+    {
+      "id": "mushroom-basket:turquoise",
+      "x": -64.59530473480898,
+      "z": 46.23869807933578,
+      "rotation": 0,
+      "physicalRoom": "kitchen",
+      "lightingRoom": "kitchen",
+      "useAnchor": {
+        "x": -64.59530473480898,
+        "z": 46.23869807933578
+      }
+    },
+    {
+      "id": "mushroom-basket:white",
+      "x": -64.15,
+      "z": 44,
+      "rotation": 0,
+      "physicalRoom": "kitchen",
+      "lightingRoom": "kitchen",
+      "useAnchor": {
+        "x": -64.15,
+        "z": 44
+      }
+    },
+    {
+      "id": "hat-point:1",
+      "x": 27.907142857142855,
+      "z": -10.35,
+      "rotation": 0,
+      "physicalRoom": "cloakroom",
+      "lightingRoom": "cloakroom",
+      "kind": "hat-spawn-point",
+      "order": 1
+    },
+    {
+      "id": "hat-point:2",
+      "x": 28.42142857142857,
+      "z": -10.35,
+      "rotation": 0,
+      "physicalRoom": "cloakroom",
+      "lightingRoom": "cloakroom",
+      "kind": "hat-spawn-point",
+      "order": 2
+    },
+    {
+      "id": "hat-point:3",
+      "x": 28.935714285714283,
+      "z": -10.35,
+      "rotation": 0,
+      "physicalRoom": "cloakroom",
+      "lightingRoom": "cloakroom",
+      "kind": "hat-spawn-point",
+      "order": 3
+    },
+    {
+      "id": "hat-point:4",
+      "x": 29.45,
+      "z": -10.35,
+      "rotation": 0,
+      "physicalRoom": "cloakroom",
+      "lightingRoom": "cloakroom",
+      "kind": "hat-spawn-point",
+      "order": 4
+    },
+    {
+      "id": "hat-point:5",
+      "x": 29.96428571428571,
+      "z": -10.35,
+      "rotation": 0,
+      "physicalRoom": "cloakroom",
+      "lightingRoom": "cloakroom",
+      "kind": "hat-spawn-point",
+      "order": 5
+    },
+    {
+      "id": "hat-point:6",
+      "x": 30.478571428571424,
+      "z": -10.35,
+      "rotation": 0,
+      "physicalRoom": "cloakroom",
+      "lightingRoom": "cloakroom",
+      "kind": "hat-spawn-point",
+      "order": 6
+    },
+    {
+      "id": "hat-point:7",
+      "x": 30.992857142857144,
+      "z": -10.35,
+      "rotation": 0,
+      "physicalRoom": "cloakroom",
+      "lightingRoom": "cloakroom",
+      "kind": "hat-spawn-point",
+      "order": 7
+    },
+    {
+      "id": "hat-point:8",
+      "x": 27.907142857142855,
+      "z": -8.729999999999999,
+      "rotation": 0,
+      "physicalRoom": "cloakroom",
+      "lightingRoom": "cloakroom",
+      "kind": "hat-spawn-point",
+      "order": 8
+    },
+    {
+      "id": "hat-point:9",
+      "x": 28.42142857142857,
+      "z": -8.729999999999999,
+      "rotation": 0,
+      "physicalRoom": "cloakroom",
+      "lightingRoom": "cloakroom",
+      "kind": "hat-spawn-point",
+      "order": 9
+    },
+    {
+      "id": "hat-point:10",
+      "x": 28.935714285714283,
+      "z": -8.729999999999999,
+      "rotation": 0,
+      "physicalRoom": "cloakroom",
+      "lightingRoom": "cloakroom",
+      "kind": "hat-spawn-point",
+      "order": 10
+    },
+    {
+      "id": "hat-point:11",
+      "x": 29.45,
+      "z": -8.729999999999999,
+      "rotation": 0,
+      "physicalRoom": "cloakroom",
+      "lightingRoom": "cloakroom",
+      "kind": "hat-spawn-point",
+      "order": 11
+    },
+    {
+      "id": "hat-point:12",
+      "x": 29.96428571428571,
+      "z": -8.729999999999999,
+      "rotation": 0,
+      "physicalRoom": "cloakroom",
+      "lightingRoom": "cloakroom",
+      "kind": "hat-spawn-point",
+      "order": 12
+    },
+    {
+      "id": "hat-point:13",
+      "x": 30.478571428571424,
+      "z": -8.729999999999999,
+      "rotation": 0,
+      "physicalRoom": "cloakroom",
+      "lightingRoom": "cloakroom",
+      "kind": "hat-spawn-point",
+      "order": 13
+    },
+    {
+      "id": "hat-point:14",
+      "x": 30.992857142857144,
+      "z": -8.729999999999999,
+      "rotation": 0,
+      "physicalRoom": "cloakroom",
+      "lightingRoom": "cloakroom",
+      "kind": "hat-spawn-point",
+      "order": 14
+    },
+    {
+      "id": "hat-point:15",
+      "x": 29.45,
+      "z": -9.54,
+      "rotation": 0,
+      "physicalRoom": "cloakroom",
+      "lightingRoom": "cloakroom",
+      "kind": "hat-spawn-point",
+      "order": 15
     },
     {
       "id": "terrace:decks",
@@ -1381,5 +1567,262 @@
     ]
   },
   "coordinates": "house-plan-metres",
-  "rotationMode": "absolute-clockwise-degrees-south-zero"
+  "rotationMode": "absolute-clockwise-degrees-south-zero",
+  "kitchenPlacements": [
+    {
+      "id": "cauldron",
+      "x": -70,
+      "z": 42.5,
+      "rotation": 0,
+      "kind": "cauldron",
+      "footprint": {
+        "w": 10,
+        "d": 7,
+        "h": 6
+      },
+      "interactionAnchor": {
+        "x": -70,
+        "z": 42.5
+      }
+    },
+    {
+      "id": "mushroom-basket:blue",
+      "x": -75.85,
+      "z": 44,
+      "rotation": 0,
+      "kind": "basket",
+      "colour": "blue",
+      "index": 0,
+      "footprint": {
+        "w": 1.4,
+        "d": 1.4,
+        "h": 1.5
+      },
+      "interactionAnchor": {
+        "x": -75.85,
+        "z": 44
+      }
+    },
+    {
+      "id": "mushroom-basket:purple",
+      "x": -75.40469526519102,
+      "z": 46.23869807933578,
+      "rotation": 0,
+      "kind": "basket",
+      "colour": "purple",
+      "index": 1,
+      "footprint": {
+        "w": 1.4,
+        "d": 1.4,
+        "h": 1.5
+      },
+      "interactionAnchor": {
+        "x": -75.40469526519102,
+        "z": 46.23869807933578
+      }
+    },
+    {
+      "id": "mushroom-basket:pink",
+      "x": -74.1365746699413,
+      "z": 48.136574669941304,
+      "rotation": 0,
+      "kind": "basket",
+      "colour": "pink",
+      "index": 2,
+      "footprint": {
+        "w": 1.4,
+        "d": 1.4,
+        "h": 1.5
+      },
+      "interactionAnchor": {
+        "x": -74.1365746699413,
+        "z": 48.136574669941304
+      }
+    },
+    {
+      "id": "mushroom-basket:red",
+      "x": -72.23869807933578,
+      "z": 49.40469526519103,
+      "rotation": 0,
+      "kind": "basket",
+      "colour": "red",
+      "index": 3,
+      "footprint": {
+        "w": 1.4,
+        "d": 1.4,
+        "h": 1.5
+      },
+      "interactionAnchor": {
+        "x": -72.23869807933578,
+        "z": 49.40469526519103
+      }
+    },
+    {
+      "id": "mushroom-basket:orange",
+      "x": -70,
+      "z": 49.85,
+      "rotation": 0,
+      "kind": "basket",
+      "colour": "orange",
+      "index": 4,
+      "footprint": {
+        "w": 1.4,
+        "d": 1.4,
+        "h": 1.5
+      },
+      "interactionAnchor": {
+        "x": -70,
+        "z": 49.85
+      }
+    },
+    {
+      "id": "mushroom-basket:yellow",
+      "x": -67.76130192066422,
+      "z": 49.40469526519103,
+      "rotation": 0,
+      "kind": "basket",
+      "colour": "yellow",
+      "index": 5,
+      "footprint": {
+        "w": 1.4,
+        "d": 1.4,
+        "h": 1.5
+      },
+      "interactionAnchor": {
+        "x": -67.76130192066422,
+        "z": 49.40469526519103
+      }
+    },
+    {
+      "id": "mushroom-basket:green",
+      "x": -65.8634253300587,
+      "z": 48.136574669941304,
+      "rotation": 0,
+      "kind": "basket",
+      "colour": "green",
+      "index": 6,
+      "footprint": {
+        "w": 1.4,
+        "d": 1.4,
+        "h": 1.5
+      },
+      "interactionAnchor": {
+        "x": -65.8634253300587,
+        "z": 48.136574669941304
+      }
+    },
+    {
+      "id": "mushroom-basket:turquoise",
+      "x": -64.59530473480898,
+      "z": 46.23869807933578,
+      "rotation": 0,
+      "kind": "basket",
+      "colour": "turquoise",
+      "index": 7,
+      "footprint": {
+        "w": 1.4,
+        "d": 1.4,
+        "h": 1.5
+      },
+      "interactionAnchor": {
+        "x": -64.59530473480898,
+        "z": 46.23869807933578
+      }
+    },
+    {
+      "id": "mushroom-basket:white",
+      "x": -64.15,
+      "z": 44,
+      "rotation": 0,
+      "kind": "basket",
+      "colour": "white",
+      "index": 8,
+      "footprint": {
+        "w": 1.4,
+        "d": 1.4,
+        "h": 1.5
+      },
+      "interactionAnchor": {
+        "x": -64.15,
+        "z": 44
+      }
+    }
+  ],
+  "hatSpawnPoints": [
+    {
+      "id": 1,
+      "x": 27.907142857142855,
+      "z": -10.35
+    },
+    {
+      "id": 2,
+      "x": 28.42142857142857,
+      "z": -10.35
+    },
+    {
+      "id": 3,
+      "x": 28.935714285714283,
+      "z": -10.35
+    },
+    {
+      "id": 4,
+      "x": 29.45,
+      "z": -10.35
+    },
+    {
+      "id": 5,
+      "x": 29.96428571428571,
+      "z": -10.35
+    },
+    {
+      "id": 6,
+      "x": 30.478571428571424,
+      "z": -10.35
+    },
+    {
+      "id": 7,
+      "x": 30.992857142857144,
+      "z": -10.35
+    },
+    {
+      "id": 8,
+      "x": 27.907142857142855,
+      "z": -8.729999999999999
+    },
+    {
+      "id": 9,
+      "x": 28.42142857142857,
+      "z": -8.729999999999999
+    },
+    {
+      "id": 10,
+      "x": 28.935714285714283,
+      "z": -8.729999999999999
+    },
+    {
+      "id": 11,
+      "x": 29.45,
+      "z": -8.729999999999999
+    },
+    {
+      "id": 12,
+      "x": 29.96428571428571,
+      "z": -8.729999999999999
+    },
+    {
+      "id": 13,
+      "x": 30.478571428571424,
+      "z": -8.729999999999999
+    },
+    {
+      "id": 14,
+      "x": 30.992857142857144,
+      "z": -8.729999999999999
+    },
+    {
+      "id": 15,
+      "x": 29.45,
+      "z": -9.54
+    }
+  ]
 }

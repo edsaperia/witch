@@ -11,6 +11,8 @@ import { hatButton, leaveHat, wearing } from "./hat";
 import type { Witch } from "./game";
 import type { LeashEvent } from "./leash";
 import { field, inRoom, nearestFloor, nearestInRoom, roomAt as shapeRoomAt } from "../../config/house/shape.js";
+import { applyEdLayout, objectOffset, rotatePlacement, setEdLayoutActive, type ObjectPlacement } from "./housePlacement";
+import { reconcileHatPoints, spawnAtLowestEmpty } from "./hatFloorPoints";
 
 /** A rectangle of floor on the house's plan (config/house/): metres from the hub's centre along the plan's axes (x, z: east and
  *  south, turned by the plan's `turn`: fromPlan). */
@@ -27,7 +29,7 @@ export type HouseUse =
   | { kind: "instrument"; instrument: "drums" | "synth" | "mic" }
   /** Last night's clothes, in a pile by her bed (rules/clothesPile.ts): E puts on all that's still in it, on a wake-up. */
   | { kind: "pile" };
-export interface HouseObject { id: string; room: string; label: string; x: number; z: number; w: number; d: number; h: number; use: HouseUse }
+export interface HouseObject { id: string; room: string; label: string; x: number; z: number; w: number; d: number; h: number; use: HouseUse; placement?: ObjectPlacement }
 /** A room of the oak (config/house/rooms/): its middle and size, a trunk room or the trunk room its branch leaves, its bounds. */
 export type HouseRoom = Rect & { id: string; label: string; x: number; z: number; r: number; trunk?: boolean; from?: string; locked?: boolean };
 /** The floor's one shape (config/house/shape.js; assemble.js makes it): the trunk's rooms, the branch rooms, the stubs, and where the
@@ -35,20 +37,27 @@ export type HouseRoom = Rect & { id: string; label: string; x: number; z: number
 export interface HouseShape { noiseAt: [number, number]; trunk: { id: string; x: number; z: number; r: number }[]; branches: { id: string; from: string; x: number; z: number; r: number; bend: number; locked?: boolean }[]; stubs: { room: string; a: { x: number; z: number }; b: { x: number; z: number }; w0: number; w1: number }[] }
 /** The Terrace's own layout (config/house/base.json terrace), metres from its middle: the open rim's angle and half-span (degrees round
  *  from east, clockwise), the decks' desk, her seat behind it, the magic circle. */
-export interface TerraceLayout { takeoff: { angle: number; half: number }; decks: { x: number; z: number; w: number; d: number }; seat: { x: number; z: number }; circle: { x: number; z: number; r: number } }
+export interface TerraceLayout { takeoff: { angle: number; half: number }; decks: { x: number; z: number; w: number; d: number; rotation?: number }; seat: { x: number; z: number }; circle: { x: number; z: number; r: number } }
 export interface HouseConfig {
   on: boolean; wall: number; reach: number; /** the plan's turn about the Terrace's middle (degrees; fromPlan) */ turn?: number;
   /** the Ent's own (Ed, 2026-10-23): rooms on its limbs, the map table an object */ organic?: boolean;
   rooms: HouseRoom[]; corridors: (Rect & { id: string })[]; shape: HouseShape; terrace: TerraceLayout;
   objects: HouseObject[]; bed: { hold: number };
+  layout?: { id: "ed"; baseline: HouseConfig; hatPoints: { id: number; x: number; z: number }[]; decor?: { id: string; x: number; z: number; rotation: number }[] };
   /** Rooms to come, their floor and their door kept clear on the plan (the guests' bedrooms: Ed, 2026-10-21, docs/backlog/treehouse.md); not walked or drawn yet. */
   reserved?: (Rect & { id: string; label: string; door: Rect })[];
 }
 export const HOUSE_ROOMS = HOUSE as unknown as HouseConfig;
+/** Explicit main-page boot step, never module initialization or a worker-side URL inference. */
+export function installEdLayout(on: boolean): void {
+  setEdLayoutActive(on);
+  if (on && !HOUSE_ROOMS.layout) Object.assign(HOUSE_ROOMS, applyEdLayout(HOUSE_ROOMS, true));
+  else if (!on && HOUSE_ROOMS.layout) { const baseline = HOUSE_ROOMS.layout.baseline; delete HOUSE_ROOMS.layout; Object.assign(HOUSE_ROOMS, baseline); }
+}
 
 /** Her business in the house's rooms: the bed's hold (since when E has been held at it) and the hats lying on the hats' floor
  *  (their spells, by slot: "" an empty one), laid out the first time she comes in. */
-export interface HouseState { bedFrom?: number; hats?: string[]; /** she's slept: the night's over (once) */ slept?: boolean }
+export interface HouseState { bedFrom?: number; hats?: string[]; hatFloorVersion?: 2; hatOverflow?: string[]; hatReserved?: number[]; hatPointOrigin?: { x: number; z: number }; /** she's slept: the night's over (once) */ slept?: boolean }
 
 /** The hub's centre in the world, for the rooms' metres. */
 interface At { x: number; z: number }
@@ -112,11 +121,15 @@ export function keepInRoom(at: At, room: string, x: number, z: number, inset = 0
   return { ...fromPlan(at, n.x, n.z, H.turn ?? 0), inside: false };
 }
 /** Where on the plan's (x, z) an object's middle is, in the world (or any point given on the plan relative to it: dx along its w, dz along its d). */
-export const objectWorld = (o: HouseObject, at: At, dx = 0, dz = 0, H = HOUSE_ROOMS): { x: number; z: number } => fromPlan(at, o.x + dx, o.z + dz, H.turn ?? 0);
+export const objectWorld = (o: HouseObject, at: At, dx = 0, dz = 0, H = HOUSE_ROOMS): { x: number; z: number } => { const p = objectOffset(o, dx, dz); return fromPlan(at, o.x + p.x, o.z + p.z, H.turn ?? 0); };
 
 /** A spot `by` metres in front of an object, in the world: off the side of it that faces into its room (towards the room's middle,
  *  along the plan's nearer axis: a wall's piece faces out from its wall), where she stands to use it. */
 export function objectFront(o: HouseObject, at: At, by = 0.5, H = HOUSE_ROOMS): { x: number; z: number } {
+  if (o.placement) {
+    const a = o.placement.anchor, dx = a.x - o.x, dz = a.z - o.z, length = Math.hypot(dx, dz) || 1;
+    return fromPlan(at, a.x + dx / length * (by - .5), a.z + dz / length * (by - .5), H.turn ?? 0);
+  }
   const r = H.rooms.find(q => q.id === o.room), dx = r ? (r.x0 + r.x1) / 2 - o.x : -o.x, dz = r ? (r.z0 + r.z1) / 2 - o.z : -o.z;
   return Math.abs(dx) > Math.abs(dz) ? objectWorld(o, at, Math.sign(dx) * (o.w / 2 + by), 0, H) : objectWorld(o, at, 0, Math.sign(dz || 1) * (o.d / 2 + by), H);
 }
@@ -124,6 +137,7 @@ export function objectFront(o: HouseObject, at: At, by = 0.5, H = HOUSE_ROOMS): 
 /** How far (x, z) in the world is from an object's footprint (0 on it), the hub's centre at `at`, measured on the house's plan
  *  (rules/stations.ts reads it too: the one place an object's place in the world is worked out for nearness). */
 export const fromObject = (o: HouseObject, at: At, x: number, z: number, H = HOUSE_ROOMS) => {
+  if (o.placement) { const p = toPlan(at, x, z, H.turn ?? 0), d = rotatePlacement(p.x - o.x, p.z - o.z, -o.placement.rotation); return Math.hypot(Math.max(0, Math.abs(d.x) - o.placement.foot.w / 2), Math.max(0, Math.abs(d.z) - o.placement.foot.d / 2)); }
   const p = toPlan(at, x, z, H.turn ?? 0), dx = Math.max(0, Math.abs(p.x - o.x) - o.w / 2), dz = Math.max(0, Math.abs(p.z - o.z) - o.d / 2);
   return Math.hypot(dx, dz);
 };
@@ -142,6 +156,7 @@ export function objectAt(at: At, x: number, z: number, H = HOUSE_ROOMS): HouseOb
 export const HAT_FLOOR = HAT_SPELLS.filter(s => s.built && s.id !== "none").map(s => s.id as string);
 /** The hats' floor's slots in the world: its spells laid in two rows across it (on the plan). */
 export function hatSlots(at: At, H = HOUSE_ROOMS): { x: number; z: number }[] {
+  if (H.layout?.hatPoints.length) return H.layout.hatPoints.map(p => fromPlan(at, p.x, p.z, H.turn ?? 0));
   const o = H.objects.find(q => q.use.kind === "hats");
   if (!o) return [];
   const n = HAT_FLOOR.length, per = Math.ceil(n / 2), out: { x: number; z: number }[] = [];
@@ -153,18 +168,47 @@ export function hatSlots(at: At, H = HOUSE_ROOMS): { x: number; z: number }[] {
  *  them"). */
 export function floorHats(W: Witch): string[] {
   const H = (W.house ??= {});
+  if (HOUSE_ROOMS.layout?.hatPoints.length) {
+    H.hats ??= HAT_FLOOR.filter(s => ownsHat(W.spells, s) && !hatsElsewhere(W).has(s));
+    return reconcileHatPoints(H, HOUSE_ROOMS.layout.hatPoints.length, hatsElsewhere(W));
+  }
+  if (H.hatFloorVersion === 2) restoreLegacyHatFloor(H);
   return (H.hats ??= hatsOnFloor(W));
 }
+const hatsElsewhere = (W: Witch) => new Set([W.spells.hat, ...W.hat.left.map(q => q.spell)]);
 /** The hats on the hats' floor as they are, or as they'd be laid out, without laying them (for the view). */
 export function hatsOnFloor(W: Witch): string[] {
+  if (HOUSE_ROOMS.layout?.hatPoints.length) {
+    const copy = { ...W.house, hats: [...(W.house?.hats ?? HAT_FLOOR.filter(s => ownsHat(W.spells, s) && !hatsElsewhere(W).has(s)))], hatOverflow: [...(W.house?.hatOverflow ?? [])] };
+    return reconcileHatPoints(copy, HOUSE_ROOMS.layout.hatPoints.length, hatsElsewhere(W));
+  }
+  if (W.house?.hatFloorVersion === 2) { const copy = { ...W.house, hats: [...(W.house.hats ?? [])], hatOverflow: [...(W.house.hatOverflow ?? [])] }; restoreLegacyHatFloor(copy); return copy.hats!; }
   if (W.house?.hats) return W.house.hats;
   const out = new Set([W.spells.hat, ...W.hat.left.map(q => q.spell)]);
   return HAT_FLOOR.map(s => (out.has(s) || !ownsHat(W.spells, s) ? "" : s));
 }
 /** A hat she's just found (rules/finds.ts) laid in its slot, if the floor's laid out already (else it's laid with the rest). */
 export function addFloorHat(W: Witch, id: string): void {
+  if (HOUSE_ROOMS.layout?.hatPoints.length) {
+    if (W.house?.hatPointOrigin) reserveHatPoints(W, W.house.hatPointOrigin);
+    floorHats(W); spawnAtLowestEmpty(W.house!, id, HOUSE_ROOMS.layout.hatPoints.length, hatsElsewhere(W)); return;
+  }
+  if (W.house?.hatFloorVersion === 2) floorHats(W);
   const hats = W.house?.hats, i = HAT_FLOOR.indexOf(id);
   if (hats && i >= 0 && !hats[i] && W.spells.hat !== id) hats[i] = id;
+}
+/** Returning from the opt-in to the published layout restores legacy spell slots without losing saved occupants. */
+function restoreLegacyHatFloor(H: HouseState): void {
+  const present = [...new Set([...(H.hats ?? []), ...(H.hatOverflow ?? [])].filter(Boolean))], floor = HAT_FLOOR.map(id => present.includes(id) ? id : "");
+  if (H.hats) H.hats.splice(0, H.hats.length, ...floor); else H.hats = floor;
+  H.hatOverflow = present.filter(id => !HAT_FLOOR.includes(id)); delete H.hatFloorVersion; delete H.hatReserved; delete H.hatPointOrigin;
+}
+/** Actual hats already lying on numbered points reserve those positions, separately from found-floor occupants. */
+export function reserveHatPoints(W: Witch, at: At): void {
+  if (!HOUSE_ROOMS.layout?.hatPoints.length) return;
+  const H = W.house ??= {}, actual = [...W.hat.left, ...(W.hat.down ? [W.hat.down] : [])];
+  H.hatPointOrigin = { ...at };
+  H.hatReserved = hatSlots(at).flatMap((p, i) => actual.some(h => Math.hypot(h.x - p.x, h.z - p.z) <= .9) ? [i] : []);
 }
 
 /** The hat E would take, standing at (x, z) on the hats' floor (Ed, 2026-10-29: "The floor hats are not a separate station; it's
@@ -173,12 +217,16 @@ export function addFloorHat(W: Witch, id: string): void {
  *  Where it lies, in the world. */
 export function hatToTake(W: Witch, at: At, x: number, z: number, radius: number, reach = 0.9): { x: number; z: number; slot?: number } | null {
   if (!W.hat.has) return null;
+  reserveHatPoints(W, at);
+  if (HOUSE_ROOMS.layout && W.hat.down && Math.hypot(W.hat.down.x - x, W.hat.down.z - z) <= radius) return { x: W.hat.down.x, z: W.hat.down.z };
   const hats = hatsOnFloor(W), slots = hatSlots(at);
   let pick = -1, bd = reach;
-  hats.forEach((s, i) => { const d = Math.hypot(slots[i].x - x, slots[i].z - z); if (s && d <= bd) { bd = d; pick = i; } });
+  hats.forEach((s, i) => { if (!slots[i]) return; const d = Math.hypot(slots[i].x - x, slots[i].z - z); if (s && d <= bd) { bd = d; pick = i; } });
   if (pick >= 0) return { ...slots[pick], slot: pick };
   const d = W.hat.down;
-  return d && Math.hypot(d.x - x, d.z - z) <= radius ? { x: d.x, z: d.z } : null;
+  if (d && Math.hypot(d.x - x, d.z - z) <= radius) return { x: d.x, z: d.z };
+  const left = HOUSE_ROOMS.layout && d ? W.hat.left.filter(h => Math.hypot(h.x - x, h.z - z) <= radius).sort((a, b) => Math.hypot(a.x - x, a.z - z) - Math.hypot(b.x - x, b.z - z))[0] : null;
+  return left ? { x: left.x, z: left.z } : null;
 }
 
 /** E by a hat on the hats' floor (Ed, 2026-10-19: "there's no hat rack per se - just an area to put down hats, which are just game
@@ -194,11 +242,13 @@ export function useHats(W: Witch, at: At, x: number, z: number, time: number, ra
     if (!worn) leaveHat(W.hat, W.spells.hat);
     hats[h.slot] = worn && W.spells.hat !== "none" ? W.spells.hat : "";
     setLoadout(W.spells, took);
+    if (HOUSE_ROOMS.layout?.hatPoints.length) reconcileHatPoints(W.house!, HOUSE_ROOMS.layout.hatPoints.length, hatsElsewhere(W));
     return { kind: "hatPicked", id: W.id, x: h.x, z: h.z, at: time };
   }
   const own = hatButton(W.hat, x, z, radius, W.spells.hat);
   if (own === null) return null;
   if (own !== W.spells.hat) setLoadout(W.spells, own);
+  reserveHatPoints(W, at);
   return { kind: "hatPicked", id: W.id, x, z, at: time };
 }
 

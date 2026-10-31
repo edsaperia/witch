@@ -8,7 +8,7 @@ import { atZooExit } from "./zoo";
 import { mushroomButton } from "./mushrooms";
 import { needsBag, takeBroom, takeInvites } from "./kit";
 import { atMapTable, deckOf } from "./treehouse";
-import { addFloorHat, objectAt, stepBed, useHats } from "./houseRooms";
+import { addFloorHat, hatToTake, HOUSE_ROOMS, objectAt, reserveHatPoints, stepBed, useHats } from "./houseRooms";
 import { runeOffset } from "./runeOffset";
 import type { Controls, Game, Witch } from "./game";
 import { relicsOut, worldAsleep } from "./partyOver";
@@ -71,8 +71,12 @@ export function stepSigilButton(g: Game, c: Controls, W: Witch, t: Tuning, ht: n
     // In the house's rooms (rules/houseRooms.ts; Ed, 2026-10-19): E at an object uses it (main.ts opens what it opens); the hats'
     // floor's hats are picked up and put down; E held at the bed fills its ring, and full, she sleeps: the night's over.
     const at = inHouse ? objectAt(deck!, x, z) : null;
+    if (c.hat && inHouse && HOUSE_ROOMS.layout) {
+      if (wearing(W.hat)) { W.hat.down = { x, z, at: ht }; delete W.hat.hold; reserveHatPoints(W, deck!); relicEvents.push({ kind: "hatPut", id: W.id, x, z, at: ht }); }
+      else { const event = useHats(W, deck!, x, z, ht, t.leash.runeRadius); if (event) relicEvents.push(event); }
+    }
     if ((sigil || place) && deck && W.body.mode === "ground" && !W.body.seated && atMapTable(deck, x, z)) relicEvents.push({ kind: "chart", id: W.id, x: deck.x, z: deck.z, at: ht });
-    else if ((sigil || place) && at && at.use.kind === "hats") { const e = useHats(W, deck!, x, z, ht, t.leash.runeRadius); if (e) relicEvents.push(e); }
+    else if ((sigil || place) && inHouse && (at?.use.kind === "hats" || (HOUSE_ROOMS.layout && hatToTake(W, deck!, x, z, t.leash.runeRadius)))) { const e = useHats(W, deck!, x, z, ht, t.leash.runeRadius); if (e) relicEvents.push(e); }
     else if ((sigil || place) && at && at.use.kind !== "bed" && at.use.kind !== "scenery") {
       // her night's kit (rules/kit.ts): E at the invitations desk, tonight's invitations; at the lathe, a broom
       if (at.use.kind === "invites" && needsBag(W)) relicEvents.push({ kind: "needBag", id: W.id, x: deck!.x + at.x, z: deck!.z + at.z, at: ht, obj: at.id }); // (no bag to carry them: the desk says so, rules/kit.ts NEED_BAG)

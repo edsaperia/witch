@@ -1,4 +1,3 @@
-import { HOUSE_ROOMS } from "../rules/houseRooms";
 import { floorFrame, paintFloorRows, type Upright } from "../render/houseArt";
 import uprights from "virtual:house-standing";
 import { furnitureSprite, FURNITURE_IDS } from "../../art/furniture.js";
@@ -6,9 +5,11 @@ import { decorSprite } from "../../art/houseDecor.js";
 import { messSprite } from "../../art/houseMess.js";
 import { SIZE } from "../../art/furniture.js";
 import { RUG_DIM, MESS_DIM } from "../render/houseDecor";
+import { paintKitchenCauldron, paintMushroomBasket } from "../render/brewingProps";
+import { emptyBaskets } from "../rules/mushrooms";
 import { litCanvas, type Drawn } from "../render/housePieces";
 import { loadStyle } from "../render/style";
-import { artKey, attachedPoint, cameraYaw, corners, isHatZone, lightingRoom, rotate, zoneSlots, type Layout, type LayoutItem, type Placement } from "./houseLayout";
+import { EDITOR_HOUSE as HOUSE_ROOMS, artKey, attachedPoint, cameraYaw, corners, isHatZone, lightingRoom, rotate, type Layout, type LayoutItem, type Placement } from "./houseLayout";
 
 const PITCH = 24 * Math.PI / 180, SIN = Math.sin(PITCH), COS = Math.cos(PITCH), PPM = 6;
 export const makeCanvas = (w: number, h: number): HTMLCanvasElement => { const c = document.createElement("canvas"); c.width = w; c.height = h; return c; };
@@ -38,6 +39,7 @@ export class HousePreview {
   }
   /** Reuses the production model, room palette, bake and lighting; no screenshot stand-ins. */
   bake(item: LayoutItem, pose: Placement): boolean {
+    if (item.kitchen) return this.bakeKitchen(item, pose);
     if (!item.decor && !this.ids.has(item.id)) return false;
     const key = artKey(item, pose);
     if (this.art.has(key)) return true;
@@ -52,6 +54,19 @@ export class HousePreview {
     if (this.art.size > 400) this.art.delete(this.art.keys().next().value!);
     return true;
   }
+  private bakeKitchen(item: LayoutItem, pose: Placement): boolean {
+    const key = artKey(item, pose); if (this.art.has(key)) return true;
+    const pot = item.kitchen!.kind === "cauldron", canvas = makeCanvas((pot ? 16 : 6) * PPM, (pot ? 20 : 8) * PPM), front = makeCanvas(canvas.width, canvas.height);
+    const c = canvas.getContext("2d")!, f = front.getContext("2d")!, ox = canvas.width / 2, oy = (pot ? 14 : 6) * PPM;
+    const p = (x: number, z: number, h = 0) => [Math.round(ox + (x - pose.x) * PPM), Math.round(oy + ((z - pose.z) * SIN - h) * PPM)];
+    const ellipse = (ctx: CanvasRenderingContext2D, x: number, y: number, rx: number, ry: number, colour: string) => { ctx.fillStyle = colour; ctx.beginPath(); ctx.ellipse(Math.round(x), Math.round(y), Math.max(.5, rx), Math.max(.5, ry), 0, 0, Math.PI * 2); ctx.fill(); };
+    const rgba = (hex: string, alpha: number) => { const n = parseInt(hex.slice(1), 16); return `rgba(${n >> 16},${n >> 8 & 255},${n & 255},${alpha})`; };
+    const ctx = { c, f, ppm: PPM, p, ellipse, rgba, darkGlow: () => {} }, state = { ingredients: [], smoke: null, baskets: emptyBaskets() };
+    if (item.kitchen!.kind === "cauldron") paintKitchenCauldron(ctx, { ...pose, id: "cauldron" }, state, 0);
+    else { const basket = item.kitchen!; paintMushroomBasket(ctx, { ...pose, id: item.id, type: basket.colour, index: basket.index }, state); }
+    const pixels = c.getImageData(0, 0, canvas.width, canvas.height); for (let i = 3; i < pixels.data.length; i += 4) pixels.data[i] = pixels.data[i] < 100 ? 0 : 255; c.putImageData(pixels, 0, 0);
+    this.art.set(key, { canvas, ox, oy }); if (this.art.size > 400) this.art.delete(this.art.keys().next().value!); return true;
+  }
   draw(canvas: HTMLCanvasElement, items: LayoutItem[], layout: Layout, selected: string, frame: Frame, camera: boolean, zoom: number): Mapping {
     const rect = canvas.getBoundingClientRect(); canvas.width = Math.max(200, Math.round(rect.width)); canvas.height = Math.max(200, Math.round(rect.height));
     const ctx = canvas.getContext("2d")!, m = mapping(canvas, frame, camera, zoom), F = this.floorBox, k = camera ? SIN : 1;
@@ -64,8 +79,13 @@ export class HousePreview {
     }
     const byId = new Map(items.map(o => [o.id, o]));
     const floor = (id: string) => isHatZone(byId.get(id)!) || ["rug", "mess"].includes(byId.get(id)?.decor?.kind ?? "");
-    for (const p of [...layout.objects].sort((a, b) => Number(floor(b.id)) - Number(floor(a.id)) || a.z - b.z)) {
+    for (const p of [...layout.objects].sort((a, b) => Number(!!byId.get(a.id)!.hatPoint) - Number(!!byId.get(b.id)!.hatPoint) || Number(floor(b.id)) - Number(floor(a.id)) || a.z - b.z)) {
       const o = byId.get(p.id)!, active = o.id === selected, pos = m.project(p.x, p.z);
+      if (o.hatPoint) {
+        ctx.beginPath(); ctx.arc(pos.x, pos.y, active ? 10 : 8, 0, Math.PI * 2); ctx.fillStyle = active ? "#ffd079" : "#dbb2ef"; ctx.fill();
+        ctx.font = "bold 11px system-ui"; ctx.textAlign = "center"; ctx.fillStyle = "#151b22"; ctx.fillText(String(o.hatPoint), pos.x, pos.y + 4);
+        continue;
+      }
       if (camera) {
         const art = this.art.get(artKey(o, p));
         if (art) { const s = m.scale / PPM; ctx.drawImage(art.canvas, pos.x - art.ox * s, pos.y - art.oy * s, art.canvas.width * s, art.canvas.height * s); }
@@ -74,9 +94,7 @@ export class HousePreview {
       if (!camera || active) {
         const points = corners(o, p).map(c => m.project(c.x, c.z)); ctx.beginPath(); points.forEach((c, i) => i ? ctx.lineTo(c.x, c.y) : ctx.moveTo(c.x, c.y)); ctx.closePath();
         ctx.fillStyle = active ? "#ffc77855" : "#9ac6c522"; if (!camera) ctx.fill(); ctx.strokeStyle = active ? "#ffd079" : "#c3d2ce"; ctx.lineWidth = active ? 2 : 1; ctx.stroke();
-        if (isHatZone(o)) {
-          for (const slot of zoneSlots(o, p)) { const dot = m.project(slot.x, slot.z); ctx.beginPath(); ctx.arc(dot.x, dot.y, 2.5, 0, Math.PI * 2); ctx.fillStyle = "#dbb2ef"; ctx.fill(); }
-        } else {
+        if (!isHatZone(o)) {
           const a = attachedPoint(o, p), anchor = m.project(a.x, a.z); ctx.beginPath(); ctx.moveTo(pos.x, pos.y); ctx.lineTo(anchor.x, anchor.y); ctx.strokeStyle = "#89e0da"; ctx.stroke();
           ctx.beginPath(); ctx.arc(anchor.x, anchor.y, 4, 0, Math.PI * 2); ctx.fillStyle = "#89e0da"; ctx.fill();
         }

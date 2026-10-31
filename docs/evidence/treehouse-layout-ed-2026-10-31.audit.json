@@ -1,8 +1,115 @@
 {
   "version": 1,
-  "floorplan": "oak-e553ed9b",
-  "objectCount": 35,
+  "floorplan": "oak-ab9acc10",
+  "objectCount": 44,
   "clutterCount": 73,
+  "hatSpawnPoints": [
+    {
+      "id": 1,
+      "x": 27.907142857142855,
+      "z": -10.35,
+      "floorOutside": -3.98,
+      "footprintOverlaps": []
+    },
+    {
+      "id": 2,
+      "x": 28.42142857142857,
+      "z": -10.35,
+      "floorOutside": -4.534,
+      "footprintOverlaps": []
+    },
+    {
+      "id": 3,
+      "x": 28.935714285714283,
+      "z": -10.35,
+      "floorOutside": -5.071,
+      "footprintOverlaps": []
+    },
+    {
+      "id": 4,
+      "x": 29.45,
+      "z": -10.35,
+      "floorOutside": -5.521,
+      "footprintOverlaps": []
+    },
+    {
+      "id": 5,
+      "x": 29.96428571428571,
+      "z": -10.35,
+      "floorOutside": -5.632,
+      "footprintOverlaps": []
+    },
+    {
+      "id": 6,
+      "x": 30.478571428571424,
+      "z": -10.35,
+      "floorOutside": -5.499,
+      "footprintOverlaps": []
+    },
+    {
+      "id": 7,
+      "x": 30.992857142857144,
+      "z": -10.35,
+      "floorOutside": -5.57,
+      "footprintOverlaps": []
+    },
+    {
+      "id": 8,
+      "x": 27.907142857142855,
+      "z": -8.729999999999999,
+      "floorOutside": -3.274,
+      "footprintOverlaps": []
+    },
+    {
+      "id": 9,
+      "x": 28.42142857142857,
+      "z": -8.729999999999999,
+      "floorOutside": -3.472,
+      "footprintOverlaps": []
+    },
+    {
+      "id": 10,
+      "x": 28.935714285714283,
+      "z": -8.729999999999999,
+      "floorOutside": -3.586,
+      "footprintOverlaps": []
+    },
+    {
+      "id": 11,
+      "x": 29.45,
+      "z": -8.729999999999999,
+      "floorOutside": -3.628,
+      "footprintOverlaps": []
+    },
+    {
+      "id": 12,
+      "x": 29.96428571428571,
+      "z": -8.729999999999999,
+      "floorOutside": -3.661,
+      "footprintOverlaps": []
+    },
+    {
+      "id": 13,
+      "x": 30.478571428571424,
+      "z": -8.729999999999999,
+      "floorOutside": -3.747,
+      "footprintOverlaps": []
+    },
+    {
+      "id": 14,
+      "x": 30.992857142857144,
+      "z": -8.729999999999999,
+      "floorOutside": -3.842,
+      "footprintOverlaps": []
+    },
+    {
+      "id": 15,
+      "x": 29.45,
+      "z": -9.54,
+      "floorOutside": -4.582,
+      "footprintOverlaps": []
+    }
+  ],
   "migration": {
     "from": 1,
     "cameraPreserved": true,
@@ -278,11 +385,11 @@
       "interactive": false,
       "anchor": {
         "x": -70,
-        "z": 46.5
+        "z": 42.5
       },
       "centerOutside": -5.781,
       "footprintOutside": -0.893,
-      "anchorOutside": -5.104,
+      "anchorOutside": -5.781,
       "approachOverlaps": [],
       "floorReachable": true
     },
@@ -383,6 +490,11 @@
           "slot": 13,
           "x": 30.992857142857144,
           "z": -8.729999999999999
+        },
+        {
+          "slot": 14,
+          "x": 29.45,
+          "z": -9.54
         }
       ],
       "anchor": null,
@@ -699,6 +811,168 @@
       "floorReachable": true
     },
     {
+      "id": "mushroom-basket:blue",
+      "function": "scenery",
+      "sourceRoom": "kitchen",
+      "physicalRoom": "kitchen",
+      "crossesRooms": false,
+      "locked": false,
+      "interactive": true,
+      "anchor": {
+        "x": -75.85,
+        "z": 44
+      },
+      "centerOutside": -1.394,
+      "footprintOutside": -0.383,
+      "anchorOutside": -1.394,
+      "approachOverlaps": [],
+      "floorReachable": true
+    },
+    {
+      "id": "mushroom-basket:purple",
+      "function": "scenery",
+      "sourceRoom": "kitchen",
+      "physicalRoom": "kitchen",
+      "crossesRooms": false,
+      "locked": false,
+      "interactive": true,
+      "anchor": {
+        "x": -75.40469526519102,
+        "z": 46.23869807933578
+      },
+      "centerOutside": -2.039,
+      "footprintOutside": -1.419,
+      "anchorOutside": -2.039,
+      "approachOverlaps": [],
+      "floorReachable": true
+    },
+    {
+      "id": "mushroom-basket:pink",
+      "function": "scenery",
+      "sourceRoom": "kitchen",
+      "physicalRoom": "kitchen",
+      "crossesRooms": false,
+      "locked": false,
+      "interactive": true,
+      "anchor": {
+        "x": -74.1365746699413,
+        "z": 48.136574669941304
+      },
+      "centerOutside": -2.104,
+      "footprintOutside": -1.406,
+      "anchorOutside": -2.104,
+      "approachOverlaps": [],
+      "floorReachable": true
+    },
+    {
+      "id": "mushroom-basket:red",
+      "function": "scenery",
+      "sourceRoom": "kitchen",
+      "physicalRoom": "kitchen",
+      "crossesRooms": false,
+      "locked": false,
+      "interactive": true,
+      "anchor": {
+        "x": -72.23869807933578,
+        "z": 49.40469526519103
+      },
+      "centerOutside": -2.23,
+      "footprintOutside": -1.238,
+      "anchorOutside": -2.23,
+      "approachOverlaps": [],
+      "floorReachable": true
+    },
+    {
+      "id": "mushroom-basket:orange",
+      "function": "scenery",
+      "sourceRoom": "kitchen",
+      "physicalRoom": "kitchen",
+      "crossesRooms": false,
+      "locked": false,
+      "interactive": true,
+      "anchor": {
+        "x": -70,
+        "z": 49.85
+      },
+      "centerOutside": -1.623,
+      "footprintOutside": -0.487,
+      "anchorOutside": -1.623,
+      "approachOverlaps": [],
+      "floorReachable": true
+    },
+    {
+      "id": "mushroom-basket:yellow",
+      "function": "scenery",
+      "sourceRoom": "kitchen",
+      "physicalRoom": "kitchen",
+      "crossesRooms": false,
+      "locked": false,
+      "interactive": true,
+      "anchor": {
+        "x": -67.76130192066422,
+        "z": 49.40469526519103
+      },
+      "centerOutside": -0.356,
+      "footprintOutside": 0.574,
+      "anchorOutside": -0.356,
+      "approachOverlaps": [],
+      "floorReachable": true
+    },
+    {
+      "id": "mushroom-basket:green",
+      "function": "scenery",
+      "sourceRoom": "kitchen",
+      "physicalRoom": "kitchen",
+      "crossesRooms": false,
+      "locked": false,
+      "interactive": true,
+      "anchor": {
+        "x": -65.8634253300587,
+        "z": 48.136574669941304
+      },
+      "centerOutside": -1.129,
+      "footprintOutside": -0.181,
+      "anchorOutside": -1.129,
+      "approachOverlaps": [],
+      "floorReachable": true
+    },
+    {
+      "id": "mushroom-basket:turquoise",
+      "function": "scenery",
+      "sourceRoom": "kitchen",
+      "physicalRoom": "kitchen",
+      "crossesRooms": false,
+      "locked": false,
+      "interactive": true,
+      "anchor": {
+        "x": -64.59530473480898,
+        "z": 46.23869807933578
+      },
+      "centerOutside": -2.601,
+      "footprintOutside": -1.61,
+      "anchorOutside": -2.601,
+      "approachOverlaps": [],
+      "floorReachable": true
+    },
+    {
+      "id": "mushroom-basket:white",
+      "function": "scenery",
+      "sourceRoom": "kitchen",
+      "physicalRoom": "kitchen",
+      "crossesRooms": false,
+      "locked": false,
+      "interactive": true,
+      "anchor": {
+        "x": -64.15,
+        "z": 44
+      },
+      "centerOutside": -2.253,
+      "footprintOutside": -1.601,
+      "anchorOutside": -2.253,
+      "approachOverlaps": [],
+      "floorReachable": true
+    },
+    {
       "id": "terrace:decks",
       "function": "say",
       "sourceRoom": "terrace",
@@ -717,7 +991,16 @@
       "floorReachable": true
     }
   ],
-  "overlaps": [],
+  "overlaps": [
+    [
+      "cauldron",
+      "mushroom-basket:purple"
+    ],
+    [
+      "cauldron",
+      "mushroom-basket:turquoise"
+    ]
+  ],
   "corridors": [
     {
       "corridor": "bedroom-turret",
@@ -769,6 +1052,23 @@
     "Bed wake pose/UI and DJ desk/seat orientation need runtime integration before enabling rotated adoption.",
     "Room labels are display text; stable object use kinds keep station functions, physical membership controls destination lighting."
   ],
+  "overlapComparison": {
+    "baseline": [
+      [
+        "cauldron",
+        "mushroom-basket:purple"
+      ],
+      [
+        "cauldron",
+        "mushroom-basket:turquoise"
+      ],
+      [
+        "bedroom2Bed",
+        "bedroom2Wardrobe"
+      ]
+    ],
+    "added": []
+  },
   "corridorComparison": {
     "baseline": [
       {

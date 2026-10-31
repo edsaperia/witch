@@ -16,7 +16,7 @@ describe("treehouse authoring layouts", () => {
     const zone = items.find(o => o.id === "hats")!, base = defaults().objects.find(p => p.id === zone.id)!;
     expect(isHatZone(zone)).toBe(true); expect(itemKind(zone)).toBe("Hat spawn zone");
     const slots = zoneSlots(zone, base), runtime = hatSlots({ x: 0, z: 0 }).map(p => toPlan({ x: 0, z: 0 }, p.x, p.z, HOUSE_ROOMS.turn ?? 0));
-    slots.forEach((p, i) => { expect(p.x).toBeCloseTo(runtime[i].x, 10); expect(p.z).toBeCloseTo(runtime[i].z, 10); expect(p.slot).toBe(i); });
+    slots.slice(0, runtime.length).forEach((p, i) => { expect(p.x).toBeCloseTo(runtime[i].x, 10); expect(p.z).toBeCloseTo(runtime[i].z, 10); expect(p.slot).toBe(i); });
     const moved = { ...base, x: base.x + 10, z: base.z - 4, rotation: base.rotation + 90 };
     zoneSlots(zone, moved).forEach((p, i) => {
       expect(p.x).toBeCloseTo(moved.x - (slots[i].z - base.z), 10);
@@ -26,13 +26,19 @@ describe("treehouse authoring layouts", () => {
     expect([edited.x, edited.z]).toEqual([supplied.objects.find(p => p.id === zone.id)!.x, supplied.objects.find(p => p.id === zone.id)!.z]);
     const exported = exportLayout(converted, items) as { objects: { id: string; useAnchor?: unknown; kind?: string; spawnSlots?: unknown[] }[] };
     const out = exported.objects.find(p => p.id === zone.id)!;
-    expect(out.kind).toBe("hat-spawn-zone"); expect(out).not.toHaveProperty("useAnchor"); expect(out.spawnSlots).toHaveLength(runtime.length);
-    expect(parseLayout(exported, items, key)).toEqual(converted);
+    expect(out.kind).toBe("hat-spawn-zone"); expect(out).not.toHaveProperty("useAnchor");
+    const points = items.filter(o => o.hatPoint);
+    expect(points).toHaveLength(runtime.length + 1); // An additional empty point accommodates the first morning's own plain hat.
+    expect(points.map(o => o.hatPoint)).toEqual(Array.from({ length: runtime.length + 1 }, (_, i) => i + 1));
+    const p = converted.objects.find(p => p.id === points[0].id)!; p.x += 2;
+    const pointExport = exportLayout(converted, items) as { hatSpawnPoints: { id: number; x: number; z: number }[] };
+    expect(pointExport.hatSpawnPoints[0]).toEqual({ id: 1, x: p.x, z: p.z });
+    expect(parseLayout(exportLayout(converted, items), items, key)).toEqual(converted);
   });
   it("exports and reapplies every current object/station without changing the published house", () => {
     const original = JSON.stringify(HOUSE_ROOMS), layout = defaults();
     expect(new Set(items.map(o => o.id)).size).toBe(items.length);
-    expect(items.filter(o => !o.synthetic && !o.decor).map(o => o.id)).toEqual(HOUSE_ROOMS.objects.map(o => o.id));
+    expect(items.filter(o => !o.synthetic && !o.decor && !o.hatPoint).map(o => o.id)).toEqual(HOUSE_ROOMS.objects.map(o => o.id));
     for (const [i, p] of layout.objects.entries()) { p.x += i / 3; p.z -= i / 7; p.rotation = normalAngle(i * 3); }
     expect(parseLayout(JSON.parse(JSON.stringify(exportLayout(layout, items))), items, key)).toEqual(layout);
     expect(JSON.stringify(HOUSE_ROOMS)).toBe(original);

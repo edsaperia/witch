@@ -51,12 +51,12 @@ if (!url || !expected || !/^[a-f0-9]{40}$/.test(expected)) throw Error('Provide 
     await page.click('#restore'); await page.fill('#settings', clutterText); await page.click('#apply');
     assert.equal(Number(await page.inputValue('#x')), +(clutterBefore + 2).toFixed(4));
     assert.equal(Number(await page.inputValue('#rotation')), 75);
-    await page.selectOption('#object', 'hats');
-    assert.match(await page.textContent('#kind'), /Hat spawn zone/);
+    await page.selectOption('#object', 'hat-point:1');
+    assert.match(await page.textContent('#kind'), /Hat spawn point/);
     assert.match(await page.textContent('#anchor'), /not a station/);
     assert.doesNotMatch(await page.textContent('#anchor'), /Use position:/);
-    await page.click('#copy'); const zone = JSON.parse(await page.inputValue('#settings')).objects.find(o => o.id === 'hats');
-    assert.equal(zone.kind, 'hat-spawn-zone'); assert.ok(zone.spawnSlots.length > 0); assert.ok(!('useAnchor' in zone));
+    await page.click('#copy'); const pointsExport = JSON.parse(await page.inputValue('#settings')), point = pointsExport.objects.find(o => o.id === 'hat-point:1');
+    assert.equal(point.kind, 'hat-spawn-point'); assert.ok(pointsExport.hatSpawnPoints.length > 4); assert.ok(!('useAnchor' in point));
     const storage = await page.evaluate(() => Object.keys(localStorage)); assert.equal(storage.length, 0, 'Editor wrote browser save data');
     assert.deepEqual(errors, []);
     fs.writeFileSync(path.join(output, 'results.json'), JSON.stringify({ expected, version, pixels, moved, assertions: 'PASS', errors }, null, 2));

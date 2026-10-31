@@ -7,6 +7,8 @@ import { enqueueWorkerTrace, postTracedJob, cancelWorkerTrace } from "../app/wor
 import { atlasBytes, atlasFromPixels, placeholderAtlas, type Atlas } from "./atlas";
 import { channelAt } from "./palette";
 import type { GpuKind } from "./gpuLedger";
+import { HOUSE_ROOMS } from "../rules/houseRooms";
+import { houseArtLayout } from "../rules/housePlacement";
 import { witchSprites, type SoundsystemGenArt, type TreehouseArt, type WitchArt } from "./homeArt";
 import { creatureFrame, walkGait, runJob, stumpId, type StumpArt, type StumpSpec, type ArtJob, type ArtResult, type BeachArt, type BeachEdgeArt, type LakeShoreArt, type DecorPiece, type PartyWitchArt, type PartyArt, type PathPieceArt, type RelicArt, type RelicLayouts, type SceneArt, type SpeakerArt, type TilePixels, type TypeLayout } from "./artBuild";
 import type { Style } from "./style";
@@ -198,7 +200,10 @@ export class AssetLibrary {
       slot.busy = false; slot.job = undefined;
     };
   }
-  private key = (j: ArtJob) => j.kind + ":" + j.id + (j.kind === "type" && j.seed !== this.typeSeed ? `@${j.seed}` : ""); // (tonight's sets apart from the island's)
+  private key = (j: ArtJob) => {
+    const layout = j.kind === "treehouse" || j.kind === "housePiece" ? j.layout ?? houseArtLayout(HOUSE_ROOMS) : undefined;
+    return j.kind + ":" + j.id + (j.kind === "type" && j.seed !== this.typeSeed ? `@${j.seed}` : "") + (layout ? `@layout:${layout.identity}` : "");
+  }; // (tonight's sets apart from the island's; opt-in layouts never share a job)
   /** Where a set is kept between visits (render/artCache.ts). */
   private cacheKey = (j: ArtJob) => artCacheKey(j, this.styleHash);
   /** Ask for a set: from the browser's store if it was drawn before, else drawn by a worker. An
@@ -210,6 +215,7 @@ export class AssetLibrary {
   /** Where an urgent job goes in the queue: after the start's own (`home`) still waiting, ahead of the rest. */
   private get front(): number { const i = this.queue.findIndex(q => !(q as ArtJob & { home?: boolean }).home); return i < 0 ? this.queue.length : i; }
   private ask(job: ArtJob, urgent = false, home = false): void {
+    if ((job.kind === "treehouse" || job.kind === "housePiece") && HOUSE_ROOMS.layout && !job.layout) job = { ...job, layout: houseArtLayout(HOUSE_ROOMS) };
     const k = this.key(job);
     if (this.inFlight.has(k)) {
       // (an urgent job asked for again while waiting is moved to the front once: asked for every creature every frame, searching
