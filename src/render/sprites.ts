@@ -12,6 +12,7 @@ import { HEIGHT_UNIFORMS, HEIGHT_VERT_GLSL } from "./height";
 import { CAST_SHADOW_GLSL, CAST_SHADOW_UNIFORMS } from "./castShadows";
 import { Dirty } from "./dirty";
 import { FX_UNIFORMS, FX_FIELD_GLSL } from "./fx/uniforms";
+import { THERMAL_UNIFORMS, THERMAL_GLSL } from './thermalVision';
 
 /** One art pixel's size in the world (metres): the sprites' scale at the tuning's pixel size. */
 export function metresPerArtPixel(t: { artPixelsPerMetre: number; pixelSize: number }): number {
@@ -19,8 +20,9 @@ export function metresPerArtPixel(t: { artPixelsPerMetre: number; pixelSize: num
 }
 
 /** Shared by every sprite batch: the camera's right and (tilted) up, and the canopy fade. */
-export interface SpriteInstance { /** Bushes and low foliage, hidden by Floor Becomes Sky. */ small?: boolean }
+export interface SpriteInstance { /** Bushes and low foliage, hidden by Floor Becomes Sky. */ small?: boolean; /** Semantic creature temperature; absent/zero is scenery. */ heat?: number }
 export const SPRITE_UNIFORMS = {
+  ...THERMAL_UNIFORMS,
   uPotionSky: { value: 0 },
   /** Review experiment, Ed 2026-10-30: creatures read inside her light, camouflage outside stays unchanged. */
   uPoolReadability: { value: new URLSearchParams(globalThis.location?.search ?? "").get("poolreadability") === "1" ? 1 : 0 },
@@ -144,9 +146,10 @@ attribute vec3 iSize; // its width and height (metres), and how far its foot rea
 attribute vec4 iUv;
 attribute vec4 iFlags; // flip, top (or a trunk's cut, negative), fresh + 2 for small foliage, sway
 attribute float iGlow; // glowing white, 0 to 1 (a party animal evolving); -1: a wild creature blinking (no eyeshine); -0.5: switched off (its glowing pixels unlit)
-attribute vec2 iJitter; // a tree's own leaf-colour jitter seeds, -1 to 1 (hue, value); 0 for everything else (render/view/scenery.ts; Ed, 2026-10-16)
+attribute vec3 iJitter; // leaf hue/value jitter; z is semantic creature heat (zero for scenery)
 varying float vGlow;
 varying vec2 vJitter;
+varying float vThermalHeat;
 varying float vSwayM; // metres its leafiest pixels move this frame (masked sprites)
 varying vec4 vFrame;  // its frame in the atlas (u0, v0, u1, v1), to keep the sway inside it
 uniform vec4 uWind;
@@ -219,7 +222,8 @@ void main() {
   vFlags = iFlags.xyz;
   vFlags.z = mod(iFlags.z, 2.0); vSmall = step(1.5, iFlags.z);
   vGlow = iGlow;
-  vJitter = iJitter;
+  vJitter = iJitter.xy;
+  vThermalHeat = iJitter.z;
   vLocal = uv;
   vSizeY = iSize.y;
   vWorld = w;
@@ -320,7 +324,7 @@ void main() {
 }
 `;
 
-const FRAG = /* glsl */ `
+const SPRITE_FRAG = /* glsl */ `
 ${atlasGlsl()}
 uniform vec3 uRight, uUp, uFacing;
 uniform float uTopFade, uUnlit;
@@ -342,6 +346,8 @@ varying vec3 vWorld;
 varying vec3 vFlags;
 varying float vSmall;
 uniform float uPotionSky;
+${THERMAL_GLSL}
+varying float vThermalHeat;
 varying float vGlow;
 varying float vSwayM; // metres its leafiest pixels move this frame (masked sprites)
 varying vec4 vFrame;  // its frame in the atlas (u0, v0, u1, v1), to keep the sway inside it
@@ -720,6 +726,22 @@ void main() {
 
 export interface SpriteInstance { x: number; y: number; z: number; frame: Frame; flip: boolean; top?: boolean; fresh?: boolean; /** A trunk cut from its crown this share of the frame's height from its top: its top fades out where crowns are hidden. */ cut?: number; /** Drawn this much bigger (1 if left out). */ scale?: number; /** Squashed or stretched: its width and height times these, about its feet, rounded to whole art pixels (an attack's feel: render/attackFeel.ts). */ sx?: number; sy?: number; /** How much it sways in the wind (0 still, 1 a crown): leafy things only. */ sway?: number; /** Glowing white, 0 to 1 (an evolving party animal); -1, a wild creature blinking (its eyeshine off); -0.5, switched off (its glowing pixels lit as paint: a soundsystem standing when the party's over); -2 - m, a sleeping legend gone m of the way to moss. */ glow?: number; /** Part of another sprite drawn over it (the treehouse's DJ table), not standing on the ground itself (the smoke's floating checks skip it). */ overlay?: boolean; /** A tree's own leaf-colour jitter seeds, -1 to 1 (hue, value), times the tuning's leafJitter in the shader; left out, none (Ed, 2026-10-16). */ jitter?: [number, number]; /** How far its foot reaches either side, in art pixels, over its frame's own (Frame.foot): a crown takes its trunk's, so the two stand on one height (a crown's own lowest row is its underside, not a foot; left out, a top half has none). */ foot?: number }
 
+// Apply after every existing return path too (eyes, glow, hiding pack members and the witch).
+// At zero strength the original sprite program's colour and alpha pass through unchanged.
+const FRAG = SPRITE_FRAG.replace('void main() {', 'void spriteMain() {') + /* glsl */ `
+void main() {
+  spriteMain();
+  if (uThermalStrength > 0.0) {
+    vec3 thermal = thermalCold(gl_FragColor.rgb);
+    if (vThermalHeat > 0.0) {
+      vec3 normal = normalAt(vUv).rgb;
+      thermal = thermalCreature(albedoAt(vUv).rgb, vec3((normal.rg * 255.0 - 128.0) / 127.0, normal.b), vThermalHeat);
+    }
+    gl_FragColor.rgb = mix(gl_FragColor.rgb, thermal, uThermalStrength);
+  }
+}
+`;
+
 /** Where a floor draws: right after the ground (-1) and before anything standing (creatures 0, scenery 0.5, shadows 1), and
  *  writing no depth, so it can never hide an actor, a prop or a shadow on it or at its edge (Ed's playtest, 2026-10-06: "the sports
  *  field isn't sitting flat on the ground properly"; a pitch's decal is an upright sprite at its near edge, nearer the camera than
@@ -835,7 +857,7 @@ export class SpriteBatch {
       if (old) (a.array as Float32Array).set(old.array as Float32Array);
       return a;
     };
-    this.pos = make(3, this.pos); this.size = make(3, this.size); this.uvs = make(4, this.uvs); this.flags = make(4, this.flags); this.glow = make(1, this.glow); this.jitter = make(2, this.jitter);
+    this.pos = make(3, this.pos); this.size = make(3, this.size); this.uvs = make(4, this.uvs); this.flags = make(4, this.flags); this.glow = make(1, this.glow); this.jitter = make(3, this.jitter);
     this.geo.setAttribute("iPos", this.pos); this.geo.setAttribute("iSize", this.size);
     this.geo.setAttribute("iUv", this.uvs); this.geo.setAttribute("iFlags", this.flags); this.geo.setAttribute("iGlow", this.glow); this.geo.setAttribute("iJitter", this.jitter);
     this.capacity = cap;
@@ -873,9 +895,9 @@ export class SpriteBatch {
       if (F[j] !== f0 || F[j + 1] !== f1 || F[j + 2] !== f2 || F[j + 3] !== f3) { F[j] = f0; F[j + 1] = f1; F[j + 2] = f2; F[j + 3] = f3; dF.touch(i); }
       const gl = it.glow ?? 0;
       if (G[i] !== gl) { G[i] = gl; dG.touch(i); }
-      const jt = it.jitter, jx = jt ? jt[0] : 0, jy = jt ? jt[1] : 0;
-      j = i * 2;
-      if (J[j] !== jx || J[j + 1] !== jy) { J[j] = jx; J[j + 1] = jy; dJ.touch(i); }
+      const jt = it.jitter, jx = jt ? jt[0] : 0, jy = jt ? jt[1] : 0, heat = it.heat ?? 0;
+      j = i * 3;
+      if (J[j] !== jx || J[j + 1] !== jy || J[j + 2] !== heat) { J[j] = jx; J[j + 1] = jy; J[j + 2] = heat; dJ.touch(i); }
     }
     // Only the instances in use that changed go to the GPU (the buffers keep their largest size, often twice what's
     // drawn, and most instances are as they were last frame). Nothing changed, nothing sent.

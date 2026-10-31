@@ -1,0 +1,1000 @@
+{
+  "revision": "d9840aa618b655aa3a3449bc39f38fc2290c8110",
+  "floorplan": "oak-3d1ef3f8",
+  "items": [
+    {
+      "id": "teaTable",
+      "label": "Tea table",
+      "use": {
+        "kind": "say",
+        "line": "The tea's not brewed yet."
+      },
+      "room": "dining",
+      "x": -22.99,
+      "z": 28.54,
+      "w": 3.92,
+      "d": 3.92,
+      "h": 1.96,
+      "anchor": {
+        "x": -20.529999999999998,
+        "z": 28.54
+      },
+      "facing": {
+        "yaw": -1.0999603432084049,
+        "foot": {
+          "w": 3.92,
+          "d": 3.92,
+          "h": 1.96
+        },
+        "curve": 7.559258879530396
+      }
+    },
+    {
+      "id": "cardTable",
+      "label": "Card table",
+      "use": {
+        "kind": "say",
+        "line": "The cards come later."
+      },
+      "room": "dining",
+      "x": -11,
+      "z": 30.67,
+      "w": 4.76,
+      "d": 4.76,
+      "h": 2.1,
+      "anchor": {
+        "x": -13.879999999999999,
+        "z": 30.67
+      },
+      "facing": {
+        "yaw": 0.9824641253686907,
+        "foot": {
+          "w": 4.76,
+          "d": 4.76,
+          "h": 2.1
+        },
+        "curve": 10.794802433806751
+      }
+    },
+    {
+      "id": "bags",
+      "label": "Bags",
+      "use": {
+        "kind": "creator",
+        "axes": [
+          "bagSize",
+          "backpackSize"
+        ],
+        "wear": [
+          "satchel",
+          "bumbag"
+        ],
+        "parts": [
+          "satchel",
+          "backpack"
+        ]
+      },
+      "room": "parlour",
+      "x": -19.66,
+      "z": -33.52,
+      "w": 5.4,
+      "d": 1.8,
+      "h": 4.8,
+      "anchor": {
+        "x": -19.66,
+        "z": -32.120000000000005
+      },
+      "facing": {
+        "yaw": -0.367033048235593,
+        "foot": {
+          "w": 5.4,
+          "d": 1.8,
+          "h": 4.8
+        },
+        "curve": 11.09931370240175
+      }
+    },
+    {
+      "id": "invitations",
+      "label": "Invitations desk",
+      "use": {
+        "kind": "invites"
+      },
+      "room": "parlour",
+      "x": -16,
+      "z": -28.4,
+      "w": 5,
+      "d": 2.8,
+      "h": 2,
+      "anchor": {
+        "x": -16,
+        "z": -26.5
+      },
+      "facing": {
+        "yaw": 0,
+        "foot": {
+          "w": 5,
+          "d": 2.8,
+          "h": 2
+        },
+        "curve": 5.799999999999999
+      }
+    },
+    {
+      "id": "telephone",
+      "label": "Telephone",
+      "use": {
+        "kind": "say",
+        "line": "The line's quiet. Friends can call later."
+      },
+      "room": "boudoir",
+      "x": -3.81,
+      "z": -50.76,
+      "w": 1.8,
+      "d": 1.8,
+      "h": 3.96,
+      "anchor": {
+        "x": -3.81,
+        "z": -49.36
+      },
+      "facing": {
+        "yaw": -0.2616149098107578,
+        "foot": {
+          "w": 1.8,
+          "d": 1.8,
+          "h": 3.96
+        },
+        "curve": 7.898121176430141
+      }
+    },
+    {
+      "id": "wardrobe",
+      "label": "Wardrobe",
+      "use": {
+        "kind": "creator",
+        "axes": [
+          "top"
+        ],
+        "wear": [],
+        "parts": [
+          "jacket",
+          "top",
+          "jeans"
+        ]
+      },
+      "room": "bedroom",
+      "x": -20.31,
+      "z": -64.88,
+      "w": 2.2,
+      "d": 4.8,
+      "h": 6.2,
+      "anchor": {
+        "x": -18.709999999999997,
+        "z": -64.88
+      },
+      "facing": {
+        "yaw": -0.8378530527455702,
+        "foot": {
+          "w": 4.8,
+          "d": 2.2,
+          "h": 6.2
+        },
+        "curve": 6.899180976655234
+      }
+    },
+    {
+      "id": "dressingTable",
+      "label": "Dressing table",
+      "use": {
+        "kind": "creator",
+        "axes": [
+          "hair"
+        ],
+        "wear": [
+          "earrings"
+        ],
+        "parts": [
+          "hair",
+          "skin"
+        ]
+      },
+      "room": "bedroom",
+      "x": -16.71,
+      "z": -67.76,
+      "w": 3.2,
+      "d": 1.6,
+      "h": 4.6,
+      "anchor": {
+        "x": -16.71,
+        "z": -66.46000000000001
+      },
+      "facing": {
+        "yaw": -0.10464592071493818,
+        "foot": {
+          "w": 3.2,
+          "d": 1.6,
+          "h": 4.6
+        },
+        "curve": 7.5971832401370545
+      }
+    },
+    {
+      "id": "shoeRack",
+      "label": "Shoe rack",
+      "use": {
+        "kind": "creator",
+        "axes": [],
+        "wear": [
+          "chunky"
+        ],
+        "parts": [
+          "sneakers"
+        ]
+      },
+      "room": "bedroom",
+      "x": -20.81,
+      "z": -56.19,
+      "w": 4.5,
+      "d": 1.65,
+      "h": 2.4,
+      "anchor": {
+        "x": -20.81,
+        "z": -57.515
+      },
+      "facing": {
+        "yaw": -0.785398163397448,
+        "foot": {
+          "w": 4.5,
+          "d": 1.65,
+          "h": 2.4
+        },
+        "curve": 7.627367235014588
+      }
+    },
+    {
+      "id": "clothesPile",
+      "label": "Last night's clothes",
+      "use": {
+        "kind": "pile"
+      },
+      "room": "bedroom",
+      "x": -16,
+      "z": -61,
+      "w": 1.6,
+      "d": 2,
+      "h": 0.6,
+      "anchor": {
+        "x": -16,
+        "z": -59.5
+      },
+      "facing": {
+        "yaw": 0,
+        "foot": {
+          "w": 1.6,
+          "d": 2,
+          "h": 0.6
+        },
+        "curve": 0
+      }
+    },
+    {
+      "id": "telescope",
+      "label": "Telescope",
+      "use": {
+        "kind": "telescope"
+      },
+      "room": "turret",
+      "x": -3.6,
+      "z": -78.78,
+      "w": 2.56,
+      "d": 2.56,
+      "h": 5.12,
+      "anchor": {
+        "x": -3.6,
+        "z": -77
+      },
+      "facing": {
+        "yaw": 0.10542775112289071,
+        "foot": {
+          "w": 2.56,
+          "d": 2.56,
+          "h": 5.12
+        },
+        "curve": 5.081105102466914
+      }
+    },
+    {
+      "id": "bed",
+      "label": "Bed",
+      "use": {
+        "kind": "bed"
+      },
+      "room": "turret",
+      "x": -6.33,
+      "z": -66.18,
+      "w": 4,
+      "d": 5.2,
+      "h": 1.6,
+      "anchor": {
+        "x": -6.33,
+        "z": -69.28
+      },
+      "facing": {
+        "yaw": -0.2582722166115482,
+        "foot": {
+          "w": 4,
+          "d": 5.2,
+          "h": 1.6
+        },
+        "curve": 11.722570909562714
+      }
+    },
+    {
+      "id": "pegboard",
+      "label": "Pegboard",
+      "use": {
+        "kind": "scenery"
+      },
+      "room": "workshop",
+      "x": -53.76,
+      "z": 6.82,
+      "w": 6.2,
+      "d": 1.8,
+      "h": 6.2,
+      "anchor": {
+        "x": -53.76,
+        "z": 8.22
+      },
+      "facing": {
+        "yaw": -0.6278773801728074,
+        "foot": {
+          "w": 6.2,
+          "d": 1.8,
+          "h": 6.2
+        },
+        "curve": 7.300781202322104
+      }
+    },
+    {
+      "id": "broomBay",
+      "label": "Broom bay",
+      "use": {
+        "kind": "scenery"
+      },
+      "room": "workshop",
+      "x": -52.29,
+      "z": 15.43,
+      "w": 6.4,
+      "d": 3.2,
+      "h": 3,
+      "anchor": {
+        "x": -52.29,
+        "z": 13.33
+      },
+      "facing": {
+        "yaw": -0.5886750984024768,
+        "foot": {
+          "w": 6.4,
+          "d": 3.2,
+          "h": 3
+        },
+        "curve": 5.724196891517183
+      }
+    },
+    {
+      "id": "lathe",
+      "label": "Lathe",
+      "use": {
+        "kind": "creator",
+        "axes": [],
+        "wear": [],
+        "parts": []
+      },
+      "room": "workshop",
+      "x": -46.98,
+      "z": 8.27,
+      "w": 5.76,
+      "d": 2.16,
+      "h": 2.64,
+      "anchor": {
+        "x": -46.98,
+        "z": 9.85
+      },
+      "facing": {
+        "yaw": 0.6805983435071946,
+        "foot": {
+          "w": 5.76,
+          "d": 2.16,
+          "h": 2.64
+        },
+        "curve": 5.879302032587658
+      }
+    },
+    {
+      "id": "cauldron",
+      "label": "Cauldron",
+      "use": {
+        "kind": "say",
+        "line": "The cauldron is cold. Brewing comes later."
+      },
+      "room": "kitchen",
+      "x": -71.25,
+      "z": 44,
+      "w": 3.92,
+      "d": 3.92,
+      "h": 2.52,
+      "anchor": {
+        "x": -68.79,
+        "z": 44
+      },
+      "facing": {
+        "yaw": -1.5707963267948966,
+        "foot": {
+          "w": 3.92,
+          "d": 3.92,
+          "h": 2.52
+        },
+        "curve": 3.21
+      }
+    },
+    {
+      "id": "mirror",
+      "label": "Mirror",
+      "use": {
+        "kind": "creator",
+        "axes": [
+          "hair"
+        ],
+        "wear": [
+          "earrings"
+        ],
+        "parts": [
+          "hair",
+          "skin"
+        ]
+      },
+      "room": "cloakroom",
+      "x": 27.82,
+      "z": -16.45,
+      "w": 3.3,
+      "d": 0.9,
+      "h": 6.3,
+      "anchor": {
+        "x": 27.82,
+        "z": -15.5
+      },
+      "facing": {
+        "yaw": -0.6204620258308431,
+        "foot": {
+          "w": 3.3,
+          "d": 0.9,
+          "h": 6.3
+        },
+        "curve": 5.919451526432974
+      }
+    },
+    {
+      "id": "hats",
+      "label": "Hats",
+      "use": {
+        "kind": "hats"
+      },
+      "room": "cloakroom",
+      "x": 32.27,
+      "z": -10.73,
+      "w": 3.6,
+      "d": 1.8,
+      "h": 0,
+      "anchor": {
+        "x": 29.970000000000002,
+        "z": -10.73
+      },
+      "facing": {
+        "yaw": 0.7853981633974497,
+        "foot": {
+          "w": 1.8,
+          "d": 3.6,
+          "h": 0
+        },
+        "curve": 3.5960512242138325
+      }
+    },
+    {
+      "id": "cloakPegs",
+      "label": "Cloak pegs",
+      "use": {
+        "kind": "creator",
+        "axes": [
+          "cloak",
+          "cloakLength",
+          "scarfLength"
+        ],
+        "wear": [
+          "patches",
+          "scarf"
+        ],
+        "parts": [
+          "cloak",
+          "scarf"
+        ]
+      },
+      "room": "cloakroom",
+      "x": 34.6,
+      "z": -15.6,
+      "w": 1.9,
+      "d": 1.9,
+      "h": 5.6,
+      "anchor": {
+        "x": 33.15,
+        "z": -15.6
+      },
+      "facing": {
+        "yaw": 0.7853981633974485,
+        "foot": {
+          "w": 1.9,
+          "d": 1.9,
+          "h": 5.6
+        },
+        "curve": 6.041168824543143
+      }
+    },
+    {
+      "id": "drumKit",
+      "label": "Drum kit",
+      "use": {
+        "kind": "instrument",
+        "instrument": "drums"
+      },
+      "room": "studio",
+      "x": 53.5,
+      "z": 16.9,
+      "w": 4.6,
+      "d": 4.4,
+      "h": 2.86,
+      "anchor": {
+        "x": 50.7,
+        "z": 16.9
+      },
+      "facing": {
+        "yaw": 0.8459301831795552,
+        "foot": {
+          "w": 4.4,
+          "d": 4.6,
+          "h": 2.86
+        },
+        "curve": 6.975467891024385
+      }
+    },
+    {
+      "id": "synthRack",
+      "label": "Modular synth",
+      "use": {
+        "kind": "instrument",
+        "instrument": "synth"
+      },
+      "room": "studio",
+      "x": 48.6,
+      "z": 15.2,
+      "w": 4.4,
+      "d": 2.4,
+      "h": 5.32,
+      "anchor": {
+        "x": 48.6,
+        "z": 16.9
+      },
+      "facing": {
+        "yaw": -0.2837941092083275,
+        "foot": {
+          "w": 4.4,
+          "d": 2.4,
+          "h": 5.32
+        },
+        "curve": 6.2
+      }
+    },
+    {
+      "id": "microphone",
+      "label": "Microphone",
+      "use": {
+        "kind": "instrument",
+        "instrument": "mic"
+      },
+      "room": "studio",
+      "x": 50.58,
+      "z": 22.88,
+      "w": 1.6,
+      "d": 1.6,
+      "h": 5.44,
+      "anchor": {
+        "x": 50.58,
+        "z": 21.58
+      },
+      "facing": {
+        "yaw": 0.19873067254123492,
+        "foot": {
+          "w": 1.6,
+          "d": 1.6,
+          "h": 5.44
+        },
+        "curve": 3.7378223227417946
+      }
+    },
+    {
+      "id": "mapTable",
+      "label": "Map table",
+      "use": {
+        "kind": "chart"
+      },
+      "room": "solarium",
+      "x": -48.8,
+      "z": -38,
+      "w": 3.9,
+      "d": 3.9,
+      "h": 1.35,
+      "anchor": {
+        "x": -46.349999999999994,
+        "z": -38
+      },
+      "facing": {
+        "yaw": -1.5707963267948966,
+        "foot": {
+          "w": 3.9,
+          "d": 3.9,
+          "h": 1.35
+        },
+        "curve": 3.7499999999999973
+      }
+    },
+    {
+      "id": "book",
+      "label": "Bestiary book",
+      "use": {
+        "kind": "zoo"
+      },
+      "room": "bestiary",
+      "x": -68.11,
+      "z": -13.42,
+      "w": 2.72,
+      "d": 2.04,
+      "h": 3.74,
+      "anchor": {
+        "x": -68.11,
+        "z": -11.9
+      },
+      "facing": {
+        "yaw": -0.3138351524279086,
+        "foot": {
+          "w": 2.72,
+          "d": 2.04,
+          "h": 3.74
+        },
+        "curve": 4.615622338344226
+      }
+    },
+    {
+      "id": "specimens",
+      "label": "Skeletons and skulls",
+      "use": {
+        "kind": "say",
+        "line": "The skeletons and skulls come later."
+      },
+      "room": "bestiary",
+      "x": -63.58,
+      "z": -6.92,
+      "w": 2,
+      "d": 3.2,
+      "h": 5.4,
+      "anchor": {
+        "x": -65.08,
+        "z": -6.92
+      },
+      "facing": {
+        "yaw": 0.8376582276036021,
+        "foot": {
+          "w": 3.2,
+          "d": 2,
+          "h": 5.4
+        },
+        "curve": 5.6024775936445375
+      }
+    },
+    {
+      "id": "bedroom2Bed",
+      "label": "A bare bed frame",
+      "use": {
+        "kind": "say",
+        "line": "Waiting for its witch."
+      },
+      "room": "bedroom2",
+      "x": 30.6,
+      "z": -60.6,
+      "w": 4,
+      "d": 5.2,
+      "h": 1.2,
+      "anchor": {
+        "x": 30.6,
+        "z": -57.5
+      },
+      "facing": {
+        "yaw": 0.7853981633974483,
+        "foot": {
+          "w": 4,
+          "d": 5.2,
+          "h": 1.2
+        },
+        "curve": 6.276955262170049
+      }
+    },
+    {
+      "id": "bedroom2Wardrobe",
+      "label": "Something under a dust sheet",
+      "use": {
+        "kind": "say",
+        "line": "Waiting for its witch."
+      },
+      "room": "bedroom2",
+      "x": 32,
+      "z": -56.4,
+      "w": 1.4,
+      "d": 4,
+      "h": 4.4,
+      "anchor": {
+        "x": 30.8,
+        "z": -56.4
+      },
+      "facing": {
+        "yaw": 1.1902899496825314,
+        "foot": {
+          "w": 4,
+          "d": 1.4,
+          "h": 4.4
+        },
+        "curve": 5.008131845707604
+      }
+    },
+    {
+      "id": "bedroom2Chest",
+      "label": "Something under a dust sheet",
+      "use": {
+        "kind": "say",
+        "line": "Waiting for its witch."
+      },
+      "room": "bedroom2",
+      "x": 26.8,
+      "z": -62.1,
+      "w": 2.8,
+      "d": 1.6,
+      "h": 1.8,
+      "anchor": {
+        "x": 26.8,
+        "z": -60.800000000000004
+      },
+      "facing": {
+        "yaw": -0.28473043852271196,
+        "foot": {
+          "w": 2.8,
+          "d": 1.6,
+          "h": 1.8
+        },
+        "curve": 5.072001872658767
+      }
+    },
+    {
+      "id": "bedroom2Crates",
+      "label": "Packing crates",
+      "use": {
+        "kind": "say",
+        "line": "Waiting for its witch."
+      },
+      "room": "bedroom2",
+      "x": 27.4,
+      "z": -53.7,
+      "w": 3,
+      "d": 1.6,
+      "h": 2.6,
+      "anchor": {
+        "x": 27.4,
+        "z": -55
+      },
+      "facing": {
+        "yaw": -0.13863973713415847,
+        "foot": {
+          "w": 3,
+          "d": 1.6,
+          "h": 2.6
+        },
+        "curve": 5.1416586692184785
+      }
+    },
+    {
+      "id": "bedroom2Door",
+      "room": "boudoir",
+      "label": "Door",
+      "use": {
+        "kind": "say",
+        "line": "A friend's room. Locked for now."
+      },
+      "x": 21.8,
+      "z": -55.46,
+      "w": 1.4,
+      "d": 1.4,
+      "h": 4.4,
+      "anchor": {
+        "x": 20.6,
+        "z": -55.46
+      },
+      "facing": {
+        "yaw": 1.1220477168603324,
+        "foot": {
+          "w": 1.4,
+          "d": 1.4,
+          "h": 4.4
+        },
+        "curve": 27.11536673983536
+      }
+    },
+    {
+      "id": "bedroom3Bed",
+      "label": "A bare bed frame",
+      "use": {
+        "kind": "say",
+        "line": "Waiting for its witch."
+      },
+      "room": "bedroom3",
+      "x": 48.6,
+      "z": -30.6,
+      "w": 4,
+      "d": 5.2,
+      "h": 1.2,
+      "anchor": {
+        "x": 48.6,
+        "z": -27.5
+      },
+      "facing": {
+        "yaw": 0.7853981633974483,
+        "foot": {
+          "w": 4,
+          "d": 5.2,
+          "h": 1.2
+        },
+        "curve": 6.276955262170049
+      }
+    },
+    {
+      "id": "bedroom3Wardrobe",
+      "label": "Something under a dust sheet",
+      "use": {
+        "kind": "say",
+        "line": "Waiting for its witch."
+      },
+      "room": "bedroom3",
+      "x": 50.2,
+      "z": -25.8,
+      "w": 1.4,
+      "d": 4,
+      "h": 4.4,
+      "anchor": {
+        "x": 49,
+        "z": -25.8
+      },
+      "facing": {
+        "yaw": 1.0882830317724201,
+        "foot": {
+          "w": 4,
+          "d": 1.4,
+          "h": 4.4
+        },
+        "curve": 5.441307836451881
+      }
+    },
+    {
+      "id": "bedroom3Chest",
+      "label": "Something under a dust sheet",
+      "use": {
+        "kind": "say",
+        "line": "Waiting for its witch."
+      },
+      "room": "bedroom3",
+      "x": 44.4,
+      "z": -32.9,
+      "w": 2.8,
+      "d": 1.6,
+      "h": 1.8,
+      "anchor": {
+        "x": 44.4,
+        "z": -31.599999999999998
+      },
+      "facing": {
+        "yaw": -0.3156156620387667,
+        "foot": {
+          "w": 2.8,
+          "d": 1.6,
+          "h": 1.8
+        },
+        "curve": 5.954609587543947
+      }
+    },
+    {
+      "id": "bedroom3Crates",
+      "label": "Packing crates",
+      "use": {
+        "kind": "say",
+        "line": "Waiting for its witch."
+      },
+      "room": "bedroom3",
+      "x": 43.2,
+      "z": -25.1,
+      "w": 3,
+      "d": 1.6,
+      "h": 2.6,
+      "anchor": {
+        "x": 43.2,
+        "z": -26.400000000000002
+      },
+      "facing": {
+        "yaw": -0.7678561033400456,
+        "foot": {
+          "w": 3,
+          "d": 1.6,
+          "h": 2.6
+        },
+        "curve": 4.831128874149272
+      }
+    },
+    {
+      "id": "bedroom3Door",
+      "room": "boudoir",
+      "label": "Door",
+      "use": {
+        "kind": "say",
+        "line": "A friend's room. Locked for now."
+      },
+      "x": 39.89,
+      "z": -32.07,
+      "w": 1.4,
+      "d": 1.4,
+      "h": 4.4,
+      "anchor": {
+        "x": 38.69,
+        "z": -32.07
+      },
+      "facing": {
+        "yaw": 1.293348160850892,
+        "foot": {
+          "w": 1.4,
+          "d": 1.4,
+          "h": 4.4
+        },
+        "curve": 44.255677012302314
+      }
+    },
+    {
+      "x": 6,
+      "z": 8,
+      "w": 5,
+      "d": 1.6,
+      "id": "terrace:decks",
+      "label": "DJ decks + seat",
+      "room": "terrace",
+      "h": 1.5,
+      "use": {
+        "kind": "say",
+        "line": "DJ decks"
+      },
+      "synthetic": true,
+      "anchor": {
+        "x": 6,
+        "z": 6.4
+      },
+      "facing": {
+        "yaw": 0.6435011087932843,
+        "foot": {
+          "w": 5,
+          "d": 1.6,
+          "h": 1.5
+        },
+        "curve": 10.8
+      }
+    }
+  ]
+}

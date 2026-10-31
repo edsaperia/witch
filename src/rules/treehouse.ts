@@ -21,7 +21,8 @@
 import type { Game } from "./game";
 import type { Tuning } from "./tuning";
 import type { WitchState } from "./witch";
-import { floorDistance, floorRects, fromPlan, HOUSE_ROOMS, nearestRoomFloor, objectAt, onRoomFloor, toPlan, type RoomFloor } from "./houseRooms";
+import { floorDistance, floorRects, fromObject, fromPlan, HOUSE_ROOMS, nearestRoomFloor, objectAt, onRoomFloor, toPlan, type RoomFloor } from "./houseRooms";
+import { rotatePlacement } from "./housePlacement";
 import { inRoom, trunkField } from "../../config/house/shape.js";
 
 /** The deck in the world: its middle (x, z), radius, floor height (m over the ground there), the rail's keep-in, the map table, the decks' arc and her seat. */
@@ -35,7 +36,7 @@ export interface Deck {
    *  clockwise from east), the decks' desk on it (its middle in the world, w along x, d along z), the magic circle on its floor, how
    *  long the landing onto it takes, and the fall off its open rim (on: with no broom; time: seconds to the ground). The Terrace's
    *  middle and size are the deck's own (x, z, r). */
-  house?: { takeoff: { angle: number; half: number }; desk: { x: number; z: number; w: number; d: number }; circle: { x: number; z: number; r: number }; landTime: number; /** on foot in it, her walking speed (m/s) */ walk: number; /** the walking speed her walk cycle is drawn for (m/s) */ stride: number; fall: { on: boolean; time: number; /** seconds after the thud before she is back at the circle */ beat?: number };
+  house?: { takeoff: { angle: number; half: number }; desk: { x: number; z: number; w: number; d: number; rotation?: number }; circle: { x: number; z: number; r: number }; landTime: number; /** on foot in it, her walking speed (m/s) */ walk: number; /** the walking speed her walk cycle is drawn for (m/s) */ stride: number; fall: { on: boolean; time: number; /** seconds after the thud before she is back at the circle */ beat?: number };
     /** The house's floor (rules/houseRooms.ts, config/house/: the oak's one shape), kept the rail in from its edge; null with the
      *  house's rooms off. */
     rooms: RoomFloor | null };
@@ -50,7 +51,7 @@ export function deckOf(map: { treehouse: { x: number; z: number }; zoo?: { layou
   if (H?.on) {
     const T = HOUSE_ROOMS.terrace, at = { x, z }, P = (p: { x: number; z: number }) => fromPlan(at, p.x, p.z), r = HOUSE_ROOMS.rooms.find(q => q.id === "terrace")?.r ?? 12.5;
     return { x, z, r, h: H.height, grace: H.grace, rail: H.rail, table: { r: 0, use: 0 }, decks: { inner: 0, outer: 0, from: 0, to: 0 }, seat: P(T.seat),
-      house: { takeoff: { angle: T.takeoff.angle * DEG, half: T.takeoff.half * DEG }, desk: { ...P(T.decks), w: T.decks.w, d: T.decks.d }, circle: { ...P(T.circle), r: T.circle.r }, landTime: H.landTime, walk: H.walk ?? 5, stride: H.stride ?? 5, fall: { on: !!H.fall.on, time: H.fall.time, beat: H.fall.beat ?? 0 }, rooms: HOUSE_ROOMS.on ? floorRects(at, H.rail) : null } };
+      house: { takeoff: { angle: T.takeoff.angle * DEG, half: T.takeoff.half * DEG }, desk: { ...P(T.decks), w: T.decks.w, d: T.decks.d, ...(T.decks.rotation !== undefined ? { rotation: T.decks.rotation - (HOUSE_ROOMS.turn ?? 0) } : {}) }, circle: { ...P(T.circle), r: T.circle.r }, landTime: H.landTime, walk: H.walk ?? 5, stride: H.stride ?? 5, fall: { on: !!H.fall.on, time: H.fall.time, beat: H.fall.beat ?? 0 }, rooms: HOUSE_ROOMS.on ? floorRects(at, H.rail) : null } };
   }
   if (!D?.on) return null;
   return { x, z, r: D.radius, h: D.height, grace: D.grace, rail: D.rail, table: { r: D.table, use: D.tableUse }, decks: { ...D.decks }, seat: { x, z: z + D.seat } };
@@ -136,9 +137,10 @@ export const landsOn = (d: Deck, x: number, z: number): boolean => (d.house ? on
  *  outside every object's box on the plan, `pad` metres round, and the decks' desk's. */
 export function clearOfFurniture(d: Deck, x: number, z: number, pad = 0.4): boolean {
   const p = toPlan(d, x, z);
-  if (HOUSE_ROOMS.objects.some(o => Math.abs(p.x - o.x) < o.w / 2 + pad && Math.abs(p.z - o.z) < o.d / 2 + pad)) return false;
+  if (HOUSE_ROOMS.objects.some(o => o.placement ? o.use.kind !== "hats" && fromObject(o, d, x, z) < pad : Math.abs(p.x - o.x) < o.w / 2 + pad && Math.abs(p.z - o.z) < o.d / 2 + pad)) return false;
   const b = d.house?.desk;
-  return !b || Math.abs(x - b.x) >= b.w / 2 + pad || Math.abs(z - b.z) >= b.d / 2 + pad;
+  const local = b ? rotatePlacement(x - b.x, z - b.z, -(b.rotation ?? 0)) : null;
+  return !b || Math.abs(local!.x) >= b.w / 2 + pad || Math.abs(local!.z) >= b.d / 2 + pad;
 }
 /** Where she touches down landing at (x, z): there, or the nearest clear spot (clearOfFurniture, on the floor the rail in) within
  *  8 m, nudged out in half-metre rings. */
@@ -184,10 +186,11 @@ export function keepOnDeck(d: Deck, x: number, z: number): { x: number; z: numbe
 /** Out of the decks' desk (the house: a box on the Terrace's open rim, her seat behind it): (x, z) inside it, 0.3 m round, put back
  *  out of its nearest side. */
 function outOfDeskBox(d: Deck, x: number, z: number): { x: number; z: number } {
-  const b = d.house!.desk, hw = b.w / 2 + 0.3, hd = b.d / 2 + 0.3, dx = x - b.x, dz = z - b.z;
+  const b = d.house!.desk, hw = b.w / 2 + 0.3, hd = b.d / 2 + 0.3, local = rotatePlacement(x - b.x, z - b.z, -(b.rotation ?? 0)), dx = local.x, dz = local.z;
   if (Math.abs(dx) >= hw || Math.abs(dz) >= hd) return { x, z };
   const out = [hw - dx, hw + dx, hd - dz, hd + dz], m = Math.min(...out);
-  return m === out[0] ? { x: b.x + hw, z } : m === out[1] ? { x: b.x - hw, z } : m === out[2] ? { x, z: b.z + hd } : { x, z: b.z - hd };
+  const q = m === out[0] ? { x: hw, z: dz } : m === out[1] ? { x: -hw, z: dz } : m === out[2] ? { x: dx, z: hd } : { x: dx, z: -hd }, rotated = rotatePlacement(q.x, q.z, b.rotation ?? 0);
+  return { x: b.x + rotated.x, z: b.z + rotated.z };
 }
 
 /** The nearest place to (x, z) she can stand in the house: on its floor, the rail in from its edge, and out of the decks' desk; `off`

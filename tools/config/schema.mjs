@@ -19,6 +19,7 @@ const FILE = "config/tuning.json", SCHEMA = "config/schema/tuning.schema.json", 
 const tuning = JSON.parse(readFileSync(FILE, "utf8"));
 const write = (p, o) => writeFileSync(p, JSON.stringify(o, null, 2) + "\n");
 const has = f => process.argv.includes(`--${f}`);
+if (has("check") && ["init", "add", "docs"].some(has)) throw Error("Use --check alone; it never writes files");
 
 if (has("init")) {
   write(SCHEMA, inferSchema(tuning, TUNING_OVER));
@@ -32,12 +33,21 @@ if (has("add")) {
   for (const c of CONFIGS) write(c.schema, merge(JSON.parse(readFileSync(c.schema, "utf8")), inferSchema(configData(c.name, c.file), c.over, "", new Set(c.records))));
 }
 let schema = JSON.parse(readFileSync(SCHEMA, "utf8"));
-if (has("docs")) {
+if (has("docs") || has("check")) {
   const index = JSON.parse(readFileSync("config/knobs/index.json", "utf8"));
   const sections = index.order.map(n => JSON.parse(readFileSync(`config/knobs/${n}.json`, "utf8")));
-  schema = describeSchema(schema, sections);
-  write(SCHEMA, schema);
-  writeFileSync(DOCS, knobsReference(tuning, schema, index, sections));
+  const described = describeSchema(schema, sections);
+  const reference = knobsReference(tuning, described, index, sections);
+  if (has("check")) {
+    if (JSON.stringify(schema) !== JSON.stringify(described) || readFileSync(DOCS, "utf8").replace(/\r\n/g, "\n") !== reference) {
+      console.error("Generated knob docs are stale; fix: node tools/config/schema.mjs --docs");
+      process.exitCode = 1;
+    }
+  } else {
+    schema = described;
+    write(SCHEMA, schema);
+    writeFileSync(DOCS, reference);
+  }
 }
 if (has("check") || !process.argv.slice(2).length) {
   for (const [file, value, sch, name] of [[FILE, tuning, schema, "tuning"], ...CONFIGS.map(c => [c.file, configData(c.name, c.file), JSON.parse(readFileSync(c.schema, "utf8")), c.name])]) {

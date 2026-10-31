@@ -16,7 +16,7 @@ All potions last ten minutes of game time, start at full strength on waking, and
 | 8 | blue + blue + turquoise | Brass Band | Coming soon | Every instrument in the music becomes a trumpet. |
 | 9 | blue + blue + white | Big Moon | Implemented | An enormous moon fills the sky, with a strong luminous halo. |
 | 10 | blue + purple + purple | Ravine | Implemented | The bend inverted: the world curves up around her, as if at the bottom of a ravine. |
-| 11 | blue + purple + pink | Chunky | Coming soon | Much bigger pixels. |
+| 11 | blue + purple + pink | Chunky | Implemented | Much bigger pixels. |
 | 12 | blue + purple + red | Superhot | Coming soon | Time only moves forward when she's moving (the wave countdown still creeps while she stands still). |
 | 13 | blue + purple + orange | Orbit | Coming soon | The treetops three times higher; the camera close to her; looking down on the forest as if from space. |
 | 14 | blue + purple + yellow | Mirror Forest | Coming soon | Every creature looks like her. |
@@ -31,10 +31,10 @@ All potions last ten minutes of game time, start at full strength on waking, and
 | 23 | blue + pink + turquoise | Drum Solo | Coming soon | The music is just a drum solo. |
 | 24 | blue + pink + white | Watched | Coming soon | Every legend on the map stands and stares at her. |
 | 25 | blue + red + red | Giant Trees | Coming soon | The trees are three times taller. |
-| 26 | blue + red + orange | Night Vision | Coming soon | The dark forest becomes clear and luminous. |
+| 26 | blue + red + orange | Night Vision | Implemented | The forest turns black and phosphor green. A rising electronic whine gives way to creature sounds alone. |
 | 27 | blue + red + yellow | Flask Finder | Coming soon | Flasks are easier to find. |
 | 28 | blue + red + green | Left Hook | Coming soon | Unlimited dodges, but they always veer left. |
-| 29 | blue + red + turquoise | Tall Tales | Coming soon | Every animal looks very tall. |
+| 29 | blue + red + turquoise | Stiltwalkers | Implemented | Familiar animal bodies stand high on impossibly long legs, tapering from normal hips to tiny feet. |
 | 30 | blue + red + white | Thick Canopy | Implemented | The canopy closes over her; every colour grows vivid and the lighting gains deep contrast. |
 | 31 | blue + orange + orange | The Whole Route | Coming soon | The entire route across the island shines into view. |
 | 32 | blue + orange + yellow | Dreamseer | Coming soon | The area a legend's dream points to is easier to see. |
@@ -50,26 +50,26 @@ All potions last ten minutes of game time, start at full strength on waking, and
 | 42 | blue + green + white | Foresight | Coming soon | Attack telegraphs twice as early, in garish colours. |
 | 43 | blue + turquoise + turquoise | Chipmunks | Coming soon | Every sound at double pitch. |
 | 44 | blue + turquoise + white | Loop the Loop | Coming soon | Rising does a loop-the-loop instead. |
-| 45 | blue + white + white | Worm's Eye | Coming soon | The camera drops very low, almost level with the ground. |
+| 45 | blue + white + white | Worm's Eye | Implemented | The camera drops very low, almost level with the ground. |
 | 46 | purple + purple + purple | Cartoon | Coming soon | Thick outlines, flat colours, a pictorial pow burst on hits. |
 | 47 | purple + purple + pink | Underwater | Coming soon | The world ripples like water, sounds turn muffled and bubbly, and movement feels weightless. |
 | 48 | purple + purple + red | Moonwalk | Coming soon | She always faces backwards; 💌s still fly forward. |
 | 49 | purple + purple + orange | Hiccups | Coming soon | A tiny involuntary blink every few seconds. |
 | 50 | purple + purple + yellow | Stopmotion | Coming soon | The world at 6 fps; she runs smoothly. |
 | 51 | purple + purple + green | Fireflies | Coming soon | Everything moving leaves glowing dots hanging in the air. |
-| 52 | purple + purple + turquoise | Heat Vision | Coming soon | Thermal; creatures glow by danger, trees cold blue. |
+| 52 | purple + purple + turquoise | Heat Vision | Implemented | Cold blue scenery surrounds warm animals, glowing hotter with danger. Music falls silent; creature sounds drop an octave beneath slow, muffled mask breathing. |
 | 53 | purple + purple + white | Fisheye | Coming soon | Extreme wide angle; she sees further, everything bends. |
 | 54 | purple + pink + pink | Synaesthesia | Coming soon | Colours pulse with the music, one colour per instrument, floods on the kick. |
 | 55 | purple + pink + red | Mirror Floor | Coming soon | The ground becomes a glossy mirror of everything above it. |
 | 56 | purple + pink + orange | Silent Film | Coming soon | Film grain and scratches, sepia, the world as a silent film. |
 | 57 | purple + pink + yellow | Masterplan | Coming soon | See how packs intend to move and attack: targets, destination slots, roles, formations and attack geometry. |
-| 58 | purple + pink + green | Stiltwalkers | Coming soon | Familiar animal bodies stand impossibly high on very thin, long legs. |
+| 58 | purple + pink + green | Stiltwalkers | Implemented | Familiar animal bodies stand high on impossibly long legs, tapering from normal hips to tiny feet. |
 | 59 | purple + pink + turquoise | Contour Dream | Coming soon | Vivid contour bands run across ground, animals and scenery. |
 | 60 | purple + pink + white | Bottomless | Coming soon | The ground becomes a starfield, with creatures apparently standing over an abyss. |
 | 61 | purple + red + red | Aurora Outlines | Implemented | Luminous coloured edges replace most solid surfaces. |
 | 62 | purple + red + orange | Folded Space | Coming soon | Repeated mirrored sectors fold the forest around her. |
 | 63 | purple + red + yellow | Sliced World | Coming soon | Horizontal world-height bands disappear, revealing stacked slices through animals and scenery. |
-| 64 | purple + red + green | The Audience | Coming soon | Amplify existing watching-tree lean and lag until the forest visibly follows her passage. |
+| 64 | purple + red + green | The Audience | Implemented | Amplify existing watching-tree lean and lag until the forest visibly follows her passage. |
 | 65 | purple + red + turquoise | Concertina | Coming soon | Shared scene deformation squeezes and stretches distance sideways. |
 | 66 | purple + red + white | Far Sight | Coming soon | Nearby scenery dissolves into haze while distant scenery is unnaturally crisp. |
 | 67 | purple + orange + orange | The World Is Late | Coming soon | Her light, canopy opening and tree attention follow her past position, catching up when she stops. |
@@ -78,7 +78,7 @@ All potions last ten minutes of game time, start at full strength on waking, and
 | 70 | purple + orange + turquoise | Borrowed Habits | Coming soon | Vegetation acquires nearby animals' idle quirks: sniffing, shivering, stretching and happy bouncing. |
 | 71 | purple + orange + white | Someone Is Having a Bad Dream | Coming soon | A legend's growing restlessness changes mist, grade and tree motion; its kin's arrival lets the scene relax. |
 | 72 | purple + yellow + yellow | Too Much Happening | Coming soon | Nearby combat makes the scene increasingly luminous until a fight dissolves into light, then settles. |
-| 73 | purple + yellow + green | The Forest Counts | Coming soon | Wind and mist advance in musical steps while she and animals remain fluid. |
+| 73 | purple + yellow + green | The Forest Counts | Implemented | Wind and mist advance in musical steps while she and animals remain fluid. |
 | 74 | purple + yellow + turquoise | Spilling Habitats | Coming soon | Ground textures and habitat colours spill across borders while trees and inhabitants stay put. |
 | 75 | purple + yellow + white | Seeing Through Seeing | Coming soon | Perceive the masks that erase the canopy to make her visible. |
 | 76 | purple + green + green | Lovesick Leaves | Coming soon | Current affection controls nearby leaf colour, glow or motion. |
@@ -107,13 +107,13 @@ All potions last ten minutes of game time, start at full strength on waking, and
 | 99 | pink + orange + white | Growing Personalities | Coming soon | Mushrooms become impossibly tall, squat or twisted, with curling stems and lifted cap rims. |
 | 100 | pink + yellow + yellow | Hall of Mirrors | Coming soon | Every movement leaves an endless trail of overlapping images. |
 | 101 | pink + yellow + green | Glow Up | Implemented | Everything glows until the forest blazes with light. |
-| 102 | pink + yellow + turquoise | Miniature | Coming soon | The island looks like a tiny toy world. |
+| 102 | pink + yellow + turquoise | Miniature | Implemented | The island looks like a tiny toy world. |
 | 103 | pink + yellow + white | Little Planet | Implemented | The world curves sharply away like a tiny planet. |
 | 104 | pink + green + green | Wireframe | Coming soon | The world becomes a web of fine lines tracing every surface. |
 | 105 | pink + green + turquoise | Mix-up | Coming soon | Creatures wear mismatched fragments of other creatures’ appearances. |
 | 106 | pink + green + white | Mannequins | Coming soon | Everyone freezes in a single pose and slides across the ground. |
 | 107 | pink + turquoise + turquoise | Cutaway | Coming soon | Nearby surfaces disappear, revealing the insides of trees and the treehouse. |
-| 108 | pink + turquoise + white | Hue Spin | Coming soon | Every colour slowly turns into another. |
+| 108 | pink + turquoise + white | Hue Spin | Implemented | Every colour slowly turns into another. |
 | 109 | pink + white + white | Vertigo | Implemented | Treetop flight feels dizzyingly high: a wide, steep view and blurred distant ground exaggerate the drop below. |
 | 110 | red + red + red | Unassigned recipe | Coming soon | This combination has not been assigned an effect yet. |
 | 111 | red + red + orange | Unassigned recipe | Coming soon | This combination has not been assigned an effect yet. |

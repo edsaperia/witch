@@ -70,6 +70,7 @@ Agreed one by one with Ed (2026-10-09). Not yet assigned to recipes, apart from 
 9. **Big Moon** (Ed): the moon is big. Really big.
 10. **Ravine** (Ed): the bend inverted: the world curves up around her, as if at the bottom of a ravine.
 11. **Chunky** (Ed): much bigger pixels.
+    Implemented as recipe #11 (blue + purple + pink): reuses the scene's low-resolution render targets and nearest-neighbour display. Default four times the normal pixel size; Potion lab exposes 1–12×. The final two minutes step back toward the original grid in whole display pixels; menus remain readable. No change to saved pixel settings or telescope resolution preferences.
 12. **Superhot** (Ed): time only moves forward when she's moving (the wave countdown still creeps while she stands still).
 13. **Orbit** (Ed): the treetops three times higher; the camera close to her; looking down on the forest as if from space.
 14. **Mirror Forest** (Ed): every creature looks like her.
@@ -85,14 +86,15 @@ Agreed one by one with Ed (2026-10-09). Not yet assigned to recipes, apart from 
 24. **Watched** (Ed): every legend on the map stands and stares at her.
 25. **Giant Trees** (Ed): the trees are three times taller.
 26. **Night Vision** (Ed).
+    Recipe #26 (blue + red + orange), Ed's refinement 2026-10-31: black and phosphor-green night vision, with pale-green highlights and lifted shadow detail. A rising electronic whine plays on waking, then only creature sounds remain. Other sound returns during the final two-minute fade. Existing tone/grade controls feed a monochrome step in the existing screen pass; saved settings remain unchanged.
 27. **Flask Finder** (Ed): flasks are easier to find.
 28. **Left Hook** (Ed): unlimited dodges, but they always veer left.
-29. **Tall Tales** (Ed): every animal looks very tall.
+29. **Stiltwalkers, replacing Tall Tales** (Ed, 2026-10-31): retain normal animal bodies on impossibly long legs, tapering from normal hip thickness to tiny feet, following the Dalí reference. Ed explicitly requested extending other legged animals too. This replaces the whole-body stretch; recipe29 and existing recipe58 now share Stiltwalkers without renumbering either combination. See58 for implementation details.
 30. **Thick Canopy** (Ed): the canopy see-through effect is off, so the ground can't be seen.
 31. **The Whole Route** (Ed): the entire route is shown. (Also the Route-seer hat's power, built in #942; a trip may want something else.)
 32. **Dreamseer** (Ed): the area a legend's dream points to is easier to see.
 33. **Paper Theatre:** everything becomes flat, wobbling cardboard cutouts.
-34. **Woodcut:** black-and-white engraving, crosshatched shadows.
+34. **Woodcut:** black-and-white engraving, crosshatched shadows. Discussion2026-10-31: reuse existing edge detection and colour thresholds, with a small new hatching formula; remains a suggestion, not built.
 35. **Kaleidoscope:** the screen mirrored into six slices round her.
 36. **Breathing:** ground, trees and rocks swell and shrink with the bpm.
 37. **Daybreak:** the sun rises; a bright, ordinary green forest.
@@ -104,6 +106,7 @@ Agreed one by one with Ed (2026-10-09). Not yet assigned to recipes, apart from 
 43. **Chipmunks:** every sound at double pitch.
 44. **Loop the Loop** (Ed): rising does a loop-the-loop instead.
 45. **Worm's Eye** (Ed): the camera drops very low, almost level with the ground.
+    Implemented as recipe #45 (blue + white + white), reusing camera angle and distance. Default 3° and 0.4× distance; both exposed in Potion lab. Telescope and voyage cameras retain control. The normal view returns through the final two-minute fade or immediately on Stop/replacement; saved camera tuning is unchanged.
 46. **Cartoon:** thick outlines, flat colours, a pictorial pow burst on hits.
 47. **Underwater:** water wobble, muffled bubbly sound, floaty movement. **Only if executed really well** (Ed): bubbles rising from animals breathing, and so on.
 48. **Moonwalk:** she always faces backwards; 💌s still fly forward.
@@ -111,6 +114,7 @@ Agreed one by one with Ed (2026-10-09). Not yet assigned to recipes, apart from 
 50. **Stopmotion:** the world at 6 fps; she runs smoothly.
 51. **Fireflies:** everything moving leaves glowing dots hanging in the air.
 52. **Heat Vision:** thermal; creatures glow by danger, trees cold blue.
+    Ed's refinement, 2026-10-31: use the thermal-boar reference (cold blue scenery; animals green/yellow/orange/red with texture retained), plus slow, close, muffled mechanical-mask breathing. Recipe #52 (purple + purple + turquoise). Creature identity and existing danger signals select heat; bright scenery is not mistaken for an animal. Ed: "Heat vision should also stop the background music and shift the creature sounds down an octave". Other sound effects remain; music and creature pitch return gradually during the final two game minutes.
 53. **Fisheye:** extreme wide angle; she sees further, everything bends.
 54. **Synaesthesia:** colours pulse with the music, one colour per instrument, floods on the kick.
 55. **Mirror Floor** (Ed): the floor is a mirror: every sprite drawn again upside down beneath its feet, the ground dark and glossy (the same trick as the bedroom mirror). Fills Afterparty's slot.
@@ -136,14 +140,14 @@ Cheap, from how the game draws (low-res target scaled up, bloom, tilt-shift, ben
 
 - **Hall of Mirrors:** don't clear the screen; everything smears into endless trails.
 - **Glow Up:** bloom threshold 0; everything blazes.
-- **Miniature:** tilt-shift at full: a toy world.
+- **Miniature:** tilt-shift at full: a toy world. PR1536 implements recipe 102 with shared scene/overlay focus settings and thin small-speaker audio, adjustable in the Potion Lab; audio render and visual judgement pending.
 - **Little Planet:** the bend cranked up.
 - **Wireframe:** one material flag.
 - **Mix-up:** creatures drawn from the wrong part of the sprite sheet.
 - **Mannequins:** animation frozen; everything slides.
 - **Cutaway:** the camera's near plane pushed in: see inside trees and the treehouse.
 - **Wandering Shadows:** shadows drift away from their owners.
-- **Hue Spin:** the colour grade rotates hue continuously.
+- **Hue Spin:** the colour grade rotates hue continuously. PR #1541 implements recipe #108 with a neutral-preserving RGB rotation in the existing composite pass and a synchronised sweep of existing audio (shared routing from #1536).
 
 Visual references: Qualia Research Institute's replications of psychedelic visuals; PsychonautWiki's Subjective Effect Index (drifting, tracers, symmetrical texture repetition, colour shifting, recursion, scenery slicing, environmental cubism, frame-rate suppression).
 
@@ -169,13 +173,13 @@ Captured 2026-10-30. Numbers continue the original list for reference, **not rec
 ### Existing machinery and crossed signals
 
 57. **Masterplan** (Ed-requested): see how packs intend to move and attack: targets, destination slots, roles, formations and attack geometry. `rules/combat/packs.ts` computes directives; `rules/combat.ts` currently keeps the complete directive map local. Publish a read-only snapshot for drawing instead of recomputing decisions. Existing line/ribbon renderers are foundations, not a complete overlay. Show current intentions first; abandoned plans and long histories would require new recording. Related: Foresight, Whole Route.
-58. **Stiltwalkers** (Ed's Dalí reference): familiar animal bodies stand impossibly high on very thin, long legs. A specific Tall Tales variant using the creature rig and leg drawing. Preserve the body silhouette; feet still meet the ground. Review joint reach, stroke sampling and clipping rather than assuming a whole-sprite stretch gives the result. Scratch elephant, fox and badger mockups were explored during the conversation; not shipped artwork.
+58. **Stiltwalkers** (Ed's Dalí reference; supersedes Tall Tales, 2026-10-31): familiar animal bodies stand impossibly high on very long legs tapering from normal hips to tiny feet. Preserve body silhouettes and ground foot targets; extend existing rigs to the other legged body types. Recipe29 and58 are aliases. Potion Lab controls leg length (default6×,1–12×) and foot thickness (default.08×,.02–.5×). Existing game-clock envelope restores normal anatomy over the final two minutes. Check joint reach, continuous limb sampling, pooled piece scales and taller culling bounds. Scratch elephant, fox and badger mockups were explored earlier; not shipped artwork. Current build uses the game's own anatomy rather than those mockups.
 59. **Contour Dream:** vivid contour bands run across ground, animals and scenery. Shared world-height/position shading; a new small colour formula. A renderer mock was explored, not a production implementation. Related: Woodcut.
 60. **Bottomless:** the ground becomes a starfield, with creatures apparently standing over an abyss. Ground-material substitution rather than moving their gameplay positions. A renderer mock was explored. Related: Skylight.
 61. **Aurora Outlines:** luminous coloured edges replace most solid surfaces. Scene/depth edge filtering and bloom; an extra filter, not a free material toggle. A renderer mock was explored. Related: Cartoon.
 62. **Folded Space:** repeated mirrored sectors fold the forest around her. Screen-coordinate remapping; a renderer mock of the existing Kaleidoscope idea. Keep as a variant unless its experience is distinct enough for another recipe.
 63. **Sliced World:** horizontal world-height bands disappear, revealing stacked slices through animals and scenery. Shared clipping formula; check depth/shadow passes. Related: Cutaway.
-64. **The Audience:** amplify existing watching-tree lean and lag until the forest visibly follows her passage. `render/view/frameUniforms.ts` and `render/sprites.ts`. Related: Watched, Walking Wood.
+64. **The Audience:** amplify existing watching-tree lean and lag until the forest visibly follows her passage. Implemented in PR #1535 using `render/view/frameUniforms.ts` and the existing `render/sprites.ts` shader: 35 m watching radius, 4 m lean, 2 s lag, all adjustable in the Potion Lab, fading with the standard trip envelope. No new art or drawing pass; visual judgement awaits Ed's trip report. Related: Watched, Walking Wood.
 65. **Concertina:** shared scene deformation squeezes and stretches distance sideways. Extend the height/bend drawing path; keep CPU anchors consistent. Not an existing bend-axis slider. Related: Ravine, Little Planet.
 66. **Far Sight:** nearby scenery dissolves into haze while distant scenery is unnaturally crisp. Reverse/remap existing haze distance controls; check saturation and clamping. Related: Inverse Perspective.
 67. **The World Is Late:** her light, canopy opening and tree attention follow her past position, catching up when she stops. `rules/momentum.ts` retains about 1.5 seconds of witch positions; `render/view/frameUniforms.ts` has movable centres. Use available history, not an invented long recording.
@@ -184,7 +188,7 @@ Captured 2026-10-30. Numbers continue the original list for reference, **not rec
 70. **Borrowed Habits:** vegetation acquires nearby animals' idle quirks: sniffing, shivering, stretching and happy bouncing. `render/character.ts` supplies rhythms and pose offsets; scenery needs a source-selection rule. Interesting during quiet wandering too.
 71. **Someone Is Having a Bad Dream:** a legend's growing restlessness changes mist, grade and tree motion; its kin's arrival lets the scene relax. `rules/legends.ts` restlessness and `render/mood.ts` appearance controls. Candidate ordinary-play cue as well as a trip.
 72. **Too Much Happening:** nearby combat makes the scene increasingly luminous until a fight dissolves into light, then settles. Exaggerate `render/combatLight.ts`'s smoothed fight signal through `render/post.ts` bloom/grade. Related: Glow Up; comfort controls still apply.
-73. **The Forest Counts:** wind and mist advance in musical steps while she and animals remain fluid. Feed stepped `rules/beat.ts` time into scenery animation. Related: Stopmotion, but only scenery follows the beat.
+73. **The Forest Counts:** wind and mist advance in musical steps while she and animals remain fluid. Feed stepped `rules/beat.ts` time into scenery animation. Related: Stopmotion, but only scenery follows the beat. Implemented in [PR #1544](https://github.com/edsaperia/witch/pull/1544): held wind/mist time and a four-step filter on existing sound, with beat interval, scenery speed and sound-range controls; play review pending.
 74. **Spilling Habitats:** ground textures and habitat colours spill across borders while trees and inhabitants stay put. Animate existing `render/ground.ts` blend-warp controls from speed, musical distortion or attack preparation. Related: Breathing.
 75. **Seeing Through Seeing:** perceive the masks that erase the canopy to make her visible. Expose sprite transparency diagnostics and exaggerate existing cut-out raggedness. `seeShowAlpha` affects particular see-through passes, not the whole image; needs a visual trial.
 76. **Lovesick Leaves:** current affection controls nearby leaf colour, glow or motion. Use the decayed value from `rules/affection.ts`, not stale raw affection. Extend the existing leaf/lighting controls. Candidate gentle communication outside trips.
@@ -231,6 +235,21 @@ The mushrooms' new complementary-colour subtraction (`render/mushroomGlow.ts`) i
 The treehouse and its occupants remain visible while the forest disappears into black; the world returns outward from a doorway or from her feet. The existing house-loading reveal already does this with `Post.behind`, `behindAt` and `HOUSE_LAYER`. A test that skipped drawing the reveal's frames exposed the intermediate state. This could be a variant of Alone, driven by her distance from home or the trip envelope. It needs no new rendering pass; a deliberate version must include her ground-level sprite in the retained layer so she does not disappear when leaving the branch. Suggestion only, with no recipe assignment.
 
 ## Catalogue follow-up
+
+### Painting-style suggestions (discussion with Ed, 2026-10-31; not approved builds)
+
+- **Hexels** (Ed-requested suggestion, 2026-10-31): the world is reconstructed on a honeycomb grid instead of square pixels. Sample the existing scene texture at each hexagonal cell's centre and fill the cell with that colour. Reuse the existing low-resolution scene and post-processing pipeline; needs a hexagonal sampling formula and a finer output pass so the browser's square enlargement does not dominate. Suggested controls: cell size, grid orientation and border thickness. A geometric reconstruction variant, related to Chunky; no new world assets or gameplay system required. Idea only, not implemented or assigned a recipe.
+- **Stained Glass** (Ed-requested suggestion, 2026-10-31): the world becomes irregular coloured panes separated by dark lead-like borders, with existing bright spell lights glowing through them. Reconstruct the existing scene using a stable irregular-cell/Voronoi pattern, sampling one colour per pane; reuse bloom for the luminous appearance. Needs a small cell-pattern/edge shader and finer output reconstruction; arbitrary hand-authored pane silhouettes would require extra masks. Suggested controls: pane size, irregularity, border thickness, saturation and glow. Related to Mondrian's rectangular composition, but with irregular panes. Idea only, not implemented or assigned a recipe.
+
+Ed asked about potions making the world resemble Cubism, Mondrian, Impressionism or Expressionism instead of pixel art, without requiring close stylistic accuracy. No recipes assigned or effects implemented by this discussion.
+
+- **Mondrian:** scenery becomes an uneven rectangular composition in red, blue, yellow, white and black, with black dividers. Reuse the existing scene texture and composite pass; add a grid sampler and limited palette. A relatively cheap first approximation, not a reconstruction of objects.
+- **Expressionist:** unnatural contrasting colours, exaggerated outlines and warped perspective grow stronger near danger. Cross existing creature danger signals with grading, edge detection and distortion. A variant combining existing trips; needs a small local signal-to-screen mapping if distortion follows individual animals.
+- **Impressionist:** overlapping brush-shaped dabs replace square pixels, colours borrowed from nearby scene samples with existing blur/bloom. Needs a new brush reconstruction shader; world anchoring or depth-aware stability would be extra work. Camera movement must not turn the paint into distracting crawling noise.
+- **Cubist:** angular facets each sample a shifted/rotated part of the same scene, breaking silhouettes into overlapping views. A small facet/UV shader, related to Kaleidoscope. Truly showing different sides of animals would require additional renders and is not the cheap version.
+- **Woodcut:** extend catalogue34 above rather than duplicate its recipe.
+
+Current pixelation has two layers: low-resolution generated sprite artwork with nearest texture filtering, and a low-resolution scene canvas enlarged by the browser with nearest-neighbour sampling (`View.resize`, default pixelSize3, snapped to whole device pixels). A smooth painting effect needs a finer output reconstruction pass, not merely changing the palette. Keeping the scene small while reconstructing its output could be cheaper than rendering the entire world at display resolution; cost and visual quality remain unmeasured.
 
 - The earlier questions about six mushroom names, 56 recipe assignments and replacing Underwater with CRT are superseded by the nine colours and 165 fixed combinations in the developer recipe book (Ed, 2026-10-31). Unassigned entries remain available for future suggestions.
 - Bag capacity is unlimited and knockout loses no mushrooms (Ed, 2026-10-30); carried stock and baskets persist across nights and voyages (Ed, 2026-10-31).
