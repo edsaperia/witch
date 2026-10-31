@@ -1529,6 +1529,7 @@ describe("ground cover (Ed, v171)", () => {
 
 describe("music by proximity (Ed, 2026-10-04)", () => {
   const M = TUNING.music;
+  // Retain extent: farDist and 2*farDist listener samples must keep the original coastal attenuation geometry.
   const g0 = newGame(6, TUNING), map = g0.map; // the game's own map
   g0.party.bootFrom = 0; g0.party.bootUntil = bootSeconds(map); // (off her decks at the start)
   const atW = (x: number, z: number, time: number) => { const g = at(x, z, time); return [g, g.witch] as const; };
@@ -1718,11 +1719,11 @@ describe("the simulation (Stage 4)", () => {
 });
 
 describe("the dash (Ed, 2026-10-04)", () => {
-  const ready = () => { const g = newGame(321, TUNING); g.clock.paused = false; g.witch = { ...g.witch, seated: false, perch: false }; return g; };
+  const ready = (local = false) => { const g = newGame(321, local ? smallWorldTuning(TUNING, "Dash timing, buffering and immunity need local movement space only.") : TUNING); g.clock.paused = false; g.witch = { ...g.witch, seated: false, perch: false }; return g; };
   const run = (g: ReturnType<typeof newGame>, n: number, c: Partial<Parameters<typeof stepGame>[1]> = {}) => { for (let i = 0; i < n; i++) stepGame(g, { moveX: 0, moveZ: 0, toggleMode: false, zoom: 0, ...c }, STEP); };
 
   it("blinks dash.distance metres the way she steers in one step, gone for a moment, then waits out its cooldown", () => {
-    const g = ready(), x0 = g.witch.x, z0 = g.witch.z;
+    const g = ready(true), x0 = g.witch.x, z0 = g.witch.z;
     run(g, 1, { dash: true, moveX: 0, moveZ: -1 });
     // One step: there already, no travel between.
     expect(z0 - g.witch.z).toBeGreaterThan(TUNING.dash.distance * 0.8);
@@ -1737,7 +1738,7 @@ describe("the dash (Ed, 2026-10-04)", () => {
   });
 
   it("holds a press made just before it's ready (dash.buffer), and lets go of one made too early", () => {
-    const g = ready(), D = g.witches[0].dash;
+    const g = ready(true), D = g.witches[0].dash;
     run(g, 1, { dash: true, moveX: 0, moveZ: -1 });
     const first = D.at;
     // Too early: pressed well over dash.buffer before it's ready, it's forgotten.
@@ -1784,6 +1785,7 @@ describe("the dash (Ed, 2026-10-04)", () => {
   });
 
   it("never lands in a tree trunk", () => {
+    // Retain extent: searches the seeded forest beyond home's meadow for twelve collision candidates.
     const g = ready();
     const out = g.map.homeRadius + 60, trees = [[1, 1], [1, -1], [-1, 1], [-1, -1]].map(([sx, sz]) => g.forest.treesNear(g.witch.x + sx * out, g.witch.z + sz * out, 40)).find(t => t.length > 0) ?? []; // (beyond home's meadow, where trees grow: the first way off it with some)
     expect(trees.length).toBeGreaterThan(0);
@@ -1802,7 +1804,7 @@ describe("the dash (Ed, 2026-10-04)", () => {
   });
 
   it("can't be hit while she's gone", () => {
-    const g = ready(), W = g.witches[0], hp = () => JSON.stringify(W.health);
+    const g = ready(true), W = g.witches[0], hp = () => JSON.stringify(W.health);
     run(g, 1, { dash: true, moveX: 1, moveZ: 0 });
     const before = hp();
     hitWitch(g, 0, g.clock.time);
