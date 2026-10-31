@@ -101,6 +101,7 @@ const SPRITE_CHECKS = async ({ names, only, candidate }) => {
   task("species-sprites", async () => {
     const { standingWitchHeight, occupiedHeight, sizePixelRange } = await import("/art/creature-size.js"), { SIZE_CLASS_BY_ID, sizeTargetPixels } = await import("/art/genome/size-ranks.js");
     const witch = standingWitchHeight(st), rankedHeights = new Map();
+    const revised=st.creatureSizeCandidate===1,{candidateSizePixels}=await import("/art/genome/size-candidate.js");
     for (const S of SPECIES) {
     const { connectivityRegression } = await import("/art/genome/connectivity.js");
     const connectedStats = (level, frame, facing, what) => {
@@ -114,11 +115,11 @@ const SPRITE_CHECKS = async ({ names, only, candidate }) => {
     { const a = connectedStats(2, 0, "away", `${S.id} adult turned away`); res.push({ what: `${S.id} adult turned away`, good: a.n > 20 && a.bottom > 0, info: `${a.w}x${a.h}` }); }
     // 6520501406/6520542543 explicitly supersede the old BODY-height ratios:
     // enforce rank-positioned age bands and full occupied decorative presence.
-    const full = [0,1,2,3].map(level => occupiedHeight(G.critter(S.id,level,0,st))), target = [0,1,2,3].map(level => sizeTargetPixels(S.id,level,witch));
+    const full = [0,1,2,3].map(level => {const sp=G.critter(S.id,level,0,st);return revised?sp.sizeFit?.bodyHeight:occupiedHeight(sp);}), target = [0,1,2,3].map(level => (revised?candidateSizePixels:sizeTargetPixels)(S.id,level,witch));
     rankedHeights.set(S.id,full);
     // 6523246311: ±1px only inside bounds that retain bands and hard ordering.
-    res.push({what:`${S.id}: rank-positioned occupied age bands against standing witch ${witch}px (at most ±1px)`,good:full.every((h,l)=>{const [lo,hi]=sizePixelRange(S.id,l,witch);return h>=lo&&h<=hi;}),info:`target ${target.join("/")}; occupied ${full.join("/")}`});
-    res.push({what:`${S.id}: strict occupied growth and legend full presence at least 1.75x adult`,good:full[0]<full[1]&&full[1]<full[2]&&full[2]<full[3]&&full[3]>=full[2]*1.75,info:full.join(" < ")});
+    res.push({what:`${S.id}: rank-positioned ${revised?'body':'occupied'} age targets against standing witch ${witch}px (at most ±1px)`,good:full.every((h,l)=>{const [lo,hi]=sizePixelRange(S.id,l,witch,revised);return Number.isFinite(h)&&h>=lo&&h<=hi;}),info:`target ${target.join("/")}; measured ${full.join("/")}`});
+    res.push({what:`${S.id}: strict age growth${revised?' (Ed 2026-10-31 body targets)':' and legend at least 1.75x adult'}`,good:full[0]<full[1]&&full[1]<full[2]&&full[2]<full[3]&&(revised||full[3]>=full[2]*1.75),info:full.join(" < ")});
   }
     const bad=[],clearPairs=[["tiger","cat"],["wolf","fox"],["fox","stoat"],["elephant","rhino"]];
     for(const a of SPECIES)for(const b of SPECIES)if(SIZE_CLASS_BY_ID[a.id]>=SIZE_CLASS_BY_ID[b.id]+2||clearPairs.some(([big,small])=>big===a.id&&small===b.id))for(const level of [0,1,2])if(rankedHeights.get(a.id)[level]<=rankedHeights.get(b.id)[level])bad.push(`${a.id} <= ${b.id} at ${level}`);

@@ -439,9 +439,10 @@
   {
    "name": "creatureSizeCandidate",
    "values": [
+    "0",
     "1"
    ],
-   "does": "Opts into Ed's revised body-size mockups; absent stays off pending review.",
+   "does": "Revised creature sizes are on by default; 0 compares the previous sizes.",
    "group": "compare",
    "since": "2026-10-31",
    "readIn": [

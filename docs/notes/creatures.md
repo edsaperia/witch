@@ -34,15 +34,15 @@ Ed resolved the size-range hold: small adults must remain readable, babies and
 youths distinguishable, adults larger where useful, and legends notably larger
 within a species but smaller overall. The smallest legends may match the largest
 adults. This supersedes the former universal age bands and 1.75 legend minimum
-for the review candidate only. `?creatureSizeCandidate=1` explicitly opts in;
-the absent switch preserves the previously reviewed sizes.
+for the revised sizes. Ed adopted them in game at 13:26 UTC, cancelling the
+mockups. Revised sizes are the default; `?creatureSizeCandidate=0` compares
+the previous size model. Existing redesign selection is unchanged.
 
 `art/genome/size-candidate.js` maps the existing mass cohorts to adult body
 targets 65–200 native pixels at the actual 43px standing witch, with wolf120.
-Baby/youth use 45%/70% adult; legend targets200–280. These are candidate values,
-not adopted product contracts. Calibration excludes volumes already marked
+Baby/youth use 45%/70% adult; legend targets200–280. Calibration excludes volumes already marked
 `extra` by the anatomy builders and floating motes; the complete original model
 is drawn at that scale, preserving ornaments, gear, anatomy and gameplay radii.
 `sizeFit.bodyHeight` reports the measured anatomical silhouette separately.
-Full native raster/scene coverage and Ed's visual adoption are still pending.
+CI remains the release gate; the cancelled scene captures are not required.
 The fixture manifest is `tools/body-graph/size-candidate-scenes.json`.

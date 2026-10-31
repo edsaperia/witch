@@ -6,7 +6,7 @@ import {critter} from "../art/creatures.js";
 import {defaultStyle} from "../art/generator.js";
 import gameStyle from "../config/style.json";
 import tuning from "../config/tuning.json";
-const st={...defaultStyle(),...gameStyle,artStyle:"bold",pixel:tuning.pixelSize};
+const st={...defaultStyle(),...gameStyle,creatureSizeCandidate:0,artStyle:"bold",pixel:tuning.pixelSize}; // retained old-size comparison
 it("covers every species exactly once and keeps continuous age targets ordered",()=>{
   const ids=SIZE_CLASSES.flat();expect(new Set(ids).size).toBe(ids.length);expect(ids.slice().sort()).toEqual(Object.keys(GENOME_BY_ID).sort());
   for(const level of [0,1,2,3])for(let i=1;i<SIZE_CLASSES.length;i++)expect(sizeMultiplier(SIZE_CLASSES[i][0],level)).toBeGreaterThan(sizeMultiplier(SIZE_CLASSES[i-1][0],level));

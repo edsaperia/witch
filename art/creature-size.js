@@ -46,7 +46,7 @@ export function fitOccupiedCreature(model,options,S,level,st,decorate) {
   const draw=(model,opts)=>{stats[opts.occupiedOnly?"probes":"rasters"]++;return render(model,opts);};
   const key=JSON.stringify([S,level,st,model.parts,model.flats,options.facing]);
   const cached=fittedScales.get(key);
-  if(cached!=null)return {options:{...options,...cached},stats};
+  if(cached!=null)return {options:{...options,...cached},stats:{...stats,bodyHeight:cached.bodyHeight}};
   const atScale=model.atScale,parts=model.parts.slice(),flats=model.flats.slice(),partState=parts.map(p=>({...p})),part=model.part;
   const reset=()=>{model.parts=parts.slice();model.flats=flats.slice();model.part=part;for(let i=0;i<parts.length;i++)Object.assign(parts[i],partState[i]);model.atScale=atScale;};
   if(!(S.id==='snowleopard'&&S.sizes.motes?.[level])){
@@ -95,7 +95,7 @@ export function fitOccupiedCreature(model,options,S,level,st,decorate) {
     }
   }
   if(fittedScales.size>=128)fittedScales.delete(fittedScales.keys().next().value);
-  fittedScales.set(key,{scale:best.scale,samplePhaseY:best.samplePhaseY});
+  fittedScales.set(key,{scale:best.scale,samplePhaseY:best.samplePhaseY,bodyHeight:best.height});
   reset();if(atScale){model.atScale=null;atScale(best.scale);}
   return {options:{...options,scale:best.scale,samplePhaseY:best.samplePhaseY},sprite:best.sp,stats};
 }

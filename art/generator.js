@@ -163,7 +163,7 @@ export const KNOBS = [
   { k: "phonesHue", g: "Witch", label: "Headphones hue", min: 0, max: 1, step: 0.01, v: 0.92, hue: true },
 ];
 export const GROUPS = ["Night light", "Shading", "Colour", "Trees", "Tree mix", "Undergrowth", "Map", "Creatures", "Witch"];
-export function defaultStyle() { const s = {}; KNOBS.forEach(k => s[k.k] = k.v); return s; }
+export function defaultStyle() { const s = {creatureSizeCandidate:1}; KNOBS.forEach(k => s[k.k] = k.v); return s; } // Ed adopted revised sizes, 2026-10-31; link =0 compares old sizes
 export function mutate(style, strength, groups, seed) {
   const r = rng(seed), s = { ...style };
   for (const k of KNOBS) {

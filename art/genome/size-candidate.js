@@ -1,8 +1,8 @@
 import { SIZE_CLASS_BY_ID } from "./size-ranks.js";
 
 // Ed, 2026-10-31: readable small adults, distinct babies/youths, larger
-// useful adults and less oversized legends. Review candidate only; callers
-// must explicitly opt in. Values are native body pixels at a 43px witch.
+// useful adults and less oversized legends. Ed adopted these in game at
+// 13:26 UTC; =0 retains the old comparison. Native body pixels at a 43px witch.
 export const SIZE_CANDIDATE = "body-range-2026-10-31";
 export function candidateSizePixels(id, level, witchHeight = 43) {
   const rank = SIZE_CLASS_BY_ID[id];

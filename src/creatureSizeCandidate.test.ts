@@ -2,10 +2,17 @@ import { describe, expect, it } from "vitest";
 import { SIZE_CLASSES } from "../art/genome/size-ranks.js";
 import { candidateSizePixels } from "../art/genome/size-candidate.js";
 import {critter,defaultStyle} from "../art/generator.js";
+import {styleFromLink} from "./app/viewParams";
+import {withTuning} from "./rules/tuning";
 
 describe("Ed's opt-in body size candidate", () => {
+  it("enables revised sizes by default after Ed's adoption",()=>expect(defaultStyle().creatureSizeCandidate).toBe(1));
+  it("lets Ed compare old sizes from the game link",()=>{
+    expect(styleFromLink(new URLSearchParams(),withTuning({})).creatureSizeCandidate).toBe(1);
+    expect(styleFromLink(new URLSearchParams("creatureSizeCandidate=0"),withTuning({})).creatureSizeCandidate).toBe(0);
+  });
   it("fits anatomical bodies only when opted in and isolates the sprite cache", () => {
-    const st=defaultStyle(), before=critter("dormouse",2,0,st);
+    const st={...defaultStyle(),creatureSizeCandidate:0}, before=critter("dormouse",2,0,st);
     for(const id of ["dormouse","wolf","elephant"])for(const level of [0,1,2,3]){
       const sp=critter(id,level,0,{...st,creatureSizeCandidate:1});
       expect(sp.sizeFit.bodyTarget).toBe(candidateSizePixels(id,level));
