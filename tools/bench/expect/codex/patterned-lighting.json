@@ -1,1 +1,7 @@
-{"reason":"Opt-in patterned-light preview; default remains off pending visual/GPU review.","frames":{},"rules":{}}
+{
+  "reason": "Patterned lighting on by default, Ed 2026-10-31 16:49 UTC; hardware cost and release acceptance remain gated separately.",
+  "frames": {
+    "boot": "The existing home-light pattern intentionally attenuates lit foliage and booth/deck shading. Artifact13051754654 confirms972 darker RGB pixels, no alpha/size/position/start-state change; gameplay and other scenes remain undeclared."
+  },
+  "rules": {}
+}
