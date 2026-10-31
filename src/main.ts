@@ -79,6 +79,12 @@ import { guidanceOf, seeGuide, GUIDANCE_HOOKS } from "./rules/guidance";
 import { addNew, dropNew, loadGuide, storeGuide } from "./app/guideSave";
 import { GuidePin } from "./render/view/guidance";
 import { warmChart } from "./app/chartWarm";
+import { nearestGroundTargets } from './app/groundWarm';
+import { warmGroundPrograms } from './render/groundWarm';
+import { resetTravelSeeds } from './app/travelSeeds';
+import { islandAt } from './app/chartLayout';
+import { unlocked } from './app/chartSave';
+import { isPlaceholder, REAL_KINDS } from './rules/rosters';
 import { powerLines } from "./app/hud";
 import { NewBuildNotice } from "./app/newBuild";
 import { SPRITE_UNIFORMS } from "./render/sprites";
@@ -115,6 +121,9 @@ import { replayRecording } from "./platform/inputRecording";
 import { snapshotGame } from "./rules/nightSnapshot";
 import { nightSaveNotice } from "./ui/resumeNight";
 import { restoreSettingsBase } from "./app/playerSettings";
+
+let groundWarmEnabled = false, groundWarmView: View | null = null, groundWarmer: ReturnType<typeof warmGroundPrograms> | null = null;
+let groundWarmTargets: string[] = [];
 
 declare const __BUILD__: string;
 const BUILD = typeof __BUILD__ === "string" ? __BUILD__ : "dev";
@@ -738,7 +747,7 @@ const decidePanel = (open: boolean) => {
 };
 if (params.has("decide")) decidePanel(true);
 window.addEventListener("keydown", e => { if (e.code !== "F2") return; e.preventDefault(); if (decide) decide.toggle(); else decidePanel(true); });
-document.addEventListener("visibilitychange", () => { if (document.hidden) N().flags.last = 0; });
+document.addEventListener("visibilitychange", () => { if (document.hidden) { N().flags.last = 0; groundWarmer?.pause(); } });
 
 const endedNights = new WeakSet<Game>();
 const commentBook = new CommentBook(browserCommentStore()), breadcrumbs = new Breadcrumbs();
@@ -1193,10 +1202,33 @@ function frame(now: number): void {
     } catch (error) { logCaughtError(error, "slow-frame observation"); }
   }
 }
+// Opt-in until an allocated probe proves renderer reuse and safe eligibility exits.
+const groundWarmEligible = () => {
+  if (!groundWarmEnabled) return false;
+  const n = N(), p = n.params;
+  return groundWarmEnabled && !p.has('debug') && !p.has('lakelook') && p.get('creator') !== '1' &&
+    !loop.manual && !sailing && !document.hidden && !freeze.frozen && n.flags.ready && !landingSleep.holds(n.game) &&
+    (!n.arrival || n.flags.landed) && (chartOpen() || (!!n.game.witches[0]?.body.perch && n.game.witches[0].body.mode === 'ground'));
+};
+function tickGroundWarm(): void {
+  if (!groundWarmEnabled) { groundWarmer?.pause(); resetTravelSeeds(''); return; }
+  const n = N(), enabled = groundWarmEnabled, world = chartWorld(), here = n.tuning.map?.island || 'home';
+  resetTravelSeeds(enabled ? `${world}|${n.game.seed}|${here}` : '');
+  if (!groundWarmEligible()) { groundWarmer?.pause(); return; }
+  if (groundWarmView !== view) { groundWarmer?.dispose(); groundWarmView = view; groundWarmer = warmGroundPrograms(view, groundWarmEligible, chartWorld); }
+  const save = loadSave();
+  const context = `${world}|${n.game.seed}|${here}|${JSON.stringify(save.found)}|${unlockAll()}|${JSON.stringify(n.tuning)}|${JSON.stringify(currentSettings())}`;
+  const from = {id:here,...(islandAt(here, world) ?? {x:0,y:0})};
+  const ids = (unlockAll() ? ['home', ...REAL_KINDS] : unlocked(save)).filter(id => !isPlaceholder(id));
+  const targets = nearestGroundTargets(ids.map(id => ({id,...(islandAt(id, world) ?? {x:0,y:0})})), from).map(t => t.id);
+  groundWarmTargets = targets;
+  groundWarmer!.tick(context, targets);
+}
 function frameBody(now: number): void {
   requestAnimationFrame(frame);
-  if (loop.manual) return;
-  if (sailing) { sound.tickSail(); return; } // (the next island being made after a sail in place: nothing stepped or drawn, the sea and the wind heard)
+  if (!groundWarmEligible()) groundWarmer?.pause();
+  if (loop.manual) { groundWarmer?.pause(); return; }
+  if (sailing) { groundWarmer?.pause(); sound.tickSail(); return; } // (the next island being made after a sail in place: nothing stepped or drawn, the sea and the wind heard)
   // The night on now, read afresh each frame (app/night.ts): its game, tuning, playtest run, HUD, arrival and flags.
   const { game, tuning, playtest, hud, arrival, flags: F } = N();
   if (F.ready && !F.frame1) { F.frame1 = true; mark("game:frame1"); if (!arrival) { logTiming(); clearCarried(); } }
@@ -1265,6 +1297,7 @@ function frameBody(now: number): void {
   // 🔇 alarm (render/alarm.ts) shows whenever she's away from them.
   if (ATTACK_DEBUG && !game.clock.paused) { const tt = game.clock.time, ph = tt % 10; if (ph < 4 && Math.floor(tt * 2) !== F.attackTick) { F.attackTick = Math.floor(tt * 2); debugBlows(game.combat.sounds, game.combat.events, game.witch.x, game.witch.z, tt); } }
   const stepMs = performance.now() - step0;
+  tickGroundWarm(); // After movement: leaving the treehouse stops preparation/polls in this same frame.
   measuredStep = stepMs; measuredParts["update.input-and-rules"] = stepMs;
   // E at the treehouse deck's map table (rules/treehouse.ts): the sea chart over the game, to sail from at any time (Ed, 2026-10-11:
   // "Sail anytime"); mid-night that ends the night unwon: played, nothing found (app/chartSave.ts), as a loss.
@@ -1425,6 +1458,9 @@ requestAnimationFrame(frame);
 
 // For the smoke test, the tools and for poking at in the console (app/hooks.ts).
 installHooks({ night: N, view, sound, meter, shake, frameStats, ladder, loadTimes, loop, advance: (game, controls, dt) => recordedStep(game, controls, dt, BUILD, captureRecording) });
+Object.defineProperty((window as unknown as {witch: object}).witch, 'precompileGround', {get:()=>groundWarmEnabled, set:(on: boolean)=>{ groundWarmEnabled = on === true; if (!groundWarmEnabled) { groundWarmer?.pause(); resetTravelSeeds(''); } }});
+Object.defineProperty((window as unknown as {witch: object}).witch, 'groundWarmStatus', {get:()=>({enabled:groundWarmEnabled,eligible:groundWarmEligible(),targets:groundWarmTargets,...groundWarmer?.status})});
+addEventListener('pagehide', () => { groundWarmer?.dispose(); groundWarmer = null; groundWarmView = null; });
 // witch.take(kind, item): tonight's find taken where she stands, as E at it takes it (the kind's claim, the hats' floor, the loan):
 // for the tools (tools/loan/shots.cjs) to look at a night with a find on loan without walking to it.
 (window as unknown as { witch: Record<string, unknown> }).witch.compareKey = keyNow;

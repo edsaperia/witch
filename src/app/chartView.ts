@@ -19,6 +19,7 @@ import { TUNING } from "../rules/tuning";
 import { islandSigil } from "../../art/sigils.js";
 import { CHART_PIXEL, releaseSeaChart, SeaChart, takeSeaChart, type ChartIsland, type FlightEnd, type FlyOptions } from "../render/chart/seaChart";
 import { loadSave, unlocked, unvisited, type ChartSave } from "./chartSave";
+import { offeredTravelSeed, rememberTravelSeed } from './travelSeeds';
 import { unlockAll } from "./debugUnlock";
 import { ChartPin } from "../render/chart/chartPin";
 import { islandAt } from "./chartLayout";
@@ -217,7 +218,7 @@ export function mountChart(host: HTMLElement, opts: ChartViewOptions): ChartView
   // still hers when she comes back to it)
   const seeds = new Map<string, number>();
   const dive = diveOptions(); // (where its flights hand over: the tuning's, or ?dive='s)
-  const seedOf = (id: string) => { let s = seeds.get(id); if (s === undefined) { s = Math.floor(Math.random() * 1000000); seeds.set(id, s); } return s; };
+  const seedOf = (id: string) => { let s = seeds.get(id); if (s === undefined) { s = offeredTravelSeed(worldNow(), id) ?? Math.floor(Math.random() * 1000000); seeds.set(id, s); rememberTravelSeed(worldNow(), id, s); } return s; };
   const bakeFor = (id: string | null) => {
     if (!sailing || mini || bake?.island === id) return;
     void bake?.job.then(b => b?.stop());
