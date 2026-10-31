@@ -337,6 +337,8 @@ async function main() {
 
   // The ground effects (tree shadows, canopy shadow, mist) off and on, from the same spot, and a
   // short recording in motion with them on.
+  // Retain the authored default island: this walk must frame its ground, paths and forest. The four-area trial
+  // produced mostly empty effects frames in the coordinator's comparison (6537756688), so it is not equivalent coverage.
   for (const [name, q] of [["effects-off", "&shadows=off&canopy=off&mist=off"], ["effects-on", ""]]) {
     await run(name, { width: 1280, height: 720 }, async page => {
       await page.keyboard.press("Enter");
@@ -348,7 +350,7 @@ async function main() {
       await page.waitForFunction(() => window.witch.game.witch.mode === "treetop", null, { timeout: 240000 });
       await sleep(600);
       await shot(page, `31-treetop-${name}.png`);
-    }, `&island=4${q || "&debug"}`); // Local ground/canopy effects comparison; distant area diversity is covered separately.
+    }, q);
   }
   // The party spreading: one area partifying (shots through its transition, from the treetops),
   // its string lights from the ground, then the party after four waves from high up.
