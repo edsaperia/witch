@@ -59,6 +59,33 @@ it("rebases after loading and advances the existing host only once through its r
   expect(snapshotGame(f.guest.game!)).toEqual(snapshotGame(f.hostGame));
   expect(f.guestOptions.synchronized).toHaveBeenCalledTimes(1);
 });
+it("pauses only with both pause pages open and resumes when either leaves", async () => {
+  const f = fixture(), { joined } = await f.start(); await f.sync(); await joined;
+  const frame = (hostPause: boolean | undefined, guestPause: boolean | undefined) => {
+    f.guest.step({ ...input(), ...(guestPause === undefined ? {} : { pausePage: guestPause }) }, .05);
+    f.host.message(f.guestMessages.at(-1)!);
+    f.host.step({ ...input(), ...(hostPause === undefined ? {} : { pausePage: hostPause }) }, .05);
+    f.guest.message(f.hostMessages.at(-1)!);
+    expect(f.guest.game!.clock.paused).toBe(f.hostGame.clock.paused);
+    expect(f.guest.game!.clock.time).toBe(f.hostGame.clock.time);
+  };
+  const before = f.hostGame.clock.time;
+  f.hostGame.clock.paused = true; // A local menu must not become a shared pause vote.
+  frame(undefined, undefined); expect(f.hostGame.clock.paused).toBe(false);
+  frame(true, false); expect(f.hostGame.clock.paused).toBe(false); expect(f.hostGame.clock.time).toBeGreaterThan(before);
+  const running = f.hostGame.clock.time;
+  frame(true, true); expect(f.hostGame.clock.paused).toBe(true); expect(f.hostGame.clock.time).toBe(running);
+  frame(true, false); expect(f.hostGame.clock.paused).toBe(false); expect(f.hostGame.clock.time).toBeGreaterThan(running);
+  frame(true, true); const paused = f.hostGame.clock.time;
+  frame(false, true); expect(f.hostGame.clock.paused).toBe(false); expect(f.hostGame.clock.time).toBeGreaterThan(paused);
+  frame(true, true);
+  frame(undefined, undefined); expect(f.hostGame.clock.paused).toBe(false);
+  expect(f.hostGame.witches.every(w => !w.paused)).toBe(true);
+  frame(true, true); const expiredAt = f.hostGame.clock.time;
+  f.advanceTime(251); f.host.step({ ...input(), pausePage: true }, .05); f.guest.message(f.hostMessages.at(-1)!);
+  expect(f.hostGame.clock.paused).toBe(false); expect(f.hostGame.clock.time).toBeGreaterThan(expiredAt);
+  expect(f.guest.game!.clock.paused).toBe(false);
+});
 it("does not accept an unassigned player's input and expires a guest's held controls", async () => {
   const f = fixture(), { joined } = await f.start(); await f.sync(); await joined;
   f.host.message({ type: "input", player: 0, payload: { sequence: 999, controls: input(-1) } });

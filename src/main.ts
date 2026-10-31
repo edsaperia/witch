@@ -1289,7 +1289,7 @@ function frameBody(now: number): void {
   if (recordedInput !== lastRecordedInput || game.clock.time - lastInputAt >= 1) { breadcrumbs.add(game, "input", c); lastRecordedInput = recordedInput; lastInputAt = game.clock.time; }
   if (params.get("cauldron") === "1" && !game.cauldron) mutate("cauldron: enable legacy preview", () => enableCauldron(game, homeMushroomPickups(game))); // Explicit compatibility preview; ordinary nights use the nine-colour mushroom system.
   const rulesDt = fightDt(dt * (botTag?.speed ?? 1));
-  if (!phone.step(game, c, rulesDt)) recordedStep(game, c, rulesDt, BUILD, captureRecording); // Solo retains its original controls and step.
+  if (!phone.step(game, { ...c, pausePage: freeze.frozen }, rulesDt)) recordedStep(game, c, rulesDt, BUILD, captureRecording); // Only the pause page votes online; solo retains original controls/step.
   for (const [kind, events] of [["ko", game.koEvents], ["quest", game.questEvents], ["spell", game.combat.spells?.events ?? []]] as const) for (const event of events) { breadcrumbs.add(game, kind, event); if (kind !== "spell") notable(kind, `${kind} event`, event); }
   rumble.update(game, currentSettings(), input.device === "pad" && !document.hidden ? [freeze.pad()] : [], now);
   // ?debug=attack: every 10 s, a few seconds of blows on the two soundsystems farthest from her (never felling one), so the

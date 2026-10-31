@@ -158,6 +158,8 @@ export function onlineSession(options: SessionOptions) {
       if (!role || !connection || !game) return role === "guest";
       try {
         const controls = wireControls(input); if (!controls) throw new Error("Invalid local online controls");
+        // Only the pause page votes to pause. Ordinary menus and omitted input never retain an old vote.
+        controls.pausePage = input.pausePage === true;
         if (role === "guest") { if (ready && !connection.sendInput({ sequence: sequence++, controls })) throw new Error("The guest telephone disconnected."); return true; }
         if (!present) return false;
         // Page-owned station mutations are not controls. Coalesce them at this ordered boundary,
@@ -176,7 +178,9 @@ export function onlineSession(options: SessionOptions) {
           if (!connection.sendState({ kind: "station", tick, choices: approved })) throw new Error("The station choice couldn't be sent to your friend.");
           for (const request of approved) options.stationApplied?.(request.player, request.choice);
         }
-        const frame = replayHostStep(game, [controls, ready ? buffer.sample(now()) : wireControls({})!], dt, ++tick, options.advanceHost);
+        const guestControls = ready ? buffer.sample(now()) : wireControls({})!;
+        guestControls.pausePage = guestControls.pausePage === true;
+        const frame = replayHostStep(game, [controls, guestControls], dt, ++tick, options.advanceHost);
         beatSegments = game.beat.segs;
         if (ready && !connection.sendState({ kind: "frame", frame })) throw new Error("The host telephone disconnected.");
         return true;
