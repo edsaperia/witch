@@ -1,5 +1,7 @@
 # Rare-screen splitting
 
+ARCHIVED 2026-10-31, PR #1520. Historical proposal only; the unused seam has been removed. Baseline and estimate now live beside this file; see [decision summary](README.md). Paths in the original narrative below describe its original checkout.
+
 STOPPED/UNSHIPPED by COORDINATOR6534772261/6534776616 (2026-10-30): the modeled~25KB initial-gzip saving does not justify integration risk. Retain this baseline/estimate/unused seam as a record; no milestone3. House first-show work replaces both proposed Creator options on this same PR/branch; see house-first-show-plan.md. Do not interpret the earlier approved plan below as continuing authorization to split screens.
 
 Assignment: COORDINATOR6533895669 on PR1493,2026-10-30, after robustness shipped as v6031. Fresh branch `codex/rare-screens`, isolated `work/rare-screens`, starting from fetched `origin/claude/prototype` at0389ac1e8970523e83c630caf70213f1d568b1c3. This PLAN precedes implementation. PR1493's logging/direct-play/What's-new work is complete; do not replay it.

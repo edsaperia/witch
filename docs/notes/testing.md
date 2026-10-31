@@ -1,5 +1,13 @@
 # Testing tools
 
+Current execution ownership (2026-10-31): builders run typecheck and nearby tests with one worker, plus the art check when art is touched, subject to the coordinator's browser allocation. The coordinator owns combined full-suite/smoke/browser acceptance. The historical “builders before a FINAL” full-smoke instruction below is superseded by CLAUDE.md's Builders and the coordinator section.
+
+CI now builds one `game-dist` artifact per tested revision. Main deploy has priority before checks; PR preview publication runs beside checks after build. Unit selection is `tools/ci/run-unit.mjs`, with conservative full fallback; smoke, largest-world proof and benchmark head reuse the build. Version labels use CI run number with no offset; always verify the served SHA for browser checks. See `.github/workflows/ci.yml` for the exact gates.
+
+The [2026-10-31 CI flake audit](../reports/ci-flakes-2026-10-31.md) records original and rerun evidence, separately from deterministic failures and cancellations. It does not authorize another rerun or a timeout increase.
+
+Effects-off/on smoke scenes (`ONLY=effects-off,effects-on`) now wait for complete island art, forest and ground, idle art jobs, requested flight mode and actual drawing (>20 trees, at least one batch, >15 draw calls). They require >40 six-bit canvas colours, the existing quick-smoke nonblank criterion, before holding that frame for its screenshot. Readiness counters alone cannot accept a black frame. This proves a complete, nonblank scene; it does not claim pixel parity or measure the visual strength of each effect. Canonical base/candidate cloud comparisons remain coordinator-owned.
+
 ### Sleep-cell ownership invariant (A7 audit, 2026-10-30; diagnosed 2026-10-31)
 
 PR #1496 exposed a raw-cell assertion failure using the largest shipped home world: game seed `123`, world `0`, shape seed `1063814361`, all 64 found kinds (64 roster areas plus home). Newt `#18` physically sleeps in cell `21,12`, while its ownership cell `c.cell` is `21,11`. These are intentionally one logical area: Ed's 2026-10-26 legend-area design gives an extra legend cell the ownership of its paired playable cell (`map.legendAreas`, `areaOf`, `sameArea`). The old test and diagnostic incorrectly required physical cell equality.

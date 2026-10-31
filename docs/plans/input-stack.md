@@ -1,5 +1,7 @@
 # Input/overlay stack, then the big-file split (brief)
 
+STATUS 2026-10-31: PR #1495 shipped the stack foundation and pause migration, included in v6478. The later panels and view/main split remain deferred, not implicitly authorized by this historical brief. Current ownership and held-input behavior are in [run notes](../notes/run.md); foundation-era “pending” statements below are historical.
+
 From the 2026-10-30 architecture review, approved by Ed:
 - `main.ts` holds about 40 top-level mutable flags (sailing, chartHeld, zooPaused, dreamAsleep, menuGone…). It checks open/frozen state 43 times and builds a 6-flag string to notice mode changes (around main.ts:1095).
 - 33 keydown/keyup listeners are spread over 20 files.

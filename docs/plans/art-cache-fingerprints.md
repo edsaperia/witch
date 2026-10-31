@@ -1,5 +1,7 @@
 # Per-art-kind cache fingerprints — plan
 
+COMPLETED in PR #1487 and follow-ups #1500, included in v6478 (2026-10-31). The plan-only/currently wording below records the starting state. The shipped dependency map and replay evidence live in [art-cache-fingerprints](../notes/art-cache-fingerprints/README.md); uncertain dependencies still broaden invalidation.
+
 Branch: `codex/art-hash`, based on `909f00aeed24a72654b1a48c04faad4ac558e865`
 (`origin/claude/prototype`). Coordinator brief: PR1477/comment6522208139,
 2026-10-30. This commit is a plan only; no cache or drawing behavior changes.
