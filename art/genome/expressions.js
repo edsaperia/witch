@@ -26,8 +26,8 @@ export const FACE_DEFAULT = { brow: "bar", happy: "arc", dazed: "x" };
 const faceEyeMats = new Set([M.EYE, M.IRIS, M.PUPIL, M.GLINT, M.MAGIC2]);
 
 // Out of the head along dir until the point is no deeper than `keep` inside the model.
-function faceSurface(m, p, dir, keep) {
-  for (let i = 0; i < 80 && m.field(p) < -keep; i++) p = v3.add(p, v3.mul(dir, keep * .25 + .002));
+function faceSurface(m, p, dir, keep, group) {
+  for (let i = 0; i < 80 && (group == null ? m.field(p) : m.groupField(group, p)) < -keep; i++) p = v3.add(p, v3.mul(dir, keep * .25 + .002));
   return p;
 }
 
@@ -38,11 +38,13 @@ export function faceUp(m, face, style = FACE_DEFAULT) {
   const A = m.anchors, head = A.head, eyes = A.eyes;
   face = JAW_FACES[face]?.face ?? face;
   if (!face || face === "neutral" || !head || !eyes || eyes.pts.length < 1) return;
-  m.atScale = P => faceDraw(m, face, { ...FACE_DEFAULT, ...style }, 1 / P);
+  m.atScale = P => {
+    for (const anchors of A.faces ?? [A]) faceDraw(m, face, { ...FACE_DEFAULT, ...style }, 1 / P, anchors);
+  };
 }
 
-function faceDraw(m, face, st, u) { // u: one pixel, in model units
-  const A = m.anchors, head = A.head, eyes = A.eyes, E = Math.max(eyes.size, u * 1.6); // the eye's radius, never under a pixel and a half
+function faceDraw(m, face, st, u, A = m.anchors) { // u: one pixel, in model units
+  const head = A.head, eyes = A.eyes, E = Math.max(eyes.size, u * 1.6); // the eye's radius, never under a pixel and a half
   const mid = eyes.pts.reduce((a, e) => v3.add(a, v3.mul(e, 1 / eyes.pts.length)), [0, 0, 0]);
   const fwd = unitVec(v3.sub(mid, head.c)), up = unitVec(v3.sub([0, 1, 0], v3.mul(fwd, v3.dot([0, 1, 0], fwd) * .6)));
   // the eyes' own parts: the ellipsoids sitting on each anchor
@@ -53,7 +55,7 @@ function faceDraw(m, face, st, u) { // u: one pixel, in model units
   const across = e => eyes.pts.length > 1 ? unitVec(v3.sub(e, mid)) : unitVec(v3.cross(fwd, up)); // out to the side, away from the middle
   for (const e of eyes.pts) {
     const out = unitVec(v3.sub(e, head.c)), a = across(e), mat = eyeMat(e);
-    const at = (x, y, keep = line * .5) => faceSurface(m, v3.add(v3.add(e, v3.mul(a, x * E)), v3.mul(up, y * E)), out, keep);
+    const at = (x, y, keep = line * .5) => faceSurface(m, v3.add(v3.add(e, v3.mul(a, x * E)), v3.mul(up, y * E)), out, keep, head.group);
     // ---- the eyes ----
     if (face === "angry") for (const q of m.parts) if (near(q, e)) q.r = [q.r[0], q.r[1] * .62, q.r[2]]; // narrowed
     if (face === "happy") {

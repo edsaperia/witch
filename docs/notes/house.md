@@ -4,6 +4,8 @@
 
 ## Treehouse layout editor
 
+Guest wake rules exports (`rules/wakeUp.ts`): `startWakeFor(g, time, options, W, {player, room})` selects an existing player and stable room ID; `bedFor(room)` and `doorFor(room)` return that room's configured objects (or undefined). Existing guest rooms are `bedroom2` and `bedroom3`; their bare frames count as beds. The caller retains room-access and equipment policy. Per-witch wake metadata keeps the stretch/bedside hold in the selected room without changing the host-default `startWake` path, page/camera, save hooks or audio. These exports do not unlock the guest rooms or connect the multiplayer UI.
+
 Ed, 2026-10-31: "I just need the top down view and the camera view and the ability to move objects around and export the layout. Skip floorplan editing for now."
 
 Open `treehouse-editor.html` beside the game (including under a PR preview). This standalone authoring page does not load gameplay or read/write player saves. The published house data is never changed. Choose a room/object, drag in the top-down plan, or type exact X/Z coordinates and a rotation. Shift-drag snaps to 0.5 m. Right-drag pans; the wheel and +/- zoom; Fit house and Focus selected change framing. Undo/Redo cover whole drag gestures and imports. Reset object/all restore the published baseline.

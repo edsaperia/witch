@@ -1,0 +1,74 @@
+import test from "node:test";
+import assert from "node:assert/strict";
+import { GENOMES, speciesOf, genomeHash, genomeProblems } from "../../art/genome/index.js";
+import { rosterGenome, rosterVariant, createRosterVariants, expectedRosterLegendPalette, ROSTER_PRESETS } from "../../art/roster/presets.js";
+
+test("default-off and unknown switch preserve every production record by identity and hash", () => {
+  for (const g of GENOMES) {
+    assert.equal(rosterGenome(g), g);
+    assert.equal(rosterGenome(g, ["unknown"]), g);
+    assert.equal(genomeHash(rosterGenome(g)), genomeHash(g));
+  }
+});
+
+test("opt-in changes only selected genomes, has valid sockets, and leaves source records untouched", () => {
+  const before = JSON.stringify(GENOMES);
+  for (const id of Object.keys(ROSTER_PRESETS)) for (const g of GENOMES) {
+    const selected = rosterGenome(g, [id], 2);
+    if (g.id !== id) assert.equal(selected, g);
+    else {
+      assert.notEqual(genomeHash(selected), genomeHash(g,{creatureModels:`${g.id}:current`}));
+      assert.deepEqual(genomeProblems(selected), []);
+      assert.equal(speciesOf(selected).id, g.id);
+      const omitted = ROSTER_PRESETS[g.id].omitLegendFeatures;
+      assert.deepEqual(selected.levels[3].features, ROSTER_PRESETS[g.id].legendPatch?.features || (omitted ? (g.levels?.[3]?.features || []).filter(f => !omitted.includes(f.kind)) : g.levels?.[3]?.features));
+      assert.equal(selected.name, g.name);
+      assert.equal(selected.builder, g.builder);
+    }
+  }
+  assert.equal(JSON.stringify(GENOMES), before);
+});
+
+test("legacy beetle resolver requires level and keeps its original elder fallback", () => {
+  const g = GENOMES.find(g => g.id === "beetle");
+  assert.equal(rosterGenome(g, ["beetle"]), g);
+  assert.equal(rosterGenome(g, ["beetle"], 3), g);
+  for (const level of [0, 1, 2]) assert.equal(speciesOf(rosterGenome(g, ["beetle"], level)).look.embers, false);
+  assert.equal(speciesOf(rosterGenome(g, ["beetle"], 3)).look.embers, true);
+});
+
+test("shared-hook pack contains complete same-id records and explicit declared elder targets", () => {
+  const before = JSON.stringify(GENOMES), pack = createRosterVariants(GENOMES);
+  assert.deepEqual(Object.keys(pack).sort(), Object.keys(ROSTER_PRESETS).sort());
+  for (const [id, modes] of Object.entries(pack)) {
+    const g = modes.roster;
+    assert.equal(g.id, id);
+    assert.ok(g.builder && g.template && g.palette);
+    assert.deepEqual(genomeProblems(g), []);
+  }
+  const beetle = GENOMES.find(g => g.id === "beetle");
+  assert.deepEqual(pack.beetle.roster.levels[3].palette, expectedRosterLegendPalette(beetle));
+  assert.deepEqual(pack.beetle.roster.levels[3].look, { ...beetle.look, materials: { wingCases: "SHELL" }, mandibles: null });
+  assert.equal(pack.beetle.roster.look.embers, false);
+  const snow = GENOMES.find(g => g.id === "snowleopard");
+  assert.deepEqual(pack.snowleopard.roster.levels[3].palette, expectedRosterLegendPalette(snow));
+  assert.equal(pack.snowleopard.roster.levels[3].palette.hue, pack.snowleopard.roster.palette.hue);
+  assert.equal(pack.snowleopard.roster.levels[3].coat.regions.torso.outerPx, 14);
+  assert.equal(rosterVariant(GENOMES.find(g => g.id === "wolf")).id, "wolf");
+  assert.equal(JSON.stringify(GENOMES), before);
+});
+
+test("ordinary corrections survive per-level overrides and restore elder anatomy", () => {
+  const original = Object.fromEntries(GENOMES.map(g => [g.id, g]));
+  const bear = speciesOf(rosterGenome(original.bear, ["bear"]));
+  for (const l of [0, 1, 2]) assert.equal(bear.levelQ[l].humpK, 0);
+  assert.equal(bear.levelQ[3].humpK, original.bear.levels[3].body.humpK);
+  const fox = speciesOf(rosterGenome(original.arcticfox, ["arcticfox"]));
+  for (const l of [0, 1, 2]) assert.equal(fox.levelQ[l].ear, "round");
+  assert.equal(fox.levelQ[3].ear, "point");
+  const snow = speciesOf(rosterGenome(original.snowleopard, ["snowleopard"], 2));
+  assert.equal(snow.levelQ[0].regions.torso.kind, "none");
+  for (const l of [1, 2, 3]) { assert.equal(snow.levelQ[l].spots, false); assert.equal(snow.levelQ[l].regions.torso.kind, "rosettes"); assert.equal(snow.levelQ[l].regions.head.kind, "spots"); assert.equal(snow.levelQ[l].regions.legs.kind, "spots"); }
+  assert.deepEqual(snow.levelFeatures[3], speciesOf(original.snowleopard).levelFeatures[3]);
+  assert.equal(snow.levelQ[3].rosettes, false);
+});
