@@ -12,7 +12,7 @@ const path = require("path");
 let playwright;
 try { playwright = require("playwright"); } catch { playwright = require("/opt/node22/lib/node_modules/playwright"); }
 
-const { readExpect, judge } = require("./expect.cjs");
+const { readExpect, judge, startingDifferences } = require("./expect.cjs");
 const { checkComparable, compareFlags } = require("./comparable.cjs");
 const args = process.argv.slice(2), ei = args.indexOf("--expect"), expectFile = ei >= 0 ? args.splice(ei, 2)[1] : null;
 const flags = compareFlags(args); // (--testing <fields>, build by default; --override: compare runs whose keys differ anyway)
@@ -80,7 +80,7 @@ async function main() {
       }, { a: fs.readFileSync(pa).toString("base64"), b: fs.readFileSync(pb).toString("base64") });
       if (r.diff) fs.writeFileSync(path.join(B, `diff-${name}.png`), Buffer.from(r.diff, "base64"));
       if (r.n !== 0) miss(`frames:${name}`, `frames ${name}: ${r.n < 0 ? "a different size" : `${r.n} pixels differ (most by ${r.most}), see diff-${name}.png; within x ${r.box[0]}..${r.box[2]}, y ${r.box[1]}..${r.box[3]} of ${fa.viewport ?? "the picture"}; by a 12 by 6 grid:\n    ${r.grid.join("\n    ")}`}`);
-      if (JSON.stringify(sa.start ?? null) !== JSON.stringify(sb.start ?? null)) miss(null, `frames ${name}: unequal controlled starting boundaries (${JSON.stringify(sa.start)} vs ${JSON.stringify(sb.start)})`);
+      for (const difference of startingDifferences(name, sa.start, sb.start)) miss(difference.key, difference.text);
       // (the frames art landed on, frames.cjs `landed`: told apart, a picture that differs may be the art's timing, not the change)
       if (r.n !== 0 && sa.landed && sb.landed && JSON.stringify(sa.landed) !== JSON.stringify(sb.landed)) miss(`frames:${name}`, `frames ${name}: its art landed on other frames (before ${JSON.stringify(sa.landed)}, after ${JSON.stringify(sb.landed)}): a change in what's asked for, or the bench's art wait broken (frames.cjs frames)`);
       const w = s => s.work ? s.work.total : null, f = k => (w(sa) ? `${w(sa)[k]} → ${w(sb)[k]}` : "");

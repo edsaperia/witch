@@ -1,5 +1,9 @@
 {
   "reason": "Ed explicitly approved making his authored house arrangement the default (1553#6547631190); classic remains available. House furniture, decoration and wake/DJ anchors now follow that arrangement in page-rendered scenes.",
+  "start": {
+    "boot": "Ed's authored DJ seat moves the initial x/z; all other controlled starting fields must remain identical.",
+    "bedroom": "The paused creator background starts at the same authored DJ seat; only initial x/z may change."
+  },
   "frames": {
     "bedroom": "The creator/wake background now uses the authored Ed bed, furniture and decoration pins by default.",
     "boot": "The house/DJ starting arrangement and its visible treehouse art now default to Ed's authored poses.",

@@ -1,5 +1,7 @@
 # Testing tools
 
+Benchmark declarations (`tools/bench/expect/<branch>.json`) may name `start: { "boot": "why the initial x/z changes" }` for an intentional starting-position change (canonical1565#6549733803). Only finite initial x/z may differ for that exact named scene; no start wildcard is accepted. Every other controlled boundary field, missing boundary or invalid coordinate remains undeclarable. Frame/rules declarations do not excuse starting-position drift. The comparator uses the same tested `startingDifferences` helper as the declaration tests; accepted and unused start declarations appear in its report.
+
 Current execution ownership (2026-10-31): builders run typecheck and nearby tests with one worker, plus the art check when art is touched, subject to the coordinator's browser allocation. The coordinator owns combined full-suite/smoke/browser acceptance. The historical “builders before a FINAL” full-smoke instruction below is superseded by CLAUDE.md's Builders and the coordinator section.
 
 CI now builds one `game-dist` artifact per tested revision. Main deploy has priority before checks; PR preview publication runs beside checks after build. Unit selection is `tools/ci/run-unit.mjs`, with conservative full fallback; smoke, largest-world proof and benchmark head reuse the build. Version labels use CI run number with no offset; always verify the served SHA for browser checks. See `.github/workflows/ci.yml` for the exact gates.
