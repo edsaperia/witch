@@ -83,7 +83,11 @@ describe("resumable night storage", () => {
     const n = saved();
     expect(savedNight(n, "test", new URLSearchParams())).toBe(n);
     expect(savedNight(n, "test", new URLSearchParams(n.params))).toBe(n);
-    for (const p of ["seed=124", "island=home", "world=43", "layout=ed"]) expect(savedNight(n, "test", new URLSearchParams(p))).toBeNull();
+    for (const p of ["seed=124", "island=home", "world=43", "layout=classic"]) expect(savedNight(n, "test", new URLSearchParams(p))).toBeNull();
+    expect(savedNight(n, "test", new URLSearchParams("layout=ed"))).toBe(n); // Default and alias are one identity.
+    const classic = { ...n, params: n.params + "&layout=classic" };
+    expect(savedNight(classic, "test", new URLSearchParams("layout=classic"))).toBe(classic);
+    expect(savedNight(classic, "test", new URLSearchParams("layout=ed"))).toBeNull();
     const ed = { ...n, params: n.params + "&layout=ed" };
     expect(savedNight(ed, "test", new URLSearchParams("layout=ed"))).toBe(ed);
     expect(savedNight(ed, "test", new URLSearchParams("layout=default"))).toBeNull();

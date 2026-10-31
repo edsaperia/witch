@@ -1,0 +1,14 @@
+{
+  "reason": "Ed explicitly approved making his authored house arrangement the default (1553#6547631190); classic remains available. House furniture, decoration and wake/DJ anchors now follow that arrangement in page-rendered scenes.",
+  "frames": {
+    "bedroom": "The creator/wake background now uses the authored Ed bed, furniture and decoration pins by default.",
+    "boot": "The house/DJ starting arrangement and its visible treehouse art now default to Ed's authored poses.",
+    "booth": "The DJ/house scene starts from Ed's authored deck/seat arrangement.",
+    "ground": "The full-route starting house/DJ pins use Ed's arrangement; route controls are unchanged.",
+    "ground-flight": "The full route starts from the authored house/deck arrangement; route controls are unchanged.",
+    "treetop": "The starting house/deck arrangement and visible treehouse art use Ed's authored poses.",
+    "treetop-flight": "The full route starts at Ed's house/deck pins and may retain visible house art; controls are unchanged.",
+    "treetop-out": "House art and the route's starting house/deck pins now use Ed's authored arrangement.",
+    "waves": "The full-route house/deck starting scene now uses Ed's authored pins; wave/rule algorithms are unchanged."
+  }
+}

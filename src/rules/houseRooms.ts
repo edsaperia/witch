@@ -84,6 +84,16 @@ export interface RoomFloor { at: At; turn: number; shape: HouseShape; inset: num
 export function floorRects(at: At, inset = 0, H = HOUSE_ROOMS): RoomFloor {
   return { at: { x: at.x, z: at.z }, turn: H.turn ?? 0, shape: H.shape, inset };
 }
+/** Caller supplies its authoritative guest assignment; player 0 remains the host.
+ * Only that guest's movement floor opens its bedroom. Shared shape/art and existing callers stay unchanged. */
+export function roomAccessFor(floor: RoomFloor, player: number, assignment?: { player: number; room: string }): RoomFloor {
+  if (!assignment || !Number.isInteger(player) || player <= 0 || assignment.player !== player ||
+      !["bedroom2", "bedroom3"].includes(assignment.room) || !floor.shape.branches.some(r => r.id === assignment.room && r.locked)) return floor;
+  // Omit the distance field's optional cached inMock data, which contains the original locks.
+  const shape: HouseShape = { noiseAt: floor.shape.noiseAt, trunk: floor.shape.trunk, stubs: floor.shape.stubs,
+    branches: floor.shape.branches.map(r => r.id === assignment.room ? { ...r, locked: false } : r) };
+  return { ...floor, shape };
+}
 /** The nearest point of a floor shape to (x, z) on the plan, and how far (0 inside). */
 export function nearestIn(r: Rect, x: number, z: number): { x: number; z: number; d: number } {
   if (r.r) { const cx = (r.x0 + r.x1) / 2, cz = (r.z0 + r.z1) / 2, d = Math.hypot(x - cx, z - cz); return d <= r.r ? { x, z, d: 0 } : { x: cx + ((x - cx) * r.r) / d, z: cz + ((z - cz) * r.r) / d, d: d - r.r }; }
