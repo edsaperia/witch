@@ -13,6 +13,7 @@ import { pendingGuestAccess } from "./platform/online/guestAccess";
 import { visitSaves } from "./app/visitSaves";
 import { visitLifecycle } from "./app/visitLifecycle";
 import { visitUnlocks } from "./app/visitUnlocks";
+import { stationAuthority } from "./platform/online/stationAuthority";
 import { currentSettings } from "./app/playerSettings";
 import { wavesOver } from "./rules/win";
 import { chartOpen, closeChart, openChart, prepareChart, finishChartFlight, type Sailed } from "./ui/chartOverlay";
@@ -54,7 +55,7 @@ import type { BotTag } from "./ui/botGame";
 import { pleasingWitch } from "./ui/looks";
 import type { DecidePanel } from "./ui/decide";
 import { saveLoadout } from "./app/loadout";
-import { castable, hatSpell, setParts } from "./rules/spells";
+import { castable, HAT_SPELLS, hatSpell, setParts } from "./rules/spells";
 import { changeLoadout } from "./rules/hatSpells";
 import { HOUSE_ROOMS, addFloorHat, installEdLayout } from "./rules/houseRooms";
 import { setEdLayoutActive } from "./rules/housePlacement";
@@ -386,6 +387,18 @@ const phone = telephoneStation({ storage: (() => { try { return localStorage; } 
   },
   failed: error => { logCaughtError(error, "telephone session"); phone.hangUp(); },
   advanceHost: (game, controls, dt) => recordedStep(game, controls, dt, BUILD, captureRecording),
+  authorizeStation: stationAuthority(game => {
+    const wardrobe = findsCtx().owned();
+    return { bags: new Set(BAGS.filter(b => wardrobe.has(b.id)).map(b => b.id)), hats: new Set(game.witches[0].spells.hats ?? HAT_SPELLS.filter(hat => hat.built).map(hat => hat.id)), parts: partsNow() };
+  }),
+  stationApplied: (player, choice) => {
+    if (player !== (phone.visiting ? 1 : 0)) return;
+    const witch = N().game.witches[player]; if (!witch) return;
+    if (choice.kind === "hat") {
+      creator.loadout = { hat: witch.spells.hat };
+      if (!phone.visiting) saveLoadout({ hat: hatWithoutLoan(witch.spells.hat, loan) as typeof witch.spells.hat });
+    } else if (choice.kind === "broom" && !phone.visiting) fitBroom(partsWithoutLoan(witch.spells.parts, loan));
+  },
 } });
 let guestAudioGame: Game | null = null;
 page.presentationGame = game => phone.presented(game);

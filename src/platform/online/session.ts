@@ -4,6 +4,7 @@ import { prepareJoin } from "./joinPreparation";
 import { replayGuest, replayHostStep, replayStart, type ReplayFrame, type ReplayStart } from "./replay";
 import { applyStationChoice, stationChoice, type StationChoice } from "./stationChoice";
 import { beatAnchor } from "./beatAnchor";
+import { appearance, type Appearance } from "./appearance";
 
 export interface SessionConnection {
   sendInput(payload: unknown): boolean;
@@ -31,6 +32,9 @@ export interface SessionOptions {
   authorizeStation?(game: Game, player: 0 | 1, choice: StationChoice): boolean;
   /** Notification only for personal presentation/storage after host approval; must not mutate the shared game. */
   stationApplied?(player: 0 | 1, choice: StationChoice): void;
+  /** Personal cosmetic data only, exchanged after telephone identity verification; never inventory or rules. */
+  appearance?(): unknown;
+  appearanceApplied?(player: 0 | 1, look: Appearance): void;
 }
 
 /** Reuses the prototype's replication and input lease without a second frame loop, View or save store. */
@@ -44,19 +48,22 @@ export function onlineSession(options: SessionOptions) {
   let stationSequence = 0, lastStation = -1;
   const requests: { player: 0 | 1; choice: StationChoice }[] = [];
   let beatSegments: Game["beat"]["segs"] | null = null;
+  const looks = new Map<0 | 1, Appearance>();
   const stop = () => {
     const previous = role, previousGame = game, attached = present;
     epoch++; role = null; connection = null; game = null; present = prepared = ready = preparing = changed = false; replica = null;
     buffer.clear(); removeAbort(); removeAbort = () => {}; controller?.abort(); controller = null;
     requests.length = 0; stationSequence = 0; lastStation = -1;
     beatSegments = null;
+    looks.clear();
     reject?.(new Error("The online night ended.")); accept = reject = null;
     if (previous === "host" && attached && previousGame) options.detach(previousGame);
     if (previous) options.ended(previous, previousGame);
   };
   const fail = (value: unknown) => { const error = value instanceof Error ? value : new Error(String(value)); stop(); options.failed(error); };
   const sendStart = () => {
-    if (!connection || !game || !connection.sendState({ kind: "start", start: replayStart(game, options.build, tick) })) throw new Error("The night couldn't be sent to your friend.");
+    if (options.appearance && looks.size !== 2) return; // No borrowed world admission until both cosmetic profiles are validated.
+    if (!connection || !game || !connection.sendState({ kind: "start", start: replayStart(game, options.build, tick), ...(options.appearance ? { looks: [...looks].map(([player, genome]) => ({ player, genome })) } : {}) })) throw new Error("The night couldn't be sent to your friend.");
     beatSegments = game.beat.segs;
   };
   const api = {
@@ -67,6 +74,12 @@ export function onlineSession(options: SessionOptions) {
       if (signal.aborted) return Promise.reject(new Error("The call was cancelled."));
       role = as; connection = relay; controller = new AbortController(); tick = sequence = progress = 0;
       const abort = () => stop(); signal.addEventListener("abort", abort, { once: true }); removeAbort = () => signal.removeEventListener("abort", abort);
+      if (options.appearance) {
+        const look = appearance(options.appearance());
+        if (!look) { fail(new Error("Invalid personal witch appearance.")); return Promise.reject(new Error("Invalid personal witch appearance.")); }
+        looks.set(as === "host" ? 0 : 1, look);
+        if (as === "guest" && !relay.sendInput({ kind: "appearance", genome: look })) { fail(new Error("The guest appearance couldn't be sent.")); return Promise.reject(new Error("The guest appearance couldn't be sent.")); }
+      }
       if (as === "host") {
         game = options.hostGame();
         if (!relay.sendReady()) { fail(new Error("The host telephone disconnected.")); return Promise.reject(new Error("The host telephone disconnected.")); }
@@ -85,6 +98,15 @@ export function onlineSession(options: SessionOptions) {
           }
           if (message.type === "guest-ready" && message.player === 1) { if (present) { sendStart(); ready = true; changed = false; } return true; }
           if (message.type === "input" && message.player === 1) {
+            const profile = message.payload as Record<string, unknown> | null;
+            if (options.appearance && profile?.kind === "appearance") {
+              if (Object.keys(profile).length !== 2 || !Object.hasOwn(profile, "genome")) throw new Error("Invalid guest appearance message.");
+              const look = appearance(profile.genome); if (!look) throw new Error("Invalid guest appearance.");
+              const previous = looks.get(1);
+              if (previous && JSON.stringify(previous) !== JSON.stringify(look)) throw new Error("Guest appearance changed outside station approval.");
+              if (!previous) { looks.set(1, look); options.appearanceApplied?.(1, structuredClone(look)); if (present) sendStart(); }
+              return true;
+            }
             if (present && ready) {
               const payload = message.payload as Record<string, unknown> | null;
               if (payload?.kind === "station") {
@@ -99,8 +121,23 @@ export function onlineSession(options: SessionOptions) {
           }
           if (message.type === "guest-left" && message.player === 1) { stop(); return true; }
         } else if (message.type === "state" && message.player === 0) {
-          const payload = message.payload as { kind?: string; start?: ReplayStart; frame?: ReplayFrame; tick?: number; choices?: { player: unknown; choice: unknown }[]; beat?: unknown } | null;
+          const payload = message.payload as { kind?: string; start?: ReplayStart; frame?: ReplayFrame; tick?: number; choices?: { player: unknown; choice: unknown }[]; beat?: unknown; looks?: { player: unknown; genome: unknown }[] } | null;
           if (payload?.kind === "start" && payload.start) {
+            if (options.appearance) {
+              if (!Array.isArray(payload.looks) || payload.looks.length !== 2) throw new Error("Missing shared witch appearances.");
+              const received = new Map<0 | 1, Appearance>();
+              for (const entry of payload.looks) {
+                if (!entry || Object.keys(entry).length !== 2 || !Object.hasOwn(entry, "player") || !Object.hasOwn(entry, "genome")) throw new Error("Invalid shared witch appearances.");
+                const look = appearance(entry.genome);
+                if (!look || entry.player !== 0 && entry.player !== 1 || received.has(entry.player)) throw new Error("Invalid shared witch appearances.");
+                received.set(entry.player, look);
+              }
+              if (JSON.stringify(received.get(1)) !== JSON.stringify(looks.get(1))) throw new Error("Your witch appearance was replaced.");
+              for (const [player, look] of received) {
+                if (JSON.stringify(looks.get(player)) !== JSON.stringify(look)) options.appearanceApplied?.(player, structuredClone(look));
+                looks.set(player, look);
+              }
+            }
             if (!replica && !preparing) {
               preparing = true; const current = epoch, signal = controller.signal;
               void prepareJoin({

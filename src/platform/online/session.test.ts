@@ -7,6 +7,7 @@ import { onlineSession, type SessionConnection, type SessionOptions } from "./se
 import { BAGS } from "../../rules/bags";
 import { beatAt, shiftBeat } from "../../rules/beat";
 import { localView } from "./localView";
+import { WITCH_GENOME } from "../../../art/witchGenome.js";
 
 const cleanups: (() => void)[] = [];
 afterEach(() => { for (const stop of cleanups.splice(0)) stop(); });
@@ -37,6 +38,7 @@ function fixture() {
     await host.connect("host", connection(hostMessages), hostAbort.signal);
     const joined = guest.connect("guest", connection(guestMessages), guestAbort.signal);
     host.message({ type: "guest-joined", player: 1 });
+    for (const message of guestMessages) if ((message.payload as { kind?: string } | undefined)?.kind === "appearance") host.message(message);
     const first = hostMessages.find(m => m.type === "state")!;
     guest.message(first); return { joined, first };
   };
@@ -85,6 +87,20 @@ it("pauses only with both pause pages open and resumes when either leaves", asyn
   f.advanceTime(251); f.host.step({ ...input(), pausePage: true }, .05); f.guest.message(f.hostMessages.at(-1)!);
   expect(f.hostGame.clock.paused).toBe(false); expect(f.hostGame.clock.time).toBeGreaterThan(expiredAt);
   expect(f.guest.game!.clock.paused).toBe(false);
+});
+it("exchanges validated personal looks before guest preparation and forbids appearance replacement", async () => {
+  const f = fixture(), seen: unknown[] = [];
+  f.hostOptions.appearance = () => WITCH_GENOME;
+  const own = structuredClone(WITCH_GENOME); own.hair = "bob";
+  f.guestOptions.appearance = () => own;
+  f.guestOptions.appearanceApplied = (player, look) => seen.push([player, look]);
+  const { joined } = await f.start(); await f.sync(); await joined;
+  expect(seen).toEqual([[0, WITCH_GENOME]]);
+  const beforeSpells = structuredClone(f.hostGame.witches[0].spells);
+  f.host.message({ type: "input", player: 1, payload: { kind: "appearance", genome: { ...own, hair: "long" } } });
+  expect(f.hostOptions.failed).toHaveBeenCalledWith(expect.objectContaining({ message: "Guest appearance changed outside station approval." }));
+  expect(f.hostGame.witches).toHaveLength(1); // Clean departure, no guest-supplied replacement game.
+  expect(f.hostGame.witches[0].spells).toEqual(beforeSpells);
 });
 it("does not accept an unassigned player's input and expires a guest's held controls", async () => {
   const f = fixture(), { joined } = await f.start(); await f.sync(); await joined;
