@@ -370,10 +370,10 @@
       "red",
       "turquoise"
     ],
-    "effect": "tall-tales",
-    "name": "Tall Tales",
-    "description": "Every animal looks very tall.",
-    "comingSoon": true,
+    "effect": "stiltwalkers",
+    "name": "Stiltwalkers",
+    "description": "Familiar animal bodies stand high on impossibly long legs, tapering from normal hips to tiny feet.",
+    "comingSoon": false,
     "id": 29
   },
   {
@@ -749,8 +749,8 @@
     ],
     "effect": "stiltwalkers",
     "name": "Stiltwalkers",
-    "description": "Familiar animal bodies stand impossibly high on very thin, long legs.",
-    "comingSoon": true,
+    "description": "Familiar animal bodies stand high on impossibly long legs, tapering from normal hips to tiny feet.",
+    "comingSoon": false,
     "id": 58
   },
   {

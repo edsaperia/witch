@@ -24,6 +24,12 @@ export function potionWatching(base: { on: boolean; radius: number; lean: number
     lag: normal.lag + (p.lag - normal.lag) * k };
 }
 
+/** Deform existing legs only; the trip envelope never changes simulation size or reach. */
+export function stiltwalkerShape(amount: number): { length: number; tip: number; strength: number } {
+  const k = Math.max(0, Math.min(1, amount)), p = potionSettings('stiltwalkers');
+  return { length: 1 + (p.length - 1) * k, tip: k ? p.tip : 1, strength: k };
+}
+
 export const tripIndicatorStrength = (g: Game): number => effectEnvelope(g.mushrooms?.trips[g.witches[0]?.id ?? 0], g.clock.time);
 
 /** Grow the existing scene pixels in whole display-pixel steps; expiry restores its exact baseline. */

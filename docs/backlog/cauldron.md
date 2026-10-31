@@ -88,7 +88,7 @@ Agreed one by one with Ed (2026-10-09). Not yet assigned to recipes, apart from 
 26. **Night Vision** (Ed).
 27. **Flask Finder** (Ed): flasks are easier to find.
 28. **Left Hook** (Ed): unlimited dodges, but they always veer left.
-29. **Tall Tales** (Ed): every animal looks very tall.
+29. **Stiltwalkers, replacing Tall Tales** (Ed, 2026-10-31): retain normal animal bodies on impossibly long legs, tapering from normal hip thickness to tiny feet, following the Dalí reference. Ed explicitly requested extending other legged animals too. This replaces the whole-body stretch; recipe29 and existing recipe58 now share Stiltwalkers without renumbering either combination. See58 for implementation details.
 30. **Thick Canopy** (Ed): the canopy see-through effect is off, so the ground can't be seen.
 31. **The Whole Route** (Ed): the entire route is shown. (Also the Route-seer hat's power, built in #942; a trip may want something else.)
 32. **Dreamseer** (Ed): the area a legend's dream points to is easier to see.
@@ -171,7 +171,7 @@ Captured 2026-10-30. Numbers continue the original list for reference, **not rec
 ### Existing machinery and crossed signals
 
 57. **Masterplan** (Ed-requested): see how packs intend to move and attack: targets, destination slots, roles, formations and attack geometry. `rules/combat/packs.ts` computes directives; `rules/combat.ts` currently keeps the complete directive map local. Publish a read-only snapshot for drawing instead of recomputing decisions. Existing line/ribbon renderers are foundations, not a complete overlay. Show current intentions first; abandoned plans and long histories would require new recording. Related: Foresight, Whole Route.
-58. **Stiltwalkers** (Ed's Dalí reference): familiar animal bodies stand impossibly high on very thin, long legs. A specific Tall Tales variant using the creature rig and leg drawing. Preserve the body silhouette; feet still meet the ground. Review joint reach, stroke sampling and clipping rather than assuming a whole-sprite stretch gives the result. Scratch elephant, fox and badger mockups were explored during the conversation; not shipped artwork.
+58. **Stiltwalkers** (Ed's Dalí reference; supersedes Tall Tales, 2026-10-31): familiar animal bodies stand impossibly high on very long legs tapering from normal hips to tiny feet. Preserve body silhouettes and ground foot targets; extend existing rigs to the other legged body types. Recipe29 and58 are aliases. Potion Lab controls leg length (default6×,1–12×) and foot thickness (default.08×,.02–.5×). Existing game-clock envelope restores normal anatomy over the final two minutes. Check joint reach, continuous limb sampling, pooled piece scales and taller culling bounds. Scratch elephant, fox and badger mockups were explored earlier; not shipped artwork. Current build uses the game's own anatomy rather than those mockups.
 59. **Contour Dream:** vivid contour bands run across ground, animals and scenery. Shared world-height/position shading; a new small colour formula. A renderer mock was explored, not a production implementation. Related: Woodcut.
 60. **Bottomless:** the ground becomes a starfield, with creatures apparently standing over an abyss. Ground-material substitution rather than moving their gameplay positions. A renderer mock was explored. Related: Skylight.
 61. **Aurora Outlines:** luminous coloured edges replace most solid surfaces. Scene/depth edge filtering and bloom; an extra filter, not a free material toggle. A renderer mock was explored. Related: Cartoon.
