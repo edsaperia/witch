@@ -1,5 +1,6 @@
-import {expect,it,vi} from 'vitest';
+import {afterEach,expect,it,vi} from 'vitest';
 import {offerTravelSeed,offeredTravelSeed,rememberTravelSeed,registerTravelSeeds,resetTravelSeeds} from './travelSeeds';
+afterEach(()=>{resetTravelSeeds('');vi.restoreAllMocks();});
 it('ordinary chart visits do not acquire cross-visit seeds while precompile is off',()=>{
   resetTravelSeeds(''); rememberTravelSeed(0,'fox',42); expect(offeredTravelSeed(0,'fox')).toBeUndefined();
 });
