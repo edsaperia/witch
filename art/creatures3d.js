@@ -9,7 +9,8 @@ import { quadrupedTorsoGraph, quadrupedEarSocket, triangularEarMask, triangularE
 import { mandiblePart } from "./body-graph/mandibles.js";
 import { paintTailParts } from "./body-graph/tail-markings.js";
 import { GENOME_BY_ID, speciesOf } from "./genome/index.js";
-import { creatureSizeOptions, fitOccupiedCreature, occupiedHeight as occupiedHeightForCandidate } from "./creature-size.js";
+// Keep original names: the single-page Art Lab flattens modules without alias bindings.
+import { creatureSizeOptions, fitOccupiedCreature, occupiedHeight } from "./creature-size.js";
 import { elderQuad, grizzle, notch, surfaceFrom, ring, fitRing, frontPts, closed, charm, crown, drawOn, meerkatDress, sentinelHeap } from "./elders.js";
 
 // Levels (Ed): 0 baby, 1 young, 2 adult, 3 legend.
@@ -109,7 +110,7 @@ const drawForm = (m, o, S, level, st) => {
   o = creatureSizeOptions(m, o, S, level, st);
   const decorate = sp => { const n = S.sizes.motes?.[level]; if (!candidate && n) glowMotes(sp, S.plan === "owl" ? 31 : S.id.length * (S.q ? 7919 : 131), n, S.q && S.id === "snowleopard"); };
   const fitted = fitOccupiedCreature(m, o, S, level, st, decorate,candidate&&FORM?.rig===true);
-  if (candidate) { fitted.stats.bodyTarget=o.sizeTarget;fitted.stats.bodyHeight=fitted.sprite ? occupiedHeightForCandidate(fitted.sprite) : fitted.stats.bodyHeight; }
+  if (candidate) { fitted.stats.bodyTarget=o.sizeTarget;fitted.stats.bodyHeight=fitted.sprite ? occupiedHeight(fitted.sprite) : fitted.stats.bodyHeight; }
   if (dressed) {
     for (let i=0;i<dressed.parts.length;i++) Object.assign(dressed.parts[i],dressed.values[i]);
     m.parts=dressed.parts; m.flats=dressed.flats; m.atScale=dressed.atScale; m.part=dressed.part;
