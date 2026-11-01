@@ -95,8 +95,17 @@ describe("shared CI game build", () => {
   });
   it("does not make the independent art generator consume a nonexistent game build", () => {
     const art = workflow("art-check");
-    expect(art.jobs.art.steps.some((s: any) => /npm run build/.test(s.run ?? ""))).toBe(false);
-    expect(art.jobs.art.needs).toBeUndefined();
+    expect(art.jobs.plan.needs).toBeUndefined();
+    expect(art.jobs.shards.needs).toBe("plan");
+    expect(art.jobs.art.needs).toEqual(["plan", "shards"]);
+    for (const job of Object.values(art.jobs) as any[]) {
+      expect(job.steps.some((s: any) => /npm run build/.test(s.run ?? ""))).toBe(false);
+      for (const step of job.steps.filter((s: any) => s.uses?.startsWith("actions/download-artifact@"))) {
+        // An unqualified/all-artifact download could silently pull game-dist too.
+        expect(step.with?.name ?? step.with?.pattern).toMatch(/^art-/);
+        expect(JSON.stringify(step.with)).not.toContain("game-dist");
+      }
+    }
   });
   it("keeps real largest-world drawing coverage separate from small unit worlds", () => {
     expect(jobs["large-world"].steps.some((s: any) => s.run?.includes("tools/smoke/large-world.cjs"))).toBe(true);
