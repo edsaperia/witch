@@ -112,7 +112,6 @@ export class IslandLayers {
     yield;
     this.ground = new Ground(game.map, game.forest, style, mpp, maxTexture, disco.art);
     this.discoLater = disco.later;
-    this.ground.mesh.renderOrder = -1; // first: the grounds' decals go on it before anything stands on it
     this.root.add(this.ground.mesh);
     // the north's lakes' glacier (render/lakeLooks.ts), its peaks under her treetop flight (she can't come down over a lake: #1016)
     const lakes = lakeLooksOf(game.map), ice = lakes && glacierMesh(lakes, game.map.island?.seed ?? game.map.seed, mpp, t.treetopHeight - lakeKnobs(t).glacierClear);
