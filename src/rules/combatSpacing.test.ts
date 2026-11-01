@@ -188,4 +188,12 @@ describe("combat waiting spacing", () => {
     world.time = world.dt; stepCombat(state, world);
     expect(victim.dazed).toBe(true); expect(state.shots).toHaveLength(0);
   });
+  for (const species of ["boar", "stoat", "bat"]) it(`${species} prepares and executes its chosen special without a melee opener`, withCombatRoles({ [species]: "special" }, () => {
+    const { state, world } = fight(true), c = world.creatures[0];
+    world.creatures.splice(1); world.active = world.creatures; c.species = species; c.x = 20; c.z = 0;
+    let seen = false;
+    world.packWorld = { confuse: () => { seen = true; } };
+    for (let i = 0; i < 240; i++) { world.time = i * world.dt; stepCombat(state, world); if (species === "boar") seen ||= !!c.charge; }
+    expect(seen).toBe(true);
+  }));
 });

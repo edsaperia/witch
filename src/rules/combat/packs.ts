@@ -22,17 +22,17 @@ import { type Creature, type Level } from "../creatures";
 import { foes, huntsWitch } from "../creatureStates";
 import { hash2 } from "../random";
 import { FIGHT, type Move as OwnMove, profileOf, startCharge, swoopStriking } from "../movement";
-import { type Attack, COMBAT, type CombatState, type CombatWorld, type Target, scaled, strengthOf, stunWorth } from "./data";
+import { type Attack, COMBAT, combatProfile, type CombatState, type CombatWorld, type Target, scaled, stunWorth } from "./data";
 import { fighting, sideOf, targetPos, targetable } from "./targeting";
 import { SPACING, bodyGap, drawnRadius, spacingOn } from "../combatSpacing";
 import type { Tuning } from "../tuning";
-import { stepTeams, teamOf, type TeamState } from "./teams";
+import { intentReach, stepTeams, teamOf, type TeamState } from "./teams";
 
 export type Role = "lunger" | "shooter" | "special" | "hold" | "hurt";
 export type Phase = "approach" | "tell" | "combo" | "lull";
 export type SpecialKind = "stampede" | "scatter" | "call" | "feint" | "confusion" | "cloud" | "wall" | "rally" | "cover" | "mirage" | "sync" | "knockback" | "pull" | "decoy" | "mind";
 /** A special's numbers (packs.json specials), and a kind's own variant over them (its `specialWith`). */
-export interface SpecialData { time?: number; radius?: number; cooldown: number; tint: string; lead?: number; drift?: number; length?: number; ahead?: number; slow?: number; heal?: number; reach?: number; armour?: number; ring?: number;
+export interface SpecialData { time?: number; range?: number; radius?: number; cooldown: number; tint: string; lead?: number; drift?: number; length?: number; ahead?: number; slow?: number; heal?: number; reach?: number; armour?: number; ring?: number;
   /** confusion: her movement turned, not her aim (the bat's screech) */ move?: boolean; /** cloud: a flash inside it confuses her aim (the moth's) */ flash?: boolean; /** cloud: its thrower leaps and it comes down where it lands (the toad's) */ leap?: boolean;
   /** cover: the coverer and its packmate both dig in, shells locked (the beetle's) */ both?: boolean; /** mirage: images by level [young, adult] */ images?: number[]; /** sync: how many blink with her */ count?: number;
   /** knockback: metres its ram throws her */ throw?: number; /** pull: metres it drags her toward it (within reach) */ pull?: number }
@@ -139,7 +139,7 @@ export interface Directive {
 export function packAttack(species: string, level: Level, move: Move, data: PacksData = PACKS): { name: string; attack: Attack; damage: number; shots: number; spread: number } | null {
   const K = packKindOf(species, data);
   if (!K || level < 1 || level > 2) return null;
-  const young = level === 1 ? data.young : null, dps = COMBAT.levels.dps[level] * strengthOf(species, level);
+  const young = level === 1 ? data.young : null, dps = combatProfile(species, level).damagePerSecond;
   if (move === "melee") {
     if (!K.melee) return null;
     const base = K.melee.attacks?.[level] ?? (level === 1 ? "nip" : "maul");
@@ -491,6 +491,7 @@ function special(s: CombatState, w: CombatWorld, pw: PackWorld, st: PackState, K
   // Admission waits for the current movement/action to release ownership. In
   // particular, replacing a waiting hop with a leap would leave two live routes.
   if (team && (by.hop || by.leap || by.burrow || by.charge || strikingNow(by))) return;
+  if (team && Math.hypot(p.x - by.x, p.z - by.z) > intentReach(by, "special", data)) return;
   if (team) { team.used.push(by.id); young = by.level === 1; }
   const scale = young ? data.young.special : 1;
   const healthy = members.filter(m => roles.get(m.id) !== "hurt");
@@ -499,6 +500,12 @@ function special(s: CombatState, w: CombatWorld, pw: PackWorld, st: PackState, K
   const T = (sp.time ?? 2) * scale, Rr = (sp.radius ?? 6) * S * scale;
   switch (K.special) {
     case "stampede": {
+      if (team) {
+        const move = profileOf(by.species)?.move;
+        if (move?.kind === "charge") { startCharge(by, move, p.x, p.z, time); if (by.fight) by.fight.packMove = "melee"; }
+        st.callUntil = time + T;
+        break;
+      }
       // At her, every member's turn to charge for its time, as a call: one after another as her dodge tokens free up (Ed, 2026-10-20:
       // the dodge's limit holds inside a pack; each charge is a member's own, rules/combat.ts). Hers on the wild: all at once.
       if (tg.kind === "witch" && huntsWitch(side)) { st.callUntil = time + T; st.struck = []; break; }

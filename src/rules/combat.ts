@@ -66,7 +66,7 @@ const THROWN = new WeakMap<AttackSpec, { her?: Thrown; any?: Thrown }>();
 /** A wild flyer that swoops (its profile's move; hostile: wild or enraged, never hers or happy). */
 const swoops = (c: Creature): boolean => !c.leashed && profileOf(c.species)?.move?.kind === "swoop" && (stateOf(c) === "wild" || stateOf(c) === "enraged");
 
-export { COMBAT, traitsOf, counterOf, newCombat, strengthOf, attackOf, scaled, attackNamed, maxHp, creatureMaxHp, stunWorth } from "./combat/data";
+export { COMBAT, traitsOf, counterOf, newCombat, strengthOf, combatProfile, attackOf, scaled, attackNamed, maxHp, creatureMaxHp, stunWorth } from "./combat/data";
 export type { Delivery, Modifier, Attack, CombatData, Trait, Target, Fight, Shot, Beam, CombatEventKind, CombatEvent, SoundHealth, CombatState, Trail, CombatWorld } from "./combat/data";
 export { fighting, targetable, truce, guardOf, nearestSound } from "./combat/targeting";
 
@@ -441,7 +441,7 @@ export function stepCombat(s: CombatState, w: CombatWorld, data: CombatData = CO
     const om = pd && pd.move === "melee" && f.target.kind !== "sound" && time >= (c.moveReadyAt ?? 0) ? ownStrike(c.species) : null;
     const ownFrom = om && om.kind !== "swoop" ? (om.from ?? 10) * 1.4 * FIGHT.scale : 0, ownTo = om?.to ? om.to * 0.8 * (om.kind === "leap" ? FIGHT.leap.reach : 1) * FIGHT.scale : ownFrom;
     if (ownFrom) want = Math.max(want, ownFrom, Math.min(d, ownTo));
-    if (spacing && pd?.role === "special" && pd.phase === "approach") want = Math.min(want, intentReach(c, pd.role, PACKS) * 0.8);
+    if (spacing && pd?.role === "special") want = Math.min(want, intentReach(c, pd.role, PACKS) * 0.8);
     // Its lunge under way: a dash-strike down the line it wound up on; at its end the blow lands, if it's still there.
     if (f.lunge) {
       // (At a creature it homes in: creatures can't read a telegraph; but not at a flier, which flits up out of its way.
@@ -552,7 +552,9 @@ export function stepCombat(s: CombatState, w: CombatWorld, data: CombatData = CO
         // circles aloft meanwhile, its lull too; the bout's other dives each a token as before)
         const dv: Directive | undefined = pd && { ...pd, move: "melee" }, tg = f.target;
         const mayDive = () => { if (!dv || c.swoop?.left) return token(tg); if (!strikeNow(dv, tg)) return false; markStrike(dv, c); return true; };
-        const r = stepSwoop(c, P.move, p.x, p.z, time >= f.readyAt, time, dt, (tv?.vx ?? 0) * sl, (tv?.vz ?? 0) * sl, mayDive, f.target.kind === "witch" && DA ? DA.commit : 0); // (each dive takes a strike's token at her: dodge.a)
+        const flight = spacing && pd?.role === "special" && pd.phase === "combo" && !swoopStriking(c)
+          ? { ...P.move, radius: Math.min(P.move.radius ?? 12, want / S) } : P.move;
+        const r = stepSwoop(c, flight, p.x, p.z, time >= f.readyAt, time, dt, (tv?.vx ?? 0) * sl, (tv?.vz ?? 0) * sl, mayDive, f.target.kind === "witch" && DA ? DA.commit : 0); // (each dive takes a strike's token at her: dodge.a)
         if (r === "tele") { f.readyAt = time + A.cooldown; s.events.push({ kind: "windup", x: c.x, z: c.z, at: time, id: c.id }); }
         if (r === "dive") s.events.push({ kind: "swooped", x: c.x, z: c.z, at: time, id: c.id });
         if (r === "low" && c.swoop?.hit) {
@@ -645,7 +647,7 @@ export function stepCombat(s: CombatState, w: CombatWorld, data: CombatData = CO
       // (a pack member steers by its role, rules/combat/packs.ts; its kind's tactic, config/movement.json, places it (the wolves'
       // surround, the pincer, the flank), a shooter firing from its place, but the one whose lunge it is goes straight in (a slot held
       // it off waiting for its place); a volley keeps its line and its beat throughout. Hit and run is the pack's lull.)
-      const tactic = pd && pk && (pk.tactic === "volley" || (!(pd.move === "melee" && packGate(pd) && free(f.target)) && (pk.tactic === "surround" || pk.tactic === "pincer" || pk.tactic === "flank"))) ? pk : null;
+      const tactic = pd && pk && !(spacing && pd.role === "special") && (pk.tactic === "volley" || (!(pd.move === "melee" && packGate(pd) && free(f.target)) && (pk.tactic === "surround" || pk.tactic === "pincer" || pk.tactic === "flank"))) ? pk : null;
       // (Momentum: chasing her and closing in to strike, a pack's tell and combo too, it makes for where she was mo.delay seconds
       // ago, leading that by mo.chaseLead seconds of how she was going then, and turns no faster than its limit. Ed, 2026-10-27: on
       // the run-in and the wind-up, never the committed lunge, which goes where the wind-up aimed.)
@@ -676,7 +678,8 @@ export function stepCombat(s: CombatState, w: CombatWorld, data: CombatData = CO
       // pack turn at all. Neither is waiting merely because `myTurn` is false.
       // Approach remains pursuit: starting a waiting circuit here can prevent the
       // pack ever reaching its engagement threshold or a species move's run-up.
-      const attackReady = time >= f.readyAt && (!pd || packGate(pd));
+      const specialReady = spacing && pd?.role === "special" && pd.phase === "combo" && !pd.team?.used.includes(c.id);
+      const attackReady = specialReady || time >= f.readyAt && (!pd || packGate(pd));
       const waiting = !!pd && pd.phase !== "approach" && !strikingNow(c) && !attackReady;
       if (spacing && waiting) {
         if (f.target.kind === "witch" || teamOf(s, c.id)) place = movingGoal!(herAt, want);
@@ -699,7 +702,7 @@ export function stepCombat(s: CombatState, w: CombatWorld, data: CombatData = CO
         if (g && Math.hypot(g.x - c.x, g.z - c.z) > 2 * S) { if (!startHop(c, g.x, g.z, time, hopOf(speed))) { c.moving = false; c.vx = 0; c.vz = 0; c.facing = p.x >= c.x ? 1 : -1; } continue; }
       }
       const may = steer(c, heavy ? heavyOf(c, P) : P, { px: herAt.x, pz: herAt.z, pr: p.r, want, range: A0.range, fire: A.range, speed: cutoff ? Math.max(run * burst, DC!.sprint * FIGHT.speed) : run * burst, time, dt, pack: pd ? tactic : pk, neighbours: grid.near(c.x, c.z, spacing ? spacingSearch : 12 * S), threats: s.shots, side: sideOf(c), ready: time >= f.readyAt, beat: 60 / t.beat.bpm, heading, lights, cutoff, arriveAt: DA && A.delivery === "melee" && f.target.kind === "witch" && !ownFrom ? A.range + p.r : undefined, momentum: chase, now: herAt === p ? undefined : p, style: place, ...(spacing ? { spacing: { tuning: t, data: SPACING, waiting } } : {}) });
-      if (spacing && waitingDrive(c, time).airborne && !may && !strikingNow(c)) {
+      if (spacing && waitingDrive(c, time).airborne && (!may || waiting || pd?.role === "special") && !strikingNow(c)) {
         const v = Math.hypot(c.vx ?? 0, c.vz ?? 0), length = hopOf(speed, c).length * S;
         if (v > SPACING.epsilon) {
           const landing = { x: c.x + c.vx! / v * length, z: c.z + c.vz! / v * length };

@@ -17,7 +17,8 @@ export function intentReach(c: Creature, role: Role, data: PacksData): number {
   if (role === "shooter") return (kind.ranged?.range ?? 4) * FIGHT.scale;
   if (role === "special") {
     const effect = { ...data.specials[kind.special], ...kind.specialWith };
-    return (effect.reach ?? effect.radius ?? kind.ranged?.range ?? move?.to ?? 20) * FIGHT.scale;
+    const range = kind.specialWith?.range ?? (effect.leap ? move?.to : undefined) ?? effect.range ?? effect.reach ?? effect.radius ?? kind.ranged?.range ?? move?.to ?? 20;
+    return range * FIGHT.scale * (c.level === 1 ? data.young.special : 1);
   }
   const ordinary = attackOf(c.species, c.level)?.attack;
   const preparation = move?.to ?? move?.from ?? move?.trigger ?? (move?.kind === "swoop" ? move.radius : undefined);

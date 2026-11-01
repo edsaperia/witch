@@ -10,6 +10,8 @@ import { befriend } from "./creatureStates";
 import { holdsArea, wildLeft } from "./clear";
 import type { Creature } from "./creatures";
 import { calmRingAt } from "./slowTime";
+import { intentReach } from "./combat/teams";
+import { PACKS, packKindOf } from "./combat/packs";
 
 // Keep the seeded radius population/geometry: the regression walks 220 m out of an area and searches ±400 m for far-end ambusher approach coverage.
 const still: Controls = { moveX: 0, moveZ: 0, toggleMode: false, zoom: 0, autoTalk: false };
@@ -109,7 +111,7 @@ describe("the hunt (Ed, 2026-10-07: 'fight with me until either I die or they ar
   // Ed, 2026-10-08: "I sometimes go into an area and the aggro creatures are at the opposite end and they don't come and attack
   // me after their dormant period is over." The ambushers (the spider, the snake) lay in wait for her to come within their
   // trigger, hunting or not: from the far end of their area they never set off.
-  it("from the far end of the area, every hunter comes for her (the ambushers too)", () => {
+  it("from the far end, hunters enter their combat envelope, including ranged and waiting roles", () => {
     for (const species of ["spider", "snake", "wolf"]) {
       const g = newGame(123, NOCAST);
       g.clock.paused = false; g.party.spellAt = undefined; g.witches[0].health.hp = 1e6;
@@ -130,7 +132,10 @@ describe("the hunt (Ed, 2026-10-07: 'fight with me until either I die or they ar
       expect(far.size, `${species}: some start far off`).toBeGreaterThan(0);
       run(g, (W.on ? W.time : 0) + 25, () => {
         g.witch = { ...g.witch, x: at.x, z: at.z, vx: 0, vz: 0 };
-        for (const c of natives()) if (Math.hypot(c.x - at.x, c.z - at.z) < 25 || (c.fight?.target?.kind === "witch" && c.fight.windupUntil > 0)) reached.add(c.id); // (near, or striking at her: a shooter may from further, tuning dodge.b.range)
+        for (const c of natives()) {
+          const kind = packKindOf(c.species), reach = Math.max(25, kind?.ranged ? intentReach(c, "shooter", PACKS) : 0, kind?.special ? intentReach(c, "special", PACKS) : 0);
+          if (c.fight?.target?.kind === "witch" && c.fight.target.id === 0 && (Math.hypot(c.x - at.x, c.z - at.z) <= reach || c.fight.windupUntil > 0)) reached.add(c.id);
+        }
       });
       const awake = natives().filter(c => far.has(c.id) && !c.asleep && !c.dazed && c.hunting === 0);
       expect(awake.length, `${species}: hunters`).toBeGreaterThan(0);

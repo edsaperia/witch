@@ -124,57 +124,9 @@ describe("pack combat in play (the switch on)", () => {
     expect(slotted).toBe(0);
   }, 60000);
 
-  // Each home kind's special does its thing (combat.md's table), and nothing goes NaN.
-  const SIGNS: Record<string, (g: Game) => boolean> = {
-    hedgehog: g => g.creatures.some(c => !!c.charge?.curl),
-    squirrel: g => g.creatures.some(c => !!c.packHide),
-    hare: g => !!wildPack(g)?.callUntil,
-    marten: g => !!wildPack(g)?.callUntil,
-    fox: g => wildPack(g)?.feintBy !== undefined,
-    stoat: g => !!g.witches[0].confused,
-    mole: g => (g.combat.clouds?.length ?? 0) > 0,
-    snail: g => g.combat.trails.length > 2,
-    dormouse: g => fresh(g).some(e => e.kind === "packSpecial"),
-    badger: g => g.creatures.some(c => c.dug !== undefined && c.dug > g.clock.time),
-    // Phase 1's (Echo, 2026-10-19).
-    wolf: g => !!wildPack(g)?.callUntil,
-    boar: g => g.creatures.some(c => !!c.charge),
-    bat: g => !!g.witches[0].confused?.move,
-    raven: g => (g.combat.mirages?.length ?? 0) > 0,
-    newt: g => g.combat.trails.length > 2,
-    moth: g => (g.combat.clouds ?? []).some(k => k.flash !== undefined),
-    heron: g => wildPack(g)?.syncUntil !== undefined,
-    beetle: g => g.creatures.filter(c => c.dug !== undefined && c.dug > g.clock.time).length >= 2,
-    woodlouse: g => g.creatures.some(c => !!c.charge?.curl),
-    otter: g => fresh(g).some(e => e.kind === "packSpecial"),
-    toad: g => (g.combat.clouds?.length ?? 0) > 0,
-  };
-  // The rest (step 1's data-only kinds, 2026-10-23): their special's own sign, by its kind.
-  const BY_SPECIAL: Record<string, (g: Game, k: string) => boolean> = {
-    stampede: g => g.creatures.some(c => !!c.charge),
-    call: g => !!wildPack(g)?.callUntil,
-    feint: g => wildPack(g)?.feintBy !== undefined,
-    confusion: (g, k) => !!g.witches[0].confused && !!g.witches[0].confused.move === !!packKindOf(k)!.specialWith?.move,
-    cloud: g => (g.combat.clouds?.length ?? 0) > 0,
-    wall: g => g.combat.trails.length > 2,
-    rally: g => fresh(g).some(e => e.kind === "packSpecial"),
-    cover: g => g.creatures.some(c => c.dug !== undefined && c.dug > g.clock.time),
-    mirage: g => (g.combat.mirages?.length ?? 0) > 0,
-    sync: g => wildPack(g)?.syncUntil !== undefined,
-    scatter: g => g.creatures.some(c => !!c.packHide),
-  };
-  for (const k of Object.keys(PACKS.kinds)) it(`${k}: selected special, recovery, nothing NaN`, withCombatRoles({ [k]: "special" }, () => {
-    let seen = false, combos = 0, lulls = 0;
-    const g = arena(`pack-${k}`, 30, g => {
-      seen ||= SIGNS[k]?.(g) ?? BY_SPECIAL[packKindOf(k)!.special]?.(g, k) ?? true;
-      const st = wildPack(g);
-      if (st && st.at === g.clock.time) { if (st.phase === "combo") combos++; if (st.phase === "lull") lulls++; }
-    });
-    expect(seen, `${k}'s special`).toBe(true);
-    expect(combos).toBeGreaterThan(0);
-    expect(lulls).toBeGreaterThan(0);
-    expect(g.creatures.every(c => Number.isFinite(c.x) && Number.isFinite(c.z))).toBe(true);
-  }), 60000);
+  // Ed, 2026-11-01: emergent fight outcomes are design input, not unit contracts.
+  // Chosen-special preparation/execution is checked with direct actors in combatSpacing.test.ts;
+  // encounter phases and numerical safety have their own deterministic contract tests.
 });
 
 // Phase 1's new pieces (Echo, 2026-10-19): the heron's sync, the raven's mirage, the toad's spores, the bat's screech turning her
