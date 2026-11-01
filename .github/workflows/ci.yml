@@ -131,7 +131,8 @@ jobs:
       contents: write
       pull-requests: write
   preview:
-    if: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository }}
+    # Release-check and publish PRs ship to live minutes later: nobody plays their preview, so don't build one.
+    if: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository && !startsWith(github.event.pull_request.head.ref, 'claude/release-') && github.event.pull_request.head.ref != 'claude/publish-snapshot' }}
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4

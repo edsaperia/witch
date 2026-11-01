@@ -32,6 +32,10 @@ describe("shared CI game build", () => {
     expect(jobs.check.steps[0]).toMatchObject({ run: "exit 1" });
     expect(jobs.check.steps[0].if).toContain("needs.build.result != 'success'");
   });
+  it("skips the unused playable preview for release-check and publish PRs", () => {
+    expect(jobs.preview.if).toContain("!startsWith(github.event.pull_request.head.ref, 'claude/release-')");
+    expect(jobs.preview.if).toContain("github.event.pull_request.head.ref != 'claude/publish-snapshot'");
+  });
   it("splits unit tests over four shards and the required check needs every shard", () => {
     expect(jobs.unit.strategy.matrix.shard).toEqual([1, 2, 3, 4]);
     expect(jobs.unit.strategy["fail-fast"]).toBe(false);
