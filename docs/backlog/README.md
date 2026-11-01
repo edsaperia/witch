@@ -3,6 +3,7 @@
 **Mixed backlog: built features, partial implementations and unbuilt proposals.** Status audit: 2026-11-01, initial prototype `ab06904b`, reconciled with `11236cf7`; [counts and evidence limits](../reports/backlog-audit.md). A status is not permission to implement anything.
 
 - [grass-repaint-noise.md](grass-repaint-noise.md) — **Not built**: deferred two-pixel grass repaint noise, leading build-budget hypothesis and confirming trace fields.
+- [proof-loop.md](proof-loop.md) — **Partly built**: lessons from the paused-world fix and faster proof loops (proofs in CI shipped in #1614; the rest proposed).
 - [journey.md](journey.md) — **Partly built**: islands, records, the treehouse, mushrooms on the journey and the master difficulty curve. The authoritative doc where others overlap.
 - [treehouse.md](treehouse.md) — **Partly built**: the treehouse: a walkable house on the Ent round a hub, its rooms, the night's loop through it, the lobby (Ed, 2026-10-14; it overrides journey.md's room table).
 - [unlocks.md](unlocks.md) — **Partly built**: hats, brooms and bags: implemented spells/parts/finds plus historical achievement and shrine proposals.
