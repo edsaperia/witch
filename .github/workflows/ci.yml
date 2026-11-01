@@ -257,6 +257,8 @@ jobs:
       - run: npm ci
       - name: Reporting and checked-tree safety fixtures
         run: node --test tools/ci/reporting.test.cjs tools/ci/pages-policy.test.cjs
+      - name: Relay protocol and admission tests
+        run: npm --prefix server ci && npm --prefix server test
       - run: npm run typecheck
       - name: Failure annotation totals
         if: always()

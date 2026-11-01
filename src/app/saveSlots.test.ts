@@ -1,8 +1,32 @@
 import { describe, expect, it } from "vitest";
-import { SaveSlots, SLOT_INDEX, SLOT_KEYS, slotKey, switchSave } from "./saveSlots";
+import { BORROWED_GAME_KEYS, SaveSlots, SLOT_INDEX, SLOT_KEYS, slotKey, switchSave } from "./saveSlots";
+import { fallbackStorage } from "./storageFallback";
 import { Bindings } from "../platform/bindings";
 const memory = () => { const data = new Map<string, string>(); return { data, getItem: (k: string) => data.get(k) ?? null, setItem: (k: string, v: string) => { data.set(k, v); }, removeItem: (k: string) => { data.delete(k); } }; };
 describe("save slots", () => {
+  it("keeps borrowed progress transient and slot bytes unchanged while personal volume still saves", async () => {
+    const store = memory(), saves = new SaveSlots(store, () => {}, () => 123), own = saves.storage(), other = saves.create();
+    const gameKeys = BORROWED_GAME_KEYS.filter(key => key !== SLOT_INDEX);
+    for (const key of gameKeys) own.setItem(key, `own ${key} 🧙`);
+    own.setItem("witch.player", '{"music":0.5}'); saves.summary("home");
+    const before = new Map(store.data), release = saves.beginBorrowedVisit(), fallback = fallbackStorage(own);
+    for (const [i, key] of gameKeys.entries()) {
+      fallback.setItem(key, `borrowed ${key}`); expect(own.getItem(key)).toBe(`borrowed ${key}`);
+      if (i % 2) own.removeItem(key);
+    }
+    own.setItem("witch.player", '{"music":0.2}'); own.setItem("witch.bindings", '{"game.use":{"keys":["KeyQ"]}}');
+    saves.summary("host island", true); saves.touch(); expect(saves.select(other.id)).toBe(false);
+    const count = saves.list().length, flush = () => { throw new Error("Do not flush a borrowed world for slot switching"); };
+    expect(await switchSave(saves, flush, () => { throw new Error("Do not reload"); }, null)).toContain("Finish visiting");
+    expect(() => saves.create()).toThrow("Finish visiting"); expect(saves.list()).toHaveLength(count);
+    expect(store.getItem(SLOT_INDEX)).toBe(before.get(SLOT_INDEX));
+    for (const key of gameKeys) expect(store.getItem(SLOT_KEYS.includes(key as typeof SLOT_KEYS[number]) ? slotKey("s1", key) : key)).toBe(before.get(SLOT_KEYS.includes(key as typeof SLOT_KEYS[number]) ? slotKey("s1", key) : key));
+    release(); release(); expect(saves.visiting).toBe(false);
+    for (const key of gameKeys) expect(fallback.getItem(key)).toBe(`own ${key} 🧙`);
+    expect(new SaveSlots(store).storage().getItem("witch.player")).toBe('{"music":0.2}');
+    expect(new SaveSlots(store).storage().getItem("witch.bindings")).toContain("KeyQ");
+    own.setItem("witch.owned", "own fresh progress"); expect(new SaveSlots(store).storage().getItem("witch.owned")).toBe("own fresh progress");
+  });
   it("preserves all legacy progress/settings bytes in the first slot and never deletes originals", () => {
     const store = memory();
     for (const key of SLOT_KEYS) store.setItem(key, `original ${key} 🧙`);

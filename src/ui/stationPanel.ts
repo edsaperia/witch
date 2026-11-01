@@ -186,6 +186,21 @@ export class StationPanel {
   /** Tonight's loan (its id, or null): its card sparkles, the panel repainted if it's open and that changed. */
   setLoaned(id: string | null): void { if (id !== this.loaned) { this.loaned = id; if (this.id) this.paint(); } }
   setLook(g: Genome): void { if (this.id && JSON.stringify(g) !== JSON.stringify(this.g)) { this.g = clone(g); this.paint(); } }
+  /** Optional online boundary: replace optimistic data without reopening/sliding or emitting another choice. */
+  reconcile(g: Genome, owned: ReadonlySet<string>, workshop?: WorkshopCtx | null): void {
+    if (!this.id) return;
+    clearTimeout(this.lookTimer); this.lookTimer = 0;
+    const at = { ...this.at }, previous = this.lines()[at.line];
+    this.g = clone(g); this.c.owned = new Set(owned);
+    if (workshop !== undefined) {
+      this.ws = workshop; this.c.found = workshop?.found ?? new Set(); this.c.fitted = workshop ? { ...workshop.fitted } : null;
+    }
+    const lines = this.lines();
+    const same = previous ? lines.findIndex(l => l.shelf === previous.shelf && l.kind === previous.kind && l.item === previous.item && l.axis === previous.axis && l.row === previous.row) : -1;
+    const line = same >= 0 ? same : Math.max(0, Math.min(at.line, lines.length - 1));
+    this.c.focus(line, Math.max(0, Math.min(at.col, (lines[line]?.n ?? 1) - 1)));
+    this.paint();
+  }
   /** Each frame while open: the pad's d-pad or right stick moves, its bottom face button chooses (the left stick walks her, circle closes it:
    *  platform/input.ts padControls leaves the rest of the pad to the panel). */
   update(time: number): void {

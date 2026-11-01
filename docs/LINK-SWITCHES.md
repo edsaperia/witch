@@ -87,6 +87,8 @@ For the builders, the smoke and bench runs, the repro link and the arenas.
 | switch | does | since | read in |
 |---|---|---|---|
 | `refraction=0` / `refraction=1` | Preview world-anchored campfire heat and party-cast pressure refraction; off by default, and disabled by reduced flashing or the magic shimmer quality rung. | 2026-10-31 | render/post.ts |
+| `telephoneCalls=1` | Explicit two-client proof only: admits calls only when telephone=1 is also supplied. Ordinary calls remain off until canonical GO. | 2026-11-01 | app/telephoneSwitch.ts |
+| `telephone=1` | Proof-only: shows the unfinished telephone station panel; default play keeps the existing quiet-line message. Calls stay off unless telephoneCalls=1 is also explicitly supplied. | 2026-11-01 | app/telephoneSwitch.ts |
 | `layout=ed` / `layout=classic` | Ed's house arrangement is the default; classic selects the previous layout, and ed selects the default explicitly. | 2026-10-31 | app/houseLayout.ts, app/nightSave.ts |
 | `recording=0` / `recording=1` | Profile-only: 0 disables input recording and incremental log journalling; ordinary games keep both enabled. | 2026-10-30 | platform/diagnosticMode.ts |
 | `restore=comment` | Builder loader: consume the comment snapshot selected on the pause page, restoring that exact saved moment paused on the same build. | 2026-10-30 | main.ts |
