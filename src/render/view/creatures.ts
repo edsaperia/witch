@@ -259,7 +259,7 @@ export function drawCreatures(v: View, time = 0): void {
     }
     const feel = attackFeel(c, time, g.tuning.attackFx, FEEL);
     // A 💌 just landed on it (render/impact.ts): an instant's white flash and a little squash, springing back.
-    const imp = impactOf(c.id, g.tuning.invites.impact, IMPACT);
+    const imp = impactOf(g.clock, c.id, g.tuning.invites.impact, IMPACT);
     if (imp.flash > 0) glow = Math.max(glow, imp.flash);
     feel.sx *= imp.sx; feel.sy *= imp.sy;
     // Leaping (Stage 5: the toad): up in an arc over its shadow.

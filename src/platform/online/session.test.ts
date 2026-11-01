@@ -18,11 +18,58 @@ import { stationAuthority } from "./stationAuthority";
 import { bpmAt } from "../../rules/beat";
 import { ITEMS } from "../../rules/wardrobe";
 import { fillNightTrunk } from "../../app/nightFindBoundary";
+import { bareBroom, PARTS } from "../../rules/broomParts";
+import { HAT_SPELLS } from "../../rules/spells";
+import { HOUSE_ROOMS, objectFront } from "../../rules/houseRooms";
+import type { StationChoice } from "./stationChoice";
+import { continueSharedNight } from "../../app/sharedNight";
 
 const cleanups: (() => void)[] = [];
 afterEach(() => { for (const stop of cleanups.splice(0)) stop(); });
 const input = (moveX = 0): Controls => ({ moveX, moveZ: 0, zoom: 0, toggleMode: false, autoTalk: false });
 const turn = () => new Promise<void>(resolve => setTimeout(resolve, 0));
+it("keeps the same visit across the host's new world and rebases after guest preparation", async () => {
+  const f = fixture(), { joined } = await f.start(); await f.sync(); await joined;
+  f.hostGame.witches.forEach(w => { w.house = { slept: true, lastBed: "bed" }; });
+  const next = newGame(456, structuredClone(f.hostGame.tuning));
+  continueSharedNight(f.hostGame, next, { hats: new Set(), parts: new Set() });
+  const before = f.hostMessages.length;
+  expect(f.host.nextNight(next)).toBe(true); expect(f.host.role).toBe("host"); expect(f.host.ready).toBe(false);
+  for (const message of f.hostMessages.slice(before)) f.guest.message(message);
+  await vi.waitFor(() => expect(f.guestMessages.some(m => (m.payload as { kind?: string } | undefined)?.kind === "night-ready")).toBe(true));
+  expect(f.guestOptions.prepareGuest).toHaveBeenLastCalledWith(expect.objectContaining({ seed: 456 }), expect.any(AbortSignal), expect.any(Function), true);
+  const ready = f.guestMessages.find(m => (m.payload as { kind?: string } | undefined)?.kind === "night-ready")!;
+  f.host.message(ready); f.guest.message(f.hostMessages.at(-1)!);
+  expect(f.host.ready).toBe(true); expect(f.guest.ready).toBe(true); expect(f.guest.game!.seed).toBe(456);
+  const index = f.hostMessages.length; f.host.step(input(), .02);
+  for (const message of f.hostMessages.slice(index)) f.guest.message(message);
+  expect(snapshotGame(f.guest.game!)).toEqual(snapshotGame(next));
+  expect(f.hostOptions.ended).not.toHaveBeenCalled(); expect(f.guestOptions.ended).not.toHaveBeenCalled();
+  expect(f.hostOptions.failed).not.toHaveBeenCalled(); expect(f.guestOptions.failed).not.toHaveBeenCalled();
+});
+it.each(["hat", "broom"] as const)("orders competing %s claims in one host step and permits acquisition after release", async kind => {
+  const f = fixture(), hat = HAT_SPELLS.find(h => h.built && h.id !== "none")!.id, part = PARTS[0];
+  const choice: StationChoice = kind === "hat" ? { kind, id: hat } : { kind, fitted: { ...bareBroom(), [part.slot]: part.id } };
+  const release: StationChoice = kind === "hat" ? { kind, id: "none" } : { kind, fitted: bareBroom() };
+  const at = objectFront(HOUSE_ROOMS.objects.find(o => o.id === (kind === "hat" ? "hats" : "lathe"))!, f.hostGame.map.treehouse, .1);
+  const place = (w: typeof f.hostGame.witches[number]) => {
+    Object.assign(w.body, at, { mode: "ground", perch: true, seated: false }); w.spells.hat = "none"; w.spells.parts = bareBroom();
+  };
+  place(f.hostGame.witches[0]);
+  f.hostOptions.attach = game => { const w = newWitchPlayer(1, 0, 0, game.tuning); attachGuest(game, w, () => true); place(w); };
+  f.hostOptions.authorizeStation = stationAuthority(() => ({ bags: new Set(), hats: new Set([hat]), parts: new Set([part.id]) }));
+  const { joined } = await f.start(); await f.sync(); await joined;
+  const pump = () => { const before = f.hostMessages.length; f.host.step(input(), .02); const updates = f.hostMessages.slice(before); for (const m of updates) f.guest.message(m); return updates; };
+  expect(f.host.choose(choice)).toBe(true); expect(f.guest.choose(choice)).toBe(true); f.host.message(f.guestMessages.at(-1)!);
+  const updates = pump(), result = updates.find(m => (m.payload as { kind: string }).kind === "station")!.payload as { results: { accepted: boolean }[] };
+  expect(result.results.map(r => r.accepted)).toEqual([false]);
+  const owns = (player: number) => kind === "hat" ? f.hostGame.witches[player].spells.hat === hat : Object.values(f.hostGame.witches[player].spells.parts).includes(part.id);
+  expect(owns(0)).toBe(true); expect(owns(1)).toBe(false);
+  expect(snapshotGame(f.guest.game!)).toEqual(snapshotGame(f.hostGame));
+  expect(f.host.choose(release)).toBe(true); expect(f.guest.choose(choice)).toBe(true); f.host.message(f.guestMessages.at(-1)!); pump();
+  expect(owns(0)).toBe(false); expect(owns(1)).toBe(true);
+  expect(snapshotGame(f.guest.game!)).toEqual(snapshotGame(f.hostGame));
+});
 it("resolves bounded guest choices by sequence, including rejection, and refuses stale results", async () => {
   const f = fixture(), resolved = vi.fn(); f.guestOptions.stationResolved = resolved;
   const { joined } = await f.start(); await f.sync(); await joined;

@@ -34,5 +34,9 @@ export function guestArrival(options: GuestArrivalOptions) {
       if (attached !== game) return;
       attached = null; detachGuest(game, options.room);
     },
+    continued(previous: Game, next: Game): void {
+      if (attached !== previous || next.witches.length !== 2 || next.witches[1].id !== 1) throw new Error("The visiting witch couldn't continue into the next night.");
+      attached = next;
+    },
   };
 }

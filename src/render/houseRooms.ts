@@ -291,7 +291,7 @@ export class HouseRoomsView {
   update(v: View, onTreehouse: (px: number, py: number) => V3, ht: number): void {
     const g = v.game, w = g.witch, t = g.tuning, T = v.assets.treehouse, d = deckOf(g.map, t);
     const shown = !!(d?.house?.rooms && T.ent && w.perch && (w.mode === "ground" || w.mode === "descending")); // (at her decks too: the Terrace the oak's floor, render/houseArt.ts)
-    const late = v.shaderLandingLimited, share = v.landingHouseShare, arrivalNow = performance.now();
+    const late = v.shaderLandingLimited, share = v.landingHouseShare, arrivalNow = v.landingPresentationMs + g.clock.time * 1000;
     const world = (px: number, pz: number, h: number): V3 => { const p = fromPlan(d!, px, pz); return { ...p, y: groundHeight(p.x, p.z) + d!.h + h }; };
     const g0 = d ? groundHeight(d.x, d.z) : 0;
     const ky = T.ent && d ? (T.seat.y - T.ent.deck.y) / Math.max(0.1, d.seat.z - d.z) : 0;
@@ -399,7 +399,7 @@ export class HouseRoomsView {
     }
     if (late && floorCreated) {
       this.floorCompiled = false;
-      void Promise.all([v.renderer.compileAsync(this.floor, v.camera, v.scene), v.renderer.compileAsync(this.terraceFloor, v.camera, v.scene)]).then(() => { this.floorCompiled = true; this.floorArrivalAt = performance.now(); }, () => {});
+      void Promise.all([v.renderer.compileAsync(this.floor, v.camera, v.scene), v.renderer.compileAsync(this.terraceFloor, v.camera, v.scene)]).then(() => { this.floorCompiled = true; this.floorArrivalAt = v.landingPresentationMs + g.clock.time * 1000; }, () => {});
     }
     const nativeShare = late ? share * (this.floorArt && this.floorCompiled ? Math.min(1, Math.max(0, (arrivalNow - this.floorArrivalAt) / 800)) : 0) : 1;
     (this.floor.material as THREE.MeshBasicMaterial).opacity = nativeShare;
@@ -474,7 +474,7 @@ export class HouseRoomsView {
     };
     this.brewing.update(v, pxWorld, ky * v.mpp);
     let glowed = false;
-    const now = performance.now() / 1000;
+    const now = v.game.clock.time;
     for (const [k, { art, mesh, pos, id, x, z }] of this.pieces) {
       if (mesh.userData.loadingOrder !== undefined) { mesh.renderOrder = mesh.userData.loadingOrder; delete mesh.userData.loadingOrder; }
       const o = HOUSE_ROOMS.objects.find(q => q.id === id);
@@ -565,7 +565,7 @@ export class HouseRoomsView {
       const sl = toPlanAt0(hatSlots({ x: 0, z: 0 })[li].x, hatSlots({ x: 0, z: 0 })[li].z), p = toWorld(sl.x, sl.z, 0.2), q = v.v3.set(p.x, p.y, p.z).project(v.camera), px = cv.width / v.width / v.mpp;
       glints.push({ x: cv.left + (q.x + 1) / 2 * cv.width, y: cv.top + (1 - q.y) / 2 * cv.height, r: Math.max(18, px * 0.45) });
     }
-    if (glints.length || this.sparkle) (this.sparkle ??= new LoanSparkle()).draw(glints, performance.now() / 1000, Math.max(2, Math.round(cv.width / v.width * 3)));
+    if (glints.length || this.sparkle) (this.sparkle ??= new LoanSparkle()).draw(glints, v.game.clock.time, Math.max(2, Math.round(cv.width / v.width * 3)));
     const waking = !!g.wake && (!g.wake.open || (at?.use.kind === "bed" && g.party.spellAt === null)); // (the new opening's wake-up, rules/wakeUp.ts: no tag while she's in bed; the bed's not for sleeping yet)
     // over it, the button that uses it (Ed's playtest, 2026-10-26: "there's a prompt showing the button to press to open it"; then
     // "Please remove words from the station tags. We used to have little keys to show 'WASD', can we use these for E"): a keycap

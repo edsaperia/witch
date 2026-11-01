@@ -20,7 +20,7 @@ import { deckOf } from "./treehouse";
 import { floorHats, hatSlots, HOUSE_ROOMS, objectAt, objectFront, objectWorld, reserveHatPoints } from "./houseRooms";
 import { placementFacing } from "./housePlacement";
 import { bedside } from "./opening";
-import { pileOut, PILE_SLOTS, type PileSlot } from "./clothesPile";
+import { pileOut, PILE_SLOTS, isDressingTable, type PileSlot } from "./clothesPile";
 
 export type WakeBeat = /** asleep, dreaming (finds on loan) */ "dream" | "alarm" | "snooze" | "stretch" | "up";
 /** Something that happened this step, for the page (its sound and cards). */
@@ -30,6 +30,8 @@ export interface WakeState {
   /** Explicit guest wake routing; absent on the unchanged host-default path. */
   player?: number;
   room?: string;
+  /** Actual last-slept bed; room above retains the arrival bedroom assignment. */
+  bed?: string;
   beat: WakeBeat;
   /** When the beat began (her clock). */
   at: number;
@@ -64,8 +66,11 @@ export const bedFor = (room: string) => HOUSE_ROOMS.objects.find(o => o.room ===
 export const doorFor = (room: string) => HOUSE_ROOMS.objects.find(o => o.id === `${room}Door`);
 
 /** The bed's middle, a little toward its head along its original local x axis. */
-function inBed(g: Game, bed = HOUSE_ROOMS.objects.find(o => o.use.kind === "bed")): { x: number; z: number } | null {
-  return bed ? objectWorld(bed, g.map.treehouse, bed.w * 0.15, 0) : null;
+function inBed(g: Game, bed = HOUSE_ROOMS.objects.find(o => o.use.kind === "bed"), W?: Witch): { x: number; z: number } | null {
+  if (!bed) return null;
+  const sharing = W ? g.witches.filter(w => w === W || w.house?.lastBed === bed.id).sort((a, b) => a.id - b.id) : [];
+  const across = W ? (sharing.indexOf(W) - (sharing.length - 1) / 2) * bed.d * .18 : 0;
+  return objectWorld(bed, g.map.treehouse, bed.w * .15, across);
 }
 
 /** Start the wake-up (the dive's landing, or a night after the bed; rules/opening.ts wakeInBedroom having put her in the bedroom):
@@ -77,17 +82,18 @@ function inBed(g: Game, bed = HOUSE_ROOMS.objects.find(o => o.use.kind === "bed"
 export const wakeOf = (g: Game, W: Witch = g.witches[0]): WakeState | undefined => W === g.witches[0] ? g.wake : W.wake;
 
 export interface WakeStart { dreaming?: boolean; mirrored?: boolean; yesterday?: boolean }
-export interface WakeTarget { player: number; room: string }
+export interface WakeTarget { player: number; room: string; bed?: string }
 /** Caller-selected player/room only: no equipment creation, room unlock or page/camera effects. */
 export function startWakeFor(g: Game, ht: number, options: WakeStart, W: Witch, target: WakeTarget): boolean {
-  const bed = bedFor(target.room);
+  const bed = target.bed ? HOUSE_ROOMS.objects.find(o => o.id === target.bed && o.use.kind === "bed") : bedFor(target.room);
   if (!Number.isInteger(target.player) || g.witches[target.player] !== W || !bed || !HOUSE_ROOMS.rooms.some(q => q.id === target.room)) return false;
-  const at = inBed(g, bed);
+  const at = inBed(g, bed, W);
   if (!at) return false;
   const { dreaming = false, mirrored = false, yesterday = false } = options;
   const placement = bed.placement;
   W.body = { ...W.body, x: at.x, z: at.z, vx: 0, vz: 0, seated: false, perch: true, mode: "ground", lift: 0, ...placementFacing(placement ? placement.rotation - placement.baseRotation : 0) };
   const wake: WakeState = { player: target.player, room: target.room, beat: dreaming ? "dream" : "alarm", at: ht, snoozes: 0, open: false, mirror: mirrored, events: [], pile: [...PILE_SLOTS], ...(yesterday ? { yesterday } : {}) };
+  if (target.bed) wake.bed = target.bed;
   if (W === g.witches[0]) g.wake = wake; else W.wake = wake;
   if (!yesterday) hatOnFloor(g, ht, W);
   return true;
@@ -96,8 +102,31 @@ export function startWakeFor(g: Game, ht: number, options: WakeStart, W: Witch, 
 function bedsideFor(g: Game, W: Witch): { x: number; z: number } | null {
   const room = wakeOf(g, W)?.room;
   if (room === undefined) return bedside(g);
-  const bed = bedFor(room), deck = deckOf(g.map, g.tuning);
+  const id = wakeOf(g, W)?.bed;
+  const bed = id ? HOUSE_ROOMS.objects.find(o => o.id === id && o.use.kind === "bed") : bedFor(room), deck = deckOf(g.map, g.tuning);
   return bed && deck?.house?.rooms ? objectFront(bed, g.map.treehouse, 1.4) : null;
+}
+
+/** Reuse the normal alarm/stretch at the actual slept-in bed, without changing arrival assignment. */
+export function startWakeInLastBed(g: Game, ht: number, options: WakeStart, W: Witch = g.witches[0]): boolean {
+  const bed = HOUSE_ROOMS.objects.find(o => o.id === W.house?.lastBed && o.use.kind === "bed");
+  if (!bed) return false;
+  const previous = wakeOf(g, W), room = previous?.room ?? bed.room;
+  if (!startWakeFor(g, ht, options, W, { player: W.id, room, bed: bed.id })) return false;
+  W.house!.slept = false; delete W.house!.bedFrom;
+  return true;
+}
+
+/** Reuse the normal bed pose, separating shared sleepers within the same bed footprint. */
+export function settleSleepingBed(g: Game, W: Witch, id: string, ht: number): void {
+  const bed = HOUSE_ROOMS.objects.find(o => o.id === id && o.use.kind === "bed"); if (!bed || !W.house?.slept) return;
+  W.house.lastBed = id;
+  for (const sleeper of g.witches.filter(w => w.house?.slept && w.house.lastBed === id)) {
+    const before = wakeOf(g, sleeper);
+    if (startWakeFor(g, ht, { yesterday: true, mirrored: before?.mirror }, sleeper, { player: sleeper.id, room: before?.room ?? bed.room, bed: id })) {
+      const wake = wakeOf(g, sleeper)!; wake.beat = "snooze";
+    }
+  }
 }
 
 export function startWake(g: Game, ht: number, { dreaming = false, mirrored = false, yesterday = false }: WakeStart = {}, W: Witch = g.witches[0]): boolean {
@@ -146,7 +175,7 @@ export function stepWake(g: Game, c: Controls, ht: number, K: WakeTuning, W: Wit
     // first time she's at it; then out to her decks
     const d = deckOf(g.map, g.tuning), here = d ? objectAt(d, W.body.x, W.body.z) : null;
     if (press && pileOut(w) && here?.use.kind === "pile") { w.pile = []; w.events.push("dressed"); return used; }
-    if (!w.mirror && here?.id === "dressingTable") { w.mirror = true; w.events.push("mirror"); }
+    if (!w.mirror && isDressingTable(here?.id)) { w.mirror = true; w.events.push("mirror"); }
     if (g.party.spellAt !== null) return c;
     // (her bed before the party: held, she sleeps and the night counts as lost, as the bed after a loss does; main.ts "slept": Ed,
     // 2026-10-26, Q-e. Sleeping again and again till tonight's find in the sky is one she wants is fine: Ed)

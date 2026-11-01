@@ -26,7 +26,7 @@ import { BubbleFader, sightOf } from "../bubbleSight";
 const SNORES = 6;
 /** Every creature bubble here faded in and out by how near she is, on the ground only (render/bubbleSight.ts; Ed, 2026-10-28). */
 const sight = new BubbleFader();
-const nowS = (): number => performance.now() / 1000;
+
 
 /** Bubbles grow with who's talking (Ed, 2026-10-05): the pixel bubble's game pixel (its --px, in
  *  screen px) by level, babies smallest, legends (dreams and nightmares) largest. One style for
@@ -75,7 +75,7 @@ export function drawSnores(lv: LeashView, camera: THREE.Camera, width: number, h
     }
     const Z = g.tuning.dreams.sleepy, time = g.clock.time;
     for (const { c } of near) {
-      const seen = sight.step(`z${c.id}`, sightOf(w, c.x, c.z, B.near, B.fade), nowS(), B.ease);
+      const seen = sight.step(`z${c.id}`, sightOf(w, c.x, c.z, B.near, B.fade), lv.game.clock.time, B.ease);
       if (seen < 0.01) continue;
       const bob = Math.sin(time * 1.6 + c.id * 1.7) * 0.18, y = Math.min(lv.tops.get(c.id) ?? 1.5, 6) + 0.35 + bob; // (capped at 6 m: 4 before the creatures grew half again, Ed 2026-10-08)
       const hd = lv.heads.get(c.id); // (its puffs down to its head, Ed 2026-10-12)
@@ -105,7 +105,7 @@ export function drawDreams(lv: LeashView, camera: THREE.Camera, width: number, h
   const Bub = g.tuning.bubbles, list = lv.dreams.map(c => ({ c, d: Math.hypot(c.x - w.x, c.z - w.z) })).filter(p => p.d <= range).sort((p, q) => p.d - q.d).slice(0, 4);
   let used = 0;
   for (const { c } of list) {
-    const seen = sight.step(`d${c.id}`, sightOf(w, c.x, c.z, range, Bub.fade), nowS(), Bub.ease);
+    const seen = sight.step(`d${c.id}`, sightOf(w, c.x, c.z, range, Bub.fade), lv.game.clock.time, Bub.ease);
     if (seen < 0.01) continue;
     // Its puffs rise from just above the sleeper's head (the art director, #238), its whole height: held to 4.5 m before, a big
     // legend's bubble sat on its back (Ed, 2026-10-08: "their speech bubble and the helper text obscure them").
@@ -137,12 +137,12 @@ export function drawDreams(lv: LeashView, camera: THREE.Camera, width: number, h
     const snapToP = (v: number) => snapTo(v, P);
     thoughtCloud(el, S, tone < 0 ? DREAM_INK : [Math.round(232 - 42 * tone), Math.round(180 - 130 * tone), Math.round(106 - 76 * tone), 0.8 + 0.2 * tone], tone < 0 ? DREAM_FILL : NIGHTMARE_FILL, P);
     const faceE = step >= 0 ? N.faces[step] ?? "😠" : zzz ? emojiOr(zzz, Z!.fallback) : "😴";
-    const sym = dreamSymbol(performance.now() / 1000, c.id, g.tuning.dreams.cycle ?? DREAM_CYCLE, open); // (the screen's clock: game time slows to a crawl in a legend's clearing)
+    const sym = dreamSymbol(lv.game.clock.time, c.id, g.tuning.dreams.cycle ?? DREAM_CYCLE, open);
     if (sym.kind === "emoji") thoughtEmoji(el, S, faceE, DREAM_EMOJI, sym.alpha, P);
     else if (sym.kind === "flask") thoughtSymbol(el, S, "flask", "relic", DREAM_INNER, () => sigilCanvas("relic", null, [255, 205, 90], DREAM_INNER), sym.alpha, P);
     else thoughtSymbol(el, S, "sigil", `${q.species}:kind`, DREAM_INNER, () => sigilCanvas(q.species, null, sigilColour(q.species), DREAM_INNER), sym.alpha * (1 - 0.75 * r), P);
     const bx = ((lv.v.x + 1) / 2) * width, ly = ((1 - lv.v.y) / 2) * height;
-    const shake = faces ? snapToP(ire * P * Math.sin(performance.now() * 0.05 + c.id)) : 0; // (a nightmare shakes, a whole grid step)
+    const shake = faces ? snapToP(ire * P * Math.sin(g.clock.time * 50 + c.id)) : 0; // (a nightmare shakes, a whole grid step)
     const at = thoughtAt(S, bx, ly, P); // (its smallest puff over the sleeper)
     let left = at.left + shake, top = at.top;
     if (top < 57) {
@@ -273,7 +273,7 @@ export function drawSlashes(lv: LeashView, time: number, camera: THREE.Camera, w
 export function drawCirclePanel(lv: LeashView, camera: THREE.Camera, width: number, height: number): void {
   const host = lv.bubbleWitch?.parentElement, g = lv.game;
   if (!host) return;
-  const now = performance.now() / 1000, dt = lv.circleAt ? Math.min(0.1, now - lv.circleAt) : 0;
+  const now = lv.game.clock.time, dt = lv.circleAt ? Math.min(0.1, now - lv.circleAt) : 0;
   lv.circleAt = now;
   const near = g.witch.lift > 0.5 ? null : legendCircleNear(g, g.witch); // (the treetops never)
   if (near) lv.circleLast = near;
@@ -371,7 +371,7 @@ export function bubbles(lv: LeashView, time: number, camera: THREE.Camera, width
     return;
   }
   const c = g.creatures[talk.id], B = g.tuning.bubbles;
-  const seen = sight.step(`t${c.id}`, sightOf(w, c.x, c.z, B.near, B.fade), nowS(), B.ease); // (its bubble as every creature's: render/bubbleSight.ts)
+  const seen = sight.step(`t${c.id}`, sightOf(w, c.x, c.z, B.near, B.fade), lv.game.clock.time, B.ease); // (its bubble as every creature's: render/bubbleSight.ts)
   bc.style.setProperty("--px", `${bubblePx(c.level)}px`);
   place(bw, w.x, witchHeight(w, g.tuning) + 2.2, w.z); // (its tail over her head, Ed 2026-10-12)
   const hd = lv.heads.get(c.id); // (its tail over its head, Ed 2026-10-12: render/view/creatures.ts)
@@ -408,7 +408,7 @@ function drawIslandDreams(lv: LeashView, camera: THREE.Camera, width: number, he
   const list = g.creatures.filter(c => !c.gone && c.finale !== undefined && c.finale < 0).map(c => ({ c, d: Math.hypot(c.x - w.x, c.z - w.z) })).filter(p => p.d <= range).sort((p, q) => p.d - q.d).slice(0, 6);
   let used = 0;
   for (const { c } of list) {
-    const seen = sight.step(`i${c.id}`, sightOf(w, c.x, c.z, range, B.fade), nowS(), B.ease); // (its own range: there to be seen from further)
+    const seen = sight.step(`i${c.id}`, sightOf(w, c.x, c.z, range, B.fade), lv.game.clock.time, B.ease); // (its own range: there to be seen from further)
     if (seen < 0.01) continue;
     const head = lv.tops.get(c.id) ?? 2;
     const hd = lv.heads.get(c.id);

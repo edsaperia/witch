@@ -12,7 +12,7 @@
   "objects": [
     {"id":"bedroom3Bed","label":"Bed","use":{"kind":"bed"},"offset":[2.6,-2.6],"box":{"w":4,"d":5.2,"h":1.2}},
     {"id":"bedroom3Wardrobe","label":"Wardrobe","use":{"kind":"creator","axes":["top"],"wear":[],"parts":["jacket","top","jeans"]},"offset":[4.2,2.2],"box":{"w":1.4,"d":4,"h":4.4}},
-    {"id":"bedroom3Chest","label":"Something under a dust sheet","use":{"kind":"say","line":"Waiting for its witch."},"offset":[-1.6,-4.9],"box":{"w":2.8,"d":1.6,"h":1.8}},
+    {"id":"bedroom3DressingTable","label":"Dressing table","use":{"kind":"creator","axes":["hair"],"wear":["earrings"],"parts":["hair","skin"]},"offset":[-1.6,-4.9],"box":{"w":2.8,"d":1.6,"h":4.6}},
     {"id":"bedroom3Crates","label":"Packing crates","use":{"kind":"say","line":"Waiting for its witch."},"offset":[-2.8,2.9],"box":{"w":3,"d":1.6,"h":2.6}}
   ]
 }

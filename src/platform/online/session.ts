@@ -26,7 +26,8 @@ export interface SessionOptions {
   attach(game: Game): void;
   detach(game: Game): void;
   /** Install this authoritative game in the normal page/View. Report only actual completed preparation work. */
-  prepareGuest(game: Game, signal: AbortSignal, advanced: () => void): Promise<void>;
+  prepareGuest(game: Game, signal: AbortSignal, advanced: () => void, continuing?: boolean): Promise<void>;
+  continuedHost?(previous: Game, next: Game): void;
   /** Called after the fresh post-preparation rebase; menus/saves must not mutate a presentation facade. */
   synchronized(game: Game): void;
   /** Page owns fresh-solo return/save policy and telephone/socket teardown. */
@@ -54,7 +55,7 @@ export function onlineSession(options: SessionOptions) {
   const buffer = guestInput(), now = options.now ?? (() => performance.now());
   let role: "host" | "guest" | null = null, connection: SessionConnection | null = null, game: Game | null = null;
   let controller: AbortController | null = null, removeAbort = () => {}, tick = 0, sequence = 0, progress = 0;
-  let present = false, prepared = false, ready = false, preparing = false, changed = false, epoch = 0;
+  let present = false, prepared = false, ready = false, preparing = false, changed = false, epoch = 0, night = 0;
   let replica: ReturnType<typeof replayGuest> | null = null;
   let accept: (() => void) | null = null, reject: ((error: Error) => void) | null = null;
   let stationSequence = 0, lastStation = -1;
@@ -71,7 +72,7 @@ export function onlineSession(options: SessionOptions) {
   };
   const stop = () => {
     const previous = role, previousGame = game, attached = present;
-    epoch++; role = null; connection = null; game = null; present = prepared = ready = preparing = changed = false; replica = null;
+    epoch++; role = null; connection = null; game = null; present = prepared = ready = preparing = changed = false; replica = null; night = 0;
     buffer.clear(); removeAbort(); removeAbort = () => {}; controller?.abort(); controller = null;
     requests.length = 0; stationSequence = 0; lastStation = -1;
     pendingStations.clear();
@@ -86,7 +87,7 @@ export function onlineSession(options: SessionOptions) {
   const sendStart = () => {
     if (options.appearance && looks.size !== 2) return; // No borrowed world admission until both cosmetic profiles are validated.
     if (options.catalogue) { catalogue = hostCatalogue(); options.catalogueApplied?.(structuredClone(catalogue)); }
-    if (!connection || !game || !connection.sendState({ kind: "start", start: replayStart(game, options.build, tick), ...(options.appearance ? { looks: [...looks].map(([player, genome]) => ({ player, genome })) } : {}), ...(catalogue ? { catalogue } : {}) })) throw new Error("The night couldn't be sent to your friend.");
+    if (!connection || !game || !connection.sendState({ kind: "start", ...(night ? { night } : {}), start: replayStart(game, options.build, tick), ...(options.appearance ? { looks: [...looks].map(([player, genome]) => ({ player, genome })) } : {}), ...(catalogue ? { catalogue } : {}) })) throw new Error("The night couldn't be sent to your friend.");
     beatSegments = game.beat.segs;
   };
   const api = {
@@ -121,9 +122,14 @@ export function onlineSession(options: SessionOptions) {
             if (!present && game) { options.attach(game); present = true; buffer.clear(); sendStart(); }
             return true;
           }
-          if (message.type === "guest-ready" && message.player === 1) { if (present) { sendStart(); ready = true; changed = false; } return true; }
+          if (message.type === "guest-ready" && message.player === 1) { if (present && night === 0) { sendStart(); ready = true; changed = false; } return true; }
           if (message.type === "input" && message.player === 1) {
             const profile = message.payload as Record<string, unknown> | null;
+            if (profile?.kind === "night-ready") {
+              if (Object.keys(profile).length !== 2 || !Number.isSafeInteger(profile.night)) throw new Error("Invalid next-night readiness.");
+              if (present && night > 0 && profile.night === night && !ready) { sendStart(); ready = true; changed = false; }
+              return true;
+            }
             if (options.appearance && profile?.kind === "appearance") {
               if (Object.keys(profile).length !== 2 || !Object.hasOwn(profile, "genome")) throw new Error("Invalid guest appearance message.");
               const look = appearance(profile.genome); if (!look) throw new Error("Invalid guest appearance.");
@@ -151,8 +157,15 @@ export function onlineSession(options: SessionOptions) {
             return true;
           }
         } else if (message.type === "state" && message.player === 0) {
-          const payload = message.payload as { kind?: string; start?: ReplayStart; frame?: ReplayFrame; tick?: number; choices?: { player: unknown; choice: unknown }[]; results?: { sequence: number; accepted: boolean }[]; beat?: unknown; looks?: { player: unknown; genome: unknown }[]; catalogue?: unknown } | null;
+          const payload = message.payload as { kind?: string; night?: number; start?: ReplayStart; frame?: ReplayFrame; tick?: number; choices?: { player: unknown; choice: unknown }[]; results?: { sequence: number; accepted: boolean }[]; beat?: unknown; looks?: { player: unknown; genome: unknown }[]; catalogue?: unknown } | null;
           if (payload?.kind === "start" && payload.start) {
+            const incomingNight = payload.night ?? 0;
+            if (!Number.isSafeInteger(incomingNight) || incomingNight < night || incomingNight > night + 1) throw new Error("Invalid shared-night sequence.");
+            if (incomingNight > night) {
+              if (!ready || !replica) throw new Error("Another shared night is still preparing.");
+              night = incomingNight; epoch++; replica = null; ready = prepared = preparing = false;
+              pendingStations.clear(); receivedHouse.clear();
+            }
             if (options.catalogue || payload.catalogue !== undefined) {
               const next = sharedCatalogue(payload.catalogue); if (!next) throw new Error("Invalid shared station catalogue.");
               catalogue = next; options.catalogueApplied?.(structuredClone(next));
@@ -178,10 +191,12 @@ export function onlineSession(options: SessionOptions) {
                 signal,
                 restore: () => { replica = replayGuest(payload.start!, options.build); game = replica.game; if (game.witches.length !== 2) throw new Error("Invalid two-person night"); return game; },
                 prepare: async (source, preparationSignal) => {
-                  await options.prepareGuest(source, preparationSignal, () => { if (current === epoch && !signal.aborted) connection?.sendProgress(++progress); });
+                  const advanced = () => { if (current === epoch && !signal.aborted) connection?.sendProgress(++progress); };
+                  if (night) await options.prepareGuest(source, preparationSignal, advanced, true);
+                  else await options.prepareGuest(source, preparationSignal, advanced);
                   if (signal.aborted || current !== epoch) return;
                   prepared = true;
-                  if (!connection?.sendReady()) throw new Error("The guest telephone disconnected.");
+                  if (!(night ? connection?.sendInput({ kind: "night-ready", night }) : connection?.sendReady())) throw new Error("The guest telephone disconnected.");
                 },
                 progress: () => progress,
                 trace: (stage, detail) => { try { options.trace?.(stage, detail); } catch { /* Diagnostics cannot break admission. */ } },
@@ -313,6 +328,16 @@ export function onlineSession(options: SessionOptions) {
       } catch (error) { fail(error); return true; }
     },
     disconnect: stop,
+    /** Host-only canonical rollover, preserving the call/approved appearances and using the existing preparation/rebase gate. */
+    nextNight(next: Game): boolean {
+      if (role !== "host" || !connection || !game || !present || !ready || !game.witches.every(w => w.house?.slept) || next.witches.length !== 2) return false;
+      try {
+        options.continuedHost?.(game, next);
+        game = next; night++; tick = 0; ready = changed = false;
+        buffer.clear(); requests.length = 0; pendingStations.clear(); receivedHouse.clear();
+        sendStart(); return true;
+      } catch (error) { fail(error); return false; }
+    },
     /** Rare host page-boundary fallback, not a per-frame update: full snapshot cost still needs browser measurement.
      * Typed station choices below avoid restoring a full world for the ordinary equipment selections. */
     changed() { if (role === "host" && present) changed = true; },

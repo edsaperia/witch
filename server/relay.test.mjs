@@ -13,6 +13,14 @@ async function fixture(t, options) {
 }
 const send = (ws, m) => ws.send(JSON.stringify({ protocol: 1, ...m }));
 const message = async ws => JSON.parse((await once(ws, 'message'))[0].toString());
+
+test('acknowledges every registered heartbeat without changing the room role', async t => {
+  const connect = await fixture(t), h = await host(connect);
+  for (let i = 0; i < 3; i++) {
+    const reply = message(h.ws); send(h.ws, { type: 'heartbeat' });
+    assert.deepEqual(await reply, { protocol: 1, type: 'heartbeat' });
+  }
+});
 async function host(connect) {
   const ws = await connect(), reply = message(ws);
   send(ws, { type: 'host', room: '1234567' });

@@ -50,7 +50,7 @@ import type { CauldronTrip } from "./cauldronTrip";
 
 /** Seconds of pushing on out against the zoo's edge before she leaves it (Game.zooPush). */
 export const ZOO_EDGE_PUSH = 0.5;
-import { keepInBedroom, stepWake, wakeOf, WAKE_DEFAULT, type WakeState } from "./wakeUp";
+import { keepInBedroom, stepWake, wakeOf, startWakeInLastBed, WAKE_DEFAULT, type WakeState } from "./wakeUp";
 import { wearPiece } from "./clothesPile";
 import { hatLetters, hatsDown, onHatPicked, onHatPut, stepHatSpells } from "./hatSpells";
 import { loadOf, type LeashLoad, groundedBy } from "./leashWeight";
@@ -564,14 +564,17 @@ function fixedStep(g: Game, controls: readonly Controls[]): void {
   const wave = g.party.wave;
   const legends = (g.legendIds ??= g.creatures.filter(k => k.boss).map(k => k.id));
   const t = g.tuning;
+  const allInBed = g.witches.every(w => w.house?.slept === true);
   const motions = g.witches.map((W, i) => {
     const ht = witchTime(g, W);
     let c = controls[i];
     if (potionPhase(g, W)) c = { moveX: 0, moveZ: 0, toggleMode: false, zoom: c.zoom };
     if (g.witches.length > 1 && W.house?.slept) {
-      // Finished the existing bed hold: asleep until this shared night ends. No new wake gesture.
-      W.body = { ...W.body, vx: 0, vz: 0 };
-      return { W, c: NO_INPUT, ht, was: W.body, deck: deckOf(g.map, t), perchTurn: 0, firing: false, LV: null as ReturnType<typeof leashView> | null };
+      const getUp = !allInBed && (Math.hypot(c.moveX, c.moveZ) > .1 || c.toggleMode);
+      if (!getUp || !startWakeInLastBed(g, ht, { yesterday: true, mirrored: wakeOf(g, W)?.mirror }, W)) {
+        W.body = { ...W.body, vx: 0, vz: 0 };
+        return { W, c: NO_INPUT, ht, was: W.body, deck: deckOf(g.map, t), perchTurn: 0, firing: false, LV: null as ReturnType<typeof leashView> | null };
+      }
     }
     // The party spell (Ed, 2026-10-06): until it's cast, and while she casts it, she stands behind the decks: no moving,
     // rising, blinking, spells or 💌s (the camera's zoom still works). Its button, Enter, or her spell key (R, the pad's L3, touch

@@ -17,6 +17,7 @@ export const PILE_SLOTS: readonly PileSlot[] = ["top", "shoes", "cloak", "hat", 
 /** The piece each dressing station puts on (config/house/'s station ids). The dressing table (her hair, skin, face, earrings)
  *  dresses nothing: those are hers in the nightie too. */
 export const STATION_SLOT: Readonly<Record<string, PileSlot>> = { wardrobe: "top", bedroom2Wardrobe: "top", bedroom3Wardrobe: "top", shoeRack: "shoes", cloakPegs: "cloak", bags: "bits" };
+export const isDressingTable = (id: string | undefined): boolean => id === "dressingTable" || id === "bedroom2DressingTable" || id === "bedroom3DressingTable";
 
 /** She's dressed: nothing of last night's left in the pile (an old wake-up, with no pile, counts as dressed). */
 export const dressed = (w: { pile?: PileSlot[] } | null | undefined): boolean => !w?.pile?.length;
