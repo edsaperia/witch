@@ -187,6 +187,18 @@ export function floorHats(W: Witch): string[] {
   return (H.hats ??= hatsOnFloor(W));
 }
 const hatsElsewhere = (W: Witch) => new Set([W.spells.hat, ...W.hat.left.map(q => q.spell)]);
+/** Explicit ownership rollback/return cleanup. Never called by the solo pickup path.
+ * Keep the currently worn hat; remove unowned physical/cached copies without compacting floor slots. */
+export function syncFloorHats(W: Witch): void {
+  if (!W.spells.hats) return; // Unrestricted ownership: no cleanup or initialization.
+  const keep = (id: string) => ownsHat(W.spells, id) || (wearing(W.hat) && id === W.spells.hat);
+  const H = W.house;
+  if (H?.hats) H.hats.forEach((id, i) => { if (id && !keep(id)) H.hats![i] = ""; });
+  if (H?.hatOverflow) H.hatOverflow.splice(0, H.hatOverflow.length, ...H.hatOverflow.filter(keep));
+  W.hat.left.splice(0, W.hat.left.length, ...W.hat.left.filter(h => keep(h.spell)));
+  if (W.hat.down && !keep(W.spells.hat)) { W.hat.down = null; setLoadout(W.spells, "none"); }
+  if (H?.hatPointOrigin && HOUSE_ROOMS.layout?.hatPoints.length) reserveHatPoints(W, H.hatPointOrigin);
+}
 /** The hats on the hats' floor as they are, or as they'd be laid out, without laying them (for the view). */
 export function hatsOnFloor(W: Witch): string[] {
   if (HOUSE_ROOMS.layout?.hatPoints.length) {
