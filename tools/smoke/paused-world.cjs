@@ -179,12 +179,14 @@ async function measure(browser, url, sha, candidate) {
       await page.waitForTimeout(duration);
       const after = await snapshot();
       const count = after.draws - before.draws;
-      console.log(JSON.stringify({ sha, name, count, elapsedMs: after.at - before.at, drawsPerMinute: count * 60000 / (after.at - before.at) }));
+      const measurement = { sha, name, count, elapsedMs: after.at - before.at, drawsPerMinute: count * 60000 / (after.at - before.at) };
+      console.log(JSON.stringify(measurement));
       assert.equal(after.time, before.time, name + ' simulation advanced');
       if (candidate) {
         assert.equal(count, 0, name + ' world redrew');
         assert.deepEqual(after.phases, before.phases, name + ' pointer phase changed');
       }
+      return measurement;
     };
     if (candidate) {
       await page.evaluate(() => { window.pauseProbe.sample = true; });
@@ -193,8 +195,8 @@ async function measure(browser, url, sha, candidate) {
     await page.keyboard.press('Escape');
     await page.waitForSelector('body.paused');
     await page.evaluate(() => { window.pauseProbe.held = window.pauseProbe.frame; });
-    await hold('pause', 60000);
-    if (!candidate) return;
+    const baselineMeasurement = await hold('pause', 60000);
+    if (!candidate) return baselineMeasurement;
     assert.ok((await snapshot()).phases.length, 'need a visible world pointer fixture');
     // The real control opens Settings after a minute with no world draws.
     await page.getByRole('button', { name: /show settings page/i }).click();
@@ -233,6 +235,8 @@ async function measure(browser, url, sha, candidate) {
     const dir = path.resolve(process.env.PAUSE_PROOF_OUT || 'paused-world-proof', candidate ? 'candidate-failure' : 'baseline-failure');
     await fs.mkdir(dir, { recursive: true });
     await page.screenshot({ path: path.join(dir, 'page.png'), timeout: 10000 }).catch(() => {});
+    const trace = await page.evaluate(() => window.pauseProbe?.frame?.trace ?? null).catch(() => null);
+    if (trace) await fs.writeFile(path.join(dir, 'pixel-submissions.json'), JSON.stringify(trace, null, 2));
     await fs.writeFile(path.join(dir, 'failure.json'), JSON.stringify({ sha, error: error.stack }, null, 2));
     throw error;
   } finally { await page.close(); }
@@ -245,15 +249,18 @@ async function measure(browser, url, sha, candidate) {
   try {
     // CI keys this successful measurement by immutable baseline SHA and proof/browser fingerprint.
     const cache = process.env.PAUSE_BASELINE_RESULT;
-    let measured = false;
+    let measured;
     if (cache) {
-      try { measured = JSON.parse(await fs.readFile(cache, 'utf8')).sha === baseSha; }
+      try {
+        const saved = JSON.parse(await fs.readFile(cache, 'utf8'));
+        if (saved.sha === baseSha && saved.measurement?.sha === baseSha) measured = saved.measurement;
+      }
       catch (error) { if (error.code !== 'ENOENT') throw error; }
     }
     if (!measured) {
-      await measure(browser, base, baseSha, false);
-      if (cache) await fs.writeFile(cache, JSON.stringify({ sha: baseSha, measuredAt: new Date().toISOString() }));
-    } else console.log(JSON.stringify({ baseline: baseSha, cached: true }));
+      const measurement = await measure(browser, base, baseSha, false);
+      if (cache) await fs.writeFile(cache, JSON.stringify({ sha: baseSha, measuredAt: new Date().toISOString(), measurement }));
+    } else console.log(JSON.stringify({ baseline: baseSha, cached: true, measurement: measured }));
     await measure(browser, candidate, candidateSha, true);
   }
   finally { await browser.close(); }

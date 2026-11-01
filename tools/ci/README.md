@@ -10,6 +10,10 @@ Bounded GitHub failure annotations shared across commands in one job; logs/artif
 node tools/ci/annotations.cjs --summary
 ```
 
+## `build-proof-baseline.cjs`
+
+Only the separate, frozen prototype checkout is built.
+
 ## `pages-policy.cjs`
 
 Pages publication policy: debounce previews outside the publisher lock; live requests preempt older publication.
@@ -21,6 +25,10 @@ Stream a check unchanged, annotating named failures or its crash reason only whe
 ```
 node tools/ci/report-command.cjs --kind art -- node art/check.mjs --times
 ```
+
+## `run-proofs.cjs`
+
+One foreground runner; servers close in finally, including assertion failures.
 
 ## `run-unit.mjs`
 
@@ -61,8 +69,11 @@ Inventory real world-constructor calls and explicit small-fixture reasons; comme
 ## Also here
 
 - `PLAN.md`
+- `PROOF-PLAN.md`
 - `effects-scene.test.ts`
 - `pages-policy.test.cjs`
+- `proofs.json`
+- `proofs.test.cjs`
 - `reporting.test.cjs`
 - `run-unit.test.ts`
 - `same-game.test.ts`
