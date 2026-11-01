@@ -985,6 +985,7 @@ const ordinaryVisit = visitNightSaves ? visitLifecycle({
     loan = null; owned = null; // Own private loan is retained in the lifecycle snapshot, never reused as a host-world loan.
     const p = new URLSearchParams(N().params); p.delete("arrive");
     await startNight(page, { how: "bed", island: game.tuning.map?.island ?? "home", seed: game.seed, world: game.tuning.map?.world, params: p, resume: game, borrowed: true });
+    seedEl.innerHTML = `seed <a href="?seed=${N().seed}">${N().seed}</a>`;
     reportAdvance(); signal.throwIfAborted();
     if (remoteArt.has(0)) { await remoteArt.start(game, 1, signal); reportAdvance(); }
     const markAt = performance.now(), timingAt = view.assets.timings.length;
@@ -1018,6 +1019,7 @@ const ordinaryVisit = visitNightSaves ? visitLifecycle({
     } else {
       returnedUnlocks = null;
       const restored = await startNight(page, { ...own.night.spec, how: "bed", resume: own.night.game, borrowed: false });
+      seedEl.innerHTML = `seed <a href="?seed=${restored.seed}">${restored.seed}</a>`;
       syncFloorHats(restored.game.witches[0]); await view.prepare(); Object.assign(restored.flags, own.night.flags, { last: 0 }); sailing = false; input.clearPresses();
     }
   },
@@ -1707,6 +1709,9 @@ if (phoneEnabled && phoneCallsEnabled) (window as unknown as { witch: Record<str
   preparation: { ...visitPreparation }, saveBoundaryReady: ordinaryVisit !== null,
   status: phone.state.status, active: phone.active, visiting: phone.visiting,
   seed: N().game.seed, borrowed: N().spec.borrowed === true, worldReady: N().flags.ready,
+  viewSeed: view.game.seed, viewUsesCanonicalMap: view.game.map === N().game.map,
+  seedLabel: seedEl.textContent,
+  players: view.game.witches.map(w => ({ id: w.id, x: w.body.x, z: w.body.z, room: w.wake?.room })),
   artPending: view.assets.pending, artDone: view.assets.done, paused: freeze.frozen,
   menus: { telephone: phone.open, creator: creator.open, station: stations.station, chart: chartOpen() },
 });
