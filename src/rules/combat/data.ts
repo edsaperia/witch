@@ -250,6 +250,8 @@ export const creatureMaxHp = (c: { species: string; level: Level }, data: Combat
 
 /** What the rest of the game tells combat each step. */
 export interface CombatWorld {
+  /** Tonight's curved ley route and its drawing tip, in metres; absent in detached combat worlds. */
+  friendlyRoute?: () => { line: readonly (readonly [number, number])[]; tip: number };
   creatures: Creature[];
   /** The creatures to step this time (near a witch, or busy with a siege). */
   active: Creature[];

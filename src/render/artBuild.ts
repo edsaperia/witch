@@ -92,7 +92,7 @@ export type ArtJob = { kind: "type"; id: number; style: Style; seed: number; K: 
   | { kind: "props"; id: string; style: Style }
   | { kind: "soundsystems"; id: string; style: Style }
   /** (id "home" the old treehouse; "ent:<deck height>:<radius>" the treehouse Ent holding the deck: rules/treehouse.ts;
-   *  "ent:<height>:<radius>:<kind>" carried on that kind's legend: art/carrier.js) */
+   *  "house:<height>:<radius>" the oak house; none has a carrier (Ed, 2026-10-31). */
   | { kind: "treehouse"; id: string; style: Style; layout?: HouseArtLayout }
   /** The paths' 3D pieces: bridges, stairs, railway landmarks, signal and verge posts. */
   | { kind: "pathPieces"; id: string; style: Style }
@@ -199,7 +199,7 @@ export function runJob(job: ArtJob, mk: MakeCanvas): ArtResult {
   if (job.kind === "props") return { px: packPixels(propSprites(job.style, mk), 1024) };
   if (job.kind === "soundsystems") return { px: packPixels(soundsystemSprites(job.style, mk), 2048) };
   if (job.kind === "soundsystem") { const { sprites, art } = soundsystemGenSprites(job.style, job.genome, job.yaw, job.size, mk, job.part); return { px: packPixels(sprites, 1024), ss: art }; }
-  if (job.kind === "treehouse") { const [ent, y, r, kind] = job.id.split(":"), { sprites, treehouse } = ent === "ent" || ent === "house" ? entTreehouseSprites(job.style, mk, +y, +r, kind || null, ent === "house", job.layout?.config) : treehouseSprites(job.style, mk); return { px: packPixels(sprites, 2048), treehouse }; }
+  if (job.kind === "treehouse") { const [ent, y, r] = job.id.split(":"), { sprites, treehouse } = ent === "ent" || ent === "house" ? entTreehouseSprites(job.style, mk, +y, +r, ent === "house", job.layout?.config) : treehouseSprites(job.style, mk); return { px: packPixels(sprites, 2048), treehouse }; }
   if (job.kind === "partyObjects") { const { sprites, party } = partyObjectSprites(job.style, mk); return { px: packPixels(sprites, 2048), party }; }
   if (job.kind === "partyWitch") { const { sprites, witch } = partyWitchSprites(job.style, job.seed, mk, job.genome ?? null); return { px: packPixels(sprites, 2048), witch }; }
   if (job.kind === "creature") return { px: packPixels(creatureSprites(job.style, job.id, mk), 2048) };
