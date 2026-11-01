@@ -38,6 +38,7 @@ import { chartOpen, closeChart, openChart, prepareChart, finishChartFlight, type
 import { openingWay, opensDirectly, opensInBedroom, opensWithCreator, sailLandsInBed } from "./app/opening";
 import { wakeInBedroom } from "./rules/opening";
 import { endDream, startParty, startWake } from "./rules/wakeUp";
+import { WorldDrawGate } from "./app/worldDrawGate";
 import { LandingSleep } from './app/landingSleep';
 import { STATION_SLOT, wearFromStation, wornGenome } from "./rules/clothesPile";
 import { WakeCard } from "./render/wakeUp";
@@ -343,7 +344,8 @@ const queueCast = () => { const n = N(); if (awaitingSpell(n.game.party) && !n.g
 window.addEventListener("keydown", e => { if (e.code === "Enter" && N().game.clock.time > 0.3 && !creator.open && !chartOpen() && !phone.open) queueCast(); }); // (Enter on the chart sails)
 // (the clock, its pops and the debug overlay: the night's HUD, app/hud.ts)
 
-const fit = () => view.resize(window.innerWidth, window.innerHeight);
+let viewRevision = 0;
+const fit = () => { view.resize(window.innerWidth, window.innerHeight); viewRevision++; };
 window.addEventListener("resize", fit);
 fit();
 
@@ -889,7 +891,7 @@ freeze.onToggle = on => {
   pauseLoading = true;
   void import("./ui/decide").then(({ PauseSliders }) => {
     const report = () => import("./ui/visualReport").then(({ report }) => report(reportHost()));
-    pauseSliders = new PauseSliders({ newBuild: { latest: () => newBuild.latest, load: () => location.reload() }, mutate: tuningMutation, saveComment, restoreComment, downloadReadableLog: () => { void N().playtest.download("text"); }, settings: () => settingsPage.show(), get tuning() { return phone.preferences(N().game); }, get seed() { return N().game.seed; }, version: BUILD, live: knobLive, report, potionLab: () => { void openPotionLab(); }, musicLab: openMusicLab, audioTest: () => { window.open("audio-test/", "_blank", "noopener"); }, downloadLog: () => N().playtest.download(), unlockAll: { get: () => unlockAll(), set: on => { if (phone.active) return; mutate("debug: unlock all", () => { setUnlockAll(on); if (on) stockMushroomBaskets(N().game); for (const W of N().game.witches) syncHatUnlock(W, on, params); creator.hats = N().game.spells.hats; }); } }, defaults: { text: () => defaultsText(lookWithoutLoan((page.look() ?? creator.genome()) as Record<string, unknown> | null, loan), partsWithoutLoan(N().game.witches[0].spells.parts, loan)), tryIt: () => { window.open(newWitchLink(location.href), "_blank", "noopener"); }, shown: () => N().hud.debugOn || unlockAll() }, fightArena: () => { window.open(fightLink(newFightSeed()), "_blank", "noopener"); }, finds: () => findsPanel.toggle(true), findsShown: () => N().hud.debugOn || devFinds, quality: { lines: () => ladder.lines(), options: () => ladder.options(), current: () => ladder.current(), choose: v => { ladder.choose(v); ladder.apply(phone.preferences(N().game)); } } });
+    pauseSliders = new PauseSliders({ newBuild: { latest: () => newBuild.latest, load: () => location.reload() }, mutate: tuningMutation, saveComment, restoreComment, downloadReadableLog: () => { void N().playtest.download("text"); }, settings: () => settingsPage.show(), get tuning() { return phone.preferences(N().game); }, get seed() { return N().game.seed; }, version: BUILD, live: knobLive, report, potionLab: () => { void openPotionLab(); }, musicLab: openMusicLab, audioTest: () => { window.open("audio-test/", "_blank", "noopener"); }, downloadLog: () => N().playtest.download(), unlockAll: { get: () => unlockAll(), set: on => { if (phone.active) return; mutate("debug: unlock all", () => { setUnlockAll(on); if (on) stockMushroomBaskets(N().game); for (const W of N().game.witches) syncHatUnlock(W, on, params); creator.hats = N().game.spells.hats; }); } }, defaults: { text: () => defaultsText(lookWithoutLoan((page.look() ?? creator.genome()) as Record<string, unknown> | null, loan), partsWithoutLoan(N().game.witches[0].spells.parts, loan)), tryIt: () => { window.open(newWitchLink(location.href), "_blank", "noopener"); }, shown: () => N().hud.debugOn || unlockAll() }, fightArena: () => { window.open(fightLink(newFightSeed()), "_blank", "noopener"); }, finds: () => findsPanel.toggle(true), findsShown: () => N().hud.debugOn || devFinds, quality: { lines: () => ladder.lines(), options: () => ladder.options(), current: () => ladder.current(), choose: v => { ladder.choose(v); ladder.apply(phone.preferences(N().game)); viewRevision++; } } });
     requestAnimationFrame(() => pauseSliders!.show(freeze.frozen, creator.open)); // (a frame shut first, so it slides in)
   }, () => { // (its files replaced under it: Ed, 2026-10-14, "the menu does not appear")
     pauseLoading = false;
@@ -1046,7 +1048,8 @@ if (autosave) {
   document.addEventListener("visibilitychange", () => { if (document.hidden) void autosave.save(performance.now(), true); });
 }
 
-let lastDraw = 0;
+let worldDraw = new WorldDrawGate();
+let displayedTime = 0, displayedStep = -1;
 /** The wake-up's card and dark (render/wakeUp.ts), made the first time a night has one. */
 let wakeCard: WakeCard | null = null;
 const landingSleep = new LandingSleep<Game>();
@@ -1331,7 +1334,8 @@ async function makeSailNight(to: Sailed, arrival?: Arrival, at?: FlightEnd["cam"
   const n = await startNight(page, { how: "sail", island: to.island, seed: to.seed, world: to.world, arrival, params: p });
   seedEl.innerHTML = `seed <a href="?seed=${n.seed}">${n.seed}</a>`;
   bedFirst(n); // (the flight in ends on her asleep in her bedroom, rules/opening.ts)
-  lastDraw = 0;
+  worldDraw = new WorldDrawGate();
+  displayedStep = -1;
   const A = n.tuning.arrive;
   await view.prepare({ sail: true, ...(A && at !== undefined ? { dive: diveReach(n.game.map, A), track: diveTrack(n.game.map, A) } : {}) });
   if (at && A && !view.shaderLandingLimited) await warmAt(n, handoffShot({ cam: at }, n.game.map), A);
@@ -1406,7 +1410,8 @@ async function nightInPlace(spec: NightSpec, href: string): Promise<void> {
   const n = await startNight(page, spec);
   seedEl.innerHTML = `seed <a href="?seed=${n.seed}">${n.seed}</a>`;
   creator.loadout = { hat: n.game.spells.hat }; creator.hats = unlockAll() ? undefined : n.game.spells.hats;
-  lastDraw = 0;
+  worldDraw = new WorldDrawGate();
+  displayedStep = -1;
   await view.prepare();
   n.flags.ready = true;
   startEl.classList.remove("loading");
@@ -1440,9 +1445,9 @@ function shutStation(why: string): void {
 let lastObservedFrame = 0;
 let measuredStep: number | undefined, measuredDraw: number | undefined;
 let measuredParts: Record<string, number> = {};
-function drawFrame(time: number): void {
+function drawFrame(time: number, repaintHeld = false): void {
   const start = performance.now(), previousParts = view.ms;
-  try { view.render(time); }
+  try { view.render(time, true, repaintHeld); }
   finally {
     measuredDraw = (measuredDraw ?? 0) + performance.now() - start;
     if (view.ms !== previousParts) for (const [name, ms] of Object.entries(view.ms)) measuredParts[`draw.${name}`] = (measuredParts[`draw.${name}`] ?? 0) + ms;
@@ -1488,7 +1493,12 @@ function frameBody(now: number): void {
     } else {
       (wakeCard ??= new WakeCard()).sleep();
       if (!freeze.frozen && now - landingSnoreAt > 4500) { sound.sfx?.snore(0, 0, 0.2); landingSnoreAt = now; }
-      drawFrame(game.clock.time); hud.clock(); freeze.update(); return;
+      // Arrival readiness needs draws while the simulation sleeps. A player pause holds even this clock.
+      if (!freeze.frozen) {
+        view.landingPresentationMs += Math.min(50, Math.max(0, dt * 1000));
+        drawFrame(game.clock.time);
+      }
+      hud.clock(); freeze.update(); return;
     }
   }
   // (the sea chart open over the game, ui/chartOverlay.ts: its keys and clicks are the chart's, hers held still)
@@ -1646,21 +1656,29 @@ function frameBody(now: number): void {
   hud.clock();
   zooPanel?.update(); // (the zoo's block bar: src/zoo/panel.ts)
   if (game.zooExit !== undefined && !zooLeaving) { zooLeaving = true; leaveZoo(); } // (her way out of the zoo: its little treehouse, or its edge; app/zooExit.ts)
-  // Behind the start screen, a frame every 0.3 s is plenty: the CPU goes to drawing the forest's
-  // art in the background instead (and so slow a frame doesn't count against the scenery budget).
   // (arriving: the flight's shot on the view, every frame; landed, the night starts)
   const flying = !!arrival && !F.landed && F.ready;
   if (flying && arrival!.frame(view, game, now)) arrived();
   // The pad on the pause page and Settings: before the chart's or the zoo's early return, so it works paused over the chart too.
   updatePauseMenus(now);
   if (chartHeld || zooHeld) return; // (the sea chart or the zoo over the night: its last frame kept, nothing drawn)
-  if (game.clock.paused && !freeze.frozen && !flying && now - lastDraw < 300) return;
-  lastDraw = now;
+  const paused = freeze.frozen || (game.clock.paused && !flying);
+  const title = paused && !freeze.frozen && !startedNights.has(game);
+  if (title) view.assets.work(4); // progress the workerless queue without submitting the world
+  const art = view.assets.done + view.assets.version;
+  if (!worldDraw.shouldDraw(false, paused, title, art, viewRevision, game.clock.time)) {
+    freeze.update(); hud.overlay(now, overlayHead); return;
+  }
   // Drawn between the last two fixed steps (game time: party transitions, sigils and waves are stamped in it).
   frameStats.beginGpu();
   // (a 💌 filling a ring holds the picture a few frames, a hitstop: the last frame kept, the rules running on; render/impact.ts)
   const held = holding(performance.now());
-  if (!held) interpolated(game, () => drawFrame(Math.max(0, game.clock.time - (1 - game.alpha) * STEP * game.timeScale))); // (the world's step is STEP x timeScale: rules/slowTime.ts)
+  if (!held) {
+    if (!paused || displayedStep !== game.clock.time) displayedTime = Math.max(0, game.clock.time - (1 - game.alpha) * STEP * game.timeScale);
+    interpolated(game, () => drawFrame(displayedTime, paused && !title && displayedStep === game.clock.time));
+    displayedStep = game.clock.time;
+    worldDraw.drawn(art, viewRevision, displayedStep);
+  } // (the world's step is STEP x timeScale: rules/slowTime.ts)
   if (!held) drew(performance.now());
   fightFrame((x, y, z) => view.screenOf(x, y, z)); // (the Fight Arena's telegraph timings, if it's on)
   frameStats.endGpu();

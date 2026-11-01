@@ -1,13 +1,31 @@
 // The morning's guidance pins breathe (Ed, 2026-10-29: "morning routine pointers should pulse slightly (wake up to spell)"):
 // render/view/guidance.ts guidePulse, by the tuning's pins.pulse and pulseRate; half as much with reduce flashing.
-import { describe, expect, it } from "vitest";
-import { guidePulse } from "./guidance";
+import { describe, expect, it, vi } from "vitest";
+import { GuidePin, guidePulse } from "./guidance";
+import type { View } from "../view";
 import { TUNING } from "../../rules/tuning";
 
 const T = TUNING.pins!, dress = { kind: "dress" as const, target: { object: "wardrobe" } };
 const over = (f: (s: number) => number) => { let lo = Infinity, hi = -Infinity; for (let s = 0; s < 2; s += 0.01) { const v = f(s); lo = Math.min(lo, v); hi = Math.max(hi, v); } return [lo, hi]; };
 
 describe("the morning's guidance pins breathe", () => {
+  it("keeps the displayed pointer phase through ten paused seconds and resumes from it", () => {
+    const pin = { scale: 0, show() {}, hide() {} };
+    const clock = { time: 1.25 };
+    const pins = { pulse: 0.1, pulseRate: 0.73 };
+    const pointer = new GuidePin({ game: { clock, tuning: { pins } }, pin: () => pin, leashView: {}, usePrompt: {} } as unknown as View);
+    vi.useFakeTimers({ toFake: ["performance"] });
+    try {
+      pointer.update(dress, true);
+      const before = pin.scale;
+      vi.advanceTimersByTime(10000);
+      pointer.update(dress, true);
+      expect(pin.scale).toBe(before);
+      clock.time += 1 / 60;
+      pointer.update(dress, true);
+      expect(pin.scale).not.toBe(before);
+    } finally { vi.useRealTimers(); }
+  });
   it("swell gently, from 1 to 1 + pins.pulse and back, pulseRate times a second", () => {
     const [lo, hi] = over(s => guidePulse(dress, s, T));
     expect(lo).toBeCloseTo(1, 3);
