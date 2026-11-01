@@ -7,8 +7,33 @@ import { fillControls } from "./ui/controlsText";
 import { bagOf, setBag } from "./rules/bags";
 import { bindings } from "./platform/bindings";
 import { Rumble } from "./platform/rumble";
+import { telephoneStation } from "./app/telephoneStation";
+import { installTelephone, telephoneEnabled, telephoneCallsEnabled } from "./app/telephoneSwitch";
+import { leaveVisit, visitHome } from "./app/visitHome";
+import { telephoneCues } from "./app/telephoneCues";
+import { telephoneFaces } from "./app/telephoneFaces";
+import { telephoneFaceCanvas } from "./render/telephoneFace";
+import { TelephonePresence } from "./ui/telephonePresence";
+import { telephoneNotice } from "./ui/telephone";
+import { guestArrival } from "./platform/online/guestArrival";
+import { guestAccess } from "./platform/online/guestAccess";
+import { visitSaves } from "./app/visitSaves";
+import { visitLifecycle } from "./app/visitLifecycle";
+import { visitUnlocks } from "./app/visitUnlocks";
+import { stationAuthority } from "./platform/online/stationAuthority";
+import { remoteWitchAppearance } from "./platform/online/remoteAppearance";
+import { appearance } from "./platform/online/appearance";
+import { stationLook } from "./platform/online/stationAppearance";
+import { localHouseAction } from "./app/houseActions";
+import type { HouseEvents } from "./platform/online/houseSteps";
+import { fillNightTrunk } from "./app/nightFindBoundary";
+import { chartDeparture } from "./app/chartDeparture";
+import { soloDiagnostic } from "./app/soloDiagnostic";
+import { overlayPause } from "./app/overlayPause";
+import { introFocus } from "./app/introFocus";
 import { currentSettings } from "./app/playerSettings";
-import { wavesOver } from "./rules/win";
+import { wavesOver, won } from "./rules/win";
+import { sharedFindLoan, withSharedFind, type PersonalKit } from "./app/sharedFindLoan";
 import { chartOpen, closeChart, openChart, prepareChart, finishChartFlight, type Sailed } from "./ui/chartOverlay";
 import { openingWay, opensDirectly, opensInBedroom, opensWithCreator, sailLandsInBed } from "./app/opening";
 import { wakeInBedroom } from "./rules/opening";
@@ -24,7 +49,7 @@ import "./platform/tuningPreset"; // (first: ?tuning=pre-overnight writes the ol
 import { FrameStats } from "./platform/frameStats";
 import { gpuName, QualityLadder } from "./app/ladder";
 import { musicCue } from "./rules/musicPlan";
-import { areaUnderWitch, interpolated, STEP, type Game } from "./rules/game";
+import { areaUnderWitch, interpolated, newWitchPlayer, STEP, type Game } from "./rules/game";
 import { enableCauldron, homeMushroomPickups } from "./rules/cauldronNight";
 import { TUNING, type Tuning } from "./rules/tuning";
 import { diveReach, diveTrack, handoffShot, newFlightClock, stepFlightClock, type Shot } from "./rules/arrive";
@@ -42,23 +67,23 @@ import { StallLog } from "./platform/stallLog";
 import { Freeze } from "./platform/freeze";
 import { StudioPlayer } from "./app/studio";
 import { StudioPanel } from "./ui/studioPanel";
-import { Creator, loadGenome, saveGenome } from "./ui/creator";
+import { Creator, loadGenome, saveGenome, classicPalette } from "./ui/creator";
 import { BOT_KINDS, type BotKind } from "./rules/botKinds";
 import type { Bot } from "./rules/bot";
 import type { BotTag } from "./ui/botGame";
 import { pleasingWitch } from "./ui/looks";
 import type { DecidePanel } from "./ui/decide";
 import { saveLoadout } from "./app/loadout";
-import { castable, hatSpell, setParts } from "./rules/spells";
+import { castable, HAT_SPELLS, hatSpell, setParts } from "./rules/spells";
 import { changeLoadout } from "./rules/hatSpells";
-import { HOUSE_ROOMS, addFloorHat, installEdLayout } from "./rules/houseRooms";
+import { HOUSE_ROOMS, addFloorHat, syncFloorHats, installEdLayout } from "./rules/houseRooms";
 import { setEdLayoutActive } from "./rules/housePlacement";
 import { usesEdLayout } from "./app/houseLayout";
 import { stationOf, tableOf } from "./rules/stations";
 import { itemById, shelfOf, shelvesAt, stationsShowing } from "./rules/wardrobe";
 import { FIND_KINDS, fillTrunk, findKind, loanFind, spawnFind, spawnSpot, type FindKindId } from "./rules/finds";
 import { fitBroom, loadBroom, migrateBroom } from "./app/broomSave";
-import { partById } from "./rules/broomParts";
+import { bareBroom, partById } from "./rules/broomParts";
 import { loadOwned } from "./app/owned";
 import { ownedToChoose, partsToChoose, setUnlockAll, stockMushroomBaskets, syncHatUnlock, unlockAll } from "./app/debugUnlock";
 import { defaultsText, newWitchLink } from "./app/defaultLook";
@@ -108,7 +133,7 @@ import { forgetArrival, type Arrival } from "./app/arrival";
 import { shotParams } from "./app/shot";
 import type { FlightEnd } from "./render/chart/seaChart";
 import { restoreGame } from "./rules/nightSnapshot";
-import { browserNightStore, captureNight, nightHasStarted, NightAutosave, savedNight, savedNightResumeLink, nightLinkConflicts, savesEnabled, type SavedNight, type NightStore } from "./app/nightSave";
+import { borrowedNightSaves, browserNightStore, captureNight, nightHasStarted, NightAutosave, savedNight, savedNightResumeLink, nightLinkConflicts, savesEnabled, type SavedNight, type NightStore } from "./app/nightSave";
 import { Breadcrumbs, browserCommentStore, captureComment, CommentBook, parseCommentFile } from "./app/playtestComments";
 import { LOG_EXPANDED_BYTES } from "./platform/logCodec";
 import { observePlaytestErrors, logCaughtError } from "./platform/playtestLog";
@@ -125,8 +150,11 @@ const BUILD = typeof __BUILD__ === "string" ? __BUILD__ : "dev";
 performance.mark("witch:main"); // (the load's steps, for timing the arrival: witch:main, :game, :view, :ready; app/arrive.ts :landed)
 prewarmArtWorkers(); // (the art workers load their code while the night is made: render/assets.ts)
 const params = new URLSearchParams(location.search);
+// Proof admission belongs to this incoming page, never a saved night's later parameter restoration.
+const phoneEnabled = telephoneEnabled(params), phoneCallsEnabled = telephoneCallsEnabled(params);
 setEdLayoutActive(usesEdLayout(params));
 installEdLayout(usesEdLayout(params));
+installTelephone(phoneEnabled);
 /** ?mistgate=0 (a builder's, the loading mist: render/loadingMist.ts): the island counted ready (g.islandReady) without waiting
  *  for its art (nothing in the house waits on it since the oak; with ?artdelay=<s>, slowly), to see the mist roll away. */
 const mistGateOff = params.get("mistgate") === "0";
@@ -144,6 +172,7 @@ if (savesEnabled(bootLink, navigator.webdriver)) {
       try {
         setEdLayoutActive(usesEdLayout(new URLSearchParams(saved.params)));
         installEdLayout(usesEdLayout(new URLSearchParams(saved.params)));
+        installTelephone(phoneEnabled);
         const restored = restoreGame(saved.game);
         restoreSettingsBase(restored.tuning, saved.settingsBase);
         resumeGame = restored; resumeSave = saved;
@@ -205,7 +234,8 @@ let lookNow = JSON.stringify(resumeSave?.look ?? savedLook);
 // nightie, bare feet, no hat...); shown whenever her look or the pile changes (`shownLook`: what the view was last given).
 let shownLook = "";
 function showLook(): void {
-  const pile = (page.night ?? page.last)?.game.wake?.pile, key = `${lookNow}|${pile?.join() ?? ""}`;
+  const canonical = (page.night ?? page.last)?.game;
+  const pile = canonical ? (page.presentationGame?.(canonical) ?? canonical).wake?.pile : undefined, key = `${lookNow}|${pile?.join() ?? ""}`;
   if (key === shownLook) return;
   const look = JSON.parse(lookNow) as unknown;
   if (view.houseRooms) view.houseRooms.outfit = look;
@@ -217,6 +247,7 @@ const page: Page = { night: null, build: BUILD, look: () => (lookNow ? JSON.pars
 /** The night on now (while the next is made after a sail in place, the one just ended: app/night.ts endNight). */
 const N = (): Night => (page.night ?? page.last)!;
 function mutate<T>(label: string, action: () => T): T { return pageMutation(N().game, label, action); }
+function tuningMutation(label: string, action: () => void): void { if (!phone.active && !N().spec.borrowed) mutate(label, action); }
 function captureRecording(game: Game): SavedNight {
   const n = N();
   return captureNight(game, { build: BUILD, params: n.params.toString(), look: page.look() as Record<string, unknown> | null, loan,
@@ -257,7 +288,8 @@ let dreamAfterDive: { loan: Loan; won: boolean } | null = null;
 /** The broom parts she has tonight: those she's found, and a part on loan. */
 const partsNow = (): Set<string> => withLoan("part", new Set(loadBroom().found), loan);
 const view = page.view = await View.create(canvas, N().game, gameStyle(style, bootTuning), savedLook); // (built a frame's budget at a time: the bedroom's frames go on meanwhile, render/slices.ts)
-view.setIntroFocus = pageFocus;
+let onlineFocus = () => false;
+view.setIntroFocus = (game, focus) => introFocus(game, N().game, focus, onlineFocus(), pageFocus);
 // The loading screen (src/loading.js, src/ui/loadingScreen.js), up since the first paint: given the view for its count of the art
 // and the shaders; gone at once for a start with no wake-up in the bedroom, its supernova into the bedroom's alarm otherwise (below).
 const loading = (window as unknown as { witchLoading?: { view: unknown; finish(): void; cancel(): void } }).witchLoading;
@@ -280,7 +312,7 @@ if (params.get("playtest") === "download") setTimeout(() => N().playtest.downloa
 
 // The debug knobs: the fight's scale, speed and momentum, the treetop speed (app/knobs.ts): their keys, and their live setters
 // for the pause page's sliders and the decisions panel (by the link's param); their start is the night's.
-const knobLive = setupKnobs(N, mutate);
+const knobLive = setupKnobs(N, mutate, () => !phone.active && !N().spec.borrowed);
 
 // Auto-talk (Ed's playtest, 2026-10-04: a new player wanted to turn it off): T, or a click
 // on its slot, turns it on or off (remembered on this browser); off, she talks while Shift is held.
@@ -309,7 +341,7 @@ startEl.style.display = "none";
 // game frozen, left her held with no spell): pressed on every frame the clock runs, till the rules have it.
 // (the night's flags.castWanted)
 const queueCast = () => { const n = N(); if (awaitingSpell(n.game.party) && !n.game.wake) n.flags.castWanted = true; }; // (a night woken in her bedroom: E at her decks casts it, rules/wakeUp.ts)
-window.addEventListener("keydown", e => { if (e.code === "Enter" && N().game.clock.time > 0.3 && !creator.open && !chartOpen()) queueCast(); }); // (Enter on the chart sails)
+window.addEventListener("keydown", e => { if (e.code === "Enter" && N().game.clock.time > 0.3 && !creator.open && !chartOpen() && !phone.open) queueCast(); }); // (Enter on the chart sails)
 // (the clock, its pops and the debug overlay: the night's HUD, app/hud.ts)
 
 let viewRevision = 0;
@@ -365,9 +397,103 @@ sound.leyLink = () => view.ley.currentLink(); // (the pulse's fizz heard where t
 // The freeze (Esc, gamepad Start, the ❚❚ button): a true still for screenshots, . steps (platform/freeze.ts).
 const freeze = page.freeze = new Freeze(N().game, N().seed, BUILD);
 freeze.mutate = mutate;
-freeze.advance = (game, controls, dt) => recordedStep(game, controls, dt, BUILD, captureRecording);
+freeze.advance = (game, controls, dt) => { if (!phone.active && !N().spec.borrowed) recordedStep(game, controls, dt, BUILD, captureRecording); };
 freeze.started = () => (startEl.style.display === "none" || creator.open) && !studio.at; // (in the bedroom too: Ed, 2026-10-14, "Can we pause from the bedroom?")
 freeze.ownsEsc = () => !bot && !document.querySelector("#settings-page.open, #potion-lab.open"); // (the Settings page's Esc is its own: it closes, the pause page stays) // (the bot game's Esc is its way back to the start screen: ui/botGame.ts)
+const callArrival = guestArrival({ room: "bedroom2", equipment: game => {
+  const witch = newWitchPlayer(1, 0, 0, game.tuning); setParts(witch.spells, bareBroom()); witch.spells.hat = "none"; return witch;
+} });
+let returnedUnlocks: ReturnType<typeof visitUnlocks> | null = null;
+let hostedUnlocks: ReturnType<typeof visitUnlocks> | null = null;
+const remoteArt = remoteWitchAppearance(view);
+const sharedLoans = sharedFindLoan();
+function personalKit(game: Game = N().game, player = 0): PersonalKit {
+  const spells = game.witches[player].spells;
+  return { look: (page.look() ?? creator.genome()) as Record<string, unknown>, hat: spells.hat, parts: { ...spells.parts }, ...(spells.hats ? { hats: [...spells.hats] } : {}) };
+}
+function hostCollections(game: Game) {
+  const wardrobe = withSharedFind(game, "wearable", findsCtx().owned());
+  return { wardrobe, bags: new Set(BAGS.filter(b => wardrobe.has(b.id)).map(b => b.id)), hats: withSharedFind(game, "hat", new Set(game.witches[0].spells.hats ?? HAT_SPELLS.filter(hat => hat.built).map(hat => hat.id))), parts: withSharedFind(game, "part", partsNow()), records: withSharedFind(game, "record", new Set(ownedRecords())) };
+}
+const phoneSounds = telephoneCues(() => sound.sfx);
+const phoneFaces = telephoneFaces(phoneEnabled ? (() => { try { return localStorage; } catch { return null; } })() : null);
+const phoneFace = (number: string) => { const face = phoneFaces.get(number); return face ? telephoneFaceCanvas(face) : null; };
+const visitPreparation = { stage: "not-started", at: 0, advancedAt: 0, progress: 0, failure: "" };
+function traceVisit(stage: string, detail?: unknown): void {
+  visitPreparation.stage = stage; visitPreparation.at = performance.now();
+  const message = (detail as { message?: unknown } | undefined)?.message;
+  if (typeof message === "string") visitPreparation.failure = message.slice(0, 500);
+  notable("telephone-preparation", stage, detail);
+}
+const phone = telephoneStation({ enabled: phoneEnabled, callsEnabled: phoneCallsEnabled, face: phoneFace, clearFaces: () => { phoneFaces.clear(); phonePresence.refresh(); }, digit: digit => { if (phone.state.status !== "preparing") phoneSounds.digit(digit); }, storage: (() => { try { return localStorage; } catch { return null; } })(), session: {
+  build: BUILD, hostGame: () => N().game,
+  trace: traceVisit,
+  appearance: () => { sharedLoans.begin(personalKit(), loan); if (!phone.visiting) sharedLoans.observe(N().game, personalKit()); return appearance(page.look()) ?? appearance({}); },
+  attach: game => { if (!guestAccess.ready) throw new Error("The guest room isn't ready yet."); callArrival.attach(game); if (remoteArt.has(1)) void remoteArt.start(game, 0).catch(error => { logCaughtError(error, "host remote appearance"); phone.hangUp(); }); },
+  detach: game => callArrival.detach(game),
+  prepareGuest: (game, signal, advanced) => {
+    if (!ordinaryVisit) { traceVisit("save-boundary:unavailable"); return Promise.reject(new Error("This browser isn't ready to protect your saved night.")); }
+    return ordinaryVisit.prepare(game, signal, advanced);
+  },
+  synchronized: game => { void ordinaryVisit?.synchronized(game).catch(error => { logCaughtError(error, "visit confirmation"); phone.hangUp(); }); },
+  ended: (role, game) => {
+    if (role === "host") phone.hangUp(); // Close the role-bearing socket on departure, not only its game session.
+    remoteArt.clear();
+    if (role === "guest") {
+      try { returnedUnlocks = game && game.witches.some(w => w.id === 1) ? visitUnlocks(game, 1) : null; }
+      catch (error) { returnedUnlocks = null; logCaughtError(error, "visit unlock capture"); }
+      sharedLoans.finish(false, personalKit(), true);
+      void ordinaryVisit?.end().catch(error => logCaughtError(error, "visit return"));
+    } else if (game) {
+      try { hostedUnlocks = visitUnlocks(game, 0); }
+      catch (error) { hostedUnlocks = null; logCaughtError(error, "host unlock capture"); }
+      const success = won(game), kit = personalKit(game);
+      if (success && kit.hats) kit.hats = [...withSharedFind(game, "hat", new Set(kit.hats))];
+      const restored = sharedLoans.finish(success, kit); loan = restored.loan;
+      const W = game.witches[0]; changeLoadout(W, restored.kit.hat); setParts(W.spells, { ...restored.kit.parts }); setBag(W.spells, bagOf(restored.kit.look)); W.spells.hats = restored.kit.hats; syncFloorHats(W);
+      lookNow = JSON.stringify(restored.kit.look); creator.adopt(restored.kit.look); shownLook = ""; owned = null;
+      if (success && hostedUnlocks) {
+        const collection = loadOwned(lookWithoutLoan(restored.kit.look, loan));
+        hostedUnlocks.apply(browserSaveSlots(), { spells: W.spells, owned: () => collection }); hostedUnlocks = null;
+        saveGenome(lookWithoutLoan(restored.kit.look, loan) as never); saveLoadout({ hat: hatWithoutLoan(W.spells.hat, loan) as typeof W.spells.hat }); fitBroom(partsWithoutLoan(W.spells.parts, loan));
+      }
+      creator.hats = unlockAll() ? undefined : W.spells.hats; creator.loadout = { hat: W.spells.hat }; view.partsFound = partsNow();
+      stations.reconcile(restored.kit.look as never, ownedToChoose(findsCtx().owned()), workshopNow()); booth.refresh(ownedRecords());
+    }
+  },
+  failed: error => { visitPreparation.failure = error.message; logCaughtError(error, "telephone session"); phone.hangUp(); telephoneNotice(error.message); },
+  advanceHost: (game, controls, dt) => recordedStep(game, controls, dt, BUILD, captureRecording),
+  authorizeStation: stationAuthority(hostCollections),
+  wardrobe: () => hostCollections(N().game).wardrobe,
+  catalogue: () => { const shared = hostCollections(N().game); return { wardrobe: [...shared.wardrobe], parts: [...shared.parts], hats: [...shared.hats], records: [...shared.records] }; },
+  catalogueApplied: catalogue => { creator.hats = catalogue.hats as typeof creator.hats; view.partsFound = new Set(catalogue.parts); reconcilePickers(); },
+  stationResolved: player => { if (player === (phone.visiting ? 1 : 0)) reconcilePickers(); },
+  stationPalette: () => classicPalette(style),
+  stationApplied: (player, choice) => {
+    if (choice.kind === "party") { booth.close(); if (!phone.visiting && ownedRecords().includes(choice.id)) chooseRecord(choice.id); }
+    if (player !== (phone.visiting ? 1 : 0)) return;
+    const witch = N().game.witches[player]; if (!witch) return;
+    if (choice.kind === "hat") {
+      creator.loadout = { hat: witch.spells.hat };
+      if (!phone.visiting) saveLoadout({ hat: sharedLoans.forSave(personalKit()).hat as typeof witch.spells.hat });
+    } else if (choice.kind === "broom" && !phone.visiting) fitBroom(sharedLoans.forSave(personalKit()).parts);
+  },
+  appearanceApplied: (player, look) => {
+    if (player !== (phone.visiting ? 1 : 0) && phone.state.peer) { phoneFaces.remember(phone.state.peer, look); phonePresence.refresh(); }
+    if (player === (phone.visiting ? 1 : 0)) {
+      lookNow = JSON.stringify(look); creator.adopt(look as never); showLook();
+      if (!phone.visiting) saveGenome(sharedLoans.forSave(personalKit()).look as never);
+      return; // The local witch uses the normal artwork; only approved host wardrobe changes persist.
+    }
+    void remoteArt.look(player, look).then(() => {
+      if (phone.active && !phone.visiting && N().game.witches.length === 2) return remoteArt.start(N().game, 0);
+    }).catch(error => { logCaughtError(error, "remote appearance"); phone.hangUp(); });
+  },
+} });
+let guestAudioGame: Game | null = null;
+const phonePresence = new TelephonePresence(phoneFace, () => { if (phone.open) phone.hangUp(); });
+onlineFocus = () => phone.active;
+page.presentationGame = game => phone.presented(game);
 
 // Arriving from the sea chart (?arrive=1, or a sail in place; the night's arrival, app/night.ts): the chart's last frame while the
 // night builds, then the flight from the chart's camera down to her asleep in her bed (Ed, 2026-10-25: "a sail always ends with her
@@ -463,7 +589,11 @@ creator.version = typeof __BUILD__ === "string" ? __BUILD__.split(" ")[0] : "dev
 (window as unknown as { __creator: Creator }).__creator = creator; // (the creator's smoke scripts read her place in the room)
 // Her hat's spell (rules/spells.ts, app/loadout.ts): the creator's Hat box chooses it from the hats she owns, kept on this browser.
 creator.loadout = { hat: N().game.spells.hat }; creator.hats = unlockAll() ? undefined : N().game.spells.hats; // (the pause page's Unlock everything: every hat, app/debugUnlock.ts)
-creator.onLoadout = l => mutate("dressing: loadout", () => { const { game } = N(); changeLoadout(game.witches[0], l.hat); saveLoadout({ hat: hatWithoutLoan(game.spells.hat, loan) as typeof game.spells.hat }); wearHat(page.look()); }); // (a loaned hat never saved: app/loan.ts; a hat swapped while hers lies elsewhere leaves that one lying: rules/hatSpells.ts)
+creator.onLoadout = l => {
+  if (!phone.active && N().spec.borrowed) return;
+  if (phone.active) { if (!phone.choose({ kind: "hat", id: l.hat })) reconcilePickers(); return; }
+  mutate("dressing: loadout", () => { const { game } = N(); changeLoadout(game.witches[0], l.hat); saveLoadout({ hat: hatWithoutLoan(game.spells.hat, loan) as typeof game.spells.hat }); wearHat(page.look()); });
+}; // A loaned hat is never saved; online choices wait for host approval.
 // Her room mid-night from the treehouse's rooms (rules/houseRooms.ts; Ed, 2026-10-19): E at a dressing station, the bags or the broom
 // stand opens it at only that station's choices (config/house/), the world running on at the house's tenth; its way out brings
 // her back where she stood, in her new look and broom: any hat lying about staying where it lies (Ed, 2026-10-12). They are the only
@@ -490,26 +620,48 @@ document.body.append(shutButton);
 let owned: Set<string> | null = null, stillAt = 0;
 /** What the finds' keepers work on (app/finds.ts): tonight's spells and what she owns to wear, kept. */
 const findsCtx = (): FindsCtx => ({ spells: N().game.spells, owned: () => (owned ??= withLoan("wearable", loadOwned((page.look() ?? creator.genome()) as Record<string, unknown>), loan)) });
-stations.onLook = g => mutate("dressing: station look and bag", () => {
+const menuWardrobe = () => phone.active ? new Set(phone.catalogue?.wardrobe ?? []) : ownedToChoose(findsCtx().owned());
+const menuRecords = () => phone.active ? phone.catalogue?.records ?? [] : ownedRecords();
+stations.onLook = g => {
+  if (!phone.active && N().spec.borrowed) return;
+  if (phone.active) {
+    if (stations.station) { const choice = stationLook(stations.station, g); if (!choice || !phone.choose(choice)) reconcilePickers(); }
+    return; // No raw host/guest mutation or visitor wardrobe save before approval.
+  }
+  mutate("dressing: station look and bag", () => {
   saveGenome(lookWithoutLoan(g as Record<string, unknown>, loan) as never); creator.adopt(g); // (saved without the loan: app/loan.ts)
   // (not yet dressed: a station's choice puts its piece on her, out of last night's pile: rules/clothesPile.ts; Ed, 2026-10-23)
   const w = N().game.wake; if (w && stations.station) wearFromStation(w, stations.station);
   if (JSON.stringify(g) !== lookNow) { lookNow = JSON.stringify(g); wearHat(g); setBag(N().game.witches[0].spells, bagOf(g as Record<string, unknown>)); } // (her bag's 💌 stats follow the bag she wears: rules/bags.ts)
   showLook();
-});
+  });
+};
 stations.onBack = () => shutStation("back"); // (menu.back, E by default: platform/bindings.ts; the pad's, circle, comes through padControls)
 // Her DJ booth at the decks (Ed, 2026-10-29; ui/djBooth.ts): E there opens it (the wake-up's "booth" event); "Get this party started"
 // closes it and starts the party at the record's bpm (rules/wakeUp.ts startParty), the record remembered for next time.
 const booth = new DjBooth();
 booth.onBack = () => booth.close();
-booth.onStart = r => mutate("house: DJ party start", () => { chooseRecord(r.id); booth.close(); startParty(N().game, r.bpm); });
+booth.onStart = r => {
+  if (phone.active) { if (!phone.choose({ kind: "party", id: r.id })) reconcilePickers(); return; }
+  mutate("house: DJ party start", () => { chooseRecord(r.id); booth.close(); startParty(N().game, r.bpm); });
+};
 stations.onChange = () => { const { game } = N(); view.turnUntil = game.herTime + 0.8; };
 stations.onDress = () => { view.spin = spinStep(view.spin, N().game.herTime); }; // (Ed, 2026-10-26: she twirls while her new look draws)
 // The Workshop's bay (Ed, 2026-10-23; docs/backlog/workshop.md): a part chosen goes on her broom at once, mid-night too (its stats
 // and its set's spell with it: rules/spells.ts setParts), and is kept on this browser for the nights after (app/broomSave.ts).
-stations.onFit = f => mutate("dressing: broom fitting", () => { const { game } = N(); setParts(game.witches[0].spells, f); fitBroom(partsWithoutLoan(f, loan)); }); // (kept without a part on loan: app/loan.ts)
+stations.onFit = f => {
+  if (!phone.active && N().spec.borrowed) return;
+  if (phone.active) { if (!phone.choose({ kind: "broom", fitted: { ...f } })) reconcilePickers(); return; }
+  mutate("dressing: broom fitting", () => { const { game } = N(); setParts(game.witches[0].spells, f); fitBroom(partsWithoutLoan(f, loan)); });
+}; // Solo keeps fitted parts without any loan; online choices wait for host approval.
 /** What the Workshop's stations show (ui/stationPanel.ts): the parts found, her broom, tonight's part to find, her tuning. */
-const workshopNow = (): WorkshopCtx => { const { game, tuning } = N(), t = game.trunk; return { found: partsToChoose(partsNow()), fitted: game.witches[0].spells.parts, tonight: t && t.kind === "part" && !t.found ? t.item : null, tuning }; };
+const workshopNow = (): WorkshopCtx => { const { game, tuning } = N(), t = game.trunk; return { found: phone.active ? new Set(phone.catalogue?.parts ?? []) : partsToChoose(partsNow()), fitted: phone.active ? { ...phone.presented(game).spells.parts } : game.witches[0].spells.parts, tonight: t && t.kind === "part" && !t.found ? t.item : null, tuning }; };
+function reconcilePickers(): void {
+  if (!phone.active) return;
+  stations.reconcile((page.look() ?? creator.genome()) as never, menuWardrobe(), workshopNow());
+  booth.refresh(menuRecords());
+  const witch = N().game.witches[phone.visiting ? 1 : 0]; if (witch) creator.loadout = { hat: witch.spells.hat };
+}
 /** Tonight's find taken (the "found" event): on loan till she sleeps (app/loan.ts), hers to wear or use at once, never written. */
 function lendFind(kind: FindKindId, id: string): void {
   const { game } = N();
@@ -526,8 +678,8 @@ const guide = loadGuide(), guidePin = new GuidePin(view);
 let chartFound: { at: number; unvisited: string[] } = { at: -Infinity, unvisited: [] };
 /** Her guidance pin this frame (rules/guidance.ts): what's next, over it, while she's in the treehouse and not at it. */
 function stepGuide(now: number): void {
-  const { game } = N();
-  if (seeGuide(game, 0, guide)) storeGuide(guide);
+  const game = phone.presented(N().game);
+  if (!phone.visiting && !N().spec.borrowed && seeGuide(game, 0, guide)) storeGuide(guide);
   if (now - chartFound.at > 1000) chartFound = { at: now, unvisited: unvisited(loadSave(), N().tuning.map?.island ?? "home") }; // (where she is counts as been to: app/chartSave.ts unvisited)
   const G = guidanceOf(game, 0, guide, chartFound.unvisited);
   guidePin.update(G, !!G && !creator.open && !chartOpen() && !sailing); // (wherever she is, at its target too: Ed, 2026-10-28)
@@ -557,7 +709,7 @@ function startDream(s: { loan: Loan; won: boolean }, veil = false): void {
   const of = { item: s.loan.id, name: loanName(s.loan), piece: findKind(s.loan.kind).piece(s.loan.id), won: s.won, home: homeOf(s.loan, id => stationsShowing(shelfOf(id)?.id ?? "")) };
   dream = new DreamView(of, dreamArt(of, view.assets.style), veil, herHead).play(veil && params.has("shot"));
   dreamAsleep = !veil; // (asleep: its end rings the next night's alarm; shown over a night, ?dream= or the dev panel, nothing)
-  dream.onOver = () => { const n = page.night; if (dreamAsleep && n?.game.wake) mutate("wake: dream dismissed", () => endDream(n.game, n.game.herTime)); };
+  dream.onOver = () => { const n = page.night; if (!phone.active && !n?.spec.borrowed && dreamAsleep && n?.game.wake) mutate("wake: dream dismissed", () => endDream(n.game, n.game.herTime)); };
   (window as unknown as { __dream?: DreamView }).__dream = dream; // (the shot tools draw it at a time: tools/loan/dream-shots.cjs)
 }
 /** Her head's top on the page (CSS px) as last drawn (render/view/witch.ts herHead), for her dream's cloud to rise from; null
@@ -573,7 +725,7 @@ const loanIcon = new LoanIcon();
 let zooPaused = false, zooHeld = false;
 // (the night under it held as under the sea chart: nothing drawn, its art workers stopped, so the zoo's own page, a whole second
 // game, has the machine; tools/zoo/perf.cjs)
-const zoo = new ZooOverlay(domZooHost(on => mutate("house: zoo pause", () => { const { clock } = N().game; if (on) { zooPaused = clock.paused; clock.paused = true; } else clock.paused = zooPaused; zooHeld = on; view.assets.hold(on || chartHeld); input.clearPresses(); })), zooUrl(location.href));
+const zoo = new ZooOverlay(domZooHost(on => mutate("house: zoo pause", () => { const { clock } = N().game; zooPaused = overlayPause(clock, on, !phone.active && !N().spec.borrowed, zooPaused); zooHeld = on; view.assets.hold((on || chartHeld) && !phone.active && !N().spec.borrowed); input.clearPresses(); })), zooUrl(location.href));
 // The telescope in the crow's nest (Ed, 2026-10-21; app/telescope.ts, rules/telescope.ts): E at it looks through it (Ed's
 // playtest, 2026-10-26, in place of 2026-10-23's "opens when you walk up to it"; look around with the aiming keys), full screen,
 // the night running on at the house's tenth while she stands still, WASD and the left stick looking round too (Ed, 2026-10-26:
@@ -596,16 +748,19 @@ telescope.onChange = on => {
 };
 const useHouse = (obj: string): void => mutate("house: use", () => {
   const { game, tuning, flags: { chartRecorded, overRecorded } } = N();
+  if (obj === "slept" && phone.visiting) { phone.hangUp(); return; } // Borrowed bed exit returns through the guarded visit lifecycle.
   if (obj === "slept") { if (!chartRecorded && !overRecorded) nightOver(tuning.map?.island ?? "", { won: false }, undefined, tuning.map?.world ?? 0); setTimeout(() => newNight("bed"), 0); return; } // (the sea chart: played, as the afterparty records it; then a new seed: app/newForest.ts; after this frame, in place)
   const o = HOUSE_ROOMS.objects.find(q => q.id === obj);
-  if (!o || creator.open || game.witches[0].ko) return;
+  if (!o || creator.open || game.witches[phone.visiting ? 1 : 0]?.ko) return;
   if (o.use.kind === "zoo") zoo.open(); // (a station's E and an instrument's: their panels, below in the frame and app/studio.ts)
+  else if (o.use.kind === "telephone") phone.use(game, o.id);
   else if (o.use.kind === "telescope" && tuning.telescope && !telescope.on) { scopeAt = o.id; telescope.open(game, tuning.telescope); }
 });
 creator.progress = () => { const a = view.assets; return { done: a.done, total: a.done + a.pending, ready: !sailing && N().flags.ready }; }; // (a new night in place: not till it's made)
 // (its room's ambience plays while it's open: overnight, 2026-10-06)
 creator.onGesture = () => sound.wake();
 creator.onStart = g => {
+  if (phone.active || N().spec.borrowed) return; // Also protects the asynchronous borrowed-return interval.
   const who = playerPick?.value ?? "human"; // (the dev "Player:" pick: a bot plays the run instead of her)
   if (who !== "human" && BOT_KINDS.includes(who as BotKind)) { botGame(who as BotKind); return; }
   if (JSON.stringify(g) !== lookNow) { lookNow = JSON.stringify(g); showLook(); wearHat(g); }
@@ -618,6 +773,7 @@ creator.spellSound = (cue, v) => sound.sfx?.spell(cue, v);
 const botParam = params.get("bot") as BotKind | null;
 let bot: Bot | null = null, botTag: BotTag | null = null, botKind: BotKind | null = null;
 function botGame(kind: BotKind): void {
+  if (phone.active || N().spec.borrowed) return;
   if (botKind) return;
   botKind = kind;
   const look = pleasingWitch(N().seed);
@@ -645,6 +801,7 @@ if (botBtn) {
   botBtn.addEventListener("click", () => { if (!N().game.clock.paused) return; botGame("skilled"); }); // (it starts as soon as it and the forest are ready)
 }
 function start(): boolean {
+  if (phone.active || N().spec.borrowed) return false;
   if (sailing) return false; // (the next night being made in place)
   const { game, flags, arrival } = N();
   if (landingSleep.holds(game)) return false;
@@ -666,8 +823,10 @@ sound.watch(() => !N().game.clock.paused && !freeze.frozen && !document.hidden &
 // of its own: nothing else over the game), its stamp at their foot. Their code loads on the first freeze.
 let potionLab: import("./ui/potionLab").PotionLab | null = null;
 async function openPotionLab(): Promise<void> {
+  if (phone.active || N().spec.borrowed) return;
   const { PotionLab } = await import("./ui/potionLab");
-  potionLab ??= new PotionLab(() => N().game, style, BUILD, () => { if (freeze.frozen) freeze.toggle(); }, mutate);
+  if (phone.active || N().spec.borrowed) return;
+  potionLab ??= new PotionLab(() => N().game, style, BUILD, () => { if (freeze.frozen) freeze.toggle(); }, (label, action) => soloDiagnostic(phone.active, N().spec.borrowed === true, () => mutate(label, action)));
   if (freeze.frozen) potionLab.show();
 }
 let pauseSliders: import("./ui/decide").PauseSliders | null = null, pauseLoading = false;
@@ -695,8 +854,9 @@ let menuGone = false;
  *  buttons while paused show the start card's keys, its What's new and the screen shake's option (ui/cornerPanel.ts, borrowed and
  *  put back). */
 let pauseBtns: HTMLDivElement | null = null;
+let leaveVisitButton: HTMLButtonElement | null = null;
 function pauseControls(on: boolean): void {
-  if (!on || dressed) { if (pauseBtns) pauseBtns.style.display = "none"; closeCornerPanel(); return; }
+  if (!on || (dressed && !phone.active)) { if (pauseBtns) pauseBtns.style.display = "none"; closeCornerPanel(); return; }
   if (!pauseBtns) {
     pauseBtns = document.createElement("div");
     pauseBtns.id = "pause-btns"; pauseBtns.style.cssText = "position:fixed;right:12px;top:12px;z-index:61;display:flex;gap:8px";
@@ -709,9 +869,13 @@ function pauseControls(on: boolean): void {
       b.addEventListener("click", () => toggleCornerPanel(document.body, id, title, [el]));
       pauseBtns.append(b);
     }
+    leaveVisitButton = document.createElement("button"); leaveVisitButton.type = "button"; leaveVisitButton.textContent = "Leave visit";
+    leaveVisitButton.addEventListener("click", () => leaveVisit(phone.active, () => phone.hangUp(), () => { if (freeze.frozen) freeze.toggle(); }));
+    pauseBtns.append(leaveVisitButton);
     document.body.append(pauseBtns);
   }
   pauseBtns.style.display = "";
+  if (leaveVisitButton) leaveVisitButton.hidden = !phone.active;
 }
 freeze.onToggle = on => {
   notable("screen", on ? "Paused" : "Resumed");
@@ -727,7 +891,7 @@ freeze.onToggle = on => {
   pauseLoading = true;
   void import("./ui/decide").then(({ PauseSliders }) => {
     const report = () => import("./ui/visualReport").then(({ report }) => report(reportHost()));
-    pauseSliders = new PauseSliders({ newBuild: { latest: () => newBuild.latest, load: () => location.reload() }, mutate, saveComment, restoreComment, downloadReadableLog: () => { void N().playtest.download("text"); }, settings: () => settingsPage.show(), get tuning() { return N().game.tuning; }, get seed() { return N().game.seed; }, version: BUILD, live: knobLive, report, potionLab: () => { void openPotionLab(); }, musicLab: openMusicLab, audioTest: () => { window.open("audio-test/", "_blank", "noopener"); }, downloadLog: () => N().playtest.download(), unlockAll: { get: () => unlockAll(), set: on => mutate("debug: unlock all", () => { setUnlockAll(on); if (on) stockMushroomBaskets(N().game); for (const W of N().game.witches) syncHatUnlock(W, on, params); creator.hats = N().game.spells.hats; }) }, defaults: { text: () => defaultsText(lookWithoutLoan((page.look() ?? creator.genome()) as Record<string, unknown> | null, loan), partsWithoutLoan(N().game.witches[0].spells.parts, loan)), tryIt: () => { window.open(newWitchLink(location.href), "_blank", "noopener"); }, shown: () => N().hud.debugOn || unlockAll() }, fightArena: () => { window.open(fightLink(newFightSeed()), "_blank", "noopener"); }, finds: () => findsPanel.toggle(true), findsShown: () => N().hud.debugOn || devFinds, quality: { lines: () => ladder.lines(), options: () => ladder.options(), current: () => ladder.current(), choose: v => { ladder.choose(v); ladder.apply(N().game.tuning); viewRevision++; } } });
+    pauseSliders = new PauseSliders({ newBuild: { latest: () => newBuild.latest, load: () => location.reload() }, mutate: tuningMutation, saveComment, restoreComment, downloadReadableLog: () => { void N().playtest.download("text"); }, settings: () => settingsPage.show(), get tuning() { return phone.preferences(N().game); }, get seed() { return N().game.seed; }, version: BUILD, live: knobLive, report, potionLab: () => { void openPotionLab(); }, musicLab: openMusicLab, audioTest: () => { window.open("audio-test/", "_blank", "noopener"); }, downloadLog: () => N().playtest.download(), unlockAll: { get: () => unlockAll(), set: on => { if (phone.active) return; mutate("debug: unlock all", () => { setUnlockAll(on); if (on) stockMushroomBaskets(N().game); for (const W of N().game.witches) syncHatUnlock(W, on, params); creator.hats = N().game.spells.hats; }); } }, defaults: { text: () => defaultsText(lookWithoutLoan((page.look() ?? creator.genome()) as Record<string, unknown> | null, loan), partsWithoutLoan(N().game.witches[0].spells.parts, loan)), tryIt: () => { window.open(newWitchLink(location.href), "_blank", "noopener"); }, shown: () => N().hud.debugOn || unlockAll() }, fightArena: () => { window.open(fightLink(newFightSeed()), "_blank", "noopener"); }, finds: () => findsPanel.toggle(true), findsShown: () => N().hud.debugOn || devFinds, quality: { lines: () => ladder.lines(), options: () => ladder.options(), current: () => ladder.current(), choose: v => { ladder.choose(v); ladder.apply(phone.preferences(N().game)); viewRevision++; } } });
     requestAnimationFrame(() => pauseSliders!.show(freeze.frozen, creator.open)); // (a frame shut first, so it slides in)
   }, () => { // (its files replaced under it: Ed, 2026-10-14, "the menu does not appear")
     pauseLoading = false;
@@ -759,7 +923,7 @@ let decide: DecidePanel | null = null, decideLoading = false;
 const decidePanel = (open: boolean) => {
   if (decide || decideLoading) return;
   decideLoading = true;
-  void import("./ui/decide").then(({ DecidePanel }) => { decide = new DecidePanel({ mutate, get tuning() { return N().game.tuning; }, get seed() { return N().game.seed; }, version: BUILD, live: knobLive }, open); });
+  void import("./ui/decide").then(({ DecidePanel }) => { decide = new DecidePanel({ mutate: tuningMutation, get tuning() { return phone.preferences(N().game); }, get seed() { return N().game.seed; }, version: BUILD, live: knobLive }, open); });
 };
 if (params.has("decide")) decidePanel(true);
 window.addEventListener("keydown", e => { if (e.code !== "F2") return; e.preventDefault(); if (decide) decide.toggle(); else decidePanel(true); });
@@ -791,25 +955,93 @@ async function saveComment(text: string): Promise<string> {
   return comment.recording?.complete ? status : `${status} Exact input replay is incomplete: ${comment.recording?.failure ?? "unavailable"}.`;
 }
 async function restoreComment(file: File): Promise<void> {
+  soloDiagnostic(phone.active, N().spec.borrowed === true, () => {});
   if (file.size > LOG_EXPANDED_BYTES) throw Error("This log file is too large.");
   const comment = await parseCommentFile(await file.text(), BUILD);
   // Validate the full graph before writing or navigating. Importing JSON never executes code.
   const replayed = comment.recording ? replayRecording(comment.recording, BUILD) : restoreGame(comment.night.game);
   if (JSON.stringify(snapshotGame(replayed)) !== JSON.stringify(comment.night.game)) throw Error("Input replay differs from the saved comment moment. The log is kept; report this replay failure.");
+  soloDiagnostic(phone.active, N().spec.borrowed === true, () => {});
   await browserNightStore(location.pathname + ":comment-restore").write(comment.night);
+  soloDiagnostic(phone.active, N().spec.borrowed === true, () => {});
   const url = new URL(location.href); url.search = "?restore=comment&resume=1"; location.href = url.toString();
 }
 let nightWriteReported = false;
-const autosave = nightStore ? new NightAutosave(nightStore, () => {
+const visitNightSaves = nightStore ? borrowedNightSaves(nightStore) : null;
+const autosave = visitNightSaves ? new NightAutosave(visitNightSaves.store, () => {
   const n = page.night;
-  if (!n || endedNights.has(n.game) || !n.flags.ready || sailing || bot || dream && !dream.over || n.arrival && !n.flags.landed || !savesEnabled(n.params, navigator.webdriver)) return null;
+  if (!n || phone.active || n.spec.borrowed || endedNights.has(n.game) || !n.flags.ready || sailing || bot || dream && !dream.over || n.arrival && !n.flags.landed || !savesEnabled(n.params, navigator.webdriver)) return null;
   // The opening, before play starts, must not replace an existing night merely because the page loaded.
   if (!nightHasStarted(n.game, startedNights.has(n.game))) return null;
   browserSaveSlots().summary(n.game.tuning.map?.island ?? "home", false, bootSlot);
   return captureNight(n.game, { build: BUILD, params: n.params.toString(), look: page.look() as Record<string, unknown> | null, loan,
     flags: { chartRecorded: n.flags.chartRecorded, overRecorded: n.flags.overRecorded } });
 }, error => { if (!nightWriteReported) { nightWriteReported = true; logCaughtError(error, "save slot: write night"); } nightSaveNotice("Your night could not be saved. Keep this page open to continue playing."); }) : null;
-page.onNightEnd = () => { if (page.night && !endedNights.has(page.night.game)) { endedNights.add(page.night.game); browserSaveSlots().summary(page.night.game.tuning.map?.island ?? "home", true, bootSlot); } void autosave?.clear(); };
+const ordinaryVisit = visitNightSaves ? visitLifecycle({
+  saves: visitSaves(browserSaveSlots(), visitNightSaves),
+  own: () => ({ night: N(), href: location.href, look: page.look() as Record<string, unknown> | null, loan: structuredClone(loan) }),
+  adoptBorrowed: async (game, signal, advanced) => {
+    visitPreparation.progress = 0; visitPreparation.failure = "";
+    const reportAdvance = () => { visitPreparation.progress++; visitPreparation.advancedAt = performance.now(); advanced(); };
+    signal.throwIfAborted(); sailing = true; input.release(); input.clearPresses();
+    loan = null; owned = null; // Own private loan is retained in the lifecycle snapshot, never reused as a host-world loan.
+    const p = new URLSearchParams(N().params); p.delete("arrive");
+    await startNight(page, { how: "bed", island: game.tuning.map?.island ?? "home", seed: game.seed, world: game.tuning.map?.world, params: p, resume: game, borrowed: true });
+    reportAdvance(); signal.throwIfAborted();
+    if (remoteArt.has(0)) { await remoteArt.start(game, 1, signal); reportAdvance(); }
+    const markAt = performance.now(), timingAt = view.assets.timings.length;
+    const landedAt = new Set([...view.assets.typeLog].filter(([, v]) => v.landed !== undefined).map(([id]) => id)); let best = 0;
+    const progress = () => {
+      const completed = performance.getEntriesByType("mark").filter(m => m.startTime >= markAt && (m.name.startsWith("witch:prep-") || m.name.startsWith("witch:build-"))).length
+        + Math.max(0, view.assets.timings.length - timingAt) + [...view.assets.typeLog].filter(([id, v]) => !landedAt.has(id) && v.landed !== undefined).length;
+      if (completed > best) { best = completed; reportAdvance(); }
+    };
+    const timer = setInterval(progress, 500), clear = () => clearInterval(timer);
+    signal.addEventListener("abort", clear, { once: true });
+    try { await view.prepare(); signal.throwIfAborted(); reportAdvance(); }
+    finally { clear(); signal.removeEventListener("abort", clear); }
+  },
+  playing: game => {
+    if (page.night?.game !== game) throw new Error("The prepared visit was replaced.");
+    page.night.flags.ready = page.night.flags.landed = true; page.night.flags.last = 0;
+    startedNights.add(game); input.clearPresses(); sailing = false;
+  },
+  adoptOwn: async (own, fresh) => {
+    loan = structuredClone(own.loan); owned = null;
+    lookNow = JSON.stringify(own.look); creator.adopt(own.look as never); shownLook = "";
+    creator.hats = unlockAll() ? undefined : own.night.game.spells.hats; view.partsFound = partsNow();
+    if (fresh) {
+      const ownCollection = loadOwned(lookWithoutLoan(own.look, own.loan));
+      returnedUnlocks?.apply(browserSaveSlots(), { spells: own.night.game.spells, owned: () => ownCollection });
+      returnedUnlocks = null; owned = null;
+      const href = nightHref("bed", own.href); await nightInPlace(nightFromHref("bed", href), href); syncFloorHats(N().game.witches[0]);
+      const homePhone = visitHome(N().game); input.release(); input.clearPresses();
+      if (homePhone) await phone.returnHome(N().game, homePhone);
+    } else {
+      returnedUnlocks = null;
+      const restored = await startNight(page, { ...own.night.spec, how: "bed", resume: own.night.game, borrowed: false });
+      syncFloorHats(restored.game.witches[0]); await view.prepare(); Object.assign(restored.flags, own.night.flags, { last: 0 }); sailing = false; input.clearPresses();
+    }
+  },
+}) : null;
+const chartDepartureBoundary = chartDeparture({
+  role: () => phone.active ? phone.visiting ? "guest" : "host" : null,
+  borrowed: () => N().spec.borrowed === true,
+  endCall: () => phone.hangUp(),
+  returnOwn: () => ordinaryVisit?.end() ?? Promise.reject(new Error("This browser cannot restore your saved night.")),
+});
+page.onNightEnd = () => {
+  if (phone.active && !phone.visiting) phone.hangUp(); // Capture the host result before its own bed/sail replaces this night.
+  if (!phone.visiting && page.night && !page.night.spec.borrowed && !endedNights.has(page.night.game)) {
+    if (hostedUnlocks) {
+      const collection = loadOwned(lookWithoutLoan(page.look() as Record<string, unknown> | null, loan));
+      // The host may continue its own night after the friend leaves; use its final own verdict, never update the departed guest's captured outcome.
+      visitUnlocks(page.night.game, 0).apply(browserSaveSlots(), { spells: page.night.game.spells, owned: () => collection }); hostedUnlocks = null; owned = null;
+    }
+    endedNights.add(page.night.game); browserSaveSlots().summary(page.night.game.tuning.map?.island ?? "home", true, bootSlot);
+  }
+  void autosave?.clear();
+};
 if (autosave) {
   setInterval(() => { void autosave.save(performance.now()); }, 5000);
   addEventListener("pagehide", () => { void autosave.save(performance.now(), true); });
@@ -830,7 +1062,7 @@ const frameStats = new FrameStats(view.renderer.getContext());
  *  are over budget and back up while there's room, remembered for this device; ?ladder=off or ?ladder=<n> to hold it. */
 const ladder = new QualityLadder(gpuName(view.renderer.getContext()), params);
 // The player's Settings page (app/settingsPage.ts): its settings on the live pieces now, the page itself opened from the pause page's dev menu.
-const settingsPage = new SettingsPage({ mutate, input, shake, ladder, freeze, audio: on => sound.freeze(!on), tuning: () => N().game.tuning, version: BUILD,
+const settingsPage = new SettingsPage({ mutate, input, shake, ladder, freeze, audio: on => sound.freeze(!on), tuning: () => phone.preferences(N().game), version: BUILD,
   saves: { list: () => browserSaveSlots().list(), active: () => bootSlot, choose: id =>
     switchSave(browserSaveSlots(), () => autosave?.flush(performance.now()) ?? Promise.resolve(true), () => { forgetArrival(); location.assign(location.pathname); }, id) },
 });
@@ -871,6 +1103,7 @@ const repro = (() => {
 // rules/finds.ts spawnSpot, spawnFind): a kind's item, or tonight's own find (kind null), on clear ground a few metres in front
 // of her, as tonight's find: the constellation, the telescope and E at it go by it, and taking it is the real claim.
 function spawnHere(kind: FindKindId | null, item: string | null): string {
+  if (phone.active) return "Find spawning is unavailable during a call.";
   return mutate("debug: spawn find", () => spawnHereNow(kind, item));
 }
 function spawnHereNow(kind: FindKindId | null, item: string | null): string {
@@ -886,10 +1119,10 @@ function spawnHereNow(kind: FindKindId | null, item: string | null): string {
 // (it redraws after each give or take, asking again: the pegboard's parts kept up with it)
 const findsPanel = new FindsPanel(() => { view.partsFound = partsNow(); return findsCtx(); }, spawnHere, {
   now: () => (loan ? loanName(loan) : null),
-  keep: () => { const s = settleLoan(true); if (s) startDream(s, true); },
-  back: () => { const s = settleLoan(false); if (s) startDream(s, true); },
+  keep: () => { if (phone.active) return; const s = settleLoan(true); if (s) startDream(s, true); },
+  back: () => { if (phone.active) return; const s = settleLoan(false); if (s) startDream(s, true); },
 });
-findsPanel.mutate = action => mutate("debug: finds changes", action);
+findsPanel.mutate = action => { if (!phone.active) mutate("debug: finds changes", action); };
 // ?dream=won:hat:sentry (or lost:wearable:top-cape, ...): her dream of such a loan over the night, at once, its own dark under it
 // (for a look at it; under ?shot= it's drawn only when asked, window.__dream.draw(seconds): tools/loan/dream-shots.cjs).
 { const [v, k, ...r] = (params.get("dream") ?? "").split(":"), id = r.join(":");
@@ -979,7 +1212,7 @@ function chartOverNight(table?: string): void {
   const n = N(), island = chartIsland(n.tuning.map?.island);
   const here = island ? { island, world: n.tuning.map?.world ?? 0, label: stayLabel(n.game.partyOver ? "over" : n.game.win?.phase === "won" ? "won" : "on") } : undefined;
   if (table) chartAt = table;
-  openChart((href, to) => { chartAt = null; void sailFromChart(href, to); }, chartWorldArg(), { here, onDepart: departFromChart, onStay: () => console.info(`sea chart: ${island} chosen, she's there: back to the night (seed ${N().seed}, game time ${N().game.clock.time.toFixed(1)} s)`),
+  openChart((href, to) => { chartAt = null; void sailFromChart(href, to).catch(error => logCaughtError(error, "chart departure")); }, chartWorldArg(), { here, onDepart: departFromChart, onStay: () => console.info(`sea chart: ${island} chosen, she's there: back to the night (seed ${N().seed}, game time ${N().game.clock.time.toFixed(1)} s)`),
     onFly: () => view.beginLandingShaders(true),
     onLandingDue: dueAt => view.startLandingShaderGrace(dueAt),
     ...(table ? { table: { onLeave: () => { chartAt = null; closeChart(); } } } : {}) });
@@ -994,7 +1227,11 @@ function chartWorldArg(): number | undefined { return new URLSearchParams(locati
  *  unwon if it's still on, then the next night started in place (app/sail.ts; the tuning's sail.inPlace, ?sail=inplace|reload)
  *  or the page loaded anew on the island's link as before; in place, anything going wrong loads it anew all the same, quietly
  *  (Ed's decision 2). Resolves once the new night's start is ready (true) or the page is going (false). */
-function sailFromChart(href: string, to: Sailed): Promise<boolean> {
+async function sailFromChart(href: string, to: Sailed): Promise<boolean> {
+  const returningVisitor = phone.visiting || N().spec.borrowed === true;
+  const pending = chartDepartureBoundary.before(); if (pending) await pending;
+  if (N().spec.borrowed) throw new Error("Return to your own night before sailing.");
+  if (returningVisitor) href = sailHref(to.island, to.seed, to.world, location.href);
   const d = departing?.island === to.island && departing.seed === to.seed ? departing : null;
   departing = null;
   if (!d) recordSail();
@@ -1019,7 +1256,9 @@ function recordSail(): void {
  *  chart's flight slows to wait for it (app/chartView.ts), then hands over (sailFromChart, with this night). Resolves once it's ready,
  *  or has gone wrong (the hand-off then loads the island's page, as ever). */
 let departing: { island: string; seed: number; night: Promise<Night> } | null = null;
-function departFromChart(to: Sailed, at: FlightEnd["cam"] | null): Promise<void> {
+async function departFromChart(to: Sailed, at: FlightEnd["cam"] | null): Promise<void> {
+  const pending = chartDepartureBoundary.before(); if (pending) await pending;
+  if (N().spec.borrowed) throw new Error("Return to your own night before sailing.");
   if (sailWay(N().params, N().tuning) === "reload") return Promise.resolve();
   recordSail();
   const night = makeSailNight(to, undefined, at);
@@ -1191,10 +1430,11 @@ function leaveBot(): void {
 }
 /** ?debug=sail's test of the fallback: window.witch.sail(island, seed, { fail: true }). */
 let sailFail = false;
+let frameHouseEvents: HouseEvents | null = null;
 /** Controls with nothing pressed or held (the aim left where it is). */
 /** The house object E was pressed at in the last step (the rules' "house" event: rules/sigilButton.ts), or null; never in a bot's game. */
 view.onUse = down => { if (down) input.touch.sigil = true; input.touch.sigilHeld = down; }; // (a tap on a use prompt: the touch sigil button's press)
-const usedAt = (g: Game): string | null => (bot ? null : g.leashEvents.find(e => e.kind === "house" && e.obj && e.obj !== "slept")?.obj ?? null);
+const usedAt = (g: Game): string | null => (bot ? null : (frameHouseEvents?.leash ?? g.leashEvents).find(e => e.kind === "house" && e.obj && e.obj !== "slept" && localHouseAction(e, phone.active ? phone.visiting ? 1 : 0 : null))?.obj ?? null);
 const stillControls = <T extends object>(c: T): T => Object.fromEntries(Object.entries(c).map(([k, v]) => [k, typeof v === "boolean" ? false : typeof v === "number" ? 0 : v])) as T;
 /** The station panels' closes, the last few (window.witch.stationShuts): why, her clock, and whether paused. */
 const stationShuts: { why: string; at: number; frozen: boolean; station: string | null }[] = [];
@@ -1227,7 +1467,7 @@ function frame(now: number): void {
 function frameBody(now: number): void {
   requestAnimationFrame(frame);
   if (loop.manual) return;
-  if (sailing) { sound.tickSail(); return; } // (the next island being made after a sail in place: nothing stepped or drawn, the sea and the wind heard)
+  if (sailing) { phone.close(); sound.tickSail(); return; } // (the next island being made after a sail in place: nothing stepped or drawn, the sea and the wind heard)
   // The night on now, read afresh each frame (app/night.ts): its game, tuning, playtest run, HUD, arrival and flags.
   const { game, tuning, playtest, hud, arrival, flags: F } = N();
   if (F.ready && !F.frame1) { F.frame1 = true; mark("game:frame1"); if (!arrival) { logTiming(); clearCarried(); } }
@@ -1238,6 +1478,12 @@ function frameBody(now: number): void {
   ladder.frame(now, dt * 1000, !F.ready || game.clock.paused || freeze.frozen || document.hidden || scopeAt !== null || (!!arrival && !F.landed), tuning, frameStats.gpuTimes);
   frameStats.frame(dt * 1000);
   freeze.pollPad();
+  phone.frame(game, now); // Normal wrapped pad, after pause; closes across night replacement without touching a save.
+  phoneSounds.update(phone.state, phone.open || phone.active || phone.state.status === "ended", now);
+  if (view.houseRooms) view.houseRooms.openGuestRooms = phone.active ? new Set(["bedroom2"]) : phone.open ? new Set() : null;
+  phonePresence.update(phone.state, phone.active, phone.visiting, view.houseRooms?.telephoneScreen ?? null, now);
+  if (phone.active) void remoteArt.refresh().catch(error => { logCaughtError(error, "remote clothing"); phone.hangUp(); });
+  frameHouseEvents = phone.houseEvents(); // Guest drains captured replay steps once; solo/host keep their original transient events.
   if (landingSleep.holds(game)) {
     input.release(); input.clearPresses(); game.clock.paused = true;
     updatePauseMenus(now);
@@ -1257,30 +1503,30 @@ function frameBody(now: number): void {
   }
   // (the sea chart open over the game, ui/chartOverlay.ts: its keys and clicks are the chart's, hers held still)
   // (her room open mid-night, or the telescope: she stands still; the telescope takes her stick, keys and wheel, E leaving it)
-  studio.update(bot ? null : game, !creator.open && !chartOpen() && !freeze.frozen && !telescope.on, dt, usedAt(game)); // (E at an instrument: she's at it)
+  studio.update(bot ? null : phone.presented(game), !creator.open && !chartOpen() && !freeze.frozen && !telescope.on, dt, usedAt(game)); // Local Studio state reads the assigned actor; never advances or writes the facade.
   // (a menu or overlay that takes the keys opening or closing, the Studio's, the chart, the telescope, the creator or the zoo:
   // everything held let go, so a key-up it took doesn't leave her walking after; Ed's playtest of v4515, the Studio's mic)
-  const takes = `${studio.at}|${chartOpen()}|${telescope.on}|${creator.open}|${zoo.isOpen}|${stations.station}`;
+  const takes = `${studio.at}|${chartOpen()}|${telescope.on}|${creator.open}|${zoo.isOpen}|${stations.station}|${phone.open}`;
   if (takes !== keysTaken) { keysTaken = takes; input.release(); notable("screen", "Active screen changed", { studio: studio.at, chart: chartOpen(), telescope: telescope.on, creator: creator.open, zoo: zoo.isOpen, station: stations.station }); }
   // While a station's panel, the map table's chart, the telescope or an instrument is open she stands still, the movement keys its
   // buttons (Ed, 2026-10-26: "walking away shouldn't work - then we can use the movement keys as buttons in the menus"), and the use
   // button (E; the pad's back, ○, since Ed's layout of 2026-10-28; a tap on touch) closes it: that press is the close and nothing else, even when the thing
   // open closed itself on it a moment before (the chart and the instruments take E themselves), so it never opens it again.
-  const raw = input.read(), openNow = chartOpen() || telescope.on || !!studio.at || !!stations.station || booth.isOpen, shutTap = !freeze.frozen && !!(raw.sigil || raw.place) && (openNow || openPrev); // (E is `place`; the pad's back, ○, and a tap `sigil`; never under the pause)
-  if (shutTap) { if (booth.isOpen) booth.close(); if (stations.station) shutStation("E"); if (studio.at) studio.leave(); if (chartAt && chartOpen()) { chartAt = null; closeChart(); } } // (the telescope: its own step, below)
+  const raw = input.read(), openNow = chartOpen() || telescope.on || !!studio.at || !!stations.station || booth.isOpen || phone.open, shutTap = !freeze.frozen && !!(raw.sigil || raw.place) && (openNow || openPrev); // (E is `place`; the pad's back, ○, and a tap `sigil`; never under the pause)
+  if (shutTap) { if (phone.open) phone.close(); if (booth.isOpen) booth.close(); if (stations.station) shutStation("E"); if (studio.at) studio.leave(); if (chartAt && chartOpen()) { chartAt = null; closeChart(); } } // (the telescope: its own step, below)
   const human = openNow || shutTap ? stillControls(raw) : raw;
   telescope.device = input.device;
-  if (telescope.on) { if (telescope.night !== game || game.witches[0].ko || chartOpen() || !tuning.telescope) telescope.close(); else telescope.step({ ...raw, sigil: !!(raw.sigil || raw.place) }, dt, tuning.telescope); } // (E or ○ leaves it)
+  if (telescope.on) { if (telescope.night !== game || game.witches[phone.visiting ? 1 : 0]?.ko || chartOpen() || !tuning.telescope) telescope.close(); else telescope.step({ ...raw, sigil: !!(raw.sigil || raw.place) }, dt, tuning.telescope); } // Local knockout only; canonical night identity still closes replacement.
   view.telescope = tuning.telescope ? telescope.look(tuning.telescope) : null;
   // The sea chart over the night (the transition review, 2026-10-19: the night ran and drew on behind it, and its art workers drew
   // on, so the chart's islands and the next island's art drawn ahead got what was left): while it's open the night is paused,
   // nothing is drawn (the canvas keeps its last frame), and no new art is handed to the workers; closed, all as it was.
   const charting = chartOpen();
-  if (charting !== chartHeld) mutate("house: chart pause", () => { chartHeld = charting; view.assets.hold(charting); if (charting) { chartWasPaused = game.clock.paused; game.clock.paused = true; } else game.clock.paused = chartWasPaused; });
+  if (charting !== chartHeld) mutate("house: chart pause", () => { chartHeld = charting; view.assets.hold(charting && !phone.active && !N().spec.borrowed); chartWasPaused = overlayPause(game.clock, charting, !phone.active && !N().spec.borrowed, chartWasPaused); });
   // A bot game: the bot's controls, not hers (the camera's zoom and the debug key still hers).
   const c: typeof human = bot ? { ...bot.decide(game), zoom: human.zoom, debug: human.debug, toggleAutoTalk: false } : human;
   if (bot) botTag?.update(bot.doing);
-  if (F.castWanted && !game.clock.paused) { if (awaitingSpell(game.party)) c.castParty = !bot; else F.castWanted = false; }
+  if (!phone.active && !N().spec.borrowed && F.castWanted && !game.clock.paused) { if (awaitingSpell(game.party)) c.castParty = !bot; else F.castWanted = false; }
   if (c.toggleAutoTalk) setAutoTalk(!autoTalk);
   // Choosing at a station (the pointer or the d-pad in its panel, or stood still a moment): the camera eases in on her; she moves, out.
   if (c.moveX || c.moveZ) { stations.walked(); stillAt = 0; } else stillAt += dt;
@@ -1293,23 +1539,25 @@ function frameBody(now: number): void {
   const step0 = performance.now();
   const recordedInput = JSON.stringify(c);
   if (recordedInput !== lastRecordedInput || game.clock.time - lastInputAt >= 1) { breadcrumbs.add(game, "input", c); lastRecordedInput = recordedInput; lastInputAt = game.clock.time; }
-  if (params.get("cauldron") === "1" && !game.cauldron) mutate("cauldron: enable legacy preview", () => enableCauldron(game, homeMushroomPickups(game))); // Explicit compatibility preview; ordinary nights use the nine-colour mushroom system.
-  recordedStep(game, c, fightDt(dt * (botTag?.speed ?? 1)), BUILD, captureRecording); // Same stepGame and original controls; tape is diagnostic only.
+  if (!phone.active && !N().spec.borrowed && params.get("cauldron") === "1" && !game.cauldron) mutate("cauldron: enable legacy preview", () => enableCauldron(game, homeMushroomPickups(game))); // Solo compatibility preview only; never a visitor's replacement rules.
+  const rulesDt = fightDt(dt * (botTag?.speed ?? 1));
+  if (!phone.step(game, { ...c, pausePage: freeze.frozen }, rulesDt) && !N().spec.borrowed) recordedStep(game, c, rulesDt, BUILD, captureRecording); // A disconnected borrowed world waits for own return; it never becomes a solo simulation.
+  if (phone.active && !phone.visiting) sharedLoans.observe(game, personalKit(game));
   for (const [kind, events] of [["ko", game.koEvents], ["quest", game.questEvents], ["spell", game.combat.spells?.events ?? []]] as const) for (const event of events) { breadcrumbs.add(game, kind, event); if (kind !== "spell") notable(kind, `${kind} event`, event); }
   rumble.update(game, currentSettings(), input.device === "pad" && !document.hidden ? [freeze.pad()] : [], now);
   // ?debug=attack: every 10 s, a few seconds of blows on the two soundsystems farthest from her (never felling one), so the
   // 🔇 alarm (render/alarm.ts) shows whenever she's away from them.
-  if (ATTACK_DEBUG && !game.clock.paused) { const tt = game.clock.time, ph = tt % 10; if (ph < 4 && Math.floor(tt * 2) !== F.attackTick) { F.attackTick = Math.floor(tt * 2); debugBlows(game.combat.sounds, game.combat.events, game.witch.x, game.witch.z, tt); } }
+  if (!phone.active && !N().spec.borrowed && ATTACK_DEBUG && !game.clock.paused) { const tt = game.clock.time, ph = tt % 10; if (ph < 4 && Math.floor(tt * 2) !== F.attackTick) { F.attackTick = Math.floor(tt * 2); debugBlows(game.combat.sounds, game.combat.events, game.witch.x, game.witch.z, tt); } }
   const stepMs = performance.now() - step0;
   measuredStep = stepMs; measuredParts["update.input-and-rules"] = stepMs;
   // E at the treehouse deck's map table (rules/treehouse.ts): the sea chart over the game, to sail from at any time (Ed, 2026-10-11:
   // "Sail anytime"); mid-night that ends the night unwon: played, nothing found (app/chartSave.ts), as a loss.
-  if (!bot) for (const e of game.leashEvents) if (e.kind === "house" && e.obj) useHouse(e.obj);
+  if (!bot) for (const e of frameHouseEvents?.leash ?? game.leashEvents) if (e.kind === "house" && e.obj && localHouseAction(e, phone.active ? phone.visiting ? 1 : 0 : null)) useHouse(e.obj);
   // Tonight's find (rules/finds.ts): the night's one draw over everything she hasn't found, a wearable (the trunk) or a broom part
   // (a wreck), made once a night; taken, it's hers for the night, on loan till she sleeps (app/loan.ts; Ed, 2026-10-24): to wear
   // or use at once, never saved unless the night's won.
-  if (game.trunk && game.trunk.item === null) mutate("finds: fill trunk", () => fillTrunk(game, foundAll(findsCtx())));
-  for (const e of game.leashEvents) if (e.kind === "found" && e.obj && e.find) {
+  if (!N().spec.borrowed && !phone.visiting && game.trunk && game.trunk.item === null) mutate("finds: fill trunk", () => fillNightTrunk(game, phone.active ? "host" : "solo", () => foundAll(findsCtx()), () => phone.changed()));
+  for (const e of game.leashEvents) if (!phone.active && !N().spec.borrowed && e.kind === "found" && e.obj && e.find) {
     mutate("finds: loan", () => lendFind(e.find!, e.obj!));
     if (e.find === "part") hud.found(`found: ${partById(e.obj)?.name.toLowerCase() ?? e.obj} · at the Workshop`); // (not fitted: the bay fits it)
     else if (e.find === "hat") hud.found(`found: the ${hatSpell(e.obj)?.name.toLowerCase() ?? e.obj} hat · on the hats' floor`); // (the rules laid it there: rules/houseRooms.ts addFloorHat)
@@ -1323,51 +1571,52 @@ function frameBody(now: number): void {
   // The station she's at (lit, E over it: render/houseRooms.ts); E there slides its panel in (Ed's playtest, 2026-10-26: "Menus should
   // open when she presses E near an interactive object ... instead of them opening automatically just through proximity"); walking
   // off it, out (not over her room open full screen, the chart, or a bot's game). E again or the pad's ○ slides it out (Esc pauses over it, platform/freeze.ts) (Ed: "I think E should also close, and we can have spacebar to select"; the frame's start), she standing still at it; Space chooses in it (ui/stationPanel.ts).
-  const station = bot || creator.open || charting ? null : stationOf(game, stations.station), shelves = station ? shelvesAt(station.id) : null;
+  const houseGame = phone.presented(game);
+  const station = bot || creator.open || charting ? null : stationOf(houseGame, stations.station), shelves = station ? shelvesAt(station.id) : null;
   stations.setLoaned(loan?.id ?? null); // (its card sparkles: ui/stationPanel.ts)
   if (stations.station && station?.id !== stations.station) shutStation(`off it (${station?.id ?? "none"}${charting ? ", charting" : ""}${creator.open ? ", creator" : ""})`); // (she's somehow off it: a knockout, a new night; E closes it above)
-  if (station && shelves && station.id !== stations.station && usedAt(game) === station.id) { const g = (page.look() ?? creator.genome()) as Record<string, unknown>; stations.open(station.id, shelves, g as never, ownedToChoose(findsCtx().owned()), game.wake && firstEver && !game.wake.yesterday && station.id === "dressingTable" ? "First night · pick your look here, and at the wardrobe, cloak pegs and shoe rack" : "", shelves.some(q => q.slot || q.board) ? workshopNow() : null, !!game.wake?.pile?.includes(STATION_SLOT[station.id])); }
+  if (station && shelves && station.id !== stations.station && usedAt(game) === station.id) { const g = (page.look() ?? creator.genome()) as Record<string, unknown>; stations.open(station.id, shelves, g as never, menuWardrobe(), houseGame.wake && firstEver && !houseGame.wake.yesterday && station.id === "dressingTable" ? "First night · pick your look here, and at the wardrobe, cloak pegs and shoe rack" : "", shelves.some(q => q.slot || q.board) ? workshopNow() : null, !!houseGame.wake?.pile?.includes(STATION_SLOT[station.id])); }
   else if (!shelves && stations.station) shutStation("no shelves");
   stations.update(performance.now() / 1000); booth.update(performance.now() / 1000);
   // The telescope: E at it looks (useHouse); E or ○ shuts it (its own step; Esc pauses over it); and should she somehow be off it, it shuts.
-  const scope = bot || creator.open || sailing || charting ? null : stationOf(game, telescope.on ? scopeAt : null, tuning, ["telescope"]);
+  const scope = bot || creator.open || sailing || charting ? null : stationOf(houseGame, telescope.on ? scopeAt : null, tuning, ["telescope"]);
   if (!scope && telescope.on && scopeAt) { telescope.close(); scopeAt = null; }
-  input.dpadMenu = !!stations.station || booth.isOpen || telescope.on || !!studio.at || chartOpen(); // (a menu owns the pad: a station's panel, the telescope, an instrument, the map table's chart; only its back, circle, closes it: Ed's layout, 2026-10-28)
-  openPrev = chartOpen() || telescope.on || !!studio.at || !!stations.station || booth.isOpen;
+  input.dpadMenu = !!stations.station || booth.isOpen || telescope.on || !!studio.at || chartOpen() || phone.open; // (a menu owns the pad: a station's panel, the telescope, an instrument, the map table's chart; only its back, circle, closes it: Ed's layout, 2026-10-28)
+  openPrev = chartOpen() || telescope.on || !!studio.at || !!stations.station || booth.isOpen || phone.open;
   shutButton.style.display = openPrev && input.device === "touch" ? "block" : "none"; // (on touch, a way to close it: the tap keycap)
   // (the use prompts, render/houseRooms.ts: the button on what she plays with, and none over what's open)
-  view.useDevice = input.device; stations.setDevice(input.device); booth.setDevice(input.device); studioPanel.setDevice(input.device); view.houseOpen = stations.station ?? studio.state.players[0].object ?? (telescope.on ? scopeAt : null) ?? chartAt;
+  view.useDevice = input.device; stations.setDevice(input.device); booth.setDevice(input.device); studioPanel.setDevice(input.device); view.houseOpen = stations.station ?? studio.state.players[0].object ?? (telescope.on ? scopeAt : null) ?? chartAt ?? phone.object;
   // The new opening's wake-up (rules/wakeUp.ts, render/wakeUp.ts): its card, the dark and her phone; its beats marked for ?timing=1,
   // and the first time she comes to the dressing table; the island's art latched drawn (marked, nothing waits on it).
-  if (!game.islandReady && F.ready && F.artRevealed && (mistGateOff || view.islandDrawn())) { game.islandReady = true; mark("island:ready"); } // (latched: the island's own art drawn, render/view.ts islandDrawn; its time marked for ?timing=1)
+  if (!phone.visiting && !N().spec.borrowed && !game.islandReady && F.ready && F.artRevealed && (mistGateOff || view.islandDrawn())) { game.islandReady = true; if (phone.active) phone.changed(); mark("island:ready"); } // Only host owns this shared latch; visitor art readiness cannot overwrite it.
   showLook(); // (what she has on: last night's pile as it stands, rules/clothesPile.ts)
   // Her dream of tonight's loan (render/dream.ts): a key the rules took (the pad's too) ends it; ended, the alarm rings (endDream).
   if (dream && dreamAsleep) {
-    if (game.wake?.beat === "dream" && dream.over) mutate("wake: dream complete", () => endDream(game, game.herTime));
+    if (!phone.active && !N().spec.borrowed && game.wake?.beat === "dream" && dream.over) mutate("wake: dream complete", () => endDream(game, game.herTime));
     else if (game.wake && game.wake.beat !== "dream" && !dream.over) dream.end();
   }
   if (dream && !dream.canvas.isConnected) dream = null;
   // The on-loan icon, top left (render/loanIcon.ts): tonight's find once she's taken it, till she sleeps.
   { const lf = loanFind(game, game.map.treehouse.x, game.map.treehouse.z); loanIcon.set(bot ? null : lf?.item ?? null, () => (lf ? findCanvas(findKind(lf.kind).piece(lf.item), view.assets.style) : null)); loanIcon.draw(now / 1000); }
-  if (game.wake) {
-    for (const e of game.wake.events) { mark(`opening:${e}`); if (e === "up") woke(); if (e === "mirror") sawMirror(); if (e === "dressed") sound.sfx?.spell("rustle", 0.6); if (e === "booth") booth.open(ownedRecords(), lastRecord()); } // (dressed: a rustle of clothes) // (the dressing table's mirror: its panel on E, as every station's)
+  if (houseGame.wake) {
+    for (const e of frameHouseEvents?.wake ?? houseGame.wake.events) { mark(`opening:${e}`); if (e === "up") woke(); if (e === "mirror") sawMirror(); if (e === "dressed") sound.sfx?.spell("rustle", 0.6); if (e === "booth") booth.open(menuRecords(), lastRecord()); } // Local assigned wake only; no remote player's booth/menu events.
     if (creator.open || stations.station) wakeCard?.hide(); // (at the mirror: its panel over it)
-    else (wakeCard ??= new WakeCard()).update(game, game.herTime, dt, () => sound.sfx?.alarm());
+    else (wakeCard ??= new WakeCard()).update(houseGame, houseGame.herTime, dt, () => sound.sfx?.alarm());
   } else if (!sailing && !bootAsleep) wakeCard?.hide(); // (asleep while the next night's made: kept up)
   if (!bot) stepGuide(now);
   // The tables (the map table's sea chart): E at one brings its chart up, as the stations' panels (Ed's playtest, 2026-10-26).
-  const table = bot || creator.open || sailing || F.ready === false ? null : tableOf(game, chartAt);
-  if (table && table.use.kind === "chart" && !chartOpen() && game.leashEvents.some(e => e.kind === "chart")) chartOverNight(table.id);
+  const table = bot || creator.open || sailing || F.ready === false ? null : tableOf(houseGame, chartAt);
+  if (table && table.use.kind === "chart" && !chartOpen() && (frameHouseEvents?.leash ?? game.leashEvents).some(e => e.kind === "chart" && localHouseAction(e, phone.active ? phone.visiting ? 1 : 0 : null))) chartOverNight(table.id);
   // The night's end (Ed, 2026-10-26: "Remove the end cards"): no card, won or lost; the guidance pins lead her home (rules/guidance.ts).
   // The night won (rules/win.ts): the islands its woken legends showed recorded on the sea chart (app/chartSave.ts), once, as its
   // finale settles; the enraged legends' (win.lost) not.
-  if (game.win?.settled && !F.chartRecorded) { F.chartRecorded = true; nightOver(tuning.map?.island ?? "", { won: true, found: game.win.found }, undefined, tuning.map?.world ?? 0); if (warmOn) warmChart(chartWorld(), loadSave().found); } // (in the campaign's world only; home grows with what she's found: made again ahead)
+  if (!N().spec.borrowed && game.win?.settled && !F.chartRecorded) { F.chartRecorded = true; nightOver(tuning.map?.island ?? "", { won: true, found: game.win.found }, undefined, tuning.map?.world ?? 0); if (warmOn) warmChart(chartWorld(), loadSave().found); } // Borrowed outcomes are kept only through the guarded shared-unlock return adapter.
   // The touch spell button only with a broom that has a spell to cast (rules/spells.ts castable).
-  { const want = castable(game.spells) ? "" : "none"; if (spellButton && spellButton.style.display !== want) spellButton.style.display = want; }
+  { const want = castable(houseGame.spells) ? "" : "none"; if (spellButton && spellButton.style.display !== want) spellButton.style.display = want; }
   newBuild.update(creator.open || (freeze.frozen && !pauseSliders) || menuGone); // (a newer build is out: in the bedroom, and on the pause page only until its panel, which has the button, loads)
   // The party's over (rules/partyOver.ts; Ed, 2026-10-06): no end screen and no pause, the afterparty; once it has eased in, the
   // night recorded on the sea chart as played (losing loses nothing).
-  if (game.partyOver && game.partyOver.ease >= 1 && !F.overRecorded) {
+  if (!N().spec.borrowed && game.partyOver && game.partyOver.ease >= 1 && !F.overRecorded) {
     F.overRecorded = true;
     nightOver(tuning.map?.island ?? "", { won: false }, undefined, tuning.map?.world ?? 0);
   }
@@ -1375,8 +1624,11 @@ function frameBody(now: number): void {
   playtest.update();
   const audio0 = performance.now();
   // The music: one track, mixed by how near the witch is to a playing soundsystem.
-  const cue = N().musicCue = musicCue(game, N().musicCue);
-  sound.update(game, cue, creator.open);
+  const audioGame = phone.presented(game, dt, c.zoom);
+  if (phone.visiting && guestAudioGame !== game) { sound.setNight(audioGame.tuning, N().seed, N().musicStyle); guestAudioGame = game; }
+  else if (!phone.visiting) guestAudioGame = null;
+  const cue = N().musicCue = musicCue(audioGame, N().musicCue);
+  sound.update(audioGame, cue, creator.open, phone.visiting ? { shareBeat: true } : undefined);
   // The soundsystem spell's analyser bars (render/leash/stones.ts): the mix's spectrum, read once a frame only while its ring shows, and
   // only while the audio runs (else the bars idle gently).
   { const SV = view.leashView.stoneView; SV.spectrum = SV.wantsSpectrum && sound.audio?.state === "running" ? sound.music?.spectrum() ?? null : null; }
@@ -1468,7 +1720,14 @@ requestAnimationFrame(frame);
 
 
 // For the smoke test, the tools and for poking at in the console (app/hooks.ts).
-installHooks({ night: N, view, sound, meter, shake, frameStats, ladder, loadTimes, loop, advance: (game, controls, dt) => recordedStep(game, controls, dt, BUILD, captureRecording) });
+installHooks({ night: N, view, sound, meter, shake, frameStats, ladder, loadTimes, loop, advance: (game, controls, dt) => soloDiagnostic(phone.active, N().spec.borrowed === true, () => recordedStep(game, controls, dt, BUILD, captureRecording)) });
+if (phoneEnabled && phoneCallsEnabled) (window as unknown as { witch: Record<string, unknown> }).witch.telephoneProof = () => ({
+  preparation: { ...visitPreparation }, saveBoundaryReady: ordinaryVisit !== null,
+  status: phone.state.status, active: phone.active, visiting: phone.visiting,
+  seed: N().game.seed, borrowed: N().spec.borrowed === true, worldReady: N().flags.ready,
+  artPending: view.assets.pending, artDone: view.assets.done, paused: freeze.frozen,
+  menus: { telephone: phone.open, creator: creator.open, station: stations.station, chart: chartOpen() },
+});
 // witch.take(kind, item): tonight's find taken where she stands, as E at it takes it (the kind's claim, the hats' floor, the loan):
 // for the tools (tools/loan/shots.cjs) to look at a night with a find on loan without walking to it.
 (window as unknown as { witch: Record<string, unknown> }).witch.compareKey = keyNow;
@@ -1543,6 +1802,14 @@ if (params.get("debug") === "sail") (window as unknown as { witch: Record<string
   const hooks = (window as unknown as { witch: Record<string, unknown> }).witch;
   for (const name of ["arena", "arenaAttack", "shot", "guest", "lose", "rainbow", "hit", "take", "wakeUp", "dream"]) {
     const action = hooks[name];
-    if (typeof action === "function") hooks[name] = (...args: unknown[]) => mutate(`debug: ${name}`, () => Reflect.apply(action, hooks, args));
+    if (typeof action === "function") hooks[name] = (...args: unknown[]) => soloDiagnostic(phone.active, N().spec.borrowed === true, () => mutate(`debug: ${name}`, () => Reflect.apply(action, hooks, args)));
   }
+  for (const name of ["debugSwap", "frame", "frameLive", "soundFrame"]) {
+    const action = hooks[name];
+    if (typeof action === "function") hooks[name] = (...args: unknown[]) => soloDiagnostic(phone.active, N().spec.borrowed === true, () => Reflect.apply(action, hooks, args));
+  }
+  const manual = Object.getOwnPropertyDescriptor(hooks, "manual");
+  if (manual?.set) Object.defineProperty(hooks, "manual", { ...manual, set: (on: unknown) => soloDiagnostic(phone.active, N().spec.borrowed === true, () => manual.set!.call(hooks, on)) });
+  const guideStep = (hooks.guide as { step?: () => void } | undefined)?.step;
+  if (guideStep) (hooks.guide as { step: () => void }).step = () => soloDiagnostic(phone.active, N().spec.borrowed === true, guideStep);
 }
