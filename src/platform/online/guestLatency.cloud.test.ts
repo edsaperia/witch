@@ -9,6 +9,8 @@ import { guestHitAuthority, type CastRequest, type HitClaim } from "./guestHits"
 import { affectionOf } from "../../rules/game";
 import { enableGuestEffects, applyGuestEffects } from "../../rules/guestEffects";
 import { withGuestInputSteps, holdGuestMotion } from "../../rules/onlineInputSteps";
+import { HOUSE_ROOMS, objectFront, fromPlan } from "../../rules/houseRooms";
+import { startWakeFor } from "../../rules/wakeUp";
 
 const cloud = it.runIf(process.env.CI === "true" || process.env.WITCH_CANONICAL_EVIDENCE === "1");
 const controls = (x: number): Controls => ({ moveX: x, moveZ: 0, toggleMode: false, zoom: 0 });
@@ -72,14 +74,35 @@ for (const delay of [0, 100, 250]) {
   }, 30000);
 }
 
-for (const delay of [100, 250]) for (const turning of [false, true]) {
-  cloud(`cloud: uneven page frames ${turning ? "turning" : "straight"} at ${delay}ms each way`, () => {
-    const host = world(), replica = replayGuest(replayStart(host, "uneven", 0), "uneven");
+for (const delay of [100, 250]) for (const route of ["straight", "turning", "indoor"] as const) {
+  cloud(`cloud: uneven page frames ${route} at ${delay}ms each way`, () => {
+    const host = world(), waypoints: { x: number; z: number }[] = [];
+    if (route === "indoor") {
+      const W = host.witches[1]; W.time = host.herTime;
+      startWakeFor(host, W.time, { yesterday: true }, W, { player: 1, room: "bedroom2" });
+      W.wake!.open = true; W.wake!.beat = "up"; W.body.seated = false;
+      const at = host.map.treehouse, shape = HOUSE_ROOMS.shape, branch = shape.branches.find(r => r.id === "bedroom2")!;
+      const parentIndex = shape.trunk.findIndex(r => r.id === branch.from), parent = shape.trunk[parentIndex];
+      const point = (p: { x: number; z: number }) => fromPlan(at, p.x, p.z, HOUSE_ROOMS.turn ?? 0);
+      const curve = (a: { x: number; z: number }, b: { x: number; z: number }, bend: number) => {
+        const L = Math.hypot(b.x-a.x,b.z-a.z), cx=(a.x+b.x)/2-(b.z-a.z)/L*bend*2, cz=(a.z+b.z)/2+(b.x-a.x)/L*bend*2;
+        return Array.from({length:9},(_,i)=>{ const t=i/8;return point({x:(1-t)**2*a.x+2*(1-t)*t*cx+t*t*b.x,z:(1-t)**2*a.z+2*(1-t)*t*cz+t*t*b.z}); });
+      };
+      for (const id of ["bedroom2Wardrobe", "bedroom2DressingTable"]) waypoints.push(objectFront(HOUSE_ROOMS.objects.find(o=>o.id===id)!,at));
+      waypoints.push(point(branch),objectFront(HOUSE_ROOMS.objects.find(o=>o.id==="bedroom2Door")!,at),...curve(parent,branch,branch.bend).reverse());
+      waypoints.push(point({x:parent.x+1,z:parent.z}));
+      const terrace = shape.trunk.findIndex(r=>r.id==="terrace");
+      for(let i=parentIndex;i>terrace;i--)waypoints.push(...curve(shape.trunk[i-1],shape.trunk[i],i%2?1:-1).reverse());
+      waypoints.push(point(shape.trunk[terrace]));
+    }
+    const replica = replayGuest(replayStart(host, "uneven", 0), "uneven");
     const errors: number[] = [], prediction = guestPrediction(replica.game, 1, e => errors.push(e.size)), buffer = guestInput();
     const up: { at: number; sequence: number; controls: Controls }[] = [], down: { at: number; frame: ReplayFrame }[] = [];
     const guestFrames = [16, 16, 250, 16, 450, 16], hostFrames = [16, 33, 70, 16, 50];
-    let guestAt = 0, hostAt = 0, gi = 0, hi = 0, sequence = 0, tick = 0, accumulator = 0, holdMs = 0, longestHostHoldMs = 0;
-    while (Math.min(guestAt, hostAt) < 8000) {
+    let guestAt = 0, hostAt = 0, gi = 0, hi = 0, sequence = 0, tick = 0, accumulator = 0, holdMs = 0, longestHostHoldMs = 0, waypoint = 0;
+    let routeDoneAt: number | undefined;
+    while (Math.min(guestAt, hostAt) < (route === "indoor" ? 160000 : 8000)) {
+      if (routeDoneAt !== undefined && Math.min(guestAt, hostAt) > routeDoneAt + 1500) break;
       if (guestAt <= hostAt) {
         const now = guestAt, frameMs = guestFrames[gi++ % guestFrames.length]; guestAt += frameMs;
         while (down[0]?.at <= now) { const p = down.shift()!; expect(replica.apply(p.frame)).toBe(true); prediction.reconcile(p.frame.guestSequence!); }
@@ -88,7 +111,15 @@ for (const delay of [100, 250]) for (const turning of [false, true]) {
         while (accumulator >= STEP - 1e-9) {
           accumulator -= STEP;
           const input = controls(now < 5000 ? 1 : 0);
-          if (turning && now >= 2000 && now < 5000) { input.moveX = 0; input.moveZ = 1; }
+          if (route === "turning" && now >= 2000 && now < 5000) { input.moveX = 0; input.moveZ = 1; }
+          if (route === "indoor") {
+            if(waypoint===waypoints.length)routeDoneAt??=now;
+            const b=prediction.actor.body,target=waypoints[waypoint];input.moveX=input.moveZ=0;
+            if(target){const dx=target.x-b.x,dz=target.z-b.z,distance=Math.hypot(dx,dz);
+              if(distance<.6&&Math.hypot(b.vx,b.vz)<.4)waypoint++;
+              else { input.moveX=Math.max(-1,Math.min(1,dx));input.moveZ=Math.max(-1,Math.min(1,dz)); }
+            }
+          }
           prediction.input(sequence, input, STEP); up.push({ at: now + delay, sequence: sequence++, controls: input });
         }
       } else {
@@ -106,12 +137,16 @@ for (const delay of [100, 250]) for (const turning of [false, true]) {
         down.push({ at: now + delay, frame });
       }
     }
-    console.log(JSON.stringify({ evidence: "guest-uneven-frames", delay, turning, guestFrames, hostFrames,
+    console.log(JSON.stringify({ evidence: "guest-uneven-frames", delay, route, guestFrames, hostFrames, waypoint, waypoints: waypoints.length,
       emitted: sequence, correctionMetres: { samples: errors.length, p95: quantile(errors, .95), max: Math.max(...errors) },
-      snaps: prediction.stats.snaps, longestHostHoldMs, hostInputQueue: buffer.stats }));
+      snaps: prediction.stats.snaps, transitionSnaps: prediction.stats.transitionSnaps, correctionSnaps: prediction.stats.correctionSnaps,
+      pendingCapSnaps: prediction.stats.pendingCapSnaps, longestHostHoldMs, hostInputQueue: buffer.stats }));
     expect(errors.length).toBeGreaterThan(0);
     expect(quantile(errors, .95)).toBeLessThan(.05); expect(Math.max(...errors)).toBeLessThan(.3);
-    expect(prediction.stats.snaps).toBe(0); expect(buffer.stats.underruns).toBeGreaterThan(0);
+    expect(prediction.stats.correctionSnaps).toBe(0); expect(prediction.stats.pendingCapSnaps).toBe(0);
+    if(route!=="indoor")expect(prediction.stats.snaps).toBe(0);
+    if(route==="indoor")expect(waypoint).toBe(waypoints.length);
+    expect(buffer.stats.underruns).toBeGreaterThan(0);
     expect(buffer.stats.discarded).toBe(0);
-  }, 30000);
+  }, 90000);
 }

@@ -34,12 +34,19 @@ export function guestInput(heldInputMs: number = ONLINE_TIMING.heldInputMs, jitt
   if (!Number.isSafeInteger(jitterTicks) || jitterTicks < 0 || jitterTicks > 3) throw new Error("Invalid guest jitter depth");
   let current = neutral(), receivedAt = -Infinity, sequence = -1;
   let applied = -1, started = false, warmTicks = 0, underruns = 0, discarded = 0;
+  let holdSince: number | null = null, longestHoldMs = 0, lastConsumeAt = 0;
+  const measureHold = (now: number, motion: boolean) => {
+    if (!Number.isFinite(now)) return;
+    lastConsumeAt = Math.max(lastConsumeAt, now);
+    if (holdSince !== null) longestHoldMs = Math.max(longestHoldMs, lastConsumeAt - holdSince);
+    if (motion) holdSince = null; else holdSince ??= lastConsumeAt;
+  };
   const ticks: { sequence: number; controls: Controls; at: number }[] = [];
   const pending: Partial<Controls> = {};
   return {
     get sequence() { return applied; },
     get receivedSequence() { return sequence; },
-    get stats() { return { applied, received: sequence, queued: ticks.length, underruns, discarded }; },
+    get stats() { return { applied, received: sequence, queued: ticks.length, underruns, discarded, longestHoldMs, currentHoldMs: holdSince === null ? 0 : lastConsumeAt - holdSince }; },
     accept(payload: unknown, now: number): boolean {
       if (!payload || typeof payload !== "object" || !Number.isFinite(now) || now < receivedAt) return false;
       const p = payload as Record<string, unknown>;
@@ -62,13 +69,14 @@ export function guestInput(heldInputMs: number = ONLINE_TIMING.heldInputMs, jitt
     consume(now: number): { sequence: number; controls: Controls; motion: boolean } {
       if (!started && ticks.length) warmTicks++;
       if (!started && (ticks.length >= Math.max(1, jitterTicks) || warmTicks > jitterTicks || ticks[0] && now - ticks[0].at >= jitterTicks * 1000 / 60)) started = true;
-      if (!started) return { sequence: applied, controls: neutral(), motion: false };
+      if (!started) { measureHold(now, false); return { sequence: applied, controls: neutral(), motion: false }; }
       const tick = ticks.shift();
-      if (tick) { applied = tick.sequence; return { sequence: applied, controls: { ...tick.controls }, motion: true }; }
+      if (tick) { measureHold(now, true); applied = tick.sequence; return { sequence: applied, controls: { ...tick.controls }, motion: true }; }
       underruns++;
+      measureHold(now, false);
       return { sequence: applied, controls: neutral(), motion: false };
     },
-    suspend(): void { discarded += ticks.length; ticks.length = 0; started = false; warmTicks = 0; },
-    clear(): void { current = neutral(); receivedAt = -Infinity; sequence = applied = -1; ticks.length = 0; started = false; warmTicks = 0; underruns = discarded = 0; for (const key of edges) delete pending[key]; },
+    suspend(): void { discarded += ticks.length; ticks.length = 0; started = false; warmTicks = 0; holdSince = null; },
+    clear(): void { current = neutral(); receivedAt = -Infinity; sequence = applied = -1; ticks.length = 0; started = false; warmTicks = 0; underruns = discarded = 0; holdSince = null; longestHoldMs = lastConsumeAt = 0; for (const key of edges) delete pending[key]; },
   };
 }

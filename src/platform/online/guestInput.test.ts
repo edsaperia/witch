@@ -72,4 +72,10 @@ it("never invents motion on underrun and drains received quanta across a slow pa
   input.accept({ sequence: 1, controls: { moveZ: 1 } }, 450);
   expect(input.consume(800)).toMatchObject({ sequence: 1, motion: true, controls: { moveZ: 1 } });
   expect(input.stats.discarded).toBe(0);
+  expect(input.stats.longestHoldMs).toBe(784);
+  expect(input.stats.currentHoldMs).toBe(0);
+  input.suspend(); input.consume(1000); input.consume(1050);
+  expect(input.stats.currentHoldMs).toBe(50);
+  expect(input.stats.longestHoldMs).toBe(784);
+  input.clear(); expect(input.stats.longestHoldMs).toBe(0);
 });

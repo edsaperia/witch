@@ -1,5 +1,4 @@
 import { STEP, stepWitchLocomotion, type Controls, type Game, type Witch } from "../../rules/game";
-import { roomAt } from "../../rules/houseRooms";
 
 const edges = ["toggleMode", "dash", "spell"] as const;
 const MAX_PENDING = 120, SNAP = 3, MAX_OFFSET = .75;
@@ -10,12 +9,13 @@ interface Input { sequence: number; controls: Controls; dt: number }
 export function guestPrediction(source: Game, player: number, report?: (event: PredictionCorrection) => void) {
   let actor = structuredClone(source.witches[player]), acc = source.acc, acknowledged = -1;
   const pending: Input[] = [];
-  const sizes: number[] = []; let corrections = 0, snaps = 0, largest = 0;
+  const sizes: number[] = []; let corrections = 0, snaps = 0, largest = 0, transitionSnaps = 0, correctionSnaps = 0, pendingCapSnaps = 0;
+  const transitionReasons: Record<string, number> = {};
   const offset = { x: 0, z: 0 };
   let pendingEdges: Partial<Controls> = {};
   const held = (w: Witch) => !!w.ko || !!w.house?.slept || !!w.paused || !!w.wake && !w.wake.open;
-  const room = (w: Witch) => w.body.perch ? roomAt(source.map.treehouse, w.body.x, w.body.z)?.id ?? null : null;
-  const state = (w: Witch) => ({ held: held(w), room: room(w), perch: !!w.body.perch, bed: w.house?.lastBed, ko: w.ko?.at });
+  // Walking between room labels is ordinary locomotion, not an authoritative relocation.
+  const state = (w: Witch) => ({ held: held(w), sleep: !!w.house?.slept, perch: !!w.body.perch, bed: w.house?.lastBed, ko: w.ko?.at });
   let authoritative = state(source.witches[player]);
   const advance = (input: Input) => {
     for (const key of edges) if (input.controls[key]) pendingEdges[key] = true;
@@ -36,6 +36,7 @@ export function guestPrediction(source: Game, player: number, report?: (event: P
       const input = { sequence, controls: { moveX: controls.moveX, moveZ: controls.moveZ, toggleMode: controls.toggleMode,
         dash: controls.dash, spell: controls.spell, fire: controls.fire, aimX: controls.aimX, aimZ: controls.aimZ, zoom: 0 }, dt };
       if (pending.length >= MAX_PENDING) {
+        snaps++; pendingCapSnaps++;
         report?.({ sequence, size: 0, snapped: true, reason: "pending-cap" });
         pending.length = 0; actor = structuredClone(source.witches[player]); acc = source.acc; pendingEdges = {}; offset.x = offset.z = 0;
       }
@@ -49,8 +50,9 @@ export function guestPrediction(source: Game, player: number, report?: (event: P
       const visible = { x: actor.body.x + offset.x, z: actor.body.z + offset.z };
       actor = structuredClone(source.witches[player]); acc = source.acc; pendingEdges = {};
       const next = state(actor);
-      const discontinuity = next.held !== authoritative.held || next.room !== authoritative.room || next.perch !== authoritative.perch
-        || next.bed !== authoritative.bed || next.ko !== authoritative.ko;
+      const transitions = (Object.keys(next) as (keyof typeof next)[]).filter(key => next[key] !== authoritative[key]);
+      const discontinuity = transitions.length > 0;
+      for (const reason of transitions) transitionReasons[reason] = (transitionReasons[reason] ?? 0) + 1;
       authoritative = next;
       if (discontinuity) pending.length = 0;
       for (const input of pending) advance(input);
@@ -58,13 +60,13 @@ export function guestPrediction(source: Game, player: number, report?: (event: P
       const snapped = discontinuity || size >= SNAP;
       const scale = snapped ? 0 : Math.min(1, MAX_OFFSET / Math.max(size, 1e-9));
       offset.x = dx * scale; offset.z = dz * scale;
-      corrections++; if (snapped) snaps++; largest = Math.max(largest, size);
+      corrections++; if (snapped) { snaps++; if (discontinuity) transitionSnaps++; else correctionSnaps++; } largest = Math.max(largest, size);
       sizes.push(size); if (sizes.length > 240) sizes.shift();
-      report?.({ sequence, size, snapped, reason: discontinuity ? "authoritative-transition" : snapped ? "large-correction" : "reconcile" });
+      report?.({ sequence, size, snapped, reason: discontinuity ? "authoritative-transition:" + transitions.join(",") : snapped ? "large-correction" : "reconcile" });
     },
     get actor(): Witch { return { ...actor, body: { ...actor.body, x: actor.body.x + offset.x, z: actor.body.z + offset.z } }; },
     get pending() { return pending.length; },
     get acknowledged() { return acknowledged; },
-    get stats() { const ordered = [...sizes].sort((a, b) => a - b); return { corrections, snaps, largest, recentP95: ordered[Math.floor(ordered.length * .95)] ?? 0, pending: pending.length, acknowledged }; },
+    get stats() { const ordered = [...sizes].sort((a, b) => a - b); return { corrections, snaps, transitionSnaps, correctionSnaps, pendingCapSnaps, transitionReasons: { ...transitionReasons }, largest, recentP95: ordered[Math.floor(ordered.length * .95)] ?? 0, pending: pending.length, acknowledged }; },
   };
 }

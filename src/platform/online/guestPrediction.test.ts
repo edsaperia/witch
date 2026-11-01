@@ -34,7 +34,15 @@ it("snaps a host-forced relocation and clears pending locomotion on sleep", () =
   game.witches[1].house = { slept: true, lastBed: "bedroom2Bed" };
   p.reconcile(0);
   expect(p.pending).toBe(0); expect(p.actor.body.x).toBe(game.witches[1].body.x);
-  expect(corrections).toContainEqual(expect.objectContaining({ snapped: true, reason: "authoritative-transition" }));
+  expect(corrections).toContainEqual(expect.objectContaining({ snapped: true, reason: expect.stringContaining("authoritative-transition:") }));
+  expect(p.stats.transitionSnaps).toBe(1); expect(p.stats.correctionSnaps).toBe(0);
+  expect(p.stats.transitionReasons).toMatchObject({ held: 1, sleep: 1, bed: 1 });
+});
+
+it("counts large unexpected corrections separately from authoritative sleep/perch transitions", () => {
+  const game = fixture(), p = guestPrediction(game, 1);
+  game.witches[1].body.x += 20; p.reconcile(-1);
+  expect(p.stats).toMatchObject({ snaps: 1, correctionSnaps: 1, transitionSnaps: 0, pendingCapSnaps: 0 });
 });
 it("does not call ordinary forest movement below a house outline an authoritative room change", () => {
   const game = fixture(), W = game.witches[1], at = game.map.treehouse;
