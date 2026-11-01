@@ -5,7 +5,32 @@ import { visitUnlocks } from "./visitUnlocks";
 import { browserSaveSlots, slotStorage } from "./saveSlots";
 import { emptySave, loadSave } from "./chartSave";
 import { loadOwned } from "./owned";
+import { loadBroom } from "./broomSave";
+import { loadHats } from "./hatSave";
+import { foundRecords } from "./recordSave";
 afterEach(() => vi.unstubAllGlobals());
+it("gives both distinct browser collections the valid find on a win and neither on loss/hang-up", () => {
+  const [item, hostOwn, guestOwn] = FIND_KINDS.find(k => k.id === "wearable")!.items;
+  for (const success of [false, true]) for (const [player, ownItem] of [[0, hostOwn], [1, guestOwn]] as const) {
+    const bytes = new Map<string, string>(); vi.stubGlobal("localStorage", { getItem: (k: string) => bytes.get(k) ?? null, setItem: (k: string, v: string) => { bytes.set(k, v); }, removeItem: (k: string) => { bytes.delete(k); } });
+    const slots = browserSaveSlots(); slotStorage.setItem("witch.owned", JSON.stringify([ownItem]));
+    const game = { witches: [{ id: 0 }, { id: 1 }], tuning: { map: { island: "home", world: 0 } }, ...(success ? { win: { phase: "won", settled: true, found: [] } } : {}), trunk: { found: true, kind: "wearable", item } } as unknown as Game;
+    const unlocks = visitUnlocks(game, player), release = slots.beginBorrowedVisit();
+    expect(() => unlocks.apply(slots, { spells: {} as never, owned: () => loadOwned(null) })).toThrow("Return to own saves");
+    release(); const before = [...bytes]; unlocks.apply(slots, { spells: {} as never, owned: () => loadOwned(null) });
+    expect(loadOwned(null)).toContain(ownItem); expect(loadOwned(null).has(item)).toBe(success);
+    if (!success) expect([...bytes]).toEqual(before);
+  }
+});
+it("settles every registered find kind for each browser through its existing keeper after a win", () => {
+  for (const kind of FIND_KINDS) for (const player of [0, 1]) {
+    const bytes = new Map<string, string>(); vi.stubGlobal("localStorage", { getItem: (k: string) => bytes.get(k) ?? null, setItem: (k: string, v: string) => { bytes.set(k, v); }, removeItem: (k: string) => { bytes.delete(k); } });
+    const game = { witches: [{ id: 0 }, { id: 1 }], tuning: { map: { island: "home", world: 0 } }, win: { phase: "won", settled: true, found: [] }, trunk: { found: true, kind: kind.id, item: kind.items[0] } } as unknown as Game;
+    visitUnlocks(game, player).apply(browserSaveSlots(), { spells: { hats: [] } as never, owned: () => loadOwned(null) });
+    const kept = kind.id === "part" ? loadBroom().found : kind.id === "hat" ? loadHats() : kind.id === "record" ? foundRecords() : [...loadOwned(null)];
+    expect(kept).toContain(kind.items[0]);
+  }
+});
 it("keeps no rewards from an unsuccessful night and rejects unknown identities", () => {
   const game = { witches: [{ id: 0 }, { id: 1 }], tuning: { map: { island: "home", world: 0 } }, trunk: { found: true, kind: "wearable", item: "invalid" } } as unknown as Game;
   const owned = vi.fn(() => new Set<string>());

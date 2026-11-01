@@ -83,7 +83,7 @@ export function onlineSession(options: SessionOptions) {
   const fail = (value: unknown) => { const error = value instanceof Error ? value : new Error(String(value)); stop(); options.failed(error); };
   const sendStart = () => {
     if (options.appearance && looks.size !== 2) return; // No borrowed world admission until both cosmetic profiles are validated.
-    if (options.catalogue) catalogue = hostCatalogue();
+    if (options.catalogue) { catalogue = hostCatalogue(); options.catalogueApplied?.(structuredClone(catalogue)); }
     if (!connection || !game || !connection.sendState({ kind: "start", start: replayStart(game, options.build, tick), ...(options.appearance ? { looks: [...looks].map(([player, genome]) => ({ player, genome })) } : {}), ...(catalogue ? { catalogue } : {}) })) throw new Error("The night couldn't be sent to your friend.");
     beatSegments = game.beat.segs;
   };
@@ -256,6 +256,7 @@ export function onlineSession(options: SessionOptions) {
           if (JSON.stringify(next) !== JSON.stringify(catalogue)) {
             if (!connection.sendState({ kind: "catalogue", tick, catalogue: next })) throw new Error("The station catalogue couldn't be sent.");
             catalogue = next;
+            options.catalogueApplied?.(structuredClone(next));
           }
         }
         // Page-owned station mutations are not controls. Coalesce them at this ordered boundary,

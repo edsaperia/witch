@@ -25,7 +25,8 @@ import { soloDiagnostic } from "./app/soloDiagnostic";
 import { overlayPause } from "./app/overlayPause";
 import { introFocus } from "./app/introFocus";
 import { currentSettings } from "./app/playerSettings";
-import { wavesOver } from "./rules/win";
+import { wavesOver, won } from "./rules/win";
+import { sharedFindLoan, withSharedFind, type PersonalKit } from "./app/sharedFindLoan";
 import { chartOpen, closeChart, openChart, prepareChart, finishChartFlight, type Sailed } from "./ui/chartOverlay";
 import { openingWay, opensDirectly, opensInBedroom, opensWithCreator, sailLandsInBed } from "./app/opening";
 import { wakeInBedroom } from "./rules/opening";
@@ -381,9 +382,18 @@ const callArrival = guestArrival({ room: "bedroom2", equipment: game => {
 let returnedUnlocks: ReturnType<typeof visitUnlocks> | null = null;
 let hostedUnlocks: ReturnType<typeof visitUnlocks> | null = null;
 const remoteArt = remoteWitchAppearance(view);
+const sharedLoans = sharedFindLoan();
+function personalKit(game: Game = N().game, player = 0): PersonalKit {
+  const spells = game.witches[player].spells;
+  return { look: (page.look() ?? creator.genome()) as Record<string, unknown>, hat: spells.hat, parts: { ...spells.parts }, ...(spells.hats ? { hats: [...spells.hats] } : {}) };
+}
+function hostCollections(game: Game) {
+  const wardrobe = withSharedFind(game, "wearable", findsCtx().owned());
+  return { wardrobe, bags: new Set(BAGS.filter(b => wardrobe.has(b.id)).map(b => b.id)), hats: withSharedFind(game, "hat", new Set(game.witches[0].spells.hats ?? HAT_SPELLS.filter(hat => hat.built).map(hat => hat.id))), parts: withSharedFind(game, "part", partsNow()), records: withSharedFind(game, "record", new Set(ownedRecords())) };
+}
 const phone = telephoneStation({ storage: (() => { try { return localStorage; } catch { return null; } })(), session: {
   build: BUILD, hostGame: () => N().game,
-  appearance: () => appearance(page.look()) ?? appearance({}),
+  appearance: () => { sharedLoans.begin(personalKit(), loan); if (!phone.visiting) sharedLoans.observe(N().game, personalKit()); return appearance(page.look()) ?? appearance({}); },
   attach: game => { if (!guestAccess.ready) throw new Error("The guest room isn't ready yet."); callArrival.attach(game); if (remoteArt.has(1)) void remoteArt.start(game, 0).catch(error => { logCaughtError(error, "host remote appearance"); phone.hangUp(); }); },
   detach: game => callArrival.detach(game),
   prepareGuest: (game, signal, advanced) => {
@@ -396,36 +406,46 @@ const phone = telephoneStation({ storage: (() => { try { return localStorage; } 
     if (role === "guest") {
       try { returnedUnlocks = game && game.witches.some(w => w.id === 1) ? visitUnlocks(game, 1) : null; }
       catch (error) { returnedUnlocks = null; logCaughtError(error, "visit unlock capture"); }
+      sharedLoans.finish(false, personalKit(), true);
       void ordinaryVisit?.end().catch(error => logCaughtError(error, "visit return"));
     } else if (game) {
       try { hostedUnlocks = visitUnlocks(game, 0); }
       catch (error) { hostedUnlocks = null; logCaughtError(error, "host unlock capture"); }
+      const success = won(game), kit = personalKit(game);
+      if (success && kit.hats) kit.hats = [...withSharedFind(game, "hat", new Set(kit.hats))];
+      const restored = sharedLoans.finish(success, kit); loan = restored.loan;
+      const W = game.witches[0]; changeLoadout(W, restored.kit.hat); setParts(W.spells, { ...restored.kit.parts }); setBag(W.spells, bagOf(restored.kit.look)); W.spells.hats = restored.kit.hats;
+      lookNow = JSON.stringify(restored.kit.look); creator.adopt(restored.kit.look); shownLook = ""; owned = null;
+      if (success && hostedUnlocks) {
+        const collection = loadOwned(lookWithoutLoan(restored.kit.look, loan));
+        hostedUnlocks.apply(browserSaveSlots(), { spells: W.spells, owned: () => collection }); hostedUnlocks = null;
+        saveGenome(lookWithoutLoan(restored.kit.look, loan) as never); saveLoadout({ hat: hatWithoutLoan(W.spells.hat, loan) as typeof W.spells.hat }); fitBroom(partsWithoutLoan(W.spells.parts, loan));
+      }
+      creator.hats = unlockAll() ? undefined : W.spells.hats; creator.loadout = { hat: W.spells.hat }; view.partsFound = partsNow();
+      stations.reconcile(restored.kit.look as never, ownedToChoose(findsCtx().owned()), workshopNow()); booth.refresh(ownedRecords());
     }
   },
   failed: error => { logCaughtError(error, "telephone session"); phone.hangUp(); },
   advanceHost: (game, controls, dt) => recordedStep(game, controls, dt, BUILD, captureRecording),
-  authorizeStation: stationAuthority(game => {
-    const wardrobe = findsCtx().owned();
-    return { bags: new Set(BAGS.filter(b => wardrobe.has(b.id)).map(b => b.id)), hats: new Set(game.witches[0].spells.hats ?? HAT_SPELLS.filter(hat => hat.built).map(hat => hat.id)), parts: partsNow(), records: new Set(ownedRecords()) };
-  }),
-  wardrobe: () => findsCtx().owned(),
-  catalogue: () => ({ wardrobe: [...findsCtx().owned()], parts: [...partsNow()], hats: [...(N().game.witches[0].spells.hats ?? HAT_SPELLS.filter(hat => hat.built).map(hat => hat.id))], records: ownedRecords() }),
+  authorizeStation: stationAuthority(hostCollections),
+  wardrobe: () => hostCollections(N().game).wardrobe,
+  catalogue: () => { const shared = hostCollections(N().game); return { wardrobe: [...shared.wardrobe], parts: [...shared.parts], hats: [...shared.hats], records: [...shared.records] }; },
   catalogueApplied: catalogue => { creator.hats = catalogue.hats as typeof creator.hats; view.partsFound = new Set(catalogue.parts); reconcilePickers(); },
   stationResolved: player => { if (player === (phone.visiting ? 1 : 0)) reconcilePickers(); },
   stationPalette: () => classicPalette(style),
   stationApplied: (player, choice) => {
-    if (choice.kind === "party") { booth.close(); if (!phone.visiting) chooseRecord(choice.id); }
+    if (choice.kind === "party") { booth.close(); if (!phone.visiting && ownedRecords().includes(choice.id)) chooseRecord(choice.id); }
     if (player !== (phone.visiting ? 1 : 0)) return;
     const witch = N().game.witches[player]; if (!witch) return;
     if (choice.kind === "hat") {
       creator.loadout = { hat: witch.spells.hat };
-      if (!phone.visiting) saveLoadout({ hat: hatWithoutLoan(witch.spells.hat, loan) as typeof witch.spells.hat });
-    } else if (choice.kind === "broom" && !phone.visiting) fitBroom(partsWithoutLoan(witch.spells.parts, loan));
+      if (!phone.visiting) saveLoadout({ hat: sharedLoans.forSave(personalKit()).hat as typeof witch.spells.hat });
+    } else if (choice.kind === "broom" && !phone.visiting) fitBroom(sharedLoans.forSave(personalKit()).parts);
   },
   appearanceApplied: (player, look) => {
     if (player === (phone.visiting ? 1 : 0)) {
       lookNow = JSON.stringify(look); creator.adopt(look as never); showLook();
-      if (!phone.visiting) saveGenome(lookWithoutLoan(look, loan) as never);
+      if (!phone.visiting) saveGenome(sharedLoans.forSave(personalKit()).look as never);
       return; // The local witch uses the normal artwork; only approved host wardrobe changes persist.
     }
     void remoteArt.look(player, look).then(() => {
@@ -562,8 +582,8 @@ document.body.append(shutButton);
 let owned: Set<string> | null = null, stillAt = 0;
 /** What the finds' keepers work on (app/finds.ts): tonight's spells and what she owns to wear, kept. */
 const findsCtx = (): FindsCtx => ({ spells: N().game.spells, owned: () => (owned ??= withLoan("wearable", loadOwned((page.look() ?? creator.genome()) as Record<string, unknown>), loan)) });
-const menuWardrobe = () => phone.visiting ? new Set(phone.catalogue?.wardrobe ?? []) : ownedToChoose(findsCtx().owned());
-const menuRecords = () => phone.visiting ? phone.catalogue?.records ?? [] : ownedRecords();
+const menuWardrobe = () => phone.active ? new Set(phone.catalogue?.wardrobe ?? []) : ownedToChoose(findsCtx().owned());
+const menuRecords = () => phone.active ? phone.catalogue?.records ?? [] : ownedRecords();
 stations.onLook = g => {
   if (!phone.active && N().spec.borrowed) return;
   if (phone.active) {
@@ -597,7 +617,7 @@ stations.onFit = f => {
   mutate("dressing: broom fitting", () => { const { game } = N(); setParts(game.witches[0].spells, f); fitBroom(partsWithoutLoan(f, loan)); });
 }; // Solo keeps fitted parts without any loan; online choices wait for host approval.
 /** What the Workshop's stations show (ui/stationPanel.ts): the parts found, her broom, tonight's part to find, her tuning. */
-const workshopNow = (): WorkshopCtx => { const { game, tuning } = N(), t = game.trunk; return { found: phone.visiting ? new Set(phone.catalogue?.parts ?? []) : partsToChoose(partsNow()), fitted: phone.active ? { ...phone.presented(game).spells.parts } : game.witches[0].spells.parts, tonight: t && t.kind === "part" && !t.found ? t.item : null, tuning }; };
+const workshopNow = (): WorkshopCtx => { const { game, tuning } = N(), t = game.trunk; return { found: phone.active ? new Set(phone.catalogue?.parts ?? []) : partsToChoose(partsNow()), fitted: phone.active ? { ...phone.presented(game).spells.parts } : game.witches[0].spells.parts, tonight: t && t.kind === "part" && !t.found ? t.item : null, tuning }; };
 function reconcilePickers(): void {
   if (!phone.active) return;
   stations.reconcile((page.look() ?? creator.genome()) as never, menuWardrobe(), workshopNow());
@@ -905,7 +925,7 @@ let nightWriteReported = false;
 const visitNightSaves = nightStore ? borrowedNightSaves(nightStore) : null;
 const autosave = visitNightSaves ? new NightAutosave(visitNightSaves.store, () => {
   const n = page.night;
-  if (!n || n.spec.borrowed || endedNights.has(n.game) || !n.flags.ready || sailing || bot || dream && !dream.over || n.arrival && !n.flags.landed || !savesEnabled(n.params, navigator.webdriver)) return null;
+  if (!n || phone.active || n.spec.borrowed || endedNights.has(n.game) || !n.flags.ready || sailing || bot || dream && !dream.over || n.arrival && !n.flags.landed || !savesEnabled(n.params, navigator.webdriver)) return null;
   // The opening, before play starts, must not replace an existing night merely because the page loaded.
   if (!nightHasStarted(n.game, startedNights.has(n.game))) return null;
   browserSaveSlots().summary(n.game.tuning.map?.island ?? "home", false, bootSlot);
@@ -914,9 +934,10 @@ const autosave = visitNightSaves ? new NightAutosave(visitNightSaves.store, () =
 }, error => { if (!nightWriteReported) { nightWriteReported = true; logCaughtError(error, "save slot: write night"); } nightSaveNotice("Your night could not be saved. Keep this page open to continue playing."); }) : null;
 const ordinaryVisit = visitNightSaves ? visitLifecycle({
   saves: visitSaves(browserSaveSlots(), visitNightSaves),
-  own: () => ({ night: N(), href: location.href, look: page.look() as Record<string, unknown> | null }),
+  own: () => ({ night: N(), href: location.href, look: page.look() as Record<string, unknown> | null, loan: structuredClone(loan) }),
   adoptBorrowed: async (game, signal, advanced) => {
     signal.throwIfAborted(); sailing = true; input.release(); input.clearPresses();
+    loan = null; owned = null; // Own private loan is retained in the lifecycle snapshot, never reused as a host-world loan.
     const p = new URLSearchParams(N().params); p.delete("arrive");
     await startNight(page, { how: "bed", island: game.tuning.map?.island ?? "home", seed: game.seed, world: game.tuning.map?.world, params: p, resume: game, borrowed: true });
     advanced(); signal.throwIfAborted();
@@ -939,10 +960,11 @@ const ordinaryVisit = visitNightSaves ? visitLifecycle({
     startedNights.add(game); input.clearPresses(); sailing = false;
   },
   adoptOwn: async (own, fresh) => {
+    loan = structuredClone(own.loan); owned = null;
     lookNow = JSON.stringify(own.look); creator.adopt(own.look as never); shownLook = "";
     creator.hats = unlockAll() ? undefined : own.night.game.spells.hats; view.partsFound = partsNow();
     if (fresh) {
-      const ownCollection = loadOwned(own.look);
+      const ownCollection = loadOwned(lookWithoutLoan(own.look, own.loan));
       returnedUnlocks?.apply(browserSaveSlots(), { spells: own.night.game.spells, owned: () => ownCollection });
       returnedUnlocks = null; owned = null;
       const href = nightHref("bed", own.href); await nightInPlace(nightFromHref("bed", href), href);
@@ -963,8 +985,9 @@ page.onNightEnd = () => {
   if (phone.active && !phone.visiting) phone.hangUp(); // Capture the host result before its own bed/sail replaces this night.
   if (!phone.visiting && page.night && !page.night.spec.borrowed && !endedNights.has(page.night.game)) {
     if (hostedUnlocks) {
-      const collection = loadOwned(page.look() as Record<string, unknown> | null);
-      hostedUnlocks.apply(browserSaveSlots(), { spells: page.night.game.spells, owned: () => collection }); hostedUnlocks = null; owned = null;
+      const collection = loadOwned(lookWithoutLoan(page.look() as Record<string, unknown> | null, loan));
+      // The host may continue its own night after the friend leaves; use its final own verdict, never update the departed guest's captured outcome.
+      visitUnlocks(page.night.game, 0).apply(browserSaveSlots(), { spells: page.night.game.spells, owned: () => collection }); hostedUnlocks = null; owned = null;
     }
     endedNights.add(page.night.game); browserSaveSlots().summary(page.night.game.tuning.map?.island ?? "home", true, bootSlot);
   }
@@ -1457,6 +1480,7 @@ function frameBody(now: number): void {
   if (!phone.active && !N().spec.borrowed && params.get("cauldron") === "1" && !game.cauldron) mutate("cauldron: enable legacy preview", () => enableCauldron(game, homeMushroomPickups(game))); // Solo compatibility preview only; never a visitor's replacement rules.
   const rulesDt = fightDt(dt * (botTag?.speed ?? 1));
   if (!phone.step(game, { ...c, pausePage: freeze.frozen }, rulesDt)) recordedStep(game, c, rulesDt, BUILD, captureRecording); // Only the pause page votes online; solo retains original controls/step.
+  if (phone.active && !phone.visiting) sharedLoans.observe(game, personalKit(game));
   for (const [kind, events] of [["ko", game.koEvents], ["quest", game.questEvents], ["spell", game.combat.spells?.events ?? []]] as const) for (const event of events) { breadcrumbs.add(game, kind, event); if (kind !== "spell") notable(kind, `${kind} event`, event); }
   rumble.update(game, currentSettings(), input.device === "pad" && !document.hidden ? [freeze.pad()] : [], now);
   // ?debug=attack: every 10 s, a few seconds of blows on the two soundsystems farthest from her (never felling one), so the
@@ -1471,7 +1495,7 @@ function frameBody(now: number): void {
   // (a wreck), made once a night; taken, it's hers for the night, on loan till she sleeps (app/loan.ts; Ed, 2026-10-24): to wear
   // or use at once, never saved unless the night's won.
   if (!N().spec.borrowed && !phone.visiting && game.trunk && game.trunk.item === null) mutate("finds: fill trunk", () => fillNightTrunk(game, phone.active ? "host" : "solo", () => foundAll(findsCtx()), () => phone.changed()));
-  for (const e of game.leashEvents) if (e.kind === "found" && e.obj && e.find) {
+  for (const e of game.leashEvents) if (!phone.active && !N().spec.borrowed && e.kind === "found" && e.obj && e.find) {
     mutate("finds: loan", () => lendFind(e.find!, e.obj!));
     if (e.find === "part") hud.found(`found: ${partById(e.obj)?.name.toLowerCase() ?? e.obj} · at the Workshop`); // (not fitted: the bay fits it)
     else if (e.find === "hat") hud.found(`found: the ${hatSpell(e.obj)?.name.toLowerCase() ?? e.obj} hat · on the hats' floor`); // (the rules laid it there: rules/houseRooms.ts addFloorHat)
