@@ -4,8 +4,17 @@
 const fs = require('node:fs/promises'), path = require('node:path');
 const { capturePair } = require('./capture-pair.cjs');
 const { installCaptureHold, restoreCaptureHold, probeRenderDrift } = require('./capture-hold.cjs');
+const { readHeldDepth, inspectDepthPoints } = require('./depth-readback.cjs');
 
 async function captureForeground(page, expectedSha, output, options = {}) {
+  const crossings=options.crossings??[0,1,2,3,4];
+  if(!Array.isArray(crossings)||!crossings.length||crossings.length>5||new Set(crossings).size!==crossings.length||crossings.some(i=>!Number.isInteger(i)||i<0||i>4))throw Error('Invalid crossing selection');
+  const depthCapture=async(directory,label)=>{
+    if(!options.depthReadback)return;
+    const frame=await page.evaluate(readHeldDepth),points=options.depthPoints??Array.from({length:9},(_,i)=>({x:495+i%3,y:254+Math.floor(i/3)}));
+    const selected=inspectDepthPoints(frame,points);
+    await fs.writeFile(path.join(directory,`${label}-depth.json`),JSON.stringify({ ...frame, selected },null,2));
+  };
   const before = await page.evaluate(async ({ requested, creatureId }) => {
     const w = window.witch, g = w.game, v = w.view;
     if (g.tuning.bare || v.fly || v.telescope) throw Error('Require ordinary clothed ground view');
@@ -95,6 +104,7 @@ async function captureForeground(page, expectedSha, output, options = {}) {
     if (distance === null) throw Error('No verified foreground/body-plume overlap: choose another existing fire; never accept an empty guard case');
     const stages = [];
     for (const [i, lateral] of [-2, -1, 0, 1, 2].entries()) {
+      if(!crossings.includes(i))continue;
       let metadata = await stage(before.fire.x + lateral, before.fire.z + distance);
       const directory = path.join(output, `crossing-${i}`);
       const drift = await page.evaluate(probeRenderDrift);
@@ -104,6 +114,11 @@ async function captureForeground(page, expectedSha, output, options = {}) {
       try {
         await page.screenshot({ timeout: 120000 }); // Compile/warm SwiftShader before the measured screenshots.
         pair = await capturePair(page, expectedSha, directory, 'fire');
+        if(options.depthReadback){
+          const old=await page.evaluate(()=>window.witch.view.post.refractionEnabled);
+          try{for(const enabled of [false,true]){await page.evaluate(enabled=>{const w=window.witch;w.view.post.refractionEnabled=enabled;w.view.render(w.game.clock.time);},enabled);await depthCapture(directory,enabled?'on':'off');}}
+          finally{await page.evaluate(enabled=>{const w=window.witch;w.view.post.refractionEnabled=enabled;w.view.render(w.game.clock.time);},old);}
+        }
         // With View update held, SpriteBatch.set cannot undo this temporary visibility mask.
         await page.evaluate(time => {
           const v = window.witch.view, state = window.__refractionCaptureHold;
@@ -111,7 +126,7 @@ async function captureForeground(page, expectedSha, output, options = {}) {
           for (const [mesh] of state.maskVisibility) mesh.visible = false;
           v.post.refractionEnabled = false; v.render(time);
         }, before.time);
-        try { await page.screenshot({ path: path.join(directory, 'off-nowitch.png'), timeout: 120000 }); }
+        try { await page.screenshot({ path: path.join(directory, 'off-nowitch.png'), timeout: 120000 }); await depthCapture(directory,'off-nowitch'); }
         finally { await page.evaluate(() => { for (const [mesh, visible] of window.__refractionCaptureHold.maskVisibility) mesh.visible = visible; }); }
       } finally { await page.evaluate(restoreCaptureHold); }
       const record = { lateral, ...metadata, drift, hold, pair };
@@ -119,7 +134,7 @@ async function captureForeground(page, expectedSha, output, options = {}) {
     }
     if (!stages.some(s => s.foreground && s.overlapsPlume)) throw Error('Crossing lost the required foreground overlap');
     const creatures = [];
-    if (before.creatureId !== null) for (const [i, lateral] of [-0.5, 0, 0.5].entries()) {
+    if (options.captureCreatures!==false && before.creatureId !== null) for (const [i, lateral] of [-0.5, 0, 0.5].entries()) {
       const metadata = await page.evaluate(async ({ fire, distance, lateral, time }) => {
         const w = window.witch, v = w.view, c = window.__refractionForeground.creature;
         const result = w.shot(`at:${fire.x + 8},${fire.z + distance}`);
