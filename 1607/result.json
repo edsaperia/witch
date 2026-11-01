@@ -1,0 +1,2470 @@
+{
+  "startedAt": "2026-11-01T11:03:39.585Z",
+  "sourceSha": "87d9cf750dc69bc10f5ece641e5cd19c8666a33c",
+  "baseline": "9e655f938318efd6e581060b4440bf59d29a01fe",
+  "canonicalComment": "https://github.com/edsaperia/witch/pull/1607#issuecomment-6557011272",
+  "driverHash": "3acca7793cd9fe82b3a9ab64c28c239efb2810792619e424aacd5598e4b19596",
+  "bundleHash": "e1bc018a183de6d3e544d24d4ceeb2857b732f232f16c52165c062f4b270f7ed",
+  "limits": "Standalone real panel and Freeze; action spies, synthetic pad and game-key probes. No live call, save, real controller or full main integration acceptance.",
+  "viewports": [
+    {
+      "width": 960,
+      "height": 480,
+      "rows": [
+        {
+          "name": "game-key probe is live outside the panel",
+          "pass": true,
+          "evidence": {
+            "actions": {},
+            "gameDown": 1,
+            "gameUp": 1,
+            "open": true,
+            "paused": false,
+            "focus": "window.__pads=[];Object.defineProperty(navigator,\"getGamepads\",{configurable:true,value:()=>window.__pads});❚❚ paused · Esc resumes · . steps (Shift+. ten)TelephoneYour number\n1234567The line is ready. 76543211234567890EraseCallAnswerNot nowConnect to this new numberHang upReconnectAddress book7654321Step away",
+            "value": "",
+            "scrollTop": 0,
+            "scrollHeight": 785,
+            "clientHeight": 480
+          }
+        },
+        {
+          "name": "native typing/editing and Enter stay local",
+          "pass": true,
+          "evidence": {
+            "actions": {
+              "digit": 9
+            },
+            "gameDown": 0,
+            "gameUp": 0,
+            "open": true,
+            "paused": false,
+            "focus": "Number to call",
+            "value": "5432109",
+            "scrollTop": 0,
+            "scrollHeight": 785,
+            "clientHeight": 480
+          }
+        },
+        {
+          "name": "Call center and native Enter activate once, not party shortcut",
+          "pass": true,
+          "evidence": {
+            "hit": {
+              "label": "Call",
+              "rect": {
+                "x": 82.15625,
+                "y": 257.84375,
+                "width": 53.71875,
+                "height": 36,
+                "top": 257.84375,
+                "right": 135.875,
+                "bottom": 293.84375,
+                "left": 82.15625
+              },
+              "centerHitsControl": true,
+              "hit": "Call",
+              "focus": "Number to call",
+              "panelScroll": 305
+            },
+            "after": {
+              "actions": {
+                "digit": 9,
+                "dial": 1
+              },
+              "gameDown": 0,
+              "gameUp": 0,
+              "open": true,
+              "paused": false,
+              "focus": "Call",
+              "value": "5432109",
+              "scrollTop": 305,
+              "scrollHeight": 785,
+              "clientHeight": 480
+            }
+          }
+        },
+        {
+          "name": "Escape pauses/resumes over open panel from input",
+          "pass": true,
+          "evidence": {
+            "before": {
+              "actions": {
+                "digit": 9,
+                "dial": 1
+              },
+              "gameDown": 0,
+              "gameUp": 0,
+              "open": true,
+              "paused": false,
+              "focus": "Number to call",
+              "value": "5432109",
+              "scrollTop": 40,
+              "scrollHeight": 785,
+              "clientHeight": 480
+            },
+            "paused": {
+              "actions": {
+                "digit": 9,
+                "dial": 1
+              },
+              "gameDown": 0,
+              "gameUp": 0,
+              "open": true,
+              "paused": true,
+              "focus": "window.__pads=[];Object.defineProperty(navigator,\"getGamepads\",{configurable:true,value:()=>window.__pads});❚❚ paused · Esc resumes · . steps (Shift+. ten)TelephoneYour number\n1234567The line is ready. 76543211234567890EraseCallAnswerNot nowConnect to this new numberHang upReconnectAddress book7654321Step away",
+              "value": "5432109",
+              "scrollTop": 40,
+              "scrollHeight": 785,
+              "clientHeight": 480
+            },
+            "held": {
+              "actions": {
+                "digit": 9,
+                "dial": 1
+              },
+              "gameDown": 0,
+              "gameUp": 0,
+              "open": true,
+              "paused": true,
+              "focus": "Call",
+              "value": "5432109",
+              "scrollTop": 305,
+              "scrollHeight": 785,
+              "clientHeight": 480
+            },
+            "shield": "pause-shield",
+            "after": {
+              "actions": {
+                "digit": 9,
+                "dial": 1
+              },
+              "gameDown": 0,
+              "gameUp": 0,
+              "open": true,
+              "paused": false,
+              "focus": "Call",
+              "value": "5432109",
+              "scrollTop": 305,
+              "scrollHeight": 785,
+              "clientHeight": 480
+            }
+          }
+        },
+        {
+          "name": "Escape pauses/resumes over open panel from button",
+          "pass": true,
+          "evidence": {
+            "before": {
+              "actions": {
+                "digit": 9,
+                "dial": 1
+              },
+              "gameDown": 0,
+              "gameUp": 0,
+              "open": true,
+              "paused": false,
+              "focus": "Call",
+              "value": "5432109",
+              "scrollTop": 305,
+              "scrollHeight": 785,
+              "clientHeight": 480
+            },
+            "paused": {
+              "actions": {
+                "digit": 9,
+                "dial": 1
+              },
+              "gameDown": 0,
+              "gameUp": 0,
+              "open": true,
+              "paused": true,
+              "focus": "window.__pads=[];Object.defineProperty(navigator,\"getGamepads\",{configurable:true,value:()=>window.__pads});❚❚ paused · Esc resumes · . steps (Shift+. ten)TelephoneYour number\n1234567The line is ready. 76543211234567890EraseCallAnswerNot nowConnect to this new numberHang upReconnectAddress book7654321Step away",
+              "value": "5432109",
+              "scrollTop": 305,
+              "scrollHeight": 785,
+              "clientHeight": 480
+            },
+            "held": {
+              "actions": {
+                "digit": 9,
+                "dial": 1
+              },
+              "gameDown": 0,
+              "gameUp": 0,
+              "open": true,
+              "paused": true,
+              "focus": "Call",
+              "value": "5432109",
+              "scrollTop": 305,
+              "scrollHeight": 785,
+              "clientHeight": 480
+            },
+            "shield": "pause-shield",
+            "after": {
+              "actions": {
+                "digit": 9,
+                "dial": 1
+              },
+              "gameDown": 0,
+              "gameUp": 0,
+              "open": true,
+              "paused": false,
+              "focus": "Call",
+              "value": "5432109",
+              "scrollTop": 305,
+              "scrollHeight": 785,
+              "clientHeight": 480
+            }
+          }
+        },
+        {
+          "name": "bound back KeyE on button steps away without game propagation",
+          "pass": true,
+          "evidence": {
+            "actions": {
+              "digit": 9,
+              "dial": 1,
+              "close": 1
+            },
+            "gameDown": 0,
+            "gameUp": 1,
+            "open": false,
+            "paused": false,
+            "focus": "window.__pads=[];Object.defineProperty(navigator,\"getGamepads\",{configurable:true,value:()=>window.__pads});❚❚ paused · Esc resumes · . steps (Shift+. ten)TelephoneYour number\n1234567The line is ready. 76543211234567890EraseCallAnswerNot nowConnect to this new numberHang upReconnectAddress book7654321Step away",
+            "value": "5432109",
+            "scrollTop": 305,
+            "scrollHeight": 785,
+            "clientHeight": 480
+          }
+        },
+        {
+          "name": "Step away receives normal click and closes",
+          "pass": true,
+          "evidence": {
+            "before": {
+              "actions": {},
+              "gameDown": 0,
+              "gameUp": 0,
+              "open": true,
+              "paused": false,
+              "focus": "Number to call",
+              "value": "5432109",
+              "scrollTop": 40,
+              "scrollHeight": 785,
+              "clientHeight": 480
+            },
+            "hit": {
+              "label": "Step away",
+              "rect": {
+                "x": 20,
+                "y": 423.59375,
+                "width": 299,
+                "height": 36,
+                "top": 423.59375,
+                "right": 319,
+                "bottom": 459.59375,
+                "left": 20
+              },
+              "centerHitsControl": true,
+              "hit": "Step away",
+              "focus": "Number to call",
+              "panelScroll": 305
+            },
+            "after": {
+              "actions": {
+                "close": 1
+              },
+              "gameDown": 0,
+              "gameUp": 0,
+              "open": false,
+              "paused": false,
+              "focus": "window.__pads=[];Object.defineProperty(navigator,\"getGamepads\",{configurable:true,value:()=>window.__pads});❚❚ paused · Esc resumes · . steps (Shift+. ten)TelephoneYour number\n1234567The line is ready. 76543211234567890EraseCallAnswerNot nowConnect to this new numberHang upReconnectAddress book7654321Step away",
+              "value": "5432109",
+              "scrollTop": 305,
+              "scrollHeight": 785,
+              "clientHeight": 480
+            }
+          }
+        },
+        {
+          "name": "address book selects number without dialing, then Call works",
+          "pass": true,
+          "evidence": {
+            "selected": {
+              "before": {
+                "actions": {},
+                "gameDown": 0,
+                "gameUp": 0,
+                "open": true,
+                "paused": false,
+                "focus": "Number to call",
+                "value": "5432109",
+                "scrollTop": 40,
+                "scrollHeight": 785,
+                "clientHeight": 480
+              },
+              "hit": {
+                "label": "7654321",
+                "rect": {
+                  "x": 20,
+                  "y": 373.59375,
+                  "width": 79.015625,
+                  "height": 36,
+                  "top": 373.59375,
+                  "right": 99.015625,
+                  "bottom": 409.59375,
+                  "left": 20
+                },
+                "centerHitsControl": true,
+                "hit": "7654321",
+                "focus": "Number to call",
+                "panelScroll": 305
+              },
+              "after": {
+                "actions": {},
+                "gameDown": 0,
+                "gameUp": 0,
+                "open": true,
+                "paused": false,
+                "focus": "7654321",
+                "value": "7654321",
+                "scrollTop": 305,
+                "scrollHeight": 785,
+                "clientHeight": 480
+              }
+            },
+            "call": {
+              "before": {
+                "actions": {},
+                "gameDown": 0,
+                "gameUp": 0,
+                "open": true,
+                "paused": false,
+                "focus": "7654321",
+                "value": "7654321",
+                "scrollTop": 305,
+                "scrollHeight": 785,
+                "clientHeight": 480
+              },
+              "hit": {
+                "label": "Call",
+                "rect": {
+                  "x": 82.15625,
+                  "y": 257.84375,
+                  "width": 53.71875,
+                  "height": 36,
+                  "top": 257.84375,
+                  "right": 135.875,
+                  "bottom": 293.84375,
+                  "left": 82.15625
+                },
+                "centerHitsControl": true,
+                "hit": "Call",
+                "focus": "7654321",
+                "panelScroll": 305
+              },
+              "after": {
+                "actions": {
+                  "dial": 1
+                },
+                "gameDown": 0,
+                "gameUp": 0,
+                "open": true,
+                "paused": false,
+                "focus": "Call",
+                "value": "7654321",
+                "scrollTop": 305,
+                "scrollHeight": 785,
+                "clientHeight": 480
+              }
+            }
+          }
+        },
+        {
+          "name": "first-contact confirmation is explicit and hit-testable",
+          "pass": true,
+          "evidence": {
+            "before": {
+              "actions": {},
+              "gameDown": 0,
+              "gameUp": 0,
+              "open": true,
+              "paused": false,
+              "focus": "Number to call",
+              "value": "7654321",
+              "scrollTop": 56,
+              "scrollHeight": 901,
+              "clientHeight": 480
+            },
+            "hit": {
+              "label": "Connect to this new number",
+              "rect": {
+                "x": 20,
+                "y": 221.84375,
+                "width": 299,
+                "height": 36,
+                "top": 221.84375,
+                "right": 319,
+                "bottom": 257.84375,
+                "left": 20
+              },
+              "centerHitsControl": true,
+              "hit": "Connect to this new number",
+              "focus": "Number to call",
+              "panelScroll": 407
+            },
+            "after": {
+              "actions": {
+                "confirm": 1
+              },
+              "gameDown": 0,
+              "gameUp": 0,
+              "open": true,
+              "paused": false,
+              "focus": "Connect to this new number",
+              "value": "7654321",
+              "scrollTop": 407,
+              "scrollHeight": 901,
+              "clientHeight": 480
+            }
+          }
+        },
+        {
+          "name": "Answer and Not now have independent reachable actions",
+          "pass": true,
+          "evidence": {
+            "answer": {
+              "before": {
+                "actions": {},
+                "gameDown": 0,
+                "gameUp": 0,
+                "open": true,
+                "paused": false,
+                "focus": "window.__pads=[];Object.defineProperty(navigator,\"getGamepads\",{configurable:true,value:()=>window.__pads});❚❚ paused · Esc resumes · . steps (Shift+. ten)TelephoneYour number\n1234567The telephone is ringing. 76543211234567890EraseCallAnswerNot nowConnect to this new numberHang upReconnectAddress book7654321Step away",
+                "value": "7654321",
+                "scrollTop": 391,
+                "scrollHeight": 885,
+                "clientHeight": 480
+              },
+              "hit": {
+                "label": "Answer",
+                "rect": {
+                  "x": 20,
+                  "y": 221.84375,
+                  "width": 299,
+                  "height": 36,
+                  "top": 221.84375,
+                  "right": 319,
+                  "bottom": 257.84375,
+                  "left": 20
+                },
+                "centerHitsControl": true,
+                "hit": "Answer",
+                "focus": "window.__pads=[];Object.defineProperty(navigator,\"getGamepads\",{configurable:true,value:()=>window.__pads});❚❚ paused · Esc resumes · . steps (Shift+. ten)TelephoneYour number\n1234567The telephone is ringing. 76543211234567890EraseCallAnswerNot nowConnect to this new numberHang upReconnectAddress book7654321Step away",
+                "panelScroll": 391
+              },
+              "after": {
+                "actions": {
+                  "answer": 1
+                },
+                "gameDown": 0,
+                "gameUp": 0,
+                "open": true,
+                "paused": false,
+                "focus": "Answer",
+                "value": "7654321",
+                "scrollTop": 391,
+                "scrollHeight": 885,
+                "clientHeight": 480
+              }
+            },
+            "decline": {
+              "before": {
+                "actions": {
+                  "answer": 1
+                },
+                "gameDown": 0,
+                "gameUp": 0,
+                "open": true,
+                "paused": false,
+                "focus": "Answer",
+                "value": "7654321",
+                "scrollTop": 391,
+                "scrollHeight": 885,
+                "clientHeight": 480
+              },
+              "hit": {
+                "label": "Not now",
+                "rect": {
+                  "x": 20,
+                  "y": 271.84375,
+                  "width": 299,
+                  "height": 36,
+                  "top": 271.84375,
+                  "right": 319,
+                  "bottom": 307.84375,
+                  "left": 20
+                },
+                "centerHitsControl": true,
+                "hit": "Not now",
+                "focus": "Answer",
+                "panelScroll": 391
+              },
+              "after": {
+                "actions": {
+                  "answer": 1,
+                  "decline": 1
+                },
+                "gameDown": 0,
+                "gameUp": 0,
+                "open": true,
+                "paused": false,
+                "focus": "Not now",
+                "value": "7654321",
+                "scrollTop": 391,
+                "scrollHeight": 885,
+                "clientHeight": 480
+              }
+            }
+          }
+        },
+        {
+          "name": "error: Reconnect works and Call is disabled",
+          "pass": true,
+          "evidence": {
+            "before": {
+              "actions": {},
+              "gameDown": 0,
+              "gameUp": 0,
+              "open": true,
+              "paused": false,
+              "focus": "window.__pads=[];Object.defineProperty(navigator,\"getGamepads\",{configurable:true,value:()=>window.__pads});❚❚ paused · Esc resumes · . steps (Shift+. ten)TelephoneYour number\n1234567The call couldn't connect. 76543211234567890EraseCallAnswerNot nowConnect to this new numberHang upReconnectAddress book7654321Step away",
+              "value": "7654321",
+              "scrollTop": 355,
+              "scrollHeight": 835,
+              "clientHeight": 480
+            },
+            "hit": {
+              "label": "Reconnect",
+              "rect": {
+                "x": 20,
+                "y": 257.84375,
+                "width": 299,
+                "height": 36,
+                "top": 257.84375,
+                "right": 319,
+                "bottom": 293.84375,
+                "left": 20
+              },
+              "centerHitsControl": true,
+              "hit": "Reconnect",
+              "focus": "window.__pads=[];Object.defineProperty(navigator,\"getGamepads\",{configurable:true,value:()=>window.__pads});❚❚ paused · Esc resumes · . steps (Shift+. ten)TelephoneYour number\n1234567The call couldn't connect. 76543211234567890EraseCallAnswerNot nowConnect to this new numberHang upReconnectAddress book7654321Step away",
+              "panelScroll": 355
+            },
+            "after": {
+              "actions": {
+                "retry": 1
+              },
+              "gameDown": 0,
+              "gameUp": 0,
+              "open": true,
+              "paused": false,
+              "focus": "Reconnect",
+              "value": "7654321",
+              "scrollTop": 355,
+              "scrollHeight": 835,
+              "clientHeight": 480
+            }
+          }
+        },
+        {
+          "name": "ended: Reconnect works and Call is disabled",
+          "pass": true,
+          "evidence": {
+            "before": {
+              "actions": {},
+              "gameDown": 0,
+              "gameUp": 0,
+              "open": true,
+              "paused": false,
+              "focus": "Reconnect",
+              "value": "7654321",
+              "scrollTop": 355,
+              "scrollHeight": 835,
+              "clientHeight": 480
+            },
+            "hit": {
+              "label": "Reconnect",
+              "rect": {
+                "x": 20,
+                "y": 257.84375,
+                "width": 299,
+                "height": 36,
+                "top": 257.84375,
+                "right": 319,
+                "bottom": 293.84375,
+                "left": 20
+              },
+              "centerHitsControl": true,
+              "hit": "Reconnect",
+              "focus": "Reconnect",
+              "panelScroll": 355
+            },
+            "after": {
+              "actions": {
+                "retry": 1
+              },
+              "gameDown": 0,
+              "gameUp": 0,
+              "open": true,
+              "paused": false,
+              "focus": "Reconnect",
+              "value": "7654321",
+              "scrollTop": 355,
+              "scrollHeight": 835,
+              "clientHeight": 480
+            }
+          }
+        },
+        {
+          "name": "connected Hang up is reachable",
+          "pass": true,
+          "evidence": {
+            "before": {
+              "actions": {},
+              "gameDown": 0,
+              "gameUp": 0,
+              "open": true,
+              "paused": false,
+              "focus": "window.__pads=[];Object.defineProperty(navigator,\"getGamepads\",{configurable:true,value:()=>window.__pads});❚❚ paused · Esc resumes · . steps (Shift+. ten)TelephoneYour number\n1234567The line is connected. 76543211234567890EraseCallAnswerNot nowConnect to this new numberHang upReconnectAddress book7654321Step away",
+              "value": "7654321",
+              "scrollTop": 355,
+              "scrollHeight": 835,
+              "clientHeight": 480
+            },
+            "hit": {
+              "label": "Hang up",
+              "rect": {
+                "x": 20,
+                "y": 257.84375,
+                "width": 299,
+                "height": 36,
+                "top": 257.84375,
+                "right": 319,
+                "bottom": 293.84375,
+                "left": 20
+              },
+              "centerHitsControl": true,
+              "hit": "Hang up",
+              "focus": "window.__pads=[];Object.defineProperty(navigator,\"getGamepads\",{configurable:true,value:()=>window.__pads});❚❚ paused · Esc resumes · . steps (Shift+. ten)TelephoneYour number\n1234567The line is connected. 76543211234567890EraseCallAnswerNot nowConnect to this new numberHang upReconnectAddress book7654321Step away",
+              "panelScroll": 355
+            },
+            "after": {
+              "actions": {
+                "hangUp": 1
+              },
+              "gameDown": 0,
+              "gameUp": 0,
+              "open": true,
+              "paused": false,
+              "focus": "Hang up",
+              "value": "7654321",
+              "scrollTop": 355,
+              "scrollHeight": 835,
+              "clientHeight": 480
+            }
+          }
+        },
+        {
+          "name": "standard pad navigates/scrolls to Step away and chooses once",
+          "pass": true,
+          "evidence": {
+            "focusTrail": [
+              {
+                "focus": "Dial 1",
+                "scrollTop": 305
+              },
+              {
+                "focus": "Dial 2",
+                "scrollTop": 305
+              },
+              {
+                "focus": "Dial 3",
+                "scrollTop": 305
+              },
+              {
+                "focus": "Dial 4",
+                "scrollTop": 305
+              },
+              {
+                "focus": "Dial 5",
+                "scrollTop": 305
+              },
+              {
+                "focus": "Dial 6",
+                "scrollTop": 305
+              },
+              {
+                "focus": "Dial 7",
+                "scrollTop": 305
+              },
+              {
+                "focus": "Dial 8",
+                "scrollTop": 305
+              },
+              {
+                "focus": "Dial 9",
+                "scrollTop": 305
+              },
+              {
+                "focus": "Dial 0",
+                "scrollTop": 305
+              },
+              {
+                "focus": "Erase",
+                "scrollTop": 305
+              },
+              {
+                "focus": "Call",
+                "scrollTop": 305
+              },
+              {
+                "focus": "7654321",
+                "scrollTop": 305
+              },
+              {
+                "focus": "Step away",
+                "scrollTop": 305
+              }
+            ],
+            "hit": {
+              "label": "Step away",
+              "rect": {
+                "x": 20,
+                "y": 423.59375,
+                "width": 299,
+                "height": 36,
+                "top": 423.59375,
+                "right": 319,
+                "bottom": 459.59375,
+                "left": 20
+              },
+              "centerHitsControl": true,
+              "hit": "Step away",
+              "focus": "Step away",
+              "panelScroll": 305
+            },
+            "after": {
+              "actions": {
+                "close": 1
+              },
+              "gameDown": 0,
+              "gameUp": 0,
+              "open": false,
+              "paused": false,
+              "focus": "window.__pads=[];Object.defineProperty(navigator,\"getGamepads\",{configurable:true,value:()=>window.__pads});❚❚ paused · Esc resumes · . steps (Shift+. ten)TelephoneYour number\n1234567The line is ready. 76543211234567890EraseCallAnswerNot nowConnect to this new numberHang upReconnectAddress book7654321Step away",
+              "value": "7654321",
+              "scrollTop": 305,
+              "scrollHeight": 785,
+              "clientHeight": 480
+            }
+          }
+        },
+        {
+          "name": "pad Start owns pause and shields underlying panel pad/choose",
+          "pass": true,
+          "evidence": {
+            "open": {
+              "paused": true,
+              "panelPadVisible": false
+            },
+            "before": {
+              "actions": {},
+              "gameDown": 0,
+              "gameUp": 0,
+              "open": true,
+              "paused": true,
+              "focus": "window.__pads=[];Object.defineProperty(navigator,\"getGamepads\",{configurable:true,value:()=>window.__pads});❚❚ paused · Esc resumes · . steps (Shift+. ten)TelephoneYour number\n1234567The line is ready. 76543211234567890EraseCallAnswerNot nowConnect to this new numberHang upReconnectAddress book7654321Step away",
+              "value": "7654321",
+              "scrollTop": 40,
+              "scrollHeight": 785,
+              "clientHeight": 480
+            },
+            "held": {
+              "actions": {},
+              "gameDown": 0,
+              "gameUp": 0,
+              "open": true,
+              "paused": true,
+              "focus": "window.__pads=[];Object.defineProperty(navigator,\"getGamepads\",{configurable:true,value:()=>window.__pads});❚❚ paused · Esc resumes · . steps (Shift+. ten)TelephoneYour number\n1234567The line is ready. 76543211234567890EraseCallAnswerNot nowConnect to this new numberHang upReconnectAddress book7654321Step away",
+              "value": "7654321",
+              "scrollTop": 40,
+              "scrollHeight": 785,
+              "clientHeight": 480
+            },
+            "resume": {
+              "paused": false,
+              "panelPadVisible": true
+            },
+            "after": {
+              "actions": {
+                "close": 1
+              },
+              "gameDown": 0,
+              "gameUp": 0,
+              "open": false,
+              "paused": false,
+              "focus": "window.__pads=[];Object.defineProperty(navigator,\"getGamepads\",{configurable:true,value:()=>window.__pads});❚❚ paused · Esc resumes · . steps (Shift+. ten)TelephoneYour number\n1234567The line is ready. 76543211234567890EraseCallAnswerNot nowConnect to this new numberHang upReconnectAddress book7654321Step away",
+              "value": "7654321",
+              "scrollTop": 40,
+              "scrollHeight": 785,
+              "clientHeight": 480
+            }
+          }
+        }
+      ],
+      "pageErrors": [],
+      "consoleErrors": []
+    },
+    {
+      "width": 960,
+      "height": 540,
+      "rows": [
+        {
+          "name": "game-key probe is live outside the panel",
+          "pass": true,
+          "evidence": {
+            "actions": {},
+            "gameDown": 1,
+            "gameUp": 1,
+            "open": true,
+            "paused": false,
+            "focus": "window.__pads=[];Object.defineProperty(navigator,\"getGamepads\",{configurable:true,value:()=>window.__pads});❚❚ paused · Esc resumes · . steps (Shift+. ten)TelephoneYour number\n1234567The line is ready. 76543211234567890EraseCallAnswerNot nowConnect to this new numberHang upReconnectAddress book7654321Step away",
+            "value": "",
+            "scrollTop": 0,
+            "scrollHeight": 785,
+            "clientHeight": 540
+          }
+        },
+        {
+          "name": "native typing/editing and Enter stay local",
+          "pass": true,
+          "evidence": {
+            "actions": {
+              "digit": 9
+            },
+            "gameDown": 0,
+            "gameUp": 0,
+            "open": true,
+            "paused": false,
+            "focus": "Number to call",
+            "value": "5432109",
+            "scrollTop": 0,
+            "scrollHeight": 785,
+            "clientHeight": 540
+          }
+        },
+        {
+          "name": "Call center and native Enter activate once, not party shortcut",
+          "pass": true,
+          "evidence": {
+            "hit": {
+              "label": "Call",
+              "rect": {
+                "x": 82.15625,
+                "y": 317.84375,
+                "width": 53.71875,
+                "height": 36,
+                "top": 317.84375,
+                "right": 135.875,
+                "bottom": 353.84375,
+                "left": 82.15625
+              },
+              "centerHitsControl": true,
+              "hit": "Call",
+              "focus": "Number to call",
+              "panelScroll": 245
+            },
+            "after": {
+              "actions": {
+                "digit": 9,
+                "dial": 1
+              },
+              "gameDown": 0,
+              "gameUp": 0,
+              "open": true,
+              "paused": false,
+              "focus": "Call",
+              "value": "5432109",
+              "scrollTop": 245,
+              "scrollHeight": 785,
+              "clientHeight": 540
+            }
+          }
+        },
+        {
+          "name": "Escape pauses/resumes over open panel from input",
+          "pass": true,
+          "evidence": {
+            "before": {
+              "actions": {
+                "digit": 9,
+                "dial": 1
+              },
+              "gameDown": 0,
+              "gameUp": 0,
+              "open": true,
+              "paused": false,
+              "focus": "Number to call",
+              "value": "5432109",
+              "scrollTop": 245,
+              "scrollHeight": 785,
+              "clientHeight": 540
+            },
+            "paused": {
+              "actions": {
+                "digit": 9,
+                "dial": 1
+              },
+              "gameDown": 0,
+              "gameUp": 0,
+              "open": true,
+              "paused": true,
+              "focus": "window.__pads=[];Object.defineProperty(navigator,\"getGamepads\",{configurable:true,value:()=>window.__pads});❚❚ paused · Esc resumes · . steps (Shift+. ten)TelephoneYour number\n1234567The line is ready. 76543211234567890EraseCallAnswerNot nowConnect to this new numberHang upReconnectAddress book7654321Step away",
+              "value": "5432109",
+              "scrollTop": 245,
+              "scrollHeight": 785,
+              "clientHeight": 540
+            },
+            "held": {
+              "actions": {
+                "digit": 9,
+                "dial": 1
+              },
+              "gameDown": 0,
+              "gameUp": 0,
+              "open": true,
+              "paused": true,
+              "focus": "Call",
+              "value": "5432109",
+              "scrollTop": 245,
+              "scrollHeight": 785,
+              "clientHeight": 540
+            },
+            "shield": "pause-shield",
+            "after": {
+              "actions": {
+                "digit": 9,
+                "dial": 1
+              },
+              "gameDown": 0,
+              "gameUp": 0,
+              "open": true,
+              "paused": false,
+              "focus": "Call",
+              "value": "5432109",
+              "scrollTop": 245,
+              "scrollHeight": 785,
+              "clientHeight": 540
+            }
+          }
+        },
+        {
+          "name": "Escape pauses/resumes over open panel from button",
+          "pass": true,
+          "evidence": {
+            "before": {
+              "actions": {
+                "digit": 9,
+                "dial": 1
+              },
+              "gameDown": 0,
+              "gameUp": 0,
+              "open": true,
+              "paused": false,
+              "focus": "Call",
+              "value": "5432109",
+              "scrollTop": 245,
+              "scrollHeight": 785,
+              "clientHeight": 540
+            },
+            "paused": {
+              "actions": {
+                "digit": 9,
+                "dial": 1
+              },
+              "gameDown": 0,
+              "gameUp": 0,
+              "open": true,
+              "paused": true,
+              "focus": "window.__pads=[];Object.defineProperty(navigator,\"getGamepads\",{configurable:true,value:()=>window.__pads});❚❚ paused · Esc resumes · . steps (Shift+. ten)TelephoneYour number\n1234567The line is ready. 76543211234567890EraseCallAnswerNot nowConnect to this new numberHang upReconnectAddress book7654321Step away",
+              "value": "5432109",
+              "scrollTop": 245,
+              "scrollHeight": 785,
+              "clientHeight": 540
+            },
+            "held": {
+              "actions": {
+                "digit": 9,
+                "dial": 1
+              },
+              "gameDown": 0,
+              "gameUp": 0,
+              "open": true,
+              "paused": true,
+              "focus": "Call",
+              "value": "5432109",
+              "scrollTop": 245,
+              "scrollHeight": 785,
+              "clientHeight": 540
+            },
+            "shield": "pause-shield",
+            "after": {
+              "actions": {
+                "digit": 9,
+                "dial": 1
+              },
+              "gameDown": 0,
+              "gameUp": 0,
+              "open": true,
+              "paused": false,
+              "focus": "Call",
+              "value": "5432109",
+              "scrollTop": 245,
+              "scrollHeight": 785,
+              "clientHeight": 540
+            }
+          }
+        },
+        {
+          "name": "bound back KeyE on button steps away without game propagation",
+          "pass": true,
+          "evidence": {
+            "actions": {
+              "digit": 9,
+              "dial": 1,
+              "close": 1
+            },
+            "gameDown": 0,
+            "gameUp": 1,
+            "open": false,
+            "paused": false,
+            "focus": "window.__pads=[];Object.defineProperty(navigator,\"getGamepads\",{configurable:true,value:()=>window.__pads});❚❚ paused · Esc resumes · . steps (Shift+. ten)TelephoneYour number\n1234567The line is ready. 76543211234567890EraseCallAnswerNot nowConnect to this new numberHang upReconnectAddress book7654321Step away",
+            "value": "5432109",
+            "scrollTop": 245,
+            "scrollHeight": 785,
+            "clientHeight": 540
+          }
+        },
+        {
+          "name": "Step away receives normal click and closes",
+          "pass": true,
+          "evidence": {
+            "before": {
+              "actions": {},
+              "gameDown": 0,
+              "gameUp": 0,
+              "open": true,
+              "paused": false,
+              "focus": "Number to call",
+              "value": "5432109",
+              "scrollTop": 245,
+              "scrollHeight": 785,
+              "clientHeight": 540
+            },
+            "hit": {
+              "label": "Step away",
+              "rect": {
+                "x": 20,
+                "y": 483.59375,
+                "width": 299,
+                "height": 36,
+                "top": 483.59375,
+                "right": 319,
+                "bottom": 519.59375,
+                "left": 20
+              },
+              "centerHitsControl": true,
+              "hit": "Step away",
+              "focus": "Number to call",
+              "panelScroll": 245
+            },
+            "after": {
+              "actions": {
+                "close": 1
+              },
+              "gameDown": 0,
+              "gameUp": 0,
+              "open": false,
+              "paused": false,
+              "focus": "window.__pads=[];Object.defineProperty(navigator,\"getGamepads\",{configurable:true,value:()=>window.__pads});❚❚ paused · Esc resumes · . steps (Shift+. ten)TelephoneYour number\n1234567The line is ready. 76543211234567890EraseCallAnswerNot nowConnect to this new numberHang upReconnectAddress book7654321Step away",
+              "value": "5432109",
+              "scrollTop": 245,
+              "scrollHeight": 785,
+              "clientHeight": 540
+            }
+          }
+        },
+        {
+          "name": "address book selects number without dialing, then Call works",
+          "pass": true,
+          "evidence": {
+            "selected": {
+              "before": {
+                "actions": {},
+                "gameDown": 0,
+                "gameUp": 0,
+                "open": true,
+                "paused": false,
+                "focus": "Number to call",
+                "value": "5432109",
+                "scrollTop": 245,
+                "scrollHeight": 785,
+                "clientHeight": 540
+              },
+              "hit": {
+                "label": "7654321",
+                "rect": {
+                  "x": 20,
+                  "y": 433.59375,
+                  "width": 79.015625,
+                  "height": 36,
+                  "top": 433.59375,
+                  "right": 99.015625,
+                  "bottom": 469.59375,
+                  "left": 20
+                },
+                "centerHitsControl": true,
+                "hit": "7654321",
+                "focus": "Number to call",
+                "panelScroll": 245
+              },
+              "after": {
+                "actions": {},
+                "gameDown": 0,
+                "gameUp": 0,
+                "open": true,
+                "paused": false,
+                "focus": "7654321",
+                "value": "7654321",
+                "scrollTop": 245,
+                "scrollHeight": 785,
+                "clientHeight": 540
+              }
+            },
+            "call": {
+              "before": {
+                "actions": {},
+                "gameDown": 0,
+                "gameUp": 0,
+                "open": true,
+                "paused": false,
+                "focus": "7654321",
+                "value": "7654321",
+                "scrollTop": 245,
+                "scrollHeight": 785,
+                "clientHeight": 540
+              },
+              "hit": {
+                "label": "Call",
+                "rect": {
+                  "x": 82.15625,
+                  "y": 317.84375,
+                  "width": 53.71875,
+                  "height": 36,
+                  "top": 317.84375,
+                  "right": 135.875,
+                  "bottom": 353.84375,
+                  "left": 82.15625
+                },
+                "centerHitsControl": true,
+                "hit": "Call",
+                "focus": "7654321",
+                "panelScroll": 245
+              },
+              "after": {
+                "actions": {
+                  "dial": 1
+                },
+                "gameDown": 0,
+                "gameUp": 0,
+                "open": true,
+                "paused": false,
+                "focus": "Call",
+                "value": "7654321",
+                "scrollTop": 245,
+                "scrollHeight": 785,
+                "clientHeight": 540
+              }
+            }
+          }
+        },
+        {
+          "name": "first-contact confirmation is explicit and hit-testable",
+          "pass": true,
+          "evidence": {
+            "before": {
+              "actions": {},
+              "gameDown": 0,
+              "gameUp": 0,
+              "open": true,
+              "paused": false,
+              "focus": "Number to call",
+              "value": "7654321",
+              "scrollTop": 261,
+              "scrollHeight": 901,
+              "clientHeight": 540
+            },
+            "hit": {
+              "label": "Connect to this new number",
+              "rect": {
+                "x": 20,
+                "y": 367.84375,
+                "width": 299,
+                "height": 36,
+                "top": 367.84375,
+                "right": 319,
+                "bottom": 403.84375,
+                "left": 20
+              },
+              "centerHitsControl": true,
+              "hit": "Connect to this new number",
+              "focus": "Number to call",
+              "panelScroll": 261
+            },
+            "after": {
+              "actions": {
+                "confirm": 1
+              },
+              "gameDown": 0,
+              "gameUp": 0,
+              "open": true,
+              "paused": false,
+              "focus": "Connect to this new number",
+              "value": "7654321",
+              "scrollTop": 261,
+              "scrollHeight": 901,
+              "clientHeight": 540
+            }
+          }
+        },
+        {
+          "name": "Answer and Not now have independent reachable actions",
+          "pass": true,
+          "evidence": {
+            "answer": {
+              "before": {
+                "actions": {},
+                "gameDown": 0,
+                "gameUp": 0,
+                "open": true,
+                "paused": false,
+                "focus": "window.__pads=[];Object.defineProperty(navigator,\"getGamepads\",{configurable:true,value:()=>window.__pads});❚❚ paused · Esc resumes · . steps (Shift+. ten)TelephoneYour number\n1234567The telephone is ringing. 76543211234567890EraseCallAnswerNot nowConnect to this new numberHang upReconnectAddress book7654321Step away",
+                "value": "7654321",
+                "scrollTop": 245,
+                "scrollHeight": 885,
+                "clientHeight": 540
+              },
+              "hit": {
+                "label": "Answer",
+                "rect": {
+                  "x": 20,
+                  "y": 367.84375,
+                  "width": 299,
+                  "height": 36,
+                  "top": 367.84375,
+                  "right": 319,
+                  "bottom": 403.84375,
+                  "left": 20
+                },
+                "centerHitsControl": true,
+                "hit": "Answer",
+                "focus": "window.__pads=[];Object.defineProperty(navigator,\"getGamepads\",{configurable:true,value:()=>window.__pads});❚❚ paused · Esc resumes · . steps (Shift+. ten)TelephoneYour number\n1234567The telephone is ringing. 76543211234567890EraseCallAnswerNot nowConnect to this new numberHang upReconnectAddress book7654321Step away",
+                "panelScroll": 245
+              },
+              "after": {
+                "actions": {
+                  "answer": 1
+                },
+                "gameDown": 0,
+                "gameUp": 0,
+                "open": true,
+                "paused": false,
+                "focus": "Answer",
+                "value": "7654321",
+                "scrollTop": 245,
+                "scrollHeight": 885,
+                "clientHeight": 540
+              }
+            },
+            "decline": {
+              "before": {
+                "actions": {
+                  "answer": 1
+                },
+                "gameDown": 0,
+                "gameUp": 0,
+                "open": true,
+                "paused": false,
+                "focus": "Answer",
+                "value": "7654321",
+                "scrollTop": 245,
+                "scrollHeight": 885,
+                "clientHeight": 540
+              },
+              "hit": {
+                "label": "Not now",
+                "rect": {
+                  "x": 20,
+                  "y": 417.84375,
+                  "width": 299,
+                  "height": 36,
+                  "top": 417.84375,
+                  "right": 319,
+                  "bottom": 453.84375,
+                  "left": 20
+                },
+                "centerHitsControl": true,
+                "hit": "Not now",
+                "focus": "Answer",
+                "panelScroll": 245
+              },
+              "after": {
+                "actions": {
+                  "answer": 1,
+                  "decline": 1
+                },
+                "gameDown": 0,
+                "gameUp": 0,
+                "open": true,
+                "paused": false,
+                "focus": "Not now",
+                "value": "7654321",
+                "scrollTop": 245,
+                "scrollHeight": 885,
+                "clientHeight": 540
+              }
+            }
+          }
+        },
+        {
+          "name": "error: Reconnect works and Call is disabled",
+          "pass": true,
+          "evidence": {
+            "before": {
+              "actions": {},
+              "gameDown": 0,
+              "gameUp": 0,
+              "open": true,
+              "paused": false,
+              "focus": "window.__pads=[];Object.defineProperty(navigator,\"getGamepads\",{configurable:true,value:()=>window.__pads});❚❚ paused · Esc resumes · . steps (Shift+. ten)TelephoneYour number\n1234567The call couldn't connect. 76543211234567890EraseCallAnswerNot nowConnect to this new numberHang upReconnectAddress book7654321Step away",
+              "value": "7654321",
+              "scrollTop": 245,
+              "scrollHeight": 835,
+              "clientHeight": 540
+            },
+            "hit": {
+              "label": "Reconnect",
+              "rect": {
+                "x": 20,
+                "y": 367.84375,
+                "width": 299,
+                "height": 36,
+                "top": 367.84375,
+                "right": 319,
+                "bottom": 403.84375,
+                "left": 20
+              },
+              "centerHitsControl": true,
+              "hit": "Reconnect",
+              "focus": "window.__pads=[];Object.defineProperty(navigator,\"getGamepads\",{configurable:true,value:()=>window.__pads});❚❚ paused · Esc resumes · . steps (Shift+. ten)TelephoneYour number\n1234567The call couldn't connect. 76543211234567890EraseCallAnswerNot nowConnect to this new numberHang upReconnectAddress book7654321Step away",
+              "panelScroll": 245
+            },
+            "after": {
+              "actions": {
+                "retry": 1
+              },
+              "gameDown": 0,
+              "gameUp": 0,
+              "open": true,
+              "paused": false,
+              "focus": "Reconnect",
+              "value": "7654321",
+              "scrollTop": 245,
+              "scrollHeight": 835,
+              "clientHeight": 540
+            }
+          }
+        },
+        {
+          "name": "ended: Reconnect works and Call is disabled",
+          "pass": true,
+          "evidence": {
+            "before": {
+              "actions": {},
+              "gameDown": 0,
+              "gameUp": 0,
+              "open": true,
+              "paused": false,
+              "focus": "Reconnect",
+              "value": "7654321",
+              "scrollTop": 245,
+              "scrollHeight": 835,
+              "clientHeight": 540
+            },
+            "hit": {
+              "label": "Reconnect",
+              "rect": {
+                "x": 20,
+                "y": 367.84375,
+                "width": 299,
+                "height": 36,
+                "top": 367.84375,
+                "right": 319,
+                "bottom": 403.84375,
+                "left": 20
+              },
+              "centerHitsControl": true,
+              "hit": "Reconnect",
+              "focus": "Reconnect",
+              "panelScroll": 245
+            },
+            "after": {
+              "actions": {
+                "retry": 1
+              },
+              "gameDown": 0,
+              "gameUp": 0,
+              "open": true,
+              "paused": false,
+              "focus": "Reconnect",
+              "value": "7654321",
+              "scrollTop": 245,
+              "scrollHeight": 835,
+              "clientHeight": 540
+            }
+          }
+        },
+        {
+          "name": "connected Hang up is reachable",
+          "pass": true,
+          "evidence": {
+            "before": {
+              "actions": {},
+              "gameDown": 0,
+              "gameUp": 0,
+              "open": true,
+              "paused": false,
+              "focus": "window.__pads=[];Object.defineProperty(navigator,\"getGamepads\",{configurable:true,value:()=>window.__pads});❚❚ paused · Esc resumes · . steps (Shift+. ten)TelephoneYour number\n1234567The line is connected. 76543211234567890EraseCallAnswerNot nowConnect to this new numberHang upReconnectAddress book7654321Step away",
+              "value": "7654321",
+              "scrollTop": 245,
+              "scrollHeight": 835,
+              "clientHeight": 540
+            },
+            "hit": {
+              "label": "Hang up",
+              "rect": {
+                "x": 20,
+                "y": 367.84375,
+                "width": 299,
+                "height": 36,
+                "top": 367.84375,
+                "right": 319,
+                "bottom": 403.84375,
+                "left": 20
+              },
+              "centerHitsControl": true,
+              "hit": "Hang up",
+              "focus": "window.__pads=[];Object.defineProperty(navigator,\"getGamepads\",{configurable:true,value:()=>window.__pads});❚❚ paused · Esc resumes · . steps (Shift+. ten)TelephoneYour number\n1234567The line is connected. 76543211234567890EraseCallAnswerNot nowConnect to this new numberHang upReconnectAddress book7654321Step away",
+              "panelScroll": 245
+            },
+            "after": {
+              "actions": {
+                "hangUp": 1
+              },
+              "gameDown": 0,
+              "gameUp": 0,
+              "open": true,
+              "paused": false,
+              "focus": "Hang up",
+              "value": "7654321",
+              "scrollTop": 245,
+              "scrollHeight": 835,
+              "clientHeight": 540
+            }
+          }
+        },
+        {
+          "name": "standard pad navigates/scrolls to Step away and chooses once",
+          "pass": true,
+          "evidence": {
+            "focusTrail": [
+              {
+                "focus": "Dial 1",
+                "scrollTop": 245
+              },
+              {
+                "focus": "Dial 2",
+                "scrollTop": 245
+              },
+              {
+                "focus": "Dial 3",
+                "scrollTop": 245
+              },
+              {
+                "focus": "Dial 4",
+                "scrollTop": 245
+              },
+              {
+                "focus": "Dial 5",
+                "scrollTop": 245
+              },
+              {
+                "focus": "Dial 6",
+                "scrollTop": 245
+              },
+              {
+                "focus": "Dial 7",
+                "scrollTop": 245
+              },
+              {
+                "focus": "Dial 8",
+                "scrollTop": 245
+              },
+              {
+                "focus": "Dial 9",
+                "scrollTop": 245
+              },
+              {
+                "focus": "Dial 0",
+                "scrollTop": 245
+              },
+              {
+                "focus": "Erase",
+                "scrollTop": 245
+              },
+              {
+                "focus": "Call",
+                "scrollTop": 245
+              },
+              {
+                "focus": "7654321",
+                "scrollTop": 245
+              },
+              {
+                "focus": "Step away",
+                "scrollTop": 245
+              }
+            ],
+            "hit": {
+              "label": "Step away",
+              "rect": {
+                "x": 20,
+                "y": 483.59375,
+                "width": 299,
+                "height": 36,
+                "top": 483.59375,
+                "right": 319,
+                "bottom": 519.59375,
+                "left": 20
+              },
+              "centerHitsControl": true,
+              "hit": "Step away",
+              "focus": "Step away",
+              "panelScroll": 245
+            },
+            "after": {
+              "actions": {
+                "close": 1
+              },
+              "gameDown": 0,
+              "gameUp": 0,
+              "open": false,
+              "paused": false,
+              "focus": "window.__pads=[];Object.defineProperty(navigator,\"getGamepads\",{configurable:true,value:()=>window.__pads});❚❚ paused · Esc resumes · . steps (Shift+. ten)TelephoneYour number\n1234567The line is ready. 76543211234567890EraseCallAnswerNot nowConnect to this new numberHang upReconnectAddress book7654321Step away",
+              "value": "7654321",
+              "scrollTop": 245,
+              "scrollHeight": 785,
+              "clientHeight": 540
+            }
+          }
+        },
+        {
+          "name": "pad Start owns pause and shields underlying panel pad/choose",
+          "pass": true,
+          "evidence": {
+            "open": {
+              "paused": true,
+              "panelPadVisible": false
+            },
+            "before": {
+              "actions": {},
+              "gameDown": 0,
+              "gameUp": 0,
+              "open": true,
+              "paused": true,
+              "focus": "window.__pads=[];Object.defineProperty(navigator,\"getGamepads\",{configurable:true,value:()=>window.__pads});❚❚ paused · Esc resumes · . steps (Shift+. ten)TelephoneYour number\n1234567The line is ready. 76543211234567890EraseCallAnswerNot nowConnect to this new numberHang upReconnectAddress book7654321Step away",
+              "value": "7654321",
+              "scrollTop": 245,
+              "scrollHeight": 785,
+              "clientHeight": 540
+            },
+            "held": {
+              "actions": {},
+              "gameDown": 0,
+              "gameUp": 0,
+              "open": true,
+              "paused": true,
+              "focus": "window.__pads=[];Object.defineProperty(navigator,\"getGamepads\",{configurable:true,value:()=>window.__pads});❚❚ paused · Esc resumes · . steps (Shift+. ten)TelephoneYour number\n1234567The line is ready. 76543211234567890EraseCallAnswerNot nowConnect to this new numberHang upReconnectAddress book7654321Step away",
+              "value": "7654321",
+              "scrollTop": 245,
+              "scrollHeight": 785,
+              "clientHeight": 540
+            },
+            "resume": {
+              "paused": false,
+              "panelPadVisible": true
+            },
+            "after": {
+              "actions": {
+                "close": 1
+              },
+              "gameDown": 0,
+              "gameUp": 0,
+              "open": false,
+              "paused": false,
+              "focus": "window.__pads=[];Object.defineProperty(navigator,\"getGamepads\",{configurable:true,value:()=>window.__pads});❚❚ paused · Esc resumes · . steps (Shift+. ten)TelephoneYour number\n1234567The line is ready. 76543211234567890EraseCallAnswerNot nowConnect to this new numberHang upReconnectAddress book7654321Step away",
+              "value": "7654321",
+              "scrollTop": 245,
+              "scrollHeight": 785,
+              "clientHeight": 540
+            }
+          }
+        }
+      ],
+      "pageErrors": [],
+      "consoleErrors": []
+    },
+    {
+      "width": 1280,
+      "height": 720,
+      "rows": [
+        {
+          "name": "game-key probe is live outside the panel",
+          "pass": true,
+          "evidence": {
+            "actions": {},
+            "gameDown": 1,
+            "gameUp": 1,
+            "open": true,
+            "paused": false,
+            "focus": "window.__pads=[];Object.defineProperty(navigator,\"getGamepads\",{configurable:true,value:()=>window.__pads});❚❚ paused · Esc resumes · . steps (Shift+. ten)TelephoneYour number\n1234567The line is ready. 76543211234567890EraseCallAnswerNot nowConnect to this new numberHang upReconnectAddress book7654321Step away",
+            "value": "",
+            "scrollTop": 0,
+            "scrollHeight": 785,
+            "clientHeight": 720
+          }
+        },
+        {
+          "name": "native typing/editing and Enter stay local",
+          "pass": true,
+          "evidence": {
+            "actions": {
+              "digit": 9
+            },
+            "gameDown": 0,
+            "gameUp": 0,
+            "open": true,
+            "paused": false,
+            "focus": "Number to call",
+            "value": "5432109",
+            "scrollTop": 0,
+            "scrollHeight": 785,
+            "clientHeight": 720
+          }
+        },
+        {
+          "name": "Call center and native Enter activate once, not party shortcut",
+          "pass": true,
+          "evidence": {
+            "hit": {
+              "label": "Call",
+              "rect": {
+                "x": 82.15625,
+                "y": 562.84375,
+                "width": 53.71875,
+                "height": 36,
+                "top": 562.84375,
+                "right": 135.875,
+                "bottom": 598.84375,
+                "left": 82.15625
+              },
+              "centerHitsControl": true,
+              "hit": "Call",
+              "focus": "Number to call",
+              "panelScroll": 0
+            },
+            "after": {
+              "actions": {
+                "digit": 9,
+                "dial": 1
+              },
+              "gameDown": 0,
+              "gameUp": 0,
+              "open": true,
+              "paused": false,
+              "focus": "Call",
+              "value": "5432109",
+              "scrollTop": 0,
+              "scrollHeight": 785,
+              "clientHeight": 720
+            }
+          }
+        },
+        {
+          "name": "Escape pauses/resumes over open panel from input",
+          "pass": true,
+          "evidence": {
+            "before": {
+              "actions": {
+                "digit": 9,
+                "dial": 1
+              },
+              "gameDown": 0,
+              "gameUp": 0,
+              "open": true,
+              "paused": false,
+              "focus": "Number to call",
+              "value": "5432109",
+              "scrollTop": 0,
+              "scrollHeight": 785,
+              "clientHeight": 720
+            },
+            "paused": {
+              "actions": {
+                "digit": 9,
+                "dial": 1
+              },
+              "gameDown": 0,
+              "gameUp": 0,
+              "open": true,
+              "paused": true,
+              "focus": "window.__pads=[];Object.defineProperty(navigator,\"getGamepads\",{configurable:true,value:()=>window.__pads});❚❚ paused · Esc resumes · . steps (Shift+. ten)TelephoneYour number\n1234567The line is ready. 76543211234567890EraseCallAnswerNot nowConnect to this new numberHang upReconnectAddress book7654321Step away",
+              "value": "5432109",
+              "scrollTop": 0,
+              "scrollHeight": 785,
+              "clientHeight": 720
+            },
+            "held": {
+              "actions": {
+                "digit": 9,
+                "dial": 1
+              },
+              "gameDown": 0,
+              "gameUp": 0,
+              "open": true,
+              "paused": true,
+              "focus": "Call",
+              "value": "5432109",
+              "scrollTop": 0,
+              "scrollHeight": 785,
+              "clientHeight": 720
+            },
+            "shield": "pause-shield",
+            "after": {
+              "actions": {
+                "digit": 9,
+                "dial": 1
+              },
+              "gameDown": 0,
+              "gameUp": 0,
+              "open": true,
+              "paused": false,
+              "focus": "Call",
+              "value": "5432109",
+              "scrollTop": 0,
+              "scrollHeight": 785,
+              "clientHeight": 720
+            }
+          }
+        },
+        {
+          "name": "Escape pauses/resumes over open panel from button",
+          "pass": true,
+          "evidence": {
+            "before": {
+              "actions": {
+                "digit": 9,
+                "dial": 1
+              },
+              "gameDown": 0,
+              "gameUp": 0,
+              "open": true,
+              "paused": false,
+              "focus": "Call",
+              "value": "5432109",
+              "scrollTop": 0,
+              "scrollHeight": 785,
+              "clientHeight": 720
+            },
+            "paused": {
+              "actions": {
+                "digit": 9,
+                "dial": 1
+              },
+              "gameDown": 0,
+              "gameUp": 0,
+              "open": true,
+              "paused": true,
+              "focus": "window.__pads=[];Object.defineProperty(navigator,\"getGamepads\",{configurable:true,value:()=>window.__pads});❚❚ paused · Esc resumes · . steps (Shift+. ten)TelephoneYour number\n1234567The line is ready. 76543211234567890EraseCallAnswerNot nowConnect to this new numberHang upReconnectAddress book7654321Step away",
+              "value": "5432109",
+              "scrollTop": 0,
+              "scrollHeight": 785,
+              "clientHeight": 720
+            },
+            "held": {
+              "actions": {
+                "digit": 9,
+                "dial": 1
+              },
+              "gameDown": 0,
+              "gameUp": 0,
+              "open": true,
+              "paused": true,
+              "focus": "Call",
+              "value": "5432109",
+              "scrollTop": 0,
+              "scrollHeight": 785,
+              "clientHeight": 720
+            },
+            "shield": "pause-shield",
+            "after": {
+              "actions": {
+                "digit": 9,
+                "dial": 1
+              },
+              "gameDown": 0,
+              "gameUp": 0,
+              "open": true,
+              "paused": false,
+              "focus": "Call",
+              "value": "5432109",
+              "scrollTop": 0,
+              "scrollHeight": 785,
+              "clientHeight": 720
+            }
+          }
+        },
+        {
+          "name": "bound back KeyE on button steps away without game propagation",
+          "pass": true,
+          "evidence": {
+            "actions": {
+              "digit": 9,
+              "dial": 1,
+              "close": 1
+            },
+            "gameDown": 0,
+            "gameUp": 1,
+            "open": false,
+            "paused": false,
+            "focus": "window.__pads=[];Object.defineProperty(navigator,\"getGamepads\",{configurable:true,value:()=>window.__pads});❚❚ paused · Esc resumes · . steps (Shift+. ten)TelephoneYour number\n1234567The line is ready. 76543211234567890EraseCallAnswerNot nowConnect to this new numberHang upReconnectAddress book7654321Step away",
+            "value": "5432109",
+            "scrollTop": 0,
+            "scrollHeight": 785,
+            "clientHeight": 720
+          }
+        },
+        {
+          "name": "Step away receives normal click and closes",
+          "pass": true,
+          "evidence": {
+            "before": {
+              "actions": {},
+              "gameDown": 0,
+              "gameUp": 0,
+              "open": true,
+              "paused": false,
+              "focus": "Number to call",
+              "value": "5432109",
+              "scrollTop": 0,
+              "scrollHeight": 785,
+              "clientHeight": 720
+            },
+            "hit": {
+              "label": "Step away",
+              "rect": {
+                "x": 20,
+                "y": 663.59375,
+                "width": 299,
+                "height": 36,
+                "top": 663.59375,
+                "right": 319,
+                "bottom": 699.59375,
+                "left": 20
+              },
+              "centerHitsControl": true,
+              "hit": "Step away",
+              "focus": "Number to call",
+              "panelScroll": 65
+            },
+            "after": {
+              "actions": {
+                "close": 1
+              },
+              "gameDown": 0,
+              "gameUp": 0,
+              "open": false,
+              "paused": false,
+              "focus": "window.__pads=[];Object.defineProperty(navigator,\"getGamepads\",{configurable:true,value:()=>window.__pads});❚❚ paused · Esc resumes · . steps (Shift+. ten)TelephoneYour number\n1234567The line is ready. 76543211234567890EraseCallAnswerNot nowConnect to this new numberHang upReconnectAddress book7654321Step away",
+              "value": "5432109",
+              "scrollTop": 65,
+              "scrollHeight": 785,
+              "clientHeight": 720
+            }
+          }
+        },
+        {
+          "name": "address book selects number without dialing, then Call works",
+          "pass": true,
+          "evidence": {
+            "selected": {
+              "before": {
+                "actions": {},
+                "gameDown": 0,
+                "gameUp": 0,
+                "open": true,
+                "paused": false,
+                "focus": "Number to call",
+                "value": "5432109",
+                "scrollTop": 65,
+                "scrollHeight": 785,
+                "clientHeight": 720
+              },
+              "hit": {
+                "label": "7654321",
+                "rect": {
+                  "x": 20,
+                  "y": 613.59375,
+                  "width": 79.015625,
+                  "height": 36,
+                  "top": 613.59375,
+                  "right": 99.015625,
+                  "bottom": 649.59375,
+                  "left": 20
+                },
+                "centerHitsControl": true,
+                "hit": "7654321",
+                "focus": "Number to call",
+                "panelScroll": 65
+              },
+              "after": {
+                "actions": {},
+                "gameDown": 0,
+                "gameUp": 0,
+                "open": true,
+                "paused": false,
+                "focus": "7654321",
+                "value": "7654321",
+                "scrollTop": 65,
+                "scrollHeight": 785,
+                "clientHeight": 720
+              }
+            },
+            "call": {
+              "before": {
+                "actions": {},
+                "gameDown": 0,
+                "gameUp": 0,
+                "open": true,
+                "paused": false,
+                "focus": "7654321",
+                "value": "7654321",
+                "scrollTop": 65,
+                "scrollHeight": 785,
+                "clientHeight": 720
+              },
+              "hit": {
+                "label": "Call",
+                "rect": {
+                  "x": 82.15625,
+                  "y": 497.84375,
+                  "width": 53.71875,
+                  "height": 36,
+                  "top": 497.84375,
+                  "right": 135.875,
+                  "bottom": 533.84375,
+                  "left": 82.15625
+                },
+                "centerHitsControl": true,
+                "hit": "Call",
+                "focus": "7654321",
+                "panelScroll": 65
+              },
+              "after": {
+                "actions": {
+                  "dial": 1
+                },
+                "gameDown": 0,
+                "gameUp": 0,
+                "open": true,
+                "paused": false,
+                "focus": "Call",
+                "value": "7654321",
+                "scrollTop": 65,
+                "scrollHeight": 785,
+                "clientHeight": 720
+              }
+            }
+          }
+        },
+        {
+          "name": "first-contact confirmation is explicit and hit-testable",
+          "pass": true,
+          "evidence": {
+            "before": {
+              "actions": {},
+              "gameDown": 0,
+              "gameUp": 0,
+              "open": true,
+              "paused": false,
+              "focus": "Number to call",
+              "value": "7654321",
+              "scrollTop": 65,
+              "scrollHeight": 901,
+              "clientHeight": 720
+            },
+            "hit": {
+              "label": "Connect to this new number",
+              "rect": {
+                "x": 20,
+                "y": 563.84375,
+                "width": 299,
+                "height": 36,
+                "top": 563.84375,
+                "right": 319,
+                "bottom": 599.84375,
+                "left": 20
+              },
+              "centerHitsControl": true,
+              "hit": "Connect to this new number",
+              "focus": "Number to call",
+              "panelScroll": 65
+            },
+            "after": {
+              "actions": {
+                "confirm": 1
+              },
+              "gameDown": 0,
+              "gameUp": 0,
+              "open": true,
+              "paused": false,
+              "focus": "Connect to this new number",
+              "value": "7654321",
+              "scrollTop": 65,
+              "scrollHeight": 901,
+              "clientHeight": 720
+            }
+          }
+        },
+        {
+          "name": "Answer and Not now have independent reachable actions",
+          "pass": true,
+          "evidence": {
+            "answer": {
+              "before": {
+                "actions": {},
+                "gameDown": 0,
+                "gameUp": 0,
+                "open": true,
+                "paused": false,
+                "focus": "window.__pads=[];Object.defineProperty(navigator,\"getGamepads\",{configurable:true,value:()=>window.__pads});❚❚ paused · Esc resumes · . steps (Shift+. ten)TelephoneYour number\n1234567The telephone is ringing. 76543211234567890EraseCallAnswerNot nowConnect to this new numberHang upReconnectAddress book7654321Step away",
+                "value": "7654321",
+                "scrollTop": 65,
+                "scrollHeight": 885,
+                "clientHeight": 720
+              },
+              "hit": {
+                "label": "Answer",
+                "rect": {
+                  "x": 20,
+                  "y": 547.84375,
+                  "width": 299,
+                  "height": 36,
+                  "top": 547.84375,
+                  "right": 319,
+                  "bottom": 583.84375,
+                  "left": 20
+                },
+                "centerHitsControl": true,
+                "hit": "Answer",
+                "focus": "window.__pads=[];Object.defineProperty(navigator,\"getGamepads\",{configurable:true,value:()=>window.__pads});❚❚ paused · Esc resumes · . steps (Shift+. ten)TelephoneYour number\n1234567The telephone is ringing. 76543211234567890EraseCallAnswerNot nowConnect to this new numberHang upReconnectAddress book7654321Step away",
+                "panelScroll": 65
+              },
+              "after": {
+                "actions": {
+                  "answer": 1
+                },
+                "gameDown": 0,
+                "gameUp": 0,
+                "open": true,
+                "paused": false,
+                "focus": "Answer",
+                "value": "7654321",
+                "scrollTop": 65,
+                "scrollHeight": 885,
+                "clientHeight": 720
+              }
+            },
+            "decline": {
+              "before": {
+                "actions": {
+                  "answer": 1
+                },
+                "gameDown": 0,
+                "gameUp": 0,
+                "open": true,
+                "paused": false,
+                "focus": "Answer",
+                "value": "7654321",
+                "scrollTop": 65,
+                "scrollHeight": 885,
+                "clientHeight": 720
+              },
+              "hit": {
+                "label": "Not now",
+                "rect": {
+                  "x": 20,
+                  "y": 597.84375,
+                  "width": 299,
+                  "height": 36,
+                  "top": 597.84375,
+                  "right": 319,
+                  "bottom": 633.84375,
+                  "left": 20
+                },
+                "centerHitsControl": true,
+                "hit": "Not now",
+                "focus": "Answer",
+                "panelScroll": 65
+              },
+              "after": {
+                "actions": {
+                  "answer": 1,
+                  "decline": 1
+                },
+                "gameDown": 0,
+                "gameUp": 0,
+                "open": true,
+                "paused": false,
+                "focus": "Not now",
+                "value": "7654321",
+                "scrollTop": 65,
+                "scrollHeight": 885,
+                "clientHeight": 720
+              }
+            }
+          }
+        },
+        {
+          "name": "error: Reconnect works and Call is disabled",
+          "pass": true,
+          "evidence": {
+            "before": {
+              "actions": {},
+              "gameDown": 0,
+              "gameUp": 0,
+              "open": true,
+              "paused": false,
+              "focus": "window.__pads=[];Object.defineProperty(navigator,\"getGamepads\",{configurable:true,value:()=>window.__pads});❚❚ paused · Esc resumes · . steps (Shift+. ten)TelephoneYour number\n1234567The call couldn't connect. 76543211234567890EraseCallAnswerNot nowConnect to this new numberHang upReconnectAddress book7654321Step away",
+              "value": "7654321",
+              "scrollTop": 65,
+              "scrollHeight": 835,
+              "clientHeight": 720
+            },
+            "hit": {
+              "label": "Reconnect",
+              "rect": {
+                "x": 20,
+                "y": 547.84375,
+                "width": 299,
+                "height": 36,
+                "top": 547.84375,
+                "right": 319,
+                "bottom": 583.84375,
+                "left": 20
+              },
+              "centerHitsControl": true,
+              "hit": "Reconnect",
+              "focus": "window.__pads=[];Object.defineProperty(navigator,\"getGamepads\",{configurable:true,value:()=>window.__pads});❚❚ paused · Esc resumes · . steps (Shift+. ten)TelephoneYour number\n1234567The call couldn't connect. 76543211234567890EraseCallAnswerNot nowConnect to this new numberHang upReconnectAddress book7654321Step away",
+              "panelScroll": 65
+            },
+            "after": {
+              "actions": {
+                "retry": 1
+              },
+              "gameDown": 0,
+              "gameUp": 0,
+              "open": true,
+              "paused": false,
+              "focus": "Reconnect",
+              "value": "7654321",
+              "scrollTop": 65,
+              "scrollHeight": 835,
+              "clientHeight": 720
+            }
+          }
+        },
+        {
+          "name": "ended: Reconnect works and Call is disabled",
+          "pass": true,
+          "evidence": {
+            "before": {
+              "actions": {},
+              "gameDown": 0,
+              "gameUp": 0,
+              "open": true,
+              "paused": false,
+              "focus": "Reconnect",
+              "value": "7654321",
+              "scrollTop": 65,
+              "scrollHeight": 835,
+              "clientHeight": 720
+            },
+            "hit": {
+              "label": "Reconnect",
+              "rect": {
+                "x": 20,
+                "y": 547.84375,
+                "width": 299,
+                "height": 36,
+                "top": 547.84375,
+                "right": 319,
+                "bottom": 583.84375,
+                "left": 20
+              },
+              "centerHitsControl": true,
+              "hit": "Reconnect",
+              "focus": "Reconnect",
+              "panelScroll": 65
+            },
+            "after": {
+              "actions": {
+                "retry": 1
+              },
+              "gameDown": 0,
+              "gameUp": 0,
+              "open": true,
+              "paused": false,
+              "focus": "Reconnect",
+              "value": "7654321",
+              "scrollTop": 65,
+              "scrollHeight": 835,
+              "clientHeight": 720
+            }
+          }
+        },
+        {
+          "name": "connected Hang up is reachable",
+          "pass": true,
+          "evidence": {
+            "before": {
+              "actions": {},
+              "gameDown": 0,
+              "gameUp": 0,
+              "open": true,
+              "paused": false,
+              "focus": "window.__pads=[];Object.defineProperty(navigator,\"getGamepads\",{configurable:true,value:()=>window.__pads});❚❚ paused · Esc resumes · . steps (Shift+. ten)TelephoneYour number\n1234567The line is connected. 76543211234567890EraseCallAnswerNot nowConnect to this new numberHang upReconnectAddress book7654321Step away",
+              "value": "7654321",
+              "scrollTop": 65,
+              "scrollHeight": 835,
+              "clientHeight": 720
+            },
+            "hit": {
+              "label": "Hang up",
+              "rect": {
+                "x": 20,
+                "y": 547.84375,
+                "width": 299,
+                "height": 36,
+                "top": 547.84375,
+                "right": 319,
+                "bottom": 583.84375,
+                "left": 20
+              },
+              "centerHitsControl": true,
+              "hit": "Hang up",
+              "focus": "window.__pads=[];Object.defineProperty(navigator,\"getGamepads\",{configurable:true,value:()=>window.__pads});❚❚ paused · Esc resumes · . steps (Shift+. ten)TelephoneYour number\n1234567The line is connected. 76543211234567890EraseCallAnswerNot nowConnect to this new numberHang upReconnectAddress book7654321Step away",
+              "panelScroll": 65
+            },
+            "after": {
+              "actions": {
+                "hangUp": 1
+              },
+              "gameDown": 0,
+              "gameUp": 0,
+              "open": true,
+              "paused": false,
+              "focus": "Hang up",
+              "value": "7654321",
+              "scrollTop": 65,
+              "scrollHeight": 835,
+              "clientHeight": 720
+            }
+          }
+        },
+        {
+          "name": "standard pad navigates/scrolls to Step away and chooses once",
+          "pass": true,
+          "evidence": {
+            "focusTrail": [
+              {
+                "focus": "Dial 1",
+                "scrollTop": 65
+              },
+              {
+                "focus": "Dial 2",
+                "scrollTop": 65
+              },
+              {
+                "focus": "Dial 3",
+                "scrollTop": 65
+              },
+              {
+                "focus": "Dial 4",
+                "scrollTop": 65
+              },
+              {
+                "focus": "Dial 5",
+                "scrollTop": 65
+              },
+              {
+                "focus": "Dial 6",
+                "scrollTop": 65
+              },
+              {
+                "focus": "Dial 7",
+                "scrollTop": 65
+              },
+              {
+                "focus": "Dial 8",
+                "scrollTop": 65
+              },
+              {
+                "focus": "Dial 9",
+                "scrollTop": 65
+              },
+              {
+                "focus": "Dial 0",
+                "scrollTop": 65
+              },
+              {
+                "focus": "Erase",
+                "scrollTop": 65
+              },
+              {
+                "focus": "Call",
+                "scrollTop": 65
+              },
+              {
+                "focus": "7654321",
+                "scrollTop": 65
+              },
+              {
+                "focus": "Step away",
+                "scrollTop": 65
+              }
+            ],
+            "hit": {
+              "label": "Step away",
+              "rect": {
+                "x": 20,
+                "y": 663.59375,
+                "width": 299,
+                "height": 36,
+                "top": 663.59375,
+                "right": 319,
+                "bottom": 699.59375,
+                "left": 20
+              },
+              "centerHitsControl": true,
+              "hit": "Step away",
+              "focus": "Step away",
+              "panelScroll": 65
+            },
+            "after": {
+              "actions": {
+                "close": 1
+              },
+              "gameDown": 0,
+              "gameUp": 0,
+              "open": false,
+              "paused": false,
+              "focus": "window.__pads=[];Object.defineProperty(navigator,\"getGamepads\",{configurable:true,value:()=>window.__pads});❚❚ paused · Esc resumes · . steps (Shift+. ten)TelephoneYour number\n1234567The line is ready. 76543211234567890EraseCallAnswerNot nowConnect to this new numberHang upReconnectAddress book7654321Step away",
+              "value": "7654321",
+              "scrollTop": 65,
+              "scrollHeight": 785,
+              "clientHeight": 720
+            }
+          }
+        },
+        {
+          "name": "pad Start owns pause and shields underlying panel pad/choose",
+          "pass": true,
+          "evidence": {
+            "open": {
+              "paused": true,
+              "panelPadVisible": false
+            },
+            "before": {
+              "actions": {},
+              "gameDown": 0,
+              "gameUp": 0,
+              "open": true,
+              "paused": true,
+              "focus": "window.__pads=[];Object.defineProperty(navigator,\"getGamepads\",{configurable:true,value:()=>window.__pads});❚❚ paused · Esc resumes · . steps (Shift+. ten)TelephoneYour number\n1234567The line is ready. 76543211234567890EraseCallAnswerNot nowConnect to this new numberHang upReconnectAddress book7654321Step away",
+              "value": "7654321",
+              "scrollTop": 65,
+              "scrollHeight": 785,
+              "clientHeight": 720
+            },
+            "held": {
+              "actions": {},
+              "gameDown": 0,
+              "gameUp": 0,
+              "open": true,
+              "paused": true,
+              "focus": "window.__pads=[];Object.defineProperty(navigator,\"getGamepads\",{configurable:true,value:()=>window.__pads});❚❚ paused · Esc resumes · . steps (Shift+. ten)TelephoneYour number\n1234567The line is ready. 76543211234567890EraseCallAnswerNot nowConnect to this new numberHang upReconnectAddress book7654321Step away",
+              "value": "7654321",
+              "scrollTop": 65,
+              "scrollHeight": 785,
+              "clientHeight": 720
+            },
+            "resume": {
+              "paused": false,
+              "panelPadVisible": true
+            },
+            "after": {
+              "actions": {
+                "close": 1
+              },
+              "gameDown": 0,
+              "gameUp": 0,
+              "open": false,
+              "paused": false,
+              "focus": "window.__pads=[];Object.defineProperty(navigator,\"getGamepads\",{configurable:true,value:()=>window.__pads});❚❚ paused · Esc resumes · . steps (Shift+. ten)TelephoneYour number\n1234567The line is ready. 76543211234567890EraseCallAnswerNot nowConnect to this new numberHang upReconnectAddress book7654321Step away",
+              "value": "7654321",
+              "scrollTop": 65,
+              "scrollHeight": 785,
+              "clientHeight": 720
+            }
+          }
+        }
+      ],
+      "pageErrors": [],
+      "consoleErrors": []
+    }
+  ],
+  "pass": true,
+  "finishedAt": "2026-11-01T11:04:07.675Z"
+}
