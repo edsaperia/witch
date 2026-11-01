@@ -5,12 +5,13 @@ import { standing } from "../render/housePieces";
 import { FURNITURE_IDS } from "../../art/furniture.js";
 import legacy from "../../config/house/layouts/editor-v1-baseline.json";
 import identities from "../../config/house/layouts/editor-v2-identities.json";
+import current from "../../config/house/layouts/ed-current.json";
 import { kitchenPlan, type MushroomColour } from "../rules/mushrooms";
 import { HOUSE_CONFIG } from "../rules/houseConfig";
 export const EDITOR_HOUSE = HOUSE_CONFIG as HouseConfig;
 
 export interface Placement { id: string; x: number; z: number; rotation: number }
-export interface Layout { version: 2; floorplan: string; objects: Placement[]; migration?: { from: 1; cameraPreserved: true; held: Placement[] } }
+export interface Layout { version: 2; floorplan: string; objects: Placement[]; removed?: string[]; migration?: { from: 1; cameraPreserved: true; held: Placement[] } }
 export interface LayoutItem extends HouseObject {
   anchor: { x: number; z: number }; synthetic?: boolean;
   facing: { yaw: number; foot: { w: number; d: number; h: number }; curve: number };
@@ -80,10 +81,12 @@ export function parseLayout(raw: unknown, items: LayoutItem[], floorplan: string
   if ((raw as { version?: unknown } | null)?.version === 1) return migrateCameraV1(raw, items, floorplan);
   const l = raw as Layout;
   const matchingSource = l?.floorplan === floorplan || (floorplan === identities.canonical && identities.legacy.includes(l?.floorplan));
-  if (!l || l.version !== 2 || !matchingSource || !Array.isArray(l.objects) || l.objects.length !== items.length) throw Error("This layout does not match the current house. Export it again from the matching editor.");
+  const removed = l?.removed ?? [];
+  if (!Array.isArray(removed) || removed.some(id => typeof id !== "string" || !id.startsWith("clutter:") || !items.some(o => o.id === id)) || new Set(removed).size !== removed.length) throw Error("Only known clutter may be explicitly removed.");
+  if (!l || l.version !== 2 || !matchingSource || !Array.isArray(l.objects) || l.objects.length + removed.length !== items.length) throw Error("This layout does not match the current house. Export it again from the matching editor.");
   const seen = new Set<string>(), ids = new Set(items.map(o => o.id));
   const objects = l.objects.map(p => {
-    if (!p || !ids.has(p.id) || seen.has(p.id) || ![p.x, p.z, p.rotation].every(v => typeof v === "number" && Number.isFinite(v)) || Math.abs(p.x) > 10000 || Math.abs(p.z) > 10000 || Math.abs(p.rotation) > 360000) throw Error("Each object must have one known ID and finite coordinates and angle.");
+    if (!p || !ids.has(p.id) || removed.includes(p.id) || seen.has(p.id) || ![p.x, p.z, p.rotation].every(v => typeof v === "number" && Number.isFinite(v)) || Math.abs(p.x) > 10000 || Math.abs(p.z) > 10000 || Math.abs(p.rotation) > 360000) throw Error("Each object must have one known ID and finite coordinates and angle.");
     const pose = { id: p.id, x: p.x, z: p.z, rotation: normalAngle(p.rotation) };
     const supplied = (p as Placement & { useAnchor?: { x: number; z: number } }).useAnchor;
     if (supplied !== undefined) {
@@ -92,7 +95,7 @@ export function parseLayout(raw: unknown, items: LayoutItem[], floorplan: string
     }
     seen.add(p.id); return pose;
   });
-  const result: Layout = { version: 2, floorplan, objects: items.map(o => objects.find(p => p.id === o.id)!) };
+  const result: Layout = { version: 2, floorplan, objects: items.filter(o => !removed.includes(o.id)).map(o => objects.find(p => p.id === o.id)!), ...(removed.length ? { removed: [...removed] } : {}) };
   if (l.migration !== undefined) {
     const m = l.migration;
     if (!m || m.from !== 1 || m.cameraPreserved !== true || !Array.isArray(m.held) || m.held.some(p => !legacy.items.some(o => o.id === p?.id) || ![p.x, p.z, p.rotation].every(Number.isFinite))) throw Error("Invalid version-1 conversion record.");
@@ -127,6 +130,9 @@ export function migrateCameraV1(raw: unknown, items: LayoutItem[], floorplan: st
     if (target) Object.assign(target, { x: point.x, z: point.z });
   }
   result.migration = { from: 1, cameraPreserved: true, held };
+  // New defaults must not silently restore the clutter Ed explicitly deleted on 2026-11-01.
+  result.removed = current.removed.filter(id => items.some(o => o.id === id));
+  result.objects = result.objects.filter(p => !result.removed!.includes(p.id));
   return result;
 }
 export function exportLayout(layout: Layout, items: LayoutItem[]): object {

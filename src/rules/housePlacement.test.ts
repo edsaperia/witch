@@ -4,7 +4,7 @@ import { fromObject, hatSlots, objectFront, objectWorld, type HouseConfig } from
 import { applyEdLayout, objectOffset, placementFacing } from "./housePlacement";
 import { kitchenPlacement } from "./kitchenPlacement";
 import { kitchenPlan } from "./mushrooms";
-import proposal from "../../docs/evidence/treehouse-layout-ed-2026-10-31.v2-proposal.json";
+import proposal from "../../config/house/layouts/ed-current.json";
 
 describe("explicit opt-in house placement", () => {
   const source = HOUSE_CONFIG as HouseConfig;
@@ -14,10 +14,12 @@ describe("explicit opt-in house placement", () => {
     const H = applyEdLayout(source, true);
     expect(JSON.stringify(source)).toBe(before); expect(H.shape).toEqual(source.shape);
     expect(H.layout?.id).toBe("ed"); expect(H.layout!.hatPoints.length).toBeGreaterThan(4);
-    expect(H.terrace.decks.rotation).toBe(45);
-    expect(H.objects.find(o => o.id === "drumKit")!.room).toBe("workshop");
+    expect(H.terrace.decks.rotation).toBe(proposal.objects.find(p => p.id === "terrace:decks")!.rotation);
+    expect(H.objects.find(o => o.id === "drumKit")!.placement?.sourceRoom).toBe(source.objects.find(o => o.id === "drumKit")!.room);
     const pot = H.objects.find(o => o.id === "cauldron")!, baselinePot = source.objects.find(o => o.id === "cauldron")!;
-    expect([pot.x, pot.z, pot.w, pot.d, pot.h]).toEqual([baselinePot.x, baselinePot.z, baselinePot.w, baselinePot.d, baselinePot.h]);
+    const authored = proposal.objects.find(p => p.id === "cauldron")!;
+    expect([pot.x, pot.z, pot.w, pot.d, pot.h]).toEqual([authored.x, authored.z, baselinePot.w, baselinePot.d, baselinePot.h]);
+    expect(pot.room).toBe("dining");
   });
   it("uses explicit model-facing, transformed station anchors and bed attachments instead of re-inferring source room facing", () => {
     const H = applyEdLayout(source, true), bed = H.objects.find(o => o.id === "bed")!, p = proposal.objects.find(o => o.id === bed.id)!;

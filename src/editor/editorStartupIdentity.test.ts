@@ -2,7 +2,7 @@ import { expect, it } from "vitest";
 import { buildSync } from "esbuild";
 import vm from "node:vm";
 import { createRequire } from "node:module";
-import proposal from "../../docs/evidence/treehouse-layout-ed-2026-10-31.v2-proposal.json";
+import proposal from "../../config/house/layouts/ed-current.json";
 import identities from "../../config/house/layouts/editor-v2-identities.json";
 import original from "../../docs/evidence/treehouse-layout-ed-2026-10-31.v1.json";
 import legacy from "../../config/house/layouts/editor-v1-baseline.json";

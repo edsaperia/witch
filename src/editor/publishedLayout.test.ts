@@ -1,7 +1,7 @@
 import { expect, it } from "vitest";
 import { EDITOR_HOUSE, defaultLayout, floorplanKey, layoutItems, normalAngle } from "./houseLayout";
 import { publishedLayout } from "./publishedLayout";
-import proposal from "../../docs/evidence/treehouse-layout-ed-2026-10-31.v2-proposal.json";
+import proposal from "../../config/house/layouts/ed-current.json";
 
 it("opens and resets the editor to Ed's published poses with the stable import identity", () => {
   const items = layoutItems(), key = floorplanKey(EDITOR_HOUSE, items);

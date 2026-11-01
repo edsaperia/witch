@@ -8,6 +8,7 @@ import { FURNITURE_IDS } from "../../art/furniture.js";
 import legacy from "../../config/house/layouts/editor-v1-baseline.json";
 import supplied from "../../docs/evidence/treehouse-layout-ed-2026-10-31.v1.json";
 import proposal from "../../docs/evidence/treehouse-layout-ed-2026-10-31.v2-proposal.json";
+import current from "../../config/house/layouts/ed-current.json";
 import { artKey, attachedPoint, cameraYaw, corners, defaultLayout, exportLayout, floorplanKey, hitItem, isHatZone, itemKind, LayoutHistory, layoutItems, normalAngle, parseLayout, physicalRoom, rotate, zoneSlots } from "./houseLayout";
 
 const items = layoutItems(), key = floorplanKey(HOUSE_ROOMS, items), defaults = () => defaultLayout(items, key);
@@ -88,7 +89,7 @@ describe("treehouse authoring layouts", () => {
   it("converts Ed's exact v1 using camera facings, preserves newer kitchen/new clutter, and keeps original evidence bytes", () => {
     expect(createHash("sha256").update(readFileSync("docs/evidence/treehouse-layout-ed-2026-10-31.v1.json")).digest("hex")).toBe("7a939d05aa6b12e3973c3be0097e9b0376ccc00b38779b9c195fb01637ef4cd9");
     const converted = parseLayout(supplied, items, key);
-    expect(converted.version).toBe(2); expect(converted.objects).toHaveLength(items.length);
+    expect(converted.version).toBe(2); expect(converted.objects).toHaveLength(items.length - current.removed.length);
     expect(converted.migration?.held.map(p => p.id)).toEqual(["cauldron"]);
     for (const old of supplied.objects.filter(p => p.id !== "cauldron")) {
       const base = legacy.items.find(o => o.id === old.id)!, p = converted.objects.find(p => p.id === old.id)!;
@@ -103,7 +104,7 @@ describe("treehouse authoring layouts", () => {
     expect(converted.objects.find(p => p.id === "terrace:decks")!.rotation).toBe(45); // camera proxy was already +45, not a model using subtraction
     expect(parseLayout(exportLayout(converted, items), items, key)).toEqual(converted);
     // The retained proposal uses the registered pre-canonical identity; poses and all other metadata stay exact.
-    expect({ ...proposal, floorplan: key }).toEqual(exportLayout(converted, items));
+    expect({ ...proposal, floorplan: key, removed: current.removed, objects: proposal.objects.filter(p => !current.removed.includes(p.id)) }).toEqual(exportLayout(converted, items));
   });
   it("separates clutter into stable selectable/exportable pieces and changes room lighting identity without changing station function", () => {
     const clutter = items.filter(o => o.decor), repeated = layoutItems().filter(o => o.decor);

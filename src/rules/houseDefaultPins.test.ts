@@ -9,7 +9,7 @@ import { smallWorld } from "../test/worlds";
 import { TUNING } from "./tuning";
 import { artCacheKey } from "../render/artCache";
 import type { ArtJob } from "../render/artBuild";
-import proposal from "../../docs/evidence/treehouse-layout-ed-2026-10-31.v2-proposal.json";
+import proposal from "../../config/house/layouts/ed-current.json";
 
 afterEach(() => installEdLayout(false));
 const newGame = smallWorld(fullGame, "Default-layout wake and art pins need only the current house.");
@@ -40,7 +40,7 @@ it("uses the same selected house art identity for default and ed alias, and rest
   const selected = houseArtLayout(HOUSE_ROOMS)!;
   expect(selected.config.layout?.id).toBe("ed");
   expect(selected.config.objects.find(o => o.id === "bed")).toMatchObject({ x: pose("bed").x, z: pose("bed").z });
-  expect(selected.config.terrace.decks.rotation).toBe(45);
+  expect(selected.config.terrace.decks.rotation).toBe(pose("terrace:decks").rotation);
   const job = { kind: "housePiece", id: "bed|@6:0.4", style: {}, ppm: 6, pitch: .4, layout: selected } as ArtJob;
   const key = artCacheKey(job, "style", { housePiece: "unchanged-generator" });
   installEdLayout(usesEdLayout(new URLSearchParams("layout=ed")));
