@@ -38,7 +38,7 @@ export const skinSwatch = (col: number, row: number): number[] => { const [v, s]
 
 /** A station's shelves, top to bottom (config/house/'s object id), or null for one with none. */
 export function shelvesAt(station: string): Shelf[] | null {
-  const ids = RAW.stations[station];
+  const ids = RAW.stations[station === "bedroom2Wardrobe" || station === "bedroom3Wardrobe" ? "wardrobe" : station];
   return ids ? ids.map(id => SHELVES[id]) : null;
 }
 
