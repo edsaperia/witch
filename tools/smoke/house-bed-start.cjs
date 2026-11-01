@@ -1,7 +1,7 @@
-// Resolve the smoke's sleep interaction from the game's selected layout and shared bed geometry, without constructing a game or art.
+// Resolve smoke sleep and overlay interaction points from the game's selected layout and shared geometry, without constructing a game or art.
 const fs = require("node:fs"), os = require("node:os"), path = require("node:path");
 let api;
-function activeBedStart(url, hub) {
+function activeHouseStart(url, hub, id, gap) {
   if (!api) {
     const temp = fs.mkdtempSync(path.join(os.tmpdir(), "witch-smoke-bed-"));
     const file = path.join(temp, "bed.cjs");
@@ -15,10 +15,12 @@ function activeBedStart(url, hub) {
     } finally { fs.rmSync(temp, { recursive: true, force: true }); }
   }
   api.installEdLayout(api.usesEdLayout(new URL(url).searchParams));
-  const H = api.HOUSE_ROOMS, bed = H.objects.find(o => o.use.kind === "bed");
-  if (!bed) throw Error("Active layout has no sleep bed");
-  const point = api.objectFrontAt(bed, hub, 0.4);
-  if (![point.x, point.z].every(Number.isFinite) || api.objectAt(hub, point.x, point.z) !== bed) throw Error("Active bed fixture does not select the actual sleep bed");
-  return { ...point, id: bed.id, room: bed.room, layout: H.layout?.id ?? "classic" };
+  const H = api.HOUSE_ROOMS, object = H.objects.find(o => id ? o.id === id : o.use.kind === "bed");
+  if (!object) throw Error(`Active layout has no ${id ?? "sleep bed"}`);
+  const point = api.objectFrontAt(object, hub, gap);
+  if (![point.x, point.z].every(Number.isFinite) || api.objectAt(hub, point.x, point.z) !== object) throw Error(`Active house fixture does not select ${object.id}`);
+  return { ...point, id: object.id, room: object.room, layout: H.layout?.id ?? "classic" };
 }
-module.exports = { activeBedStart };
+const activeBedStart = (url, hub) => activeHouseStart(url, hub, undefined, 0.4);
+const activeObjectStart = (url, hub, id, gap = 0.7) => activeHouseStart(url, hub, id, gap);
+module.exports = { activeBedStart, activeObjectStart };

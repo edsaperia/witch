@@ -80,7 +80,7 @@ npm run build && node tools/smoke/flask-stack.cjs [out dir] [seed]
 
 ## `house-bed-start.cjs`
 
-Resolve the smoke's sleep interaction from the game's selected layout and shared bed geometry, without constructing a game or art.
+Resolve smoke sleep and overlay interaction points from the game's selected layout and shared geometry, without constructing a game or art.
 
 ## `hud.cjs`
 
