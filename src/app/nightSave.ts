@@ -64,6 +64,18 @@ export function savesEnabled(params: URLSearchParams, automated = false): boolea
 }
 
 /** An explicit link to another night keeps its meaning; a plain game link may resume any saved island. */
+export function nightLinkConflicts(n: Pick<SavedNight, "params">, link: URLSearchParams): string[] {
+  const p = new URLSearchParams(n.params);
+  const keys = ["seed", "island", "world"].filter(key => link.has(key) && link.get(key) !== p.get(key));
+  // (layout: compared by the house it selects, so a default-layout save matches a link naming that same layout: app/houseLayout.ts)
+  if (link.has("layout") && houseLayoutIdentity(link) !== houseLayoutIdentity(p)) keys.push("layout");
+  return keys;
+}
+/** Use the retained save's own identity rather than retrying the conflicting incoming link. */
+export function savedNightResumeLink(n: Pick<SavedNight, "params">, path: string): string {
+  const params = new URLSearchParams(n.params); params.set("resume", "1"); params.delete("restore");
+  return path + "?" + params.toString();
+}
 export function savedNight(value: unknown, _build: string, link: URLSearchParams): SavedNight | null {
   if (!value || typeof value !== "object") return null;
   const n = value as SavedNight;
@@ -72,9 +84,7 @@ export function savedNight(value: unknown, _build: string, link: URLSearchParams
       !n.flags || typeof n.flags.chartRecorded !== "boolean" || typeof n.flags.overRecorded !== "boolean" || !n.settingsBase ||
       (n.look !== null && (!n.look || typeof n.look !== "object" || Array.isArray(n.look))) ||
       (n.loan !== null && (!n.loan || typeof n.loan !== "object" || typeof n.loan.id !== "string" || !n.loan.before))) return null;
-  const p = new URLSearchParams(n.params);
-  for (const key of ["seed", "island", "world"]) if (link.has(key) && link.get(key) !== p.get(key)) return null;
-  if (link.has("layout") && houseLayoutIdentity(link) !== houseLayoutIdentity(p)) return null;
+  if (nightLinkConflicts(n, link).length) return null;
   return n;
 }
 

@@ -131,7 +131,7 @@ import { forgetArrival, type Arrival } from "./app/arrival";
 import { shotParams } from "./app/shot";
 import type { FlightEnd } from "./render/chart/seaChart";
 import { restoreGame } from "./rules/nightSnapshot";
-import { borrowedNightSaves, browserNightStore, captureNight, nightHasStarted, NightAutosave, savedNight, savesEnabled, type SavedNight, type NightStore } from "./app/nightSave";
+import { borrowedNightSaves, browserNightStore, captureNight, nightHasStarted, NightAutosave, savedNight, savedNightResumeLink, nightLinkConflicts, savesEnabled, type SavedNight, type NightStore } from "./app/nightSave";
 import { Breadcrumbs, browserCommentStore, captureComment, CommentBook, parseCommentFile } from "./app/playtestComments";
 import { LOG_EXPANDED_BYTES } from "./platform/logCodec";
 import { observePlaytestErrors, logCaughtError } from "./platform/playtestLog";
@@ -181,7 +181,18 @@ if (savesEnabled(bootLink, navigator.webdriver)) {
         document.getElementById("arrive-landing")?.remove();
         history.replaceState(null, "", "?" + params.toString() + location.hash);
       } catch (error) { nightStore = null; logCaughtError(error, "save slot: saved night kept after restore failure"); nightSaveNotice("Your saved night could not be restored. It has been kept; this new night will not replace it."); }
-    } else if (value) { nightStore = null; logCaughtError(new Error("Incompatible format or explicit link"), "save slot: saved night kept"); nightSaveNotice("This saved night has another format, island or layout. It has been kept; this new night will not replace it."); }
+    } else if (value) {
+      nightStore = null;
+      const kept = savedNight(value, BUILD, new URLSearchParams());
+      if (kept) {
+        const conflicts = nightLinkConflicts(kept, bootLink);
+        logCaughtError(new Error(`Explicit link differs from saved night: ${conflicts.join(", ")}`), "save slot: saved night kept");
+        nightSaveNotice("This link opens a different night from your saved night. Your save has been kept; this new night will not replace it.", savedNightResumeLink(kept, location.pathname));
+      } else {
+        logCaughtError(new Error("Incompatible saved-night format"), "save slot: saved night kept");
+        nightSaveNotice("This saved night has an incompatible format. It has been kept; this new night will not replace it.");
+      }
+    }
   } catch (error) { logCaughtError(error, "save slot: read night"); nightSaveNotice("Nights cannot be saved on this browser. Keep this page open to continue playing."); nightStore = null; }
 }
 // ?timing=1 (Ed, 2026-10-19): the sail's steps and the main thread's long tasks into the L log (app/timing.ts), kept for the tab.

@@ -231,6 +231,7 @@ says what each note covers.
 
 - House route profiling
 - Startup bundle baseline
+- Crash journal budget
 - Slow-frame summaries
 - Reused surface roughness (#1464, 2026-10-30):
 - Exact travel art profiles (2026-10-30, #1464):
