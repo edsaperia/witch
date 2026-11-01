@@ -16,7 +16,7 @@ Canonical6545193242 resolves QUESTION6545179124: seven-digit numbers are address
 
 Ed ruling in this owner chat, 2026-10-31 (recorded on PR #1538, comment6544237613): returning from a friend's game starts a **fresh solo night**, not the interrupted saved night. Successful permanent unlocks remain kept/shared. Clear/replace only the participating slot's interrupted-night checkpoint at the reviewed session transition, never its permanent collection or another slot, and never write the host's multiplayer snapshot as the guest's solo night. Exact crash/reload/failed-call transition boundaries still need explicit lifecycle tests.
 
-## Current source audit
+## Initial source audit (historical base, not current readiness)
 
 | Area | What exists at the base | Integration gap / acceptance obligation |
 |---|---|---|
