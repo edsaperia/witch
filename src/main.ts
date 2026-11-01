@@ -921,7 +921,9 @@ async function saveComment(text: string): Promise<string> {
   const comment = captureComment(n.game, text, { build: BUILD, params: n.params.toString(), look: page.look() as Record<string, unknown> | null, loan,
     flags: { chartRecorded: n.flags.chartRecorded, overRecorded: n.flags.overRecorded } }, repro.link(), Object.fromEntries(repro.changed()), breadcrumbs.recent(n.game), Date.now(), recordingFor(n.game, BUILD, captureRecording).export());
   const kept = await commentBook.add(comment);
-  const status = kept ? "Comment and saved moment kept in the playtest log." : "Comment kept on this page only: browser storage is unavailable. Download the log before closing.";
+  const state = commentBook.status();
+  let status = kept ? "Written comment kept in the playtest log." : `Comment kept on this page only: ${state.error ?? "browser storage is unavailable"}. Download the log before closing.`;
+  if (state.omitted) status += ` ${state.omitted} written report(s) have no saved moment or input replay; their text and context are kept in downloads. ${state.omissionReasons.join(" ")}`;
   return comment.recording?.complete ? status : `${status} Exact input replay is incomplete: ${comment.recording?.failure ?? "unavailable"}.`;
 }
 async function restoreComment(file: File): Promise<void> {
@@ -1104,7 +1106,8 @@ document.getElementById("copy-debug")?.addEventListener("click", e => {
   void navigator.clipboard?.writeText(text).then(() => { b.textContent = "copied"; }, () => { b.textContent = "copy failed: see console"; console.log(text); }).finally(() => setTimeout(() => { b.textContent = "copy debug info"; }, 1500));
 });
 N().playtest.debugInfo = () => ({ link: repro.link(), machine: repro.machine().map(l => l.slice(7)), changed: Object.fromEntries(repro.changed()) });
-N().playtest.comments = () => commentBook.all();
+N().playtest.comments = moments => commentBook.all(moments);
+N().playtest.commentStorage = () => commentBook.status();
 N().playtest.inputRecording = () => recordingFor(N().game, BUILD, captureRecording).export();
 N().playtest.debugText = () => repro.full();
 // The pause page's Report (ui/visualReport.ts): the frame drawn with each neutral pair, where they differ, the GPU, her place, the

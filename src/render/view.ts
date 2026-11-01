@@ -69,6 +69,7 @@ import { hsv2rgb } from "../../art/generator.js";
 import { Post } from "./post";
 import { GrassView } from "./grass";
 import { SpellFx } from "./spellfx";
+import { dodgeEchoesFor, resetDodgeEchoes } from "./view/dodgeEchoes";
 import { TRAIL_DEFAULT, WitchTrail } from "./trail";
 import { newPartyOverLook, partyOff, partyOverEase, updatePartyOver } from "./partyOver";
 import { SWOOP_TRAIL_DEFAULT, SwoopTrails } from "./swoopTrails";
@@ -573,6 +574,8 @@ export class View {
   speakerBatch: SpriteBatch | null = null;
   grass!: GrassView;
   spellFx = new SpellFx();
+  /** Opt-in world-pose echo preview, also exposed to the existing capture/debug tools. */
+  get dodgeEchoes() { return dodgeEchoesFor(this); }
   /** Her flight trail: a ribbon of glow in the colour of the area she's over (render/trail.ts). */
   private trail!: WitchTrail;
   private trailRgb = new THREE.Vector3();
@@ -1339,6 +1342,7 @@ export class View {
     // shadows, and its soundsystems' (their atlases the art's: freed once, by reseat).
     cancelRefresh(this); resetCreatureCaches(); forgetCandles(this);
     this.potionObservers.dispose(this);
+    resetDodgeEchoes(this);
     for (const b of this.typeBatches.values()) { this.scene.remove(...b.meshes); b.release(); }
     this.typeBatches.clear();
     for (const [k, b] of this.trunkShadowBatches) if (typeof k === "number") { this.scene.remove(...b.meshes); b.dispose(); this.trunkShadowBatches.delete(k); }

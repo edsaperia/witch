@@ -708,6 +708,9 @@ void main() {
 /** At full share this is the exact ground shader; the added dither only runs during coast handover. */
 const BEACH_FRAG = FRAG.replaceAll('void main() {', 'uniform float uCoastAppear;\nvoid main() {\n  if (uCoastAppear < 0.999 && bayer4(gl_FragCoord.xy) >= uCoastAppear) discard;');
 
+// Opaque terrain must draw before the depth-write-free floor decals (FLOOR_ORDER = -0.5).
+export const GROUND_ORDER = -1;
+
 export class Ground {
   readonly mesh: THREE.Mesh;
   /** Always compiled at boot and retained across islands; no expensive lighting, effects, or individual lake bodies. */
@@ -838,6 +841,7 @@ void main() {
   gl_FragColor = vec4(loadingLight(c, vWorld), 1.0);
 }` });
     this.mesh = new THREE.Mesh(geo, mat);
+    this.mesh.renderOrder = GROUND_ORDER;
     this.mesh.frustumCulled = false;
     // No beach material/twin exists until setBeach says the coast is actually in view.
     const fallbackTwin = new THREE.Mesh(geo, this.loadingFallback);
@@ -861,7 +865,7 @@ void main() {
       mat.blending = amount > 0 ? THREE.CustomBlending : THREE.NormalBlending;
       mat.blendSrc = THREE.SrcAlphaFactor; mat.blendDst = THREE.OneMinusSrcAlphaFactor;
     }
-    this.mesh.renderOrder = amount > 0 ? -90 : 0;
+    this.mesh.renderOrder = amount > 0 ? -90 : GROUND_ORDER;
     if (this.coastSurface) this.coastSurface.renderOrder = this.mesh.renderOrder + 0.00001;
   }
 
