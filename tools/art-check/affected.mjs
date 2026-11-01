@@ -114,7 +114,7 @@ export function snapshotHash(root, files, read = f => artInputBytes(f, readFileS
  * not task inputs: they only choose what runs. Bump this when a change alters HOW a task runs (arguments, server,
  * browser launch), so every result is re-proven; selection-only planner edits keep every result. */
 export const EXECUTION = 'art-check-execution-v1';
-export const PLANNER = ['tools/art-check/affected.mjs', 'tools/art-check/scope.mjs', 'tools/art-check/checked-tree.mjs', 'tools/art-check/README.md', '.github/workflows/art-check.yml', 'tools/art-check/shards.mjs', 'tools/art-check/shards.test.mjs', 'tools/art-check/task-times.json'];
+export const PLANNER = ['tools/art-check/affected.mjs', 'tools/art-check/scope.mjs', 'tools/art-check/checked-tree.mjs', 'tools/art-check/README.md', '.github/workflows/art-check.yml'];
 
 /** One-time bridge from results saved by the v1 planner (tools/art-check-legacy/affected-v1.mjs.txt, the exact bytes
  * it was keyed with). Its keys hashed the planner and workflow whole, so changing the planner alone would rerun every
