@@ -25,6 +25,8 @@ export function telephoneStation(options: Pick<TelephoneOptions, "storage" | "lo
     get state() { return phone.state; },
     get active() { return session?.role !== null && session?.role !== undefined; },
     get visiting() { return session?.role === "guest"; },
+    get catalogue() { return session?.catalogue ?? null; },
+    houseEvents() { return session?.role === "guest" ? session.takeHouseEvents() : null; },
     choose(choice: StationChoice): boolean { return session?.choose(choice) ?? false; },
     preferences(game: Game) { return session?.role === "guest" ? preferences.tuning(game) : game.tuning; },
     step(game: Game, controls: Controls, dt: number): boolean {

@@ -16,11 +16,35 @@ import { deckOf } from "../../rules/treehouse";
 import { RECORDS } from "../../rules/records";
 import { stationAuthority } from "./stationAuthority";
 import { bpmAt } from "../../rules/beat";
+import { ITEMS } from "../../rules/wardrobe";
 
 const cleanups: (() => void)[] = [];
 afterEach(() => { for (const stop of cleanups.splice(0)) stop(); });
 const input = (moveX = 0): Controls => ({ moveX, moveZ: 0, zoom: 0, toggleMode: false, autoTalk: false });
 const turn = () => new Promise<void>(resolve => setTimeout(resolve, 0));
+it("uses only host catalogue metadata, publishes changes in order and keeps display IDs separate from authority", async () => {
+  const f = fixture(), seen = vi.fn(), catalogue = { wardrobe: [ITEMS[0].id], parts: [], hats: [], records: [RECORDS[0].id] };
+  f.hostOptions.catalogue = () => catalogue;
+  f.guestOptions.catalogue = vi.fn(() => { throw new Error("Visitor inventory must not be read"); });
+  f.guestOptions.catalogueApplied = seen;
+  const { joined } = await f.start(); await f.sync(); await joined;
+  expect(f.guestOptions.catalogue).not.toHaveBeenCalled(); expect(f.guest.catalogue).toEqual(catalogue);
+  f.guest.catalogue!.wardrobe.length = 0; expect(f.guest.catalogue!.wardrobe).toEqual(catalogue.wardrobe);
+  f.host.message({ type: "input", player: 1, payload: { kind: "catalogue", catalogue: { ...catalogue, records: [RECORDS[1].id] } } });
+  catalogue.records = [RECORDS[1].id]; let index = f.hostMessages.length; f.host.step(input(), .02);
+  const updates = f.hostMessages.slice(index);
+  expect(updates.map(m => (m.payload as { kind: string }).kind)).toEqual(["catalogue", "frame"]);
+  for (const message of updates) f.guest.message(message);
+  expect(f.guest.catalogue).toEqual(catalogue); expect(seen).toHaveBeenLastCalledWith(catalogue);
+  // Display metadata alone cannot authorize any station request.
+  f.guest.choose({ kind: "bag", id: BAGS[0].id }); f.host.message(f.guestMessages.at(-1)!);
+  index = f.hostMessages.length; f.host.step(input(), .02);
+  expect(f.hostMessages.slice(index).some(m => (m.payload as { kind: string }).kind === "station")).toBe(false);
+  for (const message of f.hostMessages.slice(index)) f.guest.message(message);
+  f.guest.message({ type: "state", player: 0, payload: { kind: "catalogue", tick: f.guest.tick, catalogue: { ...catalogue, wardrobe: ["invented"] } } });
+  expect(f.guestOptions.failed).toHaveBeenCalledWith(expect.objectContaining({ message: "Invalid shared station catalogue." }));
+  expect(f.guest.catalogue).toBeNull();
+});
 it("starts a visitor's approved record on both peers before the next frame", async () => {
   const f = fixture(), attach = f.hostOptions.attach, records = new Set<string>(), record = RECORDS[0];
   f.hostOptions.attach = game => {

@@ -24,6 +24,7 @@ it("opens the real telephone use kind without contacting the old relay, and clos
   });
   try {
     expect(station.active).toBe(false); expect(station.visiting).toBe(false);
+    expect(station.catalogue).toBeNull(); expect(station.houseEvents()).toBeNull();
     expect(station.presented(game, 0.05, 1)).toBe(game);
     expect(station.step(game, { moveX: 0, moveZ: 0, toggleMode: false, zoom: 0 }, 0.25)).toBe(false);
     station.use(game, "not-a-phone"); expect(station.open).toBe(false);

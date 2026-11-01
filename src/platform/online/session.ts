@@ -7,6 +7,8 @@ import { beatAnchor } from "./beatAnchor";
 import { appearance, type Appearance } from "./appearance";
 import { applyStationLook } from "./stationAppearance";
 import { bagOf, setBag } from "../../rules/bags";
+import { sharedCatalogue, type SharedCatalogue } from "./sharedCatalogue";
+import { houseSteps } from "./houseSteps";
 
 export interface SessionConnection {
   sendInput(payload: unknown): boolean;
@@ -40,6 +42,8 @@ export interface SessionOptions {
   /** Host collection only; guests never supply ownership. Palette is the build's actual classic outfit. */
   wardrobe?(): ReadonlySet<string>;
   stationPalette?(): Record<string, number[]>;
+  catalogue?(): unknown;
+  catalogueApplied?(catalogue: SharedCatalogue): void;
 }
 
 /** Reuses the prototype's replication and input lease without a second frame loop, View or save store. */
@@ -54,6 +58,13 @@ export function onlineSession(options: SessionOptions) {
   const requests: { player: 0 | 1; choice: StationChoice }[] = [];
   let beatSegments: Game["beat"]["segs"] | null = null;
   const looks = new Map<0 | 1, Appearance>();
+  const receivedHouse = houseSteps();
+  let catalogue: SharedCatalogue | null = null;
+  const hostCatalogue = () => {
+    const next = sharedCatalogue(options.catalogue?.());
+    if (!next) throw new Error("Invalid host station catalogue.");
+    return next;
+  };
   const stop = () => {
     const previous = role, previousGame = game, attached = present;
     epoch++; role = null; connection = null; game = null; present = prepared = ready = preparing = changed = false; replica = null;
@@ -61,6 +72,7 @@ export function onlineSession(options: SessionOptions) {
     requests.length = 0; stationSequence = 0; lastStation = -1;
     beatSegments = null;
     looks.clear();
+    catalogue = null; receivedHouse.clear();
     reject?.(new Error("The online night ended.")); accept = reject = null;
     if (previous === "host" && attached && previousGame) options.detach(previousGame);
     if (previous) options.ended(previous, previousGame);
@@ -68,10 +80,13 @@ export function onlineSession(options: SessionOptions) {
   const fail = (value: unknown) => { const error = value instanceof Error ? value : new Error(String(value)); stop(); options.failed(error); };
   const sendStart = () => {
     if (options.appearance && looks.size !== 2) return; // No borrowed world admission until both cosmetic profiles are validated.
-    if (!connection || !game || !connection.sendState({ kind: "start", start: replayStart(game, options.build, tick), ...(options.appearance ? { looks: [...looks].map(([player, genome]) => ({ player, genome })) } : {}) })) throw new Error("The night couldn't be sent to your friend.");
+    if (options.catalogue) catalogue = hostCatalogue();
+    if (!connection || !game || !connection.sendState({ kind: "start", start: replayStart(game, options.build, tick), ...(options.appearance ? { looks: [...looks].map(([player, genome]) => ({ player, genome })) } : {}), ...(catalogue ? { catalogue } : {}) })) throw new Error("The night couldn't be sent to your friend.");
     beatSegments = game.beat.segs;
   };
   const api = {
+    get catalogue() { return catalogue ? structuredClone(catalogue) : null; },
+    takeHouseEvents: () => receivedHouse.take(),
     get role() { return role; }, get game() { return game; }, get ready() { return ready; }, get tick() { return replica?.tick ?? tick; },
     /** Telephone invokes this only after mutual identity verification and consent. */
     connect(as: "host" | "guest", relay: SessionConnection, signal: AbortSignal): Promise<void> {
@@ -126,8 +141,12 @@ export function onlineSession(options: SessionOptions) {
           }
           if (message.type === "guest-left" && message.player === 1) { stop(); return true; }
         } else if (message.type === "state" && message.player === 0) {
-          const payload = message.payload as { kind?: string; start?: ReplayStart; frame?: ReplayFrame; tick?: number; choices?: { player: unknown; choice: unknown }[]; beat?: unknown; looks?: { player: unknown; genome: unknown }[] } | null;
+          const payload = message.payload as { kind?: string; start?: ReplayStart; frame?: ReplayFrame; tick?: number; choices?: { player: unknown; choice: unknown }[]; beat?: unknown; looks?: { player: unknown; genome: unknown }[]; catalogue?: unknown } | null;
           if (payload?.kind === "start" && payload.start) {
+            if (options.catalogue || payload.catalogue !== undefined) {
+              const next = sharedCatalogue(payload.catalogue); if (!next) throw new Error("Invalid shared station catalogue.");
+              catalogue = next; options.catalogueApplied?.(structuredClone(next));
+            }
             if (options.appearance) {
               if (!Array.isArray(payload.looks) || payload.looks.length !== 2) throw new Error("Missing shared witch appearances.");
               const received = new Map<0 | 1, Appearance>();
@@ -168,7 +187,13 @@ export function onlineSession(options: SessionOptions) {
           }
           if (payload?.kind === "frame" && payload.frame) {
             if (ready && replica && !replica.apply(payload.frame)) throw new Error("Online state lost its sequence. Hang up and call again.");
+            if (ready && replica) receivedHouse.capture(replica.game, 1, replica.tick);
             return true;
+          }
+          if (payload?.kind === "catalogue") {
+            const next = sharedCatalogue(payload.catalogue);
+            if (!ready || !replica || payload.tick !== replica.tick || !next) throw new Error("Invalid shared station catalogue.");
+            catalogue = next; options.catalogueApplied?.(structuredClone(next)); return true;
           }
           if (payload?.kind === "checkpoint" && payload.start) {
             if (!ready || !replica || payload.start.tick !== replica.tick) throw new Error("Online station state lost its sequence. Hang up and call again.");
@@ -210,6 +235,13 @@ export function onlineSession(options: SessionOptions) {
         controls.pausePage = input.pausePage === true;
         if (role === "guest") { if (ready && !connection.sendInput({ sequence: sequence++, controls })) throw new Error("The guest telephone disconnected."); return true; }
         if (!present) return false;
+        if (ready && options.catalogue) {
+          const next = hostCatalogue();
+          if (JSON.stringify(next) !== JSON.stringify(catalogue)) {
+            if (!connection.sendState({ kind: "catalogue", tick, catalogue: next })) throw new Error("The station catalogue couldn't be sent.");
+            catalogue = next;
+          }
+        }
         // Page-owned station mutations are not controls. Coalesce them at this ordered boundary,
         // after the previous frame and before advancing the next one, retaining the current tick.
         if (changed && ready) {
