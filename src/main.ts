@@ -1205,9 +1205,9 @@ function shutStation(why: string): void {
 let lastObservedFrame = 0;
 let measuredStep: number | undefined, measuredDraw: number | undefined;
 let measuredParts: Record<string, number> = {};
-function drawFrame(time: number): void {
+function drawFrame(time: number, repaintHeld = false): void {
   const start = performance.now(), previousParts = view.ms;
-  try { view.render(time); }
+  try { view.render(time, true, repaintHeld); }
   finally {
     measuredDraw = (measuredDraw ?? 0) + performance.now() - start;
     if (view.ms !== previousParts) for (const [name, ms] of Object.entries(view.ms)) measuredParts[`draw.${name}`] = (measuredParts[`draw.${name}`] ?? 0) + ms;
@@ -1423,7 +1423,7 @@ function frameBody(now: number): void {
   const held = holding(performance.now());
   if (!held) {
     if (!paused || displayedStep !== game.clock.time) displayedTime = Math.max(0, game.clock.time - (1 - game.alpha) * STEP * game.timeScale);
-    interpolated(game, () => drawFrame(displayedTime));
+    interpolated(game, () => drawFrame(displayedTime, paused && !title && displayedStep === game.clock.time));
     displayedStep = game.clock.time;
     worldDraw.drawn(art, viewRevision, displayedStep);
   } // (the world's step is STEP x timeScale: rules/slowTime.ts)

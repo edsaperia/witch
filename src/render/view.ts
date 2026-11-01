@@ -1642,7 +1642,7 @@ export class View {
   private lakeSigils: { x: number; z: number; r: number; species: string; d: number }[] = [];
   private floorItems: { species: string; glint: number; look: FloorLook }[] = Array.from({ length: 6 }, () => ({ species: "", glint: 0, look: FALLBACK_LOOK }));
 
-  render(time: number, draw = true): void {
+  render(time: number, draw = true, repaintHeld = false): void {
     // Allocate only when a whole display-pixel step changes, including Try/Stop and expiry.
     if (this.pixelViewport.w > 0 && this.scenePixelSize() !== this.cssPixel) this.resize(this.pixelViewport.w, this.pixelViewport.h);
     // Late art may introduce programs after compileAll's background pass has ended.
@@ -1680,7 +1680,7 @@ export class View {
     LIGHT_UNIFORMS.uCanopyReach.value = this.canopyNow;
     const up = placeCamera(this, time, pose);
 
-    this.swapHomeArt();
+    if (!repaintHeld) this.swapHomeArt();
     setFrameUniforms(this, time, up);
     setReveal(this, time);
     const w = g.witch;
@@ -1915,7 +1915,9 @@ export class View {
     this.magic.finish(t.lightBudget);
     this.stats.lights = LIGHT_UNIFORMS.uLightCount.value;
     if (FX_MOCK_MODE) (this.fxMock ??= new FxMock(this, FX_MOCK_MODE)).update(this, ht);
-    workAhead(this);
+    // A view-only repaint must not upload a new floor tile or height strip into
+    // the textures used for the picture. Continue that work at the next live frame.
+    if (!repaintHeld) workAhead(this);
     if (this.debugCull) drawGhosts(this, time);
     if (!draw) return;
     this.renderer.info.reset();

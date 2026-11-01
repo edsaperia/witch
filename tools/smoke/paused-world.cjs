@@ -80,7 +80,7 @@ async function measure(browser, url, sha, candidate) {
       // before bloom, using normalized screen coordinates for reduced targets.
       if (tracePixels) {
         const renderer = view.renderer, submit = renderer.renderBufferDirect.bind(renderer);
-        const sites = [[116,55], [160,77], [217,88]], rgb = new Uint8Array(4);
+        const sites = [[116,55], [160,77], [217,88], [155,90]], rgb = new Uint8Array(4);
         const labels = new WeakMap();
         function owner(object) {
           if (!labels.has(object)) {
@@ -91,6 +91,15 @@ async function measure(browser, url, sha, candidate) {
             labels.set(object, names);
           }
           return labels.get(object);
+        }
+        function input(value) {
+          if (value == null || typeof value !== 'object') return value;
+          if (value.isTexture) return { texture: value.uuid, version: value.version, source: value.source.uuid,
+            width: value.image?.width, height: value.image?.height, target: value.isRenderTargetTexture };
+          if (typeof value.toArray === 'function') return value.toArray();
+          if (ArrayBuffer.isView(value)) return Array.from(value);
+          if (Array.isArray(value)) return value.map(input);
+          return String(value);
         }
         renderer.renderBufferDirect = (...args) => {
           const target = renderer.getRenderTarget();
@@ -103,6 +112,19 @@ async function measure(browser, url, sha, candidate) {
             return [...rgb].join(',');
           });
           const before = read(), result = submit(...args), after = read(), [, , geometry, material, object] = args;
+          // Keep both sides even if a submitted sprite misses every probe pixel.
+          // iPos/iSize are the placed sprite; iUv selects its actual atlas frame.
+          if (pass === 'world' && (object === view.ground.mesh || owner(object).includes('witchBatch') || object.name.includes('nap-wolf'))) {
+            const camera = args[0], instances = {};
+            for (const [name, attr] of Object.entries(geometry.attributes)) if (attr.isInstancedBufferAttribute) {
+              instances[name] = Array.from(attr.array.subarray(0, attr.itemSize * geometry.instanceCount));
+            }
+            probe.trace.inputs.push({ object: object.id, name: object.name, owners: owner(object), geometry: geometry.id,
+              material: material.id, model: object.matrixWorld.toArray(), view: camera.matrixWorldInverse.toArray(),
+              projection: camera.projectionMatrix.toArray(), drawRange: geometry.drawRange, count: geometry.instanceCount,
+              group: args[5], instances, uniforms: Object.fromEntries(Object.entries(material.uniforms ?? {})
+                .map(([name, uniform]) => [name, input(uniform.value)])) });
+          }
           for (let i = 0; i < sites.length; i++) if (before[i] !== after[i]) {
             probe.trace.layers.push({ pass, xy: sites[i], object: [object.id, object.name, object.parent?.name], owners: owner(object),
               material: [material.id, material.name], map: material.map?.source?.uuid, geometry: geometry.id, before: before[i], after: after[i] });
@@ -111,7 +133,9 @@ async function measure(browser, url, sha, candidate) {
         };
       }
       view.render = (...args) => {
-        probe.trace = tracePixels && probe.sample ? { time: args[0], herTime: view.game.herTime, layers: [] } : null;
+        probe.trace = tracePixels && probe.sample ? { time: args[0], herTime: view.game.herTime,
+          alpha: view.game.alpha, repaintHeld: args[2], artVersion: view.assets.version,
+          pendingFloors: view.ground.pendingFloors.map(([type]) => type), layers: [], inputs: [] } : null;
         const result = render(...args);
         probe.draws++;
         if (probe.sample) {
