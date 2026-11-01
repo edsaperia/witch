@@ -245,6 +245,29 @@ it("rejects an incompatible build before preparing a guest View or sending contr
   expect(f.guestOptions.prepareGuest).not.toHaveBeenCalled(); expect(f.guestOptions.failed).toHaveBeenCalledTimes(1);
   expect(f.guestMessages).toHaveLength(0); expect(f.guest.role).toBeNull();
 });
+it("attributes a preparation refusal before art instead of reporting a loading stall", async () => {
+  const f = fixture(), trace = vi.fn(); f.guestOptions.trace = trace;
+  f.guestOptions.prepareGuest = vi.fn(async () => { throw new Error("Save boundary unavailable"); });
+  const { joined } = await f.start(); await expect(joined).rejects.toThrow("ended"); await turn();
+  expect(trace.mock.calls.map(call => call[0])).toEqual(["replay-restore:start", "replay-restore:done", "prepare:invoke", "view-preparation:failed"]);
+  expect(trace).toHaveBeenLastCalledWith("view-preparation:failed", expect.objectContaining({ message: "Save boundary unavailable" }));
+  expect(f.guestMessages.some(m => m.type === "ready" || m.type === "active")).toBe(false);
+  expect(f.guestOptions.synchronized).not.toHaveBeenCalled();
+  expect(f.guestOptions.failed).toHaveBeenCalledWith(expect.objectContaining({ message: "Save boundary unavailable" }));
+});
+it("does not let a diagnostic sink interrupt a valid guest admission", async () => {
+  const f = fixture(); f.guestOptions.trace = () => { throw new Error("Broken diagnostics"); };
+  const { joined } = await f.start(); await f.sync(); await joined;
+  expect(f.guest.ready).toBe(true); expect(f.guestOptions.failed).not.toHaveBeenCalled();
+});
+it("tells the host that a guest who leaves during preparation never started the visit", async () => {
+  const f = fixture(), { joined } = await f.start(); void joined.catch(() => {});
+  f.host.message({ type: "guest-left", player: 1 });
+  expect(f.hostOptions.failed).toHaveBeenCalledWith(expect.objectContaining({ message: "Your friend's visit couldn't start. The call has ended." }));
+  expect(f.host.role).toBeNull(); expect(f.hostGame.witches).toHaveLength(1);
+  expect(f.hostOptions.detach).toHaveBeenCalledOnce(); expect(f.hostOptions.ended).toHaveBeenCalledOnce();
+  f.host.message({ type: "guest-left", player: 1 }); expect(f.hostOptions.failed).toHaveBeenCalledOnce();
+});
 
 it("coalesces page mutations before the next frame and preserves the guest game identity", async () => {
   const f = fixture(), { joined } = await f.start(); await f.sync(); await joined;

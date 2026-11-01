@@ -18,6 +18,13 @@ export interface TelephoneActions {
 }
 const words: Record<TelephoneStatus, string> = { preparing: "Calls aren't available in this build yet.", connecting: "Connecting the telephone…", available: "The line is ready.", dialling: "Calling…", ringing: "The telephone is ringing.", confirming: "This is a new number. Connect and remember this friend?", joining: "Joining your friend's night…", connected: "The line is connected.", unavailable: "That number isn't at the telephone.", busy: "That line is engaged.", ended: "The line has gone quiet.", error: "The call couldn't connect." };
 
+/** Keep an admission failure visible even if the phone closes or the guest returns to another night. */
+export function telephoneNotice(text: string): void {
+  const notice = document.getElementById("telephone-notice") ?? h("section", { id: "telephone-notice", attrs: { role: "alert" }, style: { position: "fixed", top: "70px", left: "50%", transform: "translateX(-50%)", zIndex: "60", width: "min(420px,90vw)", boxSizing: "border-box", padding: "16px", background: "#20192d", color: "#eee8fa", border: "1px solid #bba6cf" } });
+  notice.replaceChildren(h("p", { text }), button("Dismiss", () => notice.remove()));
+  if (!notice.isConnected) document.body.append(notice);
+}
+
 /** Ed, 2026-10-31: slides FROM THE LEFT like the other stations; never a second game entry page. */
 export class TelephonePanel {
   readonly root = h("section", { id: "telephone-panel", attrs: { "aria-label": "Telephone" } });
