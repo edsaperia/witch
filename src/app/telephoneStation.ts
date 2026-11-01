@@ -7,7 +7,7 @@ import type { StationChoice } from "../platform/online/stationChoice";
 import { visitPreferences } from "./visitPreferences";
 import { telephoneActor } from "./telephoneActor";
 
-/** The ordinary station's lifetime/input seam. Call admission stays off until the actual guest/save hooks are bound. */
+/** Ordinary station lifetime/input seam. Call admission remains off until canonical proof and deployment approval. */
 export function telephoneStation(options: Pick<TelephoneOptions, "storage" | "loadIdentity" | "menu" | "socket"> & { session?: SessionOptions }) {
   const session = options.session ? onlineSession(options.session) : null;
   const preferences = visitPreferences();
@@ -54,6 +54,11 @@ export function telephoneStation(options: Pick<TelephoneOptions, "storage" | "lo
       if (phone.open) phone.pollPad(typeof navigator !== "undefined" && navigator.getGamepads ? [...navigator.getGamepads()].find(p => p) ?? null : null, now);
     },
     close,
+    async returnHome(game: Game, id: string): Promise<void> {
+      night = game; object = id;
+      await phone.show(false);
+      await phone.show(true); phone.redial();
+    },
     hangUp: phone.hangUp,
     dispose() { session?.disconnect(); presentation = source = null; preferences.clear(); phone.dispose(); },
   };

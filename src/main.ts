@@ -8,6 +8,7 @@ import { bagOf, setBag } from "./rules/bags";
 import { bindings } from "./platform/bindings";
 import { Rumble } from "./platform/rumble";
 import { telephoneStation } from "./app/telephoneStation";
+import { leaveVisit, visitHome } from "./app/visitHome";
 import { guestArrival } from "./platform/online/guestArrival";
 import { guestAccess } from "./platform/online/guestAccess";
 import { visitSaves } from "./app/visitSaves";
@@ -816,8 +817,9 @@ let menuGone = false;
  *  buttons while paused show the start card's keys, its What's new and the screen shake's option (ui/cornerPanel.ts, borrowed and
  *  put back). */
 let pauseBtns: HTMLDivElement | null = null;
+let leaveVisitButton: HTMLButtonElement | null = null;
 function pauseControls(on: boolean): void {
-  if (!on || dressed) { if (pauseBtns) pauseBtns.style.display = "none"; closeCornerPanel(); return; }
+  if (!on || (dressed && !phone.active)) { if (pauseBtns) pauseBtns.style.display = "none"; closeCornerPanel(); return; }
   if (!pauseBtns) {
     pauseBtns = document.createElement("div");
     pauseBtns.id = "pause-btns"; pauseBtns.style.cssText = "position:fixed;right:12px;top:12px;z-index:61;display:flex;gap:8px";
@@ -830,9 +832,13 @@ function pauseControls(on: boolean): void {
       b.addEventListener("click", () => toggleCornerPanel(document.body, id, title, [el]));
       pauseBtns.append(b);
     }
+    leaveVisitButton = document.createElement("button"); leaveVisitButton.type = "button"; leaveVisitButton.textContent = "Leave visit";
+    leaveVisitButton.addEventListener("click", () => leaveVisit(phone.active, () => phone.hangUp(), () => { if (freeze.frozen) freeze.toggle(); }));
+    pauseBtns.append(leaveVisitButton);
     document.body.append(pauseBtns);
   }
   pauseBtns.style.display = "";
+  if (leaveVisitButton) leaveVisitButton.hidden = !phone.active;
 }
 freeze.onToggle = on => {
   notable("screen", on ? "Paused" : "Resumed");
@@ -968,6 +974,8 @@ const ordinaryVisit = visitNightSaves ? visitLifecycle({
       returnedUnlocks?.apply(browserSaveSlots(), { spells: own.night.game.spells, owned: () => ownCollection });
       returnedUnlocks = null; owned = null;
       const href = nightHref("bed", own.href); await nightInPlace(nightFromHref("bed", href), href); syncFloorHats(N().game.witches[0]);
+      const homePhone = visitHome(N().game); input.release(); input.clearPresses();
+      if (homePhone) await phone.returnHome(N().game, homePhone);
     } else {
       returnedUnlocks = null;
       const restored = await startNight(page, { ...own.night.spec, how: "bed", resume: own.night.game, borrowed: false });
