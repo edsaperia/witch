@@ -272,7 +272,7 @@ describe("the oak's rooms", () => {
   it("the guest bedrooms stay locked in solo play, their furniture out of reach and the way in from their door clear", () => {
     for (const r of HOUSE_ROOMS.rooms.filter(q => q.locked)) {
       const door = obj(`${r.id}Door`), mine = HOUSE_ROOMS.objects.filter(o => o.room === r.id);
-      expect(mine.map(o => o.id).sort(), r.id).toEqual(["Bed", "Chest", "Crates", "Wardrobe"].map(k => r.id + k));
+      expect(mine.map(o => o.id).sort(), r.id).toEqual(["Bed", "Crates", "DressingTable", "Wardrobe"].map(k => r.id + k));
       for (const o of mine) {
         expect(Math.hypot(o.x - door.x, o.z - door.z) - Math.hypot(o.w, o.d) / 2, `${o.id}: clear of the door`).toBeGreaterThan(2.5);
         const g = inHouse(0, 0), at = before(o); put(g, at.x, at.z);

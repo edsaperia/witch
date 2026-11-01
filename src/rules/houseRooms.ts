@@ -58,7 +58,7 @@ export function installEdLayout(on: boolean): void {
 
 /** Her business in the house's rooms: the bed's hold (since when E has been held at it) and the hats lying on the hats' floor
  *  (their spells, by slot: "" an empty one), laid out the first time she comes in. */
-export interface HouseState { bedFrom?: number; hats?: string[]; hatFloorVersion?: 2; hatOverflow?: string[]; hatReserved?: number[]; hatPointOrigin?: { x: number; z: number }; /** she's slept: the night's over (once) */ slept?: boolean }
+export interface HouseState { bedFrom?: number; lastBed?: string; hats?: string[]; hatFloorVersion?: 2; hatOverflow?: string[]; hatReserved?: number[]; hatPointOrigin?: { x: number; z: number }; /** she's slept: the night's over (once) */ slept?: boolean }
 
 /** The hub's centre in the world, for the rooms' metres. */
 interface At { x: number; z: number }
