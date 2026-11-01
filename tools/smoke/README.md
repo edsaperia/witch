@@ -78,6 +78,10 @@ The flask in her sigil stack: the built game at 1280×720 on a seed; three creat
 npm run build && node tools/smoke/flask-stack.cjs [out dir] [seed]
 ```
 
+## `house-bed-start.cjs`
+
+Resolve the smoke's sleep interaction from the game's selected layout and shared bed geometry, without constructing a game or art.
+
 ## `hud.cjs`
 
 The HUD's top and edges: the built game at 1600×900 on a seed, out of the boot with the next wave half way to coming, the witch a little way from home; the whole screen, then the same with the decisions panel open and the debug overlay to check nothing at…
