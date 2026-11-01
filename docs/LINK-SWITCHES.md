@@ -45,13 +45,13 @@ How the world is drawn, to try values live or to measure.
 
 | switch | does | since | read in |
 |---|---|---|---|
+| `dodgeEchoes=0` / `dodgeEchoes=1` | Brief dodge silhouettes at actual departure and arrival poses (on by default; 0 switches them off). | 2026-10-31 | render/dodgeEcho.ts |
 | `bare=1` / `bare=2` | The terrain on its own (2: grey, with contours and a grid). | 2026-10-07 | app/linkParams.ts |
 | `biome=<name>` / `biome=<a\|b\|w>` | Every area's trees and props in that biome's look (or a blend of two), over the island's own. | 2026-10-23 | app/viewParams.ts |
 | `blend=off` / `blend=<warp>,<fine>,<band>` | Neighbouring floors meet on a plain edge, or tuned. | 2026-10-07 | app/linkParams.ts |
 | `bloom=off` | The bloom off. | 2026-10-07 | app/linkParams.ts |
 | `border=<twinkle>,<swapRate>,<swapBeat>` | The party border's sparkle. | 2026-10-07 | app/linkParams.ts |
 | `canopy=off` | The canopy off. | 2026-10-07 | app/linkParams.ts |
-| `carrier=<kind>` / `carrier=none` | That kind's legend carries the treehouse Ent, wherever she is; none, no one. | 2026-10-12 | app/linkParams.ts |
 | `clouds=<n>` | How many clouds. | 2026-10-07 | app/linkParams.ts |
 | `creatures=<k>` | Creatures drawn at this size against the style's (1 is the size before Ed's +50%). | 2026-10-08 | app/viewParams.ts |
 | `curve=<k>` | The world's bend over the treetops (0 off). | 2026-10-07 | app/linkParams.ts |
@@ -154,6 +154,8 @@ Each brings back how something was before a change, to compare against what repl
 | `area=off` | Scenery isn't averaged where it shrinks (a performance suspect, to compare). | 2026-10-14 | app/linkParams.ts |
 | `attacks=old` | Every species fights with its old attacks from config/combat.json, not its own in the attack grammar. *Decision: Each species' own attack is the default (Ed, 2026-10-27, #1326).* | 2026-10-27 | app/linkParams.ts |
 | `snap=0` | The picture's pixels as the pixel size has them, not snapped to whole device pixels (pixels.snap), to compare. | 2026-10-29 | app/linkParams.ts |
+| `creatureSizeCandidate=0` / `creatureSizeCandidate=1` | Revised creature sizes are on by default; 0 compares the previous sizes. | 2026-10-31 | app/viewParams.ts |
+| `creatureModels=<species>:<variant>,...` | Selects available experimental creature records per species; omitted, current or unavailable variants keep the current art. | 2026-10-30 | app/viewParams.ts |
 | `cullpass=0` | Each see-through pass isn't culled by the kind of pixel it keeps, as before the performance pass. | 2026-10-24 | render/sprites.ts |
 | `cut=pixel` / `cut=whole` | The canopy cut away round her pixel by pixel, or each crown whole (performance suspects). | 2026-10-14 | app/linkParams.ts |
 | `hiz=0` | The depth-pyramid culling off, to compare. | 2026-10-23 | render/view.ts |
@@ -180,6 +182,7 @@ Switches that brought back an older look or behaviour, to compare against what r
 
 | switch | brought back | what stays |
 |---|---|---|
+| `carrier=<kind>` / `carrier=none` | a legend carrying the treehouse | removed: the island-kind legend guards home instead (Ed, 2026-10-31) |
 | `tilt=before\|after` | the tilt-shift applied before or after the upscale | before (at the low resolution); `tiltShift.where` gone |
 | `tiltsky=0` | the sky left sharp by the tilt-shift | `tiltShift.skyBlur` (the decisions panel's slider); `tiltShift.sky` gone |
 | `find=0` | the forest without the find-in-the-dark looks | always on; `find.on` gone |

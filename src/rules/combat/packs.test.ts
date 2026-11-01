@@ -349,10 +349,10 @@ describe("pack combat, Phase 1's pieces", () => {
 // Ed's playtest, v3893 (2026-10-19): "Pouncing/melee animals seem to fall short again and so are easy to evade ... they miss me",
 // hares, pack combat on. Its shooters aimed half a blink ahead of her whatever their bolt's flight, so walking away she was 10 m on
 // when they arrived; and only the nearest of a pack round her lunged a combo. A hare pack in its own area, her walking away at her
-// speed, turning now and then: its lunges land, its bolts hit, and it hurts her about as often as the plain fight does.
+// speed, turning now and then: its lunges and bolts land, and its absolute hit count stays at the accepted baseline.
 describe("a pack against her walking away (Ed's playtest, v3893)", () => {
   function chase(packs: boolean) {
-    // Retain seed 123's natural hare area and 40-second walking route for the paired hit-rate comparison.
+    // Retain seed 123's natural hare area and 40-second walking route for the continuous-chase hit-rate regression.
     const g = newGame(123, withTuning({ combat: { ...TUNING.combat, packs: { on: packs } }, attacks: { reactionFloor: 0.45, species: false } })); // (the hares' lunges, as they were)
     g.clock.paused = false; g.party.paused = true;
     const h = g.creatures.filter(c => c.species === "hare" && c.level > 0 && !c.gone)[0];
@@ -377,12 +377,13 @@ describe("a pack against her walking away (Ed's playtest, v3893)", () => {
     }
     return { lunges, landed, hits, fired, shotHits };
   }
-  it("lands its lunges and bolts, and hits her about as often as without packs", () => {
-    const plain = chase(false), packs = chase(true);
+  it("lands its lunges and bolts and preserves its absolute hits during continuous pursuit", () => {
+    const packs = chase(true);
     expect(packs.lunges).toBeGreaterThanOrEqual(5);
-    expect(packs.landed / packs.lunges).toBeGreaterThanOrEqual(0.6); // (a lunge that starts reaches her: 7 of 10 before the fight styles, 4 of 6 since, the hares bounding in: Ed's playtest, 2026-10-29)
-    expect(packs.shotHits / Math.max(1, packs.fired)).toBeGreaterThanOrEqual(0.35); // (13 to 26% before: aimed behind her)
-    expect(packs.hits).toBeGreaterThanOrEqual(plain.hits * 0.5); // (9 to 17 of plain's 24 to 30 before; and since Ed, 2026-10-20, a pack's strikes at her take the dodge's tokens, one at a time as the plain fight's do, with its lulls besides)
+    expect(packs.landed / packs.lunges).toBeGreaterThanOrEqual(4 / 6);
+    expect(packs.shotHits / Math.max(1, packs.fired)).toBeGreaterThanOrEqual(7 / 9);
+    // Ed 2026-10-31: pursuit until take-off raises lone hits; accepted. Pack balance waits for the balancing phase.
+    expect(packs.hits, JSON.stringify(packs)).toBeGreaterThanOrEqual(11);
   }, 60000);
 });
 

@@ -36,7 +36,7 @@ describe("a whole night's snapshot", () => {
   it("roundtrips a played night, its maps, sets, typed buffers, shared references and infinities", () => {
     const g = fresh(); g.clock.paused = false;
     for (let i = 0; i < 120; i++) stepGame(g, { ...idle, moveX: 1 }, STEP);
-    const c = g.creatures.find(c => !c.boss)!;
+    const c = g.creatures.find(c => !c.boss && c.level > 0)!;
     inviteCreature(g.leash, c, c.x, c.z, g.clock.time);
     g.friendly.add("test"); g.wildEntry.set("test", { at: 1, until: 4, last: 2, danger: 0.5 });
     const placed = g.creatures.find(p => !p.boss && p.id !== c.id)!;
@@ -67,7 +67,7 @@ describe("a whole night's snapshot", () => {
     spreadWave(g.party, g.map, g.clock.time);
     // A creature materialized by wild growth has an id beyond the starting population.
     g.creatures.push({ ...g.creatures[0], id: g.creatures.length, rand: rng(9191) });
-    const c = g.creatures.find(c => !c.boss)!;
+    const c = g.creatures.find(c => !c.boss && c.level > 0)!;
     inviteCreature(g.leash, c, c.x, c.z, g.clock.time);
     g.witches[0].ko = knockOut(g.leash, g.creatures, g.herTime, g.tuning);
     if (g.trunk) { g.trunk.item = "test"; }

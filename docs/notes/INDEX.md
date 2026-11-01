@@ -314,6 +314,7 @@ says what each note covers.
 ## [The view](view.md)
 
 - Elapsed-time view easing
+- Dodge echoes
 - Night and Heat Vision
 - Potion perception
 - Layered magic

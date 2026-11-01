@@ -49,7 +49,7 @@ describe("the bot", () => {
   // (seeds 11 and 33: the two ways it stood idle with a full leash and never finished the night, 2026-10-26: on 11 its home guards
   // turned the stack over every step and never went down, a fighter of the same level already at the bottom; on 33 it kept the
   // last hare of an area with no legend, so the area could never be cleared, and had no one else to invite)
-  it.each([11, 22, 33])("plays the islands' pace (bots-again, 2026-10-11): on a 10-area home it invites through the run and wins the night (seed %i)", seed => {
+  it.each([11, 22, 33])("plays the islands' pace (bots-again, 2026-10-11): on a 10-area home it recruits through the run and wins the night (seed %i)", seed => {
     // (before: it stood at each next soundsystem before its wave, invited 3 to 5 all run and lost every night)
     // (seed 11: 8919, which this run was tuned on, lost once the bare broom lost the plain broom's quick take-off, Ed 2026-10-23, a
     // chaotic run; on the bare broom seeds 11, 22 and 33 win)
@@ -60,13 +60,17 @@ describe("the bot", () => {
     g.clock.paused = false; g.witch = { ...g.witch, seated: false, perch: false }; // (on the ground by the treehouse, as this run was tuned from; the deck's start shifts this chaotic run: 8 seeds from one spot invite about as many with it on as off)
     const bot = newBot("skilled");
     let invited = 0;
+    const babies = g.creatures.filter(c => c.level === 0), alreadyHappy = new Set(babies.filter(c => c.state === "happy").map(c => c.id));
+    const joinedBabies = new Set<number>(); // Ed, 2026-10-31: babies join through soundsystems, not invitation events.
     for (let i = 0; i < 20 * 60 * 60 && g.win?.phase !== "won" && !g.partyOver; i++) {
       stepGame(g, bot.decide(g), 1 / 60);
       for (const e of g.witches[0].invites.events) if (e.kind === "happy") invited++;
+      for (const c of babies) if (c.state === "happy" && !alreadyHappy.has(c.id)) joinedBabies.add(c.id);
     }
     expect(g.partyOver).toBeFalsy();
     expect(g.win?.phase).toBe("won");
-    expect(invited).toBeGreaterThanOrEqual(15); // (15 here since home's forest mammals, 2026-10-12; seeds 11, 22 and 33 invite 22, 24 and 23, all won)
+    // Count both supported recruitment paths; retain the 15-creature floor and the full-night victory requirement.
+    expect(invited + joinedBabies.size).toBeGreaterThanOrEqual(15);
   }, 240000);
 
   it("is deterministic: the same game and steps give the same run", () => {

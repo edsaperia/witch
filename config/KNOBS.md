@@ -468,11 +468,6 @@ The witch's home in the great oak beside the dancefloor: where it stands, its de
 The witch's treehouse, home [1][2]: its foot (the Terrace's middle; clear metres round it) stands gap metres beyond the dancefloor's ring of speakers (so however many speakers or how far out, it stays outside them; 22 keeps the oak's rooms, up in its crown, clear of the dancefloor's clearing), at angle degrees (-135: north-west; -90 due north, straight up the screen), always facing south, to the floor and the camera; and keeps a clearing of clear metres round its foot (at least the art's footprint: 8.2 m for the v2 tower); its lantern and fairy lights light lightReach metres round at lightStrength. The game starts with her sitting on its terrace; the first move or rise takes her off. The deck [3]: on (false: the old treehouse), a round deck radius metres across its middle at the Ent (the treehouse's spot), its floor height metres up [4]; in the treetops, landing within radius + grace metres of its middle lands her on it; she walks it, kept rail metres inside its edge, round the map table in its middle (table metres round; Ed: "The world map is in the centre"; E within tableUse metres of its edge opens the sea chart) and behind the decks along its south edge [5], where she starts and comes back, seat metres south of the middle. On it, landed, time runs as in a calm legend circle (legendCircle.slow). The house [6][7]: its floor the oak's one shape (config/house/shape.js) at height metres, rail its edge's keep-in, the Terrace one of its trunk rooms at the treehouse's spot, its layout config/house/base.json's (terrace: the open rim, the decks, her seat, the magic circle): at treetop height she flies straight onto the Terrace and lands over landTime seconds, walks off its rim to fly again, or, with no broom (fall.on, a switch till the brooms are objects), falls for fall.time seconds and comes back at the magic circle (circle.out south of the hub's centre, circle.r), where a knockout brings her back too. The house's walk [8]: on foot in the house (the hub, the balcony, the rooms) she walks, walk metres a second, not at her broom's groundSpeed [9]; her walk cycle is drawn for stride metres a second, its steps quickening above it so her feet don't slide. The dark behind the house [10][11]: with dark.on, on foot in the house, any room or the Terrace, only the house, the Ent's crowns and her are drawn, over black, till the island's ready (its art drawn: g.islandReady); then the forest fades in behind the whole house over dark.reveal seconds and stays behind every room after; leaving the house before then, it comes back from where she stands over dark.fade seconds, and through the telescope it fades in over the same. The great oak's crown [12]: with crown.on, one crown over the whole house in place of the rooms' leaf roofs, grown from the house's outline (config/house/outline.json) and crown.seed: its lobes, the oak's limbs through its gaps, the Terrace's notch open to the sky out to its edge, its string lights and its far landmark. Indoors [13]: the crown cleared over her room (or branch) opens over crown.cutFade seconds as she comes in and fills back in over the same as she leaves, and the forest's hole round her (canopyCutout: its size, its soft edge) is cut in it too, round where she's drawn, opening and closing with it; the Terrace's notch stays open as ever. Its lights [14]: lights of its strings hung, whole strings by a hash (0.5; 1 every one), each string hung its own way (rules/crown.ts: swags with their own sag and steps, some part way, tails hanging off them, spirals round the big limbs, drapes near or long across a gap, garlands part way or all round, tilted and wavering, the bulbs the same spacing on every one, Ed: "The same bulb spacing"). Its wrap [15]: wrap long strands spiralling out over its top from its middle as seen from above, in place of its drapes and garlands, each resting on the lobes, its height smoothed along it and sagging across the gaps between them (rules/crown.ts makeCrown); 2, as Ed chose; 0 its drapes and garlands instead. Its warm light [16]: warm times the house's light spilling up onto the lobes' and limbs' undersides over its open rooms (render/crown.ts warmAt: a glow round each room's middle 1.5 m over its floor, its size and 3 m more across, worked out once as the crown's made), in flat quarter steps; 0 none, 1 as Ed chose it from the mock; both live on the pause page's Oak crown group.
 Code: `rules/treehouse.ts`, `art/ent.js`, `docs/backlog/treehouse.md`, `config/house/shape.js`, `config/house/base.json`, `rules/crown.ts`, `render/crown.ts`, `config/house/outline.json`
 
-- **`treehouse.carrier`**: On other islands, that island's legend carries the treehouse on its back, braced under the oak.
-  1. Ed, 2026-10-10: "Arriving" (journey.md: on a new island the Ent stands on the back of a party legend of that island's kind; drawing only, art/carrier.js)
-  "island" that island's kind's legend, braced under the Ent, its back about 13 m up and the Ent's trunk that much shorter, so the deck stays where it is (home, the Ent's own island, has none, nor has a map that isn't an island); a kind's id (e.g. "bear", or ?carrier=bear) that kind's everywhere; "none" no one.
-  Code: `art/carrier.js`
-
 | knob | type | range |
 |---|---|---|
 | `treehouse.gap` | number | 0 to … |
@@ -513,7 +508,6 @@ Code: `rules/treehouse.ts`, `art/ent.js`, `docs/backlog/treehouse.md`, `config/h
 | `treehouse.house.crown.warm` | number | 0 to … |
 | `treehouse.house.crown.wrap` | number | 0 to … |
 | `treehouse.house.terraceRoom` | boolean |  |
-| `treehouse.carrier` | string |  |
 
 ### `home`
 
@@ -2215,6 +2209,8 @@ Which areas have a legend, and how far a happy one reaches.
 2. 2026-10-06
 . The rest have no legend: no clearing, quest, restlessness or legend music. Read as the map is made: the decisions panel reloads. Ed's answers on #259 [2]: happyRange, a happy legend's reach in metres (relic allies: "They stay home, but if they're not useful enough right now, make their range longer").
 
+- **`legends.friendRange`**: A friendly legend defends a witch within this many metres, otherwise engages enemies in this range before walking towards the ley line tip.
+  1. Ed, 2026-10-31: "about the average radius of an area" (85 m; replaces happyRange 420 m. Defend, engage, then walk the route towards its drawing tip.)
 - **`legends.earlyQuest`**: One of the first areas the waves wake has a legend dreaming of a creature from a nearby area, so there's an early quest.
   1. Ed, 2026-10-07: "for variety we could fix one of [first, second, third] having a legend that wants one of the first three [not itself] so there's always an easy quest to do in the first third"
   one of the first three areas the waves wake (seeded), one with a legend, dreams of the baby of another of those three's kind (rules/quest.ts earlyQuest); if none of them has a legend, one of them (seeded, one whose kind another of the three lacks) is given one as the map is made, moved from the legend area the route reaches last (or, where that would clump legend areas together, from the one beside it), so share holds (rules/map.ts); false: every dream as before.
@@ -2223,7 +2219,9 @@ Which areas have a legend, and how far a happy one reaches.
   1. Ed, 2026-10-26: "legends are spawned in additional areas that have legend circles where runestones usually are" (all legends in them)
   on, each of the night's legends gets an area of its own grown out of the island beside one of its kind's areas (its pair), taking its kind and look, with no runestone, soundsystem or route stop, its circle at its heart; the island grows by them; the pair counts as one area for a legend's rage and for creatures attacking and defending (rules/map.ts areaOf); false: legends in their own kind's areas as before.
   Code: `rules/map.ts`
-- **`legends.questLater`**: a legend dreams only of a kind living in an area later on the route than its own, within questCap areas; failing that, the kind of the nearest later area; with no later area, any kind (the early easy quest keeps its own pick); false: any kind as before.
+- **`legends.questCap`**: The maximum distance in areas to a dream kind; default 0 means no distance cap, so any kind on the map can be dreamed of however far.
+  1. Ed, 2026-10-31: "no quest cap" (questCap is 0; questLater is unchanged.)
+- **`legends.questLater`**: a legend dreams only of a kind living in an area later on the route than its own, within questCap areas when a positive cap is set (default 0: no cap); failing that, the kind of the nearest later area; with no later area, any kind (the early easy quest keeps its own pick); false: any kind as before.
   1. Ed's core design, 2026-10-07: relayed by the coordinator: quests point to later areas, deeper in and wilder now the forest is grown before the waves
 - **`legends.bombard`**: ("Legend bombards, but prioritises you"): an angry legend with no witch in its reach throws the first lob or beam of its volley at the nearest standing soundsystem within range metres, damage a hit (of combat.soundsystemHealth); a charging legend lobs at it rather than charge.
 - **`legends.stomp`**: A legend turning angry destroys its own area's soundsystem at once.
@@ -2238,7 +2236,7 @@ Which areas have a legend, and how far a happy one reaches.
 | `legends.share` | number | 0 to … |
 | `legends.earlyQuest` | boolean |  |
 | `legends.areas` | boolean |  |
-| `legends.happyRange` | number | 0 to … |
+| `legends.friendRange` | number | 0 to … |
 | `legends.questCap` | number | 0 to … |
 | `legends.questLater` | boolean |  |
 | `legends.bombard.on` | boolean |  |

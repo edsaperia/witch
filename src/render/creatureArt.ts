@@ -13,7 +13,7 @@ export function creatureSprites(st: Style, species: string, mk: MakeCanvas, gear
     const hand = overrideFor(species, poseName(level, f, facing === "away")); // (a hand-drawn frame: art/overrides, as it is)
     if (hand) { out.push(bakeOverride(hand, mk)); continue; }
     const sp = Art.critter(species, level, f, st, facing, gear as null) as { m: ArrayLike<number> };
-    const b = Art.bake(sp, Art.speciesColours(species, st, gear as null), st, st.cOutline, mk) as Baked;
+    const b = Art.bake(sp, Art.speciesColours(species, st, gear as null, level), st, st.cOutline, mk) as Baked;
     if (!gear || Object.keys(gear).every(k => k === "face")) b.eyes = eyeMask(sp.m); // (an expression alone keeps the find-in-the-dark eyes)
     b.head = headPoint(sp.m, b.w, b.h);
     out.push(b);
