@@ -26,6 +26,8 @@ async function serve(directory) {
 }
 async function main() {
   const started = Date.now(), out = path.resolve('proof-results');
+  const mode = process.env.PROOF_MODE || 'fast';
+  if (!['fast', 'pixels'].includes(mode)) throw Error('Unknown proof mode');
   fs.mkdirSync(out, { recursive: true });
   const baselineSha = process.env.PROOF_BASE_SHA, candidateSha = process.env.PROOF_HEAD_SHA;
   if (!/^[a-f0-9]{40}$/.test(baselineSha || '') || !/^[a-f0-9]{40}$/.test(candidateSha || '')) throw Error('Require immutable baseline and candidate SHAs');
@@ -38,7 +40,7 @@ async function main() {
       const log = fs.createWriteStream(path.join(dir, 'log.txt')), start = Date.now();
       const code = await new Promise((resolve, reject) => {
         const child = spawn(process.execPath, [proof.script, base.url, baselineSha, candidate.url, candidateSha], {
-          env: { ...process.env, PAUSE_PROOF_OUT: dir, PAUSE_TRACE_PIXELS: '1', PAUSE_BASELINE_RESULT: path.resolve(`proof-cache/${proof.id}.json`) },
+          env: { ...process.env, PAUSE_PROOF_MODE: mode, PAUSE_PROOF_OUT: dir, PAUSE_TRACE_PIXELS: mode === 'pixels' ? '1' : '0', PAUSE_BASELINE_RESULT: path.resolve(`proof-cache/${proof.id}-${mode}.json`) },
           stdio: ['ignore', 'pipe', 'pipe'],
         });
         child.stdout.on('data', data => { process.stdout.write(data); log.write(data); });
@@ -50,9 +52,9 @@ async function main() {
     }
   } finally {
     await Promise.all(servers.map(s => s.close()));
-    const summary = { baselineSha, candidateSha, wallSeconds: (Date.now() - started) / 1000, results };
+    const summary = { mode, baselineSha, candidateSha, wallSeconds: (Date.now() - started) / 1000, results };
     fs.writeFileSync(path.join(out, 'summary.json'), JSON.stringify(summary, null, 2));
-    const text = ['## Proofs', `Baseline: ${baselineSha}; candidate: ${candidateSha}`, ...results.map(r => `- ${r.proof}: **${r.status}**, ${r.seconds.toFixed(1)} s${r.seconds > 240 ? ' (SLOW: over four minutes)' : ''}`), `Runner wall time: ${(summary.wallSeconds / 60).toFixed(2)} minutes. Job setup is additional; use the Actions job duration for total added wall minutes.`, 'Failure evidence: proof-results artifact (logs, repaint PNGs, diff and pixel-submissions JSON when a mismatch is found).'].join('\n') + '\n';
+    const text = ['## Proofs', `Mode: ${mode}. Baseline: ${baselineSha}; candidate: ${candidateSha}`, ...results.map(r => `- ${r.proof}: **${r.status}**, ${r.seconds.toFixed(1)} s${r.seconds > 240 ? ' (SLOW: over four minutes)' : ''}`), `Runner wall time: ${(summary.wallSeconds / 60).toFixed(2)} minutes. Job setup is additional; use the Actions job duration for total added wall minutes.`, 'Failure evidence: proof-results artifact (logs; nightly repaint PNGs, diff and pixel-submissions JSON when a mismatch is found).'].join('\n') + '\n';
     fs.writeFileSync(path.join(out, 'summary.md'), text);
     if (process.env.GITHUB_STEP_SUMMARY) fs.appendFileSync(process.env.GITHUB_STEP_SUMMARY, text);
   }

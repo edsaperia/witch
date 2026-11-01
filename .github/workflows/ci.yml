@@ -346,6 +346,7 @@ jobs:
     if: ${{ !cancelled() && needs.build.result == 'success' && github.event_name == 'pull_request' && !startsWith(github.head_ref, 'claude/release-') && !startsWith(github.head_ref, 'claude/rel-') && !startsWith(github.head_ref, 'release/') && !contains(github.head_ref, '/release/') && github.head_ref != 'claude/publish-snapshot' && !startsWith(github.event.pull_request.title, 'Release:') && !startsWith(github.event.pull_request.title, 'Release check:') && !startsWith(github.event.pull_request.title, 'Publish:') }}
     env:
       PLAYWRIGHT_VERSION: 1.56.1
+      PROOF_MODE: fast
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -385,7 +386,7 @@ jobs:
           path: |
             proof-baseline/dist
             proof-cache
-          key: proofs-v1-${{ runner.os }}-node22-pw${{ env.PLAYWRIGHT_VERSION }}-${{ steps.baseline.outputs.sha }}-${{ hashFiles('tools/ci/*proof*', 'tools/smoke/paused-*.cjs') }}
+          key: proofs-v2-fast-${{ runner.os }}-node22-pw${{ env.PLAYWRIGHT_VERSION }}-${{ steps.baseline.outputs.sha }}-${{ hashFiles('tools/ci/*proof*', 'tools/smoke/paused-*.cjs') }}
       - name: Prepare immutable baseline (never rebuild candidate)
         id: prepare-baseline
         env:
@@ -399,7 +400,7 @@ jobs:
         run: node tools/ci/run-proofs.cjs
       - uses: actions/cache/save@v4
         # Preserve a completed baseline even when the candidate fails. No restore prefixes.
-        if: ${{ always() && steps.prepare-baseline.outcome == 'success' && steps.proof-cache.outputs.cache-hit != 'true' && hashFiles('proof-cache/paused-world.json') != '' }}
+        if: ${{ always() && steps.prepare-baseline.outcome == 'success' && steps.proof-cache.outputs.cache-hit != 'true' && hashFiles('proof-cache/paused-world-fast.json') != '' }}
         with:
           path: |
             proof-baseline/dist
@@ -409,7 +410,7 @@ jobs:
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: proof-results
+          name: proof-results-${{ github.run_attempt }}
           path: proof-results
           retention-days: 14
           if-no-files-found: warn

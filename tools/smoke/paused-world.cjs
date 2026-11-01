@@ -4,6 +4,7 @@ const fs = require('node:fs/promises');
 const path = require('node:path');
 const { assertRepaint } = require('./paused-pixels.cjs');
 const { worldSettled } = require('./paused-settle.cjs');
+const pixels = process.env.PAUSE_PROOF_MODE !== 'fast';
 let playwright;
 try { playwright = require('playwright'); } catch { playwright = require('/opt/node22/lib/node_modules/playwright'); }
 
@@ -169,11 +170,11 @@ async function measure(browser, url, sha, candidate) {
         }
         return result;
       };
-    }, candidate && process.env.PAUSE_TRACE_PIXELS === '1');
+    }, candidate && pixels && process.env.PAUSE_TRACE_PIXELS === '1');
     // Normal live frames finish budgeted art/ground/grass work before the pause fixture.
     // Repeated polling of one slow frame cannot establish stability.
-    try {
-      const settled = await page.waitForFunction(worldSettled, null, { timeout: 30000, polling: 250 });
+    if (pixels && candidate) try {
+      const settled = await page.waitForFunction(worldSettled, null, { timeout: Number(process.env.PAUSE_SETTLE_MS || 30000), polling: 250 });
       console.log(JSON.stringify({ sha, worldSettled: await settled.jsonValue() }));
       await settled.dispose();
     } catch (error) {
@@ -203,7 +204,7 @@ async function measure(browser, url, sha, candidate) {
       }
       return measurement;
     };
-    if (candidate) {
+    if (candidate && pixels) {
       await page.evaluate(() => { window.pauseProbe.sample = true; });
       await page.waitForFunction(() => window.pauseProbe.pixels !== null);
     }
@@ -217,6 +218,7 @@ async function measure(browser, url, sha, candidate) {
     await page.getByRole('button', { name: /show settings page/i }).click();
     await page.waitForSelector('#settings-page.open');
     await hold('settings', 10000);
+    if (!pixels) return; // PR gate: pause + Settings draw holds only; pixel fixture belongs to nightly.
     await page.keyboard.press('Escape');
     await page.waitForSelector('#settings-page.open', { state: 'hidden' });
     await page.waitForSelector('body.paused');
