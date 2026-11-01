@@ -103,6 +103,18 @@ Screens guarded expert-search coverage against the frozen study requirements.
 
 Fixed coordinator6520033543 screen.
 
+## `expert-opening-summary.mjs`
+
+Streaming summaries of delayed expert observations; never an input to the bot.
+
+## `expert-opening-trace.mjs`
+
+Canonical cloud-only diagnostic: one fixed 120-player-second opening, 180s wall, 512MiB worker RSS ceiling.
+
+```
+node tools/balance/expert-opening-trace.mjs --out docs/notes/expert-results/opening-diagnostic
+```
+
 ## `expert-progress.mjs`
 
 Observed outcome events only.
@@ -289,6 +301,7 @@ node tools/balance/waves.mjs --report a.json,b.json,...   (merge several runs' J
 - `expert-execution.test.mjs`
 - `expert-guarded-coverage-screen.test.mjs`
 - `expert-known-quest-screen.test.mjs`
+- `expert-opening-summary.test.mjs`
 - `expert-progress.test.mjs`
 - `expert-search-core.test.mjs`
 - `expert-space.test.mjs`

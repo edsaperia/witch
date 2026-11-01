@@ -89,6 +89,15 @@ export function newCampaign(parameters: Partial<typeof CAMPAIGN_DEFAULTS> = {}) 
       return { kind: "wait", at: feed.at, doing: "waiting for berries to heal or grow an animal" };
     }
     const at = front(o), youths = o.carried.filter(a => a.level === 1);
+    // Heal an injured adult before assigning its post. Keep existing jobs,
+    // safety checks and the feeding deadline/cooldown ahead of this decision.
+    const hurtAdult = C.troops.find(a => a.level >= 2 && a.hurt && o.carried.some(c => c.id === a.id));
+    const healingBerry = hurtAdult && o.playerTime >= feedAgain
+      ? C.berries.filter(p => distance(o.self, p) < K.feedRange).sort((a, b) => distance(o.self, a) - distance(o.self, b))[0] : null;
+    if (hurtAdult && healingBerry) {
+      feed = { id: hurtAdult.id, at: { ...healingBerry }, until: o.playerTime + 40, level: hurtAdult.level, phase: "drop" };
+      return { kind: "drop", at: healingBerry, id: hurtAdult.id, doing: "taking a hurt animal to berries" };
+    }
     // Adult strength is committed to a nearby battlefield. Keep several youths
     // mobile; do not ground the entire travelling party for a distant flask.
     const flask = C.flasks.filter(p => at && distance(p, at) < 80 && distance(o.self, p) < 60)[0];

@@ -2,6 +2,41 @@
 
 ## Campaign strategy (Ed's direct brief, 2026-10-31)
 
+Ed's2026-11-01 go-ahead and coordinator6552074465 authorize a narrow injured-adult
+priority fix and preparation of one cloud diagnostic, not a training restart.
+With a healthy witch, no danger, no existing job and nearby ripe berries, an
+injured carried adult now starts the existing40s feeding job before a new post.
+The same safety cancellation, cooldown and observed-healing retrieval apply.
+Pure decision regression failed on the posting choice before the fix; it also
+covers adult healing without growth and preserves timeout/danger behavior.
+This defect has not been established as a cause of the historical losses.
+
+Canonical cloud invocation (not run locally):
+
+```
+node tools/balance/expert-opening-trace.mjs --out docs/notes/expert-results/opening-diagnostic-1
+```
+
+The Linux-only script permits exactly one fixed home/world0/night1000 case,
+Satchel/no hat/bare broom, default expert,120player seconds. It refuses existing
+output, resume and direct unmonitored worker invocation. A separate parent caps
+the entire job at180wall seconds and monitors worker RSS/VmHWM every25ms against
+512MiB; the child also has a384MiB V8 old-space limit. The RSS ceiling can overshoot
+between samples and is not total machine memory. Failure/cap output is incomplete,
+never an accepted result. The script is prepared for the coordinator's container;
+the Linux process watchdog has not been exercised here.
+
+Summary binds the source commit/fingerprint/runtime and records player-time phase
+and action durations, visible/carried species-age animal-seconds, observed level
+increases, posting presses followed by observed placed sigils, repeated action
+episodes, total wall time and worker peak RSS. It uses the existing delayed expert
+trace callback; outcome summaries never feed back into its controls. These are
+observed transitions, not proof of berry causation or stuck jobs. No full trace
+arrays are retained in memory. Completed cases per wall-minute applies only to
+this120s opening, not full-night throughput. A full-night search still requires
+a measured, separately allocated throughput plan and fresh matched baseline;
+historical results retain their old sources.
+
 Ed requested training on2026-10-31. `--campaign-only` searches only
 `mobileYouths`, `feedRange`, `adultPostRange`, `speciesPenalty`, `flaskGroup`;
 default values remain3/80/140/250/3. With an exact `--cases` matrix all gear and

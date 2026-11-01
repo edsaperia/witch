@@ -33,6 +33,27 @@ test("baby feeding waits for actual growth then retrieves its observed sigil", (
   expect(p.choose(o)).toMatchObject({ kind: "pickup", id: 1, at: { x: 8, z: 0 } });
   carry(o, animal(1)); p.observe(o); expect(p.choose(o)).toBeNull();
 });
+
+test("a carried hurt adult heals before being posted, then is retrieved without growing", () => {
+  const o = frame(), p = newCampaign(); carry(o, animal(1, 2));
+  o.campaign!.troops[0].hurt = true; o.campaign!.berries = [{ x: 8, z: 0 }]; p.observe(o);
+  expect(p.choose(o)).toMatchObject({ kind: "drop", id: 1, at: { x: 8, z: 0 }, doing: "taking a hurt animal to berries" });
+  o.carried = []; o.campaign!.troops[0].placed = { x: 8, z: 0 }; o.playerTime = 1; p.observe(o);
+  expect(p.choose(o)?.kind).toBe("wait");
+  o.campaign!.troops[0].hurt = false; o.playerTime = 2; p.observe(o);
+  expect(p.choose(o)).toMatchObject({ kind: "pickup", id: 1 });
+  expect(o.campaign!.troops[0].level).toBe(2);
+});
+
+test("adult healing keeps danger cancellation and feeding timeout cooldown", () => {
+  const o = frame(), p = newCampaign(); carry(o, animal(1, 2));
+  o.campaign!.troops[0].hurt = true; o.campaign!.berries = [{ x: 8, z: 0 }]; p.observe(o);
+  o.windups = [{ x: 20, z: 0 }]; expect(p.choose(o)).toBeNull();
+  o.windups = []; p.choose(o); // Begin healing safely.
+  o.playerTime = 41; p.observe(o); // Existing40s deadline expires.
+  expect(p.choose(o)?.doing).toBe("positioning an adult for an upcoming fight");
+  expect(p.snapshot().feeding).toBeNull();
+});
 test("retains three travelling youths, and only deliberately grows a surplus youth near its post", () => {
   const o = frame(), p = newCampaign(); o.next = { x: 30, z: 0 }; o.campaign!.berries = [{ x: 10, z: 0 }];
   carry(o, animal(1), animal(2), animal(3)); p.observe(o); expect(p.choose(o)).toBeNull();
