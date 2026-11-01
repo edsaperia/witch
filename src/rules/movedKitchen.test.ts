@@ -14,6 +14,7 @@ function atRoom(g: Game, id: number, room: string) { const r = HOUSE_ROOMS.rooms
 it("uses Dining for basket use/unload and spatial smoke entrants, retaining timing and exclusions", () => {
   installEdLayout(true); const g = game(), plan = kitchenPlan(), basket = kitchenLayout(g).baskets.find(b => b.type === "red")!;
   expect(plan.room.id).toBe("dining"); expect(plan.cauldron).toMatchObject({ x: -16.73, z: 28.9 });
+  for (const b of kitchenLayout(g).baskets) { Object.assign(g.witches[0].body, b); expect(inKitchen(g, g.witches[0]), b.type).toBe(true); expect(basketNear(g)?.type).toBe(b.type); }
   Object.assign(g.witches[0].body, basket); atRoom(g, 1, "kitchen");
   for (const id of [2, 3, 4]) atRoom(g, id, "dining"); atRoom(g, 5, "kitchen");
   g.witches[2].ko = { inAt: 0 } as NonNullable<Witch["ko"]>; g.witches[3].body.mode = "treetop"; g.witches[4].body.seated = true;
