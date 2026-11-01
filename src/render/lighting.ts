@@ -224,7 +224,7 @@ vec3 nightLightShaded(vec3 N, vec3 P, float moonK) {
     if (ld >= reach) continue;
     float ndl = max(0.0, dot(N, lv / max(ld, 1e-4))) * 0.7 + 0.3;
     float fall = 1.0 - ld / reach;
-    l += uLightCol[i].rgb * lightPattern(P - uLightPos[i].xyz, uLightPattern[i], vec2(1.0, 0.0)) * min(1.0, ndl * fall * fall * uLightCol[i].w);
+    l += uLightCol[i].rgb * lightPattern(P - uLightPos[i].xyz, uLightPattern[i], vec2(1.0, 0.0), ld) * min(1.0, ndl * fall * fall * uLightCol[i].w);
   }
   l = l * uDim + gladeLight(P); // (inside a clearing the forest goes dark: Ed, 2026-10-06; render/glades.ts)
   if (uDisco.w > 0.5) {

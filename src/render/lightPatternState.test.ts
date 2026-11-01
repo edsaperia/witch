@@ -4,8 +4,8 @@ import { IDENTITY_PATTERN, PatternSlots, patternOptions, sourcePattern, speakerP
 it('has one explicit off switch and three repeatable soundsystem looks', () => {
   const clock = newBeatClock(120);
   expect(patternOptions('?patternlight=off')).toBe('off');
-  expect(patternOptions('?patternlight=unknown')).toBe('auto');
-  expect(patternOptions('')).toBe('auto');
+  expect(patternOptions('?patternlight=unknown')).toBe('off');
+  expect(patternOptions('')).toBe('off');
   expect(patternOptions('?patternlight=auto')).toBe('auto');
   expect(speakerPattern(clock, 10, 'off', false)).toBe(IDENTITY_PATTERN);
   expect(speakerPattern(clock, 10, 'auto', true)).toBe(IDENTITY_PATTERN);
@@ -13,8 +13,8 @@ it('has one explicit off switch and three repeatable soundsystem looks', () => {
   expect([8, 72, 136].map(beat => speakerPattern(clock, timeAt(clock, beat), 'auto', false)[0])).toEqual([1, 2, 3]);
   expect(speakerPattern(clock, timeAt(clock, 64), 'auto', false)[2]).toBe(0);
 });
-it('forces the default-on speaker and home lantern off with reduced flashing', () => {
-  const look = patternOptions(''), clock = newBeatClock(120);
+it('forces the opt-in speaker and home lantern off with reduced flashing', () => {
+  const look = patternOptions('?patternlight=auto'), clock = newBeatClock(120);
   expect(look).toBe('auto');
   expect(speakerPattern(clock, 20, look, false)[2]).toBe(.9);
   expect(speakerPattern(clock, 20, look, true)).toBe(IDENTITY_PATTERN);

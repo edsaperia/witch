@@ -11,7 +11,7 @@
     "stripes",
     "bands"
    ],
-   "does": "Patterned lighting is on by default: use off to compare original lighting, auto to cycle, or hold a soundsystem projection look.",
+   "does": "Optional patterned lighting: auto cycles, spokes/stripes/bands hold a look, off keeps original lighting. Omitted or unknown values stay off pending performance acceptance.",
    "group": "compare",
    "since": "2026-10-31",
    "readIn": [

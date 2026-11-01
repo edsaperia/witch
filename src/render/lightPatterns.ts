@@ -10,6 +10,11 @@ export interface LightPoint { x: number; y: number; z: number }
 export const PATTERN_DEFAULTS = { scale: 6, contrast: .9, beatsPerTurn: 32, projectorCap: 3 } as const;
 const TAU = Math.PI * 2;
 const clamp = (n: number, lo: number, hi: number) => Math.max(lo, Math.min(hi, n));
+/** Prepare only spatially constant work, using the same phase/scale precision sent to GLSL. */
+export function prepareLightPattern(scale: number, phase: number): [number, number] {
+  scale = Math.fround(scale); phase = Math.fround(phase);
+  return [1 / Math.max(.1, scale), clamp(.5 + .3 * Math.sin(phase) + .2 * Math.sin(phase * 1.73 + 1.2), 0, 1)];
+}
 
 /** Absolute musical phase: deterministic across frame subdivision, tempo ramps and pauses. */
 export function lightPatternPhase(clock: BeatClock, gameTime: number): number {
@@ -49,13 +54,14 @@ export function lightPatternSample(point: LightPoint, origin: LightPoint, patter
   return channels.map(value => 1 - contrast + contrast * clamp(value, 0, 1)) as [number, number, number];
 }
 
-/** Shared by ground, trunks and creatures through LIGHT_GLSL. Parameters: kind/scale/contrast/phase.
+/** Shared by ground, trunks and creatures through LIGHT_GLSL. Packed parameters: kind/inverse scale/contrast/phase
+ *  (flicker stores its prepared scalar in the phase field).
  *  Rotation is supplied separately. Modulates incident RGB only; not normals, occlusion or shadows. */
 export const LIGHT_PATTERN_GLSL = /* glsl */ `
-vec3 lightPattern(vec3 relativeWorld, vec4 pattern, vec2 rotation) {
+vec3 lightPattern(vec3 relativeWorld, vec4 pattern, vec2 rotation, float lightDistance) {
   if (pattern.x < 0.5 || pattern.z <= 0.0) return vec3(1.0);
   vec3 p = vec3(dot(relativeWorld.xz, rotation), relativeWorld.y,
-    dot(relativeWorld.xz, vec2(-rotation.y, rotation.x))) / max(0.1, pattern.y);
+    dot(relativeWorld.xz, vec2(-rotation.y, rotation.x))) * pattern.y;
   float stripe = p.x + 0.35 * p.y + 0.25 * p.z;
   float wave = 0.5;
   vec3 bands;
@@ -67,8 +73,8 @@ vec3 lightPattern(vec3 relativeWorld, vec4 pattern, vec2 rotation) {
   else if (pattern.x < 3.5) {
     bands = 0.5 + 0.5 * sin(vec3(stripe * 6.28318530718 - pattern.w) + vec3(0.0, 2.09439510239, 4.18879020479));
     return mix(vec3(1.0), clamp(bands, 0.0, 1.0), clamp(pattern.z, 0.0, 1.0));
-  } else if (pattern.x < 4.5) wave = 0.5 + 0.3 * sin(pattern.w) + 0.2 * sin(pattern.w * 1.73 + 1.2);
-  else wave = 0.5 + 0.5 * sin(length(p) * 6.28318530718 - pattern.w);
+  } else if (pattern.x < 4.5) wave = pattern.w;
+  else wave = 0.5 + 0.5 * sin(lightDistance * pattern.y * 6.28318530718 - pattern.w);
   return vec3(mix(1.0, clamp(wave, 0.0, 1.0), clamp(pattern.z, 0.0, 1.0)));
 }
 `;
