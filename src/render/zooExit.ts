@@ -23,7 +23,7 @@ export function miniTreehouse(v: View, angle: number): SpriteInstance[] {
   const ox = (T.base.x - f[0].w / 2) * mpp * k, d = pad * mpp * k;
   // (as placeTreehouse stands the big one: its roots below the foot lie on the ground nearer the camera)
   const x = s.x - R.x * ox - U.x * d, z = s.z + (below * upOnScreen) / Math.max(0.2, Math.sin(pitch)) - R.z * ox - U.z * d;
-  const lit = atZooExit(v.game.map, v.game.witch) ? 0.18 + 0.12 * Math.cos((2 * Math.PI * performance.now()) / 1400) : 0;
+  const lit = atZooExit(v.game.map, v.game.witch) ? 0.18 + 0.12 * Math.cos((2 * Math.PI * v.game.clock.time) / 1.4) : 0;
   return [f[0], f[1]].filter(Boolean).map(frame => ({ x, y: -U.y * d, z, frame, flip: false, scale: k, glow: lit }));
 }
 

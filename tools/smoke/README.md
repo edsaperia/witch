@@ -206,6 +206,10 @@ npm run build && node tools/smoke/partyspell.cjs [out dir] [seed]
 
 The pause page over everything: each overlay opened in turn, then Esc: the pause page's sliders are on top where they stand, nothing of the overlay is hit in the middle of the screen, a key and the pad reach nothing under it, and Esc again comes back to…
 
+## `paused-world.cjs`
+
+Canonical runner: node tools/smoke/paused-world.cjs BASE_URL BASE_SHA CANDIDATE_URL CANDIDATE_SHA
+
 ## `places.cjs`
 
 Screenshots of named places, for before/after sheets of scenery fixes: the built game at 1280x720 on a seed, waves off, the witch on the ground at each place in turn, the art let in and the game paused for the shot.

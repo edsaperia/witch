@@ -442,7 +442,7 @@ export function placeTreehouse(v: View, angle: number, time: number): { x: numbe
     const dx = (T.foreBox.x + ff.w / 2 - f[0].w / 2) * mpp, dy = (f[0].h - T.foreBox.y - ff.h) * mpp;
     const p0 = { x: at.x + R.x * dx + U.x * dy, y: at.y + R.y * dx + U.y * dy, z: at.z + R.z * dx + U.z * dy };
     // (lit while E there starts the party, as the house's objects she can use are: Ed's playtest, 2026-10-26; render/useGlow.ts's breath)
-    const g = v.game, lit = !!g.wake?.open && g.party.spellAt === null && atDecks(g) ? 0.18 + 0.12 * Math.cos((2 * Math.PI * performance.now()) / 1400) : 0;
+    const g = v.game, lit = !!g.wake?.open && g.party.spellAt === null && atDecks(g) ? 0.18 + 0.12 * Math.cos((2 * Math.PI * g.clock.time) / 1.4) : 0;
     items.push(deckAt ? ent(p0, ED.near + DJ_DEPTH.fore - DJ_DEPTH.her, ff, { overlay: true, glow: lit }) : { ...nearerCamera(v, p0, DJ_DEPTH.fore), frame: ff, flip: false, overlay: true, glow: lit });
     terrace.add(items[items.length - 1]);
   }

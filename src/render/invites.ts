@@ -252,7 +252,7 @@ export class InviteView {
         if (e.kind === "blocked") { this.pop("💢", e.x, head(e.id) * 0.6 + 0.5, e.z, time); this.crumple(e, head(e.id) * 0.5, time); }
         if (e.kind === "happy") won.push(e.id);
         if (e.spent) continue;
-        if (e.kind === "hit") { letterLanded(e.id); landedNow.add(e.id); } // (its flash and squash: render/impact.ts)
+        if (e.kind === "hit") { letterLanded(g.clock, e.id); landedNow.add(e.id); } // (its flash and squash: render/impact.ts)
         let b = this.replies.get(e.id);
         if (!b) { b = this.bubble(e.id); this.replies.set(e.id, b); }
         if (e.kind !== "happy" && b.until > time + 0.4) continue; // (still showing its last)
@@ -309,7 +309,7 @@ export class InviteView {
       if (time >= b.until || c.gone) { b.el.remove(); this.replies.delete(id); continue; }
       const hd = heads?.get(id); // (its tail over its head: Ed, 2026-10-12)
       place(b.el, hd?.x ?? c.x, head(id) + 0.9, hd?.z ?? c.z);
-      const seen = this.sight.step(`r${id}`, sightOf(w, c.x, c.z, t.bubbles.near, t.bubbles.fade), performance.now() / 1000, t.bubbles.ease);
+      const seen = this.sight.step(`r${id}`, sightOf(w, c.x, c.z, t.bubbles.near, t.bubbles.fade), g.clock.time, t.bubbles.ease);
       b.el.style.opacity = seen.toFixed(2);
       if (seen < 0.01) b.el.style.visibility = "hidden";
     }
