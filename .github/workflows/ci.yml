@@ -216,7 +216,9 @@ jobs:
         run: exit 1
       - uses: actions/checkout@v4
         with:
-          fetch-depth: 0
+          # PR merge checkout includes both parents: the event base and tested head.
+          # Missing or older ancestry still makes test-scope run the complete suite.
+          fetch-depth: 2
       - uses: actions/setup-node@v4
         with:
           node-version: 22
@@ -226,6 +228,7 @@ jobs:
         run: node tools/ci/run-unit.mjs
         env:
           VITEST_SHARD: ${{ matrix.shard }}/4
+          UNIT_BALANCE: "1"
       - name: Failure annotation totals
         if: always()
         run: node tools/ci/annotations.cjs --summary
@@ -234,22 +237,22 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: unit-selection-${{ matrix.shard }}
-          path: ci-unit-results.json
+          path: |
+            ci-unit-results.json
+            ci-unit-timings.json
           if-no-files-found: ignore
           retention-days: 14
     needs:
       - build
       - deploy
     if: ${{ !cancelled() }}
-  check:
+  check-work:
     runs-on: ubuntu-latest
     steps:
-      - name: Require the build, main publication and every unit shard
-        if: ${{ needs.build.result != 'success' || needs.unit.result != 'success' || (github.ref == 'refs/heads/main' && needs.deploy.result != 'success') }}
+      - name: Require the build and main publication
+        if: ${{ needs.build.result != 'success' || (github.ref == 'refs/heads/main' && needs.deploy.result != 'success') }}
         run: exit 1
       - uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
       - uses: actions/setup-node@v4
         with:
           node-version: 22
@@ -266,7 +269,20 @@ jobs:
     needs:
       - build
       - deploy
+    if: ${{ !cancelled() }}
+  # Preserve the required status name; work above runs alongside unit shards.
+  # Explicit success comparisons reject failed, skipped and cancelled prerequisites.
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Require the build, main publication, check work and every unit shard
+        if: ${{ needs.build.result != 'success' || needs.unit.result != 'success' || needs.check-work.result != 'success' || (github.ref == 'refs/heads/main' && needs.deploy.result != 'success') }}
+        run: exit 1
+    needs:
+      - build
+      - deploy
       - unit
+      - check-work
     if: ${{ !cancelled() }}
   smoke:
     runs-on: ubuntu-latest

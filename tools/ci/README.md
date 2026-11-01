@@ -58,6 +58,11 @@ Conservative unit-test selection.
 
 Refresh tools/ci/unit-timings.json from a full Vitest JSON report; it only balances the CI shards.
 
+```
+node tools/ci/unit-timings.mjs <one or more downloaded ci-unit-timings.json files>
+node tools/ci/unit-timings.mjs --source <run URL> --ci-log <gh run view --log output>
+```
+
 ## `vitest-reporter.mjs`
 
 Extra CI-only Vitest reporter: test names, first assertion and source location, alongside the default reporter.
