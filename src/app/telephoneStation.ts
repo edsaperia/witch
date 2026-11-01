@@ -5,6 +5,7 @@ import { onlineSession, type SessionOptions } from "../platform/online/session";
 import { localView } from "../platform/online/localView";
 import type { StationChoice } from "../platform/online/stationChoice";
 import { visitPreferences } from "./visitPreferences";
+import { telephoneActor } from "./telephoneActor";
 
 /** The ordinary station's lifetime/input seam. Call admission stays off until the actual guest/save hooks are bound. */
 export function telephoneStation(options: Pick<TelephoneOptions, "storage" | "loadIdentity" | "menu" | "socket"> & { session?: SessionOptions }) {
@@ -42,12 +43,14 @@ export function telephoneStation(options: Pick<TelephoneOptions, "storage" | "lo
       return Object.assign(presentation!.update(dt, zoom), { tuning: preferences.tuning(game) });
     },
     use(game: Game, id: string): void {
-      if (game.witches[0].ko || HOUSE_ROOMS.objects.find(o => o.id === id)?.use.kind !== "telephone") return;
+      const actor = telephoneActor(game, session?.role === "guest");
+      if (!actor || actor.ko || HOUSE_ROOMS.objects.find(o => o.id === id)?.use.kind !== "telephone") return;
       night = game; object = id; void phone.show(!phone.open);
     },
     /** Also closes before sailing/replacement, knockout or leaving the telephone's reach; never mutates a game/save. */
     frame(game: Game | null, now: number): void {
-      if (phone.open && (!game || night !== game || game.witches[0].ko || !game.witch.perch || objectAt(game.map.treehouse, game.witch.x, game.witch.z)?.use.kind !== "telephone")) close();
+      const actor = telephoneActor(game, session?.role === "guest");
+      if (phone.open && (!game || night !== game || !actor || actor.ko || !actor.body.perch || objectAt(game.map.treehouse, actor.body.x, actor.body.z)?.use.kind !== "telephone")) close();
       if (phone.open) phone.pollPad(typeof navigator !== "undefined" && navigator.getGamepads ? [...navigator.getGamepads()].find(p => p) ?? null : null, now);
     },
     close,
