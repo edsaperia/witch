@@ -259,16 +259,23 @@ export function hatToTake(W: Witch, at: At, x: number, z: number, radius: number
  *  takes it: the one she wore goes down in its place, and bare-headed, her own lying elsewhere stays where it lies (rules/hat.ts
  *  leaveHat). By her own lying there, she picks it up. Nowhere near a hat, nothing. Returns the leash event, or null when the press
  *  did nothing. */
-export function useHats(W: Witch, at: At, x: number, z: number, time: number, radius: number, reach = 0.9): LeashEvent | null {
+export function useHats(W: Witch, at: At, x: number, z: number, time: number, radius: number, reach = 0.9, taken?: (id: string) => boolean): LeashEvent | null {
   const h = hatToTake(W, at, x, z, radius, reach);
   if (!h) return null;
   if (h.slot !== undefined) {
     const hats = floorHats(W), took = hats[h.slot], worn = wearing(W.hat);
+    if (taken?.(took)) return null;
     if (!worn) leaveHat(W.hat, W.spells.hat);
     hats[h.slot] = worn && W.spells.hat !== "none" ? W.spells.hat : "";
     setLoadout(W.spells, took);
     if (HOUSE_ROOMS.layout?.hatPoints.length) reconcileHatPoints(W.house!, HOUSE_ROOMS.layout.hatPoints.length, hatsElsewhere(W));
     return { kind: "hatPicked", id: W.id, x: h.x, z: h.z, at: time };
+  }
+  if (taken) {
+    // Probe the existing exact pickup priority on a copy, before changing a dropped/left hat.
+    const probe = { ...W.hat, down: W.hat.down ? { ...W.hat.down } : null, left: W.hat.left.map(q => ({ ...q })) };
+    const id = HOUSE_ROOMS.layout ? hatButton(probe, h.x, h.z, 0, W.spells.hat) : hatButton(probe, x, z, radius, W.spells.hat);
+    if (id !== null && taken(id)) return null;
   }
   const own = HOUSE_ROOMS.layout ? hatButton(W.hat, h.x, h.z, 0, W.spells.hat) : hatButton(W.hat, x, z, radius, W.spells.hat);
   if (own === null) return null;
