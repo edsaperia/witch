@@ -1,0 +1,5 @@
+{
+  "reason": "Release 1101b = #1570 (sleeping-legend test cost: same assertions on art-lane sprites; test/CI-only, no game change). No frame or rules difference is waived.",
+  "frames": {},
+  "rules": {}
+}
