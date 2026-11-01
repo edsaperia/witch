@@ -1,27 +1,39 @@
 import { expect, it } from 'vitest';
 import { createRequire } from 'node:module';
+import { readFileSync } from 'node:fs';
+import { runInNewContext } from 'node:vm';
 const { percentile, pair, capabilities, quietPolicy, MAX_MS, WORK_MS } = createRequire(import.meta.url)('./patterned-light-cost.cjs');
 it('reports nearest-rank tails without dropping outliers or inventing missing GPU samples', () => {
   expect(percentile([1, 2, 3, 100], .95)).toBe(100);
   expect(() => percentile([], .5)).toThrow(); expect(() => percentile([NaN], .5)).toThrow();
 });
-it('fails closed below five minutes, on input return, incomplete inventory or any external browser', () => {
-  const state={at:'now',idleMs:300000,processInventoryComplete:true,processes:[{Name:'node.exe',ProcessId:1,ParentProcessId:0}]};
-  expect(quietPolicy(state).externalBrowserCount).toBe(0);
-  expect(()=>quietPolicy({...state,idleMs:299999})).toThrow();
-  expect(()=>quietPolicy({...state,processInventoryComplete:false})).toThrow();
-  expect(()=>quietPolicy({...state,processes:[]})).toThrow();
-  expect(()=>quietPolicy(state,undefined,{idleMs:310000})).toThrow();
-  expect(()=>quietPolicy({...state,processes:[{Name:'chrome.exe',ProcessId:4,ParentProcessId:1}]})).toThrow(/proof unavailable/);
+it('rejects missing or invalid input telemetry and records valid input without inventory', () => {
+  for (const state of [undefined, null, {}, { idleMs: NaN }, { idleMs: Infinity }, { idleMs: -1 }]) {
+    expect(() => quietPolicy(state)).toThrow('Input telemetry unavailable');
+  }
+  expect(quietPolicy({ at: 'now', idleMs: 0, lastInputTick: 1 })).toEqual({
+    at: 'now', idleMs: 0, method: 'input-only-record', inputChanged: false,
+  });
 });
-it('exempts only the runner browser and its descendants, never a second browser', () => {
-  const state={idleMs:310000,processInventoryComplete:true,processes:[
-    {Name:'chrome.exe',ProcessId:4,ParentProcessId:1},
-    {Name:'chrome.exe',ProcessId:5,ParentProcessId:4},
-    {Name:'chrome.exe',ProcessId:6,ParentProcessId:5},
-  ]};
-  expect(quietPolicy(state,4).externalBrowserCount).toBe(0);
-  expect(()=>quietPolicy({...state,processes:[...state.processes,{Name:'msedge.exe',ProcessId:7,ParentProcessId:1}]},4)).toThrow();
+it('marks input changes on idle drop or input tick change without rejecting the reading', () => {
+  const previous = { idleMs: 120000, lastInputTick: 1 };
+  expect(quietPolicy({ idleMs: 120001, lastInputTick: 1 }, undefined, previous).inputChanged).toBe(false);
+  expect(quietPolicy({ idleMs: 119999, lastInputTick: 1 }, undefined, previous).inputChanged).toBe(true);
+  expect(quietPolicy({ idleMs: 120001, lastInputTick: 2 }, undefined, previous).inputChanged).toBe(true);
+});
+it('enforces two-minute initial idle in the actual runner checkpoint, then records runtime input', () => {
+  const source = readFileSync(new URL('./patterned-light-cost.cjs', import.meta.url), 'utf8');
+  const start = source.indexOf('const quietCheckpoint=()=>{'), end = source.indexOf('\n  try{', start);
+  expect(start).toBeGreaterThan(0); expect(end).toBeGreaterThan(start);
+  let state = { at: 'now', idleMs: 119999, lastInputTick: 1 };
+  const context = { safetyError: null, launched: false, lastQuiet: undefined,
+    laptopState: () => state, quietPolicy, process: { pid: 1 }, report: {} as { measuredUnderLoad?: boolean; activityFlags?: unknown[] } };
+  const checkpoint = runInNewContext(source.slice(start, end) + '\nquietCheckpoint', context);
+  expect(() => checkpoint()).toThrow('Initial input idle below two minutes');
+  state = { ...state, idleMs: 120000 }; expect(checkpoint().inputChanged).toBe(false);
+  context.launched = true; state = { ...state, idleMs: 0, lastInputTick: 2 };
+  expect(checkpoint().inputChanged).toBe(true); expect(context.report.measuredUnderLoad).toBe(true);
+  expect(context.report.activityFlags).toEqual([{ category: 'input', at: 'now' }]);
 });
 it('refuses mismatches and enforces both canonical thresholds without dropping tail frames', () => {
   const off = { fingerprint: 'same', gpu: Array(48).fill(2) }, on = { fingerprint: 'same', gpu: Array(48).fill(3) };
