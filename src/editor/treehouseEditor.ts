@@ -1,9 +1,10 @@
 import { field } from "../../config/house/shape.js";
-import { EDITOR_HOUSE as HOUSE_ROOMS, attachedPoint, defaultLayout, exportLayout, floorplanKey, hitItem, isHatZone, itemKind, LayoutHistory, layoutItems, normalAngle, parseLayout, physicalRoom } from "./houseLayout";
+import { EDITOR_HOUSE as HOUSE_ROOMS, attachedPoint, exportLayout, floorplanKey, hitItem, isHatZone, itemKind, LayoutHistory, layoutItems, normalAngle, parseLayout, physicalRoom } from "./houseLayout";
+import { publishedLayout } from "./publishedLayout";
 import { HousePreview, type Frame, type Mapping } from "./housePreview";
 import "./treehouseEditor.css";
 
-const items = layoutItems(), identity = floorplanKey(HOUSE_ROOMS, items), initial = defaultLayout(items, identity), history = new LayoutHistory(structuredClone(initial));
+const items = layoutItems(), identity = floorplanKey(HOUSE_ROOMS, items), initial = publishedLayout(items, identity, new URLSearchParams(location.search)), history = new LayoutHistory(structuredClone(initial));
 const preview = new HousePreview(); let selected = items[0].id, ready = false, zoom = 1;
 const bounds = { x0: Math.min(...HOUSE_ROOMS.rooms.map(r => r.x0)) - 3, x1: Math.max(...HOUSE_ROOMS.rooms.map(r => r.x1)) + 3, z0: Math.min(...HOUSE_ROOMS.rooms.map(r => r.z0)) - 3, z1: Math.max(...HOUSE_ROOMS.rooms.map(r => r.z1)) + 3 };
 const fullFrame = (): Frame => ({ x: (bounds.x0 + bounds.x1) / 2, z: (bounds.z0 + bounds.z1) / 2, width: bounds.x1 - bounds.x0, height: bounds.z1 - bounds.z0 });
@@ -25,7 +26,7 @@ const status = (s: string) => { get("status").textContent = s; };
 for (const r of HOUSE_ROOMS.rooms) room.add(new Option(r.label, r.id));
 function list(): void {
   object.replaceChildren();
-  for (const o of items.filter(o => !isHatZone(o) && (!room.value || room.value === physicalRoom(history.value.objects.find(p => p.id === o.id)!)))) object.add(new Option(o.label, o.id));
+  for (const o of items.filter(o => history.value.objects.some(p => p.id === o.id) && !isHatZone(o) && (!room.value || room.value === physicalRoom(history.value.objects.find(p => p.id === o.id)!)))) object.add(new Option(o.label, o.id));
   if (![...object.options].some(o => o.value === selected)) selected = object.options[0]?.value ?? items[0].id;
   object.value = selected;
 }
@@ -37,14 +38,15 @@ function inspector(): void {
   for (const k of ["x", "z", "rotation"] as const) get<HTMLInputElement>(k).value = String(+p[k].toFixed(4));
   get<HTMLInputElement>("rotation").disabled = !!o.hatPoint; get<HTMLButtonElement>("left").disabled = !!o.hatPoint; get<HTMLButtonElement>("right").disabled = !!o.hatPoint;
   get("anchor").textContent = o.kitchen ? `Current potion kitchen: ${o.kitchen.kind === "basket" ? `${o.kitchen.colour} mushrooms · unload / ingredient use` : "large cauldron · ingredients and smoke follow its centre"}. Preview shows empty containers. Placement is exported for runtime review.` : o.hatPoint ? `Spawn point ${o.hatPoint}. A new hat takes the lowest empty point. Each hat is picked up separately; this is not a station.` : o.decor ? "Room clutter has no station interaction. Its identity stays the same when moved to another room." : `Use position: X ${a.x.toFixed(2)}, Z ${a.z.toFixed(2)} m. Rotation is clockwise; 0° faces south. Room names do not change its function.`;
-  get("warning").textContent = field(HOUSE_ROOMS.shape, p.x, p.z, true) > 0 ? "Outside the walkable floor. You can keep arranging it or move it back inside." : o.kitchen && destination !== "kitchen" ? "Outside the kitchen. Potion interactions currently require the kitchen room; review this placement before adoption." : "";
+  const potRoom = physicalRoom(history.value.objects.find(p => p.id === "cauldron")!);
+  get("warning").textContent = field(HOUSE_ROOMS.shape, p.x, p.z, true) > 0 ? "Outside the walkable floor. You can keep arranging it or move it back inside." : o.kitchen && destination !== potRoom ? "Outside the cauldron's room. Potion interactions require the cauldron's room; review this placement before adoption." : "";
 }
 function draw(): void {
   map = preview.draw(plan, items, history.value, selected, frame, false, zoom);
   preview.draw(camera, items, history.value, selected, frame, true, zoom); inspector();
 }
-function changed(): void { draw(); status("Layout changed. Copy settings to keep it; the game has not been changed."); }
-function edit(action: () => void): void { history.save(); action(); changed(); void bakeSelected(); }
+function changed(relist = false): void { if (relist) list(); draw(); status("Layout changed. Copy settings to keep it; the game has not been changed."); }
+function edit(action: () => void, relist = false): void { history.save(); action(); changed(relist); void bakeSelected(); }
 async function bakeSelected(): Promise<void> {
   if (!ready) return;
   pending(1);
@@ -61,9 +63,9 @@ for (const key of ["x", "z", "rotation"] as const) get<HTMLInputElement>(key).on
 get("left").onclick = () => edit(() => { pose().rotation = normalAngle(pose().rotation - 15); });
 get("right").onclick = () => edit(() => { pose().rotation = normalAngle(pose().rotation + 15); });
 get("restore").onclick = () => edit(() => Object.assign(pose(), initial.objects.find(p => p.id === selected)));
-get("reset").onclick = () => { if (confirm("Reset every object to the published layout? You can undo this.")) edit(() => { history.value = structuredClone(initial); }); };
-get("undo").onclick = () => { history.undo(); changed(); void bakeAll(); };
-get("redo").onclick = () => { history.redo(); changed(); void bakeAll(); };
+get("reset").onclick = () => { if (confirm("Reset every object to the published layout? You can undo this.")) edit(() => { history.value = structuredClone(initial); }, true); };
+get("undo").onclick = () => { history.undo(); changed(true); void bakeAll(); };
+get("redo").onclick = () => { history.redo(); changed(true); void bakeAll(); };
 get("fit").onclick = () => { frame = fullFrame(); zoom = 1; draw(); };
 get("focus").onclick = () => { const p = pose(); frame = { x: p.x, z: p.z, width: 28, height: 28 }; zoom = 1; draw(); };
 const zoomBy = (factor: number) => { zoom = Math.max(.5, Math.min(12, zoom * factor)); draw(); };
@@ -74,7 +76,7 @@ get("copy").onclick = async () => {
   catch { settings.focus(); settings.select(); status("Clipboard unavailable. The complete settings are selected below; copy them normally."); }
 };
 get("apply").onclick = () => {
-  try { const value = parseLayout(JSON.parse(settings.value), items, identity); edit(() => { history.value = value; }); void bakeAll(); status(value.migration ? `Version 1 converted explicitly: camera facings preserved. ${value.migration.held.length} changed legacy object(s) held; current kitchen/new clutter retained. Copy to save version 2.` : "Pasted layout applied to both views. The published house is unchanged."); }
+  try { const value = parseLayout(JSON.parse(settings.value), items, identity); edit(() => { history.value = value; }, true); void bakeAll(); status(value.migration ? `Version 1 converted explicitly: camera facings preserved. ${value.migration.held.length} changed legacy object(s) held; current kitchen/new clutter retained. Copy to save version 2.` : "Pasted layout applied to both views. The published house is unchanged."); }
   catch (e) { status(`Could not apply settings: ${e instanceof Error ? e.message : String(e)}`); }
 };
 let drag: { id: string | null; dx: number; dz: number; pan: boolean; x: number; z: number; px: number; py: number } | null = null;
@@ -95,7 +97,7 @@ plan.onpointermove = e => {
 };
 plan.onpointerup = plan.onpointercancel = () => { drag = null; void bakeSelected(); };
 for (const canvas of [plan, camera]) canvas.addEventListener("wheel", e => { e.preventDefault(); zoomBy(e.deltaY < 0 ? 1.12 : 1 / 1.12); }, { passive: false });
-window.addEventListener("keydown", e => { if ((e.target as HTMLElement)?.matches("input,textarea,select")) return; if ((e.ctrlKey || e.metaKey) && e.code === "KeyZ") { e.preventDefault(); if (e.shiftKey) history.redo(); else history.undo(); changed(); void bakeAll(); } });
+window.addEventListener("keydown", e => { if ((e.target as HTMLElement)?.matches("input,textarea,select")) return; if ((e.ctrlKey || e.metaKey) && e.code === "KeyZ") { e.preventDefault(); if (e.shiftKey) history.redo(); else history.undo(); changed(true); void bakeAll(); } });
 new ResizeObserver(draw).observe(get("plan").parentElement!);
 list(); draw();
 async function bakeAll(): Promise<void> {

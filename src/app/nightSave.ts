@@ -4,6 +4,7 @@ import { snapshotGame, type NightSnapshot } from "../rules/nightSnapshot";
 import type { Game } from "../rules/game";
 import type { Loan } from "./loan";
 import { settingsBase, type SettingsBase } from "./playerSettings";
+import { houseLayoutIdentity } from "./houseLayout";
 
 export interface SavedNight {
   version: 1;
@@ -45,7 +46,8 @@ export function savedNight(value: unknown, _build: string, link: URLSearchParams
       (n.look !== null && (!n.look || typeof n.look !== "object" || Array.isArray(n.look))) ||
       (n.loan !== null && (!n.loan || typeof n.loan !== "object" || typeof n.loan.id !== "string" || !n.loan.before))) return null;
   const p = new URLSearchParams(n.params);
-  for (const key of ["seed", "island", "world", "layout"]) if (link.has(key) && link.get(key) !== p.get(key)) return null;
+  for (const key of ["seed", "island", "world"]) if (link.has(key) && link.get(key) !== p.get(key)) return null;
+  if (link.has("layout") && houseLayoutIdentity(link) !== houseLayoutIdentity(p)) return null;
   return n;
 }
 
