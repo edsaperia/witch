@@ -16,7 +16,7 @@ import { type ReadyProgram } from "./programReadiness";
 import { installShaderDrawGate, type ShaderDrawStatus } from "./shaderDrawGate";
 import { LandingArtFade } from './landingReadiness';
 
-import { carrierOf, deckOf } from "../rules/treehouse";
+import { deckOf } from "../rules/treehouse";
 
 import { StationBackdrop } from "./stationBackdrop";
 import type { MapTable } from "./mapTable";
@@ -69,6 +69,7 @@ import { hsv2rgb } from "../../art/generator.js";
 import { Post } from "./post";
 import { GrassView } from "./grass";
 import { SpellFx } from "./spellfx";
+import { dodgeEchoesFor } from "./view/dodgeEchoes";
 import { WitchTrail } from "./trail";
 import { newPartyOverLook } from "./partyOver";
 import { SwoopTrails } from "./swoopTrails";
@@ -175,11 +176,10 @@ export interface ViewStats { berries: number; forestMs: number; forestMissing: n
 export const HAT_BESIDE = 0.9;
 export const HAT_INK = new THREE.Vector3(232 / 255, 180 / 255, 106 / 255); // (the HUD's one accent)
 
-/** Which treehouse an island's art draws: the house (art/ent.js HOUSE), the Ent holding the deck (with the island's legend carrying
- *  it, art/carrier.js), or the old treehouse, "home". */
+/** Which treehouse an island's art draws: the house (art/ent.js HOUSE), the Ent holding the deck, or the old treehouse, "home". */
 function treehouseArtId(game: Game): string {
-  const t = game.tuning, deck = deckOf(game.map, t), carrier = deck ? carrierOf(game.map, t) : null;
-  return deck ? `${deck.house ? "house" : "ent"}:${deck.h}:${deck.r}${carrier ? `:${carrier}` : ""}` : "home";
+  const t = game.tuning, deck = deckOf(game.map, t);
+  return deck ? `${deck.house ? "house" : "ent"}:${deck.h}:${deck.r}` : "home";
 }
 
 /** The deck's one warm lantern (over the map table): its colour, made once. */
@@ -630,6 +630,8 @@ export class View {
   speakerBatch: SpriteBatch | null = null;
   grass!: GrassView;
   spellFx = new SpellFx();
+  /** Opt-in world-pose echo preview, also exposed to the existing capture/debug tools. */
+  get dodgeEchoes() { return dodgeEchoesFor(this); }
   /** Her flight trail: a ribbon of glow in the colour of the area she's over (render/trail.ts). */
   private trail!: WitchTrail;
   private trailRgb = new THREE.Vector3();

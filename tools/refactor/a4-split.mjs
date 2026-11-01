@@ -57,25 +57,39 @@ if (check) {
 
 const previous = replay ? JSON.parse(read(manifestPath)) : null;
 const adoptArg = argv.find(a => a.startsWith('--adopt-source='));
+const refreshArg = argv.find(a => a.startsWith('--refresh-reviewed-source='));
+if (adoptArg && refreshArg) throw new Error('Choose identical-source adoption or reviewed source refresh');
 let adoptedCommit;
-if (adoptArg) {
+if (adoptArg || refreshArg) {
   if (!previous) throw new Error('--adopt-source requires a prior rehearsal and --replay');
-  adoptedCommit = execFileSync('git', ['rev-parse', '--verify', adoptArg.slice('--adopt-source='.length) + '^{commit}'], { encoding: 'utf8' }).trim();
-  execFileSync('git', ['merge-base', '--is-ancestor', adoptedCommit, 'HEAD']);
+  const ref = (refreshArg ?? adoptArg).split('=').slice(1).join('=');
+  adoptedCommit = execFileSync('git', ['rev-parse', '--verify', ref + '^{commit}'], { encoding: 'utf8' }).trim();
+  if (refreshArg) {
+    const mergeHead = execFileSync('git', ['rev-parse', 'MERGE_HEAD'], { encoding: 'utf8' }).trim();
+    if (mergeHead !== adoptedCommit) throw new Error('Reviewed refresh must resolve the active prototype merge');
+    const conflicts = execFileSync('git', ['diff', '--name-only', '--diff-filter=U'], { encoding: 'utf8' }).trim().split('\n').sort();
+    if (JSON.stringify(conflicts) !== JSON.stringify(['src/main.ts', 'src/render/view.ts'])) throw new Error('Refresh expects exactly the two known cut-file conflicts');
+  } else execFileSync('git', ['merge-base', '--is-ancestor', adoptedCommit, 'HEAD']);
   // Adopting a merged base may change other areas and generated metadata, but
   // never silently change the exact two source files that this rehearsal cut.
   for (const file of previous.sources) {
     const source = execFileSync('git', ['show', `${adoptedCommit}:${file.file}`], { encoding: 'utf8', maxBuffer: 8 << 20 });
-    if (hash(source) !== file.sha256) throw new Error(`New base changes ${file.file}; review new cuts before adopting it`);
+    const reviewed = argv.find(a => a.startsWith(`--reviewed-${file.file === 'src/main.ts' ? 'main' : 'view'}=`))?.split('=')[1];
+    if (refreshArg ? reviewed !== hash(source) : hash(source) !== file.sha256) throw new Error(`New base changes ${file.file}; exact reviewed source hash required`);
   }
 }
 if (previous) for (const [f, digest] of Object.entries(previous.outputs)) {
   if (adoptedCommit && ['config/link-switches.json', 'docs/LINK-SWITCHES.md'].includes(f)) continue;
+  if (refreshArg && ['src/main.ts', 'src/render/view.ts'].includes(f)) {
+    const committed = execFileSync('git', ['show', `HEAD:${f}`], { encoding: 'utf8', maxBuffer: 8 << 20 });
+    if (hash(committed) !== digest) throw new Error(`Previous committed cut output differs: ${f}`);
+    continue;
+  }
   if (hash(read(f)) !== digest) throw new Error(`Refusing to overwrite edits: ${f}`);
 }
 if (!replay && fs.existsSync(manifestPath)) throw new Error('Already applied; use --check (never overwrite a rehearsal)');
 const manifest = { schema: 1, sourceCommit: adoptedCommit ?? previous?.sourceCommit ?? execFileSync('git', ['rev-parse', 'HEAD'], { encoding: 'utf8' }).trim(),
-  ...(adoptedCommit || previous?.sourceHistory ? { sourceHistory: [...(previous?.sourceHistory ?? []), ...(adoptedCommit ? [{ from: previous.sourceCommit, to: adoptedCommit, reason: 'merged prototype; both cut source hashes identical' }] : [])] } : {}),
+  ...(adoptedCommit || previous?.sourceHistory ? { sourceHistory: [...(previous?.sourceHistory ?? []), ...(adoptedCommit ? [{ from: previous.sourceCommit, to: adoptedCommit, reason: refreshArg ? 'reviewed prototype source refresh resolving the two owned cut-file conflicts' : 'merged prototype; both cut source hashes identical' }] : [])] } : {}),
   status: 'mechanical rehearsal; typecheck/unit/bench proof pending canonical slot', sources: [], cuts: [], outputs: {} };
 const outputs = new Map();
 const importedSymbols = ast => {

@@ -16,6 +16,11 @@ test('requires rules, exact identities and all quick scene PNGs before compariso
     write('frames.json', frames);
     for (const scene of Object.keys(frames.scenes)) fs.writeFileSync(path.join(root, scene + '.png'), Buffer.from([137,80,78,71,13,10,26,10]));
     assert.equal(completeBenchmark(root, sha).scenes.length, 3);
+    const cli = require('node:child_process').spawnSync(process.execPath,
+      [path.resolve(__dirname, 'a4-proof-artifacts.cjs'), root, root, sha, sha],
+      { cwd: root, encoding: 'utf8', timeout: 5000, windowsHide: true });
+    assert.equal(cli.status, 0, cli.stderr);
+    assert.match(cli.stdout, /both exact sources/); // no repository or A4 manifest in cwd
     assert.throws(() => completeBenchmark(root, 'b'.repeat(40)), /source identity/);
     rules.seeds[0].prints.pop(); write('rules.json', rules);
     assert.throws(() => completeBenchmark(root, sha), /Incomplete rules/);

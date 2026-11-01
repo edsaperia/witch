@@ -1,26 +1,31 @@
 {
   "schema": 1,
-  "sourceCommit": "5b6fcf427a02139b6f531a7a6aba799986e635de",
+  "sourceCommit": "e841734fa1fbfee187e2cd1a29dd3d3ab83e6db7",
   "sourceHistory": [
     {
       "from": "e169c3723369947f26de1ba42a5677ffdea8901e",
       "to": "5b6fcf427a02139b6f531a7a6aba799986e635de",
       "reason": "merged prototype; both cut source hashes identical"
+    },
+    {
+      "from": "5b6fcf427a02139b6f531a7a6aba799986e635de",
+      "to": "e841734fa1fbfee187e2cd1a29dd3d3ab83e6db7",
+      "reason": "reviewed prototype source refresh resolving the two owned cut-file conflicts"
     }
   ],
   "status": "mechanical rehearsal; typecheck/unit/bench proof pending canonical slot",
   "sources": [
     {
       "file": "src/main.ts",
-      "sha256": "ba2e06bcd93b657e308383f248a6f3ffd60c8f6dd9d4be3d2df8fd8c01d0a7ef",
-      "bytes": 126439,
-      "lines": 1516
+      "sha256": "87bef36ad7cd8efc8ec9db68b9b6f51f36a98920a4398ebd78925473b201533b",
+      "bytes": 127003,
+      "lines": 1519
     },
     {
       "file": "src/render/view.ts",
-      "sha256": "e79aff33caacad48d2e98cec7ccf93832193cfef0d602669a408104e1847b50c",
-      "bytes": 146065,
-      "lines": 1944
+      "sha256": "58ba804b5efa1dc6a1db1507d0287a1ec64259ed61e7acca04d9f398f6c5d0c9",
+      "bytes": 146159,
+      "lines": 1947
     }
   ],
   "cuts": [
@@ -209,8 +214,8 @@
       "name": "updatePauseMenus",
       "output": "src/app/pagePause.ts",
       "originalSha256": "adb7b101e5fe65843ba52a5990eba294e7a0d940136394ef4fe520767ce4b4f3",
-      "sourceStart": 117999,
-      "sourceEnd": 118496,
+      "sourceStart": 118563,
+      "sourceEnd": 119060,
       "generatedSha256": "dfe133694f7ab3c321dd8385126eacf4be932958841d5baadf8312b982cbd9f3",
       "outputBodyStart": 2334,
       "outputBodyEnd": 2912,
@@ -633,12 +638,12 @@
       "source": "src/main.ts",
       "name": "installPause8",
       "output": "src/app/pagePause.ts",
-      "originalSha256": "61dcf7bdf56a776ffd23ec4c7ce25cd0b25645ac2005ac0f75ed7d5fb299c7d6",
+      "originalSha256": "cc2cfda3b9b7445089a8c69cbac15b9dae5c251e4f566016b19f24523823d8e1",
       "sourceStart": 54618,
-      "sourceEnd": 57300,
-      "generatedSha256": "83e54b2da99a934c530e738222071832ce1d85b890bab33e80b125a15beaa86a",
+      "sourceEnd": 57488,
+      "generatedSha256": "be3d7de67da899737ce1a4efe4e207d2736f1876f21fa55c64b02150de7221c5",
       "outputBodyStart": 4980,
-      "outputBodyEnd": 8205,
+      "outputBodyEnd": 8411,
       "edits": [
         {
           "start": 0,
@@ -704,347 +709,361 @@
           "generatedStart": 610
         },
         {
-          "start": 562,
-          "end": 574,
+          "start": 566,
+          "end": 578,
           "before": "pauseSliders",
           "after": "pageHost.pauseSliders",
-          "generatedStart": 643
+          "generatedStart": 647
         },
         {
-          "start": 578,
-          "end": 590,
+          "start": 674,
+          "end": 686,
           "before": "pauseSliders",
           "after": "pageHost.pauseSliders",
-          "generatedStart": 668
+          "generatedStart": 764
         },
         {
-          "start": 600,
-          "end": 607,
+          "start": 690,
+          "end": 702,
+          "before": "pauseSliders",
+          "after": "pageHost.pauseSliders",
+          "generatedStart": 789
+        },
+        {
+          "start": 712,
+          "end": 719,
           "before": "creator",
           "after": "pageHost.creator",
-          "generatedStart": 699
+          "generatedStart": 820
         },
         {
-          "start": 638,
-          "end": 650,
+          "start": 750,
+          "end": 762,
           "before": "pauseLoading",
           "after": "pageHost.pauseLoading",
-          "generatedStart": 746
+          "generatedStart": 867
         },
         {
-          "start": 662,
-          "end": 674,
+          "start": 774,
+          "end": 786,
           "before": "pauseLoading",
           "after": "pageHost.pauseLoading",
-          "generatedStart": 779
-        },
-        {
-          "start": 697,
-          "end": 710,
-          "before": "\"./ui/decide\"",
-          "after": "\"../ui/decide\"",
-          "generatedStart": 823
-        },
-        {
-          "start": 773,
-          "end": 792,
-          "before": "\"./ui/visualReport\"",
-          "after": "\"../ui/visualReport\"",
           "generatedStart": 900
         },
         {
-          "start": 822,
-          "end": 832,
+          "start": 809,
+          "end": 822,
+          "before": "\"./ui/decide\"",
+          "after": "\"../ui/decide\"",
+          "generatedStart": 944
+        },
+        {
+          "start": 885,
+          "end": 904,
+          "before": "\"./ui/visualReport\"",
+          "after": "\"../ui/visualReport\"",
+          "generatedStart": 1021
+        },
+        {
+          "start": 934,
+          "end": 944,
           "before": "reportHost",
           "after": "pageHost.reportHost",
-          "generatedStart": 950
+          "generatedStart": 1071
         },
         {
-          "start": 842,
-          "end": 854,
+          "start": 954,
+          "end": 966,
           "before": "pauseSliders",
           "after": "pageHost.pauseSliders",
-          "generatedStart": 979
+          "generatedStart": 1100
         },
         {
-          "start": 876,
-          "end": 882,
+          "start": 1014,
+          "end": 1022,
+          "before": "newBuild",
+          "after": "pageHost.newBuild",
+          "generatedStart": 1169
+        },
+        {
+          "start": 1064,
+          "end": 1070,
           "before": "mutate",
           "after": "mutate: pageHost.mutate",
-          "generatedStart": 1022
+          "generatedStart": 1228
         },
         {
-          "start": 884,
-          "end": 895,
+          "start": 1072,
+          "end": 1083,
           "before": "saveComment",
           "after": "saveComment: pageHost.saveComment",
-          "generatedStart": 1047
+          "generatedStart": 1253
         },
         {
-          "start": 897,
-          "end": 911,
+          "start": 1085,
+          "end": 1099,
           "before": "restoreComment",
           "after": "restoreComment: pageHost.restoreComment",
-          "generatedStart": 1082
+          "generatedStart": 1288
         },
         {
-          "start": 947,
-          "end": 948,
+          "start": 1135,
+          "end": 1136,
           "before": "N",
           "after": "pageHost.N",
-          "generatedStart": 1157
+          "generatedStart": 1363
         },
         {
-          "start": 997,
-          "end": 1009,
+          "start": 1185,
+          "end": 1197,
           "before": "settingsPage",
           "after": "pageHost.settingsPage",
-          "generatedStart": 1216
+          "generatedStart": 1422
         },
         {
-          "start": 1040,
-          "end": 1041,
+          "start": 1228,
+          "end": 1229,
           "before": "N",
           "after": "pageHost.N",
-          "generatedStart": 1268
+          "generatedStart": 1474
         },
         {
-          "start": 1080,
-          "end": 1081,
+          "start": 1268,
+          "end": 1269,
           "before": "N",
           "after": "pageHost.N",
-          "generatedStart": 1317
+          "generatedStart": 1523
         },
         {
-          "start": 1107,
-          "end": 1112,
+          "start": 1295,
+          "end": 1300,
           "before": "BUILD",
           "after": "pageHost.BUILD",
-          "generatedStart": 1353
+          "generatedStart": 1559
         },
         {
-          "start": 1120,
-          "end": 1128,
+          "start": 1308,
+          "end": 1316,
           "before": "knobLive",
           "after": "pageHost.knobLive",
-          "generatedStart": 1375
+          "generatedStart": 1581
         },
         {
-          "start": 1162,
-          "end": 1175,
+          "start": 1350,
+          "end": 1363,
           "before": "openPotionLab",
           "after": "pageHost.openPotionLab",
-          "generatedStart": 1426
+          "generatedStart": 1632
         },
         {
-          "start": 1192,
-          "end": 1204,
+          "start": 1380,
+          "end": 1392,
           "before": "openMusicLab",
           "after": "pageHost.openMusicLab",
-          "generatedStart": 1465
+          "generatedStart": 1671
         },
         {
-          "start": 1297,
-          "end": 1298,
+          "start": 1485,
+          "end": 1486,
           "before": "N",
           "after": "pageHost.N",
-          "generatedStart": 1579
+          "generatedStart": 1785
         },
         {
-          "start": 1370,
-          "end": 1376,
+          "start": 1558,
+          "end": 1564,
           "before": "mutate",
           "after": "pageHost.mutate",
-          "generatedStart": 1661
+          "generatedStart": 1867
         },
         {
-          "start": 1453,
-          "end": 1454,
+          "start": 1641,
+          "end": 1642,
           "before": "N",
           "after": "pageHost.N",
-          "generatedStart": 1753
+          "generatedStart": 1959
         },
         {
-          "start": 1480,
-          "end": 1481,
+          "start": 1668,
+          "end": 1669,
           "before": "N",
           "after": "pageHost.N",
-          "generatedStart": 1789
+          "generatedStart": 1995
         },
         {
-          "start": 1519,
-          "end": 1525,
+          "start": 1707,
+          "end": 1713,
           "before": "params",
           "after": "pageHost.params",
-          "generatedStart": 1837
+          "generatedStart": 2043
         },
         {
-          "start": 1528,
-          "end": 1535,
+          "start": 1716,
+          "end": 1723,
           "before": "creator",
           "after": "pageHost.creator",
-          "generatedStart": 1855
+          "generatedStart": 2061
         },
         {
-          "start": 1543,
-          "end": 1544,
+          "start": 1731,
+          "end": 1732,
           "before": "N",
           "after": "pageHost.N",
-          "generatedStart": 1879
+          "generatedStart": 2085
         },
         {
-          "start": 1625,
-          "end": 1629,
+          "start": 1813,
+          "end": 1817,
           "before": "page",
           "after": "pageHost.page",
-          "generatedStart": 1970
+          "generatedStart": 2176
         },
         {
-          "start": 1640,
-          "end": 1647,
+          "start": 1828,
+          "end": 1835,
           "before": "creator",
           "after": "pageHost.creator",
-          "generatedStart": 1994
+          "generatedStart": 2200
         },
         {
-          "start": 1693,
-          "end": 1697,
+          "start": 1881,
+          "end": 1885,
           "before": "loan",
           "after": "pageHost.loan",
-          "generatedStart": 2056
+          "generatedStart": 2262
         },
         {
-          "start": 1717,
-          "end": 1718,
+          "start": 1905,
+          "end": 1906,
           "before": "N",
           "after": "pageHost.N",
-          "generatedStart": 2089
+          "generatedStart": 2295
         },
         {
-          "start": 1751,
-          "end": 1755,
+          "start": 1939,
+          "end": 1943,
           "before": "loan",
           "after": "pageHost.loan",
-          "generatedStart": 2132
+          "generatedStart": 2338
         },
         {
-          "start": 1854,
-          "end": 1855,
+          "start": 2042,
+          "end": 2043,
           "before": "N",
           "after": "pageHost.N",
-          "generatedStart": 2244
+          "generatedStart": 2450
         },
         {
-          "start": 1986,
-          "end": 1996,
+          "start": 2174,
+          "end": 2184,
           "before": "findsPanel",
           "after": "pageHost.findsPanel",
-          "generatedStart": 2385
+          "generatedStart": 2591
         },
         {
-          "start": 2029,
-          "end": 2030,
+          "start": 2217,
+          "end": 2218,
           "before": "N",
           "after": "pageHost.N",
-          "generatedStart": 2437
+          "generatedStart": 2643
         },
         {
-          "start": 2048,
-          "end": 2056,
+          "start": 2236,
+          "end": 2244,
           "before": "devFinds",
           "after": "pageHost.devFinds",
-          "generatedStart": 2465
+          "generatedStart": 2671
         },
         {
-          "start": 2082,
-          "end": 2088,
+          "start": 2270,
+          "end": 2276,
           "before": "ladder",
           "after": "pageHost.ladder",
-          "generatedStart": 2508
+          "generatedStart": 2714
         },
         {
-          "start": 2113,
-          "end": 2119,
+          "start": 2301,
+          "end": 2307,
           "before": "ladder",
           "after": "pageHost.ladder",
-          "generatedStart": 2548
+          "generatedStart": 2754
         },
         {
-          "start": 2146,
-          "end": 2152,
+          "start": 2334,
+          "end": 2340,
           "before": "ladder",
           "after": "pageHost.ladder",
-          "generatedStart": 2590
+          "generatedStart": 2796
         },
         {
-          "start": 2179,
-          "end": 2185,
+          "start": 2367,
+          "end": 2373,
           "before": "ladder",
           "after": "pageHost.ladder",
-          "generatedStart": 2632
+          "generatedStart": 2838
         },
         {
-          "start": 2197,
-          "end": 2203,
+          "start": 2385,
+          "end": 2391,
           "before": "ladder",
           "after": "pageHost.ladder",
-          "generatedStart": 2659
+          "generatedStart": 2865
         },
         {
-          "start": 2210,
-          "end": 2211,
+          "start": 2398,
+          "end": 2399,
           "before": "N",
           "after": "pageHost.N",
-          "generatedStart": 2681
+          "generatedStart": 2887
         },
         {
-          "start": 2268,
-          "end": 2280,
+          "start": 2456,
+          "end": 2468,
           "before": "pauseSliders",
           "after": "pageHost.pauseSliders",
-          "generatedStart": 2748
+          "generatedStart": 2954
         },
         {
-          "start": 2287,
-          "end": 2293,
+          "start": 2475,
+          "end": 2481,
           "before": "freeze",
           "after": "pageHost.freeze",
-          "generatedStart": 2776
+          "generatedStart": 2982
         },
         {
-          "start": 2302,
-          "end": 2309,
+          "start": 2490,
+          "end": 2497,
           "before": "creator",
           "after": "pageHost.creator",
-          "generatedStart": 2800
+          "generatedStart": 3006
         },
         {
-          "start": 2453,
-          "end": 2465,
+          "start": 2641,
+          "end": 2653,
           "before": "pauseLoading",
           "after": "pageHost.pauseLoading",
-          "generatedStart": 2960
+          "generatedStart": 3166
         },
         {
-          "start": 2484,
-          "end": 2492,
+          "start": 2672,
+          "end": 2680,
           "before": "newBuild",
           "after": "pageHost.newBuild",
-          "generatedStart": 3000
+          "generatedStart": 3206
         },
         {
-          "start": 2518,
-          "end": 2526,
+          "start": 2706,
+          "end": 2714,
           "before": "newBuild",
           "after": "pageHost.newBuild",
-          "generatedStart": 3043
+          "generatedStart": 3249
         },
         {
-          "start": 2535,
-          "end": 2543,
+          "start": 2723,
+          "end": 2731,
           "before": "menuGone",
           "after": "pageHost.menuGone",
-          "generatedStart": 3069
+          "generatedStart": 3275
         }
       ]
     },
@@ -1053,11 +1072,11 @@
       "name": "installPause9",
       "output": "src/app/pagePause.ts",
       "originalSha256": "1bdc46866c879a168e85b426b9be9d2ce2ae1f576405eea7dc76d52d261b44cc",
-      "sourceStart": 76734,
-      "sourceEnd": 76771,
+      "sourceStart": 77228,
+      "sourceEnd": 77265,
       "generatedSha256": "dae8bea92d4697c1256ae6d552e2966cb577463dd432b2dca67690c5680756ab",
-      "outputBodyStart": 8267,
-      "outputBodyEnd": 8322,
+      "outputBodyStart": 8473,
+      "outputBodyEnd": 8528,
       "edits": [
         {
           "start": 0,
@@ -1080,8 +1099,8 @@
       "name": "shutStation",
       "output": "src/app/pageStations.ts",
       "originalSha256": "2534efe3ea516f22c73a8d35324bcdb7c01473b61ded1b796bcc2e050d2f2bb0",
-      "sourceStart": 95787,
-      "sourceEnd": 95976,
+      "sourceStart": 96281,
+      "sourceEnd": 96470,
       "generatedSha256": "7c36ae514786f98bba60823e5d41388818e405d5cf1a079b4c4a01fec03f17a4",
       "outputBodyStart": 1230,
       "outputBodyEnd": 1473,
@@ -2430,8 +2449,8 @@
       "name": "dressCreator",
       "output": "src/app/pageNight.ts",
       "originalSha256": "7380ea1d1f5c1fbc01921c45ff5ef5a554bdf3b2040282cf15a25ac9d230d01f",
-      "sourceStart": 57921,
-      "sourceEnd": 58393,
+      "sourceStart": 58109,
+      "sourceEnd": 58581,
       "generatedSha256": "b169b6006e62c6f8b5fb6ca222c4385d06a7c1c0676e5f0309af58a66785b2ce",
       "outputBodyStart": 5099,
       "outputBodyEnd": 5643,
@@ -2499,8 +2518,8 @@
       "name": "chartOverNight",
       "output": "src/app/pageNight.ts",
       "originalSha256": "c4238ce321297fc65b348b4e53f4ce11198e9fdde543f4f99300e52b4ce8ac07",
-      "sourceStart": 78972,
-      "sourceEnd": 79726,
+      "sourceStart": 79466,
+      "sourceEnd": 80220,
       "generatedSha256": "38900de577c510f0e35a5ee075c8c5791b4b2402388c82af59e34112901610fb",
       "outputBodyStart": 5718,
       "outputBodyEnd": 6571,
@@ -2589,8 +2608,8 @@
       "name": "chartWorldArg",
       "output": "src/app/pageNight.ts",
       "originalSha256": "a081e74c9707ad52cbb4456b8872bfb848c1cc03ea9f99454e0eb8964d295981",
-      "sourceStart": 80259,
-      "sourceEnd": 80356,
+      "sourceStart": 80753,
+      "sourceEnd": 80850,
       "generatedSha256": "710a2d45e4d1b5ed74ee3ceec60ff69cfb15d11e351a1fa922942a70ffffa896",
       "outputBodyStart": 6643,
       "outputBodyEnd": 6749,
@@ -2609,8 +2628,8 @@
       "name": "sailFromChart",
       "output": "src/app/pageNight.ts",
       "originalSha256": "0d1d87857708915e8d2de22a68eb9f24e0b929e13a4ee90db6311061a1d46e2b",
-      "sourceStart": 80985,
-      "sourceEnd": 81499,
+      "sourceStart": 81479,
+      "sourceEnd": 81993,
       "generatedSha256": "9e3fe128208ea7cab7472c8d215bb8a3949405b152f81571b1e337aeff54bc6d",
       "outputBodyStart": 6845,
       "outputBodyEnd": 7440,
@@ -2685,8 +2704,8 @@
       "name": "recordSail",
       "output": "src/app/pageNight.ts",
       "originalSha256": "78591d8a0b0f8a7d9384f1dc9067131216d304d871087bde19cac27c91fa76b4",
-      "sourceStart": 81651,
-      "sourceEnd": 82185,
+      "sourceStart": 82145,
+      "sourceEnd": 82679,
       "generatedSha256": "9e9aca17b099226fc84a60d2766ebd057653b9390c2f57eba2d63e2ce70e7f14",
       "outputBodyStart": 7495,
       "outputBodyEnd": 8074,
@@ -2733,8 +2752,8 @@
       "name": "departFromChart",
       "output": "src/app/pageNight.ts",
       "originalSha256": "7a0e34cbb947531fcf3cdc676e6e96962d495120c8cd6a517c9f6d4e06da5991",
-      "sourceStart": 82957,
-      "sourceEnd": 83218,
+      "sourceStart": 83451,
+      "sourceEnd": 83712,
       "generatedSha256": "7283edbfdce3984b9c9e6696f0438e307da15f7eb3c6a7eeff8b38545daac107",
       "outputBodyStart": 8184,
       "outputBodyEnd": 8490,
@@ -2781,8 +2800,8 @@
       "name": "wakeFirst",
       "output": "src/app/pageNight.ts",
       "originalSha256": "d4cdc0fbf4c6af9fa95816fb67eace5a21443b202fdb072087d2a028342c1b46",
-      "sourceStart": 84664,
-      "sourceEnd": 84714,
+      "sourceStart": 85158,
+      "sourceEnd": 85208,
       "generatedSha256": "d70ed6d9ab768022bc5c334c56268f37f05acedc6a0e9094b5d2579ed3259d66",
       "outputBodyStart": 8544,
       "outputBodyEnd": 8612,
@@ -2808,8 +2827,8 @@
       "name": "wakeFirstNow",
       "output": "src/app/pageNight.ts",
       "originalSha256": "5d9ae9fc86da1ec1e5d30b927a6406b7b08abf5792c0527af677ae92158f1f58",
-      "sourceStart": 84745,
-      "sourceEnd": 85142,
+      "sourceStart": 85239,
+      "sourceEnd": 85636,
       "generatedSha256": "860d5fcd1eb69f35f7fc3576c36327ac8615f90b2454910eb5a0c5e873c30374",
       "outputBodyStart": 8669,
       "outputBodyEnd": 9174,
@@ -2905,8 +2924,8 @@
       "name": "sailInPlace",
       "output": "src/app/pageNight.ts",
       "originalSha256": "9f30871a8710b2100326667cb2e0857a831c928a468d2a49ba4e0fa1310d2c86",
-      "sourceStart": 86184,
-      "sourceEnd": 87110,
+      "sourceStart": 86678,
+      "sourceEnd": 87604,
       "generatedSha256": "55ca77fe295f8ffeb7d618b5e0cc5d93ad6d9fe8bfd1c4dbcfde7a5b6eff6e3a",
       "outputBodyStart": 9280,
       "outputBodyEnd": 10278,
@@ -2974,8 +2993,8 @@
       "name": "makeSailNight",
       "output": "src/app/pageNight.ts",
       "originalSha256": "b0b1a4bb54f89b9fd1d1b9bb6811ebb50be786877ee3ce8cae432c351e0682ae",
-      "sourceStart": 87739,
-      "sourceEnd": 89179,
+      "sourceStart": 88233,
+      "sourceEnd": 89673,
       "generatedSha256": "f4e42d9114be1a364585cec35eeaea353df5a4bc84ded3e929654f47f9a03fe9",
       "outputBodyStart": 10413,
       "outputBodyEnd": 12042,
@@ -3134,8 +3153,8 @@
       "name": "warmAt",
       "output": "src/app/pageNight.ts",
       "originalSha256": "494b58b6b93d4ddcbbbca88d997589cbb8729ac1f0a7db60fc40495bf1c0ba22",
-      "sourceStart": 89511,
-      "sourceEnd": 90857,
+      "sourceStart": 90005,
+      "sourceEnd": 91351,
       "generatedSha256": "987bf89721ab4a2f060c1cf23fd98cce40a4d495285fbcb632ba7dd6b966643a",
       "outputBodyStart": 12164,
       "outputBodyEnd": 13627,
@@ -3238,8 +3257,8 @@
       "name": "newNight",
       "output": "src/app/pageNight.ts",
       "originalSha256": "72a7d6e5451fd3ad1e113004e5bb00138baaac0765d7dc3bb791eb19c7e51696",
-      "sourceStart": 91208,
-      "sourceEnd": 91969,
+      "sourceStart": 91702,
+      "sourceEnd": 92463,
       "generatedSha256": "b4a23f92a6d23796f6047a8d7e117d85d235c7793030bdfd082be92d9cb21a90",
       "outputBodyStart": 13695,
       "outputBodyEnd": 14537,
@@ -3314,8 +3333,8 @@
       "name": "nightInPlace",
       "output": "src/app/pageNight.ts",
       "originalSha256": "eb53651a145ffb79b19340d748c72c1a4db6e2911e80bd0a05069d36408fa4b2",
-      "sourceStart": 92515,
-      "sourceEnd": 94426,
+      "sourceStart": 93009,
+      "sourceEnd": 94920,
       "generatedSha256": "32b3858e2d117ddb36f0208ea6441829547a9be43fa897bb112349cea0f27c10",
       "outputBodyStart": 14640,
       "outputBodyEnd": 16884,
@@ -3586,8 +3605,8 @@
       "name": "leaveBot",
       "output": "src/app/pageNight.ts",
       "originalSha256": "a57ad073e9763fa72fbebff9e7035eacae19bc61d18c26fbd952bb4a90c398ad",
-      "sourceStart": 94584,
-      "sourceEnd": 94730,
+      "sourceStart": 95078,
+      "sourceEnd": 95224,
       "generatedSha256": "7a0197559537f3e6ca1c78a74b2f399fb916333078ef4ff328a7347e11598746",
       "outputBodyStart": 16937,
       "outputBodyEnd": 17137,
@@ -3756,8 +3775,8 @@
       "name": "armBack",
       "output": "src/app/pageNight.ts",
       "originalSha256": "856bdc1173cde1ed55998a7322562d1e0e4591497d126b286f366025beba4eab",
-      "sourceStart": 85494,
-      "sourceEnd": 85594,
+      "sourceStart": 85988,
+      "sourceEnd": 86088,
       "generatedSha256": "2d3f8ed1aefea060c5719ebb41af3c870f561707b9189197898eadaefed940d3",
       "outputBodyStart": 18545,
       "outputBodyEnd": 18672,
@@ -3790,8 +3809,8 @@
       "name": "wokenBefore",
       "output": "src/app/pageNight.ts",
       "originalSha256": "217efaf1fcc19b974a19803bccfc2d4ef2ec3a5b0cfa7015e5096aaa3d4380fb",
-      "sourceStart": 83623,
-      "sourceEnd": 83705,
+      "sourceStart": 84117,
+      "sourceEnd": 84199,
       "generatedSha256": "cc620a698792490d4a8341e9d4656700261f1e2814ce7f8b5e5adc0f1f210470",
       "outputBodyStart": 18731,
       "outputBodyEnd": 18822,
@@ -3810,8 +3829,8 @@
       "name": "woke",
       "output": "src/app/pageNight.ts",
       "originalSha256": "73a084932fcf923a074365aebb1812414575b44abb5809cf7a381ea8ee0587db",
-      "sourceStart": 83732,
-      "sourceEnd": 83847,
+      "sourceStart": 84226,
+      "sourceEnd": 84341,
       "generatedSha256": "a62a43c06af1a1ecb816a578eb8d5e89648e780a36ee1463dcafc078cc454127",
       "outputBodyStart": 18871,
       "outputBodyEnd": 18995,
@@ -3830,8 +3849,8 @@
       "name": "mirrored",
       "output": "src/app/pageNight.ts",
       "originalSha256": "ae028a67ca67580e5819cc15789cfaafad1e8fe8e49af2758026254cede51d58",
-      "sourceStart": 84059,
-      "sourceEnd": 84142,
+      "sourceStart": 84553,
+      "sourceEnd": 84636,
       "generatedSha256": "8f9df2cd36f7df4d026bce9f66349be6ab74297fb31fa805ec7249c3d47df4a8",
       "outputBodyStart": 19051,
       "outputBodyEnd": 19143,
@@ -3850,8 +3869,8 @@
       "name": "sawMirror",
       "output": "src/app/pageNight.ts",
       "originalSha256": "fe3ed032f61af5f9d22880974bec972f7b7db59deee06a27718bebae812d699a",
-      "sourceStart": 84174,
-      "sourceEnd": 84279,
+      "sourceStart": 84668,
+      "sourceEnd": 84773,
       "generatedSha256": "3b8030b405fa0dadc41342e5ce9cb53f35d0403e8ed1701af779ba43b3fabd49",
       "outputBodyStart": 19197,
       "outputBodyEnd": 19311,
@@ -4435,12 +4454,12 @@
       "source": "src/main.ts",
       "name": "saveComment",
       "output": "src/app/pageDebug.ts",
-      "originalSha256": "bbb34b6b101b76a1dd470156cbbba381a3a3c2d8641523264a0f9113db8641c3",
-      "sourceStart": 60979,
-      "sourceEnd": 61758,
-      "generatedSha256": "7c500b0ef207c6de8036b5d48aa9349a6adcb31b05c1bac8095f3c19974941be",
+      "originalSha256": "2e575c167e12d120f936b9abd758961512095126e20c4f40ca76c26b2dafd56b",
+      "sourceStart": 61167,
+      "sourceEnd": 62182,
+      "generatedSha256": "3e8f0083e473110fe2e4fade1b1ced5cfba38754c4b3f8706bc4cbfcbd63e30d",
       "outputBodyStart": 2326,
-      "outputBodyEnd": 3201,
+      "outputBodyEnd": 3446,
       "edits": [
         {
           "start": 14,
@@ -4511,6 +4530,13 @@
           "before": "commentBook",
           "after": "pageHost.commentBook",
           "generatedStart": 517
+        },
+        {
+          "start": 472,
+          "end": 483,
+          "before": "commentBook",
+          "after": "pageHost.commentBook",
+          "generatedStart": 568
         }
       ]
     },
@@ -4519,11 +4545,11 @@
       "name": "restoreComment",
       "output": "src/app/pageDebug.ts",
       "originalSha256": "01fe4317722d8a0a9fb76784f52f7a71af223369dca10eeb101a2cbbeb0be6dc",
-      "sourceStart": 61816,
-      "sourceEnd": 62578,
+      "sourceStart": 62240,
+      "sourceEnd": 63002,
       "generatedSha256": "764c72bc2cf4ae017e9c46fc7a6e29e63363093569089bcc84262909e270860d",
-      "outputBodyStart": 3287,
-      "outputBodyEnd": 4067,
+      "outputBodyStart": 3532,
+      "outputBodyEnd": 4312,
       "edits": [
         {
           "start": 144,
@@ -4546,11 +4572,11 @@
       "name": "spawnHere",
       "output": "src/app/pageDebug.ts",
       "originalSha256": "4ad594c5ac4ad264bde3177da76753c35fee925b439ac4c50b60ac9a3251eda2",
-      "sourceStart": 69009,
-      "sourceEnd": 69082,
+      "sourceStart": 69433,
+      "sourceEnd": 69506,
       "generatedSha256": "05fe2fba38e72cac52b02b40d4f2504227b8f1f57e9e2ecc8cfca4752770b73f",
-      "outputBodyStart": 4169,
-      "outputBodyEnd": 4260,
+      "outputBodyStart": 4414,
+      "outputBodyEnd": 4505,
       "edits": [
         {
           "start": 11,
@@ -4573,11 +4599,11 @@
       "name": "spawnHereNow",
       "output": "src/app/pageDebug.ts",
       "originalSha256": "8cfc40aae217088ea20aca469cfdd753093c1df0d5da8525cfe1632e34465f13",
-      "sourceStart": 69159,
-      "sourceEnd": 69833,
+      "sourceStart": 69583,
+      "sourceEnd": 70257,
       "generatedSha256": "0005d3a6fb25f9671f06154e6ee49a289129d4c51a396886328409435d38cdb5",
-      "outputBodyStart": 4365,
-      "outputBodyEnd": 5057,
+      "outputBodyStart": 4610,
+      "outputBodyEnd": 5302,
       "edits": [
         {
           "start": 14,
@@ -4600,11 +4626,11 @@
       "name": "decidePanel",
       "output": "src/app/pageDebug.ts",
       "originalSha256": "3e8a5ca0419bd8701432c8139019463be4fa7e75477371c38284eb19553ca789",
-      "sourceStart": 59042,
-      "sourceEnd": 59325,
+      "sourceStart": 59230,
+      "sourceEnd": 59513,
       "generatedSha256": "996b294082c915ea8ac9adb5b477654fcae761be4f8b2e8b57ef7331dc49619b",
-      "outputBodyStart": 5128,
-      "outputBodyEnd": 5501,
+      "outputBodyStart": 5373,
+      "outputBodyEnd": 5746,
       "edits": [
         {
           "start": 8,
@@ -4683,11 +4709,11 @@
       "name": "keyNow",
       "output": "src/app/pageDebug.ts",
       "originalSha256": "e8cc2334b48e8e626d5ade5cda04373d1832482d498718ba730d714a111b6f05",
-      "sourceStart": 73628,
-      "sourceEnd": 73914,
+      "sourceStart": 74122,
+      "sourceEnd": 74408,
       "generatedSha256": "7c33279b81e4ac8d9153b0be0b88b0e85d42c366b6a8cf1af9406ef453ec4e70",
-      "outputBodyStart": 5601,
-      "outputBodyEnd": 5949,
+      "outputBodyStart": 5846,
+      "outputBodyEnd": 6194,
       "edits": [
         {
           "start": 20,
@@ -4738,11 +4764,11 @@
       "name": "installDebug1",
       "output": "src/app/pageDebug.ts",
       "originalSha256": "7e3adf6b60e276d2cd41b22245d4ab605048afa08cc6e692ba8025c7f83a4e44",
-      "sourceStart": 60793,
-      "sourceEnd": 60867,
+      "sourceStart": 60981,
+      "sourceEnd": 61055,
       "generatedSha256": "b333aa63bf622d517c114707b7fd130a3f3238d8a85ac4718d5c2dfb53e49186",
-      "outputBodyStart": 6012,
-      "outputBodyEnd": 6104,
+      "outputBodyStart": 6257,
+      "outputBodyEnd": 6349,
       "edits": [
         {
           "start": 31,
@@ -4765,11 +4791,11 @@
       "name": "installDebug2",
       "output": "src/app/pageDebug.ts",
       "originalSha256": "a3c0541dc82ef02c0047074ec960dfca7d71bdf51e5655d406191fba77660b5c",
-      "sourceStart": 66305,
-      "sourceEnd": 66349,
+      "sourceStart": 66729,
+      "sourceEnd": 66773,
       "generatedSha256": "cc4995c663b3a186e2ea852ed5601c5b1b3cd1aa46b7462166868174e8643d01",
-      "outputBodyStart": 6166,
-      "outputBodyEnd": 6228,
+      "outputBodyStart": 6411,
+      "outputBodyEnd": 6473,
       "edits": [
         {
           "start": 0,
@@ -4792,11 +4818,11 @@
       "name": "installDebug3",
       "output": "src/app/pageDebug.ts",
       "originalSha256": "71943ee65c3157eb0a35aba02b7fc80fc1d680e75a8c5b97f6aed14e1840ab8d",
-      "sourceStart": 70879,
-      "sourceEnd": 70974,
+      "sourceStart": 71303,
+      "sourceEnd": 71398,
       "generatedSha256": "375ec8c99a5361fd6c3fe8181914c3a10edc00ae201dd4630b235f9732ef4ad4",
-      "outputBodyStart": 6290,
-      "outputBodyEnd": 6394,
+      "outputBodyStart": 6535,
+      "outputBodyEnd": 6639,
       "edits": [
         {
           "start": 74,
@@ -4812,11 +4838,11 @@
       "name": "installDebug4",
       "output": "src/app/pageDebug.ts",
       "originalSha256": "eed5457e6bb3a8331b143ea5811352be9a762553d1a24ccd399e13244e32ccd8",
-      "sourceStart": 71294,
-      "sourceEnd": 71679,
+      "sourceStart": 71718,
+      "sourceEnd": 72103,
       "generatedSha256": "652c0d3702c09da26ca8defb996e3cacb7278dbf0ee101177c1e32d9595875a1",
-      "outputBodyStart": 6456,
-      "outputBodyEnd": 6850,
+      "outputBodyStart": 6701,
+      "outputBodyEnd": 7095,
       "edits": [
         {
           "start": 129,
@@ -4832,11 +4858,11 @@
       "name": "installDebug5",
       "output": "src/app/pageDebug.ts",
       "originalSha256": "53bc8837dbeff637bed558e652f7bb920860230c63c0d2acae1e12c62b8e0a82",
-      "sourceStart": 71680,
-      "sourceEnd": 71829,
+      "sourceStart": 72104,
+      "sourceEnd": 72253,
       "generatedSha256": "c44e6b0660c1247441c13efe82720895b8aeace27d3103ddff9c9a780ec674b5",
-      "outputBodyStart": 6912,
-      "outputBodyEnd": 7097,
+      "outputBodyStart": 7157,
+      "outputBodyEnd": 7342,
       "edits": [
         {
           "start": 0,
@@ -4872,12 +4898,12 @@
       "source": "src/main.ts",
       "name": "installDebug6",
       "output": "src/app/pageDebug.ts",
-      "originalSha256": "4f1cd3382e824c7c65542cb6f0f202e9b0529f9e4297f7a0254befd14050251e",
-      "sourceStart": 71830,
-      "sourceEnd": 71878,
-      "generatedSha256": "144f9dcd712ae851e03dfb49e47a5e74defee7e447c31ea943bab50d276eb0b0",
-      "outputBodyStart": 7159,
-      "outputBodyEnd": 7225,
+      "originalSha256": "103be8198a4b9dddd98308cddea7abfaa0e5d62d82a1f02f500e3c67201ad4b6",
+      "sourceStart": 72254,
+      "sourceEnd": 72314,
+      "generatedSha256": "62e8be6c4f6eb3796923ef9efb8c8cfb4db65c8e804fe3f7174cd938310aa1a5",
+      "outputBodyStart": 7404,
+      "outputBodyEnd": 7482,
       "edits": [
         {
           "start": 0,
@@ -4887,11 +4913,11 @@
           "generatedStart": 0
         },
         {
-          "start": 30,
-          "end": 41,
+          "start": 35,
+          "end": 46,
           "before": "commentBook",
           "after": "pageHost.commentBook",
-          "generatedStart": 39
+          "generatedStart": 44
         }
       ]
     },
@@ -4899,12 +4925,39 @@
       "source": "src/main.ts",
       "name": "installDebug7",
       "output": "src/app/pageDebug.ts",
+      "originalSha256": "ed6f71d0f60bd9ea538ca516b8d6771b66789005adb727d8379f32f64fe3f32e",
+      "sourceStart": 72315,
+      "sourceEnd": 72372,
+      "generatedSha256": "b00c16b428f764caf1c7a245d4ef003e53435d832741e3a2b7cbba060c9c9e86",
+      "outputBodyStart": 7544,
+      "outputBodyEnd": 7619,
+      "edits": [
+        {
+          "start": 0,
+          "end": 1,
+          "before": "N",
+          "after": "pageHost.N",
+          "generatedStart": 0
+        },
+        {
+          "start": 36,
+          "end": 47,
+          "before": "commentBook",
+          "after": "pageHost.commentBook",
+          "generatedStart": 45
+        }
+      ]
+    },
+    {
+      "source": "src/main.ts",
+      "name": "installDebug8",
+      "output": "src/app/pageDebug.ts",
       "originalSha256": "af0760ad1f586d6fb6e5f3d784df79d5fbf5dce7c1728ca34472f7d8f58b9d91",
-      "sourceStart": 71879,
-      "sourceEnd": 71972,
+      "sourceStart": 72373,
+      "sourceEnd": 72466,
       "generatedSha256": "d196ddfa67e561d48c927dae35005dfc4fee2c781a1a522a276d9fa4b2486ede",
-      "outputBodyStart": 7287,
-      "outputBodyEnd": 7416,
+      "outputBodyStart": 7681,
+      "outputBodyEnd": 7810,
       "edits": [
         {
           "start": 0,
@@ -4938,14 +4991,14 @@
     },
     {
       "source": "src/main.ts",
-      "name": "installDebug8",
+      "name": "installDebug9",
       "output": "src/app/pageDebug.ts",
       "originalSha256": "33cbe895b3b5735c6946e5420416a60178cf1366485c03739e2d73d2562b57e3",
-      "sourceStart": 71973,
-      "sourceEnd": 72017,
+      "sourceStart": 72467,
+      "sourceEnd": 72511,
       "generatedSha256": "e94c7c001fea26ddb87e0f115e521bca60ffda368de8c18198c8ccc9fe489498",
-      "outputBodyStart": 7478,
-      "outputBodyEnd": 7540,
+      "outputBodyStart": 7872,
+      "outputBodyEnd": 7934,
       "edits": [
         {
           "start": 0,
@@ -4965,14 +5018,14 @@
     },
     {
       "source": "src/main.ts",
-      "name": "installDebug9",
+      "name": "installDebug10",
       "output": "src/app/pageDebug.ts",
       "originalSha256": "6799711235be134653ba02d55a01059dd19143b5556135dd6256bd09f6b518da",
-      "sourceStart": 73097,
-      "sourceEnd": 73349,
+      "sourceStart": 73591,
+      "sourceEnd": 73843,
       "generatedSha256": "c27db13b6c5a15ddf788ee660c05b485f9bc6fd9ac4ee7a8bf5cb4d6cab7bb1b",
-      "outputBodyStart": 7602,
-      "outputBodyEnd": 7872,
+      "outputBodyStart": 7997,
+      "outputBodyEnd": 8267,
       "edits": [
         {
           "start": 0,
@@ -4992,14 +5045,14 @@
     },
     {
       "source": "src/main.ts",
-      "name": "installDebug10",
+      "name": "installDebug11",
       "output": "src/app/pageDebug.ts",
       "originalSha256": "83afc8df082db56e2872d565b10ff2fce29780a867496e2075f6fa6446d4c9aa",
-      "sourceStart": 73916,
-      "sourceEnd": 73955,
+      "sourceStart": 74410,
+      "sourceEnd": 74449,
       "generatedSha256": "31a009be8ab3303d5cb53a8ab6e60cca3ed52c7fa99ae72ba194f869cf51d3e8",
-      "outputBodyStart": 7935,
-      "outputBodyEnd": 7992,
+      "outputBodyStart": 8330,
+      "outputBodyEnd": 8387,
       "edits": [
         {
           "start": 0,
@@ -5019,14 +5072,14 @@
     },
     {
       "source": "src/main.ts",
-      "name": "installDebug11",
+      "name": "installDebug12",
       "output": "src/app/pageDebug.ts",
       "originalSha256": "84c2398b6c757622dde8690e3acce1c89471edd308308050531a534ff116e560",
-      "sourceStart": 73956,
-      "sourceEnd": 74008,
+      "sourceStart": 74450,
+      "sourceEnd": 74502,
       "generatedSha256": "ff0b896a9c7eae918e4478a1f4373efa8bd5f27874109c7a75b84f086989d2f9",
-      "outputBodyStart": 8055,
-      "outputBodyEnd": 8125,
+      "outputBodyStart": 8450,
+      "outputBodyEnd": 8520,
       "edits": [
         {
           "start": 0,
@@ -5046,14 +5099,14 @@
     },
     {
       "source": "src/main.ts",
-      "name": "installDebug12",
+      "name": "installDebug13",
       "output": "src/app/pageDebug.ts",
       "originalSha256": "d0dd76912d58becad41b12e14757974a0802303399067ee49ed10622c66abbcc",
-      "sourceStart": 76687,
-      "sourceEnd": 76733,
+      "sourceStart": 77181,
+      "sourceEnd": 77227,
       "generatedSha256": "3ce3a24be0f1fd17fe9004c23bb2246aa8f6ca5eb8911bcb650c93bb2144a732",
-      "outputBodyStart": 8188,
-      "outputBodyEnd": 8252,
+      "outputBodyStart": 8583,
+      "outputBodyEnd": 8647,
       "edits": [
         {
           "start": 0,
@@ -5073,14 +5126,14 @@
     },
     {
       "source": "src/main.ts",
-      "name": "installDebug13",
+      "name": "installDebug14",
       "output": "src/app/pageDebug.ts",
       "originalSha256": "32f7ad65b1814df809b522b9560a9c2aba4799979969090cde26eaf831e83e25",
-      "sourceStart": 76772,
-      "sourceEnd": 76867,
+      "sourceStart": 77266,
+      "sourceEnd": 77361,
       "generatedSha256": "66cb76d0cdb170e84ebc2a292ed1c7173a25cbefcd1627cc3b5ad70e19191de8",
-      "outputBodyStart": 8315,
-      "outputBodyEnd": 8437,
+      "outputBodyStart": 8710,
+      "outputBodyEnd": 8832,
       "edits": [
         {
           "start": 0,
@@ -5107,14 +5160,14 @@
     },
     {
       "source": "src/main.ts",
-      "name": "installDebug14",
+      "name": "installDebug15",
       "output": "src/app/pageDebug.ts",
       "originalSha256": "9f2b8d7e3e0bd70114626f98811c37675fbca5ba42a3dddca7afdb48065b51fb",
-      "sourceStart": 76868,
-      "sourceEnd": 77083,
+      "sourceStart": 77362,
+      "sourceEnd": 77577,
       "generatedSha256": "b39eedafee3a6b3a8c87d1f9ddd1cf492f6711b91282f5cbe8afa4053ed85471",
-      "outputBodyStart": 8500,
-      "outputBodyEnd": 8751,
+      "outputBodyStart": 8895,
+      "outputBodyEnd": 9146,
       "edits": [
         {
           "start": 0,
@@ -5148,14 +5201,14 @@
     },
     {
       "source": "src/main.ts",
-      "name": "installDebug15",
+      "name": "installDebug16",
       "output": "src/app/pageDebug.ts",
       "originalSha256": "344c7a2e2c190e8f2c99fdefe668ca24c2780e48599d47c373e3421f6bdc4534",
-      "sourceStart": 77084,
-      "sourceEnd": 77857,
+      "sourceStart": 77578,
+      "sourceEnd": 78351,
       "generatedSha256": "4086349c16193031425ae5af983bdcd0dfd8c4770473c8cdc72057d56ba0aa15",
-      "outputBodyStart": 8814,
-      "outputBodyEnd": 9641,
+      "outputBodyStart": 9209,
+      "outputBodyEnd": 10036,
       "edits": [
         {
           "start": 0,
@@ -5203,14 +5256,14 @@
     },
     {
       "source": "src/main.ts",
-      "name": "installDebug16",
+      "name": "installDebug17",
       "output": "src/app/pageDebug.ts",
       "originalSha256": "00baf20df7c7c0e5740520738f60d51e556e4315c3a15f396613237acab4ab38",
-      "sourceStart": 119676,
-      "sourceEnd": 119859,
+      "sourceStart": 120240,
+      "sourceEnd": 120423,
       "generatedSha256": "9045b861712b6d1e6d1019a3d292c7350fbbe40bd06c5be44f9cebb9ac23c897",
-      "outputBodyStart": 9704,
-      "outputBodyEnd": 10050,
+      "outputBodyStart": 10099,
+      "outputBodyEnd": 10445,
       "edits": [
         {
           "start": 22,
@@ -5293,14 +5346,14 @@
     },
     {
       "source": "src/main.ts",
-      "name": "installDebug17",
+      "name": "installDebug18",
       "output": "src/app/pageDebug.ts",
       "originalSha256": "3aba354401bd6455666532e7c08a42ddfc1b72051758b701c5ee1c45219451f0",
-      "sourceStart": 120095,
-      "sourceEnd": 120179,
+      "sourceStart": 120659,
+      "sourceEnd": 120743,
       "generatedSha256": "8a56abbce5e2c98603918ca18b8f3b9ffea29bd7139530e540b6d4fe21da2344",
-      "outputBodyStart": 10113,
-      "outputBodyEnd": 10206,
+      "outputBodyStart": 10508,
+      "outputBodyEnd": 10601,
       "edits": [
         {
           "start": 77,
@@ -5313,14 +5366,14 @@
     },
     {
       "source": "src/main.ts",
-      "name": "installDebug18",
+      "name": "installDebug19",
       "output": "src/app/pageDebug.ts",
       "originalSha256": "f82dc3722e5517fb9053cfedad7c9f0c3f0797eede4b3996f619cb98696b806b",
-      "sourceStart": 120180,
-      "sourceEnd": 120700,
+      "sourceStart": 120744,
+      "sourceEnd": 121264,
       "generatedSha256": "ce859989ccf1de961ab42578b783e6f95ff829634e20fc71802c10b6eecaa5d3",
-      "outputBodyStart": 10269,
-      "outputBodyEnd": 10807,
+      "outputBodyStart": 10664,
+      "outputBodyEnd": 11202,
       "edits": [
         {
           "start": 135,
@@ -5340,14 +5393,14 @@
     },
     {
       "source": "src/main.ts",
-      "name": "installDebug19",
+      "name": "installDebug20",
       "output": "src/app/pageDebug.ts",
       "originalSha256": "48efe8dd7b69233217c913508cd260939c018e1e74d890635324cc31e97349e4",
-      "sourceStart": 121357,
-      "sourceEnd": 121565,
+      "sourceStart": 121921,
+      "sourceEnd": 122129,
       "generatedSha256": "a98e81192a2975abd2f5a78c6dc6a282923b02758b198fd86028d72450985df9",
-      "outputBodyStart": 10870,
-      "outputBodyEnd": 11087,
+      "outputBodyStart": 11265,
+      "outputBodyEnd": 11482,
       "edits": [
         {
           "start": 125,
@@ -5360,14 +5413,14 @@
     },
     {
       "source": "src/main.ts",
-      "name": "installDebug20",
+      "name": "installDebug21",
       "output": "src/app/pageDebug.ts",
       "originalSha256": "bbc6997778494cfc48c1e7bf55ffbfb26073c94547cdb1c9f433bfa360dc8f6f",
-      "sourceStart": 121808,
-      "sourceEnd": 121900,
+      "sourceStart": 122372,
+      "sourceEnd": 122464,
       "generatedSha256": "b220ac6374525c09f4879abd9f85c6068b68968077488c6a9ea82d1dd103624a",
-      "outputBodyStart": 11150,
-      "outputBodyEnd": 11251,
+      "outputBodyStart": 11545,
+      "outputBodyEnd": 11646,
       "edits": [
         {
           "start": 79,
@@ -5380,14 +5433,14 @@
     },
     {
       "source": "src/main.ts",
-      "name": "installDebug21",
+      "name": "installDebug22",
       "output": "src/app/pageDebug.ts",
       "originalSha256": "8289fa5e296844ff9a7e3e5b7de7561e9e17f0964cad3f5e82e4b842531650f2",
-      "sourceStart": 121901,
-      "sourceEnd": 122081,
+      "sourceStart": 122465,
+      "sourceEnd": 122645,
       "generatedSha256": "4d61ca2a07eb5fc50d720ffe8134f11b866ad3cc0efcb6b61f13bed328d4e219",
-      "outputBodyStart": 11314,
-      "outputBodyEnd": 11521,
+      "outputBodyStart": 11709,
+      "outputBodyEnd": 11916,
       "edits": [
         {
           "start": 80,
@@ -5414,14 +5467,14 @@
     },
     {
       "source": "src/main.ts",
-      "name": "installDebug22",
+      "name": "installDebug23",
       "output": "src/app/pageDebug.ts",
       "originalSha256": "dc376d9ced586c3f6df9e814b28a2003e36e715728cc1e990ba28b2a2b9caa42",
-      "sourceStart": 122082,
-      "sourceEnd": 122443,
+      "sourceStart": 122646,
+      "sourceEnd": 123007,
       "generatedSha256": "d0005d0d00fb29b0f310bec0c6c3b6498749636f6b49bb0456a106bf42049f93",
-      "outputBodyStart": 11584,
-      "outputBodyEnd": 11963,
+      "outputBodyStart": 11979,
+      "outputBodyEnd": 12358,
       "edits": [
         {
           "start": 212,
@@ -5441,14 +5494,14 @@
     },
     {
       "source": "src/main.ts",
-      "name": "installDebug23",
+      "name": "installDebug24",
       "output": "src/app/pageDebug.ts",
       "originalSha256": "08c79b4b8a66b1127762ee9d946b3194cd901b299f13ad1721a1024092e05ab9",
-      "sourceStart": 122715,
-      "sourceEnd": 123495,
+      "sourceStart": 123279,
+      "sourceEnd": 124059,
       "generatedSha256": "edfce79b848bfcf9c4a9d3f986efe5633507f97dc1931ad40214509817b5d8d3",
-      "outputBodyStart": 12026,
-      "outputBodyEnd": 12905,
+      "outputBodyStart": 12421,
+      "outputBodyEnd": 13300,
       "edits": [
         {
           "start": 4,
@@ -5531,14 +5584,14 @@
     },
     {
       "source": "src/main.ts",
-      "name": "installDebug24",
+      "name": "installDebug25",
       "output": "src/app/pageDebug.ts",
       "originalSha256": "18674f8383c55f3d335c7c14036e1409a75d9d638c4d7251497629bcebe92aa7",
-      "sourceStart": 124125,
-      "sourceEnd": 124220,
+      "sourceStart": 124689,
+      "sourceEnd": 124784,
       "generatedSha256": "fc682ca9599e7281d05a878b0c1e716bef91fd1045e1fa9507d3bd440c1328d5",
-      "outputBodyStart": 12968,
-      "outputBodyEnd": 13072,
+      "outputBodyStart": 13363,
+      "outputBodyEnd": 13467,
       "edits": [
         {
           "start": 78,
@@ -5551,14 +5604,14 @@
     },
     {
       "source": "src/main.ts",
-      "name": "installDebug25",
+      "name": "installDebug26",
       "output": "src/app/pageDebug.ts",
       "originalSha256": "b408f6575b8b6d83583412948f524ea91aa15cb4a0dcfd212aa38de7cd02fc7b",
-      "sourceStart": 124344,
-      "sourceEnd": 124425,
+      "sourceStart": 124908,
+      "sourceEnd": 124989,
       "generatedSha256": "38d15769817e8c33017007a7557176d602f93ca029e4f06d246b6540e96efcc6",
-      "outputBodyStart": 13135,
-      "outputBodyEnd": 13225,
+      "outputBodyStart": 13530,
+      "outputBodyEnd": 13620,
       "edits": [
         {
           "start": 77,
@@ -5571,14 +5624,14 @@
     },
     {
       "source": "src/main.ts",
-      "name": "installDebug26",
+      "name": "installDebug27",
       "output": "src/app/pageDebug.ts",
       "originalSha256": "2354515a202677b6613e74af5e8fa36c28e9d9cb0e7e81c015d6addd5fb8bc21",
-      "sourceStart": 124540,
-      "sourceEnd": 124620,
+      "sourceStart": 125104,
+      "sourceEnd": 125184,
       "generatedSha256": "dd6f01a25ffa92f61b747320aa6f761998c46de37c6900be8a7edb1fc16a369e",
-      "outputBodyStart": 13288,
-      "outputBodyEnd": 13377,
+      "outputBodyStart": 13683,
+      "outputBodyEnd": 13772,
       "edits": [
         {
           "start": 73,
@@ -5591,14 +5644,14 @@
     },
     {
       "source": "src/main.ts",
-      "name": "installDebug27",
+      "name": "installDebug28",
       "output": "src/app/pageDebug.ts",
       "originalSha256": "407eb99941d9faf08587bd7539d82bc1a4da1957c797165d37f1302117394156",
-      "sourceStart": 124836,
-      "sourceEnd": 125357,
+      "sourceStart": 125400,
+      "sourceEnd": 125921,
       "generatedSha256": "664c53094229e6b61be861173ad3fdbe0b02a59c04cd86ff94b906ee0fd0a063",
-      "outputBodyStart": 13440,
-      "outputBodyEnd": 14042,
+      "outputBodyStart": 13835,
+      "outputBodyEnd": 14437,
       "edits": [
         {
           "start": 168,
@@ -5667,14 +5720,14 @@
     },
     {
       "source": "src/main.ts",
-      "name": "installDebug28",
+      "name": "installDebug29",
       "output": "src/app/pageDebug.ts",
       "originalSha256": "50ade2d9696e1f8324771ae0dcbc1864bdd62a471d2f8a9db153c3327fdb64e1",
-      "sourceStart": 125358,
-      "sourceEnd": 125855,
+      "sourceStart": 125922,
+      "sourceEnd": 126419,
       "generatedSha256": "d7333945c853a58be00d4104fc2e07c769f08abd20d93cb9b1d5879961089de2",
-      "outputBodyStart": 14105,
-      "outputBodyEnd": 14638,
+      "outputBodyStart": 14500,
+      "outputBodyEnd": 15033,
       "edits": [
         {
           "start": 179,
@@ -5708,14 +5761,14 @@
     },
     {
       "source": "src/main.ts",
-      "name": "installDebug29",
+      "name": "installDebug30",
       "output": "src/app/pageDebug.ts",
       "originalSha256": "d805c80088926e840a8c613db89f0002978112f5c795a423d560c8c7dd76b469",
-      "sourceStart": 125997,
-      "sourceEnd": 126380,
+      "sourceStart": 126561,
+      "sourceEnd": 126944,
       "generatedSha256": "9d0d7ff728245ab41f60a31909a42e0faf4c26c6db606e78562d46ca8f7d9c57",
-      "outputBodyStart": 14701,
-      "outputBodyEnd": 15093,
+      "outputBodyStart": 15096,
+      "outputBodyEnd": 15488,
       "edits": [
         {
           "start": 310,
@@ -5731,8 +5784,8 @@
       "name": "drawFrame",
       "output": "src/app/pageFrame.ts",
       "originalSha256": "b3b298557677467507960cdc57312f69cae77afd92b8946a27914cc2556c3345",
-      "sourceStart": 96163,
-      "sourceEnd": 96499,
+      "sourceStart": 96657,
+      "sourceEnd": 96993,
       "generatedSha256": "e13f9022016380596330d2fcc484e2c7fcd530158f22e0fcb988a4846661faba",
       "outputBodyStart": 1860,
       "outputBodyEnd": 2268,
@@ -5800,8 +5853,8 @@
       "name": "frame",
       "output": "src/app/pageFrame.ts",
       "originalSha256": "54447a143f4eebac267fac5afd7833b216bd8d83aea7bb4503f21b2aaf29b378",
-      "sourceStart": 96534,
-      "sourceEnd": 97488,
+      "sourceStart": 97028,
+      "sourceEnd": 97982,
       "generatedSha256": "edc513989f3af22c70adb255d1861ea925bb59796bfdee0fb3014d809c990ec0",
       "outputBodyStart": 2331,
       "outputBodyEnd": 3447,
@@ -5938,12 +5991,12 @@
       "source": "src/main.ts",
       "name": "frameBody",
       "output": "src/app/pageFrame.ts",
-      "originalSha256": "c76ed6669fd5523ce45643499f8804911cb3c4439e80a7f4a545b6dcfa18d606",
-      "sourceStart": 97527,
-      "sourceEnd": 117853,
-      "generatedSha256": "6ecba82df2d7c2a098e22c6247a60904925ba459bef7f3eec17d645823d9dd99",
+      "originalSha256": "a676008d7293366e8b73b7f10d87883eb4eac3043bc3e8fcf3be963bef54fbf3",
+      "sourceStart": 98021,
+      "sourceEnd": 118417,
+      "generatedSha256": "c243d30715dee9bb27178997d91e752dc171e4d559618b32c3ce8240d840e6ef",
       "outputBodyStart": 3514,
-      "outputBodyEnd": 26414,
+      "outputBodyEnd": 26493,
       "edits": [
         {
           "start": 26,
@@ -7528,424 +7581,431 @@
           "generatedStart": 17627
         },
         {
-          "start": 15618,
-          "end": 15624,
+          "start": 15619,
+          "end": 15625,
           "before": "freeze",
           "after": "pageHost.freeze",
-          "generatedStart": 17652
+          "generatedStart": 17653
         },
         {
-          "start": 15635,
-          "end": 15643,
+          "start": 15637,
+          "end": 15649,
+          "before": "pauseSliders",
+          "after": "pageHost.pauseSliders",
+          "generatedStart": 17680
+        },
+        {
+          "start": 15654,
+          "end": 15662,
           "before": "menuGone",
           "after": "pageHost.menuGone",
-          "generatedStart": 17678
+          "generatedStart": 17706
         },
         {
-          "start": 16294,
-          "end": 16295,
+          "start": 16364,
+          "end": 16365,
           "before": "N",
           "after": "pageHost.N",
-          "generatedStart": 18346
+          "generatedStart": 18425
         },
         {
-          "start": 16324,
-          "end": 16325,
+          "start": 16394,
+          "end": 16395,
           "before": "N",
           "after": "pageHost.N",
-          "generatedStart": 18385
+          "generatedStart": 18464
         },
         {
-          "start": 16341,
-          "end": 16346,
+          "start": 16411,
+          "end": 16416,
           "before": "sound",
           "after": "pageHost.sound",
-          "generatedStart": 18411
+          "generatedStart": 18490
         },
         {
-          "start": 16365,
-          "end": 16372,
+          "start": 16435,
+          "end": 16442,
           "before": "creator",
           "after": "pageHost.creator",
-          "generatedStart": 18444
+          "generatedStart": 18523
         },
         {
-          "start": 16593,
-          "end": 16597,
+          "start": 16663,
+          "end": 16667,
           "before": "view",
           "after": "pageHost.view",
-          "generatedStart": 18681
+          "generatedStart": 18760
         },
         {
-          "start": 16653,
-          "end": 16658,
+          "start": 16723,
+          "end": 16728,
           "before": "sound",
           "after": "pageHost.sound",
-          "generatedStart": 18750
+          "generatedStart": 18829
         },
         {
-          "start": 16688,
-          "end": 16693,
+          "start": 16758,
+          "end": 16763,
           "before": "sound",
           "after": "pageHost.sound",
-          "generatedStart": 18794
+          "generatedStart": 18873
         },
         {
-          "start": 16772,
-          "end": 16777,
+          "start": 16842,
+          "end": 16847,
           "before": "sound",
           "after": "pageHost.sound",
-          "generatedStart": 18887
+          "generatedStart": 18966
         },
         {
-          "start": 16791,
-          "end": 16796,
+          "start": 16861,
+          "end": 16866,
           "before": "meter",
           "after": "pageHost.meter",
-          "generatedStart": 18915
+          "generatedStart": 18994
         },
         {
-          "start": 16801,
-          "end": 16806,
+          "start": 16871,
+          "end": 16876,
           "before": "sound",
           "after": "pageHost.sound",
-          "generatedStart": 18934
+          "generatedStart": 19013
         },
         {
-          "start": 16815,
-          "end": 16820,
+          "start": 16885,
+          "end": 16890,
           "before": "sound",
           "after": "pageHost.sound",
-          "generatedStart": 18957
+          "generatedStart": 19036
         },
         {
-          "start": 16836,
-          "end": 16841,
+          "start": 16906,
+          "end": 16911,
           "before": "sound",
           "after": "pageHost.sound",
-          "generatedStart": 18987
+          "generatedStart": 19066
         },
         {
-          "start": 16863,
-          "end": 16868,
+          "start": 16933,
+          "end": 16938,
           "before": "sound",
           "after": "pageHost.sound",
-          "generatedStart": 19023
+          "generatedStart": 19102
         },
         {
-          "start": 16888,
-          "end": 16893,
+          "start": 16958,
+          "end": 16963,
           "before": "meter",
           "after": "pageHost.meter",
-          "generatedStart": 19057
+          "generatedStart": 19136
         },
         {
-          "start": 16918,
-          "end": 16923,
+          "start": 16988,
+          "end": 16993,
           "before": "sound",
           "after": "pageHost.sound",
-          "generatedStart": 19096
+          "generatedStart": 19175
         },
         {
-          "start": 17016,
-          "end": 17025,
+          "start": 17086,
+          "end": 17095,
           "before": "lastShedS",
           "after": "pageHost.lastShedS",
-          "generatedStart": 19203
+          "generatedStart": 19282
         },
         {
-          "start": 17029,
-          "end": 17038,
+          "start": 17099,
+          "end": 17108,
           "before": "lastShedS",
           "after": "pageHost.lastShedS",
-          "generatedStart": 19225
+          "generatedStart": 19304
         },
         {
-          "start": 17059,
-          "end": 17064,
+          "start": 17129,
+          "end": 17134,
           "before": "meter",
           "after": "pageHost.meter",
-          "generatedStart": 19264
+          "generatedStart": 19343
         },
         {
-          "start": 17083,
-          "end": 17088,
+          "start": 17153,
+          "end": 17158,
           "before": "sound",
           "after": "pageHost.sound",
-          "generatedStart": 19297
+          "generatedStart": 19376
         },
         {
-          "start": 17206,
-          "end": 17215,
+          "start": 17276,
+          "end": 17285,
           "before": "micWanted",
           "after": "pageHost.micWanted",
-          "generatedStart": 19429
-        },
-        {
-          "start": 17220,
-          "end": 17225,
-          "before": "meter",
-          "after": "pageHost.meter",
-          "generatedStart": 19452
-        },
-        {
-          "start": 17233,
-          "end": 17246,
-          "before": "startedNights",
-          "after": "pageHost.startedNights",
-          "generatedStart": 19474
-        },
-        {
-          "start": 17258,
-          "end": 17263,
-          "before": "meter",
-          "after": "pageHost.meter",
           "generatedStart": 19508
         },
         {
-          "start": 17332,
-          "end": 17333,
-          "before": "N",
-          "after": "pageHost.N",
-          "generatedStart": 19591
+          "start": 17290,
+          "end": 17295,
+          "before": "meter",
+          "after": "pageHost.meter",
+          "generatedStart": 19531
         },
         {
-          "start": 17379,
-          "end": 17380,
-          "before": "N",
-          "after": "pageHost.N",
-          "generatedStart": 19647
-        },
-        {
-          "start": 17517,
-          "end": 17529,
-          "before": "nearestStall",
-          "after": "pageHost.nearestStall",
-          "generatedStart": 19794
-        },
-        {
-          "start": 17686,
-          "end": 17699,
-          "before": "measuredParts",
-          "after": "pageHost.measuredParts",
-          "generatedStart": 19972
-        },
-        {
-          "start": 17739,
-          "end": 17752,
-          "before": "measuredParts",
-          "after": "pageHost.measuredParts",
-          "generatedStart": 20034
-        },
-        {
-          "start": 17942,
-          "end": 17952,
-          "before": "SLOW_AUDIO",
-          "after": "pageHost.SLOW_AUDIO",
-          "generatedStart": 20246
-        },
-        {
-          "start": 17956,
-          "end": 17971,
-          "before": "slowAudioLogged",
-          "after": "pageHost.slowAudioLogged",
-          "generatedStart": 20269
-        },
-        {
-          "start": 17983,
-          "end": 17998,
-          "before": "slowAudioLogged",
-          "after": "pageHost.slowAudioLogged",
-          "generatedStart": 20305
-        },
-        {
-          "start": 18016,
-          "end": 18021,
-          "before": "sound",
-          "after": "pageHost.sound",
-          "generatedStart": 20347
-        },
-        {
-          "start": 18323,
-          "end": 18331,
-          "before": "zooPanel",
-          "after": "pageHost.zooPanel",
-          "generatedStart": 20663
-        },
-        {
-          "start": 18423,
-          "end": 18433,
-          "before": "zooLeaving",
-          "after": "pageHost.zooLeaving",
-          "generatedStart": 20772
-        },
-        {
-          "start": 18437,
-          "end": 18447,
-          "before": "zooLeaving",
-          "after": "pageHost.zooLeaving",
-          "generatedStart": 20795
-        },
-        {
-          "start": 18915,
-          "end": 18919,
-          "before": "view",
-          "after": "pageHost.view",
-          "generatedStart": 21282
-        },
-        {
-          "start": 18933,
-          "end": 18940,
-          "before": "arrived",
-          "after": "pageHost.arrived",
-          "generatedStart": 21309
-        },
-        {
-          "start": 19076,
-          "end": 19092,
-          "before": "updatePauseMenus",
-          "after": "pageHost.updatePauseMenus",
-          "generatedStart": 21461
-        },
-        {
-          "start": 19105,
-          "end": 19114,
-          "before": "chartHeld",
-          "after": "pageHost.chartHeld",
-          "generatedStart": 21499
-        },
-        {
-          "start": 19118,
-          "end": 19125,
-          "before": "zooHeld",
-          "after": "pageHost.zooHeld",
-          "generatedStart": 21521
-        },
-        {
-          "start": 19244,
-          "end": 19250,
-          "before": "freeze",
-          "after": "pageHost.freeze",
-          "generatedStart": 21656
-        },
-        {
-          "start": 19278,
-          "end": 19286,
-          "before": "lastDraw",
-          "after": "pageHost.lastDraw",
-          "generatedStart": 21699
-        },
-        {
-          "start": 19304,
-          "end": 19312,
-          "before": "lastDraw",
-          "after": "pageHost.lastDraw",
-          "generatedStart": 21734
-        },
-        {
-          "start": 19434,
-          "end": 19444,
-          "before": "frameStats",
-          "after": "pageHost.frameStats",
-          "generatedStart": 21873
-        },
-        {
-          "start": 19668,
-          "end": 19677,
-          "before": "drawFrame",
-          "after": "pageHost.drawFrame",
-          "generatedStart": 22116
-        },
-        {
-          "start": 19878,
-          "end": 19882,
-          "before": "view",
-          "after": "pageHost.view",
-          "generatedStart": 22335
-        },
-        {
-          "start": 19958,
-          "end": 19968,
-          "before": "frameStats",
-          "after": "pageHost.frameStats",
-          "generatedStart": 22424
-        },
-        {
-          "start": 19981,
-          "end": 19987,
-          "before": "aimHud",
-          "after": "pageHost.aimHud",
-          "generatedStart": 22456
-        },
-        {
-          "start": 20015,
-          "end": 20020,
-          "before": "input",
-          "after": "pageHost.input",
-          "generatedStart": 22499
-        },
-        {
-          "start": 20029,
-          "end": 20034,
-          "before": "input",
-          "after": "pageHost.input",
-          "generatedStart": 22522
-        },
-        {
-          "start": 20044,
-          "end": 20057,
+          "start": 17303,
+          "end": 17316,
           "before": "startedNights",
           "after": "pageHost.startedNights",
-          "generatedStart": 22546
+          "generatedStart": 19553
         },
         {
-          "start": 20072,
-          "end": 20075,
-          "before": "bot",
-          "after": "pageHost.bot",
-          "generatedStart": 22583
+          "start": 17328,
+          "end": 17333,
+          "before": "meter",
+          "after": "pageHost.meter",
+          "generatedStart": 19587
         },
         {
-          "start": 20080,
-          "end": 20090,
+          "start": 17402,
+          "end": 17403,
+          "before": "N",
+          "after": "pageHost.N",
+          "generatedStart": 19670
+        },
+        {
+          "start": 17449,
+          "end": 17450,
+          "before": "N",
+          "after": "pageHost.N",
+          "generatedStart": 19726
+        },
+        {
+          "start": 17587,
+          "end": 17599,
+          "before": "nearestStall",
+          "after": "pageHost.nearestStall",
+          "generatedStart": 19873
+        },
+        {
+          "start": 17756,
+          "end": 17769,
+          "before": "measuredParts",
+          "after": "pageHost.measuredParts",
+          "generatedStart": 20051
+        },
+        {
+          "start": 17809,
+          "end": 17822,
+          "before": "measuredParts",
+          "after": "pageHost.measuredParts",
+          "generatedStart": 20113
+        },
+        {
+          "start": 18012,
+          "end": 18022,
+          "before": "SLOW_AUDIO",
+          "after": "pageHost.SLOW_AUDIO",
+          "generatedStart": 20325
+        },
+        {
+          "start": 18026,
+          "end": 18041,
+          "before": "slowAudioLogged",
+          "after": "pageHost.slowAudioLogged",
+          "generatedStart": 20348
+        },
+        {
+          "start": 18053,
+          "end": 18068,
+          "before": "slowAudioLogged",
+          "after": "pageHost.slowAudioLogged",
+          "generatedStart": 20384
+        },
+        {
+          "start": 18086,
+          "end": 18091,
+          "before": "sound",
+          "after": "pageHost.sound",
+          "generatedStart": 20426
+        },
+        {
+          "start": 18393,
+          "end": 18401,
+          "before": "zooPanel",
+          "after": "pageHost.zooPanel",
+          "generatedStart": 20742
+        },
+        {
+          "start": 18493,
+          "end": 18503,
+          "before": "zooLeaving",
+          "after": "pageHost.zooLeaving",
+          "generatedStart": 20851
+        },
+        {
+          "start": 18507,
+          "end": 18517,
+          "before": "zooLeaving",
+          "after": "pageHost.zooLeaving",
+          "generatedStart": 20874
+        },
+        {
+          "start": 18985,
+          "end": 18989,
+          "before": "view",
+          "after": "pageHost.view",
+          "generatedStart": 21361
+        },
+        {
+          "start": 19003,
+          "end": 19010,
+          "before": "arrived",
+          "after": "pageHost.arrived",
+          "generatedStart": 21388
+        },
+        {
+          "start": 19146,
+          "end": 19162,
+          "before": "updatePauseMenus",
+          "after": "pageHost.updatePauseMenus",
+          "generatedStart": 21540
+        },
+        {
+          "start": 19175,
+          "end": 19184,
+          "before": "chartHeld",
+          "after": "pageHost.chartHeld",
+          "generatedStart": 21578
+        },
+        {
+          "start": 19188,
+          "end": 19195,
+          "before": "zooHeld",
+          "after": "pageHost.zooHeld",
+          "generatedStart": 21600
+        },
+        {
+          "start": 19314,
+          "end": 19320,
+          "before": "freeze",
+          "after": "pageHost.freeze",
+          "generatedStart": 21735
+        },
+        {
+          "start": 19348,
+          "end": 19356,
+          "before": "lastDraw",
+          "after": "pageHost.lastDraw",
+          "generatedStart": 21778
+        },
+        {
+          "start": 19374,
+          "end": 19382,
+          "before": "lastDraw",
+          "after": "pageHost.lastDraw",
+          "generatedStart": 21813
+        },
+        {
+          "start": 19504,
+          "end": 19514,
           "before": "frameStats",
           "after": "pageHost.frameStats",
-          "generatedStart": 22600
+          "generatedStart": 21952
         },
         {
-          "start": 20126,
-          "end": 20133,
+          "start": 19738,
+          "end": 19747,
+          "before": "drawFrame",
+          "after": "pageHost.drawFrame",
+          "generatedStart": 22195
+        },
+        {
+          "start": 19948,
+          "end": 19952,
+          "before": "view",
+          "after": "pageHost.view",
+          "generatedStart": 22414
+        },
+        {
+          "start": 20028,
+          "end": 20038,
+          "before": "frameStats",
+          "after": "pageHost.frameStats",
+          "generatedStart": 22503
+        },
+        {
+          "start": 20051,
+          "end": 20057,
+          "before": "aimHud",
+          "after": "pageHost.aimHud",
+          "generatedStart": 22535
+        },
+        {
+          "start": 20085,
+          "end": 20090,
+          "before": "input",
+          "after": "pageHost.input",
+          "generatedStart": 22578
+        },
+        {
+          "start": 20099,
+          "end": 20104,
+          "before": "input",
+          "after": "pageHost.input",
+          "generatedStart": 22601
+        },
+        {
+          "start": 20114,
+          "end": 20127,
+          "before": "startedNights",
+          "after": "pageHost.startedNights",
+          "generatedStart": 22625
+        },
+        {
+          "start": 20142,
+          "end": 20145,
+          "before": "bot",
+          "after": "pageHost.bot",
+          "generatedStart": 22662
+        },
+        {
+          "start": 20150,
+          "end": 20160,
+          "before": "frameStats",
+          "after": "pageHost.frameStats",
+          "generatedStart": 22679
+        },
+        {
+          "start": 20196,
+          "end": 20203,
           "before": "perfHud",
           "after": "pageHost.perfHud",
-          "generatedStart": 22655
+          "generatedStart": 22734
         },
         {
-          "start": 20188,
-          "end": 20194,
+          "start": 20258,
+          "end": 20264,
           "before": "freeze",
           "after": "pageHost.freeze",
-          "generatedStart": 22726
+          "generatedStart": 22805
         },
         {
-          "start": 20206,
-          "end": 20211,
+          "start": 20276,
+          "end": 20281,
           "before": "shake",
           "after": "pageHost.shake",
-          "generatedStart": 22753
+          "generatedStart": 22832
         },
         {
-          "start": 20223,
-          "end": 20229,
+          "start": 20293,
+          "end": 20299,
           "before": "freeze",
           "after": "pageHost.freeze",
-          "generatedStart": 22779
+          "generatedStart": 22858
         },
         {
-          "start": 20311,
-          "end": 20322,
+          "start": 20381,
+          "end": 20392,
           "before": "overlayHead",
           "after": "pageHost.overlayHead",
-          "generatedStart": 22876
+          "generatedStart": 22955
         }
       ]
     },
@@ -7954,11 +8014,11 @@
       "name": "overlayHead",
       "output": "src/app/pageFrame.ts",
       "originalSha256": "924517a971e7fdda4d95a5c09bbedefe1fe62426c1728c5b26bf65f6724ea6a2",
-      "sourceStart": 118633,
-      "sourceEnd": 119561,
+      "sourceStart": 119197,
+      "sourceEnd": 120125,
       "generatedSha256": "d06fed1f18d1d7a64da264c467f64a889c35f35c849ebf0e7ff388aae324a510",
-      "outputBodyStart": 26474,
-      "outputBodyEnd": 27501,
+      "outputBodyStart": 26553,
+      "outputBodyEnd": 27580,
       "edits": [
         {
           "start": 27,
@@ -8064,8 +8124,8 @@
       "name": "installBuildNotice1",
       "output": "src/app/pageBuildNotice.ts",
       "originalSha256": "8b9093031e3ddda5717da51f768995201b3a71485e19ec0055af37a189cda289",
-      "sourceStart": 59520,
-      "sourceEnd": 59618,
+      "sourceStart": 59708,
+      "sourceEnd": 59806,
       "generatedSha256": "8a4ae49372bd978a68a453b0c1b2c8312565eef3c0a4de0ad516f68213ae8844",
       "outputBodyStart": 410,
       "outputBodyEnd": 517,
@@ -8084,8 +8144,8 @@
       "name": "render",
       "output": "src/render/view/frame.ts",
       "originalSha256": "820b698fa237ffca851312327408df21fbd7a9eb954a1eb2ebe8cf3211aef4f8",
-      "sourceStart": 117361,
-      "sourceEnd": 146031,
+      "sourceStart": 117455,
+      "sourceEnd": 146125,
       "generatedSha256": "5aeed10e37087ba77056c984c775cb8f59b516e31200b214b7a4772f40f1ef51",
       "outputBodyStart": 2779,
       "outputBodyEnd": 33695,
@@ -10365,8 +10425,8 @@
       "name": "houseTilt",
       "output": "src/render/view/houseFrame.ts",
       "originalSha256": "cf962d9a53da64f48daafdf86e4a234bbe8ec6a1ec95a306d175c121e9c6d04f",
-      "sourceStart": 29172,
-      "sourceEnd": 29470,
+      "sourceStart": 29094,
+      "sourceEnd": 29392,
       "generatedSha256": "9a07dfe0e2f00eaa00d42ab3c40aad36422a7901499686942eb3c55bf3927125",
       "outputBodyStart": 1082,
       "outputBodyEnd": 1444,
@@ -10434,8 +10494,8 @@
       "name": "behindHouse",
       "output": "src/render/view/houseFrame.ts",
       "originalSha256": "5564f6c8bd350e9514e5a39274009b7ed1ac20c5d828d978e83dc66088b85037",
-      "sourceStart": 29648,
-      "sourceEnd": 31536,
+      "sourceStart": 29570,
+      "sourceEnd": 31458,
       "generatedSha256": "f8bffb8ba99b9b501dd9788f33f0ad28ae368f87c470451d1034b97fdc81dbf6",
       "outputBodyStart": 1564,
       "outputBodyEnd": 3554,
@@ -10559,8 +10619,8 @@
       "name": "occluders",
       "output": "src/render/view/houseFrame.ts",
       "originalSha256": "496be000b09d3f4addcba405efe64369bda30c560a3cc429790e6109f4f90061",
-      "sourceStart": 32049,
-      "sourceEnd": 32444,
+      "sourceStart": 31971,
+      "sourceEnd": 32366,
       "generatedSha256": "9044eb1271f5c7d5656371774bdc135d70ccbfc23508d45cabf7f512cde2550a",
       "outputBodyStart": 3662,
       "outputBodyEnd": 4173,
@@ -10677,8 +10737,8 @@
       "name": "ensureCrown",
       "output": "src/render/view/houseFrame.ts",
       "originalSha256": "926f1db7421f0fb903b440df212c3659999fb61c9b1f058bc415d554ded921da",
-      "sourceStart": 34963,
-      "sourceEnd": 37255,
+      "sourceStart": 34885,
+      "sourceEnd": 37177,
       "generatedSha256": "a8e869597c0bb8c261d19cf010bbcc1bc5812acb8b9c8759e718ee4dbae2eb1f",
       "outputBodyStart": 4296,
       "outputBodyEnd": 6861,
@@ -10963,8 +11023,8 @@
       "name": "buildHome",
       "output": "src/render/view/houseFrame.ts",
       "originalSha256": "ac8a310f8a9ca00686762f9b627be0cc2d832d6fb02894dbb27df730ddd4163d",
-      "sourceStart": 75458,
-      "sourceEnd": 76590,
+      "sourceStart": 75524,
+      "sourceEnd": 76656,
       "generatedSha256": "3440fcfe4be4e4e776bcfa1625e05654eba070d4f6628ea82db4c100805ecabc",
       "outputBodyStart": 7039,
       "outputBodyEnd": 8267,
@@ -11067,8 +11127,8 @@
       "name": "swapHomeArt",
       "output": "src/render/view/houseFrame.ts",
       "originalSha256": "b976b9d74f959d0570e2ac2eb1cebbaff2e93aa35ab4b638f835af3bf5588a7f",
-      "sourceStart": 111136,
-      "sourceEnd": 112562,
+      "sourceStart": 111230,
+      "sourceEnd": 112656,
       "generatedSha256": "6c200b028d897c651369a5f7b0f02d4f2caebc14c6a6d568790de9b5e9632ee3",
       "outputBodyStart": 8378,
       "outputBodyEnd": 10005,
@@ -11290,8 +11350,8 @@
       "name": "legendRings",
       "output": "src/render/view/markers.ts",
       "originalSha256": "f057302f5011d71f3efca6a982c30e18f1c0f5b43a8c1f49cdf277cec8e55839",
-      "sourceStart": 114308,
-      "sourceEnd": 117062,
+      "sourceStart": 114402,
+      "sourceEnd": 117156,
       "generatedSha256": "ed4ea1ac5a744cbf771311b82a98c153de3df6b097e612d7087f091afd3c85a5",
       "outputBodyStart": 731,
       "outputBodyEnd": 3587,
@@ -11408,8 +11468,8 @@
       "name": "pin",
       "output": "src/render/view/markers.ts",
       "originalSha256": "4aa130c199c30575ea9f8f756c695f7aef2d18086ca261fe5da04be69129dae7",
-      "sourceStart": 42320,
-      "sourceEnd": 42470,
+      "sourceStart": 42386,
+      "sourceEnd": 42536,
       "generatedSha256": "030be2f91d14600209444a7856670790afa3836ec64e338f750f6784af035c9e",
       "outputBodyStart": 3745,
       "outputBodyEnd": 3907,
@@ -11435,8 +11495,8 @@
       "name": "inviteStart",
       "output": "src/render/view/markers.ts",
       "originalSha256": "55bc5945bf05b541f6a60e27d626dc10c9a55c975914fc67c3a9fefe3355024f",
-      "sourceStart": 45465,
-      "sourceEnd": 45607,
+      "sourceStart": 45531,
+      "sourceEnd": 45673,
       "generatedSha256": "4d4b93a88416a8856cb94fad9f968046fbc8810aead74a9df0ab1b8e132d6bfa",
       "outputBodyStart": 4075,
       "outputBodyEnd": 4223,
@@ -11455,8 +11515,8 @@
       "name": "updateMoon",
       "output": "src/render/view/atmosphere.ts",
       "originalSha256": "e9402433590b8865354ee06ee60ddea62edaa964288c9e83dd8d6116ff94e12d",
-      "sourceStart": 107449,
-      "sourceEnd": 108184,
+      "sourceStart": 107543,
+      "sourceEnd": 108278,
       "generatedSha256": "21355eece5a06b0a367a6a6672279da4337742b8a0fabe702b18cba4e2f60e66",
       "outputBodyStart": 676,
       "outputBodyEnd": 1471,
@@ -11517,8 +11577,8 @@
       "name": "updateSteam",
       "output": "src/render/view/atmosphere.ts",
       "originalSha256": "104b1bac0384cd11ff129e56eb64d2265acccbcf84579fea1624bbdb99d2779f",
-      "sourceStart": 108358,
-      "sourceEnd": 108764,
+      "sourceStart": 108452,
+      "sourceEnd": 108858,
       "generatedSha256": "261d6e1b09717852b012427bb32d89afb9dd8f736e81d72dc777a1a9f0132be4",
       "outputBodyStart": 1606,
       "outputBodyEnd": 2048,
@@ -11558,8 +11618,8 @@
       "name": "updateSmoke",
       "output": "src/render/view/atmosphere.ts",
       "originalSha256": "b46b18e26e4a4d8191ae4ca0e57326093f9d4403928f18feda0497adfc12ec83",
-      "sourceStart": 108955,
-      "sourceEnd": 109901,
+      "sourceStart": 109049,
+      "sourceEnd": 109995,
       "generatedSha256": "28a0d6859c7ea0ad65f2723cb3526b1954af0fb6ac92d3a67115c895f7559ed5",
       "outputBodyStart": 2182,
       "outputBodyEnd": 3209,
@@ -11662,8 +11722,8 @@
       "name": "readyPrograms",
       "output": "src/render/view/readiness.ts",
       "originalSha256": "93fec4edf59ecf5a3db10acecef62e4a0947f266803e0fdc4acaec42becd59a7",
-      "sourceStart": 24301,
-      "sourceEnd": 24611,
+      "sourceStart": 24223,
+      "sourceEnd": 24533,
       "generatedSha256": "0ca1dce4137199e1727c436f536589c0f2b5790261b09d976df69640b9ce360a",
       "outputBodyStart": 843,
       "outputBodyEnd": 1183,
@@ -11703,8 +11763,8 @@
       "name": "landingWakeReady",
       "output": "src/render/view/readiness.ts",
       "originalSha256": "855f0f350423bdf2527daafdcb3ebc8b0a2ac033ccaa936ad90fb25350665af7",
-      "sourceStart": 24882,
-      "sourceEnd": 25315,
+      "sourceStart": 24804,
+      "sourceEnd": 25237,
       "generatedSha256": "9d9de95f676589356b72b9dc6f53c93d1c3d60827ba3a4995fdcaf065a937182",
       "outputBodyStart": 1303,
       "outputBodyEnd": 1784,
@@ -11772,8 +11832,8 @@
       "name": "beginLandingShaders",
       "output": "src/render/view/readiness.ts",
       "originalSha256": "060adc2047fa8ce3557a48a9fa62c27b5cfe4b70a11972b69f24d01fb86c2bde",
-      "sourceStart": 25360,
-      "sourceEnd": 25575,
+      "sourceStart": 25282,
+      "sourceEnd": 25497,
       "generatedSha256": "5e70f03245c670d0317ce836478c370b12419748cebfad1800851019ba2fa458",
       "outputBodyStart": 1919,
       "outputBodyEnd": 2188,
@@ -11834,8 +11894,8 @@
       "name": "armLimitedLanding",
       "output": "src/render/view/readiness.ts",
       "originalSha256": "ee94761010d408525613f4b8d9919d5974ebb5d5f2fc8c3e470f780b46d181c4",
-      "sourceStart": 25612,
-      "sourceEnd": 25780,
+      "sourceStart": 25534,
+      "sourceEnd": 25702,
       "generatedSha256": "6bde572b1b3e68facc5b1217fe6a214f25e6fb9e0b4c7cbf567e04ef7a0de535",
       "outputBodyStart": 2305,
       "outputBodyEnd": 2500,
@@ -11875,8 +11935,8 @@
       "name": "limitedLandingReady",
       "output": "src/render/view/readiness.ts",
       "originalSha256": "51a8dd8cf7221d2010afa9534c6217080a77bf7ad725351c12db527d389b0fa8",
-      "sourceStart": 25837,
-      "sourceEnd": 26377,
+      "sourceStart": 25759,
+      "sourceEnd": 26299,
       "generatedSha256": "023a20d951f6912f62d0d5f6c1f73b62c7e05741cab7b2efeeec277d1e0306c1",
       "outputBodyStart": 2684,
       "outputBodyEnd": 3299,
@@ -11965,8 +12025,8 @@
       "name": "waitForLandingWitch",
       "output": "src/render/view/readiness.ts",
       "originalSha256": "634b9a5e950aad1117df93ab540355f3042b7b5712203ba35c97a154983ce069",
-      "sourceStart": 26423,
-      "sourceEnd": 26645,
+      "sourceStart": 26345,
+      "sourceEnd": 26567,
       "generatedSha256": "80564015abdf5a6665a607e26cd5f1ea91ed29c48010a59fc040133f2f4885fc",
       "outputBodyStart": 3434,
       "outputBodyEnd": 3674,
@@ -11999,8 +12059,8 @@
       "name": "startLandingShaderGrace",
       "output": "src/render/view/readiness.ts",
       "originalSha256": "8bd0fcb3e4f6b9f4f7e778f86fc0502e059d79f2ee3458b99f4a64527bfbfdda",
-      "sourceStart": 26702,
-      "sourceEnd": 26910,
+      "sourceStart": 26624,
+      "sourceEnd": 26832,
       "generatedSha256": "98084c787fe704268ab7d5e9174d53586768c2991e012618d1af08e5e1d4473d",
       "outputBodyStart": 3863,
       "outputBodyEnd": 4098,
@@ -12033,8 +12093,8 @@
       "name": "compileAll",
       "output": "src/render/view/readiness.ts",
       "originalSha256": "53033e4f1356a09c872c82f340a43324c1e89bd9671e7956edae2aa942c58402",
-      "sourceStart": 80752,
-      "sourceEnd": 88671,
+      "sourceStart": 80818,
+      "sourceEnd": 88737,
       "generatedSha256": "2917fedd5c7d439b851839b7263385f57add17c35ff896daccddad335e334462",
       "outputBodyStart": 4285,
       "outputBodyEnd": 12553,
@@ -12375,8 +12435,8 @@
       "name": "gpuCaughtUp",
       "output": "src/render/view/readiness.ts",
       "originalSha256": "9006b725d035716686d9e969018223c7eed008a7ca378f89c15f765e4be15544",
-      "sourceStart": 89350,
-      "sourceEnd": 89813,
+      "sourceStart": 89416,
+      "sourceEnd": 89879,
       "generatedSha256": "94ff513ce580f8c13b89110a6fd6623e3a6d0b7d72ae48d0aa2dba59c69c562d",
       "outputBodyStart": 12680,
       "outputBodyEnd": 13149,
@@ -12395,8 +12455,8 @@
       "name": "warmDraws",
       "output": "src/render/view/readiness.ts",
       "originalSha256": "98193056d0c0f3a35fdfe1301f54b8b5b004d2ebbe1b58725e2d44b606dc3414",
-      "sourceStart": 90349,
-      "sourceEnd": 92335,
+      "sourceStart": 90415,
+      "sourceEnd": 92401,
       "generatedSha256": "a66c67968c4fc23dc0a3c6e058dfc29a5a0707e818082e397f2b1028245a6129",
       "outputBodyStart": 13273,
       "outputBodyEnd": 15355,
@@ -12499,8 +12559,8 @@
       "name": "warmSteps",
       "output": "src/render/view/readiness.ts",
       "originalSha256": "83c70bdf7672c2026fb0ff654e42661fef7dffcae909d764a6f0deb3f565dbc2",
-      "sourceStart": 78257,
-      "sourceEnd": 78716,
+      "sourceStart": 78323,
+      "sourceEnd": 78782,
       "generatedSha256": "68dabf830bf6734185ff8a7e243b4acf7202ff39e3281ea54f5290e1ddcede07",
       "outputBodyStart": 15467,
       "outputBodyEnd": 15932,
@@ -12519,8 +12579,8 @@
       "name": "setReadiness",
       "output": "src/render/view/readiness.ts",
       "originalSha256": "5f7747fa15b72df36f968d8b0b800e736ddd618a208c6d95d3984bee9c6eba7b",
-      "sourceStart": 80262,
-      "sourceEnd": 80570,
+      "sourceStart": 80328,
+      "sourceEnd": 80636,
       "generatedSha256": "1558efbe8e0dc750ee83185b8f0e19077a291f8bab3652e48d81fa8e5ce4c03f",
       "outputBodyStart": 16109,
       "outputBodyEnd": 16423,
@@ -12539,11 +12599,11 @@
       "name": "build",
       "output": "src/render/view/lifecycle.ts",
       "originalSha256": "7ac7292b813b127b0e01b9b39db6354b1fb8a718835b6e4869cfe3df846b7651",
-      "sourceStart": 55833,
-      "sourceEnd": 65556,
+      "sourceStart": 55899,
+      "sourceEnd": 65622,
       "generatedSha256": "91308edd775998e10ad438f8edfb5f0e667b1552f4581323d13f0e38dd2eaa4a",
-      "outputBodyStart": 2659,
-      "outputBodyEnd": 13578,
+      "outputBodyStart": 2709,
+      "outputBodyEnd": 13628,
       "edits": [
         {
           "start": 19,
@@ -13826,11 +13886,11 @@
       "name": "prepare",
       "output": "src/render/view/lifecycle.ts",
       "originalSha256": "5d38e8f1700b9da1b5c7e0891093d3dbae892473788d254d6ff52baf652c37b1",
-      "sourceStart": 69031,
-      "sourceEnd": 73694,
+      "sourceStart": 69097,
+      "sourceEnd": 73760,
       "generatedSha256": "403c48b3438fbe98ebe6ac863d0b9a3389323fb0a8500cfa1f56f5439d2bad80",
-      "outputBodyStart": 13807,
-      "outputBodyEnd": 18873,
+      "outputBodyStart": 13857,
+      "outputBodyEnd": 18923,
       "edits": [
         {
           "start": 62,
@@ -14217,11 +14277,11 @@
       "name": "treeExtent",
       "output": "src/render/view/lifecycle.ts",
       "originalSha256": "c0f02219f3d44c60e1a8be7da651941b62efb469e7345cb02aeb36308adf2390",
-      "sourceStart": 74101,
-      "sourceEnd": 74880,
+      "sourceStart": 74167,
+      "sourceEnd": 74946,
       "generatedSha256": "be497ec2bb3465153bb3858c96059f07cf4728b20441f8b5b98f152cbaf40329",
-      "outputBodyStart": 18997,
-      "outputBodyEnd": 19812,
+      "outputBodyStart": 19047,
+      "outputBodyEnd": 19862,
       "edits": [
         {
           "start": 16,
@@ -14272,11 +14332,11 @@
       "name": "askIsland",
       "output": "src/render/view/lifecycle.ts",
       "originalSha256": "9f3ba406e97f4f1f70b68383b1fab6b4b61afa17dc4eb980d2db06b13e492fef",
-      "sourceStart": 92563,
-      "sourceEnd": 94488,
+      "sourceStart": 92629,
+      "sourceEnd": 94554,
       "generatedSha256": "1bddfb2414e2083d6233d1ef2da8b102aa53fe89286f4db1a3a14a5df9530926",
-      "outputBodyStart": 19949,
-      "outputBodyEnd": 21940,
+      "outputBodyStart": 19999,
+      "outputBodyEnd": 21990,
       "edits": [
         {
           "start": 153,
@@ -14361,12 +14421,12 @@
       "source": "src/render/view.ts",
       "name": "setGameSteps",
       "output": "src/render/view/lifecycle.ts",
-      "originalSha256": "061514214d1d207e530848a5108a80d3cb3ef187d973396575e1e460f25c2dd1",
-      "sourceStart": 95872,
-      "sourceEnd": 99887,
-      "generatedSha256": "841293f1f61086eaec7f4c9381126dc4dfcedb283057e89c16408bf462d8ddf5",
-      "outputBodyStart": 22065,
-      "outputBodyEnd": 26569,
+      "originalSha256": "29797368b6e02c870cc97e2f7795eb2e41095fafc20867b67c856438b942164a",
+      "sourceStart": 95938,
+      "sourceEnd": 99981,
+      "generatedSha256": "b9ce3da3ca0558690f456cfabb53de39edce7dee91702c4289b00f4527a1997c",
+      "outputBodyStart": 22115,
+      "outputBodyEnd": 26653,
       "edits": [
         {
           "start": 6,
@@ -14411,459 +14471,466 @@
           "generatedStart": 505
         },
         {
-          "start": 496,
-          "end": 512,
-          "before": "this.typeBatches",
-          "after": "a4ViewHost.typeBatches",
-          "generatedStart": 538
-        },
-        {
-          "start": 525,
-          "end": 535,
-          "before": "this.scene",
-          "after": "a4ViewHost.scene",
-          "generatedStart": 573
-        },
-        {
-          "start": 576,
-          "end": 592,
-          "before": "this.typeBatches",
-          "after": "a4ViewHost.typeBatches",
-          "generatedStart": 630
-        },
-        {
-          "start": 627,
-          "end": 650,
-          "before": "this.trunkShadowBatches",
-          "after": "a4ViewHost.trunkShadowBatches",
-          "generatedStart": 687
-        },
-        {
-          "start": 681,
-          "end": 691,
-          "before": "this.scene",
-          "after": "a4ViewHost.scene",
-          "generatedStart": 747
-        },
-        {
-          "start": 726,
-          "end": 749,
-          "before": "this.trunkShadowBatches",
-          "after": "a4ViewHost.trunkShadowBatches",
-          "generatedStart": 798
-        },
-        {
-          "start": 767,
-          "end": 790,
-          "before": "this.trunkShadowBatches",
-          "after": "a4ViewHost.trunkShadowBatches",
-          "generatedStart": 845
-        },
-        {
-          "start": 864,
-          "end": 878,
-          "before": "this.partyView",
-          "after": "a4PrivateHost.partyView",
-          "generatedStart": 948
-        },
-        {
-          "start": 913,
-          "end": 927,
-          "before": "this.appearing",
-          "after": "a4ViewHost.appearing",
-          "generatedStart": 1006
-        },
-        {
-          "start": 1008,
-          "end": 1019,
-          "before": "this.assets",
-          "after": "a4ViewHost.assets",
-          "generatedStart": 1107
-        },
-        {
-          "start": 1205,
-          "end": 1219,
-          "before": "treehouseArtId",
-          "after": "a4SharedHost.treehouseArtId",
-          "generatedStart": 1310
-        },
-        {
-          "start": 1234,
-          "end": 1243,
-          "before": "this.game",
-          "after": "a4ViewHost.game",
-          "generatedStart": 1352
-        },
-        {
-          "start": 1270,
-          "end": 1274,
+          "start": 497,
+          "end": 501,
           "before": "this",
           "after": "a4ViewHost",
-          "generatedStart": 1394
+          "generatedStart": 539
         },
         {
-          "start": 1276,
-          "end": 1286,
+          "start": 524,
+          "end": 540,
+          "before": "this.typeBatches",
+          "after": "a4ViewHost.typeBatches",
+          "generatedStart": 572
+        },
+        {
+          "start": 553,
+          "end": 563,
+          "before": "this.scene",
+          "after": "a4ViewHost.scene",
+          "generatedStart": 607
+        },
+        {
+          "start": 604,
+          "end": 620,
+          "before": "this.typeBatches",
+          "after": "a4ViewHost.typeBatches",
+          "generatedStart": 664
+        },
+        {
+          "start": 655,
+          "end": 678,
+          "before": "this.trunkShadowBatches",
+          "after": "a4ViewHost.trunkShadowBatches",
+          "generatedStart": 721
+        },
+        {
+          "start": 709,
+          "end": 719,
+          "before": "this.scene",
+          "after": "a4ViewHost.scene",
+          "generatedStart": 781
+        },
+        {
+          "start": 754,
+          "end": 777,
+          "before": "this.trunkShadowBatches",
+          "after": "a4ViewHost.trunkShadowBatches",
+          "generatedStart": 832
+        },
+        {
+          "start": 795,
+          "end": 818,
+          "before": "this.trunkShadowBatches",
+          "after": "a4ViewHost.trunkShadowBatches",
+          "generatedStart": 879
+        },
+        {
+          "start": 892,
+          "end": 906,
+          "before": "this.partyView",
+          "after": "a4PrivateHost.partyView",
+          "generatedStart": 982
+        },
+        {
+          "start": 941,
+          "end": 955,
+          "before": "this.appearing",
+          "after": "a4ViewHost.appearing",
+          "generatedStart": 1040
+        },
+        {
+          "start": 1036,
+          "end": 1047,
+          "before": "this.assets",
+          "after": "a4ViewHost.assets",
+          "generatedStart": 1141
+        },
+        {
+          "start": 1233,
+          "end": 1247,
+          "before": "treehouseArtId",
+          "after": "a4SharedHost.treehouseArtId",
+          "generatedStart": 1344
+        },
+        {
+          "start": 1262,
+          "end": 1271,
+          "before": "this.game",
+          "after": "a4ViewHost.game",
+          "generatedStart": 1386
+        },
+        {
+          "start": 1298,
+          "end": 1302,
+          "before": "this",
+          "after": "a4ViewHost",
+          "generatedStart": 1428
+        },
+        {
+          "start": 1304,
+          "end": 1314,
           "before": "nightState",
           "after": "a4SharedHost.nightState",
-          "generatedStart": 1406
+          "generatedStart": 1440
         },
         {
-          "start": 1321,
-          "end": 1335,
+          "start": 1349,
+          "end": 1363,
           "before": "this.areaMoods",
           "after": "a4ViewHost.areaMoods",
-          "generatedStart": 1464
+          "generatedStart": 1498
         },
         {
-          "start": 1441,
-          "end": 1451,
+          "start": 1469,
+          "end": 1479,
           "before": "this.scene",
           "after": "a4ViewHost.scene",
-          "generatedStart": 1590
+          "generatedStart": 1624
         },
         {
-          "start": 1468,
-          "end": 1478,
+          "start": 1496,
+          "end": 1506,
           "before": "this.style",
           "after": "a4ViewHost.style",
-          "generatedStart": 1623
+          "generatedStart": 1657
         },
         {
-          "start": 1485,
-          "end": 1493,
+          "start": 1513,
+          "end": 1521,
           "before": "this.mpp",
           "after": "a4ViewHost.mpp",
-          "generatedStart": 1646
+          "generatedStart": 1680
         },
         {
-          "start": 1507,
-          "end": 1520,
+          "start": 1535,
+          "end": 1548,
           "before": "this.renderer",
           "after": "a4ViewHost.renderer",
-          "generatedStart": 1674
+          "generatedStart": 1708
         },
         {
-          "start": 1558,
-          "end": 1569,
+          "start": 1586,
+          "end": 1597,
           "before": "this.assets",
           "after": "a4ViewHost.assets",
-          "generatedStart": 1731
+          "generatedStart": 1765
         },
         {
-          "start": 1857,
-          "end": 1867,
+          "start": 1885,
+          "end": 1895,
           "before": "this.style",
           "after": "a4ViewHost.style",
-          "generatedStart": 2036
+          "generatedStart": 2070
         },
         {
-          "start": 1877,
-          "end": 1888,
+          "start": 1905,
+          "end": 1916,
           "before": "this.assets",
           "after": "a4ViewHost.assets",
-          "generatedStart": 2062
+          "generatedStart": 2096
         },
         {
-          "start": 1915,
-          "end": 1929,
+          "start": 1943,
+          "end": 1957,
           "before": "this.tuftBiome",
           "after": "a4PrivateHost.tuftBiome",
-          "generatedStart": 2106
+          "generatedStart": 2140
         },
         {
-          "start": 1965,
-          "end": 1975,
+          "start": 1993,
+          "end": 2003,
           "before": "this.style",
           "after": "a4ViewHost.style",
-          "generatedStart": 2165
+          "generatedStart": 2199
         },
         {
-          "start": 1991,
-          "end": 2001,
+          "start": 2019,
+          "end": 2029,
           "before": "this.style",
           "after": "a4ViewHost.style",
-          "generatedStart": 2197
+          "generatedStart": 2231
         },
         {
-          "start": 2003,
-          "end": 2014,
+          "start": 2031,
+          "end": 2042,
           "before": "islandTypes",
           "after": "a4SharedHost.islandTypes",
-          "generatedStart": 2215
+          "generatedStart": 2249
         },
         {
-          "start": 2289,
-          "end": 2301,
+          "start": 2317,
+          "end": 2329,
           "before": "this.leyBase",
           "after": "a4PrivateHost.leyBase",
-          "generatedStart": 2514
+          "generatedStart": 2548
         },
         {
-          "start": 2392,
-          "end": 2406,
+          "start": 2420,
+          "end": 2434,
           "before": "this.beachView",
           "after": "a4ViewHost.beachView",
-          "generatedStart": 2626
+          "generatedStart": 2660
         },
         {
-          "start": 2450,
-          "end": 2460,
+          "start": 2478,
+          "end": 2488,
           "before": "this.grass",
           "after": "a4ViewHost.grass",
-          "generatedStart": 2690
+          "generatedStart": 2724
         },
         {
-          "start": 2476,
-          "end": 2490,
+          "start": 2504,
+          "end": 2518,
           "before": "this.tuftBiome",
           "after": "a4PrivateHost.tuftBiome",
-          "generatedStart": 2722
+          "generatedStart": 2756
         },
         {
-          "start": 2503,
-          "end": 2513,
+          "start": 2531,
+          "end": 2541,
           "before": "this.grass",
           "after": "a4ViewHost.grass",
-          "generatedStart": 2758
+          "generatedStart": 2792
         },
         {
-          "start": 2699,
-          "end": 2710,
+          "start": 2727,
+          "end": 2738,
           "before": "this.island",
           "after": "a4ViewHost.island",
-          "generatedStart": 2960
+          "generatedStart": 2994
         },
         {
-          "start": 2968,
-          "end": 2983,
+          "start": 2996,
+          "end": 3011,
           "before": "this.houseRooms",
           "after": "a4ViewHost.houseRooms",
-          "generatedStart": 3235
+          "generatedStart": 3269
         },
         {
-          "start": 2985,
-          "end": 3000,
+          "start": 3013,
+          "end": 3028,
           "before": "this.houseRooms",
           "after": "a4ViewHost.houseRooms",
-          "generatedStart": 3258
+          "generatedStart": 3292
         },
         {
-          "start": 3032,
-          "end": 3047,
+          "start": 3060,
+          "end": 3075,
           "before": "this.houseRooms",
           "after": "a4ViewHost.houseRooms",
-          "generatedStart": 3311
+          "generatedStart": 3345
         },
         {
-          "start": 3072,
-          "end": 3082,
+          "start": 3100,
+          "end": 3110,
           "before": "this.scene",
           "after": "a4ViewHost.scene",
-          "generatedStart": 3357
+          "generatedStart": 3391
         },
         {
-          "start": 3090,
-          "end": 3105,
+          "start": 3118,
+          "end": 3133,
           "before": "this.houseRooms",
           "after": "a4ViewHost.houseRooms",
-          "generatedStart": 3381
+          "generatedStart": 3415
         },
         {
-          "start": 3130,
-          "end": 3145,
+          "start": 3158,
+          "end": 3173,
           "before": "this.houseRooms",
           "after": "a4ViewHost.houseRooms",
-          "generatedStart": 3427
+          "generatedStart": 3461
         },
         {
-          "start": 3149,
-          "end": 3159,
+          "start": 3177,
+          "end": 3187,
           "before": "this.scene",
           "after": "a4ViewHost.scene",
-          "generatedStart": 3452
+          "generatedStart": 3486
         },
         {
-          "start": 3170,
-          "end": 3185,
+          "start": 3198,
+          "end": 3213,
           "before": "this.houseRooms",
           "after": "a4ViewHost.houseRooms",
-          "generatedStart": 3479
+          "generatedStart": 3513
         },
         {
-          "start": 3195,
-          "end": 3210,
+          "start": 3223,
+          "end": 3238,
           "before": "this.houseRooms",
           "after": "a4ViewHost.houseRooms",
-          "generatedStart": 3510
+          "generatedStart": 3544
         },
         {
-          "start": 3222,
-          "end": 3237,
+          "start": 3250,
+          "end": 3265,
           "before": "this.houseRooms",
           "after": "a4ViewHost.houseRooms",
-          "generatedStart": 3543
+          "generatedStart": 3577
         },
         {
-          "start": 3281,
-          "end": 3296,
+          "start": 3309,
+          "end": 3324,
           "before": "this.zooExitTag",
           "after": "a4ViewHost.zooExitTag",
-          "generatedStart": 3608
+          "generatedStart": 3642
         },
         {
-          "start": 3300,
-          "end": 3315,
+          "start": 3328,
+          "end": 3343,
           "before": "this.zooExitTag",
           "after": "a4ViewHost.zooExitTag",
-          "generatedStart": 3633
+          "generatedStart": 3667
         },
         {
-          "start": 3327,
-          "end": 3342,
+          "start": 3355,
+          "end": 3370,
           "before": "this.zooExitTag",
           "after": "a4ViewHost.zooExitTag",
-          "generatedStart": 3666
+          "generatedStart": 3700
         },
         {
-          "start": 3357,
-          "end": 3373,
+          "start": 3385,
+          "end": 3401,
           "before": "this.ensureCrown",
           "after": "a4PrivateHost.ensureCrown",
-          "generatedStart": 3702
-        },
-        {
-          "start": 3442,
-          "end": 3454,
-          "before": "this.strings",
-          "after": "a4PrivateHost.strings",
-          "generatedStart": 3796
+          "generatedStart": 3736
         },
         {
           "start": 3470,
-          "end": 3484,
+          "end": 3482,
+          "before": "this.strings",
+          "after": "a4PrivateHost.strings",
+          "generatedStart": 3830
+        },
+        {
+          "start": 3498,
+          "end": 3512,
           "before": "this.leashView",
           "after": "a4ViewHost.leashView",
-          "generatedStart": 3833
+          "generatedStart": 3867
         },
         {
-          "start": 3500,
-          "end": 3511,
+          "start": 3528,
+          "end": 3539,
           "before": "this.lasers",
           "after": "a4PrivateHost.lasers",
-          "generatedStart": 3869
-        },
-        {
-          "start": 3527,
-          "end": 3539,
-          "before": "this.borders",
-          "after": "a4PrivateHost.borders",
-          "generatedStart": 3905
+          "generatedStart": 3903
         },
         {
           "start": 3555,
-          "end": 3570,
+          "end": 3567,
+          "before": "this.borders",
+          "after": "a4PrivateHost.borders",
+          "generatedStart": 3939
+        },
+        {
+          "start": 3583,
+          "end": 3598,
           "before": "this.inviteView",
           "after": "a4ViewHost.inviteView",
-          "generatedStart": 3942
+          "generatedStart": 3976
         },
         {
-          "start": 3590,
-          "end": 3607,
+          "start": 3618,
+          "end": 3635,
           "before": "this.partyObjects",
           "after": "a4ViewHost.partyObjects",
-          "generatedStart": 3983
+          "generatedStart": 4017
         },
         {
-          "start": 3617,
-          "end": 3625,
+          "start": 3645,
+          "end": 3653,
           "before": "this.rig",
           "after": "a4ViewHost.rig",
-          "generatedStart": 4016
+          "generatedStart": 4050
         },
         {
-          "start": 3636,
-          "end": 3650,
+          "start": 3664,
+          "end": 3678,
           "before": "this.holograms",
           "after": "a4PrivateHost.holograms",
-          "generatedStart": 4041
+          "generatedStart": 4075
         },
         {
-          "start": 3660,
-          "end": 3671,
+          "start": 3688,
+          "end": 3699,
           "before": "this.glades",
           "after": "a4PrivateHost.glades",
-          "generatedStart": 4074
+          "generatedStart": 4108
         },
         {
-          "start": 3681,
-          "end": 3691,
+          "start": 3709,
+          "end": 3719,
           "before": "this.wisps",
           "after": "a4PrivateHost.wisps",
-          "generatedStart": 4104
-        },
-        {
-          "start": 3706,
-          "end": 3717,
-          "before": "this.clouds",
-          "after": "a4ViewHost.clouds",
           "generatedStart": 4138
         },
         {
-          "start": 3737,
-          "end": 3752,
+          "start": 3734,
+          "end": 3745,
+          "before": "this.clouds",
+          "after": "a4ViewHost.clouds",
+          "generatedStart": 4172
+        },
+        {
+          "start": 3765,
+          "end": 3780,
           "before": "this.lightRings",
           "after": "a4ViewHost.lightRings",
-          "generatedStart": 4175
+          "generatedStart": 4209
         },
         {
-          "start": 3781,
-          "end": 3795,
+          "start": 3809,
+          "end": 3823,
           "before": "this.fireworks",
           "after": "a4ViewHost.fireworks",
-          "generatedStart": 4225
+          "generatedStart": 4259
         },
         {
-          "start": 3805,
-          "end": 3821,
+          "start": 3833,
+          "end": 3849,
           "before": "this.swoopTrails",
           "after": "a4ViewHost.swoopTrails",
-          "generatedStart": 4255
+          "generatedStart": 4289
         },
         {
-          "start": 3831,
-          "end": 3843,
+          "start": 3859,
+          "end": 3871,
           "before": "this.spellFx",
           "after": "a4ViewHost.spellFx",
-          "generatedStart": 4287
+          "generatedStart": 4321
         },
         {
-          "start": 3853,
-          "end": 3863,
+          "start": 3881,
+          "end": 3891,
           "before": "this.trail",
           "after": "a4PrivateHost.trail",
-          "generatedStart": 4315
+          "generatedStart": 4349
         },
         {
-          "start": 3876,
-          "end": 3892,
+          "start": 3904,
+          "end": 3920,
           "before": "this.combatLight",
           "after": "a4ViewHost.combatLight",
-          "generatedStart": 4347
-        },
-        {
-          "start": 3902,
-          "end": 3916,
-          "before": "this.occlusion",
-          "after": "a4ViewHost.occlusion",
-          "generatedStart": 4379
+          "generatedStart": 4381
         },
         {
           "start": 3930,
-          "end": 3941,
+          "end": 3944,
+          "before": "this.occlusion",
+          "after": "a4ViewHost.occlusion",
+          "generatedStart": 4413
+        },
+        {
+          "start": 3958,
+          "end": 3969,
           "before": "this.assets",
           "after": "a4ViewHost.assets",
-          "generatedStart": 4413
+          "generatedStart": 4447
         }
       ]
     },
@@ -14872,11 +14939,11 @@
       "name": "retype",
       "output": "src/render/view/lifecycle.ts",
       "originalSha256": "b853eac075ed51b89b7039f307a14a04a01c61b6d77ce5056de3947642ce8ccd",
-      "sourceStart": 100159,
-      "sourceEnd": 100611,
+      "sourceStart": 100253,
+      "sourceEnd": 100705,
       "generatedSha256": "995d1722026358e53bdd4cba9a10da8b9d5f5bb37fe5962f9f660d6e08c0c343",
-      "outputBodyStart": 26693,
-      "outputBodyEnd": 27187,
+      "outputBodyStart": 26777,
+      "outputBodyEnd": 27271,
       "edits": [
         {
           "start": 47,
@@ -14934,8 +15001,8 @@
       "name": "scenePixelSize",
       "output": "src/render/view/viewport.ts",
       "originalSha256": "25e14d075d8ae29d9a1b43913d5cd755c2851cb28473fc2c840eda727754e889",
-      "sourceStart": 66751,
-      "sourceEnd": 67116,
+      "sourceStart": 66817,
+      "sourceEnd": 67182,
       "generatedSha256": "53ed0a5001d2e911e9e140560c025c230ca3ec8b0a9e509ca028db7c554f1d50",
       "outputBodyStart": 489,
       "outputBodyEnd": 878,
@@ -14975,8 +15042,8 @@
       "name": "resize",
       "output": "src/render/view/viewport.ts",
       "originalSha256": "4695ff3d95dd79fa3e6bb5362a128d85a71ff391e28196279ceed8eebdfbde08",
-      "sourceStart": 67263,
-      "sourceEnd": 68105,
+      "sourceStart": 67329,
+      "sourceEnd": 68171,
       "generatedSha256": "bb00350412d8d6bc974d6a76a057f82c321b1f61558c37ebb6f16d72bf2f940b",
       "outputBodyStart": 1012,
       "outputBodyEnd": 1998,
@@ -15149,8 +15216,8 @@
       "name": "screenOf",
       "output": "src/render/view/viewport.ts",
       "originalSha256": "d8c152a4d0f91a0bf6ccf3822238ac8f30b1b31ba2b4d3fee544482f51d97d59",
-      "sourceStart": 105006,
-      "sourceEnd": 105142,
+      "sourceStart": 105100,
+      "sourceEnd": 105236,
       "generatedSha256": "486875d05784a3484a70173eccb5ff603a14fc73347ac14ac00fbc5601b78afa",
       "outputBodyStart": 2205,
       "outputBodyEnd": 2353,
@@ -15176,8 +15243,8 @@
       "name": "aimAt",
       "output": "src/render/view/viewport.ts",
       "originalSha256": "d5dd4ea72543483e59e8e276a552c8297dc5c8e5855d8e7f6506d4fa4784b9ad",
-      "sourceStart": 112952,
-      "sourceEnd": 113405,
+      "sourceStart": 113046,
+      "sourceEnd": 113499,
       "generatedSha256": "a0c052ddba0ca86614572ef81e67fc8a248d7b993aee06c975a2cb2860f3f9ee",
       "outputBodyStart": 2519,
       "outputBodyEnd": 3014,
@@ -15228,25 +15295,25 @@
     }
   ],
   "outputs": {
-    "src/app/pagePause.ts": "1933ee59e08a7570e57e24eeb67104a279e9a07b0d512f036fca56f37f37f4d4",
+    "src/app/pagePause.ts": "f6f9cc1702b0fe1f1f1b4ee22c6ecc59e03b4c6ea009d68a40743b0a26fced7e",
     "src/app/pageStations.ts": "17418363247e336d0cd0b8d9911fbcb6a855535fc11a005398fce78c892ded85",
     "src/app/pageNight.ts": "e6149d2af392989d2f3041e67508fe82ee29d33b406609131158525e637b7129",
     "src/app/pageFinds.ts": "4e9eb1891ff4a5caa3d8bbae583019c163f6fc9311c9090001293a2218f2d5e1",
-    "src/app/pageDebug.ts": "223cb2c535de0c0f5811fc6d66aeb8d174c473a125481d4c633646282c855012",
-    "src/app/pageFrame.ts": "c748c99ab12e8969dc065fafe67a1c2557e3f97d0f89025e67c327e18687b493",
+    "src/app/pageDebug.ts": "674de765f980ce166dc6a8607e1c47e4e49c9e22a28a53fcd2318b395ac48c70",
+    "src/app/pageFrame.ts": "dfe4433c62951f9af1605984e9d7bc63130bf0023615fcf3b92a82d6f54c5606",
     "src/app/pageBuildNotice.ts": "fef08d64edecb2bdf842e7ec9e69fe0454ed7844509844a5b1d1919f5edff872",
-    "src/main.ts": "f31c635b497affccb88374775d35e195268d08f049e48c5c4c6d43f4cb804d46",
+    "src/main.ts": "2a2d327937d42df72b48be18669b376d376b3c1affd4eea2b8064b65580190bf",
     "src/render/view/frame.ts": "f50ca845e6b5e5e8edddc21bfe1c98835fb0429002c379bf66654ba7c190c472",
     "src/render/view/houseFrame.ts": "8f057505fde12e8e8cfe944b1742795f32a391142fe4c762d9beec021d644d54",
     "src/render/view/markers.ts": "fe7004f260951331974d7390b140a61637a23c73d2cff3df6ef10de41274e634",
     "src/render/view/atmosphere.ts": "d0927ecfa6ba88b6fc6ac599065d96eab314fdec1e9d1ebcd8fc378cde772c3d",
     "src/render/view/readiness.ts": "230ed7582ba72fd7a5935ec2b0ff3fe22272c6d0057f3f32ac840aae7866f719",
-    "src/render/view/lifecycle.ts": "ee5c85103bfcb39786e79f8159ef194407cb4966e00b5c3731ce63d5fcd03468",
+    "src/render/view/lifecycle.ts": "d02d30b3e27483974c3b91787d3a94ffc3abf036715e63a526fd3ec3e7a1a044",
     "src/render/view/viewport.ts": "be563d10fc011a6f19e18108cf435e1f09eb42041caff600fb576f0d98cd1bf0",
-    "src/render/view.ts": "70e42f43f5983eab8821533993af0bafabb6ba9df8363fa3c161b9bd141ebdae",
-    "config/link-switches.json": "3ada6d07ffea1e6a70498b4715fd87caf58a30fea6a917394d808a455ebc1422",
-    "docs/LINK-SWITCHES.md": "cd45ab5fed5cacffe9d27baed64f9acd72b608fbf1b92a005cd057babe073118"
+    "src/render/view.ts": "a4c32a48abe5b7bd14e95c331134ec677757f25d89843ff14e42e750271e3b56",
+    "config/link-switches.json": "57943c89644cf4faccb21818bff5d4a5a8bca2f1a704de0651b039bcfa48b738",
+    "docs/LINK-SWITCHES.md": "bca4fa622ae18eb21b1e9995c27babee68136dce10de2c356e577b928d822fa7"
   },
-  "viewApiSha256": "f585e3820e424914506e8060e8a66fa10815310bdebaf306f3d4de051dfa7354",
-  "applyMs": 5668.3
+  "viewApiSha256": "2261d5c3215213445c8fd1dd0b167e6d154a49c2d7c46fd8e1f528aeeb974fd6",
+  "applyMs": 3286.6
 }

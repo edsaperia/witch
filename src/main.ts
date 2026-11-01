@@ -121,7 +121,7 @@ import { openPotionLab as a4_openPotionLab, pauseControls as a4_pauseControls, u
 import { shutStation as a4_shutStation, findsCtx as a4_findsCtx, workshopNow as a4_workshopNow, useHouse as a4_useHouse, installStations1 as a4_installStations1, installStations2 as a4_installStations2, installStations3 as a4_installStations3, installStations4 as a4_installStations4, installStations5 as a4_installStations5, installStations6 as a4_installStations6, installStations7 as a4_installStations7, installStations8 as a4_installStations8, installStations9 as a4_installStations9, installStations10 as a4_installStations10, installStations11 as a4_installStations11, installStations12 as a4_installStations12, installStations13 as a4_installStations13, installStations14 as a4_installStations14, installStations15 as a4_installStations15, installStations16 as a4_installStations16 } from "./app/pageStations";
 import { revealArt as a4_revealArt, bedFirst as a4_bedFirst, bedFirstNow as a4_bedFirstNow, arrived as a4_arrived, arrivedNow as a4_arrivedNow, wakeArrival as a4_wakeArrival, wakeArrivalNow as a4_wakeArrivalNow, start as a4_start, startDirect as a4_startDirect, dressCreator as a4_dressCreator, chartOverNight as a4_chartOverNight, chartWorldArg as a4_chartWorldArg, sailFromChart as a4_sailFromChart, recordSail as a4_recordSail, departFromChart as a4_departFromChart, wakeFirst as a4_wakeFirst, wakeFirstNow as a4_wakeFirstNow, sailInPlace as a4_sailInPlace, makeSailNight as a4_makeSailNight, warmAt as a4_warmAt, newNight as a4_newNight, nightInPlace as a4_nightInPlace, leaveBot as a4_leaveBot, chartWorld as a4_chartWorld, soundNote as a4_soundNote, armSkip as a4_armSkip, queueCast as a4_queueCast, armBack as a4_armBack, wokenBefore as a4_wokenBefore, woke as a4_woke, mirrored as a4_mirrored, sawMirror as a4_sawMirror } from "./app/pageNight";
 import { lendFind as a4_lendFind, settleLoan as a4_settleLoan, settleLoanNow as a4_settleLoanNow, startDream as a4_startDream, herHead as a4_herHead, stepGuide as a4_stepGuide, partsNow as a4_partsNow } from "./app/pageFinds";
-import { botGame as a4_botGame, saveComment as a4_saveComment, restoreComment as a4_restoreComment, spawnHere as a4_spawnHere, spawnHereNow as a4_spawnHereNow, decidePanel as a4_decidePanel, keyNow as a4_keyNow, installDebug1 as a4_installDebug1, installDebug2 as a4_installDebug2, installDebug3 as a4_installDebug3, installDebug4 as a4_installDebug4, installDebug5 as a4_installDebug5, installDebug6 as a4_installDebug6, installDebug7 as a4_installDebug7, installDebug8 as a4_installDebug8, installDebug9 as a4_installDebug9, installDebug10 as a4_installDebug10, installDebug11 as a4_installDebug11, installDebug12 as a4_installDebug12, installDebug13 as a4_installDebug13, installDebug14 as a4_installDebug14, installDebug15 as a4_installDebug15, installDebug16 as a4_installDebug16, installDebug17 as a4_installDebug17, installDebug18 as a4_installDebug18, installDebug19 as a4_installDebug19, installDebug20 as a4_installDebug20, installDebug21 as a4_installDebug21, installDebug22 as a4_installDebug22, installDebug23 as a4_installDebug23, installDebug24 as a4_installDebug24, installDebug25 as a4_installDebug25, installDebug26 as a4_installDebug26, installDebug27 as a4_installDebug27, installDebug28 as a4_installDebug28, installDebug29 as a4_installDebug29 } from "./app/pageDebug";
+import { botGame as a4_botGame, saveComment as a4_saveComment, restoreComment as a4_restoreComment, spawnHere as a4_spawnHere, spawnHereNow as a4_spawnHereNow, decidePanel as a4_decidePanel, keyNow as a4_keyNow, installDebug1 as a4_installDebug1, installDebug2 as a4_installDebug2, installDebug3 as a4_installDebug3, installDebug4 as a4_installDebug4, installDebug5 as a4_installDebug5, installDebug6 as a4_installDebug6, installDebug7 as a4_installDebug7, installDebug8 as a4_installDebug8, installDebug9 as a4_installDebug9, installDebug10 as a4_installDebug10, installDebug11 as a4_installDebug11, installDebug12 as a4_installDebug12, installDebug13 as a4_installDebug13, installDebug14 as a4_installDebug14, installDebug15 as a4_installDebug15, installDebug16 as a4_installDebug16, installDebug17 as a4_installDebug17, installDebug18 as a4_installDebug18, installDebug19 as a4_installDebug19, installDebug20 as a4_installDebug20, installDebug21 as a4_installDebug21, installDebug22 as a4_installDebug22, installDebug23 as a4_installDebug23, installDebug24 as a4_installDebug24, installDebug25 as a4_installDebug25, installDebug26 as a4_installDebug26, installDebug27 as a4_installDebug27, installDebug28 as a4_installDebug28, installDebug29 as a4_installDebug29, installDebug30 as a4_installDebug30 } from "./app/pageDebug";
 import { drawFrame as a4_drawFrame, frame as a4_frame, frameBody as a4_frameBody, overlayHead as a4_overlayHead } from "./app/pageFrame";
 import { createBuildNotice as a4_createBuildNotice, installBuildNotice1 as a4_installBuildNotice1 } from "./app/pageBuildNotice";
 
@@ -852,6 +852,7 @@ a4_installDebug5(pageHost);
 a4_installDebug6(pageHost);
 a4_installDebug7(pageHost);
 a4_installDebug8(pageHost);
+a4_installDebug9(pageHost);
 // The pause page's Report (ui/visualReport.ts): the frame drawn with each neutral pair, where they differ, the GPU, her place, the
 // camera and the repro link. window.__neutralCheck: the same pairs' numbers for the smoke test (tools/smoke/smoke.cjs "neutral").
 const reportHost = () => {
@@ -863,12 +864,12 @@ const reportHost = () => {
   };
 };
 (window as unknown as { __neutralCheck: () => Promise<unknown> }).__neutralCheck = () => import("./ui/visualReport").then(({ neutralCheck }) => neutralCheck(reportHost()));
-a4_installDebug9(pageHost);
+a4_installDebug10(pageHost);
 // The comparability key (app/compareKey.ts; Ed, 2026-10-26: "only compare like with like"): with the playtest log's run and its
 // samples' scenes, and for the browser tools (window.witch.compareKey(spot): tools/bench/comparable.cjs pageKey).
 const keyNow = (spot?: string): ReturnType<typeof compareKey> => a4_keyNow(pageHost, spot);
-a4_installDebug10(pageHost);
 a4_installDebug11(pageHost);
+a4_installDebug12(pageHost);
 // The measured output (Ed, round 16: "Is there a way for the game to know if anything is being sent to the speakers or not?";
 // platform/audio/outputMeter.ts): what leaves the game for the speakers, read a few times a second; silence while the music
 // should be heard goes in the playtest log (the pause page's Download log) with where she was and the nearest stall. ?micCheck=1 (debug only) also
@@ -895,11 +896,11 @@ meter.onSilence = e => {
 // trouble kept in the log. A lost GL context can't be mended in place (the atlases let their pixels go once uploaded, and the
 // ground's tiles live only on the GPU), so once it's back the night is loaded anew from the repro link: the island, the waves
 // brought on, her place and the zoom (DECISION FOR ED: the fights in between aren't replayed).
-a4_installDebug12(pageHost);
-a4_installPause9(pageHost);
 a4_installDebug13(pageHost);
+a4_installPause9(pageHost);
 a4_installDebug14(pageHost);
 a4_installDebug15(pageHost);
+a4_installDebug16(pageHost);
 const micWanted = params.get("micCheck") === "1";
 let chartHeld = false, chartWasPaused = false; // (the sea chart open: the night held behind it)
 let lastShedS = -1; // (the sound's safety valve, checked once a second: platform/audio/shed.ts)
@@ -1001,39 +1002,39 @@ requestAnimationFrame(frame);
 
 
 // For the smoke test, the tools and for poking at in the console (app/hooks.ts).
-a4_installDebug16(pageHost);
+a4_installDebug17(pageHost);
 // witch.take(kind, item): tonight's find taken where she stands, as E at it takes it (the kind's claim, the hats' floor, the loan):
 // for the tools (tools/loan/shots.cjs) to look at a night with a find on loan without walking to it.
-a4_installDebug17(pageHost);
 a4_installDebug18(pageHost);
+a4_installDebug19(pageHost);
 // witch.dream("won" | "lost", kind, item): her dream of such a loan over the night, its own dark under it (as ?dream=); under ?shot=
 // drawn only when asked, window.__dream.draw(seconds) (tools/loan/shots.cjs).
 // window.witch.guide: her guidance pin's state, what's kept of it (what's new, the islands seen) the pickups' hooks, and a step of it (window.witch.frame's manual frames don't run the page's loop: shots).
 // window.witch.wakeUp(yesterday): a wake-up in her bed as the game starts one (rules/wakeUp.ts startWake), with or without a night
 // played before it (the shots of the first morning's hat on the hats' floor, and of last night's pile).
-a4_installDebug19(pageHost);
+a4_installDebug20(pageHost);
 // window.witch.stationShuts: the station panels' last closes, why, when, and whether paused (the pause check's broom bay, closed
 // under the pause on the slow runner now and then: tools/smoke/pause-on-top.cjs prints them when a row fails).
-a4_installDebug20(pageHost);
 a4_installDebug21(pageHost);
 a4_installDebug22(pageHost);
+a4_installDebug23(pageHost);
 // ?debug=sail (docs/plans/sail-without-reload.md, PR 4b): another night in place, made as a sail will make one (app/night.ts
 // startNight, the view taking it: View.setGame), its start's art made and play started as the start screen's would; for
 // tools/sail/swap.cjs.
-a4_installDebug23(pageHost);
+a4_installDebug24(pageHost);
 // window.witch.sail(island, seed, { end, fail }): a sail as the map table's chart sails (sailFromChart, the same path: its record
 // on the chart, the way by sail.inPlace or ?sail=, in place the fallback), for tools/sail/leak.cjs and swap.cjs; `end` the
 // chart's flight end (a plain one out at sea south of the island if not given: its still a dark screen; null, none), `fail`
 // (?debug=sail only) the sail in place made to throw, to see the fallback. Resolves once the night's start is ready.
 // window.witch.chart(): the sea chart over the night, as the map table opens it (tools/smoke/quick.cjs: choosing her own island).
-a4_installDebug24(pageHost);
-// The bestiary book's zoo over the night, for the tools (tools/zoo/perf.cjs): open and close it as the book and its × do.
 a4_installDebug25(pageHost);
-// The Studio's instruments for the tools (tools/studio/check.cjs): where she's at and what it plays (its meter).
+// The bestiary book's zoo over the night, for the tools (tools/zoo/perf.cjs): open and close it as the book and its × do.
 a4_installDebug26(pageHost);
+// The Studio's instruments for the tools (tools/studio/check.cjs): where she's at and what it plays (its meter).
+a4_installDebug27(pageHost);
 // The telescope for the tools (tools/telescope/shots.cjs, tools/stars/shots.cjs): look through it pointed at a bearing and zoom (0
 // wide, 1 close) and an elevation (degrees up; its lowest if not given), or stop.
-a4_installDebug27(pageHost);
 a4_installDebug28(pageHost);
-// Known synchronous console mutations use declared boundaries too. Arbitrary direct writes to witch.game remain detectable replay failures.
 a4_installDebug29(pageHost);
+// Known synchronous console mutations use declared boundaries too. Arbitrary direct writes to witch.game remain detectable replay failures.
+a4_installDebug30(pageHost);

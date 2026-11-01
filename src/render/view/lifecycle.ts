@@ -24,6 +24,7 @@ import { HEIGHT_UNIFORMS } from "../height";
 import { LIGHT_UNIFORMS } from "../lighting";
 import { AreaMoods, moodOf } from "../mood";
 import { GrassView } from "../grass";
+import { resetDodgeEchoes } from "./dodgeEchoes";
 import { TRAIL_DEFAULT, WitchTrail } from "../trail";
 import { SWOOP_TRAIL_DEFAULT, SwoopTrails } from "../swoopTrails";
 import { InviteView } from "../invites";
@@ -304,6 +305,7 @@ export function* setGameSteps(a4ViewHost: View, a4PrivateHost: ViewInternals, a4
     // shadows, and its soundsystems' (their atlases the art's: freed once, by reseat).
     cancelRefresh(a4ViewHost); resetCreatureCaches(); forgetCandles(a4ViewHost);
     a4PrivateHost.potionObservers.dispose(a4ViewHost);
+    resetDodgeEchoes(a4ViewHost);
     for (const b of a4ViewHost.typeBatches.values()) { a4ViewHost.scene.remove(...b.meshes); b.release(); }
     a4ViewHost.typeBatches.clear();
     for (const [k, b] of a4ViewHost.trunkShadowBatches) if (typeof k === "number") { a4ViewHost.scene.remove(...b.meshes); b.dispose(); a4ViewHost.trunkShadowBatches.delete(k); }

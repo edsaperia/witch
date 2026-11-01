@@ -46,7 +46,9 @@ export async function saveComment(pageHost: PageHost, text: string): Promise<str
   const comment = captureComment(n.game, text, { build: pageHost.BUILD, params: n.params.toString(), look: pageHost.page.look() as Record<string, unknown> | null, loan: pageHost.loan,
     flags: { chartRecorded: n.flags.chartRecorded, overRecorded: n.flags.overRecorded } }, pageHost.repro.link(), Object.fromEntries(pageHost.repro.changed()), pageHost.breadcrumbs.recent(n.game), Date.now(), recordingFor(n.game, pageHost.BUILD, pageHost.captureRecording).export());
   const kept = await pageHost.commentBook.add(comment);
-  const status = kept ? "Comment and saved moment kept in the playtest log." : "Comment kept on this page only: browser storage is unavailable. Download the log before closing.";
+  const state = pageHost.commentBook.status();
+  let status = kept ? "Written comment kept in the playtest log." : `Comment kept on this page only: ${state.error ?? "browser storage is unavailable"}. Download the log before closing.`;
+  if (state.omitted) status += ` ${state.omitted} written report(s) have no saved moment or input replay; their text and context are kept in downloads. ${state.omissionReasons.join(" ")}`;
   return comment.recording?.complete ? status : `${status} Exact input replay is incomplete: ${comment.recording?.failure ?? "unavailable"}.`;
 }
 
@@ -107,38 +109,42 @@ pageHost.N().playtest.debugInfo = () => ({ link: pageHost.repro.link(), machine:
 }
 
 export function installDebug6(pageHost: PageHost): void {
-pageHost.N().playtest.comments = () => pageHost.commentBook.all();
+pageHost.N().playtest.comments = moments => pageHost.commentBook.all(moments);
 }
 
 export function installDebug7(pageHost: PageHost): void {
-pageHost.N().playtest.inputRecording = () => recordingFor(pageHost.N().game, pageHost.BUILD, pageHost.captureRecording).export();
+pageHost.N().playtest.commentStorage = () => pageHost.commentBook.status();
 }
 
 export function installDebug8(pageHost: PageHost): void {
-pageHost.N().playtest.debugText = () => pageHost.repro.full();
+pageHost.N().playtest.inputRecording = () => recordingFor(pageHost.N().game, pageHost.BUILD, pageHost.captureRecording).export();
 }
 
 export function installDebug9(pageHost: PageHost): void {
-pageHost.N().playtest.viewState = () => { const { game } = pageHost.N(), w = game.witch; return { x: Math.round(w.x), z: Math.round(w.z), mode: w.mode, area: areaUnderWitch(game), zoom: game.camera.zoomStep, timeScale: Math.round((game.timeScale ?? 1) * 100) / 100 }; };
+pageHost.N().playtest.debugText = () => pageHost.repro.full();
 }
 
 export function installDebug10(pageHost: PageHost): void {
-pageHost.N().playtest.keyState = () => pageHost.keyNow();
+pageHost.N().playtest.viewState = () => { const { game } = pageHost.N(), w = game.witch; return { x: Math.round(w.x), z: Math.round(w.z), mode: w.mode, area: areaUnderWitch(game), zoom: game.camera.zoomStep, timeScale: Math.round((game.timeScale ?? 1) * 100) / 100 }; };
 }
 
 export function installDebug11(pageHost: PageHost): void {
-pageHost.N().playtest.sceneState = () => sceneMode(pageHost.N().game);
+pageHost.N().playtest.keyState = () => pageHost.keyNow();
 }
 
 export function installDebug12(pageHost: PageHost): void {
-pageHost.N().playtest.gpuState = () => gpuSample(pageHost.view);
+pageHost.N().playtest.sceneState = () => sceneMode(pageHost.N().game);
 }
 
 export function installDebug13(pageHost: PageHost): void {
-pageHost.view.onGpuEvent = what => pageHost.N().playtest.gpuEvent(what, Math.round(pageHost.view.ledger.total / 1048576));
+pageHost.N().playtest.gpuState = () => gpuSample(pageHost.view);
 }
 
 export function installDebug14(pageHost: PageHost): void {
+pageHost.view.onGpuEvent = what => pageHost.N().playtest.gpuEvent(what, Math.round(pageHost.view.ledger.total / 1048576));
+}
+
+export function installDebug15(pageHost: PageHost): void {
 pageHost.view.onContextRestored = () => {
   pageHost.N().playtest.gpuEvent("context restored: the night loaded again");
   const link = pageHost.repro.link();
@@ -146,7 +152,7 @@ pageHost.view.onContextRestored = () => {
 };
 }
 
-export function installDebug15(pageHost: PageHost): void {
+export function installDebug16(pageHost: PageHost): void {
 pageHost.N().playtest.frameState = () => {
   const r = pageHost.frameStats.recent(), pct = (a: number[], p: number) => { if (!a.length) return null; const s = [...a].sort((x, y) => x - y); return Math.round(s[Math.min(s.length - 1, Math.floor(p * s.length))] * 10) / 10; };
   const S = pageHost.view.stats, { game } = pageHost.N(), w = game.witch;
@@ -154,15 +160,15 @@ pageHost.N().playtest.frameState = () => {
 };
 }
 
-export function installDebug16(pageHost: PageHost): void {
+export function installDebug17(pageHost: PageHost): void {
 installHooks({ night: pageHost.N, view: pageHost.view, sound: pageHost.sound, meter: pageHost.meter, shake: pageHost.shake, frameStats: pageHost.frameStats, ladder: pageHost.ladder, loadTimes: pageHost.loadTimes, loop: pageHost.loop, advance: (game, controls, dt) => recordedStep(game, controls, dt, pageHost.BUILD, pageHost.captureRecording) });
 }
 
-export function installDebug17(pageHost: PageHost): void {
+export function installDebug18(pageHost: PageHost): void {
 (window as unknown as { witch: Record<string, unknown> }).witch.compareKey = pageHost.keyNow;
 }
 
-export function installDebug18(pageHost: PageHost): void {
+export function installDebug19(pageHost: PageHost): void {
 (window as unknown as { witch: Record<string, unknown> }).witch.take = (kind: FindKindId, id: string): boolean => {
   const { game } = pageHost.N(), k = FIND_KINDS.find(q => q.id === kind), W = game.witches[0];
   if (!k?.items.includes(id)) return false;
@@ -175,19 +181,19 @@ export function installDebug18(pageHost: PageHost): void {
 };
 }
 
-export function installDebug19(pageHost: PageHost): void {
+export function installDebug20(pageHost: PageHost): void {
 (window as unknown as { witch: Record<string, unknown> }).witch.wakeUp = (yesterday: boolean): boolean => { const { game } = pageHost.N(); return wakeInBedroom(game) && startWake(game, game.herTime, { yesterday }); };
 }
 
-export function installDebug20(pageHost: PageHost): void {
+export function installDebug21(pageHost: PageHost): void {
 (window as unknown as { witch: Record<string, unknown> }).witch.stationShuts = pageHost.stationShuts;
 }
 
-export function installDebug21(pageHost: PageHost): void {
+export function installDebug22(pageHost: PageHost): void {
 (window as unknown as { witch: Record<string, unknown> }).witch.guide = { save: pageHost.guide, pin: () => pageHost.guidePin.state, hooks: GUIDANCE_HOOKS, step: () => pageHost.stepGuide(performance.now()) };
 }
 
-export function installDebug22(pageHost: PageHost): void {
+export function installDebug23(pageHost: PageHost): void {
 (window as unknown as { witch: Record<string, unknown> }).witch.dream = (v: string, kind: FindKindId, id: string): boolean => {
   if (!FIND_KINDS.some(q => q.id === kind && q.items.includes(id))) return false;
   pageHost.startDream({ loan: lend(kind, id, { look: null, hat: "none", parts: pageHost.N().game.witches[0].spells.parts }), won: v === "won" }, true);
@@ -195,7 +201,7 @@ export function installDebug22(pageHost: PageHost): void {
 };
 }
 
-export function installDebug23(pageHost: PageHost): void {
+export function installDebug24(pageHost: PageHost): void {
 if (pageHost.params.get("debug") === "sail") (window as unknown as { witch: Record<string, unknown> }).witch.debugSwap = async (seed: number, island?: string): Promise<number> => {
   const p = new URLSearchParams(pageHost.params), was = pageHost.N().spec;
   p.set("seed", String(seed));
@@ -213,19 +219,19 @@ if (pageHost.params.get("debug") === "sail") (window as unknown as { witch: Reco
 };
 }
 
-export function installDebug24(pageHost: PageHost): void {
+export function installDebug25(pageHost: PageHost): void {
 (window as unknown as { witch: Record<string, unknown> }).witch.chart = () => pageHost.chartOverNight();
 }
 
-export function installDebug25(pageHost: PageHost): void {
+export function installDebug26(pageHost: PageHost): void {
 (window as unknown as { witch: Record<string, unknown> }).witch.zooOverlay = pageHost.zoo;
 }
 
-export function installDebug26(pageHost: PageHost): void {
+export function installDebug27(pageHost: PageHost): void {
 (window as unknown as { witch: Record<string, unknown> }).witch.studio = pageHost.studio;
 }
 
-export function installDebug27(pageHost: PageHost): void {
+export function installDebug28(pageHost: PageHost): void {
 (window as unknown as { witch: Record<string, unknown> }).witch.telescope = {
   look: (heading: number, zoom: number, elevation?: number) => { const { game, tuning } = pageHost.N(); if (!tuning.telescope) return false; pageHost.telescope.open(game, tuning.telescope); pageHost.telescope.point(heading, zoom, tuning.telescope, elevation); pageHost.view.telescope = pageHost.telescope.look(tuning.telescope); return true; },
   close: () => { pageHost.telescope.close(); pageHost.view.telescope = null; },
@@ -234,7 +240,7 @@ export function installDebug27(pageHost: PageHost): void {
 };
 }
 
-export function installDebug28(pageHost: PageHost): void {
+export function installDebug29(pageHost: PageHost): void {
 (window as unknown as { witch: Record<string, unknown> }).witch.sail = (island: string, seed: number, o: { end?: FlightEnd | null; fail?: boolean } = {}): Promise<boolean> => {
   pageHost.sailFail = !!o.fail && pageHost.params.get("debug") === "sail";
   const world = pageHost.chartWorldArg(), end = o.end === null ? undefined : o.end ?? { cam: { x: 0, z: 700, height: 260, pitch: 0.45, fov: 40, speed: 60 }, still: "" };
@@ -242,7 +248,7 @@ export function installDebug28(pageHost: PageHost): void {
 };
 }
 
-export function installDebug29(pageHost: PageHost): void {
+export function installDebug30(pageHost: PageHost): void {
 {
   const hooks = (window as unknown as { witch: Record<string, unknown> }).witch;
   for (const name of ["arena", "arenaAttack", "shot", "guest", "lose", "rainbow", "hit", "take", "wakeUp", "dream"]) {

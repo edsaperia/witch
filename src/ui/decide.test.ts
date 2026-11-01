@@ -2,7 +2,7 @@
 // a confirmed choice makes the issue link and line the coordinator reads.
 import { describe, expect, it, vi } from "vitest";
 import { TUNING } from "../rules/tuning";
-import { applyKnobParams, byPr, changedIn, currentValue, decisionLine, DECISION_LIST, groupOf, issueUrl, keyOf, knobAt, knobParam, openGroups, parseValue, saveOpenGroups, setKnob, swatchCss, valuesText } from "./decide";
+import { applyKnobParams, byPr, changedIn, currentValue, decisionLine, DECISION_LIST, groupOf, issueUrl, keyOf, newBuildButton, knobAt, knobParam, openGroups, parseValue, saveOpenGroups, setKnob, swatchCss, valuesText } from "./decide";
 import { hsv2rgb } from "../../art/core.js";
 import { slotStorage } from "../app/saveSlots";
 
@@ -109,5 +109,24 @@ describe("the decisions panel", () => {
     for (const [h, sv] of [[0.08, 0.55], [0.6, 1], [0.33, 0], [0.95, 0.3]]) expect(swatchCss(h, sv)).toBe(`rgb(${hsv2rgb(h, sv, 1).join(", ")})`);
     const glow = DECISION_LIST.filter(d => d.control.type === "slider" && d.control.swatch);
     expect(glow.map(d => d.apply.knob).sort()).toEqual(["light.spooky.glowHue", "light.spooky.glowSat"]);
+  });
+  it("shows \"Load latest version\" only while a newer build is out, with its number, and a click loads it (playtest 31 Oct item 11)", () => {
+    const clicks: (() => void)[] = [];
+    vi.stubGlobal("document", { createElement: () => ({ style: {}, dataset: {}, textContent: "", addEventListener: (ev: string, f: () => void) => { if (ev === "click") clicks.push(f); } }) });
+    try {
+      let latest: string | null = null;
+      const load = vi.fn();
+      const b = newBuildButton({ latest: () => latest, load });
+      expect(b.el.style.display).toBe("none");
+      expect(b.el.className).toBe("copyall");
+      latest = "v6640 · 0c668fd"; b.paint();
+      expect(b.el.style.display).toBe("");
+      expect(b.el.textContent).toBe("⟳ Load latest version (v6640)");
+      expect(load).not.toHaveBeenCalled();
+      for (const f of clicks) f();
+      expect(load).toHaveBeenCalledTimes(1);
+      latest = null; b.paint();
+      expect(b.el.style.display).toBe("none");
+    } finally { vi.unstubAllGlobals(); }
   });
 });

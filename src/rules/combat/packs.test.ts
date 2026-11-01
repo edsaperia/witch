@@ -349,10 +349,10 @@ describe("pack combat, Phase 1's pieces", () => {
 // Ed's playtest, v3893 (2026-10-19): "Pouncing/melee animals seem to fall short again and so are easy to evade ... they miss me",
 // hares, pack combat on. Its shooters aimed half a blink ahead of her whatever their bolt's flight, so walking away she was 10 m on
 // when they arrived; and only the nearest of a pack round her lunged a combo. A hare pack in its own area, her walking away at her
-// speed, turning now and then: its lunges land, its bolts hit, and it hurts her about as often as the plain fight does.
+// speed, turning now and then: its lunges and bolts land, and its absolute hit count stays at the accepted baseline.
 describe("a pack against her walking away (Ed's playtest, v3893)", () => {
   function chase(packs: boolean) {
-    // Retain seed 123's natural hare area and 40-second walking route for the paired hit-rate comparison.
+    // Retain seed 123's natural hare area and 40-second walking route for the continuous-chase hit-rate regression.
     const g = newGame(123, withTuning({ combat: { ...TUNING.combat, packs: { on: packs } }, attacks: { reactionFloor: 0.45, species: false } })); // (the hares' lunges, as they were)
     g.clock.paused = false; g.party.paused = true;
     const h = g.creatures.filter(c => c.species === "hare" && c.level > 0 && !c.gone)[0];
@@ -377,55 +377,18 @@ describe("a pack against her walking away (Ed's playtest, v3893)", () => {
     }
     return { lunges, landed, hits, fired, shotHits };
   }
-  it("lands its lunges and bolts, and hits her about as often as without packs", () => {
-    const plain = chase(false), packs = chase(true);
+  it("lands its lunges and bolts and preserves its absolute hits during continuous pursuit", () => {
+    const packs = chase(true);
     expect(packs.lunges).toBeGreaterThanOrEqual(5);
-    expect(packs.landed / packs.lunges).toBeGreaterThanOrEqual(0.6); // (a lunge that starts reaches her: 7 of 10 before the fight styles, 4 of 6 since, the hares bounding in: Ed's playtest, 2026-10-29)
-    expect(packs.shotHits / Math.max(1, packs.fired)).toBeGreaterThanOrEqual(0.35); // (13 to 26% before: aimed behind her)
-    expect(packs.hits).toBeGreaterThanOrEqual(plain.hits * 0.5); // (9 to 17 of plain's 24 to 30 before; and since Ed, 2026-10-20, a pack's strikes at her take the dodge's tokens, one at a time as the plain fight's do, with its lulls besides)
+    expect(packs.landed / packs.lunges).toBeGreaterThanOrEqual(4 / 6);
+    expect(packs.shotHits / Math.max(1, packs.fired)).toBeGreaterThanOrEqual(7 / 9);
+    // Ed 2026-10-31: pursuit until take-off raises lone hits; accepted. Pack balance waits for the balancing phase.
+    expect(packs.hits, JSON.stringify(packs)).toBeGreaterThanOrEqual(11);
   }, 60000);
 });
 
-// Ed, 2026-10-20 (pack combat on by default; its tests run with it on): three things the switch showed.
-describe("the lull is a retreat, not a halt (Ed's playtests, 2026-10-23: \"lulls between pack attacks seem to have the animals stand still instead of retreat\")", () => {
-  // Every kind whose retreat isn't meant to stand (the snail's shell, the badger's hold) backs off from her in its lull and keeps moving
-  // till it comes again, a freeze (combat.md "into the trees and freeze, hard to see") after holding the lull's first part (Ed,
-  // 2026-10-23); one out of sight (in the trees, underground, under water) isn't counted.
-  const standing = (k: string) => !!PACKS.retreats[PACKS.kinds[k].retreat].still;
-  it("every moving kind's members back off from her and keep moving through the lull", () => {
-    const bad: string[] = [];
-    for (const k of Object.keys(PACKS.kinds)) {
-      if (standing(k)) continue;
-      let steps = 0, still = 0, starts = 0, backed = 0, last = "";
-      const mv = profileOf(k)?.move, out = mv?.kind === "swoop" ? mv.radius ?? 0 : PACKS.retreats[PACKS.kinds[k].retreat].out; // (a wild flyer circles aloft at its swoop's own radius)
-      const away = out * FIGHT.scale * 0.8 * (PACKS.kinds[k].retreat === "leapfrog" ? 0.5 : 1); // (the leapfrog's near half falls back half as far)
-      const off = (d0: number, most = 0) => most > d0 + 1 || d0 >= away; // (backed off, or out there already: a shooter at range, a flyer aloft)
-      const startD = new Map<number, number>(), most = new Map<number, number>();
-      // (a freeze over two arenas: how long one holds its place depends on where the fight takes it, and one arena's share swings
-      // either side of the 3% line with anything near it, as much as 4.2 to 2.3% on seed 5 for the creatures keeping off sigils, 2026-10-28)
-      for (const seed of PACKS.kinds[k].retreat === "freeze" ? [5, 6] : [5]) arena(`pack-${k}`, 30, g => {
-        const st = wildPack(g), W = g.witches[0].body;
-        if (!st) return;
-        if (st.phase === "lull" && last !== "lull") { for (const [id, d0] of startD) { starts++; if (off(d0, most.get(id))) backed++; } startD.clear(); most.clear(); }
-        last = st.phase;
-        if (st.phase !== "lull") return;
-        for (const id of st.members) {
-          const c = g.creatures[id]; if (!c || c.packHide || c.burrow || c.leap || c.charge) continue;
-          const d = Math.hypot(c.x - W.x, c.z - W.z);
-          if (!startD.has(id)) startD.set(id, d); most.set(id, Math.max(most.get(id) ?? 0, d));
-          steps++; if (!c.moving && !(c.hopNext !== undefined && g.clock.time < c.hopNext)) still++; // (a hopper's beat on the ground between bounds is its gait, not standing: Ed, 2026-10-29)
-        }
-      }, ON, seed);
-      for (const [id, d0] of startD) { starts++; if (off(d0, most.get(id))) backed++; }
-      if (!steps) { bad.push(`${k}: no lull`); continue; }
-      if (still / steps > (PACKS.kinds[k].retreat === "freeze" ? PACKS.prowl.freeze + 0.1 : 0.1)) bad.push(`${k}: standing ${(100 * still / steps).toFixed(0)}% of its lull`);
-      if (backed < starts * 0.6) bad.push(`${k}: ${backed} of ${starts} backed off`);
-      if (PACKS.kinds[k].retreat === "freeze" && still / steps < 0.03) bad.push(`${k}: no freeze (still ${(100 * still / steps).toFixed(0)}%)`);
-    }
-    expect(bad).toEqual([]);
-  }, 300000);
-});
-
+// (the lull-is-a-retreat check, one 30 s arena per kind, lives in src/test/packsLull.ts and runs as packsLull1/2.test.ts: split so the
+// test shards can run its halves side by side; it was a third of this file's time.)
 describe("pack combat's fixes (Ed, 2026-10-20)", () => {
   const at = (id: number, x: number, z: number, hp?: number): Creature => ({ id, species: "boar", level: 1, x, z, ...(hp !== undefined ? { affection: 0.99 } : {}) }) as Creature; // (hurt: its slots nearly full, rules/orbit.ts)
 

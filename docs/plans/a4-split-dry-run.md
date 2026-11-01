@@ -1,5 +1,31 @@
 # A4 mechanical split: cut-line proposal
 
+## GO reconciliation — 2026-11-01 03:43 UTC ruling
+
+Ack #1476 comment 6552999109. Prototype `e841734fa1fbfee187e2cd1a29dd3d3ab83e6db7`
+is the new rehearsal source. A normal merge conflicted only in the two owned cut
+files. Their complete upstream changes were reviewed (pause notice, retained
+reports, treehouse carrier removal, dodge-echo getter/reset), then the extraction
+was regenerated from that exact source instead of manually mixing old bodies.
+`--refresh-reviewed-source` requires the active matching merge, exactly those two
+conflicts and explicit reviewed SHA-256 hashes. Other generated outputs must still
+match their prior hashes. Original 5b6/f90/9aa evidence remains in ancestry.
+
+150 bodies/statements now reverse exactly against the current source (one new
+upstream diagnostic installer, `installDebug30`). Current View public signatures,
+defaults and field initializers match the upstream source. Script apply 3,286.6ms,
+identity check 308.1ms; these are not full fence/proof costs. The independently
+published #1587 guard/fixture is copied consistently with its standalone CLI;
+the supervisor retains its strict complete-evidence gate.
+
+Lightweight validation passes: three serial Node tooling regressions in 628ms,
+isolated transforms, reversal/public-API identity, tool inventory and config gate.
+No local full game typecheck/tests/bench/browser/art or proof runner was started.
+New candidate CI and exact READY tuple must supersede old-head gate statuses.
+This is only an isolated rehearsal refresh; it neither opens the production fence
+nor edits refraction/dodge-echo owned files beyond upstream call-site composition.
+Named A4 slot plus actual predecessor FREE remain mandatory. #1559-A is first.
+
 ## Preparation audit — 2026-11-01
 
 Root's resumed-work instruction permits owned tooling/evidence preparation only;

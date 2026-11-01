@@ -168,6 +168,7 @@ export function stepLegendStates(w: LegendWorld, ids: number[], data: LegendsDat
   for (const id of ids) {
     const c = w.creatures[id];
     if (c.gone || c.leashed) continue;
+    if (c.homeGuard) { if (c.legendState !== "happy") cheer(c, w.time); c.quest = undefined; c.questOpen = false; continue; }
     const key = cellKey(c.cell), q = c.quest;
     // Going back to sleep away from where it lay (Ed, 2026-10-06: "they should go back to their
     // circle first and sleep in the spot where they spawned initially"): it walks home, then lies down.
@@ -195,7 +196,7 @@ export function stepLegendStates(w: LegendWorld, ids: number[], data: LegendsDat
 /** Whether one of a legend's kind is in its area (any state: wild, happy, leashed and parked there, babies). */
 function hasKin(w: LegendWorld, c: Creature, key: string): boolean {
   // (A creature besieging another area's soundsystem doesn't count at home: art builder 1, #254, Ed: "After a siege, the angry adults move onto the next area, which will waken the legend".)
-  for (const o of w.creatures) if (o !== c && o.species === c.species && !o.gone && !o.fleeUntil && !o.boss && !(o.siege && o.siege !== key) && w.areaOf(o) === key) return true;
+  for (const o of w.creatures) if (o !== c && !o.homeGuard && o.species === c.species && !o.gone && !o.fleeUntil && !o.boss && !(o.siege && o.siege !== key) && w.areaOf(o) === key) return true;
   return false;
 }
 

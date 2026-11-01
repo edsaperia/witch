@@ -11,7 +11,6 @@ on:
       - opened
       - synchronize
       - reopened
-      - edited
 concurrency:
   group: ci-${{ github.event_name }}-${{ github.ref }}
   cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
@@ -51,6 +50,9 @@ jobs:
         env:
           WITCH_VERSION: ${{ github.run_number }}
           WITCH_SHA: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.sha || github.sha }}
+      - name: Failure annotation totals
+        if: always()
+        run: node tools/ci/annotations.cjs --summary
       - uses: actions/upload-artifact@v4
         with:
           name: game-dist
@@ -103,6 +105,13 @@ jobs:
             sleep $((try * 2 + RANDOM % 5))
           done
           exit 1
+      - name: Request managed Pages publication
+        # Never fail the deploy/preview over the optional publisher request.
+        continue-on-error: true
+        uses: actions/github-script@v7
+        with:
+          script: |
+            await github.rest.repos.createDispatchEvent({...context.repo,event_type:context.ref==='refs/heads/main'?'pages-live':'pages-preview',client_payload:{source_sha:context.payload.pull_request?.head.sha??context.sha,requested_at:new Date().toISOString()}});
       - name: Comment the playable link on the PR
         if: github.event_name == 'pull_request'
         uses: actions/github-script@v7
@@ -122,7 +131,8 @@ jobs:
       contents: write
       pull-requests: write
   preview:
-    if: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository }}
+    # Release-check and publish PRs ship to live minutes later: nobody plays their preview, so don't build one.
+    if: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository && !startsWith(github.event.pull_request.head.ref, 'claude/release-') && github.event.pull_request.head.ref != 'claude/publish-snapshot' }}
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -167,6 +177,13 @@ jobs:
             sleep $((try * 2 + RANDOM % 5))
           done
           exit 1
+      - name: Request managed Pages publication
+        # Never fail the deploy/preview over the optional publisher request.
+        continue-on-error: true
+        uses: actions/github-script@v7
+        with:
+          script: |
+            await github.rest.repos.createDispatchEvent({...context.repo,event_type:context.ref==='refs/heads/main'?'pages-live':'pages-preview',client_payload:{source_sha:context.payload.pull_request?.head.sha??context.sha,requested_at:new Date().toISOString()}});
       - name: Comment the playable link on the PR
         if: github.event_name == 'pull_request'
         uses: actions/github-script@v7
@@ -185,8 +202,14 @@ jobs:
     permissions:
       contents: write
       pull-requests: write
-  check:
+  # The unit suite split across four runners (vitest --shard); every test file runs in exactly one shard.
+  unit:
+    name: unit tests (${{ matrix.shard }}/4)
     runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        shard: [1, 2, 3, 4]
     steps:
       - name: Require the build and main publication
         if: ${{ needs.build.result != 'success' || (github.ref == 'refs/heads/main' && needs.deploy.result != 'success') }}
@@ -199,20 +222,49 @@ jobs:
           node-version: 22
           cache: npm
       - run: npm ci
-      - name: Full or related unit tests
+      - name: Full or related unit tests (this shard)
         run: node tools/ci/run-unit.mjs
-      - run: npm run typecheck
+        env:
+          VITEST_SHARD: ${{ matrix.shard }}/4
+      - name: Failure annotation totals
+        if: always()
+        run: node tools/ci/annotations.cjs --summary
       - name: Unit selection and wall-clock evidence
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: unit-selection
+          name: unit-selection-${{ matrix.shard }}
           path: ci-unit-results.json
           if-no-files-found: ignore
           retention-days: 14
     needs:
       - build
       - deploy
+    if: ${{ !cancelled() }}
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Require the build, main publication and every unit shard
+        if: ${{ needs.build.result != 'success' || needs.unit.result != 'success' || (github.ref == 'refs/heads/main' && needs.deploy.result != 'success') }}
+        run: exit 1
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - name: Reporting and checked-tree safety fixtures
+        run: node --test tools/ci/reporting.test.cjs tools/ci/pages-policy.test.cjs
+      - run: npm run typecheck
+      - name: Failure annotation totals
+        if: always()
+        run: node tools/ci/annotations.cjs --summary
+    needs:
+      - build
+      - deploy
+      - unit
     if: ${{ !cancelled() }}
   smoke:
     runs-on: ubuntu-latest
@@ -236,16 +288,27 @@ jobs:
           path: ~/.cache/ms-playwright
           key: playwright-${{ runner.os }}-${{ env.PLAYWRIGHT_VERSION }}
       - run: npm install --prefix .pw --no-save --no-package-lock playwright@${{ env.PLAYWRIGHT_VERSION }}
-      - run: .pw/node_modules/.bin/playwright install --with-deps chromium
+      # A hung apt/browser download once held smoke for its whole 20 min timeout: bound each attempt and retry once.
+      - name: Install Chromium (bounded, one retry)
+        shell: bash
+        run: |
+          for try in 1 2; do
+            timeout 300 .pw/node_modules/.bin/playwright install --with-deps chromium && exit 0
+            echo "Chromium install attempt $try failed or exceeded 300 s"; sleep 5
+          done
+          exit 1
       - name: Quick smoke test
         shell: bash
         run: |
           mkdir -p quick
-          NODE_PATH=$PWD/.pw/node_modules QUICK_OUT=quick/quick.png node tools/smoke/quick.cjs 2>&1 | tee quick/log.txt
+          NODE_PATH=$PWD/.pw/node_modules QUICK_OUT=quick/quick.png node tools/ci/report-command.cjs --kind smoke -- node tools/smoke/quick.cjs 2>&1 | tee quick/log.txt
       - name: Music check
-        run: NODE_PATH=$PWD/.pw/node_modules node tools/music-lab/check.cjs
+        run: NODE_PATH=$PWD/.pw/node_modules node tools/ci/report-command.cjs --kind smoke -- node tools/music-lab/check.cjs
       - name: Pause over the overlays
-        run: NODE_PATH=$PWD/.pw/node_modules node tools/smoke/pause-on-top.cjs dist
+        run: NODE_PATH=$PWD/.pw/node_modules node tools/ci/report-command.cjs --kind smoke -- node tools/smoke/pause-on-top.cjs dist
+      - name: Failure annotation totals
+        if: always()
+        run: node tools/ci/annotations.cjs --summary
       - uses: actions/upload-artifact@v4
         if: always()
         with:
@@ -280,11 +343,22 @@ jobs:
           path: ~/.cache/ms-playwright
           key: playwright-${{ runner.os }}-${{ env.PLAYWRIGHT_VERSION }}
       - run: npm install --prefix .pw --no-save --no-package-lock playwright@${{ env.PLAYWRIGHT_VERSION }}
-      - run: .pw/node_modules/.bin/playwright install --with-deps chromium
+      # A hung apt/browser download once held smoke for its whole 20 min timeout: bound each attempt and retry once.
+      - name: Install Chromium (bounded, one retry)
+        shell: bash
+        run: |
+          for try in 1 2; do
+            timeout 300 .pw/node_modules/.bin/playwright install --with-deps chromium && exit 0
+            echo "Chromium install attempt $try failed or exceeded 300 s"; sleep 5
+          done
+          exit 1
       - name: Load and draw diverse art on the largest shipped world
         env:
           EXPECTED_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
-        run: NODE_PATH=$PWD/.pw/node_modules node tools/smoke/large-world.cjs
+        run: NODE_PATH=$PWD/.pw/node_modules node tools/ci/report-command.cjs --kind smoke -- node tools/smoke/large-world.cjs
+      - name: Failure annotation totals
+        if: always()
+        run: node tools/ci/annotations.cjs --summary
       - if: always()
         uses: actions/upload-artifact@v4
         with:
@@ -316,26 +390,48 @@ jobs:
         with:
           path: ~/.cache/ms-playwright
           key: playwright-${{ runner.os }}-${{ env.PLAYWRIGHT_VERSION }}
+      # A PR whose game build is byte-identical to its base (docs, tests, CI, most tools) cannot change the
+      # benchmark: both sides are built here with the same stamp and, when identical, the bench is skipped.
+      - name: Build base and head with the same stamp
+        id: same
+        shell: bash
+        env:
+          WITCH_VERSION: ${{ github.run_number }}
+          WITCH_SHA: ${{ github.event.pull_request.head.sha }}
+        run: |
+          (cd base && npm ci && npm run build) && (cd head && npm ci && npm run build && mv dist dist-same)
+          node head/tools/ci/same-game.mjs base head | tee -a "$GITHUB_OUTPUT"
       - run: npm install --prefix .pw --no-save --no-package-lock playwright@${{ env.PLAYWRIGHT_VERSION }}
-      - run: .pw/node_modules/.bin/playwright install --with-deps chromium
+        if: steps.same.outputs.same != 'true'
+      # A hung apt/browser download once held smoke for its whole 20 min timeout: bound each attempt and retry once.
+      - name: Install Chromium (bounded, one retry)
+        if: steps.same.outputs.same != 'true'
+        shell: bash
+        run: |
+          for try in 1 2; do
+            timeout 300 .pw/node_modules/.bin/playwright install --with-deps chromium && exit 0
+            echo "Chromium install attempt $try failed or exceeded 300 s"; sleep 5
+          done
+          exit 1
       - name: Base
+        if: steps.same.outputs.same != 'true'
         working-directory: base
         run: |
-          npm ci
-          npm run build
           rm -rf tools/bench && cp -r ../head/tools/bench tools/bench
           NODE_PATH=$GITHUB_WORKSPACE/.pw/node_modules node tools/bench/run.mjs ../out/base --quick
       - name: Download the shared game build
+        if: steps.same.outputs.same != 'true'
         uses: actions/download-artifact@v4
         with:
           name: game-dist
           path: head/dist
       - name: Head
+        if: steps.same.outputs.same != 'true'
         working-directory: head
         run: |
-          npm ci
           NODE_PATH=$GITHUB_WORKSPACE/.pw/node_modules node tools/bench/run.mjs ../out/head --quick
       - name: Compare
+        if: steps.same.outputs.same != 'true'
         shell: bash
         env:
           HEAD_REF: ${{ github.head_ref }}
@@ -346,6 +442,9 @@ jobs:
           NODE_PATH=$GITHUB_WORKSPACE/.pw/node_modules node head/tools/bench/compare.cjs out/base out/head $([ -f "$EXPECT" ] && echo --expect "$EXPECT") | tee out/compare.md
       - if: always()
         run: '[ -f out/compare.md ] && cat out/compare.md >> "$GITHUB_STEP_SUMMARY" || true'
+      - name: Failure annotation totals
+        if: always()
+        run: node head/tools/ci/annotations.cjs --summary
       - uses: actions/upload-artifact@v4
         if: always()
         with:

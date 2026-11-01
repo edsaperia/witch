@@ -188,7 +188,7 @@ export function frameBody(pageHost: PageHost, now: number): void {
   if (game.win?.settled && !F.chartRecorded) { F.chartRecorded = true; nightOver(tuning.map?.island ?? "", { won: true, found: game.win.found }, undefined, tuning.map?.world ?? 0); if (pageHost.warmOn) warmChart(pageHost.chartWorld(), loadSave().found); } // (in the campaign's world only; home grows with what she's found: made again ahead)
   // The touch spell button only with a broom that has a spell to cast (rules/spells.ts castable).
   { const want = castable(game.spells) ? "" : "none"; if (pageHost.spellButton && pageHost.spellButton.style.display !== want) pageHost.spellButton.style.display = want; }
-  pageHost.newBuild.update(pageHost.creator.open || pageHost.freeze.frozen || pageHost.menuGone); // (a newer build is out: in the bedroom and on the pause page)
+  pageHost.newBuild.update(pageHost.creator.open || (pageHost.freeze.frozen && !pageHost.pauseSliders) || pageHost.menuGone); // (a newer build is out: in the bedroom, and on the pause page only until its panel, which has the button, loads)
   // The party's over (rules/partyOver.ts; Ed, 2026-10-06): no end screen and no pause, the afterparty; once it has eased in, the
   // night recorded on the sea chart as played (losing loses nothing).
   if (game.partyOver && game.partyOver.ease >= 1 && !F.overRecorded) {

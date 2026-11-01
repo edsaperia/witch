@@ -1,4 +1,5 @@
 // A4-only completeness gate before the shared comparator: require both rules and every quick scene at the exact source SHAs.
+// node tools/refactor/a4-proof-artifacts.cjs <before-dir> <after-dir> <before-full-sha> <after-full-sha>
 const fs = require('node:fs'), path = require('node:path');
 
 function completeBenchmark(directory, expectedSha) {
@@ -24,11 +25,20 @@ function completeBenchmark(directory, expectedSha) {
 
 if (require.main === module) {
   try {
-    const cp = require('node:child_process');
-    const head = cp.execFileSync('git', ['rev-parse', 'HEAD'], { encoding: 'utf8' }).trim();
-    const source = JSON.parse(fs.readFileSync('docs/plans/a4-dry-run-manifest.json', 'utf8')).sourceCommit;
-    completeBenchmark('.a4-baseline/bench-out', source);
-    completeBenchmark('bench-out', head);
+    const args = process.argv.slice(2);
+    let before, after, source, head;
+    if (args.length) {
+      if (args.length !== 4) throw Error('Usage: a4-proof-artifacts.cjs <before-dir> <after-dir> <before-full-sha> <after-full-sha>');
+      [before, after, source, head] = args;
+    } else {
+      // Compatibility for the separate A4 rehearsal supervisor; no manifest is
+      // required when the explicit standalone CLI above is used.
+      head = require('node:child_process').execFileSync('git', ['rev-parse', 'HEAD'], { encoding: 'utf8' }).trim();
+      source = JSON.parse(fs.readFileSync('docs/plans/a4-dry-run-manifest.json', 'utf8')).sourceCommit;
+      before = '.a4-baseline/bench-out'; after = 'bench-out';
+    }
+    completeBenchmark(before, source);
+    completeBenchmark(after, head);
     console.log('A4 benchmark completeness: both exact sources, rules and all three scenes present');
   } catch (error) { console.error(error.message); process.exitCode = 1; }
 }

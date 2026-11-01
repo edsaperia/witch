@@ -27,6 +27,7 @@ says what each note covers.
 
 ## [Balance](balance.md)
 
+- Written report retention
 - Compressed log bundles
 - Structured log records
 - Log recovery
@@ -312,6 +313,7 @@ says what each note covers.
 
 ## [The view](view.md)
 
+- Dodge echoes
 - Night and Heat Vision
 - Potion perception
 - Layered magic

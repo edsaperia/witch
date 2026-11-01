@@ -14,6 +14,10 @@ Read-only A4 source inventory: exact extraction boundaries and public View API b
 
 A4-only completeness gate before the shared comparator: require both rules and every quick scene at the exact source SHAs.
 
+```
+node tools/refactor/a4-proof-artifacts.cjs <before-dir> <after-dir> <before-full-sha> <after-full-sha>
+```
+
 ## `a4-split.mjs`
 
 Rehearse A4 by named syntax boundaries; --apply writes once, --check verifies hashes and reversible body edits.

@@ -1485,10 +1485,6 @@
             "terraceRoom"
           ],
           "additionalProperties": false
-        },
-        "carrier": {
-          "type": "string",
-          "description": "On other islands, that island's legend carries the treehouse on its back, braced under the oak."
         }
       },
       "required": [
@@ -1498,8 +1494,7 @@
         "lightReach",
         "lightStrength",
         "deck",
-        "house",
-        "carrier"
+        "house"
       ],
       "additionalProperties": false,
       "description": "The witch's home in the great oak beside the dancefloor: where it stands, its deck and rooms, how she walks and lands there, and the oak's crown, lights and warm glow over it."
@@ -5966,17 +5961,19 @@
           "type": "boolean",
           "description": "Each legend gets an area of its own beside one of its kind's areas."
         },
-        "happyRange": {
+        "friendRange": {
           "type": "number",
-          "minimum": 0
+          "minimum": 0,
+          "description": "A friendly legend defends a witch within this many metres, otherwise engages enemies in this range before walking towards the ley line tip."
         },
         "questCap": {
           "type": "number",
-          "minimum": 0
+          "minimum": 0,
+          "description": "The maximum distance in areas to a dream kind; default 0 means no distance cap, so any kind on the map can be dreamed of however far."
         },
         "questLater": {
           "type": "boolean",
-          "description": "a legend dreams only of a kind living in an area later on the route than its own, within questCap areas; failing that, the kind of the nearest later area; with no later area, any kind (the early easy quest keeps its own pick); false: any kind as before."
+          "description": "a legend dreams only of a kind living in an area later on the route than its own, within questCap areas when a positive cap is set (default 0: no cap); failing that, the kind of the nearest later area; with no later area, any kind (the early easy quest keeps its own pick); false: any kind as before."
         },
         "bombard": {
           "type": "object",
@@ -6039,7 +6036,7 @@
         "share",
         "earlyQuest",
         "areas",
-        "happyRange",
+        "friendRange",
         "questCap",
         "questLater",
         "bombard",
