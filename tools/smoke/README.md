@@ -206,6 +206,10 @@ npm run build && node tools/smoke/partyspell.cjs [out dir] [seed]
 
 The pause page over everything: each overlay opened in turn, then Esc: the pause page's sliders are on top where they stand, nothing of the overlay is hit in the middle of the screen, a key and the pad reach nothing under it, and Esc again comes back to…
 
+## `paused-pixels.cjs`
+
+Coordinator acceptance rule, 2026-11-01, #1614 comment6561733936.
+
 ## `paused-world.cjs`
 
 Canonical runner: node tools/smoke/paused-world.cjs BASE_URL BASE_SHA CANDIDATE_URL CANDIDATE_SHA

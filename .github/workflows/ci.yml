@@ -369,7 +369,7 @@ jobs:
           path: |
             proof-baseline/dist
             proof-cache
-          key: proofs-v1-${{ runner.os }}-node22-pw${{ env.PLAYWRIGHT_VERSION }}-${{ steps.baseline.outputs.sha }}-${{ hashFiles('tools/ci/*proof*', 'tools/smoke/paused-world.cjs') }}
+          key: proofs-v1-${{ runner.os }}-node22-pw${{ env.PLAYWRIGHT_VERSION }}-${{ steps.baseline.outputs.sha }}-${{ hashFiles('tools/ci/*proof*', 'tools/smoke/paused-*.cjs') }}
       - name: Prepare immutable baseline (never rebuild candidate)
         id: prepare-baseline
         env:
