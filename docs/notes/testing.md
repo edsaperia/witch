@@ -4,6 +4,8 @@ Sleeping-legend size regression (PR1570, canonical1476#6550319134): full feather
 
 Current execution ownership (2026-10-31): builders run typecheck and nearby tests with one worker, plus the art check when art is touched, subject to the coordinator's browser allocation. The coordinator owns combined full-suite/smoke/browser acceptance. The historical “builders before a FINAL” full-smoke instruction below is superseded by CLAUDE.md's Builders and the coordinator section.
 
+A4 evidence completeness: `node tools/refactor/a4-proof-artifacts.cjs <before-dir> <after-dir> <before-full-sha> <after-full-sha>` requires rules and all three quick scenes before the existing comparator is invoked. The shared comparator intentionally supports rules-only input; that subset is insufficient for an A4 no-change proof. This guard checks presence, source IDs, workload and page errors, then the comparator must still judge fingerprints and pixels without a waiver. It launches no game or browser and grants no slot or production fence. The narrow publication is separate from rehearsal #1562.
+
 CI now builds one `game-dist` artifact per tested revision. Main deploy has priority before checks; PR preview publication runs beside checks after build. Unit selection is `tools/ci/run-unit.mjs`, with conservative full fallback; smoke, largest-world proof and benchmark head reuse the build. Version labels use CI run number with no offset; always verify the served SHA for browser checks. See `.github/workflows/ci.yml` for the exact gates.
 
 The [2026-10-31 CI flake audit](../reports/ci-flakes-2026-10-31.md) records original and rerun evidence, separately from deterministic failures and cancellations. It does not authorize another rerun or a timeout increase.
