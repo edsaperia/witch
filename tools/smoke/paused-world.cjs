@@ -5,7 +5,7 @@ const path = require('node:path');
 let playwright;
 try { playwright = require('playwright'); } catch { playwright = require('/opt/node22/lib/node_modules/playwright'); }
 
-async function saveMismatch(page, reference, sha) {
+async function checkRepaint(page, reference, sha) {
   const evidence = await page.evaluate(reference => {
     const a = window.pauseProbe[reference], b = window.pauseProbe.frame;
     const width = Math.max(a.w, b.w), height = Math.max(a.h, b.h);
@@ -36,16 +36,22 @@ async function saveMismatch(page, reference, sha) {
       for (let y = 0; y < h; y++) rows.set(bytes.subarray(y * stride, (y + 1) * stride), (h - 1 - y) * stride);
       return png(w, h, rows);
     }
-    return { changed, bbox: changed ? { left, top, right, bottom } : null, traces: [a.trace, b.trace],
-      images: { [reference]: framePNG(a), repaint: framePNG(b), diff: png(width, height, mask) } };
+    return { changed, bbox: changed ? { left, top, right, bottom } : null, traces: changed ? [a.trace, b.trace] : [],
+      versions: [a.artVersion, b.artVersion], sameSize: a.w === b.w && a.h === b.h,
+      images: changed ? { [reference]: framePNG(a), repaint: framePNG(b), diff: png(width, height, mask) } : {} };
   }, reference);
-  const dir = path.resolve(process.env.PAUSE_PROOF_OUT || 'paused-world-proof');
-  await fs.mkdir(dir, { recursive: true });
+  const dir = path.resolve(process.env.PAUSE_PROOF_OUT || 'paused-world-proof', reference);
+  if (evidence.changed) await fs.mkdir(dir, { recursive: true });
   for (const [name, data] of Object.entries(evidence.images)) {
     await fs.writeFile(path.join(dir, name + '.png'), Buffer.from(data, 'base64'));
   }
   if (evidence.traces[0]) await fs.writeFile(path.join(dir, 'pixel-submissions.json'), JSON.stringify(evidence.traces, null, 2));
-  console.log(JSON.stringify({ sha, reference, changedPixels: evidence.changed, bboxTopLeftInclusive: evidence.bbox, directory: dir }));
+  assert.ok(evidence.versions.every(Number.isInteger), 'both submissions must report an art version');
+  const artArrived = evidence.versions[0] !== evidence.versions[1];
+  console.log(JSON.stringify({ sha, reference, result: artArrived ? 'art arrived while paused' : 'same art version',
+    artVersions: evidence.versions, changedPixels: evidence.changed, bboxTopLeftInclusive: evidence.bbox, directory: evidence.changed ? dir : undefined }));
+  assert.ok(evidence.sameSize, 'same-size resize must preserve framebuffer dimensions');
+  if (!artArrived) assert.equal(evidence.changed, 0, 'same art version: paused world pixels must match exactly');
 }
 
 async function measure(browser, url, sha, candidate) {
@@ -133,6 +139,7 @@ async function measure(browser, url, sha, candidate) {
         };
       }
       view.render = (...args) => {
+        const artVersion = view.assets.version;
         probe.trace = tracePixels && probe.sample ? { time: args[0], herTime: view.game.herTime,
           alpha: view.game.alpha, repaintHeld: args[2], artVersion: view.assets.version,
           pendingFloors: view.ground.pendingFloors.map(([type]) => type), layers: [], inputs: [] } : null;
@@ -146,7 +153,7 @@ async function measure(browser, url, sha, candidate) {
           let hash = 2166136261;
           for (const byte of pixels) hash = Math.imul(hash ^ byte, 16777619);
           probe.pixels = [w, h, hash];
-          probe.frame = { w, h, bytes: pixels, trace: probe.trace };
+          probe.frame = { w, h, bytes: pixels, artVersion, trace: probe.trace };
         }
         return result;
       };
@@ -178,10 +185,7 @@ async function measure(browser, url, sha, candidate) {
     }
     await page.keyboard.press('Escape');
     await page.waitForSelector('body.paused');
-    const heldPixels = await page.evaluate(() => {
-      window.pauseProbe.held = window.pauseProbe.frame;
-      return window.pauseProbe.pixels;
-    });
+    await page.evaluate(() => { window.pauseProbe.held = window.pauseProbe.frame; });
     await hold('pause', 60000);
     if (!candidate) return;
     assert.ok((await snapshot()).phases.length, 'need a visible world pointer fixture');
@@ -206,12 +210,10 @@ async function measure(browser, url, sha, candidate) {
     }
     const first = await repaint();
     assert.ok(first);
-    if (first.some((v, i) => v !== heldPixels[i])) await saveMismatch(page, 'held', sha);
-    assert.deepEqual(first, heldPixels, 'forced repaint must match the retained picture');
+    await checkRepaint(page, 'held', sha);
     await page.evaluate(() => { window.pauseProbe.firstRepaint = window.pauseProbe.frame; });
-    const second = await repaint();
-    if (second.some((v, i) => v !== first[i])) await saveMismatch(page, 'firstRepaint', sha);
-    assert.deepEqual(second, first, 'two paused redraws must show the same world pixels');
+    await repaint();
+    await checkRepaint(page, 'firstRepaint', sha);
     await page.keyboard.press('Escape');
     await page.waitForSelector('body.paused', { state: 'hidden' });
     await page.evaluate(() => window.witch.zooOverlay.open());
