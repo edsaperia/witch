@@ -445,7 +445,7 @@ export const footHtml = (device: "keys" | "pad" | "touch"): string =>
   : `${(["menu.up", "menu.left", "menu.down", "menu.right"] as const).map(id => keycapHtml(glyphOf(id, "keys"))).join("")} · ${keycapHtml(glyphOf("menu.choose", "keys"))} · ${keycapHtml(glyphOf("menu.back", "keys"))}`;
 // (the keys and the pad as bound now, platform/bindings.ts: a remap shows here too, Ed 2026-10-28)
 const PAD_DIRS: Record<string, [number, number]> = { left: [-1, 0], right: [1, 0], up: [0, -1], down: [0, 1] };
-const STATION_NAMES: Record<string, string> = { mirror: "Mirror", dressingTable: "Dressing table", wardrobe: "Wardrobe", cloakPegs: "Cloak pegs", shoeRack: "Shoe rack", bags: "Bags", broomBay: "The bay", lathe: "Broom", pegboard: "Pegboard" };
+const STATION_NAMES: Record<string, string> = { mirror: "Mirror", dressingTable: "Dressing table", wardrobe: "Wardrobe", bedroom2Wardrobe: "Wardrobe", bedroom3Wardrobe: "Wardrobe", bedroom2DressingTable: "Dressing table", bedroom3DressingTable: "Dressing table", cloakPegs: "Cloak pegs", shoeRack: "Shoe rack", bags: "Bags", broomBay: "The bay", lathe: "Broom", pegboard: "Pegboard" };
 const ART_M = Art.M as Record<string, number>;
 /** An item's stat line, on its card (Juliet's two bags, 2026-10-29: "faster throws, shorter reach"; config/wardrobe.json `stat`,
  *  rules/bags.ts), or "". */
