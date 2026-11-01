@@ -9,7 +9,7 @@ describe("shared CI game build", () => {
     const proof = jobs.proofs, steps = proof.steps;
     expect(proof.needs).toEqual(["build"]);
     expect(proof.if).toContain("github.event_name == 'pull_request'");
-    for (const excluded of ["claude/rel", "release/", "claude/publish-snapshot", "Release:", "Release check:", "Publish:"]) expect(proof.if).toContain(excluded);
+    for (const excluded of ["claude/release-", "claude/rel-", "release/", "claude/publish-snapshot", "Release:", "Release check:", "Publish:"]) expect(proof.if).toContain(excluded);
     expect(proof.env).toEqual(jobs.smoke.env);
     expect(steps.find((s: any) => s.name === "Install Chromium (bounded, one retry)").run).toBe(jobs.smoke.steps.find((s: any) => s.name === "Install Chromium (bounded, one retry)").run);
     expect(steps.find((s: any) => s.uses === "actions/download-artifact@v4").with).toEqual({ name: "game-dist", path: "dist" });

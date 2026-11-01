@@ -327,7 +327,7 @@ jobs:
     needs: [build]
     # Headless correctness only; release/publish heads were already proven on their own PRs.
     # Forks retain read-only permissions and never receive publication credentials.
-    if: ${{ !cancelled() && needs.build.result == 'success' && github.event_name == 'pull_request' && !startsWith(github.head_ref, 'claude/rel') && !contains(github.head_ref, 'release/') && github.head_ref != 'claude/publish-snapshot' && !startsWith(github.event.pull_request.title, 'Release:') && !startsWith(github.event.pull_request.title, 'Release check:') && !startsWith(github.event.pull_request.title, 'Publish:') }}
+    if: ${{ !cancelled() && needs.build.result == 'success' && github.event_name == 'pull_request' && !startsWith(github.head_ref, 'claude/release-') && !startsWith(github.head_ref, 'claude/rel-') && !startsWith(github.head_ref, 'release/') && !contains(github.head_ref, '/release/') && github.head_ref != 'claude/publish-snapshot' && !startsWith(github.event.pull_request.title, 'Release:') && !startsWith(github.event.pull_request.title, 'Release check:') && !startsWith(github.event.pull_request.title, 'Publish:') }}
     env:
       PLAYWRIGHT_VERSION: 1.56.1
     steps:
