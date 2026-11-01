@@ -1,5 +1,144 @@
 # The cauldron and mushroom trips
 
+**Audit status (2026-11-01): Partly built: nine-colour collection/kitchen/lifecycle and selected trips are implemented; most catalogue effects remain proposals.**
+
+The status index checks the requests below against prototype `ab06904b` and cited history. **Built** means code is present, not a new play/audition/performance pass. **Partly built** states the missing part. An em dash leaves an unimplemented request unmarked. Versions are verified changelog build labels where available; “unverified” means no first-live number was established. Historical/superseded requests are preserved, not re-authorised. Repeated details/build-order summaries are counted with their feature group, not again.
+
+| Request / feature group | Status | Evidence and remaining gap |
+|---|---|---|
+| Nine types, one non-home patch per area, biome preference and nightly return | **Built** | #1523; rules/mushrooms.ts placeMushrooms/newMushrooms and art/mushrooms.js. Changelog mushroom-brewing version null; first live version unverified. |
+| Place-key pickup, unlimited hidden stock and no KO loss | **Built** | #1523; mushroomButton, carried bags and mushroomSave. First live version unverified. |
+| Kitchen unloading arcs two per second | **Built** | #1523; nextUnload +0.5 and flights from witch to selected basket. First version unverified. |
+| Nine authored baskets, fill stages and use-to-pot plop | **Built** | #1523; basketFill/kitchenLayout and brewing render/audio; #1565 current Dining placement, layout fragment v6713. Original nine-basket first version unverified. |
+| Empty/fire/liquid/colour/bubble cauldron stages | **Built** | #1523; render/brewingFrame.ts and brewing shader; first live version unverified. No new visual review claimed. |
+| Third ingredient, smoke, late entrants and outdoor waking | **Built** | #1523; affected per witch, four-second smoke, spin/fall/sleep/recover phases in mushrooms.ts and potionChoreography.ts. First live version unverified. |
+| Partial ingredients and shared pot/baskets | **Built** | MushroomState ingredients/baskets persist while leaving room; per-witch affected state reads shared pot. #1523; first version unverified. Full network replication acceptance remains #1538, not inferred. |
+| Stock and carried items across nights/voyages; Unlock everything | **Built** | app/mushroomSave.ts and debug unlock binding; #1523, first live version unverified. |
+| Ten game minutes, full wake strength, last-two-minute fade and replacement | **Built** | rules/potionRecipes.ts/potionSettings.ts/potionCycle.ts and mushrooms.ts trip state; #1523, first version unverified. |
+| Development blackout caption and Coming soon indicator | **Built** | #1523; render/potionCaption.ts, recipe registry; first live version unverified. |
+| Wobbly-edge indicator and developer Potion Lab | **Built** | Post potion wobble plus ui/potionLab.ts browse/try/copy/settings; #1523, first live version unverified. |
+| Every trip modifies existing sound continuously | **Built** | #1536 fallback filter plus #1531 dedicated Night/Heat Vision routing; game-clock fade and Stop/replacement. First live versions unverified; no audition claim. |
+| Fixed order-independent recipes and extensible nine-colour catalogue | **Built** | 165 explicit stable recipe IDs, rules/potionRecipes.ts and config/potion-recipes.json; #1523, first version unverified. Unassigned slots are not invented effects. |
+| Original home discovery-growing and four tutorial trips | **Partly built** | Current nine-colour per-area system supersedes six-kind/home-growing distribution; Superhot/Orbit/Drift unimplemented, Mirror Floor only legacy preview. #1472 v5764; modern mapping not fulfilled. |
+| Mirror Floor integration into modern recipes | **Partly built** | Legacy explicit ?cauldron=1 preview #1472 v5764 implements reflection/wobble. Modern recipe55 still comingSoon; modern trip integration missing. |
+| Painting-style recipes and new discovery suggestions | — | Suggestions below remain unassigned/unimplemented unless a specific effect is marked Built; existing shader foundations are not completed recipes. |
+| Trip suggestion: Bullet Time | — | No implementation found for this request; original proposal remains unmarked. |
+| Trip suggestion: Moon Boots | — | No implementation found for this request; original proposal remains unmarked. |
+| Trip suggestion: Echo | — | No implementation found for this request; original proposal remains unmarked. |
+| Trip suggestion: The Fear | — | No implementation found for this request; original proposal remains unmarked. |
+| Trip suggestion: Alone | — | No implementation found for this request; original proposal remains unmarked. |
+| Trip suggestion: Walking Wood | — | No implementation found for this request; original proposal remains unmarked. |
+| Trip: Skylight | **Built** | #1523 current recipe/renderer implementation; `render/potionEffects.ts`, `rules/potionSettings.ts`; first live version unverified |
+| Trip suggestion: Brass Band | — | No implementation found for this request; original proposal remains unmarked. |
+| Trip: Big Moon | **Built** | #1523 current recipe/renderer implementation; `render/potionEffects.ts`, `rules/potionSettings.ts`; first live version unverified |
+| Trip: Ravine | **Built** | #1523 current recipe/renderer implementation; `render/potionEffects.ts`, `rules/potionSettings.ts`; first live version unverified |
+| Trip: Chunky | **Built** | #1523 current recipe/renderer implementation; `render/potionEffects.ts`, `rules/potionSettings.ts`; first live version unverified |
+| Trip suggestion: Superhot | — | No implementation found for this request; original proposal remains unmarked. |
+| Trip suggestion: Orbit | — | No implementation found for this request; original proposal remains unmarked. |
+| Trip suggestion: Mirror Forest | — | No implementation found for this request; original proposal remains unmarked. |
+| Trip suggestion: Skinny Dip | — | No implementation found for this request; original proposal remains unmarked. |
+| Trip suggestion: Pride | — | No implementation found for this request; original proposal remains unmarked. |
+| Trip suggestion: Earsight | — | No implementation found for this request; original proposal remains unmarked. |
+| Trip suggestion: Roadworks | — | No implementation found for this request; original proposal remains unmarked. |
+| Trip suggestion: Mirrorball | — | No implementation found for this request; original proposal remains unmarked. |
+| Trip suggestion: Drift | — | No implementation found for this request; original proposal remains unmarked. |
+| Trip suggestion: Blinker | — | No implementation found for this request; original proposal remains unmarked. |
+| Trip suggestion: Inverse Perspective | — | No implementation found for this request; original proposal remains unmarked. |
+| Trip suggestion: Drum Solo | — | No implementation found for this request; original proposal remains unmarked. |
+| Trip suggestion: Watched | — | No implementation found for this request; original proposal remains unmarked. |
+| Trip suggestion: Giant Trees | — | No implementation found for this request; original proposal remains unmarked. |
+| Trip: Night Vision | **Built** | #1531; `render/potionEffects.ts`, dedicated audio gates; first live version unverified |
+| Trip suggestion: Flask Finder | — | No implementation found for this request; original proposal remains unmarked. |
+| Trip suggestion: Left Hook | — | No implementation found for this request; original proposal remains unmarked. |
+| Trip: Stiltwalkers | **Built** | #1532; registry29/58, rig limb deformation; changelog v6523 |
+| Trip: Thick Canopy | **Built** | #1523 current recipe/renderer implementation; `render/potionEffects.ts`, `rules/potionSettings.ts`; first live version unverified |
+| Trip suggestion: The Whole Route | — | No implementation found for this request; original proposal remains unmarked. |
+| Trip suggestion: Dreamseer | — | No implementation found for this request; original proposal remains unmarked. |
+| Trip suggestion: Paper Theatre | — | No implementation found for this request; original proposal remains unmarked. |
+| Trip suggestion: Woodcut | — | No implementation found for this request; original proposal remains unmarked. |
+| Trip suggestion: Kaleidoscope | — | No implementation found for this request; original proposal remains unmarked. |
+| Trip suggestion: Breathing | — | No implementation found for this request; original proposal remains unmarked. |
+| Trip suggestion: Daybreak | — | No implementation found for this request; original proposal remains unmarked. |
+| Trip suggestion: Snow Globe | — | No implementation found for this request; original proposal remains unmarked. |
+| Trip suggestion: Tiny Witch | — | No implementation found for this request; original proposal remains unmarked. |
+| Trip suggestion: Giant Witch | — | No implementation found for this request; original proposal remains unmarked. |
+| Trip suggestion: Featherweight | — | No implementation found for this request; original proposal remains unmarked. |
+| Trip suggestion: Foresight | — | No implementation found for this request; original proposal remains unmarked. |
+| Trip suggestion: Chipmunks | — | No implementation found for this request; original proposal remains unmarked. |
+| Trip suggestion: Loop the Loop | — | No implementation found for this request; original proposal remains unmarked. |
+| Trip: Worm's Eye | **Built** | #1530; camera controls and shared audio; first live version unverified |
+| Trip suggestion: Cartoon | — | No implementation found for this request; original proposal remains unmarked. |
+| Trip suggestion: Underwater | — | No implementation found for this request; original proposal remains unmarked. |
+| Trip suggestion: Moonwalk | — | No implementation found for this request; original proposal remains unmarked. |
+| Trip suggestion: Hiccups | — | No implementation found for this request; original proposal remains unmarked. |
+| Trip suggestion: Stopmotion | — | No implementation found for this request; original proposal remains unmarked. |
+| Trip suggestion: Fireflies | — | No implementation found for this request; original proposal remains unmarked. |
+| Trip: Heat Vision | **Built** | #1531; semantic creature heat and octave/audio routing; first live version unverified |
+| Trip suggestion: Fisheye | — | No implementation found for this request; original proposal remains unmarked. |
+| Trip suggestion: Synaesthesia | — | No implementation found for this request; original proposal remains unmarked. |
+| Trip suggestion: Silent Film | — | No implementation found for this request; original proposal remains unmarked. |
+| Trip suggestion: Masterplan | — | No implementation found for this request; original proposal remains unmarked. |
+| Trip suggestion: Contour Dream | — | No implementation found for this request; original proposal remains unmarked. |
+| Trip suggestion: Bottomless | — | No implementation found for this request; original proposal remains unmarked. |
+| Trip: Aurora Outlines | **Built** | #1523 current recipe/renderer implementation; `render/potionEffects.ts`, `rules/potionSettings.ts`; first live version unverified |
+| Trip suggestion: Folded Space | — | No implementation found for this request; original proposal remains unmarked. |
+| Trip suggestion: Sliced World | — | No implementation found for this request; original proposal remains unmarked. |
+| Trip: The Audience | **Built** | #1535; watching-tree lean/lag and shared audio; first live version unverified |
+| Trip suggestion: Concertina | — | No implementation found for this request; original proposal remains unmarked. |
+| Trip suggestion: Far Sight | — | No implementation found for this request; original proposal remains unmarked. |
+| Trip suggestion: The World Is Late | — | No implementation found for this request; original proposal remains unmarked. |
+| Trip suggestion: Sympathetic Forest | — | No implementation found for this request; original proposal remains unmarked. |
+| Trip suggestion: Bad Reception | — | No implementation found for this request; original proposal remains unmarked. |
+| Trip suggestion: Borrowed Habits | — | No implementation found for this request; original proposal remains unmarked. |
+| Trip suggestion: Someone Is Having a Bad Dream | — | No implementation found for this request; original proposal remains unmarked. |
+| Trip suggestion: Too Much Happening | — | No implementation found for this request; original proposal remains unmarked. |
+| Trip: The Forest Counts | **Built** | #1544; held beat scenery/audio; first live version unverified |
+| Trip suggestion: Spilling Habitats | — | No implementation found for this request; original proposal remains unmarked. |
+| Trip suggestion: Seeing Through Seeing | — | No implementation found for this request; original proposal remains unmarked. |
+| Trip suggestion: Lovesick Leaves | — | No implementation found for this request; original proposal remains unmarked. |
+| Trip suggestion: Borrowed Attention | — | No implementation found for this request; original proposal remains unmarked. |
+| Trip suggestion: Held Breath | — | No implementation found for this request; original proposal remains unmarked. |
+| Trip suggestion: Out of Time | — | No implementation found for this request; original proposal remains unmarked. |
+| Trip suggestion: Pack Weather | — | No implementation found for this request; original proposal remains unmarked. |
+| Trip suggestion: Pressure Beneath the Feet | — | No implementation found for this request; original proposal remains unmarked. |
+| Trip suggestion: Distant Giants | — | No implementation found for this request; original proposal remains unmarked. |
+| Trip suggestion: Musical Ground | — | No implementation found for this request; original proposal remains unmarked. |
+| Trip suggestion: Forest Current | — | No implementation found for this request; original proposal remains unmarked. |
+| Trip suggestion: Luminous Footprints | — | No implementation found for this request; original proposal remains unmarked. |
+| Trip suggestion: Rolling Sea | — | No implementation found for this request; original proposal remains unmarked. |
+| Trip suggestion: Thick Air | — | No implementation found for this request; original proposal remains unmarked. |
+| Trip suggestion: Mushroom Lenses | — | No implementation found for this request; original proposal remains unmarked. |
+| Trip suggestion: Underwater Light | — | No implementation found for this request; original proposal remains unmarked. |
+| Trip suggestion: Striped Intentions | — | No implementation found for this request; original proposal remains unmarked. |
+| Trip suggestion: Wax Menagerie | — | No implementation found for this request; original proposal remains unmarked. |
+| Trip suggestion: Inside-Out Relief | — | No implementation found for this request; original proposal remains unmarked. |
+| Trip suggestion: Living Bark | — | No implementation found for this request; original proposal remains unmarked. |
+| Trip suggestion: Travelling Markings | — | No implementation found for this request; original proposal remains unmarked. |
+| Trip suggestion: Long Echoes | — | No implementation found for this request; original proposal remains unmarked. |
+| Trip suggestion: Recursive Memories | — | No implementation found for this request; original proposal remains unmarked. |
+| Trip suggestion: Changing Materials | — | No implementation found for this request; original proposal remains unmarked. |
+| Trip suggestion: Wandering Shadows | — | No implementation found for this request; original proposal remains unmarked. |
+| Trip suggestion: Growing Personalities | — | No implementation found for this request; original proposal remains unmarked. |
+| Trip suggestion: Hall of Mirrors | — | No implementation found for this request; original proposal remains unmarked. |
+| Trip: Glow Up | **Built** | #1523 current recipe/renderer implementation; `render/potionEffects.ts`, `rules/potionSettings.ts`; first live version unverified |
+| Trip: Miniature | **Built** | #1536; miniatureTilt and shared filtered audio; first live version unverified |
+| Trip: Little Planet | **Built** | #1523 current recipe/renderer implementation; `render/potionEffects.ts`, `rules/potionSettings.ts`; first live version unverified |
+| Trip suggestion: Wireframe | — | No implementation found for this request; original proposal remains unmarked. |
+| Trip suggestion: Mix-up | — | No implementation found for this request; original proposal remains unmarked. |
+| Trip suggestion: Mannequins | — | No implementation found for this request; original proposal remains unmarked. |
+| Trip suggestion: Cutaway | — | No implementation found for this request; original proposal remains unmarked. |
+| Trip: Hue Spin | **Built** | #1541; Post RGB rotation and synced audio; first live version unverified |
+| Trip suggestion: CRT | — | No implementation found for this request; original proposal remains unmarked. |
+| Trip suggestion: Inverse Glow Up | — | No implementation found for this request; original proposal remains unmarked. |
+| Trip suggestion: House in the void | — | No implementation found for this request; original proposal remains unmarked. |
+| Trip suggestion: Hexels | — | No implementation found for this request; original proposal remains unmarked. |
+| Trip suggestion: Stained Glass | — | No implementation found for this request; original proposal remains unmarked. |
+| Trip suggestion: Mondrian | — | No implementation found for this request; original proposal remains unmarked. |
+| Trip suggestion: Expressionist | — | No implementation found for this request; original proposal remains unmarked. |
+| Trip suggestion: Impressionist | — | No implementation found for this request; original proposal remains unmarked. |
+| Trip suggestion: Cubist | — | No implementation found for this request; original proposal remains unmarked. |
+
+
 Design catalogue (Ed, 2026-10-09 onward). Ed authorised implementation on 2026-10-31: collection, kitchen storage, brewing and the shared trip lifecycle are being built, with cheap rendering effects first. The [developer recipe book](potion-recipes.md) records fixed assignments and which effects are implemented. This catalogue also contains unbuilt proposals. Earlier journey distribution and tutorial notes are in [journey.md](journey.md); the latest decisions below take precedence.
 
 ## Mushrooms

@@ -1,6 +1,44 @@
 # The journey: islands, records and the treehouse
 
-Backlog (Ed, 2026-10-10). **Not built unless marked built; don't build any of it without Ed's go.** It is the game's longer arc: a run is one night on one island, and between nights the witch explores a sea of islands from her treehouse.
+**Audit status (2026-11-01): Partly built: islands, rosters, chart, sailing, wins, home growth and the house exist; original genre-record rewards and several campaign collections do not.**
+
+The status index checks the requests below against prototype `ab06904b` and cited history. **Built** means code is present, not a new play/audition/performance pass. **Partly built** states the missing part. An em dash leaves an unimplemented request unmarked. Versions are verified changelog build labels where available; “unverified” means no first-live number was established. Historical/superseded requests are preserved, not re-authorised. Repeated details/build-order summaries are counted with their feature group, not again.
+
+| Request / feature group | Status | Evidence and remaining gap |
+|---|---|---|
+| Small home and island sizes/phases | **Built** | rules/rosters.ts, islandShape.ts; #697, island shapes v2837; first islands v2694, original first-islands PR unverified. |
+| Win/loss, last call, victory lap, straggler and conga | **Built** | rules/win.ts, hunt.ts, render/win*; victory music fragment v2777. Originating win PR unverified; #1552 later route-aware home-guard/win fixes v6736. |
+| Quest islands kept only on won night | **Built** | #954 and chartSave.ts; quest-found flow present. #1109 v4406 find loans is separate from quest discovery; #954 first version unverified. |
+| 64 kinds, bearing/phase rosters, legendary deal | **Built** | kind.json files, rules/kinds.ts/rosters.ts/deal.ts; #1031/#1036 finish roster, all-islands v2778. Kind-specific introduction versions unverified. |
+| Own kind plentiful, other kinds capped and shuffled nightly | **Built** | rules/rosters.ts OTHERS_MAX, deal.ts, map shapeSeed; 2026-10-28 commits preserve shapes/shuffle areas. Originating PR/version unverified. |
+| Compass biomes and tall scenery | **Built** | Area recipes, biome data and art/flora; #1024/#1026; first biome versions unverified. |
+| World-seed shape persistence and changing nightly interiors | **Built** | rosters/map/chartSave; implemented world/campaign seed history. Originating PR/version unverified. |
+| Disc chart, real islands, sigils, voyages and growing home | **Built** | render/chart, app/chartSave.ts; real-island fragment v2859, chart #735/#738 v2961; first chart implementation PR unverified. |
+| Sailing continuous zoom and in-place night swap | **Built** | #735/#738/#986, chart zoom v2961 and later transition v4455/sail-in-bed v4466. app/sail.ts; reload-free change first version unverified. |
+| Open sea rim and moon rising | **Built** | #751; chart-moon fragment, first version unverified; seaChart render path present. |
+| One refined sigil family everywhere | **Partly built** | Bold/rank/chart sigils exist but several render paths and styles remain; common source family/refinement across every listed surface is not demonstrated. art/sigils.js, sigilDetail.js, bold*.js; #712, first unified version absent. |
+| Irregular coasts, lakes, shoreline routing and archipelago | **Built** | #690/#697; coast v2812, shapes v2837, rules/lakes.ts/archipelago.ts. First archipelago version unverified. |
+| Biome lake looks, shore dressing and blended distribution | **Built** | #736/#1019; rules/lakeLooks.ts, lakeShore.ts, render/lakeLooks.ts. First in-play lake-look version unverified; chart look alone is not cited as in-play completion. |
+| Home earns each biome lake after completing its islands | — | No campaign-completion-to-home-lake reward found; ordinary home shape/knownKinds growth is different. |
+| Master difficulty curve indexed by wave through 64 | **Built** | rules/swarm.ts routeShare, growth.ts routePopulation, tuning swarm.waves64; first islands v2694; originating curve PR unverified. |
+| All 64 animal shapes audited and expanded | **Partly built** | #1470 and creature-graph staging have sizes/presets/body foundations, but not proof every old/new kind meets the complete silhouette/body-plan brief. v6609 sizes; further body-shape work remains. |
+| Journey mushroom distribution and discovery-at-home | **Partly built** | Nine-colour per-area/biome distribution is built (#1523). Original six-kind discovery-unlocks-home-growth rule is superseded, not implemented; recipe tutorial colour assignments remain absent. First current live version unverified. |
+| Four tutorial recipes | **Partly built** | Superhot/Orbit/Drift remain comingSoon in registry; Mirror Floor only legacy cauldron preview #1472 v5764, not the modern assigned tutorial. Full four-recipe loop missing. |
+| Collectible records as an upgrade axis | **Partly built** | rules/records.ts/config/records.json and DJ booth offer BPM100–200 in10 steps, starting100/120. Original quest-complete biome/genre record rewards are not built; originating record PR/version unverified. |
+| Earn each island's genre record by every legend quest in one night | — | Registry records have BPM, no island genre/quest-unlock reward found. |
+| Tempo/difficulty and farther records faster | **Partly built** | Pulse responds to BPM; record tempo selectable, but record availability is a find pool rather than distance/biome genre progression. #527/#953, first versions unverified. |
+| Early quest stays gentle | **Built** | rules/quest.ts early quest case and related tests; #1552 retains no-cap correction v6736. Original easy-quest PR/version unverified. |
+| Treehouse and rooms on the Ent | **Built** | House/oak/wake source; v4094/v4439/v4240, #1565 v6713 layout. Original implementation PR unverified. |
+| Ent carried by island legend / arrival carrier | **Partly built** | Old carrier was implemented then removed by #1552 (v6736); continuous chart travel supersedes the voyage. No current carried-Ent travel claim. |
+| Home gains one area per known kind | **Built** | rules/rosters.ts knownKinds/homeIsland and chart coastline growth; first islands/rosters source history, first exact home-growth PR/version unverified. |
+| Relics one per ten areas | **Built** | #650; legends placeRelics, relics.perAreas; first version unverified. |
+| Needle drop party spell and DJ booth | **Built** | rules/wakeUp.ts/records.ts, ui/djBooth.ts (if renamed, main booth wiring); first record/booth commits5bee25adb/4a7d2e1c5; first release version unverified. |
+| House rooms and all mid-night access | **Partly built** | Built stations/bed/chart/kitchen/Studio/zoo/telescope; custom card game, poster and full ordinary telephone incomplete. #1040 v4181, #1076 v4103 and house v4094. |
+| Best-party poster in house | — | No implementation found for this request; original proposal remains unmarked. |
+| Balcony DJ-over-crowd composition | **Partly built** | Existing opening camera/decks present; north5m placement now northwest22m/oak layout. Historical exact shot/placement is superseded, not a new missing implementation requirement. v4439 oak, #1565 v6713 layout. |
+
+
+Backlog (Ed, 2026-10-10). **Mixed implementation status; see the audit below. No unbuilt work is authorised by this page.** It is the game's longer arc: a run is one night on one island, and between nights the witch explores a sea of islands from her treehouse.
 
 Where this overrides older notes: the record crate no longer picks the map's seed (islands do), and "the bedroom" grows into the whole treehouse.
 

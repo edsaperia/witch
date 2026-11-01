@@ -1,6 +1,32 @@
 # Smaller gameplay changes
 
-Backlog (Ed, 2026-10-09 to 10-10). **Not built unless marked built; don't build without Ed's go.** Checked against the code on 2026-10-14 (Kilo): what's left stands here, what's built is in the **Built** list at the bottom with its PR or file. Lakes, relics per area, the master curve and the end of the route are in [journey.md](journey.md).
+**Audit status (2026-11-01): Partly built: rules, current gamepad menus/prompts and rumble are implemented; legacy creator coverage remains qualified.**
+
+The status index checks the requests below against prototype `ab06904b` and cited history. **Built** means code is present, not a new play/audition/performance pass. **Partly built** states the missing part. An em dash leaves an unimplemented request unmarked. Versions are verified changelog build labels where available; “unverified” means no first-live number was established. Historical/superseded requests are preserved, not re-authorised. Repeated details/build-order summaries are counted with their feature group, not again.
+
+| Request / feature group | Status | Evidence and remaining gap |
+|---|---|---|
+| Tempo scales pulse and pause-page wave speed | **Built** | `rules/beat.ts`, party step; #527/#953 (first build versions unverified). Current pulseSpeed=1 and tempoRate multiplier. |
+| Invites block, refuse, vibrate and crumple on enraged | **Built** | #89/#923; `rules/invites.ts`, `render/invites.ts`, sfxCues; version unverified. |
+| Gamepad bindings, remapping and sigil runs | **Built** | #618/#649/#938; `platform/bindings.ts`, input.ts, rules/leash.ts. Dates/bindings below retain historical revisions; first versions unverified. |
+| Creator/treehouse and all menus on pad | **Partly built** | Ordinary station/chart/telescope/Studio/pause paths exist (#1076, #1456); old creator and all auxiliary panels are not certified complete. No browser acceptance claimed; versions unverified. |
+| Device-aware pad prompts | **Built** | `ui/keyHint.ts`, `ui/controlsText.ts`, bindings glyphs; #1076 and later bindings work. Current prompts follow bindings; version unverified. |
+| Rumble | **Built** | `platform/rumble.ts`, main.ts rumble.update and Accessibility rumble setting; git075f7ff7b (gamepad foundation). Hit/KO/land/wave/end pulses implemented with unsupported-device fallback. #1456; first version unverified; changelog gamepad-foundation has version null. |
+| Sigils defend whole area plus radius | **Built** | #941; rules/combat/targeting.ts and guard tests; version unverified. |
+| Higher leash arcs and visible stack | **Built** | #936/#937; renderer leash stack/ribbons; versions unverified. |
+| Pick up/place runs | **Built** | #938; rules/leash.ts run state; version unverified. |
+| One movement trail and shared cooldown | **Built** | #940; cooldown rise/dash rules and render/trail.ts; version unverified. |
+| Envelope and ring scenery/smoke occlusion | **Built** | render/occlusion.ts, invites.ts, inviteRing.ts; 2026-10-19 source implementation, originating PR/version unverified. |
+| Baby trail, ground weight, placed-sigil feeding | **Built** | #648/#649/#666; rules/babies.ts, leashWeight.ts, berries.ts; versions unverified. |
+| Flasks grow followers to adult | **Built** | #954; rules/berries.ts growthSpurt; version unverified. |
+| Small flasks and one per ten areas | **Built** | #647/#650; partyRelics.js, legends.json/placeRelics; versions unverified. |
+| Longer flyer dive bottom | **Built** | #611; species movement.swoop and rules/movement.ts; version unverified. |
+| Rise cooldown and its slider | **Built** | #649/#916; cooldown/rise settings; versions unverified. |
+| Enraged march inward | **Built** | #649; combat/targeting.ts nearestSound; version unverified. |
+| Blink along movement, facing when still | **Built** | #649; rules/dash.ts and dash.toCursor=false; version unverified. |
+
+
+Backlog (Ed, 2026-10-09 to 10-10). **Mixed implementation status; see the audit below. No unbuilt work is authorised by this page.** Checked against the code on 2026-10-14 (Kilo): what's left stands here, what's built is in the **Built** list at the bottom with its PR or file. Lakes, relics per area, the master curve and the end of the route are in [journey.md](journey.md).
 
 ## Tempo is difficulty — partly built
 
