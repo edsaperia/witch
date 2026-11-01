@@ -88,6 +88,14 @@ test('release imports only successful matching-environment task results; changed
   assert.equal(saved.some(r=>r.key==='d'.repeat(64)),false); // Actual changed task is not manufactured into a cache hit.
   assert.equal(await importPassedResults({...options,environment:{...environment,node:'v24'}}),0);
   run.conclusion='failure'; assert.equal(await importPassedResults(options),0);
+  run.conclusion='success';
+  // Runs are taken by FINISH time from the latest 100: an old long run that just finished is read before newer quick ones.
+  const quick=Array.from({length:30},(_,i)=>({id:100+i,conclusion:'success',head_repository:{full_name:'o/r'},updated_at:`2026-11-01T02:${String(10+i).padStart(2,'0')}:00Z`}));
+  const long={...run,updated_at:'2026-11-01T02:56:00Z'}, read=[], perPage=[];
+  const many={rest:{actions:{listWorkflowRuns:async q=>{perPage.push(q.per_page);return {data:{workflow_runs:[...quick.slice().reverse(),long]}};},listWorkflowRunArtifacts:async({run_id})=>({data:{artifacts:[{name:'art-check-tree',expired:false,run_id}]}})}}};
+  saved.length=0;
+  await importPassedResults({...options,github:many,readProof:async a=>{read.push(a.run_id);return a.run_id===7?proof:{...proof,runId:a.run_id,results:[]};}});
+  assert.deepEqual(perPage,[100]); assert.equal(read[0],7); assert.deepEqual(saved,[proof.results[0]]);
 });
 
 test('embedded GitHub scripts compile and neither workflow reruns on PR edits', () => {

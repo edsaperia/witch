@@ -10,9 +10,13 @@ export function proofMatches(proof, tree, environment, runId) {
 export async function importPassedResults({ github, owner, repo, environment, currentRun, readProof, saveResult, info = () => {} }) {
   let count = 0, proofs = 0;
   try {
-    const { data } = await github.rest.actions.listWorkflowRuns({ owner, repo, workflow_id: 'art-check.yml', status: 'success', per_page: 20 });
-    for (const run of data.workflow_runs) {
-      if (proofs >= 8) break;
+    // The API lists runs by START time, but the results worth importing are the long full runs, which finish long after
+    // dozens of quick runs have started: 20 by start time dropped a 75-minute run before anyone could reuse it. So read the
+    // latest 100 and take proofs by FINISH time.
+    const { data } = await github.rest.actions.listWorkflowRuns({ owner, repo, workflow_id: 'art-check.yml', status: 'success', per_page: 100 });
+    const finished = [...data.workflow_runs].sort((a, b) => String(b.updated_at ?? '').localeCompare(String(a.updated_at ?? '')));
+    for (const run of finished) {
+      if (proofs >= 12) break;
       if (run.id === currentRun || run.conclusion !== 'success' || run.head_repository?.full_name !== `${owner}/${repo}`) continue;
       const { data: artifacts } = await github.rest.actions.listWorkflowRunArtifacts({ owner, repo, run_id: run.id, per_page: 100 });
       for (const artifact of artifacts.artifacts.filter(a => a.name === 'art-check-tree' && !a.expired)) {
