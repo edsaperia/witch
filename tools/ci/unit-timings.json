@@ -1,5 +1,5 @@
 {
- "_note": "Seconds per unit test file, one full local run (3 workers), 2026-11-01; refresh with node tools/ci/unit-timings.mjs <vitest --reporter=json output>. Only balances the CI shards: a missing or stale entry costs time, never coverage.",
+ "_note": "Seconds per unit test file, one full local run (3 workers), 2026-11-01; refresh with node tools/ci/unit-timings.mjs <vitest --reporter=json output>. Only used with UNIT_BALANCE=1 (off in CI: see run-unit.mjs). Only balances the CI shards: a missing or stale entry costs time, never coverage.",
  "seconds": {
   "src/app/arrival.test.ts": 0,
   "src/app/arriveLimit.test.ts": 0,
