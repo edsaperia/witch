@@ -94,6 +94,7 @@ export async function plan(root, cacheDir, environment) {
     const producers = ['art/check.mjs', 'art/headless.mjs', 'art/headless-blank.html', 'tools/art-check/affected.mjs', 'tools/artDependencies.ts', 'tools/artJobFingerprints.ts', 'tools/art-cache/load.mjs', 'package.json', 'package-lock.json', 'config/style.json', '.github/workflows/art-check.yml'];
     // The sleeping-size regression uses the configured pixel size, not a duplicated constant.
     producers.push('config/tuning.json');
+    producers.push('tools/art-check/shards.mjs');
     const map = api.artJobFingerprints(tree, { buildInputs: producers }, DISPATCHER);
     const files = [...new Set([...checkFiles(root), ...map.scopeSources.filter(f => f !== DISPATCHER)])].sort();
     const snapshot = snapshotHash(root, files), salt = JSON.stringify({ schema: 'art-check-results-v1', environment });

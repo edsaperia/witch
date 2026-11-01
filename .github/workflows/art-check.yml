@@ -14,10 +14,12 @@ permissions:
   contents: read
   actions: read
 jobs:
-  art:
-    name: art check
+  plan:
+    name: art plan
     runs-on: ubuntu-latest
-    timeout-minutes: 90
+    timeout-minutes: 15
+    outputs:
+      mode: ${{ steps.scope.outputs.mode }}
     env:
       PLAYWRIGHT_VERSION: 1.56.1
     steps:
@@ -38,21 +40,22 @@ jobs:
             const tree = cp.execFileSync('git', ['rev-parse', 'HEAD^{tree}'], {encoding:'utf8'}).trim();
             const environment = {node:cp.execFileSync('node',['-p','process.version'],{encoding:'utf8'}).trim(), os:process.env.RUNNER_OS, arch:process.arch, browser:process.env.PLAYWRIGHT_VERSION};
             const {owner, repo} = context.repo;
+            const proofs = new Map();
             const run = await findPassedTree({github, owner, repo, tree, environment, currentRun:context.runId, info:core.info,
               readProof: async artifact => {
                 const zip = path.join(process.env.RUNNER_TEMP, `art-proof-${artifact.id}.zip`);
                 const {data} = await github.rest.actions.downloadArtifact({owner, repo, artifact_id:artifact.id, archive_format:'zip'});
                 fs.writeFileSync(zip, Buffer.from(data));
-                try { return JSON.parse(cp.execFileSync('unzip', ['-p', zip, 'art-check-proof.json'], {encoding:'utf8', maxBuffer:65536})); }
+                try { const proof = JSON.parse(cp.execFileSync('unzip', ['-p', zip, 'art-check-proof.json'], {encoding:'utf8', maxBuffer:1048576})); proofs.set(proof.runId, proof); return proof; }
                 finally { fs.unlinkSync(zip); }
               }});
             core.setOutput('run', run ?? '');
-            if (run) core.info(`Exact checked tree ${tree}: reusing successful Art check run ${run}`);
+            if (run) { fs.mkdirSync('out',{recursive:true}); fs.writeFileSync('out/exact-proof.json',JSON.stringify(proofs.get(run))); core.info(`Exact checked tree ${tree}: reusing successful Art check run ${run}`); }
       - run: npm ci
         if: steps.checked.outputs.run == ''
       - name: Restore successful PR art checks
         if: steps.checked.outputs.run == ''
-        uses: actions/cache@v4
+        uses: actions/cache/restore@v4
         with:
           path: .art-check-results
           key: art-results-v1-${{ runner.os }}-${{ github.run_id }}-${{ github.run_attempt }}
@@ -78,7 +81,10 @@ jobs:
                 finally { fs.unlinkSync(zip); }
               }});
             core.info(`Imported ${count} successful task results; current fingerprints still decide every hit`);
-      # Every missed result runs; unknown dependency layouts fall back to full coverage.
+      - name: Shard coverage and proof safety fixtures
+        if: steps.checked.outputs.run == ''
+        run: node --test tools/art-check/shards.test.mjs
+      # One immutable complete plan is shared by every shard and the final gate.
       - name: Scope
         id: scope
         shell: bash
@@ -86,57 +92,143 @@ jobs:
           CHECKED_RUN: ${{ steps.checked.outputs.run }}
         run: |
           set -o pipefail
-          if [ -n "$CHECKED_RUN" ]; then MODE="skip"; else
-            MODE=$(node tools/art-check/affected.mjs --plan out/art-check-plan.json | tail -n 1)
+          mkdir -p out
+          if [ -n "$CHECKED_RUN" ]; then
+            node -e 'require("fs").writeFileSync("out/art-check-plan.json",JSON.stringify({schema:1}))'
+          else
+            node tools/art-check/affected.mjs --plan out/art-check-plan.json
           fi
-          echo "mode=$MODE" >> "$GITHUB_OUTPUT"
-          echo "art check: $MODE"
-      # Playwright isn't one of the game's dependencies: installed on its own, its Chromium cached between runs (as ci.yml).
-      - if: steps.scope.outputs.mode != 'skip'
+          node tools/art-check/shards.mjs prepare out/art-check-plan.json
+      - uses: actions/upload-artifact@v4
+        with:
+          name: art-check-plan
+          path: out/
+          retention-days: 14
+          if-no-files-found: error
+          overwrite: true
+  shards:
+    name: art shard ${{ matrix.shard }}
+    needs: plan
+    if: ${{ needs.plan.outputs.mode == 'affected' || needs.plan.outputs.mode == 'full' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    strategy:
+      fail-fast: false
+      matrix:
+        shard: [0, 1, 2, 3]
+    env:
+      PLAYWRIGHT_VERSION: 1.56.1
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - uses: actions/download-artifact@v4
+        with:
+          name: art-check-plan
+          path: out
+      - name: Determine whether this shard needs a browser
+        id: browser
+        run: node tools/art-check/shards.mjs needs-browser out/art-check-plan.json ${{ matrix.shard }}
+      # Relocated unchanged install policy; canonical owns any install/cache policy changes.
+      - if: steps.browser.outputs.needed == 'true'
         uses: actions/cache@v4
         with:
           path: ~/.cache/ms-playwright
           key: playwright-${{ runner.os }}-${{ env.PLAYWRIGHT_VERSION }}
-      - if: steps.scope.outputs.mode != 'skip'
+      - if: steps.browser.outputs.needed == 'true'
         run: npm install --prefix .pw --no-save --no-package-lock playwright@${{ env.PLAYWRIGHT_VERSION }}
-      - if: steps.scope.outputs.mode != 'skip'
+      - if: steps.browser.outputs.needed == 'true'
         run: .pw/node_modules/.bin/playwright install --with-deps chromium
-      - name: Art check
-        if: steps.scope.outputs.mode != 'skip'
+      - name: Run the assigned art coverage
         shell: bash
         env:
-          CHECK_MODE: ${{ steps.scope.outputs.mode }}
+          SHARD: ${{ matrix.shard }}
         run: |
           set -o pipefail
           mkdir -p out
-          if [ "$CHECK_MODE" = "full" ]; then
-            NODE_PATH=$PWD/.pw/node_modules node tools/ci/report-command.cjs --kind art -- node art/check.mjs --times 2>&1 | tee out/log.txt
-          else
-            NODE_PATH=$PWD/.pw/node_modules node tools/ci/report-command.cjs --kind art -- node tools/art-check/affected.mjs --run out/art-check-plan.json 2>&1 | tee out/log.txt
-          fi
-      - name: Record the exact successful checked tree
-        if: success()
-        run: |
-          mkdir -p out
-          node --input-type=module -e 'import fs from "node:fs"; import cp from "node:child_process"; const plan=fs.existsSync("out/art-check-plan.json")?JSON.parse(fs.readFileSync("out/art-check-plan.json","utf8")):null; const results=(plan?.tasks??[]).flatMap(t=>{try{const r=JSON.parse(fs.readFileSync(`.art-check-results/${t.key}.json`,"utf8"));return r.schema===1&&r.id===t.id&&r.key===t.key&&r.passed===true?[r]:[];}catch{return[];}}); fs.writeFileSync("out/art-check-proof.json", JSON.stringify({schema:1,tree:cp.execFileSync("git",["rev-parse","HEAD^{tree}"],{encoding:"utf8"}).trim(),runId:Number(process.env.GITHUB_RUN_ID),environment:{node:process.version,os:process.env.RUNNER_OS,arch:process.arch,browser:process.env.PLAYWRIGHT_VERSION},results}));'
-      - name: Save exact checked-tree proof
+          NODE_PATH=$PWD/.pw/node_modules node tools/ci/report-command.cjs --kind art -- node tools/art-check/shards.mjs run out/art-check-plan.json "$SHARD" 2>&1 | tee "out/log-$SHARD.txt"
+      - name: Save successful shard proof
         if: success()
         uses: actions/upload-artifact@v4
         with:
-          name: art-check-tree
-          path: out/art-check-proof.json
+          name: art-shard-proof-${{ matrix.shard }}
+          path: out/shard-${{ matrix.shard }}.json
           retention-days: 14
           if-no-files-found: error
+          overwrite: true
       - name: Failure annotation totals
         if: always()
         run: node tools/ci/annotations.cjs --summary
       - uses: actions/upload-artifact@v4
         if: always()
         with:
-          name: art-check
+          name: art-check-shard-${{ matrix.shard }}
           path: |
-            out/log.txt
-            out/art-check-plan.json
+            out/log-${{ matrix.shard }}.txt
             art/out/silhouettes.png
           retention-days: 14
           if-no-files-found: ignore
+          overwrite: true
+  art:
+    name: art check
+    needs: [plan, shards]
+    if: ${{ always() }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      PLAYWRIGHT_VERSION: 1.56.1
+    steps:
+      - name: Require successful planning and every needed shard
+        env:
+          PLAN_RESULT: ${{ needs.plan.result }}
+          MODE: ${{ needs.plan.outputs.mode }}
+          SHARDS_RESULT: ${{ needs.shards.result }}
+        shell: bash
+        run: |
+          test "$PLAN_RESULT" = success
+          case "$MODE" in
+            affected|full) test "$SHARDS_RESULT" = success ;;
+            exact|cached) test "$SHARDS_RESULT" = skipped ;;
+            *) exit 1 ;;
+          esac
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - uses: actions/download-artifact@v4
+        with:
+          name: art-check-plan
+          path: out
+      - uses: actions/download-artifact@v4
+        if: needs.shards.result == 'success'
+        with:
+          pattern: art-shard-proof-*
+          merge-multiple: true
+          path: out/shards
+      - name: Validate complete coverage and combine checked-tree proof
+        env:
+          SHARD_STATUS: ${{ needs.shards.result }}
+          EXPECTED_MODE: ${{ needs.plan.outputs.mode }}
+        run: node tools/art-check/shards.mjs combine out/art-check-plan.json
+      - name: Save exact checked-tree proof
+        uses: actions/upload-artifact@v4
+        with:
+          name: art-check-tree
+          path: out/art-check-proof.json
+          retention-days: 14
+          if-no-files-found: error
+          overwrite: true
+      - name: Seed existing per-task result cache from validated combined proof
+        id: records
+        run: |
+          node -e 'const f=require("fs"),p=JSON.parse(f.readFileSync("out/art-check-proof.json"));f.mkdirSync(".art-check-results",{recursive:true});for(const r of p.results){if(r.schema!==1||r.passed!==true||!(/^[a-f0-9]{64}$/).test(r.key))throw Error("Invalid result");f.writeFileSync(".art-check-results/"+r.key+".json",JSON.stringify(r));}f.appendFileSync(process.env.GITHUB_OUTPUT,"count="+p.results.length+"\n");'
+      - uses: actions/cache/save@v4
+        if: steps.records.outputs.count != '0'
+        with:
+          path: .art-check-results
+          key: art-results-v1-${{ runner.os }}-${{ github.run_id }}-${{ github.run_attempt }}
