@@ -1255,7 +1255,7 @@
     "hangBack": 4,
     "dangerF": 90,
     "tint": 0.8,
-    "fade": 0.7
+    "fade": 1.5
   },
   "hunt": {
     "on": true
