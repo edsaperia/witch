@@ -228,6 +228,7 @@ jobs:
         run: node tools/ci/run-unit.mjs
         env:
           VITEST_SHARD: ${{ matrix.shard }}/4
+          UNIT_BALANCE: "1"
       - name: Failure annotation totals
         if: always()
         run: node tools/ci/annotations.cjs --summary

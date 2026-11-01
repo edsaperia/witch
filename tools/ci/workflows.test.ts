@@ -64,6 +64,7 @@ describe("shared CI game build", () => {
     expect(jobs.unit.strategy["fail-fast"]).toBe(false);
     const run = jobs.unit.steps.find((s: any) => s.run === "node tools/ci/run-unit.mjs");
     expect(run.env.VITEST_SHARD).toBe("${{ matrix.shard }}/4");
+    expect(run.env.UNIT_BALANCE).toBe("1");
     expect(jobs.unit.needs).toEqual(expect.arrayContaining(["build", "deploy"]));
     expect(jobs.unit.steps[0]).toMatchObject({ run: "exit 1" });
     expect(jobs.check.needs).toContain("unit");
