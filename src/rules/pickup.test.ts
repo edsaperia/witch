@@ -1,7 +1,7 @@
 // Leashing a happy creature by picking up its sigil rune (Ed, 2026-10-06; states.leash "pickup"): its 💌 ring full, it's
 // happy and its sigil lies as a rune south of it, its top just below its feet (rules/runeOffset.ts), moving with it; on the ground within leash.runeRadius, E picks it up
 // and it's leashed at the bottom of her stack. 💌s no longer fill a second meter. Her hat comes first, then a placed
-// sigil of hers, then the nearest rune. Only happy legends (and legends) have none; pickupDelay holds it back.
+// sigil of hers, then the nearest rune. Babies and ordinary legends have none; pickupDelay holds it back.
 import { afterEach, describe, expect, it } from "vitest";
 // Keep this spatial regression fixture: directional rune-pull cases recruit untouched creatures more than 200 m away.
 import { TUNING } from "./tuning";
@@ -28,7 +28,7 @@ const S = (c: Pick<Creature, "species" | "level">) => runeOffset(c, TUNING); // 
 const at = (g: Game, x: number, z: number) => { g.witch = { ...g.witch, x, z, vx: 0, vz: 0, seated: false, mode: "ground", lift: 0 }; };
 /** A wild creature brought so its rune lies at (x, z) (it stands S north of it), made happy by filling its 💌 meter. */
 function happyAt(g: Game, x: number, z: number, skip: number[] = []): Creature {
-  const c = g.creatures.find(k => !k.boss && k.level < 3 && stateOf(k) === "wild" && !skip.includes(k.id) && Math.hypot(k.x - x, k.z - z) > 200)!;
+  const c = g.creatures.find(k => !k.boss && k.level > 0 && k.level < 3 && stateOf(k) === "wild" && !skip.includes(k.id) && Math.hypot(k.x - x, k.z - z) > 200)!;
   z -= S(c);
   Object.assign(c, { x, z, tx: x, tz: z, wanderTo: undefined, fleeUntil: undefined });
   const A = affectionOf(g);
@@ -135,7 +135,7 @@ describe("leashing a happy creature by its sigil rune", () => {
     expect(farther.leashed).toBe(true);
   }, 60000);
 
-  it("only happy legends carry no rune (Ed, 2026-10-06: no more guards; a circle's baby has one like any other)", () => {
+  it("happy legends and babies carry no personal rune (Ed, 2026-10-31)", () => {
     const g = game(), c = happyAt(g, g.witch.x + 5, g.witch.z);
     expect(hasRune(c)).toBe(true);
     expect(runeNear(g.creatures, c.x, c.z, 3, g.clock.time)).toBe(c);
@@ -143,6 +143,9 @@ describe("leashing a happy creature by its sigil rune", () => {
     L.legendState = "happy";
     expect(stateOf(L)).toBe("happy");
     expect(hasRune(L)).toBe(false);
+    const baby = g.creatures.find(k => k.level === 0)!;
+    baby.state = "happy";
+    expect(hasRune(baby)).toBe(false);
   }, 60000);
 
   it("pickupDelay holds the rune back for that long after the hearts", () => {

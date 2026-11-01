@@ -55,12 +55,16 @@ function carrierCrop(sp, b) {
 export function carrierSprite(st, id, { ppm = 16, back = CARRIER.back, maxBack = CARRIER.maxBack, minLength = CARRIER.minLength, maxLength = CARRIER.maxLength } = {}) {
   const S = SPECIES_BY_ID[id]; if (!S) return null;
   const draw = k => carrierLanded(critter(id, 2, 0, { ...st, size: (st.size ?? 1) * k }, "towards")); // (only a flyer has a shadow to drop)
-  // grown in two steps: a first guess from its everyday adult, then corrected by what that drew (its shape isn't quite linear in size)
+  // Two proportional guesses, with at most two corrections if quantized
+  // native size steps still exceed the existing carrier bounds.
   let k = 1, sp = draw(1), b = carrierBox(sp);
-  for (let pass = 0; pass < 2; pass++) {
+  for (let pass = 0; pass < 4; pass++) {
     const h = b.y1 - b.back + 1, w = b.x1 - b.x0 + 1;
     k *= Math.min((maxBack * ppm) / h, Math.max((minLength * ppm) / w, Math.min((back * ppm) / h, (maxLength * ppm) / w)));
     sp = draw(k); b = carrierBox(sp);
+    // Integer witch-reference steps can overshoot two proportional guesses.
+    // Check the actual native result and allow bounded corrective passes.
+    if(pass>=1&&b.y1-b.back+1<=maxBack*ppm&&b.x1-b.x0+1<=maxLength*ppm&&b.x1-b.x0+1>=minLength*ppm)break;
   }
   return { sprite: carrierCrop(sp, b), back: { x: b.bx - b.x0 + 1, y: b.back - b.y0 + 1 }, backM: (b.y1 - b.back + 1) / ppm, lengthM: (b.x1 - b.x0 + 1) / ppm };
 }

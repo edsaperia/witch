@@ -4,6 +4,7 @@
 // included where they matter). Safe to miss: with storage blocked, full or failing, every call
 // quietly answers nothing and the sets are drawn as before.
 import type { ArtJob } from "./artBuild";
+import { GENOME_BY_ID, genomeHash, selectedCreatureGenome } from "../../art/genome/index.js";
 import { partySheetKey } from "./partySheet";
 export { cacheGet, cachePut } from "./artCacheStorage";
 
@@ -31,11 +32,14 @@ export const artCacheKey = (j: ArtJob, styleHash: string, fingerprints = ART_KIN
   if (!Object.hasOwn(fingerprints, j.kind)) return null;
   const fingerprint = fingerprints[j.kind];
   if (typeof fingerprint !== "string" || !fingerprint) return null;
+  const species = j.kind === "creature" ? j.id : "species" in j ? j.species : null;
+  const base = species ? GENOME_BY_ID[species] : null;
+  const selectedKey = (base && selectedCreatureGenome(base, j.style) !== base ? `|genome:${genomeHash(base, j.style, j.kind === "rig" || j.kind === "party" ? j.level : null)}` : "") + (base && j.style.creatureSizeCandidate === 1 ? "|body-size-candidate:2026-10-31" : "");
   if (j.kind === "party") {
     if (!Number.isInteger(j.level) || j.level < 0 || j.level > 3 || !j.gear) return null;
-    return ["art-kind-v1", fingerprint, styleHash, partySheetKey(j.species, j.level, j.gear)].join("|");
+    return ["art-kind-v1", fingerprint, styleHash, partySheetKey(j.species, j.level, j.gear)].join("|") + selectedKey;
   }
-  const key = ["art-kind-v1", fingerprint, styleHash, j.kind + ":" + j.id, j.kind === "type" ? `${j.seed}|${j.K}${j.biome ? "|" + j.biome : ""}` : j.kind === "beachEdge" || j.kind === "lakeShore" ? `${j.K}` : ""].join("|");
+  const key = ["art-kind-v1", fingerprint, styleHash, j.kind + ":" + j.id, j.kind === "type" ? `${j.seed}|${j.K}${j.biome ? "|" + j.biome : ""}` : j.kind === "beachEdge" || j.kind === "lakeShore" ? `${j.K}` : ""].join("|") + selectedKey;
   return (j.kind === "housePiece" || j.kind === "treehouse") && j.layout ? `${key}|layout:${j.layout.identity}` : key;
 };
 

@@ -1,0 +1,46 @@
+// Engine diagnostics over current records, not #1479's final roster presets.
+import { felineGraphGenome } from "../../art/body-graph/families.js";
+export const CAT_CAPTURE_IDS = ["cat", "lynx", "lion", "tiger", "cheetah", "jaguar", "snowleopard"];
+export const CAT_TARGET_NOTES = {
+  cat: "Broad head and low-set, outward ears. Preserve the sand coat and faint bars.",
+  lynx: "Preserve current tufts, bobtail and cheeks. Review feline spine, stance and feet.",
+  lion: "Preserve mane and elder story features. Review flexible feline body and feet.",
+  tiger: "Preserve natural stripe layout. Review spine, stance and feet.",
+  cheetah: "Preserve current lean proportions and spots. Review spine and feet.",
+  jaguar: "Rosettes must read on the flank and back, using the animal's own coat contrast.",
+  snowleopard: "Pale-centred, sparse torso rosettes; solid spots on head and legs. Review the baby torso repair.",
+};
+export function catCaptureGenome(base) {
+  if (!CAT_CAPTURE_IDS.includes(base.id)) throw new Error(`Not a cat fixture: ${base.id}`);
+  const options = base.id === "cat" ? { head: { earShape: "triangle", earRoot: [.15, -.06, .15], earAngle: [0, .5], earNormal: [1, .35, .15], earDepth: .8, earDimensions: { height: 1.15, width: 1.15 }, skullY: .9, skullZ: 1.2, jowl: 1.3 } } : {};
+  const out = felineGraphGenome(base, options);
+  if (base.id === "cheetah") {
+    // Keep this legend's existing wind flames on their established rest shape.
+    // The experimental bend moves skin under separately anchored effect planes,
+    // detaching a flame in frame 0. Shared graph stays enabled; animated effect
+    // attachment is unfinished, so do not imply this legend has the new gait.
+    out.levels ??= {};
+    const legend = out.levels[3] ?? {};
+    out.levels[3] = { ...legend, body: { ...legend.body, graph: { ...out.body.graph, flex: 0 } } };
+  }
+  if (base.id === "cat") {
+    // Coordinator 6514776348: freeze the cub on Current until the adult is
+    // settled. Nulls explicitly undo the diagnostic's inherited controls.
+    out.levels ??= {};
+    const baby = out.levels[0] ?? {};
+    out.levels[0] = { ...baby, body: { ...baby.body, graph: null }, head: { ...base.head, ...baby.head, earShape: null, earRoot: null, earAngle: null, earNormal: null, earDepth: null, earDimensions: null, skullY: base.head.skullY ?? 1, skullZ: base.head.skullZ ?? 1, jowl: base.head.jowl ?? (base.head.cheeks ? 1.35 : 1) } };
+  }
+  if (base.id === "snowleopard") {
+    out.levels ??= {};
+    const adult = out.levels[2] ?? {};
+    out.levels[2] = { ...adult, head: { ...adult.head, whiskerMinPx: 1.5 } };
+    out.coat.regions = {
+      torso: { kind: "rosettes", outerPx: 7, density: .45, inner: .19, outer: .4, gap: .4, xRange: [-.85, .85], flankMin: .25, centreMat: "BODYL", mat: "BODY3" },
+      head: { kind: "spots", k: 8, density: .45, radius: .4 },
+      legs: { kind: "spots", k: 8, density: .45, radius: .4 },
+    };
+    // Preserve its elder's existing beads and magical story markings.
+    if (out.levels?.[3]) out.levels[3].coat = { ...out.levels[3].coat, regions: null };
+  }
+  return out;
+}

@@ -12,6 +12,71 @@ import { drainOf, fillOf } from "../orbit";
 import { cast as castSpell, newSpells } from "../attacks/engine";
 import { hittableOf, spellWorld } from "../attacks/combatWorld";
 import { legendAttack } from "../attacks/species";
+import type { Game } from "../game";
+import { leyChain, leyKey } from "../leylines";
+import { frontMetres, TIP_PACE } from "../leypulse";
+import { linkLine } from "../pulseRoute";
+
+const attacksWitch = (c: Creature, id: number) => c.hunting === id || (c.fight?.target?.kind === "witch" && c.fight.target.id === id);
+const friendlyEnemy = (c: Creature) => stateOf(c) === "enraged" || (stateOf(c) === "wild" && (c.hunting !== undefined || c.fight?.target?.kind === "witch"));
+
+type RoutePoint = readonly [number, number];
+const routeLines = new WeakMap<Game, { key: number; line: RoutePoint[] }>();
+/** The same curved links and drawing-front metres used by the ley line, not its slower wave pulse. */
+export function friendlyLegendRoute(g: Game): { line: readonly RoutePoint[]; tip: number } {
+  const key = leyKey(g.party);
+  let cached = routeLines.get(g);
+  if (!cached || cached.key !== key) {
+    const { stones } = leyChain(g.party, g.map), line: RoutePoint[] = [];
+    for (let i = 1; i < stones.length; i++) {
+      const link = linkLine(g.map, stones[i - 1], stones[i]);
+      line.push(...(line.length ? link.slice(1) : link));
+    }
+    cached = { key, line }; routeLines.set(g, cached);
+  }
+  return { line: cached.line, tip: frontMetres(g.party, g.map, g.clock.time, g.tuning.leyLines.reveal ?? TIP_PACE) };
+}
+const friendRoutes = new WeakMap<Creature, { line: readonly RoutePoint[]; at: number; x: number; z: number }>();
+/** Join the nearest point on tonight's route, then walk along its curves towards the growing front, stopping at it.
+ * The transient progress hint disambiguates crossings; after displacement or a changed route the legend rejoins. */
+export function walkFriendlyRoute(c: Creature, line: readonly RoutePoint[], tip: number, dt: number, speed = c.speed): void {
+  if (line.length < 2) return;
+  const lengths = [0];
+  for (let i = 1; i < line.length; i++) lengths.push(lengths[i - 1] + Math.hypot(line[i][0] - line[i - 1][0], line[i][1] - line[i - 1][1]));
+  const point = (at: number): RoutePoint => {
+    for (let i = 1; i < line.length; i++) if (at <= lengths[i]) {
+      const k = (at - lengths[i - 1]) / (lengths[i] - lengths[i - 1] || 1);
+      return [line[i - 1][0] + (line[i][0] - line[i - 1][0]) * k, line[i - 1][1] + (line[i][1] - line[i - 1][1]) * k];
+    }
+    return line[line.length - 1];
+  };
+  let state = friendRoutes.get(c);
+  if (!state || state.line !== line || state.x !== c.x || state.z !== c.z) {
+    let best = Infinity, at = 0;
+    for (let i = 1; i < line.length; i++) {
+      const a = line[i - 1], b = line[i], dx = b[0] - a[0], dz = b[1] - a[1], len = lengths[i] - lengths[i - 1];
+      const k = Math.max(0, Math.min(1, ((c.x - a[0]) * dx + (c.z - a[1]) * dz) / (len * len || 1)));
+      const d = Math.hypot(c.x - a[0] - dx * k, c.z - a[1] - dz * k);
+      if (d < best) { best = d; at = lengths[i - 1] + len * k; }
+    }
+    state = { line, at, x: c.x, z: c.z }; friendRoutes.set(c, state);
+  }
+  const join = point(state.at), distance = Math.hypot(join[0] - c.x, join[1] - c.z);
+  let left = speed * FIGHT.speed * dt;
+  const before = { x: c.x, z: c.z };
+  if (distance > 0) {
+    const step = Math.min(left, distance); c.x += (join[0] - c.x) / distance * step; c.z += (join[1] - c.z) / distance * step; left -= step;
+  }
+  if (left > 0) {
+    const end = Math.max(0, Math.min(tip, lengths[lengths.length - 1]));
+    state.at += Math.sign(end - state.at) * Math.min(left, Math.abs(end - state.at));
+    const p = point(state.at); c.x = p[0]; c.z = p[1];
+  }
+  const dx = c.x - before.x, dz = c.z - before.z;
+  c.vx = dt > 0 ? dx / dt : 0; c.vz = dt > 0 ? dz / dt : 0;
+  c.moving = Math.hypot(dx, dz) > 0; if (c.moving) { c.walk += dt * 5; if (dx) c.facing = dx > 0 ? 1 : -1; c.away = dz < -Math.abs(dx); }
+  state.x = c.x; state.z = c.z;
+}
 
 /** An angry or happy legend's turn (Ed, 2026-10-05; #87; config/legends.json attack): it never
  *  leaves its area (it stands where it lay), but reaches attack.range metres. Every interval seconds it
@@ -20,11 +85,12 @@ import { legendAttack } from "../attacks/species";
  *  lobFlight seconds) or beams (by its species), each hit attack.damage times its level's power for
  *  interval seconds. (Its shots are the wild's when angry, the happy's when happy: foes() does the rest.) */
 export function stepLegendAttack(w: CombatWorld, s: CombatState, c: Creature, data: CombatData, grid: Grid): void {
-  const A = LEGENDS.attack, time = w.time, S = FIGHT.scale, angry = c.legendState !== "happy", R = (angry ? A.range : w.t.legends?.happyRange ?? A.range) * S, side: State = angry ? "wild" : "happy";
+  // Its attacks share the posse's allegiance so blows can land on wild witch-attackers as well as the enraged.
+  const A = LEGENDS.attack, time = w.time, S = FIGHT.scale, angry = c.legendState !== "happy", R = (angry ? A.range : w.t.legends.friendRange) * S, side: State = angry ? "wild" : "leashed";
   const f = (c.fight ??= { target: null, readyAt: time + A.interval * 0.5, windupUntil: 0, aimX: 0, aimZ: 0 });
   if (c.lairX === undefined) { c.lairX = c.x; c.lairZ = c.z; }
   const charger = LEGENDS.charge.species.includes(c.species);
-  if (charger && (c.run || Math.hypot(c.x - c.lairX, c.z - c.lairZ!) > 2)) { stepLongCharge(w, s, c, f, grid, angry); return; } // (out on a charge, or away from its lair: home first)
+  if (charger && (c.run || (angry && Math.hypot(c.x - c.lairX, c.z - c.lairZ!) > 2))) { stepLongCharge(w, s, c, f, grid, angry); return; }
   c.moving = false; c.vx = 0; c.vz = 0; // (it stands where it lay, in its area)
   if (f.windupUntil > 0) {
     if (time < f.windupUntil) return;
@@ -40,18 +106,25 @@ export function stepLegendAttack(w: CombatWorld, s: CombatState, c: Creature, da
     c.aims = undefined;
     return;
   }
-  if (time < f.readyAt) return;
   // The nearest it may shoot, up to attack.targets of them.
   const found: { d: number; x: number; z: number; target: Target }[] = [];
   if (angry) for (const v of w.witches) { if (!v.onGround || v.down || unseen(v, c)) continue; const d = Math.hypot(v.x - c.x, v.z - c.z); if (d <= R) found.push({ d, x: v.x, z: v.z, target: { kind: "witch", id: v.id } }); }
   for (const o of grid.near(c.x, c.z, R)) {
     if (o === c || !targetable(o) || truce(c, o) || w.asleep(o)) continue;
+    if (c.homeGuard && charger && !w.home?.inside(o.x, o.z)) continue; // A charging guard can reach only targets inside home.
     const st = stateOf(o);
-    if (angry ? st !== "leashed" : st !== "enraged") continue;
+    if (angry ? st !== "leashed" : !friendlyEnemy(o)) continue;
     const d = Math.hypot(o.x - c.x, o.z - c.z);
     if (d <= R) found.push({ d, x: o.x, z: o.z, target: { kind: "creature", id: o.id } });
   }
   found.sort((a, b) => a.d - b.d);
+  if (!angry && !c.homeGuard) {
+    // Defend a witch in range before engaging other enemies. Attackers may be beyond the range themselves.
+    const defended = w.witches.filter(v => !v.down && Math.hypot(v.x - c.x, v.z - c.z) <= R);
+    const attackers = w.creatures.filter(o => o !== c && targetable(o) && !truce(c, o) && !w.asleep(o) && friendlyEnemy(o) && defended.some(v => attacksWitch(o, v.id)))
+      .map(o => ({ d: Math.hypot(o.x - c.x, o.z - c.z), x: o.x, z: o.z, target: { kind: "creature" as const, id: o.id } })).sort((a, b) => a.d - b.d);
+    if (attackers.length) found.splice(0, found.length, ...attackers);
+  }
   // Bombarding (Ed, 2026-10-06: "Legend bombards, but prioritises you"): an angry one with no witch in
   // its reach throws its first lob or beam at the nearest standing soundsystem within bombard.range.
   const B = w.t.legends?.bombard;
@@ -61,7 +134,15 @@ export function stepLegendAttack(w: CombatWorld, s: CombatState, c: Creature, da
     for (const [k, h] of s.sounds) { if (h.hp <= 0) continue; const d = Math.hypot(h.x - c.x, h.z - c.z); if (d <= bd) { bd = d; key = k; at = h; } }
     if (key) { found.unshift({ d: bd, x: at.x, z: at.z, target: { kind: "sound", key } }); bombard = true; }
   }
-  if (!found.length) { f.target = null; f.readyAt = time + A.recheck; return; } // (nothing in reach: look again in a moment, not every step)
+  if (!found.length) {
+    f.target = null; f.readyAt = time + A.recheck;
+    if (!angry && !c.homeGuard && w.friendlyRoute) {
+      const route = w.friendlyRoute();
+      walkFriendlyRoute(c, route.line, route.tip, w.dt, w.t.combat.legendRun);
+    }
+    return;
+  }
+  if (time < f.readyAt) return;
   if (charger && !bombard) {
     // A charging legend: one long charge at the nearest, its head lowered windup seconds first.
     const t0 = found[0], a = Math.atan2(t0.z - c.z, t0.x - c.x);
@@ -119,6 +200,9 @@ export function stepLongCharge(w: CombatWorld, s: CombatState, c: Creature, f: F
       if (run.speed < 0.5) { run.phase = "home"; run.at = time; c.moving = false; }
     }
     const vx = Math.cos(run.angle) * run.speed, vz = Math.sin(run.angle) * run.speed;
+    if (c.homeGuard && !w.home?.inside(c.x + vx * dt, c.z + vz * dt)) {
+      c.run = undefined; c.moving = false; c.vx = 0; c.vz = 0; f.target = null; f.readyAt = time + K.rest; return;
+    }
     c.x += vx * dt; c.z += vz * dt; c.vx = vx; c.vz = vz; run.ran += run.speed * dt;
     c.moving = true; c.walk += dt * (2 + run.speed * 0.4); c.facing = vx >= 0 ? 1 : -1;
     // Its lane: everything within laneWidth / 2 of it but its own side and kind, once each.
@@ -147,6 +231,7 @@ export function stepLongCharge(w: CombatWorld, s: CombatState, c: Creature, f: F
     }
     return;
   }
+  if (!angry) { c.run = undefined; c.moving = false; c.vx = 0; c.vz = 0; f.readyAt = Math.max(f.readyAt, time + K.rest); f.target = null; return; }
   // Home: back to where it lay at returnSpeed, then rest seconds before it may charge again.
   const dx = (c.lairX ?? c.x) - c.x, dz = (c.lairZ ?? c.z) - c.z, d = Math.hypot(dx, dz);
   if (d < 1) { c.run = undefined; c.moving = false; c.vx = 0; c.vz = 0; f.readyAt = Math.max(f.readyAt, time + K.rest); f.target = null; return; }

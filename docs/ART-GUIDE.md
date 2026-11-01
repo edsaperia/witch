@@ -179,7 +179,7 @@ At ground level a young creature is about 45 px tall and the witch about 50 px. 
 
 ## 4. Silhouette rules
 
-- **Every species passes the silhouette check** (`art/genome/silhouette.js`, 0.15). Aim for 0.2 or more against its own template's species. New species are screened with `node art/preview.mjs silhouettes young|adult <png>` (and `node art/check.mjs` fails any pair under 0.15).
+- **Combined distinctness is a review warning, not a gate** (Ed, 2026-10-30). `art/check.mjs` warns only when two species are close in silhouette, palette, size and pattern together; look-alike species never fail the check. `art/genome/distinctness.js` compares rendered coat-colour histograms, painted bounds and spatial markings, alongside the 24 px silhouette. Its thresholds are review heuristics, not instructions to exaggerate an animal. The growth-by-level check below is unchanged.
 - **Proportion changes by level should read as growth, not scaling.**
   - Babies: a big head, big eyes and short legs (the size curves).
   - Adults: heavier, with bigger horns and antlers.
@@ -187,7 +187,8 @@ At ground level a young creature is about 45 px tall and the witch about 50 px. 
 
   Per-level `form` values did this for the bat, toad, spider and glow-worm (#97).
 - **The legend's feature must read at a glance and look grown, not glued on.** Lollipop trees on a back, flat-card wings and crystal fins all read as toys (#97, #112). Until features can be grown by the plant generator or come from a part pool, use fewer and bigger features that match the area.
-- **Species may look alike** (Ed, 2026-10-26, approving the flora check's seven new trees: "I think maybe we have been too strict on trees and animals looking different"). Real species often do: a mesquite and a palo verde, a bald cypress and a larch, two palms. Draw each as it really looks; don't push a tree or an animal away from its true shape just to clear a similarity check. The checks' look-alike lines are warnings to look at, not orders to change the art (the silhouette check's hard 0.15 floor stays).
+- **Species may look alike** (Ed, 2026-10-26, approving the flora check's seven new trees: "I think maybe we have been too strict on trees and animals looking different"). Real species often do: a mesquite and a palo verde, a bald cypress and a larch, two palms. Draw each as it really looks; don't push a tree or an animal away from its true shape just to clear a similarity check. Ed extended this on 2026-10-30: "I think the need for silhouette differences is too great; animals can have a similar silhouette e.g. if they have a different colour; polar bears are white, normal bears are brown, e.g. we have several types of cats and they can be quite similar but different sizes and colours and patterns."
+- **Real-animal likeness comes first** (Ed, 2026-10-30): "It's more important that creatures look like their real-life counterpart than that they look distinct." Distinctness comes from the real animal's own colouring, markings and proportions, not invented or exaggerated differences. This priority also applies to anatomy and gait: use the real hock position and the animal's characteristic movement. Earlier silhouette-exaggeration advice in this guide does not override this ruling.
 - **Trees: each species owns a crown shape.** Examples: slanting and broad (ancient oak), a cone (holly), a column (aspen, alder carr), weeping (willow), umbrella (Scots pine), bare and twisted (snags). Don't build a cone from separate blobs: the blob generator turned a holly into topiary (#97).
 
 ## 5. Clumps and density

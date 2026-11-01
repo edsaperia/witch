@@ -2,7 +2,8 @@
 // config/combat.json, strength by species, and the types the fight is made of (targets, shots, beams, events, the world it reads).
 import raw from "../../../config/combat.json";
 import TUNED from "../../../config/tuning.json";
-import { LEGEND, type Creature, type Level } from "../creatures";
+import type { Creature, Level } from "../creatures";
+import { LEGEND } from "../creatureLevels";
 import { type State } from "../creatureStates";
 import { FIGHT } from "../movement";
 import { sectionOf, speciesWith } from "../creatureConfig";
@@ -249,6 +250,8 @@ export const creatureMaxHp = (c: { species: string; level: Level }, data: Combat
 
 /** What the rest of the game tells combat each step. */
 export interface CombatWorld {
+  /** Tonight's curved ley route and its drawing tip, in metres; absent in detached combat worlds. */
+  friendlyRoute?: () => { line: readonly (readonly [number, number])[]; tip: number };
   creatures: Creature[];
   /** The creatures to step this time (near a witch, or busy with a siege). */
   active: Creature[];

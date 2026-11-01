@@ -313,6 +313,7 @@ says what each note covers.
 ## [The view](view.md)
 
 - Heat/refraction preview
+- Dodge echoes
 - Night and Heat Vision
 - Potion perception
 - Layered magic

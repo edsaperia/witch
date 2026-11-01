@@ -112,13 +112,36 @@ export class Model {
 export const YAW = { towards: .6, away: -.6 }; // radians; the head turned 35° towards or away from us
 export const PITCH = .52;                       // the camera looks down about 30°
 
+// Support interval of a primitive on a unit camera axis. Keep bounding spheres
+// for ray acceleration, but never use their radius as the visible fit extent.
+export function projectedInterval(q, axis) {
+  const roughMargin = (q.rough || 0) * 1.5;
+  if (q.type === "cone") {
+    const a = q.aw ?? q.a, b = q.ba ? v3.add(a, q.ba) : q.b;
+    return [Math.min(dot(a, axis) - q.r1, dot(b, axis) - q.r2) - roughMargin, Math.max(dot(a, axis) + q.r1, dot(b, axis) + q.r2) + roughMargin];
+  }
+  const centre = dot(q.cw ?? q.c, axis);
+  let radius;
+  if (q.uw || q.u) {
+    // The plane shader clips dot(rel,u/v), so non-orthogonal axes use
+    // their dual basis, not the shorter sum of the supplied vectors.
+    const u = q.uw ?? q.u, v = q.vw ?? q.v, uv = dot(u, v), determinant = 1 - uv * uv;
+    if (determinant < 1e-10) return [centre, centre]; // degenerate planes are skipped by ray intersection
+    radius = (Math.abs(dot(u, axis) - uv * dot(v, axis)) * q.su + Math.abs(dot(v, axis) - uv * dot(u, axis)) * q.sv) / determinant;
+  }
+  else if (q.type === "ell") radius = Math.hypot(...q.axes.map((a, i) => dot(a, axis) * q.r[i]));
+  else if (q.type === "box") radius = q.axes.reduce((sum, a, i) => sum + Math.abs(dot(a, axis)) * (q.h[i] - q.round), q.round);
+  else throw new Error("Unknown projected primitive");
+  return [centre - radius - roughMargin, centre + radius + roughMargin];
+}
+
 // Renders a model to a Sprite `height` art pixels tall (measured over the parts not marked extra).
 // With `scale` (pixels per model unit) instead, several models share one scale.
-// With `measure`, it only works out the scale (pixels per unit) `height` would give: { s }.
-export function render(model, { height, scale, facing = "towards", yaw = YAW[facing] ?? YAW.towards, pitch = PITCH, lineGap = .12, measure = false, keepDepth = false } = {}) {
+// With `measure`, return scale and allocated dimensions without rasterising: { s, width, height }.
+export function render(model, { height, scale, facing = "towards", yaw = YAW[facing] ?? YAW.towards, pitch = PITCH, lineGap = .12, measure = false, keepDepth = false, projected = false, samplePhaseY = 0, occupiedOnly = false, probePixels = null } = {}) {
   const cy = Math.cos(yaw), sy = Math.sin(yaw), cp = Math.cos(pitch), spp = Math.sin(pitch);
   // model.atScale(pxPerUnit): parts that must be sized in pixels (an expression's face: genome/expressions.js), added once the scale is known
-  if (model.atScale && !measure) { const f = model.atScale; model.atScale = null; f(scale ?? render(model, { height, facing, yaw, pitch, lineGap, measure: true }).s); }
+  if (model.atScale && !measure) { const f = model.atScale; model.atScale = null; f(scale ?? render(model, { height, facing, yaw, pitch, lineGap, measure: true, projected }).s); }
   const toWorld = p => [p[0] * cy - p[2] * sy, p[1], p[0] * sy + p[2] * cy];
   const toModel = p => [p[0] * cy + p[2] * sy, p[1], -p[0] * sy + p[2] * cy];
   const D = [0, -spp, -cp], U = [0, cp, -spp], R = [1, 0, 0], B = [0, spp, cp];
@@ -132,12 +155,14 @@ export function render(model, { height, scale, facing = "towards", yaw = YAW[fac
   });
   const flats = model.flats.map(f => { const c = toWorld(f.c), u = toWorld(f.u), v = toWorld(f.v); return { ...f, cw: c, uw: u, vw: v, nw: norm(cross(u, v)), bc: c, br: Math.hypot(f.su, f.sv) }; });
   const all = [...parts, ...flats];
-  const bounds = q => { const sx = dot(q.bc, R), su = dot(q.bc, U), e = q.br + (q.uw ? 0 : k); return [sx - e, sx + e, su - e, su + e]; };
+  const bounds = q => {
+    if (!projected) { const sx = dot(q.bc, R), su = dot(q.bc, U), e = q.br + (q.uw ? 0 : k); return [sx - e, sx + e, su - e, su + e]; }
+    const x = projectedInterval(q, R), u = projectedInterval(q, U), pad = q.uw ? 0 : k; return [x[0] - pad, x[1] + pad, u[0] - pad, u[1] + pad];
+  };
   for (const q of all) [q.x0, q.x1, q.u0, q.u1] = bounds(q);
   const body = all.filter(q => !q.extra && !q.cut);
   const u0b = Math.min(...body.map(q => q.u0 + (q.uw ? 0 : k))), u1b = Math.max(...body.map(q => q.u1 - (q.uw ? 0 : k)));
   const s = scale ?? height / Math.max(1e-6, u1b - u0b);
-  if (measure) return { s };
   // (o.inside: a stroke laid into the surface, such as an expression's brows, sizing nothing: its bounding sphere would widen the sprite
   // past ink it never draws)
   const sized = all.filter(q => !q.inside);
@@ -148,7 +173,13 @@ export function render(model, { height, scale, facing = "towards", yaw = YAW[fac
     const X0b = Math.min(...body.map(q => q.x0)), U1b = Math.max(...body.map(q => q.u1));
     X0 = X0b - Math.ceil((X0b - X0) * s - 1e-9) / s; U1 = U1b + Math.ceil((U1 - U1b) * s - 1e-9) / s;
   }
-  const W = Math.ceil((X1 - X0) * s) + 4, H = Math.ceil((U1 - U0) * s) + 2, sp = new Sprite(W, H);
+  // Creature-only subpixel sample phase breaks symmetric two-row jumps when
+  // an exact native occupied target lies between them. World anchors still
+  // use this same affine projection and ground-row placement below.
+  if (projected && samplePhaseY) { U0 += samplePhaseY / s; U1 += samplePhaseY / s; }
+  const W = Math.ceil((X1 - X0) * s) + 4, H = Math.ceil((U1 - U0) * s) + 2;
+  if (measure) return { s, width: W, height: H, projectedWidth: X1 - X0, projectedHeight: U1 - U0 };
+  const sp = new Sprite(W, H);
   const depth = new Float32Array(W * H).fill(Infinity), grp = new Int16Array(W * H).fill(-1);
   // which parts can touch each 8 x 8 tile of pixels
   const T = 8, TW = Math.ceil(W / T), TH = Math.ceil(H / T), tiles = Array.from({ length: TW * TH }, () => []);
@@ -159,7 +190,16 @@ export function render(model, { height, scale, facing = "towards", yaw = YAW[fac
   });
   const eps = .25 / s;
   const smin = (a, b) => { const h = Math.max(k - Math.abs(a - b), 0) / k; return Math.min(a, b) - h * h * k * .25; };
-  for (let iy = 0; iy < H; iy++) for (let ix = 0; ix < W; ix++) {
+  let occupiedTop=-1,occupiedBottom=-1;
+  const queries=occupiedOnly&&probePixels?probePixels(W,H):[];
+  for (let row = 0; row < (occupiedOnly ? H*2+queries.length : H); row++) {
+    if(occupiedOnly && occupiedTop>=0 && occupiedBottom>=0 && row<H*2){if(!queries.length)break;row=H*2;}
+    if(occupiedOnly && row<H && occupiedTop>=0)continue;
+    const query=occupiedOnly&&row>=H*2?queries[row-H*2]:null;
+    const iy=query?query[1]-Math.max(0,H-1-occupiedBottom):occupiedOnly&&row>=H?H*2-row-1:row;
+    if(iy<0||iy>=H)continue;
+    for (let ix = query?query[0]:0; ix < (query?query[0]+1:W); ix++) {
+    if(ix<0||ix>=W)continue;
     const cand = tiles[Math.floor(iy / T) * TW + Math.floor(ix / T)];
     if (!cand.length) continue;
     const sx = X0 + (ix + .5 - 1) / s, su = U1 - (iy + .5) / s;
@@ -215,6 +255,13 @@ export function render(model, { height, scale, facing = "towards", yaw = YAW[fac
     if (!hitN || !hitMat) continue;
     const i = iy * W + ix; depth[i] = hitT; grp[i] = hitG;
     sp.px(ix, iy, hitMat, dot(hitN, R), -dot(hitN, U), dot(hitN, B));
+    if(occupiedOnly){if(!query){if(row<H)occupiedTop=iy;else occupiedBottom=iy;}break;}
+    }
+  }
+  if(occupiedOnly){
+    const drop=Math.max(0,H-1-occupiedBottom);
+    if(drop){for(let y=H-1;y>=0;y--)for(let x=0;x<W;x++)sp.m[y*W+x]=y>=drop?sp.m[(y-drop)*W+x]:0;}
+    return {s,sp,occupiedHeight:occupiedBottom>=occupiedTop&&occupiedTop>=0?occupiedBottom-occupiedTop+1:0};
   }
   // interior lines: where a nearer group stands in front of a clearly further one
   const lines = [];
