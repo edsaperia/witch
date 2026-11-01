@@ -5,8 +5,10 @@ import { leashPoint, stackOrder } from "../../rules/leash";
 import { hash2 } from "../../rules/random";
 import { LOAD_DEFAULT } from "../load";
 import type { LeashView } from "../leash";
+import renderKnobs from "../../../config/playtest-render.json";
+import { groundLinks, travelPose } from "./travelPose";
 import { easeRoute } from "../routeEase";
-import { bowOf, drawChain, stepChain } from "./chain";
+import { bowOf, drawChain, stepChain, type Chain } from "./chain";
 import { DISC } from "./glyphs";
 import { chainKnobs, dotAt, drawEmbers, legendShine, rankKnobs, rankOf, rankSize, ranksOn, standScale, shownDots, youthDots } from "./ranks";
 import { meterHits } from "../../rules/game";
@@ -105,8 +107,8 @@ export function drawStack(lv: LeashView, time: number, hatTop: number, dot: numb
   return slotPos;
 }
 
-/** The bond: each leashed creature's glow at its feet, its sparks flowing back to its leash point, its travel route as a
- *  dotted line, and the thread under strain (and under a load, sooner, taut and brighter: render/load.ts). */
+/** The bond: each leashed creature's glow at its feet, its sparks flowing back to its leash point, its travel route as
+ *  grounded chain links, and the thread under strain (and under a load, sooner, taut and brighter: render/load.ts). */
 /** A pulled-down take-off's flash (Ed's playtest, v3893: "Indication that your leashed animals are stopping you from taking
  *  off should be the leashes of the (non-baby) animals flashing to complete lines (not dotted lines)"): the spans, in seconds
  *  after the "grounded" leash event, while the leashes of the followers that weigh her down are drawn whole, two flashes
@@ -140,41 +142,36 @@ export function drawBond(lv: LeashView, time: number, slotPos: Map<number, THREE
     // Travelling (rules/travel.ts; Ed, 2026-10-05: "the 'leash' graphic could become their travel
     // path"): the leash runs along its route to her or its sigil, a dotted line on the ground
     // flowing that way, shortening as it walks; joining her posse again, a pop and back to the thread.
-    const was = lv.travelling.get(id) ?? false;
-    if (was && !c.travelling) { lv.fx.push({ kind: "ring", x: c.x, y: 0, z: c.z, at: time, life: 0.5, r: col.r, g: col.g, b: col.b, seed: 0, size: 2.4, n: 18, dot: 0.6 }); lv.fx.push({ kind: "spark", x: c.x, y: 1, z: c.z, at: time, life: 0.5, r: col.r, g: col.g, b: col.b, seed: id * 7 + time, size: 2 }); }
-    lv.travelling.set(id, !!c.travelling);
-    if (!c.travelling || !c.route) lv.routes.delete(id);
-    else lv.chains.delete(id); // (a chain begins again when it's back)
-    if (c.travelling && c.route) {
-      // (bigger from the treetops, where the camera is far off and the routes run far)
-      const up = w.mode === "treetop", rd = up ? 1.8 : 0.45, gap = up ? 5 : 2.2, hi = up ? 0.35 : 0; // (and lighter, to show over dark crowns)
-      const R = c.route, plan = [{ x: c.x, z: c.z }, ...R.points.slice(Math.min(R.next, R.points.length - 1), -1), { x: lp.x, z: lp.z }], flow = (time * 3) % gap;
-      // (eased: a re-plan's new bend glides in over ROUTE_EASE seconds rather than jumping; Ed, 2026-10-06)
-      const eased = easeRoute(lv.routes.get(id), plan, time, ROUTE_EASE, lv.routeScratch), way = eased.line;
-      lv.routes.set(id, eased.shape);
-      let carry = gap - flow;
-      for (let i = 1; i < way.length; i++) {
-        const a = way[i - 1], b = way[i], seg = Math.hypot(b.x - a.x, b.z - a.z);
-        let u = carry;
-        for (; u < seg; u += gap) { const k = u / seg; const px = a.x + (b.x - a.x) * k, pz = a.z + (b.z - a.z) * k; lv.flat.add(px, 0, pz, rd, dot, col.r, col.g, col.b, 0.85); if (up) lv.over.add(px, 0.3, pz, rd * 0.8, dot, col.r + (1 - col.r) * hi, col.g + (1 - col.g) * hi, col.b + (1 - col.b) * hi, 0.9); } // (from the treetops it shows through the crowns, as the ley lines do)
-        carry = u - seg; // (the spacing carries on round the corner)
-      }
-      continue;
-    }
+    const ground = !!c.travelling;
+    if (!ground) lv.routes.delete(id);
     const d = Math.hypot(c.x - lp.x, c.z - lp.z);
     // (under a load, carried leashes pull taut sooner and brighter: render/load.ts)
     const carried = s.stack.includes(id), whole = carried && solid;
     const ld = carried ? lv.load.load : 0, LT2 = t.load ?? LOAD_DEFAULT, from0 = 0.85 - (0.85 - LT2.threadFrom) * ld;
-    if (chains) {
+    if (chains || ground || lv.chains.get(id)?.pose?.start || lv.chains.get(id)?.pose?.ground) {
       // The leash as a chain (Ed, 2026-10-28; render/leash/chain.ts): links its rank's size, from its sigil in her stack (or its placed
       // sigil) to it, real chain physics pulled toward an upward bow, high while it's slack and flattening as it goes taut (Ed,
       // 2026-10-06), a little longer than its span while slack; flashing bright while it holds her down.
       const strain = whole ? 1 : Math.max(0, Math.min(1, (d - L.length * from0) / L.length + ld * 0.5)), lit = 1 + LT2.threadBright * ld + (whole ? 0.6 : 0);
-      const link = CK.link[rankOf(c) - 1], ch = lv.chains.get(id) ?? { links: [] };
+      const link = CK.link[rankOf(c) - 1], ch: Chain = lv.chains.get(id) ?? { links: [] };
       lv.chains.set(id, ch); live.add(id);
       const span = Math.hypot(c.x - from.x, 0.5 - from.y, c.z - from.z), arc = Math.min(B.threadArcMax, d * (B.threadArcTaut + (B.threadArcSlack - B.threadArcTaut) * (1 - strain)));
-      stepChain(ch, Math.ceil((span * (1 + CK.slack * (1 - strain))) / link), link, from.x, from.y, from.z, c.x, 0.5, c.z, arc, lv.frameDt, CK);
-      drawChain(lv, ch, link, Math.min(1, col.r * lit), Math.min(1, col.g * lit), Math.min(1, col.b * lit), 1, dot);
+      let target;
+      if (ground) {
+        const R = c.route;
+        const plan = [c, ...(R ? R.points.slice(Math.min(R.next, R.points.length - 1), -1) : []), lp];
+        const eased = easeRoute(lv.routes.get(id), plan, time, ROUTE_EASE, lv.routeScratch);
+        lv.routes.set(id, eased.shape);
+        target = groundLinks(eased.line, link);
+      } else {
+        if (ch.pose?.ground) ch.links = []; // Lift toward a fresh physical chain at the current pins.
+        stepChain(ch, Math.ceil((span * (1 + CK.slack * (1 - strain))) / link), link, from.x, from.y, from.z, c.x, 0.5, c.z, arc, lv.frameDt, CK);
+        target = ch.links;
+      }
+      const points = travelPose(ch.pose ??= {}, ground, target, time, renderKnobs.chainTransitionSeconds);
+      // The old route showed through crowns from the treetops. Show the link glyphs there too.
+      const batch = ground && w.mode === "treetop" ? lv.over : lv.solid;
+      drawChain(lv, { links: points }, link, Math.min(1, col.r * lit), Math.min(1, col.g * lit), Math.min(1, col.b * lit), 1, dot, undefined, batch);
       continue;
     }
     if (B.thread && (d > L.length * from0 || whole)) {
@@ -203,7 +200,7 @@ export function drawBond(lv: LeashView, time: number, slotPos: Map<number, THREE
     stepChain(ch, n, Math.max(link, span / n), tf.x, tf.y, tf.z, TL.x, 0.5, TL.z, bowOf(span, n * link, 0.3), lv.frameDt, CK);
     drawChain(lv, ch, link, Math.min(1, col.r * taut), Math.min(1, col.g * taut), Math.min(1, col.b * taut), 1, dot);
   }
-  for (const id of [...lv.chains.keys()]) if (!live.has(id)) lv.chains.delete(id);
+  for (const id of lv.chains.keys()) if (!live.has(id)) { lv.chains.delete(id); lv.routes.delete(id); }
 }
 
 /** Her broom straining under a load (render/load.ts): sparks splaying back from its bristles, more the heavier; and over
