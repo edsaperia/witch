@@ -6,9 +6,11 @@ export const telephoneEnabled = (params: URLSearchParams): boolean => params.get
 /** Canonical1538-T: explicit two-client proof only; neither switch enables ordinary calls by default. */
 export const telephoneCallsEnabled = (params: URLSearchParams): boolean => telephoneEnabled(params) && params.get("telephoneCalls") === "1";
 const originalUse = boudoir.objects.find(o => o.id === "telephone")!.use as HouseUse;
+const previousUses = new WeakMap<object, HouseUse>();
 /** Page boot, after the chosen house arrangement is installed. The authored default stays untouched. */
 export function installTelephone(enabled: boolean): void {
   const phone = HOUSE_ROOMS.objects.find(o => o.id === "telephone"); if (!phone) return;
-  if (enabled) { if (phone.use.kind !== "telephone") phone.use = { kind: "telephone" }; }
-  else if (phone.use.kind === "telephone") phone.use = originalUse;
+  if (enabled) {
+    if (phone.use.kind !== "telephone") { previousUses.set(phone, phone.use); phone.use = { kind: "telephone" }; }
+  } else if (phone.use.kind === "telephone") { phone.use = previousUses.get(phone) ?? originalUse; previousUses.delete(phone); }
 }
