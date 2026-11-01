@@ -2,6 +2,7 @@
 // the world's bend, the camera snapped to the pixel grid along the screen's axes, lifted over hills and shaken by a legend's quake.
 import * as THREE from "three";
 import type { View } from "../view";
+import { easeCameraLift } from "../renderEasing";
 import { poseOf } from "../../rules/game";
 import { coastView, gazeAt } from "../../rules/camera";
 import { witchHeight } from "../../rules/witch";
@@ -159,7 +160,7 @@ export function placeCamera(v: View, time: number, pose: ReturnType<typeof poseO
       const px = target.x + back.x * f, pz = target.z + back.z * f, line = target.y + back.y * f;
       need = Math.max(need, (groundHeight(px, pz) + 4 - line) / f);
     }
-    v.camLift += (Math.max(0, need) - v.camLift) * (need > v.camLift ? 0.35 : 0.06);
+    v.camLift = easeCameraLift(v.camLift, need, v.renderEaseDt);
     v.camera.position.y += v.camLift;
   }
   v.camera.up.set(0, 1, 0);

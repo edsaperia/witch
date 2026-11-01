@@ -1,5 +1,15 @@
 # The view
 
+**Elapsed-time view easing** (#1556, 2026-10-31): camera hill clearance and canopy
+reach use her interpolated elapsed time instead of one fixed step per render.
+The .35/.06 camera and .08 canopy gains match a60Hz step; repeat/pause frames
+advance neither, and their timestamp resets per night. The canopy's final-metre
+snap is after the step, at most one60Hz frame earlier near that boundary, preserving
+equal-total-time behavior. Loading mist remains a wall-time loading overlay;
+the shared tools/shots still harness holds its clock and prepared scene for tests.
+No extra pass/texture or art/potion change. Bench/visual acceptance remains pending;
+see testing.md for the declared frame changes and allocated capture rules.
+
 **Dodge echoes** (Ed, 2026-10-31: “On as is”, PR1545 comment6549724800): brief world-anchored departure and arrival silhouettes are on by default at the reviewed strength; `?dodgeEchoes=0` disables them. Existing secondary-effect quality, reduced-motion/reduced-flashing and bare-debug suppression still apply. The current witch atlas is borrowed, with at most three private unlit sprite batches, depth testing and no depth writes, extra texture or fullscreen pass. Slot5 on Intel UHD / ANGLE D3D11 proved default-strength departure changes of 6,255 and 3,780 pixels with zero OFF-return differences. Saved arrival PNGs also have zero OFF-return difference; the overall capture was incomplete. Arrival, occlusion, moving-camera, rapid and turn checks are informational tail work, not gates on Ed's default-on ruling. `tools/bench/expect/codex/dodge-echoes.json` declares only the intended transient-dodge art change; current benchmark scenes never request a dodge and no frame/rules mismatch is waived. Atlas bakes and gameplay are unchanged.
 
 Hue Spin (recipe 108, PR1541) rotates scene RGB around the neutral axis in the existing composite shader, after bloom/grade and before knockout/blackout overlays. Its uniform defaults to zero strength, so inactive trips execute the original path. `rules/potionCycle.ts` supplies a wake-relative game-clock phase shared with audio. The lab exposes cycle seconds, initial angle, colour strength and audio sweep depth. Rotation fades by blending toward the unmodified scene during the final two minutes; saved art and tuning are untouched. HTML overlays keep their normal colours.
