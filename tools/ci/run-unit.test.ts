@@ -1,7 +1,7 @@
 import { describe, expect, it, vi } from "vitest";
 import path from "node:path";
 // @ts-expect-error plain JavaScript CI runner
-import { runTests, selectedTests } from "./run-unit.mjs";
+import { parseShard, runTests, selectedTests } from "./run-unit.mjs";
 
 const scope = { mode: "related", base: "abc", reason: "small PR" }, file = path.resolve("src/render/character.test.ts");
 describe("CI related-test execution safety", () => {
@@ -34,5 +34,22 @@ describe("CI related-test execution safety", () => {
     const run = vi.fn(() => ({ status: 0 }));
     runTests({ tests }, run, true);
     expect(run).toHaveBeenCalledExactlyOnceWith(["run", ...tests]);
+  });
+  it("full CI runs pass the shard to Vitest so every file runs in exactly one shard", () => {
+    const run = vi.fn(() => ({ status: 0 }));
+    runTests({ tests: [] }, run, true, parseShard("2/4"));
+    expect(run).toHaveBeenCalledExactlyOnceWith(["run", "--shard=2/4"]);
+  });
+  it("a related selection runs entirely in shard 1; other shards never start an empty Vitest run", () => {
+    const run = vi.fn(() => ({ status: 3 })), tests = ["src/render/character.test.ts"];
+    expect(runTests({ tests }, run, true, parseShard("1/4")).status).toBe(3);
+    expect(run).toHaveBeenCalledExactlyOnceWith(["run", ...tests]);
+    run.mockClear();
+    expect(runTests({ tests }, run, true, parseShard("3/4"))).toEqual({ status: 0, skipped: true });
+    expect(run).not.toHaveBeenCalled();
+  });
+  it.each(["", undefined])("no shard env means the unsharded run (%s)", value => expect(parseShard(value)).toBeNull());
+  it.each(["0/4", "5/4", "2", "a/b", "1/0"])("rejects a malformed shard %s instead of skipping tests", value => {
+    expect(() => parseShard(value)).toThrow(/invalid VITEST_SHARD/);
   });
 });
