@@ -78,7 +78,7 @@ export interface QuestEvent { kind: "done"; id: number; joined: number; /** the 
 
 /** The legend of an area (by its key), if it has one. */
 export const legendOf = (creatures: Creature[], ids: number[], key: string): Creature | null => {
-  for (const id of ids) { const c = creatures[id]; if (cellKey(c.cell) === key) return c; }
+  for (const id of ids) { const c = creatures[id]; if (!c.homeGuard && cellKey(c.cell) === key) return c; }
   return null;
 };
 

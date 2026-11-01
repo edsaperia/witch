@@ -117,12 +117,14 @@ describe("legends.questCap: dreams from anywhere but the truly far (Ed, 2026-10-
     return out.sort((a, b) => a.d - b.d);
   };
   it("keeps the spread of near and far, cutting only the far tail; never its own kind; the far ones roll stronger", () => {
-    const cap = TUNING.legends.questCap, capped = dists(cap), any = dists(0), med = (a: { d: number }[]) => a[a.length >> 1].d;
+    expect(TUNING.legends.questCap).toBe(0); // Ed, 2026-10-31: no tail cut by default.
+    const cap = 6, capped = dists(cap), any = dists(0), med = (a: { d: number }[]) => a[a.length >> 1].d;
     expect(capped[capped.length - 1].d).toBeLessThanOrEqual(cap + 1e-9);
     expect(any[any.length - 1].d).toBeGreaterThan(cap); // (there was a tail to cut)
     // (the gamble kept: most dreams as far as ever; over a few maps, one map's few legends being too few to say)
     const ratios = [8919, 1, 123, 4242, 77].map(seed => med(dists(cap, seed)) / med(dists(0, seed)));
     expect(ratios.reduce((a, b) => a + b, 0) / ratios.length).toBeGreaterThan(0.85);
+    for (const q of any) { expect(Number.isFinite(q.far)).toBe(true); expect(q.far).toBeGreaterThanOrEqual(0); expect(q.far).toBeLessThanOrEqual(1); }
     for (const q of capped) { expect(q.far).toBeGreaterThan(0); expect(q.far).toBeLessThanOrEqual(1); expect(q.far).toBeCloseTo(q.d / cap, 6); }
     for (const L of spawnCreatures(generateMap(8919, TUNING)).filter(c => c.boss && c.quest)) expect(L.quest!.species).not.toBe(L.species); // (and with questLater on)
   }, 60000);

@@ -75,7 +75,7 @@ describe("several witches in one deterministic night", () => {
 
   it("keeps dashes, leashes and knockout/recovery on the owning witch", () => {
     const g = fresh(), [a, b] = g.witches;
-    const followers = g.creatures.filter(c => !c.boss).slice(0, 2);
+    const followers = g.creatures.filter(c => !c.boss && c.level > 0).slice(0, 2);
     followers.forEach((c, i) => inviteCreature(g.witches[i].leash, c, c.x, c.z, g.clock.time));
     run(g, 1, [idle, { ...idle, sigil: true }]);
     expect(a.leash.stack).toContain(followers[0].id);

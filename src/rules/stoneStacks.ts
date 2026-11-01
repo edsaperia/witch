@@ -67,7 +67,7 @@ export interface StackEntry { id: number; level: number; friend: boolean; legend
 
 /** Whether a creature has its sigil in its stone's stack: about (not gone, not run off for good, not wandering off as its own kind's
  *  spare), not leashed, not let go here at a knockout, not a party legend or a dancer in the won night's line. */
-const inStack = (c: Creature) => !c.gone && !c.leashed && !c.dropped && c.fleeUntil !== Infinity && !c.wanderTo && !c.partyLegend && c.finale === undefined;
+const inStack = (c: Creature) => !c.homeGuard && !c.gone && !c.leashed && !c.dropped && c.fleeUntil !== Infinity && !c.wanderTo && !c.partyLegend && c.finale === undefined;
 
 /** Whether a stone (an area's key) has a stack: not home's, not partified, not ruined. */
 export function stoneOpen(g: Game, key: string): boolean {

@@ -1,0 +1,5 @@
+{
+  "reason": "Ed, 2026-10-31: 'On as is', after reviewing default-strength Intel D3D11 dodge frames. Brief departure and arrival silhouettes now draw by default during an actual dodge; ?dodgeEchoes=0 disables them. Existing atlas art, gameplay state and rules are unchanged. Current quick/full bench scenes do not request a dodge, so no benchmark frame difference is waived.",
+  "frames": {},
+  "rules": {}
+}
