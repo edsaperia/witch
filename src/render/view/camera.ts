@@ -33,9 +33,17 @@ function wholeAtStation(v: View, pose: ReturnType<typeof poseOf>): ReturnType<ty
   return { ...pose, distance, tx: pose.tx - (W.at - 0.5) * across * k, aim: (k * v.witchFeetTop) / (2 * v.witchTall) };
 }
 
+/** Hill clearance used to ease by these fractions per frame at 60 Hz. */
+export function easeCameraLift(current: number, need: number, seconds: number): number {
+  const fraction = need > current ? 0.35 : 0.06;
+  return current + (Math.max(0, need) - current) * (1 - Math.pow(1 - fraction, 60 * Math.max(0, seconds)));
+}
+
 /** Places the camera for this frame; returns the camera's up (tilted with its pitch), for the sprites' facing. */
 export function placeCamera(v: View, time: number, pose: ReturnType<typeof poseOf>): THREE.Vector3 {
   const g = v.game, t = g.tuning;
+  const liftDt = Number.isFinite(v.camLiftTime) ? time - v.camLiftTime : 0;
+  v.camLiftTime = time;
   pose = wholeAtStation(v, pose);
   const vertigo = v.fly || v.telescope ? 0 : vertigoAmount(potionStrength(g, 'vertigo'), g.witch.lift);
   const tripCamera = potionCamera(pose.angle, pose.distance, t.camera.fov, vertigo);
@@ -159,7 +167,7 @@ export function placeCamera(v: View, time: number, pose: ReturnType<typeof poseO
       const px = target.x + back.x * f, pz = target.z + back.z * f, line = target.y + back.y * f;
       need = Math.max(need, (groundHeight(px, pz) + 4 - line) / f);
     }
-    v.camLift += (Math.max(0, need) - v.camLift) * (need > v.camLift ? 0.35 : 0.06);
+    v.camLift = easeCameraLift(v.camLift, need, liftDt);
     v.camera.position.y += v.camLift;
   }
   v.camera.up.set(0, 1, 0);

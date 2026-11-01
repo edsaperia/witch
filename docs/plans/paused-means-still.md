@@ -42,3 +42,15 @@ Keep the last world picture behind a mid-night pause. Update pause controls, Set
 Shared file view.ts is also touched by #1542 (lighting), #1543 (refraction) and #1558 (veil). main.ts and view.ts are targets of the A4 production fence. Seek the coordinator's exact hunk boundary before touching them. Leave those three effect implementations and A4 registry/extraction to their owners.
 
 Test menu updates and world draw counts through the same production decision, title art/view invalidation, and a pointer before/after ten seconds paused including a forced draw and first resumed frame. Compare actual before/after draws per paused minute on a canonical runner. The reported 55 slow frames in 67 s are a baseline symptom, not a count of all draws. No browser measurements yet.
+
+## Implementation and outstanding proof
+
+The draw decision now follows menu updates. Normal pause retains the world, chart and zoo keep their own screens, and the title consumes newly completed art, including witch frames. Resize, explicit quality changes and manual simulation steps can invalidate the retained picture. Loading sleep uses its own presentation time while awaiting the house, because its wake condition requires the house to have finished fading before simulation time can advance.
+
+Guidance size, charge-ready flash, invitation impacts and sight fades, creature bubbles and nightmare shake, selection glow, deck and zoo exit glow, sparkles, batch appearance and loading mist use simulation time. The hitstop submission deadline, chart flight and compilation measurements retain their real clocks.
+
+Camera hill clearance now uses elapsed render game time. Its old 60 Hz rise and fall fractions define the exponential ease, so a second render at the same time leaves the camera in place.
+
+Outstanding clock cases for review on forced redraw are the coast compilation-to-appearance fade (ground.ts / CoastReadiness), the separately compiled room floor and furniture arrival fade (houseRooms.ts), telescope constellation dwell (view/camera.ts), and the nested dream overlay (dream.ts). Keep their readiness, interaction and presentation semantics separate when adapting them. An ordinary held world does not call its renderer. The dream overlay has its own animation callback.
+
+The cloud proof script is tools/smoke/paused-world.cjs. Supply the two served build directories with trailing slashes and their source SHAs. It verifies each manifest, counts actual View.render calls per elapsed minute, operates Settings and the bestiary, samples pin scales and compares same-size paused repaints to the retained frame. Browser results must be recorded separately from the draw-policy and pointer unit tests.

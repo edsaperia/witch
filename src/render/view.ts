@@ -203,6 +203,7 @@ function nightState(t: Tuning) {
     numbersAt: 0,
     /** How far the camera is lifted to see her over a hill in between (metres, eased). */
     camLift: 0,
+    camLiftTime: Number.NaN,
     /** The charcoal huts' smouldering mounds near her (looked up when she has moved far), for the smoke. */
     mounds: [] as number[],
     moundsAt: { x: Infinity, z: Infinity },
@@ -409,7 +410,7 @@ export class View {
       [...this.witchBatch.meshes, ...this.treehouseBatch.meshes].every(o => ([] as THREE.Material[]).concat((o as THREE.Mesh).material ?? []).every(m => materialProgramsReady(this.renderer.properties.get(m)))) &&
       !!this.houseRooms?.landingReady(this.renderer);
   }
-  beginLandingShaders(chart: boolean): void { this.shaderEpoch++; this.shaderLandingDeadline = Infinity; this.shaderChartLanding = chart; this.shaderLandingLimited = false; this.landingSleeping = false; this.landingFades.reset(); this.landingHouseShare = 1; }
+  beginLandingShaders(chart: boolean): void { this.landingPresentationMs = 0; this.shaderEpoch++; this.shaderLandingDeadline = Infinity; this.shaderChartLanding = chart; this.shaderLandingLimited = false; this.landingSleeping = false; this.landingFades.reset(); this.landingHouseShare = 1; }
   private armLimitedLanding(): void {
     if (this.shaderLandingLimited) return;
     this.shaderLandingLimited = true; this.landingFades.arm(this.assets.home);
@@ -716,8 +717,8 @@ export class View {
   loadingMist: LoadingMist | null = null;
   /** ?loadmist=1|0 (app/viewParams.ts): the loading mist on or off whatever the tuning and ?quick=1 say; null as they say. */
   loadingMistLink: boolean | null = null;
-  private mistClock = 0;
-  private mistLast = 0;
+  // Only the arrival presentation advances while the loading sleep holds game time.
+  landingPresentationMs = 0;
   width = 1;
   height = 1;
   /** ?debug=cull: tint anything that has just appeared bright red, and mark where anything has
@@ -1434,7 +1435,7 @@ export class View {
         b.name(`${map === this.typeBatches ? "type" : map === this.creatureBatches ? "creature" : "decor"} ${String(key)}`); // (the probes' draw-call names: tools/bench/gpu.cjs)
         // A set drawn after the start (flying toward an area whose art was still being drawn)
         // fades in rather than popping in.
-        if (this.prepared && !(map === this.typeBatches && this.noFade.delete(key))) { b.appearU.value = 0; this.appearing.set(b, performance.now()); }
+        if (this.prepared && !(map === this.typeBatches && this.noFade.delete(key)) && !this.game.clock.paused) { b.appearU.value = 0; this.appearing.set(b, this.game.clock.time * 1000); }
       }
     }
     return b;
@@ -1449,9 +1450,9 @@ export class View {
     for (const c of g.party.next) { const sp = AREA_TYPES[g.map.typeOf(c[0], c[1])]?.creature; if (sp) { this.assets.creatureArt(sp); this.assets.wokenArt(sp); } }
   }
   private easeAppearing(): void {
-    const now = performance.now();
+    const now = this.game.clock.time * 1000;
     for (const [b, at] of this.appearing) {
-      const k = Math.min(1, (now - at) / 800);
+      const k = Math.max(0, Math.min(1, (now - at) / 800));
       b.appearU.value = k * k * (3 - 2 * k);
       if (k >= 1) this.appearing.delete(b);
     }
@@ -1561,7 +1562,7 @@ export class View {
   /** The start's own art, drawn by the art workers (fast start (b)): each batch built on a stand-in takes its set once it arrives. */
   private swapHomeArt(): void {
     const A = this.assets;
-    const now = performance.now();
+    const now = this.landingPresentationMs + this.game.clock.time * 1000;
     const previousHouseShare = this.landingHouseShare;
     this.landingHouseShare = this.landingFades.share('treehouse', A.home.treehouse, now);
     if (this.shaderLandingLimited && previousHouseShare === 0 && this.landingHouseShare > 0) performance.mark('landing:house-fading');
@@ -1858,8 +1859,7 @@ export class View {
     LIGHT_UNIFORMS.uTime.value = time; LIGHT_UNIFORMS.uRealTime.value = ht; // (the circle's motes and edge keep her clock)
     this.mist?.follow(pose.tx, pose.tz);
     if (this.loadingMist && draw) { // (on the page's own clock, a frame counting at most a tenth of a second: not the house's slowed time)
-      const now = performance.now(); this.mistClock += this.mistLast ? Math.min(0.1, (now - this.mistLast) / 1000) : 0; this.mistLast = now;
-      this.loadingMist.update(this.mistClock, ty => this.assets.hasType(ty));
+      this.loadingMist.update(time, ty => this.assets.hasType(ty));
     }
     this.lightRings?.update(this.camera, w.x, witchHeight(w, t) + this.rideOff, w.z, canopyShown(w), time);
     const hatTop = drawWitch(this, time, ht, onTreehouse);
