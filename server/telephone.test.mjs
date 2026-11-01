@@ -13,6 +13,10 @@ const keyFor = label => {
 };
 const send = (ws, m) => ws.send(JSON.stringify({ protocol: 1, ...m }));
 const message = async ws => JSON.parse((await once(ws, 'message'))[0].toString());
+const messageType = (ws, type) => new Promise(resolve => {
+  const receive = data => { const value = JSON.parse(data.toString()); if (value.type === type) { ws.off('message', receive); resolve(value); } };
+  ws.on('message', receive);
+});
 async function fixture(t, options = {}) {
   const relay = createRelay({ log: () => {}, ...options }); relay.http.listen(0, '127.0.0.1'); await once(relay.http, 'listening'); t.after(() => relay.close());
   const connect = async () => { const w = new WebSocket(`ws://127.0.0.1:${relay.http.address().port}`); await once(w, 'open'); return w; };
@@ -49,7 +53,7 @@ test('decline, cancel, unavailable presence and ring deadline leave no stale cal
     await ring(a, b); const reply = message(a), other = message(b); send(action === 'decline' ? b : a, { type: action });
     assert.equal((await reply).type, action === 'decline' ? 'call-declined' : 'call-cancelled'); await other;
   }
-  await ring(a, b); const reply = message(a), other = message(b);
+  await ring(a, b); const reply = messageType(a, 'call-timeout'), other = messageType(b, 'call-timeout');
   // Preserve heartbeat while advancing the ring clock beyond the normal silence interval.
   for (let n = 1; n <= 6; n++) { clock = n * 5000; send(a, { type: 'heartbeat' }); send(b, { type: 'heartbeat' }); await new Promise(resolve => setImmediate(resolve)); }
   assert.equal((await reply).type, 'call-timeout'); await other;

@@ -13,11 +13,15 @@ import { hatFlight } from "../../render/hatFlight";
 import { remoteEquipment } from "../../render/remoteEquipment";
 
 const mounted = new WeakMap<View, () => void>();
+const submitted = new WeakMap<View, ReturnType<View["makeWitchBatch"]>>();
+/** Read-only capture seam: actual submitted remote body, not its rules-space position. */
+export const remoteBodyBatch = (view: View) => submitted.get(view) ?? null;
 
 /** First prototype: uses the existing witch atlas, with no new generated art. */
 export function otherWitches(view: View, source: Game, player: number, looks?: ReadonlyMap<number, WitchLookLease>, profiles?: ReadonlyMap<number, Record<string, unknown>>) {
   mounted.get(view)?.();
   const batch = view.makeWitchBatch();
+  submitted.set(view, batch);
   let released = false;
   const phases = new Map<number, { time: number; walk: number; foot: boolean }>();
   let hats: ReturnType<View["makeWitchBatch"]> | null = null;
@@ -89,6 +93,7 @@ export function otherWitches(view: View, source: Game, player: number, looks?: R
     if (released) return; released = true;
     if (view.witchBatch.set === update) view.witchBatch.set = originalSet;
     view.scene.remove(...batch.meshes); batch.release(); // Atlas lease belongs to caller; never dispose shared/local textures here.
+    if (submitted.get(view) === batch) submitted.delete(view);
     if (hats) { view.scene.remove(...hats.meshes); hats.release(); hats = null; }
     gear?.release(); gear = null;
     if (mounted.get(view) === release) mounted.delete(view);
