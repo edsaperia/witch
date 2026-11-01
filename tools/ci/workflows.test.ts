@@ -15,8 +15,18 @@ describe("shared CI game build", () => {
   it("builds the tested revision once, with the benchmark base explicitly distinct", () => {
     const builds = Object.entries(jobs).flatMap(([job, value]: [string, any]) => value.steps.filter((s: any) => /npm run build/.test(s.run ?? "")).map((s: any) => ({ job, step: s })));
     expect(builds.map((b: any) => b.job)).toEqual(["build", "game-unchanged"]);
-    expect(builds[1].step.working_directory ?? builds[1].step["working-directory"]).toBe("base");
+    // The comparison builds stamp base and head alike (and leave the shared artifact as the benchmarked head).
+    expect(builds[1].step.run).toContain("cd base && npm ci && npm run build");
+    expect(builds[1].step.run).toContain("mv dist dist-same");
+    expect(builds[1].step.env).toEqual({ WITCH_VERSION: "${{ github.run_number }}", WITCH_SHA: "${{ github.event.pull_request.head.sha }}" });
     expect(jobs["game-unchanged"].steps.find((s: any) => s.with?.path === "base").with.ref).toContain("pull_request.base.sha");
+  });
+  it("skips only the benchmark itself when the game build is byte-identical to base", () => {
+    const steps = jobs["game-unchanged"].steps, same = steps.findIndex((s: any) => s.id === "same");
+    expect(steps[same].run).toContain("node head/tools/ci/same-game.mjs base head");
+    for (const s of steps.slice(same + 1).filter((s: any) => s.name !== "Failure annotation totals" && s.if !== "always()" && !String(s.run ?? "").includes("GITHUB_STEP_SUMMARY")))
+      expect(s.if).toBe("steps.same.outputs.same != 'true'");
+    expect(steps.slice(0, same).some((s: any) => /bench\/run\.mjs/.test(s.run ?? ""))).toBe(false);
   });
   it("has every built-game consumer download the one artifact", () => {
     const upload = jobs.build.steps.find((s: any) => s.uses === "actions/upload-artifact@v4");
