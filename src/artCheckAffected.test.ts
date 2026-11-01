@@ -45,20 +45,41 @@ describe("affected art checks", () => {
     expect(() => taskDispatcher(source.replace('fetch("/config/combat.json")', 'fetch(path)'))).toThrow("Unknown art check fetch");
     expect(() => taskDispatcher(source.replace('fetch("/config/combat.json")', 'fetch("/elsewhere/combat.json")'))).toThrow("Unknown art check fetch");
   });
-  it("re-keys only the tasks that fetch a changed config file", async () => {
-    const root = temp();
-    for (const f of ["art/check.mjs", "art/headless.mjs", "art/headless-blank.html", "tools/art-check/affected.mjs", "tools/artDependencies.ts", "tools/artJobFingerprints.ts", "tools/artHash.ts", "tools/art-cache/load.mjs", "package.json", "package-lock.json", "config/style.json", "config/tuning.json", "config/combat.json", "config/broom-parts.json", ".github/workflows/art-check.yml"]) {
+  const fixture = async () => {
+    const root = temp(), { cpSync } = await import("node:fs");
+    for (const f of ["art/headless.mjs", "art/headless-blank.html", "tools/artDependencies.ts", "tools/artJobFingerprints.ts", "tools/artHash.ts", "package.json", "package-lock.json", ".github/workflows/art-check.yml"]) {
       mkdirSync(join(root, f, ".."), { recursive: true }); writeFileSync(join(root, f), readFileSync(f));
     }
-    const { cpSync } = await import("node:fs");
-    for (const dir of ["art", "src", "tools/art-cache", "tools/art-check", "tools/art-lab", "tools/overrides"]) cpSync(dir, join(root, dir), { recursive: true, filter: s => !/(node_modules|art\/out|art-lab\/dist)/.test(s) });
+    for (const dir of ["art", "src", "config", "tools/art-cache", "tools/art-check", "tools/art-lab", "tools/overrides"]) cpSync(dir, join(root, dir), { recursive: true, filter: s => !/(node_modules|art\/out|art-lab\/dist)/.test(s) });
     const { plan } = await import("../tools/art-check/affected.mjs");
     const keys = async () => Object.fromEntries((await plan(root, join(root, "cache"), {})).tasks.map((t: { id: string; key: string }) => [t.id, t.key]));
-    const before = await keys();
-    writeFileSync(join(root, "config/tuning.json"), readFileSync(join(root, "config/tuning.json"), "utf8") + "\n");
-    const after = await keys();
-    expect(Object.keys(before).filter(id => before[id] !== after[id])).toEqual(["sleeping-legends"]);
+    const edit = (f: string, change: (text: string) => string) => { const text = readFileSync(join(root, f), "utf8"), next = change(text); expect(next).not.toBe(text); writeFileSync(join(root, f), next); };
+    return { keys, edit, changed: (a: Record<string, string>, b: Record<string, string>) => Object.keys(a).filter(id => a[id] !== b[id]).sort() };
+  };
+  it("re-keys only the tasks that fetch a changed config file", async () => {
+    const { keys, edit, changed } = await fixture(), before = await keys();
+    edit("config/tuning.json", t => t + "\n");
+    expect(changed(before, await keys())).toEqual(["sleeping-legends"]);
   }, 120_000);
+  it("re-keys one edited task (and the auxiliary unit), but every task for a shared helper or scaffolding edit", async () => {
+    const { keys, edit, changed } = await fixture(), before = await keys();
+    edit("art/check.mjs", t => t.replace('task("bushes", async () => {', 'task("bushes", async () => { void 0;'));
+    const one = await keys();
+    expect(changed(before, one)).toEqual(["auxiliary-and-labs", "bushes"]);
+    edit("art/check.mjs", t => t.replace("  // --only: a builder", "  const sharedProbe = 1;\n  // --only: a builder"));
+    const helper = await keys();
+    expect(changed(one, helper)).toEqual(Object.keys(one).sort());
+    edit("art/check.mjs", t => t.replace("const report = flag(", "const unusedProbe = 0;\nconst report = flag("));
+    expect(changed(helper, await keys())).toEqual(Object.keys(one).sort());
+  }, 180_000);
+  it("ignores npm script edits in package.json but keys every task on its dependencies", async () => {
+    const { keys, edit, changed } = await fixture(), before = await keys();
+    edit("package.json", t => t.replace('"scripts": {', '"scripts": {\n    "probe": "node -e 0",'));
+    const scripts = await keys();
+    expect(changed(before, scripts)).toEqual([]);
+    edit("package.json", t => t.replace('"devDependencies": {', '"devDependencies": {\n    "left-pad": "1.3.0",'));
+    expect(changed(scripts, await keys())).toEqual(Object.keys(before).sort());
+  }, 180_000);
   it("accepts only an exact successful result and reruns misses, failures and corrupt entries", () => {
     const d = temp(), key = sha("inputs");
     expect(resultHit(d, "trees", key)).toBe(false);

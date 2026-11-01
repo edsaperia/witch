@@ -27,7 +27,7 @@ export function taskDispatcher(text) {
       const [name, callback] = s.expression.arguments;
       if (!name || !ts.isStringLiteral(name) || !callback || !ts.isArrowFunction(callback)) throw Error('Unknown art check task');
       if (tasks.some(t => t.name === name.text)) throw Error('Duplicate art check task');
-      tasks.push({ name: name.text, source: callback.getText(ast), configs: configFetches(callback, ast) });
+      tasks.push({ name: name.text, source: callback.getText(ast), start: callback.getStart(ast), end: callback.end, configs: configFetches(callback, ast) });
     } else if (ts.isVariableStatement(s) || ts.isFunctionDeclaration(s)) {
       if (configFetches(s, ast).length) throw Error('Shared check helper fetches config');
       helpers.push(s.getText(ast));
@@ -62,7 +62,11 @@ export function taskDispatcher(text) {
   dynamic(generated);
   for (const e of edits.sort((a, b) => b.start - a.start)) source = source.slice(0, e.start) + e.text + source.slice(e.end);
   source = [...imports].map(([spec, name]) => `import * as ${name} from ${JSON.stringify(spec)};`).join('\n') + '\n' + source;
-  return { source, names: tasks.map(t => t.name), configs: Object.fromEntries(tasks.map(t => [t.name, t.configs])) };
+  // Everything in check.mjs outside the task callbacks (runner, auxiliary checks, scaffolding): any edit there keys every task.
+  let scaffold = text;
+  for (const t of [...tasks].sort((a, b) => b.start - a.start)) scaffold = scaffold.slice(0, t.start) + '<task>' + scaffold.slice(t.end);
+  return { source, names: tasks.map(t => t.name), configs: Object.fromEntries(tasks.map(t => [t.name, t.configs])),
+    taskSources: Object.fromEntries(tasks.map(t => [t.name, t.source])), shared: sha(JSON.stringify({ preamble, scaffold })) };
 }
 
 /** Files a task fetches at run time (fetch("/config/x.json")) are invisible to the import
@@ -94,9 +98,15 @@ export function checkFiles(root) {
   for (const f of ['package.json', 'package-lock.json', 'config/style.json', 'tools/artDependencies.ts', 'tools/artJobFingerprints.ts', 'tools/artHash.ts', '.github/workflows/art-check.yml']) if (existsSync(join(root, f))) files.push(f);
   return [...new Set(files)].sort();
 }
+/** package.json as the art check sees it: npm scripts never run in it (art/headless.mjs serves files over plain
+ * http), so script-only edits keep every result. Dependencies, module type and the lockfile still key everything. */
+export function artInputBytes(file, bytes) {
+  if (file !== 'package.json') return bytes;
+  try { const { scripts, ...rest } = JSON.parse(bytes.toString('utf8')); return Buffer.from(JSON.stringify(rest)); } catch { return bytes; }
+}
 export function snapshotHash(root, files) {
   const h = createHash('sha256');
-  for (const f of files) { const b = readFileSync(join(root, f)); h.update(`${Buffer.byteLength(f)}:${f}${b.length}:`); h.update(b); }
+  for (const f of files) { const b = artInputBytes(f, readFileSync(join(root, f))); h.update(`${Buffer.byteLength(f)}:${f}${b.length}:`); h.update(b); }
   return h.digest('hex');
 }
 export function resultHit(dir, id, key) {
@@ -117,10 +127,15 @@ export async function plan(root, cacheDir, environment) {
     const configs = [...new Set(Object.values(dispatcher.configs).flat())].filter(f => !auxFiles.includes(f));
     for (const f of configs) if (!existsSync(join(root, f))) throw Error(`Fetched art input missing: ${f}`);
     const files = [...auxFiles, ...configs].sort();
-    const snapshot = snapshotHash(root, files), salt = JSON.stringify({ schema: 'art-check-results-v1', environment });
+    const snapshot = snapshotHash(root, files), salt = JSON.stringify({ schema: 'art-check-results-v2', environment });
+    // A task's key: its own callback text, the shared helpers and check scaffolding, the analyzer's module-initialization
+    // parts, and every file its drawing reaches. The generated dispatcher and art/check.mjs are hashed by those parts
+    // instead of whole, so editing one task's callback reruns that task alone.
+    const initialization = sha(JSON.stringify(Object.entries(map.initializationParts).sort(([a], [b]) => a < b ? -1 : a > b ? 1 : 0)));
     const tasks = dispatcher.names.map(id => {
-      const fetched = dispatcher.configs[id];
-      return { id, key: sha(salt + id + map.fingerprints[id] + (fetched.length ? snapshotHash(root, fetched) : '')), inputs: [...new Set([...map.dependencies.jobs[id].filter(f => f !== DISPATCHER), ...fetched])].sort() };
+      const fetched = dispatcher.configs[id], drawn = map.drawInputs[id].filter(f => f !== DISPATCHER && f !== 'art/check.mjs');
+      const key = sha(salt + JSON.stringify({ id, task: dispatcher.taskSources[id], shared: dispatcher.shared, initialization, drawn, files: snapshotHash(root, drawn), fetched: fetched.length ? snapshotHash(root, fetched) : '' }));
+      return { id, key, inputs: [...new Set([...map.dependencies.jobs[id].filter(f => f !== DISPATCHER), ...fetched])].sort() };
     });
     // The non-task checks and lab pages have broad, independent coverage. They
     // stay one conservative unit rather than pretending task selection covers them.
