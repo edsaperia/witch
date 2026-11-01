@@ -15,3 +15,9 @@ Base: b995ef4236541ebf24037c65461ddf750087cbe4. Branch `codex/travel-perf-4`, is
 Scope: `app/chartWarm*`, a small main scheduling hook, focused tests, a dedicated proof tool, relevant island/performance notes and own changelog. Do not edit house geometry, renderer shaders, CI workflows or another builder's files. Raise any newly discovered ownership conflict on the own PR before touching it.
 
 No capacity/service/spend work. M4's explicit fresh approval supersedes the historical M3-ships gate; no M3 source is carried here.
+
+## Source checkpoint
+
+Reachable-only worker requests and per-frame leave cancellation are implemented. Opening MAP transfers ownership to its existing all-island demand queue rather than running a second worker. A cancelled worker's late completion/error cannot settle another worker. Re-entry uses the existing cache; world/found/reachable changes invalidate the scheduling scope. Renderer preparation, chart demand/rise-in and house/sleep rules are untouched.
+
+19 nearby tests (one worker) and typecheck pass. The first restricted test attempt could not collect because a Windows temporary-file rename was denied; the permitted rerun passed. Browser/job-count/no-missing-island proof tooling and canonical cloud execution remain outstanding. This is not a FINAL or speed claim. Multiplayer takes priority per1476#6556749161; checkpoint is safe to park for an explicitly assigned split.
