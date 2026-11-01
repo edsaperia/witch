@@ -22,7 +22,9 @@ if (!process.argv.includes('--worker')) {
   const deadline = setTimeout(() => stop('wall-cap'), Math.max(0, WALL_MS - (Date.now() - started)));
   const sample = () => {
     try {
-      const m = linuxMemory(readFileSync(`/proc/${child.pid}/status`, 'utf8'));
+      const status = readFileSync(`/proc/${child.pid}/status`, 'utf8');
+      if (/^State:\s+Z\b/m.test(status)) return; // Exit event/reaping can follow this sample.
+      const m = linuxMemory(status);
       peakRss = Math.max(peakRss, m.rss, m.peakRss);
       if (peakRss > MEMORY) stop('memory-cap');
     } catch (e) { if (e.code !== 'ENOENT' && e.code !== 'ESRCH') stop(`memory-monitor-error: ${e.message}`); }
