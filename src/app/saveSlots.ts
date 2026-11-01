@@ -9,6 +9,9 @@ interface SlotIndex { version: 1; active: string; slots: SaveSlot[] }
 export const SLOT_INDEX = "witch.saves.v1";
 export const SLOT_KEYS = ["witch.genome", "witch.owned", "witch.broom", "witch.loadout", "witch.hats", "witch.records", "witch.chart", "witch.guide", "witch.arrive", "witch.player", "witch.settings", "witch.shake", "witch.bindings", "witch.autotalk", "witch.woken", "witch.mirrored", "witch.creator.box", "witch.pauseOpen", "witch.debug.unlockAll", "witch.mushrooms"] as const;
 const scoped = new Set<string>(SLOT_KEYS);
+/** Only borrowed game/progress writes are transient. Personal volume/bindings/display preferences still persist. */
+export const BORROWED_GAME_KEYS = ["witch.genome", "witch.owned", "witch.broom", "witch.loadout", "witch.hats", "witch.records", "witch.chart", "witch.guide", "witch.arrive", "witch.woken", "witch.mirrored", "witch.debug.unlockAll", "witch.mushrooms", "witch.night", SLOT_INDEX] as const;
+const borrowedGameKey = (key: string) => BORROWED_GAME_KEYS.some(prefix => key === prefix || key.startsWith(prefix + "."));
 export const slotKey = (id: string, key: string): string => `witch.save.${id}.${key}`;
 const validId = (v: unknown): v is string => typeof v === "string" && /^s[1-9][0-9]*$/.test(v);
 
@@ -19,6 +22,7 @@ export class SaveSlots {
   private migrationReady = true;
   private readFailures = 0;
   private dirty = new Set<string>();
+  private visitValues: Map<string, string | null> | null = null;
   constructor(private store: SlotStorage | null, private failed: (key: string, error: unknown) => void = (key, error) => logCaughtError(error, `[saves] ${key}`), private now: () => number = Date.now) {}
   private failure(key: string, error: unknown): void { if (!this.warned.has(key)) { this.warned.add(key); this.failed(key, error); } }
   private read(key: string): string | null {
@@ -69,12 +73,22 @@ export class SaveSlots {
     return index;
   }
   active(): string { return this.load().active; }
+  get visiting(): boolean { return this.visitValues !== null; }
+  /** Confirmed visit only. Return ends the lease and drops transient changes without rewriting stored bytes. */
+  beginBorrowedVisit(): () => void {
+    this.load();
+    if (this.visitValues) throw new Error("A borrowed save visit is already active.");
+    const values = this.visitValues = new Map<string, string | null>();
+    return () => { if (this.visitValues === values) this.visitValues = null; };
+  }
   list(): SaveSlot[] { return this.load().slots.map(s => ({ ...s })); }
   touch(id = this.active()): void {
+    if (this.visiting) return;
     const slot = this.load().slots.find(s => s.id === id);
     if (slot) { slot.updated = this.now(); this.dirty.add(id); this.persist(); }
   }
   summary(island: string, nightEnded = false, id = this.active()): void {
+    if (this.visiting) return;
     const slot = this.load().slots.find(s => s.id === id);
     if (slot) { slot.island = island; slot.updated = this.now(); if (nightEnded) slot.nights = (slot.nights ?? 0) + 1; this.dirty.add(id); this.persist(); }
   }
@@ -101,6 +115,7 @@ export class SaveSlots {
     return kept;
   }
   create(): SaveSlot {
+    if (this.visiting) throw new Error("Finish visiting your friend before creating a save.");
     const index = this.load(); this.mergeIndex();
     const number = index.slots.length + 1, at = this.now();
     // Opaque IDs avoid two open tabs allocating the same next integer.
@@ -109,6 +124,7 @@ export class SaveSlots {
   }
   /** Persist selection before a reload. A blocked write must not reload back into the old slot. */
   select(id: string): boolean {
+    if (this.visiting) return false;
     const index = this.load();
     if (!index.slots.some(s => s.id === id)) return false;
     // Refuse a reload while any outgoing data exists only in memory.
@@ -121,9 +137,20 @@ export class SaveSlots {
   storage(id = this.active()): SlotStorageView {
     if (!this.load().slots.some(s => s.id === id)) throw new Error("Unknown save slot");
     return {
-      getItem: key => this.read(scoped.has(key) ? slotKey(id, key) : key),
-      setItem: (key, value) => { if (!this.write(scoped.has(key) ? slotKey(id, key) : key, value)) throw new Error(`Browser storage refused ${key}`); },
-      removeItem: key => { if (!this.remove(scoped.has(key) ? slotKey(id, key) : key)) throw new Error(`Browser storage refused ${key}`); },
+      getItem: key => {
+        const at = scoped.has(key) ? slotKey(id, key) : key;
+        return this.visitValues?.has(at) ? this.visitValues.get(at) ?? null : this.read(at);
+      },
+      setItem: (key, value) => {
+        const at = scoped.has(key) ? slotKey(id, key) : key;
+        if (this.visitValues && borrowedGameKey(key)) { this.visitValues.set(at, value); return; }
+        if (!this.write(at, value)) throw new Error(`Browser storage refused ${key}`);
+      },
+      removeItem: key => {
+        const at = scoped.has(key) ? slotKey(id, key) : key;
+        if (this.visitValues && borrowedGameKey(key)) { this.visitValues.set(at, null); return; }
+        if (!this.remove(at)) throw new Error(`Browser storage refused ${key}`);
+      },
     };
   }
   /** IDB retains the legacy path for slot 1: lossless without duplicating a large night. */
@@ -153,6 +180,7 @@ export const slotStorage: SlotStorageView = {
 
 /** All exit paths use this ordering; a refused night write or selection must keep the page open. */
 export async function switchSave(saves: SaveSlots, flush: () => Promise<boolean>, reload: () => void, id: string | null): Promise<string | null> {
+  if (saves.visiting) return "Finish visiting your friend before switching saves.";
   if (!await flush()) return "Your night could not be saved. Please keep this page open and try again.";
   const selected = id ?? saves.create().id;
   if (!saves.select(selected)) return "The browser could not remember this save choice. Please keep this page open and try again.";
