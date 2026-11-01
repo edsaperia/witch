@@ -16,7 +16,7 @@ What the art check should run for a change: node tools/art-check/scope.mjs <chan
 
 ## `shards.mjs`
 
-Four balanced art-check shards and strict combined proof.
+Duration-balanced art-check shards and strict combined proof.
 
 ## Also here
 

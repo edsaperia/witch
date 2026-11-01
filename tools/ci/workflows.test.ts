@@ -98,6 +98,11 @@ describe("shared CI game build", () => {
     expect(art.jobs.plan.needs).toBeUndefined();
     expect(art.jobs.shards.needs).toBe("plan");
     expect(art.jobs.art.needs).toEqual(["plan", "shards"]);
+    expect(art.on.workflow_dispatch.inputs.cold).toMatchObject({ type: "boolean", default: false });
+    expect(art.jobs.plan.env.ART_CHECK_COLD).toContain("github.event_name == 'workflow_dispatch'");
+    expect(art.jobs.shards.strategy.matrix.shard).toBe("${{ fromJSON(needs.plan.outputs.shards) }}");
+    for (const name of ["Restore successful PR art checks", "Import successful PR task results into the existing cache"])
+      expect(art.jobs.plan.steps.find((s: any) => s.name === name).if).toContain("env.ART_CHECK_COLD != 'true'");
     for (const job of Object.values(art.jobs) as any[]) {
       expect(job.steps.some((s: any) => /npm run build/.test(s.run ?? ""))).toBe(false);
       for (const step of job.steps.filter((s: any) => s.uses?.startsWith("actions/download-artifact@"))) {

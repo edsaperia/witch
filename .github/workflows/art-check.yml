@@ -7,6 +7,13 @@ on:
     branches: [claude/prototype, main]
   pull_request:
     types: [opened, synchronize, reopened]
+  workflow_dispatch:
+    inputs:
+      cold:
+        description: Bypass art result reuse for this allocated measurement only
+        type: boolean
+        required: true
+        default: false
 concurrency:
   group: art-check-${{ github.event_name }}-${{ github.ref }}
   cancel-in-progress: true
@@ -20,8 +27,10 @@ jobs:
     timeout-minutes: 15
     outputs:
       mode: ${{ steps.scope.outputs.mode }}
+      shards: ${{ steps.scope.outputs.shards }}
     env:
       PLAYWRIGHT_VERSION: 1.56.1
+      ART_CHECK_COLD: ${{ github.event_name == 'workflow_dispatch' && inputs.cold == true }}
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -30,7 +39,7 @@ jobs:
           cache: npm
       - name: Find an already checked identical tree
         id: checked
-        if: github.event_name == 'push'
+        if: github.event_name == 'push' && env.ART_CHECK_COLD != 'true'
         uses: actions/github-script@v7
         with:
           script: |
@@ -54,14 +63,14 @@ jobs:
       - run: npm ci
         if: steps.checked.outputs.run == ''
       - name: Restore successful PR art checks
-        if: steps.checked.outputs.run == ''
+        if: steps.checked.outputs.run == '' && env.ART_CHECK_COLD != 'true'
         uses: actions/cache/restore@v4
         with:
           path: .art-check-results
           key: art-results-v1-${{ runner.os }}-${{ github.run_id }}-${{ github.run_attempt }}
           restore-keys: art-results-v1-${{ runner.os }}-
       - name: Import successful PR task results into the existing cache
-        if: steps.checked.outputs.run == ''
+        if: steps.checked.outputs.run == '' && env.ART_CHECK_COLD != 'true'
         uses: actions/github-script@v7
         with:
           script: |
@@ -96,7 +105,11 @@ jobs:
           if [ -n "$CHECKED_RUN" ]; then
             node -e 'require("fs").writeFileSync("out/art-check-plan.json",JSON.stringify({schema:1}))'
           else
-            node tools/art-check/affected.mjs --plan out/art-check-plan.json
+            if [ "$ART_CHECK_COLD" = true ]; then
+              ART_CHECK_CACHE=out/cold-empty-cache node tools/art-check/affected.mjs --plan out/art-check-plan.json
+            else
+              node tools/art-check/affected.mjs --plan out/art-check-plan.json
+            fi
           fi
           node tools/art-check/shards.mjs prepare out/art-check-plan.json
       - uses: actions/upload-artifact@v4
@@ -115,7 +128,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        shard: [0, 1, 2, 3]
+        shard: ${{ fromJSON(needs.plan.outputs.shards) }}
     env:
       PLAYWRIGHT_VERSION: 1.56.1
     steps:
