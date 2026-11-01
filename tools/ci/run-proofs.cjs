@@ -29,18 +29,20 @@ async function main() {
   const mode = process.env.PROOF_MODE || 'fast';
   if (!['fast', 'pixels'].includes(mode)) throw Error('Unknown proof mode');
   fs.mkdirSync(out, { recursive: true });
-  const baselineSha = process.env.PROOF_BASE_SHA, candidateSha = process.env.PROOF_HEAD_SHA;
-  if (!/^[a-f0-9]{40}$/.test(baselineSha || '') || !/^[a-f0-9]{40}$/.test(candidateSha || '')) throw Error('Require immutable baseline and candidate SHAs');
+  const baselineSha = mode === 'pixels' ? process.env.PROOF_BASE_SHA : null, candidateSha = process.env.PROOF_HEAD_SHA;
+  if (!/^[a-f0-9]{40}$/.test(candidateSha || '') || mode === 'pixels' && !/^[a-f0-9]{40}$/.test(baselineSha || '')) throw Error('Require immutable candidate SHA (and baseline SHA for pixels)');
   const servers = [], results = [];
   try {
-    const base = await serve('proof-baseline/dist'); servers.push(base);
+    let base;
+    if (mode === 'pixels') { base = await serve('proof-baseline/dist'); servers.push(base); }
     const candidate = await serve('dist'); servers.push(candidate);
     for (const proof of proofs.filter(p => p.ciSafe === true)) {
       const dir = path.join(out, proof.id); fs.mkdirSync(dir, { recursive: true });
       const log = fs.createWriteStream(path.join(dir, 'log.txt')), start = Date.now();
       const code = await new Promise((resolve, reject) => {
-        const child = spawn(process.execPath, [proof.script, base.url, baselineSha, candidate.url, candidateSha], {
-          env: { ...process.env, PAUSE_PROOF_MODE: mode, PAUSE_PROOF_OUT: dir, PAUSE_TRACE_PIXELS: mode === 'pixels' ? '1' : '0', PAUSE_BASELINE_RESULT: path.resolve(`proof-cache/${proof.id}-${mode}.json`) },
+        const args = mode === 'pixels' ? [base.url, baselineSha, candidate.url, candidateSha] : [candidate.url, candidateSha];
+        const child = spawn(process.execPath, [proof.script, ...args], {
+          env: { ...process.env, PAUSE_PROOF_MODE: mode, PAUSE_PROOF_OUT: dir, PAUSE_TRACE_PIXELS: mode === 'pixels' ? '1' : '0', PAUSE_BASELINE_RESULT: mode === 'pixels' ? path.resolve(`proof-cache/${proof.id}-pixels.json`) : '' },
           stdio: ['ignore', 'pipe', 'pipe'],
         });
         child.stdout.on('data', data => { process.stdout.write(data); log.write(data); });

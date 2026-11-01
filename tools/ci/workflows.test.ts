@@ -14,10 +14,7 @@ describe("shared CI game build", () => {
     expect(proof.env.PROOF_MODE).toBe("fast");
     expect(steps.find((s: any) => s.name === "Install Chromium (bounded, one retry)").run).toBe(jobs.smoke.steps.find((s: any) => s.name === "Install Chromium (bounded, one retry)").run);
     expect(steps.find((s: any) => s.uses === "actions/download-artifact@v4").with).toEqual({ name: "game-dist", path: "dist" });
-    const cache = steps.find((s: any) => s.id === "proof-cache");
-    expect(cache.with.key).toContain("steps.baseline.outputs.sha");
-    expect(cache.with["restore-keys"]).toBeUndefined();
-    expect(steps.find((s: any) => s.uses === "actions/cache/save@v4").if).toContain("always()");
+    expect(steps.some((s: any) => s.id === "proof-cache" || s.with?.path === "proof-baseline" || /build-proof-baseline/.test(s.run ?? ""))).toBe(false);
     expect(steps.find((s: any) => s.name === "Keep proof evidence and timing").if).toBe("always()");
   });
   it("keeps settled pixels on informational nightly/manual execution, never PRs", () => {
@@ -27,6 +24,7 @@ describe("shared CI game build", () => {
     expect(nightly.on.pull_request).toBeUndefined();
     expect(nightly.on.push).toBeUndefined();
     expect(nightly.jobs.pixels.env).toMatchObject({ PROOF_MODE: "pixels", PAUSE_SETTLE_MS: "300000" });
+    expect(nightly.jobs.pixels.steps.find((s: any) => s.id === "proof-cache").with.key).toContain("steps.baseline.outputs.sha");
     expect(nightly.jobs.pixels.steps.find((s: any) => s.name === "Update the single standing failure report").if).toBe("failure()");
     expect(jobs.proofs.steps.find((s: any) => s.name === "Keep proof evidence and timing").with.name).toContain("github.run_attempt");
     expect(jobs.proofs.needs).toEqual(["build"]);

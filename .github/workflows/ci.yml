@@ -360,13 +360,6 @@ jobs:
         with:
           name: game-dist
           path: dist
-      - uses: actions/checkout@v4
-        with:
-          ref: claude/prototype
-          path: proof-baseline
-      - name: Freeze baseline SHA once
-        id: baseline
-        run: echo "sha=$(git -C proof-baseline rev-parse HEAD)" >> "$GITHUB_OUTPUT"
       - uses: actions/cache@v4
         with:
           path: ~/.cache/ms-playwright
@@ -380,32 +373,11 @@ jobs:
             echo "Chromium install attempt $try failed or exceeded 300 s"; sleep 5
           done
           exit 1
-      - uses: actions/cache/restore@v4
-        id: proof-cache
-        with:
-          path: |
-            proof-baseline/dist
-            proof-cache
-          key: proofs-v2-fast-${{ runner.os }}-node22-pw${{ env.PLAYWRIGHT_VERSION }}-${{ steps.baseline.outputs.sha }}-${{ hashFiles('tools/ci/*proof*', 'tools/smoke/paused-*.cjs') }}
-      - name: Prepare immutable baseline (never rebuild candidate)
-        id: prepare-baseline
-        env:
-          PROOF_BASE_SHA: ${{ steps.baseline.outputs.sha }}
-        run: node tools/ci/build-proof-baseline.cjs
       - name: Run every declared CI-safe proof
         env:
           NODE_PATH: ${{ github.workspace }}/.pw/node_modules
-          PROOF_BASE_SHA: ${{ steps.baseline.outputs.sha }}
           PROOF_HEAD_SHA: ${{ github.event.pull_request.head.sha }}
         run: node tools/ci/run-proofs.cjs
-      - uses: actions/cache/save@v4
-        # Preserve a completed baseline even when the candidate fails. No restore prefixes.
-        if: ${{ always() && steps.prepare-baseline.outcome == 'success' && steps.proof-cache.outputs.cache-hit != 'true' && hashFiles('proof-cache/paused-world-fast.json') != '' }}
-        with:
-          path: |
-            proof-baseline/dist
-            proof-cache
-          key: ${{ steps.proof-cache.outputs.cache-primary-key }}
       - name: Keep proof evidence and timing
         if: always()
         uses: actions/upload-artifact@v4

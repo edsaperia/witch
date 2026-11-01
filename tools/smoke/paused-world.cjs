@@ -211,7 +211,7 @@ async function measure(browser, url, sha, candidate) {
     await page.keyboard.press('Escape');
     await page.waitForSelector('body.paused');
     await page.evaluate(() => { window.pauseProbe.held = window.pauseProbe.frame; });
-    const baselineMeasurement = await hold('pause', 60000);
+    const baselineMeasurement = await hold('pause', pixels ? 60000 : 30000);
     if (!candidate) return baselineMeasurement;
     assert.ok((await snapshot()).phases.length, 'need a visible world pointer fixture');
     // The real control opens Settings after a minute with no world draws.
@@ -260,10 +260,12 @@ async function measure(browser, url, sha, candidate) {
 }
 
 (async () => {
-  const [base, baseSha, candidate, candidateSha] = process.argv.slice(2);
-  assert.ok(base && baseSha && candidate && candidateSha, 'supply both immutable builds and expected SHAs');
+  const args = process.argv.slice(2);
+  const [base, baseSha, candidate, candidateSha] = pixels ? args : [null, null, ...args];
+  assert.ok(candidate && candidateSha && (!pixels || base && baseSha), 'supply immutable candidate (and baseline in pixel mode) with expected SHA');
   const browser = await playwright.chromium.launch({ args: ['--use-gl=angle', '--use-angle=swiftshader', '--enable-unsafe-swiftshader', '--ignore-gpu-blocklist'] });
   try {
+    if (!pixels) { await measure(browser, candidate, candidateSha, true); return; }
     // CI keys this successful measurement by immutable baseline SHA and proof/browser fingerprint.
     const cache = process.env.PAUSE_BASELINE_RESULT;
     let measured;
