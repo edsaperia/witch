@@ -1,5 +1,20 @@
 # The view
 
+**Heat/refraction preview** (Ed/root, 2026-10-31; #1543): opt-in `?refraction=1`,
+off by default pending visual/GPU acceptance. One nearest visible campfire plume
+and one party-cast pressure wave use namespaced uniforms in the existing Post
+composite, with the scene's existing depth texture. Whole art-pixel offsets are
+bounded/clamped; emitter support depth protects foreground at destination and
+borrowed source. Canonical order (6545181860): base quantized UV, guarded
+refraction, unchanged potion wobble, existing grading/composite. Potion-owned
+lines stay intact; bloom/outlines use the resulting p, smooth FX keeps vUv,
+and grade/tilt-shift retain their order. OFF pixel identity is still unmeasured.
+World-clock lifetimes freeze/slow with play; the cast's actual rendered pose and
+original timestamp are captured once, and island swaps clear it. `FX_QUALITY.distortion`
+and reduced flashing disable it. No extra pass/target or gameplay change. See
+`docs/plans/heat-refraction-review.md` for the required unperformed cloud
+foreground/edge/combined-potion and crowded GPU/memory comparisons.
+
 On entering travel, an adult or youth’s displayed chain settles onto the eased ground route. At rejoin it rises from the sigil end first. The pose takes its time from the leash view and its duration from `config/playtest-render.json`. Reversing direction halfway starts from the visible links. Babies bypass the bond renderer.
 
 A wild stump shows only hostile fighters while any are left, then all eligible area creatures. The column still fades by distance. A ready stump’s music note has a separate on-screen check and minimum pixel width in `config/playtest-render.json`. Only the stump under the witch’s feet gets the cast prompt.
