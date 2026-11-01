@@ -98,7 +98,12 @@ async function admitted(a, b) {
   assert.equal(x.role, 'host'); assert.equal(x.player, 0); assert.equal(y.role, 'guest'); assert.equal(y.player, 1); assert.equal(n.player, 1);
 }
 async function complete(a, b) { await ring(a, b); const pair = await challenge(a, b); await proofs(a, b, pair); await admitted(a, b); return pair; }
-async function barrier(p) { const reply = p.next('call-busy'); send(p, { type: 'dial', number: 'invalid' }); await reply; }
+// Same-socket frame order proves the prior synchronous message was handled, without spending the dial bucket.
+async function barrier(p) {
+  const payload = Buffer.from('lifecycle-order');
+  const pong = once(p.ws, 'pong', { signal: AbortSignal.timeout(2000) });
+  p.ws.ping(payload); assert.deepEqual((await pong)[0], payload);
+}
 
 for (const phase of ['ringing', 'challenge', 'one-sided acceptance']) for (const side of ['caller', 'answerer']) {
   run(`close ${side} during ${phase}: no admission, survivor reusable and identity released`, async t => {
@@ -128,12 +133,12 @@ run('late proof after cancellation is rejected and cannot admit world traffic', 
 
 run('redial has a new challenge and cannot reuse a previous one-sided verification', async t => {
   const f = await fixture(t), a = await f.phone('1234567'), b = await f.phone('7654321');
-  await ring(a, b); const first = await challenge(a, b); await proofs(a, b, first); send(a, { type: 'identity-verified' });
+  await ring(a, b); const first = await challenge(a, b); await proofs(a, b, first); send(a, { type: 'identity-verified' }); await barrier(a);
   const cancelled = [a.next('call-cancelled'), b.next('call-cancelled')]; send(b, { type: 'cancel-call' }); await Promise.all(cancelled);
   await ring(a, b); const fresh = await challenge(a, b); assert.notEqual(fresh[0].challenge.nonce, first[0].challenge.nonce);
   const stale = sign(null, transcript(first[0]), a.keys.privateKey);
   assert.equal(verify(null, transcript(fresh[0]), createPublicKey(a.keys.privateKey), stale), false); // Peer verifier boundary, not server-side signature validation.
-  await proofs(a, b, fresh); send(b, { type: 'identity-verified' }); await barrier(a); noAdmission(a, b);
+  await proofs(a, b, fresh); send(b, { type: 'identity-verified' }); await barrier(b); noAdmission(a, b);
   const connected = [a.next('call-connected'), b.next('call-connected'), a.next('guest-joined')]; send(a, { type: 'identity-verified' }); await Promise.all(connected);
 });
 
