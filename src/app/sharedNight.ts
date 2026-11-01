@@ -18,4 +18,5 @@ export function continueSharedNight(previous: Game, next: Game, owned: { hats: R
     witch.house = { lastBed: bed.id };
     if (!startWakeFor(next, 0, { yesterday: true, mirrored: wake?.mirror }, witch, { player: i, room: wake?.room ?? bed.room, bed: bed.id })) throw new Error("A shared witch couldn't wake in her bed.");
   });
+  next.witch = next.witches[0].body;
 }

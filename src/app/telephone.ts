@@ -16,6 +16,7 @@ export interface TelephoneOptions {
   endpoint?: string; socket?: (url: string) => RelaySocket; menu?: (actions: TelephoneActions) => Menu;
   digit?: (digit: string) => void; face?: (number: string) => Node | null;
   clearFaces?(): void;
+  trouble?(on: boolean): void;
 }
 /** Page-owned telephone; only mutually verified/accepted calls reach the ordinary-game session hook. */
 export function telephone(options: TelephoneOptions) {
@@ -27,6 +28,7 @@ export function telephone(options: TelephoneOptions) {
   let state: TelephoneState = { own: book.number, recent: book.recent, saved: book.saved, status: "ended" };
   const paint = (patch: Partial<TelephoneState>) => { state = { ...state, ...patch, recent: book.recent, saved: book.saved }; menu.render(state); };
   const hangUp = () => {
+    options.trouble?.(false);
     generation++; attempt++; intent = null; trust?.cancel(); joinAbort?.abort(); joinAbort = null; connection?.close(); connection = null;
     const joined = role !== null; role = null; paint({ status: "ended" }); if (joined) options.departed();
   };
@@ -62,6 +64,7 @@ export function telephone(options: TelephoneOptions) {
         trust = telephoneTrust(own, book.pinned);
         connection = connectRelay({ endpoint: options.endpoint ?? "wss://witch-relay.onrender.com", room: number, telephone: true, telephonePublicKey: own.publicKey, socket: options.socket,
           onError(error) { if (current === generation) fail(error); },
+            onTrouble(on) { if (current === generation && role) { paint({ detail: on ? "Connection trouble…" : undefined }); options.trouble?.(on); } },
           onClose() {
             if (current !== generation) return;
             generation++; attempt++; intent = null;
