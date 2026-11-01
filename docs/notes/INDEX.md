@@ -228,6 +228,7 @@ says what each note covers.
 
 ## [Performance](performance.md)
 
+- Smoke veil readback (PR1558, pending hardware proof)
 - House route profiling
 - Startup bundle baseline
 - Slow-frame summaries

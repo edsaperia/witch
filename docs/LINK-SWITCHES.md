@@ -120,6 +120,7 @@ For the builders, the smoke and bench runs, the repro link and the arenas.
 | `mode=treetop` | The repro link: with at=, she starts in the treetops. | 2026-10-14 | app/repro.ts |
 | `music=off` / `music=live` / `music=<section>` / `music=wave<N>` | No music, the music played live rather than the pre-recorded way (the default since Ed, 2026-10-27), one section on a loop, or wave N's music. *Decision: Pre-recorded (drawn-ahead) music is the default (Ed, 2026-10-27).* | 2026-10-07 | app/linkParams.ts, app/sound.ts |
 | `occlusion=off` | The occlusion probes off. | 2026-10-19 | render/view.ts |
+| `veilread=three` / `veilread=off` | Compare smoke-veil readback: three uses the previous asynchronous polling route; off skips the smoke veil over invite indicators. The default checks once per frame without flushing. | 2026-10-31 | render/view.ts |
 | `own=all` / `own=none` / `own=<kind>:<item>` / `own=<kind>:*` | Finds given or let go on this browser's saves, as the dev control does. | 2026-10-23 | app/linkParams.ts |
 | `pack=wolf*4@2,…` | The Fight Arena's pack, written as an arena, instead of a rolled one. | 2026-10-27 | app/fightArena.ts |
 | `parts=<part>,…` | Her broom's parts for one load, found or not. | 2026-10-23 | app/linkParams.ts |

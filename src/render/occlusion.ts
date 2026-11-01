@@ -16,6 +16,7 @@ import * as THREE from "three";
 import { GROUND_SEEN_GLSL, HEIGHT_UNIFORMS, HEIGHT_VERT_GLSL } from "./height";
 import { SMOKE_PUFF_GLSL, type Smoke } from "./smoke";
 import { SPRITE_UNIFORMS } from "./sprites";
+import { VeilReadback } from "./veilReadback";
 
 /** Between the solid pass (and the smoke at 9.4) and the see-through passes round her (10.9, 11, 19.9). */
 export const PROBE_ORDER = 10.5;
@@ -88,6 +89,14 @@ export class OcclusionProbes {
   private veilRt = new THREE.WebGLRenderTarget(VEIL_PROBES, 1, { depthBuffer: false, stencilBuffer: false, generateMipmaps: false });
   private veilBuf = new Uint8Array(VEIL_PROBES * 4);
   private veilBusy = false;
+  veilRead: "fence" | "three" | "off" = "fence";
+  readMs = 0;
+  private veilReader: VeilReadback | null = null;
+  private veilKeys: string[] = [];
+  private probeSerial = 0;
+  private probeVersions = new Map<Probe, number>();
+  private veilVersions: number[] = [];
+  private veilEpoch = 0;
   private veilScene = new THREE.Scene();
   private veilCam = new THREE.OrthographicCamera(-1, 1, 1, -1, 0, 1);
   private veilMat: THREE.ShaderMaterial | null = null;
@@ -105,7 +114,8 @@ export class OcclusionProbes {
     if (!p) {
       p = this.pool.find(q => q.key === "" && !q.pending.length);
       if (!p) p = this.make();
-      p.key = key; p.shown = 1; p.answer = 1; p.heard = false;
+      p.key = key; p.shown = 1; p.answer = 1; p.veil = 0; p.heard = false;
+      this.probeVersions.set(p, ++this.probeSerial);
       this.byKey.set(key, p);
     }
     p.u.set(x, y, z, half);
@@ -115,6 +125,7 @@ export class OcclusionProbes {
 
   /** Another night (View.setGame): every probe let go of its key (those waiting on a query are taken again once it's answered). */
   reset(): void {
+    this.veilEpoch++; this.veilReader?.cancel(); this.veilBusy = false; this.veilKeys = [];
     for (const p of this.pool) { p.key = ""; p.mesh.visible = false; p.shown = 1; p.answer = 1; p.veil = 0; p.heard = false; }
     this.byKey.clear(); this.lastTime = -1;
   }
@@ -131,6 +142,9 @@ export class OcclusionProbes {
     this.lastTime = time;
     this.frame++;
     if (!gl) return;
+    const readStart = performance.now();
+    if (this.veilReader?.poll(this.veilBuf)) this.heardVeil(this.veilKeys, this.veilVersions, this.veilBuf);
+    this.readMs = performance.now() - readStart;
     for (const p of this.pool) {
       while (p.pending.length && gl.getQueryParameter(p.pending[0], gl.QUERY_RESULT_AVAILABLE)) {
         const q = p.pending.shift()!;
@@ -149,7 +163,8 @@ export class OcclusionProbes {
    *  last one's in (never waiting on it), eased in as the queries' answers are. */
   veil(): void {
     const S = this.smoke;
-    if (!this.gl || !this.on || !S || !S.mesh.visible || this.veilBusy) return;
+    if (!this.gl || !this.on || this.veilRead === "off" || !S || !S.mesh.visible || this.veilBusy) return;
+    if (!this.pool.slice(0, VEIL_PROBES).some(p => p.key && p.used === this.frame)) return;
     const fires = S.drawnFires();
     if (!fires.n) return;
     if (!this.veilMat) {
@@ -169,13 +184,25 @@ export class OcclusionProbes {
     const r = this.renderer, prev = r.getRenderTarget();
     r.setRenderTarget(this.veilRt);
     r.render(this.veilScene, this.veilCam);
-    r.setRenderTarget(prev);
     this.veilBusy = true;
-    const keys = this.pool.slice(0, VEIL_PROBES).map(p => p.key);
-    r.readRenderTargetPixelsAsync(this.veilRt, 0, 0, VEIL_PROBES, 1, this.veilBuf).then(() => {
-      this.veilBusy = false;
-      keys.forEach((k, i) => { const p = this.pool[i]; if (k && p.key === k) p.veil += (this.veilBuf[i * 4] / 255 - p.veil) * 0.4; }); // (a readback a frame or two: eased over a few)
-    }, () => { this.veilBusy = false; });
+    const keys = this.pool.slice(0, VEIL_PROBES).map(p => p.used === this.frame ? p.key : "");
+    const versions = this.pool.slice(0, VEIL_PROBES).map(p => this.probeVersions.get(p) ?? 0);
+    if (this.veilRead === "three") {
+      r.setRenderTarget(prev);
+      const epoch = this.veilEpoch, pixels = new Uint8Array(this.veilBuf.length);
+      r.readRenderTargetPixelsAsync(this.veilRt, 0, 0, VEIL_PROBES, 1, pixels).then(() => {
+        if (epoch === this.veilEpoch) this.heardVeil(keys, versions, pixels);
+      }, () => { if (epoch === this.veilEpoch) this.veilBusy = false; });
+    } else {
+      this.veilReader ??= new VeilReadback(this.gl, this.veilBuf.length);
+      try { this.veilBusy = this.veilReader.issue(VEIL_PROBES); this.veilKeys = keys; this.veilVersions = versions; }
+      finally { r.setRenderTarget(prev); }
+    }
+  }
+
+  private heardVeil(keys: string[], versions: number[], pixels: Uint8Array): void {
+    this.veilBusy = false;
+    keys.forEach((k, i) => { const p = this.pool[i]; if (k && p?.key === k && this.probeVersions.get(p) === versions[i]) p.veil += (pixels[i * 4] / 255 - p.veil) * 0.4; });
   }
 
   private make(): Probe {
