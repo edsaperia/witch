@@ -28,6 +28,7 @@ export function telephoneStation(options: Pick<TelephoneOptions, "storage" | "lo
     get catalogue() { return session?.catalogue ?? null; },
     houseEvents() { return session?.role === "guest" ? session.takeHouseEvents() : null; },
     choose(choice: StationChoice): boolean { return session?.choose(choice) ?? false; },
+    changed() { session?.changed(); },
     preferences(game: Game) { return session?.role === "guest" ? preferences.tuning(game) : game.tuning; },
     step(game: Game, controls: Controls, dt: number): boolean {
       if (session?.role === "guest" && !session.ready) return true; // Own page may still be draining its checkpoint before adoption.

@@ -19,6 +19,7 @@ import { appearance } from "./platform/online/appearance";
 import { stationLook } from "./platform/online/stationAppearance";
 import { localHouseAction } from "./app/houseActions";
 import type { HouseEvents } from "./platform/online/houseSteps";
+import { fillNightTrunk } from "./app/nightFindBoundary";
 import { currentSettings } from "./app/playerSettings";
 import { wavesOver } from "./rules/win";
 import { chartOpen, closeChart, openChart, prepareChart, finishChartFlight, type Sailed } from "./ui/chartOverlay";
@@ -1434,7 +1435,7 @@ function frameBody(now: number): void {
   // Tonight's find (rules/finds.ts): the night's one draw over everything she hasn't found, a wearable (the trunk) or a broom part
   // (a wreck), made once a night; taken, it's hers for the night, on loan till she sleeps (app/loan.ts; Ed, 2026-10-24): to wear
   // or use at once, never saved unless the night's won.
-  if (game.trunk && game.trunk.item === null) mutate("finds: fill trunk", () => fillTrunk(game, foundAll(findsCtx())));
+  if (!N().spec.borrowed && !phone.visiting && game.trunk && game.trunk.item === null) mutate("finds: fill trunk", () => fillNightTrunk(game, phone.active ? "host" : "solo", () => foundAll(findsCtx()), () => phone.changed()));
   for (const e of game.leashEvents) if (e.kind === "found" && e.obj && e.find) {
     mutate("finds: loan", () => lendFind(e.find!, e.obj!));
     if (e.find === "part") hud.found(`found: ${partById(e.obj)?.name.toLowerCase() ?? e.obj} · at the Workshop`); // (not fitted: the bay fits it)

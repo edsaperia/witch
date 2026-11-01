@@ -17,6 +17,7 @@ import { RECORDS } from "../../rules/records";
 import { stationAuthority } from "./stationAuthority";
 import { bpmAt } from "../../rules/beat";
 import { ITEMS } from "../../rules/wardrobe";
+import { fillNightTrunk } from "../../app/nightFindBoundary";
 
 const cleanups: (() => void)[] = [];
 afterEach(() => { for (const stop of cleanups.splice(0)) stop(); });
@@ -227,6 +228,9 @@ it("rejects an incompatible build before preparing a guest View or sending contr
 it("coalesces page mutations before the next frame and preserves the guest game identity", async () => {
   const f = fixture(), { joined } = await f.start(); await f.sync(); await joined;
   const guestGame = f.guest.game!, before = f.hostMessages.length;
+  // A page-owned host find is copied at the same ordered checkpoint, not independently redrawn by the visitor.
+  f.hostGame.trunk = { x: f.hostGame.map.treehouse.x, z: f.hostGame.map.treehouse.z, cell: [0, 0], kind: "wearable", item: null, found: false };
+  fillNightTrunk(f.hostGame, "host", () => ({}), () => f.host.changed());
   f.hostGame.witches[1].body.x += 3; f.host.changed(); f.host.changed(); f.guest.changed();
   expect(f.hostMessages).toHaveLength(before);
   f.host.step(input(), .02);
@@ -234,6 +238,7 @@ it("coalesces page mutations before the next frame and preserves the guest game 
   expect(updates.map(m => (m.payload as { kind: string }).kind)).toEqual(["checkpoint", "frame"]);
   for (const message of updates) f.guest.message(message);
   expect(f.guest.game).toBe(guestGame); expect(snapshotGame(guestGame)).toEqual(snapshotGame(f.hostGame));
+  expect(guestGame.trunk).toEqual(f.hostGame.trunk); expect(guestGame.trunk?.item).toBeTruthy();
   const next = f.hostMessages.length; f.host.step(input(), .02);
   expect(f.hostMessages.slice(next).map(m => (m.payload as { kind: string }).kind)).toEqual(["frame"]);
   f.guest.message(updates[0]); expect(f.guestOptions.failed).toHaveBeenCalledTimes(1); // stale checkpoint cannot roll back a tick
