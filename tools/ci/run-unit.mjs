@@ -51,6 +51,8 @@ if (process.argv[1] && fileURLToPath(import.meta.url) === fs.realpathSync(proces
   const testsAt = performance.now(), result = runTests(selection, args => spawnSync(process.execPath, [cli, ...args], { stdio: "inherit" }), githubActions, shard);
   const report = { ...selection, shard: shard?.text ?? null, workers: githubActions ? "existing Vitest config" : 1, selectionMs, testMs: performance.now() - testsAt, totalMs: performance.now() - start, status: result.status, signal: result.signal, error: result.error?.message };
   fs.writeFileSync("ci-unit-results.json", JSON.stringify(report, null, 2) + "\n");
+  // A readable check-run annotation (the coordinator can read annotations but not logs): was this the FULL suite?
+  if (githubActions) console.log(`::notice title=unit-scope::Unit tests ${selection.mode}${shard ? ` shard ${shard.text}` : ""}: ${selection.reason}; exit ${result.status ?? result.signal ?? "error"}`);
   if (process.env.GITHUB_STEP_SUMMARY) fs.appendFileSync(process.env.GITHUB_STEP_SUMMARY, `Unit tests: **${selection.mode}** (${selection.reason}); selection ${(selectionMs / 1000).toFixed(2)}s, tests ${(report.testMs / 1000).toFixed(2)}s, exit ${result.status ?? result.signal ?? "error"}.\n`);
   process.exitCode = result.status ?? 1;
 }
