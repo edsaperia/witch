@@ -26,6 +26,14 @@ node tools/ci/report-command.cjs --kind art -- node art/check.mjs --times
 
 Resolve related tests first.
 
+## `same-game.mjs`
+
+Is the head's game exactly the base's?
+
+```
+node tools/ci/same-game.mjs <base checkout> <head checkout>   (prints same=true|false for $GITHUB_OUTPUT)
+```
+
 ## `sleep-cell-repro.mjs`
 
 Diagnose logical ownership at spawn and both sleep stages; retain raw physical legend-cell differences as evidence.
@@ -37,6 +45,10 @@ node tools/ci/sleep-cell-repro.mjs [largest|four-area|radius|all] (exit 1 means 
 ## `test-scope.mjs`
 
 Conservative unit-test selection.
+
+## `unit-timings.mjs`
+
+Refresh tools/ci/unit-timings.json from a full Vitest JSON report; it only balances the CI shards.
 
 ## `vitest-reporter.mjs`
 
@@ -53,6 +65,8 @@ Inventory real world-constructor calls and explicit small-fixture reasons; comme
 - `pages-policy.test.cjs`
 - `reporting.test.cjs`
 - `run-unit.test.ts`
+- `same-game.test.ts`
 - `test-scope.test.ts`
+- `unit-timings.json`
 - `workflows.test.ts`
 - `world-audit.test.ts`

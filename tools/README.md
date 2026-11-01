@@ -7,6 +7,7 @@ Scripts for building, checking and measuring the game, run from the repository r
 - [`arrive/`](arrive/README.md): 2 scripts — boot.cjs, time.cjs
 - [`art-cache/`](art-cache/README.md): 4 scripts — history.mjs, load.mjs, map.mjs, parity.mjs
 - [`art-check/`](art-check/README.md): 4 scripts — affected.mjs, checked-tree.mjs, scope.mjs, shards.mjs
+- [`art-check-legacy/`](art-check-legacy/README.md): 0 scripts
 - [`art-iterations/`](art-iterations/README.md): 2 scripts — evolutions.js, ladder.mjs
 - [`art-lab/`](art-lab/README.md): 1 script — build.mjs
 - [`art-style/`](art-style/README.md): 1 script — capture.cjs
@@ -19,7 +20,7 @@ Scripts for building, checking and measuring the game, run from the repository r
 - [`biomes/`](biomes/README.md): 2 scripts — sheet.mjs, shots.cjs
 - [`body-graph/`](body-graph/README.md): 7 scripts — age-size-audit.mjs, cat-fixtures.js, cats-preview.mjs, diagnostics.mjs, fit-contact-sheets.mjs, fit-size-audit.mjs, size-candidate-audit.mjs
 - [`chart/`](chart/README.md): 4 scripts — diff.cjs, emerge.cjs, open.cjs, profile.cjs
-- [`ci/`](ci/README.md): 8 scripts — annotations.cjs, pages-policy.cjs, report-command.cjs, run-unit.mjs, sleep-cell-repro.mjs, test-scope.mjs, vitest-reporter.mjs, world-audit.mjs
+- [`ci/`](ci/README.md): 10 scripts — annotations.cjs, pages-policy.cjs, report-command.cjs, run-unit.mjs, same-game.mjs, sleep-cell-repro.mjs, test-scope.mjs, unit-timings.mjs, vitest-reporter.mjs, world-audit.mjs
 - [`config/`](config/README.md): 7 scripts — check.mjs, format.mjs, generated.mjs, knob-docs.mjs, linkSwitches.mjs, schema.mjs, typegen.mjs
 - [`dj/`](dj/README.md): 5 scripts — booth-sheet.mjs, booth.cjs, candles-sheet.mjs, respawn.cjs, strip.mjs
 - [`docs/`](docs/README.md): 2 scripts — glossary.mjs, tables.mjs
