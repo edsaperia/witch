@@ -1,0 +1,25 @@
+import { expect, it } from "vitest";
+import { newGame, newWitchPlayer } from "../rules/game";
+import { TUNING } from "../rules/tuning";
+import { snapshotGame } from "../rules/nightSnapshot";
+import { WITCH_GENOME } from "../../art/witchGenome.js";
+import { startWakeFor } from "../rules/wakeUp";
+import { remoteRoomPass, remoteWitchFrame, remoteWornLook } from "./remoteWitch";
+import type { WitchArt } from "./homeArt";
+const pose = (n: number) => ({ towards: [n], away: [n + 1], fps: 4 });
+const heading = { hover: [0], lean: 120, leanCycle: [120], fast: [100], brake: [110], idle: [20], walk: [30], idleBroom: [40], walkBroom: [50] };
+const art: WitchArt = { foot: { idle: pose(20), walk: pose(30), idleBroom: pose(40), walkBroom: pose(50), sit: pose(60), liftSigil: pose(70), land: pose(80), takeoff: pose(90) }, fly: { fast: pose(100), brake: pose(110) }, heading: { up: heading, down: heading }, lean: { towards: [120], away: [121] }, dj: { full: [], upper: [] }, hat: -1, grounds: [] };
+it("reads each remote wake/pile/hat without changing canonical state or the approved look", () => {
+  const tuning = structuredClone(TUNING); tuning.map!.island = "home"; tuning.map!.islandAreas = 4;
+  const game = newGame(123, tuning), W = newWitchPlayer(1, 0, 0, tuning); game.witches.push(W); startWakeFor(game, 0, { yesterday: true }, W, { player: 1, room: "bedroom2" });
+  const before = JSON.stringify(snapshotGame(game)), approved = structuredClone(WITCH_GENOME), original = JSON.stringify(approved);
+  const nightie = remoteWornLook(game, W, approved); expect((nightie.accessories as Record<string, unknown>).nightie).toBe(true); expect((nightie.hat as { shape: string }).shape).toBe("none");
+  const phase = { time: 0, walk: 0, foot: true }; expect(remoteWitchFrame(game, W, art, phase).index).toBe(60);
+  expect(remoteRoomPass(game, W)).toBe(true);
+  expect(JSON.stringify(snapshotGame(game))).toBe(before); expect(JSON.stringify(approved)).toBe(original);
+  W.wake!.open = true; W.wake!.pile = []; W.body.vx = 3; W.time = 1;
+  expect(remoteWitchFrame(game, W, art, phase).index).toBe(30);
+  W.hat.has = true; W.hat.down = { x: 1, z: 2, at: 0 }; expect((remoteWornLook(game, W, approved).hat as { shape: string }).shape).toBe("none");
+  W.hat.down = null; expect(remoteWornLook(game, W, approved)).toBe(approved);
+  W.body.x += 1000; expect(remoteRoomPass(game, W)).toBe(false); expect(remoteRoomPass(game, undefined)).toBe(false);
+});

@@ -1,5 +1,7 @@
 # Config files
 
+PR1538/canonical6552743521 registers proof-only `telephone=1` in app/telephoneSwitch.ts; omitted/0/other values keep the original quiet-line use and no panel or identity work. The registry and LINK-SWITCHES page are refreshed through their existing generator. This is panel visibility only, never permission to enable calls or deploy a relay.
+
 The link-switch scanner records paths with forward slashes on every OS. Its generated-document check ignores checkout CRLF versus LF only; all text and spacing must still match.
 
 The schema reader's combat data imports `LEGEND` from the pure `rules/creatureLevels.ts`, not the creature simulation. `creatures.ts` retains its original LEGEND/Level exports for callers. The narrow boundary removes the schema tool's runtime import path to creatures/wildWatch/game without changing assembled combat values or any timeout; parity and dependency-graph tests guard it. Windows cold/warm gate timing remains separate evidence, under the laptop allocation rule.
