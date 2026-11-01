@@ -23,6 +23,27 @@ const cleanups: (() => void)[] = [];
 afterEach(() => { for (const stop of cleanups.splice(0)) stop(); });
 const input = (moveX = 0): Controls => ({ moveX, moveZ: 0, zoom: 0, toggleMode: false, autoTalk: false });
 const turn = () => new Promise<void>(resolve => setTimeout(resolve, 0));
+it("resolves bounded guest choices by sequence, including rejection, and refuses stale results", async () => {
+  const f = fixture(), resolved = vi.fn(); f.guestOptions.stationResolved = resolved;
+  const { joined } = await f.start(); await f.sync(); await joined;
+  const choice = { kind: "bag" as const, id: BAGS[0].id }, before = f.guestMessages.length;
+  for (let i = 0; i < 8; i++) expect(f.guest.choose(choice)).toBe(true);
+  expect(f.guest.choose(choice)).toBe(false);
+  for (const message of f.guestMessages.slice(before)) f.host.message(message);
+  let index = f.hostMessages.length; f.host.step(input(), .02);
+  const rejected = f.hostMessages.slice(index);
+  expect((rejected[0].payload as { results: unknown[] }).results).toEqual(Array.from({ length: 8 }, (_, sequence) => ({ sequence, accepted: false })));
+  for (const message of rejected) f.guest.message(message);
+  expect(resolved).toHaveBeenCalledTimes(8); expect(resolved).toHaveBeenLastCalledWith(1, choice, false);
+  f.hostOptions.authorizeStation = () => true;
+  expect(f.guest.choose(choice)).toBe(true); f.host.message(f.guestMessages.at(-1)!); index = f.hostMessages.length;
+  f.host.step(input(), .02); const approved = f.hostMessages.slice(index);
+  for (const message of approved) f.guest.message(message);
+  expect(resolved).toHaveBeenLastCalledWith(1, choice, true); expect(f.guest.game!.witches[1].spells.bag).toBe(choice.id);
+  expect(snapshotGame(f.guest.game!)).toEqual(snapshotGame(f.hostGame));
+  f.guest.message({ type: "state", player: 0, payload: { kind: "station", tick: f.guest.tick, choices: [], results: [{ sequence: 0, accepted: false }] } });
+  expect(f.guestOptions.failed).toHaveBeenCalledWith(expect.objectContaining({ message: "Invalid station results" })); expect(resolved).toHaveBeenCalledTimes(9);
+});
 it("uses only host catalogue metadata, publishes changes in order and keeps display IDs separate from authority", async () => {
   const f = fixture(), seen = vi.fn(), catalogue = { wardrobe: [ITEMS[0].id], parts: [], hats: [], records: [RECORDS[0].id] };
   f.hostOptions.catalogue = () => catalogue;
@@ -40,7 +61,7 @@ it("uses only host catalogue metadata, publishes changes in order and keeps disp
   // Display metadata alone cannot authorize any station request.
   f.guest.choose({ kind: "bag", id: BAGS[0].id }); f.host.message(f.guestMessages.at(-1)!);
   index = f.hostMessages.length; f.host.step(input(), .02);
-  expect(f.hostMessages.slice(index).some(m => (m.payload as { kind: string }).kind === "station")).toBe(false);
+  expect(f.hostMessages.slice(index).filter(m => (m.payload as { kind: string }).kind === "station").map(m => (m.payload as { choices: unknown[] }).choices)).toEqual([[]]);
   for (const message of f.hostMessages.slice(index)) f.guest.message(message);
   f.guest.message({ type: "state", player: 0, payload: { kind: "catalogue", tick: f.guest.tick, catalogue: { ...catalogue, wardrobe: ["invented"] } } });
   expect(f.guestOptions.failed).toHaveBeenCalledWith(expect.objectContaining({ message: "Invalid shared station catalogue." }));
@@ -250,7 +271,7 @@ it("keeps a visitor's station request inert until host approval and applies it t
   expect(f.guest.choose(choice)).toBe(true); expect(snapshotGame(f.guest.game!)).toEqual(before);
   const unapproved = f.guestMessages.at(-1)!; f.host.message(unapproved);
   let index = f.hostMessages.length; f.host.step(input(), .02);
-  expect(f.hostMessages.slice(index).some(m => (m.payload as { kind: string }).kind === "station")).toBe(false);
+  expect(f.hostMessages.slice(index).filter(m => (m.payload as { kind: string }).kind === "station").map(m => (m.payload as { choices: unknown[] }).choices)).toEqual([[]]);
   for (const message of f.hostMessages.slice(index)) f.guest.message(message);
   f.hostOptions.authorizeStation = vi.fn((_game, player) => player === 1);
   f.hostOptions.stationApplied = vi.fn(); f.guestOptions.stationApplied = vi.fn();

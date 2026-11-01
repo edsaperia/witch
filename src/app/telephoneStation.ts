@@ -36,11 +36,11 @@ export function telephoneStation(options: Pick<TelephoneOptions, "storage" | "lo
       if (session?.game && session.game !== game) { session.nightChanged(); presentation = source = null; return false; }
       return session?.step(controls, Math.min(0.1, dt)) ?? false;
     },
-    /** Read-only presentation seam: solo/host returns the exact canonical object. */
+    /** Solo returns the exact canonical object. Both online players own a local camera/focus facade. */
     presented(game: Game, dt = 0, zoom = 0): Game {
-      if (session?.role !== "guest" || session.game !== game) { presentation = source = null; return game; }
-      if (source !== game) { source = game; presentation = localView(game, 1); }
-      return Object.assign(presentation!.update(dt, zoom), { tuning: preferences.tuning(game) });
+      if (!session?.role || session.game !== game) { presentation = source = null; return game; }
+      if (source !== game) { source = game; presentation = localView(game, session.role === "guest" ? 1 : 0); }
+      return Object.assign(presentation!.update(dt, zoom), { tuning: session.role === "guest" ? preferences.tuning(game) : game.tuning });
     },
     use(game: Game, id: string): void {
       const actor = telephoneActor(game, session?.role === "guest");

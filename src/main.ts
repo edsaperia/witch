@@ -23,6 +23,7 @@ import { fillNightTrunk } from "./app/nightFindBoundary";
 import { chartDeparture } from "./app/chartDeparture";
 import { soloDiagnostic } from "./app/soloDiagnostic";
 import { overlayPause } from "./app/overlayPause";
+import { introFocus } from "./app/introFocus";
 import { currentSettings } from "./app/playerSettings";
 import { wavesOver } from "./rules/win";
 import { chartOpen, closeChart, openChart, prepareChart, finishChartFlight, type Sailed } from "./ui/chartOverlay";
@@ -263,7 +264,8 @@ let dreamAfterDive: { loan: Loan; won: boolean } | null = null;
 /** The broom parts she has tonight: those she's found, and a part on loan. */
 const partsNow = (): Set<string> => withLoan("part", new Set(loadBroom().found), loan);
 const view = page.view = await View.create(canvas, N().game, gameStyle(style, bootTuning), savedLook); // (built a frame's budget at a time: the bedroom's frames go on meanwhile, render/slices.ts)
-view.setIntroFocus = pageFocus;
+let onlineFocus = () => false;
+view.setIntroFocus = (game, focus) => introFocus(game, N().game, focus, onlineFocus(), pageFocus);
 // The loading screen (src/loading.js, src/ui/loadingScreen.js), up since the first paint: given the view for its count of the art
 // and the shaders; gone at once for a start with no wake-up in the bedroom, its supernova into the bedroom's alarm otherwise (below).
 const loading = (window as unknown as { witchLoading?: { view: unknown; finish(): void; cancel(): void } }).witchLoading;
@@ -408,7 +410,8 @@ const phone = telephoneStation({ storage: (() => { try { return localStorage; } 
   }),
   wardrobe: () => findsCtx().owned(),
   catalogue: () => ({ wardrobe: [...findsCtx().owned()], parts: [...partsNow()], hats: [...(N().game.witches[0].spells.hats ?? HAT_SPELLS.filter(hat => hat.built).map(hat => hat.id))], records: ownedRecords() }),
-  catalogueApplied: catalogue => { creator.hats = catalogue.hats as typeof creator.hats; view.partsFound = new Set(catalogue.parts); },
+  catalogueApplied: catalogue => { creator.hats = catalogue.hats as typeof creator.hats; view.partsFound = new Set(catalogue.parts); reconcilePickers(); },
+  stationResolved: player => { if (player === (phone.visiting ? 1 : 0)) reconcilePickers(); },
   stationPalette: () => classicPalette(style),
   stationApplied: (player, choice) => {
     if (choice.kind === "party") { booth.close(); if (!phone.visiting) chooseRecord(choice.id); }
@@ -431,6 +434,7 @@ const phone = telephoneStation({ storage: (() => { try { return localStorage; } 
   },
 } });
 let guestAudioGame: Game | null = null;
+onlineFocus = () => phone.active;
 page.presentationGame = game => phone.presented(game);
 
 // Arriving from the sea chart (?arrive=1, or a sail in place; the night's arrival, app/night.ts): the chart's last frame while the
@@ -529,7 +533,7 @@ creator.version = typeof __BUILD__ === "string" ? __BUILD__.split(" ")[0] : "dev
 creator.loadout = { hat: N().game.spells.hat }; creator.hats = unlockAll() ? undefined : N().game.spells.hats; // (the pause page's Unlock everything: every hat, app/debugUnlock.ts)
 creator.onLoadout = l => {
   if (!phone.active && N().spec.borrowed) return;
-  if (phone.active) { phone.choose({ kind: "hat", id: l.hat }); return; }
+  if (phone.active) { if (!phone.choose({ kind: "hat", id: l.hat })) reconcilePickers(); return; }
   mutate("dressing: loadout", () => { const { game } = N(); changeLoadout(game.witches[0], l.hat); saveLoadout({ hat: hatWithoutLoan(game.spells.hat, loan) as typeof game.spells.hat }); wearHat(page.look()); });
 }; // A loaned hat is never saved; online choices wait for host approval.
 // Her room mid-night from the treehouse's rooms (rules/houseRooms.ts; Ed, 2026-10-19): E at a dressing station, the bags or the broom
@@ -563,7 +567,7 @@ const menuRecords = () => phone.visiting ? phone.catalogue?.records ?? [] : owne
 stations.onLook = g => {
   if (!phone.active && N().spec.borrowed) return;
   if (phone.active) {
-    if (stations.station) { const choice = stationLook(stations.station, g); if (choice) phone.choose(choice); }
+    if (stations.station) { const choice = stationLook(stations.station, g); if (!choice || !phone.choose(choice)) reconcilePickers(); }
     return; // No raw host/guest mutation or visitor wardrobe save before approval.
   }
   mutate("dressing: station look and bag", () => {
@@ -580,7 +584,7 @@ stations.onBack = () => shutStation("back"); // (menu.back, E by default: platfo
 const booth = new DjBooth();
 booth.onBack = () => booth.close();
 booth.onStart = r => {
-  if (phone.active) { phone.choose({ kind: "party", id: r.id }); return; }
+  if (phone.active) { if (!phone.choose({ kind: "party", id: r.id })) reconcilePickers(); return; }
   mutate("house: DJ party start", () => { chooseRecord(r.id); booth.close(); startParty(N().game, r.bpm); });
 };
 stations.onChange = () => { const { game } = N(); view.turnUntil = game.herTime + 0.8; };
@@ -589,11 +593,17 @@ stations.onDress = () => { view.spin = spinStep(view.spin, N().game.herTime); };
 // and its set's spell with it: rules/spells.ts setParts), and is kept on this browser for the nights after (app/broomSave.ts).
 stations.onFit = f => {
   if (!phone.active && N().spec.borrowed) return;
-  if (phone.active) { phone.choose({ kind: "broom", fitted: { ...f } }); return; }
+  if (phone.active) { if (!phone.choose({ kind: "broom", fitted: { ...f } })) reconcilePickers(); return; }
   mutate("dressing: broom fitting", () => { const { game } = N(); setParts(game.witches[0].spells, f); fitBroom(partsWithoutLoan(f, loan)); });
 }; // Solo keeps fitted parts without any loan; online choices wait for host approval.
 /** What the Workshop's stations show (ui/stationPanel.ts): the parts found, her broom, tonight's part to find, her tuning. */
 const workshopNow = (): WorkshopCtx => { const { game, tuning } = N(), t = game.trunk; return { found: phone.visiting ? new Set(phone.catalogue?.parts ?? []) : partsToChoose(partsNow()), fitted: phone.active ? { ...phone.presented(game).spells.parts } : game.witches[0].spells.parts, tonight: t && t.kind === "part" && !t.found ? t.item : null, tuning }; };
+function reconcilePickers(): void {
+  if (!phone.active) return;
+  stations.reconcile((page.look() ?? creator.genome()) as never, menuWardrobe(), workshopNow());
+  booth.refresh(menuRecords());
+  const witch = N().game.witches[phone.visiting ? 1 : 0]; if (witch) creator.loadout = { hat: witch.spells.hat };
+}
 /** Tonight's find taken (the "found" event): on loan till she sleeps (app/loan.ts), hers to wear or use at once, never written. */
 function lendFind(kind: FindKindId, id: string): void {
   const { game } = N();

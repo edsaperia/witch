@@ -36,6 +36,7 @@ export interface SessionOptions {
   authorizeStation?(game: Game, player: 0 | 1, choice: StationChoice): boolean;
   /** Notification only for personal presentation/storage after host approval; must not mutate the shared game. */
   stationApplied?(player: 0 | 1, choice: StationChoice): void;
+  stationResolved?(player: 0 | 1, choice: StationChoice, accepted: boolean): void;
   /** Personal cosmetic data only, exchanged after telephone identity verification; never inventory or rules. */
   appearance?(): unknown;
   appearanceApplied?(player: 0 | 1, look: Appearance): void;
@@ -55,7 +56,8 @@ export function onlineSession(options: SessionOptions) {
   let replica: ReturnType<typeof replayGuest> | null = null;
   let accept: (() => void) | null = null, reject: ((error: Error) => void) | null = null;
   let stationSequence = 0, lastStation = -1;
-  const requests: { player: 0 | 1; choice: StationChoice }[] = [];
+  const requests: { player: 0 | 1; choice: StationChoice; sequence: number }[] = [];
+  const pendingStations = new Map<number, StationChoice>();
   let beatSegments: Game["beat"]["segs"] | null = null;
   const looks = new Map<0 | 1, Appearance>();
   const receivedHouse = houseSteps();
@@ -70,6 +72,7 @@ export function onlineSession(options: SessionOptions) {
     epoch++; role = null; connection = null; game = null; present = prepared = ready = preparing = changed = false; replica = null;
     buffer.clear(); removeAbort(); removeAbort = () => {}; controller?.abort(); controller = null;
     requests.length = 0; stationSequence = 0; lastStation = -1;
+    pendingStations.clear();
     beatSegments = null;
     looks.clear();
     catalogue = null; receivedHouse.clear();
@@ -133,7 +136,8 @@ export function onlineSession(options: SessionOptions) {
                 const choice = stationChoice(payload.choice);
                 if (choice && Number.isSafeInteger(payload.sequence) && (payload.sequence as number) >= 0 && (payload.sequence as number) > lastStation) {
                   lastStation = payload.sequence as number;
-                  if (requests.length < 8) requests.push({ player: 1, choice });
+                  if (requests.length < 8) requests.push({ player: 1, choice, sequence: payload.sequence as number });
+                  else if (!connection.sendState({ kind: "station", tick, choices: [], results: [{ sequence: payload.sequence, accepted: false }] })) throw new Error("The station result couldn't be sent.");
                 }
               } else buffer.accept(message.payload, now());
             }
@@ -141,7 +145,7 @@ export function onlineSession(options: SessionOptions) {
           }
           if (message.type === "guest-left" && message.player === 1) { stop(); return true; }
         } else if (message.type === "state" && message.player === 0) {
-          const payload = message.payload as { kind?: string; start?: ReplayStart; frame?: ReplayFrame; tick?: number; choices?: { player: unknown; choice: unknown }[]; beat?: unknown; looks?: { player: unknown; genome: unknown }[]; catalogue?: unknown } | null;
+          const payload = message.payload as { kind?: string; start?: ReplayStart; frame?: ReplayFrame; tick?: number; choices?: { player: unknown; choice: unknown }[]; results?: { sequence: number; accepted: boolean }[]; beat?: unknown; looks?: { player: unknown; genome: unknown }[]; catalogue?: unknown } | null;
           if (payload?.kind === "start" && payload.start) {
             if (options.catalogue || payload.catalogue !== undefined) {
               const next = sharedCatalogue(payload.catalogue); if (!next) throw new Error("Invalid shared station catalogue.");
@@ -203,6 +207,14 @@ export function onlineSession(options: SessionOptions) {
           }
           if (payload?.kind === "station") {
             if (!ready || !replica || payload.tick !== replica.tick || !Array.isArray(payload.choices) || payload.choices.length > 8) throw new Error("Invalid online station choices");
+            const results = payload.results ?? [], seen = new Set<number>();
+            if (!Array.isArray(results) || results.length > 8) throw new Error("Invalid station results");
+            if (payload.choices.filter(entry => entry.player === 1).length !== results.filter(result => result?.accepted === true).length) throw new Error("Station approvals lack their results");
+            for (const result of results) {
+              if (!result || Object.keys(result).length !== 2 || !Number.isSafeInteger(result.sequence) || typeof result.accepted !== "boolean" || !pendingStations.has(result.sequence) || seen.has(result.sequence)) throw new Error("Invalid station results");
+              seen.add(result.sequence);
+              if (result.accepted && !payload.choices.some(entry => entry.player === 1 && JSON.stringify(entry.choice) === JSON.stringify(pendingStations.get(result.sequence)))) throw new Error("Station approval lacks its choice");
+            }
             for (const entry of payload.choices) {
               const choice = stationChoice(entry.choice);
               if (choice?.kind === "look" && (entry.player === 0 || entry.player === 1)) {
@@ -213,6 +225,10 @@ export function onlineSession(options: SessionOptions) {
               }
               if (!choice || entry.player !== 0 && entry.player !== 1 || !applyStationChoice(replica.game, entry.player, choice)) throw new Error("Online station choices disagree");
               options.stationApplied?.(entry.player, choice);
+            }
+            for (const result of results) {
+              const choice = pendingStations.get(result.sequence)!; pendingStations.delete(result.sequence);
+              options.stationResolved?.(1, choice, result.accepted);
             }
             return true;
           }
@@ -253,26 +269,34 @@ export function onlineSession(options: SessionOptions) {
         // ordinary deterministic tempo changes inside stepGame are already replayed on both ends.
         if (ready && game.beat.segs !== beatSegments && !connection.sendState({ kind: "beat", tick, beat: structuredClone(game.beat) })) throw new Error("The host beat couldn't be sent to your friend.");
         const approved: { player: 0 | 1; choice: StationChoice }[] = [];
-        for (const request of requests.splice(0)) {
-          if (options.authorizeStation?.(game, request.player, request.choice) !== true) continue;
+        const resolved: { player: 0 | 1; choice: StationChoice; sequence: number; accepted: boolean }[] = [];
+        const applyRequest = (request: typeof requests[number]): boolean => {
+          if (options.authorizeStation?.(game!, request.player, request.choice) !== true) return false;
           const before = looks.get(request.player), wardrobe = options.wardrobe?.();
           const next = request.choice.kind === "look" && before && wardrobe ? applyStationLook(before, request.choice, wardrobe, options.stationPalette?.()) : null;
-          if (request.choice.kind === "look" && !next) continue;
-          if (next && request.choice.kind === "look" && request.choice.station === "bags" && options.authorizeStation?.(game, request.player, { kind: "bag", id: bagOf(next) }) !== true) continue;
-          if (!applyStationChoice(game, request.player, request.choice)) continue;
+          if (request.choice.kind === "look" && !next) return false;
+          if (next && request.choice.kind === "look" && request.choice.station === "bags" && options.authorizeStation?.(game!, request.player, { kind: "bag", id: bagOf(next) }) !== true) return false;
+          if (!applyStationChoice(game!, request.player, request.choice)) return false;
           if (next) {
-            if (request.choice.kind === "look" && request.choice.station === "bags") setBag(game.witches[request.player].spells, bagOf(next));
+            if (request.choice.kind === "look" && request.choice.station === "bags") setBag(game!.witches[request.player].spells, bagOf(next));
             looks.set(request.player, next);
           }
-          approved.push(request);
+          return true;
+        };
+        for (const request of requests.splice(0)) {
+          const accepted = applyRequest(request);
+          if (accepted) approved.push({ player: request.player, choice: request.choice });
+          resolved.push({ ...request, accepted });
         }
-        if (approved.length) {
-          if (!connection.sendState({ kind: "station", tick, choices: approved })) throw new Error("The station choice couldn't be sent to your friend.");
+        const results = resolved.filter(request => request.player === 1).map(({ sequence, accepted }) => ({ sequence, accepted }));
+        if (approved.length || results.length) {
+          if (!connection.sendState({ kind: "station", tick, choices: approved, ...(results.length ? { results } : {}) })) throw new Error("The station choice couldn't be sent to your friend.");
           for (const request of approved) {
             if (request.choice.kind === "look") options.appearanceApplied?.(request.player, structuredClone(looks.get(request.player)!));
             options.stationApplied?.(request.player, request.choice);
           }
         }
+        for (const request of resolved) options.stationResolved?.(request.player, request.choice, request.accepted);
         const guestControls = ready ? buffer.sample(now()) : wireControls({})!;
         guestControls.pausePage = guestControls.pausePage === true;
         const frame = replayHostStep(game, [controls, guestControls], dt, ++tick, options.advanceHost);
@@ -290,9 +314,14 @@ export function onlineSession(options: SessionOptions) {
     choose(value: StationChoice): boolean {
       const choice = stationChoice(value);
       if (!ready || !connection || !choice) return false;
-      if (role === "guest") return connection.sendInput({ kind: "station", sequence: stationSequence++, choice });
+      if (role === "guest") {
+        if (pendingStations.size >= 8) return false;
+        const sequence = stationSequence++;
+        if (!connection.sendInput({ kind: "station", sequence, choice })) return false;
+        pendingStations.set(sequence, choice); return true;
+      }
       if (role !== "host" || requests.length >= 8) return false;
-      requests.push({ player: 0, choice }); return true;
+      requests.push({ player: 0, choice, sequence: stationSequence++ }); return true;
     },
     /** Never carry a socket/replay into a replacement night; the page owns the next night. */
     nightChanged() { if (role) stop(); },
