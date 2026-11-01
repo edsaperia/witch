@@ -8,7 +8,7 @@ import { lend } from "./loan";
 import { sharedFindLoan, withSharedFind, type PersonalKit } from "./sharedFindLoan";
 import { newGame } from "../rules/game";
 import { TUNING } from "../rules/tuning";
-import { HOUSE_ROOMS, objectFront, addFloorHat, floorHats, hatSlots, useHats } from "../rules/houseRooms";
+import { HOUSE_ROOMS, objectFront, addFloorHat, floorHats, hatSlots, useHats, syncFloorHats } from "../rules/houseRooms";
 import { stationAuthority } from "../platform/online/stationAuthority";
 import { applyStationChoice } from "../platform/online/stationChoice";
 import { stepSigilButton } from "../rules/sigilButton";
@@ -47,6 +47,7 @@ it("diagnostic: revoked transient hat cannot be picked from a cached floor after
   const tuning = structuredClone(TUNING); tuning.map!.island = "home"; tuning.map!.islandAreas = 4;
   const game = newGame(123, tuning), W = game.witches[0], hat = FIND_KINDS.find(k => k.id === "hat")!.items[0];
   W.hat.has = true; W.spells.hats = []; floorHats(W); W.spells.hats = [hat]; addFloorHat(W, hat); W.spells.hats = []; // Cached floor existed before the find and its later revocation.
+  syncFloorHats(W); // Production return/rollback invokes the integrated owner API immediately after restoring ownership.
   let regained = false;
   for (const slot of hatSlots(game.map.treehouse)) { useHats(W, game.map.treehouse, slot.x, slot.z, 1, 2); regained ||= W.spells.hat === hat; }
   expect(regained).toBe(false);

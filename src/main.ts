@@ -68,7 +68,7 @@ import type { DecidePanel } from "./ui/decide";
 import { saveLoadout } from "./app/loadout";
 import { castable, HAT_SPELLS, hatSpell, setParts } from "./rules/spells";
 import { changeLoadout } from "./rules/hatSpells";
-import { HOUSE_ROOMS, addFloorHat, installEdLayout } from "./rules/houseRooms";
+import { HOUSE_ROOMS, addFloorHat, syncFloorHats, installEdLayout } from "./rules/houseRooms";
 import { setEdLayoutActive } from "./rules/housePlacement";
 import { usesEdLayout } from "./app/houseLayout";
 import { stationOf, tableOf } from "./rules/stations";
@@ -414,7 +414,7 @@ const phone = telephoneStation({ storage: (() => { try { return localStorage; } 
       const success = won(game), kit = personalKit(game);
       if (success && kit.hats) kit.hats = [...withSharedFind(game, "hat", new Set(kit.hats))];
       const restored = sharedLoans.finish(success, kit); loan = restored.loan;
-      const W = game.witches[0]; changeLoadout(W, restored.kit.hat); setParts(W.spells, { ...restored.kit.parts }); setBag(W.spells, bagOf(restored.kit.look)); W.spells.hats = restored.kit.hats;
+      const W = game.witches[0]; changeLoadout(W, restored.kit.hat); setParts(W.spells, { ...restored.kit.parts }); setBag(W.spells, bagOf(restored.kit.look)); W.spells.hats = restored.kit.hats; syncFloorHats(W);
       lookNow = JSON.stringify(restored.kit.look); creator.adopt(restored.kit.look); shownLook = ""; owned = null;
       if (success && hostedUnlocks) {
         const collection = loadOwned(lookWithoutLoan(restored.kit.look, loan));
@@ -967,11 +967,11 @@ const ordinaryVisit = visitNightSaves ? visitLifecycle({
       const ownCollection = loadOwned(lookWithoutLoan(own.look, own.loan));
       returnedUnlocks?.apply(browserSaveSlots(), { spells: own.night.game.spells, owned: () => ownCollection });
       returnedUnlocks = null; owned = null;
-      const href = nightHref("bed", own.href); await nightInPlace(nightFromHref("bed", href), href);
+      const href = nightHref("bed", own.href); await nightInPlace(nightFromHref("bed", href), href); syncFloorHats(N().game.witches[0]);
     } else {
       returnedUnlocks = null;
       const restored = await startNight(page, { ...own.night.spec, how: "bed", resume: own.night.game, borrowed: false });
-      await view.prepare(); Object.assign(restored.flags, own.night.flags, { last: 0 }); sailing = false; input.clearPresses();
+      syncFloorHats(restored.game.witches[0]); await view.prepare(); Object.assign(restored.flags, own.night.flags, { last: 0 }); sailing = false; input.clearPresses();
     }
   },
 }) : null;
@@ -1479,7 +1479,7 @@ function frameBody(now: number): void {
   if (recordedInput !== lastRecordedInput || game.clock.time - lastInputAt >= 1) { breadcrumbs.add(game, "input", c); lastRecordedInput = recordedInput; lastInputAt = game.clock.time; }
   if (!phone.active && !N().spec.borrowed && params.get("cauldron") === "1" && !game.cauldron) mutate("cauldron: enable legacy preview", () => enableCauldron(game, homeMushroomPickups(game))); // Solo compatibility preview only; never a visitor's replacement rules.
   const rulesDt = fightDt(dt * (botTag?.speed ?? 1));
-  if (!phone.step(game, { ...c, pausePage: freeze.frozen }, rulesDt)) recordedStep(game, c, rulesDt, BUILD, captureRecording); // Only the pause page votes online; solo retains original controls/step.
+  if (!phone.step(game, { ...c, pausePage: freeze.frozen }, rulesDt) && !N().spec.borrowed) recordedStep(game, c, rulesDt, BUILD, captureRecording); // A disconnected borrowed world waits for own return; it never becomes a solo simulation.
   if (phone.active && !phone.visiting) sharedLoans.observe(game, personalKit(game));
   for (const [kind, events] of [["ko", game.koEvents], ["quest", game.questEvents], ["spell", game.combat.spells?.events ?? []]] as const) for (const event of events) { breadcrumbs.add(game, kind, event); if (kind !== "spell") notable(kind, `${kind} event`, event); }
   rumble.update(game, currentSettings(), input.device === "pad" && !document.hidden ? [freeze.pad()] : [], now);
