@@ -13,6 +13,7 @@ import { wakeInBedroom } from "./opening";
 import { atDecks, startParty, bedRoom, doorShut, endDream, startWake, WAKE_DEFAULT, type WakeEvent } from "./wakeUp";
 import { dressed, pileOut, PILE_SLOTS, wearFromStation, wearPiece, wornGenome } from "./clothesPile";
 import { deckOf, onTerrace } from "./treehouse";
+import { furnitureFor } from "./guestFurniture";
 import { heldByRoutine } from "./djSet";
 
 const idle: Controls = { moveX: 0, moveZ: 0, toggleMode: false, zoom: 0, autoTalk: false };
@@ -301,7 +302,7 @@ describe("last night's clothes (Ed, 2026-10-23: \"When waking up she wears only 
 
 describe("dressing before the door (Ed, 2026-10-21: \"all of the customisation options (except for broom, hat, and bag) should be before the locked door\")", () => {
   it("every dressing station but the Cloakroom's (the hat's mirror, the cloak pegs), the bags and the Workshop's is in the bedroom", () => {
-    const st = HOUSE_ROOMS.objects.filter(o => o.use.kind === "creator");
+    const g = woken(false), st = HOUSE_ROOMS.objects.filter(o => o.use.kind === "creator" && furnitureFor(g, g.witches[0], o));
     expect(st.filter(o => o.room === "bedroom").map(o => o.id).sort()).toEqual(["dressingTable", "shoeRack", "wardrobe"]);
     expect(st.filter(o => o.room !== "bedroom").map(o => o.id).sort()).toEqual(["bags", "cloakPegs", "lathe", "mirror"]);
     expect(obj("cloakPegs").room).toBe("cloakroom");

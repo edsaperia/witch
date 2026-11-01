@@ -79,7 +79,10 @@ export const lightingRoom = (p: Pick<Placement, "x" | "z">, H = HOUSE_ROOMS): st
 export const artKey = (o: LayoutItem, p: Placement, H = HOUSE_ROOMS): string => `${o.id}:${p.rotation}:${lightingRoom(p, H)}`;
 export function parseLayout(raw: unknown, items: LayoutItem[], floorplan: string): Layout {
   if ((raw as { version?: unknown } | null)?.version === 1) return migrateCameraV1(raw, items, floorplan);
-  const l = raw as Layout;
+  let l = raw as Layout;
+  // Explicit source-catalogue upgrade: Ed replaced the two unused guest chests in place.
+  if (floorplan === identities.canonical && identities.legacy.includes(l?.floorplan) && Array.isArray(l.objects))
+    l = { ...l, objects: l.objects.map(p => ({ ...p, id: guestFurnitureReplacement(p.id) })) };
   const matchingSource = l?.floorplan === floorplan || (floorplan === identities.canonical && identities.legacy.includes(l?.floorplan));
   const removed = l?.removed ?? [];
   if (!Array.isArray(removed) || removed.some(id => typeof id !== "string" || !id.startsWith("clutter:") || !items.some(o => o.id === id)) || new Set(removed).size !== removed.length) throw Error("Only known clutter may be explicitly removed.");
@@ -103,18 +106,21 @@ export function parseLayout(raw: unknown, items: LayoutItem[], floorplan: string
   }
   return result;
 }
+const guestFurnitureReplacement = (id: string): string => id === "bedroom2Chest" ? "bedroom2DressingTable" : id === "bedroom3Chest" ? "bedroom3DressingTable" : id;
 /** Explicit compatibility: legacy CAMERA yaw = base yaw - v1 angle. Never silently treat v1 angles as v2. */
 export function migrateCameraV1(raw: unknown, items: LayoutItem[], floorplan: string): Layout {
   const l = raw as { version: number; floorplan: string; objects: Placement[] };
   if (!l || l.version !== 1 || l.floorplan !== legacy.floorplan || !Array.isArray(l.objects) || l.objects.length !== legacy.items.length) throw Error("Only the recorded version-1 house can be converted. Its camera appearance is preserved explicitly.");
   const result = defaultLayout(items, floorplan), seen = new Set<string>(), held: Placement[] = [];
   for (const p of l.objects) {
-    const old = legacy.items.find(o => o.id === p?.id), current = items.find(o => o.id === p?.id);
+    const id = guestFurnitureReplacement(p?.id);
+    const old = legacy.items.find(o => o.id === p?.id), current = items.find(o => o.id === id);
     if (!old || seen.has(p.id) || ![p.x, p.z, p.rotation].every(v => typeof v === "number" && Number.isFinite(v)) || Math.abs(p.x) > 10000 || Math.abs(p.z) > 10000 || Math.abs(p.rotation) > 360000) throw Error("Invalid version-1 object ID, coordinate or angle.");
     seen.add(p.id);
     // A changed object (notably the working mushroom kitchen) is not overwritten by its stale placeholder.
-    if (!current || ["w", "d", "h"].some(k => old[k as "w" | "d" | "h"] !== current[k as "w" | "d" | "h"])) { held.push({ id: p.id, x: p.x, z: p.z, rotation: p.rotation }); continue; }
-    const target = result.objects.find(q => q.id === p.id)!;
+    // The named chest→table upgrade keeps horizontal footprint/placement; its new mirror height is authored.
+    if (!current || (id === p.id ? ["w", "d", "h"] : ["w", "d"]).some(k => old[k as "w" | "d" | "h"] !== current[k as "w" | "d" | "h"])) { held.push({ id: p.id, x: p.x, z: p.z, rotation: p.rotation }); continue; }
+    const target = result.objects.find(q => q.id === id)!;
     // Legacy proxies (decks/clothes pile) already used the plan's +angle in the camera canvas.
     const angle = FURNITURE_IDS.includes(old.id) ? old.facing.yaw * 180 / Math.PI - p.rotation : p.rotation;
     Object.assign(target, { x: p.x, z: p.z, rotation: normalAngle(angle) });

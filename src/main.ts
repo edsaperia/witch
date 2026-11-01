@@ -25,6 +25,7 @@ import { remoteWitchAppearance } from "./platform/online/remoteAppearance";
 import { appearance } from "./platform/online/appearance";
 import { stationLook } from "./platform/online/stationAppearance";
 import { localHouseAction } from "./app/houseActions";
+import { continueSharedNight } from "./app/sharedNight";
 import type { HouseEvents } from "./platform/online/houseSteps";
 import { fillNightTrunk } from "./app/nightFindBoundary";
 import { chartDeparture } from "./app/chartDeparture";
@@ -403,6 +404,8 @@ const callArrival = guestArrival({ room: "bedroom2", equipment: game => {
 } });
 let returnedUnlocks: ReturnType<typeof visitUnlocks> | null = null;
 let hostedUnlocks: ReturnType<typeof visitUnlocks> | null = null;
+const completedGuestNights: ReturnType<typeof visitUnlocks>[] = [];
+let sharedNightChanging = false, sharedNightFrom: Game | null = null;
 const remoteArt = remoteWitchAppearance(view);
 const sharedLoans = sharedFindLoan();
 function personalKit(game: Game = N().game, player = 0): PersonalKit {
@@ -429,8 +432,11 @@ const phone = telephoneStation({ enabled: phoneEnabled, callsEnabled: phoneCalls
   appearance: () => { sharedLoans.begin(personalKit(), loan); if (!phone.visiting) sharedLoans.observe(N().game, personalKit()); return appearance(page.look()) ?? appearance({}); },
   attach: game => { if (!guestAccess.ready) throw new Error("The guest room isn't ready yet."); callArrival.attach(game); if (remoteArt.has(1)) void remoteArt.start(game, 0).catch(error => { logCaughtError(error, "host remote appearance"); phone.hangUp(); }); },
   detach: game => callArrival.detach(game),
-  prepareGuest: (game, signal, advanced) => {
+  continuedHost: (previous, next) => callArrival.continued(previous, next),
+  prepareGuest: (game, signal, advanced, continuing) => {
     if (!ordinaryVisit) { traceVisit("save-boundary:unavailable"); return Promise.reject(new Error("This browser isn't ready to protect your saved night.")); }
+    if (continuing) { completedGuestNights.push(visitUnlocks(N().game, 1)); return ordinaryVisit.nextNight(game, signal, advanced); }
+    completedGuestNights.length = 0;
     return ordinaryVisit.prepare(game, signal, advanced);
   },
   synchronized: game => { if (ordinaryVisit) void synchronizeVisit(ordinaryVisit, game, error => { logCaughtError(error, "visit confirmation"); phone.hangUp(); }); },
@@ -753,7 +759,7 @@ telescope.onChange = on => {
 };
 const useHouse = (obj: string): void => mutate("house: use", () => {
   const { game, tuning, flags: { chartRecorded, overRecorded } } = N();
-  if (obj === "slept" && phone.visiting) { phone.hangUp(); return; } // Borrowed bed exit returns through the guarded visit lifecycle.
+  if (obj === "slept" && phone.visiting) { sailing = true; input.release(); input.clearPresses(); return; } // The host rolls the shared world; Leave visit is the guest exit.
   if (obj === "slept") { if (!chartRecorded && !overRecorded) nightOver(tuning.map?.island ?? "", { won: false }, undefined, tuning.map?.world ?? 0); setTimeout(() => newNight("bed"), 0); return; } // (the sea chart: played, as the afterparty records it; then a new seed: app/newForest.ts; after this frame, in place)
   const o = HOUSE_ROOMS.objects.find(q => q.id === obj);
   if (!o || creator.open || game.witches[phone.visiting ? 1 : 0]?.ko) return;
@@ -1018,6 +1024,8 @@ const ordinaryVisit = visitNightSaves ? visitLifecycle({
     creator.hats = unlockAll() ? undefined : own.night.game.spells.hats; view.partsFound = partsNow();
     if (fresh) {
       const ownCollection = loadOwned(lookWithoutLoan(own.look, own.loan));
+      for (const outcome of completedGuestNights) outcome.apply(browserSaveSlots(), { spells: own.night.game.spells, owned: () => ownCollection });
+      completedGuestNights.length = 0;
       returnedUnlocks?.apply(browserSaveSlots(), { spells: own.night.game.spells, owned: () => ownCollection });
       returnedUnlocks = null; owned = null;
       const href = nightHref("bed", own.href); await nightInPlace(nightFromHref("bed", href), href); syncFloorHats(N().game.witches[0]);
@@ -1038,16 +1046,22 @@ const chartDepartureBoundary = chartDeparture({
   returnOwn: () => ordinaryVisit?.end() ?? Promise.reject(new Error("This browser cannot restore your saved night.")),
 });
 page.onNightEnd = () => {
-  if (phone.active && !phone.visiting) phone.hangUp(); // Capture the host result before its own bed/sail replaces this night.
+  if (phone.active && !phone.visiting && !sharedNightChanging) phone.hangUp(); // A shared bed rollover retains its call.
   if (!phone.visiting && page.night && !page.night.spec.borrowed && !endedNights.has(page.night.game)) {
-    if (hostedUnlocks) {
+    const hostOutcome = hostedUnlocks ?? (sharedNightChanging ? visitUnlocks(page.night.game, 0) : null);
+    if (hostOutcome) {
       const collection = loadOwned(lookWithoutLoan(page.look() as Record<string, unknown> | null, loan));
       // The host may continue its own night after the friend leaves; use its final own verdict, never update the departed guest's captured outcome.
-      visitUnlocks(page.night.game, 0).apply(browserSaveSlots(), { spells: page.night.game.spells, owned: () => collection }); hostedUnlocks = null; owned = null;
+      hostOutcome.apply(browserSaveSlots(), { spells: page.night.game.spells, owned: () => collection }); hostedUnlocks = null; owned = null;
     }
     endedNights.add(page.night.game); browserSaveSlots().summary(page.night.game.tuning.map?.island ?? "home", true, bootSlot);
   }
   void autosave?.clear();
+};
+page.prepareNight = (game, spec) => {
+  if (!sharedNightChanging || !sharedNightFrom || spec.how !== "bed") return;
+  continueSharedNight(sharedNightFrom, game, hostCollections(game));
+  if (!phone.nextNight(game)) throw new Error("The shared night couldn't continue.");
 };
 if (autosave) {
   setInterval(() => { void autosave.save(performance.now()); }, 5000);
@@ -1375,17 +1389,21 @@ async function warmAt(n: Night, shot: Shot, A: NonNullable<Tuning["arrive"]>): P
  *  before (app/sail.ts nightHref's), quietly. */
 function newNight(how: NightWay): void {
   if (sailing) return;
+  if (how === "bed" && phone.active) {
+    if (phone.visiting || sharedNightChanging) return;
+    sharedNightChanging = true; sharedNightFrom = N().game;
+  }
   page.onNightEnd?.();
   // (she sleeps: tonight's loan settled, won or not, and on the bed's way she dreams it: app/loan.ts, render/dream.ts)
   const settled = settleLoan(N().game.win?.phase === "won");
   dreamNext = dreamsAfter(how) ? settled : null;
   const n = N(), href = nightHref(how, location.href);
-  const reload = (h: string) => { location.href = h; };
-  if ((botKind && how !== "bot") || sailWay(n.params, n.tuning) === "reload") { reload(href); return; }
+  const reload = (h: string) => { if (sharedNightChanging) phone.hangUp(); sharedNightChanging = false; sharedNightFrom = null; location.href = h; };
+  if (!sharedNightChanging && ((botKind && how !== "bot") || sailWay(n.params, n.tuning) === "reload")) { reload(href); return; }
   void sailOrReload(() => nightInPlace(nightFromHref(how, href), href), href, reload, e => {
     console.error(`a new night in place (${how}): it went wrong, so the page loads instead`, e);
     N().playtest.sail(String((e as Error)?.stack ?? e).slice(0, 600));
-  });
+  }).finally(() => { sharedNightChanging = false; sharedNightFrom = null; });
 }
 /** A new night in place by one of those ways (docs/plans/sail-without-reload.md B), starting as a fresh load of its link would: the
  *  old night's music faded and the night ended, the link pushed (and Back's guard), the bedroom open as the loading screen (the
@@ -1421,7 +1439,8 @@ async function nightInPlace(spec: NightSpec, href: string): Promise<void> {
   startEl.classList.remove("loading");
   input.clearPresses();
   sailing = false;
-  if (wakes && wakeInBedroom(n.game) && startWake(n.game, n.game.herTime, { dreaming: !!dream && !dream.over, mirrored: mirrored(), yesterday: true })) { mark("opening:bed"); start(); } // (after the bed: last night's clothes in their pile)
+  if (sharedNightChanging) { mark("opening:shared-bed"); start(); }
+  else if (wakes && wakeInBedroom(n.game) && startWake(n.game, n.game.herTime, { dreaming: !!dream && !dream.over, mirrored: mirrored(), yesterday: true })) { mark("opening:bed"); start(); } // (after the bed: last night's clothes in their pile)
   else if (!room && !wakes) startDirect();
 }
 /** The bot game left (its exit in place): the bot and its tag gone, her own look back (the creator's, as a fresh page has it). */

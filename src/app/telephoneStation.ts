@@ -33,9 +33,11 @@ export function telephoneStation(options: Pick<TelephoneOptions, "storage" | "lo
     houseEvents() { return session?.role === "guest" ? session.takeHouseEvents() : null; },
     choose(choice: StationChoice): boolean { return session?.choose(choice) ?? false; },
     changed() { session?.changed(); },
+    nextNight(game: Game): boolean { presentation = source = null; return session?.nextNight(game) ?? false; },
     preferences(game: Game) { return session?.role === "guest" ? preferences.tuning(game) : game.tuning; },
     step(game: Game, controls: Controls, dt: number): boolean {
       if (session?.role === "guest" && !session.ready) return true; // Own page may still be draining its checkpoint before adoption.
+      if (session?.role === "host" && !session.ready && session.game !== game) return true; // The View is still adopting the host's new canonical night.
       if (session?.game && session.game !== game) { session.nightChanged(); presentation = source = null; return false; }
       return session?.step(controls, Math.min(0.1, dt)) ?? false;
     },

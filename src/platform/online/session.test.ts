@@ -22,11 +22,31 @@ import { bareBroom, PARTS } from "../../rules/broomParts";
 import { HAT_SPELLS } from "../../rules/spells";
 import { HOUSE_ROOMS, objectFront } from "../../rules/houseRooms";
 import type { StationChoice } from "./stationChoice";
+import { continueSharedNight } from "../../app/sharedNight";
 
 const cleanups: (() => void)[] = [];
 afterEach(() => { for (const stop of cleanups.splice(0)) stop(); });
 const input = (moveX = 0): Controls => ({ moveX, moveZ: 0, zoom: 0, toggleMode: false, autoTalk: false });
 const turn = () => new Promise<void>(resolve => setTimeout(resolve, 0));
+it("keeps the same visit across the host's new world and rebases after guest preparation", async () => {
+  const f = fixture(), { joined } = await f.start(); await f.sync(); await joined;
+  f.hostGame.witches.forEach(w => { w.house = { slept: true, lastBed: "bed" }; });
+  const next = newGame(456, structuredClone(f.hostGame.tuning));
+  continueSharedNight(f.hostGame, next, { hats: new Set(), parts: new Set() });
+  const before = f.hostMessages.length;
+  expect(f.host.nextNight(next)).toBe(true); expect(f.host.role).toBe("host"); expect(f.host.ready).toBe(false);
+  for (const message of f.hostMessages.slice(before)) f.guest.message(message);
+  await vi.waitFor(() => expect(f.guestMessages.some(m => (m.payload as { kind?: string } | undefined)?.kind === "night-ready")).toBe(true));
+  expect(f.guestOptions.prepareGuest).toHaveBeenLastCalledWith(expect.objectContaining({ seed: 456 }), expect.any(AbortSignal), expect.any(Function), true);
+  const ready = f.guestMessages.find(m => (m.payload as { kind?: string } | undefined)?.kind === "night-ready")!;
+  f.host.message(ready); f.guest.message(f.hostMessages.at(-1)!);
+  expect(f.host.ready).toBe(true); expect(f.guest.ready).toBe(true); expect(f.guest.game!.seed).toBe(456);
+  const index = f.hostMessages.length; f.host.step(input(), .02);
+  for (const message of f.hostMessages.slice(index)) f.guest.message(message);
+  expect(snapshotGame(f.guest.game!)).toEqual(snapshotGame(next));
+  expect(f.hostOptions.ended).not.toHaveBeenCalled(); expect(f.guestOptions.ended).not.toHaveBeenCalled();
+  expect(f.hostOptions.failed).not.toHaveBeenCalled(); expect(f.guestOptions.failed).not.toHaveBeenCalled();
+});
 it.each(["hat", "broom"] as const)("orders competing %s claims in one host step and permits acquisition after release", async kind => {
   const f = fixture(), hat = HAT_SPELLS.find(h => h.built && h.id !== "none")!.id, part = PARTS[0];
   const choice: StationChoice = kind === "hat" ? { kind, id: hat } : { kind, fitted: { ...bareBroom(), [part.slot]: part.id } };
