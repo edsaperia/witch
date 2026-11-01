@@ -145,4 +145,3 @@ run('post-upgrade application handshake has its separate10000ms deadline',async 
   const closed=once(ws,'close');t.after(()=>ws.terminate());await once(ws,'open');
   clock=9999;await turn();assert.equal(ws.readyState,WebSocket.OPEN);clock=10000;await closed;
 });
-
