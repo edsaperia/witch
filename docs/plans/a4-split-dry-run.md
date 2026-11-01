@@ -1,5 +1,38 @@
 # A4 mechanical split: cut-line proposal
 
+## Preparation audit — 2026-11-01
+
+Root's resumed-work instruction permits owned tooling/evidence preparation only;
+no product source edits or heavy run. Latest canonical #1476 comment 6551913255
+says NO laptop slots until a fresh grant. The production fence remains closed.
+
+Confirmed preparation defect fixed: the supervisor previously invoked the shared
+comparator directly, which intentionally supports rules-only comparisons. A4 now
+first runs `a4-proof-artifacts.cjs`: both sources must have exact build identities,
+the default quick rules workload (both seeds, all three checkpoints), all three
+quick frame scenes and PNGs, and no recorded page error. Missing/truncated frame
+evidence can no longer be accepted as a rules-only A4 proof. The shared comparator
+and its pixel/rules acceptance rules are unchanged. One small regression fixture
+passes in 98 ms; the historical 149-body reversal check passes in 278 ms.
+
+Freshness audit is read-only. `a4-inventory.mjs --source=<commit>` inventories Git
+source directly without rewriting the working product files. Next-source inventory
+pins `e67842754af816e233ddadf6ba932f51b191aa7c`; all 31 main / 35 View named anchors
+still resolve uniquely. Relative to the historical `5b6fcf427` rehearsal base,
+current main/view differ by 11 added / 8 removed lines: pause build-notice hooks,
+treehouse carrier removal, and dodge-echo getter/reset wiring. This is a concrete
+source-refresh step, not a missing architecture decision. It remains unapplied
+under this turn's explicit no-product-edit instruction. Before the next candidate
+can be proved/pushed, integrate then-current prototype and mechanically replay
+those reviewed changes, regenerate derived metadata, and validate the new SHA.
+Old source/proof SHAs and interrupted-run evidence remain unchanged.
+
+Independent tool coding is complete after this audit; no other confirmed defect
+or unanswered module-cut decision was found. Remaining boundaries are the product
+source refresh above, a fresh serial proof allocation, complete same-head tests
+and benchmark evidence, release-CI gates, and the coordinator's fence announcement.
+Do not describe this as full proof readiness or source freshness already achieved.
+
 Owner: Codex chat `01a19366-12da-7cc0-a12c-d252489911ae`.
 Branch: `codex/a4-split-dry-run`; worktree: `work/a4-split-dry-run`.
 Parent: #1555; authority: #1476 comment 6547931247 and #1555 comment 6547641785.

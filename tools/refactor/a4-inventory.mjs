@@ -5,6 +5,8 @@ import { execFileSync } from 'node:child_process';
 import ts from 'typescript';
 
 const hash = text => crypto.createHash('sha256').update(text).digest('hex');
+const sourceArg = process.argv.slice(2).find(a => a.startsWith('--source='));
+const sourceCommit = execFileSync('git', ['rev-parse', '--verify', `${sourceArg ? sourceArg.slice('--source='.length) : 'HEAD'}^{commit}`], { encoding: 'utf8' }).trim();
 const main = {
   pagePause: ['openPotionLab', 'openMusicLab', 'pauseControls', 'updatePauseMenus'],
   pageStations: ['findsCtx', 'workshopNow', 'useHouse', 'shutStation'],
@@ -23,7 +25,7 @@ const view = {
 };
 
 function inventory(file, groups, isView) {
-  const source = fs.readFileSync(file, 'utf8');
+  const source = sourceArg ? execFileSync('git', ['show', `${sourceCommit}:${file}`], { encoding: 'utf8', maxBuffer: 8 << 20 }) : fs.readFileSync(file, 'utf8');
   const ast = ts.createSourceFile(file, source, ts.ScriptTarget.Latest, true);
   if (ast.parseDiagnostics.length) throw new Error(`Cannot parse ${file}`);
   const cls = ast.statements.find(n => ts.isClassDeclaration(n) && n.name?.text === 'View');
@@ -53,7 +55,7 @@ function inventory(file, groups, isView) {
 
 const report = {
   schema: 1,
-  sourceCommit: execFileSync('git', ['rev-parse', 'HEAD'], { encoding: 'utf8' }).trim(),
+  sourceCommit,
   status: 'inventory-only; no extraction or behavioural proof',
   sources: [inventory('src/main.ts', main, false), inventory('src/render/view.ts', view, true)],
 };

@@ -27,7 +27,7 @@ $taskCommands = @{
   'unit-shard-4' = 'npm test -- --shard=4/4 --maxWorkers=2'
   'build' = 'npm run build'
   'bench-quick' = 'npm run bench:quick'
-  'compare' = 'node tools/bench/compare.cjs .a4-baseline/bench-out bench-out'
+  'compare' = 'node tools/refactor/a4-proof-artifacts.cjs && node tools/bench/compare.cjs .a4-baseline/bench-out bench-out'
 }
 New-Item -ItemType Directory -Path $EvidenceDir -Force | Out-Null
 $taskEvidence = (Resolve-Path $EvidenceDir).Path
