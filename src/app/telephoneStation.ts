@@ -30,6 +30,7 @@ export function telephoneStation(options: Pick<TelephoneOptions, "storage" | "lo
     get active() { return session?.role !== null && session?.role !== undefined; },
     get visiting() { return session?.role === "guest"; },
     get catalogue() { return session?.catalogue ?? null; },
+    network() { return { prediction: session?.predictionStats ?? null, rejectedHits: session?.rejectedHits ?? {}, tick: session?.tick ?? 0 }; },
     houseEvents() { return session?.role === "guest" ? session.takeHouseEvents() : null; },
     choose(choice: StationChoice): boolean { return session?.choose(choice) ?? false; },
     changed() { session?.changed(); },
@@ -45,7 +46,7 @@ export function telephoneStation(options: Pick<TelephoneOptions, "storage" | "lo
     presented(game: Game, dt = 0, zoom = 0): Game {
       if (!session?.role || session.game !== game) { presentation = source = null; return game; }
       if (source !== game) { source = game; presentation = localView(game, session.role === "guest" ? 1 : 0); }
-      return Object.assign(presentation!.update(dt, zoom), { tuning: session.role === "guest" ? preferences.tuning(game) : game.tuning });
+      return Object.assign(presentation!.update(dt, zoom, session.predicted), { tuning: session.role === "guest" ? preferences.tuning(game) : game.tuning });
     },
     use(game: Game, id: string): void {
       const actor = telephoneActor(game, session?.role === "guest");

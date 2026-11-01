@@ -1773,6 +1773,7 @@ const telephoneBatchProof = (batch: typeof view.witchBatch | null) => {
 };
 if (phoneEnabled && phoneCallsEnabled) (window as unknown as { witch: Record<string, unknown> }).witch.telephoneProof = () => ({
   preparation: { ...visitPreparation }, saveBoundaryReady: ordinaryVisit !== null,
+  network: phone.network(),
   status: phone.state.status, active: phone.active, visiting: phone.visiting,
   seed: N().game.seed, borrowed: N().spec.borrowed === true, worldReady: N().flags.ready,
   viewSeed: view.game.seed, viewUsesCanonicalMap: view.game.map === N().game.map,

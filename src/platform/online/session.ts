@@ -9,6 +9,9 @@ import { applyStationLook } from "./stationAppearance";
 import { bagOf, setBag } from "../../rules/bags";
 import { sharedCatalogue, type SharedCatalogue } from "./sharedCatalogue";
 import { houseSteps } from "./houseSteps";
+import { guestPrediction } from "./guestPrediction";
+import { guestHitAuthority, guestHitPresentation } from "./guestHits";
+import { enableGuestEffects, disableGuestEffects } from "../../rules/guestEffects";
 
 export interface SessionConnection {
   sendInput(payload: unknown): boolean;
@@ -57,6 +60,10 @@ export function onlineSession(options: SessionOptions) {
   let controller: AbortController | null = null, removeAbort = () => {}, tick = 0, sequence = 0, progress = 0;
   let present = false, prepared = false, ready = false, preparing = false, changed = false, epoch = 0, night = 0;
   let replica: ReturnType<typeof replayGuest> | null = null;
+  let prediction: ReturnType<typeof guestPrediction> | null = null;
+  let hits: ReturnType<typeof guestHitAuthority> | null = null, hitPresentation: ReturnType<typeof guestHitPresentation> | null = null;
+  const trace = (stage: string, detail: unknown) => { try { options.trace?.(stage, detail); } catch { /* Diagnostics do not change admission/gameplay. */ } };
+  const correction = (event: import("./guestPrediction").PredictionCorrection) => { if (event.snapped || event.size > .05 && event.sequence % 30 === 0) trace("prediction-correction", event); };
   let accept: (() => void) | null = null, reject: ((error: Error) => void) | null = null;
   let stationSequence = 0, lastStation = -1;
   const requests: { player: 0 | 1; choice: StationChoice; sequence: number }[] = [];
@@ -72,8 +79,9 @@ export function onlineSession(options: SessionOptions) {
   };
   const stop = () => {
     const previous = role, previousGame = game, attached = present;
+    if (previousGame) disableGuestEffects(previousGame);
     epoch++; role = null; connection = null; game = null; present = prepared = ready = preparing = changed = false; replica = null; night = 0;
-    buffer.clear(); removeAbort(); removeAbort = () => {}; controller?.abort(); controller = null;
+    prediction = hits = hitPresentation = null; buffer.clear(); removeAbort(); removeAbort = () => {}; controller?.abort(); controller = null;
     requests.length = 0; stationSequence = 0; lastStation = -1;
     pendingStations.clear();
     beatSegments = null;
@@ -92,6 +100,9 @@ export function onlineSession(options: SessionOptions) {
   };
   const api = {
     get catalogue() { return catalogue ? structuredClone(catalogue) : null; },
+    get predicted() { return role === "guest" && ready && prediction ? hitPresentation?.actor(prediction.actor) ?? prediction.actor : undefined; },
+    get rejectedHits() { return hits?.rejected ?? {}; },
+    get predictionStats() { return prediction?.stats ?? null; },
     takeHouseEvents: () => receivedHouse.take(),
     get role() { return role; }, get game() { return game; }, get ready() { return ready; }, get tick() { return replica?.tick ?? tick; },
     /** Telephone invokes this only after mutual identity verification and consent. */
@@ -119,7 +130,7 @@ export function onlineSession(options: SessionOptions) {
       try {
         if (role === "host") {
           if (message.type === "guest-joined" && message.player === 1) {
-            if (!present && game) { options.attach(game); present = true; buffer.clear(); sendStart(); }
+            if (!present && game) { options.attach(game); enableGuestEffects(game); hits = guestHitAuthority(game, reason => trace("rejected-hit-claim", reason)); present = true; buffer.clear(); sendStart(); }
             return true;
           }
           if (message.type === "guest-ready" && message.player === 1) { if (present && night === 0) { sendStart(); ready = true; changed = false; } return true; }
@@ -140,7 +151,8 @@ export function onlineSession(options: SessionOptions) {
             }
             if (present && ready) {
               const payload = message.payload as Record<string, unknown> | null;
-              if (payload?.kind === "station") {
+              if (payload?.kind === "pve-cast" || payload?.kind === "pve-hit") hits?.receive(payload);
+              else if (payload?.kind === "station") {
                 const choice = stationChoice(payload.choice);
                 if (choice && Number.isSafeInteger(payload.sequence) && (payload.sequence as number) >= 0 && (payload.sequence as number) > lastStation) {
                   lastStation = payload.sequence as number;
@@ -206,12 +218,15 @@ export function onlineSession(options: SessionOptions) {
               replica = replayGuest(payload.start, options.build, replica.game); game = replica.game;
               if (game.witches.length !== 2) throw new Error("Invalid two-person night");
               if (!connection.sendActive()) throw new Error("The guest telephone disconnected.");
+              prediction = guestPrediction(game, 1, correction);
+              hitPresentation = guestHitPresentation(game, request => { if (!connection?.sendInput(request)) throw Error("The guest cast couldn't be sent."); });
               ready = true; options.synchronized(game); accept?.(); accept = reject = null;
             }
             return true;
           }
           if (payload?.kind === "frame" && payload.frame) {
             if (ready && replica && !replica.apply(payload.frame)) throw new Error("Online state lost its sequence. Hang up and call again.");
+            if (ready && prediction && payload.frame.guestSequence !== undefined) prediction.reconcile(payload.frame.guestSequence);
             if (ready && replica) receivedHouse.capture(replica.game, 1, replica.tick);
             return true;
           }
@@ -223,6 +238,7 @@ export function onlineSession(options: SessionOptions) {
           if (payload?.kind === "checkpoint" && payload.start) {
             if (!ready || !replica || payload.start.tick !== replica.tick) throw new Error("Online station state lost its sequence. Hang up and call again.");
             replica = replayGuest(payload.start, options.build, replica.game); game = replica.game;
+            prediction = guestPrediction(game, 1, correction);
             if (game.witches.length !== 2) throw new Error("Invalid two-person night");
             return true;
           }
@@ -270,7 +286,14 @@ export function onlineSession(options: SessionOptions) {
         const controls = wireControls(input); if (!controls) throw new Error("Invalid local online controls");
         // Only the pause page votes to pause. Ordinary menus and omitted input never retain an old vote.
         controls.pausePage = input.pausePage === true;
-        if (role === "guest") { if (ready && !connection.sendInput({ sequence: sequence++, controls })) throw new Error("The guest telephone disconnected."); return true; }
+        if (role === "guest") {
+          if (ready) {
+            if (!connection.sendInput({ sequence, controls })) throw new Error("The guest telephone disconnected.");
+            prediction?.input(sequence++, controls, dt);
+            if (prediction) hitPresentation?.step(prediction.actor, controls, dt);
+          }
+          return true;
+        }
         if (!present) return false;
         if (ready && options.catalogue) {
           const next = hostCatalogue();
@@ -321,7 +344,12 @@ export function onlineSession(options: SessionOptions) {
         for (const request of resolved) options.stationResolved?.(request.player, request.choice, request.accepted);
         const guestControls = ready ? buffer.sample(now()) : wireControls({})!;
         guestControls.pausePage = guestControls.pausePage === true;
+        const pve = ready ? hits?.drain() : null;
         const frame = replayHostStep(game, [controls, guestControls], dt, ++tick, options.advanceHost);
+        hits?.observed();
+        frame.guestSequence = buffer.sequence;
+        if (pve?.casts.length) frame.guestCasts = pve.casts;
+        if (pve?.effects.length) frame.guestEffects = pve.effects;
         beatSegments = game.beat.segs;
         if (ready && !connection.sendState({ kind: "frame", frame })) throw new Error("The host telephone disconnected.");
         return true;
@@ -334,6 +362,7 @@ export function onlineSession(options: SessionOptions) {
       try {
         options.continuedHost?.(game, next);
         game = next; night++; tick = 0; ready = changed = false;
+        enableGuestEffects(next); hits = guestHitAuthority(next, reason => trace("rejected-hit-claim", reason));
         buffer.clear(); requests.length = 0; pendingStations.clear(); receivedHouse.clear();
         sendStart(); return true;
       } catch (error) { fail(error); return false; }

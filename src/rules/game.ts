@@ -79,6 +79,7 @@ import { deckOf, onTreehouse } from "./treehouse";
 import { homeDown, startPartyOver, stepPartyOver, stepWorldAsleep, worldAsleep, type PartyOver } from "./partyOver";
 import { stepWin, winFlare, won, type WinState } from "./win";
 import { hasBroom, hasInvites, type Kit } from "./kit";
+import { applyGuestEffects, guestEffectsEnabled, recordAutomaticHit } from "./guestEffects";
 import { pulseRouteMetres } from "./leypulse";
 
 /** One player's witch (Stage 4: game.witches, one per player, the first this machine's): her
@@ -406,15 +407,18 @@ export const witchTime = (g: Game, W: Witch): number => W.time ?? g.herTime;
 /** Napping (rules/creatures.ts stepNaps): asleep with a nap's end, so a letter can rouse it; not the party's over's sleep. */
 const napper = (c: Creature): boolean => !!c.asleep && c.napUntil !== undefined;
 
-export const affectionOf = (g: Game, W: Witch = g.witches[0]): Affection => {
+export const affectionOf = (g: Game, W: Witch = g.witches[0], acceptedGuestHit = false): Affection => {
   const t = g.tuning, s = W.invites, E = t.legends;
   const data = { ...STATES, partyEgg: E.partyEgg, affection: { ...STATES.affection, hits: meterHits(t), drain: t.invites.drain ?? STATES.affection.drain, gap: 0, legendDrain: E.partyDrain } };
   return {
+    acceptsHit: automatic => !(W.id === 1 && guestEffectsEnabled(g) && !acceptedGuestHit && !automatic),
     // A napper takes them (Ed, 2026-10-11: "Letters wake them"): the 💌 rouses it, wherever she is, and lands as any other (hit,
     // below). One asleep for good (the party's over: no napUntil) still lets them by.
     invitable: c => (napper(c) ? invitableNow({ ...c, asleep: false }, data) : invitableNow(c, data)), // (as if up: the letter wakes it)
     blocksLetters: c => !c.partyLegend && !c.asleep && !invitableNow(c, data) && blocksLetters(c), // (the egg: a happy legend takes them; a party legend lets them by)
-    hit(c, amount, at) {
+    hit(c, amount, at, automatic, letter) {
+      if (W.id === 1 && guestEffectsEnabled(g) && !acceptedGuestHit && !automatic) return;
+      if (W.id === 1 && guestEffectsEnabled(g) && automatic && letter?.claimCast !== undefined && letter.claimShot !== undefined) recordAutomaticHit(g, letter.claimCast, letter.claimShot, c.id);
       if (c.level === 0) return; // Ed, 2026-10-31: no baby invitation, wake or meter.
       // (the creature's meter on the world's clock; her letters' events on hers: rules/slowTime.ts)
       if (napper(c)) Object.assign(c, { asleep: false, napUntil: undefined, lulled: undefined, wakeUntil: undefined, rest: 0 }); // (roused by it: up at once, as rules/inviteWakes.ts wakes its area)
@@ -552,6 +556,113 @@ export function interpolated<T>(g: Game, draw: () => T): T {
 }
 
 /** One fixed step of the whole game. */
+/** Shared actor locomotion. Prediction passes a private actor and effects=false: no shared cast/creature writes. */
+export function stepWitchLocomotion(g: Game, W: Witch, input: Controls, hdt: number, effects = true) {
+  const t = g.tuning, allInBed = g.witches.every(w => w.house?.slept === true);
+  const ht = witchTime(g, W);
+  let c = input;
+  if (potionPhase(g, W)) c = { moveX: 0, moveZ: 0, toggleMode: false, zoom: c.zoom };
+  if (g.witches.length > 1 && W.house?.slept) {
+    const getUp = !allInBed && (Math.hypot(c.moveX, c.moveZ) > .1 || c.toggleMode);
+    if (!getUp || !startWakeInLastBed(g, ht, { yesterday: true, mirrored: wakeOf(g, W)?.mirror }, W)) {
+      W.body = { ...W.body, vx: 0, vz: 0 };
+      return { W, c: NO_INPUT, ht, was: W.body, deck: deckOf(g.map, t), perchTurn: 0, firing: false, LV: null as ReturnType<typeof leashView> | null };
+    }
+  }
+  // The party spell (Ed, 2026-10-06): until it's cast, and while she casts it, she stands behind the decks: no moving,
+  // rising, blinking, spells or 💌s (the camera's zoom still works). Its button, Enter, or her spell key (R, the pad's L3, touch
+  // "spell") while the game waits casts it, rather than the boost (the hold drops that spell press).
+  // Waking up in her bedroom (the new opening, rules/wakeUp.ts): the alarm, the snoozes, the stretch, then walking the bedroom
+  // with the spell not yet cast (her decks cast it, once she's dressed and down the trunk).
+  const waking = wakeOf(g, W);
+  if (waking) c = effects ? stepWake(g, c, ht, t.opening?.wake ?? WAKE_DEFAULT, W) : { ...c, spell: g.party.spellAt === null ? false : c.spell };
+  if (effects && (c.castParty || c.spell)) castPartySpell(g.party, g.map, g.clock.time);
+  // Then her needle-drop routine at the decks (Ed, 2026-10-07: held till it ends, the first music dropping then; rules/djSet.ts).
+  // (Woken in her bedroom, waiting for her to reach her decks: neither holds her on the way, the house's slow time making them
+  // minutes; seated there, E having cast it, both hold her as ever.)
+  if ((g.witches.length > 1 ? W.body.seated : !waking || W.body.seated) && (heldBySpell(g.party, g.clock.time) || heldByRoutine(g, g.clock.time))) c = { moveX: 0, moveZ: 0, toggleMode: false, zoom: c.zoom };
+  // Her own movement plays by her broom's parts (rules/broomParts.ts: speeds, turning, rise and fall, the cooldowns, blinks; the
+  // bare broom's the tuning's own): `tw` for her steps, blinks and cooldowns below, `t` for the rest.
+  const tw = broomTuning(t, W.spells.parts);
+  // Her broom's spell (rules/spells.ts): Speed's boost, or at once Ley jump (to the ley line's pulse) or Ground pound (rules/brooms.ts).
+  if (c.spell && (effects || W.spells.broom !== "leyjump") && !W.ko && castSpell(W.spells, ht, t, W.spells.broom === "leyjump" ? !!leyJumpTarget(g) : W.spells.broom === "pound" ? canPound(W.body) : true)) {
+    if (W.spells.broom === "leyjump") leyJump(g, W, (x, z) => blinkClear(g, x, z, W.body));
+    else if (W.spells.broom === "pound" && groundPound(effects && !(W.id === 1 && guestEffectsEnabled(g)) ? g : { ...g, creatures: [] }, W, t)) { W.landedAt = ht; if (tw.cooldown?.shared) coolSpend(W.cool, tw.riseCooldown ?? 0, coolRoom(tw, blinkCharges(g, W))); } // (a landing, for the shared cooldown too)
+  }
+  // The speed boost: her speeds times its multiplier while it's on.
+  const charges = blinkCharges(g, W); // (two blinks before the cooldown, Ed 2026-10-08; the Twig bristles one more)
+  // One cooldown for her dodge and her take-off (Ed, 2026-10-15; rules/cooldown.ts): a counter with room for her blinks, a dodge
+  // adding dash.cooldown, a take-off cooldown.rise, a landing riseCooldown (the Jet nozzles halve the last two); it drains on her clock.
+  const shared = !!tw.cooldown?.shared, room = coolRoom(tw, charges);
+  if (shared) stepCool(W.cool, hdt);
+  // Her speed: the boost spell, a slow, and firing.
+  const firing = W.invites.burstLeft > 0 || (!!c.fire && t.invites.on && W.body.mode === "ground" && !W.body.seated);
+  const boost = speedMultiplier(W.spells, ht, tw) * (W.slowUntil !== undefined && g.clock.time < W.slowUntil ? W.slowMult ?? 1 : 1)
+    * (firing && W.body.mode === "ground" ? t.invites.fireSlow ?? 1 : 1);
+  // Knocked out: no input but the camera's zoom while it plays out.
+  if (W.ko) c = { moveX: 0, moveZ: 0, toggleMode: false, zoom: c.zoom };
+  // Staggered by a blow (rules/knock.ts): no moving, rising, blinking or 💌s for a moment.
+  else if (stunned(W.knock, ht)) c = { moveX: 0, moveZ: 0, toggleMode: false, zoom: c.zoom, sigil: c.sigil, place: c.place, cycle: c.cycle, cycleBack: c.cycleBack };
+  // Her movement turned (pack combat: the bat's screech, rules/combat/packs.ts): her steering swung, wavering, as her aim is by the stoat's dance.
+  else if (W.confused?.move && ht < W.confused.until && W.body.mode === "ground") { const a = W.confused.drift * Math.sin(ht * 2.3), cs = Math.cos(a), sn = Math.sin(a); c = { ...c, moveX: c.moveX * cs - c.moveZ * sn, moveZ: c.moveX * sn + c.moveZ * cs }; }
+  // Grounded by who follows her (Ed, 2026-10-18: "One adult stops you taking off. Three young do.", by weight; "you try and fly
+  // but get pulled down"; rules/leashWeight.ts groundedBy, leash.grounded): the press keeps her on the ground, dropped before the
+  // cooldown's (so it spends none), and is said, the "grounded" leash event: the view draws her lifting off and yanked back down
+  // by her taut, blazing leashes (render/view/witch.ts groundedHop, render/leash/stack.ts drawBond) and the landing's thud
+  // (platform/audio/sfxCues.ts). Drawn only: she never leaves the ground, so it's no dodge. Only a take-off from the ground: up
+  // in the treetops, or coming down, she flies on as before.
+  if (c.toggleMode && W.body.mode === "ground" && !W.body.seated && !g.map.bounds.fence && groundedBy(W.leash.stack, g.creatures, t).grounded) { // (never in the zoo: flying is the only way over its fences, Ed 2026-10-26, so nothing holds her down)
+    c = { ...c, toggleMode: false };
+    g.leashEvents.push({ kind: "grounded", id: W.id, x: W.body.x, z: W.body.z, at: ht });
+  }
+  // No coming down over a lake (Ed, 2026-10-23: "At the moment you can press x to leave treetop mode while over a lake; you go
+  // lower and move more slowly. I don't think you should be able to do that"): up in the treetops, or rising, over the water (the
+  // lake test with its pad, as on foot: rules/lakes.ts), the press is dropped and she flies on at full height and speed; and is
+  // said, the "lakeHold" leash event: the refusal's soft "nope", as for a sigil refused (platform/audio/sfxCues.ts).
+  if (c.toggleMode && (W.body.mode === "treetop" || W.body.mode === "rising") && g.map.bounds.lakes && onLake(g.map.bounds, W.body.x, W.body.z, lakeKnobs(t).pad)) {
+    c = { ...c, toggleMode: false };
+    g.leashEvents.push({ kind: "lakeHold", id: W.id, x: W.body.x, z: W.body.z, at: ht });
+  }
+  // Just landed: no rising again till riseCooldown seconds after (Ed, 2026-10-11: "players rise to the treetops instead of
+  // dodging"; rising takes her out of ground mode at once).
+  if (c.toggleMode && W.body.mode === "ground" && !W.body.seated && (shared ? !coolReady(W.cool, tw.cooldown?.rise ?? 0, room) : ht < (W.landedAt ?? -Infinity) + (tw.riseCooldown ?? 0))) c = { ...c, toggleMode: false }; // (the Jet nozzles' shorter: rules/broomParts.ts; shared: the counter must have room for the take-off)
+  const was = W.body;
+  if (!shared) rechargeDash(W.dash, ht, charges, tw.dash.cooldown);
+  // A blink (Decoy, Beaver: it leaves a waiting 💌 where she was).
+  // (A press is held for dash.buffer seconds until it can go: pressed a moment early still blinks.)
+  if (c.dash) W.dash.bufferUntil = ht + tw.dash.buffer;
+  if (ht <= (W.dash.bufferUntil ?? -Infinity) && !potionPhase(g, W) && !W.ko && !stunned(W.knock, ht)
+    && startDash(W.dash, was, c.moveX, c.moveZ, ht, tw, g.map.bounds, (x, z) => blinkClear(g, x, z, W.body), charges, tw.dash.chain, c.aimX ?? 0, c.aimZ ?? 0, shared ? coolReady(W.cool, tw.dash.cooldown, room) : undefined)) {
+    W.dash.bufferUntil = undefined;
+    if (shared) coolSpend(W.cool, tw.dash.cooldown, room); // (the dodge's share of the one cooldown)
+    if (effects && !(W.id === 1 && guestEffectsEnabled(g)) && W.spells.broom === "battering") batter(g, W.dash.fromX, W.dash.fromZ, W.dash.toX, W.dash.toZ, t); // (Battering: what's in her path is stunned)
+  }
+  const deck = guestDeck(deckOf(g.map, t), g, W), fallsOff = deck?.house && !hasBroom(W) ? { ...deck, house: { ...deck.house, fall: { ...deck.house.fall, on: true } } } : deck; // Movement-only guest floor; no broom still falls off the Terrace.
+  if (!potionPhase(g, W)) W.body = applyDash(W.dash, stepWitch(was, c, hdt, boost === 1 ? tw : { ...tw, groundSpeed: tw.groundSpeed * boost, treetopSpeed: tw.treetopSpeed * boost }, g.map.bounds, loadOf(W.leash.stack, g.creatures, was, t, pullOf(W.spells), !!W.leash.scatter), fallsOff)); // (her sigils' pull: rules/leashWeight.ts; the treehouse deck: rules/treehouse.ts)
+  // (the zoo: flying or walking on out against its edge, over the waterfall, takes her out of it, Ed 2026-10-26: "If you fly off the
+  // edge of the map in the zoo you exit as well"): pushing on outward where the edge's soft hold has her (its last map.push metres,
+  // as the beach's stargazing reckons it: rules/witch.ts), for ZOO_EDGE_PUSH seconds, on foot or flying
+  if (g.map.zoo?.layout) {
+    const Ld = g.map.bounds.land, B = W.body;
+    const held = !!Ld && !B.seated && Ld.distAt(B.x, B.z) < (t.map?.push ?? 0) * 0.6 && seaward(B, c, g.map.bounds) === true;
+    const pushed = held ? ((g.witches.length > 1 ? W.zooPush : g.zooPush) ?? 0) + hdt : 0;
+    if (g.witches.length > 1) W.zooPush = pushed; else g.zooPush = pushed;
+    if (pushed >= ZOO_EDGE_PUSH) g.zooExit ??= ht;
+  }
+  if (waking) keepInBedroom(g, W); // (the bedroom's door shut till she's up: rules/wakeUp.ts)
+  if (W.knock && !potionPhase(g, W)) W.body = stepWitchKnock(W.knock, W.body, hdt, t, g.map.bounds, (x, z) => blinkClear(g, x, z, W.body));
+  if (was.mode !== "ground" && W.body.mode === "ground") { W.landedAt = ht; if (shared) coolSpend(W.cool, tw.riseCooldown ?? 0, room); } // (landed: the rise cooldown starts; shared, the landing's share of the one cooldown)
+  if (shared && was.mode === "ground" && !was.seated && W.body.mode === "rising") coolSpend(W.cool, tw.cooldown?.rise ?? 0, room); // (taken off: its share; not her first step off the decks)
+  if (shared) { const wait = coolWait(W.cool, tw.dash.cooldown, room); if (wait > 0) W.dash.readyAt = ht + wait; } // (the dash's readyAt kept true to the counter, for the reticle and the buffer)
+  // On the treehouse deck or off it (rules/treehouse.ts): landed on it, or risen off it.
+  const onDeck = (b: WitchState) => !!b.perch && b.mode === "ground", perchTurn = !was.seated && onDeck(was) !== onDeck(W.body) ? (onDeck(W.body) ? 1 : -1) : 0;
+  // A party legend on her leash (the Easter egg): not a step past legends.partyReach of it, blinking, flying or thrown (rules/partyLegend.ts).
+  if (t.legends.partyEgg && !potionPhase(g, W)) { const P = pinWitch(W.body, W.leash.stack, g.creatures, t.legends.partyReach, g.clock.time, W.pinned ?? null); W.body = P.body; W.pinned = P.pinned; }
+  // A sleeping legend's sigil she carries (rules/stoneStacks.ts): not a step past its tether, blinking, flying or thrown.
+  if (W.leash.tether && !potionPhase(g, W)) { const P = tetherWitch(W.body, W.leash.tether, g.creatures, g.clock.time, W.pinned ?? null); W.body = P.body; if (P.pinned) W.pinned = P.pinned; }
+  return { W, c, ht, was, deck, perchTurn, firing, LV: null as ReturnType<typeof leashView> | null };
+}
+
 function fixedStep(g: Game, controls: readonly Controls[]): void {
   // Two clocks (rules/slowTime.ts): the world's runs at timeScale (slowed in a sleeping legend's circle), hers at full speed.
   stepTimeScale(g, STEP);
@@ -564,111 +675,7 @@ function fixedStep(g: Game, controls: readonly Controls[]): void {
   const wave = g.party.wave;
   const legends = (g.legendIds ??= g.creatures.filter(k => k.boss).map(k => k.id));
   const t = g.tuning;
-  const allInBed = g.witches.every(w => w.house?.slept === true);
-  const motions = g.witches.map((W, i) => {
-    const ht = witchTime(g, W);
-    let c = controls[i];
-    if (potionPhase(g, W)) c = { moveX: 0, moveZ: 0, toggleMode: false, zoom: c.zoom };
-    if (g.witches.length > 1 && W.house?.slept) {
-      const getUp = !allInBed && (Math.hypot(c.moveX, c.moveZ) > .1 || c.toggleMode);
-      if (!getUp || !startWakeInLastBed(g, ht, { yesterday: true, mirrored: wakeOf(g, W)?.mirror }, W)) {
-        W.body = { ...W.body, vx: 0, vz: 0 };
-        return { W, c: NO_INPUT, ht, was: W.body, deck: deckOf(g.map, t), perchTurn: 0, firing: false, LV: null as ReturnType<typeof leashView> | null };
-      }
-    }
-    // The party spell (Ed, 2026-10-06): until it's cast, and while she casts it, she stands behind the decks: no moving,
-    // rising, blinking, spells or 💌s (the camera's zoom still works). Its button, Enter, or her spell key (R, the pad's L3, touch
-    // "spell") while the game waits casts it, rather than the boost (the hold drops that spell press).
-    // Waking up in her bedroom (the new opening, rules/wakeUp.ts): the alarm, the snoozes, the stretch, then walking the bedroom
-    // with the spell not yet cast (her decks cast it, once she's dressed and down the trunk).
-    const waking = wakeOf(g, W);
-    if (waking) c = stepWake(g, c, ht, t.opening?.wake ?? WAKE_DEFAULT, W);
-    if (c.castParty || c.spell) castPartySpell(g.party, g.map, g.clock.time);
-    // Then her needle-drop routine at the decks (Ed, 2026-10-07: held till it ends, the first music dropping then; rules/djSet.ts).
-    // (Woken in her bedroom, waiting for her to reach her decks: neither holds her on the way, the house's slow time making them
-    // minutes; seated there, E having cast it, both hold her as ever.)
-    if ((g.witches.length > 1 ? W.body.seated : !waking || W.body.seated) && (heldBySpell(g.party, g.clock.time) || heldByRoutine(g, g.clock.time))) c = { moveX: 0, moveZ: 0, toggleMode: false, zoom: c.zoom };
-    // Her own movement plays by her broom's parts (rules/broomParts.ts: speeds, turning, rise and fall, the cooldowns, blinks; the
-    // bare broom's the tuning's own): `tw` for her steps, blinks and cooldowns below, `t` for the rest.
-    const tw = broomTuning(t, W.spells.parts);
-    // Her broom's spell (rules/spells.ts): Speed's boost, or at once Ley jump (to the ley line's pulse) or Ground pound (rules/brooms.ts).
-    if (c.spell && !W.ko && castSpell(W.spells, ht, t, W.spells.broom === "leyjump" ? !!leyJumpTarget(g) : W.spells.broom === "pound" ? canPound(W.body) : true)) {
-      if (W.spells.broom === "leyjump") leyJump(g, W, (x, z) => blinkClear(g, x, z, W.body));
-      else if (W.spells.broom === "pound" && groundPound(g, W, t)) { W.landedAt = ht; if (tw.cooldown?.shared) coolSpend(W.cool, tw.riseCooldown ?? 0, coolRoom(tw, blinkCharges(g, W))); } // (a landing, for the shared cooldown too)
-    }
-    // The speed boost: her speeds times its multiplier while it's on.
-    const charges = blinkCharges(g, W); // (two blinks before the cooldown, Ed 2026-10-08; the Twig bristles one more)
-    // One cooldown for her dodge and her take-off (Ed, 2026-10-15; rules/cooldown.ts): a counter with room for her blinks, a dodge
-    // adding dash.cooldown, a take-off cooldown.rise, a landing riseCooldown (the Jet nozzles halve the last two); it drains on her clock.
-    const shared = !!tw.cooldown?.shared, room = coolRoom(tw, charges);
-    if (shared) stepCool(W.cool, hdt);
-    // Her speed: the boost spell, a slow, and firing.
-    const firing = W.invites.burstLeft > 0 || (!!c.fire && t.invites.on && W.body.mode === "ground" && !W.body.seated);
-    const boost = speedMultiplier(W.spells, ht, tw) * (W.slowUntil !== undefined && g.clock.time < W.slowUntil ? W.slowMult ?? 1 : 1)
-      * (firing && W.body.mode === "ground" ? t.invites.fireSlow ?? 1 : 1);
-    // Knocked out: no input but the camera's zoom while it plays out.
-    if (W.ko) c = { moveX: 0, moveZ: 0, toggleMode: false, zoom: c.zoom };
-    // Staggered by a blow (rules/knock.ts): no moving, rising, blinking or 💌s for a moment.
-    else if (stunned(W.knock, ht)) c = { moveX: 0, moveZ: 0, toggleMode: false, zoom: c.zoom, sigil: c.sigil, place: c.place, cycle: c.cycle, cycleBack: c.cycleBack };
-    // Her movement turned (pack combat: the bat's screech, rules/combat/packs.ts): her steering swung, wavering, as her aim is by the stoat's dance.
-    else if (W.confused?.move && ht < W.confused.until && W.body.mode === "ground") { const a = W.confused.drift * Math.sin(ht * 2.3), cs = Math.cos(a), sn = Math.sin(a); c = { ...c, moveX: c.moveX * cs - c.moveZ * sn, moveZ: c.moveX * sn + c.moveZ * cs }; }
-    // Grounded by who follows her (Ed, 2026-10-18: "One adult stops you taking off. Three young do.", by weight; "you try and fly
-    // but get pulled down"; rules/leashWeight.ts groundedBy, leash.grounded): the press keeps her on the ground, dropped before the
-    // cooldown's (so it spends none), and is said, the "grounded" leash event: the view draws her lifting off and yanked back down
-    // by her taut, blazing leashes (render/view/witch.ts groundedHop, render/leash/stack.ts drawBond) and the landing's thud
-    // (platform/audio/sfxCues.ts). Drawn only: she never leaves the ground, so it's no dodge. Only a take-off from the ground: up
-    // in the treetops, or coming down, she flies on as before.
-    if (c.toggleMode && W.body.mode === "ground" && !W.body.seated && !g.map.bounds.fence && groundedBy(W.leash.stack, g.creatures, t).grounded) { // (never in the zoo: flying is the only way over its fences, Ed 2026-10-26, so nothing holds her down)
-      c = { ...c, toggleMode: false };
-      g.leashEvents.push({ kind: "grounded", id: W.id, x: W.body.x, z: W.body.z, at: ht });
-    }
-    // No coming down over a lake (Ed, 2026-10-23: "At the moment you can press x to leave treetop mode while over a lake; you go
-    // lower and move more slowly. I don't think you should be able to do that"): up in the treetops, or rising, over the water (the
-    // lake test with its pad, as on foot: rules/lakes.ts), the press is dropped and she flies on at full height and speed; and is
-    // said, the "lakeHold" leash event: the refusal's soft "nope", as for a sigil refused (platform/audio/sfxCues.ts).
-    if (c.toggleMode && (W.body.mode === "treetop" || W.body.mode === "rising") && g.map.bounds.lakes && onLake(g.map.bounds, W.body.x, W.body.z, lakeKnobs(t).pad)) {
-      c = { ...c, toggleMode: false };
-      g.leashEvents.push({ kind: "lakeHold", id: W.id, x: W.body.x, z: W.body.z, at: ht });
-    }
-    // Just landed: no rising again till riseCooldown seconds after (Ed, 2026-10-11: "players rise to the treetops instead of
-    // dodging"; rising takes her out of ground mode at once).
-    if (c.toggleMode && W.body.mode === "ground" && !W.body.seated && (shared ? !coolReady(W.cool, tw.cooldown?.rise ?? 0, room) : ht < (W.landedAt ?? -Infinity) + (tw.riseCooldown ?? 0))) c = { ...c, toggleMode: false }; // (the Jet nozzles' shorter: rules/broomParts.ts; shared: the counter must have room for the take-off)
-    const was = W.body;
-    if (!shared) rechargeDash(W.dash, ht, charges, tw.dash.cooldown);
-    // A blink (Decoy, Beaver: it leaves a waiting 💌 where she was).
-    // (A press is held for dash.buffer seconds until it can go: pressed a moment early still blinks.)
-    if (c.dash) W.dash.bufferUntil = ht + tw.dash.buffer;
-    if (ht <= (W.dash.bufferUntil ?? -Infinity) && !potionPhase(g, W) && !W.ko && !stunned(W.knock, ht)
-      && startDash(W.dash, was, c.moveX, c.moveZ, ht, tw, g.map.bounds, (x, z) => blinkClear(g, x, z, W.body), charges, tw.dash.chain, c.aimX ?? 0, c.aimZ ?? 0, shared ? coolReady(W.cool, tw.dash.cooldown, room) : undefined)) {
-      W.dash.bufferUntil = undefined;
-      if (shared) coolSpend(W.cool, tw.dash.cooldown, room); // (the dodge's share of the one cooldown)
-      if (W.spells.broom === "battering") batter(g, W.dash.fromX, W.dash.fromZ, W.dash.toX, W.dash.toZ, t); // (Battering: what's in her path is stunned)
-    }
-    const deck = guestDeck(deckOf(g.map, t), g, W), fallsOff = deck?.house && !hasBroom(W) ? { ...deck, house: { ...deck.house, fall: { ...deck.house.fall, on: true } } } : deck; // Movement-only guest floor; no broom still falls off the Terrace.
-    if (!potionPhase(g, W)) W.body = applyDash(W.dash, stepWitch(was, c, hdt, boost === 1 ? tw : { ...tw, groundSpeed: tw.groundSpeed * boost, treetopSpeed: tw.treetopSpeed * boost }, g.map.bounds, loadOf(W.leash.stack, g.creatures, was, t, pullOf(W.spells), !!W.leash.scatter), fallsOff)); // (her sigils' pull: rules/leashWeight.ts; the treehouse deck: rules/treehouse.ts)
-    // (the zoo: flying or walking on out against its edge, over the waterfall, takes her out of it, Ed 2026-10-26: "If you fly off the
-    // edge of the map in the zoo you exit as well"): pushing on outward where the edge's soft hold has her (its last map.push metres,
-    // as the beach's stargazing reckons it: rules/witch.ts), for ZOO_EDGE_PUSH seconds, on foot or flying
-    if (g.map.zoo?.layout) {
-      const Ld = g.map.bounds.land, B = W.body;
-      const held = !!Ld && !B.seated && Ld.distAt(B.x, B.z) < (t.map?.push ?? 0) * 0.6 && seaward(B, c, g.map.bounds) === true;
-      const pushed = held ? ((g.witches.length > 1 ? W.zooPush : g.zooPush) ?? 0) + hdt : 0;
-      if (g.witches.length > 1) W.zooPush = pushed; else g.zooPush = pushed;
-      if (pushed >= ZOO_EDGE_PUSH) g.zooExit ??= ht;
-    }
-    if (waking) keepInBedroom(g, W); // (the bedroom's door shut till she's up: rules/wakeUp.ts)
-    if (W.knock && !potionPhase(g, W)) W.body = stepWitchKnock(W.knock, W.body, hdt, t, g.map.bounds, (x, z) => blinkClear(g, x, z, W.body));
-    if (was.mode !== "ground" && W.body.mode === "ground") { W.landedAt = ht; if (shared) coolSpend(W.cool, tw.riseCooldown ?? 0, room); } // (landed: the rise cooldown starts; shared, the landing's share of the one cooldown)
-    if (shared && was.mode === "ground" && !was.seated && W.body.mode === "rising") coolSpend(W.cool, tw.cooldown?.rise ?? 0, room); // (taken off: its share; not her first step off the decks)
-    if (shared) { const wait = coolWait(W.cool, tw.dash.cooldown, room); if (wait > 0) W.dash.readyAt = ht + wait; } // (the dash's readyAt kept true to the counter, for the reticle and the buffer)
-    // On the treehouse deck or off it (rules/treehouse.ts): landed on it, or risen off it.
-    const onDeck = (b: WitchState) => !!b.perch && b.mode === "ground", perchTurn = !was.seated && onDeck(was) !== onDeck(W.body) ? (onDeck(W.body) ? 1 : -1) : 0;
-    // A party legend on her leash (the Easter egg): not a step past legends.partyReach of it, blinking, flying or thrown (rules/partyLegend.ts).
-    if (t.legends.partyEgg && !potionPhase(g, W)) { const P = pinWitch(W.body, W.leash.stack, g.creatures, t.legends.partyReach, g.clock.time, W.pinned ?? null); W.body = P.body; W.pinned = P.pinned; }
-    // A sleeping legend's sigil she carries (rules/stoneStacks.ts): not a step past its tether, blinking, flying or thrown.
-    if (W.leash.tether && !potionPhase(g, W)) { const P = tetherWitch(W.body, W.leash.tether, g.creatures, g.clock.time, W.pinned ?? null); W.body = P.body; if (P.pinned) W.pinned = P.pinned; }
-    return { W, c, ht, was, deck, perchTurn, firing, LV: null as ReturnType<typeof leashView> | null };
-  });
+  const motions = g.witches.map((W, i) => stepWitchLocomotion(g, W, controls[i], hdt));
   if (g.cauldron) {
     const routed = stepCauldronNight(g, motions.map(m => m.c), hdt);
     motions.forEach((m, i) => { m.c = routed[i]; });
@@ -745,7 +752,8 @@ function fixedStep(g: Game, controls: readonly Controls[]): void {
       else if (e.kind === "hatPicked") { onHatPicked(g, W, e.x, e.z, ht, t); const waking = wakeOf(g, W); if (waking) wearPiece(waking, "hat"); } // (a hat on her head: out of last night's pile, so she's drawn in it; rules/clothesPile.ts)
     }
     // The 💌s (issue #87): on the ground, off her seat, not knocked out.
-    stepInvites(W.invites, W.ko ? {} : confusedAim(W, c, ht), { ...W.body }, t.invites.on && hasInvites(W) && W.body.mode === "ground" && !W.body.seated && !W.ko && !(g.witches.length > 1 && W.house?.slept), g.creatures, affectionOf(g, W), ht, hdt, bagTuning(t, W.spells.bag), g.tuning.legendCircle?.slow.on === false ? undefined : leavesCalmRing(g, W.body), hasInvites(W) ? hatLetters(hatsDown(W), t) : undefined, g.combat.mirages?.length || g.combat.decoys?.length ? mirageDecoys(g, g.clock.time) : undefined);
+    if (W.id === 1 && guestEffectsEnabled(g)) applyGuestEffects(g);
+    stepInvites(W.invites, W.ko ? {} : confusedAim(W, W.id === 1 && guestEffectsEnabled(g) ? { ...c, fire: false } : c, ht), { ...W.body }, t.invites.on && hasInvites(W) && W.body.mode === "ground" && !W.body.seated && !W.ko && !(g.witches.length > 1 && W.house?.slept), g.creatures, affectionOf(g, W), ht, hdt, bagTuning(t, W.spells.bag), g.tuning.legendCircle?.slow.on === false ? undefined : leavesCalmRing(g, W.body), hasInvites(W) ? hatLetters(hatsDown(W), t) : undefined, g.combat.mirages?.length || g.combat.decoys?.length ? mirageDecoys(g, g.clock.time) : undefined);
     if (!worldAsleep(g)) wakeOnInvites(g, W.invites.events, t); // (a 💌 landing on a wild one wakes its area: rules/inviteWakes.ts)
     questsFromPlaced(g, ht, W);
     if (c.feedNearest) feedNearest(B, g.creatures, W.body.x, W.body.z, g.clock.time, t, g.beat);
@@ -849,7 +857,7 @@ export function mirageDecoys(g: Game, time: number): Decoy[] {
 }
 
 /** Her aim, turned while she's confused (pack combat: the stoat's war dance, its drift wavering; rules/combat/packs.ts). */
-function confusedAim(W: Witch, c: Controls, ht: number): Controls {
+export function confusedAim(W: Witch, c: Controls, ht: number): Controls {
   const C = W.confused;
   if (!C || C.move || ht >= C.until || c.aimX === undefined || c.aimZ === undefined) return c;
   const a = C.drift * Math.sin(ht * 2.3), cs = Math.cos(a), sn = Math.sin(a);

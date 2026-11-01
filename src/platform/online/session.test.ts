@@ -28,6 +28,27 @@ const cleanups: (() => void)[] = [];
 afterEach(() => { for (const stop of cleanups.splice(0)) stop(); });
 const input = (moveX = 0): Controls => ({ moveX, moveZ: 0, zoom: 0, toggleMode: false, autoTalk: false });
 const turn = () => new Promise<void>(resolve => setTimeout(resolve, 0));
+it("shows guest movement and letter launch immediately while canonical simulation waits for host frames", async () => {
+  const f = fixture(), { joined } = await f.start();
+  f.hostGame.clock.paused = false;
+  Object.assign(f.hostGame.witches[1].body, { seated: false, perch: false });
+  delete f.hostGame.witches[1].wake; delete f.hostGame.witches[1].kit;
+  await f.sync(); await joined;
+  const canonical = snapshotGame(f.guest.game!), x = f.guest.game!.witches[1].body.x;
+  const sentAt = f.guestMessages.length;
+  f.guest.step({ ...input(1), fire: true, aimX: 1, aimZ: 0 }, 1 / 60);
+  expect(f.guest.predicted!.body.x).toBeGreaterThan(x);
+  expect(f.guest.predicted!.invites.events.some(e => e.kind === "shot")).toBe(true);
+  expect(snapshotGame(f.guest.game!)).toEqual(canonical);
+  const packets = f.guestMessages.slice(sentAt);
+  expect(packets.some(m => (m.payload as { kind?: string }).kind === "pve-cast")).toBe(true);
+  packets.forEach(m => f.host.message(m));
+  const hostAt = f.hostMessages.length; f.host.step(input(), 1 / 60);
+  const frames = f.hostMessages.slice(hostAt);
+  frames.forEach(m => f.guest.message(m));
+  expect(f.hostOptions.failed).not.toHaveBeenCalled(); expect(f.guestOptions.failed).not.toHaveBeenCalled();
+  expect(snapshotGame(f.guest.game!)).toEqual(snapshotGame(f.hostGame));
+});
 it("keeps the same visit across the host's new world and rebases after guest preparation", async () => {
   const f = fixture(), { joined } = await f.start(); await f.sync(); await joined;
   f.hostGame.witches.forEach(w => { w.house = { slept: true, lastBed: "bed" }; });

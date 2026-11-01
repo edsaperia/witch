@@ -33,6 +33,7 @@ export function guestInput(heldInputMs: number = ONLINE_TIMING.heldInputMs) {
   let current = neutral(), receivedAt = -Infinity, sequence = -1;
   const pending: Partial<Controls> = {};
   return {
+    get sequence() { return sequence; },
     accept(payload: unknown, now: number): boolean {
       if (!payload || typeof payload !== "object" || !Number.isFinite(now) || now < receivedAt) return false;
       const p = payload as Record<string, unknown>;

@@ -15,6 +15,8 @@ import { hash2 } from "./random";
 import type { Tuning } from "./tuning";
 
 export interface Letter {
+  claimCast?: number;
+  claimShot?: number;
   /** Its number (the view keys its spin and bubble by it). */
   n: number;
   x: number;
@@ -67,6 +69,8 @@ export type InviteEvent =
   | (InviteEventAt & { kind: "happy"; id: number; n?: undefined; spent?: undefined });
 
 export interface Invites {
+  /** Online hit receipts also cover an admitted projectile whose first host step has not run yet. */
+  claimed?: Record<string, { ids: number[]; spent: boolean; at: number }>;
   letters: Letter[];
   /** Volleys left in this burst, and when the next goes. */
   burstLeft: number;
@@ -80,7 +84,7 @@ export interface Invites {
   az: number;
   next: number;
   /** The burst's volleys to fire: when, and which way. */
-  queue: { at: number; ax: number; az: number }[];
+  queue: { at: number; ax: number; az: number; claimCast?: number; claimFirst?: number }[];
   /** The bloom: degrees her aim has spread from firing on (invites.bloomPer), and when it was last brought up to date. */
   bloom?: number;
   bloomAt?: number;
@@ -99,7 +103,9 @@ export interface Affection {
   /** Whether it stops 💌s dead: enraged animals and legends. */
   blocksLetters(c: Creature): boolean;
   /** A 💌 landed on it: `amount` 1 a letter. */
-  hit(c: Creature, amount: number, time: number): void;
+  hit(c: Creature, amount: number, time: number, automatic?: boolean, letter?: Letter): void;
+  /** Online hand-projectile effects wait for the guest claim; automatic hat letters retain host resolution. */
+  acceptsHit?(automatic: boolean): boolean;
   /** Its meter, 0 to 1, or null when it has none. */
   affection(c: Creature): number | null;
 }
@@ -115,7 +121,9 @@ export interface InviteControls {
 /** A letter launched from (x, z) at angle a. */
 function letter(s: Invites, x: number, z: number, a: number, time: number, t: Tuning, more: Partial<Letter> = {}): Letter {
   const I = t.invites, L: Letter = { n: s.next++, x, z, vx: Math.cos(a) * I.speed, vz: Math.sin(a) * I.speed, flown: 0, at: time, r: I.radius, range: I.range, home: false, hit: [], ...more };
-  s.letters.push(L);
+  const receipt = L.claimCast === undefined ? undefined : s.claimed?.[`${L.claimCast}:${L.claimShot}`];
+  if (receipt) L.hit = [...receipt.ids];
+  if (!receipt?.spent) s.letters.push(L);
   return L;
 }
 
@@ -131,8 +139,9 @@ export function aimOff(s: Invites, time: number, I: Tuning["invites"]): number {
 
 /** One step: start or carry on a burst, fly the letters, and land them. `canFire`: on the ground,
  *  off her seat, not knocked out. */
-export function stepInvites(s: Invites, c: InviteControls, witch: { x: number; z: number; facing: number; vx?: number; vz?: number }, canFire: boolean, creatures: Creature[], A: Affection, time: number, dt: number, t: Tuning, leaves?: (x0: number, z0: number, x1: number, z1: number) => boolean, hat?: HatLetters, decoys?: readonly Decoy[]): void {
-  const I = t.invites, HARD = I.hard;
+/** Schedule an allowed burst without moving projectiles or touching creatures. */
+export function queueInviteBurst(s: Invites, c: InviteControls, witch: { facing: number; vx?: number; vz?: number }, canFire: boolean, time: number, t: Tuning): void {
+  const I = t.invites;
   const ax = c.aimX ?? 0, az = c.aimZ ?? 0, al = Math.hypot(ax, az);
   if (al > 1e-3 && s.queue.length === 0) { s.ax = ax / al; s.az = az / al; }
   /** Aim with nothing to aim by (touch): the way she's going, or facing. */
@@ -145,13 +154,19 @@ export function stepInvites(s: Invites, c: InviteControls, witch: { x: number; z
     for (let i = 0; i < volleys; i++) s.queue.push({ at: time + i * I.burstGap, ax: s.ax, az: s.az });
     s.readyAt = time + (volleys - 1) * I.burstGap + I.cooldown;
   }
+}
+
+export function stepInvites(s: Invites, c: InviteControls, witch: { x: number; z: number; facing: number; vx?: number; vz?: number }, canFire: boolean, creatures: Creature[], A: Affection, time: number, dt: number, t: Tuning, leaves?: (x0: number, z0: number, x1: number, z1: number) => boolean, hat?: HatLetters, decoys?: readonly Decoy[]): void {
+  if (s.claimed) for (const [key, receipt] of Object.entries(s.claimed)) if (time - receipt.at > 20) delete s.claimed[key];
+  const I = t.invites, HARD = I.hard;
+  queueInviteBurst(s, c, witch, canFire, time, t);
   // The volleys due: multiShot letters each, over spread degrees.
   s.queue.sort((a, b) => a.at - b.at);
   while (s.queue.length && time >= s.queue[0].at - 1e-9) {
     const q = s.queue.shift()!;
     const n = Math.max(1, Math.round(I.multiShot)), base = Math.atan2(q.az, q.ax), fan = (I.spread * Math.PI) / 180;
     const off = (aimOff(s, q.at, I) * Math.PI) / 180;
-    for (let k = 0; k < n; k++) { const a = base + (n > 1 ? (k / (n - 1) - 0.5) * fan : 0) + (off > 0 ? (hash2(s.next, 7, 1) * 2 - 1) * off : 0); letter(s, witch.x + Math.cos(a) * 0.6, witch.z + Math.sin(a) * 0.6, a, time, t); }
+    for (let k = 0; k < n; k++) { const a = base + (n > 1 ? (k / (n - 1) - 0.5) * fan : 0) + (off > 0 ? (hash2(s.next, 7, 1) * 2 - 1) * off : 0); letter(s, witch.x + Math.cos(a) * 0.6, witch.z + Math.sin(a) * 0.6, a, time, t, q.claimCast === undefined ? {} : { claimCast: q.claimCast, claimShot: q.claimFirst! + k }); }
     s.events.push({ kind: "shot", x: witch.x, z: witch.z, at: time, n: s.next - 1 });
   }
   s.burstLeft = s.queue.length;
@@ -170,9 +185,11 @@ export function stepInvites(s: Invites, c: InviteControls, witch: { x: number; z
   };
   const aimAt = (L: Letter, k: Creature) => { const sp = Math.hypot(L.vx, L.vz) || I.speed, d = Math.hypot(k.x - L.x, k.z - L.z) || 1; L.vx = ((k.x - L.x) / d) * sp; L.vz = ((k.z - L.z) / d) * sp; };
   /** Love landing on k: every letter counts (no gap since 2026-10-06: her firing rate sets the pace). */
-  const love = (k: Creature, x: number, z: number, n: number) => {
-    s.events.push({ kind: "hit", x, z, at: time, id: k.id, n, spent: false });
-    A.hit(k, I.amount, time);
+  const love = (k: Creature, x: number, z: number, n: number, automatic = false, projectile?: Letter) => {
+    if (A.acceptsHit?.(automatic) === false) return;
+    const event = { kind: "hit" as const, x, z, at: time, id: k.id, n, spent: false };
+    s.events.push(event);
+    A.hit(k, I.amount, time, automatic, projectile);
   };
 
   // The Sentry hats: each a 💌 at the nearest invitable creature in its reach, every few seconds, homing hard.
@@ -252,7 +269,7 @@ export function stepInvites(s: Invites, c: InviteControls, witch: { x: number; z
     if (first) {
       // Stopped dead by an enraged animal or a legend; else love lands.
       if (A.blocksLetters(first)) { s.events.push({ kind: "blocked", x: L.x, z: L.z, at: time, id: first.id, n: L.n, vx: L.vx, vz: L.vz }); return false; }
-      love(first, L.x, L.z, L.n);
+      love(first, L.x, L.z, L.n, L.hat === true, L);
       L.hit.push(first.id);
       // Pierce (Ed, 2026-10-29: "pierce, yes"): it flies on through up to `pierce` more, the ones it has landed on passed by.
       if (L.hit.length > Math.round(I.pierce ?? 0)) {
