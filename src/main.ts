@@ -8,7 +8,7 @@ import { bagOf, setBag } from "./rules/bags";
 import { bindings } from "./platform/bindings";
 import { Rumble } from "./platform/rumble";
 import { telephoneStation } from "./app/telephoneStation";
-import { installTelephone, telephoneEnabled } from "./app/telephoneSwitch";
+import { installTelephone, telephoneEnabled, telephoneCallsEnabled } from "./app/telephoneSwitch";
 import { leaveVisit, visitHome } from "./app/visitHome";
 import { telephoneCues } from "./app/telephoneCues";
 import { telephoneFaces } from "./app/telephoneFaces";
@@ -402,7 +402,7 @@ function hostCollections(game: Game) {
 const phoneSounds = telephoneCues(() => sound.sfx);
 const phoneFaces = telephoneFaces(telephoneEnabled(params) ? (() => { try { return localStorage; } catch { return null; } })() : null);
 const phoneFace = (number: string) => { const face = phoneFaces.get(number); return face ? telephoneFaceCanvas(face) : null; };
-const phone = telephoneStation({ enabled: telephoneEnabled(params), face: phoneFace, clearFaces: () => { phoneFaces.clear(); phonePresence.refresh(); }, digit: digit => { if (phone.state.status !== "preparing") phoneSounds.digit(digit); }, storage: (() => { try { return localStorage; } catch { return null; } })(), session: {
+const phone = telephoneStation({ enabled: telephoneEnabled(params), callsEnabled: telephoneCallsEnabled(params), face: phoneFace, clearFaces: () => { phoneFaces.clear(); phonePresence.refresh(); }, digit: digit => { if (phone.state.status !== "preparing") phoneSounds.digit(digit); }, storage: (() => { try { return localStorage; } catch { return null; } })(), session: {
   build: BUILD, hostGame: () => N().game,
   appearance: () => { sharedLoans.begin(personalKit(), loan); if (!phone.visiting) sharedLoans.observe(N().game, personalKit()); return appearance(page.look()) ?? appearance({}); },
   attach: game => { if (!guestAccess.ready) throw new Error("The guest room isn't ready yet."); callArrival.attach(game); if (remoteArt.has(1)) void remoteArt.start(game, 0).catch(error => { logCaughtError(error, "host remote appearance"); phone.hangUp(); }); },

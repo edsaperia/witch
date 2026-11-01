@@ -1,11 +1,16 @@
 import { afterEach, expect, it, vi } from "vitest";
-import { installTelephone, telephoneEnabled } from "./telephoneSwitch";
+import { installTelephone, telephoneEnabled, telephoneCallsEnabled } from "./telephoneSwitch";
 import { telephoneStation } from "./telephoneStation";
 import { HOUSE_ROOMS } from "../rules/houseRooms";
 import { newGame } from "../rules/game";
 import { TUNING } from "../rules/tuning";
 import { snapshotGame } from "../rules/nightSnapshot";
 afterEach(() => installTelephone(false));
+
+it("admits calls only with both explicit proof switches", () => {
+  for (const value of ["", "telephone=1", "telephoneCalls=1", "telephone=0&telephoneCalls=1", "telephone=1&telephoneCalls=true", "telephone=1&telephoneCalls=0"]) expect(telephoneCallsEnabled(new URLSearchParams(value))).toBe(false);
+  expect(telephoneCallsEnabled(new URLSearchParams("telephone=1&telephoneCalls=1"))).toBe(true);
+});
 
 it("keeps the authored default say use and performs no panel/identity/storage/network work on use", async () => {
   installTelephone(false);

@@ -9,13 +9,13 @@ import { telephoneActor } from "./telephoneActor";
 import type { TelephoneState } from "../ui/telephone";
 
 /** Ordinary station lifetime/input seam. Call admission remains off until canonical proof and deployment approval. */
-export function telephoneStation(options: Pick<TelephoneOptions, "storage" | "loadIdentity" | "menu" | "socket" | "digit" | "face" | "clearFaces"> & { enabled?: boolean; session?: SessionOptions }) {
+export function telephoneStation(options: Pick<TelephoneOptions, "storage" | "loadIdentity" | "menu" | "socket" | "digit" | "face" | "clearFaces"> & { enabled?: boolean; callsEnabled?: boolean; session?: SessionOptions }) {
   const session = options.enabled && options.session ? onlineSession(options.session) : null;
   const preferences = visitPreferences();
   let presentation: ReturnType<typeof localView> | null = null, source: Game | null = null;
   let phone: ReturnType<typeof telephone> | null = null;
   const idleState: TelephoneState = { own: "", status: "ended", recent: [], saved: true };
-  const makePhone = () => telephone({ ...options, callsEnabled: false,
+  const makePhone = () => telephone({ ...options, callsEnabled: options.enabled === true && options.callsEnabled === true,
     connected: async (role, connection, _peer, signal) => {
       if (!session) throw new Error("Calls aren't available in this build yet.");
       await session.connect(role, connection, signal);

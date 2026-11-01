@@ -308,6 +308,10 @@ says what each note covers.
 - Babble
 - Audio capacity test
 
+## [Two-client telephone proof](telephone-proof.md)
+
+(no entries: its tools and checks only)
+
 ## [Testing tools](testing.md)
 
 - A quick proof shot
