@@ -18,6 +18,10 @@ Called only by the coordinator's allocated cloud browser runner; owns no browser
 
 Canonical-allocated cloud only, two serial private contexts; no existing browser/profile/window touched.
 
+## `diagnose.mjs`
+
+Bounded canonical cloud diagnostic; temporarily changes only a disposable checkout, runs one existing species file without changing assertions, then restores every byte.
+
 ## `measure.ts`
 
 Canonical-allocated cloud CPU evidence only; bundled by run.mjs.
