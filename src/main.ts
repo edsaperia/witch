@@ -80,7 +80,9 @@ import { readZooCoasts } from "./app/zooCoasts";
 import { guidanceOf, seeGuide, GUIDANCE_HOOKS } from "./rules/guidance";
 import { addNew, dropNew, loadGuide, storeGuide } from "./app/guideSave";
 import { GuidePin } from "./render/view/guidance";
-import { warmChart } from "./app/chartWarm";
+import { reachableChartIslandIds, stopWarmChart, warmChart } from "./app/chartWarm";
+import { chartWarmEligible, ChartWarmSchedule } from './app/chartWarmSchedule';
+import { REAL_KINDS } from './rules/rosters';
 import { powerLines } from "./app/hud";
 import { NewBuildNotice } from "./app/newBuild";
 import { SPRITE_UNIFORMS } from "./render/sprites";
@@ -331,13 +333,22 @@ const showProgress = setInterval(() => {
 // Not under automation (the smoke and bench runs time the game's own frames), unless ?warmChart=1.
 const chartWorld = () => (params.has("world") ? N().tuning.map?.world ?? 0 : loadSave().world);
 const warmOn = params.get("warmChart") === "1" || (params.get("warmChart") !== "0" && !navigator.webdriver);
-const warmWhenSettled = warmOn ? setInterval(() => {
-  if (!N().flags.ready || view.assets.pending || document.hidden || chartOpen()) return;
-  clearInterval(warmWhenSettled);
-  const t0 = performance.now(), log = params.get("warmChart") === "1"; // (?warmChart=1: each island logged, for timing it)
-  if (log) console.info("sea chart: making ahead");
-  warmChart(chartWorld(), loadSave().found, (made, kept) => console.info(`sea chart made ahead: ${made} islands made, ${kept} already kept, ${((performance.now() - t0) / 1000).toFixed(1)} s`), log ? (id, made) => console.info(`sea chart: ${id} ${made ? "made" : "kept"} at ${((performance.now() - t0) / 1000).toFixed(1)} s`) : undefined);
-}, 3000) : 0;
+const chartWarmer = new ChartWarmSchedule(({ world, found, ids }, done) => {
+  warmChart(world, found, (made, kept) => { done(); if (params.get('warmChart') === '1') console.info(`sea chart made ahead: ${made} islands made, ${kept} already kept`); }, undefined, ids, done);
+}, stopWarmChart);
+let chartWarmNextCheck = 0;
+function updateChartWarm(): void {
+  const n = N();
+  if (!chartWarmEligible({ enabled: warmOn, ready: n.flags.ready, treehouse: !!n.game.witch.perch && n.game.witch.mode === 'ground', map: chartOpen(),
+    blocked: loop.manual || sailing || document.hidden || freeze.frozen || landingSleep.holds(n.game) || (!!n.arrival && !n.flags.landed) })) {
+    chartWarmer.pause(); chartWarmNextCheck = 0; return;
+  }
+  // Cancellation is per frame; storage/reachability checks need not run at frame frequency.
+  if (view.assets.pending || performance.now() < chartWarmNextCheck) return;
+  chartWarmNextCheck = performance.now() + 1000;
+  const world = chartWorld(), found = loadSave().found;
+  chartWarmer.tick({ world, found, ids: reachableChartIslandIds(world, unlockAll() ? [...REAL_KINDS] : found) });
+}
 requestAnimationFrame(() => setTimeout(async () => {
   const night = N();
   if (night.arrival) bedFirst(night); // (the island's link loaded anew, &arrive=1: in bed before the dive, as a sail in place)
@@ -761,7 +772,8 @@ const decidePanel = (open: boolean) => {
 };
 if (params.has("decide")) decidePanel(true);
 window.addEventListener("keydown", e => { if (e.code !== "F2") return; e.preventDefault(); if (decide) decide.toggle(); else decidePanel(true); });
-document.addEventListener("visibilitychange", () => { if (document.hidden) N().flags.last = 0; });
+document.addEventListener("visibilitychange", () => { if (document.hidden) { N().flags.last = 0; chartWarmer.pause(); } });
+addEventListener('pagehide', () => chartWarmer.pause());
 
 const endedNights = new WeakSet<Game>();
 const commentBook = new CommentBook(browserCommentStore()), breadcrumbs = new Breadcrumbs();
@@ -1214,6 +1226,7 @@ function frame(now: number): void {
   const n = N(), phase = sailing ? "sailing" : landingSleep.holds(n.game) ? "landing-sleep" : !n.flags.ready ? "building" : n.arrival && !n.flags.landed ? "arrival" : "play";
   try { frameBody(now); }
   finally {
+    try { updateChartWarm(); } catch (error) { chartWarmer.pause(); logCaughtError(error, 'chart background scheduling'); }
     try {
       if (!loop.manual) stallLog.frame({ t: n.game.clock.time, gap, work: performance.now() - start, step: measuredStep ?? 0, draw: measuredDraw, measured: { step: measuredStep !== undefined, draw: measuredDraw !== undefined }, parts: measuredParts, source: "raf", loading: { phase, ready: n.flags.ready, ...view.readiness }, mode: n.game.witch.mode, x: n.game.witch.x, z: n.game.witch.z, wave: n.game.party.wave, creatures: n.game.creatures.length });
     } catch (error) { logCaughtError(error, "slow-frame observation"); }
@@ -1351,7 +1364,7 @@ function frameBody(now: number): void {
   // The night's end (Ed, 2026-10-26: "Remove the end cards"): no card, won or lost; the guidance pins lead her home (rules/guidance.ts).
   // The night won (rules/win.ts): the islands its woken legends showed recorded on the sea chart (app/chartSave.ts), once, as its
   // finale settles; the enraged legends' (win.lost) not.
-  if (game.win?.settled && !F.chartRecorded) { F.chartRecorded = true; nightOver(tuning.map?.island ?? "", { won: true, found: game.win.found }, undefined, tuning.map?.world ?? 0); if (warmOn) warmChart(chartWorld(), loadSave().found); } // (in the campaign's world only; home grows with what she's found: made again ahead)
+  if (game.win?.settled && !F.chartRecorded) { F.chartRecorded = true; nightOver(tuning.map?.island ?? "", { won: true, found: game.win.found }, undefined, tuning.map?.world ?? 0); } // Next eligible chart-warm check picks up new finds; no unconditional worker at night-over.
   // The touch spell button only with a broom that has a spell to cast (rules/spells.ts castable).
   { const want = castable(game.spells) ? "" : "none"; if (spellButton && spellButton.style.display !== want) spellButton.style.display = want; }
   newBuild.update(creator.open || (freeze.frozen && !pauseSliders) || menuGone); // (a newer build is out: in the bedroom, and on the pause page only until its panel, which has the button, loads)
