@@ -204,6 +204,7 @@ function nightState(t: Tuning) {
     /** How far the camera is lifted to see her over a hill in between (metres, eased). */
     camLift: 0,
     camLiftTime: Number.NaN,
+    houseCamInput: new THREE.Vector3(),
     /** The charcoal huts' smouldering mounds near her (looked up when she has moved far), for the smoke. */
     mounds: [] as number[],
     moundsAt: { x: Infinity, z: Infinity },
@@ -1654,6 +1655,8 @@ export class View {
     // Her clock (rules/slowTime.ts): she and everything of hers (her frames, blinks, trail, 💌s, sigils, the action bar) at full
     // speed, while the world (time) may run slow in a sleeping legend's circle; eased between steps as the world's is.
     const ht = Math.max(0, g.herTime - Math.max(0, g.clock.time - time) / Math.max(1e-3, g.timeScale));
+    // CPU effects read these too. Stamp them before drawing any markers or sparkles.
+    LIGHT_UNIFORMS.uTime.value = time; LIGHT_UNIFORMS.uRealTime.value = ht;
     this.magic.begin(ht, g.witch.x, g.witch.z, g);
     this.magic.batches.mpp.value = this.mpp;
     this.magic.batches.canopy = g.witch.lift > 0.5;
@@ -1856,7 +1859,6 @@ export class View {
       }
     }
     this.time("grass+lights");
-    LIGHT_UNIFORMS.uTime.value = time; LIGHT_UNIFORMS.uRealTime.value = ht; // (the circle's motes and edge keep her clock)
     this.mist?.follow(pose.tx, pose.tz);
     if (this.loadingMist && draw) { // (on the page's own clock, a frame counting at most a tenth of a second: not the house's slowed time)
       this.loadingMist.update(time, ty => this.assets.hasType(ty));

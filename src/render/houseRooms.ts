@@ -288,7 +288,7 @@ export class HouseRoomsView {
   update(v: View, onTreehouse: (px: number, py: number) => V3, ht: number): void {
     const g = v.game, w = g.witch, t = g.tuning, T = v.assets.treehouse, d = deckOf(g.map, t);
     const shown = !!(d?.house?.rooms && T.ent && w.perch && (w.mode === "ground" || w.mode === "descending")); // (at her decks too: the Terrace the oak's floor, render/houseArt.ts)
-    const late = v.shaderLandingLimited, share = v.landingHouseShare, arrivalNow = performance.now();
+    const late = v.shaderLandingLimited, share = v.landingHouseShare, arrivalNow = v.landingPresentationMs + g.clock.time * 1000;
     const world = (px: number, pz: number, h: number): V3 => { const p = fromPlan(d!, px, pz); return { ...p, y: groundHeight(p.x, p.z) + d!.h + h }; };
     const g0 = d ? groundHeight(d.x, d.z) : 0;
     const ky = T.ent && d ? (T.seat.y - T.ent.deck.y) / Math.max(0.1, d.seat.z - d.z) : 0;
@@ -396,7 +396,7 @@ export class HouseRoomsView {
     }
     if (late && floorCreated) {
       this.floorCompiled = false;
-      void Promise.all([v.renderer.compileAsync(this.floor, v.camera, v.scene), v.renderer.compileAsync(this.terraceFloor, v.camera, v.scene)]).then(() => { this.floorCompiled = true; this.floorArrivalAt = performance.now(); }, () => {});
+      void Promise.all([v.renderer.compileAsync(this.floor, v.camera, v.scene), v.renderer.compileAsync(this.terraceFloor, v.camera, v.scene)]).then(() => { this.floorCompiled = true; this.floorArrivalAt = v.landingPresentationMs + g.clock.time * 1000; }, () => {});
     }
     const nativeShare = late ? share * (this.floorArt && this.floorCompiled ? Math.min(1, Math.max(0, (arrivalNow - this.floorArrivalAt) / 800)) : 0) : 1;
     (this.floor.material as THREE.MeshBasicMaterial).opacity = nativeShare;

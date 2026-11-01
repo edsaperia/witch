@@ -43,6 +43,9 @@ export function easeCameraLift(current: number, need: number, seconds: number): 
 export function placeCamera(v: View, time: number, pose: ReturnType<typeof poseOf>): THREE.Vector3 {
   const g = v.game, t = g.tuning;
   const liftDt = Number.isFinite(v.camLiftTime) ? time - v.camLiftTime : 0;
+  // drawWitch computes the house offset after camera placement. Repainting the
+  // same instant must use the offset its first camera placement actually saw.
+  if (time !== v.camLiftTime) v.houseCamInput.copy(v.houseCam as THREE.Vector3Like);
   v.camLiftTime = time;
   pose = wholeAtStation(v, pose);
   const vertigo = v.fly || v.telescope ? 0 : vertigoAmount(potionStrength(g, 'vertigo'), g.witch.lift);
@@ -92,7 +95,7 @@ export function placeCamera(v: View, time: number, pose: ReturnType<typeof poseO
     v.rideOff = W.seated || W.perch ? 0 : v.ride.h - groundHeight(W.x, W.z); // (on the treehouse deck: its floor is flat)
   }
   const target = new THREE.Vector3(pose.tx, F ? F.ty : pose.ty + v.camRide.h, pose.tz); // (the flight's aim is in the world's heights)
-  if (!F) target.add(v.houseCam as THREE.Vector3Like); // (off the treehouse's hub: where she's drawn, render/view/witch.ts)
+  if (!F) target.add(v.houseCamInput);
   // At a station, aimed up her to the part being chosen (rules/camera.ts aim: a share of her height as drawn), along the way her
   // sprite stands (up the screen), so that part stays in the middle at any zoom.
   // From her feet as she's drawn (the last frame's: she stands still at a station), not the rules' height: indoors that's

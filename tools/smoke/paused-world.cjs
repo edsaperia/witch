@@ -36,7 +36,7 @@ async function saveMismatch(page, reference, sha) {
       for (let y = 0; y < h; y++) rows.set(bytes.subarray(y * stride, (y + 1) * stride), (h - 1 - y) * stride);
       return png(w, h, rows);
     }
-    return { changed, bbox: changed ? { left, top, right, bottom } : null,
+    return { changed, bbox: changed ? { left, top, right, bottom } : null, traces: [a.trace, b.trace],
       images: { [reference]: framePNG(a), repaint: framePNG(b), diff: png(width, height, mask) } };
   }, reference);
   const dir = path.resolve(process.env.PAUSE_PROOF_OUT || 'paused-world-proof');
@@ -44,6 +44,7 @@ async function saveMismatch(page, reference, sha) {
   for (const [name, data] of Object.entries(evidence.images)) {
     await fs.writeFile(path.join(dir, name + '.png'), Buffer.from(data, 'base64'));
   }
+  if (evidence.traces[0]) await fs.writeFile(path.join(dir, 'pixel-submissions.json'), JSON.stringify(evidence.traces, null, 2));
   console.log(JSON.stringify({ sha, reference, changedPixels: evidence.changed, bboxTopLeftInclusive: evidence.bbox, directory: dir }));
 }
 
@@ -71,10 +72,46 @@ async function measure(browser, url, sha, candidate) {
       return game.clock.time > 2 && game.wake?.open && game.party.spellAt === null && pin.key.startsWith('dress:') &&
         pin.key.includes('dressingTable') && pin.strength > 0 && view.pins.size > 0;
     }, null, wakeWait);
-    await page.evaluate(() => {
+    await page.evaluate(tracePixels => {
       const view = window.witch.view, render = view.render.bind(view);
       const probe = window.pauseProbe = { draws: 0, sample: false, pixels: null };
+      // Optional cloud diagnostic. Record which submissions actually change the
+      // three pixels identified in run 3. Sample the world and effects targets
+      // before bloom, using normalized screen coordinates for reduced targets.
+      if (tracePixels) {
+        const renderer = view.renderer, submit = renderer.renderBufferDirect.bind(renderer);
+        const sites = [[116,55], [160,77], [217,88]], rgb = new Uint8Array(4);
+        const labels = new WeakMap();
+        function owner(object) {
+          if (!labels.has(object)) {
+            const names = [];
+            for (const [key, part] of Object.entries(view)) {
+              if (part === object || part?.mesh === object || (Array.isArray(part?.meshes) && part.meshes.includes(object))) names.push(key);
+            }
+            labels.set(object, names);
+          }
+          return labels.get(object);
+        }
+        renderer.renderBufferDirect = (...args) => {
+          const target = renderer.getRenderTarget();
+          const pass = target === view.post.scene ? 'world' : target === view.post.fx ? 'effects' : null;
+          if (!probe.trace || !pass) return submit(...args);
+          const read = () => sites.map(([x,y]) => {
+            renderer.getContext().readPixels(Math.floor((x + 0.5) * target.width / 320),
+              target.height - 1 - Math.floor((y + 0.5) * target.height / 180), 1, 1,
+              renderer.getContext().RGBA, renderer.getContext().UNSIGNED_BYTE, rgb);
+            return [...rgb].join(',');
+          });
+          const before = read(), result = submit(...args), after = read(), [, , geometry, material, object] = args;
+          for (let i = 0; i < sites.length; i++) if (before[i] !== after[i]) {
+            probe.trace.layers.push({ pass, xy: sites[i], object: [object.id, object.name, object.parent?.name], owners: owner(object),
+              material: [material.id, material.name], map: material.map?.source?.uuid, geometry: geometry.id, before: before[i], after: after[i] });
+          }
+          return result;
+        };
+      }
       view.render = (...args) => {
+        probe.trace = tracePixels && probe.sample ? { time: args[0], herTime: view.game.herTime, layers: [] } : null;
         const result = render(...args);
         probe.draws++;
         if (probe.sample) {
@@ -85,11 +122,11 @@ async function measure(browser, url, sha, candidate) {
           let hash = 2166136261;
           for (const byte of pixels) hash = Math.imul(hash ^ byte, 16777619);
           probe.pixels = [w, h, hash];
-          probe.frame = { w, h, bytes: pixels };
+          probe.frame = { w, h, bytes: pixels, trace: probe.trace };
         }
         return result;
       };
-    });
+    }, candidate && process.env.PAUSE_TRACE_PIXELS === '1');
     const snapshot = () => page.evaluate(() => ({
       at: performance.now(), draws: window.pauseProbe.draws, time: window.witch.game.clock.time,
       phases: Array.from(window.witch.view.pins, p => p.scale), pixels: window.pauseProbe.pixels,
