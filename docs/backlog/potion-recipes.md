@@ -1,5 +1,33 @@
 # Potion recipe book
 
+**Audit status (2026-11-01): Partly built: 165 fixed recipe slots, with 18 implemented entries; other entries remain Coming soon.**
+
+Built means implementation in this source checkpoint, not a new visual or audio acceptance. First-live versions for the recent recipes are unverified unless named below; existing null-version changelog fragments are not release numbers.
+
+### Implemented recipe evidence
+
+| Item | Status | Source / version |
+|---|---|---|
+| Recipe 7: Floor Becomes Sky | **Built** | #1523 current recipe/renderer implementation; `render/potionEffects.ts`, `rules/potionSettings.ts`; first live version unverified |
+| Recipe 9: Big Moon | **Built** | #1523 current recipe/renderer implementation; `render/potionEffects.ts`, `rules/potionSettings.ts`; first live version unverified |
+| Recipe 10: Ravine | **Built** | #1523 current recipe/renderer implementation; `render/potionEffects.ts`, `rules/potionSettings.ts`; first live version unverified |
+| Recipe 11: Chunky | **Built** | #1523 current recipe/renderer implementation; `render/potionEffects.ts`, `rules/potionSettings.ts`; first live version unverified |
+| Recipe 26: Night Vision | **Built** | #1531; `render/potionEffects.ts`, dedicated audio gates; first live version unverified |
+| Recipe 29: Stiltwalkers | **Built** | #1532; registry29/58, rig limb deformation; changelog v6523 |
+| Recipe 30: Thick Canopy | **Built** | #1523 current recipe/renderer implementation; `render/potionEffects.ts`, `rules/potionSettings.ts`; first live version unverified |
+| Recipe 45: Worm's Eye | **Built** | #1530; camera controls and shared audio; first live version unverified |
+| Recipe 52: Heat Vision | **Built** | #1531; semantic creature heat and octave/audio routing; first live version unverified |
+| Recipe 58: Stiltwalkers | **Built** | #1532; registry29/58, rig limb deformation; changelog v6523 |
+| Recipe 61: Aurora Outlines | **Built** | #1523 current recipe/renderer implementation; `render/potionEffects.ts`, `rules/potionSettings.ts`; first live version unverified |
+| Recipe 64: The Audience | **Built** | #1535; watching-tree lean/lag and shared audio; first live version unverified |
+| Recipe 73: The Forest Counts | **Built** | #1544; held beat scenery/audio; first live version unverified |
+| Recipe 101: Glow Up | **Built** | #1523 current recipe/renderer implementation; `render/potionEffects.ts`, `rules/potionSettings.ts`; first live version unverified |
+| Recipe 102: Miniature | **Built** | #1536; miniatureTilt and shared filtered audio; first live version unverified |
+| Recipe 103: Little Planet | **Built** | #1523 current recipe/renderer implementation; `render/potionEffects.ts`, `rules/potionSettings.ts`; first live version unverified |
+| Recipe 108: Hue Spin | **Built** | #1541; Post RGB rotation and synced audio; first live version unverified |
+| Recipe 109: Vertigo | **Built** | #1523 current recipe/renderer implementation; `render/potionEffects.ts`, `rules/potionSettings.ts`; first live version unverified |
+
+
 Developer reference, not an in-game discovery UI. All 165 unordered three-mushroom combinations (repeats allowed) have explicit, stable entries in `config/potion-recipes.json`. Names and descriptions drawn from the existing trip catalogue remain design proposals wherever marked **Coming soon**. Unassigned recipes have no invented effect. New effects fill these existing entries rather than reshuffling recipes.
 
 All potions last ten minutes of game time, start at full strength on waking, and fade during the final two minutes. A new potion replaces the previous one. The historical tutorial A/B recipes have not been assigned to particular colours.

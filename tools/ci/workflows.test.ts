@@ -5,6 +5,30 @@ import { parse } from "yaml";
 const workflow = (name: string) => parse(fs.readFileSync(`.github/workflows/${name}.yml`, "utf8"));
 const ci = workflow("ci"), jobs = ci.jobs;
 describe("shared CI game build", () => {
+  it("runs candidate-only fast proofs on PR artifacts with smoke Chromium", () => {
+    const proof = jobs.proofs, steps = proof.steps;
+    expect(proof.needs).toEqual(["build"]);
+    expect(proof.if).toContain("github.event_name == 'pull_request'");
+    for (const excluded of ["claude/release-", "claude/rel-", "release/", "claude/publish-snapshot", "Release:", "Release check:", "Publish:"]) expect(proof.if).toContain(excluded);
+    expect(proof.env.PLAYWRIGHT_VERSION).toBe(jobs.smoke.env.PLAYWRIGHT_VERSION);
+    expect(proof.env.PROOF_MODE).toBe("fast");
+    expect(steps.find((s: any) => s.name === "Install Chromium (bounded, one retry)").run).toBe(jobs.smoke.steps.find((s: any) => s.name === "Install Chromium (bounded, one retry)").run);
+    expect(steps.find((s: any) => s.uses === "actions/download-artifact@v4").with).toEqual({ name: "game-dist", path: "dist" });
+    expect(steps.some((s: any) => s.id === "proof-cache" || s.with?.path === "proof-baseline" || /build-proof-baseline/.test(s.run ?? ""))).toBe(false);
+    expect(steps.find((s: any) => s.name === "Keep proof evidence and timing").if).toBe("always()");
+  });
+  it("keeps settled pixels on informational nightly/manual execution, never PRs", () => {
+    const nightly = workflow("proofs-nightly");
+    expect(nightly.on.schedule).toEqual([{ cron: "17 3 * * *" }]);
+    expect(nightly.on).toHaveProperty("workflow_dispatch");
+    expect(nightly.on.pull_request).toBeUndefined();
+    expect(nightly.on.push).toBeUndefined();
+    expect(nightly.jobs.pixels.env).toMatchObject({ PROOF_MODE: "pixels", PAUSE_SETTLE_MS: "300000" });
+    expect(nightly.jobs.pixels.steps.find((s: any) => s.id === "proof-cache").with.key).toContain("steps.baseline.outputs.sha");
+    expect(nightly.jobs.pixels.steps.find((s: any) => s.name === "Update the single standing failure report").if).toBe("failure()");
+    expect(jobs.proofs.steps.find((s: any) => s.name === "Keep proof evidence and timing").with.name).toContain("github.run_attempt");
+    expect(jobs.proofs.needs).toEqual(["build"]);
+  });
   it("checks config values and every maintained generated reference before building", () => {
     const step = jobs.build.steps.find((s: any) => /npm run build/.test(s.run ?? ""));
     expect(step.run).toBe("node tools/config/check.mjs && npm run build");

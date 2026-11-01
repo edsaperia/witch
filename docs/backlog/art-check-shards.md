@@ -1,5 +1,14 @@
 # Art-check sharding — parked
 
+**Audit status (2026-11-01): Partly built / parked.** Status addition only; owner prose and historical measurements below are preserved.
+
+| Request / feature group | Status | Evidence and remaining gap |
+|---|---|---|
+| Nightly/manual scheduling, no PR/push triggers or release dependency | **Built** | #1583 via #1619/publish #1624; canonical #1476 comment6562592823 confirms release1101k LIVE. Exact first numeric live version unverified. Current `.github/workflows/art-check.yml` confirms nightly03:17 UTC/manual triggers and standing status report. |
+| Art-task sharding | **Partly built** | Source and measurements preserved at owner checkpoint7c7e6b513, but sharding was withdrawn from production and parked. No sharded release or cold-validation success claimed. |
+| Controlled cold validation and decomposition of auxiliary floor | — | Owner note says no controlled cold result exists or is currently required; new investigation requires explicit authorisation. |
+
+
 Ed, 2026-11-01 about17:40UTC: “I don't think art checks should hold up a build. We can do them when there's time.” Canonical1583#6561490005 and6561497894 cancel the cold measurement and park sharding. PR1583 stays draft; no sharding release. No cold dispatch occurred. Art scheduling is now a separate scheduling-only change: nightly03:17UTC against exact `claude/prototype`, or manual on any chosen ref; no PR/push trigger or build/deploy/release dependency. Nightly failures update one standing issue1476 comment with sourceSHA and failed/unproven task batch; a later pass resolves that comment. All checks, fingerprint cache and exact-tree reuse remain.
 
 The parked implementation and complete59-task duration table with artifact hashes are preserved at pushed commit [7c7e6b513](https://github.com/edsaperia/witch/commit/7c7e6b513eb0f29e35136197c843c88b79433716), including [task-times.json](https://github.com/edsaperia/witch/blob/7c7e6b513eb0f29e35136197c843c88b79433716/tools/art-check/task-times.json). Those unshipped files are restored to prototype in the active diff, leaving only scheduling/tests/this note. The measurements came from cold41264535322/e3ba7d66. Its four active shard times were10m45/37m14/23m04/12m11; queue-inclusive envelope59m29 versus unsharded42m34. Cached e763dcab/41331519953 validated59/59 records in55s including queue; that is not cold-render speedup evidence.
