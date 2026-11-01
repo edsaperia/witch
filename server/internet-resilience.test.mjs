@@ -145,3 +145,9 @@ run('post-upgrade application handshake has its separate10000ms deadline',async 
   const closed=once(ws,'close');t.after(()=>ws.terminate());await once(ws,'open');
   clock=9999;await turn();assert.equal(ws.readyState,WebSocket.OPEN);clock=10000;await closed;
 });
+run('registered telephones and both active roles receive server heartbeat acknowledgements',async t=>{
+  const f=await fixture(t),a=await f.phone('1301'),b=await f.phone('1401');
+  const check=async()=>{const replies=[a.next('heartbeat'),b.next('heartbeat')];send(a,{type:'heartbeat'});send(b,{type:'heartbeat'});
+    for(const reply of await Promise.all(replies))assert.deepEqual(reply,{protocol:1,type:'heartbeat'});};
+  await check();await complete(a,b);await active(a,b);await check();
+});

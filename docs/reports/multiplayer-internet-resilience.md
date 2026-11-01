@@ -30,7 +30,7 @@ No Render deployment manifest/service-plan selection exists in this checkout. `d
 | Host while guest loads |20,000ms silence; guest load stall90,000ms, absolute join cap600,000ms. These are not a cold-start extension. |
 | Held movement/pause controls |250ms since packet receipt (`guestInput.ts`); heartbeat cannot renew this input lease. |
 
-### Case results
+### Initial case results (product3ca241506; superseded watchdog status below)
 
 | New regression | Result / precise scope |
 |---|---|
@@ -50,7 +50,7 @@ No Render deployment manifest/service-plan selection exists in this checkout. `d
 
 ### Confirmed transport gap and proposed fix
 
-`src/app/internetResilience.test.ts`, “MP-D minimal regression: active guest transport reports a blackholed downlink within the active silence budget”, uses the actual `connectRelay` with a synthetic socket: open → joined → ready/acknowledged → active; subsequently every outgoing send succeeds but no message, error or close event returns. After `ONLINE_TIMING.dropMs + 1000` (6s), heartbeats were sent but `onClose` and `onError` counts remain0. Expected nonzero failure notification; observed0. The test intentionally remains a failing regression, not `it.fails` or skipped.
+The original `src/app/internetResilience.test.ts` discovery regression used actual `connectRelay` with a synthetic socket: open → joined → ready/acknowledged → active; subsequently every outgoing send succeeded but no message, error or close event returned. After `ONLINE_TIMING.dropMs + 1000` (6s), heartbeats were sent but `onClose` and `onError` counts remained0. Expected nonzero failure notification; observed0. It was committed as an unmasked failing regression, not `it.fails` or skipped. The approved contract and passing verification below supersede that initial deadline/status without erasing the discovery evidence.
 
 Source explanation: `relayClient.ts` starts an outgoing heartbeat interval and reacts to WebSocket error/close, but tracks no server receive timestamp and owns no receive-deadline timer. Server `relay.mjs` refreshes liveness from client messages and does not acknowledge heartbeats. A one-way or half-open connection can therefore outlive the application’s active-silence expectation until the underlying transport eventually reports failure. This is reproduced at the transport seam, **not a measured live-network hang or a proof of infinite duration**. The6s assertion is a proposed receive-liveness regression derived from the existing5s active budget plus one heartbeat, not an already documented client deadline; the production owner/coordinator must choose its exact contract.
 
@@ -75,3 +75,38 @@ Read-only access check,2026-11-01: no authenticated Render connector, installed 
 Conditional public facts, checked against Render's official pages: [Free web services](https://render.com/docs/free) idle after15minutes without inbound traffic and take about one minute to spin up; [the FAQ](https://render.com/docs/faq) says paid compute does not spin down. Render's [official always-on comparison](https://render.com/articles/render-vs-railway) lists Starter web-service compute at $7/month (0.5vCPU/512MB), excluding other usage/account charges; [pricing](https://render.com/pricing) remains the rate reference. This is conditional plan context, not verification of this service, a requested purchase or an upgrade recommendation. If the historical Starter selection is still current, free-tier idle wake is not the explanation; that condition has not been verified here.
 
 Coordinator1610#6558051418 closes the access question: **Starter ($7/month, Frankfurt) per deploy record, not re-verified 1 Nov.** Paid compute does not idle, so the free-tier cold-wake risk does not apply if that recorded selection remains unchanged. No current dashboard/API verification or measured startup duration is claimed. The coordinator explicitly declined a dashboard/browser session; no further hosting audit is pending. This builder is AVAILABLE while awaiting the exact approved1609 watchdog-fix head for a normal merge and15s-contract regression run; no other inbox is assigned.
+
+## Early watchdog verification — 1 Nov,17:26 UTC
+
+Coordinator1610#6561247053 explicitly approved product head `13689c6736ac4d814b02bbd1585ac7b6d6370840`. Normal-merged exactly that head as `3f76fe28cdf016437625bb1db457302cc0ac72fd` (no rebase/force). The sole add/add conflict was the audit client test already imported/updated by the production owner; retained its5s/15s regression and fresh-return case, then added remaining audit conditions. All production files come unchanged from the approved merge. Own diff against that product head remains only the two audit test files and this findings note.
+
+`node --test --test-concurrency=1 server/internet-resilience.test.mjs`: **8 PASS**,357ms reported runner duration. `vitest run src/app/internetResilience.test.ts --maxWorkers=1`: **11 PASS**,12.96s total (3.14s tests). No live relay or browser. Per-case disposition:
+
+| Relay cases | Result |
+|---|---|
+| Guest socket loss / survivor channel / fresh consent | PASS |
+| Host socket loss / identities and room released | PASS |
+| Local relay restart at same endpoint | PASS |
+|300ms logical delay and two lost beats | PASS |
+|4,999ms survives /5,000ms guest-silence closes | PASS |
+|30,000ms answer timeout despite heartbeats | PASS |
+|10,000ms post-upgrade handshake deadline | PASS |
+|Heartbeat acknowledgement for registered phones and both active roles | PASS |
+
+| Client cases | Result |
+|---|---|
+|60s cold-open stays connecting then recovers | PASS |
+|Cancel cold-open / late-open cannot start heartbeat | PASS |
+|Socket close after guest admission requests one fresh-own return; late messages cannot revive | PASS |
+|Host disconnect removes guest and stale movement/pause input without replacing host seed/time | PASS |
+|Delayed/dropped release obeys250ms held-input lease | PASS |
+|Active guest blackhole: no warning before5s, warns at5s, no end at14.999s, ends at15s | PASS |
+|Real telephone/visit save seam:5s warning stays connected,15s requests fresh-own return exactly once | PASS |
+|Downstream heartbeat clears warning and resets full15s deadline | PASS |
+|Downstream state message clears warning and resets full15s deadline | PASS |
+|Open/preparing guest stays unarmed60s, then arms on active | PASS |
+|Host arms on accepted readiness and ends once at15s | PASS |
+
+Typecheck attempted on the merged tree: only existing `src/pagesWorkflow.test.ts(3,23)` TS2307 missing `yaml` in shared local dependencies; no other errors. Diff check PASS. Non-browser imports emit the existing storage-unavailable warning; the save assertions use explicit memory stores and pass. All local listeners, sockets and timers are cleaned up.
+
+This is **early exact-head CPU/local-socket evidence**, not browser/UI/Render/deployment acceptance or a full all-checks-green FINAL. Repeat these audit files only if the final approved1609 head changes the watchdog. The historical hosting qualification and unverified physical-disconnect door/overlay/input-stack limits remain unchanged.
