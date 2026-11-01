@@ -1,7 +1,51 @@
 // Canonical runner: node tools/smoke/paused-world.cjs BASE_URL BASE_SHA CANDIDATE_URL CANDIDATE_SHA
 const assert = require('node:assert/strict');
+const fs = require('node:fs/promises');
+const path = require('node:path');
 let playwright;
 try { playwright = require('playwright'); } catch { playwright = require('/opt/node22/lib/node_modules/playwright'); }
+
+async function saveMismatch(page, reference, sha) {
+  const evidence = await page.evaluate(reference => {
+    const a = window.pauseProbe[reference], b = window.pauseProbe.frame;
+    const width = Math.max(a.w, b.w), height = Math.max(a.h, b.h);
+    const mask = new Uint8ClampedArray(width * height * 4);
+    let changed = 0, left = width, top = height, right = -1, bottom = -1;
+    for (let y = 0; y < height; y++) for (let x = 0; x < width; x++) {
+      const inA = x < a.w && y < a.h, inB = x < b.w && y < b.h;
+      const i = 4 * ((a.h - 1 - y) * a.w + x), j = 4 * ((b.h - 1 - y) * b.w + x);
+      let different = inA !== inB;
+      if (inA && inB) for (let c = 0; c < 4; c++) different ||= a.bytes[i + c] !== b.bytes[j + c];
+      const k = (y * width + x) * 4;
+      mask[k + 3] = 255;
+      if (!different) continue;
+      mask.fill(255, k, k + 3);
+      changed++;
+      left = Math.min(left, x); right = Math.max(right, x);
+      top = Math.min(top, y); bottom = Math.max(bottom, y);
+    }
+    function png(w, h, bytes) {
+      const canvas = document.createElement('canvas');
+      canvas.width = w; canvas.height = h;
+      canvas.getContext('2d').putImageData(new ImageData(bytes, w, h), 0, 0);
+      return canvas.toDataURL('image/png').split(',')[1];
+    }
+    function framePNG({ w, h, bytes }) {
+      // WebGL readPixels starts at bottom left. Write the PNGs and bbox in screen coordinates.
+      const rows = new Uint8ClampedArray(bytes.length), stride = w * 4;
+      for (let y = 0; y < h; y++) rows.set(bytes.subarray(y * stride, (y + 1) * stride), (h - 1 - y) * stride);
+      return png(w, h, rows);
+    }
+    return { changed, bbox: changed ? { left, top, right, bottom } : null,
+      images: { [reference]: framePNG(a), repaint: framePNG(b), diff: png(width, height, mask) } };
+  }, reference);
+  const dir = path.resolve(process.env.PAUSE_PROOF_OUT || 'paused-world-proof');
+  await fs.mkdir(dir, { recursive: true });
+  for (const [name, data] of Object.entries(evidence.images)) {
+    await fs.writeFile(path.join(dir, name + '.png'), Buffer.from(data, 'base64'));
+  }
+  console.log(JSON.stringify({ sha, reference, changedPixels: evidence.changed, bboxTopLeftInclusive: evidence.bbox, directory: dir }));
+}
 
 async function measure(browser, url, sha, candidate) {
   const page = await browser.newPage({ viewport: { width: 960, height: 540 } });
@@ -41,6 +85,7 @@ async function measure(browser, url, sha, candidate) {
           let hash = 2166136261;
           for (const byte of pixels) hash = Math.imul(hash ^ byte, 16777619);
           probe.pixels = [w, h, hash];
+          probe.frame = { w, h, bytes: pixels };
         }
         return result;
       };
@@ -72,7 +117,10 @@ async function measure(browser, url, sha, candidate) {
     }
     await page.keyboard.press('Escape');
     await page.waitForSelector('body.paused');
-    const heldPixels = (await snapshot()).pixels;
+    const heldPixels = await page.evaluate(() => {
+      window.pauseProbe.held = window.pauseProbe.frame;
+      return window.pauseProbe.pixels;
+    });
     await hold('pause', 60000);
     if (!candidate) return;
     assert.ok((await snapshot()).phases.length, 'need a visible world pointer fixture');
@@ -97,8 +145,12 @@ async function measure(browser, url, sha, candidate) {
     }
     const first = await repaint();
     assert.ok(first);
+    if (first.some((v, i) => v !== heldPixels[i])) await saveMismatch(page, 'held', sha);
     assert.deepEqual(first, heldPixels, 'forced repaint must match the retained picture');
-    assert.deepEqual(await repaint(), first, 'two paused redraws must show the same world pixels');
+    await page.evaluate(() => { window.pauseProbe.firstRepaint = window.pauseProbe.frame; });
+    const second = await repaint();
+    if (second.some((v, i) => v !== first[i])) await saveMismatch(page, 'firstRepaint', sha);
+    assert.deepEqual(second, first, 'two paused redraws must show the same world pixels');
     await page.keyboard.press('Escape');
     await page.waitForSelector('body.paused', { state: 'hidden' });
     await page.evaluate(() => window.witch.zooOverlay.open());
