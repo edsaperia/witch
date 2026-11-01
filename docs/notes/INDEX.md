@@ -131,6 +131,7 @@ says what each note covers.
 
 ## [The treehouse and its house](house.md)
 
+- Telephone
 - Current brewing authority (Ed, 2026-10-31):
 - Mushrooms and brewing
 - Mushroom kitchen artwork
@@ -230,6 +231,7 @@ says what each note covers.
 
 - House route profiling
 - Startup bundle baseline
+- Crash journal budget
 - Slow-frame summaries
 - Reused surface roughness (#1464, 2026-10-30):
 - Exact travel art profiles (2026-10-30, #1464):
@@ -297,6 +299,7 @@ says what each note covers.
 - Compatible nights
 - Save format guards
 - Compatible mushroom extension (PR #1523)
+- Borrowed visits (PR #1538)
 
 ## [Sound effects](sound.md)
 
@@ -306,6 +309,10 @@ says what each note covers.
 - Babble
 - Audio capacity test
 
+## [Two-client telephone proof](telephone-proof.md)
+
+(no entries: its tools and checks only)
+
 ## [Testing tools](testing.md)
 
 - A quick proof shot
@@ -313,6 +320,7 @@ says what each note covers.
 
 ## [The view](view.md)
 
+- Heat/refraction preview
 - Dodge echoes
 - Night and Heat Vision
 - Potion perception

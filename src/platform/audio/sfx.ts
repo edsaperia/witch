@@ -29,6 +29,7 @@ import { SfxKit, type SfxTuning } from "./sfxKit";
 import type { CreatureVoice, Mood } from "./voices";
 import { Whale } from "./whale";
 import { CreaturePitch, PotionAudio } from "./potionAudio";
+import { telephoneCue, type TelephoneCue } from "./telephone";
 
 export type { SfxTuning } from "./sfxKit";
 
@@ -112,6 +113,7 @@ export class Sfx {
   thud(pan = 0): void { chimes.thud(this.k, pan); }
   /** Her phone's alarm ringing once (the wake-up: chimes.ts alarm). */
   alarm(): void { chimes.alarm(this.k); }
+  telephone(cue: TelephoneCue, digit?: string): void { telephoneCue(this.k, cue, digit); }
   /** A 💌 refused by an enraged animal: its whine (chimes.ts refused). */
   refused(pan = 0, near = 1): void { chimes.refused(this.creatures, pan, near); }
   reply(v: CreatureVoice, amount: number, pan = 0, near = 1): void { this.creatureBabble.reply(v, amount, pan, near); }

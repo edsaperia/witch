@@ -4,6 +4,7 @@ import { snapshotGame, type NightSnapshot } from "../rules/nightSnapshot";
 import type { Game } from "../rules/game";
 import type { Loan } from "./loan";
 import { settingsBase, type SettingsBase } from "./playerSettings";
+import { houseLayoutIdentity } from "./houseLayout";
 
 export interface SavedNight {
   version: 1;
@@ -22,6 +23,33 @@ export interface NightStore {
   clear(): Promise<void>;
 }
 
+/** Suspend before adopting a borrowed game. Confirmation alone discards the interrupted solo checkpoint;
+ * a failed/preparing call can resume its own game without having deleted that checkpoint. */
+export function borrowedNightSaves(original: NightStore) {
+  let held = false, tail = Promise.resolve(), barrier: Promise<void> | null = null, confirmation: Promise<void> | null = null;
+  const queue = (action: () => Promise<void>) => {
+    const operation = tail.then(action); tail = operation.catch(() => {}); return operation;
+  };
+  const store: NightStore = {
+    read: () => held ? Promise.resolve(undefined) : original.read(),
+    write: value => held ? Promise.resolve() : queue(() => held ? Promise.resolve() : original.write(value)),
+    clear: () => held ? Promise.resolve() : queue(() => held ? Promise.resolve() : original.clear()),
+  };
+  return {
+    store,
+    get suspended() { return held; },
+    suspendForVisit(): Promise<void> { if (!held) { held = true; barrier = tail; } return barrier ?? Promise.resolve(); },
+    confirmVisit(): Promise<void> {
+      if (!held) return Promise.reject(new Error("Suspend own night saves before confirming a visit."));
+      return confirmation ??= (barrier ?? tail).then(() => original.clear());
+    },
+    /** Only after an own solo game has replaced the borrowed game. Never flush borrowed snapshots. */
+    async resumeSolo(): Promise<void> {
+      await (confirmation ?? barrier)?.catch(() => {}); held = false; barrier = confirmation = null;
+    },
+  };
+}
+
 /** Hiding the loading card also happens while she is still asleep: wait until she's up before saving. */
 export function nightHasStarted(game: Pick<Game, "wake">, playStarted: boolean): boolean {
   return playStarted && (!game.wake || game.wake.open);
@@ -36,6 +64,18 @@ export function savesEnabled(params: URLSearchParams, automated = false): boolea
 }
 
 /** An explicit link to another night keeps its meaning; a plain game link may resume any saved island. */
+export function nightLinkConflicts(n: Pick<SavedNight, "params">, link: URLSearchParams): string[] {
+  const p = new URLSearchParams(n.params);
+  const keys = ["seed", "island", "world"].filter(key => link.has(key) && link.get(key) !== p.get(key));
+  // (layout: compared by the house it selects, so a default-layout save matches a link naming that same layout: app/houseLayout.ts)
+  if (link.has("layout") && houseLayoutIdentity(link) !== houseLayoutIdentity(p)) keys.push("layout");
+  return keys;
+}
+/** Use the retained save's own identity rather than retrying the conflicting incoming link. */
+export function savedNightResumeLink(n: Pick<SavedNight, "params">, path: string): string {
+  const params = new URLSearchParams(n.params); params.set("resume", "1"); params.delete("restore");
+  return path + "?" + params.toString();
+}
 export function savedNight(value: unknown, _build: string, link: URLSearchParams): SavedNight | null {
   if (!value || typeof value !== "object") return null;
   const n = value as SavedNight;
@@ -44,8 +84,7 @@ export function savedNight(value: unknown, _build: string, link: URLSearchParams
       !n.flags || typeof n.flags.chartRecorded !== "boolean" || typeof n.flags.overRecorded !== "boolean" || !n.settingsBase ||
       (n.look !== null && (!n.look || typeof n.look !== "object" || Array.isArray(n.look))) ||
       (n.loan !== null && (!n.loan || typeof n.loan !== "object" || typeof n.loan.id !== "string" || !n.loan.before))) return null;
-  const p = new URLSearchParams(n.params);
-  for (const key of ["seed", "island", "world", "layout"]) if (link.has(key) && link.get(key) !== p.get(key)) return null;
+  if (nightLinkConflicts(n, link).length) return null;
   return n;
 }
 

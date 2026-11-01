@@ -1,5 +1,24 @@
 # The view
 
+**Heat/refraction preview** (Ed/root, 2026-10-31; #1543): opt-in `?refraction=1`,
+off by default pending visual/GPU acceptance. One nearest visible campfire plume
+and one party-cast pressure wave use namespaced uniforms in the existing Post
+composite, with the scene's existing depth texture. Whole art-pixel offsets are
+bounded/clamped; emitter support depth protects foreground at destination and
+borrowed source. Canonical order (6545181860): base quantized UV, guarded
+refraction, unchanged potion wobble, existing grading/composite. Potion-owned
+lines stay intact; bloom/outlines use the resulting p, smooth FX keeps vUv,
+and grade/tilt-shift retain their order. OFF pixel identity is still unmeasured.
+World-clock lifetimes freeze/slow with play; the cast's actual rendered pose and
+original timestamp are captured once, and island swaps clear it. `FX_QUALITY.distortion`
+and reduced flashing disable it. No extra pass/target or gameplay change. See
+`docs/plans/heat-refraction-review.md` for the required unperformed cloud
+foreground/edge/combined-potion and crowded GPU/memory comparisons.
+
+On entering travel, an adult or youth’s displayed chain settles onto the eased ground route. At rejoin it rises from the sigil end first. The pose takes its time from the leash view and its duration from `config/playtest-render.json`. Reversing direction halfway starts from the visible links. Babies bypass the bond renderer.
+
+A wild stump shows only hostile fighters while any are left, then all eligible area creatures. The column still fades by distance. A ready stump’s music note has a separate on-screen check and minimum pixel width in `config/playtest-render.json`. Only the stump under the witch’s feet gets the cast prompt.
+
 **Dodge echoes** (Ed, 2026-10-31: “On as is”, PR1545 comment6549724800): brief world-anchored departure and arrival silhouettes are on by default at the reviewed strength; `?dodgeEchoes=0` disables them. Existing secondary-effect quality, reduced-motion/reduced-flashing and bare-debug suppression still apply. The current witch atlas is borrowed, with at most three private unlit sprite batches, depth testing and no depth writes, extra texture or fullscreen pass. Slot5 on Intel UHD / ANGLE D3D11 proved default-strength departure changes of 6,255 and 3,780 pixels with zero OFF-return differences. Saved arrival PNGs also have zero OFF-return difference; the overall capture was incomplete. Arrival, occlusion, moving-camera, rapid and turn checks are informational tail work, not gates on Ed's default-on ruling. `tools/bench/expect/codex/dodge-echoes.json` declares only the intended transient-dodge art change; current benchmark scenes never request a dodge and no frame/rules mismatch is waived. Atlas bakes and gameplay are unchanged.
 
 Hue Spin (recipe 108, PR1541) rotates scene RGB around the neutral axis in the existing composite shader, after bloom/grade and before knockout/blackout overlays. Its uniform defaults to zero strength, so inactive trips execute the original path. `rules/potionCycle.ts` supplies a wake-relative game-clock phase shared with audio. The lab exposes cycle seconds, initial angle, colour strength and audio sweep depth. Rotation fades by blending toward the unmodified scene during the final two minutes; saved art and tuning are untouched. HTML overlays keep their normal colours.

@@ -78,6 +78,10 @@ The flask in her sigil stack: the built game at 1280×720 on a seed; three creat
 npm run build && node tools/smoke/flask-stack.cjs [out dir] [seed]
 ```
 
+## `house-bed-start.cjs`
+
+Resolve smoke sleep and overlay interaction points from the game's selected layout and shared geometry, without constructing a game or art.
+
 ## `hud.cjs`
 
 The HUD's top and edges: the built game at 1600×900 on a seed, out of the boot with the next wave half way to coming, the witch a little way from home; the whole screen, then the same with the decisions panel open and the debug overlay to check nothing at…
@@ -201,6 +205,10 @@ npm run build && node tools/smoke/partyspell.cjs [out dir] [seed]
 ## `pause-on-top.cjs`
 
 The pause page over everything: each overlay opened in turn, then Esc: the pause page's sliders are on top where they stand, nothing of the overlay is hit in the middle of the screen, a key and the pad reach nothing under it, and Esc again comes back to…
+
+## `paused-world.cjs`
+
+Canonical runner: node tools/smoke/paused-world.cjs BASE_URL BASE_SHA CANDIDATE_URL CANDIDATE_SHA
 
 ## `places.cjs`
 

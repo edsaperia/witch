@@ -45,6 +45,8 @@ export interface NightSpec {
   ready?: Promise<PrepRecord | null>;
   /** A validated saved night's rules, already rebuilt before its view is made. */
   resume?: Game;
+  /** A friend's canonical night is borrowed: never register campaign-stock writes in this browser. */
+  borrowed?: boolean;
 }
 
 /** The night's own flags, fresh each night (a second night left with the first's would never record to the chart). */
@@ -96,6 +98,8 @@ export interface Night {
  *  filled in after it, and re-pointed by each later night. */
 export interface Page {
   night: Night | null;
+  /** Read/presentation only: the supplied canonical game remains Night.game for simulation and persistence. */
+  presentationGame?: (canonical: Game) => Game;
   /** Forget the resumable night before replacing it (including a direct startNight). */
   onNightEnd?: () => void;
   /** The night just ended (endNight) while the next one is made: what the page's pieces read meanwhile, and what the next
@@ -114,6 +118,8 @@ export interface Page {
 /** Whether her look has a hat to lose on a knockout (rules/hat.ts; Ed, 2026-10-06: "If she chooses no hat in character creation,
  *  then she simply doesn't have this mechanic"): a hat with a spell is a hat, whatever its look (rules/spells.ts). */
 export const hasHat = (game: Game, look: unknown): boolean => (look as { hat?: { shape?: string } } | null)?.hat?.shape !== "none" || game.spells.hat !== "none";
+/** With no online presentation hook, retain the exact original game object. Never use this for saves/steps. */
+export const presentedGame = (page: Pick<Page, "presentationGame">, canonical: Game): Game => page.presentationGame?.(canonical) ?? canonical;
 /** Her hat on or not by her look; none, none lying about either. */
 export function wearHat(game: Game, look: unknown): void { const H = game.witches[0].hat; H.has = hasHat(game, look); if (!H.has) H.down = null; }
 
@@ -142,7 +148,7 @@ export async function startNight(page: Page, spec: NightSpec): Promise<Night> {
   if (!spec.resume) applyLoadRungs(tuning, linkSets); // (the quality ladder's load rungs: app/ladder.ts)
   // A night after another on this page: every pause-page slider as it was set (Ed's decision 5: the game's knobs too), on purpose,
   // but for those this night's link sets itself.
-  if (old && !spec.resume) carryKnobs(old.tuning, tuning, DECISION_LIST, linkKnobs(params, DECISION_LIST));
+  if (old && !old.spec.borrowed && !spec.resume) carryKnobs(old.tuning, tuning, DECISION_LIST, linkKnobs(params, DECISION_LIST));
   if (!spec.resume) applySettings(currentSettings(), tuning); // (a resume keeps the saved rules' knobs)
   // Sailed here (&arrive=1, or in place): the island's map made already, in a worker while the chart flew (app/mapPrep.ts), if it's this night's.
   // (the boot: its own map, if the worker it started at once has it: app/mapPrep.ts startBootMapPrep)
@@ -157,13 +163,13 @@ export async function startNight(page: Page, spec: NightSpec): Promise<Night> {
   const game = spec.resume ?? newGame(seed, tuning, 1, map);
   const stockWorld = spec.world ?? tuning.map?.world ?? 0;
   if (!spec.resume) {
-    if (old && (old.spec.world ?? old.tuning.map?.world ?? 0) === stockWorld) restoreMushroomStock(game.mushrooms, mushroomStock(old.game.mushrooms));
+    if (old && !old.spec.borrowed && (old.spec.world ?? old.tuning.map?.world ?? 0) === stockWorld) restoreMushroomStock(game.mushrooms, mushroomStock(old.game.mushrooms));
     else loadMushroomStock(game.mushrooms, stockWorld);
   }
   performance.mark("witch:game");
   const cleanups: (() => void)[] = [];
   const saveStock = () => saveMushroomStock(game.mushrooms, stockWorld);
-  if (typeof window !== 'undefined') {
+  if (!spec.borrowed && typeof window !== 'undefined') {
     const timer = window.setInterval(saveStock, 2000);
     window.addEventListener('pagehide', saveStock);
     cleanups.push(() => { saveStock(); window.clearInterval(timer); window.removeEventListener('pagehide', saveStock); });
@@ -176,7 +182,7 @@ export async function startNight(page: Page, spec: NightSpec): Promise<Night> {
   // The debug knobs' start for this night: the link's fight and treetop speed (app/knobs.ts).
   if (!spec.resume) startKnobs({ tuning, game, world, playtest }, WORLD_DEFAULT, params);
   // The clock, its pops and the debug overlay (app/hud.ts); the overlay as it was.
-  const hud = new Hud(game);
+  const hud = new Hud(game, () => presentedGame(page, game));
   hud.setDebug(old ? old.hud.debugOn : params.has("debug"));
   const night: Night = { spec, seed, params, tuning, musicStyle, musicCue, world, WORLD_DEFAULT, game, playtest, hud, arrival: spec.resume ? null : nightArrival(spec, tuning), flags: freshFlags(), cleanups };
   page.freeze?.retarget(game, seed);
@@ -185,8 +191,8 @@ export async function startNight(page: Page, spec: NightSpec): Promise<Night> {
   if (old) page.sound?.setNight(tuning, seed, musicStyle);
   // The page's own switch the boot puts on its night's tuning once the night is made (main.ts styleFromLink: the prop generator's
   // party pieces, which the rules' party places and the view's dressings read), on each later night's at the same point.
-  if (old) tuning.partyObjects.generated = old.tuning.partyObjects.generated;
-  if (old) await page.view?.setGameSliced(game); // (the view's island and records, tonight's, built a frame's budget at a time: render/view.ts; its start's art is the caller's, view.prepare)
+  if (old && !old.spec.borrowed && !spec.borrowed) tuning.partyObjects.generated = old.tuning.partyObjects.generated;
+  if (old) await page.view?.setGameSliced(presentedGame(page, game)); // (the view's island and records, tonight's, built a frame's budget at a time: render/view.ts; its start's art is the caller's, view.prepare)
   page.night = night;
   page.last = undefined;
   return night;

@@ -1,5 +1,5 @@
 import type { HouseConfig, HouseObject } from "./houseRooms";
-import proposal from "../../docs/evidence/treehouse-layout-ed-2026-10-31.v2-proposal.json";
+import proposal from "../../config/house/layouts/ed-current.json";
 import baseline from "../../config/house/layouts/editor-v1-baseline.json";
 import { roomAt } from "../../config/house/shape.js";
 
@@ -22,7 +22,7 @@ export const edLayoutRequested = (): boolean => activeLayout;
 export const rotatePlacement = (x: number, z: number, degrees: number) => {
   const a = degrees * Math.PI / 180; return { x: x * Math.cos(a) - z * Math.sin(a), z: x * Math.sin(a) + z * Math.cos(a) };
 };
-/** Explicit opt-in only. Geometry and the caller's published configuration are never mutated. */
+/** Explicit selected configuration. Geometry and the caller's classic source are never mutated. */
 export function applyEdLayout(source: HouseConfig, on = edLayoutRequested()): HouseConfig {
   if (!on) return source;
   source = source.layout?.baseline ?? source;
@@ -33,7 +33,7 @@ export function applyEdLayout(source: HouseConfig, on = edLayoutRequested()): Ho
     if (o.id === "cauldron") {
       // Current large-pot data, never the held stale version-1 placeholder.
       o.placement = { rotation: p.rotation, baseRotation: 0, foot: { w: o.w, d: o.d, h: o.h }, curve: 0, anchor: { x: p.x, z: p.z }, sourceRoom: o.room };
-      o.x = p.x; o.z = p.z; continue;
+      o.x = p.x; o.z = p.z; o.room = roomAt(H.shape, p.x, p.z)?.id ?? o.room; continue;
     }
     const anchor = "useAnchor" in p && p.useAnchor ? p.useAnchor : { x: p.x, z: p.z };
     o.placement = { rotation: p.rotation, baseRotation: original.facing.yaw * 180 / Math.PI, foot: { ...original.facing.foot }, curve: original.facing.curve, anchor, sourceRoom: o.room };
@@ -43,7 +43,7 @@ export function applyEdLayout(source: HouseConfig, on = edLayoutRequested()): Ho
   }
   for (const p of proposal.objects.filter(p => p.id.startsWith("mushroom-basket:"))) {
     const foot = { w: 1.4, d: 1.4, h: 1.5 };
-    H.objects.push({ id: p.id, label: `${p.id.split(":")[1]} mushrooms`, room: "kitchen", x: p.x, z: p.z, ...foot, use: { kind: "scenery" },
+    H.objects.push({ id: p.id, label: `${p.id.split(":")[1]} mushrooms`, room: roomAt(H.shape, p.x, p.z)?.id ?? "kitchen", x: p.x, z: p.z, ...foot, use: { kind: "scenery" },
       placement: { rotation: p.rotation, baseRotation: 0, foot, curve: 0, anchor: { x: p.x, z: p.z }, sourceRoom: "kitchen" } });
   }
   const decks = proposal.objects.find(p => p.id === "terrace:decks"), terrace = H.rooms.find(r => r.id === "terrace")!;

@@ -19,7 +19,8 @@ export class Hud {
   private readonly clockT = this.clockEl.querySelector<HTMLElement>(".t")!;
   private readonly clockLabel = this.clockEl.querySelector<HTMLElement>(".label")!;
 
-  constructor(private readonly game: Game) {}
+  constructor(private readonly canonicalGame: Game, private readonly presentation?: () => Game) {}
+  private get game(): Game { return this.presentation?.() ?? this.canonicalGame; }
 
   /** The debug overlay, its buttons and the bedroom's Player pick, on or off. */
   setDebug(on: boolean): void {

@@ -3,6 +3,43 @@
  "intro": "Every `?name=value` the game reads from its link, and where it reads it. Most are read once as the page loads (`src/app/linkParams.ts` for the tuning, `src/app/gameParams.ts` for the game, `src/app/viewParams.ts` for the view, `src/main.ts` for the page); a few are read where they're used. Several can be combined: `?seed=123&wave=30&creator=0`. This page is written from `config/link-switches.json`, and a test checks that file against the code.",
  "switches": [
   {
+   "name": "telephoneCalls",
+   "values": [
+    "1"
+   ],
+   "does": "Explicit two-client proof only: admits calls only when telephone=1 is also supplied. Ordinary calls remain off until canonical GO.",
+   "group": "debug",
+   "since": "2026-11-01",
+   "readIn": [
+    "src/app/telephoneSwitch.ts"
+   ]
+  },
+  {
+   "name": "telephone",
+   "values": [
+    "1"
+   ],
+   "does": "Proof-only: shows the unfinished telephone station panel; default play keeps the existing quiet-line message. Calls stay off unless telephoneCalls=1 is also explicitly supplied.",
+   "group": "debug",
+   "since": "2026-11-01",
+   "readIn": [
+    "src/app/telephoneSwitch.ts"
+   ]
+  },
+  {
+   "name": "refraction",
+   "values": [
+    "0",
+    "1"
+   ],
+   "does": "Preview world-anchored campfire heat and party-cast pressure refraction; off by default, and disabled by reduced flashing or the magic shimmer quality rung.",
+   "group": "debug",
+   "since": "2026-10-31",
+   "readIn": [
+    "src/render/post.ts"
+   ]
+  },
+  {
    "name": "dodgeEchoes",
    "values": [
     "0",
@@ -18,13 +55,15 @@
   {
    "name": "layout",
    "values": [
-    "ed"
+    "ed",
+    "classic"
    ],
-   "does": "Opt-in Ed house layout preview; the default house stays unchanged.",
+   "does": "Ed's house arrangement is the default; classic selects the previous layout, and ed selects the default explicitly.",
    "group": "debug",
    "since": "2026-10-31",
    "readIn": [
-    "src/main.ts"
+    "src/app/houseLayout.ts",
+    "src/app/nightSave.ts"
    ]
   },
   {

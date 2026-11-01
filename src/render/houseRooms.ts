@@ -47,7 +47,7 @@ type V3 = { x: number; y: number; z: number };
  *  within it, `depth`: how far south its nearest point is in the world (the far drawn first). */
 interface Quad { p: [number, number, number][]; rgb: [number, number, number]; obj?: string; layer: number; depth: number }
 
-const KIND: Record<HouseObject["use"]["kind"], [number, number, number]> = { creator: [0.32, 0.62, 0.45], hats: [0.32, 0.62, 0.45], zoo: [0.32, 0.62, 0.45], telescope: [0.32, 0.62, 0.45], bed: [0.82, 0.62, 0.3], say: [0.48, 0.42, 0.56], chart: [0.32, 0.62, 0.45], instrument: [0.62, 0.36, 0.7], invites: [0.32, 0.62, 0.45], pile: [0.32, 0.62, 0.45], scenery: [0.48, 0.42, 0.56] };
+const KIND: Record<HouseObject["use"]["kind"], [number, number, number]> = { creator: [0.32, 0.62, 0.45], hats: [0.32, 0.62, 0.45], zoo: [0.32, 0.62, 0.45], telescope: [0.32, 0.62, 0.45], telephone: [0.48, 0.42, 0.56], bed: [0.82, 0.62, 0.3], say: [0.48, 0.42, 0.56], chart: [0.32, 0.62, 0.45], instrument: [0.62, 0.36, 0.7], invites: [0.32, 0.62, 0.45], pile: [0.32, 0.62, 0.45], scenery: [0.48, 0.42, 0.56] };
 /** How long a placeholder's line stays up (s). */
 const SAY_FOR = 3.5;
 
@@ -184,6 +184,9 @@ export class HouseRoomsView {
   private readonly furniture = new THREE.Group();
   /** Named points of the furniture in the world this frame, "<id>.<mark>" (the mic's spot lamp: "microphone.spot"), for the view. */
   readonly marks = new Map<string, V3>();
+  /** Online presentation only; absent in solo. No collision/config changes. */
+  openGuestRooms: ReadonlySet<string> | null = null;
+  telephoneScreen: readonly number[] | null = null;
   private readonly pieces = new Map<string, { art: FurnitureArt; mesh: THREE.Mesh; pos: Float32Array; id: string; x: number; z: number }>();
   /** The Workshop's: her broom on the bay (or the lathe) and the parts on the pegboard, laid on those pieces' marks (render/workshopArt.ts). */
   private readonly workshop = new WorkshopArt();
@@ -288,7 +291,7 @@ export class HouseRoomsView {
   update(v: View, onTreehouse: (px: number, py: number) => V3, ht: number): void {
     const g = v.game, w = g.witch, t = g.tuning, T = v.assets.treehouse, d = deckOf(g.map, t);
     const shown = !!(d?.house?.rooms && T.ent && w.perch && (w.mode === "ground" || w.mode === "descending")); // (at her decks too: the Terrace the oak's floor, render/houseArt.ts)
-    const late = v.shaderLandingLimited, share = v.landingHouseShare, arrivalNow = performance.now();
+    const late = v.shaderLandingLimited, share = v.landingHouseShare, arrivalNow = v.landingPresentationMs + g.clock.time * 1000;
     const world = (px: number, pz: number, h: number): V3 => { const p = fromPlan(d!, px, pz); return { ...p, y: groundHeight(p.x, p.z) + d!.h + h }; };
     const g0 = d ? groundHeight(d.x, d.z) : 0;
     const ky = T.ent && d ? (T.seat.y - T.ent.deck.y) / Math.max(0.1, d.seat.z - d.z) : 0;
@@ -396,7 +399,7 @@ export class HouseRoomsView {
     }
     if (late && floorCreated) {
       this.floorCompiled = false;
-      void Promise.all([v.renderer.compileAsync(this.floor, v.camera, v.scene), v.renderer.compileAsync(this.terraceFloor, v.camera, v.scene)]).then(() => { this.floorCompiled = true; this.floorArrivalAt = performance.now(); }, () => {});
+      void Promise.all([v.renderer.compileAsync(this.floor, v.camera, v.scene), v.renderer.compileAsync(this.terraceFloor, v.camera, v.scene)]).then(() => { this.floorCompiled = true; this.floorArrivalAt = v.landingPresentationMs + g.clock.time * 1000; }, () => {});
     }
     const nativeShare = late ? share * (this.floorArt && this.floorCompiled ? Math.min(1, Math.max(0, (arrivalNow - this.floorArrivalAt) / 800)) : 0) : 1;
     (this.floor.material as THREE.MeshBasicMaterial).opacity = nativeShare;
@@ -471,7 +474,7 @@ export class HouseRoomsView {
     };
     this.brewing.update(v, pxWorld, ky * v.mpp);
     let glowed = false;
-    const now = performance.now() / 1000;
+    const now = v.game.clock.time;
     for (const [k, { art, mesh, pos, id, x, z }] of this.pieces) {
       if (mesh.userData.loadingOrder !== undefined) { mesh.renderOrder = mesh.userData.loadingOrder; delete mesh.userData.loadingOrder; }
       const o = HOUSE_ROOMS.objects.find(q => q.id === id);
@@ -540,9 +543,12 @@ export class HouseRoomsView {
       const o = HOUSE_ROOMS.objects.find(q => q.id === e.obj);
       if (o && e.kind === "needBag") this.said = { obj: o, at: ht, line: NEED_BAG }; // (the desk with no bag to carry them: rules/kit.ts)
       else if (o?.use.kind === "say" && this.said?.at !== ht) this.said = { obj: o, at: ht, line: o.use.line };
+      else if (o?.use.kind === "telephone") this.said = null; // The ordinary page opens its left station panel.
     }
-    if (this.said && (ht - this.said.at > SAY_FOR || this.said.at > ht)) this.said = null;
+    if (this.said && (ht - this.said.at > SAY_FOR || this.said.at > ht || [...this.openGuestRooms ?? []].some(room => this.said?.obj.id === `${room}Door`))) this.said = null;
+    for (const piece of this.pieces.values()) if ([...this.openGuestRooms ?? []].some(room => piece.id === `${room}Door`)) piece.mesh.visible = false;
     const cv = v.canvas.getBoundingClientRect(), screen = (o: HouseObject, up: number) => { const p = toWorld(o.x, o.z, o.h + up), s = v.v3.set(p.x, p.y, p.z).project(v.camera); return [cv.left + (s.x + 1) / 2 * cv.width, cv.top + (1 - s.y) / 2 * cv.height]; };
+    const phone = HOUSE_ROOMS.objects.find(o => o.use.kind === "telephone"); this.telephoneScreen = this.openGuestRooms && phone ? screen(phone, 1) : null;
     const place = (el: HTMLElement, o: HouseObject | null, up: number, text?: string) => {
       if (!o) { el.style.display = "none"; return; }
       const [x, y] = screen(o, up); el.style.display = "block"; el.style.left = `${x}px`; el.style.top = `${y}px`;
@@ -559,7 +565,7 @@ export class HouseRoomsView {
       const sl = toPlanAt0(hatSlots({ x: 0, z: 0 })[li].x, hatSlots({ x: 0, z: 0 })[li].z), p = toWorld(sl.x, sl.z, 0.2), q = v.v3.set(p.x, p.y, p.z).project(v.camera), px = cv.width / v.width / v.mpp;
       glints.push({ x: cv.left + (q.x + 1) / 2 * cv.width, y: cv.top + (1 - q.y) / 2 * cv.height, r: Math.max(18, px * 0.45) });
     }
-    if (glints.length || this.sparkle) (this.sparkle ??= new LoanSparkle()).draw(glints, performance.now() / 1000, Math.max(2, Math.round(cv.width / v.width * 3)));
+    if (glints.length || this.sparkle) (this.sparkle ??= new LoanSparkle()).draw(glints, v.game.clock.time, Math.max(2, Math.round(cv.width / v.width * 3)));
     const waking = !!g.wake && (!g.wake.open || (at?.use.kind === "bed" && g.party.spellAt === null)); // (the new opening's wake-up, rules/wakeUp.ts: no tag while she's in bed; the bed's not for sleeping yet)
     // over it, the button that uses it (Ed's playtest, 2026-10-26: "there's a prompt showing the button to press to open it"; then
     // "Please remove words from the station tags. We used to have little keys to show 'WASD', can we use these for E"): a keycap

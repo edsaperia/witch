@@ -932,7 +932,7 @@ void main() {
   moonRoad(x: number, widthPx: number, up: boolean): void { ((this.mesh.material as THREE.ShaderMaterial).uniforms.uMoonRoad.value as THREE.Vector3).set(x, widthPx, up ? 1 : 0); }
   setBeach(b: Beach | null): void {
     const u = (this.mesh.material as THREE.ShaderMaterial).uniforms, v = u.uBeach.value as THREE.Vector4;
-    this.coastReadiness.request(!!b, performance.now());
+    this.coastReadiness.request(!!b, performance.now(), LIGHT_UNIFORMS.uTime.value * 1000);
     if (!b) { this.mesh.material = this.plain; if (this.coastSurface) this.coastSurface.visible = false; v.set(0, 0, 0, 0); return; }
     if (!this.beach) {
       this.beach = new THREE.ShaderMaterial({ vertexShader: VERT, fragmentShader: BEACH_FRAG, defines: { ...this.beachDefines, ...('POTION_SKY' in this.plain.defines ? { POTION_SKY: '' } : {}), ...('THERMAL_VISION' in this.plain.defines ? { THERMAL_VISION: '' } : {}) }, uniforms: { ...u, uCoastAppear: { value: 0 } } });
@@ -974,7 +974,7 @@ void main() {
     }
     coast.linked = materialProgramsReady(renderer.properties.get(this.beach));
     if (coast.linked && !this.coastReadyMarked) { this.coastReadyMarked = true; performance.mark('ground:coast-ready', { detail: { fallbackMs: coast.fallbackMs } }); }
-    const share = coast.frame(performance.now()); this.beach.uniforms.uCoastAppear.value = share;
+    const share = coast.frame(performance.now(), LIGHT_UNIFORMS.uTime.value * 1000); this.beach.uniforms.uCoastAppear.value = share;
     this.mesh.material = share === 1 ? this.beach : this.loadingFallback; surface.visible = share > 0 && share < 1;
     if (share === 1 && !this.coastFullMarked) { this.coastFullMarked = true; performance.mark('ground:coast-full', { detail: { fallbackMs: coast.fallbackMs } }); }
   }

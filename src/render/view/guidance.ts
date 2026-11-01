@@ -151,7 +151,7 @@ export class GuidePin {
     this.pin.above = on ? P.top : null;
     // The morning's pins breathe (Ed, 2026-10-29: "morning routine pointers should pulse slightly (wake up to spell)"): every one
     // till the party spell, not the night's end's 🧭 and 💤; a gentle swell, half as much with reduce flashing (render/comfort.ts).
-    this.pin.scale = guidePulse(guide, performance.now() / 1000, this.view.game.tuning.pins, comfort.reduceFlashing);
+    this.pin.scale = guidePulse(guide, this.view.game.clock.time, this.view.game.tuning.pins, comfort.reduceFlashing);
     if (guide && shows) this.pin.show(); else this.pin.hide();
   }
   /** Its kind now and its strength (tools, the shots). */
