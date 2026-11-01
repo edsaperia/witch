@@ -84,3 +84,16 @@ After closing Settings the runner explicitly dispatches two separate same-size r
 The witch renderer previously cleared its ordinary batch whenever the independent hatless art job became ready. That job does not increment the scenery art version, and a retained repaint does not run swapHomeArt to replace a prewarmed batch's transparent placeholder. Retained repaints now use the last submitted witch instances, including their hat state. A live draw may switch to the ready hatless atlas. The regression exercises readiness changing between two retained submissions and the switch after play resumes.
 
 Crown clearance uses witch-time deltas, and string wind and twinkle use shader time. The new trace includes crown inputs and both witch batches, even when a batch has zero instances, to distinguish secondary colour changes. No independent crown clock cause established.
+
+### Release acceptance and the two-pixel exception
+
+Run 7’s committed strict check failed on two pixels after the witch stayed visible. Run 8 used a coordinator-local eight-pixel allowance to reach the bestiary. The accepted build fe62217e recorded 30 → 0 paused world draws per minute, zero draws behind Settings and the bestiary, and a successful return to play. Both runs produced the same two near-black differences. The coordinator judged them invisible during play. [Run 7](https://github.com/edsaperia/witch/pull/1598#issuecomment-6557879996) · [Run 8 and acceptance](https://github.com/edsaperia/witch/pull/1598#issuecomment-6557976798)
+
+The saved submission trace sampled (217,88), three rows above (217,91), and did not sample (204,87). It cannot attribute either pixel to a draw or postprocessing pass. The napwolf's positions, sizes, atlas UVs and flags matched. Attribution remains open; future traced comparisons sample both exact coordinates.
+
+For two successive forced repaints at 320×180 with the same art version, allow either or both of these observed RGB transitions, with alpha 255 on both frames (coordinates from the top left).
+
+- (204,87) from (4,11,7) to (13,31,17).
+- (217,91) from (10,14,9) to (5,14,9).
+
+Any other same-version difference fails, including a different colour at either position. The held-frame comparison remains exact at the same art version. Newly arrived art keeps its separate count and bounding-box report. The coordinator’s temporary eight-pixel allowance was never committed.
