@@ -256,7 +256,7 @@ jobs:
           cache: npm
       - run: npm ci
       - name: Reporting and checked-tree safety fixtures
-        run: node --test tools/ci/reporting.test.cjs tools/ci/pages-policy.test.cjs tools/ci/proofs.test.cjs
+        run: node --test tools/ci/reporting.test.cjs tools/ci/pages-policy.test.cjs
       - name: Relay protocol and admission tests
         run: npm --prefix server ci && npm --prefix server test
       - run: npm run typecheck
@@ -337,6 +337,8 @@ jobs:
           node-version: 22
           cache: npm
       - run: npm ci
+      - name: Proof runner source checks
+        run: node --test tools/ci/proofs.test.cjs
       - uses: actions/download-artifact@v4
         with:
           name: game-dist
