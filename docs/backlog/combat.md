@@ -1,5 +1,28 @@
 # Pack combat and three moves per animal
 
+**Audit status (2026-11-01): Partly built: species pack data, turns/combos/lulls and specials exist; full flyer/siege/art variants and balancing remain incomplete.**
+
+The status index checks the requests below against prototype `ab06904b` and cited history. **Built** means code is present, not a new play/audition/performance pass. **Partly built** states the missing part. An em dash leaves an unimplemented request unmarked. Versions are verified changelog build labels where available; “unverified” means no first-live number was established. Historical/superseded requests are preserved, not re-authorised. Repeated details/build-order summaries are counted with their feature group, not again.
+
+| Request / feature group | Status | Evidence and remaining gap |
+|---|---|---|
+| One-kind packs, turns and position-dependent roles | **Built** | rules/combat/packs.ts, config/packs.json; #993 and earlier pack prototype; first pack version unverified. |
+| Species rhythm, reactive combo and shared tell | **Built** | Pack directives, call/tell/combo/lull states and combat integration; #993; first version unverified. |
+| Lulls, loss scatter, hurt-member retreat and own patterns | **Built** | packs.ts and pack retreats/prowl; pack-lulls v4194. Originating lull PR unverified. |
+| Three move slots from young for every drafted kind | **Partly built** | 64-kind pack data and role attacks exist, but grammar/rank-aware attacks now differ from the dated exact table; full role/budget audit remains. #1048–#1074 include data rollout; first versions not all verified. |
+| All biome pack datasets and special framework | **Built** | config/packs.json has the roster's rows; #1048–#1074 source rollout, specials #1050/#1053/#1061. Known fragments v4202 specials/v4226 fantastic/v4231 mind control; not every PR's first version verified. |
+| Knockback, pull, decoy, mind control and friendly-side stun | **Built** | Pack special switches in combat/packs.ts, pack tests; #1050/#1053/#1061, v4202/v4231. Does not claim every proposed visual is final. |
+| Slot-shaped tells, per-element art and move poses | **Partly built** | Attack grammar and layered magic #1468 (polish follow-up #1484) supply real geometry/element drawing; exact per-kind call art and all requested rig take-off/rear poses not demonstrated complete. First full-pass version unverified. |
+| Flyers grounded except attacking; half pack down | **Partly built** | Existing swoop/diving strike persists; no complete half-grounded young-hop/adult-once scheme found for every flyer. movement.ts/combat.ts; #993 inherited moves, first version unverified. |
+| Soundsystem sieges, edge shellers and defending beyond leash | **Partly built** | Nearest-sound siege and guards work, but the page explicitly retained non-pack soundsystem attacks and the full proposed siege-pack rhythm is not established. #941 guard area, #1552 home guard v6736. |
+| Kinds keep signature moves and continuous slime | **Built** | Movement profiles and pack override helpers; #993, first version unverified. |
+| Species charger/circler/flanker/hopper/friend style placement | **Built** | config/packs.json styles and wheelSlot/spreadLull/hop wiring; 2026-10-29 source change, originating PR/version unverified. New #1620 spacing pass is separate pending work. |
+| Homing handles quick movers | **Partly built** | Invite velocity-leading exists; not proof that all requested balance/feel targets are met. rules/invites.ts; originating PR/version unverified. |
+| Rhythm/pressure/lull master-curve balance and tools | **Partly built** | Existing balance harnesses and real-rules report #1475 v5655; balancing/census audit remains, no numeric retune shipped by this audit. |
+| Pad/touch confusion and young-role budget review | **Partly built** | Existing confusion effect reverses movement/aim depending data; final per-device/budget/slot audit not completed. #1053/#1061, first versions unverified. |
+| Cloud hides tells while invites remain possible | **Built** | Cloud/special handling and invite path retain creature interaction; pack-special code. Originating PR/version unverified; no new visual acceptance. |
+
+
 Backlog (Ed, 2026-10-15, from an interview with Juliet). **Build step 1 built (Ed's go, 2026-10-19): home's ten, behind `combat.packs.on` (on by default since Ed, 2026-10-20); and Phase 1's eleven (Echo, 2026-10-19, the same switch); kinds keep their own moves inside a pack (Ed, 2026-10-20: below, "Kinds keep their own moves"; #993); every other kind's pack and the knockback, pull, decoy and mind-control specials (step 5: #1048 to #1074, #1050, #1053, #1061); the rest not built yet.** This page is the plan for fights: animals fighting in packs that combo their moves, and every animal with three moves (melee, ranged, special) so kinds feel different from each other. It overrides DESIGN.md's "Level-ups" line (young one attack, adults two, legends one) for every level but the legends'. **Legends are not part of this work** (Ed): they keep their long-range attack and their own moves.
 
 Ed's words: "Maybe they should all have three [melee, ranged, special]. The place where this game should shine is animals fighting in packs (where they combo all their attacks differently) and animals feeling different from each other. If one lunges while two lay down crossfire and the last throws a smoke bomb, that would be exciting."

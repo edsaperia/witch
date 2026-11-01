@@ -1,6 +1,34 @@
 # Music: witchier, and a palette of genres
 
-Backlog (Ed, 2026-10-11). Not built unless marked built; don't build without Ed's go.
+**Audit status (2026-11-01): Partly built: samples, alto/A-B tools, genre foundations and Music Studio exist; the complete proposed palette and record progression do not.**
+
+The status index checks the requests below against prototype `ab06904b` and cited history. **Built** means code is present, not a new play/audition/performance pass. **Partly built** states the missing part. An em dash leaves an unimplemented request unmarked. Versions are verified changelog build labels where available; “unverified” means no first-live number was established. Historical/superseded requests are preserved, not re-authorised. Repeated details/build-order summaries are counted with their feature group, not again.
+
+| Request / feature group | Status | Evidence and remaining gap |
+|---|---|---|
+| Witchier context-dependent music and genre palette | **Partly built** | Existing genre families/scales in config/music-style.json and musicPlan; full proposed island/biome record mapping is not implemented. #920/#921; v3739 alto baseline, full palette version absent. |
+| Harmony/drone/chant and melodic proposal | **Partly built** | Alto narrow-step rules and family scales exist; complete chant/drone/ritual record design still incomplete. #920 v3739; musicScore/form rules. |
+| Folk/ritual instruments, voices and environmental beds | **Partly built** | Synth/sample voices and existing ambience exist, not the full requested folk-instrument/field-recording collection. #656/#920, v3739 for alto; full collection not shipped. |
+| Tape/wobble/dark voice processing foundations | **Built** | musicEngine patches, voiceFxPure/voiceFxDark and family treatment; #920 v3739. This is the implemented processing, not approval of every proposed genre. |
+| Licensed sample manifest, credits, checks and size budget | **Built** | #656; samples/manifest.json, sources.json, CREDITS.md and tools/samples/check.mjs. First build version unverified. |
+| Replace drums with first CC0 kit | **Partly built** | CC0 sample infrastructure exists; ordinary music still has synthesised drum patches. Full requested replacement kit not confirmed. #656, first version unverified. |
+| Reference mood board and new-genre selection | **Partly built** | Research/proposals and current families exist; no completed Ed-approved first-record palette identified. The later musician session remains the decision point. |
+| Alto register, narrow melody, dynamics and voice placement | **Built** | #920 v3739; form.sung, recordedVoice swell, voiceFx* and section roles in musicScore. |
+| Sampled alto set | **Built** | samples/alto, manifest processing and altoSampled notes; singer A/B #921 (first version unverified). This is source implementation, not an audition result. |
+| Live vocal-tract voice and A/B picker | **Built** | altoTract patch, audio tract worklet and Music Lab Vocalise controls; #921, version unverified. |
+| Two voice chains, Lab sliders and copy settings | **Built** | #920/#921; pure/dark chains and Vocalise lab controls; v3739 cheap fixes, A/B first version unverified. |
+| Pitch/tuning check | **Built** | tools/music-lab/tune.cjs; #920/#921, version unverified. Audit did not execute audio rendering. |
+| Family-specific recorded texture shelf | **Partly built** | Existing samples/voice patches include some layers; full bounded-retune per-family choir/whisper/throat/chant shelf is not established. #656/#921; first version unverified. |
+| Mode by family | **Built** | config/music-style.json families include phrygian coven and aeolian darker sections; current musicPlan reads scales. Originating PR/version unverified. |
+| Dedicated drone-and-ostinato ritual/witch-house records | — | Existing drone-like patches do not prove the proposed separate record form is implemented. |
+| Half-time dark families | **Partly built** | Dark/phonk patterns exist, but not the complete proposed record-family system. config/music-style.json; originating PR/version unverified. |
+| First biome/record genre set | **Partly built** | Families exist; collectible records currently encode BPM only (rules/records.ts), not the proposed geographic genre palette. |
+| Music Studio patch designer and MIDI player | **Built** | music-studio.html, tools/music-studio and patch controls; changelog v4087, originating PR unverified. |
+| Expanded synth controls | **Built** | Music Studio oscillator/custom-wave/FM/filter/LFO controls and musicEngine patches; v4087 Studio baseline; originating PR unverified. |
+| Musician melody/structure ingestion policy | — | MIDI can be played in the Studio; as-written versus generator-material policy remains unresolved, not silently implemented by MIDI support. |
+
+
+Backlog (Ed, 2026-10-11). Mixed implementation status; see the audit below. Don't build unimplemented work without Ed's go.
 
 **Open to change** (Ed): we can move away from dorian and from today's music structure (32-bar ABAC, sections) if we find better alternatives.
 

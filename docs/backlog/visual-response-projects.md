@@ -1,5 +1,20 @@
 # Visual response projects
 
+**Audit status (2026-11-01): Partly built: default dodge echoes and opt-in refraction exist; other response projects are absent or scoped prototypes.**
+
+The status index checks the requests below against prototype `ab06904b` and cited history. **Built** means code is present, not a new play/audition/performance pass. **Partly built** states the missing part. An em dash leaves an unimplemented request unmarked. Versions are verified changelog build labels where available; “unverified” means no first-live number was established. Historical/superseded requests are preserved, not re-authorised. Repeated details/build-order summaries are counted with their feature group, not again.
+
+| Request / feature group | Status | Evidence and remaining gap |
+|---|---|---|
+| 1. Foliage interaction, ground memory and individual footprints | **Partly built** | Magic push/imprint field exists (#1468 (polish follow-up #1484)), but no movement-stamped ground-memory/footfall system found. `render/fx/imprint*` and sprites push are foundations, not this full request. First version unverified. |
+| 2. Landing settling/skid, terrain ripples and take-off push | — | No visual height-impulse/ripple system or ordinary touchdown wiring found; attackFeel alone is not terrain response. |
+| 3. Heat/spell refraction masks | **Partly built** | Opt-in campfire plume and party-spell pressure wave #1543 (`?refraction=1`, default off); fragment v6587 is a preview label. Foreground/quality guards exist, broad spell/wake/lens integration remains outside this first slice; first live version unverified. |
+| 4. Patterned light and soundsystem projections | **Partly built** | Dedicated #1542 source branch has world/spell patterns and measured investigation, but is parked and not merged into this prototype. Existing disco/canopy patterns do not implement all new projectors. No shipped version claimed. |
+| 5. Expressive flat-art lighting audit and material pass | — | Existing normal maps are confirmed in sprites.ts; the proposed controlled three-subject audit and selective material-response improvements are not demonstrated by their mere existence. Parked #1542 exploration is not a completed new normal pipeline. |
+| 6. Flowing water/spell surface direction field | — | Existing lake coordinate motion and beam direction are foundations; no requested shared flowing-surface slice found. |
+| 7. Dodge echoes and fast-spell trails | **Partly built** | #1545, default-on commit25a3b60bf; fragment v6727 (preview build label), release1101a history carries it. Bounded departure/arrival echoes are built; fast-spell pose-echo reuse remains missing. No new performance acceptance. |
+
+
 Captured with Ed, 2026-10-30. Project proposals, not shipped features or permission to start implementation. Ed supports foliage interaction, heat and spell distortion, grass footprints, patterned lighting, and investigating more effective lighting of flat artwork. Flowing surfaces and dodge echoes are candidates. The implementation details and build order below are suggestions.
 
 These extend [the magic-effects language](magic-effects.md), especially its existing imprint and distortion proposals. Build shared drawing systems that movement, spells, scenery and trips can all use. Do not create a separate effects engine for mushrooms. The implementation gate is Ed choosing a project to build; the existing magic pass still waits for his go after the content passes.
