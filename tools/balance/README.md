@@ -91,6 +91,10 @@ Approved staged evaluation: baseline once, then exactly one fixed vector/job.
 
 Pure fixed-vector evaluation contracts.
 
+## `expert-execution.mjs`
+
+Ed explicitly requested full-night training/comparison on2026-10-31.
+
 ## `expert-guarded-coverage-screen.mjs`
 
 Screens guarded expert-search coverage against the frozen study requirements.
@@ -98,6 +102,18 @@ Screens guarded expert-search coverage against the frozen study requirements.
 ## `expert-known-quest-screen.mjs`
 
 Fixed coordinator6520033543 screen.
+
+## `expert-opening-summary.mjs`
+
+Streaming summaries of delayed expert observations; never an input to the bot.
+
+## `expert-opening-trace.mjs`
+
+Canonical cloud-only diagnostic: one fixed 120-player-second opening, 180s wall, 512MiB worker RSS ceiling.
+
+```
+node tools/balance/expert-opening-trace.mjs --out docs/notes/expert-results/opening-diagnostic
+```
 
 ## `expert-progress.mjs`
 
@@ -275,13 +291,17 @@ node tools/balance/waves.mjs --report a.json,b.json,...   (merge several runs' J
 
 ## Also here
 
+- `expert-campaign-full-night-cases.json`
+- `expert-campaign-pilot-cases.json`
 - `expert-contract.test.mjs`
 - `expert-coverage-screen.test.mjs`
 - `expert-delivery-screen.test.mjs`
 - `expert-evaluation-core.test.mjs`
 - `expert-evaluation-vectors.json`
+- `expert-execution.test.mjs`
 - `expert-guarded-coverage-screen.test.mjs`
 - `expert-known-quest-screen.test.mjs`
+- `expert-opening-summary.test.mjs`
 - `expert-progress.test.mjs`
 - `expert-search-core.test.mjs`
 - `expert-space.test.mjs`

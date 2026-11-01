@@ -4,6 +4,17 @@ import { POLICY_SPACE, INITIAL_POLICY, policySpace, equipmentSpace, equipmentOf,
 import { startSearch, ask, tell } from "./expert-search-core.mjs";
 const catalogue = { bag: ["satchel", "purse"], hat: ["none", "helmet"], tip: [null, "tip-a"], chassis: [null, "body-a"], exhaust: [null, "tail-a"] };
 
+test("campaign-only training changes campaign decisions while freezing movement and quest controls", () => {
+  const space = policySpace(false, true);
+  assert.deepEqual(space.map(([name]) => name), ["mobileYouths", "feedRange", "adultPostRange", "speciesPenalty", "flaskGroup"]);
+  const state = startSearch(space, Object.fromEntries(space.map(([name]) => [name, INITIAL_POLICY[name]])), 1540);
+  for (let i = 0; i < 12; i++) {
+    const c = ask(state), p = policyOf({ ...INITIAL_POLICY, ...c.point });
+    for (const [name] of POLICY_SPACE.filter(([name]) => !space.some(([active]) => active === name))) assert.equal(p[name], INITIAL_POLICY[name]);
+    tell(state, c, [0, 0, 0, 0, 0, 0, i, 0]);
+  }
+});
+
 test("deferred quest search retains the fixed quest policy through mutations", () => {
   const space = policySpace(true), initial = Object.fromEntries(space.map(([name]) => [name, INITIAL_POLICY[name]]));
   assert.equal(space.length, POLICY_SPACE.length - 3);

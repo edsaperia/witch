@@ -1,5 +1,91 @@
 # Expert search: implementation and fairness audit
 
+## Campaign strategy (Ed's direct brief, 2026-10-31)
+
+Ed's2026-11-01 go-ahead and coordinator6552074465 authorize a narrow injured-adult
+priority fix and preparation of one cloud diagnostic, not a training restart.
+With a healthy witch, no danger, no existing job and nearby ripe berries, an
+injured carried adult now starts the existing40s feeding job before a new post.
+The same safety cancellation, cooldown and observed-healing retrieval apply.
+Pure decision regression failed on the posting choice before the fix; it also
+covers adult healing without growth and preserves timeout/danger behavior.
+This defect has not been established as a cause of the historical losses.
+
+Canonical cloud invocation (not run locally):
+
+```
+node tools/balance/expert-opening-trace.mjs --out docs/notes/expert-results/opening-diagnostic-1
+```
+
+The Linux-only script permits exactly one fixed home/world0/night1000 case,
+Satchel/no hat/bare broom, default expert,120player seconds. It refuses existing
+output, resume and direct unmonitored worker invocation. A separate parent caps
+the entire job at180wall seconds and monitors worker RSS/VmHWM every25ms against
+512MiB; the child also has a384MiB V8 old-space limit. The RSS ceiling can overshoot
+between samples and is not total machine memory. Failure/cap output is incomplete,
+never an accepted result. The script is prepared for the coordinator's container;
+the Linux process watchdog has not been exercised here.
+
+Summary binds the source commit/fingerprint/runtime and records player-time phase
+and action durations, visible/carried species-age animal-seconds, observed level
+increases, posting presses followed by observed placed sigils, repeated action
+episodes, total wall time and worker peak RSS. It uses the existing delayed expert
+trace callback; outcome summaries never feed back into its controls. These are
+observed transitions, not proof of berry causation or stuck jobs. No full trace
+arrays are retained in memory. Completed cases per wall-minute applies only to
+this120s opening, not full-night throughput. A full-night search still requires
+a measured, separately allocated throughput plan and fresh matched baseline;
+historical results retain their old sources.
+
+Ed requested training on2026-10-31. `--campaign-only` searches only
+`mobileYouths`, `feedRange`, `adultPostRange`, `speciesPenalty`, `flaskGroup`;
+default values remain3/80/140/250/3. With an exact `--cases` matrix all gear and
+movement/quest parameters are fixed. This is parameter search, not a learned
+world model or a neural policy. The first two-cell120s training-only pilot has
+six candidates and a480s hard cap; it never evaluates held-out cases, emits a
+model lock or promotes defaults. Longer full-night cases remain cloud-only.
+All new artifacts bind the new source/parameter schema; historical locks and
+measurements are not relabelled or reused for the changed policy.
+
+`bots/campaign.ts` adds bounded age/species decisions to the expert only. It
+recruits babies when a mobile youth force is short and observed berries can grow
+them, retains three travelling youths, considers species that can fight the known
+opposition, and places adults at a nearby future battlefield or a captured area.
+Nearer previously observed hostile areas can be prepared before the next route
+area. Growth to adult is deliberate near a post with spare youths; berries also
+heal observed injured allies. Feeding/placement jobs expire after40 player seconds
+and yield to danger. Real-game fixtures exercise baby placement, growth and
+retrieval, and adult placement without immediate pickup. This is rule-based
+planning, not evidence of stronger full-night play or a trained model.
+
+The adapter exposes only ripe berries/flasks in the approved approximate view,
+visible ally condition and sigils, and carried age/species. Off-screen carried
+positions are represented by the witch, not actual hidden follower locations.
+Visible captured-area markers and revealed route columns are remembered. Route
+columns use the renderer's `leyReachTimes` gate (or a worn Route-seer); a hidden
+wave-plan endpoint never escapes. Clearing early is prioritized through ready
+casts and newly visible route/capture information is consumed on subsequent
+delayed snapshots. This does not make the internal future route known or change
+the game's pulse/early-clear reveal behavior. The early-clear rainbow is sampled
+at every fourth bar, at most128 bars per run, through `rainbowRuns`/`routePoint`
+(the renderer's rule fallback). Only bars inside the approximate view and a30m
+forward-direction waypoint escape; no route distance, wave origin or endpoint.
+Samples refresh at most8Hz, memory expires after15player seconds. This is
+explicitly approximate: it does not reproduce the renderer's smoothed curves,
+bent-world ground occlusion or exact frustum. A picked-up legend sigil provides
+only the drawn tether's direction in40m steps; a loose crowned sigil alone gives
+no remote legend coordinate. Encountered dreams retain the existing request and
+delivery controls; their deliberate discovery is no longer limited to one per
+night when campaign observation is present.
+
+Growth flasks are used only for a useful group close to its intended battlefield,
+not during distant travel. Equipped Harvest/healing hats and suitable ready broom
+spells are used through ordinary buttons. Changing Workshop/wardrobe loadouts is
+not expressible in the current bot control interface: QUESTION6544266067 requests
+canonical ownership for that separate station adapter. No direct loadout mutation,
+new unlock, mushroom action, skilled policy or game tuning is added. The new work
+does not authorize replaying historical searches/pilots or touching protected cases.
+
 Guarded coverage (coordinators6521109755/6521665224, 2026-10-30) is default on
 after fixed pilot59bc20ce passed its coverage/KO gate. Explicit
 `guardedCoverageExploration:false` retains the OFF comparison. The same

@@ -1,0 +1,41 @@
+{
+  "schema": 1,
+  "complete": false,
+  "sourceCommit": "dc52bd317368916c2e04f2519bc2f3c16cd87d2b",
+  "sourceFingerprint": "18d97bae411c16efe20673ffb25f125efe474c3402cdcb3dbc8360da41517e81",
+  "checkpointDigest": "ef3ffa43e0daf7e9ff1bc1077cade326ef610e96c3990147bbcccb4e5b15c56e",
+  "analysisDigest": "57a3782975d0f3b910167724109ba91073d2f19fa3c8e27dd3bf82f4b9a31403",
+  "plannedCases": 12,
+  "plannedCandidates": 6,
+  "heldOutEvaluated": 0,
+  "baseline": {
+    "cases": 10,
+    "wins": 0,
+    "losses": 10,
+    "censored": 0,
+    "quests": 0,
+    "allQuests": 0,
+    "eligibleFinds": 0,
+    "knockdowns": 13,
+    "objective": [
+      0,
+      0,
+      0,
+      0,
+      2,
+      0,
+      80,
+      23131.885000047856
+    ]
+  },
+  "comparisons": [],
+  "selected": {
+    "mobileYouths": 3,
+    "feedRange": 80,
+    "adultPostRange": 140,
+    "speciesPenalty": 250,
+    "flaskGroup": 3
+  },
+  "promoted": false,
+  "limits": "Training comparisons, one case per island kind; no independent generalization or persistence claim. Partial candidates use common completed cases only."
+}

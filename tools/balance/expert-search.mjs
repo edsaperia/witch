@@ -13,13 +13,13 @@ import { seedAt } from "./report-core.mjs";
 import { startSearch, ask, tell, objective } from "./expert-search-core.mjs";
 import { INITIAL_POLICY, POLICY_SPACE, policySpace, equipmentSpace, equipmentOf, policyOf, trainingCases } from "./expert-space.mjs";
 import { importEvaluations, canonical, modelLock, digest, readFitnessCases, validateParameters } from "./expert-contract.mjs";
+import { validateExecution } from "./expert-execution.mjs";
 
 // A separate idle parent enforces a real wall deadline even while one synchronous
 // real-rules case is running. An interrupted case resumes from its last checkpoint.
 if (!process.argv.includes("--worker")) {
   const cap = Number(arg("wall-seconds", 480));
-  const cloud = arg("execution", "pilot") === "cloud";
-  if (!Number.isFinite(cap) || cap <= 0 || cap > (cloud ? 3600 : 600)) throw Error("Invalid hard wall cap");
+  validateExecution({ execution: arg("execution", "pilot"), cap, limit: Number(arg("time", 60)), trainingOnly: process.argv.includes("--training-only"), campaignOnly: process.argv.includes("--campaign-only"), caseFile: arg("cases", "") });
   const child = spawn(process.execPath, [fileURLToPath(import.meta.url), ...process.argv.slice(2), "--worker"], { stdio: "inherit" });
   let timedOut = false;
   const timer = setTimeout(() => { timedOut = true; child.kill(); }, Math.max(0, cap * 1000 - performance.now()));
@@ -38,9 +38,8 @@ const limit = positive("time", 60), iterations = positive("iterations", 3, true)
 const wall = positive("wall-seconds", 480), searchSeed = positive("search-seed", 1477, true);
 const execution = arg("execution", "pilot"), trainingOnly = process.argv.includes("--training-only"), shard = arg("shard", "local-pilot");
 const deferQuests = process.argv.includes("--defer-quests");
-if (!["pilot", "cloud"].includes(execution)) throw Error("Unsupported execution mode");
-if (wall > (execution === "cloud" ? 3600 : 600)) throw Error("Wall cap exceeds approved execution window");
-if (limit > 120 && execution !== "cloud") throw Error("Long training is cloud-only; pilot case limit is 120 player seconds");
+const campaignOnly = process.argv.includes("--campaign-only");
+validateExecution({ execution, cap: wall, limit, trainingOnly, campaignOnly, caseFile: arg("cases", "") });
 // Keep seed ranges disjoint even if the training count is increased.
 const protectedPairs = JSON.parse(readFileSync(resolve(arg("held-list", "docs/notes/expert-held-out-pairs.json")), "utf8"));
 if (!Array.isArray(protectedPairs) || protectedPairs.some(p => p.worldSeed !== 0 || !Number.isInteger(p.nightSeed)) || heldCount > protectedPairs.length) throw Error("Invalid/insufficient protected held-out pairs");
@@ -66,6 +65,7 @@ try {
   const caseFile = arg("cases", "");
   if (round === 2 && !caseFile) throw Error("Focused round 2 requires --cases; --external alone does not define its fitness matrix");
   const fitness = caseFile ? readFitnessCases(caseFile, catalogue, r.islands, heldOutPairs, round) : null;
+  if (execution === "local-full-night" && fitness.some(c => c.expert.limit > 4200)) throw Error("Exact local full-night cases exceed4200 player seconds");
   const fromFile = arg("from", ""), from = fromFile ? JSON.parse(readFileSync(fromFile, "utf8")) : null;
   if (round === 2 && !fromFile) throw Error("Focused round 2 requires --from for its selected round-one model");
   if (from) {
@@ -91,9 +91,9 @@ try {
   }
   const equipmentFor = point => equipmentOf({ ...initial, ...point }, catalogue);
   const policyFor = point => policyOf({ ...initial, ...point });
-  const activePolicy = policySpace(deferQuests);
+  const activePolicy = policySpace(deferQuests, campaignOnly);
   const activeSpace = fitness ? activePolicy : [...activePolicy, ...equipmentSpace(catalogue)];
-  Object.assign(manifest, { deferQuests, activeSpace });
+  Object.assign(manifest, { deferQuests, campaignOnly, activeSpace });
   const initialPoint = Object.fromEntries(activeSpace.map(([name]) => [name, initial[name]]));
   let checkpoint = existsSync(checkpointPath) ? JSON.parse(readFileSync(checkpointPath, "utf8")) : { manifest, search: startSearch(activeSpace, initialPoint, searchSeed), evaluations: [], held: [], complete: false };
   // Runners commit results on their result branches. Those docs-only commits
