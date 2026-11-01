@@ -17,6 +17,7 @@ import { installShaderDrawGate, materialProgramsReady, type ShaderDrawStatus } f
 import { LandingArtFade, lateLandingReady } from './landingReadiness';
 import { captureProgramUses, mapProgramUses } from "./programInventory";
 import { deckOf } from "../rules/treehouse";
+import { insideTreehouseCanopy } from './treehouseVisibility';
 import { HOUSE_LAYER } from "./post";
 import { StationBackdrop } from "./stationBackdrop";
 import type { MapTable } from "./mapTable";
@@ -29,7 +30,6 @@ import { makeCrown, type HouseOutline } from "../rules/crown";
 // (the house's outline for the crown: only what it reads, so the floor's traced rings stay out of the bundle)
 import { rooms as OUTLINE_ROOMS, branches as OUTLINE_BRANCHES, stubs as OUTLINE_STUBS, takeoff as OUTLINE_TAKEOFF } from "../../config/house/outline.json";
 import { fromPlan, HOUSE_ROOMS, toPlan } from "../rules/houseRooms";
-import { speakerRadius } from "../rules/speakers";
 import { Hiz, HIZ_LAYER } from "./hiz";
 /** How near the treehouse (m, the camera) its occluders are built (render/hiz.ts). */
 const HIZ_NEAR = 120;
@@ -544,14 +544,13 @@ export class View {
   /** The crown for a house with rooms (made once: the same oak over any island's treehouse), or none. */
   private ensureCrown(game: Game): void {
     const t = game.tuning, H = t.treehouse.house, want = !!(H?.on && H.crown?.on && deckOf(game.map, t)?.house?.rooms);
-    // (the crown whole over the Terrace or with its gap, the pause page's switch: Ed, 2026-10-26, grown again when it's flipped)
-    const gap = H?.crown?.whole !== true, lights = H?.crown?.lights ?? 1, wrap = H?.crown?.wrap ?? 0;
+    // Ed,2026-11-01: the production crown has no Terrace notch.
+    const gap = false, lights = H?.crown?.lights ?? 1, wrap = H?.crown?.wrap ?? 0;
     if (this.crown && want && (this.crown.crown.gap !== gap || this.crown.lights !== lights || (this.crown.crown.wrap ?? 0) !== wrap)) { this.scene.remove(...this.crown.meshes); this.strings?.setCrown(null); this.crown.dispose(); this.crown = null; if (this.crownFar) { this.scene.remove(...this.crownFar.meshes); this.crownFar.dispose(); this.crownFar = null; } }
     if (want && !this.crown && H) {
       const outline = { rooms: OUTLINE_ROOMS, branches: OUTLINE_BRANCHES, stubs: OUTLINE_STUBS, takeoff: OUTLINE_TAKEOFF } as unknown as HouseOutline;
-      // (the dancefloor and its speakers stay open to the sky as the Terrace does: it stands south-east of the house, under the crown's edge)
-      const deck = deckOf(game.map, t)!, df = game.map.dancefloor, dp = toPlan({ x: deck.x, z: deck.z }, df.x, df.z);
-      const open = [{ x: dp.x, z: dp.z, r: speakerRadius(t) + t.dancefloor.speakers.footprint + 4 }];
+      // Ed,2026-11-01: no notch in the tree, including the old dancefloor opening.
+      const open: { x: number; z: number; r: number }[] = [];
       this.crown = new CrownView(makeCrown({ outline, floor: H.height, seed: H.crown!.seed, open, gap, wrap }), t.stringLights.bulbSpacing, outline, lights);
       this.crown.drawMask = (key, box) => { const p = this.assets.oneOff({ kind: "crownMask", id: `${key}@${box.map(v => v.toFixed(4)).join(",")}`, style: this.assets.style, box: [...box] }).then(r => r.mask ?? Promise.reject(new Error("no mask"))); this.assets.track(`crownMask:${key}`, p); return p; };
       this.scene.add(...this.crown.meshes);
@@ -1878,7 +1877,8 @@ export class View {
       const cut = t.canopyCutout, hw = SPRITE_UNIFORMS.uWitch.value, CR = t.treehouse.house?.crown;
       const hole = { x: hw.x, y: hw.y, r: 0.5 * cut.screenFraction * (t.suspects.holeCut ? 1 : 0) * this.width, edge: cut.edge * this.width };
       this.crown.uniforms.uWarmK.value = CR?.warm ?? 0; // (the house's warm light up into it, live from the pause page)
-      this.crown.update(this.camera, W, plan, here, dt, hole, CR?.cutFade ?? 0, { x: w.x, y: groundHeight(w.x, w.z) + witchHeight(w, t), z: w.z }); // (her: the oak hidden when she's behind it)
+      const airborneInside = w.mode === 'treetop' && insideTreehouseCanopy(toPlan(deck, w.x, w.z), this.crown.crown.dome);
+      this.crown.update(this.camera, W, w.perch ? plan : null, here, dt, hole, CR?.cutFade ?? 0, { x: w.x, y: groundHeight(w.x, w.z) + witchHeight(w, t), z: w.z }, airborneInside);
       if (this.crownFar) { // (and over the horizon from far off: its picture baked the first frame there is one)
         if (!this.shaderDrawStatus.active) this.crownFar.bake(this.renderer);
         const at = g.party.spellAt;

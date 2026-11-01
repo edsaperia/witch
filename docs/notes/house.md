@@ -1,5 +1,22 @@
 # The treehouse and its house
 
+Ed,2026-11-01 (PR1591): remove the walls; every room/branch floor edge is open.
+`keepInHouse` returns the nearest safe edge point on exit. With a broom the existing
+rise to treetop applies; without one, `fallReturn` preserves that point through
+the existing fall/thud/beat and returns there instead of the magic circle. The
+knockout return remains separate. Walking is9m/s instead of7.5 (+20percent),
+with the same acceleration and unchanged broom-flight speeds. Runtime room
+geometry omits upright layer1 walls, keeping the below-floor bark rim and
+furniture; the editor/placement/config geometry is not changed in this slice.
+
+Ground viewers cannot see house rooms/terrace. A treetop visitor within the
+crown footprint sees world-space floors and furniture through a local canopy
+opening, with depth testing against remaining leaves/scenery. Indoor room drawing
+retains its established plane/painter. The indoor crown's soft distance band is
+7.5m instead of2.5m; room fade timing is unchanged. Production crown generation
+has no fixed Terrace/dancefloor notch. Nearby pure movement/visibility and crown
+state checks are separate from canonical visual/frame acceptance, still required.
+
 ## Treehouse layout editor
 
 Guest wake rules exports (`rules/wakeUp.ts`): `startWakeFor(g, time, options, W, {player, room})` selects an existing player and stable room ID; `bedFor(room)` and `doorFor(room)` return that room's configured objects (or undefined). Existing guest rooms are `bedroom2` and `bedroom3`; their bare frames count as beds. The caller retains room-access and equipment policy. Per-witch wake metadata keeps the stretch/bedside hold in the selected room without changing the host-default `startWake` path, page/camera, save hooks or audio. These exports do not unlock the guest rooms or connect the multiplayer UI.

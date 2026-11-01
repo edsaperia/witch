@@ -148,25 +148,19 @@ describe("the treehouse's house", () => {
     const p = pastEdge(d, a); expect(atTakeoff(d, p.x, p.z)).toBe(true);
   });
 
-  it("is one floor: from the Terrace she walks up the trunk and out along the branches, kept in by its edge but for the take-off", () => {
+  it("is one floor, with every edge open and the decks' desk still solid", () => {
     const g = game(JETS), d = deckOf(g.map, TUNING)!;
     run(g, 0.2, { moveZ: -1 });
-    run(g, 2, { moveZ: -1 }); // north, off her seat across the Terrace
+    run(g, 0.5, { moveZ: -1 }); // north, still on the Terrace
     expect([g.witch.perch, g.witch.mode]).toEqual([true, "ground"]);
-    for (const [mx, mz] of [[-1, 0], [0, -1], [1, 0], [0.7, -0.7], [-0.6, -0.8]]) {
-      run(g, 2, { moveX: mx, moveZ: mz });
-      expect(onFloor(d, g.witch.x, g.witch.z, 1e-6), `${mx}, ${mz}`).toBe(true);
-      expect([g.witch.perch, g.witch.mode]).toEqual([true, "ground"]);
-    }
     const mid = keepInHouse(d, d.x, d.z); expect([mid.x, mid.z]).toEqual([d.x, d.z]);
     // the edge keeps her, all round but the take-off: there she's off
     for (let a = 0; a < 360; a += 15) {
       const p = pastEdge(d, a);
       if (p.r > HOUSE_ROOMS.rooms.find(r => r.id === "terrace")!.r * 1.4) continue; // (along a limb, not the Terrace's own edge)
-      const k = keepInHouse(d, p.x, p.z), da = Math.abs((((a - K.angle) % 360) + 540) % 360 - 180), T = HOUSE_ROOMS.rooms.find(r => r.id === "terrace")!;
-      if (da < K.half - 3 && p.r + 1.5 < T.r + 3) expect(k.off, `${a}°: the take-off`).toBe(true); // (its open rim: within its span and 3 m of its size, as drawn)
-      else if (da > K.half + 3) expect(k.off, `${a}°: kept`).toBe(false);
-      if (!k.off) expect(onFloor(d, k.x, k.z, 1e-6)).toBe(true);
+      const k = keepInHouse(d, p.x, p.z);
+      expect(k.off, `${a}°: open edge`).toBe(true);
+      expect(onFloor(d, k.x, k.z, 1e-6)).toBe(true);
     }
     // the decks' desk is solid
     const b = d.house!.desk, k = keepInHouse(d, b.x, b.z);
@@ -243,7 +237,7 @@ describe("the treehouse's house", () => {
     expect(g.witch.mode).toBe("treetop");
   });
 
-  it("takes her flying again when she walks off the Terrace's open rim; with no broom she falls and comes back at the circle", () => {
+  it("takes her flying again off an edge; without a broom she falls and returns to that edge", () => {
     const out = { moveX: Math.cos(40 * DEG), moveZ: Math.sin(40 * DEG) }; // (south-east, past the desk's east end)
     const g = game(JETS);
     const along = 0.7 * 5 / HS.walk; // (along behind the desk to its end: 3.5 m, at her walk)
@@ -252,17 +246,18 @@ describe("the treehouse's house", () => {
     for (let i = 0; i < 600 && !off; i++) { press(g, out); off = g.witch.mode === "rising" || g.witch.mode === "treetop"; }
     expect(off).toBe(true);
     run(g, 2); expect(g.witch.mode).toBe("treetop"); expect(g.witch.perch).toBeFalsy();
-    const T = withTuning({ treehouse: { ...TUNING.treehouse, house: { ...HS, fall: { on: true, time: 0.9 } } } }), g2 = game(T), d2 = deckOf(g2.map, T)!;
+    const T = withTuning({ treehouse: { ...TUNING.treehouse, house: { ...HS, fall: { on: true, time: 0.9 } } } }), g2 = game(T);
     run(g2, 0.2, { moveZ: -1 }); run(g2, along, { moveX: 1 });
     let falling = false;
     for (let i = 0; i < 600 && !falling; i++) { press(g2, out); falling = g2.witch.falling !== undefined; }
     expect(falling).toBe(true);
+    const returnAt = g2.witch.fallReturn!;
     expect(witchHeight(g2.witch, T)).toBeCloseTo(22 + T.groundHeight, 6); // (the camera stays up: her height is the floor's)
     let fell = 0;
     for (let i = 0; i < Math.round(1.2 / STEP); i++) { press(g2, {}); fell += events(g2, "fell").length; } // (the events are each step's own)
     expect(g2.witch.falling).toBeUndefined();
     expect(fell).toBe(1);
-    expect(g2.witch.x).toBeCloseTo(d2.house!.circle.x, 6); expect(g2.witch.z).toBeCloseTo(d2.house!.circle.z, 6);
+    expect(g2.witch.x).toBeCloseTo(returnAt.x, 6); expect(g2.witch.z).toBeCloseTo(returnAt.z, 6);
     expect([g2.witch.perch, g2.witch.mode]).toEqual([true, "ground"]);
   });
 

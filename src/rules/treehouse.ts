@@ -181,15 +181,13 @@ function outOfDeskBox(d: Deck, x: number, z: number): { x: number; z: number } {
   return { x: b.x + rotated.x, z: b.z + rotated.z };
 }
 
-/** The nearest place to (x, z) she can stand in the house: on its floor, the rail in from its edge, and out of the decks' desk; `off`
- *  when (x, z) has gone out over the Terrace's open rim (she flies, or falls), the place given then on the floor's edge there. */
+/** Ed,2026-11-01: every floor edge is open. `off` returns its nearest safe
+ *  floor point for the fall's return, while the witch continues off the edge. */
 export function keepInHouse(d: Deck, x: number, z: number): { x: number; z: number; off: boolean } {
   const rooms = d.house!.rooms;
   if (!rooms || onRoomFloor(rooms, x, z)) return { ...outOfDeskBox(d, x, z), off: false };
   const n = nearestRoomFloor(rooms, x, z)!;
-  // out over the open rim (past where the rest of the floor's edge keeps her, the rail in from it): off the house
-  if (atTakeoff(d, x, z)) return { x: n.x, z: n.z, off: true };
-  return { ...outOfDeskBox(d, n.x, n.z), off: false };
+  return { ...landingSpot(d, n.x, n.z), off: true };
 }
 
 /** Within reach of the map table (E there opens the sea chart). */

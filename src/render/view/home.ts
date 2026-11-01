@@ -11,6 +11,8 @@ import { beatAt, beatTime } from "../../rules/beat";
 import { candleCount, candleMelt, candleRed } from "../../rules/knockout";
 import { canopyShown } from "../../rules/witch";
 import { deckOf, type Deck } from "../../rules/treehouse";
+import { toPlan } from '../../rules/houseRooms';
+import { insideTreehouseCanopy, treehouseVisible } from '../treehouseVisibility';
 import { atDecks } from "../../rules/wakeUp";
 import { groundHeight } from "../height";
 import { cellKey, spawnMarkers, waveCountdown, wavePlan } from "../../rules/party";
@@ -460,7 +462,8 @@ export function placeTreehouse(v: View, angle: number, time: number): { x: numbe
   // (the Terrace one of the house's rooms, treehouse.house.terraceRoom: Ed, 2026-10-26, "not having the terrace drawn separately":
   // its art, its round of wood, her decks and the DJ table, drawn only while the house is, as render/houseRooms.ts shows its rooms;
   // a knockout's candles stay, as she waits there)
-  const w = v.game.witch, hide = !!(deckAt && deck?.house && v.game.tuning.treehouse.house?.terraceRoom && !(w.perch && (w.mode === "ground" || w.mode === "descending")) && !ko);
+  const w = v.game.witch, inside = !!deck && insideTreehouseCanopy(toPlan(deck, w.x, w.z), v.crown?.crown.dome);
+  const hide = !!(deckAt && deck?.house && v.game.tuning.treehouse.house?.terraceRoom && !treehouseVisible(w, inside));
   if (v.leashView) v.leashView.decksHidden = hide; // (their tempo with them: render/leash/deckBpm.ts)
   if (hide) { v.treehouseBatch.set(items.filter(it => !terrace.has(it))); return at; }
   v.treehouseBatch.set(items);

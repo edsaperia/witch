@@ -67,7 +67,8 @@ float inClear(sampler2D mask, vec2 floorP) {
   if (all(greaterThan(uv, vec2(0.0))) && all(lessThan(uv, vec2(1.0)))) d = texture2D(mask, uv).r * 16.0;
   if (all(greaterThan(uv2, vec2(0.0))) && all(lessThan(uv2, vec2(1.0)))) d = min(d, texture2D(mask, uv2).r * 16.0);
   float o = d - (1.0 + 1.6 * vnoise2(floorP * 0.5));
-  return 1.0 - smoothstep(0.0, 2.5, o);
+  // Ed,2026-11-01: the canopy returns over a longer distance around each room.
+  return 1.0 - smoothstep(0.0, 7.5, o);
 }
 // How much of the crown stays here (0 cleared away, 1 whole): her room's (or branch's) floor as it fades in, the one she left as it
 // fades back (vFloor: the floor's plan point under this pixel); indoors, the forest's hole round her where she's drawn, its soft
@@ -344,7 +345,7 @@ export class CrownView {
    *  outdoors, its middle where she's drawn (screen pixels: x, y, radius, edge), cut in the crown indoors; `fade` the seconds a
    *  room's cut (and that hole) takes to open or close (treehouse.house.crown.cutFade; 0 at once); `her` where she is in the world
    *  (for hiding the oak when she's behind it). */
-  update(camera: THREE.Camera, world: PlanMap, house: PlanMap | null, here: { x: number; z: number } | null, dt: number, hole: { x: number; y: number; r: number; edge: number } | null = null, fade = 0, her: { x: number; y: number; z: number } | null = null): void {
+  update(camera: THREE.Camera, world: PlanMap, house: PlanMap | null, here: { x: number; z: number } | null, dt: number, hole: { x: number; y: number; r: number; edge: number } | null = null, fade = 0, her: { x: number; y: number; z: number } | null = null, airborneInside = false): void {
     const want = house ? 1 : 0;
     this.k += (want - this.k) * (1 - Math.exp(-8 * Math.max(0, dt)));
     if (Math.abs(this.k - want) < 0.01 || dt <= 0) this.k = want;
@@ -391,7 +392,7 @@ export class CrownView {
     U.uClear.value = a.tex; U.uClearB.value = b.tex; (U.uClearW.value as THREE.Vector2).set(a.key ? a.w : 0, b.key ? b.w : 0);
     U.uClearOn.value = (a.key && a.w > 0) || (b.key && b.w > 0) ? 1 : 0;
     // the hole round her, as outdoors, where she's drawn: opening as she comes in, closing as she goes out
-    this.herW = indoors && hole ? Math.min(1, this.herW + step) : Math.max(0, this.herW - step);
+    this.herW = (indoors || airborneInside) && hole ? Math.min(1, this.herW + step) : Math.max(0, this.herW - step);
     const H = U.uHerHole.value as THREE.Vector4;
     if (hole && this.herW > 0) H.set(hole.x, hole.y, hole.r * smooth01(this.herW), Math.max(1, hole.edge)); else H.set(0, 0, 0, 1);
   }
