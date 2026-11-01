@@ -22,6 +22,31 @@ function fixture() {
 }
 
 describe("incremental playtest journal", () => {
+  it("coalesces flushes behind a blocked store and reconciles evicted rows without queueing a batch per request", async () => {
+    const f = fixture(), journal = new PlaytestJournal("/test", "session", "blocked", "build", f.store, f.markers, 1, { bytes: 2000, count: 2 });
+    await journal.ready;
+    const append = f.store.append;
+    let release!: () => void, entered!: () => void, calls = 0;
+    const blocked = new Promise<void>(resolve => { release = resolve; });
+    const started = new Promise<void>(resolve => { entered = resolve; });
+    f.store.append = async (page, rows, removed) => {
+      if (++calls === 1) { entered(); await blocked; }
+      await append(page, rows, removed);
+    };
+    journal.append("error", "keep error"); journal.append("recording:event", "old input");
+    const first = journal.flush(); await started;
+    const waiting: Promise<void>[] = [];
+    for (let i = 0; i < 100; i++) {
+      journal.append("recording:event", { tick: i });
+      waiting.push(journal.flush());
+    }
+    expect(calls).toBe(1);
+    release(); await Promise.all([first, ...waiting]);
+    expect(calls).toBe(2);
+    expect(f.entries.get("blocked")?.map(row => row.data)).toEqual(["keep error", { tick: 99 }]);
+    expect(f.pages.get("blocked")!.bytes).toBeLessThan(2000);
+    await journal.close();
+  });
   it("bounds durable debug growth across a long pause and reload while preserving warnings and errors", async () => {
     const f = fixture(), journal = f.open("paused");
     journal.append("error", { message: "before pause" });

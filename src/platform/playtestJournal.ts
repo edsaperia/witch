@@ -29,10 +29,10 @@ export function journalPrunePlan(pages: JournalPage[], next: JournalPage, budget
 export class PlaytestJournal {
   readonly ready: Promise<{ unexpected: boolean; persistent: boolean }>;
   private pending = new Map<number, JournalEntry>();
-  private removed = new Set<number>();
   private records: LogRecords;
   private committed = new Map<number, number>();
-  private queue: Promise<void> = Promise.resolve();
+  private flushing?: Promise<void>;
+  private flushRequested = false;
   private timer?: ReturnType<typeof setTimeout>;
   private previous: JournalPage[] = [];
   private previousMarker: JournalMarker | null = null;
@@ -62,7 +62,7 @@ export class PlaytestJournal {
     if (this.closing) return;
     const level = details?.level ?? (kind === "error" ? "error" : kind === "slowframe" ? "warn" : kind.startsWith("recording:") ? "debug" : "info");
     const { record, removed } = this.records.add(level, details?.message ?? kind, payload, details?.context ?? { build: this.page.build, t: null, island: "unknown" }, details?.at);
-    for (const id of removed) { this.pending.delete(id); this.removed.add(id); }
+    for (const id of removed) this.pending.delete(id);
     if (record) this.pending.set(record.seq, { ...record, page: this.page.id });
     this.page.bytes = this.records.bytes + this.records.count * (8 + JSON.stringify(this.page.id).length);
     this.page.dropped = Object.values(this.records.dropped).reduce((a, b) => a + b, 0);
@@ -76,27 +76,36 @@ export class PlaytestJournal {
     try { if (this.markers.read()?.owner === this.page.id) this.markers.write({ owner: this.page.id, active: true, build: this.page.build, at: event.at, compact: this.compact }); } catch { this.persistent = false; }
     this.append("notable", { kind: event.kind, data: event.data }, { level: event.kind === "error" ? "error" : event.kind === "warning" ? "warn" : "info", message: event.message, context: event, at: event.at });
   }
-  async flush(): Promise<void> {
+  flush(): Promise<void> {
     if (this.timer) { clearTimeout(this.timer); this.timer = undefined; }
-    const batch = [...this.pending.values()], removed = [...this.removed], page = { ...this.page };
-    this.pending.clear(); this.removed.clear();
-    const job = this.queue.then(async () => {
+    this.flushRequested = true;
+    // A slow store retains one in-flight batch plus the current bounded records,
+    // rather than one captured batch for every timer/download/close request.
+    return this.flushing ??= this.drain();
+  }
+  private async drain(): Promise<void> {
+    try {
       await this.ready;
-      // A failed deletion must not leave stale rows accumulating behind a smaller metadata budget.
-      const deleted = [...new Set([...removed, ...[...this.committed.keys()].filter(seq => !this.records.has(seq))])];
-      const rows = batch.flatMap(row => { const current = this.records.get(row.seq); return current ? [{ ...current, page: page.id }] : []; });
-      const sizes = new Map(this.committed);
-      for (const seq of deleted) sizes.delete(seq);
-      for (const row of rows) sizes.set(row.seq, recordBytes(row));
-      try {
-        await this.store.append({ ...page, bytes: [...sizes.values()].reduce((a, b) => a + b, 0) }, rows, deleted);
-        this.committed = sizes;
-      } catch {
-        this.persistent = false;
-        for (const row of rows) { const current = this.records.get(row.seq); if (current) this.pending.set(row.seq, { ...current, page: page.id }); }
-      }
-    });
-    this.queue = job; await job;
+      do {
+        this.flushRequested = false;
+        const batch = [...this.pending.values()], page = { ...this.page };
+        this.pending.clear();
+        // A failed deletion must not leave stale rows accumulating behind a smaller metadata budget.
+        // Reconcile committed IDs only: never retain deletion IDs for uncommitted debug churn.
+        const deleted = [...this.committed.keys()].filter(seq => !this.records.has(seq));
+        const rows = batch.flatMap(row => { const current = this.records.get(row.seq); return current ? [{ ...current, page: page.id }] : []; });
+        const sizes = new Map(this.committed);
+        for (const seq of deleted) sizes.delete(seq);
+        for (const row of rows) sizes.set(row.seq, recordBytes(row));
+        try {
+          await this.store.append({ ...page, bytes: [...sizes.values()].reduce((a, b) => a + b, 0) }, rows, deleted);
+          this.committed = sizes;
+        } catch {
+          this.persistent = false;
+          for (const row of rows) { const current = this.records.get(row.seq); if (current) this.pending.set(row.seq, { ...current, page: page.id }); }
+        }
+      } while (this.flushRequested);
+    } finally { this.flushing = undefined; }
   }
   /** pagehide (not into the back/forward cache): the page is going away on purpose. IndexedDB work started now
    * doesn't commit before an unload in Chromium (crash1823: 0 of 5 reloads), so the clean-end marker is written
