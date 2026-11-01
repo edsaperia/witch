@@ -104,11 +104,18 @@ describe("the bot", () => {
     g.clock.paused = false; g.witch = { ...g.witch, seated: false };
     const bot = newBot("skilled"), w = g.witches[0];
     let won = 0;
+    const trace: unknown[] = [];
     for (let i = 0; i < 40 * 60 && !won; i++) {
-      stepGame(g, bot.decide(g), 1 / 60);
+      const controls = bot.decide(g);
+      if (i % 300 === 0) {
+        const aim = { x: g.witch.x + (controls.aimX ?? 0), z: g.witch.z + (controls.aimZ ?? 0) };
+        const target = g.creatures.filter(c => !c.gone && !c.leashed && !c.boss).sort((a, b) => Math.hypot(a.x - aim.x, a.z - aim.z) - Math.hypot(b.x - aim.x, b.z - aim.z))[0];
+        trace.push({ t: i / 60, doing: bot.doing, mode: g.witch.mode, fire: controls.fire, target: target && { id: target.id, species: target.species, level: target.level, state: target.state } });
+      }
+      stepGame(g, controls, 1 / 60);
       won += w.invites.events.filter(e => e.kind === "happy").length;
     }
-    expect(won).toBeGreaterThan(0);
+    expect(won, JSON.stringify(trace)).toBeGreaterThan(0);
   }, 60000);
 
   it("names a species in the plural for its tag", () => {

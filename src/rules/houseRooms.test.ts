@@ -107,15 +107,15 @@ describe("the oak's rooms", () => {
     expect(g.tuning.treehouse.house!.walk).toBeLessThan(g.tuning.groundSpeed / 2);
   });
 
-  it("walks half again as fast as she did (Ed, 2026-10-25: 5 to 7.5 m/s), her broom's ground speed apart and unchanged, her walk cycle drawn for 5 m/s so her steps quicken with her", () => {
+  it("walks twentypercent faster (Ed,2026-11-01:7.5 to9m/s), with broom speed and authored stride unchanged", () => {
     const H = TUNING.treehouse.house!;
-    expect(H.walk).toBe(7.5);
+    expect(H.walk).toBe(7.5 * 1.2);
     expect(H.stride).toBe(5);
-    expect(H.walk / H.stride!).toBeCloseTo(1.5, 6);
+    expect(H.walk / H.stride!).toBeCloseTo(1.8, 6);
     expect(TUNING.groundSpeed).toBe(19.25);
     const g = inHouse(0, -3), W = g.witches[0];
     for (let i = 0; i < 0.5 / STEP; i++) stepGame(g, { ...idle, moveX: 1 }, STEP);
-    expect(Math.hypot(W.body.vx, W.body.vz)).toBeCloseTo(7.5, 1);
+    expect(Math.hypot(W.body.vx, W.body.vz)).toBeCloseTo(9, 1);
   });
 
   it("leave her room to move: limbs 3 m wide or more, rooms 12 m across or more, her bedroom 16 m", () => {
@@ -123,12 +123,12 @@ describe("the oak's rooms", () => {
     for (const r of HOUSE_ROOMS.rooms) expect(2 * r.r, r.id).toBeGreaterThanOrEqual(r.id === "bedroom" ? 16 : 12);
   });
 
-  it("their edge keeps her in, wherever she walks at it but the take-off", () => {
+  it("unlocked rooms have open edges, with a safe floor point to return to after a fall", () => {
     const d = deck(newGame(7, TUNING));
     for (const id of ["turret", "kitchen", "studio", "bestiary", "dining"]) {
       const r = room(id), P = r.from ? room(r.from) : room("terrace"), ux = (r.x - P.x) / Math.hypot(r.x - P.x, r.z - P.z), uz = (r.z - P.z) / Math.hypot(r.x - P.x, r.z - P.z);
       const k = keepInHouse(d, d.x + r.x + ux * (r.r + 4), d.z + r.z + uz * (r.r + 4)); // (past its far side)
-      expect(k.off, id).toBe(false);
+      expect(k.off, id).toBe(true);
       expect(onFloor(d, k.x, k.z, 1e-6), id).toBe(true);
       expect(inRoom(S, id, k.x - d.x, k.z - d.z), `${id}: at its own floor (or its limb's stub, bulging past it)`).toBeLessThan(5);
     }

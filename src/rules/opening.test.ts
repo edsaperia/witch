@@ -4,7 +4,7 @@ import { describe, expect, it } from "vitest";
 import { TUNING } from "./tuning";
 import { newGame as fullGame, stepGame, STEP, poseOf, type Controls } from "./game";
 import { smallWorld } from "../test/worlds";
-const newGame = smallWorld(fullGame, "Bedroom placement, indoor camera and walls use one treehouse, independent of distant areas.");
+const newGame = smallWorld(fullGame, "Bedroom placement, indoor camera and open edges use one treehouse, independent of distant areas.");
 import { deckOf, onFloor, onTreehouse } from "./treehouse";
 import { HOUSE_ROOMS, toPlan } from "./houseRooms";
 import { bedside, wakeInBedroom } from "./opening";
@@ -31,18 +31,20 @@ describe("waking in her bedroom", () => {
     expect(Math.hypot(p.tx - at.x, p.tz - at.z)).toBeLessThan(2); // (the shot the dive lands on: her)
   });
 
-  it("and she walks on from there, held in the house's walls", () => {
+  it("and she can walk from there off an open edge and fly with her broom", () => {
     const g = newGame(123, TUNING);
     wakeInBedroom(g);
     g.clock.paused = false; g.party.spellAt = undefined; // (play on: no spell to wait for)
     const x0 = g.witch.x;
-    for (let i = 0; i < 1 / STEP; i++) stepGame(g, { ...idle, moveX: -1 }, STEP);
-    expect(g.witch.x).toBeLessThan(x0 - 1);
-    const d = deckOf(g.map, g.tuning)!;
-    for (const [mx, mz] of [[0, -1], [-1, 0], [0, 1], [1, 0]]) { // (at the floor's edge each way, the limbs' too: held in)
-      for (let i = 0; i < 4 / STEP; i++) stepGame(g, { ...idle, moveX: mx, moveZ: mz }, STEP);
-      expect(onFloor(d, g.witch.x, g.witch.z, 1e-6), `${mx}, ${mz}`).toBe(true);
-      expect(onTreehouse(g)).toBe(true);
+    let tookOff = false;
+    for (let i = 0; i < 4 / STEP && !tookOff; i++) {
+      stepGame(g, { ...idle, moveX: -1 }, STEP);
+      tookOff = g.witch.mode === 'rising' || g.witch.mode === 'treetop';
     }
+    expect(g.witch.x).toBeLessThan(x0 - 1);
+    expect(tookOff).toBe(true);
+    for (let i = 0; i < 2 / STEP; i++) stepGame(g, idle, STEP);
+    expect(g.witch.mode).toBe('treetop'); expect(onTreehouse(g)).toBe(false);
+    expect(g.witch.falling).toBeUndefined();
   });
 });

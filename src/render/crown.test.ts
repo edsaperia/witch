@@ -23,6 +23,17 @@ function setup(fade: number) {
 }
 
 describe("the oak's crown indoors (Ed, 2026-10-26)", () => {
+  it('opens a local view for a treetop visitor without flattening the world crown into indoor mode', () => {
+    const crown = new CrownView(makeCrown({ outline: O, floor: H.height, seed: 1, gap: false }), 2, O);
+    const camera = new THREE.PerspectiveCamera(), W = map();
+    crown.update(camera, W, null, null, 0.1, HOLE, 0.4, null, true);
+    expect(crown.indoors).toBe(false);
+    expect(crown.herHole).toBeCloseTo(0.25);
+    expect((crown.uniforms.uHerHole.value as THREE.Vector4).z).toBeGreaterThan(0);
+    crown.update(camera, W, null, null, 0.4, HOLE, 0.4, null, false);
+    expect(crown.herHole).toBe(0);
+    crown.dispose();
+  });
   it("has rooms to walk into", () => expect(rooms.length).toBeGreaterThan(1));
 
   it("opens a room's cut over cutFade seconds as she comes in, not at once, and closes it the same as she leaves", () => {

@@ -15,7 +15,7 @@ import type { View } from "./view";
 import { deckOf, type Deck } from "../rules/treehouse";
 import { fromPlan, toPlan, HOUSE_ROOMS, hatsOnFloor, hatSlots, hatToTake, objectAt, type HouseObject } from "../rules/houseRooms";
 import { houseArtLayout, objectOffset } from "../rules/housePlacement";
-import { groundHeight } from "./height";
+import { bendPoint, groundHeight } from "./height";
 import { alongRay } from "./view/home";
 import type { FloorPixels } from "./houseArt";
 import houseStanding from "virtual:house-standing";
@@ -40,6 +40,8 @@ import { LIGHT_UNIFORMS } from './lighting';
 import { LOADING_LIGHT_GLSL } from './loadingLight';
 import { materialProgramsReady } from './shaderDrawGate';
 import { loanFind } from "../rules/finds";
+import { insideTreehouseCanopy, treehouseVisible } from './treehouseVisibility';
+import { SPRITE_UNIFORMS } from './sprites';
 
 type V3 = { x: number; y: number; z: number };
 /** A quad of the rooms in metres on the house's plan (x, z from the hub's centre, rules/houseRooms.ts; h up off the floor) and its
@@ -61,7 +63,9 @@ const inOrder = (q: Quad[]) => q.sort((a, b) => a.layer - b.layer || a.depth - b
  *  objects' boxes. */
 function buildQuads(): Quad[] {
   const q: Quad[] = [];
-  for (const u of houseStanding) q.push(quad(u.p, u.rgb, u.layer));
+  // Ed,2026-11-01: open floors, without the upright walls. Keep the floor's
+  // underside/rim (layer3); furniture remains separate.
+  for (const u of houseStanding) if (u.layer !== 1) q.push(quad(u.p, u.rgb, u.layer));
   objects(q);
   return inOrder(q);
 }
@@ -287,13 +291,16 @@ export class HouseRoomsView {
   /** A frame: `onTreehouse` takes a point of the Ent's art (pixels) into the world (render/view.ts); `ht`, her clock. */
   update(v: View, onTreehouse: (px: number, py: number) => V3, ht: number): void {
     const g = v.game, w = g.witch, t = g.tuning, T = v.assets.treehouse, d = deckOf(g.map, t);
-    const shown = !!(d?.house?.rooms && T.ent && w.perch && (w.mode === "ground" || w.mode === "descending")); // (at her decks too: the Terrace the oak's floor, render/houseArt.ts)
+    const indoors = !!w.perch && (w.mode === 'ground' || w.mode === 'descending');
+    const inCanopy = !!d && insideTreehouseCanopy(toPlan(d, w.x, w.z), v.crown?.crown.dome);
+    const shown = !!(d?.house?.rooms && T.ent && treehouseVisible(w, inCanopy));
     const late = v.shaderLandingLimited, share = v.landingHouseShare, arrivalNow = performance.now();
     const world = (px: number, pz: number, h: number): V3 => { const p = fromPlan(d!, px, pz); return { ...p, y: groundHeight(p.x, p.z) + d!.h + h }; };
     const g0 = d ? groundHeight(d.x, d.z) : 0;
     const ky = T.ent && d ? (T.seat.y - T.ent.deck.y) / Math.max(0.1, d.seat.z - d.z) : 0;
     const toWorld = (px: number, pz: number, h: number): V3 => {
       if (!T.ent) return world(px, pz, h);
+      if (!indoors) return bendPoint(world(px, pz, h));
       const { x, z } = fromPlan({ x: 0, z: 0 }, px, pz), p = onTreehouse(T.ent.deck.x + x / v.mpp, T.ent.deck.y + z * ky + v.houseShift - h / v.mpp);
       const b = alongRay(v, { x: p.x, y: p.y + g0, z: p.z }, z);
       if (!late || share >= 1) return b;
@@ -403,7 +410,7 @@ export class HouseRoomsView {
     terraceMaterial.opacity = nativeShare;
     // (the floors' map without the push along the camera's rays, which moves nothing on the screen: what's laid over them in their
     // plane, the crown, is drawn after them with no depth)
-    { const flat = (px: number, pz: number, h: number) => { const { x, z } = fromPlan({ x: 0, z: 0 }, px, pz), p = onTreehouse(T.ent!.deck.x + x / v.mpp, T.ent!.deck.y + z * ky + v.houseShift - h / v.mpp); return new THREE.Vector3(p.x, p.y + g0, p.z); }; // (slid with the rooms: houseShift)
+    { const flat = (px: number, pz: number, h: number) => { if (!indoors) { const p = world(px, pz, h); return new THREE.Vector3(p.x, p.y, p.z); } const { x, z } = fromPlan({ x: 0, z: 0 }, px, pz), p = onTreehouse(T.ent!.deck.x + x / v.mpp, T.ent!.deck.y + z * ky + v.houseShift - h / v.mpp); return new THREE.Vector3(p.x, p.y + g0, p.z); }; // (slid with the rooms: houseShift)
       const o = flat(0, 0, 0); this.plan = { o, ex: flat(1, 0, 0).sub(o), ey: flat(0, 0, 1).sub(o), ez: flat(0, 1, 0).sub(o) }; }
     // (the hats' floor isn't a thing to use: the hat she's by is, hatToTake; Ed, 2026-10-29: "just an area where normal hat objects
     // are placed")
@@ -461,6 +468,10 @@ export class HouseRoomsView {
       this.furniture.add(mesh); this.pieces.set(key, { art, mesh, pos, id, x: at.x, z: at.z });
     }
     const pxWorld = (px: number, pz: number, dx: number, dy: number): V3 => {
+      if (!indoors) {
+        const p = bendPoint(world(px, pz, 0)), R = SPRITE_UNIFORMS.uRight.value, U = SPRITE_UNIFORMS.uUp.value;
+        return { x: p.x + (R.x * dx - U.x * dy) * v.mpp, y: p.y + (R.y * dx - U.y * dy) * v.mpp, z: p.z + (R.z * dx - U.z * dy) * v.mpp };
+      }
       const { x, z } = fromPlan({ x: 0, z: 0 }, px, pz), p = onTreehouse(T.ent!.deck.x + x / v.mpp + dx, T.ent!.deck.y + z * ky + v.houseShift + dy);
       const b = alongRay(v, { x: p.x, y: p.y + g0, z: p.z }, z);
       if (!late || share >= 1) return b;
@@ -548,6 +559,17 @@ export class HouseRoomsView {
       const [x, y] = screen(o, up); el.style.display = "block"; el.style.left = `${x}px`; el.style.top = `${y}px`;
       if (text !== undefined && el.textContent !== text) el.textContent = text;
     };
+    // Include pieces that arrived this frame. Outside, leaves can cover the
+    // world-space floors; indoors keep the established painter's order.
+    for (const root of this.meshes) root.traverse(o => {
+      const materials = (o as THREE.Mesh).material;
+      if (materials) for (const m of Array.isArray(materials) ? materials : [materials]) m.depthTest = !indoors;
+    });
+    if (!indoors) {
+      this.box.style.display = 'none'; v.usePrompt.id = '';
+      for (const el of [this.ring, this.wakeL, this.wakeR, ...this.labels.map(l => l.el)]) el.style.display = 'none';
+      return;
+    }
     this.box.style.display = "block";
     for (const L of this.labels) { const p = toWorld(L.x, L.z, 0), s = v.v3.set(p.x, p.y, p.z).project(v.camera); L.el.style.left = `${cv.left + (s.x + 1) / 2 * cv.width}px`; L.el.style.top = `${cv.top + (1 - s.y) / 2 * cv.height}px`; }
     // her head on the page in the house, as its labels are placed (her dream's cloud rises from it: render/dream.ts; her own drawing's
