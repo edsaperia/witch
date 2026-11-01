@@ -14,6 +14,7 @@ import { telephoneCues } from "./app/telephoneCues";
 import { telephoneFaces } from "./app/telephoneFaces";
 import { telephoneFaceCanvas } from "./render/telephoneFace";
 import { TelephonePresence } from "./ui/telephonePresence";
+import { telephoneNotice } from "./ui/telephone";
 import { guestArrival } from "./platform/online/guestArrival";
 import { guestAccess } from "./platform/online/guestAccess";
 import { visitSaves } from "./app/visitSaves";
@@ -415,17 +416,26 @@ function hostCollections(game: Game) {
 const phoneSounds = telephoneCues(() => sound.sfx);
 const phoneFaces = telephoneFaces(phoneEnabled ? (() => { try { return localStorage; } catch { return null; } })() : null);
 const phoneFace = (number: string) => { const face = phoneFaces.get(number); return face ? telephoneFaceCanvas(face) : null; };
+const visitPreparation = { stage: "not-started", at: 0, advancedAt: 0, progress: 0, failure: "" };
+function traceVisit(stage: string, detail?: unknown): void {
+  visitPreparation.stage = stage; visitPreparation.at = performance.now();
+  const message = (detail as { message?: unknown } | undefined)?.message;
+  if (typeof message === "string") visitPreparation.failure = message.slice(0, 500);
+  notable("telephone-preparation", stage, detail);
+}
 const phone = telephoneStation({ enabled: phoneEnabled, callsEnabled: phoneCallsEnabled, face: phoneFace, clearFaces: () => { phoneFaces.clear(); phonePresence.refresh(); }, digit: digit => { if (phone.state.status !== "preparing") phoneSounds.digit(digit); }, storage: (() => { try { return localStorage; } catch { return null; } })(), session: {
   build: BUILD, hostGame: () => N().game,
+  trace: traceVisit,
   appearance: () => { sharedLoans.begin(personalKit(), loan); if (!phone.visiting) sharedLoans.observe(N().game, personalKit()); return appearance(page.look()) ?? appearance({}); },
   attach: game => { if (!guestAccess.ready) throw new Error("The guest room isn't ready yet."); callArrival.attach(game); if (remoteArt.has(1)) void remoteArt.start(game, 0).catch(error => { logCaughtError(error, "host remote appearance"); phone.hangUp(); }); },
   detach: game => callArrival.detach(game),
   prepareGuest: (game, signal, advanced) => {
-    if (!ordinaryVisit) return Promise.reject(new Error("This browser isn't ready to protect your saved night."));
+    if (!ordinaryVisit) { traceVisit("save-boundary:unavailable"); return Promise.reject(new Error("This browser isn't ready to protect your saved night.")); }
     return ordinaryVisit.prepare(game, signal, advanced);
   },
   synchronized: game => { void ordinaryVisit?.synchronized(game).catch(error => { logCaughtError(error, "visit confirmation"); phone.hangUp(); }); },
   ended: (role, game) => {
+    if (role === "host") phone.hangUp(); // Close the role-bearing socket on departure, not only its game session.
     remoteArt.clear();
     if (role === "guest") {
       try { returnedUnlocks = game && game.witches.some(w => w.id === 1) ? visitUnlocks(game, 1) : null; }
@@ -449,7 +459,7 @@ const phone = telephoneStation({ enabled: phoneEnabled, callsEnabled: phoneCalls
       stations.reconcile(restored.kit.look as never, ownedToChoose(findsCtx().owned()), workshopNow()); booth.refresh(ownedRecords());
     }
   },
-  failed: error => { logCaughtError(error, "telephone session"); phone.hangUp(); },
+  failed: error => { visitPreparation.failure = error.message; logCaughtError(error, "telephone session"); phone.hangUp(); telephoneNotice(error.message); },
   advanceHost: (game, controls, dt) => recordedStep(game, controls, dt, BUILD, captureRecording),
   authorizeStation: stationAuthority(hostCollections),
   wardrobe: () => hostCollections(N().game).wardrobe,
@@ -969,22 +979,24 @@ const ordinaryVisit = visitNightSaves ? visitLifecycle({
   saves: visitSaves(browserSaveSlots(), visitNightSaves),
   own: () => ({ night: N(), href: location.href, look: page.look() as Record<string, unknown> | null, loan: structuredClone(loan) }),
   adoptBorrowed: async (game, signal, advanced) => {
+    visitPreparation.progress = 0; visitPreparation.failure = "";
+    const reportAdvance = () => { visitPreparation.progress++; visitPreparation.advancedAt = performance.now(); advanced(); };
     signal.throwIfAborted(); sailing = true; input.release(); input.clearPresses();
     loan = null; owned = null; // Own private loan is retained in the lifecycle snapshot, never reused as a host-world loan.
     const p = new URLSearchParams(N().params); p.delete("arrive");
     await startNight(page, { how: "bed", island: game.tuning.map?.island ?? "home", seed: game.seed, world: game.tuning.map?.world, params: p, resume: game, borrowed: true });
-    advanced(); signal.throwIfAborted();
-    if (remoteArt.has(0)) { await remoteArt.start(game, 1, signal); advanced(); }
+    reportAdvance(); signal.throwIfAborted();
+    if (remoteArt.has(0)) { await remoteArt.start(game, 1, signal); reportAdvance(); }
     const markAt = performance.now(), timingAt = view.assets.timings.length;
     const landedAt = new Set([...view.assets.typeLog].filter(([, v]) => v.landed !== undefined).map(([id]) => id)); let best = 0;
     const progress = () => {
       const completed = performance.getEntriesByType("mark").filter(m => m.startTime >= markAt && (m.name.startsWith("witch:prep-") || m.name.startsWith("witch:build-"))).length
         + Math.max(0, view.assets.timings.length - timingAt) + [...view.assets.typeLog].filter(([id, v]) => !landedAt.has(id) && v.landed !== undefined).length;
-      if (completed > best) { best = completed; advanced(); }
+      if (completed > best) { best = completed; reportAdvance(); }
     };
     const timer = setInterval(progress, 500), clear = () => clearInterval(timer);
     signal.addEventListener("abort", clear, { once: true });
-    try { await view.prepare(); signal.throwIfAborted(); advanced(); }
+    try { await view.prepare(); signal.throwIfAborted(); reportAdvance(); }
     finally { clear(); signal.removeEventListener("abort", clear); }
   },
   playing: game => {
@@ -1691,6 +1703,13 @@ requestAnimationFrame(frame);
 
 // For the smoke test, the tools and for poking at in the console (app/hooks.ts).
 installHooks({ night: N, view, sound, meter, shake, frameStats, ladder, loadTimes, loop, advance: (game, controls, dt) => soloDiagnostic(phone.active, N().spec.borrowed === true, () => recordedStep(game, controls, dt, BUILD, captureRecording)) });
+if (phoneEnabled && phoneCallsEnabled) (window as unknown as { witch: Record<string, unknown> }).witch.telephoneProof = () => ({
+  preparation: { ...visitPreparation }, saveBoundaryReady: ordinaryVisit !== null,
+  status: phone.state.status, active: phone.active, visiting: phone.visiting,
+  seed: N().game.seed, borrowed: N().spec.borrowed === true, worldReady: N().flags.ready,
+  artPending: view.assets.pending, artDone: view.assets.done, paused: freeze.frozen,
+  menus: { telephone: phone.open, creator: creator.open, station: stations.station, chart: chartOpen() },
+});
 // witch.take(kind, item): tonight's find taken where she stands, as E at it takes it (the kind's claim, the hats' floor, the loan):
 // for the tools (tools/loan/shots.cjs) to look at a night with a find on loan without walking to it.
 (window as unknown as { witch: Record<string, unknown> }).witch.compareKey = keyNow;

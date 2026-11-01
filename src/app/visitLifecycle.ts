@@ -11,10 +11,12 @@ export interface VisitLifecycleOptions<Own> {
 /** One ordinary page/View: serialize late preparation before return, never race two night replacements. */
 export function visitLifecycle<Own>(options: VisitLifecycleOptions<Own>) {
   let own: Own | undefined, active = false, ending = false, synchronizationStarted = false;
+  let preparedGame: Game | null = null, generation = 0;
   let preparing: Promise<void> = Promise.resolve(), synchronizing: Promise<void> = Promise.resolve(), returning: Promise<void> | null = null;
   return {
     prepare(game: Game, signal: AbortSignal, advanced: () => void): Promise<void> {
       if (active) return Promise.reject(new Error("A visit is already being prepared."));
+      preparedGame = game; generation++;
       own = options.own(); active = true; ending = synchronizationStarted = false;
       preparing = (async () => {
         await options.saves.prepare(); signal.throwIfAborted();
@@ -23,25 +25,29 @@ export function visitLifecycle<Own>(options: VisitLifecycleOptions<Own>) {
       return preparing;
     },
     synchronized(game: Game): Promise<void> {
+      // Preserve an aborted preparation's rejection, but never let an old host confirm the next visit.
+      if (!active || ending) return preparing;
+      if (game !== preparedGame) return Promise.resolve();
       if (synchronizationStarted) return synchronizing;
+      const current = generation, preparation = preparing;
       synchronizationStarted = true;
       synchronizing = (async () => {
-        await preparing;
-        if (!active || ending) return;
+        await preparation;
+        if (!active || ending || current !== generation || game !== preparedGame) return;
         await options.saves.confirm();
-        if (!ending) options.playing(game);
+        if (active && !ending && current === generation && game === preparedGame) options.playing(game);
       })();
       return synchronizing;
     },
     end(): Promise<void> {
       if (!active) return Promise.resolve();
       if (returning) return returning;
-      ending = true;
+      ending = true; generation++;
       returning = (async () => {
         try {
           await preparing.catch(() => {}); await synchronizing.catch(() => {});
           await options.saves.returnOwn(fresh => options.adoptOwn(own!, fresh));
-          active = false; own = undefined;
+          active = false; own = undefined; preparedGame = null;
         } finally { returning = null; }
       })();
       return returning;

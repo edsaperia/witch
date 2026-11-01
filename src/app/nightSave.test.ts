@@ -11,6 +11,12 @@ import { startWake, WAKE_DEFAULT } from "../rules/wakeUp";
 
 const saved = (): SavedNight => ({ version: 1, build: "test", at: 123, params: "seed=123&island=wolf&world=42", look: null, loan: null,
   flags: { chartRecorded: false, overRecorded: false }, settingsBase: { voices: {}, shake: 1, legendFlash: 1 }, game: { version: 1, seed: 123, tuning: {} as never, state: { root: null, nodes: [] } } });
+it("requires explicit saved-night opt-in for the actual headless telephone proof URL", () => {
+  const proof = new URLSearchParams("creator=0&quick=1&seed=456&telephone=1&telephoneCalls=1&shot=object:telephone");
+  expect(savesEnabled(proof, true)).toBe(false);
+  proof.set("resume", "1"); expect(savesEnabled(proof, true)).toBe(true);
+  proof.set("resume", "0"); expect(savesEnabled(proof, true)).toBe(false);
+});
 it("keeps an explicit-link conflict distinct and supplies a one-click link to the retained save", () => {
   const n = saved();
   const incoming = new URLSearchParams("seed=1");

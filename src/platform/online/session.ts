@@ -19,6 +19,8 @@ export interface SessionConnection {
 }
 export interface SessionOptions {
   build: string;
+  /** Local diagnostics only; never a gameplay message or admission decision. */
+  trace?(stage: string, detail?: unknown): void;
   hostGame(): Game;
   /** Page supplies the approved guest-room/equipment adapter; never reuse the prototype's host bedroom. */
   attach(game: Game): void;
@@ -143,7 +145,11 @@ export function onlineSession(options: SessionOptions) {
             }
             return true;
           }
-          if (message.type === "guest-left" && message.player === 1) { stop(); return true; }
+          if (message.type === "guest-left" && message.player === 1) {
+            if (!ready) fail(new Error("Your friend's visit couldn't start. The call has ended."));
+            else stop();
+            return true;
+          }
         } else if (message.type === "state" && message.player === 0) {
           const payload = message.payload as { kind?: string; start?: ReplayStart; frame?: ReplayFrame; tick?: number; choices?: { player: unknown; choice: unknown }[]; results?: { sequence: number; accepted: boolean }[]; beat?: unknown; looks?: { player: unknown; genome: unknown }[]; catalogue?: unknown } | null;
           if (payload?.kind === "start" && payload.start) {
@@ -178,7 +184,7 @@ export function onlineSession(options: SessionOptions) {
                   if (!connection?.sendReady()) throw new Error("The guest telephone disconnected.");
                 },
                 progress: () => progress,
-                trace: () => {},
+                trace: (stage, detail) => { try { options.trace?.(stage, detail); } catch { /* Diagnostics cannot break admission. */ } },
                 fail: error => { if (current === epoch && !signal.aborted) fail(error); },
               });
             } else if (replica && prepared) {
