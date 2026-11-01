@@ -4,6 +4,8 @@
 
 ## Treehouse layout editor
 
+Ownership return/rollback cleanup (1565#6551717228): `syncFloorHats(W: Witch): void` explicitly removes unowned cached floor/overflow and left copies, preserving floor array identity/slots and the currently worn hat. An unowned dropped current hat is cleared and its selection becomes plain `none`, rather than re-equipping a revoked spell. Known numbered-point reservations are refreshed. Unrestricted ownership does nothing, and no solo/pickup callsite invokes this automatically; multiplayer calls it after updating ownership on return/rollback.
+
 Multiplayer floor-hat exclusivity (1565#6551609950): `useHats(W: Witch, at: {x:number;z:number}, x: number, z: number, time: number, radius: number, reach = 0.9, taken?: (id: string) => boolean): LeashEvent | null` refuses a selected floor/dropped/left hat when the caller reports its ID taken (for example by another witch). The caller owns that shared context; no-hook solo behavior is unchanged. This does not globally unlock, move or remove hats, and adds no multiplayer wiring itself.
 
 Guest walking access (`rules/houseRooms.ts`): `roomAccessFor(floor: RoomFloor, player: number, assignment?: { player: number; room: string }): RoomFloor` returns a separate walking floor with only the matching guest's assigned bedroom2/3 open. The caller supplies the authoritative assignment and passes this floor to that guest's movement checks; it does not mutate the shared floor, room config, art or other witches. Host player 0, solo/unassigned and mismatched assignments return the original floor unchanged. Existing callers remain unchanged; multiplayer wiring belongs to #1538 (1476#6549097708).
