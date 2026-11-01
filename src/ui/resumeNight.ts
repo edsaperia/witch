@@ -33,8 +33,9 @@ export function chooseSavedNight(savedAt: number): Promise<boolean> {
 }
 
 /** Saving must never silently fail; keep one quiet, visible status instead of repeated alerts. */
-export function nightSaveNotice(text: string): void {
+export function nightSaveNotice(text: string, resumeHref?: string): void {
   let el = document.getElementById("night-save-notice");
   if (!el) { el = h("p", { id: "night-save-notice", attrs: { role: "status" }, style: { position: "fixed", bottom: "8px", left: "12px", zIndex: "2001", background: "#191422", color: "#eee6d6", padding: "8px", font: "13px ui-monospace, monospace", maxWidth: "420px" } }); document.body.append(el); }
   el.textContent = text;
+  if (resumeHref) el.append(h("a", { text: "Resume saved night", attrs: { href: resumeHref }, style: { color: "#e0c780", display: "block", marginTop: "6px" } }));
 }

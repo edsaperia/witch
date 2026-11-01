@@ -34,7 +34,7 @@ export type RecordedEvent =
   | { kind: "focus"; step: number; tick: number; before?: Game["introFocus"]; after?: Game["introFocus"] }
   | { kind: "checkpoint"; label: string; step: number; before: LocalStart; after: LocalStart };
 type FrameEvent = Extract<RecordedEvent, { kind: "frame" }>;
-interface FrameRun { first: FrameEvent; count: number; delta: number; serialized: number; sent: number }
+interface FrameRun { first: FrameEvent; count: number; delta: number; serialized: number; sent: number; paused: boolean }
 type RetainedEvent = FrameRun | Exclude<RecordedEvent, FrameEvent>;
 const copyFocus = (focus: Game["introFocus"]): Game["introFocus"] => focus && ({ x: focus.x, y: focus.y, z: focus.z });
 const sameFocus = (a: Game["introFocus"], b: Game["introFocus"]): boolean => a === undefined ? b === undefined : !!b && a.x === b.x && a.y === b.y && a.z === b.z;
@@ -69,6 +69,8 @@ export class InputRecorder {
   private eventCount = 0;
   private journalIndex = 0;
   private journalTimer?: ReturnType<typeof setTimeout>;
+  private quiet?: { step: number; firstTick: number; frames: number };
+  private zeroStep = 0;
   private size: number;
   private complete = true;
   private failure?: string;
@@ -93,7 +95,7 @@ export class InputRecorder {
     this.size += bytes(event);
     if (this.eventCount >= MAX_EVENTS || this.size > MAX_BYTES) { this.fail("Input recording reached its retention limit"); return; }
     this.eventCount++;
-    this.events.push(event.kind === "frame" ? { first: event, count: 1, delta: event.toStep - event.fromStep, serialized: bytes(event), sent: 0 } : event);
+    this.events.push(event.kind === "frame" ? { first: event, count: 1, delta: event.toStep - event.fromStep, serialized: bytes(event), sent: 0, paused: !!this.game.clock.paused } : event);
     this.scheduleJournal();
   }
   private scheduleJournal(): void {
@@ -107,15 +109,38 @@ export class InputRecorder {
     if (!this.persist) return;
     while (this.journalIndex < this.events.length && limit > 0) {
       const item = this.events[this.journalIndex];
-      if ("first" in item) {
-        while (item.sent < item.count && limit-- > 0) this.record("recording:event", { seed: this.game.seed, event: expandFrame(item, item.sent++) });
+      if ("first" in item && item.delta === 0) {
+        // crash1823: the replay tape keeps every exact frame in memory (export); the crash
+        // journal gets no durable row per zero-step frame. A paused stretch, however many
+        // runs its varying dt splits it into, is one "recording:paused" row and one
+        // "recording:resumed" row carrying its frame count.
+        const fresh = item.count - item.sent;
+        if (item.paused) {
+          if (!this.quiet) { this.quiet = { step: item.first.fromStep, firstTick: item.first.frame.tick + item.sent, frames: 0 }; this.record("recording:paused", { seed: this.game.seed, step: this.quiet.step, firstTick: this.quiet.firstTick }); limit--; }
+          this.quiet.frames += fresh;
+        } else { this.endQuiet(); this.zeroStep += fresh; }
+        item.sent = item.count;
+        if (this.journalIndex === this.events.length - 1) break;
+      } else if ("first" in item) {
+        this.endQuiet();
+        while (item.sent < item.count && limit-- > 0) this.record("recording:event", { seed: this.game.seed, event: expandFrame(item, item.sent++), ...this.takeZeroStep() });
         // The last run can grow before the next flush: keep its cursor until sealed.
         if (item.sent < item.count || this.journalIndex === this.events.length - 1) break;
-      } else { this.record("recording:event", { seed: this.game.seed, event: item }); limit--; }
+      } else { this.endQuiet(); this.record("recording:event", { seed: this.game.seed, event: item, ...this.takeZeroStep() }); limit--; }
       this.journalIndex++;
     }
     const last = this.events[this.journalIndex];
     if (last && (!("first" in last) || last.sent < last.count || this.journalIndex < this.events.length - 1)) this.scheduleJournal();
+  }
+  private endQuiet(): void {
+    if (!this.quiet) return;
+    this.record("recording:resumed", { seed: this.game.seed, ...this.quiet });
+    this.quiet = undefined;
+  }
+  /** Unpaused zero-step frames (e.g. 120 Hz over 60 Hz steps) are counted onto the next journal row. */
+  private takeZeroStep(): { zeroStepBefore?: number } {
+    const n = this.zeroStep; this.zeroStep = 0;
+    return n ? { zeroStepBefore: n } : {};
   }
   /** Record the actual caller's controls, then run the unchanged stepGame implementation with its original arguments. */
   step(controls: Controls | readonly Controls[], dt: number): void {
@@ -123,7 +148,7 @@ export class InputRecorder {
     const last = this.events.at(-1), run = last && "first" in last ? last : undefined;
     const effective = Math.min(MAX_STEP, Math.max(0, dt)), fromStep = simulationStep(this.game), tick = this.tick + 1;
     const focusNow = this.game.introFocus, focusWas = run?.first.focus;
-    let same = !!run && Number.isFinite(dt) && run.first.frame.dt === effective && run.first.frame.inputs.length === this.game.witches.length && (!Array.isArray(controls) || controls.length === run.first.frame.inputs.length)
+    let same = !!run && run.paused === !!this.game.clock.paused && Number.isFinite(dt) && run.first.frame.dt === effective && run.first.frame.inputs.length === this.game.witches.length && (!Array.isArray(controls) || controls.length === run.first.frame.inputs.length)
       && (focusNow === undefined ? focusWas === undefined : !!focusWas && focusNow.x === focusWas.x && focusNow.y === focusWas.y && focusNow.z === focusWas.z);
     if (same) for (let i = 0; i < this.game.witches.length; i++) {
       const input = Array.isArray(controls) ? controls[i] : i ? neutral : controls as Controls;
@@ -139,7 +164,7 @@ export class InputRecorder {
         this.size += run!.serialized + integerWidth(tick) + integerWidth(fromStep) + integerWidth(toStep)
           - integerWidth(run!.first.frame.tick) - integerWidth(run!.first.fromStep) - integerWidth(run!.first.toStep);
         if (this.eventCount >= MAX_EVENTS || this.size > MAX_BYTES) this.fail("Input recording reached its retention limit");
-        else { run!.count++; this.eventCount++; this.scheduleJournal(); }
+        else { run!.count++; this.eventCount++; if (run!.delta !== 0) this.scheduleJournal(); }
         return;
       }
       // Fractional frames can cross a different number of fixed steps with the same

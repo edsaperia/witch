@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { captureNight, nightHasStarted, NightAutosave, savedNight, savesEnabled, type NightStore, type SavedNight } from "./nightSave";
+import { captureNight, nightHasStarted, NightAutosave, savedNight, savedNightResumeLink, nightLinkConflicts, savesEnabled, type NightStore, type SavedNight } from "./nightSave";
 import { applySettings, DEFAULTS } from "./playerSettings";
 import { restoreGame, snapshotGame } from "../rules/nightSnapshot";
 import { newGame as fullGame, stepGame, STEP } from "../rules/game";
@@ -11,6 +11,18 @@ import { startWake, WAKE_DEFAULT } from "../rules/wakeUp";
 
 const saved = (): SavedNight => ({ version: 1, build: "test", at: 123, params: "seed=123&island=wolf&world=42", look: null, loan: null,
   flags: { chartRecorded: false, overRecorded: false }, settingsBase: { voices: {}, shake: 1, legendFlash: 1 }, game: { version: 1, seed: 123, tuning: {} as never, state: { root: null, nodes: [] } } });
+it("keeps an explicit-link conflict distinct and supplies a one-click link to the retained save", () => {
+  const n = saved();
+  const incoming = new URLSearchParams("seed=1");
+  expect(nightLinkConflicts(n, incoming)).toEqual(["seed"]);
+  expect(savedNight(n, "test", incoming)).toBeNull();
+  const href = savedNightResumeLink(n, "/witch/");
+  const resumed = new URL(href, "https://unit.invalid");
+  expect(savedNight(n, "test", resumed.searchParams)).toBe(n);
+  expect(savesEnabled(resumed.searchParams)).toBe(true);
+  expect(savedNight(n, "test", new URLSearchParams(n.params))).toBe(n); // Ordinary same-link reload.
+  expect(n.params).toBe("seed=123&island=wolf&world=42");
+});
 it("accepts a build-counter jump under the cross-build save contract", () => {
   const old = { ...saved(), build: "v5955 · old" };
   expect(savedNight(old, "v5955 · old", new URLSearchParams())).toBe(old);
