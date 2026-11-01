@@ -19,8 +19,9 @@ it("confirms after preparation and waits for confirmation before playing or retu
   const order: string[] = []; let confirm!: () => void;
   const saves = { phase: "solo" as const, prepare: async () => {}, confirm: () => new Promise<void>(r => { confirm = r; }), returnOwn: async (adopt: (fresh: boolean) => Promise<void>) => { order.push("return"); await adopt(true); } };
   const lifecycle = visitLifecycle({ saves, own: () => 1, adoptBorrowed: async () => { order.push("prepared"); }, adoptOwn: async (_own, fresh) => { expect(fresh).toBe(true); order.push("fresh"); }, playing: () => { order.push("playing"); } });
-  await lifecycle.prepare({} as Game, new AbortController().signal, () => {});
-  const synchronized = lifecycle.synchronized({} as Game);
+  const borrowed = {} as Game;
+  await lifecycle.prepare(borrowed, new AbortController().signal, () => {});
+  const synchronized = lifecycle.synchronized(borrowed);
   await vi.waitFor(() => expect(confirm).toBeTypeOf("function")); const returned = lifecycle.end();
   expect(order).toEqual(["prepared"]); confirm(); await synchronized; await returned;
   expect(order).toEqual(["prepared", "return", "fresh"]);

@@ -1,4 +1,4 @@
 {
   "version": null,
-  "items": ["The telephone explains when a visit cannot start."]
+  "items": ["The telephone explains when a visit cannot start.", "Starting a new visit ignores late confirmations from an earlier call."]
 }
