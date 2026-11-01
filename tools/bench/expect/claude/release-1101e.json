@@ -1,0 +1,5 @@
+{
+  "reason": "Release 1101e = release 1101d + claude/art-config-inputs: CI and test-layout changes only (art-check planner keys, bench skip on an identical build, time-balanced unit shards, the pack lull check split into two files unchanged). No game change; no frame or rules difference is waived.",
+  "frames": {},
+  "rules": {}
+}
