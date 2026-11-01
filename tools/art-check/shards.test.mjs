@@ -25,7 +25,7 @@ test('failed, cancelled, skipped, missing and duplicate shards cannot be green',
   const {p,manifests}=fixture();assert.throws(()=>combine(p,manifests.slice(1),'success'));assert.throws(()=>combine(p,[manifests[0],...manifests.slice(0,3)],'success'));
 });
 test('missing, duplicate, extra, failed, stale and different-environment task proofs fail',()=>{
-  for(const mutate of [m=>m.results.pop(),m=>m.results.push(m.results[0]),m=>m.results[0].key='f'.repeat(64),m=>m.results[0].passed=false,m=>m.tree='b'.repeat(40),m=>m.runId++,m=>m.attempt=0,m=>m.plan='different',m=>m.environment={...m.environment,browser:'changed'}]){
+  for(const mutate of [m=>m.results.pop(),m=>m.results.push(m.results[0]),m=>m.results[0].key='f'.repeat(64),m=>m.results[0].passed=false,m=>m.tree='b'.repeat(40),m=>m.runId++,m=>m.attempt=0,m=>m.plan='different',m=>m.environment={...m.environment,browser:'changed'},m=>m.environment={...m.environment,node:'v22.23.3'}]){
     const {p,manifests}=fixture();mutate(manifests[0]);assert.throws(()=>combine(p,manifests,'success'));
   }
 });

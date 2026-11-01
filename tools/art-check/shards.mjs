@@ -34,7 +34,10 @@ export function combine(p, manifests, shardStatus, latestAttempt = p.ci.attempt)
 const tree = () => execFileSync('git', ['rev-parse', 'HEAD^{tree}'], { encoding: 'utf8' }).trim();
 const environment = () => ({ node: process.version, os: process.env.RUNNER_OS, arch: process.arch, browser: process.env.PLAYWRIGHT_VERSION });
 const record = (cache, t) => { try { const r = read(join(cache, t.key + '.json')); return validResult(r, t) ? r : null; } catch { return null; } };
-const assertCurrent = p => { if (p.ci.tree !== tree() || p.ci.runId !== Number(process.env.GITHUB_RUN_ID) || p.ci.attempt > Number(process.env.GITHUB_RUN_ATTEMPT) || JSON.stringify(p.ci.environment) !== JSON.stringify(environment())) throw Error('Plan tree/run/attempt/environment changed'); };
+const assertCurrent = p => {
+  const actual = { tree: tree(), runId: Number(process.env.GITHUB_RUN_ID), attempt: Number(process.env.GITHUB_RUN_ATTEMPT), environment: environment() };
+  if (p.ci.tree !== actual.tree || p.ci.runId !== actual.runId || p.ci.attempt > actual.attempt || JSON.stringify(p.ci.environment) !== JSON.stringify(actual.environment)) throw Error(`Plan tree/run/attempt/environment changed: expected ${JSON.stringify(p.ci)}, actual ${JSON.stringify(actual)}`);
+};
 
 if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
   const [command, file = 'out/art-check-plan.json', number] = process.argv.slice(2), cache = 'out/art-cache';
