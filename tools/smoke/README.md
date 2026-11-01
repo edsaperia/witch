@@ -210,6 +210,10 @@ The pause page over everything: each overlay opened in turn, then Esc: the pause
 
 Coordinator acceptance rule, 2026-11-01, #1614 comment6561733936.
 
+## `paused-settle.cjs`
+
+Observe existing view build signals across three distinct rendered samples before pausing.
+
 ## `paused-world.cjs`
 
 Canonical runner: node tools/smoke/paused-world.cjs BASE_URL BASE_SHA CANDIDATE_URL CANDIDATE_SHA

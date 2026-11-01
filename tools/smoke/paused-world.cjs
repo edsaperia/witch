@@ -3,6 +3,7 @@ const assert = require('node:assert/strict');
 const fs = require('node:fs/promises');
 const path = require('node:path');
 const { assertRepaint } = require('./paused-pixels.cjs');
+const { worldSettled } = require('./paused-settle.cjs');
 let playwright;
 try { playwright = require('playwright'); } catch { playwright = require('/opt/node22/lib/node_modules/playwright'); }
 
@@ -169,6 +170,16 @@ async function measure(browser, url, sha, candidate) {
         return result;
       };
     }, candidate && process.env.PAUSE_TRACE_PIXELS === '1');
+    // Normal live frames finish budgeted art/ground/grass work before the pause fixture.
+    // Repeated polling of one slow frame cannot establish stability.
+    try {
+      const settled = await page.waitForFunction(worldSettled, null, { timeout: 30000, polling: 250 });
+      console.log(JSON.stringify({ sha, worldSettled: await settled.jsonValue() }));
+      await settled.dispose();
+    } catch (error) {
+      const state = await page.evaluate(() => window.pauseWorldSettle).catch(() => null);
+      throw new Error(`world never settled: ${JSON.stringify(state)}`, { cause: error });
+    }
     const snapshot = () => page.evaluate(() => ({
       at: performance.now(), draws: window.pauseProbe.draws, time: window.witch.game.clock.time,
       phases: Array.from(window.witch.view.pins, p => p.scale), pixels: window.pauseProbe.pixels,
