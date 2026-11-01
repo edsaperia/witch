@@ -11,14 +11,14 @@ const http = require("http"), fs = require("fs"), path = require("path");
 let playwright; try { playwright = require("playwright"); } catch { playwright = require("/opt/node22/lib/node_modules/playwright"); }
 const root = path.resolve(process.argv[2] || "dist"), ONLY = process.env.ONLY ? process.env.ONLY.split(",") : null;
 const types = { ".html": "text/html", ".js": "text/javascript", ".css": "text/css", ".json": "application/json", ".png": "image/png", ".ogg": "audio/ogg", ".wasm": "application/wasm", ".woff2": "font/woff2" };
-const H = require("../../config/house/load.mjs").loadHouse();
+const { activeObjectStart } = require("./house-bed-start.cjs");
 const fail = [];
 const check = (ok, what) => { console.log(`${ok ? "ok  " : "FAIL"} ${what}`); if (!ok) fail.push(what); };
-/** Where she stands to use object `id`: on its side facing its room's middle (the hub's for the hub's), `gap` m off it. */
-const front = (id, gap = 0.7) => {
-  const o = H.objects.find(q => q.id === id), r = H.rooms.find(q => q.id === o.room); // (the oak's rooms' boxes overlap: its own)
-  const cx = r ? (r.x0 + r.x1) / 2 : 0, cz = r ? (r.z0 + r.z1) / 2 : 0, dx = cx - o.x, dz = cz - o.z, side = Math.abs(dx) > Math.abs(dz);
-  return side ? [o.x + Math.sign(dx || 1) * (o.w / 2 + gap), o.z] : [o.x, o.z + Math.sign(dz || 1) * (o.d / 2 + gap)];
+/** The selected layout's shared interaction side for object `id`, `gap` m off it. */
+const front = (id, url, gap = 0.7) => {
+  const p = activeObjectStart(url, { x: 0, z: 0 }, id, gap);
+  console.log(`info active overlay fixture ${JSON.stringify(p)}`);
+  return [p.x, p.z];
 };
 // Each case: how it opens, what of it shows, and something of it to compare before and after the pause (it mustn't change).
 const CASES = [
@@ -78,7 +78,7 @@ const CASES = [
     // open it
     const isOpen = () => C.on ? page.evaluate(C.on) : page.evaluate(([sel, shown]) => { const e = document.querySelector(sel); return !!e && (!shown || getComputedStyle(e).display !== "none"); }, [C.sel, !!C.shown]);
     // (a house object: stood at it, then E, pressed till the rules' step has seen her there: nothing opens by nearness, Ed's playtest of 2026-10-26)
-    if (C.at) { await put(front(C.at)); try { await page.waitForFunction(at => { const p = document.querySelector("#station-panel.in"); return !p || p.dataset.station === at; }, C.at, { timeout: 120000, polling: 250 }); } catch { /* (checked below: it opens) */ } /* (the last station's panel out, however slow the frame that sees her leave it) */ for (let i = 0; i < 5 && !(await isOpen()); i++) { await page.keyboard.press("KeyE"); for (let j = 0; j < 40 && !(await isOpen()); j++) await page.waitForTimeout(500); } /* (one E, then up to 20 s for a slow frame to see it: E closes it too) */ } else await C.open(page);
+    if (C.at) { await put(front(C.at, page.url())); try { await page.waitForFunction(at => { const p = document.querySelector("#station-panel.in"); return !p || p.dataset.station === at; }, C.at, { timeout: 120000, polling: 250 }); } catch { /* (checked below: it opens) */ } /* (the last station's panel out, however slow the frame that sees her leave it) */ for (let i = 0; i < 5 && !(await isOpen()); i++) { await page.keyboard.press("KeyE"); for (let j = 0; j < 40 && !(await isOpen()); j++) await page.waitForTimeout(500); } /* (one E, then up to 20 s for a slow frame to see it: E closes it too) */ } else await C.open(page);
     try { await page.waitForFunction(C.on ? C.on : ([sel, shown]) => { const e = document.querySelector(sel); return !!e && (!shown || getComputedStyle(e).display !== "none"); }, C.on ? null : [C.sel, !!C.shown], { timeout: 120000, polling: 250 }); }
     catch { check(false, `${C.id}: opens`); continue; }
     await page.waitForTimeout(1500); // (slid in)

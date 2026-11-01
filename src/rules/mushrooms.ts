@@ -9,6 +9,7 @@ import { onLake } from './lakes';
 import { HOUSE_ROOMS, fromPlan, roomAt } from './houseRooms';
 import { deckOf } from './treehouse';
 import { kitchenPlacement } from './kitchenPlacement';
+import { roomAt as planRoomAt } from '../../config/house/shape.js';
 import { edLayoutRequested } from './housePlacement';
 
 export const MUSHROOM_COLOURS = ['blue', 'purple', 'pink', 'red', 'orange', 'yellow', 'green', 'turquoise', 'white'] as const;
@@ -80,7 +81,9 @@ export function kitchenPlan(optIn = edLayoutRequested()) {
     const a = Math.PI - i * Math.PI / (MUSHROOM_COLOURS.length - 1), radius = room.r * .78;
     return { type, x: room.x + Math.cos(a) * radius, z: room.z + Math.sin(a) * radius };
   });
-  return kitchenPlacement({ room, cauldron, baskets }, optIn);
+  const selected = kitchenPlacement({ room, cauldron, baskets }, optIn);
+  const destination = planRoomAt(HOUSE_ROOMS.shape, selected.cauldron.x, selected.cauldron.z)?.id;
+  return { ...selected, room: HOUSE_ROOMS.rooms.find(r => r.id === destination) ?? room };
 }
 export function kitchenLayout(g: Pick<Game, 'map' | 'tuning'>) {
   const plan = kitchenPlan(), at = deckOf(g.map, g.tuning) ?? g.map.treehouse;
@@ -88,7 +91,7 @@ export function kitchenLayout(g: Pick<Game, 'map' | 'tuning'>) {
 }
 export function inKitchen(g: Game, W: Witch): boolean {
   const d = deckOf(g.map, g.tuning), w = W.body;
-  return !!d && !!w.perch && w.mode === 'ground' && !w.seated && roomAt(d, w.x, w.z)?.id === 'kitchen';
+  return !!d && !!w.perch && w.mode === 'ground' && !w.seated && roomAt(d, w.x, w.z)?.id === kitchenPlan().room.id;
 }
 export function basketNear(g: Game, W = g.witches[0]) {
   if (!inKitchen(g, W)) return null;

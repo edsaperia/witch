@@ -4,6 +4,7 @@ import { snapshotGame, type NightSnapshot } from "../rules/nightSnapshot";
 import type { Game } from "../rules/game";
 import type { Loan } from "./loan";
 import { settingsBase, type SettingsBase } from "./playerSettings";
+import { houseLayoutIdentity } from "./houseLayout";
 
 export interface SavedNight {
   version: 1;
@@ -38,7 +39,8 @@ export function savesEnabled(params: URLSearchParams, automated = false): boolea
 /** An explicit link to another night keeps its meaning; a plain game link may resume any saved island. */
 export function nightLinkConflicts(n: Pick<SavedNight, "params">, link: URLSearchParams): string[] {
   const p = new URLSearchParams(n.params);
-  return ["seed", "island", "world", "layout"].filter(key => link.has(key) && link.get(key) !== p.get(key));
+  // (layout: compared by the house it selects, so a default-layout save matches a link naming that same layout: app/houseLayout.ts)
+  return ["seed", "island", "world", "layout"].filter(key => link.has(key) && (key === "layout" ? houseLayoutIdentity(link) !== houseLayoutIdentity(p) : link.get(key) !== p.get(key)));
 }
 /** Use the retained save's own identity rather than retrying the conflicting incoming link. */
 export function savedNightResumeLink(n: Pick<SavedNight, "params">, path: string): string {
