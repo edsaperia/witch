@@ -75,7 +75,7 @@ import type { DecidePanel } from "./ui/decide";
 import { saveLoadout } from "./app/loadout";
 import { castable, HAT_SPELLS, hatSpell, setParts } from "./rules/spells";
 import { changeLoadout } from "./rules/hatSpells";
-import { HOUSE_ROOMS, addFloorHat, syncFloorHats, installEdLayout } from "./rules/houseRooms";
+import { HOUSE_ROOMS, addFloorHat, syncFloorHats, installEdLayout, objectFront, roomAt } from "./rules/houseRooms";
 import { setEdLayoutActive } from "./rules/housePlacement";
 import { usesEdLayout } from "./app/houseLayout";
 import { stationOf, tableOf } from "./rules/stations";
@@ -1711,7 +1711,12 @@ if (phoneEnabled && phoneCallsEnabled) (window as unknown as { witch: Record<str
   seed: N().game.seed, borrowed: N().spec.borrowed === true, worldReady: N().flags.ready,
   viewSeed: view.game.seed, viewUsesCanonicalMap: view.game.map === N().game.map,
   seedLabel: seedEl.textContent,
-  players: view.game.witches.map(w => ({ id: w.id, x: w.body.x, z: w.body.z, room: w.wake?.room })),
+  players: view.game.witches.map(w => ({ id: w.id, x: w.body.x, z: w.body.z, room: w.wake?.room,
+    atRoom: roomAt(N().game.map.treehouse, w.body.x, w.body.z)?.id ?? null,
+    perched: !!w.body.perch, slept: w.house?.slept === true, wakeOpen: w.wake?.open,
+    pile: w.wake?.pile, screen: view.screenOf(w.body.x, w.body.perch ? N().tuning.treehouse.house?.height ?? 0 : 0, w.body.z) })),
+  house: { at: N().game.map.treehouse, turn: HOUSE_ROOMS.turn ?? 0, shape: HOUSE_ROOMS.shape, bedHold: HOUSE_ROOMS.bed.hold, terrace: HOUSE_ROOMS.terrace,
+    objects: HOUSE_ROOMS.objects.map(o => ({ id: o.id, use: o.use.kind, front: objectFront(o, N().game.map.treehouse, .6) })) },
   artPending: view.assets.pending, artDone: view.assets.done, paused: freeze.frozen,
   menus: { telephone: phone.open, creator: creator.open, station: stations.station, chart: chartOpen() },
 });
