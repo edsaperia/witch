@@ -103,7 +103,7 @@ describe('MP-A existing visit/save acceptance boundaries', () => {
       adoptOwn: vi.fn(async () => {}), playing });
     const prepare = lifecycle.prepare(host(), controller.signal, () => {}), rejected = expect(prepare).rejects.toThrow();
     await Promise.resolve(); controller.abort(); const end = lifecycle.end(); preparing.resolve(); await rejected; await end;
-    await lifecycle.synchronized(host());
+    await expect(lifecycle.synchronized(host())).rejects.toMatchObject({ name: 'AbortError' });
     expect(playing).not.toHaveBeenCalled(); expect(f.saves.phase).toBe('solo'); expect(f.slots.visiting).toBe(false);
   });
 

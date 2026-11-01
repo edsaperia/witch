@@ -3,8 +3,8 @@
  * fresh own-night departure, persistent unlock/other-slot isolation, stale callbacks.
  * Own only this new fixture and app/visitAcceptance.test.ts. Production fixes belong
  * to1538. No browser/relay/fullsuite; focused one-worker tests and typecheck.
- * Current prototype98558e261 does not contain the named visit APIs; resolve the
- * exact product dependency before claiming any acceptance case passed.
+ * Canonical1606#6556898642 resolved the API dependency: normally merge only
+ * product ea88aeaf62747d55f35214461c3e9a6109778d70; no later head without instruction.
  */
 export const visitAcceptanceCases = {
   rollback: 'failed preparation preserves the own checkpoint',
