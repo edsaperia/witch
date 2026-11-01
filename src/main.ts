@@ -1666,8 +1666,7 @@ function frameBody(now: number): void {
   const title = paused && !freeze.frozen && !startedNights.has(game);
   if (title) view.assets.work(4); // progress the workerless queue without submitting the world
   const art = view.assets.done + view.assets.version;
-  // Intentional temporary CI regression (#1614): prove paused-world rejects repeated world draws.
-  if (!worldDraw.shouldDraw(false, false, title, art, viewRevision, game.clock.time)) {
+  if (!worldDraw.shouldDraw(false, paused, title, art, viewRevision, game.clock.time)) {
     freeze.update(); hud.overlay(now, overlayHead); return;
   }
   // Drawn between the last two fixed steps (game time: party transitions, sigils and waves are stamped in it).
