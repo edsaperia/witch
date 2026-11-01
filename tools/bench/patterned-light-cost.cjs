@@ -4,6 +4,7 @@ const {installCompletion}=require('./patterned-completion.cjs');
 const {completeCamera}=require('./patterned-camera-completion.cjs');
 const {snapCameraTarget}=require('./patterned-camera-target.cjs');
 const {installPassTimer}=require('./patterned-pass-timer.cjs');
+const {settleBlinkFixture}=require('./patterned-blink-fixture.cjs');
 // Bounded Intel-only patterned-light GPU comparison: real home, party and blink scenes, default ON then explicit off.
 // Prepared exact-SHA dist, fresh canonical allocation + preceding FREE required. Never starts from an import or PREPARE_ONLY.
 // EXPECT_SHA=<full> INTEL_SLOT=<grant> PRECEDING_RELEASE=<actual FREE> node tools/bench/patterned-light-cost.cjs <dist> <out>
@@ -181,11 +182,23 @@ async function main(){
         if(remaining()<12000)throw Error('Insufficient shared budget for another scene');
         quietCheckpoint();
         const fixture=await bounded(page.evaluate(setup,scene));report.stage.phase='settle';await bounded(page.evaluate(settle));
-        if(scene==='blink')fixture.blink=await bounded(page.evaluate(blink));
+        let postBlink;
+        if(scene==='blink'){
+          const prepared=await settleBlinkFixture(
+            ()=>bounded(page.evaluate(blink)),
+            ()=>bounded(page.evaluate(settle)),
+            ()=>bounded(page.evaluate(()=>{const W=window.witch,v=W.view;return {
+              clocks:{world:W.game.clock.time,her:W.game.herTime},blinkAt:W.game.witches[0].dash.at,
+              geometry:{calls:v.renderer.info.render.calls,triangles:v.renderer.info.render.triangles,assetVersion:v.assets.version,
+                pendingGround:v.stats.pendingGround,forestMissing:v.stats.forestMissing,urgentKeys:v.assets.urgentKeys.size,
+                ringPhases:W.lightUniforms.uLightPattern.value.filter(p=>p.x===5&&p.z>0).map(p=>p.w)}
+            };})));
+          fixture.blink=prepared.blinkState;postBlink=prepared.postBlink;
+        }
         const steadyBaseline=await cpu();report.cpu.push(steadyBaseline);if(steadyBaseline.percent>=70){report.measuredUnderLoad=true;(report.activityFlags??=[]).push({category:'CPU',at:steadyBaseline.at});}phase='warmup';phaseEpoch++;report.stage.phase='GPU samples';save();const data=await bounded(page.evaluate(measure,{scene,on,frames,remaining:remaining(),diagnostic}));
         if(remaining()<12000)throw Error('Insufficient shared budget for final scene guards');
         quietCheckpoint();
-        arm.scenes.push({scene,fixture,...data,fingerprint:hash(JSON.stringify({fixture,descriptor:data.descriptor}))});save();
+        arm.scenes.push({scene,fixture,postBlink,...data,fingerprint:hash(JSON.stringify({fixture,descriptor:data.descriptor}))});save();
         if(report.arms.length===2&&!diagnostic){const result={scene,...pair(report.arms.find(a=>a.on).scenes.find(s=>s.scene===scene),report.arms.find(a=>!a.on).scenes.find(s=>s.scene===scene))};(report.pairs??=[]).push(result);if(!result.withinCeiling)report.overBudget=true;save();}
       }
       closing=true;await bounded(page.close());
