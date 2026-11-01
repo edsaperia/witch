@@ -84,7 +84,9 @@ if (process.argv[1] && fileURLToPath(import.meta.url) === fs.realpathSync(proces
   const balanced = process.env.UNIT_BALANCE === "1" ? balancedSelection(selection, shard, listFiles, timings) : null;
   if (balanced) { Object.assign(selection, balanced); console.log(`Unit test shard ${shard.text}: ${balanced.balanced.files} of ${balanced.balanced.of} files by measured time, about ${balanced.balanced.estimate} s`); }
   else if (shard) console.log(`Unit test shard ${shard.text}${selection.tests.length && shard.index !== 1 ? ": related selection runs entirely in shard 1" : ""}`);
-  const testsAt = performance.now(), result = runTests(selection, args => spawnSync(process.execPath, [cli, ...args], { stdio: "inherit" }), githubActions, shard);
+  // Retain normal output/annotations and collect per-file cloud durations for a refreshable shard model.
+  const reporters = githubActions ? ["--reporter=default", "--reporter=./tools/ci/vitest-reporter.mjs", "--reporter=json", "--outputFile.json=ci-unit-timings.json"] : [];
+  const testsAt = performance.now(), result = runTests(selection, args => spawnSync(process.execPath, [cli, ...args, ...reporters], { stdio: "inherit" }), githubActions, shard);
   const report = { ...selection, shard: shard?.text ?? null, workers: githubActions ? "existing Vitest config" : 1, selectionMs, testMs: performance.now() - testsAt, totalMs: performance.now() - start, status: result.status, signal: result.signal, error: result.error?.message };
   fs.writeFileSync("ci-unit-results.json", JSON.stringify(report, null, 2) + "\n");
   // A readable check-run annotation (the coordinator can read annotations but not logs): was this the FULL suite?
