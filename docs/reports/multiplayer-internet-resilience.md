@@ -110,3 +110,9 @@ Coordinator1610#6561247053 explicitly approved product head `13689c6736ac4d814b0
 Typecheck attempted on the merged tree: only existing `src/pagesWorkflow.test.ts(3,23)` TS2307 missing `yaml` in shared local dependencies; no other errors. Diff check PASS. Non-browser imports emit the existing storage-unavailable warning; the save assertions use explicit memory stores and pass. All local listeners, sockets and timers are cleaned up.
 
 This is **early exact-head CPU/local-socket evidence**, not browser/UI/Render/deployment acceptance or a full all-checks-green FINAL. Repeat these audit files only if the final approved1609 head changes the watchdog. The historical hosting qualification and unverified physical-disconnect door/overlay/input-stack limits remain unchanged.
+
+## Approved inherited-layout fix rerun — 1 Nov,17:50 UTC
+
+Coordinator1610#6561582586 explicitly authorized another regression run after normally merging exactly `5eb548839d0644fd79cc24a8f54fc7a6877e7e76`. Merge checkpoint `4c7c190536b136c79c24ba4f5c2569c84625ef64`; no rebase/force. Both audit test files are byte-unchanged from the earlier19-case checkpoint. No layout or production fix was authored here; the own diff against the approved product remains just the two audit files and this note.
+
+Same conditions/commands, one worker, loopback relay only: **all eight relay cases and all eleven client cases in the preceding per-case tables PASS again**. Relay runner duration337ms; client runner14.59s total,3.16s tests. No skipped or expected-failure cases, live relay, browser, Render or deployment. Owned test sockets/listeners/timers cleaned up. The prior inherited published-layout CI failure is not relabelled green by these audit tests: exact new-head CI is reported separately on PR1610 once it finishes.
