@@ -88,7 +88,7 @@ export function stepSigilButton(g: Game, c: Controls, W: Witch, t: Tuning, ht: n
       const waking = wakeOf(g, W); if (isDressingTable(at.id) && waking) waking.styled = true; // (her skin and hair seen to: the first morning's first step, rules/guidance.ts)
     }
     const slept = (inHouse || W.house) && stepBed(W, at?.use.kind === "bed", !!c.sigilHeld && inHouse, ht).slept;
-    if (slept && at?.use.kind === "bed") settleSleepingBed(g, W, at.id, ht);
+    if (slept && g.witches.length > 1 && at?.use.kind === "bed") settleSleepingBed(g, W, at.id, ht);
     if (slept && g.witches.every(w => w.house?.slept)) relicEvents.push({ kind: "house", id: W.id, x, z, at: ht, obj: "slept" });
     sigil = false; place = false;
   } else if (W.house?.bedFrom !== undefined) delete W.house.bedFrom;

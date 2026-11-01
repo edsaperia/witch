@@ -435,7 +435,10 @@ const phone = telephoneStation({ enabled: phoneEnabled, callsEnabled: phoneCalls
   appearance: () => { sharedLoans.begin(personalKit(), loan); if (!phone.visiting) sharedLoans.observe(N().game, personalKit()); return appearance(page.look()) ?? appearance({}); },
   attach: game => { if (!guestAccess.ready) throw new Error("The guest room isn't ready yet."); callArrival.attach(game); if (remoteArt.has(1)) void remoteArt.start(game, 0).catch(error => { logCaughtError(error, "host remote appearance"); phone.hangUp(); }); },
   detach: game => callArrival.detach(game),
-  continuedHost: (previous, next) => callArrival.continued(previous, next),
+  continuedHost: (previous, next) => {
+    callArrival.continued(previous, next);
+    if (remoteArt.has(1)) void remoteArt.start(next, 0).catch(error => { logCaughtError(error, "host continued remote appearance"); phone.hangUp(); });
+  },
   prepareGuest: (game, signal, advanced, continuing) => {
     if (!ordinaryVisit) { traceVisit("save-boundary:unavailable"); return Promise.reject(new Error("This browser isn't ready to protect your saved night.")); }
     if (continuing) { completedGuestNights.push(visitUnlocks(N().game, 1)); return ordinaryVisit.nextNight(game, signal, advanced); }

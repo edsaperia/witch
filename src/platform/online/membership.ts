@@ -1,5 +1,5 @@
 import { type Game, type Witch } from "../../rules/game";
-import { startWake } from "../../rules/wakeUp";
+import { startWake, startWakeInLastBed } from "../../rules/wakeUp";
 import { letGoHappy } from "../../rules/knockout";
 import { addFloorHat, roomAt } from "../../rules/houseRooms";
 import { bedRoom } from "../../rules/wakeUp";
@@ -54,6 +54,12 @@ export function detachGuest(game: Game, guestRoom: string = bedRoom()): void {
     else host.hat.left.push({ ...at, spell: guest.spells.hat });
   }
   game.witches.pop();
+  if (host.house?.slept) {
+    // A shared sleeper returns to the ordinary alarm/get-up, not an un-clearable solo sleep latch.
+    host.house.slept = false; delete host.house.bedFrom;
+    const options = { yesterday: true, mirrored: game.wake?.mirror };
+    if (!startWakeInLastBed(game, host.time ?? game.herTime, options, host)) startWake(game, host.time ?? game.herTime, options, host);
+  }
   game.pending = host.pending ?? {}; game.clock.paused = !!host.paused;
   delete host.pending; delete host.time; delete host.paused;
   game.prev.witches = [{ x: host.body.x, z: host.body.z, lift: host.body.lift }];
