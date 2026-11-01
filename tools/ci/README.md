@@ -46,6 +46,10 @@ node tools/ci/sleep-cell-repro.mjs [largest|four-area|radius|all] (exit 1 means 
 
 Conservative unit-test selection.
 
+## `unit-timings.mjs`
+
+Refresh tools/ci/unit-timings.json from a full Vitest JSON report; it only balances the CI shards.
+
 ## `vitest-reporter.mjs`
 
 Extra CI-only Vitest reporter: test names, first assertion and source location, alongside the default reporter.
@@ -63,5 +67,6 @@ Inventory real world-constructor calls and explicit small-fixture reasons; comme
 - `run-unit.test.ts`
 - `same-game.test.ts`
 - `test-scope.test.ts`
+- `unit-timings.json`
 - `workflows.test.ts`
 - `world-audit.test.ts`

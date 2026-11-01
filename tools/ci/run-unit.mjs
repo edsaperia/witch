@@ -28,7 +28,34 @@ export function parseShard(value) {
   return { index: +m[1], count: +m[2], text: value };
 }
 
+/** Split the full suite's files into `count` shards by measured seconds (tools/ci/unit-timings.json), largest first, each to the
+ * shard whose estimated wall time (its longest file, or its total over `workers`) grows least. Vitest's own --shard splits by
+ * count, which put the slowest files together (one shard took 11 minutes, the others 5). Unknown files cost the median.
+ * Every file lands in exactly one shard; deterministic, so every shard computes the same split. */
+export function balancedShards(files, seconds, count, workers = 4) {
+  const known = files.map(f => seconds[f]).filter(Number.isFinite).sort((a, b) => a - b);
+  const median = known.length ? known[Math.floor(known.length / 2)] : 1, cost = f => Number.isFinite(seconds[f]) ? seconds[f] : median;
+  const shards = Array.from({ length: count }, () => ({ files: [], sum: 0, max: 0 }));
+  for (const f of [...new Set(files)].sort((a, b) => cost(b) - cost(a) || (a < b ? -1 : 1))) {
+    const c = cost(f), wall = s => Math.max(s.max, c, (s.sum + c) / workers);
+    const s = shards.reduce((best, x) => wall(x) < wall(best) - 1e-9 || (Math.abs(wall(x) - wall(best)) <= 1e-9 && x.sum < best.sum) ? x : best);
+    s.files.push(f); s.sum += c; s.max = Math.max(s.max, c);
+  }
+  return shards.map(s => ({ files: s.files.sort(), seconds: Math.round(Math.max(s.max, s.sum / workers)) }));
+}
+
+/** This shard's files of the full suite, or null (then Vitest's own --shard). Never an empty list: an empty filter runs everything. */
+export function balancedSelection(selection, shard, listFiles, timings) {
+  if (!shard || selection.mode !== "full") return null;
+  try {
+    const files = listFiles(), split = balancedShards(files, timings, shard.count), mine = split[shard.index - 1];
+    if (!files.length || !mine.files.length) return null;
+    return { ...selection, tests: mine.files, balanced: { files: mine.files.length, of: files.length, estimate: mine.seconds } };
+  } catch { return null; }
+}
+
 export function runTests(selection, run, githubActions = false, shard = null) {
+  if (selection.balanced) return run(["run", ...selection.tests, ...(githubActions ? [] : ["--maxWorkers=1"])]);
   // No passWithNoTests and no fallback after a genuine test failure.
   // Preserve CI's existing vite.config worker count; the builder's local invocation stays single-worker.
   // A related selection is small: shard 1 runs all of it and the other shards run nothing (never an empty green Vitest run).
@@ -47,12 +74,18 @@ if (process.argv[1] && fileURLToPath(import.meta.url) === fs.realpathSync(proces
   const selectionMs = performance.now() - start;
   console.log(`Unit tests: ${selection.mode}; ${selection.reason}; ${selection.tests.length || "all"} files`);
   const githubActions = process.env.GITHUB_ACTIONS === "true", shard = parseShard(process.env.VITEST_SHARD);
-  if (shard) console.log(`Unit test shard ${shard.text}${selection.tests.length && shard.index !== 1 ? ": related selection runs entirely in shard 1" : ""}`);
+  const listFiles = () => JSON.parse(execFileSync(process.execPath, [cli, "list", "--filesOnly", "--json", "--maxWorkers=1"], { encoding: "utf8", maxBuffer: 32e6 }))
+    .map(e => path.relative(process.cwd(), e.file).replaceAll("\\", "/"));
+  let timings = {};
+  try { timings = JSON.parse(fs.readFileSync("tools/ci/unit-timings.json", "utf8")).seconds ?? {}; } catch { /* unbalanced but complete */ }
+  const balanced = balancedSelection(selection, shard, listFiles, timings);
+  if (balanced) { Object.assign(selection, balanced); console.log(`Unit test shard ${shard.text}: ${balanced.balanced.files} of ${balanced.balanced.of} files by measured time, about ${balanced.balanced.estimate} s`); }
+  else if (shard) console.log(`Unit test shard ${shard.text}${selection.tests.length && shard.index !== 1 ? ": related selection runs entirely in shard 1" : ""}`);
   const testsAt = performance.now(), result = runTests(selection, args => spawnSync(process.execPath, [cli, ...args], { stdio: "inherit" }), githubActions, shard);
   const report = { ...selection, shard: shard?.text ?? null, workers: githubActions ? "existing Vitest config" : 1, selectionMs, testMs: performance.now() - testsAt, totalMs: performance.now() - start, status: result.status, signal: result.signal, error: result.error?.message };
   fs.writeFileSync("ci-unit-results.json", JSON.stringify(report, null, 2) + "\n");
   // A readable check-run annotation (the coordinator can read annotations but not logs): was this the FULL suite?
-  if (githubActions) console.log(`::notice title=unit-scope::Unit tests ${selection.mode}${shard ? ` shard ${shard.text}` : ""}: ${selection.reason}; exit ${result.status ?? result.signal ?? "error"}`);
+  if (githubActions) console.log(`::notice title=unit-scope::Unit tests ${selection.mode}${shard ? ` shard ${shard.text}` : ""}${selection.balanced ? ` (balanced: ${selection.balanced.files}/${selection.balanced.of} files, est ${selection.balanced.estimate} s)` : ""}: ${selection.reason}; exit ${result.status ?? result.signal ?? "error"}`);
   if (process.env.GITHUB_STEP_SUMMARY) fs.appendFileSync(process.env.GITHUB_STEP_SUMMARY, `Unit tests: **${selection.mode}** (${selection.reason}); selection ${(selectionMs / 1000).toFixed(2)}s, tests ${(report.testMs / 1000).toFixed(2)}s, exit ${result.status ?? result.signal ?? "error"}.\n`);
   process.exitCode = result.status ?? 1;
 }
