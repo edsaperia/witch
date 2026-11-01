@@ -10,11 +10,23 @@ async function measure(browser, url, sha, candidate) {
     assert.equal(manifest.status(), 200);
     assert.ok((await manifest.json()).version.endsWith(sha.slice(0, 7)), 'wrong served build');
     const game = new URL(url);
-    game.search = 'creator=0&quick=1&seed=123&island=4&wave=off&debug';
+    game.search = 'opening=bedroom&quick=1&seed=123&island=4&wave=off&spell=wait&debug';
     await page.goto(game.href);
     await page.waitForFunction(() => window.witch?.ready, null, { timeout: 900000 });
-    await page.keyboard.press('Enter');
-    await page.waitForFunction(() => window.witch.game.clock.time > 2, null, { timeout: 300000 });
+    // Wake normally. The creator=0 shortcut skips the bedroom, so it cannot produce
+    // the first morning's dressing-table pointer, however long the test waits.
+    const wakeWait = { timeout: 300000, polling: 250 };
+    await page.waitForFunction(() => window.witch.game.wake?.beat === 'alarm', null, wakeWait);
+    await page.keyboard.down('KeyD');
+    try {
+      await page.waitForFunction(() => ['stretch', 'up'].includes(window.witch.game.wake?.beat), null, wakeWait);
+    } finally { await page.keyboard.up('KeyD'); }
+    await page.waitForFunction(() => {
+      const { game, guide, view } = window.witch;
+      const pin = guide.pin();
+      return game.clock.time > 2 && game.wake?.open && game.party.spellAt === null && pin.key.startsWith('dress:') &&
+        pin.key.includes('dressingTable') && pin.strength > 0 && view.pins.size > 0;
+    }, null, wakeWait);
     await page.evaluate(() => {
       const view = window.witch.view, render = view.render.bind(view);
       const probe = window.pauseProbe = { draws: 0, sample: false, pixels: null };
