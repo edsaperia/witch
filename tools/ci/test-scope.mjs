@@ -6,7 +6,7 @@ import { fileURLToPath } from "node:url";
 export function testScope({ event = "", branch = "", title = "", files = [], history = true } = {}) {
   const full = reason => ({ mode: "full", reason });
   if (event !== "pull_request") return full("push or unrecognised event");
-  if (/(^|\/)release\//i.test(branch) || /^claude\/rel-/i.test(branch) || branch === "claude/publish-snapshot" || /^Release check/i.test(title) || /^Publish:/i.test(title)) return full("release or publish check");
+  if (/(^|\/)release\//i.test(branch) || /^claude\/rel(?:ease)?-/i.test(branch) || branch === "claude/publish-snapshot" || /^Release(?: check)?:/i.test(title) || /^Publish:/i.test(title)) return full("release or publish check");
   if (!history) return full("merge base unavailable");
   if (!files.length) return full("no changed files resolved");
   for (const file of files) {
