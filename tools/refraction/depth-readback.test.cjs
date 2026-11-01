@@ -10,6 +10,7 @@ test('maps screenshot samples through the actual canvas offset rather than assum
  const f={width:2,height:2,canvasRect:{left:10,top:20,width:6,height:6},values:[.1,.2,.3,.4],bits:[1,2,3,4],sourceCells:[[0,0],[1,0],[0,1],[1,1]],states:[[.99,0,1,1.5]]};
  const p=inspectDepthPoints(f,[{x:10,y:20}])[0];assert.deepEqual(p.destination.cell,[0,1]);assert.deepEqual(p.displacement,[0,0]);assert.equal(p.destination.neighbours.length,9);
  assert.throws(()=>inspectDepthPoints(f,[{x:0,y:0}]),/outside/);
+ assert.deepEqual(inspectDepthPoints({...f,devicePixelRatio:2},[{x:20,y:40}])[0].destination.cell,[0,1]);
 });
 test('reports the complete clamped square including diagonals and original bit identity',()=>{
  const frame={width:3,height:3,values:Array.from({length:9},(_,i)=>i/10),bits:Array.from({length:9},(_,i)=>i)};

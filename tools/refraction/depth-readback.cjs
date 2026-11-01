@@ -10,9 +10,9 @@ function neighbourhood(frame,x,y){
  const cells=[];for(let dy=-1;dy<=1;dy++)for(let dx=-1;dx<=1;dx++){const cx=Math.max(0,Math.min(frame.width-1,x+dx)),cy=Math.max(0,Math.min(frame.height-1,y+dy)),i=cy*frame.width+cx;cells.push({dx,dy,x:cx,y:cy,depth:frame.values[i],bits:frame.bits[i]});}return cells;
 }
 function inspectDepthPoints(frame,points){
- const rect=frame.canvasRect;if(!rect||!(rect.width>0&&rect.height>0))throw Error('Need actual canvas rectangle');
+ const rect=frame.canvasRect,scale=frame.devicePixelRatio??1;if(!rect||!(rect.width>0&&rect.height>0)||!(scale>0))throw Error('Need actual canvas rectangle/scale');
  return points.map(({x,y})=>{
-  const u=(x+.5-rect.left)/rect.width,v=1-(y+.5-rect.top)/rect.height;
+  const u=((x+.5)/scale-rect.left)/rect.width,v=1-((y+.5)/scale-rect.top)/rect.height;
   if(u<0||u>=1||v<0||v>=1)throw Error('Screenshot sample outside canvas');
   const cx=Math.floor(u*frame.width),cy=Math.floor(v*frame.height),source=frame.sourceCells[cy*frame.width+cx];
   return {screen:{x,y},destination:{cell:[cx,cy],uv:[(cx+.5)/frame.width,(cy+.5)/frame.height],neighbours:neighbourhood(frame,cx,cy)},source:{cell:source,uv:[(source[0]+.5)/frame.width,(source[1]+.5)/frame.height],neighbours:neighbourhood(frame,...source)},displacement:[source[0]-cx,source[1]-cy],supportStates:frame.states,domain:'Base quantized scene coordinate; final potion/tilt sampling is separate'};
