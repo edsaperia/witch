@@ -57,6 +57,7 @@ Scripts for building, checking and measuring the game, run from the repository r
 - [`props/`](props/README.md): 1 script — ingame.cjs
 - [`qa/`](qa/README.md): 4 scripts — core.cjs, journey.cjs, leash-lake.cjs, win-strip.cjs
 - [`rainbow/`](rainbow/README.md): 1 script — shots.cjs
+- [`refactor/`](refactor/README.md): 4 scripts — a4-browser-preload.cjs, a4-inventory.mjs, a4-proof-artifacts.cjs, a4-split.mjs
 - [`relics/`](relics/README.md): 1 script — map.mjs
 - [`rig/`](rig/README.md): 4 scripts — demo.cjs, legends.cjs, perf.cjs, strip.mjs
 - [`robustness/`](robustness/README.md): 5 scripts — bundle-size.mjs, catch-audit.mjs, measure-log.mjs, measure-recorder.mjs, rules-layer.mjs

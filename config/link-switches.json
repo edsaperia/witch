@@ -378,7 +378,7 @@
    "group": "debug",
    "since": "2026-10-30",
    "readIn": [
-    "src/main.ts"
+    "src/app/pageFrame.ts"
    ]
   },
   {
@@ -432,6 +432,7 @@
     "src/app/gameParams.ts",
     "src/app/nightSave.ts",
     "src/app/opening.ts",
+    "src/app/pageNight.ts",
     "src/main.ts",
     "src/render/ground.ts"
    ]
@@ -524,6 +525,8 @@
    "readIn": [
     "src/app/keys.ts",
     "src/app/night.ts",
+    "src/app/pageDebug.ts",
+    "src/app/pageNight.ts",
     "src/app/playerPick.ts",
     "src/app/viewParams.ts",
     "src/main.ts",
@@ -1091,7 +1094,7 @@
    "group": "debug",
    "since": "2026-10-19",
    "readIn": [
-    "src/render/view.ts"
+    "src/render/view/lifecycle.ts"
    ]
   },
   {
@@ -1464,8 +1467,8 @@
    "since": "2026-10-23",
    "readIn": [
     "src/app/gameParams.ts",
-    "src/app/shot.ts",
-    "src/main.ts"
+    "src/app/pageFinds.ts",
+    "src/app/shot.ts"
    ]
   },
   {
@@ -1569,7 +1572,7 @@
    "group": "debug",
    "since": "2026-10-21",
    "readIn": [
-    "src/main.ts"
+    "src/app/pageStations.ts"
    ]
   },
   {
@@ -1723,6 +1726,7 @@
    "readIn": [
     "src/app/chartPage.ts",
     "src/app/linkParams.ts",
+    "src/app/pageNight.ts",
     "src/app/sail.ts",
     "src/main.ts"
    ]
