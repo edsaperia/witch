@@ -24,6 +24,8 @@ import { hash2 } from "../random";
 import { FIGHT, type Move as OwnMove, profileOf, startCharge, swoopStriking } from "../movement";
 import { type Attack, COMBAT, type CombatState, type CombatWorld, type Target, scaled, strengthOf, stunWorth } from "./data";
 import { fighting, sideOf, targetPos, targetable } from "./targeting";
+import { SPACING, bodyGap, drawnRadius, spacingOn } from "../combatSpacing";
+import type { Tuning } from "../tuning";
 
 export type Role = "lunger" | "shooter" | "special" | "hold" | "hurt";
 export type Phase = "approach" | "tell" | "combo" | "lull";
@@ -364,7 +366,7 @@ export function stepPacks(s: CombatState, w: CombatWorld, pw: PackWorld = {}, da
         d.slot = { x: p.x + Math.cos(a) * out2, z: p.z + Math.sin(a) * out2 };
       } else if (st!.phase === "lull" && !st!.hers) {
         const k = Math.min(1, (time - st!.at) / Math.max(0.1, st!.until - st!.at));
-        d.slot = styleOf(m.species, data) === "charger" && tg.kind === "witch" && !R2.still && !st!.lost ? wheelSlot(st!, R2, m, p, data) : retreatSlot(K.retreat, st!, R2, m, i, n, p, k, time);
+        d.slot = styleOf(m.species, data) === "charger" && tg.kind === "witch" && !R2.still && !st!.lost ? wheelSlot(st!, R2, m, p, data, spacingOn(w.t) ? w.t : undefined) : retreatSlot(K.retreat, st!, R2, m, i, n, p, k, time);
         d.still = !!R2.still; d.freeze = K.retreat === "freeze" && !st!.lost && k < data.prowl.freeze; // (a freeze holds only the lull's first part, then prowls: Ed, 2026-10-23)
         // Out of sight in the trees or underground for the lull's middle, back down from another side (rules here, drawing: not drawn).
         if ((R2.hide === true || (R2.hide === "half" && i % 2 === 0)) && !m.packHide && k > 0.3 && k < 0.5) { const a = st!.seed * Math.PI * 2 + Math.PI + (i / n) * Math.PI * 2, r = (R2.out * 0.8) * FIGHT.scale; m.packHide = { until: st!.until, tx: p.x + Math.cos(a) * r, tz: p.z + Math.sin(a) * r, at: time }; }
@@ -377,29 +379,30 @@ export function stepPacks(s: CombatState, w: CombatWorld, pw: PackWorld = {}, da
       }
       out.set(m.id, d);
     });
-    if (st.phase === "lull" && !st.hers && !R2.still && tg.kind === "witch") spreadLull(members.map(m => ({ m, d: out.get(m.id)! })).filter(e => e.d.slot && e.d.role !== "hurt"), p, data, K.retreat === "freeze" && !st.lost ? 1 : undefined); // (a freeze holds near its own place: only spread apart)
+    if (st.phase === "lull" && !st.hers && !R2.still && tg.kind === "witch") spreadLull(members.map(m => ({ m, d: out.get(m.id)! })).filter(e => e.d.slot && e.d.role !== "hurt"), p, data, K.retreat === "freeze" && !st.lost ? 1 : undefined, spacingOn(w.t) ? w.t : undefined); // (a freeze holds near its own place: only spread apart)
   }
   return out;
 }
 
 /** A charger's place in the lull (packs.json styles.charger): on past her and wheeling round wide, `carrot` radians ahead of where it
  *  is round her at `wheel` times the lull's distance, the pack all one way round (by its seed), so it comes again from the far side. */
-export function wheelSlot(st: { seed: number }, R: { out: number }, m: Creature, p: { x: number; z: number }, data: PacksData = PACKS): { x: number; z: number } {
-  const C = data.styles.charger, dir = st.seed < 0.5 ? 1 : -1, a = Math.atan2(m.z - p.z, m.x - p.x) + dir * C.carrot, r = R.out * C.wheel * FIGHT.scale;
+export function wheelSlot(st: { seed: number }, R: { out: number }, m: Creature, p: { x: number; z: number }, data: PacksData = PACKS, tuning?: Tuning): { x: number; z: number } {
+  const C = data.styles.charger, dir = st.seed < 0.5 ? 1 : -1, a = Math.atan2(m.z - p.z, m.x - p.x) + dir * (tuning ? SPACING.charger.carrot : C.carrot), r = R.out * C.wheel * FIGHT.scale * (tuning ? SPACING.charger.out : 1) + (tuning ? drawnRadius(m, tuning) : 0);
   return { x: p.x + Math.cos(a) * r, z: p.z + Math.sin(a) * r };
 }
 
 /** The lull's places spread out (Ed's playtest, 2026-10-29: "their lulls are too close"): each member's place out lullOut times as far
  *  from her (`out`: a freeze 1), its own radius within jitter (by its id), then pushed apart to at least lullGap metres from each other. Pure but for the
  *  slots it moves. */
-export function spreadLull(es: { m: Creature; d: { slot?: { x: number; z: number } } }[], p: { x: number; z: number }, data: PacksData = PACKS, out = data.styles.lullOut): void {
-  const Y = data.styles, gap = Y.lullGap * FIGHT.scale;
+export function spreadLull(es: { m: Creature; d: { slot?: { x: number; z: number } } }[], p: { x: number; z: number }, data: PacksData = PACKS, out = data.styles.lullOut, tuning?: Tuning): void {
+  const Y = data.styles;
   for (const { m, d } of es) {
     const ox = d.slot!.x - p.x, oz = d.slot!.z - p.z, k = out === 1 ? 1 : out * (1 - Y.jitter + 2 * Y.jitter * hash2(m.id, 3, 1029));
     d.slot = { x: p.x + ox * k, z: p.z + oz * k };
   }
-  for (let it = 0; it < 4; it++) for (let a = 0; a < es.length; a++) for (let b = a + 1; b < es.length; b++) {
+  for (let it = 0; it < (tuning ? SPACING.slotPasses : 4); it++) for (let a = 0; a < es.length; a++) for (let b = a + 1; b < es.length; b++) {
     const A = es[a].d.slot!, B = es[b].d.slot!, dx = B.x - A.x, dz = B.z - A.z, dd = Math.hypot(dx, dz);
+    const gap = tuning ? bodyGap(es[a].m, es[b].m, tuning) : Y.lullGap * FIGHT.scale;
     if (dd >= gap) continue;
     const ux = dd > 1e-3 ? dx / dd : Math.cos(a + b), uz = dd > 1e-3 ? dz / dd : Math.sin(a + b), push = (gap - dd) / 2;
     es[a].d.slot = { x: A.x - ux * push, z: A.z - uz * push }; es[b].d.slot = { x: B.x + ux * push, z: B.z + uz * push };

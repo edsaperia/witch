@@ -9,3 +9,11 @@ Inbox #1620; coordinator #1476 comment 6562407303. Full brief read at 4be832ef93
 5. Prepare a reproducible cloud CPU-only paired measurement (at least20 same off/on seeds, drawn-body minimum/median distance, overlap share and occupied arena). Request canonical allocation for two short same-seed cloud captures and route heavy measurements there; no local full-suite/browser/heavy fight runs or laptop allocation.
 
 No multiplayer files, server or game.ts multi-witch branch. Normally merge current prototype before READY. Existing infrastructure only. Report evidence/limitations on the own PR, no release.
+
+## Source checkpoint, 2026-11-01
+
+Default-off switch and body-radius/slot/lull/waiting-steering paths are prepared. The narrow game.ts edit is only the shared stepSpacing call outside all multi-witch branches; it routes fighting bodies through their existing steering rather than positional nudges. Ten focused tests include radius units, distinct smooth goals, attacker preservation, a tiny seeded waiting fight and explicit-off/default state parity. Full benchmark and larger paired-fight proof are cloud-owned.
+
+Calibration is intentionally NOT invented: spacing.body.radii remains empty until canonical returns the cloud-generated anatomical support artifact. Therefore spacing=1 is not a working/READY preview at this checkpoint. Missing calibrated species fail explicitly. Default play still takes the old paths. The unexecuted cloud tool captures actual fitted model support; run.mjs prepares the required >=20 paired fights, and capture-fight.cjs accepts only an already allocated cloud page and writes a short clip without owning a browser/server/listener. Manual proof workflow is prepared but may require an existing cloud executor because a new workflow isn't yet on the default branch.
+
+Pending canonical cloud allocation: own PR questions6562481064/6562510182, central1476 question6562643939. No local calibration, heavy arena measurement, browser or art run. Resume calibration adoption and actual metrics/capture proof only on that allocation/result. No assertions/timeouts changed and no orbit tuning changed.

@@ -8,6 +8,8 @@ import { sectionOf } from "./creatureConfig";
 import type { Creature } from "./creatures";
 import { hash2 } from "./random";
 import { limitTurn } from "./momentum";
+import { bodyGap, clearWaitingSlot, waitingAvoidance, type SpacingData } from "./combatSpacing";
+import type { Tuning } from "./tuning";
 
 export type BehaviourKind = "arrive" | "keepRange" | "orbit" | "strafe" | "slot" | "separation" | "cohesion" | "wander" | "dodge" | "light";
 export interface Behaviour { kind: BehaviourKind; w: number; near?: number; far?: number; radius?: number; swap?: number }
@@ -135,6 +137,8 @@ export interface SteerContext {
   /** The place its fight style gives it while it waits its turn, or a friend's place round its target (rules/combat.ts; packs.json
    *  _styles): it makes for this over its pack's tactic. */
   style?: { x: number; z: number } | null;
+  /** Opt-in waiting-only body-aware relief; the existing momentum/acceleration integration remains authoritative. */
+  spacing?: { tuning: Tuning; data: SpacingData; waiting: boolean };
 }
 
 /** A hop under way (a hopper's bound: packs.json styles.hopper) flies on by the time, whatever holds the creature (Ed's playtest,
@@ -204,6 +208,7 @@ export function steer(c: Creature, P: Profile, x: SteerContext): boolean {
     default: break;
   }
   if (x.style) slot = x.style; // (its style's place, or a friend's: over the tactic's)
+  if (x.spacing?.waiting && slot) slot = clearWaitingSlot(c, slot, [...x.neighbours], x.spacing.tuning, x.spacing.data);
   // Cutting off her retreat (dodge.c): a place ahead of her as she runs, to one side (by its id), making for it hard whatever
   // its tactic (or its kind's behaviours: a bat has no slot to keep), striking from there as she comes.
   const cut = x.cutoff && x.heading ? x.cutoff : null;
@@ -228,7 +233,7 @@ export function steer(c: Creature, P: Profile, x: SteerContext): boolean {
         const sx = gx - c.x, sz = gz - c.z, gd = Math.hypot(sx, sz) || 1e-6; if (sd > 0.6 * S) add(sx / gd, sz / gd, b.w * Math.min(1, sd / (4 * S)));
         // Surrounding or pincering, it takes its place before it strikes.
         if ((pack?.tactic === "surround" || pack?.tactic === "pincer") && sd > 3 * S) may = false; } break; }
-      case "separation": { const R = (b.radius ?? 7) * S; for (const o of x.neighbours) { if (o === c) continue; const ox = c.x - o.x, oz = c.z - o.z, od = Math.hypot(ox, oz); if (od < R && od > 1e-4) add(ox / od, oz / od, b.w * (1 - od / R)); } break; }
+      case "separation": { if (x.spacing) break; const R = (b.radius ?? 7) * S; for (const o of x.neighbours) { if (o === c) continue; const ox = c.x - o.x, oz = c.z - o.z, od = Math.hypot(ox, oz); if (od < R && od > 1e-4) add(ox / od, oz / od, b.w * (1 - od / R)); } break; }
       case "cohesion": { if (pack && n > 1) { const cx = pack.cx - c.x, cz = pack.cz - c.z, cd = Math.hypot(cx, cz); if (cd > (b.radius ?? 14) * S) add(cx / cd, cz / cd, b.w); } break; }
       case "wander": { const a = hash2(c.id, Math.floor(x.time * 2), 13) * Math.PI * 2; add(Math.cos(a), Math.sin(a), b.w); break; }
       case "light": {
@@ -257,8 +262,14 @@ export function steer(c: Creature, P: Profile, x: SteerContext): boolean {
     }
   }
   // (its style's place pulls it there whether or not its kind keeps slots)
-  if (x.style && !cut && !P.fight.some(b => b.kind === "slot")) { const sx = x.style.x - c.x, sz = x.style.z - c.z, sd = Math.hypot(sx, sz) || 1e-6; if (sd > 0.6 * S) add(sx / sd, sz / sd, 1.3 * Math.min(1, sd / (4 * S))); }
+  const styleGoal = x.spacing?.waiting ? slot : x.style;
+  if (styleGoal && !cut && !P.fight.some(b => b.kind === "slot")) { const sx = styleGoal.x - c.x, sz = styleGoal.z - c.z, sd = Math.hypot(sx, sz) || 1e-6; if (sd > 0.6 * S) add(sx / sd, sz / sd, 1.3 * Math.min(1, sd / (4 * S))); }
   // A behaviour asking for more than full speed is held to it; then ease toward it at its acceleration.
+  if (x.spacing?.waiting) {
+    const force = waitingAvoidance(c, x.neighbours, x.spacing.tuning, x.spacing.data);
+    add(force.x, force.z, 1);
+    for (const o of x.neighbours) if (o !== c && Math.hypot(c.x - o.x, c.z - o.z) < bodyGap(c, o, x.spacing.tuning, x.spacing.data)) may = false;
+  }
   const m = Math.hypot(vx, vz);
   if (m > 1) { vx /= m; vz /= m; }
   let tx = vx * x.speed, tz = vz * x.speed;

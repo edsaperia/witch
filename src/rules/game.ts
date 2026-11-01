@@ -10,6 +10,7 @@ import { MOVEMENT, resetFight } from "./movement";
 import { useData } from "./combat/hits";
 import { nightFor, type NightSet } from "./musicSet";
 import { bodyRadius, spaceOut } from "./spacing";
+import { drawnRadius, spacingOn } from "./combatSpacing";
 import { type QuestEvent } from "./quest";
 import { beatAt, knockdownTempo, newBeatClock, tempoRate, timeAt, waveArrived, waveTempo, type BeatClock } from "./beat";
 import { cameraPose, newCamera, stepCamera, type CameraPose, type CameraState, type CoastView } from "./camera";
@@ -800,7 +801,8 @@ function stepSpacing(g: Game, dt: number): void {
     if (c.gone || c.burrow || c.leap || c.swoop) continue; // (a flyer swooping: rules/movement.ts stepSwoop)
     for (const w of ws) if (Math.abs(c.x - w.x) < R && Math.abs(c.z - w.z) < R) { list.push(c); break; }
   }
-  spaceOut(list, dt, c => !!c.homeGuard || !!c.partyLegend || dormant(g, c) || !!c.asleep || (c.stunUntil !== undefined && g.clock.time < c.stunUntil));
+  spaceOut(list, dt, c => !!c.homeGuard || !!c.partyLegend || dormant(g, c) || !!c.asleep || (c.stunUntil !== undefined && g.clock.time < c.stunUntil), MOVEMENT,
+    spacingOn(g.tuning) ? { radius: c => drawnRadius(c, g.tuning), steered: c => !!c.fight?.target } : undefined);
   list.length = 0; // (let them go)
 }
 

@@ -65,6 +65,18 @@
     "hopper": { "length": 7, "time": 0.5, "height": 2.2, "pause": 0.25, "ring": 6 },
     "friends": { "on": true }
   },
+  "_spacing": "Ed, 2026-11-01: spacing=1 experiment, OFF until played. body.radii are cloud-calibrated anatomical ground-disc support pixels at body.pixelSize, not hit radii; all distances below are metres at fight scale except physical body clearance. Avoidance steers waiting creatures only, preserving attackers and momentum. Detailed notes: docs/notes/config-history/packs.md#spacing.",
+  "spacing": {
+    "on": false,
+    "body": { "pixelSize": 3, "source": "pending cloud calibration", "radii": {} },
+    "clearance": 0.75, "search": 24, "predict": 0.65, "avoid": 3.5, "headingWindow": 0.2,
+    "slotPasses": 16, "epsilon": 0.000001, "fallbackAccel": 18,
+    "charger": { "out": 1.65, "carrot": 1.05 },
+    "circler": { "out": 1.5, "wave": 0.28, "period": 7, "carrot": 0.95 },
+    "flanker": { "out": 1.8, "sweep": 28, "period": 8 },
+    "hopper": { "out": 1.7, "length": 1.4, "time": 1.15, "height": 1.2, "pause": 0.35 },
+    "steady": { "out": 1.2, "carrot": 0.35 }
+  },
   "_style": "Each kind's style (styles above); a kind not here is steady.",
   "style": { "arcticfox": "hopper", "armadillo": "charger", "bat": "circler", "boar": "charger", "cat": "flanker", "cheetah": "charger", "dormouse": "circler", "dragonfly": "circler", "elephant": "charger", "elk": "charger", "fennec": "circler", "flyingsquirrel": "hopper", "fox": "flanker", "frostwyrm": "flanker", "griffin": "charger", "hare": "hopper", "hedgehog": "charger", "heron": "circler", "ibex": "charger", "jaguar": "flanker", "komodo": "flanker", "lion": "charger", "lynx": "flanker", "marten": "circler", "meerkat": "circler", "otter": "circler", "owl": "circler", "penguin": "charger", "polarbear": "charger", "raccoon": "flanker", "ram": "charger", "raven": "circler", "redpanda": "hopper", "rhino": "charger", "roe": "hopper", "snowleopard": "flanker", "sphinx": "flanker", "squirrel": "hopper", "stag": "charger", "stegosaurus": "charger", "stoat": "circler", "tiger": "flanker", "toad": "hopper", "unicorn": "charger", "wolf": "circler", "woodlouse": "charger" }
 }

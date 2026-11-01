@@ -9,3 +9,19 @@ Cloud CPU calibration only: conservative anatomical ground-disc support at the s
 ```
 node tools/combat-spacing/body-radii.mjs <output.json>
 ```
+
+## `capture-fight.cjs`
+
+Called only by the coordinator's allocated cloud browser runner; owns no browser/server/listener.
+
+## `measure.ts`
+
+Canonical-allocated cloud CPU evidence only; bundled by run.mjs.
+
+## `run.mjs`
+
+Launch only in the approved existing cloud CPU allocation.
+
+```
+node tools/combat-spacing/run.mjs [--fights=20] [--seconds=24] [--out=spacing-measure.json]
+```

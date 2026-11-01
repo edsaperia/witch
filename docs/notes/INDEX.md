@@ -85,6 +85,7 @@ says what each note covers.
 
 ## [Creatures in play](gameplay.md)
 
+- Combat waiting spacing experiment
 - Attack target identity
 - Sheltered attack effects
 - Momentum class selection
