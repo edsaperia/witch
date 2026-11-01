@@ -2,6 +2,7 @@ import type { HouseConfig, HouseObject } from "./houseRooms";
 import proposal from "../../config/house/layouts/ed-current.json";
 import baseline from "../../config/house/layouts/editor-v1-baseline.json";
 import { roomAt } from "../../config/house/shape.js";
+import { publishedGuestFurnitureId } from "./guestFurnitureMigration";
 
 export interface ObjectPlacement {
   rotation: number; baseRotation: number; foot: { w: number; d: number; h: number }; curve: number;
@@ -29,7 +30,7 @@ export function applyEdLayout(source: HouseConfig, on = edLayoutRequested()): Ho
   const H = structuredClone(source);
   for (const o of H.objects) {
     // The unused guest chest is replaced in place by Ed's requested dressing table.
-    const placedId = o.id === "bedroom2DressingTable" || o.id === "bedroom3DressingTable" ? o.id.replace("DressingTable", "Chest") : o.id;
+    const placedId = publishedGuestFurnitureId(o.id);
     const p = proposal.objects.find(p => p.id === placedId), original = baseline.items.find(q => q.id === placedId);
     if (!p || !original) continue;
     if (o.id === "cauldron") {

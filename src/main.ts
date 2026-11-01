@@ -77,7 +77,8 @@ import type { DecidePanel } from "./ui/decide";
 import { saveLoadout } from "./app/loadout";
 import { castable, HAT_SPELLS, hatSpell, setParts } from "./rules/spells";
 import { changeLoadout } from "./rules/hatSpells";
-import { HOUSE_ROOMS, addFloorHat, syncFloorHats, installEdLayout, objectFront, roomAt } from "./rules/houseRooms";
+import { HOUSE_ROOMS, addFloorHat, syncFloorHats, installEdLayout, objectFront, roomAt, fromObject } from "./rules/houseRooms";
+import { remoteBodyBatch } from "./platform/online/otherWitches";
 import { setEdLayoutActive } from "./rules/housePlacement";
 import { usesEdLayout } from "./app/houseLayout";
 import { stationOf, tableOf } from "./rules/stations";
@@ -1512,7 +1513,7 @@ function frameBody(now: number): void {
   freeze.pollPad();
   phone.frame(game, now); // Normal wrapped pad, after pause; closes across night replacement without touching a save.
   phoneSounds.update(phone.state, phone.open || phone.active || phone.state.status === "ended", now);
-  if (view.houseRooms) view.houseRooms.openGuestRooms = phone.active ? new Set(["bedroom2"]) : phone.open ? new Set() : null;
+  if (view.houseRooms) view.houseRooms.openGuestRooms = phone.active ? new Set(["bedroom2", "bedroom3"]) : phone.open ? new Set() : null;
   phonePresence.update(phone.state, phone.active, phone.visiting, view.houseRooms?.telephoneScreen ?? null, now);
   if (phone.active) void remoteArt.refresh().catch(error => { logCaughtError(error, "remote clothing"); phone.hangUp(); });
   frameHouseEvents = phone.houseEvents(); // Guest drains captured replay steps once; solo/host keep their original transient events.
@@ -1753,16 +1754,33 @@ requestAnimationFrame(frame);
 
 // For the smoke test, the tools and for poking at in the console (app/hooks.ts).
 installHooks({ night: N, view, sound, meter, shake, frameStats, ladder, loadTimes, loop, advance: (game, controls, dt) => soloDiagnostic(phone.active, N().spec.borrowed === true, () => recordedStep(game, controls, dt, BUILD, captureRecording)) });
+const telephoneBatchProof = (batch: typeof view.witchBatch | null) => {
+  if (!batch) return null;
+  const material = batch.mesh.material as { depthTest?: boolean; transparent?: boolean };
+  const up = SPRITE_UNIFORMS.uUp.value;
+  return { count: batch.count, visible: batch.mesh.visible, renderOrder: batch.mesh.renderOrder,
+    depthTest: material.depthTest, transparent: material.transparent, atlas: batch.atlas.albedo.uuid,
+    matchesDressedAtlas: batch.atlas === view.assets.witch, textureVersion: batch.atlas.albedo.version,
+    instances: batch.items.slice(0, 4).map(p => {
+      const height = (p.sy === undefined ? p.frame.h : Math.max(1, Math.round(p.frame.h * p.sy))) * batch.metresPerPixel * (p.scale ?? 1);
+      return { x: p.x, y: p.y, z: p.z, frame: batch.atlas.frames.indexOf(p.frame),
+        feet: view.screenOf(p.x, p.y, p.z, true),
+        centre: view.screenOf(p.x + up.x * height / 2, p.y + up.y * height / 2, p.z + up.z * height / 2, true) };
+    }) };
+};
 if (phoneEnabled && phoneCallsEnabled) (window as unknown as { witch: Record<string, unknown> }).witch.telephoneProof = () => ({
   preparation: { ...visitPreparation }, saveBoundaryReady: ordinaryVisit !== null,
   status: phone.state.status, active: phone.active, visiting: phone.visiting,
   seed: N().game.seed, borrowed: N().spec.borrowed === true, worldReady: N().flags.ready,
   viewSeed: view.game.seed, viewUsesCanonicalMap: view.game.map === N().game.map,
   seedLabel: seedEl.textContent,
+  draw: { dressed: telephoneBatchProof(view.witchBatch), bare: telephoneBatchProof(view.bareBatch), remote: telephoneBatchProof(remoteBodyBatch(view)) },
   players: view.game.witches.map(w => ({ id: w.id, x: w.body.x, z: w.body.z, room: w.wake?.room,
     atRoom: roomAt(N().game.map.treehouse, w.body.x, w.body.z)?.id ?? null,
     perched: !!w.body.perch, slept: w.house?.slept === true, wakeOpen: w.wake?.open,
-    pile: w.wake?.pile, screen: view.screenOf(w.body.x, w.body.perch ? N().tuning.treehouse.house?.height ?? 0 : 0, w.body.z) })),
+    pile: w.wake?.pile, lastBed: w.house?.lastBed,
+    nearObjects: HOUSE_ROOMS.objects.filter(o => fromObject(o, N().game.map.treehouse, w.body.x, w.body.z) <= HOUSE_ROOMS.reach).map(o => o.id),
+    screen: view.screenOf(w.body.x, w.body.perch ? N().tuning.treehouse.house?.height ?? 0 : 0, w.body.z) })),
   house: { at: N().game.map.treehouse, turn: HOUSE_ROOMS.turn ?? 0, shape: HOUSE_ROOMS.shape, bedHold: HOUSE_ROOMS.bed.hold, terrace: HOUSE_ROOMS.terrace,
     objects: HOUSE_ROOMS.objects.map(o => ({ id: o.id, use: o.use.kind, front: objectFront(o, N().game.map.treehouse, .6) })) },
   artPending: view.assets.pending, artDone: view.assets.done, paused: freeze.frozen,
