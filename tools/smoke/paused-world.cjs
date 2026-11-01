@@ -120,7 +120,8 @@ async function measure(browser, url, sha, candidate) {
           const before = read(), result = submit(...args), after = read(), [, , geometry, material, object] = args;
           // Keep both sides even if a submitted sprite misses every probe pixel.
           // iPos/iSize are the placed sprite; iUv selects its actual atlas frame.
-          if (pass === 'world' && (object === view.ground.mesh || owner(object).includes('witchBatch') || object.name.includes('nap-wolf'))) {
+          if (pass === 'world' && (object === view.ground.mesh || owner(object).includes('witchBatch') ||
+            owner(object).includes('bareBatch') || owner(object).includes('crown') || object.name.includes('nap-wolf'))) {
             const camera = args[0], instances = {};
             for (const [name, attr] of Object.entries(geometry.attributes)) if (attr.isInstancedBufferAttribute) {
               instances[name] = Array.from(attr.array.subarray(0, attr.itemSize * geometry.instanceCount));
@@ -144,6 +145,12 @@ async function measure(browser, url, sha, candidate) {
           alpha: view.game.alpha, repaintHeld: args[2], artVersion: view.assets.version,
           pendingFloors: view.ground.pendingFloors.map(([type]) => type), layers: [], inputs: [] } : null;
         const result = render(...args);
+        if (probe.trace) {
+          const batch = b => b && ({ count: b.count, atlas: b.atlas.albedo.uuid, visible: b.mesh.visible, object: b.mesh.id });
+          probe.trace.witch = { ordinary: batch(view.witchBatch), bare: batch(view.bareBatch),
+            bareReady: view.assets.bareReady, hatDown: !!view.game.witches[0].hat.down, hatOff: view.hatOff,
+            partyIdle: view.partyWitchView.herIdle };
+        }
         probe.draws++;
         if (probe.sample) {
           // Read inside the render task, before the browser discards the backbuffer.

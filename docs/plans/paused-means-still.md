@@ -76,3 +76,11 @@ A second confirmed update path is independent of animation time. Each world draw
 ### Run 5 and repaint acceptance
 
 The baseline drew 34 times per paused minute. The candidate drew zero during pause and Settings. On a forced repaint the art version advanced from 16 to 31, with 793 changed pixels inside (204,78)–(251,139), inclusive. The coordinator accepted art arrivals on forced repaints. Compare every RGBA byte when the version is unchanged. When it changes, record both versions, the changed-pixel count and bounds, then continue to the bestiary. The same rule applies to the second forced repaint. Run 5 stopped before the bestiary.
+
+### Run 6
+
+After closing Settings the runner explicitly dispatches two separate same-size resize events, waiting for exactly one draw after each. The first repaint gained art (16 to 31, 790 pixels). The second repaint at version 31 changed 21,757 pixels. The ordinary witch batch submitted one instance on the first draw and had no recorded submission on the second. Camera matrices and the recorded island glow uniforms matched. Run 6 did not record the bare batch or its bound atlas.
+
+The witch renderer previously cleared its ordinary batch whenever the independent hatless art job became ready. That job does not increment the scenery art version, and a retained repaint does not run swapHomeArt to replace a prewarmed batch's transparent placeholder. Retained repaints now use the last submitted witch instances, including their hat state. A live draw may switch to the ready hatless atlas. The regression exercises readiness changing between two retained submissions and the switch after play resumes.
+
+Crown clearance uses witch-time deltas, and string wind and twinkle use shader time. The new trace includes crown inputs and both witch batches, even when a batch has zero instances, to distinguish secondary colour changes. No independent crown clock cause established.

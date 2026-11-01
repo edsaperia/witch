@@ -1866,7 +1866,7 @@ export class View {
       this.loadingMist.update(time, ty => this.assets.hasType(ty));
     }
     this.lightRings?.update(this.camera, w.x, witchHeight(w, t) + this.rideOff, w.z, canopyShown(w), time);
-    const hatTop = drawWitch(this, time, ht, onTreehouse);
+    const hatTop = drawWitch(this, time, ht, onTreehouse, repaintHeld);
     updateRefraction(this, time);
     this.mushroomView.update(this);
     this.ground.prepareCoast(this.renderer, this.camera, this.scene);

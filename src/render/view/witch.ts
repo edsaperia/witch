@@ -35,9 +35,27 @@ import { spinAt, spinFacing, spinLift } from "../spin";
 /** The player asked for less motion (the knockout's iris then a plain cut: render/koIris.ts). */
 const REDUCED = typeof matchMedia === "function" && matchMedia("(prefers-reduced-motion: reduce)").matches;
 
+/** Hatless art arrives independently of scenery. A retained repaint reuses the
+ * submitted batch; only a live draw may hand the body to the newly ready atlas. */
+export function bareBodyBatch(v: Pick<View, "bareBatch" | "assets" | "makeWitchBatch">, wanted: boolean, repaintHeld: boolean): SpriteBatch | null {
+  if (repaintHeld) return v.bareBatch?.items.length ? v.bareBatch : null;
+  if (!wanted) return null;
+  const atlas = v.assets.witchBare();
+  if (!v.assets.bareReady) return null;
+  const batch = v.bareBatch ??= v.makeWitchBatch(true);
+  // The prewarmed batch may still point at the transparent placeholder.
+  // swapHomeArt binds its replacement on live frames, except during a twirl.
+  return batch.atlas === atlas || batch.items.length ? batch : null;
+}
+
+/** Reproject the already submitted world-space instances on a paused resize. */
+export function submitWitchInstances(batch: SpriteBatch, items: SpriteInstance[], repaintHeld: boolean): void {
+  batch.set(repaintHeld ? batch.items : items);
+}
+
 /** Draws her for this frame; returns her hat's top (m over the ground), for the sigil stack over it. onTreehouse: a point on
  *  the treehouse's sprite (its pixels) in the world. */
-export function drawWitch(v: View, time: number, ht: number, onTreehouse: (px: number, py: number) => { x: number; y: number; z: number }): number {
+export function drawWitch(v: View, time: number, ht: number, onTreehouse: (px: number, py: number) => { x: number; y: number; z: number }, repaintHeld = false): number {
   const g = v.game, t = g.tuning, w = g.witch, h = witchHeight(w, t), T = v.assets.treehouse;
   const KO = g.witches[0].ko;
   const potion = g.mushrooms?.affected[g.witches[0].id];
@@ -214,8 +232,7 @@ export function drawWitch(v: View, time: number, ht: number, onTreehouse: (px: n
   // (asked at once when her hat's already off: a game's first morning starts with it on the hats' floor, rules/wakeUp.ts)
   if (!v.bareAsked && Hat.has && (!!Hat.down || (!g.clock.paused && ht > 1))) { v.bareAsked = true; setTimeout(() => { v.bareBatch ??= v.makeWitchBatch(true); }, 0); }
   // At a station for her head and face (ui/stationPanel.ts bareHead; Ed, 2026-10-23), drawn without it too, once those frames are in.
-  const bare = Hat.has && (!!Hat.down || v.hatOff) && !!v.assets.witchBare() && v.assets.bareReady ? // (her hat off, down or at a station: witchBare asks for the bare frames, hat on till they're in, never her drawn with none)
-    (v.bareBatch ??= v.makeWitchBatch(true)) : null;
+  const bare = bareBodyBatch(v, Hat.has && (!!Hat.down || v.hatOff), repaintHeld);
 
   // (her frames from the atlas her batch draws: through a twirl that is still the clothes she had, render/spin.ts)
   const watlas = (bare ?? v.witchBatch).atlas, wframe = watlas.frames[wf], hatTop = wyy + wframe.h * v.mpp;
@@ -256,14 +273,14 @@ export function drawWitch(v: View, time: number, ht: number, onTreehouse: (px: n
       her.push({ x: up.x, y: up.y, z: up.z, frame: watlas.frames[djUpper], flip: false, scale: up.scale } as typeof b);
     } else { const up = nearerCamera(v, b, DJ_DEPTH.upper - DJ_DEPTH.her); her.push({ ...up, frame: watlas.frames[djUpper], flip: false }); }
   }
-  const hatFrame = bare && Hat.down ? v.assets.witchBare().frames[v.assets.witchHatFrame] : undefined;
+  const hatFrame = bare && Hat.down ? bare.atlas.frames[v.assets.witchHatFrame] : undefined;
   { // Under a load (render/load.ts), in flight: she leans forward flying away from the pull, her broom tilts nose-up and bows.
     const LV = v.leashView.load, LT = t.load ?? LOAD_DEFAULT, flying = !w.seated && !KO && v.foot < 0.05 && !v.partyWitchView.herIdle;
     const fwd = w.facing < 0 ? -1 : 1, k = flying ? LV.load : 0;
     v.witchBatch.leanU.value.set(fwd * LT.witchLean * k * LV.away, fwd * LT.broomTilt * k, LT.broomBow * k, 0);
     v.leashView.bristle.on = flying && !hidden;
   }
-  v.witchBatch.set(bare ? [] : her);
+  submitWitchInstances(v.witchBatch, bare ? [] : her, repaintHeld);
   // In a room off the hub: the rooms are drawn over the Ent's tree and tower and the forest round the house, which they lie behind,
   // in the see-through pass (render/houseRooms.ts), so she's drawn after them there (her batch put in that pass while she's in
   // one), over everything, and needs no silhouette.
@@ -282,7 +299,7 @@ export function drawWitch(v: View, time: number, ht: number, onTreehouse: (px: n
   // outside it, as the house's pins are: render/pins.ts pinSpot)
   const inHouse = !!(hat && deck?.house?.rooms && onRoomFloor(deck.house.rooms, Hat.down!.x, Hat.down!.z));
   if (hat && inHouse) { const [X, Y, Z] = v.herOffset.on ? letterAt(v.herOffset, hat.x, hat.y, hat.z, groundHeight) : [hat.x, hat.y + deck!.h, hat.z]; hat = { ...hat, x: X, y: Y, z: Z }; }
-  v.bareBatch?.set(bare ? (hat ? [...her, { x: hat.x, y: hat.y + groundHeight(hat.x, hat.z), z: hat.z, frame: hatFrame!, flip: hat.flip }] : her) : []);
+  if (v.bareBatch) submitWitchInstances(v.bareBatch, bare ? (hat ? [...her, { x: hat.x, y: hat.y + groundHeight(hat.x, hat.z), z: hat.z, frame: hatFrame!, flip: hat.flip }] : her) : [], repaintHeld);
   captureDodgeEchoes(v, ht, bare ? v.bareBatch : v.witchBatch, her, wsink, D);
   const lying = drawLeftHats(v);
   // The party's and the beach's witches' shadows, and a small one under her hat (gathering as it comes down).
