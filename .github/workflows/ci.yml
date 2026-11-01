@@ -201,8 +201,14 @@ jobs:
     permissions:
       contents: write
       pull-requests: write
-  check:
+  # The unit suite split across four runners (vitest --shard); every test file runs in exactly one shard.
+  unit:
+    name: unit tests (${{ matrix.shard }}/4)
     runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        shard: [1, 2, 3, 4]
     steps:
       - name: Require the build and main publication
         if: ${{ needs.build.result != 'success' || (github.ref == 'refs/heads/main' && needs.deploy.result != 'success') }}
@@ -215,11 +221,10 @@ jobs:
           node-version: 22
           cache: npm
       - run: npm ci
-      - name: Full or related unit tests
+      - name: Full or related unit tests (this shard)
         run: node tools/ci/run-unit.mjs
-      - name: Reporting and checked-tree safety fixtures
-        run: node --test tools/ci/reporting.test.cjs tools/ci/pages-policy.test.cjs
-      - run: npm run typecheck
+        env:
+          VITEST_SHARD: ${{ matrix.shard }}/4
       - name: Failure annotation totals
         if: always()
         run: node tools/ci/annotations.cjs --summary
@@ -227,13 +232,38 @@ jobs:
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: unit-selection
+          name: unit-selection-${{ matrix.shard }}
           path: ci-unit-results.json
           if-no-files-found: ignore
           retention-days: 14
     needs:
       - build
       - deploy
+    if: ${{ !cancelled() }}
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Require the build, main publication and every unit shard
+        if: ${{ needs.build.result != 'success' || needs.unit.result != 'success' || (github.ref == 'refs/heads/main' && needs.deploy.result != 'success') }}
+        run: exit 1
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - name: Reporting and checked-tree safety fixtures
+        run: node --test tools/ci/reporting.test.cjs tools/ci/pages-policy.test.cjs
+      - run: npm run typecheck
+      - name: Failure annotation totals
+        if: always()
+        run: node tools/ci/annotations.cjs --summary
+    needs:
+      - build
+      - deploy
+      - unit
     if: ${{ !cancelled() }}
   smoke:
     runs-on: ubuntu-latest
@@ -257,7 +287,15 @@ jobs:
           path: ~/.cache/ms-playwright
           key: playwright-${{ runner.os }}-${{ env.PLAYWRIGHT_VERSION }}
       - run: npm install --prefix .pw --no-save --no-package-lock playwright@${{ env.PLAYWRIGHT_VERSION }}
-      - run: .pw/node_modules/.bin/playwright install --with-deps chromium
+      # A hung apt/browser download once held smoke for its whole 20 min timeout: bound each attempt and retry once.
+      - name: Install Chromium (bounded, one retry)
+        shell: bash
+        run: |
+          for try in 1 2; do
+            timeout 300 .pw/node_modules/.bin/playwright install --with-deps chromium && exit 0
+            echo "Chromium install attempt $try failed or exceeded 300 s"; sleep 5
+          done
+          exit 1
       - name: Quick smoke test
         shell: bash
         run: |
@@ -304,7 +342,15 @@ jobs:
           path: ~/.cache/ms-playwright
           key: playwright-${{ runner.os }}-${{ env.PLAYWRIGHT_VERSION }}
       - run: npm install --prefix .pw --no-save --no-package-lock playwright@${{ env.PLAYWRIGHT_VERSION }}
-      - run: .pw/node_modules/.bin/playwright install --with-deps chromium
+      # A hung apt/browser download once held smoke for its whole 20 min timeout: bound each attempt and retry once.
+      - name: Install Chromium (bounded, one retry)
+        shell: bash
+        run: |
+          for try in 1 2; do
+            timeout 300 .pw/node_modules/.bin/playwright install --with-deps chromium && exit 0
+            echo "Chromium install attempt $try failed or exceeded 300 s"; sleep 5
+          done
+          exit 1
       - name: Load and draw diverse art on the largest shipped world
         env:
           EXPECTED_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
@@ -344,7 +390,15 @@ jobs:
           path: ~/.cache/ms-playwright
           key: playwright-${{ runner.os }}-${{ env.PLAYWRIGHT_VERSION }}
       - run: npm install --prefix .pw --no-save --no-package-lock playwright@${{ env.PLAYWRIGHT_VERSION }}
-      - run: .pw/node_modules/.bin/playwright install --with-deps chromium
+      # A hung apt/browser download once held smoke for its whole 20 min timeout: bound each attempt and retry once.
+      - name: Install Chromium (bounded, one retry)
+        shell: bash
+        run: |
+          for try in 1 2; do
+            timeout 300 .pw/node_modules/.bin/playwright install --with-deps chromium && exit 0
+            echo "Chromium install attempt $try failed or exceeded 300 s"; sleep 5
+          done
+          exit 1
       - name: Base
         working-directory: base
         run: |

@@ -20,10 +20,20 @@ export function selectedTests(scope, list, root = process.cwd()) {
   } catch (error) { return { ...scope, mode: "full", reason: `related selection failed: ${error.message}`, tests: [] }; }
 }
 
-export function runTests(selection, run, githubActions = false) {
+/** "i/n" from VITEST_SHARD, or null. A malformed value is an error, never a silently skipped shard. */
+export function parseShard(value) {
+  if (!value) return null;
+  const m = /^(\d+)\/(\d+)$/.exec(value);
+  if (!m || +m[1] < 1 || +m[2] < 1 || +m[1] > +m[2]) throw Error(`invalid VITEST_SHARD: ${value}`);
+  return { index: +m[1], count: +m[2], text: value };
+}
+
+export function runTests(selection, run, githubActions = false, shard = null) {
   // No passWithNoTests and no fallback after a genuine test failure.
   // Preserve CI's existing vite.config worker count; the builder's local invocation stays single-worker.
-  return run(["run", ...selection.tests, ...(githubActions ? [] : ["--maxWorkers=1"])]);
+  // A related selection is small: shard 1 runs all of it and the other shards run nothing (never an empty green Vitest run).
+  if (shard && selection.tests.length) return shard.index === 1 ? run(["run", ...selection.tests, ...(githubActions ? [] : ["--maxWorkers=1"])]) : { status: 0, skipped: true };
+  return run(["run", ...selection.tests, ...(shard ? [`--shard=${shard.text}`] : []), ...(githubActions ? [] : ["--maxWorkers=1"])]);
 }
 
 if (process.argv[1] && fileURLToPath(import.meta.url) === fs.realpathSync(process.argv[1])) {
@@ -36,9 +46,10 @@ if (process.argv[1] && fileURLToPath(import.meta.url) === fs.realpathSync(proces
   const selection = selectedTests(scope, base => execFileSync(process.execPath, [cli, "list", `--changed=${base}`, "--filesOnly", "--json", "--maxWorkers=1"], { encoding: "utf8", maxBuffer: 32e6 }));
   const selectionMs = performance.now() - start;
   console.log(`Unit tests: ${selection.mode}; ${selection.reason}; ${selection.tests.length || "all"} files`);
-  const githubActions = process.env.GITHUB_ACTIONS === "true";
-  const testsAt = performance.now(), result = runTests(selection, args => spawnSync(process.execPath, [cli, ...args], { stdio: "inherit" }), githubActions);
-  const report = { ...selection, workers: githubActions ? "existing Vitest config" : 1, selectionMs, testMs: performance.now() - testsAt, totalMs: performance.now() - start, status: result.status, signal: result.signal, error: result.error?.message };
+  const githubActions = process.env.GITHUB_ACTIONS === "true", shard = parseShard(process.env.VITEST_SHARD);
+  if (shard) console.log(`Unit test shard ${shard.text}${selection.tests.length && shard.index !== 1 ? ": related selection runs entirely in shard 1" : ""}`);
+  const testsAt = performance.now(), result = runTests(selection, args => spawnSync(process.execPath, [cli, ...args], { stdio: "inherit" }), githubActions, shard);
+  const report = { ...selection, shard: shard?.text ?? null, workers: githubActions ? "existing Vitest config" : 1, selectionMs, testMs: performance.now() - testsAt, totalMs: performance.now() - start, status: result.status, signal: result.signal, error: result.error?.message };
   fs.writeFileSync("ci-unit-results.json", JSON.stringify(report, null, 2) + "\n");
   if (process.env.GITHUB_STEP_SUMMARY) fs.appendFileSync(process.env.GITHUB_STEP_SUMMARY, `Unit tests: **${selection.mode}** (${selection.reason}); selection ${(selectionMs / 1000).toFixed(2)}s, tests ${(report.testMs / 1000).toFixed(2)}s, exit ${result.status ?? result.signal ?? "error"}.\n`);
   process.exitCode = result.status ?? 1;
