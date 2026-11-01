@@ -69,6 +69,7 @@ import { hsv2rgb } from "../../art/generator.js";
 import { Post } from "./post";
 import { GrassView } from "./grass";
 import { SpellFx } from "./spellfx";
+import { updateRefraction, resetRefraction } from "./view/refraction";
 import { dodgeEchoesFor, resetDodgeEchoes } from "./view/dodgeEchoes";
 import { TRAIL_DEFAULT, WitchTrail } from "./trail";
 import { newPartyOverLook, partyOff, partyOverEase, updatePartyOver } from "./partyOver";
@@ -1383,6 +1384,7 @@ export class View {
     this.partyObjects.reset(); this.rig?.reset(); this.holograms.reset(); this.glades.reset(); this.wisps?.reset();
     this.clouds.reseed(game.seed); this.lightRings?.reseed(game.map.seed);
     this.fireworks.reset(); this.swoopTrails.reset(); this.spellFx.reset(); this.trail.newNight(); this.combatLight.reset(); this.occlusion.reset();
+    resetRefraction(this);
     this.assets.prefetchType(HOME_LOOK); // home's meadow floor (no trees ask for it)
   }
 
@@ -1863,6 +1865,7 @@ export class View {
     }
     this.lightRings?.update(this.camera, w.x, witchHeight(w, t) + this.rideOff, w.z, canopyShown(w), time);
     const hatTop = drawWitch(this, time, ht, onTreehouse);
+    updateRefraction(this, time);
     this.mushroomView.update(this);
     this.ground.prepareCoast(this.renderer, this.camera, this.scene);
     this.houseRooms?.update(this, onTreehouse, ht);

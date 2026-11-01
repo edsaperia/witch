@@ -27,6 +27,19 @@
    ]
   },
   {
+   "name": "refraction",
+   "values": [
+    "0",
+    "1"
+   ],
+   "does": "Preview world-anchored campfire heat and party-cast pressure refraction; off by default, and disabled by reduced flashing or the magic shimmer quality rung.",
+   "group": "debug",
+   "since": "2026-10-31",
+   "readIn": [
+    "src/render/post.ts"
+   ]
+  },
+  {
    "name": "dodgeEchoes",
    "values": [
     "0",

@@ -1,0 +1,61 @@
+import { afterEach, expect, it } from "vitest";
+import * as THREE from "three";
+import { Post, type PostTuning } from "./post";
+import { Refraction } from "./refraction";
+import { updateRefraction, resetRefraction, captureRefractionCast } from "./view/refraction";
+import { FX_QUALITY } from "./fx/system";
+import { comfort } from "./comfort";
+import type { View } from "./view";
+import { potionLevels } from "./potionEffects";
+
+afterEach(() => { FX_QUALITY.distortion = true; comfort.reduceFlashing = false; });
+it("binds existing depth plus bounded form uniforms in the real Post composite without adding passes", () => {
+  const renderer = { setRenderTarget() {}, render() {} };
+  const tuning = { bloom: { on: false, strength: 0, threshold: 0.5 }, tone: { black: 0, gamma: 1, ambient: 1 }, suspects: { effectsLayer: false, showBroken: false }, tiltShift: { on: false, strength: 0, band: 0.5, centre: 0.5, treetop: { strength: 0, band: 0.5 } } } satisfies PostTuning;
+  const post = new Post(renderer as unknown as THREE.WebGLRenderer, tuning);
+  const composite = (post as unknown as { mats: Record<string, THREE.ShaderMaterial> }).mats.composite;
+  post.refraction.count = 2; post.refractionEnabled = false;
+  expect([...post.renderSteps(new THREE.Scene(), new THREE.PerspectiveCamera())]).toHaveLength(1);
+  expect(composite.uniforms.uRefractionCount.value).toBe(0);
+  post.refractionEnabled = true;
+  // Real released potion bindings coexist with refraction (CPU binding check, not pixel evidence).
+  post.potionWobble = 1; post.potionCanopy = 1; post.potionTime = 12;
+  expect([...post.renderSteps(new THREE.Scene(), new THREE.PerspectiveCamera())]).toHaveLength(1);
+  expect(composite.uniforms.uRefractionCount.value).toBe(2);
+  expect(composite.uniforms.uPotionWobble.value.x).toBeGreaterThan(0);
+  expect(composite.uniforms.uPotionTime.value).toBe(12);
+  const levels = potionLevels(0, 1, 1);
+  expect(composite.uniforms.uBlack.value).toBe(levels.black);
+  expect(composite.uniforms.uGamma.value).toBe(levels.gamma);
+  expect(composite.uniforms.uPotionStyle.value.x).toBe(levels.saturation - 1);
+  expect(composite.uniforms.uRefractionDepth.value).toBe(post.scene.depthTexture);
+  expect(composite.uniforms.uRefractionShape.value).toBe(post.refraction.shapes);
+  // Canonical6545181860: one additive seam, before the unchanged potion block.
+  const shader = composite.fragmentShader;
+  const base = shader.indexOf("vec2 p = (floor(vUv * uLow) + 0.5) / uLow;");
+  const refraction = shader.indexOf("p = refractScene(p);", base);
+  const wobble = shader.indexOf("if (uPotionWobble.x > 0.0", base);
+  const scene = shader.indexOf("vec3 c = texture2D(uScene, p).rgb;", base);
+  const grading = shader.indexOf("if (uGrade.x > 0.0)", base);
+  expect(base).toBeGreaterThan(0); expect(refraction).toBeGreaterThan(base);
+  expect(wobble).toBeGreaterThan(refraction); expect(scene).toBeGreaterThan(wobble);
+  expect(grading).toBeGreaterThan(scene);
+  expect(shader.match(/p = refractScene\(p\);/g)).toHaveLength(1);
+  expect(composite.fragmentShader).toContain("texture2D(uBloom, uPotionWobble.x > 0.0 ? p : vUv)");
+  expect(composite.fragmentShader).toContain("texture2D(uFx, vUv)");
+});
+it("the real View hook respects URL activation, quality, comfort and island reset", () => {
+  const camera = new THREE.PerspectiveCamera(60, 1, 0.1, 100); camera.updateMatrixWorld();
+  const refraction = new Refraction();
+  const v = { game: { tuning: { bare: false }, witch: { x: 0, z: -10 }, party: { spellAt: null } }, post: { refraction, refractionEnabled: false }, worldFires: [{ x: 0, z: -10, scale: 1 }], camera, witchBodyY: 1 } as unknown as View;
+  updateRefraction(v, 1); expect(refraction.count).toBe(0);
+  v.post.refractionEnabled = true; updateRefraction(v, 1); expect(refraction.count).toBe(1);
+  FX_QUALITY.distortion = false; updateRefraction(v, 1); expect(refraction.count).toBe(0);
+  FX_QUALITY.distortion = true; comfort.reduceFlashing = true; updateRefraction(v, 1); expect(refraction.count).toBe(0);
+  comfort.reduceFlashing = false; updateRefraction(v, 1); expect(refraction.count).toBe(1);
+  v.game.party.spellAt = 1; captureRefractionCast(v, 1, 0, 0, -10); updateRefraction(v, 1.1); expect(refraction.count).toBe(2);
+  const source = refraction.shapes[1].clone(); v.game.witch.x = 3;
+  updateRefraction(v, 1.1); expect(refraction.shapes[1].equals(source)).toBe(true);
+  v.game.party.spellAt = null; updateRefraction(v, 0.5); expect(refraction.count).toBe(1);
+  resetRefraction(v); expect(refraction.count).toBe(0);
+});
