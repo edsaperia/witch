@@ -42,6 +42,19 @@ describe("shared CI game build", () => {
     expect(jobs.check.steps[0]).toMatchObject({ run: "exit 1" });
     expect(jobs.check.steps[0].if).toContain("needs.build.result != 'success'");
   });
+  it("runs independent check work beside unit shards and keeps the final gate strict and tiny", () => {
+    expect(jobs["check-work"].needs).toEqual(["build", "deploy"]);
+    expect(jobs["check-work"].steps.some((s: any) => s.run === "npm run typecheck")).toBe(true);
+    expect(jobs["check-work"].steps.some((s: any) => s.run?.includes("reporting.test.cjs"))).toBe(true);
+    expect(jobs["check-work"].steps.some((s: any) => s.run?.includes("npm --prefix server test"))).toBe(true);
+    expect(jobs.check.needs).toContain("check-work");
+    expect(jobs.check.steps).toHaveLength(1);
+    expect(jobs.check.steps[0].if).toContain("needs.check-work.result != 'success'");
+    for (const prerequisite of ["build", "unit", "check-work", "deploy"])
+      expect(jobs.check.steps[0].if).toContain(`needs.${prerequisite}.result != 'success'`);
+    expect(jobs.unit.steps.find((s: any) => s.uses === "actions/checkout@v4").with["fetch-depth"]).toBe(2);
+    expect(jobs["check-work"].steps.find((s: any) => s.uses === "actions/checkout@v4").with?.["fetch-depth"] ?? 1).toBe(1);
+  });
   it("skips the unused playable preview for release-check and publish PRs", () => {
     expect(jobs.preview.if).toContain("!startsWith(github.event.pull_request.head.ref, 'claude/release-')");
     expect(jobs.preview.if).toContain("github.event.pull_request.head.ref != 'claude/publish-snapshot'");
@@ -51,6 +64,7 @@ describe("shared CI game build", () => {
     expect(jobs.unit.strategy["fail-fast"]).toBe(false);
     const run = jobs.unit.steps.find((s: any) => s.run === "node tools/ci/run-unit.mjs");
     expect(run.env.VITEST_SHARD).toBe("${{ matrix.shard }}/4");
+    expect(run.env.UNIT_BALANCE).toBe("1");
     expect(jobs.unit.needs).toEqual(expect.arrayContaining(["build", "deploy"]));
     expect(jobs.unit.steps[0]).toMatchObject({ run: "exit 1" });
     expect(jobs.check.needs).toContain("unit");
