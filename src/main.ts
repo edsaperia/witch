@@ -20,6 +20,7 @@ import { stationLook } from "./platform/online/stationAppearance";
 import { localHouseAction } from "./app/houseActions";
 import type { HouseEvents } from "./platform/online/houseSteps";
 import { fillNightTrunk } from "./app/nightFindBoundary";
+import { chartDeparture } from "./app/chartDeparture";
 import { currentSettings } from "./app/playerSettings";
 import { wavesOver } from "./rules/win";
 import { chartOpen, closeChart, openChart, prepareChart, finishChartFlight, type Sailed } from "./ui/chartOverlay";
@@ -930,6 +931,12 @@ const ordinaryVisit = visitNightSaves ? visitLifecycle({
     }
   },
 }) : null;
+const chartDepartureBoundary = chartDeparture({
+  role: () => phone.active ? phone.visiting ? "guest" : "host" : null,
+  borrowed: () => N().spec.borrowed === true,
+  endCall: () => phone.hangUp(),
+  returnOwn: () => ordinaryVisit?.end() ?? Promise.reject(new Error("This browser cannot restore your saved night.")),
+});
 page.onNightEnd = () => {
   if (phone.active && !phone.visiting) phone.hangUp(); // Capture the host result before its own bed/sail replaces this night.
   if (!phone.visiting && page.night && !page.night.spec.borrowed && !endedNights.has(page.night.game)) {
@@ -1109,7 +1116,7 @@ function chartOverNight(table?: string): void {
   const n = N(), island = chartIsland(n.tuning.map?.island);
   const here = island ? { island, world: n.tuning.map?.world ?? 0, label: stayLabel(n.game.partyOver ? "over" : n.game.win?.phase === "won" ? "won" : "on") } : undefined;
   if (table) chartAt = table;
-  openChart((href, to) => { chartAt = null; void sailFromChart(href, to); }, chartWorldArg(), { here, onDepart: departFromChart, onStay: () => console.info(`sea chart: ${island} chosen, she's there: back to the night (seed ${N().seed}, game time ${N().game.clock.time.toFixed(1)} s)`),
+  openChart((href, to) => { chartAt = null; void sailFromChart(href, to).catch(error => logCaughtError(error, "chart departure")); }, chartWorldArg(), { here, onDepart: departFromChart, onStay: () => console.info(`sea chart: ${island} chosen, she's there: back to the night (seed ${N().seed}, game time ${N().game.clock.time.toFixed(1)} s)`),
     onFly: () => view.beginLandingShaders(true),
     onLandingDue: dueAt => view.startLandingShaderGrace(dueAt),
     ...(table ? { table: { onLeave: () => { chartAt = null; closeChart(); } } } : {}) });
@@ -1124,7 +1131,11 @@ function chartWorldArg(): number | undefined { return new URLSearchParams(locati
  *  unwon if it's still on, then the next night started in place (app/sail.ts; the tuning's sail.inPlace, ?sail=inplace|reload)
  *  or the page loaded anew on the island's link as before; in place, anything going wrong loads it anew all the same, quietly
  *  (Ed's decision 2). Resolves once the new night's start is ready (true) or the page is going (false). */
-function sailFromChart(href: string, to: Sailed): Promise<boolean> {
+async function sailFromChart(href: string, to: Sailed): Promise<boolean> {
+  const returningVisitor = phone.visiting || N().spec.borrowed === true;
+  const pending = chartDepartureBoundary.before(); if (pending) await pending;
+  if (N().spec.borrowed) throw new Error("Return to your own night before sailing.");
+  if (returningVisitor) href = sailHref(to.island, to.seed, to.world, location.href);
   const d = departing?.island === to.island && departing.seed === to.seed ? departing : null;
   departing = null;
   if (!d) recordSail();
@@ -1149,7 +1160,9 @@ function recordSail(): void {
  *  chart's flight slows to wait for it (app/chartView.ts), then hands over (sailFromChart, with this night). Resolves once it's ready,
  *  or has gone wrong (the hand-off then loads the island's page, as ever). */
 let departing: { island: string; seed: number; night: Promise<Night> } | null = null;
-function departFromChart(to: Sailed, at: FlightEnd["cam"] | null): Promise<void> {
+async function departFromChart(to: Sailed, at: FlightEnd["cam"] | null): Promise<void> {
+  const pending = chartDepartureBoundary.before(); if (pending) await pending;
+  if (N().spec.borrowed) throw new Error("Return to your own night before sailing.");
   if (sailWay(N().params, N().tuning) === "reload") return Promise.resolve();
   recordSail();
   const night = makeSailNight(to, undefined, at);
@@ -1484,8 +1497,8 @@ function frameBody(now: number): void {
   } else if (!sailing && !bootAsleep) wakeCard?.hide(); // (asleep while the next night's made: kept up)
   if (!bot) stepGuide(now);
   // The tables (the map table's sea chart): E at one brings its chart up, as the stations' panels (Ed's playtest, 2026-10-26).
-  const table = bot || creator.open || sailing || F.ready === false ? null : tableOf(game, chartAt);
-  if (table && table.use.kind === "chart" && !chartOpen() && game.leashEvents.some(e => e.kind === "chart")) chartOverNight(table.id);
+  const table = bot || creator.open || sailing || F.ready === false ? null : tableOf(houseGame, chartAt);
+  if (table && table.use.kind === "chart" && !chartOpen() && (frameHouseEvents?.leash ?? game.leashEvents).some(e => e.kind === "chart" && localHouseAction(e, phone.active ? phone.visiting ? 1 : 0 : null))) chartOverNight(table.id);
   // The night's end (Ed, 2026-10-26: "Remove the end cards"): no card, won or lost; the guidance pins lead her home (rules/guidance.ts).
   // The night won (rules/win.ts): the islands its woken legends showed recorded on the sea chart (app/chartSave.ts), once, as its
   // finale settles; the enraged legends' (win.lost) not.
