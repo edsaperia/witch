@@ -82,7 +82,7 @@ describe('view-only potion parameters', () => {
       expect(plain.transparent).toBe(false);
       expect(plain.blending).toBe(strength > 0 ? THREE.CustomBlending : THREE.NormalBlending);
     }
-    expect(mesh.renderOrder).toBe(0);
+    expect(mesh.renderOrder).toBe(-1); // Restore the ordinary ground pass before stump and court decals.
     sky.mesh.geometry.dispose(); material.dispose(); plain.dispose(); beach.dispose(); mesh.geometry.dispose();
   });
 });
