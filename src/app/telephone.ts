@@ -15,6 +15,7 @@ export interface TelephoneOptions {
   callsEnabled?: boolean;
   endpoint?: string; socket?: (url: string) => RelaySocket; menu?: (actions: TelephoneActions) => Menu;
   digit?: (digit: string) => void; face?: (number: string) => Node | null;
+  clearFaces?(): void;
 }
 /** Page-owned telephone; only mutually verified/accepted calls reach the ordinary-game session hook. */
 export function telephone(options: TelephoneOptions) {
@@ -36,7 +37,7 @@ export function telephone(options: TelephoneOptions) {
     answer() { if (state.status === "ringing" && connection) { intent = "guest"; connection.answer(); } }, decline() { connection?.decline(); }, hangUp,
     close() { void api.show(false); }, retry() { if (!role) void api.show(false).then(() => api.show(true)); },
     confirmIdentity() { if (state.status === "confirming") { try { agree(); } catch (error) { fail(error); } } },
-    digit: options.digit, face: options.face,
+    digit: options.digit, face: options.face, clearFaces: options.clearFaces ? () => { options.clearFaces!(); menu.render(state); } : undefined,
   };
   const menu = options.menu?.(actions) ?? new TelephonePanel(actions);
   const api = {

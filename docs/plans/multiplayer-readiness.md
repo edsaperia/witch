@@ -2,6 +2,8 @@
 
 Source audit 2026-11-01, PR1538 head28be8d3b1. This supersedes the initial gap table in multiplayer-integration.md as a current status; it does not erase historical failures or constitute runtime acceptance. Calls remain hard OFF in app/telephoneStation.ts. Source work can proceed during a compute/release hold.
 
+Update under full canonical6552151018: all five seams were explicitly assigned here, not deferred to other owners. Leave/own-phone return is pushed atd911097c4. Subsequent source adds remote pose/pile/hat and fitted-gear presentation, telephone cues, clearable cosmetic face book/bubble/kick, occupied-door picture handling and joining fade. The omissions below are the historical audit that triggered this work. Source now needs review and canonical exact-SHA proof, especially the assembled-broom overlay's alignment, pixel-face likeness, door collision/presentation consistency and fade timing. These are not established visual passes. No new owner permission wait or blanket release source hold is claimed.
+
 ## Connected source
 
 | Original obligation | Current binding / evidence boundary |
@@ -15,7 +17,7 @@ Source audit 2026-11-01, PR1538 head28be8d3b1. This supersedes the initial gap t
 | Saves, progress and return | Borrowed stock/checkpoint/slot game-state writes held; personal preferences persist. Own adoption precedes save resumption and successful shared keepers. Confirmed visit returns fresh; failed preparation restores interrupted night. Chart departure is serialized. Disconnected borrowed world cannot run as solo. Phone-side return placement/redial remains incomplete below. |
 | Pause/time/bed/departure rules | Session tests cover every-player pause consensus. slowTime requires all in treehouse. stepSigilButton requires every witch slept. membership releases guest creatures/relics/sigils/hat on departure. These source checks do not prove in-play presentation. |
 
-## Confirmed omissions from the original design
+## Original-design omissions found by the audit (implementation now assigned by6552151018)
 
 1. **Pause-menu leave:** main.pauseControls has Controls/Options only; no visit-leave action invokes phone.hangUp. Existing telephone and borrowed-bed exits work through the lifecycle. Needs one exact additional main pause-button seam, without changing Freeze.
 2. **Dropped-line home arrival/redial:** main.adoptOwn starts a fresh bed night; it does not place the witch beside her own telephone, open the phone, or invoke telephone.redial. The latter exists internally but telephoneStation does not expose it. Need canonical confirmation of the exact safe post-prepare arrival hook/house placement owner boundary. Keep fresh-night/save policy unchanged.
@@ -38,6 +40,6 @@ Use two isolated browser profiles/storage origins at the same exact reviewed gam
 
 ## Deployment and availability
 
-Owned shared-find slice is source-review-ready at28be8d3b1 with33focused tests/typecheck/config/diff PASS reported6551859533; full original ordinary-play scope is NOT source-complete. Historical inherited benchmark red/canceled smoke remain unresolved canonical evidence, not new owner failures or permission to rerun. Existing exact-head CI and combined dependency1565 must be reviewed. No source hold is inferred from release/compute holds.
+The initial shared-find-only readiness statement at28be8d3b1/REPORT6551859533 is superseded by the five-seam implementation above. Those source seams are ready for review; they are not a completed ordinary two-person acceptance result. Historical inherited benchmark red/canceled smoke remain unresolved canonical evidence, not new owner failures or permission to rerun. Existing exact-head CI and combined dependency1565 must be reviewed. No source hold is inferred from release/compute holds.
 
-AVAILABLE for the concrete source seams above. Canonical must route shared pause/return, house/render and audio boundaries; no repeated Ed product decision is needed for already-approved behavior. Live relay7fb7aff67 cannot serve the new telephone protocol. Deployment requires fresh approval of exact server/game revisions together, pinned WITCH_SHA/health and served game SHA, compatible build identities and reviewed origin/cap settings. Preserve the authorized Starter plan and Auto-Deploy Off. Do not enable calls or change Render under this audit.
+AVAILABLE for source review and corrections under6552151018; the boundaries above are granted here, not waiting on five owners. Live relay7fb7aff67 cannot serve the new telephone protocol. Deployment requires fresh approval of exact server/game revisions together, pinned WITCH_SHA/health and served game SHA, compatible build identities and reviewed origin/cap settings. Preserve the authorized Starter plan and Auto-Deploy Off. Do not enable calls or change Render under this audit.

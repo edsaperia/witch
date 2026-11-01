@@ -8,7 +8,7 @@ import { visitPreferences } from "./visitPreferences";
 import { telephoneActor } from "./telephoneActor";
 
 /** Ordinary station lifetime/input seam. Call admission remains off until canonical proof and deployment approval. */
-export function telephoneStation(options: Pick<TelephoneOptions, "storage" | "loadIdentity" | "menu" | "socket"> & { session?: SessionOptions }) {
+export function telephoneStation(options: Pick<TelephoneOptions, "storage" | "loadIdentity" | "menu" | "socket" | "digit" | "face" | "clearFaces"> & { session?: SessionOptions }) {
   const session = options.session ? onlineSession(options.session) : null;
   const preferences = visitPreferences();
   let presentation: ReturnType<typeof localView> | null = null, source: Game | null = null;

@@ -14,6 +14,7 @@ export interface TelephoneActions {
   digit?(digit: string): void;
   /** The normal game's witch renderer supplies faces; never load a caller-provided image URL. */
   face?(number: string): Node | null;
+  clearFaces?(): void;
 }
 const words: Record<TelephoneStatus, string> = { preparing: "Calls aren't available in this build yet.", connecting: "Connecting the telephone…", available: "The line is ready.", dialling: "Calling…", ringing: "The telephone is ringing.", confirming: "This is a new number. Connect and remember this friend?", joining: "Joining your friend's night…", connected: "The line is connected.", unavailable: "That number isn't at the telephone.", busy: "That line is engaged.", ended: "The line has gone quiet.", error: "The call couldn't connect." };
 
@@ -47,7 +48,7 @@ export class TelephonePanel {
       const angle = (-130 + i * 28) * Math.PI / 180;
       dial.append(button(digit, () => { if (this.digits.value.length < 7) { this.digits.value += digit; actions.digit?.(digit); this.paintCall(); } }, { attrs: { "aria-label": `Dial ${digit}` }, style: { left: `${83 + 78 * Math.cos(angle)}px`, top: `${83 + 78 * Math.sin(angle)}px` } }));
     });
-    this.digits.addEventListener("input", () => { this.digits.value = this.digits.value.replace(/\D/g, "").slice(0, 7); this.paintCall(); });
+    this.digits.addEventListener("input", (event) => { this.digits.value = this.digits.value.replace(/\D/g, "").slice(0, 7); for (const digit of ((event as InputEvent).data ?? "").replace(/\D/g, "").slice(0, 7)) actions.digit?.(digit); this.paintCall(); });
     // Native typing/button activation stays local; Enter must not also reach the page's party shortcut.
     this.root.addEventListener("keydown", e => {
       if (!textEntry(e.target) && bindings.keys("menu.back").includes(e.code)) { e.preventDefault(); if (!e.repeat) actions.close(); }
@@ -56,7 +57,7 @@ export class TelephonePanel {
     this.root.addEventListener("keyup", e => e.stopPropagation());
     this.root.append(h("h2", { text: "Telephone" }), this.own, this.status, this.digits, dial,
       h("div", {}, button("Erase", () => { this.digits.value = this.digits.value.slice(0, -1); this.paintCall(); }), this.call),
-      this.answer, this.decline, this.confirm, this.hangup, this.retry, h("h3", { text: "Address book" }), this.book, button("Step away", () => actions.close()));
+      this.answer, this.decline, this.confirm, this.hangup, this.retry, h("h3", { text: "Address book" }), this.book, ...(actions.clearFaces ? [button("×", () => actions.clearFaces?.(), { attrs: { "aria-label": "Clear faces" } })] : []), button("Step away", () => actions.close()));
     document.body.append(this.root); this.slide = new SlideIn(this.root, "left", "flex");
   }
   get open() { return this.openNow; }

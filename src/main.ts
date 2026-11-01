@@ -9,6 +9,10 @@ import { bindings } from "./platform/bindings";
 import { Rumble } from "./platform/rumble";
 import { telephoneStation } from "./app/telephoneStation";
 import { leaveVisit, visitHome } from "./app/visitHome";
+import { telephoneCues } from "./app/telephoneCues";
+import { telephoneFaces } from "./app/telephoneFaces";
+import { telephoneFaceCanvas } from "./render/telephoneFace";
+import { TelephonePresence } from "./ui/telephonePresence";
 import { guestArrival } from "./platform/online/guestArrival";
 import { guestAccess } from "./platform/online/guestAccess";
 import { visitSaves } from "./app/visitSaves";
@@ -392,7 +396,10 @@ function hostCollections(game: Game) {
   const wardrobe = withSharedFind(game, "wearable", findsCtx().owned());
   return { wardrobe, bags: new Set(BAGS.filter(b => wardrobe.has(b.id)).map(b => b.id)), hats: withSharedFind(game, "hat", new Set(game.witches[0].spells.hats ?? HAT_SPELLS.filter(hat => hat.built).map(hat => hat.id))), parts: withSharedFind(game, "part", partsNow()), records: withSharedFind(game, "record", new Set(ownedRecords())) };
 }
-const phone = telephoneStation({ storage: (() => { try { return localStorage; } catch { return null; } })(), session: {
+const phoneSounds = telephoneCues(() => sound.sfx);
+const phoneFaces = telephoneFaces((() => { try { return localStorage; } catch { return null; } })());
+const phoneFace = (number: string) => { const face = phoneFaces.get(number); return face ? telephoneFaceCanvas(face) : null; };
+const phone = telephoneStation({ face: phoneFace, clearFaces: () => { phoneFaces.clear(); phonePresence.refresh(); }, digit: digit => { if (phone.state.status !== "preparing") phoneSounds.digit(digit); }, storage: (() => { try { return localStorage; } catch { return null; } })(), session: {
   build: BUILD, hostGame: () => N().game,
   appearance: () => { sharedLoans.begin(personalKit(), loan); if (!phone.visiting) sharedLoans.observe(N().game, personalKit()); return appearance(page.look()) ?? appearance({}); },
   attach: game => { if (!guestAccess.ready) throw new Error("The guest room isn't ready yet."); callArrival.attach(game); if (remoteArt.has(1)) void remoteArt.start(game, 0).catch(error => { logCaughtError(error, "host remote appearance"); phone.hangUp(); }); },
@@ -444,6 +451,7 @@ const phone = telephoneStation({ storage: (() => { try { return localStorage; } 
     } else if (choice.kind === "broom" && !phone.visiting) fitBroom(sharedLoans.forSave(personalKit()).parts);
   },
   appearanceApplied: (player, look) => {
+    if (player !== (phone.visiting ? 1 : 0) && phone.state.peer) { phoneFaces.remember(phone.state.peer, look); phonePresence.refresh(); }
     if (player === (phone.visiting ? 1 : 0)) {
       lookNow = JSON.stringify(look); creator.adopt(look as never); showLook();
       if (!phone.visiting) saveGenome(sharedLoans.forSave(personalKit()).look as never);
@@ -455,6 +463,7 @@ const phone = telephoneStation({ storage: (() => { try { return localStorage; } 
   },
 } });
 let guestAudioGame: Game | null = null;
+const phonePresence = new TelephonePresence(phoneFace, () => { if (phone.open) phone.hangUp(); });
 onlineFocus = () => phone.active;
 page.presentationGame = game => phone.presented(game);
 
@@ -1434,6 +1443,10 @@ function frameBody(now: number): void {
   frameStats.frame(dt * 1000);
   freeze.pollPad();
   phone.frame(game, now); // Normal wrapped pad, after pause; closes across night replacement without touching a save.
+  phoneSounds.update(phone.state, phone.open || phone.active || phone.state.status === "ended", now);
+  if (view.houseRooms) view.houseRooms.openGuestRooms = phone.active ? new Set(["bedroom2"]) : phone.open ? new Set() : null;
+  phonePresence.update(phone.state, phone.active, phone.visiting, view.houseRooms?.telephoneScreen ?? null, now);
+  if (phone.active) void remoteArt.refresh().catch(error => { logCaughtError(error, "remote clothing"); phone.hangUp(); });
   frameHouseEvents = phone.houseEvents(); // Guest drains captured replay steps once; solo/host keep their original transient events.
   if (landingSleep.holds(game)) {
     input.release(); input.clearPresses(); game.clock.paused = true;
