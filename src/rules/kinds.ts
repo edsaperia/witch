@@ -1,16 +1,9 @@
-// The kinds table: every kind of creature (each an area type's species and a legend), with the phase it's introduced in (0 home:
-// its island is phase 1; 1 phase 1; 2 phase 2) and its island's planned bearing on the sea chart, degrees clockwise from north
-// (Ed, 2026-10-11, docs/backlog/journey.md 'Rosters' and 'Biomes by direction': north cold, south hot, east rocky, west jungle,
-// the diagonals blending). `dir` is the bearing's compass point, for reading; `biome` the theme its island's direction suggests.
-// Home 10, phase 1 10, phase 2 12: the easiest and most familiar at home, tougher and stranger later. Ed approved the 32 as
-// drafted (2026-10-11). Home is green forests and mostly cute mammals, no flyers or insects (Ed, 2026-10-12): owl, toad and
-// beetle swapped phase and bearing with marten, stoat and badger, so the chart's rings stay as they were. The rest (Ed,
-// 2026-10-11: "We should generate all the islands. For islands where we haven't designed the creatures yet, use '?'";
-// journey.md: 14 introduced in phase 3, 18 in phase 4, none in phase 5) are placeholders (unknown-NN, placeholder true): their
-// islands have a seed, size and coast and show on the sea chart as '?', but no one sails there and they're never dealt or put
-// on a playable island. Since the roster (Ed, 2026-10-23, docs/backlog/journey.md: 8 biomes of 6 kinds, one fantastic each, and
-// 16 temperate; "rocky" renamed "volcanic" the same day) all 64 are designed and none is a placeholder: home 10, phase 1 6, then
-// 16 a phase (docs/notes/island.md's table, made from the kinds' files by tools/docs/tables.mjs).
+// The kinds table: each creature kind, its introduction phase and its island bearing (clockwise from north).
+// Current kind.json counts (Ed, 2026-10-31: "Game wins"): home 10, phase 1 6, then 16 each in phases 2, 3 and 4.
+// All 64 are designed; none is a placeholder. Its own island is one phase after its introduction.
+// `dir` is the compass point for reading; `biome` is the island theme. The roster (Ed, 2026-10-23) has 16 temperate
+// kinds and 8 biomes of 6 kinds, one fantastic each; "rocky" became "volcanic" that day.
+// Before that roster the counts were 10/10/12/14/18, the last 32 placeholders (unknown-NN).
 //
 // One line a file, so builders adding areas don't collide (Ed, 2026-10-13): an area's creature's line is its folder's
 // art/areas/<id>/kind.json (`{ kind, slot, phase, bearing, dir, biome }`), a placeholder's config/kinds/<id>.json (`placeholder`
