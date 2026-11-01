@@ -104,10 +104,34 @@ export function artInputBytes(file, bytes) {
   if (file !== 'package.json') return bytes;
   try { const { scripts, ...rest } = JSON.parse(bytes.toString('utf8')); return Buffer.from(JSON.stringify(rest)); } catch { return bytes; }
 }
-export function snapshotHash(root, files) {
+export function snapshotHash(root, files, read = f => artInputBytes(f, readFileSync(join(root, f)))) {
   const h = createHash('sha256');
-  for (const f of files) { const b = artInputBytes(f, readFileSync(join(root, f))); h.update(`${Buffer.byteLength(f)}:${f}${b.length}:`); h.update(b); }
+  for (const f of files) { const b = read(f); h.update(`${Buffer.byteLength(f)}:${f}${b.length}:`); h.update(b); }
   return h.digest('hex');
+}
+
+/** How a selected task is executed (execute() below and art-check.yml's run steps). The planner and workflow files are
+ * not task inputs: they only choose what runs. Bump this when a change alters HOW a task runs (arguments, server,
+ * browser launch), so every result is re-proven; selection-only planner edits keep every result. */
+export const EXECUTION = 'art-check-execution-v1';
+export const PLANNER = ['tools/art-check/affected.mjs', 'tools/art-check/scope.mjs', 'tools/art-check/checked-tree.mjs', 'tools/art-check/README.md', '.github/workflows/art-check.yml'];
+
+/** One-time bridge from results saved by the v1 planner (tools/art-check-legacy/affected-v1.mjs.txt, the exact bytes
+ * it was keyed with). Its keys hashed the planner and workflow whole, so changing the planner alone would rerun every
+ * task. A v1 result is reused only for a task whose v1 key, recomputed over this tree with those planner bytes, is
+ * exactly the saved one: identical check, art and environment. Remove once v2 results cover the shared cache. */
+export const LEGACY_PLANNER = 'tools/art-check-legacy/affected-v1.mjs.txt';
+function legacyKeys(api, root, disk, dispatcher, environment) {
+  if (!existsSync(join(root, LEGACY_PLANNER))) return {};
+  const planner = readFileSync(join(root, LEGACY_PLANNER)), own = f => f === 'tools/art-check/affected.mjs' ? planner : readFileSync(join(root, f));
+  const tree = { exists: f => f === DISPATCHER || disk.exists(f), read: f => f === DISPATCHER ? Buffer.from(dispatcher.source) : f === 'tools/art-check/affected.mjs' ? planner : disk.read(f) };
+  const producers = ['art/check.mjs', 'art/headless.mjs', 'art/headless-blank.html', 'tools/art-check/affected.mjs', 'tools/artDependencies.ts', 'tools/artJobFingerprints.ts', 'tools/art-cache/load.mjs', 'package.json', 'package-lock.json', 'config/style.json', '.github/workflows/art-check.yml', 'config/tuning.json'];
+  const map = api.artJobFingerprints(tree, { buildInputs: producers }, DISPATCHER);
+  const salt = JSON.stringify({ schema: 'art-check-results-v1', environment });
+  const keys = Object.fromEntries(dispatcher.names.map(id => [id, sha(salt + id + map.fingerprints[id])]));
+  const files = [...new Set([...checkFiles(root), ...map.scopeSources.filter(f => f !== DISPATCHER)])].sort();
+  keys['auxiliary-and-labs'] = sha(salt + snapshotHash(root, files, own));
+  return keys;
 }
 export function resultHit(dir, id, key) {
   try { const r = JSON.parse(readFileSync(join(dir, `${key}.json`), 'utf8')); return r.schema === 1 && r.id === id && r.key === key && r.passed === true; } catch { return false; }
@@ -120,14 +144,14 @@ export async function plan(root, cacheDir, environment) {
   try {
     const text = readFileSync(join(root, 'art/check.mjs'), 'utf8'), dispatcher = taskDispatcher(text), disk = api.diskTree(root);
     const tree = { exists: f => f === DISPATCHER || disk.exists(f), read: f => f === DISPATCHER ? Buffer.from(dispatcher.source) : disk.read(f) };
-    const producers = ['art/check.mjs', 'art/headless.mjs', 'art/headless-blank.html', 'tools/art-check/affected.mjs', 'tools/artDependencies.ts', 'tools/artJobFingerprints.ts', 'tools/art-cache/load.mjs', 'package.json', 'package-lock.json', 'config/style.json', '.github/workflows/art-check.yml'];
+    const producers = ['art/check.mjs', 'art/headless.mjs', 'art/headless-blank.html', 'tools/artDependencies.ts', 'tools/artJobFingerprints.ts', 'tools/art-cache/load.mjs', 'package.json', 'package-lock.json', 'config/style.json'];
     const map = api.artJobFingerprints(tree, { buildInputs: producers }, DISPATCHER);
     const auxFiles = [...new Set([...checkFiles(root), ...map.scopeSources.filter(f => f !== DISPATCHER)])].sort();
     // Fetched config files (e.g. tuning.json for the sleeping-size regression) key only the tasks that read them.
     const configs = [...new Set(Object.values(dispatcher.configs).flat())].filter(f => !auxFiles.includes(f));
     for (const f of configs) if (!existsSync(join(root, f))) throw Error(`Fetched art input missing: ${f}`);
     const files = [...auxFiles, ...configs].sort();
-    const snapshot = snapshotHash(root, files), salt = JSON.stringify({ schema: 'art-check-results-v2', environment });
+    const snapshot = snapshotHash(root, files), salt = JSON.stringify({ schema: 'art-check-results-v2', execution: EXECUTION, environment });
     // A task's key: its own callback text, the shared helpers and check scaffolding, the analyzer's module-initialization
     // parts, and every file its drawing reaches. The generated dispatcher and art/check.mjs are hashed by those parts
     // instead of whole, so editing one task's callback reruns that task alone.
@@ -139,8 +163,13 @@ export async function plan(root, cacheDir, environment) {
     });
     // The non-task checks and lab pages have broad, independent coverage. They
     // stay one conservative unit rather than pretending task selection covers them.
-    tasks.push({ id: 'auxiliary-and-labs', key: sha(salt + snapshotHash(root, auxFiles)), inputs: auxFiles });
-    for (const t of tasks) t.cached = resultHit(cacheDir, t.id, t.key);
+    const auxInputs = auxFiles.filter(f => !PLANNER.includes(f) && !f.startsWith('tools/art-check-legacy/'));
+    tasks.push({ id: 'auxiliary-and-labs', key: sha(salt + snapshotHash(root, auxInputs)), inputs: auxInputs });
+    const legacy = legacyKeys(api, root, disk, dispatcher, environment);
+    for (const t of tasks) {
+      t.cached = resultHit(cacheDir, t.id, t.key);
+      if (!t.cached && legacy[t.id] && resultHit(cacheDir, t.id, legacy[t.id])) { saveSuccess(cacheDir, t.id, t.key); t.cached = true; t.bridged = legacy[t.id]; }
+    }
     return { schema: 1, environment, snapshot, files, tasks, fileToTasks: Object.fromEntries(files.map(f => [f, tasks.filter(t => t.inputs.includes(f)).map(t => t.id)])) };
   } finally { close(); }
 }

@@ -50,11 +50,11 @@ describe("affected art checks", () => {
     for (const f of ["art/headless.mjs", "art/headless-blank.html", "tools/artDependencies.ts", "tools/artJobFingerprints.ts", "tools/artHash.ts", "package.json", "package-lock.json", ".github/workflows/art-check.yml"]) {
       mkdirSync(join(root, f, ".."), { recursive: true }); writeFileSync(join(root, f), readFileSync(f));
     }
-    for (const dir of ["art", "src", "config", "tools/art-cache", "tools/art-check", "tools/art-lab", "tools/overrides"]) cpSync(dir, join(root, dir), { recursive: true, filter: s => !/(node_modules|art\/out|art-lab\/dist)/.test(s) });
+    for (const dir of ["art", "src", "config", "tools/art-cache", "tools/art-check", "tools/art-check-legacy", "tools/art-lab", "tools/overrides"]) cpSync(dir, join(root, dir), { recursive: true, filter: s => !/(node_modules|art\/out|art-lab\/dist)/.test(s) });
     const { plan } = await import("../tools/art-check/affected.mjs");
     const keys = async () => Object.fromEntries((await plan(root, join(root, "cache"), {})).tasks.map((t: { id: string; key: string }) => [t.id, t.key]));
     const edit = (f: string, change: (text: string) => string) => { const text = readFileSync(join(root, f), "utf8"), next = change(text); expect(next).not.toBe(text); writeFileSync(join(root, f), next); };
-    return { keys, edit, changed: (a: Record<string, string>, b: Record<string, string>) => Object.keys(a).filter(id => a[id] !== b[id]).sort() };
+    return { root, plan, keys, edit, changed: (a: Record<string, string>, b: Record<string, string>) => Object.keys(a).filter(id => a[id] !== b[id]).sort() };
   };
   it("re-keys only the tasks that fetch a changed config file", async () => {
     const { keys, edit, changed } = await fixture(), before = await keys();
@@ -72,6 +72,33 @@ describe("affected art checks", () => {
     edit("art/check.mjs", t => t.replace("const report = flag(", "const unusedProbe = 0;\nconst report = flag("));
     expect(changed(helper, await keys())).toEqual(Object.keys(one).sort());
   }, 180_000);
+  it("keeps every result through planner and workflow edits that only choose what runs", async () => {
+    const { keys, edit, changed } = await fixture(), before = await keys();
+    edit("tools/art-check/affected.mjs", t => t + "\n// selection-only edit\n");
+    edit(".github/workflows/art-check.yml", t => t + "\n# workflow edit\n");
+    expect(changed(before, await keys())).toEqual([]);
+  }, 180_000);
+  it("bridges exact v1 results once, never across a changed art input", async () => {
+    const { root, plan, edit } = await fixture(), cache = join(root, "v1cache"), current = readFileSync(join(root, "tools/art-check/affected.mjs"));
+    // The v1 planner, run as it ran in CI: its own bytes at its own path.
+    writeFileSync(join(root, "tools/art-check/affected.mjs"), readFileSync("tools/art-check-legacy/affected-v1.mjs.txt"));
+    const { pathToFileURL } = await import("node:url");
+    const v1 = await import(pathToFileURL(join(root, "tools/art-check/affected.mjs")).href + "?v1");
+    const old = await v1.plan(root, cache, {});
+    for (const t of old.tasks) saveSuccess(cache, t.id, t.key);
+    writeFileSync(join(root, "tools/art-check/affected.mjs"), current);
+    const bridged: any = await plan(root, cache, {});
+    expect(bridged.tasks.filter((t: any) => !t.cached)).toEqual([]);
+    for (const t of bridged.tasks) expect(resultHit(cache, t.id, t.key)).toBe(true);
+    // A real art edit after migration: only v1 results for the old bytes exist, so the touched task must rerun.
+    const fresh = join(root, "v1only"); mkdirSync(fresh);
+    for (const t of old.tasks) saveSuccess(fresh, t.id, t.key);
+    edit("art/flora/variants.js", t => t + "\n// drawing edit\n");
+    const after: any = await plan(root, fresh, {}), rerun = after.tasks.filter((t: any) => !t.cached).map((t: { id: string }) => t.id);
+    expect(rerun).toContain("tree-species");
+    expect(rerun).toContain("auxiliary-and-labs");
+    expect(rerun.length).toBeLessThan(after.tasks.length);
+  }, 240_000);
   it("ignores npm script edits in package.json but keys every task on its dependencies", async () => {
     const { keys, edit, changed } = await fixture(), before = await keys();
     edit("package.json", t => t.replace('"scripts": {', '"scripts": {\n    "probe": "node -e 0",'));
