@@ -4,6 +4,7 @@ import { decorPlan, type DecorItem } from "../render/houseDecor";
 import { standing } from "../render/housePieces";
 import { FURNITURE_IDS } from "../../art/furniture.js";
 import legacy from "../../config/house/layouts/editor-v1-baseline.json";
+import identities from "../../config/house/layouts/editor-v2-identities.json";
 import { kitchenPlan, type MushroomColour } from "../rules/mushrooms";
 import { HOUSE_CONFIG } from "../rules/houseConfig";
 export const EDITOR_HOUSE = HOUSE_CONFIG as HouseConfig;
@@ -59,9 +60,13 @@ export function layoutItems(H = EDITOR_HOUSE): LayoutItem[] {
 const point = (p: { x: number; z: number }): [number, number] => [p.x, p.z];
 /** Geometry and source catalogue identity: a changed baseline requires an explicit conversion. */
 export const floorplanKey = (H: HouseConfig, items: LayoutItem[]): string => {
-  const text = JSON.stringify([H.shape, H.wall, H.turn, items.map(o => [o.id, o.room, o.x, o.z, o.facing, o.anchor, o.decor])]);
+  // Transcendental results can differ by an ulp across JS engines. Cache warmth and
+  // sub-nanometre arithmetic noise are not changes to the authored source geometry.
+  const { m: _cache, ...shape } = H.shape as HouseConfig["shape"] & { m?: unknown };
+  const text = JSON.stringify([shape, H.wall, H.turn, items.map(o => [o.id, o.room, o.x, o.z, o.facing, o.anchor, o.decor])],
+    (_key, value: unknown) => typeof value === "number" && Number.isFinite(value) ? +value.toFixed(9) : value);
   let hash = 2166136261; for (const c of text) hash = Math.imul(hash ^ c.charCodeAt(0), 16777619);
-  return `oak-${(hash >>> 0).toString(16)}`;
+  return `oak-v3-${(hash >>> 0).toString(16)}`;
 };
 export function defaultLayout(items: LayoutItem[], floorplan: string): Layout {
   return { version: 2, floorplan, objects: items.map(o => ({ id: o.id, x: o.x, z: o.z, rotation: normalAngle(o.facing.yaw * 180 / Math.PI) })) };
@@ -74,7 +79,8 @@ export const artKey = (o: LayoutItem, p: Placement, H = HOUSE_ROOMS): string => 
 export function parseLayout(raw: unknown, items: LayoutItem[], floorplan: string): Layout {
   if ((raw as { version?: unknown } | null)?.version === 1) return migrateCameraV1(raw, items, floorplan);
   const l = raw as Layout;
-  if (!l || l.version !== 2 || l.floorplan !== floorplan || !Array.isArray(l.objects) || l.objects.length !== items.length) throw Error("This layout does not match the current house. Export it again from the matching editor.");
+  const matchingSource = l?.floorplan === floorplan || (floorplan === identities.canonical && identities.legacy.includes(l?.floorplan));
+  if (!l || l.version !== 2 || !matchingSource || !Array.isArray(l.objects) || l.objects.length !== items.length) throw Error("This layout does not match the current house. Export it again from the matching editor.");
   const seen = new Set<string>(), ids = new Set(items.map(o => o.id));
   const objects = l.objects.map(p => {
     if (!p || !ids.has(p.id) || seen.has(p.id) || ![p.x, p.z, p.rotation].every(v => typeof v === "number" && Number.isFinite(v)) || Math.abs(p.x) > 10000 || Math.abs(p.z) > 10000 || Math.abs(p.rotation) > 360000) throw Error("Each object must have one known ID and finite coordinates and angle.");

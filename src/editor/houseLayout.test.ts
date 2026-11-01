@@ -102,7 +102,8 @@ describe("treehouse authoring layouts", () => {
     expect(converted.objects.filter(p => p.id.startsWith("clutter:")).length).toBeGreaterThan(20);
     expect(converted.objects.find(p => p.id === "terrace:decks")!.rotation).toBe(45); // camera proxy was already +45, not a model using subtraction
     expect(parseLayout(exportLayout(converted, items), items, key)).toEqual(converted);
-    expect(proposal).toEqual(exportLayout(converted, items));
+    // The retained proposal uses the registered pre-canonical identity; poses and all other metadata stay exact.
+    expect({ ...proposal, floorplan: key }).toEqual(exportLayout(converted, items));
   });
   it("separates clutter into stable selectable/exportable pieces and changes room lighting identity without changing station function", () => {
     const clutter = items.filter(o => o.decor), repeated = layoutItems().filter(o => o.decor);
