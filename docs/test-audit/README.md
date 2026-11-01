@@ -1,9 +1,28 @@
-# Test audit
+# Test audit inventory
 
-Audit-first assignment #1631, brief commit `b6f4046f6e1805913a1ba8d0ee8e148613556dbe` (2026-11-01). Starting prototype: `4f2483dc2c7ab6c97dec6ec96393b042c20b412d`.
+Audit only, #1631 / draft #1632. No test is changed or approved for deletion.
 
-The inventory will enumerate source test declarations without running the game. Runtime evidence comes from existing CI records; absent case timing stays unknown rather than dividing a file duration by its test count. Classification and supersession signals are review candidates, not proof a test is obsolete or permission to delete it.
+628 files; 3204 source case declarations. Parameterized and loop-generated cases are not expanded. CJS files are supplementary to the requested TS/MJS scope.
 
-Deliverables: a rerunnable inventory tool, JSON inventory and plain summary, followed by twelve system decision pages. Hard limits, current rules, outcome statistics and leftovers are the four review groups. Combat (#1622) and multiplayer (#1609) retain their current owners; this work changes no game source or existing tests. Test removal, rewrite or a non-blocking report workflow requires Ed's later group decision and a separate PR.
+601 files have historical CI durations from [the existing run](https://github.com/edsaperia/witch/actions/runs/41305026644); all case durations are unknown. File duration includes runner effects and cannot be added to infer parallel CI wall time saved.
 
-No generated-world, browser, laptop hardware or full-suite runs belong to this audit. Before publication, check merge-tree compatibility with the current multiplayer branch. Canonical owns review/release; the proposed standing testing rules are not adopted policy.
+Kinds are first guesses. “Current rules” is a provisional default, not proof of a current Ed ruling. Historical citations may describe setup or compatibility. Supersession candidates require human confirmation. Nothing adopts the proposed standing rule.
+
+Run `node tools/tests/inventory.mjs` to refresh; `--check` verifies generated outputs. Reads source only; never imports or executes game tests.
+
+## System decisions
+
+- [Combat](combat.md): 254 declarations
+- [Creatures and movement](creatures-movement.md): 476 declarations
+- [Invites and party](invites-party.md): 257 declarations
+- [Legends](legends.md): 248 declarations
+- [World, islands and lakes](world-islands-lakes.md): 97 declarations
+- [House and treehouse](house-treehouse.md): 463 declarations
+- [Music and audio](music-audio.md): 237 declarations
+- [UI, menus and controls](ui-menus-controls.md): 209 declarations
+- [Saves, replay and robustness](saves-replay-robustness.md): 100 declarations
+- [Multiplayer](multiplayer.md): 149 declarations
+- [Art and rendering checks](art-rendering.md): 488 declarations
+- [Tools and CI](tools-ci.md): 226 declarations
+
+The short system pages link to the exhaustive [case catalogue](cases.md) and [machine inventory](inventory.json). File timings live in the JSON. Review every cited assertion before granting a grouped deletion. No measured CI savings are claimed.
