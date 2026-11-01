@@ -100,7 +100,7 @@ describe("the wild watch (Ed, 2026-10-07)", () => {
     expect(aggroOf(g)!.k).toBeLessThan(0.05);
   }, 120_000);
 
-  it("comes out after her if she snipes from just outside its edge, as far as its chase band, and no further (Ed, 2026-10-13: no sniping or kiting from the edge)", () => {
+  it("comes out after her if she snipes from just outside its edge, then pursues beyond its old chase band until take-off (Ed, 2026-10-13: no sniping or kiting from the edge)", () => {
     const { g, key, at } = overWild(), T = TUNING, band = T.combat.leaveArea * T.fight.scale;
     // the edge along a straight line out into a neighbouring area (as above), one of the area's watchers 8 m inside it
     const dirs = [[1, 0], [-1, 0], [0, 1], [0, -1]], edgeOf = ([dx, dz]: number[]) => { let r = 0; while (cellKey(g.map.cellSafe(at.x + dx * (r + 1), at.z + dz * (r + 1)).cell) === key && r < 400) r++; return r; };
@@ -126,7 +126,9 @@ describe("the wild watch (Ed, 2026-10-07)", () => {
     // past its band: it gives her up
     let gaveUp = false;
     run(g, 6, () => { place(band * 2); gaveUp ||= !onHer(); });
-    expect(gaveUp, "gives up past its band").toBe(true);
+    expect(gaveUp, "keeps pursuing on the ground beyond the band").toBe(false);
+    rise(g); run(g, STEP);
+    expect(onHer(), "take-off ends pursuit").toBe(false);
   }, 120_000);
 
   it("lets her walk out on foot before they make up their minds, and nobody follows (Ed: time to run away)", () => {

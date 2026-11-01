@@ -4,7 +4,7 @@ import { newGame, stepGame, STEP, type Controls, type Game } from "./game";
 import { TUNING, withTuning, type Tuning } from "./tuning";
 // (she stands by the legends here: their own timers are under test, so the circle's slowed time (rules/slowTime.ts, its own tests) is off)
 const NO_SLOW = { ...TUNING, legendCircle: { slow: { ...TUNING.legendCircle!.slow, on: false } } };
-import { LEGENDS, anger, canopyOver, lull, relicGlints, stepLegendStates } from "./legends";
+import { LEGENDS, anger, cheer, canopyOver, lull, relicGlints, stepLegendStates } from "./legends";
 import { cellKey } from "./party";
 import { setupQuestDemo } from "./quest";
 import { inLegendClearing } from "./map";
@@ -47,6 +47,19 @@ function put(g: Game, species: string, level: Level, x: number, z: number, cell 
 const withAngryAfter = <T,>(s: number, f: () => T): T => { const was = [LEGENDS.angryAfter, LEGENDS.check]; LEGENDS.angryAfter = s; LEGENDS.check = 0.5; try { return f(); } finally { [LEGENDS.angryAfter, LEGENDS.check] = was; } };
 
 describe("legends, redesigned (Ed, 2026-10-05; #87)", () => {
+  it("a friendly legend's attacks actually land on a wild witch-attacker, in grammar and classic modes", () => {
+    for (const species of [false, true]) {
+      const { g, L } = beside(true, { ...NO_SLOW, attacks: { ...TUNING.attacks!, species } });
+      cheer(L, g.clock.time);
+      const enemy = put(g, L.species === "boar" ? "wolf" : "boar", 1, L.x + 25, L.z);
+      enemy.friendly = undefined; enemy.hunting = 0; g.hunts ??= new Set(); g.hunts.add(enemy.id);
+      const at = { x: enemy.x, z: enemy.z };
+      let landed = false, aimed = false, shots = 0;
+      run(g, LEGENDS.attack.interval + LEGENDS.attack.windup + LEGENDS.attack.lobFlight + 2, idle, () => { landed ||= enemy.hurtAt !== undefined; aimed ||= L.fight?.target?.kind === "creature" && L.fight.target.id === enemy.id; shots = Math.max(shots, g.combat.shots.filter(s => s.from === L.id).length + g.combat.beams.filter(s => s.from === L.id).length); Object.assign(enemy, at); }); // fixed target: damage eligibility, not the existing beam's ability to track a moving target
+      expect(landed, JSON.stringify({ species, aimed, shots, legend: L.legendState, fight: L.fight, enemy: { hunting: enemy.hunting, fight: enemy.fight, asleep: enemy.asleep, friendly: enemy.friendly, gone: enemy.gone, state: enemy.state }, distance: Math.hypot(L.x - enemy.x, L.z - enemy.z), time: g.clock.time })).toBe(true);
+    }
+  }, 60000);
+
   it("sleep on when their area's soundsystem comes (soundsystems no longer wake them)", () => {
     const { g, L } = beside();
     g.party.areas.set(cellKey(L.cell), { cell: L.cell, wave: 1, at: g.clock.time, from: null, soundsystem: null });
@@ -216,14 +229,14 @@ describe("legends, redesigned (Ed, 2026-10-05; #87)", () => {
     }
   }, 60000);
 
-  it("when happy, shoot the enraged from afar; worn down by them, sleep again", () => {
+  it("when happy, engages an enraged enemy within 85 m and cannot itself be pursued or provoked", () => {
     const { g, L } = beside();
     run(g, 0.2, { ...idle, happyNearest: true });
     expect(L.legendState).toBe("happy");
     g.witch = { ...g.witch, mode: "treetop", lift: 1 };
     // (120 m off toward the map's middle, wherever in its clearing the legend lies)
     const dx = g.map.dancefloor.x - L.x, dz = g.map.dancefloor.z - L.z, dd = Math.hypot(dx, dz) || 1;
-    const far = put(g, L.species === "boar" ? "wolf" : "boar", 1, L.x + (dx / dd) * 120, L.z + (dz / dd) * 120); far.enraged = true; far.state = "enraged"; far.siege = "home";
+    const far = put(g, L.species === "boar" ? "wolf" : "boar", 1, L.x + (dx / dd) * 60, L.z + (dz / dd) * 60); far.enraged = true; far.state = "enraged"; far.siege = "home";
     let hitFar = false;
     run(g, LEGENDS.attack.interval + LEGENDS.attack.windup + LEGENDS.attack.lobFlight + 2, idle, () => { if (far.hurtAt !== undefined) hitFar = true; });
     expect(hitFar).toBe(true);
@@ -231,7 +244,8 @@ describe("legends, redesigned (Ed, 2026-10-05; #87)", () => {
     L.drops = 0.999; // (its slots nearly full of 💧s: rules/orbit.ts)
     const near = put(g, L.species === "boar" ? "wolf" : "boar", 2, L.x + 1.5, L.z, L.cell); near.enraged = true; near.state = "enraged";
     run(g, 10);
-    expect(L.legendState).toBe("asleep");
+    expect(L.legendState).toBe("happy");
+    expect(near.fight?.target?.kind === "creature" && near.fight.target.id === L.id).toBe(false);
   }, 60000);
 
   it("has the dream quest wake it happy, fighting for her, no buff (Ed, 2026-10-18; the creature stays hers), and stay open while it sleeps, soundsystem on or not (Ed, 2026-10-06)", () => {

@@ -78,7 +78,8 @@ describe("a legend's quest is done by the drop alone (Ed, 2026-10-19)", () => {
   }, 60000);
 
   it("Ed's case (seed 162218, 14 areas): his parked adults of the dreamt kind standing in the circle no longer finish it", () => {
-    const T = withTuning({ mapAreas: 14, map: { ...TUNING.map, radius: 14 / Math.sqrt(Math.PI) } } as never), g = newGame(162218, T);
+    // Preserve Ed's historical stoat/coordinates fixture; the default no-cap dream spread is covered in quest.test.ts.
+    const T = withTuning({ legends: { ...TUNING.legends, questCap: 6 }, mapAreas: 14, map: { ...TUNING.map, radius: 14 / Math.sqrt(Math.PI) } } as never), g = newGame(162218, T);
     g.clock.paused = false; g.party.paused = true; g.witches[0].health.hp = 1e6;
     const L = g.creatures.filter(c => c.boss).sort((a, b) => Math.hypot(a.x - 2566, a.z - 1923) - Math.hypot(b.x - 2566, b.z - 1923))[0];
     expect(L.quest).toMatchObject({ species: "stoat" });

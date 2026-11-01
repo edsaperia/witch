@@ -151,46 +151,26 @@ export interface TreehouseArt { base: { x: number; y: number }; seat: { x: numbe
    *  half, the map table) and 1 its near half (the rail's near half and the decks' desk), the same size; its deck's middle on its
    *  floor and the map table's top, pixels. */
   ent?: { deck: { x: number; y: number }; table: { x: number; y: number }; /** the house (art/ent.js HOUSE): the magic circle's middle and the balcony's, on the floor */ circle?: { x: number; y: number }; balcony?: { x: number; y: number } };
-  /** The island's legend carrying the Ent (art/carrier.js): its frame, its back's top in its own pixels (where the Ent's roots'
-   *  foot stands, sink pixels down into it). */
-  carrier?: { frame: number; back: { x: number; y: number }; sink: number } }
+}
 
 /** The treehouse Ent (Bravo's, art/ent.js) at the deck's height and radius: frames 0 its far half, 1 its near half (she stands
- *  between them), 2 on the DJ table alone, turning (drawn over her), then the knockdown candles, as the old treehouse's; and last,
- *  given a kind, the island's legend carrying it (art/carrier.js), the Ent's trunk that much shorter. */
-export function entTreehouseSprites(style: Style, mk: MakeCanvas, deckY: number, deckR: number, carrierKind: string | null = null, house = false, layout?: HouseConfig): { sprites: Baked[]; treehouse: TreehouseArt } {
+ *  between them), 2 on the DJ table alone, turning (drawn over her), then the knockdown candles, as the old treehouse's; without a carrier (Ed, 2026-10-31). */
+export function entTreehouseSprites(style: Style, mk: MakeCanvas, deckY: number, deckR: number, house = false, layout?: HouseConfig): { sprites: Baked[]; treehouse: TreehouseArt } {
   type EntArt = { far: unknown; near: unknown; foreFrames: unknown[]; foreBox: { x: number; y: number }; candles: { x: number; y: number }[];
     anchors: { base: { x: number; y: number }; deck: { x: number; y: number }; table: { x: number; y: number }; circle?: { x: number; y: number }; balcony?: { x: number; y: number }; seat: { x: number; y: number }; platter?: { x: number; y: number }; camera: { x: number; y: number }; lights: { x: number; y: number; rgb: number[]; kind: string }[] } };
   // (the oak, config/house/ organic: the Terrace one of its trunk's rooms, its decks on the open rim; Ed, 2026-10-24)
   const plan = layout ?? HOUSE_PLAN;
   const look = house && (plan as { organic?: boolean }).organic ? { organic: true, terrace: { ...(plan as unknown as { terrace: object }).terrace, r: 10 } } : house; // (the oak: its Terrace's layout the game's, config/house/base.json)
-  const ent = (y: number) => Art.entSprite(style, { facing: "towards", deckY: y, deckR, house: look }) as EntArt, trunk = (a: EntArt) => a.anchors.base.y - a.anchors.deck.y;
-  let e = ent(deckY);
-  // The island's legend carrying it (art/carrier.js; Ed, 2026-10-10): grown at the Ent's own pixels a metre (its trunk's pixels
-  // over the deck's height: its roots' foot stands on the ground), and the Ent grown that much shorter, its roots standing
-  // CARRIER.sink down into the carrier's back, so the deck stays where the rules have it (the deck's anchor: render/view/home.ts).
-  let carrier: { sprite: { w: number; h: number }; back: { x: number; y: number } } | null = null, sinkPx = 0;
-  if (carrierKind) {
-    const full = trunk(e), ppm = full / deckY, C = Art.CARRIER as { sink: number };
-    carrier = (Art.carrierSprite as (st: Style, id: string, o: object) => typeof carrier)(style, carrierKind, { ppm });
-    if (carrier) {
-      sinkPx = C.sink * ppm;
-      const want = full - (carrier.sprite.h - carrier.back.y) + sinkPx; // (the trunk's pixels from the carrier's back up to the deck)
-      let y = Math.max(2, want / ppm); e = ent(y);
-      if (Math.abs(trunk(e) - want) > 1.5) { y *= want / trunk(e); e = ent(y); } // (once more: the trunk isn't quite in proportion)
-    }
-  }
+  const e = Art.entSprite(style, { facing: "towards", deckY, deckR, house: look }) as EntArt;
   const ec = Art.entColours(style), fores = e.foreFrames;
   const CN = Art.CANDLE as { levels: number; frames: number }, candles: Baked[] = [];
   for (const white of [true, false]) for (let level = 0; level < CN.levels; level++) for (let frame = 0; frame < CN.frames; frame++) candles.push(Art.bake((Art.candleSprite as (st: Style, o: object) => never)(style, { level, frame, white }), ec, style, "none", mk) as Baked);
   const { deck, table, circle, balcony, ...anchors } = e.anchors;
   const sprites = [...[e.far, e.near, ...fores].map(sp => Art.bake(sp, ec, style, "none", mk) as Baked), ...candles];
-  if (carrier) sprites.push(Art.bake(carrier.sprite, Art.speciesColours(carrierKind!, style), style, style.cOutline, mk) as Baked);
   return {
     sprites,
     treehouse: { ...anchors, hasFore: fores.length > 0, foreFrames: fores.length, foreBox: e.foreBox,
-      candle0: 2 + fores.length, candleRed: CN.levels * CN.frames, candleLevels: CN.levels, candleFlicker: CN.frames, candleRow: e.candles, ent: { deck, table, ...(circle && balcony ? { circle, balcony } : {}) },
-      ...(carrier ? { carrier: { frame: sprites.length - 1, back: carrier.back, sink: sinkPx } } : {}) },
+      candle0: 2 + fores.length, candleRed: CN.levels * CN.frames, candleLevels: CN.levels, candleFlicker: CN.frames, candleRow: e.candles, ent: { deck, table, ...(circle && balcony ? { circle, balcony } : {}) } },
   };
 }
 

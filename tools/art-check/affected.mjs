@@ -1,4 +1,4 @@
-// PR-only successful-result cache. Full release/prototype checks never use it.
+// Successful-result cache for PRs, releases and shared pushes. Unknown layouts still run full checks.
 import ts from 'typescript';
 import { createHash } from 'node:crypto';
 import { existsSync, mkdirSync, readFileSync, readdirSync, writeFileSync } from 'node:fs';
@@ -10,7 +10,7 @@ import { loadAnalyzer } from '../art-cache/load.mjs';
 const DISPATCHER = 'tools/art-check/.task-dispatcher.ts';
 export const sha = value => createHash('sha256').update(value).digest('hex');
 export function fullCheck(event, branch = '', title = '') {
-  return event !== 'pull_request' || branch.startsWith('claude/rel-') || title.startsWith('Release check:');
+  return !['pull_request', 'push'].includes(event);
 }
 
 /** Reuse the production binding/initialization analyzer on the actual check's
@@ -92,6 +92,8 @@ export async function plan(root, cacheDir, environment) {
     const text = readFileSync(join(root, 'art/check.mjs'), 'utf8'), dispatcher = taskDispatcher(text), disk = api.diskTree(root);
     const tree = { exists: f => f === DISPATCHER || disk.exists(f), read: f => f === DISPATCHER ? Buffer.from(dispatcher.source) : disk.read(f) };
     const producers = ['art/check.mjs', 'art/headless.mjs', 'art/headless-blank.html', 'tools/art-check/affected.mjs', 'tools/artDependencies.ts', 'tools/artJobFingerprints.ts', 'tools/art-cache/load.mjs', 'package.json', 'package-lock.json', 'config/style.json', '.github/workflows/art-check.yml'];
+    // The sleeping-size regression uses the configured pixel size, not a duplicated constant.
+    producers.push('config/tuning.json');
     const map = api.artJobFingerprints(tree, { buildInputs: producers }, DISPATCHER);
     const files = [...new Set([...checkFiles(root), ...map.scopeSources.filter(f => f !== DISPATCHER)])].sort();
     const snapshot = snapshotHash(root, files), salt = JSON.stringify({ schema: 'art-check-results-v1', environment });
