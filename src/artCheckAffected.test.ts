@@ -36,6 +36,29 @@ describe("affected art checks", () => {
     expect(workflow).not.toContain("claude/rel-*");
     expect(workflow).toContain('if: steps.checked.outputs.run == \'\'');
   });
+  it("binds each fetched config file only to the task that reads it, and refuses unknown fetches", () => {
+    const source = readFileSync("art/check.mjs", "utf8"), d = taskDispatcher(source);
+    expect(d.configs["sleeping-legends"]).toEqual(["config/style.json", "config/tuning.json"]);
+    expect(d.configs["effects"]).toEqual(["config/combat.json"]);
+    expect(d.configs["finds"]).toEqual(["config/broom-parts.json"]);
+    expect(Object.entries(d.configs).filter(([, f]) => f.includes("config/tuning.json")).map(([n]) => n)).toEqual(["sleeping-legends"]);
+    expect(() => taskDispatcher(source.replace('fetch("/config/combat.json")', 'fetch(path)'))).toThrow("Unknown art check fetch");
+    expect(() => taskDispatcher(source.replace('fetch("/config/combat.json")', 'fetch("/elsewhere/combat.json")'))).toThrow("Unknown art check fetch");
+  });
+  it("re-keys only the tasks that fetch a changed config file", async () => {
+    const root = temp();
+    for (const f of ["art/check.mjs", "art/headless.mjs", "art/headless-blank.html", "tools/art-check/affected.mjs", "tools/artDependencies.ts", "tools/artJobFingerprints.ts", "tools/artHash.ts", "tools/art-cache/load.mjs", "package.json", "package-lock.json", "config/style.json", "config/tuning.json", "config/combat.json", "config/broom-parts.json", ".github/workflows/art-check.yml"]) {
+      mkdirSync(join(root, f, ".."), { recursive: true }); writeFileSync(join(root, f), readFileSync(f));
+    }
+    const { cpSync } = await import("node:fs");
+    for (const dir of ["art", "src", "tools/art-cache", "tools/art-check", "tools/art-lab", "tools/overrides"]) cpSync(dir, join(root, dir), { recursive: true, filter: s => !/(node_modules|art\/out|art-lab\/dist)/.test(s) });
+    const { plan } = await import("../tools/art-check/affected.mjs");
+    const keys = async () => Object.fromEntries((await plan(root, join(root, "cache"), {})).tasks.map((t: { id: string; key: string }) => [t.id, t.key]));
+    const before = await keys();
+    writeFileSync(join(root, "config/tuning.json"), readFileSync(join(root, "config/tuning.json"), "utf8") + "\n");
+    const after = await keys();
+    expect(Object.keys(before).filter(id => before[id] !== after[id])).toEqual(["sleeping-legends"]);
+  }, 120_000);
   it("accepts only an exact successful result and reruns misses, failures and corrupt entries", () => {
     const d = temp(), key = sha("inputs");
     expect(resultHit(d, "trees", key)).toBe(false);

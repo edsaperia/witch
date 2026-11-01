@@ -27,8 +27,11 @@ export function taskDispatcher(text) {
       const [name, callback] = s.expression.arguments;
       if (!name || !ts.isStringLiteral(name) || !callback || !ts.isArrowFunction(callback)) throw Error('Unknown art check task');
       if (tasks.some(t => t.name === name.text)) throw Error('Duplicate art check task');
-      tasks.push({ name: name.text, source: callback.getText(ast) });
-    } else if (ts.isVariableStatement(s) || ts.isFunctionDeclaration(s)) helpers.push(s.getText(ast));
+      tasks.push({ name: name.text, source: callback.getText(ast), configs: configFetches(callback, ast) });
+    } else if (ts.isVariableStatement(s) || ts.isFunctionDeclaration(s)) {
+      if (configFetches(s, ast).length) throw Error('Shared check helper fetches config');
+      helpers.push(s.getText(ast));
+    }
     else if (!(ts.isForOfStatement(s) && s.expression.getText(ast) === 'tasks') && !ts.isReturnStatement(s)) throw Error('Unknown check task scaffolding');
   }
   let registered = 0;
@@ -59,7 +62,23 @@ export function taskDispatcher(text) {
   dynamic(generated);
   for (const e of edits.sort((a, b) => b.start - a.start)) source = source.slice(0, e.start) + e.text + source.slice(e.end);
   source = [...imports].map(([spec, name]) => `import * as ${name} from ${JSON.stringify(spec)};`).join('\n') + '\n' + source;
-  return { source, names: tasks.map(t => t.name) };
+  return { source, names: tasks.map(t => t.name), configs: Object.fromEntries(tasks.map(t => [t.name, t.configs])) };
+}
+
+/** Files a task fetches at run time (fetch("/config/x.json")) are invisible to the import
+ * analyzer, so each binds only to the task that reads it. Any other fetch is unknown: full check. */
+function configFetches(node, ast) {
+  const out = new Set();
+  const walk = n => {
+    if (ts.isCallExpression(n) && n.expression.getText(ast) === 'fetch') {
+      const spec = n.arguments[0];
+      if (!spec || !ts.isStringLiteral(spec) || !/^\/config\/[\w.-]+\.json$/.test(spec.text)) throw Error('Unknown art check fetch');
+      out.add(spec.text.slice(1));
+    }
+    ts.forEachChild(n, walk);
+  };
+  walk(node);
+  return [...out].sort();
 }
 
 /** Include untracked additions too; generated images/results and dependencies are
@@ -92,15 +111,20 @@ export async function plan(root, cacheDir, environment) {
     const text = readFileSync(join(root, 'art/check.mjs'), 'utf8'), dispatcher = taskDispatcher(text), disk = api.diskTree(root);
     const tree = { exists: f => f === DISPATCHER || disk.exists(f), read: f => f === DISPATCHER ? Buffer.from(dispatcher.source) : disk.read(f) };
     const producers = ['art/check.mjs', 'art/headless.mjs', 'art/headless-blank.html', 'tools/art-check/affected.mjs', 'tools/artDependencies.ts', 'tools/artJobFingerprints.ts', 'tools/art-cache/load.mjs', 'package.json', 'package-lock.json', 'config/style.json', '.github/workflows/art-check.yml'];
-    // The sleeping-size regression uses the configured pixel size, not a duplicated constant.
-    producers.push('config/tuning.json');
     const map = api.artJobFingerprints(tree, { buildInputs: producers }, DISPATCHER);
-    const files = [...new Set([...checkFiles(root), ...map.scopeSources.filter(f => f !== DISPATCHER)])].sort();
+    const auxFiles = [...new Set([...checkFiles(root), ...map.scopeSources.filter(f => f !== DISPATCHER)])].sort();
+    // Fetched config files (e.g. tuning.json for the sleeping-size regression) key only the tasks that read them.
+    const configs = [...new Set(Object.values(dispatcher.configs).flat())].filter(f => !auxFiles.includes(f));
+    for (const f of configs) if (!existsSync(join(root, f))) throw Error(`Fetched art input missing: ${f}`);
+    const files = [...auxFiles, ...configs].sort();
     const snapshot = snapshotHash(root, files), salt = JSON.stringify({ schema: 'art-check-results-v1', environment });
-    const tasks = dispatcher.names.map(id => ({ id, key: sha(salt + id + map.fingerprints[id]), inputs: map.dependencies.jobs[id].filter(f => f !== DISPATCHER) }));
+    const tasks = dispatcher.names.map(id => {
+      const fetched = dispatcher.configs[id];
+      return { id, key: sha(salt + id + map.fingerprints[id] + (fetched.length ? snapshotHash(root, fetched) : '')), inputs: [...new Set([...map.dependencies.jobs[id].filter(f => f !== DISPATCHER), ...fetched])].sort() };
+    });
     // The non-task checks and lab pages have broad, independent coverage. They
     // stay one conservative unit rather than pretending task selection covers them.
-    tasks.push({ id: 'auxiliary-and-labs', key: sha(salt + snapshot), inputs: files });
+    tasks.push({ id: 'auxiliary-and-labs', key: sha(salt + snapshotHash(root, auxFiles)), inputs: auxFiles });
     for (const t of tasks) t.cached = resultHit(cacheDir, t.id, t.key);
     return { schema: 1, environment, snapshot, files, tasks, fileToTasks: Object.fromEntries(files.map(f => [f, tasks.filter(t => t.inputs.includes(f)).map(t => t.id)])) };
   } finally { close(); }
