@@ -121,3 +121,37 @@ it('a blackholed active call warns without ending at5s and returns an admitted g
   expect(slots.visiting).toBe(false); expect(nights.suspended).toBe(false); expect(checkpoint.writes).toEqual([]);
   await vi.advanceTimersByTimeAsync(30000); expect(f.departed).toHaveBeenCalledOnce(); expect(vi.getTimerCount()).toBe(0);
 });
+
+it.each(['heartbeat', 'state'])('any downstream %s clears an active warning and resets its full15s ending deadline', async type => {
+  vi.useFakeTimers(); const ws = new Socket(), failed = vi.fn(), trouble = vi.fn(), message = vi.fn();
+  const relay = connectRelay({ endpoint: 'ws://127.0.0.1:8787', room: '1234567', token: 'a'.repeat(48), socket: () => ws,
+    onMessage: message, onClose() {}, onError: failed, onTrouble: trouble }); cleanup.push(relay.close);
+  ws.open(); ws.receive({ type: 'joined', player: 1 }); relay.sendReady(); ws.receive({ type: 'ready-accepted' }); relay.sendActive();
+  await vi.advanceTimersByTimeAsync(5000); expect(trouble).toHaveBeenLastCalledWith(true);
+  ws.receive({ type, ...(type === 'state' ? { payload: { tick: 1 } } : {}) });
+  expect(trouble).toHaveBeenLastCalledWith(false); expect(message).toHaveBeenLastCalledWith(expect.objectContaining({ type }));
+  await vi.advanceTimersByTimeAsync(14999); expect(failed).not.toHaveBeenCalled();
+  await vi.advanceTimersByTimeAsync(1); expect(failed).toHaveBeenCalledOnce(); expect(ws.readyState).toBe(3);
+  expect(vi.getTimerCount()).toBe(0);
+});
+it('an open guest socket waiting for preparation stays unarmed until sendActive', async () => {
+  vi.useFakeTimers(); const ws = new Socket(), failed = vi.fn(), trouble = vi.fn();
+  const relay = connectRelay({ endpoint: 'ws://127.0.0.1:8787', room: '1234567', token: 'a'.repeat(48), socket: () => ws,
+    onMessage() {}, onClose() {}, onError: failed, onTrouble: trouble }); cleanup.push(relay.close);
+  ws.open(); ws.receive({ type: 'joined', player: 1 }); relay.sendReady(); ws.receive({ type: 'ready-accepted' });
+  await vi.advanceTimersByTimeAsync(60000); expect(trouble).not.toHaveBeenCalled(); expect(failed).not.toHaveBeenCalled();
+  expect(relay.sendActive()).toBe(true); await vi.advanceTimersByTimeAsync(5000);
+  expect(trouble).toHaveBeenLastCalledWith(true); expect(failed).not.toHaveBeenCalled();
+  relay.close(); expect(vi.getTimerCount()).toBe(0);
+});
+it('host watchdog arms on accepted readiness and ends the host transport once at15s', async () => {
+  vi.useFakeTimers(); const ws = new Socket(), closed = vi.fn(), failed = vi.fn(), trouble = vi.fn();
+  const relay = connectRelay({ endpoint: 'ws://127.0.0.1:8787', room: '1234567', socket: () => ws,
+    onMessage() {}, onClose: closed, onError: failed, onTrouble: trouble }); cleanup.push(relay.close);
+  ws.open(); ws.receive({ type: 'hosted', player: 0 }); await vi.advanceTimersByTimeAsync(60000);
+  expect(trouble).not.toHaveBeenCalled(); relay.sendReady(); ws.receive({ type: 'ready-accepted' });
+  await vi.advanceTimersByTimeAsync(5000); expect(trouble).toHaveBeenLastCalledWith(true); expect(failed).not.toHaveBeenCalled();
+  await vi.advanceTimersByTimeAsync(10000); expect(failed).toHaveBeenCalledOnce(); expect(ws.readyState).toBe(3);
+  ws.emit('close'); await vi.advanceTimersByTimeAsync(30000); expect(failed).toHaveBeenCalledOnce(); expect(closed).not.toHaveBeenCalled();
+  expect(vi.getTimerCount()).toBe(0);
+});
