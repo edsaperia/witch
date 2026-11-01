@@ -153,10 +153,15 @@ describe("fight profiles for every species (Ed's species pass)", () => {
 
   it("has a snail leave a slime trail that slows her", withCombatRoles({ snail: "melee" }, () => {
     const g = quiet(77, TUNING), W = g.witches[0];
-    pick(g, "snail", 2, 12, 0);
+    const snail = pick(g, "snail", 2, 12, 0);
     let trails = 0;
     run(g, 8, () => { trails = Math.max(trails, g.combat.trails.length); });
     expect(trails).toBeGreaterThan(3);
+    // The new waiting route need not cross a stationary witch. Test the slime
+    // where it was actually laid, independently of the selected travel path.
+    const trail = g.combat.trails.find(trail => trail.from === snail.id)!;
+    expect(trail).toBeDefined();
+    g.witch = { ...g.witch, x: trail.x, z: trail.z }; run(g, STEP);
     expect(W.slowUntil).toBeDefined();
     expect(W.slowMult).toBeLessThan(1);
   }), 60000);

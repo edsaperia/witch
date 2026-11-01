@@ -1,6 +1,6 @@
 // Shared mixed-species youth/adult attack rounds. Movement remains per animal; team identity is side + target.
 import type { Creature } from "../creatures";
-import type { CombatState, CombatWorld } from "./data";
+import { attackOf, type CombatState, type CombatWorld } from "./data";
 import type { PacksData, Role, Phase } from "./packs";
 import { SPACING } from "../combatSpacing";
 import { hash2 } from "../random";
@@ -10,6 +10,19 @@ import { FIGHT, profileOf } from "../movement";
 export interface RolePreferences { melee: number; ranged: number; special: number; tempo: number; youngMelee: number; youngRanged: number; youngSpecial: number; withdraw: number; rejoin: number; rest: number }
 export interface TeamState { seed: number; round: number; phase: Phase; at: number; cycleAt: number; nextAt: number; members: number[]; roles: Record<number, Role>; used: number[]; withdrawn: Record<number, number> }
 export const rolePreferences = (species: string): RolePreferences => ({ ...SPACING.preferences.default, ...SPACING.preferences.species[species] });
+/** The selected intent's useful reach, shared by admission and approach planning. */
+export function intentReach(c: Creature, role: Role, data: PacksData): number {
+  const kind = data.kinds[c.species], move = profileOf(c.species)?.move;
+  if (!kind || role === "hold" || role === "hurt") return 0;
+  if (role === "shooter") return (kind.ranged?.range ?? 4) * FIGHT.scale;
+  if (role === "special") {
+    const effect = { ...data.specials[kind.special], ...kind.specialWith };
+    return (effect.reach ?? effect.radius ?? kind.ranged?.range ?? move?.to ?? 20) * FIGHT.scale;
+  }
+  const ordinary = attackOf(c.species, c.level)?.attack;
+  const preparation = move?.to ?? move?.from ?? move?.trigger ?? (move?.kind === "swoop" ? move.radius : undefined);
+  return preparation !== undefined ? preparation * FIGHT.scale : (ordinary?.range ?? 4) + (ordinary?.lunge ?? 0);
+}
 const damage = (c: Creature): number => c.leashed || c.state === "happy" ? c.drops ?? 0 : c.dazed ? 1 : c.affection ?? 0;
 export function teamOf(state: CombatState, id: number): TeamState | undefined { return [...(state.waitingTeams?.values() ?? [])].find(team => team.members.includes(id)); }
 
@@ -76,10 +89,10 @@ export function stepTeams(state: CombatState, w: CombatWorld, data: PacksData, c
     const tell = rhythms.reduce((sum, rhythm) => sum + rhythm.tell, 0) / rhythms.length / tempo;
     const rest = rhythms.reduce((sum, rhythm) => sum + rhythm.lull, 0) / rhythms.length / tempo;
     const enter = (phase: Phase, until: number) => { team!.phase = phase; team!.at = w.time; team!.nextAt = until; };
-    if (team.phase === "approach" && position && available.some(c => {
-      const role = team!.roles[c.id], kind = data.kinds[c.species], move = profileOf(c.species)?.move;
-      const reach = role === "shooter" ? kind.ranged?.range ?? 4 : role === "lunger" && move ? move.to ?? move.from ?? move.radius ?? 4 : 4;
-      return Math.hypot(c.x - position.x, c.z - position.z) <= (reach + data.limits.engage) * FIGHT.scale;
+    if (team.phase === "approach" && !busy && available.every(c => team!.roles[c.id] === "hold" || team!.roles[c.id] === "hurt")) enter("lull", w.time + SPACING.team.roundTime / tempo);
+    else if (team.phase === "approach" && position && available.some(c => {
+      const role = team!.roles[c.id];
+      return role !== "hold" && role !== "hurt" && Math.hypot(c.x - position.x, c.z - position.z) <= intentReach(c, role, data) + data.limits.engage * FIGHT.scale;
     })) { team.cycleAt = w.time; enter("tell", w.time + tell); }
     else if (team.phase === "tell" && w.time >= team.nextAt && !busy) enter("combo", w.time + SPACING.team.attackWindow / tempo);
     else if (team.phase === "combo" && !busy) {

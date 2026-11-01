@@ -8,6 +8,9 @@ import { tuningFromLink } from "../app/linkParams";
 import type { Creature, Level } from "./creatures";
 import { newCombat, stepCombat, type CombatWorld } from "./combat";
 import { rng } from "./random";
+import { withCombatRoles } from "../test/combatRoles";
+import { queueCombatHit } from "../test/combatHit";
+import type { Game } from "./game";
 
 const data: SpacingData = { ...SPACING, body: { pixelSize: 3, source: "synthetic geometry fixture, not measured game radii", radii: { wolf: [10, 20, 30, 40], elephant: [20, 40, 60, 80] } } };
 const t = withTuning({ combatSpacing: true });
@@ -163,5 +166,26 @@ describe("combat waiting spacing", () => {
     world.time = 1; stepCombat(state, world);
     expect(c.x).toBeCloseTo(x + 10, 10); expect(c.z).toBeCloseTo(z, 10);
     expect(c.hop).toBeUndefined();
+  });
+  it("admits a chosen special only after its waiting route lands", withCombatRoles({ toad: "special" }, () => {
+    const { state, world } = fight(true), c = world.creatures[0];
+    world.creatures.splice(1); world.active = world.creatures; c.species = "toad"; c.x = 15; c.z = 0;
+    stepCombat(state, world);
+    const team = [...state.waitingTeams!.values()][0]; team.phase = "combo"; team.nextAt = 10;
+    c.hop = { fx: 15, fz: 0, tx: 17, tz: 0, at: 0, lands: 1, height: 2 };
+    world.time = 0.5; stepCombat(state, world);
+    expect(c.hop).toBeDefined(); expect(c.leap).toBeUndefined(); expect(c.x).toBe(16);
+    world.time = 1; stepCombat(state, world);
+    expect(c.hop).toBeUndefined(); expect(c.leap).toBeUndefined(); expect(c.x).toBe(17);
+    world.time = 1 + world.dt; stepCombat(state, world);
+    expect(c.leap).toBeDefined(); expect(c.hop).toBeUndefined(); expect(c.x).toBe(17);
+  }));
+  it("a controlled landed hit reaches the real stun state without an AI role choice", () => {
+    const { state, world } = fight(true), victim = world.creatures[0], attacker = world.creatures[1];
+    world.creatures.splice(2); world.active = world.creatures;
+    victim.species = "boar"; victim.level = 1; attacker.leashed = true;
+    queueCombatHit({ combat: state, clock: { time: 0 } } as Game, attacker, victim);
+    world.time = world.dt; stepCombat(state, world);
+    expect(victim.dazed).toBe(true); expect(state.shots).toHaveLength(0);
   });
 });

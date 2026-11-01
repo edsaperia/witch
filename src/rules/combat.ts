@@ -28,7 +28,7 @@ import type { AttackSpec } from "./attacks/types";
 import { PACKS, stepPacks, packsOn, packKindOf, packAttack, packGate, markStrike, dodgeAim, strikingNow, ownStrike, styleOf, type Directive } from "./combat/packs";
 import { chaseAt, limitTurn, momentumOf, noteWitches, witchWas } from "./momentum";
 import { SPACING, bodyGap, clearWaitingSlot, drawnRadius, hazardAvoidance, pathClearsHazard, spacingOn, waitingDrive, waitingProfile, waitingSlot, type WaitingHazard } from "./combatSpacing";
-import { teamOf } from "./combat/teams";
+import { intentReach, teamOf } from "./combat/teams";
 import { advanceMotion } from "./locomotion";
 
 /** A species' own attack as a pack member's strike: a lunger's if it's close (a lunge, or an area round itself), a shooter's if it's
@@ -441,6 +441,7 @@ export function stepCombat(s: CombatState, w: CombatWorld, data: CombatData = CO
     const om = pd && pd.move === "melee" && f.target.kind !== "sound" && time >= (c.moveReadyAt ?? 0) ? ownStrike(c.species) : null;
     const ownFrom = om && om.kind !== "swoop" ? (om.from ?? 10) * 1.4 * FIGHT.scale : 0, ownTo = om?.to ? om.to * 0.8 * (om.kind === "leap" ? FIGHT.leap.reach : 1) * FIGHT.scale : ownFrom;
     if (ownFrom) want = Math.max(want, ownFrom, Math.min(d, ownTo));
+    if (spacing && pd?.role === "special" && pd.phase === "approach") want = Math.min(want, intentReach(c, pd.role, PACKS) * 0.8);
     // Its lunge under way: a dash-strike down the line it wound up on; at its end the blow lands, if it's still there.
     if (f.lunge) {
       // (At a creature it homes in: creatures can't read a telegraph; but not at a flier, which flits up out of its way.
@@ -468,6 +469,11 @@ export function stepCombat(s: CombatState, w: CombatWorld, data: CombatData = CO
     // stands, biting what comes in reach when its pack lets it.
     if (!pd?.slot || pd.phase !== "lull") c.packProwl = undefined; // (a new lull's prowl starts from its place)
     if (pd && f.windupUntil === 0 && !c.charge && !c.leap && !c.burrow && !swoops(c)) { // (a flyer in a pack circles aloft through its lull: below)
+      if (c.dug !== undefined && time < c.dug) {
+        c.moving = false; c.vx = 0; c.vz = 0; c.facing = p.x >= c.x ? 1 : -1;
+        if (time >= f.readyAt && d <= A.range + p.r + 1.5 * FIGHT.scale && strikeNow(pd, f.target)) { f.windupUntil = time + A.windup * 0.7; f.aimX = p.x; f.aimZ = p.z; markStrike(pd, c); s.events.push({ kind: "windup", x: c.x, z: c.z, at: time, id: c.id }); if (spell) startSpell(c, f, spell); }
+        continue;
+      }
       if (pd.slot) {
         if (pd.still) { c.moving = false; c.vx = 0; c.vz = 0; c.facing = p.x >= c.x ? 1 : -1; continue; }
         // At its place it doesn't halt (Ed's playtests, 2026-10-23: "lulls between pack attacks seem to have the animals stand still
@@ -500,11 +506,6 @@ export function stepCombat(s: CombatState, w: CombatWorld, data: CombatData = CO
         }
         if (styleOf(c.species) === "hopper" && f.target.kind === "witch" && !pd.state.hers) { if (pd.freeze || !startHop(c, tx, tz, time, hopOf(speed))) { c.moving = false; c.vx = 0; c.vz = 0; c.facing = p.x >= c.x ? 1 : -1; } continue; } // (a hopper bounds round its lull ring, a beat on the ground between)
         moveToward(c, tx, tz, 0.1, speed, dt);
-        continue;
-      }
-      if (c.dug !== undefined && time < c.dug) {
-        c.moving = false; c.vx = 0; c.vz = 0; c.facing = p.x >= c.x ? 1 : -1;
-        if (time >= f.readyAt && d <= A.range + p.r + 1.5 * FIGHT.scale && strikeNow(pd, f.target)) { f.windupUntil = time + A.windup * 0.7; f.aimX = p.x; f.aimZ = p.z; markStrike(pd, c); s.events.push({ kind: "windup", x: c.x, z: c.z, at: time, id: c.id }); if (spell) startSpell(c, f, spell); }
         continue;
       }
     }
@@ -601,12 +602,12 @@ export function stepCombat(s: CombatState, w: CombatWorld, data: CombatData = CO
           if (P.move.strike) f.readyAt = Math.min(f.readyAt, time); // (the snake: it strikes as it springs)
         }
       }
-      if (P.move?.kind === "dig" && (!pd || c.dug !== undefined || pd.move === "melee" && packGate(pd))) {
+      if (P.move?.kind === "dig" && (!pd || c.dug !== undefined || pd.move === "melee" && pd.role === "lunger")) {
         // The badger digs in when its target comes close: rooted, taking armour times the damage, biting
         // without a lunge at whatever's in reach; then it comes up and the move cools down.
         if (c.dug !== undefined && time < c.dug) {
           c.vx = 0; c.vz = 0; c.moving = false; c.facing = p.x >= c.x ? 1 : -1;
-          if (time >= f.readyAt && d <= A.range + p.r + 1.5 * S) { f.windupUntil = time + A.windup * 0.7; f.aimX = p.x; f.aimZ = p.z; s.events.push({ kind: "windup", x: c.x, z: c.z, at: time, id: c.id }); if (spell) startSpell(c, f, spell); }
+          if (time >= f.readyAt && d <= A.range + p.r + 1.5 * S && strikeNow(pd, f.target)) { if (pd) markStrike(pd, c); f.windupUntil = time + A.windup * 0.7; f.aimX = p.x; f.aimZ = p.z; s.events.push({ kind: "windup", x: c.x, z: c.z, at: time, id: c.id }); if (spell) startSpell(c, f, spell); }
           continue;
         }
         if (c.dug !== undefined) { c.dug = undefined; c.moveReadyAt = time + P.move.cooldown; }

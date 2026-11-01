@@ -6,6 +6,7 @@ import { newGame, stepGame, STEP, type Controls, type Game } from "../rules/game
 import { TUNING, withTuning } from "../rules/tuning";
 import { PACKS } from "../rules/combat/packs";
 import { FIGHT, profileOf } from "../rules/movement";
+import { waitingProfile } from "../rules/combatSpacing";
 
 const idle: Controls = { moveX: 0, moveZ: 0, toggleMode: false, zoom: 0, autoTalk: false };
 const ON = withTuning({ combat: { ...TUNING.combat, packs: { on: true } } });
@@ -31,35 +32,36 @@ export function lullKinds(index: number, parts: number): string[] {
 
 /** The kinds (of those given) whose lull isn't a retreat, with why. */
 export function lullFailures(kinds: string[]): string[] {
-  const standing = (k: string) => !!PACKS.retreats[PACKS.kinds[k].retreat].still;
   const bad: string[] = [];
   for (const k of kinds) {
-    if (standing(k)) continue;
     let steps = 0, still = 0, starts = 0, backed = 0, last = "";
     const mv = profileOf(k)?.move, out = mv?.kind === "swoop" ? mv.radius ?? 0 : PACKS.retreats[PACKS.kinds[k].retreat].out; // (a wild flyer circles aloft at its swoop's own radius)
     const away = out * FIGHT.scale * 0.8 * (PACKS.kinds[k].retreat === "leapfrog" ? 0.5 : 1); // (the leapfrog's near half falls back half as far)
-    const off = (d0: number, most = 0) => most > d0 + 1 || d0 >= away; // (backed off, or out there already: a shooter at range, a flyer aloft)
-    const startD = new Map<number, number>(), most = new Map<number, number>();
+    const off = (d0: number, travelled = 0) => travelled > 0.25 || d0 >= away;
+    const startD = new Map<number, number>(), most = new Map<number, number>(), positions = new Map<number, { x: number; z: number }>();
     // (a freeze over two arenas: how long one holds its place depends on where the fight takes it, and one arena's share swings
     // either side of the 3% line with anything near it, as much as 4.2 to 2.3% on seed 5 for the creatures keeping off sigils, 2026-10-28)
     for (const seed of PACKS.kinds[k].retreat === "freeze" ? [5, 6] : [5]) arena(`pack-${k}`, 30, g => {
       const st = wildPack(g), W = g.witches[0].body;
       if (!st) return;
-      if (st.phase === "lull" && last !== "lull") { for (const [id, d0] of startD) { starts++; if (off(d0, most.get(id))) backed++; } startD.clear(); most.clear(); }
+      if (st.phase === "lull" && last !== "lull") { for (const [id, d0] of startD) { starts++; if (off(d0, most.get(id))) backed++; } startD.clear(); most.clear(); positions.clear(); }
       last = st.phase;
       if (st.phase !== "lull") return;
       for (const id of st.members) {
-        const c = g.creatures[id]; if (!c || c.packHide || c.burrow || c.leap || c.charge) continue;
+        const c = g.creatures[id]; if (!c || c.packHide || c.burrow || c.leap || c.charge || (c.dug ?? 0) > g.clock.time || (c.brace ?? 0) > g.clock.time || (c.packShell ?? 0) > g.clock.time) continue;
         const d = Math.hypot(c.x - W.x, c.z - W.z);
-        if (!startD.has(id)) startD.set(id, d); most.set(id, Math.max(most.get(id) ?? 0, d));
+        if (!startD.has(id)) startD.set(id, d);
+        const previous = positions.get(id);
+        if (previous) most.set(id, (most.get(id) ?? 0) + Math.hypot(c.x - previous.x, c.z - previous.z));
+        positions.set(id, { x: c.x, z: c.z });
         steps++; if (!c.moving && !(c.hopNext !== undefined && g.clock.time < c.hopNext)) still++; // (a hopper's beat on the ground between bounds is its gait, not standing: Ed, 2026-10-29)
       }
     }, ON, seed);
     for (const [id, d0] of startD) { starts++; if (off(d0, most.get(id))) backed++; }
     if (!steps) { bad.push(`${k}: no lull`); continue; }
-    if (still / steps > (PACKS.kinds[k].retreat === "freeze" ? PACKS.prowl.freeze + 0.1 : 0.1)) bad.push(`${k}: standing ${(100 * still / steps).toFixed(0)}% of its lull`);
-    if (backed < starts * 0.6) bad.push(`${k}: ${backed} of ${starts} backed off`);
-    if (PACKS.kinds[k].retreat === "freeze" && still / steps < 0.03) bad.push(`${k}: no freeze (still ${(100 * still / steps).toFixed(0)}%)`);
+    const gait = waitingProfile({ species: k }), rest = gait.cadence > 0 && gait.restSpeed === 0 ? 1 - gait.duty : 0;
+    if (still / steps > rest + 0.1) bad.push(`${k}: stationary beyond its configured gait (${(100 * still / steps).toFixed(0)}%)`);
+    if (backed < starts * 0.6) bad.push(`${k}: only ${backed} of ${starts} moved through recovery`);
   }
   return bad;
 }

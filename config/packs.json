@@ -185,7 +185,7 @@
       "marten": {"radius":12.48,"period":7,"phaseSpread":0.18,"radialWave":0.25,"headingFollow":0,"trailGap":1.2,"laneSpread":0},
       "meerkat": {"radius":12.84,"period":7.42,"phaseSpread":1,"radialWave":0.25},
       "mole": {"radius":8,"period":10.9,"cadence":2,"duty":0.7,"restSpeed":0.1,"phaseSpread":0.3,"turn":0.7},
-      "moth": {"radius":7.36,"period":11.2},
+      "moth": {"radius":7.36,"period":11.2,"pathWeight":0.35},
       "newt": {"radius":7.6,"period":8.8},
       "otter": {"radius":11.76,"period":6.37,"phaseSpread":1,"radialWave":0.25},
       "owl": {"radius":12.12,"period":6.58,"phaseSpread":1,"radialWave":0.25},

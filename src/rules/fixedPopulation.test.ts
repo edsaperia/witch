@@ -8,6 +8,7 @@ import { loseSoundsystem, newGame, stepGame, STEP, type Game } from "./game";
 import { newBot } from "./bot";
 import { endParty } from "./partyOver";
 import { cellKey } from "./party";
+import { queueCombatHit } from "../test/combatHit";
 import { runAway } from "./orbit";
 import { runawaySpot } from "./runaway";
 import type { Creature, Level } from "./creatures";
@@ -83,7 +84,8 @@ describe("a night's creatures (Ed, 2026-10-28)", () => {
       return c;
     };
     const mine = place("hedgehog", 1, g.witch.x + 2, g.witch.z, true), before = new Set(g.creatures.filter(c => c.gone).map(c => c.id));
-    place("bear", 2, g.witch.x + 4, g.witch.z); place("bear", 2, g.witch.x + 3, g.witch.z + 2);
+    const attacker = place("bear", 2, g.witch.x + 4, g.witch.z); place("bear", 2, g.witch.x + 3, g.witch.z + 2);
+    queueCombatHit(g, attacker, mine);
     for (let i = 0; i < 60 / STEP && !mine.fleeUntil; i++) stepGame(g, { moveX: 0, moveZ: 0, toggleMode: false, zoom: 0 }, STEP);
     expect(mine.fleeUntil).toBeTruthy();
     expect(mine.leashed).toBe(false);

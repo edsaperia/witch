@@ -263,7 +263,7 @@ export function steer(c: Creature, P: Profile, x: SteerContext): boolean {
   }
   // (its style's place pulls it there whether or not its kind keeps slots)
   const styleGoal = x.spacing?.waiting ? slot : x.style;
-  if (styleGoal && !cut && !P.fight.some(b => b.kind === "slot")) { const sx = styleGoal.x - c.x, sz = styleGoal.z - c.z, sd = Math.hypot(sx, sz) || 1e-6; if (sd > 0.6 * S) add(sx / sd, sz / sd, 1.3 * Math.min(1, sd / (4 * S))); }
+  if (styleGoal && !cut && !P.fight.some(b => b.kind === "slot")) { const sx = styleGoal.x - c.x, sz = styleGoal.z - c.z, sd = Math.hypot(sx, sz) || 1e-6, weight = x.spacing?.waiting ? waitingProfile(c, x.spacing.data).pathWeight ?? 1.3 : 1.3; if (sd > 0.6 * S) add(sx / sd, sz / sd, weight * Math.min(1, sd / (4 * S))); }
   // A behaviour asking for more than full speed is held to it; then ease toward it at its acceleration.
   if (x.spacing?.waiting) {
     const force = waitingAvoidance(c, x.neighbours, x.spacing.tuning, x.spacing.data);

@@ -391,11 +391,11 @@ export function stepPacks(s: CombatState, w: CombatWorld, pw: PackWorld = {}, da
       } else if (st!.phase === "lull" && !st!.hers) {
         const k = Math.min(1, (time - st!.at) / Math.max(0.1, st!.until - st!.at));
         d.slot = styleOf(m.species, data) === "charger" && tg.kind === "witch" && !R2.still && !st!.lost ? wheelSlot(st!, R2, m, p, data, spacingOn(w.t) ? w.t : undefined) : retreatSlot(K.retreat, st!, R2, m, i, n, p, k, time);
-        d.still = !!R2.still; d.freeze = K.retreat === "freeze" && !st!.lost && k < data.prowl.freeze; // (a freeze holds only the lull's first part, then prowls: Ed, 2026-10-23)
+        d.still = !team && !!R2.still; d.freeze = !team && K.retreat === "freeze" && !st!.lost && k < data.prowl.freeze;
         // Out of sight in the trees or underground for the lull's middle, back down from another side (rules here, drawing: not drawn).
-        if ((R2.hide === true || (R2.hide === "half" && i % 2 === 0)) && !m.packHide && k > 0.3 && k < 0.5) { const a = st!.seed * Math.PI * 2 + Math.PI + (i / n) * Math.PI * 2, r = (R2.out * 0.8) * FIGHT.scale; m.packHide = { until: st!.until, tx: p.x + Math.cos(a) * r, tz: p.z + Math.sin(a) * r, at: time }; }
-        if (K.retreat === "shell" && !m.packShell) m.packShell = Math.min(st!.until, time + 2); // (the snail: into its shell, untouchable 2 s)
-        if (K.retreat === "hold" && (m.dug === undefined || time >= m.dug)) m.dug = st!.until; // (the badger: digs in and waits)
+        if (!team && (R2.hide === true || (R2.hide === "half" && i % 2 === 0)) && !m.packHide && k > 0.3 && k < 0.5) { const a = st!.seed * Math.PI * 2 + Math.PI + (i / n) * Math.PI * 2, r = (R2.out * 0.8) * FIGHT.scale; m.packHide = { until: st!.until, tx: p.x + Math.cos(a) * r, tz: p.z + Math.sin(a) * r, at: time }; }
+        if (!team && K.retreat === "shell" && !m.packShell) m.packShell = Math.min(st!.until, time + 2);
+        if (!team && K.retreat === "hold" && (m.dug === undefined || time >= m.dug)) m.dug = st!.until;
       } else if (st!.phase === "combo") {
         const struck = st!.struck.includes(m.id), feinting = st!.feintBy === m.id && time < (st!.feintUntil ?? 0);
         const turn = calling || (role === "lunger" ? time >= (st!.feintUntil ?? -Infinity) : (role === "shooter" || role === "special") && st!.step >= 1);
@@ -488,6 +488,9 @@ function special(s: CombatState, w: CombatWorld, pw: PackWorld, st: PackState, K
   const by = byId !== undefined ? w.creatures[byId] : members[0], side = sideOf(by);
   const team = spacingOn(w.t) ? teamOf(s, by.id) : undefined;
   if (spacingOn(w.t) && (!team || roles.get(by.id) !== "special" || team.used.includes(by.id))) return;
+  // Admission waits for the current movement/action to release ownership. In
+  // particular, replacing a waiting hop with a leap would leave two live routes.
+  if (team && (by.hop || by.leap || by.burrow || by.charge || strikingNow(by))) return;
   if (team) { team.used.push(by.id); young = by.level === 1; }
   const scale = young ? data.young.special : 1;
   const healthy = members.filter(m => roles.get(m.id) !== "hurt");

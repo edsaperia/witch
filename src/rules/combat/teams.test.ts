@@ -3,9 +3,19 @@ import { chooseTeamRoles, stepTeams, teamOf } from "./teams";
 import { PACKS } from "./packs";
 import { newCombat, type CombatWorld } from "../combat";
 import type { Creature } from "../creatures";
+import { withCombatRoles } from "../../test/combatRoles";
+import type { PackState } from "./packs";
 
 const animal = (id: number, species = "fox", level = 2) => ({ id, species, level, x: 0, z: 0, fight: { target: { kind: "witch", id: 0 } } } as Creature);
 describe("mixed combat teams", () => {
+  it("waits for another finite opportunity when the selected capability is cooling down", withCombatRoles({ fox: "special" }, () => {
+    const c = animal(0), state = newCombat(), world = { active: [c], time: 1, witches: [{ id: 0, x: 0, z: 0 }] } as CombatWorld;
+    state.packs = new Map([["cooling", { members: [0], specialReadyAt: 1000 } as PackState]]);
+    stepTeams(state, world, PACKS, () => false);
+    const team = teamOf(state, 0)!;
+    expect(team.roles[0]).toBe("hold"); expect(team.phase).toBe("lull");
+    expect(Number.isFinite(team.nextAt)).toBe(true); expect(team.nextAt).toBeGreaterThan(world.time);
+  }));
   it.each(["fox", "ram"])("lets a lone %s choose each role over successive rounds", species => {
     const roles = new Set(Array.from({ length: 100 }, (_, round) => chooseTeamRoles([animal(1, species)], 123, round, PACKS)[1]));
     expect(roles).toEqual(new Set(["lunger", "shooter", "special"]));

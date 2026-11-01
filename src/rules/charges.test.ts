@@ -1,5 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { setCombatRoles } from "../test/combatRoles";
+import { FIGHT, profileOf, startCharge, stepLeap } from "./movement";
 import { type Creature, type Level } from "./creatures";
 import { newGame, stepGame, STEP, type Controls, type Game } from "./game";
 import { TUNING, withTuning, type Tuning } from "./tuning";
@@ -68,6 +69,14 @@ describe("charges and leaps go further (Ed, 2026-10-06)", () => {
   it("hurts whoever it touches on the way, once each: a party animal in its lane, and her once a charge", () => {
     const t = TUNING, g = quiet(t), boar = pick(g, "boar", 2, 25, 0), mate = pick(g, "hare", 1, 8, 0.5, true), W = g.witches[0], hp0 = W.health.hp;
     mate.anchorX = mate.x; mate.anchorZ = mate.z;
+    // A contact fixture fixes the intended lane and holds its bystander still;
+    // the real committed attack, collision and damage paths remain in use.
+    mate.stunUntil = g.clock.time + 20;
+    g.leash.stack = g.leash.stack.filter(id => id !== mate.id);
+    g.leash.placed.push({ id: mate.id, x: mate.x, z: mate.z, at: g.clock.time });
+    boar.hunting = 0;
+    boar.fight = { target: { kind: "witch", id: 0 }, readyAt: 0, windupUntil: 0, aimX: W.body.x, aimZ: W.body.z, seenAt: -10 };
+    startCharge(boar, profileOf("boar")!.move!, W.body.x, W.body.z, g.clock.time);
     // (a pack's charge comes after its pack's tell, by when her hare may have run in at it, the lane missing her: so till its second)
     let hits = 0, most = 0, last = W.health.hp, charging = false, was = false;
     run(g, 10, () => {
@@ -170,7 +179,16 @@ describe("walking away is no escape (Ed, 2026-10-06: \"Charging creatures can ea
   }, 120000);
   it("leads a toad's leap to where she's going", () => {
     expect(TUNING.fight.leap.lead).toBeGreaterThan(0);
-    expect(escape("toad", 20, "away")).toBe(true);
-    expect(escape("toad", 20, "away", withTuning({ fight: { ...TUNING.fight, leap: { ...TUNING.fight.leap, lead: 0 } } }))).toBe(false); // (landing where she was)
+    const before = { scale: FIGHT.scale, speed: FIGHT.speed, leap: FIGHT.leap };
+    try {
+      FIGHT.scale = TUNING.fight.scale; FIGHT.speed = TUNING.fight.speed; FIGHT.leap = TUNING.fight.leap;
+      const moving = { x: -20, z: 0, moveReadyAt: 0 } as Creature, unled = { ...moving };
+      const move = profileOf("toad")!.move!;
+      expect(stepLeap(moving, move, 0, 0, true, 0, 8, 0)).toBe("leapt");
+      FIGHT.leap = { ...FIGHT.leap, lead: 0 };
+      expect(stepLeap(unled, move, 0, 0, true, 0, 8, 0)).toBe("leapt");
+      expect(moving.leap!.tx - unled.leap!.tx).toBeCloseTo(8 * (moving.leap!.lands - moving.leap!.at) * TUNING.fight.leap.lead, 8);
+      expect(moving.leap!.tx).toBeGreaterThan(unled.leap!.tx);
+    } finally { Object.assign(FIGHT, before); }
   }, 120000);
 });
