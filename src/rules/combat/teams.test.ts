@@ -6,9 +6,23 @@ import type { Creature } from "../creatures";
 
 const animal = (id: number, species = "fox", level = 2) => ({ id, species, level, x: 0, z: 0, fight: { target: { kind: "witch", id: 0 } } } as Creature);
 describe("mixed combat teams", () => {
-  it("lets a lone capable animal choose each role over successive rounds", () => {
-    const roles = new Set(Array.from({ length: 100 }, (_, round) => chooseTeamRoles([animal(1)], 123, round, PACKS)[1]));
+  it.each(["fox", "ram"])("lets a lone %s choose each role over successive rounds", species => {
+    const roles = new Set(Array.from({ length: 100 }, (_, round) => chooseTeamRoles([animal(1, species)], 123, round, PACKS)[1]));
     expect(roles).toEqual(new Set(["lunger", "shooter", "special"]));
+  });
+  it("does not replace a committed intent at an encounter round boundary", () => {
+    const c = animal(0), state = newCombat(), world = { active: [c], time: 1, witches: [{ id: 0, x: 0, z: 0 }] } as CombatWorld;
+    stepTeams(state, world, PACKS, () => false);
+    const team = teamOf(state, 0)!, roles = { ...team.roles }, round = team.round;
+    world.time = 100;
+    stepTeams(state, world, PACKS, () => true);
+    expect(team.roles).toEqual(roles); expect(team.round).toBe(round);
+    stepTeams(state, world, PACKS, () => false);
+    team.used = [c.id]; world.time = team.nextAt + 1;
+    stepTeams(state, world, PACKS, () => false);
+    world.time = team.nextAt;
+    stepTeams(state, world, PACKS, () => false);
+    expect(team.round).toBe(round + 1); expect(team.nextAt).toBeGreaterThan(world.time);
   });
   it("shares role limits across species, filters unavailable specials and repeats deterministically", () => {
     const members = Array.from({ length: 12 }, (_, i) => animal(i, i % 2 ? "fox" : "hare", i % 3 ? 2 : 1));

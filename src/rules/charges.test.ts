@@ -1,4 +1,5 @@
-import { describe, expect, it } from "vitest";
+import { afterEach, beforeEach, describe, expect, it } from "vitest";
+import { setCombatRoles } from "../test/combatRoles";
 import { type Creature, type Level } from "./creatures";
 import { newGame, stepGame, STEP, type Controls, type Game } from "./game";
 import { TUNING, withTuning, type Tuning } from "./tuning";
@@ -7,6 +8,10 @@ import { TUNING, withTuning, type Tuning } from "./tuning";
 // the moment it feels like they always stop short. They should be damaging whenever they're touched
 // while in attack mode. Charging creatures should have much more momentum, travelling in wide arcs."
 const idle: Controls = { moveX: 0, moveZ: 0, toggleMode: false, zoom: 0, autoTalk: false };
+// Ed, 2026-11-01: a charge is the chosen melee, not every attack a ram/boar makes.
+let restoreRoles: () => void;
+beforeEach(() => { restoreRoles = setCombatRoles({ boar: "melee", stag: "melee", lynx: "melee", toad: "melee" }); });
+afterEach(() => restoreRoles());
 const D = TUNING.dodge!;
 /** The dodge changes off (Ed, 2026-10-08; tuning dodge): the heavies' homing run and committed strikes as before. */
 const NO_DODGE = withTuning({ dodge: { a: { ...D.a, on: false }, b: { ...D.b, on: false }, c: { ...D.c, on: false } } });

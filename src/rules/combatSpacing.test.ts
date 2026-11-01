@@ -35,7 +35,8 @@ describe("combat waiting spacing", () => {
     expect(drawnRadius(big, t, data)).toBe(drawnRadius(small, t, data) * 2);
     expect(drawnRadius({ ...big, level: 1 }, t, data)).toBeLessThan(drawnRadius(big, t, data));
     expect(drawnRadius(small, { ...t, pixelSize: 6 }, data)).toBe(drawnRadius(small, t, data));
-    expect(() => drawnRadius({ ...small, species: "unknown" }, t, data)).toThrow(/Missing calibrated/);
+    expect(drawnRadius({ ...small, species: "unknown" }, t, data)).toBeGreaterThan(0);
+    expect(() => drawnRadius({ ...small, species: "fox" }, t, data)).toThrow(/Missing calibrated/);
     expect(bodyGap(small, big, t, data)).toBe(drawnRadius(small, t, data) + drawnRadius(big, t, data) + data.clearance);
   });
   it("gives species distinct continuous goals through one numerical path calculation", () => {
@@ -120,6 +121,7 @@ describe("combat waiting spacing", () => {
     // This fixture measures waiting, not the newly restored engagement pursuit.
     // Hold the director in its tell while all attack cooldowns remain unready.
     for (const pack of state.packs?.values() ?? []) { pack.phase = "tell"; pack.until = 100; }
+    for (const team of state.waitingTeams?.values() ?? []) { team.phase = "tell"; team.nextAt = 100; }
     for (let i = 0; i < 60; i++) {
       world.time = i / 60;
       stepCombat(state, world);

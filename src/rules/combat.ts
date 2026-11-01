@@ -29,6 +29,7 @@ import { PACKS, stepPacks, packsOn, packKindOf, packAttack, packGate, markStrike
 import { chaseAt, limitTurn, momentumOf, noteWitches, witchWas } from "./momentum";
 import { SPACING, bodyGap, clearWaitingSlot, drawnRadius, hazardAvoidance, pathClearsHazard, spacingOn, waitingDrive, waitingProfile, waitingSlot, type WaitingHazard } from "./combatSpacing";
 import { teamOf } from "./combat/teams";
+import { advanceMotion } from "./locomotion";
 
 /** A species' own attack as a pack member's strike: a lunger's if it's close (a lunge, or an area round itself), a shooter's if it's
  *  from afar (moving and timed as its pack's shooters, reaching as far) and its pack's shot is the plain bolt, not one of its own (the
@@ -264,7 +265,7 @@ export function stepCombat(s: CombatState, w: CombatWorld, data: CombatData = CO
     if (c.gone) continue;
     // A leap under way flies on whatever holds it this step (a stun, a daze, its pack's turn): its arc goes by the time, so steps
     // missed would put it the rest of the way at once (Ed's playtest, 2026-10-29: "some animals seem to teleport"). It lands as ever.
-    if (c.leap && c.fight) { const L = c.leap, k = Math.min(1, (time - L.at) / Math.max(0.01, L.lands - L.at)); c.x = L.fx + (L.tx - L.fx) * k; c.z = L.fz + (L.tz - L.fz) * k; }
+    if (c.leap && c.fight) advanceMotion(c, { route: c.leap }, time, 0);
     const aloft = !!c.hop; advanceHop(c, time); // (a hopper's bound flies on by the time, whatever else holds it, landing this step or later: rules/movement.ts)
     // A flyer swooping that's no longer a wild one in a fight (invited, leashed, dazed, running off, asleep) glides down (rules/movement.ts).
     if (c.swoop && (!swoops(c) || !fighting(c) || w.asleep(c))) landSwoop(c, time);
@@ -388,7 +389,7 @@ export function stepCombat(s: CombatState, w: CombatWorld, data: CombatData = CO
       if (c.swoop) landSwoop(c, time); // (a flyer glides down)
       c.sprung = undefined; // (an ambusher lies in wait again)
       if (c.burrow) c.burrow = undefined; // (a burrower comes up)
-      if (c.leap) { const L = c.leap, k = Math.min(1, (time - L.at) / Math.max(0.01, L.lands - L.at)); c.x = L.fx + (L.tx - L.fx) * k; c.z = L.fz + (L.tz - L.fz) * k; if (k >= 1) c.leap = undefined; } // (a leaper comes down, the rest of its arc: not put there at once)
+      if (c.leap && advanceMotion(c, { route: c.leap }, time, 0) >= 1) c.leap = undefined; // (a leaper comes down, not put there at once)
       c.dug = undefined; c.brace = undefined; // (a digger comes up, a blocker lowers its tail)
       continue;
     }
@@ -449,7 +450,7 @@ export function stepCombat(s: CombatState, w: CombatWorld, data: CombatData = CO
       const v = Math.min(top, v0 + a * dt, Math.sqrt(Math.max(0, 2 * a * L.left + (12 * FIGHT.speed) ** 2))), step = Math.min(L.left, v * dt);
       L.v = v;
       if (f.target.kind === "creature" && !traitsOf(w.creatures[f.target.id]?.species ?? "", data).includes("flier")) { const hx = p.x - c.x, hz = p.z - c.z, hd = Math.hypot(hx, hz); if (hd > 1e-3) { L.dx = hx / hd; L.dz = hz / hd; L.left = Math.min(L.left, Math.max(0, hd - A.range * 0.5)); } }
-      c.x += L.dx * step; c.z += L.dz * step; L.left -= step; c.moving = true; c.walk += dt * 12; c.facing = L.dx >= 0 ? 1 : -1;
+      advanceMotion(c, { vx: L.dx * step / dt, vz: L.dz * step / dt }, time, dt); L.left -= step; c.moving = true; c.walk += dt * 12; c.facing = L.dx >= 0 ? 1 : -1;
       c.vx = L.dx * v; c.vz = L.dz * v;
       if (L.left <= 1e-6) { f.lunge = undefined; if (Math.hypot(p.x - c.x, p.z - c.z) <= A.range * widthOf(f.target) + p.r) { const observation = { source: c.id, attack: spell?.name ?? null, delivery: "melee", phase: "damage" as const }; land(w, s, c, f.target, atk.damage, A, c.x, c.z, observation); if (spell) meleeExtras(w, s, f.target, spell.spec, c.x, c.z, c, observation); } if (c.taunt && time < c.taunt.until && w.creatures[c.taunt.by]) f.target = { kind: "creature", id: c.taunt.by }; } // (taunted mid-lunge: its lunge done, it turns on the taunter)
       continue;
@@ -485,7 +486,7 @@ export function stepCombat(s: CombatState, w: CombatWorld, data: CombatData = CO
           const origin = mo && f.target.kind === "witch" ? chaseAt(s, f.target.id, time, mo) ?? p : p;
           const goal = clearWaitingSlot(c, safeWaitingGoal(movingGoal!(origin, want)), grid.near(c.x, c.z, spacingSearch), t);
           const profile = profileOf(c.species) ?? { accel: SPACING.fallbackAccel, fight: [{ kind: "arrive" as const, w: 1 }] };
-          steer(c, profile, { px: origin.x, pz: origin.z, pr: p.r, want: 0, range: 0, speed, time, dt, pack: null, neighbours: grid.near(c.x, c.z, spacingSearch), threats: s.shots, side: sideOf(c), ready: false, beat: 60 / t.beat.bpm, momentum: mo, style: goal, spacing: { tuning: t, data: SPACING, waiting: true } });
+          steer(c, profile, { px: origin.x, pz: origin.z, pr: p.r, want: 0, range: 0, speed, time, dt, pack: null, neighbours: grid.near(c.x, c.z, spacingSearch), threats: s.shots, side: sideOf(c), ready: false, beat: 60 / t.beat.bpm, momentum: mo, style: goal, lights: profile.fight.some(b => b.kind === "light") ? lightsNear(w, s, c, 40 * S) : undefined, spacing: { tuning: t, data: SPACING, waiting: true } });
           if (waitingDrive(c, time).airborne && f.target.kind === "witch" && !pd.state.hers) {
             // Launch in its already momentum-limited heading, toward a clear landing disc.
             const v = Math.hypot(c.vx ?? 0, c.vz ?? 0), length = hopOf(speed, c).length * S;
@@ -600,7 +601,7 @@ export function stepCombat(s: CombatState, w: CombatWorld, data: CombatData = CO
           if (P.move.strike) f.readyAt = Math.min(f.readyAt, time); // (the snake: it strikes as it springs)
         }
       }
-      if (P.move?.kind === "dig" && !pd) { // (in a pack: its cover and its hold instead)
+      if (P.move?.kind === "dig" && (!pd || c.dug !== undefined || pd.move === "melee" && packGate(pd))) {
         // The badger digs in when its target comes close: rooted, taking armour times the damage, biting
         // without a lunge at whatever's in reach; then it comes up and the move cools down.
         if (c.dug !== undefined && time < c.dug) {
@@ -622,11 +623,6 @@ export function stepCombat(s: CombatState, w: CombatWorld, data: CombatData = CO
           if (!threat && f.target.kind === "creature") { const o = w.creatures[f.target.id]; threat = !!o?.fight && o.fight.windupUntil > time && o.fight.target?.kind === "creature" && o.fight.target.id === c.id; }
           if (threat) { c.brace = time + (P.move.time ?? 1.2); s.events.push({ kind: "braced", x: c.x, z: c.z, at: time, id: c.id }); continue; }
         }
-      }
-      if (P.move?.kind === "trail" && c.moving && time >= (c.moveReadyAt ?? 0)) { // (in a pack too: its wall besides, rules/combat/packs.ts)
-        // The snail leaves slime as it goes: a patch every `every` seconds, slowing the other side, drying after `time`.
-        s.trails.push({ x: c.x, z: c.z, r: (P.move.radius ?? 2.5) * S, until: time + (P.move.time ?? 6), side: sideOf(c), slow: P.move.slow ?? 0.5, from: c.id });
-        c.moveReadyAt = time + (P.move.every ?? 0.5);
       }
       if (P.move?.kind === "flash" && time >= (c.moveReadyAt ?? 0) && d <= (P.move.radius ?? 10) * S) {
         // A flash: a pulse of light dazzling the other side round it (slowed a moment).
@@ -657,7 +653,7 @@ export function stepCombat(s: CombatState, w: CombatWorld, data: CombatData = CO
       // Its fight style's place while it waits its turn (packs.json _styles; Ed's playtest, 2026-10-29: "circling, flanking, more
       // dynamic"), a wild pack's melee member in the tell and the combo; or a friend's place round what it fights.
       const sty0 = pd && !pd.state.hers && f.target.kind === "witch" ? styleOf(c.species) : "steady"; // (at her: between creatures, as before)
-      const sty = pd && (pd.phase === "tell" || pd.phase === "combo" || (sty0 === "circler" && pd.phase === "approach")) ? sty0 : "steady"; // (a circler spirals in on its approach)
+      const sty = !spacing && pd && (pd.phase === "tell" || pd.phase === "combo" || (sty0 === "circler" && pd.phase === "approach")) ? sty0 : "steady"; // (legacy diagnostic baseline only)
       // (a shooter keeps its place and fires from it, at its own range; a melee one leaves it when its turn comes, and strikes)
       const shooter = pd?.move === "ranged", myTurn = !shooter && !!pd && packGate(pd) && free(f.target), keep = (r: number) => (shooter ? want : r);
       let place: { x: number; z: number } | null = null;
@@ -695,14 +691,14 @@ export function stepCombat(s: CombatState, w: CombatWorld, data: CombatData = CO
       }
       // (a hopper bounds there, or in toward her for its strike, a beat on the ground between; the last stretch, it runs in and
       // strikes as any)
-      if (sty0 === "hopper" && !(spacing && waiting)) {
+      if (!spacing && sty0 === "hopper") {
         if (c.hop) continue;
         const shoot = shooter && time >= f.readyAt && d <= A.range * 0.95; // (a shooter fires between bounds when it's ready: below)
         const g = shoot ? null : place ?? (Math.hypot(p.x - c.x, p.z - c.z) > want + YS.hopper.ring * S ? { x: p.x + ((c.x - p.x) / Math.max(1e-3, d)) * (want + YS.hopper.ring * S * 0.5), z: p.z + ((c.z - p.z) / Math.max(1e-3, d)) * (want + YS.hopper.ring * S * 0.5) } : null);
         if (g && Math.hypot(g.x - c.x, g.z - c.z) > 2 * S) { if (!startHop(c, g.x, g.z, time, hopOf(speed))) { c.moving = false; c.vx = 0; c.vz = 0; c.facing = p.x >= c.x ? 1 : -1; } continue; }
       }
       const may = steer(c, heavy ? heavyOf(c, P) : P, { px: herAt.x, pz: herAt.z, pr: p.r, want, range: A0.range, fire: A.range, speed: cutoff ? Math.max(run * burst, DC!.sprint * FIGHT.speed) : run * burst, time, dt, pack: pd ? tactic : pk, neighbours: grid.near(c.x, c.z, spacing ? spacingSearch : 12 * S), threats: s.shots, side: sideOf(c), ready: time >= f.readyAt, beat: 60 / t.beat.bpm, heading, lights, cutoff, arriveAt: DA && A.delivery === "melee" && f.target.kind === "witch" && !ownFrom ? A.range + p.r : undefined, momentum: chase, now: herAt === p ? undefined : p, style: place, ...(spacing ? { spacing: { tuning: t, data: SPACING, waiting } } : {}) });
-      if (spacing && waiting && waitingDrive(c, time).airborne && !may && place) {
+      if (spacing && waitingDrive(c, time).airborne && !may && !strikingNow(c)) {
         const v = Math.hypot(c.vx ?? 0, c.vz ?? 0), length = hopOf(speed, c).length * S;
         if (v > SPACING.epsilon) {
           const landing = { x: c.x + c.vx! / v * length, z: c.z + c.vz! / v * length };
@@ -747,9 +743,9 @@ export function stepCombat(s: CombatState, w: CombatWorld, data: CombatData = CO
       let nx = ((q.x - c.x) / qd) * surge, nz = ((q.z - c.z) / qd) * surge;
       if (ms && Math.hypot(c.vx ?? 0, c.vz ?? 0) > 0.5) [nx, nz] = limitTurn(c.vx ?? 0, c.vz ?? 0, nx, nz, ms, dt, FIGHT.momentum); // (slowing as it turns, as it does chasing)
       const nv = Math.hypot(nx, nz), step = Math.min(d - A.range - p.r, nv * dt), ux = nv > 1e-6 ? nx / nv : 0, uz = nv > 1e-6 ? nz / nv : 0;
-      c.x += ux * step; c.z += uz * step; c.vx = nx; c.vz = nz; c.moving = true; c.walk += dt * 8; if (Math.abs(ux) > 1e-6) c.facing = ux >= 0 ? 1 : -1;
+      advanceMotion(c, { vx: ux * step / dt, vz: uz * step / dt }, time, dt); c.vx = nx; c.vz = nz; c.moving = true; c.walk += dt * 8; if (Math.abs(ux) > 1e-6) c.facing = ux >= 0 ? 1 : -1;
     } else { const vx = c.vx ?? 0, vz = c.vz ?? 0, v = Math.hypot(vx, vz);
-      if (v > 0.05) { const nv = Math.max(0, v - ((40 * FIGHT.speed) / FIGHT.momentum) * dt); c.vx = (vx / v) * nv; c.vz = (vz / v) * nv; c.x += c.vx * dt; c.z += c.vz * dt; } else { c.vx = 0; c.vz = 0; }
+      if (v > 0.05) { const nv = Math.max(0, v - ((40 * FIGHT.speed) / FIGHT.momentum) * dt); advanceMotion(c, { vx: vx / v * nv, vz: vz / v * nv }, time, dt); } else { c.vx = 0; c.vz = 0; }
       c.moving = v > 1; }
     if (time < f.windupUntil) continue;
     f.windupUntil = 0; f.readyAt = time + A.cooldown;
@@ -801,6 +797,14 @@ export function stepCombat(s: CombatState, w: CombatWorld, data: CombatData = CO
         for (const [key, h] of s.sounds) if (h.hp > 0 && Math.hypot(h.x - c.x, h.z - c.z) <= R + h.radius) land(w, s, c, { kind: "sound", key }, dmg, A, c.x, c.z);
       }
     }
+  }
+  // Movement-dependent effects observe the completed motion, whatever intent
+  // produced it. Early returns from a waiting/attack phase cannot suppress them.
+  for (const c of w.active) {
+    const move = profileOf(c.species)?.move;
+    if (move?.kind !== "trail" || !c.fight?.target || !fighting(c) || !c.moving || time < (c.moveReadyAt ?? 0)) continue;
+    s.trails.push({ x: c.x, z: c.z, r: (move.radius ?? 2.5) * FIGHT.scale, until: time + (move.time ?? 6), side: sideOf(c), slow: move.slow ?? 0.5, from: c.id });
+    c.moveReadyAt = time + (move.every ?? 0.5);
   }
 }
 

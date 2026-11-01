@@ -4,6 +4,8 @@ import raw from "../../config/packs.json";
 import type { Creature } from "./creatures";
 import type { Tuning } from "./tuning";
 import { hash2 } from "./random";
+import { bodyRadius } from "./spacing";
+import { profileOf } from "./movement";
 export interface MotionProfile {
   radius: number; period: number; phaseSpread: number; radialWave: number; lobes: number; stretch: number;
   headingFollow: number; bearing: number; sweep: number; laneSpread: number; trailGap: number; sideGap: number;
@@ -22,7 +24,7 @@ export interface SpacingData {
   hopper: { out: number; length: number; time: number; height: number; pause: number };
   steady: { out: number; carrot: number };
   motion: { default: MotionProfile; species: Record<string, Partial<MotionProfile>> };
-  team: { roundTime: number; active: number; melee: number; ranged: number; special: number };
+  team: { roundTime: number; attackWindow: number; active: number; melee: number; ranged: number; special: number };
   preferences: { default: import("./combat/teams").RolePreferences; species: Record<string, Partial<import("./combat/teams").RolePreferences>> };
 }
 export const SPACING = raw.spacing as SpacingData;
@@ -62,6 +64,9 @@ export function pathClearsHazard(c: Creature, end: Point, h: WaitingHazard, t: T
 /** Conservative anatomical X/Z disc at the actual fitted drawing scale. Does not change damage/hit reach. */
 export function drawnRadius(c: Body, t: Tuning, data: SpacingData = SPACING): number {
   const pixels = data.body.radii[c.species]?.[c.level];
+  // Synthetic/extension creatures have no anatomical art to calibrate. They
+  // retain the existing body contract; real species still require calibration.
+  if (pixels === undefined && !profileOf(c.species)) return bodyRadius(c);
   if (!(pixels > 0) || !Number.isFinite(pixels)) throw Error(`Missing calibrated combat body: ${c.species}@${c.level}`);
   // Drawing m/px = pixelSize/(2*artPixelsPerMetre); fitted pixel support changes inversely with pixelSize.
   return pixels * data.body.pixelSize / (2 * t.artPixelsPerMetre) * (c.boss && !c.leashed ? t.wildLegends.scale : 1);

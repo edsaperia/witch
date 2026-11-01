@@ -234,7 +234,7 @@ export interface PackWorld {
 export function stepPacks(s: CombatState, w: CombatWorld, pw: PackWorld = {}, data: PacksData = PACKS): Map<number, Directive> {
   const time = w.time, out = new Map<number, Directive>(), states = (s.packs ??= new Map());
   const coordinated = spacingOn(w.t);
-  if (coordinated) stepTeams(s, w, data, strikingNow);
+  if (coordinated) stepTeams(s, w, data, c => strikingNow(c) || !!c.burrow);
   const groups = new Map<string, Creature[]>();
   for (const c of w.active) {
     const tg = c.fight?.target;
@@ -278,7 +278,7 @@ export function stepPacks(s: CombatState, w: CombatWorld, pw: PackWorld = {}, da
     };
     const near = healthy.length ? Math.min(...healthy.map(m => Math.hypot(m.x - p.x, m.z - p.z) - reachOf(m))) : Infinity;
     const enter = (ph: Phase, until = Infinity) => { st!.phase = ph; st!.at = time; st!.until = until; };
-    if (lostOne && !st.hers && (st.phase === "combo" || st.phase === "tell")) { st.lost = true; enter("lull", time + lullOf(K, members.length, young, data)); }
+    if (!team && lostOne && !st.hers && (st.phase === "combo" || st.phase === "tell")) { st.lost = true; enter("lull", time + lullOf(K, members.length, young, data)); }
     // The toad's cloud comes down where its thrower lands from its leap.
     if (st.cloudAt && time >= st.cloudAt.at) { const b = w.creatures[st.cloudAt.id]; st.cloudAt = undefined; if (b && !b.gone) cloud(s, w, pw, K, b, tg, young, data); }
     // The heron's sync: while it lasts, a blink of hers since it began brings `count` of the pack blinking in round where it put her.
@@ -298,16 +298,25 @@ export function stepPacks(s: CombatState, w: CombatWorld, pw: PackWorld = {}, da
         }
       }
     }
-    switch (st.phase) {
+    if (team) {
+      const newRound = st.combo !== team.round + 1, oldPhase = st.phase;
+      st.phase = team.phase; st.at = team.at; st.until = team.nextAt; st.step = 1;
+      if (newRound) { st.combo = team.round + 1; st.struck = []; st.specialDone = false; st.callUntil = undefined; st.feintUntil = undefined; st.feintBy = undefined; st.answered = undefined; st.split = undefined; st.lost = undefined; }
+      if (st.phase === "tell" && (newRound || oldPhase !== "tell")) for (const m of members) { m.packGlow = st.until; s.events.push({ kind: "packTell", x: m.x, z: m.z, at: time, id: m.id }); }
+      if (st.phase === "combo" && !st.specialDone && time >= st.specialReadyAt) {
+        special(s, w, pw, st, K, members, roles, tg, p, young, data);
+        st.specialDone = members.some(m => roles.get(m.id) === "special" && team.used.includes(m.id));
+      }
+    } else switch (st.phase) {
       case "approach": if (near <= data.limits.engage * FIGHT.scale) { enter("tell", time + R.tell); for (const m of members) { m.packGlow = time + R.tell; s.events.push({ kind: "packTell", x: m.x, z: m.z, at: time, id: m.id }); } } break;
       case "tell": if (time >= st.until) { enter("combo", time + R.timeout); st.combo++; st.feintUntil = undefined; st.feintBy = undefined; st.struck = []; st.step = 0; st.stepAt = time; st.specialDone = false; st.callUntil = undefined; st.answered = undefined; st.split = undefined; st.lost = undefined;
         // A feinting kind (the fox) feints first: the special member fakes the lunge's tell, then the lunger's real one lands.
         if (K.special === "feint" && time >= st.specialReadyAt) {
-          const by = [...roles].find(([id, r]) => r === "special" && !team?.used.includes(id))?.[0] ?? null;
+          const by = [...roles].find(([, r]) => r === "special")?.[0] ?? null;
           if (by !== null) {
-            const sp = data.specials.feint, f = w.creatures[by], isYoung = team ? f.level === 1 : young;
+            const sp = data.specials.feint, f = w.creatures[by], isYoung = young;
             st.feintBy = by; st.feintUntil = time + (sp.lead ?? 0.45) * (isYoung ? 1 / data.young.special : 1); st.specialReadyAt = time + sp.cooldown;
-            f.feintUntil = st.feintUntil; if (team) team.used.push(by);
+            f.feintUntil = st.feintUntil;
             s.events.push({ kind: "windup", x: f.x, z: f.z, at: time, id: by }); s.events.push({ kind: "packSpecial", x: f.x, z: f.z, at: time, id: by }); st.specialDone = true;
           }
         }
@@ -494,7 +503,10 @@ function special(s: CombatState, w: CombatWorld, pw: PackWorld, st: PackState, K
     }
     case "scatter": { const n = healthy.length; healthy.forEach((m, i) => { const a = st.seed * Math.PI * 2 + (i / Math.max(1, n)) * Math.PI * 2, r = Math.max(6 * S, (packAttack(m.species, m.level, "ranged", data)?.attack.range ?? 10) * 0.6) * (sp.ring ?? 1); if (m.fight && !m.fight.lunge && m.fight.windupUntil === 0) m.packHide = { until: time + T, tx: p.x + Math.cos(a) * r, tz: p.z + Math.sin(a) * r, at: time }; }); break; }
     case "call": st.callUntil = time + T; st.struck = []; break;
-    case "feint": break; // (it feints at the combo's start: stepPacks)
+    case "feint": {
+      if (team) { st.feintBy = by.id; st.feintUntil = time + (sp.lead ?? 0.45) / scale; by.feintUntil = st.feintUntil; s.events.push({ kind: "windup", x: by.x, z: by.z, at: time, id: by.id }); }
+      break;
+    }
     case "confusion": {
       if (tg.kind === "witch" && huntsWitch(side)) { const v = w.witches[tg.id]; if (v && healthy.some(m => Math.hypot(m.x - v.x, m.z - v.z) <= Rr)) pw.confuse?.(tg.id, time + T, ((sp.drift ?? 35) * Math.PI) / 180, !!sp.move); }
       else for (const o of w.active) if (o !== by && targetable(o) && foes(sideOf(o), side) && Math.hypot(o.x - by.x, o.z - by.z) <= Rr) o.slowUntil = Math.max(o.slowUntil ?? 0, time + T); // (hers on the wild: they're slowed)
