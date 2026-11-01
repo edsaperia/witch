@@ -121,9 +121,10 @@ export const PLANNER = ['tools/art-check/affected.mjs', 'tools/art-check/scope.m
  * task. A v1 result is reused only for a task whose v1 key, recomputed over this tree with those planner bytes, is
  * exactly the saved one: identical check, art and environment. Remove once v2 results cover the shared cache. */
 export const LEGACY_PLANNER = 'tools/art-check-legacy/affected-v1.mjs.txt';
+const LEGACY_FILES = { 'tools/art-check/affected.mjs': LEGACY_PLANNER, 'tools/art-check/checked-tree.mjs': 'tools/art-check-legacy/checked-tree-v1.mjs.txt' };
 function legacyKeys(api, root, disk, dispatcher, environment) {
-  if (!existsSync(join(root, LEGACY_PLANNER))) return {};
-  const planner = readFileSync(join(root, LEGACY_PLANNER)), own = f => f === 'tools/art-check/affected.mjs' ? planner : readFileSync(join(root, f));
+  if (!Object.values(LEGACY_FILES).every(f => existsSync(join(root, f)))) return {};
+  const planner = readFileSync(join(root, LEGACY_PLANNER)), own = f => LEGACY_FILES[f] ? readFileSync(join(root, LEGACY_FILES[f])) : readFileSync(join(root, f));
   const tree = { exists: f => f === DISPATCHER || disk.exists(f), read: f => f === DISPATCHER ? Buffer.from(dispatcher.source) : f === 'tools/art-check/affected.mjs' ? planner : disk.read(f) };
   const producers = ['art/check.mjs', 'art/headless.mjs', 'art/headless-blank.html', 'tools/art-check/affected.mjs', 'tools/artDependencies.ts', 'tools/artJobFingerprints.ts', 'tools/art-cache/load.mjs', 'package.json', 'package-lock.json', 'config/style.json', '.github/workflows/art-check.yml', 'config/tuning.json'];
   const map = api.artJobFingerprints(tree, { buildInputs: producers }, DISPATCHER);

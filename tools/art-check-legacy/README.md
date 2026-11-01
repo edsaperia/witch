@@ -5,3 +5,4 @@
 ## Also here
 
 - `affected-v1.mjs.txt`
+- `checked-tree-v1.mjs.txt`
