@@ -114,7 +114,7 @@ export class OcclusionProbes {
     if (!p) {
       p = this.pool.find(q => q.key === "" && !q.pending.length);
       if (!p) p = this.make();
-      p.key = key; p.shown = 1; p.answer = 1; p.heard = false;
+      p.key = key; p.shown = 1; p.answer = 1; p.veil = 0; p.heard = false;
       this.probeVersions.set(p, ++this.probeSerial);
       this.byKey.set(key, p);
     }

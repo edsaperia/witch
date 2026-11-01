@@ -1,0 +1,5 @@
+{
+  "reason": "Release 1101a = release 1031f (#1545 dodge echoes on by default; current bench scenes never dash) + #1574 stump/floor-decal draw order (ground renderOrder -1 on ordinary frames; #1574's own bench run showed no frame difference). No frame or rules difference is waived.",
+  "frames": {},
+  "rules": {}
+}

@@ -1,0 +1,9 @@
+# CI failure annotations: interrupted checkpoint
+
+Own branch `codex/ci-speed`, worktree `work/ci-speed`. Item 1 of parent1555 docs/plans/ci-speed.md only; paused by urgent canonical crash1823 assignment before validation or publication. Resume after urgent task resolved and canonical ownership confirmed.
+
+Implemented but NOT validated: tools/ci/annotations.cjs shared job-budget sink (20 details plus summary); report-command.cjs stream wrapper for art/smoke/config; additional Vitest reporter; config gate wrapper; bench mismatch annotations; CI/art workflow wiring. Existing check selection, statuses and artifact paths intended unchanged. JS syntax checks passed only. No typecheck/config gate/unit/browser/fullsuite/art/bench/smoke run yet. No timing or GitHub annotation acceptance claim.
+
+Required next steps: review wrapper diagnostics for named failures and crash fallback (music output, multiline config errors); test cross-command cap/escaping/summary/status/signal propagation and large logs, true Vitest failure and collection/hook errors with source assertion location, bench scene/pixel/bbox/rules messages and declared-change filtering; validate workflow invariants and artifact preservation. Ensure annotation infrastructure cannot falsely turn failures green. Inspect new helper header/inventory requirements and regenerate exact docs. Run lightweight nearby tests/typecheck/config gate under canonical laptop constraints; collect synthetic before/after overhead, then push a completed milestone with exact-head evidence. Current checkpoint is deliberately unready for merge.
+
+Parent PLAN1555#6547421589. Prior guest-wake1553 and treehouse1526 history stays with same owner; no own idle monitor. Later CI items2–5 remain in brief order; pause1551 items11–12 require separate concrete routing after annotation milestone.
