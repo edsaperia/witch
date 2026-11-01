@@ -256,7 +256,7 @@ jobs:
           cache: npm
       - run: npm ci
       - name: Reporting and checked-tree safety fixtures
-        run: node --test tools/ci/reporting.test.cjs tools/ci/pages-policy.test.cjs
+        run: node --test tools/ci/reporting.test.cjs tools/ci/pages-policy.test.cjs tools/ci/proofs.test.cjs
       - name: Relay protocol and admission tests
         run: npm --prefix server ci && npm --prefix server test
       - run: npm run typecheck
@@ -321,6 +321,80 @@ jobs:
       - build
       - deploy
     if: ${{ !cancelled() && needs.build.result == 'success' && (github.ref != 'refs/heads/main' || needs.deploy.result == 'success') }}
+  proofs:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    needs: [build]
+    # Headless correctness only; release/publish heads were already proven on their own PRs.
+    # Forks retain read-only permissions and never receive publication credentials.
+    if: ${{ !cancelled() && needs.build.result == 'success' && github.event_name == 'pull_request' && !startsWith(github.head_ref, 'claude/rel') && !contains(github.head_ref, 'release/') && github.head_ref != 'claude/publish-snapshot' && !startsWith(github.event.pull_request.title, 'Release:') && !startsWith(github.event.pull_request.title, 'Release check:') && !startsWith(github.event.pull_request.title, 'Publish:') }}
+    env:
+      PLAYWRIGHT_VERSION: 1.56.1
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - uses: actions/download-artifact@v4
+        with:
+          name: game-dist
+          path: dist
+      - uses: actions/checkout@v4
+        with:
+          ref: claude/prototype
+          path: proof-baseline
+      - name: Freeze baseline SHA once
+        id: baseline
+        run: echo "sha=$(git -C proof-baseline rev-parse HEAD)" >> "$GITHUB_OUTPUT"
+      - uses: actions/cache@v4
+        with:
+          path: ~/.cache/ms-playwright
+          key: playwright-${{ runner.os }}-${{ env.PLAYWRIGHT_VERSION }}
+      - run: npm install --prefix .pw --no-save --no-package-lock playwright@${{ env.PLAYWRIGHT_VERSION }}
+      - name: Install Chromium (bounded, one retry)
+        shell: bash
+        run: |
+          for try in 1 2; do
+            timeout 300 .pw/node_modules/.bin/playwright install --with-deps chromium && exit 0
+            echo "Chromium install attempt $try failed or exceeded 300 s"; sleep 5
+          done
+          exit 1
+      - uses: actions/cache/restore@v4
+        id: proof-cache
+        with:
+          path: |
+            proof-baseline/dist
+            proof-cache
+          key: proofs-v1-${{ runner.os }}-node22-pw${{ env.PLAYWRIGHT_VERSION }}-${{ steps.baseline.outputs.sha }}-${{ hashFiles('tools/ci/*proof*', 'tools/smoke/paused-world.cjs') }}
+      - name: Prepare immutable baseline (never rebuild candidate)
+        id: prepare-baseline
+        env:
+          PROOF_BASE_SHA: ${{ steps.baseline.outputs.sha }}
+        run: node tools/ci/build-proof-baseline.cjs
+      - name: Run every declared CI-safe proof
+        env:
+          NODE_PATH: ${{ github.workspace }}/.pw/node_modules
+          PROOF_BASE_SHA: ${{ steps.baseline.outputs.sha }}
+          PROOF_HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+        run: node tools/ci/run-proofs.cjs
+      - uses: actions/cache/save@v4
+        # Preserve a completed baseline even when the candidate fails. No restore prefixes.
+        if: ${{ always() && steps.prepare-baseline.outcome == 'success' && steps.proof-cache.outputs.cache-hit != 'true' && hashFiles('proof-cache/paused-world.json') != '' }}
+        with:
+          path: |
+            proof-baseline/dist
+            proof-cache
+          key: ${{ steps.proof-cache.outputs.cache-primary-key }}
+      - name: Keep proof evidence and timing
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: proof-results
+          path: proof-results
+          retention-days: 14
+          if-no-files-found: warn
   large-world:
     name: largest shipped world art
     runs-on: ubuntu-latest

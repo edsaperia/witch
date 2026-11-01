@@ -228,6 +228,13 @@ async function measure(browser, url, sha, candidate) {
     await hold('bestiary', 10000);
     await page.evaluate(() => window.witch.zooOverlay.close());
     await page.waitForFunction(t => window.witch.game.clock.time > t, (await snapshot()).time);
+  } catch (error) {
+    // Preserve the scene even when readiness/hold assertions fail before a pixel comparison.
+    const dir = path.resolve(process.env.PAUSE_PROOF_OUT || 'paused-world-proof', candidate ? 'candidate-failure' : 'baseline-failure');
+    await fs.mkdir(dir, { recursive: true });
+    await page.screenshot({ path: path.join(dir, 'page.png'), timeout: 10000 }).catch(() => {});
+    await fs.writeFile(path.join(dir, 'failure.json'), JSON.stringify({ sha, error: error.stack }, null, 2));
+    throw error;
   } finally { await page.close(); }
 }
 
@@ -235,6 +242,19 @@ async function measure(browser, url, sha, candidate) {
   const [base, baseSha, candidate, candidateSha] = process.argv.slice(2);
   assert.ok(base && baseSha && candidate && candidateSha, 'supply both immutable builds and expected SHAs');
   const browser = await playwright.chromium.launch({ args: ['--use-gl=angle', '--use-angle=swiftshader', '--enable-unsafe-swiftshader', '--ignore-gpu-blocklist'] });
-  try { await measure(browser, base, baseSha, false); await measure(browser, candidate, candidateSha, true); }
+  try {
+    // CI keys this successful measurement by immutable baseline SHA and proof/browser fingerprint.
+    const cache = process.env.PAUSE_BASELINE_RESULT;
+    let measured = false;
+    if (cache) {
+      try { measured = JSON.parse(await fs.readFile(cache, 'utf8')).sha === baseSha; }
+      catch (error) { if (error.code !== 'ENOENT') throw error; }
+    }
+    if (!measured) {
+      await measure(browser, base, baseSha, false);
+      if (cache) await fs.writeFile(cache, JSON.stringify({ sha: baseSha, measuredAt: new Date().toISOString() }));
+    } else console.log(JSON.stringify({ baseline: baseSha, cached: true }));
+    await measure(browser, candidate, candidateSha, true);
+  }
   finally { await browser.close(); }
 })().catch(error => { console.error(error); process.exitCode = 1; });

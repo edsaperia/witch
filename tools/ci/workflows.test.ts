@@ -5,6 +5,20 @@ import { parse } from "yaml";
 const workflow = (name: string) => parse(fs.readFileSync(`.github/workflows/${name}.yml`, "utf8"));
 const ci = workflow("ci"), jobs = ci.jobs;
 describe("shared CI game build", () => {
+  it("runs declared proofs on PR artifacts with a frozen cached baseline and smoke Chromium", () => {
+    const proof = jobs.proofs, steps = proof.steps;
+    expect(proof.needs).toEqual(["build"]);
+    expect(proof.if).toContain("github.event_name == 'pull_request'");
+    for (const excluded of ["claude/rel", "release/", "claude/publish-snapshot", "Release:", "Release check:", "Publish:"]) expect(proof.if).toContain(excluded);
+    expect(proof.env).toEqual(jobs.smoke.env);
+    expect(steps.find((s: any) => s.name === "Install Chromium (bounded, one retry)").run).toBe(jobs.smoke.steps.find((s: any) => s.name === "Install Chromium (bounded, one retry)").run);
+    expect(steps.find((s: any) => s.uses === "actions/download-artifact@v4").with).toEqual({ name: "game-dist", path: "dist" });
+    const cache = steps.find((s: any) => s.id === "proof-cache");
+    expect(cache.with.key).toContain("steps.baseline.outputs.sha");
+    expect(cache.with["restore-keys"]).toBeUndefined();
+    expect(steps.find((s: any) => s.uses === "actions/cache/save@v4").if).toContain("always()");
+    expect(steps.find((s: any) => s.name === "Keep proof evidence and timing").if).toBe("always()");
+  });
   it("checks config values and every maintained generated reference before building", () => {
     const step = jobs.build.steps.find((s: any) => /npm run build/.test(s.run ?? ""));
     expect(step.run).toBe("node tools/config/check.mjs && npm run build");
