@@ -1,0 +1,21 @@
+import { expect, it, vi } from "vitest";
+import * as THREE from "three";
+import type { View } from "./view";
+import type { Witch } from "../rules/game";
+import { remoteEquipment } from "./remoteEquipment";
+import { WITCH_GENOME } from "../../art/witchGenome.js";
+it("coalesces a pending gear picture, rejects stale output and releases current and late resources", async () => {
+  let finish!: (v: unknown) => void;
+  const oneOff = vi.fn(() => new Promise(resolve => { finish = resolve; })), scene = new THREE.Scene();
+  const view = { scene, mpp: .02, camera: new THREE.PerspectiveCamera(), assets: { style: {}, oneOff }, witchBatch: { mesh: { renderOrder: 10 } } } as unknown as View;
+  const W = { body: { facing: 1 }, spells: { parts: { tip: "a", chassis: null, exhaust: null } } } as unknown as Witch;
+  const gear = remoteEquipment(view), at = { x: 1, y: 2, z: 3, scale: 1 }, failed = vi.fn();
+  gear.update(W, WITCH_GENOME, at, true, failed); gear.update(W, WITCH_GENOME, at, true, failed); expect(oneOff).toHaveBeenCalledTimes(1);
+  W.spells.parts.tip = "b"; gear.update(W, WITCH_GENOME, at, true, failed);
+  const result = { housePiece: { px: new Uint8Array(4), w: 1, h: 1, ox: 0, oy: 0, marks: {} } };
+  finish(result); await vi.waitFor(() => { gear.update(W, WITCH_GENOME, at, true, failed); expect(oneOff).toHaveBeenCalledTimes(2); }); expect(scene.children).toHaveLength(0);
+  finish(result); await vi.waitFor(() => expect(scene.children).toHaveLength(1)); gear.update(W, WITCH_GENOME, at, true, failed);
+  expect(scene.children[0].visible).toBe(true); const mesh = scene.children[0] as THREE.Mesh<THREE.PlaneGeometry, THREE.MeshBasicMaterial>, dispose = vi.spyOn(mesh.material.map!, "dispose");
+  gear.hide(); expect(mesh.visible).toBe(false); gear.release(); gear.release(); expect(dispose).toHaveBeenCalledTimes(1); expect(scene.children).toHaveLength(0); expect(failed).not.toHaveBeenCalled();
+  const late = remoteEquipment(view); late.update(W, WITCH_GENOME, at, true, failed); late.release(); finish(result); await Promise.resolve(); expect(scene.children).toHaveLength(0);
+});

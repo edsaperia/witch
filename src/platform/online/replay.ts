@@ -51,10 +51,10 @@ export function replayGuest(start: ReplayStart, build: string, reuse?: Game, val
 }
 
 /** Only controls representable by the public wire contract may drive a replicated night. */
-export function replayHostStep(game: Game, inputs: readonly Controls[], dt: number, tick: number): ReplayFrame {
+export function replayHostStep(game: Game, inputs: readonly Controls[], dt: number, tick: number, advance: (game: Game, inputs: readonly Controls[], dt: number) => void = stepGame): ReplayFrame {
   const safe = inputs.map(wireControls);
   if (!Number.isSafeInteger(tick) || tick < 1 || !Number.isFinite(dt) || dt < 0 || dt > 0.25 || safe.length !== game.witches.length || safe.some(c => c === null)) throw new Error("Invalid online frame");
   const frame = { tick, dt, inputs: safe as Controls[] };
-  stepGame(game, frame.inputs, dt);
+  advance(game, frame.inputs, dt);
   return frame;
 }

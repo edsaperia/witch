@@ -1,6 +1,10 @@
-import { afterAll, beforeAll, describe, expect, it } from "vitest";
-import { endNight, startNight, type Page } from "./night";
-import { stepGame } from "../rules/game";
+import { afterAll, beforeAll, describe, expect, it, vi } from "vitest";
+import { endNight, presentedGame, startNight, type Page } from "./night";
+import * as leypulse from "../rules/leypulse";
+import { newGame, stepGame } from "../rules/game";
+import { TUNING } from "../rules/tuning";
+import { slotStorage } from "./saveSlots";
+import { mushroomStock, saveMushroomStock } from "./mushroomStock";
 import { restoreGame, snapshotGame } from "../rules/nightSnapshot";
 import { DECISION_LIST, knobAt, setKnob } from "../ui/decisions";
 import { installHooks, type HookDeps } from "./hooks";
@@ -29,6 +33,99 @@ afterAll(() => {
 const spec = (seed: number, island = "4") => ({ how: "boot" as const, island, seed, params: new URLSearchParams({ island, seed: String(seed), creator: "0" }) });
 
 describe("startNight (docs/plans/sail-without-reload.md B)", () => {
+  it("returns from a borrowed night without host knobs or generated-party state", async () => {
+    const page: Page = { night: null, build: "test", look: () => null };
+    const baseline = await startNight(page, spec(71));
+    const flash = DECISION_LIST.find(d => d.id === "legendFlash")!;
+    const ownFlash = knobAt(baseline.tuning, flash.apply.knob!), generated = baseline.tuning.partyObjects.generated;
+    const host = newGame(72, structuredClone(baseline.tuning));
+    setKnob(host.tuning, flash.apply.knob!, 0.123); host.tuning.partyObjects.generated = !generated;
+    await startNight(page, { ...spec(72), how: "bed", resume: host, borrowed: true });
+    endNight(page);
+    const home = await startNight(page, { ...spec(73), how: "bed" });
+    expect(knobAt(home.tuning, flash.apply.knob!)).toBe(ownFlash);
+    expect(home.tuning.partyObjects.generated).toBe(generated);
+    expect(knobAt(host.tuning, flash.apply.knob!)).toBe(0.123);
+    expect(host.tuning.partyObjects.generated).toBe(!generated);
+    endNight(page);
+  });
+  it("a borrowed visit returns home to the visitor's exact pre-visit stock bytes", async () => {
+    vi.useFakeTimers();
+    const bytes = new Map<string, string>(), listeners = new Map<string, Set<() => void>>();
+    vi.stubGlobal("window", { setInterval: globalThis.setInterval, clearInterval: globalThis.clearInterval,
+      addEventListener: (type: string, listener: () => void) => { if (!listeners.has(type)) listeners.set(type, new Set()); listeners.get(type)!.add(listener); },
+      removeEventListener: (type: string, listener: () => void) => { listeners.get(type)?.delete(listener); },
+    });
+    vi.stubGlobal("localStorage", { getItem: (key: string) => bytes.get(key) ?? null, setItem: (key: string, value: string) => bytes.set(key, value), removeItem: (key: string) => bytes.delete(key) });
+    const page: Page = { night: null, build: "test", look: () => null };
+    try {
+      const tuning = structuredClone(TUNING); tuning.map!.island = "home"; tuning.map!.islandAreas = 4;
+      const own = newGame(123, tuning); own.mushrooms.baskets.red = 2; own.mushrooms.carried[0] = ["blue"];
+      saveMushroomStock(own.mushrooms, 0); const stockBefore = slotStorage.getItem("witch.mushrooms");
+      slotStorage.setItem("witch.night", "visitor's interrupted night"); const before = [...bytes];
+      const borrowed = newGame(456, structuredClone(tuning)); borrowed.mushrooms.baskets.red = 99;
+      await startNight(page, { ...spec(456), world: 0, resume: borrowed, borrowed: true });
+      endNight(page); // hang up; the borrowed night is retained as page.last during ordinary home replacement
+      const home = await startNight(page, { ...spec(789), world: 0, how: "bed" });
+      expect(mushroomStock(home.game.mushrooms)).toEqual(mushroomStock(own.mushrooms));
+      await vi.advanceTimersByTimeAsync(5000); for (const listener of listeners.get("pagehide") ?? []) listener();
+      endNight(page); expect(slotStorage.getItem("witch.mushrooms")).toBe(stockBefore); expect([...bytes]).toEqual(before);
+    } finally { endNight(page); vi.unstubAllGlobals(); vi.useRealTimers(); }
+  });
+  it("a borrowed night never registers stock writes or changes visitor slot bytes through timer/pagehide/cleanup", async () => {
+    vi.useFakeTimers();
+    const bytes = new Map<string, string>(), listeners = new Map<string, Set<() => void>>();
+    const browserWindow = { setInterval: vi.fn(globalThis.setInterval), clearInterval: vi.fn(globalThis.clearInterval),
+      addEventListener: (type: string, listener: () => void) => { if (!listeners.has(type)) listeners.set(type, new Set()); listeners.get(type)!.add(listener); },
+      removeEventListener: (type: string, listener: () => void) => { listeners.get(type)?.delete(listener); },
+    };
+    vi.stubGlobal("window", browserWindow);
+    vi.stubGlobal("localStorage", { getItem: (key: string) => bytes.get(key) ?? null, setItem: (key: string, value: string) => bytes.set(key, value), removeItem: (key: string) => bytes.delete(key) });
+    const page: Page = { night: null, build: "test", look: () => null };
+    try {
+      slotStorage.setItem("witch.mushrooms", JSON.stringify({ 0: { baskets: { red: 2 }, carried: {} } }));
+      slotStorage.setItem("witch.night", "visitor's interrupted night"); slotStorage.setItem("witch.settings", "visitor's settings");
+      const before = [...bytes], tuning = structuredClone(TUNING); tuning.map!.island = "home"; tuning.map!.islandAreas = 4;
+      const borrowed = newGame(123, tuning); borrowed.mushrooms.baskets.red = 99;
+      await startNight(page, { ...spec(123), resume: borrowed, borrowed: true });
+      expect(browserWindow.setInterval).not.toHaveBeenCalled();
+      await vi.advanceTimersByTimeAsync(5000); for (const listener of listeners.get("pagehide") ?? []) listener();
+      endNight(page); expect([...bytes]).toEqual(before);
+    } finally { endNight(page); vi.unstubAllGlobals(); vi.useRealTimers(); }
+  });
+  it("presentation defaults keep the exact canonical render, HUD and simulation game", async () => {
+    const page: Page = { night: null, build: "test", look: () => null };
+    await startNight(page, spec(123));
+    const render = vi.fn(async () => {}), retarget = vi.fn();
+    page.view = { setGameSliced: render } as unknown as NonNullable<Page["view"]>;
+    page.freeze = { retarget } as unknown as NonNullable<Page["freeze"]>;
+    const night = await startNight(page, { ...spec(456), how: "bed" });
+    expect(presentedGame(page, night.game)).toBe(night.game); expect(render).toHaveBeenCalledWith(night.game);
+    expect(retarget).toHaveBeenCalledWith(night.game, 456);
+    const clock = vi.spyOn(leypulse, "clockSeconds");
+    try { night.hud.clock(); expect(clock).toHaveBeenCalledWith(night.game.party, night.game.clock.time); }
+    finally { clock.mockRestore(); endNight(page); }
+  });
+
+  it("presentation hooks route render/HUD reads while keeping Night.game and freeze canonical", async () => {
+    const page: Page = { night: null, build: "test", look: () => null };
+    await startNight(page, spec(123));
+    const render = vi.fn(async () => {}), retarget = vi.fn();
+    page.view = { setGameSliced: render } as unknown as NonNullable<Page["view"]>;
+    page.freeze = { retarget } as unknown as NonNullable<Page["freeze"]>;
+    let facade: ReturnType<typeof presentedGame>;
+    page.presentationGame = canonical => facade = { ...canonical, clock: { ...canonical.clock, time: 42 } };
+    const night = await startNight(page, { ...spec(456), how: "bed" }), before = snapshotGame(night.game);
+    expect(render).toHaveBeenCalledWith(facade!); expect(night.game).not.toBe(facade!);
+    expect(retarget).toHaveBeenCalledWith(night.game, 456);
+    const clock = vi.spyOn(leypulse, "clockSeconds");
+    try {
+      night.hud.clock(); expect(clock).toHaveBeenCalledWith(night.game.party, 42);
+      expect(snapshotGame(night.game)).toEqual(before);
+      page.presentationGame = undefined; clock.mockClear(); night.hud.clock();
+      expect(clock).toHaveBeenCalledWith(night.game.party, night.game.clock.time);
+    } finally { clock.mockRestore(); endNight(page); }
+  });
   it("resumes the saved rules and tuning without replaying the link's fresh-night switches", async () => {
     const original = await startNight({ night: null, build: "test", look: () => null }, spec(123, "home"));
     original.game.clock.time = original.game.herTime = 37;
