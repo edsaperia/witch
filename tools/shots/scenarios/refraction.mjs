@@ -40,9 +40,10 @@ export async function run({ page, loadStill, url, expectedSha, output, options }
       if (noise.count || !maskPixels) throw Error(`Creature case ${i} is noisy or lacks real opaque-body/plume overlap`);
     }
     const result = { expectedSha, driver: options.driver, driverSha: options.driverSha ?? null, measures, creatures,
+      maskInterpretation: { threshold: 24, kind: 'actor-removal contrast mask', opacityProven: false, criterion: 'Strict zero changed pixels remains unchanged; a contrast mask alone does not certify sprite opacity or depth coverage.' },
       guardZeroBodyPixels: measures.every(m => m.body.count === 0) && creatures.length > 0 && creatures.every(m => m.body.count === 0), limitation: 'Stable meaningful body-mask pixels only. Creature mask includes all actual creature geometry in plume interior. GPU/memory unmeasured.' };
     await fs.writeFile(path.join(output, 'guard-review.json'), JSON.stringify(result, null, 2));
-    if (!result.guardZeroBodyPixels) throw Error('Foreground guard still changes opaque witch pixels; guard-review.json contains exact counts');
+    if (!result.guardZeroBodyPixels) throw Error('Foreground guard still changes actor-difference-mask pixels; guard-review.json contains exact counts (opacity not established by the mask)');
     return result;
   } finally { await capture.release(); }
 }

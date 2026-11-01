@@ -1,0 +1,11 @@
+# Independent capture-source audit
+
+The previous measured harness remains6fea3540. This source-only follow-up does not relocate or reinterpret its historical evidence.
+
+Confirmed launch defects can be repaired independently of a capture slot. The frozen helper forced SwiftShader even when given an installed Chrome executable. The new explicit `rendererBackend` request defaults to the previous `swiftshader` flags; `d3d11` requires Windows and an explicit executable. The receipt names the requested backend and explicitly does not certify the actual renderer. Each hardware scenario must still record and validate its actual WebGL identity. No browser was launched to make this change.
+
+The helper also retained the console-error false-stop class already corrected by external drivers: an optional favicon request could stop a game capture. It now fulfils only `/favicon.ico` requests with204, keeps page errors and same-origin game asset failures fatal, and records other console messages without calling them game errors. Fake-browser/CPU tests cover classification and preserve the owned-process/deadline contract. Native input/browser-tree/CPU supervision remains an external operator obligation; this helper grants no slot.
+
+The refraction scenario now labels its threshold24 actor-removal mask accurately: it proves a composited contribution, not opacity. The existing mask algorithm, counts and strict zero-changed-pixel gate are unchanged. `mask-coverage.mjs` reports contrast histograms and selected saved RGB samples without inventing a coverage/opacity verdict. The actual saved crossing1 failure is still nine pixels/max11, with actor-removal contrast25. A threshold32 mask excluding them is a diagnostic negative control, never an accepted fix.
+
+Remaining compute: actual depth/source-cell readback on measured refraction038f2f74, and exact-head GPU/foreground validation of any later proven correction. DefaultOFF and release ownership remain canonical. Stargazing1573's offline reconstruction is complete at its stated precision; the unresolved visible gap still requires its separate single held contact frame. No independently proved product visual correction was found in this audit.

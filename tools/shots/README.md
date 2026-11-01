@@ -6,6 +6,10 @@
 
 Run one caller scenario in a fresh headless Chromium only after recorded canonical slot/FREE/idle/tab evidence; hard cap 270s.
 
+## `mask-coverage.mjs`
+
+Analyze saved actor-removal masks without inferring opacity or changing a capture's acceptance threshold.
+
 ## `pixels.mjs`
 
 Exact decoded screenshot comparisons, masks and review PNGs; no browser or extra package.
@@ -33,6 +37,7 @@ Shared still-frame API for a caller-owned allocated page: version, seeded/pinned
 ## Also here
 
 - `headless.test.ts`
+- `mask-coverage.test.ts`
 - `pixels.test.ts`
 - `push.test.ts`
 - `scenarios`
