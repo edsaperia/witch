@@ -5,7 +5,7 @@ import { parse } from "yaml";
 const workflow = (name: string) => parse(fs.readFileSync(`.github/workflows/${name}.yml`, "utf8"));
 const ci = workflow("ci"), jobs = ci.jobs;
 describe("shared CI game build", () => {
-  it("runs declared proofs on PR artifacts with a frozen cached baseline and smoke Chromium", () => {
+  it("runs candidate-only fast proofs on PR artifacts with smoke Chromium", () => {
     const proof = jobs.proofs, steps = proof.steps;
     expect(proof.needs).toEqual(["build"]);
     expect(proof.if).toContain("github.event_name == 'pull_request'");
