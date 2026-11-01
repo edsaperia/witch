@@ -81,12 +81,15 @@ describe("affected art checks", () => {
   it("bridges exact v1 results once, never across a changed art input", async () => {
     const { root, plan, edit } = await fixture(), cache = join(root, "v1cache"), current = readFileSync(join(root, "tools/art-check/affected.mjs"));
     // The v1 planner, run as it ran in CI: its own bytes at its own path.
+    const currentImport = readFileSync(join(root, "tools/art-check/checked-tree.mjs"));
     writeFileSync(join(root, "tools/art-check/affected.mjs"), readFileSync("tools/art-check-legacy/affected-v1.mjs.txt"));
+    writeFileSync(join(root, "tools/art-check/checked-tree.mjs"), readFileSync("tools/art-check-legacy/checked-tree-v1.mjs.txt"));
     const { pathToFileURL } = await import("node:url");
     const v1 = await import(pathToFileURL(join(root, "tools/art-check/affected.mjs")).href + "?v1");
     const old = await v1.plan(root, cache, {});
     for (const t of old.tasks) saveSuccess(cache, t.id, t.key);
     writeFileSync(join(root, "tools/art-check/affected.mjs"), current);
+    writeFileSync(join(root, "tools/art-check/checked-tree.mjs"), currentImport);
     const bridged: any = await plan(root, cache, {});
     expect(bridged.tasks.filter((t: any) => !t.cached)).toEqual([]);
     for (const t of bridged.tasks) expect(resultHit(cache, t.id, t.key)).toBe(true);
