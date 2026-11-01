@@ -14,6 +14,7 @@ export function visitLifecycle<Own>(options: VisitLifecycleOptions<Own>) {
   let preparedGame: Game | null = null, generation = 0;
   let preparing: Promise<void> = Promise.resolve(), synchronizing: Promise<void> = Promise.resolve(), returning: Promise<void> | null = null;
   return {
+    admission(game: Game): number | null { return active && !ending && game === preparedGame ? generation : null; },
     prepare(game: Game, signal: AbortSignal, advanced: () => void): Promise<void> {
       if (active) return Promise.reject(new Error("A visit is already being prepared."));
       preparedGame = game; generation++;
@@ -53,4 +54,12 @@ export function visitLifecycle<Own>(options: VisitLifecycleOptions<Own>) {
       return returning;
     },
   };
+}
+
+/** The page may handle a rejected current admission, but an old promise must not hang up a newer call. */
+export function synchronizeVisit(visit: { admission(game: Game): number | null; synchronized(game: Game): Promise<void> }, game: Game, failed: (error: unknown) => void): Promise<void> {
+  const admission = visit.admission(game);
+  return visit.synchronized(game).catch(error => {
+    if (admission !== null && visit.admission(game) === admission) failed(error);
+  });
 }

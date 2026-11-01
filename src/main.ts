@@ -18,7 +18,7 @@ import { telephoneNotice } from "./ui/telephone";
 import { guestArrival } from "./platform/online/guestArrival";
 import { guestAccess } from "./platform/online/guestAccess";
 import { visitSaves } from "./app/visitSaves";
-import { visitLifecycle } from "./app/visitLifecycle";
+import { visitLifecycle, synchronizeVisit } from "./app/visitLifecycle";
 import { visitUnlocks } from "./app/visitUnlocks";
 import { stationAuthority } from "./platform/online/stationAuthority";
 import { remoteWitchAppearance } from "./platform/online/remoteAppearance";
@@ -433,7 +433,7 @@ const phone = telephoneStation({ enabled: phoneEnabled, callsEnabled: phoneCalls
     if (!ordinaryVisit) { traceVisit("save-boundary:unavailable"); return Promise.reject(new Error("This browser isn't ready to protect your saved night.")); }
     return ordinaryVisit.prepare(game, signal, advanced);
   },
-  synchronized: game => { void ordinaryVisit?.synchronized(game).catch(error => { logCaughtError(error, "visit confirmation"); phone.hangUp(); }); },
+  synchronized: game => { if (ordinaryVisit) void synchronizeVisit(ordinaryVisit, game, error => { logCaughtError(error, "visit confirmation"); phone.hangUp(); }); },
   ended: (role, game) => {
     if (role === "host") phone.hangUp(); // Close the role-bearing socket on departure, not only its game session.
     remoteArt.clear();
