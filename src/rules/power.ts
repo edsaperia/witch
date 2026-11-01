@@ -23,7 +23,7 @@ export const lanchester = (a: number, b: number) => Math.sqrt(Math.max(0, a * a 
 /** How many of each level, baby to legend. */
 export function levelCounts(list: Iterable<Creature>): [number, number, number, number] {
   const n: [number, number, number, number] = [0, 0, 0, 0];
-  for (const c of list) if (!c.gone) n[c.level]++;
+  for (const c of list) if (!c.gone && !c.homeGuard) n[c.level]++;
   return n;
 }
 

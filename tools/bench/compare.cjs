@@ -9,10 +9,11 @@
 //   node tools/bench/compare.cjs <before out> <after out> [--expect <file>] [--testing build,...] [--override]
 const fs = require("fs");
 const path = require("path");
+const annotations = require('../ci/annotations.cjs').createSink();
 let playwright;
 try { playwright = require("playwright"); } catch { playwright = require("/opt/node22/lib/node_modules/playwright"); }
 
-const { readExpect, judge } = require("./expect.cjs");
+const { readExpect, judge, startingDifferences } = require("./expect.cjs");
 const { checkComparable, compareFlags } = require("./comparable.cjs");
 const args = process.argv.slice(2), ei = args.indexOf("--expect"), expectFile = ei >= 0 ? args.splice(ei, 2)[1] : null;
 const flags = compareFlags(args); // (--testing <fields>, build by default; --override: compare runs whose keys differ anyway)
@@ -31,7 +32,7 @@ async function main() {
     if (!a || !b) continue;
     const c = checkComparable(a.key, b.key, { ...flags, what });
     console.log(c.text);
-    if (!c.ok) process.exit(2);
+    if (!c.ok) { annotations.error('bench comparability', c.text, { file: __filename }); process.exit(2); }
   }
   // The rules: same fingerprints at every checkpoint, every seed.
   const ra = read(A, "rules.json"), rb = read(B, "rules.json");
@@ -80,7 +81,7 @@ async function main() {
       }, { a: fs.readFileSync(pa).toString("base64"), b: fs.readFileSync(pb).toString("base64") });
       if (r.diff) fs.writeFileSync(path.join(B, `diff-${name}.png`), Buffer.from(r.diff, "base64"));
       if (r.n !== 0) miss(`frames:${name}`, `frames ${name}: ${r.n < 0 ? "a different size" : `${r.n} pixels differ (most by ${r.most}), see diff-${name}.png; within x ${r.box[0]}..${r.box[2]}, y ${r.box[1]}..${r.box[3]} of ${fa.viewport ?? "the picture"}; by a 12 by 6 grid:\n    ${r.grid.join("\n    ")}`}`);
-      if (JSON.stringify(sa.start ?? null) !== JSON.stringify(sb.start ?? null)) miss(null, `frames ${name}: unequal controlled starting boundaries (${JSON.stringify(sa.start)} vs ${JSON.stringify(sb.start)})`);
+      for (const difference of startingDifferences(name, sa.start, sb.start)) miss(difference.key, difference.text);
       // (the frames art landed on, frames.cjs `landed`: told apart, a picture that differs may be the art's timing, not the change)
       if (r.n !== 0 && sa.landed && sb.landed && JSON.stringify(sa.landed) !== JSON.stringify(sb.landed)) miss(`frames:${name}`, `frames ${name}: its art landed on other frames (before ${JSON.stringify(sa.landed)}, after ${JSON.stringify(sb.landed)}): a change in what's asked for, or the bench's art wait broken (frames.cjs frames)`);
       const w = s => s.work ? s.work.total : null, f = k => (w(sa) ? `${w(sa)[k]} → ${w(sb)[k]}` : "");
@@ -94,7 +95,7 @@ async function main() {
   if (expect) console.log(`Declared (${expectFile}): ${expect.reason}`);
   if (ok.length) console.log("DECLARED (differ as the PR says):\n" + ok.map(b => `- ${b.text}\n  why: ${b.why}`).join("\n"));
   if (unseen.length) console.log("Declared but unchanged (stale, or a change that didn't happen?): " + unseen.join(", "));
-  if (left.length) { console.log("MISMATCH" + (expect ? " (not declared)" : "") + ":\n" + left.map(b => "- " + b.text + (b.key ? ` [${b.key}]` : "")).join("\n")); process.exit(1); }
+  if (left.length) { for (const b of left) annotations.error('bench', `${b.key ?? 'unclassified'}: ${b.text}`, { file: __filename }); console.log("MISMATCH" + (expect ? " (not declared)" : "") + ":\n" + left.map(b => "- " + b.text + (b.key ? ` [${b.key}]` : "")).join("\n")); process.exit(1); }
   console.log(ok.length ? "match: only the declared differences" : "match: same state, same pictures");
 }
-main().catch(e => { console.error(e); process.exit(1); });
+main().catch(e => { annotations.error('bench crash', String(e), { file: __filename }); console.error(e); process.exit(1); });

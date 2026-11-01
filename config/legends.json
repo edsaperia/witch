@@ -63,7 +63,9 @@
       "ram",
       "ibex",
       "hedgehog",
-      "woodlouse"
+      "woodlouse",
+      "rhino",
+      "unicorn"
     ],
     "windup": 2.5,
     "laneShown": 60,

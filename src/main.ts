@@ -52,6 +52,7 @@ import { castable, hatSpell, setParts } from "./rules/spells";
 import { changeLoadout } from "./rules/hatSpells";
 import { HOUSE_ROOMS, addFloorHat, installEdLayout } from "./rules/houseRooms";
 import { setEdLayoutActive } from "./rules/housePlacement";
+import { usesEdLayout } from "./app/houseLayout";
 import { stationOf, tableOf } from "./rules/stations";
 import { itemById, shelfOf, shelvesAt, stationsShowing } from "./rules/wardrobe";
 import { FIND_KINDS, fillTrunk, findKind, loanFind, spawnFind, spawnSpot, type FindKindId } from "./rules/finds";
@@ -106,7 +107,7 @@ import { forgetArrival, type Arrival } from "./app/arrival";
 import { shotParams } from "./app/shot";
 import type { FlightEnd } from "./render/chart/seaChart";
 import { restoreGame } from "./rules/nightSnapshot";
-import { browserNightStore, captureNight, nightHasStarted, NightAutosave, savedNight, savesEnabled, type SavedNight, type NightStore } from "./app/nightSave";
+import { browserNightStore, captureNight, nightHasStarted, NightAutosave, savedNight, savedNightResumeLink, nightLinkConflicts, savesEnabled, type SavedNight, type NightStore } from "./app/nightSave";
 import { Breadcrumbs, browserCommentStore, captureComment, CommentBook, parseCommentFile } from "./app/playtestComments";
 import { LOG_EXPANDED_BYTES } from "./platform/logCodec";
 import { observePlaytestErrors, logCaughtError } from "./platform/playtestLog";
@@ -123,8 +124,8 @@ const BUILD = typeof __BUILD__ === "string" ? __BUILD__ : "dev";
 performance.mark("witch:main"); // (the load's steps, for timing the arrival: witch:main, :game, :view, :ready; app/arrive.ts :landed)
 prewarmArtWorkers(); // (the art workers load their code while the night is made: render/assets.ts)
 const params = new URLSearchParams(location.search);
-setEdLayoutActive(params.get("layout") === "ed");
-installEdLayout(params.get("layout") === "ed");
+setEdLayoutActive(usesEdLayout(params));
+installEdLayout(usesEdLayout(params));
 /** ?mistgate=0 (a builder's, the loading mist: render/loadingMist.ts): the island counted ready (g.islandReady) without waiting
  *  for its art (nothing in the house waits on it since the oak; with ?artdelay=<s>, slowly), to see the mist roll away. */
 const mistGateOff = params.get("mistgate") === "0";
@@ -140,8 +141,8 @@ if (savesEnabled(bootLink, navigator.webdriver)) {
     const value = await source.read(), saved = savedNight(value, BUILD, bootLink);
     if (saved) {
       try {
-        setEdLayoutActive(new URLSearchParams(saved.params).get("layout") === "ed");
-        installEdLayout(new URLSearchParams(saved.params).get("layout") === "ed");
+        setEdLayoutActive(usesEdLayout(new URLSearchParams(saved.params)));
+        installEdLayout(usesEdLayout(new URLSearchParams(saved.params)));
         const restored = restoreGame(saved.game);
         restoreSettingsBase(restored.tuning, saved.settingsBase);
         resumeGame = restored; resumeSave = saved;
@@ -154,7 +155,18 @@ if (savesEnabled(bootLink, navigator.webdriver)) {
         document.getElementById("arrive-landing")?.remove();
         history.replaceState(null, "", "?" + params.toString() + location.hash);
       } catch (error) { nightStore = null; logCaughtError(error, "save slot: saved night kept after restore failure"); nightSaveNotice("Your saved night could not be restored. It has been kept; this new night will not replace it."); }
-    } else if (value) { nightStore = null; logCaughtError(new Error("Incompatible format or explicit link"), "save slot: saved night kept"); nightSaveNotice("This saved night has another format, island or layout. It has been kept; this new night will not replace it."); }
+    } else if (value) {
+      nightStore = null;
+      const kept = savedNight(value, BUILD, new URLSearchParams());
+      if (kept) {
+        const conflicts = nightLinkConflicts(kept, bootLink);
+        logCaughtError(new Error(`Explicit link differs from saved night: ${conflicts.join(", ")}`), "save slot: saved night kept");
+        nightSaveNotice("This link opens a different night from your saved night. Your save has been kept; this new night will not replace it.", savedNightResumeLink(kept, location.pathname));
+      } else {
+        logCaughtError(new Error("Incompatible saved-night format"), "save slot: saved night kept");
+        nightSaveNotice("This saved night has an incompatible format. It has been kept; this new night will not replace it.");
+      }
+    }
   } catch (error) { logCaughtError(error, "save slot: read night"); nightSaveNotice("Nights cannot be saved on this browser. Keep this page open to continue playing."); nightStore = null; }
 }
 // ?timing=1 (Ed, 2026-10-19): the sail's steps and the main thread's long tasks into the L log (app/timing.ts), kept for the tab.
@@ -707,13 +719,13 @@ freeze.onToggle = on => {
   pauseControls(on);
   musicLabPanel?.frozen(on);
   creator.frozen = on; // (paused in her room: its keys and clicks wait, Esc resumes; the sliders backed over its panel)
-  if (on) void newBuild.check();
+  if (on) void newBuild.check().then(() => pauseSliders?.paintNewBuild()); // (the pause panel's "Load latest version": playtest 31 Oct item 11)
   if (pauseSliders) { pauseSliders.show(on, creator.open); return; }
   if (!on || pauseLoading) return;
   pauseLoading = true;
   void import("./ui/decide").then(({ PauseSliders }) => {
     const report = () => import("./ui/visualReport").then(({ report }) => report(reportHost()));
-    pauseSliders = new PauseSliders({ mutate, saveComment, restoreComment, downloadReadableLog: () => { void N().playtest.download("text"); }, settings: () => settingsPage.show(), get tuning() { return N().game.tuning; }, get seed() { return N().game.seed; }, version: BUILD, live: knobLive, report, potionLab: () => { void openPotionLab(); }, musicLab: openMusicLab, audioTest: () => { window.open("audio-test/", "_blank", "noopener"); }, downloadLog: () => N().playtest.download(), unlockAll: { get: () => unlockAll(), set: on => mutate("debug: unlock all", () => { setUnlockAll(on); if (on) stockMushroomBaskets(N().game); for (const W of N().game.witches) syncHatUnlock(W, on, params); creator.hats = N().game.spells.hats; }) }, defaults: { text: () => defaultsText(lookWithoutLoan((page.look() ?? creator.genome()) as Record<string, unknown> | null, loan), partsWithoutLoan(N().game.witches[0].spells.parts, loan)), tryIt: () => { window.open(newWitchLink(location.href), "_blank", "noopener"); }, shown: () => N().hud.debugOn || unlockAll() }, fightArena: () => { window.open(fightLink(newFightSeed()), "_blank", "noopener"); }, finds: () => findsPanel.toggle(true), findsShown: () => N().hud.debugOn || devFinds, quality: { lines: () => ladder.lines(), options: () => ladder.options(), current: () => ladder.current(), choose: v => { ladder.choose(v); ladder.apply(N().game.tuning); } } });
+    pauseSliders = new PauseSliders({ newBuild: { latest: () => newBuild.latest, load: () => location.reload() }, mutate, saveComment, restoreComment, downloadReadableLog: () => { void N().playtest.download("text"); }, settings: () => settingsPage.show(), get tuning() { return N().game.tuning; }, get seed() { return N().game.seed; }, version: BUILD, live: knobLive, report, potionLab: () => { void openPotionLab(); }, musicLab: openMusicLab, audioTest: () => { window.open("audio-test/", "_blank", "noopener"); }, downloadLog: () => N().playtest.download(), unlockAll: { get: () => unlockAll(), set: on => mutate("debug: unlock all", () => { setUnlockAll(on); if (on) stockMushroomBaskets(N().game); for (const W of N().game.witches) syncHatUnlock(W, on, params); creator.hats = N().game.spells.hats; }) }, defaults: { text: () => defaultsText(lookWithoutLoan((page.look() ?? creator.genome()) as Record<string, unknown> | null, loan), partsWithoutLoan(N().game.witches[0].spells.parts, loan)), tryIt: () => { window.open(newWitchLink(location.href), "_blank", "noopener"); }, shown: () => N().hud.debugOn || unlockAll() }, fightArena: () => { window.open(fightLink(newFightSeed()), "_blank", "noopener"); }, finds: () => findsPanel.toggle(true), findsShown: () => N().hud.debugOn || devFinds, quality: { lines: () => ladder.lines(), options: () => ladder.options(), current: () => ladder.current(), choose: v => { ladder.choose(v); ladder.apply(N().game.tuning); } } });
     requestAnimationFrame(() => pauseSliders!.show(freeze.frozen, creator.open)); // (a frame shut first, so it slides in)
   }, () => { // (its files replaced under it: Ed, 2026-10-14, "the menu does not appear")
     pauseLoading = false;
@@ -771,7 +783,9 @@ async function saveComment(text: string): Promise<string> {
   const comment = captureComment(n.game, text, { build: BUILD, params: n.params.toString(), look: page.look() as Record<string, unknown> | null, loan,
     flags: { chartRecorded: n.flags.chartRecorded, overRecorded: n.flags.overRecorded } }, repro.link(), Object.fromEntries(repro.changed()), breadcrumbs.recent(n.game), Date.now(), recordingFor(n.game, BUILD, captureRecording).export());
   const kept = await commentBook.add(comment);
-  const status = kept ? "Comment and saved moment kept in the playtest log." : "Comment kept on this page only: browser storage is unavailable. Download the log before closing.";
+  const state = commentBook.status();
+  let status = kept ? "Written comment kept in the playtest log." : `Comment kept on this page only: ${state.error ?? "browser storage is unavailable"}. Download the log before closing.`;
+  if (state.omitted) status += ` ${state.omitted} written report(s) have no saved moment or input replay; their text and context are kept in downloads. ${state.omissionReasons.join(" ")}`;
   return comment.recording?.complete ? status : `${status} Exact input replay is incomplete: ${comment.recording?.failure ?? "unavailable"}.`;
 }
 async function restoreComment(file: File): Promise<void> {
@@ -887,7 +901,8 @@ document.getElementById("copy-debug")?.addEventListener("click", e => {
   void navigator.clipboard?.writeText(text).then(() => { b.textContent = "copied"; }, () => { b.textContent = "copy failed: see console"; console.log(text); }).finally(() => setTimeout(() => { b.textContent = "copy debug info"; }, 1500));
 });
 N().playtest.debugInfo = () => ({ link: repro.link(), machine: repro.machine().map(l => l.slice(7)), changed: Object.fromEntries(repro.changed()) });
-N().playtest.comments = () => commentBook.all();
+N().playtest.comments = moments => commentBook.all(moments);
+N().playtest.commentStorage = () => commentBook.status();
 N().playtest.inputRecording = () => recordingFor(N().game, BUILD, captureRecording).export();
 N().playtest.debugText = () => repro.full();
 // The pause page's Report (ui/visualReport.ts): the frame drawn with each neutral pair, where they differ, the GPU, her place, the
@@ -1339,7 +1354,7 @@ function frameBody(now: number): void {
   if (game.win?.settled && !F.chartRecorded) { F.chartRecorded = true; nightOver(tuning.map?.island ?? "", { won: true, found: game.win.found }, undefined, tuning.map?.world ?? 0); if (warmOn) warmChart(chartWorld(), loadSave().found); } // (in the campaign's world only; home grows with what she's found: made again ahead)
   // The touch spell button only with a broom that has a spell to cast (rules/spells.ts castable).
   { const want = castable(game.spells) ? "" : "none"; if (spellButton && spellButton.style.display !== want) spellButton.style.display = want; }
-  newBuild.update(creator.open || freeze.frozen || menuGone); // (a newer build is out: in the bedroom and on the pause page)
+  newBuild.update(creator.open || (freeze.frozen && !pauseSliders) || menuGone); // (a newer build is out: in the bedroom, and on the pause page only until its panel, which has the button, loads)
   // The party's over (rules/partyOver.ts; Ed, 2026-10-06): no end screen and no pause, the afterparty; once it has eased in, the
   // night recorded on the sea chart as played (losing loses nothing).
   if (game.partyOver && game.partyOver.ease >= 1 && !F.overRecorded) {

@@ -8,6 +8,8 @@ import { deckOf } from '../rules/treehouse';
 import { MUSHROOM_COLOURS } from './mushroomArt';
 import { pixelTexture } from './houseFurniture';
 import { complement, subtractiveMaterial } from './mushroomGlow';
+import { brewingFrame } from './brewingFrame';
+import { edLayoutRequested } from '../rules/housePlacement';
 
 type Point = { x: number; y: number; z: number };
 type PixelMap = (x: number, z: number, dx: number, dy: number) => Point;
@@ -34,8 +36,8 @@ export class BrewingView {
     const g = v.game, state = g.mushrooms, layout = kitchenPlan();
     if (!state || !layout || g.cauldron) { this.group.visible = false; return; }
     this.group.visible = true;
-    const ppm = 1 / v.mpp, room = layout.room, width = Math.ceil(24 * ppm), height = Math.ceil(25 * ppm);
-    const ox = width / 2, oy = 17 * ppm;
+    const ppm = 1 / v.mpp, room = layout.room;
+    const { width, height, ox, oy } = brewingFrame(layout, ppm, pitch, edLayoutRequested());
     for (const p of [this.halo, this.back, this.front]) {
       if (p.canvas.width !== width || p.canvas.height !== height) { p.canvas.width = width; p.canvas.height = height; }
       const pos = p.mesh.geometry.getAttribute('position') as THREE.BufferAttribute;
@@ -44,7 +46,7 @@ export class BrewingView {
       }); pos.needsUpdate = true;
     }
     const selected = basketNear(g)?.type ?? '';
-    const key = `${Math.floor(g.herTime * 12)}:${width}:${pitch.toFixed(3)}:${selected}`;
+    const key = `${Math.floor(g.herTime * 12)}:${width}:${height}:${ox}:${oy}:${pitch.toFixed(3)}:${selected}`;
     if (this.lastFrame === key) return;
     this.lastFrame = key;
     const c = this.back.canvas.getContext('2d')!, f = this.front.canvas.getContext('2d')!, halo = this.halo.canvas.getContext('2d')!;

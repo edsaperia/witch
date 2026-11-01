@@ -9,7 +9,7 @@ import { channelAt } from "./palette";
 import type { GpuKind } from "./gpuLedger";
 import { HOUSE_ROOMS } from "../rules/houseRooms";
 import { houseArtLayout } from "../rules/housePlacement";
-import { witchSprites, type SoundsystemGenArt, type TreehouseArt, type WitchArt } from "./homeArt";
+import { witchSprites, type SoundsystemGenArt, type WitchArt } from "./homeArt";
 import { creatureFrame, walkGait, runJob, stumpId, type StumpArt, type StumpSpec, type ArtJob, type ArtResult, type BeachArt, type BeachEdgeArt, type LakeShoreArt, type DecorPiece, type PartyWitchArt, type PartyArt, type PathPieceArt, type RelicArt, type RelicLayouts, type SceneArt, type SpeakerArt, type TilePixels, type TypeLayout } from "./artBuild";
 import type { Style } from "./style";
 import { artCacheKey, cachePut, hashText, type CacheHint } from "./artCache";
@@ -117,7 +117,7 @@ export class AssetLibrary {
   soundsystems: Atlas = placeholderAtlas(16);
   /** The witch's treehouse: its base (frame 0) and top (frame 1, the crown: treetop mode), and
    *  anchors in its sprite's pixels: the trunk's foot, her seat on the terrace, its lights. */
-  treehouse: { atlas: Atlas; ent?: { deck: { x: number; y: number }; table: { x: number; y: number } }; /** The island's legend carrying the Ent (render/homeArt.ts). */ carrier?: TreehouseArt["carrier"]; base: { x: number; y: number }; seat: { x: number; y: number }; platter?: { x: number; y: number }; camera: { x: number; y: number }; hasFore: boolean; lights: { x: number; y: number; rgb: number[]; kind: string }[];
+  treehouse: { atlas: Atlas; ent?: { deck: { x: number; y: number }; table: { x: number; y: number } }; base: { x: number; y: number }; seat: { x: number; y: number }; platter?: { x: number; y: number }; camera: { x: number; y: number }; hasFore: boolean; lights: { x: number; y: number; rgb: number[]; kind: string }[];
     /** The DJ table's frames (2 on: the platters turning, the LEDs chasing), cropped to the box whose top-left is foreBox in the base's pixels. */
     foreFrames: number; foreBox: { x: number; y: number };
     /** The knockdown candles (Art.candleSprite: white then red from candleRed on, level × flicker, from frame candle0) and their row along the desk's front (its ends, in the base's pixels). */
@@ -469,10 +469,12 @@ export class AssetLibrary {
   /** Each species' genome hash (rigArt's page key), worked out once. */
   private genomeHashes = new Map<string, string>();
   rigArt(species: string, level: number, gear?: RigGear): RigArt | undefined { // gear: a party animal's, baked on (a page per species, level and gear)
-    const g = (Art.GENOME_BY_ID as Record<string, unknown>)[species];
-    if (!g) return undefined;
-    let h = this.genomeHashes.get(species);
-    if (h === undefined) this.genomeHashes.set(species, (h = Art.genomeHash(g) as string)); // (the genomes are fixed for the run: hashed once, not per creature per frame)
+    const base = (Art.GENOME_BY_ID as Record<string, unknown>)[species];
+    if (!base) return undefined;
+    const g = Art.selectedCreatureGenome(base, this.style, level);
+    const hashId = `${species}:${level}`;
+    let h = this.genomeHashes.get(hashId);
+    if (h === undefined) this.genomeHashes.set(hashId, (h = (g === base ? Art.genomeHash(base) : Art.genomeHash(base, this.style, level)) as string)); // selected genome and level, fixed for the run
     const k = `rig-${species}-${level}-${h}${gear ? "-" + rigGearKey(gear) : ""}`, a = this.rigs.get(k);
     if (a) { a.used = performance.now(); return a; }
     // Only the four-legged and the snakes have rig parts (art/genome/parts.js); a page that came back without any (a squat

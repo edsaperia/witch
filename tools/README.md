@@ -6,7 +6,8 @@ Scripts for building, checking and measuring the game, run from the repository r
 
 - [`arrive/`](arrive/README.md): 2 scripts — boot.cjs, time.cjs
 - [`art-cache/`](art-cache/README.md): 4 scripts — history.mjs, load.mjs, map.mjs, parity.mjs
-- [`art-check/`](art-check/README.md): 2 scripts — affected.mjs, scope.mjs
+- [`art-check/`](art-check/README.md): 3 scripts — affected.mjs, checked-tree.mjs, scope.mjs
+- [`art-check-legacy/`](art-check-legacy/README.md): 0 scripts
 - [`art-iterations/`](art-iterations/README.md): 2 scripts — evolutions.js, ladder.mjs
 - [`art-lab/`](art-lab/README.md): 1 script — build.mjs
 - [`art-style/`](art-style/README.md): 1 script — capture.cjs
@@ -15,10 +16,11 @@ Scripts for building, checking and measuring the game, run from the repository r
 - [`audio-test/`](audio-test/README.md): 4 scripts — build.mjs, main.ts, run.cjs, stall.ts
 - [`balance/`](balance/README.md): 41 scripts — bagstun.mjs, bottrace.mjs, charges.mjs, coach.mjs, coachwatch.mjs, dodgebot.mjs, endgame.mjs, expert-calibrate.mjs, expert-contract.mjs, expert-coverage-screen.mjs, expert-delivery-screen.mjs, expert-diagnostic-trace.mjs, expert-evaluate.mjs, expert-evaluation-core.mjs, expert-guarded-coverage-screen.mjs, expert-known-quest-screen.mjs, expert-progress.mjs, expert-quest-trace.mjs, expert-search-core.mjs, expert-search.mjs, expert-space.mjs, expert-throughput.mjs, fight.mjs, fightbot.mjs, leycross.mjs, lib.mjs, logistics.mjs, mapsize.mjs, opening.mjs, playthrough.mjs, pulsegaps.mjs, report-core.mjs, report-runtime.mjs, report.mjs, runbot.mjs, sim.mjs, states.mjs, stunhits.mjs, survey.mjs, sweep.mjs, waves.mjs
 - [`beach/`](beach/README.md): 9 scripts — approach.cjs, bearings.cjs, check.cjs, dolphins-sheet.mjs, dolphins.cjs, gaze-gif.cjs, kraken-sheet.mjs, map.mjs, spot.cjs
-- [`bench/`](bench/README.md): 45 scripts — alloc.mjs, alloc.ts, artmem.cjs, bootstall.cjs, comparable.cjs, compare.cjs, crown-cost.cjs, cull-walk.cjs, early-diff.cjs, expect.cjs, fingerprint.ts, frames.cjs, gpu.cjs, ground-compile-variants.cjs, ground-compile.mjs, ground-extra-intel.cjs, ground-extra-parity.mjs, ground-family-map.mjs, ground-family-parity.mjs, ground-parity-scene.mjs, ground.cjs, heapdiff.cjs, hitch.cjs, hold-simulation.cjs, house-cpu-functions.mjs, house-profile-summary.mjs, house-profile.mjs, house-route.cjs, late.cjs, map-prep-intel.mjs, neutral-hunt.cjs, ordinary.cjs, patterned-light-cost.cjs, perf.ts, rules.ts, run.mjs, spikes.ts, stalls.cjs, travel-budget.cjs, ts.mjs, viewalloc.cjs, worker-compute-entry.ts, worker-compute.mjs, worker-job-summary.cjs, worker-profile.cjs
+- [`bench/`](bench/README.md): 45 scripts — alloc.mjs, alloc.ts, artmem.cjs, bootstall.cjs, comparable.cjs, compare.cjs, crown-cost.cjs, cull-walk.cjs, early-diff.cjs, expect.cjs, fingerprint.ts, frames.cjs, gpu.cjs, ground-compile-variants.cjs, ground-compile.mjs, ground-extra-intel.cjs, ground-extra-parity.mjs, ground-family-map.mjs, ground-family-parity.mjs, ground-parity-scene.mjs, ground.cjs, heapdiff.cjs, hitch.cjs, hold-simulation.cjs, house-cpu-functions.mjs, house-profile-summary.mjs, house-profile.mjs, house-route.cjs, late.cjs, map-prep-intel.mjs, neutral-hunt.cjs, ordinary.cjs, perf.ts, rules.ts, run.mjs, scene-state.cjs, spikes.ts, stalls.cjs, travel-budget.cjs, ts.mjs, viewalloc.cjs, worker-compute-entry.ts, worker-compute.mjs, worker-job-summary.cjs, worker-profile.cjs
 - [`biomes/`](biomes/README.md): 2 scripts — sheet.mjs, shots.cjs
+- [`body-graph/`](body-graph/README.md): 7 scripts — age-size-audit.mjs, cat-fixtures.js, cats-preview.mjs, diagnostics.mjs, fit-contact-sheets.mjs, fit-size-audit.mjs, size-candidate-audit.mjs
 - [`chart/`](chart/README.md): 4 scripts — diff.cjs, emerge.cjs, open.cjs, profile.cjs
-- [`ci/`](ci/README.md): 4 scripts — run-unit.mjs, sleep-cell-repro.mjs, test-scope.mjs, world-audit.mjs
+- [`ci/`](ci/README.md): 10 scripts — annotations.cjs, pages-policy.cjs, report-command.cjs, run-unit.mjs, same-game.mjs, sleep-cell-repro.mjs, test-scope.mjs, unit-timings.mjs, vitest-reporter.mjs, world-audit.mjs
 - [`config/`](config/README.md): 7 scripts — check.mjs, format.mjs, generated.mjs, knob-docs.mjs, linkSwitches.mjs, schema.mjs, typegen.mjs
 - [`dj/`](dj/README.md): 5 scripts — booth-sheet.mjs, booth.cjs, candles-sheet.mjs, respawn.cjs, strip.mjs
 - [`docs/`](docs/README.md): 2 scripts — glossary.mjs, tables.mjs
@@ -55,18 +57,20 @@ Scripts for building, checking and measuring the game, run from the repository r
 - [`props/`](props/README.md): 1 script — ingame.cjs
 - [`qa/`](qa/README.md): 4 scripts — core.cjs, journey.cjs, leash-lake.cjs, win-strip.cjs
 - [`rainbow/`](rainbow/README.md): 1 script — shots.cjs
+- [`refraction/`](refraction/README.md): 6 scripts — capture-hold.cjs, capture-pair.cjs, depth-coverage.cjs, depth-readback.cjs, foreground.cjs, review-depth-coverage.mjs
 - [`relics/`](relics/README.md): 1 script — map.mjs
 - [`rig/`](rig/README.md): 4 scripts — demo.cjs, legends.cjs, perf.cjs, strip.mjs
 - [`robustness/`](robustness/README.md): 5 scripts — bundle-size.mjs, catch-audit.mjs, measure-log.mjs, measure-recorder.mjs, rules-layer.mjs
+- [`roster/`](roster/README.md): 10 scripts — assessments.mjs, audit.mjs, catalogue.mjs, check-model-pack.mjs, compare.mjs, fetch-previews.mjs, pixel-diff.js, poll.mjs, prepare-model.mjs, visual-review.mjs
 - [`sail/`](sail/README.md): 3 scripts — bed-shots.cjs, leak.cjs, swap.cjs
 - [`samples/`](samples/README.md): 3 scripts — build.mjs, check.mjs, credits.mjs
 - [`settings/`](settings/README.md): 1 script — shots.cjs
 - [`sfx/`](sfx/README.md): 9 scripts — audit.cjs, check.mjs, compare.mjs, live.cjs, mix.mjs, mix.ts, render.ts, run.mjs, run.ts
 - [`shadows/`](shadows/README.md): 4 scripts — prop-light-shots.cjs, scenery-shots.cjs, trunk-cover.cjs, trunk-walkup.cjs
-- [`shot/`](shot/README.md): 8 scripts — contrast.cjs, crown-gap.cjs, crown-look.cjs, crown-whole.cjs, motes.cjs, pixels.cjs, shot.cjs, wisps.cjs
+- [`shot/`](shot/README.md): 10 scripts — contrast.cjs, crown-gap.cjs, crown-look.cjs, crown-whole.cjs, motes.cjs, pixels.cjs, playtest-render.cjs, shot.cjs, stump-diagnostic.cjs, wisps.cjs
 - [`shots/`](shots/README.md): 1 script — push.mjs
 - [`sigils/`](sigils/README.md): 2 scripts — legendary-sheet.mjs, sheet.mjs
-- [`smoke/`](smoke/README.md): 42 scripts — alarm.cjs, bedroom.cjs, bounce-off.cjs, canopy-hole.cjs, cheer-shots.cjs, creator-menus.cjs, creator.cjs, decide.cjs, dream-way.cjs, dreams.cjs, effects-scene.cjs, flask-stack.cjs, hud.cjs, knockdown-bpm.cjs, large-world.cjs, legend-attack.cjs, legend-panel.cjs, legendary-sigil.cjs, legends-flasks.cjs, looks.cjs, magic-dodge.cjs, magic-letters.cjs, magic-sigils.cjs, music-lab-pause.cjs, orbit-combat.cjs, packs.cjs, party-join.cjs, party-life.cjs, partyspell.cjs, pause-on-top.cjs, places.cjs, quick.cjs, room-walk.cjs, smoke.cjs, spell-scroll.cjs, start-screen.cjs, swoop.cjs, trail-cooldown.cjs, trail.cjs, treetop-sigils.cjs, wild-left.cjs, witch-pool.cjs
+- [`smoke/`](smoke/README.md): 43 scripts — alarm.cjs, bedroom.cjs, bounce-off.cjs, canopy-hole.cjs, cheer-shots.cjs, creator-menus.cjs, creator.cjs, decide.cjs, dream-way.cjs, dreams.cjs, effects-scene.cjs, flask-stack.cjs, house-bed-start.cjs, hud.cjs, knockdown-bpm.cjs, large-world.cjs, legend-attack.cjs, legend-panel.cjs, legendary-sigil.cjs, legends-flasks.cjs, looks.cjs, magic-dodge.cjs, magic-letters.cjs, magic-sigils.cjs, music-lab-pause.cjs, orbit-combat.cjs, packs.cjs, party-join.cjs, party-life.cjs, partyspell.cjs, pause-on-top.cjs, places.cjs, quick.cjs, room-walk.cjs, smoke.cjs, spell-scroll.cjs, start-screen.cjs, swoop.cjs, trail-cooldown.cjs, trail.cjs, treetop-sigils.cjs, wild-left.cjs, witch-pool.cjs
 - [`soundsystem/`](soundsystem/README.md): 3 scripts — build-preview.mjs, ingame.cjs, sheet.mjs
 - [`stars/`](stars/README.md): 1 script — shots.cjs
 - [`stations/`](stations/README.md): 1 script — check.cjs

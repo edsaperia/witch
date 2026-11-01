@@ -814,8 +814,8 @@ describe("inviting and leashing", () => {
     return { c, w, t };
   };
 
-  it("invites after talking for the creature's talk time (babies 3 s, young 6 s, adults 12 s), not before: happy first, then (asked again) leashed (#87)", () => {
-    for (const level of [0, 1, 2] as const) {
+  it("invites after talking for the creature's talk time (young 6 s, adults 12 s), not before: happy first, then (asked again) leashed (#87)", () => {
+    for (const level of [1, 2] as const) {
       const all = fresh(), s = newLeash(), c = all.find(k => k.level === level)!, w = { x: c.x + 1, z: c.z };
       const need = TUNING.invite.talkTime[level];
       let t = 0;
@@ -831,7 +831,7 @@ describe("inviting and leashing", () => {
   });
 
   it("talks by herself, no button (Ed, v244); rising cancels it, and she never invites from the treetops", () => {
-    const all = fresh(), s = newLeash(), c = all.find(k => k.level === 0)!, w = { x: c.x + 1, z: c.z };
+    const all = fresh(), s = newLeash(), c = all.find(k => k.level === 1)!, w = { x: c.x + 1, z: c.z };
     stepLeash(s, all, none, w, true, 0, 0.1, TUNING);
     expect(s.talk?.id).toBe(c.id); // started on its own
     for (let t = 0.1; t < 2; t += 0.1) stepLeash(s, all, none, w, true, t, 0.1, TUNING);
@@ -840,7 +840,7 @@ describe("inviting and leashing", () => {
     expect(s.events.map(e => e.kind)).toContain("cancelled");
     for (let t = 2; t < 2.5; t += 0.1) stepLeash(s, all, none, w, true, t, 0.1, TUNING);
     expect(c.leashed).toBe(false); // picked up where it left off, not finished yet
-    const s2 = newLeash(), c2 = all.find(k => k.level === 0 && k !== c)!, w2 = { x: c2.x + 1, z: c2.z };
+    const s2 = newLeash(), c2 = all.find(k => k.level === 1 && k !== c)!, w2 = { x: c2.x + 1, z: c2.z };
     for (let t = 0; t < 20; t += 0.1) stepLeash(s2, all, none, w2, false, t, 0.1, TUNING);
     expect(c2.leashed).toBe(false); // never from the treetops
     const far = { x: c.x + TUNING.invite.cancelDistance + 30, z: c.z };
@@ -892,7 +892,7 @@ describe("inviting and leashing", () => {
   });
 
   it("with auto-talk off she talks only while Talk is held (Ed's playtest, 2026-10-04)", () => {
-    const all = fresh(), s = newLeash(), c = all.find(k => k.level === 0)!, w = { x: c.x + 1, z: c.z };
+    const all = fresh(), s = newLeash(), c = all.find(k => k.level === 1)!, w = { x: c.x + 1, z: c.z };
     for (let t = 0; t < 2; t += 0.1) stepLeash(s, all, { sigil: false, talk: false }, w, true, t, 0.1, TUNING);
     expect(s.talk).toBeNull();
     expect(s.progress.size).toBe(0);
@@ -920,7 +920,7 @@ describe("inviting and leashing", () => {
 
   it("stacks last in, first out: places the newest, picks up back onto the bottom (put down freely: leash.hex off)", () => {
     const all = fresh(), s = newLeash(), TUNING = withTuning({ leash: { ...TOP.leash, spacing: TOP.leash.pickRadius + 1, hex: { ...TOP.leash.hex!, size: 0 } } }); // (on the hex grid: hexSigils.test.ts; a spacing past pickRadius, so there's room between them to fizzle)
-    const a = inviteOne(all, s, 0), b = inviteOne(all, s, 0, a.t), c = inviteOne(all, s, 1, b.t);
+    const a = inviteOne(all, s, 1), b = inviteOne(all, s, 1, a.t), c = inviteOne(all, s, 1, b.t);
     expect(s.stack).toEqual([a.c.id, b.c.id, c.c.id]);
     const here = { x: 500, z: 500 };
     stepLeash(s, all, { sigil: true }, here, true, 100, 0.1, TUNING);
@@ -959,7 +959,7 @@ describe("inviting and leashing", () => {
   });
 
   it("is elastic: a creature walks to its new leash point, never jumps, then stays within the leash", () => {
-    const all = fresh(), s = newLeash(), { c, w } = inviteOne(all, s, 0);
+    const all = fresh(), s = newLeash(), { c, w } = inviteOne(all, s, 1);
     const to = { x: w.x + 60, z: w.z + 20 };
     stepLeash(s, all, { sigil: true }, to, true, 50, 0.1, TUNING);
     const p = s.placed.find(q => q.id === c.id)!, L = TUNING.leash.length, rest = { x: p.x, z: p.z - runeOffset(c, TUNING, 1) }; // (parked, it rests north of its sigil, by its size; the sigil where it snapped on the hex grid)

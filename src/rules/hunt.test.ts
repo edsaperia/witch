@@ -32,6 +32,19 @@ function landed(): { g: Game; key: string; natives: () => Creature[] } {
 }
 
 describe("the hunt (Ed, 2026-10-07: 'fight with me until either I die or they are invited')", () => {
+  it("holds while she is airborne over the hunted area, then resumes when she lands there", () => {
+    const { g, natives } = landed();
+    run(g, (W.on ? W.time : 0) + 1);
+    const hunters = natives().filter(c => c.hunting === 0);
+    expect(hunters.length).toBeGreaterThan(0);
+    g.witch = { ...g.witch, mode: "treetop", lift: 1 };
+    run(g, 0.2);
+    for (const c of hunters) expect(c.hunting).toBe(0);
+    g.witch = { ...g.witch, mode: "ground", lift: 0 };
+    run(g, 0.2);
+    expect(hunters.some(c => c.fight?.target?.kind === "witch" && c.fight.target.id === 0)).toBe(true);
+  }, 60000);
+
   it("once the watch is over, every awake young and adult of the area hunts her; never its babies, legend or circle baby", () => {
     const { g, key, natives } = landed();
     run(g, W.on ? W.time - 0.5 : 0.1);
@@ -43,7 +56,7 @@ describe("the hunt (Ed, 2026-10-07: 'fight with me until either I die or they ar
     for (const c of g.creatures) if (cellKey(c.cell) === key && (c.level === 0 || c.boss || c.circle)) expect(c.hunting).toBeUndefined();
   }, 120000);
 
-  it("she leaves their area: they lose interest and go home, as before (Ed: 'as they did before')", () => {
+  it("hunters follow her outside on foot, then all go home when airborne outside their area", () => {
     const { g, key, natives } = landed();
     run(g, (W.on ? W.time : 0) + 1);
     const hunters = natives().filter(c => c.hunting === 0);
@@ -54,15 +67,17 @@ describe("the hunt (Ed, 2026-10-07: 'fight with me until either I die or they ar
     let left = false, wasOut = false;
     run(g, 30, () => {
       // out of their area since the step before, no creature of it hunts her
-      if (wasOut) for (const c of hunters) expect(c.hunting, `${c.id} still hunting`).toBeUndefined();
+      if (wasOut) for (const c of hunters) if (holdsArea(c) && !c.asleep && !c.dazed) expect(c.hunting, `${c.id} still hunting on foot`).toBe(0);
       const w = g.witch;
       if (Math.hypot(w.x - start.x, w.z - start.z) < 220) g.witch = { ...w, x: w.x + (away.x / n) * 0.2, z: w.z + (away.z / n) * 0.2 };
       wasOut = cellKey(g.map.cellSafe(g.witch.x, g.witch.z).cell) !== key;
       left ||= wasOut;
     });
     expect(left, "she left the area").toBe(true);
-    const near = hunters.filter(c => !c.gone && c.state !== "happy" && Math.hypot(c.x - g.witch.x, c.z - g.witch.z) < 40);
-    expect(near.length, "they've turned back").toBe(0);
+    g.witch = { ...g.witch, mode: "treetop", lift: 1 };
+    run(g, 0.1);
+    for (const c of hunters) expect(c.hunting).toBeUndefined();
+    expect(g.wildEntry.has(key), "next visit must watch again").toBe(false);
   }, 180000);
 
   it("all of the area's own invited, its stone transforms", () => {

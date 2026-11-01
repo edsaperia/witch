@@ -19,15 +19,43 @@
    ]
   },
   {
-   "name": "layout",
+   "name": "refraction",
    "values": [
-    "ed"
+    "0",
+    "1"
    ],
-   "does": "Opt-in Ed house layout preview; the default house stays unchanged.",
+   "does": "Preview world-anchored campfire heat and party-cast pressure refraction; off by default, and disabled by reduced flashing or the magic shimmer quality rung.",
    "group": "debug",
    "since": "2026-10-31",
    "readIn": [
-    "src/main.ts"
+    "src/render/post.ts"
+   ]
+  },
+  {
+   "name": "dodgeEchoes",
+   "values": [
+    "0",
+    "1"
+   ],
+   "does": "Brief dodge silhouettes at actual departure and arrival poses (on by default; 0 switches them off).",
+   "group": "view",
+   "since": "2026-10-31",
+   "readIn": [
+    "src/render/dodgeEcho.ts"
+   ]
+  },
+  {
+   "name": "layout",
+   "values": [
+    "ed",
+    "classic"
+   ],
+   "does": "Ed's house arrangement is the default; classic selects the previous layout, and ed selects the default explicitly.",
+   "group": "debug",
+   "since": "2026-10-31",
+   "readIn": [
+    "src/app/houseLayout.ts",
+    "src/app/nightSave.ts"
    ]
   },
   {
@@ -373,19 +401,6 @@
    ]
   },
   {
-   "name": "carrier",
-   "values": [
-    "<kind>",
-    "none"
-   ],
-   "does": "That kind's legend carries the treehouse Ent, wherever she is; none, no one.",
-   "group": "view",
-   "since": "2026-10-12",
-   "readIn": [
-    "src/app/linkParams.ts"
-   ]
-  },
-  {
    "name": "cauldron",
    "values": [
     "0"
@@ -460,6 +475,31 @@
    "does": "Creatures drawn at this size against the style's (1 is the size before Ed's +50%).",
    "group": "view",
    "since": "2026-10-08",
+   "readIn": [
+    "src/app/viewParams.ts"
+   ]
+  },
+  {
+   "name": "creatureSizeCandidate",
+   "values": [
+    "0",
+    "1"
+   ],
+   "does": "Revised creature sizes are on by default; 0 compares the previous sizes.",
+   "group": "compare",
+   "since": "2026-10-31",
+   "readIn": [
+    "src/app/viewParams.ts"
+   ]
+  },
+  {
+   "name": "creatureModels",
+   "values": [
+    "<species>:<variant>,..."
+   ],
+   "does": "Selects available experimental creature records per species; omitted, current or unavailable variants keep the current art.",
+   "group": "compare",
+   "since": "2026-10-30",
    "readIn": [
     "src/app/viewParams.ts"
    ]
@@ -1785,6 +1825,15 @@
  ],
  "retiredIntro": "Switches that brought back an older look or behaviour, to compare against what replaced it, gone with their old code paths (2026-10-07, the coordinator's recommendation to Ed). A link that still names one plays as the default does.",
  "retired": [
+  {
+   "name": "carrier",
+   "values": [
+    "<kind>",
+    "none"
+   ],
+   "broughtBack": "a legend carrying the treehouse",
+   "stays": "removed: the island-kind legend guards home instead (Ed, 2026-10-31)"
+  },
   {
    "name": "tilt",
    "values": [

@@ -7,6 +7,8 @@ import { updatePotionCaption } from "../potionCaption";
 import { onRoomFloor } from "../../rules/houseRooms";
 import { broomWhere, stationOf } from "../../rules/stations";
 import type { View } from "../view";
+import { captureRefractionCast } from "./refraction";
+import { captureDodgeEchoes } from "./dodgeEchoes";
 import { PARTY_CAST } from "../../rules/party";
 import { STEP } from "../../rules/game";
 import { stunned } from "../../rules/knock";
@@ -158,7 +160,7 @@ export function drawWitch(v: View, time: number, ht: number, onTreehouse: (px: n
     const cam = deckSeat ? { ...deckSeat, y: deck!.h + 1.2 } : onTreehouse(T.camera.x, T.camera.y); // (the rules' heights: the camera stands it on the smoothed ground)
     const focus = { x: cam.x, y: cam.y, z: cam.z };
     if (!g.introFocus || g.introFocus.x !== focus.x || g.introFocus.y !== focus.y || g.introFocus.z !== focus.z) v.setIntroFocus(g, focus);
-    else g.introFocus = focus; // same values, same original per-frame assignment
+    else v.setIntroFocus(g, focus); // preserve the approved #1538 presentation/host callback boundary
     // (a touch nearer the camera than the house, along the ray to it, so she lands on the seat's own pixel: render/view/home.ts; on the
     // oak, as far along the ray as its floor under her seat is drawn, render/houseRooms.ts, and that touch more, so the floor's behind her)
     const dzSeat = deck?.house ? deck.seat.z - deck.z : 0;
@@ -183,7 +185,7 @@ export function drawWitch(v: View, time: number, ht: number, onTreehouse: (px: n
         const j = R ? v.assets.djGestureFrame(R.gesture, R.frame) : KO && irisOn && KO.riseUntil === undefined && ht >= atDecksFrom(KO, true) && ht < KO.inAt ? v.assets.djGestureFrame("scratch", 0) : v.assets.djFrame(beatAt(g.beat, time), casting, respawnLeft(g.witches[0].ko, ht) !== null); // (its fallback: scratching through a knockout's wait, rules/knockout.ts)
         wf = Dj.full[j]; djUpper = Dj.upper[j];
       }
-      if (typeof sp === "number" && sp !== v.castSeen) { v.castSeen = sp; v.spellFx.partyBurst(wx, wyy, wz, sp); v.magic.emit("party", "pillar", wx, wyy+5, wz, 3, 1.5, 2.4, 914); v.magic.emit("party", "dome", wx, wyy+2, wz, 3, 1, 1.8, 915); }
+      if (typeof sp === "number" && sp !== v.castSeen) { v.castSeen = sp; v.spellFx.partyBurst(wx, wyy, wz, sp); v.magic.emit("party", "pillar", wx, wyy+5, wz, 3, 1.5, 2.4, 914); v.magic.emit("party", "dome", wx, wyy+2, wz, 3, 1, 1.8, 915); captureRefractionCast(v, sp, wx, wyy, wz); }
     }
   }
   // Knocked out (Ed, 2026-10-04): she sits slumped on the ground while her stack lets go, then
@@ -281,6 +283,7 @@ export function drawWitch(v: View, time: number, ht: number, onTreehouse: (px: n
   const inHouse = !!(hat && deck?.house?.rooms && onRoomFloor(deck.house.rooms, Hat.down!.x, Hat.down!.z));
   if (hat && inHouse) { const [X, Y, Z] = v.herOffset.on ? letterAt(v.herOffset, hat.x, hat.y, hat.z, groundHeight) : [hat.x, hat.y + deck!.h, hat.z]; hat = { ...hat, x: X, y: Y, z: Z }; }
   v.bareBatch?.set(bare ? (hat ? [...her, { x: hat.x, y: hat.y + groundHeight(hat.x, hat.z), z: hat.z, frame: hatFrame!, flip: hat.flip }] : her) : []);
+  captureDodgeEchoes(v, ht, bare ? v.bareBatch : v.witchBatch, her, wsink, D);
   const lying = drawLeftHats(v);
   // The party's and the beach's witches' shadows, and a small one under her hat (gathering as it comes down).
   v.witchShadows = [...v.partyWitchView.shadows, ...v.beachView.shadows];

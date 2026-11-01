@@ -1,0 +1,6 @@
+{
+  "reason": "Approved creature age sizes and twenty roster redesigns change creature and rig/effect art; gameplay state stays unchanged.",
+  "frames": {
+    "wave-fight": "COORDINATOR 6523500300 accepted the 220 changed pixels at x0..31/y0..23 from artifact run 41058331074. Base/head entity positions and state, all captured light uniforms, and magic ground layers are identical. The only entity in the region is redesigned/resized wolf id 28 at level 2; changing batches are rig/effect sprite geometry. Boot and bedroom remain undeclared, and no rules-state difference is accepted."
+  }
+}

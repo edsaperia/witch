@@ -27,6 +27,7 @@ says what each note covers.
 
 ## [Balance](balance.md)
 
+- Written report retention
 - Compressed log bundles
 - Structured log records
 - Log recovery
@@ -229,6 +230,7 @@ says what each note covers.
 
 - House route profiling
 - Startup bundle baseline
+- Crash journal budget
 - Slow-frame summaries
 - Reused surface roughness (#1464, 2026-10-30):
 - Exact travel art profiles (2026-10-30, #1464):
@@ -312,6 +314,8 @@ says what each note covers.
 
 ## [The view](view.md)
 
+- Heat/refraction preview
+- Dodge echoes
 - Night and Heat Vision
 - Potion perception
 - Layered magic

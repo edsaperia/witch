@@ -16,7 +16,7 @@ import { monitorProgramLink, waitForPrograms, type ReadyProgram } from "./progra
 import { installShaderDrawGate, materialProgramsReady, type ShaderDrawStatus } from "./shaderDrawGate";
 import { LandingArtFade, lateLandingReady } from './landingReadiness';
 import { captureProgramUses, mapProgramUses } from "./programInventory";
-import { carrierOf, deckOf } from "../rules/treehouse";
+import { deckOf } from "../rules/treehouse";
 import { HOUSE_LAYER } from "./post";
 import { StationBackdrop } from "./stationBackdrop";
 import type { MapTable } from "./mapTable";
@@ -69,6 +69,8 @@ import { hsv2rgb } from "../../art/generator.js";
 import { Post } from "./post";
 import { GrassView } from "./grass";
 import { SpellFx } from "./spellfx";
+import { updateRefraction, resetRefraction } from "./view/refraction";
+import { dodgeEchoesFor, resetDodgeEchoes } from "./view/dodgeEchoes";
 import { TRAIL_DEFAULT, WitchTrail } from "./trail";
 import { newPartyOverLook, partyOff, partyOverEase, updatePartyOver } from "./partyOver";
 import { SWOOP_TRAIL_DEFAULT, SwoopTrails } from "./swoopTrails";
@@ -179,11 +181,10 @@ export interface ViewStats { berries: number; forestMs: number; forestMissing: n
 export const HAT_BESIDE = 0.9;
 export const HAT_INK = new THREE.Vector3(232 / 255, 180 / 255, 106 / 255); // (the HUD's one accent)
 
-/** Which treehouse an island's art draws: the house (art/ent.js HOUSE), the Ent holding the deck (with the island's legend carrying
- *  it, art/carrier.js), or the old treehouse, "home". */
+/** Which treehouse an island's art draws: the house (art/ent.js HOUSE), the Ent holding the deck, or the old treehouse, "home". */
 function treehouseArtId(game: Game): string {
-  const t = game.tuning, deck = deckOf(game.map, t), carrier = deck ? carrierOf(game.map, t) : null;
-  return deck ? `${deck.house ? "house" : "ent"}:${deck.h}:${deck.r}${carrier ? `:${carrier}` : ""}` : "home";
+  const t = game.tuning, deck = deckOf(game.map, t);
+  return deck ? `${deck.house ? "house" : "ent"}:${deck.h}:${deck.r}` : "home";
 }
 
 /** The deck's one warm lantern (over the map table): its colour, made once. */
@@ -578,6 +579,8 @@ export class View {
   speakerBatch: SpriteBatch | null = null;
   grass!: GrassView;
   spellFx = new SpellFx();
+  /** Opt-in world-pose echo preview, also exposed to the existing capture/debug tools. */
+  get dodgeEchoes() { return dodgeEchoesFor(this); }
   /** Her flight trail: a ribbon of glow in the colour of the area she's over (render/trail.ts). */
   private trail!: WitchTrail;
   private trailRgb = new THREE.Vector3();
@@ -1344,6 +1347,7 @@ export class View {
     // shadows, and its soundsystems' (their atlases the art's: freed once, by reseat).
     cancelRefresh(this); resetCreatureCaches(); forgetCandles(this);
     this.potionObservers.dispose(this);
+    resetDodgeEchoes(this);
     for (const b of this.typeBatches.values()) { this.scene.remove(...b.meshes); b.release(); }
     this.typeBatches.clear();
     for (const [k, b] of this.trunkShadowBatches) if (typeof k === "number") { this.scene.remove(...b.meshes); b.dispose(); this.trunkShadowBatches.delete(k); }
@@ -1384,6 +1388,7 @@ export class View {
     this.partyObjects.reset(); this.rig?.reset(); this.holograms.reset(); this.glades.reset(); this.wisps?.reset();
     this.clouds.reseed(game.seed); this.lightRings?.reseed(game.map.seed);
     this.fireworks.reset(); this.swoopTrails.reset(); this.spellFx.reset(); this.trail.newNight(); this.combatLight.reset(); this.occlusion.reset();
+    resetRefraction(this);
     this.assets.prefetchType(HOME_LOOK); // home's meadow floor (no trees ask for it)
   }
 
@@ -1865,6 +1870,7 @@ export class View {
     }
     this.lightRings?.update(this.camera, w.x, witchHeight(w, t) + this.rideOff, w.z, canopyShown(w), time);
     const hatTop = drawWitch(this, time, ht, onTreehouse);
+    updateRefraction(this, time);
     this.mushroomView.update(this);
     this.ground.prepareCoast(this.renderer, this.camera, this.scene);
     this.houseRooms?.update(this, onTreehouse, ht);

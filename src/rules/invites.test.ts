@@ -91,7 +91,7 @@ describe("the 💌 invite (issue #87)", () => {
     g.witch = { ...g.witch, seated: false, mode: "ground", lift: 0, x: tree.x - 6, z: tree.z, vx: 0, vz: 0 };
     W.health.hp = 1e6;
     const c = g.creatures.find(k => !k.gone && !k.leashed && !k.boss && !k.enraged && k.level < 3)!;
-    Object.assign(c, { level: 0, x: tree.x + 6, z: tree.z, tx: tree.x + 6, tz: tree.z, anchorX: tree.x + 6, anchorZ: tree.z, homeX: tree.x + 6, homeZ: tree.z, rest: 99, fight: undefined });
+    Object.assign(c, { level: 1, asleep: false, napUntil: undefined, wakeUntil: undefined, circle: undefined, x: tree.x + 6, z: tree.z, tx: tree.x + 6, tz: tree.z, anchorX: tree.x + 6, anchorZ: tree.z, homeX: tree.x + 6, homeZ: tree.z, rest: 99, fight: undefined });
     c.cell = g.map.cellSafe(c.x, c.z).cell as [number, number];
     g.byArea = null;
     let hits = 0;
