@@ -131,6 +131,7 @@ says what each note covers.
 
 ## [The treehouse and its house](house.md)
 
+- Telephone
 - Current brewing authority (Ed, 2026-10-31):
 - Mushrooms and brewing
 - Mushroom kitchen artwork
@@ -298,6 +299,7 @@ says what each note covers.
 - Compatible nights
 - Save format guards
 - Compatible mushroom extension (PR #1523)
+- Borrowed visits (PR #1538)
 
 ## [Sound effects](sound.md)
 
@@ -306,6 +308,10 @@ says what each note covers.
 - Sound effects
 - Babble
 - Audio capacity test
+
+## [Two-client telephone proof](telephone-proof.md)
+
+(no entries: its tools and checks only)
 
 ## [Testing tools](testing.md)
 

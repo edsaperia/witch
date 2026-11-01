@@ -163,6 +163,6 @@ test('close logging distinguishes protocol, client close and joining-grace rules
   const client = await connect(), clientClosed = once(client, 'close'); client.close(); await clientClosed;
   const silent = await connect(), silentClosed = once(silent, 'close'); clock = 180000; await silentClosed;
   await new Promise(resolve => setTimeout(resolve, 10));
-  assert.deepEqual(logs.map(row => row.rule).sort(), ['client-close', 'join-stall', 'protocol']);
+  assert.deepEqual(logs.map(row => row.rule).sort(), ['client-close', 'handshake', 'protocol']);
   assert.equal(JSON.stringify(logs).includes('secret-invalid-json'), false);
 });

@@ -1,4 +1,5 @@
 import { ONLINE_TIMING } from "./inputLease";
+import { validPublicKey, type TelephonePublicKey } from "./telephoneIdentity";
 
 export interface RelaySocket {
   readyState: number;
@@ -10,6 +11,9 @@ export interface RelayOptions {
   endpoint: string;
   room: string;
   token?: string;
+  /** Register only while using the ordinary-game telephone; an explicit answer assigns host/guest. */
+  telephone?: boolean;
+  telephonePublicKey?: TelephonePublicKey;
   heartbeatMs?: number;
   socket?: (url: string) => RelaySocket;
   onMessage(message: Record<string, unknown>): void;
@@ -22,20 +26,24 @@ export function connectRelay(options: RelayOptions) {
   const url = new URL(options.endpoint);
   if (!["ws:", "wss:"].includes(url.protocol) || url.username || url.password) throw new Error("Invalid relay URL");
   if (url.protocol === "ws:" && !["localhost", "127.0.0.1", "[::1]"].includes(url.hostname)) throw new Error("Remote relay requires wss");
-  if (!/^\d{7}$/.test(options.room)) throw new Error("Invalid room number");
+  if (options.telephone ? !validPublicKey(options.telephonePublicKey) : !/^\d{7}$/.test(options.room)) throw new Error("Invalid relay identity");
   const heartbeatMs = options.heartbeatMs ?? 1000;
   if (!(heartbeatMs > 0 && heartbeatMs < ONLINE_TIMING.dropMs)) throw new Error("Invalid heartbeat interval");
   const ws = (options.socket ?? (endpoint => new WebSocket(endpoint) as unknown as RelaySocket))(url.href);
   let stopped = false, timer: ReturnType<typeof setInterval> | undefined;
-  const send = (type: string, payload?: unknown): boolean => {
+  let role: "host" | "guest" | null = options.telephone ? null : options.token ? "guest" : "host";
+  let identityConfirmed = false;
+  const sendMessage = (message: Record<string, unknown>): boolean => {
     if (stopped || ws.readyState !== 1) return false;
-    ws.send(JSON.stringify({ protocol: 1, type, ...(payload === undefined ? {} : { payload }) }));
-    return true;
+    ws.send(JSON.stringify({ protocol: 1, ...message })); return true;
+  };
+  const send = (type: string, payload?: unknown): boolean => {
+    return sendMessage({ type, ...(payload === undefined ? {} : { payload }) });
   };
   const cleanup = () => { if (timer !== undefined) clearInterval(timer); timer = undefined; };
   ws.addEventListener("open", () => {
     if (stopped) return;
-    ws.send(JSON.stringify({ protocol: 1, type: options.token ? "join" : "host", room: options.room, ...(options.token ? { token: options.token } : {}) }));
+    sendMessage(options.telephone ? { type: "telephone", publicKey: options.telephonePublicKey } : { type: options.token ? "join" : "host", room: options.room, ...(options.token ? { token: options.token } : {}) });
     timer = setInterval(() => send("heartbeat"), heartbeatMs);
   });
   ws.addEventListener("message", event => {
@@ -44,17 +52,30 @@ export function connectRelay(options: RelayOptions) {
       if (typeof event.data !== "string") throw new Error("Invalid relay message");
       const m = JSON.parse(event.data) as Record<string, unknown>;
       if (!m || typeof m !== "object" || m.protocol !== 1 || typeof m.type !== "string") throw new Error("Incompatible relay message");
+      if (options.telephone && ["call-challenge", "call-cancelled", "call-declined", "call-timeout"].includes(m.type)) { identityConfirmed = false; role = null; }
+      if (options.telephone && !role && ["state", "input", "guest-joined", "guest-ready", "guest-left"].includes(m.type)) throw new Error("Unverified gameplay message");
+      if (options.telephone && m.type === "call-connected") {
+        if (!identityConfirmed || m.role !== "host" && m.role !== "guest" || m.player !== (m.role === "host" ? 0 : 1)) throw new Error("Unverified telephone role");
+        role = m.role;
+      }
       options.onMessage(m);
     } catch (error) { options.onError(error instanceof Error ? error : new Error("Invalid relay message")); }
   });
   ws.addEventListener("error", () => { if (!stopped) options.onError(new Error("Relay connection failed")); });
   ws.addEventListener("close", () => { cleanup(); if (!stopped) { stopped = true; options.onClose(); } });
   return {
-    sendInput: (payload: unknown) => options.token ? send("input", payload) : false,
-    sendState: (payload: unknown) => !options.token ? send("state", payload) : false,
+    sendInput: (payload: unknown) => role === "guest" ? send("input", payload) : false,
+    sendState: (payload: unknown) => role === "host" ? send("state", payload) : false,
+    dial: (number: string) => options.telephone && /^[1-9][0-9]{6}$/.test(number) ? sendMessage({ type: "dial", number }) : false,
+    answer: () => options.telephone ? send("answer") : false,
+    decline: () => options.telephone ? send("decline") : false,
+    cancelCall: () => options.telephone ? send("cancel-call") : false,
+    available: (on: boolean) => options.telephone ? send("available", on) : false,
+    identityProof: (signature: string) => options.telephone ? sendMessage({ type: "identity-proof", signature }) : false,
+    identityVerified: () => { if (!options.telephone || !send("identity-verified")) return false; identityConfirmed = true; return true; },
     sendReady: () => send("ready"),
     sendProgress: (sequence: number) => send("progress", sequence),
-    sendActive: () => options.token ? send("active") : false,
+    sendActive: () => role === "guest" ? send("active") : false,
     close() { if (stopped) return; stopped = true; cleanup(); ws.close(); },
   };
 }
