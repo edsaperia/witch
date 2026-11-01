@@ -17,6 +17,11 @@ retains its established plane/painter. The indoor crown's soft distance band is
 has no fixed Terrace/dancefloor notch. Nearby pure movement/visibility and crown
 state checks are separate from canonical visual/frame acceptance, still required.
 
+Keyboard/gamepad regression fixtures now press rise while still on floor rather
+than after a three-second push against a removed wall; landing cooldown is an
+explicit precondition. Separate actual-input tests walk off an edge with a broom
+and reach treetop, or without one observe one thud/return at the departure edge.
+
 ## Treehouse layout editor
 
 Guest wake rules exports (`rules/wakeUp.ts`): `startWakeFor(g, time, options, W, {player, room})` selects an existing player and stable room ID; `bedFor(room)` and `doorFor(room)` return that room's configured objects (or undefined). Existing guest rooms are `bedroom2` and `bedroom3`; their bare frames count as beds. The caller retains room-access and equipment policy. Per-witch wake metadata keeps the stretch/bedside hold in the selected room without changing the host-default `startWake` path, page/camera, save hooks or audio. These exports do not unlock the guest rooms or connect the multiplayer UI.

@@ -82,14 +82,15 @@ describe("her night's kit", () => {
     expect(W.invites.letters.length).toBeGreaterThan(0);
   });
 
-  it("without a broom, off the Terrace's open rim she falls: a thud below, a beat, then back at the magic circle; with one, she flies", () => {
+  it("without a broom she falls off the rim, thuds and returns to the departure edge; with one, she flies", () => {
     const out = { moveX: Math.cos(40 * DEG), moveZ: Math.sin(40 * DEG) }; // (south-east, past the desk's east end: treehouse.test.ts)
     const HS = JETS.treehouse.house!, along = 0.7 * 5 / HS.walk;
-    const g = night(), d = deckOf(g.map, g.tuning)!;
+    const g = night();
     run(g, 0.2, { moveZ: -1 }); run(g, along, { moveX: 1 });
     let falling = false;
     for (let i = 0; i < 600 && !falling; i++) { run(g, STEP, out); falling = g.witch.falling !== undefined; }
     expect(falling).toBe(true);
+    const returnAt = g.witch.fallReturn!;
     let thud = 0, fell = 0, thudAt = -1, fellAt = -1;
     for (let i = 0; i < Math.round((HS.fall.time + (HS.fall.beat ?? 0) + 0.3) / STEP); i++) {
       run(g, STEP); if (events(g, "thud").length) { thud++; thudAt = i; } if (events(g, "fell").length) { fell++; fellAt = i; }
@@ -97,7 +98,7 @@ describe("her night's kit", () => {
     expect([thud, fell]).toEqual([1, 1]);
     expect((fellAt - thudAt) * STEP).toBeCloseTo(HS.fall.beat ?? 0, 1); // (the beat between the thud and her coming back)
     expect(g.witch.falling).toBeUndefined();
-    expect(g.witch.x).toBeCloseTo(d.house!.circle.x, 6); expect(g.witch.z).toBeCloseTo(d.house!.circle.z, 6);
+    expect(g.witch.x).toBeCloseTo(returnAt.x, 6); expect(g.witch.z).toBeCloseTo(returnAt.z, 6);
     // with a broom: the same walk takes her flying
     const g2 = night(); takeBroom(g2, g2.witches[0]);
     run(g2, 0.2, { moveZ: -1 }); run(g2, along, { moveX: 1 });

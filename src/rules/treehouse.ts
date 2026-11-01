@@ -187,6 +187,11 @@ export function keepInHouse(d: Deck, x: number, z: number): { x: number; z: numb
   const rooms = d.house!.rooms;
   if (!rooms || onRoomFloor(rooms, x, z)) return { ...outOfDeskBox(d, x, z), off: false };
   const n = nearestRoomFloor(rooms, x, z)!;
+  // Open edges do not unlock the guest rooms. Their existing closed doors keep
+  // a walker on the branch, where the friend's-room prompt remains usable.
+  const p = toPlan(d, x, z);
+  if (HOUSE_ROOMS.rooms.some(r => r.locked && inRoom(HOUSE_ROOMS.shape, r.id, p.x, p.z) <= d.rail))
+    return { ...outOfDeskBox(d, n.x, n.z), off: false };
   return { ...landingSpot(d, n.x, n.z), off: true };
 }
 

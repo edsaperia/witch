@@ -246,7 +246,9 @@ export function newBot(kind: BotKind, o: BotOptions = {}): Bot {
       let kin = 0;
       for (const c of g.creatures) if (!c.gone && !c.boss && !c.leashed && c.fleeUntil === undefined && cellKey(c.cell) === key && c.species === sp) kin++;
       for (const c of g.creatures) {
-        if (c.gone || c.boss || c.leashed || c.fleeUntil !== undefined || c.enraged || cellKey(c.cell) !== key) continue;
+        // Ed,2026-10-31: babies join with their soundsystem; letters cannot
+        // invite or wake them. Never let a nearby baby monopolize the aim.
+        if (c.gone || c.boss || c.level === 0 || c.leashed || c.fleeUntil !== undefined || c.enraged || cellKey(c.cell) !== key) continue;
         if (stacks && stateOf(c) === "happy") continue; // (won over already: its sigil waits in the stone's stack till she casts there)
         if (keepKin && c.species === sp && kin <= K.kinKeep) continue;
         out.push(c);

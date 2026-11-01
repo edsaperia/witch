@@ -1,5 +1,15 @@
 # Balance
 
+PR1591's open-edge/pace CI exposed a legacy bot target bug in the existing
+seed1000 forty-second invitation regression: it repeatedly aimed at squirrel
+babies even though Game's invitation callbacks ignore level0 (Ed,2026-10-31).
+The shared skilled/champion/crude/novice invitation candidate filter now excludes
+babies. No policy constants, seed, duration or positive invitation-count assertion
+were relaxed. Babies still join through their soundsystems and can then be
+collected/fed. Expert's separate campaign policy is not modified by this repair;
+its analogous candidate handling needs review in its own scope, not relabelled
+historical training. This is target eligibility correctness, not trained strength.
+
 **Written report retention** (Ed, 2026-10-31, #1572): written comments have no automatic count/size eviction. Their text, id, timestamp, build, repro link, tuning changes, breadcrumbs/notable trail and saved page context remain in the tab/path's session book. Full moments/input replay alone use the existing eight-moment,32 MiB individual/64 MiB total decoded and8 MiB individual/32 MiB total packed budgets, newest first. Each omitted moment carries its reason in both downloads, and saving states the omission count and reasons. Restoration of a report without a moment fails explicitly rather than selecting an older report or approximating from its link. A JSON envelope failure falls back to an explicitly labelled reports-only download, preserving written reports/context while omitting other diagnostics. A report-only envelope that itself exceeds the codec limits still fails visibly; no report text is pruned to fit.
 
 The v2 comment store writes report text/context in a completed IndexedDB transaction before attempting compressed moments. Actual moment compression/write/read errors are attached to retained reports; failure to persist report text leaves the page copy downloadable and gives the actual error and close-page warning. Text retention is subject to browser quota and completed transactions, not an unlimited durability claim. Quota exhaustion never authorizes automatic report deletion. Legacy v1 compressed and raw arrays migrate on the next successful save; a failed legacy read blocks writes so unread reports cannot be overwritten. A crash between text and moment transactions can leave reports without moments, explicitly labelled. Existing tab/path session keys are unchanged, so this does not collect comments from other tabs/paths or recover already evicted text. Recovery audit of the two earlier Oct31 downloads found no authored comments; missing hat-marker/suggestion reports were not recovered. Browser/real quota behavior remains for coordinated verification.
