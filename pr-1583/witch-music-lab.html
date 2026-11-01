@@ -9144,6 +9144,35 @@ registerProcessor("witch-fof", WitchFof);
     }
   };
 
+  // src/platform/audio/telephone.ts
+  function telephoneCue(K, cue2, digit = "1") {
+    if (!K.ready(`telephone:${cue2}`, cue2 === "digit" ? 0.025 : 0.15)) return;
+    const at2 = K.ctx.currentTime + 5e-3;
+    const tone = (offset, length, frequencies, level = 0.08) => {
+      const g = K.ctx.createGain();
+      g.connect(K.voice(0, 1, offset + length + 0.1));
+      K.env(g, at2 + offset, level, 6e-3, length);
+      for (const frequency of frequencies) K.osc("sine", frequency, at2 + offset, length, g);
+    };
+    if (cue2 === "dial") tone(0, 0.8, [350, 440], 0.035);
+    else if (cue2 === "ring") {
+      tone(0, 0.32, [440, 480]);
+      tone(0.42, 0.32, [440, 480]);
+    } else if (cue2 === "busy") {
+      tone(0, 0.18, [480, 620]);
+      tone(0.35, 0.18, [480, 620]);
+    } else if (cue2 === "unavailable") {
+      tone(0, 0.2, [950]);
+      tone(0.25, 0.2, [1400]);
+      tone(0.5, 0.2, [1800]);
+    } else if (cue2 === "dead") tone(0, 0.2, [180, 220], 0.04);
+    else {
+      const count = /^[0-9]$/.test(digit) ? Number(digit) || 10 : 1;
+      tone(0, count * 0.045, [230], 0.02);
+      for (let i = 0; i < count; i++) tone(i * 0.045, 0.012, [1100], 0.055);
+    }
+  }
+
   // src/platform/audio/sfx.ts
   var Sfx = class {
     k;
@@ -9273,6 +9302,9 @@ registerProcessor("witch-fof", WitchFof);
     /** Her phone's alarm ringing once (the wake-up: chimes.ts alarm). */
     alarm() {
       alarm(this.k);
+    }
+    telephone(cue2, digit) {
+      telephoneCue(this.k, cue2, digit);
     }
     /** A 💌 refused by an enraged animal: its whine (chimes.ts refused). */
     refused(pan = 0, near = 1) {
@@ -10745,7 +10777,7 @@ registerProcessor("witch-fof", WitchFof);
       hangBack: 4,
       dangerF: 90,
       tint: 0.8,
-      fade: 0.7
+      fade: 1.5
     },
     hunt: {
       on: true
