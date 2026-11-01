@@ -78,7 +78,10 @@ if (process.argv[1] && fileURLToPath(import.meta.url) === fs.realpathSync(proces
     .map(e => path.relative(process.cwd(), e.file).replaceAll("\\", "/"));
   let timings = {};
   try { timings = JSON.parse(fs.readFileSync("tools/ci/unit-timings.json", "utf8")).seconds ?? {}; } catch { /* unbalanced but complete */ }
-  const balanced = balancedSelection(selection, shard, listFiles, timings);
+  // Opt-in (UNIT_BALANCE=1): on GitHub's 4-vCPU runners, shards packed with only heavy files ran 1.6-1.9x slower than the
+  // local timings predicted and one 18 s test hit its 60 s timeout (2026-11-01, #1592). Vitest's hashed --shard mixes light
+  // and heavy files; keep it until the model accounts for that contention.
+  const balanced = process.env.UNIT_BALANCE === "1" ? balancedSelection(selection, shard, listFiles, timings) : null;
   if (balanced) { Object.assign(selection, balanced); console.log(`Unit test shard ${shard.text}: ${balanced.balanced.files} of ${balanced.balanced.of} files by measured time, about ${balanced.balanced.estimate} s`); }
   else if (shard) console.log(`Unit test shard ${shard.text}${selection.tests.length && shard.index !== 1 ? ": related selection runs entirely in shard 1" : ""}`);
   const testsAt = performance.now(), result = runTests(selection, args => spawnSync(process.execPath, [cli, ...args], { stdio: "inherit" }), githubActions, shard);
