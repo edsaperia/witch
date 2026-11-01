@@ -64,3 +64,17 @@ it("includes saved comments and their bundles in a readable text download", asyn
   expect(text).toContain('"text": "stuck"'); expect(text).toContain('"fixtureState": 42');
   expect(text).toContain('"debug": 2');
 });
+
+it("downloads every written report when the full diagnostics envelope cannot be encoded", async () => {
+  const { packPlaytestDownload } = await import("./playtestLog");
+  const { unpackLog } = await import("./logCodec");
+  const reports = [{ id: "first", text: "hat marker", context: { params: "seed=1" }, omission: "Saved moment omitted" }, { id: "second", text: "suggestion" }];
+  // Deep diagnostic payload hits the real codec guard without a 128 MiB test allocation.
+  let diagnostic: unknown = {};
+  for (let i = 0; i < 70; i++) diagnostic = { child: diagnostic };
+  const packed = await packPlaytestDownload([{ seed: 1, build: "fixture", started: "2026-10-31", interval: 1, samples: [], diagnostic } as import("./playtestLog").PlaytestRun], async () => reports);
+  const decoded = await unpackLog(packed) as { comments: unknown[]; exportOmissions: string[] }[];
+  expect(decoded[0].comments).toEqual(reports);
+  expect(decoded[0].exportOmissions[0]).toContain("Log nesting exceeds its limit");
+  expect(decoded[0].exportOmissions[1]).toContain("Reports-only download");
+});
