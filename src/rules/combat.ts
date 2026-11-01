@@ -671,7 +671,12 @@ export function stepCombat(s: CombatState, w: CombatWorld, data: CombatData = CO
         const l = onFoe.get(f.target.id), i = l ? l.indexOf(c.id) : -1;
         if (l && l.length > 1 && i >= 0) { const a = hash2(f.target.id, 7, 1029) * Math.PI * 2 + (i / l.length) * Math.PI * 2, R = Math.max(want * 0.95, 1); place = { x: p.x + Math.cos(a) * R, z: p.z + Math.sin(a) * R }; }
       }
-      const waiting = !strikingNow(c) && (!myTurn || time < f.readyAt);
+      // A shooter can attack without a melee token, and an independent animal has no
+      // pack turn at all. Neither is waiting merely because `myTurn` is false.
+      // Approach remains pursuit: starting a waiting circuit here can prevent the
+      // pack ever reaching its engagement threshold or a species move's run-up.
+      const attackReady = time >= f.readyAt && (!pd || packGate(pd));
+      const waiting = !!pd && pd.phase !== "approach" && !strikingNow(c) && !attackReady;
       if (spacing && waiting) {
         if (f.target.kind === "witch" || teamOf(s, c.id)) place = movingGoal!(herAt, want);
         else if (f.target.kind === "creature" && place) {

@@ -115,6 +115,10 @@ describe("combat waiting spacing", () => {
   it("runs a small seeded waiting-fight fixture without drawn-disc overlap", () => {
     SPACING.body = data.body;
     const { state, world } = fight(true);
+    stepCombat(state, world);
+    // This fixture measures waiting, not the newly restored engagement pursuit.
+    // Hold the director in its tell while all attack cooldowns remain unready.
+    for (const pack of state.packs?.values() ?? []) { pack.phase = "tell"; pack.until = 100; }
     for (let i = 0; i < 60; i++) {
       world.time = i / 60;
       stepCombat(state, world);
@@ -132,5 +136,18 @@ describe("combat waiting spacing", () => {
     }
     const snapshot = (f: ReturnType<typeof fight>) => JSON.stringify({ creatures: f.world.creatures, state: f.state }, (_, value) => value instanceof Map ? [...value.entries()] : value);
     expect(snapshot(a)).toBe(snapshot(b));
+  });
+  it("does not replace independent pursuit with a waiting circuit", () => {
+    const a = fight(false), b = fight(true);
+    for (const f of [a, b]) {
+      f.world.t = { ...f.world.t, combat: { ...f.world.t.combat, packs: { on: false } } };
+      f.world.creatures.splice(1); f.world.active = f.world.creatures;
+      f.world.creatures[0].fight!.readyAt = 0;
+      f.world.time = 1;
+      stepCombat(f.state, f.world);
+    }
+    expect(b.world.creatures[0].hop).toBeUndefined();
+    expect(b.world.creatures[0].x).toBeCloseTo(a.world.creatures[0].x, 10);
+    expect(b.world.creatures[0].z).toBeCloseTo(a.world.creatures[0].z, 10);
   });
 });

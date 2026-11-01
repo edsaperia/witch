@@ -233,7 +233,7 @@ export function steer(c: Creature, P: Profile, x: SteerContext): boolean {
         const sx = gx - c.x, sz = gz - c.z, gd = Math.hypot(sx, sz) || 1e-6; if (sd > 0.6 * S) add(sx / gd, sz / gd, b.w * Math.min(1, sd / (4 * S)));
         // Surrounding or pincering, it takes its place before it strikes.
         if ((pack?.tactic === "surround" || pack?.tactic === "pincer") && sd > 3 * S) may = false; } break; }
-      case "separation": { if (x.spacing) break; const R = (b.radius ?? 7) * S; for (const o of x.neighbours) { if (o === c) continue; const ox = c.x - o.x, oz = c.z - o.z, od = Math.hypot(ox, oz); if (od < R && od > 1e-4) add(ox / od, oz / od, b.w * (1 - od / R)); } break; }
+      case "separation": { if (x.spacing?.waiting) break; const R = (b.radius ?? 7) * S; for (const o of x.neighbours) { if (o === c) continue; const ox = c.x - o.x, oz = c.z - o.z, od = Math.hypot(ox, oz); if (od < R && od > 1e-4) add(ox / od, oz / od, b.w * (1 - od / R)); } break; }
       case "cohesion": { if (pack && n > 1) { const cx = pack.cx - c.x, cz = pack.cz - c.z, cd = Math.hypot(cx, cz); if (cd > (b.radius ?? 14) * S) add(cx / cd, cz / cd, b.w); } break; }
       case "wander": { const a = hash2(c.id, Math.floor(x.time * 2), 13) * Math.PI * 2; add(Math.cos(a), Math.sin(a), b.w); break; }
       case "light": {
