@@ -1,0 +1,380 @@
+[
+  {
+    "time": 2.014153333333364,
+    "herTime": 17.966666666666928,
+    "layers": [
+      {
+        "pass": "world",
+        "xy": [
+          116,
+          55
+        ],
+        "object": [
+          31,
+          "",
+          "island"
+        ],
+        "owners": [],
+        "material": [
+          121,
+          ""
+        ],
+        "geometry": 28,
+        "before": "1,1,2,255",
+        "after": "57,81,62,255"
+      },
+      {
+        "pass": "world",
+        "xy": [
+          160,
+          77
+        ],
+        "object": [
+          31,
+          "",
+          "island"
+        ],
+        "owners": [],
+        "material": [
+          121,
+          ""
+        ],
+        "geometry": 28,
+        "before": "1,1,2,255",
+        "after": "51,75,58,255"
+      },
+      {
+        "pass": "world",
+        "xy": [
+          217,
+          88
+        ],
+        "object": [
+          31,
+          "",
+          "island"
+        ],
+        "owners": [],
+        "material": [
+          121,
+          ""
+        ],
+        "geometry": 28,
+        "before": "1,1,2,255",
+        "after": "25,39,30,255"
+      },
+      {
+        "pass": "world",
+        "xy": [
+          160,
+          77
+        ],
+        "object": [
+          241,
+          "type 9 (see-through)",
+          ""
+        ],
+        "owners": [],
+        "material": [
+          219,
+          ""
+        ],
+        "geometry": 222,
+        "before": "51,75,58,255",
+        "after": "43,61,47,255"
+      },
+      {
+        "pass": "world",
+        "xy": [
+          160,
+          77
+        ],
+        "object": [
+          67,
+          "",
+          ""
+        ],
+        "owners": [
+          "houseRooms"
+        ],
+        "material": [
+          49,
+          ""
+        ],
+        "geometry": 59,
+        "before": "43,61,47,255",
+        "after": "56,40,28,255"
+      },
+      {
+        "pass": "world",
+        "xy": [
+          160,
+          77
+        ],
+        "object": [
+          49,
+          "",
+          ""
+        ],
+        "owners": [
+          "witchBatch"
+        ],
+        "material": [
+          42,
+          ""
+        ],
+        "geometry": 48,
+        "before": "56,40,28,255",
+        "after": "255,255,255,255"
+      },
+      {
+        "pass": "effects",
+        "xy": [
+          116,
+          55
+        ],
+        "object": [
+          29,
+          "",
+          null
+        ],
+        "owners": [],
+        "material": [
+          22,
+          ""
+        ],
+        "geometry": 27,
+        "before": "0,0,0,255",
+        "after": "0,0,0,0"
+      },
+      {
+        "pass": "effects",
+        "xy": [
+          160,
+          77
+        ],
+        "object": [
+          29,
+          "",
+          null
+        ],
+        "owners": [],
+        "material": [
+          22,
+          ""
+        ],
+        "geometry": 27,
+        "before": "0,0,0,255",
+        "after": "0,0,0,0"
+      },
+      {
+        "pass": "effects",
+        "xy": [
+          217,
+          88
+        ],
+        "object": [
+          29,
+          "",
+          null
+        ],
+        "owners": [],
+        "material": [
+          22,
+          ""
+        ],
+        "geometry": 27,
+        "before": "0,0,0,255",
+        "after": "0,0,0,0"
+      }
+    ]
+  },
+  {
+    "time": 2.014153333333364,
+    "herTime": 17.966666666666928,
+    "layers": [
+      {
+        "pass": "world",
+        "xy": [
+          116,
+          55
+        ],
+        "object": [
+          31,
+          "",
+          "island"
+        ],
+        "owners": [],
+        "material": [
+          121,
+          ""
+        ],
+        "geometry": 28,
+        "before": "1,1,2,255",
+        "after": "99,128,103,255"
+      },
+      {
+        "pass": "world",
+        "xy": [
+          160,
+          77
+        ],
+        "object": [
+          31,
+          "",
+          "island"
+        ],
+        "owners": [],
+        "material": [
+          121,
+          ""
+        ],
+        "geometry": 28,
+        "before": "1,1,2,255",
+        "after": "51,75,58,255"
+      },
+      {
+        "pass": "world",
+        "xy": [
+          217,
+          88
+        ],
+        "object": [
+          31,
+          "",
+          "island"
+        ],
+        "owners": [],
+        "material": [
+          121,
+          ""
+        ],
+        "geometry": 28,
+        "before": "1,1,2,255",
+        "after": "25,39,30,255"
+      },
+      {
+        "pass": "world",
+        "xy": [
+          217,
+          88
+        ],
+        "object": [
+          250,
+          "creature nap-wolf",
+          ""
+        ],
+        "owners": [],
+        "material": [
+          228,
+          ""
+        ],
+        "geometry": 230,
+        "before": "25,39,30,255",
+        "after": "255,255,255,255"
+      },
+      {
+        "pass": "world",
+        "xy": [
+          160,
+          77
+        ],
+        "object": [
+          241,
+          "type 9 (see-through)",
+          ""
+        ],
+        "owners": [],
+        "material": [
+          219,
+          ""
+        ],
+        "geometry": 222,
+        "before": "51,75,58,255",
+        "after": "43,61,47,255"
+      },
+      {
+        "pass": "world",
+        "xy": [
+          160,
+          77
+        ],
+        "object": [
+          67,
+          "",
+          ""
+        ],
+        "owners": [
+          "houseRooms"
+        ],
+        "material": [
+          49,
+          ""
+        ],
+        "geometry": 59,
+        "before": "43,61,47,255",
+        "after": "56,40,28,255"
+      },
+      {
+        "pass": "effects",
+        "xy": [
+          116,
+          55
+        ],
+        "object": [
+          29,
+          "",
+          null
+        ],
+        "owners": [],
+        "material": [
+          22,
+          ""
+        ],
+        "geometry": 27,
+        "before": "0,0,0,255",
+        "after": "0,0,0,0"
+      },
+      {
+        "pass": "effects",
+        "xy": [
+          160,
+          77
+        ],
+        "object": [
+          29,
+          "",
+          null
+        ],
+        "owners": [],
+        "material": [
+          22,
+          ""
+        ],
+        "geometry": 27,
+        "before": "0,0,0,255",
+        "after": "0,0,0,0"
+      },
+      {
+        "pass": "effects",
+        "xy": [
+          217,
+          88
+        ],
+        "object": [
+          29,
+          "",
+          null
+        ],
+        "owners": [],
+        "material": [
+          22,
+          ""
+        ],
+        "geometry": 27,
+        "before": "0,0,0,255",
+        "after": "0,0,0,0"
+      }
+    ]
+  }
+]
