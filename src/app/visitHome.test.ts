@@ -10,7 +10,7 @@ it("returns an own fresh night to the existing telephone anchor without modifyin
   const tuning = structuredClone(TUNING); tuning.map!.island = "home"; tuning.map!.islandAreas = 4;
   const game = newGame(123, tuning), rooms = JSON.stringify(HOUSE_ROOMS), gear = JSON.stringify(game.witches[0].spells);
   startWake(game, 0, { yesterday: true });
-  const phone = HOUSE_ROOMS.objects.find(o => o.use.kind === "telephone")!;
+  const phone = HOUSE_ROOMS.objects.find(o => o.id === "telephone")!;
   expect(visitHome(game)).toBe(phone.id);
   expect(game.witches[0].body).toMatchObject({ ...objectFront(phone, game.map.treehouse), mode: "ground", perch: true, vx: 0, vz: 0 });
   expect(game.wake).toMatchObject({ open: true, beat: "up", pile: [] });

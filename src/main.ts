@@ -8,6 +8,7 @@ import { bagOf, setBag } from "./rules/bags";
 import { bindings } from "./platform/bindings";
 import { Rumble } from "./platform/rumble";
 import { telephoneStation } from "./app/telephoneStation";
+import { installTelephone, telephoneEnabled } from "./app/telephoneSwitch";
 import { leaveVisit, visitHome } from "./app/visitHome";
 import { telephoneCues } from "./app/telephoneCues";
 import { telephoneFaces } from "./app/telephoneFaces";
@@ -149,6 +150,7 @@ prewarmArtWorkers(); // (the art workers load their code while the night is made
 const params = new URLSearchParams(location.search);
 setEdLayoutActive(usesEdLayout(params));
 installEdLayout(usesEdLayout(params));
+installTelephone(telephoneEnabled(params));
 /** ?mistgate=0 (a builder's, the loading mist: render/loadingMist.ts): the island counted ready (g.islandReady) without waiting
  *  for its art (nothing in the house waits on it since the oak; with ?artdelay=<s>, slowly), to see the mist roll away. */
 const mistGateOff = params.get("mistgate") === "0";
@@ -166,6 +168,7 @@ if (savesEnabled(bootLink, navigator.webdriver)) {
       try {
         setEdLayoutActive(usesEdLayout(new URLSearchParams(saved.params)));
         installEdLayout(usesEdLayout(new URLSearchParams(saved.params)));
+        installTelephone(telephoneEnabled(params));
         const restored = restoreGame(saved.game);
         restoreSettingsBase(restored.tuning, saved.settingsBase);
         resumeGame = restored; resumeSave = saved;
@@ -397,9 +400,9 @@ function hostCollections(game: Game) {
   return { wardrobe, bags: new Set(BAGS.filter(b => wardrobe.has(b.id)).map(b => b.id)), hats: withSharedFind(game, "hat", new Set(game.witches[0].spells.hats ?? HAT_SPELLS.filter(hat => hat.built).map(hat => hat.id))), parts: withSharedFind(game, "part", partsNow()), records: withSharedFind(game, "record", new Set(ownedRecords())) };
 }
 const phoneSounds = telephoneCues(() => sound.sfx);
-const phoneFaces = telephoneFaces((() => { try { return localStorage; } catch { return null; } })());
+const phoneFaces = telephoneFaces(telephoneEnabled(params) ? (() => { try { return localStorage; } catch { return null; } })() : null);
 const phoneFace = (number: string) => { const face = phoneFaces.get(number); return face ? telephoneFaceCanvas(face) : null; };
-const phone = telephoneStation({ face: phoneFace, clearFaces: () => { phoneFaces.clear(); phonePresence.refresh(); }, digit: digit => { if (phone.state.status !== "preparing") phoneSounds.digit(digit); }, storage: (() => { try { return localStorage; } catch { return null; } })(), session: {
+const phone = telephoneStation({ enabled: telephoneEnabled(params), face: phoneFace, clearFaces: () => { phoneFaces.clear(); phonePresence.refresh(); }, digit: digit => { if (phone.state.status !== "preparing") phoneSounds.digit(digit); }, storage: (() => { try { return localStorage; } catch { return null; } })(), session: {
   build: BUILD, hostGame: () => N().game,
   appearance: () => { sharedLoans.begin(personalKit(), loan); if (!phone.visiting) sharedLoans.observe(N().game, personalKit()); return appearance(page.look()) ?? appearance({}); },
   attach: game => { if (!guestAccess.ready) throw new Error("The guest room isn't ready yet."); callArrival.attach(game); if (remoteArt.has(1)) void remoteArt.start(game, 0).catch(error => { logCaughtError(error, "host remote appearance"); phone.hangUp(); }); },

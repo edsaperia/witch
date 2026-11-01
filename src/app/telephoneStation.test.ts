@@ -7,8 +7,10 @@ import { HOUSE_ROOMS, objectWorld } from "../rules/houseRooms";
 import { knockOut } from "../rules/knockout";
 import type { TelephoneActions } from "../ui/telephone";
 import { snapshotGame } from "../rules/nightSnapshot";
+import { installTelephone } from "./telephoneSwitch";
 
 it("opens the real telephone use kind without contacting the old relay, and closes on departure/replacement", async () => {
+  installTelephone(true);
   // Only the boudoir's use dispatch/position is needed, independent of distant island area count.
   const tuning = structuredClone(TUNING); tuning.map!.island = "home"; tuning.map!.islandAreas = 4;
   const game = newGame(123, tuning), phoneObject = HOUSE_ROOMS.objects.find(o => o.id === "telephone")!;
@@ -17,7 +19,7 @@ it("opens the real telephone use kind without contacting the old relay, and clos
   const data = new Map<string, string>(), socket = vi.fn(() => { throw new Error("No relay should be opened"); }), show = vi.fn(), pollPad = vi.fn();
   let actions!: TelephoneActions;
   const before = JSON.stringify(snapshotGame(game)), produce = vi.fn(() => ({})), hostGame = vi.fn(() => game);
-  const station = telephoneStation({ storage: { getItem: k => data.get(k) ?? null, setItem: (k, v) => { data.set(k, v); } }, socket,
+  const station = telephoneStation({ enabled: true, storage: { getItem: k => data.get(k) ?? null, setItem: (k, v) => { data.set(k, v); } }, socket,
     loadIdentity: () => loadTelephoneIdentity({ read: async () => null, write: async () => {} }),
     menu: a => { actions = a; return { show, render: vi.fn(), redial: vi.fn(), pollPad }; },
     session: { build: "test", hostGame, appearance: produce, attach: vi.fn(), detach: vi.fn(), prepareGuest: vi.fn(async () => {}), synchronized: vi.fn(), ended: vi.fn(), failed: vi.fn() },
@@ -43,5 +45,5 @@ it("opens the real telephone use kind without contacting the old relay, and clos
     game.witches[0].ko = knockOut(game.leash, game.creatures, game.clock.time, tuning); station.use(game, phoneObject.id); expect(station.open).toBe(false);
     expect(socket).not.toHaveBeenCalled(); expect(data.has("witch.telephone.v1")).toBe(true);
     expect(produce).not.toHaveBeenCalled();
-  } finally { station.dispose(); vi.unstubAllGlobals(); }
+  } finally { station.dispose(); installTelephone(false); vi.unstubAllGlobals(); }
 });
