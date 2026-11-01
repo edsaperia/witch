@@ -1,4 +1,4 @@
-import proposal from "../../docs/evidence/treehouse-layout-ed-2026-10-31.v2-proposal.json";
+import proposal from "../../config/house/layouts/ed-current.json";
 import { edLayoutRequested } from "./housePlacement";
 
 export interface KitchenPropPosition { x: number; z: number; rotation?: number }

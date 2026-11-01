@@ -3,7 +3,7 @@ import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
 // @ts-expect-error the CI tool is plain JavaScript
-import { firstDifference, sameStamp, treeHashes } from "./same-game.mjs";
+import { firstDifference, sameGame, sameStamp, treeHashes } from "./same-game.mjs";
 
 const dirs: string[] = [];
 afterEach(() => { for (const d of dirs.splice(0)) fs.rmSync(d, { recursive: true, force: true }); });
@@ -30,5 +30,11 @@ describe("same game build", () => {
   it("refuses builds stamped differently or unstamped", () => {
     expect(sameStamp(tree({ "version.json": '{"version":"v1 · abc"}' }), tree({ "version.json": '{"version":"dev"}' }))).toBe(false);
     expect(sameStamp(tree({}), tree({}))).toBe(false);
+  });
+  it("ignores a branch's bench expect declaration but not a changed benchmark tool", async () => {
+    const side = (extra: Record<string, string>) => tree({ "dist/version.json": '{"version":"v1 · a"}', "dist-same/version.json": '{"version":"v1 · a"}', "dist/index.html": "x", "dist-same/index.html": "x", "tools/bench/run.mjs": "bench", "tools/bench/rules.ts": "export {};", ...extra });
+    const base = side({}), head = side({ "tools/bench/expect/claude/release-x.json": "{}" });
+    expect((await sameGame(base, head)).same).toBe(true);
+    expect((await sameGame(base, side({ "tools/bench/run.mjs": "changed bench" }))).reason).toContain("benchmark tool");
   });
 });

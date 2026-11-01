@@ -1,0 +1,18 @@
+{
+  "reason": "Release 1101g = prototype (v6828) + #1565 (Ed house layout default) + bench-skip expect fix (CI only). Frames as declared by #1565: Ed explicitly approved making his authored house arrangement the default (1553#6547631190), superseded by his 2026-11-01 placement (1565#6551357170); classic remains available. Canonical1565#6553116889 requests this named-scene declaration. The imported default-layout boundary change was measured in1538#6552627379: boot x/z delta matched the actual classic-to-Ed deck-seat transformation to within 3e-13 m. That historical measurement establishes the reason, not the exact coordinates of this newer authored layout. No rules, wildcard or other starting-state fields are waived.",
+  "start": {
+    "boot": "The quick boot scene starts at the selected Ed DJ seat instead of classic.1538#6552627379 measured base(3172.43871836629,2793.326777190793) versus its imported Ed head(3175.7300892161884,2793.9254063408944), matching that source's deck-seat delta(3.2913708498984757,0.5986291501015248). This current placement is newer; only finite initial x/z may differ, all other controlled starting fields remain strict.",
+    "bedroom": "The quick paused creator scene shares the authored DJ-seat starting boundary;1538#6552627379 also measured that boundary unequal despite zero bedroom pixel differences. Only finite initial x/z may change; time, pause, player and other boundary fields remain strict."
+  },
+  "frames": {
+    "bedroom": "This exact named creator/wake frame uses the authored Ed bed, furniture and decoration pins. The historical1538 comparison had zero bedroom pixel differences; this declaration covers the deliberate house background change, not a claim that it differed there.",
+    "boot": "This exact named quick boot frame deliberately changes the house/DJ starting seat and visible house art to Ed's authored poses.1538#6552627379 measured415185 differing pixels(80.09%,max253) with equal non-build comparability keys and an exactly explained initial x/z delta; no separate attribution of every pixel was claimed. Wave-fight is not declared and remains strict.",
+    "booth": "The DJ/house scene starts from Ed's authored deck/seat arrangement.",
+    "ground": "The full-route starting house/DJ pins use Ed's arrangement; route controls are unchanged.",
+    "ground-flight": "The full route starts from the authored house/deck arrangement; route controls are unchanged.",
+    "treetop": "The starting house/deck arrangement and visible treehouse art use Ed's authored poses.",
+    "treetop-flight": "The full route starts at Ed's house/deck pins and may retain visible house art; controls are unchanged.",
+    "treetop-out": "House art and the route's starting house/deck pins now use Ed's authored arrangement.",
+    "waves": "The full-route house/deck starting scene now uses Ed's authored pins; wave/rule algorithms are unchanged."
+  }
+}

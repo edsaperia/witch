@@ -14,6 +14,8 @@ export interface JournalStore {
   prune(ids: string[]): Promise<void>;
 }
 export const JOURNAL_TOTAL_BYTES = 96 * 1024 * 1024;
+/** Per-page low-priority retention; warnings/errors survive even if they alone exceed it. */
+export const JOURNAL_DEBUG_BYTES = 512 * 1024;
 /** All paths share one DB budget. Closed pages can go; live/unknown pages never get deleted to make room. */
 export function journalPrunePlan(pages: JournalPage[], next: JournalPage, budget = JOURNAL_TOTAL_BYTES): string[] | null {
   let total = pages.filter(p => p.id !== next.id).reduce((n, p) => n + p.bytes, next.bytes);
@@ -27,10 +29,10 @@ export function journalPrunePlan(pages: JournalPage[], next: JournalPage, budget
 export class PlaytestJournal {
   readonly ready: Promise<{ unexpected: boolean; persistent: boolean }>;
   private pending = new Map<number, JournalEntry>();
-  private removed = new Set<number>();
   private records: LogRecords;
   private committed = new Map<number, number>();
-  private queue: Promise<void> = Promise.resolve();
+  private flushing?: Promise<void>;
+  private flushRequested = false;
   private timer?: ReturnType<typeof setTimeout>;
   private previous: JournalPage[] = [];
   private previousMarker: JournalMarker | null = null;
@@ -39,13 +41,17 @@ export class PlaytestJournal {
   private closing = false;
   private page: JournalPage;
   constructor(path: string, session: string, id: string, build: string, private store: JournalStore, private markers: MarkerStore, now = Date.now(), limits?: { bytes: number; count: number }) {
-    this.records = new LogRecords(limits?.bytes, limits?.count);
+    this.records = new LogRecords(limits?.bytes ?? JOURNAL_DEBUG_BYTES, limits?.count ?? 1000, true);
     const page = this.page = { id, path, session, build, started: now, updated: now, closed: false, bytes: 0, dropped: 0 };
     try { this.previousMarker = markers.read(); markers.write({ owner: id, active: true, build, at: now, compact: [] }); } catch { this.persistent = false; }
     this.ready = (async () => {
       try {
         const old = (await store.list(path)).filter(p => p.id !== id && p.session === session).sort((a, b) => b.started - a.started);
         // Never delete another tab/session or an unclosed page that may still be running.
+        // crash1823: a reload's pagehide can't commit to IndexedDB, only the synchronous marker
+        // (see pageHidden); a page whose marker says it ended cleanly is closed here.
+        const ended = this.previousMarker?.active === false ? old.find(p => p.id === this.previousMarker!.owner && !p.closed) : undefined;
+        if (ended) { ended.closed = true; await store.append(ended, []); }
         this.previous = old.slice(0, 2); await store.prune(old.slice(2).filter(p => p.closed).map(p => p.id));
         await store.append(page, []);
       } catch { this.persistent = false; }
@@ -56,7 +62,7 @@ export class PlaytestJournal {
     if (this.closing) return;
     const level = details?.level ?? (kind === "error" ? "error" : kind === "slowframe" ? "warn" : kind.startsWith("recording:") ? "debug" : "info");
     const { record, removed } = this.records.add(level, details?.message ?? kind, payload, details?.context ?? { build: this.page.build, t: null, island: "unknown" }, details?.at);
-    for (const id of removed) { this.pending.delete(id); this.removed.add(id); }
+    for (const id of removed) this.pending.delete(id);
     if (record) this.pending.set(record.seq, { ...record, page: this.page.id });
     this.page.bytes = this.records.bytes + this.records.count * (8 + JSON.stringify(this.page.id).length);
     this.page.dropped = Object.values(this.records.dropped).reduce((a, b) => a + b, 0);
@@ -70,27 +76,44 @@ export class PlaytestJournal {
     try { if (this.markers.read()?.owner === this.page.id) this.markers.write({ owner: this.page.id, active: true, build: this.page.build, at: event.at, compact: this.compact }); } catch { this.persistent = false; }
     this.append("notable", { kind: event.kind, data: event.data }, { level: event.kind === "error" ? "error" : event.kind === "warning" ? "warn" : "info", message: event.message, context: event, at: event.at });
   }
-  async flush(): Promise<void> {
+  flush(): Promise<void> {
     if (this.timer) { clearTimeout(this.timer); this.timer = undefined; }
-    const batch = [...this.pending.values()], removed = [...this.removed], page = { ...this.page };
-    this.pending.clear(); this.removed.clear();
-    const job = this.queue.then(async () => {
+    this.flushRequested = true;
+    // A slow store retains one in-flight batch plus the current bounded records,
+    // rather than one captured batch for every timer/download/close request.
+    return this.flushing ??= this.drain();
+  }
+  private async drain(): Promise<void> {
+    try {
       await this.ready;
-      // A failed deletion must not leave stale rows accumulating behind a smaller metadata budget.
-      const deleted = [...new Set([...removed, ...[...this.committed.keys()].filter(seq => !this.records.has(seq))])];
-      const rows = batch.flatMap(row => { const current = this.records.get(row.seq); return current ? [{ ...current, page: page.id }] : []; });
-      const sizes = new Map(this.committed);
-      for (const seq of deleted) sizes.delete(seq);
-      for (const row of rows) sizes.set(row.seq, recordBytes(row));
-      try {
-        await this.store.append({ ...page, bytes: [...sizes.values()].reduce((a, b) => a + b, 0) }, rows, deleted);
-        this.committed = sizes;
-      } catch {
-        this.persistent = false;
-        for (const row of rows) { const current = this.records.get(row.seq); if (current) this.pending.set(row.seq, { ...current, page: page.id }); }
-      }
-    });
-    this.queue = job; await job;
+      do {
+        this.flushRequested = false;
+        const batch = [...this.pending.values()], page = { ...this.page };
+        this.pending.clear();
+        // A failed deletion must not leave stale rows accumulating behind a smaller metadata budget.
+        // Reconcile committed IDs only: never retain deletion IDs for uncommitted debug churn.
+        const deleted = [...this.committed.keys()].filter(seq => !this.records.has(seq));
+        const rows = batch.flatMap(row => { const current = this.records.get(row.seq); return current ? [{ ...current, page: page.id }] : []; });
+        const sizes = new Map(this.committed);
+        for (const seq of deleted) sizes.delete(seq);
+        for (const row of rows) sizes.set(row.seq, recordBytes(row));
+        try {
+          await this.store.append({ ...page, bytes: [...sizes.values()].reduce((a, b) => a + b, 0) }, rows, deleted);
+          this.committed = sizes;
+        } catch {
+          this.persistent = false;
+          for (const row of rows) { const current = this.records.get(row.seq); if (current) this.pending.set(row.seq, { ...current, page: page.id }); }
+        }
+      } while (this.flushRequested);
+    } finally { this.flushing = undefined; }
+  }
+  /** pagehide (not into the back/forward cache): the page is going away on purpose. IndexedDB work started now
+   * doesn't commit before an unload in Chromium (crash1823: 0 of 5 reloads), so the clean-end marker is written
+   * synchronously first; only a page that dies without pagehide (a renderer crash or kill) stays "unexpected". */
+  pageHidden(): void {
+    if (this.closing || !this.persistent) { void this.close(); return; }
+    try { if (this.markers.read()?.owner === this.page.id) this.markers.write({ owner: this.page.id, active: false, build: this.page.build, at: Date.now(), compact: this.compact }); } catch { this.persistent = false; }
+    void this.close();
   }
   async close(): Promise<void> {
     this.closing = true; await this.flush();
@@ -189,7 +212,7 @@ export function beginBrowserJournal(build: string): PlaytestJournal | undefined 
     return value && typeof value.owner === "string" && typeof value.active === "boolean" && Array.isArray(value.compact) ? { ...value, compact: value.compact.slice(-50) } : null;
   }, write: marker => localStorage.setItem(key, JSON.stringify(marker)) };
   active = new PlaytestJournal(location.pathname, session, id, build, browserJournalStore(globalThis.indexedDB), markers);
-  window.addEventListener("pagehide", event => { if (event.persisted) void active?.flush(); else void active?.close(); });
+  window.addEventListener("pagehide", event => { if (event.persisted) void active?.flush(); else active?.pageHidden(); });
   document.addEventListener("visibilitychange", () => { if (document.hidden) void active?.flush(); });
   return active;
 }

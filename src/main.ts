@@ -52,6 +52,7 @@ import { castable, hatSpell, setParts } from "./rules/spells";
 import { changeLoadout } from "./rules/hatSpells";
 import { HOUSE_ROOMS, addFloorHat, installEdLayout } from "./rules/houseRooms";
 import { setEdLayoutActive } from "./rules/housePlacement";
+import { usesEdLayout } from "./app/houseLayout";
 import { stationOf, tableOf } from "./rules/stations";
 import { itemById, shelfOf, shelvesAt, stationsShowing } from "./rules/wardrobe";
 import { FIND_KINDS, fillTrunk, findKind, loanFind, spawnFind, spawnSpot, type FindKindId } from "./rules/finds";
@@ -106,7 +107,7 @@ import { forgetArrival, type Arrival } from "./app/arrival";
 import { shotParams } from "./app/shot";
 import type { FlightEnd } from "./render/chart/seaChart";
 import { restoreGame } from "./rules/nightSnapshot";
-import { browserNightStore, captureNight, nightHasStarted, NightAutosave, savedNight, savesEnabled, type SavedNight, type NightStore } from "./app/nightSave";
+import { browserNightStore, captureNight, nightHasStarted, NightAutosave, savedNight, savedNightResumeLink, nightLinkConflicts, savesEnabled, type SavedNight, type NightStore } from "./app/nightSave";
 import { Breadcrumbs, browserCommentStore, captureComment, CommentBook, parseCommentFile } from "./app/playtestComments";
 import { LOG_EXPANDED_BYTES } from "./platform/logCodec";
 import { observePlaytestErrors, logCaughtError } from "./platform/playtestLog";
@@ -123,8 +124,8 @@ const BUILD = typeof __BUILD__ === "string" ? __BUILD__ : "dev";
 performance.mark("witch:main"); // (the load's steps, for timing the arrival: witch:main, :game, :view, :ready; app/arrive.ts :landed)
 prewarmArtWorkers(); // (the art workers load their code while the night is made: render/assets.ts)
 const params = new URLSearchParams(location.search);
-setEdLayoutActive(params.get("layout") === "ed");
-installEdLayout(params.get("layout") === "ed");
+setEdLayoutActive(usesEdLayout(params));
+installEdLayout(usesEdLayout(params));
 /** ?mistgate=0 (a builder's, the loading mist: render/loadingMist.ts): the island counted ready (g.islandReady) without waiting
  *  for its art (nothing in the house waits on it since the oak; with ?artdelay=<s>, slowly), to see the mist roll away. */
 const mistGateOff = params.get("mistgate") === "0";
@@ -140,8 +141,8 @@ if (savesEnabled(bootLink, navigator.webdriver)) {
     const value = await source.read(), saved = savedNight(value, BUILD, bootLink);
     if (saved) {
       try {
-        setEdLayoutActive(new URLSearchParams(saved.params).get("layout") === "ed");
-        installEdLayout(new URLSearchParams(saved.params).get("layout") === "ed");
+        setEdLayoutActive(usesEdLayout(new URLSearchParams(saved.params)));
+        installEdLayout(usesEdLayout(new URLSearchParams(saved.params)));
         const restored = restoreGame(saved.game);
         restoreSettingsBase(restored.tuning, saved.settingsBase);
         resumeGame = restored; resumeSave = saved;
@@ -154,7 +155,18 @@ if (savesEnabled(bootLink, navigator.webdriver)) {
         document.getElementById("arrive-landing")?.remove();
         history.replaceState(null, "", "?" + params.toString() + location.hash);
       } catch (error) { nightStore = null; logCaughtError(error, "save slot: saved night kept after restore failure"); nightSaveNotice("Your saved night could not be restored. It has been kept; this new night will not replace it."); }
-    } else if (value) { nightStore = null; logCaughtError(new Error("Incompatible format or explicit link"), "save slot: saved night kept"); nightSaveNotice("This saved night has another format, island or layout. It has been kept; this new night will not replace it."); }
+    } else if (value) {
+      nightStore = null;
+      const kept = savedNight(value, BUILD, new URLSearchParams());
+      if (kept) {
+        const conflicts = nightLinkConflicts(kept, bootLink);
+        logCaughtError(new Error(`Explicit link differs from saved night: ${conflicts.join(", ")}`), "save slot: saved night kept");
+        nightSaveNotice("This link opens a different night from your saved night. Your save has been kept; this new night will not replace it.", savedNightResumeLink(kept, location.pathname));
+      } else {
+        logCaughtError(new Error("Incompatible saved-night format"), "save slot: saved night kept");
+        nightSaveNotice("This saved night has an incompatible format. It has been kept; this new night will not replace it.");
+      }
+    }
   } catch (error) { logCaughtError(error, "save slot: read night"); nightSaveNotice("Nights cannot be saved on this browser. Keep this page open to continue playing."); nightStore = null; }
 }
 // ?timing=1 (Ed, 2026-10-19): the sail's steps and the main thread's long tasks into the L log (app/timing.ts), kept for the tab.
