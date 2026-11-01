@@ -1,5 +1,5 @@
 // A 💌 landing on a creature, felt (Ed, 2026-10-29, from his playtest: "invitation impacts feel unsatisfying"): the view's part
-// only, on the wall clock, never the rules'. The creature flashes white an instant and squashes a little, springing back (no
+// only, timed by the night. The creature flashes white an instant and squashes a little, springing back (no
 // flash and a gentler squash with reduce-flashing on: render/comfort.ts); the slot it fills pops in (render/invites.ts); and the
 // 💌 that fills its ring holds the picture a few frames (a hitstop: main.ts keeps the last frame drawn, the rules run on). The
 // thunk is the sound's (platform/audio/chimes.ts thunk). Knobs: the tuning's invites.impact.
@@ -9,16 +9,18 @@ import { comfort } from "./comfort";
 export type ImpactTuning = NonNullable<Tuning["invites"]["impact"]>;
 export const IMPACT_DEFAULT: ImpactTuning = { flash: 0.07, squash: 0.08, gentle: 0.04, squashSecs: 0.22, pop: 0.45, popSecs: 0.3, hitstop: 0.07 };
 
-const now = () => performance.now() / 1000;
-/** When each creature last took a 💌 (wall-clock seconds), and the hitstop: asked for (seconds, armed once a frame has shown the
+type NightClock = { time: number };
+/** When each creature last took a 💌 (game seconds), and the hitstop: asked for (seconds, armed once a frame has shown the
  *  blow), and held until (ms, performance.now). */
-const landed = new Map<number, number>();
+const impacts = new WeakMap<NightClock, Map<number, number>>();
 let pending = 0, waits = 0, holdUntil = 0;
 
 /** A 💌 landed on creature `id` just now. */
-export function letterLanded(id: number): void {
-  landed.set(id, now());
-  if (landed.size > 256) for (const [k, t] of landed) if (now() - t > 2) landed.delete(k);
+export function letterLanded(clock: NightClock, id: number): void {
+  let landed = impacts.get(clock);
+  if (!landed) { landed = new Map(); impacts.set(clock, landed); }
+  landed.set(id, clock.time);
+  if (landed.size > 256) for (const [k, t] of landed) if (clock.time - t > 2) landed.delete(k);
 }
 
 /** Its ring filled by that 💌: hold the picture `secs`, from the frame after next (so the flash it shows is the one held). */
@@ -38,11 +40,11 @@ export function drew(ms: number): void {
 }
 
 /** Creature `id`'s 💌 impact now: its white flash (0..1, added to its glow) and its squash (multipliers about its feet). */
-export function impactOf(id: number, T: ImpactTuning | undefined, out: { flash: number; sx: number; sy: number }): typeof out {
+export function impactOf(clock: NightClock, id: number, T: ImpactTuning | undefined, out: { flash: number; sx: number; sy: number }): typeof out {
   out.flash = 0; out.sx = 1; out.sy = 1;
-  const at = landed.get(id);
+  const at = impacts.get(clock)?.get(id);
   if (at === undefined) return out;
-  const K = T ?? IMPACT_DEFAULT, d = now() - at;
+  const K = T ?? IMPACT_DEFAULT, d = clock.time - at;
   if (d < 0 || d > Math.max(K.flash, K.squashSecs)) return out;
   if (!comfort.reduceFlashing && d < K.flash) out.flash = 1 - d / K.flash;
   const amp = (comfort.reduceFlashing ? K.gentle : K.squash), t = d / K.squashSecs;

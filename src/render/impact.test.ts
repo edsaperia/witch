@@ -1,28 +1,26 @@
-import { describe, expect, it, vi } from "vitest";
+import { describe, expect, it } from "vitest";
 import { drew, holding, impactOf, IMPACT_DEFAULT, letterLanded, popScale, ringFilled } from "./impact";
 import { comfort } from "./comfort";
 
 describe("a 💌 landing, felt (Ed, 2026-10-29: render/impact.ts)", () => {
   it("flashes white an instant and squashes, springing back; with reduce-flashing on, no flash and a gentler squash", () => {
-    const at = performance.now();
-    const clock = vi.spyOn(performance, "now");
+    const clock = { time: 0 };
     const out = { flash: 0, sx: 1, sy: 1 };
-    clock.mockReturnValue(at); letterLanded(7);
-    clock.mockReturnValue(at + 10);
-    impactOf(7, IMPACT_DEFAULT, out);
+    letterLanded(clock, 7);
+    clock.time = 0.01;
+    impactOf(clock, 7, IMPACT_DEFAULT, out);
     expect(out.flash).toBeGreaterThan(0.8); expect(out.sy).toBeLessThan(1); expect(out.sx).toBeGreaterThan(1);
     const sq = 1 - out.sy;
-    clock.mockReturnValue(at + IMPACT_DEFAULT.flash * 1000 + 5);
-    expect(impactOf(7, IMPACT_DEFAULT, out).flash).toBe(0); // (an instant)
-    clock.mockReturnValue(at + IMPACT_DEFAULT.squashSecs * 1000 + 5);
-    impactOf(7, IMPACT_DEFAULT, out); expect([out.flash, out.sx, out.sy]).toEqual([0, 1, 1]); // (back to its shape)
+    clock.time = IMPACT_DEFAULT.flash + 0.005;
+    expect(impactOf(clock, 7, IMPACT_DEFAULT, out).flash).toBe(0); // (an instant)
+    clock.time = IMPACT_DEFAULT.squashSecs + 0.005;
+    impactOf(clock, 7, IMPACT_DEFAULT, out); expect([out.flash, out.sx, out.sy]).toEqual([0, 1, 1]); // (back to its shape)
     comfort.reduceFlashing = true;
-    clock.mockReturnValue(at + 1000); letterLanded(7); clock.mockReturnValue(at + 1010);
-    impactOf(7, IMPACT_DEFAULT, out);
+    clock.time = 1; letterLanded(clock, 7); clock.time = 1.01;
+    impactOf(clock, 7, IMPACT_DEFAULT, out);
     expect(out.flash).toBe(0); expect(1 - out.sy).toBeLessThan(sq);
     comfort.reduceFlashing = false;
-    expect(impactOf(99, IMPACT_DEFAULT, out).flash).toBe(0); // (one never hit)
-    clock.mockRestore();
+    expect(impactOf(clock, 99, IMPACT_DEFAULT, out).flash).toBe(0); // (one never hit)
   });
   it("pops a slot in small, overshooting and settling at its size", () => {
     const S = Array.from({ length: 31 }, (_, i) => popScale((i / 30) * IMPACT_DEFAULT.popSecs, IMPACT_DEFAULT));
