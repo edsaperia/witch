@@ -45,6 +45,7 @@ How the world is drawn, to try values live or to measure.
 
 | switch | does | since | read in |
 |---|---|---|---|
+| `dodgeEchoes=0` / `dodgeEchoes=1` | Brief dodge silhouettes at actual departure and arrival poses (on by default; 0 switches them off). | 2026-10-31 | render/dodgeEcho.ts |
 | `bare=1` / `bare=2` | The terrain on its own (2: grey, with contours and a grid). | 2026-10-07 | app/linkParams.ts |
 | `biome=<name>` / `biome=<a\|b\|w>` | Every area's trees and props in that biome's look (or a blend of two), over the island's own. | 2026-10-23 | app/viewParams.ts |
 | `blend=off` / `blend=<warp>,<fine>,<band>` | Neighbouring floors meet on a plain edge, or tuned. | 2026-10-07 | app/linkParams.ts |

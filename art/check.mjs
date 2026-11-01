@@ -232,15 +232,22 @@ const SPRITE_CHECKS = async ({ names, only, candidate }) => {
   task("sleeping-legends", async () => { // sleeping legends (Ed, 2026-10-04: just the sleeping form for now): asleep in 2 breathing frames, both facings, each drawn, standing on its bottom
     // row, its origin on the sprite and every material coloured; sunk (its ground line above its feet), no taller than the legend awake, nothing glowing,
     // eyes shut, its two breaths different
+    const { sleepingLegendSizeProblems } = await import("/art/checks/sleepingLegendSize.js");
+    const gameStyle = await (await fetch("/config/style.json")).json(), tuning = await (await fetch("/config/tuning.json")).json();
+    const regressionStyle = { ...st, ...gameStyle, artStyle: "bold", pixel: tuning.pixelSize };
     const glows = sp => { let n = 0; for (const m of sp.m) if (G.EMISSIVE.has(m)) n++; return n; };
     for (const id of G.LEGEND_IDS.filter(id => SPECIES.some(S => S.id === id))) for (const facing of ["towards", "away"]) { // (--only: the selected species' legends)
-      const fs = [0, 1].map(frame => G.legendForm(id, st, { frame, facing })), bad = [], aw = G.critter(id, 3, 0, st, facing);
+      const regression = ["featheredserpent", "marten"].includes(id), style = regression ? regressionStyle : st, times = [];
+      const timed = (stage, draw) => { const at = performance.now(); const result = draw(); times.push(`${stage}=${(performance.now() - at).toFixed(2)}ms`); return result; };
+      const aw = timed("awake", () => G.critter(id, 3, 0, style, facing));
+      const fs = [0, 1].map(frame => timed(`sleeping-${frame}`, () => G.legendForm(id, style, { frame, facing }))), bad = [];
+      if (regression) bad.push(...sleepingLegendSizeProblems(aw, fs.map(f => f.sp)));
       fs.forEach(({ sp, colours }, i) => { const s = stats(sp), o = sp.origin, nan = sp.n.some(Number.isNaN), miss = [...new Set(sp.m)].filter(m => m && m !== G.M.LINE && !colours[m]);
         if (!(s.n > 200 && s.bottom > 0 && o && o[0] >= 0 && o[0] <= sp.w && o[1] >= 0 && o[1] <= sp.h + 1 && !nan && !miss.length)) bad.push(`asleep${i} ${s.w}x${s.h}${nan ? " NaN" : ""}${miss.length ? " uncoloured " + miss : ""}${o ? "" : " no origin"}`);
         if (!(sp.groundLine > 0)) bad.push(`asleep${i} not sunk`); if (sp.h > aw.h) bad.push(`asleep${i} ${sp.h} taller than awake ${aw.h}`); if (glows(sp)) bad.push(`asleep${i} glows`);
         if (sp.m.some(m => m === G.M.EYE || m === G.M.IRIS || m === G.M.WOKEN)) bad.push(`asleep${i} eyes open`); });
       if (fs[0].sp.m.length === fs[1].sp.m.length && fs[0].sp.m.every((m, i) => m === fs[1].sp.m[i])) bad.push("no breath");
-      res.push({ what: `sleeping legend ${id} ${facing}: asleep x2 (sunk, no taller than awake, no glow, eyes shut, breathing; drawn, standing, origin on the sprite, coloured)`, good: !bad.length, info: bad.join(", ") || `asleep ${fs[0].sp.w}x${fs[0].sp.h}, awake ${aw.w}x${aw.h}` });
+      res.push({ what: `sleeping legend ${id} ${facing}: asleep x2 (sunk, no taller than awake, no glow, eyes shut, breathing; drawn, standing, origin on the sprite, coloured)`, good: !bad.length, info: bad.join(", ") || `asleep ${fs[0].sp.w}x${fs[0].sp.h}, awake ${aw.w}x${aw.h}${regression ? "; regression " + times.join(", ") : ""}` });
     }
   });
   task("naps", async () => { // every creature asleep (art/naps.js; Ed, 2026-10-06: "we will need sleeping artwork for all the creatures"): every species at every level in 2

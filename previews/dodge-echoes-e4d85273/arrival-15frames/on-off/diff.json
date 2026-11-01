@@ -1,0 +1,12 @@
+{
+  "count": 6633,
+  "max": 45,
+  "considered": 518400,
+  "bounds": {
+    "left": 351,
+    "top": 208,
+    "right": 680,
+    "bottom": 309
+  },
+  "ignored": []
+}
