@@ -33,7 +33,7 @@ export function guestInput(heldInputMs: number = ONLINE_TIMING.heldInputMs, jitt
   if (!Number.isFinite(heldInputMs) || heldInputMs < 0) throw new Error("Invalid input expiry");
   if (!Number.isSafeInteger(jitterTicks) || jitterTicks < 0 || jitterTicks > 3) throw new Error("Invalid guest jitter depth");
   let current = neutral(), receivedAt = -Infinity, sequence = -1;
-  let applied = -1, started = false, warmTicks = 0, previousTick = neutral(), underruns = 0, discarded = 0;
+  let applied = -1, started = false, warmTicks = 0, underruns = 0, discarded = 0;
   const ticks: { sequence: number; controls: Controls; at: number }[] = [];
   const pending: Partial<Controls> = {};
   return {
@@ -59,19 +59,16 @@ export function guestInput(heldInputMs: number = ONLINE_TIMING.heldInputMs, jitt
       return result;
     },
     /** Called once per actual physics quantum, not once per render frame. */
-    consume(now: number): { sequence: number; controls: Controls } {
-      const age = Number.isFinite(now) ? Math.max(0, now - receivedAt) : Infinity;
-      if (age >= heldInputMs) { discarded += ticks.length; ticks.length = 0; started = false; warmTicks = 0; previousTick = neutral(); return { sequence: applied, controls: neutral() }; }
+    consume(now: number): { sequence: number; controls: Controls; motion: boolean } {
       if (!started && ticks.length) warmTicks++;
       if (!started && (ticks.length >= Math.max(1, jitterTicks) || warmTicks > jitterTicks || ticks[0] && now - ticks[0].at >= jitterTicks * 1000 / 60)) started = true;
-      if (!started) return { sequence: applied, controls: neutral() };
+      if (!started) return { sequence: applied, controls: neutral(), motion: false };
       const tick = ticks.shift();
-      if (tick) { applied = tick.sequence; previousTick = { ...tick.controls }; return { sequence: applied, controls: { ...tick.controls } }; }
+      if (tick) { applied = tick.sequence; return { sequence: applied, controls: { ...tick.controls }, motion: true }; }
       underruns++;
-      const held = { ...previousTick }; for (const key of edges) held[key] = false;
-      return { sequence: applied, controls: held };
+      return { sequence: applied, controls: neutral(), motion: false };
     },
-    suspend(): void { discarded += ticks.length; ticks.length = 0; started = false; warmTicks = 0; previousTick = neutral(); },
-    clear(): void { current = neutral(); receivedAt = -Infinity; sequence = applied = -1; ticks.length = 0; started = false; warmTicks = 0; previousTick = neutral(); underruns = discarded = 0; for (const key of edges) delete pending[key]; },
+    suspend(): void { discarded += ticks.length; ticks.length = 0; started = false; warmTicks = 0; },
+    clear(): void { current = neutral(); receivedAt = -Infinity; sequence = applied = -1; ticks.length = 0; started = false; warmTicks = 0; underruns = discarded = 0; for (const key of edges) delete pending[key]; },
   };
 }

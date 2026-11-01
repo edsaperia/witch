@@ -1,6 +1,6 @@
 import { STEP, type Controls, type Game } from "../../rules/game";
 import { guestInput, wireControls, INPUT_EDGES } from "./guestInput";
-import { withGuestInputSteps } from "../../rules/onlineInputSteps";
+import { withGuestInputSteps, holdGuestMotion } from "../../rules/onlineInputSteps";
 import { prepareJoin } from "./joinPreparation";
 import { replayGuest, replayHostStep, replayStart, type ReplayFrame, type ReplayStart } from "./replay";
 import { applyStationChoice, stationChoice, type StationChoice } from "./stationChoice";
@@ -295,7 +295,7 @@ export function onlineSession(options: SessionOptions) {
         if (role === "guest") {
           if (ready) {
             for (const edge of INPUT_EDGES) if (controls[edge]) guestEdges[edge] = true;
-            guestAccumulator = Math.min(guestAccumulator + dt, .1 + STEP);
+            guestAccumulator += dt;
             while (guestAccumulator >= STEP - 1e-9) {
               guestAccumulator -= STEP;
               const quantum = { ...controls };
@@ -362,11 +362,12 @@ export function onlineSession(options: SessionOptions) {
         const pve = ready ? hits?.drain() : null;
         const guestSteps: NonNullable<ReplayFrame["guestSteps"]> = [];
         const frame = withGuestInputSteps(game, original => {
-          const consumed = ready ? buffer.consume(now()) : { sequence: -1, controls: wireControls({})! };
+          const consumed = ready ? buffer.consume(now()) : { sequence: -1, controls: wireControls({})!, motion: false };
+          if (!consumed.motion) holdGuestMotion(game!);
           const motion = consumed.controls;
           const applied = game!.witches[1].paused ? original : { ...original, moveX: motion.moveX, moveZ: motion.moveZ,
             toggleMode: motion.toggleMode, dash: motion.dash, spell: motion.spell, fire: motion.fire, aimX: motion.aimX, aimZ: motion.aimZ };
-          guestSteps.push({ sequence: consumed.sequence, controls: applied });
+          guestSteps.push({ sequence: consumed.sequence, controls: applied, motion: consumed.motion });
           return applied;
         }, () => replayHostStep(game!, [controls, guestControls], dt, ++tick, options.advanceHost), { steps: guestSteps, casts: pve?.casts, effects: pve?.effects });
         hits?.observed();

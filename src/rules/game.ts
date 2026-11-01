@@ -80,7 +80,7 @@ import { homeDown, startPartyOver, stepPartyOver, stepWorldAsleep, worldAsleep, 
 import { stepWin, winFlare, won, type WinState } from "./win";
 import { hasBroom, hasInvites, type Kit } from "./kit";
 import { applyGuestEffects, guestEffectsEnabled, recordAutomaticHit } from "./guestEffects";
-import { guestInputStep } from "./onlineInputSteps";
+import { guestInputStep, guestMotionReady } from "./onlineInputSteps";
 import { pulseRouteMetres } from "./leypulse";
 
 /** One player's witch (Stage 4: game.witches, one per player, the first this machine's): her
@@ -560,6 +560,9 @@ export function interpolated<T>(g: Game, draw: () => T): T {
 /** One fixed step of the whole game. */
 /** Shared actor locomotion. Prediction passes a private actor and effects=false: no shared cast/creature writes. */
 export function stepWitchLocomotion(g: Game, W: Witch, input: Controls, hdt: number, effects = true) {
+  if (effects && W === g.witches[1] && !guestMotionReady(g)) {
+    return { W, c: NO_INPUT, ht: witchTime(g, W), was: W.body, deck: deckOf(g.map, g.tuning), perchTurn: 0, firing: false, LV: null as ReturnType<typeof leashView> | null };
+  }
   const t = g.tuning, allInBed = g.witches.every(w => w.house?.slept === true);
   const ht = witchTime(g, W);
   let c = input;
@@ -671,7 +674,7 @@ function fixedStep(g: Game, controls: readonly Controls[]): void {
   const dt = STEP * g.timeScale, hdt = STEP;
   g.clock.time += dt;
   g.herTime += hdt;
-  for (const W of g.witches) if (W.time !== undefined) W.time += hdt;
+  for (const W of g.witches) if (W.time !== undefined && (W !== g.witches[1] || guestMotionReady(g))) W.time += hdt;
   // Explicit legacy cauldron preview owns its own inventory/inputs while enabled.
   if (!g.cauldron) stepMushrooms(g);
   const wave = g.party.wave;

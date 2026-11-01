@@ -53,7 +53,7 @@ it("consumes bunched movement quanta in order and acknowledges applied rather th
   expect(input.sequence).toBe(0);
   expect(input.consume(3)).toMatchObject({ sequence: 1, controls: { moveX: 0 } });
   expect(input.consume(4)).toMatchObject({ sequence: 2, controls: { moveX: -1 } });
-  expect(input.consume(5)).toMatchObject({ sequence: 2, controls: { moveX: -1, dash: false } });
+  expect(input.consume(5)).toMatchObject({ sequence: 2, controls: { moveX: 0 }, motion: false });
   expect(input.consume(252)).toMatchObject({ sequence: 2, controls: { moveX: 0 } });
 });
 it("bounds the input queue and can release a lone edge after the startup delay", () => {
@@ -62,4 +62,14 @@ it("bounds the input queue and can release a lone edge after the startup delay",
   for (let n = 1; n <= 130; n++) input.accept({ sequence: n, controls: {} }, n);
   expect(input.stats.queued).toBe(120); expect(input.stats.discarded).toBe(10);
   input.suspend(); expect(input.stats.queued).toBe(0); expect(input.sequence).toBe(0);
+});
+
+it("never invents motion on underrun and drains received quanta across a slow page gap", () => {
+  const input = guestInput(250, 0);
+  input.accept({ sequence: 0, controls: { moveX: 1 } }, 0);
+  expect(input.consume(0)).toMatchObject({ sequence: 0, motion: true });
+  for (let n = 1; n <= 20; n++) expect(input.consume(n * 16)).toMatchObject({ sequence: 0, motion: false, controls: { moveX: 0 } });
+  input.accept({ sequence: 1, controls: { moveZ: 1 } }, 450);
+  expect(input.consume(800)).toMatchObject({ sequence: 1, motion: true, controls: { moveZ: 1 } });
+  expect(input.stats.discarded).toBe(0);
 });
