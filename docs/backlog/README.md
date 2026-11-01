@@ -2,6 +2,8 @@
 
 **Nothing in docs/backlog/ is built yet unless marked shipped; don't build without Ed's go.**
 
+- [grass-repaint-noise.md](grass-repaint-noise.md): deferred two-pixel grass repaint noise, leading build-budget hypothesis and confirming trace fields.
+
 - [journey.md](journey.md): islands, records, the treehouse, mushrooms on the journey and the master difficulty curve. The authoritative doc where others overlap.
 - [treehouse.md](treehouse.md): the treehouse: a walkable house on the Ent round a hub, its rooms, the night's loop through it, the lobby (Ed, 2026-10-14; it overrides journey.md's room table).
 - [unlocks.md](unlocks.md): hats and brooms, unlocked by achievements.

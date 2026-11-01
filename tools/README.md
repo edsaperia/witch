@@ -20,7 +20,7 @@ Scripts for building, checking and measuring the game, run from the repository r
 - [`biomes/`](biomes/README.md): 2 scripts — sheet.mjs, shots.cjs
 - [`body-graph/`](body-graph/README.md): 7 scripts — age-size-audit.mjs, cat-fixtures.js, cats-preview.mjs, diagnostics.mjs, fit-contact-sheets.mjs, fit-size-audit.mjs, size-candidate-audit.mjs
 - [`chart/`](chart/README.md): 4 scripts — diff.cjs, emerge.cjs, open.cjs, profile.cjs
-- [`ci/`](ci/README.md): 10 scripts — annotations.cjs, pages-policy.cjs, report-command.cjs, run-unit.mjs, same-game.mjs, sleep-cell-repro.mjs, test-scope.mjs, unit-timings.mjs, vitest-reporter.mjs, world-audit.mjs
+- [`ci/`](ci/README.md): 12 scripts — annotations.cjs, build-proof-baseline.cjs, pages-policy.cjs, report-command.cjs, run-proofs.cjs, run-unit.mjs, same-game.mjs, sleep-cell-repro.mjs, test-scope.mjs, unit-timings.mjs, vitest-reporter.mjs, world-audit.mjs
 - [`config/`](config/README.md): 7 scripts — check.mjs, format.mjs, generated.mjs, knob-docs.mjs, linkSwitches.mjs, schema.mjs, typegen.mjs
 - [`dj/`](dj/README.md): 5 scripts — booth-sheet.mjs, booth.cjs, candles-sheet.mjs, respawn.cjs, strip.mjs
 - [`docs/`](docs/README.md): 2 scripts — glossary.mjs, tables.mjs
@@ -70,7 +70,7 @@ Scripts for building, checking and measuring the game, run from the repository r
 - [`shot/`](shot/README.md): 10 scripts — contrast.cjs, crown-gap.cjs, crown-look.cjs, crown-whole.cjs, motes.cjs, pixels.cjs, playtest-render.cjs, shot.cjs, stump-diagnostic.cjs, wisps.cjs
 - [`shots/`](shots/README.md): 1 script — push.mjs
 - [`sigils/`](sigils/README.md): 2 scripts — legendary-sheet.mjs, sheet.mjs
-- [`smoke/`](smoke/README.md): 44 scripts — alarm.cjs, bedroom.cjs, bounce-off.cjs, canopy-hole.cjs, cheer-shots.cjs, creator-menus.cjs, creator.cjs, decide.cjs, dream-way.cjs, dreams.cjs, effects-scene.cjs, flask-stack.cjs, house-bed-start.cjs, hud.cjs, knockdown-bpm.cjs, large-world.cjs, legend-attack.cjs, legend-panel.cjs, legendary-sigil.cjs, legends-flasks.cjs, looks.cjs, magic-dodge.cjs, magic-letters.cjs, magic-sigils.cjs, music-lab-pause.cjs, orbit-combat.cjs, packs.cjs, party-join.cjs, party-life.cjs, partyspell.cjs, pause-on-top.cjs, paused-world.cjs, places.cjs, quick.cjs, room-walk.cjs, smoke.cjs, spell-scroll.cjs, start-screen.cjs, swoop.cjs, trail-cooldown.cjs, trail.cjs, treetop-sigils.cjs, wild-left.cjs, witch-pool.cjs
+- [`smoke/`](smoke/README.md): 46 scripts — alarm.cjs, bedroom.cjs, bounce-off.cjs, canopy-hole.cjs, cheer-shots.cjs, creator-menus.cjs, creator.cjs, decide.cjs, dream-way.cjs, dreams.cjs, effects-scene.cjs, flask-stack.cjs, house-bed-start.cjs, hud.cjs, knockdown-bpm.cjs, large-world.cjs, legend-attack.cjs, legend-panel.cjs, legendary-sigil.cjs, legends-flasks.cjs, looks.cjs, magic-dodge.cjs, magic-letters.cjs, magic-sigils.cjs, music-lab-pause.cjs, orbit-combat.cjs, packs.cjs, party-join.cjs, party-life.cjs, partyspell.cjs, pause-on-top.cjs, paused-pixels.cjs, paused-settle.cjs, paused-world.cjs, places.cjs, quick.cjs, room-walk.cjs, smoke.cjs, spell-scroll.cjs, start-screen.cjs, swoop.cjs, trail-cooldown.cjs, trail.cjs, treetop-sigils.cjs, wild-left.cjs, witch-pool.cjs
 - [`soundsystem/`](soundsystem/README.md): 3 scripts — build-preview.mjs, ingame.cjs, sheet.mjs
 - [`stars/`](stars/README.md): 1 script — shots.cjs
 - [`stations/`](stations/README.md): 1 script — check.cjs

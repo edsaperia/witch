@@ -2,6 +2,9 @@
 const assert = require('node:assert/strict');
 const fs = require('node:fs/promises');
 const path = require('node:path');
+const { assertRepaint } = require('./paused-pixels.cjs');
+const { worldSettled } = require('./paused-settle.cjs');
+const pixels = process.env.PAUSE_PROOF_MODE !== 'fast';
 let playwright;
 try { playwright = require('playwright'); } catch { playwright = require('/opt/node22/lib/node_modules/playwright'); }
 
@@ -11,7 +14,7 @@ async function checkRepaint(page, reference, sha) {
     const width = Math.max(a.w, b.w), height = Math.max(a.h, b.h);
     const mask = new Uint8ClampedArray(width * height * 4);
     let changed = 0, left = width, top = height, right = -1, bottom = -1;
-    let knownPixels = 0;
+    const maxChannelChange = [0, 0, 0];
     for (let y = 0; y < height; y++) for (let x = 0; x < width; x++) {
       const inA = x < a.w && y < a.h, inB = x < b.w && y < b.h;
       const i = 4 * ((a.h - 1 - y) * a.w + x), j = 4 * ((b.h - 1 - y) * b.w + x);
@@ -22,14 +25,8 @@ async function checkRepaint(page, reference, sha) {
       if (!different) continue;
       mask.fill(255, k, k + 3);
       changed++;
-      // Runs 7/8, 320x180 bedroom fixture. Permit only the observed directional
-      // RGBA transitions between two forced repaints. Other changes still fail.
-      if (reference === 'firstRepaint' && a.w === 320 && a.h === 180 && inA && inB) {
-        const matches = (bytes, offset, r, g, blue) => bytes[offset] === r && bytes[offset + 1] === g &&
-          bytes[offset + 2] === blue && bytes[offset + 3] === 255;
-        if (x === 204 && y === 87 && matches(a.bytes, i, 4, 11, 7) && matches(b.bytes, j, 13, 31, 17) ||
-            x === 217 && y === 91 && matches(a.bytes, i, 10, 14, 9) && matches(b.bytes, j, 5, 14, 9)) knownPixels++;
-      }
+      for (let c = 0; c < 3; c++) maxChannelChange[c] = Math.max(maxChannelChange[c],
+        inA && inB ? Math.abs(a.bytes[i + c] - b.bytes[j + c]) : 255);
       left = Math.min(left, x); right = Math.max(right, x);
       top = Math.min(top, y); bottom = Math.max(bottom, y);
     }
@@ -45,7 +42,7 @@ async function checkRepaint(page, reference, sha) {
       for (let y = 0; y < h; y++) rows.set(bytes.subarray(y * stride, (y + 1) * stride), (h - 1 - y) * stride);
       return png(w, h, rows);
     }
-    return { changed, knownPixels, bbox: changed ? { left, top, right, bottom } : null, traces: changed ? [a.trace, b.trace] : [],
+    return { changed, maxChannelChange, bbox: changed ? { left, top, right, bottom } : null, traces: changed ? [a.trace, b.trace] : [],
       versions: [a.artVersion, b.artVersion], sameSize: a.w === b.w && a.h === b.h,
       images: changed ? { [reference]: framePNG(a), repaint: framePNG(b), diff: png(width, height, mask) } : {} };
   }, reference);
@@ -58,9 +55,9 @@ async function checkRepaint(page, reference, sha) {
   assert.ok(evidence.versions.every(Number.isInteger), 'both submissions must report an art version');
   const artArrived = evidence.versions[0] !== evidence.versions[1];
   console.log(JSON.stringify({ sha, reference, result: artArrived ? 'art arrived while paused' : 'same art version',
-    artVersions: evidence.versions, changedPixels: evidence.changed, knownPixels: evidence.knownPixels, bboxTopLeftInclusive: evidence.bbox, directory: evidence.changed ? dir : undefined }));
+    artVersions: evidence.versions, changedPixels: evidence.changed, maxChannelChangeRGB: evidence.maxChannelChange, bboxTopLeftInclusive: evidence.bbox, directory: evidence.changed ? dir : undefined }));
   assert.ok(evidence.sameSize, 'same-size resize must preserve framebuffer dimensions');
-  if (!artArrived) assert.equal(evidence.changed, evidence.knownPixels, 'unexpected same-version paused pixel difference');
+  if (!artArrived) assertRepaint(evidence);
 }
 
 async function measure(browser, url, sha, candidate) {
@@ -173,7 +170,17 @@ async function measure(browser, url, sha, candidate) {
         }
         return result;
       };
-    }, candidate && process.env.PAUSE_TRACE_PIXELS === '1');
+    }, candidate && pixels && process.env.PAUSE_TRACE_PIXELS === '1');
+    // Normal live frames finish budgeted art/ground/grass work before the pause fixture.
+    // Repeated polling of one slow frame cannot establish stability.
+    if (pixels && candidate) try {
+      const settled = await page.waitForFunction(worldSettled, null, { timeout: Number(process.env.PAUSE_SETTLE_MS || 30000), polling: 250 });
+      console.log(JSON.stringify({ sha, worldSettled: await settled.jsonValue() }));
+      await settled.dispose();
+    } catch (error) {
+      const state = await page.evaluate(() => window.pauseWorldSettle).catch(() => null);
+      throw new Error(`world never settled: ${JSON.stringify(state)}`, { cause: error });
+    }
     const snapshot = () => page.evaluate(() => ({
       at: performance.now(), draws: window.pauseProbe.draws, time: window.witch.game.clock.time,
       phases: Array.from(window.witch.view.pins, p => p.scale), pixels: window.pauseProbe.pixels,
@@ -188,27 +195,30 @@ async function measure(browser, url, sha, candidate) {
       await page.waitForTimeout(duration);
       const after = await snapshot();
       const count = after.draws - before.draws;
-      console.log(JSON.stringify({ sha, name, count, elapsedMs: after.at - before.at, drawsPerMinute: count * 60000 / (after.at - before.at) }));
+      const measurement = { sha, name, count, elapsedMs: after.at - before.at, drawsPerMinute: count * 60000 / (after.at - before.at) };
+      console.log(JSON.stringify(measurement));
       assert.equal(after.time, before.time, name + ' simulation advanced');
       if (candidate) {
         assert.equal(count, 0, name + ' world redrew');
         assert.deepEqual(after.phases, before.phases, name + ' pointer phase changed');
       }
+      return measurement;
     };
-    if (candidate) {
+    if (candidate && pixels) {
       await page.evaluate(() => { window.pauseProbe.sample = true; });
       await page.waitForFunction(() => window.pauseProbe.pixels !== null);
     }
     await page.keyboard.press('Escape');
     await page.waitForSelector('body.paused');
     await page.evaluate(() => { window.pauseProbe.held = window.pauseProbe.frame; });
-    await hold('pause', 60000);
-    if (!candidate) return;
+    const baselineMeasurement = await hold('pause', pixels ? 60000 : 30000);
+    if (!candidate) return baselineMeasurement;
     assert.ok((await snapshot()).phases.length, 'need a visible world pointer fixture');
     // The real control opens Settings after a minute with no world draws.
     await page.getByRole('button', { name: /show settings page/i }).click();
     await page.waitForSelector('#settings-page.open');
     await hold('settings', 10000);
+    if (!pixels) return; // PR gate: pause + Settings draw holds only; pixel fixture belongs to nightly.
     await page.keyboard.press('Escape');
     await page.waitForSelector('#settings-page.open', { state: 'hidden' });
     await page.waitForSelector('body.paused');
@@ -237,13 +247,40 @@ async function measure(browser, url, sha, candidate) {
     await hold('bestiary', 10000);
     await page.evaluate(() => window.witch.zooOverlay.close());
     await page.waitForFunction(t => window.witch.game.clock.time > t, (await snapshot()).time);
+  } catch (error) {
+    // Preserve the scene even when readiness/hold assertions fail before a pixel comparison.
+    const dir = path.resolve(process.env.PAUSE_PROOF_OUT || 'paused-world-proof', candidate ? 'candidate-failure' : 'baseline-failure');
+    await fs.mkdir(dir, { recursive: true });
+    await page.screenshot({ path: path.join(dir, 'page.png'), timeout: 10000 }).catch(() => {});
+    const trace = await page.evaluate(() => window.pauseProbe?.frame?.trace ?? null).catch(() => null);
+    if (trace) await fs.writeFile(path.join(dir, 'pixel-submissions.json'), JSON.stringify(trace, null, 2));
+    await fs.writeFile(path.join(dir, 'failure.json'), JSON.stringify({ sha, error: error.stack }, null, 2));
+    throw error;
   } finally { await page.close(); }
 }
 
 (async () => {
-  const [base, baseSha, candidate, candidateSha] = process.argv.slice(2);
-  assert.ok(base && baseSha && candidate && candidateSha, 'supply both immutable builds and expected SHAs');
+  const args = process.argv.slice(2);
+  const [base, baseSha, candidate, candidateSha] = pixels ? args : [null, null, ...args];
+  assert.ok(candidate && candidateSha && (!pixels || base && baseSha), 'supply immutable candidate (and baseline in pixel mode) with expected SHA');
   const browser = await playwright.chromium.launch({ args: ['--use-gl=angle', '--use-angle=swiftshader', '--enable-unsafe-swiftshader', '--ignore-gpu-blocklist'] });
-  try { await measure(browser, base, baseSha, false); await measure(browser, candidate, candidateSha, true); }
+  try {
+    if (!pixels) { await measure(browser, candidate, candidateSha, true); return; }
+    // CI keys this successful measurement by immutable baseline SHA and proof/browser fingerprint.
+    const cache = process.env.PAUSE_BASELINE_RESULT;
+    let measured;
+    if (cache) {
+      try {
+        const saved = JSON.parse(await fs.readFile(cache, 'utf8'));
+        if (saved.sha === baseSha && saved.measurement?.sha === baseSha) measured = saved.measurement;
+      }
+      catch (error) { if (error.code !== 'ENOENT') throw error; }
+    }
+    if (!measured) {
+      const measurement = await measure(browser, base, baseSha, false);
+      if (cache) await fs.writeFile(cache, JSON.stringify({ sha: baseSha, measuredAt: new Date().toISOString(), measurement }));
+    } else console.log(JSON.stringify({ baseline: baseSha, cached: true, measurement: measured }));
+    await measure(browser, candidate, candidateSha, true);
+  }
   finally { await browser.close(); }
 })().catch(error => { console.error(error); process.exitCode = 1; });
