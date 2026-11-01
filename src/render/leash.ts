@@ -149,8 +149,6 @@ export class LeashView {
   /** Where each stacked sigil was last frame (a knockout's release splashes from there). */
   lastSlots = new Map<number, THREE.Vector3>();
   /** Short-lived effects: hit sparks, puffs, splashes, released leashes, teleport sparkles, quake rings. */
-  /** Whether each party animal was travelling last frame (to pop as it joins her posse again). */
-  travelling = new Map<number, boolean>();
   /** Each traveller's drawn route, eased between the rules' re-plans (render/routeEase.ts). */
   routes = new Map<number, RouteShape>();
   routeScratch = new Float32Array((ROUTE_SAMPLES + 1) * 2);
@@ -228,7 +226,7 @@ export class LeashView {
   setGame(game: Game): void {
     this.game = game;
     this.seatAt = null; this.bloodPool = null;
-    for (const m of [this.ruts, this.evolved, this.cycledAt, this.joined, this.stackY, this.lastSlots, this.travelling, this.routes, this.tops, this.halfW, this.heads, this.dreamStones, this.chains]) m.clear();
+    for (const m of [this.ruts, this.evolved, this.cycledAt, this.joined, this.stackY, this.lastSlots, this.routes, this.tops, this.halfW, this.heads, this.dreamStones, this.chains]) m.clear();
     this.look.reset(); this.stones.length = 0; resetStoneView(this.stoneView);
     this.bursts = []; this.chain = []; this.fx = []; this.ringGlows = []; this.dreams = []; this.snoreNear = []; this.projected = [];
     this.lastTime = 0; this.tugAt = -9; this.load = newLoadView(); this.bristle = { x: 0, y: 0, z: 0, on: false };

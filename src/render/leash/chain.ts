@@ -5,6 +5,7 @@
 // so they hang in the air as the threads did; the step clamped and cut into substeps, a chain laid afresh on a jump, every point
 // kept above the ground, and `damping` for calm or lively. As a chain lengthens or shortens it gains or loses links at the
 // creature's end.
+import type { PosePoint, TravelPose } from "./travelPose";
 import type { LeashView } from "../leash";
 import { SLOT, SLOTS } from "./glyphs";
 import { SPRITE_UNIFORMS } from "../sprites";
@@ -12,7 +13,7 @@ import { SPRITE_UNIFORMS } from "../sprites";
 /** A chain's point: where it is and where it was (verlet). */
 export interface ChainLink { x: number; y: number; z: number; px: number; py: number; pz: number }
 /** A chain: its points from her end (0) to the creature's (the last), and where her end was last frame (to see a jump). */
-export interface Chain { links: ChainLink[]; ax?: number; az?: number }
+export interface Chain { links: ChainLink[]; ax?: number; az?: number; pose?: TravelPose }
 
 /** The chain's motion (tuning leash.ranks.chain). */
 export interface ChainMotion {
@@ -112,12 +113,12 @@ export function linkSlots(lv: LeashView): { face: number[][]; edge: number[][] }
 
 /** Draw a chain: a link on each span between its points, alternately face on and edge on, each turned along its span as the screen
  *  shows it (the sprites' right and up: render/sprites.ts), crisp (the solid batch), each with a faint glow of its colour. */
-export function drawChain(lv: LeashView, ch: Chain, link: number, r: number, g: number, b: number, a: number, dot: number[], glow = 0.12): void {
+export function drawChain(lv: LeashView, ch: { links: readonly PosePoint[] }, link: number, r: number, g: number, b: number, a: number, dot: number[], glow = 0.12, batch = lv.solid): void {
   const S = linkSlots(lv), P = ch.links, R = SPRITE_UNIFORMS.uRight.value, U = SPRITE_UNIFORMS.uUp.value;
   for (let i = 0; i + 1 < P.length; i++) {
     const p = P[i], q = P[i + 1], x = (p.x + q.x) / 2, y = (p.y + q.y) / 2, z = (p.z + q.z) / 2, face = i % 2 === 1;
     const dx = q.x - p.x, dy = q.y - p.y, dz = q.z - p.z, k = linkAngle(dx * R.x + dy * R.y + dz * R.z, dx * U.x + dy * U.y + dz * U.z);
-    lv.solid.add(x, y, z, link * (face ? 1.25 : 1.1), face ? S.face[k] : S.edge[k], r, g, b, a);
+    batch.add(x, y, z, link * (face ? 1.25 : 1.1), face ? S.face[k] : S.edge[k], r, g, b, a);
     if (glow > 0) lv.over.add(x, y, z, link * 1.6, dot, r, g, b, glow * a, 1, true);
   }
 }

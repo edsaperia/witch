@@ -1,9 +1,15 @@
 import { describe, expect, it } from "vitest";
-import { barLevel, columnOf } from "./stones";
+import { barLevel, columnOf, stumpNoteSize } from "./stones";
+import renderKnobs from "../../../config/playtest-render.json";
 import { bowOf, layChain, LINK_ANGLES, linkAngle, stepChain, type Chain, type ChainMotion } from "./chain";
 import { CHAIN_DEFAULT } from "./ranks";
 
 describe("rune stones' sigils", () => {
+  it("keeps nearby notes at their authored size and distant notes at the minimum screen width", () => {
+    expect(stumpNoteSize(3, 20)).toBe(3);
+    expect(stumpNoteSize(3, .4)! * .4).toBeCloseTo(renderKnobs.stumpIconMinPixels);
+    expect(stumpNoteSize(3, 0)).toBeUndefined();
+  });
   it("the column climbs from just over the stone, each sigil its size, none overlapping", () => {
     const P = columnOf([{ level: 3 }, { level: 0 }, { level: 2 }], l => [0.81, 0.9, 1, 1.1][l] * 2.8);
     expect(P[0].y - P[0].size / 2).toBeCloseTo(0.6);

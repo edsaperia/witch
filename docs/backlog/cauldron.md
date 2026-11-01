@@ -230,6 +230,8 @@ Masterplan (real decisions), Stiltwalkers (the existing rig), The World Is Late 
 
 The mushrooms' new complementary-colour subtraction (`render/mushroomGlow.ts`) is a reusable trip output: creatures and spell impacts could carry broad halos that remove the other colours from the scenery around them. A red creature makes its surroundings deeply red without adding light; overlapping colours leave almost black pools. Feed existing creature positions, spell radii and music intensity into the halo radius/opacity, and optionally invert the ordinary Glow Up recipe's brightening. The base-game mushroom halo is built; this recipe and its assignment are not.
 
+Suggested variant: let the witch see a travelling friend's chain as a trail of its rank colour across the forest floor. Use the ground-link positions from `render/leash/travelPose.ts` to place sparse mushroom colour pools at bends, with the nearest pool lifting as the sigil reconnects. This reuses the route and halo renderers and would need a trip-only connection between them.
+
 ### Suggestion: the house in the void (discovered during brewing checks, 2026-10-31)
 
 The treehouse and its occupants remain visible while the forest disappears into black; the world returns outward from a doorway or from her feet. The existing house-loading reveal already does this with `Post.behind`, `behindAt` and `HOUSE_LAYER`. A test that skipped drawing the reveal's frames exposed the intermediate state. This could be a variant of Alone, driven by her distance from home or the trip envelope. It needs no new rendering pass; a deliberate version must include her ground-level sprite in the retained layer so she does not disappear when leaving the branch. Suggestion only, with no recipe assignment.

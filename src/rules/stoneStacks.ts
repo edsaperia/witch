@@ -91,14 +91,18 @@ export function stoneStack(g: Game, key: string): StackEntry[] {
     if (keyOf(c.cell) !== key || !inStack(c)) continue;
     out.push({ id: c.id, level: c.boss ? LEGEND : c.level, friend: stateOf(c) === "happy", legend: !!c.boss });
   }
-  return out.sort(stackOrder);
+  const hostiles = out.filter(hostileSigil);
+  return (hostiles.length ? hostiles : out).sort(stackOrder);
 }
+
+/** The same wild fighters that gate casting determine what a wild area's column shows. */
+export const hostileSigil = (e: StackEntry): boolean => !e.friend && !e.legend && e.level > 0;
 
 /** Whether a stone's spell can be cast (Ed, 2026-10-29: "Stop you from casting until all wild animals are invited"): no enemy
  *  fighter left on its stack, every wild youth and adult of its area invited (happy, or leashed and so off it). Its babies don't
  *  count (they turn friendly at the conversion), nor its sleeping legend. A wave converts it whatever. */
 export function castReady(g: Game, key: string): boolean {
-  return !stoneStack(g, key).some(e => !e.friend && !e.legend && e.level > 0);
+  return !stoneStack(g, key).some(hostileSigil);
 }
 
 /** Where a stone at (x, z)'s spell spot lies: cast.spot m south of it. */

@@ -50,6 +50,14 @@ How crisp the pixel art reaches the screen.
 npm run build && node tools/shot/pixels.cjs [out dir]   (SEED=542195, LINK= more of the link, SIZE=1106x743, DPRS=1,1.25,1.5,
 ```
 
+## `playtest-render.cjs`
+
+Capture the five chain poses and three near/far night mushroom colours on an allocated headless renderer slot.
+
+```
+node tools/shot/playtest-render.cjs <served-url> <expected-sha> <output-dir> [chains|stumps|mushrooms]
+```
+
 ## `shot.cjs`
 
 A builder's quick proof shot: one picture of a room, an area, a creature or a find in the built game, in a minute or two on the cloud's software renderer.
@@ -59,6 +67,14 @@ npm run build && node tools/shot/shot.cjs <scene> [out.png] [more of the link]
 node tools/shot/shot.cjs object:dressingTable previews/shot/dressing.png
 node tools/shot/shot.cjs find:hat:sentry previews/shot/sentry.png own=none
 node tools/shot/shot.cjs creature:fox@1 previews/shot/fox.png zoom=0
+```
+
+## `stump-diagnostic.cjs`
+
+Record the reported world's stump art, shader gate, draw calls and visible pixels in the allocated capture session.
+
+```
+node tools/shot/playtest-render.cjs <served-url> <expected-sha> <output-dir> stumps
 ```
 
 ## `wisps.cjs`

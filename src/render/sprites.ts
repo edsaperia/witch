@@ -653,6 +653,19 @@ void main() {
   // A pack member hiding in its lull (render/view/creatures.ts; Ed, 2026-10-29: "like the animal becoming a shadow (dark and
   // transparent), rather than teleporting"): its own lit sprite going over to a dark, see-through shadow of itself, by its glow.
   if (uShadow.x > 0.5) { float k = clamp(vGlow, 0.0, 1.0); gl_FragColor = vec4(mix(gl_FragColor.rgb, gl_FragColor.rgb * (1.0 - uShadow.y), k), gl_FragColor.a * mix(1.0, uShadow.z, k)); return; }
+  #ifdef MUSHROOM_SPOT_SPILL
+  vec2 texel = 1.0 / vec2(textureSize(uAlbedo, 0));
+  vec3 spill = vec3(0.0);
+  for (int axis = 0; axis < 4; axis++) {
+    vec2 offset = axis == 0 ? vec2(texel.x,0.) : axis == 1 ? vec2(-texel.x,0.) : axis == 2 ? vec2(0.,texel.y) : vec2(0.,-texel.y);
+    vec2 uv = clamp(vUv + offset, vFrame.xy, vFrame.zw);
+    vec4 neighbour = albedoAt(uv);
+    if (neighbour.a > 0.994 && neighbour.a < 0.999) spill += neighbour.rgb;
+  }
+  spill *= uGlowGain * 0.25;
+  spill /= max(1.0, max(spill.r, max(spill.g, spill.b)));
+  gl_FragColor.rgb = max(gl_FragColor.rgb, spill);
+  #endif
   // Glowing white (a party animal evolving).
   if (vGlow > 0.0 && uSilhouette.a <= 0.0) gl_FragColor.rgb = mix(gl_FragColor.rgb, vec3(1.0), vGlow);
   // Tinted (enraged creatures, red): toward the tint by the pixel's own lightness, so its shading and shape still read.
@@ -779,7 +792,7 @@ export class SpriteBatch {
   count = 0;
 
   /** metresPerPixel: world size of one art pixel. */
-  constructor(public atlas: Atlas, readonly metresPerPixel: number, opts: { /** clears the stencil where it draws: nothing shows through it (the witch: render/leash.ts) */ unmark?: boolean; unlit?: boolean; onTop?: boolean; scenery?: boolean; fade?: boolean; flat?: boolean; /** Gameplay (creatures, soundsystems, markers...): never faded or cut away round the witch (Ed, v149). */ solid?: boolean; silhouette?: { colour: THREE.Vector3; opacity: number }; /** The witch: lit by the world's lights but not her own glow (witchLight.ts). */ witchLight?: { lightFloor: number; lightTint: number; lightRim: number }; /** Wild creatures: eyeshine, a light floor and a rim, so they can be found in the dark (Ed, v244). */ find?: boolean; /** Characters (the witch, creatures): the mood's moonlight rim. */ rim?: boolean; /** Each instance's y is a world height, not a height over the ground (her: ride.ts). */ absolute?: boolean; /** Tint the whole batch: a uniform of r, g, b (0-1) and how much (enraged creatures; shared, so a knob changes it live). */ tint?: { value: THREE.Vector4 }; /** A shadow batch: pack members hiding, each its own sprite gone over to a dark, see-through shadow of itself by its glow (0 solid, 1 shadow), the shared SHADOW_LOOK's shade and opacity (render/view/creatures.ts). */ shadow?: boolean; /** A sleeping legend's batch: its sigil's neon and its rim's strength, and its light floor (Ed's round 14 playtest). */ legend?: THREE.Vector4; legendFloor?: number; /** a dark-coated legend awake: the share of its own colour it keeps at night (render/legendLight.ts) */ legendAwake?: number; /** A legend's batch: its light banded into this many steps of brightness (0 smooth). */ steps?: number; /** Its glowing pixels brighter by this, hue kept (shared, so a knob changes it live: the rune stones, render/view/home.ts). */ glowGain?: { value: number }; /** Lies on the ground (a floor), its rows running away from the camera this many metres a metre of its height: a picture of something low seen from the art's camera (a great stump: 1 / sin of the art's pitch). */ lie?: number } = {}) {
+  constructor(public atlas: Atlas, readonly metresPerPixel: number, opts: { /** clears the stencil where it draws: nothing shows through it (the witch: render/leash.ts) */ unmark?: boolean; unlit?: boolean; onTop?: boolean; scenery?: boolean; fade?: boolean; flat?: boolean; /** Gameplay (creatures, soundsystems, markers...): never faded or cut away round the witch (Ed, v149). */ solid?: boolean; silhouette?: { colour: THREE.Vector3; opacity: number }; /** The witch: lit by the world's lights but not her own glow (witchLight.ts). */ witchLight?: { lightFloor: number; lightTint: number; lightRim: number }; /** Wild creatures: eyeshine, a light floor and a rim, so they can be found in the dark (Ed, v244). */ find?: boolean; /** Characters (the witch, creatures): the mood's moonlight rim. */ rim?: boolean; /** Each instance's y is a world height, not a height over the ground (her: ride.ts). */ absolute?: boolean; /** Tint the whole batch: a uniform of r, g, b (0-1) and how much (enraged creatures; shared, so a knob changes it live). */ tint?: { value: THREE.Vector4 }; /** A shadow batch: pack members hiding, each its own sprite gone over to a dark, see-through shadow of itself by its glow (0 solid, 1 shadow), the shared SHADOW_LOOK's shade and opacity (render/view/creatures.ts). */ shadow?: boolean; /** A sleeping legend's batch: its sigil's neon and its rim's strength, and its light floor (Ed's round 14 playtest). */ legend?: THREE.Vector4; legendFloor?: number; /** a dark-coated legend awake: the share of its own colour it keeps at night (render/legendLight.ts) */ legendAwake?: number; /** A legend's batch: its light banded into this many steps of brightness (0 smooth). */ steps?: number; /** Its glowing pixels brighter by this, hue kept (shared, so a knob changes it live: the rune stones, render/view/home.ts). */ glowGain?: { value: number }; /** Mushroom caps only: marked emissive texels spill their hue onto adjacent pixels. */ spotSpill?: boolean; /** Lies on the ground (a floor), its rows running away from the camera this many metres a metre of its height: a picture of something low seen from the art's camera (a great stump: 1 / sin of the art's pitch). */ lie?: number } = {}) {
     const quad = new THREE.PlaneGeometry(1, 1);
     quad.translate(0, 0.5, 0); // stand on the base
     this.geo = new THREE.InstancedBufferGeometry();
@@ -795,7 +808,7 @@ export class SpriteBatch {
     // Scenery marks its pixels in the stencil (1), so the ley line can show through the trees and nothing else (leylines.ts).
     const mark = opts.scenery ? { stencilWrite: true, stencilRef: 1, stencilFunc: THREE.AlwaysStencilFunc, stencilZPass: THREE.ReplaceStencilOp }
       : opts.unmark ? { stencilWrite: true, stencilRef: 0, stencilFunc: THREE.AlwaysStencilFunc, stencilZPass: THREE.ReplaceStencilOp } : {}; // (she clears it: nothing shows through her)
-    const mat = new THREE.ShaderMaterial({ vertexShader: VERT, fragmentShader: FRAG, uniforms: uniforms({}), depthTest: !opts.onTop, depthWrite: !opts.onTop && !opts.shadow, ...blend, ...mark, ...(opts.shadow ? { transparent: true } : {}) }); // (a shadow's see-through: blended, writing no depth)
+    const mat = new THREE.ShaderMaterial({ vertexShader: VERT, fragmentShader: FRAG, defines: opts.spotSpill ? { MUSHROOM_SPOT_SPILL: 1 } : {}, uniforms: uniforms({}), depthTest: !opts.onTop, depthWrite: !opts.onTop && !opts.shadow, ...blend, ...mark, ...(opts.shadow ? { transparent: true } : {}) }); // (a shadow's see-through: blended, writing no depth)
     this.mesh = new THREE.Mesh(this.geo, mat);
     this.mesh.frustumCulled = false;
     if (opts.onTop) this.mesh.renderOrder = 10;

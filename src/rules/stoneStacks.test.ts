@@ -57,10 +57,14 @@ function at(g: Game, a: { key: string; stone: { x: number; z: number } }, keep =
 }
 
 describe("runestone stacks (Ed, 2026-10-28)", () => {
-  it("list an area's own creatures at its stone in draw order, bottom first: enemy fighters (legend, adults, youths), friend fighters in the same order, then every baby on top (Ed, 2026-10-29)", () => {
+  it("show only wild fighters until clear, then include eligible friends, legend and babies in stack order", () => {
     const g = game(), a = area(g, true), cs = own(g, a.key);
     const youth = cs.find(c => c.level > 0 && !c.boss)!, baby = cs.find(c => c.level === 0 && !c.boss)!;
     befriend(youth, g.clock.time); befriend(baby, g.clock.time);
+    const hostile = cs.filter(c => !c.boss && c.level > 0 && c.id !== youth.id && !c.wanderTo && c.fleeUntil !== Infinity);
+    expect(hostile.length).toBeGreaterThan(0);
+    expect(stoneStack(g, a.key).map(e => e.id).sort()).toEqual(hostile.map(c => c.id).sort());
+    for (const c of hostile) befriend(c, g.clock.time);
     const s = stoneStack(g, a.key);
     expect(s.length).toBe(cs.filter(c => c.fleeUntil !== Infinity && !c.wanderTo).length);
     const babies = s.filter(e => e.level === 0 && !e.legend), fighters = s.filter(e => !babies.includes(e));
@@ -336,13 +340,15 @@ describe("a legend circle's baby's sigil (Ed, 2026-10-28: it lands in its circle
 });
 
 describe("a legend's sigil in its stone's stack (Ed's playtest, 2026-10-29: \"I didn't notice any legends in any runestone sigil stacks\")", () => {
-  it("on the islands (legend areas), every night's legend is at the bottom of its area's stone's enemies, and falls with the friends at its conversion", () => {
+  it("on the islands (legend areas), each area's legend appears once its fighters are friendly, and scatters at conversion", () => {
     for (const seed of [542195, 428455, 7]) {
       const g = game(seed, withTuning({ cast: { ...BUILT.cast, on: true }, map: { ...BUILT.map!, islandAreas: 10, island: "home" } }));
       const legends = g.creatures.filter(c => c.boss && !c.gone);
       expect(legends.length).toBe(g.map.legendKinds.length);
       for (const L of legends) {
-        const key = cellKey(L.cell), stack = stoneStack(g, key);
+        const key = cellKey(L.cell);
+        for (const c of own(g, key)) if (!c.boss && c.level > 0) befriend(c, g.clock.time);
+        const stack = stoneStack(g, key);
         expect(stack[0], `${seed} ${L.species} at ${key}`).toMatchObject({ id: L.id, legend: true, friend: false });
       }
       const L = legends[0], key = cellKey(L.cell), [cx, cy] = L.cell, stone = g.map.soundsystemSpot(cx, cy);

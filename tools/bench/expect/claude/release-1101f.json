@@ -1,0 +1,5 @@
+{
+  "reason": "Release 1101f = prototype (v6817) + #1554 playtest render fixes (travelling chains, mushroom glow, stump invite counts and stacks, soundsystem note from afar). #1554 passed bench:quick on its own branch with no declared difference. No frame or rules difference is waived.",
+  "frames": {},
+  "rules": {}
+}
