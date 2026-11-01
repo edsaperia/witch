@@ -1,0 +1,66 @@
+{
+  "source": "actual offline witchSprite plus bold palette/outline bake using byte-array canvas adapter; no atlas/GPU",
+  "elapsedMs": 44.66030000000001,
+  "frames": [
+    {
+      "frame": 0,
+      "width": 43,
+      "height": 41,
+      "scale": 30.475606508246337,
+      "ground": [
+        18.7,
+        35.3
+      ],
+      "shadow": [
+        28,
+        12
+      ],
+      "mpp": 0.09375,
+      "lowestOpaqueRow": 34,
+      "contacts": [
+        {
+          "x": 22.5,
+          "y": 34.5,
+          "dxArtMetres": 0.35625000000000007,
+          "upArtMetres": 0.07499999999999973
+        },
+        {
+          "x": 23.5,
+          "y": 34.5,
+          "dxArtMetres": 0.45000000000000007,
+          "upArtMetres": 0.07499999999999973
+        }
+      ]
+    },
+    {
+      "frame": 1,
+      "width": 43,
+      "height": 41,
+      "scale": 30.475606508246337,
+      "ground": [
+        18.6,
+        35.3
+      ],
+      "shadow": [
+        29,
+        12
+      ],
+      "mpp": 0.09375,
+      "lowestOpaqueRow": 34,
+      "contacts": [
+        {
+          "x": 22.5,
+          "y": 34.5,
+          "dxArtMetres": 0.36562499999999987,
+          "upArtMetres": 0.07499999999999973
+        },
+        {
+          "x": 23.5,
+          "y": 34.5,
+          "dxArtMetres": 0.45937499999999987,
+          "upArtMetres": 0.07499999999999973
+        }
+      ]
+    }
+  ]
+}
