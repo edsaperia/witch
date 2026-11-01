@@ -55,9 +55,10 @@ describe("combat waiting spacing", () => {
     expect(Math.hypot(a.x - b.x, a.z - b.z)).toBeGreaterThan(1);
     const returned = waitingSlot(c, p, 5, 10, 1, data, null, group);
     expect(returned).toEqual({ x: 5, z: 0 });
-    const speeds = Array.from({ length: 40 }, (_, i) => waitingDrive(c, i / 20, data).speed);
+    const speeds = Array.from({ length: 40 }, (_, i) => waitingDrive({ ...c, hopNext: 0.8 }, i / 20, data).speed);
     expect(speeds.some(v => v === 0)).toBe(true);
     expect(speeds.some(v => v > 0)).toBe(true);
+    expect(waitingDrive({ ...c, hopNext: 0.8 }, 0.8, data).airborne).toBe(true);
     expect(waitingProfile(creature(1, 0, 0, "boar"), data).turn).toBeLessThan(waitingProfile(c, data).turn);
     const signatures = Object.keys(SPACING.body.radii).map(species => JSON.stringify(waitingProfile({ species }, data)));
     expect(signatures).toHaveLength(64);
@@ -149,5 +150,16 @@ describe("combat waiting spacing", () => {
     expect(b.world.creatures[0].hop).toBeUndefined();
     expect(b.world.creatures[0].x).toBeCloseTo(a.world.creatures[0].x, 10);
     expect(b.world.creatures[0].z).toBeCloseTo(a.world.creatures[0].z, 10);
+  });
+  it("advances an active waiting hop exactly once, including its landing step", () => {
+    const { state, world } = fight(true), c = world.creatures[0];
+    world.creatures.splice(1); world.active = world.creatures;
+    const x = c.x, z = c.z;
+    c.hop = { fx: x, fz: z, tx: x + 10, tz: z, at: 0, lands: 1, height: 2 };
+    world.time = 0.5; stepCombat(state, world);
+    expect(c.x).toBeCloseTo(x + 5, 10); expect(c.z).toBeCloseTo(z, 10);
+    world.time = 1; stepCombat(state, world);
+    expect(c.x).toBeCloseTo(x + 10, 10); expect(c.z).toBeCloseTo(z, 10);
+    expect(c.hop).toBeUndefined();
   });
 });

@@ -315,6 +315,10 @@ export function stepCombat(s: CombatState, w: CombatWorld, data: CombatData = CO
       } else if (!c.leap && !aloft) c.moving = false;
       c.vx = 0; c.vz = 0; continue;
     }
+    // A bound already advanced above owns this step, including its landing step.
+    // Steering again here adds a second displacement and an attack can interrupt
+    // the arc, then snap back onto it next step.
+    if (aloft) continue;
     // (an attack in the grammar given it, rules/attacks/; else its species' own, the default since step 5: ?attacks=old for the old)
     // (its species' own: against a soundsystem its old attack, so the sieges stay as balanced; in a pack, as its role's strike when its
     // range suits the role, a lunger's close (a lunge, or an area round itself), a shooter's from afar, else its pack's own move, so the

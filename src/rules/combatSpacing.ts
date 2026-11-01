@@ -80,7 +80,9 @@ export function waitingProfile(c: Pick<Creature, "species">, data: SpacingData =
 /** Common cadence: continuous travel or a configured movement/rest cycle; no species/type branch. */
 export function waitingDrive(c: Creature, time: number, data: SpacingData = SPACING): { speed: number; turn: number; airborne: boolean } {
   const m = waitingProfile(c, data), phase = m.cadence > 0 ? (time / m.cadence + hash2(c.id, 13, 1620)) % 1 : 0;
-  const moving = m.cadence <= 0 || phase < m.duty;
+  // Lifted strides already schedule their rest on landing. A second wall-clock
+  // gate can add an unscheduled stop after that rest and desynchronise the gait.
+  const moving = m.lift > 0 ? !!c.hop || time >= (c.hopNext ?? -Infinity) : m.cadence <= 0 || phase < m.duty;
   return { speed: m.speed * (moving ? 1 : m.restSpeed), turn: m.turn, airborne: moving && m.lift > 0 };
 }
 /** Shared continuous pack path, local formation offsets and return envelope. Shape comes entirely from numeric parameters. */
