@@ -1,18 +1,17 @@
-# Ordinary PRs reuse successful named-task results by source/dependency/environment
-# fingerprint. Missing results run; unknown dependency layouts run the full check.
-# Release PRs use the same exact fingerprints. Shared pushes can reuse a proven identical checked tree.
+# Art runs off the build/release path: nightly prototype or an explicitly chosen manual ref.
+# Fingerprints and complete coverage are unchanged; sharding is parked.
 name: Art check
 on:
-  push:
-    branches: [claude/prototype, main]
-  pull_request:
-    types: [opened, synchronize, reopened]
+  schedule:
+    - cron: '17 3 * * *'
+  workflow_dispatch: {}
 concurrency:
   group: art-check-${{ github.event_name }}-${{ github.ref }}
   cancel-in-progress: true
 permissions:
   contents: read
   actions: read
+  issues: write
 jobs:
   art:
     name: art check
@@ -21,31 +20,58 @@ jobs:
     env:
       PLAYWRIGHT_VERSION: 1.56.1
     steps:
+      - name: Resolve the exact art source
+        id: source
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const ref = context.eventName === 'schedule' ? 'claude/prototype' : context.sha;
+            const {data} = await github.rest.repos.getCommit({...context.repo, ref});
+            core.setOutput('sha', data.sha);
+            core.info(`Art source: ${ref} at ${data.sha}`);
       - uses: actions/checkout@v4
+        with:
+          ref: ${{ steps.source.outputs.sha }}
       - uses: actions/setup-node@v4
         with:
           node-version: 22
           cache: npm
       - name: Find an already checked identical tree
         id: checked
-        if: github.event_name == 'push'
+        # Both nightly and manual runs may reuse an exact successful tree.
         uses: actions/github-script@v7
         with:
           script: |
             const fs = require('fs'), path = require('path'), cp = require('child_process');
             const { pathToFileURL } = require('url');
-            const { findPassedTree } = await import(pathToFileURL(path.resolve('tools/art-check/checked-tree.mjs')).href);
+            const { findPassedTree, proofMatches } = await import(pathToFileURL(path.resolve('tools/art-check/checked-tree.mjs')).href);
             const tree = cp.execFileSync('git', ['rev-parse', 'HEAD^{tree}'], {encoding:'utf8'}).trim();
             const environment = {node:cp.execFileSync('node',['-p','process.version'],{encoding:'utf8'}).trim(), os:process.env.RUNNER_OS, arch:process.arch, browser:process.env.PLAYWRIGHT_VERSION};
             const {owner, repo} = context.repo;
-            const run = await findPassedTree({github, owner, repo, tree, environment, currentRun:context.runId, info:core.info,
-              readProof: async artifact => {
+            const readProof = async artifact => {
                 const zip = path.join(process.env.RUNNER_TEMP, `art-proof-${artifact.id}.zip`);
                 const {data} = await github.rest.actions.downloadArtifact({owner, repo, artifact_id:artifact.id, archive_format:'zip'});
                 fs.writeFileSync(zip, Buffer.from(data));
                 try { return JSON.parse(cp.execFileSync('unzip', ['-p', zip, 'art-check-proof.json'], {encoding:'utf8', maxBuffer:65536})); }
                 finally { fs.unlinkSync(zip); }
-              }});
+              };
+            let run = await findPassedTree({github, owner, repo, tree, environment, currentRun:context.runId, info:core.info, readProof});
+            // Scheduled run metadata names the default-branch workflow SHA, not the prototype checkout.
+            // Its successful proof, rather than that metadata SHA, must establish the actual checked tree.
+            if (!run) {
+              try {
+              const {data} = await github.rest.actions.listWorkflowRuns({owner,repo,workflow_id:'art-check.yml',status:'success',per_page:100});
+              for (const prior of data.workflow_runs) {
+                if (prior.id === context.runId || prior.conclusion !== 'success' || prior.head_repository?.full_name !== `${owner}/${repo}` || !['schedule','workflow_dispatch'].includes(prior.event)) continue;
+                const {data:artifacts} = await github.rest.actions.listWorkflowRunArtifacts({owner,repo,run_id:prior.id,per_page:100});
+                for (const a of artifacts.artifacts.filter(a=>a.name === 'art-check-tree' && !a.expired && a.size_in_bytes <= 1048576)) {
+                  try { if (proofMatches(await readProof(a),tree,environment,prior.id)) { run=prior.id; break; } }
+                  catch(error) { core.info(`Proof unavailable; checking art: ${String(error)}`); }
+                }
+                if (run) break;
+              }
+              } catch(error) { core.info(`Scheduled proof lookup unavailable; checking art: ${String(error)}`); }
+            }
             core.setOutput('run', run ?? '');
             if (run) core.info(`Exact checked tree ${tree}: reusing successful Art check run ${run}`);
       - run: npm ci
@@ -140,3 +166,28 @@ jobs:
             art/out/silhouettes.png
           retention-days: 14
           if-no-files-found: ignore
+      - name: Update the single nightly art result on issue 1476
+        if: ${{ always() && !cancelled() && github.event_name == 'schedule' }}
+        uses: actions/github-script@v7
+        env:
+          ART_RESULT: ${{ job.status }}
+          ART_SOURCE: ${{ steps.source.outputs.sha }}
+        with:
+          script: |
+            const fs = require('fs');
+            const marker = '<!-- witch-art-check-nightly-result -->';
+            const {owner, repo} = context.repo, issue_number = 1476;
+            const prior = (await github.paginate(github.rest.issues.listComments, {owner, repo, issue_number, per_page:100}))
+              .find(c => c.body?.includes(marker) && c.user?.login === 'github-actions[bot]');
+            const success = process.env.ART_RESULT === 'success';
+            if (success && !prior) return; // Quiet passing nights; recover the same standing failure comment.
+            let log = ''; try { log = fs.readFileSync('out/log.txt', 'utf8'); } catch {}
+            const batches = [...log.matchAll(/^checking art: (.+)$/gm)].map(m => m[1]);
+            const failures = log.split('\n').filter(l => /^FAIL\b|Error:|::error/.test(l)).slice(0,12);
+            const source = process.env.ART_SOURCE || 'unresolved (source lookup failed)';
+            const run = `https://github.com/${owner}/${repo}/actions/runs/${context.runId}`;
+            const tasks = batches.length ? `Failed/unproven task batch: ${batches.at(-1)}. Batch attribution is conservative; individual failures are below.`
+              : log ? 'Full fallback or auxiliary checks; see failure details below.' : 'Setup/planning failed before task execution; no art task is claimed to have failed.';
+            const body = `${marker}\nREPORT: Nightly art ${success ? 'RECOVERED / PASS' : 'FAILED'} on claude/prototype SHA ${source}.\n\n${success ? 'The latest complete check passed; the preceding failure is resolved.' : tasks}\n\n${success ? '' : failures.join('\n').slice(0,4000)}\n\nRun: ${run}\nUpdated ${new Date().toISOString()}. Art is advisory; build, deploy and release do not wait for it.`;
+            if (prior) await github.rest.issues.updateComment({owner,repo,comment_id:prior.id,body});
+            else await github.rest.issues.createComment({owner,repo,issue_number,body});
