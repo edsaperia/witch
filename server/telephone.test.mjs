@@ -4,7 +4,7 @@ import { once } from 'node:events';
 import { WebSocket } from 'ws';
 import { createRelay } from './relay.mjs';
 import { relayEnvironment } from './guards.mjs';
-import { telephoneIdentity } from './telephone.mjs';
+import { telephoneIdentity, telephoneDirectory } from './telephone.mjs';
 import { createPrivateKey, createPublicKey, sign } from 'node:crypto';
 const keyFor = label => {
   const seed = Buffer.alloc(32); seed.writeUInt32BE(Number(label), 28);
@@ -46,19 +46,51 @@ test('knowing a number never grants world access before answer', { timeout: 5000
   const { phone, ring } = await fixture(t), a = await phone('1234567'), b = await phone('7654321'); await ring(a, b);
   const closed = once(a, 'close'); send(a, { type: 'state', payload: {} }); assert.equal((await closed)[0], 1008);
 });
-test('decline, cancel, unavailable presence and ring deadline leave no stale call', { timeout: 5000 }, async t => {
-  let clock = 0; const { phone, ring } = await fixture(t, { now: () => clock, checkMs: 5 });
-  const a = await phone('1234567'), b = await phone('7654321');
-  for (const action of ['decline', 'cancel-call']) {
-    await ring(a, b); const reply = message(a), other = message(b); send(action === 'decline' ? b : a, { type: action });
-    assert.equal((await reply).type, action === 'decline' ? 'call-declined' : 'call-cancelled'); await other;
+test('decline, cancel, unavailable presence and ring deadline leave no stale call', { timeout: 5000 }, () => {
+  let clock = 0;
+  const events = new Map(), a = {}, b = {};
+  const directory = telephoneDirectory({ now: () => clock, rooms: new Map(), roomLimit: 8,
+    send: (ws, event) => events.get(ws).push(event),
+    stop: (_ws, _reason, _code, message) => assert.fail(message),
+  });
+  for (const [ws, label] of [[a, '1234567'], [b, '7654321']]) {
+    events.set(ws, []); directory.handle(ws, { type: 'telephone', publicKey: keyFor(label).publicKey });
+    assert.equal(events.get(ws).shift().type, 'telephone-ready');
   }
-  await ring(a, b); const reply = messageType(a, 'call-timeout'), other = messageType(b, 'call-timeout');
-  // Preserve heartbeat while advancing the ring clock beyond the normal silence interval.
-  for (let n = 1; n <= 6; n++) { clock = n * 5000; send(a, { type: 'heartbeat' }); send(b, { type: 'heartbeat' }); await new Promise(resolve => setImmediate(resolve)); }
-  assert.equal((await reply).type, 'call-timeout'); await other;
-  const ready = message(a); send(b, { type: 'available', payload: false });
-  send(a, { type: 'dial', number: b.number }); assert.equal((await ready).type, 'call-unavailable');
+  const ring = () => {
+    directory.handle(a, { type: 'dial', number: b.telephone });
+    assert.equal(events.get(a).shift().type, 'call-ringing');
+    assert.equal(events.get(b).shift().type, 'incoming-call');
+  };
+  for (const action of ['decline', 'cancel-call']) {
+    ring(); directory.handle(action === 'decline' ? b : a, { type: action });
+    for (const ws of [a, b]) {
+      assert.equal(events.get(ws).shift().type, action === 'decline' ? 'call-declined' : 'call-cancelled');
+      assert.equal(ws.call, null);
+    }
+  }
+  ring(); clock = 29999; directory.check();
+  assert.equal(events.get(a).length, 0); assert.equal(events.get(b).length, 0);
+  assert.ok(a.call); assert.equal(a.call, b.call);
+  clock = 30000; directory.check();
+  for (const ws of [a, b]) { assert.equal(events.get(ws).shift().type, 'call-timeout'); assert.equal(ws.call, null); }
+  directory.check(); // A completed deadline cannot emit a second timeout.
+  assert.equal(events.get(a).length, 0); assert.equal(events.get(b).length, 0);
+  directory.handle(b, { type: 'available', payload: false });
+  directory.handle(a, { type: 'dial', number: b.telephone });
+  assert.equal(events.get(a).shift().type, 'call-unavailable');
+});
+
+test('ring deadline delivers call-timeout to both WebSocket clients', { timeout: 5000 }, async t => {
+  t.mock.timers.enable({ apis: ['setInterval'] });
+  let clock = 0;
+  const { phone, ring } = await fixture(t, { now: () => clock, checkMs: 5 });
+  const a = await phone('1234567'), b = await phone('7654321');
+  await ring(a, b);
+  const caller = messageType(a, 'call-timeout'), answerer = messageType(b, 'call-timeout');
+  clock = 30001; t.mock.timers.tick(5);
+  assert.equal((await caller).type, 'call-timeout');
+  assert.equal((await answerer).type, 'call-timeout');
 });
 test('duplicate numbers, fabricated answer and dialing a busy phone are refused', { timeout: 5000 }, async t => {
   const { phone, connect, ring } = await fixture(t), a = await phone('1234567'), b = await phone('7654321'), c = await phone('3333333');

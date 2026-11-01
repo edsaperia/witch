@@ -11,6 +11,7 @@ import { remoteRoomPass, remoteWitchFrame } from "../../render/remoteWitch";
 import { hatMarkers } from "../../rules/hat";
 import { hatFlight } from "../../render/hatFlight";
 import { remoteEquipment } from "../../render/remoteEquipment";
+import { HOUSE_LAYER } from "../../render/post";
 
 const mounted = new WeakMap<View, () => void>();
 const submitted = new WeakMap<View, ReturnType<View["makeWitchBatch"]>>();
@@ -21,6 +22,8 @@ export const remoteBodyBatch = (view: View) => submitted.get(view) ?? null;
 export function otherWitches(view: View, source: Game, player: number, looks?: ReadonlyMap<number, WitchLookLease>, profiles?: ReadonlyMap<number, Record<string, unknown>>) {
   mounted.get(view)?.();
   const batch = view.makeWitchBatch();
+  // Enclosed rooms render HOUSE_LAYER alone; remote bodies must share the local body's pass.
+  for (const mesh of batch.meshes) { mesh.layers.enable(HOUSE_LAYER); mesh.name = "telephone-remote-body"; }
   submitted.set(view, batch);
   let released = false;
   const phases = new Map<number, { time: number; walk: number; foot: boolean }>();
