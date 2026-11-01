@@ -30,7 +30,7 @@ export function telephoneStation(options: Pick<TelephoneOptions, "storage" | "lo
     get active() { return session?.role !== null && session?.role !== undefined; },
     get visiting() { return session?.role === "guest"; },
     get catalogue() { return session?.catalogue ?? null; },
-    network() { return { prediction: session?.predictionStats ?? null, rejectedHits: session?.rejectedHits ?? {}, tick: session?.tick ?? 0 }; },
+    network() { return { prediction: session?.predictionStats ?? null, inputs: session?.inputStats ?? null, rejectedHits: session?.rejectedHits ?? {}, tick: session?.tick ?? 0 }; },
     houseEvents() { return session?.role === "guest" ? session.takeHouseEvents() : null; },
     choose(choice: StationChoice): boolean { return session?.choose(choice) ?? false; },
     changed() { session?.changed(); },

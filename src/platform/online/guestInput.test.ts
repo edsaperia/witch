@@ -42,3 +42,24 @@ it("tolerates a frame timestamp before packet arrival and neutralizes invalid cl
   expect(input.sample(NaN).moveX).toBe(0);
   expect(input.sample(350.5).moveX).toBe(0);
 });
+it("consumes bunched movement quanta in order and acknowledges applied rather than newest received sequence", () => {
+  const input = guestInput();
+  input.accept({ sequence: 0, controls: { moveX: 1, dash: true } }, 0);
+  expect(input.consume(0).sequence).toBe(-1);
+  input.accept({ sequence: 1, controls: { moveX: 0 } }, 1);
+  input.accept({ sequence: 2, controls: { moveX: -1 } }, 2);
+  expect(input.receivedSequence).toBe(2); expect(input.sequence).toBe(-1);
+  expect(input.consume(2)).toMatchObject({ sequence: 0, controls: { moveX: 1, dash: true } });
+  expect(input.sequence).toBe(0);
+  expect(input.consume(3)).toMatchObject({ sequence: 1, controls: { moveX: 0 } });
+  expect(input.consume(4)).toMatchObject({ sequence: 2, controls: { moveX: -1 } });
+  expect(input.consume(5)).toMatchObject({ sequence: 2, controls: { moveX: -1, dash: false } });
+  expect(input.consume(252)).toMatchObject({ sequence: 2, controls: { moveX: 0 } });
+});
+it("bounds the input queue and can release a lone edge after the startup delay", () => {
+  const input = guestInput(); input.accept({ sequence: 0, controls: { dash: true } }, 0);
+  expect(input.consume(49).sequence).toBe(-1); expect(input.consume(50).sequence).toBe(0);
+  for (let n = 1; n <= 130; n++) input.accept({ sequence: n, controls: {} }, n);
+  expect(input.stats.queued).toBe(120); expect(input.stats.discarded).toBe(10);
+  input.suspend(); expect(input.stats.queued).toBe(0); expect(input.sequence).toBe(0);
+});

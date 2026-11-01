@@ -33,7 +33,9 @@ for (const delay of [0, 100, 250]) {
       const jitter = delay ? (tick * 17 % 41) - 20 : 0;
       lastUp = Math.max(lastUp, now + delay + jitter); up.push({ at: lastUp, sequence: tick, controls: input });
       while (up[0]?.at <= now) { const packet = up.shift()!; buffer.accept(packet, now); }
-      const frame = replayHostStep(host, [controls(0), buffer.sample(now)], STEP, tick + 1); frame.guestSequence = buffer.sequence;
+      const consumed = buffer.consume(now);
+      const frame = replayHostStep(host, [controls(0), consumed.controls], STEP, tick + 1);
+      frame.guestSequence = consumed.sequence; frame.guestSteps = [consumed];
       lastDown = Math.max(lastDown, now + delay - jitter); down.push({ at: lastDown, frame });
       while (down[0]?.at <= now) { const packet = down.shift()!; expect(replica.apply(packet.frame)).toBe(true); prediction.reconcile(packet.frame.guestSequence!); }
     }
@@ -41,7 +43,10 @@ for (const delay of [0, 100, 250]) {
     expect(lowSpeedFrames).toBeGreaterThan(responseFrames); expect(prediction.pending).toBeLessThan(120);
     console.log(JSON.stringify({ evidence: "guest-locomotion", oneWayDelayMs: delay, jitterMs: delay ? 20 : 0,
       keyupFirstDecelerationFrames: responseFrames, keyupToLowSpeedFrames: lowSpeedFrames,
-      correctionMetres: { samples: errors.length, p50: quantile(errors, .5), p95: quantile(errors, .95), max: Math.max(...errors) } }));
+      correctionMetres: { samples: errors.length, p50: quantile(errors, .5), p95: quantile(errors, .95), max: Math.max(...errors) }, snaps: prediction.stats.snaps, hostInputQueue: buffer.stats }));
+    expect(quantile(errors, .95)).toBeLessThan(.05);
+    expect(Math.max(...errors)).toBeLessThan(.3);
+    expect(prediction.stats.snaps).toBe(0);
   }, 30000);
 
   cloud(`cloud: guest-seen moving-target hit and grouped plausibility rejects at ${delay}ms + jitter`, () => {

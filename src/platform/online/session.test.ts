@@ -28,6 +28,25 @@ const cleanups: (() => void)[] = [];
 afterEach(() => { for (const stop of cleanups.splice(0)) stop(); });
 const input = (moveX = 0): Controls => ({ moveX, moveZ: 0, zoom: 0, toggleMode: false, autoTalk: false });
 const turn = () => new Promise<void>(resolve => setTimeout(resolve, 0));
+it("emits guest fixed quanta and acknowledges each consumed host step instead of the newest packet", async () => {
+  const f = fixture(), { joined } = await f.start();
+  f.hostGame.clock.paused = false; Object.assign(f.hostGame.witches[1].body, { seated: false, perch: false });
+  delete f.hostGame.witches[1].wake; delete f.hostGame.witches[1].kit;
+  await f.sync(); await joined;
+  const before = f.guestMessages.length;
+  f.guest.step({ ...input(1), dash: true }, 3 / 60);
+  const packets = f.guestMessages.slice(before);
+  expect(packets.map(m => (m.payload as { sequence: number }).sequence)).toEqual([0, 1, 2]);
+  expect(packets.map(m => (m.payload as { controls: Controls }).controls.dash)).toEqual([true, false, false]);
+  packets.forEach(m => f.host.message(m));
+  f.host.step(input(), 2 / 60);
+  const frame = (f.hostMessages.at(-1)!.payload as { frame: import("./replay").ReplayFrame }).frame;
+  expect(frame.guestSteps?.map(step => step.sequence)).toEqual([0, 1]); expect(frame.guestSequence).toBe(1);
+  expect(f.hostOptions.advanceHost).toHaveBeenCalledTimes(1);
+  f.guest.message(f.hostMessages.at(-1)!);
+  expect(f.guestOptions.failed).not.toHaveBeenCalled();
+  expect(snapshotGame(f.guest.game!)).toEqual(snapshotGame(f.hostGame));
+});
 it("shows guest movement and letter launch immediately while canonical simulation waits for host frames", async () => {
   const f = fixture(), { joined } = await f.start();
   f.hostGame.clock.paused = false;

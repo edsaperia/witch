@@ -1,6 +1,7 @@
 import { stepGame, type Controls, type Game } from "../../rules/game";
 import { restoreGame, snapshotGame, type NightSnapshot } from "../../rules/nightSnapshot";
 import { wireControls } from "./guestInput";
+import { withGuestInputSteps } from "../../rules/onlineInputSteps";
 import { restoreGuestEffects, guestEffectsEnabled, pendingGuestEffects, queueGuestEffects, startGuestLetters, type GuestEffect, type GuestLetterCast } from "../../rules/guestEffects";
 
 export interface ReplayStart {
@@ -9,7 +10,7 @@ export interface ReplayStart {
   snapshot: NightSnapshot;
   transient: { acc: number; paused: boolean; pending: Partial<Controls>; witches: { paused?: boolean; pending?: Partial<Controls> }[]; guestClaims?: boolean; guestEffects?: GuestEffect[] };
 }
-export interface ReplayFrame { tick: number; dt: number; inputs: Controls[]; guestSequence?: number; guestCasts?: GuestLetterCast[]; guestEffects?: GuestEffect[] }
+export interface ReplayFrame { tick: number; dt: number; inputs: Controls[]; guestSequence?: number; guestSteps?: { sequence: number; controls: Controls }[]; guestCasts?: GuestLetterCast[]; guestEffects?: GuestEffect[] }
 
 /** A network handoff preserves input queues/accumulator; a disk resume deliberately clears them. */
 export function replayStart(game: Game, build: string, tick: number): ReplayStart {
@@ -54,7 +55,16 @@ export function replayGuest(start: ReplayStart, build: string, reuse?: Game, val
         startGuestLetters(game, cast);
       }
       queueGuestEffects(game, frame.guestEffects ?? []);
-      stepGame(game, inputs as Controls[], frame.dt); tick = frame.tick;
+      if (frame.guestSteps) {
+        if (frame.guestSteps.length > 16 || frame.guestSteps.some(step => !Number.isSafeInteger(step.sequence) || step.sequence < -1 || !validateControls(step.controls))) return false;
+        let index = 0;
+        withGuestInputSteps(game, () => {
+          const step = frame.guestSteps![index++]; if (!step) throw Error("Guest physics steps lost their sequence");
+          return validateControls(step.controls)!;
+        }, () => stepGame(game, inputs as Controls[], frame.dt));
+        if (index !== frame.guestSteps.length || index > 0 && frame.guestSequence !== frame.guestSteps[index - 1].sequence) return false;
+      } else stepGame(game, inputs as Controls[], frame.dt);
+      tick = frame.tick;
       return true;
     },
   };

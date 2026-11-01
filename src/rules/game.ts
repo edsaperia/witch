@@ -80,6 +80,7 @@ import { homeDown, startPartyOver, stepPartyOver, stepWorldAsleep, worldAsleep, 
 import { stepWin, winFlare, won, type WinState } from "./win";
 import { hasBroom, hasInvites, type Kit } from "./kit";
 import { applyGuestEffects, guestEffectsEnabled, recordAutomaticHit } from "./guestEffects";
+import { guestInputStep } from "./onlineInputSteps";
 import { pulseRouteMetres } from "./leypulse";
 
 /** One player's witch (Stage 4: game.witches, one per player, the first this machine's): her
@@ -389,6 +390,7 @@ export function stepGame(g: Game, controls: Controls | readonly Controls[], real
       step.zoom = (P.zoom as number) ?? 0; delete P.zoom;
       return multi && g.witches[i].paused ? { moveX: 0, moveZ: 0, toggleMode: false, zoom: 0 } : step;
     });
+    if (multi) steps[1] = guestInputStep(g, steps[1]);
     remember(g);
     setFloorSigils(gatherFloorSigils(g));
     try { fixedStep(g, steps); } finally { setFloorSigils(null); }

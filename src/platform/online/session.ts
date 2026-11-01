@@ -1,5 +1,6 @@
-import type { Controls, Game } from "../../rules/game";
-import { guestInput, wireControls } from "./guestInput";
+import { STEP, type Controls, type Game } from "../../rules/game";
+import { guestInput, wireControls, INPUT_EDGES } from "./guestInput";
+import { withGuestInputSteps } from "../../rules/onlineInputSteps";
 import { prepareJoin } from "./joinPreparation";
 import { replayGuest, replayHostStep, replayStart, type ReplayFrame, type ReplayStart } from "./replay";
 import { applyStationChoice, stationChoice, type StationChoice } from "./stationChoice";
@@ -58,6 +59,7 @@ export function onlineSession(options: SessionOptions) {
   const buffer = guestInput(), now = options.now ?? (() => performance.now());
   let role: "host" | "guest" | null = null, connection: SessionConnection | null = null, game: Game | null = null;
   let controller: AbortController | null = null, removeAbort = () => {}, tick = 0, sequence = 0, progress = 0;
+  let guestAccumulator = 0, guestEdges: Partial<Controls> = {};
   let present = false, prepared = false, ready = false, preparing = false, changed = false, epoch = 0, night = 0;
   let replica: ReturnType<typeof replayGuest> | null = null;
   let prediction: ReturnType<typeof guestPrediction> | null = null;
@@ -82,6 +84,7 @@ export function onlineSession(options: SessionOptions) {
     if (previousGame) disableGuestEffects(previousGame);
     epoch++; role = null; connection = null; game = null; present = prepared = ready = preparing = changed = false; replica = null; night = 0;
     prediction = hits = hitPresentation = null; buffer.clear(); removeAbort(); removeAbort = () => {}; controller?.abort(); controller = null;
+    guestAccumulator = 0; guestEdges = {};
     requests.length = 0; stationSequence = 0; lastStation = -1;
     pendingStations.clear();
     beatSegments = null;
@@ -103,6 +106,7 @@ export function onlineSession(options: SessionOptions) {
     get predicted() { return role === "guest" && ready && prediction ? hitPresentation?.actor(prediction.actor) ?? prediction.actor : undefined; },
     get rejectedHits() { return hits?.rejected ?? {}; },
     get predictionStats() { return prediction?.stats ?? null; },
+    get inputStats() { return role === "host" ? buffer.stats : null; },
     takeHouseEvents: () => receivedHouse.take(),
     get role() { return role; }, get game() { return game; }, get ready() { return ready; }, get tick() { return replica?.tick ?? tick; },
     /** Telephone invokes this only after mutual identity verification and consent. */
@@ -176,6 +180,7 @@ export function onlineSession(options: SessionOptions) {
             if (incomingNight > night) {
               if (!ready || !replica) throw new Error("Another shared night is still preparing.");
               night = incomingNight; epoch++; replica = null; ready = prepared = preparing = false;
+              guestAccumulator = 0; guestEdges = {};
               pendingStations.clear(); receivedHouse.clear();
             }
             if (options.catalogue || payload.catalogue !== undefined) {
@@ -286,11 +291,20 @@ export function onlineSession(options: SessionOptions) {
         const controls = wireControls(input); if (!controls) throw new Error("Invalid local online controls");
         // Only the pause page votes to pause. Ordinary menus and omitted input never retain an old vote.
         controls.pausePage = input.pausePage === true;
+        if (!Number.isFinite(dt) || dt < 0 || dt > .25) throw Error("Invalid online input frame duration");
         if (role === "guest") {
           if (ready) {
-            if (!connection.sendInput({ sequence, controls })) throw new Error("The guest telephone disconnected.");
-            prediction?.input(sequence++, controls, dt);
-            if (prediction) hitPresentation?.step(prediction.actor, controls, dt);
+            for (const edge of INPUT_EDGES) if (controls[edge]) guestEdges[edge] = true;
+            guestAccumulator = Math.min(guestAccumulator + dt, .1 + STEP);
+            while (guestAccumulator >= STEP - 1e-9) {
+              guestAccumulator -= STEP;
+              const quantum = { ...controls };
+              for (const edge of INPUT_EDGES) { quantum[edge] = !!guestEdges[edge]; delete guestEdges[edge]; }
+              if (!connection.sendInput({ sequence, controls: quantum })) throw new Error("The guest telephone disconnected.");
+              if (!game.clock.paused) prediction?.input(sequence, quantum, STEP);
+              sequence++;
+              if (prediction) hitPresentation?.step(prediction.actor, quantum, STEP);
+            }
           }
           return true;
         }
@@ -344,10 +358,20 @@ export function onlineSession(options: SessionOptions) {
         for (const request of resolved) options.stationResolved?.(request.player, request.choice, request.accepted);
         const guestControls = ready ? buffer.sample(now()) : wireControls({})!;
         guestControls.pausePage = guestControls.pausePage === true;
+        if (controls.pausePage && guestControls.pausePage) buffer.suspend();
         const pve = ready ? hits?.drain() : null;
-        const frame = replayHostStep(game, [controls, guestControls], dt, ++tick, options.advanceHost);
+        const guestSteps: NonNullable<ReplayFrame["guestSteps"]> = [];
+        const frame = withGuestInputSteps(game, original => {
+          const consumed = ready ? buffer.consume(now()) : { sequence: -1, controls: wireControls({})! };
+          const motion = consumed.controls;
+          const applied = game!.witches[1].paused ? original : { ...original, moveX: motion.moveX, moveZ: motion.moveZ,
+            toggleMode: motion.toggleMode, dash: motion.dash, spell: motion.spell, fire: motion.fire, aimX: motion.aimX, aimZ: motion.aimZ };
+          guestSteps.push({ sequence: consumed.sequence, controls: applied });
+          return applied;
+        }, () => replayHostStep(game!, [controls, guestControls], dt, ++tick, options.advanceHost), { steps: guestSteps, casts: pve?.casts, effects: pve?.effects });
         hits?.observed();
         frame.guestSequence = buffer.sequence;
+        frame.guestSteps = guestSteps;
         if (pve?.casts.length) frame.guestCasts = pve.casts;
         if (pve?.effects.length) frame.guestEffects = pve.effects;
         beatSegments = game.beat.segs;

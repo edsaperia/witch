@@ -12,9 +12,11 @@ export function guestPrediction(source: Game, player: number, report?: (event: P
   const pending: Input[] = [];
   const sizes: number[] = []; let corrections = 0, snaps = 0, largest = 0;
   const offset = { x: 0, z: 0 };
-  let pendingEdges: Partial<Controls> = { ...actor.pending };
+  let pendingEdges: Partial<Controls> = {};
   const held = (w: Witch) => !!w.ko || !!w.house?.slept || !!w.paused || !!w.wake && !w.wake.open;
-  const room = (w: Witch) => roomAt(source.map.treehouse, w.body.x, w.body.z)?.id ?? null;
+  const room = (w: Witch) => w.body.perch ? roomAt(source.map.treehouse, w.body.x, w.body.z)?.id ?? null : null;
+  const state = (w: Witch) => ({ held: held(w), room: room(w), perch: !!w.body.perch, bed: w.house?.lastBed, ko: w.ko?.at });
+  let authoritative = state(source.witches[player]);
   const advance = (input: Input) => {
     for (const key of edges) if (input.controls[key]) pendingEdges[key] = true;
     acc = Math.min(acc + input.dt, .25 + STEP);
@@ -44,10 +46,12 @@ export function guestPrediction(source: Game, player: number, report?: (event: P
       if (!Number.isSafeInteger(sequence) || sequence < acknowledged) throw Error("Invalid applied guest input acknowledgement");
       acknowledged = sequence;
       while (pending.length && pending[0].sequence <= sequence) pending.shift();
-      const previous = actor, visible = { x: actor.body.x + offset.x, z: actor.body.z + offset.z };
-      actor = structuredClone(source.witches[player]); acc = source.acc; pendingEdges = { ...actor.pending };
-      const discontinuity = held(actor) !== held(previous) || room(actor) !== room(previous) || actor.body.perch !== previous.body.perch
-        || actor.house?.lastBed !== previous.house?.lastBed || actor.ko?.at !== previous.ko?.at;
+      const visible = { x: actor.body.x + offset.x, z: actor.body.z + offset.z };
+      actor = structuredClone(source.witches[player]); acc = source.acc; pendingEdges = {};
+      const next = state(actor);
+      const discontinuity = next.held !== authoritative.held || next.room !== authoritative.room || next.perch !== authoritative.perch
+        || next.bed !== authoritative.bed || next.ko !== authoritative.ko;
+      authoritative = next;
       if (discontinuity) pending.length = 0;
       for (const input of pending) advance(input);
       const dx = visible.x - actor.body.x, dz = visible.z - actor.body.z, size = Math.hypot(dx, dz);

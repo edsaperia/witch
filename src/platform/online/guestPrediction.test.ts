@@ -4,6 +4,7 @@ import { TUNING } from "../../rules/tuning";
 import { snapshotGame } from "../../rules/nightSnapshot";
 import { guestPrediction } from "./guestPrediction";
 import { localView } from "./localView";
+import { roomAt } from "../../rules/houseRooms";
 
 const input = (moveX: number): Controls => ({ moveX, moveZ: 0, toggleMode: false, zoom: 0 });
 function fixture() {
@@ -34,4 +35,25 @@ it("snaps a host-forced relocation and clears pending locomotion on sleep", () =
   p.reconcile(0);
   expect(p.pending).toBe(0); expect(p.actor.body.x).toBe(game.witches[1].body.x);
   expect(corrections).toContainEqual(expect.objectContaining({ snapped: true, reason: "authoritative-transition" }));
+});
+it("does not call ordinary forest movement below a house outline an authoritative room change", () => {
+  const game = fixture(), W = game.witches[1], at = game.map.treehouse;
+  const candidates: number[] = [];
+  for (let n = -1200; n <= 1200; n++) {
+    const x = at.x + n * .05;
+    if ((roomAt(at, x, at.z)?.id ?? null) !== (roomAt(at, x + .125, at.z)?.id ?? null)) candidates.push(x);
+  }
+  expect(candidates.length).toBeGreaterThan(0);
+  const x = candidates.sort((a, b) => Math.abs(a - at.x) - Math.abs(b - at.x))[0];
+  Object.assign(W.body, { x, z: at.z, vx: 7.5, vz: 0, perch: false, seated: false });
+  const before = roomAt(at, W.body.x, W.body.z)?.id ?? null;
+  const p = guestPrediction(game, 1); p.input(0, input(1), 1 / 60);
+  expect(roomAt(at, p.actor.body.x, p.actor.body.z)?.id ?? null).not.toBe(before);
+  p.reconcile(-1);
+  expect(p.stats.snaps).toBe(0); expect(p.pending).toBe(1);
+});
+it("treats absent and false perch flags as the same authoritative ground state", () => {
+  const game = fixture(), p = guestPrediction(game, 1);
+  delete game.witches[1].body.perch;
+  p.reconcile(-1); expect(p.stats.snaps).toBe(0);
 });
