@@ -12,8 +12,34 @@ export interface PlaytestComment {
   version: 1; id: string; at: number; text: string; build: string; repro: string;
   t: number; island: string; wave: number; witch: { x: number; z: number; hp: number };
   changed: Record<string, unknown>; breadcrumbs: Breadcrumb[]; night: SavedNight;
+  context?: Omit<SavedNight, "game">;
   recording?: InputRecording;
   trail?: NotableEvent[];
+}
+/** Authored reports have no automatic count/byte eviction. Only their expensive attachments do. */
+export type RetainedComment = Omit<PlaytestComment, "night"> & {
+  night?: SavedNight;
+  context?: Omit<SavedNight, "game">;
+  omission?: string;
+};
+function withoutMoment(row: RetainedComment, reason: string): RetainedComment {
+  const { night, recording: _recording, ...report } = row;
+  const context = row.context ?? (night ? (({ game: _game, ...context }) => context)(night) : undefined);
+  return { ...report, ...(context ? { context } : {}), omission: reason };
+}
+/** Newest complete moments get the replay budget; every written report stays in order. */
+export function retainComments(rows: RetainedComment[]): RetainedComment[] {
+  let used = 0, count = 0;
+  const out = rows.slice();
+  for (let i = out.length - 1; i >= 0; i--) {
+    const row = out[i];
+    if (!row.night) continue;
+    const size = bytes(row);
+    if (size > COMMENT_BYTES || count >= COMMENT_COUNT || used + size > COMMENT_TOTAL)
+      out[i] = withoutMoment(row, "Saved moment and input replay omitted: replay retention limit. Written report and context kept.");
+    else { used += size; count++; }
+  }
+  return out;
 }
 const bytes = (v: unknown) => new TextEncoder().encode(JSON.stringify(v)).byteLength;
 export class Breadcrumbs {
@@ -36,7 +62,8 @@ export function captureComment(game: Game, text: string, context: Parameters<typ
     t: game.clock.time, island: game.tuning.map?.island || "home", wave: game.party.wave,
     witch: { x: game.witch.x, z: game.witch.z, hp: game.witches[0].health.hp },
     changed: structuredClone(changed), breadcrumbs: structuredClone(breadcrumbs), trail: recentNotables(), night: captureNight(game, context, at), ...(recording ? { recording } : {}) };
-  if (bytes(comment) > COMMENT_BYTES) throw Error("This moment is too large to save as a comment. Download the log and report this limit.");
+  const { game: _snapshot, ...savedContext } = comment.night;
+  comment.context = savedContext;
   return comment;
 }
 /** A builder may select an individual bundle or a Download log file; the latter restores its latest comment. */
@@ -48,6 +75,7 @@ export function parseComment(text: string, build: string): PlaytestComment {
 function selectComment(raw: unknown, build: string): PlaytestComment {
   const candidates: unknown[] = Array.isArray(raw) ? raw.flatMap(r => r && typeof r === "object" && Array.isArray(r.comments) ? r.comments : []) : [raw];
   const c = candidates.sort((a, b) => Number((a as PlaytestComment)?.at ?? 0) - Number((b as PlaytestComment)?.at ?? 0)).at(-1) as PlaytestComment | undefined;
+  if (c && !c.night && (c as RetainedComment).omission) throw Error(`This written report is kept, but cannot restore its moment. ${(c as RetainedComment).omission}`);
   if (!c || c.version !== 1 || c.build !== build || typeof c.text !== "string" || c.text.length > COMMENT_TEXT || typeof c.repro !== "string" || !Number.isFinite(c.at) || !savedNight(c.night, build, new URLSearchParams()) || bytes(c) > COMMENT_BYTES) throw Error("No valid comment for this build. Open the build named in the log, then restore it there.");
   return c;
 }
@@ -55,54 +83,85 @@ export async function parseCommentFile(text: string, build: string): Promise<Pla
   if (new TextEncoder().encode(text).byteLength > LOG_EXPANDED_BYTES) throw Error("This log file is too large.");
   return selectComment(await unpackLog(JSON.parse(text)), build);
 }
-interface StoredComments { format: "witch-comments/v1"; bundles: PackedLog[] }
-export async function encodeStoredComments(rows: PlaytestComment[]): Promise<StoredComments> {
-  const bundles: PackedLog[] = [];
-  for (const row of rows) {
-    const bundle = await packLog(row);
-    if (jsonBytes(bundle) > COMMENT_PACKED_BYTES) throw Error("This compressed comment exceeds its size limit");
-    bundles.push(bundle);
+interface StoredComments { format: "witch-comments/v2"; reports: RetainedComment[]; moments: { id: string; bundle: PackedLog }[] }
+const errorText = (e: unknown) => e instanceof Error ? `${e.name}: ${e.message}` : String(e);
+export async function encodeStoredComments(rows: RetainedComment[]): Promise<StoredComments> {
+  const retained = retainComments(rows), reports = retained.map(row => withoutMoment(row, row.omission ?? "Saved moment unavailable."));
+  const moments: StoredComments["moments"] = [];
+  let used = 0;
+  for (let i = retained.length - 1; i >= 0; i--) {
+    const row = retained[i];
+    if (!row.night) continue;
+    try {
+      const bundle = await packLog({ night: row.night, ...(row.recording ? { recording: row.recording } : {}) });
+      const size = jsonBytes(bundle);
+      if (size > COMMENT_PACKED_BYTES || used + size > COMMENT_PACKED_TOTAL) throw Error("Compressed replay retention limit");
+      used += size; moments.push({ id: row.id, bundle });
+      // Context is also in the moment, avoiding a second copy on successful roundtrip.
+      const { omission: _omission, ...report } = reports[i];
+      reports[i] = report;
+    } catch (e) { reports[i] = withoutMoment(row, `Saved moment and input replay omitted: ${errorText(e)}. Written report and context kept.`); }
   }
-  const result: StoredComments = { format: "witch-comments/v1", bundles };
-  if (jsonBytes(result) > COMMENT_PACKED_TOTAL) throw Error("Compressed comments exceed their storage limit");
-  return result;
+  return { format: "witch-comments/v2", reports, moments };
 }
-export async function decodeStoredComments(value: unknown): Promise<PlaytestComment[]> {
-  if (Array.isArray(value)) return value as PlaytestComment[]; // Existing uncompressed session rows.
+export async function decodeStoredComments(value: unknown): Promise<RetainedComment[]> {
+  if (Array.isArray(value)) return retainComments(value as PlaytestComment[]); // Legacy uncompressed rows.
   const stored = value as StoredComments;
-  if (!stored || stored.format !== "witch-comments/v1" || !Array.isArray(stored.bundles) || stored.bundles.length > COMMENT_COUNT || jsonBytes(stored) > COMMENT_PACKED_TOTAL) throw Error("Invalid stored comments");
+  if (stored?.format === "witch-comments/v2") {
+    if (!Array.isArray(stored.reports) || !Array.isArray(stored.moments) || stored.moments.length > COMMENT_COUNT || jsonBytes(stored.moments) > COMMENT_PACKED_TOTAL + 4096) throw Error("Invalid stored comments");
+    const rows = stored.reports.map(row => {
+      if (!row || row.version !== 1 || typeof row.id !== "string" || typeof row.text !== "string" || row.text.length > COMMENT_TEXT || typeof row.build !== "string" || !Number.isFinite(row.at)) throw Error("Invalid stored report");
+      return { ...row };
+    });
+    for (const { id, bundle } of stored.moments) {
+      const row = rows.find(row => row.id === id);
+      if (!row) throw Error("Unknown stored report moment");
+      try {
+        if (jsonBytes(bundle) > COMMENT_PACKED_BYTES) throw Error("Stored replay exceeds its limit");
+        const moment = await unpackLog(bundle) as Pick<PlaytestComment, "night" | "recording">;
+        const restored = selectComment({ ...row, ...moment }, row.build);
+        Object.assign(row, restored);
+      } catch (e) { row.omission = `Saved moment could not be read: ${errorText(e)}. Written report kept.`; }
+    }
+    return retainComments(rows);
+  }
+  const legacy = value as { format: string; bundles: PackedLog[] };
+  if (!legacy || legacy.format !== "witch-comments/v1" || !Array.isArray(legacy.bundles) || legacy.bundles.length > COMMENT_COUNT || jsonBytes(legacy) > COMMENT_PACKED_TOTAL) throw Error("Invalid stored comments");
   const rows: PlaytestComment[] = [];
-  for (const bundle of stored.bundles) {
+  for (const bundle of legacy.bundles) {
     if (jsonBytes(bundle) > COMMENT_PACKED_BYTES) throw Error("Stored comment exceeds its size limit");
     const row = await unpackLog(bundle) as PlaytestComment;
     rows.push(selectComment(row, row?.build));
-    if (jsonBytes(rows) > COMMENT_TOTAL) throw Error("Expanded comments exceed their storage limit");
   }
-  return rows;
+  return retainComments(rows);
 }
-export interface CommentStore { read(): Promise<PlaytestComment[]>; write(rows: PlaytestComment[]): Promise<void> }
+export interface CommentStore { read(): Promise<RetainedComment[]>; write(rows: RetainedComment[]): Promise<RetainedComment[] | void> }
 export class CommentBook {
-  private rows: PlaytestComment[] = [];
+  private rows: RetainedComment[] = [];
   private queue: Promise<unknown>;
   private persistent = true;
+  private readFailed = false;
+  private error?: string;
   constructor(private store: CommentStore) {
-    this.queue = store.read().then(rows => { this.rows = this.cap(Array.isArray(rows) ? rows : []); }).catch(() => { this.persistent = false; });
-  }
-  private cap(rows: PlaytestComment[]): PlaytestComment[] {
-    const out = rows.slice(-COMMENT_COUNT);
-    while (out.length && bytes(out) > COMMENT_TOTAL) out.shift();
-    return out;
+    this.queue = store.read().then(rows => { this.rows = retainComments(Array.isArray(rows) ? rows : []); }).catch(e => { this.persistent = false; this.readFailed = true; this.error = errorText(e); });
   }
   add(comment: PlaytestComment): Promise<boolean> {
     const action = this.queue.then(async () => {
-      this.rows = this.cap([...this.rows, comment]);
-      try { await this.store.write(this.rows); this.persistent = true; } catch { this.persistent = false; }
+      this.rows = retainComments([...this.rows, comment]);
+      try {
+        // Never overwrite an unread legacy store with only this page's new reports.
+        if (this.readFailed) throw Error(`Previous reports could not be read; storage left unchanged. ${this.error}`);
+        const saved = await this.store.write(this.rows);
+        if (saved) this.rows = saved;
+        this.persistent = true; this.error = undefined;
+      } catch (e) { this.persistent = false; this.error = errorText(e); }
       return this.persistent;
     });
     this.queue = action;
     return action;
   }
-  async all(): Promise<PlaytestComment[]> { await this.queue; return structuredClone(this.rows); }
+  status(): { persistent: boolean; error?: string; omitted: number; omissionReasons: string[] } { return { persistent: this.persistent, ...(this.error ? { error: this.error } : {}), omitted: this.rows.filter(row => row.omission).length, omissionReasons: [...new Set(this.rows.flatMap(row => row.omission ? [row.omission] : []))] }; }
+  async all(moments = true): Promise<RetainedComment[]> { await this.queue; return structuredClone(moments ? this.rows : this.rows.map(row => withoutMoment(row, row.omission ?? "Saved moment omitted from this reports-only download."))); }
 }
 /** Session identity survives reload in this tab. IDB avoids localStorage's small synchronous quota. */
 export function browserCommentStore(): CommentStore {
@@ -125,5 +184,18 @@ export function browserCommentStore(): CommentStore {
       tx.onerror = tx.onabort = () => reject(tx.error ?? r.error);
     });
   };
-  return { read: async () => decodeStoredComments(await act("readonly")), write: async rows => { await act("readwrite", await encodeStoredComments(rows)); } };
+  return { read: async () => decodeStoredComments(await act("readonly")), write: async rows => {
+    // Commit authored text before compression or expensive attachment writes can fail.
+    const textOnly: StoredComments = { format: "witch-comments/v2", reports: rows.map(row => withoutMoment(row, row.omission ?? "Saved moment not persisted; written report and context kept.")), moments: [] };
+    await act("readwrite", textOnly);
+    try {
+      const encoded = await encodeStoredComments(rows);
+      await act("readwrite", encoded);
+      return await decodeStoredComments(encoded);
+    } catch (e) {
+      textOnly.reports = textOnly.reports.map(row => ({ ...row, omission: `Saved moment storage failed: ${errorText(e)}. Written report and context kept.` }));
+      try { await act("readwrite", textOnly); } catch { /* The first text-only transaction already committed. */ }
+      return textOnly.reports;
+    }
+  } };
 }
