@@ -1,0 +1,5 @@
+{
+  "reason": "Ed requested replacement combat movement, shared mixed-species attack rounds, varied roles and withdrawal on damage (2026-11-01). Waiting movement now uses calibrated bodies and numerical species profiles, including close passes and cadence.",
+  "frames": {"wave-fight": "Changed fighting positions, movement and subsequent attacks"},
+  "rules": {"creatures": "New fighting positions, roles, withdrawal and attack timing", "*": "Consequences of changed combat: hits, invitations, knockouts, sieges and wave outcomes"}
+}

@@ -154,7 +154,6 @@ Each brings back how something was before a change, to compare against what repl
 
 | switch | does | since | read in |
 |---|---|---|---|
-| `spacing=1` / `spacing=0` | Size-aware, more dynamic combat waiting movement; experimental and off by default until Ed plays it. | 2026-11-01 | app/linkParams.ts |
 | `area=off` | Scenery isn't averaged where it shrinks (a performance suspect, to compare). | 2026-10-14 | app/linkParams.ts |
 | `attacks=old` | Every species fights with its old attacks from config/combat.json, not its own in the attack grammar. *Decision: Each species' own attack is the default (Ed, 2026-10-27, #1326).* | 2026-10-27 | app/linkParams.ts |
 | `snap=0` | The picture's pixels as the pixel size has them, not snapped to whole device pixels (pixels.snap), to compare. | 2026-10-29 | app/linkParams.ts |

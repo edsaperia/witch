@@ -169,6 +169,8 @@ export type CombatEvent =
 export interface SoundHealth { hp: number; max: number; x: number; z: number; radius: number }
 
 export interface CombatState {
+  /** Shared youth/adult attack rounds by side + target, including mixed species. */
+  waitingTeams?: Map<string, import("./teams").TeamState>;
   shots: Shot[];
   nextShot: number;
   sounds: Map<string, SoundHealth>;

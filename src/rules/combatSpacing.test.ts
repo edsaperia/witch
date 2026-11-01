@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it } from "vitest";
-import { SPACING, bodyGap, clearWaitingSlot, drawnRadius, spacingOn, waitingAvoidance, waitingSlot, type SpacingData } from "./combatSpacing";
+import { SPACING, bodyGap, clearWaitingSlot, drawnRadius, pathClearsHazard, spacingOn, waitingAvoidance, waitingDrive, waitingProfile, waitingSlot, type SpacingData } from "./combatSpacing";
 import { MOVEMENT, resetFight, steer } from "./movement";
 import { spaceOut } from "./spacing";
 import { PACKS, spreadLull } from "./combat/packs";
@@ -15,11 +15,17 @@ const creature = (id: number, x: number, z: number, species = "wolf", level: Lev
 const original = SPACING.body;
 afterEach(() => { SPACING.body = original; resetFight(); });
 
-describe("opt-in combat waiting spacing", () => {
-  it("is off by default and only spacing=1 enables the per-load experiment", () => {
-    expect(spacingOn(TUNING)).toBe(false);
+describe("combat waiting spacing", () => {
+  it("allows close passes while rejecting hops through the target body", () => {
+    const c = creature(1, -10, 0), hazard = { x: 0, z: 0, radius: 1 };
+    expect(pathClearsHazard(c, { x: 10, z: 0 }, hazard, t, data)).toBe(false);
+    expect(pathClearsHazard({ ...c, z: 6 }, { x: 10, z: 6 }, hazard, t, data)).toBe(true);
+    expect(pathClearsHazard(c, { x: 10, z: 0 }, { x: 0, z: -10, endX: 0, endZ: 10, radius: 1 }, t, data)).toBe(false);
+  });
+  it("ships the early system by default without a public legacy-spacing switch", () => {
+    expect(spacingOn(TUNING)).toBe(true);
     expect(spacingOn(tuningFromLink(new URLSearchParams("spacing=1")).tuning)).toBe(true);
-    expect(spacingOn(tuningFromLink(new URLSearchParams("spacing=0")).tuning)).toBe(false);
+    expect(spacingOn(tuningFromLink(new URLSearchParams("spacing=0")).tuning)).toBe(true);
     expect(tuningFromLink(new URLSearchParams()).tuning.combatSpacing).toBeUndefined();
     expect(tuningFromLink(new URLSearchParams("spacing=1")).tuning.invites.orbit).toEqual(TUNING.invites.orbit);
   });
@@ -32,15 +38,30 @@ describe("opt-in combat waiting spacing", () => {
     expect(() => drawnRadius({ ...small, species: "unknown" }, t, data)).toThrow(/Missing calibrated/);
     expect(bodyGap(small, big, t, data)).toBe(drawnRadius(small, t, data) + drawnRadius(big, t, data) + data.clearance);
   });
-  it("keeps charger, circler, flanker, hopper and steady goals distinct and continuous", () => {
-    const c = creature(17, 20, 0), p = { x: 0, z: 0 }, styles = ["charger", "circler", "flanker", "hopper", "steady"] as const;
-    const goals = styles.map(style => waitingSlot(c, p, style, 10, 3, 1, PACKS.styles, data, { x: 1, z: 0 }));
-    expect(new Set(goals.map(g => `${g.x},${g.z}`)).size).toBe(styles.length);
-    styles.forEach((style, i) => {
-      const next = waitingSlot(c, p, style, 10, 3.0001, 1, PACKS.styles, data, { x: 1, z: 0 });
+  it("gives species distinct continuous goals through one numerical path calculation", () => {
+    const c = creature(17, 20, 0), p = { x: 0, z: 0 }, species = ["boar", "wolf", "fox", "hare", "badger"];
+    const goals = species.map(species => waitingSlot({ ...c, species }, p, 10, 3, 1, data, { x: 1, z: 0 }));
+    expect(new Set(goals.map(g => `${g.x},${g.z}`)).size).toBe(species.length);
+    species.forEach((species, i) => {
+      const next = waitingSlot({ ...c, species }, p, 10, 3.0001, 1, data, { x: 1, z: 0 });
       expect(Math.hypot(next.x - goals[i].x, next.z - goals[i].z)).toBeLessThan(0.01);
     });
-    expect(goals[2].x).toBeLessThan(0); // flanker repositions beside/behind the perceived heading
+    const turned = waitingSlot({ ...c, species: "fox" }, p, 10, 3, 1, data, { x: -1, z: 0 });
+    expect(Math.hypot(turned.x - goals[2].x, turned.z - goals[2].z)).toBeGreaterThan(5);
+  });
+  it("coordinates members by shared phase, returns by the deadline and expresses rests through cadence", () => {
+    const c = creature(17, 20, 0, "hare"), p = { x: 0, z: 0 }, group = { seed: 0.3, index: 0, count: 4, gap: 8, until: 10 };
+    const a = waitingSlot(c, p, 5, 3, 1, data, null, group), b = waitingSlot({ ...c, id: 18 }, p, 5, 3, 1, data, null, { ...group, index: 1 });
+    expect(Math.hypot(a.x - b.x, a.z - b.z)).toBeGreaterThan(1);
+    const returned = waitingSlot(c, p, 5, 10, 1, data, null, group);
+    expect(returned).toEqual({ x: 5, z: 0 });
+    const speeds = Array.from({ length: 40 }, (_, i) => waitingDrive(c, i / 20, data).speed);
+    expect(speeds.some(v => v === 0)).toBe(true);
+    expect(speeds.some(v => v > 0)).toBe(true);
+    expect(waitingProfile(creature(1, 0, 0, "boar"), data).turn).toBeLessThan(waitingProfile(c, data).turn);
+    const signatures = Object.keys(SPACING.body.radii).map(species => JSON.stringify(waitingProfile({ species }, data)));
+    expect(signatures).toHaveLength(64);
+    expect(new Set(signatures).size).toBe(64);
   });
   it("moves a waiting goal clear of large drawn bodies without moving the bodies", () => {
     const c = creature(1, 15, 0), attacker = creature(2, 0, 0, "elephant"), before = { ...attacker };
@@ -103,8 +124,8 @@ describe("opt-in combat waiting spacing", () => {
       }
     }
   });
-  it("preserves seeded combat state exactly for absent versus explicitly off spacing", () => {
-    const a = fight(), b = fight(false);
+  it("default combat matches the explicitly selected new system on the same seed", () => {
+    const a = fight(), b = fight(true);
     for (let i = 0; i < 30; i++) {
       a.world.time = b.world.time = i / 60;
       stepCombat(a.state, a.world); stepCombat(b.state, b.world);

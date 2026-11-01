@@ -60,7 +60,6 @@ export function tuningFromLink(params: URLSearchParams) {
   // the file's own objects, so a night made after another in the same page starts from the file as a fresh page does (only what
   // is carried on purpose carries: app/settings.ts carryKnobs; docs/plans/sail-without-reload.md).
   const tuning = structuredClone(TUNING); // (styleFromLink's partyObjects.generated among them: the chart's landing bake and its map's worker each make one, app/mapPrep.ts)
-  if (params.has("spacing")) tuning.combatSpacing = params.get("spacing") === "1";
   // ?px=3|4|5: the art pixel (screen pixels per art pixel; the tuning's pixelSize), per load, to compare the pixel-art
   // styles in play (docs/ART-GUIDE.md section 0: Ed picks between bold and ref at 4 or 5 in playtesting).
   { const px = Number(params.get("px")); if ([2, 3, 4, 5, 6].includes(px)) tuning.pixelSize = px; }

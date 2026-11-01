@@ -8,7 +8,7 @@ import { sectionOf } from "./creatureConfig";
 import type { Creature } from "./creatures";
 import { hash2 } from "./random";
 import { limitTurn } from "./momentum";
-import { bodyGap, clearWaitingSlot, waitingAvoidance, type SpacingData } from "./combatSpacing";
+import { bodyGap, clearWaitingSlot, hazardAvoidance, waitingAvoidance, waitingDrive, type SpacingData, type WaitingHazard } from "./combatSpacing";
 import type { Tuning } from "./tuning";
 
 export type BehaviourKind = "arrive" | "keepRange" | "orbit" | "strafe" | "slot" | "separation" | "cohesion" | "wander" | "dodge" | "light";
@@ -138,7 +138,7 @@ export interface SteerContext {
    *  _styles): it makes for this over its pack's tactic. */
   style?: { x: number; z: number } | null;
   /** Opt-in waiting-only body-aware relief; the existing momentum/acceleration integration remains authoritative. */
-  spacing?: { tuning: Tuning; data: SpacingData; waiting: boolean };
+  spacing?: { tuning: Tuning; data: SpacingData; waiting: boolean; hazards?: WaitingHazard[] };
 }
 
 /** A hop under way (a hopper's bound: packs.json styles.hopper) flies on by the time, whatever holds the creature (Ed's playtest,
@@ -268,12 +268,15 @@ export function steer(c: Creature, P: Profile, x: SteerContext): boolean {
   if (x.spacing?.waiting) {
     const force = waitingAvoidance(c, x.neighbours, x.spacing.tuning, x.spacing.data);
     add(force.x, force.z, 1);
+    const danger = hazardAvoidance(c, x.spacing.hazards ?? [], x.spacing.tuning, x.spacing.data);
+    add(danger.x, danger.z, 1);
     for (const o of x.neighbours) if (o !== c && Math.hypot(c.x - o.x, c.z - o.z) < bodyGap(c, o, x.spacing.tuning, x.spacing.data)) may = false;
   }
   const m = Math.hypot(vx, vz);
   if (m > 1) { vx /= m; vz /= m; }
-  let tx = vx * x.speed, tz = vz * x.speed;
-  if (x.momentum) [tx, tz] = limitTurn(c.vx ?? 0, c.vz ?? 0, tx, tz, x.momentum, x.dt, FIGHT.momentum); // (momentum: rules/momentum.ts)
+  const drive = x.spacing?.waiting ? waitingDrive(c, x.time, x.spacing.data) : null;
+  let tx = vx * x.speed * (drive?.speed ?? 1), tz = vz * x.speed * (drive?.speed ?? 1);
+  if (x.momentum) [tx, tz] = limitTurn(c.vx ?? 0, c.vz ?? 0, tx, tz, drive ? { ...x.momentum, turn: x.momentum.turn * drive.turn } : x.momentum, x.dt, FIGHT.momentum); // (momentum: rules/momentum.ts)
   const ax = tx - (c.vx ?? 0), az = tz - (c.vz ?? 0), am = Math.hypot(ax, az), step = (P.accel * x.dt * FIGHT.speed) / FIGHT.momentum;
   const k = am > step ? step / am : 1;
   c.vx = (c.vx ?? 0) + ax * k; c.vz = (c.vz ?? 0) + az * k;

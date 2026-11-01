@@ -20,6 +20,8 @@ async function captureFight(page, { baseUrl, expectedSha, output, on, seed = 123
     await page.waitForFunction(() => !window.witch.game.clock.paused, null, { timeout: 60000 });
     await page.evaluate(() => window.witch.view.assets.whenIdle());
     const start = await page.evaluate(startingBoundary);
+    // Private measurement override at the held zero-step boundary; no public gameplay switch.
+    await page.evaluate(value => { window.witch.game.tuning.combatSpacing = value; }, on);
     const source = await page.evaluate(async () => {
       const w = window.witch, g = w.game, response = await fetch(new URL('version.json', location.href), { cache: 'no-store' });
       if (!response.ok) throw Error('Missing served build identity');

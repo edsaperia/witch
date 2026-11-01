@@ -27,7 +27,8 @@ import { observeAttack } from "./attackObservation";
 import type { AttackSpec } from "./attacks/types";
 import { PACKS, stepPacks, packsOn, packKindOf, packAttack, packGate, markStrike, dodgeAim, strikingNow, ownStrike, styleOf, type Directive } from "./combat/packs";
 import { chaseAt, limitTurn, momentumOf, noteWitches, witchWas } from "./momentum";
-import { SPACING, bodyGap, clearWaitingSlot, drawnRadius, spacingOn, waitingSlot } from "./combatSpacing";
+import { SPACING, bodyGap, clearWaitingSlot, drawnRadius, hazardAvoidance, pathClearsHazard, spacingOn, waitingDrive, waitingProfile, waitingSlot, type WaitingHazard } from "./combatSpacing";
+import { teamOf } from "./combat/teams";
 
 /** A species' own attack as a pack member's strike: a lunger's if it's close (a lunge, or an area round itself), a shooter's if it's
  *  from afar (moving and timed as its pack's shooters, reaching as far) and its pack's shot is the plain bolt, not one of its own (the
@@ -173,7 +174,7 @@ export function stepCombat(s: CombatState, w: CombatWorld, data: CombatData = CO
   const YS = PACKS.styles, onFoe = new Map<number, number[]>();
   if (YS?.friends.on) for (const o of w.active) if (foes("enraged", sideOf(o)) && o.fight?.target?.kind === "creature" && !w.parked(o.id)) { const id = o.fight.target.id, l = onFoe.get(id); if (l) l.push(o.id); else onFoe.set(id, [o.id]); }
   /** A hopper's bounds at its run (m/s): each as long as its run takes it over a bound and a beat, so it keeps its own pace, at least styles.hopper.length. */
-  const hopOf = (run: number) => { const H = spacing ? { ...YS.hopper, length: YS.hopper.length * SPACING.hopper.length, time: YS.hopper.time * SPACING.hopper.time, height: YS.hopper.height * SPACING.hopper.height, pause: SPACING.hopper.pause } : YS.hopper, L = Math.max(H.length, (run * (H.time + H.pause)) / (FIGHT.scale * FIGHT.speed)); return L === H.length ? H : { ...H, length: L }; };
+  const hopOf = (run: number, creature?: Creature) => { const M = spacing && creature ? waitingProfile(creature) : null, H = M ? { length: M.stride, time: M.cadence * M.duty, height: M.lift, pause: M.cadence * (1 - M.duty) } : YS.hopper, L = Math.max(H.length, (run * (H.time + H.pause)) / (FIGHT.scale * FIGHT.speed)); return L === H.length ? H : { ...H, length: L }; };
   const claim = (tg: { kind: string; id?: number } | null | undefined, k: number) => { if (tg?.kind === "creature" && tg.id !== undefined) claims.set(tg.id, (claims.get(tg.id) ?? 0) + k); };
 
   // Dodging matters (Ed, 2026-10-08; tuning dodge): against the witch, committed strikes (a), predictive aim (b), packs
@@ -398,6 +399,33 @@ export function stepCombat(s: CombatState, w: CombatWorld, data: CombatData = CO
       const a = witchWas(s, f.target.id, time - mo.delay - SPACING.headingWindow), b = witchWas(s, f.target.id, time - mo.delay);
       return a && b && Math.hypot(b.x - a.x, b.z - a.z) > SPACING.epsilon ? { x: b.x - a.x, z: b.z - a.z } : null;
     } : undefined;
+    const movingGoal = spacing ? (origin: { x: number; z: number }, range: number) => {
+      const team = teamOf(s, c.id), members = team?.members ?? pd?.state.members ?? [];
+      let gap = 0;
+      for (const id of members) { const other = w.creatures[id]; if (other) gap = Math.max(gap, bodyGap(c, other, t)); }
+      const tell = pd ? PACKS.rhythms[packKindOf(c.species)?.rhythm ?? "steady"].tell : 0;
+      const until = pd?.phase === "lull" ? pd.state.until + tell : pd?.phase === "tell" || pd?.phase === "combo" ? pd.state.until : Infinity;
+      const seed = team ? hash2(team.seed, 1620, 17) : pd?.state.seed;
+      const retreat = pd?.role === "hurt" ? waitingProfile(c).radius * FIGHT.scale : 0;
+      return waitingSlot(c, origin, range + retreat, time, FIGHT.scale, SPACING, waitingHeading?.(), seed !== undefined ? { seed, index: Math.max(0, members.indexOf(c.id)), count: members.length, gap, until, minimum: drawnRadius(c, t) + p.r + SPACING.clearance } : undefined);
+    } : undefined;
+    const waitingHazards: WaitingHazard[] = spacing ? [{ x: p.x, z: p.z, radius: p.r }] : [];
+    if (spacing) for (const other of w.active) {
+      const warning = other.fight;
+      if (other.level !== LEGEND || sideOf(other) === sideOf(c) || !warning || warning.windupUntil <= time) continue;
+      const attack = warning.move ? attackNamed(warning.move, data) : attackOf(other.species, other.level, data)?.attack;
+      if (!attack) continue;
+      if (attack.delivery === "quake" || attack.delivery === "pulse") waitingHazards.push({ x: other.x, z: other.z, radius: attack.radius ?? 5 });
+      else if (attack.delivery === "lob") waitingHazards.push({ x: warning.aimX, z: warning.aimZ, radius: attack.radius ?? 2 });
+      else if (attack.delivery === "beam" || attack.delivery === "melee") {
+        const angle = Math.atan2(warning.aimZ - other.z, warning.aimX - other.x);
+        waitingHazards.push({ x: other.x, z: other.z, endX: other.x + Math.cos(angle) * attack.range, endZ: other.z + Math.sin(angle) * attack.range, radius: attack.width ?? attack.radius ?? 1 });
+      }
+    }
+    const safeWaitingGoal = (goal: { x: number; z: number }) => {
+      const force = hazardAvoidance(c, waitingHazards, t);
+      return { x: goal.x + force.x, z: goal.z + force.z };
+    };
     const lead = (tg: Target) => { const v = velOf(tg); return { vx: v.vx * sl, vz: v.vz * sl }; };
     // (a shooter keeps its usual distance, A0's, however far it may now fire at her: so she can still reach it with her 💌s)
     const A0 = atk.attack;
@@ -451,16 +479,16 @@ export function stepCombat(s: CombatState, w: CombatWorld, data: CombatData = CO
         if (c.hop) continue; // (in the air: rules/movement.ts)
         if (spacing && !pd.freeze) {
           const origin = mo && f.target.kind === "witch" ? chaseAt(s, f.target.id, time, mo) ?? p : p;
-          const goal = clearWaitingSlot(c, waitingSlot(c, origin, styleOf(c.species), Math.hypot(tx - p.x, tz - p.z), time, S, YS, SPACING, waitingHeading?.()), grid.near(c.x, c.z, spacingSearch), t);
+          const goal = clearWaitingSlot(c, safeWaitingGoal(movingGoal!(origin, want)), grid.near(c.x, c.z, spacingSearch), t);
           const profile = profileOf(c.species) ?? { accel: SPACING.fallbackAccel, fight: [{ kind: "arrive" as const, w: 1 }] };
           steer(c, profile, { px: origin.x, pz: origin.z, pr: p.r, want: 0, range: 0, speed, time, dt, pack: null, neighbours: grid.near(c.x, c.z, spacingSearch), threats: s.shots, side: sideOf(c), ready: false, beat: 60 / t.beat.bpm, momentum: mo, style: goal, spacing: { tuning: t, data: SPACING, waiting: true } });
-          if (styleOf(c.species) === "hopper" && f.target.kind === "witch" && !pd.state.hers) {
+          if (waitingDrive(c, time).airborne && f.target.kind === "witch" && !pd.state.hers) {
             // Launch in its already momentum-limited heading, toward a clear landing disc.
-            const v = Math.hypot(c.vx ?? 0, c.vz ?? 0), length = hopOf(speed).length * S;
+            const v = Math.hypot(c.vx ?? 0, c.vz ?? 0), length = hopOf(speed, c).length * S;
             if (v > SPACING.epsilon) {
               const landing = { x: c.x + c.vx! / v * length, z: c.z + c.vz! / v * length };
               const safe = clearWaitingSlot(c, landing, grid.near(c.x, c.z, spacingSearch), t);
-              if (Math.hypot(safe.x - landing.x, safe.z - landing.z) <= SPACING.epsilon) startHop(c, landing.x, landing.z, time, hopOf(speed));
+              if (Math.hypot(safe.x - landing.x, safe.z - landing.z) <= SPACING.epsilon && waitingHazards.every(h => pathClearsHazard(c, landing, h, t))) startHop(c, landing.x, landing.z, time, hopOf(speed, c));
             }
           }
           continue;
@@ -645,7 +673,7 @@ export function stepCombat(s: CombatState, w: CombatWorld, data: CombatData = CO
       }
       const waiting = !strikingNow(c) && (!myTurn || time < f.readyAt);
       if (spacing && waiting) {
-        if (f.target.kind === "witch") place = waitingSlot(c, herAt, sty0, want, time, S, YS, SPACING, waitingHeading?.());
+        if (f.target.kind === "witch" || teamOf(s, c.id)) place = movingGoal!(herAt, want);
         else if (f.target.kind === "creature" && place) {
           const l = onFoe.get(f.target.id) ?? [], target = w.creatures[f.target.id];
           let gap = 0;
@@ -654,7 +682,7 @@ export function stepCombat(s: CombatState, w: CombatWorld, data: CombatData = CO
           const a = Math.atan2(place.z - p.z, place.x - p.x);
           place = { x: p.x + Math.cos(a) * R, z: p.z + Math.sin(a) * R };
         }
-        if (place) place = clearWaitingSlot(c, place, grid.near(c.x, c.z, spacingSearch), t);
+        if (place) place = clearWaitingSlot(c, safeWaitingGoal(place), grid.near(c.x, c.z, spacingSearch), t);
       }
       // (a hopper bounds there, or in toward her for its strike, a beat on the ground between; the last stretch, it runs in and
       // strikes as any)
@@ -665,12 +693,12 @@ export function stepCombat(s: CombatState, w: CombatWorld, data: CombatData = CO
         if (g && Math.hypot(g.x - c.x, g.z - c.z) > 2 * S) { if (!startHop(c, g.x, g.z, time, hopOf(speed))) { c.moving = false; c.vx = 0; c.vz = 0; c.facing = p.x >= c.x ? 1 : -1; } continue; }
       }
       const may = steer(c, heavy ? heavyOf(c, P) : P, { px: herAt.x, pz: herAt.z, pr: p.r, want, range: A0.range, fire: A.range, speed: cutoff ? Math.max(run * burst, DC!.sprint * FIGHT.speed) : run * burst, time, dt, pack: pd ? tactic : pk, neighbours: grid.near(c.x, c.z, spacing ? spacingSearch : 12 * S), threats: s.shots, side: sideOf(c), ready: time >= f.readyAt, beat: 60 / t.beat.bpm, heading, lights, cutoff, arriveAt: DA && A.delivery === "melee" && f.target.kind === "witch" && !ownFrom ? A.range + p.r : undefined, momentum: chase, now: herAt === p ? undefined : p, style: place, ...(spacing ? { spacing: { tuning: t, data: SPACING, waiting } } : {}) });
-      if (spacing && waiting && sty0 === "hopper" && !may && place) {
-        const v = Math.hypot(c.vx ?? 0, c.vz ?? 0), length = hopOf(speed).length * S;
+      if (spacing && waiting && waitingDrive(c, time).airborne && !may && place) {
+        const v = Math.hypot(c.vx ?? 0, c.vz ?? 0), length = hopOf(speed, c).length * S;
         if (v > SPACING.epsilon) {
           const landing = { x: c.x + c.vx! / v * length, z: c.z + c.vz! / v * length };
           const safe = clearWaitingSlot(c, landing, grid.near(c.x, c.z, spacingSearch), t);
-          if (Math.hypot(safe.x - landing.x, safe.z - landing.z) <= SPACING.epsilon) startHop(c, landing.x, landing.z, time, hopOf(speed));
+          if (Math.hypot(safe.x - landing.x, safe.z - landing.z) <= SPACING.epsilon && waitingHazards.every(h => pathClearsHazard(c, landing, h, t))) startHop(c, landing.x, landing.z, time, hopOf(speed, c));
         }
       }
       if (may && time >= f.readyAt && strikeNow(pd, f.target)) {

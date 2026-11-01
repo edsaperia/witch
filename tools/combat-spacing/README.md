@@ -14,6 +14,10 @@ node tools/combat-spacing/body-radii.mjs <output.json>
 
 Called only by the coordinator's allocated cloud browser runner; owns no browser/server/listener.
 
+## `capture.cjs`
+
+Canonical-allocated cloud only, two serial private contexts; no existing browser/profile/window touched.
+
 ## `measure.ts`
 
 Canonical-allocated cloud CPU evidence only; bundled by run.mjs.
