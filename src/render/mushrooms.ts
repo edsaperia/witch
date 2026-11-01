@@ -1,3 +1,4 @@
+import renderKnobs from '../../config/playtest-render.json';
 import * as THREE from 'three';
 import { packAtlas } from './atlas';
 import { SpriteBatch, type SpriteInstance } from './sprites';
@@ -32,14 +33,14 @@ export class MushroomView {
       this.key = key;
       const images = state.patches.map(p => mushroomArt(v.assets.style, p.type, p.seed));
       images.push(puffArt());
-      this.batch = new SpriteBatch(packAtlas(images, 1024), v.mpp, { solid: true, glowGain: { value: 2.4 } }).name('mushrooms');
+      this.batch = new SpriteBatch(packAtlas(images, 1024), v.mpp, { solid: true, glowGain: { value: renderKnobs.mushroomSpotGain }, spotSpill: true }).name('mushrooms');
       v.scene.add(...this.batch.meshes);
     }
     const b = this.batch!, items: SpriteInstance[] = [], halos: MushroomHalo[] = [], w = v.game.witch;
     for (const [index, p] of state.patches.entries()) if (!p.picked && Math.hypot(p.x - w.x, p.z - w.z) < 150) {
       const frame = b.atlas.frames[index];
       if (frame) {
-        items.push({ x: p.x, z: p.z, y: 0, frame, flip: false, glow: .5 });
+        items.push({ x: p.x, z: p.z, y: 0, frame, flip: false, glow: 0 });
         halos.push({ x: p.x, z: p.z, h: frame.h * v.mpp * .65, radius: Math.max(2, frame.h * v.mpp * 1.05), type: p.type });
       }
     }

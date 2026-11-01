@@ -27,6 +27,7 @@ says what each note covers.
 
 ## [Balance](balance.md)
 
+- Written report retention
 - Compressed log bundles
 - Structured log records
 - Log recovery
