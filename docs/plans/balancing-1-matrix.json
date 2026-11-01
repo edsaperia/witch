@@ -1,0 +1,55 @@
+{
+  "schema": 1,
+  "status": "proposal-not-dispatched",
+  "baseline": "6ecede5fd",
+  "authority": "1476#6552671020",
+  "seedRule": {
+    "count": 200,
+    "startIndex": 0,
+    "formula": "1000 + 7919 * i"
+  },
+  "islands": [
+    "home",
+    "tiger"
+  ],
+  "bots": [
+    {
+      "label": "sloppy",
+      "policy": "novice"
+    },
+    {
+      "label": "crude",
+      "policy": "crude"
+    },
+    {
+      "label": "skilled",
+      "policy": "skilled"
+    }
+  ],
+  "bpms": [
+    100,
+    120,
+    160,
+    200
+  ],
+  "worldSeed": 0,
+  "bag": "satchel",
+  "hat": "none",
+  "broomParts": [],
+  "ownedFinds": {},
+  "capPlayerSeconds": 4200,
+  "cells": 4800,
+  "allocation": {
+    "workers": 1,
+    "maxWallSeconds": 1800,
+    "requiresCanonicalCpuSlot": true,
+    "resume": "identical manifest/source; completed cases only; no silent restart"
+  },
+  "census": {
+    "manifest": "tools/balance/surveys/wave1/census.json",
+    "proposal": "docs/notes/attack-audit/census-proposal/README.md",
+    "status": "blocked pending compatible source/adapter/lock or explicit fixture-only commission"
+  },
+  "training": "stopped",
+  "tuning": "no changes"
+}

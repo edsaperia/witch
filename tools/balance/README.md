@@ -18,6 +18,18 @@ A bot's run, as a trace: every change in what it's doing, with the clock, her pl
 node tools/balance/bottrace.mjs [--seed 1000] [--bot skilled] [--island 10] [--kind badger (that kind's island)] [--time 900] [--every 0 (also a line every N s)] [--game (the bot game's options)] [--feed]
 ```
 
+## `bounded-report-core.mjs`
+
+Bounded single-child supervision and read-only report checkpoints; no game imports.
+
+## `bounded-report.mjs`
+
+One restartable report worker with a <=30-minute allocation, exact-source identity and interruption receipt.
+
+```
+node tools/balance/bounded-report.mjs allocation.json
+```
+
 ## `charges.mjs`
 
 Can she walk away from a charge or a leap?
@@ -275,6 +287,7 @@ node tools/balance/waves.mjs --report a.json,b.json,...   (merge several runs' J
 
 ## Also here
 
+- `bounded-report.test.mjs`
 - `expert-contract.test.mjs`
 - `expert-coverage-screen.test.mjs`
 - `expert-delivery-screen.test.mjs`
