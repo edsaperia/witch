@@ -66,6 +66,7 @@ export function onlineSession(options: SessionOptions) {
   let controller: AbortController | null = null, removeAbort = () => {}, tick = 0, sequence = 0, progress = 0;
   let guestAccumulator = 0, guestEdges: Partial<Controls> = {};
   let present = false, prepared = false, ready = false, preparing = false, changed = false, epoch = 0, night = 0;
+  let resuming = false;
   let replica: ReturnType<typeof replayGuest> | null = null;
   let prediction: ReturnType<typeof guestPrediction> | null = null;
   let hits: ReturnType<typeof guestHitAuthority> | null = null, hitPresentation: ReturnType<typeof guestHitPresentation> | null = null;
@@ -101,7 +102,7 @@ export function onlineSession(options: SessionOptions) {
     }
     if (previousGame) disableGuestEffects(previousGame);
     epoch++; role = null; connection = null; game = null; present = prepared = ready = preparing = changed = false; replica = null; night = 0;
-    prediction = hits = hitPresentation = null; buffer.clear(); removeAbort(); removeAbort = () => {}; controller?.abort(); controller = null;
+    resuming = false; prediction = hits = hitPresentation = null; buffer.clear(); removeAbort(); removeAbort = () => {}; controller?.abort(); controller = null;
     guestAccumulator = 0; guestEdges = {};
     requests.length = 0; stationSequence = 0; lastStation = -1;
     pendingStations.clear();
@@ -151,6 +152,17 @@ export function onlineSession(options: SessionOptions) {
     message(message: Record<string, unknown>): boolean {
       if (!role || !connection || !controller) return false;
       try {
+        if (message.type === "transport-away" || message.type === "peer-away") {
+          ready = false; resuming = true; buffer.clear(); guestAccumulator = 0; guestEdges = {};
+          requests.length = 0; receivedHouse.clear();
+          for (const choice of pendingStations.values()) options.stationResolved?.(1, choice, false);
+          pendingStations.clear();
+          return true;
+        }
+        if (message.type === "transport-resumed" || message.type === "peer-resumed") {
+          if (role === "host" && present) { sendStart(); ready = true; changed = resuming = false; }
+          return true;
+        }
         if (role === "host") {
           if (message.type === "guest-joined" && message.player === 1) {
             if (!present && game) { options.attach(game); enableGuestEffects(game); hits = guestHitAuthority(game, reason => trace("rejected-hit-claim", reason)); present = true; buffer.clear(); sendStart(); }
@@ -215,7 +227,9 @@ export function onlineSession(options: SessionOptions) {
                 if (!look || entry.player !== 0 && entry.player !== 1 || received.has(entry.player)) throw new Error("Invalid shared witch appearances.");
                 received.set(entry.player, look);
               }
-              if (JSON.stringify(received.get(1)) !== JSON.stringify(looks.get(1))) throw new Error("Your witch appearance was replaced.");
+              // A station approval can reach the host immediately before the guest link fails.
+              // Only an authenticated transport rebase may carry that missed authoritative look.
+              if (!resuming && JSON.stringify(received.get(1)) !== JSON.stringify(looks.get(1))) throw new Error("Your witch appearance was replaced.");
               for (const [player, look] of received) {
                 if (JSON.stringify(looks.get(player)) !== JSON.stringify(look)) options.appearanceApplied?.(player, structuredClone(look));
                 looks.set(player, look);
@@ -244,7 +258,7 @@ export function onlineSession(options: SessionOptions) {
               if (!connection.sendActive()) throw new Error("The guest telephone disconnected.");
               prediction = guestPrediction(game, 1, correction, predictionEvidence);
               hitPresentation = guestHitPresentation(game, request => { if (!connection?.sendInput(request)) throw Error("The guest cast couldn't be sent."); });
-              ready = true; options.synchronized(game); accept?.(); accept = reject = null;
+              ready = true; resuming = false; options.synchronized(game); accept?.(); accept = reject = null;
             }
             return true;
           }

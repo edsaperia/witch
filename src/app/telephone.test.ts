@@ -16,10 +16,10 @@ class Socket implements RelaySocket {
 const make = () => loadTelephoneIdentity({ read: async () => null, write: async () => {} });
 async function fixture(pinWrongFriend = false) {
   const own = await make(), peer = await make(), ownNumber = await numberForKey(own.publicKey), peerNumber = await numberForKey(peer.publicKey);
-  vi.useFakeTimers(); const ws = new Socket(), connected = vi.fn<TelephoneOptions["connected"]>(async () => {}), departed = vi.fn(), show = vi.fn(); let actions!: TelephoneActions;
+  vi.useFakeTimers(); const ws = new Socket(), connected = vi.fn<TelephoneOptions["connected"]>(async () => {}), departed = vi.fn(), show = vi.fn(), trouble = vi.fn(); let actions!: TelephoneActions;
   const data = new Map<string, string>();
   if (pinWrongFriend) { const old = await make(); data.set("witch.telephone.v1", JSON.stringify({ recent: [peerNumber], contacts: [{ number: peerNumber, publicKey: old.publicKey }] })); }
-  const phone = telephone({ storage: { getItem: k => data.get(k) ?? null, setItem: (k, v) => { data.set(k, v); } }, loadIdentity: async () => own, socket: () => ws, connected, message: vi.fn(), departed,
+  const phone = telephone({ storage: { getItem: k => data.get(k) ?? null, setItem: (k, v) => { data.set(k, v); } }, loadIdentity: async () => own, socket: () => ws, connected, message: vi.fn(), departed, trouble,
     menu: a => { actions = a; return { show, render: vi.fn(), redial: vi.fn() }; } });
   const start = async () => { await phone.show(true); ws.open(); ws.receive({ type: "telephone-ready", number: ownNumber }); };
   const verify = async () => {
@@ -33,8 +33,21 @@ async function fixture(pinWrongFriend = false) {
     actions.confirmIdentity!(); expect(ws.sent.at(-1)).toMatchObject({ type: "identity-verified" });
     ws.receive({ type: "call-connected", role: "guest", player: 1, number: peerNumber }); await Promise.resolve();
   };
-  return { ws, connected, departed, phone, actions, start, verify, data, peer, peerNumber };
+  return { ws, connected, departed, phone, actions, start, verify, data, peer, peerNumber, trouble };
 }
+it("keeps a recoverable call up, clears the HUD on traffic, then displays loss after the20s fallback", async () => {
+  const f = await fixture(); await f.start(); await f.verify();
+  f.connected.mock.calls[0][1].sendActive();
+  vi.advanceTimersByTime(2000);
+  expect(f.phone.state.detail).toBe("Attempting to reconnect…");
+  expect(f.trouble).toHaveBeenLastCalledWith(true,18000);
+  expect(f.departed).not.toHaveBeenCalled();
+  f.ws.receive({type:"heartbeat"});
+  expect(f.phone.state.detail).toBeUndefined(); expect(f.trouble).toHaveBeenLastCalledWith(false,undefined);
+  vi.advanceTimersByTime(20000);
+  expect(f.departed).toHaveBeenCalledOnce(); expect(f.phone.state.detail).toBe("Connection lost");
+  expect(f.trouble).toHaveBeenLastCalledWith(true,0); expect(vi.getTimerCount()).toBe(0);
+});
 it("lists only at the phone; stepping away cancels a pending call and clears heartbeat", async () => {
   const f = await fixture(); await f.start(); f.actions.dial(f.peerNumber); expect(f.phone.state.status).toBe("dialling");
   await f.phone.show(false); expect(f.ws.sent.at(-1)).toMatchObject({ type: "available", payload: false });

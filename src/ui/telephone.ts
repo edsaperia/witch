@@ -4,6 +4,7 @@ import { bindings } from "../platform/bindings";
 import { textEntry } from "../platform/inputTarget";
 import { MenuFocus } from "./menuFocus";
 import { telephoneNumber } from "../app/telephoneBook";
+import { ONLINE_TIMING } from "../platform/online/inputLease";
 
 export type TelephoneStatus = "preparing" | "connecting" | "available" | "dialling" | "ringing" | "confirming" | "joining" | "connected" | "unavailable" | "busy" | "ended" | "error";
 export interface TelephoneState { own: string; status: TelephoneStatus; peer?: string; recent: readonly string[]; saved: boolean; detail?: string }
@@ -19,10 +20,17 @@ export interface TelephoneActions {
 const words: Record<TelephoneStatus, string> = { preparing: "Calls aren't available in this build yet.", connecting: "Connecting the telephone…", available: "The line is ready.", dialling: "Calling…", ringing: "The telephone is ringing.", confirming: "This is a new number. Connect and remember this friend?", joining: "Joining your friend's night…", connected: "The line is connected.", unavailable: "That number isn't at the telephone.", busy: "That line is engaged.", ended: "The line has gone quiet.", error: "The call couldn't connect." };
 
 /** Recoverable call warning stays visible with the station closed and never owns gameplay input. */
-export function telephoneTrouble(on: boolean): void {
+export function telephoneTrouble(on: boolean, remainingMs: number = ONLINE_TIMING.dropMs): void {
   const previous = document.getElementById("telephone-trouble");
   if (!on) { previous?.remove(); return; }
-  if (!previous) document.body.append(h("p", { id: "telephone-trouble", text: "Connection trouble…", attrs: { role: "status", "aria-live": "polite" }, style: { position: "fixed", top: "70px", left: "50%", transform: "translateX(-50%)", zIndex: "60", color: "#eee8fa", background: "#20192d", padding: "8px 12px", pointerEvents: "none" } }));
+  if (remainingMs <= 0) { previous?.remove(); telephoneNotice("Connection lost"); return; }
+  const root = previous ?? h("section", { id: "telephone-trouble", attrs: { role: "status", "aria-live": "polite" }, style: { position: "fixed", top: "70px", left: "50%", transform: "translateX(-50%)", zIndex: "60", width: "min(320px,90vw)", boxSizing: "border-box", color: "#eee8fa", background: "#20192d", padding: "8px 12px", pointerEvents: "none" } },
+    h("p", { text: "Attempting to reconnect…", style: { margin: "0 0 6px" } }),
+    h("progress", { attrs: { max: String(ONLINE_TIMING.dropMs), "aria-label": "Time remaining to reconnect" }, style: { width: "100%", height: "8px", accentColor: "#bba6cf" } }));
+  const bar = root.querySelector("progress")!;
+  bar.value = Math.max(0, Math.min(ONLINE_TIMING.dropMs, remainingMs));
+  bar.setAttribute("aria-valuetext", `${Math.ceil(bar.value / 1000)} seconds remaining`);
+  if (!previous) { document.getElementById("telephone-notice")?.remove(); document.body.append(root); }
 }
 
 /** Keep an admission failure visible even if the phone closes or the guest returns to another night. */

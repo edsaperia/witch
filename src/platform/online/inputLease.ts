@@ -1,4 +1,4 @@
-export const ONLINE_TIMING = { heldInputMs: 250, dropMs: 5000 } as const;
+export const ONLINE_TIMING = { heldInputMs: 250, dropMs: 20000 } as const;
 
 /** Held controls only, never one-shot edges. Host samples on its clock; arrival never steps the game.
  * Connection liveness is tracked separately by the relay, including heartbeats. */

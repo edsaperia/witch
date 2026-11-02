@@ -16,7 +16,7 @@ export interface TelephoneOptions {
   endpoint?: string; socket?: (url: string) => RelaySocket; menu?: (actions: TelephoneActions) => Menu;
   digit?: (digit: string) => void; face?: (number: string) => Node | null;
   clearFaces?(): void;
-  trouble?(on: boolean): void;
+  trouble?(on: boolean, remainingMs?: number): void;
   lifecycleEvidence?(proof: Record<string, unknown>): void;
 }
 /** Page-owned telephone; only mutually verified/accepted calls reach the ordinary-game session hook. */
@@ -37,6 +37,7 @@ export function telephone(options: TelephoneOptions) {
   const fail = (error: unknown) => {
     try { options.lifecycleEvidence?.({ stage: "telephone-error", reason: error instanceof Error ? error.message : "unknown", role, sampledWallTimeMs: Date.now(), sampledAtMs: performance.now() }); } catch { /* Diagnostic only. */ }
     hangUp("telephone-error"); paint({ status: "error", detail: error instanceof Error ? error.message : "The call couldn't connect." });
+    if (error instanceof Error && error.message === "Connection lost") options.trouble?.(true, 0);
   };
   const agree = () => { if (!trust || !connection) return; trust.agree(); connection.identityVerified(); paint({ status: "joining", detail: undefined }); };
   const actions: TelephoneActions = {
@@ -70,7 +71,7 @@ export function telephone(options: TelephoneOptions) {
         connection = connectRelay({ endpoint: options.endpoint ?? "wss://witch-relay.onrender.com", room: number, telephone: true, telephonePublicKey: own.publicKey, socket: options.socket,
           lifecycleEvidence: options.lifecycleEvidence,
           onError(error) { if (current === generation) fail(error); },
-            onTrouble(on) { if (current === generation && role) { paint({ detail: on ? "Connection trouble…" : undefined }); options.trouble?.(on); } },
+            onTrouble(on, remainingMs) { if (current === generation && role) { paint({ detail: on ? "Attempting to reconnect…" : undefined }); options.trouble?.(on, remainingMs); } },
           onClose() {
             if (current !== generation) return;
             generation++; attempt++; intent = null;

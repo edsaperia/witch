@@ -1,12 +1,12 @@
 import { createServer } from 'node:http';
-import { randomBytes } from 'node:crypto';
+import { randomBytes, timingSafeEqual } from 'node:crypto';
 import { pathToFileURL } from 'node:url';
 import { WebSocketServer, WebSocket } from 'ws';
 import { bucket, limitsWith, originSet, relayEnvironment, sendBounded } from './guards.mjs';
 import { telephoneDirectory } from './telephone.mjs';
 
 /** Relay only: the host browser owns all simulation and permanent outcomes. */
-export function createRelay({ dropMs = 5000, joiningGraceMs = 600000, joiningStallMs = 90000, hostJoiningDropMs = 20000, checkMs = 250, now = Date.now, log = line => console.info(JSON.stringify(line)), build = process.env.WITCH_SHA ?? 'local-unidentified', allowedOrigins, limits: overrides } = {}) {
+export function createRelay({ dropMs = 20000, joiningGraceMs = 600000, joiningStallMs = 90000, hostJoiningDropMs = 20000, checkMs = 250, now = Date.now, log = line => console.info(JSON.stringify(line)), build = process.env.WITCH_SHA ?? 'local-unidentified', allowedOrigins, limits: overrides } = {}) {
   if (!(Number.isFinite(dropMs) && Number.isFinite(joiningGraceMs) && joiningGraceMs >= dropMs && Number.isFinite(joiningStallMs) && joiningStallMs > 0 && Number.isFinite(hostJoiningDropMs) && hostJoiningDropMs >= dropMs && Number.isFinite(checkMs) && dropMs > 0 && checkMs > 0)) throw new Error('Invalid relay timing');
   const limits = limitsWith(overrides), origins = allowedOrigins === undefined ? null : originSet(allowedOrigins);
   const rooms = new Map(); let shuttingDown = false, closing;
@@ -36,11 +36,21 @@ export function createRelay({ dropMs = 5000, joiningGraceMs = 600000, joiningSta
     sendBounded(ws, message, limits, stop);
   };
   const telephone = telephoneDirectory({ send, stop, rooms, roomLimit: limits.rooms, now });
+  const ticket = (ws, room, role) => (ws.resumeTicket = { room: room.number, player: role === 'host' ? 0 : 1, token: randomBytes(32).toString('hex') });
+  const release = ws => {
+    const room = ws.onlineRoom, role = ws.onlineRole;
+    delete ws.resumeUntil; delete ws.resumeTicket;
+    telephone.closed(ws);
+    if (!room || room[role] !== ws) return;
+    if (role === 'host') { rooms.delete(room.number); if (room.guest) { if (room.guest.resumeUntil !== undefined) release(room.guest); else stop(room.guest, 'host-left', 1001, 'Host left'); } }
+    else { room.guest = null; room.host.lastMessage = now(); send(room.host, { protocol: 1, type: 'guest-left', player: 1 }); }
+  };
   wss.on('connection', ws => {
     let room, role;
     ws.assignRoom = (assigned, assignedRole) => {
       room = assigned; role = assignedRole; ws.onlineRoom = room; ws.onlineRole = role;
       ws.joinedAt = ws.advancedAt = now(); ws.progress = -1; ws.renderReady = ws.playable = false;
+      ticket(ws, room, role);
     };
     ws.connectionNumber = ++connectionNumber;
     ws.lastMessage = now();
@@ -56,6 +66,24 @@ export function createRelay({ dropMs = 5000, joiningGraceMs = 600000, joiningSta
       try { m = JSON.parse(bytes.toString()); } catch { stop(ws, 'protocol', 1008, 'Invalid JSON'); return; }
       if (!m || typeof m !== 'object' || Array.isArray(m) || m.protocol !== 1) { stop(ws, 'protocol', 1008, 'Incompatible protocol'); return; }
       ws.lastMessage = now();
+      if (m.type === 'resume' && !ws.onlineRole) {
+        const found = typeof m.room === 'string' && rooms.get(m.room), as = m.player === 0 ? 'host' : m.player === 1 ? 'guest' : null;
+        const previous = found && as && found[as];
+        const liveReplacement = previous?.playable && previous.readyState === WebSocket.OPEN && !previous.closeRule;
+        if (!previous?.resumeTicket || !(previous.resumeUntil > now() || liveReplacement) || typeof m.token !== 'string' || !/^[a-f0-9]{64}$/.test(m.token)
+          || !timingSafeEqual(Buffer.from(m.token, 'hex'), Buffer.from(previous.resumeTicket.token, 'hex'))) {
+          stop(ws, 'protocol', 1008, 'Resume unavailable'); return;
+        }
+        delete previous.resumeTicket; delete previous.resumeUntil;
+        ws.assignRoom(found, as); found[as] = ws;
+        ws.renderReady = previous.renderReady; ws.playable = previous.playable;
+        ws.progress = previous.progress; ws.advancedAt = now();
+        telephone.resumed(previous, ws);
+        if (liveReplacement) stop(previous, 'replaced', 1000, 'Connection replaced', true);
+        send(ws, { protocol: 1, type: 'resumed', role: as, player: m.player, resume: ws.resumeTicket });
+        send(found[as === 'host' ? 'guest' : 'host'], { protocol: 1, type: 'peer-resumed', player: m.player });
+        return;
+      }
       if (m.type === 'heartbeat' && ws.onlineRole) { send(ws, { protocol: 1, type: 'heartbeat' }); return; }
       if (telephone.handle(ws, m)) return;
       if (ws.onlineRole === 'telephone') {
@@ -67,18 +95,21 @@ export function createRelay({ dropMs = 5000, joiningGraceMs = 600000, joiningSta
           if (rooms.size >= limits.rooms) { stop(ws, 'capacity', 1013, 'Relay full'); return; }
           role = 'host'; room = { number: m.room, host: ws, guest: null, token: randomBytes(24).toString('hex') };
           rooms.set(m.room, room);
-          send(ws, { protocol: 1, type: 'hosted', room: m.room, token: room.token, player: 0 });
+          ticket(ws, room, role);
+          send(ws, { protocol: 1, type: 'hosted', room: m.room, token: room.token, player: 0, resume: ws.resumeTicket });
         } else if (m.type === 'join' && typeof m.room === 'string' && /^\d{7}$/.test(m.room) && typeof m.token === 'string' && /^[a-f0-9]{48}$/.test(m.token)) {
           const found = rooms.get(m.room);
           if (!found || found.token !== m.token || found.guest) { stop(ws, 'protocol', 1008, 'Room unavailable'); return; }
           role = 'guest'; room = found; room.guest = ws;
-          send(ws, { protocol: 1, type: 'joined', player: 1 });
+          ticket(ws, room, role);
+          send(ws, { protocol: 1, type: 'joined', player: 1, resume: ws.resumeTicket });
           send(room.host, { protocol: 1, type: 'guest-joined', player: 1 });
         } else stop(ws, 'protocol', 1008, 'Room unavailable');
         ws.onlineRole = role; ws.onlineRoom = room;
         return;
       }
       if (m.type === 'heartbeat') return;
+      if (m.type === 'leave') { stop(ws, 'leave', 1000, 'Left call'); return; }
       if (m.type === 'progress' && Number.isSafeInteger(m.payload) && m.payload >= 0) {
         if (!ws.playable && m.payload > ws.progress) { ws.progress = m.payload; ws.advancedAt = now(); }
         return;
@@ -100,21 +131,20 @@ export function createRelay({ dropMs = 5000, joiningGraceMs = 600000, joiningSta
     });
     ws.on('error', () => { ws.closeRule ??= 'socket-error'; });
     ws.on('close', code => {
-      telephone.closed(ws);
       log({ event: 'relay-close', connection: ws.connectionNumber, role: role ?? 'unassigned', rule: ws.closeRule ?? 'client-close', detail: ws.closeDetail ?? '', code, silenceMs: now() - ws.lastMessage, progressSilenceMs: now() - ws.advancedAt, progress: ws.progress, joiningMs: now() - ws.joinedAt, limitMs: ws.closeLimit });
-      if (!room) return;
-      if (role === 'host') {
-        rooms.delete(room.number);
-        if (room.guest) stop(room.guest, 'host-left', 1001, 'Host left');
-      } else if (room.guest === ws) {
-        room.guest = null;
-        room.host.lastMessage = now();
-        send(room.host, { protocol: 1, type: 'guest-left', player: 1 });
-      }
+      // Only an explicit Leave is a voluntary active-call departure. A bare transport
+      // close (including a clean WebSocket close) keeps the authenticated actor briefly.
+      if (!shuttingDown && ws.playable && room?.[role] === ws && ws.resumeTicket && [1000, 1005, 1006].includes(code) && (!ws.closeRule || ws.closeRule === 'socket-error')) {
+        ws.resumeUntil = now() + dropMs;
+        send(room[role === 'host' ? 'guest' : 'host'], { protocol: 1, type: 'peer-away', player: role === 'host' ? 0 : 1 });
+      } else release(ws);
     });
   });
   const timer = setInterval(() => {
     telephone.check();
+    for (const room of rooms.values()) for (const role of ['host', 'guest']) {
+      const lost = room[role]; if (lost?.resumeUntil !== undefined && now() >= lost.resumeUntil) release(lost);
+    }
     for (const ws of wss.clients) {
       if (ws.closeRule) continue;
       if (!ws.onlineRole && now() - ws.joinedAt >= limits.handshakeMs) { stop(ws, 'handshake', 1008, 'Handshake deadline', true); continue; }
@@ -133,6 +163,7 @@ export function createRelay({ dropMs = 5000, joiningGraceMs = 600000, joiningSta
       if (closing) return closing;
       shuttingDown = true;
       clearInterval(timer);
+      for (const room of rooms.values()) for (const role of ['host', 'guest']) if (room[role]?.resumeUntil !== undefined) release(room[role]);
       for (const ws of wss.clients) stop(ws, 'shutdown', 1001, 'Relay shutdown', true);
       closing = (async () => {
         await new Promise(resolve => wss.close(resolve));
@@ -145,7 +176,7 @@ export function createRelay({ dropMs = 5000, joiningGraceMs = 600000, joiningSta
 
 if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
   const config = relayEnvironment(process.env);
-  const relay = createRelay({ ...config, dropMs: Number(process.env.WITCH_DROP_MS ?? 5000), joiningGraceMs: Number(process.env.WITCH_JOIN_GRACE_MS ?? 600000), joiningStallMs: Number(process.env.WITCH_JOIN_STALL_MS ?? 90000), hostJoiningDropMs: Number(process.env.WITCH_HOST_JOIN_DROP_MS ?? 20000) });
+  const relay = createRelay({ ...config, dropMs: Number(process.env.WITCH_DROP_MS ?? 20000), joiningGraceMs: Number(process.env.WITCH_JOIN_GRACE_MS ?? 600000), joiningStallMs: Number(process.env.WITCH_JOIN_STALL_MS ?? 90000), hostJoiningDropMs: Number(process.env.WITCH_HOST_JOIN_DROP_MS ?? 20000) });
   for (const signal of ['SIGTERM', 'SIGINT']) process.once(signal, () => {
     const deadline = setTimeout(() => process.exit(1), 2000); deadline.unref();
     void relay.close().then(() => { clearTimeout(deadline); process.exitCode = 0; });
