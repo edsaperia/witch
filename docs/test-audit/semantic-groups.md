@@ -6,7 +6,7 @@ Core-file format preview only; the rest of the audit remains in progress. Each g
 
 ## S1: Slot migration and isolation
 
-hard limits; 12 declarations; ~0.033 historical file-seconds.
+hard limits; 12 declarations; ~0 s of CI.
 
 In-memory stores exercise exact byte preservation, corrupt indexes, independent controls, cross-tab metadata and flush-before-reload; no emergent outcome target.
 
@@ -27,7 +27,7 @@ In-memory stores exercise exact byte preservation, corrupt indexes, independent 
 
 ## S2: Snapshot integrity and format guards
 
-hard limits; 8 declarations; ~32.195 historical file-seconds.
+hard limits; 8 declarations; ~32 s of CI.
 
 The generated world is input to a before/after equality proof, not a win/count target. The 4 MB size ceiling is a hard budget. Hash guards also retain the old v1 contract alongside the additive mushroom migration.
 
@@ -44,7 +44,7 @@ The generated world is input to a before/after equality proof, not a win/count t
 
 ## S3: Solo autosave eligibility and identity
 
-hard limits; 10 declarations; ~3.854 historical file-seconds.
+hard limits; 10 declarations; ~4 s of CI.
 
 Synthetic storage proves ordering and failure behavior. The stepped wake-up fixture checks an explicit save gate, not how quickly an uncontrolled night succeeds. Telephone and borrowed-visit cases are left to #1609.
 
@@ -63,7 +63,7 @@ Synthetic storage proves ordering and failure behavior. The stepped wake-up fixt
 
 ## S4: Equipment saves and compatibility migrations
 
-current rules; 13 declarations; ~0.007 historical file-seconds.
+current rules; 13 declarations; ~0 s of CI.
 
 Old broom spells and the broomBay name occur as migration inputs: assertions require the current Classic broom/lathe result. They do not restore obsolete gameplay. Records explicitly require the 29 Oct 100/120 BPM starters.
 
@@ -85,7 +85,7 @@ Old broom spells and the broomBay name occur as migration inputs: assertions req
 
 ## S5: Campaign progress and personal settings
 
-current rules; 21 declarations; ~0.028 historical file-seconds.
+current rules; 21 declarations; ~0 s of CI.
 
 Won/lost results are supplied directly; no night is simulated to obtain them. Settings use synthetic stores and cloned tuning to test migration, accessibility flags and noncompounding volume.
 
@@ -121,7 +121,7 @@ Won/lost results are supplied directly; no night is simulated to obtain them. Se
 
 ## L1: Paired-area ownership and sleeping placement
 
-hard limits; 9 declarations; ~48.992 historical file-seconds.
+hard limits; 9 declarations; ~49 s of CI.
 
 Generated maps are checked for logical relationships and rejection of unrelated ownership. The short sleep steps preserve those relationships; they are not survival statistics.
 
@@ -139,7 +139,7 @@ Generated maps are checked for logical relationships and rejection of unrelated 
 
 ## L2: Circle geometry and explanation contracts
 
-current rules; 7 declarations; ~16.525 historical file-seconds.
+current rules; 7 declarations; ~17 s of CI.
 
 These compare geometry to the configured cap/margin and lookup to an exhaustive oracle. Coverage counts ensure the fixture visits circles; they are not measured gameplay success rates.
 
@@ -155,7 +155,7 @@ These compare geometry to the configured cap/margin and lookup to an exhaustive 
 
 ## L3: Timed travel and generated scenery statistics
 
-outcome stats; 6 declarations; ~33.250 historical file-seconds.
+outcome stats; 6 declarations; ~33 s of CI.
 
 Assertions include baby return within 20 s; following beyond circle+10 m after 25 s; a 150 s siege-to-rage scenario; grove mean >0.6/<0.08; rim/south coverage >80%; runestone-gap exceptions <1.5%. Mixed safety/rule assertions need extraction before any move, not deletion of the whole file.
 
@@ -170,7 +170,7 @@ Assertions include baby return within 20 s; following beyond circle+10 m after 2
 
 ## L4: Retained radius-map comparison settings
 
-leftovers; 2 declarations; ~14.055 historical file-seconds.
+leftovers; 2 declarations; ~14 s of CI.
 
 The default assertion already requires 0.2. Half, 0.3 and 1 are explicit overrides for the retained radius-map selector; its header says authored islands deal their own legends. This is old-mode coverage, not evidence the default still uses the superseded half-share rule.
 
@@ -181,7 +181,7 @@ The default assertion already requires 0.2. Half, 0.3 and 1 are explicit overrid
 
 ## L5: Pinned list of giants exceeding the old circle cap
 
-leftovers; 1 declarations; ~4.400 historical file-seconds.
+leftovers; 1 declarations; ~4 s of CI.
 
 The assertion pins an exact species list and its comment says ‘waiting on Ed's call’. The 26 Oct paired-area/fit design permits the biggest fitting circle and documented elephant exceptions. This needs a current design ruling; it is a stale-looking baseline, not a proven obsolete test.
 

@@ -1,6 +1,10 @@
 # Saves, replay and robustness
 
+0 changes proposed, 5 groups to keep as they are.
+
 Format-check preview: core save files read in full; unrelated name-based assignments and recording integration remain to review. This is not the completed system audit.
+
+Timings are historical containing-file time, not savings. Partial-file and overlapping groups include other tests; do not add their times. Source counts are test templates, not expanded runs.
 
 ## What these protect
 
@@ -9,47 +13,53 @@ Format-check preview: core save files read in full; unrelated name-based assignm
 - Build-number changes alone do not invalidate compatible nights; explicit world links remain distinct.
 - Owned equipment, chart discoveries and accessibility settings survive reloads and bad storage.
 
-## Proposed decisions
+## Proposed changes
+
+None in the reviewed groups.
+
+## Keep as they are
 
 ### S1. Slot migration and isolation
 
-**12 declarations · hard limits · ~0.033 historical file-seconds.**
+**12 tests · hard limits · ~0 s of CI.**
 
-Examples: [preserves all legacy progress/settings bytes in the…](../../src/app/saveSlots.test.ts#L30); [a corrupt slot's bytes cannot block another slot](../../src/app/saveSlots.test.ts#L55); [keeps other tabs' slots and last-used selection when…](../../src/app/saveSlots.test.ts#L132).
+Examples: [Old save bytes survive migration.](../../src/app/saveSlots.test.ts#L30); [A corrupt slot cannot block another.](../../src/app/saveSlots.test.ts#L55); [An older tab preserves newer slots.](../../src/app/saveSlots.test.ts#L132).
 
-**Yes/no: Keep these slot isolation, migration and failed-write protections unchanged?** [Assertions, rationale and exact membership](semantic-groups.md#s1).
+[Assertions, rationale and exact membership](semantic-groups.md#s1).
 
 ### S2. Snapshot integrity and format guards
 
-**8 declarations · hard limits · ~32.195 historical file-seconds.**
+**8 tests · hard limits · ~32 s of CI.**
 
-Examples: [roundtrips a played night, its maps, sets, typed…](../../src/rules/nightSnapshot.test.ts#L36); [continues the same simulation, including RNG, after…](../../src/rules/nightSnapshot.test.ts#L64); [requires an explicit rules-format review when Game or…](../../src/app/saveFormat.test.ts#L40).
+Examples: [Snapshots preserve shared data.](../../src/rules/nightSnapshot.test.ts#L36); [The restored night continues identically.](../../src/rules/nightSnapshot.test.ts#L64); [Game format changes require review.](../../src/app/saveFormat.test.ts#L40).
 
-**Yes/no: Keep all snapshot, deterministic-continuation and explicit format-review protections unchanged?** [Assertions, rationale and exact membership](semantic-groups.md#s2).
+[Assertions, rationale and exact membership](semantic-groups.md#s2).
 
 ### S3. Solo autosave eligibility and identity
 
-**10 declarations · hard limits · ~3.854 historical file-seconds.**
+**10 tests · hard limits · ~4 s of CI.**
 
-Examples: [accepts a build-counter jump under the cross-build…](../../src/app/nightSave.test.ts#L32); [doesn't overlap writes and reports a failed write…](../../src/app/nightSave.test.ts#L132); [flush waits for an active checkpoint then writes the…](../../src/app/nightSave.test.ts#L146).
+Examples: [Compatible saves survive new builds.](../../src/app/nightSave.test.ts#L32); [Failed writes are reported safely.](../../src/app/nightSave.test.ts#L132); [Slot changes wait for the last checkpoint.](../../src/app/nightSave.test.ts#L146).
 
-**Yes/no: Keep compatible-night acceptance, identity checks and serialized writes unchanged?** [Assertions, rationale and exact membership](semantic-groups.md#s3).
+[Assertions, rationale and exact membership](semantic-groups.md#s3).
 
 ### S4. Equipment saves and compatibility migrations
 
-**13 declarations · current rules · ~0.007 historical file-seconds.**
+**13 tests · current rules · ~0 s of CI.**
 
-Examples: [an old save's broom shape goes back to the Classic…](../../src/app/broomSave.test.ts#L44); [keeps a newly found hat in this page when storage…](../../src/app/hatSave.test.ts#L8); [keeps the new things (one an item, newest last) and…](../../src/app/guideSave.test.ts#L7).
+Examples: [Old brooms convert once and retain colours.](../../src/app/broomSave.test.ts#L44); [Found hats survive a refused write in this page.](../../src/app/hatSave.test.ts#L8); [Old station names migrate to current ones.](../../src/app/guideSave.test.ts#L7).
 
-**Yes/no: Keep equipment ownership and old-save conversion checks, including the old broom and station-name fixtures?** [Assertions, rationale and exact membership](semantic-groups.md#s4).
+[Assertions, rationale and exact membership](semantic-groups.md#s4).
 
 ### S5. Campaign progress and personal settings
 
-**21 declarations · current rules · ~0.028 historical file-seconds.**
+**21 tests · current rules · ~0 s of CI.**
 
-Examples: [unlocks the islands of the legends a won night woke,…](../../src/app/chartSave.test.ts#L17); [carries over today's saved volumes and screen shake…](../../src/app/playerSettings.test.ts#L25); [keeps original settings levels across a saved night,…](../../src/app/playerSettings.test.ts#L49).
+Examples: [Won nights unlock islands; losses do not.](../../src/app/chartSave.test.ts#L17); [Old volumes migrate only once.](../../src/app/playerSettings.test.ts#L25); [Resuming preserves accessibility settings.](../../src/app/playerSettings.test.ts#L49).
 
-**Yes/no: Keep deterministic chart-unlock rules and settings persistence unchanged?** [Assertions, rationale and exact membership](semantic-groups.md#s5).
+[Assertions, rationale and exact membership](semantic-groups.md#s5).
 
 
-Historical containing-file durations are approximate context, **not case time or savings**. Partial-file groups include other cases; overlapping file totals must not be added. [Old/current ruling comparisons](semantic-groups.md#saves-replay-robustness-ruling-review). No change happens before Ed rules.
+**Yes/no: Keep S1, S2, S3, S4, S5 as they are?** They protect slot isolation, exact save/replay continuation, safe checkpoints, equipment migrations and personal settings.
+
+[Old/current ruling comparisons](semantic-groups.md#saves-replay-robustness-ruling-review). No change happens before Ed rules.

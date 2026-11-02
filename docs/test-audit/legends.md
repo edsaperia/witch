@@ -1,6 +1,10 @@
 # Legends
 
+2 changes proposed, 3 groups to keep as they are.
+
 Format-check preview: reviewed the named core files and groups below; other legend-tagged files remain unreviewed. Combat behavior in legends.test.ts remains with #1622. This is not the completed system audit.
+
+Timings are historical containing-file time, not savings. Partial-file and overlapping groups include other tests; do not add their times. Source counts are test templates, not expanded runs.
 
 ## What these protect
 
@@ -9,47 +13,52 @@ Format-check preview: reviewed the named core files and groups below; other lege
 - Legend footprint data controls circle size and margins; raw physical cells need not equal ownership cells.
 - Long fixtures also pin baby travel times, grove averages, rim coverage and runestone-gap failure rates.
 
-## Proposed decisions
-
-### L1. Paired-area ownership and sleeping placement
-
-**9 declarations · hard limits · ~48.992 historical file-seconds.**
-
-Examples: [counts a legend area and its pair as one area: a point…](../../src/rules/legendAreas.test.ts#L92); [partifies a pair together: its legend area is…](../../src/rules/legendAreas.test.ts#L141); [rejects an unrelated area even for a boss, and rejects…](../../src/rules/sleepCells.test.ts#L51).
-
-**Yes/no: Keep paired-area identity, route exclusion and sleeping-ownership protections?** [Assertions, rationale and exact membership](semantic-groups.md#l1).
-
-### L2. Circle geometry and explanation contracts
-
-**7 declarations · current rules · ~16.525 historical file-seconds.**
-
-Examples: [has every area's creature measured…](../../src/rules/legendFit.test.ts#L13); [skips only legends too far for their circle: the same…](../../src/rules/legendCircle.test.ts#L16); [asks for its kind with no age and names no boon (Ed,…](../../src/rules/legendCircle.test.ts#L82).
-
-**Yes/no: Keep the footprint, circle-size, indexed-lookup and explanation contracts?** [Assertions, rationale and exact membership](semantic-groups.md#l2).
+## Proposed changes
 
 ### L3. Timed travel and generated scenery statistics
 
-**6 declarations · outcome stats · ~33.250 historical file-seconds.**
+**6 tests · outcome stats · ~33 s of CI.**
 
-Examples: [each holds a wild baby of its legend's kind, which…](../../src/rules/legendClearing.test.ts#L50); [each swells the forest round it, strongest at its edge…](../../src/rules/legendClearing.test.ts#L158); [each keeps its edge minFromStone metres from its…](../../src/rules/legendClearing.test.ts#L206).
+Examples: [Babies return to their circle within 20 seconds.](../../src/rules/legendClearing.test.ts#L50); [Generated groves meet average-strength targets.](../../src/rules/legendClearing.test.ts#L158); [Almost all circles meet the runestone gap.](../../src/rules/legendClearing.test.ts#L206).
 
-**Yes/no: Move these six long scenario/statistical checks to a nonblocking report, while retaining small rule and boundary tests?** [Assertions, rationale and exact membership](semantic-groups.md#l3).
-
-### L4. Retained radius-map comparison settings
-
-**2 declarations · leftovers · ~14.055 historical file-seconds.**
-
-Examples: [puts one in legends.share of the areas (Ed,…](../../src/rules/legendShare.test.ts#L21); [puts one in every area but home at 1, and differs by seed](../../src/rules/legendShare.test.ts#L41).
-
-**Yes/no: Keep these two radius-map comparison tests, including explicit half/all-area settings, separate from authored-island rules?** [Assertions, rationale and exact membership](semantic-groups.md#l4).
+**Yes/no: Move these six tests of baby travel times, grove averages, rim coverage and siege timing out of release gates? Yes means they run nightly as a nonblocking report; small rule and safety checks are retained separately.** [Assertions, rationale and exact membership](semantic-groups.md#l3).
 
 ### L5. Pinned list of giants exceeding the old circle cap
 
-**1 declarations · leftovers · ~4.400 historical file-seconds.**
+**1 tests · leftovers · ~4 s of CI.**
 
-Examples: [lists the legends too big for any circle under the cap…](../../src/rules/legendFit.test.ts#L34).
+Examples: [The oversized-legend list stays exactly eleven species.](../../src/rules/legendFit.test.ts#L34).
 
-**Yes/no: Replace this exact eleven-species list with a report of current footprint overflow, keeping the cap/margin safety checks?** [Assertions, rationale and exact membership](semantic-groups.md#l5).
+**Yes/no: Replace the exact list of eleven giant species with a report of which legends currently overflow? Yes keeps the circle cap and margin checks blocking, while the species list becomes informational.** [Assertions, rationale and exact membership](semantic-groups.md#l5).
 
 
-Historical containing-file durations are approximate context, **not case time or savings**. Partial-file groups include other cases; overlapping file totals must not be added. [Old/current ruling comparisons](semantic-groups.md#legends-ruling-review). No change happens before Ed rules.
+## Keep as they are
+
+### L1. Paired-area ownership and sleeping placement
+
+**9 tests · hard limits · ~49 s of CI.**
+
+Examples: [Paired areas share ownership.](../../src/rules/legendAreas.test.ts#L92); [The party border surrounds both paired areas.](../../src/rules/legendAreas.test.ts#L141); [Unrelated sleeping ownership is rejected.](../../src/rules/sleepCells.test.ts#L51).
+
+[Assertions, rationale and exact membership](semantic-groups.md#l1).
+
+### L2. Circle geometry and explanation contracts
+
+**7 tests · current rules · ~17 s of CI.**
+
+Examples: [Every species has a measured footprint.](../../src/rules/legendFit.test.ts#L13); [Fast circle lookup matches complete search.](../../src/rules/legendCircle.test.ts#L16); [Quest instructions ask for any age and no buff.](../../src/rules/legendCircle.test.ts#L82).
+
+[Assertions, rationale and exact membership](semantic-groups.md#l2).
+
+### L4. Retained radius-map comparison settings
+
+**2 tests · leftovers · ~14 s of CI.**
+
+Examples: [Radius maps default to one-fifth legends.](../../src/rules/legendShare.test.ts#L21); [An explicit comparison can fill every area.](../../src/rules/legendShare.test.ts#L41).
+
+[Assertions, rationale and exact membership](semantic-groups.md#l4).
+
+
+**Yes/no: Keep L1, L2, L4 as they are?** They protect paired-area ownership, circle geometry and instructions, and deliberately retained radius-map comparisons.
+
+[Old/current ruling comparisons](semantic-groups.md#legends-ruling-review). No change happens before Ed rules.

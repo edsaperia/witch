@@ -47,7 +47,7 @@ test('semantic groups use explicit membership and preserve undivided file timing
   applyReviews(data,reviews);
   assert.equal(data.files[0].cases[0].kind,'hard limits');
   assert.equal(data.files[0].cases[1].kind,undefined);
-  assert.match(reviewOutputs(data,reviews)['saves-replay-robustness.md'],/~10.000 historical file-seconds/);
+  assert.match(reviewOutputs(data,reviews)['saves-replay-robustness.md'],/~10 s of CI/);
 });
 test('semantic review rejects missing examples and duplicate case assignments',()=>{
   const data={files:[{file:'one.test.ts',cases:[{id:'one.test.ts:1',line:1,name:'keep'}]}]};
@@ -60,4 +60,15 @@ test('finds numeric simulated outcomes without relying on survival wording',()=>
   assert.equal(classify({fullName:'curves on its way home',simulationContext:true,body:'run(g,60); expect(maxAway).toBeGreaterThan(70);'}).kind,'outcome stats');
   assert.equal(classify({fullName:'guard creates a shot',simulationContext:true,body:'for(let i=0;i<100;i++) stepGame(g); expect(shots.length).toBe(3);'}).kind,'outcome stats');
   assert.equal(classify({fullName:'circle geometry',simulationContext:false,body:'expect(radius).toBeGreaterThan(3)'}).kind,'current rules');
+});
+test('records computed case names without evaluating imported fixture constants',()=>{
+  const result=parseCases("import {it} from 'vitest'; it(cases.rollback, async()=>{}); it.each(rows)('template',()=>{});",'fixture.test.ts');
+  assert.equal(result.cases.length,2);
+  assert.equal(result.cases[0].name,'cases.rollback');
+  assert.equal(result.cases[0].dynamicName,true);
+});
+test('system guesses use file ownership rather than incidental words in test prose',()=>{
+  assert.equal(systemFor('src/rules/mapShape.test.ts','what starts with soundsystems'),'creatures-movement');
+  assert.equal(systemFor('src/rules/party.test.ts','what music starts'),'invites-party');
+  assert.equal(systemFor('src/render/soundsystemGen.test.ts'),'art-rendering');
 });

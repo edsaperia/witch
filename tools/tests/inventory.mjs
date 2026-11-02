@@ -54,7 +54,8 @@ export function parseCases(source, file) {
       const kind = aliases.get(parts[0]);
       const name = n.arguments[0];
       const literal = name && (ts.isStringLiteralLike(name) || ts.isTemplateExpression(name));
-      if (literal && ['it', 'test', 'describe'].includes(kind)) {
+      const computed = name && n.arguments.slice(1).some(a=>ts.isArrowFunction(a) || ts.isFunctionExpression(a));
+      if ((literal || computed) && ['it', 'test', 'describe'].includes(kind)) {
         const leading = comments.filter(c => c.end <= n.getStart(sf) && c.start >= n.getFullStart());
         const header = comments.filter(c => c.start < (sf.statements[0]?.getStart(sf) ?? 0));
         const scoped = [...header.map(c=>({...c,scope:'file'})), ...inherited, ...leading.map(c=>({...c,scope:'declaration'})), ...comments.filter(c=>c.start >= n.getStart(sf) && c.end <= n.end).map(c=>({...c,scope:'body'}))];
@@ -66,7 +67,7 @@ export function parseCases(source, file) {
           return;
         }
         const line = sf.getLineAndCharacterOfPosition(n.getStart(sf)).line + 1;
-        results.push({id:`${file}:${line}`, line, name:title, suites, fullName:[...suites,title].join(' > '), parameterized:parts.includes('each') || parts.includes('for'), dynamicName:ts.isTemplateExpression(name), modifiers:parts.slice(1), citations, simulationContext:/\b(stepGame|stepCreature|stepCombat|simulate|runNight|tickGame)\s*\(/.test(source), body:n.getText(sf)});
+        results.push({id:`${file}:${line}`, line, name:title, suites, fullName:[...suites,title].join(' > '), parameterized:parts.includes('each') || parts.includes('for'), dynamicName:!ts.isStringLiteralLike(name), modifiers:parts.slice(1), citations, simulationContext:/\b(stepGame|stepCreature|stepCombat|simulate|runNight|tickGame)\s*\(/.test(source), body:n.getText(sf)});
         return;
       }
     }
@@ -76,16 +77,19 @@ export function parseCases(source, file) {
   return {cases:results, parseErrors:sf.parseDiagnostics.map(d=>ts.flattenDiagnosticMessageText(d.messageText,' '))};
 }
 export function systemFor(file, name = '') {
-  const s = `${file} ${name}`.toLowerCase();
+  // File ownership is the first pass. Case prose ("what", "start", "soundsystem")
+  // must not accidentally match hat/art/audio and scatter one file across systems.
+  const s = file.toLowerCase();
   if (/multiplayer|online|network|relay|authority|telephone/.test(s)) return 'multiplayer';
   if (/^tools\//.test(file)) return 'tools-ci';
   if (/save|replay|serializ|robust|migration/.test(s)) return 'saves-replay-robustness';
-  if (/music|audio|sound|singer/.test(s)) return 'music-audio';
+  if (/src\/render\//.test(s)) return 'art-rendering';
+  if (/music|audio|(?:\/sound\.)|singer|samples/.test(s)) return 'music-audio';
   if (/legend|quest/.test(s)) return 'legends';
   if (/combat|fight|damage|siege|attack|balance/.test(s)) return 'combat';
-  if (/invite|party|sigil|leash/.test(s)) return 'invites-party';
+  if (/invite|party|sigil|leash|soundsystem|wave|ley|pulse/.test(s)) return 'invites-party';
   if (/house|room|workshop|station|bedroom|broom|hat/.test(s)) return 'house-treehouse';
-  if (/render|geometry|sprite|art|mesh|shader|palette|texture|indicator/.test(s)) return 'art-rendering';
+  if (/render|geometry|sprite|(?:^|\/)art|mesh|shader|palette|texture|indicator/.test(s)) return 'art-rendering';
   if (/island|lake|world|terrain|biome|archipelago|beach/.test(s)) return 'world-islands-lakes';
   if (/menu|control|input|screen|ui\/|app\/|platform\//.test(s)) return 'ui-menus-controls';
   return 'creatures-movement';

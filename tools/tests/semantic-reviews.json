@@ -8,37 +8,254 @@
       "Owned equipment, chart discoveries and accessibility settings survive reloads and bad storage."
     ],
     "groups": [
-      {"id":"S1","title":"Slot migration and isolation","kind":"hard limits","files":["src/app/saveSlots.test.ts"],"excludeLines":[7],"question":"Keep these slot isolation, migration and failed-write protections unchanged?","reason":"In-memory stores exercise exact byte preservation, corrupt indexes, independent controls, cross-tab metadata and flush-before-reload; no emergent outcome target.","examples":["preserves all legacy progress/settings bytes in the first slot and never deletes originals","a corrupt slot's bytes cannot block another slot","keeps other tabs' slots and last-used selection when an older tab saves metadata"]},
-      {"id":"S2","title":"Snapshot integrity and format guards","kind":"hard limits","files":["src/rules/nightSnapshot.test.ts","src/app/saveFormat.test.ts"],"question":"Keep all snapshot, deterministic-continuation and explicit format-review protections unchanged?","reason":"The generated world is input to a before/after equality proof, not a win/count target. The 4 MB size ceiling is a hard budget. Hash guards also retain the old v1 contract alongside the additive mushroom migration.","examples":["roundtrips a played night, its maps, sets, typed buffers, shared references and infinities","continues the same simulation, including RNG, after later waves and a knockout","requires an explicit rules-format review when Game or the graph format changes"]},
-      {"id":"S3","title":"Solo autosave eligibility and identity","kind":"hard limits","files":["src/app/nightSave.test.ts"],"excludeLines":[14,45,56],"question":"Keep compatible-night acceptance, identity checks and serialized writes unchanged?","reason":"Synthetic storage proves ordering and failure behavior. The stepped wake-up fixture checks an explicit save gate, not how quickly an uncontrolled night succeeds. Telephone and borrowed-visit cases are left to #1609.","examples":["accepts a build-counter jump under the cross-build save contract","doesn't overlap writes and reports a failed write without throwing into play","flush waits for an active checkpoint then writes the latest state before a slot exit"]},
-      {"id":"S4","title":"Equipment saves and compatibility migrations","kind":"current rules","files":["src/app/broomSave.test.ts","src/app/hatSave.test.ts","src/app/recordSave.test.ts","src/app/guideSave.test.ts"],"question":"Keep equipment ownership and old-save conversion checks, including the old broom and station-name fixtures?","reason":"Old broom spells and the broomBay name occur as migration inputs: assertions require the current Classic broom/lathe result. They do not restore obsolete gameplay. Records explicitly require the 29 Oct 100/120 BPM starters.","examples":["an old save's broom shape goes back to the Classic look (its colours and fit kept) and its broom spell is dropped, once","keeps a newly found hat in this page when storage refuses the write","keeps the new things (one an item, newest last) and the islands seen; drops a thing gone, and anything unreadable"]},
-      {"id":"S5","title":"Campaign progress and personal settings","kind":"current rules","files":["src/app/chartSave.test.ts","src/app/playerSettings.test.ts"],"question":"Keep deterministic chart-unlock rules and settings persistence unchanged?","reason":"Won/lost results are supplied directly; no night is simulated to obtain them. Settings use synthetic stores and cloned tuning to test migration, accessibility flags and noncompounding volume.","examples":["unlocks the islands of the legends a won night woke, each with its voyage from where she set out; a lost night only plays","carries over today's saved volumes and screen shake the first time, not after","keeps original settings levels across a saved night, including disabled shake/flash and quieter voices"]}
+      {
+        "id": "S1",
+        "title": "Slot migration and isolation",
+        "kind": "hard limits",
+        "files": [
+          "src/app/saveSlots.test.ts"
+        ],
+        "excludeLines": [
+          7
+        ],
+        "question": "Keep these slot isolation, migration and failed-write protections unchanged?",
+        "reason": "In-memory stores exercise exact byte preservation, corrupt indexes, independent controls, cross-tab metadata and flush-before-reload; no emergent outcome target.",
+        "examples": [
+          "preserves all legacy progress/settings bytes in the first slot and never deletes originals",
+          "a corrupt slot's bytes cannot block another slot",
+          "keeps other tabs' slots and last-used selection when an older tab saves metadata"
+        ],
+        "exampleLabels": [
+          "Old save bytes survive migration.",
+          "A corrupt slot cannot block another.",
+          "An older tab preserves newer slots."
+        ]
+      },
+      {
+        "id": "S2",
+        "title": "Snapshot integrity and format guards",
+        "kind": "hard limits",
+        "files": [
+          "src/rules/nightSnapshot.test.ts",
+          "src/app/saveFormat.test.ts"
+        ],
+        "question": "Keep all snapshot, deterministic-continuation and explicit format-review protections unchanged?",
+        "reason": "The generated world is input to a before/after equality proof, not a win/count target. The 4 MB size ceiling is a hard budget. Hash guards also retain the old v1 contract alongside the additive mushroom migration.",
+        "examples": [
+          "roundtrips a played night, its maps, sets, typed buffers, shared references and infinities",
+          "continues the same simulation, including RNG, after later waves and a knockout",
+          "requires an explicit rules-format review when Game or the graph format changes"
+        ],
+        "exampleLabels": [
+          "Snapshots preserve shared data.",
+          "The restored night continues identically.",
+          "Game format changes require review."
+        ]
+      },
+      {
+        "id": "S3",
+        "title": "Solo autosave eligibility and identity",
+        "kind": "hard limits",
+        "files": [
+          "src/app/nightSave.test.ts"
+        ],
+        "excludeLines": [
+          14,
+          45,
+          56
+        ],
+        "question": "Keep compatible-night acceptance, identity checks and serialized writes unchanged?",
+        "reason": "Synthetic storage proves ordering and failure behavior. The stepped wake-up fixture checks an explicit save gate, not how quickly an uncontrolled night succeeds. Telephone and borrowed-visit cases are left to #1609.",
+        "examples": [
+          "accepts a build-counter jump under the cross-build save contract",
+          "doesn't overlap writes and reports a failed write without throwing into play",
+          "flush waits for an active checkpoint then writes the latest state before a slot exit"
+        ],
+        "exampleLabels": [
+          "Compatible saves survive new builds.",
+          "Failed writes are reported safely.",
+          "Slot changes wait for the last checkpoint."
+        ]
+      },
+      {
+        "id": "S4",
+        "title": "Equipment saves and compatibility migrations",
+        "kind": "current rules",
+        "files": [
+          "src/app/broomSave.test.ts",
+          "src/app/hatSave.test.ts",
+          "src/app/recordSave.test.ts",
+          "src/app/guideSave.test.ts"
+        ],
+        "question": "Keep equipment ownership and old-save conversion checks, including the old broom and station-name fixtures?",
+        "reason": "Old broom spells and the broomBay name occur as migration inputs: assertions require the current Classic broom/lathe result. They do not restore obsolete gameplay. Records explicitly require the 29 Oct 100/120 BPM starters.",
+        "examples": [
+          "an old save's broom shape goes back to the Classic look (its colours and fit kept) and its broom spell is dropped, once",
+          "keeps a newly found hat in this page when storage refuses the write",
+          "keeps the new things (one an item, newest last) and the islands seen; drops a thing gone, and anything unreadable"
+        ],
+        "exampleLabels": [
+          "Old brooms convert once and retain colours.",
+          "Found hats survive a refused write in this page.",
+          "Old station names migrate to current ones."
+        ]
+      },
+      {
+        "id": "S5",
+        "title": "Campaign progress and personal settings",
+        "kind": "current rules",
+        "files": [
+          "src/app/chartSave.test.ts",
+          "src/app/playerSettings.test.ts"
+        ],
+        "question": "Keep deterministic chart-unlock rules and settings persistence unchanged?",
+        "reason": "Won/lost results are supplied directly; no night is simulated to obtain them. Settings use synthetic stores and cloned tuning to test migration, accessibility flags and noncompounding volume.",
+        "examples": [
+          "unlocks the islands of the legends a won night woke, each with its voyage from where she set out; a lost night only plays",
+          "carries over today's saved volumes and screen shake the first time, not after",
+          "keeps original settings levels across a saved night, including disabled shake/flash and quieter voices"
+        ],
+        "exampleLabels": [
+          "Won nights unlock islands; losses do not.",
+          "Old volumes migrate only once.",
+          "Resuming preserves accessibility settings."
+        ]
+      }
     ],
     "rulings": [
       "Current slot ruling: Ed, 2026-10-30, docs/notes/save-slots.md: ‘save slots that hold progress and settings’ and ‘By default open the previous one’. S1 directly tests this; the old single-save bytes remain migration input, not an obsolete rule to delete.",
       "Supersession checked: src/app/broomSave.test.ts describes ‘migration from the brooms before parts’; docs/notes/house.md records the 23 Oct Workshop/parts design. The test asserts Classic shape, retained colours and removal of the old spell. No positive old-broom gameplay assertion was found in S4.",
       "Current compatibility contract: docs/notes/save-slots.md ‘accept matching SavedNight/NightSnapshot format versions across build numbers’. S2/S3 assert that behavior; the v5955/v6322 names are compatibility examples, not version gates."
-    ]
+    ],
+    "keepSummary": "slot isolation, exact save/replay continuation, safe checkpoints, equipment migrations and personal settings"
   },
   "legends": {
-    "status":"Format-check preview: reviewed the named core files and groups below; other legend-tagged files remain unreviewed. Combat behavior in legends.test.ts remains with #1622. This is not the completed system audit.",
-    "protections":[
+    "status": "Format-check preview: reviewed the named core files and groups below; other legend-tagged files remain unreviewed. Combat behavior in legends.test.ts remains with #1622. This is not the completed system audit.",
+    "protections": [
       "A legend area and its paired creature area share ownership, rage accounting and party borders.",
       "Circle lookup agrees with the complete search, and circle explanations follow the legend's state.",
       "Legend footprint data controls circle size and margins; raw physical cells need not equal ownership cells.",
       "Long fixtures also pin baby travel times, grove averages, rim coverage and runestone-gap failure rates."
     ],
-    "groups":[
-      {"id":"L1","title":"Paired-area ownership and sleeping placement","kind":"hard limits","files":["src/rules/legendAreas.test.ts","src/rules/sleepCells.test.ts"],"question":"Keep paired-area identity, route exclusion and sleeping-ownership protections?","reason":"Generated maps are checked for logical relationships and rejection of unrelated ownership. The short sleep steps preserve those relationships; they are not survival statistics.","examples":["counts a legend area and its pair as one area: a point in either is in the pair's area, and the legend's cell is its pair's","partifies a pair together: its legend area is partified with it, drawn as a zone of its own, and the party border runs round the outside of the pair","rejects an unrelated area even for a boss, and rejects a non-circle wild creature in a paired legend area"]},
-      {"id":"L2","title":"Circle geometry and explanation contracts","kind":"current rules","files":["src/rules/legendFit.test.ts","src/rules/legendCircle.test.ts"],"excludeIds":["src/rules/legendFit.test.ts:34"],"question":"Keep the footprint, circle-size, indexed-lookup and explanation contracts?","reason":"These compare geometry to the configured cap/margin and lookup to an exhaustive oracle. Coverage counts ensure the fixture visits circles; they are not measured gameplay success rates.","examples":["has every area's creature measured (config/legend-footprints.json: node tools/legends/footprint.mjs)","skips only legends too far for their circle: the same answers as searching every legend's clearing","asks for its kind with no age and names no boon (Ed, 2026-10-18)"]},
-      {"id":"L3","title":"Timed travel and generated scenery statistics","kind":"outcome stats","files":["src/rules/legendClearing.test.ts"],"includeLines":[50,81,111,158,186,206],"question":"Move these six long scenario/statistical checks to a nonblocking report, while retaining small rule and boundary tests?","reason":"Assertions include baby return within 20 s; following beyond circle+10 m after 25 s; a 150 s siege-to-rage scenario; grove mean >0.6/<0.08; rim/south coverage >80%; runestone-gap exceptions <1.5%. Mixed safety/rule assertions need extraction before any move, not deletion of the whole file.","examples":["each holds a wild baby of its legend's kind, which keeps to the circle, comes back in if pushed out, and is free only while leashed","each swells the forest round it, strongest at its edge and easing smoothly out into the area's own, all the way round","each keeps its edge minFromStone metres from its area's runestone, but in a sliver of an area too small to (the farthest it fits)"]},
-      {"id":"L4","title":"Retained radius-map comparison settings","kind":"leftovers","files":["src/rules/legendShare.test.ts"],"question":"Keep these two radius-map comparison tests, including explicit half/all-area settings, separate from authored-island rules?","reason":"The default assertion already requires 0.2. Half, 0.3 and 1 are explicit overrides for the retained radius-map selector; its header says authored islands deal their own legends. This is old-mode coverage, not evidence the default still uses the superseded half-share rule.","examples":["puts one in legends.share of the areas (Ed, 2026-10-08: about a fifth), never home, seeded, spread so they don't clump","puts one in every area but home at 1, and differs by seed"]},
-      {"id":"L5","title":"Pinned list of giants exceeding the old circle cap","kind":"leftovers","files":["src/rules/legendFit.test.ts"],"includeLines":[34],"question":"Replace this exact eleven-species list with a report of current footprint overflow, keeping the cap/margin safety checks?","reason":"The assertion pins an exact species list and its comment says ‘waiting on Ed's call’. The 26 Oct paired-area/fit design permits the biggest fitting circle and documented elephant exceptions. This needs a current design ruling; it is a stale-looking baseline, not a proven obsolete test.","examples":["lists the legends too big for any circle under the cap (waiting on Ed's call: drawn smaller asleep, or the circles allowed bigger)"]}
+    "groups": [
+      {
+        "id": "L1",
+        "title": "Paired-area ownership and sleeping placement",
+        "kind": "hard limits",
+        "files": [
+          "src/rules/legendAreas.test.ts",
+          "src/rules/sleepCells.test.ts"
+        ],
+        "question": "Keep paired-area identity, route exclusion and sleeping-ownership protections?",
+        "reason": "Generated maps are checked for logical relationships and rejection of unrelated ownership. The short sleep steps preserve those relationships; they are not survival statistics.",
+        "examples": [
+          "counts a legend area and its pair as one area: a point in either is in the pair's area, and the legend's cell is its pair's",
+          "partifies a pair together: its legend area is partified with it, drawn as a zone of its own, and the party border runs round the outside of the pair",
+          "rejects an unrelated area even for a boss, and rejects a non-circle wild creature in a paired legend area"
+        ],
+        "exampleLabels": [
+          "Paired areas share ownership.",
+          "The party border surrounds both paired areas.",
+          "Unrelated sleeping ownership is rejected."
+        ]
+      },
+      {
+        "id": "L2",
+        "title": "Circle geometry and explanation contracts",
+        "kind": "current rules",
+        "files": [
+          "src/rules/legendFit.test.ts",
+          "src/rules/legendCircle.test.ts"
+        ],
+        "excludeIds": [
+          "src/rules/legendFit.test.ts:34"
+        ],
+        "question": "Keep the footprint, circle-size, indexed-lookup and explanation contracts?",
+        "reason": "These compare geometry to the configured cap/margin and lookup to an exhaustive oracle. Coverage counts ensure the fixture visits circles; they are not measured gameplay success rates.",
+        "examples": [
+          "has every area's creature measured (config/legend-footprints.json: node tools/legends/footprint.mjs)",
+          "skips only legends too far for their circle: the same answers as searching every legend's clearing",
+          "asks for its kind with no age and names no boon (Ed, 2026-10-18)"
+        ],
+        "exampleLabels": [
+          "Every species has a measured footprint.",
+          "Fast circle lookup matches complete search.",
+          "Quest instructions ask for any age and no buff."
+        ]
+      },
+      {
+        "id": "L3",
+        "title": "Timed travel and generated scenery statistics",
+        "kind": "outcome stats",
+        "files": [
+          "src/rules/legendClearing.test.ts"
+        ],
+        "includeLines": [
+          50,
+          81,
+          111,
+          158,
+          186,
+          206
+        ],
+        "question": "Move these six tests of baby travel times, grove averages, rim coverage and siege timing out of release gates? Yes means they run nightly as a nonblocking report; small rule and safety checks are retained separately.",
+        "reason": "Assertions include baby return within 20 s; following beyond circle+10 m after 25 s; a 150 s siege-to-rage scenario; grove mean >0.6/<0.08; rim/south coverage >80%; runestone-gap exceptions <1.5%. Mixed safety/rule assertions need extraction before any move, not deletion of the whole file.",
+        "examples": [
+          "each holds a wild baby of its legend's kind, which keeps to the circle, comes back in if pushed out, and is free only while leashed",
+          "each swells the forest round it, strongest at its edge and easing smoothly out into the area's own, all the way round",
+          "each keeps its edge minFromStone metres from its area's runestone, but in a sliver of an area too small to (the farthest it fits)"
+        ],
+        "exampleLabels": [
+          "Babies return to their circle within 20 seconds.",
+          "Generated groves meet average-strength targets.",
+          "Almost all circles meet the runestone gap."
+        ],
+        "action": true
+      },
+      {
+        "id": "L4",
+        "title": "Retained radius-map comparison settings",
+        "kind": "leftovers",
+        "files": [
+          "src/rules/legendShare.test.ts"
+        ],
+        "question": "Keep these two radius-map comparison tests, including explicit half/all-area settings, separate from authored-island rules?",
+        "reason": "The default assertion already requires 0.2. Half, 0.3 and 1 are explicit overrides for the retained radius-map selector; its header says authored islands deal their own legends. This is old-mode coverage, not evidence the default still uses the superseded half-share rule.",
+        "examples": [
+          "puts one in legends.share of the areas (Ed, 2026-10-08: about a fifth), never home, seeded, spread so they don't clump",
+          "puts one in every area but home at 1, and differs by seed"
+        ],
+        "exampleLabels": [
+          "Radius maps default to one-fifth legends.",
+          "An explicit comparison can fill every area."
+        ]
+      },
+      {
+        "id": "L5",
+        "title": "Pinned list of giants exceeding the old circle cap",
+        "kind": "leftovers",
+        "files": [
+          "src/rules/legendFit.test.ts"
+        ],
+        "includeLines": [
+          34
+        ],
+        "question": "Replace the exact list of eleven giant species with a report of which legends currently overflow? Yes keeps the circle cap and margin checks blocking, while the species list becomes informational.",
+        "reason": "The assertion pins an exact species list and its comment says ‘waiting on Ed's call’. The 26 Oct paired-area/fit design permits the biggest fitting circle and documented elephant exceptions. This needs a current design ruling; it is a stale-looking baseline, not a proven obsolete test.",
+        "examples": [
+          "lists the legends too big for any circle under the cap (waiting on Ed's call: drawn smaller asleep, or the circles allowed bigger)"
+        ],
+        "exampleLabels": [
+          "The oversized-legend list stays exactly eleven species."
+        ],
+        "action": true
+      }
     ],
-    "rulings":[
+    "rulings": [
       "Supersession matched to L1: docs/notes/testing.md records the old diagnostic ‘incorrectly required physical cell equality’. Ed's 2026-10-26 replacement: paired areas are ‘one logical area’. sleepCells.test.ts now permits 14 raw differences on the largest fixture but requires zero logical mismatches. Keep the replacement regression; no remaining equality assertion in this reviewed group needs deleting.",
       "Supersession matched to L4: Ed, 2026-10-06, DESIGN.md: ‘about half of areas’; Ed, 2026-10-08: ‘more like 1/5’. legendShare.test.ts asserts S===0.2 before explicitly constructing half/all comparison maps. Both rulings are accounted for; the old citation alone is not an obsolete default.",
       "Current sizing ruling, L2/L5: Ed, 2026-10-26, legendFit.test.ts: ‘Legend circles need to be larger. Often legends don't fit in them.’ legendAreas.test.ts checks the authored paired areas, allowing only elephant overflow in its five-map matrix. The exact eleven-giant radius-cap list needs a separate ruling, not an assumed deletion."
-    ]
+    ],
+    "keepSummary": "paired-area ownership, circle geometry and instructions, and deliberately retained radius-map comparisons"
   }
 }
