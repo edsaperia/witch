@@ -18,6 +18,10 @@ Only the separate, frozen prototype checkout is built.
 
 Pages publication policy: debounce previews outside the publisher lock; live requests preempt older publication.
 
+## `perch-profile.cjs`
+
+Canonical/cloud only.
+
 ## `report-command.cjs`
 
 Stream a check unchanged, annotating named failures or its crash reason only when it exits unsuccessfully.
