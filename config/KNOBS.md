@@ -470,31 +470,31 @@ Code: `rules/treehouse.ts`, `art/ent.js`, `docs/backlog/treehouse.md`, `config/h
 
 - **`treehouse.house.look.indoor`**: Fade the entire crown and its string lights indoors.
   1. Ed, 2026-11-02: "The treehouse/tree needs work. It looks good on the horizon but weird to fly to and from."
-  Treehouse look trials; all four switches default off until Ed reviews.
+  Treehouse look settings; all four switches on by default, chosen by Ed on 2 November.
 - **`treehouse.house.look.noNotch`**: Remove the close crown dancefloor sight-cut; retain the original horizon landmark.
   1. Ed, 2026-11-02: "The treehouse/tree needs work. It looks good on the horizon but weird to fly to and from."
-  Treehouse look trials; all four switches default off until Ed reviews.
+  Treehouse look settings; all four switches on by default, chosen by Ed on 2 November.
 - **`treehouse.house.look.approach`**: Reveal the house floor beneath and around the flying witch near any room or branch.
   1. Ed, 2026-11-02: "The treehouse/tree needs work. It looks good on the horizon but weird to fly to and from."
-  Treehouse look trials; all four switches default off until Ed reviews.
+  Treehouse look settings; all four switches on by default, chosen by Ed on 2 November.
 - **`treehouse.house.look.noWalls`**: Hide upright walls and allow any room edge exit; broom flies, no broom uses the existing fall and edge respawn.
   1. Ed, 2026-11-02: "The treehouse/tree needs work. It looks good on the horizon but weird to fly to and from."
-  Treehouse look trials; all four switches default off until Ed reviews.
+  Treehouse look settings; all four switches on by default, chosen by Ed on 2 November.
 - **`treehouse.house.look.fade`**: Seconds for the whole-crown indoor reveal or return.
   1. Ed, 2026-11-02: "The treehouse/tree needs work. It looks good on the horizon but weird to fly to and from."
-  Treehouse look trials; all four switches default off until Ed reviews.
+  Treehouse look settings; all four switches on by default, chosen by Ed on 2 November.
 - **`treehouse.house.look.bark`**: Fraction of bark opacity retained indoors.
   1. Ed, 2026-11-02: "The treehouse/tree needs work. It looks good on the horizon but weird to fly to and from."
-  Treehouse look trials; all four switches default off until Ed reviews.
+  Treehouse look settings; all four switches on by default, chosen by Ed on 2 November.
 - **`treehouse.house.look.radius`**: Metres from the floor outline at which the flight reveal begins, and its local radius.
   1. Ed, 2026-11-02: "The treehouse/tree needs work. It looks good on the horizon but weird to fly to and from."
-  Treehouse look trials; all four switches default off until Ed reviews.
+  Treehouse look settings; all four switches on by default, chosen by Ed on 2 November.
 - **`treehouse.house.look.softness`**: Fraction of the reveal radius used for its soft edge.
   1. Ed, 2026-11-02: "The treehouse/tree needs work. It looks good on the horizon but weird to fly to and from."
-  Treehouse look trials; all four switches default off until Ed reviews.
+  Treehouse look settings; all four switches on by default, chosen by Ed on 2 November.
 - **`treehouse.house.look.ragged`**: Fractional irregularity of the reveal edge.
   1. Ed, 2026-11-02: "The treehouse/tree needs work. It looks good on the horizon but weird to fly to and from."
-  Treehouse look trials; all four switches default off until Ed reviews.
+  Treehouse look settings; all four switches on by default, chosen by Ed on 2 November.
 
 | knob | type | range |
 |---|---|---|

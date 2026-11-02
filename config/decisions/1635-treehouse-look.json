@@ -7,11 +7,11 @@
       "pr": 1635,
       "group": "Treehouse look",
       "label": "Fade the whole crown indoors",
-      "note": "Close-view trial; default off until Ed reviews. The horizon landmark retains its original crown.",
+      "note": "On by default, chosen by Ed on 2 November. The horizon landmark retains its original crown.",
       "control": {
         "type": "toggle"
       },
-      "default": false,
+      "default": true,
       "apply": {
         "knob": "treehouse.house.look.indoor"
       }
@@ -21,11 +21,11 @@
       "pr": 1635,
       "group": "Treehouse look",
       "label": "Fill the crown notch",
-      "note": "Close-view trial; default off until Ed reviews. The horizon landmark retains its original crown.",
+      "note": "On by default, chosen by Ed on 2 November. The horizon landmark retains its original crown.",
       "control": {
         "type": "toggle"
       },
-      "default": false,
+      "default": true,
       "apply": {
         "knob": "treehouse.house.look.noNotch"
       }
@@ -35,11 +35,11 @@
       "pr": 1635,
       "group": "Treehouse look",
       "label": "Reveal floors while flying close",
-      "note": "Close-view trial; default off until Ed reviews. The horizon landmark retains its original crown.",
+      "note": "On by default, chosen by Ed on 2 November. The horizon landmark retains its original crown.",
       "control": {
         "type": "toggle"
       },
-      "default": false,
+      "default": true,
       "apply": {
         "knob": "treehouse.house.look.approach"
       }
@@ -49,11 +49,11 @@
       "pr": 1635,
       "group": "Treehouse look",
       "label": "Open platforms without walls",
-      "note": "Walk off any room edge: with a broom she flies; without one the existing fall returns her to that edge. Default off until Ed reviews.",
+      "note": "Walk off any room edge: with a broom she flies; without one the existing fall returns her to that edge. On by default, chosen by Ed on 2 November.",
       "control": {
         "type": "toggle"
       },
-      "default": false,
+      "default": true,
       "apply": {
         "knob": "treehouse.house.look.noWalls"
       }
@@ -63,7 +63,7 @@
       "pr": 1635,
       "group": "Treehouse look",
       "label": "Crown fade time (s)",
-      "note": "Only affects its enabled Treehouse look trial.",
+      "note": "Adjusts the corresponding Treehouse look setting while it is enabled.",
       "control": {
         "type": "slider",
         "min": 0.5,
@@ -80,7 +80,7 @@
       "pr": 1635,
       "group": "Treehouse look",
       "label": "Bark left indoors",
-      "note": "Only affects its enabled Treehouse look trial.",
+      "note": "Adjusts the corresponding Treehouse look setting while it is enabled.",
       "control": {
         "type": "slider",
         "min": 0,
@@ -97,7 +97,7 @@
       "pr": 1635,
       "group": "Treehouse look",
       "label": "Approach reveal distance (m)",
-      "note": "Only affects its enabled Treehouse look trial.",
+      "note": "Adjusts the corresponding Treehouse look setting while it is enabled.",
       "control": {
         "type": "slider",
         "min": 10,
@@ -114,7 +114,7 @@
       "pr": 1635,
       "group": "Treehouse look",
       "label": "Reveal edge softness",
-      "note": "Only affects its enabled Treehouse look trial.",
+      "note": "Adjusts the corresponding Treehouse look setting while it is enabled.",
       "control": {
         "type": "slider",
         "min": 0.05,
@@ -131,7 +131,7 @@
       "pr": 1635,
       "group": "Treehouse look",
       "label": "Reveal edge irregularity",
-      "note": "Only affects its enabled Treehouse look trial.",
+      "note": "Adjusts the corresponding Treehouse look setting while it is enabled.",
       "control": {
         "type": "slider",
         "min": 0,

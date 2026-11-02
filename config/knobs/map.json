@@ -838,7 +838,7 @@
           "quote": "The treehouse/tree needs work. It looks good on the horizon but weird to fly to and from."
         }
       ],
-      "notes": "Treehouse look trials; all four switches default off until Ed reviews."
+      "notes": "Treehouse look settings; all four switches on by default, chosen by Ed on 2 November."
     },
     "treehouse.house.look.noNotch": {
       "what": "Remove the close crown dancefloor sight-cut; retain the original horizon landmark.",
@@ -849,7 +849,7 @@
           "quote": "The treehouse/tree needs work. It looks good on the horizon but weird to fly to and from."
         }
       ],
-      "notes": "Treehouse look trials; all four switches default off until Ed reviews."
+      "notes": "Treehouse look settings; all four switches on by default, chosen by Ed on 2 November."
     },
     "treehouse.house.look.approach": {
       "what": "Reveal the house floor beneath and around the flying witch near any room or branch.",
@@ -860,7 +860,7 @@
           "quote": "The treehouse/tree needs work. It looks good on the horizon but weird to fly to and from."
         }
       ],
-      "notes": "Treehouse look trials; all four switches default off until Ed reviews."
+      "notes": "Treehouse look settings; all four switches on by default, chosen by Ed on 2 November."
     },
     "treehouse.house.look.noWalls": {
       "what": "Hide upright walls and allow any room edge exit; broom flies, no broom uses the existing fall and edge respawn.",
@@ -871,7 +871,7 @@
           "quote": "The treehouse/tree needs work. It looks good on the horizon but weird to fly to and from."
         }
       ],
-      "notes": "Treehouse look trials; all four switches default off until Ed reviews."
+      "notes": "Treehouse look settings; all four switches on by default, chosen by Ed on 2 November."
     },
     "treehouse.house.look.fade": {
       "what": "Seconds for the whole-crown indoor reveal or return.",
@@ -882,7 +882,7 @@
           "quote": "The treehouse/tree needs work. It looks good on the horizon but weird to fly to and from."
         }
       ],
-      "notes": "Treehouse look trials; all four switches default off until Ed reviews."
+      "notes": "Treehouse look settings; all four switches on by default, chosen by Ed on 2 November."
     },
     "treehouse.house.look.bark": {
       "what": "Fraction of bark opacity retained indoors.",
@@ -893,7 +893,7 @@
           "quote": "The treehouse/tree needs work. It looks good on the horizon but weird to fly to and from."
         }
       ],
-      "notes": "Treehouse look trials; all four switches default off until Ed reviews."
+      "notes": "Treehouse look settings; all four switches on by default, chosen by Ed on 2 November."
     },
     "treehouse.house.look.radius": {
       "what": "Metres from the floor outline at which the flight reveal begins, and its local radius.",
@@ -904,7 +904,7 @@
           "quote": "The treehouse/tree needs work. It looks good on the horizon but weird to fly to and from."
         }
       ],
-      "notes": "Treehouse look trials; all four switches default off until Ed reviews."
+      "notes": "Treehouse look settings; all four switches on by default, chosen by Ed on 2 November."
     },
     "treehouse.house.look.softness": {
       "what": "Fraction of the reveal radius used for its soft edge.",
@@ -915,7 +915,7 @@
           "quote": "The treehouse/tree needs work. It looks good on the horizon but weird to fly to and from."
         }
       ],
-      "notes": "Treehouse look trials; all four switches default off until Ed reviews."
+      "notes": "Treehouse look settings; all four switches on by default, chosen by Ed on 2 November."
     },
     "treehouse.house.look.ragged": {
       "what": "Fractional irregularity of the reveal edge.",
@@ -926,7 +926,7 @@
           "quote": "The treehouse/tree needs work. It looks good on the horizon but weird to fly to and from."
         }
       ],
-      "notes": "Treehouse look trials; all four switches default off until Ed reviews."
+      "notes": "Treehouse look settings; all four switches on by default, chosen by Ed on 2 November."
     }
   }
 }
