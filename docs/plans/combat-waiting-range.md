@@ -2,7 +2,7 @@
 
 **Ed (2 Nov, after playing combat on the home island):** "the waiting-to-attack behaviour is still very close to the witch; unless deliberately coming in for a pass-by, they should tend to be further away as they're waiting. I would use the witch's dash range and shoot range as parameters here, and also the size of the area itself."
 
-**Then, on the design:** "the average range at which creatures wait should be more like the witch's range of movement (she has two dashes in her 'stack') plus her inviting range (which changes depending on bag). Different creatures can vary. In a small area, they should go over the boundary. In a large area, they can go further away."
+**Then, on the design:** "the average range at which creatures wait should be more like the witch's range of movement (she has two dashes in her 'stack') plus her inviting range (which changes depending on bag)." Later: "they shouldn't vary based on the range of the bag that she has … It should be set based on the default bag. Different creatures can vary. In a small area, they should go over the boundary. In a large area, they can go further away."
 
 ## Where it is now
 
@@ -26,10 +26,11 @@ The waiting goal is `waitingSlot` in `src/rules/combatSpacing.ts`, called from `
 
 ## What Ed wants
 
-- **Average waiting distance ≈ her movement range + her 💌 range:**
+- **Average waiting distance ≈ her movement range + her default 💌 range:**
   - movement range = `dash.distance × dash.charges` (15 m × 2 = 30 m today);
-  - 💌 range = `bagTuning(t, bag).invites.range`: 25 m with the Bumbag, 33 m with no bag, 43 m with the Far bag (src/rules/bags.ts).
-  - That gives about 55 / 63 / 73 m today. Read the numbers live from tuning and her bag, never as constants. Use the bag of the witch being waited on.
+  - default 💌 range = the tuning's own `invites.range` (33 m today, the no-bag value).
+  - That gives about 63 m today. Read the numbers live from tuning, never as constants.
+  - **Not her current bag (Ed, 2 Nov):** "they shouldn't vary based on the range of the bag that she has, otherwise there's no reason to choose different bags. It should be set based on the default bag." Don't use `bagTuning` here: the Far bag's longer reach should let her hit waiters, and the Bumbag's shorter reach shouldn't.
 - **Species vary around that average.** Keep each species' own character, e.g. as a multiplier or offset per species in packs.json, rather than one fixed ring.
 - **Area size:**
   - In a small area they go over the boundary: don't clamp the wait to the area.
