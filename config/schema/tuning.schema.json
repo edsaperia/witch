@@ -32,7 +32,7 @@
           "type": "number",
           "minimum": 0,
           "maximum": 2,
-          "description": "Multiplier on the halo's height above ground."
+          "description": "Multiplier on the flat ground halo's small lift off the ground (0.04 m at 1), which keeps it clear of the ground's surface."
         },
         "complement": {
           "type": "number",

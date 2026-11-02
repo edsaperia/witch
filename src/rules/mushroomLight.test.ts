@@ -7,12 +7,10 @@ import {MUSHROOM_LIGHT_DEFAULTS} from './mushroomLight';
 import {validate, type Schema} from './schema';
 
 describe('canonical mushroom light knobs', () => {
-  it('keeps all decision defaults canonical and the historical lighting values unchanged', () => {
+  it('keeps all decision defaults canonical: Ed\'s chosen light (2026-11-02), the historical capture left as it was', () => {
     expect(MUSHROOM_LIGHT_DEFAULTS).toEqual(raw.mushroomLight);
-    expect(raw.mushroomLight.haloStrength).toBe(capture.mushroomHaloStrength);
-    expect(raw.mushroomLight.poolStrength).toBe(capture.mushroomPoolStrength);
-    expect(raw.mushroomLight.capGlow).toBe(capture.mushroomSpotGain);
-    expect(raw.mushroomLight.testRow).toBe(false);
+    expect(raw.mushroomLight).toEqual({haloStrength: 0.3, poolStrength: 0.1, capGlow: 4.7, radius: 2.35, height: 1.2, complement: 0.1, testRow: false});
+    expect([capture.mushroomHaloStrength, capture.mushroomPoolStrength, capture.mushroomSpotGain]).toEqual([0.8, 0.45, 4.8]);
     for (const d of decisions.decisions) expect(raw.mushroomLight[d.apply.knob.split('.')[1] as keyof typeof raw.mushroomLight], d.id).toBe(d.default);
   });
   it('accepts every slider endpoint and rejects values beyond the owned ranges', () => {

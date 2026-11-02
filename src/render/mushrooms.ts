@@ -44,7 +44,7 @@ export class MushroomView {
       const frame = b.atlas.frames[index];
       if (frame) {
         items.push({ x: p.x, z: p.z, y: 0, frame, flip: false, glow: 0 });
-        halos.push({ x: p.x, z: p.z, h: frame.h * v.mpp * .65, radius: Math.max(2, frame.h * v.mpp * 1.05), type: p.type });
+        halos.push({ x: p.x, z: p.z, radius: Math.max(2, frame.h * v.mpp * 1.05), type: p.type });
       }
     }
     // A cloud of pale spore puffs expands and shrinks away at the pickup point.
