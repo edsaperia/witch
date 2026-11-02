@@ -10,6 +10,7 @@
 // E is held (rules/houseRooms.ts stepBed).
 import { approachStrength, houseApproachDistance, showHouseLayer } from "../rules/treehouseLook";
 import { setApproachDepth } from "./treehouseLook";
+import { HOUSE_FLOOR_OVERLAY_ORDER } from "./houseWitchPass";
 import APPROACH_OUTLINE from "../../config/house/outline.json";
 import { NEED_BAG } from "../rules/kit";
 import * as THREE from "three";
@@ -239,7 +240,7 @@ export class HouseRoomsView {
   constructor() {
     const R = ROOMS_ORDER;
     this.parts = [new Part(this.mat, R.back), new Part(this.mat, R.backNear), new Part(this.mat, R.front), new Part(this.mat, R.frontNear), new Part(this.mat, R.frontNear - 1e-4)];
-    this.floor.frustumCulled = false; this.floor.visible = false; this.floor.renderOrder = 19.925;
+    this.floor.frustumCulled = false; this.floor.visible = false; this.floor.renderOrder = HOUSE_FLOOR_OVERLAY_ORDER;
     this.terraceFloor.frustumCulled = false; this.terraceFloor.visible = false;
     this.furniture.add(this.spot.mesh, this.glow.mesh);
     this.loadingFloor.name = 'Loading house platform'; this.loadingFloor.visible = false; this.loadingFloor.frustumCulled = false; this.loadingFloor.renderOrder = 19.924;
