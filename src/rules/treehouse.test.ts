@@ -148,8 +148,9 @@ describe("the treehouse's house", () => {
     const p = pastEdge(d, a); expect(atTakeoff(d, p.x, p.z)).toBe(true);
   });
 
-  it("is one floor: from the Terrace she walks up the trunk and out along the branches, kept in by its edge but for the take-off", () => {
-    const g = game(JETS), d = deckOf(g.map, TUNING)!;
+  it("with walls explicitly on, she walks up the trunk and branches, kept in except at the take-off", () => {
+    const T = withTuning({ ...JETS, treehouse: { ...JETS.treehouse, house: { ...HS, look: { ...HS.look!, noWalls: false } } } });
+    const g = game(T), d = deckOf(g.map, T)!;
     run(g, 0.2, { moveZ: -1 });
     run(g, 2, { moveZ: -1 }); // north, off her seat across the Terrace
     expect([g.witch.perch, g.witch.mode]).toEqual([true, "ground"]);
@@ -252,7 +253,7 @@ describe("the treehouse's house", () => {
     for (let i = 0; i < 600 && !off; i++) { press(g, out); off = g.witch.mode === "rising" || g.witch.mode === "treetop"; }
     expect(off).toBe(true);
     run(g, 2); expect(g.witch.mode).toBe("treetop"); expect(g.witch.perch).toBeFalsy();
-    const T = withTuning({ treehouse: { ...TUNING.treehouse, house: { ...HS, fall: { on: true, time: 0.9 } } } }), g2 = game(T), d2 = deckOf(g2.map, T)!;
+    const T = withTuning({ treehouse: { ...TUNING.treehouse, house: { ...HS, look: { ...HS.look!, noWalls: false }, fall: { on: true, time: 0.9 } } } }), g2 = game(T), d2 = deckOf(g2.map, T)!;
     run(g2, 0.2, { moveZ: -1 }); run(g2, along, { moveX: 1 });
     let falling = false;
     for (let i = 0; i < 600 && !falling; i++) { press(g2, out); falling = g2.witch.falling !== undefined; }

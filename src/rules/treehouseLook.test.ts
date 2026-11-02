@@ -8,8 +8,8 @@ import { sightClearance } from "./crown";
 import { DECISION_LIST, applyKnobParams } from "../ui/decisions";
 import { NO_LOAD } from "./leashWeight";
 const H = TUNING.treehouse.house!, B = { minX: -10000, maxX: 10000, minZ: -10000, maxZ: 10000 };
-it("keeps all four trials off in the published tuning", () => {
-  expect([H.look!.indoor, H.look!.noNotch, H.look!.approach, H.look!.noWalls]).toEqual([false, false, false, false]);
+it("enables all four looks in the published tuning, as chosen by Ed on 2 November", () => {
+  expect([H.look!.indoor, H.look!.noNotch, H.look!.approach, H.look!.noWalls]).toEqual([true, true, true, true]);
 });
 it("finishes and reverses the authored fade without advancing on a negative step", () => {
   expect(advanceCrownFade(0, true, .375, .75)).toBe(.5);
@@ -80,13 +80,13 @@ it("traces the dancefloor open-sky channel even when the Terrace crown is whole"
   expect(sightClearance(crownLookInput(original, true), 40, 20, 40)).toBe(Infinity);
 });
 
-it("registers four independent off-by-default pause switches and applies each through the real link controls", () => {
+it("registers four independent on-by-default pause switches and lets each be disabled through the real link controls", () => {
   const controls = DECISION_LIST.filter(d => d.group === "Treehouse look" && d.control.type === "toggle");
   expect(controls.map(d => d.id)).toEqual(["lookIndoor", "lookNoNotch", "lookApproach", "lookNoWalls"]);
   for (const control of controls) {
-    expect(control.default).toBe(false); const t = structuredClone(TUNING);
-    applyKnobParams(t, new URLSearchParams("d_" + control.id + "=1"));
+    expect(control.default).toBe(true); const t = structuredClone(TUNING);
+    applyKnobParams(t, new URLSearchParams("d_" + control.id + "=0"));
     const values = t.treehouse.house!.look!;
-    expect([values.indoor,values.noNotch,values.approach,values.noWalls].filter(Boolean)).toHaveLength(1);
+    expect([values.indoor,values.noNotch,values.approach,values.noWalls].filter(Boolean)).toHaveLength(3);
   }
 });
