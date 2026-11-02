@@ -235,11 +235,13 @@ let lookNow = JSON.stringify(resumeSave?.look ?? savedLook);
 let shownLook = "";
 function showLook(): void {
   const canonical = (page.night ?? page.last)?.game;
-  const pile = canonical ? (page.presentationGame?.(canonical) ?? canonical).wake?.pile : undefined, key = `${lookNow}|${pile?.join() ?? ""}`;
+  const shown = canonical ? page.presentationGame?.(canonical) ?? canonical : undefined, pile = shown?.wake?.pile;
+  // (her hat still to put on but lying on the floor, the first morning's: its shape kept, so its frame lying there is drawn)
+  const lying = !!pile?.includes("hat") && !!shown?.witches[0]?.hat.down, key = `${lookNow}|${pile?.join() ?? ""}|${lying}`;
   if (key === shownLook) return;
   const look = JSON.parse(lookNow) as unknown;
   if (view.houseRooms) view.houseRooms.outfit = look;
-  shownLook = key; view.setWitch(wornGenome(look as never, pile));
+  shownLook = key; view.setWitch(wornGenome(look as never, pile, lying));
 }
 // The page and the night (app/night.ts; docs/plans/sail-without-reload.md B): the page made once, the night (its link, tuning,
 // game, playtest run, HUD, arrival and flags) held in `page.night`, read there by everything that needs it, never captured.

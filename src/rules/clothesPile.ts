@@ -46,10 +46,13 @@ interface Genome { hat?: { shape?: string }; cloak?: string; backpackSize?: numb
 const BITS = ["phones", "shades", "glowsticks", "satchel", "pendant", "lantern", "vial", "book", "bumbag", "purse", "tote", "duffel", "briefcase", "clutch", "messenger", "wristband"];
 
 /** Her look with what's still in the pile taken off (the nightie for her top, bare feet for her shoes, and no cloak, scarf, hat or
- *  bits), for the page to draw her by; `pile` empty, her genome as it is. A null genome (the classic witch) is hers, art/witchGenome.js WITCH_GENOME. */
-export function wornGenome<G extends Genome | null>(g: G, pile: readonly PileSlot[] | undefined): G {
+ *  bits), for the page to draw her by; `pile` empty, her genome as it is. A null genome (the classic witch) is hers, art/witchGenome.js WITCH_GENOME.
+ *  `hatLying`: her hat lies somewhere (rules/hat.ts down: a game's first morning's on the hats' floor, rules/wakeUp.ts hatOnFloor), so it
+ *  keeps its shape: she's drawn without it all the same (her hat-off frames), and those frames' hat lying on the floor is drawn from it
+ *  (render/assets.ts witchHatFrame; with the shape "none" there was no hat to draw: Ed's playtest of v7061, "hat has not appeared"). */
+export function wornGenome<G extends Genome | null>(g: G, pile: readonly PileSlot[] | undefined, hatLying = false): G {
   if (!pile?.length) return g;
-  const base = (g ?? WITCH_GENOME) as Genome, acc: Record<string, unknown> = { ...(base.accessories ?? {}) }, has = (s: PileSlot) => pile.includes(s);
+  const base = (g ?? WITCH_GENOME) as Genome, acc: Record<string, unknown> = { ...(base.accessories ?? {}) }, has = (s: PileSlot) => pile.includes(s) && !(s === "hat" && hatLying);
   if (has("top")) acc.nightie = true;
   if (has("shoes")) { acc.barefoot = true; acc.chunky = false; }
   if (has("cloak")) { acc.scarf = false; acc.patches = false; }

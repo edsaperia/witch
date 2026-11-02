@@ -23,7 +23,7 @@
 import type { Game } from "./game";
 import { dressed, pileOut, type PileSlot } from "./clothesPile";
 import { deckOf } from "./treehouse";
-import { hasRooms, objectAt } from "./houseRooms";
+import { HOUSE_ROOMS, hasRooms, objectAt } from "./houseRooms";
 import { hasBag, hasBroom, hasInvites } from "./kit";
 
 /** What a guidance pin is for (render/view/guidance.ts gives each its glyph). */
@@ -60,6 +60,15 @@ export const FIRST_MORNING: readonly ({ dress: PileSlot | "styled"; at: string }
   { kit: "desk" }, { dress: "cloak", at: "cloakPegs" }, { dress: "hat", at: "hats" }, { kit: "lathe" },
 ];
 
+/** The first morning's hat step: her hat where it lies. In Ed's arrangement the hats' floor is numbered spawn points (rules/houseRooms.ts
+ *  hatSlots), the first morning's hat on the first of them (rules/wakeUp.ts hatOnFloor), and the old hats' area that stays as decor
+ *  can be rooms away (Ed's playtest of v7061: the pin led to the old area, and the hat wasn't there). The classic house lays it on
+ *  the hats' floor itself: that object, as before. */
+function hatGuide(g: Game, w: number): Guide {
+  const d = g.witches[w]?.hat.down;
+  return HOUSE_ROOMS.layout?.hatPoints.length && d ? { kind: "dress", target: { x: d.x, z: d.z } } : { kind: "dress", target: { object: "hats" } };
+}
+
 /** How near the decks' seat she's at them (m): rules/wakeUp.ts atDecks's reach. */
 const AT_DECKS = 2.5;
 
@@ -77,7 +86,7 @@ export function guidanceOf(g: Game, w: number, save: GuideSave, unvisited: reado
   if (!k.yesterday && !pileOut(k)) { // (a game's first morning: no pile of last night's clothes to put on at once)
     for (const s of FIRST_MORNING) {
       if ("kit" in s) { if (s.kit === "desk" ? !hooks.invitationsReady(g, w) : !hooks.broomTaken(g, w)) return s.kit === "desk" ? desk() : { kind: "lathe", target: { object: "lathe" } }; }
-      else if (s.dress === "styled" ? !k.styled : !dressed(k) && !!k.pile?.includes(s.dress)) return { kind: "dress", target: { object: s.at } };
+      else if (s.dress === "styled" ? !k.styled : !dressed(k) && !!k.pile?.includes(s.dress)) return s.dress === "hat" ? hatGuide(g, w) : { kind: "dress", target: { object: s.at } };
     }
   }
   // (later mornings: E at the pile dresses her at once; then her kit, the invitations before the broom)
@@ -95,7 +104,8 @@ export function atGuide(g: Game, w: number, guide: Guide): boolean {
   const b = g.witches[w]?.body, d = deckOf(g.map, g.tuning);
   if (!b || !d) return false;
   const T = guide.target;
-  if (!("object" in T)) return Math.hypot(b.x - d.seat.x, b.z - d.seat.z) <= AT_DECKS; // (the decks: at her seat)
+  if (!("object" in T)) return guide.kind === "decks" ? Math.hypot(b.x - d.seat.x, b.z - d.seat.z) <= AT_DECKS // (the decks: at her seat)
+    : Math.hypot(b.x - T.x, b.z - T.z) <= g.tuning.leash.runeRadius; // (her hat lying: near enough to pick it up, rules/houseRooms.ts hatToTake)
   return !!b.perch && hasRooms(d) && objectAt(d, b.x, b.z)?.id === T.object;
 }
 
