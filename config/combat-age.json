@@ -1,0 +1,7 @@
+{
+  "_": "Ed, 2026-11-02: youths are soldiers, adults are mobile tanks, legends artillery. Numerical age modifiers preserve species style. Damage, accuracy and berry costs are independent.",
+  "neutral": {"speed":1,"turn":1,"roam":1,"closePass":1,"tempo":1,"durability":1,"range":1,"footprint":1,"body":1,"pattern":1,"lunge":1,"windup":1,"projectileSpeed":1,"rangedWeight":1,"composedWeight":1,"settle":0,"impactRadius":0,"impactDamage":0},
+  "youth": {"speed":1.15,"turn":1.15,"roam":1,"closePass":1,"tempo":1.12,"durability":1,"range":1,"footprint":1,"body":1,"pattern":1,"lunge":1,"windup":0.9,"projectileSpeed":1,"rangedWeight":1,"composedWeight":1,"settle":0,"impactRadius":0,"impactDamage":0},
+  "adult": {"speed":0.9,"turn":0.85,"roam":0.6,"closePass":0.35,"tempo":0.85,"durability":1.5,"range":2.25,"footprint":2,"body":1.5,"pattern":1.5,"lunge":1.35,"windup":1.25,"projectileSpeed":0.9,"rangedWeight":1.4,"composedWeight":1.5,"settle":0.65,"impactRadius":4,"impactDamage":0.25},
+  "legend": {"speed":1,"turn":1,"roam":1,"closePass":1,"tempo":0.8,"durability":1,"range":1.6,"footprint":2.6,"body":1.8,"pattern":2,"lunge":1.6,"windup":1.6,"projectileSpeed":0.65,"rangedWeight":1,"composedWeight":1,"settle":0,"impactRadius":0,"impactDamage":0}
+}

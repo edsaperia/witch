@@ -3,11 +3,15 @@ import raw from "../../../config/creature-actions.json";
 import type { Creature } from "../creatures";
 import { FIGHT, profileOf } from "../movement";
 import { attackOf } from "./data";
+import { speciesAttack } from "../attacks/species";
+import { ageProfile } from "./age";
 import type { PacksData, Role, SpecialData, SpecialKind } from "./packs";
 
 export interface CreatureAction {
   id: string;
   delivery: "melee" | "ranged" | "effect";
+  /** Explicit weapon reference: keep the configured grammar, including its children/effects. */
+  attack?: "species";
   weight: number;
   youngWeight: number;
   cooldown?: number;
@@ -21,7 +25,8 @@ export const actionsOf = (species: string): readonly CreatureAction[] => ACTIONS
 export const actionRole = (action: CreatureAction): Role => action.delivery === "melee" ? "lunger" : action.delivery === "ranged" ? "shooter" : "special";
 export function actionReach(c: Creature, action: CreatureAction, data: PacksData): number {
   const kind = data.kinds[c.species], move = profileOf(c.species)?.move;
-  if (action.delivery === "ranged") return (kind?.ranged?.range ?? 4) * FIGHT.scale * (c.level === 1 ? data.young.range : 1);
+  if (action.attack === "species") return (speciesAttack(c.species, c.level)?.cast?.range ?? 4) * FIGHT.scale;
+  if (action.delivery === "ranged") return (kind?.ranged?.range ?? 4) * FIGHT.scale * (c.level === 1 ? data.young.range : ageProfile(c.level).range);
   if (action.delivery === "effect") {
     const effect = action.parameters ?? {};
     const range = (effect.leap ? move?.to : undefined) ?? effect.range ?? effect.reach ?? effect.radius ?? 20;

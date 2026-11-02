@@ -219,7 +219,7 @@ describe("combat waiting spacing", () => {
     world.t = withTuning({combatSpacing: true});
     let fired = false;
     for (let i = 0; i < 240; i++) {
-      world.time = i * world.dt; stepCombat(state, world); fired ||= state.shots.length > 0;
+      world.time = i * world.dt; stepCombat(state, world); fired ||= state.shots.length > 0 || (state.spells?.stats.bodies[0] ?? 0) > 0;
       expect(c.charge).toBeUndefined(); expect(c.swoop?.phase).not.toBe("dive");
     }
     expect(fired).toBe(true);

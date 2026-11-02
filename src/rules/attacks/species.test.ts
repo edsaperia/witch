@@ -31,7 +31,12 @@ export function complexity(a: AttackSpec): number {
   if (a.force) n++;
   if (a.beam?.sweep || a.beam?.track || a.beam?.charge) n++;
   n += Object.keys(a.hit?.effect ?? {}).length > 1 ? 1 : 0;
-  for (const list of Object.values(a.on ?? {})) for (const c of list as Child[]) n += 1 + (typeof c.attack === "object" ? complexity(c.attack) : 0);
+  const children = new Set<string>();
+  for (const list of Object.values(a.on ?? {})) for (const c of list as Child[]) {
+    // One child composition may happen on a hit or on a miss; count its structure once.
+    const key = JSON.stringify(c); if (children.has(key)) continue; children.add(key);
+    n += 1 + (typeof c.attack === "object" ? complexity(c.attack) : 0);
+  }
   return n;
 }
 
@@ -46,10 +51,10 @@ describe("each species' own attack", () => {
     expect(speciesAttack("wolf", 0)).toBeNull(); expect(speciesAttack("wolf", 3)).toBeNull(); expect(speciesAttack("nobody", 1)).toBeNull();
   });
 
-  it("grows its adult's: one more in its pattern, bigger and further, its children too", () => {
+  it("grows the same species tree into broader, longer-ranged adult attacks, including its children", () => {
     const hog = adultOf(SPECIES_ATTACKS.hedgehog), fox = adultOf(SPECIES_ATTACKS.arcticfox);
-    expect(hog.emit?.n).toBe(7); expect(hog.body?.radius).toBeCloseTo(0.6); expect(hog.cast?.range).toBeCloseTo(6.6);
-    expect((fox.on!.expire![0].attack as AttackSpec).emit?.n).toBe(4);
+    expect(hog.emit?.n).toBe(9); expect(hog.body?.radius).toBeCloseTo(0.75); expect(hog.cast?.range).toBeCloseTo(13.5);
+    expect((fox.on!.expire![0].attack as AttackSpec).emit?.n).toBe(5);
   });
 
   it("gives every species in a biome its own style, and composes more the further out its phase", () => {
@@ -78,7 +83,7 @@ describe("each species' own attack", () => {
     }
     expect(legendAttack("salamander", L)!.beam?.length).toBe(A.range); // (a giant beam across its whole reach)
     const hog = legendAttack("hedgehog", L)!, burst = hog.on!.land![0].attack as AttackSpec;
-    expect(hog.body?.kind).toBe("lob"); expect(burst.emit?.n).toBe(8); // (its ring of quills, two sizes up)
+    expect(hog.body?.kind).toBe("lob"); expect(burst.emit?.n).toBe(12); // Its species' ring, with the artillery profile's density.
     expect((legendAttack("dormouse", L)!.on!.land![0].attack as AttackSpec).emit).toMatchObject({ pattern: "fan", n: 3 }); // (a single becomes three)
     expect((legendAttack("wolf", L)!.on!.land![0].attack as AttackSpec).body?.kind).toBe("area"); // (a lunge becomes a great slam)
   });

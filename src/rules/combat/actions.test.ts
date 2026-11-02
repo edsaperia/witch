@@ -5,6 +5,7 @@ import { teamOf } from "./teams";
 import { newCombat, type CombatWorld } from "../combat";
 import type { Creature } from "../creatures";
 import { withTuning } from "../tuning";
+import { speciesAttack } from "../attacks/species";
 
 const original = ACTIONS.species;
 afterEach(() => { ACTIONS.species = original; });
@@ -30,7 +31,8 @@ describe("creature action contracts", () => {
         for (const level of [1, 2] as const) {
           const c = {...animal(0), species, level};
           expect(Number.isFinite(actionReach(c, action, PACKS)) && actionReach(c, action, PACKS) > 0, `${species}:${action.id}@${level}`).toBe(true);
-          if (action.delivery !== "effect") expect(packAttack(species, level, action.delivery), `${species}:${action.id}@${level}`).not.toBeNull();
+          if (action.attack === "species") expect(speciesAttack(species, level), `${species}:${action.id}@${level}`).not.toBeNull();
+          else if (action.delivery !== "effect") expect(packAttack(species, level, action.delivery), `${species}:${action.id}@${level}`).not.toBeNull();
         }
       }
       for (const level of [1, 2]) expect(actions.reduce((sum, a) => sum + a.weight * (level === 1 ? a.youngWeight : 1), 0), `${species}@${level}: executable choices`).toBeGreaterThan(0);

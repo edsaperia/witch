@@ -8,6 +8,7 @@ import { type State } from "../creatureStates";
 import { FIGHT } from "../movement";
 import { sectionOf, speciesWith } from "../creatureConfig";
 import { type Tuning } from "../tuning";
+import { ageProfile } from "./age";
 
 export type Delivery = "melee" | "shot" | "quake" | "lob" | "beam" | "pulse";
 export type Modifier = "none" | "knockback" | "slow";
@@ -219,7 +220,7 @@ const profiles = new WeakMap<CombatData, Map<string, (CreatureCombatProfile | un
  * instance state, not another copy of the animal's balancing definition. */
 export function combatProfile(species: string, level: Level, data: CombatData = COMBAT): CreatureCombatProfile {
   const strength = strengthOf(species, level, data), health = data.levels.hp[Math.min(level, data.levels.hp.length - 1)] * strength;
-  const capacity = data.levels.stun ?? data.levels.hp, durability = capacity[Math.min(level, capacity.length - 1)] * strength;
+  const capacity = data.levels.stun ?? data.levels.hp, durability = capacity[Math.min(level, capacity.length - 1)] * strength * ageProfile(level).durability;
   const damagePerSecond = data.levels.dps[level] * strength;
   let speciesProfiles = profiles.get(data);
   if (!speciesProfiles) profiles.set(data, (speciesProfiles = new Map()));

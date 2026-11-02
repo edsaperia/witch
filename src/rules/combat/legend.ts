@@ -12,6 +12,7 @@ import { drainOf, fillOf } from "../orbit";
 import { cast as castSpell, newSpells } from "../attacks/engine";
 import { hittableOf, spellWorld } from "../attacks/combatWorld";
 import { legendAttack } from "../attacks/species";
+import { ageProfile } from "./age";
 import type { Game } from "../game";
 import { leyChain, leyKey } from "../leylines";
 import { frontMetres, TIP_PACE } from "../leypulse";
@@ -94,7 +95,7 @@ export function stepLegendAttack(w: CombatWorld, s: CombatState, c: Creature, da
   c.moving = false; c.vx = 0; c.vz = 0; // (it stands where it lay, in its area)
   if (f.windupUntil > 0) {
     if (time < f.windupUntil) return;
-    f.windupUntil = 0; f.readyAt = time + A.interval;
+    f.windupUntil = 0; f.readyAt = time + A.interval / (f.spellCasts?.length ? ageProfile(3).tempo : 1);
     const beam = A.beam.includes(c.species);
     for (const a of c.aims ?? []) {
       const ticks = Math.max(1, Math.round(A.beamTime / 0.25)), sk = a.target.kind === "sound" ? a.target.key : null;
@@ -159,6 +160,7 @@ export function stepLegendAttack(w: CombatWorld, s: CombatState, c: Creature, da
   const own = (w.t.attacks?.species ?? true) ? legendAttack(c.species, { range: R, windup: A.windup, interval: A.interval, flight: A.lobFlight, radius: A.lobRadius * S }, w.t.attacks?.reactionFloor) : null, spec = own && !angry && own.body?.kind === "lob" ? { ...own, path: [{ home: { turn: 0 } }] } : own;
   f.spellCasts = undefined;
   if (spec) {
+    f.windupUntil = time + (spec.cast?.windup ?? A.windup);
     const S2 = (s.spells ??= newSpells()), W = spellWorld(w, s, grid, S2.seed, data), casts: number[] = [];
     for (const a of c.aims) if (a.target.kind !== "sound") casts.push(castSpell(S2, W, spec, `legend:${c.species}`, { id: c.id, x: c.x, z: c.z, side, species: c.species, heading: Math.atan2(a.z - c.z, a.x - c.x) }, hittableOf(w, s, a.target), time, A.damage, f.windupUntil));
     if (casts.length) { f.spellCasts = casts; c.aims = c.aims.filter(a => a.target.kind === "sound"); }

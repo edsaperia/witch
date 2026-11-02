@@ -16,6 +16,7 @@
 // pack engages from that move's reach, reachOf); a kiter's strike is its shot, never a lunge; the slime trail runs on; and while it
 // waits its turn its kind's tactic places it (the wolves' surround: rules/combat.ts).
 import raw from "../../../config/packs.json";
+import { ageProfile } from "./age";
 import { observeAttack } from "../attackObservation";
 import { sectionOf } from "../creatureConfig";
 import { type Creature, type Level } from "../creatures";
@@ -145,7 +146,7 @@ export interface Directive {
 export function packAttack(species: string, level: Level, move: Move, data: PacksData = PACKS): { name: string; attack: Attack; damage: number; shots: number; spread: number } | null {
   const K = packKindOf(species, data);
   if (!K || level < 1 || level > 2) return null;
-  const young = level === 1 ? data.young : null, dps = combatProfile(species, level).damagePerSecond;
+  const young = level === 1 ? data.young : null, age = ageProfile(level), dps = combatProfile(species, level).damagePerSecond;
   if (move === "melee") {
     if (!K.melee) return null;
     const base = K.melee.attacks?.[level] ?? (level === 1 ? "nip" : "maul");
@@ -154,7 +155,7 @@ export function packAttack(species: string, level: Level, move: Move, data: Pack
     let A = COMBAT.attacks[name];
     if (!A) {
       const B = COMBAT.attacks[base];
-      A = { ...B, windup: B.windup * (young?.windup ?? 1), ...(K.melee.knockback ? { modifier: "knockback" as const, knockback: K.melee.knockback } : {}) };
+      A = { ...B, range: B.range * age.lunge, lunge: B.lunge === undefined ? undefined : B.lunge * age.lunge, radius: B.radius === undefined ? undefined : B.radius * age.footprint, windup: B.windup * (young?.windup ?? 1) * age.windup, ...(K.melee.knockback ? { modifier: "knockback" as const, knockback: K.melee.knockback } : {}) };
       COMBAT.attacks[name] = A;
     }
     const S = scaled(name, A);
@@ -166,7 +167,7 @@ export function packAttack(species: string, level: Level, move: Move, data: Pack
   let A = COMBAT.attacks[name];
   if (!A) {
     const own = R.attacks?.[level], B: Attack = own && COMBAT.attacks[own] ? COMBAT.attacks[own] : R.delivery === "lob" ? { ...data.bolt, delivery: "lob", flight: R.flight ?? 1.1 } : data.bolt;
-    A = { ...B, range: R.range * (young?.range ?? 1), speed: (B.speed ?? 20) * (R.speed ?? 1) * (young?.speed ?? 1), windup: B.windup * (young?.windup ?? 1), radius: (B.radius ?? 0.6) * (R.size?.[level] ?? 1) };
+    A = { ...B, range: R.range * (young?.range ?? 1) * age.range, speed: (B.speed ?? 20) * (R.speed ?? 1) * (young?.speed ?? 1) * age.projectileSpeed, windup: B.windup * (young?.windup ?? 1) * age.windup, radius: (B.radius ?? 0.6) * (R.size?.[level] ?? 1) * age.body };
     COMBAT.attacks[name] = A;
   }
   const S = scaled(name, A);
@@ -384,7 +385,7 @@ export function stepPacks(s: CombatState, w: CombatWorld, pw: PackWorld = {}, da
     members.forEach((m, i) => {
       const role = roles.get(m.id)!;
       const own = m.fight?.packMove;
-      const move: Move = own && m.fight && strikingNow(m) ? own : team?.actions[m.id]?.delivery === "melee" ? "melee" : role === "lunger" ? lungeMove(m.species, K) : K.ranged ? "ranged" : "melee";
+      const move: Move = own && m.fight && strikingNow(m) ? own : team?.actions[m.id]?.delivery === "melee" ? "melee" : team?.actions[m.id]?.delivery === "ranged" ? "ranged" : role === "lunger" ? lungeMove(m.species, K) : K.ranged ? "ranged" : "melee";
       const d: Directive = { role, phase: st!.phase, state: st!, may: false, move, ...(team ? { team, member: m.id, action: team.actions[m.id] } : {}) };
       const own2 = profileOf(m.species)?.move;
       if (m.packSync !== undefined && time < m.packSync) {
