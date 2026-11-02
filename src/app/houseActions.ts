@@ -1,3 +1,4 @@
 import type { LeashEvent } from "../rules/leash";
-/** Solo retains its original events; an online page responds only to its assigned witch's house actions. */
-export const localHouseAction = (event: Pick<LeashEvent, "id">, player: number | null): boolean => player === null || event.id === player;
+/** Ordinary actions are local; the all-in-bed verdict ends the shared night for both pages. */
+export const localHouseAction = (event: Pick<LeashEvent, "id"> & Partial<Pick<LeashEvent, "kind" | "obj">>, player: number | null): boolean =>
+  player === null || event.id === player || event.kind === "house" && event.obj === "slept";

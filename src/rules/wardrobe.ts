@@ -4,6 +4,7 @@
 // found: every colour is hers from the start (Ed, "She starts with all the colour variants"). Pure: the genome in, a new one out.
 import WARDROBE from "../../config/wardrobe.json";
 import type { Slot } from "./broomParts";
+import { isDressingTable } from "./clothesPile";
 
 /** A thing she can wear: what it sets on her genome (a dotted path for a part), and whether it's hers in a first game (the rest
  *  are found in the forest, as the other permanent upgrades are: Ed, 2026-10-21). */
@@ -38,7 +39,9 @@ export const skinSwatch = (col: number, row: number): number[] => { const [v, s]
 
 /** A station's shelves, top to bottom (config/house/'s object id), or null for one with none. */
 export function shelvesAt(station: string): Shelf[] | null {
-  const ids = RAW.stations[station];
+  const home = station === "bedroom2Wardrobe" || station === "bedroom3Wardrobe" ? "wardrobe"
+    : isDressingTable(station) ? "dressingTable" : station;
+  const ids = RAW.stations[home];
   return ids ? ids.map(id => SHELVES[id]) : null;
 }
 
@@ -48,7 +51,7 @@ export const shownItems = (s: Shelf): WardrobeItem[] => s.items;
  *  to choose yet"; the row appears once there's something to choose). */
 export const itemsToChoose = (s: Shelf, owned: ReadonlySet<string>): boolean => shownItems(s).filter(i => owned.has(i.id)).length >= 2;
 /** Whether she's drawn without her hat while `station`'s panel is open (its choices are on her head or face: Ed, 2026-10-23). */
-export const bareHeadAt = (station: string): boolean => !!RAW.bareHead?.includes(station);
+export const bareHeadAt = (station: string): boolean => !!RAW.bareHead?.includes(isDressingTable(station) ? "dressingTable" : station);
 
 const get = (g: Genome, path: string): unknown => path.split(".").reduce<unknown>((o, k) => (o as Record<string, unknown> | null | undefined)?.[k], g);
 /** Whether she has `item` on: every value it sets is hers (a number: hers above 0 when its is, none when its is 0). */

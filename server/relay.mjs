@@ -56,6 +56,7 @@ export function createRelay({ dropMs = 5000, joiningGraceMs = 600000, joiningSta
       try { m = JSON.parse(bytes.toString()); } catch { stop(ws, 'protocol', 1008, 'Invalid JSON'); return; }
       if (!m || typeof m !== 'object' || Array.isArray(m) || m.protocol !== 1) { stop(ws, 'protocol', 1008, 'Incompatible protocol'); return; }
       ws.lastMessage = now();
+      if (m.type === 'heartbeat' && ws.onlineRole) { send(ws, { protocol: 1, type: 'heartbeat' }); return; }
       if (telephone.handle(ws, m)) return;
       if (ws.onlineRole === 'telephone') {
         if (m.type !== 'heartbeat') stop(ws, 'protocol', 1008, 'Message not permitted');

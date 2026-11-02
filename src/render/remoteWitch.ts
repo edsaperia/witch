@@ -2,14 +2,10 @@ import type { Game, Witch } from "../rules/game";
 import { wakeOf } from "../rules/wakeUp";
 import { wornGenome } from "../rules/clothesPile";
 import { onTerrace, deckOf } from "../rules/treehouse";
-import { onRoomFloor, roomAt } from "../rules/houseRooms";
+import { witchRoomPass } from "./witchRoomPass";
 import type { WitchArt } from "./homeArt";
 
-export function remoteRoomPass(game: Game, W: Witch | undefined): boolean {
-  const deck = deckOf(game.map, game.tuning), b = W?.body;
-  // The public movement floor excludes a reserved bedroom; its assigned occupant is still drawn inside it.
-  return !!(b?.perch && deck?.house?.rooms && !onTerrace(deck, b.x, b.z) && (roomAt(game.map.treehouse, b.x, b.z) || onRoomFloor(deck.house.rooms, b.x, b.z)));
-}
+export const remoteRoomPass = witchRoomPass;
 
 /** Pure, assigned-actor drawing inputs. No View/camera/audio mutations and no reordered rules game. */
 export function remoteWornLook(game: Game, W: Witch, approved: Record<string, unknown>): Record<string, unknown> {

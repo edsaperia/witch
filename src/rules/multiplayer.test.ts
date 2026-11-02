@@ -163,17 +163,22 @@ describe("several witches in one deterministic night", () => {
     expect(g.witches[0].house?.slept).toBe(true);
     expect(g.witches[1].house?.slept).not.toBe(true);
     expect(g.leashEvents.some(e => e.obj === "slept")).toBe(false);
-    const sleeping = { ...g.witches[0].body };
     run(g, 20, [{ ...idle, moveX: 1, fire: true, dash: true, spell: true, sigil: true }, idle]);
-    expect(g.witches[0].body).toEqual(sleeping);
+    expect(g.witches[0].house?.slept).toBe(false); // Ed: movement gets only this sleeper up while another is awake.
     expect(g.witches[0].invites.letters).toHaveLength(0);
     expect(g.leashEvents.some(e => e.obj === "slept")).toBe(false);
+    run(g, Math.ceil(3.2 / STEP), [idle, idle]);
+    Object.assign(g.witches[0].body, p);
+    run(g, Math.ceil((HOUSE_ROOMS.bed.hold + .1) / STEP), [{ ...idle, sigilHeld: true }, idle]);
+    expect(g.witches[0].house?.slept).toBe(true);
     let ended = 0;
     for (let i = 0; i < Math.ceil((HOUSE_ROOMS.bed.hold + 0.1) / STEP); i++) {
       run(g, 1, [idle, { ...idle, sigilHeld: true }]);
       ended += g.leashEvents.filter(e => e.obj === "slept").length;
     }
     expect(ended).toBe(1);
+    run(g, 20, [{ ...idle, moveX: 1 }, { ...idle, moveX: -1 }]);
+    expect(g.witches.every(w => w.house?.slept)).toBe(true); // All-asleep transition has already begun.
   });
 
   it("keeps all three occupied wild watches until each area's last witch leaves", () => {

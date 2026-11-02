@@ -14,17 +14,18 @@ import { telephoneCues } from "./app/telephoneCues";
 import { telephoneFaces } from "./app/telephoneFaces";
 import { telephoneFaceCanvas } from "./render/telephoneFace";
 import { TelephonePresence } from "./ui/telephonePresence";
-import { telephoneNotice } from "./ui/telephone";
+import { telephoneNotice, telephoneTrouble } from "./ui/telephone";
 import { guestArrival } from "./platform/online/guestArrival";
 import { guestAccess } from "./platform/online/guestAccess";
 import { visitSaves } from "./app/visitSaves";
-import { visitLifecycle } from "./app/visitLifecycle";
+import { visitLifecycle, synchronizeVisit } from "./app/visitLifecycle";
 import { visitUnlocks } from "./app/visitUnlocks";
 import { stationAuthority } from "./platform/online/stationAuthority";
 import { remoteWitchAppearance } from "./platform/online/remoteAppearance";
 import { appearance } from "./platform/online/appearance";
 import { stationLook } from "./platform/online/stationAppearance";
 import { localHouseAction } from "./app/houseActions";
+import { continueSharedNight } from "./app/sharedNight";
 import type { HouseEvents } from "./platform/online/houseSteps";
 import { fillNightTrunk } from "./app/nightFindBoundary";
 import { chartDeparture } from "./app/chartDeparture";
@@ -76,7 +77,8 @@ import type { DecidePanel } from "./ui/decide";
 import { saveLoadout } from "./app/loadout";
 import { castable, HAT_SPELLS, hatSpell, setParts } from "./rules/spells";
 import { changeLoadout } from "./rules/hatSpells";
-import { HOUSE_ROOMS, addFloorHat, syncFloorHats, installEdLayout } from "./rules/houseRooms";
+import { HOUSE_ROOMS, addFloorHat, syncFloorHats, installEdLayout, objectFront, roomAt, fromObject } from "./rules/houseRooms";
+import { remoteBodyBatch } from "./platform/online/otherWitches";
 import { setEdLayoutActive } from "./rules/housePlacement";
 import { usesEdLayout } from "./app/houseLayout";
 import { stationOf, tableOf } from "./rules/stations";
@@ -405,6 +407,8 @@ const callArrival = guestArrival({ room: "bedroom2", equipment: game => {
 } });
 let returnedUnlocks: ReturnType<typeof visitUnlocks> | null = null;
 let hostedUnlocks: ReturnType<typeof visitUnlocks> | null = null;
+const completedGuestNights: ReturnType<typeof visitUnlocks>[] = [];
+let sharedNightChanging = false, sharedNightFrom: Game | null = null;
 const remoteArt = remoteWitchAppearance(view);
 const sharedLoans = sharedFindLoan();
 function personalKit(game: Game = N().game, player = 0): PersonalKit {
@@ -425,19 +429,29 @@ function traceVisit(stage: string, detail?: unknown): void {
   if (typeof message === "string") visitPreparation.failure = message.slice(0, 500);
   notable("telephone-preparation", stage, detail);
 }
-const phone = telephoneStation({ enabled: phoneEnabled, callsEnabled: phoneCallsEnabled, face: phoneFace, clearFaces: () => { phoneFaces.clear(); phonePresence.refresh(); }, digit: digit => { if (phone.state.status !== "preparing") phoneSounds.digit(digit); }, storage: (() => { try { return localStorage; } catch { return null; } })(), session: {
+const lifecycleEvidence = params.has("shot") ? (proof: Record<string, unknown>) => { window.dispatchEvent(new CustomEvent("witch-lifecycle-evidence", { detail: proof })); } : undefined;
+const phone = telephoneStation({ lifecycleEvidence, enabled: phoneEnabled, callsEnabled: phoneCallsEnabled, face: phoneFace, trouble: telephoneTrouble, clearFaces: () => { phoneFaces.clear(); phonePresence.refresh(); }, digit: digit => { if (phone.state.status !== "preparing") phoneSounds.digit(digit); }, storage: (() => { try { return localStorage; } catch { return null; } })(), session: {
+  lifecycleEvidence,
   build: BUILD, hostGame: () => N().game,
   trace: traceVisit,
+  predictionEvidence: params.has("shot") ? proof => { window.dispatchEvent(new CustomEvent("witch-prediction-evidence", { detail: proof })); } : undefined,
+  protocolEvidence: params.has("shot") ? proof => { window.dispatchEvent(new CustomEvent("witch-protocol-evidence", { detail: proof })); } : undefined,
   appearance: () => { sharedLoans.begin(personalKit(), loan); if (!phone.visiting) sharedLoans.observe(N().game, personalKit()); return appearance(page.look()) ?? appearance({}); },
   attach: game => { if (!guestAccess.ready) throw new Error("The guest room isn't ready yet."); callArrival.attach(game); if (remoteArt.has(1)) void remoteArt.start(game, 0).catch(error => { logCaughtError(error, "host remote appearance"); phone.hangUp(); }); },
   detach: game => callArrival.detach(game),
-  prepareGuest: (game, signal, advanced) => {
+  continuedHost: (previous, next) => {
+    callArrival.continued(previous, next);
+    if (remoteArt.has(1)) void remoteArt.start(next, 0).catch(error => { logCaughtError(error, "host continued remote appearance"); phone.hangUp(); });
+  },
+  prepareGuest: (game, signal, advanced, continuing) => {
     if (!ordinaryVisit) { traceVisit("save-boundary:unavailable"); return Promise.reject(new Error("This browser isn't ready to protect your saved night.")); }
+    if (continuing) { completedGuestNights.push(visitUnlocks(N().game, 1)); return ordinaryVisit.nextNight(game, signal, advanced); }
+    completedGuestNights.length = 0;
     return ordinaryVisit.prepare(game, signal, advanced);
   },
-  synchronized: game => { void ordinaryVisit?.synchronized(game).catch(error => { logCaughtError(error, "visit confirmation"); phone.hangUp(); }); },
+  synchronized: game => { if (ordinaryVisit) void synchronizeVisit(ordinaryVisit, game, error => { logCaughtError(error, "visit confirmation"); phone.hangUp(); }); },
   ended: (role, game) => {
-    if (role === "host") phone.hangUp(); // Close the role-bearing socket on departure, not only its game session.
+    if (role === "host") phone.hangUp("host-session-ended"); // Close the role-bearing socket on departure, not only its game session.
     remoteArt.clear();
     if (role === "guest") {
       try { returnedUnlocks = game && game.witches.some(w => w.id === 1) ? visitUnlocks(game, 1) : null; }
@@ -461,13 +475,20 @@ const phone = telephoneStation({ enabled: phoneEnabled, callsEnabled: phoneCalls
       stations.reconcile(restored.kit.look as never, ownedToChoose(findsCtx().owned()), workshopNow()); booth.refresh(ownedRecords());
     }
   },
-  failed: error => { visitPreparation.failure = error.message; logCaughtError(error, "telephone session"); phone.hangUp(); telephoneNotice(error.message); },
+  failed: error => { visitPreparation.failure = error.message; logCaughtError(error, "telephone session"); phone.hangUp("session-error"); telephoneNotice(error.message); },
   advanceHost: (game, controls, dt) => recordedStep(game, controls, dt, BUILD, captureRecording),
   authorizeStation: stationAuthority(hostCollections),
   wardrobe: () => hostCollections(N().game).wardrobe,
   catalogue: () => { const shared = hostCollections(N().game); return { wardrobe: [...shared.wardrobe], parts: [...shared.parts], hats: [...shared.hats], records: [...shared.records] }; },
   catalogueApplied: catalogue => { creator.hats = catalogue.hats as typeof creator.hats; view.partsFound = new Set(catalogue.parts); reconcilePickers(); },
-  stationResolved: player => { if (player === (phone.visiting ? 1 : 0)) reconcilePickers(); },
+  stationResolved: (player, choice, accepted) => {
+    if (player !== (phone.visiting ? 1 : 0)) return;
+    reconcilePickers();
+    if (accepted) return;
+    const others = N().game.witches.filter(w => w.id !== player);
+    if (choice.kind === "hat" && choice.id !== "none" && others.some(w => w.spells.hat === choice.id)) telephoneNotice("Your friend is using that hat.");
+    if (choice.kind === "broom" && others.some(w => Object.values(choice.fitted).some(id => id !== null && Object.values(w.spells.parts ?? {}).includes(id)))) telephoneNotice("Your friend is using that broom part.");
+  },
   stationPalette: () => classicPalette(style),
   stationApplied: (player, choice) => {
     if (choice.kind === "party") { booth.close(); if (!phone.visiting && ownedRecords().includes(choice.id)) chooseRecord(choice.id); }
@@ -748,7 +769,7 @@ telescope.onChange = on => {
 };
 const useHouse = (obj: string): void => mutate("house: use", () => {
   const { game, tuning, flags: { chartRecorded, overRecorded } } = N();
-  if (obj === "slept" && phone.visiting) { phone.hangUp(); return; } // Borrowed bed exit returns through the guarded visit lifecycle.
+  if (obj === "slept" && phone.visiting) { sailing = true; input.release(); input.clearPresses(); return; } // The host rolls the shared world; Leave visit is the guest exit.
   if (obj === "slept") { if (!chartRecorded && !overRecorded) nightOver(tuning.map?.island ?? "", { won: false }, undefined, tuning.map?.world ?? 0); setTimeout(() => newNight("bed"), 0); return; } // (the sea chart: played, as the afterparty records it; then a new seed: app/newForest.ts; after this frame, in place)
   const o = HOUSE_ROOMS.objects.find(q => q.id === obj);
   if (!o || creator.open || game.witches[phone.visiting ? 1 : 0]?.ko) return;
@@ -987,6 +1008,7 @@ const ordinaryVisit = visitNightSaves ? visitLifecycle({
     loan = null; owned = null; // Own private loan is retained in the lifecycle snapshot, never reused as a host-world loan.
     const p = new URLSearchParams(N().params); p.delete("arrive");
     await startNight(page, { how: "bed", island: game.tuning.map?.island ?? "home", seed: game.seed, world: game.tuning.map?.world, params: p, resume: game, borrowed: true });
+    seedEl.innerHTML = `seed <a href="?seed=${N().seed}">${N().seed}</a>`;
     reportAdvance(); signal.throwIfAborted();
     if (remoteArt.has(0)) { await remoteArt.start(game, 1, signal); reportAdvance(); }
     const markAt = performance.now(), timingAt = view.assets.timings.length;
@@ -1012,6 +1034,8 @@ const ordinaryVisit = visitNightSaves ? visitLifecycle({
     creator.hats = unlockAll() ? undefined : own.night.game.spells.hats; view.partsFound = partsNow();
     if (fresh) {
       const ownCollection = loadOwned(lookWithoutLoan(own.look, own.loan));
+      for (const outcome of completedGuestNights) outcome.apply(browserSaveSlots(), { spells: own.night.game.spells, owned: () => ownCollection });
+      completedGuestNights.length = 0;
       returnedUnlocks?.apply(browserSaveSlots(), { spells: own.night.game.spells, owned: () => ownCollection });
       returnedUnlocks = null; owned = null;
       const href = nightHref("bed", own.href); await nightInPlace(nightFromHref("bed", href), href); syncFloorHats(N().game.witches[0]);
@@ -1020,6 +1044,7 @@ const ordinaryVisit = visitNightSaves ? visitLifecycle({
     } else {
       returnedUnlocks = null;
       const restored = await startNight(page, { ...own.night.spec, how: "bed", resume: own.night.game, borrowed: false });
+      seedEl.innerHTML = `seed <a href="?seed=${restored.seed}">${restored.seed}</a>`;
       syncFloorHats(restored.game.witches[0]); await view.prepare(); Object.assign(restored.flags, own.night.flags, { last: 0 }); sailing = false; input.clearPresses();
     }
   },
@@ -1031,16 +1056,22 @@ const chartDepartureBoundary = chartDeparture({
   returnOwn: () => ordinaryVisit?.end() ?? Promise.reject(new Error("This browser cannot restore your saved night.")),
 });
 page.onNightEnd = () => {
-  if (phone.active && !phone.visiting) phone.hangUp(); // Capture the host result before its own bed/sail replaces this night.
+  if (phone.active && !phone.visiting && !sharedNightChanging) phone.hangUp("host-night-ended"); // A shared bed rollover retains its call.
   if (!phone.visiting && page.night && !page.night.spec.borrowed && !endedNights.has(page.night.game)) {
-    if (hostedUnlocks) {
+    const hostOutcome = hostedUnlocks ?? (sharedNightChanging ? visitUnlocks(page.night.game, 0) : null);
+    if (hostOutcome) {
       const collection = loadOwned(lookWithoutLoan(page.look() as Record<string, unknown> | null, loan));
       // The host may continue its own night after the friend leaves; use its final own verdict, never update the departed guest's captured outcome.
-      visitUnlocks(page.night.game, 0).apply(browserSaveSlots(), { spells: page.night.game.spells, owned: () => collection }); hostedUnlocks = null; owned = null;
+      hostOutcome.apply(browserSaveSlots(), { spells: page.night.game.spells, owned: () => collection }); hostedUnlocks = null; owned = null;
     }
     endedNights.add(page.night.game); browserSaveSlots().summary(page.night.game.tuning.map?.island ?? "home", true, bootSlot);
   }
   void autosave?.clear();
+};
+page.prepareNight = (game, spec) => {
+  if (!sharedNightChanging || !sharedNightFrom || spec.how !== "bed") return;
+  continueSharedNight(sharedNightFrom, game, hostCollections(game));
+  if (!phone.nextNight(game)) throw new Error("The shared night couldn't continue.");
 };
 if (autosave) {
   setInterval(() => { void autosave.save(performance.now()); }, 5000);
@@ -1370,17 +1401,21 @@ async function warmAt(n: Night, shot: Shot, A: NonNullable<Tuning["arrive"]>): P
  *  before (app/sail.ts nightHref's), quietly. */
 function newNight(how: NightWay): void {
   if (sailing) return;
+  if (how === "bed" && phone.active) {
+    if (phone.visiting || sharedNightChanging) return;
+    sharedNightChanging = true; sharedNightFrom = N().game;
+  }
   page.onNightEnd?.();
   // (she sleeps: tonight's loan settled, won or not, and on the bed's way she dreams it: app/loan.ts, render/dream.ts)
   const settled = settleLoan(N().game.win?.phase === "won");
   dreamNext = dreamsAfter(how) ? settled : null;
   const n = N(), href = nightHref(how, location.href);
-  const reload = (h: string) => { location.href = h; };
-  if ((botKind && how !== "bot") || sailWay(n.params, n.tuning) === "reload") { reload(href); return; }
+  const reload = (h: string) => { if (sharedNightChanging) phone.hangUp(); sharedNightChanging = false; sharedNightFrom = null; location.href = h; };
+  if (!sharedNightChanging && ((botKind && how !== "bot") || sailWay(n.params, n.tuning) === "reload")) { reload(href); return; }
   void sailOrReload(() => nightInPlace(nightFromHref(how, href), href), href, reload, e => {
     console.error(`a new night in place (${how}): it went wrong, so the page loads instead`, e);
     N().playtest.sail(String((e as Error)?.stack ?? e).slice(0, 600));
-  });
+  }).finally(() => { sharedNightChanging = false; sharedNightFrom = null; });
 }
 /** A new night in place by one of those ways (docs/plans/sail-without-reload.md B), starting as a fresh load of its link would: the
  *  old night's music faded and the night ended, the link pushed (and Back's guard), the bedroom open as the loading screen (the
@@ -1417,7 +1452,12 @@ async function nightInPlace(spec: NightSpec, href: string): Promise<void> {
   startEl.classList.remove("loading");
   input.clearPresses();
   sailing = false;
-  if (wakes && wakeInBedroom(n.game) && startWake(n.game, n.game.herTime, { dreaming: !!dream && !dream.over, mirrored: mirrored(), yesterday: true })) { mark("opening:bed"); start(); } // (after the bed: last night's clothes in their pile)
+  if (sharedNightChanging) {
+    n.flags.ready = n.flags.landed = true; n.flags.last = 0;
+    n.game.clock.paused = false; startedNights.add(n.game); sound.start(); revealArt();
+    mark("opening:shared-bed");
+  }
+  else if (wakes && wakeInBedroom(n.game) && startWake(n.game, n.game.herTime, { dreaming: !!dream && !dream.over, mirrored: mirrored(), yesterday: true })) { mark("opening:bed"); start(); } // (after the bed: last night's clothes in their pile)
   else if (!room && !wakes) startDirect();
 }
 /** The bot game left (its exit in place): the bot and its tag gone, her own look back (the creator's, as a fresh page has it). */
@@ -1460,6 +1500,13 @@ function frame(now: number): void {
   try { frameBody(now); }
   finally {
     try {
+      if (params.has("shot") && (gap >= 100 || performance.now() - start >= 100)) {
+        window.dispatchEvent(new CustomEvent("witch-slow-frame-evidence", { detail: {
+          sampledWallTimeMs: Date.now(), sampledAtMs: performance.now(), gap, work: performance.now() - start,
+          step: measuredStep ?? null, draw: measuredDraw ?? null, parts: { ...measuredParts },
+          loading: { phase, ready: n.flags.ready, ...view.readiness }, mode: n.game.witch.mode, perched: !!n.game.witch.perch,
+        } }));
+      }
       if (!loop.manual) stallLog.frame({ t: n.game.clock.time, gap, work: performance.now() - start, step: measuredStep ?? 0, draw: measuredDraw, measured: { step: measuredStep !== undefined, draw: measuredDraw !== undefined }, parts: measuredParts, source: "raf", loading: { phase, ready: n.flags.ready, ...view.readiness }, mode: n.game.witch.mode, x: n.game.witch.x, z: n.game.witch.z, wave: n.game.party.wave, creatures: n.game.creatures.length });
     } catch (error) { logCaughtError(error, "slow-frame observation"); }
   }
@@ -1480,7 +1527,7 @@ function frameBody(now: number): void {
   freeze.pollPad();
   phone.frame(game, now); // Normal wrapped pad, after pause; closes across night replacement without touching a save.
   phoneSounds.update(phone.state, phone.open || phone.active || phone.state.status === "ended", now);
-  if (view.houseRooms) view.houseRooms.openGuestRooms = phone.active ? new Set(["bedroom2"]) : phone.open ? new Set() : null;
+  if (view.houseRooms) view.houseRooms.openGuestRooms = phone.active ? new Set(["bedroom2", "bedroom3"]) : phone.open ? new Set() : null;
   phonePresence.update(phone.state, phone.active, phone.visiting, view.houseRooms?.telephoneScreen ?? null, now);
   if (phone.active) void remoteArt.refresh().catch(error => { logCaughtError(error, "remote clothing"); phone.hangUp(); });
   frameHouseEvents = phone.houseEvents(); // Guest drains captured replay steps once; solo/host keep their original transient events.
@@ -1721,10 +1768,39 @@ requestAnimationFrame(frame);
 
 // For the smoke test, the tools and for poking at in the console (app/hooks.ts).
 installHooks({ night: N, view, sound, meter, shake, frameStats, ladder, loadTimes, loop, advance: (game, controls, dt) => soloDiagnostic(phone.active, N().spec.borrowed === true, () => recordedStep(game, controls, dt, BUILD, captureRecording)) });
+if (phoneEnabled && phoneCallsEnabled && params.has("shot")) {
+  (window as unknown as { witch: Record<string, unknown> }).witch.telephoneReplayRecording = () => recordingFor(N().game, BUILD, captureRecording).export();
+}
+const telephoneBatchProof = (batch: typeof view.witchBatch | null) => {
+  if (!batch) return null;
+  const material = batch.mesh.material as { depthTest?: boolean; transparent?: boolean };
+  const up = SPRITE_UNIFORMS.uUp.value;
+  return { count: batch.count, visible: batch.mesh.visible, renderOrder: batch.mesh.renderOrder,
+    depthTest: material.depthTest, transparent: material.transparent, atlas: batch.atlas.albedo.uuid,
+    matchesDressedAtlas: batch.atlas === view.assets.witch, textureVersion: batch.atlas.albedo.version,
+    instances: batch.items.slice(0, 4).map(p => {
+      const height = (p.sy === undefined ? p.frame.h : Math.max(1, Math.round(p.frame.h * p.sy))) * batch.metresPerPixel * (p.scale ?? 1);
+      return { x: p.x, y: p.y, z: p.z, frame: batch.atlas.frames.indexOf(p.frame),
+        feet: view.screenOf(p.x, p.y, p.z, true),
+        centre: view.screenOf(p.x + up.x * height / 2, p.y + up.y * height / 2, p.z + up.z * height / 2, true) };
+    }) };
+};
 if (phoneEnabled && phoneCallsEnabled) (window as unknown as { witch: Record<string, unknown> }).witch.telephoneProof = () => ({
   preparation: { ...visitPreparation }, saveBoundaryReady: ordinaryVisit !== null,
+  network: phone.network(),
   status: phone.state.status, active: phone.active, visiting: phone.visiting,
   seed: N().game.seed, borrowed: N().spec.borrowed === true, worldReady: N().flags.ready,
+  viewSeed: view.game.seed, viewUsesCanonicalMap: view.game.map === N().game.map,
+  seedLabel: seedEl.textContent,
+  draw: { dressed: telephoneBatchProof(view.witchBatch), bare: telephoneBatchProof(view.bareBatch), remote: telephoneBatchProof(remoteBodyBatch(view)) },
+  players: view.game.witches.map(w => ({ id: w.id, x: w.body.x, z: w.body.z, room: w.wake?.room,
+    atRoom: roomAt(N().game.map.treehouse, w.body.x, w.body.z)?.id ?? null,
+    perched: !!w.body.perch, slept: w.house?.slept === true, wakeOpen: w.wake?.open,
+    pile: w.wake?.pile, lastBed: w.house?.lastBed,
+    nearObjects: HOUSE_ROOMS.objects.filter(o => fromObject(o, N().game.map.treehouse, w.body.x, w.body.z) <= HOUSE_ROOMS.reach).map(o => o.id),
+    screen: view.screenOf(w.body.x, w.body.perch ? N().tuning.treehouse.house?.height ?? 0 : 0, w.body.z) })),
+  house: { at: N().game.map.treehouse, turn: HOUSE_ROOMS.turn ?? 0, shape: HOUSE_ROOMS.shape, bedHold: HOUSE_ROOMS.bed.hold, terrace: HOUSE_ROOMS.terrace,
+    objects: HOUSE_ROOMS.objects.map(o => ({ id: o.id, use: o.use.kind, front: objectFront(o, N().game.map.treehouse, .6) })) },
   artPending: view.assets.pending, artDone: view.assets.done, paused: freeze.frozen,
   menus: { telephone: phone.open, creator: creator.open, station: stations.station, chart: chartOpen() },
 });

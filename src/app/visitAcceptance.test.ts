@@ -118,4 +118,19 @@ describe('MP-A existing visit/save acceptance boundaries', () => {
     expect(f.saves.phase).toBe('preparing'); expect(f.slots.visiting).toBe(false);
     await lifecycle.end();
   });
+
+  it('stale A does not trigger the current-call rejection handler, and B can still synchronize', async () => {
+    const f = fixture(), a = host(1), b = host(2), playing = vi.fn(), hangUpCurrent = vi.fn();
+    const lifecycle = visitLifecycle({ saves: f.saves, own: () => 'own', adoptBorrowed: async () => {}, adoptOwn: async () => {}, playing });
+    await lifecycle.prepare(a, new AbortController().signal, () => {}); await lifecycle.end();
+    await lifecycle.prepare(b, new AbortController().signal, () => {});
+    // Same rejection-handler shape as main's synchronized callback; no actual phone/session is mocked as passing.
+    await lifecycle.synchronized(a).catch(error => { hangUpCurrent(error); });
+    expect(hangUpCurrent).not.toHaveBeenCalled(); expect(f.saves.phase).toBe('preparing');
+    await lifecycle.synchronized(b).catch(error => { hangUpCurrent(error); });
+    await lifecycle.synchronized(a).catch(error => { hangUpCurrent(error); });
+    expect(hangUpCurrent).not.toHaveBeenCalled(); expect(playing).toHaveBeenCalledExactlyOnceWith(b);
+    expect(f.saves.phase).toBe('visiting'); expect(f.slots.visiting).toBe(true);
+    await lifecycle.end();
+  });
 });

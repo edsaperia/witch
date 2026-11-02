@@ -20,7 +20,7 @@ Scripts for building, checking and measuring the game, run from the repository r
 - [`biomes/`](biomes/README.md): 2 scripts — sheet.mjs, shots.cjs
 - [`body-graph/`](body-graph/README.md): 7 scripts — age-size-audit.mjs, cat-fixtures.js, cats-preview.mjs, diagnostics.mjs, fit-contact-sheets.mjs, fit-size-audit.mjs, size-candidate-audit.mjs
 - [`chart/`](chart/README.md): 4 scripts — diff.cjs, emerge.cjs, open.cjs, profile.cjs
-- [`ci/`](ci/README.md): 12 scripts — annotations.cjs, build-proof-baseline.cjs, pages-policy.cjs, report-command.cjs, run-proofs.cjs, run-unit.mjs, same-game.mjs, sleep-cell-repro.mjs, test-scope.mjs, unit-timings.mjs, vitest-reporter.mjs, world-audit.mjs
+- [`ci/`](ci/README.md): 13 scripts — annotations.cjs, build-proof-baseline.cjs, pages-policy.cjs, perch-profile.cjs, report-command.cjs, run-proofs.cjs, run-unit.mjs, same-game.mjs, sleep-cell-repro.mjs, test-scope.mjs, unit-timings.mjs, vitest-reporter.mjs, world-audit.mjs
 - [`combat-spacing/`](combat-spacing/README.md): 6 scripts — body-radii.mjs, capture-fight.cjs, capture.cjs, diagnose.mjs, measure.ts, run.mjs
 - [`config/`](config/README.md): 7 scripts — check.mjs, format.mjs, generated.mjs, knob-docs.mjs, linkSwitches.mjs, schema.mjs, typegen.mjs
 - [`dj/`](dj/README.md): 5 scripts — booth-sheet.mjs, booth.cjs, candles-sheet.mjs, respawn.cjs, strip.mjs
@@ -76,6 +76,7 @@ Scripts for building, checking and measuring the game, run from the repository r
 - [`stars/`](stars/README.md): 1 script — shots.cjs
 - [`stations/`](stations/README.md): 1 script — check.cjs
 - [`studio/`](studio/README.md): 1 script — check.cjs
+- [`telephone/`](telephone/README.md): 1 script — panel-input-proof.cjs
 - [`telescope/`](telescope/README.md): 2 scripts — moon.cjs, shots.cjs
 - [`view/`](view/README.md): 9 scripts — build-budget.cjs, chart-target.cjs, coast-first-use.cjs, landing-limit-preload.cjs, sail-timing.cjs, start-hold.cjs, travel-failure.cjs, travel-probe.cjs, worker-checkpoint.cjs
 - [`voice/`](voice/README.md): 1 script — sing.mjs

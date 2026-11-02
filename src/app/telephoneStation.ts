@@ -9,7 +9,7 @@ import { telephoneActor } from "./telephoneActor";
 import type { TelephoneState } from "../ui/telephone";
 
 /** Ordinary station lifetime/input seam. Call admission remains off until canonical proof and deployment approval. */
-export function telephoneStation(options: Pick<TelephoneOptions, "storage" | "loadIdentity" | "menu" | "socket" | "digit" | "face" | "clearFaces"> & { enabled?: boolean; callsEnabled?: boolean; session?: SessionOptions }) {
+export function telephoneStation(options: Pick<TelephoneOptions, "storage" | "loadIdentity" | "menu" | "socket" | "digit" | "face" | "clearFaces" | "trouble" | "lifecycleEvidence"> & { enabled?: boolean; callsEnabled?: boolean; session?: SessionOptions }) {
   const session = options.enabled && options.session ? onlineSession(options.session) : null;
   const preferences = visitPreferences();
   let presentation: ReturnType<typeof localView> | null = null, source: Game | null = null;
@@ -30,12 +30,15 @@ export function telephoneStation(options: Pick<TelephoneOptions, "storage" | "lo
     get active() { return session?.role !== null && session?.role !== undefined; },
     get visiting() { return session?.role === "guest"; },
     get catalogue() { return session?.catalogue ?? null; },
+    network() { return { prediction: session?.predictionStats ?? null, inputs: session?.inputStats ?? null, rejectedHits: session?.rejectedHits ?? {}, tick: session?.tick ?? 0, ...(session?.sessionEnd ? { sessionEnd: session.sessionEnd } : {}) }; },
     houseEvents() { return session?.role === "guest" ? session.takeHouseEvents() : null; },
     choose(choice: StationChoice): boolean { return session?.choose(choice) ?? false; },
     changed() { session?.changed(); },
+    nextNight(game: Game): boolean { presentation = source = null; return session?.nextNight(game) ?? false; },
     preferences(game: Game) { return session?.role === "guest" ? preferences.tuning(game) : game.tuning; },
     step(game: Game, controls: Controls, dt: number): boolean {
       if (session?.role === "guest" && !session.ready) return true; // Own page may still be draining its checkpoint before adoption.
+      if (session?.role === "host" && !session.ready && session.game !== game) return true; // The View is still adopting the host's new canonical night.
       if (session?.game && session.game !== game) { session.nightChanged(); presentation = source = null; return false; }
       return session?.step(controls, Math.min(0.1, dt)) ?? false;
     },
@@ -43,7 +46,7 @@ export function telephoneStation(options: Pick<TelephoneOptions, "storage" | "lo
     presented(game: Game, dt = 0, zoom = 0): Game {
       if (!session?.role || session.game !== game) { presentation = source = null; return game; }
       if (source !== game) { source = game; presentation = localView(game, session.role === "guest" ? 1 : 0); }
-      return Object.assign(presentation!.update(dt, zoom), { tuning: session.role === "guest" ? preferences.tuning(game) : game.tuning });
+      return Object.assign(presentation!.update(dt, zoom, session.predicted), { tuning: session.role === "guest" ? preferences.tuning(game) : game.tuning });
     },
     use(game: Game, id: string): void {
       const actor = telephoneActor(game, session?.role === "guest");
@@ -65,7 +68,7 @@ export function telephoneStation(options: Pick<TelephoneOptions, "storage" | "lo
       await phone.show(false);
       await phone.show(true); phone.redial();
     },
-    hangUp() { phone?.hangUp(); },
+    hangUp(reason?: string) { phone?.hangUp(reason); },
     dispose() { session?.disconnect(); presentation = source = null; preferences.clear(); phone?.dispose(); },
   };
 }

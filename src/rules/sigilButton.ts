@@ -3,7 +3,9 @@
 // growth spurt: every animal following her an adult at once; Ed, 2026-10-18), else the leash's own (put a sigil down, pick one up, a happy creature's rune;
 // rules/leash.ts); and a happy creature's rune near her trotting over to her. Then, after the 💌s, a sigil put down in
 // a legend's clearing finishing its quest (rules/quest.ts).
-import { wakeOf } from "./wakeUp";
+import { wakeOf, settleSleepingBed } from "./wakeUp";
+import { furnitureFor } from "./guestFurniture";
+import { isDressingTable } from "./clothesPile";
 import { atZooExit } from "./zoo";
 import { mushroomButton } from "./mushrooms";
 import { needsBag, takeBroom, takeInvites } from "./kit";
@@ -70,7 +72,8 @@ export function stepSigilButton(g: Game, c: Controls, W: Witch, t: Tuning, ht: n
     const inHouse = !!deck?.house?.rooms && W.body.mode === "ground" && !W.body.seated && !W.ko, x = W.body.x, z = W.body.z;
     // In the house's rooms (rules/houseRooms.ts; Ed, 2026-10-19): E at an object uses it (main.ts opens what it opens); the hats'
     // floor's hats are picked up and put down; E held at the bed fills its ring, and full, she sleeps: the night's over.
-    const at = inHouse ? objectAt(deck!, x, z) : null;
+    const candidate = inHouse ? objectAt(deck!, x, z) : null;
+    const at = candidate && furnitureFor(g, W, candidate) ? candidate : null;
     if (c.hat && inHouse && HOUSE_ROOMS.layout) {
       if (wearing(W.hat)) { W.hat.down = { x, z, at: ht }; delete W.hat.hold; reserveHatPoints(W, deck!); relicEvents.push({ kind: "hatPut", id: W.id, x, z, at: ht }); }
       else { const event = useHats(W, deck!, x, z, ht, t.leash.runeRadius, 0.9, g.witches.length > 1 ? id => g.witches.some(o => o !== W && o.spells.hat === id) : undefined); if (event) relicEvents.push(event); }
@@ -82,9 +85,11 @@ export function stepSigilButton(g: Game, c: Controls, W: Witch, t: Tuning, ht: n
       if (at.use.kind === "invites" && needsBag(W)) relicEvents.push({ kind: "needBag", id: W.id, x: deck!.x + at.x, z: deck!.z + at.z, at: ht, obj: at.id }); // (no bag to carry them: the desk says so, rules/kit.ts NEED_BAG)
       else if (at.use.kind === "invites" ? takeInvites(W) : at.id === "lathe" && takeBroom(g, W)) relicEvents.push({ kind: "kit", id: W.id, x: deck!.x + at.x, z: deck!.z + at.z, at: ht, obj: at.use.kind === "invites" ? "invites" : "broom" });
       relicEvents.push({ kind: "house", id: W.id, x: deck!.x + at.x, z: deck!.z + at.z, at: ht, obj: at.id });
-      const waking = wakeOf(g, W); if (at.id === "dressingTable" && waking) waking.styled = true; // (her skin and hair seen to: the first morning's first step, rules/guidance.ts)
+      const waking = wakeOf(g, W); if (isDressingTable(at.id) && waking) waking.styled = true; // (her skin and hair seen to: the first morning's first step, rules/guidance.ts)
     }
-    if ((inHouse || W.house) && stepBed(W, at?.use.kind === "bed", !!c.sigilHeld && inHouse, ht).slept && g.witches.every(w => w.house?.slept)) relicEvents.push({ kind: "house", id: W.id, x, z, at: ht, obj: "slept" });
+    const slept = (inHouse || W.house) && stepBed(W, at?.use.kind === "bed", !!c.sigilHeld && inHouse, ht).slept;
+    if (slept && g.witches.length > 1 && at?.use.kind === "bed") settleSleepingBed(g, W, at.id, ht);
+    if (slept && g.witches.every(w => w.house?.slept)) relicEvents.push({ kind: "house", id: W.id, x, z, at: ht, obj: "slept" });
     sigil = false; place = false;
   } else if (W.house?.bedFrom !== undefined) delete W.house.bedFrom;
   // E at the zoo's little treehouse takes her out of the zoo (Ed, 2026-10-26; rules/zoo.ts atZooExit; app/zooExit.ts does the leaving).

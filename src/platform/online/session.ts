@@ -1,5 +1,6 @@
-import type { Controls, Game } from "../../rules/game";
-import { guestInput, wireControls } from "./guestInput";
+import { STEP, type Controls, type Game } from "../../rules/game";
+import { guestInput, wireControls, INPUT_EDGES } from "./guestInput";
+import { withGuestInputSteps, holdGuestMotion } from "../../rules/onlineInputSteps";
 import { prepareJoin } from "./joinPreparation";
 import { replayGuest, replayHostStep, replayStart, type ReplayFrame, type ReplayStart } from "./replay";
 import { applyStationChoice, stationChoice, type StationChoice } from "./stationChoice";
@@ -9,6 +10,9 @@ import { applyStationLook } from "./stationAppearance";
 import { bagOf, setBag } from "../../rules/bags";
 import { sharedCatalogue, type SharedCatalogue } from "./sharedCatalogue";
 import { houseSteps } from "./houseSteps";
+import { guestPrediction, type PredictionEvidence } from "./guestPrediction";
+import { guestHitAuthority, guestHitPresentation } from "./guestHits";
+import { enableGuestEffects, disableGuestEffects } from "../../rules/guestEffects";
 
 export interface SessionConnection {
   sendInput(payload: unknown): boolean;
@@ -19,14 +23,20 @@ export interface SessionConnection {
 }
 export interface SessionOptions {
   build: string;
+  /** Private diagnostics only; sink failures do not affect the session. */
+  lifecycleEvidence?(proof: Record<string, unknown>): void;
   /** Local diagnostics only; never a gameplay message or admission decision. */
   trace?(stage: string, detail?: unknown): void;
+  /** Explicit private replay capture; absent during ordinary play. */
+  predictionEvidence?(proof: PredictionEvidence): void;
+  protocolEvidence?(proof: { stage: "guest-apply-start" | "guest-apply-end"; frameTick: number; sampledAtMs: number; sampledWallTimeMs: number }): void;
   hostGame(): Game;
   /** Page supplies the approved guest-room/equipment adapter; never reuse the prototype's host bedroom. */
   attach(game: Game): void;
   detach(game: Game): void;
   /** Install this authoritative game in the normal page/View. Report only actual completed preparation work. */
-  prepareGuest(game: Game, signal: AbortSignal, advanced: () => void): Promise<void>;
+  prepareGuest(game: Game, signal: AbortSignal, advanced: () => void, continuing?: boolean): Promise<void>;
+  continuedHost?(previous: Game, next: Game): void;
   /** Called after the fresh post-preparation rebase; menus/saves must not mutate a presentation facade. */
   synchronized(game: Game): void;
   /** Page owns fresh-solo return/save policy and telephone/socket teardown. */
@@ -54,8 +64,17 @@ export function onlineSession(options: SessionOptions) {
   const buffer = guestInput(), now = options.now ?? (() => performance.now());
   let role: "host" | "guest" | null = null, connection: SessionConnection | null = null, game: Game | null = null;
   let controller: AbortController | null = null, removeAbort = () => {}, tick = 0, sequence = 0, progress = 0;
-  let present = false, prepared = false, ready = false, preparing = false, changed = false, epoch = 0;
+  let guestAccumulator = 0, guestEdges: Partial<Controls> = {};
+  let present = false, prepared = false, ready = false, preparing = false, changed = false, epoch = 0, night = 0;
   let replica: ReturnType<typeof replayGuest> | null = null;
+  let prediction: ReturnType<typeof guestPrediction> | null = null;
+  let hits: ReturnType<typeof guestHitAuthority> | null = null, hitPresentation: ReturnType<typeof guestHitPresentation> | null = null;
+  const trace = (stage: string, detail: unknown) => { try { options.trace?.(stage, detail); } catch { /* Diagnostics do not change admission/gameplay. */ } };
+  const correction = (event: import("./guestPrediction").PredictionCorrection) => { if (event.snapped || event.size > .05 && event.sequence % 30 === 0) trace("prediction-correction", event); };
+  const predictionEvidence = options.predictionEvidence ? (proof: PredictionEvidence) => options.predictionEvidence!({ ...proof, frameTick: replica?.tick ?? tick, sampledAtMs: now(), sampledWallTimeMs: Date.now() }) : undefined;
+  const protocolEvidence = (stage: "guest-apply-start" | "guest-apply-end", frameTick: number) => {
+    try { options.protocolEvidence?.({ stage, frameTick, sampledAtMs: now(), sampledWallTimeMs: Date.now() }); } catch { /* Diagnostic only. */ }
+  };
   let accept: (() => void) | null = null, reject: ((error: Error) => void) | null = null;
   let stationSequence = 0, lastStation = -1;
   const requests: { player: 0 | 1; choice: StationChoice; sequence: number }[] = [];
@@ -69,10 +88,21 @@ export function onlineSession(options: SessionOptions) {
     if (!next) throw new Error("Invalid host station catalogue.");
     return next;
   };
-  const stop = () => {
+  let sessionEnd: Record<string, unknown> | null = null;
+  const stop = (reason = "disconnect") => {
     const previous = role, previousGame = game, attached = present;
-    epoch++; role = null; connection = null; game = null; present = prepared = ready = preparing = changed = false; replica = null;
-    buffer.clear(); removeAbort(); removeAbort = () => {}; controller?.abort(); controller = null;
+    if (previous && options.lifecycleEvidence) {
+      try {
+        sessionEnd = structuredClone({ stage: "session-end", reason, role: previous, tick: replica?.tick ?? tick,
+          sampledAtMs: now(), sampledWallTimeMs: Date.now(), prediction: prediction?.stats ?? null,
+          inputs: previous === "host" ? buffer.stats : null, rejectedHits: hits?.rejected ?? {} });
+        options.lifecycleEvidence(structuredClone(sessionEnd));
+      } catch { /* Diagnostic only. */ }
+    }
+    if (previousGame) disableGuestEffects(previousGame);
+    epoch++; role = null; connection = null; game = null; present = prepared = ready = preparing = changed = false; replica = null; night = 0;
+    prediction = hits = hitPresentation = null; buffer.clear(); removeAbort(); removeAbort = () => {}; controller?.abort(); controller = null;
+    guestAccumulator = 0; guestEdges = {};
     requests.length = 0; stationSequence = 0; lastStation = -1;
     pendingStations.clear();
     beatSegments = null;
@@ -82,23 +112,28 @@ export function onlineSession(options: SessionOptions) {
     if (previous === "host" && attached && previousGame) options.detach(previousGame);
     if (previous) options.ended(previous, previousGame);
   };
-  const fail = (value: unknown) => { const error = value instanceof Error ? value : new Error(String(value)); stop(); options.failed(error); };
+  const fail = (value: unknown) => { const error = value instanceof Error ? value : new Error(String(value)); stop("session-error: " + error.message); options.failed(error); };
   const sendStart = () => {
     if (options.appearance && looks.size !== 2) return; // No borrowed world admission until both cosmetic profiles are validated.
     if (options.catalogue) { catalogue = hostCatalogue(); options.catalogueApplied?.(structuredClone(catalogue)); }
-    if (!connection || !game || !connection.sendState({ kind: "start", start: replayStart(game, options.build, tick), ...(options.appearance ? { looks: [...looks].map(([player, genome]) => ({ player, genome })) } : {}), ...(catalogue ? { catalogue } : {}) })) throw new Error("The night couldn't be sent to your friend.");
+    if (!connection || !game || !connection.sendState({ kind: "start", ...(night ? { night } : {}), start: replayStart(game, options.build, tick), ...(options.appearance ? { looks: [...looks].map(([player, genome]) => ({ player, genome })) } : {}), ...(catalogue ? { catalogue } : {}) })) throw new Error("The night couldn't be sent to your friend.");
     beatSegments = game.beat.segs;
   };
   const api = {
+    get sessionEnd() { return sessionEnd ? structuredClone(sessionEnd) : null; },
     get catalogue() { return catalogue ? structuredClone(catalogue) : null; },
+    get predicted() { return role === "guest" && ready && prediction ? hitPresentation?.actor(prediction.actor) ?? prediction.actor : undefined; },
+    get rejectedHits() { return hits?.rejected ?? {}; },
+    get predictionStats() { return prediction?.stats ?? null; },
+    get inputStats() { return role === "host" ? buffer.stats : null; },
     takeHouseEvents: () => receivedHouse.take(),
     get role() { return role; }, get game() { return game; }, get ready() { return ready; }, get tick() { return replica?.tick ?? tick; },
     /** Telephone invokes this only after mutual identity verification and consent. */
     connect(as: "host" | "guest", relay: SessionConnection, signal: AbortSignal): Promise<void> {
       if (role) return Promise.reject(new Error("An online night is already active."));
       if (signal.aborted) return Promise.reject(new Error("The call was cancelled."));
-      role = as; connection = relay; controller = new AbortController(); tick = sequence = progress = 0;
-      const abort = () => stop(); signal.addEventListener("abort", abort, { once: true }); removeAbort = () => signal.removeEventListener("abort", abort);
+      sessionEnd = null; role = as; connection = relay; controller = new AbortController(); tick = sequence = progress = 0;
+      const abort = () => stop("call-aborted"); signal.addEventListener("abort", abort, { once: true }); removeAbort = () => signal.removeEventListener("abort", abort);
       if (options.appearance) {
         const look = appearance(options.appearance());
         if (!look) { fail(new Error("Invalid personal witch appearance.")); return Promise.reject(new Error("Invalid personal witch appearance.")); }
@@ -118,12 +153,17 @@ export function onlineSession(options: SessionOptions) {
       try {
         if (role === "host") {
           if (message.type === "guest-joined" && message.player === 1) {
-            if (!present && game) { options.attach(game); present = true; buffer.clear(); sendStart(); }
+            if (!present && game) { options.attach(game); enableGuestEffects(game); hits = guestHitAuthority(game, reason => trace("rejected-hit-claim", reason)); present = true; buffer.clear(); sendStart(); }
             return true;
           }
-          if (message.type === "guest-ready" && message.player === 1) { if (present) { sendStart(); ready = true; changed = false; } return true; }
+          if (message.type === "guest-ready" && message.player === 1) { if (present && night === 0) { sendStart(); ready = true; changed = false; } return true; }
           if (message.type === "input" && message.player === 1) {
             const profile = message.payload as Record<string, unknown> | null;
+            if (profile?.kind === "night-ready") {
+              if (Object.keys(profile).length !== 2 || !Number.isSafeInteger(profile.night)) throw new Error("Invalid next-night readiness.");
+              if (present && night > 0 && profile.night === night && !ready) { sendStart(); ready = true; changed = false; }
+              return true;
+            }
             if (options.appearance && profile?.kind === "appearance") {
               if (Object.keys(profile).length !== 2 || !Object.hasOwn(profile, "genome")) throw new Error("Invalid guest appearance message.");
               const look = appearance(profile.genome); if (!look) throw new Error("Invalid guest appearance.");
@@ -134,7 +174,8 @@ export function onlineSession(options: SessionOptions) {
             }
             if (present && ready) {
               const payload = message.payload as Record<string, unknown> | null;
-              if (payload?.kind === "station") {
+              if (payload?.kind === "pve-cast" || payload?.kind === "pve-hit") hits?.receive(payload);
+              else if (payload?.kind === "station") {
                 const choice = stationChoice(payload.choice);
                 if (choice && Number.isSafeInteger(payload.sequence) && (payload.sequence as number) >= 0 && (payload.sequence as number) > lastStation) {
                   lastStation = payload.sequence as number;
@@ -147,12 +188,20 @@ export function onlineSession(options: SessionOptions) {
           }
           if (message.type === "guest-left" && message.player === 1) {
             if (!ready) fail(new Error("Your friend's visit couldn't start. The call has ended."));
-            else stop();
+            else stop("guest-left");
             return true;
           }
         } else if (message.type === "state" && message.player === 0) {
-          const payload = message.payload as { kind?: string; start?: ReplayStart; frame?: ReplayFrame; tick?: number; choices?: { player: unknown; choice: unknown }[]; results?: { sequence: number; accepted: boolean }[]; beat?: unknown; looks?: { player: unknown; genome: unknown }[]; catalogue?: unknown } | null;
+          const payload = message.payload as { kind?: string; night?: number; start?: ReplayStart; frame?: ReplayFrame; tick?: number; choices?: { player: unknown; choice: unknown }[]; results?: { sequence: number; accepted: boolean }[]; beat?: unknown; looks?: { player: unknown; genome: unknown }[]; catalogue?: unknown } | null;
           if (payload?.kind === "start" && payload.start) {
+            const incomingNight = payload.night ?? 0;
+            if (!Number.isSafeInteger(incomingNight) || incomingNight < night || incomingNight > night + 1) throw new Error("Invalid shared-night sequence.");
+            if (incomingNight > night) {
+              if (!ready || !replica) throw new Error("Another shared night is still preparing.");
+              night = incomingNight; epoch++; replica = null; ready = prepared = preparing = false;
+              guestAccumulator = 0; guestEdges = {};
+              pendingStations.clear(); receivedHouse.clear();
+            }
             if (options.catalogue || payload.catalogue !== undefined) {
               const next = sharedCatalogue(payload.catalogue); if (!next) throw new Error("Invalid shared station catalogue.");
               catalogue = next; options.catalogueApplied?.(structuredClone(next));
@@ -178,10 +227,12 @@ export function onlineSession(options: SessionOptions) {
                 signal,
                 restore: () => { replica = replayGuest(payload.start!, options.build); game = replica.game; if (game.witches.length !== 2) throw new Error("Invalid two-person night"); return game; },
                 prepare: async (source, preparationSignal) => {
-                  await options.prepareGuest(source, preparationSignal, () => { if (current === epoch && !signal.aborted) connection?.sendProgress(++progress); });
+                  const advanced = () => { if (current === epoch && !signal.aborted) connection?.sendProgress(++progress); };
+                  if (night) await options.prepareGuest(source, preparationSignal, advanced, true);
+                  else await options.prepareGuest(source, preparationSignal, advanced);
                   if (signal.aborted || current !== epoch) return;
                   prepared = true;
-                  if (!connection?.sendReady()) throw new Error("The guest telephone disconnected.");
+                  if (!(night ? connection?.sendInput({ kind: "night-ready", night }) : connection?.sendReady())) throw new Error("The guest telephone disconnected.");
                 },
                 progress: () => progress,
                 trace: (stage, detail) => { try { options.trace?.(stage, detail); } catch { /* Diagnostics cannot break admission. */ } },
@@ -191,13 +242,18 @@ export function onlineSession(options: SessionOptions) {
               replica = replayGuest(payload.start, options.build, replica.game); game = replica.game;
               if (game.witches.length !== 2) throw new Error("Invalid two-person night");
               if (!connection.sendActive()) throw new Error("The guest telephone disconnected.");
+              prediction = guestPrediction(game, 1, correction, predictionEvidence);
+              hitPresentation = guestHitPresentation(game, request => { if (!connection?.sendInput(request)) throw Error("The guest cast couldn't be sent."); });
               ready = true; options.synchronized(game); accept?.(); accept = reject = null;
             }
             return true;
           }
           if (payload?.kind === "frame" && payload.frame) {
+            if (ready && replica) protocolEvidence("guest-apply-start", payload.frame.tick);
             if (ready && replica && !replica.apply(payload.frame)) throw new Error("Online state lost its sequence. Hang up and call again.");
+            if (ready && prediction && payload.frame.guestSequence !== undefined) prediction.reconcile(payload.frame.guestSequence);
             if (ready && replica) receivedHouse.capture(replica.game, 1, replica.tick);
+            if (ready && replica) protocolEvidence("guest-apply-end", payload.frame.tick);
             return true;
           }
           if (payload?.kind === "catalogue") {
@@ -208,6 +264,7 @@ export function onlineSession(options: SessionOptions) {
           if (payload?.kind === "checkpoint" && payload.start) {
             if (!ready || !replica || payload.start.tick !== replica.tick) throw new Error("Online station state lost its sequence. Hang up and call again.");
             replica = replayGuest(payload.start, options.build, replica.game); game = replica.game;
+            prediction = guestPrediction(game, 1, correction, predictionEvidence);
             if (game.witches.length !== 2) throw new Error("Invalid two-person night");
             return true;
           }
@@ -255,7 +312,23 @@ export function onlineSession(options: SessionOptions) {
         const controls = wireControls(input); if (!controls) throw new Error("Invalid local online controls");
         // Only the pause page votes to pause. Ordinary menus and omitted input never retain an old vote.
         controls.pausePage = input.pausePage === true;
-        if (role === "guest") { if (ready && !connection.sendInput({ sequence: sequence++, controls })) throw new Error("The guest telephone disconnected."); return true; }
+        if (!Number.isFinite(dt) || dt < 0 || dt > .25) throw Error("Invalid online input frame duration");
+        if (role === "guest") {
+          if (ready) {
+            for (const edge of INPUT_EDGES) if (controls[edge]) guestEdges[edge] = true;
+            guestAccumulator += dt;
+            while (guestAccumulator >= STEP - 1e-9) {
+              guestAccumulator -= STEP;
+              const quantum = { ...controls };
+              for (const edge of INPUT_EDGES) { quantum[edge] = !!guestEdges[edge]; delete guestEdges[edge]; }
+              if (!connection.sendInput({ sequence, controls: quantum })) throw new Error("The guest telephone disconnected.");
+              if (!game.clock.paused) prediction?.input(sequence, quantum, STEP);
+              sequence++;
+              if (prediction) hitPresentation?.step(prediction.actor, quantum, STEP);
+            }
+          }
+          return true;
+        }
         if (!present) return false;
         if (ready && options.catalogue) {
           const next = hostCatalogue();
@@ -306,13 +379,40 @@ export function onlineSession(options: SessionOptions) {
         for (const request of resolved) options.stationResolved?.(request.player, request.choice, request.accepted);
         const guestControls = ready ? buffer.sample(now()) : wireControls({})!;
         guestControls.pausePage = guestControls.pausePage === true;
-        const frame = replayHostStep(game, [controls, guestControls], dt, ++tick, options.advanceHost);
+        if (controls.pausePage && guestControls.pausePage) buffer.suspend();
+        const pve = ready ? hits?.drain() : null;
+        const guestSteps: NonNullable<ReplayFrame["guestSteps"]> = [];
+        const frame = withGuestInputSteps(game, original => {
+          const consumed = ready ? buffer.consume(now()) : { sequence: -1, controls: wireControls({})!, motion: false };
+          if (!consumed.motion) holdGuestMotion(game!);
+          const motion = consumed.controls;
+          const applied = game!.witches[1].paused ? original : { ...original, moveX: motion.moveX, moveZ: motion.moveZ,
+            toggleMode: motion.toggleMode, dash: motion.dash, spell: motion.spell, fire: motion.fire, aimX: motion.aimX, aimZ: motion.aimZ };
+          guestSteps.push({ sequence: consumed.sequence, controls: applied, motion: consumed.motion });
+          return applied;
+        }, () => replayHostStep(game!, [controls, guestControls], dt, ++tick, options.advanceHost), { steps: guestSteps, casts: pve?.casts, effects: pve?.effects });
+        hits?.observed();
+        frame.guestSequence = buffer.sequence;
+        frame.guestSteps = guestSteps;
+        if (pve?.casts.length) frame.guestCasts = pve.casts;
+        if (pve?.effects.length) frame.guestEffects = pve.effects;
         beatSegments = game.beat.segs;
         if (ready && !connection.sendState({ kind: "frame", frame })) throw new Error("The host telephone disconnected.");
         return true;
       } catch (error) { fail(error); return true; }
     },
     disconnect: stop,
+    /** Host-only canonical rollover, preserving the call/approved appearances and using the existing preparation/rebase gate. */
+    nextNight(next: Game): boolean {
+      if (role !== "host" || !connection || !game || !present || !ready || !game.witches.every(w => w.house?.slept) || next.witches.length !== 2) return false;
+      try {
+        options.continuedHost?.(game, next);
+        game = next; night++; tick = 0; ready = changed = false;
+        enableGuestEffects(next); hits = guestHitAuthority(next, reason => trace("rejected-hit-claim", reason));
+        buffer.clear(); requests.length = 0; pendingStations.clear(); receivedHouse.clear();
+        sendStart(); return true;
+      } catch (error) { fail(error); return false; }
+    },
     /** Rare host page-boundary fallback, not a per-frame update: full snapshot cost still needs browser measurement.
      * Typed station choices below avoid restoring a full world for the ordinary equipment selections. */
     changed() { if (role === "host" && present) changed = true; },
@@ -331,7 +431,7 @@ export function onlineSession(options: SessionOptions) {
       requests.push({ player: 0, choice, sequence: stationSequence++ }); return true;
     },
     /** Never carry a socket/replay into a replacement night; the page owns the next night. */
-    nightChanged() { if (role) stop(); },
+    nightChanged() { if (role) stop("night-changed"); },
   };
   return api;
 }

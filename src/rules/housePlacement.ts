@@ -2,6 +2,7 @@ import type { HouseConfig, HouseObject } from "./houseRooms";
 import proposal from "../../config/house/layouts/ed-current.json";
 import baseline from "../../config/house/layouts/editor-v1-baseline.json";
 import { roomAt } from "../../config/house/shape.js";
+import { publishedGuestFurnitureId } from "./guestFurnitureMigration";
 
 export interface ObjectPlacement {
   rotation: number; baseRotation: number; foot: { w: number; d: number; h: number }; curve: number;
@@ -28,7 +29,9 @@ export function applyEdLayout(source: HouseConfig, on = edLayoutRequested()): Ho
   source = source.layout?.baseline ?? source;
   const H = structuredClone(source);
   for (const o of H.objects) {
-    const p = proposal.objects.find(p => p.id === o.id), original = baseline.items.find(q => q.id === o.id);
+    // The unused guest chest is replaced in place by Ed's requested dressing table.
+    const placedId = publishedGuestFurnitureId(o.id);
+    const p = proposal.objects.find(p => p.id === placedId), original = baseline.items.find(q => q.id === placedId);
     if (!p || !original) continue;
     if (o.id === "cauldron") {
       // Current large-pot data, never the held stale version-1 placeholder.
@@ -36,7 +39,7 @@ export function applyEdLayout(source: HouseConfig, on = edLayoutRequested()): Ho
       o.x = p.x; o.z = p.z; o.room = roomAt(H.shape, p.x, p.z)?.id ?? o.room; continue;
     }
     const anchor = "useAnchor" in p && p.useAnchor ? p.useAnchor : { x: p.x, z: p.z };
-    o.placement = { rotation: p.rotation, baseRotation: original.facing.yaw * 180 / Math.PI, foot: { ...original.facing.foot }, curve: original.facing.curve, anchor, sourceRoom: o.room };
+    o.placement = { rotation: p.rotation, baseRotation: original.facing.yaw * 180 / Math.PI, foot: { ...original.facing.foot, ...(placedId !== o.id ? { h: o.h } : {}) }, curve: original.facing.curve, anchor, sourceRoom: o.room };
     o.x = p.x; o.z = p.z;
     const destination = roomAt(H.shape, p.x, p.z)?.id ?? [...H.rooms].sort((a, b) => Math.hypot(a.x - p.x, a.z - p.z) - Math.hypot(b.x - p.x, b.z - p.z))[0].id;
     o.room = destination;

@@ -12,6 +12,24 @@ class Socket implements RelaySocket {
   open() { this.readyState = 1; this.emit("open"); }
 }
 afterEach(() => vi.useRealTimers());
+it("records the unchanged watchdog deadline before teardown and tolerates a throwing diagnostic sink", () => {
+  vi.useFakeTimers(); const socket = new Socket(), onError = vi.fn(), events: Record<string, unknown>[] = [];
+  const c = connectRelay({ endpoint: "ws://localhost:8787", room: "1234567", token: "fixture", socket: () => socket,
+    onMessage: vi.fn(), onClose: vi.fn(), onError, lifecycleEvidence: event => { events.push(event); throw Error("sink"); } });
+  socket.open(); c.sendActive(); vi.advanceTimersByTime(14999); expect(onError).not.toHaveBeenCalled();
+  vi.advanceTimersByTime(1); expect(onError).toHaveBeenCalledOnce();
+  expect(events).toContainEqual(expect.objectContaining({ stage: "relay-watchdog-end", silenceMs: 15000, limitMs: 15000 }));
+});
+
+it("clears a5s warning on any downstream message and restarts the15s silence deadline", () => {
+  vi.useFakeTimers(); const socket = new Socket(), onTrouble = vi.fn(), onError = vi.fn();
+  const c = connectRelay({ endpoint: "ws://localhost:8787", room: "1234567", token: "fixture", socket: () => socket, onMessage: vi.fn(), onClose: vi.fn(), onError, onTrouble });
+  socket.open(); expect(c.sendActive()).toBe(true);
+  vi.advanceTimersByTime(5000); expect(onTrouble).toHaveBeenLastCalledWith(true); expect(onError).not.toHaveBeenCalled();
+  socket.emit("message", JSON.stringify({ protocol: 1, type: "heartbeat" })); expect(onTrouble).toHaveBeenLastCalledWith(false);
+  vi.advanceTimersByTime(14999); expect(onError).not.toHaveBeenCalled();
+  vi.advanceTimersByTime(1); expect(onError).toHaveBeenCalledOnce(); expect(socket.readyState).toBe(3); expect(vi.getTimerCount()).toBe(0);
+});
 
 it("telephone signaling grants no gameplay role before a server-confirmed answer", () => {
   vi.useFakeTimers(); const socket = new Socket(), onError = vi.fn();

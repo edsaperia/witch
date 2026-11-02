@@ -3,6 +3,7 @@ import { STEP, stepGame, type Controls, type Game } from "../rules/game";
 import { MAX_STEP } from "../rules/clock";
 import { replayGuest, replayStart, type ReplayFrame, type ReplayStart } from "./online/replay";
 import type { SavedNight } from "../app/nightSave";
+import { guestFrameTrace, type GuestFrameTrace } from "../rules/onlineInputSteps";
 
 const MAX_BYTES = 16 * 1024 * 1024, MAX_EVENTS = 120_000;
 const bytes = (v: unknown) => new TextEncoder().encode(JSON.stringify(v)).byteLength;
@@ -77,7 +78,9 @@ export class InputRecorder {
   private nested = 0;
   private readonly start: Omit<LocalStart, "snapshot">;
   private readonly startingSave: SavedNight;
+  private initialOnlineFrame?: GuestFrameTrace;
   constructor(private game: Game, private build: string, capture: () => SavedNight, private persist?: (kind: string, payload: unknown, context: { build: string; t: number; island: string }) => void, enabled = true) {
+    this.initialOnlineFrame = guestFrameTrace(game);
     this.startingSave = capture();
     const { snapshot: _snapshot, ...start } = localStart(game, build, 0); this.start = start;
     this.size = bytes(this.startingSave) + bytes(start);
@@ -148,7 +151,8 @@ export class InputRecorder {
     const last = this.events.at(-1), run = last && "first" in last ? last : undefined;
     const effective = Math.min(MAX_STEP, Math.max(0, dt)), fromStep = simulationStep(this.game), tick = this.tick + 1;
     const focusNow = this.game.introFocus, focusWas = run?.first.focus;
-    let same = !!run && run.paused === !!this.game.clock.paused && Number.isFinite(dt) && run.first.frame.dt === effective && run.first.frame.inputs.length === this.game.witches.length && (!Array.isArray(controls) || controls.length === run.first.frame.inputs.length)
+    const online = guestFrameTrace(this.game);
+    let same = !online && !!run && run.paused === !!this.game.clock.paused && Number.isFinite(dt) && run.first.frame.dt === effective && run.first.frame.inputs.length === this.game.witches.length && (!Array.isArray(controls) || controls.length === run.first.frame.inputs.length)
       && (focusNow === undefined ? focusWas === undefined : !!focusWas && focusNow.x === focusWas.x && focusNow.y === focusWas.y && focusNow.z === focusWas.z);
     if (same) for (let i = 0; i < this.game.witches.length; i++) {
       const input = Array.isArray(controls) ? controls[i] : i ? neutral : controls as Controls;
@@ -179,7 +183,10 @@ export class InputRecorder {
     try { stepGame(this.game, controls, dt); }
     catch (error) { this.fail("A recorded simulation frame threw before completion"); throw error; }
     // stepGame itself clamps dt to MAX_STEP, including bot/fight-speed frames. Keep the effective value used by the same rules.
-    this.append({ kind: "frame", fromStep, toStep: simulationStep(this.game), frame: { tick, dt: Math.min(MAX_STEP, Math.max(0, dt)), inputs: inputs as Controls[] }, focus });
+    const applied = online ? structuredClone({ guestSteps: online.steps, guestSequence: online.steps.at(-1)?.sequence ?? -1,
+      ...(this.initialOnlineFrame === online ? {} : { guestCasts: online.casts, guestEffects: online.effects }) }) : {};
+    this.initialOnlineFrame = undefined;
+    this.append({ kind: "frame", fromStep, toStep: simulationStep(this.game), frame: { tick, dt: Math.min(MAX_STEP, Math.max(0, dt)), inputs: inputs as Controls[], ...applied }, focus });
   }
   /** A local render input changes three numbers, not the world; retain its exact ordered boundary. */
   setFocus(focus: Game["introFocus"]): void {

@@ -9,6 +9,7 @@
 // slides its panel in (main.ts, the rules' "house" event), and E again slides it out, she standing still at it meanwhile (Ed:
 // "walking away shouldn't work - then we can use the movement keys as buttons in the menus"). The rules don't change for it.
 import { hasBroom } from "./kit";
+import { furnitureFor } from "./guestFurniture";
 import type { Game } from "./game";
 import { deckOf } from "./treehouse";
 import { HOUSE_ROOMS, fromObject, hasRooms, onRoomFloor, type HouseObject } from "./houseRooms";
@@ -42,7 +43,7 @@ export function stationOf(g: Game, open: string | null, tuning: Tuning = g.tunin
   if (!w.perch || w.mode !== "ground" || w.seated || W.ko) return null;
   const d = deckOf(g.map, tuning);
   if (!d || !hasRooms(d)) return null;
-  return stationAt(d, w.x, w.z, open, HOUSE_ROOMS, STATION_SLACK, uses);
+  return stationAt(d, w.x, w.z, open, { ...HOUSE_ROOMS, objects: HOUSE_ROOMS.objects.filter(o => furnitureFor(g, W, o)) }, STATION_SLACK, uses);
 }
 /** The table she's at (its thing slides up from the bottom: ui/chartOverlay.ts), as stationOf. */
 export const tableOf = (g: Game, open: string | null, tuning: Tuning = g.tuning): HouseObject | null => stationOf(g, open, tuning, TABLE_USES);

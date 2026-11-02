@@ -1,10 +1,11 @@
 // Her, each frame (moved out of view.ts's render, unchanged): her pose (hover, lean, rise and descend, brake and fast, her
 // headings, on foot, the treehouse's seat, a knockout, mid-blink), her hat knocked off, her sprite stood by its frame's ground,
 // the party's and the beach's views of her, where she is on screen, and her shadow.
-import { deckOf, onTerrace } from "../../rules/treehouse";
+import { deckOf } from "../../rules/treehouse";
 import { potionBlackout, potionFall } from "../potionChoreography";
 import { updatePotionCaption } from "../potionCaption";
 import { onRoomFloor } from "../../rules/houseRooms";
+import { witchRoomPass, witchRoomDepth } from "../witchRoomPass";
 import { broomWhere, stationOf } from "../../rules/stations";
 import type { View } from "../view";
 import { captureRefractionCast } from "./refraction";
@@ -145,7 +146,7 @@ export function drawWitch(v: View, time: number, ht: number, onTreehouse: (px: n
   // ellipse is the art's view, not the camera's) in the plane through the deck's middle, then moved along the ray from the camera
   // by how far toward it she stands (so she's between the Ent's halves, render/view/home.ts ENT_DEPTH) and scaled to land on those
   // pixels; eased off as she rises (her lift) into the world's own place.
-  const inRoom = !!(T.ent && deck?.house?.rooms && w.perch && !onTerrace(deck, w.x, w.z) && onRoomFloor(deck.house.rooms, w.x, w.z)); // (in a room off the Terrace, rules/houseRooms.ts)
+  const inRoom = !!T.ent && witchRoomPass(g, g.witches[0]);
   v.houseCam.x = v.houseCam.y = v.houseCam.z = 0;
   if (T.ent && deck && w.perch) {
     const m = (1 - w.lift) * v.landingHouseShare, ky = (T.seat.y - T.ent.deck.y) / Math.max(0.1, deck.seat.z - deck.z), dz = w.z - deck.z;
@@ -284,10 +285,11 @@ export function drawWitch(v: View, time: number, ht: number, onTreehouse: (px: n
   // In a room off the hub: the rooms are drawn over the Ent's tree and tower and the forest round the house, which they lie behind,
   // in the see-through pass (render/houseRooms.ts), so she's drawn after them there (her batch put in that pass while she's in
   // one), over everything, and needs no silhouette.
+  const roomDepth = witchRoomDepth(inRoom);
   for (const b of [v.witchBatch, v.bareBatch]) if (b) {
     const m = b.mesh.material as { depthTest: boolean; transparent: boolean; needsUpdate: boolean };
     if (m.transparent !== inRoom) { m.transparent = inRoom; m.needsUpdate = true; }
-    m.depthTest = !inRoom; b.mesh.renderOrder = inRoom ? 19.95 : 10;
+    m.depthTest = roomDepth.depthTest; b.mesh.renderOrder = roomDepth.renderOrder;
     b.silhouette = djUpper < 0 && !inRoom;
   }
   // Knocked off, her hat floats down (Ed, 2026-10-07: "the hat slowly floats to the floor over about 4 seconds"): from her head
