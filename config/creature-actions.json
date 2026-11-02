@@ -13,7 +13,8 @@
         "id": "snow bolt",
         "delivery": "ranged",
         "weight": 0.3,
-        "youngWeight": 1.15
+        "youngWeight": 1.15,
+        "attack": "species"
       },
       {
         "id": "mirage",
@@ -42,6 +43,14 @@
         "weight": 0.36,
         "youngWeight": 1,
         "cooldown": 6
+      },
+      {
+        "id": "species:armadillo",
+        "delivery": "ranged",
+        "attack": "species",
+        "weight": 0.4,
+        "youngWeight": 0.7,
+        "cooldown": 2.6
       }
     ],
     "badger": [
@@ -105,6 +114,14 @@
           "tint": "violet",
           "move": true
         }
+      },
+      {
+        "id": "species:bat",
+        "delivery": "melee",
+        "attack": "species",
+        "weight": 0.312,
+        "youngWeight": 0.7,
+        "cooldown": 1.8
       }
     ],
     "bear": [
@@ -112,7 +129,8 @@
         "id": "strike",
         "delivery": "melee",
         "weight": 0.54,
-        "youngWeight": 1
+        "youngWeight": 1,
+        "attack": "species"
       },
       {
         "id": "cover",
@@ -143,7 +161,8 @@
         "id": "wood chip",
         "delivery": "ranged",
         "weight": 0.37,
-        "youngWeight": 1.15
+        "youngWeight": 1.15,
+        "attack": "species"
       },
       {
         "id": "wall",
@@ -187,6 +206,14 @@
           "tint": "white",
           "both": true
         }
+      },
+      {
+        "id": "species:beetle",
+        "delivery": "ranged",
+        "attack": "species",
+        "weight": 0.4,
+        "youngWeight": 0.7,
+        "cooldown": 3
       }
     ],
     "boar": [
@@ -196,6 +223,14 @@
         "weight": 0.7,
         "youngWeight": 1,
         "cooldown": 5
+      },
+      {
+        "id": "species:boar",
+        "delivery": "melee",
+        "attack": "species",
+        "weight": 0.45499999999999996,
+        "youngWeight": 0.7,
+        "cooldown": 2
       }
     ],
     "cat": [
@@ -210,7 +245,8 @@
         "id": "hiss bolt",
         "delivery": "ranged",
         "weight": 0.3,
-        "youngWeight": 1.15
+        "youngWeight": 1.15,
+        "attack": "species"
       },
       {
         "id": "sync",
@@ -241,7 +277,8 @@
         "id": "dust bolt",
         "delivery": "ranged",
         "weight": 0.37,
-        "youngWeight": 1.15
+        "youngWeight": 1.15,
+        "attack": "species"
       },
       {
         "id": "sync",
@@ -265,7 +302,8 @@
         "id": "strike",
         "delivery": "melee",
         "weight": 0.3,
-        "youngWeight": 1
+        "youngWeight": 1,
+        "attack": "species"
       },
       {
         "id": "cover",
@@ -290,7 +328,8 @@
         "delivery": "melee",
         "weight": 0.36,
         "youngWeight": 1,
-        "cooldown": 7
+        "cooldown": 7,
+        "attack": "species"
       },
       {
         "id": "water jet",
@@ -325,7 +364,8 @@
         "id": "nut bolt",
         "delivery": "ranged",
         "weight": 0.65,
-        "youngWeight": 1.15
+        "youngWeight": 1.15,
+        "attack": "species"
       },
       {
         "id": "rally",
@@ -355,7 +395,8 @@
         "id": "water drop",
         "delivery": "ranged",
         "weight": 0.37,
-        "youngWeight": 1.15
+        "youngWeight": 1.15,
+        "attack": "species"
       },
       {
         "id": "sync",
@@ -381,6 +422,14 @@
         "weight": 0.54,
         "youngWeight": 1,
         "cooldown": 7
+      },
+      {
+        "id": "species:elephant",
+        "delivery": "melee",
+        "attack": "species",
+        "weight": 0.35100000000000003,
+        "youngWeight": 0.7,
+        "cooldown": 3.4
       }
     ],
     "elk": [
@@ -396,6 +445,14 @@
         "delivery": "ranged",
         "weight": 0.51,
         "youngWeight": 1.15
+      },
+      {
+        "id": "species:elk",
+        "delivery": "melee",
+        "attack": "species",
+        "weight": 0.195,
+        "youngWeight": 0.7,
+        "cooldown": 2.6
       }
     ],
     "featheredserpent": [
@@ -410,7 +467,8 @@
         "id": "venom spit",
         "delivery": "ranged",
         "weight": 0.3,
-        "youngWeight": 1.15
+        "youngWeight": 1.15,
+        "attack": "species"
       },
       {
         "id": "mirage",
@@ -443,7 +501,8 @@
         "id": "sand bolt",
         "delivery": "ranged",
         "weight": 0.37,
-        "youngWeight": 1.15
+        "youngWeight": 1.15,
+        "attack": "species"
       },
       {
         "id": "mirage",
@@ -477,7 +536,8 @@
         "id": "acorn bolt",
         "delivery": "ranged",
         "weight": 0.44,
-        "youngWeight": 1.15
+        "youngWeight": 1.15,
+        "attack": "species"
       },
       {
         "id": "scatter",
@@ -506,7 +566,8 @@
         "id": "fox-fire",
         "delivery": "ranged",
         "weight": 0.5,
-        "youngWeight": 1.15
+        "youngWeight": 1.15,
+        "attack": "species"
       }
     ],
     "frosttroll": [
@@ -514,7 +575,8 @@
         "id": "strike",
         "delivery": "melee",
         "weight": 0.3,
-        "youngWeight": 1
+        "youngWeight": 1,
+        "attack": "species"
       },
       {
         "id": "cover",
@@ -544,7 +606,8 @@
         "id": "frost beam",
         "delivery": "ranged",
         "weight": 0.37,
-        "youngWeight": 1.15
+        "youngWeight": 1.15,
+        "attack": "species"
       },
       {
         "id": "wall",
@@ -577,7 +640,8 @@
         "id": "feather bolt",
         "delivery": "ranged",
         "weight": 0.44,
-        "youngWeight": 1.15
+        "youngWeight": 1.15,
+        "attack": "species"
       },
       {
         "id": "pull",
@@ -600,7 +664,8 @@
         "id": "strike",
         "delivery": "melee",
         "weight": 0.25,
-        "youngWeight": 1
+        "youngWeight": 1,
+        "attack": "species"
       },
       {
         "id": "moon-dust bolt",
@@ -635,7 +700,8 @@
         "id": "spine fan",
         "delivery": "ranged",
         "weight": 0.1,
-        "youngWeight": 1.15
+        "youngWeight": 1.15,
+        "attack": "species"
       }
     ],
     "heron": [
@@ -650,7 +716,8 @@
         "id": "water jet",
         "delivery": "ranged",
         "weight": 0.37,
-        "youngWeight": 1.15
+        "youngWeight": 1.15,
+        "attack": "species"
       },
       {
         "id": "sync",
@@ -681,7 +748,8 @@
         "id": "head spit",
         "delivery": "ranged",
         "weight": 0.44,
-        "youngWeight": 1.15
+        "youngWeight": 1.15,
+        "attack": "species"
       },
       {
         "id": "rally",
@@ -713,6 +781,14 @@
         "delivery": "ranged",
         "weight": 0.51,
         "youngWeight": 1.15
+      },
+      {
+        "id": "species:ibex",
+        "delivery": "melee",
+        "attack": "species",
+        "weight": 0.273,
+        "youngWeight": 0.7,
+        "cooldown": 2.8
       }
     ],
     "jaguar": [
@@ -727,7 +803,8 @@
         "id": "jaguar bolt",
         "delivery": "ranged",
         "weight": 0.3,
-        "youngWeight": 1.15
+        "youngWeight": 1.15,
+        "attack": "species"
       },
       {
         "id": "sync",
@@ -758,7 +835,8 @@
         "id": "venom spit",
         "delivery": "ranged",
         "weight": 0.37,
-        "youngWeight": 1.15
+        "youngWeight": 1.15,
+        "attack": "species"
       },
       {
         "id": "confusion",
@@ -804,6 +882,14 @@
           "cooldown": 8,
           "tint": "white"
         }
+      },
+      {
+        "id": "species:lion",
+        "delivery": "melee",
+        "attack": "species",
+        "weight": 0.195,
+        "youngWeight": 0.7,
+        "cooldown": 3
       }
     ],
     "lynx": [
@@ -832,7 +918,8 @@
         "id": "ember bolt",
         "delivery": "ranged",
         "weight": 0.45,
-        "youngWeight": 1.15
+        "youngWeight": 1.15,
+        "attack": "species"
       },
       {
         "id": "call",
@@ -860,7 +947,8 @@
         "id": "sand bolt",
         "delivery": "ranged",
         "weight": 0.37,
-        "youngWeight": 1.15
+        "youngWeight": 1.15,
+        "attack": "species"
       },
       {
         "id": "call",
@@ -889,7 +977,8 @@
         "id": "earth bolt",
         "delivery": "ranged",
         "weight": 0.44,
-        "youngWeight": 1.15
+        "youngWeight": 1.15,
+        "attack": "species"
       },
       {
         "id": "cloud",
@@ -912,7 +1001,8 @@
         "id": "dust bolt",
         "delivery": "ranged",
         "weight": 0.51,
-        "youngWeight": 1.15
+        "youngWeight": 1.15,
+        "attack": "species"
       },
       {
         "id": "cloud",
@@ -936,7 +1026,8 @@
         "id": "spit",
         "delivery": "ranged",
         "weight": 0.3,
-        "youngWeight": 1.15
+        "youngWeight": 1.15,
+        "attack": "species"
       },
       {
         "id": "wall",
@@ -968,7 +1059,8 @@
         "id": "water bolt",
         "delivery": "ranged",
         "weight": 0.37,
-        "youngWeight": 1.15
+        "youngWeight": 1.15,
+        "attack": "species"
       },
       {
         "id": "rally",
@@ -998,7 +1090,8 @@
         "id": "lob",
         "delivery": "ranged",
         "weight": 0.44,
-        "youngWeight": 1.15
+        "youngWeight": 1.15,
+        "attack": "species"
       },
       {
         "id": "mind",
@@ -1029,7 +1122,8 @@
         "id": "ice pellet",
         "delivery": "ranged",
         "weight": 0.51,
-        "youngWeight": 1.15
+        "youngWeight": 1.15,
+        "attack": "species"
       }
     ],
     "polarbear": [
@@ -1055,6 +1149,14 @@
           "cooldown": 8,
           "tint": "white"
         }
+      },
+      {
+        "id": "species:polarbear",
+        "delivery": "ranged",
+        "attack": "species",
+        "weight": 0.4,
+        "youngWeight": 0.7,
+        "cooldown": 3.6
       }
     ],
     "raccoon": [
@@ -1068,7 +1170,8 @@
         "id": "thrown stone",
         "delivery": "ranged",
         "weight": 0.37,
-        "youngWeight": 1.15
+        "youngWeight": 1.15,
+        "attack": "species"
       },
       {
         "id": "decoy",
@@ -1114,7 +1217,8 @@
         "id": "venom spit",
         "delivery": "ranged",
         "weight": 0.51,
-        "youngWeight": 1.15
+        "youngWeight": 1.15,
+        "attack": "species"
       },
       {
         "id": "confusion",
@@ -1146,7 +1250,8 @@
         "id": "spit and barb",
         "delivery": "ranged",
         "weight": 0.3,
-        "youngWeight": 1.15
+        "youngWeight": 1.15,
+        "attack": "species"
       },
       {
         "id": "mirage",
@@ -1180,7 +1285,8 @@
         "id": "ember bolt",
         "delivery": "ranged",
         "weight": 0.37,
-        "youngWeight": 1.15
+        "youngWeight": 1.15,
+        "attack": "species"
       },
       {
         "id": "rally",
@@ -1211,7 +1317,8 @@
         "id": "dust bolt",
         "delivery": "ranged",
         "weight": 0.44,
-        "youngWeight": 1.15
+        "youngWeight": 1.15,
+        "attack": "species"
       }
     ],
     "roe": [
@@ -1226,7 +1333,8 @@
         "id": "bolt of light",
         "delivery": "ranged",
         "weight": 0.51,
-        "youngWeight": 1.15
+        "youngWeight": 1.15,
+        "attack": "species"
       },
       {
         "id": "scatter",
@@ -1249,7 +1357,8 @@
         "id": "fire beam",
         "delivery": "ranged",
         "weight": 0.3,
-        "youngWeight": 1.15
+        "youngWeight": 1.15,
+        "attack": "species"
       },
       {
         "id": "wall",
@@ -1275,7 +1384,8 @@
         "id": "venom bolt",
         "delivery": "ranged",
         "weight": 0.37,
-        "youngWeight": 1.15
+        "youngWeight": 1.15,
+        "attack": "species"
       },
       {
         "id": "wall",
@@ -1301,7 +1411,8 @@
         "id": "trail",
         "delivery": "melee",
         "weight": 0.3,
-        "youngWeight": 1
+        "youngWeight": 1,
+        "attack": "species"
       },
       {
         "id": "wall",
@@ -1334,7 +1445,8 @@
         "id": "venom spit",
         "delivery": "ranged",
         "weight": 0.51,
-        "youngWeight": 1.15
+        "youngWeight": 1.15,
+        "attack": "species"
       },
       {
         "id": "confusion",
@@ -1366,7 +1478,8 @@
         "id": "snow bolt",
         "delivery": "ranged",
         "weight": 0.3,
-        "youngWeight": 1.15
+        "youngWeight": 1.15,
+        "attack": "species"
       }
     ],
     "sphinx": [
@@ -1380,7 +1493,8 @@
         "id": "sun bolt",
         "delivery": "ranged",
         "weight": 0.37,
-        "youngWeight": 1.15
+        "youngWeight": 1.15,
+        "attack": "species"
       },
       {
         "id": "confusion",
@@ -1404,7 +1518,8 @@
         "id": "web shot",
         "delivery": "ranged",
         "weight": 0.44,
-        "youngWeight": 1.15
+        "youngWeight": 1.15,
+        "attack": "species"
       },
       {
         "id": "pull",
@@ -1433,7 +1548,8 @@
         "id": "acorn bolts",
         "delivery": "ranged",
         "weight": 0.65,
-        "youngWeight": 1.15
+        "youngWeight": 1.15,
+        "attack": "species"
       },
       {
         "id": "scatter",
@@ -1464,6 +1580,14 @@
         "delivery": "ranged",
         "weight": 0.3,
         "youngWeight": 1.15
+      },
+      {
+        "id": "species:stag",
+        "delivery": "melee",
+        "attack": "species",
+        "weight": 0.23399999999999999,
+        "youngWeight": 0.7,
+        "cooldown": 2.4
       }
     ],
     "stegosaurus": [
@@ -1478,7 +1602,8 @@
         "id": "thrown stone",
         "delivery": "ranged",
         "weight": 0.37,
-        "youngWeight": 1.15
+        "youngWeight": 1.15,
+        "attack": "species"
       }
     ],
     "stoat": [
@@ -1523,7 +1648,8 @@
         "id": "growl bolt",
         "delivery": "ranged",
         "weight": 0.51,
-        "youngWeight": 1.15
+        "youngWeight": 1.15,
+        "attack": "species"
       }
     ],
     "toad": [
@@ -1538,7 +1664,8 @@
         "id": "spore lob",
         "delivery": "ranged",
         "weight": 0.3,
-        "youngWeight": 1.15
+        "youngWeight": 1.15,
+        "attack": "species"
       },
       {
         "id": "cloud",
@@ -1569,7 +1696,8 @@
         "id": "horn bolt",
         "delivery": "ranged",
         "weight": 0.37,
-        "youngWeight": 1.15
+        "youngWeight": 1.15,
+        "attack": "species"
       },
       {
         "id": "mind",
@@ -1623,6 +1751,14 @@
         "weight": 0.48,
         "youngWeight": 1,
         "cooldown": 6
+      },
+      {
+        "id": "species:woodlouse",
+        "delivery": "ranged",
+        "attack": "species",
+        "weight": 0.4,
+        "youngWeight": 0.7,
+        "cooldown": 2.6
       }
     ]
   }

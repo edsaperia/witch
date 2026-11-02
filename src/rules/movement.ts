@@ -129,6 +129,8 @@ export interface SteerContext {
   cutoff?: { ahead: number; angle: number; reach: number };
   /** How far it may fire from, if further than `range` (a shooter at her, tuning dodge.b.range: it keeps its distance by `range`). */
   fire?: number;
+  /** Reduce incidental motion while comfortably inside a firing band; avoidance stays active. */
+  settle?: number;
   /** Where "arrive" makes for, if not `want` (committed strikes, tuning dodge.a: right in on her, striking as it comes). */
   arriveAt?: number;
   /** Its momentum chasing her (rules/momentum.ts): its heading turns no faster than its limit. */
@@ -218,7 +220,9 @@ export function steer(c: Creature, P: Profile, x: SteerContext): boolean {
     const sx = slot.x - c.x, sz = slot.z - c.z, sd = Math.hypot(sx, sz) || 1e-6;
     if (sd > 0.6 * S) add(sx / sd, sz / sd, 1.5 * Math.min(1, sd / (4 * S)));
   }
-  for (const b of P.fight) {
+  for (const authored of P.fight) {
+    const incidental = ["orbit", "strafe", "wander", "cohesion"].includes(authored.kind);
+    const b = incidental && d > x.range * 0.4 && d < x.range * 0.9 ? {...authored, w: authored.w * (1 - (x.settle ?? 0))} : authored;
     switch (b.kind) {
       case "arrive": { const k = Math.max(-0.4, Math.min(1, (d - (x.arriveAt ?? x.want)) / (4 * S))); if (!slot) add(ux, uz, b.w * k); break; }
       case "keepRange": { const near = x.range * (b.near ?? 0.5), far = x.range * (b.far ?? 0.9); if (d < near) add(-ux, -uz, b.w); else if (d > far) add(ux, uz, b.w); break; }

@@ -19,7 +19,7 @@ it("keeps three moves on the level's budget: a move's damage a second is its lev
       expect((a.damage * a.shots) / a.attack.cooldown).toBeCloseTo(COMBAT.levels.dps[level] * (COMBAT.strength?.species[k] ?? 1) * (a.attack.factor ?? 1), 6);
     }
     expect(packAttack("snail", 2, "ranged")).toBeNull(); // (the table's none)
-    expect(packAttack("fox", 1, "ranged")!.attack.windup).toBeGreaterThan(packAttack("fox", 2, "ranged")!.attack.windup); // (young: slower)
+    expect(packAttack("fox", 1, "ranged")!.attack.windup).toBeLessThan(packAttack("fox", 2, "ranged")!.attack.windup); // Youth soldiers act briskly; adult tanks are deliberate (Ed, 2026-11-02).
     expect(packAttack("fox", 1, "ranged")!.shots).toBeLessThan(packAttack("fox", 2, "ranged")!.shots); // (an adult's a volley)
   });
 it("decoy: a 💌 the waving raccoon catches is wasted, its meter untouched (Ed, 2026-10-23: \"otherwise it's not a decoy\")", () => {

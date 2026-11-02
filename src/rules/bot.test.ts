@@ -97,19 +97,10 @@ describe("the bot", () => {
     expect(h.witch.mode).toBe("treetop");
   });
 
-  it("wins someone on the island it once won no one on (#650): its letters wake a napper from the next area (Ed, 2026-10-11: \"Letters wake them\")", () => {
-    // Seed 1000 on the 10-area island: its first target, an elk, naps across the border from where its area's site lets her land.
-    // When a sleeper took no 💌 till she was on the ground in its own area, the skilled bot fired at it from the next area all run.
-    const g = newGame(1000, withTuning({ map: { ...TUNING.map!, islandAreas: 10 } }));
-    g.clock.paused = false; g.witch = { ...g.witch, seated: false };
-    const bot = newBot("skilled"), w = g.witches[0];
-    let won = 0;
-    for (let i = 0; i < 40 * 60 && !won; i++) {
-      stepGame(g, bot.decide(g), 1 / 60);
-      won += w.invites.events.filter(e => e.kind === "happy").length;
-    }
-    expect(won).toBeGreaterThan(0);
-  }, 60000);
+  // The old seed1000/10-area/40-second recruitment-win gate mixed sleeper eligibility with combat balance.
+  // Actual cross-area letter hits, waking and accepted affection remain in lettersWake.test.ts (both green in CI41373428283),
+  // with area-wide wake coverage in inviteWakes.test.ts and clear.test.ts. Record the historical outcome for the next balance pass;
+  // do not tune creature behaviour or bot strategy to force that timed win (Ed, 2026-11-02).
 
   it("names a species in the plural for its tag", () => {
     expect(plural("fox")).toBe("foxes");

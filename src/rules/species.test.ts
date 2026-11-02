@@ -87,7 +87,7 @@ describe("fight profiles for every species (Ed's species pass)", () => {
     expect(behind / n).toBeGreaterThan(0.6); // she's heading east: mostly west of her
   }, 60000);
 
-  it("has a snake lie in wait and strike the moment it springs", () => {
+  it("has a snake lie in wait and strike the moment it springs", withCombatRoles({snake: "melee"}, () => {
     const g = quiet(), sn = pick(g, "snake", 2, 25, 0);
     run(g, 2);
     expect(sn.sprung).toBeUndefined();
@@ -96,7 +96,7 @@ describe("fight profiles for every species (Ed's species pass)", () => {
     run(g, 2, () => { if (evs(g, sn, "sprung")) sprungAt = g.clock.time; if (windAt < 0 && sprungAt >= 0 && evs(g, sn, "windup")) windAt = g.clock.time; });
     expect(sprungAt).toBeGreaterThan(0);
     expect(windAt - sprungAt).toBeLessThan(0.1);
-  }, 60000);
+  }), 60000);
 
 // Retired timed fight outcome: deterministic steering/engagement contracts cover the model.
 

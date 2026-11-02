@@ -12,6 +12,9 @@ export function setCombatRoles(roles: Record<string, "melee" | "ranged" | "speci
   const original = ACTIONS.species;
   ACTIONS.species = { ...original };
   // Existing signature fixtures use the old shorthand; production has no role preferences.
-  for (const [species, role] of Object.entries(roles)) ACTIONS.species[species] = (original[species] ?? []).map(action => ({...action, weight: action.delivery === (role === "special" ? "effect" : role) ? 1 : 0}));
+  for (const [species, role] of Object.entries(roles)) {
+    const choices = original[species] ?? [], nativeMelee = choices.some(a => a.delivery === "melee" && a.attack !== "species");
+    ACTIONS.species[species] = choices.map(action => ({...action, weight: action.delivery === (role === "special" ? "effect" : role) && !(role === "melee" && nativeMelee && action.attack === "species") ? 1 : 0}));
+  }
   return () => { ACTIONS.species = original; };
 }

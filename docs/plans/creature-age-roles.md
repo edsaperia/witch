@@ -1,0 +1,43 @@
+# Creature age roles and composed attack integration
+
+Ed, 2026-11-02: exaggerate youth/adult differences even if the initial balance needs later tuning. Latest role description: youths are soldiers, adults are tanks, legends are artillery. Keep species recognisable; adults remain mobile. Broader coverage, range and durability should make adults useful without relying only on higher damage. Do not introduce new movement-type categories or a universal special role.
+
+Also trace the composable/chained attack upgrade through actual released combat and rendering. Ed reports seeing neither composed attacks nor the new magic effects in repeated playtests, with melee previously dominant. Release ancestry alone is not evidence that a creature actually casts or renders a composed attack.
+
+Starting point: prototype7f6dcba31, isolated work/combat-spacing worktree, new branch codex/creature-age-roles. Live metadata checked at pickup: v6972 /5d19a18; both #1326's species grammar and #1622's action model are ancestors of remote main. The species grammar shipped on27October (#1333 publication). Source currently filters species attacks by old close/ranged pack compatibility and can substitute old designed shots or native movement. Trace and test these routes before claiming a cause.
+
+Plan: one numerical age profile supplies action preferences, preferred engagement distance, waiting movement/relocation, attack footprint/range and durability. Transform composable attack trees through the existing engine while retaining elements, paths, effects and child triggers. Preserve native animal movement choices. Ed explicitly authorised editing legend attacks too: grow coverage and volleys, slow delivery and lengthen warnings through the same numerical model, keeping their existing long-range artillery delivery and charging species. Verify real selected attacks and child/effect execution with small deterministic fixtures; do not infer visual quality from source presence.
+
+Owned scope: age-profile config/resolver, combat action/position integration, species attack growth/integration, nearby deterministic tests, documentation and own changelog. Any required rendering hooks will be reported to the coordinator before crossing another builder's ownership. No multiplayer/server changes. No local heavy world fights, browser, art or full suite; canonical owns combined checks and publication. No difficulty comparison is opened.
+
+## Implementation findings
+
+- The old close/ranged compatibility filter made armadillo's configured roll-to-pebbles attack unselectable. A regression reproduced this before the change. Each species grammar now has an explicit selectable action, alongside its native melee movement where appropriate; designed ranged weapons no longer silently replace the selected grammar tree or shorten it to old bolt range.
+- Six authored projectile compositions (spider, arctic fox, penguin, cheetah, armadillo, hydra) only created their patch/burst on range expiry, not a successful impact. They now declare the existing child composition on hit as well. Engine event semantics stay unchanged. The structural-complexity test counts an identical child once even when two alternative terminal conditions can trigger it.
+- Default ranged fallbacks also use the existing grammar engine and effect drawing adapter. The native melee executors remain available, and committed movement, including braking, must finish before changing attack ownership.
+- Adults initially get 2.25x ranged cast/flight reach, 2x area width/radius, broader volleys, 1.5x body radius and durability, 0.9x travel speed and 0.85x tempo; youths get 1.15x speed and 1.12x tempo. These are independent tuning values, not a damage or berry-cost increase. Adults stay mobile, reduce incidental motion in their firing band and make fewer close passes. Legends keep their existing outer reach, gain 2.6x inner coverage, 2x pattern density (capped at 12), slower flight and 1.6x windup. The real engine warning geometry feeds waiting avoidance.
+- Small direct combat fixtures exercise armadillo, arctic fox and flying squirrel through actual team selection, casting, children and the effect drawing adapter. A player stepping aside during the child's warning lets splinters travel; standing on their birth point can make them hit immediately. These adapter checks establish wiring, not pixel quality or gameplay balance. Browser/cloud visual acceptance and full combined checks remain the coordinator's.
+
+## Cloud failure review: 1409a053 / CI 41373428283
+
+All four required unit shards completed with nine failures; read all failure details before changing tests. No runtime difficulty, native movement executor or bot strategy is changed in this repair.
+
+| Failure | Cause and bounded repair | Contract retained |
+| --- | --- | --- |
+| configDataBoundary replay | Its explicit require allowlist omitted the new pure age resolver; supply that same resolver in the replay. | Legacy level/export/strength equality and runtime graph isolation remain asserted. |
+| packs budget youth windup ordering | Old youths-slower assertion conflicts with the approved brisk soldiers/deliberate tanks direction. Reverse the ordering. | Exact per-shot DPS budget, absent weapons and adult volley size remain asserted. |
+| swoop lead-at-release, bat bout count, bat token cap | The fixtures did not select native melee, so the new action draw could choose a composed ranged weapon instead of a dive. Select native melee for this native-dive suite. | Every existing damage/miss, telegraph, bout, targetability, invitation and token-cap assertion remains. |
+| snake spring timing | Random action selection could choose its venom projectile. Explicitly select native melee. | Wait outside trigger, spring, and immediate windup assertions remain. |
+| boar charge momentum | Random selection could choose its new authored ranged runner. Explicitly select native melee. | Speed, acceleration, overshoot, braking, turn-rate and facing continuity bounds remain. |
+| area approach distance/time | The old fixture requires a randomly ranged adult to close within 18 m, regardless of its new firing range, at the old age-independent speed. Select melee and express its original speed bound with the explicit age modifier. | Crossing the real area from its far side, the same close-distance threshold, watch delay and prompt pursuit remain. |
+| bot seed1000 recruitment before 40 seconds | A timed recruitment outcome combines letter eligibility with revised combat balance. Retire it as a unit release gate. | Both real cross-border hit/wake/affection tests in lettersWake passed in this exact CI and remain unchanged, as do clear/inviteWakes and other bot tests. No bot strategy or difficulty tuning. |
+
+Additional direct 1–4 actor regressions cover chosen boar charge acceleration/overshoot/braking, snake spring+windup, and bat bout telegraphs/token cap without generating a world. These passed locally alongside dependency/budget checks; complete world fixtures remain cloud validation, not claimed locally verified.
+
+Balance observation to revisit only when the coordinator opens the next explicitly authorised balance-pass PR: seed1000, 10-area island, skilled bot, 40 simulated seconds, zero recruits at 1409a053 (old assertion expected at least one). Use this as an observation alongside current combat rather than a mandate to restore the old outcome. Ed deferred difficulty comparisons to that later pass; no new balance run is opened here.
+
+## Shared-record schema repair: 9ae0c2c3 / CI 41374744252
+
+Three unit shards passed, including the previously failing native movement and approach cases. Shard2 failed only the assembled combat schema: cached wolf/cat/raven adult melee attacks had a present `radius` property with value `undefined`. `packAttack` stores generated flat definitions in the shared `COMBAT.attacks` table read by `configData`; the new age scaler explicitly wrote undefined optional radius/lunge fields when the base weapon omitted them. This was a real record-construction defect exposed by shared cache population, not a schema change or an intended undefined value.
+
+The builder now conditionally adds those optional properties only when the base defines them. Schema files and test isolation remain unchanged. The direct action regression warms every species/age melee and ranged weapon, checks the actual cached source records for undefined fields (not the optional slots in a scaled runtime view), then validates the warmed shared `COMBAT` table against the unchanged combat schema. That test and all config-schema/name checks pass locally (17 tests); the full matrix remains cloud validation.

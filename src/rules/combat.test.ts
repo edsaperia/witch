@@ -14,6 +14,8 @@ import { queueCombatHit } from "../test/combatHit";
 import { FIGHT, MOVEMENT } from "./movement";
 import { areaOf, homeArea } from "./homeArea";
 import { smallWorldTuning } from "../test/worlds";
+import { withCombatRoles } from "../test/combatRoles";
+import { ageProfile } from "./combat/age";
 const PEOPLED = withTuning({ population: { ...TUNING.population, start: { ...TUNING.population.start, young: 1 } } }); // (a young in every area, whatever the tuning's curve: the mechanics, not the balance)
 
 const idle: Controls = { moveX: 0, moveZ: 0, toggleMode: false, zoom: 0 };
@@ -666,7 +668,7 @@ describe("the invitee truce (Ed, 2026-10-04)", () => {
 });
 
 describe("the motion scale pass (Ed, 2026-10-04)", () => {
-  it("has an area's creatures onto her within a few seconds of her landing in it, from across the area", () => {
+  it("a selected melee adult approaches across its area promptly at its age's pace", withCombatRoles({wolf: "melee"}, () => {
     const g = quiet(), W = g.witches[0];
     W.health.hp = 1e6;
     // An adult wolf at its area's far side, and her landing at the other.
@@ -680,8 +682,8 @@ describe("the motion scale pass (Ed, 2026-10-04)", () => {
     let t = 0;
     for (; t < 10 && Math.hypot(wolf.x - g.witch.x, wolf.z - g.witch.z) > 18; t += STEP) stepGame(g, { ...idle, autoTalk: false }, STEP);
     expect(d0).toBeGreaterThan(20);
-    expect(t).toBeLessThan(0.5 + (g.tuning.wildWatch?.on ? g.tuning.wildWatch.time : 0) + d0 / 15); // (a moment's reaction after its area's watched her come down, rules/wildWatch.ts, then about 20 m/s)
-  }, 60000);
+    expect(t).toBeLessThan(0.5 + (g.tuning.wildWatch?.on ? g.tuning.wildWatch.time : 0) + d0 / (15 * ageProfile(wolf.level).speed)); // Same pursuit contract, adjusted by the explicit adult speed modifier.
+  }), 60000);
 
   it("scales a fight live: lengths with fight.scale, speeds with fight.speed", () => {
     const g = quiet();

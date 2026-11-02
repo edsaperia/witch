@@ -7,6 +7,7 @@ import { hash2 } from "../random";
 import { fighting } from "./targeting";
 import { FIGHT } from "../movement";
 import { actionsOf, actionRole, actionReach, type CreatureAction } from "./actions";
+import { ageProfile } from "./age";
 
 export interface RolePreferences { tempo: number; withdraw: number; rejoin: number; rest: number }
 export interface TeamState { seed: number; round: number; phase: Phase; at: number; cycleAt: number; nextAt: number; members: number[]; actions: Record<number, CreatureAction | undefined>; ready: Record<number, Record<string, number>>; roles: Record<number, Role>; used: number[]; withdrawn: Record<number, number> }
@@ -18,10 +19,11 @@ export function teamOf(state: CombatState, id: number): TeamState | undefined { 
 export function chooseTeamActions(members: readonly Creature[], seed: number, round: number, ready: (c: Creature, action: CreatureAction) => boolean = () => true): Record<number, CreatureAction | undefined> {
   const actions: Record<number, CreatureAction | undefined> = {};
   let active = 0;
-  const priority = (c: Creature) => -Math.log(Math.max(1e-9, hash2(c.id, round, seed))) / Math.max(0.1, rolePreferences(c.species).tempo);
+  const priority = (c: Creature) => -Math.log(Math.max(1e-9, hash2(c.id, round, seed))) / Math.max(0.1, rolePreferences(c.species).tempo * ageProfile(c.level).tempo);
   const order = [...members].sort((a, b) => priority(a) - priority(b) || a.id - b.id);
   for (const c of order) {
-    const choices = actionsOf(c.species).filter(a => ready(c, a)).map(action => ({action, weight: action.weight * (c.level === 1 ? action.youngWeight : 1)}));
+    const age = ageProfile(c.level);
+    const choices = actionsOf(c.species).filter(a => ready(c, a)).map(action => ({action, weight: action.weight * (c.level === 1 ? action.youngWeight : 1) * (action.delivery === "ranged" ? age.rangedWeight : 1) * (action.attack === "species" ? age.composedWeight : 1)}));
     const total = choices.reduce((n, x) => n + Math.max(0, x.weight), 0);
     if (!total || active >= SPACING.team.active) { actions[c.id] = undefined; continue; }
     let pick = hash2(c.id, round, seed + 1620) * total;
@@ -74,7 +76,7 @@ export function stepTeams(state: CombatState, w: CombatWorld, data: PacksData, c
     const target = members[0].fight!.target!;
     const position = target.kind === "witch" ? w.witches?.find(v => v.id === target.id) : target.kind === "creature" ? w.creatures?.[target.id] : undefined;
     const rhythms = members.map(c => data.rhythms[data.kinds[c.species].rhythm] ?? data.rhythms.steady);
-    const tempo = Math.max(0.1, members.reduce((sum, c) => sum + rolePreferences(c.species).tempo, 0) / members.length);
+    const tempo = Math.max(0.1, members.reduce((sum, c) => sum + rolePreferences(c.species).tempo * ageProfile(c.level).tempo, 0) / members.length);
     const tell = rhythms.reduce((sum, rhythm) => sum + rhythm.tell, 0) / rhythms.length / tempo;
     const rest = rhythms.reduce((sum, rhythm) => sum + rhythm.lull, 0) / rhythms.length / tempo;
     const enter = (phase: Phase, until: number) => { team!.phase = phase; team!.at = w.time; team!.nextAt = until; };

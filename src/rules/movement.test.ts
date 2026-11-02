@@ -139,7 +139,7 @@ describe("creature movement (Stage 5)", () => {
     expect(pulsed).toBe(true);
   })), 60000);
 
-  it("gives a boar's charge momentum: it builds speed, carries on past her, brakes and comes round in an arc (Ed, 2026-10-05)", () => {
+  it("gives a boar's charge momentum: it builds speed, carries on past her, brakes and comes round in an arc (Ed, 2026-10-05)", withCombatRoles({boar: "melee"}, () => {
     const g = quiet(), boar = pick(g, "boar", 1, 30, 0), M = MOVEMENT.profiles.boar.move!;
     let px = boar.x, pz = boar.z, pv = 0, ph = NaN, worstAccel = 0, worstTurn = 0, top = 0, past = 0, flips = 0, face = boar.facing, braked = false;
     run(g, 6, () => {
@@ -160,5 +160,5 @@ describe("creature movement (Stage 5)", () => {
     expect(braked).toBe(true);
     expect(worstTurn).toBeLessThan((M.turn! * Math.PI) / 180 * 1.2 + 0.5); // turning in an arc, not on the spot
     expect(flips).toBeLessThan(6); // (no flickering left-right)
-  }, 60000);
+  }), 60000);
 });

@@ -6,6 +6,8 @@ import type { Tuning } from "./tuning";
 import { hash2 } from "./random";
 import { bodyRadius } from "./spacing";
 import { profileOf } from "./movement";
+import { ageProfile } from "./combat/age";
+import type { Telegraph } from "./attacks/engine";
 export interface MotionProfile {
   radius: number; period: number; phaseSpread: number; radialWave: number; lobes: number; stretch: number;
   headingFollow: number; bearing: number; sweep: number; laneSpread: number; trailGap: number; sideGap: number;
@@ -33,6 +35,14 @@ export const spacingOn = (t: Tuning): boolean => t.combatSpacing ?? SPACING.on;
 type Body = Pick<Creature, "species" | "level"> & Partial<Pick<Creature, "boss" | "leashed">>;
 export type Point = { x: number; z: number };
 export interface WaitingHazard extends Point { radius: number; endX?: number; endZ?: number }
+/** Read the engine's actual warning geometry, including child attacks, rather than an old weapon's footprint. */
+export function telegraphHazard(warning: Telegraph): WaitingHazard {
+  const s = warning.shape;
+  if (s.type === "segment" || s.type === "path") return {x: s.x, z: s.z, endX: s.x2 ?? s.x, endZ: s.z2 ?? s.z, radius: (s.width ?? s.r ?? 2) / 2};
+  let radius = s.r ?? s.width ?? 1;
+  if (s.points) for (let i = 0; i + 1 < s.points.length; i += 2) radius = Math.max(radius, Math.hypot(s.points[i] - s.x, s.points[i + 1] - s.z));
+  return {x: s.x, z: s.z, radius};
+}
 
 /** One geometry response for body boundaries, telegraphed discs and telegraphed lanes. */
 export function hazardAvoidance(c: Creature, hazards: readonly WaitingHazard[], t: Tuning, data: SpacingData = SPACING): Point {
@@ -76,11 +86,16 @@ export function drawnRadius(c: Body, t: Tuning, data: SpacingData = SPACING): nu
 export const bodyGap = (a: Body, b: Body, t: Tuning, data: SpacingData = SPACING): number => drawnRadius(a, t, data) + drawnRadius(b, t, data) + data.clearance;
 
 const profileCache = new WeakMap<object, Map<string, MotionProfile>>();
-export function waitingProfile(c: Pick<Creature, "species">, data: SpacingData = SPACING): MotionProfile {
+export function waitingProfile(c: Pick<Creature, "species"> & Partial<Pick<Creature, "level">>, data: SpacingData = SPACING): MotionProfile {
   let cache = profileCache.get(data.motion);
   if (!cache) profileCache.set(data.motion, (cache = new Map()));
-  let profile = cache.get(c.species);
-  if (!profile) { profile = { ...data.motion.default, ...data.motion.species[c.species] }; cache.set(c.species, profile); }
+  const key = `${c.species}/${c.level ?? ""}`;
+  let profile = cache.get(key);
+  if (!profile) {
+    const base = { ...data.motion.default, ...data.motion.species[c.species] }, age = ageProfile(c.level);
+    profile = {...base, radius: base.radius * age.roam, period: base.period / age.roam, turn: base.turn * age.turn, centerShift: base.centerShift * age.closePass};
+    cache.set(key, profile);
+  }
   return profile;
 }
 /** Common cadence: continuous travel or a configured movement/rest cycle; no species/type branch. */
