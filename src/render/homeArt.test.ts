@@ -3,6 +3,8 @@ import { entTreehouseSprites, witchSprites } from "./homeArt";
 import { createHash } from "node:crypto";
 import { loadStyle } from "./style";
 import type { MakeCanvas } from "./artBuild";
+import { PILE_SLOTS, wornGenome } from "../rules/clothesPile";
+import { defaultGenome } from "../app/defaultLook";
 
 // A canvas enough for the baker: its image data kept as put.
 const mk: MakeCanvas = (w, h) => {
@@ -33,4 +35,17 @@ describe("her preview (witchSprites quick: worn till her whole set is in)", () =
     // standing, still the one frame a facing (the preview's point: a tenth of the drawing)
     expect(new Set(witch.foot.idle.towards.map(i => sprites[i])).size).toBe(1);
   });
+});
+
+describe("the first morning's hat lying on the floor (rules/wakeUp.ts hatOnFloor)", () => {
+  // Ed's playtest of v7061, a fresh game: "hat has not appeared in first hat spawn point". Her hat still to put on (in the pile), she
+  // was drawn by a look with no hat at all, so her hat-off frames had no hat to lie on the floor (render/view/witch.ts hatFrame).
+  it("her worn look keeps its hat's shape while it lies there, so her hat-off frames have it lying", () => {
+    const look = defaultGenome(), pile = [...PILE_SLOTS];
+    expect((wornGenome(look, pile) as { hat: { shape: string } }).hat.shape).toBe("none"); // (in the pile, nowhere: bare-headed)
+    const lying = wornGenome(look, pile, true) as { hat: { shape: string }; accessories: Record<string, unknown> };
+    expect(lying.hat.shape).toBe((look as { hat: { shape: string } }).hat.shape);
+    expect(lying.accessories.nightie).toBe(true); // (the rest still in the pile)
+    expect(witchSprites(loadStyle(), lying, true, mk).witch.hat).toBeGreaterThanOrEqual(0);
+  }, 120000);
 });
