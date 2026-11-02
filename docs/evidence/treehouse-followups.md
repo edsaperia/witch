@@ -24,6 +24,13 @@ The existing host stepGame movement branch sets its per-witch deck fall.on=true 
 7. treehouse: “is one floor: from the Terrace she walks up the trunk…” → explicitly walls-on, same walk constraints.
 8. treehouse: “takes her flying again when she walks off the Terrace's open rim…” → explicitly walls-on only in its forced-fall circle fixture, same circle recovery assertions.
 
+## CI follow-up on the same defaults milestone
+
+Full CI41435633030 shard3 found three additional implicit-default failures after the fast-path merge. No product source fault is inferred: the crown render test passed H.look as its disabled control, but H.look is now enabled; the two broom input tests pushed for three seconds against absent walls, flew off, then pressed rise to descend.
+
+- render/treehouseLook: “supplies full indoor clearing…” now explicitly sets indoor/approach false only for its disabled-control call; all uniform assertions unchanged.
+- platform/inputHouse: the shared fixture for its26 tests explicitly selects walls-on, matching the suite's stated wall-push/rise contract. This retains both pad/keys broom assertions and all no-broom/station/rise assertions. No expected values or gameplay controls changed. Open-platform exits remain covered by the actual host kit regression and all14 direct room-edge contracts.
+
 ## Visible text
 
 Toggle notes: former default-off trial wording → on by default, chosen by Ed on 2 November; wall note keeps the same broom/fall explanation. Slider note: “Only affects its enabled Treehouse look trial.” → “Adjusts the corresponding Treehouse look setting while it is enabled.” Labels unchanged. Changelog adds “The treehouse now has open platforms, a fuller crown and clearer approaches by default.” and “Walking in the treehouse is 20% faster.”
