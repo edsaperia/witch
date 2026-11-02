@@ -4,6 +4,16 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import YAML from 'yaml';
 import {metric,summary} from '../behaviour/results.mjs';
+import {shouldRunReport} from '../behaviour/schedule.mjs';
+
+test('scheduled reports skip old prototypes, while manual dispatch always runs',()=>{
+  const now=Date.parse('2026-11-02T12:00:00Z');
+  assert.equal(shouldRunReport('schedule','2026-11-01T11:59:59Z',now),false);
+  assert.equal(shouldRunReport('schedule','2026-11-01T12:00:00Z',now),true);
+  assert.equal(shouldRunReport('schedule','2026-11-02T11:00:00Z',now),true);
+  assert.equal(shouldRunReport('workflow_dispatch','2020-01-01T00:00:00Z',now),true);
+  assert.equal(shouldRunReport('schedule','invalid',now),true);
+});
 
 test('valid measurements outside every reference are data, not thrown failures',()=>{
   for(const [operator,value,bound]of [['>=',0,3],['>',0,1],['<',9,3.5]]){
@@ -30,6 +40,10 @@ test('workflow stays nightly/manual and survey discovery stays outside release t
   const workflow=YAML.parse(fs.readFileSync('.github/workflows/behaviour-report.yml','utf8'));
   assert.deepEqual(Object.keys(workflow.on).sort(),['schedule','workflow_dispatch']);
   assert.equal(workflow.jobs.report.needs,undefined);
+  const steps=workflow.jobs.report.steps;
+  assert.equal(steps.find(s=>s.name==='Measure behaviour with one worker').if,"steps.source.outputs.run == 'true'");
+  assert.match(steps.find(s=>s.name==='Save measurements, summary and execution log').if,/outputs.run != 'false'/);
+  assert.match(steps.find(s=>s.name==='Update one standing nightly observation').if,/outputs.run != 'false'/);
   const config=fs.readFileSync('tools/behaviour/config.mjs','utf8');
   assert.match(config,/maxWorkers:1/);assert.match(config,/\.behaviour\.ts/);
   assert.doesNotMatch(fs.readFileSync('vite.config.ts','utf8'),/behaviour/);

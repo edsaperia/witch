@@ -14,4 +14,6 @@ The first command uses a separate Vitest configuration, one worker and `*.behavi
 
 Outside-reference values are informational and leave the command successful. Missing, nonfinite or failed measurements are execution errors and fail the standalone reporting command, preserving that distinction. The independent workflow runs at 04:47 UTC nightly against a resolved prototype SHA or manually against the selected revision. It is never invoked by PR/build/release CI. Its artifacts last 14 days. Scheduled errors or observations update one standing canonical issue comment; passing nights stay quiet unless recovering that comment.
 
+Ed's 2 November pre-release correction (1632#6577571686): scheduled runs skip successfully when prototype's latest commit is over 24 hours old. This uses his expressly permitted age shortcut, not a claim that the SHA was compared with the last report. Skips install/run/upload nothing and post no comment. Manual dispatch always runs; invalid date metadata fails open so it cannot silently suppress a report.
+
 The workflow becomes schedulable after it reaches the default branch. A local run or a PR check does not prove a scheduled run occurred. Actual cloud timing savings require comparable CI measurements; historical file totals and local timings are not cloud savings.
