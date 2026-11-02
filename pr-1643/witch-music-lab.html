@@ -9521,6 +9521,15 @@ registerProcessor("witch-fof", WitchFof);
 
   // config/tuning.json
   var tuning_default = {
+    mushroomLight: {
+      haloStrength: 0.8,
+      poolStrength: 0.45,
+      capGlow: 4.8,
+      radius: 1,
+      height: 1,
+      complement: 1,
+      testRow: false
+    },
     mapAreas: 10,
     map: {
       shape: "circle",
@@ -12496,34 +12505,8 @@ registerProcessor("witch-fof", WitchFof);
     }
   };
 
-  // config/playtest-render.json
-  var playtest_render_default = {
-    chainTransitionSeconds: 0.5,
-    chainGroundHeight: 0.15,
-    stumpIconMinPixels: 16,
-    chainLiftStagger: 0.25,
-    mushroomSpotGain: 4.8,
-    mushroomHaloStrength: 0.8,
-    mushroomPoolStrength: 0.45,
-    mushroomHaloRadius: 1,
-    mushroomHaloHeight: 1,
-    mushroomComplement: 1,
-    mushroomTestRow: false
-  };
-
-  // src/rules/mushroomLight.ts
-  var MUSHROOM_LIGHT_DEFAULTS = {
-    haloStrength: playtest_render_default.mushroomHaloStrength,
-    poolStrength: playtest_render_default.mushroomPoolStrength,
-    capGlow: playtest_render_default.mushroomSpotGain,
-    radius: playtest_render_default.mushroomHaloRadius,
-    height: playtest_render_default.mushroomHaloHeight,
-    complement: playtest_render_default.mushroomComplement,
-    testRow: playtest_render_default.mushroomTestRow
-  };
-
   // src/rules/tuning.ts
-  var TUNING = { ...tuning_default, mushroomLight: { ...MUSHROOM_LIGHT_DEFAULTS } };
+  var TUNING = tuning_default;
 
   // tools/music-lab/analyse.ts
   var BANDS2 = [60, 250, 1e3, 4e3, 1e4, 2e4];
