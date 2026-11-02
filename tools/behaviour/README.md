@@ -7,6 +7,7 @@ Run from the repository root:
 ```
 node tools/behaviour/run.mjs
 npx vitest run tools/ci/behaviour-report.test.ts --maxWorkers=1
+npx tsc -p tools/behaviour/tsconfig.json
 ```
 
 The first command uses a separate Vitest configuration, one worker and `*.behaviour.ts` discovery outside the blocking test configuration. It retains the original radius-map setup, seed 123, 0.1-second sampling over 60/600 seconds for sea-life cues and 60 seeds × ABC for melodies. No browser or audio device is used. It records actual counts, ratios, sample metadata, exact Git SHA, tracked-dirty state, elapsed wall time and historical references in `out/behaviour/`. `summary.md` is readable; `run.log` preserves execution output. Every attempt removes its own previous result filenames before starting.

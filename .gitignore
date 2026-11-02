@@ -17,3 +17,4 @@ tools/art-lab/dist/
 tools/music-lab/dist/
 dist-*/
 /.art-check-results/
+/out/behaviour/
