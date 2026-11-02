@@ -8,6 +8,13 @@
 - Witch is played **in the browser first**, so it is quick to build and share. Nothing is chosen that would make a later port to other platforms impossible.
 - Ed has designed and directed games but not developed one. The coordinator brings game-development practice and says when a choice goes against it.
 
+## Tests and behaviour reports (Ed, 2026-11-02)
+
+1. The builder who changes a system owns its tests.
+2. When Ed changes a design, the brief lists the tests that pin the old rule.
+3. Outcome statistics never block a release.
+4. Every REPORT lists the tests it changed or removed, with a reason.
+
 ## Pitch
 
 A roguelite that crosses a **creature collector** with **tower defence / real-time strategy**. The player moves around a map, finds creatures, collects them and levels them up, and **leashes** them to locations, where they defend the player's home against incoming enemies.

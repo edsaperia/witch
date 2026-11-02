@@ -1,38 +1,38 @@
-// The sea life's sounds (Ed, 2026-10-07: dolphins off the east coast, a kraken off the west), cued from art builder 4's
-// timetable (rules/seaLife.ts): lying by the east coast she hears the dolphins' splashes, by the west the kraken now and then,
-// and inland neither.
-import { describe, expect, it } from "vitest";
-import { newGame } from "../../rules/game";
-import { TUNING } from "../../rules/tuning";
-import { beachOf } from "../../rules/mapShape";
-import { SfxCues } from "./sfxCues";
-import { facing } from "../../test/coast";
-import type { Sfx } from "./sfx";
+// M4 (Ed, 2026-11-02): report generated occurrence counts, retaining direct range and cue contracts.
+import { beforeAll, afterEach, describe, expect, it, vi } from "vitest";
+import * as timetable from "../../rules/seaLife";
+import { seaLifeListener } from "../../test/seaLifeCues";
 
-const heard = (at: "east" | "west" | "inland", secs: number) => {
-  // Keep the coast-sized fixture: east/west beach geometry and a point 600 m inland are part of the sound-range test.
-  const g = newGame(123, TUNING), B = beachOf(g.map.bounds, g.tuning)!, p = facing(B.land, at === "west" ? Math.PI : 0), d = at === "inland" ? 600 : 5;
-  g.witch = { ...g.witch, x: p.x - p.nx * d, z: p.z - p.nz * d, seated: false, mode: "ground", lift: 0, stargazing: true };
-  const n = { splash: 0, groan: 0, pour: 0 };
-  const sfx = new Proxy({}, { get: (_, k: string) => k === "splash" ? () => n.splash++ : k === "krakenGroan" ? () => n.groan++ : k === "krakenPour" ? () => n.pour++ : () => {} }) as unknown as Sfx;
-  const cues = new SfxCues(sfx);
-  for (let t = 0; t < secs; t += 0.1) { g.clock.time = t; cues.update(g, t); }
-  return n;
-};
+let listener: ReturnType<typeof seaLifeListener>;
+beforeAll(() => { listener = seaLifeListener(); });
+afterEach(() => { vi.restoreAllMocks(); });
 
-describe("the sea life's sounds", () => {
-  it("by the east coast, the dolphins' splashes, now and then", () => {
-    const n = heard("east", 60);
-    expect(n.splash).toBeGreaterThanOrEqual(3);
-    expect(n.groan).toBe(0);
+describe("the sea life's direct cue and range contracts", () => {
+  it("keeps kraken events off the east coast and dolphin events off the west", () => {
+    listener.place("east");
+    for (const time of [1, 75, 150]) expect(timetable.krakenRising(listener.game, listener.beach, time)).toBeNull();
+    listener.place("west");
+    for (const time of [1, 8.5, 17]) expect(timetable.dolphinLeaps(listener.game, listener.beach, time)).toEqual([]);
   });
-  it("by the west coast, the kraken's groan and the water pouring off it, rarely", () => {
-    const n = heard("west", 600);
-    expect(n.groan).toBeGreaterThanOrEqual(1);
-    expect(n.pour).toBeGreaterThanOrEqual(n.groan);
-    expect(n.splash).toBe(0);
+  it("routes one supplied dolphin leap once, without a kraken cue", () => {
+    listener.place("east");
+    const w = listener.game.witch;
+    vi.spyOn(timetable, "dolphinLeaps").mockReturnValue([{ start: 1, dur: 1.4, x: w.x + 8, z: w.z, tx: 0, tz: 1, length: 6, height: 2.2 }]);
+    vi.spyOn(timetable, "krakenRising").mockReturnValue(null);
+    expect(listener.listen([0, 1, 1, 1.1])).toEqual({ splash: 1, groan: 0, pour: 0 });
   });
-  it("inland, nothing", () => {
-    expect(heard("inland", 120)).toEqual({ splash: 0, groan: 0, pour: 0 });
+  it("routes a supplied kraken's groan and first tentacle pour once, without a dolphin cue", () => {
+    listener.place("west");
+    const w = listener.game.witch;
+    vi.spyOn(timetable, "dolphinLeaps").mockReturnValue([]);
+    vi.spyOn(timetable, "krakenRising").mockReturnValue({ tentacles: [{ start: 1, dur: 14, x: w.x - 8, z: w.z, side: 1 }], head: null, tx: 0, tz: 1 });
+    expect(listener.listen([0, 1, 1, 1.1])).toEqual({ splash: 0, groan: 1, pour: 1 });
+  });
+  it("hears neither inland, even with supplied events beside her", () => {
+    listener.place("inland");
+    const w = listener.game.witch;
+    vi.spyOn(timetable, "dolphinLeaps").mockReturnValue([{ start: 1, dur: 1.4, x: w.x, z: w.z, tx: 0, tz: 1, length: 6, height: 2.2 }]);
+    vi.spyOn(timetable, "krakenRising").mockReturnValue({ tentacles: [{ start: 1, dur: 14, x: w.x, z: w.z, side: 1 }], head: null, tx: 0, tz: 1 });
+    expect(listener.listen([0, 1, 1.1])).toEqual({ splash: 0, groan: 0, pour: 0 });
   });
 });

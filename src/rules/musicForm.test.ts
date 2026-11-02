@@ -169,23 +169,8 @@ describe("a knockdown: the record scratched, silence, a new record from the top 
 });
 
 describe("the melodies' pace (Ed, 2026-10-09: \"keep the melodies relatively slow, but not always. Use whole notes and triplets quite often\")", () => {
-  it("is mostly slow, with whole notes and triplets often, and some busier bars", () => {
-    let notes = 0, whole = 0, triplet = 0, short = 0, phrases = 0;
-    for (let seed = 0; seed < 60; seed++) for (const L of "ABC") {
-      phrases++;
-      for (const n of formPhrase(style, seed, L)) if (n) {
-        notes++;
-        if (n.dur >= 12) whole++;
-        if (n.dur % 1) triplet++;
-        if (n.dur <= 2) short++;
-      }
-    }
-    const perBar = notes / (phrases * 8);
-    expect(perBar).toBeLessThan(3.5); // (relatively slow: a few notes a bar)
-    expect(whole / phrases).toBeGreaterThan(1); // (a whole note or more a phrase)
-    expect(triplet / notes).toBeGreaterThan(0.15);
-    expect(short).toBeGreaterThan(0); // (not always slow)
-  });
+  // M4, Ed 2026-11-02: the unchanged 60-seed ABC pace survey is now in
+  // tools/behaviour/music.behaviour.ts; sampled proportions never block a release.
 
   it("plays triplets straight, three in the time of two", () => {
     for (const seed of seeds) {
