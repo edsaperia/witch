@@ -1,0 +1,16 @@
+{
+  "pr": 1682,
+  "group": "Leash chains",
+  "decisions": [
+    {
+      "id": "chainFall",
+      "pr": 1682,
+      "group": "Leash chains",
+      "label": "Chain drop spread",
+      "note": "How far out a travelling follower's chain, hanging from its sigil in her stack, reaches the ground for every metre it falls: 0 drops straight down, higher spreads it out (Ed, 2026-11-02: \"fall to the ground quickly and become their walking path\").",
+      "control": { "type": "slider", "min": 0, "max": 2, "step": 0.05 },
+      "default": 0.5,
+      "apply": { "knob": "leash.ranks.chain.fall" }
+    }
+  ]
+}

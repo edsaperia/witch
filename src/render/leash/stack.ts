@@ -6,7 +6,7 @@ import { hash2 } from "../../rules/random";
 import { LOAD_DEFAULT } from "../load";
 import type { LeashView } from "../leash";
 import renderKnobs from "../../../config/playtest-render.json";
-import { groundLinks, travelPose } from "./travelPose";
+import { sigilPath, travelPose } from "./travelPose";
 import { easeRoute } from "../routeEase";
 import { bowOf, drawChain, stepChain, type Chain } from "./chain";
 import { DISC } from "./glyphs";
@@ -140,8 +140,9 @@ export function drawBond(lv: LeashView, time: number, slotPos: Map<number, THREE
       }
     }
     // Travelling (rules/travel.ts; Ed, 2026-10-05: "the 'leash' graphic could become their travel
-    // path"): the leash runs along its route to her or its sigil, a dotted line on the ground
-    // flowing that way, shortening as it walks; joining her posse again, a pop and back to the thread.
+    // path"): the leash hangs from its sigil (in her stack, or placed) down to the ground and lies along its route to it, shortening
+    // as it walks (Ed, 2026-11-02: "it should still attach to their sigils, but fall to the ground quickly and become their walking
+    // path"; travelPose.ts sigilPath); joining her posse again, it lifts back to the hanging chain.
     const ground = !!c.travelling;
     if (!ground) lv.routes.delete(id);
     const d = Math.hypot(c.x - lp.x, c.z - lp.z);
@@ -162,7 +163,7 @@ export function drawBond(lv: LeashView, time: number, slotPos: Map<number, THREE
         const plan = [c, ...(R ? R.points.slice(Math.min(R.next, R.points.length - 1), -1) : []), lp];
         const eased = easeRoute(lv.routes.get(id), plan, time, ROUTE_EASE, lv.routeScratch);
         lv.routes.set(id, eased.shape);
-        target = groundLinks(eased.line, link);
+        target = sigilPath(from, eased.line, link, CK.fall);
       } else {
         if (ch.pose?.ground) ch.links = []; // Lift toward a fresh physical chain at the current pins.
         stepChain(ch, Math.ceil((span * (1 + CK.slack * (1 - strain))) / link), link, from.x, from.y, from.z, c.x, 0.5, c.z, arc, lv.frameDt, CK);

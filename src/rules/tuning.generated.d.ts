@@ -928,6 +928,7 @@ export type SchemaTuning = {
         "arcPull": number;
         "iterations": number;
         "jump": number;
+        "fall": number;
       };
     };
   };
