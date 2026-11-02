@@ -6,7 +6,7 @@ All four switches remain OFF. This is a review candidate, not visual acceptance 
 
 - Treehouse look: fade the whole crown indoors, fill the close crown notch, reveal floors on flight approach, open platforms without upright walls. Fade duration, bark opacity, reveal distance/softness/raggedness are adjustable in the same group.
 - Leaves and strings share a spreading soft noise edge; bark retains its adjustable opacity. State/uniform vectors are reused. The new outline-distance routine allocates no objects; its call is skipped with approach off.
-- Approach proximity is measured from the authored room/branch outlines, not only the hub. Floors are drawn in world space before landing; interaction prompts remain indoors-only.
+- Approach proximity is measured from the authored room/branch outlines, not only the hub. Floors and bark edges are drawn in world space before landing, in the normal opaque depth pass so uncleared leaves can still cover them. Furniture and interaction prompts remain indoors-only.
 - With platforms open, all room edges reuse the existing movement exit. The host supplies the existing per-witch broom/fall choice. Only a fall-start records an optional safe edge origin; existing fall timing/thud/fell and the old circle fallback remain. No multiplayer files changed. The multiplayer owner must confirm optional fall-origin transport and consistent trial settings for guests before online use.
 - The whole-crown setting did not remove the dancefloor open-sky reservation. View.ensureCrown supplies that reservation; rules/crown.sightClearance projects it along sight rays, including with gap=false. The notch switch removes it from close geometry. This explains a possible channel by source, not proof it is the visual symptom Ed reported.
 - The horizon retains a separately built original source only when the notch switch is enabled, with matching warm light. Landmark baking suppresses/restores all trial uniforms. All-off geometry inputs are identical; pixel parity remains a cloud check.
@@ -14,6 +14,8 @@ All four switches remain OFF. This is a review candidate, not visual acceptance 
 ## Validation and limits
 
 Two new direct-contract files; no existing test expectations changed. Tests cover default-off settings, fade endpoints, exact original input off, the sight-cut contract, disabled/ground/out-of-range flight clearing, translated outlines, upright-layer selection and each of the 14 room shapes. Guest-room test setup uses the existing authorized floor accessor, not a network simulation. Existing crown-fade and standing-geometry contracts are checked separately.
+
+CI smoke on eb3a7e546 reported an uncompiled fragment. Source inspection found the crown-wire call still passing two arguments to the updated three-argument shared clearing helper; that call is corrected and both string-light consumers have a static interface contract. This is not a local GPU compile or a claimed cloud smoke pass. Crown materials now carry diagnostic names.
 
 No local browser, game build, art render, full suite, smoke or performance run. Exact-head CI and canonical cloud checks remain required. No default flip or release requested.
 

@@ -337,6 +337,7 @@ export class CrownView {
   /** How far the hole round her is open indoors (0 to 1, by the same fade). */
   private herW = 0;
   private lookFade = 0;
+  private spreadRadius = 1;
   private readonly flatY = new THREE.Vector3();
   private readonly flatO = new THREE.Vector3();
   private readonly back = new THREE.Vector3();
@@ -357,13 +358,15 @@ export class CrownView {
       uLook: { value: new THREE.Vector4(0, 1, 1, 0) }, uLookShape: { value: new THREE.Vector4(40, 0.25, 0.12, 0) }, uLookCenter: { value: new THREE.Vector2() },
       uLookWorldO: { value: new THREE.Vector3() }, uLookWorldX: { value: new THREE.Vector3(1, 0, 0) }, uLookWorldZ: { value: new THREE.Vector3(0, 0, 1) },
     };
-    const lobeMat = new THREE.ShaderMaterial({ vertexShader: LOBE_VERT, fragmentShader: LOBE_FRAG, uniforms: this.uniforms });
-    const barkMat = new THREE.ShaderMaterial({ vertexShader: BARK_VERT, fragmentShader: BARK_FRAG, uniforms: this.uniforms });
+    const lobeMat = new THREE.ShaderMaterial({ name: "oak-crown-leaves", vertexShader: LOBE_VERT, fragmentShader: LOBE_FRAG, uniforms: this.uniforms });
+    const barkMat = new THREE.ShaderMaterial({ name: "oak-crown-bark", vertexShader: BARK_VERT, fragmentShader: BARK_FRAG, uniforms: this.uniforms });
     this.lobes = new THREE.Mesh(lobeGeometry(crown, outline.rooms), lobeMat);
     this.bark = new THREE.Mesh(barkGeometry(crown, outline.rooms), barkMat);
     for (const m of [this.lobes, this.bark]) { m.frustumCulled = false; m.name = "crown"; }
     this.meshes = [this.bark, this.lobes];
     this.bulbs = crownBulbs(crown, spacing, 0, lights);
+    for (const l of crown.lobes) this.spreadRadius = Math.max(this.spreadRadius, Math.hypot(l.x - cx, l.z - cz) + l.r);
+    for (const b of this.bulbs) this.spreadRadius = Math.max(this.spreadRadius, Math.hypot(b.x - cx, b.z - cz));
   }
 
   /** How many triangles and lobes it draws (for ?perf and the report). */
@@ -396,7 +399,7 @@ export class CrownView {
     const dx = (her?.x ?? world.o.x) - world.o.x, dz = (her?.z ?? world.o.z) - world.o.z;
     const px = dx * world.ex.x + dz * world.ex.z, pz = dx * world.ez.x + dz * world.ez.z;
     (U.uLookCenter.value as THREE.Vector2).set(px, pz);
-    (U.uLook.value as THREE.Vector4).set(this.lookFade, 2 * (this.crown.dome.rx + this.crown.dome.rz) + Math.hypot(px - this.crown.dome.cx, pz - this.crown.dome.cz), look?.bark ?? 1, approach);
+    (U.uLook.value as THREE.Vector4).set(this.lookFade, (this.spreadRadius + Math.hypot(px - this.crown.dome.cx, pz - this.crown.dome.cz)) * (1 + (look?.ragged ?? 0.12) * 0.5), look?.bark ?? 1, approach);
     (U.uLookShape.value as THREE.Vector4).set(look?.radius ?? 40, look?.softness ?? 0.25, look?.ragged ?? 0.12, look?.indoor ? 1 : 0);
     (U.uLookWorldO.value as THREE.Vector3).copy(world.o); (U.uLookWorldX.value as THREE.Vector3).copy(world.ex); (U.uLookWorldZ.value as THREE.Vector3).copy(world.ez);
     const fading = this.lookFade > 0 || approach > 0;

@@ -9,6 +9,7 @@
 // the object she's at, its name and E; a placeholder's line in a bubble a few seconds when she uses it; the bed's ring filling as
 // E is held (rules/houseRooms.ts stepBed).
 import { approachStrength, houseApproachDistance, showHouseLayer } from "../rules/treehouseLook";
+import { setApproachDepth } from "./treehouseLook";
 import APPROACH_OUTLINE from "../../config/house/outline.json";
 import { NEED_BAG } from "../rules/kit";
 import * as THREE from "three";
@@ -168,6 +169,7 @@ export class HouseRoomsView {
   private quads: Quad[] = [];
   private hub = -1;
   private noWalls = false;
+  private previewFloor = false;
   private hatsKey = "";
   /** A hat on loan lying on the hats' floor, sparkling (render/loanSparkle.ts; Ed, 2026-10-24). */
   private sparkle: LoanSparkle | null = null;
@@ -298,6 +300,11 @@ export class HouseRoomsView {
     const look = t.treehouse.house?.look;
     const preview = !!look?.approach && !w.perch && w.mode !== "ground" && !!d?.house?.rooms && approachStrength(true, true, houseApproachDistance(w.x, w.z, d.x, d.z, HOUSE_ROOMS.turn ?? 0, APPROACH_OUTLINE.rooms, APPROACH_OUTLINE.branches), look?.radius ?? 40) > 0;
     const shown = inside || preview;
+    if (this.previewFloor !== preview) {
+      this.previewFloor = preview;
+      const floorMat = this.floor.material as THREE.MeshBasicMaterial;
+      setApproachDepth(floorMat, preview, true); setApproachDepth(this.mat, preview, false);
+    }
     const late = v.shaderLandingLimited, share = v.landingHouseShare, arrivalNow = v.landingPresentationMs + g.clock.time * 1000;
     const world = (px: number, pz: number, h: number): V3 => { const p = fromPlan(d!, px, pz); return { ...p, y: groundHeight(p.x, p.z) + d!.h + h }; };
     const g0 = d ? groundHeight(d.x, d.z) : 0;
@@ -312,7 +319,7 @@ export class HouseRoomsView {
     };
     const floorShare = this.floorArt && this.floorCompiled ? Math.min(1, Math.max(0, (arrivalNow - this.floorArrivalAt) / 800)) : 0;
     const terraceMaterial = this.terraceFloor.material as THREE.MeshBasicMaterial;
-    if (terraceMaterial.transparent !== late) { terraceMaterial.transparent = late; terraceMaterial.needsUpdate = true; }
+    if (terraceMaterial.transparent !== (late && inside)) { terraceMaterial.transparent = late && inside; terraceMaterial.needsUpdate = true; }
     this.loadingFloor.visible = !!(late && d?.house?.rooms && w.perch && share * floorShare < 1);
     if (this.loadingFloor.visible) {
       const b = loadingFloorBounds([...HOUSE_ROOMS.rooms, ...HOUSE_ROOMS.corridors], d!.r), pos = this.loadingFloor.geometry.getAttribute('position') as THREE.BufferAttribute;
@@ -321,9 +328,9 @@ export class HouseRoomsView {
     }
     this.mat.opacity = late ? share : 1;
     for (const p of this.parts) p.mesh.visible = shown;
-    this.furniture.visible = shown;
-    this.workshop.group.visible = shown;
-    this.brewing.group.visible = shown;
+    this.furniture.visible = inside;
+    this.workshop.group.visible = inside;
+    this.brewing.group.visible = inside;
     this.floor.visible = this.terraceFloor.visible = shown;
     if (!shown) {
       this.box.style.display = "none"; this.plan = null; this.sparkle?.draw([], 0, 1); v.usePrompt.id = "";

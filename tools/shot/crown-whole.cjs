@@ -31,7 +31,8 @@ const ALL = process.env.LOOK ? { off: "", indoor: "d_lookIndoor=1", notch: "d_lo
       if (await page.evaluate(() => window.witch.game.clock.paused)) { await page.keyboard.press("Enter"); await page.waitForFunction(() => !window.witch.game.clock.paused, null, { timeout: 60000 }).catch(() => {}); }
       const said = await page.evaluate(() => window.witch.lastShot ?? window.witch.shot("room:terrace"));
       if (!said.ok) throw new Error(said.say);
-      const step = (n, c = {}) => page.evaluate(([n, c]) => { const w = window.witch; for (let i = 0; i < n; i++) w.frame({ moveX: 0, moveZ: 0, toggleMode: false, zoom: 0, ...c }, 1 / 60, i === n - 1); }, [n, c]);
+      let heldPose = false;
+      const step = (n, c = {}) => page.evaluate(([n, c, held]) => { const w = window.witch; for (let i = 0; i < n; i++) w.frame({ moveX: 0, moveZ: 0, toggleMode: false, zoom: 0, ...c }, held ? 0 : 1 / 60, i === n - 1); }, [n, c, heldPose]);
       const settle = async () => { for (let round = 0, calm = 0; calm < 2 && round < 60; round++) { await step(10); if ((await page.evaluate(() => window.witch.view.assets.pending)) === 0) calm++; else { calm = 0; await page.waitForTimeout(1500); } } await step(30); };
       const put = (dx, dz, mode) => page.evaluate(([dx, dz, mode]) => { const g = window.witch.game, T = g.map.treehouse, b = g.witches[0].body; g.witches[0].body = { ...b, x: T.x + dx, z: T.z + dz, vx: 0, vz: 0, mode, lift: mode === "treetop" ? 1 : 0, perch: false, seated: false }; }, [dx, dz, mode]);
       const shot = async scene => { await settle(); await page.evaluate(() => window.witch.view.renderer.getContext().finish()); await page.screenshot({ path: path.join(out, `${scene}-${name}.png`), timeout: 300000 }); log(`${scene}-${name}`); };
@@ -62,8 +63,11 @@ const ALL = process.env.LOOK ? { off: "", indoor: "d_lookIndoor=1", notch: "d_lo
           if (!result.ok) throw new Error(result.say); await shot(room);
         }
         await step(1, { toggleMode: true }); await step(30); await shot("takeoff");
-        await put(0, 1200, "treetop"); await shot("horizon-south");
-        await put(0, 1200, "ground"); await shot("horizon-ground");
+        heldPose = true; // No coast clamp while drawing the far comparison pose. Fade already settled on takeoff.
+        for (const mode of ["treetop", "ground"]) {
+          const result = await page.evaluate(mode => { const w = window.witch, t = w.game.map.treehouse; return w.shot("at:" + t.x + "," + (t.z + 1200) + (mode === "treetop" ? ",treetop" : "")); }, mode);
+          if (!result.ok) throw new Error(result.say); await shot(mode === "treetop" ? "horizon-south" : "horizon-ground");
+        }
       }
       if (errors.length) { failed = true; log(`page errors: ${errors.join(" | ")}`); }
       await page.close();
