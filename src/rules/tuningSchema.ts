@@ -4,6 +4,10 @@
 import type { Schema } from "./schema";
 
 export const TUNING_OVER: Record<string, Partial<Schema>> = {
+  "combatWaiting.reachScale": { minimum: 0, maximum: 3 },
+  "combatWaiting.areaGrowth": { minimum: 0, maximum: 1 },
+  "combatWaiting.passPower": { minimum: 1, maximum: 64 },
+  "combatWaiting.passDepth": { minimum: 0, maximum: 1 },
   "map.shape": { enum: ["circle", "square", "zoo"] },
   "light.mood": { enum: ["spooky", "plain"] },
   "suspects.seeSolid": { enum: ["off", "all", "circle", "rest"] },

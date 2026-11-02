@@ -950,6 +950,12 @@ export type SchemaTuning = {
       "lead": number;
     };
   };
+  "combatWaiting": {
+    "reachScale": number;
+    "areaGrowth": number;
+    "passPower": number;
+    "passDepth": number;
+  };
   "creatureMomentum": {
     "on": boolean;
     "turn": number;

@@ -1806,6 +1806,20 @@ The fight's scale and speed [1]: fights are drawn and played at the ground camer
 | `fight.leap.contact` | boolean |  |
 | `fight.leap.lead` | number | 0 to … |
 
+### `combatWaiting`
+
+Waiting movement favours room beyond default invitation reach while allowing deliberate close passes.
+
+1. Ed, 2026-11-02: "creatures should be moving most of the time, and tend to be outside of her (default bag) range if they're not attacking"
+reachScale multiplies dash distance times charges plus default invitation range; areaGrowth adds a fraction of area radius beyond that reference, without clamping small areas. passPower concentrates the smooth close-pass pulse; passDepth sets how far that pulse relaxes the outward preference. Species routes, speed and turning remain in the pack profiles.
+
+| knob | type | range |
+|---|---|---|
+| `combatWaiting.reachScale` | number | 0 to 3 |
+| `combatWaiting.areaGrowth` | number | 0 to 1 |
+| `combatWaiting.passPower` | number | 1 to 64 |
+| `combatWaiting.passDepth` | number | 0 to 1 |
+
 ### `creatureMomentum`
 
 Creatures chasing her carry momentum on their run-in and wind-up, so she can dodge past them.

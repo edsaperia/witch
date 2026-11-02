@@ -1,6 +1,7 @@
 // Ed, 2026-11-01: bigger bodies keep their distance by moving through more of the arena.
 // Drawing calibration is committed data, never dependent on art-worker readiness or a browser.
 import raw from "../../config/packs.json";
+import tuningRaw from "../../config/tuning.json";
 import type { Creature } from "./creatures";
 import type { Tuning } from "./tuning";
 import { hash2 } from "./random";
@@ -16,6 +17,7 @@ export interface MotionProfile {
   pathWeight?: number;
 }
 export interface WaitingGroup { seed: number; index: number; count: number; gap: number; until: number; minimum?: number }
+export interface WaitingContext { dashReach: number; inviteReach: number; areaRadius: number; speed: number; parameters?: Tuning["combatWaiting"] }
 
 export interface SpacingData {
   on: boolean;
@@ -94,7 +96,7 @@ export function waitingDrive(c: Creature, time: number, data: SpacingData = SPAC
   return { speed: m.speed * (moving ? 1 : m.restSpeed), turn: m.turn, airborne: moving && m.lift > 0 };
 }
 /** Shared continuous pack path, local formation offsets and return envelope. Shape comes entirely from numeric parameters. */
-export function waitingSlot(c: Creature, p: Point, want: number, time: number, scale: number, data: SpacingData = SPACING, heading?: Point | null, group?: WaitingGroup): Point {
+export function waitingSlot(c: Creature, p: Point, want: number, time: number, scale: number, data: SpacingData = SPACING, heading?: Point | null, group?: WaitingGroup, context?: WaitingContext): Point {
   const m = waitingProfile(c, data), seed = group?.seed ?? hash2(c.id, 11, 1620), index = group?.index ?? 0, count = Math.max(1, group?.count ?? 1);
   const dir = seed < 0.5 ? 1 : -1, phase = time * Math.PI * 2 / m.period * dir + seed * Math.PI * 2;
   const slotPhase = phase + index / count * Math.PI * 2 * m.phaseSpread;
@@ -103,9 +105,17 @@ export function waitingSlot(c: Creature, p: Point, want: number, time: number, s
   const gap = group?.gap ?? data.clearance;
   const r = Math.max(want * m.rangeBias + m.radius * scale, gap * count / (2 * Math.PI)) * (1 + m.radialWave * Math.cos(m.lobes * slotPhase));
   const rank = index - (count - 1) / 2;
-  const x = p.x + Math.cos(a) * (r + rank * m.sideGap * gap) + Math.sin(a) * index * m.trailGap * gap + Math.cos(seed * Math.PI * 2) * r * m.centerShift;
-  const z = p.z + Math.sin(a) * (r * m.stretch + rank * m.sideGap * gap) - Math.cos(a) * index * m.trailGap * gap + side * m.laneSpread * scale + Math.sin(seed * Math.PI * 2) * r * m.centerShift;
-  const left = group ? group.until - time : Infinity, blend = Math.max(0, Math.min(1, left / m.returnLead)), ease = blend * blend * (3 - 2 * blend);
+  let x = p.x + Math.cos(a) * (r + rank * m.sideGap * gap) + Math.sin(a) * index * m.trailGap * gap + Math.cos(seed * Math.PI * 2) * r * m.centerShift;
+  let z = p.z + Math.sin(a) * (r * m.stretch + rank * m.sideGap * gap) - Math.cos(a) * index * m.trailGap * gap + side * m.laneSpread * scale + Math.sin(seed * Math.PI * 2) * r * m.centerShift;
+  // A soft outward preference, periodically relaxed for a deliberate close pass. Only the goal moves.
+  const settings = context?.parameters ?? tuningRaw.combatWaiting;
+  const reference = context ? (context.dashReach + context.inviteReach) * settings.reachScale : 0;
+  const room = reference + settings.areaGrowth * Math.max(0, (context?.areaRadius ?? 0) - reference);
+  const pass = Math.pow((1 + Math.cos(slotPhase)) / 2, settings.passPower) * settings.passDepth;
+  const ox = x - p.x, oz = z - p.z, length = Math.hypot(ox, oz, data.epsilon), outward = room * (1 - pass);
+  x += ox / length * outward; z += oz / length * outward;
+  const travel = context ? Math.max(0, Math.hypot(c.x - p.x, c.z - p.z) - want) / Math.max(1, context.speed) : 0;
+  const left = group ? group.until - time : Infinity, blend = Math.max(0, Math.min(1, left / (m.returnLead + travel))), ease = blend * blend * (3 - 2 * blend);
   const bearing = Math.atan2(c.z - p.z, c.x - p.x), sx = p.x + Math.cos(bearing) * want, sz = p.z + Math.sin(bearing) * want;
   const result = { x: sx + (x - sx) * ease, z: sz + (z - sz) * ease }, dx = result.x - p.x, dz = result.z - p.z, distance = Math.hypot(dx, dz), minimum = Math.max(m.near * scale, group?.minimum ?? 0);
   if (ease > 0 && distance < minimum) { const angle = distance > data.epsilon ? Math.atan2(dz, dx) : bearing; result.x = p.x + Math.cos(angle) * minimum; result.z = p.z + Math.sin(angle) * minimum; }

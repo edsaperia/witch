@@ -115,6 +115,8 @@ export interface Fight {
   readyAt: number;
   /** Winding up: the game time it lands or flies, and where it was aimed then (a shot flies at that point). */
   windupUntil: number;
+  /** Actual preparation start, for warning waves with modified wind-up durations. */
+  windupAt?: number;
   aimX: number;
   aimZ: number;
   /** A wild legend's move being wound up (Stage 5), for the view's telegraph. */

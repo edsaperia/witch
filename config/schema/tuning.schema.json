@@ -4861,6 +4861,39 @@
       "additionalProperties": false,
       "description": "The scale and speed fights are played at, with creatures running at about her speed."
     },
+    "combatWaiting": {
+      "type": "object",
+      "properties": {
+        "reachScale": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 3
+        },
+        "areaGrowth": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1
+        },
+        "passPower": {
+          "type": "number",
+          "minimum": 1,
+          "maximum": 64
+        },
+        "passDepth": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1
+        }
+      },
+      "required": [
+        "reachScale",
+        "areaGrowth",
+        "passPower",
+        "passDepth"
+      ],
+      "additionalProperties": false,
+      "description": "Waiting movement favours room beyond default invitation reach while allowing deliberate close passes."
+    },
     "creatureMomentum": {
       "type": "object",
       "properties": {
@@ -13676,6 +13709,7 @@
     "leash",
     "bond",
     "fight",
+    "combatWaiting",
     "creatureMomentum",
     "attackFx",
     "combat",
