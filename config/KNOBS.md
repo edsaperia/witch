@@ -1667,6 +1667,9 @@ Code: `rules/win.ts`, `docs/backlog/journey.md`, `rules/guidance.ts`
   1. the coordinator, 2026-10-29: "Given current settings, the motes from sigils don't do much" (Ed, relayed; the art director's motes pass, #1398 (tools/shot/motes.cjs measures them))
 - **`leash.ranks.embers.bright`**: The embers rising off rank sigils (on the ground, in her stack, over the rune stones): their colour times this.
   1. the coordinator, 2026-10-29: "Given current settings, the motes from sigils don't do much" (Ed, relayed; the art director's motes pass, #1398 (tools/shot/motes.cjs measures them))
+- **`leash.ranks.chain.fall`**: How far (m) along its walking path a travelling follower's chain, hanging from its sigil, reaches the ground for every metre it falls (0: straight down to where the path starts).
+  1. Ed, 2026-11-02: "I am on the ground, and the chains of my leashed creatures are attached to me instead of to their sigils. When I'm in the air, it should still attach to their sigils, but fall to the ground quickly and become their walking path." (v7061; 0.5 is the builder's first value, for Ed to set in play)
+  Steepest under the sigil and flat where it meets the ground, then along the path to the creature; 0.5 lands a chain from 3 m up 1.5 m out. Code: render/leash/travelPose.ts sigilPath
 - **`leash.ranks.embers.crowd`**: Past this many of her sigils put down, each one's embers thinned by the square root, so a crowd of them isn't noise (0: never).
   1. the coordinator, 2026-10-29: "Given current settings, the motes from sigils don't do much" (Ed, relayed; the art director's motes pass, #1398 (tools/shot/motes.cjs measures them))
 
@@ -1748,6 +1751,7 @@ Code: `rules/win.ts`, `docs/backlog/journey.md`, `rules/guidance.ts`
 | `leash.ranks.chain.arcPull` | number | 0 to … |
 | `leash.ranks.chain.iterations` | number | 0 to … |
 | `leash.ranks.chain.jump` | number | 0 to … |
+| `leash.ranks.chain.fall` | number | 0 to … |
 
 ### `bond`
 

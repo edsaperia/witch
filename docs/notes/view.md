@@ -15,7 +15,7 @@ and reduced flashing disable it. No extra pass/target or gameplay change. See
 `docs/plans/heat-refraction-review.md` for the required unperformed cloud
 foreground/edge/combined-potion and crowded GPU/memory comparisons.
 
-On entering travel, an adult or youth’s displayed chain settles onto the eased ground route. At rejoin it rises from the sigil end first. The pose takes its time from the leash view and its duration from `config/playtest-render.json`. Reversing direction halfway starts from the visible links. Babies bypass the bond renderer.
+On entering travel, an adult or youth’s displayed chain settles onto the eased ground route. It stays pinned at its sigil, in her stack or placed, and hangs from there down to the ground, reaching it `leash.ranks.chain.fall` m along the route per metre fallen (0.5), then lies along the route to the creature (Ed, 2026-11-02: "the chains of my leashed creatures are attached to me instead of to their sigils. When I'm in the air, it should still attach to their sigils, but fall to the ground quickly and become their walking path"; `render/leash/travelPose.ts` `sigilPath`; until then it ended on the ground under her). At rejoin it rises from the sigil end first. The pose takes its time from the leash view and its duration from `config/playtest-render.json`. Reversing direction halfway starts from the visible links. Babies bypass the bond renderer.
 
 A wild stump shows only hostile fighters while any are left, then all eligible area creatures. The column still fades by distance. A ready stump’s music note has a separate on-screen check and minimum pixel width in `config/playtest-render.json`. Only the stump under the witch’s feet gets the cast prompt.
 
