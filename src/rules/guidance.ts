@@ -23,7 +23,7 @@
 import type { Game } from "./game";
 import { dressed, pileOut, type PileSlot } from "./clothesPile";
 import { deckOf } from "./treehouse";
-import { HOUSE_ROOMS, hasRooms, objectAt } from "./houseRooms";
+import { HOUSE_ROOMS, hasRooms, hatSlots, hatsOnFloor, objectAt } from "./houseRooms";
 import { hasBag, hasBroom, hasInvites } from "./kit";
 
 /** What a guidance pin is for (render/view/guidance.ts gives each its glyph). */
@@ -69,6 +69,15 @@ function hatGuide(g: Game, w: number): Guide {
   return HOUSE_ROOMS.layout?.hatPoints.length && d ? { kind: "dress", target: { x: d.x, z: d.z } } : { kind: "dress", target: { object: "hats" } };
 }
 
+/** Where a hat she's found lies in Ed's arrangement: the spawn point it was laid on (rules/houseRooms.ts addFloorHat), not the old
+ *  hats' area; null in the classic house, or where it isn't on a point (worn, lying elsewhere, queued for a free one). */
+function hatSpot(g: Game, w: number, id: string): { x: number; z: number } | null {
+  const W = g.witches[w];
+  if (!W || !HOUSE_ROOMS.layout?.hatPoints.length) return null;
+  const i = hatsOnFloor(W).indexOf(id), p = i >= 0 ? hatSlots(g.map.treehouse)[i] : undefined;
+  return p ? { x: p.x, z: p.z } : null;
+}
+
 /** How near the decks' seat she's at them (m): rules/wakeUp.ts atDecks's reach. */
 const AT_DECKS = 2.5;
 
@@ -93,7 +102,7 @@ export function guidanceOf(g: Game, w: number, save: GuideSave, unvisited: reado
   if (!hooks.invitationsReady(g, w)) return desk();
   if (!hooks.broomTaken(g, w)) return { kind: "lathe", target: { object: "lathe" } };
   const n = save.unseen[save.unseen.length - 1];
-  if (n) return { kind: n.kind, target: { object: n.at } };
+  if (n) { const p = n.kind === "hat" ? hatSpot(g, w, n.id) : null; return { kind: n.kind, target: p ?? { object: n.at } }; } // (a hat: where it lies)
   const d = deckOf(g.map, g.tuning);
   const at = d?.house?.desk ?? d?.seat; // (over the decks' desk in the house; her seat behind it is where she's at them)
   return at ? { kind: "decks", target: { x: at.x, z: at.z } } : null;
@@ -116,8 +125,10 @@ const nightOver = (g: Game): boolean => !!g.partyOver || (g.win?.phase === "won"
 export function seeGuide(g: Game, w: number, save: GuideSave): boolean {
   const b = g.witches[w]?.body, d = deckOf(g.map, g.tuning);
   if (!b?.perch || !d || !hasRooms(d) || !save.unseen.length) return false;
-  const here = objectAt(d, b.x, b.z)?.id;
-  const left = save.unseen.filter(n => n.at !== here);
+  const here = objectAt(d, b.x, b.z)?.id, W = g.witches[w]!;
+  // (a hat on its spawn point: been to once she's near enough to take it, rules/houseRooms.ts hatToTake; or once she wears it)
+  const been = (n: NewThing) => { const p = n.kind === "hat" ? hatSpot(g, w, n.id) : null; return p ? Math.hypot(b.x - p.x, b.z - p.z) <= g.tuning.leash.runeRadius : n.at === here || (n.kind === "hat" && !!HOUSE_ROOMS.layout && W.spells.hat === n.id); };
+  const left = save.unseen.filter(n => !been(n));
   if (left.length === save.unseen.length) return false;
   save.unseen = left;
   return true;

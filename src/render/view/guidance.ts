@@ -147,7 +147,7 @@ export class GuidePin {
     const L = this.view.leashView, seat = L.seatAt;
     if (guide?.kind === "decks" && seat) this.pin.target = { x: seat.x + L.seatSlide.x, z: seat.z + L.seatSlide.z, top: seat.y + L.seatSlide.y + DECKS_TOP };
     // At its target, the pin stays over the object (Ed, 2026-10-28), its tip clear above the use prompt's keycap there (render/houseRooms.ts).
-    const P = this.view.usePrompt, on = !!guide && !!P.id && P.id === ("object" in guide.target ? guide.target.object : guide.kind === "dress" ? "hats" : "decks"); // (by a lying hat, the prompt's the hats' area's: render/houseRooms.ts)
+    const P = this.view.usePrompt, on = !!guide && !!P.id && P.id === ("object" in guide.target ? guide.target.object : guide.kind === "dress" || guide.kind === "hat" ? "hats" : "decks"); // (by a lying hat, the prompt's the hats' area's: render/houseRooms.ts)
     this.pin.above = on ? P.top : null;
     // The morning's pins breathe (Ed, 2026-10-29: "morning routine pointers should pulse slightly (wake up to spell)"): every one
     // till the party spell, not the night's end's 🧭 and 💤; a gentle swell, half as much with reduce flashing (render/comfort.ts).

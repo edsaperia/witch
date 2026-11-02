@@ -6,7 +6,7 @@ import { afterEach, describe, expect, it } from "vitest";
 import { TUNING } from "./tuning";
 import { newGame as fullGame, stepGame, STEP, type Controls, type Game } from "./game";
 import { smallWorld } from "../test/worlds";
-import { HOUSE_ROOMS, hatSlots, installEdLayout, objectFront, objectWorld, useHats } from "./houseRooms";
+import { HAT_FLOOR, HOUSE_ROOMS, addFloorHat, hatSlots, hatsOnFloor, installEdLayout, objectFront, objectWorld, useHats } from "./houseRooms";
 import { usesEdLayout } from "../app/houseLayout";
 import { wakeInBedroom } from "./opening";
 import { startWake, WAKE_DEFAULT } from "./wakeUp";
@@ -110,6 +110,22 @@ describe("guidance pins", () => {
       // (and where it points she can take it: on her head, the pin moves on)
       expect(useHats(W, at, W.body.x, W.body.z, g.herTime, g.tuning.leash.runeRadius)?.kind).toBe("hatPicked");
       expect(W.hat.down).toBeNull();
+    });
+
+    it("a hat she's found: its pin points at the spawn point it lies on, and goes once she's near enough to take it", () => {
+      installEdLayout(usesEdLayout(new URLSearchParams()));
+      const g = up(true), W = g.witches[0], at = g.map.treehouse, id = HAT_FLOOR[0];
+      W.spells.hats = [id]; addFloorHat(W, id); // (found: laid on the lowest free point, rules/finds.ts)
+      const spot = hatSlots(at)[hatsOnFloor(W).indexOf(id)], area = objectWorld(HOUSE_ROOMS.objects.find(o => o.use.kind === "hats")!, at);
+      expect(Math.hypot(area.x - spot.x, area.z - spot.z)).toBeGreaterThan(10); // (rooms apart from the old hats' area)
+      const s: GuideSave = { unseen: [{ kind: "hat", id, at: "hats" }] };
+      expect(of(g, s)).toEqual({ kind: "hat", target: { x: spot.x, z: spot.z } });
+      standAt(g, "hats");
+      expect(seeGuide(g, 0, s)).toBe(false); // (the old area isn't where it is)
+      W.body = { ...W.body, x: spot.x + 0.5, z: spot.z, vx: 0, vz: 0 };
+      expect(atGuide(g, 0, of(g, s)!)).toBe(true);
+      expect(seeGuide(g, 0, s)).toBe(true);
+      expect(s.unseen).toEqual([]);
     });
   });
 
