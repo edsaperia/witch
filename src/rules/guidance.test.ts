@@ -112,6 +112,24 @@ describe("guidance pins", () => {
       expect(W.hat.down).toBeNull();
     });
 
+    // (Ed, 2026-11-02: "If there's a hat step but no hat lying anywhere then go to the next step")
+    it("a hat step with no hat lying anywhere: on to the next step, no pin at the old area", () => {
+      installEdLayout(usesEdLayout(new URLSearchParams()));
+      const g = newGame(123, TUNING), W = g.witches[0];
+      W.spells.hats = [];
+      g.party.spellAt = null; g.clock.paused = false; wakeInBedroom(g); startWake(g, g.herTime);
+      run(g, 0.1, { moveX: 1 }); run(g, WAKE_DEFAULT.stretch + 0.1);
+      g.wake!.styled = true;
+      for (const st of ["wardrobe", "shoeRack", "bags", "cloakPegs"]) wearFromStation(g.wake!, st);
+      W.hat.down = null; // (nowhere: the hat step has nothing to point at)
+      const G = of(g);
+      expect(G?.kind).not.toBe("dress");
+      expect(G && "object" in G.target ? G.target.object : null).not.toBe("hats");
+      // a found hat lying on no spawn point is passed over too, for the next new thing
+      const s: GuideSave = { unseen: [{ kind: "part", id: "p", at: "lathe" }, { kind: "hat", id: "nowhere", at: "hats" }] };
+      expect(guidanceOf(g, 0, s, [], { ...GUIDANCE_HOOKS, invitationsReady: () => true, broomTaken: () => true })).toEqual({ kind: "part", target: { object: "lathe" } });
+    });
+
     it("a hat she's found: its pin points at the spawn point it lies on, and goes once she's near enough to take it", () => {
       installEdLayout(usesEdLayout(new URLSearchParams()));
       const g = up(true), W = g.witches[0], at = g.map.treehouse, id = HAT_FLOOR[0];

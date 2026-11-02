@@ -64,9 +64,10 @@ export const FIRST_MORNING: readonly ({ dress: PileSlot | "styled"; at: string }
  *  hatSlots), the first morning's hat on the first free one (rules/wakeUp.ts hatOnFloor); the old Cloakroom hats' area is gone
  *  (Ed's playtest of v7061: the pin led to it, and the hat wasn't there; Ed, 2026-11-02: "we should remove the old cloakroom hats
  *  area"), so with no hat lying there's nothing to point at. The classic house lays it on the hats' floor itself: that object. */
-function hatGuide(g: Game, w: number): Guide {
+function hatGuide(g: Game, w: number): Guide | null {
   const d = g.witches[w]?.hat.down;
-  return HOUSE_ROOMS.layout?.hatPoints.length && d ? { kind: "dress", target: { x: d.x, z: d.z } } : { kind: "dress", target: { object: "hats" } };
+  if (!HOUSE_ROOMS.layout?.hatPoints.length) return { kind: "dress", target: { object: "hats" } };
+  return d ? { kind: "dress", target: { x: d.x, z: d.z } } : null; // (no hat lying anywhere: on to the next step, Ed 2026-11-02)
 }
 
 /** Where a hat she's found lies in Ed's arrangement: the spawn point it was laid on (rules/houseRooms.ts addFloorHat), not the old
@@ -95,14 +96,20 @@ export function guidanceOf(g: Game, w: number, save: GuideSave, unvisited: reado
   if (!k.yesterday && !pileOut(k)) { // (a game's first morning: no pile of last night's clothes to put on at once)
     for (const s of FIRST_MORNING) {
       if ("kit" in s) { if (s.kit === "desk" ? !hooks.invitationsReady(g, w) : !hooks.broomTaken(g, w)) return s.kit === "desk" ? desk() : { kind: "lathe", target: { object: "lathe" } }; }
-      else if (s.dress === "styled" ? !k.styled : !dressed(k) && !!k.pile?.includes(s.dress)) return s.dress === "hat" ? hatGuide(g, w) : { kind: "dress", target: { object: s.at } };
+      else if (s.dress === "styled" ? !k.styled : !dressed(k) && !!k.pile?.includes(s.dress)) {
+        if (s.dress !== "hat") return { kind: "dress", target: { object: s.at } };
+        const h = hatGuide(g, w); // (Ed, 2026-11-02: "If there's a hat step but no hat lying anywhere then go to the next step")
+        if (h) return h;
+      }
     }
   }
   // (later mornings: E at the pile dresses her at once; then her kit, the invitations before the broom)
   if (!hooks.invitationsReady(g, w)) return desk();
   if (!hooks.broomTaken(g, w)) return { kind: "lathe", target: { object: "lathe" } };
-  const n = save.unseen[save.unseen.length - 1];
-  if (n) { const p = n.kind === "hat" ? hatSpot(g, w, n.id) : null; return { kind: n.kind, target: p ?? { object: n.at } }; } // (a hat: where it lies)
+  // (a hat: where it lies; in Ed's arrangement one lying on no spawn point has nowhere to point, so it's passed over: Ed, 2026-11-02)
+  const placed = (n: NewThing) => n.kind !== "hat" || !HOUSE_ROOMS.layout?.hatPoints.length || !!hatSpot(g, w, n.id);
+  const n = [...save.unseen].reverse().find(placed);
+  if (n) { const p = n.kind === "hat" ? hatSpot(g, w, n.id) : null; return { kind: n.kind, target: p ?? { object: n.at } }; }
   const d = deckOf(g.map, g.tuning);
   const at = d?.house?.desk ?? d?.seat; // (over the decks' desk in the house; her seat behind it is where she's at them)
   return at ? { kind: "decks", target: { x: at.x, z: at.z } } : null;
