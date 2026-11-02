@@ -1,8 +1,8 @@
 # Saves, replay and robustness
 
-0 changes proposed, 5 groups to keep as they are.
+0 changes proposed, 6 groups to keep as they are.
 
-Format-check preview: core save files read in full; unrelated name-based assignments and recording integration remain to review. This is not the completed system audit.
+Core save, settings and replay setup/assertions reviewed. Borrowed visits and telephone boundaries remain with #1609; this page proposes no gameplay change.
 
 Timings are historical containing-file time, not savings. Partial-file and overlapping groups include other tests; do not add their times. Source counts are test templates, not expanded runs.
 
@@ -21,7 +21,7 @@ None in the reviewed groups.
 
 ### S1. Slot migration and isolation
 
-**12 tests · hard limits · ~0 s of CI.**
+**14 tests · hard limits · ~0 s of CI.**
 
 Examples: [Old save bytes survive migration.](../../src/app/saveSlots.test.ts#L30); [A corrupt slot cannot block another.](../../src/app/saveSlots.test.ts#L55); [An older tab preserves newer slots.](../../src/app/saveSlots.test.ts#L132).
 
@@ -59,7 +59,15 @@ Examples: [Won nights unlock islands; losses do not.](../../src/app/chartSave.te
 
 [Assertions, rationale and exact membership](semantic-groups.md#s5).
 
+### S6. Recorded inputs and retained playtest reports
 
-**Yes/no: Keep S1, S2, S3, S4, S5 as they are?** They protect slot isolation, exact save/replay continuation, safe checkpoints, equipment migrations and personal settings.
+**18 tests · hard limits · ~97 s of CI.**
+
+Examples: [A paused tape replays the identical state.](../../src/platform/inputRecording.test.ts#L18); [A checkpoint never hides replay divergence.](../../src/platform/inputRecording.test.ts#L76); [Report text survives an attachment-write failure.](../../src/app/playtestComments.test.ts#L111).
+
+[Assertions, rationale and exact membership](semantic-groups.md#s6).
+
+
+**Yes/no: Keep S1, S2, S3, S4, S5, S6 as they are?** They protect slot isolation, exact save/replay continuation, safe checkpoints, equipment migrations, personal settings and retained report text.
 
 [Old/current ruling comparisons](semantic-groups.md#saves-replay-robustness-ruling-review). No change happens before Ed rules.

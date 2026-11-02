@@ -15,7 +15,7 @@ Audit only. Any implementation follows a separate, small system PR after Ed rule
 | Kind | Declarations |
 |---|---:|
 | hard limits | 20 |
-| current rules | 510 |
+| current rules | 509 |
 | outcome stats | 2 |
 | leftovers | 1 |
 

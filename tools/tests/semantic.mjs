@@ -1,12 +1,13 @@
 // Render bounded human reviews with explicit case membership and undivided file timings.
 // Imported by node tools/tests/inventory.mjs; does not execute game code.
 export function reviewMembers(data, group) {
-  return data.files.filter(f=>group.files.includes(f.file)).flatMap(f=>f.cases.filter(c=>(!group.includeLines || group.includeLines.includes(c.line)) && !group.excludeLines?.includes(c.line) && !group.excludeIds?.includes(c.id)).map(c=>({...c,file:f.file})));
+  return data.files.filter(f=>group.caseIds || group.files.includes(f.file)).flatMap(f=>f.cases.filter(c=>(!group.caseIds || group.caseIds.includes(c.id)) && (!group.includeLines || group.includeLines.includes(c.line)) && !group.excludeLines?.includes(c.line) && !group.excludeIds?.includes(c.id)).map(c=>({...c,file:f.file})));
 }
 export function applyReviews(data,reviews) {
   const used=new Set();
   for(const [system,review] of Object.entries(reviews)) for(const group of review.groups) {
     const members=reviewMembers(data,group);
+    if(group.caseIds && members.length!==group.caseIds.length)throw Error(`Missing semantic case in ${group.id}`);
     if(!members.length) throw Error(`Empty semantic group ${group.id}`);
     for(const example of group.examples) if(!members.some(c=>c.name===example)) throw Error(`Example missing in ${group.id}: ${example}`);
     for(const member of members) {
@@ -15,6 +16,12 @@ export function applyReviews(data,reviews) {
       const c=data.files.find(f=>f.file===member.file).cases.find(c=>c.id===member.id);
       Object.assign(c,{system,kind:group.kind,reason:group.reason,semanticGroup:group.id,currentness:'setup and assertions read; proposed decision awaits Ed',recommendation:group.question});
     }
+  }
+  for(const review of Object.values(reviews))for(const [owner,ids] of Object.entries(review.ownerCases??{}))for(const id of ids){
+    const c=data.files.flatMap(f=>f.cases).find(c=>c.id===id);
+    if(!c)throw Error(`Missing owner case ${id}`);
+    if(used.has(id))throw Error(`Owner case already grouped ${id}`);
+    Object.assign(c,{system:owner==='1622'?'combat':'multiplayer',owner:`#${owner}`,recommendation:`existing owner #${owner}; no parallel audit decision`});
   }
   return data;
 }

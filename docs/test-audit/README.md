@@ -14,17 +14,17 @@ Run `node tools/tests/inventory.mjs` to refresh; `--check` verifies generated ou
 
 ## System decisions
 
-- [Combat](combat.md): 194 declarations
-- [Creatures and movement](creatures-movement.md): 1005 declarations
+- [Combat](combat.md): 220 declarations
+- [Creatures and movement](creatures-movement.md): 1001 declarations
 - [Invites and party](invites-party.md): 152 declarations
-- [Legends](legends.md): 108 declarations
+- [Legends](legends.md): 86 declarations
 - [World, islands and lakes](world-islands-lakes.md): 69 declarations
 - [House and treehouse](house-treehouse.md): 178 declarations
-- [Music and audio](music-audio.md): 150 declarations
-- [UI, menus and controls](ui-menus-controls.md): 382 declarations
-- [Saves, replay and robustness](saves-replay-robustness.md): 72 declarations
-- [Multiplayer](multiplayer.md): 142 declarations
-- [Art and rendering checks](art-rendering.md): 533 declarations
+- [Music and audio](music-audio.md): 149 declarations
+- [UI, menus and controls](ui-menus-controls.md): 357 declarations
+- [Saves, replay and robustness](saves-replay-robustness.md): 86 declarations
+- [Multiplayer](multiplayer.md): 155 declarations
+- [Art and rendering checks](art-rendering.md): 532 declarations
 - [Tools and CI](tools-ci.md): 231 declarations
 
 The short system pages link to the exhaustive [case catalogue](cases.md) and [machine inventory](inventory.json). File timings live in the JSON. Review every cited assertion before granting a grouped deletion. No measured CI savings are claimed.

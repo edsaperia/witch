@@ -1,6 +1,6 @@
 {
   "saves-replay-robustness": {
-    "status": "Format-check preview: core save files read in full; unrelated name-based assignments and recording integration remain to review. This is not the completed system audit.",
+    "status": "Core save, settings and replay setup/assertions reviewed. Borrowed visits and telephone boundaries remain with #1609; this page proposes no gameplay change.",
     "protections": [
       "A slot change waits for the outgoing checkpoint; failed migration never replaces the original save bytes.",
       "A restored night preserves shared references, typed buffers, RNG cursors and identical future simulation.",
@@ -13,7 +13,8 @@
         "title": "Slot migration and isolation",
         "kind": "hard limits",
         "files": [
-          "src/app/saveSlots.test.ts"
+          "src/app/saveSlots.test.ts",
+          "src/ui/settingsSaves.test.ts"
         ],
         "excludeLines": [
           7
@@ -120,17 +121,40 @@
           "Old volumes migrate only once.",
           "Resuming preserves accessibility settings."
         ]
+      },
+      {
+        "id": "S6",
+        "title": "Recorded inputs and retained playtest reports",
+        "kind": "hard limits",
+        "files": [
+          "src/platform/inputRecording.test.ts",
+          "src/app/recordingHooks.test.ts",
+          "src/app/playtestComments.test.ts"
+        ],
+        "question": "Keep exact replay and report-retention protections unchanged?",
+        "reason": "Controlled inputs and fake timers prove identical replay, refusal of undeclared divergence, bounded tape/journal storage and exact retention of report text after attachment pressure or transaction failure. The long paused tape and synthetic 16–18 MiB bundles exercise explicit integrity/budget boundaries, not success statistics. The 600-second paused loop advances fake time; no real ten-minute run is needed.",
+        "examples": [
+          "keeps a ten-minute paused tape exact without expanding paused frames into the crash journal",
+          "rejects divergence before a labelled checkpoint instead of using it to repair the replay",
+          "commits text before attachments, exposes a real attachment-write error and reloads every word"
+        ],
+        "exampleLabels": [
+          "A paused tape replays the identical state.",
+          "A checkpoint never hides replay divergence.",
+          "Report text survives an attachment-write failure."
+        ]
       }
     ],
     "rulings": [
       "Current slot ruling: Ed, 2026-10-30, docs/notes/save-slots.md: ‘save slots that hold progress and settings’ and ‘By default open the previous one’. S1 directly tests this; the old single-save bytes remain migration input, not an obsolete rule to delete.",
       "Supersession checked: src/app/broomSave.test.ts describes ‘migration from the brooms before parts’; docs/notes/house.md records the 23 Oct Workshop/parts design. The test asserts Classic shape, retained colours and removal of the old spell. No positive old-broom gameplay assertion was found in S4.",
-      "Current compatibility contract: docs/notes/save-slots.md ‘accept matching SavedNight/NightSnapshot format versions across build numbers’. S2/S3 assert that behavior; the v5955/v6322 names are compatibility examples, not version gates."
+      "Current compatibility contract: docs/notes/save-slots.md ‘accept matching SavedNight/NightSnapshot format versions across build numbers’. S2/S3 assert that behavior; the v5955/v6322 names are compatibility examples, not version gates.",
+      "Report retention: playtestComments.test.ts keeps report text under attachment/count pressure and preserves unread storage. Its historical build equality is deliberately stricter than ordinary cross-build night saves: docs/notes/save-slots.md says comment restore retains separate staging and recording/build checks. No supersession of that diagnostic replay contract was found in these reviewed files."
     ],
-    "keepSummary": "slot isolation, exact save/replay continuation, safe checkpoints, equipment migrations and personal settings"
+    "keepSummary": "slot isolation, exact save/replay continuation, safe checkpoints, equipment migrations, personal settings and retained report text"
   },
   "legends": {
-    "status": "Format-check preview: reviewed the named core files and groups below; other legend-tagged files remain unreviewed. Combat behavior in legends.test.ts remains with #1622. This is not the completed system audit.",
+    "status": "Core legend and quest setup/assertions reviewed. Combat targeting, charge and route-integration cases remain with #1622; visual sprite checks and bot policies are listed with their corresponding systems. No test changes are made.",
     "protections": [
       "A legend area and its paired creature area share ownership, rage accounting and party borders.",
       "Circle lookup agrees with the complete search, and circle explanations follow the legend's state.",
@@ -167,9 +191,7 @@
           "src/rules/legendFit.test.ts",
           "src/rules/legendCircle.test.ts"
         ],
-        "excludeIds": [
-          "src/rules/legendFit.test.ts:34"
-        ],
+        "excludeIds": [],
         "question": "Keep the footprint, circle-size, indexed-lookup and explanation contracts?",
         "reason": "These compare geometry to the configured cap/margin and lookup to an exhaustive oracle. Coverage counts ensure the fixture visits circles; they are not measured gameplay success rates.",
         "examples": [
@@ -181,25 +203,28 @@
           "Every species has a measured footprint.",
           "Fast circle lookup matches complete search.",
           "Quest instructions ask for any age and no buff."
+        ],
+        "caseIds": [
+          "src/rules/legendFit.test.ts:13",
+          "src/rules/legendFit.test.ts:16",
+          "src/rules/legendFit.test.ts:23",
+          "src/rules/legendCircle.test.ts:16",
+          "src/rules/legendCircle.test.ts:38",
+          "src/rules/legendCircle.test.ts:61",
+          "src/rules/legendCircle.test.ts:82",
+          "src/rules/legendClearing.test.ts:19",
+          "src/rules/legendClearing.test.ts:44"
         ]
       },
       {
         "id": "L3",
-        "title": "Timed travel and generated scenery statistics",
+        "title": "Timed scenarios and generated scenery/quest statistics",
         "kind": "outcome stats",
         "files": [
           "src/rules/legendClearing.test.ts"
         ],
-        "includeLines": [
-          50,
-          81,
-          111,
-          158,
-          186,
-          206
-        ],
-        "question": "Move these six tests of baby travel times, grove averages, rim coverage and siege timing out of release gates? Yes means they run nightly as a nonblocking report; small rule and safety checks are retained separately.",
-        "reason": "Assertions include baby return within 20 s; following beyond circle+10 m after 25 s; a 150 s siege-to-rage scenario; grove mean >0.6/<0.08; rim/south coverage >80%; runestone-gap exceptions <1.5%. Mixed safety/rule assertions need extraction before any move, not deletion of the whole file.",
+        "question": "Move these eight scenery, travel and quest-distribution tests out of release gates? Yes makes their sampled times, averages and coverage a nightly report. Small boundary, ownership and current quest-cap checks stay blocking.",
+        "reason": "Assertions include baby return within 20 s; following beyond circle+10 m after 25 s; a 150 s siege-to-rage scenario; grove mean >0.6/<0.08; rim/south coverage >80%; runestone-gap exceptions <1.5%. Mixed safety/rule assertions need extraction before any move, not deletion of the whole file. questLater compares summed route depths across three seeds. quest.test compares median-distance ratios across five capped/uncapped maps (>0.85), while directly asserting the CURRENT default questCap===0. Preserve that default and finite-range assertions as small rules before moving the statistics.",
         "examples": [
           "each holds a wild baby of its legend's kind, which keeps to the circle, comes back in if pushed out, and is free only while leashed",
           "each swells the forest round it, strongest at its edge and easing smoothly out into the area's own, all the way round",
@@ -210,17 +235,27 @@
           "Generated groves meet average-strength targets.",
           "Almost all circles meet the runestone gap."
         ],
-        "action": true
+        "action": true,
+        "caseIds": [
+          "src/rules/legendClearing.test.ts:50",
+          "src/rules/legendClearing.test.ts:81",
+          "src/rules/legendClearing.test.ts:111",
+          "src/rules/legendClearing.test.ts:158",
+          "src/rules/legendClearing.test.ts:186",
+          "src/rules/legendClearing.test.ts:206",
+          "src/rules/questLater.test.ts:30",
+          "src/rules/quest.test.ts:119"
+        ]
       },
       {
         "id": "L4",
-        "title": "Retained radius-map comparison settings",
+        "title": "Retained comparison settings",
         "kind": "leftovers",
         "files": [
           "src/rules/legendShare.test.ts"
         ],
         "question": "Keep these two radius-map comparison tests, including explicit half/all-area settings, separate from authored-island rules?",
-        "reason": "The default assertion already requires 0.2. Half, 0.3 and 1 are explicit overrides for the retained radius-map selector; its header says authored islands deal their own legends. This is old-mode coverage, not evidence the default still uses the superseded half-share rule.",
+        "reason": "The default assertion already requires 0.2. Half, 0.3 and 1 are explicit overrides for the retained radius-map selector; its header says authored islands deal their own legends. This is old-mode coverage, not evidence the default still uses the superseded half-share rule. Explicit earlyQuest=false, questLater=false and stomp=true exercise retained options rather than asserting those are current defaults.",
         "examples": [
           "puts one in legends.share of the areas (Ed, 2026-10-08: about a fifth), never home, seeded, spread so they don't clump",
           "puts one in every area but home at 1, and differs by seed"
@@ -228,6 +263,13 @@
         "exampleLabels": [
           "Radius maps default to one-fifth legends.",
           "An explicit comparison can fill every area."
+        ],
+        "caseIds": [
+          "src/rules/legendShare.test.ts:21",
+          "src/rules/legendShare.test.ts:41",
+          "src/rules/earlyQuest.test.ts:48",
+          "src/rules/questLater.test.ts:44",
+          "src/rules/legends.test.ts:141"
         ]
       },
       {
@@ -249,13 +291,89 @@
           "The oversized-legend list stays exactly eleven species."
         ],
         "action": true
+      },
+      {
+        "id": "L6",
+        "title": "Quest completion, sleeping state and party-legend rules",
+        "kind": "current rules",
+        "caseIds": [
+          "src/rules/earlyQuest.test.ts:14",
+          "src/rules/earlyQuest.test.ts:29",
+          "src/rules/earlyQuest.test.ts:40",
+          "src/rules/earlyQuest.test.ts:44",
+          "src/rules/questLater.test.ts:14",
+          "src/rules/questDrop.test.ts:24",
+          "src/rules/questDrop.test.ts:32",
+          "src/rules/questDrop.test.ts:41",
+          "src/rules/questDrop.test.ts:52",
+          "src/rules/questDrop.test.ts:71",
+          "src/rules/questDrop.test.ts:80",
+          "src/rules/quest.test.ts:22",
+          "src/rules/quest.test.ts:34",
+          "src/rules/quest.test.ts:43",
+          "src/rules/quest.test.ts:52",
+          "src/rules/quest.test.ts:96",
+          "src/rules/sleeping.test.ts:31",
+          "src/rules/sleeping.test.ts:40",
+          "src/rules/sleeping.test.ts:46",
+          "src/rules/sleeping.test.ts:52",
+          "src/rules/partyLegend.test.ts:45",
+          "src/rules/partyLegend.test.ts:57",
+          "src/rules/partyLegend.test.ts:68",
+          "src/rules/partyLegend.test.ts:84",
+          "src/rules/partyLegend.test.ts:103",
+          "src/rules/partyLegend.test.ts:118",
+          "src/rules/legends.test.ts:63",
+          "src/rules/legends.test.ts:70",
+          "src/rules/legends.test.ts:90",
+          "src/rules/legends.test.ts:192",
+          "src/rules/legends.test.ts:206",
+          "src/rules/legends.test.ts:251",
+          "src/rules/legends.test.ts:359",
+          "src/rules/legends.test.ts:393",
+          "src/rules/legends.test.ts:410",
+          "src/rules/legends.test.ts:430",
+          "src/rules/legends.test.ts:450"
+        ],
+        "question": "Keep current legend and quest rules?",
+        "reason": "The setup isolates a legend, kin or gift and invokes the explicit transition: waves do not wake legends, kin restore sleep, only a placed sigil completes a quest at any age, no buff is awarded, and the 100-letter Easter egg has its own tether/release rules. Fixed steps here check the declared state/timer/boundary, not an uncontrolled win rate. The staggered five-second kin check is a per-frame work bound. Early-quest wording still says baby, but its assertion explicitly says any age; it does not enforce the retired age requirement.",
+        "examples": [
+          "completes on the very step its sigil is put down in the circle, its animal still far away",
+          "has the dream quest wake it happy, fighting for her, no buff (Ed, 2026-10-18; the creature stays hers), and stay open while it sleeps, soundsystem on or not (Ed, 2026-10-06)",
+          "below the egg threshold stays a route legend: no direct invite, chat or rune; the final letter alone creates the party legend"
+        ],
+        "exampleLabels": [
+          "Placing the sigil completes the quest immediately.",
+          "A completed quest wakes an ally and grants no buff.",
+          "Only the final Easter-egg letter permits legend pickup."
+        ]
       }
     ],
     "rulings": [
       "Supersession matched to L1: docs/notes/testing.md records the old diagnostic ‘incorrectly required physical cell equality’. Ed's 2026-10-26 replacement: paired areas are ‘one logical area’. sleepCells.test.ts now permits 14 raw differences on the largest fixture but requires zero logical mismatches. Keep the replacement regression; no remaining equality assertion in this reviewed group needs deleting.",
       "Supersession matched to L4: Ed, 2026-10-06, DESIGN.md: ‘about half of areas’; Ed, 2026-10-08: ‘more like 1/5’. legendShare.test.ts asserts S===0.2 before explicitly constructing half/all comparison maps. Both rulings are accounted for; the old citation alone is not an obsolete default.",
-      "Current sizing ruling, L2/L5: Ed, 2026-10-26, legendFit.test.ts: ‘Legend circles need to be larger. Often legends don't fit in them.’ legendAreas.test.ts checks the authored paired areas, allowing only elephant overflow in its five-map matrix. The exact eleven-giant radius-cap list needs a separate ruling, not an assumed deletion."
+      "Current sizing ruling, L2/L5: Ed, 2026-10-26, legendFit.test.ts: ‘Legend circles need to be larger. Often legends don't fit in them.’ legendAreas.test.ts checks the authored paired areas, allowing only elephant overflow in its five-map matrix. The exact eleven-giant radius-cap list needs a separate ruling, not an assumed deletion.",
+      "Concrete quest-cap supersession: DESIGN.md Quests are a gamble (6 Oct) describes a five-area tail cap; docs/notes/gameplay.md 31 Oct playtest item13 sets questCap to 0, ‘no distance tail cut’, while ‘Positive explicit caps remain supported and tested at 6’. quest.test.ts:119 already asserts default0 and explicitly builds cap6 comparison maps. Propose reporting its median ratios, retain default0/finite-distance protections. The seed162218 regression in questDrop.test.ts explicitly opts into cap6 to preserve Ed’s old coordinates and tests the 19 Oct placed-sigil rule; it does not pin cap6 as default.",
+      "Quest supersession: DESIGN.md Dreams lists the old quest making the placed creature join the area and the old quest closing at its wave (5 Oct); the 6 Oct replacement stays open while asleep, and the 18 Oct replacement keeps the creature hers and grants no buff. quest.test.ts:43/96, questDrop.test.ts:41 and legends.test.ts:251 assert the replacements. No positive removed-buff or wave-closes-quest assertion remains in these reviewed cases."
     ],
-    "keepSummary": "paired-area ownership, circle geometry and instructions, and deliberately retained radius-map comparisons"
+    "keepSummary": "paired-area ownership, circle geometry and instructions, deliberate comparison settings, quest completion and sleeping/Easter-egg state rules",
+    "ownerCases": {
+      "1622": [
+        "src/rules/legends.test.ts:50",
+        "src/rules/legends.test.ts:97",
+        "src/rules/legends.test.ts:118",
+        "src/rules/legends.test.ts:159",
+        "src/rules/legends.test.ts:177",
+        "src/rules/legends.test.ts:232",
+        "src/rules/legends.test.ts:311",
+        "src/rules/legends.test.ts:333",
+        "src/rules/legends.test.ts:379",
+        "src/rules/quest.test.ts:62",
+        "src/rules/quest.test.ts:78",
+        "src/rules/friendlyLegendRoute.test.ts:26",
+        "src/rules/friendlyLegendRoute.test.ts:37",
+        "src/rules/friendlyLegendRoute.test.ts:48"
+      ]
+    }
   }
 }

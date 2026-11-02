@@ -582,6 +582,54 @@ Static declarations only. All classifications and currentness are provisional. C
   - outcome stats; review simulation assertions; consider report after Ed rules. Currentness: unverified. Case runtime: unknown.
   - Cited ruling: none found in scoped comments; not proof that none exists.
 
+- **friendly legends: defend, engage, walk (Ed, 31 Oct) > %s legends use the long charge, with ordinary attacks unchanged (Ed item14)** — [src/rules/combat/friendlyLegend.test.ts:24](../../src/rules/combat/friendlyLegend.test.ts#L24) (parameterized template)
+  - current rules; keep pending design review. Currentness: unverified. Case runtime: unknown.
+  - Cited ruling: none found in scoped comments; not proof that none exists.
+
+- **friendly legends: defend, engage, walk (Ed, 31 Oct) > home guards use their own 85 m reach, never route, and leave calm creatures and their own kind alone** — [src/rules/combat/friendlyLegend.test.ts:40](../../src/rules/combat/friendlyLegend.test.ts#L40)
+  - current rules; keep pending design review. Currentness: unverified. Case runtime: unknown.
+  - Cited ruling: none found in scoped comments; not proof that none exists.
+
+- **friendly legends: defend, engage, walk (Ed, 31 Oct) > a charging %s home guard targets only where it can charge inside home and cannot cross its boundary** — [src/rules/combat/friendlyLegend.test.ts:51](../../src/rules/combat/friendlyLegend.test.ts#L51) (parameterized template)
+  - current rules; keep pending design review. Currentness: unverified. Case runtime: unknown.
+  - Cited ruling: none found in scoped comments; not proof that none exists.
+
+- **friendly legends: defend, engage, walk (Ed, 31 Oct) > keeps absent-callback combat parity: an empty decision stands still and schedules the same recheck** — [src/rules/combat/friendlyLegend.test.ts:61](../../src/rules/combat/friendlyLegend.test.ts#L61)
+  - current rules; keep pending design review. Currentness: unverified. Case runtime: unknown.
+  - Cited ruling: none found in scoped comments; not proof that none exists.
+
+- **friendly legends: defend, engage, walk (Ed, 31 Oct) > walks only when no defence or engagement is needed, even during its attack cooldown** — [src/rules/combat/friendlyLegend.test.ts:69](../../src/rules/combat/friendlyLegend.test.ts#L69)
+  - current rules; keep pending design review. Currentness: unverified. Case runtime: unknown.
+  - Cited ruling: none found in scoped comments; not proof that none exists.
+
+- **friendly legends: defend, engage, walk (Ed, 31 Oct) > a friendly charger finishes braking then resumes the route instead of walking to its lair** — [src/rules/combat/friendlyLegend.test.ts:84](../../src/rules/combat/friendlyLegend.test.ts#L84)
+  - current rules; keep pending design review. Currentness: unverified. Case runtime: unknown.
+  - Cited ruling: none found in scoped comments; not proof that none exists.
+
+- **friendly legends: defend, engage, walk (Ed, 31 Oct) > joins the nearest route point, follows a bend towards the drawing tip, waits there and follows its growth** — [src/rules/combat/friendlyLegend.test.ts:92](../../src/rules/combat/friendlyLegend.test.ts#L92)
+  - current rules; keep pending design review. Currentness: unverified. Case runtime: unknown.
+  - Cited ruling: none found in scoped comments; not proof that none exists.
+
+- **friendly legends: defend, engage, walk (Ed, 31 Oct) > walks back along the route if its nearest join lies ahead of the tip** — [src/rules/combat/friendlyLegend.test.ts:107](../../src/rules/combat/friendlyLegend.test.ts#L107)
+  - current rules; keep pending design review. Currentness: unverified. Case runtime: unknown.
+  - Cited ruling: none found in scoped comments; not proof that none exists.
+
+- **friendly legends: defend, engage, walk (Ed, 31 Oct) > defends the witch before a nearer enraged enemy, including an attacker beyond its engagement radius** — [src/rules/combat/friendlyLegend.test.ts:114](../../src/rules/combat/friendlyLegend.test.ts#L114)
+  - current rules; keep pending design review. Currentness: unverified. Case runtime: unknown.
+  - Cited ruling: none found in scoped comments; not proof that none exists.
+
+- **friendly legends: defend, engage, walk (Ed, 31 Oct) > counts hunting as an attack and defends any witch, not just witch zero** — [src/rules/combat/friendlyLegend.test.ts:121](../../src/rules/combat/friendlyLegend.test.ts#L121)
+  - current rules; keep pending design review. Currentness: unverified. Case runtime: unknown.
+  - Cited ruling: none found in scoped comments; not proof that none exists.
+
+- **friendly legends: defend, engage, walk (Ed, 31 Oct) > engages wild attackers and enraged enemies at the inclusive 85 m boundary; calm wild creatures are left alone** — [src/rules/combat/friendlyLegend.test.ts:128](../../src/rules/combat/friendlyLegend.test.ts#L128)
+  - current rules; keep pending design review. Currentness: unverified. Case runtime: unknown.
+  - Cited ruling: none found in scoped comments; not proof that none exists.
+
+- **friendly legends: defend, engage, walk (Ed, 31 Oct) > does not defend an out-of-range witch against an out-of-range attacker, and cannot itself be targeted** — [src/rules/combat/friendlyLegend.test.ts:137](../../src/rules/combat/friendlyLegend.test.ts#L137)
+  - current rules; keep pending design review. Currentness: unverified. Case runtime: unknown.
+  - Cited ruling: none found in scoped comments; not proof that none exists.
+
 - **no creature jumps in a fight (Ed's playtest, 2026-10-29) > a step's move is never more than its fastest move (a lunge, a leap's arc) takes in a step** — [src/rules/combat/noTeleport.test.ts:18](../../src/rules/combat/noTeleport.test.ts#L18)
   - outcome stats; review simulation assertions; consider report after Ed rules. Currentness: unverified. Case runtime: unknown.
   - Cited ruling: file, line 1: // No creature jumps (Ed's playtest, 2026-10-29: "some animals seem to teleport. I saw it with the Ibex on the ibex island. I think after
@@ -793,11 +841,71 @@ Static declarations only. All classifications and currentness are provisional. C
   - outcome stats; review simulation assertions; consider report after Ed rules. Currentness: unverified. Case runtime: unknown.
   - Cited ruling: none found in scoped comments; not proof that none exists.
 
+- **friendly legend route integration > uses the actual curved ley route and drawing front, distinct from the wave pulse** — [src/rules/friendlyLegendRoute.test.ts:26](../../src/rules/friendlyLegendRoute.test.ts#L26)
+  - current rules; existing owner #1622; no parallel audit decision. Currentness: unverified. Case runtime: unknown.
+  - Cited ruling: none found in scoped comments; not proof that none exists.
+
+- **friendly legend route integration > stepGame walks an idle happy legend along the route without its ordinary roam overriding the move** — [src/rules/friendlyLegendRoute.test.ts:37](../../src/rules/friendlyLegendRoute.test.ts#L37)
+  - outcome stats; existing owner #1622; no parallel audit decision. Currentness: unverified. Case runtime: unknown.
+  - Cited ruling: none found in scoped comments; not proof that none exists.
+
+- **friendly legend route integration > does not teleport an unseen route legend home or apply ordinary roam; party and leashed legends keep their old ownership** — [src/rules/friendlyLegendRoute.test.ts:48](../../src/rules/friendlyLegendRoute.test.ts#L48)
+  - hard limits; existing owner #1622; no parallel audit decision. Currentness: unverified. Case runtime: unknown.
+  - Cited ruling: none found in scoped comments; not proof that none exists.
+
 - **a friendly area's wave > enrages none of its creatures: they never become stragglers the night can't get past (seed 8919, the hare's area)** — [src/rules/friendlySiege.test.ts:16](../../src/rules/friendlySiege.test.ts#L16)
   - outcome stats; review simulation assertions; consider report after Ed rules. Currentness: unverified. Case runtime: unknown.
   - Cited ruling: file, line 1: // A friendly area's wave (Ed, 2026-10-11, fix (a)): its legend's quest done before its wave, its creatures stay as party
   - Possible later evidence: [DESIGN.md:359](../../DESIGN.md#L359): - **Conversion, by the spell or a wave, the same rule:** the stone becomes a soundsystem; its babies turn friendly; its wild young and adults turn hostile and besiege it, as a wave does; and **every friend sigil falls and scatters** over its runestone clearing on free hex cells (Ed, 2026-10-28: "It's fine if they're scattered around the whole runestone clearing"; `cast.scatter`: its open ground out to 20 m (Ed's playtest, 2026-10-29: "sigils scatter too widely"; 34 free 6 m hex cells there, room for the biggest stacks, about 20), in a seeded order so they spread however many there are, never in the wedge just north of the soundsystem where its sprite would hide them), into `g.loose`, for any. candidate only: same-topic wording and later inline date; not a verified superseding ruling.
   - Possible later evidence: [DESIGN.md:54](../../DESIGN.md#L54): - **Knocked out** (Ed, 2026-10-04; since Ed's playtest of v4821, 2026-10-26: "When I get knocked out and my leashed animals are put down, I think they should become happy instead of leashed to a point by a floor sigil"): at no hits left she collapses where she is (no more hits, no input). **Her sigil stack comes down from the bottom up, about a second each** (`knockout.releaseEach`; since Ed's decisions of 2026-10-07, `releaseEach` 0: all at once as she goes down), each animal she carried **turning happy where it stands**: no sigil is made; its rune is at its feet, so she can leash it again by picking that up, as after an invite; meanwhile it idles near where it was dropped (Ed, later that d. candidate only: same-topic wording and later inline date; not a verified superseding ruling.
+
+- **legends, redesigned (Ed, 2026-10-05; #87) > a friendly legend's attacks actually land on a wild witch-attacker, in grammar and classic modes** — [src/rules/legends.test.ts:50](../../src/rules/legends.test.ts#L50)
+  - outcome stats; existing owner #1622; no parallel audit decision. Currentness: unverified. Case runtime: unknown.
+  - Cited ruling: none found in scoped comments; not proof that none exists.
+
+- **legends, redesigned (Ed, 2026-10-05; #87) > when angry, shoot her from afar (into neighbouring areas), slowly; never soundsystems, never happy creatures; and stay in their area** — [src/rules/legends.test.ts:97](../../src/rules/legends.test.ts#L97)
+  - outcome stats; existing owner #1622; no parallel audit decision. Currentness: unverified. Case runtime: unknown.
+  - Cited ruling: none found in scoped comments; not proof that none exists.
+
+- **legends, redesigned (Ed, 2026-10-05; #87) > when angry with her out of reach, bombard the nearest standing soundsystem within bombard.range (Ed, 2026-10-06: "Legend bombards, but prioritises you")** — [src/rules/legends.test.ts:118](../../src/rules/legends.test.ts#L118)
+  - outcome stats; existing owner #1622; no parallel audit decision. Currentness: unverified. Case runtime: unknown.
+  - Cited ruling: name, line 118: when angry with her out of reach, bombard the nearest standing soundsystem within bombard.range (Ed, 2026-10-06: "Legend bombards, but prioritises you")
+  - Possible later evidence: [docs/notes/island.md:21](../../docs/notes/island.md#L21): - **Zoo**: `?zoo` (Ed, 2026-10-13; laid out like the sea chart since Ed, 2026-10-26: `src/rules/zooMap.ts`, `src/rules/zoo.ts`, `config/zoo.json`; the mock: `previews/ed/zoo-map` on `claude/ed-shots`): every kind's island where the chart has it (`worldOf(world)`), its outline the chart's real coast where this browser has it (Ed, 2026-10-26: "We already know the real coastline shapes, can't we reuse them in the zoo without calculating anything?": the chart's worker keeps each island's biggest sea loop beside its outline, `app/chartCache.ts` `coastKey`/`keepCoast`, under the chart's own keys; the zoo's page reads them back before its map is made, at most 400 ms, `app/zooCoasts.ts`, and hands t. candidate only: same-topic wording and later inline date; not a verified superseding ruling.
+  - Possible later evidence: [DESIGN.md:54](../../DESIGN.md#L54): - **Knocked out** (Ed, 2026-10-04; since Ed's playtest of v4821, 2026-10-26: "When I get knocked out and my leashed animals are put down, I think they should become happy instead of leashed to a point by a floor sigil"): at no hits left she collapses where she is (no more hits, no input). **Her sigil stack comes down from the bottom up, about a second each** (`knockout.releaseEach`; since Ed's decisions of 2026-10-07, `releaseEach` 0: all at once as she goes down), each animal she carried **turning happy where it stands**: no sigil is made; its rune is at its feet, so she can leash it again by picking that up, as after an invite; meanwhile it idles near where it was dropped (Ed, later that d. candidate only: same-topic wording and later inline date; not a verified superseding ruling.
+
+- **legends, redesigned (Ed, 2026-10-05; #87) > fire each volley at up to attack.targets of the nearest (balance builder's values: 10 a hit, every 15 s)** — [src/rules/legends.test.ts:159](../../src/rules/legends.test.ts#L159)
+  - outcome stats; existing owner #1622; no parallel audit decision. Currentness: unverified. Case runtime: unknown.
+  - Cited ruling: none found in scoped comments; not proof that none exists.
+
+- **legends, redesigned (Ed, 2026-10-05; #87) > worn down, go back to sleep (angry or happy)** — [src/rules/legends.test.ts:177](../../src/rules/legends.test.ts#L177)
+  - current rules; existing owner #1622; no parallel audit decision. Currentness: unverified. Case runtime: unknown.
+  - Cited ruling: none found in scoped comments; not proof that none exists.
+
+- **legends, redesigned (Ed, 2026-10-05; #87) > when happy, engages an enraged enemy within 85 m and cannot itself be pursued or provoked** — [src/rules/legends.test.ts:232](../../src/rules/legends.test.ts#L232)
+  - outcome stats; existing owner #1622; no parallel audit decision. Currentness: unverified. Case runtime: unknown.
+  - Cited ruling: none found in scoped comments; not proof that none exists.
+
+- **charging legends' long charge (Ed, 2026-10-05; legends.json charge) > tramples everything in its lane once each (her, the wild alike), knocking them aside, through scenery** — [src/rules/legends.test.ts:311](../../src/rules/legends.test.ts#L311)
+  - outcome stats; existing owner #1622; no parallel audit decision. Currentness: unverified. Case runtime: unknown.
+  - Cited ruling: none found in scoped comments; not proof that none exists.
+
+- **charging legends' long charge (Ed, 2026-10-05; legends.json charge) > curves toward its target, brakes in a wide arc past it, walks home, and charges again only once it's back** — [src/rules/legends.test.ts:333](../../src/rules/legends.test.ts#L333)
+  - outcome stats; existing owner #1622; no parallel audit decision. Currentness: unverified. Case runtime: unknown.
+  - Cited ruling: none found in scoped comments; not proof that none exists.
+
+- **an awake legend with nothing in reach (balance, 2026-10-06) > looks again every attack.recheck seconds, not every step** — [src/rules/legends.test.ts:379](../../src/rules/legends.test.ts#L379)
+  - outcome stats; existing owner #1622; no parallel audit decision. Currentness: unverified. Case runtime: unknown.
+  - Cited ruling: none found in scoped comments; not proof that none exists.
+
+- **the first quest (Ed, 2026-10-04) > wakes an area whose quest isn't done angry: its creatures go for the nearest party animal or soundsystem** — [src/rules/quest.test.ts:62](../../src/rules/quest.test.ts#L62)
+  - current rules; existing owner #1622; no parallel audit decision. Currentness: unverified. Case runtime: unknown.
+  - Cited ruling: none found in scoped comments; not proof that none exists.
+
+- **the first quest (Ed, 2026-10-04) > makes every wild creature already living in the area friendly when it's done, calming any mid-attack; hers and other areas' as they were (art builder 3, 2026-10-07)** — [src/rules/quest.test.ts:78](../../src/rules/quest.test.ts#L78)
+  - outcome stats; existing owner #1622; no parallel audit decision. Currentness: unverified. Case runtime: unknown.
+  - Cited ruling: name, line 78: makes every wild creature already living in the area friendly when it's done, calming any mid-attack; hers and other areas' as they were (art builder 3, 2026-10-07)
+  - Possible later evidence: [docs/notes/art-checks.md:7](../../docs/notes/art-checks.md#L7): - `node art/check.mjs` — builds the lab, opens the source page and the built page in headless Chromium (no script errors, a bestiary card for every species, the scene drawn; each on a page of its own, drawing while the rest runs), and draws everything the art generators make (every creature at every level, face, texture and silhouette, the trees and bushes, the area types and their ground cover, the witch and the party witches in every pose, the hats, the sigils, the dancefloor and its speakers, the treehouse, the props, scenes, relics, paths and party objects, the attack effects, the sleeping legends, the live rig) and holds each to its rules: sizes by level and against the witch, what may . candidate only: same-topic wording and later inline date; not a verified superseding ruling.
+  - Possible later evidence: [docs/notes/creatures.md:22](../../docs/notes/creatures.md#L22): - **Genome**: a species as data (#79; since 2026-10-13 one file a species, `art/creatures/<id>/genome.js`, assembled by `art/creatures/index.js`, which `node tools/creatures.mjs index` writes sorted by id, and re-exported as `GENOMES` by `art/genome/species.js`; Ed, 2026-10-13: every animal PR edited the one file and merges mangled neighbouring records. **A new creature** is a new folder with its `genome.js` (`export const GENOME_<ID> = { id, name, template, builder, ... }`, a named export: the Art Lab's build inlines every module into one page), its `sigil.js` (`SIGIL_<ID> = { neon, strokes }`, the strokes from `art/sigils/strokes.js`'s building blocks; `art/sigils.js` assembles `SIGILS` an. candidate only: same-topic wording and later inline date; not a verified superseding ruling.
 
 - **besiegers hurry (combat.marchShare) > march at half their top speed, their kind's own (a legend's too)** — [src/rules/siegeFixes.test.ts:32](../../src/rules/siegeFixes.test.ts#L32)
   - current rules; keep pending design review. Currentness: unverified. Case runtime: unknown.
@@ -4467,26 +4575,6 @@ Static declarations only. All classifications and currentness are provisional. C
   - Possible later evidence: [DESIGN.md:50](../../DESIGN.md#L50): - **Aggro on the witch** (Ed, 2026-10-04): a wild creature goes for her as soon as she's on the ground **in its area** (Ed's playtest, 2026-10-04; it replaced "within its attack range or 30 m"), or within its attack range; it lets her go when she rises to the treetops, or by the retreat rule below (a besieger keeps the older rule: once she's out of its area **and** out of its range **and** at least `combat.witchLose`, 45 m, away). Attacks are mixed by species: some shoot slow, telegraphed shots; melee ones wind up and lunge. Both can be dodged. Some kinds **kite**: long-range attackers that hold a distance as part of their attack, backing off when she closes in and closing in when she's too . candidate only: same-topic wording and later inline date; not a verified superseding ruling.
   - Possible later evidence: [docs/notes/art-checks.md:7](../../docs/notes/art-checks.md#L7): - `node art/check.mjs` — builds the lab, opens the source page and the built page in headless Chromium (no script errors, a bestiary card for every species, the scene drawn; each on a page of its own, drawing while the rest runs), and draws everything the art generators make (every creature at every level, face, texture and silhouette, the trees and bushes, the area types and their ground cover, the witch and the party witches in every pose, the hats, the sigils, the dancefloor and its speakers, the treehouse, the props, scenes, relics, paths and party objects, the attack effects, the sleeping legends, the live rig) and holds each to its rules: sizes by level and against the witch, what may . candidate only: same-topic wording and later inline date; not a verified superseding ruling.
 
-- **sleeping legends (Ed, 2026-10-04) > sleep through her standing beside them: no fight, no chat, not a step** — [src/rules/sleeping.test.ts:31](../../src/rules/sleeping.test.ts#L31)
-  - outcome stats; review simulation assertions; consider report after Ed rules. Currentness: unverified. Case runtime: unknown.
-  - Cited ruling: none found in scoped comments; not proof that none exists.
-
-- **sleeping legends (Ed, 2026-10-04) > turn happy (debug O, for now): at peace (Ed, 2026-10-18: happy legends grant nothing)** — [src/rules/sleeping.test.ts:40](../../src/rules/sleeping.test.ts#L40)
-  - current rules; keep pending design review. Currentness: unverified. Case runtime: unknown.
-  - Cited ruling: name, line 40: turn happy (debug O, for now): at peace (Ed, 2026-10-18: happy legends grant nothing)
-  - Possible later evidence: [docs/notes/run.md:79](../../docs/notes/run.md#L79): - **The world asleep before the party** (Ed, 2026-10-26: "If you leave the treehouse before starting the party, it should be the same as after a party is lost; creatures are asleep in their areas and you can't invite them, the night's permanent upgrade find is not placed yet"; `worldAsleep`, `putToBed`, `stepWorldAsleep` in `src/rules/partyOver.ts`): a night waiting for her party spell (`party.spellAt` null; not the zoo, not the debug arena's) lies as the afterparty does: every creature put to bed at once in its own area, asleep for good (the afterparty's own sleep), the legends still, no 💌 taking, nothing fighting or attacking her, nothing growing, and tonight's find not there (its trunk, . candidate only: same-topic wording and later inline date; not a verified superseding ruling.
-  - Possible later evidence: [DESIGN.md:54](../../DESIGN.md#L54): - **Knocked out** (Ed, 2026-10-04; since Ed's playtest of v4821, 2026-10-26: "When I get knocked out and my leashed animals are put down, I think they should become happy instead of leashed to a point by a floor sigil"): at no hits left she collapses where she is (no more hits, no input). **Her sigil stack comes down from the bottom up, about a second each** (`knockout.releaseEach`; since Ed's decisions of 2026-10-07, `releaseEach` 0: all at once as she goes down), each animal she carried **turning happy where it stands**: no sigil is made; its rune is at its feet, so she can leash it again by picking that up, as after an invite; meanwhile it idles near where it was dropped (Ed, later that d. candidate only: same-topic wording and later inline date; not a verified superseding ruling.
-
-- **sleeping legends (Ed, 2026-10-04) > leave home without a legend, (Ed, 2026-10-05)** — [src/rules/sleeping.test.ts:46](../../src/rules/sleeping.test.ts#L46)
-  - current rules; keep pending design review. Currentness: unverified. Case runtime: unknown.
-  - Cited ruling: name, line 46: leave home without a legend, (Ed, 2026-10-05)
-  - Possible later evidence: [DESIGN.md:417](../../DESIGN.md#L417): **Legends in half the areas** (Ed, 2026-10-06): "Legends should only appear in about half of areas (we can test this ratio); every area makes them too common." `legends.share` (tuning, default 0.5, then 0.2 from 2026-10-08: "I think there are too many and it should be more like 1/5"; a slider on the decisions panel, which reloads for a new map) is the share of areas, home never, with a sleeping legend, chosen per map from the seed and spread out (`chooseLegendCells` in `src/rules/map.ts`). An area without one has no legend's clearing, no quest, no restlessness or anger, and no legend music. DECISION FOR ED (balance, 2026-10-06): "no more than two neighbouring areas in a row" holds exactly on. candidate only: same-topic wording and later inline date; not a verified superseding ruling.
-  - Possible later evidence: [docs/notes/island.md:21](../../docs/notes/island.md#L21): - **Zoo**: `?zoo` (Ed, 2026-10-13; laid out like the sea chart since Ed, 2026-10-26: `src/rules/zooMap.ts`, `src/rules/zoo.ts`, `config/zoo.json`; the mock: `previews/ed/zoo-map` on `claude/ed-shots`): every kind's island where the chart has it (`worldOf(world)`), its outline the chart's real coast where this browser has it (Ed, 2026-10-26: "We already know the real coastline shapes, can't we reuse them in the zoo without calculating anything?": the chart's worker keeps each island's biggest sea loop beside its outline, `app/chartCache.ts` `coastKey`/`keepCoast`, under the chart's own keys; the zoo's page reads them back before its map is made, at most 400 ms, `app/zooCoasts.ts`, and hands t. candidate only: same-topic wording and later inline date; not a verified superseding ruling.
-
-- **sleeping legends (Ed, 2026-10-04) > are the only legends: party animals evolve no further than adult** — [src/rules/sleeping.test.ts:52](../../src/rules/sleeping.test.ts#L52)
-  - current rules; keep pending design review. Currentness: unverified. Case runtime: unknown.
-  - Cited ruling: none found in scoped comments; not proof that none exists.
-
 - **legend circles slow time > slows the world to slow.scale on the ground in a sleeping legend's circle, eased over slow.ease, while she keeps her speed** — [src/rules/slowTime.test.ts:29](../../src/rules/slowTime.test.ts#L29)
   - outcome stats; review simulation assertions; consider report after Ed rules. Currentness: unverified. Case runtime: unknown.
   - Cited ruling: file, line 1: // Legend circles slow time (rules/slowTime.ts; Ed, 2026-10-06): on the ground in a sleeping or restless legend's circle the
@@ -6583,95 +6671,35 @@ Static declarations only. All classifications and currentness are provisional. C
   - current rules; keep pending design review. Currentness: unverified. Case runtime: unknown.
   - Cited ruling: none found in scoped comments; not proof that none exists.
 
-- **friendly legends: defend, engage, walk (Ed, 31 Oct) > %s legends use the long charge, with ordinary attacks unchanged (Ed item14)** — [src/rules/combat/friendlyLegend.test.ts:24](../../src/rules/combat/friendlyLegend.test.ts#L24) (parameterized template)
-  - current rules; keep pending design review. Currentness: unverified. Case runtime: unknown.
-  - Cited ruling: none found in scoped comments; not proof that none exists.
-
-- **friendly legends: defend, engage, walk (Ed, 31 Oct) > home guards use their own 85 m reach, never route, and leave calm creatures and their own kind alone** — [src/rules/combat/friendlyLegend.test.ts:40](../../src/rules/combat/friendlyLegend.test.ts#L40)
-  - current rules; keep pending design review. Currentness: unverified. Case runtime: unknown.
-  - Cited ruling: none found in scoped comments; not proof that none exists.
-
-- **friendly legends: defend, engage, walk (Ed, 31 Oct) > a charging %s home guard targets only where it can charge inside home and cannot cross its boundary** — [src/rules/combat/friendlyLegend.test.ts:51](../../src/rules/combat/friendlyLegend.test.ts#L51) (parameterized template)
-  - current rules; keep pending design review. Currentness: unverified. Case runtime: unknown.
-  - Cited ruling: none found in scoped comments; not proof that none exists.
-
-- **friendly legends: defend, engage, walk (Ed, 31 Oct) > keeps absent-callback combat parity: an empty decision stands still and schedules the same recheck** — [src/rules/combat/friendlyLegend.test.ts:61](../../src/rules/combat/friendlyLegend.test.ts#L61)
-  - current rules; keep pending design review. Currentness: unverified. Case runtime: unknown.
-  - Cited ruling: none found in scoped comments; not proof that none exists.
-
-- **friendly legends: defend, engage, walk (Ed, 31 Oct) > walks only when no defence or engagement is needed, even during its attack cooldown** — [src/rules/combat/friendlyLegend.test.ts:69](../../src/rules/combat/friendlyLegend.test.ts#L69)
-  - current rules; keep pending design review. Currentness: unverified. Case runtime: unknown.
-  - Cited ruling: none found in scoped comments; not proof that none exists.
-
-- **friendly legends: defend, engage, walk (Ed, 31 Oct) > a friendly charger finishes braking then resumes the route instead of walking to its lair** — [src/rules/combat/friendlyLegend.test.ts:84](../../src/rules/combat/friendlyLegend.test.ts#L84)
-  - current rules; keep pending design review. Currentness: unverified. Case runtime: unknown.
-  - Cited ruling: none found in scoped comments; not proof that none exists.
-
-- **friendly legends: defend, engage, walk (Ed, 31 Oct) > joins the nearest route point, follows a bend towards the drawing tip, waits there and follows its growth** — [src/rules/combat/friendlyLegend.test.ts:92](../../src/rules/combat/friendlyLegend.test.ts#L92)
-  - current rules; keep pending design review. Currentness: unverified. Case runtime: unknown.
-  - Cited ruling: none found in scoped comments; not proof that none exists.
-
-- **friendly legends: defend, engage, walk (Ed, 31 Oct) > walks back along the route if its nearest join lies ahead of the tip** — [src/rules/combat/friendlyLegend.test.ts:107](../../src/rules/combat/friendlyLegend.test.ts#L107)
-  - current rules; keep pending design review. Currentness: unverified. Case runtime: unknown.
-  - Cited ruling: none found in scoped comments; not proof that none exists.
-
-- **friendly legends: defend, engage, walk (Ed, 31 Oct) > defends the witch before a nearer enraged enemy, including an attacker beyond its engagement radius** — [src/rules/combat/friendlyLegend.test.ts:114](../../src/rules/combat/friendlyLegend.test.ts#L114)
-  - current rules; keep pending design review. Currentness: unverified. Case runtime: unknown.
-  - Cited ruling: none found in scoped comments; not proof that none exists.
-
-- **friendly legends: defend, engage, walk (Ed, 31 Oct) > counts hunting as an attack and defends any witch, not just witch zero** — [src/rules/combat/friendlyLegend.test.ts:121](../../src/rules/combat/friendlyLegend.test.ts#L121)
-  - current rules; keep pending design review. Currentness: unverified. Case runtime: unknown.
-  - Cited ruling: none found in scoped comments; not proof that none exists.
-
-- **friendly legends: defend, engage, walk (Ed, 31 Oct) > engages wild attackers and enraged enemies at the inclusive 85 m boundary; calm wild creatures are left alone** — [src/rules/combat/friendlyLegend.test.ts:128](../../src/rules/combat/friendlyLegend.test.ts#L128)
-  - current rules; keep pending design review. Currentness: unverified. Case runtime: unknown.
-  - Cited ruling: none found in scoped comments; not proof that none exists.
-
-- **friendly legends: defend, engage, walk (Ed, 31 Oct) > does not defend an out-of-range witch against an out-of-range attacker, and cannot itself be targeted** — [src/rules/combat/friendlyLegend.test.ts:137](../../src/rules/combat/friendlyLegend.test.ts#L137)
-  - current rules; keep pending design review. Currentness: unverified. Case runtime: unknown.
-  - Cited ruling: none found in scoped comments; not proof that none exists.
-
 - **the early easy quest > `seed ${seed}: a legend among the first areas wants another first area's baby`** — [src/rules/earlyQuest.test.ts:14](../../src/rules/earlyQuest.test.ts#L14)
-  - current rules; keep pending design review. Currentness: unverified. Case runtime: unknown.
+  - current rules; Keep current legend and quest rules?. Currentness: unverified. Case runtime: unknown.
   - Cited ruling: file, line 1: // The early easy quest (Ed, 2026-10-07; rules/quest.ts earlyQuest): one of the first three areas the waves wake, with a / body, line 19: // its host is always one of the first three (Ed, 2026-10-07: "force a circle into the first three"), with its clearing / body, line 26: // (any age: Ed, 2026-10-18)
   - Possible later evidence: [docs/notes/gameplay.md:42](../../docs/notes/gameplay.md#L42): - **Legend area** (Ed, 2026-10-26: "legends are spawned in additional areas that have legend circles where runestones usually are"; "extra areas are added to each island, and the legend areas can be adjacent to the same type of area, so it effectively becomes an area twice the size"; all legends in them; "The route only cares about runestones"; islands grow): on an island by roster, every kind a night could deal there (the roster's but the island's own kind and placeholders: one each, chosen by the island's own seed, so its shape, land, coast and chart outline are the same every night) gets an area of its own grown out of the island's frontier beside one of its kind's areas, its **pair**: th. candidate only: same-topic wording and later inline date; not a verified superseding ruling.
   - Possible later evidence: [docs/notes/run.md:79](../../docs/notes/run.md#L79): - **The world asleep before the party** (Ed, 2026-10-26: "If you leave the treehouse before starting the party, it should be the same as after a party is lost; creatures are asleep in their areas and you can't invite them, the night's permanent upgrade find is not placed yet"; `worldAsleep`, `putToBed`, `stepWorldAsleep` in `src/rules/partyOver.ts`): a night waiting for her party spell (`party.spellAt` null; not the zoo, not the debug arena's) lies as the afterparty does: every creature put to bed at once in its own area, asleep for good (the afterparty's own sleep), the legends still, no 💌 taking, nothing fighting or attacking her, nothing growing, and tonight's find not there (its trunk, . candidate only: same-topic wording and later inline date; not a verified superseding ruling.
 
 - **the early easy quest > forces a legend circle into the first three where the share left them none** — [src/rules/earlyQuest.test.ts:29](../../src/rules/earlyQuest.test.ts#L29)
-  - current rules; keep pending design review. Currentness: unverified. Case runtime: unknown.
+  - current rules; Keep current legend and quest rules?. Currentness: unverified. Case runtime: unknown.
   - Cited ruling: file, line 1: // The early easy quest (Ed, 2026-10-07; rules/quest.ts earlyQuest): one of the first three areas the waves wake, with a
   - Possible later evidence: [docs/notes/gameplay.md:42](../../docs/notes/gameplay.md#L42): - **Legend area** (Ed, 2026-10-26: "legends are spawned in additional areas that have legend circles where runestones usually are"; "extra areas are added to each island, and the legend areas can be adjacent to the same type of area, so it effectively becomes an area twice the size"; all legends in them; "The route only cares about runestones"; islands grow): on an island by roster, every kind a night could deal there (the roster's but the island's own kind and placeholders: one each, chosen by the island's own seed, so its shape, land, coast and chart outline are the same every night) gets an area of its own grown out of the island's frontier beside one of its kind's areas, its **pair**: th. candidate only: same-topic wording and later inline date; not a verified superseding ruling.
   - Possible later evidence: [docs/notes/view.md:72](../../docs/notes/view.md#L72): - **Ley lines**: the glowing line through the runestones in wave order (`src/rules/leylines.ts` the chain, `src/rules/leyroute.ts` the route, `src/render/leylines.ts` the drawing): through every area's stone from home to the last, the whole time (Ed, 2026-10-06: "I think the leylines should cover the entire set of waves the whole time, but ideally it shouldn't cross itself"), moving on from the last runestone reached (by its wave, or its quest: `onAreaDone(party, cell, time)`), every section as bright as the next (`fade`, `behindBright` and `far` all 1: Ed, 2026-10-06: "The leyline should always go from the treehouse to 3x the progress of the pulse, and I should be able to see it along its e. candidate only: same-topic wording and later inline date; not a verified superseding ruling.
 
 - **the early easy quest > plans the same route mid-build (where the map gives the first areas their legend) as on the finished map** — [src/rules/earlyQuest.test.ts:40](../../src/rules/earlyQuest.test.ts#L40)
-  - current rules; keep pending design review. Currentness: unverified. Case runtime: unknown.
+  - current rules; Keep current legend and quest rules?. Currentness: unverified. Case runtime: unknown.
   - Cited ruling: file, line 1: // The early easy quest (Ed, 2026-10-07; rules/quest.ts earlyQuest): one of the first three areas the waves wake, with a
   - Possible later evidence: [docs/notes/gameplay.md:42](../../docs/notes/gameplay.md#L42): - **Legend area** (Ed, 2026-10-26: "legends are spawned in additional areas that have legend circles where runestones usually are"; "extra areas are added to each island, and the legend areas can be adjacent to the same type of area, so it effectively becomes an area twice the size"; all legends in them; "The route only cares about runestones"; islands grow): on an island by roster, every kind a night could deal there (the roster's but the island's own kind and placeholders: one each, chosen by the island's own seed, so its shape, land, coast and chart outline are the same every night) gets an area of its own grown out of the island's frontier beside one of its kind's areas, its **pair**: th. candidate only: same-topic wording and later inline date; not a verified superseding ruling.
   - Possible later evidence: [docs/notes/run.md:79](../../docs/notes/run.md#L79): - **The world asleep before the party** (Ed, 2026-10-26: "If you leave the treehouse before starting the party, it should be the same as after a party is lost; creatures are asleep in their areas and you can't invite them, the night's permanent upgrade find is not placed yet"; `worldAsleep`, `putToBed`, `stepWorldAsleep` in `src/rules/partyOver.ts`): a night waiting for her party spell (`party.spellAt` null; not the zoo, not the debug arena's) lies as the afterparty does: every creature put to bed at once in its own area, asleep for good (the afterparty's own sleep), the legends still, no 💌 taking, nothing fighting or attacking her, nothing growing, and tonight's find not there (its trunk, . candidate only: same-topic wording and later inline date; not a verified superseding ruling.
 
 - **the early easy quest > is the same every time for a seed** — [src/rules/earlyQuest.test.ts:44](../../src/rules/earlyQuest.test.ts#L44)
-  - current rules; keep pending design review. Currentness: unverified. Case runtime: unknown.
+  - current rules; Keep current legend and quest rules?. Currentness: unverified. Case runtime: unknown.
   - Cited ruling: file, line 1: // The early easy quest (Ed, 2026-10-07; rules/quest.ts earlyQuest): one of the first three areas the waves wake, with a
   - Possible later evidence: [docs/notes/gameplay.md:42](../../docs/notes/gameplay.md#L42): - **Legend area** (Ed, 2026-10-26: "legends are spawned in additional areas that have legend circles where runestones usually are"; "extra areas are added to each island, and the legend areas can be adjacent to the same type of area, so it effectively becomes an area twice the size"; all legends in them; "The route only cares about runestones"; islands grow): on an island by roster, every kind a night could deal there (the roster's but the island's own kind and placeholders: one each, chosen by the island's own seed, so its shape, land, coast and chart outline are the same every night) gets an area of its own grown out of the island's frontier beside one of its kind's areas, its **pair**: th. candidate only: same-topic wording and later inline date; not a verified superseding ruling.
   - Possible later evidence: [DESIGN.md:417](../../DESIGN.md#L417): **Legends in half the areas** (Ed, 2026-10-06): "Legends should only appear in about half of areas (we can test this ratio); every area makes them too common." `legends.share` (tuning, default 0.5, then 0.2 from 2026-10-08: "I think there are too many and it should be more like 1/5"; a slider on the decisions panel, which reloads for a new map) is the share of areas, home never, with a sleeping legend, chosen per map from the seed and spread out (`chooseLegendCells` in `src/rules/map.ts`). An area without one has no legend's clearing, no quest, no restlessness or anger, and no legend music. DECISION FOR ED (balance, 2026-10-06): "no more than two neighbouring areas in a row" holds exactly on. candidate only: same-topic wording and later inline date; not a verified superseding ruling.
 
 - **the early easy quest > is off with legends.earlyQuest false: every dream as before** — [src/rules/earlyQuest.test.ts:48](../../src/rules/earlyQuest.test.ts#L48)
-  - current rules; keep pending design review. Currentness: unverified. Case runtime: unknown.
+  - leftovers; Keep these two radius-map comparison tests, including explicit half/all-area settings, separate from authored-island rules?. Currentness: unverified. Case runtime: unknown.
   - Cited ruling: file, line 1: // The early easy quest (Ed, 2026-10-07; rules/quest.ts earlyQuest): one of the first three areas the waves wake, with a
   - Possible later evidence: [docs/notes/gameplay.md:42](../../docs/notes/gameplay.md#L42): - **Legend area** (Ed, 2026-10-26: "legends are spawned in additional areas that have legend circles where runestones usually are"; "extra areas are added to each island, and the legend areas can be adjacent to the same type of area, so it effectively becomes an area twice the size"; all legends in them; "The route only cares about runestones"; islands grow): on an island by roster, every kind a night could deal there (the roster's but the island's own kind and placeholders: one each, chosen by the island's own seed, so its shape, land, coast and chart outline are the same every night) gets an area of its own grown out of the island's frontier beside one of its kind's areas, its **pair**: th. candidate only: same-topic wording and later inline date; not a verified superseding ruling.
   - Possible later evidence: [docs/notes/run.md:79](../../docs/notes/run.md#L79): - **The world asleep before the party** (Ed, 2026-10-26: "If you leave the treehouse before starting the party, it should be the same as after a party is lost; creatures are asleep in their areas and you can't invite them, the night's permanent upgrade find is not placed yet"; `worldAsleep`, `putToBed`, `stepWorldAsleep` in `src/rules/partyOver.ts`): a night waiting for her party spell (`party.spellAt` null; not the zoo, not the debug arena's) lies as the afterparty does: every creature put to bed at once in its own area, asleep for good (the afterparty's own sleep), the legends still, no 💌 taking, nothing fighting or attacking her, nothing growing, and tonight's find not there (its trunk, . candidate only: same-topic wording and later inline date; not a verified superseding ruling.
-
-- **friendly legend route integration > uses the actual curved ley route and drawing front, distinct from the wave pulse** — [src/rules/friendlyLegendRoute.test.ts:26](../../src/rules/friendlyLegendRoute.test.ts#L26)
-  - current rules; keep pending design review. Currentness: unverified. Case runtime: unknown.
-  - Cited ruling: none found in scoped comments; not proof that none exists.
-
-- **friendly legend route integration > stepGame walks an idle happy legend along the route without its ordinary roam overriding the move** — [src/rules/friendlyLegendRoute.test.ts:37](../../src/rules/friendlyLegendRoute.test.ts#L37)
-  - outcome stats; review simulation assertions; consider report after Ed rules. Currentness: unverified. Case runtime: unknown.
-  - Cited ruling: none found in scoped comments; not proof that none exists.
-
-- **friendly legend route integration > does not teleport an unseen route legend home or apply ordinary roam; party and leashed legends keep their old ownership** — [src/rules/friendlyLegendRoute.test.ts:48](../../src/rules/friendlyLegendRoute.test.ts#L48)
-  - hard limits; keep. Currentness: unverified. Case runtime: unknown.
-  - Cited ruling: none found in scoped comments; not proof that none exists.
 
 - **legend areas > `each of the night's legends lies in an area of its own beside one of its kind, off the route (${kind} island, seed ${seed})`** — [src/rules/legendAreas.test.ts:29](../../src/rules/legendAreas.test.ts#L29)
   - hard limits; Keep paired-area identity, route exclusion and sleeping-ownership protections?. Currentness: unverified. Case runtime: unknown.
@@ -6726,49 +6754,49 @@ Static declarations only. All classifications and currentness are provisional. C
   - Possible later evidence: [docs/notes/island.md:21](../../docs/notes/island.md#L21): - **Zoo**: `?zoo` (Ed, 2026-10-13; laid out like the sea chart since Ed, 2026-10-26: `src/rules/zooMap.ts`, `src/rules/zoo.ts`, `config/zoo.json`; the mock: `previews/ed/zoo-map` on `claude/ed-shots`): every kind's island where the chart has it (`worldOf(world)`), its outline the chart's real coast where this browser has it (Ed, 2026-10-26: "We already know the real coastline shapes, can't we reuse them in the zoo without calculating anything?": the chart's worker keeps each island's biggest sea loop beside its outline, `app/chartCache.ts` `coastKey`/`keepCoast`, under the chart's own keys; the zoo's page reads them back before its map is made, at most 400 ms, `app/zooCoasts.ts`, and hands t. candidate only: same-topic wording and later inline date; not a verified superseding ruling.
 
 - **legend clearings > `every area with a legend has one (and only those), inside its own area, clear of trees, bushes, decor and the soundsystem, its legend near the top (seed ${seed})`** — [src/rules/legendClearing.test.ts:19](../../src/rules/legendClearing.test.ts#L19)
-  - current rules; keep pending design review. Currentness: unverified. Case runtime: unknown.
+  - current rules; Keep the footprint, circle-size, indexed-lookup and explanation contracts?. Currentness: unverified. Case runtime: unknown.
   - Cited ruling: suite, line 16: // Each area's sleeping legend lies in a small circular clearing of its own (Ed, 2026-10-06), near its top.
   - Possible later evidence: [DESIGN.md:359](../../DESIGN.md#L359): - **Conversion, by the spell or a wave, the same rule:** the stone becomes a soundsystem; its babies turn friendly; its wild young and adults turn hostile and besiege it, as a wave does; and **every friend sigil falls and scatters** over its runestone clearing on free hex cells (Ed, 2026-10-28: "It's fine if they're scattered around the whole runestone clearing"; `cast.scatter`: its open ground out to 20 m (Ed's playtest, 2026-10-29: "sigils scatter too widely"; 34 free 6 m hex cells there, room for the biggest stacks, about 20), in a seeded order so they spread however many there are, never in the wedge just north of the soundsystem where its sprite would hide them), into `g.loose`, for any. candidate only: same-topic wording and later inline date; not a verified superseding ruling.
   - Possible later evidence: [docs/notes/art-checks.md:7](../../docs/notes/art-checks.md#L7): - `node art/check.mjs` — builds the lab, opens the source page and the built page in headless Chromium (no script errors, a bestiary card for every species, the scene drawn; each on a page of its own, drawing while the rest runs), and draws everything the art generators make (every creature at every level, face, texture and silhouette, the trees and bushes, the area types and their ground cover, the witch and the party witches in every pose, the hats, the sigils, the dancefloor and its speakers, the treehouse, the props, scenes, relics, paths and party objects, the attack effects, the sleeping legends, the live rig) and holds each to its rules: sizes by level and against the witch, what may . candidate only: same-topic wording and later inline date; not a verified superseding ruling.
 
 - **legend clearings > is sized to its legend: the elk's wider than the bat's** — [src/rules/legendClearing.test.ts:44](../../src/rules/legendClearing.test.ts#L44)
-  - current rules; keep pending design review. Currentness: unverified. Case runtime: unknown.
+  - current rules; Keep the footprint, circle-size, indexed-lookup and explanation contracts?. Currentness: unverified. Case runtime: unknown.
   - Cited ruling: suite, line 16: // Each area's sleeping legend lies in a small circular clearing of its own (Ed, 2026-10-06), near its top.
   - Possible later evidence: [docs/notes/house.md:97](../../docs/notes/house.md#L97): - **Finds / travel trunk** (Ed, 2026-10-21, the station menus' part (b): "The items are found in the forest like other permanent upgrades. Hints are given by the crystal ball"; `src/rules/finds.ts`, `render/view/finds.ts`): each night the island she's on holds one permanent upgrade she hasn't found, a wearable in the trunk or a broom part in a wreck (the finds pool, below; the wearables `FINDABLE`, the wardrobe's items not hers from the start, never a broom shape: brooms are made of parts), drawn as one flask-sized object on a clear patch in its own pale gold-white light (the finds style guide, `docs/art-guide/FINDS.md`, Ed 2026-10-23: clothes a folded bundle, `find-bundle`; bags a little ba. candidate only: same-topic wording and later inline date; not a verified superseding ruling.
   - Possible later evidence: [docs/notes/island.md:21](../../docs/notes/island.md#L21): - **Zoo**: `?zoo` (Ed, 2026-10-13; laid out like the sea chart since Ed, 2026-10-26: `src/rules/zooMap.ts`, `src/rules/zoo.ts`, `config/zoo.json`; the mock: `previews/ed/zoo-map` on `claude/ed-shots`): every kind's island where the chart has it (`worldOf(world)`), its outline the chart's real coast where this browser has it (Ed, 2026-10-26: "We already know the real coastline shapes, can't we reuse them in the zoo without calculating anything?": the chart's worker keeps each island's biggest sea loop beside its outline, `app/chartCache.ts` `coastKey`/`keepCoast`, under the chart's own keys; the zoo's page reads them back before its map is made, at most 400 ms, `app/zooCoasts.ts`, and hands t. candidate only: same-topic wording and later inline date; not a verified superseding ruling.
 
 - **legend clearings > each holds a wild baby of its legend's kind, which keeps to the circle, comes back in if pushed out, and is free only while leashed** — [src/rules/legendClearing.test.ts:50](../../src/rules/legendClearing.test.ts#L50)
-  - outcome stats; Move these six tests of baby travel times, grove averages, rim coverage and siege timing out of release gates? Yes means they run nightly as a nonblocking report; small rule and safety checks are retained separately.. Currentness: unverified. Case runtime: unknown.
+  - outcome stats; Move these eight scenery, travel and quest-distribution tests out of release gates? Yes makes their sampled times, averages and coverage a nightly report. Small boundary, ownership and current quest-cap checks stay blocking.. Currentness: unverified. Case runtime: unknown.
   - Cited ruling: suite, line 16: // Each area's sleeping legend lies in a small circular clearing of its own (Ed, 2026-10-06), near its top.
   - Possible later evidence: [docs/notes/house.md:97](../../docs/notes/house.md#L97): - **Finds / travel trunk** (Ed, 2026-10-21, the station menus' part (b): "The items are found in the forest like other permanent upgrades. Hints are given by the crystal ball"; `src/rules/finds.ts`, `render/view/finds.ts`): each night the island she's on holds one permanent upgrade she hasn't found, a wearable in the trunk or a broom part in a wreck (the finds pool, below; the wearables `FINDABLE`, the wardrobe's items not hers from the start, never a broom shape: brooms are made of parts), drawn as one flask-sized object on a clear patch in its own pale gold-white light (the finds style guide, `docs/art-guide/FINDS.md`, Ed 2026-10-23: clothes a folded bundle, `find-bundle`; bags a little ba. candidate only: same-topic wording and later inline date; not a verified superseding ruling.
   - Possible later evidence: [docs/notes/island.md:21](../../docs/notes/island.md#L21): - **Zoo**: `?zoo` (Ed, 2026-10-13; laid out like the sea chart since Ed, 2026-10-26: `src/rules/zooMap.ts`, `src/rules/zoo.ts`, `config/zoo.json`; the mock: `previews/ed/zoo-map` on `claude/ed-shots`): every kind's island where the chart has it (`worldOf(world)`), its outline the chart's real coast where this browser has it (Ed, 2026-10-26: "We already know the real coastline shapes, can't we reuse them in the zoo without calculating anything?": the chart's worker keeps each island's biggest sea loop beside its outline, `app/chartCache.ts` `coastKey`/`keepCoast`, under the chart's own keys; the zoo's page reads them back before its map is made, at most 400 ms, `app/zooCoasts.ts`, and hands t. candidate only: same-topic wording and later inline date; not a verified superseding ruling.
 
 - **legend clearings > its befriended baby stays in the circle and dances there; only loose-sigil pickup makes it follow her** — [src/rules/legendClearing.test.ts:81](../../src/rules/legendClearing.test.ts#L81)
-  - outcome stats; Move these six tests of baby travel times, grove averages, rim coverage and siege timing out of release gates? Yes means they run nightly as a nonblocking report; small rule and safety checks are retained separately.. Currentness: unverified. Case runtime: unknown.
+  - outcome stats; Move these eight scenery, travel and quest-distribution tests out of release gates? Yes makes their sampled times, averages and coverage a nightly report. Small boundary, ownership and current quest-cap checks stay blocking.. Currentness: unverified. Case runtime: unknown.
   - Cited ruling: suite, line 16: // Each area's sleeping legend lies in a small circular clearing of its own (Ed, 2026-10-06), near its top.
   - Possible later evidence: [DESIGN.md:359](../../DESIGN.md#L359): - **Conversion, by the spell or a wave, the same rule:** the stone becomes a soundsystem; its babies turn friendly; its wild young and adults turn hostile and besiege it, as a wave does; and **every friend sigil falls and scatters** over its runestone clearing on free hex cells (Ed, 2026-10-28: "It's fine if they're scattered around the whole runestone clearing"; `cast.scatter`: its open ground out to 20 m (Ed's playtest, 2026-10-29: "sigils scatter too widely"; 34 free 6 m hex cells there, room for the biggest stacks, about 20), in a seeded order so they spread however many there are, never in the wedge just north of the soundsystem where its sprite would hide them), into `g.loose`, for any. candidate only: same-topic wording and later inline date; not a verified superseding ruling.
   - Possible later evidence: [docs/notes/gameplay.md:34](../../docs/notes/gameplay.md#L34): - **Area legend / sleeping legend**: the one legend of its kind in about a fifth of the areas (`legends.share` 0.2: Ed, 2026-10-08; half before; never home), asleep (sunk and mossed over, scenery) near the top of its circle; waves don't wake it: it grows restless, then angry, while its area has none of its kind, and goes back to sleep when one is back or when worn down; a relic by it makes it happy (DESIGN.md, "Legends, redesigned"); in its circle it reads at a glance (Ed's round 14 playtest): the sleeping form's outline in its sigil's neon and a light floor (`uLegend` in `render/sprites.ts`), a soft neon glow on the ground under it asleep or happy (`legendSeen` in `render/leash.ts`), knobs . candidate only: same-topic wording and later inline date; not a verified superseding ruling.
 
 - **legend clearings > a fallen soundsystem's babies run off home and its besiegers march on: its legend, left without kin, grows restless, then angry** — [src/rules/legendClearing.test.ts:111](../../src/rules/legendClearing.test.ts#L111)
-  - outcome stats; Move these six tests of baby travel times, grove averages, rim coverage and siege timing out of release gates? Yes means they run nightly as a nonblocking report; small rule and safety checks are retained separately.. Currentness: unverified. Case runtime: unknown.
+  - outcome stats; Move these eight scenery, travel and quest-distribution tests out of release gates? Yes makes their sampled times, averages and coverage a nightly report. Small boundary, ownership and current quest-cap checks stay blocking.. Currentness: unverified. Case runtime: unknown.
   - Cited ruling: suite, line 16: // Each area's sleeping legend lies in a small circular clearing of its own (Ed, 2026-10-06), near its top.
   - Possible later evidence: [DESIGN.md:359](../../DESIGN.md#L359): - **Conversion, by the spell or a wave, the same rule:** the stone becomes a soundsystem; its babies turn friendly; its wild young and adults turn hostile and besiege it, as a wave does; and **every friend sigil falls and scatters** over its runestone clearing on free hex cells (Ed, 2026-10-28: "It's fine if they're scattered around the whole runestone clearing"; `cast.scatter`: its open ground out to 20 m (Ed's playtest, 2026-10-29: "sigils scatter too widely"; 34 free 6 m hex cells there, room for the biggest stacks, about 20), in a seeded order so they spread however many there are, never in the wedge just north of the soundsystem where its sprite would hide them), into `g.loose`, for any. candidate only: same-topic wording and later inline date; not a verified superseding ruling.
   - Possible later evidence: [docs/notes/gameplay.md:34](../../docs/notes/gameplay.md#L34): - **Area legend / sleeping legend**: the one legend of its kind in about a fifth of the areas (`legends.share` 0.2: Ed, 2026-10-08; half before; never home), asleep (sunk and mossed over, scenery) near the top of its circle; waves don't wake it: it grows restless, then angry, while its area has none of its kind, and goes back to sleep when one is back or when worn down; a relic by it makes it happy (DESIGN.md, "Legends, redesigned"); in its circle it reads at a glance (Ed's round 14 playtest): the sleeping form's outline in its sigil's neon and a light floor (`uLegend` in `render/sprites.ts`), a soft neon glow on the ground under it asleep or happy (`legendSeen` in `render/leash.ts`), knobs . candidate only: same-topic wording and later inline date; not a verified superseding ruling.
 
 - **legend clearings > each swells the forest round it, strongest at its edge and easing smoothly out into the area's own, all the way round** — [src/rules/legendClearing.test.ts:158](../../src/rules/legendClearing.test.ts#L158)
-  - outcome stats; Move these six tests of baby travel times, grove averages, rim coverage and siege timing out of release gates? Yes means they run nightly as a nonblocking report; small rule and safety checks are retained separately.. Currentness: unverified. Case runtime: unknown.
+  - outcome stats; Move these eight scenery, travel and quest-distribution tests out of release gates? Yes makes their sampled times, averages and coverage a nightly report. Small boundary, ownership and current quest-cap checks stay blocking.. Currentness: unverified. Case runtime: unknown.
   - Cited ruling: suite, line 16: // Each area's sleeping legend lies in a small circular clearing of its own (Ed, 2026-10-06), near its top.
   - Possible later evidence: [docs/notes/house.md:97](../../docs/notes/house.md#L97): - **Finds / travel trunk** (Ed, 2026-10-21, the station menus' part (b): "The items are found in the forest like other permanent upgrades. Hints are given by the crystal ball"; `src/rules/finds.ts`, `render/view/finds.ts`): each night the island she's on holds one permanent upgrade she hasn't found, a wearable in the trunk or a broom part in a wreck (the finds pool, below; the wearables `FINDABLE`, the wardrobe's items not hers from the start, never a broom shape: brooms are made of parts), drawn as one flask-sized object on a clear patch in its own pale gold-white light (the finds style guide, `docs/art-guide/FINDS.md`, Ed 2026-10-23: clothes a folded bundle, `find-bundle`; bags a little ba. candidate only: same-topic wording and later inline date; not a verified superseding ruling.
   - Possible later evidence: [docs/notes/music.md:9](../../docs/notes/music.md#L9): The music (`src/rules/musicPlan.ts`, `src/rules/musicScore.ts`, `src/platform/audio/musicEngine.ts`, `config/music-style.json`): A sleeping legend's clearing on the ground (Ed, 2026-10-06) muffles the music (`muffled`, rules/music.ts; the tuning's `music.circle`) under that legend's own layer (`legendCircleAt`, rules/musicPlan.ts; the style's `circle`: every legend's parts and its voice family's, each species its own patterns, melody, rhythm and octave in the music's key and chords, played over the muffle on the engine's second output); There the world slows to about a tenth (the game's time scale, `g.timeScale`) and the music follows it (Ed, 2026-10-06: "the music audibly slows down"): the . candidate only: same-topic wording and later inline date; not a verified superseding ruling.
 
 - **legend clearings > each is edged by the rim kit: small pieces just past its floor, all the way round** — [src/rules/legendClearing.test.ts:186](../../src/rules/legendClearing.test.ts#L186)
-  - outcome stats; Move these six tests of baby travel times, grove averages, rim coverage and siege timing out of release gates? Yes means they run nightly as a nonblocking report; small rule and safety checks are retained separately.. Currentness: unverified. Case runtime: unknown.
+  - outcome stats; Move these eight scenery, travel and quest-distribution tests out of release gates? Yes makes their sampled times, averages and coverage a nightly report. Small boundary, ownership and current quest-cap checks stay blocking.. Currentness: unverified. Case runtime: unknown.
   - Cited ruling: suite, line 16: // Each area's sleeping legend lies in a small circular clearing of its own (Ed, 2026-10-06), near its top.
   - Possible later evidence: [docs/notes/house.md:97](../../docs/notes/house.md#L97): - **Finds / travel trunk** (Ed, 2026-10-21, the station menus' part (b): "The items are found in the forest like other permanent upgrades. Hints are given by the crystal ball"; `src/rules/finds.ts`, `render/view/finds.ts`): each night the island she's on holds one permanent upgrade she hasn't found, a wearable in the trunk or a broom part in a wreck (the finds pool, below; the wearables `FINDABLE`, the wardrobe's items not hers from the start, never a broom shape: brooms are made of parts), drawn as one flask-sized object on a clear patch in its own pale gold-white light (the finds style guide, `docs/art-guide/FINDS.md`, Ed 2026-10-23: clothes a folded bundle, `find-bundle`; bags a little ba. candidate only: same-topic wording and later inline date; not a verified superseding ruling.
   - Possible later evidence: [docs/notes/island.md:21](../../docs/notes/island.md#L21): - **Zoo**: `?zoo` (Ed, 2026-10-13; laid out like the sea chart since Ed, 2026-10-26: `src/rules/zooMap.ts`, `src/rules/zoo.ts`, `config/zoo.json`; the mock: `previews/ed/zoo-map` on `claude/ed-shots`): every kind's island where the chart has it (`worldOf(world)`), its outline the chart's real coast where this browser has it (Ed, 2026-10-26: "We already know the real coastline shapes, can't we reuse them in the zoo without calculating anything?": the chart's worker keeps each island's biggest sea loop beside its outline, `app/chartCache.ts` `coastKey`/`keepCoast`, under the chart's own keys; the zoo's page reads them back before its map is made, at most 400 ms, `app/zooCoasts.ts`, and hands t. candidate only: same-topic wording and later inline date; not a verified superseding ruling.
 
 - **legend clearings > each keeps its edge minFromStone metres from its area's runestone, but in a sliver of an area too small to (the farthest it fits)** — [src/rules/legendClearing.test.ts:206](../../src/rules/legendClearing.test.ts#L206)
-  - outcome stats; Move these six tests of baby travel times, grove averages, rim coverage and siege timing out of release gates? Yes means they run nightly as a nonblocking report; small rule and safety checks are retained separately.. Currentness: unverified. Case runtime: unknown.
+  - outcome stats; Move these eight scenery, travel and quest-distribution tests out of release gates? Yes makes their sampled times, averages and coverage a nightly report. Small boundary, ownership and current quest-cap checks stay blocking.. Currentness: unverified. Case runtime: unknown.
   - Cited ruling: suite, line 16: // Each area's sleeping legend lies in a small circular clearing of its own (Ed, 2026-10-06), near its top.
   - Possible later evidence: [docs/notes/island.md:21](../../docs/notes/island.md#L21): - **Zoo**: `?zoo` (Ed, 2026-10-13; laid out like the sea chart since Ed, 2026-10-26: `src/rules/zooMap.ts`, `src/rules/zoo.ts`, `config/zoo.json`; the mock: `previews/ed/zoo-map` on `claude/ed-shots`): every kind's island where the chart has it (`worldOf(world)`), its outline the chart's real coast where this browser has it (Ed, 2026-10-26: "We already know the real coastline shapes, can't we reuse them in the zoo without calculating anything?": the chart's worker keeps each island's biggest sea loop beside its outline, `app/chartCache.ts` `coastKey`/`keepCoast`, under the chart's own keys; the zoo's page reads them back before its map is made, at most 400 ms, `app/zooCoasts.ts`, and hands t. candidate only: same-topic wording and later inline date; not a verified superseding ruling.
   - Possible later evidence: [DESIGN.md:359](../../DESIGN.md#L359): - **Conversion, by the spell or a wave, the same rule:** the stone becomes a soundsystem; its babies turn friendly; its wild young and adults turn hostile and besiege it, as a wave does; and **every friend sigil falls and scatters** over its runestone clearing on free hex cells (Ed, 2026-10-28: "It's fine if they're scattered around the whole runestone clearing"; `cast.scatter`: its open ground out to 20 m (Ed's playtest, 2026-10-29: "sigils scatter too widely"; 34 free 6 m hex cells there, room for the biggest stacks, about 20), in a seeded order so they spread however many there are, never in the wedge just north of the soundsystem where its sprite would hide them), into `g.loose`, for any. candidate only: same-topic wording and later inline date; not a verified superseding ruling.
@@ -6807,64 +6835,38 @@ Static declarations only. All classifications and currentness are provisional. C
   - leftovers; Keep these two radius-map comparison tests, including explicit half/all-area settings, separate from authored-island rules?. Currentness: unverified. Case runtime: unknown.
   - Cited ruling: none found in scoped comments; not proof that none exists.
 
-- **legends, redesigned (Ed, 2026-10-05; #87) > a friendly legend's attacks actually land on a wild witch-attacker, in grammar and classic modes** — [src/rules/legends.test.ts:50](../../src/rules/legends.test.ts#L50)
-  - outcome stats; review simulation assertions; consider report after Ed rules. Currentness: unverified. Case runtime: unknown.
-  - Cited ruling: none found in scoped comments; not proof that none exists.
-
 - **legends, redesigned (Ed, 2026-10-05; #87) > sleep on when their area's soundsystem comes (soundsystems no longer wake them)** — [src/rules/legends.test.ts:63](../../src/rules/legends.test.ts#L63)
-  - current rules; keep pending design review. Currentness: unverified. Case runtime: unknown.
+  - current rules; Keep current legend and quest rules?. Currentness: unverified. Case runtime: unknown.
   - Cited ruling: none found in scoped comments; not proof that none exists.
 
 - **legends, redesigned (Ed, 2026-10-05; #87) > grow restless (0 to 1) with none of their kind in their area, calm as soon as one's back, and turn angry once it's run its course** — [src/rules/legends.test.ts:70](../../src/rules/legends.test.ts#L70)
-  - outcome stats; review simulation assertions; consider report after Ed rules. Currentness: unverified. Case runtime: unknown.
+  - current rules; Keep current legend and quest rules?. Currentness: unverified. Case runtime: unknown.
   - Cited ruling: none found in scoped comments; not proof that none exists.
 
 - **legends, redesigned (Ed, 2026-10-05; #87) > counts one of its kind parked there at her sigil as kin** — [src/rules/legends.test.ts:90](../../src/rules/legends.test.ts#L90)
-  - current rules; keep pending design review. Currentness: unverified. Case runtime: unknown.
+  - current rules; Keep current legend and quest rules?. Currentness: unverified. Case runtime: unknown.
   - Cited ruling: none found in scoped comments; not proof that none exists.
-
-- **legends, redesigned (Ed, 2026-10-05; #87) > when angry, shoot her from afar (into neighbouring areas), slowly; never soundsystems, never happy creatures; and stay in their area** — [src/rules/legends.test.ts:97](../../src/rules/legends.test.ts#L97)
-  - outcome stats; review simulation assertions; consider report after Ed rules. Currentness: unverified. Case runtime: unknown.
-  - Cited ruling: none found in scoped comments; not proof that none exists.
-
-- **legends, redesigned (Ed, 2026-10-05; #87) > when angry with her out of reach, bombard the nearest standing soundsystem within bombard.range (Ed, 2026-10-06: "Legend bombards, but prioritises you")** — [src/rules/legends.test.ts:118](../../src/rules/legends.test.ts#L118)
-  - outcome stats; review simulation assertions; consider report after Ed rules. Currentness: unverified. Case runtime: unknown.
-  - Cited ruling: name, line 118: when angry with her out of reach, bombard the nearest standing soundsystem within bombard.range (Ed, 2026-10-06: "Legend bombards, but prioritises you")
-  - Possible later evidence: [docs/notes/island.md:21](../../docs/notes/island.md#L21): - **Zoo**: `?zoo` (Ed, 2026-10-13; laid out like the sea chart since Ed, 2026-10-26: `src/rules/zooMap.ts`, `src/rules/zoo.ts`, `config/zoo.json`; the mock: `previews/ed/zoo-map` on `claude/ed-shots`): every kind's island where the chart has it (`worldOf(world)`), its outline the chart's real coast where this browser has it (Ed, 2026-10-26: "We already know the real coastline shapes, can't we reuse them in the zoo without calculating anything?": the chart's worker keeps each island's biggest sea loop beside its outline, `app/chartCache.ts` `coastKey`/`keepCoast`, under the chart's own keys; the zoo's page reads them back before its map is made, at most 400 ms, `app/zooCoasts.ts`, and hands t. candidate only: same-topic wording and later inline date; not a verified superseding ruling.
-  - Possible later evidence: [DESIGN.md:54](../../DESIGN.md#L54): - **Knocked out** (Ed, 2026-10-04; since Ed's playtest of v4821, 2026-10-26: "When I get knocked out and my leashed animals are put down, I think they should become happy instead of leashed to a point by a floor sigil"): at no hits left she collapses where she is (no more hits, no input). **Her sigil stack comes down from the bottom up, about a second each** (`knockout.releaseEach`; since Ed's decisions of 2026-10-07, `releaseEach` 0: all at once as she goes down), each animal she carried **turning happy where it stands**: no sigil is made; its rune is at its feet, so she can leash it again by picking that up, as after an invite; meanwhile it idles near where it was dropped (Ed, later that d. candidate only: same-topic wording and later inline date; not a verified superseding ruling.
 
 - **legends, redesigned (Ed, 2026-10-05; #87) > with the stomp on, a legend turning angry stamps on its own area's standing soundsystem, after the stomp's longer restless time (Ed, 2026-10-06)** — [src/rules/legends.test.ts:141](../../src/rules/legends.test.ts#L141)
-  - outcome stats; review simulation assertions; consider report after Ed rules. Currentness: unverified. Case runtime: unknown.
+  - leftovers; Keep these two radius-map comparison tests, including explicit half/all-area settings, separate from authored-island rules?. Currentness: unverified. Case runtime: unknown.
   - Cited ruling: name, line 141: with the stomp on, a legend turning angry stamps on its own area's standing soundsystem, after the stomp's longer restless time (Ed, 2026-10-06)
   - Possible later evidence: [docs/notes/gameplay.md:34](../../docs/notes/gameplay.md#L34): - **Area legend / sleeping legend**: the one legend of its kind in about a fifth of the areas (`legends.share` 0.2: Ed, 2026-10-08; half before; never home), asleep (sunk and mossed over, scenery) near the top of its circle; waves don't wake it: it grows restless, then angry, while its area has none of its kind, and goes back to sleep when one is back or when worn down; a relic by it makes it happy (DESIGN.md, "Legends, redesigned"); in its circle it reads at a glance (Ed's round 14 playtest): the sleeping form's outline in its sigil's neon and a light floor (`uLegend` in `render/sprites.ts`), a soft neon glow on the ground under it asleep or happy (`legendSeen` in `render/leash.ts`), knobs . candidate only: same-topic wording and later inline date; not a verified superseding ruling.
   - Possible later evidence: [docs/notes/view.md:74](../../docs/notes/view.md#L74): - **Edge pointers** (`src/render/view/hud.ts` drawPointers, `src/render/indicator.ts` StoneIndicator, their subjects in `src/render/view/pointers.ts`; Ed's pointer pass, 2026-10-28): on the screen's edge toward their subject, a map pin over it once on screen. They fade out in slowed time, show nothing through the telescope, and none after the party's over. **Wave pointer**: toward the ley line's pulse and the next stone, the soundsystem spell's 🎶 (`NOTES`, as its spot) in a ring, both cycling the rainbow (`rainbow: true`: the 🎶 one hue turning, as the spot's; the ring a wheel of it, turning), the route's last stone too (its 🎉 before); the countdown's fill, the bpm label and its pop as bef. candidate only: same-topic wording and later inline date; not a verified superseding ruling.
 
-- **legends, redesigned (Ed, 2026-10-05; #87) > fire each volley at up to attack.targets of the nearest (balance builder's values: 10 a hit, every 15 s)** — [src/rules/legends.test.ts:159](../../src/rules/legends.test.ts#L159)
-  - outcome stats; review simulation assertions; consider report after Ed rules. Currentness: unverified. Case runtime: unknown.
-  - Cited ruling: none found in scoped comments; not proof that none exists.
-
-- **legends, redesigned (Ed, 2026-10-05; #87) > worn down, go back to sleep (angry or happy)** — [src/rules/legends.test.ts:177](../../src/rules/legends.test.ts#L177)
-  - current rules; keep pending design review. Currentness: unverified. Case runtime: unknown.
-  - Cited ruling: none found in scoped comments; not proof that none exists.
-
 - **legends, redesigned (Ed, 2026-10-05; #87) > lie relics (flasks) about the map, one per ten areas; drunk on their sigil they grow her followers and wake no legend (Ed, 2026-10-18)** — [src/rules/legends.test.ts:192](../../src/rules/legends.test.ts#L192)
-  - outcome stats; review simulation assertions; consider report after Ed rules. Currentness: unverified. Case runtime: unknown.
+  - current rules; Keep current legend and quest rules?. Currentness: unverified. Case runtime: unknown.
   - Cited ruling: name, line 192: lie relics (flasks) about the map, one per ten areas; drunk on their sigil they grow her followers and wake no legend (Ed, 2026-10-18)
   - Possible later evidence: [docs/notes/island.md:21](../../docs/notes/island.md#L21): - **Zoo**: `?zoo` (Ed, 2026-10-13; laid out like the sea chart since Ed, 2026-10-26: `src/rules/zooMap.ts`, `src/rules/zoo.ts`, `config/zoo.json`; the mock: `previews/ed/zoo-map` on `claude/ed-shots`): every kind's island where the chart has it (`worldOf(world)`), its outline the chart's real coast where this browser has it (Ed, 2026-10-26: "We already know the real coastline shapes, can't we reuse them in the zoo without calculating anything?": the chart's worker keeps each island's biggest sea loop beside its outline, `app/chartCache.ts` `coastKey`/`keepCoast`, under the chart's own keys; the zoo's page reads them back before its map is made, at most 400 ms, `app/zooCoasts.ts`, and hands t. candidate only: same-topic wording and later inline date; not a verified superseding ruling.
   - Possible later evidence: [docs/notes/gameplay.md:42](../../docs/notes/gameplay.md#L42): - **Legend area** (Ed, 2026-10-26: "legends are spawned in additional areas that have legend circles where runestones usually are"; "extra areas are added to each island, and the legend areas can be adjacent to the same type of area, so it effectively becomes an area twice the size"; all legends in them; "The route only cares about runestones"; islands grow): on an island by roster, every kind a night could deal there (the roster's but the island's own kind and placeholders: one each, chosen by the island's own seed, so its shape, land, coast and chart outline are the same every night) gets an area of its own grown out of the island's frontier beside one of its kind's areas, its **pair**: th. candidate only: same-topic wording and later inline date; not a verified superseding ruling.
 
 - **legends, redesigned (Ed, 2026-10-05; #87) > take a quest sigil only inside their clearing: the right creature put down elsewhere in its area does nothing but cue** — [src/rules/legends.test.ts:206](../../src/rules/legends.test.ts#L206)
-  - current rules; keep pending design review. Currentness: unverified. Case runtime: unknown.
+  - current rules; Keep current legend and quest rules?. Currentness: unverified. Case runtime: unknown.
   - Cited ruling: body, line 213: // (the gift starts out of the circle; only its sigil put down inside finishes the quest: Ed, 2026-10-19)
   - Possible later evidence: [docs/notes/island.md:21](../../docs/notes/island.md#L21): - **Zoo**: `?zoo` (Ed, 2026-10-13; laid out like the sea chart since Ed, 2026-10-26: `src/rules/zooMap.ts`, `src/rules/zoo.ts`, `config/zoo.json`; the mock: `previews/ed/zoo-map` on `claude/ed-shots`): every kind's island where the chart has it (`worldOf(world)`), its outline the chart's real coast where this browser has it (Ed, 2026-10-26: "We already know the real coastline shapes, can't we reuse them in the zoo without calculating anything?": the chart's worker keeps each island's biggest sea loop beside its outline, `app/chartCache.ts` `coastKey`/`keepCoast`, under the chart's own keys; the zoo's page reads them back before its map is made, at most 400 ms, `app/zooCoasts.ts`, and hands t. candidate only: same-topic wording and later inline date; not a verified superseding ruling.
   - Possible later evidence: [docs/notes/gameplay.md:42](../../docs/notes/gameplay.md#L42): - **Legend area** (Ed, 2026-10-26: "legends are spawned in additional areas that have legend circles where runestones usually are"; "extra areas are added to each island, and the legend areas can be adjacent to the same type of area, so it effectively becomes an area twice the size"; all legends in them; "The route only cares about runestones"; islands grow): on an island by roster, every kind a night could deal there (the roster's but the island's own kind and placeholders: one each, chosen by the island's own seed, so its shape, land, coast and chart outline are the same every night) gets an area of its own grown out of the island's frontier beside one of its kind's areas, its **pair**: th. candidate only: same-topic wording and later inline date; not a verified superseding ruling.
 
-- **legends, redesigned (Ed, 2026-10-05; #87) > when happy, engages an enraged enemy within 85 m and cannot itself be pursued or provoked** — [src/rules/legends.test.ts:232](../../src/rules/legends.test.ts#L232)
-  - outcome stats; review simulation assertions; consider report after Ed rules. Currentness: unverified. Case runtime: unknown.
-  - Cited ruling: none found in scoped comments; not proof that none exists.
-
 - **legends, redesigned (Ed, 2026-10-05; #87) > has the dream quest wake it happy, fighting for her, no buff (Ed, 2026-10-18; the creature stays hers), and stay open while it sleeps, soundsystem on or not (Ed, 2026-10-06)** — [src/rules/legends.test.ts:251](../../src/rules/legends.test.ts#L251)
-  - current rules; keep pending design review. Currentness: unverified. Case runtime: unknown.
+  - current rules; Keep current legend and quest rules?. Currentness: unverified. Case runtime: unknown.
   - Cited ruling: name, line 251: has the dream quest wake it happy, fighting for her, no buff (Ed, 2026-10-18; the creature stays hers), and stay open while it sleeps, soundsystem on or not (Ed, 2026-10-06)
   - Possible later evidence: [docs/notes/run.md:79](../../docs/notes/run.md#L79): - **The world asleep before the party** (Ed, 2026-10-26: "If you leave the treehouse before starting the party, it should be the same as after a party is lost; creatures are asleep in their areas and you can't invite them, the night's permanent upgrade find is not placed yet"; `worldAsleep`, `putToBed`, `stepWorldAsleep` in `src/rules/partyOver.ts`): a night waiting for her party spell (`party.spellAt` null; not the zoo, not the debug arena's) lies as the afterparty does: every creature put to bed at once in its own area, asleep for good (the afterparty's own sleep), the legends still, no 💌 taking, nothing fighting or attacking her, nothing growing, and tonight's find not there (its trunk, . candidate only: same-topic wording and later inline date; not a verified superseding ruling.
   - Possible later evidence: [DESIGN.md:54](../../DESIGN.md#L54): - **Knocked out** (Ed, 2026-10-04; since Ed's playtest of v4821, 2026-10-26: "When I get knocked out and my leashed animals are put down, I think they should become happy instead of leashed to a point by a floor sigil"): at no hits left she collapses where she is (no more hits, no input). **Her sigil stack comes down from the bottom up, about a second each** (`knockout.releaseEach`; since Ed's decisions of 2026-10-07, `releaseEach` 0: all at once as she goes down), each animal she carried **turning happy where it stands**: no sigil is made; its rune is at its feet, so she can leash it again by picking that up, as after an invite; meanwhile it idles near where it was dropped (Ed, later that d. candidate only: same-topic wording and later inline date; not a verified superseding ruling.
@@ -6875,166 +6877,144 @@ Static declarations only. All classifications and currentness are provisional. C
   - Possible later evidence: [docs/notes/house.md:97](../../docs/notes/house.md#L97): - **Finds / travel trunk** (Ed, 2026-10-21, the station menus' part (b): "The items are found in the forest like other permanent upgrades. Hints are given by the crystal ball"; `src/rules/finds.ts`, `render/view/finds.ts`): each night the island she's on holds one permanent upgrade she hasn't found, a wearable in the trunk or a broom part in a wreck (the finds pool, below; the wearables `FINDABLE`, the wardrobe's items not hers from the start, never a broom shape: brooms are made of parts), drawn as one flask-sized object on a clear patch in its own pale gold-white light (the finds style guide, `docs/art-guide/FINDS.md`, Ed 2026-10-23: clothes a folded bundle, `find-bundle`; bags a little ba. candidate only: same-topic wording and later inline date; not a verified superseding ruling.
   - Possible later evidence: [docs/notes/performance.md:166](../../docs/notes/performance.md#L166): **The stall hunt** (`node tools/bench/stalls.cjs [out]`, the coordinator's ask from Ed's overlay, 2026-10-13: 24 stalls over 100 ms and 18% of frames over 20 ms in the treetops, seed 2267, Old pinewood, 56 s into wave 0): the game's own loop run free at a spot (`SEED`, `X`, `Z`, `ZOOM`; `DIST=dist-prof` from `npx vite build --minify false --outDir dist-prof`, so the functions have names) under Chromium's sampling profiler, the GPU draw a no-op (`NODRAW=1`) so a wall second is a game second, and a report of where the JavaScript's time went: self time by function, call chains, runs of JavaScript over `RUN_MS`, the browser's long animation frames and the game's own stall log (`<out>/stalls.json. candidate only: same-topic wording and later inline date; not a verified superseding ruling.
 
-- **charging legends' long charge (Ed, 2026-10-05; legends.json charge) > tramples everything in its lane once each (her, the wild alike), knocking them aside, through scenery** — [src/rules/legends.test.ts:311](../../src/rules/legends.test.ts#L311)
-  - outcome stats; review simulation assertions; consider report after Ed rules. Currentness: unverified. Case runtime: unknown.
-  - Cited ruling: none found in scoped comments; not proof that none exists.
-
-- **charging legends' long charge (Ed, 2026-10-05; legends.json charge) > curves toward its target, brakes in a wide arc past it, walks home, and charges again only once it's back** — [src/rules/legends.test.ts:333](../../src/rules/legends.test.ts#L333)
-  - outcome stats; review simulation assertions; consider report after Ed rules. Currentness: unverified. Case runtime: unknown.
-  - Cited ruling: none found in scoped comments; not proof that none exists.
-
 - **a wave on a legend's area (#87, found by the overnight playthrough) > enrages its wild creatures into a siege, but leaves its legend asleep, neither enraged nor besieging** — [src/rules/legends.test.ts:359](../../src/rules/legends.test.ts#L359)
-  - outcome stats; review simulation assertions; consider report after Ed rules. Currentness: unverified. Case runtime: unknown.
-  - Cited ruling: none found in scoped comments; not proof that none exists.
-
-- **an awake legend with nothing in reach (balance, 2026-10-06) > looks again every attack.recheck seconds, not every step** — [src/rules/legends.test.ts:379](../../src/rules/legends.test.ts#L379)
-  - outcome stats; review simulation assertions; consider report after Ed rules. Currentness: unverified. Case runtime: unknown.
+  - current rules; Keep current legend and quest rules?. Currentness: unverified. Case runtime: unknown.
   - Cited ruling: none found in scoped comments; not proof that none exists.
 
 - **legends going back to sleep (Ed, 2026-10-06) > look for their kind every legends.check seconds (5), each on its own beat, not all on one frame** — [src/rules/legends.test.ts:393](../../src/rules/legends.test.ts#L393)
-  - current rules; keep pending design review. Currentness: unverified. Case runtime: unknown.
+  - current rules; Keep current legend and quest rules?. Currentness: unverified. Case runtime: unknown.
   - Cited ruling: none found in scoped comments; not proof that none exists.
 
 - **legends going back to sleep (Ed, 2026-10-06) > away from where they lay, walk home first and lie down where they spawned** — [src/rules/legends.test.ts:410](../../src/rules/legends.test.ts#L410)
-  - outcome stats; review simulation assertions; consider report after Ed rules. Currentness: unverified. Case runtime: unknown.
+  - current rules; Keep current legend and quest rules?. Currentness: unverified. Case runtime: unknown.
   - Cited ruling: none found in scoped comments; not proof that none exists.
 
 - **legends going back to sleep (Ed, 2026-10-06) > calm when angry as soon as one of their kind is back in their area: asleep, restlessness 0, and home first** — [src/rules/legends.test.ts:430](../../src/rules/legends.test.ts#L430)
-  - current rules; keep pending design review. Currentness: unverified. Case runtime: unknown.
+  - current rules; Keep current legend and quest rules?. Currentness: unverified. Case runtime: unknown.
   - Cited ruling: none found in scoped comments; not proof that none exists.
 
 - **a sleeping legend's facing > stays as it was laid while she walks round it** — [src/rules/legends.test.ts:450](../../src/rules/legends.test.ts#L450)
-  - current rules; keep pending design review. Currentness: unverified. Case runtime: unknown.
+  - current rules; Keep current legend and quest rules?. Currentness: unverified. Case runtime: unknown.
   - Cited ruling: none found in scoped comments; not proof that none exists.
 
 - **the party legend (Easter egg) > below the egg threshold stays a route legend: no direct invite, chat or rune; the final letter alone creates the party legend** — [src/rules/partyLegend.test.ts:45](../../src/rules/partyLegend.test.ts#L45)
-  - current rules; keep pending design review. Currentness: unverified. Case runtime: unknown.
+  - current rules; Keep current legend and quest rules?. Currentness: unverified. Case runtime: unknown.
   - Cited ruling: file, line 1: // The party-legend Easter egg (Ed, 2026-10-06; rules/partyLegend.ts): only a happy legend takes 💌s, 100 of them, draining
   - Possible later evidence: [DESIGN.md:54](../../DESIGN.md#L54): - **Knocked out** (Ed, 2026-10-04; since Ed's playtest of v4821, 2026-10-26: "When I get knocked out and my leashed animals are put down, I think they should become happy instead of leashed to a point by a floor sigil"): at no hits left she collapses where she is (no more hits, no input). **Her sigil stack comes down from the bottom up, about a second each** (`knockout.releaseEach`; since Ed's decisions of 2026-10-07, `releaseEach` 0: all at once as she goes down), each animal she carried **turning happy where it stands**: no sigil is made; its rune is at its feet, so she can leash it again by picking that up, as after an invite; meanwhile it idles near where it was dropped (Ed, later that d. candidate only: same-topic wording and later inline date; not a verified superseding ruling.
   - Possible later evidence: [docs/notes/gameplay.md:52](../../docs/notes/gameplay.md#L52): Only quest-complete legends dance at the win (a completion timestamp of zero counts); all incomplete legends lull and return to their own circles. Since normal legend stepping stops at victory, win.ts finishes their return walks. Friendly legends use legends.friendRange (85 m): defend a witch in range first, otherwise engage enraged or witch-targeting/hunting wild creatures in range, otherwise follow tonight's route towards the drawing tip. Their attacks keep their kinds and cooldowns; friendly chargers resume the route after braking rather than return to their lairs. Friendly legends cannot be pursued or provoked. The optional 100-letter partyEgg exception is retained (COORDINATOR #1552, 20. candidate only: same-topic wording and later inline date; not a verified superseding ruling.
 
 - **the party legend (Easter egg) > only a happy legend takes 💌s: asleep, restless and angry ones block them, and with the egg off a happy one does too** — [src/rules/partyLegend.test.ts:57](../../src/rules/partyLegend.test.ts#L57)
-  - current rules; keep pending design review. Currentness: unverified. Case runtime: unknown.
+  - current rules; Keep current legend and quest rules?. Currentness: unverified. Case runtime: unknown.
   - Cited ruling: file, line 1: // The party-legend Easter egg (Ed, 2026-10-06; rules/partyLegend.ts): only a happy legend takes 💌s, 100 of them, draining
   - Possible later evidence: [docs/notes/island.md:21](../../docs/notes/island.md#L21): - **Zoo**: `?zoo` (Ed, 2026-10-13; laid out like the sea chart since Ed, 2026-10-26: `src/rules/zooMap.ts`, `src/rules/zoo.ts`, `config/zoo.json`; the mock: `previews/ed/zoo-map` on `claude/ed-shots`): every kind's island where the chart has it (`worldOf(world)`), its outline the chart's real coast where this browser has it (Ed, 2026-10-26: "We already know the real coastline shapes, can't we reuse them in the zoo without calculating anything?": the chart's worker keeps each island's biggest sea loop beside its outline, `app/chartCache.ts` `coastKey`/`keepCoast`, under the chart's own keys; the zoo's page reads them back before its map is made, at most 400 ms, `app/zooCoasts.ts`, and hands t. candidate only: same-topic wording and later inline date; not a verified superseding ruling.
   - Possible later evidence: [docs/notes/view.md:74](../../docs/notes/view.md#L74): - **Edge pointers** (`src/render/view/hud.ts` drawPointers, `src/render/indicator.ts` StoneIndicator, their subjects in `src/render/view/pointers.ts`; Ed's pointer pass, 2026-10-28): on the screen's edge toward their subject, a map pin over it once on screen. They fade out in slowed time, show nothing through the telescope, and none after the party's over. **Wave pointer**: toward the ley line's pulse and the next stone, the soundsystem spell's 🎶 (`NOTES`, as its spot) in a ring, both cycling the rainbow (`rainbow: true`: the 🎶 one hue turning, as the spot's; the ring a wheel of it, turning), the route's last stone too (its 🎉 before); the countdown's fill, the bpm label and its pop as bef. candidate only: same-topic wording and later inline date; not a verified superseding ruling.
 
 - **the party legend (Easter egg) > takes partyHits 💌s (99 aren't enough), draining slowly; the 100th makes it a party legend, its rune at its feet** — [src/rules/partyLegend.test.ts:68](../../src/rules/partyLegend.test.ts#L68)
-  - outcome stats; review simulation assertions; consider report after Ed rules. Currentness: unverified. Case runtime: unknown.
+  - current rules; Keep current legend and quest rules?. Currentness: unverified. Case runtime: unknown.
   - Cited ruling: file, line 1: // The party-legend Easter egg (Ed, 2026-10-06; rules/partyLegend.ts): only a happy legend takes 💌s, 100 of them, draining
   - Possible later evidence: [DESIGN.md:54](../../DESIGN.md#L54): - **Knocked out** (Ed, 2026-10-04; since Ed's playtest of v4821, 2026-10-26: "When I get knocked out and my leashed animals are put down, I think they should become happy instead of leashed to a point by a floor sigil"): at no hits left she collapses where she is (no more hits, no input). **Her sigil stack comes down from the bottom up, about a second each** (`knockout.releaseEach`; since Ed's decisions of 2026-10-07, `releaseEach` 0: all at once as she goes down), each animal she carried **turning happy where it stands**: no sigil is made; its rune is at its feet, so she can leash it again by picking that up, as after an invite; meanwhile it idles near where it was dropped (Ed, later that d. candidate only: same-topic wording and later inline date; not a verified superseding ruling.
   - Possible later evidence: [docs/notes/house.md:76](../../docs/notes/house.md#L76): - **Treehouse deck** (Ed, 2026-10-11: "a circle with a wooden floor and a balustrade sitting on the ent. You land on it by being at treetop height, and during the night time slower 10x"; `src/rules/treehouse.ts`, the tuning's `treehouse.deck`, `on: false` for the old treehouse): a round deck (radius 7 m, its floor 22 m up) on the Ent at the treehouse's spot. From the treetops, coming down within its radius plus `grace` lands her on it (`witch.perch`, mode "ground", its floor her ground: `witchHeight`); she walks it, kept inside its rail (`keepOnDeck`), round the **map table** in its middle (Ed: "The world map is in the centre": E there opens the sea chart over the game, `ui/chartOverlay.ts` . candidate only: same-topic wording and later inline date; not a verified superseding ruling.
 
 - **the party legend (Easter egg) > picked up, it never comes to her, and she can't go a step past partyReach of it: on foot, over the treetops, or by a blink** — [src/rules/partyLegend.test.ts:84](../../src/rules/partyLegend.test.ts#L84)
-  - outcome stats; review simulation assertions; consider report after Ed rules. Currentness: unverified. Case runtime: unknown.
+  - current rules; Keep current legend and quest rules?. Currentness: unverified. Case runtime: unknown.
   - Cited ruling: file, line 1: // The party-legend Easter egg (Ed, 2026-10-06; rules/partyLegend.ts): only a happy legend takes 💌s, 100 of them, draining
   - Possible later evidence: [DESIGN.md:54](../../DESIGN.md#L54): - **Knocked out** (Ed, 2026-10-04; since Ed's playtest of v4821, 2026-10-26: "When I get knocked out and my leashed animals are put down, I think they should become happy instead of leashed to a point by a floor sigil"): at no hits left she collapses where she is (no more hits, no input). **Her sigil stack comes down from the bottom up, about a second each** (`knockout.releaseEach`; since Ed's decisions of 2026-10-07, `releaseEach` 0: all at once as she goes down), each animal she carried **turning happy where it stands**: no sigil is made; its rune is at its feet, so she can leash it again by picking that up, as after an invite; meanwhile it idles near where it was dropped (Ed, later that d. candidate only: same-topic wording and later inline date; not a verified superseding ruling.
   - Possible later evidence: [docs/notes/house.md:76](../../docs/notes/house.md#L76): - **Treehouse deck** (Ed, 2026-10-11: "a circle with a wooden floor and a balustrade sitting on the ent. You land on it by being at treetop height, and during the night time slower 10x"; `src/rules/treehouse.ts`, the tuning's `treehouse.deck`, `on: false` for the old treehouse): a round deck (radius 7 m, its floor 22 m up) on the Ent at the treehouse's spot. From the treetops, coming down within its radius plus `grace` lands her on it (`witch.perch`, mode "ground", its floor her ground: `witchHeight`); she walks it, kept inside its rail (`keepOnDeck`), round the **map table** in its middle (Ed: "The world map is in the centre": E there opens the sea chart over the game, `ui/chartOverlay.ts` . candidate only: same-topic wording and later inline date; not a verified superseding ruling.
 
 - **the party legend (Easter egg) > put down (E), it's let go where it stands, dancing, and she's free** — [src/rules/partyLegend.test.ts:103](../../src/rules/partyLegend.test.ts#L103)
-  - outcome stats; review simulation assertions; consider report after Ed rules. Currentness: unverified. Case runtime: unknown.
+  - current rules; Keep current legend and quest rules?. Currentness: unverified. Case runtime: unknown.
   - Cited ruling: file, line 1: // The party-legend Easter egg (Ed, 2026-10-06; rules/partyLegend.ts): only a happy legend takes 💌s, 100 of them, draining
   - Possible later evidence: [DESIGN.md:54](../../DESIGN.md#L54): - **Knocked out** (Ed, 2026-10-04; since Ed's playtest of v4821, 2026-10-26: "When I get knocked out and my leashed animals are put down, I think they should become happy instead of leashed to a point by a floor sigil"): at no hits left she collapses where she is (no more hits, no input). **Her sigil stack comes down from the bottom up, about a second each** (`knockout.releaseEach`; since Ed's decisions of 2026-10-07, `releaseEach` 0: all at once as she goes down), each animal she carried **turning happy where it stands**: no sigil is made; its rune is at its feet, so she can leash it again by picking that up, as after an invite; meanwhile it idles near where it was dropped (Ed, later that d. candidate only: same-topic wording and later inline date; not a verified superseding ruling.
   - Possible later evidence: [docs/notes/gameplay.md:42](../../docs/notes/gameplay.md#L42): - **Legend area** (Ed, 2026-10-26: "legends are spawned in additional areas that have legend circles where runestones usually are"; "extra areas are added to each island, and the legend areas can be adjacent to the same type of area, so it effectively becomes an area twice the size"; all legends in them; "The route only cares about runestones"; islands grow): on an island by roster, every kind a night could deal there (the roster's but the island's own kind and placeholders: one each, chosen by the island's own seed, so its shape, land, coast and chart outline are the same every night) gets an area of its own grown out of the island's frontier beside one of its kind's areas, its **pair**: th. candidate only: same-topic wording and later inline date; not a verified superseding ruling.
 
 - **the party legend (Easter egg) > knocked out, she lets it go where it stands** — [src/rules/partyLegend.test.ts:118](../../src/rules/partyLegend.test.ts#L118)
-  - outcome stats; review simulation assertions; consider report after Ed rules. Currentness: unverified. Case runtime: unknown.
+  - current rules; Keep current legend and quest rules?. Currentness: unverified. Case runtime: unknown.
   - Cited ruling: file, line 1: // The party-legend Easter egg (Ed, 2026-10-06; rules/partyLegend.ts): only a happy legend takes 💌s, 100 of them, draining
   - Possible later evidence: [DESIGN.md:54](../../DESIGN.md#L54): - **Knocked out** (Ed, 2026-10-04; since Ed's playtest of v4821, 2026-10-26: "When I get knocked out and my leashed animals are put down, I think they should become happy instead of leashed to a point by a floor sigil"): at no hits left she collapses where she is (no more hits, no input). **Her sigil stack comes down from the bottom up, about a second each** (`knockout.releaseEach`; since Ed's decisions of 2026-10-07, `releaseEach` 0: all at once as she goes down), each animal she carried **turning happy where it stands**: no sigil is made; its rune is at its feet, so she can leash it again by picking that up, as after an invite; meanwhile it idles near where it was dropped (Ed, later that d. candidate only: same-topic wording and later inline date; not a verified superseding ruling.
   - Possible later evidence: [docs/notes/gameplay.md:42](../../docs/notes/gameplay.md#L42): - **Legend area** (Ed, 2026-10-26: "legends are spawned in additional areas that have legend circles where runestones usually are"; "extra areas are added to each island, and the legend areas can be adjacent to the same type of area, so it effectively becomes an area twice the size"; all legends in them; "The route only cares about runestones"; islands grow): on an island by roster, every kind a night could deal there (the roster's but the island's own kind and placeholders: one each, chosen by the island's own seed, so its shape, land, coast and chart outline are the same every night) gets an area of its own grown out of the island's frontier beside one of its kind's areas, its **pair**: th. candidate only: same-topic wording and later inline date; not a verified superseding ruling.
 
 - **the first quest (Ed, 2026-10-04) > gives every sleeping legend a dream: a kind of the map, not its own, any age (Ed, 2026-10-18), from the seed** — [src/rules/quest.test.ts:22](../../src/rules/quest.test.ts#L22)
-  - current rules; keep pending design review. Currentness: unverified. Case runtime: unknown.
+  - current rules; Keep current legend and quest rules?. Currentness: unverified. Case runtime: unknown.
   - Cited ruling: name, line 22: gives every sleeping legend a dream: a kind of the map, not its own, any age (Ed, 2026-10-18), from the seed
   - Possible later evidence: [docs/notes/run.md:79](../../docs/notes/run.md#L79): - **The world asleep before the party** (Ed, 2026-10-26: "If you leave the treehouse before starting the party, it should be the same as after a party is lost; creatures are asleep in their areas and you can't invite them, the night's permanent upgrade find is not placed yet"; `worldAsleep`, `putToBed`, `stepWorldAsleep` in `src/rules/partyOver.ts`): a night waiting for her party spell (`party.spellAt` null; not the zoo, not the debug arena's) lies as the afterparty does: every creature put to bed at once in its own area, asleep for good (the afterparty's own sleep), the legends still, no 💌 taking, nothing fighting or attacking her, nothing growing, and tonight's find not there (its trunk, . candidate only: same-topic wording and later inline date; not a verified superseding ruling.
   - Possible later evidence: [DESIGN.md:359](../../DESIGN.md#L359): - **Conversion, by the spell or a wave, the same rule:** the stone becomes a soundsystem; its babies turn friendly; its wild young and adults turn hostile and besiege it, as a wave does; and **every friend sigil falls and scatters** over its runestone clearing on free hex cells (Ed, 2026-10-28: "It's fine if they're scattered around the whole runestone clearing"; `cast.scatter`: its open ground out to 20 m (Ed's playtest, 2026-10-29: "sigils scatter too widely"; 34 free 6 m hex cells there, room for the biggest stacks, about 20), in a seeded order so they spread however many there are, never in the wedge just north of the soundsystem where its sprite would hide them), into `g.loose`, for any. candidate only: same-topic wording and later inline date; not a verified superseding ruling.
 
 - **the first quest (Ed, 2026-10-04) > isn't done by the wrong kind** — [src/rules/quest.test.ts:34](../../src/rules/quest.test.ts#L34)
-  - current rules; keep pending design review. Currentness: unverified. Case runtime: unknown.
+  - current rules; Keep current legend and quest rules?. Currentness: unverified. Case runtime: unknown.
   - Cited ruling: none found in scoped comments; not proof that none exists.
 
 - **the first quest (Ed, 2026-10-04) > `is done by its kind at any age (${["a baby", "a young one", "an adult"][level]}): the legend happy at once, fighting for her, its island found tonight, no boon (Ed, 2026-10-18)`** — [src/rules/quest.test.ts:43](../../src/rules/quest.test.ts#L43)
-  - current rules; keep pending design review. Currentness: unverified. Case runtime: unknown.
+  - current rules; Keep current legend and quest rules?. Currentness: unverified. Case runtime: unknown.
   - Cited ruling: name, line 43: `is done by its kind at any age (${["a baby", "a young one", "an adult"][level]}): the legend happy at once, fighting for her, its island found tonight, no boon (Ed, 2026-10-18)`
   - Possible later evidence: [docs/notes/gameplay.md:38](../../docs/notes/gameplay.md#L38): - **Fight Arena** (Ed, 2026-10-27: "we can press a button to randomise the settings and another generates a random enemy pack to fight, and then I can tweak and save/copy attack settings that are fun"): `?fight=<seed>[&pack=wolf*4@2,...]`, or the pause page's **⚔ Fight arena** (a new tab, a new seed): her alone against a wild pack (`setupArena(g, spec, { wildOnly: true })`: every group wild, side by side, none of hers) on the debug arena's ground, no waves, straight in (no spell to cast). The pack is the seed's roll (`rollPack`, rules/fightArena.ts: one time in eight a lone legend, else one kind or, one time in three, two, 2 to 6 of each, young or adult, at most 8; kinds with an attack at ev. candidate only: same-topic wording and later inline date; not a verified superseding ruling.
   - Possible later evidence: [docs/notes/gameplay.md:42](../../docs/notes/gameplay.md#L42): - **Legend area** (Ed, 2026-10-26: "legends are spawned in additional areas that have legend circles where runestones usually are"; "extra areas are added to each island, and the legend areas can be adjacent to the same type of area, so it effectively becomes an area twice the size"; all legends in them; "The route only cares about runestones"; islands grow): on an island by roster, every kind a night could deal there (the roster's but the island's own kind and placeholders: one each, chosen by the island's own seed, so its shape, land, coast and chart outline are the same every night) gets an area of its own grown out of the island's frontier beside one of its kind's areas, its **pair**: th. candidate only: same-topic wording and later inline date; not a verified superseding ruling.
 
 - **the first quest (Ed, 2026-10-04) > isn't taken once the party's over (Ed, 2026-10-18: permanent unlocks only while the party is on)** — [src/rules/quest.test.ts:52](../../src/rules/quest.test.ts#L52)
-  - current rules; keep pending design review. Currentness: unverified. Case runtime: unknown.
+  - current rules; Keep current legend and quest rules?. Currentness: unverified. Case runtime: unknown.
   - Cited ruling: name, line 52: isn't taken once the party's over (Ed, 2026-10-18: permanent unlocks only while the party is on)
   - Possible later evidence: [docs/notes/house.md:97](../../docs/notes/house.md#L97): - **Finds / travel trunk** (Ed, 2026-10-21, the station menus' part (b): "The items are found in the forest like other permanent upgrades. Hints are given by the crystal ball"; `src/rules/finds.ts`, `render/view/finds.ts`): each night the island she's on holds one permanent upgrade she hasn't found, a wearable in the trunk or a broom part in a wreck (the finds pool, below; the wearables `FINDABLE`, the wardrobe's items not hers from the start, never a broom shape: brooms are made of parts), drawn as one flask-sized object on a clear patch in its own pale gold-white light (the finds style guide, `docs/art-guide/FINDS.md`, Ed 2026-10-23: clothes a folded bundle, `find-bundle`; bags a little ba. candidate only: same-topic wording and later inline date; not a verified superseding ruling.
   - Possible later evidence: [docs/notes/gameplay.md:42](../../docs/notes/gameplay.md#L42): - **Legend area** (Ed, 2026-10-26: "legends are spawned in additional areas that have legend circles where runestones usually are"; "extra areas are added to each island, and the legend areas can be adjacent to the same type of area, so it effectively becomes an area twice the size"; all legends in them; "The route only cares about runestones"; islands grow): on an island by roster, every kind a night could deal there (the roster's but the island's own kind and placeholders: one each, chosen by the island's own seed, so its shape, land, coast and chart outline are the same every night) gets an area of its own grown out of the island's frontier beside one of its kind's areas, its **pair**: th. candidate only: same-topic wording and later inline date; not a verified superseding ruling.
 
-- **the first quest (Ed, 2026-10-04) > wakes an area whose quest isn't done angry: its creatures go for the nearest party animal or soundsystem** — [src/rules/quest.test.ts:62](../../src/rules/quest.test.ts#L62)
-  - current rules; keep pending design review. Currentness: unverified. Case runtime: unknown.
-  - Cited ruling: none found in scoped comments; not proof that none exists.
-
-- **the first quest (Ed, 2026-10-04) > makes every wild creature already living in the area friendly when it's done, calming any mid-attack; hers and other areas' as they were (art builder 3, 2026-10-07)** — [src/rules/quest.test.ts:78](../../src/rules/quest.test.ts#L78)
-  - outcome stats; review simulation assertions; consider report after Ed rules. Currentness: unverified. Case runtime: unknown.
-  - Cited ruling: name, line 78: makes every wild creature already living in the area friendly when it's done, calming any mid-attack; hers and other areas' as they were (art builder 3, 2026-10-07)
-  - Possible later evidence: [docs/notes/art-checks.md:7](../../docs/notes/art-checks.md#L7): - `node art/check.mjs` — builds the lab, opens the source page and the built page in headless Chromium (no script errors, a bestiary card for every species, the scene drawn; each on a page of its own, drawing while the rest runs), and draws everything the art generators make (every creature at every level, face, texture and silhouette, the trees and bushes, the area types and their ground cover, the witch and the party witches in every pose, the hats, the sigils, the dancefloor and its speakers, the treehouse, the props, scenes, relics, paths and party objects, the attack effects, the sleeping legends, the live rig) and holds each to its rules: sizes by level and against the witch, what may . candidate only: same-topic wording and later inline date; not a verified superseding ruling.
-  - Possible later evidence: [docs/notes/creatures.md:22](../../docs/notes/creatures.md#L22): - **Genome**: a species as data (#79; since 2026-10-13 one file a species, `art/creatures/<id>/genome.js`, assembled by `art/creatures/index.js`, which `node tools/creatures.mjs index` writes sorted by id, and re-exported as `GENOMES` by `art/genome/species.js`; Ed, 2026-10-13: every animal PR edited the one file and merges mangled neighbouring records. **A new creature** is a new folder with its `genome.js` (`export const GENOME_<ID> = { id, name, template, builder, ... }`, a named export: the Art Lab's build inlines every module into one page), its `sigil.js` (`SIGIL_<ID> = { neon, strokes }`, the strokes from `art/sigils/strokes.js`'s building blocks; `art/sigils.js` assembles `SIGILS` an. candidate only: same-topic wording and later inline date; not a verified superseding ruling.
-
 - **the first quest (Ed, 2026-10-04) > can still be done after the area's wave, while its legend sleeps: happy, its island found, but not a friendly area (Ed, 2026-10-06)** — [src/rules/quest.test.ts:96](../../src/rules/quest.test.ts#L96)
-  - current rules; keep pending design review. Currentness: unverified. Case runtime: unknown.
+  - current rules; Keep current legend and quest rules?. Currentness: unverified. Case runtime: unknown.
   - Cited ruling: name, line 96: can still be done after the area's wave, while its legend sleeps: happy, its island found, but not a friendly area (Ed, 2026-10-06)
   - Possible later evidence: [docs/notes/gameplay.md:40](../../docs/notes/gameplay.md#L40): - **Dream / quest**: a sleeping legend's thought bubble (Ed, 2026-10-08: a pixel cloud like the speech bubbles, little puffs rising to it from the sleeper, `render/thoughtCloud.ts`, on the 3 px grid; one symbol at a time by turns, its face, then the sigil, now and then the flask's relic sigil instead: `dreams.cycle`), the sigil (in its level's variant) of the creature it wants; put that sigil down in its circle while its quest is open (as long as it sleeps) and it wakes to fight for her (it gave a buff till Ed's 2026-10-18 change); done before its wave, the area is friendly too (rules/quest.ts); its bubble points the way (Ed, 2026-10-06) to the runestone of the nearest area, to her, whose cr. candidate only: same-topic wording and later inline date; not a verified superseding ruling.
   - Possible later evidence: [docs/notes/house.md:97](../../docs/notes/house.md#L97): - **Finds / travel trunk** (Ed, 2026-10-21, the station menus' part (b): "The items are found in the forest like other permanent upgrades. Hints are given by the crystal ball"; `src/rules/finds.ts`, `render/view/finds.ts`): each night the island she's on holds one permanent upgrade she hasn't found, a wearable in the trunk or a broom part in a wreck (the finds pool, below; the wearables `FINDABLE`, the wardrobe's items not hers from the start, never a broom shape: brooms are made of parts), drawn as one flask-sized object on a clear patch in its own pale gold-white light (the finds style guide, `docs/art-guide/FINDS.md`, Ed 2026-10-23: clothes a folded bundle, `find-bundle`; bags a little ba. candidate only: same-topic wording and later inline date; not a verified superseding ruling.
 
 - **legends.questCap: dreams from anywhere but the truly far (Ed, 2026-10-06: quests are a gamble) > keeps the spread of near and far, cutting only the far tail; never its own kind; the far ones roll stronger** — [src/rules/quest.test.ts:119](../../src/rules/quest.test.ts#L119)
-  - current rules; keep pending design review. Currentness: unverified. Case runtime: unknown.
+  - outcome stats; Move these eight scenery, travel and quest-distribution tests out of release gates? Yes makes their sampled times, averages and coverage a nightly report. Small boundary, ownership and current quest-cap checks stay blocking.. Currentness: unverified. Case runtime: unknown.
   - Cited ruling: none found in scoped comments; not proof that none exists.
 
 - **a legend's quest is done by the drop alone (Ed, 2026-10-19) > not by her animal of its kind standing in the circle, following her** — [src/rules/questDrop.test.ts:24](../../src/rules/questDrop.test.ts#L24)
-  - current rules; keep pending design review. Currentness: unverified. Case runtime: unknown.
+  - current rules; Keep current legend and quest rules?. Currentness: unverified. Case runtime: unknown.
   - Cited ruling: file, line 1: // Only putting the sigil down finishes a legend's quest (Ed, 2026-10-19: "The reward should be given when the sigil is placed, not
   - Possible later evidence: [docs/notes/gameplay.md:20](../../docs/notes/gameplay.md#L20): - **Sides and sizes** (Ed, 2026-10-28, settling the runestone mocks in `previews/ed/runestone-stacks/`): a sigil's colour says its side and rank. Since Ed's playtest (2026-10-29: "it's hard to tell friendly vs enemy sigils apart, especially purples/pinks/reds ... maybe baby sigils are purple (neither friend nor enemy), and the rest are more strongly red or blue"): every baby's sigil is one purple, whatever its state (wild, happy, loose), the only purple anywhere; friends' youths, adults and legends (hers, and the invited) three blues (`leash.ranks.colours`), enemies' (the wild still at their stone) three reds (`leash.ranks.enemy`), red and blue the pair colour-blind eyes keep apart. Each sid. candidate only: same-topic wording and later inline date; not a verified superseding ruling.
   - Possible later evidence: [docs/notes/house.md:97](../../docs/notes/house.md#L97): - **Finds / travel trunk** (Ed, 2026-10-21, the station menus' part (b): "The items are found in the forest like other permanent upgrades. Hints are given by the crystal ball"; `src/rules/finds.ts`, `render/view/finds.ts`): each night the island she's on holds one permanent upgrade she hasn't found, a wearable in the trunk or a broom part in a wreck (the finds pool, below; the wearables `FINDABLE`, the wardrobe's items not hers from the start, never a broom shape: brooms are made of parts), drawn as one flask-sized object on a clear patch in its own pale gold-white light (the finds style guide, `docs/art-guide/FINDS.md`, Ed 2026-10-23: clothes a folded bundle, `find-bundle`; bags a little ba. candidate only: same-topic wording and later inline date; not a verified superseding ruling.
 
 - **a legend's quest is done by the drop alone (Ed, 2026-10-19) > not by one parked in it with its sigil outside** — [src/rules/questDrop.test.ts:32](../../src/rules/questDrop.test.ts#L32)
-  - current rules; keep pending design review. Currentness: unverified. Case runtime: unknown.
+  - current rules; Keep current legend and quest rules?. Currentness: unverified. Case runtime: unknown.
   - Cited ruling: file, line 1: // Only putting the sigil down finishes a legend's quest (Ed, 2026-10-19: "The reward should be given when the sigil is placed, not
   - Possible later evidence: [docs/notes/gameplay.md:42](../../docs/notes/gameplay.md#L42): - **Legend area** (Ed, 2026-10-26: "legends are spawned in additional areas that have legend circles where runestones usually are"; "extra areas are added to each island, and the legend areas can be adjacent to the same type of area, so it effectively becomes an area twice the size"; all legends in them; "The route only cares about runestones"; islands grow): on an island by roster, every kind a night could deal there (the roster's but the island's own kind and placeholders: one each, chosen by the island's own seed, so its shape, land, coast and chart outline are the same every night) gets an area of its own grown out of the island's frontier beside one of its kind's areas, its **pair**: th. candidate only: same-topic wording and later inline date; not a verified superseding ruling.
   - Possible later evidence: [docs/notes/house.md:97](../../docs/notes/house.md#L97): - **Finds / travel trunk** (Ed, 2026-10-21, the station menus' part (b): "The items are found in the forest like other permanent upgrades. Hints are given by the crystal ball"; `src/rules/finds.ts`, `render/view/finds.ts`): each night the island she's on holds one permanent upgrade she hasn't found, a wearable in the trunk or a broom part in a wreck (the finds pool, below; the wearables `FINDABLE`, the wardrobe's items not hers from the start, never a broom shape: brooms are made of parts), drawn as one flask-sized object on a clear patch in its own pale gold-white light (the finds style guide, `docs/art-guide/FINDS.md`, Ed 2026-10-23: clothes a folded bundle, `find-bundle`; bags a little ba. candidate only: same-topic wording and later inline date; not a verified superseding ruling.
 
 - **a legend's quest is done by the drop alone (Ed, 2026-10-19) > completes on the very step its sigil is put down in the circle, its animal still far away** — [src/rules/questDrop.test.ts:41](../../src/rules/questDrop.test.ts#L41)
-  - outcome stats; review simulation assertions; consider report after Ed rules. Currentness: unverified. Case runtime: unknown.
+  - current rules; Keep current legend and quest rules?. Currentness: unverified. Case runtime: unknown.
   - Cited ruling: file, line 1: // Only putting the sigil down finishes a legend's quest (Ed, 2026-10-19: "The reward should be given when the sigil is placed, not
   - Possible later evidence: [docs/notes/house.md:97](../../docs/notes/house.md#L97): - **Finds / travel trunk** (Ed, 2026-10-21, the station menus' part (b): "The items are found in the forest like other permanent upgrades. Hints are given by the crystal ball"; `src/rules/finds.ts`, `render/view/finds.ts`): each night the island she's on holds one permanent upgrade she hasn't found, a wearable in the trunk or a broom part in a wreck (the finds pool, below; the wearables `FINDABLE`, the wardrobe's items not hers from the start, never a broom shape: brooms are made of parts), drawn as one flask-sized object on a clear patch in its own pale gold-white light (the finds style guide, `docs/art-guide/FINDS.md`, Ed 2026-10-23: clothes a folded bundle, `find-bundle`; bags a little ba. candidate only: same-topic wording and later inline date; not a verified superseding ruling.
   - Possible later evidence: [DESIGN.md:359](../../DESIGN.md#L359): - **Conversion, by the spell or a wave, the same rule:** the stone becomes a soundsystem; its babies turn friendly; its wild young and adults turn hostile and besiege it, as a wave does; and **every friend sigil falls and scatters** over its runestone clearing on free hex cells (Ed, 2026-10-28: "It's fine if they're scattered around the whole runestone clearing"; `cast.scatter`: its open ground out to 20 m (Ed's playtest, 2026-10-29: "sigils scatter too widely"; 34 free 6 m hex cells there, room for the biggest stacks, about 20), in a seeded order so they spread however many there are, never in the wedge just north of the soundsystem where its sprite would hide them), into `g.loose`, for any. candidate only: same-topic wording and later inline date; not a verified superseding ruling.
 
 - **a legend's quest is done by the drop alone (Ed, 2026-10-19) > any age of the kind will do; a wrong kind's sigil is named on the panel the moment it's down** — [src/rules/questDrop.test.ts:52](../../src/rules/questDrop.test.ts#L52)
-  - current rules; keep pending design review. Currentness: unverified. Case runtime: unknown.
+  - current rules; Keep current legend and quest rules?. Currentness: unverified. Case runtime: unknown.
   - Cited ruling: file, line 1: // Only putting the sigil down finishes a legend's quest (Ed, 2026-10-19: "The reward should be given when the sigil is placed, not
   - Possible later evidence: [docs/notes/house.md:97](../../docs/notes/house.md#L97): - **Finds / travel trunk** (Ed, 2026-10-21, the station menus' part (b): "The items are found in the forest like other permanent upgrades. Hints are given by the crystal ball"; `src/rules/finds.ts`, `render/view/finds.ts`): each night the island she's on holds one permanent upgrade she hasn't found, a wearable in the trunk or a broom part in a wreck (the finds pool, below; the wearables `FINDABLE`, the wardrobe's items not hers from the start, never a broom shape: brooms are made of parts), drawn as one flask-sized object on a clear patch in its own pale gold-white light (the finds style guide, `docs/art-guide/FINDS.md`, Ed 2026-10-23: clothes a folded bundle, `find-bundle`; bags a little ba. candidate only: same-topic wording and later inline date; not a verified superseding ruling.
   - Possible later evidence: [docs/notes/gameplay.md:38](../../docs/notes/gameplay.md#L38): - **Fight Arena** (Ed, 2026-10-27: "we can press a button to randomise the settings and another generates a random enemy pack to fight, and then I can tweak and save/copy attack settings that are fun"): `?fight=<seed>[&pack=wolf*4@2,...]`, or the pause page's **⚔ Fight arena** (a new tab, a new seed): her alone against a wild pack (`setupArena(g, spec, { wildOnly: true })`: every group wild, side by side, none of hers) on the debug arena's ground, no waves, straight in (no spell to cast). The pack is the seed's roll (`rollPack`, rules/fightArena.ts: one time in eight a lone legend, else one kind or, one time in three, two, 2 to 6 of each, young or adult, at most 8; kinds with an attack at ev. candidate only: same-topic wording and later inline date; not a verified superseding ruling.
 
 - **a legend's quest is done by the drop alone (Ed, 2026-10-19) > names nothing for a wrong kind merely standing in the circle (only a sigil put down counts)** — [src/rules/questDrop.test.ts:71](../../src/rules/questDrop.test.ts#L71)
-  - current rules; keep pending design review. Currentness: unverified. Case runtime: unknown.
+  - current rules; Keep current legend and quest rules?. Currentness: unverified. Case runtime: unknown.
   - Cited ruling: file, line 1: // Only putting the sigil down finishes a legend's quest (Ed, 2026-10-19: "The reward should be given when the sigil is placed, not
   - Possible later evidence: [docs/notes/house.md:97](../../docs/notes/house.md#L97): - **Finds / travel trunk** (Ed, 2026-10-21, the station menus' part (b): "The items are found in the forest like other permanent upgrades. Hints are given by the crystal ball"; `src/rules/finds.ts`, `render/view/finds.ts`): each night the island she's on holds one permanent upgrade she hasn't found, a wearable in the trunk or a broom part in a wreck (the finds pool, below; the wearables `FINDABLE`, the wardrobe's items not hers from the start, never a broom shape: brooms are made of parts), drawn as one flask-sized object on a clear patch in its own pale gold-white light (the finds style guide, `docs/art-guide/FINDS.md`, Ed 2026-10-23: clothes a folded bundle, `find-bundle`; bags a little ba. candidate only: same-topic wording and later inline date; not a verified superseding ruling.
   - Possible later evidence: [DESIGN.md:359](../../DESIGN.md#L359): - **Conversion, by the spell or a wave, the same rule:** the stone becomes a soundsystem; its babies turn friendly; its wild young and adults turn hostile and besiege it, as a wave does; and **every friend sigil falls and scatters** over its runestone clearing on free hex cells (Ed, 2026-10-28: "It's fine if they're scattered around the whole runestone clearing"; `cast.scatter`: its open ground out to 20 m (Ed's playtest, 2026-10-29: "sigils scatter too widely"; 34 free 6 m hex cells there, room for the biggest stacks, about 20), in a seeded order so they spread however many there are, never in the wedge just north of the soundsystem where its sprite would hide them), into `g.loose`, for any. candidate only: same-topic wording and later inline date; not a verified superseding ruling.
 
 - **a legend's quest is done by the drop alone (Ed, 2026-10-19) > Ed's case (seed 162218, 14 areas): his parked adults of the dreamt kind standing in the circle no longer finish it** — [src/rules/questDrop.test.ts:80](../../src/rules/questDrop.test.ts#L80)
-  - current rules; keep pending design review. Currentness: unverified. Case runtime: unknown.
+  - current rules; Keep current legend and quest rules?. Currentness: unverified. Case runtime: unknown.
   - Cited ruling: file, line 1: // Only putting the sigil down finishes a legend's quest (Ed, 2026-10-19: "The reward should be given when the sigil is placed, not
   - Possible later evidence: [docs/notes/gameplay.md:42](../../docs/notes/gameplay.md#L42): - **Legend area** (Ed, 2026-10-26: "legends are spawned in additional areas that have legend circles where runestones usually are"; "extra areas are added to each island, and the legend areas can be adjacent to the same type of area, so it effectively becomes an area twice the size"; all legends in them; "The route only cares about runestones"; islands grow): on an island by roster, every kind a night could deal there (the roster's but the island's own kind and placeholders: one each, chosen by the island's own seed, so its shape, land, coast and chart outline are the same every night) gets an area of its own grown out of the island's frontier beside one of its kind's areas, its **pair**: th. candidate only: same-topic wording and later inline date; not a verified superseding ruling.
   - Possible later evidence: [DESIGN.md:359](../../DESIGN.md#L359): - **Conversion, by the spell or a wave, the same rule:** the stone becomes a soundsystem; its babies turn friendly; its wild young and adults turn hostile and besiege it, as a wave does; and **every friend sigil falls and scatters** over its runestone clearing on free hex cells (Ed, 2026-10-28: "It's fine if they're scattered around the whole runestone clearing"; `cast.scatter`: its open ground out to 20 m (Ed's playtest, 2026-10-29: "sigils scatter too widely"; 34 free 6 m hex cells there, room for the biggest stacks, about 20), in a seeded order so they spread however many there are, never in the wedge just north of the soundsystem where its sprite would hide them), into `g.loose`, for any. candidate only: same-topic wording and later inline date; not a verified superseding ruling.
 
 - **quests point to later areas (legends.questLater) > `seed ${seed}: every legend but the early quest's dreams of a kind from later on the route`** — [src/rules/questLater.test.ts:14](../../src/rules/questLater.test.ts#L14)
-  - current rules; keep pending design review. Currentness: unverified. Case runtime: unknown.
+  - current rules; Keep current legend and quest rules?. Currentness: unverified. Case runtime: unknown.
   - Cited ruling: file, line 1: // Quests point to later areas (legends.questLater; Ed's core design, relayed 2026-10-07): a sleeping legend dreams of a kind
   - Possible later evidence: [docs/notes/gameplay.md:42](../../docs/notes/gameplay.md#L42): - **Legend area** (Ed, 2026-10-26: "legends are spawned in additional areas that have legend circles where runestones usually are"; "extra areas are added to each island, and the legend areas can be adjacent to the same type of area, so it effectively becomes an area twice the size"; all legends in them; "The route only cares about runestones"; islands grow): on an island by roster, every kind a night could deal there (the roster's but the island's own kind and placeholders: one each, chosen by the island's own seed, so its shape, land, coast and chart outline are the same every night) gets an area of its own grown out of the island's frontier beside one of its kind's areas, its **pair**: th. candidate only: same-topic wording and later inline date; not a verified superseding ruling.
   - Possible later evidence: [docs/notes/run.md:79](../../docs/notes/run.md#L79): - **The world asleep before the party** (Ed, 2026-10-26: "If you leave the treehouse before starting the party, it should be the same as after a party is lost; creatures are asleep in their areas and you can't invite them, the night's permanent upgrade find is not placed yet"; `worldAsleep`, `putToBed`, `stepWorldAsleep` in `src/rules/partyOver.ts`): a night waiting for her party spell (`party.spellAt` null; not the zoo, not the debug arena's) lies as the afterparty does: every creature put to bed at once in its own area, asleep for good (the afterparty's own sleep), the legends still, no 💌 taking, nothing fighting or attacking her, nothing growing, and tonight's find not there (its trunk, . candidate only: same-topic wording and later inline date; not a verified superseding ruling.
 
 - **quests point to later areas (legends.questLater) > dreams from deeper in than before: the dream's nearest later area lies later on the route than the old pick's** — [src/rules/questLater.test.ts:30](../../src/rules/questLater.test.ts#L30)
-  - current rules; keep pending design review. Currentness: unverified. Case runtime: unknown.
+  - outcome stats; Move these eight scenery, travel and quest-distribution tests out of release gates? Yes makes their sampled times, averages and coverage a nightly report. Small boundary, ownership and current quest-cap checks stay blocking.. Currentness: unverified. Case runtime: unknown.
   - Cited ruling: file, line 1: // Quests point to later areas (legends.questLater; Ed's core design, relayed 2026-10-07): a sleeping legend dreams of a kind
   - Possible later evidence: [DESIGN.md:54](../../DESIGN.md#L54): - **Knocked out** (Ed, 2026-10-04; since Ed's playtest of v4821, 2026-10-26: "When I get knocked out and my leashed animals are put down, I think they should become happy instead of leashed to a point by a floor sigil"): at no hits left she collapses where she is (no more hits, no input). **Her sigil stack comes down from the bottom up, about a second each** (`knockout.releaseEach`; since Ed's decisions of 2026-10-07, `releaseEach` 0: all at once as she goes down), each animal she carried **turning happy where it stands**: no sigil is made; its rune is at its feet, so she can leash it again by picking that up, as after an invite; meanwhile it idles near where it was dropped (Ed, later that d. candidate only: same-topic wording and later inline date; not a verified superseding ruling.
   - Possible later evidence: [docs/notes/gameplay.md:42](../../docs/notes/gameplay.md#L42): - **Legend area** (Ed, 2026-10-26: "legends are spawned in additional areas that have legend circles where runestones usually are"; "extra areas are added to each island, and the legend areas can be adjacent to the same type of area, so it effectively becomes an area twice the size"; all legends in them; "The route only cares about runestones"; islands grow): on an island by roster, every kind a night could deal there (the roster's but the island's own kind and placeholders: one each, chosen by the island's own seed, so its shape, land, coast and chart outline are the same every night) gets an area of its own grown out of the island's frontier beside one of its kind's areas, its **pair**: th. candidate only: same-topic wording and later inline date; not a verified superseding ruling.
 
 - **quests point to later areas (legends.questLater) > is the old gamble with legends.questLater false** — [src/rules/questLater.test.ts:44](../../src/rules/questLater.test.ts#L44)
-  - current rules; keep pending design review. Currentness: unverified. Case runtime: unknown.
+  - leftovers; Keep these two radius-map comparison tests, including explicit half/all-area settings, separate from authored-island rules?. Currentness: unverified. Case runtime: unknown.
   - Cited ruling: file, line 1: // Quests point to later areas (legends.questLater; Ed's core design, relayed 2026-10-07): a sleeping legend dreams of a kind
   - Possible later evidence: [DESIGN.md:54](../../DESIGN.md#L54): - **Knocked out** (Ed, 2026-10-04; since Ed's playtest of v4821, 2026-10-26: "When I get knocked out and my leashed animals are put down, I think they should become happy instead of leashed to a point by a floor sigil"): at no hits left she collapses where she is (no more hits, no input). **Her sigil stack comes down from the bottom up, about a second each** (`knockout.releaseEach`; since Ed's decisions of 2026-10-07, `releaseEach` 0: all at once as she goes down), each animal she carried **turning happy where it stands**: no sigil is made; its rune is at its feet, so she can leash it again by picking that up, as after an invite; meanwhile it idles near where it was dropped (Ed, later that d. candidate only: same-topic wording and later inline date; not a verified superseding ruling.
   - Possible later evidence: [docs/notes/gameplay.md:34](../../docs/notes/gameplay.md#L34): - **Area legend / sleeping legend**: the one legend of its kind in about a fifth of the areas (`legends.share` 0.2: Ed, 2026-10-08; half before; never home), asleep (sunk and mossed over, scenery) near the top of its circle; waves don't wake it: it grows restless, then angry, while its area has none of its kind, and goes back to sleep when one is back or when worn down; a relic by it makes it happy (DESIGN.md, "Legends, redesigned"); in its circle it reads at a glance (Ed's round 14 playtest): the sleeping form's outline in its sigil's neon and a light floor (`uLegend` in `render/sprites.ts`), a soft neon glow on the ground under it asleep or happy (`legendSeen` in `render/leash.ts`), knobs . candidate only: same-topic wording and later inline date; not a verified superseding ruling.
@@ -7045,6 +7025,26 @@ Static declarations only. All classifications and currentness are provisional. C
 
 - **sleeping creatures' logical ownership areas > rejects an unrelated area even for a boss, and rejects a non-circle wild creature in a paired legend area** — [src/rules/sleepCells.test.ts:51](../../src/rules/sleepCells.test.ts#L51)
   - hard limits; Keep paired-area identity, route exclusion and sleeping-ownership protections?. Currentness: unverified. Case runtime: unknown.
+  - Cited ruling: none found in scoped comments; not proof that none exists.
+
+- **sleeping legends (Ed, 2026-10-04) > sleep through her standing beside them: no fight, no chat, not a step** — [src/rules/sleeping.test.ts:31](../../src/rules/sleeping.test.ts#L31)
+  - current rules; Keep current legend and quest rules?. Currentness: unverified. Case runtime: unknown.
+  - Cited ruling: none found in scoped comments; not proof that none exists.
+
+- **sleeping legends (Ed, 2026-10-04) > turn happy (debug O, for now): at peace (Ed, 2026-10-18: happy legends grant nothing)** — [src/rules/sleeping.test.ts:40](../../src/rules/sleeping.test.ts#L40)
+  - current rules; Keep current legend and quest rules?. Currentness: unverified. Case runtime: unknown.
+  - Cited ruling: name, line 40: turn happy (debug O, for now): at peace (Ed, 2026-10-18: happy legends grant nothing)
+  - Possible later evidence: [docs/notes/run.md:79](../../docs/notes/run.md#L79): - **The world asleep before the party** (Ed, 2026-10-26: "If you leave the treehouse before starting the party, it should be the same as after a party is lost; creatures are asleep in their areas and you can't invite them, the night's permanent upgrade find is not placed yet"; `worldAsleep`, `putToBed`, `stepWorldAsleep` in `src/rules/partyOver.ts`): a night waiting for her party spell (`party.spellAt` null; not the zoo, not the debug arena's) lies as the afterparty does: every creature put to bed at once in its own area, asleep for good (the afterparty's own sleep), the legends still, no 💌 taking, nothing fighting or attacking her, nothing growing, and tonight's find not there (its trunk, . candidate only: same-topic wording and later inline date; not a verified superseding ruling.
+  - Possible later evidence: [DESIGN.md:54](../../DESIGN.md#L54): - **Knocked out** (Ed, 2026-10-04; since Ed's playtest of v4821, 2026-10-26: "When I get knocked out and my leashed animals are put down, I think they should become happy instead of leashed to a point by a floor sigil"): at no hits left she collapses where she is (no more hits, no input). **Her sigil stack comes down from the bottom up, about a second each** (`knockout.releaseEach`; since Ed's decisions of 2026-10-07, `releaseEach` 0: all at once as she goes down), each animal she carried **turning happy where it stands**: no sigil is made; its rune is at its feet, so she can leash it again by picking that up, as after an invite; meanwhile it idles near where it was dropped (Ed, later that d. candidate only: same-topic wording and later inline date; not a verified superseding ruling.
+
+- **sleeping legends (Ed, 2026-10-04) > leave home without a legend, (Ed, 2026-10-05)** — [src/rules/sleeping.test.ts:46](../../src/rules/sleeping.test.ts#L46)
+  - current rules; Keep current legend and quest rules?. Currentness: unverified. Case runtime: unknown.
+  - Cited ruling: name, line 46: leave home without a legend, (Ed, 2026-10-05)
+  - Possible later evidence: [DESIGN.md:417](../../DESIGN.md#L417): **Legends in half the areas** (Ed, 2026-10-06): "Legends should only appear in about half of areas (we can test this ratio); every area makes them too common." `legends.share` (tuning, default 0.5, then 0.2 from 2026-10-08: "I think there are too many and it should be more like 1/5"; a slider on the decisions panel, which reloads for a new map) is the share of areas, home never, with a sleeping legend, chosen per map from the seed and spread out (`chooseLegendCells` in `src/rules/map.ts`). An area without one has no legend's clearing, no quest, no restlessness or anger, and no legend music. DECISION FOR ED (balance, 2026-10-06): "no more than two neighbouring areas in a row" holds exactly on. candidate only: same-topic wording and later inline date; not a verified superseding ruling.
+  - Possible later evidence: [docs/notes/island.md:21](../../docs/notes/island.md#L21): - **Zoo**: `?zoo` (Ed, 2026-10-13; laid out like the sea chart since Ed, 2026-10-26: `src/rules/zooMap.ts`, `src/rules/zoo.ts`, `config/zoo.json`; the mock: `previews/ed/zoo-map` on `claude/ed-shots`): every kind's island where the chart has it (`worldOf(world)`), its outline the chart's real coast where this browser has it (Ed, 2026-10-26: "We already know the real coastline shapes, can't we reuse them in the zoo without calculating anything?": the chart's worker keeps each island's biggest sea loop beside its outline, `app/chartCache.ts` `coastKey`/`keepCoast`, under the chart's own keys; the zoo's page reads them back before its map is made, at most 400 ms, `app/zooCoasts.ts`, and hands t. candidate only: same-topic wording and later inline date; not a verified superseding ruling.
+
+- **sleeping legends (Ed, 2026-10-04) > are the only legends: party animals evolve no further than adult** — [src/rules/sleeping.test.ts:52](../../src/rules/sleeping.test.ts#L52)
+  - current rules; Keep current legend and quest rules?. Currentness: unverified. Case runtime: unknown.
   - Cited ruling: none found in scoped comments; not proof that none exists.
 
 - **accepts two distinct valid breaths without modifying sprites** — [src/sleepingLegendSize.test.ts:9](../../src/sleepingLegendSize.test.ts#L9)
@@ -8378,348 +8378,344 @@ Static declarations only. All classifications and currentness are provisional. C
 
 ## Music and audio
 
-- **a guest follows the host beat without keepBeat changing it; the absent option retains solo behavior** — [src/app/sound.test.ts:17](../../src/app/sound.test.ts#L17)
-  - current rules; keep pending design review. Currentness: unverified. Case runtime: unknown.
-  - Cited ruling: none found in scoped comments; not proof that none exists.
-
 - **potion audio isolation > isolates ordinary audio at wake, restores it over the final two game minutes, and starts only once** — [src/app/sound.test.ts:37](../../src/app/sound.test.ts#L37)
-  - current rules; keep pending design review. Currentness: unverified. Case runtime: unknown.
+  - current rules; Keep cue and audio data rules unchanged?. Currentness: unverified. Case runtime: unknown.
   - Cited ruling: none found in scoped comments; not proof that none exists.
 
 - **potion audio isolation > heat mutes music, lowers creatures an octave and fades breathing, without muting ordinary effects** — [src/app/sound.test.ts:55](../../src/app/sound.test.ts#L55)
-  - current rules; keep pending design review. Currentness: unverified. Case runtime: unknown.
+  - current rules; Keep cue and audio data rules unchanged?. Currentness: unverified. Case runtime: unknown.
   - Cited ruling: none found in scoped comments; not proof that none exists.
 
 - **Sound.setNight: a new night on the same page (docs/plans/sail-without-reload.md, A4) > gives the live music the new seed, and the watchdog's rebuild uses it** — [src/app/sound.test.ts:105](../../src/app/sound.test.ts#L105)
-  - current rules; keep pending design review. Currentness: unverified. Case runtime: unknown.
+  - current rules; Keep cue and audio data rules unchanged?. Currentness: unverified. Case runtime: unknown.
   - Cited ruling: none found in scoped comments; not proof that none exists.
 
 - **Sound.setNight: a new night on the same page (docs/plans/sail-without-reload.md, A4) > anchors the music's timeline afresh** — [src/app/sound.test.ts:118](../../src/app/sound.test.ts#L118)
-  - current rules; keep pending design review. Currentness: unverified. Case runtime: unknown.
+  - current rules; Keep cue and audio data rules unchanged?. Currentness: unverified. Case runtime: unknown.
   - Cited ruling: none found in scoped comments; not proof that none exists.
 
 - **Sound.setNight: a new night on the same page (docs/plans/sail-without-reload.md, A4) > makes new cues for the new night, and re-points the effects at its tuning** — [src/app/sound.test.ts:125](../../src/app/sound.test.ts#L125)
-  - current rules; keep pending design review. Currentness: unverified. Case runtime: unknown.
+  - current rules; Keep cue and audio data rules unchanged?. Currentness: unverified. Case runtime: unknown.
   - Cited ruling: none found in scoped comments; not proof that none exists.
 
 - **Sound.setNight: a new night on the same page (docs/plans/sail-without-reload.md, A4) > lets the old cues' watch warning fall as it hands over** — [src/app/sound.test.ts:135](../../src/app/sound.test.ts#L135)
-  - current rules; keep pending design review. Currentness: unverified. Case runtime: unknown.
+  - current rules; Keep cue and audio data rules unchanged?. Currentness: unverified. Case runtime: unknown.
   - Cited ruling: none found in scoped comments; not proof that none exists.
 
 - **Sound.setNight: a new night on the same page (docs/plans/sail-without-reload.md, A4) > re-arms the safety valve's grace once play has started** — [src/app/sound.test.ts:142](../../src/app/sound.test.ts#L142)
-  - current rules; keep pending design review. Currentness: unverified. Case runtime: unknown.
+  - current rules; Keep cue and audio data rules unchanged?. Currentness: unverified. Case runtime: unknown.
   - Cited ruling: none found in scoped comments; not proof that none exists.
 
 - **music lab settings > copies nothing but its label when nothing changed** — [src/musicLabSettings.test.ts:10](../../src/musicLabSettings.test.ts#L10)
-  - current rules; keep pending design review. Currentness: unverified. Case runtime: unknown.
+  - current rules; Keep cue and audio data rules unchanged?. Currentness: unverified. Case runtime: unknown.
   - Cited ruling: none found in scoped comments; not proof that none exists.
 
 - **music lab settings > copies only what changed, and pastes back the same** — [src/musicLabSettings.test.ts:14](../../src/musicLabSettings.test.ts#L14)
-  - current rules; keep pending design review. Currentness: unverified. Case runtime: unknown.
+  - current rules; Keep cue and audio data rules unchanged?. Currentness: unverified. Case runtime: unknown.
   - Cited ruling: none found in scoped comments; not proof that none exists.
 
 - **music lab settings > ignores what it doesn't know and keeps numbers in range** — [src/musicLabSettings.test.ts:29](../../src/musicLabSettings.test.ts#L29)
-  - current rules; keep pending design review. Currentness: unverified. Case runtime: unknown.
+  - current rules; Keep cue and audio data rules unchanged?. Currentness: unverified. Case runtime: unknown.
   - Cited ruling: none found in scoped comments; not proof that none exists.
 
 - **music lab settings > picks the singer's A/B voice, its breath and its chain (Ed, 2026-10-14)** — [src/musicLabSettings.test.ts:40](../../src/musicLabSettings.test.ts#L40)
-  - current rules; keep pending design review. Currentness: unverified. Case runtime: unknown.
+  - current rules; Keep cue and audio data rules unchanged?. Currentness: unverified. Case runtime: unknown.
   - Cited ruling: name, line 40: picks the singer's A/B voice, its breath and its chain (Ed, 2026-10-14)
   - Possible later evidence: [docs/notes/music.md:25](../../docs/notes/music.md#L25): - **Music ahead** (Ed, 2026-10-27, from his audio test: "render the music ahead, so main-thread stalls can't silence it"; the plan and its steps in the REPORT of 2026-10-27; the stall test, `audio-test/stall.html`, docs/notes/sound.md, its baseline): the music drawn a bar at a time on an OfflineAudioContext (off the page's thread) and queued seconds ahead on the audio clock, its buses live. **Step 2, the stems** (this): `MusicEngine` takes a **sink** (`MusicSink`), where its parts' notes go and its bus automation: by default its own buses, live exactly as before (its `bus`; `node tools/music-lab/stems.cjs ab` with `OLD=<a checkout>`: before and after apart by no more than Chromium's own roun. candidate only: same-topic wording and later inline date; not a verified superseding ruling.
   - Possible later evidence: [docs/notes/performance.md:166](../../docs/notes/performance.md#L166): **The stall hunt** (`node tools/bench/stalls.cjs [out]`, the coordinator's ask from Ed's overlay, 2026-10-13: 24 stalls over 100 ms and 18% of frames over 20 ms in the treetops, seed 2267, Old pinewood, 56 s into wave 0): the game's own loop run free at a spot (`SEED`, `X`, `Z`, `ZOOM`; `DIST=dist-prof` from `npx vite build --minify false --outDir dist-prof`, so the functions have names) under Chromium's sampling profiler, the GPU draw a no-op (`NODRAW=1`) so a wall second is a game second, and a report of where the JavaScript's time went: self time by function, call chains, runs of JavaScript over `RUN_MS`, the browser's long animation frames and the game's own stall log (`<out>/stalls.json. candidate only: same-topic wording and later inline date; not a verified superseding ruling.
 
 - **music lab settings > mutes and solos** — [src/musicLabSettings.test.ts:64](../../src/musicLabSettings.test.ts#L64)
-  - current rules; keep pending design review. Currentness: unverified. Case runtime: unknown.
+  - current rules; Keep cue and audio data rules unchanged?. Currentness: unverified. Case runtime: unknown.
   - Cited ruling: none found in scoped comments; not proof that none exists.
 
 - **parseMidi > reads a format 1 file: the tempo map on the first track, names, notes in seconds, markers** — [src/musicStudioMidi.test.ts:13](../../src/musicStudioMidi.test.ts#L13)
-  - current rules; keep pending design review. Currentness: unverified. Case runtime: unknown.
+  - current rules; Keep cue and audio data rules unchanged?. Currentness: unverified. Case runtime: unknown.
   - Cited ruling: none found in scoped comments; not proof that none exists.
 
 - **parseMidi > defaults to 120 bpm and 4/4, and refuses what it can't read** — [src/musicStudioMidi.test.ts:31](../../src/musicStudioMidi.test.ts#L31)
-  - current rules; keep pending design review. Currentness: unverified. Case runtime: unknown.
+  - current rules; Keep cue and audio data rules unchanged?. Currentness: unverified. Case runtime: unknown.
   - Cited ruling: none found in scoped comments; not proof that none exists.
 
 - **the wild watch's warning (aggroOf) > rises with the watch and hits as they attack** — [src/platform/audio/aggro.cues.test.ts:27](../../src/platform/audio/aggro.cues.test.ts#L27)
-  - current rules; keep pending design review. Currentness: unverified. Case runtime: unknown.
+  - current rules; Keep cue and audio data rules unchanged?. Currentness: unverified. Case runtime: unknown.
   - Cited ruling: none found in scoped comments; not proof that none exists.
 
 - **the wild watch's warning (aggroOf) > falls away without a hit when she rises before they decide** — [src/platform/audio/aggro.cues.test.ts:37](../../src/platform/audio/aggro.cues.test.ts#L37)
-  - current rules; keep pending design review. Currentness: unverified. Case runtime: unknown.
+  - current rules; Keep cue and audio data rules unchanged?. Currentness: unverified. Case runtime: unknown.
   - Cited ruling: none found in scoped comments; not proof that none exists.
 
 - **the audio output's buffer > asks for the tuning's buffer in seconds, more if this browser learnt it needs it, a category or seconds by ?latency=** — [src/platform/audio/buffer.test.ts:8](../../src/platform/audio/buffer.test.ts#L8)
-  - current rules; keep pending design review. Currentness: unverified. Case runtime: unknown.
+  - hard limits; Keep audio integrity checks unchanged?. Currentness: unverified. Case runtime: unknown.
   - Cited ruling: file, line 1: // The audio output's buffer (platform/audio/buffer.ts; Ed's v3167 playtest: "music is still cutting out", 474 device under-runs
 
 - **the audio output's buffer > after enough under-runs in a load, asks for twice the buffer next time, at least 60 ms, never more than the most** — [src/platform/audio/buffer.test.ts:18](../../src/platform/audio/buffer.test.ts#L18)
-  - current rules; keep pending design review. Currentness: unverified. Case runtime: unknown.
+  - hard limits; Keep audio integrity checks unchanged?. Currentness: unverified. Case runtime: unknown.
   - Cited ruling: file, line 1: // The audio output's buffer (platform/audio/buffer.ts; Ed's v3167 playtest: "music is still cutting out", 474 device under-runs
 
 - **the "cleared!" sting (an area cleared early, Ed 2026-10-08) > plays once, on the next half-beat after the areaCleared event, louder near the new soundsystem** — [src/platform/audio/cleared.cues.test.ts:11](../../src/platform/audio/cleared.cues.test.ts#L11)
-  - current rules; keep pending design review. Currentness: unverified. Case runtime: unknown.
+  - current rules; Keep cue and audio data rules unchanged?. Currentness: unverified. Case runtime: unknown.
   - Cited ruling: none found in scoped comments; not proof that none exists.
 
 - **the "cleared!" sting (an area cleared early, Ed 2026-10-08) > from far away still heard, at the floor** — [src/platform/audio/cleared.cues.test.ts:24](../../src/platform/audio/cleared.cues.test.ts#L24)
-  - current rules; keep pending design review. Currentness: unverified. Case runtime: unknown.
+  - current rules; Keep cue and audio data rules unchanged?. Currentness: unverified. Case runtime: unknown.
   - Cited ruling: none found in scoped comments; not proof that none exists.
 
 - **fireworks over a cleared area's soundsystem (waveCelebrate) > whooshes each shell of the drawn show up, bursts it once its sound has reached her, and cheers once at the finale** — [src/platform/audio/fireworks.cues.test.ts:18](../../src/platform/audio/fireworks.cues.test.ts#L18)
-  - current rules; keep pending design review. Currentness: unverified. Case runtime: unknown.
+  - current rules; Keep cue and audio data rules unchanged?. Currentness: unverified. Case runtime: unknown.
   - Cited ruling: none found in scoped comments; not proof that none exists.
 
 - **the FOF voice > is silent before its gate, sings after it, the same every time** — [src/platform/audio/fof/fof.test.ts:24](../../src/platform/audio/fof/fof.test.ts#L24)
-  - current rules; keep pending design review. Currentness: unverified. Case runtime: unknown.
+  - hard limits; Keep audio integrity checks unchanged?. Currentness: unverified. Case runtime: unknown.
   - Cited ruling: none found in scoped comments; not proof that none exists.
 
 - **knocked down: the record scratched, silence, the needle on a new record, her scratching, the music from the top > plays it in that order, once** — [src/platform/audio/knockdownRecord.cues.test.ts:13](../../src/platform/audio/knockdownRecord.cues.test.ts#L13)
-  - current rules; keep pending design review. Currentness: unverified. Case runtime: unknown.
+  - current rules; Keep cue and audio data rules unchanged?. Currentness: unverified. Case runtime: unknown.
   - Cited ruling: suite, line 10: // Ed, 2026-10-09: "the music stops when she gets knocked down, and she comes back to restart it by putting on a new record";
   - Possible later evidence: [docs/notes/house.md:96](../../docs/notes/house.md#L96): - **The Studio's instruments** (Ed, 2026-10-23: "The studio has a drumkit (top left), modular synth setup (top right), microphone (middle, spotlit). They open menus when you go near that let you 'play them'"; the mock, previews/ed/studio-instruments on claude/ed-shots; `config/studio.json`, `src/rules/studio.ts`, `src/app/studio.ts`, `src/ui/studioPanel.ts`): house objects whose use is `instrument` (`drumKit`, `synthRack`, `microphone` in their room's file under `config/house/rooms/`; drawn by Alpha's `art/furniture.js`; the mic's spotlight, a cone of warm light from its lamp's `spot` mark to a pool round its foot, is `render/spotlight.ts`: one additive quad in the furniture's plane, no ligh. candidate only: same-topic wording and later inline date; not a verified superseding ruling.
   - Possible later evidence: [docs/notes/music.md:25](../../docs/notes/music.md#L25): - **Music ahead** (Ed, 2026-10-27, from his audio test: "render the music ahead, so main-thread stalls can't silence it"; the plan and its steps in the REPORT of 2026-10-27; the stall test, `audio-test/stall.html`, docs/notes/sound.md, its baseline): the music drawn a bar at a time on an OfflineAudioContext (off the page's thread) and queued seconds ahead on the audio clock, its buses live. **Step 2, the stems** (this): `MusicEngine` takes a **sink** (`MusicSink`), where its parts' notes go and its bus automation: by default its own buses, live exactly as before (its `bus`; `node tools/music-lab/stems.cjs ab` with `OLD=<a checkout>`: before and after apart by no more than Chromium's own roun. candidate only: same-topic wording and later inline date; not a verified superseding ruling.
 
 - **music drawn ahead > a bar rendered across a reset (a new night: the timeline not anchored) is dropped, not started at a non-finite time** — [src/platform/audio/musicAhead.test.ts:5](../../src/platform/audio/musicAhead.test.ts#L5)
-  - hard limits; keep. Currentness: unverified. Case runtime: unknown.
+  - hard limits; Keep audio integrity checks unchanged?. Currentness: unverified. Case runtime: unknown.
   - Cited ruling: none found in scoped comments; not proof that none exists.
 
 - **the music engine's scheduler > schedules every sixteenth once, in order, at full speed** — [src/platform/audio/musicEngine.test.ts:44](../../src/platform/audio/musicEngine.test.ts#L44)
-  - current rules; keep pending design review. Currentness: unverified. Case runtime: unknown.
+  - hard limits; Keep audio integrity checks unchanged?. Currentness: unverified. Case runtime: unknown.
   - Cited ruling: none found in scoped comments; not proof that none exists.
 
 - **the music engine's scheduler > never schedules a sixteenth twice when the game runs slower than the audio or hitches (round 13: the music crackling, then quiet)** — [src/platform/audio/musicEngine.test.ts:51](../../src/platform/audio/musicEngine.test.ts#L51)
-  - current rules; keep pending design review. Currentness: unverified. Case runtime: unknown.
+  - hard limits; Keep audio integrity checks unchanged?. Currentness: unverified. Case runtime: unknown.
   - Cited ruling: none found in scoped comments; not proof that none exists.
 
 - **the music plays on through the frames' hitches (Ed's playtest, 2026-10-06: "The music cuts in and out a lot") > a hitch shorter than what's scheduled ahead leaves no gap, and the music eases back into step** — [src/platform/audio/musicEngine.test.ts:76](../../src/platform/audio/musicEngine.test.ts#L76)
-  - current rules; keep pending design review. Currentness: unverified. Case runtime: unknown.
+  - hard limits; Keep audio integrity checks unchanged?. Currentness: unverified. Case runtime: unknown.
   - Cited ruling: none found in scoped comments; not proof that none exists.
 
 - **the music plays on through the frames' hitches (Ed's playtest, 2026-10-06: "The music cuts in and out a lot") > after one long stall it schedules further ahead, so the next like it leaves no gap (Ed, round 16: "Music is still starting and stopping")** — [src/platform/audio/musicEngine.test.ts:85](../../src/platform/audio/musicEngine.test.ts#L85)
-  - current rules; keep pending design review. Currentness: unverified. Case runtime: unknown.
+  - hard limits; Keep audio integrity checks unchanged?. Currentness: unverified. Case runtime: unknown.
   - Cited ruling: none found in scoped comments; not proof that none exists.
 
 - **the music plays on through the frames' hitches (Ed's playtest, 2026-10-06: "The music cuts in and out a lot") > a longer stall only holds the music for the stall, then it plays on from where it was** — [src/platform/audio/musicEngine.test.ts:92](../../src/platform/audio/musicEngine.test.ts#L92)
-  - current rules; keep pending design review. Currentness: unverified. Case runtime: unknown.
+  - hard limits; Keep audio integrity checks unchanged?. Currentness: unverified. Case runtime: unknown.
   - Cited ruling: none found in scoped comments; not proof that none exists.
 
 - **a sleeping legend's clearing in the music (Ed, 2026-10-06) > eases the muffle and the legend's layer in over about a second as she enters, and out as she leaves** — [src/platform/audio/musicEngine.test.ts:100](../../src/platform/audio/musicEngine.test.ts#L100)
-  - current rules; keep pending design review. Currentness: unverified. Case runtime: unknown.
+  - hard limits; Keep audio integrity checks unchanged?. Currentness: unverified. Case runtime: unknown.
   - Cited ruling: none found in scoped comments; not proof that none exists.
 
 - **the world slowed in a legend's circle (Ed, 2026-10-06: "the music and countdown get ~10x slower ... the music audibly slows down") > slows the music with the world: a tenth as many sixteenths, each in order once, on the game clock (so the waves and bars stay in step)** — [src/platform/audio/musicEngine.test.ts:138](../../src/platform/audio/musicEngine.test.ts#L138)
-  - current rules; keep pending design review. Currentness: unverified. Case runtime: unknown.
+  - hard limits; Keep audio integrity checks unchanged?. Currentness: unverified. Case runtime: unknown.
   - Cited ruling: none found in scoped comments; not proof that none exists.
 
 - **the world slowed in a legend's circle (Ed, 2026-10-06: "the music and countdown get ~10x slower ... the music audibly slows down") > drops the notes' pitch like a slowing tape (down to its floor), but never the legend's own layer** — [src/platform/audio/musicEngine.test.ts:152](../../src/platform/audio/musicEngine.test.ts#L152)
-  - current rules; keep pending design review. Currentness: unverified. Case runtime: unknown.
+  - hard limits; Keep audio integrity checks unchanged?. Currentness: unverified. Case runtime: unknown.
   - Cited ruling: none found in scoped comments; not proof that none exists.
 
 - **the world slowed in a legend's circle (Ed, 2026-10-06: "the music and countdown get ~10x slower ... the music audibly slows down") > plays the legend's layer at full speed over the slowed music** — [src/platform/audio/musicEngine.test.ts:163](../../src/platform/audio/musicEngine.test.ts#L163)
-  - current rules; keep pending design review. Currentness: unverified. Case runtime: unknown.
+  - hard limits; Keep audio integrity checks unchanged?. Currentness: unverified. Case runtime: unknown.
   - Cited ruling: none found in scoped comments; not proof that none exists.
 
 - **a new night on the same page (docs/plans/sail-without-reload.md, A4) > re-anchors the timeline at the new night's game time 0, not 6 s ahead of it** — [src/platform/audio/musicEngine.test.ts:192](../../src/platform/audio/musicEngine.test.ts#L192)
-  - current rules; keep pending design review. Currentness: unverified. Case runtime: unknown.
+  - hard limits; Keep audio integrity checks unchanged?. Currentness: unverified. Case runtime: unknown.
   - Cited ruling: none found in scoped comments; not proof that none exists.
 
 - **a new night on the same page (docs/plans/sail-without-reload.md, A4) > opens the knockdown's gate and counts knockdowns from none** — [src/platform/audio/musicEngine.test.ts:200](../../src/platform/audio/musicEngine.test.ts#L200)
-  - current rules; keep pending design review. Currentness: unverified. Case runtime: unknown.
+  - hard limits; Keep audio integrity checks unchanged?. Currentness: unverified. Case runtime: unknown.
   - Cited ruling: none found in scoped comments; not proof that none exists.
 
 - **a new night on the same page (docs/plans/sail-without-reload.md, A4) > builds the sung part's channel again after a new style (its first note no stall)** — [src/platform/audio/musicEngine.test.ts:211](../../src/platform/audio/musicEngine.test.ts#L211)
-  - current rules; keep pending design review. Currentness: unverified. Case runtime: unknown.
+  - hard limits; Keep audio integrity checks unchanged?. Currentness: unverified. Case runtime: unknown.
   - Cited ruling: none found in scoped comments; not proof that none exists.
 
 - **the afterparty's nights > every area type has its night named, and a wet one unnamed is a wet night** — [src/platform/audio/night.test.ts:9](../../src/platform/audio/night.test.ts#L9)
-  - current rules; keep pending design review. Currentness: unverified. Case runtime: unknown.
+  - current rules; Keep cue and audio data rules unchanged?. Currentness: unverified. Case runtime: unknown.
   - Cited ruling: file, line 1: // The afterparty (Ed, 2026-10-06: "the dance music stops ... We can have nice environmental music and sounds that match
   - Possible later evidence: [docs/notes/performance.md:166](../../docs/notes/performance.md#L166): **The stall hunt** (`node tools/bench/stalls.cjs [out]`, the coordinator's ask from Ed's overlay, 2026-10-13: 24 stalls over 100 ms and 18% of frames over 20 ms in the treetops, seed 2267, Old pinewood, 56 s into wave 0): the game's own loop run free at a spot (`SEED`, `X`, `Z`, `ZOOM`; `DIST=dist-prof` from `npx vite build --minify false --outDir dist-prof`, so the functions have names) under Chromium's sampling profiler, the GPU draw a no-op (`NODRAW=1`) so a wall second is a game second, and a report of where the JavaScript's time went: self time by function, call chains, runs of JavaScript over `RUN_MS`, the browser's long animation frames and the game's own stall log (`<out>/stalls.json. candidate only: same-topic wording and later inline date; not a verified superseding ruling.
   - Possible later evidence: [docs/notes/run.md:79](../../docs/notes/run.md#L79): - **The world asleep before the party** (Ed, 2026-10-26: "If you leave the treehouse before starting the party, it should be the same as after a party is lost; creatures are asleep in their areas and you can't invite them, the night's permanent upgrade find is not placed yet"; `worldAsleep`, `putToBed`, `stepWorldAsleep` in `src/rules/partyOver.ts`): a night waiting for her party spell (`party.spellAt` null; not the zoo, not the debug arena's) lies as the afterparty does: every creature put to bed at once in its own area, asleep for good (the afterparty's own sleep), the legends still, no 💌 taking, nothing fighting or attacking her, nothing growing, and tonight's find not there (its trunk, . candidate only: same-topic wording and later inline date; not a verified superseding ruling.
 
 - **the afterparty's nights > how far the party's over: nothing in a game without it, its own ease, or eased in from its start** — [src/platform/audio/night.test.ts:17](../../src/platform/audio/night.test.ts#L17)
-  - current rules; keep pending design review. Currentness: unverified. Case runtime: unknown.
+  - current rules; Keep cue and audio data rules unchanged?. Currentness: unverified. Case runtime: unknown.
   - Cited ruling: file, line 1: // The afterparty (Ed, 2026-10-06: "the dance music stops ... We can have nice environmental music and sounds that match
   - Possible later evidence: [docs/notes/view.md:72](../../docs/notes/view.md#L72): - **Ley lines**: the glowing line through the runestones in wave order (`src/rules/leylines.ts` the chain, `src/rules/leyroute.ts` the route, `src/render/leylines.ts` the drawing): through every area's stone from home to the last, the whole time (Ed, 2026-10-06: "I think the leylines should cover the entire set of waves the whole time, but ideally it shouldn't cross itself"), moving on from the last runestone reached (by its wave, or its quest: `onAreaDone(party, cell, time)`), every section as bright as the next (`fade`, `behindBright` and `far` all 1: Ed, 2026-10-06: "The leyline should always go from the treehouse to 3x the progress of the pulse, and I should be able to see it along its e. candidate only: same-topic wording and later inline date; not a verified superseding ruling.
   - Possible later evidence: [docs/notes/house.md:76](../../docs/notes/house.md#L76): - **Treehouse deck** (Ed, 2026-10-11: "a circle with a wooden floor and a balustrade sitting on the ent. You land on it by being at treetop height, and during the night time slower 10x"; `src/rules/treehouse.ts`, the tuning's `treehouse.deck`, `on: false` for the old treehouse): a round deck (radius 7 m, its floor 22 m up) on the Ent at the treehouse's spot. From the treetops, coming down within its radius plus `grace` lands her on it (`witch.perch`, mode "ground", its floor her ground: `witchHeight`); she walks it, kept inside its rail (`keepOnDeck`), round the **map table** in its middle (Ed: "The world map is in the centre": E there opens the sea chart over the game, `ui/chartOverlay.ts` . candidate only: same-topic wording and later inline date; not a verified superseding ruling.
 
 - **a refused sigil's nope (Ed, 2026-10-07) > plays once on the leash's fizzled event, and not on a placed one** — [src/platform/audio/nope.cues.test.ts:10](../../src/platform/audio/nope.cues.test.ts#L10)
-  - current rules; keep pending design review. Currentness: unverified. Case runtime: unknown.
+  - current rules; Keep cue and audio data rules unchanged?. Currentness: unverified. Case runtime: unknown.
   - Cited ruling: none found in scoped comments; not proof that none exists.
 
 - **the measured output's silence episodes > logs a silence while the music should be heard, from the last loud read to the last silent one** — [src/platform/audio/outputMeter.test.ts:5](../../src/platform/audio/outputMeter.test.ts#L5)
-  - current rules; keep pending design review. Currentness: unverified. Case runtime: unknown.
+  - hard limits; Keep audio integrity checks unchanged?. Currentness: unverified. Case runtime: unknown.
   - Cited ruling: none found in scoped comments; not proof that none exists.
 
 - **the measured output's silence episodes > ignores a short dip, and silence that isn't expected (before the speakers boot, paused, muted)** — [src/platform/audio/outputMeter.test.ts:13](../../src/platform/audio/outputMeter.test.ts#L13)
-  - current rules; keep pending design review. Currentness: unverified. Case runtime: unknown.
+  - hard limits; Keep audio integrity checks unchanged?. Currentness: unverified. Case runtime: unknown.
   - Cited ruling: none found in scoped comments; not proof that none exists.
 
 - **the measured output's silence episodes > says how long it's been silent so far** — [src/platform/audio/outputMeter.test.ts:19](../../src/platform/audio/outputMeter.test.ts#L19)
-  - current rules; keep pending design review. Currentness: unverified. Case runtime: unknown.
+  - hard limits; Keep audio integrity checks unchanged?. Currentness: unverified. Case runtime: unknown.
   - Cited ruling: none found in scoped comments; not proof that none exists.
 
 - **the mic check > finds the device's lag** — [src/platform/audio/outputMeter.test.ts:30](../../src/platform/audio/outputMeter.test.ts#L30)
-  - current rules; keep pending design review. Currentness: unverified. Case runtime: unknown.
+  - hard limits; Keep audio integrity checks unchanged?. Currentness: unverified. Case runtime: unknown.
   - Cited ruling: none found in scoped comments; not proof that none exists.
 
 - **the mic check > flags a dropout after the game (the mic drops to the room while the output plays on), and not otherwise** — [src/platform/audio/outputMeter.test.ts:35](../../src/platform/audio/outputMeter.test.ts#L35)
-  - current rules; keep pending design review. Currentness: unverified. Case runtime: unknown.
+  - hard limits; Keep audio integrity checks unchanged?. Currentness: unverified. Case runtime: unknown.
   - Cited ruling: none found in scoped comments; not proof that none exists.
 
 - **the mic check > flags the mic hearing it loud while the output is silent** — [src/platform/audio/outputMeter.test.ts:50](../../src/platform/audio/outputMeter.test.ts#L50)
-  - current rules; keep pending design review. Currentness: unverified. Case runtime: unknown.
+  - hard limits; Keep audio integrity checks unchanged?. Currentness: unverified. Case runtime: unknown.
   - Cited ruling: none found in scoped comments; not proof that none exists.
 
 - **ClockWatch: why the sound cut out (Ed, 2026-10-07: "the music is still cutting out") > calls a true clock true** — [src/platform/audio/outputMeter.test.ts:69](../../src/platform/audio/outputMeter.test.ts#L69)
-  - current rules; keep pending design review. Currentness: unverified. Case runtime: unknown.
+  - hard limits; Keep audio integrity checks unchanged?. Currentness: unverified. Case runtime: unknown.
   - Cited ruling: none found in scoped comments; not proof that none exists.
 
 - **ClockWatch: why the sound cut out (Ed, 2026-10-07: "the music is still cutting out") > tells coarse clock steps (slow seconds paid back by fast ones, nothing lost) from under-runs** — [src/platform/audio/outputMeter.test.ts:75](../../src/platform/audio/outputMeter.test.ts#L75)
-  - current rules; keep pending design review. Currentness: unverified. Case runtime: unknown.
+  - hard limits; Keep audio integrity checks unchanged?. Currentness: unverified. Case runtime: unknown.
   - Cited ruling: none found in scoped comments; not proof that none exists.
 
 - **ClockWatch: why the sound cut out (Ed, 2026-10-07: "the music is still cutting out") > calls a clock that loses time for good under-runs** — [src/platform/audio/outputMeter.test.ts:84](../../src/platform/audio/outputMeter.test.ts#L84)
-  - current rules; keep pending design review. Currentness: unverified. Case runtime: unknown.
+  - hard limits; Keep audio integrity checks unchanged?. Currentness: unverified. Case runtime: unknown.
   - Cited ruling: none found in scoped comments; not proof that none exists.
 
 - **ClockWatch: why the sound cut out (Ed, 2026-10-07: "the music is still cutting out") > believes the browser's own under-run count where it has one** — [src/platform/audio/outputMeter.test.ts:91](../../src/platform/audio/outputMeter.test.ts#L91)
-  - current rules; keep pending design review. Currentness: unverified. Case runtime: unknown.
+  - hard limits; Keep audio integrity checks unchanged?. Currentness: unverified. Case runtime: unknown.
   - Cited ruling: none found in scoped comments; not proof that none exists.
 
 - **ClockWatch: why the sound cut out (Ed, 2026-10-07: "the music is still cutting out") > starts the reckoning again after a suspend** — [src/platform/audio/outputMeter.test.ts:97](../../src/platform/audio/outputMeter.test.ts#L97)
-  - current rules; keep pending design review. Currentness: unverified. Case runtime: unknown.
+  - hard limits; Keep audio integrity checks unchanged?. Currentness: unverified. Case runtime: unknown.
   - Cited ruling: none found in scoped comments; not proof that none exists.
 
 - **potion sound routes > routes creature audio through pitch while breathing/startup bypass it but share the master and limiter** — [src/platform/audio/potionAudio.test.ts:14](../../src/platform/audio/potionAudio.test.ts#L14)
-  - current rules; keep pending design review. Currentness: unverified. Case runtime: unknown.
+  - current rules; Keep cue and audio data rules unchanged?. Currentness: unverified. Case runtime: unknown.
   - Cited ruling: none found in scoped comments; not proof that none exists.
 
 - **potion sound routes > transposes the existing creature bus with two bounded taps, restores exact dry routing and releases sources** — [src/platform/audio/potionAudio.test.ts:26](../../src/platform/audio/potionAudio.test.ts#L26)
-  - current rules; keep pending design review. Currentness: unverified. Case runtime: unknown.
+  - current rules; Keep cue and audio data rules unchanged?. Currentness: unverified. Case runtime: unknown.
   - Cited ruling: none found in scoped comments; not proof that none exists.
 
 - **potion sound routes > keeps creature routes, their reverb and shared volume/budget intact when ordinary output is muted** — [src/platform/audio/potionAudio.test.ts:43](../../src/platform/audio/potionAudio.test.ts#L43)
-  - hard limits; keep. Currentness: unverified. Case runtime: unknown.
+  - current rules; Keep cue and audio data rules unchanged?. Currentness: unverified. Case runtime: unknown.
   - Cited ruling: none found in scoped comments; not proof that none exists.
 
 - **potion sound routes > keeps one bounded breathing source and releases it at stop, with an original rising startup tone** — [src/platform/audio/potionAudio.test.ts:54](../../src/platform/audio/potionAudio.test.ts#L54)
-  - current rules; keep pending design review. Currentness: unverified. Case runtime: unknown.
+  - current rules; Keep cue and audio data rules unchanged?. Currentness: unverified. Case runtime: unknown.
   - Cited ruling: none found in scoped comments; not proof that none exists.
 
 - **covers every recipe with the fallback except the two explicitly bespoke vision effects** — [src/platform/audio/potionFilter.test.ts:9](../../src/platform/audio/potionFilter.test.ts#L9)
-  - current rules; keep pending design review. Currentness: unverified. Case runtime: unknown.
+  - current rules; Keep cue and audio data rules unchanged?. Currentness: unverified. Case runtime: unknown.
   - Cited ruling: none found in scoped comments; not proof that none exists.
 
 - **thins Miniature and fades any fallback over the final two minutes of game time** — [src/platform/audio/potionFilter.test.ts:12](../../src/platform/audio/potionFilter.test.ts#L12)
-  - current rules; keep pending design review. Currentness: unverified. Case runtime: unknown.
+  - current rules; Keep cue and audio data rules unchanged?. Currentness: unverified. Case runtime: unknown.
   - Cited ruling: none found in scoped comments; not proof that none exists.
 
 - **keeps modulation bounded and fixed on a paused game clock** — [src/platform/audio/potionFilter.test.ts:20](../../src/platform/audio/potionFilter.test.ts#L20)
-  - current rules; keep pending design review. Currentness: unverified. Case runtime: unknown.
+  - current rules; Keep cue and audio data rules unchanged?. Currentness: unverified. Case runtime: unknown.
   - Cited ruling: none found in scoped comments; not proof that none exists.
 
 - **routes both dry and filtered paths, starts dry and restores dry gain after Stop** — [src/platform/audio/potionFilter.test.ts:24](../../src/platform/audio/potionFilter.test.ts#L24)
-  - current rules; keep pending design review. Currentness: unverified. Case runtime: unknown.
+  - current rules; Keep cue and audio data rules unchanged?. Currentness: unverified. Case runtime: unknown.
   - Cited ruling: none found in scoped comments; not proof that none exists.
 
 - **the sea life's sounds > by the east coast, the dolphins' splashes, now and then** — [src/platform/audio/seaLife.cues.test.ts:24](../../src/platform/audio/seaLife.cues.test.ts#L24)
-  - current rules; keep pending design review. Currentness: unverified. Case runtime: unknown.
+  - outcome stats; Make these three rate/proportion tests informational? Yes moves the 60/600-second dolphin/kraken counts and 60-seed melody-pace survey to a nightly report; range, routing, note validity and explicit form rules keep blocking releases.. Currentness: unverified. Case runtime: unknown.
   - Cited ruling: file, line 1: // The sea life's sounds (Ed, 2026-10-07: dolphins off the east coast, a kraken off the west), cued from art builder 4's
 
 - **the sea life's sounds > by the west coast, the kraken's groan and the water pouring off it, rarely** — [src/platform/audio/seaLife.cues.test.ts:29](../../src/platform/audio/seaLife.cues.test.ts#L29)
-  - current rules; keep pending design review. Currentness: unverified. Case runtime: unknown.
+  - outcome stats; Make these three rate/proportion tests informational? Yes moves the 60/600-second dolphin/kraken counts and 60-seed melody-pace survey to a nightly report; range, routing, note validity and explicit form rules keep blocking releases.. Currentness: unverified. Case runtime: unknown.
   - Cited ruling: file, line 1: // The sea life's sounds (Ed, 2026-10-07: dolphins off the east coast, a kraken off the west), cued from art builder 4's
   - Possible later evidence: [docs/notes/island.md:21](../../docs/notes/island.md#L21): - **Zoo**: `?zoo` (Ed, 2026-10-13; laid out like the sea chart since Ed, 2026-10-26: `src/rules/zooMap.ts`, `src/rules/zoo.ts`, `config/zoo.json`; the mock: `previews/ed/zoo-map` on `claude/ed-shots`): every kind's island where the chart has it (`worldOf(world)`), its outline the chart's real coast where this browser has it (Ed, 2026-10-26: "We already know the real coastline shapes, can't we reuse them in the zoo without calculating anything?": the chart's worker keeps each island's biggest sea loop beside its outline, `app/chartCache.ts` `coastKey`/`keepCoast`, under the chart's own keys; the zoo's page reads them back before its map is made, at most 400 ms, `app/zooCoasts.ts`, and hands t. candidate only: same-topic wording and later inline date; not a verified superseding ruling.
 
 - **the sea life's sounds > inland, nothing** — [src/platform/audio/seaLife.cues.test.ts:35](../../src/platform/audio/seaLife.cues.test.ts#L35)
-  - current rules; keep pending design review. Currentness: unverified. Case runtime: unknown.
+  - current rules; Keep cue and audio data rules unchanged?. Currentness: unverified. Case runtime: unknown.
   - Cited ruling: file, line 1: // The sea life's sounds (Ed, 2026-10-07: dolphins off the east coast, a kraken off the west), cued from art builder 4's
   - Possible later evidence: [docs/notes/island.md:21](../../docs/notes/island.md#L21): - **Zoo**: `?zoo` (Ed, 2026-10-13; laid out like the sea chart since Ed, 2026-10-26: `src/rules/zooMap.ts`, `src/rules/zoo.ts`, `config/zoo.json`; the mock: `previews/ed/zoo-map` on `claude/ed-shots`): every kind's island where the chart has it (`worldOf(world)`), its outline the chart's real coast where this browser has it (Ed, 2026-10-26: "We already know the real coastline shapes, can't we reuse them in the zoo without calculating anything?": the chart's worker keeps each island's biggest sea loop beside its outline, `app/chartCache.ts` `coastKey`/`keepCoast`, under the chart's own keys; the zoo's page reads them back before its map is made, at most 400 ms, `app/zooCoasts.ts`, and hands t. candidate only: same-topic wording and later inline date; not a verified superseding ruling.
 
 - **the sound effects' voice budget > plays up to the cap, then lets a lesser sound go nowhere** — [src/platform/audio/sfxBudget.test.ts:27](../../src/platform/audio/sfxBudget.test.ts#L27)
-  - hard limits; keep. Currentness: unverified. Case runtime: unknown.
+  - hard limits; Keep audio integrity checks unchanged?. Currentness: unverified. Case runtime: unknown.
   - Cited ruling: file, line 1: // The sound effects' voice budget (sfxKit.ts voice; Ed's playtest, 2026-10-12: "the sound is cutting out ... too many
   - Possible later evidence: [docs/notes/music.md:9](../../docs/notes/music.md#L9): The music (`src/rules/musicPlan.ts`, `src/rules/musicScore.ts`, `src/platform/audio/musicEngine.ts`, `config/music-style.json`): A sleeping legend's clearing on the ground (Ed, 2026-10-06) muffles the music (`muffled`, rules/music.ts; the tuning's `music.circle`) under that legend's own layer (`legendCircleAt`, rules/musicPlan.ts; the style's `circle`: every legend's parts and its voice family's, each species its own patterns, melody, rhythm and octave in the music's key and chords, played over the muffle on the engine's second output); There the world slows to about a tenth (the game's time scale, `g.timeScale`) and the music follows it (Ed, 2026-10-06: "the music audibly slows down"): the . candidate only: same-topic wording and later inline date; not a verified superseding ruling.
   - Possible later evidence: [docs/notes/music.md:25](../../docs/notes/music.md#L25): - **Music ahead** (Ed, 2026-10-27, from his audio test: "render the music ahead, so main-thread stalls can't silence it"; the plan and its steps in the REPORT of 2026-10-27; the stall test, `audio-test/stall.html`, docs/notes/sound.md, its baseline): the music drawn a bar at a time on an OfflineAudioContext (off the page's thread) and queued seconds ahead on the audio clock, its buses live. **Step 2, the stems** (this): `MusicEngine` takes a **sink** (`MusicSink`), where its parts' notes go and its bus automation: by default its own buses, live exactly as before (its `bus`; `node tools/music-lab/stems.cjs ab` with `OLD=<a checkout>`: before and after apart by no more than Chromium's own roun. candidate only: same-topic wording and later inline date; not a verified superseding ruling.
 
 - **the sound effects' voice budget > lets a greater sound cut the least short** — [src/platform/audio/sfxBudget.test.ts:35](../../src/platform/audio/sfxBudget.test.ts#L35)
-  - hard limits; keep. Currentness: unverified. Case runtime: unknown.
+  - hard limits; Keep audio integrity checks unchanged?. Currentness: unverified. Case runtime: unknown.
   - Cited ruling: file, line 1: // The sound effects' voice budget (sfxKit.ts voice; Ed's playtest, 2026-10-12: "the sound is cutting out ... too many
   - Possible later evidence: [docs/notes/music.md:9](../../docs/notes/music.md#L9): The music (`src/rules/musicPlan.ts`, `src/rules/musicScore.ts`, `src/platform/audio/musicEngine.ts`, `config/music-style.json`): A sleeping legend's clearing on the ground (Ed, 2026-10-06) muffles the music (`muffled`, rules/music.ts; the tuning's `music.circle`) under that legend's own layer (`legendCircleAt`, rules/musicPlan.ts; the style's `circle`: every legend's parts and its voice family's, each species its own patterns, melody, rhythm and octave in the music's key and chords, played over the muffle on the engine's second output); There the world slows to about a tenth (the game's time scale, `g.timeScale`) and the music follows it (Ed, 2026-10-06: "the music audibly slows down"): the . candidate only: same-topic wording and later inline date; not a verified superseding ruling.
   - Possible later evidence: [docs/notes/music.md:25](../../docs/notes/music.md#L25): - **Music ahead** (Ed, 2026-10-27, from his audio test: "render the music ahead, so main-thread stalls can't silence it"; the plan and its steps in the REPORT of 2026-10-27; the stall test, `audio-test/stall.html`, docs/notes/sound.md, its baseline): the music drawn a bar at a time on an OfflineAudioContext (off the page's thread) and queued seconds ahead on the audio clock, its buses live. **Step 2, the stems** (this): `MusicEngine` takes a **sink** (`MusicSink`), where its parts' notes go and its bus automation: by default its own buses, live exactly as before (its `bus`; `node tools/music-lab/stems.cjs ab` with `OLD=<a checkout>`: before and after apart by no more than Chromium's own roun. candidate only: same-topic wording and later inline date; not a verified superseding ruling.
 
 - **the sound effects' voice budget > counts no lasting sound, and lets go of those done** — [src/platform/audio/sfxBudget.test.ts:41](../../src/platform/audio/sfxBudget.test.ts#L41)
-  - hard limits; keep. Currentness: unverified. Case runtime: unknown.
+  - hard limits; Keep audio integrity checks unchanged?. Currentness: unverified. Case runtime: unknown.
   - Cited ruling: file, line 1: // The sound effects' voice budget (sfxKit.ts voice; Ed's playtest, 2026-10-12: "the sound is cutting out ... too many
   - Possible later evidence: [docs/notes/music.md:9](../../docs/notes/music.md#L9): The music (`src/rules/musicPlan.ts`, `src/rules/musicScore.ts`, `src/platform/audio/musicEngine.ts`, `config/music-style.json`): A sleeping legend's clearing on the ground (Ed, 2026-10-06) muffles the music (`muffled`, rules/music.ts; the tuning's `music.circle`) under that legend's own layer (`legendCircleAt`, rules/musicPlan.ts; the style's `circle`: every legend's parts and its voice family's, each species its own patterns, melody, rhythm and octave in the music's key and chords, played over the muffle on the engine's second output); There the world slows to about a tenth (the game's time scale, `g.timeScale`) and the music follows it (Ed, 2026-10-06: "the music audibly slows down"): the . candidate only: same-topic wording and later inline date; not a verified superseding ruling.
   - Possible later evidence: [docs/notes/performance.md:166](../../docs/notes/performance.md#L166): **The stall hunt** (`node tools/bench/stalls.cjs [out]`, the coordinator's ask from Ed's overlay, 2026-10-13: 24 stalls over 100 ms and 18% of frames over 20 ms in the treetops, seed 2267, Old pinewood, 56 s into wave 0): the game's own loop run free at a spot (`SEED`, `X`, `Z`, `ZOOM`; `DIST=dist-prof` from `npx vite build --minify false --outDir dist-prof`, so the functions have names) under Chromium's sampling profiler, the GPU draw a no-op (`NODRAW=1`) so a wall second is a game second, and a report of where the JavaScript's time went: self time by function, call chains, runs of JavaScript over `RUN_MS`, the browser's long animation frames and the game's own stall log (`<out>/stalls.json. candidate only: same-topic wording and later inline date; not a verified superseding ruling.
 
 - **the sound effects' voice budget > has no limit at 0** — [src/platform/audio/sfxBudget.test.ts:49](../../src/platform/audio/sfxBudget.test.ts#L49)
-  - hard limits; keep. Currentness: unverified. Case runtime: unknown.
+  - hard limits; Keep audio integrity checks unchanged?. Currentness: unverified. Case runtime: unknown.
   - Cited ruling: file, line 1: // The sound effects' voice budget (sfxKit.ts voice; Ed's playtest, 2026-10-12: "the sound is cutting out ... too many
   - Possible later evidence: [docs/notes/music.md:9](../../docs/notes/music.md#L9): The music (`src/rules/musicPlan.ts`, `src/rules/musicScore.ts`, `src/platform/audio/musicEngine.ts`, `config/music-style.json`): A sleeping legend's clearing on the ground (Ed, 2026-10-06) muffles the music (`muffled`, rules/music.ts; the tuning's `music.circle`) under that legend's own layer (`legendCircleAt`, rules/musicPlan.ts; the style's `circle`: every legend's parts and its voice family's, each species its own patterns, melody, rhythm and octave in the music's key and chords, played over the muffle on the engine's second output); There the world slows to about a tenth (the game's time scale, `g.timeScale`) and the music follows it (Ed, 2026-10-06: "the music audibly slows down"): the . candidate only: same-topic wording and later inline date; not a verified superseding ruling.
   - Possible later evidence: [docs/notes/performance.md:166](../../docs/notes/performance.md#L166): **The stall hunt** (`node tools/bench/stalls.cjs [out]`, the coordinator's ask from Ed's overlay, 2026-10-13: 24 stalls over 100 ms and 18% of frames over 20 ms in the treetops, seed 2267, Old pinewood, 56 s into wave 0): the game's own loop run free at a spot (`SEED`, `X`, `Z`, `ZOOM`; `DIST=dist-prof` from `npx vite build --minify false --outDir dist-prof`, so the functions have names) under Chromium's sampling profiler, the GPU draw a no-op (`NODRAW=1`) so a wall second is a game second, and a report of where the JavaScript's time went: self time by function, call chains, runs of JavaScript over `RUN_MS`, the browser's long animation frames and the game's own stall log (`<out>/stalls.json. candidate only: same-topic wording and later inline date; not a verified superseding ruling.
 
 - **restless legends calling out sadly (Ed, 2026-10-06) > call now and then from their clearings, more often as restlessness rises, the nearest two at most, and stop once calm** — [src/platform/audio/sfxCues.test.ts:18](../../src/platform/audio/sfxCues.test.ts#L18)
-  - current rules; keep pending design review. Currentness: unverified. Case runtime: unknown.
+  - current rules; Keep cue and audio data rules unchanged?. Currentness: unverified. Case runtime: unknown.
   - Cited ruling: none found in scoped comments; not proof that none exists.
 
 - **restless legends calling out sadly (Ed, 2026-10-06) > is heard far beyond the usual hearing, and not past its range** — [src/platform/audio/sfxCues.test.ts:45](../../src/platform/audio/sfxCues.test.ts#L45)
-  - current rules; keep pending design review. Currentness: unverified. Case runtime: unknown.
+  - current rules; Keep cue and audio data rules unchanged?. Currentness: unverified. Case runtime: unknown.
   - Cited ruling: none found in scoped comments; not proof that none exists.
 
 - **runestones crackling into life (Ed, 2026-10-06) > powers up each home speaker as the boot pulse turns it (g.speakerBoot), a step up the scale round the ring, the last a chord** — [src/platform/audio/sfxCues.test.ts:61](../../src/platform/audio/sfxCues.test.ts#L61)
-  - current rules; keep pending design review. Currentness: unverified. Case runtime: unknown.
+  - current rules; Keep cue and audio data rules unchanged?. Currentness: unverified. Case runtime: unknown.
   - Cited ruling: none found in scoped comments; not proof that none exists.
 
 - **runestones crackling into life (Ed, 2026-10-06) > powers up a wave's soundsystem as it appears, once, from where it stands** — [src/platform/audio/sfxCues.test.ts:74](../../src/platform/audio/sfxCues.test.ts#L74)
-  - current rules; keep pending design review. Currentness: unverified. Case runtime: unknown.
+  - current rules; Keep cue and audio data rules unchanged?. Currentness: unverified. Case runtime: unknown.
   - Cited ruling: none found in scoped comments; not proof that none exists.
 
 - **the sound's safety valve (shed.ts) > sheds a step when the browser counts under-runs, waits between steps and stops at the last** — [src/platform/audio/shed.test.ts:5](../../src/platform/audio/shed.test.ts#L5)
-  - current rules; keep pending design review. Currentness: unverified. Case runtime: unknown.
+  - hard limits; Keep audio integrity checks unchanged?. Currentness: unverified. Case runtime: unknown.
   - Cited ruling: none found in scoped comments; not proof that none exists.
 
 - **the sound's safety valve (shed.ts) > sheds when the audio clock falls behind for good, but not for a coarse clock's steps that pay back** — [src/platform/audio/shed.test.ts:13](../../src/platform/audio/shed.test.ts#L13)
-  - current rules; keep pending design review. Currentness: unverified. Case runtime: unknown.
+  - hard limits; Keep audio integrity checks unchanged?. Currentness: unverified. Case runtime: unknown.
   - Cited ruling: none found in scoped comments; not proof that none exists.
 
 - **the sound's safety valve (shed.ts) > sheds when the music keeps re-anchoring (Ed's v2186 pattern: 279 resyncs in 320 s, no clock data)** — [src/platform/audio/shed.test.ts:21](../../src/platform/audio/shed.test.ts#L21)
-  - current rules; keep pending design review. Currentness: unverified. Case runtime: unknown.
+  - hard limits; Keep audio integrity checks unchanged?. Currentness: unverified. Case runtime: unknown.
   - Cited ruling: name, line 21: sheds when the music keeps re-anchoring (Ed's v2186 pattern: 279 resyncs in 320 s, no clock data)
 
 - **the sound's safety valve (shed.ts) > stays put on a true clock, and ?audio=lite starts shed, ?audio=full never sheds** — [src/platform/audio/shed.test.ts:26](../../src/platform/audio/shed.test.ts#L26)
-  - current rules; keep pending design review. Currentness: unverified. Case runtime: unknown.
+  - hard limits; Keep audio integrity checks unchanged?. Currentness: unverified. Case runtime: unknown.
   - Cited ruling: none found in scoped comments; not proof that none exists.
 
 - **the sound's safety valve (shed.ts) > lets play's start pass: a second lost and a burst of under-runs in the first seconds shed nothing** — [src/platform/audio/shed.test.ts:36](../../src/platform/audio/shed.test.ts#L36)
-  - current rules; keep pending design review. Currentness: unverified. Case runtime: unknown.
+  - hard limits; Keep audio integrity checks unchanged?. Currentness: unverified. Case runtime: unknown.
   - Cited ruling: declaration, line 35: // Ed's logs, 2026-10-14 (v3492-v3668): a one-off loss as the sound starts read as "can't keep up", and never undone
   - Possible later evidence: [docs/notes/island.md:17](../../docs/notes/island.md#L17): - **Sea chart**: the journey's map of islands (`chart.html`, or `?chart`; `?chart=all` shows everything; Ed, 2026-10-11): the world's disc, home in the middle, all 64 islands drawn in their real outlines at their kinds' bearings on their phases' rings, a sigil (and a link) only on those she can travel to, voyages as dotted lines, won islands starred; click one to play it. **New islands** (Ed, 2026-10-26: the chart didn't show which islands are new): each island she's found and not yet been to (`app/chartSave.ts` `unvisited`: no night played there, and not the one she's on) sparkles, a ring of little stars twinkling round its sigil (`ChartIsland.fresh`, `render/chart/seaChart.ts` `spark`, nev. candidate only: same-topic wording and later inline date; not a verified superseding ruling.
   - Possible later evidence: [docs/notes/music.md:25](../../docs/notes/music.md#L25): - **Music ahead** (Ed, 2026-10-27, from his audio test: "render the music ahead, so main-thread stalls can't silence it"; the plan and its steps in the REPORT of 2026-10-27; the stall test, `audio-test/stall.html`, docs/notes/sound.md, its baseline): the music drawn a bar at a time on an OfflineAudioContext (off the page's thread) and queued seconds ahead on the audio clock, its buses live. **Step 2, the stems** (this): `MusicEngine` takes a **sink** (`MusicSink`), where its parts' notes go and its bus automation: by default its own buses, live exactly as before (its `bus`; `node tools/music-lab/stems.cjs ab` with `OLD=<a checkout>`: before and after apart by no more than Chromium's own roun. candidate only: same-topic wording and later inline date; not a verified superseding ruling.
 
 - **the sound's safety valve (shed.ts) > doesn't shed for a one-off step in the clock, only for time still being lost** — [src/platform/audio/shed.test.ts:44](../../src/platform/audio/shed.test.ts#L44)
-  - current rules; keep pending design review. Currentness: unverified. Case runtime: unknown.
+  - hard limits; Keep audio integrity checks unchanged?. Currentness: unverified. Case runtime: unknown.
   - Cited ruling: none found in scoped comments; not proof that none exists.
 
 - **the sound's safety valve (shed.ts) > steps back up after a calm minute (a wave landing's burst costs a minute, not the night), never past ?audio=lite** — [src/platform/audio/shed.test.ts:52](../../src/platform/audio/shed.test.ts#L52)
-  - current rules; keep pending design review. Currentness: unverified. Case runtime: unknown.
+  - hard limits; Keep audio integrity checks unchanged?. Currentness: unverified. Case runtime: unknown.
   - Cited ruling: none found in scoped comments; not proof that none exists.
 
 - **the sound's safety valve (shed.ts) > keeps shed while the trouble goes on** — [src/platform/audio/shed.test.ts:64](../../src/platform/audio/shed.test.ts#L64)
-  - current rules; keep pending design review. Currentness: unverified. Case runtime: unknown.
+  - hard limits; Keep audio integrity checks unchanged?. Currentness: unverified. Case runtime: unknown.
   - Cited ruling: none found in scoped comments; not proof that none exists.
 
 - **the ley pulse's sparkler fizz (#491) > is heard by the pulse's tip, fading with distance, and not while home boots up** — [src/platform/audio/sparkler.cues.test.ts:18](../../src/platform/audio/sparkler.cues.test.ts#L18)
-  - current rules; keep pending design review. Currentness: unverified. Case runtime: unknown.
+  - current rules; Keep cue and audio data rules unchanged?. Currentness: unverified. Case runtime: unknown.
   - Cited ruling: none found in scoped comments; not proof that none exists.
 
 - **the crowd's cheer as a knockdown speeds the party up (+1 BPM, Ed 2026-10-07) > with no knockout under way, cheers once, on the bar line the tempo starts rising from** — [src/platform/audio/tempoUp.cues.test.ts:11](../../src/platform/audio/tempoUp.cues.test.ts#L11)
-  - current rules; keep pending design review. Currentness: unverified. Case runtime: unknown.
+  - leftovers; Update these two test descriptions to the current knockdown design? Yes removes the old +1 BPM and rewind wording; the existing one-cheer/on-return timing assertions stay unchanged.. Currentness: unverified. Case runtime: unknown.
   - Cited ruling: none found in scoped comments; not proof that none exists.
 
 - **the crowd's cheer as a knockdown speeds the party up (+1 BPM, Ed 2026-10-07) > knocked down, cheers once as she's back at her decks (after the trumpet and the rewind), on her clock** — [src/platform/audio/tempoUp.cues.test.ts:25](../../src/platform/audio/tempoUp.cues.test.ts#L25)
-  - current rules; keep pending design review. Currentness: unverified. Case runtime: unknown.
+  - leftovers; Update these two test descriptions to the current knockdown design? Yes removes the old +1 BPM and rewind wording; the existing one-cheer/on-return timing assertions stay unchanged.. Currentness: unverified. Case runtime: unknown.
   - Cited ruling: none found in scoped comments; not proof that none exists.
 
 - **retains the original quantised windows at arrival and after small and large moves** — [src/rules/heightSamples.test.ts:14](../../src/rules/heightSamples.test.ts#L14)
@@ -8735,325 +8731,325 @@ Static declarations only. All classifications and currentness are provisional. C
   - Cited ruling: none found in scoped comments; not proof that none exists.
 
 - **a sleeping legend's clearing in the music (Ed, 2026-10-06) > is heard on the ground inside the circle only: not in the treetops, not outside, not by an angry legend** — [src/rules/legendCircle.music.test.ts:18](../../src/rules/legendCircle.music.test.ts#L18)
-  - current rules; keep pending design review. Currentness: unverified. Case runtime: unknown.
+  - current rules; Keep current score contracts unchanged?. Currentness: unverified. Case runtime: unknown.
   - Cited ruling: none found in scoped comments; not proof that none exists.
 
 - **a sleeping legend's clearing in the music (Ed, 2026-10-06) > uses the map's clearing where it has one (#235), its middle and radius rather than the legend's own** — [src/rules/legendCircle.music.test.ts:32](../../src/rules/legendCircle.music.test.ts#L32)
-  - current rules; keep pending design review. Currentness: unverified. Case runtime: unknown.
+  - current rules; Keep current score contracts unchanged?. Currentness: unverified. Case runtime: unknown.
   - Cited ruling: none found in scoped comments; not proof that none exists.
 
 - **a sleeping legend's clearing in the music (Ed, 2026-10-06) > is heard at the middle of every clearing the map draws (#235), from its own legend** — [src/rules/legendCircle.music.test.ts:40](../../src/rules/legendCircle.music.test.ts#L40)
-  - current rules; keep pending design review. Currentness: unverified. Case runtime: unknown.
+  - current rules; Keep current score contracts unchanged?. Currentness: unverified. Case runtime: unknown.
   - Cited ruling: none found in scoped comments; not proof that none exists.
 
 - **a sleeping legend's clearing in the music (Ed, 2026-10-06) > muffles the music by how far in she is: unchanged outside, steeply low-passed and quieter fully in** — [src/rules/legendCircle.music.test.ts:51](../../src/rules/legendCircle.music.test.ts#L51)
-  - current rules; keep pending design review. Currentness: unverified. Case runtime: unknown.
+  - current rules; Keep current score contracts unchanged?. Currentness: unverified. Case runtime: unknown.
   - Cited ruling: none found in scoped comments; not proof that none exists.
 
 - **a sleeping legend's clearing in the music (Ed, 2026-10-06) > in the treehouse muffles more lightly, its volume kept (Ed, 2026-10-26: "the house music slows and muffles")** — [src/rules/legendCircle.music.test.ts:62](../../src/rules/legendCircle.music.test.ts#L62)
-  - current rules; keep pending design review. Currentness: unverified. Case runtime: unknown.
+  - current rules; Keep current score contracts unchanged?. Currentness: unverified. Case runtime: unknown.
   - Cited ruling: name, line 62: in the treehouse muffles more lightly, its volume kept (Ed, 2026-10-26: "the house music slows and muffles")
   - Possible later evidence: [docs/notes/music.md:3](../../docs/notes/music.md#L3): **Potion isolation** (2026-10-31, `app/sound.ts`, `platform/audio/music.ts`): Night Vision and Heat Vision independently gate the music after both the main output and sleeping-legend layer. They keep scheduling, beat alignment, user volume, Music Lab controls and the existing mix intact. The gate is zero at wake and returns linearly during the final two game-clock minutes; stop/replacement restores the current mix. Watchdog rebuilding reapplies the gate immediately and deliberate isolation disables its expected-music test. Creature routing, Heat Vision's whole-bus octave shift and the pending coordinator offline-audio gates are documented in [Sound effects](sound.md). The music composition a. candidate only: same-topic wording and later inline date; not a verified superseding ruling.
   - Possible later evidence: [docs/notes/music.md:25](../../docs/notes/music.md#L25): - **Music ahead** (Ed, 2026-10-27, from his audio test: "render the music ahead, so main-thread stalls can't silence it"; the plan and its steps in the REPORT of 2026-10-27; the stall test, `audio-test/stall.html`, docs/notes/sound.md, its baseline): the music drawn a bar at a time on an OfflineAudioContext (off the page's thread) and queued seconds ahead on the audio clock, its buses live. **Step 2, the stems** (this): `MusicEngine` takes a **sink** (`MusicSink`), where its parts' notes go and its bus automation: by default its own buses, live exactly as before (its `bus`; `node tools/music-lab/stems.cjs ab` with `OLD=<a checkout>`: before and after apart by no more than Chromium's own roun. candidate only: same-topic wording and later inline date; not a verified superseding ruling.
 
 - **a sleeping legend's clearing in the music (Ed, 2026-10-06) > plays a legend's own layer in the music's key over it, only while she's in a circle** — [src/rules/legendCircle.music.test.ts:78](../../src/rules/legendCircle.music.test.ts#L78)
-  - current rules; keep pending design review. Currentness: unverified. Case runtime: unknown.
+  - current rules; Keep current score contracts unchanged?. Currentness: unverified. Case runtime: unknown.
   - Cited ruling: none found in scoped comments; not proof that none exists.
 
 - **a sleeping legend's clearing in the music (Ed, 2026-10-06) > gives each species its own legend music: families their own instruments, kin their own melodies** — [src/rules/legendCircle.music.test.ts:91](../../src/rules/legendCircle.music.test.ts#L91)
-  - current rules; keep pending design review. Currentness: unverified. Case runtime: unknown.
+  - current rules; Keep current score contracts unchanged?. Currentness: unverified. Case runtime: unknown.
   - Cited ruling: none found in scoped comments; not proof that none exists.
 
 - **the melodies' 32-bar ABAC form > is ABAC in 8-bar phrases, A coming back exactly, B and C different** — [src/rules/musicForm.test.ts:21](../../src/rules/musicForm.test.ts#L21)
-  - current rules; keep pending design review. Currentness: unverified. Case runtime: unknown.
+  - current rules; Keep current score contracts unchanged?. Currentness: unverified. Case runtime: unknown.
   - Cited ruling: file, line 1: // Ed's brief (2026-10-09): "Keep it all in the dorian. Melodies should be 8 bars long, with a 32 bar ABAC structure, and
 
 - **the melodies' 32-bar ABAC form > rests in every phrase, every half-phrase ending on rests** — [src/rules/musicForm.test.ts:38](../../src/rules/musicForm.test.ts#L38)
-  - current rules; keep pending design review. Currentness: unverified. Case runtime: unknown.
+  - current rules; Keep current score contracts unchanged?. Currentness: unverified. Case runtime: unknown.
   - Cited ruling: file, line 1: // Ed's brief (2026-10-09): "Keep it all in the dorian. Melodies should be 8 bars long, with a 32 bar ABAC structure, and
   - Possible later evidence: [docs/notes/music.md:23](../../docs/notes/music.md#L23): - **Music Studio** (Ed, 2026-10-22: a musician joins, working in Logic, "we can keep the current music and start separate parallel branch"; they design instruments on our engine's own synths, tuned live, and new structures and melodies, whether played as written or as material for the generator still open; the branch `claude/music-musician`; docs/backlog/music.md "The musician"): `music-studio.html` beside the game (`tools/music-studio/`, built by its `build.mjs` in `npm run build`): a **patch designer** with every knob of the engine's synth, kick, noise, snare and bell patches (`knobs.ts`), a keyboard (held notes, `MusicEngine.hold`) and a phrase looping on the patch being edited, a **MIDI . candidate only: same-topic wording and later inline date; not a verified superseding ruling.
 
 - **the melodies' 32-bar ABAC form > plays A on one instrument of Ed's six by the seed, B and C sung** — [src/rules/musicForm.test.ts:52](../../src/rules/musicForm.test.ts#L52)
-  - current rules; keep pending design review. Currentness: unverified. Case runtime: unknown.
+  - current rules; Keep current score contracts unchanged?. Currentness: unverified. Case runtime: unknown.
   - Cited ruling: file, line 1: // Ed's brief (2026-10-09): "Keep it all in the dorian. Melodies should be 8 bars long, with a 32 bar ABAC structure, and
   - Possible later evidence: [docs/notes/house.md:96](../../docs/notes/house.md#L96): - **The Studio's instruments** (Ed, 2026-10-23: "The studio has a drumkit (top left), modular synth setup (top right), microphone (middle, spotlit). They open menus when you go near that let you 'play them'"; the mock, previews/ed/studio-instruments on claude/ed-shots; `config/studio.json`, `src/rules/studio.ts`, `src/app/studio.ts`, `src/ui/studioPanel.ts`): house objects whose use is `instrument` (`drumKit`, `synthRack`, `microphone` in their room's file under `config/house/rooms/`; drawn by Alpha's `art/furniture.js`; the mic's spotlight, a cone of warm light from its lamp's `spot` mark to a pool round its foot, is `render/spotlight.ts`: one additive quad in the furniture's plane, no ligh. candidate only: same-topic wording and later inline date; not a verified superseding ruling.
 
 - **the melodies' 32-bar ABAC form > asks a question in B and answers it on the root in C** — [src/rules/musicForm.test.ts:71](../../src/rules/musicForm.test.ts#L71)
-  - current rules; keep pending design review. Currentness: unverified. Case runtime: unknown.
+  - current rules; Keep current score contracts unchanged?. Currentness: unverified. Case runtime: unknown.
   - Cited ruling: file, line 1: // Ed's brief (2026-10-09): "Keep it all in the dorian. Melodies should be 8 bars long, with a 32 bar ABAC structure, and
 
 - **everything in dorian, each stage in its own key > every arc step, section and layer** — [src/rules/musicForm.test.ts:85](../../src/rules/musicForm.test.ts#L85)
-  - current rules; keep pending design review. Currentness: unverified. Case runtime: unknown.
+  - current rules; Keep current score contracts unchanged?. Currentness: unverified. Case runtime: unknown.
   - Cited ruling: file, line 1: // Ed's brief (2026-10-09): "Keep it all in the dorian. Melodies should be 8 bars long, with a 32 bar ABAC structure, and
   - Possible later evidence: [docs/notes/music.md:9](../../docs/notes/music.md#L9): The music (`src/rules/musicPlan.ts`, `src/rules/musicScore.ts`, `src/platform/audio/musicEngine.ts`, `config/music-style.json`): A sleeping legend's clearing on the ground (Ed, 2026-10-06) muffles the music (`muffled`, rules/music.ts; the tuning's `music.circle`) under that legend's own layer (`legendCircleAt`, rules/musicPlan.ts; the style's `circle`: every legend's parts and its voice family's, each species its own patterns, melody, rhythm and octave in the music's key and chords, played over the muffle on the engine's second output); There the world slows to about a tenth (the game's time scale, `g.timeScale`) and the music follows it (Ed, 2026-10-06: "the music audibly slows down"): the . candidate only: same-topic wording and later inline date; not a verified superseding ruling.
   - Possible later evidence: [docs/notes/creatures.md:22](../../docs/notes/creatures.md#L22): - **Genome**: a species as data (#79; since 2026-10-13 one file a species, `art/creatures/<id>/genome.js`, assembled by `art/creatures/index.js`, which `node tools/creatures.mjs index` writes sorted by id, and re-exported as `GENOMES` by `art/genome/species.js`; Ed, 2026-10-13: every animal PR edited the one file and merges mangled neighbouring records. **A new creature** is a new folder with its `genome.js` (`export const GENOME_<ID> = { id, name, template, builder, ... }`, a named export: the Art Lab's build inlines every module into one page), its `sigil.js` (`SIGIL_<ID> = { neon, strokes }`, the strokes from `art/sigils/strokes.js`'s building blocks; `art/sigils.js` assembles `SIGILS` an. candidate only: same-topic wording and later inline date; not a verified superseding ruling.
 
 - **the tempo: 120, and 5 more a knockdown > stays at 120 through every wave** — [src/rules/musicForm.test.ts:104](../../src/rules/musicForm.test.ts#L104)
-  - current rules; keep pending design review. Currentness: unverified. Case runtime: unknown.
+  - current rules; Keep current score contracts unchanged?. Currentness: unverified. Case runtime: unknown.
   - Cited ruling: file, line 1: // Ed's brief (2026-10-09): "Keep it all in the dorian. Melodies should be 8 bars long, with a 32 bar ABAC structure, and
   - Possible later evidence: [docs/notes/house.md:81](../../docs/notes/house.md#L81): - **Station menus** (Ed, 2026-10-21; the mock, previews/ed/station-menus-mock on claude/ed-shots; `config/wardrobe.json`, `src/rules/wardrobe.ts`, `src/app/owned.ts`, `src/ui/stationPanel.ts`, `src/rules/stations.ts`): at a dressing station (the house's reach, `rules/stations.ts` `stationOf`) it lights up with E over it, and E there slides its panel in from the left over the live game (Ed's playtest, 2026-10-26: "Menus should open when she presses E near an interactive object (dresser, map, etc) instead of them opening automatically just through proximity"; it was by nearness, no E, since 2026-10-21); E again (the pad's □) slides it out (Ed, 2026-10-26: "I think E should also close, and we c. candidate only: same-topic wording and later inline date; not a verified superseding ruling.
   - Possible later evidence: [docs/notes/music.md:23](../../docs/notes/music.md#L23): - **Music Studio** (Ed, 2026-10-22: a musician joins, working in Logic, "we can keep the current music and start separate parallel branch"; they design instruments on our engine's own synths, tuned live, and new structures and melodies, whether played as written or as material for the generator still open; the branch `claude/music-musician`; docs/backlog/music.md "The musician"): `music-studio.html` beside the game (`tools/music-studio/`, built by its `build.mjs` in `npm run build`): a **patch designer** with every knob of the engine's synth, kick, noise, snare and bell patches (`knobs.ts`), a keyboard (held notes, `MusicEngine.hold`) and a phrase looping on the patch being edited, a **MIDI . candidate only: same-topic wording and later inline date; not a verified superseding ruling.
 
 - **the tempo: 120, and 5 more a knockdown > gains 5 a knockdown, with no cap** — [src/rules/musicForm.test.ts:112](../../src/rules/musicForm.test.ts#L112)
-  - current rules; keep pending design review. Currentness: unverified. Case runtime: unknown.
+  - current rules; Keep current score contracts unchanged?. Currentness: unverified. Case runtime: unknown.
   - Cited ruling: file, line 1: // Ed's brief (2026-10-09): "Keep it all in the dorian. Melodies should be 8 bars long, with a 32 bar ABAC structure, and
 
 - **a knockdown: the record scratched, silence, a new record from the top (Ed, 2026-10-09) > is silent from the knockdown till the new record, which starts its form there on a new seed** — [src/rules/musicForm.test.ts:128](../../src/rules/musicForm.test.ts#L128)
-  - current rules; keep pending design review. Currentness: unverified. Case runtime: unknown.
+  - current rules; Keep current score contracts unchanged?. Currentness: unverified. Case runtime: unknown.
   - Cited ruling: file, line 1: // Ed's brief (2026-10-09): "Keep it all in the dorian. Melodies should be 8 bars long, with a 32 bar ABAC structure, and
   - Possible later evidence: [docs/notes/music.md:25](../../docs/notes/music.md#L25): - **Music ahead** (Ed, 2026-10-27, from his audio test: "render the music ahead, so main-thread stalls can't silence it"; the plan and its steps in the REPORT of 2026-10-27; the stall test, `audio-test/stall.html`, docs/notes/sound.md, its baseline): the music drawn a bar at a time on an OfflineAudioContext (off the page's thread) and queued seconds ahead on the audio clock, its buses live. **Step 2, the stems** (this): `MusicEngine` takes a **sink** (`MusicSink`), where its parts' notes go and its bus automation: by default its own buses, live exactly as before (its `bus`; `node tools/music-lab/stems.cjs ab` with `OLD=<a checkout>`: before and after apart by no more than Chromium's own roun. candidate only: same-topic wording and later inline date; not a verified superseding ruling.
   - Possible later evidence: [docs/notes/house.md:96](../../docs/notes/house.md#L96): - **The Studio's instruments** (Ed, 2026-10-23: "The studio has a drumkit (top left), modular synth setup (top right), microphone (middle, spotlit). They open menus when you go near that let you 'play them'"; the mock, previews/ed/studio-instruments on claude/ed-shots; `config/studio.json`, `src/rules/studio.ts`, `src/app/studio.ts`, `src/ui/studioPanel.ts`): house objects whose use is `instrument` (`drumKit`, `synthRack`, `microphone` in their room's file under `config/house/rooms/`; drawn by Alpha's `art/furniture.js`; the mic's spotlight, a cone of warm light from its lamp's `spot` mark to a pool round its foot, is `render/spotlight.ts`: one additive quad in the furniture's plane, no ligh. candidate only: same-topic wording and later inline date; not a verified superseding ruling.
 
 - **a knockdown: the record scratched, silence, a new record from the top (Ed, 2026-10-09) > goes down and comes back in the game: her wait ends on a bar line, the cue silent till then** — [src/rules/musicForm.test.ts:152](../../src/rules/musicForm.test.ts#L152)
-  - current rules; keep pending design review. Currentness: unverified. Case runtime: unknown.
+  - current rules; Keep current score contracts unchanged?. Currentness: unverified. Case runtime: unknown.
   - Cited ruling: file, line 1: // Ed's brief (2026-10-09): "Keep it all in the dorian. Melodies should be 8 bars long, with a 32 bar ABAC structure, and
   - Possible later evidence: [docs/notes/house.md:96](../../docs/notes/house.md#L96): - **The Studio's instruments** (Ed, 2026-10-23: "The studio has a drumkit (top left), modular synth setup (top right), microphone (middle, spotlit). They open menus when you go near that let you 'play them'"; the mock, previews/ed/studio-instruments on claude/ed-shots; `config/studio.json`, `src/rules/studio.ts`, `src/app/studio.ts`, `src/ui/studioPanel.ts`): house objects whose use is `instrument` (`drumKit`, `synthRack`, `microphone` in their room's file under `config/house/rooms/`; drawn by Alpha's `art/furniture.js`; the mic's spotlight, a cone of warm light from its lamp's `spot` mark to a pool round its foot, is `render/spotlight.ts`: one additive quad in the furniture's plane, no ligh. candidate only: same-topic wording and later inline date; not a verified superseding ruling.
   - Possible later evidence: [docs/notes/music.md:25](../../docs/notes/music.md#L25): - **Music ahead** (Ed, 2026-10-27, from his audio test: "render the music ahead, so main-thread stalls can't silence it"; the plan and its steps in the REPORT of 2026-10-27; the stall test, `audio-test/stall.html`, docs/notes/sound.md, its baseline): the music drawn a bar at a time on an OfflineAudioContext (off the page's thread) and queued seconds ahead on the audio clock, its buses live. **Step 2, the stems** (this): `MusicEngine` takes a **sink** (`MusicSink`), where its parts' notes go and its bus automation: by default its own buses, live exactly as before (its `bus`; `node tools/music-lab/stems.cjs ab` with `OLD=<a checkout>`: before and after apart by no more than Chromium's own roun. candidate only: same-topic wording and later inline date; not a verified superseding ruling.
 
 - **the melodies' pace (Ed, 2026-10-09: "keep the melodies relatively slow, but not always. Use whole notes and triplets quite often") > is mostly slow, with whole notes and triplets often, and some busier bars** — [src/rules/musicForm.test.ts:172](../../src/rules/musicForm.test.ts#L172)
-  - current rules; keep pending design review. Currentness: unverified. Case runtime: unknown.
+  - outcome stats; Make these three rate/proportion tests informational? Yes moves the 60/600-second dolphin/kraken counts and 60-seed melody-pace survey to a nightly report; range, routing, note validity and explicit form rules keep blocking releases.. Currentness: unverified. Case runtime: unknown.
   - Cited ruling: file, line 1: // Ed's brief (2026-10-09): "Keep it all in the dorian. Melodies should be 8 bars long, with a 32 bar ABAC structure, and
 
 - **the melodies' pace (Ed, 2026-10-09: "keep the melodies relatively slow, but not always. Use whole notes and triplets quite often") > plays triplets straight, three in the time of two** — [src/rules/musicForm.test.ts:190](../../src/rules/musicForm.test.ts#L190)
-  - current rules; keep pending design review. Currentness: unverified. Case runtime: unknown.
+  - current rules; Keep current score contracts unchanged?. Currentness: unverified. Case runtime: unknown.
   - Cited ruling: file, line 1: // Ed's brief (2026-10-09): "Keep it all in the dorian. Melodies should be 8 bars long, with a 32 bar ABAC structure, and
   - Possible later evidence: [docs/notes/house.md:96](../../docs/notes/house.md#L96): - **The Studio's instruments** (Ed, 2026-10-23: "The studio has a drumkit (top left), modular synth setup (top right), microphone (middle, spotlit). They open menus when you go near that let you 'play them'"; the mock, previews/ed/studio-instruments on claude/ed-shots; `config/studio.json`, `src/rules/studio.ts`, `src/app/studio.ts`, `src/ui/studioPanel.ts`): house objects whose use is `instrument` (`drumKit`, `synthRack`, `microphone` in their room's file under `config/house/rooms/`; drawn by Alpha's `art/furniture.js`; the mic's spotlight, a cone of warm light from its lamp's `spot` mark to a pool round its foot, is `render/spotlight.ts`: one additive quad in the furniture's plane, no ligh. candidate only: same-topic wording and later inline date; not a verified superseding ruling.
   - Possible later evidence: [docs/notes/sound.md:25](../../docs/notes/sound.md#L25): - **Audio capacity test** (Ed, 2026-10-26, from his web research on the game's audio: "link to the page from the pause menu"; `tools/audio-test/`, built by `npm run build` into `dist/audio-test/`, opened in a new tab by the pause page's **🔊 Audio test**): about two minutes, run once on a machine to see how much sound its browser takes. The game's own music (`Music`, the drop at wave 3, the singer's recordings loaded) plays while the load climbs a rung every 6 s: the music alone, + the night's other reverbs (the singer's effects and the legends' space, fed the music), then 8, 16, 32, 48, 64 and 96 voices kept sounding, half the effects' one-shots and half creature babble (the game's caps lif. candidate only: same-topic wording and later inline date; not a verified superseding ruling.
 
 - **the form's sections (Ed, 2026-10-09: "ABAC; the first two sections should be 4 on the floor, the third sections breakbeats, and the fourth a breakdown") > names a four-on-the-floor, a breakbeat and a breakdown section for every wave** — [src/rules/musicForm.test.ts:208](../../src/rules/musicForm.test.ts#L208)
-  - current rules; keep pending design review. Currentness: unverified. Case runtime: unknown.
+  - current rules; Keep current score contracts unchanged?. Currentness: unverified. Case runtime: unknown.
   - Cited ruling: file, line 1: // Ed's brief (2026-10-09): "Keep it all in the dorian. Melodies should be 8 bars long, with a 32 bar ABAC structure, and
   - Possible later evidence: [docs/notes/config.md:22](../../docs/notes/config.md#L22): - **Knob docs** (Ed, 2026-10-28: "Let's do all the docs work. Reformat prose into data where you can"): what each tuning knob does lives in `config/knobs/<section>.json` (map, forest, witch, army, creatures, legends, party, view, light; `config/knobs/index.json` has the file's own notes and the sections' order), keyed by knob path: `what` (one plain sentence, what it does in player terms: the coordinator's hand pass, 2026-10-28, done for the biggest entries first, the old words moved whole into `notes`; `[n]` marks where decision n was said, in `what` or `notes`), `decisions` (`by`: Ed, Ed's playtest, the coordinator...; `date`; `quote`: his words exactly, one or several; `rest`: what else i. candidate only: same-topic wording and later inline date; not a verified superseding ruling.
   - Possible later evidence: [docs/notes/art-checks.md:7](../../docs/notes/art-checks.md#L7): - `node art/check.mjs` — builds the lab, opens the source page and the built page in headless Chromium (no script errors, a bestiary card for every species, the scene drawn; each on a page of its own, drawing while the rest runs), and draws everything the art generators make (every creature at every level, face, texture and silhouette, the trees and bushes, the area types and their ground cover, the witch and the party witches in every pose, the hats, the sigils, the dancefloor and its speakers, the treehouse, the props, scenes, relics, paths and party objects, the attack effects, the sleeping legends, the live rig) and holds each to its rules: sizes by level and against the witch, what may . candidate only: same-topic wording and later inline date; not a verified superseding ruling.
 
 - **the form's sections (Ed, 2026-10-09: "ABAC; the first two sections should be 4 on the floor, the third sections breakbeats, and the fourth a breakdown") > plays them on the form: A and B four on the floor, A breakbeats, C a breakdown, from where each wave lands** — [src/rules/musicForm.test.ts:223](../../src/rules/musicForm.test.ts#L223)
-  - current rules; keep pending design review. Currentness: unverified. Case runtime: unknown.
+  - current rules; Keep current score contracts unchanged?. Currentness: unverified. Case runtime: unknown.
   - Cited ruling: file, line 1: // Ed's brief (2026-10-09): "Keep it all in the dorian. Melodies should be 8 bars long, with a 32 bar ABAC structure, and
   - Possible later evidence: [docs/notes/music.md:25](../../docs/notes/music.md#L25): - **Music ahead** (Ed, 2026-10-27, from his audio test: "render the music ahead, so main-thread stalls can't silence it"; the plan and its steps in the REPORT of 2026-10-27; the stall test, `audio-test/stall.html`, docs/notes/sound.md, its baseline): the music drawn a bar at a time on an OfflineAudioContext (off the page's thread) and queued seconds ahead on the audio clock, its buses live. **Step 2, the stems** (this): `MusicEngine` takes a **sink** (`MusicSink`), where its parts' notes go and its bus automation: by default its own buses, live exactly as before (its `bus`; `node tools/music-lab/stems.cjs ab` with `OLD=<a checkout>`: before and after apart by no more than Chromium's own roun. candidate only: same-topic wording and later inline date; not a verified superseding ruling.
   - Possible later evidence: [docs/notes/house.md:106](../../docs/notes/house.md#L106): - **The great oak's crown** (Ed, 2026-10-24: "one great crown sounds good. it should have thicker and thinner patches. Perhaps there's also a layer that shows the bark of the tree underneath"; the mock, previews/ed/treehouse-layout-v4/crown/ on claude/treehouse-trunk-mock; the tuning's `treehouse.house.crown`): one crown over the whole house in place of the rooms' leaf roofs, grown from the house's outline (`config/house/outline.json`: its rooms' outlines, branches, stubs and take-off, in the frame with its origin at the Terrace's middle) and a seed (`src/rules/crown.ts` `makeCrown`, pure and tested, `crown.test.ts` against the outline itself), so it follows the rooms wherever they go: 300 t. candidate only: same-topic wording and later inline date; not a verified superseding ruling.
 
 - **the singer's redesign (Ed, 2026-10-14: an alto in tune, stepwise, in the breakdowns and builds, two chains by place) > sings as an alto, G3 to G4 in the home key, whatever the seed** — [src/rules/musicForm.test.ts:238](../../src/rules/musicForm.test.ts#L238)
-  - current rules; keep pending design review. Currentness: unverified. Case runtime: unknown.
+  - current rules; Keep current score contracts unchanged?. Currentness: unverified. Case runtime: unknown.
   - Cited ruling: file, line 1: // Ed's brief (2026-10-09): "Keep it all in the dorian. Melodies should be 8 bars long, with a 32 bar ABAC structure, and
   - Possible later evidence: [docs/notes/music.md:20](../../docs/notes/music.md#L20): - **The singer's redesign** (Ed, 2026-10-14, docs/backlog/music.md "The singer, and the music round it"): Ed finds the vocalise unpleasant (its timbre and melody, often out of tune, too plain; it should be gentler, breathier, more dynamic). Measured: the sung line sits 7 to 16 semitones above the one G4 recording, and the chorus, octave double and shimmer smear each note's tuning by up to a third of a semitone. Approved: the **alto** (an octave down), two lead voices **A/B'd live in the Music Lab** (a sampled alto set built offline with formant-preserving shift, GPL tools offline only, against a vocal-tract worklet from Paul Batchelor's `voc`, MIT and public domain), a **narrow stepwise melo. candidate only: same-topic wording and later inline date; not a verified superseding ruling.
   - Possible later evidence: [docs/notes/house.md:75](../../docs/notes/house.md#L75): - **Arriving** (Ed, 2026-10-12, the zoom-to-island plan: Charlie's chart side and this, the game's; `src/rules/arrive.ts`, `src/app/arrive.ts`, the tuning's `arrive`): sailing from the sea chart, the chart zooms in, flies to a point over the open sea south of the island and leaves its last frame and camera in sessionStorage (`witch.arrive`: `{ v: 1, island, world, at, still, cam: { x, z, height, pitch, fov } }`, x and z metres from the dancefloor, height over the sea, pitch radians down, fov degrees), then loads `./?island=X&arrive=1`. The page puts that still up on its first paint (a little script in `index.html`), pushing in while the night builds (no bedroom), then the game's camera takes. candidate only: same-topic wording and later inline date; not a verified superseding ruling.
 
 - **the singer's redesign (Ed, 2026-10-14: an alto in tune, stepwise, in the breakdowns and builds, two chains by place) > walks the sung phrases in steps and thirds within a fifth, and still answers on the root** — [src/rules/musicForm.test.ts:247](../../src/rules/musicForm.test.ts#L247)
-  - current rules; keep pending design review. Currentness: unverified. Case runtime: unknown.
+  - current rules; Keep current score contracts unchanged?. Currentness: unverified. Case runtime: unknown.
   - Cited ruling: file, line 1: // Ed's brief (2026-10-09): "Keep it all in the dorian. Melodies should be 8 bars long, with a 32 bar ABAC structure, and
   - Possible later evidence: [docs/notes/music.md:20](../../docs/notes/music.md#L20): - **The singer's redesign** (Ed, 2026-10-14, docs/backlog/music.md "The singer, and the music round it"): Ed finds the vocalise unpleasant (its timbre and melody, often out of tune, too plain; it should be gentler, breathier, more dynamic). Measured: the sung line sits 7 to 16 semitones above the one G4 recording, and the chorus, octave double and shimmer smear each note's tuning by up to a third of a semitone. Approved: the **alto** (an octave down), two lead voices **A/B'd live in the Music Lab** (a sampled alto set built offline with formant-preserving shift, GPL tools offline only, against a vocal-tract worklet from Paul Batchelor's `voc`, MIT and public domain), a **narrow stepwise melo. candidate only: same-topic wording and later inline date; not a verified superseding ruling.
   - Possible later evidence: [docs/notes/music.md:9](../../docs/notes/music.md#L9): The music (`src/rules/musicPlan.ts`, `src/rules/musicScore.ts`, `src/platform/audio/musicEngine.ts`, `config/music-style.json`): A sleeping legend's clearing on the ground (Ed, 2026-10-06) muffles the music (`muffled`, rules/music.ts; the tuning's `music.circle`) under that legend's own layer (`legendCircleAt`, rules/musicPlan.ts; the style's `circle`: every legend's parts and its voice family's, each species its own patterns, melody, rhythm and octave in the music's key and chords, played over the muffle on the engine's second output); There the world slows to about a tenth (the game's time scale, `g.timeScale`) and the music follows it (Ed, 2026-10-06: "the music audibly slows down"): the . candidate only: same-topic wording and later inline date; not a verified superseding ruling.
 
 - **the singer's redesign (Ed, 2026-10-14: an alto in tune, stepwise, in the breakdowns and builds, two chains by place) > opens every wave's sung phrase on the night's own hook, the rest the wave's own** — [src/rules/musicForm.test.ts:259](../../src/rules/musicForm.test.ts#L259)
-  - current rules; keep pending design review. Currentness: unverified. Case runtime: unknown.
+  - current rules; Keep current score contracts unchanged?. Currentness: unverified. Case runtime: unknown.
   - Cited ruling: file, line 1: // Ed's brief (2026-10-09): "Keep it all in the dorian. Melodies should be 8 bars long, with a 32 bar ABAC structure, and
   - Possible later evidence: [docs/notes/music.md:20](../../docs/notes/music.md#L20): - **The singer's redesign** (Ed, 2026-10-14, docs/backlog/music.md "The singer, and the music round it"): Ed finds the vocalise unpleasant (its timbre and melody, often out of tune, too plain; it should be gentler, breathier, more dynamic). Measured: the sung line sits 7 to 16 semitones above the one G4 recording, and the chorus, octave double and shimmer smear each note's tuning by up to a third of a semitone. Approved: the **alto** (an octave down), two lead voices **A/B'd live in the Music Lab** (a sampled alto set built offline with formant-preserving shift, GPL tools offline only, against a vocal-tract worklet from Paul Batchelor's `voc`, MIT and public domain), a **narrow stepwise melo. candidate only: same-topic wording and later inline date; not a verified superseding ruling.
   - Possible later evidence: [docs/notes/house.md:75](../../docs/notes/house.md#L75): - **Arriving** (Ed, 2026-10-12, the zoom-to-island plan: Charlie's chart side and this, the game's; `src/rules/arrive.ts`, `src/app/arrive.ts`, the tuning's `arrive`): sailing from the sea chart, the chart zooms in, flies to a point over the open sea south of the island and leaves its last frame and camera in sessionStorage (`witch.arrive`: `{ v: 1, island, world, at, still, cam: { x, z, height, pitch, fov } }`, x and z metres from the dancefloor, height over the sea, pitch radians down, fov degrees), then loads `./?island=X&arrive=1`. The page puts that still up on its first paint (a little script in `index.html`), pushing in while the night builds (no bedroom), then the game's camera takes. candidate only: same-topic wording and later inline date; not a verified superseding ruling.
 
 - **the singer's redesign (Ed, 2026-10-14: an alto in tune, stepwise, in the breakdowns and builds, two chains by place) > sings only in the breakdowns and the build, the instrument playing the rest; washed in the breakdowns; the dark chain in the dark families** — [src/rules/musicForm.test.ts:270](../../src/rules/musicForm.test.ts#L270)
-  - current rules; keep pending design review. Currentness: unverified. Case runtime: unknown.
+  - current rules; Keep current score contracts unchanged?. Currentness: unverified. Case runtime: unknown.
   - Cited ruling: file, line 1: // Ed's brief (2026-10-09): "Keep it all in the dorian. Melodies should be 8 bars long, with a 32 bar ABAC structure, and
   - Possible later evidence: [docs/notes/music.md:20](../../docs/notes/music.md#L20): - **The singer's redesign** (Ed, 2026-10-14, docs/backlog/music.md "The singer, and the music round it"): Ed finds the vocalise unpleasant (its timbre and melody, often out of tune, too plain; it should be gentler, breathier, more dynamic). Measured: the sung line sits 7 to 16 semitones above the one G4 recording, and the chorus, octave double and shimmer smear each note's tuning by up to a third of a semitone. Approved: the **alto** (an octave down), two lead voices **A/B'd live in the Music Lab** (a sampled alto set built offline with formant-preserving shift, GPL tools offline only, against a vocal-tract worklet from Paul Batchelor's `voc`, MIT and public domain), a **narrow stepwise melo. candidate only: same-topic wording and later inline date; not a verified superseding ruling.
   - Possible later evidence: [docs/notes/music.md:25](../../docs/notes/music.md#L25): - **Music ahead** (Ed, 2026-10-27, from his audio test: "render the music ahead, so main-thread stalls can't silence it"; the plan and its steps in the REPORT of 2026-10-27; the stall test, `audio-test/stall.html`, docs/notes/sound.md, its baseline): the music drawn a bar at a time on an OfflineAudioContext (off the page's thread) and queued seconds ahead on the audio clock, its buses live. **Step 2, the stems** (this): `MusicEngine` takes a **sink** (`MusicSink`), where its parts' notes go and its bus automation: by default its own buses, live exactly as before (its `bus`; `node tools/music-lab/stems.cjs ab` with `OLD=<a checkout>`: before and after apart by no more than Chromium's own roun. candidate only: same-topic wording and later inline date; not a verified superseding ruling.
 
 - **the singer's redesign (Ed, 2026-10-14: an alto in tune, stepwise, in the breakdowns and builds, two chains by place) > has the pure chain with no chorus, octave double or shimmer, and a swelling, breathing voice** — [src/rules/musicForm.test.ts:315](../../src/rules/musicForm.test.ts#L315)
-  - current rules; keep pending design review. Currentness: unverified. Case runtime: unknown.
+  - current rules; Keep current score contracts unchanged?. Currentness: unverified. Case runtime: unknown.
   - Cited ruling: file, line 1: // Ed's brief (2026-10-09): "Keep it all in the dorian. Melodies should be 8 bars long, with a 32 bar ABAC structure, and
   - Possible later evidence: [docs/notes/music.md:20](../../docs/notes/music.md#L20): - **The singer's redesign** (Ed, 2026-10-14, docs/backlog/music.md "The singer, and the music round it"): Ed finds the vocalise unpleasant (its timbre and melody, often out of tune, too plain; it should be gentler, breathier, more dynamic). Measured: the sung line sits 7 to 16 semitones above the one G4 recording, and the chorus, octave double and shimmer smear each note's tuning by up to a third of a semitone. Approved: the **alto** (an octave down), two lead voices **A/B'd live in the Music Lab** (a sampled alto set built offline with formant-preserving shift, GPL tools offline only, against a vocal-tract worklet from Paul Batchelor's `voc`, MIT and public domain), a **narrow stepwise melo. candidate only: same-topic wording and later inline date; not a verified superseding ruling.
   - Possible later evidence: [docs/notes/music.md:19](../../docs/notes/music.md#L19): - **FOF voice**: the music's sung voice from Faust's singing model (Ed, 2026-10-11: "replace Pink Trombone ... with Faust's physmodels.lib FOF singing model"): Mike Olsen's `pm.SFFormantModelFofSmooth` (5 voice types, vowels morphing smoothly, breath), three detuned singers spread across the stereo field with a vibrato creeping in (`tools/voice/fof/fof.dsp`), compiled to WebAssembly by `node tools/voice/fof/build.mjs` (the Faust compiler from npm, `@grame/faustwasm`, in a temporary folder) into `src/platform/audio/fof/fofModule.ts` (committed; the Faust libraries are LGPL with GRAME's exception for compiled code, credited in `samples/CREDITS.md`), and run by our own AudioWorklet (`src/platfo. candidate only: same-topic wording and later inline date; not a verified superseding ruling.
 
 - **music style > is sound: every section, part, pattern and patch it names exists, in whole bars and blocks** — [src/rules/musicPlan.test.ts:31](../../src/rules/musicPlan.test.ts#L31)
-  - current rules; keep pending design review. Currentness: unverified. Case runtime: unknown.
+  - current rules; Keep current score contracts unchanged?. Currentness: unverified. Case runtime: unknown.
   - Cited ruling: none found in scoped comments; not proof that none exists.
 
 - **music sections > change only on block lines (every 4 bars), and run whole blocks** — [src/rules/musicPlan.test.ts:37](../../src/rules/musicPlan.test.ts#L37)
-  - current rules; keep pending design review. Currentness: unverified. Case runtime: unknown.
+  - current rules; Keep current score contracts unchanged?. Currentness: unverified. Case runtime: unknown.
   - Cited ruling: none found in scoped comments; not proof that none exists.
 
 - **music sections > map waves to sections the same way every time** — [src/rules/musicPlan.test.ts:50](../../src/rules/musicPlan.test.ts#L50)
-  - current rules; keep pending design review. Currentness: unverified. Case runtime: unknown.
+  - current rules; Keep current score contracts unchanged?. Currentness: unverified. Case runtime: unknown.
   - Cited ruling: none found in scoped comments; not proof that none exists.
 
 - **music sections > boots with the intro, then the forest; builds into each wave and drops as it lands** — [src/rules/musicPlan.test.ts:57](../../src/rules/musicPlan.test.ts#L57)
-  - current rules; keep pending design review. Currentness: unverified. Case runtime: unknown.
+  - current rules; Keep current score contracts unchanged?. Currentness: unverified. Case runtime: unknown.
   - Cited ruling: none found in scoped comments; not proof that none exists.
 
 - **music sections > goes through the whole arc and stays on its last step** — [src/rules/musicPlan.test.ts:75](../../src/rules/musicPlan.test.ts#L75)
-  - current rules; keep pending design review. Currentness: unverified. Case runtime: unknown.
+  - current rules; Keep current score contracts unchanged?. Currentness: unverified. Case runtime: unknown.
   - Cited ruling: none found in scoped comments; not proof that none exists.
 
 - **music sections > drops on the next block line when a wave comes early (N)** — [src/rules/musicPlan.test.ts:84](../../src/rules/musicPlan.test.ts#L84)
-  - current rules; keep pending design review. Currentness: unverified. Case runtime: unknown.
+  - current rules; Keep current score contracts unchanged?. Currentness: unverified. Case runtime: unknown.
   - Cited ruling: none found in scoped comments; not proof that none exists.
 
 - **music sections > lets a wave a moment late still land on the line it was due on** — [src/rules/musicPlan.test.ts:93](../../src/rules/musicPlan.test.ts#L93)
-  - current rules; keep pending design review. Currentness: unverified. Case runtime: unknown.
+  - current rules; Keep current score contracts unchanged?. Currentness: unverified. Case runtime: unknown.
   - Cited ruling: none found in scoped comments; not proof that none exists.
 
 - **music sections > never builds with waves off, and starts straight in the forest with no boot** — [src/rules/musicPlan.test.ts:99](../../src/rules/musicPlan.test.ts#L99)
-  - current rules; keep pending design review. Currentness: unverified. Case runtime: unknown.
+  - current rules; Keep current score contracts unchanged?. Currentness: unverified. Case runtime: unknown.
   - Cited ruling: none found in scoped comments; not proof that none exists.
 
 - **music sections > keeps a block's plan once made, whatever comes after** — [src/rules/musicPlan.test.ts:105](../../src/rules/musicPlan.test.ts#L105)
-  - current rules; keep pending design review. Currentness: unverified. Case runtime: unknown.
+  - current rules; Keep current score contracts unchanged?. Currentness: unverified. Case runtime: unknown.
   - Cited ruling: body, line 109: // (knocked out, the music is silent rather than the knockout section: Ed, 2026-10-09, silentAt; its plans go on)
   - Possible later evidence: [docs/notes/music.md:25](../../docs/notes/music.md#L25): - **Music ahead** (Ed, 2026-10-27, from his audio test: "render the music ahead, so main-thread stalls can't silence it"; the plan and its steps in the REPORT of 2026-10-27; the stall test, `audio-test/stall.html`, docs/notes/sound.md, its baseline): the music drawn a bar at a time on an OfflineAudioContext (off the page's thread) and queued seconds ahead on the audio clock, its buses live. **Step 2, the stems** (this): `MusicEngine` takes a **sink** (`MusicSink`), where its parts' notes go and its bus automation: by default its own buses, live exactly as before (its `bus`; `node tools/music-lab/stems.cjs ab` with `OLD=<a checkout>`: before and after apart by no more than Chromium's own roun. candidate only: same-topic wording and later inline date; not a verified superseding ruling.
   - Possible later evidence: [docs/notes/island.md:21](../../docs/notes/island.md#L21): - **Zoo**: `?zoo` (Ed, 2026-10-13; laid out like the sea chart since Ed, 2026-10-26: `src/rules/zooMap.ts`, `src/rules/zoo.ts`, `config/zoo.json`; the mock: `previews/ed/zoo-map` on `claude/ed-shots`): every kind's island where the chart has it (`worldOf(world)`), its outline the chart's real coast where this browser has it (Ed, 2026-10-26: "We already know the real coastline shapes, can't we reuse them in the zoo without calculating anything?": the chart's worker keeps each island's biggest sea loop beside its outline, `app/chartCache.ts` `coastKey`/`keepCoast`, under the chart's own keys; the zoo's page reads them back before its map is made, at most 400 ms, `app/zooCoasts.ts`, and hands t. candidate only: same-topic wording and later inline date; not a verified superseding ruling.
 
 - **music sections > previews: ?music=<section> loops it, ?music=wave<N> plays wave N's music** — [src/rules/musicPlan.test.ts:113](../../src/rules/musicPlan.test.ts#L113)
-  - current rules; keep pending design review. Currentness: unverified. Case runtime: unknown.
+  - current rules; Keep current score contracts unchanged?. Currentness: unverified. Case runtime: unknown.
   - Cited ruling: none found in scoped comments; not proof that none exists.
 
 - **music score > plays notes in every section, in the scale, at sane levels, the same every time** — [src/rules/musicPlan.test.ts:123](../../src/rules/musicPlan.test.ts#L123)
-  - current rules; keep pending design review. Currentness: unverified. Case runtime: unknown.
+  - current rules; Keep current score contracts unchanged?. Currentness: unverified. Case runtime: unknown.
   - Cited ruling: none found in scoped comments; not proof that none exists.
 
 - **music score > fills the bar before a new section, and brings the intro's parts in as the speakers boot** — [src/rules/musicPlan.test.ts:150](../../src/rules/musicPlan.test.ts#L150)
-  - current rules; keep pending design review. Currentness: unverified. Case runtime: unknown.
+  - current rules; Keep current score contracts unchanged?. Currentness: unverified. Case runtime: unknown.
   - Cited ruling: none found in scoped comments; not proof that none exists.
 
 - **music score > adds the siege's parts under siege** — [src/rules/musicPlan.test.ts:162](../../src/rules/musicPlan.test.ts#L162)
-  - current rules; keep pending design review. Currentness: unverified. Case runtime: unknown.
+  - current rules; Keep current score contracts unchanged?. Currentness: unverified. Case runtime: unknown.
   - Cited ruling: none found in scoped comments; not proof that none exists.
 
 - **music score > adds the party's parts near a woken area that has joined the party, never doubling the section's own** — [src/rules/musicPlan.test.ts:168](../../src/rules/musicPlan.test.ts#L168)
-  - current rules; keep pending design review. Currentness: unverified. Case runtime: unknown.
+  - current rules; Keep current score contracts unchanged?. Currentness: unverified. Case runtime: unknown.
   - Cited ruling: none found in scoped comments; not proof that none exists.
 
 - **a woken area joining the party (partyNear) > is heard near a standing soundsystem with happy animals by it, not near home's, a ruined one or one with none** — [src/rules/musicPlan.test.ts:181](../../src/rules/musicPlan.test.ts#L181)
-  - current rules; keep pending design review. Currentness: unverified. Case runtime: unknown.
+  - current rules; Keep current score contracts unchanged?. Currentness: unverified. Case runtime: unknown.
   - Cited ruling: none found in scoped comments; not proof that none exists.
 
 - **variety over a long run (overnight, 2026-10-06: a 30-minute run shouldn't loop audibly) > takes an arc step's variants in turn on later passes round its loop** — [src/rules/musicPlan.test.ts:200](../../src/rules/musicPlan.test.ts#L200)
-  - current rules; keep pending design review. Currentness: unverified. Case runtime: unknown.
+  - current rules; Keep current score contracts unchanged?. Currentness: unverified. Case runtime: unknown.
   - Cited ruling: none found in scoped comments; not proof that none exists.
 
 - **variety over a long run (overnight, 2026-10-06: a 30-minute run shouldn't loop audibly) > plays the form's melody wherever a block falls (Ed, 2026-10-09: the 32-bar ABAC form, on the music's bars)** — [src/rules/musicPlan.test.ts:208](../../src/rules/musicPlan.test.ts#L208)
-  - current rules; keep pending design review. Currentness: unverified. Case runtime: unknown.
+  - current rules; Keep current score contracts unchanged?. Currentness: unverified. Case runtime: unknown.
   - Cited ruling: name, line 208: plays the form's melody wherever a block falls (Ed, 2026-10-09: the 32-bar ABAC form, on the music's bars)
   - Possible later evidence: [docs/notes/music.md:9](../../docs/notes/music.md#L9): The music (`src/rules/musicPlan.ts`, `src/rules/musicScore.ts`, `src/platform/audio/musicEngine.ts`, `config/music-style.json`): A sleeping legend's clearing on the ground (Ed, 2026-10-06) muffles the music (`muffled`, rules/music.ts; the tuning's `music.circle`) under that legend's own layer (`legendCircleAt`, rules/musicPlan.ts; the style's `circle`: every legend's parts and its voice family's, each species its own patterns, melody, rhythm and octave in the music's key and chords, played over the muffle on the engine's second output); There the world slows to about a tenth (the game's time scale, `g.timeScale`) and the music follows it (Ed, 2026-10-06: "the music audibly slows down"): the . candidate only: same-topic wording and later inline date; not a verified superseding ruling.
   - Possible later evidence: [docs/notes/music.md:25](../../docs/notes/music.md#L25): - **Music ahead** (Ed, 2026-10-27, from his audio test: "render the music ahead, so main-thread stalls can't silence it"; the plan and its steps in the REPORT of 2026-10-27; the stall test, `audio-test/stall.html`, docs/notes/sound.md, its baseline): the music drawn a bar at a time on an OfflineAudioContext (off the page's thread) and queued seconds ahead on the audio clock, its buses live. **Step 2, the stems** (this): `MusicEngine` takes a **sink** (`MusicSink`), where its parts' notes go and its bus automation: by default its own buses, live exactly as before (its `bus`; `node tools/music-lab/stems.cjs ab` with `OLD=<a checkout>`: before and after apart by no more than Chromium's own roun. candidate only: same-topic wording and later inline date; not a verified superseding ruling.
 
 - **variety over a long run (overnight, 2026-10-06: a 30-minute run shouldn't loop audibly) > keeps the first pass as it was (pass 0 is the music before variants)** — [src/rules/musicPlan.test.ts:216](../../src/rules/musicPlan.test.ts#L216)
-  - current rules; keep pending design review. Currentness: unverified. Case runtime: unknown.
+  - current rules; Keep current score contracts unchanged?. Currentness: unverified. Case runtime: unknown.
   - Cited ruling: none found in scoped comments; not proof that none exists.
 
 - **an angry legend near (legendNear and the style's legend parts) > darkens the music near an angry or charging legend, by how near, and not near a sleeping or happy one** — [src/rules/musicPlan.test.ts:223](../../src/rules/musicPlan.test.ts#L223)
-  - current rules; keep pending design review. Currentness: unverified. Case runtime: unknown.
+  - current rules; Keep current score contracts unchanged?. Currentness: unverified. Case runtime: unknown.
   - Cited ruling: none found in scoped comments; not proof that none exists.
 
 - **the music building with the home speakers' boot (Ed, 2026-10-06) > is silent before the first speaker, then adds a layer a speaker until the twelfth makes it whole** — [src/rules/musicPlan.test.ts:249](../../src/rules/musicPlan.test.ts#L249)
-  - current rules; keep pending design review. Currentness: unverified. Case runtime: unknown.
+  - current rules; Keep current score contracts unchanged?. Currentness: unverified. Case runtime: unknown.
   - Cited ruling: none found in scoped comments; not proof that none exists.
 
 - **the music building with the home speakers' boot (Ed, 2026-10-06) > brings each speaker's layer in on the bar line after it turns, and is whole without a boot to follow** — [src/rules/musicPlan.test.ts:264](../../src/rules/musicPlan.test.ts#L264)
-  - current rules; keep pending design review. Currentness: unverified. Case runtime: unknown.
+  - current rules; Keep current score contracts unchanged?. Currentness: unverified. Case runtime: unknown.
   - Cited ruling: none found in scoped comments; not proof that none exists.
 
 - **the music building with the home speakers' boot (Ed, 2026-10-06) > drops dropLayers of the intro on the bar line after her needle-drop routine, before any speaker (Ed, 2026-10-07)** — [src/rules/musicPlan.test.ts:273](../../src/rules/musicPlan.test.ts#L273)
-  - current rules; keep pending design review. Currentness: unverified. Case runtime: unknown.
+  - current rules; Keep current score contracts unchanged?. Currentness: unverified. Case runtime: unknown.
   - Cited ruling: name, line 273: drops dropLayers of the intro on the bar line after her needle-drop routine, before any speaker (Ed, 2026-10-07)
   - Possible later evidence: [docs/notes/music.md:9](../../docs/notes/music.md#L9): The music (`src/rules/musicPlan.ts`, `src/rules/musicScore.ts`, `src/platform/audio/musicEngine.ts`, `config/music-style.json`): A sleeping legend's clearing on the ground (Ed, 2026-10-06) muffles the music (`muffled`, rules/music.ts; the tuning's `music.circle`) under that legend's own layer (`legendCircleAt`, rules/musicPlan.ts; the style's `circle`: every legend's parts and its voice family's, each species its own patterns, melody, rhythm and octave in the music's key and chords, played over the muffle on the engine's second output); There the world slows to about a tenth (the game's time scale, `g.timeScale`) and the music follows it (Ed, 2026-10-06: "the music audibly slows down"): the . candidate only: same-topic wording and later inline date; not a verified superseding ruling.
   - Possible later evidence: [docs/notes/music.md:14](../../docs/notes/music.md#L14): - **Form**: the melodies' shape (Ed, 2026-10-09: "Melodies should be 8 bars long, with a 32 bar ABAC structure, and include rests"; the style's `form`, `formPhrase`/`formChord`/`formNoteAt` in `src/rules/musicScore.ts`): 8-bar phrases A, B, A, C, round and round on the music's bars, mostly slow (Ed, the same day: "keep the melodies relatively slow, but not always. Use whole notes and triplets quite often": bar-long rhythm cells, whole notes and quarter- and eighth-note triplets often among halves, dotted and plainer rhythms (the triplets played straight), a part's `pace` of its bars from the busier cells), each half-phrase ending on rests; A is played on one instrument the seed picks from pl. candidate only: same-topic wording and later inline date; not a verified superseding ruling.
 
 - **the music building with the home speakers' boot (Ed, 2026-10-06) > follows the game's speakers: none booted, silent; each the pulse reaches, a layer** — [src/rules/musicPlan.test.ts:282](../../src/rules/musicPlan.test.ts#L282)
-  - current rules; keep pending design review. Currentness: unverified. Case runtime: unknown.
+  - current rules; Keep current score contracts unchanged?. Currentness: unverified. Case runtime: unknown.
   - Cited ruling: none found in scoped comments; not proof that none exists.
 
 - **a night's set > is sound: every family's sections, patches and leads exist, and the night's style checks out** — [src/rules/musicSet.test.ts:18](../../src/rules/musicSet.test.ts#L18)
-  - current rules; keep pending design review. Currentness: unverified. Case runtime: unknown.
+  - current rules; Keep current score contracts unchanged?. Currentness: unverified. Case runtime: unknown.
   - Cited ruling: file, line 1: // A night's set (rules/musicSet.ts; Ed, 2026-10-11): every wave noticeably different from the last, never the same genre
   - Possible later evidence: [docs/notes/music.md:9](../../docs/notes/music.md#L9): The music (`src/rules/musicPlan.ts`, `src/rules/musicScore.ts`, `src/platform/audio/musicEngine.ts`, `config/music-style.json`): A sleeping legend's clearing on the ground (Ed, 2026-10-06) muffles the music (`muffled`, rules/music.ts; the tuning's `music.circle`) under that legend's own layer (`legendCircleAt`, rules/musicPlan.ts; the style's `circle`: every legend's parts and its voice family's, each species its own patterns, melody, rhythm and octave in the music's key and chords, played over the muffle on the engine's second output); There the world slows to about a tenth (the game's time scale, `g.timeScale`) and the music follows it (Ed, 2026-10-06: "the music audibly slows down"): the . candidate only: same-topic wording and later inline date; not a verified superseding ruling.
   - Possible later evidence: [docs/notes/house.md:78](../../docs/notes/house.md#L78): - **The treehouse's rooms** (Ed, 2026-10-19; `config/house/`, `src/rules/houseRooms.ts`, `src/render/houseRooms.ts`; the mock, previews/ed/big-room-mock): placeholder plank rooms joined by corridors off the hub, walked as one floor with it (`keepInHouse`, the deck's `house.rooms`), the hub's wall open where a corridor meets it: the hat room (the hat's mirror, its colours and fit; the hats' floor), the bedroom off the landing beside it (18 × 18 m: the bed, the phone, the telephone, and since 2026-10-21 each witch's own dressing, before its door: the dressing table, face, hair, skin, earrings; the wardrobe, jacket, top, trousers; the cloak pegs, cloak, scarf; the shoe rack; Ed: three bedrooms,. candidate only: same-topic wording and later inline date; not a verified superseding ruling.
 
 - **a night's set > changes at least two of genre, key, lead, bass, voice and density every wave (never the tempo: the gameplay's), and never the genre twice running** — [src/rules/musicSet.test.ts:24](../../src/rules/musicSet.test.ts#L24)
-  - current rules; keep pending design review. Currentness: unverified. Case runtime: unknown.
+  - current rules; Keep current score contracts unchanged?. Currentness: unverified. Case runtime: unknown.
   - Cited ruling: file, line 1: // A night's set (rules/musicSet.ts; Ed, 2026-10-11): every wave noticeably different from the last, never the same genre
   - Possible later evidence: [docs/notes/house.md:81](../../docs/notes/house.md#L81): - **Station menus** (Ed, 2026-10-21; the mock, previews/ed/station-menus-mock on claude/ed-shots; `config/wardrobe.json`, `src/rules/wardrobe.ts`, `src/app/owned.ts`, `src/ui/stationPanel.ts`, `src/rules/stations.ts`): at a dressing station (the house's reach, `rules/stations.ts` `stationOf`) it lights up with E over it, and E there slides its panel in from the left over the live game (Ed's playtest, 2026-10-26: "Menus should open when she presses E near an interactive object (dresser, map, etc) instead of them opening automatically just through proximity"; it was by nearness, no E, since 2026-10-21); E again (the pad's □) slides it out (Ed, 2026-10-26: "I think E should also close, and we c. candidate only: same-topic wording and later inline date; not a verified superseding ruling.
   - Possible later evidence: [docs/notes/performance.md:180](../../docs/notes/performance.md#L180): **Quality ladder** (Ed, 2026-10-26: "scenery is not gameplay critical so it's better to preserve framerate and draw fewer things or draw slower if necessary"; his order, 2026-10-27, from India's study `previews/ed/quality-ladder/`; `rules/ladder.ts` the rungs and the controller, `app/ladder.ts` the running game): rungs from full quality down, in Ed's order: the forest's far edge dithered; trees ×0.9; area borders over 40 m; tall trees squeezed (treeCap.keep 0.35, `SQUEEZE_KEEP`); leaves still and no trunk shadows; the cut-away's crowns solid; trees ×0.8; a steady 30 fps (the loop draws every other frame at 60 Hz); px 4. Live rungs change the running night; load rungs (density, the blend, the. candidate only: same-topic wording and later inline date; not a verified superseding ruling.
 
 - **a night's set > rises to its climax on the final wave, a peak and a breakdown every cycle, each cycle's peak higher** — [src/rules/musicSet.test.ts:35](../../src/rules/musicSet.test.ts#L35)
-  - current rules; keep pending design review. Currentness: unverified. Case runtime: unknown.
+  - current rules; Keep current score contracts unchanged?. Currentness: unverified. Case runtime: unknown.
   - Cited ruling: file, line 1: // A night's set (rules/musicSet.ts; Ed, 2026-10-11): every wave noticeably different from the last, never the same genre
   - Possible later evidence: [docs/notes/house.md:78](../../docs/notes/house.md#L78): - **The treehouse's rooms** (Ed, 2026-10-19; `config/house/`, `src/rules/houseRooms.ts`, `src/render/houseRooms.ts`; the mock, previews/ed/big-room-mock): placeholder plank rooms joined by corridors off the hub, walked as one floor with it (`keepInHouse`, the deck's `house.rooms`), the hub's wall open where a corridor meets it: the hat room (the hat's mirror, its colours and fit; the hats' floor), the bedroom off the landing beside it (18 × 18 m: the bed, the phone, the telephone, and since 2026-10-21 each witch's own dressing, before its door: the dressing table, face, hair, skin, earrings; the wardrobe, jacket, top, trousers; the cloak pegs, cloak, scarf; the shoe rack; Ed: three bedrooms,. candidate only: same-topic wording and later inline date; not a verified superseding ruling.
   - Possible later evidence: [docs/notes/house.md:81](../../docs/notes/house.md#L81): - **Station menus** (Ed, 2026-10-21; the mock, previews/ed/station-menus-mock on claude/ed-shots; `config/wardrobe.json`, `src/rules/wardrobe.ts`, `src/app/owned.ts`, `src/ui/stationPanel.ts`, `src/rules/stations.ts`): at a dressing station (the house's reach, `rules/stations.ts` `stationOf`) it lights up with E over it, and E there slides its panel in from the left over the live game (Ed's playtest, 2026-10-26: "Menus should open when she presses E near an interactive object (dresser, map, etc) instead of them opening automatically just through proximity"; it was by nearness, no E, since 2026-10-21); E again (the pad's □) slides it out (Ed, 2026-10-26: "I think E should also close, and we c. candidate only: same-topic wording and later inline date; not a verified superseding ruling.
 
 - **a night's set > deals its palette by the absolute wave: a 10-wave night stays early, home's 64 travels to the hard end** — [src/rules/musicSet.test.ts:62](../../src/rules/musicSet.test.ts#L62)
-  - current rules; keep pending design review. Currentness: unverified. Case runtime: unknown.
+  - current rules; Keep current score contracts unchanged?. Currentness: unverified. Case runtime: unknown.
   - Cited ruling: file, line 1: // A night's set (rules/musicSet.ts; Ed, 2026-10-11): every wave noticeably different from the last, never the same genre
   - Possible later evidence: [docs/notes/house.md:81](../../docs/notes/house.md#L81): - **Station menus** (Ed, 2026-10-21; the mock, previews/ed/station-menus-mock on claude/ed-shots; `config/wardrobe.json`, `src/rules/wardrobe.ts`, `src/app/owned.ts`, `src/ui/stationPanel.ts`, `src/rules/stations.ts`): at a dressing station (the house's reach, `rules/stations.ts` `stationOf`) it lights up with E over it, and E there slides its panel in from the left over the live game (Ed's playtest, 2026-10-26: "Menus should open when she presses E near an interactive object (dresser, map, etc) instead of them opening automatically just through proximity"; it was by nearness, no E, since 2026-10-21); E again (the pad's □) slides it out (Ed, 2026-10-26: "I think E should also close, and we c. candidate only: same-topic wording and later inline date; not a verified superseding ruling.
   - Possible later evidence: [docs/notes/gameplay.md:42](../../docs/notes/gameplay.md#L42): - **Legend area** (Ed, 2026-10-26: "legends are spawned in additional areas that have legend circles where runestones usually are"; "extra areas are added to each island, and the legend areas can be adjacent to the same type of area, so it effectively becomes an area twice the size"; all legends in them; "The route only cares about runestones"; islands grow): on an island by roster, every kind a night could deal there (the roster's but the island's own kind and placeholders: one each, chosen by the island's own seed, so its shape, land, coast and chart outline are the same every night) gets an area of its own grown out of the island's frontier beside one of its kind's areas, its **pair**: th. candidate only: same-topic wording and later inline date; not a verified superseding ruling.
 
 - **a night's set > plans by the night's time: a long wave counts for more of the night** — [src/rules/musicSet.test.ts:69](../../src/rules/musicSet.test.ts#L69)
-  - current rules; keep pending design review. Currentness: unverified. Case runtime: unknown.
+  - current rules; Keep current score contracts unchanged?. Currentness: unverified. Case runtime: unknown.
   - Cited ruling: file, line 1: // A night's set (rules/musicSet.ts; Ed, 2026-10-11): every wave noticeably different from the last, never the same genre
   - Possible later evidence: [docs/notes/gameplay.md:29](../../docs/notes/gameplay.md#L29): - **Attack grammar**: attacks as small trees of composable modules (Ed, 2026-10-27: "Put the focus on composability for these attack systems — and on telegraphing"; `docs/plans/attack-grammar.md`, `src/rules/attacks/`): cast (windup, cooldown, casts before a rest, the body's tell), telegraph, emit pattern, body, path terms, speed profile, life, hit (damage, effect, friendly fire, blink-dodgeable), `on` events spawning child attacks, pack interplay, beams, areas, traps. `config/attacks.json` is the source (an attack may `base` on another); `node tools/attacks/compile.mjs` compiles the ones today's runtime runs into `config/combat.json`'s `attacks` (run it after editing; `src/rules/attacks/att. candidate only: same-topic wording and later inline date; not a verified superseding ruling.
   - Possible later evidence: [DESIGN.md:359](../../DESIGN.md#L359): - **Conversion, by the spell or a wave, the same rule:** the stone becomes a soundsystem; its babies turn friendly; its wild young and adults turn hostile and besiege it, as a wave does; and **every friend sigil falls and scatters** over its runestone clearing on free hex cells (Ed, 2026-10-28: "It's fine if they're scattered around the whole runestone clearing"; `cast.scatter`: its open ground out to 20 m (Ed's playtest, 2026-10-29: "sigils scatter too widely"; 34 free 6 m hex cells there, room for the biggest stacks, about 20), in a seeded order so they spread however many there are, never in the wedge just north of the soundsystem where its sprite would hide them), into `g.loose`, for any. candidate only: same-topic wording and later inline date; not a verified superseding ruling.
 
 - **a night's set > is the hand-picked set on the first home night, and the game plays it** — [src/rules/musicSet.test.ts:77](../../src/rules/musicSet.test.ts#L77)
-  - current rules; keep pending design review. Currentness: unverified. Case runtime: unknown.
+  - current rules; Keep current score contracts unchanged?. Currentness: unverified. Case runtime: unknown.
   - Cited ruling: file, line 1: // A night's set (rules/musicSet.ts; Ed, 2026-10-11): every wave noticeably different from the last, never the same genre
   - Possible later evidence: [docs/notes/house.md:78](../../docs/notes/house.md#L78): - **The treehouse's rooms** (Ed, 2026-10-19; `config/house/`, `src/rules/houseRooms.ts`, `src/render/houseRooms.ts`; the mock, previews/ed/big-room-mock): placeholder plank rooms joined by corridors off the hub, walked as one floor with it (`keepInHouse`, the deck's `house.rooms`), the hub's wall open where a corridor meets it: the hat room (the hat's mirror, its colours and fit; the hats' floor), the bedroom off the landing beside it (18 × 18 m: the bed, the phone, the telephone, and since 2026-10-21 each witch's own dressing, before its door: the dressing table, face, hair, skin, earrings; the wardrobe, jacket, top, trousers; the cloak pegs, cloak, scarf; the shoe rack; Ed: three bedrooms,. candidate only: same-topic wording and later inline date; not a verified superseding ruling.
   - Possible later evidence: [docs/notes/house.md:81](../../docs/notes/house.md#L81): - **Station menus** (Ed, 2026-10-21; the mock, previews/ed/station-menus-mock on claude/ed-shots; `config/wardrobe.json`, `src/rules/wardrobe.ts`, `src/app/owned.ts`, `src/ui/stationPanel.ts`, `src/rules/stations.ts`): at a dressing station (the house's reach, `rules/stations.ts` `stationOf`) it lights up with E over it, and E there slides its panel in from the left over the live game (Ed's playtest, 2026-10-26: "Menus should open when she presses E near an interactive object (dresser, map, etc) instead of them opening automatically just through proximity"; it was by nearness, no E, since 2026-10-21); E again (the pad's □) slides it out (Ed, 2026-10-26: "I think E should also close, and we c. candidate only: same-topic wording and later inline date; not a verified superseding ruling.
 
 - **a night's set > is the same for the same seed, island and waves, and different for another seed** — [src/rules/musicSet.test.ts:91](../../src/rules/musicSet.test.ts#L91)
-  - current rules; keep pending design review. Currentness: unverified. Case runtime: unknown.
+  - current rules; Keep current score contracts unchanged?. Currentness: unverified. Case runtime: unknown.
   - Cited ruling: file, line 1: // A night's set (rules/musicSet.ts; Ed, 2026-10-11): every wave noticeably different from the last, never the same genre
   - Possible later evidence: [docs/notes/performance.md:166](../../docs/notes/performance.md#L166): **The stall hunt** (`node tools/bench/stalls.cjs [out]`, the coordinator's ask from Ed's overlay, 2026-10-13: 24 stalls over 100 ms and 18% of frames over 20 ms in the treetops, seed 2267, Old pinewood, 56 s into wave 0): the game's own loop run free at a spot (`SEED`, `X`, `Z`, `ZOOM`; `DIST=dist-prof` from `npx vite build --minify false --outDir dist-prof`, so the functions have names) under Chromium's sampling profiler, the GPU draw a no-op (`NODRAW=1`) so a wall second is a game second, and a report of where the JavaScript's time went: self time by function, call chains, runs of JavaScript over `RUN_MS`, the browser's long animation frames and the game's own stall log (`<out>/stalls.json. candidate only: same-topic wording and later inline date; not a verified superseding ruling.
   - Possible later evidence: [docs/notes/view.md:72](../../docs/notes/view.md#L72): - **Ley lines**: the glowing line through the runestones in wave order (`src/rules/leylines.ts` the chain, `src/rules/leyroute.ts` the route, `src/render/leylines.ts` the drawing): through every area's stone from home to the last, the whole time (Ed, 2026-10-06: "I think the leylines should cover the entire set of waves the whole time, but ideally it shouldn't cross itself"), moving on from the last runestone reached (by its wave, or its quest: `onAreaDone(party, cell, time)`), every section as bright as the next (`fade`, `behindBright` and `far` all 1: Ed, 2026-10-06: "The leyline should always go from the treehouse to 3x the progress of the pulse, and I should be able to see it along its e. candidate only: same-topic wording and later inline date; not a verified superseding ruling.
 
 - **a night's set > plays: every wave's sections, its lead, singer and bass make notes in its key** — [src/rules/musicSet.test.ts:98](../../src/rules/musicSet.test.ts#L98)
-  - current rules; keep pending design review. Currentness: unverified. Case runtime: unknown.
+  - current rules; Keep current score contracts unchanged?. Currentness: unverified. Case runtime: unknown.
   - Cited ruling: file, line 1: // A night's set (rules/musicSet.ts; Ed, 2026-10-11): every wave noticeably different from the last, never the same genre
   - Possible later evidence: [docs/notes/sound.md:25](../../docs/notes/sound.md#L25): - **Audio capacity test** (Ed, 2026-10-26, from his web research on the game's audio: "link to the page from the pause menu"; `tools/audio-test/`, built by `npm run build` into `dist/audio-test/`, opened in a new tab by the pause page's **🔊 Audio test**): about two minutes, run once on a machine to see how much sound its browser takes. The game's own music (`Music`, the drop at wave 3, the singer's recordings loaded) plays while the load climbs a rung every 6 s: the music alone, + the night's other reverbs (the singer's effects and the legends' space, fed the music), then 8, 16, 32, 48, 64 and 96 voices kept sounding, half the effects' one-shots and half creature babble (the game's caps lif. candidate only: same-topic wording and later inline date; not a verified superseding ruling.
   - Possible later evidence: [docs/notes/house.md:81](../../docs/notes/house.md#L81): - **Station menus** (Ed, 2026-10-21; the mock, previews/ed/station-menus-mock on claude/ed-shots; `config/wardrobe.json`, `src/rules/wardrobe.ts`, `src/app/owned.ts`, `src/ui/stationPanel.ts`, `src/rules/stations.ts`): at a dressing station (the house's reach, `rules/stations.ts` `stationOf`) it lights up with E over it, and E there slides its panel in from the left over the live game (Ed's playtest, 2026-10-26: "Menus should open when she presses E near an interactive object (dresser, map, etc) instead of them opening automatically just through proximity"; it was by nearness, no E, since 2026-10-21); E again (the pad's □) slides it out (Ed, 2026-10-26: "I think E should also close, and we c. candidate only: same-topic wording and later inline date; not a verified superseding ruling.
 
 - **the victory section > is named by the style and sound** — [src/rules/musicVictory.test.ts:15](../../src/rules/musicVictory.test.ts#L15)
-  - current rules; keep pending design review. Currentness: unverified. Case runtime: unknown.
+  - current rules; Keep current score contracts unchanged?. Currentness: unverified. Case runtime: unknown.
   - Cited ruling: file, line 1: // The victory music (wave 2's finale, Ed approved, 2026-10-11): when an island is won, its lap, its party (a conga line
   - Possible later evidence: [docs/notes/music.md:9](../../docs/notes/music.md#L9): The music (`src/rules/musicPlan.ts`, `src/rules/musicScore.ts`, `src/platform/audio/musicEngine.ts`, `config/music-style.json`): A sleeping legend's clearing on the ground (Ed, 2026-10-06) muffles the music (`muffled`, rules/music.ts; the tuning's `music.circle`) under that legend's own layer (`legendCircleAt`, rules/musicPlan.ts; the style's `circle`: every legend's parts and its voice family's, each species its own patterns, melody, rhythm and octave in the music's key and chords, played over the muffle on the engine's second output); There the world slows to about a tenth (the game's time scale, `g.timeScale`) and the music follows it (Ed, 2026-10-06: "the music audibly slows down"): the . candidate only: same-topic wording and later inline date; not a verified superseding ruling.
   - Possible later evidence: [docs/notes/music.md:25](../../docs/notes/music.md#L25): - **Music ahead** (Ed, 2026-10-27, from his audio test: "render the music ahead, so main-thread stalls can't silence it"; the plan and its steps in the REPORT of 2026-10-27; the stall test, `audio-test/stall.html`, docs/notes/sound.md, its baseline): the music drawn a bar at a time on an OfflineAudioContext (off the page's thread) and queued seconds ahead on the audio clock, its buses live. **Step 2, the stems** (this): `MusicEngine` takes a **sink** (`MusicSink`), where its parts' notes go and its bus automation: by default its own buses, live exactly as before (its `bus`; `node tools/music-lab/stems.cjs ab` with `OLD=<a checkout>`: before and after apart by no more than Chromium's own roun. candidate only: same-topic wording and later inline date; not a verified superseding ruling.
 
 - **the victory section > lifts the drop a whole step, with more over it** — [src/rules/musicVictory.test.ts:21](../../src/rules/musicVictory.test.ts#L21)
-  - outcome stats; consider report after Ed rules. Currentness: unverified. Case runtime: unknown.
+  - current rules; Keep current score contracts unchanged?. Currentness: unverified. Case runtime: unknown.
   - Cited ruling: file, line 1: // The victory music (wave 2's finale, Ed approved, 2026-10-11): when an island is won, its lap, its party (a conga line
   - Possible later evidence: [docs/notes/view.md:72](../../docs/notes/view.md#L72): - **Ley lines**: the glowing line through the runestones in wave order (`src/rules/leylines.ts` the chain, `src/rules/leyroute.ts` the route, `src/render/leylines.ts` the drawing): through every area's stone from home to the last, the whole time (Ed, 2026-10-06: "I think the leylines should cover the entire set of waves the whole time, but ideally it shouldn't cross itself"), moving on from the last runestone reached (by its wave, or its quest: `onAreaDone(party, cell, time)`), every section as bright as the next (`fade`, `behindBright` and `far` all 1: Ed, 2026-10-06: "The leyline should always go from the treehouse to 3x the progress of the pulse, and I should be able to see it along its e. candidate only: same-topic wording and later inline date; not a verified superseding ruling.
   - Possible later evidence: [docs/notes/house.md:79](../../docs/notes/house.md#L79): - **The oak** (Ed, 2026-10-24: "it is a large old oak tree with wide, thick, decumbent branches ... The floors are wooden but not planks"; the layout v4 he approved, previews/ed/treehouse-layout-v4 on claude/treehouse-trunk-mock; "I think best to build it and we will find out in game"): the house is one floor shape, `config/house/shape.js` (the mock's own distance field: its noise, so its shapes), six trunk rooms in a soft S (Dining Room, Terrace, Parlour, Boudoir, her Bedroom, the Turret; a room file's `trunk`, bottom to top by `order`) and a pair of branch rooms off each of the lower four (`from`, `bend`: Workshop and Kitchen, Cloakroom and Studio, Solarium and Bestiary, Bedrooms 2 and 3 `. candidate only: same-topic wording and later inline date; not a verified superseding ruling.
 
 - **the victory section > claps a conga line (one, two, three, kick!) and loops with no fills** — [src/rules/musicVictory.test.ts:32](../../src/rules/musicVictory.test.ts#L32)
-  - outcome stats; consider report after Ed rules. Currentness: unverified. Case runtime: unknown.
+  - current rules; Keep current score contracts unchanged?. Currentness: unverified. Case runtime: unknown.
   - Cited ruling: file, line 1: // The victory music (wave 2's finale, Ed approved, 2026-10-11): when an island is won, its lap, its party (a conga line
   - Possible later evidence: [docs/notes/view.md:72](../../docs/notes/view.md#L72): - **Ley lines**: the glowing line through the runestones in wave order (`src/rules/leylines.ts` the chain, `src/rules/leyroute.ts` the route, `src/render/leylines.ts` the drawing): through every area's stone from home to the last, the whole time (Ed, 2026-10-06: "I think the leylines should cover the entire set of waves the whole time, but ideally it shouldn't cross itself"), moving on from the last runestone reached (by its wave, or its quest: `onAreaDone(party, cell, time)`), every section as bright as the next (`fade`, `behindBright` and `far` all 1: Ed, 2026-10-06: "The leyline should always go from the treehouse to 3x the progress of the pulse, and I should be able to see it along its e. candidate only: same-topic wording and later inline date; not a verified superseding ruling.
   - Possible later evidence: [docs/notes/gameplay.md:42](../../docs/notes/gameplay.md#L42): - **Legend area** (Ed, 2026-10-26: "legends are spawned in additional areas that have legend circles where runestones usually are"; "extra areas are added to each island, and the legend areas can be adjacent to the same type of area, so it effectively becomes an area twice the size"; all legends in them; "The route only cares about runestones"; islands grow): on an island by roster, every kind a night could deal there (the roster's but the island's own kind and placeholders: one each, chosen by the island's own seed, so its shape, land, coast and chart outline are the same every night) gets an area of its own grown out of the island's frontier beside one of its kind's areas, its **pair**: th. candidate only: same-topic wording and later inline date; not a verified superseding ruling.
 
 - **the music, place by place > loudest and clear on the dancefloor and round its ring** — [src/rules/musicZones.test.ts:22](../../src/rules/musicZones.test.ts#L22)
-  - current rules; keep pending design review. Currentness: unverified. Case runtime: unknown.
+  - current rules; Keep current score contracts unchanged?. Currentness: unverified. Case runtime: unknown.
   - Cited ruling: none found in scoped comments; not proof that none exists.
 
 - **the music, place by place > loud at a partified area's soundsystem** — [src/rules/musicZones.test.ts:34](../../src/rules/musicZones.test.ts#L34)
-  - current rules; keep pending design review. Currentness: unverified. Case runtime: unknown.
+  - current rules; Keep current score contracts unchanged?. Currentness: unverified. Case runtime: unknown.
   - Cited ruling: none found in scoped comments; not proof that none exists.
 
 - **the music, place by place > faint and muffled deep in the wild, far from every soundsystem and from the sea** — [src/rules/musicZones.test.ts:40](../../src/rules/musicZones.test.ts#L40)
-  - current rules; keep pending design review. Currentness: unverified. Case runtime: unknown.
+  - current rules; Keep current score contracts unchanged?. Currentness: unverified. Case runtime: unknown.
   - Cited ruling: none found in scoped comments; not proof that none exists.
 
 - **the music, place by place > all but gone on the beach, and at the sea's edge only the waves** — [src/rules/musicZones.test.ts:52](../../src/rules/musicZones.test.ts#L52)
-  - current rules; keep pending design review. Currentness: unverified. Case runtime: unknown.
+  - current rules; Keep current score contracts unchanged?. Currentness: unverified. Case runtime: unknown.
   - Cited ruling: none found in scoped comments; not proof that none exists.
 
 - **the music, place by place > the forest just inland of the beach fades smoothly, never jumping** — [src/rules/musicZones.test.ts:60](../../src/rules/musicZones.test.ts#L60)
-  - current rules; keep pending design review. Currentness: unverified. Case runtime: unknown.
+  - current rules; Keep current score contracts unchanged?. Currentness: unverified. Case runtime: unknown.
   - Cited ruling: none found in scoped comments; not proof that none exists.
 
 - **samples > are all listed, under approved licences (never NC), credited and within the size budget** — [src/samples.test.ts:11](../../src/samples.test.ts#L11)
-  - hard limits; keep. Currentness: unverified. Case runtime: unknown.
+  - hard limits; Keep audio integrity checks unchanged?. Currentness: unverified. Case runtime: unknown.
   - Cited ruling: file, line 1: // The samples' licences, files and size budget (tools/samples/check.mjs; Ed, 2026-10-11: "a CI check that every sample has
   - Possible later evidence: [docs/notes/performance.md:166](../../docs/notes/performance.md#L166): **The stall hunt** (`node tools/bench/stalls.cjs [out]`, the coordinator's ask from Ed's overlay, 2026-10-13: 24 stalls over 100 ms and 18% of frames over 20 ms in the treetops, seed 2267, Old pinewood, 56 s into wave 0): the game's own loop run free at a spot (`SEED`, `X`, `Z`, `ZOOM`; `DIST=dist-prof` from `npx vite build --minify false --outDir dist-prof`, so the functions have names) under Chromium's sampling profiler, the GPU draw a no-op (`NODRAW=1`) so a wall second is a game second, and a report of where the JavaScript's time went: self time by function, call chains, runs of JavaScript over `RUN_MS`, the browser's long animation frames and the game's own stall log (`<out>/stalls.json. candidate only: same-topic wording and later inline date; not a verified superseding ruling.
   - Possible later evidence: [docs/notes/music.md:9](../../docs/notes/music.md#L9): The music (`src/rules/musicPlan.ts`, `src/rules/musicScore.ts`, `src/platform/audio/musicEngine.ts`, `config/music-style.json`): A sleeping legend's clearing on the ground (Ed, 2026-10-06) muffles the music (`muffled`, rules/music.ts; the tuning's `music.circle`) under that legend's own layer (`legendCircleAt`, rules/musicPlan.ts; the style's `circle`: every legend's parts and its voice family's, each species its own patterns, melody, rhythm and octave in the music's key and chords, played over the muffle on the engine's second output); There the world slows to about a tenth (the game's time scale, `g.timeScale`) and the music follows it (Ed, 2026-10-06: "the music audibly slows down"): the . candidate only: same-topic wording and later inline date; not a verified superseding ruling.
 
 - **samples > catches a non-commercial licence, an unlisted file and a missing one** — [src/samples.test.ts:16](../../src/samples.test.ts#L16)
-  - current rules; keep pending design review. Currentness: unverified. Case runtime: unknown.
+  - hard limits; Keep audio integrity checks unchanged?. Currentness: unverified. Case runtime: unknown.
   - Cited ruling: file, line 1: // The samples' licences, files and size budget (tools/samples/check.mjs; Ed, 2026-10-11: "a CI check that every sample has
   - Possible later evidence: [docs/notes/performance.md:166](../../docs/notes/performance.md#L166): **The stall hunt** (`node tools/bench/stalls.cjs [out]`, the coordinator's ask from Ed's overlay, 2026-10-13: 24 stalls over 100 ms and 18% of frames over 20 ms in the treetops, seed 2267, Old pinewood, 56 s into wave 0): the game's own loop run free at a spot (`SEED`, `X`, `Z`, `ZOOM`; `DIST=dist-prof` from `npx vite build --minify false --outDir dist-prof`, so the functions have names) under Chromium's sampling profiler, the GPU draw a no-op (`NODRAW=1`) so a wall second is a game second, and a report of where the JavaScript's time went: self time by function, call chains, runs of JavaScript over `RUN_MS`, the browser's long animation frames and the game's own stall log (`<out>/stalls.json. candidate only: same-topic wording and later inline date; not a verified superseding ruling.
   - Possible later evidence: [docs/notes/music.md:9](../../docs/notes/music.md#L9): The music (`src/rules/musicPlan.ts`, `src/rules/musicScore.ts`, `src/platform/audio/musicEngine.ts`, `config/music-style.json`): A sleeping legend's clearing on the ground (Ed, 2026-10-06) muffles the music (`muffled`, rules/music.ts; the tuning's `music.circle`) under that legend's own layer (`legendCircleAt`, rules/musicPlan.ts; the style's `circle`: every legend's parts and its voice family's, each species its own patterns, melody, rhythm and octave in the music's key and chords, played over the muffle on the engine's second output); There the world slows to about a tenth (the game's time scale, `g.timeScale`) and the music follows it (Ed, 2026-10-06: "the music audibly slows down"): the . candidate only: same-topic wording and later inline date; not a verified superseding ruling.
@@ -9092,10 +9088,6 @@ Static declarations only. All classifications and currentness are provisional. C
 
 - **serializes flight preparation and handoff behind restored saves and own settings** — [src/app/chartDeparture.test.ts:10](../../src/app/chartDeparture.test.ts#L10)
   - hard limits; keep. Currentness: unverified. Case runtime: unknown.
-  - Cited ruling: none found in scoped comments; not proof that none exists.
-
-- **refuses early settlement/reload if return fails or still leaves a borrowed night** — [src/app/chartDeparture.test.ts:23](../../src/app/chartDeparture.test.ts#L23)
-  - current rules; keep pending design review. Currentness: unverified. Case runtime: unknown.
   - Cited ruling: none found in scoped comments; not proof that none exists.
 
 - **the sea chart's layout > packs the islands over the whole disc: home in the middle, each near its bearing, later phases further out, each in its own patch** — [src/app/chartLayout.test.ts:15](../../src/app/chartLayout.test.ts#L15)
@@ -9485,18 +9477,6 @@ Static declarations only. All classifications and currentness are provisional. C
   - current rules; keep pending design review. Currentness: unverified. Case runtime: unknown.
   - Cited ruling: none found in scoped comments; not proof that none exists.
 
-- **startNight (docs/plans/sail-without-reload.md B) > returns from a borrowed night without host knobs or generated-party state** — [src/app/night.test.ts:36](../../src/app/night.test.ts#L36)
-  - current rules; keep pending design review. Currentness: unverified. Case runtime: unknown.
-  - Cited ruling: none found in scoped comments; not proof that none exists.
-
-- **startNight (docs/plans/sail-without-reload.md B) > a borrowed visit returns home to the visitor's exact pre-visit stock bytes** — [src/app/night.test.ts:52](../../src/app/night.test.ts#L52)
-  - current rules; keep pending design review. Currentness: unverified. Case runtime: unknown.
-  - Cited ruling: none found in scoped comments; not proof that none exists.
-
-- **startNight (docs/plans/sail-without-reload.md B) > a borrowed night never registers stock writes or changes visitor slot bytes through timer/pagehide/cleanup** — [src/app/night.test.ts:75](../../src/app/night.test.ts#L75)
-  - current rules; keep pending design review. Currentness: unverified. Case runtime: unknown.
-  - Cited ruling: none found in scoped comments; not proof that none exists.
-
 - **startNight (docs/plans/sail-without-reload.md B) > presentation defaults keep the exact canonical render, HUD and simulation game** — [src/app/night.test.ts:96](../../src/app/night.test.ts#L96)
   - current rules; keep pending design review. Currentness: unverified. Case runtime: unknown.
   - Cited ruling: none found in scoped comments; not proof that none exists.
@@ -9604,42 +9584,6 @@ Static declarations only. All classifications and currentness are provisional. C
   - Cited ruling: file, line 1: // The dev Player pick shows only with the debug overlay on (Ed, 2026-10-11: "the Player dropdown moves into the debug overlay
   - Possible later evidence: [docs/notes/house.md:110](../../docs/notes/house.md#L110): - **Hats and brooms** (Ed, 2026-10-11; `src/rules/spells.ts`, docs/backlog/unlocks.md): two slots, a hat and a broom, each with a spell or none (the default; the plain broom's quicker rise is the parts' stats now: see **Sets**). Hats are worn (the Helmet: an extra hit, knocked off) or placed with E held (the Healing ring: a hit back every few seconds standing by it; Harvest: a ring of six berries grows round it; Dowsing: a pointer to the nearest relic for a minute; Sentry: it throws 💌s at wild creatures within 30 m; Slingshot: her 💌s passing within 10 m circle it, then fly at a creature up to 40 m off; Gathering: picked up again, it brings back every sigil of hers within 100 m; Bramble: wi. candidate only: same-topic wording and later inline date; not a verified superseding ruling.
   - Possible later evidence: [docs/notes/music.md:9](../../docs/notes/music.md#L9): The music (`src/rules/musicPlan.ts`, `src/rules/musicScore.ts`, `src/platform/audio/musicEngine.ts`, `config/music-style.json`): A sleeping legend's clearing on the ground (Ed, 2026-10-06) muffles the music (`muffled`, rules/music.ts; the tuning's `music.circle`) under that legend's own layer (`legendCircleAt`, rules/musicPlan.ts; the style's `circle`: every legend's parts and its voice family's, each species its own patterns, melody, rhythm and octave in the music's key and chords, played over the muffle on the engine's second output); There the world slows to about a tenth (the game's time scale, `g.timeScale`) and the music follows it (Ed, 2026-10-06: "the music audibly slows down"): the . candidate only: same-topic wording and later inline date; not a verified superseding ruling.
-
-- **paused playtest comments > roundtrips the actual played moment and continues from the same random/state cursor** — [src/app/playtestComments.test.ts:25](../../src/app/playtestComments.test.ts#L25)
-  - hard limits; keep. Currentness: unverified. Case runtime: unknown.
-  - Cited ruling: none found in scoped comments; not proof that none exists.
-
-- **paused playtest comments > rejects oversized, malformed and wrong-build bundles instead of restoring an approximate link** — [src/app/playtestComments.test.ts:42](../../src/app/playtestComments.test.ts#L42)
-  - hard limits; keep. Currentness: unverified. Case runtime: unknown.
-  - Cited ruling: none found in scoped comments; not proof that none exists.
-
-- **paused playtest comments > keeps every report across count pressure and reload; unread storage is never overwritten** — [src/app/playtestComments.test.ts:51](../../src/app/playtestComments.test.ts#L51)
-  - current rules; keep pending design review. Currentness: unverified. Case runtime: unknown.
-  - Cited ruling: none found in scoped comments; not proof that none exists.
-
-- **paused playtest comments > preserves legacy report text through production-sized duplicated replay pressure, reload and both exports** — [src/app/playtestComments.test.ts:69](../../src/app/playtestComments.test.ts#L69)
-  - hard limits; keep. Currentness: unverified. Case runtime: unknown.
-  - Cited ruling: none found in scoped comments; not proof that none exists.
-
-- **paused playtest comments > migrates v1 packed comments and retains oversized moments as written reports** — [src/app/playtestComments.test.ts:100](../../src/app/playtestComments.test.ts#L100)
-  - current rules; keep pending design review. Currentness: unverified. Case runtime: unknown.
-  - Cited ruling: none found in scoped comments; not proof that none exists.
-
-- **paused playtest comments > commits text before attachments, exposes a real attachment-write error and reloads every word** — [src/app/playtestComments.test.ts:111](../../src/app/playtestComments.test.ts#L111)
-  - current rules; keep pending design review. Currentness: unverified. Case runtime: unknown.
-  - Cited ruling: none found in scoped comments; not proof that none exists.
-
-- **paused playtest comments > copies only the recent 30 seconds and caps a noisy breadcrumb stream** — [src/app/playtestComments.test.ts:143](../../src/app/playtestComments.test.ts#L143)
-  - current rules; keep pending design review. Currentness: unverified. Case runtime: unknown.
-  - Cited ruling: none found in scoped comments; not proof that none exists.
-
-- **the page hooks keep both players, explicit mutation boundaries and a comment replay to the saved state** — [src/app/recordingHooks.test.ts:20](../../src/app/recordingHooks.test.ts#L20)
-  - hard limits; keep. Currentness: unverified. Case runtime: unknown.
-  - Cited ruling: none found in scoped comments; not proof that none exists.
-
-- **a diagnostic starting-save failure cannot prevent or duplicate the original simulation step** — [src/app/recordingHooks.test.ts:35](../../src/app/recordingHooks.test.ts#L35)
-  - current rules; keep pending design review. Currentness: unverified. Case runtime: unknown.
-  - Cited ruling: none found in scoped comments; not proof that none exists.
 
 - **the settings changed > lists every leaf that differs, by its path, and none of the notes or what the load sets elsewhere** — [src/app/repro.test.ts:12](../../src/app/repro.test.ts#L12)
   - current rules; keep pending design review. Currentness: unverified. Case runtime: unknown.
@@ -9839,10 +9783,6 @@ Static declarations only. All classifications and currentness are provisional. C
   - current rules; keep pending design review. Currentness: unverified. Case runtime: unknown.
   - Cited ruling: none found in scoped comments; not proof that none exists.
 
-- **preserves solo results and exceptions but never runs a diagnostic in a live/returning borrowed night** — [src/app/soloDiagnostic.test.ts:3](../../src/app/soloDiagnostic.test.ts#L3)
-  - current rules; keep pending design review. Currentness: unverified. Case runtime: unknown.
-  - Cited ruling: none found in scoped comments; not proof that none exists.
-
 - **keeps broom finds and record choices when storage reads old data but refuses writes** — [src/app/storageFallback.test.ts:9](../../src/app/storageFallback.test.ts#L9)
   - current rules; keep pending design review. Currentness: unverified. Case runtime: unknown.
   - Cited ruling: none found in scoped comments; not proof that none exists.
@@ -9923,10 +9863,6 @@ Static declarations only. All classifications and currentness are provisional. C
   - current rules; keep pending design review. Currentness: unverified. Case runtime: unknown.
   - Cited ruling: none found in scoped comments; not proof that none exists.
 
-- **waits for cancelled late borrowed preparation before restoring own page and never confirms it** — [src/app/visitLifecycle.test.ts:5](../../src/app/visitLifecycle.test.ts#L5)
-  - current rules; keep pending design review. Currentness: unverified. Case runtime: unknown.
-  - Cited ruling: none found in scoped comments; not proof that none exists.
-
 - **confirms after preparation and waits for confirmation before playing or returning** — [src/app/visitLifecycle.test.ts:18](../../src/app/visitLifecycle.test.ts#L18)
   - current rules; keep pending design review. Currentness: unverified. Case runtime: unknown.
   - Cited ruling: none found in scoped comments; not proof that none exists.
@@ -9945,10 +9881,6 @@ Static declarations only. All classifications and currentness are provisional. C
 
 - **keeps no rewards from an unsuccessful night and rejects unknown identities** — [src/app/visitUnlocks.test.ts:34](../../src/app/visitUnlocks.test.ts#L34)
   - hard limits; keep. Currentness: unverified. Case runtime: unknown.
-  - Cited ruling: none found in scoped comments; not proof that none exists.
-
-- **keeps successful shared unlocks once in own collections after dropping borrowed writes** — [src/app/visitUnlocks.test.ts:43](../../src/app/visitUnlocks.test.ts#L43)
-  - current rules; keep pending design review. Currentness: unverified. Case runtime: unknown.
   - Cited ruling: none found in scoped comments; not proof that none exists.
 
 - **sends only the original art result when diagnostics are off** — [src/app/workerJobHandlers.test.ts:22](../../src/app/workerJobHandlers.test.ts#L22)
@@ -10236,42 +10168,6 @@ Static declarations only. All classifications and currentness are provisional. C
   - Cited ruling: file, line 1: // A gamepad's controls (platform/input.ts padControls) under Ed's layout (2026-10-28; platform/bindings.ts), and how a menu takes
   - Possible later evidence: [docs/notes/house.md:81](../../docs/notes/house.md#L81): - **Station menus** (Ed, 2026-10-21; the mock, previews/ed/station-menus-mock on claude/ed-shots; `config/wardrobe.json`, `src/rules/wardrobe.ts`, `src/app/owned.ts`, `src/ui/stationPanel.ts`, `src/rules/stations.ts`): at a dressing station (the house's reach, `rules/stations.ts` `stationOf`) it lights up with E over it, and E there slides its panel in from the left over the live game (Ed's playtest, 2026-10-26: "Menus should open when she presses E near an interactive object (dresser, map, etc) instead of them opening automatically just through proximity"; it was by nearness, no E, since 2026-10-21); E again (the pad's □) slides it out (Ed, 2026-10-26: "I think E should also close, and we c. candidate only: same-topic wording and later inline date; not a verified superseding ruling.
   - Possible later evidence: [docs/notes/run.md:85](../../docs/notes/run.md#L85): - **Pad layout** (Ed, 2026-10-28, with his swap of cross and square the same day; swapped back in play, Ed 2026-10-29: "swap x and square on the gamepad; square is use and place, x is takeoff/land"): the left stick moves, the right aims (the d-pad no longer moves her); **square** (□) uses what's here (opens a station, takes a rune, puts down or picks up a sigil; held, a run) and nothing else; **cross** (✕) takes off or lands in play, never by context ("rising is not quite a free action"), and chooses in a menu (menus unchanged: ✕ chooses, ○ goes back); **circle** (○) dodges (and **L2**: Ed, 2026-10-29, "Left trigger needs to be dodge"), and in a menu goes back or closes it; **triangle** (△) . candidate only: same-topic wording and later inline date; not a verified superseding ruling.
-
-- **keeps a ten-minute paused tape exact without expanding paused frames into the crash journal** — [src/platform/inputRecording.test.ts:18](../../src/platform/inputRecording.test.ts#L18)
-  - hard limits; keep. Currentness: unverified. Case runtime: unknown.
-  - Cited ruling: none found in scoped comments; not proof that none exists.
-
-- **records a scripted fractional-frame run, retains local aim/zoom/framing, and replays to the identical paused moment** — [src/platform/inputRecording.test.ts:52](../../src/platform/inputRecording.test.ts#L52)
-  - hard limits; keep. Currentness: unverified. Case runtime: unknown.
-  - Cited ruling: none found in scoped comments; not proof that none exists.
-
-- **rejects divergence before a labelled checkpoint instead of using it to repair the replay** — [src/platform/inputRecording.test.ts:76](../../src/platform/inputRecording.test.ts#L76)
-  - hard limits; keep. Currentness: unverified. Case runtime: unknown.
-  - Cited ruling: none found in scoped comments; not proof that none exists.
-
-- **rejects executable/nested controls without changing the wire default or normalizing local aim** — [src/platform/inputRecording.test.ts:82](../../src/platform/inputRecording.test.ts#L82)
-  - hard limits; keep. Currentness: unverified. Case runtime: unknown.
-  - Cited ruling: none found in scoped comments; not proof that none exists.
-
-- **replays the intro seat ease-off and changing camera anchors without render-path world snapshots** — [src/platform/inputRecording.test.ts:87](../../src/platform/inputRecording.test.ts#L87)
-  - hard limits; keep. Currentness: unverified. Case runtime: unknown.
-  - Cited ruling: none found in scoped comments; not proof that none exists.
-
-- **retains unchanged frames without hot-path serialization/cloning, drains bounded journal batches and exports the exact ordered stream** — [src/platform/inputRecording.test.ts:123](../../src/platform/inputRecording.test.ts#L123)
-  - outcome stats; review simulation assertions; consider report after Ed rules. Currentness: unverified. Case runtime: unknown.
-  - Cited ruling: none found in scoped comments; not proof that none exists.
-
-- **still enforces the raw expanded byte/event cap when a long unchanged run is compact in memory** — [src/platform/inputRecording.test.ts:151](../../src/platform/inputRecording.test.ts#L151)
-  - outcome stats; review simulation assertions; consider report after Ed rules. Currentness: unverified. Case runtime: unknown.
-  - Cited ruling: none found in scoped comments; not proof that none exists.
-
-- **keeps deferred records owned by their original game after another night can become current** — [src/platform/inputRecording.test.ts:162](../../src/platform/inputRecording.test.ts#L162)
-  - current rules; keep pending design review. Currentness: unverified. Case runtime: unknown.
-  - Cited ruling: none found in scoped comments; not proof that none exists.
-
-- **labels an explicitly disabled profile tape incomplete and preserves its simulation actions without journal writes** — [src/platform/inputRecording.test.ts:175](../../src/platform/inputRecording.test.ts#L175)
-  - current rules; keep pending design review. Currentness: unverified. Case runtime: unknown.
-  - Cited ruling: none found in scoped comments; not proof that none exists.
 
 - **overlay input ownership > gives input to the game only with an empty stack, and to the exact top registration otherwise** — [src/platform/inputStack.test.ts:8](../../src/platform/inputStack.test.ts#L8)
   - hard limits; keep. Currentness: unverified. Case runtime: unknown.
@@ -10856,20 +10752,12 @@ Static declarations only. All classifications and currentness are provisional. C
   - Possible later evidence: [docs/notes/house.md:97](../../docs/notes/house.md#L97): - **Finds / travel trunk** (Ed, 2026-10-21, the station menus' part (b): "The items are found in the forest like other permanent upgrades. Hints are given by the crystal ball"; `src/rules/finds.ts`, `render/view/finds.ts`): each night the island she's on holds one permanent upgrade she hasn't found, a wearable in the trunk or a broom part in a wreck (the finds pool, below; the wearables `FINDABLE`, the wardrobe's items not hers from the start, never a broom shape: brooms are made of parts), drawn as one flask-sized object on a clear patch in its own pale gold-white light (the finds style guide, `docs/art-guide/FINDS.md`, Ed 2026-10-23: clothes a folded bundle, `find-bundle`; bags a little ba. candidate only: same-topic wording and later inline date; not a verified superseding ruling.
   - Possible later evidence: [docs/notes/house.md:111](../../docs/notes/house.md#L111): - **Guidance pins** (Ed, 2026-10-26: "Pointers: let's work out what they help with and build it"; his list approved the same day): one pin at a time over what she should do next in the treehouse, icons only, no words (`rules/guidance.ts` guidanceOf, drawn by `render/view/guidance.ts` GuidePin with `view.pin`, render/pins.ts), the HUD's amber ring and Ed's icons in it, emoji drawn in pixels as the thrown 💌 is (`render/indicator.ts` emoji, render/bubbles.ts): 💤 the bed, 💌 the invitations desk, a pair of 🪽 the lathe (one 🪽 mirrored beside another), 🎁 anything new, 🧭 the map table, 🎶 the decks (the wave pointer's own 🎶 glyph, in cream: the emoji's black notes were lost on the dark floor. candidate only: same-topic wording and later inline date; not a verified superseding ruling.
 
-- **requires explicit saved-night opt-in for the actual headless telephone proof URL** — [src/app/nightSave.test.ts:14](../../src/app/nightSave.test.ts#L14)
-  - current rules; keep pending design review. Currentness: unverified. Case runtime: unknown.
-  - Cited ruling: none found in scoped comments; not proof that none exists.
-
 - **keeps an explicit-link conflict distinct and supplies a one-click link to the retained save** — [src/app/nightSave.test.ts:20](../../src/app/nightSave.test.ts#L20)
   - hard limits; Keep compatible-night acceptance, identity checks and serialized writes unchanged?. Currentness: unverified. Case runtime: unknown.
   - Cited ruling: none found in scoped comments; not proof that none exists.
 
 - **accepts a build-counter jump under the cross-build save contract** — [src/app/nightSave.test.ts:32](../../src/app/nightSave.test.ts#L32)
   - hard limits; Keep compatible-night acceptance, identity checks and serialized writes unchanged?. Currentness: unverified. Case runtime: unknown.
-  - Cited ruling: none found in scoped comments; not proof that none exists.
-
-- **a borrowed save gate drains an in-flight own write and clears only once the visit is confirmed** — [src/app/nightSave.test.ts:45](../../src/app/nightSave.test.ts#L45)
-  - current rules; keep pending design review. Currentness: unverified. Case runtime: unknown.
   - Cited ruling: none found in scoped comments; not proof that none exists.
 
 - **an aborted visit keeps the interrupted checkpoint, and solo saves resume only explicitly** — [src/app/nightSave.test.ts:56](../../src/app/nightSave.test.ts#L56)
@@ -10964,6 +10852,34 @@ Static declarations only. All classifications and currentness are provisional. C
   - current rules; Keep deterministic chart-unlock rules and settings persistence unchanged?. Currentness: unverified. Case runtime: unknown.
   - Cited ruling: none found in scoped comments; not proof that none exists.
 
+- **paused playtest comments > roundtrips the actual played moment and continues from the same random/state cursor** — [src/app/playtestComments.test.ts:25](../../src/app/playtestComments.test.ts#L25)
+  - hard limits; Keep exact replay and report-retention protections unchanged?. Currentness: unverified. Case runtime: unknown.
+  - Cited ruling: none found in scoped comments; not proof that none exists.
+
+- **paused playtest comments > rejects oversized, malformed and wrong-build bundles instead of restoring an approximate link** — [src/app/playtestComments.test.ts:42](../../src/app/playtestComments.test.ts#L42)
+  - hard limits; Keep exact replay and report-retention protections unchanged?. Currentness: unverified. Case runtime: unknown.
+  - Cited ruling: none found in scoped comments; not proof that none exists.
+
+- **paused playtest comments > keeps every report across count pressure and reload; unread storage is never overwritten** — [src/app/playtestComments.test.ts:51](../../src/app/playtestComments.test.ts#L51)
+  - hard limits; Keep exact replay and report-retention protections unchanged?. Currentness: unverified. Case runtime: unknown.
+  - Cited ruling: none found in scoped comments; not proof that none exists.
+
+- **paused playtest comments > preserves legacy report text through production-sized duplicated replay pressure, reload and both exports** — [src/app/playtestComments.test.ts:69](../../src/app/playtestComments.test.ts#L69)
+  - hard limits; Keep exact replay and report-retention protections unchanged?. Currentness: unverified. Case runtime: unknown.
+  - Cited ruling: none found in scoped comments; not proof that none exists.
+
+- **paused playtest comments > migrates v1 packed comments and retains oversized moments as written reports** — [src/app/playtestComments.test.ts:100](../../src/app/playtestComments.test.ts#L100)
+  - hard limits; Keep exact replay and report-retention protections unchanged?. Currentness: unverified. Case runtime: unknown.
+  - Cited ruling: none found in scoped comments; not proof that none exists.
+
+- **paused playtest comments > commits text before attachments, exposes a real attachment-write error and reloads every word** — [src/app/playtestComments.test.ts:111](../../src/app/playtestComments.test.ts#L111)
+  - hard limits; Keep exact replay and report-retention protections unchanged?. Currentness: unverified. Case runtime: unknown.
+  - Cited ruling: none found in scoped comments; not proof that none exists.
+
+- **paused playtest comments > copies only the recent 30 seconds and caps a noisy breadcrumb stream** — [src/app/playtestComments.test.ts:143](../../src/app/playtestComments.test.ts#L143)
+  - hard limits; Keep exact replay and report-retention protections unchanged?. Currentness: unverified. Case runtime: unknown.
+  - Cited ruling: none found in scoped comments; not proof that none exists.
+
 - **her records > are every 10 bpm from 100 to 200 (Ed, 2026-10-29: "full set from 100 to 200, but only every 10 bpm"); she starts with 100 and 120, the other 9 are finds** — [src/app/recordSave.test.ts:12](../../src/app/recordSave.test.ts#L12)
   - current rules; Keep equipment ownership and old-save conversion checks, including the old broom and station-name fixtures?. Currentness: unverified. Case runtime: unknown.
   - Cited ruling: file, line 1: // Her records kept (app/recordSave.ts; Ed, 2026-10-29: "Start with 100 and 120"): the starting ones always hers, finds added and / name, line 12: are every 10 bpm from 100 to 200 (Ed, 2026-10-29: "full set from 100 to 200, but only every 10 bpm"); she starts with 100 and 120, the other 9 are finds
@@ -10977,16 +10893,20 @@ Static declarations only. All classifications and currentness are provisional. C
   - current rules; Keep equipment ownership and old-save conversion checks, including the old broom and station-name fixtures?. Currentness: unverified. Case runtime: unknown.
   - Cited ruling: file, line 1: // Her records kept (app/recordSave.ts; Ed, 2026-10-29: "Start with 100 and 120"): the starting ones always hers, finds added and
 
+- **the page hooks keep both players, explicit mutation boundaries and a comment replay to the saved state** — [src/app/recordingHooks.test.ts:20](../../src/app/recordingHooks.test.ts#L20)
+  - hard limits; Keep exact replay and report-retention protections unchanged?. Currentness: unverified. Case runtime: unknown.
+  - Cited ruling: none found in scoped comments; not proof that none exists.
+
+- **a diagnostic starting-save failure cannot prevent or duplicate the original simulation step** — [src/app/recordingHooks.test.ts:35](../../src/app/recordingHooks.test.ts#L35)
+  - hard limits; Keep exact replay and report-retention protections unchanged?. Currentness: unverified. Case runtime: unknown.
+  - Cited ruling: none found in scoped comments; not proof that none exists.
+
 - **saved format contracts > requires an explicit envelope-format review when SavedNight changes** — [src/app/saveFormat.test.ts:37](../../src/app/saveFormat.test.ts#L37)
   - hard limits; Keep all snapshot, deterministic-continuation and explicit format-review protections unchanged?. Currentness: unverified. Case runtime: unknown.
   - Cited ruling: none found in scoped comments; not proof that none exists.
 
 - **saved format contracts > requires an explicit rules-format review when Game or the graph format changes** — [src/app/saveFormat.test.ts:40](../../src/app/saveFormat.test.ts#L40)
   - hard limits; Keep all snapshot, deterministic-continuation and explicit format-review protections unchanged?. Currentness: unverified. Case runtime: unknown.
-  - Cited ruling: none found in scoped comments; not proof that none exists.
-
-- **save slots > keeps borrowed progress transient and slot bytes unchanged while personal volume still saves** — [src/app/saveSlots.test.ts:7](../../src/app/saveSlots.test.ts#L7)
-  - current rules; keep pending design review. Currentness: unverified. Case runtime: unknown.
   - Cited ruling: none found in scoped comments; not proof that none exists.
 
 - **save slots > preserves all legacy progress/settings bytes in the first slot and never deletes originals** — [src/app/saveSlots.test.ts:30](../../src/app/saveSlots.test.ts#L30)
@@ -11037,12 +10957,44 @@ Static declarations only. All classifications and currentness are provisional. C
   - hard limits; Keep these slot isolation, migration and failed-write protections unchanged?. Currentness: unverified. Case runtime: unknown.
   - Cited ruling: none found in scoped comments; not proof that none exists.
 
-- **holds confirmed borrowed writes, drops them on return and enables checkpoints only after own adoption** — [src/app/visitSaves.test.ts:14](../../src/app/visitSaves.test.ts#L14)
+- **keeps an aborted preparation checkpoint and holds failed return until an own adoption succeeds** — [src/app/visitSaves.test.ts:26](../../src/app/visitSaves.test.ts#L26)
   - current rules; keep pending design review. Currentness: unverified. Case runtime: unknown.
   - Cited ruling: none found in scoped comments; not proof that none exists.
 
-- **keeps an aborted preparation checkpoint and holds failed return until an own adoption succeeds** — [src/app/visitSaves.test.ts:26](../../src/app/visitSaves.test.ts#L26)
-  - current rules; keep pending design review. Currentness: unverified. Case runtime: unknown.
+- **keeps a ten-minute paused tape exact without expanding paused frames into the crash journal** — [src/platform/inputRecording.test.ts:18](../../src/platform/inputRecording.test.ts#L18)
+  - hard limits; Keep exact replay and report-retention protections unchanged?. Currentness: unverified. Case runtime: unknown.
+  - Cited ruling: none found in scoped comments; not proof that none exists.
+
+- **records a scripted fractional-frame run, retains local aim/zoom/framing, and replays to the identical paused moment** — [src/platform/inputRecording.test.ts:52](../../src/platform/inputRecording.test.ts#L52)
+  - hard limits; Keep exact replay and report-retention protections unchanged?. Currentness: unverified. Case runtime: unknown.
+  - Cited ruling: none found in scoped comments; not proof that none exists.
+
+- **rejects divergence before a labelled checkpoint instead of using it to repair the replay** — [src/platform/inputRecording.test.ts:76](../../src/platform/inputRecording.test.ts#L76)
+  - hard limits; Keep exact replay and report-retention protections unchanged?. Currentness: unverified. Case runtime: unknown.
+  - Cited ruling: none found in scoped comments; not proof that none exists.
+
+- **rejects executable/nested controls without changing the wire default or normalizing local aim** — [src/platform/inputRecording.test.ts:82](../../src/platform/inputRecording.test.ts#L82)
+  - hard limits; Keep exact replay and report-retention protections unchanged?. Currentness: unverified. Case runtime: unknown.
+  - Cited ruling: none found in scoped comments; not proof that none exists.
+
+- **replays the intro seat ease-off and changing camera anchors without render-path world snapshots** — [src/platform/inputRecording.test.ts:87](../../src/platform/inputRecording.test.ts#L87)
+  - hard limits; Keep exact replay and report-retention protections unchanged?. Currentness: unverified. Case runtime: unknown.
+  - Cited ruling: none found in scoped comments; not proof that none exists.
+
+- **retains unchanged frames without hot-path serialization/cloning, drains bounded journal batches and exports the exact ordered stream** — [src/platform/inputRecording.test.ts:123](../../src/platform/inputRecording.test.ts#L123)
+  - hard limits; Keep exact replay and report-retention protections unchanged?. Currentness: unverified. Case runtime: unknown.
+  - Cited ruling: none found in scoped comments; not proof that none exists.
+
+- **still enforces the raw expanded byte/event cap when a long unchanged run is compact in memory** — [src/platform/inputRecording.test.ts:151](../../src/platform/inputRecording.test.ts#L151)
+  - hard limits; Keep exact replay and report-retention protections unchanged?. Currentness: unverified. Case runtime: unknown.
+  - Cited ruling: none found in scoped comments; not proof that none exists.
+
+- **keeps deferred records owned by their original game after another night can become current** — [src/platform/inputRecording.test.ts:162](../../src/platform/inputRecording.test.ts#L162)
+  - hard limits; Keep exact replay and report-retention protections unchanged?. Currentness: unverified. Case runtime: unknown.
+  - Cited ruling: none found in scoped comments; not proof that none exists.
+
+- **labels an explicitly disabled profile tape incomplete and preserves its simulation actions without journal writes** — [src/platform/inputRecording.test.ts:175](../../src/platform/inputRecording.test.ts#L175)
+  - hard limits; Keep exact replay and report-retention protections unchanged?. Currentness: unverified. Case runtime: unknown.
   - Cited ruling: none found in scoped comments; not proof that none exists.
 
 - **a whole night's snapshot > migrates older nights without mushroom state and preserves new brewing snapshots exactly** — [src/rules/nightSnapshot.test.ts:18](../../src/rules/nightSnapshot.test.ts#L18)
@@ -11070,11 +11022,11 @@ Static declarations only. All classifications and currentness are provisional. C
   - Cited ruling: none found in scoped comments; not proof that none exists.
 
 - **Saves settings tab > lists the active save with island/night/date summary and a new-save action** — [src/ui/settingsSaves.test.ts:12](../../src/ui/settingsSaves.test.ts#L12)
-  - current rules; keep pending design review. Currentness: unverified. Case runtime: unknown.
+  - hard limits; Keep these slot isolation, migration and failed-write protections unchanged?. Currentness: unverified. Case runtime: unknown.
   - Cited ruling: none found in scoped comments; not proof that none exists.
 
 - **Saves settings tab > opens new/different slots through the host and does not restart the current slot** — [src/ui/settingsSaves.test.ts:18](../../src/ui/settingsSaves.test.ts#L18)
-  - current rules; keep pending design review. Currentness: unverified. Case runtime: unknown.
+  - hard limits; Keep these slot isolation, migration and failed-write protections unchanged?. Currentness: unverified. Case runtime: unknown.
   - Cited ruling: none found in scoped comments; not proof that none exists.
 
 <a id="multiplayer"></a>
@@ -11169,6 +11121,42 @@ Static declarations only. All classifications and currentness are provisional. C
   - current rules; keep pending design review. Currentness: unverified. Case runtime: unknown.
   - Cited ruling: none found in scoped comments; not proof that none exists.
 
+- **refuses early settlement/reload if return fails or still leaves a borrowed night** — [src/app/chartDeparture.test.ts:23](../../src/app/chartDeparture.test.ts#L23)
+  - current rules; keep pending design review. Currentness: unverified. Case runtime: unknown.
+  - Cited ruling: none found in scoped comments; not proof that none exists.
+
+- **startNight (docs/plans/sail-without-reload.md B) > returns from a borrowed night without host knobs or generated-party state** — [src/app/night.test.ts:36](../../src/app/night.test.ts#L36)
+  - current rules; keep pending design review. Currentness: unverified. Case runtime: unknown.
+  - Cited ruling: none found in scoped comments; not proof that none exists.
+
+- **startNight (docs/plans/sail-without-reload.md B) > a borrowed visit returns home to the visitor's exact pre-visit stock bytes** — [src/app/night.test.ts:52](../../src/app/night.test.ts#L52)
+  - current rules; keep pending design review. Currentness: unverified. Case runtime: unknown.
+  - Cited ruling: none found in scoped comments; not proof that none exists.
+
+- **startNight (docs/plans/sail-without-reload.md B) > a borrowed night never registers stock writes or changes visitor slot bytes through timer/pagehide/cleanup** — [src/app/night.test.ts:75](../../src/app/night.test.ts#L75)
+  - current rules; keep pending design review. Currentness: unverified. Case runtime: unknown.
+  - Cited ruling: none found in scoped comments; not proof that none exists.
+
+- **requires explicit saved-night opt-in for the actual headless telephone proof URL** — [src/app/nightSave.test.ts:14](../../src/app/nightSave.test.ts#L14)
+  - current rules; keep pending design review. Currentness: unverified. Case runtime: unknown.
+  - Cited ruling: none found in scoped comments; not proof that none exists.
+
+- **a borrowed save gate drains an in-flight own write and clears only once the visit is confirmed** — [src/app/nightSave.test.ts:45](../../src/app/nightSave.test.ts#L45)
+  - current rules; keep pending design review. Currentness: unverified. Case runtime: unknown.
+  - Cited ruling: none found in scoped comments; not proof that none exists.
+
+- **save slots > keeps borrowed progress transient and slot bytes unchanged while personal volume still saves** — [src/app/saveSlots.test.ts:7](../../src/app/saveSlots.test.ts#L7)
+  - current rules; keep pending design review. Currentness: unverified. Case runtime: unknown.
+  - Cited ruling: none found in scoped comments; not proof that none exists.
+
+- **preserves solo results and exceptions but never runs a diagnostic in a live/returning borrowed night** — [src/app/soloDiagnostic.test.ts:3](../../src/app/soloDiagnostic.test.ts#L3)
+  - current rules; keep pending design review. Currentness: unverified. Case runtime: unknown.
+  - Cited ruling: none found in scoped comments; not proof that none exists.
+
+- **a guest follows the host beat without keepBeat changing it; the absent option retains solo behavior** — [src/app/sound.test.ts:17](../../src/app/sound.test.ts#L17)
+  - current rules; keep pending design review. Currentness: unverified. Case runtime: unknown.
+  - Cited ruling: none found in scoped comments; not proof that none exists.
+
 - **lists only at the phone; stepping away cancels a pending call and clears heartbeat** — [src/app/telephone.test.ts:38](../../src/app/telephone.test.ts#L38)
   - current rules; keep pending design review. Currentness: unverified. Case runtime: unknown.
   - Cited ruling: none found in scoped comments; not proof that none exists.
@@ -11226,6 +11214,18 @@ Static declarations only. All classifications and currentness are provisional. C
   - Cited ruling: none found in scoped comments; not proof that none exists.
 
 - **requires explicit telephone=1 and restores the original use after proof opt-in** — [src/app/telephoneSwitch.test.ts:28](../../src/app/telephoneSwitch.test.ts#L28)
+  - current rules; keep pending design review. Currentness: unverified. Case runtime: unknown.
+  - Cited ruling: none found in scoped comments; not proof that none exists.
+
+- **waits for cancelled late borrowed preparation before restoring own page and never confirms it** — [src/app/visitLifecycle.test.ts:5](../../src/app/visitLifecycle.test.ts#L5)
+  - current rules; keep pending design review. Currentness: unverified. Case runtime: unknown.
+  - Cited ruling: none found in scoped comments; not proof that none exists.
+
+- **holds confirmed borrowed writes, drops them on return and enables checkpoints only after own adoption** — [src/app/visitSaves.test.ts:14](../../src/app/visitSaves.test.ts#L14)
+  - current rules; keep pending design review. Currentness: unverified. Case runtime: unknown.
+  - Cited ruling: none found in scoped comments; not proof that none exists.
+
+- **keeps successful shared unlocks once in own collections after dropping borrowed writes** — [src/app/visitUnlocks.test.ts:43](../../src/app/visitUnlocks.test.ts#L43)
   - current rules; keep pending design review. Currentness: unverified. Case runtime: unknown.
   - Cited ruling: none found in scoped comments; not proof that none exists.
 
@@ -11518,6 +11518,10 @@ Static declarations only. All classifications and currentness are provisional. C
   - Cited ruling: none found in scoped comments; not proof that none exists.
 
 - **cancellation during asynchronous signing cannot restore a verified call** — [src/platform/online/telephoneTrust.test.ts:33](../../src/platform/online/telephoneTrust.test.ts#L33)
+  - current rules; keep pending design review. Currentness: unverified. Case runtime: unknown.
+  - Cited ruling: none found in scoped comments; not proof that none exists.
+
+- **creates only bounded silhouette batches from borrowed atlas textures and preserves snapshot pose/lean** — [src/render/dodgeEcho.test.ts:16](../../src/render/dodgeEcho.test.ts#L16)
   - current rules; keep pending design review. Currentness: unverified. Case runtime: unknown.
   - Cited ruling: none found in scoped comments; not proof that none exists.
 
@@ -12167,10 +12171,6 @@ Static declarations only. All classifications and currentness are provisional. C
   - Cited ruling: none found in scoped comments; not proof that none exists.
 
 - **the crown's clearing over each floor > is clear on its room's own floor and closed far from it** — [src/render/crownMask.test.ts:15](../../src/render/crownMask.test.ts#L15)
-  - current rules; keep pending design review. Currentness: unverified. Case runtime: unknown.
-  - Cited ruling: none found in scoped comments; not proof that none exists.
-
-- **creates only bounded silhouette batches from borrowed atlas textures and preserves snapshot pose/lean** — [src/render/dodgeEcho.test.ts:16](../../src/render/dodgeEcho.test.ts#L16)
   - current rules; keep pending design review. Currentness: unverified. Case runtime: unknown.
   - Cited ruling: none found in scoped comments; not proof that none exists.
 

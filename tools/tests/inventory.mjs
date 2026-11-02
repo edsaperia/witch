@@ -81,6 +81,7 @@ export function systemFor(file, name = '') {
   // must not accidentally match hat/art/audio and scatter one file across systems.
   const s = file.toLowerCase();
   if (/multiplayer|online|network|relay|authority|telephone/.test(s)) return 'multiplayer';
+  if (/\/combat\//.test(s)) return 'combat';
   if (/^tools\//.test(file)) return 'tools-ci';
   if (/save|replay|serializ|robust|migration/.test(s)) return 'saves-replay-robustness';
   if (/src\/render\//.test(s)) return 'art-rendering';
@@ -125,7 +126,8 @@ export function build(root) {
     const parsed = parseCases(source,file);
     return {file,sha256:hash(source),scope:file.endsWith('.cjs')?'supplementary CJS':'requested TS/MJS',fileRuntimeSeconds:timing.seconds[file] ?? null,runtimeSource:timing.seconds[file] == null ? null : timing._source,coverageNote:'Source declarations only: loops, factories, computed registrations and imported helper-generated cases may register additional runtime cases. File and suite citations are context, not necessarily the assertion ruling. Truncated excerpts retain a source line.',parseErrors:parsed.parseErrors,cases:parsed.cases.map(c=>{
       const {body,...rest}=c;
-      return {...rest,system:systemFor(file,c.fullName),...classify(c),currentness:'unverified: human design review required',supersessionCandidates:candidates(c,sources),caseRuntimeSeconds:null};
+      const ownerBoundary=/\b(borrowed|guest follows the host|telephone proof)\b/i.test(c.name);
+      return {...rest,system:ownerBoundary?'multiplayer':systemFor(file,c.fullName),...classify(c),currentness:'unverified: human design review required',supersessionCandidates:candidates(c,sources),caseRuntimeSeconds:null};
     })};
   });
   return {schemaVersion:1,method:'Static declarations, not executed or expanded cases. Heuristic classifications are review prompts, not Ed rulings. Existing CI file durations are historical; case durations are unknown and never apportioned.',timingSource:timing._source,files:entries};
@@ -150,6 +152,7 @@ if (process.argv[1] && path.resolve(process.argv[1])===fileURLToPath(import.meta
   const root=path.resolve(path.dirname(fileURLToPath(import.meta.url)),'../..');
   const out=path.join(root,'docs/test-audit');
   const reviews=JSON.parse(fs.readFileSync(path.join(root,'tools/tests/semantic-reviews.json'),'utf8'));
+  for(const file of fs.readdirSync(path.join(root,'tools/tests')).filter(f=>/^review-.*\.json$/.test(f)).sort())Object.assign(reviews,JSON.parse(fs.readFileSync(path.join(root,'tools/tests',file),'utf8')));
   const generated=outputs(applyReviews(build(root),reviews),reviews);
   let stale=false;
   fs.mkdirSync(out,{recursive:true});
