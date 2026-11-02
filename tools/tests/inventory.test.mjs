@@ -56,3 +56,8 @@ test('semantic review rejects missing examples and duplicate case assignments',(
   group.examples=['keep'];
   assert.throws(()=>applyReviews(data,{x:{groups:[group,group]}}),/Duplicate/);
 });
+test('finds numeric simulated outcomes without relying on survival wording',()=>{
+  assert.equal(classify({fullName:'curves on its way home',simulationContext:true,body:'run(g,60); expect(maxAway).toBeGreaterThan(70);'}).kind,'outcome stats');
+  assert.equal(classify({fullName:'guard creates a shot',simulationContext:true,body:'for(let i=0;i<100;i++) stepGame(g); expect(shots.length).toBe(3);'}).kind,'outcome stats');
+  assert.equal(classify({fullName:'circle geometry',simulationContext:false,body:'expect(radius).toBeGreaterThan(3)'}).kind,'current rules');
+});

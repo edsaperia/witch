@@ -15,8 +15,8 @@ Audit only. Any implementation follows a separate, small system PR after Ed rule
 | Kind | Declarations |
 |---|---:|
 | hard limits | 15 |
-| current rules | 470 |
-| outcome stats | 0 |
+| current rules | 461 |
+| outcome stats | 9 |
 | leftovers | 2 |
 
 These are machine guesses, not confirmed design decisions. See [all art and rendering checks cases](cases.md#art-rendering) for names, citations, recommendations and runtime limits.
@@ -24,7 +24,7 @@ These are machine guesses, not confirmed design decisions. See [all art and rend
 ## Group decisions for Ed
 
 1. Keep the safety and integrity protections. Review the provisional rule group against today's design before any changes.
-2. Review the 0 outcome-stat declarations as a group for possible nonblocking reports. No move happens before your ruling.
+2. Review the 9 outcome-stat declarations as a group for possible nonblocking reports. No move happens before your ruling.
 3. Review the 2 historical-wording declarations for compatibility purpose. Choose keep, rewrite or delete only after checking the case and a specific superseding ruling. An older date alone is insufficient.
 
 Case runtimes are unknown. Historical file timings are in the inventory; no savings estimate or new benchmark run is claimed.

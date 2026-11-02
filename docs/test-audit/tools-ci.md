@@ -16,7 +16,7 @@ Audit only. Any implementation follows a separate, small system PR after Ed rule
 |---|---:|
 | hard limits | 36 |
 | current rules | 190 |
-| outcome stats | 1 |
+| outcome stats | 2 |
 | leftovers | 1 |
 
 These are machine guesses, not confirmed design decisions. See [all tools and ci cases](cases.md#tools-ci) for names, citations, recommendations and runtime limits.
@@ -24,7 +24,7 @@ These are machine guesses, not confirmed design decisions. See [all tools and ci
 ## Group decisions for Ed
 
 1. Keep the safety and integrity protections. Review the provisional rule group against today's design before any changes.
-2. Review the 1 outcome-stat declarations as a group for possible nonblocking reports. No move happens before your ruling.
+2. Review the 2 outcome-stat declarations as a group for possible nonblocking reports. No move happens before your ruling.
 3. Review the 1 historical-wording declarations for compatibility purpose. Choose keep, rewrite or delete only after checking the case and a specific superseding ruling. An older date alone is insufficient.
 
 Case runtimes are unknown. Historical file timings are in the inventory; no savings estimate or new benchmark run is claimed.

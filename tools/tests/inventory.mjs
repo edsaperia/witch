@@ -66,7 +66,7 @@ export function parseCases(source, file) {
           return;
         }
         const line = sf.getLineAndCharacterOfPosition(n.getStart(sf)).line + 1;
-        results.push({id:`${file}:${line}`, line, name:title, suites, fullName:[...suites,title].join(' > '), parameterized:parts.includes('each') || parts.includes('for'), dynamicName:ts.isTemplateExpression(name), modifiers:parts.slice(1), citations, body:n.getText(sf)});
+        results.push({id:`${file}:${line}`, line, name:title, suites, fullName:[...suites,title].join(' > '), parameterized:parts.includes('each') || parts.includes('for'), dynamicName:ts.isTemplateExpression(name), modifiers:parts.slice(1), citations, simulationContext:/\b(stepGame|stepCreature|stepCombat|simulate|runNight|tickGame)\s*\(/.test(source), body:n.getText(sf)});
         return;
       }
     }
@@ -94,7 +94,11 @@ export function classify(c) {
   const title = c.fullName.toLowerCase();
   if (/round.?trip|determin|replay|authority|ownership|no nan|finite|teleport|crash|corrupt|budget|performance|invalid|reject|serialize|deserializ/.test(title)) return {kind:'hard limits', reason:'Safety, integrity, determinism or budget signal in the case name.', recommendation:'keep'};
   if (/(legacy|obsolete|superseded|removed rule|old design)/.test(title)) return {kind:'leftovers',reason:'Historical-rule wording; compatibility coverage may still be required.',recommendation:'review before any rewrite or deletion'};
-  if (/(surviv|win rate|wins? within|defeat|victor|average|percentile|outcome)/.test(title) && /(step|tick|simulate|generate|world|runNight|advance)/i.test(c.body)) return {kind:'outcome stats',reason:'Emergent outcome wording plus simulation signal; inspect assertions before acting.',recommendation:'consider report after Ed rules'};
+  const steps=/\b(run|runFor|runNight|stepGame|stepCreature|stepCombat|step|tick|simulate|advance|duel|battle|fight)\s*\(/i.test(c.body);
+  const aggregate=/\.toBe(?:GreaterThan|LessThan|CloseTo)|\.toHaveLength\s*\(|expect\s*\([^;\n]*(?:\.length|\b(?:mean|average|share|ratio|count|hits|shots|distance|maxAway|elapsed|survived|landed|won|wins|dead|alive|damage|hp)\b)/i.test(c.body);
+  const outcomeName=/(surviv|win rate|wins? within|defeat|victor|average|percentile|outcome|within \d+|seconds|hits|charge|momentum|hunt|dodge)/.test(title);
+  if (steps && (c.simulationContext || /\b(simulate|runNight|duel|battle)\s*\(/.test(c.body)) && (aggregate || outcomeName)) return {kind:'outcome stats',reason:'Candidate: stepped simulation plus aggregate/threshold or bounded-outcome assertion. Mixed direct-rule and safety assertions require semantic review before any move.',recommendation:'review simulation assertions; consider report after Ed rules'};
+  if (/(surviv|win rate|wins? within|defeat|victor|average|percentile|outcome)/.test(title) && /(step|tick|simulate|generate|world|runNight|advance)/i.test(c.body)) return {kind:'outcome stats',reason:'Candidate: outcome wording plus simulation signal; inspect assertions before acting.',recommendation:'consider report after Ed rules'};
   return {kind:'current rules',reason:'Provisional default; direct-rule intent and current design require review.',recommendation:'keep pending design review'};
 }
 function evidence(root) {
