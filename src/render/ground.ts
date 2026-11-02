@@ -48,6 +48,49 @@ const TYPE_SLOTS = Math.max(32, LOOKS.length); // a slot per area type and home'
 const FLOOR_ROWS = Math.ceil(TYPE_SLOTS / FLOOR_COLS);
 const FLOOR_VARIANTS = 4; // each type's floor: this many tiles side by side (art/areas.js FLOOR_VARIANTS), one picked per repeat of the tile
 
+/** The loading ground's colour for each area type (the stand-in drawn while the ground's own program compiles: Ground.loadingFallback),
+ *  in RGB: each look's floor as the ground shader's hsv() makes it from uTypeFloor's (hue, saturation, value), at the style's
+ *  saturation; the last entry for ground no area window holds (the shader's vec3(0.25, 0.45, 0.4)). Ed's "red floor" (v7114,
+ *  2026-11-02): the stand-in read the first look's HSV triple as an RGB colour, the moor's (0.95, 0.28, 0.36), a strong red. */
+export function loadingFloorColours(sat: number, looks: readonly { floor?: readonly number[] }[] = LOOKS, slots = TYPE_SLOTS): THREE.Vector3[] {
+  const rgb = ([h, s, v]: readonly number[]): THREE.Vector3 => {
+    const k = [0, 4, 2].map(o => Math.min(1, Math.max(0, Math.abs(((((h % 1) + 1) % 1) * 6 + o) % 6 - 3) - 1)));
+    const S = Math.min(1, Math.max(0, s * sat)), V = Math.min(1, Math.max(0, v));
+    return new THREE.Vector3(...k.map(c => V * (1 + (c - 1) * S)) as [number, number, number]);
+  };
+  return [...Array.from({ length: slots }, (_, i) => rgb(looks[i]?.floor ?? [0.25, 0.45, 0.4])), rgb([0.25, 0.45, 0.4])];
+}
+/** The loading ground's fragment shader: each spot in its own area's floor colour (loadingFloorColours), lit cheaply; lakes and the
+ *  coast as flat colours. */
+export const LOADING_GROUND_FRAG = `
+varying vec3 vWorld;
+${LOADING_LIGHT_GLSL}
+${AREA_GLSL}
+uniform vec3 uLoadingFloor[${TYPE_SLOTS + 1}];
+uniform vec4 uLake, uLakeBox;
+uniform sampler2D uLakes, uLakeLooks;
+uniform vec4 uBeach, uLandBox;
+uniform sampler2D uLand;
+void main() {
+  vec4 area = areaAt(vWorld.xz);
+  vec3 c = max(area.a > 0.5 ? uLoadingFloor[int(area.r * 255.0 + 0.5)] : uLoadingFloor[${TYPE_SLOTS}], vec3(0.18, 0.24, 0.15));
+  vec2 uv = (vWorld.xz - uLakeBox.xy + uLake.y) * uLakeBox.zw;
+  if (uLake.x > 0.0 && uv.x > 0.0 && uv.y > 0.0 && uv.x < 1.0 && uv.y < 1.0) {
+    float d = texture2D(uLakes, uv).r;
+    float kind = floor(texture2D(uLakeLooks, uv).r * 255.0 + 0.5);
+    if (d > 0.0) c = kind > 1.5 && kind < 2.5 ? vec3(0.8, 0.2, 0.04) : kind > 0.5 && kind < 1.5 ? vec3(0.55, 0.7, 0.8) : vec3(0.08, 0.27, 0.38);
+    else if (d > -1.5) c = vec3(0.36, 0.4, 0.3);
+  }
+  if (uBeach.x > 0.0) {
+    vec2 luv = (vWorld.xz - uLandBox.xy + uBeach.z) * uLandBox.zw, cuv = clamp(luv, vec2(0.0), vec2(1.0));
+    vec4 land = texture2D(uLand, cuv);
+    float bd = -land.r + length((luv - cuv) / uLandBox.zw);
+    if (bd > uBeach.y) c = vec3(0.09, 0.18, 0.26);
+    else if (bd > -land.g) c = vec3(0.36, 0.37, 0.39);
+  }
+  gl_FragColor = vec4(loadingLight(c, vWorld), 1.0);
+}`;
+
 // The ground's grid: GRID metres a square, out to REACH metres round the witch (past the haze's
 // far edge), its outermost ring stretched out to SKIRT metres; it follows her, snapped to its squares.
 const GRID = 4, REACH = 400, SKIRT = 2000;
@@ -814,32 +857,8 @@ export class Ground {
       if (Math.abs(P.getZ(i)) >= REACH - 0.01) P.setZ(i, Math.sign(P.getZ(i)) * SKIRT);
     }
     this.plain = mat;
-    this.loadingFallback = new THREE.ShaderMaterial({ name: 'Loading ground and lake surfaces', vertexShader: VERT, uniforms: mat.uniforms, fragmentShader: `
-varying vec3 vWorld;
-${LOADING_LIGHT_GLSL}
-uniform vec3 uTypeFloor[${TYPE_SLOTS}];
-uniform vec4 uLake, uLakeBox;
-uniform sampler2D uLakes, uLakeLooks;
-uniform vec4 uBeach, uLandBox;
-uniform sampler2D uLand;
-void main() {
-  vec3 c = max(uTypeFloor[0], vec3(0.18, 0.24, 0.15));
-  vec2 uv = (vWorld.xz - uLakeBox.xy + uLake.y) * uLakeBox.zw;
-  if (uLake.x > 0.0 && uv.x > 0.0 && uv.y > 0.0 && uv.x < 1.0 && uv.y < 1.0) {
-    float d = texture2D(uLakes, uv).r;
-    float kind = floor(texture2D(uLakeLooks, uv).r * 255.0 + 0.5);
-    if (d > 0.0) c = kind > 1.5 && kind < 2.5 ? vec3(0.8, 0.2, 0.04) : kind > 0.5 && kind < 1.5 ? vec3(0.55, 0.7, 0.8) : vec3(0.08, 0.27, 0.38);
-    else if (d > -1.5) c = vec3(0.36, 0.4, 0.3);
-  }
-  if (uBeach.x > 0.0) {
-    vec2 luv = (vWorld.xz - uLandBox.xy + uBeach.z) * uLandBox.zw, cuv = clamp(luv, vec2(0.0), vec2(1.0));
-    vec4 land = texture2D(uLand, cuv);
-    float bd = -land.r + length((luv - cuv) / uLandBox.zw);
-    if (bd > uBeach.y) c = vec3(0.09, 0.18, 0.26);
-    else if (bd > -land.g) c = vec3(0.36, 0.37, 0.39);
-  }
-  gl_FragColor = vec4(loadingLight(c, vWorld), 1.0);
-}` });
+    mat.uniforms.uLoadingFloor = { value: loadingFloorColours(st.sat) };
+    this.loadingFallback = new THREE.ShaderMaterial({ name: 'Loading ground and lake surfaces', vertexShader: VERT, uniforms: mat.uniforms, fragmentShader: LOADING_GROUND_FRAG });
     this.mesh = new THREE.Mesh(geo, mat);
     this.mesh.renderOrder = GROUND_ORDER;
     this.mesh.frustumCulled = false;
