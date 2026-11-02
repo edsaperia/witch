@@ -8,7 +8,7 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import { Input } from "./input";
 import { bindings } from "./bindings";
 const RISE_KEY = bindings.keys("game.rise")[0], RISE_PAD = bindings.padButtons("game.rise")[0];
-import { TUNING } from "../rules/tuning";
+import { TUNING, withTuning } from "../rules/tuning";
 import { newGame as fullGame, stepGame, STEP, type Controls, type Game } from "../rules/game";
 import { smallWorld } from "../test/worlds";
 const newGame = smallWorld(fullGame, "House rise controls exercise local walls, rooms and kit state, independent of distant area count.");
@@ -32,7 +32,9 @@ afterEach(() => vi.unstubAllGlobals());
 
 /** In the house mid-night, landed, off her decks, with her broom or not (rules/kit.ts). */
 function inHouse(broom = false): Game {
-  const g = newGame(123, TUNING);
+  // This suite deliberately pushes against walls before pressing rise; open platforms leave before the press.
+  const t = withTuning({ treehouse: { ...TUNING.treehouse, house: { ...TUNING.treehouse.house!, look: { ...TUNING.treehouse.house!.look!, noWalls: false } } } });
+  const g = newGame(123, t);
   g.witches[0].kit = { invites: true, broom };
   g.clock.paused = false; g.party.paused = true;
   for (let i = 0; i < 0.3 / STEP; i++) stepGame(g, { moveX: 0, moveZ: 0, toggleMode: false, zoom: 0 }, STEP); // (the controls' first frame)
