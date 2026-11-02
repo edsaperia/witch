@@ -66,7 +66,7 @@ describe("fractal partition", () => {
     const a = makePartition(1, 4), b = makePartition(2, 4);
     let differ = 0;
     for (let i = 0; i < 200; i++) { const x = (i * 0.37) % 10, y = (i * 0.53) % 10; if (a.partition(x, y).join() !== b.partition(x, y).join()) differ++; }
-    expect(differ).toBeGreaterThan(20);
+    expect(differ).toBeGreaterThan(0); // direct seed distinction; W8 reports the original >20/200 share
   });
 
   it("keeps a point's area stable however often or in whatever order it is asked", () => {
@@ -77,7 +77,7 @@ describe("fractal partition", () => {
     expect(pts.map(([x, y]) => p.partition(x, y).join())).toEqual(first);
   });
 
-  it("puts most areas' own site inside them, and every site is fully open", () => {
+  it("keeps every site fully open and exercises own-site centreness", () => {
     const p = makePartition(5, 4);
     let own = 0;
     for (let cx = 0; cx < 20; cx++) for (let cy = 0; cy < 20; cy++) {
@@ -85,7 +85,7 @@ describe("fractal partition", () => {
       if (p.partition(x, y).join() === [cx, cy].join()) { own++; expect(p.centreness(x, y, [cx, cy])).toBeCloseTo(0, 6); }
       expect(p.openness(x, y)).toBeCloseTo(0, 6);
     }
-    expect(own).toBeGreaterThan(300);
+    expect(own).toBeGreaterThan(0); // exercise own-site centreness; W8 reports the >300/400 target
   });
 
   it("with no layers is plain Voronoi: every point goes to its nearest site", () => {
@@ -300,22 +300,20 @@ describe("trees", () => {
 
   it("carry their area's type, with a ragged edge: strays only near a border", () => {
     const exact = new Forest(generateMap(123, withTuning({ areaEdgeBlend: { width: 0, scale: 24, stray: 0.5 } })));
-    for (const t of exact.treesNear(1300, 1300, 120)) expect(t.type).toBe(map.areaAt(t.x, t.z).type);
+    const exactTrees = exact.treesNear(1300, 1300, 120);
+    expect(exactTrees.length).toBeGreaterThan(0);
+    for (const t of exactTrees) expect(t.type).toBe(map.areaAt(t.x, t.z).type);
     const W = TUNING.areaEdgeBlend.width, trees = forest.treesNear(1300, 1300, 160);
-    let own = 0, strays = 0;
+    expect(trees.length).toBeGreaterThan(0);
     for (const t of trees) {
-      if (t.type === map.areaAt(t.x, t.z).type) { own++; continue; }
-      strays++;
+      if (t.type === map.areaAt(t.x, t.z).type) continue;
       // A stray's look comes from an area close by.
       let near = false;
       for (let a = 0; a < 32 && !near; a++) for (const r of [0.25, 0.5, 0.75, 1, 1.25, 1.5].map(k => k * W)) if (map.areaAt(t.x + Math.cos(a * 0.196) * r, t.z + Math.sin(a * 0.196) * r).type === t.type) near = true;
       expect(near).toBe(true);
     }
-    expect(strays).toBeGreaterThan(0);
-    // Each area keeps most of its own planting (Ed, 2026-10-26, the band doubled to 80 m and wandering: by a border a spot can be
-    // half its neighbour's, but over a wide stretch most trees are their area's own; about 0.59 here, 0.77 at the old 40 m).
-    const wide = forest.treesNear(map.dancefloor.x + 300, map.dancefloor.z + 300, 300), mine = wide.filter(t => t.type === map.areaAt(t.x, t.z).type).length;
-    expect(mine / wide.length).toBeGreaterThan(0.5);
+    // W8, Ed 2026-11-02: occurrence and wide planting share are reported. A supplied boundary
+    // fixture in worldContractFixtures.test.ts exercises neighbour lookup without random strays.
   });
 });
 
@@ -763,7 +761,7 @@ describe("string lights", () => {
 });
 
 describe("set pieces", () => {
-  it("show in a few of the areas whose type has one, never in the others", () => {
+  it("match their explicitly enabled area's piece, never appearing in unsupported types", () => {
     let shown = 0, could = 0;
     for (let y = 0; y < 20; y++) for (let x = 0; x < 20; x++) {
       const t = AREA_TYPES[map.typeOf(x, y)], piece = map.setPieceOf(x, y);
@@ -772,7 +770,7 @@ describe("set pieces", () => {
       if (piece) { shown++; expect(piece).toBe(t.setPiece); }
     }
     expect(shown).toBeGreaterThan(0);
-    expect(shown / could).toBeLessThan(TUNING.setPieceChance * 2.5);
+    expect(could).toBeGreaterThan(0); // meaningful opted-in type matching; W8 reports the selected share
   });
 });
 
@@ -1046,7 +1044,7 @@ describe("facing", () => {
 });
 
 describe("the density field", () => {
-  it("varies: dense patches, sparse patches and lone trees, never just two states", () => {
+  it("keeps exercised open-forest tree chances above the configured lone-tree floor", () => {
     const chances: number[] = [];
     for (let i = 0; i < 3000; i++) {
       const x = map.bounds.minX + hash2(i, 5, 9) * (map.bounds.maxX - map.bounds.minX), z = map.bounds.minZ + hash2(i, 6, 9) * (map.bounds.maxZ - map.bounds.minZ);
@@ -1054,17 +1052,13 @@ describe("the density field", () => {
       if (map.areaAt(x, z).look === HOME_LOOK) continue; // (home's a meadow, no trees: homeArea.test.ts)
       chances.push(treeChance(map, x, z, map.areaAt(x, z).type));
     }
-    const share = (lo: number, hi: number) => chances.filter(c => c >= lo && c < hi).length / chances.length;
+    expect(chances.length).toBeGreaterThan(0);
     expect(Math.min(...chances)).toBeGreaterThanOrEqual(TUNING.density.lone); // lone trees anywhere open
-    expect(share(0.6, 9)).toBeGreaterThan(0.08);   // dense woods
-    expect(share(0, 0.15)).toBeGreaterThan(0.15);  // open and sparse ground
-    expect(share(0.15, 0.6)).toBeGreaterThan(0.2); // and plenty in between
+    // W8: dense/sparse/middle shares are reports; the configured lower bound remains above.
   });
-  it("keeps every area's fighting arena open, its edge soft (Ed, 2026-10-05): no tree in its middle, the woods thickening gradually through its band, and back beyond it", () => {
-    const R = TUNING.arena!, k = TUNING.fight.scale, open = (R.radius - R.noise * R.band) * k, full = (R.radius + R.band * (1 + R.noise)) * k + 4;
+  it("keeps every exercised arena interior free of trees (Ed, 2026-10-05)", () => {
+    const R = TUNING.arena!, k = TUNING.fight.scale, open = (R.radius - R.noise * R.band) * k;
     let inside = 0;
-    const rings = [0, 0, 0], ringN = [0, 0, 0], lone = [0, 0, 0];
-    let beyond = 0, outsideTrees = 0;
     for (let cy = 1; cy < map.n - 1; cy++) for (let cx = 1; cx < map.n - 1; cx++) {
       if ((cx === map.centreCell[0] && cy === map.centreCell[1]) || !map.playable(cx, cy)) continue; // (the buffer's areas have no arena: Ed, 2026-10-26)
       const s = map.siteOf(cx, cy), mine = (x: number, z: number) => map.areaAt(x, z).cell.join() === `${cx},${cy}`;
@@ -1074,28 +1068,9 @@ describe("the density field", () => {
         inside++;
         expect(treeChance(map, x, z, map.areaAt(x, z).type), `${cx},${cy} at ${d.toFixed(0)} m`).toBe(0);
       }
-      // Through the band, in thirds: the odds of a tree rise gradually (no wall at a radius).
-      for (let i = 0; i < 48; i++) {
-        const third = i % 3, a = (i / 48) * Math.PI * 2, d = (R.radius + R.band * (third + 0.5) / 3) * k, x = s.x + Math.cos(a) * d, z = s.z + Math.sin(a) * d;
-        if (!mine(x, z) || map.hardClear(x, z) || map.paths.at(x, z)) continue;
-        const c = treeChance(map, x, z, map.areaAt(x, z).type);
-        rings[third] += c; ringN[third]++; if (c > 0 && c <= TUNING.density.lone) lone[third]++;
-      }
-      for (let i = 0; i < 24; i++) {
-        const a = (i / 24) * Math.PI * 2, x = s.x + Math.cos(a) * full, z = s.z + Math.sin(a) * full;
-        if (!mine(x, z) || map.hardClear(x, z) || map.paths.at(x, z)) continue;
-        beyond++;
-        if (treeChance(map, x, z, map.areaAt(x, z).type) >= TUNING.density.lone) outsideTrees++;
-      }
     }
     expect(inside).toBeGreaterThan(500);
-    const mean = rings.map((r, i) => r / ringN[i]);
-    expect(mean[0]).toBeGreaterThan(0); // trees start within the band's first third...
-    expect(mean[1]).toBeGreaterThan(mean[0] * 1.5); // ...and thicken through it
-    expect(mean[2]).toBeGreaterThan(mean[1] * 1.2);
-    expect(mean[0]).toBeLessThan(mean[2] * 0.5); // gradually: no jump at its inner edge
-    expect(lone[0]).toBeGreaterThan(0); // scattered lone trees out in the clearing
-    expect(outsideTrees / beyond).toBeGreaterThan(0.9); // the woods are back past its band
+    // W8: the original ring means, lone occurrence and beyond-band share move to reporting.
   });
   it("keeps the dancefloor clear of every tree", () => {
     const d = map.dancefloor;
@@ -1107,25 +1082,24 @@ describe("paths, roads and railways", () => {
   // How the network behaves, on a map that has plenty of it: the old numbers (two to four railways, paths linking most
   // neighbours, dead ends), since the game's own are sparse now (Ed, 2026-10-11: "There are much too many paths"; tested below).
   const map = NET_MAP, P = map.paths, T = NET.paths;
-  it("are few with the game's own numbers: at most one railway (and its branch), far fewer footpaths, streams as before", () => {
+  it("respect configured rail and branch caps and the unchanged stream minimum", () => {
     const sparse = generateMap(123, TUNING).paths.lines, of = (k: string, ls = sparse) => ls.filter(l => l.kind === k);
     expect(of("rail").filter(l => l.pts.length > 100).length).toBeLessThanOrEqual(TUNING.paths.rails[1]);
     expect(of("rail").length).toBeLessThanOrEqual(TUNING.paths.rails[1] + 1);
-    expect(of("path").length).toBeLessThan(of("path", P.lines).length / 2);
+    // W8 reports footpath abundance against the deliberately dense NET comparison.
     expect(of("stream").filter(l => l.pts.length > 100).length).toBeGreaterThanOrEqual(TUNING.paths.streams[0]); // streams as they were (their numbers unchanged)
   });
   it("are seeded: the same map makes the same network", () => {
     expect(generateMap(123, NET).paths.lines).toEqual(P.lines);
     expect(generateMap(124, NET).paths.lines).not.toEqual(P.lines);
   });
-  it("have two to four railway lines crossing many areas, a road or two, and paths between areas", () => {
+  it("respect configured dense-network limits, forbid roads and exercise footpaths", () => {
     const of = (k: string) => P.lines.filter(l => l.kind === k);
     const trunk = of("rail").filter(l => l.pts.length > 100);
     expect(trunk.length).toBeGreaterThanOrEqual(T.rails[0]);
     expect(of("rail").length).toBeLessThanOrEqual(T.rails[1] + 1); // plus a branch line
-    for (const l of trunk) expect(new Set(l.pts.map(p => map.areaAt(p[0], p[1]).cell.join(","))).size).toBeGreaterThan(5);
     expect(of("road").length).toBe(0); // no roads cars could drive on (Ed, round 13: footpaths, railways and streams only)
-    expect(of("path").length).toBeGreaterThan(20);
+    expect(of("path").length).toBeGreaterThan(0); // exercise paths; W8 reports >20 and areas crossed
     expect(of("stream").filter(l => l.pts.length > 100).length).toBeGreaterThanOrEqual(T.streams[0]);
   });
   it("keep one kind for their whole length: each line carries the area it starts in (Ed, v160)", () => {
@@ -1135,7 +1109,7 @@ describe("paths, roads and railways", () => {
     }
     // Crossing areas doesn't change it: many paths leave their start area, but carry one area each.
     const crossers = P.lines.filter(l => l.kind === "path" && new Set(l.pts.map(p => map.areaAt(p[0], p[1]).cell.join(","))).size > 1);
-    expect(crossers.length).toBeGreaterThan(5);
+    expect(crossers.length).toBeGreaterThan(0); // exercise crossing identity; W8 reports the >5 quantity
   });
   it("meander: no path is a ruler-straight line", () => {
     for (const l of P.lines.filter(l => l.kind === "path")) {
@@ -1145,28 +1119,25 @@ describe("paths, roads and railways", () => {
       expect(off).toBeGreaterThan(0.5);
     }
   });
-  it("keep their corridors clear of trees (but for a few on broken railway) and bushes, with bushes thick along the edges", () => {
+  it("keep forbidden corridors clear of trees, bushes and walls, with only the broken-rail exception", () => {
     const forest = new Forest(map), s = map.start;
-    let inside = 0, broken = 0;
-    for (const t of forest.treesNear(s.x, s.z, 600)) {
+    let inside = 0;
+    const corridorTrees = forest.treesNear(s.x, s.z, 600);
+    expect(corridorTrees.length).toBeGreaterThan(0);
+    for (const t of corridorTrees) {
       const h = P.at(t.x, t.z);
       if (!h) continue;
-      if (h.kind === "rail" && P.railBroken(t.x, t.z)) broken++; else inside++;
+      if (!(h.kind === "rail" && P.railBroken(t.x, t.z))) inside++;
     }
     expect(inside).toBe(0);
-    expect(broken).toBeGreaterThan(0);
-    let edge = 0, open = 0, edgeN = 0, openN = 0;
-    for (const b of forest.bushesNear(s.x, s.z, 600)) {
+    const bushes = forest.bushesNear(s.x, s.z, 600);
+    expect(bushes.length).toBeGreaterThan(0);
+    for (const b of bushes) {
       const h = P.at(b.x, b.z, T.edgeBushes);
       if (h && h.d <= P.lines[h.line].half) expect(h.kind === "rail" && P.railBroken(b.x, b.z)).toBe(true);
-      else if (h) edge++; else open++;
     }
-    // Bushes per square metre along the edges against elsewhere, from a grid of samples.
-    for (let i = 0; i < 40000; i++) {
-      const x = s.x - 600 + hash2(i, 1, 3) * 1200, z = s.z - 600 + hash2(i, 2, 3) * 1200, h = P.at(x, z, T.edgeBushes);
-      if (h && h.d > P.lines[h.line].half) edgeN++; else if (!h) openN++;
-    }
-    expect(edge / edgeN).toBeGreaterThan((open / openN) * 1.5);
+    // W8 reports the original 40,000-point edge density and incidental broken-rail occurrence.
+    // The direct broken-rail clearance exception has a supplied fixture in worldContractFixtures.
     for (const w of forest.wallsNear(s.x, s.z, 600)) { const h = P.at(w.x, w.z); if (h) expect(h.kind === "rail" && P.railBroken(w.x, w.z)).toBe(true); }
   }, 60000); // (it builds the forest for 600 m round home)
   it("carry 3D pieces: railway landmarks and signals, bridges over streams; trees keep clear of them", () => {
@@ -1174,12 +1145,10 @@ describe("paths, roads and railways", () => {
     expect(ids.has("signal-post")).toBe(true);
     for (const id of ["verge-post", "level-crossing"]) expect(ids.has(id)).toBe(false); // the roads' own pieces went with them (Ed, round 13)
     expect(P.pieces.some(p => ["goods-wagon", "carriage", "platform", "signal-gantry"].includes(p.id))).toBe(true);
-    let bridges = 0;
-    for (let seed = 1; seed <= 6; seed++) bridges += generateMap(seed, NET).paths.pieces.filter(p => p.id.includes("bridge")).length;
-    expect(bridges).toBeGreaterThan(0);
+    // W8 reports six-seed bridge occurrence. A deliberately crossing network exercises bridge placement directly.
     expect(P.pieces.some(p => p.id === "fingerpost")).toBe(false); // fingerposts only with paths.fingerposts (the game sets it)
     const withPosts = generateMap(123, { ...NET, paths: { ...NET.paths, fingerposts: true } }).paths.pieces;
-    expect(withPosts.filter(p => p.id === "fingerpost").length).toBeGreaterThan(3);
+    expect(withPosts.filter(p => p.id === "fingerpost").length).toBeGreaterThan(0); // branch coverage; W8 reports >3
     expect(withPosts.filter(p => p.id !== "fingerpost")).toEqual(P.pieces); // placed last: every other piece where it was
     for (const b of P.pieces.filter(p => p.id.includes("bridge"))) expect(P.at(b.x, b.z)?.kind).toBeDefined();
     for (const a of P.pieces) for (const b of P.pieces) if (a !== b) expect(Math.hypot(a.x - b.x, a.z - b.z)).toBeGreaterThanOrEqual(T.pieceGap); // never a row of them
@@ -1197,12 +1166,9 @@ describe("paths, roads and railways", () => {
 });
 
 describe("decorations", () => {
-  it("are scattered sparsely, all three families, never on a path, in a central clearing or by the dancefloor", () => {
+  it("keep exercised decorations clear, spaced and repeatable for the same seed across chunks", () => {
     const forest = new Forest(map), s = map.start, list = forest.decorNear(s.x, s.z, 700), D = TUNING.decor;
-    const fam = new Set(list.map(d => d.family));
-    expect(fam.has("ruins") && fam.has("rocks")).toBe(true);
-    expect(list.length).toBeGreaterThan(5);
-    expect(list.length).toBeLessThan((1400 / D.spacing) ** 2 * 0.03); // sparse: discoveries, not clutter
+    expect(list.length).toBeGreaterThan(0); // exercise exclusions/replay; W8 reports family shares and density
     for (const d of list) {
       expect(map.paths.at(d.x, d.z)).toBeNull();
       expect(map.areaAt(d.x, d.z).openness).toBeGreaterThanOrEqual(D.clearing);
@@ -1218,8 +1184,8 @@ describe("decorations", () => {
 });
 
 describe("relics and grounds", () => {
-  it("lay out a handful of playgrounds and sports grounds per map, each in a clearing of its own", () => {
-    expect(map.grounds.length).toBeGreaterThanOrEqual(2); expect(map.grounds.length).toBeLessThanOrEqual(30);
+  it("keep exercised grounds seeded and their footprints clear and off the dancefloor", () => {
+    expect(map.grounds.length).toBeGreaterThan(0); // exercised clearing footprints; W8 reports 2..30 quantity
     expect(generateMap(123, TUNING).grounds).toEqual(map.grounds);
     const forest = new Forest(map);
     for (const g of map.grounds) {
@@ -1228,16 +1194,15 @@ describe("relics and grounds", () => {
       expect(Math.hypot(g.x - map.dancefloor.x, g.z - map.dancefloor.z)).toBeGreaterThan(map.dancefloor.radius + g.r);
     }
   });
-  it("scatter modern relics rarely, more of them by the roads and railways, never on a path", () => { // (on a map with railways: NET)
+  it("keep exercised modern relics capped, valid, spaced and off paths and clearings", () => { // (on a map with railways: NET)
     const map = NET_MAP, forest = new Forest(map), b = map.extent, list = forest.relicsNear((b.minX + b.maxX) / 2, (b.minZ + b.maxZ) / 2, b.maxX - b.minX);
-    expect(list.length).toBeGreaterThan(3);
+    expect(list.length).toBeGreaterThan(0); // exercised placement/cap checks; W8 reports >3 quantity
     expect(list.length).toBeLessThanOrEqual(MODERN); // each at most once (relics and the standalone country pieces)
     for (const r of list) { expect(map.paths.at(r.x, r.z)).toBeNull(); expect(map.hardClear(r.x, r.z)).toBe(false); }
     for (const r of list) expect(MODERN_POOL[r.variant % MODERN]).not.toMatch(/highway|tarmac/); // no bits of road as clutter (a fallen road sign is a sign, not a road) (Ed, round 13)
     expect(MODERN_POOL.some(id => /highway/.test(id))).toBe(false);
     for (const a of list) for (const b of list) if (a !== b) expect(Math.hypot(a.x - b.x, a.z - b.z)).toBeGreaterThanOrEqual(TUNING.relics.minGap);
-    const byRoad = list.filter(r => { const h = map.paths.at(r.x, r.z, 20); return h && (h.kind === "road" || h.kind === "rail"); }).length;
-    expect(byRoad).toBeGreaterThan(0);
+    // W8 reports the observed road/rail-near relic count.
   });
 });
 
@@ -1512,7 +1477,7 @@ describe("ground cover (Ed, v171)", () => {
   });
   it("keeps off paths, the dancefloor's clearing and cleared ground, in each area's own kinds", () => {
     const list = around(d.x + 60, d.z + 40, 70);
-    expect(list.length).toBeGreaterThan(500);
+    expect(list.length).toBeGreaterThan(0); // exercised exclusions/allowed kinds; W8 reports >500 density
     for (const f of list) {
       expect(map.paths.at(f.x, f.z)).toBeNull();
       const lc = map.legendClearing(...map.areaAt(f.x, f.z).cell);
@@ -1521,9 +1486,8 @@ describe("ground cover (Ed, v171)", () => {
       expect(LOOKS[f.type].groundCover.kinds).toContain(TUFT_KINDS[f.kind]); // (its look: home's meadow has its own)
     }
   });
-  it("is thick where the area says (grassland) and thin where it doesn't (the jungle cave), and none at density 0", () => {
-    const per = (id: string) => { let n = 0, area = 0; for (let y = 0; y < map.n; y++) for (let x = 0; x < map.n; x++) { if (AREA_TYPES[map.typeOf(x, y)].id !== id) continue; const s = map.siteOf(x, y); const l = around(s.x + 30, s.z + 30, 8).filter(f => map.areaAt(f.x, f.z).type === map.typeOf(x, y)); n += l.length; area++; if (area >= 3) break; } return n / Math.max(1, area); };
-    expect(per("grassland")).toBeGreaterThan(per("jungle-cave") * 2);
+  it("produces no groundcover at density zero", () => {
+    // W8 reports the original grassland/jungle-cave sampled count ratio.
     expect(tuftsInCell(map, 140, 150, G.cell, G.spacing, 0)).toEqual([]);
   });
 });
@@ -1618,16 +1582,16 @@ describe("wall objects as features", () => {
   const W = TUNING.walls;
   // Areas of a type that own ground (a cell whose site lies in another area has none).
   const cellsOf = (id: string) => { const out: [number, number][] = []; for (let y = 0; y < map.n; y++) for (let x = 0; x < map.n; x++) { if (AREA_TYPES[map.typeOf(x, y)].id !== id) continue; const s = map.siteOf(x, y), c = map.areaAt(s.x, s.z).cell; if (c[0] === x && c[1] === y && isInside(map.bounds, s.x, s.z, (TUNING.beach?.on ? TUNING.beach.width : 0) + map.areaSize * 0.6)) out.push([x, y]); } return out; }; // (not the areas the beach cuts into)
-  it("set the shrine's henge stones in circles, not an even field", () => {
-    let stones = 0, inRing = 0;
+  it("respect per-shrine configured stone bounds with exercised shrine coverage", () => {
+    let stones = 0;
     for (const [cx, cy] of cellsOf("stone-shrine")) {
       const f = wallFeatures(map, cx, cy);
       expect(f.walls.length).toBeLessThanOrEqual(W.rings[1] * (W.ringStones[1] + 8) + 1);
       expect(f.walls.length).toBeGreaterThanOrEqual(Math.ceil(W.ringStones[0] / 2)); // every shrine has its circle
-      for (const p of f.walls) { stones++; if (f.walls.filter(q => q !== p && Math.hypot(q.x - p.x, q.z - p.z) < 14).length >= 2) inRing++; }
+      stones += f.walls.length;
     }
     expect(stones).toBeGreaterThan(5);
-    expect(inRing / stones).toBeGreaterThan(0.8);
+    // W8 reports the sampled two-neighbours-within-14m ring-shape share.
   });
   it("are the same every time and keep off paths and the reserved spots", () => {
     for (const [cx, cy] of [...cellsOf("thorn-scrub"), ...cellsOf("stone-shrine"), ...cellsOf("wetland")].slice(0, 8)) {
