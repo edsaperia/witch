@@ -100,24 +100,29 @@ it('MP-D minimal regression: active guest transport reports a blackholed downlin
   ws.open(); ws.receive({ type: 'joined', player: 1 });
   expect(relay.sendReady()).toBe(true); ws.receive({ type: 'ready-accepted' }); expect(relay.sendActive()).toBe(true);
   // Upstream sends succeed, but no server message/error/close reaches this endpoint again.
-  await vi.advanceTimersByTimeAsync(4999); expect(trouble).not.toHaveBeenCalled(); expect(failed).not.toHaveBeenCalled();
-  await vi.advanceTimersByTimeAsync(1); expect(trouble).toHaveBeenLastCalledWith(true); expect(failed).not.toHaveBeenCalled();
-  await vi.advanceTimersByTimeAsync(9999); expect(closed.mock.calls.length + failed.mock.calls.length).toBe(0);
+  await vi.advanceTimersByTimeAsync(1999); expect(trouble).not.toHaveBeenCalled(); expect(failed).not.toHaveBeenCalled();
+  await vi.advanceTimersByTimeAsync(1); expect(trouble).toHaveBeenLastCalledWith(true, 18000); expect(failed).not.toHaveBeenCalled();
+  await vi.advanceTimersByTimeAsync(17999); expect(closed.mock.calls.length + failed.mock.calls.length).toBe(0);
   await vi.advanceTimersByTimeAsync(1);
   expect(ws.sent.filter(m => m.type === 'heartbeat').length).toBeGreaterThan(0);
-  expect(closed.mock.calls.length + failed.mock.calls.length).toBeGreaterThan(0);
+  expect(closed.mock.calls.length + failed.mock.calls.length).toBe(1);
+  expect(failed).toHaveBeenCalledWith(expect.objectContaining({ message: 'Connection lost' }));
 });
 
-it('a blackholed active call warns without ending at5s and returns an admitted guest fresh at15s once', async () => {
+it('a blackholed active call warns before ending and returns an admitted guest fresh at20s once', async () => {
   const memory = memoryVisitStorage(), checkpoint = checkpointFixture(), nights = borrowedNightSaves(checkpoint.store);
   const slots = new SaveSlots(memory.storage), saves = visitSaves(slots, nights), own = { seed: 777 }, borrowed = { seed: 123 } as Game;
   let returned = Promise.resolve(); const adoptOwn = vi.fn(async (_own: typeof own, fresh: boolean) => { expect(fresh).toBe(true); });
   const life = visitLifecycle({ saves, own: () => own, adoptBorrowed: async () => {}, adoptOwn, playing() {} });
-  const f = await phoneFixture(async (_role, connection, _peer, signal) => { await life.prepare(borrowed, signal, () => {}); await life.synchronized(borrowed); connection.sendActive(); }, vi.fn(() => { returned = life.end(); }));
+  let activeAt = 0;
+  const f = await phoneFixture(async (_role, connection, _peer, signal) => { await life.prepare(borrowed, signal, () => {}); await life.synchronized(borrowed); activeAt = Date.now(); connection.sendActive(); }, vi.fn(() => { returned = life.end(); }));
   await f.join(); await vi.waitFor(() => expect(f.phone.state.status).toBe('connected'));
-  await vi.advanceTimersByTimeAsync(5000); expect(f.phone.state.status).toBe('connected'); expect(f.phone.state.detail).toBe('Connection trouble…'); expect(f.departed).not.toHaveBeenCalled();
-  await vi.advanceTimersByTimeAsync(10000); await returned;
+  await vi.advanceTimersByTimeAsync(2000); expect(f.phone.state.status).toBe('connected'); expect(f.phone.state.detail).toBe('Attempting to reconnect…'); expect(f.departed).not.toHaveBeenCalled();
+  // vi.waitFor above may advance fake time while admission resolves; use the actual activation origin.
+  await vi.advanceTimersByTimeAsync(activeAt + 19999 - Date.now()); expect(f.departed).not.toHaveBeenCalled(); expect(adoptOwn).not.toHaveBeenCalled();
+  await vi.advanceTimersByTimeAsync(1); await returned;
   expect(f.phone.state.status).toBe('error'); expect(f.departed).toHaveBeenCalledOnce(); expect(adoptOwn).toHaveBeenCalledOnce();
+  expect(f.phone.state.detail).toBe('Connection lost');
   expect(slots.visiting).toBe(false); expect(nights.suspended).toBe(false); expect(checkpoint.writes).toEqual([]);
   await vi.advanceTimersByTimeAsync(30000); expect(f.departed).toHaveBeenCalledOnce(); expect(vi.getTimerCount()).toBe(0);
 });
