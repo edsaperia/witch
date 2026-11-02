@@ -1602,15 +1602,15 @@ Keep geometry and sight clearance, supported whole/gapped canopy, find validity/
 
 ## invites-party: review provenance
 
-Read-only review of the 152 assigned tests in25 files at 9f045ebca, report 6566171808. Rebucketed neighboring cases are not silently approved.
+Read-only review of the 152 assigned tests in25 files at 9f045ebca, report 6566171808. Rebucketed neighboring cases are not silently approved. Second remaining-manifest review 6566767328 at 73741aa8: all 134 source declarations accounted for, 7 proposed, 116 kept and 11 combat-owner-only. Zero overlap and zero unread. Final question membership folded into IP1/IP2/IP3; IP4/IP5 are reviewer report labels, not additional questions.
 
 <a id="ip1"></a>
 
 ## IP1: Observed motion and occurrence thresholds
 
-outcome stats; 9 tests; files take ~124 s.
+outcome stats; 11 tests; files take ~208 s.
 
-Nine tests pin loaded movement/climb ratios, route drift, treetop swoop frequency, sigil occupancy share, partner arrival, observed poses and the retained noisy picker’s excess crossings. These are outcome-dominated measurements; direct boundaries and ownership must remain separately protected.
+Nine tests pin loaded movement/climb ratios, route drift, treetop swoop frequency, sigil occupancy share, partner arrival, observed poses and the retained noisy picker’s excess crossings. These are outcome-dominated measurements; direct boundaries and ownership must remain separately protected. Second review adds two outcome-only docking/bot-success deadline measurements. Neither has an independent integrity assertion to retain; controlled pickup/cast/scatter contracts remain elsewhere. Report 6566767328.
 
 - [src/rules/leashWeight.test.ts:75](../../src/rules/leashWeight.test.ts#L75): loaded, she's slower moving away from the pull, not toward it or across it much, and drifts a little toward it
 - [src/rules/leashWeight.test.ts:84](../../src/rules/leashWeight.test.ts#L84): rises slower with load
@@ -1619,16 +1619,18 @@ Nine tests pin loaded movement/climb ratios, route drift, treetop swoop frequenc
 - [src/rules/partyWitches.test.ts:45](../../src/rules/partyWitches.test.ts#L45): a partner stands beside the one who leads
 - [src/rules/partyWitches.test.ts:76](../../src/rules/partyWitches.test.ts#L76): the twirl and the broom limbo: partners do the partner's pose, and a third shuffles under the bar
 - [src/rules/partyWitches.test.ts:112](../../src/rules/partyWitches.test.ts#L112): swoops up over the treetops and down again, much more often while a player's up there
+- [src/rules/pickup.test.ts:81](../../src/rules/pickup.test.ts#L81): pulls from any side (Ed, 2026-10-12): a rune near her comes to her feet from north, south, east or west, round a follower in the way
 - [src/rules/sigilAvoid.test.ts:34](../../src/rules/sigilAvoid.test.ts#L34): dancers and idlers near a cluster of placed sigils end up off them
 - [src/rules/sigilAvoid.test.ts:51](../../src/rules/sigilAvoid.test.ts#L51): parked ones roaming round their sigil keep off it and its neighbours
+- [src/rules/stoneStacks.test.ts:397](../../src/rules/stoneStacks.test.ts#L397): the skilled bot converts a stone by casting it, then gathers its loose sigils (seed 11, the 10-area home)
 
 <a id="ip2"></a>
 
 ## IP2: Mixed party, spread and route statistics
 
-outcome stats; 16 tests; files take ~142 s.
+outcome stats; 21 tests; files take ~358 s.
 
-Sixteen mixed tests combine finite-sample extrema, density, activity, route diversity and arrival observations with direct rules. Preserve roster membership, angular bounds/replay, path/floor/seat exclusions, removed-piece absence, caps, deterministic guest places, reciprocal pairs, configured height/40 m bounds, finite pulse lifecycle, crossing separation and unoccupied destinations.
+Sixteen mixed tests combine finite-sample extrema, density, activity, route diversity and arrival observations with direct rules. Preserve roster membership, angular bounds/replay, path/floor/seat exclusions, removed-piece absence, caps, deterministic guest places, reciprocal pairs, configured height/40 m bounds, finite pulse lifecycle, crossing separation and unoccupied destinations. Two outcome-only declarations: pickup:81 measures docking by a 12-second deadline; stoneStacks:397 requires bot casting/stack success within 90 seconds. Neither contains a separate integrity assertion to retain. Five mixed declarations: pickup:63 retains rune/pickup-radius ordering, controlled in-range pickup and leash state, while six-second convergence reports; stoneStacks:219 retains repeatability while sampled shape variation reports; rules:619 retains fresh adjacent choices, forecast and wave identity while sampled noisy-picker preference reports; runestones:23 retains same/different-seed dealing while finite-sample flip variety reports. rules:641 retains formula-derived arrival order, monotone activation, all speakers, scheduling and pause shifts; fixed path length 195, 8–9.5-second first arrival and midpoint speaker-count pins need reporting or geometry-derived checks. Its older roughly-three-second comment and DECISION FOR ED remain unresolved against the north-west house geometry; no replacement timing ruling was found. Exact assertion dispositions: report 6566767328.
 
 - [src/rules/floorSigils.test.ts:12](../../src/rules/floorSigils.test.ts#L12): never picks an off-island kind's shape, whatever has the party, and does pick the World Tree
 - [src/rules/invitesAim.test.ts:30](../../src/rules/invitesAim.test.ts#L30): strays each letter within inaccuracy degrees, both ways, and the same every time
@@ -1645,17 +1647,27 @@ Sixteen mixed tests combine finite-sample extrema, density, activity, route dive
 - [src/rules/partyWitches.test.ts:82](../../src/rules/partyWitches.test.ts#L82): wanders within 40 m of the floor's middle, mildly preferring it (Ed, 2026-10-06)
 - [src/rules/partyWitches.test.ts:102](../../src/rules/partyWitches.test.ts#L102): never drinks, rests, chats or holds hands on the dancefloor itself
 - [src/rules/partyWitches.test.ts:124](../../src/rules/partyWitches.test.ts#L124): swoops to random heights, lower hops and soaring well over the treetops
+- [src/rules/pickup.test.ts:63](../../src/rules/pickup.test.ts#L63): forgiving (Ed's playtest, 2026-10-06): E picks a rune up from further than her own sigils, and a rune near her comes to her
+- [src/rules/rules.test.ts:619](../../src/rules/rules.test.ts#L619): wakes exactly one area a wave, the one chosen in advance, always bordering the party (no islands), spreading away from the last (the noisy picker)
+- [src/rules/rules.test.ts:641](../../src/rules/rules.test.ts#L641): boots the home speakers up first, one by one, at the boot's own speed, then the pulse sets off for the first wave (Ed, 2026-10-04; the first speaker about 3 s off the decks, 2026-10-06; the pulse's speed, 2026-10-09; the boot's own, 2026-10-18)
+- [src/rules/runestones.test.ts:23](../../src/rules/runestones.test.ts#L23): is the seed's own, and mirrors some
 - [src/rules/sigilAvoid.test.ts:61](../../src/rules/sigilAvoid.test.ts#L61): one resting on a sigil moves on
+- [src/rules/stoneStacks.test.ts:219](../../src/rules/stoneStacks.test.ts#L219): grows the great stumps' cuts irregular (runeMarkers.stump.irregular; Ed, 2026-10-29: "can they be more irregular?"), each its own
 
 <a id="ip3"></a>
 
 ## IP3: Invitation, phase and route contracts
 
-current rules; 127 tests; files take ~388 s.
+current rules; 243 tests; files take ~744 s.
 
-Direct hit counts use constructed eligible targets, not emergent battles. Phase/state/identity sweeps prevent vacuous passes. Long pulse audits check EVERY step for monotone bounded fronts and exact wave coupling; curveWork is a real planning budget. Old modes remain explicit comparisons.
+Direct hit counts use constructed eligible targets, not emergent battles. Phase/state/identity sweeps prevent vacuous passes. Long pulse audits check EVERY step for monotone bounded fronts and exact wave coupling; curveWork is a real planning budget. Old modes remain explicit comparisons. Keep eligibility, personal runes, pickup priority/delay, per-step no-teleport/leash bounds, actor/bed isolation, current letters, wave identity/forecast, analytical pulse/intercept, pause, once-only activation, stack/cycle geometry, balanced dealing, explicit placement/cardinality/uniqueness and deterministic choices. Long loops provide direct safety/branch coverage. placement:14 explicitly enables setPieceChance 0.25 and older scenery families; its minimum coverage avoids a vacuous compatibility fixture. Older grid, cast-off, noisy-picker, proximity-talk and injected carried-flask states are explicitly selected, not current-default demands. Report 6566767328.
 
 - [src/partyGearSize.test.ts:8](../../src/partyGearSize.test.ts#L8): %s party accessories keep the naked body scale
+- [src/rules/alarms.test.ts:14](../../src/rules/alarms.test.ts#L14): starts on the first blow, follows its health down, and counts a frame's blows once however often it's drawn
+- [src/rules/alarms.test.ts:25](../../src/rules/alarms.test.ts#L25): goes a few seconds after the blows stop, and a new attack after that starts again
+- [src/rules/alarms.test.ts:34](../../src/rules/alarms.test.ts#L34): keeps a fallen one for its fall, at no health, then lets it go
+- [src/rules/alarms.test.ts:45](../../src/rules/alarms.test.ts#L45): shows one per soundsystem under attack, the most recently hit first, up to a few
+- [src/rules/alarms.test.ts:54](../../src/rules/alarms.test.ts#L54): gives the debug blows as real soundHit events on the farthest standing ones, never felling one (mended at the floor)
 - [src/rules/asleepBeforeParty.test.ts:51](../../src/rules/asleepBeforeParty.test.ts#L51): every creature asleep in its own area, as after a loss, the legends too
 - [src/rules/asleepBeforeParty.test.ts:68](../../src/rules/asleepBeforeParty.test.ts#L68): out of the house she can't invite them, and nothing attacks her, as after a loss
 - [src/rules/asleepBeforeParty.test.ts:83](../../src/rules/asleepBeforeParty.test.ts#L83): tonight's find isn't there yet: E at its trunk does nothing, as after a loss
@@ -1664,9 +1676,38 @@ Direct hit counts use constructed eligible targets, not emergent battles. Phase/
 - [src/rules/asleepBeforeParty.test.ts:131](../../src/rules/asleepBeforeParty.test.ts#L131): no relics before the party (Ed, 2026-10-26: "Relics, like finds, only appear once the party starts"); out once it's cast
 - [src/rules/asleepBeforeParty.test.ts:147](../../src/rules/asleepBeforeParty.test.ts#L147): the night sounds as after a loss before the party (Ed, 2026-10-26, Q-c), easing out as it's cast; a night that never waited has none
 - [src/rules/asleepBeforeParty.test.ts:161](../../src/rules/asleepBeforeParty.test.ts#L161): a night that never waits for the spell (the tools, the bots) is as before: awake from the start
+- [src/rules/bootRing.test.ts:21](../../src/rules/bootRing.test.ts#L21): goes round clockwise from the top: the first stone just east of north, then east, south, west
+- [src/rules/bootRing.test.ts:27](../../src/rules/bootRing.test.ts#L27): starts at the treehouse's front and comes down on to the ring along it, just past its top, before the first stone
+- [src/rules/bootRing.test.ts:34](../../src/rules/bootRing.test.ts#L34): moves nothing before the party spell
+- [src/rules/bootRing.test.ts:40](../../src/rules/bootRing.test.ts#L40): draws the line at reveal (3) times the pulse until the ring is whole
+- [src/rules/bootRing.test.ts:45](../../src/rules/bootRing.test.ts#L45): waits at the treehouse after the cast until she leaves her decks
+- [src/rules/bootRing.test.ts:50](../../src/rules/bootRing.test.ts#L50): runs at the pulse's speed from when she leaves her decks, turning the first stone as it gets there
+- [src/rules/bootRing.test.ts:58](../../src/rules/bootRing.test.ts#L58): turns each stone into a speaker as the pulse reaches it, in order
+- [src/rules/bootRing.test.ts:68](../../src/rules/bootRing.test.ts#L68): turns the 12th stone as the pulse reaches it, and ends the boot as it comes round to where it came on to the ring
+- [src/rules/bootRing.test.ts:79](../../src/rules/bootRing.test.ts#L79): holds the party until it's cast and she leaves her decks, then the boot runs at the pulse's speed and the wave's pulse sets off after it
+- [src/rules/bootRing.test.ts:106](../../src/rules/bootRing.test.ts#L106): the first line's way out starts where the boot's lap ends, runs on round the ring's circle and leaves it from a point on it
+- [src/rules/clear.test.ts:137](../../src/rules/clear.test.ts#L137): leaves the pulse, its link, the line's front and every stone's reach time as they were
+- [src/rules/clear.test.ts:151](../../src/rules/clear.test.ts#L151): counts its stone reached when its wave comes, at the wave's time, in the route's order
+- [src/rules/clear.test.ts:164](../../src/rules/clear.test.ts#L164): raises its soundsystem at once, its babies (its circle's too) happy and dancing, its stone reached, no wave spent
+- [src/rules/clear.test.ts:180](../../src/rules/clear.test.ts#L180): a wave at a stone already playing changes nothing in the rules: no enraging, no second soundsystem; it celebrates
+- [src/rules/clear.test.ts:199](../../src/rules/clear.test.ts#L199): a wave still wakes a stone not yet cleared, as ever; and an early soundsystem lost is skipped quietly by its wave
+- [src/rules/clear.test.ts:220](../../src/rules/clear.test.ts#L220): clears no area while any of its own wild (or enraged) creatures is about; its legend and circle baby don't count
+- [src/rules/clear.test.ts:233](../../src/rules/clear.test.ts#L233): babies never hold it (Ed, 2026-10-07: 'Wild babies don't count'): with only its wild babies left it transforms, and they join the party
+- [src/rules/clear.test.ts:245](../../src/rules/clear.test.ts#L245): its wave transforming it uncleared, its wild babies join the party too (Ed, 2026-10-07: 'Wild babies become party babies when the pulse transforms an uncleared area'); its young and adults besiege
+- [src/rules/clear.test.ts:258](../../src/rules/clear.test.ts#L258): plays the same from the same seed
+- [src/rules/clear.test.ts:265](../../src/rules/clear.test.ts#L265): lists the area's own still holding it, the area she's in if it can still be cleared, and says so in words
+- [src/rules/clear.test.ts:287](../../src/rules/clear.test.ts#L287): a sleeper holds its area till she wakes it, landing in it (what Ed met), or with a 💌, which it now takes (Ed, 2026-10-11: "Letters wake them"; lettersWake.test.ts)
+- [src/rules/clear.test.ts:305](../../src/rules/clear.test.ts#L305): a visitor standing in a cleared area doesn't block it, isn't counted, and isn't touched when its stone transforms; a native wandered off still holds it
+- [src/rules/fireworks.test.ts:5](../../src/rules/fireworks.test.ts#L5): is the same for the same event, and different elsewhere
+- [src/rules/fireworks.test.ts:9](../../src/rules/fireworks.test.ts#L9): keeps to its knobs: the count, the time, the heights, the drift, the finale last
+- [src/rules/fireworks.test.ts:26](../../src/rules/fireworks.test.ts#L26): is off with fireworks.on false
 - [src/rules/floorSigils.test.ts:24](../../src/rules/floorSigils.test.ts#L24): takes a game's kinds from its island's roster, not from home's own cell, and the floor keeps to them
 - [src/rules/floorSigils.test.ts:34](../../src/rules/floorSigils.test.ts#L34): on a map with no roster, takes the kinds of its playable areas, home's own cell left out
 - [src/rules/floorSigils.test.ts:40](../../src/rules/floorSigils.test.ts#L40): writes the island's own sigil through the boot: a kind's island its kind's, home's the World Tree
+- [src/rules/guestWake.test.ts:11](../../src/rules/guestWake.test.ts#L11): looks up stable guest-room beds and doors without changing room access
+- [src/rules/guestWake.test.ts:20](../../src/rules/guestWake.test.ts#L20): routes guest alarm, hold and stretch to her own bed without changing host or equipment
+- [src/rules/guestWake.test.ts:40](../../src/rules/guestWake.test.ts#L40): keeps explicit host-room routing equivalent to the unchanged host default
+- [src/rules/guestWake.test.ts:52](../../src/rules/guestWake.test.ts#L52): rejects unknown rooms and mismatched player targets without changing state
 - [src/rules/hexSigils.test.ts:26](../../src/rules/hexSigils.test.ts#L26): are on: 6 m between neighbouring cells with the rank sigils (leash.ranks.hex; 4 before them, ?sigils=old)
 - [src/rules/hexSigils.test.ts:31](../../src/rules/hexSigils.test.ts#L31): the grid: every point snaps to the nearest cell's middle, and neighbours are size apart
 - [src/rules/hexSigils.test.ts:42](../../src/rules/hexSigils.test.ts#L42): put down, a sigil sits in the middle of the cell nearest her; pressed there again, it's picked up (no fizzling)
@@ -1697,6 +1738,8 @@ Direct hit counts use constructed eligible targets, not emergent battles. Phase/
 - [src/rules/leashWeight.test.ts:46](../../src/rules/leashWeight.test.ts#L46): weighs adults over babies, and the species' strength
 - [src/rules/leashWeight.test.ts:51](../../src/rules/leashWeight.test.ts#L51): only her stack weighs (placed sigils don't), and the first few weigh nothing
 - [src/rules/leashWeight.test.ts:66](../../src/rules/leashWeight.test.ts#L66): on the ground she's stronger: an adult's weight more is free there than in the treetops (Ed, 2026-10-09)
+- [src/rules/lettersWake.test.ts:32](../../src/rules/lettersWake.test.ts#L32): a 💌 from the next area over rouses a napper and counts on its meter
+- [src/rules/lettersWake.test.ts:46](../../src/rules/lettersWake.test.ts#L46): one asleep for good (the party's over: no nap's end) still lets them by
 - [src/rules/leyPulseAudit.test.ts:50](../../src/rules/leyPulseAudit.test.ts#L50): wave by wave: from the last wave's stone to the next's, setting off as each wave lands, never past the front
 - [src/rules/leyPulseAudit.test.ts:63](../../src/rules/leyPulseAudit.test.ts#L63): an area cleared early: the pulse, the line and the beacons keep their pace (#565); its wave reaches it as ever
 - [src/rules/leyPulseAudit.test.ts:77](../../src/rules/leyPulseAudit.test.ts#L77): a soundsystem lost: its stone stays on the line, reached when its wave came; the line isn't redrawn and the pulse stays on its link
@@ -1736,6 +1779,8 @@ Direct hit counts use constructed eligible targets, not emergent battles. Phase/
 - [src/rules/leyroute.test.ts:55](../../src/rules/leyroute.test.ts#L55): plans quickly on every seed: the curves' untangling kept within its budget (the oak's seed 4 once took 25 s)
 - [src/rules/leyroute.test.ts:70](../../src/rules/leyroute.test.ts#L70): (the rules themselves: too many, drawn ahead of the pulse, too close together)
 - [src/rules/leyroute.test.ts:94](../../src/rules/leyroute.test.ts#L94): is the spiral before untangling and crossings (spiralOrder)
+- [src/rules/orbit.test.ts:9](../../src/rules/orbit.test.ts#L9): drain at the same rate and delay, newest first, whichever kind
+- [src/rules/orbit.test.ts:22](../../src/rules/orbit.test.ts#L22): squares with an affection set straight on it: its newest shed, or the rest 💌s
 - [src/rules/partyDressing.test.ts:86](../../src/rules/partyDressing.test.ts#L86): partyObjects.exclude still leaves a piece out (Ed, v271: the LED cube's, empty since the cube was cut)
 - [src/rules/partyDressing.test.ts:94](../../src/rules/partyDressing.test.ts#L94): the prop generator's party pieces (gen-*) only under partyObjects.generated, in place of the ones they replace
 - [src/rules/partyGuests.test.ts:22](../../src/rules/partyGuests.test.ts#L22): finds each area's party places among its own decorations, inside the area
@@ -1763,10 +1808,63 @@ Direct hit counts use constructed eligible targets, not emergent battles. Phase/
 - [src/rules/partyspell.test.ts:39](../../src/rules/partyspell.test.ts#L39): starts the clock and the boot when pressed, and lets her move once the cast and her routine are done
 - [src/rules/partyspell.test.ts:71](../../src/rules/partyspell.test.ts#L71): is cast by her spell key too, which then isn't the boost
 - [src/rules/partyspell.test.ts:79](../../src/rules/partyspell.test.ts#L79): leaves a game without it (the tools, the tests) as before: she moves at once
+- [src/rules/pickup.test.ts:42](../../src/rules/pickup.test.ts#L42): full ring: happy, its rune south of it; E within reach leashes it at the bottom of her stack, as a pick-up
+- [src/rules/pickup.test.ts:98](../../src/rules/pickup.test.ts#L98): 💌s no longer fill a second meter: a happy creature isn't invitable
+- [src/rules/pickup.test.ts:113](../../src/rules/pickup.test.ts#L113): picks up her hat first, then a placed sigil of hers, then the nearest happy creature's rune
+- [src/rules/pickup.test.ts:138](../../src/rules/pickup.test.ts#L138): happy legends and babies carry no personal rune (Ed, 2026-10-31)
+- [src/rules/pickup.test.ts:151](../../src/rules/pickup.test.ts#L151): pickupDelay holds the rune back for that long after the hearts
+- [src/rules/placement.test.ts:14](../../src/rules/placement.test.ts#L14): `no set piece's, decoration's, relic's or ground's footprint touches a soundsystem, the dancefloor, the treehouse or a set piece (seed ${seed})`
+- [src/rules/placement.test.ts:52](../../src/rules/placement.test.ts#L52): soundsystems stand in their own area, and trees keep clear of them
 - [src/rules/pulseSpeed.test.ts:26](../../src/rules/pulseSpeed.test.ts#L26): is 1 m/s (Ed, 2026-10-18), and the boot runs its 195 m path at its own 4 m/s: about 49 s, whatever the waves' speed
 - [src/rules/pulseSpeed.test.ts:37](../../src/rules/pulseSpeed.test.ts#L37): runs pulseSpeed metres a second along the route at the base tempo, and pulseSpeed times the tempo's rate after a knockdown's BPM
 - [src/rules/pulseSpeed.test.ts:48](../../src/rules/pulseSpeed.test.ts#L48): lands each wave as the pulse reaches its stone: the gap its link's length over the speed
 - [src/rules/pulseSpeed.test.ts:58](../../src/rules/pulseSpeed.test.ts#L58): set to 0 on the pause page mid-night, holds the pulse where it is (no waves, nothing NaN), and moves on when set again
+- [src/rules/rainbow.test.ts:16](../../src/rules/rainbow.test.ts#L16): sets off from the early-cleared soundsystem's own stone, and only from an early clear
+- [src/rules/rainbow.test.ts:31](../../src/rules/rainbow.test.ts#L31): twice as fast as before, three times as long
+- [src/rules/rainbow.test.ts:37](../../src/rules/rainbow.test.ts#L37): runs both ways: on to the route's end, and back till it meets the spark
+- [src/rules/rainbow.test.ts:54](../../src/rules/rainbow.test.ts#L54): follows the route's own line, and keeps at most max at once
+- [src/rules/relics.test.ts:19](../../src/rules/relics.test.ts#L19): one of each kind, one just inside the home area's edge, the rest out in the map, every pair minGap apart
+- [src/rules/relics.test.ts:50](../../src/rules/relics.test.ts#L50): are drunk by standing on their sigil and pressing the button (Ed, 2026-10-18): every animal following her an adult at once; not from beside the flask itself, and nothing with no one to grow
+- [src/rules/relics.test.ts:74](../../src/rules/relics.test.ts#L74): one per relics.perAreas areas on the islands (Ed, 2026-10-11): 1 on 10, 2 on 20, 5 on 50, 6 on 64, no kind twice
+- [src/rules/relics.test.ts:83](../../src/rules/relics.test.ts#L83): has twelve kinds: the six bottles and their mirror images (Ed, 2026-10-11)
+- [src/rules/relics.test.ts:89](../../src/rules/relics.test.ts#L89): come in every bottle, mirrored or not, in every colour (Ed, 2026-10-11): 72 kinds, 36 looks; a bottle in its own glass written bare
+- [src/rules/relics.test.ts:102](../../src/rules/relics.test.ts#L102): lists the colours in the bottles' order, each its own bottle's glass (art/partyRelics.js)
+- [src/rules/relics.test.ts:108](../../src/rules/relics.test.ts#L108): never lays a bottle and its mirror image in the same colour on one map (Ed, 2026-10-11), on 30 seeds of each size
+- [src/rules/relics.test.ts:117](../../src/rules/relics.test.ts#L117): are the same for the same seed
+- [src/rules/rules.test.ts:614](../../src/rules/rules.test.ts#L614): starts with only home partified
+- [src/rules/rules.test.ts:662](../../src/rules/rules.test.ts#L662): waits for her to get up from the decks: the first speaker about 3 s after her first step, the boot at its own speed (Ed, 2026-10-09; 2026-10-18)
+- [src/rules/rules.test.ts:673](../../src/rules/rules.test.ts#L673): forecasts two waves ahead, confirmed (Ed, 2026-10-04)
+- [src/rules/rules.test.ts:685](../../src/rules/rules.test.ts#L685): numbers every dormant area by the wave that will wake it, as the waves then do (Ed, 2026-10-04: numbers over the stones)
+- [src/rules/rules.test.ts:697](../../src/rules/rules.test.ts#L697): wakes one area per witch each wave (Ed, 2026-10-04): areasPerWave, all different, forecast as sets, and it can change between waves
+- [src/rules/rules.test.ts:717](../../src/rules/rules.test.ts#L717): comes in waves as the pulse reaches each stone at its speed (Ed, 2026-10-09: "Pure constant speed"), and pauses
+- [src/rules/rules.test.ts:727](../../src/rules/rules.test.ts#L727): is the same from the same seed, and gives each new area one soundsystem in its own ground
+- [src/rules/rules.test.ts:817](../../src/rules/rules.test.ts#L817): invites after talking for the creature's talk time (young 6 s, adults 12 s), not before: happy first, then (asked again) leashed (#87)
+- [src/rules/rules.test.ts:833](../../src/rules/rules.test.ts#L833): talks by herself, no button (Ed, v244); rising cancels it, and she never invites from the treetops
+- [src/rules/rules.test.ts:851](../../src/rules/rules.test.ts#L851): lets a chat drain at half the fill rate when she stops, and picks up from what's left
+- [src/rules/rules.test.ts:874](../../src/rules/rules.test.ts#L874): can't invite legends
+- [src/rules/rules.test.ts:894](../../src/rules/rules.test.ts#L894): with auto-talk off she talks only while Talk is held (Ed's playtest, 2026-10-04)
+- [src/rules/rules.test.ts:905](../../src/rules/rules.test.ts#L905): sticks with the creature she's talking to while it stays within cancelDistance, and drops it beyond
+- [src/rules/rules.test.ts:921](../../src/rules/rules.test.ts#L921): stacks last in, first out: places the newest, picks up back onto the bottom (put down freely: leash.hex off)
+- [src/rules/rules.test.ts:961](../../src/rules/rules.test.ts#L961): is elastic: a creature walks to its new leash point, never jumps, then stays within the leash
+- [src/rules/rules.test.ts:979](../../src/rules/rules.test.ts#L979): goes through the game: the debug invite and the sigil button in its controls
+- [src/rules/rules.test.ts:1319](../../src/rules/rules.test.ts#L1319): stand count of them evenly round the floor at radiusFactor times its radius, from start degrees
+- [src/rules/rules.test.ts:1328](../../src/rules/rules.test.ts#L1328): are gameplay: reserved, with no trees, bushes or scenery on their feet
+- [src/rules/rules.test.ts:1337](../../src/rules/rules.test.ts#L1337): keep the treehouse outside their ring and the floor's clearing, over seeds
+- [src/rules/rules.test.ts:1348](../../src/rules/rules.test.ts#L1348): are the dancefloor's only sound: no soundsystem stands in their ring or the floor's clearing, over seeds (Ed, v183)
+- [src/rules/rules.test.ts:1359](../../src/rules/rules.test.ts#L1359): give the treehouse a clearing at least as wide as the art's footprint (v2: a tall tower in a giant tree)
+- [src/rules/rules.test.ts:1364](../../src/rules/rules.test.ts#L1364): cycle playing, damaged, destroyed on the debug key
+- [src/rules/rules.test.ts:1376](../../src/rules/rules.test.ts#L1376): turn into speakers one by one as the boot reaches them, each over boot.transform, all of them by its end
+- [src/rules/rules.test.ts:1394](../../src/rules/rules.test.ts#L1394): can be booted by the pulse: bootSpeaker turns one now, once
+- [src/rules/rules.test.ts:1594](../../src/rules/rules.test.ts#L1594): in the air sends the bottom sigil of the stack to the top, and never places or lifts
+- [src/rules/rules.test.ts:1606](../../src/rules/rules.test.ts#L1606): on the ground never cycles: it puts the bottom sigil down
+- [src/rules/rules.test.ts:1642](../../src/rules/rules.test.ts#L1642): stand on every area the party hasn't reached, at its soundsystem's spot; awake exactly where the next wave will spread
+- [src/rules/rules.test.ts:1653](../../src/rules/rules.test.ts#L1653): replace the random rune stones (campfires stay)
+- [src/rules/runeOffset.test.ts:16](../../src/rules/runeOffset.test.ts#L16): for every species and level, its backing's top edge is clear of the body by runeGap, a happy rune's and a placed sigil's
+- [src/rules/runeOffset.test.ts:26](../../src/rules/runeOffset.test.ts#L26): is further off the bigger the animal: a dormouse's rune nearer than a bear's, a legend's furthest
+- [src/rules/runeOffset.test.ts:34](../../src/rules/runeOffset.test.ts#L34): runeNear finds each happy creature's rune at its own offset south of it
+- [src/rules/runestones.test.ts:8](../../src/rules/runestones.test.ts#L8): matches the art's number of forms
+- [src/rules/runestones.test.ts:9](../../src/rules/runestones.test.ts#L9): on a 10-area map, no form repeats
+- [src/rules/runestones.test.ts:15](../../src/rules/runestones.test.ts#L15): on a 50-area map, each form appears 2 or 3 times
 - [src/rules/sigilAvoid.test.ts:71](../../src/rules/sigilAvoid.test.ts#L71): gathers her placed sigils, her hats lying down, the relics' sigils and happy creatures' runes (never one's own)
 - [src/rules/sigilRuns.test.ts:41](../../src/rules/sigilRuns.test.ts#L41): holding Use at every morning dressing station and the booth never drops her hat
 - [src/rules/sigilRuns.test.ts:56](../../src/rules/sigilRuns.test.ts#L56): a press puts one down; moving into each empty hex while holding puts down the next; letting go ends it
@@ -1777,6 +1875,31 @@ Direct hit counts use constructed eligible targets, not emergent battles. Phase/
 - [src/rules/sigilRuns.test.ts:141](../../src/rules/sigilRuns.test.ts#L141): puts her hat down at her feet at once; pressed on it again, she picks it up
 - [src/rules/sigilRuns.test.ts:152](../../src/rules/sigilRuns.test.ts#L152): square held on (sigilHeld without hatHold) never drops the hat; E held (hatHold) does
 - [src/rules/sigilRuns.test.ts:160](../../src/rules/sigilRuns.test.ts#L160): a hat press in the treetops does nothing
+- [src/rules/stackCycle.test.ts:27](../../src/rules/stackCycle.test.ts#L27): brings every sigil to the bottom in turn, the adult's too
+- [src/rules/stackCycle.test.ts:32](../../src/rules/stackCycle.test.ts#L32): a sleeping legend's sigil she carries is drawn last and stays there (it never cycles): the log names it
+- [src/rules/stackRelics.test.ts:21](../../src/rules/stackRelics.test.ts#L21): goes on at the bottom, a creature leashed after it goes under it, and it cycles with the rest
+- [src/rules/stackRelics.test.ts:50](../../src/rules/stackRelics.test.ts#L50): cycles back too (the pad's L1, Ed's layout 2026-10-28): the top sigil to the bottom, undoing a cycle forward
+- [src/rules/stackRelics.test.ts:63](../../src/rules/stackRelics.test.ts#L63): cycles back in play, on the cycle-back control
+- [src/rules/stackRelics.test.ts:72](../../src/rules/stackRelics.test.ts#L72): a relic alone, or a creature alone, doesn't cycle; the two together do
+- [src/rules/stackRelics.test.ts:105](../../src/rules/stackRelics.test.ts#L105): cycles with the stack (Q), the cycled event naming it a relic
+- [src/rules/stoneStacks.test.ts:60](../../src/rules/stoneStacks.test.ts#L60): show only wild fighters until clear, then include eligible friends, legend and babies in stack order
+- [src/rules/stoneStacks.test.ts:87](../../src/rules/stoneStacks.test.ts#L87): keep a befriended one's sigil in the stack, friend-coloured: no rune at its feet till its stone converts
+- [src/rules/stoneStacks.test.ts:98](../../src/rules/stoneStacks.test.ts#L98): no longer clear by themselves: an area with all its wild gone stays wild till it's cast or its wave comes
+- [src/rules/stoneStacks.test.ts:114](../../src/rules/stoneStacks.test.ts#L114): an unready stump reserves Use for a second witch at her own position
+- [src/rules/stoneStacks.test.ts:125](../../src/rules/stoneStacks.test.ts#L125): holding Use at a hostile, unready stump never puts her hat down, including an idle hold begun elsewhere
+- [src/rules/stoneStacks.test.ts:137](../../src/rules/stoneStacks.test.ts#L137): held at the stone for cast.time converts it: a soundsystem, its babies friends, every friend sigil scattered loose round it
+- [src/rules/stoneStacks.test.ts:166](../../src/rules/stoneStacks.test.ts#L166): can't be cast till every wild youth and adult of its area is invited (Ed, 2026-10-29); its babies and its sleeping legend don't count
+- [src/rules/stoneStacks.test.ts:185](../../src/rules/stoneStacks.test.ts#L185): casts only standing on the spell spot (Ed's playtest, 2026-10-29: "I should have to stand on the soundsystem spell sigil"), not just north of it by the stone
+- [src/rules/stoneStacks.test.ts:198](../../src/rules/stoneStacks.test.ts#L198): casts from the middle of a great stump's cut, not south of it (Ed, 2026-10-29: "the spell and the audio circle effect can be on top of the stump")
+- [src/rules/stoneStacks.test.ts:228](../../src/rules/stoneStacks.test.ts#L228): drains while she's away, and resumes from where it has drained to
+- [src/rules/stoneStacks.test.ts:242](../../src/rules/stoneStacks.test.ts#L242): stops at a hit, and won't go on till she lets go and holds again
+- [src/rules/stoneStacks.test.ts:258](../../src/rules/stoneStacks.test.ts#L258): at the stone, the sigil button casts rather than putting a sigil down or the hat
+- [src/rules/stoneStacks.test.ts:272](../../src/rules/stoneStacks.test.ts#L272): scatters its friend sigils, sets its wild young and adults on it, and keeps loose sigils loose when it falls
+- [src/rules/stoneStacks.test.ts:293](../../src/rules/stoneStacks.test.ts#L293): in a friendly area turns every creature friendly and starts no siege
+- [src/rules/stoneStacks.test.ts:317](../../src/rules/stoneStacks.test.ts#L317): by the spell
+- [src/rules/stoneStacks.test.ts:329](../../src/rules/stoneStacks.test.ts#L329): by its wave
+- [src/rules/stoneStacks.test.ts:343](../../src/rules/stoneStacks.test.ts#L343): on the islands (legend areas), each area's legend appears once its fighters are friendly, and scatters at conversion
+- [src/rules/stoneStacks.test.ts:365](../../src/rules/stoneStacks.test.ts#L365): are picked up like any sigil, leashing the creature; a legend's tethers her at the distance it lay, till she puts it down
 - [src/rules/waveLoss.test.ts:32](../../src/rules/waveLoss.test.ts#L32): the tuning has no loss penalty
 - [src/rules/waveLoss.test.ts:34](../../src/rules/waveLoss.test.ts#L34): a loss leaves the countdown, the tempo and the knockdown bonus as they were; the wave comes on time
 - [src/rules/waveLoss.test.ts:48](../../src/rules/waveLoss.test.ts#L48): two losses close together: still nothing
@@ -1790,6 +1913,8 @@ Direct hit counts use constructed eligible targets, not emergent battles. Phase/
 - Party guest distinction: an older stopped-soundsystem case flies away;11Oct destroyed-soundsystem design retains the witch stargazing in pairs/threes. partyWitches.gaze:19 checks both ruined and merely stopped; the implementation branches on ruined. No obsolete fly-away assertion was established.
 - 29Oct set-piece removal applies to normal generation; partyDressing:43 does not require any set piece to spawn, and :71 requires removed pieces absent. The title alone is not deletion evidence.
 - Baby invites changed31Oct. hexSigils:61 starts with already-carried babies; invites:114 uses a level1 stand-in and counting Affection. Neither asserts real baby invitation. Old partyspell prompt prose tests rules input and tool-game compatibility, not a restored start-screen UI.
+- Second review 6566767328: current cast/grid/route/letters rules do not obsolete explicitly enabled comparison modes. Older carried-flask states test generic stack integration, not live flask pickup. Old wave-per-witch wording tests supplied areasPerWave. No obsolete whole test established. The old roughly-three-second boot prose versus 8–9.5-second assertion remains unresolved after the 24 October north-west treehouse geometry; IP2 flags it without choosing gameplay timing.
+- Eleven cases in clear.test.ts:46,55,64,72,82,93,106,115 and homeSpeakers.test.ts:27,36,64 are combat-owner-only. Bodies were read for routing; the live combat plan does not enumerate all eleven individually. No audit keep/delete approval or claim that every individual disposition is already decided.
 
 ## music-audio: review provenance
 
@@ -3197,4 +3322,5 @@ Read in the second house pass and displayed here once: footprint size, stairs on
 - Legacy zoo grid: old zoo.ts helpers draw borders/corners of a grid; island.md21 replaces the live zoo with chart-shaped islands26Oct. map.ts creates zooChartPlan, paths.ts omits grid strips with that layout, and the live map omits grid junctions. zoo35 directly tests retained zooPlan helpers, while the plan still supplies current jump-list rows. No live-grid requirement or helper-retirement permission is established.
 - Radius/square compatibility is explicit: island.md13 retains island=off and test/radiusMap sets islandAreas0. mapShape73 selects square intentionally; islandShape13 tests a still-used helper, while islandGrowth56 compares real outlines. Treehouse rules224 already asserts north-west after 24Oct; no due-north-only assertion was found.
 - Owner-only second-pass listings: island49 master swarm curve belongs to1622. IslandShape9/24 and lakeShore38 are visual source tests; rules237 is house/input; rules1642/1653 are spawn-marker/replacement-rune party policy. They receive no automatic keep decision from the world reviewer and remain explicitly unread until an owner/lead review is recorded.
-- Set-piece follow-up to coordinator 6566615533: rules.test.ts:40–43 explicitly overrides GAME_TUNING with setPieceChance:0.25, enabled grounds, ruins/rocks/freak mix, path pieces and unrestricted featured scenes. The five maps at 1253 use that TUNING. Therefore set-piece uniqueness (1257), assignment/count (1294) and path clearance (1306) explicitly opt into retained compatibility scenery; none requires default normal play to spawn set pieces. Ed 29 October phases normal generation out, while recipes/art remain for comparisons (world-art.md:11–12,39). Scenes/ruins remain documented features, and this fixture explicitly enables their full placement. Keep/split as proposed; no proven leftover.
+- Set-piece follow-up to coordinator 6566615533: rules.test.ts:40–43 explicitly overrides GAME_TUNING with setPieceChance:0.25, enabled grounds, ruins/rocks/freak mix, path pieces and scenes.featured:undefined, disabling the featured exception while leaving ordinary scenes enabled. The five maps at 1253 use that TUNING. Therefore set-piece uniqueness (1257), assignment/count (1294) and path clearance (1306) explicitly opt into retained compatibility scenery; none requires default normal play to spawn set pieces. Ed 29 October phases normal generation out, while recipes/art remain for comparisons (world-art.md:11–12,39). Scenes/ruins remain documented features, and this fixture explicitly enables their full placement. Keep/split as proposed; no proven leftover.
+- House reviewer clarification 6566750463 confirms all six cases explicitly use local compatibility TUNING; current GAME_TUNING defaults are checked separately at rules.test.ts:1847–1864. Three mixed cases remain split proposals, three remain keeps, zero proven leftovers.

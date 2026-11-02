@@ -3,7 +3,7 @@
 
 ## One yes/no list for Ed
 
-Answer by ID. Changes come first; each linked page explains what yes preserves and changes. Combat is already decided; multiplayer remains with its owner.
+Answer by ID. Changes come first; each linked page explains what yes preserves and changes. Released combat changes are already decided; remaining combat and multiplayer listings stay with their owners.
 
 ### Proposed changes
 
@@ -17,8 +17,8 @@ Answer by ID. Changes come first; each linked page explains what yes preserves a
 - **H2 — Update these three historical descriptions while keeping every assertion?** 3 tests. [House and treehouse](house-treehouse.md#h2).
 - **H-R2-1 — Split sampled canopy density and find diversity into nonblocking reports while preserving the blocking protections?** 8 tests. [House and treehouse](house-treehouse.md#h-r2-1).
 - **H-R2-2 — Correct three obsolete Workshop descriptions while preserving every assertion?** 3 tests. [House and treehouse](house-treehouse.md#h-r2-2).
-- **IP1 — Move these nine observed motion/occurrence thresholds to nightly/manual reports?** 9 tests. [Invites and party](invites-party.md#ip1).
-- **IP2 — Split these sixteen tests into blocking rules/integrity checks and nonblocking sampled measurements?** 16 tests. [Invites and party](invites-party.md#ip2).
+- **IP1 — Move these eleven observed motion, occurrence and bot-success thresholds to nonblocking nightly/manual reports?** 11 tests. [Invites and party](invites-party.md#ip1).
+- **IP2 — Split these twenty-one mixed tests into blocking direct rules and nonblocking sampled measurements?** 21 tests. [Invites and party](invites-party.md#ip2).
 - **M4 — Make these three rate/proportion tests informational?** 3 tests. [Music and audio](music-audio.md#m4).
 - **M5 — Update these two test descriptions to the current knockdown design?** 2 tests. [Music and audio](music-audio.md#m5).
 - **T6 — Ask the report/combat owner to separate fixture-sanity predicates from this replay test?** 1 test. [Tools and CI](tools-ci.md#t6).
@@ -37,7 +37,7 @@ Answer by ID. Changes come first; each linked page explains what yes preserves a
 - **AR-KEEP — Keep AR3, AR5 unchanged?** 611 tests; protect resource ownership, finite geometry, CPU/shader data agreement, deterministic pixels and retained visual comparison modes. [Art and rendering checks](art-rendering.md#keep-as-they-are).
 - **C-KEEP — Keep C2, C3, C4 unchanged?** 131 tests; protect creature conservation, exact input/seed continuation, movement/LOD and berry/bag rules, travel/victory ownership and human-limited bot decisions. [Creatures and movement](creatures-movement.md#keep-as-they-are).
 - **H-KEEP — Keep HK1, HK2, HK3, H-R2-K1, H-R2-K2, H-R2-K3 unchanged?** 283 tests; protect safe floors and interactions, exactly-once events, layout/editor identity, hat conservation and direct equipment/kitchen rules. [House and treehouse](house-treehouse.md#keep-as-they-are).
-- **IP-KEEP — Keep IP3 unchanged?** 127 tests; protect letter eligibility and queue parity, correct sigil ownership, phase gates, monotone pulse/route coupling and valid party-guest state. [Invites and party](invites-party.md#keep-as-they-are).
+- **IP-KEEP — Keep IP3 unchanged?** 243 tests; protect letter eligibility and queue parity, correct sigil ownership, phase gates, monotone pulse/route coupling and valid party-guest state. [Invites and party](invites-party.md#keep-as-they-are).
 - **M-KEEP — Keep M1, M2, M3 unchanged?** 166 tests; protect audio resource limits and deterministic scheduling, the approved score structure, and explicit event-to-sound routing. [Music and audio](music-audio.md#keep-as-they-are).
 - **T-KEEP — Keep T1, T2, T3, T4, T5, T7 unchanged?** 319 tests; protect honest CI coverage and publication, trustworthy measurements, deterministic isolation, research provenance and safe preview tooling. [Tools and CI](tools-ci.md#keep-as-they-are).
 - **U-KEEP — Keep U2, U3, U4, U5, U8, U9, U10 unchanged?** 336 tests; protect input recovery, menu ownership, opening/travel handoff, retained diagnostics and valid creator/editor data. [UI, menus and controls](ui-menus-controls.md#keep-as-they-are).
@@ -61,9 +61,9 @@ Run `node tools/tests/inventory.mjs` to refresh; `--check` verifies generated ou
 
 ## System decisions
 
-- [Combat](combat.md): 414 declarations
+- [Combat](combat.md): 425 declarations
 - [Creatures and movement](creatures-movement.md): 146 declarations
-- [Invites and party](invites-party.md): 286 declarations
+- [Invites and party](invites-party.md): 275 declarations
 - [Legends](legends.md): 93 declarations
 - [World, islands and lakes](world-islands-lakes.md): 218 declarations
 - [House and treehouse](house-treehouse.md): 300 declarations
@@ -82,9 +82,9 @@ Counts below are source test templates, not executions. “Existing owner” mea
 
 | System | Reviewed | Existing owner | Unread |
 |---|---:|---:|---:|
-| Combat | 0 | 414 | 0 |
+| Combat | 0 | 425 | 0 |
 | Creatures and movement | 146 | 0 | 0 |
-| Invites and party | 152 | 0 | 134 |
+| Invites and party | 275 | 0 | 0 |
 | Legends | 93 | 0 | 0 |
 | World, islands and lakes | 218 | 0 | 0 |
 | House and treehouse | 300 | 0 | 0 |

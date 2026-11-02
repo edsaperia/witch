@@ -30,7 +30,7 @@ Examples: [Bag preview loops rank total letter counts.](../../src/ui/bagSim.test
 
 **1 test · hard limits · files take ~38 s.**
 
-Examples: [preserves legacy report text through production-sized duplicated replay pressure, reload and both exports](../../src/app/playtestComments.test.ts#L69).
+Examples: [Legacy report text survives duplicated replay pressure, reload and both exports.](../../src/app/playtestComments.test.ts#L69).
 
 **Yes/no: Keep the report-integrity checks with a smaller blocking fixture and move production-sized pressure to a nonblocking report?** [Assertions, rationale and exact membership](semantic-groups.md#u-time).
 
@@ -40,7 +40,7 @@ Examples: [preserves legacy report text through production-sized duplicated repl
 
 **5 tests · outcome stats · files take ~131 s.**
 
-Examples: [eases, never jumps: a step's change in angle stays small](../../src/rules/coastCamera.test.ts#L38); [lying down, the camera by her bearing round the coast: each of the twelve entries exactly, smoothly between](../../src/rules/coastCamera.test.ts#L44); [opens close in on her seat, and eases out to the starting zoom once she leaves it (Ed, v171)](../../src/rules/rules.test.ts#L447); [follows smoothly: never overshoots, never jolts, and looks only a little ahead](../../src/rules/rules.test.ts#L481); [flies the witch and the camera follows](../../src/rules/rules.test.ts#L788).
+Examples: [Camera transitions meet a sampled maximum angle change.](../../src/rules/coastCamera.test.ts#L38); [Authored bearings match exactly, alongside a sampled smoothness score.](../../src/rules/coastCamera.test.ts#L44); [Leaving a seat follows the intro curve and an extra midpoint-distance preference.](../../src/rules/rules.test.ts#L447); [Camera following retains no overshoot and bounded look-ahead.](../../src/rules/rules.test.ts#L481); [Rightward input moves the witch and the camera within a fixed sample window.](../../src/rules/rules.test.ts#L788).
 
 **Yes/no: Split or replace sampled camera comfort and travel magnitudes while retaining or supplying direct pose, continuity and movement/follow protections?** [Assertions, rationale and exact membership](semantic-groups.md#u7).
 

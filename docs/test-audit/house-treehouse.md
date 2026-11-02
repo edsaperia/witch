@@ -40,7 +40,7 @@ Examples: [The route name should match its current 99 m assertion.](../../src/ru
 
 **8 tests · outcome stats · files take ~77 s.**
 
-Examples: [has 300 to 500 lobes, thick and thin](../../src/rules/crown.test.ts#L19); [keeps open ground it's given (the dancefloor) open to the sky as the Terrace: no lobe over it or on a line of sight to it](../../src/rules/crown.test.ts#L56); [strings its lights: every bulb on a string, in order along it, the Terrace ringed](../../src/rules/crown.test.ts#L81); [hangs each string its own way (Ed, 2026-10-27: "String lights on the treehouse seem to all have the same shape")](../../src/rules/crown.test.ts#L101); [has leaves over the Terrace and along its notch, where the gap had none](../../src/rules/crown.test.ts#L127).
+Examples: [Canopy density meets a sampled lobe-count and thin-leaf share.](../../src/rules/crown.test.ts#L19); [Lighting density exceeds a sampled bulb count.](../../src/rules/crown.test.ts#L81); [Terrace leaf coverage exceeds a sampled percentage.](../../src/rules/crown.test.ts#L127); [Six seeds produce a minimum variety of trunk positions.](../../src/rules/finds.test.ts#L40); [Sixty seeds produce a minimum variety of eligible finds.](../../src/rules/finds.test.ts#L47).
 
 **Yes/no: Split sampled canopy density and find diversity into nonblocking reports while preserving the blocking protections?** [Assertions, rationale and exact membership](semantic-groups.md#h-r2-1).
 
@@ -50,7 +50,7 @@ Examples: [has 300 to 500 lobes, thick and thin](../../src/rules/crown.test.ts#L
 
 **3 tests · leftovers · files take ~65 s.**
 
-Examples: [E at it while the party's on: the part is hers at once (a found event of its kind), not fitted: it waits at the Workshop's bay](../../src/rules/finds.test.ts#L150); [a part found leaves her broom as it was: her fitted part stays, her set and spell too](../../src/rules/finds.test.ts#L159); [the broom stand is gone (the Workshop's bay, lathe and pegboard in its place), and no station offers a broom's power or shape](../../src/rules/wardrobeShelves.test.ts#L90).
+Examples: [New parts remain owned without being fitted automatically.](../../src/rules/finds.test.ts#L150); [Finding a part preserves the current broom and spell.](../../src/rules/finds.test.ts#L159); [Descriptions should name the single current lathe station.](../../src/rules/wardrobeShelves.test.ts#L90).
 
 **Yes/no: Correct three obsolete Workshop descriptions while preserving every assertion?** [Assertions, rationale and exact membership](semantic-groups.md#h-r2-2).
 

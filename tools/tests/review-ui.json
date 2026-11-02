@@ -468,6 +468,9 @@
         "action": true,
         "examples": [
           "preserves legacy report text through production-sized duplicated replay pressure, reload and both exports"
+        ],
+        "exampleLabels": [
+          "Legacy report text survives duplicated replay pressure, reload and both exports."
         ]
       },
       {
@@ -490,6 +493,13 @@
           "opens close in on her seat, and eases out to the starting zoom once she leaves it (Ed, v171)",
           "follows smoothly: never overshoots, never jolts, and looks only a little ahead",
           "flies the witch and the camera follows"
+        ],
+        "exampleLabels": [
+          "Camera transitions meet a sampled maximum angle change.",
+          "Authored bearings match exactly, alongside a sampled smoothness score.",
+          "Leaving a seat follows the intro curve and an extra midpoint-distance preference.",
+          "Camera following retains no overshoot and bounded look-ahead.",
+          "Rightward input moves the witch and the camera within a fixed sample window."
         ]
       },
       {
