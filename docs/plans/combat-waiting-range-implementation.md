@@ -1,0 +1,7 @@
+# Combat waiting-range implementation
+
+Inbox1652; updated brief84093a7c65e26ebca7ec95b13b8cfb0ea591d86c. Latest Ed correction6576869448 wins: live dash.distance × dash.charges + tuning invites.range, never the current bag. Planned own branch codex/combat-waiting-range, isolated work/combat-waiting-range. Preserve mushroom1643ead4ae9/kitchen question and prior combat1634 checkpoint.
+
+Use one numeric waiting-band formula with species variation, simple area-size scaling and no small-area boundary clamp. Maintain intentional pass-bys, return/run-in and attack admission; incidental wobble/centre displacement must not push ordinary waiting inside the movement band. Read live tuning values. New numeric knobs get schema/docs/changelog; direct deterministic formula/geometry tests stay blocking. Measured pack distances and rhythm outcomes are nonblocking report evidence, not release assertions; request canonical allocation for any heavy fight measurement. No unrelated balance tuning, multiplayer edits or house/pause work.
+
+PLAN posted first on1652#6576912286. Separate T6 fixture-sanity/replay split registered1632#6576912676 as a later tests-only PR; replay stays blocking and no T6 work is mixed here. Nearby1worker/typecheck only, live1609 merge-tree before REPORT, every REPORT lists tests changed/removed. Canonical owns full cloud checks and release; root centrally watches, no personal idle monitor.
