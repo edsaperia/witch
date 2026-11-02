@@ -2,7 +2,7 @@
 
 Audit only, #1631 / draft #1632.
 
-**Semantic review in progress.** Saves/replay and legends are bounded format-check previews, with concrete groups in [semantic-groups.md](semantic-groups.md). Other system pages remain unreviewed placeholders and are not ready for Ed. Combat and multiplayer retain their existing owners. The initial catalogue remains a machine-first reading aid; reviewed classifications and membership are in inventory.json and semantic-groups.md. No test is changed or approved for deletion.
+**Semantic review in progress.** Concrete reviewed groups: [Saves, replay and robustness](saves-replay-robustness.md), [Legends](legends.md), [Music and audio](music-audio.md), [Tools and CI](tools-ci.md), [World, islands and lakes](world-islands-lakes.md). Exact reviewed membership, assertion rationale and old/current ruling comparisons are in [semantic-groups.md](semantic-groups.md). Page scope statements identify bounded reviews; neighboring unreviewed cases are not silently treated as current. Other system pages remain placeholders and are not ready for Ed. Combat and multiplayer retain their existing owners. The initial catalogue remains a machine-first reading aid; reviewed classifications are in inventory.json. No test is changed or approved for deletion.
 
 628 files; 3216 source case declarations. Parameterized and loop-generated cases are not expanded. CJS files are supplementary to the requested TS/MJS scope.
 
@@ -14,17 +14,17 @@ Run `node tools/tests/inventory.mjs` to refresh; `--check` verifies generated ou
 
 ## System decisions
 
-- [Combat](combat.md): 220 declarations
-- [Creatures and movement](creatures-movement.md): 1001 declarations
-- [Invites and party](invites-party.md): 152 declarations
-- [Legends](legends.md): 86 declarations
-- [World, islands and lakes](world-islands-lakes.md): 69 declarations
-- [House and treehouse](house-treehouse.md): 178 declarations
-- [Music and audio](music-audio.md): 149 declarations
-- [UI, menus and controls](ui-menus-controls.md): 357 declarations
-- [Saves, replay and robustness](saves-replay-robustness.md): 86 declarations
-- [Multiplayer](multiplayer.md): 155 declarations
-- [Art and rendering checks](art-rendering.md): 532 declarations
-- [Tools and CI](tools-ci.md): 231 declarations
+- [Combat](combat.md): 367 declarations
+- [Creatures and movement](creatures-movement.md): 163 declarations
+- [Invites and party](invites-party.md): 299 declarations
+- [Legends](legends.md): 93 declarations
+- [World, islands and lakes](world-islands-lakes.md): 222 declarations
+- [House and treehouse](house-treehouse.md): 341 declarations
+- [Music and audio](music-audio.md): 171 declarations
+- [UI, menus and controls](ui-menus-controls.md): 379 declarations
+- [Saves, replay and robustness](saves-replay-robustness.md): 84 declarations
+- [Multiplayer](multiplayer.md): 166 declarations
+- [Art and rendering checks](art-rendering.md): 655 declarations
+- [Tools and CI](tools-ci.md): 276 declarations
 
 The short system pages link to the exhaustive [case catalogue](cases.md) and [machine inventory](inventory.json). File timings live in the JSON. Review every cited assertion before granting a grouped deletion. No measured CI savings are claimed.

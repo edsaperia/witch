@@ -1,0 +1,190 @@
+{
+  "tools-ci": {
+    "title": "Tools and CI",
+    "status": "Read-only semantic review of 49 files at 7ca190821, reports #1632 comments6565979619 and6565996723; integrated with the added synthetic inventory checks reviewed here. No tool/game run was used as audit evidence.",
+    "keepSummary": "honest CI coverage and publication, trustworthy measurements, deterministic isolation, research provenance and safe preview tooling",
+    "protections": [
+      "CI cannot turn missing history, a failed prerequisite or stale proof into a pass.",
+      "Preview publishing preserves the live site and other builders’ files.",
+      "Measurements compare equivalent inputs and distinguish missing telemetry from zero.",
+      "Interleaved worlds and settings preserve deterministic state and tuning fingerprints.",
+      "Research seeds, source identities and report denominators remain auditable."
+    ],
+    "groups": [
+      {
+        "id": "T1",
+        "title": "CI coverage, publication and proof guards",
+        "kind": "current rules",
+        "files": [
+          "tools/ci/effects-scene.test.ts",
+          "tools/ci/run-unit.test.ts",
+          "tools/ci/same-game.test.ts",
+          "tools/ci/test-scope.test.ts",
+          "tools/ci/workflows.test.ts",
+          "tools/ci/world-audit.test.ts",
+          "tools/ci/pages-policy.test.cjs",
+          "tools/ci/proofs.test.cjs",
+          "tools/ci/reporting.test.cjs"
+        ],
+        "question": "Keep this group unchanged?",
+        "reason": "Parsed workflow YAML, tiny Git/command fixtures and stubbed pixels check fail-closed coverage, publication restrictions and current scheduling policy. world-audit parses strings; effects-scene tests a synthetic nonblank detector. Four shards and8px/32 are current operational rules rather than timeless invariants. No generated outcome target is run.",
+        "examples": [
+          "cannot pass missing history or an empty diff as a related run",
+          "does not hide a failing selected test by rerunning the full suite",
+          "proof server resolves build identities and rejects encoded traversal without a local listener"
+        ],
+        "exampleLabels": [
+          "Missing history cannot produce a related-test pass.",
+          "A failed selected test stays failed.",
+          "Proof serving rejects encoded path traversal."
+        ]
+      },
+      {
+        "id": "T2",
+        "title": "Measurement and diagnostic contracts",
+        "kind": "hard limits",
+        "files": [
+          "tools/bench/chart-target.test.ts",
+          "tools/bench/coast-first-use.test.ts",
+          "tools/bench/comparable.test.ts",
+          "tools/bench/expect.test.ts",
+          "tools/bench/ground-compile-variants.test.ts",
+          "tools/bench/ground-extra-source.test.ts",
+          "tools/bench/ground-parity-scene.test.ts",
+          "tools/bench/hold-simulation.test.ts",
+          "tools/bench/travel-budget.test.ts",
+          "tools/bench/travel-failure.test.ts",
+          "tools/bench/travel-probe.test.ts",
+          "tools/bench/worker-checkpoint.test.ts",
+          "tools/bench/worker-job-summary.test.ts",
+          "tools/bench/worker-profile.test.ts"
+        ],
+        "question": "Keep this group unchanged?",
+        "reason": "Supplied traces, fake clocks/workers/GL and shader source tokens test honest telemetry, comparison boundaries and performance budgets. The30000 upload calls and256 masks are synthetic coverage, not game populations. Intentional shader changes may require a separately reviewed baseline; no replacing ruling was established.",
+        "examples": [
+          "rejects an unmeasured API trip instead of counting missing telemetry as zero",
+          "preserves worker handlers, receiver, return values and transfer-list identity",
+          "does not extend pending-stage elapsed time through a transport backlog"
+        ],
+        "exampleLabels": [
+          "An unmeasured trip is not recorded as zero cost.",
+          "Instrumentation preserves worker message behavior.",
+          "Transport backlog does not inflate stage time."
+        ]
+      },
+      {
+        "id": "T3",
+        "title": "Generated-world fingerprints and repeat-night isolation",
+        "kind": "hard limits",
+        "files": [
+          "tools/bench/fingerprint.test.ts",
+          "tools/bench/twoNights.test.ts"
+        ],
+        "question": "Keep this group unchanged?",
+        "reason": "These do step generated games (240/600-step paths plus short wave advances). Assertions compare matched state, semantic fingerprint sensitivity and reset behavior rather than wins, survival or kills. The historical15.605 file seconds remain integrity work, not a savings proposal.",
+        "examples": [
+          "is the same for a knob added, a note edited, or the groups reordered: the tuning file is an input, not the state",
+          "the second night is the night played fresh",
+          "a new game puts the fight's settings back as a page starts them (the last night's are read before its first fight)"
+        ],
+        "exampleLabels": [
+          "Notes and unused knobs do not change the game fingerprint.",
+          "The second night equals a fresh matching night.",
+          "A new game resets previous fight settings."
+        ]
+      },
+      {
+        "id": "T4",
+        "title": "Research provenance and generated data",
+        "kind": "current rules",
+        "files": [
+          "tools/balance/expert-contract.test.mjs",
+          "tools/balance/expert-coverage-screen.test.mjs",
+          "tools/balance/expert-delivery-screen.test.mjs",
+          "tools/balance/expert-evaluation-core.test.mjs",
+          "tools/balance/expert-guarded-coverage-screen.test.mjs",
+          "tools/balance/expert-known-quest-screen.test.mjs",
+          "tools/balance/expert-progress.test.mjs",
+          "tools/balance/expert-search-core.test.mjs",
+          "tools/balance/expert-space.test.mjs",
+          "tools/balance/survey.test.mjs",
+          "tools/config/format.test.ts",
+          "tools/config/inventory.test.ts",
+          "tools/config/typegen.test.ts",
+          "tools/docs/glossary.test.ts",
+          "tools/docs/tables.test.ts",
+          "tools/tests/inventory.test.mjs",
+          "tools/balance/report.test.mjs"
+        ],
+        "question": "Keep this group unchanged?",
+        "reason": "Most inputs are fabricated rows/configs. Screen tests validate frozen experiment controls and gate text, not whether a bot wins. Toy ask/tell scores protect resumability. Tiny real expert-contract cases assert provenance, replay equality and honest unsupported results. The inventory classifier tests pass strings like advance(world); they never advance a world. Newly added synthetic inventory cases have been reviewed by the integrator.",
+        "excludeIds": [
+          "tools/balance/report.test.mjs:36"
+        ],
+        "examples": [
+          "external rows cannot leak held-out pairs or first-round reserved survey pairs",
+          "merge refuses duplicates, wrong cells, missing shards, missing progression and model drift",
+          "preserves enums, records, nullable values and optional keys without adding constraints"
+        ],
+        "exampleLabels": [
+          "Held-out and reserved seeds cannot leak into training rows.",
+          "Survey merges reject duplicate or missing work.",
+          "Generated types retain optional and nullable fields."
+        ]
+      },
+      {
+        "id": "T5",
+        "title": "Preview and visual-review tool integrity",
+        "kind": "current rules",
+        "files": [
+          "tools/leash/sigil-pass.test.mjs",
+          "tools/refraction/capture-hold.test.cjs",
+          "tools/refraction/depth-coverage.test.cjs",
+          "tools/refraction/depth-readback.test.cjs",
+          "tools/roster/pixel-diff.test.mjs",
+          "tools/roster/presets.test.mjs",
+          "tools/shots/push.test.ts"
+        ],
+        "question": "Keep this group unchanged?",
+        "reason": "Throwaway Git fixtures, small typed arrays/depth bits, stubbed wrappers and glyph/genome records prove safe tooling and opted-in comparisons. Deterministic shape/ink constants are readability rules, not night outcomes. Art/creature owners should confirm a future acceptance-constant change.",
+        "examples": [
+          "adds only the named files, whatever is staged or missing in the checkout",
+          "keeps adjacent sampled float32 depths distinct instead of re-quantizing to DEPTH24",
+          "default-off and unknown switch preserve every production record by identity and hash"
+        ],
+        "exampleLabels": [
+          "Preview publishing adds only the named files.",
+          "Depth readback preserves distinct neighboring values.",
+          "An unused preview switch preserves production data."
+        ]
+      },
+      {
+        "id": "T6",
+        "title": "One mixed replay and fixture-sanity case",
+        "kind": "hard limits",
+        "files": [
+          "tools/balance/report.test.mjs"
+        ],
+        "question": "Ask the report/combat owner to separate fixture-sanity predicates from this replay test? Yes opens a targeted follow-up review; deterministic replay and accounting stay blocking. It does not move or delete the case.",
+        "reason": "One declaration runs30/5s real cases plus stun fixtures15/30s. Repeated runs and phase accounting are hard integrity proofs; censored/stunned/hits>0/retaliation>0 predicates also validate the selected scenario. This is not a demonstrated pure outcome test to move wholesale. Exact purpose needs its report/combat owner.",
+        "includeLines": [
+          36
+        ],
+        "action": true,
+        "examples": [
+          "real-rules replay is deterministic across interleaved bots and bags"
+        ],
+        "exampleLabels": [
+          "Interleaved bots and bags replay deterministically."
+        ]
+      }
+    ],
+    "rulings": [
+      "Proof supersession checked: testing.md historical text ‘freezes prototype once and caches its separate build and successful baseline measurement’ is replaced by cost correction6562620628 ‘neither checks out/builds/measures nor caches a prototype baseline’. workflows.test.ts:8 asserts the replacement. Its nightly helper tests do not reinstate the removed PR settle/pixel gate.",
+      "Pixel exception supersession: testing.md6561733936 replaces #1612’s exact-colour exception with at most eight pixels and channel delta32. proofs.test.cjs:30 checks 2small/8at32 pass and9pixels/40channel fail. No removed allowlist requirement remains.",
+      "Art policy supersession: historical creatures.md says cloud art/canonical visual review are release gates; current testing.md says art runs nightly/manual and does not hold builds/releases. workflows.test.ts checks advisory nightly art, standing result and matching-tree reuse. This supports keeping the replacement guards, not deleting them.",
+      "Compatibility is current: roster/presets.test.mjs legacy beetle branch is still implemented in art/roster/presets.js and creatures.md retains beetle Current. comparable old-log and hold-simulation old/new-loop inputs similarly prove compatibility. No whole-case obsolete design was established in these49 files.",
+      "run-unit.test.ts “slowest alone” still follows the current largest-first total-work algorithm for its300s file/150s remaining-work input. A separate case rejects hiding extra work under the longest file. The title alone does not pin the superseded longest-file objective."
+    ]
+  }
+}

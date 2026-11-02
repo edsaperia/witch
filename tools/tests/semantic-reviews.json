@@ -151,7 +151,13 @@
       "Current compatibility contract: docs/notes/save-slots.md ‘accept matching SavedNight/NightSnapshot format versions across build numbers’. S2/S3 assert that behavior; the v5955/v6322 names are compatibility examples, not version gates.",
       "Report retention: playtestComments.test.ts keeps report text under attachment/count pressure and preserves unread storage. Its historical build equality is deliberately stricter than ordinary cross-build night saves: docs/notes/save-slots.md says comment restore retains separate staging and recording/build checks. No supersession of that diagnostic replay contract was found in these reviewed files."
     ],
-    "keepSummary": "slot isolation, exact save/replay continuation, safe checkpoints, equipment migrations, personal settings and retained report text"
+    "keepSummary": "slot isolation, exact save/replay continuation, safe checkpoints, equipment migrations, personal settings and retained report text",
+    "ownerCases": {
+      "1609": [
+        "src/app/nightSave.test.ts:56",
+        "src/app/visitSaves.test.ts:26"
+      ]
+    }
   },
   "legends": {
     "status": "Core legend and quest setup/assertions reviewed. Combat targeting, charge and route-integration cases remain with #1622; visual sprite checks and bot policies are listed with their corresponding systems. No test changes are made.",
@@ -333,10 +339,23 @@
           "src/rules/legends.test.ts:393",
           "src/rules/legends.test.ts:410",
           "src/rules/legends.test.ts:430",
-          "src/rules/legends.test.ts:450"
+          "src/rules/legends.test.ts:450",
+          "src/bots/knownQuest.test.ts:11",
+          "src/bots/knownQuest.test.ts:17",
+          "src/bots/knownQuest.test.ts:26",
+          "src/bots/knownQuest.test.ts:34",
+          "src/bots/knownQuest.test.ts:39",
+          "src/bots/knownQuest.test.ts:53",
+          "src/bots/knownQuest.test.ts:60",
+          "src/bots/questOffering.test.ts:4",
+          "src/bots/questOffering.test.ts:9",
+          "src/bots/questOffering.test.ts:17",
+          "src/bots/questOffering.test.ts:25",
+          "src/bots/quest-ending.test.ts:14",
+          "src/bots/quest-ending.test.ts:24"
         ],
         "question": "Keep current legend and quest rules?",
-        "reason": "The setup isolates a legend, kin or gift and invokes the explicit transition: waves do not wake legends, kin restore sleep, only a placed sigil completes a quest at any age, no buff is awarded, and the 100-letter Easter egg has its own tether/release rules. Fixed steps here check the declared state/timer/boundary, not an uncontrolled win rate. The staggered five-second kin check is a per-frame work bound. Early-quest wording still says baby, but its assertion explicitly says any age; it does not enforce the retired age requirement.",
+        "reason": "The setup isolates a legend, kin or gift and invokes the explicit transition: waves do not wake legends, kin restore sleep, only a placed sigil completes a quest at any age, no buff is awarded, and the 100-letter Easter egg has its own tether/release rules. Fixed steps here check the declared state/timer/boundary, not an uncontrolled win rate. The staggered five-second kin check is a per-frame work bound. Early-quest wording still says baby, but its assertion explicitly says any age; it does not enforce the retired age requirement. Known-quest and offering policies receive fabricated observations/stack acknowledgements and explicit deadlines; they cannot invent unseen cues. Ending cases advance only the wave/ending clock and force neutralization, checking automatic ending and observed/drawn-pointer agreement, not whether a bot wins a natural night.",
         "examples": [
           "completes on the very step its sigil is put down in the circle, its animal still far away",
           "has the dream quest wake it happy, fighting for her, no buff (Ed, 2026-10-18; the creature stays hers), and stay open while it sleeps, soundsystem on or not (Ed, 2026-10-06)",

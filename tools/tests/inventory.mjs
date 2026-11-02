@@ -121,13 +121,26 @@ export function candidates(c, sources) {
 export function build(root) {
   const timing = JSON.parse(fs.readFileSync(path.join(root,'tools/ci/unit-timings.json'),'utf8'));
   const sources = evidence(root);
+  const routing=JSON.parse(fs.readFileSync(path.join(root,'tools/tests/system-routing.json'),'utf8'));
   const entries = files(root).map(file=>{
     const source = fs.readFileSync(path.join(root,file),'utf8');
     const parsed = parseCases(source,file);
     return {file,sha256:hash(source),scope:file.endsWith('.cjs')?'supplementary CJS':'requested TS/MJS',fileRuntimeSeconds:timing.seconds[file] ?? null,runtimeSource:timing.seconds[file] == null ? null : timing._source,coverageNote:'Source declarations only: loops, factories, computed registrations and imported helper-generated cases may register additional runtime cases. File and suite citations are context, not necessarily the assertion ruling. Truncated excerpts retain a source line.',parseErrors:parsed.parseErrors,cases:parsed.cases.map(c=>{
       const {body,...rest}=c;
       const ownerBoundary=/\b(borrowed|guest follows the host|telephone proof)\b/i.test(c.name);
-      return {...rest,system:ownerBoundary?'multiplayer':systemFor(file,c.fullName),...classify(c),currentness:'unverified: human design review required',supersessionCandidates:candidates(c,sources),caseRuntimeSeconds:null};
+      let system=ownerBoundary?'multiplayer':routing[file]??systemFor(file,c.fullName);
+      if(file==='src/rules/rules.test.ts') {
+        const suite=c.suites.join(' ').toLowerCase();
+        if(/momentum|the dash/.test(suite))system='combat';
+        else if(/music/.test(suite))system='music-audio';
+        else if(/finds/.test(suite))system='house-treehouse';
+        else if(/camera|clock/.test(suite))system='ui-menus-controls';
+        else if(/inviting|leashing|sigils|the party|speakers/.test(suite))system='invites-party';
+        else if(/light|laser|border|facing|moon/.test(suite))system='art-rendering';
+        else if(/creature|witch|simulation|broom/.test(suite))system='creatures-movement';
+        else system='world-islands-lakes';
+      }
+      return {...rest,system,...classify(c),currentness:'unverified: human design review required',supersessionCandidates:candidates(c,sources),caseRuntimeSeconds:null};
     })};
   });
   return {schemaVersion:1,method:'Static declarations, not executed or expanded cases. Heuristic classifications are review prompts, not Ed rulings. Existing CI file durations are historical; case durations are unknown and never apportioned.',timingSource:timing._source,files:entries};
@@ -144,9 +157,20 @@ export function outputs(data, reviews = {}) {
     result[`${id}.md`]=`# ${title}\n\nAudit only. ${owner}\n\n## What these tests aim to protect\n\n${protections.map(p=>`- ${p}`).join('\n')}\n\n## First guesses\n\n| Kind | Declarations |\n|---|---:|\n${Object.entries(counts).map(([k,n])=>`| ${k} | ${n} |`).join('\n')}\n\nThese are machine guesses, not confirmed design decisions. See [all ${title.toLowerCase()} cases](cases.md#${id}) for names, citations, recommendations and runtime limits.\n\n## Group decisions for Ed\n\n1. Keep the safety and integrity protections. Review the provisional rule group against today's design before any changes.\n2. ${id==='combat'?'Apply #1622’s outcome-test decision through its owner; this audit proposes no duplicate edits.':id==='multiplayer'?'Have #1609 review these classifications after its integration; this audit proposes no authority-test edits.':`Review the ${counts['outcome stats']} outcome-stat declarations as a group for possible nonblocking reports. No move happens before your ruling.`}\n3. Review the ${counts.leftovers} historical-wording declarations for compatibility purpose. Choose keep, rewrite or delete only after checking the case and a specific superseding ruling. An older date alone is insufficient.\n\nCase runtimes are unknown. Historical file timings are in the inventory; no savings estimate or new benchmark run is claimed.\n`;
   }
   result['cases.md']='# Exhaustive case catalogue\n\nStatic declarations only. All classifications and currentness are provisional. Case runtime is unknown throughout; file timings and provenance are in inventory.json. Parameterized templates are not expanded.\n\n'+Object.entries(systems).map(([id,[title]])=>`<a id="${id}"></a>\n\n## ${title}\n\n`+all.filter(c=>c.system===id).map(c=>`- **${cell(c.fullName)}** — [${c.file}:${c.line}](../../${c.file}#L${c.line})${c.parameterized?' (parameterized template)':''}\n  - ${c.kind}; ${c.recommendation}. Currentness: unverified. Case runtime: unknown.\n  - Cited ruling: ${c.citations.length?c.citations.map(q=>`${q.scope}, line ${q.line}: ${cell(q.quote)}`).join(' / '):'none found in scoped comments; not proof that none exists.'}\n${c.supersessionCandidates.map(e=>`  - Possible later evidence: [${e.file}:${e.line}](../../${e.file}#L${e.line}): ${cell(e.quote)}. ${e.status}.\n`).join('')}`).join('\n')).join('\n');
-  result['README.md']=result['README.md'].replace('Audit only, #1631 / draft #1632.','Audit only, #1631 / draft #1632.\n\n**Semantic review in progress.** Saves/replay and legends are bounded format-check previews, with concrete groups in [semantic-groups.md](semantic-groups.md). Other system pages remain unreviewed placeholders and are not ready for Ed. Combat and multiplayer retain their existing owners. The initial catalogue remains a machine-first reading aid; reviewed classifications and membership are in inventory.json and semantic-groups.md.');
-  for(const id of Object.keys(systems))if(!reviews[id] && !['combat','multiplayer'].includes(id))result[`${id}.md`]=result[`${id}.md`].replace('\n\n','\n\n**Not ready for Ed: semantic review pending.** The generic prompts below are placeholders, not proposed group decisions.\n\n');
-  return {...result,...reviewOutputs(data,reviews)};
+  const reviewed=Object.keys(reviews).map(id=>`[${systems[id]?.[0]??id}](${id}.md)`).join(', ');
+  result['README.md']=result['README.md'].replace('Audit only, #1631 / draft #1632.',`Audit only, #1631 / draft #1632.\n\n**Semantic review in progress.** Concrete reviewed groups: ${reviewed}. Exact reviewed membership, assertion rationale and old/current ruling comparisons are in [semantic-groups.md](semantic-groups.md). Page scope statements identify bounded reviews; neighboring unreviewed cases are not silently treated as current. Other system pages remain placeholders and are not ready for Ed. Combat and multiplayer retain their existing owners. The initial catalogue remains a machine-first reading aid; reviewed classifications are in inventory.json.`);
+  const combined={...result,...reviewOutputs(data,reviews)};
+  let unread='# Tests not yet semantically reviewed\n\nNo change is proposed for these tests. System placement uses the source file/module and named suite; placement is not a semantic keep decision. Combat and multiplayer remain owner-only listings. IDs identify source templates, not expanded executions.\n\n';
+  for(const [id,[title]] of Object.entries(systems)) {
+    if(['combat','multiplayer'].includes(id))continue;
+    const pending=all.filter(c=>c.system===id && !c.semanticGroup);
+    unread+=`## ${title}\n\n${pending.length} tests not reviewed; no change proposed.\n\n`;
+    for(const file of [...new Set(pending.map(c=>c.file))])unread+=`- [${file}](../../${file}): ${pending.filter(c=>c.file===file).length} tests; lines ${pending.filter(c=>c.file===file).map(c=>c.line).join(', ')}.\n`;
+    if(!reviews[id])combined[`${id}.md`]=`# ${title}\n\n0 changes proposed, 0 reviewed groups to keep.\n\n**Not reviewed, no change proposed:** ${pending.length} tests. No keep question covers these unread tests. [Exact remaining file/line manifest](unreviewed.md#${title.toLowerCase().replaceAll(',','').replaceAll(' ','-')}).\n`;
+    else combined[`${id}.md`]+=`\n## Not reviewed, no change proposed\n\n${pending.length} additional tests remain outside the reviewed groups. The keep question above covers only named groups. [Exact remaining file/line manifest](unreviewed.md).\n`;
+  }
+  combined['unreviewed.md']=unread;
+  return combined;
 }
 if (process.argv[1] && path.resolve(process.argv[1])===fileURLToPath(import.meta.url)) {
   const root=path.resolve(path.dirname(fileURLToPath(import.meta.url)),'../..');

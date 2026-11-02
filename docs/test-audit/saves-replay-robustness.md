@@ -21,7 +21,7 @@ None in the reviewed groups.
 
 ### S1. Slot migration and isolation
 
-**14 tests · hard limits · ~0 s of CI.**
+**14 tests · hard limits · <1 s of CI.**
 
 Examples: [Old save bytes survive migration.](../../src/app/saveSlots.test.ts#L30); [A corrupt slot cannot block another.](../../src/app/saveSlots.test.ts#L55); [An older tab preserves newer slots.](../../src/app/saveSlots.test.ts#L132).
 
@@ -45,7 +45,7 @@ Examples: [Compatible saves survive new builds.](../../src/app/nightSave.test.ts
 
 ### S4. Equipment saves and compatibility migrations
 
-**13 tests · current rules · ~0 s of CI.**
+**13 tests · current rules · <1 s of CI.**
 
 Examples: [Old brooms convert once and retain colours.](../../src/app/broomSave.test.ts#L44); [Found hats survive a refused write in this page.](../../src/app/hatSave.test.ts#L8); [Old station names migrate to current ones.](../../src/app/guideSave.test.ts#L7).
 
@@ -53,7 +53,7 @@ Examples: [Old brooms convert once and retain colours.](../../src/app/broomSave.
 
 ### S5. Campaign progress and personal settings
 
-**21 tests · current rules · ~0 s of CI.**
+**21 tests · current rules · <1 s of CI.**
 
 Examples: [Won nights unlock islands; losses do not.](../../src/app/chartSave.test.ts#L17); [Old volumes migrate only once.](../../src/app/playerSettings.test.ts#L25); [Resuming preserves accessibility settings.](../../src/app/playerSettings.test.ts#L49).
 
@@ -71,3 +71,7 @@ Examples: [A paused tape replays the identical state.](../../src/platform/inputR
 **Yes/no: Keep S1, S2, S3, S4, S5, S6 as they are?** They protect slot isolation, exact save/replay continuation, safe checkpoints, equipment migrations, personal settings and retained report text.
 
 [Old/current ruling comparisons](semantic-groups.md#saves-replay-robustness-ruling-review). No change happens before Ed rules.
+
+## Not reviewed, no change proposed
+
+0 additional tests remain outside the reviewed groups. The keep question above covers only named groups. [Exact remaining file/line manifest](unreviewed.md).

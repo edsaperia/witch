@@ -1,0 +1,472 @@
+# Tests not yet semantically reviewed
+
+No change is proposed for these tests. System placement uses the source file/module and named suite; placement is not a semantic keep decision. Combat and multiplayer remain owner-only listings. IDs identify source templates, not expanded executions.
+
+## Creatures and movement
+
+163 tests not reviewed; no change proposed.
+
+- [src/bots/coverage.test.ts](../../src/bots/coverage.test.ts): 4 tests; lines 5, 15, 23, 30.
+- [src/bots/coverageGuard.test.ts](../../src/bots/coverageGuard.test.ts): 5 tests; lines 4, 8, 11, 19, 25.
+- [src/bots/expert-trace.test.ts](../../src/bots/expert-trace.test.ts): 21 tests; lines 37, 67, 75, 86, 98, 120, 139, 156, 164, 170, 178, 189, 197, 219, 229, 238, 256, 262, 269, 273, 277.
+- [src/bots/expert.test.ts](../../src/bots/expert.test.ts): 9 tests; lines 10, 24, 41, 56, 70, 78, 91, 106, 116.
+- [src/rules/babies.test.ts](../../src/rules/babies.test.ts): 8 tests; lines 41, 56, 90, 120, 140, 154, 165, 179.
+- [src/rules/bags.test.ts](../../src/rules/bags.test.ts): 6 tests; lines 19, 32, 44, 53, 71, 82.
+- [src/rules/berries.test.ts](../../src/rules/berries.test.ts): 8 tests; lines 38, 52, 64, 74, 101, 124, 130, 147.
+- [src/rules/circleSafe.test.ts](../../src/rules/circleSafe.test.ts): 3 tests; lines 38, 51, 61.
+- [src/rules/creatureShape.test.ts](../../src/rules/creatureShape.test.ts): 1 tests; lines 14.
+- [src/rules/glide.test.ts](../../src/rules/glide.test.ts): 1 tests; lines 12.
+- [src/rules/grounded.test.ts](../../src/rules/grounded.test.ts): 8 tests; lines 39, 51, 59, 66, 73, 81, 91, 98.
+- [src/rules/growth.test.ts](../../src/rules/growth.test.ts): 4 tests; lines 25, 34, 47, 72.
+- [src/rules/kinds.test.ts](../../src/rules/kinds.test.ts): 3 tests; lines 11, 15, 34.
+- [src/rules/movement.test.ts](../../src/rules/movement.test.ts): 13 tests; lines 36, 40, 56, 64, 71, 81, 92, 103, 111, 122, 131, 140, 147.
+- [src/rules/naps.test.ts](../../src/rules/naps.test.ts): 7 tests; lines 35, 49, 70, 90, 106, 129, 137.
+- [src/rules/riseCooldown.test.ts](../../src/rules/riseCooldown.test.ts): 4 tests; lines 23, 25, 35, 46.
+- [src/rules/rules.test.ts](../../src/rules/rules.test.ts): 21 tests; lines 329, 336, 346, 406, 422, 430, 435, 440, 510, 517, 536, 551, 579, 1563, 1574, 1581, 1678, 1683, 1695, 1706, 1715.
+- [src/rules/runaway.test.ts](../../src/rules/runaway.test.ts): 2 tests; lines 37, 60.
+- [src/rules/simLod.test.ts](../../src/rules/simLod.test.ts): 7 tests; lines 19, 27, 41, 50, 75, 86, 93.
+- [src/rules/spacing.test.ts](../../src/rules/spacing.test.ts): 4 tests; lines 14, 20, 33, 40.
+- [src/rules/stoneIdle.test.ts](../../src/rules/stoneIdle.test.ts): 2 tests; lines 33, 52.
+- [src/rules/travel.test.ts](../../src/rules/travel.test.ts): 7 tests; lines 36, 53, 68, 87, 100, 116, 136.
+- [src/rules/win.test.ts](../../src/rules/win.test.ts): 15 tests; lines 44, 67, 74, 89, 111, 173, 229, 266, 274, 307, 325, 345, 364, 385, 398.
+## Invites and party
+
+299 tests not reviewed; no change proposed.
+
+- [src/partyGearSize.test.ts](../../src/partyGearSize.test.ts): 1 tests; lines 8.
+- [src/rules/alarms.test.ts](../../src/rules/alarms.test.ts): 5 tests; lines 14, 25, 34, 45, 54.
+- [src/rules/asleepBeforeParty.test.ts](../../src/rules/asleepBeforeParty.test.ts): 8 tests; lines 51, 68, 83, 94, 116, 131, 147, 161.
+- [src/rules/bootRing.test.ts](../../src/rules/bootRing.test.ts): 10 tests; lines 21, 27, 34, 40, 45, 50, 58, 68, 79, 106.
+- [src/rules/clear.test.ts](../../src/rules/clear.test.ts): 20 tests; lines 46, 55, 64, 72, 82, 93, 106, 115, 137, 151, 164, 180, 199, 220, 233, 245, 258, 265, 287, 305.
+- [src/rules/creatureStates.test.ts](../../src/rules/creatureStates.test.ts): 15 tests; lines 42, 48, 57, 69, 82, 109, 125, 137, 148, 170, 184, 192, 206, 217, 229.
+- [src/rules/fireworks.test.ts](../../src/rules/fireworks.test.ts): 3 tests; lines 5, 9, 26.
+- [src/rules/floorSigils.test.ts](../../src/rules/floorSigils.test.ts): 4 tests; lines 12, 24, 34, 40.
+- [src/rules/guestWake.test.ts](../../src/rules/guestWake.test.ts): 4 tests; lines 11, 20, 40, 52.
+- [src/rules/hexSigils.test.ts](../../src/rules/hexSigils.test.ts): 6 tests; lines 26, 31, 42, 61, 71, 83.
+- [src/rules/homeSpeakers.test.ts](../../src/rules/homeSpeakers.test.ts): 3 tests; lines 27, 36, 64.
+- [src/rules/inviteWakes.test.ts](../../src/rules/inviteWakes.test.ts): 2 tests; lines 38, 54.
+- [src/rules/invites.test.ts](../../src/rules/invites.test.ts): 8 tests; lines 28, 42, 50, 59, 69, 84, 106, 114.
+- [src/rules/invitesAim.test.ts](../../src/rules/invitesAim.test.ts): 4 tests; lines 24, 30, 37, 47.
+- [src/rules/invitesChain.test.ts](../../src/rules/invitesChain.test.ts): 4 tests; lines 55, 62, 68, 79.
+- [src/rules/invitesPierce.test.ts](../../src/rules/invitesPierce.test.ts): 3 tests; lines 56, 62, 74.
+- [src/rules/leashWeight.test.ts](../../src/rules/leashWeight.test.ts): 7 tests; lines 34, 46, 51, 66, 75, 84, 89.
+- [src/rules/lettersWake.test.ts](../../src/rules/lettersWake.test.ts): 2 tests; lines 32, 46.
+- [src/rules/leyPulseAudit.test.ts](../../src/rules/leyPulseAudit.test.ts): 12 tests; lines 50, 63, 77, 89, 100, 111, 157, 166, 174, 188, 198, 206.
+- [src/rules/leycurve.test.ts](../../src/rules/leycurve.test.ts): 4 tests; lines 12, 25, 35, 44.
+- [src/rules/leylines.test.ts](../../src/rules/leylines.test.ts): 11 tests; lines 23, 30, 41, 54, 67, 75, 88, 102, 108, 117, 142.
+- [src/rules/leypulse.test.ts](../../src/rules/leypulse.test.ts): 7 tests; lines 15, 28, 32, 40, 48, 66, 83.
+- [src/rules/leyroute.test.ts](../../src/rules/leyroute.test.ts): 10 tests; lines 15, 29, 37, 41, 55, 70, 86, 94, 98, 106.
+- [src/rules/orbit.test.ts](../../src/rules/orbit.test.ts): 2 tests; lines 9, 22.
+- [src/rules/partyDressing.test.ts](../../src/rules/partyDressing.test.ts): 6 tests; lines 14, 43, 71, 86, 94, 102.
+- [src/rules/partyGuests.test.ts](../../src/rules/partyGuests.test.ts): 5 tests; lines 22, 34, 43, 51, 57.
+- [src/rules/partyOver.test.ts](../../src/rules/partyOver.test.ts): 7 tests; lines 23, 33, 47, 60, 70, 114, 126.
+- [src/rules/partyWitches.gaze.test.ts](../../src/rules/partyWitches.gaze.test.ts): 5 tests; lines 19, 37, 59, 69, 77.
+- [src/rules/partyWitches.test.ts](../../src/rules/partyWitches.test.ts): 11 tests; lines 14, 26, 45, 59, 76, 82, 97, 102, 112, 124, 131.
+- [src/rules/partyspell.test.ts](../../src/rules/partyspell.test.ts): 5 tests; lines 18, 30, 39, 71, 79.
+- [src/rules/pickup.test.ts](../../src/rules/pickup.test.ts): 7 tests; lines 42, 63, 81, 98, 113, 138, 151.
+- [src/rules/placement.test.ts](../../src/rules/placement.test.ts): 2 tests; lines 14, 52.
+- [src/rules/pulseSpeed.test.ts](../../src/rules/pulseSpeed.test.ts): 4 tests; lines 26, 37, 48, 58.
+- [src/rules/rainbow.test.ts](../../src/rules/rainbow.test.ts): 4 tests; lines 16, 31, 37, 54.
+- [src/rules/relics.test.ts](../../src/rules/relics.test.ts): 8 tests; lines 19, 50, 74, 83, 89, 102, 108, 117.
+- [src/rules/rules.test.ts](../../src/rules/rules.test.ts): 28 tests; lines 614, 619, 641, 662, 673, 685, 697, 717, 727, 817, 833, 851, 874, 894, 905, 921, 961, 979, 1319, 1328, 1337, 1348, 1359, 1364, 1376, 1394, 1594, 1606.
+- [src/rules/runeOffset.test.ts](../../src/rules/runeOffset.test.ts): 3 tests; lines 16, 26, 34.
+- [src/rules/runestones.test.ts](../../src/rules/runestones.test.ts): 4 tests; lines 8, 9, 15, 23.
+- [src/rules/sigilAvoid.test.ts](../../src/rules/sigilAvoid.test.ts): 4 tests; lines 34, 51, 61, 71.
+- [src/rules/sigilRuns.test.ts](../../src/rules/sigilRuns.test.ts): 9 tests; lines 41, 56, 85, 99, 122, 131, 141, 152, 160.
+- [src/rules/stackCycle.test.ts](../../src/rules/stackCycle.test.ts): 2 tests; lines 27, 32.
+- [src/rules/stackRelics.test.ts](../../src/rules/stackRelics.test.ts): 5 tests; lines 21, 50, 63, 72, 105.
+- [src/rules/stoneStacks.test.ts](../../src/rules/stoneStacks.test.ts): 20 tests; lines 60, 87, 98, 114, 125, 137, 166, 185, 198, 219, 228, 242, 258, 272, 293, 317, 329, 343, 365, 397.
+- [src/rules/waveLoss.test.ts](../../src/rules/waveLoss.test.ts): 5 tests; lines 32, 34, 48, 56, 71.
+## Legends
+
+11 tests not reviewed; no change proposed.
+
+- [src/rules/dream.test.ts](../../src/rules/dream.test.ts): 4 tests; lines 10, 21, 27, 36.
+- [src/rules/legends.test.ts](../../src/rules/legends.test.ts): 1 tests; lines 277.
+- [src/rules/slowTime.test.ts](../../src/rules/slowTime.test.ts): 6 tests; lines 29, 49, 70, 85, 111, 116.
+## World, islands and lakes
+
+125 tests not reviewed; no change proposed.
+
+- [src/rules/archipelago.test.ts](../../src/rules/archipelago.test.ts): 1 tests; lines 22.
+- [src/rules/areaRenames.test.ts](../../src/rules/areaRenames.test.ts): 2 tests; lines 12, 32.
+- [src/rules/arrive.test.ts](../../src/rules/arrive.test.ts): 5 tests; lines 11, 44, 66, 82, 103.
+- [src/rules/beach.test.ts](../../src/rules/beach.test.ts): 1 tests; lines 158.
+- [src/rules/beachDecor.test.ts](../../src/rules/beachDecor.test.ts): 1 tests; lines 35.
+- [src/rules/bufferClearings.test.ts](../../src/rules/bufferClearings.test.ts): 1 tests; lines 15.
+- [src/rules/deal.test.ts](../../src/rules/deal.test.ts): 4 tests; lines 18, 31, 40, 67.
+- [src/rules/fixedPopulation.test.ts](../../src/rules/fixedPopulation.test.ts): 3 tests; lines 47, 60, 72.
+- [src/rules/forestChunks.test.ts](../../src/rules/forestChunks.test.ts): 2 tests; lines 11, 23.
+- [src/rules/groundcover.test.ts](../../src/rules/groundcover.test.ts): 3 tests; lines 19, 30, 45.
+- [src/rules/homeArea.test.ts](../../src/rules/homeArea.test.ts): 4 tests; lines 15, 34, 56, 74.
+- [src/rules/island.test.ts](../../src/rules/island.test.ts): 2 tests; lines 18, 49.
+- [src/rules/islandGrowth.test.ts](../../src/rules/islandGrowth.test.ts): 1 tests; lines 56.
+- [src/rules/islandShape.test.ts](../../src/rules/islandShape.test.ts): 3 tests; lines 9, 13, 24.
+- [src/rules/lakeShore.test.ts](../../src/rules/lakeShore.test.ts): 3 tests; lines 16, 30, 38.
+- [src/rules/lakes.test.ts](../../src/rules/lakes.test.ts): 2 tests; lines 128, 162.
+- [src/rules/land.test.ts](../../src/rules/land.test.ts): 4 tests; lines 20, 30, 43, 49.
+- [src/rules/layoutPatterns.test.ts](../../src/rules/layoutPatterns.test.ts): 3 tests; lines 18, 22, 27.
+- [src/rules/mapPrep.test.ts](../../src/rules/mapPrep.test.ts): 3 tests; lines 59, 77, 87.
+- [src/rules/mapShape.test.ts](../../src/rules/mapShape.test.ts): 5 tests; lines 20, 53, 73, 90, 106.
+- [src/rules/pointFeatures.test.ts](../../src/rules/pointFeatures.test.ts): 2 tests; lines 18, 25.
+- [src/rules/roster.test.ts](../../src/rules/roster.test.ts): 2 tests; lines 31, 50.
+- [src/rules/rosters.test.ts](../../src/rules/rosters.test.ts): 5 tests; lines 44, 66, 82, 90, 125.
+- [src/rules/rules.test.ts](../../src/rules/rules.test.ts): 46 tests; lines 56, 65, 72, 80, 91, 103, 121, 138, 144, 160, 169, 176, 183, 200, 218, 224, 237, 247, 259, 279, 289, 296, 301, 766, 1049, 1063, 1100, 1110, 1117, 1121, 1131, 1140, 1148, 1172, 1190, 1200, 1221, 1231, 1245, 1510, 1513, 1524, 1621, 1632, 1642, 1653.
+- [src/rules/stoneKeepClear.test.ts](../../src/rules/stoneKeepClear.test.ts): 2 tests; lines 50, 61.
+- [src/rules/terrain.test.ts](../../src/rules/terrain.test.ts): 1 tests; lines 16.
+- [src/rules/zoo.test.ts](../../src/rules/zoo.test.ts): 3 tests; lines 17, 35, 43.
+- [src/rules/zooCoast.test.ts](../../src/rules/zooCoast.test.ts): 1 tests; lines 23.
+- [src/rules/zooFence.test.ts](../../src/rules/zooFence.test.ts): 5 tests; lines 60, 67, 86, 92, 100.
+- [src/rules/zooMap.test.ts](../../src/rules/zooMap.test.ts): 5 tests; lines 20, 41, 59, 76, 92.
+## House and treehouse
+
+341 tests not reviewed; no change proposed.
+
+- [src/app/houseActions.test.ts](../../src/app/houseActions.test.ts): 1 tests; lines 3.
+- [src/app/houseCpuFunctions.test.ts](../../src/app/houseCpuFunctions.test.ts): 2 tests; lines 3, 10.
+- [src/app/houseLayout.test.ts](../../src/app/houseLayout.test.ts): 1 tests; lines 4.
+- [src/app/houseProfile.test.ts](../../src/app/houseProfile.test.ts): 5 tests; lines 7, 11, 19, 34, 50.
+- [src/app/houseShotSession.test.ts](../../src/app/houseShotSession.test.ts): 4 tests; lines 8, 19, 31, 37.
+- [src/app/localHousePresentation.test.ts](../../src/app/localHousePresentation.test.ts): 1 tests; lines 9.
+- [src/app/mushroomStock.test.ts](../../src/app/mushroomStock.test.ts): 3 tests; lines 6, 16, 23.
+- [src/app/whatsNew.test.ts](../../src/app/whatsNew.test.ts): 3 tests; lines 8, 26, 33.
+- [src/editor/currentEdLayout.test.ts](../../src/editor/currentEdLayout.test.ts): 2 tests; lines 11, 28.
+- [src/editor/editorStartupIdentity.test.ts](../../src/editor/editorStartupIdentity.test.ts): 3 tests; lines 27, 39, 49.
+- [src/editor/hatZone.test.ts](../../src/editor/hatZone.test.ts): 1 tests; lines 10.
+- [src/editor/houseLayout.test.ts](../../src/editor/houseLayout.test.ts): 8 tests; lines 16, 39, 48, 61, 79, 89, 109, 121.
+- [src/editor/houseLayoutAudit.test.ts](../../src/editor/houseLayoutAudit.test.ts): 2 tests; lines 9, 22.
+- [src/editor/publishedLayout.test.ts](../../src/editor/publishedLayout.test.ts): 1 tests; lines 6.
+- [src/editor/smokeBedStart.test.ts](../../src/editor/smokeBedStart.test.ts): 5 tests; lines 8, 17, 25, 31, 40.
+- [src/platform/inputHouse.test.ts](../../src/platform/inputHouse.test.ts): 4 tests; lines 69, 82, 92, 98.
+- [src/rules/broomParts.test.ts](../../src/rules/broomParts.test.ts): 8 tests; lines 11, 21, 26, 42, 48, 59, 70, 81.
+- [src/rules/brooms.test.ts](../../src/rules/brooms.test.ts): 6 tests; lines 41, 56, 76, 91, 130, 140.
+- [src/rules/cauldron.test.ts](../../src/rules/cauldron.test.ts): 7 tests; lines 5, 17, 24, 30, 46, 63, 71.
+- [src/rules/cauldronKitchen.test.ts](../../src/rules/cauldronKitchen.test.ts): 7 tests; lines 12, 37, 45, 60, 72, 80, 100.
+- [src/rules/cauldronNight.test.ts](../../src/rules/cauldronNight.test.ts): 4 tests; lines 25, 32, 50, 75.
+- [src/rules/cauldronTrip.test.ts](../../src/rules/cauldronTrip.test.ts): 2 tests; lines 4, 17.
+- [src/rules/constellations.test.ts](../../src/rules/constellations.test.ts): 4 tests; lines 6, 20, 31, 39.
+- [src/rules/crown.test.ts](../../src/rules/crown.test.ts): 15 tests; lines 14, 19, 26, 34, 47, 56, 63, 69, 81, 91, 101, 127, 135, 141, 146.
+- [src/rules/finds.test.ts](../../src/rules/finds.test.ts): 16 tests; lines 27, 40, 47, 72, 86, 105, 119, 131, 150, 159, 166, 178, 187, 206, 220, 233.
+- [src/rules/findsList.test.ts](../../src/rules/findsList.test.ts): 1 tests; lines 31.
+- [src/rules/hat.test.ts](../../src/rules/hat.test.ts): 9 tests; lines 35, 51, 71, 88, 99, 115, 132, 143, 150.
+- [src/rules/hatFloorPoints.test.ts](../../src/rules/hatFloorPoints.test.ts): 5 tests; lines 5, 11, 18, 25, 33.
+- [src/rules/hatSpells.test.ts](../../src/rules/hatSpells.test.ts): 6 tests; lines 46, 64, 78, 99, 120, 139.
+- [src/rules/hatSpellsB.test.ts](../../src/rules/hatSpellsB.test.ts): 6 tests; lines 57, 69, 81, 103, 114, 141.
+- [src/rules/houseConfig.test.ts](../../src/rules/houseConfig.test.ts): 5 tests; lines 16, 17, 27, 59, 63.
+- [src/rules/houseDefaultPins.test.ts](../../src/rules/houseDefaultPins.test.ts): 2 tests; lines 18, 38.
+- [src/rules/houseGuard.test.ts](../../src/rules/houseGuard.test.ts): 4 tests; lines 39, 57, 81, 95.
+- [src/rules/housePlacement.runtime.test.ts](../../src/rules/housePlacement.runtime.test.ts): 3 tests; lines 5, 40, 75.
+- [src/rules/housePlacement.test.ts](../../src/rules/housePlacement.test.ts): 3 tests; lines 11, 24, 33.
+- [src/rules/houseRooms.test.ts](../../src/rules/houseRooms.test.ts): 19 tests; lines 57, 66, 88, 103, 110, 121, 126, 137, 156, 165, 174, 182, 190, 210, 226, 248, 255, 272, 284.
+- [src/rules/kit.test.ts](../../src/rules/kit.test.ts): 7 tests; lines 26, 34, 41, 54, 72, 85, 109.
+- [src/rules/movedKitchen.test.ts](../../src/rules/movedKitchen.test.ts): 2 tests; lines 14, 34.
+- [src/rules/mushrooms.test.ts](../../src/rules/mushrooms.test.ts): 9 tests; lines 21, 28, 40, 50, 59, 67, 79, 87, 90.
+- [src/rules/opening.test.ts](../../src/rules/opening.test.ts): 3 tests; lines 16, 23, 34.
+- [src/rules/potionRecipes.test.ts](../../src/rules/potionRecipes.test.ts): 2 tests; lines 5, 21.
+- [src/rules/potionSettings.test.ts](../../src/rules/potionSettings.test.ts): 3 tests; lines 9, 19, 32.
+- [src/rules/roomAccessFor.test.ts](../../src/rules/roomAccessFor.test.ts): 2 tests; lines 4, 13.
+- [src/rules/rules.test.ts](../../src/rules/rules.test.ts): 6 tests; lines 1257, 1270, 1286, 1290, 1294, 1306.
+- [src/rules/stations.test.ts](../../src/rules/stations.test.ts): 18 tests; lines 33, 38, 45, 49, 58, 64, 68, 75, 84, 91, 106, 120, 158, 165, 179, 183, 187, 193.
+- [src/rules/studio.test.ts](../../src/rules/studio.test.ts): 7 tests; lines 11, 24, 30, 34, 49, 64, 68.
+- [src/rules/telescope.test.ts](../../src/rules/telescope.test.ts): 10 tests; lines 8, 15, 23, 30, 35, 44, 49, 55, 58, 65.
+- [src/rules/treehouse.test.ts](../../src/rules/treehouse.test.ts): 18 tests; lines 25, 34, 50, 63, 85, 100, 109, 129, 143, 151, 176, 198, 224, 237, 246, 269, 279, 296.
+- [src/rules/useHatsExclusivity.test.ts](../../src/rules/useHatsExclusivity.test.ts): 5 tests; lines 14, 29, 38, 46, 59.
+- [src/rules/wakeUp.test.ts](../../src/rules/wakeUp.test.ts): 39 tests; lines 41, 49, 60, 71, 79, 94, 104, 115, 127, 140, 158, 208, 221, 240, 248, 259, 268, 283, 292, 303, 310, 323, 330, 359, 371, 381, 390, 397, 416, 422, 431, 440, 453, 471, 483, 495, 512, 522, 535.
+- [src/rules/wardrobe.test.ts](../../src/rules/wardrobe.test.ts): 4 tests; lines 26, 38, 54, 65.
+- [src/rules/wardrobeShelves.test.ts](../../src/rules/wardrobeShelves.test.ts): 13 tests; lines 14, 19, 29, 36, 41, 50, 56, 65, 74, 84, 90, 96, 100.
+- [src/ui/roomWalk.test.ts](../../src/ui/roomWalk.test.ts): 5 tests; lines 11, 15, 24, 36, 43.
+- [src/ui/stationChoice.test.ts](../../src/ui/stationChoice.test.ts): 10 tests; lines 39, 61, 71, 85, 105, 118, 130, 142, 153, 162.
+## Music and audio
+
+25 tests not reviewed; no change proposed.
+
+- [src/rules/beat.test.ts](../../src/rules/beat.test.ts): 8 tests; lines 8, 15, 35, 47, 60, 65, 90, 100.
+- [src/rules/creatureVoices.test.ts](../../src/rules/creatureVoices.test.ts): 2 tests; lines 8, 15.
+- [src/rules/djSet.test.ts](../../src/rules/djSet.test.ts): 8 tests; lines 11, 19, 25, 32, 41, 59, 76, 81.
+- [src/rules/knockdownTempo.test.ts](../../src/rules/knockdownTempo.test.ts): 5 tests; lines 14, 25, 34, 42, 72.
+- [src/rules/rules.test.ts](../../src/rules/rules.test.ts): 2 tests; lines 1538, 1548.
+## UI, menus and controls
+
+379 tests not reviewed; no change proposed.
+
+- [src/app/arrival.test.ts](../../src/app/arrival.test.ts): 1 tests; lines 32.
+- [src/app/arriveLimit.test.ts](../../src/app/arriveLimit.test.ts): 1 tests; lines 8.
+- [src/app/bundleMetrics.test.ts](../../src/app/bundleMetrics.test.ts): 2 tests; lines 4, 8.
+- [src/app/chartDeparture.test.ts](../../src/app/chartDeparture.test.ts): 2 tests; lines 3, 10.
+- [src/app/chartLayout.test.ts](../../src/app/chartLayout.test.ts): 2 tests; lines 15, 42.
+- [src/app/chartNav.test.ts](../../src/app/chartNav.test.ts): 2 tests; lines 6, 11.
+- [src/app/chartOrder.test.ts](../../src/app/chartOrder.test.ts): 4 tests; lines 13, 24, 34, 43.
+- [src/app/chartPin.test.ts](../../src/app/chartPin.test.ts): 4 tests; lines 12, 16, 24, 30.
+- [src/app/chartWorkerTrace.test.ts](../../src/app/chartWorkerTrace.test.ts): 2 tests; lines 8, 16.
+- [src/app/compareKey.test.ts](../../src/app/compareKey.test.ts): 2 tests; lines 12, 18.
+- [src/app/debugUnlock.test.ts](../../src/app/debugUnlock.test.ts): 6 tests; lines 21, 27, 50, 68, 75, 84.
+- [src/app/defaultLook.test.ts](../../src/app/defaultLook.test.ts): 5 tests; lines 13, 19, 35, 42, 49.
+- [src/app/finds.test.ts](../../src/app/finds.test.ts): 6 tests; lines 46, 57, 73, 76, 98, 106.
+- [src/app/homeGrowth.test.ts](../../src/app/homeGrowth.test.ts): 4 tests; lines 16, 49, 55, 75.
+- [src/app/introFocus.test.ts](../../src/app/introFocus.test.ts): 1 tests; lines 8.
+- [src/app/knobs.test.ts](../../src/app/knobs.test.ts): 2 tests; lines 17, 26.
+- [src/app/ladder.travel.test.ts](../../src/app/ladder.travel.test.ts): 3 tests; lines 13, 21, 28.
+- [src/app/landingBake.test.ts](../../src/app/landingBake.test.ts): 2 tests; lines 14, 31.
+- [src/app/landingSleep.test.ts](../../src/app/landingSleep.test.ts): 1 tests; lines 4.
+- [src/app/linkParams.test.ts](../../src/app/linkParams.test.ts): 3 tests; lines 39, 52, 80.
+- [src/app/loan.test.ts](../../src/app/loan.test.ts): 11 tests; lines 63, 76, 88, 97, 110, 121, 130, 139, 152, 158, 164.
+- [src/app/mapPrepDiagnostics.test.ts](../../src/app/mapPrepDiagnostics.test.ts): 3 tests; lines 16, 24, 32.
+- [src/app/newBuild.test.ts](../../src/app/newBuild.test.ts): 5 tests; lines 7, 12, 18, 23, 33.
+- [src/app/newForest.test.ts](../../src/app/newForest.test.ts): 2 tests; lines 5, 14.
+- [src/app/night.test.ts](../../src/app/night.test.ts): 9 tests; lines 96, 110, 129, 157, 169, 187, 214, 232, 244.
+- [src/app/nightFindBoundary.test.ts](../../src/app/nightFindBoundary.test.ts): 2 tests; lines 5, 13.
+- [src/app/opening.test.ts](../../src/app/opening.test.ts): 8 tests; lines 12, 22, 31, 40, 48, 53, 61, 69.
+- [src/app/overlayPause.test.ts](../../src/app/overlayPause.test.ts): 1 tests; lines 3.
+- [src/app/playerPick.test.ts](../../src/app/playerPick.test.ts): 2 tests; lines 20, 29.
+- [src/app/repro.test.ts](../../src/app/repro.test.ts): 5 tests; lines 12, 18, 30, 47, 54.
+- [src/app/sail.test.ts](../../src/app/sail.test.ts): 22 tests; lines 13, 26, 31, 35, 50, 61, 64, 74, 101, 109, 126, 136, 141, 150, 154, 159, 164, 171, 179, 182, 186, 192.
+- [src/app/settings.test.ts](../../src/app/settings.test.ts): 4 tests; lines 15, 23, 34, 45.
+- [src/app/settingsPage.test.ts](../../src/app/settingsPage.test.ts): 2 tests; lines 20, 31.
+- [src/app/sharedFindLoan.test.ts](../../src/app/sharedFindLoan.test.ts): 6 tests; lines 17, 31, 46, 55, 64, 77.
+- [src/app/shot.test.ts](../../src/app/shot.test.ts): 7 tests; lines 15, 22, 27, 32, 38, 44, 47.
+- [src/app/storageFallback.test.ts](../../src/app/storageFallback.test.ts): 3 tests; lines 9, 22, 38.
+- [src/app/timing.test.ts](../../src/app/timing.test.ts): 4 tests; lines 10, 17, 32, 40.
+- [src/app/travelTiming.test.ts](../../src/app/travelTiming.test.ts): 3 tests; lines 18, 29, 39.
+- [src/app/visitAcceptance.test.ts](../../src/app/visitAcceptance.test.ts): 8 tests; lines 21, 32, 43, 57, 67, 83, 100, 110.
+- [src/app/visitHome.test.ts](../../src/app/visitHome.test.ts): 2 tests; lines 9, 19.
+- [src/app/visitLifecycle.test.ts](../../src/app/visitLifecycle.test.ts): 1 tests; lines 18.
+- [src/app/visitPreferences.test.ts](../../src/app/visitPreferences.test.ts): 1 tests; lines 6.
+- [src/app/visitUnlocks.test.ts](../../src/app/visitUnlocks.test.ts): 3 tests; lines 12, 25, 34.
+- [src/app/workerJobHandlers.test.ts](../../src/app/workerJobHandlers.test.ts): 3 tests; lines 22, 31, 41.
+- [src/app/workerJobTrace.test.ts](../../src/app/workerJobTrace.test.ts): 5 tests; lines 4, 10, 19, 27, 37.
+- [src/app/worldDrawGate.test.ts](../../src/app/worldDrawGate.test.ts): 2 tests; lines 4, 15.
+- [src/app/zooExit.test.ts](../../src/app/zooExit.test.ts): 2 tests; lines 6, 9.
+- [src/app/zooOverlay.test.ts](../../src/app/zooOverlay.test.ts): 2 tests; lines 16, 32.
+- [src/beetleControls.test.ts](../../src/beetleControls.test.ts): 5 tests; lines 23, 38, 44, 49, 61.
+- [src/controlsText.test.ts](../../src/controlsText.test.ts): 4 tests; lines 12, 23, 26, 32.
+- [src/creatureShapeControls.test.ts](../../src/creatureShapeControls.test.ts): 4 tests; lines 13, 22, 28, 33.
+- [src/platform/bindings.test.ts](../../src/platform/bindings.test.ts): 12 tests; lines 16, 31, 42, 52, 59, 70, 76, 87, 92, 102, 120, 130.
+- [src/platform/freeze.pad.test.ts](../../src/platform/freeze.pad.test.ts): 1 tests; lines 7.
+- [src/platform/freezeNative.test.ts](../../src/platform/freezeNative.test.ts): 6 tests; lines 40, 47, 57, 66, 73, 83.
+- [src/platform/freezeStack.test.ts](../../src/platform/freezeStack.test.ts): 3 tests; lines 34, 56, 71.
+- [src/platform/freezeText.test.ts](../../src/platform/freezeText.test.ts): 1 tests; lines 4.
+- [src/platform/input.events.test.ts](../../src/platform/input.events.test.ts): 6 tests; lines 20, 33, 46, 58, 68, 77.
+- [src/platform/input.test.ts](../../src/platform/input.test.ts): 6 tests; lines 12, 19, 23, 32, 38, 45.
+- [src/platform/inputStack.test.ts](../../src/platform/inputStack.test.ts): 6 tests; lines 8, 22, 31, 44, 57, 65.
+- [src/platform/inputStuck.test.ts](../../src/platform/inputStuck.test.ts): 3 tests; lines 38, 51, 59.
+- [src/platform/inputTalk.test.ts](../../src/platform/inputTalk.test.ts): 2 tests; lines 13, 18.
+- [src/platform/inputTarget.test.ts](../../src/platform/inputTarget.test.ts): 1 tests; lines 3.
+- [src/platform/logCodec.test.ts](../../src/platform/logCodec.test.ts): 3 tests; lines 7, 15, 22.
+- [src/platform/logRecords.test.ts](../../src/platform/logRecords.test.ts): 4 tests; lines 4, 13, 25, 33.
+- [src/platform/padRemaps.test.ts](../../src/platform/padRemaps.test.ts): 3 tests; lines 18, 26, 42.
+- [src/platform/playtestJournal.test.ts](../../src/platform/playtestJournal.test.ts): 12 tests; lines 25, 50, 68, 77, 90, 100, 118, 127, 133, 140, 150, 157.
+- [src/platform/playtestLog.test.ts](../../src/platform/playtestLog.test.ts): 5 tests; lines 12, 39, 46, 59, 68.
+- [src/platform/rumble.test.ts](../../src/platform/rumble.test.ts): 3 tests; lines 8, 22, 31.
+- [src/platform/stallLog.test.ts](../../src/platform/stallLog.test.ts): 3 tests; lines 4, 16, 24.
+- [src/platform/tuningPreset.test.ts](../../src/platform/tuningPreset.test.ts): 2 tests; lines 12, 16.
+- [src/rules/coastCamera.test.ts](../../src/rules/coastCamera.test.ts): 4 tests; lines 28, 38, 44, 60.
+- [src/rules/guidance.test.ts](../../src/rules/guidance.test.ts): 9 tests; lines 32, 38, 62, 71, 77, 88, 123, 148, 170.
+- [src/rules/inputEdges.test.ts](../../src/rules/inputEdges.test.ts): 2 tests; lines 8, 22.
+- [src/rules/ladder.test.ts](../../src/rules/ladder.test.ts): 14 tests; lines 9, 15, 24, 28, 41, 49, 56, 73, 81, 90, 96, 113, 129, 147.
+- [src/rules/rules.test.ts](../../src/rules/rules.test.ts): 6 tests; lines 447, 463, 481, 496, 780, 788.
+- [src/rules/zooControls.test.ts](../../src/rules/zooControls.test.ts): 4 tests; lines 14, 19, 30, 46.
+- [src/ui/bagSim.test.ts](../../src/ui/bagSim.test.ts): 3 tests; lines 24, 31, 41.
+- [src/ui/creator.test.ts](../../src/ui/creator.test.ts): 12 tests; lines 9, 16, 19, 27, 36, 48, 57, 66, 85, 94, 105, 114.
+- [src/ui/decide.test.ts](../../src/ui/decide.test.ts): 9 tests; lines 13, 38, 51, 57, 66, 84, 99, 108, 113.
+- [src/ui/deviceHints.test.ts](../../src/ui/deviceHints.test.ts): 2 tests; lines 7, 17.
+- [src/ui/djBooth.test.ts](../../src/ui/djBooth.test.ts): 3 tests; lines 10, 16, 23.
+- [src/ui/loadingTree.test.ts](../../src/ui/loadingTree.test.ts): 1 tests; lines 9.
+- [src/ui/looks.test.ts](../../src/ui/looks.test.ts): 2 tests; lines 11, 14.
+- [src/ui/menuFocus.test.ts](../../src/ui/menuFocus.test.ts): 5 tests; lines 6, 17, 25, 50, 64.
+- [src/ui/potionLab.test.ts](../../src/ui/potionLab.test.ts): 2 tests; lines 7, 13.
+- [src/ui/rebind.test.ts](../../src/ui/rebind.test.ts): 9 tests; lines 9, 15, 27, 42, 56, 64, 77, 87, 94.
+- [src/ui/schemaForm.test.ts](../../src/ui/schemaForm.test.ts): 6 tests; lines 36, 44, 62, 79, 91, 105.
+- [src/ui/settingsNav.test.ts](../../src/ui/settingsNav.test.ts): 8 tests; lines 14, 20, 25, 36, 46, 54, 63, 72.
+## Saves, replay and robustness
+
+0 tests not reviewed; no change proposed.
+
+## Art and rendering checks
+
+655 tests not reviewed; no change proposed.
+
+- [src/artCheckAffected.test.ts](../../src/artCheckAffected.test.ts): 11 tests; lines 15, 23, 42, 62, 67, 78, 84, 108, 116, 125, 150.
+- [src/artCheckScope.test.ts](../../src/artCheckScope.test.ts): 3 tests; lines 7, 11, 16.
+- [src/artDependencies.test.ts](../../src/artDependencies.test.ts): 5 tests; lines 6, 19, 23, 29, 32.
+- [src/artHash.test.ts](../../src/artHash.test.ts): 3 tests; lines 20, 29, 36.
+- [src/artJobFingerprints.test.ts](../../src/artJobFingerprints.test.ts): 10 tests; lines 11, 24, 35, 46, 52, 64, 74, 84, 93, 104.
+- [src/artLabSizeBundle.test.ts](../../src/artLabSizeBundle.test.ts): 1 tests; lines 17.
+- [src/bibPaint.test.ts](../../src/bibPaint.test.ts): 4 tests; lines 14, 21, 31, 51.
+- [src/bodyGraph.test.ts](../../src/bodyGraph.test.ts): 9 tests; lines 9, 33, 45, 57, 63, 78, 90, 104, 123.
+- [src/cheetahLegendAttachment.test.ts](../../src/cheetahLegendAttachment.test.ts): 1 tests; lines 12.
+- [src/creatureDistinctness.test.ts](../../src/creatureDistinctness.test.ts): 7 tests; lines 17, 20, 26, 31, 38, 43, 46.
+- [src/creatureSelection.test.ts](../../src/creatureSelection.test.ts): 9 tests; lines 24, 31, 38, 47, 55, 63, 77, 83, 88.
+- [src/creatureSizeCandidate.test.ts](../../src/creatureSizeCandidate.test.ts): 6 tests; lines 9, 10, 14, 24, 31, 40.
+- [src/creatureSizeModel.test.ts](../../src/creatureSizeModel.test.ts): 4 tests; lines 10, 15, 25, 31.
+- [src/creatures.test.ts](../../src/creatures.test.ts): 8 tests; lines 15, 19, 23, 37, 41, 45, 67, 76.
+- [src/defaultRoster.test.ts](../../src/defaultRoster.test.ts): 2 tests; lines 6, 16.
+- [src/earSilhouette.test.ts](../../src/earSilhouette.test.ts): 4 tests; lines 22, 34, 46, 51.
+- [src/felineGraph.test.ts](../../src/felineGraph.test.ts): 9 tests; lines 22, 30, 43, 53, 65, 81, 93, 102, 109.
+- [src/moleReferenceFit.test.ts](../../src/moleReferenceFit.test.ts): 3 tests; lines 16, 25, 31.
+- [src/multiHeadExpressions.test.ts](../../src/multiHeadExpressions.test.ts): 1 tests; lines 8.
+- [src/napSizeCompatibility.test.ts](../../src/napSizeCompatibility.test.ts): 1 tests; lines 8.
+- [src/projectedModelFit.test.ts](../../src/projectedModelFit.test.ts): 5 tests; lines 6, 14, 22, 27, 37.
+- [src/quadFitDragonfly.test.ts](../../src/quadFitDragonfly.test.ts): 3 tests; lines 13, 21, 29.
+- [src/render/aggro.test.ts](../../src/render/aggro.test.ts): 3 tests; lines 5, 12, 16.
+- [src/render/alarm.test.ts](../../src/render/alarm.test.ts): 1 tests; lines 6.
+- [src/render/areaWindow.test.ts](../../src/render/areaWindow.test.ts): 3 tests; lines 27, 35, 49.
+- [src/render/artCache.test.ts](../../src/render/artCache.test.ts): 3 tests; lines 6, 11, 20.
+- [src/render/artWorker.test.ts](../../src/render/artWorker.test.ts): 4 tests; lines 23, 30, 36, 46.
+- [src/render/assets.test.ts](../../src/render/assets.test.ts): 8 tests; lines 18, 46, 58, 77, 101, 118, 143, 153.
+- [src/render/attackFeel.test.ts](../../src/render/attackFeel.test.ts): 7 tests; lines 9, 21, 27, 32, 39, 44, 50.
+- [src/render/audiencePotion.test.ts](../../src/render/audiencePotion.test.ts): 3 tests; lines 9, 20, 28.
+- [src/render/barkFaces.test.ts](../../src/render/barkFaces.test.ts): 1 tests; lines 12.
+- [src/render/beachEdge.test.ts](../../src/render/beachEdge.test.ts): 4 tests; lines 18, 22, 33, 48.
+- [src/render/beachFires.test.ts](../../src/render/beachFires.test.ts): 1 tests; lines 15.
+- [src/render/brewingProps.test.ts](../../src/render/brewingProps.test.ts): 1 tests; lines 14.
+- [src/render/bubbleSight.test.ts](../../src/render/bubbleSight.test.ts): 5 tests; lines 11, 20, 28, 34, 39.
+- [src/render/cauldronMaterials.test.ts](../../src/render/cauldronMaterials.test.ts): 3 tests; lines 6, 28, 40.
+- [src/render/character.test.ts](../../src/render/character.test.ts): 5 tests; lines 6, 16, 24, 29, 39.
+- [src/render/chart/flightClock.test.ts](../../src/render/chart/flightClock.test.ts): 4 tests; lines 5, 13, 30, 41.
+- [src/render/chart/islandMesh.test.ts](../../src/render/chart/islandMesh.test.ts): 3 tests; lines 21, 34, 52.
+- [src/render/chart/moon.test.ts](../../src/render/chart/moon.test.ts): 3 tests; lines 7, 19, 24.
+- [src/render/cheer.test.ts](../../src/render/cheer.test.ts): 2 tests; lines 5, 11.
+- [src/render/chunkyPotion.test.ts](../../src/render/chunkyPotion.test.ts): 2 tests; lines 8, 19.
+- [src/render/coastReadiness.test.ts](../../src/render/coastReadiness.test.ts): 4 tests; lines 3, 14, 19, 28.
+- [src/render/conga.test.ts](../../src/render/conga.test.ts): 5 tests; lines 9, 17, 23, 34, 44.
+- [src/render/creatureArt.party.test.ts](../../src/render/creatureArt.party.test.ts): 1 tests; lines 21.
+- [src/render/crown.test.ts](../../src/render/crown.test.ts): 6 tests; lines 26, 28, 48, 56, 70, 78.
+- [src/render/crownMask.test.ts](../../src/render/crownMask.test.ts): 2 tests; lines 9, 15.
+- [src/render/dodgeEcho.test.ts](../../src/render/dodgeEcho.test.ts): 4 tests; lines 29, 39, 46, 64.
+- [src/render/dodgeEchoIntegration.test.ts](../../src/render/dodgeEchoIntegration.test.ts): 1 tests; lines 9.
+- [src/render/dodgeEchoModel.test.ts](../../src/render/dodgeEchoModel.test.ts): 6 tests; lines 10, 17, 24, 34, 41, 47.
+- [src/render/fireworksWin.test.ts](../../src/render/fireworksWin.test.ts): 1 tests; lines 5.
+- [src/render/floors.test.ts](../../src/render/floors.test.ts): 2 tests; lines 12, 26.
+- [src/render/forestCountsPotion.test.ts](../../src/render/forestCountsPotion.test.ts): 4 tests; lines 16, 22, 30, 39.
+- [src/render/fx/fightFixture.test.ts](../../src/render/fx/fightFixture.test.ts): 1 tests; lines 9.
+- [src/render/fx/model.test.ts](../../src/render/fx/model.test.ts): 5 tests; lines 9, 23, 27, 34, 41.
+- [src/render/fx/native.test.ts](../../src/render/fx/native.test.ts): 3 tests; lines 6, 14, 23.
+- [src/render/fx/system.test.ts](../../src/render/fx/system.test.ts): 4 tests; lines 9, 15, 28, 37.
+- [src/render/fxMockModel.test.ts](../../src/render/fxMockModel.test.ts): 4 tests; lines 4, 8, 19, 24.
+- [src/render/glades.test.ts](../../src/render/glades.test.ts): 5 tests; lines 9, 15, 21, 29, 32.
+- [src/render/gpuLedger.test.ts](../../src/render/gpuLedger.test.ts): 6 tests; lines 21, 31, 49, 64, 82, 97.
+- [src/render/groundFamily.test.ts](../../src/render/groundFamily.test.ts): 4 tests; lines 6, 15, 27, 38.
+- [src/render/hatFlight.test.ts](../../src/render/hatFlight.test.ts): 2 tests; lines 5, 10.
+- [src/render/hatIcons.test.ts](../../src/render/hatIcons.test.ts): 3 tests; lines 15, 20, 23.
+- [src/render/headPoint.test.ts](../../src/render/headPoint.test.ts): 4 tests; lines 11, 15, 21, 22.
+- [src/render/height.test.ts](../../src/render/height.test.ts): 12 tests; lines 32, 45, 49, 61, 65, 77, 82, 87, 102, 125, 145, 155.
+- [src/render/hiz.test.ts](../../src/render/hiz.test.ts): 2 tests; lines 8, 31.
+- [src/render/hologram.test.ts](../../src/render/hologram.test.ts): 1 tests; lines 5.
+- [src/render/homeArt.test.ts](../../src/render/homeArt.test.ts): 2 tests; lines 15, 27.
+- [src/render/horizonLead.test.ts](../../src/render/horizonLead.test.ts): 2 tests; lines 16, 32.
+- [src/render/houseArt.test.ts](../../src/render/houseArt.test.ts): 2 tests; lines 48, 60.
+- [src/render/houseArtLayout.test.ts](../../src/render/houseArtLayout.test.ts): 2 tests; lines 12, 23.
+- [src/render/houseDecor.test.ts](../../src/render/houseDecor.test.ts): 4 tests; lines 10, 18, 31, 37.
+- [src/render/houseFurniture.test.ts](../../src/render/houseFurniture.test.ts): 7 tests; lines 17, 21, 39, 47, 55, 64, 74.
+- [src/render/houseOrder.test.ts](../../src/render/houseOrder.test.ts): 3 tests; lines 11, 19, 26.
+- [src/render/houseStanding.test.ts](../../src/render/houseStanding.test.ts): 4 tests; lines 16, 24, 32, 37.
+- [src/render/hueSpinPotion.test.ts](../../src/render/hueSpinPotion.test.ts): 3 tests; lines 15, 22, 29.
+- [src/render/impact.test.ts](../../src/render/impact.test.ts): 3 tests; lines 6, 25, 32.
+- [src/render/indicator.bend.test.ts](../../src/render/indicator.bend.test.ts): 2 tests; lines 23, 39.
+- [src/render/indicator.test.ts](../../src/render/indicator.test.ts): 5 tests; lines 5, 27, 39, 53, 59.
+- [src/render/invitePixels.test.ts](../../src/render/invitePixels.test.ts): 4 tests; lines 7, 10, 14, 17.
+- [src/render/inviteRing.test.ts](../../src/render/inviteRing.test.ts): 4 tests; lines 21, 28, 39, 63.
+- [src/render/invites.test.ts](../../src/render/invites.test.ts): 3 tests; lines 15, 22, 32.
+- [src/render/island.test.ts](../../src/render/island.test.ts): 8 tests; lines 54, 62, 69, 76, 89, 96, 105, 117.
+- [src/render/koIris.test.ts](../../src/render/koIris.test.ts): 3 tests; lines 7, 14, 26.
+- [src/render/landingReadiness.test.ts](../../src/render/landingReadiness.test.ts): 4 tests; lines 5, 12, 27, 33.
+- [src/render/leash/bareSlot.test.ts](../../src/render/leash/bareSlot.test.ts): 2 tests; lines 23, 43.
+- [src/render/leash/bold.test.ts](../../src/render/leash/bold.test.ts): 3 tests; lines 8, 19, 32.
+- [src/render/leash/glyphGain.test.ts](../../src/render/leash/glyphGain.test.ts): 3 tests; lines 12, 18, 31.
+- [src/render/leash/groundedFlash.test.ts](../../src/render/leash/groundedFlash.test.ts): 2 tests; lines 6, 16.
+- [src/render/leash/ranks.test.ts](../../src/render/leash/ranks.test.ts): 9 tests; lines 8, 19, 24, 27, 34, 50, 59, 73, 83.
+- [src/render/leash/slashes.test.ts](../../src/render/leash/slashes.test.ts): 5 tests; lines 8, 20, 28, 36, 44.
+- [src/render/leash/stones.test.ts](../../src/render/leash/stones.test.ts): 7 tests; lines 8, 13, 19, 31, 42, 57, 67.
+- [src/render/leash/travelPose.test.ts](../../src/render/leash/travelPose.test.ts): 3 tests; lines 6, 12, 23.
+- [src/render/leash/writeOn.test.ts](../../src/render/leash/writeOn.test.ts): 2 tests; lines 9, 15.
+- [src/render/legendCarving.test.ts](../../src/render/legendCarving.test.ts): 1 tests; lines 6.
+- [src/render/legendLight.test.ts](../../src/render/legendLight.test.ts): 3 tests; lines 5, 8, 12.
+- [src/render/legendOutline.test.ts](../../src/render/legendOutline.test.ts): 2 tests; lines 5, 13.
+- [src/render/legendSleep.test.ts](../../src/render/legendSleep.test.ts): 5 tests; lines 8, 12, 23, 28, 36.
+- [src/render/leylines.test.ts](../../src/render/leylines.test.ts): 17 tests; lines 25, 29, 33, 40, 45, 51, 84, 124, 129, 137, 143, 171, 183, 208, 218, 233, 242.
+- [src/render/load.test.ts](../../src/render/load.test.ts): 3 tests; lines 16, 20, 28.
+- [src/render/loadingFront.test.ts](../../src/render/loadingFront.test.ts): 8 tests; lines 10, 14, 17, 20, 26, 31, 38, 42.
+- [src/render/miniaturePotion.test.ts](../../src/render/miniaturePotion.test.ts): 2 tests; lines 7, 14.
+- [src/render/mushroomGlow.test.ts](../../src/render/mushroomGlow.test.ts): 1 tests; lines 7.
+- [src/render/nightVisionPotion.test.ts](../../src/render/nightVisionPotion.test.ts): 2 tests; lines 8, 23.
+- [src/render/overBend.test.ts](../../src/render/overBend.test.ts): 5 tests; lines 9, 12, 19, 30, 36.
+- [src/render/overlayTilt.test.ts](../../src/render/overlayTilt.test.ts): 3 tests; lines 8, 17, 22.
+- [src/render/overrides.test.ts](../../src/render/overrides.test.ts): 5 tests; lines 13, 18, 22, 29, 30.
+- [src/render/palette.test.ts](../../src/render/palette.test.ts): 5 tests; lines 13, 22, 27, 35, 40.
+- [src/render/partyOver.test.ts](../../src/render/partyOver.test.ts): 3 tests; lines 16, 22, 33.
+- [src/render/partySheet.test.ts](../../src/render/partySheet.test.ts): 3 tests; lines 10, 21, 29.
+- [src/render/pins.test.ts](../../src/render/pins.test.ts): 6 tests; lines 16, 19, 22, 27, 33, 34.
+- [src/render/potionChoreography.test.ts](../../src/render/potionChoreography.test.ts): 2 tests; lines 4, 12.
+- [src/render/potionEffects.test.ts](../../src/render/potionEffects.test.ts): 5 tests; lines 12, 28, 37, 50, 61.
+- [src/render/programInventory.test.ts](../../src/render/programInventory.test.ts): 2 tests; lines 5, 18.
+- [src/render/programReadiness.test.ts](../../src/render/programReadiness.test.ts): 6 tests; lines 4, 13, 19, 29, 37, 51.
+- [src/render/refraction.test.ts](../../src/render/refraction.test.ts): 7 tests; lines 14, 22, 29, 33, 39, 44, 49.
+- [src/render/refractionComposition.test.ts](../../src/render/refractionComposition.test.ts): 7 tests; lines 7, 12, 17, 27, 35, 39, 45.
+- [src/render/refractionIntegration.test.ts](../../src/render/refractionIntegration.test.ts): 2 tests; lines 12, 47.
+- [src/render/refractionMath.test.ts](../../src/render/refractionMath.test.ts): 4 tests; lines 4, 11, 17, 24.
+- [src/render/remoteEquipment.test.ts](../../src/render/remoteEquipment.test.ts): 1 tests; lines 7.
+- [src/render/remoteWitch.test.ts](../../src/render/remoteWitch.test.ts): 1 tests; lines 12.
+- [src/render/ride.test.ts](../../src/render/ride.test.ts): 3 tests; lines 13, 31, 40.
+- [src/render/rig/discOutline.test.ts](../../src/render/rig/discOutline.test.ts): 1 tests; lines 13.
+- [src/render/rig/rig.test.ts](../../src/render/rig/rig.test.ts): 18 tests; lines 30, 36, 48, 67, 79, 89, 93, 110, 115, 123, 129, 135, 142, 152, 160, 169, 177, 183.
+- [src/render/rig/stiltParts.test.ts](../../src/render/rig/stiltParts.test.ts): 4 tests; lines 15, 34, 41, 48.
+- [src/render/rig/stiltView.test.ts](../../src/render/rig/stiltView.test.ts): 1 tests; lines 7.
+- [src/render/routeEase.test.ts](../../src/render/routeEase.test.ts): 2 tests; lines 10, 17.
+- [src/render/shaderDrawGate.test.ts](../../src/render/shaderDrawGate.test.ts): 2 tests; lines 5, 24.
+- [src/render/shake.test.ts](../../src/render/shake.test.ts): 8 tests; lines 10, 17, 31, 44, 52, 61, 86, 99.
+- [src/render/sleepyFace.test.ts](../../src/render/sleepyFace.test.ts): 2 tests; lines 6, 13.
+- [src/render/slices.test.ts](../../src/render/slices.test.ts): 3 tests; lines 25, 32, 46.
+- [src/render/slowtime.test.ts](../../src/render/slowtime.test.ts): 2 tests; lines 6, 13.
+- [src/render/soundsystemGen.test.ts](../../src/render/soundsystemGen.test.ts): 4 tests; lines 14, 20, 29, 36.
+- [src/render/spin.test.ts](../../src/render/spin.test.ts): 5 tests; lines 16, 21, 26, 30, 36.
+- [src/render/spookyGrade.test.ts](../../src/render/spookyGrade.test.ts): 4 tests; lines 17, 28, 45, 53.
+- [src/render/stiltwalkersPotion.test.ts](../../src/render/stiltwalkersPotion.test.ts): 2 tests; lines 8, 21.
+- [src/render/stumpDeal.test.ts](../../src/render/stumpDeal.test.ts): 1 tests; lines 14.
+- [src/render/swoopTrails.test.ts](../../src/render/swoopTrails.test.ts): 4 tests; lines 24, 40, 45, 58.
+- [src/render/thermalVision.test.ts](../../src/render/thermalVision.test.ts): 4 tests; lines 9, 18, 22, 25.
+- [src/render/thoughtCloud.test.ts](../../src/render/thoughtCloud.test.ts): 5 tests; lines 22, 42, 51, 60, 68.
+- [src/render/trail.test.ts](../../src/render/trail.test.ts): 5 tests; lines 16, 20, 27, 33, 41.
+- [src/render/trunkCut.test.ts](../../src/render/trunkCut.test.ts): 3 tests; lines 8, 11, 15.
+- [src/render/usePrompt.test.ts](../../src/render/usePrompt.test.ts): 2 tests; lines 12, 15.
+- [src/render/view/cameraLift.test.ts](../../src/render/view/cameraLift.test.ts): 1 tests; lines 4.
+- [src/render/view/entDepth.test.ts](../../src/render/view/entDepth.test.ts): 1 tests; lines 9.
+- [src/render/view/guidancePulse.test.ts](../../src/render/view/guidancePulse.test.ts): 4 tests; lines 12, 29, 36, 39.
+- [src/render/view/hatArt.test.ts](../../src/render/view/hatArt.test.ts): 2 tests; lines 9, 20.
+- [src/render/view/pausedWitch.test.ts](../../src/render/view/pausedWitch.test.ts): 1 tests; lines 6.
+- [src/render/view/pointers.test.ts](../../src/render/view/pointers.test.ts): 3 tests; lines 10, 19, 32.
+- [src/render/view/scenery.test.ts](../../src/render/view/scenery.test.ts): 1 tests; lines 10.
+- [src/render/view/scenerySchedule.test.ts](../../src/render/view/scenerySchedule.test.ts): 3 tests; lines 5, 23, 31.
+- [src/render/viewSetGame.test.ts](../../src/render/viewSetGame.test.ts): 2 tests; lines 80, 124.
+- [src/render/wisps.test.ts](../../src/render/wisps.test.ts): 2 tests; lines 8, 16.
+- [src/render/witchLookLease.test.ts](../../src/render/witchLookLease.test.ts): 3 tests; lines 18, 38, 51.
+- [src/render/workshopArt.test.ts](../../src/render/workshopArt.test.ts): 5 tests; lines 14, 17, 27, 34, 37.
+- [src/render/wormsEyePotion.test.ts](../../src/render/wormsEyePotion.test.ts): 2 tests; lines 8, 22.
+- [src/render/zooInscriptions.test.ts](../../src/render/zooInscriptions.test.ts): 4 tests; lines 13, 19, 23, 26.
+- [src/rigSizeCapture.test.ts](../../src/rigSizeCapture.test.ts): 1 tests; lines 7.
+- [src/rosettePainter.test.ts](../../src/rosettePainter.test.ts): 6 tests; lines 19, 27, 43, 55, 69, 90.
+- [src/rules/budget.test.ts](../../src/rules/budget.test.ts): 7 tests; lines 12, 13, 14, 21, 22, 27, 31.
+- [src/rules/interpolate.test.ts](../../src/rules/interpolate.test.ts): 1 tests; lines 13.
+- [src/rules/pathGeometry.test.ts](../../src/rules/pathGeometry.test.ts): 4 tests; lines 14, 27, 40, 48.
+- [src/rules/rules.test.ts](../../src/rules/rules.test.ts): 14 tests; lines 598, 605, 741, 990, 1014, 1036, 1409, 1434, 1455, 1465, 1477, 1484, 1495, 1832.
+- [src/rules/trunkShadowTuning.test.ts](../../src/rules/trunkShadowTuning.test.ts): 2 tests; lines 7, 11.
+- [src/sizeAdoptionRegressions.test.ts](../../src/sizeAdoptionRegressions.test.ts): 3 tests; lines 6, 15, 26.
+- [src/sleepingLegendSize.test.ts](../../src/sleepingLegendSize.test.ts): 2 tests; lines 9, 14.
+- [src/snowLeopardWhiskers.test.ts](../../src/snowLeopardWhiskers.test.ts): 4 tests; lines 16, 23, 29, 32.
+- [src/spriteConnectivity.test.ts](../../src/spriteConnectivity.test.ts): 5 tests; lines 6, 12, 18, 22, 29.
+- [src/stableMotes.test.ts](../../src/stableMotes.test.ts): 2 tests; lines 5, 11.
+- [src/tailMarkings.test.ts](../../src/tailMarkings.test.ts): 5 tests; lines 13, 25, 35, 46, 55.
+- [src/textureSizeCompatibility.test.ts](../../src/textureSizeCompatibility.test.ts): 1 tests; lines 6.
+## Tools and CI
+
+45 tests not reviewed; no change proposed.
+
+- [.claude/skills/page-contract/tests/contract.test.ts](../../.claude/skills/page-contract/tests/contract.test.ts): 14 tests; lines 19, 25, 33, 42, 52, 58, 69, 79, 86, 92, 110, 129, 145, 164.
+- [src/changelog.test.ts](../../src/changelog.test.ts): 6 tests; lines 6, 10, 18, 33, 46, 58.
+- [src/linkSwitches.test.ts](../../src/linkSwitches.test.ts): 4 tests; lines 12, 18, 22, 33.
+- [src/makingOf.test.ts](../../src/makingOf.test.ts): 1 tests; lines 7.
+- [src/pagesWorkflow.test.ts](../../src/pagesWorkflow.test.ts): 4 tests; lines 10, 20, 30, 36.
+- [src/rules/configDataBoundary.test.ts](../../src/rules/configDataBoundary.test.ts): 2 tests; lines 13, 37.
+- [src/rules/configs.test.ts](../../src/rules/configs.test.ts): 4 tests; lines 17, 23, 32, 39.
+- [src/rules/knobDocs.test.ts](../../src/rules/knobDocs.test.ts): 6 tests; lines 17, 21, 30, 39, 48, 67.
+- [src/rules/layer.test.ts](../../src/rules/layer.test.ts): 2 tests; lines 5, 8.
+- [src/rules/tuningSchema.test.ts](../../src/rules/tuningSchema.test.ts): 2 tests; lines 13, 18.

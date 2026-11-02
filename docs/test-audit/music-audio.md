@@ -63,3 +63,7 @@ Examples: [A clearing event sounds once on the next half-beat.](../../src/platfo
 **Yes/no: Keep M1, M2, M3 as they are?** They protect audio resource limits and deterministic scheduling, the approved score structure, and explicit event-to-sound routing.
 
 [Old/current ruling comparisons](semantic-groups.md#music-audio-ruling-review). No change happens before Ed rules.
+
+## Not reviewed, no change proposed
+
+25 additional tests remain outside the reviewed groups. The keep question above covers only named groups. [Exact remaining file/line manifest](unreviewed.md).

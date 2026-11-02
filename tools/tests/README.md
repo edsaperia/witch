@@ -18,4 +18,7 @@ Render bounded human reviews with explicit case membership and undivided file ti
 
 - `inventory.test.mjs`
 - `review-music.json`
+- `review-tools.json`
+- `review-world.json`
 - `semantic-reviews.json`
+- `system-routing.json`

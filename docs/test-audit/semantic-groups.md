@@ -6,7 +6,7 @@ Core-file format preview only; the rest of the audit remains in progress. Each g
 
 ## S1: Slot migration and isolation
 
-hard limits; 14 declarations; ~0 s of CI.
+hard limits; 14 declarations; <1 s of CI.
 
 In-memory stores exercise exact byte preservation, corrupt indexes, independent controls, cross-tab metadata and flush-before-reload; no emergent outcome target.
 
@@ -65,7 +65,7 @@ Synthetic storage proves ordering and failure behavior. The stepped wake-up fixt
 
 ## S4: Equipment saves and compatibility migrations
 
-current rules; 13 declarations; ~0 s of CI.
+current rules; 13 declarations; <1 s of CI.
 
 Old broom spells and the broomBay name occur as migration inputs: assertions require the current Classic broom/lathe result. They do not restore obsolete gameplay. Records explicitly require the 29 Oct 100/120 BPM starters.
 
@@ -87,7 +87,7 @@ Old broom spells and the broomBay name occur as migration inputs: assertions req
 
 ## S5: Campaign progress and personal settings
 
-current rules; 21 declarations; ~0 s of CI.
+current rules; 21 declarations; <1 s of CI.
 
 Won/lost results are supplied directly; no night is simulated to obtain them. Settings use synthetic stores and cloned tuning to test migration, accessibility flags and noncompounding volume.
 
@@ -228,10 +228,23 @@ The assertion pins an exact species list and its comment says ‘waiting on Ed's
 
 ## L6: Quest completion, sleeping state and party-legend rules
 
-current rules; 37 declarations; ~196 s of CI.
+current rules; 50 declarations; ~201 s of CI.
 
-The setup isolates a legend, kin or gift and invokes the explicit transition: waves do not wake legends, kin restore sleep, only a placed sigil completes a quest at any age, no buff is awarded, and the 100-letter Easter egg has its own tether/release rules. Fixed steps here check the declared state/timer/boundary, not an uncontrolled win rate. The staggered five-second kin check is a per-frame work bound. Early-quest wording still says baby, but its assertion explicitly says any age; it does not enforce the retired age requirement.
+The setup isolates a legend, kin or gift and invokes the explicit transition: waves do not wake legends, kin restore sleep, only a placed sigil completes a quest at any age, no buff is awarded, and the 100-letter Easter egg has its own tether/release rules. Fixed steps here check the declared state/timer/boundary, not an uncontrolled win rate. The staggered five-second kin check is a per-frame work bound. Early-quest wording still says baby, but its assertion explicitly says any age; it does not enforce the retired age requirement. Known-quest and offering policies receive fabricated observations/stack acknowledgements and explicit deadlines; they cannot invent unseen cues. Ending cases advance only the wave/ending clock and force neutralization, checking automatic ending and observed/drawn-pointer agreement, not whether a bot wins a natural night.
 
+- [src/bots/knownQuest.test.ts:11](../../src/bots/knownQuest.test.ts#L11): empty observations and closed bubbles never invent unseen requests; output is detached
+- [src/bots/knownQuest.test.ts:17](../../src/bots/knownQuest.test.ts#L17): only fresh actual cues can keep a job active; closed/angry/friendly cues end it
+- [src/bots/knownQuest.test.ts:26](../../src/bots/knownQuest.test.ts#L26): a carried offering beats other hints, and a chosen request remains committed
+- [src/bots/knownQuest.test.ts:34](../../src/bots/knownQuest.test.ts#L34): unavailable targets release priority without manufacturing an arrival/completion cue
+- [src/bots/knownQuest.test.ts:39](../../src/bots/knownQuest.test.ts#L39): the fixed deadline counts gaps, dream-visit interruptions and quest switches; no restart
+- [src/bots/knownQuest.test.ts:53](../../src/bots/knownQuest.test.ts#L53): `${reason} releases deferral for the rest of the night`
+- [src/bots/knownQuest.test.ts:60](../../src/bots/knownQuest.test.ts#L60): unsafe entry and an active dream visit cannot begin a budget; opt-out is inert
+- [src/bots/quest-ending.test.ts:14](../../src/bots/quest-ending.test.ts#L14): timed waves reach the ending without casting or any witch control
+- [src/bots/quest-ending.test.ts:24](../../src/bots/quest-ending.test.ts#L24): external neutralization starts an automatic lap; observed cue equals the drawn party pointer
+- [src/bots/questOffering.test.ts:4](../../src/bots/questOffering.test.ts#L4): either of two matching requested sigils can be put down, independent of age or ID
+- [src/bots/questOffering.test.ts:9](../../src/bots/questOffering.test.ts#L9): one cycle pulse waits for the delayed stack acknowledgement before placement
+- [src/bots/questOffering.test.ts:17](../../src/bots/questOffering.test.ts#L17): a longer mixed stack cycles once per acknowledged rotation, never against stale input
+- [src/bots/questOffering.test.ts:25](../../src/bots/questOffering.test.ts#L25): missing requested species does not cycle, and a detached diagnostic cannot acknowledge it
 - [src/rules/earlyQuest.test.ts:14](../../src/rules/earlyQuest.test.ts#L14): `seed ${seed}: a legend among the first areas wants another first area's baby`
 - [src/rules/earlyQuest.test.ts:29](../../src/rules/earlyQuest.test.ts#L29): forces a legend circle into the first three where the share left them none
 - [src/rules/earlyQuest.test.ts:40](../../src/rules/earlyQuest.test.ts#L40): plans the same route mid-build (where the map gives the first areas their legend) as on the finished map
@@ -475,4 +488,456 @@ The suite still says +1 BPM (7 Oct), and a case name says after trumpet and rewi
 - M2 old singer: docs/notes/music.md records the 11 Oct choice ‘e Recorded + ethereal will do for now’. Replacement: 14 Oct singer redesign specifies alto, narrow stepwise phrases and two effect chains. musicForm.test.ts asserts MIDI55–67, limited leaps, voice only in builds/breakdowns, and pure-chain chorus/octave/shimmer zero. No old high-soprano default is pinned by this reviewed group; the old soprano is explicitly fallback/comparison data.
 - M4 current intent: Ed, 2026-10-09, musicForm.test.ts: ‘keep the melodies relatively slow, but not always. Use whole notes and triplets quite often’. The numeric 3.5/15% thresholds are implementation interpretations of that intent, not quoted numeric rulings. Sea-life header cites Ed, 2026-10-07, dolphins east/kraken west, but the ≥3/≥1 sampled counts are not quoted frequency decisions. No newer cancellation of these effects is claimed.
 - M2 tempo scope: records were extended on 29 Oct to 100–200 BPM, with 100/120 starters (recordSave.test.ts). musicForm's 120-BPM case builds t.beat from style.bpm explicitly; it checks wave changes do not choose tempo. docs/notes/music.md 11 Oct: ‘tempo is set by the gameplay’. This does not contradict selectable records.
+
+<a id="t1"></a>
+
+## T1: CI coverage, publication and proof guards
+
+current rules; 71 declarations; known files: <1 s of CI; 3 files have unknown timing.
+
+Parsed workflow YAML, tiny Git/command fixtures and stubbed pixels check fail-closed coverage, publication restrictions and current scheduling policy. world-audit parses strings; effects-scene tests a synthetic nonblank detector. Four shards and8px/32 are current operational rules rather than timeless invariants. No generated outcome target is run.
+
+- [tools/ci/effects-scene.test.ts:15](../../tools/ci/effects-scene.test.ts#L15): rejects a black frame even when drawing counters claim the scene is ready
+- [tools/ci/effects-scene.test.ts:18](../../tools/ci/effects-scene.test.ts#L18): rejects an unfinished forest and the wrong flight mode even when pixels have detail
+- [tools/ci/effects-scene.test.ts:22](../../tools/ci/effects-scene.test.ts#L22): reports actual drawn detail only when the complete scene and requested mode agree
+- [tools/ci/pages-policy.test.cjs:6](../../tools/ci/pages-policy.test.cjs#L6): live publication bypasses preview debounce and only live may preempt a running publisher
+- [tools/ci/pages-policy.test.cjs:16](../../tools/ci/pages-policy.test.cjs#L16): an old preview replacing a queued live job still publishes the newest live root, never its stale event snapshot
+- [tools/ci/pages-policy.test.cjs:27](../../tools/ci/pages-policy.test.cjs#L27): Ed owns source activation, cleanup remains independent, and dispatch reaches the default-branch workflow
+- [tools/ci/proofs.test.cjs:8](../../tools/ci/proofs.test.cjs#L8): settled fixture requires idle builds and three distinct unchanged rendered samples
+- [tools/ci/proofs.test.cjs:30](../../tools/ci/proofs.test.cjs#L30): approved repaint rule accepts two small changes and rejects count or channel excess
+- [tools/ci/proofs.test.cjs:37](../../tools/ci/proofs.test.cjs#L37): proof server resolves build identities and rejects encoded traversal without a local listener
+- [tools/ci/proofs.test.cjs:43](../../tools/ci/proofs.test.cjs#L43): the initial CI-safe registry names an existing canonical proof
+- [tools/ci/reporting.test.cjs:12](../../tools/ci/reporting.test.cjs#L12): annotation cap is shared across commands, totals remain complete and payload cannot inject commands
+- [tools/ci/reporting.test.cjs:27](../../tools/ci/reporting.test.cjs#L27): tool diagnostics retain names and config paths
+- [tools/ci/reporting.test.cjs:35](../../tools/ci/reporting.test.cjs#L35): command status is preserved; crash fallback and unsuccessful named checks are annotated
+- [tools/ci/reporting.test.cjs:45](../../tools/ci/reporting.test.cjs#L45): checked-tree proof rejects changed tree/environment, failed runs, absent or corrupt proof
+- [tools/ci/reporting.test.cjs:66](../../tools/ci/reporting.test.cjs#L66): real isolated Vitest failure reports its test name, file and assertion line without changing failure status
+- [tools/ci/reporting.test.cjs:80](../../tools/ci/reporting.test.cjs#L80): release imports only successful matching-environment task results; changed fingerprints remain misses
+- [tools/ci/reporting.test.cjs:101](../../tools/ci/reporting.test.cjs#L101): embedded GitHub scripts compile and neither workflow reruns on PR edits
+- [tools/ci/run-unit.test.ts:10](../../tools/ci/run-unit.test.ts#L10): locally runs exactly the resolved related files once with one worker
+- [tools/ci/run-unit.test.ts:17](../../tools/ci/run-unit.test.ts#L17): falls back to all tests for %s
+- [tools/ci/run-unit.test.ts:20](../../tools/ci/run-unit.test.ts#L20): falls back if module-graph selection itself throws
+- [tools/ci/run-unit.test.ts:23](../../tools/ci/run-unit.test.ts#L23): does not hide a failing selected test by rerunning the full suite
+- [tools/ci/run-unit.test.ts:28](../../tools/ci/run-unit.test.ts#L28): full runs do not invoke the related selector or permit empty suites
+- [tools/ci/run-unit.test.ts:35](../../tools/ci/run-unit.test.ts#L35): CI keeps its configured parallelism for $tests
+- [tools/ci/run-unit.test.ts:40](../../tools/ci/run-unit.test.ts#L40): full CI runs pass the shard to Vitest so every file runs in exactly one shard
+- [tools/ci/run-unit.test.ts:45](../../tools/ci/run-unit.test.ts#L45): a related selection runs entirely in shard 1; other shards never start an empty Vitest run
+- [tools/ci/run-unit.test.ts:53](../../tools/ci/run-unit.test.ts#L53): no shard env means the unsharded run (%s)
+- [tools/ci/run-unit.test.ts:54](../../tools/ci/run-unit.test.ts#L54): rejects a malformed shard %s instead of skipping tests
+- [tools/ci/run-unit.test.ts:57](../../tools/ci/run-unit.test.ts#L57): splits the full suite by measured time: every file exactly once, deterministically, the slowest alone
+- [tools/ci/run-unit.test.ts:66](../../tools/ci/run-unit.test.ts#L66): balances only full sharded runs, never hands Vitest an empty filter, and falls back to its own --shard
+- [tools/ci/run-unit.test.ts:76](../../tools/ci/run-unit.test.ts#L76): keeps the measured timings in step with the real test files
+- [tools/ci/run-unit.test.ts:81](../../tools/ci/run-unit.test.ts#L81): does not hide extra heavy work underneath the longest file
+- [tools/ci/run-unit.test.ts:89](../../tools/ci/run-unit.test.ts#L89): refreshes portable cloud timings and rejects failures, duplicate files and invalid durations
+- [tools/ci/same-game.test.ts:18](../../tools/ci/same-game.test.ts#L18): ignores only the build time in version.json
+- [tools/ci/same-game.test.ts:24](../../tools/ci/same-game.test.ts#L24): reports any changed, added or removed built file
+- [tools/ci/same-game.test.ts:30](../../tools/ci/same-game.test.ts#L30): refuses builds stamped differently or unstamped
+- [tools/ci/same-game.test.ts:34](../../tools/ci/same-game.test.ts#L34): ignores a branch's bench expect declaration but not a changed benchmark tool
+- [tools/ci/test-scope.test.ts:12](../../tools/ci/test-scope.test.ts#L12): allows related tests only for ordinary module-only PRs
+- [tools/ci/test-scope.test.ts:13](../../tools/ci/test-scope.test.ts#L13): keeps %s full
+- [tools/ci/test-scope.test.ts:14](../../tools/ci/test-scope.test.ts#L14): keeps release/publish branch %s full
+- [tools/ci/test-scope.test.ts:15](../../tools/ci/test-scope.test.ts#L15): keeps title-based release %s full
+- [tools/ci/test-scope.test.ts:16](../../tools/ci/test-scope.test.ts#L16): does not treat an ordinary title mentioning release as a release
+- [tools/ci/test-scope.test.ts:17](../../tools/ci/test-scope.test.ts#L17): keeps title-based publication checks full
+- [tools/ci/test-scope.test.ts:18](../../tools/ci/test-scope.test.ts#L18): falls back for %s
+- [tools/ci/test-scope.test.ts:19](../../tools/ci/test-scope.test.ts#L19): cannot pass missing history or an empty diff as a related run
+- [tools/ci/test-scope.test.ts:24](../../tools/ci/test-scope.test.ts#L24): uses the merge base and keeps renamed path separators intact
+- [tools/ci/test-scope.test.ts:30](../../tools/ci/test-scope.test.ts#L30): falls back when a changed module was deleted
+- [tools/ci/test-scope.test.ts:33](../../tools/ci/test-scope.test.ts#L33): falls back on a shallow or broken git history
+- [tools/ci/test-scope.test.ts:36](../../tools/ci/test-scope.test.ts#L36): selects safely from a real two-parent depth-two PR checkout and falls back at depth one
+- [tools/ci/workflows.test.ts:8](../../tools/ci/workflows.test.ts#L8): runs candidate-only fast proofs on PR artifacts with smoke Chromium
+- [tools/ci/workflows.test.ts:20](../../tools/ci/workflows.test.ts#L20): keeps settled pixels on informational nightly/manual execution, never PRs
+- [tools/ci/workflows.test.ts:32](../../tools/ci/workflows.test.ts#L32): checks config values and every maintained generated reference before building
+- [tools/ci/workflows.test.ts:39](../../tools/ci/workflows.test.ts#L39): builds the tested revision once, with the benchmark base explicitly distinct
+- [tools/ci/workflows.test.ts:48](../../tools/ci/workflows.test.ts#L48): skips only the benchmark itself when the game build is byte-identical to base
+- [tools/ci/workflows.test.ts:55](../../tools/ci/workflows.test.ts#L55): has every built-game consumer download the one artifact
+- [tools/ci/workflows.test.ts:63](../../tools/ci/workflows.test.ts#L63): cannot report a green required check when its prerequisite build failed
+- [tools/ci/workflows.test.ts:69](../../tools/ci/workflows.test.ts#L69): runs independent check work beside unit shards and keeps the final gate strict and tiny
+- [tools/ci/workflows.test.ts:82](../../tools/ci/workflows.test.ts#L82): skips the unused playable preview for release-check and publish PRs
+- [tools/ci/workflows.test.ts:86](../../tools/ci/workflows.test.ts#L86): splits unit tests over four shards and the required check needs every shard
+- [tools/ci/workflows.test.ts:98](../../tools/ci/workflows.test.ts#L98): bounds every Chromium install so a hung download cannot consume a whole job timeout
+- [tools/ci/workflows.test.ts:105](../../tools/ci/workflows.test.ts#L105): gives main publication priority without publishing prototype pushes or forks
+- [tools/ci/workflows.test.ts:118](../../tools/ci/workflows.test.ts#L118): runs PR preview alongside checks while only main publication gates them
+- [tools/ci/workflows.test.ts:127](../../tools/ci/workflows.test.ts#L127): keeps closed-PR cleanup independent and removes the duplicate benchmark workflow
+- [tools/ci/workflows.test.ts:134](../../tools/ci/workflows.test.ts#L134): does not make the independent art generator consume a nonexistent game build
+- [tools/ci/workflows.test.ts:147](../../tools/ci/workflows.test.ts#L147): runs advisory art only nightly on prototype or manually on the selected exact ref
+- [tools/ci/workflows.test.ts:168](../../tools/ci/workflows.test.ts#L168): creates or updates one nightly failure comment with source and failed batch, and quietly resolves it
+- [tools/ci/workflows.test.ts:190](../../tools/ci/workflows.test.ts#L190): reuses a scheduled proof's actual checkout tree even when workflow metadata names another SHA
+- [tools/ci/workflows.test.ts:222](../../tools/ci/workflows.test.ts#L222): keeps real largest-world drawing coverage separate from small unit worlds
+- [tools/ci/workflows.test.ts:227](../../tools/ci/workflows.test.ts#L227): allows cancellation of stale consumer jobs rather than always keeping them alive
+- [tools/ci/world-audit.test.ts:5](../../tools/ci/world-audit.test.ts#L5): finds imported constructor aliases and ignores comment/string lookalikes
+- [tools/ci/world-audit.test.ts:9](../../tools/ci/world-audit.test.ts#L9): keeps each small-world factory reason with the calls it supplies
+- [tools/ci/world-audit.test.ts:14](../../tools/ci/world-audit.test.ts#L14): does not treat type-only imports or unrelated methods as world creation
+
+<a id="t2"></a>
+
+## T2: Measurement and diagnostic contracts
+
+hard limits; 69 declarations; ~3 s of CI.
+
+Supplied traces, fake clocks/workers/GL and shader source tokens test honest telemetry, comparison boundaries and performance budgets. The30000 upload calls and256 masks are synthetic coverage, not game populations. Intentional shader changes may require a separately reviewed baseline; no replacing ruling was established.
+
+- [tools/bench/chart-target.test.ts:5](../../tools/bench/chart-target.test.ts#L5): selects a record with no outline before waiting for its prioritized outline
+- [tools/bench/chart-target.test.ts:16](../../tools/bench/chart-target.test.ts#L16): shares one wait budget rather than restarting the full timeout after selection
+- [tools/bench/chart-target.test.ts:23](../../tools/bench/chart-target.test.ts#L23): does not choose a target whose record never becomes available
+- [tools/bench/coast-first-use.test.ts:6](../../tools/bench/coast-first-use.test.ts#L6): separates the coast transition window from later coast frames and verifies material activation
+- [tools/bench/coast-first-use.test.ts:20](../../tools/bench/coast-first-use.test.ts#L20): refuses an unverified coast visit later than30s after arrival
+- [tools/bench/comparable.test.ts:23](../../tools/bench/comparable.test.ts#L23): differ in nothing but what's tested: the build by default
+- [tools/bench/comparable.test.ts:29](../../tools/bench/comparable.test.ts#L29): compares the knobs one by one, a knob as built against one set
+- [tools/bench/comparable.test.ts:35](../../tools/bench/comparable.test.ts#L35): refuses a pair that differs in more, naming each field before and after; --override compares anyway
+- [tools/bench/comparable.test.ts:45](../../tools/bench/comparable.test.ts#L45): can't judge a run made before keys: compares with a warning
+- [tools/bench/comparable.test.ts:50](../../tools/bench/comparable.test.ts#L50): takes --testing and --override off the command line
+- [tools/bench/comparable.test.ts:60](../../tools/bench/comparable.test.ts#L60): splits where the island, wave or mode changes, with each segment's own medians
+- [tools/bench/comparable.test.ts:66](../../tools/bench/comparable.test.ts#L66): falls back to the view's mode in a log from before scenes
+- [tools/bench/comparable.test.ts:69](../../tools/bench/comparable.test.ts#L69): merges a scene's samples wherever they fall, for two runs side by side
+- [tools/bench/comparable.test.ts:83](../../tools/bench/comparable.test.ts#L83): refuses this morning's pair, saying which fields differ
+- [tools/bench/comparable.test.ts:89](../../tools/bench/comparable.test.ts#L89): compares it with --override, and still only the scenes both runs have
+- [tools/bench/comparable.test.ts:95](../../tools/bench/comparable.test.ts#L95): sets a like-for-like pair side by side by scene (the key's own scene, the last sampled, aside)
+- [tools/bench/expect.test.ts:22](../../tools/bench/expect.test.ts#L22): with nothing declared, every mismatch is one
+- [tools/bench/expect.test.ts:27](../../tools/bench/expect.test.ts#L27): only what's declared passes, with its reason; the rest, and what can't be declared, still fail
+- [tools/bench/expect.test.ts:33](../../tools/bench/expect.test.ts#L33): * declares every scene (or every part) of its kind
+- [tools/bench/expect.test.ts:38](../../tools/bench/expect.test.ts#L38): says what was declared but didn't differ
+- [tools/bench/expect.test.ts:42](../../tools/bench/expect.test.ts#L42): refuses a declaration with no reason, a reason missing, or a field it doesn't know
+- [tools/bench/expect.test.ts:53](../../tools/bench/expect.test.ts#L53): rejects undeclared initial position drift, including when only pixels or another scene were declared
+- [tools/bench/expect.test.ts:57](../../tools/bench/expect.test.ts#L57): accepts declared finite initial x/z only, and reports unused declarations
+- [tools/bench/expect.test.ts:62](../../tools/bench/expect.test.ts#L62): rejects every other boundary field's drift even alongside declared position drift
+- [tools/bench/expect.test.ts:72](../../tools/bench/expect.test.ts#L72): cannot declare missing boundaries or missing/non-finite coordinates
+- [tools/bench/expect.test.ts:75](../../tools/bench/expect.test.ts#L75): rejects start wildcards, blank scene names and missing reasons at parsing
+- [tools/bench/ground-compile-variants.test.ts:5](../../tools/bench/ground-compile-variants.test.ts#L5): enumerates four baseline and six proposed families without impossible no-lake/water-only defines
+- [tools/bench/ground-compile-variants.test.ts:12](../../tools/bench/ground-compile-variants.test.ts#L12): guards only the biome helpers and special branch, preserving ordinary water and full-path text
+- [tools/bench/ground-extra-source.test.ts:37](../../tools/bench/ground-extra-source.test.ts#L37): retains exact active fragment tokens when all extras are present, plain/beach and every lake kind
+- [tools/bench/ground-extra-source.test.ts:44](../../tools/bench/ground-extra-source.test.ts#L44): all256 extra combinations keep balanced scope; the empty set removes the costly feature bodies
+- [tools/bench/ground-parity-scene.test.ts:4](../../tools/bench/ground-parity-scene.test.ts#L4): removes water-only regions without depending on compiled-out lake looks
+- [tools/bench/ground-parity-scene.test.ts:10](../../tools/bench/ground-parity-scene.test.ts#L10): ablates each requested kind independently and rejects absent or mismatched fixtures
+- [tools/bench/hold-simulation.test.ts:5](../../tools/bench/hold-simulation.test.ts#L5): holds old paused and new direct-play loops synchronously before readiness, without blocking readiness or replacing the game
+- [tools/bench/travel-budget.test.ts:5](../../tools/bench/travel-budget.test.ts#L5): passes a complete, smooth trip without a quality downgrade
+- [tools/bench/travel-budget.test.ts:6](../../tools/bench/travel-budget.test.ts#L6): requires job protocol evidence for the new job-instrumented trace format
+- [tools/bench/travel-budget.test.ts:12](../../tools/bench/travel-budget.test.ts#L12): rejects an unmeasured API trip instead of counting missing telemetry as zero
+- [tools/bench/travel-budget.test.ts:15](../../tools/bench/travel-budget.test.ts#L15): accepts observed zero long tasks but not unsupported empty telemetry
+- [tools/bench/travel-budget.test.ts:19](../../tools/bench/travel-budget.test.ts#L19): rejects non-finite durations and frame counts
+- [tools/bench/travel-budget.test.ts:24](../../tools/bench/travel-budget.test.ts#L24): does not pass a partial trace whose later trip timed out
+- [tools/bench/travel-budget.test.ts:28](../../tools/bench/travel-budget.test.ts#L28): does not silently pass with a misspelled numeric budget
+- [tools/bench/travel-budget.test.ts:29](../../tools/bench/travel-budget.test.ts#L29): catches removal of sliced terrain preparation even under the broad software-renderer frame limit
+- [tools/bench/travel-budget.test.ts:30](../../tools/bench/travel-budget.test.ts#L30): rejects the measured premature handoff even when no frame was blocked
+- [tools/bench/travel-budget.test.ts:34](../../tools/bench/travel-budget.test.ts#L34): rejects an unrecorded arrival or incomplete observation rather than treating null as zero
+- [tools/bench/travel-budget.test.ts:39](../../tools/bench/travel-budget.test.ts#L39): rejects long tasks, slices and frame gaps independently
+- [tools/bench/travel-budget.test.ts:43](../../tools/bench/travel-budget.test.ts#L43): requires active quality and catches a drop during travel or the arrival grace period
+- [tools/bench/travel-budget.test.ts:48](../../tools/bench/travel-budget.test.ts#L48): does not require chart markers for an explicitly identified API trip
+- [tools/bench/travel-budget.test.ts:53](../../tools/bench/travel-budget.test.ts#L53): summarizes elapsed shader waits separately from callbacks and parallel worker reports
+- [tools/bench/travel-budget.test.ts:58](../../tools/bench/travel-budget.test.ts#L58): summarizes upload aggregates by call count and individual maximum, not aggregate wall time
+- [tools/bench/travel-failure.test.ts:5](../../tools/bench/travel-failure.test.ts#L5): retains chart readiness and bounded mark metadata without outline payloads
+- [tools/bench/travel-failure.test.ts:12](../../tools/bench/travel-failure.test.ts#L12): preserves original phase context on a closed page
+- [tools/bench/travel-failure.test.ts:16](../../tools/bench/travel-failure.test.ts#L16): bounds diagnostics when the failed page no longer responds
+- [tools/bench/travel-failure.test.ts:22](../../tools/bench/travel-failure.test.ts#L22): retains page evidence when an individual worker is unresponsive
+- [tools/bench/travel-probe.test.ts:5](../../tools/bench/travel-probe.test.ts#L5): preserves worker handlers, receiver, return values and transfer-list identity
+- [tools/bench/travel-probe.test.ts:34](../../tools/bench/travel-probe.test.ts#L34): preserves upload return values and thrown errors while recording the call
+- [tools/bench/travel-probe.test.ts:44](../../tools/bench/travel-probe.test.ts#L44): records native worker errors without replacing handlers or retaining event payloads
+- [tools/bench/travel-probe.test.ts:57](../../tools/bench/travel-probe.test.ts#L57): consumes diagnostic packets, preserves active jobs across reset and closes them on termination
+- [tools/bench/travel-probe.test.ts:75](../../tools/bench/travel-probe.test.ts#L75): streams job metadata to the host across recorder resets without requiring a final page snapshot
+- [tools/bench/travel-probe.test.ts:84](../../tools/bench/travel-probe.test.ts#L84): retains initial job records if the host binding is installed after the probe init script
+- [tools/bench/travel-probe.test.ts:94](../../tools/bench/travel-probe.test.ts#L94): retains every upload count and slowest call beyond the old cap, leaving room for late worker events
+- [tools/bench/worker-checkpoint.test.ts:8](../../tools/bench/worker-checkpoint.test.ts#L8): preserves metadata already delivered to the host when the page later stops responding
+- [tools/bench/worker-checkpoint.test.ts:20](../../tools/bench/worker-checkpoint.test.ts#L20): deduplicates batches, declares gaps and bounds retained history
+- [tools/bench/worker-checkpoint.test.ts:27](../../tools/bench/worker-checkpoint.test.ts#L27): does not call missing checkpoints zero jobs and prefers a completed page snapshot
+- [tools/bench/worker-checkpoint.test.ts:31](../../tools/bench/worker-checkpoint.test.ts#L31): does not extend pending-stage elapsed time through a transport backlog
+- [tools/bench/worker-checkpoint.test.ts:39](../../tools/bench/worker-checkpoint.test.ts#L39): never resurrects a cancelled job when a delayed worker stage packet arrives
+- [tools/bench/worker-job-summary.test.ts:4](../../tools/bench/worker-job-summary.test.ts#L4): keeps queue, compute and cache wall spans separate across different time origins
+- [tools/bench/worker-job-summary.test.ts:14](../../tools/bench/worker-job-summary.test.ts#L14): retains a pending cache operation at failure without pretending it completed
+- [tools/bench/worker-profile.test.ts:5](../../tools/bench/worker-profile.test.ts#L5): escapes malformed native Windows profile URLs without changing samples or times
+- [tools/bench/worker-profile.test.ts:11](../../tools/bench/worker-profile.test.ts#L11): leaves valid profile JSON unchanged and rejects unrelated corruption
+- [tools/bench/worker-profile.test.ts:16](../../tools/bench/worker-profile.test.ts#L16): copies ImageData exactly and clips rectangles in the explicit Node pixel backend
+
+<a id="t3"></a>
+
+## T3: Generated-world fingerprints and repeat-night isolation
+
+hard limits; 4 declarations; ~16 s of CI.
+
+These do step generated games (240/600-step paths plus short wave advances). Assertions compare matched state, semantic fingerprint sensitivity and reset behavior rather than wins, survival or kills. The historical15.605 file seconds remain integrity work, not a savings proposal.
+
+- [tools/bench/fingerprint.test.ts:18](../../tools/bench/fingerprint.test.ts#L18): is the same for a knob added, a note edited, or the groups reordered: the tuning file is an input, not the state
+- [tools/bench/fingerprint.test.ts:24](../../tools/bench/fingerprint.test.ts#L24): still changes when a knob the game uses changes what happens
+- [tools/bench/twoNights.test.ts:28](../../tools/bench/twoNights.test.ts#L28): the second night is the night played fresh
+- [tools/bench/twoNights.test.ts:38](../../tools/bench/twoNights.test.ts#L38): a new game puts the fight's settings back as a page starts them (the last night's are read before its first fight)
+
+<a id="t4"></a>
+
+## T4: Research provenance and generated data
+
+current rules; 61 declarations; known files: <1 s of CI; 12 files have unknown timing.
+
+Most inputs are fabricated rows/configs. Screen tests validate frozen experiment controls and gate text, not whether a bot wins. Toy ask/tell scores protect resumability. Tiny real expert-contract cases assert provenance, replay equality and honest unsupported results. The inventory classifier tests pass strings like advance(world); they never advance a world. Newly added synthetic inventory cases have been reviewed by the integrator.
+
+- [tools/balance/expert-contract.test.mjs:9](../../tools/balance/expert-contract.test.mjs#L9): source fingerprints match LF and CRLF checkouts but reject changed source
+- [tools/balance/expert-contract.test.mjs:31](../../tools/balance/expert-contract.test.mjs#L31): locks protect source, parameters and human floors; canonical hashes ignore key order
+- [tools/balance/expert-contract.test.mjs:41](../../tools/balance/expert-contract.test.mjs#L41): weak-case fitness lists preserve exact settings and exclude held-out pairs in both rounds
+- [tools/balance/expert-contract.test.mjs:61](../../tools/balance/expert-contract.test.mjs#L61): external rows cannot leak held-out pairs or first-round reserved survey pairs
+- [tools/balance/expert-contract.test.mjs:79](../../tools/balance/expert-contract.test.mjs#L79): runCase uses exact seeds/loadout/tempo and rejects unsupported cells
+- [tools/balance/expert-coverage-screen.test.mjs:6](../../tools/balance/expert-coverage-screen.test.mjs#L6): final coverage matrix is sixteen exact paired cases with alternating arm order and visits on
+- [tools/balance/expert-coverage-screen.test.mjs:20](../../tools/balance/expert-coverage-screen.test.mjs#L20): every final-screen night is refused if protected; missing protection input is refused
+- [tools/balance/expert-coverage-screen.test.mjs:24](../../tools/balance/expert-coverage-screen.test.mjs#L24): screen fixes the ten-minute whole-job budget and preserves the pre-registered decision verbatim
+- [tools/balance/expert-delivery-screen.test.mjs:4](../../tools/balance/expert-delivery-screen.test.mjs#L4): delivery correctness screen fixes one matched off/on pair with priority and coverage off
+- [tools/balance/expert-delivery-screen.test.mjs:12](../../tools/balance/expert-delivery-screen.test.mjs#L12): delivery screen refuses protected pairs and fixes five-minute budget and exact gate
+- [tools/balance/expert-evaluation-core.test.mjs:17](../../tools/balance/expert-evaluation-core.test.mjs#L17): approved vectors change only their named existing policy choice and exclude protected pairs
+- [tools/balance/expert-evaluation-core.test.mjs:28](../../tools/balance/expert-evaluation-core.test.mjs#L28): baseline reuse requires a complete default-policy artifact bound to source, runtime, matrix and cutoff
+- [tools/balance/expert-evaluation-core.test.mjs:43](../../tools/balance/expert-evaluation-core.test.mjs#L43): resumption preserves completed cases and rejects a different baseline, vector or corrupt case
+- [tools/balance/expert-evaluation-core.test.mjs:59](../../tools/balance/expert-evaluation-core.test.mjs#L59): comparisons keep primary goal improvements distinct from survival tie-breakers
+- [tools/balance/expert-guarded-coverage-screen.test.mjs:3](../../tools/balance/expert-guarded-coverage-screen.test.mjs#L3): guarded coverage fixes four paired cases on the KO night with both correctness fixes on
+- [tools/balance/expert-guarded-coverage-screen.test.mjs:9](../../tools/balance/expert-guarded-coverage-screen.test.mjs#L9): guarded coverage refuses protected input and fixes its eight-minute gate without tuning
+- [tools/balance/expert-known-quest-screen.test.mjs:4](../../tools/balance/expert-known-quest-screen.test.mjs#L4): known-quest screen fixes two paired nights, alternating order and every other control
+- [tools/balance/expert-known-quest-screen.test.mjs:17](../../tools/balance/expert-known-quest-screen.test.mjs#L17): known-quest screen refuses either protected pair before producing cases
+- [tools/balance/expert-known-quest-screen.test.mjs:21](../../tools/balance/expert-known-quest-screen.test.mjs#L21): known-quest screen fixes ten-minute budget and actual-completion disposition
+- [tools/balance/expert-progress.test.mjs:5](../../tools/balance/expert-progress.test.mjs#L5): partial deliveries count each real quest once, not repeated placement farming
+- [tools/balance/expert-progress.test.mjs:15](../../tools/balance/expert-progress.test.mjs#L15): a provisional pickup stays recorded without becoming a kept find
+- [tools/balance/expert-progress.test.mjs:22](../../tools/balance/expert-progress.test.mjs#L22): ordinary sigil/relic events and invalid IDs do not create quest progress
+- [tools/balance/expert-search-core.test.mjs:9](../../tools/balance/expert-search-core.test.mjs#L9): a serialized pending evaluation resumes the exact search trajectory
+- [tools/balance/expert-search-core.test.mjs:23](../../tools/balance/expert-search-core.test.mjs#L23): completed priorities dominate every lower partial-progress reward
+- [tools/balance/expert-search-core.test.mjs:33](../../tools/balance/expert-search-core.test.mjs#L33): equal wins prefer faster completion while non-wins prefer longer survival
+- [tools/balance/expert-search-core.test.mjs:42](../../tools/balance/expert-search-core.test.mjs#L42): invalid domains, results and mismatched checkpoint replies are refused
+- [tools/balance/expert-space.test.mjs:7](../../tools/balance/expert-space.test.mjs#L7): deferred quest search retains the fixed quest policy through mutations
+- [tools/balance/expert-space.test.mjs:18](../../tools/balance/expert-space.test.mjs#L18): all proposed equipment is one choice per legal slot and never enters matched cases
+- [tools/balance/report.test.mjs:8](../../tools/balance/report.test.mjs#L8): observations separate cutoff, KO onset, wave passage and completed phases
+- [tools/balance/report.test.mjs:26](../../tools/balance/report.test.mjs#L26): tables keep bag/bpm/island denominators separate and omit censored win times
+- [tools/balance/report.test.mjs:57](../../tools/balance/report.test.mjs#L57): ranged observation counts this witch's live casts, excluding melee, expired and other targets
+- [tools/balance/survey.test.mjs:18](../../tools/balance/survey.test.mjs#L18): every frozen production cell has exactly one cloud shard, including census ages and gear
+- [tools/balance/survey.test.mjs:34](../../tools/balance/survey.test.mjs#L34): untrained experts, first-round leakage and final-heldout contamination fail closed
+- [tools/balance/survey.test.mjs:43](../../tools/balance/survey.test.mjs#L43): wave one covers every axis in 24 budgeted shards with distinct short-horizon keys
+- [tools/balance/survey.test.mjs:54](../../tools/balance/survey.test.mjs#L54): case/JSONL translation follows createCaseRunner contract, preserving exact external evaluations
+- [tools/balance/survey.test.mjs:69](../../tools/balance/survey.test.mjs#L69): merge refuses duplicates, wrong cells, missing shards, missing progression and model drift
+- [tools/balance/survey.test.mjs:80](../../tools/balance/survey.test.mjs#L80): wave-two depth is selected from actual map-luck spread, not an automatic full matrix
+- [tools/balance/survey.test.mjs:90](../../tools/balance/survey.test.mjs#L90): unsupported is explicit; fixture progression N/A and unresolved retention never become fake zeros
+- [tools/balance/survey.test.mjs:100](../../tools/balance/survey.test.mjs#L100): weak feedback keeps all matched maps of a weak cell and never enters final scoring
+- [tools/config/format.test.ts:6](../../tools/config/format.test.ts#L6): preserves every tuning value and key order, with byte-stable output
+- [tools/config/format.test.ts:14](../../tools/config/format.test.ts#L14): expands object arrays and leaves short numeric vectors inline
+- [tools/config/inventory.test.ts:7](../../tools/config/inventory.test.ts#L7): generates the same readable inventory from CRLF and LF and detects drift
+- [tools/config/typegen.test.ts:7](../../tools/config/typegen.test.ts#L7): keeps the schema-derived tuning declaration fresh
+- [tools/config/typegen.test.ts:11](../../tools/config/typegen.test.ts#L11): preserves enums, records, nullable values and optional keys without adding constraints
+- [tools/docs/glossary.test.ts:10](../../tools/docs/glossary.test.ts#L10): reads a note's entries: the bold names opening its lines, each once, in order
+- [tools/docs/glossary.test.ts:17](../../tools/docs/glossary.test.ts#L17): is up to date with the notes (node tools/docs/glossary.mjs --write)
+- [tools/docs/glossary.test.ts:21](../../tools/docs/glossary.test.ts#L21): names each entry in one note only
+- [tools/docs/glossary.test.ts:30](../../tools/docs/glossary.test.ts#L30): has every note in CLAUDE.md's list of notes
+- [tools/docs/tables.test.ts:11](../../tools/docs/tables.test.ts#L11): are as the data makes them (node tools/docs/tables.mjs --write)
+- [tools/docs/tables.test.ts:15](../../tools/docs/tables.test.ts#L15): each stand in a doc
+- [tools/docs/tables.test.ts:20](../../tools/docs/tables.test.ts#L20): fills a block from its table and refuses an unknown one
+- [tools/tests/inventory.test.mjs:8](../../tools/tests/inventory.test.mjs#L8): finds aliased nested declarations and parameterized templates without executing
+- [tools/tests/inventory.test.mjs:17](../../tools/tests/inventory.test.mjs#L17): ignores declaration-looking strings and records scoped dated comments
+- [tools/tests/inventory.test.mjs:25](../../tools/tests/inventory.test.mjs#L25): keeps hard limits above outcome or historical wording
+- [tools/tests/inventory.test.mjs:31](../../tools/tests/inventory.test.mjs#L31): only suggests later same-topic evidence and labels it unverified
+- [tools/tests/inventory.test.mjs:37](../../tools/tests/inventory.test.mjs#L37): routes protected owner areas and tools
+- [tools/tests/inventory.test.mjs:42](../../tools/tests/inventory.test.mjs#L42): semantic groups use explicit membership and preserve undivided file timing
+- [tools/tests/inventory.test.mjs:52](../../tools/tests/inventory.test.mjs#L52): semantic review rejects missing examples and duplicate case assignments
+- [tools/tests/inventory.test.mjs:59](../../tools/tests/inventory.test.mjs#L59): finds numeric simulated outcomes without relying on survival wording
+- [tools/tests/inventory.test.mjs:64](../../tools/tests/inventory.test.mjs#L64): records computed case names without evaluating imported fixture constants
+- [tools/tests/inventory.test.mjs:70](../../tools/tests/inventory.test.mjs#L70): system guesses use file ownership rather than incidental words in test prose
+
+<a id="t5"></a>
+
+## T5: Preview and visual-review tool integrity
+
+current rules; 25 declarations; known files: ~2 s of CI; 6 files have unknown timing.
+
+Throwaway Git fixtures, small typed arrays/depth bits, stubbed wrappers and glyph/genome records prove safe tooling and opted-in comparisons. Deterministic shape/ink constants are readability rules, not night outcomes. Art/creature owners should confirm a future acceptance-constant change.
+
+- [tools/leash/sigil-pass.test.mjs:7](../../tools/leash/sigil-pass.test.mjs#L7): review candidates remain within the live grid ink and stroke limits
+- [tools/leash/sigil-pass.test.mjs:33](../../tools/leash/sigil-pass.test.mjs#L33): approved squirrel stays apart from snail at each nominal rank and pointer size
+- [tools/leash/sigil-pass.test.mjs:41](../../tools/leash/sigil-pass.test.mjs#L41): approved horn differs from the actual dropped-hat pointer mask
+- [tools/leash/sigil-pass.test.mjs:56](../../tools/leash/sigil-pass.test.mjs#L56): approved five keep the 24px glyph below the shared crown in its 32px atlas slot
+- [tools/refraction/capture-hold.test.cjs:11](../../tools/refraction/capture-hold.test.cjs#L11): holds update state while allowing repeated Post draws and restores inherited render
+- [tools/refraction/capture-hold.test.cjs:20](../../tools/refraction/capture-hold.test.cjs#L20): restores an existing runner wrapper descriptor and backdrop even when Post throws
+- [tools/refraction/capture-hold.test.cjs:29](../../tools/refraction/capture-hold.test.cjs#L29): diagnostic names actual changed camera state and interleaved/instance buffers at one clock
+- [tools/refraction/depth-coverage.test.cjs:6](../../tools/refraction/depth-coverage.test.cjs#L6): real c680 depth bits exclude all9 color-contrast halo pixels without changing contrast24
+- [tools/refraction/depth-coverage.test.cjs:14](../../tools/refraction/depth-coverage.test.cjs#L14): equal or farther depth does not create actor front coverage; malformed map rejected
+- [tools/refraction/depth-readback.test.cjs:3](../../tools/refraction/depth-readback.test.cjs#L3): keeps adjacent sampled float32 depths distinct instead of re-quantizing to DEPTH24
+- [tools/refraction/depth-readback.test.cjs:9](../../tools/refraction/depth-readback.test.cjs#L9): maps screenshot samples through the actual canvas offset rather than assuming origin0
+- [tools/refraction/depth-readback.test.cjs:15](../../tools/refraction/depth-readback.test.cjs#L15): reports the complete clamped square including diagonals and original bit identity
+- [tools/roster/pixel-diff.test.mjs:5](../../tools/roster/pixel-diff.test.mjs#L5): changed sprite size counts changed opaque pixels instead of null/zero
+- [tools/roster/pixel-diff.test.mjs:8](../../tools/roster/pixel-diff.test.mjs#L8): transparent padding uses the sheet's bottom alignment
+- [tools/roster/presets.test.mjs:6](../../tools/roster/presets.test.mjs#L6): default-off and unknown switch preserve every production record by identity and hash
+- [tools/roster/presets.test.mjs:14](../../tools/roster/presets.test.mjs#L14): opt-in changes only selected genomes, has valid sockets, and leaves source records untouched
+- [tools/roster/presets.test.mjs:32](../../tools/roster/presets.test.mjs#L32): legacy beetle resolver requires level and keeps its original elder fallback
+- [tools/roster/presets.test.mjs:40](../../tools/roster/presets.test.mjs#L40): shared-hook pack contains complete same-id records and explicit declared elder targets
+- [tools/roster/presets.test.mjs:61](../../tools/roster/presets.test.mjs#L61): ordinary corrections survive per-level overrides and restore elder anatomy
+- [tools/shots/push.test.ts:30](../../tools/shots/push.test.ts#L30): adds only the named files, whatever is staged or missing in the checkout
+- [tools/shots/push.test.ts:39](../../tools/shots/push.test.ts#L39): replaces a file of its own, and a second publish of the same bytes changes nothing
+- [tools/shots/push.test.ts:47](../../tools/shots/push.test.ts#L47): built again on the new tip when another builder pushes first, keeping theirs
+- [tools/shots/push.test.ts:59](../../tools/shots/push.test.ts#L59): refuses a commit that would delete a path
+- [tools/shots/push.test.ts:71](../../tools/shots/push.test.ts#L71): never puts a file where a directory of others' previews is (git won't, and nothing is pushed)
+- [tools/shots/push.test.ts:79](../../tools/shots/push.test.ts#L79): keeps to paths on the branch
+
+<a id="t6"></a>
+
+## T6: One mixed replay and fixture-sanity case
+
+hard limits; 1 declarations; historical time unknown.
+
+One declaration runs30/5s real cases plus stun fixtures15/30s. Repeated runs and phase accounting are hard integrity proofs; censored/stunned/hits>0/retaliation>0 predicates also validate the selected scenario. This is not a demonstrated pure outcome test to move wholesale. Exact purpose needs its report/combat owner.
+
+- [tools/balance/report.test.mjs:36](../../tools/balance/report.test.mjs#L36): real-rules replay is deterministic across interleaved bots and bags
+
+## tools-ci: ruling review
+
+- Proof supersession checked: testing.md historical text ‘freezes prototype once and caches its separate build and successful baseline measurement’ is replaced by cost correction6562620628 ‘neither checks out/builds/measures nor caches a prototype baseline’. workflows.test.ts:8 asserts the replacement. Its nightly helper tests do not reinstate the removed PR settle/pixel gate.
+- Pixel exception supersession: testing.md6561733936 replaces #1612’s exact-colour exception with at most eight pixels and channel delta32. proofs.test.cjs:30 checks 2small/8at32 pass and9pixels/40channel fail. No removed allowlist requirement remains.
+- Art policy supersession: historical creatures.md says cloud art/canonical visual review are release gates; current testing.md says art runs nightly/manual and does not hold builds/releases. workflows.test.ts checks advisory nightly art, standing result and matching-tree reuse. This supports keeping the replacement guards, not deleting them.
+- Compatibility is current: roster/presets.test.mjs legacy beetle branch is still implemented in art/roster/presets.js and creatures.md retains beetle Current. comparable old-log and hold-simulation old/new-loop inputs similarly prove compatibility. No whole-case obsolete design was established in these49 files.
+- run-unit.test.ts “slowest alone” still follows the current largest-first total-work algorithm for its300s file/150s remaining-work input. A separate case rejects hiding extra work under the longest file. The title alone does not pin the superseded longest-file objective.
+
+<a id="w1"></a>
+
+## W1: Campaign identity and map equivalence
+
+hard limits; 21 declarations; ~313 s of CI.
+
+Assertions compare identity, stable coast/shape, prepared/direct map equality, allowed species and connectivity. The roster case steps12/24 waves plus20s but only prohibits species outside the roster. It is not a win-rate target. Nearby mapPrep:59 prepared/direct continuation equality is another integrity check, not evidence to move the file. Lead additionally read heightSamples.test.ts:14/31/54: preserved quantized buffers, worker/direct rolling equality, immutable cache and malformed/NaN rejection. Its frozen hash is an extraction-parity baseline, with no later replacing terrain ruling established.
+
+- [src/app/arrival.test.ts:16](../../src/app/arrival.test.ts#L16): carries the flight's end to the island's page, once
+- [src/app/arrival.test.ts:23](../../src/app/arrival.test.ts#L23): ignores another island's, a stale one, and none
+- [src/app/homeGrowth.test.ts:24](../../src/app/homeGrowth.test.ts#L24): 10 -> 11 -> 13 areas at home: the first ones kept, each new kind an area further out, the shape the world's
+- [src/app/islandTypes.test.ts:11](../../src/app/islandTypes.test.ts#L11): `are all its roster's, ring and sea too (${island})`
+- [src/app/landingBake.test.ts:8](../../src/app/landingBake.test.ts#L8): are home's meadow, the island's own kind, then the rest of its roster, once each
+- [src/app/landingBake.test.ts:25](../../src/app/landingBake.test.ts#L25): gives each island in each world its own tree seed, the same every time
+- [src/rules/archipelago.test.ts:10](../../src/rules/archipelago.test.ts#L10): is the same for a world each time, and another world's is another
+- [src/rules/areaRenames.test.ts:20](../../src/rules/areaRenames.test.ts#L20): keeps each renamed area's creature in its kind's slot (its island and its place on the maps as they were)
+- [src/rules/deal.test.ts:54](../../src/rules/deal.test.ts#L54): keeps an island's shapes every night and moves only its types, the rules holding each night
+- [src/rules/heightSamples.test.ts:14](../../src/rules/heightSamples.test.ts#L14): retains the original quantised windows at arrival and after small and large moves
+- [src/rules/heightSamples.test.ts:31](../../src/rules/heightSamples.test.ts#L31): hydrates the worker window without refilling, preserves rolling continuation and cache immutability
+- [src/rules/heightSamples.test.ts:54](../../src/rules/heightSamples.test.ts#L54): rejects incomplete or nonfinite height payloads instead of trusting a cached window
+- [src/rules/islandGrowth.test.ts:22](../../src/rules/islandGrowth.test.ts#L22): `phase ${phase}: exactly its areas, joined, home inland, everything for play off the beach`
+- [src/rules/islandGrowth.test.ts:39](../../src/rules/islandGrowth.test.ts#L39): the same island for the same seed; another seed, another shape
+- [src/rules/land.test.ts:13](../../src/rules/land.test.ts#L13): traces the coast and the lake's shore as two loops, the sea's and the lake's
+- [src/rules/mapPrep.test.ts:50](../../src/rules/mapPrep.test.ts#L50): is the map made directly: its data and its closures' answers, for several seeds, worlds and islands
+- [src/rules/roster.test.ts:42](../../src/rules/roster.test.ts#L42): a kind's island: every creature made over a night is in its roster
+- [src/rules/win.test.ts:240](../../src/rules/win.test.ts#L240): is deterministic: the same island won twice is the same, step for step
+- [src/rules/worldSeed.test.ts:17](../../src/rules/worldSeed.test.ts#L17): fixes every island in a world (world 0: the table's own bearings), and moves them all in another
+- [src/rules/worldSeed.test.ts:28](../../src/rules/worldSeed.test.ts#L28): keeps an island's shape every night in one world, its insides the night's own; another world, another shape
+- [src/rules/worldSeed.test.ts:37](../../src/rules/worldSeed.test.ts#L37): places the creatures by the night too
+
+<a id="w2"></a>
+
+## W2: Coast, lake and zoo boundaries
+
+hard limits; 25 declarations; ~88 s of CI.
+
+Forced toggles, knockout and displacement verify declared landing/shore/fence states. Routing must terminate within its bound without crossing water. Scripted3–90s movement is boundary coverage rather than emergent survival statistics; beach poses are current interaction rules within this predominantly spatial-integrity group.
+
+- [src/rules/beach.test.ts:21](../../src/rules/beach.test.ts#L21): `nothing grows, stands or runs on the sand or in the sea (seed ${seed})`
+- [src/rules/beach.test.ts:88](../../src/rules/beach.test.ts#L88): on foot: pushing out against the edge she lies down, and stays down
+- [src/rules/beach.test.ts:102](../../src/rules/beach.test.ts#L102): from the treetops: she comes down first
+- [src/rules/beach.test.ts:113](../../src/rules/beach.test.ts#L113): never in the woods, nor flying along the beach
+- [src/rules/beach.test.ts:147](../../src/rules/beach.test.ts#L147): each spot left alone unless she's near it
+- [src/rules/beachDecor.test.ts:46](../../src/rules/beachDecor.test.ts#L46): are found only near her, and only near the beach
+- [src/rules/homeGuard.test.ts:56](../../src/rules/homeGuard.test.ts#L56): the final game boundary keeps the guard inside home even after an external displacement
+- [src/rules/lakeHold.test.ts:34](../../src/rules/lakeHold.test.ts#L34): has a lake to test on
+- [src/rules/lakeHold.test.ts:41](../../src/rules/lakeHold.test.ts#L41): pressing to come down over the water leaves her in the treetops, said by the lakeHold event
+- [src/rules/lakeHold.test.ts:52](../../src/rules/lakeHold.test.ts#L52): ashore, the same press brings her down as ever
+- [src/rules/lakeHold.test.ts:61](../../src/rules/lakeHold.test.ts#L61): her followers' pull never lands her on the water
+- [src/rules/lakes.test.ts:33](../../src/rules/lakes.test.ts#L33): never home or its neighbours, the rest of the island its size and joined
+- [src/rules/lakes.test.ts:53](../../src/rules/lakes.test.ts#L53): lies inland: its water well clear of the sea, the island's land one piece round it
+- [src/rules/lakes.test.ts:61](../../src/rules/lakes.test.ts#L61): nothing placed for play on the water or its shore
+- [src/rules/lakes.test.ts:76](../../src/rules/lakes.test.ts#L76): stops her on foot at the shore, sliding along it; over the water she never lands
+- [src/rules/lakes.test.ts:98](../../src/rules/lakes.test.ts#L98): puts every creature on foot back on the shore, sliding toward where it's going; those in the air pass over
+- [src/rules/lakes.test.ts:119](../../src/rules/lakes.test.ts#L119): routes a travelling animal round a lake
+- [src/rules/lakes.test.ts:175](../../src/rules/lakes.test.ts#L175): lie level in a hollow: one flat water, the ground easing down to it round the shore and never under it
+- [src/rules/zooCoast.test.ts:31](../../src/rules/zooCoast.test.ts#L31): keeps its bay: a point in the bay is the street, the land round it the island
+- [src/rules/zooCoast.test.ts:42](../../src/rules/zooCoast.test.ts#L42): the fence stops her at the coast itself, in the bay too
+- [src/rules/zooCoast.test.ts:53](../../src/rules/zooCoast.test.ts#L53): lays out with the real coasts it's given, and round ones for the rest
+- [src/rules/zooFence.test.ts:26](../../src/rules/zooFence.test.ts#L26): on foot she can't walk out of an island, nor into one from the street: she stops at the fence
+- [src/rules/zooFence.test.ts:37](../../src/rules/zooFence.test.ts#L37): and not round an undiscovered island's lake either (lakes get fences too)
+- [src/rules/zooFence.test.ts:44](../../src/rules/zooFence.test.ts#L44): she rises inside an island and flies over its fence, followers or not, and comes down outside
+- [src/rules/zooFence.test.ts:74](../../src/rules/zooFence.test.ts#L74): knocked out on an island, she comes back on the Ent's plaza (home), never inside a fence (Ed, 2026-10-26)
+
+<a id="w3"></a>
+
+## W3: Authored rosters, biomes and lake looks
+
+current rules; 27 declarations; ~118 s of CI.
+
+Roster multiplicities and biome/phase assignments come directly from authored content rules. Equal wave numbers producing equal populations is a direct generation contract, not a played-night victory statistic. Flora exclusions and the no-lake early return need the targeted coverage review recorded in the ruling appendix.
+
+- [src/biomeForests.test.ts:11](../../src/biomeForests.test.ts#L11): has a look for every compass biome, and none for temperate
+- [src/biomeForests.test.ts:16](../../src/biomeForests.test.ts#L16): gives every non-temperate kind's island a key its look reads
+- [src/biomeForests.test.ts:26](../../src/biomeForests.test.ts#L26): blends two biomes by share
+- [src/biomeForests.test.ts:32](../../src/biomeForests.test.ts#L32): tints leaves and bark, keeps a prop's flowers, and leaves snow's jitter out
+- [src/biomeForests.test.ts:48](../../src/biomeForests.test.ts#L48): takes its biome's look by its ring: semi-temperate near home, the full look furthest out (Ed, 2026-10-25)
+- [src/biomeForests.test.ts:75](../../src/biomeForests.test.ts#L75): mixes the look toward temperate by 1 - strength, and keeps two neighbours' blend
+- [src/floraBiomes.test.ts:28](../../src/floraBiomes.test.ts#L28): finds the graded areas
+- [src/floraBiomes.test.ts:31](../../src/floraBiomes.test.ts#L31): `${A.id} (ring ${k.phase + 1}, ${k.biome})`
+- [src/rules/beach.test.ts:75](../../src/rules/beach.test.ts#L75): off, or on the square map, there's none
+- [src/rules/beach.test.ts:123](../../src/rules/beach.test.ts#L123): in every run, a handful of spots spread round the whole coast, never bunched (Ed, 2026-10-06: "always ... only a handful spread around it")
+- [src/rules/beachDecor.test.ts:29](../../src/rules/beachDecor.test.ts#L29): are only nature: shells, starfish, a conch, seaweed, pebbles, rocks, and prints of feet, paws, hooves and birds
+- [src/rules/coastCamera.test.ts:17](../../src/rules/coastCamera.test.ts#L17): lowers steadily from the normal view 200 m out to beach.camera.angle at the water's edge
+- [src/rules/homeGuard.test.ts:39](../../src/rules/homeGuard.test.ts#L39): has none on the home island
+- [src/rules/island.test.ts:58](../../src/rules/island.test.ts#L58): peoples each area by its wave alone: the same wave, the same swarm, on a 10-area island and a 50-area one
+- [src/rules/kinds.test.ts:22](../../src/rules/kinds.test.ts#L22): puts home and phase 1 in temperate, then 6 kinds in each compass biome, 2 a phase, near its point (Ed, 2026-10-23)
+- [src/rules/lakeLooks.test.ts:11](../../src/rules/lakeLooks.test.ts#L11): blends the two compass biomes a bearing lies between
+- [src/rules/lakeLooks.test.ts:18](../../src/rules/lakeLooks.test.ts#L18): keeps home's lakes and the inner phases' plain, half the first special phase's, all further out
+- [src/rules/lakeLooks.test.ts:25](../../src/rules/lakeLooks.test.ts#L25): blends the volcanic east with its neighbours like every compass point (no island a biome alone)
+- [src/rules/lakeLooks.test.ts:35](../../src/rules/lakeLooks.test.ts#L35): deals each lake one of its island's two looks, the same every time
+- [src/rules/lakeLooks.test.ts:40](../../src/rules/lakeLooks.test.ts#L40): finds every lake on a real island and gives it a look
+- [src/rules/lakes.test.ts:24](../../src/rules/lakes.test.ts#L24): none on home's island (phase 0); from phase 1 some, more by phase
+- [src/rules/lakes.test.ts:151](../../src/rules/lakes.test.ts#L151): has koi in some lakes: seeded, all or none at the share's ends
+- [src/rules/rosters.test.ts:15](../../src/rules/rosters.test.ts#L15): puts every kind's island one phase after its own, on its bearing, sized by phase, the same every time
+- [src/rules/rosters.test.ts:28](../../src/rules/rosters.test.ts#L28): gives each a roster by the rule: its kind plentiful, 1-3 new to its phase, only kinds of its phase or before, each other kind on at most 2 areas (Ed, 2026-10-28)
+- [src/rules/rosters.test.ts:102](../../src/rules/rosters.test.ts#L102): draws from islandOf alone: the coast the map makes with the island's seed and the islands' knobs
+- [src/rules/rosters.test.ts:115](../../src/rules/rosters.test.ts#L115): gives all 64 kinds an island with a seed, size and roster, 10 to 50 areas by phase
+- [src/rules/terrain.test.ts:23](../../src/rules/terrain.test.ts#L23): is seeded, and with ground.layout off the land is the hills alone and trees grow as before
+
+<a id="w4"></a>
+
+## W4: Scenery distributions and sea-life frequencies
+
+outcome stats; 7 declarations; ~200 s of CI.
+
+One pure distribution case and six mixed cases sample coast widths,5–120 finds/km, raggedness ratios, featured scenery≥6/10 islands, ruins mean>4, dolphin starts15–80/300s, kraken rises>4/1500s with<35% active share, or low-ground trees>1.3×high. Preserve direct placement, forbidden-scenery, equality and parameter assertions before moving those statistical components.
+
+- [src/rules/beach.test.ts:43](../../src/rules/beach.test.ts#L43): varies in width round the coast (Ed, 2026-10-06: "more irregularly shaped"): wide bays, narrows, rocky stretches
+- [src/rules/beachDecor.test.ts:16](../../src/rules/beachDecor.test.ts#L16): lie on the sand, clear of the woods' edge and out of the sea, sparsely, the same for the same seed
+- [src/rules/islandGrowth.test.ts:45](../../src/rules/islandGrowth.test.ts#L45): more irregular phase by phase (Ed, 2026-10-11): home near-round, phase 5 strongly irregular
+- [src/rules/rules.test.ts:1851](../../src/rules/rules.test.ts#L1851): leaves out the cut scenery, keeps the playground, and puts the featured scene on most islands
+- [src/rules/seaLife.test.ts:15](../../src/rules/seaLife.test.ts#L15): leaps dolphins off the east coast only, in the water north of her, now and then
+- [src/rules/seaLife.test.ts:27](../../src/rules/seaLife.test.ts#L27): raises the kraken off the west coast only, rarely, beside or north of her and out in the water
+- [src/rules/terrain.test.ts:31](../../src/rules/terrain.test.ts#L31): grows trees thicker in the low ground than on the high
+
+<a id="w5"></a>
+
+## W5: Map resource and test-helper budgets
+
+hard limits; 4 declarations; ~77 s of CI.
+
+The existing hydration guard uses best-of-two measurements over four tuples: each hydration below generation time and summed hydration below0.6×generation. Small-world helpers must clone tuning, give a reason and preserve separate largest-world coverage. The snapshot<4M-character guard is already S2 on the saves page and is not counted again here.
+
+- [src/rules/mapPrep.test.ts:65](../../src/rules/mapPrep.test.ts#L65): is never slower to make than the map itself (Ed's laptop, 2026-10-20): hydrating takes well under generating, home's island too
+- [src/test/worlds.test.ts:7](../../src/test/worlds.test.ts#L7): shrinks only a cloned test map without mutating shared production/test tuning
+- [src/test/worlds.test.ts:15](../../src/test/worlds.test.ts#L15): requires an answerable reason rather than silently choosing a small world
+- [src/test/worlds.test.ts:18](../../src/test/worlds.test.ts#L18): keeps largest-shipped-world area diversity coverage separate from small logic fixtures
+
+<a id="w6"></a>
+
+## W6: Links, travel and explicit transition rules
+
+current rules; 13 declarations; ~91 s of CI.
+
+Explicit URL values override carried sliders; retired wave-pace keys are forgotten. Door/ready and forced-clear transitions check named state and exactly-once pulses. The two generated-bot win/recruitment templates from the original partition remain with #1622, not a duplicate world proposal.
+
+- [src/app/linkParams.test.ts:18](../../src/app/linkParams.test.ts#L18): takes the island's size from ?island= (Ed, 2026-10-11): areas, home, off; ?mapAreas= the radius map
+- [src/app/linkParams.test.ts:62](../../src/app/linkParams.test.ts#L62): clamps the link's values
+- [src/app/linkParams.test.ts:66](../../src/app/linkParams.test.ts#L66): forgets the old waves' pace key (Ed, 2026-10-08; the pause page's slider keeps its own now: app/settings.ts)
+- [src/app/linkParams.test.ts:69](../../src/app/linkParams.test.ts#L69): ?dodge= picks which dodge changes are on (Ed, 2026-10-08), all by default
+- [src/app/sail.test.ts:44](../../src/app/sail.test.ts#L44): fall back to today's links: the bed newForestHref's (a new seed, the same island), the bot's exit without ?bot
+- [src/app/sail.test.ts:83](../../src/app/sail.test.ts#L83): knows the knobs its link sets itself: ?set= paths and the decisions' d_<id>
+- [src/app/sail.test.ts:87](../../src/app/sail.test.ts#L87): carries every slider moved last night but those the next night's link sets itself
+- [src/platform/zooPad.test.ts:7](../../src/platform/zooPad.test.ts#L7): Square uses the zoo's in-world exit; Circle is not a parent-side exit action
+- [src/rules/guidance.test.ts:110](../../src/rules/guidance.test.ts#L110): something new, newest first, till she's been to it; never the map table during the night, new islands or not (Ed, 2026-10-26: "You don't see it all night")
+- [src/rules/guidance.test.ts:133](../../src/rules/guidance.test.ts#L133): after a lost night: the bed, wherever she is, over everything else, unless there's an island she hasn't been to (Ed, 2026-10-26)
+- [src/rules/island.test.ts:35](../../src/rules/island.test.ts#L35): plays the waves on any island, the pulse running out after the last stone
+- [src/rules/wakeUp.test.ts:148](../../src/rules/wakeUp.test.ts#L148): dressed, the door opens with the island still being built; the spell waits for her decks
+- [src/rules/win.test.ts:122](../../src/rules/win.test.ts#L122): the island cleared before the route's end (Ed, 2026-10-12): the lap sets off at once, from where the wave's pulse is, one pulse home and one on to the route's end, each stone firing once; the waves stop
+
+## world-islands-lakes: ruling review
+
+- Set-piece supersession: DESIGN.md Ed3Oct says ‘Set pieces are rare bits of scenery’. world-art.md Ed29Oct says ‘phased out of normal generation (setPieceChance0)’ with recipes/art retained for previews. rules.test.ts:1851 asserts setPiecesNear=[] and paths.pieces=[]: retain those replacement guards and split only statistical scenery thresholds. lakes.test.ts:61 conditionally checks returned set-piece positions; mapPrep closure equality does not require one to spawn. No positive old-generation requirement was found in the97 reviewed tests.
+- Home-growth supersession: journey backlog Ed10/11Oct says first10 areas’ ‘places and their kinds’ remain the same; island.md Ed28Oct says ‘keep the route changing, shuffle the creatures and area types, retain the area shapes’. deal.test.ts:54 requires changed type deals with stable shapes; homeGrowth.test.ts:24 compares cell keys and sorted roster, not type-at-cell. They implement the replacement. The rosters comment saying the night ‘only deals its legends’ is stale explanation, not a reason to delete its count/coast protection.
+- Placeholder supersession: journey backlog Ed11Oct describes32 kinds and32 placeholders; island.md now says all64 designed. rosters.test.ts:115 still checks64 valid island descriptors; its old placeholder title is stale, while rejecting unknown-01 remains legacy-ID safety. Neither that title nor the64-designed statement proves flora RETHEMING exclusions obsolete.
+- G3 review limits: floraBiomes.test.ts:31 excludes11 RETHEMING IDs under a comment saying17; an art/data owner must confirm those exclusions. lakeLooks.test.ts:40 returns early if its sampled island has no lake. These are specific coverage-strengthening candidates, not established obsolete whole tests. This bounded review confirmed zero obsolete whole tests.
+- Timing overlaps: mapPrep, beach, beachDecor, islandGrowth, homeGuard, lakes, island, terrain and win appear in multiple groups. File durations include other tests and other systems. No group-time sum is a wall-time or savings estimate.
 

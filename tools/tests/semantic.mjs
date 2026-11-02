@@ -35,7 +35,8 @@ export function reviewOutputs(data,reviews) {
       const members=reviewMembers(data,g), files=data.files.filter(f=>new Set(members.map(c=>c.file)).has(f.file));
       const seconds=files.reduce((n,f)=>n+(f.fileRuntimeSeconds??0),0).toFixed(3);
       const missing=files.filter(f=>f.fileRuntimeSeconds===null).length;
-      const timing=`~${Math.round(Number(seconds))} s of CI${missing?`; ${missing} files unknown`:''}`;
+      const known=files.length-missing;
+      const timing=!known?'historical time unknown':`${missing?'known files: ':''}${Number(seconds)<0.5?'<1':`~${Math.round(Number(seconds))}`} s of CI${missing?`; ${missing} files have unknown timing`:''}`;
       appendix+=`<a id="${g.id.toLowerCase()}"></a>\n\n## ${g.id}: ${g.title}\n\n${g.kind}; ${members.length} declarations; ${timing}.\n\n${g.reason}\n\n`+members.map(c=>`- [${c.file}:${c.line}](../../${c.file}#L${c.line}): ${c.name}`).join('\n')+'\n\n';
       const examples=g.examples.map((n,i)=>{const c=members.find(c=>c.name===n);const label=g.exampleLabels?.[i]??n;return `[${label}](../../${c.file}#L${c.line})`;}).join('; ');
       return {id:g.id,action:g.action,text:`### ${g.id}. ${g.title}\n\n**${members.length} tests · ${g.kind} · ${timing}.**\n\nExamples: ${examples}.\n\n${g.action?`**Yes/no: ${g.question}** `:''}[Assertions, rationale and exact membership](semantic-groups.md#${g.id.toLowerCase()}).\n`};

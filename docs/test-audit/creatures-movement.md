@@ -1,30 +1,5 @@
 # Creatures and movement
 
-**Not ready for Ed: semantic review pending.** The generic prompts below are placeholders, not proposed group decisions.
+0 changes proposed, 0 reviewed groups to keep.
 
-Audit only. Any implementation follows a separate, small system PR after Ed rules.
-
-## What these tests aim to protect
-
-- Creatures move within the permitted world.
-- State transitions preserve valid creature data.
-- Movement and population rules need their current design checked.
-
-## First guesses
-
-| Kind | Declarations |
-|---|---:|
-| hard limits | 30 |
-| current rules | 821 |
-| outcome stats | 146 |
-| leftovers | 4 |
-
-These are machine guesses, not confirmed design decisions. See [all creatures and movement cases](cases.md#creatures-movement) for names, citations, recommendations and runtime limits.
-
-## Group decisions for Ed
-
-1. Keep the safety and integrity protections. Review the provisional rule group against today's design before any changes.
-2. Review the 146 outcome-stat declarations as a group for possible nonblocking reports. No move happens before your ruling.
-3. Review the 4 historical-wording declarations for compatibility purpose. Choose keep, rewrite or delete only after checking the case and a specific superseding ruling. An older date alone is insufficient.
-
-Case runtimes are unknown. Historical file timings are in the inventory; no savings estimate or new benchmark run is claimed.
+**Not reviewed, no change proposed:** 163 tests. No keep question covers these unread tests. [Exact remaining file/line manifest](unreviewed.md#creatures-and-movement).

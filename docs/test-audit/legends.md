@@ -60,7 +60,7 @@ Examples: [Radius maps default to one-fifth legends.](../../src/rules/legendShar
 
 ### L6. Quest completion, sleeping state and party-legend rules
 
-**37 tests · current rules · ~196 s of CI.**
+**50 tests · current rules · ~201 s of CI.**
 
 Examples: [Placing the sigil completes the quest immediately.](../../src/rules/questDrop.test.ts#L41); [A completed quest wakes an ally and grants no buff.](../../src/rules/legends.test.ts#L251); [Only the final Easter-egg letter permits legend pickup.](../../src/rules/partyLegend.test.ts#L45).
 
@@ -70,3 +70,7 @@ Examples: [Placing the sigil completes the quest immediately.](../../src/rules/q
 **Yes/no: Keep L1, L2, L4, L6 as they are?** They protect paired-area ownership, circle geometry and instructions, deliberate comparison settings, quest completion and sleeping/Easter-egg state rules.
 
 [Old/current ruling comparisons](semantic-groups.md#legends-ruling-review). No change happens before Ed rules.
+
+## Not reviewed, no change proposed
+
+11 additional tests remain outside the reviewed groups. The keep question above covers only named groups. [Exact remaining file/line manifest](unreviewed.md).
