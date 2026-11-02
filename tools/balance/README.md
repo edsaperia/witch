@@ -199,6 +199,18 @@ node tools/balance/pulsegaps.mjs [--seeds 10] [--speed 4] [--interval 60] [--boo
 
 Observation and presentation only: no combat, progression or wave model lives here.
 
+## `report-fixture-sanity.mjs`
+
+Nonblocking T6 scenario observations; not a *.test file and not part of replay assertions.
+
+```
+node tools/balance/report-fixture-sanity.mjs [--out=previews/report-fixture-sanity.json]
+```
+
+## `report-replay.mjs`
+
+Integrity assertions only.
+
 ## `report-runtime.mjs`
 
 Real-rule runner and isolated invitation fixtures for report.mjs; no simulated combat model.
@@ -285,6 +297,7 @@ node tools/balance/waves.mjs --report a.json,b.json,...   (merge several runs' J
 - `expert-progress.test.mjs`
 - `expert-search-core.test.mjs`
 - `expert-space.test.mjs`
+- `report-fixture-split.test.mjs`
 - `report.test.mjs`
 - `survey.test.mjs`
 - `surveys`
