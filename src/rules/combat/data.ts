@@ -23,7 +23,7 @@ export interface Attack {
   knockback?: number;
   slowMult?: number;
   slowTime?: number;
-  /** Melee: how far it lunges at where it aimed when the blow lands (dodgeable: it's committed). */
+  /** Melee: released travel budget; species strikeTurn controls subsequent heading correction. */
   lunge?: number;
   /** Lob: seconds in the air. Beam: its width, seconds it burns, seconds between its ticks, and how fast it sweeps (degrees a second). */
   flight?: number;
@@ -115,6 +115,8 @@ export interface Fight {
   readyAt: number;
   /** Winding up: the game time it lands or flies, and where it was aimed then (a shot flies at that point). */
   windupUntil: number;
+  /** Actual preparation start, for warning waves with modified wind-up durations. */
+  windupAt?: number;
   aimX: number;
   aimZ: number;
   /** A wild legend's move being wound up (Stage 5), for the view's telegraph. */

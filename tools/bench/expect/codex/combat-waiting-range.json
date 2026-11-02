@@ -1,0 +1,10 @@
+{
+  "reason": "Ed requested farther purposeful waiting movement, tunable lunge tracking and a travelling dotted warning (2 Nov); coordinator6578197885 accepts only these three keys, including the observed art-landing schedule difference.",
+  "rules": {
+    "creatures": "Waiting routes, preparation return and lunge course correction intentionally change fighting positions and velocities.",
+    "combat": "Changed fighting positions and lunge tracking intentionally change subsequent attack state."
+  },
+  "frames": {
+    "wave-fight": "Changed fighting positions and dotted lunge warnings alter the fight image; its art-landing frames also differ, as explicitly accepted for Ed to judge in play."
+  }
+}

@@ -1,10 +1,10 @@
 // The bots (rules/bot.ts): the balance tool's and the bot game's one player made of rules.
 import { describe, expect, it } from "vitest";
-import { TUNING, withTuning } from "./tuning";
+import { TUNING } from "./tuning";
 import { newGame, stepGame, type Game } from "./game";
 import { article, BOT_GAME, newBot, plural, type BotKind, type BotOptions } from "./bot";
 
-// Keep the seeded radius runs and ten-area regressions: full-night wins, cross-area sleeper targeting and 150–200 s travel/landing behavior depend on their routes and populations.
+// Seeded movement and replay contracts remain here. Full-night/recruitment outcomes are tools/balance/bot-outcomes.mjs.
 /** A fresh game as the bot game starts one: unpaused, waiting for the party spell. */
 function fresh(seed = 123): Game {
   const g = newGame(seed, TUNING);
@@ -46,33 +46,6 @@ describe("the bot", () => {
     expect(g.leash.stack.length + g.leash.placed.length + g.creatures.filter(c => c.dropped && !c.gone).length).toBeGreaterThan(0);
   });
 
-  // (seeds 11 and 33: the two ways it stood idle with a full leash and never finished the night, 2026-10-26: on 11 its home guards
-  // turned the stack over every step and never went down, a fighter of the same level already at the bottom; on 33 it kept the
-  // last hare of an area with no legend, so the area could never be cleared, and had no one else to invite)
-  it.each([11, 22, 33])("plays the islands' pace (bots-again, 2026-10-11): on a 10-area home it recruits through the run and wins the night (seed %i)", seed => {
-    // (before: it stood at each next soundsystem before its wave, invited 3 to 5 all run and lost every night)
-    // (seed 11: 8919, which this run was tuned on, lost once the bare broom lost the plain broom's quick take-off, Ed 2026-10-23, a
-    // chaotic run; on the bare broom seeds 11, 22 and 33 win)
-    // (seed 22 since the legend circles were sized to their legends, 2026-10-26: their maps moved, and on seed 11 the bot then
-    // stood idle with a full leash from 6 minutes on, never finishing the night, as seed 33 already did before; both fixed in the
-    // bot since, above: all three run)
-    const g = newGame(seed, withTuning({ map: { ...TUNING.map!, islandAreas: 10 } }));
-    g.clock.paused = false; g.witch = { ...g.witch, seated: false, perch: false }; // (on the ground by the treehouse, as this run was tuned from; the deck's start shifts this chaotic run: 8 seeds from one spot invite about as many with it on as off)
-    const bot = newBot("skilled");
-    let invited = 0;
-    const babies = g.creatures.filter(c => c.level === 0), alreadyHappy = new Set(babies.filter(c => c.state === "happy").map(c => c.id));
-    const joinedBabies = new Set<number>(); // Ed, 2026-10-31: babies join through soundsystems, not invitation events.
-    for (let i = 0; i < 20 * 60 * 60 && g.win?.phase !== "won" && !g.partyOver; i++) {
-      stepGame(g, bot.decide(g), 1 / 60);
-      for (const e of g.witches[0].invites.events) if (e.kind === "happy") invited++;
-      for (const c of babies) if (c.state === "happy" && !alreadyHappy.has(c.id)) joinedBabies.add(c.id);
-    }
-    expect(g.partyOver).toBeFalsy();
-    expect(g.win?.phase).toBe("won");
-    // Count both supported recruitment paths; retain the 15-creature floor and the full-night victory requirement.
-    expect(invited + joinedBabies.size).toBeGreaterThanOrEqual(15);
-  }, 240000);
-
   it("is deterministic: the same game and steps give the same run", () => {
     const a = play(fresh(7), "skilled", 60).track, b = play(fresh(7), "skilled", 60).track;
     expect(a).toEqual(b);
@@ -96,20 +69,6 @@ describe("the bot", () => {
     play(h, "hover", 10);
     expect(h.witch.mode).toBe("treetop");
   });
-
-  it("wins someone on the island it once won no one on (#650): its letters wake a napper from the next area (Ed, 2026-10-11: \"Letters wake them\")", () => {
-    // Seed 1000 on the 10-area island: its first target, an elk, naps across the border from where its area's site lets her land.
-    // When a sleeper took no 💌 till she was on the ground in its own area, the skilled bot fired at it from the next area all run.
-    const g = newGame(1000, withTuning({ map: { ...TUNING.map!, islandAreas: 10 } }));
-    g.clock.paused = false; g.witch = { ...g.witch, seated: false };
-    const bot = newBot("skilled"), w = g.witches[0];
-    let won = 0;
-    for (let i = 0; i < 40 * 60 && !won; i++) {
-      stepGame(g, bot.decide(g), 1 / 60);
-      won += w.invites.events.filter(e => e.kind === "happy").length;
-    }
-    expect(won).toBeGreaterThan(0);
-  }, 60000);
 
   it("names a species in the plural for its tag", () => {
     expect(plural("fox")).toBe("foxes");

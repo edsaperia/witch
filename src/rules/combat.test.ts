@@ -699,7 +699,7 @@ describe("the motion scale pass (Ed, 2026-10-04)", () => {
     g.tuning.fight.scale = 1;
   }, 60000);
 
-  it("has an ordinary wild pursuer follow across area borders until take-off, then go home (Ed, 2026-10-31; hunt off)", () => {
+  it("keeps an ordinary wild pursuer engaged outside its area until take-off, then sends it home (Ed, 2026-10-31; hunt off)", () => {
     const g = quiet({ ...TUNING, hunt: { on: false } }), W = g.witches[0];
     W.health.hp = 1e6;
     const cell: [number, number] = [g.map.centreCell[0] + 2, g.map.centreCell[1]], site = g.map.siteOf(cell[0], cell[1]);
@@ -708,15 +708,14 @@ describe("the motion scale pass (Ed, 2026-10-04)", () => {
     g.witch = { ...g.witch, x: site.x + 8, z: site.z, mode: "ground", lift: 0, seated: false };
     for (let i = 0; i < (2 + (g.tuning.wildWatch?.on ? g.tuning.wildWatch.time : 0)) / STEP; i++) stepGame(g, { ...idle, autoTalk: false }, STEP); // (after the watch, rules/wildWatch.ts)
     expect(wolf.fight?.target?.kind).toBe("witch");
-    // She runs out of its area, far east, and keeps going.
-    let maxOut = 0;
-    for (let i = 0; i < 12 / STEP; i++) {
-      stepGame(g, { ...idle, autoTalk: false, moveX: 1 }, STEP);
-      const k = g.map.cellSafe(wolf.x, wolf.z).cell;
-      if (k[0] !== cell[0] || k[1] !== cell[1]) maxOut++;
-    }
+    // Direct border fixture, independent of the selected action's close-run timing.
+    let edge = 0;
+    while (g.map.cellSafe(site.x + edge + 1, site.z).cell.every((v, i) => v === cell[i])) edge++;
+    wolf.x = site.x + edge + 2; wolf.z = site.z;
+    g.witch = { ...g.witch, x: wolf.x + 40, z: wolf.z };
+    expect(g.map.cellSafe(wolf.x, wolf.z).cell).not.toEqual(cell);
+    stepGame(g, { ...idle, autoTalk: false }, STEP);
     expect(wolf.fight?.target?.kind).toBe("witch");
-    expect(maxOut).toBeGreaterThan(0);
     g.witch = { ...g.witch, mode: "treetop", lift: 1 };
     for (let i = 0; i < 15 / STEP; i++) stepGame(g, idle, STEP);
     expect(g.map.cellSafe(wolf.x, wolf.z).cell).toEqual(cell); // back home

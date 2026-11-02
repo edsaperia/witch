@@ -84,6 +84,16 @@ export function limitTurn(vx: number, vz: number, tx: number, tz: number, m: Res
   return [Math.cos(a) * mag, Math.sin(a) * mag];
 }
 
+/** A finite heading correction, independent of speed or remaining travel budget. */
+export function turnHeading(dx: number, dz: number, tx: number, tz: number, degrees: number, dt: number): [number, number] {
+  if (degrees <= 0 || dt <= 0 || Math.hypot(tx, tz) < 1e-6) return [dx, dz];
+  const heading = Math.atan2(dz, dx), aim = Math.atan2(tz, tx);
+  const difference = Math.atan2(Math.sin(aim - heading), Math.cos(aim - heading));
+  const limit = degrees * Math.PI / 180 * dt;
+  const next = heading + Math.max(-limit, Math.min(limit, difference));
+  return [Math.cos(next), Math.sin(next)];
+}
+
 /** Where a creature just chasing witch i makes for: where she was m.delay seconds ago, led by m.chaseLead seconds of how she was
  *  going then (null with no trail). */
 export function chaseAt(s: CombatState, i: number, time: number, m: Resolved): { x: number; z: number } | null {

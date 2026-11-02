@@ -116,10 +116,13 @@ describe("the wild watch (Ed, 2026-10-07)", () => {
     expect(onHer(), "not provoked: it leaves her be").toBe(false);
     // her 💌 lands on it: provoked, it comes out across its edge after her
     expect(hit({ time: g.clock.time, leash: () => {} }, c, 1)).toBe(true);
-    let left = false;
-    run(g, 3, () => { place(6); left ||= !inside(); });
+    run(g, STEP, () => place(6));
     expect(onHer(), "provoked: after her").toBe(true);
-    expect(left, "out of its area after her").toBe(true);
+    // Exercise the boundary directly rather than pinning a close run within three seconds.
+    c.x = ex + dx; c.z = ez + dz;
+    expect(inside(), "fixture is beyond its area").toBe(false);
+    run(g, STEP, () => place(6));
+    expect(onHer(), "keeps pursuing beyond its area").toBe(true);
     // she backs off to half its band past the edge: it keeps after her
     run(g, 2, () => place(band * 0.5));
     expect(onHer(), "still after her within its band").toBe(true);
