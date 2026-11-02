@@ -139,10 +139,8 @@
           "rejects divergence before a labelled checkpoint instead of using it to repair the replay",
           "commits text before attachments, exposes a real attachment-write error and reloads every word"
         ],
-        "exampleLabels": [
-          "A paused tape replays the identical state.",
-          "A checkpoint never hides replay divergence.",
-          "Report text survives an attachment-write failure."
+        "excludeIds": [
+          "src/app/playtestComments.test.ts:69"
         ]
       }
     ],
@@ -166,7 +164,8 @@
       "A legend area and its paired creature area share ownership, rage accounting and party borders.",
       "Circle lookup agrees with the complete search, and circle explanations follow the legend's state.",
       "Legend footprint data controls circle size and margins; raw physical cells need not equal ownership cells.",
-      "Long fixtures also pin baby travel times, grove averages, rim coverage and runestone-gap failure rates."
+      "Long fixtures also pin baby travel times, grove averages, rim coverage and runestone-gap failure rates.",
+      "Relic glints remain visible on the ground and show through canopy gaps only from above."
     ],
     "groups": [
       {
@@ -363,10 +362,11 @@
           "src/rules/slowTime.test.ts:70",
           "src/rules/slowTime.test.ts:85",
           "src/rules/slowTime.test.ts:111",
-          "src/rules/slowTime.test.ts:116"
+          "src/rules/slowTime.test.ts:116",
+          "src/rules/legends.test.ts:277"
         ],
         "question": "Keep current legend and quest rules?",
-        "reason": "The setup isolates a legend, kin or gift and invokes the explicit transition: waves do not wake legends, kin restore sleep, only a placed sigil completes a quest at any age, no buff is awarded, and the 100-letter Easter egg has its own tether/release rules. Fixed steps here check the declared state/timer/boundary, not an uncontrolled win rate. The staggered five-second kin check is a per-frame work bound. Early-quest wording still says baby, but its assertion explicitly says any age; it does not enforce the retired age requirement. Known-quest and offering policies receive fabricated observations/stack acknowledgements and explicit deadlines; they cannot invent unseen cues. Ending cases advance only the wave/ending clock and force neutralization, checking automatic ending and observed/drawn-pointer agreement, not whether a bot wins a natural night. Dream helpers directly check nearest-kind/compass results and quest-open flags. Slow-time tests force ring entry/exit, held headings and a boundary-crossing letter: clock-rate scaling and exclusion remain direct rules, despite numeric movement checks, rather than sampled battle outcomes.",
+        "reason": "The setup isolates a legend, kin or gift and invokes the explicit transition: waves do not wake legends, kin restore sleep, only a placed sigil completes a quest at any age, no buff is awarded, and the 100-letter Easter egg has its own tether/release rules. Fixed steps here check the declared state/timer/boundary, not an uncontrolled win rate. The staggered five-second kin check is a per-frame work bound. Early-quest wording still says baby, but its assertion explicitly says any age; it does not enforce the retired age requirement. Known-quest and offering policies receive fabricated observations/stack acknowledgements and explicit deadlines; they cannot invent unseen cues. Ending cases advance only the wave/ending clock and force neutralization, checking automatic ending and observed/drawn-pointer agreement, not whether a bot wins a natural night. Dream helpers directly check nearest-kind/compass results and quest-open flags. Slow-time tests force ring entry/exit, held headings and a boundary-crossing letter: clock-rate scaling and exclusion remain direct rules, despite numeric movement checks, rather than sampled battle outcomes. Final previously unread case277 was read in full: three seeded maps require relics outside clearings, ground-visible glints, treetop visibility exactly equal to canopy clearance, and a moved-under-crown negative check. The open/covered mixture implements DESIGN432’s explicit alternating placement contract; it is not an arbitrary sampled percentage or travel deadline. Keep this current visibility/content rule.",
         "examples": [
           "completes on the very step its sigil is put down in the circle, its animal still far away",
           "has the dream quest wake it happy, fighting for her, no buff (Ed, 2026-10-18; the creature stays hers), and stay open while it sleeps, soundsystem on or not (Ed, 2026-10-06)",
@@ -384,7 +384,8 @@
       "Supersession matched to L4: Ed, 2026-10-06, DESIGN.md: ‘about half of areas’; Ed, 2026-10-08: ‘more like 1/5’. legendShare.test.ts asserts S===0.2 before explicitly constructing half/all comparison maps. Both rulings are accounted for; the old citation alone is not an obsolete default.",
       "Current sizing ruling, L2/L5: Ed, 2026-10-26, legendFit.test.ts: ‘Legend circles need to be larger. Often legends don't fit in them.’ legendAreas.test.ts checks the authored paired areas, allowing only elephant overflow in its five-map matrix. The exact eleven-giant radius-cap list needs a separate ruling, not an assumed deletion.",
       "Concrete quest-cap supersession: DESIGN.md Quests are a gamble (6 Oct) describes a five-area tail cap; docs/notes/gameplay.md 31 Oct playtest item13 sets questCap to 0, ‘no distance tail cut’, while ‘Positive explicit caps remain supported and tested at 6’. quest.test.ts:119 already asserts default0 and explicitly builds cap6 comparison maps. Propose reporting its median ratios, retain default0/finite-distance protections. The seed162218 regression in questDrop.test.ts explicitly opts into cap6 to preserve Ed’s old coordinates and tests the 19 Oct placed-sigil rule; it does not pin cap6 as default.",
-      "Quest supersession: DESIGN.md Dreams lists the old quest making the placed creature join the area and the old quest closing at its wave (5 Oct); the 6 Oct replacement stays open while asleep, and the 18 Oct replacement keeps the creature hers and grants no buff. quest.test.ts:43/96, questDrop.test.ts:41 and legends.test.ts:251 assert the replacements. No positive removed-buff or wave-closes-quest assertion remains in these reviewed cases."
+      "Quest supersession: DESIGN.md Dreams lists the old quest making the placed creature join the area and the old quest closing at its wave (5 Oct); the 6 Oct replacement stays open while asleep, and the 18 Oct replacement keeps the creature hers and grants no buff. quest.test.ts:43/96, questDrop.test.ts:41 and legends.test.ts:251 assert the replacements. No positive removed-buff or wave-closes-quest assertion remains in these reviewed cases.",
+      "Final legend case277: DESIGN432 cites Ed5Oct “bottle glint should only show through gaps” and explicitly places every other relic under a gap, the rest under closed canopy. Assertions require both categories on three seeds and compare each glint to canopyOver, including a deliberate under-crown negative placement. The18Oct flask-use redesign does not supersede this visibility rule; no later cancellation was found in the reviewed notes. This is current authored placement/visibility coverage, not a statistical frequency score."
     ],
     "keepSummary": "paired-area ownership, circle geometry and instructions, deliberate comparison settings, quest completion and sleeping/Easter-egg state rules",
     "ownerCases": {

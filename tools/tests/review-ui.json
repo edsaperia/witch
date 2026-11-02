@@ -1,7 +1,7 @@
 {
   "ui-menus-controls": {
     "title": "UI, menus and controls",
-    "status": "Read-only source review at 9f045ebca, report6566137785. Exact overlap with saves/world/art is counted on those pages once; multiplayer boundaries remain with #1609.",
+    "status": "Read-only source review at 9f045ebca, report6566137785. Exact overlap with saves/world/art is counted on those pages once; multiplayer boundaries remain with #1609. Second review 6566596996 at 73741aa8 accounts for all 35 remaining declarations: U7 five proposed, U8/U9/U10 thirty kept; no overlap.",
     "keepSummary": "input recovery, menu ownership, opening/travel handoff, retained diagnostics and valid creator/editor data",
     "protections": [
       "Remapped keys, mouse and pad act once per press while Choose/Back retain recovery routes.",
@@ -455,6 +455,122 @@
           "Pending effects are not presented as working.",
           "Editor values remain within their data contract."
         ]
+      },
+      {
+        "id": "U-TIME",
+        "title": "Production-sized replay pressure fixture cost",
+        "caseIds": [
+          "src/app/playtestComments.test.ts:69"
+        ],
+        "kind": "hard limits",
+        "reason": "Preserve legacy report text through duplicated replay pressure, reload and both exports. Coordinator report 6566569947 measured 24.7 s on a normal shard and a 30 s timeout on unrelated multiplayer head d7ce9a6e. This is fixture cost, not evidence against the safety assertion. Yes means use a smaller blocking integrity fixture and move only production-sized pressure to a nonblocking report; no means retain the current fixture. No implementation before Ed rules.",
+        "question": "Keep the report-integrity checks with a smaller blocking fixture and move production-sized pressure to a nonblocking report?",
+        "action": true,
+        "examples": [
+          "preserves legacy report text through production-sized duplicated replay pressure, reload and both exports"
+        ]
+      },
+      {
+        "id": "U7",
+        "title": "Sampled camera comfort and travel magnitudes",
+        "caseIds": [
+          "src/rules/coastCamera.test.ts:38",
+          "src/rules/coastCamera.test.ts:44",
+          "src/rules/rules.test.ts:447",
+          "src/rules/rules.test.ts:481",
+          "src/rules/rules.test.ts:788"
+        ],
+        "reason": "Report sampled maximum angle changes, midpoint distance, smoothness multiplier and two-second travel magnitudes. Keep authored tables/poses, intro termination, no overshoot, capped look-ahead and settled tracking. coastCamera:38 and rules:788 require NEW direct finite/continuity and input-to-movement/camera-coupling coverage in the later implementation; they do not already contain separable integrity assertions. Report 6566596996 records each assertion disposition.",
+        "question": "Split or replace sampled camera comfort and travel magnitudes while retaining or supplying direct pose, continuity and movement/follow protections?",
+        "action": true,
+        "kind": "outcome stats",
+        "examples": [
+          "eases, never jumps: a step's change in angle stays small",
+          "lying down, the camera by her bearing round the coast: each of the twelve entries exactly, smoothly between",
+          "opens close in on her seat, and eases out to the starting zoom once she leaves it (Ed, v171)",
+          "follows smoothly: never overshoots, never jolts, and looks only a little ahead",
+          "flies the witch and the camera follows"
+        ]
+      },
+      {
+        "id": "U8",
+        "title": "Paused picture, clock and quality-controller policy",
+        "caseIds": [
+          "src/app/worldDrawGate.test.ts:4",
+          "src/app/worldDrawGate.test.ts:15",
+          "src/rules/ladder.test.ts:9",
+          "src/rules/ladder.test.ts:15",
+          "src/rules/ladder.test.ts:24",
+          "src/rules/ladder.test.ts:28",
+          "src/rules/ladder.test.ts:41",
+          "src/rules/ladder.test.ts:49",
+          "src/rules/ladder.test.ts:56",
+          "src/rules/ladder.test.ts:73",
+          "src/rules/ladder.test.ts:81",
+          "src/rules/ladder.test.ts:90",
+          "src/rules/ladder.test.ts:96",
+          "src/rules/ladder.test.ts:113",
+          "src/rules/ladder.test.ts:129",
+          "src/rules/ladder.test.ts:147",
+          "src/rules/rules.test.ts:780"
+        ],
+        "reason": "Keep no paused redraw, each changed title redraw once, paused clock and MAX_STEP clamp. Quality modes, nonfinite/skipped sample handling, pending loads, hysteresis and exponential retry are supplied-input policy contracts, not measured throughput outcomes.",
+        "question": "Keep paused rendering, clock and quality policy?",
+        "action": false,
+        "kind": "current rules",
+        "examples": [
+          "retains a paused picture through a minute of menu frames, including background art arrivals",
+          "redraws the start for new art, a changed view or an explicit simulation step, once each",
+          "starts at full quality with nothing in effect",
+          "steps down after a few slow windows, past rungs not built and load rungs, to the next live rung",
+          "doesn't step down on a window or two, nor while settling"
+        ]
+      },
+      {
+        "id": "U9",
+        "title": "Morning and post-night guidance",
+        "caseIds": [
+          "src/rules/guidance.test.ts:32",
+          "src/rules/guidance.test.ts:38",
+          "src/rules/guidance.test.ts:62",
+          "src/rules/guidance.test.ts:71",
+          "src/rules/guidance.test.ts:77",
+          "src/rules/guidance.test.ts:88",
+          "src/rules/guidance.test.ts:123",
+          "src/rules/guidance.test.ts:148",
+          "src/rules/guidance.test.ts:170"
+        ],
+        "reason": "Keep current morning order, bed gating, real kit/bag prerequisites and settled-win map/bed guidance. Waking is fixture preparation. The 28 October downward-pointing pin rule supersedes the hiding header; case 170 already tests current at-target and outside-house behavior. No obsolete test assertion found.",
+        "question": "Keep current morning and post-night guidance?",
+        "action": false,
+        "kind": "current rules",
+        "examples": [
+          "none while she's still in bed",
+          "a game's first morning, in Ed's order (2026-10-29): the dressing table (skin, hair), wardrobe, shoes, bags, the invitations, the cloak, her hat, her broom; then the decks",
+          "the dressing table's step is done once she's used it: E there (its panel opened)",
+          "no dressing pin after a night played: last night's clothes are in their pile; straight to the decks",
+          "a game's first morning on a later load (no night played yet): no pile, so the dressing pins, her hat last on the hats' floor"
+        ]
+      },
+      {
+        "id": "U10",
+        "title": "Exact camera geometry and configuration",
+        "caseIds": [
+          "src/rules/coastCamera.test.ts:28",
+          "src/rules/coastCamera.test.ts:60",
+          "src/rules/rules.test.ts:463",
+          "src/rules/rules.test.ts:496"
+        ],
+        "reason": "Keep authored coast/stargazing bearings, treetop exclusion, configured zoom endpoints/exponent and calculated camera position. Fixed-target settling prepares comparison with specified configuration.",
+        "question": "Keep exact camera geometry and configuration?",
+        "action": false,
+        "kind": "current rules",
+        "examples": [
+          "lying down to stargaze, lower and closer still; getting up and walking off, back the same way",
+          "over the treetops the coast leaves the camera alone",
+          "uses each mode's angle and distance, and zoom moves between in and out",
+          "sits south of and above what it looks at"
+        ]
       }
     ],
     "rulings": [
@@ -462,7 +578,9 @@
       "Fixed interval replacement: DESIGN records old party.interval ‘5 minutes then1’ and 9Oct ‘Pure constant speed’. tuningPreset:15 copies a historical preset and explicitly notes the runtime no longer reads its interval. Its copy/unknown-preset/untouched-camera assertions protect compatibility, not retired wave pacing.",
       "Opening replacement: the sea chart came first20Oct; Ed23Oct says ‘the first screen should be the witch waking up in her bedroom on the home island instead of the map’. Opening tests now check bedroom defaults plus documented opening=old/tool/resume exceptions. The old-decks comparison is expressly retained in house.md. End-card tests assert their26Oct removal.",
       "Familiars: creator.test.ts:48 supplies old familiar data and asserts removal under Ed8Oct ‘Remove familiars’. It is migration protection. Controls tests assert the29Oct swap back, L2 dodge and correct d-pad zoom; no removed face-button layout was found required.",
-      "Nine beetle/shape-control cases are counted under art once, not UI twice. Report/replay cases already in S6 and identity/link cases already in W1/W6 remain there. U6’s36 owner-boundary tests are listing-only for1609."
+      "Nine beetle/shape-control cases are counted under art once, not UI twice. Report/replay cases already in S6 and identity/link cases already in W1/W6 remain there. U6’s36 owner-boundary tests are listing-only for1609.",
+      "Coordinator timing proposal 6566569947 refines U4: the report-integrity assertion remains blocking; only fixture scale and production-sized pressure reporting are proposed to change. Alternatives recorded by the coordinator include a looser per-test timeout.",
+      "Second review 6566596996: Ed 6 October gradual coast transition still applies, but sampled comfort is distinct from direct correctness. Bedroom-first opening retains generic seated intro camera math. 28 October pin behavior supersedes the stale hidden-at-target header; current assertions already match it. No obsolete whole behavior test found."
     ]
   }
 }

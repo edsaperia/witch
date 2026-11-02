@@ -1,7 +1,7 @@
 {
   "world-islands-lakes": {
     "title": "World, islands and lakes",
-    "status": "Two bounded source reviews are integrated: original97-case partition plus122 additional IDs (reports6566078651/6566081354 and6566275689/6566277162). Shared save/creature cases and owner-only listings are counted elsewhere once. No world runtime was executed.",
+    "status": "Two bounded source reviews are integrated: original97-case partition plus122 additional IDs (reports6566078651/6566081354 and6566275689/6566277162). Shared save/creature cases and owner-only listings are counted elsewhere once. No world runtime was executed. Six scenery declarations read in second house report 6566610514 are integrated here without duplicate membership.",
     "keepSummary": "campaign identity and map equivalence, spatial boundaries, authored world content, resource budgets and explicit link/transition rules",
     "protections": [
       "A campaign retains island shapes across nights while permitted creature/type deals change.",
@@ -396,6 +396,42 @@
           "A travelling follower remains ashore around a lake.",
           "Runestone grounds exclude special scenery."
         ]
+      },
+      {
+        "id": "W-R2-1",
+        "title": "Scenery abundance observations",
+        "caseIds": [
+          "src/rules/rules.test.ts:1257",
+          "src/rules/rules.test.ts:1270",
+          "src/rules/rules.test.ts:1294"
+        ],
+        "kind": "outcome stats",
+        "reason": "Keep structural validity, exclusions, reproducibility, ownership, eligibility, identity and existing upper bounds blocking. Report only sampled minimum density, numerical variation, abundance and diversity. Exact assertion dispositions and ruling review: PR #1632 comment 6566610514.",
+        "question": "Report sampled scenery abundance while retaining uniqueness, suitability, clearance and valid placement checks?",
+        "action": true,
+        "examples": [
+          "no ruin, freak tree, relic, set piece or grounds arrangement appears twice, over 5 seeds",
+          "places scenes, each at most once, in areas they suit, off the paths and clear of the gameplay (Ed, 2026-10-04)",
+          "give each set piece to one area only, which has room for it"
+        ]
+      },
+      {
+        "id": "W-R2-K1",
+        "title": "Scenery footprint, stairs and paths",
+        "caseIds": [
+          "src/rules/rules.test.ts:1286",
+          "src/rules/rules.test.ts:1290",
+          "src/rules/rules.test.ts:1306"
+        ],
+        "kind": "current rules",
+        "reason": "Read in the second house pass and displayed here once: footprint size, stairs only in suitable areas and clear paths. These are direct placement and geometry contracts.",
+        "question": "Keep scenery footprint, stairs and clear-path contracts?",
+        "action": false,
+        "examples": [
+          "gives each scene a footprint at least the art's own",
+          "stairs stand only by ravines, rocky slopes, cave mouths and stone shrines",
+          "keep soundsystems and set pieces off the paths, so paths run on unbroken"
+        ]
       }
     ],
     "ownerCases": {
@@ -414,7 +450,8 @@
       "Second-pass set-piece evidence: rules.test.ts40–43 explicitly enables setPieceChance=.25, grounds/decor families and path pieces; stoneKeepClear14–16 opts in too. This is retained preview/placement compatibility under the29Oct phase-out, not a positive requirement for normal generation. Keep exclusion/placement rules; report only sampled quality portions.",
       "Legacy zoo grid: old zoo.ts helpers draw borders/corners of a grid; island.md21 replaces the live zoo with chart-shaped islands26Oct. map.ts creates zooChartPlan, paths.ts omits grid strips with that layout, and the live map omits grid junctions. zoo35 directly tests retained zooPlan helpers, while the plan still supplies current jump-list rows. No live-grid requirement or helper-retirement permission is established.",
       "Radius/square compatibility is explicit: island.md13 retains island=off and test/radiusMap sets islandAreas0. mapShape73 selects square intentionally; islandShape13 tests a still-used helper, while islandGrowth56 compares real outlines. Treehouse rules224 already asserts north-west after24Oct; no due-north-only assertion was found.",
-      "Owner-only second-pass listings: island49 master swarm curve belongs to1622. IslandShape9/24 and lakeShore38 are visual source tests; rules237 is house/input; rules1642/1653 are spawn-marker/replacement-rune party policy. They receive no automatic keep decision from the world reviewer and remain explicitly unread until an owner/lead review is recorded."
+      "Owner-only second-pass listings: island49 master swarm curve belongs to1622. IslandShape9/24 and lakeShore38 are visual source tests; rules237 is house/input; rules1642/1653 are spawn-marker/replacement-rune party policy. They receive no automatic keep decision from the world reviewer and remain explicitly unread until an owner/lead review is recorded.",
+      "Set-piece follow-up to coordinator 6566615533: rules.test.ts:40–43 explicitly overrides GAME_TUNING with setPieceChance:0.25, enabled grounds, ruins/rocks/freak mix, path pieces and unrestricted featured scenes. The five maps at 1253 use that TUNING. Therefore set-piece uniqueness (1257), assignment/count (1294) and path clearance (1306) explicitly opt into retained compatibility scenery; none requires default normal play to spawn set pieces. Ed 29 October phases normal generation out, while recipes/art remain for comparisons (world-art.md:11–12,39). Scenes/ruins remain documented features, and this fixture explicitly enables their full placement. Keep/split as proposed; no proven leftover."
     ],
     "routing": {
       "art-rendering": [

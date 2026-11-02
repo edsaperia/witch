@@ -1846,6 +1846,12 @@ Static declarations only. All classifications and currentness are provisional. C
   - current rules; keep pending design review. Currentness: unverified. Case runtime: unknown.
   - Cited ruling: none found in scoped comments; not proof that none exists.
 
+- **her hats left in the world > keep working: a Bramble hat left lying still slows the wild round it** — [src/rules/wardrobe.test.ts:54](../../src/rules/wardrobe.test.ts#L54)
+  - outcome stats; existing owner #1622; no parallel audit decision. Currentness: unverified. Case runtime: unknown.
+  - Cited ruling: file, line 1: // Back in her room mid-night from the treehouse deck (Ed, 2026-10-11, answer 4; rules/hatSpells.ts changeLoadout): the new hat and
+  - Possible later evidence: [docs/notes/house.md:110](../../docs/notes/house.md#L110): - **Hats and brooms** (Ed, 2026-10-11; `src/rules/spells.ts`, docs/backlog/unlocks.md): two slots, a hat and a broom, each with a spell or none (the default; the plain broom's quicker rise is the parts' stats now: see **Sets**). Hats are worn (the Helmet: an extra hit, knocked off) or placed with E held (the Healing ring: a hit back every few seconds standing by it; Harvest: a ring of six berries grows round it; Dowsing: a pointer to the nearest relic for a minute; Sentry: it throws 💌s at wild creatures within 30 m; Slingshot: her 💌s passing within 10 m circle it, then fly at a creature up to 40 m off; Gathering: picked up again, it brings back every sigil of hers within 100 m; Bramble: wi. candidate only: same-topic wording and later inline date; not a verified superseding ruling.
+  - Possible later evidence: [docs/notes/house.md:76](../../docs/notes/house.md#L76): - **Treehouse deck** (Ed, 2026-10-11: "a circle with a wooden floor and a balustrade sitting on the ent. You land on it by being at treetop height, and during the night time slower 10x"; `src/rules/treehouse.ts`, the tuning's `treehouse.deck`, `on: false` for the old treehouse): a round deck (radius 7 m, its floor 22 m up) on the Ent at the treehouse's spot. From the treetops, coming down within its radius plus `grace` lands her on it (`witch.perch`, mode "ground", its floor her ground: `witchHeight`); she walks it, kept inside its rail (`keepOnDeck`), round the **map table** in its middle (Ed: "The world map is in the centre": E there opens the sea chart over the game, `ui/chartOverlay.ts` . candidate only: same-topic wording and later inline date; not a verified superseding ruling.
+
 - **the wild watch (Ed, 2026-10-07) > has a wild area's young and adults stand and stare at her for wildWatch.time when she comes down, then attack** — [src/rules/wildWatch.test.ts:54](../../src/rules/wildWatch.test.ts#L54)
   - outcome stats; review simulation assertions; consider report after Ed rules. Currentness: unverified. Case runtime: unknown.
   - Cited ruling: file, line 1: // The wild watch (Ed, 2026-10-07): come down in a wild area and its animals stir and stare at her, then attack.
@@ -4425,7 +4431,7 @@ Static declarations only. All classifications and currentness are provisional. C
   - Possible later evidence: [DESIGN.md:54](../../DESIGN.md#L54): - **Knocked out** (Ed, 2026-10-04; since Ed's playtest of v4821, 2026-10-26: "When I get knocked out and my leashed animals are put down, I think they should become happy instead of leashed to a point by a floor sigil"): at no hits left she collapses where she is (no more hits, no input). **Her sigil stack comes down from the bottom up, about a second each** (`knockout.releaseEach`; since Ed's decisions of 2026-10-07, `releaseEach` 0: all at once as she goes down), each animal she carried **turning happy where it stands**: no sigil is made; its rune is at its feet, so she can leash it again by picking that up, as after an invite; meanwhile it idles near where it was dropped (Ed, later that d. candidate only: same-topic wording and later inline date; not a verified superseding ruling.
 
 - **legends, redesigned (Ed, 2026-10-05; #87) > glint only through a gap in the canopy from the treetops, always on the ground; lie out in the woods, some under gaps, some under closed canopy (Ed, 2026-10-05)** — [src/rules/legends.test.ts:277](../../src/rules/legends.test.ts#L277)
-  - current rules; keep pending design review. Currentness: unverified. Case runtime: unknown.
+  - current rules; Keep current legend and quest rules?. Currentness: unverified. Case runtime: unknown.
   - Cited ruling: name, line 277: glint only through a gap in the canopy from the treetops, always on the ground; lie out in the woods, some under gaps, some under closed canopy (Ed, 2026-10-05)
   - Possible later evidence: [docs/notes/house.md:97](../../docs/notes/house.md#L97): - **Finds / travel trunk** (Ed, 2026-10-21, the station menus' part (b): "The items are found in the forest like other permanent upgrades. Hints are given by the crystal ball"; `src/rules/finds.ts`, `render/view/finds.ts`): each night the island she's on holds one permanent upgrade she hasn't found, a wearable in the trunk or a broom part in a wreck (the finds pool, below; the wearables `FINDABLE`, the wardrobe's items not hers from the start, never a broom shape: brooms are made of parts), drawn as one flask-sized object on a clear patch in its own pale gold-white light (the finds style guide, `docs/art-guide/FINDS.md`, Ed 2026-10-23: clothes a folded bundle, `find-bundle`; bags a little ba. candidate only: same-topic wording and later inline date; not a verified superseding ruling.
   - Possible later evidence: [docs/notes/performance.md:166](../../docs/notes/performance.md#L166): **The stall hunt** (`node tools/bench/stalls.cjs [out]`, the coordinator's ask from Ed's overlay, 2026-10-13: 24 stalls over 100 ms and 18% of frames over 20 ms in the treetops, seed 2267, Old pinewood, 56 s into wave 0): the game's own loop run free at a spot (`SEED`, `X`, `Z`, `ZOOM`; `DIST=dist-prof` from `npx vite build --minify false --outDir dist-prof`, so the functions have names) under Chromium's sampling profiler, the GPU draw a no-op (`NODRAW=1`) so a wall second is a game second, and a report of where the JavaScript's time went: self time by function, call chains, runs of JavaScript over `RUN_MS`, the browser's long animation frames and the game's own stall log (`<out>/stalls.json. candidate only: same-topic wording and later inline date; not a verified superseding ruling.
@@ -5506,6 +5512,32 @@ Static declarations only. All classifications and currentness are provisional. C
   - current rules; Keep this group unchanged?. Currentness: unverified. Case runtime: unknown.
   - Cited ruling: none found in scoped comments; not proof that none exists.
 
+- **finds, each at most once per map (Ed, v160) > no ruin, freak tree, relic, set piece or grounds arrangement appears twice, over 5 seeds** — [src/rules/rules.test.ts:1257](../../src/rules/rules.test.ts#L1257)
+  - outcome stats; Report sampled scenery abundance while retaining uniqueness, suitability, clearance and valid placement checks?. Currentness: unverified. Case runtime: unknown.
+  - Cited ruling: none found in scoped comments; not proof that none exists.
+
+- **finds, each at most once per map (Ed, v160) > places scenes, each at most once, in areas they suit, off the paths and clear of the gameplay (Ed, 2026-10-04)** — [src/rules/rules.test.ts:1270](../../src/rules/rules.test.ts#L1270)
+  - outcome stats; Report sampled scenery abundance while retaining uniqueness, suitability, clearance and valid placement checks?. Currentness: unverified. Case runtime: unknown.
+  - Cited ruling: name, line 1270: places scenes, each at most once, in areas they suit, off the paths and clear of the gameplay (Ed, 2026-10-04)
+  - Possible later evidence: [docs/notes/view.md:80](../../docs/notes/view.md#L80): - **Reveal / places kept clear** (Ed, 2026-10-26: "When the witch stands in a legend circle, scenery in front of it should fade away"; then "we might want this for other important points of interest, such as runestone areas, finds, flasks"): a **place of interest** is a centre, a radius she stands within, a ring on the ground round it and what stands at its centre (width and height); while she's within one on the ground, every sprite in a batch with a see-through pass (the trees, crowns, rim pieces, decor, relics, scenes, props; never creatures, floors or the solid gameplay batches) standing nearer the camera than its centre whose rectangle on screen covers its box (the ring and what stands . candidate only: same-topic wording and later inline date; not a verified superseding ruling.
+  - Possible later evidence: [docs/notes/house.md:97](../../docs/notes/house.md#L97): - **Finds / travel trunk** (Ed, 2026-10-21, the station menus' part (b): "The items are found in the forest like other permanent upgrades. Hints are given by the crystal ball"; `src/rules/finds.ts`, `render/view/finds.ts`): each night the island she's on holds one permanent upgrade she hasn't found, a wearable in the trunk or a broom part in a wreck (the finds pool, below; the wearables `FINDABLE`, the wardrobe's items not hers from the start, never a broom shape: brooms are made of parts), drawn as one flask-sized object on a clear patch in its own pale gold-white light (the finds style guide, `docs/art-guide/FINDS.md`, Ed 2026-10-23: clothes a folded bundle, `find-bundle`; bags a little ba. candidate only: same-topic wording and later inline date; not a verified superseding ruling.
+
+- **finds, each at most once per map (Ed, v160) > gives each scene a footprint at least the art's own** — [src/rules/rules.test.ts:1286](../../src/rules/rules.test.ts#L1286)
+  - current rules; Keep scenery footprint, stairs and clear-path contracts?. Currentness: unverified. Case runtime: unknown.
+  - Cited ruling: none found in scoped comments; not proof that none exists.
+
+- **finds, each at most once per map (Ed, v160) > stairs stand only by ravines, rocky slopes, cave mouths and stone shrines** — [src/rules/rules.test.ts:1290](../../src/rules/rules.test.ts#L1290)
+  - current rules; Keep scenery footprint, stairs and clear-path contracts?. Currentness: unverified. Case runtime: unknown.
+  - Cited ruling: none found in scoped comments; not proof that none exists.
+
+- **finds, each at most once per map (Ed, v160) > give each set piece to one area only, which has room for it** — [src/rules/rules.test.ts:1294](../../src/rules/rules.test.ts#L1294)
+  - outcome stats; Report sampled scenery abundance while retaining uniqueness, suitability, clearance and valid placement checks?. Currentness: unverified. Case runtime: unknown.
+  - Cited ruling: none found in scoped comments; not proof that none exists.
+
+- **finds, each at most once per map (Ed, v160) > keep soundsystems and set pieces off the paths, so paths run on unbroken** — [src/rules/rules.test.ts:1306](../../src/rules/rules.test.ts#L1306)
+  - current rules; Keep scenery footprint, stairs and clear-path contracts?. Currentness: unverified. Case runtime: unknown.
+  - Cited ruling: none found in scoped comments; not proof that none exists.
+
 - **ground cover (Ed, v171) > is seeded per cell: the same patch every time** — [src/rules/rules.test.ts:1510](../../src/rules/rules.test.ts#L1510)
   - current rules; Keep this group unchanged?. Currentness: unverified. Case runtime: unknown.
   - Cited ruling: none found in scoped comments; not proof that none exists.
@@ -5733,23 +5765,23 @@ Static declarations only. All classifications and currentness are provisional. C
   - Cited ruling: none found in scoped comments; not proof that none exists.
 
 - **preserves the complete export and all110 kept poses/anchors; removes strictly west of -100** — [src/editor/currentEdLayout.test.ts:11](../../src/editor/currentEdLayout.test.ts#L11)
-  - current rules; keep pending design review. Currentness: unverified. Case runtime: unknown.
+  - current rules; Keep layout, wake-up and opening contracts?. Currentness: unverified. Case runtime: unknown.
   - Cited ruling: none found in scoped comments; not proof that none exists.
 
 - **requires explicit valid clutter removal rather than accepting missing furniture or overlaps** — [src/editor/currentEdLayout.test.ts:28](../../src/editor/currentEdLayout.test.ts#L28)
-  - current rules; keep pending design review. Currentness: unverified. Case runtime: unknown.
+  - current rules; Keep layout, wake-up and opening contracts?. Currentness: unverified. Case runtime: unknown.
   - Cited ruling: none found in scoped comments; not proof that none exists.
 
 - **starts with every authored pose under either one-ulp sine result, with the same source identity** — [src/editor/editorStartupIdentity.test.ts:27](../../src/editor/editorStartupIdentity.test.ts#L27)
-  - current rules; keep pending design review. Currentness: unverified. Case runtime: unknown.
+  - current rules; Keep layout, wake-up and opening contracts?. Currentness: unverified. Case runtime: unknown.
   - Cited ruling: none found in scoped comments; not proof that none exists.
 
 - **keeps source changes and unknown legacy IDs incompatible, rather than bypassing validation** — [src/editor/editorStartupIdentity.test.ts:39](../../src/editor/editorStartupIdentity.test.ts#L39)
-  - leftovers; review before any rewrite or deletion. Currentness: unverified. Case runtime: unknown.
+  - current rules; Keep layout, wake-up and opening contracts?. Currentness: unverified. Case runtime: unknown.
   - Cited ruling: none found in scoped comments; not proof that none exists.
 
 - **keeps the original v1 bytes and its camera-preserving import under both math variants** — [src/editor/editorStartupIdentity.test.ts:49](../../src/editor/editorStartupIdentity.test.ts#L49)
-  - current rules; keep pending design review. Currentness: unverified. Case runtime: unknown.
+  - current rules; Keep layout, wake-up and opening contracts?. Currentness: unverified. Case runtime: unknown.
   - Cited ruling: none found in scoped comments; not proof that none exists.
 
 - **keeps the empty spawn marker out of station menus and acts on individual hats only** — [src/editor/hatZone.test.ts:10](../../src/editor/hatZone.test.ts#L10)
@@ -5797,27 +5829,27 @@ Static declarations only. All classifications and currentness are provisional. C
   - Cited ruling: none found in scoped comments; not proof that none exists.
 
 - **opens and resets the editor to Ed's published poses with the stable import identity** — [src/editor/publishedLayout.test.ts:6](../../src/editor/publishedLayout.test.ts#L6)
-  - current rules; keep pending design review. Currentness: unverified. Case runtime: unknown.
+  - current rules; Keep layout, wake-up and opening contracts?. Currentness: unverified. Case runtime: unknown.
   - Cited ruling: none found in scoped comments; not proof that none exists.
 
 - **smoke sleep interaction follows the active house > uses Ed's authored bed anchor for both a plain page and explicit ed** — [src/editor/smokeBedStart.test.ts:8](../../src/editor/smokeBedStart.test.ts#L8)
-  - current rules; keep pending design review. Currentness: unverified. Case runtime: unknown.
+  - current rules; Keep layout, wake-up and opening contracts?. Currentness: unverified. Case runtime: unknown.
   - Cited ruling: none found in scoped comments; not proof that none exists.
 
 - **smoke sleep interaction follows the active house > keeps explicit classic and resets repeated selected-layout switches** — [src/editor/smokeBedStart.test.ts:17](../../src/editor/smokeBedStart.test.ts#L17)
-  - current rules; keep pending design review. Currentness: unverified. Case runtime: unknown.
+  - current rules; Keep layout, wake-up and opening contracts?. Currentness: unverified. Case runtime: unknown.
   - Cited ruling: none found in scoped comments; not proof that none exists.
 
 - **smoke sleep interaction follows the active house > translates the selected interaction point with the actual island hub** — [src/editor/smokeBedStart.test.ts:25](../../src/editor/smokeBedStart.test.ts#L25)
-  - current rules; keep pending design review. Currentness: unverified. Case runtime: unknown.
+  - current rules; Keep layout, wake-up and opening contracts?. Currentness: unverified. Case runtime: unknown.
   - Cited ruling: none found in scoped comments; not proof that none exists.
 
 - **smoke sleep interaction follows the active house > resolves %s at its selected authored anchor, retaining classic fallback** — [src/editor/smokeBedStart.test.ts:31](../../src/editor/smokeBedStart.test.ts#L31) (parameterized template)
-  - current rules; keep pending design review. Currentness: unverified. Case runtime: unknown.
+  - current rules; Keep layout, wake-up and opening contracts?. Currentness: unverified. Case runtime: unknown.
   - Cited ruling: none found in scoped comments; not proof that none exists.
 
 - **smoke sleep interaction follows the active house > rejects the old classic %s fixture under Ed's layout** — [src/editor/smokeBedStart.test.ts:40](../../src/editor/smokeBedStart.test.ts#L40) (parameterized template)
-  - hard limits; keep. Currentness: unverified. Case runtime: unknown.
+  - hard limits; Keep layout, wake-up and opening contracts?. Currentness: unverified. Case runtime: unknown.
   - Cited ruling: none found in scoped comments; not proof that none exists.
 
 - **rising in the treehouse, through the page's controls > `${how}: with no broom, pushed against the ${r.id}'s walls, she stays on the ground`** — [src/platform/inputHouse.test.ts:69](../../src/platform/inputHouse.test.ts#L69)
@@ -5905,265 +5937,265 @@ Static declarations only. All classifications and currentness are provisional. C
   - Possible later evidence: [docs/notes/gameplay.md:31](../../docs/notes/gameplay.md#L31): - **Attack grammar**: attacks as small trees of composable modules (Ed, 2026-10-27: "Put the focus on composability for these attack systems — and on telegraphing"; `docs/plans/attack-grammar.md`, `src/rules/attacks/`): cast (windup, cooldown, casts before a rest, the body's tell), telegraph, emit pattern, body, path terms, speed profile, life, hit (damage, effect, friendly fire, blink-dodgeable), `on` events spawning child attacks, pack interplay, beams, areas, traps. `config/attacks.json` is the source (an attack may `base` on another); `node tools/attacks/compile.mjs` compiles the ones today's runtime runs into `config/combat.json`'s `attacks` (run it after editing; `src/rules/attacks/att. candidate only: same-topic wording and later inline date; not a verified superseding ruling.
 
 - **commutative mushroom recipes > has exactly 56 unordered three-mushroom recipes, including repeats** — [src/rules/cauldron.test.ts:5](../../src/rules/cauldron.test.ts#L5)
-  - current rules; keep pending design review. Currentness: unverified. Case runtime: unknown.
+  - current rules; Keep current kitchen and explicitly supported preview contracts?. Currentness: unverified. Case runtime: unknown.
   - Cited ruling: none found in scoped comments; not proof that none exists.
 
 - **commutative mushroom recipes > retains Ed's tutorial mapping for %j** — [src/rules/cauldron.test.ts:17](../../src/rules/cauldron.test.ts#L17) (parameterized template)
-  - current rules; keep pending design review. Currentness: unverified. Case runtime: unknown.
+  - current rules; Keep current kitchen and explicitly supported preview contracts?. Currentness: unverified. Case runtime: unknown.
   - Cited ruling: none found in scoped comments; not proof that none exists.
 
 - **commutative mushroom recipes > does not invent assignments for biome recipes** — [src/rules/cauldron.test.ts:24](../../src/rules/cauldron.test.ts#L24)
-  - current rules; keep pending design review. Currentness: unverified. Case runtime: unknown.
+  - current rules; Keep current kitchen and explicitly supported preview contracts?. Currentness: unverified. Case runtime: unknown.
   - Cited ruling: none found in scoped comments; not proof that none exists.
 
 - **hidden bag and kitchen baskets > collects without a capacity limit and transfers each kind without loss** — [src/rules/cauldron.test.ts:30](../../src/rules/cauldron.test.ts#L30)
-  - current rules; keep pending design review. Currentness: unverified. Case runtime: unknown.
+  - current rules; Keep current kitchen and explicitly supported preview contracts?. Currentness: unverified. Case runtime: unknown.
   - Cited ruling: none found in scoped comments; not proof that none exists.
 
 - **hidden bag and kitchen baskets > uses one per press and brews on exactly the third, then starts a fresh brew** — [src/rules/cauldron.test.ts:46](../../src/rules/cauldron.test.ts#L46)
-  - current rules; keep pending design review. Currentness: unverified. Case runtime: unknown.
+  - current rules; Keep current kitchen and explicitly supported preview contracts?. Currentness: unverified. Case runtime: unknown.
   - Cited ruling: none found in scoped comments; not proof that none exists.
 
 - **hidden bag and kitchen baskets > keeps separately allocated witch inventories independent** — [src/rules/cauldron.test.ts:63](../../src/rules/cauldron.test.ts#L63)
-  - current rules; keep pending design review. Currentness: unverified. Case runtime: unknown.
+  - current rules; Keep current kitchen and explicitly supported preview contracts?. Currentness: unverified. Case runtime: unknown.
   - Cited ruling: none found in scoped comments; not proof that none exists.
 
 - **hidden bag and kitchen baskets > keeps visitors' bags separate while sharing the host's baskets and partial pot** — [src/rules/cauldron.test.ts:71](../../src/rules/cauldron.test.ts#L71)
-  - current rules; keep pending design review. Currentness: unverified. Case runtime: unknown.
+  - current rules; Keep current kitchen and explicitly supported preview contracts?. Currentness: unverified. Case runtime: unknown.
   - Cited ruling: none found in scoped comments; not proof that none exists.
 
 - **kitchen sequence > deposits on entry, consumes one per use, starts the third immediately and exits once after a second** — [src/rules/cauldronKitchen.test.ts:12](../../src/rules/cauldronKitchen.test.ts#L12)
-  - current rules; keep pending design review. Currentness: unverified. Case runtime: unknown.
+  - current rules; Keep current kitchen and explicitly supported preview contracts?. Currentness: unverified. Case runtime: unknown.
   - Cited ruling: none found in scoped comments; not proof that none exists.
 
 - **kitchen sequence > does nothing outside or at an empty basket** — [src/rules/cauldronKitchen.test.ts:37](../../src/rules/cauldronKitchen.test.ts#L37)
-  - current rules; keep pending design review. Currentness: unverified. Case runtime: unknown.
+  - current rules; Keep current kitchen and explicitly supported preview contracts?. Currentness: unverified. Case runtime: unknown.
   - Cited ruling: none found in scoped comments; not proof that none exists.
 
 - **kitchen sequence > does not deposit repeatedly while inside, and preserves partial ingredients across a visit** — [src/rules/cauldronKitchen.test.ts:45](../../src/rules/cauldronKitchen.test.ts#L45)
-  - current rules; keep pending design review. Currentness: unverified. Case runtime: unknown.
+  - current rules; Keep current kitchen and explicitly supported preview contracts?. Currentness: unverified. Case runtime: unknown.
   - Cited ruling: none found in scoped comments; not proof that none exists.
 
 - **kitchen sequence > supports a large simulation step and a second brew after returning** — [src/rules/cauldronKitchen.test.ts:60](../../src/rules/cauldronKitchen.test.ts#L60)
-  - current rules; keep pending design review. Currentness: unverified. Case runtime: unknown.
+  - current rules; Keep current kitchen and explicitly supported preview contracts?. Currentness: unverified. Case runtime: unknown.
   - Cited ruling: none found in scoped comments; not proof that none exists.
 
 - **kitchen sequence > rejects invalid timesteps without advancing a brew** — [src/rules/cauldronKitchen.test.ts:72](../../src/rules/cauldronKitchen.test.ts#L72)
-  - hard limits; keep. Currentness: unverified. Case runtime: unknown.
+  - hard limits; Keep current kitchen and explicitly supported preview contracts?. Currentness: unverified. Case runtime: unknown.
   - Cited ruling: none found in scoped comments; not proof that none exists.
 
 - **kitchen sequence > fixes all recipients at the third ingredient; late arrivals stay normal and leavers still exit** — [src/rules/cauldronKitchen.test.ts:80](../../src/rules/cauldronKitchen.test.ts#L80)
-  - current rules; keep pending design review. Currentness: unverified. Case runtime: unknown.
+  - current rules; Keep current kitchen and explicitly supported preview contracts?. Currentness: unverified. Case runtime: unknown.
   - Cited ruling: none found in scoped comments; not proof that none exists.
 
 - **kitchen sequence > includes every witch present, only once, regardless of who contributed** — [src/rules/cauldronKitchen.test.ts:100](../../src/rules/cauldronKitchen.test.ts#L100)
-  - current rules; keep pending design review. Currentness: unverified. Case runtime: unknown.
+  - current rules; Keep current kitchen and explicitly supported preview contracts?. Currentness: unverified. Case runtime: unknown.
   - Cited ruling: none found in scoped comments; not proof that none exists.
 
 - **gated cauldron game hooks > leaves ordinary nights disabled** — [src/rules/cauldronNight.test.ts:25](../../src/rules/cauldronNight.test.ts#L25)
-  - current rules; keep pending design review. Currentness: unverified. Case runtime: unknown.
+  - current rules; Keep current kitchen and explicitly supported preview contracts?. Currentness: unverified. Case runtime: unknown.
   - Cited ruling: none found in scoped comments; not proof that none exists.
 
 - **gated cauldron game hooks > auto-collects once into her hidden bag after the party and keeps it through a knockout** — [src/rules/cauldronNight.test.ts:32](../../src/rules/cauldronNight.test.ts#L32)
-  - current rules; keep pending design review. Currentness: unverified. Case runtime: unknown.
+  - current rules; Keep current kitchen and explicitly supported preview contracts?. Currentness: unverified. Case runtime: unknown.
   - Cited ruling: none found in scoped comments; not proof that none exists.
 
 - **gated cauldron game hooks > deposits both visitors, retains partial ingredients and snapshots all occupants on BBB** — [src/rules/cauldronNight.test.ts:50](../../src/rules/cauldronNight.test.ts#L50)
-  - outcome stats; review simulation assertions; consider report after Ed rules. Currentness: unverified. Case runtime: unknown.
+  - current rules; Keep current kitchen and explicitly supported preview contracts?. Currentness: unverified. Case runtime: unknown.
   - Cited ruling: none found in scoped comments; not proof that none exists.
 
 - **gated cauldron game hooks > preserves shared basket and pot references across save/restore** — [src/rules/cauldronNight.test.ts:75](../../src/rules/cauldronNight.test.ts#L75)
-  - current rules; keep pending design review. Currentness: unverified. Case runtime: unknown.
+  - current rules; Keep current kitchen and explicitly supported preview contracts?. Currentness: unverified. Case runtime: unknown.
   - Cited ruling: none found in scoped comments; not proof that none exists.
 
 - **fades Mirror Floor in/out and clears it completely after 90 simulation seconds** — [src/rules/cauldronTrip.test.ts:4](../../src/rules/cauldronTrip.test.ts#L4)
-  - current rules; keep pending design review. Currentness: unverified. Case runtime: unknown.
+  - current rules; Keep current kitchen and explicitly supported preview contracts?. Currentness: unverified. Case runtime: unknown.
   - Cited ruling: none found in scoped comments; not proof that none exists.
 
 - **allocates a separate trip clock for every witch** — [src/rules/cauldronTrip.test.ts:17](../../src/rules/cauldronTrip.test.ts#L17)
-  - current rules; keep pending design review. Currentness: unverified. Case runtime: unknown.
+  - current rules; Keep current kitchen and explicitly supported preview contracts?. Currentness: unverified. Case runtime: unknown.
   - Cited ruling: none found in scoped comments; not proof that none exists.
 
 - **the constellations (rules/constellations.ts) > give every item in the finds pool (the wearables and the 9 broom parts) an outline of 7 to 10 stars, within the sky's limits (render/sky.ts: 12 stars, 16 lines)** — [src/rules/constellations.test.ts:6](../../src/rules/constellations.test.ts#L6)
-  - current rules; keep pending design review. Currentness: unverified. Case runtime: unknown.
+  - current rules; Keep equipment, finds, canopy, telescope and Studio contracts?. Currentness: unverified. Case runtime: unknown.
   - Cited ruling: none found in scoped comments; not proof that none exists.
 
 - **the constellations (rules/constellations.ts) > stand at the trunk's bearing from the treehouse, about 35° up, and go once it's found** — [src/rules/constellations.test.ts:20](../../src/rules/constellations.test.ts#L20)
-  - current rules; keep pending design review. Currentness: unverified. Case runtime: unknown.
+  - current rules; Keep equipment, finds, canopy, telescope and Studio contracts?. Currentness: unverified. Case runtime: unknown.
   - Cited ruling: none found in scoped comments; not proof that none exists.
 
 - **the constellations (rules/constellations.ts) > take the night's one find from one source, any kind, an outline by its item id (Ed, 2026-10-22: one permanent upgrade a night)** — [src/rules/constellations.test.ts:31](../../src/rules/constellations.test.ts#L31)
-  - current rules; keep pending design review. Currentness: unverified. Case runtime: unknown.
+  - current rules; Keep equipment, finds, canopy, telescope and Studio contracts?. Currentness: unverified. Case runtime: unknown.
   - Cited ruling: name, line 31: take the night's one find from one source, any kind, an outline by its item id (Ed, 2026-10-22: one permanent upgrade a night)
   - Possible later evidence: [docs/notes/house.md:97](../../docs/notes/house.md#L97): - **Finds / travel trunk** (Ed, 2026-10-21, the station menus' part (b): "The items are found in the forest like other permanent upgrades. Hints are given by the crystal ball"; `src/rules/finds.ts`, `render/view/finds.ts`): each night the island she's on holds one permanent upgrade she hasn't found, a wearable in the trunk or a broom part in a wreck (the finds pool, below; the wearables `FINDABLE`, the wardrobe's items not hers from the start, never a broom shape: brooms are made of parts), drawn as one flask-sized object on a clear patch in its own pale gold-white light (the finds style guide, `docs/art-guide/FINDS.md`, Ed 2026-10-23: clothes a folded bundle, `find-bundle`; bags a little ba. candidate only: same-topic wording and later inline date; not a verified superseding ruling.
   - Possible later evidence: [docs/notes/house.md:99](../../docs/notes/house.md#L99): - **Finds pool** (Ed, 2026-10-23: "One draw over everything she hasn't found. Clothes, brooms, hats, records - everything that's a permanent upgrade."; `rules/finds.ts`): every kind of permanent upgrade is a `FindKind` in `FIND_KINDS` (its items in order, the art piece its find is drawn as, its `claim` in the rules), and the night's one find is `nightPick(seed, found)`: one seeded draw over every item of every kind she hasn't found, the kind drawn deciding the find (a wearable in the trunk, a broom part in a **wreck**; no forced early wreck, no biome weighting). `trunkItem` is gone: `fillTrunk(g, { wearable, part })` fills `g.trunk` (its `kind` saying which), placed as before; the `found` le. candidate only: same-topic wording and later inline date; not a verified superseding ruling.
 
 - **the constellations (rules/constellations.ts) > wrap round north** — [src/rules/constellations.test.ts:39](../../src/rules/constellations.test.ts#L39)
-  - current rules; keep pending design review. Currentness: unverified. Case runtime: unknown.
+  - current rules; Keep equipment, finds, canopy, telescope and Studio contracts?. Currentness: unverified. Case runtime: unknown.
   - Cited ruling: none found in scoped comments; not proof that none exists.
 
 - **the great oak's crown > is the same crown for the same house and seed, another for another seed** — [src/rules/crown.test.ts:14](../../src/rules/crown.test.ts#L14)
-  - current rules; keep pending design review. Currentness: unverified. Case runtime: unknown.
+  - current rules; Keep equipment, finds, canopy, telescope and Studio contracts?. Currentness: unverified. Case runtime: unknown.
   - Cited ruling: none found in scoped comments; not proof that none exists.
 
 - **the great oak's crown > has 300 to 500 lobes, thick and thin** — [src/rules/crown.test.ts:19](../../src/rules/crown.test.ts#L19)
-  - current rules; keep pending design review. Currentness: unverified. Case runtime: unknown.
+  - outcome stats; Split sampled canopy density and find diversity into nonblocking reports while preserving the blocking protections?. Currentness: unverified. Case runtime: unknown.
   - Cited ruling: none found in scoped comments; not proof that none exists.
 
 - **the great oak's crown > stands over every room: each room's floor is inside the dome, under its leaves** — [src/rules/crown.test.ts:26](../../src/rules/crown.test.ts#L26)
-  - current rules; keep pending design review. Currentness: unverified. Case runtime: unknown.
+  - current rules; Keep equipment, finds, canopy, telescope and Studio contracts?. Currentness: unverified. Case runtime: unknown.
   - Cited ruling: none found in scoped comments; not proof that none exists.
 
 - **the great oak's crown > leaves the Terrace and its notch out to the crown's edge open: no lobe, limb or string above the floor on any line of sight to them** — [src/rules/crown.test.ts:34](../../src/rules/crown.test.ts#L34)
-  - current rules; keep pending design review. Currentness: unverified. Case runtime: unknown.
+  - current rules; Keep equipment, finds, canopy, telescope and Studio contracts?. Currentness: unverified. Case runtime: unknown.
   - Cited ruling: body, line 37: // bark under the Terrace showed over it; Ed, 2026-10-26: "there are branches in front of the balcony")
   - Possible later evidence: [docs/notes/house.md:106](../../docs/notes/house.md#L106): - **The great oak's crown** (Ed, 2026-10-24: "one great crown sounds good. it should have thicker and thinner patches. Perhaps there's also a layer that shows the bark of the tree underneath"; the mock, previews/ed/treehouse-layout-v4/crown/ on claude/treehouse-trunk-mock; the tuning's `treehouse.house.crown`): one crown over the whole house in place of the rooms' leaf roofs, grown from the house's outline (`config/house/outline.json`: its rooms' outlines, branches, stubs and take-off, in the frame with its origin at the Terrace's middle) and a seed (`src/rules/crown.ts` `makeCrown`, pure and tested, `crown.test.ts` against the outline itself), so it follows the rooms wherever they go: 300 t. candidate only: same-topic wording and later inline date; not a verified superseding ruling.
   - Possible later evidence: [docs/notes/performance.md:180](../../docs/notes/performance.md#L180): **Quality ladder** (Ed, 2026-10-26: "scenery is not gameplay critical so it's better to preserve framerate and draw fewer things or draw slower if necessary"; his order, 2026-10-27, from India's study `previews/ed/quality-ladder/`; `rules/ladder.ts` the rungs and the controller, `app/ladder.ts` the running game): rungs from full quality down, in Ed's order: the forest's far edge dithered; trees ×0.9; area borders over 40 m; tall trees squeezed (treeCap.keep 0.35, `SQUEEZE_KEEP`); leaves still and no trunk shadows; the cut-away's crowns solid; trees ×0.8; a steady 30 fps (the loop draws every other frame at 60 Hz); px 4. Live rungs change the running night; load rungs (density, the blend, the. candidate only: same-topic wording and later inline date; not a verified superseding ruling.
 
 - **the great oak's crown > frames the whole Terrace: its floor's outline, and her DJ desk on its rim, inside the gap with a margin to spare** — [src/rules/crown.test.ts:47](../../src/rules/crown.test.ts#L47)
-  - current rules; keep pending design review. Currentness: unverified. Case runtime: unknown.
+  - current rules; Keep equipment, finds, canopy, telescope and Studio contracts?. Currentness: unverified. Case runtime: unknown.
   - Cited ruling: none found in scoped comments; not proof that none exists.
 
 - **the great oak's crown > keeps open ground it's given (the dancefloor) open to the sky as the Terrace: no lobe over it or on a line of sight to it** — [src/rules/crown.test.ts:56](../../src/rules/crown.test.ts#L56)
-  - current rules; keep pending design review. Currentness: unverified. Case runtime: unknown.
+  - outcome stats; Split sampled canopy density and find diversity into nonblocking reports while preserving the blocking protections?. Currentness: unverified. Case runtime: unknown.
   - Cited ruling: none found in scoped comments; not proof that none exists.
 
 - **the great oak's crown > opens its notch the way she takes off: the Terrace's open south-east rim, towards the dancefloor** — [src/rules/crown.test.ts:63](../../src/rules/crown.test.ts#L63)
-  - current rules; keep pending design review. Currentness: unverified. Case runtime: unknown.
+  - current rules; Keep equipment, finds, canopy, telescope and Studio contracts?. Currentness: unverified. Case runtime: unknown.
   - Cited ruling: none found in scoped comments; not proof that none exists.
 
 - **the great oak's crown > carries each room's limb on past it, forking, with roots on the ground and top limbs over the topmost room** — [src/rules/crown.test.ts:69](../../src/rules/crown.test.ts#L69)
-  - current rules; keep pending design review. Currentness: unverified. Case runtime: unknown.
+  - current rules; Keep equipment, finds, canopy, telescope and Studio contracts?. Currentness: unverified. Case runtime: unknown.
   - Cited ruling: none found in scoped comments; not proof that none exists.
 
 - **the great oak's crown > strings its lights: every bulb on a string, in order along it, the Terrace ringed** — [src/rules/crown.test.ts:81](../../src/rules/crown.test.ts#L81)
-  - current rules; keep pending design review. Currentness: unverified. Case runtime: unknown.
+  - outcome stats; Split sampled canopy density and find diversity into nonblocking reports while preserving the blocking protections?. Currentness: unverified. Case runtime: unknown.
   - Cited ruling: none found in scoped comments; not proof that none exists.
 
 - **the great oak's crown > winds its lights round it in smooth strands when asked (Ed, 2026-10-27: "The spiral with 2 strands, smoothed so it sags across the gaps")** — [src/rules/crown.test.ts:91](../../src/rules/crown.test.ts#L91)
-  - current rules; keep pending design review. Currentness: unverified. Case runtime: unknown.
+  - current rules; Keep equipment, finds, canopy, telescope and Studio contracts?. Currentness: unverified. Case runtime: unknown.
   - Cited ruling: name, line 91: winds its lights round it in smooth strands when asked (Ed, 2026-10-27: "The spiral with 2 strands, smoothed so it sags across the gaps")
   - Possible later evidence: [docs/notes/view.md:72](../../docs/notes/view.md#L72): - **Ley lines**: the glowing line through the runestones in wave order (`src/rules/leylines.ts` the chain, `src/rules/leyroute.ts` the route, `src/render/leylines.ts` the drawing): through every area's stone from home to the last, the whole time (Ed, 2026-10-06: "I think the leylines should cover the entire set of waves the whole time, but ideally it shouldn't cross itself"), moving on from the last runestone reached (by its wave, or its quest: `onAreaDone(party, cell, time)`), every section as bright as the next (`fade`, `behindBright` and `far` all 1: Ed, 2026-10-06: "The leyline should always go from the treehouse to 3x the progress of the pulse, and I should be able to see it along its e. candidate only: same-topic wording and later inline date; not a verified superseding ruling.
   - Possible later evidence: [docs/notes/house.md:81](../../docs/notes/house.md#L81): - **Station menus** (Ed, 2026-10-21; the mock, previews/ed/station-menus-mock on claude/ed-shots; `config/wardrobe.json`, `src/rules/wardrobe.ts`, `src/app/owned.ts`, `src/ui/stationPanel.ts`, `src/rules/stations.ts`): at a dressing station (the house's reach, `rules/stations.ts` `stationOf`) it lights up with E over it, and E there slides its panel in from the left over the live game (Ed's playtest, 2026-10-26: "Menus should open when she presses E near an interactive object (dresser, map, etc) instead of them opening automatically just through proximity"; it was by nearness, no E, since 2026-10-21); E again (the pad's □) slides it out (Ed, 2026-10-26: "I think E should also close, and we c. candidate only: same-topic wording and later inline date; not a verified superseding ruling.
 
 - **the great oak's crown > hangs each string its own way (Ed, 2026-10-27: "String lights on the treehouse seem to all have the same shape")** — [src/rules/crown.test.ts:101](../../src/rules/crown.test.ts#L101)
-  - current rules; keep pending design review. Currentness: unverified. Case runtime: unknown.
+  - outcome stats; Split sampled canopy density and find diversity into nonblocking reports while preserving the blocking protections?. Currentness: unverified. Case runtime: unknown.
   - Cited ruling: name, line 101: hangs each string its own way (Ed, 2026-10-27: "String lights on the treehouse seem to all have the same shape")
   - Possible later evidence: [docs/notes/house.md:81](../../docs/notes/house.md#L81): - **Station menus** (Ed, 2026-10-21; the mock, previews/ed/station-menus-mock on claude/ed-shots; `config/wardrobe.json`, `src/rules/wardrobe.ts`, `src/app/owned.ts`, `src/ui/stationPanel.ts`, `src/rules/stations.ts`): at a dressing station (the house's reach, `rules/stations.ts` `stationOf`) it lights up with E over it, and E there slides its panel in from the left over the live game (Ed's playtest, 2026-10-26: "Menus should open when she presses E near an interactive object (dresser, map, etc) instead of them opening automatically just through proximity"; it was by nearness, no E, since 2026-10-21); E again (the pad's □) slides it out (Ed, 2026-10-26: "I think E should also close, and we c. candidate only: same-topic wording and later inline date; not a verified superseding ruling.
   - Possible later evidence: [docs/notes/view.md:61](../../docs/notes/view.md#L61): - **Stump wisps** (`runeMarkers.stump.wisps`; Ed, 2026-10-29: "pre-soundsystem stump area lighting should change to be more like eerie moonlight; maybe it can be lit by a mix of blue/green/white wisps ... that move around the stump area? Remove the current lighting"; "the overall lighting palette should be an eerie blue/green; this is to contrast with the bright and warm post-soundsystem lighting"; `render/stumpWisps.ts`, from `drawMarkers` in `render/view/home.ts`): a wild great stump (before its soundsystem) has no sigil-mix light any more (`runeMarkers.stump.light` unused); a dim teal moonlight hangs over its middle (`fill`: colour, reach 18 m, strength 0.7, 5 m up) and three wisps drift . candidate only: same-topic wording and later inline date; not a verified superseding ruling.
 
 - **the crown whole over the Terrace (Ed, 2026-10-26: "I'd like to try the treehouse canopy not being cut-through") > has leaves over the Terrace and along its notch, where the gap had none** — [src/rules/crown.test.ts:127](../../src/rules/crown.test.ts#L127)
-  - current rules; keep pending design review. Currentness: unverified. Case runtime: unknown.
+  - outcome stats; Split sampled canopy density and find diversity into nonblocking reports while preserving the blocking protections?. Currentness: unverified. Case runtime: unknown.
   - Cited ruling: none found in scoped comments; not proof that none exists.
 
 - **the crown whole over the Terrace (Ed, 2026-10-26: "I'd like to try the treehouse canopy not being cut-through") > has no ring of lights round a gap, its other strings as ever, its limbs all kept** — [src/rules/crown.test.ts:135](../../src/rules/crown.test.ts#L135)
-  - current rules; keep pending design review. Currentness: unverified. Case runtime: unknown.
+  - current rules; Keep equipment, finds, canopy, telescope and Studio contracts?. Currentness: unverified. Case runtime: unknown.
   - Cited ruling: none found in scoped comments; not proof that none exists.
 
 - **the crown whole over the Terrace (Ed, 2026-10-26: "I'd like to try the treehouse canopy not being cut-through") > still keeps open ground it's given open to the sky (the dancefloor)** — [src/rules/crown.test.ts:141](../../src/rules/crown.test.ts#L141)
-  - current rules; keep pending design review. Currentness: unverified. Case runtime: unknown.
+  - current rules; Keep equipment, finds, canopy, telescope and Studio contracts?. Currentness: unverified. Case runtime: unknown.
   - Cited ruling: none found in scoped comments; not proof that none exists.
 
 - **the crown whole over the Terrace (Ed, 2026-10-26: "I'd like to try the treehouse canopy not being cut-through") > is the same crown for the same house and seed, and the gap's crown is the one it always was** — [src/rules/crown.test.ts:146](../../src/rules/crown.test.ts#L146)
-  - current rules; keep pending design review. Currentness: unverified. Case runtime: unknown.
+  - current rules; Keep equipment, finds, canopy, telescope and Studio contracts?. Currentness: unverified. Case runtime: unknown.
   - Cited ruling: none found in scoped comments; not proof that none exists.
 
 - **tonight's travel trunk > stands in a wild area's woods, never home's, off its clearings and clear of the relics** — [src/rules/finds.test.ts:27](../../src/rules/finds.test.ts#L27)
-  - current rules; keep pending design review. Currentness: unverified. Case runtime: unknown.
+  - current rules; Keep equipment, finds, canopy, telescope and Studio contracts?. Currentness: unverified. Case runtime: unknown.
   - Cited ruling: file, line 1: // Things to wear found in the forest (rules/finds.ts; Ed, 2026-10-21): tonight's travel trunk, what's in it, taking it, and the
   - Possible later evidence: [docs/notes/house.md:97](../../docs/notes/house.md#L97): - **Finds / travel trunk** (Ed, 2026-10-21, the station menus' part (b): "The items are found in the forest like other permanent upgrades. Hints are given by the crystal ball"; `src/rules/finds.ts`, `render/view/finds.ts`): each night the island she's on holds one permanent upgrade she hasn't found, a wearable in the trunk or a broom part in a wreck (the finds pool, below; the wearables `FINDABLE`, the wardrobe's items not hers from the start, never a broom shape: brooms are made of parts), drawn as one flask-sized object on a clear patch in its own pale gold-white light (the finds style guide, `docs/art-guide/FINDS.md`, Ed 2026-10-23: clothes a folded bundle, `find-bundle`; bags a little ba. candidate only: same-topic wording and later inline date; not a verified superseding ruling.
   - Possible later evidence: [docs/notes/view.md:80](../../docs/notes/view.md#L80): - **Reveal / places kept clear** (Ed, 2026-10-26: "When the witch stands in a legend circle, scenery in front of it should fade away"; then "we might want this for other important points of interest, such as runestone areas, finds, flasks"): a **place of interest** is a centre, a radius she stands within, a ring on the ground round it and what stands at its centre (width and height); while she's within one on the ground, every sprite in a batch with a see-through pass (the trees, crowns, rim pieces, decor, relics, scenes, props; never creatures, floors or the solid gameplay batches) standing nearer the camera than its centre whose rectangle on screen covers its box (the ring and what stands . candidate only: same-topic wording and later inline date; not a verified superseding ruling.
 
 - **tonight's travel trunk > is the night's: the same seed puts it in the same place, and nights differ** — [src/rules/finds.test.ts:40](../../src/rules/finds.test.ts#L40)
-  - current rules; keep pending design review. Currentness: unverified. Case runtime: unknown.
+  - outcome stats; Split sampled canopy density and find diversity into nonblocking reports while preserving the blocking protections?. Currentness: unverified. Case runtime: unknown.
   - Cited ruling: file, line 1: // Things to wear found in the forest (rules/finds.ts; Ed, 2026-10-21): tonight's travel trunk, what's in it, taking it, and the
   - Possible later evidence: [docs/notes/house.md:97](../../docs/notes/house.md#L97): - **Finds / travel trunk** (Ed, 2026-10-21, the station menus' part (b): "The items are found in the forest like other permanent upgrades. Hints are given by the crystal ball"; `src/rules/finds.ts`, `render/view/finds.ts`): each night the island she's on holds one permanent upgrade she hasn't found, a wearable in the trunk or a broom part in a wreck (the finds pool, below; the wearables `FINDABLE`, the wardrobe's items not hers from the start, never a broom shape: brooms are made of parts), drawn as one flask-sized object on a clear patch in its own pale gold-white light (the finds style guide, `docs/art-guide/FINDS.md`, Ed 2026-10-23: clothes a folded bundle, `find-bundle`; bags a little ba. candidate only: same-topic wording and later inline date; not a verified superseding ruling.
   - Possible later evidence: [docs/notes/house.md:75](../../docs/notes/house.md#L75): - **Arriving** (Ed, 2026-10-12, the zoom-to-island plan: Charlie's chart side and this, the game's; `src/rules/arrive.ts`, `src/app/arrive.ts`, the tuning's `arrive`): sailing from the sea chart, the chart zooms in, flies to a point over the open sea south of the island and leaves its last frame and camera in sessionStorage (`witch.arrive`: `{ v: 1, island, world, at, still, cam: { x, z, height, pitch, fov } }`, x and z metres from the dancefloor, height over the sea, pitch radians down, fov degrees), then loads `./?island=X&arrive=1`. The page puts that still up on its first paint (a little script in `index.html`), pushing in while the night builds (no bedroom), then the game's camera takes. candidate only: same-topic wording and later inline date; not a verified superseding ruling.
 
 - **tonight's travel trunk > holds what the night's one draw picks over everything she lacks, of every kind (Ed, 2026-10-23); nothing once she has it all** — [src/rules/finds.test.ts:47](../../src/rules/finds.test.ts#L47)
-  - current rules; keep pending design review. Currentness: unverified. Case runtime: unknown.
+  - outcome stats; Split sampled canopy density and find diversity into nonblocking reports while preserving the blocking protections?. Currentness: unverified. Case runtime: unknown.
   - Cited ruling: file, line 1: // Things to wear found in the forest (rules/finds.ts; Ed, 2026-10-21): tonight's travel trunk, what's in it, taking it, and the / name, line 47: holds what the night's one draw picks over everything she lacks, of every kind (Ed, 2026-10-23); nothing once she has it all
   - Possible later evidence: [docs/notes/house.md:97](../../docs/notes/house.md#L97): - **Finds / travel trunk** (Ed, 2026-10-21, the station menus' part (b): "The items are found in the forest like other permanent upgrades. Hints are given by the crystal ball"; `src/rules/finds.ts`, `render/view/finds.ts`): each night the island she's on holds one permanent upgrade she hasn't found, a wearable in the trunk or a broom part in a wreck (the finds pool, below; the wearables `FINDABLE`, the wardrobe's items not hers from the start, never a broom shape: brooms are made of parts), drawn as one flask-sized object on a clear patch in its own pale gold-white light (the finds style guide, `docs/art-guide/FINDS.md`, Ed 2026-10-23: clothes a folded bundle, `find-bundle`; bags a little ba. candidate only: same-topic wording and later inline date; not a verified superseding ruling.
   - Possible later evidence: [docs/notes/house.md:81](../../docs/notes/house.md#L81): - **Station menus** (Ed, 2026-10-21; the mock, previews/ed/station-menus-mock on claude/ed-shots; `config/wardrobe.json`, `src/rules/wardrobe.ts`, `src/app/owned.ts`, `src/ui/stationPanel.ts`, `src/rules/stations.ts`): at a dressing station (the house's reach, `rules/stations.ts` `stationOf`) it lights up with E over it, and E there slides its panel in from the left over the live game (Ed's playtest, 2026-10-26: "Menus should open when she presses E near an interactive object (dresser, map, etc) instead of them opening automatically just through proximity"; it was by nearness, no E, since 2026-10-21); E again (the pad's □) slides it out (Ed, 2026-10-26: "I think E should also close, and we c. candidate only: same-topic wording and later inline date; not a verified superseding ruling.
 
 - **tonight's travel trunk > finds hats and bags each on its own (Ed, 2026-10-23): every spell hat but the plain one, and the found bags (the Satchel, Bumbag and Purse hers from the start: Ed, 2026-10-29), out of the trunk** — [src/rules/finds.test.ts:72](../../src/rules/finds.test.ts#L72)
-  - current rules; keep pending design review. Currentness: unverified. Case runtime: unknown.
+  - current rules; Keep equipment, finds, canopy, telescope and Studio contracts?. Currentness: unverified. Case runtime: unknown.
   - Cited ruling: file, line 1: // Things to wear found in the forest (rules/finds.ts; Ed, 2026-10-21): tonight's travel trunk, what's in it, taking it, and the / name, line 72: finds hats and bags each on its own (Ed, 2026-10-23): every spell hat but the plain one, and the found bags (the Satchel, Bumbag and Purse hers from the start: Ed, 2026-10-29), out of the trunk
 
 - **tonight's travel trunk > starts her with the plain hat only; a hat found is hers and lies on the hats' floor (Ed, 2026-10-23: the floor fills as she finds them)** — [src/rules/finds.test.ts:86](../../src/rules/finds.test.ts#L86)
-  - current rules; keep pending design review. Currentness: unverified. Case runtime: unknown.
+  - current rules; Keep equipment, finds, canopy, telescope and Studio contracts?. Currentness: unverified. Case runtime: unknown.
   - Cited ruling: file, line 1: // Things to wear found in the forest (rules/finds.ts; Ed, 2026-10-21): tonight's travel trunk, what's in it, taking it, and the / name, line 86: starts her with the plain hat only; a hat found is hers and lies on the hats' floor (Ed, 2026-10-23: the floor fills as she finds them)
   - Possible later evidence: [docs/notes/house.md:97](../../docs/notes/house.md#L97): - **Finds / travel trunk** (Ed, 2026-10-21, the station menus' part (b): "The items are found in the forest like other permanent upgrades. Hints are given by the crystal ball"; `src/rules/finds.ts`, `render/view/finds.ts`): each night the island she's on holds one permanent upgrade she hasn't found, a wearable in the trunk or a broom part in a wreck (the finds pool, below; the wearables `FINDABLE`, the wardrobe's items not hers from the start, never a broom shape: brooms are made of parts), drawn as one flask-sized object on a clear patch in its own pale gold-white light (the finds style guide, `docs/art-guide/FINDS.md`, Ed 2026-10-23: clothes a folded bundle, `find-bundle`; bags a little ba. candidate only: same-topic wording and later inline date; not a verified superseding ruling.
   - Possible later evidence: [docs/notes/house.md:101](../../docs/notes/house.md#L101): - **Invitations and brooms / her night's kit** (Ed, 2026-10-26, mock v2: "just has them for the night, no ammo that runs out"; `src/rules/kit.ts`, `W.kit`): a night that waits for her party spell starts her with neither. **The invitations desk** (`config/house/rooms/parlour.json` `invitations`, use `invites`; `art/furniture.js` `invitations`, states the three piles' counts, "8,8,8" to "0,0,0"): big and freestanding, front-on at the Parlour's north side, the real 💌 (red heart, blue edge, off-white paper) in piles on three trays, one a witch, and spilled on the floor; one E there and she has tonight's invitations (her pile empties). Without them the invite key and her Sentry hat throw nothing. candidate only: same-topic wording and later inline date; not a verified superseding ruling.
 
 - **tonight's travel trunk > opens with E on foot: what's in it is hers (a found event), once** — [src/rules/finds.test.ts:105](../../src/rules/finds.test.ts#L105)
-  - current rules; keep pending design review. Currentness: unverified. Case runtime: unknown.
+  - current rules; Keep equipment, finds, canopy, telescope and Studio contracts?. Currentness: unverified. Case runtime: unknown.
   - Cited ruling: file, line 1: // Things to wear found in the forest (rules/finds.ts; Ed, 2026-10-21): tonight's travel trunk, what's in it, taking it, and the
   - Possible later evidence: [docs/notes/house.md:97](../../docs/notes/house.md#L97): - **Finds / travel trunk** (Ed, 2026-10-21, the station menus' part (b): "The items are found in the forest like other permanent upgrades. Hints are given by the crystal ball"; `src/rules/finds.ts`, `render/view/finds.ts`): each night the island she's on holds one permanent upgrade she hasn't found, a wearable in the trunk or a broom part in a wreck (the finds pool, below; the wearables `FINDABLE`, the wardrobe's items not hers from the start, never a broom shape: brooms are made of parts), drawn as one flask-sized object on a clear patch in its own pale gold-white light (the finds style guide, `docs/art-guide/FINDS.md`, Ed 2026-10-23: clothes a folded bundle, `find-bundle`; bags a little ba. candidate only: same-topic wording and later inline date; not a verified superseding ruling.
   - Possible later evidence: [docs/notes/house.md:75](../../docs/notes/house.md#L75): - **Arriving** (Ed, 2026-10-12, the zoom-to-island plan: Charlie's chart side and this, the game's; `src/rules/arrive.ts`, `src/app/arrive.ts`, the tuning's `arrive`): sailing from the sea chart, the chart zooms in, flies to a point over the open sea south of the island and leaves its last frame and camera in sessionStorage (`witch.arrive`: `{ v: 1, island, world, at, still, cam: { x, z, height, pitch, fov } }`, x and z metres from the dancefloor, height over the sea, pitch radians down, fov degrees), then loads `./?island=X&arrive=1`. The page puts that still up on its first paint (a little script in `index.html`), pushing in while the night builds (no bedroom), then the game's camera takes. candidate only: same-topic wording and later inline date; not a verified superseding ruling.
 
 - **tonight's travel trunk > can't be opened once the party's over** — [src/rules/finds.test.ts:119](../../src/rules/finds.test.ts#L119)
-  - current rules; keep pending design review. Currentness: unverified. Case runtime: unknown.
+  - current rules; Keep equipment, finds, canopy, telescope and Studio contracts?. Currentness: unverified. Case runtime: unknown.
   - Cited ruling: file, line 1: // Things to wear found in the forest (rules/finds.ts; Ed, 2026-10-21): tonight's travel trunk, what's in it, taking it, and the
   - Possible later evidence: [docs/notes/house.md:97](../../docs/notes/house.md#L97): - **Finds / travel trunk** (Ed, 2026-10-21, the station menus' part (b): "The items are found in the forest like other permanent upgrades. Hints are given by the crystal ball"; `src/rules/finds.ts`, `render/view/finds.ts`): each night the island she's on holds one permanent upgrade she hasn't found, a wearable in the trunk or a broom part in a wreck (the finds pool, below; the wearables `FINDABLE`, the wardrobe's items not hers from the start, never a broom shape: brooms are made of parts), drawn as one flask-sized object on a clear patch in its own pale gold-white light (the finds style guide, `docs/art-guide/FINDS.md`, Ed 2026-10-23: clothes a folded bundle, `find-bundle`; bags a little ba. candidate only: same-topic wording and later inline date; not a verified superseding ruling.
   - Possible later evidence: [docs/notes/house.md:111](../../docs/notes/house.md#L111): - **Guidance pins** (Ed, 2026-10-26: "Pointers: let's work out what they help with and build it"; his list approved the same day): one pin at a time over what she should do next in the treehouse, icons only, no words (`rules/guidance.ts` guidanceOf, drawn by `render/view/guidance.ts` GuidePin with `view.pin`, render/pins.ts), the HUD's amber ring and Ed's icons in it, emoji drawn in pixels as the thrown 💌 is (`render/indicator.ts` emoji, render/bubbles.ts): 💤 the bed, 💌 the invitations desk, a pair of 🪽 the lathe (one 🪽 mirrored beside another), 🎁 anything new, 🧭 the map table, 🎶 the decks (the wave pointer's own 🎶 glyph, in cream: the emoji's black notes were lost on the dark floor. candidate only: same-topic wording and later inline date; not a verified superseding ruling.
 
 - **the way to the trunk (never how far) > names the compass point from the treehouse to the trunk, north up the screen** — [src/rules/finds.test.ts:131](../../src/rules/finds.test.ts#L131)
-  - current rules; keep pending design review. Currentness: unverified. Case runtime: unknown.
+  - current rules; Keep equipment, finds, canopy, telescope and Studio contracts?. Currentness: unverified. Case runtime: unknown.
   - Cited ruling: file, line 1: // Things to wear found in the forest (rules/finds.ts; Ed, 2026-10-21): tonight's travel trunk, what's in it, taking it, and the
   - Possible later evidence: [docs/notes/house.md:97](../../docs/notes/house.md#L97): - **Finds / travel trunk** (Ed, 2026-10-21, the station menus' part (b): "The items are found in the forest like other permanent upgrades. Hints are given by the crystal ball"; `src/rules/finds.ts`, `render/view/finds.ts`): each night the island she's on holds one permanent upgrade she hasn't found, a wearable in the trunk or a broom part in a wreck (the finds pool, below; the wearables `FINDABLE`, the wardrobe's items not hers from the start, never a broom shape: brooms are made of parts), drawn as one flask-sized object on a clear patch in its own pale gold-white light (the finds style guide, `docs/art-guide/FINDS.md`, Ed 2026-10-23: clothes a folded bundle, `find-bundle`; bags a little ba. candidate only: same-topic wording and later inline date; not a verified superseding ruling.
   - Possible later evidence: [docs/notes/house.md:75](../../docs/notes/house.md#L75): - **Arriving** (Ed, 2026-10-12, the zoom-to-island plan: Charlie's chart side and this, the game's; `src/rules/arrive.ts`, `src/app/arrive.ts`, the tuning's `arrive`): sailing from the sea chart, the chart zooms in, flies to a point over the open sea south of the island and leaves its last frame and camera in sessionStorage (`witch.arrive`: `{ v: 1, island, world, at, still, cam: { x, z, height, pitch, fov } }`, x and z metres from the dancefloor, height over the sea, pitch radians down, fov degrees), then loads `./?island=X&arrive=1`. The page puts that still up on its first paint (a little script in `index.html`), pushing in while the night builds (no bedroom), then the game's camera takes. candidate only: same-topic wording and later inline date; not a verified superseding ruling.
 
 - **tonight's wreck (the Workshop, Ed 2026-10-23: a broom part to find) > E at it while the party's on: the part is hers at once (a found event of its kind), not fitted: it waits at the Workshop's bay** — [src/rules/finds.test.ts:150](../../src/rules/finds.test.ts#L150)
-  - current rules; keep pending design review. Currentness: unverified. Case runtime: unknown.
+  - leftovers; Correct three obsolete Workshop descriptions while preserving every assertion?. Currentness: unverified. Case runtime: unknown.
   - Cited ruling: file, line 1: // Things to wear found in the forest (rules/finds.ts; Ed, 2026-10-21): tonight's travel trunk, what's in it, taking it, and the
   - Possible later evidence: [docs/notes/house.md:97](../../docs/notes/house.md#L97): - **Finds / travel trunk** (Ed, 2026-10-21, the station menus' part (b): "The items are found in the forest like other permanent upgrades. Hints are given by the crystal ball"; `src/rules/finds.ts`, `render/view/finds.ts`): each night the island she's on holds one permanent upgrade she hasn't found, a wearable in the trunk or a broom part in a wreck (the finds pool, below; the wearables `FINDABLE`, the wardrobe's items not hers from the start, never a broom shape: brooms are made of parts), drawn as one flask-sized object on a clear patch in its own pale gold-white light (the finds style guide, `docs/art-guide/FINDS.md`, Ed 2026-10-23: clothes a folded bundle, `find-bundle`; bags a little ba. candidate only: same-topic wording and later inline date; not a verified superseding ruling.
   - Possible later evidence: [docs/notes/house.md:100](../../docs/notes/house.md#L100): - **Workshop** (Ed, 2026-10-22/23; docs/backlog/workshop.md). **One broom station** since Ed, 2026-10-29 ("The broom area can probably just be one station instead of two; one for colours, the other for components"): the **lathe** (`config/wardrobe.json` `stations.lathe`), where her night's broom is taken too (rules/kit.ts) and the guidance's broom pin points, its cards the three slots' part cards, the sets' chips and "Her broom", the Body and Trim colours, the Fit, and the pegboard's 3 × 3 board, read-only, as its last card; the bay and the pegboard are **scenery** (their use `{ "kind": "scenery" }`: no prompt, E does nothing; still drawn, her broom resting on the lathe while she's at it, th. candidate only: same-topic wording and later inline date; not a verified superseding ruling.
 
 - **tonight's wreck (the Workshop, Ed 2026-10-23: a broom part to find) > a part found leaves her broom as it was: her fitted part stays, her set and spell too** — [src/rules/finds.test.ts:159](../../src/rules/finds.test.ts#L159)
-  - current rules; keep pending design review. Currentness: unverified. Case runtime: unknown.
+  - leftovers; Correct three obsolete Workshop descriptions while preserving every assertion?. Currentness: unverified. Case runtime: unknown.
   - Cited ruling: file, line 1: // Things to wear found in the forest (rules/finds.ts; Ed, 2026-10-21): tonight's travel trunk, what's in it, taking it, and the
   - Possible later evidence: [docs/notes/house.md:97](../../docs/notes/house.md#L97): - **Finds / travel trunk** (Ed, 2026-10-21, the station menus' part (b): "The items are found in the forest like other permanent upgrades. Hints are given by the crystal ball"; `src/rules/finds.ts`, `render/view/finds.ts`): each night the island she's on holds one permanent upgrade she hasn't found, a wearable in the trunk or a broom part in a wreck (the finds pool, below; the wearables `FINDABLE`, the wardrobe's items not hers from the start, never a broom shape: brooms are made of parts), drawn as one flask-sized object on a clear patch in its own pale gold-white light (the finds style guide, `docs/art-guide/FINDS.md`, Ed 2026-10-23: clothes a folded bundle, `find-bundle`; bags a little ba. candidate only: same-topic wording and later inline date; not a verified superseding ruling.
   - Possible later evidence: [docs/notes/house.md:100](../../docs/notes/house.md#L100): - **Workshop** (Ed, 2026-10-22/23; docs/backlog/workshop.md). **One broom station** since Ed, 2026-10-29 ("The broom area can probably just be one station instead of two; one for colours, the other for components"): the **lathe** (`config/wardrobe.json` `stations.lathe`), where her night's broom is taken too (rules/kit.ts) and the guidance's broom pin points, its cards the three slots' part cards, the sets' chips and "Her broom", the Body and Trim colours, the Fit, and the pegboard's 3 × 3 board, read-only, as its last card; the bay and the pegboard are **scenery** (their use `{ "kind": "scenery" }`: no prompt, E does nothing; still drawn, her broom resting on the lathe while she's at it, th. candidate only: same-topic wording and later inline date; not a verified superseding ruling.
 
 - **tonight's wreck (the Workshop, Ed 2026-10-23: a broom part to find) > only while the party's on** — [src/rules/finds.test.ts:166](../../src/rules/finds.test.ts#L166)
-  - current rules; keep pending design review. Currentness: unverified. Case runtime: unknown.
+  - current rules; Keep equipment, finds, canopy, telescope and Studio contracts?. Currentness: unverified. Case runtime: unknown.
   - Cited ruling: file, line 1: // Things to wear found in the forest (rules/finds.ts; Ed, 2026-10-21): tonight's travel trunk, what's in it, taking it, and the
   - Possible later evidence: [docs/notes/house.md:97](../../docs/notes/house.md#L97): - **Finds / travel trunk** (Ed, 2026-10-21, the station menus' part (b): "The items are found in the forest like other permanent upgrades. Hints are given by the crystal ball"; `src/rules/finds.ts`, `render/view/finds.ts`): each night the island she's on holds one permanent upgrade she hasn't found, a wearable in the trunk or a broom part in a wreck (the finds pool, below; the wearables `FINDABLE`, the wardrobe's items not hers from the start, never a broom shape: brooms are made of parts), drawn as one flask-sized object on a clear patch in its own pale gold-white light (the finds style guide, `docs/art-guide/FINDS.md`, Ed 2026-10-23: clothes a folded bundle, `find-bundle`; bags a little ba. candidate only: same-topic wording and later inline date; not a verified superseding ruling.
   - Possible later evidence: [docs/notes/house.md:111](../../docs/notes/house.md#L111): - **Guidance pins** (Ed, 2026-10-26: "Pointers: let's work out what they help with and build it"; his list approved the same day): one pin at a time over what she should do next in the treehouse, icons only, no words (`rules/guidance.ts` guidanceOf, drawn by `render/view/guidance.ts` GuidePin with `view.pin`, render/pins.ts), the HUD's amber ring and Ed's icons in it, emoji drawn in pixels as the thrown 💌 is (`render/indicator.ts` emoji, render/bubbles.ts): 💤 the bed, 💌 the invitations desk, a pair of 🪽 the lathe (one 🪽 mirrored beside another), 🎁 anything new, 🧭 the map table, 🎶 the decks (the wave pointer's own 🎶 glyph, in cream: the emoji's black notes were lost on the dark floor. candidate only: same-topic wording and later inline date; not a verified superseding ruling.
 
 - **a find spawned near her (the dev spawn; Ed, 2026-10-23: "a way to spawn the collectible near the player") > `is claimed exactly as a placed one (${kind} ${item})`** — [src/rules/finds.test.ts:178](../../src/rules/finds.test.ts#L178)
-  - current rules; keep pending design review. Currentness: unverified. Case runtime: unknown.
+  - current rules; Keep equipment, finds, canopy, telescope and Studio contracts?. Currentness: unverified. Case runtime: unknown.
   - Cited ruling: file, line 1: // Things to wear found in the forest (rules/finds.ts; Ed, 2026-10-21): tonight's travel trunk, what's in it, taking it, and the
   - Possible later evidence: [docs/notes/house.md:97](../../docs/notes/house.md#L97): - **Finds / travel trunk** (Ed, 2026-10-21, the station menus' part (b): "The items are found in the forest like other permanent upgrades. Hints are given by the crystal ball"; `src/rules/finds.ts`, `render/view/finds.ts`): each night the island she's on holds one permanent upgrade she hasn't found, a wearable in the trunk or a broom part in a wreck (the finds pool, below; the wearables `FINDABLE`, the wardrobe's items not hers from the start, never a broom shape: brooms are made of parts), drawn as one flask-sized object on a clear patch in its own pale gold-white light (the finds style guide, `docs/art-guide/FINDS.md`, Ed 2026-10-23: clothes a folded bundle, `find-bundle`; bags a little ba. candidate only: same-topic wording and later inline date; not a verified superseding ruling.
   - Possible later evidence: [docs/notes/house.md:81](../../docs/notes/house.md#L81): - **Station menus** (Ed, 2026-10-21; the mock, previews/ed/station-menus-mock on claude/ed-shots; `config/wardrobe.json`, `src/rules/wardrobe.ts`, `src/app/owned.ts`, `src/ui/stationPanel.ts`, `src/rules/stations.ts`): at a dressing station (the house's reach, `rules/stations.ts` `stationOf`) it lights up with E over it, and E there slides its panel in from the left over the live game (Ed's playtest, 2026-10-26: "Menus should open when she presses E near an interactive object (dresser, map, etc) instead of them opening automatically just through proximity"; it was by nearness, no E, since 2026-10-21); E again (the pad's □) slides it out (Ed, 2026-10-26: "I think E should also close, and we c. candidate only: same-topic wording and later inline date; not a verified superseding ruling.
 
 - **a find spawned near her (the dev spawn; Ed, 2026-10-23: "a way to spawn the collectible near the player") > stands a few metres from her on clear ground: no tree, rock or ruin on it, not on a lake or the treehouse** — [src/rules/finds.test.ts:187](../../src/rules/finds.test.ts#L187)
-  - current rules; keep pending design review. Currentness: unverified. Case runtime: unknown.
+  - outcome stats; Split sampled canopy density and find diversity into nonblocking reports while preserving the blocking protections?. Currentness: unverified. Case runtime: unknown.
   - Cited ruling: file, line 1: // Things to wear found in the forest (rules/finds.ts; Ed, 2026-10-21): tonight's travel trunk, what's in it, taking it, and the
   - Possible later evidence: [docs/notes/house.md:97](../../docs/notes/house.md#L97): - **Finds / travel trunk** (Ed, 2026-10-21, the station menus' part (b): "The items are found in the forest like other permanent upgrades. Hints are given by the crystal ball"; `src/rules/finds.ts`, `render/view/finds.ts`): each night the island she's on holds one permanent upgrade she hasn't found, a wearable in the trunk or a broom part in a wreck (the finds pool, below; the wearables `FINDABLE`, the wardrobe's items not hers from the start, never a broom shape: brooms are made of parts), drawn as one flask-sized object on a clear patch in its own pale gold-white light (the finds style guide, `docs/art-guide/FINDS.md`, Ed 2026-10-23: clothes a folded bundle, `find-bundle`; bags a little ba. candidate only: same-topic wording and later inline date; not a verified superseding ruling.
   - Possible later evidence: [docs/notes/house.md:75](../../docs/notes/house.md#L75): - **Arriving** (Ed, 2026-10-12, the zoom-to-island plan: Charlie's chart side and this, the game's; `src/rules/arrive.ts`, `src/app/arrive.ts`, the tuning's `arrive`): sailing from the sea chart, the chart zooms in, flies to a point over the open sea south of the island and leaves its last frame and camera in sessionStorage (`witch.arrive`: `{ v: 1, island, world, at, still, cam: { x, z, height, pitch, fov } }`, x and z metres from the dancefloor, height over the sea, pitch radians down, fov degrees), then loads `./?island=X&arrive=1`. The page puts that still up on its first paint (a little script in `index.html`), pushing in while the night builds (no bedroom), then the game's camera takes. candidate only: same-topic wording and later inline date; not a verified superseding ruling.
 
 - **a find spawned near her (the dev spawn; Ed, 2026-10-23: "a way to spawn the collectible near the player") > is tonight's find: the constellation's way points at it, and an unknown item spawns nothing** — [src/rules/finds.test.ts:206](../../src/rules/finds.test.ts#L206)
-  - current rules; keep pending design review. Currentness: unverified. Case runtime: unknown.
+  - current rules; Keep equipment, finds, canopy, telescope and Studio contracts?. Currentness: unverified. Case runtime: unknown.
   - Cited ruling: file, line 1: // Things to wear found in the forest (rules/finds.ts; Ed, 2026-10-21): tonight's travel trunk, what's in it, taking it, and the
   - Possible later evidence: [docs/notes/house.md:97](../../docs/notes/house.md#L97): - **Finds / travel trunk** (Ed, 2026-10-21, the station menus' part (b): "The items are found in the forest like other permanent upgrades. Hints are given by the crystal ball"; `src/rules/finds.ts`, `render/view/finds.ts`): each night the island she's on holds one permanent upgrade she hasn't found, a wearable in the trunk or a broom part in a wreck (the finds pool, below; the wearables `FINDABLE`, the wardrobe's items not hers from the start, never a broom shape: brooms are made of parts), drawn as one flask-sized object on a clear patch in its own pale gold-white light (the finds style guide, `docs/art-guide/FINDS.md`, Ed 2026-10-23: clothes a folded bundle, `find-bundle`; bags a little ba. candidate only: same-topic wording and later inline date; not a verified superseding ruling.
   - Possible later evidence: [docs/notes/house.md:81](../../docs/notes/house.md#L81): - **Station menus** (Ed, 2026-10-21; the mock, previews/ed/station-menus-mock on claude/ed-shots; `config/wardrobe.json`, `src/rules/wardrobe.ts`, `src/app/owned.ts`, `src/ui/stationPanel.ts`, `src/rules/stations.ts`): at a dressing station (the house's reach, `rules/stations.ts` `stationOf`) it lights up with E over it, and E there slides its panel in from the left over the live game (Ed's playtest, 2026-10-26: "Menus should open when she presses E near an interactive object (dresser, map, etc) instead of them opening automatically just through proximity"; it was by nearness, no E, since 2026-10-21); E again (the pad's □) slides it out (Ed, 2026-10-26: "I think E should also close, and we c. candidate only: same-topic wording and later inline date; not a verified superseding ruling.
 
 - **on loan till she sleeps (Ed, 2026-10-24) > taken, its constellation's find is the loan's (lit), not tonight's to find; before, none on loan** — [src/rules/finds.test.ts:220](../../src/rules/finds.test.ts#L220)
-  - current rules; keep pending design review. Currentness: unverified. Case runtime: unknown.
+  - current rules; Keep equipment, finds, canopy, telescope and Studio contracts?. Currentness: unverified. Case runtime: unknown.
   - Cited ruling: file, line 1: // Things to wear found in the forest (rules/finds.ts; Ed, 2026-10-21): tonight's travel trunk, what's in it, taking it, and the
   - Possible later evidence: [docs/notes/house.md:97](../../docs/notes/house.md#L97): - **Finds / travel trunk** (Ed, 2026-10-21, the station menus' part (b): "The items are found in the forest like other permanent upgrades. Hints are given by the crystal ball"; `src/rules/finds.ts`, `render/view/finds.ts`): each night the island she's on holds one permanent upgrade she hasn't found, a wearable in the trunk or a broom part in a wreck (the finds pool, below; the wearables `FINDABLE`, the wardrobe's items not hers from the start, never a broom shape: brooms are made of parts), drawn as one flask-sized object on a clear patch in its own pale gold-white light (the finds style guide, `docs/art-guide/FINDS.md`, Ed 2026-10-23: clothes a folded bundle, `find-bundle`; bags a little ba. candidate only: same-topic wording and later inline date; not a verified superseding ruling.
   - Possible later evidence: [docs/notes/house.md:99](../../docs/notes/house.md#L99): - **Finds pool** (Ed, 2026-10-23: "One draw over everything she hasn't found. Clothes, brooms, hats, records - everything that's a permanent upgrade."; `rules/finds.ts`): every kind of permanent upgrade is a `FindKind` in `FIND_KINDS` (its items in order, the art piece its find is drawn as, its `claim` in the rules), and the night's one find is `nightPick(seed, found)`: one seeded draw over every item of every kind she hasn't found, the kind drawn deciding the find (a wearable in the trunk, a broom part in a **wreck**; no forced early wreck, no biome weighting). `trunkItem` is gone: `fillTrunk(g, { wearable, part })` fills `g.trunk` (its `kind` saying which), placed as before; the `found` le. candidate only: same-topic wording and later inline date; not a verified superseding ruling.
 
 - **on loan till she sleeps (Ed, 2026-10-24) > the night won: one not yet taken is gone; one on loan stays (its constellation lit till she sleeps)** — [src/rules/finds.test.ts:233](../../src/rules/finds.test.ts#L233)
-  - current rules; keep pending design review. Currentness: unverified. Case runtime: unknown.
+  - current rules; Keep equipment, finds, canopy, telescope and Studio contracts?. Currentness: unverified. Case runtime: unknown.
   - Cited ruling: file, line 1: // Things to wear found in the forest (rules/finds.ts; Ed, 2026-10-21): tonight's travel trunk, what's in it, taking it, and the
   - Possible later evidence: [docs/notes/house.md:97](../../docs/notes/house.md#L97): - **Finds / travel trunk** (Ed, 2026-10-21, the station menus' part (b): "The items are found in the forest like other permanent upgrades. Hints are given by the crystal ball"; `src/rules/finds.ts`, `render/view/finds.ts`): each night the island she's on holds one permanent upgrade she hasn't found, a wearable in the trunk or a broom part in a wreck (the finds pool, below; the wearables `FINDABLE`, the wardrobe's items not hers from the start, never a broom shape: brooms are made of parts), drawn as one flask-sized object on a clear patch in its own pale gold-white light (the finds style guide, `docs/art-guide/FINDS.md`, Ed 2026-10-23: clothes a folded bundle, `find-bundle`; bags a little ba. candidate only: same-topic wording and later inline date; not a verified superseding ruling.
   - Possible later evidence: [docs/notes/performance.md:180](../../docs/notes/performance.md#L180): **Quality ladder** (Ed, 2026-10-26: "scenery is not gameplay critical so it's better to preserve framerate and draw fewer things or draw slower if necessary"; his order, 2026-10-27, from India's study `previews/ed/quality-ladder/`; `rules/ladder.ts` the rungs and the controller, `app/ladder.ts` the running game): rungs from full quality down, in Ed's order: the forest's far edge dithered; trees ×0.9; area borders over 40 m; tall trees squeezed (treeCap.keep 0.35, `SQUEEZE_KEEP`); leaves still and no trunk shadows; the cut-away's crowns solid; trees ×0.8; a steady 30 fps (the loop draws every other frame at 60 Hz); px 4. Live rungs change the running night; load rungs (density, the blend, the. candidate only: same-topic wording and later inline date; not a verified superseding ruling.
 
 - **the finds' master list > in docs/art-guide/FINDS.md is FIND_KINDS's own** — [src/rules/findsList.test.ts:31](../../src/rules/findsList.test.ts#L31)
-  - current rules; keep pending design review. Currentness: unverified. Case runtime: unknown.
+  - current rules; Keep equipment, finds, canopy, telescope and Studio contracts?. Currentness: unverified. Case runtime: unknown.
   - Cited ruling: file, line 1: // The finds' master list (docs/art-guide/FINDS.md, the art director's style guide for the permanent-upgrade finds, Ed 2026-10-23)
   - Possible later evidence: [docs/notes/house.md:97](../../docs/notes/house.md#L97): - **Finds / travel trunk** (Ed, 2026-10-21, the station menus' part (b): "The items are found in the forest like other permanent upgrades. Hints are given by the crystal ball"; `src/rules/finds.ts`, `render/view/finds.ts`): each night the island she's on holds one permanent upgrade she hasn't found, a wearable in the trunk or a broom part in a wreck (the finds pool, below; the wearables `FINDABLE`, the wardrobe's items not hers from the start, never a broom shape: brooms are made of parts), drawn as one flask-sized object on a clear patch in its own pale gold-white light (the finds style guide, `docs/art-guide/FINDS.md`, Ed 2026-10-23: clothes a folded bundle, `find-bundle`; bags a little ba. candidate only: same-topic wording and later inline date; not a verified superseding ruling.
   - Possible later evidence: [docs/notes/house.md:81](../../docs/notes/house.md#L81): - **Station menus** (Ed, 2026-10-21; the mock, previews/ed/station-menus-mock on claude/ed-shots; `config/wardrobe.json`, `src/rules/wardrobe.ts`, `src/app/owned.ts`, `src/ui/stationPanel.ts`, `src/rules/stations.ts`): at a dressing station (the house's reach, `rules/stations.ts` `stationOf`) it lights up with E over it, and E there slides its panel in from the left over the live game (Ed's playtest, 2026-10-26: "Menus should open when she presses E near an interactive object (dresser, map, etc) instead of them opening automatically just through proximity"; it was by nearness, no E, since 2026-10-21); E again (the pad's □) slides it out (Ed, 2026-10-26: "I think E should also close, and we c. candidate only: same-topic wording and later inline date; not a verified superseding ruling.
@@ -6485,51 +6517,51 @@ Static declarations only. All classifications and currentness are provisional. C
   - Possible later evidence: [docs/notes/house.md:81](../../docs/notes/house.md#L81): - **Station menus** (Ed, 2026-10-21; the mock, previews/ed/station-menus-mock on claude/ed-shots; `config/wardrobe.json`, `src/rules/wardrobe.ts`, `src/app/owned.ts`, `src/ui/stationPanel.ts`, `src/rules/stations.ts`): at a dressing station (the house's reach, `rules/stations.ts` `stationOf`) it lights up with E over it, and E there slides its panel in from the left over the live game (Ed's playtest, 2026-10-26: "Menus should open when she presses E near an interactive object (dresser, map, etc) instead of them opening automatically just through proximity"; it was by nearness, no E, since 2026-10-21); E again (the pad's □) slides it out (Ed, 2026-10-26: "I think E should also close, and we c. candidate only: same-topic wording and later inline date; not a verified superseding ruling.
 
 - **her night's kit > is nothing taken on a night that waits for her spell, and both on one that doesn't (the tools, the bots)** — [src/rules/kit.test.ts:26](../../src/rules/kit.test.ts#L26)
-  - current rules; keep pending design review. Currentness: unverified. Case runtime: unknown.
+  - current rules; Keep equipment, finds, canopy, telescope and Studio contracts?. Currentness: unverified. Case runtime: unknown.
   - Cited ruling: file, line 1: // Her night's kit (Ed, 2026-10-26; rules/kit.ts): her invitations from the Parlour's desk and a broom from the Workshop's lathe. Without
   - Possible later evidence: [docs/notes/house.md:100](../../docs/notes/house.md#L100): - **Workshop** (Ed, 2026-10-22/23; docs/backlog/workshop.md). **One broom station** since Ed, 2026-10-29 ("The broom area can probably just be one station instead of two; one for colours, the other for components"): the **lathe** (`config/wardrobe.json` `stations.lathe`), where her night's broom is taken too (rules/kit.ts) and the guidance's broom pin points, its cards the three slots' part cards, the sets' chips and "Her broom", the Body and Trim colours, the Fit, and the pegboard's 3 × 3 board, read-only, as its last card; the bay and the pegboard are **scenery** (their use `{ "kind": "scenery" }`: no prompt, E does nothing; still drawn, her broom resting on the lathe while she's at it, th. candidate only: same-topic wording and later inline date; not a verified superseding ruling.
   - Possible later evidence: [docs/notes/house.md:81](../../docs/notes/house.md#L81): - **Station menus** (Ed, 2026-10-21; the mock, previews/ed/station-menus-mock on claude/ed-shots; `config/wardrobe.json`, `src/rules/wardrobe.ts`, `src/app/owned.ts`, `src/ui/stationPanel.ts`, `src/rules/stations.ts`): at a dressing station (the house's reach, `rules/stations.ts` `stationOf`) it lights up with E over it, and E there slides its panel in from the left over the live game (Ed's playtest, 2026-10-26: "Menus should open when she presses E near an interactive object (dresser, map, etc) instead of them opening automatically just through proximity"; it was by nearness, no E, since 2026-10-21); E again (the pad's □) slides it out (Ed, 2026-10-26: "I think E should also close, and we c. candidate only: same-topic wording and later inline date; not a verified superseding ruling.
 
 - **her night's kit > takes her invitations once, and a broom while one's left at the lathe, one a witch** — [src/rules/kit.test.ts:34](../../src/rules/kit.test.ts#L34)
-  - current rules; keep pending design review. Currentness: unverified. Case runtime: unknown.
+  - current rules; Keep equipment, finds, canopy, telescope and Studio contracts?. Currentness: unverified. Case runtime: unknown.
   - Cited ruling: file, line 1: // Her night's kit (Ed, 2026-10-26; rules/kit.ts): her invitations from the Parlour's desk and a broom from the Workshop's lathe. Without
   - Possible later evidence: [docs/notes/house.md:81](../../docs/notes/house.md#L81): - **Station menus** (Ed, 2026-10-21; the mock, previews/ed/station-menus-mock on claude/ed-shots; `config/wardrobe.json`, `src/rules/wardrobe.ts`, `src/app/owned.ts`, `src/ui/stationPanel.ts`, `src/rules/stations.ts`): at a dressing station (the house's reach, `rules/stations.ts` `stationOf`) it lights up with E over it, and E there slides its panel in from the left over the live game (Ed's playtest, 2026-10-26: "Menus should open when she presses E near an interactive object (dresser, map, etc) instead of them opening automatically just through proximity"; it was by nearness, no E, since 2026-10-21); E again (the pad's □) slides it out (Ed, 2026-10-26: "I think E should also close, and we c. candidate only: same-topic wording and later inline date; not a verified superseding ruling.
   - Possible later evidence: [docs/notes/house.md:111](../../docs/notes/house.md#L111): - **Guidance pins** (Ed, 2026-10-26: "Pointers: let's work out what they help with and build it"; his list approved the same day): one pin at a time over what she should do next in the treehouse, icons only, no words (`rules/guidance.ts` guidanceOf, drawn by `render/view/guidance.ts` GuidePin with `view.pin`, render/pins.ts), the HUD's amber ring and Ed's icons in it, emoji drawn in pixels as the thrown 💌 is (`render/indicator.ts` emoji, render/bubbles.ts): 💤 the bed, 💌 the invitations desk, a pair of 🪽 the lathe (one 🪽 mirrored beside another), 🎁 anything new, 🧭 the map table, 🎶 the decks (the wave pointer's own 🎶 glyph, in cream: the emoji's black notes were lost on the dark floor. candidate only: same-topic wording and later inline date; not a verified superseding ruling.
 
 - **her night's kit > E at the invitations desk gives her tonight's invitations; E at the lathe, a broom** — [src/rules/kit.test.ts:41](../../src/rules/kit.test.ts#L41)
-  - current rules; keep pending design review. Currentness: unverified. Case runtime: unknown.
+  - current rules; Keep equipment, finds, canopy, telescope and Studio contracts?. Currentness: unverified. Case runtime: unknown.
   - Cited ruling: file, line 1: // Her night's kit (Ed, 2026-10-26; rules/kit.ts): her invitations from the Parlour's desk and a broom from the Workshop's lathe. Without
   - Possible later evidence: [docs/notes/house.md:111](../../docs/notes/house.md#L111): - **Guidance pins** (Ed, 2026-10-26: "Pointers: let's work out what they help with and build it"; his list approved the same day): one pin at a time over what she should do next in the treehouse, icons only, no words (`rules/guidance.ts` guidanceOf, drawn by `render/view/guidance.ts` GuidePin with `view.pin`, render/pins.ts), the HUD's amber ring and Ed's icons in it, emoji drawn in pixels as the thrown 💌 is (`render/indicator.ts` emoji, render/bubbles.ts): 💤 the bed, 💌 the invitations desk, a pair of 🪽 the lathe (one 🪽 mirrored beside another), 🎁 anything new, 🧭 the map table, 🎶 the decks (the wave pointer's own 🎶 glyph, in cream: the emoji's black notes were lost on the dark floor. candidate only: same-topic wording and later inline date; not a verified superseding ruling.
   - Possible later evidence: [docs/notes/house.md:81](../../docs/notes/house.md#L81): - **Station menus** (Ed, 2026-10-21; the mock, previews/ed/station-menus-mock on claude/ed-shots; `config/wardrobe.json`, `src/rules/wardrobe.ts`, `src/app/owned.ts`, `src/ui/stationPanel.ts`, `src/rules/stations.ts`): at a dressing station (the house's reach, `rules/stations.ts` `stationOf`) it lights up with E over it, and E there slides its panel in from the left over the live game (Ed's playtest, 2026-10-26: "Menus should open when she presses E near an interactive object (dresser, map, etc) instead of them opening automatically just through proximity"; it was by nearness, no E, since 2026-10-21); E again (the pad's □) slides it out (Ed, 2026-10-26: "I think E should also close, and we c. candidate only: same-topic wording and later inline date; not a verified superseding ruling.
 
 - **her night's kit > won't give her invitations till she carries a bag (Ed, 2026-10-29: "you can't pick up invitations until you're carrying a bag"): the desk says why** — [src/rules/kit.test.ts:54](../../src/rules/kit.test.ts#L54)
-  - current rules; keep pending design review. Currentness: unverified. Case runtime: unknown.
+  - current rules; Keep equipment, finds, canopy, telescope and Studio contracts?. Currentness: unverified. Case runtime: unknown.
   - Cited ruling: file, line 1: // Her night's kit (Ed, 2026-10-26; rules/kit.ts): her invitations from the Parlour's desk and a broom from the Workshop's lathe. Without / name, line 54: won't give her invitations till she carries a bag (Ed, 2026-10-29: "you can't pick up invitations until you're carrying a bag"): the desk says why
 
 - **her night's kit > without her invitations, her 💌 key throws nothing; with them, as ever (Ed: "no ammo that runs out")** — [src/rules/kit.test.ts:72](../../src/rules/kit.test.ts#L72)
-  - outcome stats; review simulation assertions; consider report after Ed rules. Currentness: unverified. Case runtime: unknown.
+  - current rules; Keep equipment, finds, canopy, telescope and Studio contracts?. Currentness: unverified. Case runtime: unknown.
   - Cited ruling: file, line 1: // Her night's kit (Ed, 2026-10-26; rules/kit.ts): her invitations from the Parlour's desk and a broom from the Workshop's lathe. Without
   - Possible later evidence: [docs/notes/house.md:81](../../docs/notes/house.md#L81): - **Station menus** (Ed, 2026-10-21; the mock, previews/ed/station-menus-mock on claude/ed-shots; `config/wardrobe.json`, `src/rules/wardrobe.ts`, `src/app/owned.ts`, `src/ui/stationPanel.ts`, `src/rules/stations.ts`): at a dressing station (the house's reach, `rules/stations.ts` `stationOf`) it lights up with E over it, and E there slides its panel in from the left over the live game (Ed's playtest, 2026-10-26: "Menus should open when she presses E near an interactive object (dresser, map, etc) instead of them opening automatically just through proximity"; it was by nearness, no E, since 2026-10-21); E again (the pad's □) slides it out (Ed, 2026-10-26: "I think E should also close, and we c. candidate only: same-topic wording and later inline date; not a verified superseding ruling.
   - Possible later evidence: [docs/notes/house.md:100](../../docs/notes/house.md#L100): - **Workshop** (Ed, 2026-10-22/23; docs/backlog/workshop.md). **One broom station** since Ed, 2026-10-29 ("The broom area can probably just be one station instead of two; one for colours, the other for components"): the **lathe** (`config/wardrobe.json` `stations.lathe`), where her night's broom is taken too (rules/kit.ts) and the guidance's broom pin points, its cards the three slots' part cards, the sets' chips and "Her broom", the Body and Trim colours, the Fit, and the pegboard's 3 × 3 board, read-only, as its last card; the bay and the pegboard are **scenery** (their use `{ "kind": "scenery" }`: no prompt, E does nothing; still drawn, her broom resting on the lathe while she's at it, th. candidate only: same-topic wording and later inline date; not a verified superseding ruling.
 
 - **her night's kit > without a broom, off the Terrace's open rim she falls: a thud below, a beat, then back at the magic circle; with one, she flies** — [src/rules/kit.test.ts:85](../../src/rules/kit.test.ts#L85)
-  - outcome stats; review simulation assertions; consider report after Ed rules. Currentness: unverified. Case runtime: unknown.
+  - current rules; Keep equipment, finds, canopy, telescope and Studio contracts?. Currentness: unverified. Case runtime: unknown.
   - Cited ruling: file, line 1: // Her night's kit (Ed, 2026-10-26; rules/kit.ts): her invitations from the Parlour's desk and a broom from the Workshop's lathe. Without
   - Possible later evidence: [docs/notes/house.md:81](../../docs/notes/house.md#L81): - **Station menus** (Ed, 2026-10-21; the mock, previews/ed/station-menus-mock on claude/ed-shots; `config/wardrobe.json`, `src/rules/wardrobe.ts`, `src/app/owned.ts`, `src/ui/stationPanel.ts`, `src/rules/stations.ts`): at a dressing station (the house's reach, `rules/stations.ts` `stationOf`) it lights up with E over it, and E there slides its panel in from the left over the live game (Ed's playtest, 2026-10-26: "Menus should open when she presses E near an interactive object (dresser, map, etc) instead of them opening automatically just through proximity"; it was by nearness, no E, since 2026-10-21); E again (the pad's □) slides it out (Ed, 2026-10-26: "I think E should also close, and we c. candidate only: same-topic wording and later inline date; not a verified superseding ruling.
   - Possible later evidence: [docs/notes/house.md:100](../../docs/notes/house.md#L100): - **Workshop** (Ed, 2026-10-22/23; docs/backlog/workshop.md). **One broom station** since Ed, 2026-10-29 ("The broom area can probably just be one station instead of two; one for colours, the other for components"): the **lathe** (`config/wardrobe.json` `stations.lathe`), where her night's broom is taken too (rules/kit.ts) and the guidance's broom pin points, its cards the three slots' part cards, the sets' chips and "Her broom", the Body and Trim colours, the Fit, and the pegboard's 3 × 3 board, read-only, as its last card; the bay and the pegboard are **scenery** (their use `{ "kind": "scenery" }`: no prompt, E does nothing; still drawn, her broom resting on the lathe while she's at it, th. candidate only: same-topic wording and later inline date; not a verified superseding ruling.
 
 - **her night's kit > keeps both through a knockout** — [src/rules/kit.test.ts:109](../../src/rules/kit.test.ts#L109)
-  - current rules; keep pending design review. Currentness: unverified. Case runtime: unknown.
+  - current rules; Keep equipment, finds, canopy, telescope and Studio contracts?. Currentness: unverified. Case runtime: unknown.
   - Cited ruling: file, line 1: // Her night's kit (Ed, 2026-10-26; rules/kit.ts): her invitations from the Parlour's desk and a broom from the Workshop's lathe. Without
   - Possible later evidence: [docs/notes/house.md:81](../../docs/notes/house.md#L81): - **Station menus** (Ed, 2026-10-21; the mock, previews/ed/station-menus-mock on claude/ed-shots; `config/wardrobe.json`, `src/rules/wardrobe.ts`, `src/app/owned.ts`, `src/ui/stationPanel.ts`, `src/rules/stations.ts`): at a dressing station (the house's reach, `rules/stations.ts` `stationOf`) it lights up with E over it, and E there slides its panel in from the left over the live game (Ed's playtest, 2026-10-26: "Menus should open when she presses E near an interactive object (dresser, map, etc) instead of them opening automatically just through proximity"; it was by nearness, no E, since 2026-10-21); E again (the pad's □) slides it out (Ed, 2026-10-26: "I think E should also close, and we c. candidate only: same-topic wording and later inline date; not a verified superseding ruling.
   - Possible later evidence: [docs/notes/house.md:111](../../docs/notes/house.md#L111): - **Guidance pins** (Ed, 2026-10-26: "Pointers: let's work out what they help with and build it"; his list approved the same day): one pin at a time over what she should do next in the treehouse, icons only, no words (`rules/guidance.ts` guidanceOf, drawn by `render/view/guidance.ts` GuidePin with `view.pin`, render/pins.ts), the HUD's amber ring and Ed's icons in it, emoji drawn in pixels as the thrown 💌 is (`render/indicator.ts` emoji, render/bubbles.ts): 💤 the bed, 💌 the invitations desk, a pair of 🪽 the lathe (one 🪽 mirrored beside another), 🎁 anything new, 🧭 the map table, 🎶 the decks (the wave pointer's own 🎶 glyph, in cream: the emoji's black notes were lost on the dark floor. candidate only: same-topic wording and later inline date; not a verified superseding ruling.
 
 - **uses Dining for basket use/unload and spatial smoke entrants, retaining timing and exclusions** — [src/rules/movedKitchen.test.ts:14](../../src/rules/movedKitchen.test.ts#L14)
-  - current rules; keep pending design review. Currentness: unverified. Case runtime: unknown.
+  - current rules; Keep current kitchen and explicitly supported preview contracts?. Currentness: unverified. Case runtime: unknown.
   - Cited ruling: none found in scoped comments; not proof that none exists.
 
 - **keeps classic Kitchen membership/panel exact and covers moved pot, baskets and smoke without a new radius** — [src/rules/movedKitchen.test.ts:34](../../src/rules/movedKitchen.test.ts#L34)
-  - current rules; keep pending design review. Currentness: unverified. Case runtime: unknown.
+  - current rules; Keep current kitchen and explicitly supported preview contracts?. Currentness: unverified. Case runtime: unknown.
   - Cited ruling: none found in scoped comments; not proof that none exists.
 
 - **mushrooms and brewing > keeps the inland recovery camera upright while preserving seaside stargazing** — [src/rules/mushrooms.test.ts:21](../../src/rules/mushrooms.test.ts#L21)
@@ -6569,71 +6601,45 @@ Static declarations only. All classifications and currentness are provisional. C
   - Cited ruling: none found in scoped comments; not proof that none exists.
 
 - **waking in her bedroom > is beside her bed, in its room (the Turret: Ed, 2026-10-26, "Move the bed to the turret"), on the house's floor** — [src/rules/opening.test.ts:16](../../src/rules/opening.test.ts#L16)
-  - current rules; keep pending design review. Currentness: unverified. Case runtime: unknown.
+  - current rules; Keep layout, wake-up and opening contracts?. Currentness: unverified. Case runtime: unknown.
   - Cited ruling: file, line 1: // The new opening's wake-up spot (rules/opening.ts; Ed, 2026-10-20): the chart's dive ends in her bedroom, beside her bed, on the / name, line 16: is beside her bed, in its room (the Turret: Ed, 2026-10-26, "Move the bed to the turret"), on the house's floor
   - Possible later evidence: [docs/notes/house.md:81](../../docs/notes/house.md#L81): - **Station menus** (Ed, 2026-10-21; the mock, previews/ed/station-menus-mock on claude/ed-shots; `config/wardrobe.json`, `src/rules/wardrobe.ts`, `src/app/owned.ts`, `src/ui/stationPanel.ts`, `src/rules/stations.ts`): at a dressing station (the house's reach, `rules/stations.ts` `stationOf`) it lights up with E over it, and E there slides its panel in from the left over the live game (Ed's playtest, 2026-10-26: "Menus should open when she presses E near an interactive object (dresser, map, etc) instead of them opening automatically just through proximity"; it was by nearness, no E, since 2026-10-21); E again (the pad's □) slides it out (Ed, 2026-10-26: "I think E should also close, and we c. candidate only: same-topic wording and later inline date; not a verified superseding ruling.
   - Possible later evidence: [docs/notes/house.md:111](../../docs/notes/house.md#L111): - **Guidance pins** (Ed, 2026-10-26: "Pointers: let's work out what they help with and build it"; his list approved the same day): one pin at a time over what she should do next in the treehouse, icons only, no words (`rules/guidance.ts` guidanceOf, drawn by `render/view/guidance.ts` GuidePin with `view.pin`, render/pins.ts), the HUD's amber ring and Ed's icons in it, emoji drawn in pixels as the thrown 💌 is (`render/indicator.ts` emoji, render/bubbles.ts): 💤 the bed, 💌 the invitations desk, a pair of 🪽 the lathe (one 🪽 mirrored beside another), 🎁 anything new, 🧭 the map table, 🎶 the decks (the wave pointer's own 🎶 glyph, in cream: the emoji's black notes were lost on the dark floor. candidate only: same-topic wording and later inline date; not a verified superseding ruling.
 
 - **waking in her bedroom > puts her there standing, off her decks, the camera indoors on her** — [src/rules/opening.test.ts:23](../../src/rules/opening.test.ts#L23)
-  - current rules; keep pending design review. Currentness: unverified. Case runtime: unknown.
+  - current rules; Keep layout, wake-up and opening contracts?. Currentness: unverified. Case runtime: unknown.
   - Cited ruling: file, line 1: // The new opening's wake-up spot (rules/opening.ts; Ed, 2026-10-20): the chart's dive ends in her bedroom, beside her bed, on the
   - Possible later evidence: [docs/notes/run.md:68](../../docs/notes/run.md#L68): - **The opening** (Ed, 2026-10-20; `app/opening.ts`, the storyboard and Ed's decisions in previews/ed/opening-mock/ on claude/ed-shots; on by default: the tuning's `opening.bedroom`, `?opening=bedroom\|old` for one load): every first load but a chart's arrival (`?arrive=`), a bot game, `?creator=0` or `?zoo` (Ed, 2026-10-25, on `?seed=497831`: "it should be loading straight to her bedroom in the treehouse, not the character creation screen": a link naming its seed or island too, in that island's treehouse) is home's night, asleep in the dark (`render/wakeUp.ts` `WakeCard.sleep`) while it's made, then she wakes in her bedroom there (main.ts `wakeFirst`; Ed, 2026-10-23: "the first screen should. candidate only: same-topic wording and later inline date; not a verified superseding ruling.
   - Possible later evidence: [docs/notes/house.md:75](../../docs/notes/house.md#L75): - **Arriving** (Ed, 2026-10-12, the zoom-to-island plan: Charlie's chart side and this, the game's; `src/rules/arrive.ts`, `src/app/arrive.ts`, the tuning's `arrive`): sailing from the sea chart, the chart zooms in, flies to a point over the open sea south of the island and leaves its last frame and camera in sessionStorage (`witch.arrive`: `{ v: 1, island, world, at, still, cam: { x, z, height, pitch, fov } }`, x and z metres from the dancefloor, height over the sea, pitch radians down, fov degrees), then loads `./?island=X&arrive=1`. The page puts that still up on its first paint (a little script in `index.html`), pushing in while the night builds (no bedroom), then the game's camera takes. candidate only: same-topic wording and later inline date; not a verified superseding ruling.
 
 - **waking in her bedroom > and she walks on from there, held in the house's walls** — [src/rules/opening.test.ts:34](../../src/rules/opening.test.ts#L34)
-  - outcome stats; review simulation assertions; consider report after Ed rules. Currentness: unverified. Case runtime: unknown.
+  - current rules; Keep layout, wake-up and opening contracts?. Currentness: unverified. Case runtime: unknown.
   - Cited ruling: file, line 1: // The new opening's wake-up spot (rules/opening.ts; Ed, 2026-10-20): the chart's dive ends in her bedroom, beside her bed, on the
   - Possible later evidence: [docs/notes/house.md:78](../../docs/notes/house.md#L78): - **The treehouse's rooms** (Ed, 2026-10-19; `config/house/`, `src/rules/houseRooms.ts`, `src/render/houseRooms.ts`; the mock, previews/ed/big-room-mock): placeholder plank rooms joined by corridors off the hub, walked as one floor with it (`keepInHouse`, the deck's `house.rooms`), the hub's wall open where a corridor meets it: the hat room (the hat's mirror, its colours and fit; the hats' floor), the bedroom off the landing beside it (18 × 18 m: the bed, the phone, the telephone, and since 2026-10-21 each witch's own dressing, before its door: the dressing table, face, hair, skin, earrings; the wardrobe, jacket, top, trousers; the cloak pegs, cloak, scarf; the shoe rack; Ed: three bedrooms,. candidate only: same-topic wording and later inline date; not a verified superseding ruling.
   - Possible later evidence: [docs/notes/run.md:68](../../docs/notes/run.md#L68): - **The opening** (Ed, 2026-10-20; `app/opening.ts`, the storyboard and Ed's decisions in previews/ed/opening-mock/ on claude/ed-shots; on by default: the tuning's `opening.bedroom`, `?opening=bedroom\|old` for one load): every first load but a chart's arrival (`?arrive=`), a bot game, `?creator=0` or `?zoo` (Ed, 2026-10-25, on `?seed=497831`: "it should be loading straight to her bedroom in the treehouse, not the character creation screen": a link naming its seed or island too, in that island's treehouse) is home's night, asleep in the dark (`render/wakeUp.ts` `WakeCard.sleep`) while it's made, then she wakes in her bedroom there (main.ts `wakeFirst`; Ed, 2026-10-23: "the first screen should. candidate only: same-topic wording and later inline date; not a verified superseding ruling.
 
 - **the developer potion recipe book > covers all 165 combinations exactly once, independent of ingredient order** — [src/rules/potionRecipes.test.ts:5](../../src/rules/potionRecipes.test.ts#L5)
-  - current rules; keep pending design review. Currentness: unverified. Case runtime: unknown.
+  - current rules; Keep current kitchen and explicitly supported preview contracts?. Currentness: unverified. Case runtime: unknown.
   - Cited ruling: none found in scoped comments; not proof that none exists.
 
 - **the developer potion recipe book > starts at full strength on wake, stays full eight minutes, fades the last two** — [src/rules/potionRecipes.test.ts:21](../../src/rules/potionRecipes.test.ts#L21)
-  - current rules; keep pending design review. Currentness: unverified. Case runtime: unknown.
+  - current rules; Keep current kitchen and explicitly supported preview contracts?. Currentness: unverified. Case runtime: unknown.
   - Cited ruling: none found in scoped comments; not proof that none exists.
 
 - **live potion controls > exposes defaults for all implemented effects and copies independent complete settings** — [src/rules/potionSettings.test.ts:9](../../src/rules/potionSettings.test.ts#L9)
-  - current rules; keep pending design review. Currentness: unverified. Case runtime: unknown.
+  - current rules; Keep current kitchen and explicitly supported preview contracts?. Currentness: unverified. Case runtime: unknown.
   - Cited ruling: none found in scoped comments; not proof that none exists.
 
 - **live potion controls > clamps unsafe values, ignores unknown fields, changes renderer values immediately and resets** — [src/rules/potionSettings.test.ts:19](../../src/rules/potionSettings.test.ts#L19)
-  - current rules; keep pending design review. Currentness: unverified. Case runtime: unknown.
+  - current rules; Keep current kitchen and explicitly supported preview contracts?. Currentness: unverified. Case runtime: unknown.
   - Cited ruling: none found in scoped comments; not proof that none exists.
 
 - **live potion controls > shows the shared trip indicator even for coming-soon recipes, then fades and clears it** — [src/rules/potionSettings.test.ts:32](../../src/rules/potionSettings.test.ts#L32)
-  - current rules; keep pending design review. Currentness: unverified. Case runtime: unknown.
+  - current rules; Keep current kitchen and explicitly supported preview contracts?. Currentness: unverified. Case runtime: unknown.
   - Cited ruling: none found in scoped comments; not proof that none exists.
 
 - **the map > starts the witch seated on the terrace; she stays put till the first move or rise** — [src/rules/rules.test.ts:237](../../src/rules/rules.test.ts#L237)
-  - current rules; keep pending design review. Currentness: unverified. Case runtime: unknown.
-  - Cited ruling: none found in scoped comments; not proof that none exists.
-
-- **finds, each at most once per map (Ed, v160) > no ruin, freak tree, relic, set piece or grounds arrangement appears twice, over 5 seeds** — [src/rules/rules.test.ts:1257](../../src/rules/rules.test.ts#L1257)
-  - current rules; keep pending design review. Currentness: unverified. Case runtime: unknown.
-  - Cited ruling: none found in scoped comments; not proof that none exists.
-
-- **finds, each at most once per map (Ed, v160) > places scenes, each at most once, in areas they suit, off the paths and clear of the gameplay (Ed, 2026-10-04)** — [src/rules/rules.test.ts:1270](../../src/rules/rules.test.ts#L1270)
-  - current rules; keep pending design review. Currentness: unverified. Case runtime: unknown.
-  - Cited ruling: name, line 1270: places scenes, each at most once, in areas they suit, off the paths and clear of the gameplay (Ed, 2026-10-04)
-  - Possible later evidence: [docs/notes/view.md:80](../../docs/notes/view.md#L80): - **Reveal / places kept clear** (Ed, 2026-10-26: "When the witch stands in a legend circle, scenery in front of it should fade away"; then "we might want this for other important points of interest, such as runestone areas, finds, flasks"): a **place of interest** is a centre, a radius she stands within, a ring on the ground round it and what stands at its centre (width and height); while she's within one on the ground, every sprite in a batch with a see-through pass (the trees, crowns, rim pieces, decor, relics, scenes, props; never creatures, floors or the solid gameplay batches) standing nearer the camera than its centre whose rectangle on screen covers its box (the ring and what stands . candidate only: same-topic wording and later inline date; not a verified superseding ruling.
-  - Possible later evidence: [docs/notes/house.md:97](../../docs/notes/house.md#L97): - **Finds / travel trunk** (Ed, 2026-10-21, the station menus' part (b): "The items are found in the forest like other permanent upgrades. Hints are given by the crystal ball"; `src/rules/finds.ts`, `render/view/finds.ts`): each night the island she's on holds one permanent upgrade she hasn't found, a wearable in the trunk or a broom part in a wreck (the finds pool, below; the wearables `FINDABLE`, the wardrobe's items not hers from the start, never a broom shape: brooms are made of parts), drawn as one flask-sized object on a clear patch in its own pale gold-white light (the finds style guide, `docs/art-guide/FINDS.md`, Ed 2026-10-23: clothes a folded bundle, `find-bundle`; bags a little ba. candidate only: same-topic wording and later inline date; not a verified superseding ruling.
-
-- **finds, each at most once per map (Ed, v160) > gives each scene a footprint at least the art's own** — [src/rules/rules.test.ts:1286](../../src/rules/rules.test.ts#L1286)
-  - current rules; keep pending design review. Currentness: unverified. Case runtime: unknown.
-  - Cited ruling: none found in scoped comments; not proof that none exists.
-
-- **finds, each at most once per map (Ed, v160) > stairs stand only by ravines, rocky slopes, cave mouths and stone shrines** — [src/rules/rules.test.ts:1290](../../src/rules/rules.test.ts#L1290)
-  - current rules; keep pending design review. Currentness: unverified. Case runtime: unknown.
-  - Cited ruling: none found in scoped comments; not proof that none exists.
-
-- **finds, each at most once per map (Ed, v160) > give each set piece to one area only, which has room for it** — [src/rules/rules.test.ts:1294](../../src/rules/rules.test.ts#L1294)
-  - current rules; keep pending design review. Currentness: unverified. Case runtime: unknown.
-  - Cited ruling: none found in scoped comments; not proof that none exists.
-
-- **finds, each at most once per map (Ed, v160) > keep soundsystems and set pieces off the paths, so paths run on unbroken** — [src/rules/rules.test.ts:1306](../../src/rules/rules.test.ts#L1306)
-  - current rules; keep pending design review. Currentness: unverified. Case runtime: unknown.
+  - current rules; Keep layout, wake-up and opening contracts?. Currentness: unverified. Case runtime: unknown.
   - Cited ruling: none found in scoped comments; not proof that none exists.
 
 - **the dressing stations by nearness > are the creator's stations, and there are some** — [src/rules/stations.test.ts:33](../../src/rules/stations.test.ts#L33)
@@ -6745,75 +6751,75 @@ Static declarations only. All classifications and currentness are provisional. C
   - Possible later evidence: [docs/notes/house.md:78](../../docs/notes/house.md#L78): - **The treehouse's rooms** (Ed, 2026-10-19; `config/house/`, `src/rules/houseRooms.ts`, `src/render/houseRooms.ts`; the mock, previews/ed/big-room-mock): placeholder plank rooms joined by corridors off the hub, walked as one floor with it (`keepInHouse`, the deck's `house.rooms`), the hub's wall open where a corridor meets it: the hat room (the hat's mirror, its colours and fit; the hats' floor), the bedroom off the landing beside it (18 × 18 m: the bed, the phone, the telephone, and since 2026-10-21 each witch's own dressing, before its door: the dressing table, face, hair, skin, earrings; the wardrobe, jacket, top, trousers; the cloak pegs, cloak, scarf; the shoe rack; Ed: three bedrooms,. candidate only: same-topic wording and later inline date; not a verified superseding ruling.
 
 - **the Studio's keys > plays three rows of the scale, the middle row from the root, every note in key** — [src/rules/studio.test.ts:11](../../src/rules/studio.test.ts#L11)
-  - current rules; keep pending design review. Currentness: unverified. Case runtime: unknown.
+  - current rules; Keep equipment, finds, canopy, telescope and Studio contracts?. Currentness: unverified. Case runtime: unknown.
   - Cited ruling: none found in scoped comments; not proof that none exists.
 
 - **the Studio's keys > gives every drum key and gamepad pad a kit's real patch** — [src/rules/studio.test.ts:24](../../src/rules/studio.test.ts#L24)
-  - current rules; keep pending design review. Currentness: unverified. Case runtime: unknown.
+  - current rules; Keep equipment, finds, canopy, telescope and Studio contracts?. Currentness: unverified. Case runtime: unknown.
   - Cited ruling: none found in scoped comments; not proof that none exists.
 
 - **the Studio's keys > has every sound a real patch** — [src/rules/studio.test.ts:30](../../src/rules/studio.test.ts#L30)
-  - current rules; keep pending design review. Currentness: unverified. Case runtime: unknown.
+  - current rules; Keep equipment, finds, canopy, telescope and Studio contracts?. Currentness: unverified. Case runtime: unknown.
   - Cited ruling: none found in scoped comments; not proof that none exists.
 
 - **the Studio's keys > runs the number row on the shared loop and her own sound** — [src/rules/studio.test.ts:34](../../src/rules/studio.test.ts#L34)
-  - current rules; keep pending design review. Currentness: unverified. Case runtime: unknown.
+  - current rules; Keep equipment, finds, canopy, telescope and Studio contracts?. Currentness: unverified. Case runtime: unknown.
   - Cited ruling: none found in scoped comments; not proof that none exists.
 
 - **the Studio's loop > plays real patches in every style, a kick on the beat, never on the off-beat sixteenths** — [src/rules/studio.test.ts:49](../../src/rules/studio.test.ts#L49)
-  - current rules; keep pending design review. Currentness: unverified. Case runtime: unknown.
+  - current rules; Keep equipment, finds, canopy, telescope and Studio contracts?. Currentness: unverified. Case runtime: unknown.
   - Cited ruling: none found in scoped comments; not proof that none exists.
 
 - **the Studio's instruments by nearness > stands the drum kit, the synth and the mic in the Studio; no record shelf (Ed, 2026-10-29: "Remove record station, instead have dj booth": her decks)** — [src/rules/studio.test.ts:64](../../src/rules/studio.test.ts#L64)
-  - current rules; keep pending design review. Currentness: unverified. Case runtime: unknown.
+  - current rules; Keep equipment, finds, canopy, telescope and Studio contracts?. Currentness: unverified. Case runtime: unknown.
   - Cited ruling: name, line 64: stands the drum kit, the synth and the mic in the Studio; no record shelf (Ed, 2026-10-29: "Remove record station, instead have dj booth": her decks)
 
 - **the Studio's instruments by nearness > lights the instrument she walks up to, is at it only on E there, holds it a little past reach, and lets go on Esc (Ed's playtest, 2026-10-26)** — [src/rules/studio.test.ts:68](../../src/rules/studio.test.ts#L68)
-  - current rules; keep pending design review. Currentness: unverified. Case runtime: unknown.
+  - current rules; Keep equipment, finds, canopy, telescope and Studio contracts?. Currentness: unverified. Case runtime: unknown.
   - Cited ruling: name, line 68: lights the instrument she walks up to, is at it only on E there, holds it a little past reach, and lets go on Esc (Ed's playtest, 2026-10-26)
   - Possible later evidence: [docs/notes/house.md:81](../../docs/notes/house.md#L81): - **Station menus** (Ed, 2026-10-21; the mock, previews/ed/station-menus-mock on claude/ed-shots; `config/wardrobe.json`, `src/rules/wardrobe.ts`, `src/app/owned.ts`, `src/ui/stationPanel.ts`, `src/rules/stations.ts`): at a dressing station (the house's reach, `rules/stations.ts` `stationOf`) it lights up with E over it, and E there slides its panel in from the left over the live game (Ed's playtest, 2026-10-26: "Menus should open when she presses E near an interactive object (dresser, map, etc) instead of them opening automatically just through proximity"; it was by nearness, no E, since 2026-10-21); E again (the pad's □) slides it out (Ed, 2026-10-26: "I think E should also close, and we c. candidate only: same-topic wording and later inline date; not a verified superseding ruling.
   - Possible later evidence: [docs/notes/run.md:85](../../docs/notes/run.md#L85): - **Pad layout** (Ed, 2026-10-28, with his swap of cross and square the same day; swapped back in play, Ed 2026-10-29: "swap x and square on the gamepad; square is use and place, x is takeoff/land"): the left stick moves, the right aims (the d-pad no longer moves her); **square** (□) uses what's here (opens a station, takes a rune, puts down or picks up a sigil; held, a run) and nothing else; **cross** (✕) takes off or lands in play, never by context ("rising is not quite a free action"), and chooses in a menu (menus unchanged: ✕ chooses, ○ goes back); **circle** (○) dodges (and **L2**: Ed, 2026-10-29, "Left trigger needs to be dodge"), and in a menu goes back or closes it; **triangle** (△) . candidate only: same-topic wording and later inline date; not a verified superseding ruling.
 
 - **the telescope (rules/telescope.ts) > starts north and wide, the game's own way** — [src/rules/telescope.test.ts:8](../../src/rules/telescope.test.ts#L8)
-  - current rules; keep pending design review. Currentness: unverified. Case runtime: unknown.
+  - current rules; Keep equipment, finds, canopy, telescope and Studio contracts?. Currentness: unverified. Case runtime: unknown.
   - Cited ruling: none found in scoped comments; not proof that none exists.
 
 - **the telescope (rules/telescope.ts) > pans all the way round, either way, and wraps** — [src/rules/telescope.test.ts:15](../../src/rules/telescope.test.ts#L15)
-  - current rules; keep pending design review. Currentness: unverified. Case runtime: unknown.
+  - current rules; Keep equipment, finds, canopy, telescope and Studio contracts?. Currentness: unverified. Case runtime: unknown.
   - Cited ruling: none found in scoped comments; not proof that none exists.
 
 - **the telescope (rules/telescope.ts) > turns straight by the mouse's degrees, wrapping round and tilting no further than its floor and tiltMax** — [src/rules/telescope.test.ts:23](../../src/rules/telescope.test.ts#L23)
-  - current rules; keep pending design review. Currentness: unverified. Case runtime: unknown.
+  - current rules; Keep equipment, finds, canopy, telescope and Studio contracts?. Currentness: unverified. Case runtime: unknown.
   - Cited ruling: none found in scoped comments; not proof that none exists.
 
 - **the telescope (rules/telescope.ts) > pans slower zoomed in, so the view moves alike on screen** — [src/rules/telescope.test.ts:30](../../src/rules/telescope.test.ts#L30)
-  - current rules; keep pending design review. Currentness: unverified. Case runtime: unknown.
+  - current rules; Keep equipment, finds, canopy, telescope and Studio contracts?. Currentness: unverified. Case runtime: unknown.
   - Cited ruling: none found in scoped comments; not proof that none exists.
 
 - **the telescope (rules/telescope.ts) > tilts up the stick from the forest to tiltMax, and no further either way (Ed, 2026-10-22: to look at the stars)** — [src/rules/telescope.test.ts:35](../../src/rules/telescope.test.ts#L35)
-  - current rules; keep pending design review. Currentness: unverified. Case runtime: unknown.
+  - current rules; Keep equipment, finds, canopy, telescope and Studio contracts?. Currentness: unverified. Case runtime: unknown.
   - Cited ruling: name, line 35: tilts up the stick from the forest to tiltMax, and no further either way (Ed, 2026-10-22: to look at the stars)
   - Possible later evidence: [docs/notes/house.md:81](../../docs/notes/house.md#L81): - **Station menus** (Ed, 2026-10-21; the mock, previews/ed/station-menus-mock on claude/ed-shots; `config/wardrobe.json`, `src/rules/wardrobe.ts`, `src/app/owned.ts`, `src/ui/stationPanel.ts`, `src/rules/stations.ts`): at a dressing station (the house's reach, `rules/stations.ts` `stationOf`) it lights up with E over it, and E there slides its panel in from the left over the live game (Ed's playtest, 2026-10-26: "Menus should open when she presses E near an interactive object (dresser, map, etc) instead of them opening automatically just through proximity"; it was by nearness, no E, since 2026-10-21); E again (the pad's □) slides it out (Ed, 2026-10-26: "I think E should also close, and we c. candidate only: same-topic wording and later inline date; not a verified superseding ruling.
   - Possible later evidence: [docs/notes/house.md:97](../../docs/notes/house.md#L97): - **Finds / travel trunk** (Ed, 2026-10-21, the station menus' part (b): "The items are found in the forest like other permanent upgrades. Hints are given by the crystal ball"; `src/rules/finds.ts`, `render/view/finds.ts`): each night the island she's on holds one permanent upgrade she hasn't found, a wearable in the trunk or a broom part in a wreck (the finds pool, below; the wearables `FINDABLE`, the wardrobe's items not hers from the start, never a broom shape: brooms are made of parts), drawn as one flask-sized object on a clear patch in its own pale gold-white light (the finds style guide, `docs/art-guide/FINDS.md`, Ed 2026-10-23: clothes a folded bundle, `find-bundle`; bags a little ba. candidate only: same-topic wording and later inline date; not a verified superseding ruling.
 
 - **the telescope (rules/telescope.ts) > zooms with the wheel, the zoom keys and the shoulder buttons, within wide and close** — [src/rules/telescope.test.ts:44](../../src/rules/telescope.test.ts#L44)
-  - current rules; keep pending design review. Currentness: unverified. Case runtime: unknown.
+  - current rules; Keep equipment, finds, canopy, telescope and Studio contracts?. Currentness: unverified. Case runtime: unknown.
   - Cited ruling: none found in scoped comments; not proof that none exists.
 
 - **the telescope (rules/telescope.ts) > looks down to the forest over the bend at its lowest** — [src/rules/telescope.test.ts:49](../../src/rules/telescope.test.ts#L49)
-  - current rules; keep pending design review. Currentness: unverified. Case runtime: unknown.
+  - current rules; Keep equipment, finds, canopy, telescope and Studio contracts?. Currentness: unverified. Case runtime: unknown.
   - Cited ruling: none found in scoped comments; not proof that none exists.
 
 - **the telescope (rules/telescope.ts) > names the compass points** — [src/rules/telescope.test.ts:55](../../src/rules/telescope.test.ts#L55)
-  - current rules; keep pending design review. Currentness: unverified. Case runtime: unknown.
+  - current rules; Keep equipment, finds, canopy, telescope and Studio contracts?. Currentness: unverified. Case runtime: unknown.
   - Cited ruling: none found in scoped comments; not proof that none exists.
 
 - **the telescope (rules/telescope.ts) > shows the moon only looking its way** — [src/rules/telescope.test.ts:58](../../src/rules/telescope.test.ts#L58)
-  - current rules; keep pending design review. Currentness: unverified. Case runtime: unknown.
+  - current rules; Keep equipment, finds, canopy, telescope and Studio contracts?. Currentness: unverified. Case runtime: unknown.
   - Cited ruling: none found in scoped comments; not proof that none exists.
 
 - **the telescope (rules/telescope.ts) > puts the moon in the sky: its altitude and bearing the same however the view pans, tilts and zooms (Ed's playtest, v4522)** — [src/rules/telescope.test.ts:65](../../src/rules/telescope.test.ts#L65)
-  - current rules; keep pending design review. Currentness: unverified. Case runtime: unknown.
+  - current rules; Keep equipment, finds, canopy, telescope and Studio contracts?. Currentness: unverified. Case runtime: unknown.
   - Cited ruling: name, line 65: puts the moon in the sky: its altitude and bearing the same however the view pans, tilts and zooms (Ed's playtest, v4522)
 
 - **the treehouse deck > starts her at her decks on the deck, 22 m up, by the south rail behind the decks** — [src/rules/treehouse.test.ts:25](../../src/rules/treehouse.test.ts#L25)
@@ -6925,335 +6931,329 @@ Static declarations only. All classifications and currentness are provisional. C
   - Possible later evidence: [docs/notes/house.md:79](../../docs/notes/house.md#L79): - **The oak** (Ed, 2026-10-24: "it is a large old oak tree with wide, thick, decumbent branches ... The floors are wooden but not planks"; the layout v4 he approved, previews/ed/treehouse-layout-v4 on claude/treehouse-trunk-mock; "I think best to build it and we will find out in game"): the house is one floor shape, `config/house/shape.js` (the mock's own distance field: its noise, so its shapes), six trunk rooms in a soft S (Dining Room, Terrace, Parlour, Boudoir, her Bedroom, the Turret; a room file's `trunk`, bottom to top by `order`) and a pair of branch rooms off each of the lower four (`from`, `bend`: Workshop and Kitchen, Cloakroom and Studio, Solarium and Bestiary, Bedrooms 2 and 3 `. candidate only: same-topic wording and later inline date; not a verified superseding ruling.
 
 - **the alarm > rings with her in bed, held there, the night not started** — [src/rules/wakeUp.test.ts:41](../../src/rules/wakeUp.test.ts#L41)
-  - current rules; keep pending design review. Currentness: unverified. Case runtime: unknown.
+  - current rules; Keep layout, wake-up and opening contracts?. Currentness: unverified. Case runtime: unknown.
   - Cited ruling: file, line 1: // The new opening's wake-up (rules/wakeUp.ts; Ed, 2026-10-20): each beat's input (the alarm, E snoozing it five seconds a time as / file, line 3: // she's up, and on nothing else (the oak, Ed 2026-10-24: no curtains, nothing waiting on the island's build; Ed 2026-10-25: not on
   - Possible later evidence: [docs/notes/run.md:68](../../docs/notes/run.md#L68): - **The opening** (Ed, 2026-10-20; `app/opening.ts`, the storyboard and Ed's decisions in previews/ed/opening-mock/ on claude/ed-shots; on by default: the tuning's `opening.bedroom`, `?opening=bedroom\|old` for one load): every first load but a chart's arrival (`?arrive=`), a bot game, `?creator=0` or `?zoo` (Ed, 2026-10-25, on `?seed=497831`: "it should be loading straight to her bedroom in the treehouse, not the character creation screen": a link naming its seed or island too, in that island's treehouse) is home's night, asleep in the dark (`render/wakeUp.ts` `WakeCard.sleep`) while it's made, then she wakes in her bedroom there (main.ts `wakeFirst`; Ed, 2026-10-23: "the first screen should. candidate only: same-topic wording and later inline date; not a verified superseding ruling.
   - Possible later evidence: [docs/notes/house.md:79](../../docs/notes/house.md#L79): - **The oak** (Ed, 2026-10-24: "it is a large old oak tree with wide, thick, decumbent branches ... The floors are wooden but not planks"; the layout v4 he approved, previews/ed/treehouse-layout-v4 on claude/treehouse-trunk-mock; "I think best to build it and we will find out in game"): the house is one floor shape, `config/house/shape.js` (the mock's own distance field: its noise, so its shapes), six trunk rooms in a soft S (Dining Room, Terrace, Parlour, Boudoir, her Bedroom, the Turret; a room file's `trunk`, bottom to top by `order`) and a pair of branch rooms off each of the lower four (`from`, `bend`: Workshop and Kitchen, Cloakroom and Studio, Solarium and Bestiary, Bedrooms 2 and 3 `. candidate only: same-topic wording and later inline date; not a verified superseding ruling.
 
 - **the alarm > E snoozes it, but not a press the moment it starts ringing** — [src/rules/wakeUp.test.ts:49](../../src/rules/wakeUp.test.ts#L49)
-  - current rules; keep pending design review. Currentness: unverified. Case runtime: unknown.
+  - current rules; Keep layout, wake-up and opening contracts?. Currentness: unverified. Case runtime: unknown.
   - Cited ruling: file, line 1: // The new opening's wake-up (rules/wakeUp.ts; Ed, 2026-10-20): each beat's input (the alarm, E snoozing it five seconds a time as / file, line 3: // she's up, and on nothing else (the oak, Ed 2026-10-24: no curtains, nothing waiting on the island's build; Ed 2026-10-25: not on
   - Possible later evidence: [docs/notes/run.md:68](../../docs/notes/run.md#L68): - **The opening** (Ed, 2026-10-20; `app/opening.ts`, the storyboard and Ed's decisions in previews/ed/opening-mock/ on claude/ed-shots; on by default: the tuning's `opening.bedroom`, `?opening=bedroom\|old` for one load): every first load but a chart's arrival (`?arrive=`), a bot game, `?creator=0` or `?zoo` (Ed, 2026-10-25, on `?seed=497831`: "it should be loading straight to her bedroom in the treehouse, not the character creation screen": a link naming its seed or island too, in that island's treehouse) is home's night, asleep in the dark (`render/wakeUp.ts` `WakeCard.sleep`) while it's made, then she wakes in her bedroom there (main.ts `wakeFirst`; Ed, 2026-10-23: "the first screen should. candidate only: same-topic wording and later inline date; not a verified superseding ruling.
   - Possible later evidence: [docs/notes/house.md:81](../../docs/notes/house.md#L81): - **Station menus** (Ed, 2026-10-21; the mock, previews/ed/station-menus-mock on claude/ed-shots; `config/wardrobe.json`, `src/rules/wardrobe.ts`, `src/app/owned.ts`, `src/ui/stationPanel.ts`, `src/rules/stations.ts`): at a dressing station (the house's reach, `rules/stations.ts` `stationOf`) it lights up with E over it, and E there slides its panel in from the left over the live game (Ed's playtest, 2026-10-26: "Menus should open when she presses E near an interactive object (dresser, map, etc) instead of them opening automatically just through proximity"; it was by nearness, no E, since 2026-10-21); E again (the pad's □) slides it out (Ed, 2026-10-26: "I think E should also close, and we c. candidate only: same-topic wording and later inline date; not a verified superseding ruling.
 
 - **the snooze > lasts five seconds, then the alarm rings again; as often as she likes** — [src/rules/wakeUp.test.ts:60](../../src/rules/wakeUp.test.ts#L60)
-  - outcome stats; review simulation assertions; consider report after Ed rules. Currentness: unverified. Case runtime: unknown.
+  - current rules; Keep layout, wake-up and opening contracts?. Currentness: unverified. Case runtime: unknown.
   - Cited ruling: file, line 1: // The new opening's wake-up (rules/wakeUp.ts; Ed, 2026-10-20): each beat's input (the alarm, E snoozing it five seconds a time as / file, line 3: // she's up, and on nothing else (the oak, Ed 2026-10-24: no curtains, nothing waiting on the island's build; Ed 2026-10-25: not on
   - Possible later evidence: [docs/notes/run.md:68](../../docs/notes/run.md#L68): - **The opening** (Ed, 2026-10-20; `app/opening.ts`, the storyboard and Ed's decisions in previews/ed/opening-mock/ on claude/ed-shots; on by default: the tuning's `opening.bedroom`, `?opening=bedroom\|old` for one load): every first load but a chart's arrival (`?arrive=`), a bot game, `?creator=0` or `?zoo` (Ed, 2026-10-25, on `?seed=497831`: "it should be loading straight to her bedroom in the treehouse, not the character creation screen": a link naming its seed or island too, in that island's treehouse) is home's night, asleep in the dark (`render/wakeUp.ts` `WakeCard.sleep`) while it's made, then she wakes in her bedroom there (main.ts `wakeFirst`; Ed, 2026-10-23: "the first screen should. candidate only: same-topic wording and later inline date; not a verified superseding ruling.
   - Possible later evidence: [docs/notes/house.md:79](../../docs/notes/house.md#L79): - **The oak** (Ed, 2026-10-24: "it is a large old oak tree with wide, thick, decumbent branches ... The floors are wooden but not planks"; the layout v4 he approved, previews/ed/treehouse-layout-v4 on claude/treehouse-trunk-mock; "I think best to build it and we will find out in game"): the house is one floor shape, `config/house/shape.js` (the mock's own distance field: its noise, so its shapes), six trunk rooms in a soft S (Dining Room, Terrace, Parlour, Boudoir, her Bedroom, the Turret; a room file's `trunk`, bottom to top by `order`) and a pair of branch rooms off each of the lower four (`from`, `bend`: Workshop and Kitchen, Cloakroom and Studio, Solarium and Bestiary, Bedrooms 2 and 3 `. candidate only: same-topic wording and later inline date; not a verified superseding ruling.
 
 - **the snooze > E while snoozing does nothing more** — [src/rules/wakeUp.test.ts:71](../../src/rules/wakeUp.test.ts#L71)
-  - current rules; keep pending design review. Currentness: unverified. Case runtime: unknown.
+  - current rules; Keep layout, wake-up and opening contracts?. Currentness: unverified. Case runtime: unknown.
   - Cited ruling: file, line 1: // The new opening's wake-up (rules/wakeUp.ts; Ed, 2026-10-20): each beat's input (the alarm, E snoozing it five seconds a time as / file, line 3: // she's up, and on nothing else (the oak, Ed 2026-10-24: no curtains, nothing waiting on the island's build; Ed 2026-10-25: not on
   - Possible later evidence: [docs/notes/run.md:68](../../docs/notes/run.md#L68): - **The opening** (Ed, 2026-10-20; `app/opening.ts`, the storyboard and Ed's decisions in previews/ed/opening-mock/ on claude/ed-shots; on by default: the tuning's `opening.bedroom`, `?opening=bedroom\|old` for one load): every first load but a chart's arrival (`?arrive=`), a bot game, `?creator=0` or `?zoo` (Ed, 2026-10-25, on `?seed=497831`: "it should be loading straight to her bedroom in the treehouse, not the character creation screen": a link naming its seed or island too, in that island's treehouse) is home's night, asleep in the dark (`render/wakeUp.ts` `WakeCard.sleep`) while it's made, then she wakes in her bedroom there (main.ts `wakeFirst`; Ed, 2026-10-23: "the first screen should. candidate only: same-topic wording and later inline date; not a verified superseding ruling.
   - Possible later evidence: [docs/notes/house.md:79](../../docs/notes/house.md#L79): - **The oak** (Ed, 2026-10-24: "it is a large old oak tree with wide, thick, decumbent branches ... The floors are wooden but not planks"; the layout v4 he approved, previews/ed/treehouse-layout-v4 on claude/treehouse-trunk-mock; "I think best to build it and we will find out in game"): the house is one floor shape, `config/house/shape.js` (the mock's own distance field: its noise, so its shapes), six trunk rooms in a soft S (Dining Room, Terrace, Parlour, Boudoir, her Bedroom, the Turret; a room file's `trunk`, bottom to top by `order`) and a pair of branch rooms off each of the lower four (`from`, `bend`: Workshop and Kitchen, Cloakroom and Studio, Solarium and Bestiary, Bedrooms 2 and 3 `. candidate only: same-topic wording and later inline date; not a verified superseding ruling.
 
 - **getting up > `moving gets her up from the ${from}: the stretch, held, then beside her bed`** — [src/rules/wakeUp.test.ts:79](../../src/rules/wakeUp.test.ts#L79)
-  - outcome stats; review simulation assertions; consider report after Ed rules. Currentness: unverified. Case runtime: unknown.
+  - current rules; Keep layout, wake-up and opening contracts?. Currentness: unverified. Case runtime: unknown.
   - Cited ruling: file, line 1: // The new opening's wake-up (rules/wakeUp.ts; Ed, 2026-10-20): each beat's input (the alarm, E snoozing it five seconds a time as / file, line 3: // she's up, and on nothing else (the oak, Ed 2026-10-24: no curtains, nothing waiting on the island's build; Ed 2026-10-25: not on
   - Possible later evidence: [docs/notes/run.md:68](../../docs/notes/run.md#L68): - **The opening** (Ed, 2026-10-20; `app/opening.ts`, the storyboard and Ed's decisions in previews/ed/opening-mock/ on claude/ed-shots; on by default: the tuning's `opening.bedroom`, `?opening=bedroom\|old` for one load): every first load but a chart's arrival (`?arrive=`), a bot game, `?creator=0` or `?zoo` (Ed, 2026-10-25, on `?seed=497831`: "it should be loading straight to her bedroom in the treehouse, not the character creation screen": a link naming its seed or island too, in that island's treehouse) is home's night, asleep in the dark (`render/wakeUp.ts` `WakeCard.sleep`) while it's made, then she wakes in her bedroom there (main.ts `wakeFirst`; Ed, 2026-10-23: "the first screen should. candidate only: same-topic wording and later inline date; not a verified superseding ruling.
   - Possible later evidence: [docs/notes/house.md:79](../../docs/notes/house.md#L79): - **The oak** (Ed, 2026-10-24: "it is a large old oak tree with wide, thick, decumbent branches ... The floors are wooden but not planks"; the layout v4 he approved, previews/ed/treehouse-layout-v4 on claude/treehouse-trunk-mock; "I think best to build it and we will find out in game"): the house is one floor shape, `config/house/shape.js` (the mock's own distance field: its noise, so its shapes), six trunk rooms in a soft S (Dining Room, Terrace, Parlour, Boudoir, her Bedroom, the Turret; a room file's `trunk`, bottom to top by `order`) and a pair of branch rooms off each of the lower four (`from`, `bend`: Workshop and Kitchen, Cloakroom and Studio, Solarium and Bestiary, Bedrooms 2 and 3 `. candidate only: same-topic wording and later inline date; not a verified superseding ruling.
 
 - **getting up > a rise does too, but she doesn't fly** — [src/rules/wakeUp.test.ts:94](../../src/rules/wakeUp.test.ts#L94)
-  - current rules; keep pending design review. Currentness: unverified. Case runtime: unknown.
+  - current rules; Keep layout, wake-up and opening contracts?. Currentness: unverified. Case runtime: unknown.
   - Cited ruling: file, line 1: // The new opening's wake-up (rules/wakeUp.ts; Ed, 2026-10-20): each beat's input (the alarm, E snoozing it five seconds a time as / file, line 3: // she's up, and on nothing else (the oak, Ed 2026-10-24: no curtains, nothing waiting on the island's build; Ed 2026-10-25: not on
   - Possible later evidence: [docs/notes/run.md:68](../../docs/notes/run.md#L68): - **The opening** (Ed, 2026-10-20; `app/opening.ts`, the storyboard and Ed's decisions in previews/ed/opening-mock/ on claude/ed-shots; on by default: the tuning's `opening.bedroom`, `?opening=bedroom\|old` for one load): every first load but a chart's arrival (`?arrive=`), a bot game, `?creator=0` or `?zoo` (Ed, 2026-10-25, on `?seed=497831`: "it should be loading straight to her bedroom in the treehouse, not the character creation screen": a link naming its seed or island too, in that island's treehouse) is home's night, asleep in the dark (`render/wakeUp.ts` `WakeCard.sleep`) while it's made, then she wakes in her bedroom there (main.ts `wakeFirst`; Ed, 2026-10-23: "the first screen should. candidate only: same-topic wording and later inline date; not a verified superseding ruling.
   - Possible later evidence: [docs/notes/house.md:79](../../docs/notes/house.md#L79): - **The oak** (Ed, 2026-10-24: "it is a large old oak tree with wide, thick, decumbent branches ... The floors are wooden but not planks"; the layout v4 he approved, previews/ed/treehouse-layout-v4 on claude/treehouse-trunk-mock; "I think best to build it and we will find out in game"): the house is one floor shape, `config/house/shape.js` (the mock's own distance field: its noise, so its shapes), six trunk rooms in a soft S (Dining Room, Terrace, Parlour, Boudoir, her Bedroom, the Turret; a room file's `trunk`, bottom to top by `order`) and a pair of branch rooms off each of the lower four (`from`, `bend`: Workshop and Kitchen, Cloakroom and Studio, Solarium and Bestiary, Bedrooms 2 and 3 `. candidate only: same-topic wording and later inline date; not a verified superseding ruling.
 
 - **the dressing table > opens its mirror by itself the first time she comes to it, once** — [src/rules/wakeUp.test.ts:104](../../src/rules/wakeUp.test.ts#L104)
-  - current rules; keep pending design review. Currentness: unverified. Case runtime: unknown.
+  - current rules; Keep layout, wake-up and opening contracts?. Currentness: unverified. Case runtime: unknown.
   - Cited ruling: file, line 1: // The new opening's wake-up (rules/wakeUp.ts; Ed, 2026-10-20): each beat's input (the alarm, E snoozing it five seconds a time as / file, line 3: // she's up, and on nothing else (the oak, Ed 2026-10-24: no curtains, nothing waiting on the island's build; Ed 2026-10-25: not on
   - Possible later evidence: [docs/notes/run.md:68](../../docs/notes/run.md#L68): - **The opening** (Ed, 2026-10-20; `app/opening.ts`, the storyboard and Ed's decisions in previews/ed/opening-mock/ on claude/ed-shots; on by default: the tuning's `opening.bedroom`, `?opening=bedroom\|old` for one load): every first load but a chart's arrival (`?arrive=`), a bot game, `?creator=0` or `?zoo` (Ed, 2026-10-25, on `?seed=497831`: "it should be loading straight to her bedroom in the treehouse, not the character creation screen": a link naming its seed or island too, in that island's treehouse) is home's night, asleep in the dark (`render/wakeUp.ts` `WakeCard.sleep`) while it's made, then she wakes in her bedroom there (main.ts `wakeFirst`; Ed, 2026-10-23: "the first screen should. candidate only: same-topic wording and later inline date; not a verified superseding ruling.
   - Possible later evidence: [docs/notes/house.md:81](../../docs/notes/house.md#L81): - **Station menus** (Ed, 2026-10-21; the mock, previews/ed/station-menus-mock on claude/ed-shots; `config/wardrobe.json`, `src/rules/wardrobe.ts`, `src/app/owned.ts`, `src/ui/stationPanel.ts`, `src/rules/stations.ts`): at a dressing station (the house's reach, `rules/stations.ts` `stationOf`) it lights up with E over it, and E there slides its panel in from the left over the live game (Ed's playtest, 2026-10-26: "Menus should open when she presses E near an interactive object (dresser, map, etc) instead of them opening automatically just through proximity"; it was by nearness, no E, since 2026-10-21); E again (the pad's □) slides it out (Ed, 2026-10-26: "I think E should also close, and we c. candidate only: same-topic wording and later inline date; not a verified superseding ruling.
 
 - **the door, and nothing waiting on the build (the oak, Ed 2026-10-24: "No curtains, and no loading gate") > up, she walks out of the bedroom's door in her nightie, the island built or not (Ed, 2026-10-25: "I should be able to leave regardless")** — [src/rules/wakeUp.test.ts:115](../../src/rules/wakeUp.test.ts#L115)
-  - current rules; keep pending design review. Currentness: unverified. Case runtime: unknown.
+  - current rules; Keep layout, wake-up and opening contracts?. Currentness: unverified. Case runtime: unknown.
   - Cited ruling: file, line 1: // The new opening's wake-up (rules/wakeUp.ts; Ed, 2026-10-20): each beat's input (the alarm, E snoozing it five seconds a time as / file, line 3: // she's up, and on nothing else (the oak, Ed 2026-10-24: no curtains, nothing waiting on the island's build; Ed 2026-10-25: not on / name, line 115: up, she walks out of the bedroom's door in her nightie, the island built or not (Ed, 2026-10-25: "I should be able to leave regardless")
   - Possible later evidence: [docs/notes/run.md:68](../../docs/notes/run.md#L68): - **The opening** (Ed, 2026-10-20; `app/opening.ts`, the storyboard and Ed's decisions in previews/ed/opening-mock/ on claude/ed-shots; on by default: the tuning's `opening.bedroom`, `?opening=bedroom\|old` for one load): every first load but a chart's arrival (`?arrive=`), a bot game, `?creator=0` or `?zoo` (Ed, 2026-10-25, on `?seed=497831`: "it should be loading straight to her bedroom in the treehouse, not the character creation screen": a link naming its seed or island too, in that island's treehouse) is home's night, asleep in the dark (`render/wakeUp.ts` `WakeCard.sleep`) while it's made, then she wakes in her bedroom there (main.ts `wakeFirst`; Ed, 2026-10-23: "the first screen should. candidate only: same-topic wording and later inline date; not a verified superseding ruling.
   - Possible later evidence: [docs/notes/house.md:79](../../docs/notes/house.md#L79): - **The oak** (Ed, 2026-10-24: "it is a large old oak tree with wide, thick, decumbent branches ... The floors are wooden but not planks"; the layout v4 he approved, previews/ed/treehouse-layout-v4 on claude/treehouse-trunk-mock; "I think best to build it and we will find out in game"): the house is one floor shape, `config/house/shape.js` (the mock's own distance field: its noise, so its shapes), six trunk rooms in a soft S (Dining Room, Terrace, Parlour, Boudoir, her Bedroom, the Turret; a room file's `trunk`, bottom to top by `order`) and a pair of branch rooms off each of the lower four (`from`, `bend`: Workshop and Kitchen, Cloakroom and Studio, Solarium and Bestiary, Bedrooms 2 and 3 `. candidate only: same-topic wording and later inline date; not a verified superseding ruling.
 
 - **the door, and nothing waiting on the build (the oak, Ed 2026-10-24: "No curtains, and no loading gate") > the door's shut only till she's up: asleep, ringing, snoozing and stretching (held in bed then too)** — [src/rules/wakeUp.test.ts:127](../../src/rules/wakeUp.test.ts#L127)
-  - current rules; keep pending design review. Currentness: unverified. Case runtime: unknown.
+  - current rules; Keep layout, wake-up and opening contracts?. Currentness: unverified. Case runtime: unknown.
   - Cited ruling: file, line 1: // The new opening's wake-up (rules/wakeUp.ts; Ed, 2026-10-20): each beat's input (the alarm, E snoozing it five seconds a time as / file, line 3: // she's up, and on nothing else (the oak, Ed 2026-10-24: no curtains, nothing waiting on the island's build; Ed 2026-10-25: not on
   - Possible later evidence: [docs/notes/run.md:68](../../docs/notes/run.md#L68): - **The opening** (Ed, 2026-10-20; `app/opening.ts`, the storyboard and Ed's decisions in previews/ed/opening-mock/ on claude/ed-shots; on by default: the tuning's `opening.bedroom`, `?opening=bedroom\|old` for one load): every first load but a chart's arrival (`?arrive=`), a bot game, `?creator=0` or `?zoo` (Ed, 2026-10-25, on `?seed=497831`: "it should be loading straight to her bedroom in the treehouse, not the character creation screen": a link naming its seed or island too, in that island's treehouse) is home's night, asleep in the dark (`render/wakeUp.ts` `WakeCard.sleep`) while it's made, then she wakes in her bedroom there (main.ts `wakeFirst`; Ed, 2026-10-23: "the first screen should. candidate only: same-topic wording and later inline date; not a verified superseding ruling.
   - Possible later evidence: [docs/notes/house.md:79](../../docs/notes/house.md#L79): - **The oak** (Ed, 2026-10-24: "it is a large old oak tree with wide, thick, decumbent branches ... The floors are wooden but not planks"; the layout v4 he approved, previews/ed/treehouse-layout-v4 on claude/treehouse-trunk-mock; "I think best to build it and we will find out in game"): the house is one floor shape, `config/house/shape.js` (the mock's own distance field: its noise, so its shapes), six trunk rooms in a soft S (Dining Room, Terrace, Parlour, Boudoir, her Bedroom, the Turret; a room file's `trunk`, bottom to top by `order`) and a pair of branch rooms off each of the lower four (`from`, `bend`: Workshop and Kitchen, Cloakroom and Studio, Solarium and Bestiary, Bedrooms 2 and 3 `. candidate only: same-topic wording and later inline date; not a verified superseding ruling.
 
 - **the door, and nothing waiting on the build (the oak, Ed 2026-10-24: "No curtains, and no loading gate") > nor does the bed end the night meanwhile, nor any key cast the spell** — [src/rules/wakeUp.test.ts:140](../../src/rules/wakeUp.test.ts#L140)
-  - current rules; keep pending design review. Currentness: unverified. Case runtime: unknown.
+  - current rules; Keep layout, wake-up and opening contracts?. Currentness: unverified. Case runtime: unknown.
   - Cited ruling: file, line 1: // The new opening's wake-up (rules/wakeUp.ts; Ed, 2026-10-20): each beat's input (the alarm, E snoozing it five seconds a time as / file, line 3: // she's up, and on nothing else (the oak, Ed 2026-10-24: no curtains, nothing waiting on the island's build; Ed 2026-10-25: not on
   - Possible later evidence: [docs/notes/run.md:68](../../docs/notes/run.md#L68): - **The opening** (Ed, 2026-10-20; `app/opening.ts`, the storyboard and Ed's decisions in previews/ed/opening-mock/ on claude/ed-shots; on by default: the tuning's `opening.bedroom`, `?opening=bedroom\|old` for one load): every first load but a chart's arrival (`?arrive=`), a bot game, `?creator=0` or `?zoo` (Ed, 2026-10-25, on `?seed=497831`: "it should be loading straight to her bedroom in the treehouse, not the character creation screen": a link naming its seed or island too, in that island's treehouse) is home's night, asleep in the dark (`render/wakeUp.ts` `WakeCard.sleep`) while it's made, then she wakes in her bedroom there (main.ts `wakeFirst`; Ed, 2026-10-23: "the first screen should. candidate only: same-topic wording and later inline date; not a verified superseding ruling.
   - Possible later evidence: [docs/notes/island.md:20](../../docs/notes/island.md#L20): - **Sail in place**: sailing from the map table's sea chart without reloading the page (docs/plans/sail-without-reload.md PR 5; `src/app/sail.ts`, main.ts `sailFromChart`): the night recorded on the chart, the old one ended (`endNight`), the chart's last frame up while the next is made (`startNight` with `how: "sail"`, every pause-page slider carried but those its link sets: `carryKnobs`, `linkKnobs`), its link pushed (`?island=X&seed=S[&world=W]` and the page's other switches, without `arrive` and the repro and debug keys: `SAIL_DROPS`), then the chart's flight in, passed in memory; the old night's music fades out as a quiet sea and wind come in (`sound.sailing`, `Sailing` in `platform/audi. candidate only: same-topic wording and later inline date; not a verified superseding ruling.
 
 - **the door, and nothing waiting on the build (the oak, Ed 2026-10-24: "No curtains, and no loading gate") > has no curtains, and nothing says "not yet"** — [src/rules/wakeUp.test.ts:158](../../src/rules/wakeUp.test.ts#L158)
-  - current rules; keep pending design review. Currentness: unverified. Case runtime: unknown.
+  - current rules; Keep layout, wake-up and opening contracts?. Currentness: unverified. Case runtime: unknown.
   - Cited ruling: file, line 1: // The new opening's wake-up (rules/wakeUp.ts; Ed, 2026-10-20): each beat's input (the alarm, E snoozing it five seconds a time as / file, line 3: // she's up, and on nothing else (the oak, Ed 2026-10-24: no curtains, nothing waiting on the island's build; Ed 2026-10-25: not on
   - Possible later evidence: [docs/notes/run.md:68](../../docs/notes/run.md#L68): - **The opening** (Ed, 2026-10-20; `app/opening.ts`, the storyboard and Ed's decisions in previews/ed/opening-mock/ on claude/ed-shots; on by default: the tuning's `opening.bedroom`, `?opening=bedroom\|old` for one load): every first load but a chart's arrival (`?arrive=`), a bot game, `?creator=0` or `?zoo` (Ed, 2026-10-25, on `?seed=497831`: "it should be loading straight to her bedroom in the treehouse, not the character creation screen": a link naming its seed or island too, in that island's treehouse) is home's night, asleep in the dark (`render/wakeUp.ts` `WakeCard.sleep`) while it's made, then she wakes in her bedroom there (main.ts `wakeFirst`; Ed, 2026-10-23: "the first screen should. candidate only: same-topic wording and later inline date; not a verified superseding ruling.
   - Possible later evidence: [docs/notes/house.md:79](../../docs/notes/house.md#L79): - **The oak** (Ed, 2026-10-24: "it is a large old oak tree with wide, thick, decumbent branches ... The floors are wooden but not planks"; the layout v4 he approved, previews/ed/treehouse-layout-v4 on claude/treehouse-trunk-mock; "I think best to build it and we will find out in game"): the house is one floor shape, `config/house/shape.js` (the mock's own distance field: its noise, so its shapes), six trunk rooms in a soft S (Dining Room, Terrace, Parlour, Boudoir, her Bedroom, the Turret; a room file's `trunk`, bottom to top by `order`) and a pair of branch rooms off each of the lower four (`from`, `bend`: Workshop and Kitchen, Cloakroom and Studio, Solarium and Bestiary, Bedrooms 2 and 3 `. candidate only: same-topic wording and later inline date; not a verified superseding ruling.
 
 - **last night's clothes (Ed, 2026-10-23: "When waking up she wears only a nightie; last night's clothes are in a pile on the floor (pick all up with x/e)") > she wakes in her nightie, every piece of her outfit in the pile in the middle of her Bedroom (her bed up in the Turret: Ed, 2026-10-26; the middle, 2026-10-29)** — [src/rules/wakeUp.test.ts:208](../../src/rules/wakeUp.test.ts#L208)
-  - current rules; keep pending design review. Currentness: unverified. Case runtime: unknown.
+  - current rules; Keep layout, wake-up and opening contracts?. Currentness: unverified. Case runtime: unknown.
   - Cited ruling: file, line 1: // The new opening's wake-up (rules/wakeUp.ts; Ed, 2026-10-20): each beat's input (the alarm, E snoozing it five seconds a time as / file, line 3: // she's up, and on nothing else (the oak, Ed 2026-10-24: no curtains, nothing waiting on the island's build; Ed 2026-10-25: not on / name, line 208: she wakes in her nightie, every piece of her outfit in the pile in the middle of her Bedroom (her bed up in the Turret: Ed, 2026-10-26; the middle, 2026-10-29)
   - Possible later evidence: [docs/notes/run.md:26](../../docs/notes/run.md#L26): **Direct play after loading** (#1493, 2026-10-30): resumed nights, creator=0 links and bot games use the existing start action once ready, with no visible start card. A bot's asynchronous module must finish before its night starts. Bedroom wake-up and chart arrival retain their own gates; the old creator still waits for its spell-scroll action. Automatic starts keep the existing sound-only first-gesture prompt; that key/tap is not needed to begin play. Controls/Options can still borrow their hidden nodes, but main no longer imports the start-screen formatter, eager changelog or upcoming data. Started-night state is tracked separately from the hidden card, so hiding it during loading cannot i. candidate only: same-topic wording and later inline date; not a verified superseding ruling.
   - Possible later evidence: [docs/notes/performance.md:52](../../docs/notes/performance.md#L52): Ed's Option B (2026-10-30, COORDINATOR6522207766; PLAN6522476214 approved6522749418) extends the expired landing path: only the complete current witch atlas and her ready GPU programs may keep landing waiting. House readiness no longer blocks it. A boot-warmed platform covers the rules room/corridor/terrace bounds, alongside the existing ground/lake stand-in. Late house, props and sound-system drawing fades in over800ms; the witch stays opaque and moves with the floor's projection. Rules interactions remain usable, labelled with existing prompts while their drawing is absent. Warm arrivals keep their normal path. The painted floor retains its stand-in until its mapped material is compiled. W. candidate only: same-topic wording and later inline date; not a verified superseding ruling.
 
 - **last night's clothes (Ed, 2026-10-23: "When waking up she wears only a nightie; last night's clothes are in a pile on the floor (pick all up with x/e)") > a game's first morning has no yesterday (Ed, 2026-10-26: "the hat she wore yesterday should be in the clothes pile - but on the first, there was no yesterday"): no pile, on any load; her hat lies on the hats' floor, and picked up there it's on** — [src/rules/wakeUp.test.ts:221](../../src/rules/wakeUp.test.ts#L221)
-  - current rules; keep pending design review. Currentness: unverified. Case runtime: unknown.
+  - current rules; Keep layout, wake-up and opening contracts?. Currentness: unverified. Case runtime: unknown.
   - Cited ruling: file, line 1: // The new opening's wake-up (rules/wakeUp.ts; Ed, 2026-10-20): each beat's input (the alarm, E snoozing it five seconds a time as / file, line 3: // she's up, and on nothing else (the oak, Ed 2026-10-24: no curtains, nothing waiting on the island's build; Ed 2026-10-25: not on / name, line 221: a game's first morning has no yesterday (Ed, 2026-10-26: "the hat she wore yesterday should be in the clothes pile - but on the first, there was no yesterday"): no pile, on any load; her hat lies on the hats' floor, and picked up there it's on
   - Possible later evidence: [docs/notes/run.md:70](../../docs/notes/run.md#L70): - **Nightie / clothes pile** (Ed, 2026-10-23: "When waking up she wears only a nightie; last night's clothes are in a pile on the floor (pick all up with x/e)"; `src/rules/clothesPile.ts`, `g.wake.pile`): on every wake-up (the first load's, later loads', after the bed) she's in her nightie (art/witch.js `nightie`, and `barefoot`: since Ed's reference, 2026-10-29, a short white cotton chemise, thin straps over bare shoulders, a V at the neck, falling loose to mid-thigh with a ruffled tier flared at its hem, all white; its lace and seams left off, too fine for her few pixels, the ruffle the step in its outline; before, a long nightdress trimmed in her own colours; `node art/preview.mjs witch n. candidate only: same-topic wording and later inline date; not a verified superseding ruling.
   - Possible later evidence: [docs/notes/house.md:81](../../docs/notes/house.md#L81): - **Station menus** (Ed, 2026-10-21; the mock, previews/ed/station-menus-mock on claude/ed-shots; `config/wardrobe.json`, `src/rules/wardrobe.ts`, `src/app/owned.ts`, `src/ui/stationPanel.ts`, `src/rules/stations.ts`): at a dressing station (the house's reach, `rules/stations.ts` `stationOf`) it lights up with E over it, and E there slides its panel in from the left over the live game (Ed's playtest, 2026-10-26: "Menus should open when she presses E near an interactive object (dresser, map, etc) instead of them opening automatically just through proximity"; it was by nearness, no E, since 2026-10-21); E again (the pad's □) slides it out (Ed, 2026-10-26: "I think E should also close, and we c. candidate only: same-topic wording and later inline date; not a verified superseding ruling.
 
 - **last night's clothes (Ed, 2026-10-23: "When waking up she wears only a nightie; last night's clothes are in a pile on the floor (pick all up with x/e)") > after a night played (after the bed, or a sail), last night's hat is in the pile with the rest, none on the hats' floor** — [src/rules/wakeUp.test.ts:240](../../src/rules/wakeUp.test.ts#L240)
-  - current rules; keep pending design review. Currentness: unverified. Case runtime: unknown.
+  - current rules; Keep layout, wake-up and opening contracts?. Currentness: unverified. Case runtime: unknown.
   - Cited ruling: file, line 1: // The new opening's wake-up (rules/wakeUp.ts; Ed, 2026-10-20): each beat's input (the alarm, E snoozing it five seconds a time as / file, line 3: // she's up, and on nothing else (the oak, Ed 2026-10-24: no curtains, nothing waiting on the island's build; Ed 2026-10-25: not on
   - Possible later evidence: [docs/notes/run.md:68](../../docs/notes/run.md#L68): - **The opening** (Ed, 2026-10-20; `app/opening.ts`, the storyboard and Ed's decisions in previews/ed/opening-mock/ on claude/ed-shots; on by default: the tuning's `opening.bedroom`, `?opening=bedroom\|old` for one load): every first load but a chart's arrival (`?arrive=`), a bot game, `?creator=0` or `?zoo` (Ed, 2026-10-25, on `?seed=497831`: "it should be loading straight to her bedroom in the treehouse, not the character creation screen": a link naming its seed or island too, in that island's treehouse) is home's night, asleep in the dark (`render/wakeUp.ts` `WakeCard.sleep`) while it's made, then she wakes in her bedroom there (main.ts `wakeFirst`; Ed, 2026-10-23: "the first screen should. candidate only: same-topic wording and later inline date; not a verified superseding ruling.
   - Possible later evidence: [docs/notes/run.md:70](../../docs/notes/run.md#L70): - **Nightie / clothes pile** (Ed, 2026-10-23: "When waking up she wears only a nightie; last night's clothes are in a pile on the floor (pick all up with x/e)"; `src/rules/clothesPile.ts`, `g.wake.pile`): on every wake-up (the first load's, later loads', after the bed) she's in her nightie (art/witch.js `nightie`, and `barefoot`: since Ed's reference, 2026-10-29, a short white cotton chemise, thin straps over bare shoulders, a V at the neck, falling loose to mid-thigh with a ruffled tier flared at its hem, all white; its lace and seams left off, too fine for her few pixels, the ruffle the step in its outline; before, a long nightdress trimmed in her own colours; `node art/preview.mjs witch n. candidate only: same-topic wording and later inline date; not a verified superseding ruling.
 
 - **last night's clothes (Ed, 2026-10-23: "When waking up she wears only a nightie; last night's clothes are in a pile on the floor (pick all up with x/e)") > her first wake-up has no pile (Ed, 2026-10-26: "if it's the first night, there won't be any last night's clothes"): in her nightie all the same, dressing at the stations; E where it would lie does nothing** — [src/rules/wakeUp.test.ts:248](../../src/rules/wakeUp.test.ts#L248)
-  - current rules; keep pending design review. Currentness: unverified. Case runtime: unknown.
+  - current rules; Keep layout, wake-up and opening contracts?. Currentness: unverified. Case runtime: unknown.
   - Cited ruling: file, line 1: // The new opening's wake-up (rules/wakeUp.ts; Ed, 2026-10-20): each beat's input (the alarm, E snoozing it five seconds a time as / file, line 3: // she's up, and on nothing else (the oak, Ed 2026-10-24: no curtains, nothing waiting on the island's build; Ed 2026-10-25: not on / name, line 248: her first wake-up has no pile (Ed, 2026-10-26: "if it's the first night, there won't be any last night's clothes"): in her nightie all the same, dressing at the stations; E where it would lie does nothing
   - Possible later evidence: [docs/notes/house.md:81](../../docs/notes/house.md#L81): - **Station menus** (Ed, 2026-10-21; the mock, previews/ed/station-menus-mock on claude/ed-shots; `config/wardrobe.json`, `src/rules/wardrobe.ts`, `src/app/owned.ts`, `src/ui/stationPanel.ts`, `src/rules/stations.ts`): at a dressing station (the house's reach, `rules/stations.ts` `stationOf`) it lights up with E over it, and E there slides its panel in from the left over the live game (Ed's playtest, 2026-10-26: "Menus should open when she presses E near an interactive object (dresser, map, etc) instead of them opening automatically just through proximity"; it was by nearness, no E, since 2026-10-21); E again (the pad's □) slides it out (Ed, 2026-10-26: "I think E should also close, and we c. candidate only: same-topic wording and later inline date; not a verified superseding ruling.
   - Possible later evidence: [docs/notes/run.md:70](../../docs/notes/run.md#L70): - **Nightie / clothes pile** (Ed, 2026-10-23: "When waking up she wears only a nightie; last night's clothes are in a pile on the floor (pick all up with x/e)"; `src/rules/clothesPile.ts`, `g.wake.pile`): on every wake-up (the first load's, later loads', after the bed) she's in her nightie (art/witch.js `nightie`, and `barefoot`: since Ed's reference, 2026-10-29, a short white cotton chemise, thin straps over bare shoulders, a V at the neck, falling loose to mid-thigh with a ruffled tier flared at its hem, all white; its lace and seams left off, too fine for her few pixels, the ruffle the step in its outline; before, a long nightdress trimmed in her own colours; `node art/preview.mjs witch n. candidate only: same-topic wording and later inline date; not a verified superseding ruling.
 
 - **last night's clothes (Ed, 2026-10-23: "When waking up she wears only a nightie; last night's clothes are in a pile on the floor (pick all up with x/e)") > E at the pile puts on all of it at once: dressed** — [src/rules/wakeUp.test.ts:259](../../src/rules/wakeUp.test.ts#L259)
-  - current rules; keep pending design review. Currentness: unverified. Case runtime: unknown.
+  - current rules; Keep layout, wake-up and opening contracts?. Currentness: unverified. Case runtime: unknown.
   - Cited ruling: file, line 1: // The new opening's wake-up (rules/wakeUp.ts; Ed, 2026-10-20): each beat's input (the alarm, E snoozing it five seconds a time as / file, line 3: // she's up, and on nothing else (the oak, Ed 2026-10-24: no curtains, nothing waiting on the island's build; Ed 2026-10-25: not on
   - Possible later evidence: [docs/notes/run.md:68](../../docs/notes/run.md#L68): - **The opening** (Ed, 2026-10-20; `app/opening.ts`, the storyboard and Ed's decisions in previews/ed/opening-mock/ on claude/ed-shots; on by default: the tuning's `opening.bedroom`, `?opening=bedroom\|old` for one load): every first load but a chart's arrival (`?arrive=`), a bot game, `?creator=0` or `?zoo` (Ed, 2026-10-25, on `?seed=497831`: "it should be loading straight to her bedroom in the treehouse, not the character creation screen": a link naming its seed or island too, in that island's treehouse) is home's night, asleep in the dark (`render/wakeUp.ts` `WakeCard.sleep`) while it's made, then she wakes in her bedroom there (main.ts `wakeFirst`; Ed, 2026-10-23: "the first screen should. candidate only: same-topic wording and later inline date; not a verified superseding ruling.
   - Possible later evidence: [docs/notes/run.md:70](../../docs/notes/run.md#L70): - **Nightie / clothes pile** (Ed, 2026-10-23: "When waking up she wears only a nightie; last night's clothes are in a pile on the floor (pick all up with x/e)"; `src/rules/clothesPile.ts`, `g.wake.pile`): on every wake-up (the first load's, later loads', after the bed) she's in her nightie (art/witch.js `nightie`, and `barefoot`: since Ed's reference, 2026-10-29, a short white cotton chemise, thin straps over bare shoulders, a V at the neck, falling loose to mid-thigh with a ruffled tier flared at its hem, all white; its lace and seams left off, too fine for her few pixels, the ruffle the step in its outline; before, a long nightdress trimmed in her own colours; `node art/preview.mjs witch n. candidate only: same-topic wording and later inline date; not a verified superseding ruling.
 
 - **last night's clothes (Ed, 2026-10-23: "When waking up she wears only a nightie; last night's clothes are in a pile on the floor (pick all up with x/e)") > a station's choice puts its piece on her, and the pile keeps the rest (Ed: "if she puts on a top via the menu, the pile then puts on everything else except yesterday's top")** — [src/rules/wakeUp.test.ts:268](../../src/rules/wakeUp.test.ts#L268)
-  - current rules; keep pending design review. Currentness: unverified. Case runtime: unknown.
+  - current rules; Keep layout, wake-up and opening contracts?. Currentness: unverified. Case runtime: unknown.
   - Cited ruling: file, line 1: // The new opening's wake-up (rules/wakeUp.ts; Ed, 2026-10-20): each beat's input (the alarm, E snoozing it five seconds a time as / file, line 3: // she's up, and on nothing else (the oak, Ed 2026-10-24: no curtains, nothing waiting on the island's build; Ed 2026-10-25: not on
   - Possible later evidence: [docs/notes/run.md:68](../../docs/notes/run.md#L68): - **The opening** (Ed, 2026-10-20; `app/opening.ts`, the storyboard and Ed's decisions in previews/ed/opening-mock/ on claude/ed-shots; on by default: the tuning's `opening.bedroom`, `?opening=bedroom\|old` for one load): every first load but a chart's arrival (`?arrive=`), a bot game, `?creator=0` or `?zoo` (Ed, 2026-10-25, on `?seed=497831`: "it should be loading straight to her bedroom in the treehouse, not the character creation screen": a link naming its seed or island too, in that island's treehouse) is home's night, asleep in the dark (`render/wakeUp.ts` `WakeCard.sleep`) while it's made, then she wakes in her bedroom there (main.ts `wakeFirst`; Ed, 2026-10-23: "the first screen should. candidate only: same-topic wording and later inline date; not a verified superseding ruling.
   - Possible later evidence: [docs/notes/run.md:70](../../docs/notes/run.md#L70): - **Nightie / clothes pile** (Ed, 2026-10-23: "When waking up she wears only a nightie; last night's clothes are in a pile on the floor (pick all up with x/e)"; `src/rules/clothesPile.ts`, `g.wake.pile`): on every wake-up (the first load's, later loads', after the bed) she's in her nightie (art/witch.js `nightie`, and `barefoot`: since Ed's reference, 2026-10-29, a short white cotton chemise, thin straps over bare shoulders, a V at the neck, falling loose to mid-thigh with a ruffled tier flared at its hem, all white; its lace and seams left off, too fine for her few pixels, the ruffle the step in its outline; before, a long nightdress trimmed in her own colours; `node art/preview.mjs witch n. candidate only: same-topic wording and later inline date; not a verified superseding ruling.
 
 - **last night's clothes (Ed, 2026-10-23: "When waking up she wears only a nightie; last night's clothes are in a pile on the floor (pick all up with x/e)") > in her nightie, a hat taken off the Cloakroom's hats' floor is on her head, out of the pile (so she's drawn in it)** — [src/rules/wakeUp.test.ts:283](../../src/rules/wakeUp.test.ts#L283)
-  - current rules; keep pending design review. Currentness: unverified. Case runtime: unknown.
+  - current rules; Keep layout, wake-up and opening contracts?. Currentness: unverified. Case runtime: unknown.
   - Cited ruling: file, line 1: // The new opening's wake-up (rules/wakeUp.ts; Ed, 2026-10-20): each beat's input (the alarm, E snoozing it five seconds a time as / file, line 3: // she's up, and on nothing else (the oak, Ed 2026-10-24: no curtains, nothing waiting on the island's build; Ed 2026-10-25: not on
   - Possible later evidence: [docs/notes/run.md:68](../../docs/notes/run.md#L68): - **The opening** (Ed, 2026-10-20; `app/opening.ts`, the storyboard and Ed's decisions in previews/ed/opening-mock/ on claude/ed-shots; on by default: the tuning's `opening.bedroom`, `?opening=bedroom\|old` for one load): every first load but a chart's arrival (`?arrive=`), a bot game, `?creator=0` or `?zoo` (Ed, 2026-10-25, on `?seed=497831`: "it should be loading straight to her bedroom in the treehouse, not the character creation screen": a link naming its seed or island too, in that island's treehouse) is home's night, asleep in the dark (`render/wakeUp.ts` `WakeCard.sleep`) while it's made, then she wakes in her bedroom there (main.ts `wakeFirst`; Ed, 2026-10-23: "the first screen should. candidate only: same-topic wording and later inline date; not a verified superseding ruling.
   - Possible later evidence: [docs/notes/house.md:81](../../docs/notes/house.md#L81): - **Station menus** (Ed, 2026-10-21; the mock, previews/ed/station-menus-mock on claude/ed-shots; `config/wardrobe.json`, `src/rules/wardrobe.ts`, `src/app/owned.ts`, `src/ui/stationPanel.ts`, `src/rules/stations.ts`): at a dressing station (the house's reach, `rules/stations.ts` `stationOf`) it lights up with E over it, and E there slides its panel in from the left over the live game (Ed's playtest, 2026-10-26: "Menus should open when she presses E near an interactive object (dresser, map, etc) instead of them opening automatically just through proximity"; it was by nearness, no E, since 2026-10-21); E again (the pad's □) slides it out (Ed, 2026-10-26: "I think E should also close, and we c. candidate only: same-topic wording and later inline date; not a verified superseding ruling.
 
 - **last night's clothes (Ed, 2026-10-23: "When waking up she wears only a nightie; last night's clothes are in a pile on the floor (pick all up with x/e)") > half dressed by the stations, she walks out as she is, the rest left in the pile** — [src/rules/wakeUp.test.ts:292](../../src/rules/wakeUp.test.ts#L292)
-  - current rules; keep pending design review. Currentness: unverified. Case runtime: unknown.
+  - current rules; Keep layout, wake-up and opening contracts?. Currentness: unverified. Case runtime: unknown.
   - Cited ruling: file, line 1: // The new opening's wake-up (rules/wakeUp.ts; Ed, 2026-10-20): each beat's input (the alarm, E snoozing it five seconds a time as / file, line 3: // she's up, and on nothing else (the oak, Ed 2026-10-24: no curtains, nothing waiting on the island's build; Ed 2026-10-25: not on
   - Possible later evidence: [docs/notes/run.md:68](../../docs/notes/run.md#L68): - **The opening** (Ed, 2026-10-20; `app/opening.ts`, the storyboard and Ed's decisions in previews/ed/opening-mock/ on claude/ed-shots; on by default: the tuning's `opening.bedroom`, `?opening=bedroom\|old` for one load): every first load but a chart's arrival (`?arrive=`), a bot game, `?creator=0` or `?zoo` (Ed, 2026-10-25, on `?seed=497831`: "it should be loading straight to her bedroom in the treehouse, not the character creation screen": a link naming its seed or island too, in that island's treehouse) is home's night, asleep in the dark (`render/wakeUp.ts` `WakeCard.sleep`) while it's made, then she wakes in her bedroom there (main.ts `wakeFirst`; Ed, 2026-10-23: "the first screen should. candidate only: same-topic wording and later inline date; not a verified superseding ruling.
   - Possible later evidence: [docs/notes/run.md:70](../../docs/notes/run.md#L70): - **Nightie / clothes pile** (Ed, 2026-10-23: "When waking up she wears only a nightie; last night's clothes are in a pile on the floor (pick all up with x/e)"; `src/rules/clothesPile.ts`, `g.wake.pile`): on every wake-up (the first load's, later loads', after the bed) she's in her nightie (art/witch.js `nightie`, and `barefoot`: since Ed's reference, 2026-10-29, a short white cotton chemise, thin straps over bare shoulders, a V at the neck, falling loose to mid-thigh with a ruffled tier flared at its hem, all white; its lace and seams left off, too fine for her few pixels, the ruffle the step in its outline; before, a long nightdress trimmed in her own colours; `node art/preview.mjs witch n. candidate only: same-topic wording and later inline date; not a verified superseding ruling.
 
 - **dressing before the door (Ed, 2026-10-21: "all of the customisation options (except for broom, hat, and bag) should be before the locked door") > every dressing station but the Cloakroom's (the hat's mirror, the cloak pegs), the bags and the Workshop's is in the bedroom** — [src/rules/wakeUp.test.ts:303](../../src/rules/wakeUp.test.ts#L303)
-  - current rules; keep pending design review. Currentness: unverified. Case runtime: unknown.
+  - current rules; Keep layout, wake-up and opening contracts?. Currentness: unverified. Case runtime: unknown.
   - Cited ruling: file, line 1: // The new opening's wake-up (rules/wakeUp.ts; Ed, 2026-10-20): each beat's input (the alarm, E snoozing it five seconds a time as / file, line 3: // she's up, and on nothing else (the oak, Ed 2026-10-24: no curtains, nothing waiting on the island's build; Ed 2026-10-25: not on
   - Possible later evidence: [docs/notes/run.md:68](../../docs/notes/run.md#L68): - **The opening** (Ed, 2026-10-20; `app/opening.ts`, the storyboard and Ed's decisions in previews/ed/opening-mock/ on claude/ed-shots; on by default: the tuning's `opening.bedroom`, `?opening=bedroom\|old` for one load): every first load but a chart's arrival (`?arrive=`), a bot game, `?creator=0` or `?zoo` (Ed, 2026-10-25, on `?seed=497831`: "it should be loading straight to her bedroom in the treehouse, not the character creation screen": a link naming its seed or island too, in that island's treehouse) is home's night, asleep in the dark (`render/wakeUp.ts` `WakeCard.sleep`) while it's made, then she wakes in her bedroom there (main.ts `wakeFirst`; Ed, 2026-10-23: "the first screen should. candidate only: same-topic wording and later inline date; not a verified superseding ruling.
   - Possible later evidence: [docs/notes/house.md:79](../../docs/notes/house.md#L79): - **The oak** (Ed, 2026-10-24: "it is a large old oak tree with wide, thick, decumbent branches ... The floors are wooden but not planks"; the layout v4 he approved, previews/ed/treehouse-layout-v4 on claude/treehouse-trunk-mock; "I think best to build it and we will find out in game"): the house is one floor shape, `config/house/shape.js` (the mock's own distance field: its noise, so its shapes), six trunk rooms in a soft S (Dining Room, Terrace, Parlour, Boudoir, her Bedroom, the Turret; a room file's `trunk`, bottom to top by `order`) and a pair of branch rooms off each of the lower four (`from`, `bend`: Workshop and Kitchen, Cloakroom and Studio, Solarium and Bestiary, Bedrooms 2 and 3 `. candidate only: same-topic wording and later inline date; not a verified superseding ruling.
 
 - **dressing before the door (Ed, 2026-10-21: "all of the customisation options (except for broom, hat, and bag) should be before the locked door") > the wake-up's over as she gets up, not while she's in bed or stretching, the island built or not** — [src/rules/wakeUp.test.ts:310](../../src/rules/wakeUp.test.ts#L310)
-  - current rules; keep pending design review. Currentness: unverified. Case runtime: unknown.
+  - current rules; Keep layout, wake-up and opening contracts?. Currentness: unverified. Case runtime: unknown.
   - Cited ruling: file, line 1: // The new opening's wake-up (rules/wakeUp.ts; Ed, 2026-10-20): each beat's input (the alarm, E snoozing it five seconds a time as / file, line 3: // she's up, and on nothing else (the oak, Ed 2026-10-24: no curtains, nothing waiting on the island's build; Ed 2026-10-25: not on
   - Possible later evidence: [docs/notes/run.md:68](../../docs/notes/run.md#L68): - **The opening** (Ed, 2026-10-20; `app/opening.ts`, the storyboard and Ed's decisions in previews/ed/opening-mock/ on claude/ed-shots; on by default: the tuning's `opening.bedroom`, `?opening=bedroom\|old` for one load): every first load but a chart's arrival (`?arrive=`), a bot game, `?creator=0` or `?zoo` (Ed, 2026-10-25, on `?seed=497831`: "it should be loading straight to her bedroom in the treehouse, not the character creation screen": a link naming its seed or island too, in that island's treehouse) is home's night, asleep in the dark (`render/wakeUp.ts` `WakeCard.sleep`) while it's made, then she wakes in her bedroom there (main.ts `wakeFirst`; Ed, 2026-10-23: "the first screen should. candidate only: same-topic wording and later inline date; not a verified superseding ruling.
   - Possible later evidence: [docs/notes/house.md:79](../../docs/notes/house.md#L79): - **The oak** (Ed, 2026-10-24: "it is a large old oak tree with wide, thick, decumbent branches ... The floors are wooden but not planks"; the layout v4 he approved, previews/ed/treehouse-layout-v4 on claude/treehouse-trunk-mock; "I think best to build it and we will find out in game"): the house is one floor shape, `config/house/shape.js` (the mock's own distance field: its noise, so its shapes), six trunk rooms in a soft S (Dining Room, Terrace, Parlour, Boudoir, her Bedroom, the Turret; a room file's `trunk`, bottom to top by `order`) and a pair of branch rooms off each of the lower four (`from`, `bend`: Workshop and Kitchen, Cloakroom and Studio, Solarium and Bestiary, Bedrooms 2 and 3 `. candidate only: same-topic wording and later inline date; not a verified superseding ruling.
 
 - **the DJ intro at her decks (in place of the party spell) > no key casts the spell on her way out, nor E anywhere but her decks** — [src/rules/wakeUp.test.ts:323](../../src/rules/wakeUp.test.ts#L323)
-  - current rules; keep pending design review. Currentness: unverified. Case runtime: unknown.
+  - current rules; Keep layout, wake-up and opening contracts?. Currentness: unverified. Case runtime: unknown.
   - Cited ruling: file, line 1: // The new opening's wake-up (rules/wakeUp.ts; Ed, 2026-10-20): each beat's input (the alarm, E snoozing it five seconds a time as / file, line 3: // she's up, and on nothing else (the oak, Ed 2026-10-24: no curtains, nothing waiting on the island's build; Ed 2026-10-25: not on
   - Possible later evidence: [docs/notes/run.md:68](../../docs/notes/run.md#L68): - **The opening** (Ed, 2026-10-20; `app/opening.ts`, the storyboard and Ed's decisions in previews/ed/opening-mock/ on claude/ed-shots; on by default: the tuning's `opening.bedroom`, `?opening=bedroom\|old` for one load): every first load but a chart's arrival (`?arrive=`), a bot game, `?creator=0` or `?zoo` (Ed, 2026-10-25, on `?seed=497831`: "it should be loading straight to her bedroom in the treehouse, not the character creation screen": a link naming its seed or island too, in that island's treehouse) is home's night, asleep in the dark (`render/wakeUp.ts` `WakeCard.sleep`) while it's made, then she wakes in her bedroom there (main.ts `wakeFirst`; Ed, 2026-10-23: "the first screen should. candidate only: same-topic wording and later inline date; not a verified superseding ruling.
   - Possible later evidence: [docs/notes/house.md:79](../../docs/notes/house.md#L79): - **The oak** (Ed, 2026-10-24: "it is a large old oak tree with wide, thick, decumbent branches ... The floors are wooden but not planks"; the layout v4 he approved, previews/ed/treehouse-layout-v4 on claude/treehouse-trunk-mock; "I think best to build it and we will find out in game"): the house is one floor shape, `config/house/shape.js` (the mock's own distance field: its noise, so its shapes), six trunk rooms in a soft S (Dining Room, Terrace, Parlour, Boudoir, her Bedroom, the Turret; a room file's `trunk`, bottom to top by `order`) and a pair of branch rooms off each of the lower four (`from`, `bend`: Workshop and Kitchen, Cloakroom and Studio, Solarium and Bestiary, Bedrooms 2 and 3 `. candidate only: same-topic wording and later inline date; not a verified superseding ruling.
 
 - **the DJ intro at her decks (in place of the party spell) > E at her decks opens her DJ booth (Ed, 2026-10-29), and "Get this party started" seats her behind them and casts it: its routine holds her there, then the party's on** — [src/rules/wakeUp.test.ts:330](../../src/rules/wakeUp.test.ts#L330)
-  - outcome stats; review simulation assertions; consider report after Ed rules. Currentness: unverified. Case runtime: unknown.
+  - current rules; Keep layout, wake-up and opening contracts?. Currentness: unverified. Case runtime: unknown.
   - Cited ruling: file, line 1: // The new opening's wake-up (rules/wakeUp.ts; Ed, 2026-10-20): each beat's input (the alarm, E snoozing it five seconds a time as / file, line 3: // she's up, and on nothing else (the oak, Ed 2026-10-24: no curtains, nothing waiting on the island's build; Ed 2026-10-25: not on / name, line 330: E at her decks opens her DJ booth (Ed, 2026-10-29), and "Get this party started" seats her behind them and casts it: its routine holds her there, then the party's on
   - Possible later evidence: [docs/notes/run.md:26](../../docs/notes/run.md#L26): **Direct play after loading** (#1493, 2026-10-30): resumed nights, creator=0 links and bot games use the existing start action once ready, with no visible start card. A bot's asynchronous module must finish before its night starts. Bedroom wake-up and chart arrival retain their own gates; the old creator still waits for its spell-scroll action. Automatic starts keep the existing sound-only first-gesture prompt; that key/tap is not needed to begin play. Controls/Options can still borrow their hidden nodes, but main no longer imports the start-screen formatter, eager changelog or upcoming data. Started-night state is tracked separately from the hidden card, so hiding it during loading cannot i. candidate only: same-topic wording and later inline date; not a verified superseding ruling.
   - Possible later evidence: [docs/notes/house.md:5](../../docs/notes/house.md#L5): **Telephone** (Ed, 2026-10-31): E at the boudoir telephone opens `ui/telephone.ts` from the left, using the ordinary station's SlideIn behavior. `app/telephoneStation.ts` holds the local witch still through main's existing overlay controls, keeps native typing/Enter inside the panel, leaves Esc to Freeze, and closes on step-away, knockout, sailing or night replacement. This first mounted checkpoint shows a browser-held number and the explicit line “Calls aren't available in this build yet.” It does not register against the old live relay or enter another night; actual guest-room/save binding and reviewed relay deployment remain required. Canonical6546222866 uses the ordinary station pad patt. candidate only: same-topic wording and later inline date; not a verified superseding ruling.
 
 - **one wake-up for every morning (Ed, 2026-10-26: "yes, and keep 3 second stretch for both"; it replaced the shorter one after the first) > `after a load or the bed, ${what} snoozes it, as often as she likes, and never gets her up`** — [src/rules/wakeUp.test.ts:359](../../src/rules/wakeUp.test.ts#L359)
-  - current rules; keep pending design review. Currentness: unverified. Case runtime: unknown.
+  - current rules; Keep layout, wake-up and opening contracts?. Currentness: unverified. Case runtime: unknown.
   - Cited ruling: file, line 1: // The new opening's wake-up (rules/wakeUp.ts; Ed, 2026-10-20): each beat's input (the alarm, E snoozing it five seconds a time as / file, line 3: // she's up, and on nothing else (the oak, Ed 2026-10-24: no curtains, nothing waiting on the island's build; Ed 2026-10-25: not on
   - Possible later evidence: [docs/notes/run.md:68](../../docs/notes/run.md#L68): - **The opening** (Ed, 2026-10-20; `app/opening.ts`, the storyboard and Ed's decisions in previews/ed/opening-mock/ on claude/ed-shots; on by default: the tuning's `opening.bedroom`, `?opening=bedroom\|old` for one load): every first load but a chart's arrival (`?arrive=`), a bot game, `?creator=0` or `?zoo` (Ed, 2026-10-25, on `?seed=497831`: "it should be loading straight to her bedroom in the treehouse, not the character creation screen": a link naming its seed or island too, in that island's treehouse) is home's night, asleep in the dark (`render/wakeUp.ts` `WakeCard.sleep`) while it's made, then she wakes in her bedroom there (main.ts `wakeFirst`; Ed, 2026-10-23: "the first screen should. candidate only: same-topic wording and later inline date; not a verified superseding ruling.
   - Possible later evidence: [docs/notes/house.md:79](../../docs/notes/house.md#L79): - **The oak** (Ed, 2026-10-24: "it is a large old oak tree with wide, thick, decumbent branches ... The floors are wooden but not planks"; the layout v4 he approved, previews/ed/treehouse-layout-v4 on claude/treehouse-trunk-mock; "I think best to build it and we will find out in game"): the house is one floor shape, `config/house/shape.js` (the mock's own distance field: its noise, so its shapes), six trunk rooms in a soft S (Dining Room, Terrace, Parlour, Boudoir, her Bedroom, the Turret; a room file's `trunk`, bottom to top by `order`) and a pair of branch rooms off each of the lower four (`from`, `bend`: Workshop and Kitchen, Cloakroom and Studio, Solarium and Bestiary, Bedrooms 2 and 3 `. candidate only: same-topic wording and later inline date; not a verified superseding ruling.
 
 - **one wake-up for every morning (Ed, 2026-10-26: "yes, and keep 3 second stretch for both"; it replaced the shorter one after the first) > `after a load or the bed, a move from the ${from} starts the ${K.stretch} s stretch, then she's up`** — [src/rules/wakeUp.test.ts:371](../../src/rules/wakeUp.test.ts#L371)
-  - current rules; keep pending design review. Currentness: unverified. Case runtime: unknown.
+  - current rules; Keep layout, wake-up and opening contracts?. Currentness: unverified. Case runtime: unknown.
   - Cited ruling: file, line 1: // The new opening's wake-up (rules/wakeUp.ts; Ed, 2026-10-20): each beat's input (the alarm, E snoozing it five seconds a time as / file, line 3: // she's up, and on nothing else (the oak, Ed 2026-10-24: no curtains, nothing waiting on the island's build; Ed 2026-10-25: not on
   - Possible later evidence: [docs/notes/run.md:68](../../docs/notes/run.md#L68): - **The opening** (Ed, 2026-10-20; `app/opening.ts`, the storyboard and Ed's decisions in previews/ed/opening-mock/ on claude/ed-shots; on by default: the tuning's `opening.bedroom`, `?opening=bedroom\|old` for one load): every first load but a chart's arrival (`?arrive=`), a bot game, `?creator=0` or `?zoo` (Ed, 2026-10-25, on `?seed=497831`: "it should be loading straight to her bedroom in the treehouse, not the character creation screen": a link naming its seed or island too, in that island's treehouse) is home's night, asleep in the dark (`render/wakeUp.ts` `WakeCard.sleep`) while it's made, then she wakes in her bedroom there (main.ts `wakeFirst`; Ed, 2026-10-23: "the first screen should. candidate only: same-topic wording and later inline date; not a verified superseding ruling.
   - Possible later evidence: [docs/notes/island.md:17](../../docs/notes/island.md#L17): - **Sea chart**: the journey's map of islands (`chart.html`, or `?chart`; `?chart=all` shows everything; Ed, 2026-10-11): the world's disc, home in the middle, all 64 islands drawn in their real outlines at their kinds' bearings on their phases' rings, a sigil (and a link) only on those she can travel to, voyages as dotted lines, won islands starred; click one to play it. **New islands** (Ed, 2026-10-26: the chart didn't show which islands are new): each island she's found and not yet been to (`app/chartSave.ts` `unvisited`: no night played there, and not the one she's on) sparkles, a ring of little stars twinkling round its sigil (`ChartIsland.fresh`, `render/chart/seaChart.ts` `spark`, nev. candidate only: same-topic wording and later inline date; not a verified superseding ruling.
 
 - **one wake-up for every morning (Ed, 2026-10-26: "yes, and keep 3 second stretch for both"; it replaced the shorter one after the first) > `${what} does nothing in the wake-up`** — [src/rules/wakeUp.test.ts:381](../../src/rules/wakeUp.test.ts#L381)
-  - current rules; keep pending design review. Currentness: unverified. Case runtime: unknown.
+  - current rules; Keep layout, wake-up and opening contracts?. Currentness: unverified. Case runtime: unknown.
   - Cited ruling: file, line 1: // The new opening's wake-up (rules/wakeUp.ts; Ed, 2026-10-20): each beat's input (the alarm, E snoozing it five seconds a time as / file, line 3: // she's up, and on nothing else (the oak, Ed 2026-10-24: no curtains, nothing waiting on the island's build; Ed 2026-10-25: not on
   - Possible later evidence: [docs/notes/run.md:68](../../docs/notes/run.md#L68): - **The opening** (Ed, 2026-10-20; `app/opening.ts`, the storyboard and Ed's decisions in previews/ed/opening-mock/ on claude/ed-shots; on by default: the tuning's `opening.bedroom`, `?opening=bedroom\|old` for one load): every first load but a chart's arrival (`?arrive=`), a bot game, `?creator=0` or `?zoo` (Ed, 2026-10-25, on `?seed=497831`: "it should be loading straight to her bedroom in the treehouse, not the character creation screen": a link naming its seed or island too, in that island's treehouse) is home's night, asleep in the dark (`render/wakeUp.ts` `WakeCard.sleep`) while it's made, then she wakes in her bedroom there (main.ts `wakeFirst`; Ed, 2026-10-23: "the first screen should. candidate only: same-topic wording and later inline date; not a verified superseding ruling.
   - Possible later evidence: [docs/notes/house.md:79](../../docs/notes/house.md#L79): - **The oak** (Ed, 2026-10-24: "it is a large old oak tree with wide, thick, decumbent branches ... The floors are wooden but not planks"; the layout v4 he approved, previews/ed/treehouse-layout-v4 on claude/treehouse-trunk-mock; "I think best to build it and we will find out in game"): the house is one floor shape, `config/house/shape.js` (the mock's own distance field: its noise, so its shapes), six trunk rooms in a soft S (Dining Room, Terrace, Parlour, Boudoir, her Bedroom, the Turret; a room file's `trunk`, bottom to top by `order`) and a pair of branch rooms off each of the lower four (`from`, `bend`: Workshop and Kitchen, Cloakroom and Studio, Solarium and Bestiary, Bedrooms 2 and 3 `. candidate only: same-topic wording and later inline date; not a verified superseding ruling.
 
 - **one wake-up for every morning (Ed, 2026-10-26: "yes, and keep 3 second stretch for both"; it replaced the shorter one after the first) > the dressing table's first-ever visit is marked once: not again on a later morning (the page's save)** — [src/rules/wakeUp.test.ts:390](../../src/rules/wakeUp.test.ts#L390)
-  - current rules; keep pending design review. Currentness: unverified. Case runtime: unknown.
+  - current rules; Keep layout, wake-up and opening contracts?. Currentness: unverified. Case runtime: unknown.
   - Cited ruling: file, line 1: // The new opening's wake-up (rules/wakeUp.ts; Ed, 2026-10-20): each beat's input (the alarm, E snoozing it five seconds a time as / file, line 3: // she's up, and on nothing else (the oak, Ed 2026-10-24: no curtains, nothing waiting on the island's build; Ed 2026-10-25: not on
   - Possible later evidence: [docs/notes/run.md:68](../../docs/notes/run.md#L68): - **The opening** (Ed, 2026-10-20; `app/opening.ts`, the storyboard and Ed's decisions in previews/ed/opening-mock/ on claude/ed-shots; on by default: the tuning's `opening.bedroom`, `?opening=bedroom\|old` for one load): every first load but a chart's arrival (`?arrive=`), a bot game, `?creator=0` or `?zoo` (Ed, 2026-10-25, on `?seed=497831`: "it should be loading straight to her bedroom in the treehouse, not the character creation screen": a link naming its seed or island too, in that island's treehouse) is home's night, asleep in the dark (`render/wakeUp.ts` `WakeCard.sleep`) while it's made, then she wakes in her bedroom there (main.ts `wakeFirst`; Ed, 2026-10-23: "the first screen should. candidate only: same-topic wording and later inline date; not a verified superseding ruling.
   - Possible later evidence: [docs/notes/house.md:79](../../docs/notes/house.md#L79): - **The oak** (Ed, 2026-10-24: "it is a large old oak tree with wide, thick, decumbent branches ... The floors are wooden but not planks"; the layout v4 he approved, previews/ed/treehouse-layout-v4 on claude/treehouse-trunk-mock; "I think best to build it and we will find out in game"): the house is one floor shape, `config/house/shape.js` (the mock's own distance field: its noise, so its shapes), six trunk rooms in a soft S (Dining Room, Terrace, Parlour, Boudoir, her Bedroom, the Turret; a room file's `trunk`, bottom to top by `order`) and a pair of branch rooms off each of the lower four (`from`, `bend`: Workshop and Kitchen, Cloakroom and Studio, Solarium and Bestiary, Bedrooms 2 and 3 `. candidate only: same-topic wording and later inline date; not a verified superseding ruling.
 
 - **one wake-up for every morning (Ed, 2026-10-26: "yes, and keep 3 second stretch for both"; it replaced the shorter one after the first) > the door's open as soon as she's up, dressed or not; the party waits for her decks all the same** — [src/rules/wakeUp.test.ts:397](../../src/rules/wakeUp.test.ts#L397)
-  - current rules; keep pending design review. Currentness: unverified. Case runtime: unknown.
+  - current rules; Keep layout, wake-up and opening contracts?. Currentness: unverified. Case runtime: unknown.
   - Cited ruling: file, line 1: // The new opening's wake-up (rules/wakeUp.ts; Ed, 2026-10-20): each beat's input (the alarm, E snoozing it five seconds a time as / file, line 3: // she's up, and on nothing else (the oak, Ed 2026-10-24: no curtains, nothing waiting on the island's build; Ed 2026-10-25: not on
   - Possible later evidence: [docs/notes/run.md:68](../../docs/notes/run.md#L68): - **The opening** (Ed, 2026-10-20; `app/opening.ts`, the storyboard and Ed's decisions in previews/ed/opening-mock/ on claude/ed-shots; on by default: the tuning's `opening.bedroom`, `?opening=bedroom\|old` for one load): every first load but a chart's arrival (`?arrive=`), a bot game, `?creator=0` or `?zoo` (Ed, 2026-10-25, on `?seed=497831`: "it should be loading straight to her bedroom in the treehouse, not the character creation screen": a link naming its seed or island too, in that island's treehouse) is home's night, asleep in the dark (`render/wakeUp.ts` `WakeCard.sleep`) while it's made, then she wakes in her bedroom there (main.ts `wakeFirst`; Ed, 2026-10-23: "the first screen should. candidate only: same-topic wording and later inline date; not a verified superseding ruling.
   - Possible later evidence: [docs/notes/house.md:79](../../docs/notes/house.md#L79): - **The oak** (Ed, 2026-10-24: "it is a large old oak tree with wide, thick, decumbent branches ... The floors are wooden but not planks"; the layout v4 he approved, previews/ed/treehouse-layout-v4 on claude/treehouse-trunk-mock; "I think best to build it and we will find out in game"): the house is one floor shape, `config/house/shape.js` (the mock's own distance field: its noise, so its shapes), six trunk rooms in a soft S (Dining Room, Terrace, Parlour, Boudoir, her Bedroom, the Turret; a room file's `trunk`, bottom to top by `order`) and a pair of branch rooms off each of the lower four (`from`, `bend`: Workshop and Kitchen, Cloakroom and Studio, Solarium and Bestiary, Bedrooms 2 and 3 `. candidate only: same-topic wording and later inline date; not a verified superseding ruling.
 
 - **the dream before the alarm (Ed, 2026-10-24: finds on loan) > she sleeps through it in bed, held, nothing ringing** — [src/rules/wakeUp.test.ts:416](../../src/rules/wakeUp.test.ts#L416)
-  - current rules; keep pending design review. Currentness: unverified. Case runtime: unknown.
+  - current rules; Keep layout, wake-up and opening contracts?. Currentness: unverified. Case runtime: unknown.
   - Cited ruling: file, line 1: // The new opening's wake-up (rules/wakeUp.ts; Ed, 2026-10-20): each beat's input (the alarm, E snoozing it five seconds a time as / file, line 3: // she's up, and on nothing else (the oak, Ed 2026-10-24: no curtains, nothing waiting on the island's build; Ed 2026-10-25: not on
   - Possible later evidence: [docs/notes/run.md:68](../../docs/notes/run.md#L68): - **The opening** (Ed, 2026-10-20; `app/opening.ts`, the storyboard and Ed's decisions in previews/ed/opening-mock/ on claude/ed-shots; on by default: the tuning's `opening.bedroom`, `?opening=bedroom\|old` for one load): every first load but a chart's arrival (`?arrive=`), a bot game, `?creator=0` or `?zoo` (Ed, 2026-10-25, on `?seed=497831`: "it should be loading straight to her bedroom in the treehouse, not the character creation screen": a link naming its seed or island too, in that island's treehouse) is home's night, asleep in the dark (`render/wakeUp.ts` `WakeCard.sleep`) while it's made, then she wakes in her bedroom there (main.ts `wakeFirst`; Ed, 2026-10-23: "the first screen should. candidate only: same-topic wording and later inline date; not a verified superseding ruling.
   - Possible later evidence: [docs/notes/house.md:79](../../docs/notes/house.md#L79): - **The oak** (Ed, 2026-10-24: "it is a large old oak tree with wide, thick, decumbent branches ... The floors are wooden but not planks"; the layout v4 he approved, previews/ed/treehouse-layout-v4 on claude/treehouse-trunk-mock; "I think best to build it and we will find out in game"): the house is one floor shape, `config/house/shape.js` (the mock's own distance field: its noise, so its shapes), six trunk rooms in a soft S (Dining Room, Terrace, Parlour, Boudoir, her Bedroom, the Turret; a room file's `trunk`, bottom to top by `order`) and a pair of branch rooms off each of the lower four (`from`, `bend`: Workshop and Kitchen, Cloakroom and Studio, Solarium and Bestiary, Bedrooms 2 and 3 `. candidate only: same-topic wording and later inline date; not a verified superseding ruling.
 
 - **the dream before the alarm (Ed, 2026-10-24: finds on loan) > its end rings the alarm (the page's: it played to its end), and the wake-up goes on as ever** — [src/rules/wakeUp.test.ts:422](../../src/rules/wakeUp.test.ts#L422)
-  - current rules; keep pending design review. Currentness: unverified. Case runtime: unknown.
+  - current rules; Keep layout, wake-up and opening contracts?. Currentness: unverified. Case runtime: unknown.
   - Cited ruling: file, line 1: // The new opening's wake-up (rules/wakeUp.ts; Ed, 2026-10-20): each beat's input (the alarm, E snoozing it five seconds a time as / file, line 3: // she's up, and on nothing else (the oak, Ed 2026-10-24: no curtains, nothing waiting on the island's build; Ed 2026-10-25: not on
   - Possible later evidence: [docs/notes/run.md:68](../../docs/notes/run.md#L68): - **The opening** (Ed, 2026-10-20; `app/opening.ts`, the storyboard and Ed's decisions in previews/ed/opening-mock/ on claude/ed-shots; on by default: the tuning's `opening.bedroom`, `?opening=bedroom\|old` for one load): every first load but a chart's arrival (`?arrive=`), a bot game, `?creator=0` or `?zoo` (Ed, 2026-10-25, on `?seed=497831`: "it should be loading straight to her bedroom in the treehouse, not the character creation screen": a link naming its seed or island too, in that island's treehouse) is home's night, asleep in the dark (`render/wakeUp.ts` `WakeCard.sleep`) while it's made, then she wakes in her bedroom there (main.ts `wakeFirst`; Ed, 2026-10-23: "the first screen should. candidate only: same-topic wording and later inline date; not a verified superseding ruling.
   - Possible later evidence: [docs/notes/island.md:17](../../docs/notes/island.md#L17): - **Sea chart**: the journey's map of islands (`chart.html`, or `?chart`; `?chart=all` shows everything; Ed, 2026-10-11): the world's disc, home in the middle, all 64 islands drawn in their real outlines at their kinds' bearings on their phases' rings, a sigil (and a link) only on those she can travel to, voyages as dotted lines, won islands starred; click one to play it. **New islands** (Ed, 2026-10-26: the chart didn't show which islands are new): each island she's found and not yet been to (`app/chartSave.ts` `unvisited`: no night played there, and not the one she's on) sparkles, a ring of little stars twinkling round its sigil (`ChartIsland.fresh`, `render/chart/seaChart.ts` `spark`, nev. candidate only: same-topic wording and later inline date; not a verified superseding ruling.
 
 - **the dream before the alarm (Ed, 2026-10-24: finds on loan) > any key or move ends it: the alarm rings, and that press doesn't also get her up** — [src/rules/wakeUp.test.ts:431](../../src/rules/wakeUp.test.ts#L431)
-  - current rules; keep pending design review. Currentness: unverified. Case runtime: unknown.
+  - current rules; Keep layout, wake-up and opening contracts?. Currentness: unverified. Case runtime: unknown.
   - Cited ruling: file, line 1: // The new opening's wake-up (rules/wakeUp.ts; Ed, 2026-10-20): each beat's input (the alarm, E snoozing it five seconds a time as / file, line 3: // she's up, and on nothing else (the oak, Ed 2026-10-24: no curtains, nothing waiting on the island's build; Ed 2026-10-25: not on
   - Possible later evidence: [docs/notes/run.md:68](../../docs/notes/run.md#L68): - **The opening** (Ed, 2026-10-20; `app/opening.ts`, the storyboard and Ed's decisions in previews/ed/opening-mock/ on claude/ed-shots; on by default: the tuning's `opening.bedroom`, `?opening=bedroom\|old` for one load): every first load but a chart's arrival (`?arrive=`), a bot game, `?creator=0` or `?zoo` (Ed, 2026-10-25, on `?seed=497831`: "it should be loading straight to her bedroom in the treehouse, not the character creation screen": a link naming its seed or island too, in that island's treehouse) is home's night, asleep in the dark (`render/wakeUp.ts` `WakeCard.sleep`) while it's made, then she wakes in her bedroom there (main.ts `wakeFirst`; Ed, 2026-10-23: "the first screen should. candidate only: same-topic wording and later inline date; not a verified superseding ruling.
   - Possible later evidence: [docs/notes/house.md:79](../../docs/notes/house.md#L79): - **The oak** (Ed, 2026-10-24: "it is a large old oak tree with wide, thick, decumbent branches ... The floors are wooden but not planks"; the layout v4 he approved, previews/ed/treehouse-layout-v4 on claude/treehouse-trunk-mock; "I think best to build it and we will find out in game"): the house is one floor shape, `config/house/shape.js` (the mock's own distance field: its noise, so its shapes), six trunk rooms in a soft S (Dining Room, Terrace, Parlour, Boudoir, her Bedroom, the Turret; a room file's `trunk`, bottom to top by `order`) and a pair of branch rooms off each of the lower four (`from`, `bend`: Workshop and Kitchen, Cloakroom and Studio, Solarium and Bestiary, Bedrooms 2 and 3 `. candidate only: same-topic wording and later inline date; not a verified superseding ruling.
 
 - **the dream before the alarm (Ed, 2026-10-24: finds on loan) > after a sail's flight in (Ed, 2026-10-24: one dream, always in bed): landed in her bedroom asleep, the same dream, the alarm when it ends** — [src/rules/wakeUp.test.ts:440](../../src/rules/wakeUp.test.ts#L440)
-  - current rules; keep pending design review. Currentness: unverified. Case runtime: unknown.
+  - current rules; Keep layout, wake-up and opening contracts?. Currentness: unverified. Case runtime: unknown.
   - Cited ruling: file, line 1: // The new opening's wake-up (rules/wakeUp.ts; Ed, 2026-10-20): each beat's input (the alarm, E snoozing it five seconds a time as / file, line 3: // she's up, and on nothing else (the oak, Ed 2026-10-24: no curtains, nothing waiting on the island's build; Ed 2026-10-25: not on / name, line 440: after a sail's flight in (Ed, 2026-10-24: one dream, always in bed): landed in her bedroom asleep, the same dream, the alarm when it ends
   - Possible later evidence: [docs/notes/run.md:68](../../docs/notes/run.md#L68): - **The opening** (Ed, 2026-10-20; `app/opening.ts`, the storyboard and Ed's decisions in previews/ed/opening-mock/ on claude/ed-shots; on by default: the tuning's `opening.bedroom`, `?opening=bedroom\|old` for one load): every first load but a chart's arrival (`?arrive=`), a bot game, `?creator=0` or `?zoo` (Ed, 2026-10-25, on `?seed=497831`: "it should be loading straight to her bedroom in the treehouse, not the character creation screen": a link naming its seed or island too, in that island's treehouse) is home's night, asleep in the dark (`render/wakeUp.ts` `WakeCard.sleep`) while it's made, then she wakes in her bedroom there (main.ts `wakeFirst`; Ed, 2026-10-23: "the first screen should. candidate only: same-topic wording and later inline date; not a verified superseding ruling.
   - Possible later evidence: [docs/notes/house.md:79](../../docs/notes/house.md#L79): - **The oak** (Ed, 2026-10-24: "it is a large old oak tree with wide, thick, decumbent branches ... The floors are wooden but not planks"; the layout v4 he approved, previews/ed/treehouse-layout-v4 on claude/treehouse-trunk-mock; "I think best to build it and we will find out in game"): the house is one floor shape, `config/house/shape.js` (the mock's own distance field: its noise, so its shapes), six trunk rooms in a soft S (Dining Room, Terrace, Parlour, Boudoir, her Bedroom, the Turret; a room file's `trunk`, bottom to top by `order`) and a pair of branch rooms off each of the lower four (`from`, `bend`: Workshop and Kitchen, Cloakroom and Studio, Solarium and Bestiary, Bedrooms 2 and 3 `. candidate only: same-topic wording and later inline date; not a verified superseding ruling.
 
 - **the dream before the alarm (Ed, 2026-10-24: finds on loan) > no dream with nothing on loan: the alarm at once, as before** — [src/rules/wakeUp.test.ts:453](../../src/rules/wakeUp.test.ts#L453)
-  - current rules; keep pending design review. Currentness: unverified. Case runtime: unknown.
+  - current rules; Keep layout, wake-up and opening contracts?. Currentness: unverified. Case runtime: unknown.
   - Cited ruling: file, line 1: // The new opening's wake-up (rules/wakeUp.ts; Ed, 2026-10-20): each beat's input (the alarm, E snoozing it five seconds a time as / file, line 3: // she's up, and on nothing else (the oak, Ed 2026-10-24: no curtains, nothing waiting on the island's build; Ed 2026-10-25: not on
   - Possible later evidence: [docs/notes/run.md:68](../../docs/notes/run.md#L68): - **The opening** (Ed, 2026-10-20; `app/opening.ts`, the storyboard and Ed's decisions in previews/ed/opening-mock/ on claude/ed-shots; on by default: the tuning's `opening.bedroom`, `?opening=bedroom\|old` for one load): every first load but a chart's arrival (`?arrive=`), a bot game, `?creator=0` or `?zoo` (Ed, 2026-10-25, on `?seed=497831`: "it should be loading straight to her bedroom in the treehouse, not the character creation screen": a link naming its seed or island too, in that island's treehouse) is home's night, asleep in the dark (`render/wakeUp.ts` `WakeCard.sleep`) while it's made, then she wakes in her bedroom there (main.ts `wakeFirst`; Ed, 2026-10-23: "the first screen should. candidate only: same-topic wording and later inline date; not a verified superseding ruling.
   - Possible later evidence: [docs/notes/house.md:79](../../docs/notes/house.md#L79): - **The oak** (Ed, 2026-10-24: "it is a large old oak tree with wide, thick, decumbent branches ... The floors are wooden but not planks"; the layout v4 he approved, previews/ed/treehouse-layout-v4 on claude/treehouse-trunk-mock; "I think best to build it and we will find out in game"): the house is one floor shape, `config/house/shape.js` (the mock's own distance field: its noise, so its shapes), six trunk rooms in a soft S (Dining Room, Terrace, Parlour, Boudoir, her Bedroom, the Turret; a room file's `trunk`, bottom to top by `order`) and a pair of branch rooms off each of the lower four (`from`, `bend`: Workshop and Kitchen, Cloakroom and Studio, Solarium and Bestiary, Bedrooms 2 and 3 `. candidate only: same-topic wording and later inline date; not a verified superseding ruling.
 
 - **a sail always ends with her asleep in bed (Ed, 2026-10-25, his 2a) > with nothing on loan: in her bed in her bedroom, not at her decks, asleep with the alarm ringing, in her nightie** — [src/rules/wakeUp.test.ts:471](../../src/rules/wakeUp.test.ts#L471)
-  - current rules; keep pending design review. Currentness: unverified. Case runtime: unknown.
+  - current rules; Keep layout, wake-up and opening contracts?. Currentness: unverified. Case runtime: unknown.
   - Cited ruling: file, line 1: // The new opening's wake-up (rules/wakeUp.ts; Ed, 2026-10-20): each beat's input (the alarm, E snoozing it five seconds a time as / file, line 3: // she's up, and on nothing else (the oak, Ed 2026-10-24: no curtains, nothing waiting on the island's build; Ed 2026-10-25: not on
   - Possible later evidence: [docs/notes/run.md:68](../../docs/notes/run.md#L68): - **The opening** (Ed, 2026-10-20; `app/opening.ts`, the storyboard and Ed's decisions in previews/ed/opening-mock/ on claude/ed-shots; on by default: the tuning's `opening.bedroom`, `?opening=bedroom\|old` for one load): every first load but a chart's arrival (`?arrive=`), a bot game, `?creator=0` or `?zoo` (Ed, 2026-10-25, on `?seed=497831`: "it should be loading straight to her bedroom in the treehouse, not the character creation screen": a link naming its seed or island too, in that island's treehouse) is home's night, asleep in the dark (`render/wakeUp.ts` `WakeCard.sleep`) while it's made, then she wakes in her bedroom there (main.ts `wakeFirst`; Ed, 2026-10-23: "the first screen should. candidate only: same-topic wording and later inline date; not a verified superseding ruling.
   - Possible later evidence: [docs/notes/house.md:79](../../docs/notes/house.md#L79): - **The oak** (Ed, 2026-10-24: "it is a large old oak tree with wide, thick, decumbent branches ... The floors are wooden but not planks"; the layout v4 he approved, previews/ed/treehouse-layout-v4 on claude/treehouse-trunk-mock; "I think best to build it and we will find out in game"): the house is one floor shape, `config/house/shape.js` (the mock's own distance field: its noise, so its shapes), six trunk rooms in a soft S (Dining Room, Terrace, Parlour, Boudoir, her Bedroom, the Turret; a room file's `trunk`, bottom to top by `order`) and a pair of branch rooms off each of the lower four (`from`, `bend`: Workshop and Kitchen, Cloakroom and Studio, Solarium and Bestiary, Bedrooms 2 and 3 `. candidate only: same-topic wording and later inline date; not a verified superseding ruling.
 
 - **a sail always ends with her asleep in bed (Ed, 2026-10-25, his 2a) > then the wake-up as every morning: up after a move and the stretch, the door open at once, dressing at the pile if she likes** — [src/rules/wakeUp.test.ts:483](../../src/rules/wakeUp.test.ts#L483)
-  - current rules; keep pending design review. Currentness: unverified. Case runtime: unknown.
+  - current rules; Keep layout, wake-up and opening contracts?. Currentness: unverified. Case runtime: unknown.
   - Cited ruling: file, line 1: // The new opening's wake-up (rules/wakeUp.ts; Ed, 2026-10-20): each beat's input (the alarm, E snoozing it five seconds a time as / file, line 3: // she's up, and on nothing else (the oak, Ed 2026-10-24: no curtains, nothing waiting on the island's build; Ed 2026-10-25: not on
   - Possible later evidence: [docs/notes/run.md:68](../../docs/notes/run.md#L68): - **The opening** (Ed, 2026-10-20; `app/opening.ts`, the storyboard and Ed's decisions in previews/ed/opening-mock/ on claude/ed-shots; on by default: the tuning's `opening.bedroom`, `?opening=bedroom\|old` for one load): every first load but a chart's arrival (`?arrive=`), a bot game, `?creator=0` or `?zoo` (Ed, 2026-10-25, on `?seed=497831`: "it should be loading straight to her bedroom in the treehouse, not the character creation screen": a link naming its seed or island too, in that island's treehouse) is home's night, asleep in the dark (`render/wakeUp.ts` `WakeCard.sleep`) while it's made, then she wakes in her bedroom there (main.ts `wakeFirst`; Ed, 2026-10-23: "the first screen should. candidate only: same-topic wording and later inline date; not a verified superseding ruling.
   - Possible later evidence: [docs/notes/house.md:79](../../docs/notes/house.md#L79): - **The oak** (Ed, 2026-10-24: "it is a large old oak tree with wide, thick, decumbent branches ... The floors are wooden but not planks"; the layout v4 he approved, previews/ed/treehouse-layout-v4 on claude/treehouse-trunk-mock; "I think best to build it and we will find out in game"): the house is one floor shape, `config/house/shape.js` (the mock's own distance field: its noise, so its shapes), six trunk rooms in a soft S (Dining Room, Terrace, Parlour, Boudoir, her Bedroom, the Turret; a room file's `trunk`, bottom to top by `order`) and a pair of branch rooms off each of the lower four (`from`, `bend`: Workshop and Kitchen, Cloakroom and Studio, Solarium and Bestiary, Bedrooms 2 and 3 `. candidate only: same-topic wording and later inline date; not a verified superseding ruling.
 
 - **a sail always ends with her asleep in bed (Ed, 2026-10-25, his 2a) > undressed, she walks from her bed down the trunk to the Terrace and starts the party at her decks in her nightie (Ed, 2026-10-25, his playtest of a sail)** — [src/rules/wakeUp.test.ts:495](../../src/rules/wakeUp.test.ts#L495)
-  - current rules; keep pending design review. Currentness: unverified. Case runtime: unknown.
+  - current rules; Keep layout, wake-up and opening contracts?. Currentness: unverified. Case runtime: unknown.
   - Cited ruling: file, line 1: // The new opening's wake-up (rules/wakeUp.ts; Ed, 2026-10-20): each beat's input (the alarm, E snoozing it five seconds a time as / file, line 3: // she's up, and on nothing else (the oak, Ed 2026-10-24: no curtains, nothing waiting on the island's build; Ed 2026-10-25: not on / name, line 495: undressed, she walks from her bed down the trunk to the Terrace and starts the party at her decks in her nightie (Ed, 2026-10-25, his playtest of a sail)
   - Possible later evidence: [docs/notes/run.md:68](../../docs/notes/run.md#L68): - **The opening** (Ed, 2026-10-20; `app/opening.ts`, the storyboard and Ed's decisions in previews/ed/opening-mock/ on claude/ed-shots; on by default: the tuning's `opening.bedroom`, `?opening=bedroom\|old` for one load): every first load but a chart's arrival (`?arrive=`), a bot game, `?creator=0` or `?zoo` (Ed, 2026-10-25, on `?seed=497831`: "it should be loading straight to her bedroom in the treehouse, not the character creation screen": a link naming its seed or island too, in that island's treehouse) is home's night, asleep in the dark (`render/wakeUp.ts` `WakeCard.sleep`) while it's made, then she wakes in her bedroom there (main.ts `wakeFirst`; Ed, 2026-10-23: "the first screen should. candidate only: same-topic wording and later inline date; not a verified superseding ruling.
   - Possible later evidence: [docs/notes/house.md:79](../../docs/notes/house.md#L79): - **The oak** (Ed, 2026-10-24: "it is a large old oak tree with wide, thick, decumbent branches ... The floors are wooden but not planks"; the layout v4 he approved, previews/ed/treehouse-layout-v4 on claude/treehouse-trunk-mock; "I think best to build it and we will find out in game"): the house is one floor shape, `config/house/shape.js` (the mock's own distance field: its noise, so its shapes), six trunk rooms in a soft S (Dining Room, Terrace, Parlour, Boudoir, her Bedroom, the Turret; a room file's `trunk`, bottom to top by `order`) and a pair of branch rooms off each of the lower four (`from`, `bend`: Workshop and Kitchen, Cloakroom and Studio, Solarium and Bestiary, Bedrooms 2 and 3 `. candidate only: same-topic wording and later inline date; not a verified superseding ruling.
 
 - **a sail always ends with her asleep in bed (Ed, 2026-10-25, his 2a) > with a find on loan: the same bed, dreaming first, the alarm as the dream ends** — [src/rules/wakeUp.test.ts:512](../../src/rules/wakeUp.test.ts#L512)
-  - current rules; keep pending design review. Currentness: unverified. Case runtime: unknown.
+  - current rules; Keep layout, wake-up and opening contracts?. Currentness: unverified. Case runtime: unknown.
   - Cited ruling: file, line 1: // The new opening's wake-up (rules/wakeUp.ts; Ed, 2026-10-20): each beat's input (the alarm, E snoozing it five seconds a time as / file, line 3: // she's up, and on nothing else (the oak, Ed 2026-10-24: no curtains, nothing waiting on the island's build; Ed 2026-10-25: not on
   - Possible later evidence: [docs/notes/run.md:68](../../docs/notes/run.md#L68): - **The opening** (Ed, 2026-10-20; `app/opening.ts`, the storyboard and Ed's decisions in previews/ed/opening-mock/ on claude/ed-shots; on by default: the tuning's `opening.bedroom`, `?opening=bedroom\|old` for one load): every first load but a chart's arrival (`?arrive=`), a bot game, `?creator=0` or `?zoo` (Ed, 2026-10-25, on `?seed=497831`: "it should be loading straight to her bedroom in the treehouse, not the character creation screen": a link naming its seed or island too, in that island's treehouse) is home's night, asleep in the dark (`render/wakeUp.ts` `WakeCard.sleep`) while it's made, then she wakes in her bedroom there (main.ts `wakeFirst`; Ed, 2026-10-23: "the first screen should. candidate only: same-topic wording and later inline date; not a verified superseding ruling.
   - Possible later evidence: [docs/notes/house.md:79](../../docs/notes/house.md#L79): - **The oak** (Ed, 2026-10-24: "it is a large old oak tree with wide, thick, decumbent branches ... The floors are wooden but not planks"; the layout v4 he approved, previews/ed/treehouse-layout-v4 on claude/treehouse-trunk-mock; "I think best to build it and we will find out in game"): the house is one floor shape, `config/house/shape.js` (the mock's own distance field: its noise, so its shapes), six trunk rooms in a soft S (Dining Room, Terrace, Parlour, Boudoir, her Bedroom, the Turret; a room file's `trunk`, bottom to top by `order`) and a pair of branch rooms off each of the lower four (`from`, `bend`: Workshop and Kitchen, Cloakroom and Studio, Solarium and Bestiary, Bedrooms 2 and 3 `. candidate only: same-topic wording and later inline date; not a verified superseding ruling.
 
 - **she always wakes in her nightie, last night's clothes in the pile (Ed, 2026-10-24) > on every way in: a load, after the bed or a sail, and after a dream** — [src/rules/wakeUp.test.ts:522](../../src/rules/wakeUp.test.ts#L522)
-  - current rules; keep pending design review. Currentness: unverified. Case runtime: unknown.
+  - current rules; Keep layout, wake-up and opening contracts?. Currentness: unverified. Case runtime: unknown.
   - Cited ruling: file, line 1: // The new opening's wake-up (rules/wakeUp.ts; Ed, 2026-10-20): each beat's input (the alarm, E snoozing it five seconds a time as / file, line 3: // she's up, and on nothing else (the oak, Ed 2026-10-24: no curtains, nothing waiting on the island's build; Ed 2026-10-25: not on
   - Possible later evidence: [docs/notes/run.md:68](../../docs/notes/run.md#L68): - **The opening** (Ed, 2026-10-20; `app/opening.ts`, the storyboard and Ed's decisions in previews/ed/opening-mock/ on claude/ed-shots; on by default: the tuning's `opening.bedroom`, `?opening=bedroom\|old` for one load): every first load but a chart's arrival (`?arrive=`), a bot game, `?creator=0` or `?zoo` (Ed, 2026-10-25, on `?seed=497831`: "it should be loading straight to her bedroom in the treehouse, not the character creation screen": a link naming its seed or island too, in that island's treehouse) is home's night, asleep in the dark (`render/wakeUp.ts` `WakeCard.sleep`) while it's made, then she wakes in her bedroom there (main.ts `wakeFirst`; Ed, 2026-10-23: "the first screen should. candidate only: same-topic wording and later inline date; not a verified superseding ruling.
   - Possible later evidence: [docs/notes/house.md:79](../../docs/notes/house.md#L79): - **The oak** (Ed, 2026-10-24: "it is a large old oak tree with wide, thick, decumbent branches ... The floors are wooden but not planks"; the layout v4 he approved, previews/ed/treehouse-layout-v4 on claude/treehouse-trunk-mock; "I think best to build it and we will find out in game"): the house is one floor shape, `config/house/shape.js` (the mock's own distance field: its noise, so its shapes), six trunk rooms in a soft S (Dining Room, Terrace, Parlour, Boudoir, her Bedroom, the Turret; a room file's `trunk`, bottom to top by `order`) and a pair of branch rooms off each of the lower four (`from`, `bend`: Workshop and Kitchen, Cloakroom and Studio, Solarium and Bestiary, Bedrooms 2 and 3 `. candidate only: same-topic wording and later inline date; not a verified superseding ruling.
 
 - **her bed before the party (Ed, 2026-10-26, Q-e: it counts as a lost night) > up, E held at her bed sleeps, the party never cast: main.ts's "slept" (the night lost, the next on a new seed)** — [src/rules/wakeUp.test.ts:535](../../src/rules/wakeUp.test.ts#L535)
-  - current rules; keep pending design review. Currentness: unverified. Case runtime: unknown.
+  - current rules; Keep layout, wake-up and opening contracts?. Currentness: unverified. Case runtime: unknown.
   - Cited ruling: file, line 1: // The new opening's wake-up (rules/wakeUp.ts; Ed, 2026-10-20): each beat's input (the alarm, E snoozing it five seconds a time as / file, line 3: // she's up, and on nothing else (the oak, Ed 2026-10-24: no curtains, nothing waiting on the island's build; Ed 2026-10-25: not on
   - Possible later evidence: [docs/notes/run.md:68](../../docs/notes/run.md#L68): - **The opening** (Ed, 2026-10-20; `app/opening.ts`, the storyboard and Ed's decisions in previews/ed/opening-mock/ on claude/ed-shots; on by default: the tuning's `opening.bedroom`, `?opening=bedroom\|old` for one load): every first load but a chart's arrival (`?arrive=`), a bot game, `?creator=0` or `?zoo` (Ed, 2026-10-25, on `?seed=497831`: "it should be loading straight to her bedroom in the treehouse, not the character creation screen": a link naming its seed or island too, in that island's treehouse) is home's night, asleep in the dark (`render/wakeUp.ts` `WakeCard.sleep`) while it's made, then she wakes in her bedroom there (main.ts `wakeFirst`; Ed, 2026-10-23: "the first screen should. candidate only: same-topic wording and later inline date; not a verified superseding ruling.
   - Possible later evidence: [docs/notes/run.md:79](../../docs/notes/run.md#L79): - **The world asleep before the party** (Ed, 2026-10-26: "If you leave the treehouse before starting the party, it should be the same as after a party is lost; creatures are asleep in their areas and you can't invite them, the night's permanent upgrade find is not placed yet"; `worldAsleep`, `putToBed`, `stepWorldAsleep` in `src/rules/partyOver.ts`): a night waiting for her party spell (`party.spellAt` null; not the zoo, not the debug arena's) lies as the afterparty does: every creature put to bed at once in its own area, asleep for good (the afterparty's own sleep), the legends still, no 💌 taking, nothing fighting or attacking her, nothing growing, and tonight's find not there (its trunk, . candidate only: same-topic wording and later inline date; not a verified superseding ruling.
 
 - **changing her hat mid-night > takes at once; a hat lying in the world stays there with its spell, and she wears the new one** — [src/rules/wardrobe.test.ts:26](../../src/rules/wardrobe.test.ts#L26)
-  - current rules; keep pending design review. Currentness: unverified. Case runtime: unknown.
+  - current rules; Keep equipment, finds, canopy, telescope and Studio contracts?. Currentness: unverified. Case runtime: unknown.
   - Cited ruling: file, line 1: // Back in her room mid-night from the treehouse deck (Ed, 2026-10-11, answer 4; rules/hatSpells.ts changeLoadout): the new hat and
   - Possible later evidence: [docs/notes/house.md:110](../../docs/notes/house.md#L110): - **Hats and brooms** (Ed, 2026-10-11; `src/rules/spells.ts`, docs/backlog/unlocks.md): two slots, a hat and a broom, each with a spell or none (the default; the plain broom's quicker rise is the parts' stats now: see **Sets**). Hats are worn (the Helmet: an extra hit, knocked off) or placed with E held (the Healing ring: a hit back every few seconds standing by it; Harvest: a ring of six berries grows round it; Dowsing: a pointer to the nearest relic for a minute; Sentry: it throws 💌s at wild creatures within 30 m; Slingshot: her 💌s passing within 10 m circle it, then fly at a creature up to 40 m off; Gathering: picked up again, it brings back every sigil of hers within 100 m; Bramble: wi. candidate only: same-topic wording and later inline date; not a verified superseding ruling.
   - Possible later evidence: [docs/notes/music.md:25](../../docs/notes/music.md#L25): - **Music ahead** (Ed, 2026-10-27, from his audio test: "render the music ahead, so main-thread stalls can't silence it"; the plan and its steps in the REPORT of 2026-10-27; the stall test, `audio-test/stall.html`, docs/notes/sound.md, its baseline): the music drawn a bar at a time on an OfflineAudioContext (off the page's thread) and queued seconds ahead on the audio clock, its buses live. **Step 2, the stems** (this): `MusicEngine` takes a **sink** (`MusicSink`), where its parts' notes go and its bus automation: by default its own buses, live exactly as before (its `bus`; `node tools/music-lab/stems.cjs ab` with `OLD=<a checkout>`: before and after apart by no more than Chromium's own roun. candidate only: same-topic wording and later inline date; not a verified superseding ruling.
 
 - **changing her hat mid-night > several can lie about at once** — [src/rules/wardrobe.test.ts:38](../../src/rules/wardrobe.test.ts#L38)
-  - current rules; keep pending design review. Currentness: unverified. Case runtime: unknown.
+  - current rules; Keep equipment, finds, canopy, telescope and Studio contracts?. Currentness: unverified. Case runtime: unknown.
   - Cited ruling: file, line 1: // Back in her room mid-night from the treehouse deck (Ed, 2026-10-11, answer 4; rules/hatSpells.ts changeLoadout): the new hat and / body, line 47: // a pointer to each (Ed, 2026-10-12: "If there are multiple hats on the ground, they each get a pointer")
   - Possible later evidence: [docs/notes/house.md:110](../../docs/notes/house.md#L110): - **Hats and brooms** (Ed, 2026-10-11; `src/rules/spells.ts`, docs/backlog/unlocks.md): two slots, a hat and a broom, each with a spell or none (the default; the plain broom's quicker rise is the parts' stats now: see **Sets**). Hats are worn (the Helmet: an extra hit, knocked off) or placed with E held (the Healing ring: a hit back every few seconds standing by it; Harvest: a ring of six berries grows round it; Dowsing: a pointer to the nearest relic for a minute; Sentry: it throws 💌s at wild creatures within 30 m; Slingshot: her 💌s passing within 10 m circle it, then fly at a creature up to 40 m off; Gathering: picked up again, it brings back every sigil of hers within 100 m; Bramble: wi. candidate only: same-topic wording and later inline date; not a verified superseding ruling.
   - Possible later evidence: [docs/notes/view.md:72](../../docs/notes/view.md#L72): - **Ley lines**: the glowing line through the runestones in wave order (`src/rules/leylines.ts` the chain, `src/rules/leyroute.ts` the route, `src/render/leylines.ts` the drawing): through every area's stone from home to the last, the whole time (Ed, 2026-10-06: "I think the leylines should cover the entire set of waves the whole time, but ideally it shouldn't cross itself"), moving on from the last runestone reached (by its wave, or its quest: `onAreaDone(party, cell, time)`), every section as bright as the next (`fade`, `behindBright` and `far` all 1: Ed, 2026-10-06: "The leyline should always go from the treehouse to 3x the progress of the pulse, and I should be able to see it along its e. candidate only: same-topic wording and later inline date; not a verified superseding ruling.
 
-- **her hats left in the world > keep working: a Bramble hat left lying still slows the wild round it** — [src/rules/wardrobe.test.ts:54](../../src/rules/wardrobe.test.ts#L54)
-  - outcome stats; review simulation assertions; consider report after Ed rules. Currentness: unverified. Case runtime: unknown.
-  - Cited ruling: file, line 1: // Back in her room mid-night from the treehouse deck (Ed, 2026-10-11, answer 4; rules/hatSpells.ts changeLoadout): the new hat and
-  - Possible later evidence: [docs/notes/house.md:110](../../docs/notes/house.md#L110): - **Hats and brooms** (Ed, 2026-10-11; `src/rules/spells.ts`, docs/backlog/unlocks.md): two slots, a hat and a broom, each with a spell or none (the default; the plain broom's quicker rise is the parts' stats now: see **Sets**). Hats are worn (the Helmet: an extra hit, knocked off) or placed with E held (the Healing ring: a hit back every few seconds standing by it; Harvest: a ring of six berries grows round it; Dowsing: a pointer to the nearest relic for a minute; Sentry: it throws 💌s at wild creatures within 30 m; Slingshot: her 💌s passing within 10 m circle it, then fly at a creature up to 40 m off; Gathering: picked up again, it brings back every sigil of hers within 100 m; Bramble: wi. candidate only: same-topic wording and later inline date; not a verified superseding ruling.
-  - Possible later evidence: [docs/notes/house.md:76](../../docs/notes/house.md#L76): - **Treehouse deck** (Ed, 2026-10-11: "a circle with a wooden floor and a balustrade sitting on the ent. You land on it by being at treetop height, and during the night time slower 10x"; `src/rules/treehouse.ts`, the tuning's `treehouse.deck`, `on: false` for the old treehouse): a round deck (radius 7 m, its floor 22 m up) on the Ent at the treehouse's spot. From the treetops, coming down within its radius plus `grace` lands her on it (`witch.perch`, mode "ground", its floor her ground: `witchHeight`); she walks it, kept inside its rail (`keepOnDeck`), round the **map table** in its middle (Ed: "The world map is in the centre": E there opens the sea chart over the game, `ui/chartOverlay.ts` . candidate only: same-topic wording and later inline date; not a verified superseding ruling.
-
 - **her hats left in the world > she can't pick one up wearing a hat; bare-headed she puts it on, its spell hers, and her own stays where it lay** — [src/rules/wardrobe.test.ts:65](../../src/rules/wardrobe.test.ts#L65)
-  - current rules; keep pending design review. Currentness: unverified. Case runtime: unknown.
+  - current rules; Keep equipment, finds, canopy, telescope and Studio contracts?. Currentness: unverified. Case runtime: unknown.
   - Cited ruling: file, line 1: // Back in her room mid-night from the treehouse deck (Ed, 2026-10-11, answer 4; rules/hatSpells.ts changeLoadout): the new hat and
   - Possible later evidence: [docs/notes/house.md:110](../../docs/notes/house.md#L110): - **Hats and brooms** (Ed, 2026-10-11; `src/rules/spells.ts`, docs/backlog/unlocks.md): two slots, a hat and a broom, each with a spell or none (the default; the plain broom's quicker rise is the parts' stats now: see **Sets**). Hats are worn (the Helmet: an extra hit, knocked off) or placed with E held (the Healing ring: a hit back every few seconds standing by it; Harvest: a ring of six berries grows round it; Dowsing: a pointer to the nearest relic for a minute; Sentry: it throws 💌s at wild creatures within 30 m; Slingshot: her 💌s passing within 10 m circle it, then fly at a creature up to 40 m off; Gathering: picked up again, it brings back every sigil of hers within 100 m; Bramble: wi. candidate only: same-topic wording and later inline date; not a verified superseding ruling.
   - Possible later evidence: [docs/notes/music.md:25](../../docs/notes/music.md#L25): - **Music ahead** (Ed, 2026-10-27, from his audio test: "render the music ahead, so main-thread stalls can't silence it"; the plan and its steps in the REPORT of 2026-10-27; the stall test, `audio-test/stall.html`, docs/notes/sound.md, its baseline): the music drawn a bar at a time on an OfflineAudioContext (off the page's thread) and queued seconds ahead on the audio clock, its buses live. **Step 2, the stems** (this): `MusicEngine` takes a **sink** (`MusicSink`), where its parts' notes go and its bus automation: by default its own buses, live exactly as before (its `bus`; `node tools/music-lab/stems.cjs ab` with `OLD=<a checkout>`: before and after apart by no more than Chromium's own roun. candidate only: same-topic wording and later inline date; not a verified superseding ruling.
 
 - **the wardrobe > gives every dressing station its shelves, and names no station the house hasn't** — [src/rules/wardrobeShelves.test.ts:14](../../src/rules/wardrobeShelves.test.ts#L14)
-  - current rules; keep pending design review. Currentness: unverified. Case runtime: unknown.
+  - current rules; Keep equipment, finds, canopy, telescope and Studio contracts?. Currentness: unverified. Case runtime: unknown.
   - Cited ruling: file, line 1: // The dressing stations' shelves (config/wardrobe.json, rules/wardrobe.ts; Ed, 2026-10-21, the station menus). (wardrobe.test.ts is the hats and brooms changed mid-night.)
   - Possible later evidence: [docs/notes/house.md:78](../../docs/notes/house.md#L78): - **The treehouse's rooms** (Ed, 2026-10-19; `config/house/`, `src/rules/houseRooms.ts`, `src/render/houseRooms.ts`; the mock, previews/ed/big-room-mock): placeholder plank rooms joined by corridors off the hub, walked as one floor with it (`keepInHouse`, the deck's `house.rooms`), the hub's wall open where a corridor meets it: the hat room (the hat's mirror, its colours and fit; the hats' floor), the bedroom off the landing beside it (18 × 18 m: the bed, the phone, the telephone, and since 2026-10-21 each witch's own dressing, before its door: the dressing table, face, hair, skin, earrings; the wardrobe, jacket, top, trousers; the cloak pegs, cloak, scarf; the shoe rack; Ed: three bedrooms,. candidate only: same-topic wording and later inline date; not a verified superseding ruling.
   - Possible later evidence: [docs/notes/house.md:81](../../docs/notes/house.md#L81): - **Station menus** (Ed, 2026-10-21; the mock, previews/ed/station-menus-mock on claude/ed-shots; `config/wardrobe.json`, `src/rules/wardrobe.ts`, `src/app/owned.ts`, `src/ui/stationPanel.ts`, `src/rules/stations.ts`): at a dressing station (the house's reach, `rules/stations.ts` `stationOf`) it lights up with E over it, and E there slides its panel in from the left over the live game (Ed's playtest, 2026-10-26: "Menus should open when she presses E near an interactive object (dresser, map, etc) instead of them opening automatically just through proximity"; it was by nearness, no E, since 2026-10-21); E again (the pad's □) slides it out (Ed, 2026-10-26: "I think E should also close, and we c. candidate only: same-topic wording and later inline date; not a verified superseding ruling.
 
 - **the wardrobe > sets only what her genome has, to values the generator draws** — [src/rules/wardrobeShelves.test.ts:19](../../src/rules/wardrobeShelves.test.ts#L19)
-  - current rules; keep pending design review. Currentness: unverified. Case runtime: unknown.
+  - current rules; Keep equipment, finds, canopy, telescope and Studio contracts?. Currentness: unverified. Case runtime: unknown.
   - Cited ruling: file, line 1: // The dressing stations' shelves (config/wardrobe.json, rules/wardrobe.ts; Ed, 2026-10-21, the station menus). (wardrobe.test.ts is the hats and brooms changed mid-night.)
   - Possible later evidence: [docs/notes/house.md:81](../../docs/notes/house.md#L81): - **Station menus** (Ed, 2026-10-21; the mock, previews/ed/station-menus-mock on claude/ed-shots; `config/wardrobe.json`, `src/rules/wardrobe.ts`, `src/app/owned.ts`, `src/ui/stationPanel.ts`, `src/rules/stations.ts`): at a dressing station (the house's reach, `rules/stations.ts` `stationOf`) it lights up with E over it, and E there slides its panel in from the left over the live game (Ed's playtest, 2026-10-26: "Menus should open when she presses E near an interactive object (dresser, map, etc) instead of them opening automatically just through proximity"; it was by nearness, no E, since 2026-10-21); E again (the pad's □) slides it out (Ed, 2026-10-26: "I think E should also close, and we c. candidate only: same-topic wording and later inline date; not a verified superseding ruling.
   - Possible later evidence: [docs/notes/house.md:78](../../docs/notes/house.md#L78): - **The treehouse's rooms** (Ed, 2026-10-19; `config/house/`, `src/rules/houseRooms.ts`, `src/render/houseRooms.ts`; the mock, previews/ed/big-room-mock): placeholder plank rooms joined by corridors off the hub, walked as one floor with it (`keepInHouse`, the deck's `house.rooms`), the hub's wall open where a corridor meets it: the hat room (the hat's mirror, its colours and fit; the hats' floor), the bedroom off the landing beside it (18 × 18 m: the bed, the phone, the telephone, and since 2026-10-21 each witch's own dressing, before its door: the dressing table, face, hair, skin, earrings; the wardrobe, jacket, top, trousers; the cloak pegs, cloak, scarf; the shoe rack; Ed: three bedrooms,. candidate only: same-topic wording and later inline date; not a verified superseding ruling.
 
 - **the wardrobe > colours only her palette's parts, and fits only her sliders** — [src/rules/wardrobeShelves.test.ts:29](../../src/rules/wardrobeShelves.test.ts#L29)
-  - current rules; keep pending design review. Currentness: unverified. Case runtime: unknown.
+  - current rules; Keep equipment, finds, canopy, telescope and Studio contracts?. Currentness: unverified. Case runtime: unknown.
   - Cited ruling: file, line 1: // The dressing stations' shelves (config/wardrobe.json, rules/wardrobe.ts; Ed, 2026-10-21, the station menus). (wardrobe.test.ts is the hats and brooms changed mid-night.)
   - Possible later evidence: [docs/notes/house.md:81](../../docs/notes/house.md#L81): - **Station menus** (Ed, 2026-10-21; the mock, previews/ed/station-menus-mock on claude/ed-shots; `config/wardrobe.json`, `src/rules/wardrobe.ts`, `src/app/owned.ts`, `src/ui/stationPanel.ts`, `src/rules/stations.ts`): at a dressing station (the house's reach, `rules/stations.ts` `stationOf`) it lights up with E over it, and E there slides its panel in from the left over the live game (Ed's playtest, 2026-10-26: "Menus should open when she presses E near an interactive object (dresser, map, etc) instead of them opening automatically just through proximity"; it was by nearness, no E, since 2026-10-21); E again (the pad's □) slides it out (Ed, 2026-10-26: "I think E should also close, and we c. candidate only: same-topic wording and later inline date; not a verified superseding ruling.
   - Possible later evidence: [docs/notes/house.md:78](../../docs/notes/house.md#L78): - **The treehouse's rooms** (Ed, 2026-10-19; `config/house/`, `src/rules/houseRooms.ts`, `src/render/houseRooms.ts`; the mock, previews/ed/big-room-mock): placeholder plank rooms joined by corridors off the hub, walked as one floor with it (`keepInHouse`, the deck's `house.rooms`), the hub's wall open where a corridor meets it: the hat room (the hat's mirror, its colours and fit; the hats' floor), the bedroom off the landing beside it (18 × 18 m: the bed, the phone, the telephone, and since 2026-10-21 each witch's own dressing, before its door: the dressing table, face, hair, skin, earrings; the wardrobe, jacket, top, trousers; the cloak pegs, cloak, scarf; the shoe rack; Ed: three bedrooms,. candidate only: same-topic wording and later inline date; not a verified superseding ruling.
 
 - **the wardrobe > has unique ids, and some still to find** — [src/rules/wardrobeShelves.test.ts:36](../../src/rules/wardrobeShelves.test.ts#L36)
-  - current rules; keep pending design review. Currentness: unverified. Case runtime: unknown.
+  - current rules; Keep equipment, finds, canopy, telescope and Studio contracts?. Currentness: unverified. Case runtime: unknown.
   - Cited ruling: file, line 1: // The dressing stations' shelves (config/wardrobe.json, rules/wardrobe.ts; Ed, 2026-10-21, the station menus). (wardrobe.test.ts is the hats and brooms changed mid-night.)
   - Possible later evidence: [docs/notes/house.md:78](../../docs/notes/house.md#L78): - **The treehouse's rooms** (Ed, 2026-10-19; `config/house/`, `src/rules/houseRooms.ts`, `src/render/houseRooms.ts`; the mock, previews/ed/big-room-mock): placeholder plank rooms joined by corridors off the hub, walked as one floor with it (`keepInHouse`, the deck's `house.rooms`), the hub's wall open where a corridor meets it: the hat room (the hat's mirror, its colours and fit; the hats' floor), the bedroom off the landing beside it (18 × 18 m: the bed, the phone, the telephone, and since 2026-10-21 each witch's own dressing, before its door: the dressing table, face, hair, skin, earrings; the wardrobe, jacket, top, trousers; the cloak pegs, cloak, scarf; the shoe rack; Ed: three bedrooms,. candidate only: same-topic wording and later inline date; not a verified superseding ruling.
   - Possible later evidence: [docs/notes/house.md:81](../../docs/notes/house.md#L81): - **Station menus** (Ed, 2026-10-21; the mock, previews/ed/station-menus-mock on claude/ed-shots; `config/wardrobe.json`, `src/rules/wardrobe.ts`, `src/app/owned.ts`, `src/ui/stationPanel.ts`, `src/rules/stations.ts`): at a dressing station (the house's reach, `rules/stations.ts` `stationOf`) it lights up with E over it, and E there slides its panel in from the left over the live game (Ed's playtest, 2026-10-26: "Menus should open when she presses E near an interactive object (dresser, map, etc) instead of them opening automatically just through proximity"; it was by nearness, no E, since 2026-10-21); E again (the pad's □) slides it out (Ed, 2026-10-26: "I think E should also close, and we c. candidate only: same-topic wording and later inline date; not a verified superseding ruling.
 
 - **the wardrobe > puts each item on, and only it of its shelf** — [src/rules/wardrobeShelves.test.ts:41](../../src/rules/wardrobeShelves.test.ts#L41)
-  - current rules; keep pending design review. Currentness: unverified. Case runtime: unknown.
+  - current rules; Keep equipment, finds, canopy, telescope and Studio contracts?. Currentness: unverified. Case runtime: unknown.
   - Cited ruling: file, line 1: // The dressing stations' shelves (config/wardrobe.json, rules/wardrobe.ts; Ed, 2026-10-21, the station menus). (wardrobe.test.ts is the hats and brooms changed mid-night.)
   - Possible later evidence: [docs/notes/house.md:78](../../docs/notes/house.md#L78): - **The treehouse's rooms** (Ed, 2026-10-19; `config/house/`, `src/rules/houseRooms.ts`, `src/render/houseRooms.ts`; the mock, previews/ed/big-room-mock): placeholder plank rooms joined by corridors off the hub, walked as one floor with it (`keepInHouse`, the deck's `house.rooms`), the hub's wall open where a corridor meets it: the hat room (the hat's mirror, its colours and fit; the hats' floor), the bedroom off the landing beside it (18 × 18 m: the bed, the phone, the telephone, and since 2026-10-21 each witch's own dressing, before its door: the dressing table, face, hair, skin, earrings; the wardrobe, jacket, top, trousers; the cloak pegs, cloak, scarf; the shoe rack; Ed: three bedrooms,. candidate only: same-topic wording and later inline date; not a verified superseding ruling.
   - Possible later evidence: [docs/notes/house.md:81](../../docs/notes/house.md#L81): - **Station menus** (Ed, 2026-10-21; the mock, previews/ed/station-menus-mock on claude/ed-shots; `config/wardrobe.json`, `src/rules/wardrobe.ts`, `src/app/owned.ts`, `src/ui/stationPanel.ts`, `src/rules/stations.ts`): at a dressing station (the house's reach, `rules/stations.ts` `stationOf`) it lights up with E over it, and E there slides its panel in from the left over the live game (Ed's playtest, 2026-10-26: "Menus should open when she presses E near an interactive object (dresser, map, etc) instead of them opening automatically just through proximity"; it was by nearness, no E, since 2026-10-21); E again (the pad's □) slides it out (Ed, 2026-10-26: "I think E should also close, and we c. candidate only: same-topic wording and later inline date; not a verified superseding ruling.
 
 - **the wardrobe > keeps a backpack's size when it's already on, so its fit stays** — [src/rules/wardrobeShelves.test.ts:50](../../src/rules/wardrobeShelves.test.ts#L50)
-  - current rules; keep pending design review. Currentness: unverified. Case runtime: unknown.
+  - current rules; Keep equipment, finds, canopy, telescope and Studio contracts?. Currentness: unverified. Case runtime: unknown.
   - Cited ruling: file, line 1: // The dressing stations' shelves (config/wardrobe.json, rules/wardrobe.ts; Ed, 2026-10-21, the station menus). (wardrobe.test.ts is the hats and brooms changed mid-night.)
   - Possible later evidence: [docs/notes/house.md:78](../../docs/notes/house.md#L78): - **The treehouse's rooms** (Ed, 2026-10-19; `config/house/`, `src/rules/houseRooms.ts`, `src/render/houseRooms.ts`; the mock, previews/ed/big-room-mock): placeholder plank rooms joined by corridors off the hub, walked as one floor with it (`keepInHouse`, the deck's `house.rooms`), the hub's wall open where a corridor meets it: the hat room (the hat's mirror, its colours and fit; the hats' floor), the bedroom off the landing beside it (18 × 18 m: the bed, the phone, the telephone, and since 2026-10-21 each witch's own dressing, before its door: the dressing table, face, hair, skin, earrings; the wardrobe, jacket, top, trousers; the cloak pegs, cloak, scarf; the shoe rack; Ed: three bedrooms,. candidate only: same-topic wording and later inline date; not a verified superseding ruling.
   - Possible later evidence: [docs/notes/house.md:81](../../docs/notes/house.md#L81): - **Station menus** (Ed, 2026-10-21; the mock, previews/ed/station-menus-mock on claude/ed-shots; `config/wardrobe.json`, `src/rules/wardrobe.ts`, `src/app/owned.ts`, `src/ui/stationPanel.ts`, `src/rules/stations.ts`): at a dressing station (the house's reach, `rules/stations.ts` `stationOf`) it lights up with E over it, and E there slides its panel in from the left over the live game (Ed's playtest, 2026-10-26: "Menus should open when she presses E near an interactive object (dresser, map, etc) instead of them opening automatically just through proximity"; it was by nearness, no E, since 2026-10-21); E again (the pad's □) slides it out (Ed, 2026-10-26: "I think E should also close, and we c. candidate only: same-topic wording and later inline date; not a verified superseding ruling.
 
 - **the wardrobe > starts her owning what she has on, on every shelf with items but the bags (she starts with none: Ed, 2026-10-29, "Remove none")** — [src/rules/wardrobeShelves.test.ts:56](../../src/rules/wardrobeShelves.test.ts#L56)
-  - current rules; keep pending design review. Currentness: unverified. Case runtime: unknown.
+  - current rules; Keep equipment, finds, canopy, telescope and Studio contracts?. Currentness: unverified. Case runtime: unknown.
   - Cited ruling: file, line 1: // The dressing stations' shelves (config/wardrobe.json, rules/wardrobe.ts; Ed, 2026-10-21, the station menus). (wardrobe.test.ts is the hats and brooms changed mid-night.) / name, line 56: starts her owning what she has on, on every shelf with items but the bags (she starts with none: Ed, 2026-10-29, "Remove none")
 
 - **the wardrobe > owns the starting set, what's kept, and anything she's wearing; never a stranger's id** — [src/rules/wardrobeShelves.test.ts:65](../../src/rules/wardrobeShelves.test.ts#L65)
-  - current rules; keep pending design review. Currentness: unverified. Case runtime: unknown.
+  - current rules; Keep equipment, finds, canopy, telescope and Studio contracts?. Currentness: unverified. Case runtime: unknown.
   - Cited ruling: file, line 1: // The dressing stations' shelves (config/wardrobe.json, rules/wardrobe.ts; Ed, 2026-10-21, the station menus). (wardrobe.test.ts is the hats and brooms changed mid-night.)
   - Possible later evidence: [docs/notes/house.md:81](../../docs/notes/house.md#L81): - **Station menus** (Ed, 2026-10-21; the mock, previews/ed/station-menus-mock on claude/ed-shots; `config/wardrobe.json`, `src/rules/wardrobe.ts`, `src/app/owned.ts`, `src/ui/stationPanel.ts`, `src/rules/stations.ts`): at a dressing station (the house's reach, `rules/stations.ts` `stationOf`) it lights up with E over it, and E there slides its panel in from the left over the live game (Ed's playtest, 2026-10-26: "Menus should open when she presses E near an interactive object (dresser, map, etc) instead of them opening automatically just through proximity"; it was by nearness, no E, since 2026-10-21); E again (the pad's □) slides it out (Ed, 2026-10-26: "I think E should also close, and we c. candidate only: same-topic wording and later inline date; not a verified superseding ruling.
   - Possible later evidence: [docs/notes/house.md:78](../../docs/notes/house.md#L78): - **The treehouse's rooms** (Ed, 2026-10-19; `config/house/`, `src/rules/houseRooms.ts`, `src/render/houseRooms.ts`; the mock, previews/ed/big-room-mock): placeholder plank rooms joined by corridors off the hub, walked as one floor with it (`keepInHouse`, the deck's `house.rooms`), the hub's wall open where a corridor meets it: the hat room (the hat's mirror, its colours and fit; the hats' floor), the bedroom off the landing beside it (18 × 18 m: the bed, the phone, the telephone, and since 2026-10-21 each witch's own dressing, before its door: the dressing table, face, hair, skin, earrings; the wardrobe, jacket, top, trousers; the cloak pegs, cloak, scarf; the shoe rack; Ed: three bedrooms,. candidate only: same-topic wording and later inline date; not a verified superseding ruling.
 
 - **the wardrobe > has colour grids of 5 rows (Ed: "Colour picker has only 5 rows"): cloth 13 across, skin 6** — [src/rules/wardrobeShelves.test.ts:74](../../src/rules/wardrobeShelves.test.ts#L74)
-  - current rules; keep pending design review. Currentness: unverified. Case runtime: unknown.
+  - current rules; Keep equipment, finds, canopy, telescope and Studio contracts?. Currentness: unverified. Case runtime: unknown.
   - Cited ruling: file, line 1: // The dressing stations' shelves (config/wardrobe.json, rules/wardrobe.ts; Ed, 2026-10-21, the station menus). (wardrobe.test.ts is the hats and brooms changed mid-night.)
   - Possible later evidence: [docs/notes/house.md:81](../../docs/notes/house.md#L81): - **Station menus** (Ed, 2026-10-21; the mock, previews/ed/station-menus-mock on claude/ed-shots; `config/wardrobe.json`, `src/rules/wardrobe.ts`, `src/app/owned.ts`, `src/ui/stationPanel.ts`, `src/rules/stations.ts`): at a dressing station (the house's reach, `rules/stations.ts` `stationOf`) it lights up with E over it, and E there slides its panel in from the left over the live game (Ed's playtest, 2026-10-26: "Menus should open when she presses E near an interactive object (dresser, map, etc) instead of them opening automatically just through proximity"; it was by nearness, no E, since 2026-10-21); E again (the pad's □) slides it out (Ed, 2026-10-26: "I think E should also close, and we c. candidate only: same-topic wording and later inline date; not a verified superseding ruling.
   - Possible later evidence: [docs/notes/house.md:78](../../docs/notes/house.md#L78): - **The treehouse's rooms** (Ed, 2026-10-19; `config/house/`, `src/rules/houseRooms.ts`, `src/render/houseRooms.ts`; the mock, previews/ed/big-room-mock): placeholder plank rooms joined by corridors off the hub, walked as one floor with it (`keepInHouse`, the deck's `house.rooms`), the hub's wall open where a corridor meets it: the hat room (the hat's mirror, its colours and fit; the hats' floor), the bedroom off the landing beside it (18 × 18 m: the bed, the phone, the telephone, and since 2026-10-21 each witch's own dressing, before its door: the dressing table, face, hair, skin, earrings; the wardrobe, jacket, top, trousers; the cloak pegs, cloak, scarf; the shoe rack; Ed: three bedrooms,. candidate only: same-topic wording and later inline date; not a verified superseding ruling.
 
 - **Ed's redo (2026-10-23): nothing with no choice in it, the broom till the Workshop, her hat off for her face > an item row shows once two of its items are hers** — [src/rules/wardrobeShelves.test.ts:84](../../src/rules/wardrobeShelves.test.ts#L84)
-  - current rules; keep pending design review. Currentness: unverified. Case runtime: unknown.
+  - current rules; Keep equipment, finds, canopy, telescope and Studio contracts?. Currentness: unverified. Case runtime: unknown.
   - Cited ruling: file, line 1: // The dressing stations' shelves (config/wardrobe.json, rules/wardrobe.ts; Ed, 2026-10-21, the station menus). (wardrobe.test.ts is the hats and brooms changed mid-night.)
   - Possible later evidence: [docs/notes/house.md:81](../../docs/notes/house.md#L81): - **Station menus** (Ed, 2026-10-21; the mock, previews/ed/station-menus-mock on claude/ed-shots; `config/wardrobe.json`, `src/rules/wardrobe.ts`, `src/app/owned.ts`, `src/ui/stationPanel.ts`, `src/rules/stations.ts`): at a dressing station (the house's reach, `rules/stations.ts` `stationOf`) it lights up with E over it, and E there slides its panel in from the left over the live game (Ed's playtest, 2026-10-26: "Menus should open when she presses E near an interactive object (dresser, map, etc) instead of them opening automatically just through proximity"; it was by nearness, no E, since 2026-10-21); E again (the pad's □) slides it out (Ed, 2026-10-26: "I think E should also close, and we c. candidate only: same-topic wording and later inline date; not a verified superseding ruling.
   - Possible later evidence: [docs/notes/house.md:78](../../docs/notes/house.md#L78): - **The treehouse's rooms** (Ed, 2026-10-19; `config/house/`, `src/rules/houseRooms.ts`, `src/render/houseRooms.ts`; the mock, previews/ed/big-room-mock): placeholder plank rooms joined by corridors off the hub, walked as one floor with it (`keepInHouse`, the deck's `house.rooms`), the hub's wall open where a corridor meets it: the hat room (the hat's mirror, its colours and fit; the hats' floor), the bedroom off the landing beside it (18 × 18 m: the bed, the phone, the telephone, and since 2026-10-21 each witch's own dressing, before its door: the dressing table, face, hair, skin, earrings; the wardrobe, jacket, top, trousers; the cloak pegs, cloak, scarf; the shoe rack; Ed: three bedrooms,. candidate only: same-topic wording and later inline date; not a verified superseding ruling.
 
 - **Ed's redo (2026-10-23): nothing with no choice in it, the broom till the Workshop, her hat off for her face > the broom stand is gone (the Workshop's bay, lathe and pegboard in its place), and no station offers a broom's power or shape** — [src/rules/wardrobeShelves.test.ts:90](../../src/rules/wardrobeShelves.test.ts#L90)
-  - current rules; keep pending design review. Currentness: unverified. Case runtime: unknown.
+  - leftovers; Correct three obsolete Workshop descriptions while preserving every assertion?. Currentness: unverified. Case runtime: unknown.
   - Cited ruling: file, line 1: // The dressing stations' shelves (config/wardrobe.json, rules/wardrobe.ts; Ed, 2026-10-21, the station menus). (wardrobe.test.ts is the hats and brooms changed mid-night.)
   - Possible later evidence: [docs/notes/house.md:81](../../docs/notes/house.md#L81): - **Station menus** (Ed, 2026-10-21; the mock, previews/ed/station-menus-mock on claude/ed-shots; `config/wardrobe.json`, `src/rules/wardrobe.ts`, `src/app/owned.ts`, `src/ui/stationPanel.ts`, `src/rules/stations.ts`): at a dressing station (the house's reach, `rules/stations.ts` `stationOf`) it lights up with E over it, and E there slides its panel in from the left over the live game (Ed's playtest, 2026-10-26: "Menus should open when she presses E near an interactive object (dresser, map, etc) instead of them opening automatically just through proximity"; it was by nearness, no E, since 2026-10-21); E again (the pad's □) slides it out (Ed, 2026-10-26: "I think E should also close, and we c. candidate only: same-topic wording and later inline date; not a verified superseding ruling.
   - Possible later evidence: [docs/notes/house.md:78](../../docs/notes/house.md#L78): - **The treehouse's rooms** (Ed, 2026-10-19; `config/house/`, `src/rules/houseRooms.ts`, `src/render/houseRooms.ts`; the mock, previews/ed/big-room-mock): placeholder plank rooms joined by corridors off the hub, walked as one floor with it (`keepInHouse`, the deck's `house.rooms`), the hub's wall open where a corridor meets it: the hat room (the hat's mirror, its colours and fit; the hats' floor), the bedroom off the landing beside it (18 × 18 m: the bed, the phone, the telephone, and since 2026-10-21 each witch's own dressing, before its door: the dressing table, face, hair, skin, earrings; the wardrobe, jacket, top, trousers; the cloak pegs, cloak, scarf; the shoe rack; Ed: three bedrooms,. candidate only: same-topic wording and later inline date; not a verified superseding ruling.
 
 - **Ed's redo (2026-10-23): nothing with no choice in it, the broom till the Workshop, her hat off for her face > every shelf names the part of her the camera zooms on, one the tuning has** — [src/rules/wardrobeShelves.test.ts:96](../../src/rules/wardrobeShelves.test.ts#L96)
-  - current rules; keep pending design review. Currentness: unverified. Case runtime: unknown.
+  - current rules; Keep equipment, finds, canopy, telescope and Studio contracts?. Currentness: unverified. Case runtime: unknown.
   - Cited ruling: file, line 1: // The dressing stations' shelves (config/wardrobe.json, rules/wardrobe.ts; Ed, 2026-10-21, the station menus). (wardrobe.test.ts is the hats and brooms changed mid-night.)
   - Possible later evidence: [docs/notes/house.md:81](../../docs/notes/house.md#L81): - **Station menus** (Ed, 2026-10-21; the mock, previews/ed/station-menus-mock on claude/ed-shots; `config/wardrobe.json`, `src/rules/wardrobe.ts`, `src/app/owned.ts`, `src/ui/stationPanel.ts`, `src/rules/stations.ts`): at a dressing station (the house's reach, `rules/stations.ts` `stationOf`) it lights up with E over it, and E there slides its panel in from the left over the live game (Ed's playtest, 2026-10-26: "Menus should open when she presses E near an interactive object (dresser, map, etc) instead of them opening automatically just through proximity"; it was by nearness, no E, since 2026-10-21); E again (the pad's □) slides it out (Ed, 2026-10-26: "I think E should also close, and we c. candidate only: same-topic wording and later inline date; not a verified superseding ruling.
   - Possible later evidence: [docs/notes/house.md:78](../../docs/notes/house.md#L78): - **The treehouse's rooms** (Ed, 2026-10-19; `config/house/`, `src/rules/houseRooms.ts`, `src/render/houseRooms.ts`; the mock, previews/ed/big-room-mock): placeholder plank rooms joined by corridors off the hub, walked as one floor with it (`keepInHouse`, the deck's `house.rooms`), the hub's wall open where a corridor meets it: the hat room (the hat's mirror, its colours and fit; the hats' floor), the bedroom off the landing beside it (18 × 18 m: the bed, the phone, the telephone, and since 2026-10-21 each witch's own dressing, before its door: the dressing table, face, hair, skin, earrings; the wardrobe, jacket, top, trousers; the cloak pegs, cloak, scarf; the shoe rack; Ed: three bedrooms,. candidate only: same-topic wording and later inline date; not a verified superseding ruling.
 
 - **Ed's redo (2026-10-23): nothing with no choice in it, the broom till the Workshop, her hat off for her face > her hat comes off at the dressing table, not at the hat's mirror** — [src/rules/wardrobeShelves.test.ts:100](../../src/rules/wardrobeShelves.test.ts#L100)
-  - current rules; keep pending design review. Currentness: unverified. Case runtime: unknown.
+  - current rules; Keep equipment, finds, canopy, telescope and Studio contracts?. Currentness: unverified. Case runtime: unknown.
   - Cited ruling: file, line 1: // The dressing stations' shelves (config/wardrobe.json, rules/wardrobe.ts; Ed, 2026-10-21, the station menus). (wardrobe.test.ts is the hats and brooms changed mid-night.)
   - Possible later evidence: [docs/notes/house.md:78](../../docs/notes/house.md#L78): - **The treehouse's rooms** (Ed, 2026-10-19; `config/house/`, `src/rules/houseRooms.ts`, `src/render/houseRooms.ts`; the mock, previews/ed/big-room-mock): placeholder plank rooms joined by corridors off the hub, walked as one floor with it (`keepInHouse`, the deck's `house.rooms`), the hub's wall open where a corridor meets it: the hat room (the hat's mirror, its colours and fit; the hats' floor), the bedroom off the landing beside it (18 × 18 m: the bed, the phone, the telephone, and since 2026-10-21 each witch's own dressing, before its door: the dressing table, face, hair, skin, earrings; the wardrobe, jacket, top, trousers; the cloak pegs, cloak, scarf; the shoe rack; Ed: three bedrooms,. candidate only: same-topic wording and later inline date; not a verified superseding ruling.
   - Possible later evidence: [docs/notes/house.md:81](../../docs/notes/house.md#L81): - **Station menus** (Ed, 2026-10-21; the mock, previews/ed/station-menus-mock on claude/ed-shots; `config/wardrobe.json`, `src/rules/wardrobe.ts`, `src/app/owned.ts`, `src/ui/stationPanel.ts`, `src/rules/stations.ts`): at a dressing station (the house's reach, `rules/stations.ts` `stationOf`) it lights up with E over it, and E there slides its panel in from the left over the live game (Ed's playtest, 2026-10-26: "Menus should open when she presses E near an interactive object (dresser, map, etc) instead of them opening automatically just through proximity"; it was by nearness, no E, since 2026-10-21); E again (the pad's □) slides it out (Ed, 2026-10-26: "I think E should also close, and we c. candidate only: same-topic wording and later inline date; not a verified superseding ruling.
@@ -8575,6 +8575,10 @@ Static declarations only. All classifications and currentness are provisional. C
   - Possible later evidence: [docs/notes/house.md:110](../../docs/notes/house.md#L110): - **Hats and brooms** (Ed, 2026-10-11; `src/rules/spells.ts`, docs/backlog/unlocks.md): two slots, a hat and a broom, each with a spell or none (the default; the plain broom's quicker rise is the parts' stats now: see **Sets**). Hats are worn (the Helmet: an extra hit, knocked off) or placed with E held (the Healing ring: a hit back every few seconds standing by it; Harvest: a ring of six berries grows round it; Dowsing: a pointer to the nearest relic for a minute; Sentry: it throws 💌s at wild creatures within 30 m; Slingshot: her 💌s passing within 10 m circle it, then fly at a creature up to 40 m off; Gathering: picked up again, it brings back every sigil of hers within 100 m; Bramble: wi. candidate only: same-topic wording and later inline date; not a verified superseding ruling.
   - Possible later evidence: [docs/notes/music.md:9](../../docs/notes/music.md#L9): The music (`src/rules/musicPlan.ts`, `src/rules/musicScore.ts`, `src/platform/audio/musicEngine.ts`, `config/music-style.json`): A sleeping legend's clearing on the ground (Ed, 2026-10-06) muffles the music (`muffled`, rules/music.ts; the tuning's `music.circle`) under that legend's own layer (`legendCircleAt`, rules/musicPlan.ts; the style's `circle`: every legend's parts and its voice family's, each species its own patterns, melody, rhythm and octave in the music's key and chords, played over the muffle on the engine's second output); There the world slows to about a tenth (the game's time scale, `g.timeScale`) and the music follows it (Ed, 2026-10-06: "the music audibly slows down"): the . candidate only: same-topic wording and later inline date; not a verified superseding ruling.
 
+- **paused playtest comments > preserves legacy report text through production-sized duplicated replay pressure, reload and both exports** — [src/app/playtestComments.test.ts:69](../../src/app/playtestComments.test.ts#L69)
+  - hard limits; Keep the report-integrity checks with a smaller blocking fixture and move production-sized pressure to a nonblocking report?. Currentness: unverified. Case runtime: unknown.
+  - Cited ruling: none found in scoped comments; not proof that none exists.
+
 - **the settings changed > lists every leaf that differs, by its path, and none of the notes or what the load sets elsewhere** — [src/app/repro.test.ts:12](../../src/app/repro.test.ts#L12)
   - hard limits; Keep this group unchanged?. Currentness: unverified. Case runtime: unknown.
   - Cited ruling: none found in scoped comments; not proof that none exists.
@@ -8822,11 +8826,11 @@ Static declarations only. All classifications and currentness are provisional. C
   - Cited ruling: none found in scoped comments; not proof that none exists.
 
 - **retains a paused picture through a minute of menu frames, including background art arrivals** — [src/app/worldDrawGate.test.ts:4](../../src/app/worldDrawGate.test.ts#L4)
-  - current rules; keep pending design review. Currentness: unverified. Case runtime: unknown.
+  - current rules; Keep paused rendering, clock and quality policy?. Currentness: unverified. Case runtime: unknown.
   - Cited ruling: none found in scoped comments; not proof that none exists.
 
 - **redraws the start for new art, a changed view or an explicit simulation step, once each** — [src/app/worldDrawGate.test.ts:15](../../src/app/worldDrawGate.test.ts#L15)
-  - current rules; keep pending design review. Currentness: unverified. Case runtime: unknown.
+  - current rules; Keep paused rendering, clock and quality policy?. Currentness: unverified. Case runtime: unknown.
   - Cited ruling: none found in scoped comments; not proof that none exists.
 
 - **leaving the zoo (Ed, 2026-10-26) > in the book's frame over a night, it hands back to the night's page** — [src/app/zooExit.test.ts:6](../../src/app/zooExit.test.ts#L6)
@@ -9244,68 +9248,68 @@ Static declarations only. All classifications and currentness are provisional. C
   - Possible later evidence: [docs/notes/house.md:97](../../docs/notes/house.md#L97): - **Finds / travel trunk** (Ed, 2026-10-21, the station menus' part (b): "The items are found in the forest like other permanent upgrades. Hints are given by the crystal ball"; `src/rules/finds.ts`, `render/view/finds.ts`): each night the island she's on holds one permanent upgrade she hasn't found, a wearable in the trunk or a broom part in a wreck (the finds pool, below; the wearables `FINDABLE`, the wardrobe's items not hers from the start, never a broom shape: brooms are made of parts), drawn as one flask-sized object on a clear patch in its own pale gold-white light (the finds style guide, `docs/art-guide/FINDS.md`, Ed 2026-10-23: clothes a folded bundle, `find-bundle`; bags a little ba. candidate only: same-topic wording and later inline date; not a verified superseding ruling.
 
 - **the camera by the sea > lying down to stargaze, lower and closer still; getting up and walking off, back the same way** — [src/rules/coastCamera.test.ts:28](../../src/rules/coastCamera.test.ts#L28)
-  - current rules; keep pending design review. Currentness: unverified. Case runtime: unknown.
+  - current rules; Keep exact camera geometry and configuration?. Currentness: unverified. Case runtime: unknown.
   - Cited ruling: file, line 1: // The camera by the sea (Ed, 2026-10-06: "The transition to a lower angle and higher bend should be gradual as you approach the
   - Possible later evidence: [DESIGN.md:79](../../DESIGN.md#L79): - **Creatures grow more numerous and higher level with distance from home** (Ed, 2026-10-03): the **home area** (the dancefloor's own) holds **no creatures** (Ed, 2026-10-03) and **no legend** (Ed, 2026-10-05). (Since 2026-10-04/05: every other area starts the same, with one baby and one young, and grows a creature every other wave while wild (`population.growth.perWave` 0.5); and **about a fifth of the other areas have a sleeping legend** (`legends.share`; Ed, 2026-10-08: "more like 1/5", about half before): see Balance and forecasting power and Legends, redesigned. First: the areas next to home held a couple of babies, those towards the edge about 20 creatures, and legends were rare.) **Id. candidate only: same-topic wording and later inline date; not a verified superseding ruling.
   - Possible later evidence: [docs/notes/house.md:77](../../docs/notes/house.md#L77): - **The house** (Ed, 2026-10-14, the treehouse plan's step 1, docs/backlog/treehouse.md; `src/rules/treehouse.ts`, the tuning's `treehouse.house`, on in place of the deck, which `treehouse.deck` keeps for a build or two): on the Ent where the deck was, the **hub**, a round room (the deck's radius and floor) with its back wall and the far ribs of a glass dome drawn and its front cut away so the camera sees in, the **map** in its middle as a water feature (the world's disc at table height, the sea pouring off it into a pool with koi under a golden grating she walks on, flagstones round it; a drawing hinting at the islands, never the live chart: E there opens the sea chart as before), a **clock. candidate only: same-topic wording and later inline date; not a verified superseding ruling.
 
 - **the camera by the sea > eases, never jumps: a step's change in angle stays small** — [src/rules/coastCamera.test.ts:38](../../src/rules/coastCamera.test.ts#L38)
-  - current rules; keep pending design review. Currentness: unverified. Case runtime: unknown.
+  - outcome stats; Split or replace sampled camera comfort and travel magnitudes while retaining or supplying direct pose, continuity and movement/follow protections?. Currentness: unverified. Case runtime: unknown.
   - Cited ruling: file, line 1: // The camera by the sea (Ed, 2026-10-06: "The transition to a lower angle and higher bend should be gradual as you approach the
   - Possible later evidence: [docs/notes/house.md:81](../../docs/notes/house.md#L81): - **Station menus** (Ed, 2026-10-21; the mock, previews/ed/station-menus-mock on claude/ed-shots; `config/wardrobe.json`, `src/rules/wardrobe.ts`, `src/app/owned.ts`, `src/ui/stationPanel.ts`, `src/rules/stations.ts`): at a dressing station (the house's reach, `rules/stations.ts` `stationOf`) it lights up with E over it, and E there slides its panel in from the left over the live game (Ed's playtest, 2026-10-26: "Menus should open when she presses E near an interactive object (dresser, map, etc) instead of them opening automatically just through proximity"; it was by nearness, no E, since 2026-10-21); E again (the pad's □) slides it out (Ed, 2026-10-26: "I think E should also close, and we c. candidate only: same-topic wording and later inline date; not a verified superseding ruling.
   - Possible later evidence: [docs/notes/island.md:11](../../docs/notes/island.md#L11): - **Biome forests** (Ed, 2026-10-23: "Design all 8. Consider temperate alongside; they should work as a set", "still trees in a forest, so they may be scrubby, but it shouldn't feel desolate"; `art/flora/biomes.js`): each compass biome a look laid over any species when an area type's art is baked: its leaves, bark and moss tinted in RGB after `treeColours` (its night palette squeezes the greens, so never by hue), the tree knobs nudged (lean, gnarl, size, hanging moss), snow on the crowns, and on the genome generator's species crown extras (the jungle's flowering vines and blossom, the swamp's prop roots). An island's key is its land's blend (`islandBlend`, `biomeKey` in `rules/lakeLooks.ts`:. candidate only: same-topic wording and later inline date; not a verified superseding ruling.
 
 - **the camera by the sea > lying down, the camera by her bearing round the coast: each of the twelve entries exactly, smoothly between** — [src/rules/coastCamera.test.ts:44](../../src/rules/coastCamera.test.ts#L44)
-  - current rules; keep pending design review. Currentness: unverified. Case runtime: unknown.
+  - outcome stats; Split or replace sampled camera comfort and travel magnitudes while retaining or supplying direct pose, continuity and movement/follow protections?. Currentness: unverified. Case runtime: unknown.
   - Cited ruling: file, line 1: // The camera by the sea (Ed, 2026-10-06: "The transition to a lower angle and higher bend should be gradual as you approach the
   - Possible later evidence: [docs/notes/island.md:11](../../docs/notes/island.md#L11): - **Biome forests** (Ed, 2026-10-23: "Design all 8. Consider temperate alongside; they should work as a set", "still trees in a forest, so they may be scrubby, but it shouldn't feel desolate"; `art/flora/biomes.js`): each compass biome a look laid over any species when an area type's art is baked: its leaves, bark and moss tinted in RGB after `treeColours` (its night palette squeezes the greens, so never by hue), the tree knobs nudged (lean, gnarl, size, hanging moss), snow on the crowns, and on the genome generator's species crown extras (the jungle's flowering vines and blossom, the swamp's prop roots). An island's key is its land's blend (`islandBlend`, `biomeKey` in `rules/lakeLooks.ts`:. candidate only: same-topic wording and later inline date; not a verified superseding ruling.
   - Possible later evidence: [docs/notes/view.md:72](../../docs/notes/view.md#L72): - **Ley lines**: the glowing line through the runestones in wave order (`src/rules/leylines.ts` the chain, `src/rules/leyroute.ts` the route, `src/render/leylines.ts` the drawing): through every area's stone from home to the last, the whole time (Ed, 2026-10-06: "I think the leylines should cover the entire set of waves the whole time, but ideally it shouldn't cross itself"), moving on from the last runestone reached (by its wave, or its quest: `onAreaDone(party, cell, time)`), every section as bright as the next (`fade`, `behindBright` and `far` all 1: Ed, 2026-10-06: "The leyline should always go from the treehouse to 3x the progress of the pulse, and I should be able to see it along its e. candidate only: same-topic wording and later inline date; not a verified superseding ruling.
 
 - **the camera by the sea > over the treetops the coast leaves the camera alone** — [src/rules/coastCamera.test.ts:60](../../src/rules/coastCamera.test.ts#L60)
-  - current rules; keep pending design review. Currentness: unverified. Case runtime: unknown.
+  - current rules; Keep exact camera geometry and configuration?. Currentness: unverified. Case runtime: unknown.
   - Cited ruling: file, line 1: // The camera by the sea (Ed, 2026-10-06: "The transition to a lower angle and higher bend should be gradual as you approach the
   - Possible later evidence: [docs/notes/island.md:11](../../docs/notes/island.md#L11): - **Biome forests** (Ed, 2026-10-23: "Design all 8. Consider temperate alongside; they should work as a set", "still trees in a forest, so they may be scrubby, but it shouldn't feel desolate"; `art/flora/biomes.js`): each compass biome a look laid over any species when an area type's art is baked: its leaves, bark and moss tinted in RGB after `treeColours` (its night palette squeezes the greens, so never by hue), the tree knobs nudged (lean, gnarl, size, hanging moss), snow on the crowns, and on the genome generator's species crown extras (the jungle's flowering vines and blossom, the swamp's prop roots). An island's key is its land's blend (`islandBlend`, `biomeKey` in `rules/lakeLooks.ts`:. candidate only: same-topic wording and later inline date; not a verified superseding ruling.
   - Possible later evidence: [DESIGN.md:79](../../DESIGN.md#L79): - **Creatures grow more numerous and higher level with distance from home** (Ed, 2026-10-03): the **home area** (the dancefloor's own) holds **no creatures** (Ed, 2026-10-03) and **no legend** (Ed, 2026-10-05). (Since 2026-10-04/05: every other area starts the same, with one baby and one young, and grows a creature every other wave while wild (`population.growth.perWave` 0.5); and **about a fifth of the other areas have a sleeping legend** (`legends.share`; Ed, 2026-10-08: "more like 1/5", about half before): see Balance and forecasting power and Legends, redesigned. First: the areas next to home held a couple of babies, those towards the edge about 20 creatures, and legends were rare.) **Id. candidate only: same-topic wording and later inline date; not a verified superseding ruling.
 
 - **guidance pins > none while she's still in bed** — [src/rules/guidance.test.ts:32](../../src/rules/guidance.test.ts#L32)
-  - current rules; keep pending design review. Currentness: unverified. Case runtime: unknown.
+  - current rules; Keep current morning and post-night guidance?. Currentness: unverified. Case runtime: unknown.
   - Cited ruling: file, line 1: // Guidance pins (rules/guidance.ts; Ed's list, 2026-10-26): one at a time, in order: the bed after a lost night; her first night's / file, line 2: // morning in Ed's order (2026-10-29: the dressing table, wardrobe, shoes, bags, invitations, cloak, hat, broom); later mornings the invitations desk and the lathe (her night's kit, rules/kit.ts); something new till
   - Possible later evidence: [docs/notes/house.md:56](../../docs/notes/house.md#L56): **Current brewing authority (Ed, 2026-10-31):** the nine-colour `Game.mushrooms` kitchen is the always-on flow. It admits late entrants while smoke remains and grants 600 game seconds from each witch's wake. The earlier PR #1472 cauldron slice and its six-kind, fixed-at-brew group are recorded in `docs/backlog/cauldron.md` as implementation history; their conflicting collection, recipient and duration rules are superseded. This does not replace unrelated house, wardrobe or online infrastructure.. candidate only: same-topic wording and later inline date; not a verified superseding ruling.
 
 - **guidance pins > a game's first morning, in Ed's order (2026-10-29): the dressing table (skin, hair), wardrobe, shoes, bags, the invitations, the cloak, her hat, her broom; then the decks** — [src/rules/guidance.test.ts:38](../../src/rules/guidance.test.ts#L38)
-  - current rules; keep pending design review. Currentness: unverified. Case runtime: unknown.
+  - current rules; Keep current morning and post-night guidance?. Currentness: unverified. Case runtime: unknown.
   - Cited ruling: file, line 1: // Guidance pins (rules/guidance.ts; Ed's list, 2026-10-26): one at a time, in order: the bed after a lost night; her first night's / file, line 2: // morning in Ed's order (2026-10-29: the dressing table, wardrobe, shoes, bags, invitations, cloak, hat, broom); later mornings the invitations desk and the lathe (her night's kit, rules/kit.ts); something new till / name, line 38: a game's first morning, in Ed's order (2026-10-29): the dressing table (skin, hair), wardrobe, shoes, bags, the invitations, the cloak, her hat, her broom; then the decks
 
 - **guidance pins > the dressing table's step is done once she's used it: E there (its panel opened)** — [src/rules/guidance.test.ts:62](../../src/rules/guidance.test.ts#L62)
-  - current rules; keep pending design review. Currentness: unverified. Case runtime: unknown.
+  - current rules; Keep current morning and post-night guidance?. Currentness: unverified. Case runtime: unknown.
   - Cited ruling: file, line 1: // Guidance pins (rules/guidance.ts; Ed's list, 2026-10-26): one at a time, in order: the bed after a lost night; her first night's / file, line 2: // morning in Ed's order (2026-10-29: the dressing table, wardrobe, shoes, bags, invitations, cloak, hat, broom); later mornings the invitations desk and the lathe (her night's kit, rules/kit.ts); something new till
 
 - **guidance pins > no dressing pin after a night played: last night's clothes are in their pile; straight to the decks** — [src/rules/guidance.test.ts:71](../../src/rules/guidance.test.ts#L71)
-  - current rules; keep pending design review. Currentness: unverified. Case runtime: unknown.
+  - current rules; Keep current morning and post-night guidance?. Currentness: unverified. Case runtime: unknown.
   - Cited ruling: file, line 1: // Guidance pins (rules/guidance.ts; Ed's list, 2026-10-26): one at a time, in order: the bed after a lost night; her first night's / file, line 2: // morning in Ed's order (2026-10-29: the dressing table, wardrobe, shoes, bags, invitations, cloak, hat, broom); later mornings the invitations desk and the lathe (her night's kit, rules/kit.ts); something new till
 
 - **guidance pins > a game's first morning on a later load (no night played yet): no pile, so the dressing pins, her hat last on the hats' floor** — [src/rules/guidance.test.ts:77](../../src/rules/guidance.test.ts#L77)
-  - current rules; keep pending design review. Currentness: unverified. Case runtime: unknown.
+  - current rules; Keep current morning and post-night guidance?. Currentness: unverified. Case runtime: unknown.
   - Cited ruling: file, line 1: // Guidance pins (rules/guidance.ts; Ed's list, 2026-10-26): one at a time, in order: the bed after a lost night; her first night's / file, line 2: // morning in Ed's order (2026-10-29: the dressing table, wardrobe, shoes, bags, invitations, cloak, hat, broom); later mornings the invitations desk and the lathe (her night's kit, rules/kit.ts); something new till
   - Possible later evidence: [docs/notes/house.md:60](../../docs/notes/house.md#L60): **Mushroom kitchen artwork** (2026-10-31): `render/brewing.ts` draws the cauldron and nine wicker baskets on the existing house plane, replacing the cold placeholder cauldron furniture. Three native-resolution textures separate subtractive basket halos, the pot/baskets behind the witch, and ingredient arcs, motes and smoke in front. Empty, one-colour, two-colour and smoke states read `Game.mushrooms`; basket fills distinguish 0, 1–5, 6–15 and 16+ mushrooms, in blue/purple/pink/red/orange/yellow/green/turquoise/white order. Nearby baskets highlight and use the house's existing E keycap/touch interaction. Texture painting is bounded to 12 updates per second; placement still follows the house c. candidate only: same-topic wording and later inline date; not a verified superseding ruling.
 
 - **guidance pins > the invitations desk, then the lathe, each till it's done (Lima's pickups; skipped while they say done)** — [src/rules/guidance.test.ts:88](../../src/rules/guidance.test.ts#L88)
-  - current rules; keep pending design review. Currentness: unverified. Case runtime: unknown.
+  - current rules; Keep current morning and post-night guidance?. Currentness: unverified. Case runtime: unknown.
   - Cited ruling: file, line 1: // Guidance pins (rules/guidance.ts; Ed's list, 2026-10-26): one at a time, in order: the bed after a lost night; her first night's / file, line 2: // morning in Ed's order (2026-10-29: the dressing table, wardrobe, shoes, bags, invitations, cloak, hat, broom); later mornings the invitations desk and the lathe (her night's kit, rules/kit.ts); something new till / body, line 100: // no bag yet (Ed, 2026-10-29: invitations need a bag): the pin leads to the bags first, then the desk
   - Possible later evidence: [docs/notes/house.md:56](../../docs/notes/house.md#L56): **Current brewing authority (Ed, 2026-10-31):** the nine-colour `Game.mushrooms` kitchen is the always-on flow. It admits late entrants while smoke remains and grants 600 game seconds from each witch's wake. The earlier PR #1472 cauldron slice and its six-kind, fixed-at-brew group are recorded in `docs/backlog/cauldron.md` as implementation history; their conflicting collection, recipient and duration rules are superseded. This does not replace unrelated house, wardrobe or online infrastructure.. candidate only: same-topic wording and later inline date; not a verified superseding ruling.
 
 - **guidance pins > the decks' pin goes with the party spell cast** — [src/rules/guidance.test.ts:123](../../src/rules/guidance.test.ts#L123)
-  - current rules; keep pending design review. Currentness: unverified. Case runtime: unknown.
+  - current rules; Keep current morning and post-night guidance?. Currentness: unverified. Case runtime: unknown.
   - Cited ruling: file, line 1: // Guidance pins (rules/guidance.ts; Ed's list, 2026-10-26): one at a time, in order: the bed after a lost night; her first night's / file, line 2: // morning in Ed's order (2026-10-29: the dressing table, wardrobe, shoes, bags, invitations, cloak, hat, broom); later mornings the invitations desk and the lathe (her night's kit, rules/kit.ts); something new till
 
 - **guidance pins > after a won night, once its finale's settled: the map table while there's an island she hasn't been to, even after the chart's opened; then the bed; shown from anywhere (Ed, 2026-10-26)** — [src/rules/guidance.test.ts:148](../../src/rules/guidance.test.ts#L148)
-  - current rules; keep pending design review. Currentness: unverified. Case runtime: unknown.
+  - current rules; Keep current morning and post-night guidance?. Currentness: unverified. Case runtime: unknown.
   - Cited ruling: file, line 1: // Guidance pins (rules/guidance.ts; Ed's list, 2026-10-26): one at a time, in order: the bed after a lost night; her first night's / file, line 2: // morning in Ed's order (2026-10-29: the dressing table, wardrobe, shoes, bags, invitations, cloak, hat, broom); later mornings the invitations desk and the lathe (her night's kit, rules/kit.ts); something new till / name, line 148: after a won night, once its finale's settled: the map table while there's an island she hasn't been to, even after the chart's opened; then the bed; shown from anywhere (Ed, 2026-10-26)
   - Possible later evidence: [docs/notes/online-prototype.md:133](../../docs/notes/online-prototype.md#L133): Chart departures now follow COORDINATOR6551088974 (2026-11-01, Ed's fresh-night ruling): a host hangs up before normal solo settlement/travel; a visitor waits for guarded fresh-solo return/save restoration before settling or preparing her own travel to the selected island. Flight preparation (`departFromChart`) and final handoff (`sailFromChart`, including the direct diagnostic route) share one serialized boundary, and refuse to settle/reload if restoration fails or still leaves `NightSpec.borrowed`. Visitor fallback URLs are built only after own restoration; sail settings/carry then come from the own night. Solo remains synchronous before its ordinary preparation and keeps its provided URL.. candidate only: same-topic wording and later inline date; not a verified superseding ruling.
   - Possible later evidence: [docs/notes/house.md:56](../../docs/notes/house.md#L56): **Current brewing authority (Ed, 2026-10-31):** the nine-colour `Game.mushrooms` kitchen is the always-on flow. It admits late entrants while smoke remains and grants 600 game seconds from each witch's wake. The earlier PR #1472 cauldron slice and its six-kind, fixed-at-brew group are recorded in `docs/backlog/cauldron.md` as implementation history; their conflicting collection, recipient and duration rules are superseded. This does not replace unrelated house, wardrobe or online infrastructure.. candidate only: same-topic wording and later inline date; not a verified superseding ruling.
 
 - **guidance pins > stays the same off the treehouse (Ed, 2026-10-28: "Whatever pin you had before leaving the treehouse still shows"), and knows when she's at its target (where the pin stays, over it)** — [src/rules/guidance.test.ts:170](../../src/rules/guidance.test.ts#L170)
-  - current rules; keep pending design review. Currentness: unverified. Case runtime: unknown.
+  - current rules; Keep current morning and post-night guidance?. Currentness: unverified. Case runtime: unknown.
   - Cited ruling: file, line 1: // Guidance pins (rules/guidance.ts; Ed's list, 2026-10-26): one at a time, in order: the bed after a lost night; her first night's / file, line 2: // morning in Ed's order (2026-10-29: the dressing table, wardrobe, shoes, bags, invitations, cloak, hat, broom); later mornings the invitations desk and the lathe (her night's kit, rules/kit.ts); something new till / body, line 174: // (her first morning's first pin: Ed, 2026-10-29) / name, line 170: stays the same off the treehouse (Ed, 2026-10-28: "Whatever pin you had before leaving the treehouse still shows"), and knows when she's at its target (where the pin stays, over it)
   - Possible later evidence: [docs/notes/house.md:60](../../docs/notes/house.md#L60): **Mushroom kitchen artwork** (2026-10-31): `render/brewing.ts` draws the cauldron and nine wicker baskets on the existing house plane, replacing the cold placeholder cauldron furniture. Three native-resolution textures separate subtractive basket halos, the pot/baskets behind the witch, and ingredient arcs, motes and smoke in front. Empty, one-colour, two-colour and smoke states read `Game.mushrooms`; basket fills distinguish 0, 1–5, 6–15 and 16+ mushrooms, in blue/purple/pink/red/orange/yellow/green/turquoise/white order. Nearby baskets highlight and use the house's existing E keycap/touch interaction. Texture painting is bounded to 12 updates per second; placement still follows the house c. candidate only: same-topic wording and later inline date; not a verified superseding ruling.
 
@@ -9314,83 +9318,83 @@ Static declarations only. All classifications and currentness are provisional. C
   - Cited ruling: none found in scoped comments; not proof that none exists.
 
 - **the quality ladder > starts at full quality with nothing in effect** — [src/rules/ladder.test.ts:9](../../src/rules/ladder.test.ts#L9)
-  - current rules; keep pending design review. Currentness: unverified. Case runtime: unknown.
+  - current rules; Keep paused rendering, clock and quality policy?. Currentness: unverified. Case runtime: unknown.
   - Cited ruling: none found in scoped comments; not proof that none exists.
 
 - **the quality ladder > steps down after a few slow windows, past rungs not built and load rungs, to the next live rung** — [src/rules/ladder.test.ts:15](../../src/rules/ladder.test.ts#L15)
-  - current rules; keep pending design review. Currentness: unverified. Case runtime: unknown.
+  - current rules; Keep paused rendering, clock and quality policy?. Currentness: unverified. Case runtime: unknown.
   - Cited ruling: none found in scoped comments; not proof that none exists.
 
 - **the quality ladder > doesn't step down on a window or two, nor while settling** — [src/rules/ladder.test.ts:24](../../src/rules/ladder.test.ts#L24)
-  - current rules; keep pending design review. Currentness: unverified. Case runtime: unknown.
+  - current rules; Keep paused rendering, clock and quality policy?. Currentness: unverified. Case runtime: unknown.
   - Cited ruling: none found in scoped comments; not proof that none exists.
 
 - **the quality ladder > climbs back slowly when there's room, and only if the rung above fitted last time** — [src/rules/ladder.test.ts:28](../../src/rules/ladder.test.ts#L28)
-  - current rules; keep pending design review. Currentness: unverified. Case runtime: unknown.
+  - current rules; Keep paused rendering, clock and quality policy?. Currentness: unverified. Case runtime: unknown.
   - Cited ruling: none found in scoped comments; not proof that none exists.
 
 - **the quality ladder > stops climbing for the night after it keeps flipping** — [src/rules/ladder.test.ts:41](../../src/rules/ladder.test.ts#L41)
-  - current rules; keep pending design review. Currentness: unverified. Case runtime: unknown.
+  - current rules; Keep paused rendering, clock and quality policy?. Currentness: unverified. Case runtime: unknown.
   - Cited ruling: none found in scoped comments; not proof that none exists.
 
 - **the quality ladder > goes to the bottom live rung, then wants px 4 from the next load, and no further** — [src/rules/ladder.test.ts:49](../../src/rules/ladder.test.ts#L49)
-  - current rules; keep pending design review. Currentness: unverified. Case runtime: unknown.
+  - current rules; Keep paused rendering, clock and quality policy?. Currentness: unverified. Case runtime: unknown.
   - Cited ruling: none found in scoped comments; not proof that none exists.
 
 - **the quality ladder > marks load rungs passed over as pending, and drops them when climbing back over** — [src/rules/ladder.test.ts:56](../../src/rules/ladder.test.ts#L56)
-  - current rules; keep pending design review. Currentness: unverified. Case runtime: unknown.
+  - current rules; Keep paused rendering, clock and quality policy?. Currentness: unverified. Case runtime: unknown.
   - Cited ruling: none found in scoped comments; not proof that none exists.
 
 - **the quality ladder > makes a night with the load rungs in effect at its rung** — [src/rules/ladder.test.ts:73](../../src/rules/ladder.test.ts#L73)
-  - current rules; keep pending design review. Currentness: unverified. Case runtime: unknown.
+  - current rules; Keep paused rendering, clock and quality policy?. Currentness: unverified. Case runtime: unknown.
   - Cited ruling: none found in scoped comments; not proof that none exists.
 
 - **the quality ladder > does nothing pinned or off; off is full quality** — [src/rules/ladder.test.ts:81](../../src/rules/ladder.test.ts#L81)
-  - current rules; keep pending design review. Currentness: unverified. Case runtime: unknown.
+  - current rules; Keep paused rendering, clock and quality policy?. Currentness: unverified. Case runtime: unknown.
   - Cited ruling: none found in scoped comments; not proof that none exists.
 
 - **the quality ladder > ignores windows marked skip and nonsense times** — [src/rules/ladder.test.ts:90](../../src/rules/ladder.test.ts#L90)
-  - current rules; keep pending design review. Currentness: unverified. Case runtime: unknown.
+  - current rules; Keep paused rendering, clock and quality policy?. Currentness: unverified. Case runtime: unknown.
   - Cited ruling: none found in scoped comments; not proof that none exists.
 
 - **the quality ladder > doesn't step down on a spike, a stall or a load that a skip window breaks up** — [src/rules/ladder.test.ts:96](../../src/rules/ladder.test.ts#L96)
-  - current rules; keep pending design review. Currentness: unverified. Case runtime: unknown.
+  - current rules; Keep paused rendering, clock and quality policy?. Currentness: unverified. Case runtime: unknown.
   - Cited ruling: none found in scoped comments; not proof that none exists.
 
 - **the quality ladder > climbs back once the room is real, though a spike pushed it down: retried after a while, longer each time it's left** — [src/rules/ladder.test.ts:113](../../src/rules/ladder.test.ts#L113)
-  - current rules; keep pending design review. Currentness: unverified. Case runtime: unknown.
+  - current rules; Keep paused rendering, clock and quality policy?. Currentness: unverified. Case runtime: unknown.
   - Cited ruling: none found in scoped comments; not proof that none exists.
 
 - **the quality ladder > a rung that really doesn't fit is tried again less and less often** — [src/rules/ladder.test.ts:129](../../src/rules/ladder.test.ts#L129)
-  - current rules; keep pending design review. Currentness: unverified. Case runtime: unknown.
+  - current rules; Keep paused rendering, clock and quality policy?. Currentness: unverified. Case runtime: unknown.
   - Cited ruling: none found in scoped comments; not proof that none exists.
 
 - **the quality ladder > on frame time (no GPU timer), a frame keeping up with the refresh isn't slow, and only missed frames step down** — [src/rules/ladder.test.ts:147](../../src/rules/ladder.test.ts#L147)
-  - current rules; keep pending design review. Currentness: unverified. Case runtime: unknown.
+  - current rules; Keep paused rendering, clock and quality policy?. Currentness: unverified. Case runtime: unknown.
   - Cited ruling: none found in scoped comments; not proof that none exists.
 
 - **the camera > opens close in on her seat, and eases out to the starting zoom once she leaves it (Ed, v171)** — [src/rules/rules.test.ts:447](../../src/rules/rules.test.ts#L447)
-  - current rules; keep pending design review. Currentness: unverified. Case runtime: unknown.
+  - outcome stats; Split or replace sampled camera comfort and travel magnitudes while retaining or supplying direct pose, continuity and movement/follow protections?. Currentness: unverified. Case runtime: unknown.
   - Cited ruling: name, line 447: opens close in on her seat, and eases out to the starting zoom once she leaves it (Ed, v171)
 
 - **the camera > uses each mode's angle and distance, and zoom moves between in and out** — [src/rules/rules.test.ts:463](../../src/rules/rules.test.ts#L463)
-  - current rules; keep pending design review. Currentness: unverified. Case runtime: unknown.
+  - current rules; Keep exact camera geometry and configuration?. Currentness: unverified. Case runtime: unknown.
   - Cited ruling: none found in scoped comments; not proof that none exists.
 
 - **the camera > follows smoothly: never overshoots, never jolts, and looks only a little ahead** — [src/rules/rules.test.ts:481](../../src/rules/rules.test.ts#L481)
-  - current rules; keep pending design review. Currentness: unverified. Case runtime: unknown.
+  - outcome stats; Split or replace sampled camera comfort and travel magnitudes while retaining or supplying direct pose, continuity and movement/follow protections?. Currentness: unverified. Case runtime: unknown.
   - Cited ruling: none found in scoped comments; not proof that none exists.
 
 - **the camera > sits south of and above what it looks at** — [src/rules/rules.test.ts:496](../../src/rules/rules.test.ts#L496)
-  - current rules; keep pending design review. Currentness: unverified. Case runtime: unknown.
+  - current rules; Keep exact camera geometry and configuration?. Currentness: unverified. Case runtime: unknown.
   - Cited ruling: none found in scoped comments; not proof that none exists.
 
 - **the game clock and a whole step > does not run while paused, and cuts long frames short** — [src/rules/rules.test.ts:780](../../src/rules/rules.test.ts#L780)
-  - current rules; keep pending design review. Currentness: unverified. Case runtime: unknown.
+  - current rules; Keep paused rendering, clock and quality policy?. Currentness: unverified. Case runtime: unknown.
   - Cited ruling: none found in scoped comments; not proof that none exists.
 
 - **the game clock and a whole step > flies the witch and the camera follows** — [src/rules/rules.test.ts:788](../../src/rules/rules.test.ts#L788)
-  - outcome stats; review simulation assertions; consider report after Ed rules. Currentness: unverified. Case runtime: unknown.
+  - outcome stats; Split or replace sampled camera comfort and travel magnitudes while retaining or supplying direct pose, continuity and movement/follow protections?. Currentness: unverified. Case runtime: unknown.
   - Cited ruling: none found in scoped comments; not proof that none exists.
 
 - **the zoo's block bar (rules/zooControls.ts) > finds the block she's in** — [src/rules/zooControls.test.ts:14](../../src/rules/zooControls.test.ts#L14)
@@ -9885,10 +9889,6 @@ Static declarations only. All classifications and currentness are provisional. C
   - Cited ruling: none found in scoped comments; not proof that none exists.
 
 - **paused playtest comments > keeps every report across count pressure and reload; unread storage is never overwritten** — [src/app/playtestComments.test.ts:51](../../src/app/playtestComments.test.ts#L51)
-  - hard limits; Keep exact replay and report-retention protections unchanged?. Currentness: unverified. Case runtime: unknown.
-  - Cited ruling: none found in scoped comments; not proof that none exists.
-
-- **paused playtest comments > preserves legacy report text through production-sized duplicated replay pressure, reload and both exports** — [src/app/playtestComments.test.ts:69](../../src/app/playtestComments.test.ts#L69)
   - hard limits; Keep exact replay and report-retention protections unchanged?. Currentness: unverified. Case runtime: unknown.
   - Cited ruling: none found in scoped comments; not proof that none exists.
 
@@ -10990,55 +10990,55 @@ Static declarations only. All classifications and currentness are provisional. C
   - Cited ruling: none found in scoped comments; not proof that none exists.
 
 - **localized shared throat/chest bib paint > pins projected-fit marten pixels and normal bytes with the field absent** — [src/bibPaint.test.ts:14](../../src/bibPaint.test.ts#L14)
-  - current rules; keep pending design review. Currentness: unverified. Case runtime: unknown.
+  - current rules; Keep art integrity and supported comparison contracts?. Currentness: unverified. Case runtime: unknown.
   - Cited ruling: none found in scoped comments; not proof that none exists.
 
 - **localized shared throat/chest bib paint > bounds the shared paint to the underside of the neck and local chest** — [src/bibPaint.test.ts:21](../../src/bibPaint.test.ts#L21)
-  - current rules; keep pending design review. Currentness: unverified. Case runtime: unknown.
+  - current rules; Keep art integrity and supported comparison contracts?. Currentness: unverified. Case runtime: unknown.
   - Cited ruling: none found in scoped comments; not proof that none exists.
 
 - **localized shared throat/chest bib paint > paints a selected cream bib with a brown belly and no geometry changes** — [src/bibPaint.test.ts:31](../../src/bibPaint.test.ts#L31)
-  - current rules; keep pending design review. Currentness: unverified. Case runtime: unknown.
+  - current rules; Keep art integrity and supported comparison contracts?. Currentness: unverified. Case runtime: unknown.
   - Cited ruling: none found in scoped comments; not proof that none exists.
 
 - **localized shared throat/chest bib paint > requires a finite localized extent and valid material** — [src/bibPaint.test.ts:51](../../src/bibPaint.test.ts#L51)
-  - hard limits; keep. Currentness: unverified. Case runtime: unknown.
+  - hard limits; Keep art integrity and supported comparison contracts?. Currentness: unverified. Case runtime: unknown.
   - Cited ruling: none found in scoped comments; not proof that none exists.
 
 - **experimental creature body graph > %s has continuous skin, tapered limbs and grounded feet** — [src/bodyGraph.test.ts:9](../../src/bodyGraph.test.ts#L9) (parameterized template)
-  - current rules; keep pending design review. Currentness: unverified. Case runtime: unknown.
+  - current rules; Keep art integrity and supported comparison contracts?. Currentness: unverified. Case runtime: unknown.
   - Cited ruling: none found in scoped comments; not proof that none exists.
 
 - **experimental creature body graph > matches the existing skin primitives exactly for a torso-only graph** — [src/bodyGraph.test.ts:33](../../src/bodyGraph.test.ts#L33)
-  - current rules; keep pending design review. Currentness: unverified. Case runtime: unknown.
+  - current rules; Keep art integrity and supported comparison contracts?. Currentness: unverified. Case runtime: unknown.
   - Cited ruling: none found in scoped comments; not proof that none exists.
 
 - **experimental creature body graph > supports extra heads, shells and wings without mutating the input** — [src/bodyGraph.test.ts:45](../../src/bodyGraph.test.ts#L45)
-  - current rules; keep pending design review. Currentness: unverified. Case runtime: unknown.
+  - current rules; Keep art integrity and supported comparison contracts?. Currentness: unverified. Case runtime: unknown.
   - Cited ruling: none found in scoped comments; not proof that none exists.
 
 - **experimental creature body graph > actually blends skin rather than merely overlapping hard shapes** — [src/bodyGraph.test.ts:57](../../src/bodyGraph.test.ts#L57)
-  - current rules; keep pending design review. Currentness: unverified. Case runtime: unknown.
+  - current rules; Keep art integrity and supported comparison contracts?. Currentness: unverified. Case runtime: unknown.
   - Cited ruling: none found in scoped comments; not proof that none exists.
 
 - **experimental creature body graph > rejects disconnected spine stations and invalid sockets before drawing** — [src/bodyGraph.test.ts:63](../../src/bodyGraph.test.ts#L63)
-  - hard limits; keep. Currentness: unverified. Case runtime: unknown.
+  - hard limits; Keep art integrity and supported comparison contracts?. Currentness: unverified. Case runtime: unknown.
   - Cited ruling: none found in scoped comments; not proof that none exists.
 
 - **experimental body graph gait > keeps both bone lengths for reachable, clamped and singular targets** — [src/bodyGraph.test.ts:78](../../src/bodyGraph.test.ts#L78)
-  - current rules; keep pending design review. Currentness: unverified. Case runtime: unknown.
+  - current rules; Keep art integrity and supported comparison contracts?. Currentness: unverified. Case runtime: unknown.
   - Cited ruling: none found in scoped comments; not proof that none exists.
 
 - **experimental body graph gait > is periodic in signed travel and has stationary planted feet in world space** — [src/bodyGraph.test.ts:90](../../src/bodyGraph.test.ts#L90)
-  - current rules; keep pending design review. Currentness: unverified. Case runtime: unknown.
+  - current rules; Keep art integrity and supported comparison contracts?. Currentness: unverified. Case runtime: unknown.
   - Cited ruling: none found in scoped comments; not proof that none exists.
 
 - **experimental body graph gait > %s loops continuously and never claims unreachable contact** — [src/bodyGraph.test.ts:104](../../src/bodyGraph.test.ts#L104) (parameterized template)
-  - current rules; keep pending design review. Currentness: unverified. Case runtime: unknown.
+  - current rules; Keep art integrity and supported comparison contracts?. Currentness: unverified. Case runtime: unknown.
   - Cited ruling: none found in scoped comments; not proof that none exists.
 
 - **experimental body graph gait > rejects invalid clocks and solver inputs** — [src/bodyGraph.test.ts:123](../../src/bodyGraph.test.ts#L123)
-  - hard limits; keep. Currentness: unverified. Case runtime: unknown.
+  - hard limits; Keep art integrity and supported comparison contracts?. Currentness: unverified. Case runtime: unknown.
   - Cited ruling: none found in scoped comments; not proof that none exists.
 
 - **cheetah legend flame attachment regression > keeps the graph active without detaching new effect pixels in frame %s** — [src/cheetahLegendAttachment.test.ts:12](../../src/cheetahLegendAttachment.test.ts#L12) (parameterized template)
@@ -11046,67 +11046,67 @@ Static declarations only. All classifications and currentness are provisional. C
   - Cited ruling: none found in scoped comments; not proof that none exists.
 
 - **combined creature distinctness warnings > warns on matching shape, palette, size and pattern** — [src/creatureDistinctness.test.ts:17](../../src/creatureDistinctness.test.ts#L17)
-  - current rules; keep pending design review. Currentness: unverified. Case runtime: unknown.
+  - current rules; Keep art integrity and supported comparison contracts?. Currentness: unverified. Case runtime: unknown.
   - Cited ruling: none found in scoped comments; not proof that none exists.
 
 - **combined creature distinctness warnings > allows the same silhouette when coat colour differs** — [src/creatureDistinctness.test.ts:20](../../src/creatureDistinctness.test.ts#L20)
-  - current rules; keep pending design review. Currentness: unverified. Case runtime: unknown.
+  - current rules; Keep art integrity and supported comparison contracts?. Currentness: unverified. Case runtime: unknown.
   - Cited ruling: none found in scoped comments; not proof that none exists.
 
 - **combined creature distinctness warnings > allows the same silhouette at different actual sizes** — [src/creatureDistinctness.test.ts:26](../../src/creatureDistinctness.test.ts#L26)
-  - current rules; keep pending design review. Currentness: unverified. Case runtime: unknown.
+  - current rules; Keep art integrity and supported comparison contracts?. Currentness: unverified. Case runtime: unknown.
   - Cited ruling: none found in scoped comments; not proof that none exists.
 
 - **combined creature distinctness warnings > allows different markings with the same palette and size** — [src/creatureDistinctness.test.ts:31](../../src/creatureDistinctness.test.ts#L31)
-  - current rules; keep pending design review. Currentness: unverified. Case runtime: unknown.
+  - current rules; Keep art integrity and supported comparison contracts?. Currentness: unverified. Case runtime: unknown.
   - Cited ruling: none found in scoped comments; not proof that none exists.
 
 - **combined creature distinctness warnings > allows different shapes even when all the other measures are close** — [src/creatureDistinctness.test.ts:38](../../src/creatureDistinctness.test.ts#L38)
-  - current rules; keep pending design review. Currentness: unverified. Case runtime: unknown.
+  - current rules; Keep art integrity and supported comparison contracts?. Currentness: unverified. Case runtime: unknown.
   - Cited ruling: none found in scoped comments; not proof that none exists.
 
 - **combined creature distinctness warnings > does not produce a look-alike warning from missing palette data** — [src/creatureDistinctness.test.ts:43](../../src/creatureDistinctness.test.ts#L43)
-  - current rules; keep pending design review. Currentness: unverified. Case runtime: unknown.
+  - current rules; Keep art integrity and supported comparison contracts?. Currentness: unverified. Case runtime: unknown.
   - Cited ruling: none found in scoped comments; not proof that none exists.
 
 - **combined creature distinctness warnings > makes the art-check look-alike result warning-only and keeps growth separate** — [src/creatureDistinctness.test.ts:46](../../src/creatureDistinctness.test.ts#L46)
-  - current rules; keep pending design review. Currentness: unverified. Case runtime: unknown.
+  - current rules; Keep art integrity and supported comparison contracts?. Currentness: unverified. Case runtime: unknown.
   - Cited ruling: none found in scoped comments; not proof that none exists.
 
 - **one creature selection hook with the approved roster defaults > selects individual species explicitly and ignores malformed tokens** — [src/creatureSelection.test.ts:24](../../src/creatureSelection.test.ts#L24)
-  - current rules; keep pending design review. Currentness: unverified. Case runtime: unknown.
+  - current rules; Keep art integrity and supported comparison contracts?. Currentness: unverified. Case runtime: unknown.
   - Cited ruling: none found in scoped comments; not proof that none exists.
 
 - **one creature selection hook with the approved roster defaults > keeps Current records and hash for explicit current and unavailable choices** — [src/creatureSelection.test.ts:31](../../src/creatureSelection.test.ts#L31)
-  - current rules; keep pending design review. Currentness: unverified. Case runtime: unknown.
+  - current rules; Keep art integrity and supported comparison contracts?. Currentness: unverified. Case runtime: unknown.
   - Cited ruling: none found in scoped comments; not proof that none exists.
 
 - **one creature selection hook with the approved roster defaults > hashes selected content and keeps base/other records immutable** — [src/creatureSelection.test.ts:38](../../src/creatureSelection.test.ts#L38)
-  - current rules; keep pending design review. Currentness: unverified. Case runtime: unknown.
+  - current rules; Keep art integrity and supported comparison contracts?. Currentness: unverified. Case runtime: unknown.
   - Cited ruling: none found in scoped comments; not proof that none exists.
 
 - **one creature selection hook with the approved roster defaults > uses identical selection in serialized page/worker contexts** — [src/creatureSelection.test.ts:47](../../src/creatureSelection.test.ts#L47)
-  - hard limits; keep. Currentness: unverified. Case runtime: unknown.
+  - hard limits; Keep art integrity and supported comparison contracts?. Currentness: unverified. Case runtime: unknown.
   - Cited ruling: none found in scoped comments; not proof that none exists.
 
 - **one creature selection hook with the approved roster defaults > separates same-id sprite caches and restores the exact current sprite** — [src/creatureSelection.test.ts:55](../../src/creatureSelection.test.ts#L55)
-  - current rules; keep pending design review. Currentness: unverified. Case runtime: unknown.
+  - current rules; Keep art integrity and supported comparison contracts?. Currentness: unverified. Case runtime: unknown.
   - Cited ruling: none found in scoped comments; not proof that none exists.
 
 - **one creature selection hook with the approved roster defaults > separates persistent creature/face/rig cache entries by the selected genome** — [src/creatureSelection.test.ts:63](../../src/creatureSelection.test.ts#L63)
-  - current rules; keep pending design review. Currentness: unverified. Case runtime: unknown.
+  - current rules; Keep art integrity and supported comparison contracts?. Currentness: unverified. Case runtime: unknown.
   - Cited ruling: none found in scoped comments; not proof that none exists.
 
 - **one creature selection hook with the approved roster defaults > uses the selected anatomy for rig pieces too** — [src/creatureSelection.test.ts:77](../../src/creatureSelection.test.ts#L77)
-  - current rules; keep pending design review. Currentness: unverified. Case runtime: unknown.
+  - current rules; Keep art integrity and supported comparison contracts?. Currentness: unverified. Case runtime: unknown.
   - Cited ruling: none found in scoped comments; not proof that none exists.
 
 - **one creature selection hook with the approved roster defaults > rejects a selected record for another species** — [src/creatureSelection.test.ts:83](../../src/creatureSelection.test.ts#L83)
-  - hard limits; keep. Currentness: unverified. Case runtime: unknown.
+  - hard limits; Keep art integrity and supported comparison contracts?. Currentness: unverified. Case runtime: unknown.
   - Cited ruling: none found in scoped comments; not proof that none exists.
 
 - **one creature selection hook with the approved roster defaults > resolves selected per-level look and includes the level in its hash** — [src/creatureSelection.test.ts:88](../../src/creatureSelection.test.ts#L88)
-  - current rules; keep pending design review. Currentness: unverified. Case runtime: unknown.
+  - current rules; Keep art integrity and supported comparison contracts?. Currentness: unverified. Case runtime: unknown.
   - Cited ruling: none found in scoped comments; not proof that none exists.
 
 - **pins %s age %s idle %s with optional controls absent on both size grids** — [src/creatureShapeControls.test.ts:13](../../src/creatureShapeControls.test.ts#L13) (parameterized template)
@@ -11126,187 +11126,187 @@ Static declarations only. All classifications and currentness are provisional. C
   - Cited ruling: none found in scoped comments; not proof that none exists.
 
 - **Ed's opt-in body size candidate > enables revised sizes by default after Ed's adoption** — [src/creatureSizeCandidate.test.ts:9](../../src/creatureSizeCandidate.test.ts#L9)
-  - current rules; keep pending design review. Currentness: unverified. Case runtime: unknown.
+  - current rules; Keep art integrity and supported comparison contracts?. Currentness: unverified. Case runtime: unknown.
   - Cited ruling: none found in scoped comments; not proof that none exists.
 
 - **Ed's opt-in body size candidate > lets Ed compare old sizes from the game link** — [src/creatureSizeCandidate.test.ts:10](../../src/creatureSizeCandidate.test.ts#L10)
-  - current rules; keep pending design review. Currentness: unverified. Case runtime: unknown.
+  - current rules; Keep art integrity and supported comparison contracts?. Currentness: unverified. Case runtime: unknown.
   - Cited ruling: none found in scoped comments; not proof that none exists.
 
 - **Ed's opt-in body size candidate > fits anatomical bodies only when opted in and isolates the sprite cache** — [src/creatureSizeCandidate.test.ts:14](../../src/creatureSizeCandidate.test.ts#L14)
-  - current rules; keep pending design review. Currentness: unverified. Case runtime: unknown.
+  - current rules; Keep art integrity and supported comparison contracts?. Currentness: unverified. Case runtime: unknown.
   - Cited ruling: none found in scoped comments; not proof that none exists.
 
 - **Ed's opt-in body size candidate > keeps readable small adults and the medium anchor with a broader adult range** — [src/creatureSizeCandidate.test.ts:24](../../src/creatureSizeCandidate.test.ts#L24)
-  - current rules; keep pending design review. Currentness: unverified. Case runtime: unknown.
+  - current rules; Keep art integrity and supported comparison contracts?. Currentness: unverified. Case runtime: unknown.
   - Cited ruling: none found in scoped comments; not proof that none exists.
 
 - **Ed's opt-in body size candidate > separates each age and keeps every mass class ordered at native size** — [src/creatureSizeCandidate.test.ts:31](../../src/creatureSizeCandidate.test.ts#L31)
-  - current rules; keep pending design review. Currentness: unverified. Case runtime: unknown.
+  - current rules; Keep art integrity and supported comparison contracts?. Currentness: unverified. Case runtime: unknown.
   - Cited ruling: none found in scoped comments; not proof that none exists.
 
 - **Ed's opt-in body size candidate > scales all bodies with the same witch reference and rejects invalid inputs** — [src/creatureSizeCandidate.test.ts:40](../../src/creatureSizeCandidate.test.ts#L40)
-  - hard limits; keep. Currentness: unverified. Case runtime: unknown.
+  - hard limits; Keep art integrity and supported comparison contracts?. Currentness: unverified. Case runtime: unknown.
   - Cited ruling: none found in scoped comments; not proof that none exists.
 
 - **covers every species exactly once and keeps continuous age targets ordered** — [src/creatureSizeModel.test.ts:10](../../src/creatureSizeModel.test.ts#L10)
-  - current rules; keep pending design review. Currentness: unverified. Case runtime: unknown.
+  - current rules; Keep art integrity and supported comparison contracts?. Currentness: unverified. Case runtime: unknown.
   - Cited ruling: none found in scoped comments; not proof that none exists.
 
 - **keeps the accepted bands, full-presence legend ratio and hard real-size pairs** — [src/creatureSizeModel.test.ts:15](../../src/creatureSizeModel.test.ts#L15)
-  - current rules; keep pending design review. Currentness: unverified. Case runtime: unknown.
+  - current rules; Keep art integrity and supported comparison contracts?. Currentness: unverified. Case runtime: unknown.
   - Cited ruling: none found in scoped comments; not proof that none exists.
 
 - **%s uses the final age target in both game facings** — [src/creatureSizeModel.test.ts:25](../../src/creatureSizeModel.test.ts#L25) (parameterized template)
-  - current rules; keep pending design review. Currentness: unverified. Case runtime: unknown.
+  - current rules; Keep art integrity and supported comparison contracts?. Currentness: unverified. Case runtime: unknown.
   - Cited ruling: none found in scoped comments; not proof that none exists.
 
 - **keeps every tolerance interval inside hard growth, legend and ordering bounds** — [src/creatureSizeModel.test.ts:31](../../src/creatureSizeModel.test.ts#L31)
-  - current rules; keep pending design review. Currentness: unverified. Case runtime: unknown.
+  - current rules; Keep art integrity and supported comparison contracts?. Currentness: unverified. Case runtime: unknown.
   - Cited ruling: none found in scoped comments; not proof that none exists.
 
 - **the creatures' folders (art/creatures/) > assemble cleanly: the index current, every record in its folder, no genome problems** — [src/creatures.test.ts:15](../../src/creatures.test.ts#L15)
-  - current rules; keep pending design review. Currentness: unverified. Case runtime: unknown.
+  - current rules; Keep art integrity and supported comparison contracts?. Currentness: unverified. Case runtime: unknown.
   - Cited ruling: none found in scoped comments; not proof that none exists.
 
 - **the creatures' folders (art/creatures/) > each creature.js holds only known sections, of the right shapes (config/schema/creature.schema.json)** — [src/creatures.test.ts:19](../../src/creatures.test.ts#L19)
-  - current rules; keep pending design review. Currentness: unverified. Case runtime: unknown.
+  - current rules; Keep art integrity and supported comparison contracts?. Currentness: unverified. Case runtime: unknown.
   - Cited ruling: none found in scoped comments; not proof that none exists.
 
 - **the creatures' folders (art/creatures/) > every creature in the game has its folder, with its movement and voice** — [src/creatures.test.ts:23](../../src/creatures.test.ts#L23)
-  - current rules; keep pending design review. Currentness: unverified. Case runtime: unknown.
+  - current rules; Keep art integrity and supported comparison contracts?. Currentness: unverified. Case runtime: unknown.
   - Cited ruling: none found in scoped comments; not proof that none exists.
 
 - **the split registries (tools/data.mjs) > decisions: every fragment named by its pr and group, ids unique, none left in the file** — [src/creatures.test.ts:37](../../src/creatures.test.ts#L37)
-  - current rules; keep pending design review. Currentness: unverified. Case runtime: unknown.
+  - current rules; Keep art integrity and supported comparison contracts?. Currentness: unverified. Case runtime: unknown.
   - Cited ruling: none found in scoped comments; not proof that none exists.
 
 - **the split registries (tools/data.mjs) > flora: one file a species, the index current, none left in genomes.js, the baseline folder sound** — [src/creatures.test.ts:41](../../src/creatures.test.ts#L41)
-  - current rules; keep pending design review. Currentness: unverified. Case runtime: unknown.
+  - current rules; Keep art integrity and supported comparison contracts?. Currentness: unverified. Case runtime: unknown.
   - Cited ruling: none found in scoped comments; not proof that none exists.
 
 - **the split registries (tools/data.mjs) > areas: a folder an area with its kind line, the recipes and the original areas' flora in them, the kinds' slots whole** — [src/creatures.test.ts:45](../../src/creatures.test.ts#L45)
-  - current rules; keep pending design review. Currentness: unverified. Case runtime: unknown.
+  - current rules; Keep art integrity and supported comparison contracts?. Currentness: unverified. Case runtime: unknown.
   - Cited ruling: none found in scoped comments; not proof that none exists.
 
 - **the adopt's record scanner (tools/lib/genomeRecords.mjs) > finds the pasted records and no more, each its own module without the spread** — [src/creatures.test.ts:67](../../src/creatures.test.ts#L67)
-  - current rules; keep pending design review. Currentness: unverified. Case runtime: unknown.
+  - current rules; Keep art integrity and supported comparison contracts?. Currentness: unverified. Case runtime: unknown.
   - Cited ruling: none found in scoped comments; not proof that none exists.
 
 - **the adopt's record scanner (tools/lib/genomeRecords.mjs) > leaves the file's array empty (the adopt puts the index's spread back) and what follows it as it was** — [src/creatures.test.ts:76](../../src/creatures.test.ts#L76)
-  - current rules; keep pending design review. Currentness: unverified. Case runtime: unknown.
+  - current rules; Keep art integrity and supported comparison contracts?. Currentness: unverified. Case runtime: unknown.
   - Cited ruling: none found in scoped comments; not proof that none exists.
 
 - **enables exactly Ed's twenty kept redesigns, with immutable Current fallback** — [src/defaultRoster.test.ts:6](../../src/defaultRoster.test.ts#L6)
-  - current rules; keep pending design review. Currentness: unverified. Case runtime: unknown.
+  - current rules; Keep art integrity and supported comparison contracts?. Currentness: unverified. Case runtime: unknown.
   - Cited ruling: none found in scoped comments; not proof that none exists.
 
 - **keeps redesigned and explicit Current species/cache identities separate** — [src/defaultRoster.test.ts:16](../../src/defaultRoster.test.ts#L16)
-  - current rules; keep pending design review. Currentness: unverified. Case runtime: unknown.
+  - current rules; Keep art integrity and supported comparison contracts?. Currentness: unverified. Case runtime: unknown.
   - Cited ruling: none found in scoped comments; not proof that none exists.
 
 - **sand-cat ear projection gate > does not regress baby/adult attachment in any game-style facing and retains Current baby** — [src/earSilhouette.test.ts:22](../../src/earSilhouette.test.ts#L22)
-  - current rules; keep pending design review. Currentness: unverified. Case runtime: unknown.
+  - current rules; Keep art integrity and supported comparison contracts?. Currentness: unverified. Case runtime: unknown.
   - Cited ruling: none found in scoped comments; not proof that none exists.
 
 - **sand-cat ear projection gate > both ears have visible pixels in the actual %s render without a narrow horn** — [src/earSilhouette.test.ts:34](../../src/earSilhouette.test.ts#L34) (parameterized template)
-  - current rules; keep pending design review. Currentness: unverified. Case runtime: unknown.
+  - current rules; Keep art integrity and supported comparison contracts?. Currentness: unverified. Case runtime: unknown.
   - Cited ruling: none found in scoped comments; not proof that none exists.
 
 - **sand-cat ear projection gate > uses straight triangular edges rather than the old rounded leaf** — [src/earSilhouette.test.ts:46](../../src/earSilhouette.test.ts#L46)
-  - current rules; keep pending design review. Currentness: unverified. Case runtime: unknown.
+  - current rules; Keep art integrity and supported comparison contracts?. Currentness: unverified. Case runtime: unknown.
   - Cited ruling: none found in scoped comments; not proof that none exists.
 
 - **sand-cat ear projection gate > both adult tips clear the skull by 2 art px with pointed outlines in %s** — [src/earSilhouette.test.ts:51](../../src/earSilhouette.test.ts#L51) (parameterized template)
-  - current rules; keep pending design review. Currentness: unverified. Case runtime: unknown.
+  - current rules; Keep art integrity and supported comparison contracts?. Currentness: unverified. Case runtime: unknown.
   - Cited ruling: none found in scoped comments; not proof that none exists.
 
 - **first shared feline graph iteration > retains the Current sand-cat baby pixels and normals in both facings** — [src/felineGraph.test.ts:22](../../src/felineGraph.test.ts#L22)
-  - current rules; keep pending design review. Currentness: unverified. Case runtime: unknown.
+  - current rules; Keep art integrity and supported comparison contracts?. Currentness: unverified. Case runtime: unknown.
   - Cited ruling: none found in scoped comments; not proof that none exists.
 
 - **first shared feline graph iteration > gives both non-baby sand-cat ears mirrored geometry** — [src/felineGraph.test.ts:30](../../src/felineGraph.test.ts#L30)
-  - current rules; keep pending design review. Currentness: unverified. Case runtime: unknown.
+  - current rules; Keep art integrity and supported comparison contracts?. Currentness: unverified. Case runtime: unknown.
   - Cited ruling: none found in scoped comments; not proof that none exists.
 
 - **first shared feline graph iteration > positions low, splayed ears symmetrically without moving the head** — [src/felineGraph.test.ts:43](../../src/felineGraph.test.ts#L43)
-  - current rules; keep pending design review. Currentness: unverified. Case runtime: unknown.
+  - current rules; Keep art integrity and supported comparison contracts?. Currentness: unverified. Case runtime: unknown.
   - Cited ruling: none found in scoped comments; not proof that none exists.
 
 - **first shared feline graph iteration > wraps rosettes onto the back and both flanks and leaves the belly clear** — [src/felineGraph.test.ts:53](../../src/felineGraph.test.ts#L53)
-  - current rules; keep pending design review. Currentness: unverified. Case runtime: unknown.
+  - current rules; Keep art integrity and supported comparison contracts?. Currentness: unverified. Case runtime: unknown.
   - Cited ruling: none found in scoped comments; not proof that none exists.
 
 - **first shared feline graph iteration > keeps pale ring centres, ring ink and solid regional spots separate** — [src/felineGraph.test.ts:65](../../src/felineGraph.test.ts#L65)
-  - current rules; keep pending design review. Currentness: unverified. Case runtime: unknown.
+  - current rules; Keep art integrity and supported comparison contracts?. Currentness: unverified. Case runtime: unknown.
   - Cited ruling: none found in scoped comments; not proof that none exists.
 
 - **first shared feline graph iteration > uses actual bake scale for native ring size and excludes spine/rump outside the region** — [src/felineGraph.test.ts:81](../../src/felineGraph.test.ts#L81)
-  - current rules; keep pending design review. Currentness: unverified. Case runtime: unknown.
+  - current rules; Keep art integrity and supported comparison contracts?. Currentness: unverified. Case runtime: unknown.
   - Cited ruling: none found in scoped comments; not proof that none exists.
 
 - **first shared feline graph iteration > sets native marking scale through the real renderer callback** — [src/felineGraph.test.ts:93](../../src/felineGraph.test.ts#L93)
-  - current rules; keep pending design review. Currentness: unverified. Case runtime: unknown.
+  - current rules; Keep art integrity and supported comparison contracts?. Currentness: unverified. Case runtime: unknown.
   - Cited ruling: none found in scoped comments; not proof that none exists.
 
 - **first shared feline graph iteration > keeps an opt-in baby's belly below its back even with inverted legacy ratios** — [src/felineGraph.test.ts:102](../../src/felineGraph.test.ts#L102)
-  - leftovers; review before any rewrite or deletion. Currentness: unverified. Case runtime: unknown.
+  - current rules; Keep art integrity and supported comparison contracts?. Currentness: unverified. Case runtime: unknown.
   - Cited ruling: none found in scoped comments; not proof that none exists.
 
 - **first shared feline graph iteration > %s uses a connected graph at every level without mutating current art** — [src/felineGraph.test.ts:109](../../src/felineGraph.test.ts#L109) (parameterized template)
-  - current rules; keep pending design review. Currentness: unverified. Case runtime: unknown.
+  - current rules; Keep art integrity and supported comparison contracts?. Currentness: unverified. Case runtime: unknown.
   - Cited ruling: none found in scoped comments; not proof that none exists.
 
 - **keeps the final age target governing pinned and unpinned mole proportions** — [src/moleReferenceFit.test.ts:16](../../src/moleReferenceFit.test.ts#L16)
-  - current rules; keep pending design review. Currentness: unverified. Case runtime: unknown.
+  - current rules; Keep art integrity and supported comparison contracts?. Currentness: unverified. Case runtime: unknown.
   - Cited ruling: none found in scoped comments; not proof that none exists.
 
 - **separates barrel vertical depth and width without changing the other axis** — [src/moleReferenceFit.test.ts:25](../../src/moleReferenceFit.test.ts#L25)
-  - current rules; keep pending design review. Currentness: unverified. Case runtime: unknown.
+  - current rules; Keep art integrity and supported comparison contracts?. Currentness: unverified. Case runtime: unknown.
   - Cited ruling: none found in scoped comments; not proof that none exists.
 
 - **moves and reshapes existing snout/paws and rejects invalid controls** — [src/moleReferenceFit.test.ts:31](../../src/moleReferenceFit.test.ts#L31)
-  - hard limits; keep. Currentness: unverified. Case runtime: unknown.
+  - hard limits; Keep art integrity and supported comparison contracts?. Currentness: unverified. Case runtime: unknown.
   - Cited ruling: none found in scoped comments; not proof that none exists.
 
 - **keeps the adult hydra angry brows visible on its actual multi-head geometry** — [src/multiHeadExpressions.test.ts:8](../../src/multiHeadExpressions.test.ts#L8)
-  - current rules; keep pending design review. Currentness: unverified. Case runtime: unknown.
+  - current rules; Keep art integrity and supported comparison contracts?. Currentness: unverified. Case runtime: unknown.
   - Cited ruling: none found in scoped comments; not proof that none exists.
 
 - **%s age %s lies no taller than its awake form** — [src/napSizeCompatibility.test.ts:8](../../src/napSizeCompatibility.test.ts#L8) (parameterized template)
-  - current rules; keep pending design review. Currentness: unverified. Case runtime: unknown.
+  - current rules; Keep art integrity and supported comparison contracts?. Currentness: unverified. Case runtime: unknown.
   - Cited ruling: none found in scoped comments; not proof that none exists.
 
 - **uses exact ellipsoid support instead of its largest radius** — [src/projectedModelFit.test.ts:6](../../src/projectedModelFit.test.ts#L6)
-  - current rules; keep pending design review. Currentness: unverified. Case runtime: unknown.
+  - current rules; Keep art integrity and supported comparison contracts?. Currentness: unverified. Case runtime: unknown.
   - Cited ruling: none found in scoped comments; not proof that none exists.
 
 - **bounds rounded boxes, tapered cones and roughness conservatively** — [src/projectedModelFit.test.ts:14](../../src/projectedModelFit.test.ts#L14)
-  - current rules; keep pending design review. Currentness: unverified. Case runtime: unknown.
+  - current rules; Keep art integrity and supported comparison contracts?. Currentness: unverified. Case runtime: unknown.
   - Cited ruling: none found in scoped comments; not proof that none exists.
 
 - **fits skew plane coordinates using the same dual basis as ray clipping** — [src/projectedModelFit.test.ts:22](../../src/projectedModelFit.test.ts#L22)
-  - current rules; keep pending design review. Currentness: unverified. Case runtime: unknown.
+  - current rules; Keep art integrity and supported comparison contracts?. Currentness: unverified. Case runtime: unknown.
   - Cited ruling: none found in scoped comments; not proof that none exists.
 
 - **retains extras exclusion, explicit scale, projection and ground-row placement** — [src/projectedModelFit.test.ts:27](../../src/projectedModelFit.test.ts#L27)
-  - current rules; keep pending design review. Currentness: unverified. Case runtime: unknown.
+  - current rules; Keep art integrity and supported comparison contracts?. Currentness: unverified. Case runtime: unknown.
   - Cited ruling: none found in scoped comments; not proof that none exists.
 
 - **sparse edge and query rays match the full native mask after ground placement** — [src/projectedModelFit.test.ts:37](../../src/projectedModelFit.test.ts#L37)
-  - current rules; keep pending design review. Currentness: unverified. Case runtime: unknown.
+  - current rules; Keep art integrity and supported comparison contracts?. Currentness: unverified. Case runtime: unknown.
   - Cited ruling: none found in scoped comments; not proof that none exists.
 
 - **lets the final age target govern pinned quadruped proportion changes** — [src/quadFitDragonfly.test.ts:13](../../src/quadFitDragonfly.test.ts#L13)
-  - current rules; keep pending design review. Currentness: unverified. Case runtime: unknown.
+  - current rules; Keep art integrity and supported comparison contracts?. Currentness: unverified. Case runtime: unknown.
   - Cited ruling: none found in scoped comments; not proof that none exists.
 
 - **keeps dragonfly wing length and width independent and their roots fixed** — [src/quadFitDragonfly.test.ts:21](../../src/quadFitDragonfly.test.ts#L21)
-  - current rules; keep pending design review. Currentness: unverified. Case runtime: unknown.
+  - current rules; Keep art integrity and supported comparison contracts?. Currentness: unverified. Case runtime: unknown.
   - Cited ruling: none found in scoped comments; not proof that none exists.
 
 - **sets wing elevation in radians, including flat panes in both frames** — [src/quadFitDragonfly.test.ts:29](../../src/quadFitDragonfly.test.ts#L29)
-  - current rules; keep pending design review. Currentness: unverified. Case runtime: unknown.
+  - current rules; Keep art integrity and supported comparison contracts?. Currentness: unverified. Case runtime: unknown.
   - Cited ruling: none found in scoped comments; not proof that none exists.
 
 - **a wild area's rising aggro (Ed, 2026-10-07) > rises from nothing as they notice her to full as they attack, more in a dangerous area** — [src/render/aggro.test.ts:5](../../src/render/aggro.test.ts#L5)
@@ -13448,77 +13448,77 @@ Static declarations only. All classifications and currentness are provisional. C
   - Possible later evidence: [docs/notes/gameplay.md:40](../../docs/notes/gameplay.md#L40): - **Fight Arena** (Ed, 2026-10-27: "we can press a button to randomise the settings and another generates a random enemy pack to fight, and then I can tweak and save/copy attack settings that are fun"): `?fight=<seed>[&pack=wolf*4@2,...]`, or the pause page's **⚔ Fight arena** (a new tab, a new seed): her alone against a wild pack (`setupArena(g, spec, { wildOnly: true })`: every group wild, side by side, none of hers) on the debug arena's ground, no waves, straight in (no spell to cast). The pack is the seed's roll (`rollPack`, rules/fightArena.ts: one time in eight a lone legend, else one kind or, one time in three, two, 2 to 6 of each, young or adult, at most 8; kinds with an attack at ev. candidate only: same-topic wording and later inline date; not a verified superseding ruling.
 
 - **capture-only %s fit keeps exactly the full-raster scale and geometry** — [src/rigSizeCapture.test.ts:7](../../src/rigSizeCapture.test.ts#L7) (parameterized template)
-  - current rules; keep pending design review. Currentness: unverified. Case runtime: unknown.
+  - current rules; Keep art integrity and supported comparison contracts?. Currentness: unverified. Case runtime: unknown.
   - Cited ruling: none found in scoped comments; not proof that none exists.
 
 - **seeded regional rosette variation > retains the pre-change painter bytes when all new fields are absent** — [src/rosettePainter.test.ts:19](../../src/rosettePainter.test.ts#L19)
-  - current rules; keep pending design review. Currentness: unverified. Case runtime: unknown.
+  - current rules; Keep art integrity and supported comparison contracts?. Currentness: unverified. Case runtime: unknown.
   - Cited ruling: none found in scoped comments; not proof that none exists.
 
 - **seeded regional rosette variation > keeps centre dots separated from the ring and accepts material names or indices** — [src/rosettePainter.test.ts:27](../../src/rosettePainter.test.ts#L27)
-  - current rules; keep pending design review. Currentness: unverified. Case runtime: unknown.
+  - current rules; Keep art integrity and supported comparison contracts?. Currentness: unverified. Case runtime: unknown.
   - Cited ruling: none found in scoped comments; not proof that none exists.
 
 - **seeded regional rosette variation > fills a stable share of complete cells with solid ink rather than pale centres** — [src/rosettePainter.test.ts:43](../../src/rosettePainter.test.ts#L43)
-  - current rules; keep pending design review. Currentness: unverified. Case runtime: unknown.
+  - outcome stats; Move sampled appearance shares and long-run variety to nonblocking reports while keeping direct visual rules, geometry, caps, fades and replay blocking?. Currentness: unverified. Case runtime: unknown.
   - Cited ruling: none found in scoped comments; not proof that none exists.
 
 - **seeded regional rosette variation > fades whole cells toward the belly and neck with clamped, composable ramps** — [src/rosettePainter.test.ts:55](../../src/rosettePainter.test.ts#L55)
-  - current rules; keep pending design review. Currentness: unverified. Case runtime: unknown.
+  - current rules; Keep art integrity and supported comparison contracts?. Currentness: unverified. Case runtime: unknown.
   - Cited ruling: none found in scoped comments; not proof that none exists.
 
 - **seeded regional rosette variation > varies size and gap within bounds with a reproducible closed-ring share** — [src/rosettePainter.test.ts:69](../../src/rosettePainter.test.ts#L69)
-  - current rules; keep pending design review. Currentness: unverified. Case runtime: unknown.
+  - outcome stats; Move sampled appearance shares and long-run variety to nonblocking reports while keeping direct visual rules, geometry, caps, fades and replay blocking?. Currentness: unverified. Case runtime: unknown.
   - Cited ruling: none found in scoped comments; not proof that none exists.
 
 - **seeded regional rosette variation > rejects invalid bounds instead of emitting unstable patterns** — [src/rosettePainter.test.ts:90](../../src/rosettePainter.test.ts#L90)
-  - hard limits; keep. Currentness: unverified. Case runtime: unknown.
+  - hard limits; Keep art integrity and supported comparison contracts?. Currentness: unverified. Case runtime: unknown.
   - Cited ruling: none found in scoped comments; not proof that none exists.
 
 - **scenery budget > starts with the whole view** — [src/rules/budget.test.ts:12](../../src/rules/budget.test.ts#L12)
-  - hard limits; keep. Currentness: unverified. Case runtime: unknown.
+  - hard limits; Keep art integrity and supported comparison contracts?. Currentness: unverified. Case runtime: unknown.
   - Cited ruling: none found in scoped comments; not proof that none exists.
 
 - **scenery budget > holds at a good frame rate, never past the haze's far edge** — [src/rules/budget.test.ts:13](../../src/rules/budget.test.ts#L13)
-  - hard limits; keep. Currentness: unverified. Case runtime: unknown.
+  - hard limits; Keep art integrity and supported comparison contracts?. Currentness: unverified. Case runtime: unknown.
   - Cited ruling: none found in scoped comments; not proof that none exists.
 
 - **scenery budget > shrinks slowly while frames stay slow, not at the first slow frame** — [src/rules/budget.test.ts:14](../../src/rules/budget.test.ts#L14)
-  - hard limits; keep. Currentness: unverified. Case runtime: unknown.
+  - hard limits; Keep art integrity and supported comparison contracts?. Currentness: unverified. Case runtime: unknown.
   - Cited ruling: none found in scoped comments; not proof that none exists.
 
 - **scenery budget > never goes below its minimum** — [src/rules/budget.test.ts:21](../../src/rules/budget.test.ts#L21)
-  - hard limits; keep. Currentness: unverified. Case runtime: unknown.
+  - hard limits; Keep art integrity and supported comparison contracts?. Currentness: unverified. Case runtime: unknown.
   - Cited ruling: none found in scoped comments; not proof that none exists.
 
 - **scenery budget > holds in the hysteresis band between slow and fast** — [src/rules/budget.test.ts:22](../../src/rules/budget.test.ts#L22)
-  - hard limits; keep. Currentness: unverified. Case runtime: unknown.
+  - hard limits; Keep art integrity and supported comparison contracts?. Currentness: unverified. Case runtime: unknown.
   - Cited ruling: none found in scoped comments; not proof that none exists.
 
 - **scenery budget > grows back with headroom** — [src/rules/budget.test.ts:27](../../src/rules/budget.test.ts#L27)
-  - hard limits; keep. Currentness: unverified. Case runtime: unknown.
+  - hard limits; Keep art integrity and supported comparison contracts?. Currentness: unverified. Case runtime: unknown.
   - Cited ruling: none found in scoped comments; not proof that none exists.
 
 - **scenery budget > ignores long frames (a hidden tab, a hitch) and stays put when not adaptive** — [src/rules/budget.test.ts:31](../../src/rules/budget.test.ts#L31)
-  - hard limits; keep. Currentness: unverified. Case runtime: unknown.
+  - hard limits; Keep art integrity and supported comparison contracts?. Currentness: unverified. Case runtime: unknown.
   - Cited ruling: none found in scoped comments; not proof that none exists.
 
 - **drawing between steps > draws a 💌 and a shot where they were at the moment drawn, and puts them back** — [src/rules/interpolate.test.ts:13](../../src/rules/interpolate.test.ts#L13)
-  - current rules; keep pending design review. Currentness: unverified. Case runtime: unknown.
+  - current rules; Keep art integrity and supported comparison contracts?. Currentness: unverified. Case runtime: unknown.
   - Cited ruling: file, line 1: // What's drawn between two fixed steps (Ed's playtest, 2026-10-06: "it feels low"): interpolated()
   - Possible later evidence: [docs/notes/house.md:81](../../docs/notes/house.md#L81): - **Station menus** (Ed, 2026-10-21; the mock, previews/ed/station-menus-mock on claude/ed-shots; `config/wardrobe.json`, `src/rules/wardrobe.ts`, `src/app/owned.ts`, `src/ui/stationPanel.ts`, `src/rules/stations.ts`): at a dressing station (the house's reach, `rules/stations.ts` `stationOf`) it lights up with E over it, and E there slides its panel in from the left over the live game (Ed's playtest, 2026-10-26: "Menus should open when she presses E near an interactive object (dresser, map, etc) instead of them opening automatically just through proximity"; it was by nearness, no E, since 2026-10-21); E again (the pad's □) slides it out (Ed, 2026-10-26: "I think E should also close, and we c. candidate only: same-topic wording and later inline date; not a verified superseding ruling.
   - Possible later evidence: [docs/notes/performance.md:166](../../docs/notes/performance.md#L166): **The stall hunt** (`node tools/bench/stalls.cjs [out]`, the coordinator's ask from Ed's overlay, 2026-10-13: 24 stalls over 100 ms and 18% of frames over 20 ms in the treetops, seed 2267, Old pinewood, 56 s into wave 0): the game's own loop run free at a spot (`SEED`, `X`, `Z`, `ZOOM`; `DIST=dist-prof` from `npx vite build --minify false --outDir dist-prof`, so the functions have names) under Chromium's sampling profiler, the GPU draw a no-op (`NODRAW=1`) so a wall second is a game second, and a report of where the JavaScript's time went: self time by function, call chains, runs of JavaScript over `RUN_MS`, the browser's long animation frames and the game's own stall log (`<out>/stalls.json. candidate only: same-topic wording and later inline date; not a verified superseding ruling.
 
 - **islands' shapes and pictures (the wave 2 finale's dream bubbles, the sea chart) > gives every kind its own sigil, home's the World Tree** — [src/rules/islandShape.test.ts:9](../../src/rules/islandShape.test.ts#L9)
-  - current rules; keep pending design review. Currentness: unverified. Case runtime: unknown.
+  - current rules; Keep art integrity and supported comparison contracts?. Currentness: unverified. Case runtime: unknown.
   - Cited ruling: none found in scoped comments; not proof that none exists.
 
 - **islands' shapes and pictures (the wave 2 finale's dream bubbles, the sea chart) > pictures every kind's island with its sigil in whole pixels, readable at a bubble's 30 px, and as a path for the sea chart** — [src/rules/islandShape.test.ts:24](../../src/rules/islandShape.test.ts#L24)
-  - current rules; keep pending design review. Currentness: unverified. Case runtime: unknown.
+  - current rules; Keep art integrity and supported comparison contracts?. Currentness: unverified. Case runtime: unknown.
   - Cited ruling: none found in scoped comments; not proof that none exists.
 
 - **the biome lakes' shore dressing (rules/lakeShore.ts, art/lakeShore.js) > draws every piece, only the lava rocks glowing** — [src/rules/lakeShore.test.ts:38](../../src/rules/lakeShore.test.ts#L38)
-  - current rules; keep pending design review. Currentness: unverified. Case runtime: unknown.
+  - current rules; Keep art integrity and supported comparison contracts?. Currentness: unverified. Case runtime: unknown.
   - Cited ruling: none found in scoped comments; not proof that none exists.
 
 - **retains exact pre-extraction ribbon arrays on a fixed map and a coastal island** — [src/rules/pathGeometry.test.ts:14](../../src/rules/pathGeometry.test.ts#L14)
@@ -13538,83 +13538,83 @@ Static declarations only. All classifications and currentness are provisional. C
   - Cited ruling: none found in scoped comments; not proof that none exists.
 
 - **light sources > come as campfires and ponds (rune stones now only mark soundsystem spots), the same from the same seed, and keep off the dancefloor** — [src/rules/rules.test.ts:598](../../src/rules/rules.test.ts#L598)
-  - current rules; keep pending design review. Currentness: unverified. Case runtime: unknown.
+  - current rules; Keep art integrity and supported comparison contracts?. Currentness: unverified. Case runtime: unknown.
   - Cited ruling: none found in scoped comments; not proof that none exists.
 
 - **light sources > put more ponds in the wet areas** — [src/rules/rules.test.ts:605](../../src/rules/rules.test.ts#L605)
-  - current rules; keep pending design review. Currentness: unverified. Case runtime: unknown.
+  - outcome stats; Move sampled appearance shares and long-run variety to nonblocking reports while keeping direct visual rules, geometry, caps, fades and replay blocking?. Currentness: unverified. Case runtime: unknown.
   - Cited ruling: none found in scoped comments; not proof that none exists.
 
 - **string lights > hang as long runs between the area's own trees: no crossings, at most 3 ends per tree, the same every time** — [src/rules/rules.test.ts:741](../../src/rules/rules.test.ts#L741)
-  - current rules; keep pending design review. Currentness: unverified. Case runtime: unknown.
+  - outcome stats; Move sampled appearance shares and long-run variety to nonblocking reports while keeping direct visual rules, geometry, caps, fades and replay blocking?. Currentness: unverified. Case runtime: unknown.
   - Cited ruling: none found in scoped comments; not proof that none exists.
 
 - **laser shows > are seeded, on about duty of the time, at most maxCount beams, and fade rather than pop** — [src/rules/rules.test.ts:990](../../src/rules/rules.test.ts#L990)
-  - current rules; keep pending design review. Currentness: unverified. Case runtime: unknown.
+  - outcome stats; Move sampled appearance shares and long-run variety to nonblocking reports while keeping direct visual rules, geometry, caps, fades and replay blocking?. Currentness: unverified. Case runtime: unknown.
   - Cited ruling: none found in scoped comments; not proof that none exists.
 
 - **area borders > run along the edge of an area's own ground, each point knowing the area across, cheaply** — [src/rules/rules.test.ts:1014](../../src/rules/rules.test.ts#L1014)
-  - current rules; keep pending design review. Currentness: unverified. Case runtime: unknown.
+  - current rules; Keep art integrity and supported comparison contracts?. Currentness: unverified. Case runtime: unknown.
   - Cited ruling: none found in scoped comments; not proof that none exists.
 
 - **facing > faces the viewer unless clearly heading up the screen, with a little hysteresis on the cone** — [src/rules/rules.test.ts:1036](../../src/rules/rules.test.ts#L1036)
-  - current rules; keep pending design review. Currentness: unverified. Case runtime: unknown.
+  - current rules; Keep art integrity and supported comparison contracts?. Currentness: unverified. Case runtime: unknown.
   - Cited ruling: none found in scoped comments; not proof that none exists.
 
 - **the dancefloor's tile lights (Ed, v160) > shows only the moon before the first wave (with the island's sigil off), in its twilight palette, and switches on, once, when the first wave comes** — [src/rules/rules.test.ts:1409](../../src/rules/rules.test.ts#L1409)
-  - outcome stats; review simulation assertions; consider report after Ed rules. Currentness: unverified. Case runtime: unknown.
+  - current rules; Keep art integrity and supported comparison contracts?. Currentness: unverified. Case runtime: unknown.
   - Cited ruling: none found in scoped comments; not proof that none exists.
 
 - **the dancefloor's tile lights (Ed, v160) > shows the island's sigil through the boot (home's: the World Tree), written on as the pulse goes round, the moon before** — [src/rules/rules.test.ts:1434](../../src/rules/rules.test.ts#L1434)
-  - outcome stats; review simulation assertions; consider report after Ed rules. Currentness: unverified. Case runtime: unknown.
+  - current rules; Keep art integrity and supported comparison contracts?. Currentness: unverified. Case runtime: unknown.
   - Cited ruling: none found in scoped comments; not proof that none exists.
 
 - **the dancefloor's tile lights (Ed, v160) > draws the moon's phases: none lit at new, the right half at first quarter, all at full, the left half at last quarter** — [src/rules/rules.test.ts:1455](../../src/rules/rules.test.ts#L1455)
-  - current rules; keep pending design review. Currentness: unverified. Case runtime: unknown.
+  - current rules; Keep art integrity and supported comparison contracts?. Currentness: unverified. Case runtime: unknown.
   - Cited ruling: none found in scoped comments; not proof that none exists.
 
 - **the dancefloor's tile lights (Ed, v160) > plays patterns on the beat, changing on bar lines, never the same one twice running** — [src/rules/rules.test.ts:1465](../../src/rules/rules.test.ts#L1465)
-  - current rules; keep pending design review. Currentness: unverified. Case runtime: unknown.
+  - outcome stats; Move sampled appearance shares and long-run variety to nonblocking reports while keeping direct visual rules, geometry, caps, fades and replay blocking?. Currentness: unverified. Case runtime: unknown.
   - Cited ruling: none found in scoped comments; not proof that none exists.
 
 - **the dancefloor's tile lights (Ed, v160) > rises in level with the party, and a higher level lights more of the floor** — [src/rules/rules.test.ts:1477](../../src/rules/rules.test.ts#L1477)
-  - current rules; keep pending design review. Currentness: unverified. Case runtime: unknown.
+  - outcome stats; Move sampled appearance shares and long-run variety to nonblocking reports while keeping direct visual rules, geometry, caps, fades and replay blocking?. Currentness: unverified. Case runtime: unknown.
   - Cited ruling: none found in scoped comments; not proof that none exists.
 
 - **the dancefloor's tile lights (Ed, v160) > lights the witch's tile where she stands, and ripples out from her** — [src/rules/rules.test.ts:1484](../../src/rules/rules.test.ts#L1484)
-  - outcome stats; review simulation assertions; consider report after Ed rules. Currentness: unverified. Case runtime: unknown.
+  - current rules; Keep art integrity and supported comparison contracts?. Currentness: unverified. Case runtime: unknown.
   - Cited ruling: none found in scoped comments; not proof that none exists.
 
 - **the dancefloor's tile lights (Ed, v160) > composes the layers: an event's pulse shows over the pattern, towards its area** — [src/rules/rules.test.ts:1495](../../src/rules/rules.test.ts#L1495)
-  - outcome stats; review simulation assertions; consider report after Ed rules. Currentness: unverified. Case runtime: unknown.
+  - current rules; Keep art integrity and supported comparison contracts?. Currentness: unverified. Case runtime: unknown.
   - Cited ruling: none found in scoped comments; not proof that none exists.
 
 - **the moon (Ed, 2026-10-06) > goes through its phases, crosses the sky, and now and then turns red, blue or gold, the same for a seed** — [src/rules/rules.test.ts:1832](../../src/rules/rules.test.ts#L1832)
-  - current rules; keep pending design review. Currentness: unverified. Case runtime: unknown.
+  - current rules; Keep art integrity and supported comparison contracts?. Currentness: unverified. Case runtime: unknown.
   - Cited ruling: none found in scoped comments; not proof that none exists.
 
 - **trunk shadows' defaults > are Ed's tuned values** — [src/rules/trunkShadowTuning.test.ts:7](../../src/rules/trunkShadowTuning.test.ts#L7)
-  - current rules; keep pending design review. Currentness: unverified. Case runtime: unknown.
+  - current rules; Keep art integrity and supported comparison contracts?. Currentness: unverified. Case runtime: unknown.
   - Cited ruling: file, line 1: // The trunks' shadows' tuning (render/trunkShadows.ts; Ed, 2026-10-12): his tuned values as the defaults, the fades at the trunk's
   - Possible later evidence: [docs/notes/performance.md:166](../../docs/notes/performance.md#L166): **The stall hunt** (`node tools/bench/stalls.cjs [out]`, the coordinator's ask from Ed's overlay, 2026-10-13: 24 stalls over 100 ms and 18% of frames over 20 ms in the treetops, seed 2267, Old pinewood, 56 s into wave 0): the game's own loop run free at a spot (`SEED`, `X`, `Z`, `ZOOM`; `DIST=dist-prof` from `npx vite build --minify false --outDir dist-prof`, so the functions have names) under Chromium's sampling profiler, the GPU draw a no-op (`NODRAW=1`) so a wall second is a game second, and a report of where the JavaScript's time went: self time by function, call chains, runs of JavaScript over `RUN_MS`, the browser's long animation frames and the game's own stall log (`<out>/stalls.json. candidate only: same-topic wording and later inline date; not a verified superseding ruling.
   - Possible later evidence: [docs/notes/performance.md:180](../../docs/notes/performance.md#L180): **Quality ladder** (Ed, 2026-10-26: "scenery is not gameplay critical so it's better to preserve framerate and draw fewer things or draw slower if necessary"; his order, 2026-10-27, from India's study `previews/ed/quality-ladder/`; `rules/ladder.ts` the rungs and the controller, `app/ladder.ts` the running game): rungs from full quality down, in Ed's order: the forest's far edge dithered; trees ×0.9; area borders over 40 m; tall trees squeezed (treeCap.keep 0.35, `SQUEEZE_KEEP`); leaves still and no trunk shadows; the cut-away's crowns solid; trees ×0.8; a steady 30 fps (the loop draws every other frame at 60 Hz); px 4. Live rungs change the running night; load rungs (density, the blend, the. candidate only: same-topic wording and later inline date; not a verified superseding ruling.
 
 - **trunk shadows' defaults > fade at the foot and near her, taper at the foot, and darken the ground cover** — [src/rules/trunkShadowTuning.test.ts:11](../../src/rules/trunkShadowTuning.test.ts#L11)
-  - current rules; keep pending design review. Currentness: unverified. Case runtime: unknown.
+  - current rules; Keep art integrity and supported comparison contracts?. Currentness: unverified. Case runtime: unknown.
   - Cited ruling: file, line 1: // The trunks' shadows' tuning (render/trunkShadows.ts; Ed, 2026-10-12): his tuned values as the defaults, the fades at the trunk's
   - Possible later evidence: [docs/notes/performance.md:166](../../docs/notes/performance.md#L166): **The stall hunt** (`node tools/bench/stalls.cjs [out]`, the coordinator's ask from Ed's overlay, 2026-10-13: 24 stalls over 100 ms and 18% of frames over 20 ms in the treetops, seed 2267, Old pinewood, 56 s into wave 0): the game's own loop run free at a spot (`SEED`, `X`, `Z`, `ZOOM`; `DIST=dist-prof` from `npx vite build --minify false --outDir dist-prof`, so the functions have names) under Chromium's sampling profiler, the GPU draw a no-op (`NODRAW=1`) so a wall second is a game second, and a report of where the JavaScript's time went: self time by function, call chains, runs of JavaScript over `RUN_MS`, the browser's long animation frames and the game's own stall log (`<out>/stalls.json. candidate only: same-topic wording and later inline date; not a verified superseding ruling.
   - Possible later evidence: [docs/notes/performance.md:180](../../docs/notes/performance.md#L180): **Quality ladder** (Ed, 2026-10-26: "scenery is not gameplay critical so it's better to preserve framerate and draw fewer things or draw slower if necessary"; his order, 2026-10-27, from India's study `previews/ed/quality-ladder/`; `rules/ladder.ts` the rungs and the controller, `app/ladder.ts` the running game): rungs from full quality down, in Ed's order: the forest's far edge dithered; trees ×0.9; area borders over 40 m; tall trees squeezed (treeCap.keep 0.35, `SQUEEZE_KEEP`); leaves still and no trunk shadows; the cut-away's crowns solid; trees ×0.8; a steady 30 fps (the loop draws every other frame at 60 Hz); px 4. Live rungs change the running night; load rungs (density, the blend, the. candidate only: same-topic wording and later inline date; not a verified superseding ruling.
 
 - **keeps %s legend expressions on the visible blended head** — [src/sizeAdoptionRegressions.test.ts:6](../../src/sizeAdoptionRegressions.test.ts#L6) (parameterized template)
-  - current rules; keep pending design review. Currentness: unverified. Case runtime: unknown.
+  - current rules; Keep art integrity and supported comparison contracts?. Currentness: unverified. Case runtime: unknown.
   - Cited ruling: none found in scoped comments; not proof that none exists.
 
 - **keeps both sleeping woodlouse legend ground anchors inside their native canvases** — [src/sizeAdoptionRegressions.test.ts:15](../../src/sizeAdoptionRegressions.test.ts#L15)
-  - current rules; keep pending design review. Currentness: unverified. Case runtime: unknown.
+  - current rules; Keep art integrity and supported comparison contracts?. Currentness: unverified. Case runtime: unknown.
   - Cited ruling: none found in scoped comments; not proof that none exists.
 
 - **keeps the resized crocodile carrier within its existing length and back limits** — [src/sizeAdoptionRegressions.test.ts:26](../../src/sizeAdoptionRegressions.test.ts#L26)
-  - current rules; keep pending design review. Currentness: unverified. Case runtime: unknown.
+  - current rules; Keep art integrity and supported comparison contracts?. Currentness: unverified. Case runtime: unknown.
   - Cited ruling: none found in scoped comments; not proof that none exists.
 
 - **accepts two distinct valid breaths without modifying sprites** — [src/sleepingLegendSize.test.ts:9](../../src/sleepingLegendSize.test.ts#L9)
@@ -13626,19 +13626,19 @@ Static declarations only. All classifications and currentness are provisional. C
   - Cited ruling: none found in scoped comments; not proof that none exists.
 
 - **snow leopard subpixel whisker attachment > pins projected-fit Current material and normal bytes with the control absent** — [src/snowLeopardWhiskers.test.ts:16](../../src/snowLeopardWhiskers.test.ts#L16)
-  - current rules; keep pending design review. Currentness: unverified. Case runtime: unknown.
+  - current rules; Keep art integrity and supported comparison contracts?. Currentness: unverified. Case runtime: unknown.
   - Cited ruling: none found in scoped comments; not proof that none exists.
 
 - **snow leopard subpixel whisker attachment > keeps top-view attachment non-worsening with the pixel floor on the projected grid** — [src/snowLeopardWhiskers.test.ts:23](../../src/snowLeopardWhiskers.test.ts#L23)
-  - current rules; keep pending design review. Currentness: unverified. Case runtime: unknown.
+  - current rules; Keep art integrity and supported comparison contracts?. Currentness: unverified. Case runtime: unknown.
   - Cited ruling: none found in scoped comments; not proof that none exists.
 
 - **snow leopard subpixel whisker attachment > passes the unchanged paired guard in all adult facings for frame %s** — [src/snowLeopardWhiskers.test.ts:29](../../src/snowLeopardWhiskers.test.ts#L29) (parameterized template)
-  - current rules; keep pending design review. Currentness: unverified. Case runtime: unknown.
+  - current rules; Keep art integrity and supported comparison contracts?. Currentness: unverified. Case runtime: unknown.
   - Cited ruling: none found in scoped comments; not proof that none exists.
 
 - **snow leopard subpixel whisker attachment > rejects invalid pixel floors** — [src/snowLeopardWhiskers.test.ts:32](../../src/snowLeopardWhiskers.test.ts#L32)
-  - hard limits; keep. Currentness: unverified. Case runtime: unknown.
+  - hard limits; Keep art integrity and supported comparison contracts?. Currentness: unverified. Case runtime: unknown.
   - Cited ruling: none found in scoped comments; not proof that none exists.
 
 - **sprite attachment guard > allows Current's existing detached effects and rejects a new component** — [src/spriteConnectivity.test.ts:6](../../src/spriteConnectivity.test.ts#L6)
@@ -13662,32 +13662,32 @@ Static declarations only. All classifications and currentness are provisional. C
   - Cited ruling: none found in scoped comments; not proof that none exists.
 
 - **places the intended separated count deterministically without overwriting bodies** — [src/stableMotes.test.ts:5](../../src/stableMotes.test.ts#L5)
-  - hard limits; keep. Currentness: unverified. Case runtime: unknown.
+  - hard limits; Keep art integrity and supported comparison contracts?. Currentness: unverified. Case runtime: unknown.
   - Cited ruling: none found in scoped comments; not proof that none exists.
 
 - **bounds the search when no empty cells can hold an effect** — [src/stableMotes.test.ts:11](../../src/stableMotes.test.ts#L11)
-  - current rules; keep pending design review. Currentness: unverified. Case runtime: unknown.
+  - current rules; Keep art integrity and supported comparison contracts?. Currentness: unverified. Case runtime: unknown.
   - Cited ruling: none found in scoped comments; not proof that none exists.
 
 - **optional tail region painter > pins projected-fit %s material and normal bytes with the region absent** — [src/tailMarkings.test.ts:13](../../src/tailMarkings.test.ts#L13) (parameterized template)
-  - current rules; keep pending design review. Currentness: unverified. Case runtime: unknown.
+  - current rules; Keep art integrity and supported comparison contracts?. Currentness: unverified. Case runtime: unknown.
   - Cited ruling: body, line 14: // Ed's 2026-10-31 size adoption changes raster dimensions; =0 reproduces every old pin exactly.
   - Possible later evidence: [docs/notes/house.md:13](../../docs/notes/house.md#L13): Ed, 2026-11-01 (1565#6551357170): the new132-object export supersedes the earlier arrangement, and everything strictly west of plan X=-100 may be removed. The full export is archived byte-for-byte in `docs/evidence/treehouse-layout-ed-2026-11-01.v2.json` (SHA25618c3c64c68a60d67d3d55b2f8f349983fe2260f467634b8b48b216984bb49af6). `config/house/layouts/ed-current.json` retains110 exact poses/anchors and explicitly records22 removed clutter IDs. Selected runtime decoration is authoritative; absent pieces stay absent. Editor import/export/history carries `removed` IDs, accepts only known clutter removals and still requires every remaining ID exactly once. V1 migration preserves its34 compatible po. candidate only: same-topic wording and later inline date; not a verified superseding ruling.
 
 - **optional tail region painter > uses arc length around bends for rings and the tip, preserving geometry** — [src/tailMarkings.test.ts:25](../../src/tailMarkings.test.ts#L25)
-  - current rules; keep pending design review. Currentness: unverified. Case runtime: unknown.
+  - current rules; Keep art integrity and supported comparison contracts?. Currentness: unverified. Case runtime: unknown.
   - Cited ruling: none found in scoped comments; not proof that none exists.
 
 - **optional tail region painter > reuses seeded rosettes, filled cells and centre dots around the whole tail** — [src/tailMarkings.test.ts:35](../../src/tailMarkings.test.ts#L35)
-  - current rules; keep pending design review. Currentness: unverified. Case runtime: unknown.
+  - current rules; Keep art integrity and supported comparison contracts?. Currentness: unverified. Case runtime: unknown.
   - Cited ruling: none found in scoped comments; not proof that none exists.
 
 - **optional tail region painter > wires the region through a selected creature without changing its shape or Current** — [src/tailMarkings.test.ts:46](../../src/tailMarkings.test.ts#L46)
-  - current rules; keep pending design review. Currentness: unverified. Case runtime: unknown.
+  - current rules; Keep art integrity and supported comparison contracts?. Currentness: unverified. Case runtime: unknown.
   - Cited ruling: none found in scoped comments; not proof that none exists.
 
 - **optional tail region painter > rejects invalid fields and does not guess a path for non-chain tails** — [src/tailMarkings.test.ts:55](../../src/tailMarkings.test.ts#L55)
-  - hard limits; keep. Currentness: unverified. Case runtime: unknown.
+  - hard limits; Keep art integrity and supported comparison contracts?. Currentness: unverified. Case runtime: unknown.
   - Cited ruling: none found in scoped comments; not proof that none exists.
 
 - **%s age %s texture toggle preserves physical size** — [src/textureSizeCompatibility.test.ts:6](../../src/textureSizeCompatibility.test.ts#L6) (parameterized template)

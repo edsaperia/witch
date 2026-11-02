@@ -2,11 +2,15 @@
 
 Reviewed source groups; the separate unreviewed manifest proposes no changes. No test change is authorized. Each group lists source templates, not expanded executions. Durations sum unique containing-file timings from the existing CI run. Partial-file groups include unrelated cases, overlapping groups reuse file timings, and none of these sums is CI wall time or savings.
 
+## saves-replay-robustness: review provenance
+
+Core save, settings and replay setup/assertions reviewed. Borrowed visits and telephone boundaries remain with #1609; this page proposes no gameplay change.
+
 <a id="s1"></a>
 
 ## S1: Slot migration and isolation
 
-hard limits; 14 declarations; <1 s of CI.
+hard limits; 14 tests; files take <1 s.
 
 In-memory stores exercise exact byte preservation, corrupt indexes, independent controls, cross-tab metadata and flush-before-reload; no emergent outcome target.
 
@@ -29,7 +33,7 @@ In-memory stores exercise exact byte preservation, corrupt indexes, independent 
 
 ## S2: Snapshot integrity and format guards
 
-hard limits; 8 declarations; ~32 s of CI.
+hard limits; 8 tests; files take ~32 s.
 
 The generated world is input to a before/after equality proof, not a win/count target. The 4 MB size ceiling is a hard budget. Hash guards also retain the old v1 contract alongside the additive mushroom migration.
 
@@ -46,7 +50,7 @@ The generated world is input to a before/after equality proof, not a win/count t
 
 ## S3: Solo autosave eligibility and identity
 
-hard limits; 10 declarations; ~4 s of CI.
+hard limits; 10 tests; files take ~4 s.
 
 Synthetic storage proves ordering and failure behavior. The stepped wake-up fixture checks an explicit save gate, not how quickly an uncontrolled night succeeds. Telephone and borrowed-visit cases are left to #1609.
 
@@ -65,7 +69,7 @@ Synthetic storage proves ordering and failure behavior. The stepped wake-up fixt
 
 ## S4: Equipment saves and compatibility migrations
 
-current rules; 16 declarations; <1 s of CI.
+current rules; 16 tests; files take <1 s.
 
 Old broom spells and the broomBay name occur as migration inputs: assertions require the current Classic broom/lathe result. They do not restore obsolete gameplay. Records explicitly require the 29 Oct 100/120 BPM starters. House reviewer additionally verified mushroomStock:6/16/23: slot/campaign isolation, once-only in-flight credit and malformed-state handling.
 
@@ -90,7 +94,7 @@ Old broom spells and the broomBay name occur as migration inputs: assertions req
 
 ## S5: Campaign progress and personal settings
 
-current rules; 21 declarations; <1 s of CI.
+current rules; 21 tests; files take <1 s.
 
 Won/lost results are supplied directly; no night is simulated to obtain them. Settings use synthetic stores and cloned tuning to test migration, accessibility flags and noncompounding volume.
 
@@ -120,14 +124,13 @@ Won/lost results are supplied directly; no night is simulated to obtain them. Se
 
 ## S6: Recorded inputs and retained playtest reports
 
-hard limits; 18 declarations; ~97 s of CI.
+hard limits; 17 tests; files take ~97 s.
 
 Controlled inputs and fake timers prove identical replay, refusal of undeclared divergence, bounded tape/journal storage and exact retention of report text after attachment pressure or transaction failure. The long paused tape and synthetic 16–18 MiB bundles exercise explicit integrity/budget boundaries, not success statistics. The 600-second paused loop advances fake time; no real ten-minute run is needed.
 
 - [src/app/playtestComments.test.ts:25](../../src/app/playtestComments.test.ts#L25): roundtrips the actual played moment and continues from the same random/state cursor
 - [src/app/playtestComments.test.ts:42](../../src/app/playtestComments.test.ts#L42): rejects oversized, malformed and wrong-build bundles instead of restoring an approximate link
 - [src/app/playtestComments.test.ts:51](../../src/app/playtestComments.test.ts#L51): keeps every report across count pressure and reload; unread storage is never overwritten
-- [src/app/playtestComments.test.ts:69](../../src/app/playtestComments.test.ts#L69): preserves legacy report text through production-sized duplicated replay pressure, reload and both exports
 - [src/app/playtestComments.test.ts:100](../../src/app/playtestComments.test.ts#L100): migrates v1 packed comments and retains oversized moments as written reports
 - [src/app/playtestComments.test.ts:111](../../src/app/playtestComments.test.ts#L111): commits text before attachments, exposes a real attachment-write error and reloads every word
 - [src/app/playtestComments.test.ts:143](../../src/app/playtestComments.test.ts#L143): copies only the recent 30 seconds and caps a noisy breadcrumb stream
@@ -150,11 +153,15 @@ Controlled inputs and fake timers prove identical replay, refusal of undeclared 
 - Current compatibility contract: docs/notes/save-slots.md ‘accept matching SavedNight/NightSnapshot format versions across build numbers’. S2/S3 assert that behavior; the v5955/v6322 names are compatibility examples, not version gates.
 - Report retention: playtestComments.test.ts keeps report text under attachment/count pressure and preserves unread storage. Its historical build equality is deliberately stricter than ordinary cross-build night saves: docs/notes/save-slots.md says comment restore retains separate staging and recording/build checks. No supersession of that diagnostic replay contract was found in these reviewed files.
 
+## legends: review provenance
+
+Core legend and quest setup/assertions reviewed. Combat targeting, charge and route-integration cases remain with #1622; visual sprite checks and bot policies are listed with their corresponding systems. No test changes are made.
+
 <a id="l1"></a>
 
 ## L1: Paired-area ownership and sleeping placement
 
-hard limits; 9 declarations; ~49 s of CI.
+hard limits; 9 tests; files take ~49 s.
 
 Generated maps are checked for logical relationships and rejection of unrelated ownership. The short sleep steps preserve those relationships; they are not survival statistics.
 
@@ -172,7 +179,7 @@ Generated maps are checked for logical relationships and rejection of unrelated 
 
 ## L2: Circle geometry and explanation contracts
 
-current rules; 9 declarations; ~50 s of CI.
+current rules; 9 tests; files take ~50 s.
 
 These compare geometry to the configured cap/margin and lookup to an exhaustive oracle. Coverage counts ensure the fixture visits circles; they are not measured gameplay success rates.
 
@@ -190,7 +197,7 @@ These compare geometry to the configured cap/margin and lookup to an exhaustive 
 
 ## L3: Timed scenarios and generated scenery/quest statistics
 
-outcome stats; 8 declarations; ~87 s of CI.
+outcome stats; 8 tests; files take ~87 s.
 
 Assertions include baby return within 20 s; following beyond circle+10 m after 25 s; a 150 s siege-to-rage scenario; grove mean >0.6/<0.08; rim/south coverage >80%; runestone-gap exceptions <1.5%. Mixed safety/rule assertions need extraction before any move, not deletion of the whole file. questLater compares summed route depths across three seeds. quest.test compares median-distance ratios across five capped/uncapped maps (>0.85), while directly asserting the CURRENT default questCap===0. Preserve that default and finite-range assertions as small rules before moving the statistics.
 
@@ -207,7 +214,7 @@ Assertions include baby return within 20 s; following beyond circle+10 m after 2
 
 ## L4: Retained comparison settings
 
-leftovers; 5 declarations; ~147 s of CI.
+leftovers; 5 tests; files take ~147 s.
 
 The default assertion already requires 0.2. Half, 0.3 and 1 are explicit overrides for the retained radius-map selector; its header says authored islands deal their own legends. This is old-mode coverage, not evidence the default still uses the superseded half-share rule. Explicit earlyQuest=false, questLater=false and stomp=true exercise retained options rather than asserting those are current defaults.
 
@@ -221,7 +228,7 @@ The default assertion already requires 0.2. Half, 0.3 and 1 are explicit overrid
 
 ## L5: Pinned list of giants exceeding the old circle cap
 
-leftovers; 1 declarations; ~4 s of CI.
+leftovers; 1 test; files take ~4 s.
 
 The assertion pins an exact species list and its comment says ‘waiting on Ed's call’. The 26 Oct paired-area/fit design permits the biggest fitting circle and documented elephant exceptions. This needs a current design ruling; it is a stale-looking baseline, not a proven obsolete test.
 
@@ -231,9 +238,9 @@ The assertion pins an exact species list and its comment says ‘waiting on Ed's
 
 ## L6: Quest completion, sleeping state and party-legend rules
 
-current rules; 60 declarations; ~221 s of CI.
+current rules; 61 tests; files take ~221 s.
 
-The setup isolates a legend, kin or gift and invokes the explicit transition: waves do not wake legends, kin restore sleep, only a placed sigil completes a quest at any age, no buff is awarded, and the 100-letter Easter egg has its own tether/release rules. Fixed steps here check the declared state/timer/boundary, not an uncontrolled win rate. The staggered five-second kin check is a per-frame work bound. Early-quest wording still says baby, but its assertion explicitly says any age; it does not enforce the retired age requirement. Known-quest and offering policies receive fabricated observations/stack acknowledgements and explicit deadlines; they cannot invent unseen cues. Ending cases advance only the wave/ending clock and force neutralization, checking automatic ending and observed/drawn-pointer agreement, not whether a bot wins a natural night. Dream helpers directly check nearest-kind/compass results and quest-open flags. Slow-time tests force ring entry/exit, held headings and a boundary-crossing letter: clock-rate scaling and exclusion remain direct rules, despite numeric movement checks, rather than sampled battle outcomes.
+The setup isolates a legend, kin or gift and invokes the explicit transition: waves do not wake legends, kin restore sleep, only a placed sigil completes a quest at any age, no buff is awarded, and the 100-letter Easter egg has its own tether/release rules. Fixed steps here check the declared state/timer/boundary, not an uncontrolled win rate. The staggered five-second kin check is a per-frame work bound. Early-quest wording still says baby, but its assertion explicitly says any age; it does not enforce the retired age requirement. Known-quest and offering policies receive fabricated observations/stack acknowledgements and explicit deadlines; they cannot invent unseen cues. Ending cases advance only the wave/ending clock and force neutralization, checking automatic ending and observed/drawn-pointer agreement, not whether a bot wins a natural night. Dream helpers directly check nearest-kind/compass results and quest-open flags. Slow-time tests force ring entry/exit, held headings and a boundary-crossing letter: clock-rate scaling and exclusion remain direct rules, despite numeric movement checks, rather than sampled battle outcomes. Final previously unread case 277 was read in full: three seeded maps require relics outside clearings, ground-visible glints, treetop visibility exactly equal to canopy clearance, and a moved-under-crown negative check. The open/covered mixture implements DESIGN432’s explicit alternating placement contract; it is not an arbitrary sampled percentage or travel deadline. Keep this current visibility/content rule.
 
 - [src/bots/knownQuest.test.ts:11](../../src/bots/knownQuest.test.ts#L11): empty observations and closed bubbles never invent unseen requests; output is detached
 - [src/bots/knownQuest.test.ts:17](../../src/bots/knownQuest.test.ts#L17): only fresh actual cues can keep a job active; closed/angry/friendly cues end it
@@ -262,6 +269,7 @@ The setup isolates a legend, kin or gift and invokes the explicit transition: wa
 - [src/rules/legends.test.ts:192](../../src/rules/legends.test.ts#L192): lie relics (flasks) about the map, one per ten areas; drunk on their sigil they grow her followers and wake no legend (Ed, 2026-10-18)
 - [src/rules/legends.test.ts:206](../../src/rules/legends.test.ts#L206): take a quest sigil only inside their clearing: the right creature put down elsewhere in its area does nothing but cue
 - [src/rules/legends.test.ts:251](../../src/rules/legends.test.ts#L251): has the dream quest wake it happy, fighting for her, no buff (Ed, 2026-10-18; the creature stays hers), and stay open while it sleeps, soundsystem on or not (Ed, 2026-10-06)
+- [src/rules/legends.test.ts:277](../../src/rules/legends.test.ts#L277): glint only through a gap in the canopy from the treetops, always on the ground; lie out in the woods, some under gaps, some under closed canopy (Ed, 2026-10-05)
 - [src/rules/legends.test.ts:359](../../src/rules/legends.test.ts#L359): enrages its wild creatures into a siege, but leaves its legend asleep, neither enraged nor besieging
 - [src/rules/legends.test.ts:393](../../src/rules/legends.test.ts#L393): look for their kind every legends.check seconds (5), each on its own beat, not all on one frame
 - [src/rules/legends.test.ts:410](../../src/rules/legends.test.ts#L410): away from where they lay, walk home first and lie down where they spawned
@@ -301,16 +309,21 @@ The setup isolates a legend, kin or gift and invokes the explicit transition: wa
 - Supersession matched to L1: docs/notes/testing.md records the old diagnostic ‘incorrectly required physical cell equality’. Ed's 2026-10-26 replacement: paired areas are ‘one logical area’. sleepCells.test.ts now permits 14 raw differences on the largest fixture but requires zero logical mismatches. Keep the replacement regression; no remaining equality assertion in this reviewed group needs deleting.
 - Supersession matched to L4: Ed, 2026-10-06, DESIGN.md: ‘about half of areas’; Ed, 2026-10-08: ‘more like 1/5’. legendShare.test.ts asserts S===0.2 before explicitly constructing half/all comparison maps. Both rulings are accounted for; the old citation alone is not an obsolete default.
 - Current sizing ruling, L2/L5: Ed, 2026-10-26, legendFit.test.ts: ‘Legend circles need to be larger. Often legends don't fit in them.’ legendAreas.test.ts checks the authored paired areas, allowing only elephant overflow in its five-map matrix. The exact eleven-giant radius-cap list needs a separate ruling, not an assumed deletion.
-- Concrete quest-cap supersession: DESIGN.md Quests are a gamble (6 Oct) describes a five-area tail cap; docs/notes/gameplay.md 31 Oct playtest item13 sets questCap to 0, ‘no distance tail cut’, while ‘Positive explicit caps remain supported and tested at 6’. quest.test.ts:119 already asserts default0 and explicitly builds cap6 comparison maps. Propose reporting its median ratios, retain default0/finite-distance protections. The seed162218 regression in questDrop.test.ts explicitly opts into cap6 to preserve Ed’s old coordinates and tests the 19 Oct placed-sigil rule; it does not pin cap6 as default.
+- Concrete quest-cap supersession: DESIGN.md Quests are a gamble (6 Oct) describes a five-area tail cap; docs/notes/gameplay.md 31 Oct playtest item13 sets questCap to 0, ‘no distance tail cut’, while ‘Positive explicit caps remain supported and tested at 6’. quest.test.ts:119 already asserts default 0 and explicitly builds cap6 comparison maps. Propose reporting its median ratios, retain default 0/finite-distance protections. The seed162218 regression in questDrop.test.ts explicitly opts into cap6 to preserve Ed’s old coordinates and tests the 19 Oct placed-sigil rule; it does not pin cap6 as default.
 - Quest supersession: DESIGN.md Dreams lists the old quest making the placed creature join the area and the old quest closing at its wave (5 Oct); the 6 Oct replacement stays open while asleep, and the 18 Oct replacement keeps the creature hers and grants no buff. quest.test.ts:43/96, questDrop.test.ts:41 and legends.test.ts:251 assert the replacements. No positive removed-buff or wave-closes-quest assertion remains in these reviewed cases.
+- Final legend case 277: DESIGN432 cites Ed 5Oct “bottle glint should only show through gaps” and explicitly places every other relic under a gap, the rest under closed canopy. Assertions require both categories on three seeds and compare each glint to canopyOver, including a deliberate under-crown negative placement. The 18Oct flask-use redesign does not supersede this visibility rule; no later cancellation was found in the reviewed notes. This is current authored placement/visibility coverage, not a statistical frequency score.
+
+## art-rendering: review provenance
+
+Read-only semantic review at 9f045ebca, report 6566138102. Includes the UI reviewer’s nine visual-control cases and three additional sprite-integrity cases read by the lead. No rendered appearance or GPU performance is claimed. Second review 6566610088 at 73741aa8: all 123 remaining declarations read, AR4 seven proposed and AR5 116 kept; zero overlap or unread.
 
 <a id="ar1"></a>
 
 ## AR1: Sampled animation frequency and variety
 
-outcome stats; 5 declarations; ~6 s of CI.
+outcome stats; 5 tests; files take ~6 s.
 
-120-second quirks,40 IDs/400-second faces,400 dream-symbol turns and60-second trail hues pin observed shares/diversity. Preserve within-turn holds, valid symbols and alternation before reporting sampled thresholds.
+120-second quirks,40 IDs/400-second faces,400 dream-symbol turns and 60-second trail hues pin observed shares/diversity. Preserve within-turn holds, valid symbols and alternation before reporting sampled thresholds.
 
 - [src/render/character.test.ts:16](../../src/render/character.test.ts#L16): a quirk plays now and then, for its own length, different creatures at different times
 - [src/render/sleepyFace.test.ts:6](../../src/render/sleepyFace.test.ts#L6): is mostly 😴, now and then each of the others
@@ -322,9 +335,9 @@ outcome stats; 5 declarations; ~6 s of CI.
 
 ## AR2: Generated appearance and motion smoothness
 
-outcome stats; 7 declarations; ~25 s of CI.
+outcome stats; 7 tests; files take ~25 s.
 
-Mixed tests pin map-wide bark minimums, beach density/share, ride acceleration RMS, far-speaker cohort means, trail activity/height and85% southern inscription placement. Preserve determinism, no-sea, ground clearance, finite/bounded trails, sizing, fit/non-overlap and readable-scale checks.
+Mixed tests pin map-wide bark minimums, beach density/share, ride acceleration RMS, far-speaker cohort means, trail activity/height and 85% southern inscription placement. Preserve determinism, no-sea, ground clearance, finite/bounded trails, sizing, fit/non-overlap and readable-scale checks.
 
 - [src/render/barkFaces.test.ts:12](../../src/render/barkFaces.test.ts#L12): at most two trees an area wear one, never home's, the same every time
 - [src/render/beachEdge.test.ts:22](../../src/render/beachEdge.test.ts#L22): lines the scalloped edge with shrubs and grass, the odd palm, a few strays on the sand
@@ -338,7 +351,7 @@ Mixed tests pin map-wide bark minimums, beach density/share, ride acceleration R
 
 ## AR3: Rendering integrity and current visual contracts
 
-current rules; 495 declarations; ~231 s of CI.
+current rules; 495 tests; files take ~231 s.
 
 Read-only source evidence supports current safety/rule/compatibility intent, not an independently dated Ed ruling for every aesthetic constant. Texture/height parity, conservative occlusion, bone/contact geometry, reset/disposal and exact neutral states remain blocking. UI control hashes cover both old-size and adopted-size grids deliberately. Lead-read sprite helpers preserve finite normals/contact/material/breath validation and connected flame effects.
 
@@ -838,21 +851,167 @@ Read-only source evidence supports current safety/rule/compatibility intent, not
 - [src/spriteConnectivity.test.ts:29](../../src/spriteConnectivity.test.ts#L29): fails empty masks and retains isolated single bright pixels
 - [src/textureSizeCompatibility.test.ts:6](../../src/textureSizeCompatibility.test.ts#L6): %s age %s texture toggle preserves physical size
 
+<a id="ar4"></a>
+
+## AR4: Sampled appearance distributions
+
+outcome stats; 7 tests; files take ~135 s.
+
+One outcome-only and six mixed declarations. Report wet-pond share, rosette fill/closed-ring shares and sampled diversity, span/junction abundance, laser duty/agreement, pattern variety and accumulated lit-tile ratio. Retain endpoint controls, bounded geometry, no crossings, exact seeded replay, fade bounds, direct no-repeat choices and exact floor-level mappings. rules:605 has no independent integrity assertion; neighboring map/light checks remain. Exact dispositions: report 6566610088.
+
+- [src/rosettePainter.test.ts:43](../../src/rosettePainter.test.ts#L43): fills a stable share of complete cells with solid ink rather than pale centres
+- [src/rosettePainter.test.ts:69](../../src/rosettePainter.test.ts#L69): varies size and gap within bounds with a reproducible closed-ring share
+- [src/rules/rules.test.ts:605](../../src/rules/rules.test.ts#L605): put more ponds in the wet areas
+- [src/rules/rules.test.ts:741](../../src/rules/rules.test.ts#L741): hang as long runs between the area's own trees: no crossings, at most 3 ends per tree, the same every time
+- [src/rules/rules.test.ts:990](../../src/rules/rules.test.ts#L990): are seeded, on about duty of the time, at most maxCount beams, and fade rather than pop
+- [src/rules/rules.test.ts:1465](../../src/rules/rules.test.ts#L1465): plays patterns on the beat, changing on bar lines, never the same one twice running
+- [src/rules/rules.test.ts:1477](../../src/rules/rules.test.ts#L1477): rises in level with the party, and a higher level lights more of the floor
+
+<a id="ar5"></a>
+
+## AR5: Art integrity and supported comparisons
+
+current rules; 116 tests; files take ~353 s.
+
+Keep connected finite anatomy, exact bone lengths/contact, source-genome immutability, sparse/full projected parity, scale parity, cache separation, pixel/material/normal contracts, sleeping anchors, bounded search, renderer state restoration and scenery budgets. Current feature visibility, authored moon/floor rules and supplied-input hysteresis are direct contracts rather than population statistics. Supported old-size/projected/graph contexts are explicitly selected.
+
+- [src/bibPaint.test.ts:14](../../src/bibPaint.test.ts#L14): pins projected-fit marten pixels and normal bytes with the field absent
+- [src/bibPaint.test.ts:21](../../src/bibPaint.test.ts#L21): bounds the shared paint to the underside of the neck and local chest
+- [src/bibPaint.test.ts:31](../../src/bibPaint.test.ts#L31): paints a selected cream bib with a brown belly and no geometry changes
+- [src/bibPaint.test.ts:51](../../src/bibPaint.test.ts#L51): requires a finite localized extent and valid material
+- [src/bodyGraph.test.ts:9](../../src/bodyGraph.test.ts#L9): %s has continuous skin, tapered limbs and grounded feet
+- [src/bodyGraph.test.ts:33](../../src/bodyGraph.test.ts#L33): matches the existing skin primitives exactly for a torso-only graph
+- [src/bodyGraph.test.ts:45](../../src/bodyGraph.test.ts#L45): supports extra heads, shells and wings without mutating the input
+- [src/bodyGraph.test.ts:57](../../src/bodyGraph.test.ts#L57): actually blends skin rather than merely overlapping hard shapes
+- [src/bodyGraph.test.ts:63](../../src/bodyGraph.test.ts#L63): rejects disconnected spine stations and invalid sockets before drawing
+- [src/bodyGraph.test.ts:78](../../src/bodyGraph.test.ts#L78): keeps both bone lengths for reachable, clamped and singular targets
+- [src/bodyGraph.test.ts:90](../../src/bodyGraph.test.ts#L90): is periodic in signed travel and has stationary planted feet in world space
+- [src/bodyGraph.test.ts:104](../../src/bodyGraph.test.ts#L104): %s loops continuously and never claims unreachable contact
+- [src/bodyGraph.test.ts:123](../../src/bodyGraph.test.ts#L123): rejects invalid clocks and solver inputs
+- [src/creatureDistinctness.test.ts:17](../../src/creatureDistinctness.test.ts#L17): warns on matching shape, palette, size and pattern
+- [src/creatureDistinctness.test.ts:20](../../src/creatureDistinctness.test.ts#L20): allows the same silhouette when coat colour differs
+- [src/creatureDistinctness.test.ts:26](../../src/creatureDistinctness.test.ts#L26): allows the same silhouette at different actual sizes
+- [src/creatureDistinctness.test.ts:31](../../src/creatureDistinctness.test.ts#L31): allows different markings with the same palette and size
+- [src/creatureDistinctness.test.ts:38](../../src/creatureDistinctness.test.ts#L38): allows different shapes even when all the other measures are close
+- [src/creatureDistinctness.test.ts:43](../../src/creatureDistinctness.test.ts#L43): does not produce a look-alike warning from missing palette data
+- [src/creatureDistinctness.test.ts:46](../../src/creatureDistinctness.test.ts#L46): makes the art-check look-alike result warning-only and keeps growth separate
+- [src/creatureSelection.test.ts:24](../../src/creatureSelection.test.ts#L24): selects individual species explicitly and ignores malformed tokens
+- [src/creatureSelection.test.ts:31](../../src/creatureSelection.test.ts#L31): keeps Current records and hash for explicit current and unavailable choices
+- [src/creatureSelection.test.ts:38](../../src/creatureSelection.test.ts#L38): hashes selected content and keeps base/other records immutable
+- [src/creatureSelection.test.ts:47](../../src/creatureSelection.test.ts#L47): uses identical selection in serialized page/worker contexts
+- [src/creatureSelection.test.ts:55](../../src/creatureSelection.test.ts#L55): separates same-id sprite caches and restores the exact current sprite
+- [src/creatureSelection.test.ts:63](../../src/creatureSelection.test.ts#L63): separates persistent creature/face/rig cache entries by the selected genome
+- [src/creatureSelection.test.ts:77](../../src/creatureSelection.test.ts#L77): uses the selected anatomy for rig pieces too
+- [src/creatureSelection.test.ts:83](../../src/creatureSelection.test.ts#L83): rejects a selected record for another species
+- [src/creatureSelection.test.ts:88](../../src/creatureSelection.test.ts#L88): resolves selected per-level look and includes the level in its hash
+- [src/creatureSizeCandidate.test.ts:9](../../src/creatureSizeCandidate.test.ts#L9): enables revised sizes by default after Ed's adoption
+- [src/creatureSizeCandidate.test.ts:10](../../src/creatureSizeCandidate.test.ts#L10): lets Ed compare old sizes from the game link
+- [src/creatureSizeCandidate.test.ts:14](../../src/creatureSizeCandidate.test.ts#L14): fits anatomical bodies only when opted in and isolates the sprite cache
+- [src/creatureSizeCandidate.test.ts:24](../../src/creatureSizeCandidate.test.ts#L24): keeps readable small adults and the medium anchor with a broader adult range
+- [src/creatureSizeCandidate.test.ts:31](../../src/creatureSizeCandidate.test.ts#L31): separates each age and keeps every mass class ordered at native size
+- [src/creatureSizeCandidate.test.ts:40](../../src/creatureSizeCandidate.test.ts#L40): scales all bodies with the same witch reference and rejects invalid inputs
+- [src/creatureSizeModel.test.ts:10](../../src/creatureSizeModel.test.ts#L10): covers every species exactly once and keeps continuous age targets ordered
+- [src/creatureSizeModel.test.ts:15](../../src/creatureSizeModel.test.ts#L15): keeps the accepted bands, full-presence legend ratio and hard real-size pairs
+- [src/creatureSizeModel.test.ts:25](../../src/creatureSizeModel.test.ts#L25): %s uses the final age target in both game facings
+- [src/creatureSizeModel.test.ts:31](../../src/creatureSizeModel.test.ts#L31): keeps every tolerance interval inside hard growth, legend and ordering bounds
+- [src/creatures.test.ts:15](../../src/creatures.test.ts#L15): assemble cleanly: the index current, every record in its folder, no genome problems
+- [src/creatures.test.ts:19](../../src/creatures.test.ts#L19): each creature.js holds only known sections, of the right shapes (config/schema/creature.schema.json)
+- [src/creatures.test.ts:23](../../src/creatures.test.ts#L23): every creature in the game has its folder, with its movement and voice
+- [src/creatures.test.ts:37](../../src/creatures.test.ts#L37): decisions: every fragment named by its pr and group, ids unique, none left in the file
+- [src/creatures.test.ts:41](../../src/creatures.test.ts#L41): flora: one file a species, the index current, none left in genomes.js, the baseline folder sound
+- [src/creatures.test.ts:45](../../src/creatures.test.ts#L45): areas: a folder an area with its kind line, the recipes and the original areas' flora in them, the kinds' slots whole
+- [src/creatures.test.ts:67](../../src/creatures.test.ts#L67): finds the pasted records and no more, each its own module without the spread
+- [src/creatures.test.ts:76](../../src/creatures.test.ts#L76): leaves the file's array empty (the adopt puts the index's spread back) and what follows it as it was
+- [src/defaultRoster.test.ts:6](../../src/defaultRoster.test.ts#L6): enables exactly Ed's twenty kept redesigns, with immutable Current fallback
+- [src/defaultRoster.test.ts:16](../../src/defaultRoster.test.ts#L16): keeps redesigned and explicit Current species/cache identities separate
+- [src/earSilhouette.test.ts:22](../../src/earSilhouette.test.ts#L22): does not regress baby/adult attachment in any game-style facing and retains Current baby
+- [src/earSilhouette.test.ts:34](../../src/earSilhouette.test.ts#L34): both ears have visible pixels in the actual %s render without a narrow horn
+- [src/earSilhouette.test.ts:46](../../src/earSilhouette.test.ts#L46): uses straight triangular edges rather than the old rounded leaf
+- [src/earSilhouette.test.ts:51](../../src/earSilhouette.test.ts#L51): both adult tips clear the skull by 2 art px with pointed outlines in %s
+- [src/felineGraph.test.ts:22](../../src/felineGraph.test.ts#L22): retains the Current sand-cat baby pixels and normals in both facings
+- [src/felineGraph.test.ts:30](../../src/felineGraph.test.ts#L30): gives both non-baby sand-cat ears mirrored geometry
+- [src/felineGraph.test.ts:43](../../src/felineGraph.test.ts#L43): positions low, splayed ears symmetrically without moving the head
+- [src/felineGraph.test.ts:53](../../src/felineGraph.test.ts#L53): wraps rosettes onto the back and both flanks and leaves the belly clear
+- [src/felineGraph.test.ts:65](../../src/felineGraph.test.ts#L65): keeps pale ring centres, ring ink and solid regional spots separate
+- [src/felineGraph.test.ts:81](../../src/felineGraph.test.ts#L81): uses actual bake scale for native ring size and excludes spine/rump outside the region
+- [src/felineGraph.test.ts:93](../../src/felineGraph.test.ts#L93): sets native marking scale through the real renderer callback
+- [src/felineGraph.test.ts:102](../../src/felineGraph.test.ts#L102): keeps an opt-in baby's belly below its back even with inverted legacy ratios
+- [src/felineGraph.test.ts:109](../../src/felineGraph.test.ts#L109): %s uses a connected graph at every level without mutating current art
+- [src/moleReferenceFit.test.ts:16](../../src/moleReferenceFit.test.ts#L16): keeps the final age target governing pinned and unpinned mole proportions
+- [src/moleReferenceFit.test.ts:25](../../src/moleReferenceFit.test.ts#L25): separates barrel vertical depth and width without changing the other axis
+- [src/moleReferenceFit.test.ts:31](../../src/moleReferenceFit.test.ts#L31): moves and reshapes existing snout/paws and rejects invalid controls
+- [src/multiHeadExpressions.test.ts:8](../../src/multiHeadExpressions.test.ts#L8): keeps the adult hydra angry brows visible on its actual multi-head geometry
+- [src/napSizeCompatibility.test.ts:8](../../src/napSizeCompatibility.test.ts#L8): %s age %s lies no taller than its awake form
+- [src/projectedModelFit.test.ts:6](../../src/projectedModelFit.test.ts#L6): uses exact ellipsoid support instead of its largest radius
+- [src/projectedModelFit.test.ts:14](../../src/projectedModelFit.test.ts#L14): bounds rounded boxes, tapered cones and roughness conservatively
+- [src/projectedModelFit.test.ts:22](../../src/projectedModelFit.test.ts#L22): fits skew plane coordinates using the same dual basis as ray clipping
+- [src/projectedModelFit.test.ts:27](../../src/projectedModelFit.test.ts#L27): retains extras exclusion, explicit scale, projection and ground-row placement
+- [src/projectedModelFit.test.ts:37](../../src/projectedModelFit.test.ts#L37): sparse edge and query rays match the full native mask after ground placement
+- [src/quadFitDragonfly.test.ts:13](../../src/quadFitDragonfly.test.ts#L13): lets the final age target govern pinned quadruped proportion changes
+- [src/quadFitDragonfly.test.ts:21](../../src/quadFitDragonfly.test.ts#L21): keeps dragonfly wing length and width independent and their roots fixed
+- [src/quadFitDragonfly.test.ts:29](../../src/quadFitDragonfly.test.ts#L29): sets wing elevation in radians, including flat panes in both frames
+- [src/rigSizeCapture.test.ts:7](../../src/rigSizeCapture.test.ts#L7): capture-only %s fit keeps exactly the full-raster scale and geometry
+- [src/rosettePainter.test.ts:19](../../src/rosettePainter.test.ts#L19): retains the pre-change painter bytes when all new fields are absent
+- [src/rosettePainter.test.ts:27](../../src/rosettePainter.test.ts#L27): keeps centre dots separated from the ring and accepts material names or indices
+- [src/rosettePainter.test.ts:55](../../src/rosettePainter.test.ts#L55): fades whole cells toward the belly and neck with clamped, composable ramps
+- [src/rosettePainter.test.ts:90](../../src/rosettePainter.test.ts#L90): rejects invalid bounds instead of emitting unstable patterns
+- [src/rules/budget.test.ts:12](../../src/rules/budget.test.ts#L12): starts with the whole view
+- [src/rules/budget.test.ts:13](../../src/rules/budget.test.ts#L13): holds at a good frame rate, never past the haze's far edge
+- [src/rules/budget.test.ts:14](../../src/rules/budget.test.ts#L14): shrinks slowly while frames stay slow, not at the first slow frame
+- [src/rules/budget.test.ts:21](../../src/rules/budget.test.ts#L21): never goes below its minimum
+- [src/rules/budget.test.ts:22](../../src/rules/budget.test.ts#L22): holds in the hysteresis band between slow and fast
+- [src/rules/budget.test.ts:27](../../src/rules/budget.test.ts#L27): grows back with headroom
+- [src/rules/budget.test.ts:31](../../src/rules/budget.test.ts#L31): ignores long frames (a hidden tab, a hitch) and stays put when not adaptive
+- [src/rules/interpolate.test.ts:13](../../src/rules/interpolate.test.ts#L13): draws a 💌 and a shot where they were at the moment drawn, and puts them back
+- [src/rules/islandShape.test.ts:9](../../src/rules/islandShape.test.ts#L9): gives every kind its own sigil, home's the World Tree
+- [src/rules/islandShape.test.ts:24](../../src/rules/islandShape.test.ts#L24): pictures every kind's island with its sigil in whole pixels, readable at a bubble's 30 px, and as a path for the sea chart
+- [src/rules/lakeShore.test.ts:38](../../src/rules/lakeShore.test.ts#L38): draws every piece, only the lava rocks glowing
+- [src/rules/rules.test.ts:598](../../src/rules/rules.test.ts#L598): come as campfires and ponds (rune stones now only mark soundsystem spots), the same from the same seed, and keep off the dancefloor
+- [src/rules/rules.test.ts:1014](../../src/rules/rules.test.ts#L1014): run along the edge of an area's own ground, each point knowing the area across, cheaply
+- [src/rules/rules.test.ts:1036](../../src/rules/rules.test.ts#L1036): faces the viewer unless clearly heading up the screen, with a little hysteresis on the cone
+- [src/rules/rules.test.ts:1409](../../src/rules/rules.test.ts#L1409): shows only the moon before the first wave (with the island's sigil off), in its twilight palette, and switches on, once, when the first wave comes
+- [src/rules/rules.test.ts:1434](../../src/rules/rules.test.ts#L1434): shows the island's sigil through the boot (home's: the World Tree), written on as the pulse goes round, the moon before
+- [src/rules/rules.test.ts:1455](../../src/rules/rules.test.ts#L1455): draws the moon's phases: none lit at new, the right half at first quarter, all at full, the left half at last quarter
+- [src/rules/rules.test.ts:1484](../../src/rules/rules.test.ts#L1484): lights the witch's tile where she stands, and ripples out from her
+- [src/rules/rules.test.ts:1495](../../src/rules/rules.test.ts#L1495): composes the layers: an event's pulse shows over the pattern, towards its area
+- [src/rules/rules.test.ts:1832](../../src/rules/rules.test.ts#L1832): goes through its phases, crosses the sky, and now and then turns red, blue or gold, the same for a seed
+- [src/rules/trunkShadowTuning.test.ts:7](../../src/rules/trunkShadowTuning.test.ts#L7): are Ed's tuned values
+- [src/rules/trunkShadowTuning.test.ts:11](../../src/rules/trunkShadowTuning.test.ts#L11): fade at the foot and near her, taper at the foot, and darken the ground cover
+- [src/sizeAdoptionRegressions.test.ts:6](../../src/sizeAdoptionRegressions.test.ts#L6): keeps %s legend expressions on the visible blended head
+- [src/sizeAdoptionRegressions.test.ts:15](../../src/sizeAdoptionRegressions.test.ts#L15): keeps both sleeping woodlouse legend ground anchors inside their native canvases
+- [src/sizeAdoptionRegressions.test.ts:26](../../src/sizeAdoptionRegressions.test.ts#L26): keeps the resized crocodile carrier within its existing length and back limits
+- [src/snowLeopardWhiskers.test.ts:16](../../src/snowLeopardWhiskers.test.ts#L16): pins projected-fit Current material and normal bytes with the control absent
+- [src/snowLeopardWhiskers.test.ts:23](../../src/snowLeopardWhiskers.test.ts#L23): keeps top-view attachment non-worsening with the pixel floor on the projected grid
+- [src/snowLeopardWhiskers.test.ts:29](../../src/snowLeopardWhiskers.test.ts#L29): passes the unchanged paired guard in all adult facings for frame %s
+- [src/snowLeopardWhiskers.test.ts:32](../../src/snowLeopardWhiskers.test.ts#L32): rejects invalid pixel floors
+- [src/stableMotes.test.ts:5](../../src/stableMotes.test.ts#L5): places the intended separated count deterministically without overwriting bodies
+- [src/stableMotes.test.ts:11](../../src/stableMotes.test.ts#L11): bounds the search when no empty cells can hold an effect
+- [src/tailMarkings.test.ts:13](../../src/tailMarkings.test.ts#L13): pins projected-fit %s material and normal bytes with the region absent
+- [src/tailMarkings.test.ts:25](../../src/tailMarkings.test.ts#L25): uses arc length around bends for rings and the tip, preserving geometry
+- [src/tailMarkings.test.ts:35](../../src/tailMarkings.test.ts#L35): reuses seeded rosettes, filled cells and centre dots around the whole tail
+- [src/tailMarkings.test.ts:46](../../src/tailMarkings.test.ts#L46): wires the region through a selected creature without changing its shape or Current
+- [src/tailMarkings.test.ts:55](../../src/tailMarkings.test.ts#L55): rejects invalid fields and does not guess a path for non-chain tails
+
 ## art-rendering: ruling review
 
 - Size supersession: creatures.md formerly required legends≥1.75×rounded adult height; revised-size rule explicitly supersedes that floor and retains creatureSizeCandidate=0 for comparison. artLabSizeBundle exercises0/1 and textureSizeCompatibility checks physical-size parity; neither requires the superseded universal floor.
 - Stiltwalkers explicitly replaces Tall Tales’ whole-body stretch. Its recipe/expiry tests restore length1; rig tests retain normal torso/head and fixed feet. The replacement is protected rather than the removed stretch.
 - Stage-zero stop: old view.md said no stage1 work until frame review; current text says that stop was superseded and the original stage0 mock remains for comparison. fxMockModel tests a documented comparison path, not a production stop.
 - Set pieces are phased out of normal generation29Oct, while recipes/art remain for previews. Retained art comparisons are not obsolete merely because their setup draws legacy scenery.
-- programReadiness’s “OBSOLETE WAIT” is cancellation of a replaced island’s work, not an obsolete design test. No proven whole-case leftover deletion emerged. The32 art-check dependency/cache tests are tools/CI handoff; five multiplayer and one timed arena-count case remain with their existing owners.
+- programReadiness’s “OBSOLETE WAIT” is cancellation of a replaced island’s work, not an obsolete design test. No proven whole-case leftover deletion emerged. The 32 art-check dependency/cache tests are tools/CI handoff; five multiplayer and one timed arena-count case remain with their existing owners.
+- Second review 6566610088: 31 October revised-size rules supersede universal old age bands only for revised sizes; explicit creatureSizeCandidate=0 keeps previous comparisons supported. Projected-fit tests explicitly select support math. 30 October combined likeness policy warns rather than fails; tests enforce it. Twenty adopted redesigns and current fallback/cache identities remain intentional. Both old/new raster hashes are present.
+
+## creatures-movement: review provenance
+
+Pinned source reviews6566093230 and 6566223656/6566231272 are preserved. After merging released prototype 7f6dcba3 (v6972), three fixed-population cases and refreshed movement IDs are owner-only under 1622. The 146 still-current reviewed creature tests remain grouped; no new combat behavior is reviewed here.
 
 <a id="c1"></a>
 
 ## C1: Emergent travel, sleep, scenery and convergence thresholds
 
-outcome stats; 15 declarations; ~260 s of CI.
+outcome stats; 15 tests; files take ~260 s.
 
-Mixed tests pin a200m baby arrival in8s, squirrel glide/landing counts over120s, circle-baby sleep share over300s, normalized follower spacing after6s,800-draw level shares27–40%, idler naps, coarse marcher progress. Preserve conservation, boundaries, glide speed/landing, forced-level/determinism, boss exclusion and immediate LOD transitions before splitting. Second pass6566223656 adds sampled berry-area/patch shares, stone-idle outside/center shares, roaming grid coverage, fast-species share and conga convergence. Preserve berry indexing/conservation and seed equality, no-cross-area/speed limits, direct configured speed ordering, victory/quest/legend/leash state and following-mode invariants.
+Mixed tests pin a200 m baby arrival in8 s, squirrel glide/landing counts over 120 s, circle-baby sleep share over 300 s, normalized follower spacing after 6 s,800-draw level shares27–40%, idler naps, coarse marcher progress. Preserve conservation, boundaries, glide speed/landing, forced-level/determinism, boss exclusion and immediate LOD transitions before splitting. Second pass6566223656 adds sampled berry-area/patch shares, stone-idle outside/center shares, roaming grid coverage, fast-species share and conga convergence. Preserve berry indexing/conservation and seed equality, no-cross-area/speed limits, direct configured speed ordering, victory/quest/legend/leash state and following-mode invariants.
 
 - [src/rules/babies.test.ts:120](../../src/rules/babies.test.ts#L120): one far off (200 m, out of sight) is back with her in seconds
 - [src/rules/berries.test.ts:38](../../src/rules/berries.test.ts#L38): every area has perArea berries, one per bush, and the same seed gives the same berries
@@ -874,7 +1033,7 @@ Mixed tests pin a200m baby arrival in8s, squirrel glide/landing counts over120s,
 
 ## C2: Explicit growth comparison helpers
 
-current rules; 2 declarations; ~3 s of CI.
+current rules; 2 tests; files take ~3 s.
 
 Controlled wave and visibility inputs verify pending-growth bookkeeping, no growth at home/party areas, growth-off0 and stable materialization IDs. These are retained comparison contracts, not a proposed return to old default population growth.
 
@@ -885,7 +1044,7 @@ Controlled wave and visibility inputs verify pending-growth bookkeeping, no grow
 
 ## C3: Direct movement and creature integrity
 
-current rules; 90 declarations; ~301 s of CI.
+current rules; 90 tests; files take ~301 s.
 
 Remaining assertions protect count/identity conservation, floor/shore state, eligibility, scheduling and hysteresis. Scripted movement checks are not outcome gates merely because they take steps. Posse membership through a constructed fight is ownership/integrity, not win balance. Second pass adds literal creature-record property order, repeated seed/input digest equality, fixed-step/substep/once-only input integrity, current bag cadence/range, berry stage/adult caps, diagonal speed normalization, configured rise delay/nozzles and ordered victory/conga gates. Those are direct contracts even when numeric or stepped.
 
@@ -984,9 +1143,9 @@ Remaining assertions protect count/identity conservation, floor/shore state, eli
 
 ## C4: Human-limited bot observations and decisions
 
-current rules; 39 declarations; ~4 s of CI.
+current rules; 39 tests; files take ~4 s.
 
-The39 tests use scripted observations/frames and explicit player clocks, not generated-night strength runs. They enforce detached information, ≥0.25s reaction, ≤8Hz input, bounded non-renewing coverage/quest slots, danger overrides and acknowledgement before another toggle/cycle. The960-frame trace is scripted policy coverage, not a battle outcome.
+The 39 tests use scripted observations/frames and explicit player clocks, not generated-night strength runs. They enforce detached information, ≥0.25 s reaction, ≤8 Hz input, bounded non-renewing coverage/quest slots, danger overrides and acknowledgement before another toggle/cycle. The 960-frame trace is scripted policy coverage, not a battle outcome.
 
 - [src/bots/coverage.test.ts:5](../../src/bots/coverage.test.ts#L5): coverage remembers only whole cells in observed rectangles and is repeatable
 - [src/bots/coverage.test.ts:15](../../src/bots/coverage.test.ts#L15): a least-seen candidate wins over a previously observed footprint and holds its waypoint
@@ -1030,21 +1189,25 @@ The39 tests use scripted observations/frames and explicit player clocks, not gen
 
 ## creatures-movement: ruling review
 
-- Historical fixed-population finding is CLOSED by1622 at released7f6dcba3: docs/plans/combat-spacing-test-changes.md replaces the bot-win prerequisite with explicit runaways and the actual victory transition while preserving IDs/count. The controlled defeat setup also changed. All three current cases are listed with1622, excluded from this audit’s proposed splits/keeps; the original pinned review remains historical evidence.
+- Historical fixed-population finding is CLOSED by 1622 at released 7f6dcba3: docs/plans/combat-spacing-test-changes.md replaces the bot-win prerequisite with explicit runaways and the actual victory transition while preserving IDs/count. The controlled defeat setup also changed. All three current cases are listed with 1622, excluded from this audit’s proposed splits/keeps; the original pinned review remains historical evidence.
 - Explicit growth-on/off helper comparisons remain compatibility. They test once-per-wave pending counts only for wild areas, no materialization far away/in view, stable IDs and exact pending-count consumption when awakened. No old-vs-new ruling proved these helpers obsolete.
-- The review read51 cases, not the original1001 machine bucket. Remaining cases are shown as not reviewed/no change; no keep question covers them. Parameter/template and internal loops are not executed counts.
+- The review read51 cases, not the original 1001 machine bucket. Remaining cases are shown as not reviewed/no change; no keep question covers them. Parameter/template and internal loops are not executed counts.
 - Expert defaults: expert-search.md old default-OFF coverage pilot is replaced by newest guarded coverage default-ON, with explicit false preserving comparison. expert-trace:262 tests guardedON by default; :139 retains unguarded mode deliberately. Delivery repair similarly defaultsON and explicit false preserves old cycling; trace:219 checks undefined matches repairedON. No comparison deletion follows from date alone.
-- Victory supersession: old win wording says legends home/lulled angry; gameplay.md52 now says only quest-complete legends dance, incomplete ones lull to their own circles, and completed timestamp0 counts. win:44 and:173 assert those replacements. D1/C1 only proposes reporting conga convergence, never moving these state gates. The28Oct arrival-based settlement rule is retained.
-- Current exactness is intentional: bags’29Oct Purse/Satchel roster,25.08/42.9 ranges and0.418/0.6985 cadences are direct current contracts. Rise delay distinguishes bare broom from Jet nozzles under23Oct rule and deliberately supports cooldown0. rules:510’s all30 title is stale wording, but AREA_TYPES is dynamic/current64; no assertion pinning30 is present.
+- Victory supersession: old win wording says legends home/lulled angry; gameplay.md52 now says only quest-complete legends dance, incomplete ones lull to their own circles, and completed timestamp0 counts. win:44 and:173 assert those replacements. D1/C1 only proposes reporting conga convergence, never moving these state gates. The 28Oct arrival-based settlement rule is retained.
+- Current exactness is intentional: bags’29Oct Purse/Satchel roster,25.08/42.9 ranges and 0.418/0.6985 cadences are direct current contracts. Rise delay distinguishes bare broom from Jet nozzles under 23Oct rule and deliberately supports cooldown0. rules:510’s all 30 title is stale wording, but AREA_TYPES is dynamic/current 64; no assertion pinning30 is present.
 - Prototype refresh: canonical6566366307 requested merging released combat7f6dcba3. Source files outside combat/fixedPopulation/creatureStates retain their reviewed test bodies and line IDs; changed movement registrations are refreshed from static source and remain owner-only. This is no duplicate combat review.
+
+## house-treehouse: review provenance
+
+Read-only review at 9f045ebca, report 6566215080. Original 178 tests are reconciled into reviewed house groups and explicit tools/UI/save/MP/combat handoffs. Extra rebucketed neighbors remain separately listed until reviewed. Second remaining-manifest review at 73741aa8f969dc5c5be31182490497c6668b358d, report 6566610514: 164 declarations resolved, six scenery declarations displayed under world and one explicit combat-owner listing.
 
 <a id="h1"></a>
 
 ## H1: Simulated house travel observations
 
-outcome stats; 3 declarations; ~62 s of CI.
+outcome stats; 3 tests; files take ~62 s.
 
-Three mixed cases pin a bed-to-Terrace journey under26s, follower arrival within12m after40s, and later posse proximity after90/20s. Preserve floor/reachability, takeoff, sigil identity/order, no manufactured sigils and guard-assignment release.
+Three mixed cases pin a bed-to-Terrace journey under 26 s, follower arrival within 12 m after 40 s, and later posse proximity after 90/20 s. Preserve floor/reachability, takeoff, sigil identity/order, no manufactured sigils and guard-assignment release.
 
 - [src/rules/houseGuard.test.ts:39](../../src/rules/houseGuard.test.ts#L39): head into the home area to spots of their own and guard there, not to her: no sigil put down, her stack unchanged
 - [src/rules/houseGuard.test.ts:57](../../src/rules/houseGuard.test.ts#L57): follow her again once she's off the treehouse: travelling to her while she flies, then her posse round her once she lands
@@ -1054,9 +1217,9 @@ Three mixed cases pin a bed-to-Terrace journey under26s, follower arrival within
 
 ## H2: Historical route and layout descriptions
 
-leftovers; 3 declarations; ~11 s of CI.
+leftovers; 3 tests; files take ~11 s.
 
-The93m name disagrees with its99m assertion; explicit classic/Ed comparisons still describe Ed as globally opt-in; classic restoration is called default. Their actual assertions remain useful and are not proposed for removal.
+The 93 m name disagrees with its99 m assertion; explicit classic/Ed comparisons still describe Ed as globally opt-in; classic restoration is called default. Their actual assertions remain useful and are not proposed for removal.
 
 - [src/rules/houseConfig.test.ts:27](../../src/rules/houseConfig.test.ts#L27): is the oak (the layout v4, Ed 2026-10-24): six rooms up the trunk, a pair of branch rooms off each of the first four, the last pair locked; the walk from her bed to the take-off about 93 m
 - [src/rules/housePlacement.runtime.test.ts:75](../../src/rules/housePlacement.runtime.test.ts#L75): restores an opt-in save to default spell slots without losing occupants when the opt-in is removed
@@ -1066,7 +1229,7 @@ The93m name disagrees with its99m assertion; explicit classic/Ed comparisons sti
 
 ## HK1: Movement, interactions and camera contracts
 
-current rules; 77 declarations; ~88 s of CI.
+current rules; 77 tests; files take ~88 s.
 
 Floor containment, one-time actions, blocked panels and reachable stations are direct protections. Current walk speeds/dimensions, rise permissions and camera easing remain authored rules. Explicit old-camera/house-off modes are supported comparisons, not proven dead code.
 
@@ -1152,7 +1315,7 @@ Floor containment, one-time actions, blocked panels and reachable stations are d
 
 ## HK2: Layouts, editor and hat conservation
 
-current rules; 32 declarations; ~17 s of CI.
+current rules; 32 tests; files take ~17 s.
 
 Serialization, validation and conservation assertions remain alongside current placement/default policy. Archived proposal audits validate historical evidence rather than asserting an old object count as today’s complete layout. Waiting through knockdown does not make hat ownership a balance outcome.
 
@@ -1193,7 +1356,7 @@ Serialization, validation and conservation assertions remain alongside current p
 
 ## HK3: Equipment and kitchen contracts
 
-current rules; 28 declarations; ~89 s of CI.
+current rules; 28 tests; files take ~89 s.
 
 Remaining component arithmetic/exclusivity, ingredient reservation, landing credit and timed-effect state transitions are direct house rules. The nine combat/invitation kernels are not included in this keep group.
 
@@ -1226,19 +1389,226 @@ Remaining component arithmetic/exclusivity, ingredient reservation, landing cred
 - [src/rules/mushrooms.test.ts:87](../../src/rules/mushrooms.test.ts#L87): uses the agreed basket thresholds
 - [src/rules/mushrooms.test.ts:90](../../src/rules/mushrooms.test.ts#L90): blocks movement and dodge during recovery in the real game step
 
+<a id="h-r2-1"></a>
+
+## H-R2-1: Canopy density and find diversity observations
+
+outcome stats; 8 tests; files take ~77 s.
+
+Keep structural validity, exclusions, reproducibility, ownership, eligibility, identity and existing upper bounds blocking. Report only sampled minimum density, numerical variation, abundance and diversity. Exact assertion dispositions and ruling review: PR #1632 comment 6566610514.
+
+- [src/rules/crown.test.ts:19](../../src/rules/crown.test.ts#L19): has 300 to 500 lobes, thick and thin
+- [src/rules/crown.test.ts:56](../../src/rules/crown.test.ts#L56): keeps open ground it's given (the dancefloor) open to the sky as the Terrace: no lobe over it or on a line of sight to it
+- [src/rules/crown.test.ts:81](../../src/rules/crown.test.ts#L81): strings its lights: every bulb on a string, in order along it, the Terrace ringed
+- [src/rules/crown.test.ts:101](../../src/rules/crown.test.ts#L101): hangs each string its own way (Ed, 2026-10-27: "String lights on the treehouse seem to all have the same shape")
+- [src/rules/crown.test.ts:127](../../src/rules/crown.test.ts#L127): has leaves over the Terrace and along its notch, where the gap had none
+- [src/rules/finds.test.ts:40](../../src/rules/finds.test.ts#L40): is the night's: the same seed puts it in the same place, and nights differ
+- [src/rules/finds.test.ts:47](../../src/rules/finds.test.ts#L47): holds what the night's one draw picks over everything she lacks, of every kind (Ed, 2026-10-23); nothing once she has it all
+- [src/rules/finds.test.ts:187](../../src/rules/finds.test.ts#L187): stands a few metres from her on clear ground: no tree, rock or ruin on it, not on a lake or the treehouse
+
+<a id="h-r2-2"></a>
+
+## H-R2-2: Obsolete Workshop descriptions
+
+leftovers; 3 tests; files take ~65 s.
+
+29 October combined broom work at the lathe supersedes the earlier bay/lathe/pegboard arrangement. Assertions already reflect ownership, unchanged fitted parts and one lathe. Correct names/comments only. Evidence: docs/notes/house.md; report 6566610514.
+
+- [src/rules/finds.test.ts:150](../../src/rules/finds.test.ts#L150): E at it while the party's on: the part is hers at once (a found event of its kind), not fitted: it waits at the Workshop's bay
+- [src/rules/finds.test.ts:159](../../src/rules/finds.test.ts#L159): a part found leaves her broom as it was: her fitted part stays, her set and spell too
+- [src/rules/wardrobeShelves.test.ts:90](../../src/rules/wardrobeShelves.test.ts#L90): the broom stand is gone (the Workshop's bay, lathe and pegboard in its place), and no station offers a broom's power or shape
+
+<a id="h-r2-k1"></a>
+
+## H-R2-K1: Layout, wake-up and opening contracts
+
+current rules; 54 tests; files take ~163 s.
+
+Preserve exact published poses and removals, import identity, supported classic layout, authored snooze/stretch timing, clothing conservation, doors and deliberate party start. The bounded undressed walk proves reachability rather than setting a speed target.
+
+- [src/editor/currentEdLayout.test.ts:11](../../src/editor/currentEdLayout.test.ts#L11): preserves the complete export and all110 kept poses/anchors; removes strictly west of -100
+- [src/editor/currentEdLayout.test.ts:28](../../src/editor/currentEdLayout.test.ts#L28): requires explicit valid clutter removal rather than accepting missing furniture or overlaps
+- [src/editor/editorStartupIdentity.test.ts:27](../../src/editor/editorStartupIdentity.test.ts#L27): starts with every authored pose under either one-ulp sine result, with the same source identity
+- [src/editor/editorStartupIdentity.test.ts:39](../../src/editor/editorStartupIdentity.test.ts#L39): keeps source changes and unknown legacy IDs incompatible, rather than bypassing validation
+- [src/editor/editorStartupIdentity.test.ts:49](../../src/editor/editorStartupIdentity.test.ts#L49): keeps the original v1 bytes and its camera-preserving import under both math variants
+- [src/editor/publishedLayout.test.ts:6](../../src/editor/publishedLayout.test.ts#L6): opens and resets the editor to Ed's published poses with the stable import identity
+- [src/editor/smokeBedStart.test.ts:8](../../src/editor/smokeBedStart.test.ts#L8): uses Ed's authored bed anchor for both a plain page and explicit ed
+- [src/editor/smokeBedStart.test.ts:17](../../src/editor/smokeBedStart.test.ts#L17): keeps explicit classic and resets repeated selected-layout switches
+- [src/editor/smokeBedStart.test.ts:25](../../src/editor/smokeBedStart.test.ts#L25): translates the selected interaction point with the actual island hub
+- [src/editor/smokeBedStart.test.ts:31](../../src/editor/smokeBedStart.test.ts#L31): resolves %s at its selected authored anchor, retaining classic fallback
+- [src/editor/smokeBedStart.test.ts:40](../../src/editor/smokeBedStart.test.ts#L40): rejects the old classic %s fixture under Ed's layout
+- [src/rules/opening.test.ts:16](../../src/rules/opening.test.ts#L16): is beside her bed, in its room (the Turret: Ed, 2026-10-26, "Move the bed to the turret"), on the house's floor
+- [src/rules/opening.test.ts:23](../../src/rules/opening.test.ts#L23): puts her there standing, off her decks, the camera indoors on her
+- [src/rules/opening.test.ts:34](../../src/rules/opening.test.ts#L34): and she walks on from there, held in the house's walls
+- [src/rules/rules.test.ts:237](../../src/rules/rules.test.ts#L237): starts the witch seated on the terrace; she stays put till the first move or rise
+- [src/rules/wakeUp.test.ts:41](../../src/rules/wakeUp.test.ts#L41): rings with her in bed, held there, the night not started
+- [src/rules/wakeUp.test.ts:49](../../src/rules/wakeUp.test.ts#L49): E snoozes it, but not a press the moment it starts ringing
+- [src/rules/wakeUp.test.ts:60](../../src/rules/wakeUp.test.ts#L60): lasts five seconds, then the alarm rings again; as often as she likes
+- [src/rules/wakeUp.test.ts:71](../../src/rules/wakeUp.test.ts#L71): E while snoozing does nothing more
+- [src/rules/wakeUp.test.ts:79](../../src/rules/wakeUp.test.ts#L79): `moving gets her up from the ${from}: the stretch, held, then beside her bed`
+- [src/rules/wakeUp.test.ts:94](../../src/rules/wakeUp.test.ts#L94): a rise does too, but she doesn't fly
+- [src/rules/wakeUp.test.ts:104](../../src/rules/wakeUp.test.ts#L104): opens its mirror by itself the first time she comes to it, once
+- [src/rules/wakeUp.test.ts:115](../../src/rules/wakeUp.test.ts#L115): up, she walks out of the bedroom's door in her nightie, the island built or not (Ed, 2026-10-25: "I should be able to leave regardless")
+- [src/rules/wakeUp.test.ts:127](../../src/rules/wakeUp.test.ts#L127): the door's shut only till she's up: asleep, ringing, snoozing and stretching (held in bed then too)
+- [src/rules/wakeUp.test.ts:140](../../src/rules/wakeUp.test.ts#L140): nor does the bed end the night meanwhile, nor any key cast the spell
+- [src/rules/wakeUp.test.ts:158](../../src/rules/wakeUp.test.ts#L158): has no curtains, and nothing says "not yet"
+- [src/rules/wakeUp.test.ts:208](../../src/rules/wakeUp.test.ts#L208): she wakes in her nightie, every piece of her outfit in the pile in the middle of her Bedroom (her bed up in the Turret: Ed, 2026-10-26; the middle, 2026-10-29)
+- [src/rules/wakeUp.test.ts:221](../../src/rules/wakeUp.test.ts#L221): a game's first morning has no yesterday (Ed, 2026-10-26: "the hat she wore yesterday should be in the clothes pile - but on the first, there was no yesterday"): no pile, on any load; her hat lies on the hats' floor, and picked up there it's on
+- [src/rules/wakeUp.test.ts:240](../../src/rules/wakeUp.test.ts#L240): after a night played (after the bed, or a sail), last night's hat is in the pile with the rest, none on the hats' floor
+- [src/rules/wakeUp.test.ts:248](../../src/rules/wakeUp.test.ts#L248): her first wake-up has no pile (Ed, 2026-10-26: "if it's the first night, there won't be any last night's clothes"): in her nightie all the same, dressing at the stations; E where it would lie does nothing
+- [src/rules/wakeUp.test.ts:259](../../src/rules/wakeUp.test.ts#L259): E at the pile puts on all of it at once: dressed
+- [src/rules/wakeUp.test.ts:268](../../src/rules/wakeUp.test.ts#L268): a station's choice puts its piece on her, and the pile keeps the rest (Ed: "if she puts on a top via the menu, the pile then puts on everything else except yesterday's top")
+- [src/rules/wakeUp.test.ts:283](../../src/rules/wakeUp.test.ts#L283): in her nightie, a hat taken off the Cloakroom's hats' floor is on her head, out of the pile (so she's drawn in it)
+- [src/rules/wakeUp.test.ts:292](../../src/rules/wakeUp.test.ts#L292): half dressed by the stations, she walks out as she is, the rest left in the pile
+- [src/rules/wakeUp.test.ts:303](../../src/rules/wakeUp.test.ts#L303): every dressing station but the Cloakroom's (the hat's mirror, the cloak pegs), the bags and the Workshop's is in the bedroom
+- [src/rules/wakeUp.test.ts:310](../../src/rules/wakeUp.test.ts#L310): the wake-up's over as she gets up, not while she's in bed or stretching, the island built or not
+- [src/rules/wakeUp.test.ts:323](../../src/rules/wakeUp.test.ts#L323): no key casts the spell on her way out, nor E anywhere but her decks
+- [src/rules/wakeUp.test.ts:330](../../src/rules/wakeUp.test.ts#L330): E at her decks opens her DJ booth (Ed, 2026-10-29), and "Get this party started" seats her behind them and casts it: its routine holds her there, then the party's on
+- [src/rules/wakeUp.test.ts:359](../../src/rules/wakeUp.test.ts#L359): `after a load or the bed, ${what} snoozes it, as often as she likes, and never gets her up`
+- [src/rules/wakeUp.test.ts:371](../../src/rules/wakeUp.test.ts#L371): `after a load or the bed, a move from the ${from} starts the ${K.stretch} s stretch, then she's up`
+- [src/rules/wakeUp.test.ts:381](../../src/rules/wakeUp.test.ts#L381): `${what} does nothing in the wake-up`
+- [src/rules/wakeUp.test.ts:390](../../src/rules/wakeUp.test.ts#L390): the dressing table's first-ever visit is marked once: not again on a later morning (the page's save)
+- [src/rules/wakeUp.test.ts:397](../../src/rules/wakeUp.test.ts#L397): the door's open as soon as she's up, dressed or not; the party waits for her decks all the same
+- [src/rules/wakeUp.test.ts:416](../../src/rules/wakeUp.test.ts#L416): she sleeps through it in bed, held, nothing ringing
+- [src/rules/wakeUp.test.ts:422](../../src/rules/wakeUp.test.ts#L422): its end rings the alarm (the page's: it played to its end), and the wake-up goes on as ever
+- [src/rules/wakeUp.test.ts:431](../../src/rules/wakeUp.test.ts#L431): any key or move ends it: the alarm rings, and that press doesn't also get her up
+- [src/rules/wakeUp.test.ts:440](../../src/rules/wakeUp.test.ts#L440): after a sail's flight in (Ed, 2026-10-24: one dream, always in bed): landed in her bedroom asleep, the same dream, the alarm when it ends
+- [src/rules/wakeUp.test.ts:453](../../src/rules/wakeUp.test.ts#L453): no dream with nothing on loan: the alarm at once, as before
+- [src/rules/wakeUp.test.ts:471](../../src/rules/wakeUp.test.ts#L471): with nothing on loan: in her bed in her bedroom, not at her decks, asleep with the alarm ringing, in her nightie
+- [src/rules/wakeUp.test.ts:483](../../src/rules/wakeUp.test.ts#L483): then the wake-up as every morning: up after a move and the stretch, the door open at once, dressing at the pile if she likes
+- [src/rules/wakeUp.test.ts:495](../../src/rules/wakeUp.test.ts#L495): undressed, she walks from her bed down the trunk to the Terrace and starts the party at her decks in her nightie (Ed, 2026-10-25, his playtest of a sail)
+- [src/rules/wakeUp.test.ts:512](../../src/rules/wakeUp.test.ts#L512): with a find on loan: the same bed, dreaming first, the alarm as the dream ends
+- [src/rules/wakeUp.test.ts:522](../../src/rules/wakeUp.test.ts#L522): on every way in: a load, after the bed or a sail, and after a dream
+- [src/rules/wakeUp.test.ts:535](../../src/rules/wakeUp.test.ts#L535): up, E held at her bed sleeps, the party never cast: main.ts's "slept" (the night lost, the next on a new seed)
+
+<a id="h-r2-k2"></a>
+
+## H-R2-K2: Current kitchen and explicit legacy preview contracts
+
+current rules; 27 tests; files take ~7 s.
+
+The normal nine-colour kitchen and ten-minute individual trip coexist with the explicitly selectable six-kind cauldron preview and 90-second Mirror Floor. Keep both modes, valid timesteps, independent inventories, shared references and exactly-once consumption/exit. docs/notes/cauldron.md explicitly retains the preview; it is not obsolete.
+
+- [src/rules/cauldron.test.ts:5](../../src/rules/cauldron.test.ts#L5): has exactly 56 unordered three-mushroom recipes, including repeats
+- [src/rules/cauldron.test.ts:17](../../src/rules/cauldron.test.ts#L17): retains Ed's tutorial mapping for %j
+- [src/rules/cauldron.test.ts:24](../../src/rules/cauldron.test.ts#L24): does not invent assignments for biome recipes
+- [src/rules/cauldron.test.ts:30](../../src/rules/cauldron.test.ts#L30): collects without a capacity limit and transfers each kind without loss
+- [src/rules/cauldron.test.ts:46](../../src/rules/cauldron.test.ts#L46): uses one per press and brews on exactly the third, then starts a fresh brew
+- [src/rules/cauldron.test.ts:63](../../src/rules/cauldron.test.ts#L63): keeps separately allocated witch inventories independent
+- [src/rules/cauldron.test.ts:71](../../src/rules/cauldron.test.ts#L71): keeps visitors' bags separate while sharing the host's baskets and partial pot
+- [src/rules/cauldronKitchen.test.ts:12](../../src/rules/cauldronKitchen.test.ts#L12): deposits on entry, consumes one per use, starts the third immediately and exits once after a second
+- [src/rules/cauldronKitchen.test.ts:37](../../src/rules/cauldronKitchen.test.ts#L37): does nothing outside or at an empty basket
+- [src/rules/cauldronKitchen.test.ts:45](../../src/rules/cauldronKitchen.test.ts#L45): does not deposit repeatedly while inside, and preserves partial ingredients across a visit
+- [src/rules/cauldronKitchen.test.ts:60](../../src/rules/cauldronKitchen.test.ts#L60): supports a large simulation step and a second brew after returning
+- [src/rules/cauldronKitchen.test.ts:72](../../src/rules/cauldronKitchen.test.ts#L72): rejects invalid timesteps without advancing a brew
+- [src/rules/cauldronKitchen.test.ts:80](../../src/rules/cauldronKitchen.test.ts#L80): fixes all recipients at the third ingredient; late arrivals stay normal and leavers still exit
+- [src/rules/cauldronKitchen.test.ts:100](../../src/rules/cauldronKitchen.test.ts#L100): includes every witch present, only once, regardless of who contributed
+- [src/rules/cauldronNight.test.ts:25](../../src/rules/cauldronNight.test.ts#L25): leaves ordinary nights disabled
+- [src/rules/cauldronNight.test.ts:32](../../src/rules/cauldronNight.test.ts#L32): auto-collects once into her hidden bag after the party and keeps it through a knockout
+- [src/rules/cauldronNight.test.ts:50](../../src/rules/cauldronNight.test.ts#L50): deposits both visitors, retains partial ingredients and snapshots all occupants on BBB
+- [src/rules/cauldronNight.test.ts:75](../../src/rules/cauldronNight.test.ts#L75): preserves shared basket and pot references across save/restore
+- [src/rules/cauldronTrip.test.ts:4](../../src/rules/cauldronTrip.test.ts#L4): fades Mirror Floor in/out and clears it completely after 90 simulation seconds
+- [src/rules/cauldronTrip.test.ts:17](../../src/rules/cauldronTrip.test.ts#L17): allocates a separate trip clock for every witch
+- [src/rules/movedKitchen.test.ts:14](../../src/rules/movedKitchen.test.ts#L14): uses Dining for basket use/unload and spatial smoke entrants, retaining timing and exclusions
+- [src/rules/movedKitchen.test.ts:34](../../src/rules/movedKitchen.test.ts#L34): keeps classic Kitchen membership/panel exact and covers moved pot, baskets and smoke without a new radius
+- [src/rules/potionRecipes.test.ts:5](../../src/rules/potionRecipes.test.ts#L5): covers all 165 combinations exactly once, independent of ingredient order
+- [src/rules/potionRecipes.test.ts:21](../../src/rules/potionRecipes.test.ts#L21): starts at full strength on wake, stays full eight minutes, fades the last two
+- [src/rules/potionSettings.test.ts:9](../../src/rules/potionSettings.test.ts#L9): exposes defaults for all implemented effects and copies independent complete settings
+- [src/rules/potionSettings.test.ts:19](../../src/rules/potionSettings.test.ts#L19): clamps unsafe values, ignores unknown fields, changes renderer values immediately and resets
+- [src/rules/potionSettings.test.ts:32](../../src/rules/potionSettings.test.ts#L32): shows the shared trip indicator even for coming-soon recipes, then fades and clears it
+
+<a id="h-r2-k3"></a>
+
+## H-R2-K3: Equipment, finds, canopy, telescope and Studio contracts
+
+current rules; 65 tests; files take ~91 s.
+
+Keep geometry and sight clearance, supported whole/gapped canopy, find validity/ownership/identity, once-only pickup, kit prerequisites and knockout conservation, telescope projection, real Studio mappings, wardrobe and hat ownership. Projection sample minimum ensures exercised inputs rather than setting a generated-world outcome target.
+
+- [src/rules/constellations.test.ts:6](../../src/rules/constellations.test.ts#L6): give every item in the finds pool (the wearables and the 9 broom parts) an outline of 7 to 10 stars, within the sky's limits (render/sky.ts: 12 stars, 16 lines)
+- [src/rules/constellations.test.ts:20](../../src/rules/constellations.test.ts#L20): stand at the trunk's bearing from the treehouse, about 35° up, and go once it's found
+- [src/rules/constellations.test.ts:31](../../src/rules/constellations.test.ts#L31): take the night's one find from one source, any kind, an outline by its item id (Ed, 2026-10-22: one permanent upgrade a night)
+- [src/rules/constellations.test.ts:39](../../src/rules/constellations.test.ts#L39): wrap round north
+- [src/rules/crown.test.ts:14](../../src/rules/crown.test.ts#L14): is the same crown for the same house and seed, another for another seed
+- [src/rules/crown.test.ts:26](../../src/rules/crown.test.ts#L26): stands over every room: each room's floor is inside the dome, under its leaves
+- [src/rules/crown.test.ts:34](../../src/rules/crown.test.ts#L34): leaves the Terrace and its notch out to the crown's edge open: no lobe, limb or string above the floor on any line of sight to them
+- [src/rules/crown.test.ts:47](../../src/rules/crown.test.ts#L47): frames the whole Terrace: its floor's outline, and her DJ desk on its rim, inside the gap with a margin to spare
+- [src/rules/crown.test.ts:63](../../src/rules/crown.test.ts#L63): opens its notch the way she takes off: the Terrace's open south-east rim, towards the dancefloor
+- [src/rules/crown.test.ts:69](../../src/rules/crown.test.ts#L69): carries each room's limb on past it, forking, with roots on the ground and top limbs over the topmost room
+- [src/rules/crown.test.ts:91](../../src/rules/crown.test.ts#L91): winds its lights round it in smooth strands when asked (Ed, 2026-10-27: "The spiral with 2 strands, smoothed so it sags across the gaps")
+- [src/rules/crown.test.ts:135](../../src/rules/crown.test.ts#L135): has no ring of lights round a gap, its other strings as ever, its limbs all kept
+- [src/rules/crown.test.ts:141](../../src/rules/crown.test.ts#L141): still keeps open ground it's given open to the sky (the dancefloor)
+- [src/rules/crown.test.ts:146](../../src/rules/crown.test.ts#L146): is the same crown for the same house and seed, and the gap's crown is the one it always was
+- [src/rules/finds.test.ts:27](../../src/rules/finds.test.ts#L27): stands in a wild area's woods, never home's, off its clearings and clear of the relics
+- [src/rules/finds.test.ts:72](../../src/rules/finds.test.ts#L72): finds hats and bags each on its own (Ed, 2026-10-23): every spell hat but the plain one, and the found bags (the Satchel, Bumbag and Purse hers from the start: Ed, 2026-10-29), out of the trunk
+- [src/rules/finds.test.ts:86](../../src/rules/finds.test.ts#L86): starts her with the plain hat only; a hat found is hers and lies on the hats' floor (Ed, 2026-10-23: the floor fills as she finds them)
+- [src/rules/finds.test.ts:105](../../src/rules/finds.test.ts#L105): opens with E on foot: what's in it is hers (a found event), once
+- [src/rules/finds.test.ts:119](../../src/rules/finds.test.ts#L119): can't be opened once the party's over
+- [src/rules/finds.test.ts:131](../../src/rules/finds.test.ts#L131): names the compass point from the treehouse to the trunk, north up the screen
+- [src/rules/finds.test.ts:166](../../src/rules/finds.test.ts#L166): only while the party's on
+- [src/rules/finds.test.ts:178](../../src/rules/finds.test.ts#L178): `is claimed exactly as a placed one (${kind} ${item})`
+- [src/rules/finds.test.ts:206](../../src/rules/finds.test.ts#L206): is tonight's find: the constellation's way points at it, and an unknown item spawns nothing
+- [src/rules/finds.test.ts:220](../../src/rules/finds.test.ts#L220): taken, its constellation's find is the loan's (lit), not tonight's to find; before, none on loan
+- [src/rules/finds.test.ts:233](../../src/rules/finds.test.ts#L233): the night won: one not yet taken is gone; one on loan stays (its constellation lit till she sleeps)
+- [src/rules/findsList.test.ts:31](../../src/rules/findsList.test.ts#L31): in docs/art-guide/FINDS.md is FIND_KINDS's own
+- [src/rules/kit.test.ts:26](../../src/rules/kit.test.ts#L26): is nothing taken on a night that waits for her spell, and both on one that doesn't (the tools, the bots)
+- [src/rules/kit.test.ts:34](../../src/rules/kit.test.ts#L34): takes her invitations once, and a broom while one's left at the lathe, one a witch
+- [src/rules/kit.test.ts:41](../../src/rules/kit.test.ts#L41): E at the invitations desk gives her tonight's invitations; E at the lathe, a broom
+- [src/rules/kit.test.ts:54](../../src/rules/kit.test.ts#L54): won't give her invitations till she carries a bag (Ed, 2026-10-29: "you can't pick up invitations until you're carrying a bag"): the desk says why
+- [src/rules/kit.test.ts:72](../../src/rules/kit.test.ts#L72): without her invitations, her 💌 key throws nothing; with them, as ever (Ed: "no ammo that runs out")
+- [src/rules/kit.test.ts:85](../../src/rules/kit.test.ts#L85): without a broom, off the Terrace's open rim she falls: a thud below, a beat, then back at the magic circle; with one, she flies
+- [src/rules/kit.test.ts:109](../../src/rules/kit.test.ts#L109): keeps both through a knockout
+- [src/rules/studio.test.ts:11](../../src/rules/studio.test.ts#L11): plays three rows of the scale, the middle row from the root, every note in key
+- [src/rules/studio.test.ts:24](../../src/rules/studio.test.ts#L24): gives every drum key and gamepad pad a kit's real patch
+- [src/rules/studio.test.ts:30](../../src/rules/studio.test.ts#L30): has every sound a real patch
+- [src/rules/studio.test.ts:34](../../src/rules/studio.test.ts#L34): runs the number row on the shared loop and her own sound
+- [src/rules/studio.test.ts:49](../../src/rules/studio.test.ts#L49): plays real patches in every style, a kick on the beat, never on the off-beat sixteenths
+- [src/rules/studio.test.ts:64](../../src/rules/studio.test.ts#L64): stands the drum kit, the synth and the mic in the Studio; no record shelf (Ed, 2026-10-29: "Remove record station, instead have dj booth": her decks)
+- [src/rules/studio.test.ts:68](../../src/rules/studio.test.ts#L68): lights the instrument she walks up to, is at it only on E there, holds it a little past reach, and lets go on Esc (Ed's playtest, 2026-10-26)
+- [src/rules/telescope.test.ts:8](../../src/rules/telescope.test.ts#L8): starts north and wide, the game's own way
+- [src/rules/telescope.test.ts:15](../../src/rules/telescope.test.ts#L15): pans all the way round, either way, and wraps
+- [src/rules/telescope.test.ts:23](../../src/rules/telescope.test.ts#L23): turns straight by the mouse's degrees, wrapping round and tilting no further than its floor and tiltMax
+- [src/rules/telescope.test.ts:30](../../src/rules/telescope.test.ts#L30): pans slower zoomed in, so the view moves alike on screen
+- [src/rules/telescope.test.ts:35](../../src/rules/telescope.test.ts#L35): tilts up the stick from the forest to tiltMax, and no further either way (Ed, 2026-10-22: to look at the stars)
+- [src/rules/telescope.test.ts:44](../../src/rules/telescope.test.ts#L44): zooms with the wheel, the zoom keys and the shoulder buttons, within wide and close
+- [src/rules/telescope.test.ts:49](../../src/rules/telescope.test.ts#L49): looks down to the forest over the bend at its lowest
+- [src/rules/telescope.test.ts:55](../../src/rules/telescope.test.ts#L55): names the compass points
+- [src/rules/telescope.test.ts:58](../../src/rules/telescope.test.ts#L58): shows the moon only looking its way
+- [src/rules/telescope.test.ts:65](../../src/rules/telescope.test.ts#L65): puts the moon in the sky: its altitude and bearing the same however the view pans, tilts and zooms (Ed's playtest, v4522)
+- [src/rules/wardrobe.test.ts:26](../../src/rules/wardrobe.test.ts#L26): takes at once; a hat lying in the world stays there with its spell, and she wears the new one
+- [src/rules/wardrobe.test.ts:38](../../src/rules/wardrobe.test.ts#L38): several can lie about at once
+- [src/rules/wardrobe.test.ts:65](../../src/rules/wardrobe.test.ts#L65): she can't pick one up wearing a hat; bare-headed she puts it on, its spell hers, and her own stays where it lay
+- [src/rules/wardrobeShelves.test.ts:14](../../src/rules/wardrobeShelves.test.ts#L14): gives every dressing station its shelves, and names no station the house hasn't
+- [src/rules/wardrobeShelves.test.ts:19](../../src/rules/wardrobeShelves.test.ts#L19): sets only what her genome has, to values the generator draws
+- [src/rules/wardrobeShelves.test.ts:29](../../src/rules/wardrobeShelves.test.ts#L29): colours only her palette's parts, and fits only her sliders
+- [src/rules/wardrobeShelves.test.ts:36](../../src/rules/wardrobeShelves.test.ts#L36): has unique ids, and some still to find
+- [src/rules/wardrobeShelves.test.ts:41](../../src/rules/wardrobeShelves.test.ts#L41): puts each item on, and only it of its shelf
+- [src/rules/wardrobeShelves.test.ts:50](../../src/rules/wardrobeShelves.test.ts#L50): keeps a backpack's size when it's already on, so its fit stays
+- [src/rules/wardrobeShelves.test.ts:56](../../src/rules/wardrobeShelves.test.ts#L56): starts her owning what she has on, on every shelf with items but the bags (she starts with none: Ed, 2026-10-29, "Remove none")
+- [src/rules/wardrobeShelves.test.ts:65](../../src/rules/wardrobeShelves.test.ts#L65): owns the starting set, what's kept, and anything she's wearing; never a stranger's id
+- [src/rules/wardrobeShelves.test.ts:74](../../src/rules/wardrobeShelves.test.ts#L74): has colour grids of 5 rows (Ed: "Colour picker has only 5 rows"): cloth 13 across, skin 6
+- [src/rules/wardrobeShelves.test.ts:84](../../src/rules/wardrobeShelves.test.ts#L84): an item row shows once two of its items are hers
+- [src/rules/wardrobeShelves.test.ts:96](../../src/rules/wardrobeShelves.test.ts#L96): every shelf names the part of her the camera zooms on, one the tuning has
+- [src/rules/wardrobeShelves.test.ts:100](../../src/rules/wardrobeShelves.test.ts#L100): her hat comes off at the dressing table, not at the hat's mirror
+
 ## house-treehouse: ruling review
 
 - Layout supersession: house.md37 records the saved proposal approved as the default after guest-wake releasev6703 (1553#6547631190,1476#6548948298). Plain links/layout=ed select it; layout=classic retains the older arrangement. housePlacement:11 explicitly compares false/true modes rather than the global default. H2 proposes descriptions only, preserving classic-module identity and occupant conservation.
-- Bed route: houseConfig:27 names the old93m mock, while its actual assertion is99m following the26Oct corridor/bed move. H2 updates the description to the route already asserted, not the expected value.
-- Treehouse direction: DESIGN105’s5Oct due-north placement was replaced by24Oct north-west. treehouse:143 already checks north-west. No behavior deletion is needed.
+- Bed route: houseConfig:27 names the old 93 m mock, while its actual assertion is99 m following the 26Oct corridor/bed move. H2 updates the description to the route already asserted, not the expected value.
+- Treehouse direction: DESIGN105’s5Oct due-north placement was replaced by 24Oct north-west. treehouse:143 already checks north-west. No behavior deletion is needed.
 - Broom stations: house.md100 records29Oct’s single station at the lathe, replacing separate bay/pegboard interaction. houseRooms:156 and stations:179 enforce the replacement. No-broom takeoff restrictions and broom-enabled takeoff are conditional rules, not contradictions.
-- Cross-owner mixed kernels in nine broom/hat/guard cases are excluded from the combined house keep question and listed under1622. Stealth windows, hit counts and Cyclone turn/height/fling percentages are not certified as house integrity merely by appearing in equipment files. Other handoffs:11 measurement-tool tests,3 changelog UI tests,3 mushroom-stock save tests and9 MP boundary tests are counted on their owner pages once. No whole house behavior was proved obsolete.
+- Cross-owner mixed kernels in nine broom/hat/guard cases are excluded from the combined house keep question and listed under 1622. Stealth windows, hit counts and Cyclone turn/height/fling percentages are not certified as house integrity merely by appearing in equipment files. Other handoffs:11 measurement-tool tests,3 changelog UI tests,3 mushroom-stock save tests and 9 MP boundary tests are counted on their owner pages once. No whole house behavior was proved obsolete.
+- Second pass: the 1 November published layout retains 110 poses and 22 removals; 29 October one-lathe rule changes three descriptions only. Current kitchen rules do not obsolete the explicitly retained ?cauldron=1 preview. Whole/gapped canopy modes remain supported. Report 6566610514 includes the completed review and exact assertion dispositions.
+
+## invites-party: review provenance
+
+Read-only review of the 152 assigned tests in25 files at 9f045ebca, report 6566171808. Rebucketed neighboring cases are not silently approved.
 
 <a id="ip1"></a>
 
 ## IP1: Observed motion and occurrence thresholds
 
-outcome stats; 9 declarations; ~124 s of CI.
+outcome stats; 9 tests; files take ~124 s.
 
 Nine tests pin loaded movement/climb ratios, route drift, treetop swoop frequency, sigil occupancy share, partner arrival, observed poses and the retained noisy picker’s excess crossings. These are outcome-dominated measurements; direct boundaries and ownership must remain separately protected.
 
@@ -1256,9 +1626,9 @@ Nine tests pin loaded movement/climb ratios, route drift, treetop swoop frequenc
 
 ## IP2: Mixed party, spread and route statistics
 
-outcome stats; 16 declarations; ~142 s of CI.
+outcome stats; 16 tests; files take ~142 s.
 
-Sixteen mixed tests combine finite-sample extrema, density, activity, route diversity and arrival observations with direct rules. Preserve roster membership, angular bounds/replay, path/floor/seat exclusions, removed-piece absence, caps, deterministic guest places, reciprocal pairs, configured height/40m bounds, finite pulse lifecycle, crossing separation and unoccupied destinations.
+Sixteen mixed tests combine finite-sample extrema, density, activity, route diversity and arrival observations with direct rules. Preserve roster membership, angular bounds/replay, path/floor/seat exclusions, removed-piece absence, caps, deterministic guest places, reciprocal pairs, configured height/40 m bounds, finite pulse lifecycle, crossing separation and unoccupied destinations.
 
 - [src/rules/floorSigils.test.ts:12](../../src/rules/floorSigils.test.ts#L12): never picks an off-island kind's shape, whatever has the party, and does pick the World Tree
 - [src/rules/invitesAim.test.ts:30](../../src/rules/invitesAim.test.ts#L30): strays each letter within inaccuracy degrees, both ways, and the same every time
@@ -1281,7 +1651,7 @@ Sixteen mixed tests combine finite-sample extrema, density, activity, route dive
 
 ## IP3: Invitation, phase and route contracts
 
-current rules; 127 declarations; ~388 s of CI.
+current rules; 127 tests; files take ~388 s.
 
 Direct hit counts use constructed eligible targets, not emergent battles. Phase/state/identity sweeps prevent vacuous passes. Long pulse audits check EVERY step for monotone bounded fronts and exact wave coupling; curveWork is a real planning budget. Old modes remain explicit comparisons.
 
@@ -1415,17 +1785,21 @@ Direct hit counts use constructed eligible targets, not emergent battles. Phase/
 
 ## invites-party: ruling review
 
-- Ley-line supersession: old4/5Oct header advances on wave or quest ‘whichever comes first’; the8Oct ruling says ‘The pulse should never skip, it always travels along the route at the bpm speed’. leylines:41/88 explicitly opt into advance=first; :54 tests current default; leyPulseAudit:111 tests both. They are compatibility paths. The audit header saying Ed has not ruled is stale prose, not old behavior.
+- Ley-line supersession: old 4/5Oct header advances on wave or quest ‘whichever comes first’; the 8Oct ruling says ‘The pulse should never skip, it always travels along the route at the bpm speed’. leylines:41/88 explicitly opt into advance=first; :54 tests current default; leyPulseAudit:111 tests both. They are compatibility paths. The audit header saying Ed has not ruled is stale prose, not old behavior.
 - Witch-count supersession: DESIGN481 drops ‘one new area per witch’ on24Oct. leyPulseAudit:198’s two-witches title actually sets areasPerWave=2 in a SINGLE-witch game. Keep the explicit option’s timing check, but do not claim it proves multiplayer policy;1609 retains that design.
 - Party guest distinction: an older stopped-soundsystem case flies away;11Oct destroyed-soundsystem design retains the witch stargazing in pairs/threes. partyWitches.gaze:19 checks both ruined and merely stopped; the implementation branches on ruined. No obsolete fly-away assertion was established.
 - 29Oct set-piece removal applies to normal generation; partyDressing:43 does not require any set piece to spawn, and :71 requires removed pieces absent. The title alone is not deletion evidence.
 - Baby invites changed31Oct. hexSigils:61 starts with already-carried babies; invites:114 uses a level1 stand-in and counting Affection. Neither asserts real baby invitation. Old partyspell prompt prose tests rules input and tool-game compatibility, not a restored start-screen UI.
 
+## music-audio: review provenance
+
+Setup and assertions reviewed in the named score, cue, audio-engine and music-tool files. Telephone authority remains with #1609. No listening or browser run is claimed.
+
 <a id="m1"></a>
 
 ## M1: Audio safety, scheduling and sample integrity
 
-hard limits; 41 declarations; ~2 s of CI.
+hard limits; 41 tests; files take ~2 s.
 
 Clocks and audio nodes are controlled stand-ins. Note uniqueness, finite scheduling, gate reset, bounded voices, drift recovery and compiled-voice determinism are pipeline guarantees, not outcomes of a generated fight. The sample manifest test enforces the existing licence/size contract. The old FOF implementation remains a lab comparison; its safety test does not select it as the game's voice.
 
@@ -1475,7 +1849,7 @@ Clocks and audio nodes are controlled stand-ins. Note uniqueness, finite schedul
 
 ## M2: Score form and explicit musical rules
 
-current rules; 88 declarations; ~166 s of CI.
+current rules; 88 tests; files take ~166 s.
 
 The planner receives synthetic wave clocks; the score receives explicit seeds and styles. Assertions directly implement the 9 Oct ABAC structure, 11 Oct nightly set and 14 Oct alto/stepwise redesign. A 30-minute planner loop is not a played night. The 120 BPM test supplies its own style-based beat tuning; it does not prohibit choosing a different record. Wide instrument phrases, retained soprano fallback and alternate lab arpeggios are explicit comparison modes, not stale default singer claims. Additional beat/DJ/knockdown tests use specified clocks and tuning, including explicit bpmStep1/cap5 comparison parameters. Their real wave integration checks the derived tempo/countdown ratio, not an emergent win target. Beat inverse/continuity and DJ stroke order remain direct contracts. Two monolithic music tests explicitly set position/time/speaker damage and call musicMix; they do not simulate sampled sound success.
 
@@ -1572,7 +1946,7 @@ The planner receives synthetic wave clocks; the score receives explicit seeds an
 
 ## M3: Cue boundaries, potion routing and music-tool data
 
-current rules; 37 declarations; ~14 s of CI.
+current rules; 37 tests; files take ~14 s.
 
 Tests inject the watch, cleared-area, fireworks or knockdown event, manually advance clocks and log a fake sound call. Counts here prove exactly-once routing and configured limits. The inland sea-life case is the negative range boundary. Potion tests directly set trip times and check routing, fade and source disposal. Music Lab JSON/MIDI tests use synthetic input and roundtrip/validation assertions. The first sound.test authority case is excluded for #1609.
 
@@ -1618,7 +1992,7 @@ Tests inject the watch, cleared-area, fireworks or knockdown event, manually adv
 
 ## M4: Generated cue rates and melody proportions
 
-outcome stats; 3 declarations; ~17 s of CI.
+outcome stats; 3 tests; files take ~17 s.
 
 Sea-life tests sample seeded timetables for 60/600 seconds and require at least three splashes or one groan. Melody pace samples 60 seeds × ABC, requiring <3.5 notes/bar, >1 whole note/phrase and >15% triplets. These quantify an intended feel; they do not establish no-NaN, ownership or exactly-once event delivery. Opposite-coast absence assertions in the mixed sea-life cases must first be retained as small range tests.
 
@@ -1630,7 +2004,7 @@ Sea-life tests sample seeded timetables for 60/600 seconds and require at least 
 
 ## M5: Outdated cheer-test descriptions
 
-leftovers; 2 declarations; ~1 s of CI.
+leftovers; 2 tests; files take ~1 s.
 
 The suite still says +1 BPM (7 Oct), and a case name says after trumpet and rewind. The 9 Oct design instead adds 5 BPM and removes the rewind at the cut. Neither case asserts +1 or requires a rewind: one calls knockdownTempo with current tuning; the other supplies a synthetic return clock. This is stale explanation, not obsolete behavior or deletion authority.
 
@@ -1639,18 +2013,22 @@ The suite still says +1 BPM (7 Oct), and a case name says after trumpet and rewi
 
 ## music-audio: ruling review
 
-- M5 old: tempoUp.cues.test.ts suite cites Ed, 2026-10-07, ‘+1 BPM’, and the second test names ‘the trumpet and the rewind’. Replacement: Ed, 2026-10-09, docs/notes/music.md Beat clock: ‘it stays at 120 unless you are knocked down, in which case it gains 5bpm’; Form: ‘the rewind at the cut is gone’. The assertions already test current event timing; only their description is proposed for rewrite.
+- M5 old: tempoUp.cues.test.ts suite cites Ed, 2026-10-07, ‘+1 BPM’, and the second test names ‘the trumpet and the rewind’. Replacement: Ed, 2026-10-09, docs/notes/music.md Beat clock: ‘it stays at 120 unless you are knocked down, in which case it gains 5 bpm’; Form: ‘the rewind at the cut is gone’. The assertions already test current event timing; only their description is proposed for rewrite.
 - M2 old singer: docs/notes/music.md records the 11 Oct choice ‘e Recorded + ethereal will do for now’. Replacement: 14 Oct singer redesign specifies alto, narrow stepwise phrases and two effect chains. musicForm.test.ts asserts MIDI55–67, limited leaps, voice only in builds/breakdowns, and pure-chain chorus/octave/shimmer zero. No old high-soprano default is pinned by this reviewed group; the old soprano is explicitly fallback/comparison data.
 - M4 current intent: Ed, 2026-10-09, musicForm.test.ts: ‘keep the melodies relatively slow, but not always. Use whole notes and triplets quite often’. The numeric 3.5/15% thresholds are implementation interpretations of that intent, not quoted numeric rulings. Sea-life header cites Ed, 2026-10-07, dolphins east/kraken west, but the ≥3/≥1 sampled counts are not quoted frequency decisions. No newer cancellation of these effects is claimed.
 - M2 tempo scope: records were extended on 29 Oct to 100–200 BPM, with 100/120 starters (recordSave.test.ts). musicForm's 120-BPM case builds t.beat from style.bpm explicitly; it checks wave changes do not choose tempo. docs/notes/music.md 11 Oct: ‘tempo is set by the gameplay’. This does not contradict selectable records.
+
+## tools-ci: review provenance
+
+Two read-only tools reviews integrated:226 original tests plus 77 additional tests (reports 6565979619/6565996723/6566258844), plus six added synthetic inventory checks and eleven house-measurement tests reviewed separately. Standalone/plugin execution scope is labeled separately; no test run supplied semantic evidence.
 
 <a id="t1"></a>
 
 ## T1: CI coverage, publication and proof guards
 
-current rules; 71 declarations; known files: <1 s of CI; 3 files have unknown timing.
+current rules; 71 tests; known files take <1 s; 3 files have unknown timing.
 
-Parsed workflow YAML, tiny Git/command fixtures and stubbed pixels check fail-closed coverage, publication restrictions and current scheduling policy. world-audit parses strings; effects-scene tests a synthetic nonblank detector. Four shards and8px/32 are current operational rules rather than timeless invariants. No generated outcome target is run.
+Parsed workflow YAML, tiny Git/command fixtures and stubbed pixels check fail-closed coverage, publication restrictions and current scheduling policy. world-audit parses strings; effects-scene tests a synthetic nonblank detector. Four shards and 8px/32 are current operational rules rather than timeless invariants. No generated outcome target is run.
 
 - [tools/ci/effects-scene.test.ts:15](../../tools/ci/effects-scene.test.ts#L15): rejects a black frame even when drawing counters claim the scene is ready
 - [tools/ci/effects-scene.test.ts:18](../../tools/ci/effects-scene.test.ts#L18): rejects an unfinished forest and the wrong flight mode even when pixels have detail
@@ -1728,9 +2106,9 @@ Parsed workflow YAML, tiny Git/command fixtures and stubbed pixels check fail-cl
 
 ## T2: Measurement and diagnostic contracts
 
-hard limits; 80 declarations; ~3 s of CI.
+hard limits; 80 tests; files take ~3 s.
 
-Supplied traces, fake clocks/workers/GL and shader source tokens test honest telemetry, comparison boundaries and performance budgets. The30000 upload calls and256 masks are synthetic coverage, not game populations. Intentional shader changes may require a separately reviewed baseline; no replacing ruling was established. House reviewer verified eleven synthetic CPU attribution/quantile/missing-data, held-clock, draw/finish, PNG-drift and census-reconciliation tests; these are measurement integrity, not generated-house outcomes.
+Supplied traces, fake clocks/workers/GL and shader source tokens test honest telemetry, comparison boundaries and performance budgets. The 30000 upload calls and 256 masks are synthetic coverage, not game populations. Intentional shader changes may require a separately reviewed baseline; no replacing ruling was established. House reviewer verified eleven synthetic CPU attribution/quantile/missing-data, held-clock, draw/finish, PNG-drift and census-reconciliation tests; these are measurement integrity, not generated-house outcomes.
 
 - [src/app/houseCpuFunctions.test.ts:3](../../src/app/houseCpuFunctions.test.ts#L3): clips sample weights to the actual frame window and keeps parent/child totals separate
 - [src/app/houseCpuFunctions.test.ts:10](../../src/app/houseCpuFunctions.test.ts#L10): does not double-count a recursive parent and keeps small negative sample deltas from adding time
@@ -1817,7 +2195,7 @@ Supplied traces, fake clocks/workers/GL and shader source tokens test honest tel
 
 ## T3: Generated-world fingerprints and repeat-night isolation
 
-hard limits; 4 declarations; ~16 s of CI.
+hard limits; 4 tests; files take ~16 s.
 
 These do step generated games (240/600-step paths plus short wave advances). Assertions compare matched state, semantic fingerprint sensitivity and reset behavior rather than wins, survival or kills. The historical15.605 file seconds remain integrity work, not a savings proposal.
 
@@ -1830,9 +2208,9 @@ These do step generated games (240/600-step paths plus short wave advances). Ass
 
 ## T4: Research, architecture and generated data
 
-current rules; 93 declarations; known files: ~4 s of CI; 12 files have unknown timing.
+current rules; 93 tests; known files take ~4 s; 12 files have unknown timing.
 
-Most inputs are fabricated rows/configs. Screen tests validate frozen experiment controls and gate text, not whether a bot wins. Toy ask/tell scores protect resumability. Tiny real expert-contract cases assert provenance, replay equality and honest unsupported results. The inventory classifier tests pass strings like advance(world); they never advance a world. Newly added synthetic inventory cases have been reviewed by the integrator. Second review6566258844 adds20 schema/architecture/reference contracts and11 change-history/site-publication cases. Old import boundaries are parity inputs; the NEW schema graph excludes game/render/DOM. Knob-date checks validate metadata format, not every ruling’s design currentness. Changelog34 is a frozen archive sanity floor; Pages tests preserve selected source and latest live snapshot, not a game outcome.
+Most inputs are fabricated rows/configs. Screen tests validate frozen experiment controls and gate text, not whether a bot wins. Toy ask/tell scores protect resumability. Tiny real expert-contract cases assert provenance, replay equality and honest unsupported results. The inventory classifier tests pass strings like advance(world); they never advance a world. Newly added synthetic inventory cases have been reviewed by the integrator. Second review6566258844 adds20 schema/architecture/reference contracts and 11 change-history/site-publication cases. Old import boundaries are parity inputs; the NEW schema graph excludes game/render/DOM. Knob-date checks validate metadata format, not every ruling’s design currentness. Changelog34 is a frozen archive sanity floor; Pages tests preserve selected source and latest live snapshot, not a game outcome.
 
 - [src/changelog.test.ts:6](../../src/changelog.test.ts#L6): groups and sorts version gaps without assuming a consecutive workflow counter
 - [src/changelog.test.ts:10](../../src/changelog.test.ts#L10): collects the archive and the fragments, the current build's first, then newest version first
@@ -1932,9 +2310,9 @@ Most inputs are fabricated rows/configs. Screen tests validate frozen experiment
 
 ## T5: Preview and visual-review tool integrity
 
-current rules; 57 declarations; known files: ~122 s of CI; 6 files have unknown timing.
+current rules; 57 tests; known files take ~122 s; 6 files have unknown timing.
 
-Throwaway Git fixtures, small typed arrays/depth bits, stubbed wrappers and glyph/genome records prove safe tooling and opted-in comparisons. Deterministic shape/ink constants are readability rules, not night outcomes. Art/creature owners should confirm a future acceptance-constant change. The32 art-cache handoff tests parse ASTs/hash source/JSON/binary bytes and use fake command exits, not drawing. They require fail-closed dependency analysis, exact successful keys, initialization-order coverage and old-v1 exact-input compatibility. Copy-heavy real-source fixtures account for historical cost but are not outcome simulations.
+Throwaway Git fixtures, small typed arrays/depth bits, stubbed wrappers and glyph/genome records prove safe tooling and opted-in comparisons. Deterministic shape/ink constants are readability rules, not night outcomes. Art/creature owners should confirm a future acceptance-constant change. The 32 art-cache handoff tests parse ASTs/hash source/JSON/binary bytes and use fake command exits, not drawing. They require fail-closed dependency analysis, exact successful keys, initialization-order coverage and old-v1 exact-input compatibility. Copy-heavy real-source fixtures account for historical cost but are not outcome simulations.
 
 - [src/artCheckAffected.test.ts:15](../../src/artCheckAffected.test.ts#L15): allows exact successful fingerprints on releases and pushes, retaining full fallback for unknown events
 - [src/artCheckAffected.test.ts:23](../../src/artCheckAffected.test.ts#L23): derives every real registered task once without executing the check
@@ -1998,9 +2376,9 @@ Throwaway Git fixtures, small typed arrays/depth bits, stubbed wrappers and glyp
 
 ## T6: One mixed replay and fixture-sanity case
 
-hard limits; 1 declarations; historical time unknown.
+hard limits; 1 test; file time unknown.
 
-One declaration runs30/5s real cases plus stun fixtures15/30s. Repeated runs and phase accounting are hard integrity proofs; censored/stunned/hits>0/retaliation>0 predicates also validate the selected scenario. This is not a demonstrated pure outcome test to move wholesale. Exact purpose needs its report/combat owner.
+One declaration runs30/5 s real cases plus stun fixtures15/30 s. Repeated runs and phase accounting are hard integrity proofs; censored/stunned/hits>0/retaliation>0 predicates also validate the selected scenario. This is not a demonstrated pure outcome test to move wholesale. Exact purpose needs its report/combat owner.
 
 - [tools/balance/report.test.mjs:36](../../tools/balance/report.test.mjs#L36): real-rules replay is deterministic across interleaved bots and bags
 
@@ -2008,7 +2386,7 @@ One declaration runs30/5s real cases plus stun fixtures15/30s. Repeated runs and
 
 ## T7: Separate coordination-plugin contracts
 
-current rules; 14 declarations; historical time unknown.
+current rules; 14 tests; file time unknown.
 
 Fourteen contracts mock tool replies, clocks and session identity. They protect required status/option fields, atomic batches, version-pinned activity stamps and wake-thread identity. The plugin still has manifest/hooks, but live activation was not verified. These are OUTSIDE Witch Vitest includes, their timing is UNKNOWN, and no Witch CI saving is established. Activation/applicability remains with dev-ops owner.
 
@@ -2030,19 +2408,23 @@ Fourteen contracts mock tool replies, clocks and session identity. They protect 
 ## tools-ci: ruling review
 
 - Proof supersession checked: testing.md historical text ‘freezes prototype once and caches its separate build and successful baseline measurement’ is replaced by cost correction6562620628 ‘neither checks out/builds/measures nor caches a prototype baseline’. workflows.test.ts:8 asserts the replacement. Its nightly helper tests do not reinstate the removed PR settle/pixel gate.
-- Pixel exception supersession: testing.md6561733936 replaces #1612’s exact-colour exception with at most eight pixels and channel delta32. proofs.test.cjs:30 checks 2small/8at32 pass and9pixels/40channel fail. No removed allowlist requirement remains.
+- Pixel exception supersession: testing.md6561733936 replaces #1612’s exact-colour exception with at most eight pixels and channel delta32. proofs.test.cjs:30 checks 2small/8at32 pass and 9 pixels/40channel fail. No removed allowlist requirement remains.
 - Art policy supersession: historical creatures.md says cloud art/canonical visual review are release gates; current testing.md says art runs nightly/manual and does not hold builds/releases. workflows.test.ts checks advisory nightly art, standing result and matching-tree reuse. This supports keeping the replacement guards, not deleting them.
-- Compatibility is current: roster/presets.test.mjs legacy beetle branch is still implemented in art/roster/presets.js and creatures.md retains beetle Current. comparable old-log and hold-simulation old/new-loop inputs similarly prove compatibility. No whole-case obsolete design was established in these49 files.
-- run-unit.test.ts “slowest alone” still follows the current largest-first total-work algorithm for its300s file/150s remaining-work input. A separate case rejects hiding extra work under the longest file. The title alone does not pin the superseded longest-file objective.
-- Second-pass schedule supersession: art-check/scope.mjs header says full check on every prototype push; art-checks.md5 Ed1Nov now says nightly03:17/manual and ‘No build, deploy or release waits on it’. affected23 asserts schedule/manual and NO PR/push triggers. fullCheck(event) and scope(paths) are exported compatibility helpers, not workflow triggers. The old header is stale commentary; no assertion enforcing the retired schedule was found.
+- Compatibility is current: roster/presets.test.mjs legacy beetle branch is still implemented in art/roster/presets.js and creatures.md retains beetle Current. comparable old-log and hold-simulation old/new-loop inputs similarly prove compatibility. No whole-case obsolete design was established in these 49 files.
+- run-unit.test.ts “slowest alone” still follows the current largest-first total-work algorithm for its300 s file/150 s remaining-work input. A separate case rejects hiding extra work under the longest file. The title alone does not pin the superseded longest-file objective.
+- Second-pass schedule supersession: art-check/scope.mjs header says full check on every prototype push; art-checks.md5 Ed 1Nov now says nightly03:17/manual and ‘No build, deploy or release waits on it’. affected23 asserts schedule/manual and NO PR/push triggers. fullCheck(event) and scope(paths) are exported compatibility helpers, not workflow triggers. The old header is stale commentary; no assertion enforcing the retired schedule was found.
 - Pure schema replacement: config.md7 now imports LEGEND from creatureLevels while creatures retains the old exports without changing assembled values. configDataBoundary13 builds an OLD-import parity reference; :37 requires the NEW independent runtime graph. Knob prose migration29Oct and generated gates approved30Oct are protected by knobDocs21/67. No request to restore retired imports or prose is present.
-- Known hash bug: artHash’s23Oct header records top-level-only hashing missing nested edits. Tests now require recursive subfolder changes; exact-v1 migration requires matching effective inputs. These are replacement bug guards, not old stale-cache behavior. No outcome/deletion group was established in the77-ID second pass.
+- Known hash bug: artHash’s23Oct header records top-level-only hashing missing nested edits. Tests now require recursive subfolder changes; exact-v1 migration requires matching effective inputs. These are replacement bug guards, not old stale-cache behavior. No outcome/deletion group was established in the 77-ID second pass.
+
+## ui-menus-controls: review provenance
+
+Read-only source review at 9f045ebca, report 6566137785. Exact overlap with saves/world/art is counted on those pages once; multiplayer boundaries remain with #1609. Second review 6566596996 at 73741aa8 accounts for all 35 remaining declarations: U7 five proposed, U8/U9/U10 thirty kept; no overlap.
 
 <a id="u1"></a>
 
 ## U1: Preview and chart distribution thresholds
 
-outcome stats; 3 declarations; ~2 s of CI.
+outcome stats; 3 tests; files take ~2 s.
 
 Bag previews compare total throws/hits across loops. ChartLayout samples three archipelagos and pins median/max bearing drift, radius growth and quadrant shares. Split those outcome thresholds while retaining bag reach, chart containment and patch exclusion.
 
@@ -2054,7 +2436,7 @@ Bag previews compare total throws/hits across loops. ChartLayout samples three a
 
 ## U2: Controls, pause and menu recovery
 
-current rules; 105 declarations; ~12 s of CI.
+current rules; 105 tests; files take ~12 s.
 
 Tests inject events/hosts and check input ownership, exception recovery, remaps and exactly-once actions. freezeStack replay equality is integrity despite advancing a game. Settings’ fixed recovery inputs are deliberate; controller tests do not measure GPU performance.
 
@@ -2168,7 +2550,7 @@ Tests inject events/hosts and check input ownership, exception recovery, remaps 
 
 ## U3: Opening, travel, progression and links
 
-current rules; 101 declarations; ~54 s of CI.
+current rules; 101 tests; files take ~54 s.
 
 Known inputs drive fallback, saved tuning, temporary finds and loading completeness. Map/campaign cases compare retained identity rather than bot success. Existing W1/W6 cases are excluded from duplicate membership here. House reviewer verified three whatsNew tests: lazy/retry networking, safe bounded paths/data and batched ordered changelog transport.
 
@@ -2278,7 +2660,7 @@ Known inputs drive fallback, saved tuning, temporary finds and loading completen
 
 ## U4: Diagnostics, encoded data and queue bounds
 
-hard limits; 60 declarations; ~7 s of CI.
+hard limits; 60 tests; files take ~7 s.
 
 Synthetic rows, fake timers and worker traces exercise bounded allocation, retained report text and transparent instrumentation. Long arrays and paused loops are integrity pressure, not gameplay outcome targets. S6 already contains recorded-game/comment replay and is not double-counted.
 
@@ -2347,7 +2729,7 @@ Synthetic rows, fake timers and worker traces exercise bounded allocation, retai
 
 ## U5: Creator and editor data compatibility
 
-current rules; 40 declarations; ~2 s of CI.
+current rules; 40 tests; files take ~2 s.
 
 Synthetic saved data and controls verify migration, current catalogs and valid schemas. The exact potion catalog and palette grid are current pins, not proven superseded. Beetle/shape visual baseline cases are listed under art instead.
 
@@ -2392,21 +2774,108 @@ Synthetic saved data and controls verify migration, current catalogs and valid s
 - [src/ui/schemaForm.test.ts:91](../../src/ui/schemaForm.test.ts#L91): stops at its depth, the rest raw JSON (children of children of ... are attacks)
 - [src/ui/schemaForm.test.ts:105](../../src/ui/schemaForm.test.ts#L105): reads the game's own schemas without throwing (combat.json's)
 
+<a id="u-time"></a>
+
+## U-TIME: Production-sized replay pressure fixture cost
+
+hard limits; 1 test; files take ~38 s.
+
+Preserve legacy report text through duplicated replay pressure, reload and both exports. Coordinator report 6566569947 measured 24.7 s on a normal shard and a 30 s timeout on unrelated multiplayer head d7ce9a6e. This is fixture cost, not evidence against the safety assertion. Yes means use a smaller blocking integrity fixture and move only production-sized pressure to a nonblocking report; no means retain the current fixture. No implementation before Ed rules.
+
+- [src/app/playtestComments.test.ts:69](../../src/app/playtestComments.test.ts#L69): preserves legacy report text through production-sized duplicated replay pressure, reload and both exports
+
+<a id="u7"></a>
+
+## U7: Sampled camera comfort and travel magnitudes
+
+outcome stats; 5 tests; files take ~131 s.
+
+Report sampled maximum angle changes, midpoint distance, smoothness multiplier and two-second travel magnitudes. Keep authored tables/poses, intro termination, no overshoot, capped look-ahead and settled tracking. coastCamera:38 and rules:788 require NEW direct finite/continuity and input-to-movement/camera-coupling coverage in the later implementation; they do not already contain separable integrity assertions. Report 6566596996 records each assertion disposition.
+
+- [src/rules/coastCamera.test.ts:38](../../src/rules/coastCamera.test.ts#L38): eases, never jumps: a step's change in angle stays small
+- [src/rules/coastCamera.test.ts:44](../../src/rules/coastCamera.test.ts#L44): lying down, the camera by her bearing round the coast: each of the twelve entries exactly, smoothly between
+- [src/rules/rules.test.ts:447](../../src/rules/rules.test.ts#L447): opens close in on her seat, and eases out to the starting zoom once she leaves it (Ed, v171)
+- [src/rules/rules.test.ts:481](../../src/rules/rules.test.ts#L481): follows smoothly: never overshoots, never jolts, and looks only a little ahead
+- [src/rules/rules.test.ts:788](../../src/rules/rules.test.ts#L788): flies the witch and the camera follows
+
+<a id="u8"></a>
+
+## U8: Paused picture, clock and quality-controller policy
+
+current rules; 17 tests; files take ~131 s.
+
+Keep no paused redraw, each changed title redraw once, paused clock and MAX_STEP clamp. Quality modes, nonfinite/skipped sample handling, pending loads, hysteresis and exponential retry are supplied-input policy contracts, not measured throughput outcomes.
+
+- [src/app/worldDrawGate.test.ts:4](../../src/app/worldDrawGate.test.ts#L4): retains a paused picture through a minute of menu frames, including background art arrivals
+- [src/app/worldDrawGate.test.ts:15](../../src/app/worldDrawGate.test.ts#L15): redraws the start for new art, a changed view or an explicit simulation step, once each
+- [src/rules/ladder.test.ts:9](../../src/rules/ladder.test.ts#L9): starts at full quality with nothing in effect
+- [src/rules/ladder.test.ts:15](../../src/rules/ladder.test.ts#L15): steps down after a few slow windows, past rungs not built and load rungs, to the next live rung
+- [src/rules/ladder.test.ts:24](../../src/rules/ladder.test.ts#L24): doesn't step down on a window or two, nor while settling
+- [src/rules/ladder.test.ts:28](../../src/rules/ladder.test.ts#L28): climbs back slowly when there's room, and only if the rung above fitted last time
+- [src/rules/ladder.test.ts:41](../../src/rules/ladder.test.ts#L41): stops climbing for the night after it keeps flipping
+- [src/rules/ladder.test.ts:49](../../src/rules/ladder.test.ts#L49): goes to the bottom live rung, then wants px 4 from the next load, and no further
+- [src/rules/ladder.test.ts:56](../../src/rules/ladder.test.ts#L56): marks load rungs passed over as pending, and drops them when climbing back over
+- [src/rules/ladder.test.ts:73](../../src/rules/ladder.test.ts#L73): makes a night with the load rungs in effect at its rung
+- [src/rules/ladder.test.ts:81](../../src/rules/ladder.test.ts#L81): does nothing pinned or off; off is full quality
+- [src/rules/ladder.test.ts:90](../../src/rules/ladder.test.ts#L90): ignores windows marked skip and nonsense times
+- [src/rules/ladder.test.ts:96](../../src/rules/ladder.test.ts#L96): doesn't step down on a spike, a stall or a load that a skip window breaks up
+- [src/rules/ladder.test.ts:113](../../src/rules/ladder.test.ts#L113): climbs back once the room is real, though a spike pushed it down: retried after a while, longer each time it's left
+- [src/rules/ladder.test.ts:129](../../src/rules/ladder.test.ts#L129): a rung that really doesn't fit is tried again less and less often
+- [src/rules/ladder.test.ts:147](../../src/rules/ladder.test.ts#L147): on frame time (no GPU timer), a frame keeping up with the refresh isn't slow, and only missed frames step down
+- [src/rules/rules.test.ts:780](../../src/rules/rules.test.ts#L780): does not run while paused, and cuts long frames short
+
+<a id="u9"></a>
+
+## U9: Morning and post-night guidance
+
+current rules; 9 tests; files take ~4 s.
+
+Keep current morning order, bed gating, real kit/bag prerequisites and settled-win map/bed guidance. Waking is fixture preparation. The 28 October downward-pointing pin rule supersedes the hiding header; case 170 already tests current at-target and outside-house behavior. No obsolete test assertion found.
+
+- [src/rules/guidance.test.ts:32](../../src/rules/guidance.test.ts#L32): none while she's still in bed
+- [src/rules/guidance.test.ts:38](../../src/rules/guidance.test.ts#L38): a game's first morning, in Ed's order (2026-10-29): the dressing table (skin, hair), wardrobe, shoes, bags, the invitations, the cloak, her hat, her broom; then the decks
+- [src/rules/guidance.test.ts:62](../../src/rules/guidance.test.ts#L62): the dressing table's step is done once she's used it: E there (its panel opened)
+- [src/rules/guidance.test.ts:71](../../src/rules/guidance.test.ts#L71): no dressing pin after a night played: last night's clothes are in their pile; straight to the decks
+- [src/rules/guidance.test.ts:77](../../src/rules/guidance.test.ts#L77): a game's first morning on a later load (no night played yet): no pile, so the dressing pins, her hat last on the hats' floor
+- [src/rules/guidance.test.ts:88](../../src/rules/guidance.test.ts#L88): the invitations desk, then the lathe, each till it's done (Lima's pickups; skipped while they say done)
+- [src/rules/guidance.test.ts:123](../../src/rules/guidance.test.ts#L123): the decks' pin goes with the party spell cast
+- [src/rules/guidance.test.ts:148](../../src/rules/guidance.test.ts#L148): after a won night, once its finale's settled: the map table while there's an island she hasn't been to, even after the chart's opened; then the bed; shown from anywhere (Ed, 2026-10-26)
+- [src/rules/guidance.test.ts:170](../../src/rules/guidance.test.ts#L170): stays the same off the treehouse (Ed, 2026-10-28: "Whatever pin you had before leaving the treehouse still shows"), and knows when she's at its target (where the pin stays, over it)
+
+<a id="u10"></a>
+
+## U10: Exact camera geometry and configuration
+
+current rules; 4 tests; files take ~131 s.
+
+Keep authored coast/stargazing bearings, treetop exclusion, configured zoom endpoints/exponent and calculated camera position. Fixed-target settling prepares comparison with specified configuration.
+
+- [src/rules/coastCamera.test.ts:28](../../src/rules/coastCamera.test.ts#L28): lying down to stargaze, lower and closer still; getting up and walking off, back the same way
+- [src/rules/coastCamera.test.ts:60](../../src/rules/coastCamera.test.ts#L60): over the treetops the coast leaves the camera alone
+- [src/rules/rules.test.ts:463](../../src/rules/rules.test.ts#L463): uses each mode's angle and distance, and zoom moves between in and out
+- [src/rules/rules.test.ts:496](../../src/rules/rules.test.ts#L496): sits south of and above what it looks at
+
 ## ui-menus-controls: ruling review
 
-- Relaxed sea chart: the old comparison placed each island on its phase ring; Ed12Oct in island.md says ‘the rings can be very relaxed, a pleasing layout is much more important’ and ‘the phase rings should hardly show’. chartLayout:42 checks ringAt for the comparison tool’s before panel, not the live chart. Keep it; U1 targets the separate live-layout statistics.
+- Relaxed sea chart: the old comparison placed each island on its phase ring; Ed 12Oct in island.md says ‘the rings can be very relaxed, a pleasing layout is much more important’ and ‘the phase rings should hardly show’. chartLayout:42 checks ringAt for the comparison tool’s before panel, not the live chart. Keep it; U1 targets the separate live-layout statistics.
 - Fixed interval replacement: DESIGN records old party.interval ‘5 minutes then1’ and 9Oct ‘Pure constant speed’. tuningPreset:15 copies a historical preset and explicitly notes the runtime no longer reads its interval. Its copy/unknown-preset/untouched-camera assertions protect compatibility, not retired wave pacing.
-- Opening replacement: the sea chart came first20Oct; Ed23Oct says ‘the first screen should be the witch waking up in her bedroom on the home island instead of the map’. Opening tests now check bedroom defaults plus documented opening=old/tool/resume exceptions. The old-decks comparison is expressly retained in house.md. End-card tests assert their26Oct removal.
-- Familiars: creator.test.ts:48 supplies old familiar data and asserts removal under Ed8Oct ‘Remove familiars’. It is migration protection. Controls tests assert the29Oct swap back, L2 dodge and correct d-pad zoom; no removed face-button layout was found required.
-- Nine beetle/shape-control cases are counted under art once, not UI twice. Report/replay cases already in S6 and identity/link cases already in W1/W6 remain there. U6’s36 owner-boundary tests are listing-only for1609.
+- Opening replacement: the sea chart came first20Oct; Ed 23Oct says ‘the first screen should be the witch waking up in her bedroom on the home island instead of the map’. Opening tests now check bedroom defaults plus documented opening=old/tool/resume exceptions. The old-decks comparison is expressly retained in house.md. End-card tests assert their26Oct removal.
+- Familiars: creator.test.ts:48 supplies old familiar data and asserts removal under Ed 8Oct ‘Remove familiars’. It is migration protection. Controls tests assert the 29Oct swap back, L2 dodge and correct d-pad zoom; no removed face-button layout was found required.
+- Nine beetle/shape-control cases are counted under art once, not UI twice. Report/replay cases already in S6 and identity/link cases already in W1/W6 remain there. U6’s36 owner-boundary tests are listing-only for 1609.
+- Coordinator timing proposal 6566569947 refines U4: the report-integrity assertion remains blocking; only fixture scale and production-sized pressure reporting are proposed to change. Alternatives recorded by the coordinator include a looser per-test timeout.
+- Second review 6566596996: Ed 6 October gradual coast transition still applies, but sampled comfort is distinct from direct correctness. Bedroom-first opening retains generic seated intro camera math. 28 October pin behavior supersedes the stale hidden-at-target header; current assertions already match it. No obsolete whole behavior test found.
+
+## world-islands-lakes: review provenance
+
+Two bounded source reviews are integrated: original 97-case partition plus 122 additional IDs (reports 6566078651/6566081354 and 6566275689/6566277162). Shared save/creature cases and owner-only listings are counted elsewhere once. No world runtime was executed. Six scenery declarations read in second house report 6566610514 are integrated here without duplicate membership.
 
 <a id="w1"></a>
 
 ## W1: Campaign identity and map equivalence
 
-hard limits; 21 declarations; ~313 s of CI.
+hard limits; 21 tests; files take ~313 s.
 
-Assertions compare identity, stable coast/shape, prepared/direct map equality, allowed species and connectivity. The roster case steps12/24 waves plus20s but only prohibits species outside the roster. It is not a win-rate target. Nearby mapPrep:59 prepared/direct continuation equality is another integrity check, not evidence to move the file. Lead additionally read heightSamples.test.ts:14/31/54: preserved quantized buffers, worker/direct rolling equality, immutable cache and malformed/NaN rejection. Its frozen hash is an extraction-parity baseline, with no later replacing terrain ruling established.
+Assertions compare identity, stable coast/shape, prepared/direct map equality, allowed species and connectivity. The roster case steps12/24 waves plus 20 s but only prohibits species outside the roster. It is not a win-rate target. Nearby mapPrep:59 prepared/direct continuation equality is another integrity check, not evidence to move the file. Lead additionally read heightSamples.test.ts:14/31/54: preserved quantized buffers, worker/direct rolling equality, immutable cache and malformed/NaN rejection. Its frozen hash is an extraction-parity baseline, with no later replacing terrain ruling established.
 
 - [src/app/arrival.test.ts:16](../../src/app/arrival.test.ts#L16): carries the flight's end to the island's page, once
 - [src/app/arrival.test.ts:23](../../src/app/arrival.test.ts#L23): ignores another island's, a stale one, and none
@@ -2434,9 +2903,9 @@ Assertions compare identity, stable coast/shape, prepared/direct map equality, a
 
 ## W2: Coast, lake and zoo boundaries
 
-hard limits; 25 declarations; ~88 s of CI.
+hard limits; 25 tests; files take ~88 s.
 
-Forced toggles, knockout and displacement verify declared landing/shore/fence states. Routing must terminate within its bound without crossing water. Scripted3–90s movement is boundary coverage rather than emergent survival statistics; beach poses are current interaction rules within this predominantly spatial-integrity group.
+Forced toggles, knockout and displacement verify declared landing/shore/fence states. Routing must terminate within its bound without crossing water. Scripted3–90 s movement is boundary coverage rather than emergent survival statistics; beach poses are current interaction rules within this predominantly spatial-integrity group.
 
 - [src/rules/beach.test.ts:21](../../src/rules/beach.test.ts#L21): `nothing grows, stands or runs on the sand or in the sea (seed ${seed})`
 - [src/rules/beach.test.ts:88](../../src/rules/beach.test.ts#L88): on foot: pushing out against the edge she lies down, and stays down
@@ -2468,7 +2937,7 @@ Forced toggles, knockout and displacement verify declared landing/shore/fence st
 
 ## W3: Authored rosters, biomes and lake looks
 
-current rules; 27 declarations; ~118 s of CI.
+current rules; 27 tests; files take ~118 s.
 
 Roster multiplicities and biome/phase assignments come directly from authored content rules. Equal wave numbers producing equal populations is a direct generation contract, not a played-night victory statistic. Flora exclusions and the no-lake early return need the targeted coverage review recorded in the ruling appendix.
 
@@ -2504,9 +2973,9 @@ Roster multiplicities and biome/phase assignments come directly from authored co
 
 ## W4: Scenery distributions and sea-life frequencies
 
-outcome stats; 7 declarations; ~200 s of CI.
+outcome stats; 7 tests; files take ~200 s.
 
-One pure distribution case and six mixed cases sample coast widths,5–120 finds/km, raggedness ratios, featured scenery≥6/10 islands, ruins mean>4, dolphin starts15–80/300s, kraken rises>4/1500s with<35% active share, or low-ground trees>1.3×high. Preserve direct placement, forbidden-scenery, equality and parameter assertions before moving those statistical components.
+One pure distribution case and six mixed cases sample coast widths,5–120 finds/km, raggedness ratios, featured scenery≥6/10 islands, ruins mean>4, dolphin starts15–80/300 s, kraken rises>4/1500 s with<35% active share, or low-ground trees>1.3×high. Preserve direct placement, forbidden-scenery, equality and parameter assertions before moving those statistical components.
 
 - [src/rules/beach.test.ts:43](../../src/rules/beach.test.ts#L43): varies in width round the coast (Ed, 2026-10-06: "more irregularly shaped"): wide bays, narrows, rocky stretches
 - [src/rules/beachDecor.test.ts:16](../../src/rules/beachDecor.test.ts#L16): lie on the sand, clear of the woods' edge and out of the sea, sparsely, the same for the same seed
@@ -2520,9 +2989,9 @@ One pure distribution case and six mixed cases sample coast widths,5–120 finds
 
 ## W5: Map resource and test-helper budgets
 
-hard limits; 4 declarations; ~77 s of CI.
+hard limits; 4 tests; files take ~77 s.
 
-The existing hydration guard uses best-of-two measurements over four tuples: each hydration below generation time and summed hydration below0.6×generation. Small-world helpers must clone tuning, give a reason and preserve separate largest-world coverage. The snapshot<4M-character guard is already S2 on the saves page and is not counted again here.
+The existing hydration guard uses best-of-two measurements over four tuples: each hydration below generation time and summed hydration below 0.6×generation. Small-world helpers must clone tuning, give a reason and preserve separate largest-world coverage. The snapshot<4M-character guard is already S2 on the saves page and is not counted again here.
 
 - [src/rules/mapPrep.test.ts:65](../../src/rules/mapPrep.test.ts#L65): is never slower to make than the map itself (Ed's laptop, 2026-10-20): hydrating takes well under generating, home's island too
 - [src/test/worlds.test.ts:7](../../src/test/worlds.test.ts#L7): shrinks only a cloned test map without mutating shared production/test tuning
@@ -2533,7 +3002,7 @@ The existing hydration guard uses best-of-two measurements over four tuples: eac
 
 ## W6: Links, travel and explicit transition rules
 
-current rules; 13 declarations; ~91 s of CI.
+current rules; 13 tests; files take ~91 s.
 
 Explicit URL values override carried sliders; retired wave-pace keys are forgotten. Door/ready and forced-clear transitions check named state and exactly-once pulses. The two generated-bot win/recruitment templates from the original partition remain with #1622, not a duplicate world proposal.
 
@@ -2555,7 +3024,7 @@ Explicit URL values override carried sliders; retired wave-pace keys are forgott
 
 ## W7: Procedural field and scenery quality
 
-outcome stats; 7 declarations; ~131 s of CI.
+outcome stats; 7 tests; files take ~131 s.
 
 Seven bodies measure generated area-size spread, forest dense/open/gradient shares, type diversity, openness-band tree density, the deliberately reduced-density count, layout-pattern shares and path departure from a straight line. No save/replay/water/exclusion assertion occurs inside these quality-only bodies. These are procedural quality measurements, not seven fight simulations.
 
@@ -2571,7 +3040,7 @@ Seven bodies measure generated area-size spread, forest dense/open/gradient shar
 
 ## W8: Mixed procedural quality and world integrity
 
-outcome stats; 29 declarations; ~182 s of CI.
+outcome stats; 29 tests; files take ~182 s.
 
 Twenty-nine cases combine sampled density, variety, correlations, ring shapes, street proximity and route diversity with direct world protection. Keep coast separation, nonnegative masks, water/path/floor/clearing exclusions, current allowed/removed content, per-object counts, exact seed/chunk equality, configuration endpoints and exercised nonempty coverage. mapShape53’s >90% numerical boundary agreement is retained GEOMETRY CORRECTNESS, not demoted with its aesthetic headland ratio.
 
@@ -2609,9 +3078,9 @@ Twenty-nine cases combine sampled density, variety, correlations, ring shapes, s
 
 ## W9: World continuation, placement and explicit modes
 
-current rules; 79 declarations; ~603 s of CI.
+current rules; 79 tests; files take ~603 s.
 
-Seventy-nine tests protect matched prepared/direct moving state, corrupt-prep rejection, roster/save coherence, shore-safe routing, protected runestone ground, arrival step bounds, forest cache/query ordering and zoo transitions. A600s route escape bound checks every walked/drawn segment stays ashore; a40s flight checks coast containment. Numerical geometry/query-effectiveness and coverage bounds remain integrity/current rules, not generic sampled appearance scores.
+Seventy-nine tests protect matched prepared/direct moving state, corrupt-prep rejection, roster/save coherence, shore-safe routing, protected runestone ground, arrival step bounds, forest cache/query ordering and zoo transitions. A600 s route escape bound checks every walked/drawn segment stays ashore; a40 s flight checks coast containment. Numerical geometry/query-effectiveness and coverage bounds remain integrity/current rules, not generic sampled appearance scores.
 
 - [src/rules/areaRenames.test.ts:12](../../src/rules/areaRenames.test.ts#L12): leaves no old id among the areas, and maps each to one that is
 - [src/rules/areaRenames.test.ts:32](../../src/rules/areaRenames.test.ts#L32): loads a save from before the renames whole (saves keep kinds, never area ids)
@@ -2693,14 +3162,39 @@ Seventy-nine tests protect matched prepared/direct moving state, corrupt-prep re
 - [src/rules/zooMap.test.ts:76](../../src/rules/zooMap.test.ts#L76): lays each legend's clearing at its island's middle, sized as play sizes it but to the zoo's cap, its runestone by the south shore
 - [src/rules/zooMap.test.ts:92](../../src/rules/zooMap.test.ts#L92): with a fresh save, only the kinds she knows are areas; every other island is its lake, with no creature on it
 
+<a id="w-r2-1"></a>
+
+## W-R2-1: Scenery abundance observations
+
+outcome stats; 3 tests; files take ~131 s.
+
+Keep structural validity, exclusions, reproducibility, ownership, eligibility, identity and existing upper bounds blocking. Report only sampled minimum density, numerical variation, abundance and diversity. Exact assertion dispositions and ruling review: PR #1632 comment 6566610514.
+
+- [src/rules/rules.test.ts:1257](../../src/rules/rules.test.ts#L1257): no ruin, freak tree, relic, set piece or grounds arrangement appears twice, over 5 seeds
+- [src/rules/rules.test.ts:1270](../../src/rules/rules.test.ts#L1270): places scenes, each at most once, in areas they suit, off the paths and clear of the gameplay (Ed, 2026-10-04)
+- [src/rules/rules.test.ts:1294](../../src/rules/rules.test.ts#L1294): give each set piece to one area only, which has room for it
+
+<a id="w-r2-k1"></a>
+
+## W-R2-K1: Scenery footprint, stairs and paths
+
+current rules; 3 tests; files take ~131 s.
+
+Read in the second house pass and displayed here once: footprint size, stairs only in suitable areas and clear paths. These are direct placement and geometry contracts.
+
+- [src/rules/rules.test.ts:1286](../../src/rules/rules.test.ts#L1286): gives each scene a footprint at least the art's own
+- [src/rules/rules.test.ts:1290](../../src/rules/rules.test.ts#L1290): stairs stand only by ravines, rocky slopes, cave mouths and stone shrines
+- [src/rules/rules.test.ts:1306](../../src/rules/rules.test.ts#L1306): keep soundsystems and set pieces off the paths, so paths run on unbroken
+
 ## world-islands-lakes: ruling review
 
-- Set-piece supersession: DESIGN.md Ed3Oct says ‘Set pieces are rare bits of scenery’. world-art.md Ed29Oct says ‘phased out of normal generation (setPieceChance0)’ with recipes/art retained for previews. rules.test.ts:1851 asserts setPiecesNear=[] and paths.pieces=[]: retain those replacement guards and split only statistical scenery thresholds. lakes.test.ts:61 conditionally checks returned set-piece positions; mapPrep closure equality does not require one to spawn. No positive old-generation requirement was found in the97 reviewed tests.
-- Home-growth supersession: journey backlog Ed10/11Oct says first10 areas’ ‘places and their kinds’ remain the same; island.md Ed28Oct says ‘keep the route changing, shuffle the creatures and area types, retain the area shapes’. deal.test.ts:54 requires changed type deals with stable shapes; homeGrowth.test.ts:24 compares cell keys and sorted roster, not type-at-cell. They implement the replacement. The rosters comment saying the night ‘only deals its legends’ is stale explanation, not a reason to delete its count/coast protection.
-- Placeholder supersession: journey backlog Ed11Oct describes32 kinds and32 placeholders; island.md now says all64 designed. rosters.test.ts:115 still checks64 valid island descriptors; its old placeholder title is stale, while rejecting unknown-01 remains legacy-ID safety. Neither that title nor the64-designed statement proves flora RETHEMING exclusions obsolete.
+- Set-piece supersession: DESIGN.md Ed 3Oct says ‘Set pieces are rare bits of scenery’. world-art.md Ed 29Oct says ‘phased out of normal generation (setPieceChance0)’ with recipes/art retained for previews. rules.test.ts:1851 asserts setPiecesNear=[] and paths.pieces=[]: retain those replacement guards and split only statistical scenery thresholds. lakes.test.ts:61 conditionally checks returned set-piece positions; mapPrep closure equality does not require one to spawn. No positive old-generation requirement was found in the 97 reviewed tests.
+- Home-growth supersession: journey backlog Ed 10/11Oct says first10 areas’ ‘places and their kinds’ remain the same; island.md Ed 28Oct says ‘keep the route changing, shuffle the creatures and area types, retain the area shapes’. deal.test.ts:54 requires changed type deals with stable shapes; homeGrowth.test.ts:24 compares cell keys and sorted roster, not type-at-cell. They implement the replacement. The rosters comment saying the night ‘only deals its legends’ is stale explanation, not a reason to delete its count/coast protection.
+- Placeholder supersession: journey backlog Ed 11Oct describes32 kinds and 32 placeholders; island.md now says all 64 designed. rosters.test.ts:115 still checks64 valid island descriptors; its old placeholder title is stale, while rejecting unknown-01 remains legacy-ID safety. Neither that title nor the 64-designed statement proves flora RETHEMING exclusions obsolete.
 - G3 review limits: floraBiomes.test.ts:31 excludes11 RETHEMING IDs under a comment saying17; an art/data owner must confirm those exclusions. lakeLooks.test.ts:40 returns early if its sampled island has no lake. These are specific coverage-strengthening candidates, not established obsolete whole tests. This bounded review confirmed zero obsolete whole tests.
 - Timing overlaps: mapPrep, beach, beachDecor, islandGrowth, homeGuard, lakes, island, terrain and win appear in multiple groups. File durations include other tests and other systems. No group-time sum is a wall-time or savings estimate.
-- Second-pass set-piece evidence: rules.test.ts40–43 explicitly enables setPieceChance=.25, grounds/decor families and path pieces; stoneKeepClear14–16 opts in too. This is retained preview/placement compatibility under the29Oct phase-out, not a positive requirement for normal generation. Keep exclusion/placement rules; report only sampled quality portions.
+- Second-pass set-piece evidence: rules.test.ts40–43 explicitly enables setPieceChance=.25, grounds/decor families and path pieces; stoneKeepClear14–16 opts in too. This is retained preview/placement compatibility under the 29Oct phase-out, not a positive requirement for normal generation. Keep exclusion/placement rules; report only sampled quality portions.
 - Legacy zoo grid: old zoo.ts helpers draw borders/corners of a grid; island.md21 replaces the live zoo with chart-shaped islands26Oct. map.ts creates zooChartPlan, paths.ts omits grid strips with that layout, and the live map omits grid junctions. zoo35 directly tests retained zooPlan helpers, while the plan still supplies current jump-list rows. No live-grid requirement or helper-retirement permission is established.
-- Radius/square compatibility is explicit: island.md13 retains island=off and test/radiusMap sets islandAreas0. mapShape73 selects square intentionally; islandShape13 tests a still-used helper, while islandGrowth56 compares real outlines. Treehouse rules224 already asserts north-west after24Oct; no due-north-only assertion was found.
+- Radius/square compatibility is explicit: island.md13 retains island=off and test/radiusMap sets islandAreas0. mapShape73 selects square intentionally; islandShape13 tests a still-used helper, while islandGrowth56 compares real outlines. Treehouse rules224 already asserts north-west after 24Oct; no due-north-only assertion was found.
 - Owner-only second-pass listings: island49 master swarm curve belongs to1622. IslandShape9/24 and lakeShore38 are visual source tests; rules237 is house/input; rules1642/1653 are spawn-marker/replacement-rune party policy. They receive no automatic keep decision from the world reviewer and remain explicitly unread until an owner/lead review is recorded.
+- Set-piece follow-up to coordinator 6566615533: rules.test.ts:40–43 explicitly overrides GAME_TUNING with setPieceChance:0.25, enabled grounds, ruins/rocks/freak mix, path pieces and unrestricted featured scenes. The five maps at 1253 use that TUNING. Therefore set-piece uniqueness (1257), assignment/count (1294) and path clearance (1306) explicitly opt into retained compatibility scenery; none requires default normal play to spawn set pieces. Ed 29 October phases normal generation out, while recipes/art remain for comparisons (world-art.md:11–12,39). Scenes/ruins remain documented features, and this fixture explicitly enables their full placement. Keep/split as proposed; no proven leftover.

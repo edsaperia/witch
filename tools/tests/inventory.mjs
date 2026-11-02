@@ -5,7 +5,7 @@ import path from 'node:path';
 import crypto from 'node:crypto';
 import { fileURLToPath } from 'node:url';
 import ts from 'typescript';
-import { applyReviews, reviewOutputs } from './semantic.mjs';
+import { applyReviews, reviewOutputs, questionList } from './semantic.mjs';
 
 export const systems = {
   combat: ['Combat', 'Damage and fighting values follow the current rules.', 'Emergent victory rates remain separate from safety guarantees.', 'Combat decisions and test changes belong to #1622.'],
@@ -178,15 +178,16 @@ export function outputs(data, reviews = {}) {
   const reviewed=Object.keys(reviews).map(id=>`[${systems[id]?.[0]??id}](${id}.md)`).join(', ');
   result['README.md']=result['README.md'].replace('Audit only, #1631 / draft #1632.',`Audit only, #1631 / draft #1632.\n\n**Scoped semantic review.** Concrete reviewed groups: ${reviewed}. Exact reviewed membership, assertion rationale and old/current ruling comparisons are in [semantic-groups.md](semantic-groups.md). Page scope statements identify bounded reviews; neighboring unreviewed cases are not silently treated as current. These proposals await the coordinator's review before Ed sees them. Combat and multiplayer retain their existing owners. The initial catalogue remains a machine-first reading aid; reviewed classifications are in inventory.json.`);
   result['README.md']+='\n## Coverage ledger\n\nCounts below are source test templates, not executions. “Existing owner” means no parallel review/proposal in this audit; “unread” means no change proposed.\n\n| System | Reviewed | Existing owner | Unread |\n|---|---:|---:|---:|\n'+Object.entries(systems).map(([id,[title]])=>{const cases=all.filter(c=>c.system===id),owner=['combat','multiplayer'].includes(id);return `| ${title} | ${cases.filter(c=>c.semanticGroup).length} | ${owner?cases.length:0} | ${owner?0:cases.filter(c=>!c.semanticGroup).length} |`;}).join('\n')+'\n\nSee [the exact unread file/line manifest](unreviewed.md). Standalone Node and external coordination-plugin files are included in the inventory but labeled outside Witch Vitest includes; their counts are not established Witch CI savings. A file with no named registrations may be a standalone assertion script, not zero coverage.\n';
+  result['README.md']='# Test audit decisions\n\n'+questionList(data,reviews)+'\n<details>\n<summary>Inventory, coverage and method</summary>\n\n'+result['README.md'].replace(/^# [^\n]+\n/,'')+'\n</details>\n';
   const combined={...result,...reviewOutputs(data,reviews)};
   let unread='# Tests not yet semantically reviewed\n\nNo change is proposed for these tests. System placement uses the source file/module and named suite; placement is not a semantic keep decision. Combat and multiplayer remain owner-only listings. IDs identify source templates, not expanded executions.\n\n';
   for(const [id,[title]] of Object.entries(systems)) {
     if(['combat','multiplayer'].includes(id))continue;
     const pending=all.filter(c=>c.system===id && !c.semanticGroup);
-    unread+=`## ${title}\n\n${pending.length} tests not reviewed; no change proposed.\n\n`;
-    for(const file of [...new Set(pending.map(c=>c.file))])unread+=`- [${file}](../../${file}): ${pending.filter(c=>c.file===file).length} tests; lines ${pending.filter(c=>c.file===file).map(c=>c.line).join(', ')}.\n`;
+    unread+=`## ${title}\n\n${pending.length} ${pending.length===1?'test':'tests'} not reviewed; no change proposed.\n\n`;
+    for(const file of [...new Set(pending.map(c=>c.file))]){const n=pending.filter(c=>c.file===file).length;unread+=`- [${file}](../../${file}): ${n} ${n===1?'test':'tests'}; lines ${pending.filter(c=>c.file===file).map(c=>c.line).join(', ')}.\n`;}
     if(!reviews[id])combined[`${id}.md`]=`# ${title}\n\n0 changes proposed, 0 reviewed groups to keep.\n\n**Not reviewed, no change proposed:** ${pending.length} tests. No keep question covers these unread tests. [Exact remaining file/line manifest](unreviewed.md#${title.toLowerCase().replaceAll(',','').replaceAll(' ','-')}).\n`;
-    else combined[`${id}.md`]+=`\n## Not reviewed, no change proposed\n\n${pending.length} additional tests remain outside the reviewed groups. The keep question above covers only named groups. [Exact remaining file/line manifest](unreviewed.md).\n`;
+    else combined[`${id}.md`]+=`\n## Review coverage\n\n${pending.length} ${pending.length===1?'test remains':'tests remain'} unread. The keep question covers only named reviewed groups. [Exact remaining file/line manifest](unreviewed.md).\n`;
   }
   combined['unreviewed.md']=unread;
   return Object.fromEntries(Object.entries(combined).map(([file,content])=>[file,content.trimEnd()+'\n']));

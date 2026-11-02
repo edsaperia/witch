@@ -47,7 +47,7 @@ test('semantic groups use explicit membership and preserve undivided file timing
   applyReviews(data,reviews);
   assert.equal(data.files[0].cases[0].kind,'hard limits');
   assert.equal(data.files[0].cases[1].kind,undefined);
-  assert.match(reviewOutputs(data,reviews)['saves-replay-robustness.md'],/~10 s of CI/);
+  assert.match(reviewOutputs(data,reviews)['saves-replay-robustness.md'],/files take ~10 s/);
 });
 test('semantic review rejects missing examples and duplicate case assignments',()=>{
   const data={files:[{file:'one.test.ts',cases:[{id:'one.test.ts:1',line:1,name:'keep'}]}]};
