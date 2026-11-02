@@ -1,0 +1,7 @@
+{
+  "version": null,
+  "items": [
+    "Mushrooms now cast a softer, wider light by default, with a fainter colour pool.",
+    "The light around each mushroom now lies flat on the ground, so it is no longer cut off at the bottom."
+  ]
+}
