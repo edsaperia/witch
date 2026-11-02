@@ -25,7 +25,7 @@ export function actionReach(c: Creature, action: CreatureAction, data: PacksData
   if (action.delivery === "effect") {
     const effect = action.parameters ?? {};
     const range = (effect.leap ? move?.to : undefined) ?? effect.range ?? effect.reach ?? effect.radius ?? 20;
-    return range * FIGHT.scale * (c.level === 1 ? data.young.special : 1);
+    return range * FIGHT.scale * (c.level === 1 ? data.young.effectScale : 1);
   }
   const ordinary = attackOf(c.species, c.level)?.attack;
   const preparation = move?.to ?? move?.from ?? move?.trigger ?? (move?.kind === "swoop" ? move.radius : undefined);

@@ -236,4 +236,15 @@ describe("combat waiting spacing", () => {
     for (let i = 0; i < 120; i++) {world.time = i * world.dt; stepCombat(state, world); pulsed ||= state.events.some(e => e.kind === "pulse" && e.id === c.id);}
     expect(pulsed, JSON.stringify({gap: bodyGap(c, foe, world.t), attack: packAttack("bat", 2, "melee")?.attack, fight: c.fight, x: c.x, z: c.z, foe: {x: foe.x, z: foe.z}, team: [...state.waitingTeams!.values()][0], events: state.events.map(e => e.kind)})).toBe(true);
   }));
+  it("keeps roe movement finite through repeated action and waiting transitions", () => {
+    const {state, world} = fight(true);
+    world.t = withTuning({combatSpacing: true});
+    for (const c of world.creatures) {c.species = "roe"; c.level = c.id < 2 ? 1 : 2; c.x = 20 + c.id * 5; c.z = c.id * 6; c.moveReadyAt = 0; c.fight!.readyAt = 0;}
+    for (let i = 0; i < 1800; i++) {
+      world.time = i * world.dt; world.witches[0].x = Math.cos(world.time * 0.6) * 10; world.witches[0].z = Math.sin(world.time * 0.6) * 10;
+      const before = world.creatures.map(c => ({x: c.x, z: c.z, hop: c.hop && {...c.hop}, leap: c.leap && {...c.leap}, hide: c.packHide && {...c.packHide}}));
+      stepCombat(state, world);
+      if (world.creatures.some(c => ![c.x, c.z, c.vx ?? 0, c.vz ?? 0].every(Number.isFinite))) throw Error(JSON.stringify({time: world.time, before, after: world.creatures, teams: [...state.waitingTeams!.values()]}));
+    }
+  });
 });

@@ -54,13 +54,7 @@ describe("creature movement (Stage 5)", () => {
     expect(seen[Math.floor(seen.length / 2)]).toBeLessThan(Math.PI); // spread round her: mostly no half of the circle round her holds them all
   }, 60000);
 
-  it("has a hare dart in and back out (hit and run)", () => {
-    const g = quiet(), hare = pick(g, "hare", 1, 35, 0);
-    let near = Infinity, farAfter = 0, wasNear = false;
-    run(g, 10, () => { const d = Math.hypot(hare.x - g.witch.x, hare.z - g.witch.z); if (d < 5) { wasNear = true; near = Math.min(near, d); } if (wasNear) farAfter = Math.max(farAfter, d); });
-    expect(near).toBeLessThan(5);
-    expect(farAfter).toBeGreaterThan(15); // (out to a ring about 25 m round her)
-  }, 60000);
+// Numerical cadence/close passes replace a fixed-distance hit-and-run outcome (Ed, 2026-11-01).
 
   it("has a boar charge: a fast straight burst", () => {
     const g = quiet(), boar = pick(g, "boar", 1, 30, 0);

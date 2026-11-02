@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, it } from "vitest";
-import { ACTIONS, actionsOf, type CreatureAction } from "./actions";
-import { PACKS, stepPacks, packGate, markStrike } from "./packs";
+import { ACTIONS, actionsOf, actionReach, type CreatureAction } from "./actions";
+import { PACKS, stepPacks, packGate, markStrike, packAttack } from "./packs";
 import { teamOf } from "./teams";
 import { newCombat, type CombatWorld } from "../combat";
 import type { Creature } from "../creatures";
@@ -27,7 +27,13 @@ describe("creature action contracts", () => {
         expect(Number.isFinite(action.weight) && action.weight >= 0).toBe(true);
         expect(Number.isFinite(action.youngWeight) && action.youngWeight >= 0).toBe(true);
         if (action.delivery === "effect") expect(action.effect).toBeDefined();
+        for (const level of [1, 2] as const) {
+          const c = {...animal(0), species, level};
+          expect(Number.isFinite(actionReach(c, action, PACKS)) && actionReach(c, action, PACKS) > 0, `${species}:${action.id}@${level}`).toBe(true);
+          if (action.delivery !== "effect") expect(packAttack(species, level, action.delivery), `${species}:${action.id}@${level}`).not.toBeNull();
+        }
       }
+      for (const level of [1, 2]) expect(actions.reduce((sum, a) => sum + a.weight * (level === 1 ? a.youngWeight : 1), 0), `${species}@${level}: executable choices`).toBeGreaterThan(0);
     }
     expect(actionsOf("ram").map(a => a.delivery)).toEqual(["melee", "ranged"]);
   });
@@ -61,5 +67,20 @@ describe("creature action contracts", () => {
     stepPacks(state, world);
     expect(creatures[0].leap).toBeDefined();
     expect([...state.packs!.values()][0].pendingClouds).toHaveLength(2);
+  });
+  it("a protective stance does not reposition its actor or a nearby wounded packmate", () => {
+    const {state, world, creatures} = fixture({id: "protect", delivery: "effect", effect: "cover", weight: 1, youngWeight: 1, cooldown: 7, parameters: {range: 10, reach: 4}});
+    creatures[1].affection = 0.9;
+    const positions = creatures.map(c => [c.x, c.z]);
+    stepPacks(state, world);
+    expect(creatures.map(c => [c.x, c.z])).toEqual(positions);
+    expect(creatures[0].dug).toBeGreaterThan(world.time);
+  });
+  it("a packmate's scatter cannot replace a committed charge with hidden travel", () => {
+    const {state, world, creatures} = fixture({id: "scatter", delivery: "effect", effect: "scatter", weight: 1, youngWeight: 1, cooldown: 7, parameters: {range: 10}});
+    creatures[1].charge = {dx: 1, dz: 0, speed: 20, until: 10};
+    const route = creatures[1].charge;
+    stepPacks(state, world);
+    expect(creatures[1].charge).toBe(route); expect(creatures[1].packHide).toBeUndefined();
   });
 });

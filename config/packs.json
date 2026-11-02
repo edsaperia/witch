@@ -6,8 +6,8 @@
     "steady": { "tell": 0.75, "gap": 0.55, "lull": 1.8, "perMember": 0.45, "timeout": 6 },
     "slow": { "tell": 1, "gap": 0.8, "lull": 2.4, "perMember": 0.6, "timeout": 7 }
   },
-  "_young": "Young packs scale wind-up, speed, range, special and lull; decisions: docs/notes/config-history/packs.md#young.",
-  "young": { "windup": 1.3, "speed": 0.8, "range": 0.85,  "lull": 1.3 },
+  "_young": "Youth physical scales for wind-up, speed, range, effect size/duration and recovery. Effect scaling is separate from action eligibility and choice weights.",
+  "young": { "windup": 1.3, "speed": 0.8, "range": 0.85, "effectScale": 0.7, "lull": 1.3 },
   "_limits": "Readability and pressure limits for simultaneous pack attacks; detailed field notes: docs/notes/config-history/packs.md#limits.",
   "limits": { "combo": 8, "lanes": 1, "lines": 2, "shots": 6, "hurt": 0.5, "engage": 6, "split": 18, "close": 8 },
   "_bolt": "Every magic bolt (combat.md: 'one projectile sprite tinted'): the base its kinds' ranged moves are built on (range, shots and spread by kind).",

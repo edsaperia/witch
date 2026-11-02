@@ -21,3 +21,11 @@ Ed's rulings on 2026-11-01 (PR #1622 comments 6565532460 and 6565535116) permit 
 - `locomotion.test.ts` retains trajectory endpoints, continuity and velocity ownership; `creatureProfile.test.ts` retains immutable resolved statistics, live tuning refresh and berry growth validity.
 
 No no-teleport bound, numerical-safety assertion, damage attribution rule, grammar/engine contract or readability floor is relaxed. These tests establish deterministic rules, not visual quality or combat balance.
+
+## Numerical repair checkpoint
+
+The configuration migration accidentally removed the youth physical effect multiplier while removing role weights. The every-species/every-age executable-action check caught a non-finite youth action reach, and a four-actor mixed-age roe fixture reproduced youth scatter's non-finite duration and positions at 26.47 seconds. Restoring the physical multiplier as `young.effectScale` makes that same fixture pass. The JSON age-scale shape is now compile-time checked, and noTeleport additionally reports the first non-finite actor state without relaxing its displacement bound. Adult-only fixtures did not expose this fault.
+
+Further controlled replacements: `counters.test.ts` now lands actual melee/beam/quake hits, checks actual normalized damage, knockback/stun and exact strong/resisted/neutral view flags; its old fight-winner prerequisites are removed. The hare's fixed five-metre-in/15-metre-out ten-second outcome is removed, with cadence and close-pass geometry covered directly. `fixedPopulation.test.ts` tests the actual victory transition with explicit beach runaways and unchanged IDs/count, rather than requiring a skilled bot to win before checking that rule. Its loss/return and controlled party defeat checks remain. The separate three-seed full-night bot win checks remain unchanged for cloud validation of the numerical repair; no bot win is claimed from the small fixtures.
+
+Additional action ownership regressions retain positions during protection and preserve a committed charge during group scatter. Every species/age must have a positive-weight executable action, finite positive admission reach, and real weapon definitions for weapon deliveries.

@@ -1,69 +1,33 @@
-import { describe, expect, it, beforeAll, afterAll } from "vitest";
-import { COMBAT } from "./combat";
-import { setupArena } from "./arena";
-import { counterOf, traitsOf } from "./combat";
-import { newGame as fullGame, stepGame, STEP, type Controls, type Game } from "./game";
-import { smallWorld } from "../test/worlds";
-const newGame = smallWorld(fullGame, "Counter matchups use explicitly spawned arena groups in the home clearing, not the world's population.");
-import { TUNING } from "./tuning";
-
-/** Every species at strength 1 for these tests (Ed, 2026-10-08, gave the species strengths by class; these test other
- *  mechanics, written when every species was 1): combat.json strength.species emptied for the block, put back after. */
-const SAVED_STRENGTH = { ...COMBAT.strength!.species };
-const plainStrength = () => { for (const k of Object.keys(COMBAT.strength!.species)) delete COMBAT.strength!.species[k]; };
-const restoreStrength = () => Object.assign(COMBAT.strength!.species, SAVED_STRENGTH);
-
-const idle: Controls = { moveX: 0, moveZ: 0, toggleMode: false, zoom: 0, autoTalk: false };
-/** An arena fight for `secs`: the share of health each side has lost (the fled count as all of it). */
-function fight(spec: string, secs = 30): { hers: number; wild: number; g: Game } {
-  const g = newGame(5, TUNING);
-  g.clock.paused = false; g.party.paused = true;
-  setupArena(g, spec);
-  g.witch = { ...g.witch, mode: "treetop" }; // (out of it)
-  const ids = g.arena!.ids, side = new Map(ids.map(id => [id, g.creatures[id].leashed]));
-  for (let i = 0; i < secs / STEP; i++) stepGame(g, idle, STEP);
-  const lost = (hers: boolean) => { let l = 0, n = 0; for (const id of ids) if (side.get(id) === hers) { const c = g.creatures[id]; n++; l += c.fleeUntil || c.gone || c.dazed ? 1 : hers ? c.drops ?? 0 : -(c.fills ?? []).reduce((s, v) => s + Math.min(0, v), 0); } return l / n; }; // (its slots filled: 💧s on hers, hearts on the wild; rules/orbit.ts)
-  return { hers: lost(true), wild: lost(false), g };
+// Counters are tested with actual controlled landed hits, independent of AI outcomes.
+import {describe, expect, it} from "vitest";
+import {COMBAT, counterOf, traitsOf, newCombat, stunWorth, type Attack, type CombatWorld} from "./combat/data";
+import {land} from "./combat/hits";
+import type {Creature} from "./creatures";
+import {TUNING} from "./tuning";
+function hit(species: string, attack: Attack) {
+  const c = {id: 0, species, level: 2, x: 0, z: 0, rand: () => 0.5} as Creature;
+  const s = newCombat(), w = {creatures: [c], time: 1, t: TUNING} as CombatWorld;
+  land(w, s, null, {kind: "creature", id: 0}, 1, attack, -1, 0);
+  return {c, event: s.events.find(e => e.kind === "hit")!, damage: -(c.fills ?? []).reduce((sum, value) => sum + Math.min(0, value), 0) * stunWorth(c)};
 }
-
-describe("traits and counters (Stage 5)", () => {
-  beforeAll(plainStrength); afterAll(restoreStrength);
-  it("gives the first slice its traits, and each trait its counter", () => {
+describe("traits and landed counter effects", () => {
+  it("gives traits their delivery, knockback and stun counters", () => {
     expect(traitsOf("raven")).toContain("flier");
     expect(traitsOf("bat")).toEqual(expect.arrayContaining(["flier", "swarm"]));
-    expect(traitsOf("beetle")).toContain("armoured");
-    expect(traitsOf("boar")).toContain("heavy");
-    expect(traitsOf("wolf")).toEqual([]);
-    expect(counterOf("raven", "melee").damage).toBe(0.5);
-    expect(counterOf("raven", "shot").damage).toBe(1);
-    expect(counterOf("beetle", "shot").damage).toBeLessThan(0.5);
-    expect(counterOf("beetle", "melee").knockback).toBe(2);
-    expect(counterOf("beetle", "melee").stun).toBeGreaterThan(0);
-    expect(counterOf("bat", "quake").damage).toBe(2);
-    expect(counterOf("boar", "melee").knockback).toBe(0);
+    expect(traitsOf("beetle")).toContain("armoured"); expect(traitsOf("boar")).toContain("heavy"); expect(traitsOf("wolf")).toEqual([]);
+    expect(counterOf("raven", "melee").damage).toBe(0.5); expect(counterOf("raven", "shot").damage).toBe(1);
+    expect(counterOf("beetle", "shot").damage).toBeLessThan(0.5); expect(counterOf("beetle", "melee").knockback).toBe(2); expect(counterOf("beetle", "melee").stun).toBeGreaterThan(0);
+    expect(counterOf("bat", "quake").damage).toBe(2); expect(counterOf("boar", "melee").knockback).toBe(0);
   });
-
-  it("has fliers beat melee: ravens come off better against wolves", () => {
-    const r = fight("wolf*3@2,raven*3@2");
-    expect(r.wild).toBeLessThan(r.hers);
-  }, 60000);
-
-  it("has armour shrug off shooters: beetles lose far less to salamanders' beams than wolves do", () => {
-    // (wild ones march on hers; parked ones only guard their ground)
-    const beetles = fight("salamander*3@2,beetle*3@2", 20), wolves = fight("salamander*3@2,wolf*3@2", 20);
-    expect(beetles.wild).toBeLessThan(wolves.wild * 0.8); // (slow and bunched in a beam, they take more hits, each a third)
-  }, 60000);
-
-  it("has knockback beat armour: an adult wolf's maul knocks a beetle over, stunned", () => {
-    const r = fight("wolf*3@2,beetle*3@2", 12);
-    expect(r.g.combat.events.length + 1).toBeGreaterThan(0);
-    const stunned = r.g.arena!.ids.some(id => r.g.creatures[id].stunUntil !== undefined);
-    expect(stunned).toBe(true);
-  }, 60000);
-
-  it("marks a hit strong or resisted, for the view", () => {
-    const g = fight("wolf*3,raven*3", 10).g;
-    // (events are cleared each frame; the last frame's are enough to see the field's there)
-    expect(["number", "undefined"]).toContain(typeof g.combat.events.find(e => e.kind === "hit")?.counter);
-  }, 60000);
+  it("applies flying resistance to an actual melee hit", () => {expect(hit("raven", COMBAT.attacks.nip).damage).toBeCloseTo(hit("wolf", COMBAT.attacks.nip).damage * 0.5);});
+  it("applies armour resistance to an actual beam hit", () => {
+    const beam: Attack = {delivery: "beam", range: 10, windup: 0.5, cooldown: 1, modifier: "none"};
+    expect(hit("beetle", beam).damage).toBeCloseTo(hit("wolf", beam).damage * 0.35);
+  });
+  it("a landed maul knocks an armoured creature over and stuns it", () => {const {c} = hit("beetle", COMBAT.attacks.maul); expect(c.stunUntil).toBeGreaterThan(1); expect(Math.hypot(c.kx ?? 0, c.kz ?? 0)).toBeGreaterThan(0);});
+  it("marks actual hits strong, resisted or neutral for the view", () => {
+    expect(hit("bat", COMBAT.attacks.quake).event.counter).toBe(1);
+    expect(hit("raven", COMBAT.attacks.nip).event.counter).toBe(-1);
+    expect(hit("wolf", COMBAT.attacks.nip).event.counter).toBe(0);
+  });
 });
