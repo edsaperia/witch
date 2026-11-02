@@ -1,7 +1,7 @@
 // The berry (rules/berries.ts): a small shiny dark-red berry, like a cherry, drawn here in a few
 // pixels (Ed, 2026-10-04): a deep red body, a darker shadow side and a crisp near-white highlight
-// upper left. Its soft red halo and the glints seen from the treetops are drawn with the sigils'
-// glow sprites (leash.ts). A placeholder until the art builder draws one.
+// upper left. Its soft red halo and the glints seen from the treetops (through gaps in the crowns
+// only) are drawn with the sigils' glow sprites (leash.ts). A placeholder until the art builder draws one.
 import type { Baked } from "./atlas";
 
 const ROWS = [
