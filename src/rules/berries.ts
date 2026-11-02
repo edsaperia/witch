@@ -8,7 +8,7 @@
 // of berries never changes. A party animal that has eaten enough evolves: the berries its next
 // level's strength costs (toEvolve: 4 and 4 for a species of normal strength); evolving stops at adult (Ed, 2026-10-04: legends are the areas'
 // own, never grown). It evolves on the next bar line of the music, so the view can make a show of it. No drawing here.
-import { COMBAT, strengthOf } from "./combat";
+import { combatProfile } from "./combat";
 import { beatAt, timeAt, type BeatClock } from "./beat";
 import { LEGEND, heal, type Creature, type Level } from "./creatures";
 import { gaitRate, leashSpeed } from "./leash";
@@ -62,8 +62,7 @@ export const TOP_LEVEL: Level = 2;
  *  "power", health × damage a second (the square of its fighting value), or "value", its fighting
  *  value √(hp × dps) (rules/power.ts); its species' strength included. */
 export function strengthGain(level: Level, species: string | undefined, t: Tuning): number {
-  const L = COMBAT.levels, m = species ? strengthOf(species, level) : 1;
-  const at = (l: number) => { const p = L.hp[l] * m * L.dps[l] * m; return t.berries.cost.by === "value" ? Math.sqrt(p) : p; };
+  const at = (l: number) => { const stats = combatProfile(species ?? "", l as Level), p = stats.health * stats.damagePerSecond; return t.berries.cost.by === "value" ? Math.sqrt(p) : p; };
   return at(level + 1) - at(level);
 }
 

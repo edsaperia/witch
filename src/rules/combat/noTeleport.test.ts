@@ -30,6 +30,7 @@ describe("no creature jumps in a fight (Ed's playtest, 2026-10-29)", () => {
         stepGame(g, c, STEP);
         for (const id of ids) {
           const o = g.creatures[id], p = prev.get(id);
+          expect([o.x, o.z, o.vx ?? 0, o.vz ?? 0].every(Number.isFinite), JSON.stringify({species: k, id, time: g.clock.time, previous: p, x: o.x, z: o.z, vx: o.vx, vz: o.vz, leap: o.leap, hop: o.hop, hide: o.packHide, fight: o.fight})).toBe(true);
           const L = o.leap, leap = L ? Math.hypot(L.tx - L.fx, L.tz - L.fz) / Math.max(0.01, L.lands - L.at) : 0;
           if (p && !o.gone) {
             const d = Math.hypot(o.x - p.x, o.z - p.z), most = Math.max(60 * FIGHT.speed, leap, p.leap) * STEP * 1.05 + 0.01;

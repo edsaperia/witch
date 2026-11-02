@@ -3,6 +3,7 @@
 // her takes the nearest attacker not already taken (spread out, not all on one), within its pursuit of her; with none on her,
 // they go back to what they did (her animals' attackers, or nothing).
 import { describe, expect, it } from "vitest";
+import { queueCombatHit } from "../test/combatHit";
 import type { Creature, Level } from "./creatures";
 import { speedFactor, wanderRange } from "./creatures";
 import { newGame, stepGame, STEP, type Controls, type Game } from "./game";
@@ -101,7 +102,7 @@ describe("her posse defends her", () => {
     const hold = () => { if (badger.fight) { badger.fight.readyAt = 1e9; badger.fight.windupUntil = 0; } };
     let at = -1, held = true, until = 0;
     run(g, 6, () => {
-      if (at < 0) hold();
+      if (at < 0) { hold(); if (badger.fight?.target?.kind === "witch") queueCombatHit(g, wolf, badger, 0.1); }
       if (at < 0 && badger.taunt) { at = g.clock.time; until = badger.taunt.until; }
       if (at >= 0 && badger.taunt && g.clock.time > at + 0.1 && g.clock.time < until - 0.05 && !badger.fight?.lunge && on(badger) !== null && on(badger) !== wolf.id) held = false;
     });

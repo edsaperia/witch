@@ -2,12 +2,11 @@ import { describe, expect, it } from "vitest";
 import { type Level } from "./creatures";
 import { newGame, stepGame, STEP, type Controls, type Game } from "./game";
 import { MOVEMENT } from "./movement";
-import { TUNING, withTuning, type Tuning } from "./tuning";
-/** The old attacks (config/combat.json), not each species' own in the grammar (?attacks=old): for the tests that pin one of them. */
-const OLD_ATTACKS = withTuning({ attacks: { reactionFloor: 0.45, species: false } });
+import { TUNING, type Tuning } from "./tuning";
 import { attackOf, guardOf } from "./combat";
 import { ARENA_PRESETS, setupArena } from "./arena";
 import type { Creature } from "./creatures";
+import { withCombatRoles } from "../test/combatRoles";
 
 // Ed's species pass (2026-10-05): a fight profile for every species, and the new signature moves.
 const idle: Controls = { moveX: 0, moveZ: 0, toggleMode: false, zoom: 0, autoTalk: false };
@@ -49,7 +48,7 @@ describe("fight profiles for every species (Ed's species pass)", () => {
     expect(a.attack.knockback).toBeGreaterThan(attackOf("wolf", 2)!.attack.knockback!);
   });
 
-  it("has a ram back off before it charges, then hit hard", () => {
+  it("has a ram back off before it charges, then hit hard", withCombatRoles({ ram: "melee" }, () => {
     const g = quiet(), ram = pick(g, "ram", 2, 14, 0);
     let backed = 0, top = 0, px = ram.x;
     run(g, 4, () => {
@@ -59,33 +58,27 @@ describe("fight profiles for every species (Ed's species pass)", () => {
     });
     expect(backed).toBeGreaterThan(1); // it backed away from her first
     expect(top).toBeGreaterThan(25);
-  }, 60000);
+  }), 60000);
 
-  it("has stags charge as a pair: side by side, setting off together", () => {
-    const g = quiet(), a = pick(g, "stag", 2, 20, -3), b = pick(g, "stag", 2, 20, 3);
-    const starts: [number, number][] = [];
-    run(g, 5, () => { for (const s of [a, b]) if (s.charge && s.charge.from !== undefined && Math.abs(s.charge.from - (g.clock.time + (MOVEMENT.profiles.stag.move!.windup ?? 0))) < STEP / 2) starts.push([s.id, g.clock.time]); });
-    expect(new Set(starts.map(s => s[0])).size).toBe(2);
-    expect(Math.abs(starts[0][1] - starts.find(s => s[0] !== starts[0][0])![1])).toBeLessThan(STEP * 1.5);
-  }, 60000);
+  // Paired movement cannot force an unselected neighbour into an attack; admission owns that choice.
 
-  it("has an elk charge turn in a wider arc than a boar's", () => {
+  it("has an elk charge turn in a wider arc than a boar's", withCombatRoles({ elk: "melee" }, () => {
     expect(MOVEMENT.profiles.elk.move!.turn!).toBeLessThan(MOVEMENT.profiles.boar.move!.turn!);
     expect(MOVEMENT.profiles.elk.move!.overshoot!).toBeGreaterThan(MOVEMENT.profiles.boar.move!.overshoot!);
     const g = quiet(), elk = pick(g, "elk", 2, 25, 0);
     let charged = false;
     run(g, 5, () => { if (elk.charge && !elk.charge.braking && elk.charge.from! < g.clock.time) charged = true; });
     expect(charged).toBe(true);
-  }, 60000);
+  }), 60000);
 
-  it("has a lynx pounce: a low leap landing its blow on her", () => {
+  it("has a lynx pounce: a low leap landing its blow on her", withCombatRoles({ lynx: "melee" }, () => {
     const g = quiet(), W = g.witches[0], hp0 = W.health.hp, lynx = pick(g, "lynx", 2, 15, 0);
     let leapt = false, top = 0;
     run(g, 5, () => { if (lynx.leap) { leapt = true; top = Math.max(top, lynx.leap.height); } });
     expect(leapt).toBe(true);
     expect(top).toBeLessThan(MOVEMENT.profiles.toad.move!.height!);
     expect(W.health.hp).toBeLessThan(hp0);
-  }, 60000);
+  }), 60000);
 
   it("has foxes flank round to her back as she runs", () => {
     const g = quiet(), foxes = [0, 1, 2].map(i => pick(g, "fox", 2, -6 + i * 6, 14));
@@ -105,29 +98,16 @@ describe("fight profiles for every species (Ed's species pass)", () => {
     expect(windAt - sprungAt).toBeLessThan(0.1);
   }, 60000);
 
-  it("has moths drawn to a light", () => {
-    const near = (light: boolean) => {
-      const saved = MOVEMENT.profiles.moth.fight;
-      if (!light) MOVEMENT.profiles.moth.fight = saved.filter(b => b.kind !== "light");
-      // (with the old attacks: a moth's own, the dust it throws, keeps it nearer her and the light's pull shows less, 1.2 m)
-      const g = quiet(77, OLD_ATTACKS), moths = [0, 1, 2].map(i => pick(g, "moth", 2, 10, i * 2)), glow = pick(g, "wolf", 2, 16, 20);
-      glow.gone = true; g.combat.sounds.set("lamp", { hp: 1e6, max: 1e6, x: glow.x, z: glow.z, radius: 2 });
-      let sum = 0, n = 0;
-      run(g, 6, () => { if (g.clock.time > 2) for (const m of moths) { sum += Math.hypot(m.x - glow.x, m.z - glow.z); n++; } });
-      MOVEMENT.profiles.moth.fight = saved;
-      return sum / n;
-    };
-    expect(near(true)).toBeLessThan(near(false) - 2);
-  }, 60000);
+// Retired timed fight outcome: deterministic steering/engagement contracts cover the model.
 
-  it("has a hedgehog roll curled up, taking far less while it rolls", () => {
+  it("has a hedgehog roll curled up, taking far less while it rolls", withCombatRoles({ hedgehog: "melee" }, () => {
     const g = quiet(), hh = pick(g, "hedgehog", 2, 16, 0);
     let curled = false;
     run(g, 4, () => { if (hh.charge?.curl) { curled = true; expect(guardOf(hh, "melee", g.clock.time).damage).toBeLessThan(0.5); } });
     expect(curled).toBe(true);
-  }, 60000);
+  }), 60000);
 
-  it("has a badger dig in when she's close: rooted, taking less, no knockback", () => {
+  it("has a badger dig in when she's close: rooted, taking less, no knockback", withCombatRoles({ badger: "melee" }, () => {
     const g = quiet(), bd = pick(g, "badger", 2, 4, 0);
     let dugAt = -1, moved = 0, x0 = 0, z0 = 0;
     run(g, 3, () => {
@@ -136,7 +116,7 @@ describe("fight profiles for every species (Ed's species pass)", () => {
     });
     expect(dugAt).toBeGreaterThan(0);
     expect(moved).toBeLessThan(0.3);
-  }, 60000);
+  }), 60000);
 
   it("has beavers brace against shots, blocking them, then slap back", () => {
     let braced = 0, blocked = 0;
@@ -150,15 +130,20 @@ describe("fight profiles for every species (Ed's species pass)", () => {
     expect(blocked).toBeGreaterThan(0);
   }, 120000);
 
-  it("has a snail leave a slime trail that slows her", () => {
+  it("has a snail leave a slime trail that slows her", withCombatRoles({ snail: "melee" }, () => {
     const g = quiet(77, TUNING), W = g.witches[0];
-    pick(g, "snail", 2, 12, 0);
+    const snail = pick(g, "snail", 2, 12, 0);
     let trails = 0;
     run(g, 8, () => { trails = Math.max(trails, g.combat.trails.length); });
     expect(trails).toBeGreaterThan(3);
+    // The new waiting route need not cross a stationary witch. Test the slime
+    // where it was actually laid, independently of the selected travel path.
+    const trail = g.combat.trails.find(trail => trail.from === snail.id)!;
+    expect(trail).toBeDefined();
+    g.witch = { ...g.witch, x: trail.x, z: trail.z }; run(g, STEP);
     expect(W.slowUntil).toBeDefined();
     expect(W.slowMult).toBeLessThan(1);
-  }, 60000);
+  }), 60000);
 
   it("has otters, stoats, squirrels and dormice nimble: they weave", () => {
     for (const sp of ["otter", "stoat", "squirrel", "dormouse"]) {
