@@ -1,7 +1,7 @@
 // The oak's rooms (Ed, 2026-10-24, the layout v4; rules/houseRooms.ts, config/house/): one floor, walked from her bed down the trunk to
 // the Terrace and out along every branch, kept in by its edge, the locked rooms' doors, each object's E, the hats' floor, and the bed.
 import { describe, expect, it } from "vitest";
-import { TUNING } from "./tuning";
+import { TUNING, withTuning } from "./tuning";
 import { newGame as fullGame, stepGame, STEP, type Controls, type Game } from "./game";
 import { smallWorld } from "../test/worlds";
 const newGame = smallWorld(fullGame, "Room walls, furniture, doors and Terrace landings use one house's layout, independent of island extent.");
@@ -18,8 +18,8 @@ const room = (id: string) => HOUSE_ROOMS.rooms.find(q => q.id === id)!;
 const S = HOUSE_ROOMS.shape;
 
 /** In the house mid-night: landed, off her decks, at (dx, dz) metres from the Terrace's middle. */
-function inHouse(dx: number, dz: number): Game {
-  const g = newGame(123, TUNING), W = g.witches[0], d = deck(g);
+function inHouse(dx: number, dz: number, tuning = TUNING): Game {
+  const g = newGame(123, tuning), W = g.witches[0], d = deck(g);
   g.clock.paused = false; g.party.paused = true;
   for (let i = 0; i < 0.3 / STEP; i++) stepGame(g, { ...idle, moveZ: -1 }, STEP); // (off her seat at the decks)
   W.body = { ...W.body, x: d.x + dx, z: d.z + dz, vx: 0, vz: 0, perch: true, mode: "ground", lift: 0 };
@@ -107,15 +107,15 @@ describe("the oak's rooms", () => {
     expect(g.tuning.treehouse.house!.walk).toBeLessThan(g.tuning.groundSpeed / 2);
   });
 
-  it("walks half again as fast as she did (Ed, 2026-10-25: 5 to 7.5 m/s), her broom's ground speed apart and unchanged, her walk cycle drawn for 5 m/s so her steps quicken with her", () => {
+  it("walks 20% faster (Ed, 2026-11-02: 7.5 to 9 m/s), her broom's ground speed apart and unchanged, her walk cycle drawn for 5 m/s so her steps quicken with her", () => {
     const H = TUNING.treehouse.house!;
-    expect(H.walk).toBe(7.5);
+    expect(H.walk).toBe(9);
     expect(H.stride).toBe(5);
-    expect(H.walk / H.stride!).toBeCloseTo(1.5, 6);
+    expect(H.walk / H.stride!).toBeCloseTo(1.8, 6);
     expect(TUNING.groundSpeed).toBe(19.25);
     const g = inHouse(0, -3), W = g.witches[0];
     for (let i = 0; i < 0.5 / STEP; i++) stepGame(g, { ...idle, moveX: 1 }, STEP);
-    expect(Math.hypot(W.body.vx, W.body.vz)).toBeCloseTo(7.5, 1);
+    expect(Math.hypot(W.body.vx, W.body.vz)).toBeCloseTo(9, 1);
   });
 
   it("leave her room to move: limbs 3 m wide or more, rooms 12 m across or more, her bedroom 16 m", () => {
@@ -123,8 +123,9 @@ describe("the oak's rooms", () => {
     for (const r of HOUSE_ROOMS.rooms) expect(2 * r.r, r.id).toBeGreaterThanOrEqual(r.id === "bedroom" ? 16 : 12);
   });
 
-  it("their edge keeps her in, wherever she walks at it but the take-off", () => {
+  it("with walls explicitly on, their edge keeps her in except at the take-off", () => {
     const d = deck(newGame(7, TUNING));
+    d.house = { ...d.house!, noWalls: false }; // Retain the optional walls-on contract.
     for (const id of ["turret", "kitchen", "studio", "bestiary", "dining"]) {
       const r = room(id), P = r.from ? room(r.from) : room("terrace"), ux = (r.x - P.x) / Math.hypot(r.x - P.x, r.z - P.z), uz = (r.z - P.z) / Math.hypot(r.x - P.x, r.z - P.z);
       const k = keepInHouse(d, d.x + r.x + ux * (r.r + 4), d.z + r.z + uz * (r.r + 4)); // (past its far side)
@@ -260,7 +261,7 @@ describe("the oak's rooms", () => {
       expect(door.use).toEqual({ kind: "say", line: "A friend's room. Locked for now." });
       expect(door.room).toBe(r.from);
       expect(Math.abs(inRoom(S, r.id, door.x, door.z)), `${r.id}: its door at its rim`).toBeLessThan(0.6);
-      const ux = door.x - r.x, uz = door.z - r.z, L = Math.hypot(ux, uz), g = inHouse(door.x + (ux / L) * 1.2, door.z + (uz / L) * 1.2), W = g.witches[0], d = deck(g);
+      const ux = door.x - r.x, uz = door.z - r.z, L = Math.hypot(ux, uz), g = inHouse(door.x + (ux / L) * 1.2, door.z + (uz / L) * 1.2, withTuning({ treehouse: { ...TUNING.treehouse, house: { ...TUNING.treehouse.house!, look: { ...TUNING.treehouse.house!.look!, noWalls: false } } } })), W = g.witches[0], d = deck(g);
       expect(press(g).some(e => e.kind === "house" && e.obj === door.id), r.id).toBe(true);
       for (let i = 0; i < 2 / STEP; i++) stepGame(g, { ...idle, moveX: -ux / L, moveZ: -uz / L }, STEP); // (walking at the door, into the room)
       expect(inRoom(S, r.id, W.body.x - d.x, W.body.z - d.z), `${r.id}: kept out`).toBeGreaterThan(-0.3);

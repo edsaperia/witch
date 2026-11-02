@@ -48,12 +48,13 @@ export interface RankKnobs {
   stones?: { range: number; fade: number; size: number; near: number; far: number; bars: number; radius: number; cell: number; convert: number; ringTilt?: number };
   /** The leashes as chains (render/leash/chain.ts): a link's length (m) by rank, youth to legend (babies have no leash: Ed, 2026-10-11, and again 2026-10-28); a legend's tether's links `tether` times
    *  its rank's; a slack leash `slack` longer than its span; and their motion (chain.ts ChainMotion: damping, gravity, arcPull,
-   *  iterations, jump). */
-  chain?: { link: number[]; tether: number; slack: number; damping: number; gravity: number; arcPull: number; iterations: number; jump: number };
+   *  iterations, jump); a travelling follower's chain hanging from its sigil reaches the ground `fall` m along its walking path for
+   *  every metre it falls (travelPose.ts sigilPath). */
+  chain?: { link: number[]; tether: number; slack: number; damping: number; gravity: number; arcPull: number; iterations: number; jump: number; fall: number };
 }
 
 export const STONES_DEFAULT = { range: 90, fade: 20, size: 4.4, near: 5, far: 10, bars: 36, radius: 4.4, cell: 0.55, convert: 2.4, ringTilt: 1.6 };
-export const CHAIN_DEFAULT = { link: [0.62, 0.78, 1], tether: 1.3, slack: 0.12, damping: 0.96, gravity: 9.8, arcPull: 60, iterations: 6, jump: 8 };
+export const CHAIN_DEFAULT = { link: [0.62, 0.78, 1], tether: 1.3, slack: 0.12, damping: 0.96, gravity: 9.8, arcPull: 60, iterations: 6, jump: 8, fall: 0.5 };
 
 export const RANKS_DEFAULT: RankKnobs = {
   on: true, hex: 6, glyph: 5,
@@ -161,11 +162,12 @@ export function legendShine(rank: number, time: number, seed = 0, period = 2.6):
  *  a sigil), nor any gone, fleeing, travelling or off dancing at the party; so it changes as they grow, are recruited away, come
  *  home or leave. */
 export const EMPTY_STONE = 4;
-type Resident = Pick<Creature, "cell" | "level" | "leashed"> & Partial<Pick<Creature, "gone" | "fleeUntil" | "travelling" | "dancing" | "partyLegend" | "state">>;
+type Resident = Pick<Creature, "cell" | "level" | "leashed"> & Partial<Pick<Creature, "gone" | "fleeUntil" | "travelling" | "dancing" | "partyLegend" | "state" | "friendly" | "enraged">>;
 export function areaTopRanks(creatures: readonly Resident[], out = new Map<string, number>()): Map<string, number> {
   out.clear();
   for (const c of creatures) {
     if (c.gone || c.leashed || c.state === "happy" || c.fleeUntil !== undefined || c.travelling || c.dancing || c.partyLegend) continue; // (only the still hostile: Ed, 2026-10-28, the stone in the enemy palette)
+    if (c.friendly && !c.enraged) continue; // (nor a friendly area's, its legend's quest done: Ed, 2026-11-02, friends on its stump's stack too)
     const k = c.cell[0] + "," + c.cell[1], r = rankOf(c);
     if ((out.get(k) ?? -1) < r) out.set(k, r);
   }

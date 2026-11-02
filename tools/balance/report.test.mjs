@@ -4,6 +4,7 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import { observer, phaseOf, markdown, caseKey, rangedTargeted } from "./report-core.mjs";
 import { runtime } from "./report-runtime.mjs";
+import { verifyReportReplay } from "./report-replay.mjs";
 
 test("observations separate cutoff, KO onset, wave passage and completed phases", () => {
   const g = { clock: { time: 0 }, witches: [{ ko: null }], party: { wave: 0 }, win: null, partyOver: null, islandsTonight: ["fox"], trunk: { found: true, kind: "record", item: "120" } };
@@ -36,21 +37,7 @@ test("tables keep bag/bpm/island denominators separate and omit censored win tim
 test("real-rules replay is deterministic across interleaved bots and bags", async () => {
   const r = await runtime();
   try {
-    const c = { seed: 1000, island: "home", bpm: 120, bag: "satchel", bot: "sloppy" };
-    const first = r.run(c, 30);
-    r.run({ ...c, bot: "skilled", bag: "purse", bpm: 200 }, 5);
-    assert.deepEqual(r.run(c, 30), first);
-    const expertCase = { ...c, bot: "expert", hat: "none", wearsHat: false, parts: [] };
-    const expert = r.run(expertCase, 5);
-    assert.deepEqual(r.run(expertCase, 5), expert);
-    assert.equal(first.outcome, "censored");
-    assert.ok(Math.abs(Object.values(first.phases).reduce((s, p) => s + p.seconds, 0) - first.end) < 1e-8);
-    const stun = { seed: 1000, bpm: 100, bag: "tote", species: "fox", level: 1 };
-    const a = r.stun(stun, 15, 10), b = r.stun(stun, 15, 10);
-    assert.deepEqual(a, b); assert.equal(a.stunned, true); assert.ok(a.hits > 0);
-    const active = r.stun({ ...stun, bag: "satchel", species: "boar", level: 2 }, 30, 10);
-    assert.ok(active.retaliation > 0, "the target must be fighting, not repeatedly put to bed before the party");
-    assert.equal(active.fixture, "active-party-after-intro-v2");
+    verifyReportReplay(r);
   } finally { await r.close(); }
 });
 

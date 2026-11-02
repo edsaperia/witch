@@ -2,7 +2,7 @@
 // trait marks, health bars, the knockout's release and the quake's shake.
 import * as THREE from "three";
 import { speciesColours, defaultStyle, M } from "../../../art/generator.js";
-import { attackNamed, attackOf, traitsOf, type Trait } from "../../rules/combat";
+import { attackNamed, attackOf, lungeLength, traitsOf, type Trait } from "../../rules/combat";
 import { hash2 } from "../../rules/random";
 import { FIGHT, profileOf } from "../../rules/movement";
 import { bodyRadius } from "../../rules/spacing";
@@ -18,6 +18,9 @@ import { elementOf } from "../../rules/attackLook";
 import type { Dress } from "./attackLook";
 import { drawSpells } from "./attackSpells";
 import { comfort } from "../comfort";
+import { lungeWarning, lungeWave } from "../../rules/lungeMotion";
+import { waitingProfile } from "../../rules/combatSpacing";
+import type { Attack } from "../../rules/combat/data";
 
 /** The attack look (leash/attackLook.ts: attacks in their elements, the danger frame), or ?look=old: the red dots, lines and rings
  *  it replaced, for comparing. */
@@ -82,6 +85,15 @@ export function drawCombat(lv: LeashView, time: number, camera: THREE.Camera, wi
   const up = w.lift > 0.5, far = up ? t.haze.far + 60 : 150, big = up ? 2.6 : 1.2;
   // (on the ground, and from the treetops through the crowns too, as the ley lines and leash routes do)
   const mark = (x: number, z: number, size: number, r: number, gg: number, b: number, a: number) => { lv.flat.add(x, 0, z, size, dot, r, gg, b, a); if (up) lv.over.add(x, 0.3, z, size * 0.8, dot, r, gg, b, Math.min(1, a * 1.1)); };
+  const lungeTell = (c: Creature, A: Attack, aimX: number, aimZ: number, atWitch: boolean, k: number, modern: boolean, colour = RED_30) => {
+    const length = lungeLength(c, A, atWitch, t, time, aimX, aimZ), angle = Math.atan2(aimZ - c.z, aimX - c.x);
+    const ux = Math.cos(angle), uz = Math.sin(angle), turn = waitingProfile(c).strikeTurn;
+    if (length <= 1) return;
+    const half = Math.max(0.6, A.range * (atWitch && t.dodge?.a.on ? t.dodge.a.width : 1));
+    const points = lungeWave(lungeWarning(length, Math.hypot(c.vx ?? 0, c.vz ?? 0), turn, half), k).map(p => ({ x: c.x + ux * p.x - uz * p.z, z: c.z + uz * p.x + ux * p.z }));
+    if (modern) lv.look.trumpet(points, up);
+    else for (const p of points) lv.flat.add(p.x, 0, p.z, 0.35, dot, colour.r, colour.g, colour.b, 0.85);
+  };
   const neon = (sp: string) => lv.colours.get(sp) ?? (lv.slotOf(sp, 0), lv.colours.get(sp)!);
   // New happenings become effects.
   for (const e of g.combat.events) {
@@ -388,7 +400,7 @@ export function drawCombat(lv: LeashView, time: number, camera: THREE.Camera, wi
       else if (f.move && A.delivery === "shot") { const n = A.shots ?? 8, aim = Math.atan2(dz, dx), R = Math.min(A.range ?? 10, 10); for (let i = 0; i < n; i++) { const a = aim + (i / n) * Math.PI * 2; lv.look.lane(c.x + Math.cos(a) * 1.5, c.z + Math.sin(a) * 1.5, c.x + Math.cos(a) * R, c.z + Math.sin(a) * R, 0.35, k, left, time, big); } }
       else if (f.move && A.delivery === "beam") { lv.look.ring(c.x, c.z, A.range, k, left, time, big); lv.look.beamLine(c.x + ux * 1.2, c.z + uz * 1.2, c.x + ux * A.range, c.z + uz * A.range, (A.width ?? 2) / 2, k, left, time, big); }
       else if (f.move && A.delivery === "melee") { const L = (A.speed ?? 8) * (A.duration ?? 1.5); lv.look.lane(c.x + ux * 1.5, c.z + uz * 1.5, c.x + ux * L, c.z + uz * L, 1.4, k, left, time, big); }
-      else if (A.delivery === "melee" && (A.lunge ?? 0) > 3) { const L = Math.min(A.lunge ?? 0, d); lv.look.lane(c.x + ux, c.z + uz, c.x + ux * L, c.z + uz * L, 0.6, k, left, time); }
+      else if (A.delivery === "melee" && (A.lunge ?? 0) > 3) lungeTell(c, A, f.aimX, f.aimZ, f.target?.kind === "witch", f.windupAt === undefined ? k : Math.max(0, Math.min(1, (time - f.windupAt) / Math.max(1e-6, f.windupUntil - f.windupAt))), true);
       else if (A.delivery === "shot") { const L = Math.min(A.range, d + 2); lv.look.lane(c.x + ux * 1.2, c.z + uz * 1.2, c.x + ux * L, c.z + uz * L, Math.max(0.4, A.radius ?? 0.7), k, left, time); }
       else if (A.delivery === "beam") { const L = Math.min(A.range, d + 2); lv.look.beamLine(c.x + ux * 1.2, c.z + uz * 1.2, c.x + ux * L, c.z + uz * L, (A.width ?? 2) / 2, k, left, time); }
       else if (A.delivery === "lob") lv.look.ring(f.aimX, f.aimZ, A.radius ?? 2, 0, left + (A.flight ?? 1), time);
@@ -418,10 +430,7 @@ export function drawCombat(lv: LeashView, time: number, camera: THREE.Camera, wi
         const R = 1.8 - 0.9 * k;
         for (let i = 0; i < 16; i++) { const a = (i / 16) * Math.PI * 2; lv.flat.add(c.x + Math.cos(a) * R, 0, c.z + Math.sin(a) * R * 0.8, 0.35, dot, r, gg, b, 0.4 + 0.5 * k); }
         if (A.delivery === "melee" && (A.lunge ?? 0) > 3) {
-          // A lunge's line (Ed's motion scale pass: a dash-strike of 12 to 16 m): where it will go.
-          const dx = f.aimX - c.x, dz = f.aimZ - c.z, d = Math.hypot(dx, dz) || 1, L = Math.min(A.lunge ?? 0, d);
-          for (let s2 = 1; s2 < L; s2 += 0.8) lv.flat.add(c.x + (dx / d) * s2, 0, c.z + (dz / d) * s2, 0.35, dot, r, gg, b, 0.15 + 0.5 * k);
-          lv.flat.add(c.x + (dx / d) * L, 0, c.z + (dz / d) * L, 0.9, dot, r, gg, b, 0.3 + 0.6 * k);
+          lungeTell(c, A, f.aimX, f.aimZ, f.target?.kind === "witch", f.windupAt === undefined ? k : Math.max(0, Math.min(1, (time - f.windupAt) / Math.max(1e-6, f.windupUntil - f.windupAt))), false, { r, g: gg, b });
         }
         if ((A.delivery === "shot" || A.delivery === "beam") && wild) {
           const dx = f.aimX - c.x, dz = f.aimZ - c.z, d = Math.hypot(dx, dz) || 1, L = Math.min(A.range, d + 2);

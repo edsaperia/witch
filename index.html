@@ -77,14 +77,16 @@
     #sigil { right: 126px; bottom: 30px; }
     #spell { right: 200px; bottom: 30px; }
     #bubbles { position: fixed; inset: 0; pointer-events: none; overflow: hidden; }
-    /* Pixel speech bubbles: an outline only (no fill), one game pixel thick (--px), its corners
-       notched, a stepped tail; the emoji in it are pixel sprites (see src/render/leash.ts). */
+    /* Pixel speech bubbles: the emoji alone, no outline or tail (Ed, 2026-11-02: "Remove the white box around emoji when
+       the witch and animals speak"); the emoji in it are pixel sprites (see src/render/leash.ts). The outline and its
+       stepped tail are kept below, switched off, so they are one line to bring back. */
     .bubble { --px: 3px; --ink: rgba(240, 232, 255, .9); position: absolute; transform: translate(-50%, calc(-100% - var(--px) * 3)); color: var(--ink); padding: calc(var(--px) * 2) calc(var(--px) * 3); font-size: 15px; line-height: 1.2; white-space: nowrap; display: none; text-shadow: 0 1px 0 #000; }
     .bubble::before { content: ""; position: absolute; inset: 0; border: var(--px) solid var(--ink);
       clip-path: polygon(var(--px) 0, calc(100% - var(--px)) 0, 100% var(--px), 100% calc(100% - var(--px)), calc(100% - var(--px)) 100%, var(--px) 100%, 0 calc(100% - var(--px)), 0 var(--px)); }
     .bubble::after { content: ""; position: absolute; left: 50%; top: 100%; width: var(--px); height: var(--px); background: var(--ink); box-shadow: 0 var(--px) 0 var(--ink), calc(var(--px) * -1) calc(var(--px) * 2) 0 var(--ink); }
     .bubble canvas { display: block; image-rendering: pixelated; }
     .bubble.on { display: block; }
+    .bubble::before, .bubble::after { display: none; }
     /* the legend circle's explainer (render/leash.ts drawCirclePanel; Ed, 2026-10-06) */
     .deck-bpm { position: absolute; transform: translate(-50%, -100%); padding: 1px 5px 0; border: 1px solid rgba(120, 255, 200, .45); border-radius: 2px; background: rgba(6, 14, 12, .82); color: rgb(120, 255, 200); font: 14px "Tiny5", ui-monospace, monospace; line-height: 14px; white-space: nowrap; pointer-events: none; z-index: 2; text-shadow: 0 0 4px rgba(120, 255, 200, .7); -webkit-font-smoothing: none; } /* the party's tempo over her decks, a DJ controller's display (render/leash/deckBpm.ts) */
     .deck-bpm .u { font-size: 9px; margin-left: 3px; opacity: .75; }

@@ -7,7 +7,7 @@ import { TUNING } from "../../rules/tuning";
 import type { Sfx } from "./sfx";
 import { SfxCues } from "./sfxCues";
 
-describe("the crowd's cheer as a knockdown speeds the party up (+1 BPM, Ed 2026-10-07)", () => {
+describe("the crowd's cheer as a knockdown speeds the party up (+5 BPM, Ed 2026-10-09; description corrected 2026-11-02)", () => {
   it("with no knockout under way, cheers once, on the bar line the tempo starts rising from", () => {
     const g = newGame(123, TUNING), cheers: number[] = [];
     let now = 0;
@@ -22,7 +22,7 @@ describe("the crowd's cheer as a knockdown speeds the party up (+1 BPM, Ed 2026-
     expect(cheers[0]).toBeLessThan(rise + 1 / 30);
   });
 
-  it("knocked down, cheers once as she's back at her decks (after the trumpet and the rewind), on her clock", () => {
+  it("knocked down, cheers once as she's back at her decks after the trumpet, on her clock", () => {
     const g = newGame(123, TUNING), cheers: number[] = [];
     const sfx = new Proxy({}, { get: (_, k) => k === "fireworkCheer" ? () => cheers.push(g.herTime) : () => {} }) as unknown as Sfx;
     const cues = new SfxCues(sfx), me = g.witches[0];

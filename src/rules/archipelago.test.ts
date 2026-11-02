@@ -19,7 +19,7 @@ describe("the archipelago", () => {
     expect(Math.abs(b.metres - CHART_METRES)).toBeLessThan(5);
   });
 
-  it("grows each island in its patch: home and its nearest neighbours' coasts never meet, a strait apart, and close enough to read as fitted", () => {
+  it("keeps home and each sampled neighbouring coast a strait apart", () => {
     const W = worldOf(0), home = W.islands.get("home")!, M = W.metres;
     const near = [...W.islands.values()].filter(p => p.id !== "home" && islandOf(p.id)).sort((a, b) => Math.hypot(a.x, a.y) - Math.hypot(b.x, b.y)).slice(0, 4);
     const coast = (id: string, x: number, y: number) => {
@@ -28,14 +28,13 @@ describe("the archipelago", () => {
       return pts;
     };
     const H = coast("home", home.x, home.y);
-    let closest = Infinity;
+    expect(near.length).toBeGreaterThan(0); // exercise coast separation, not a closeness target
     for (const p of near) {
       const C = coast(p.id, p.x, p.y);
       let d = Infinity;
       for (let i = 0; i < H.length; i += 2) for (let j = 0; j < C.length; j += 2) d = Math.min(d, Math.hypot(H[i] - C[j], H[i + 1] - C[j + 1]));
       expect(d, `home and ${p.id}`).toBeGreaterThan(STRAIT - 8); // (a strait at least, less the outline's sampling)
-      closest = Math.min(closest, d);
     }
-    expect(closest).toBeLessThan(STRAIT * 4); // (one of them across a strait from home, not open sea)
+    // W8, Ed 2026-11-02: nearest-island aesthetic closeness is reported, not pinned.
   }, 120000);
 });

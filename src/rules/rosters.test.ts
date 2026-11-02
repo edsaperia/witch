@@ -1,7 +1,7 @@
 // The journey's rosters (Ed, 2026-10-11; docs/backlog/journey.md "Rosters", rules/rosters.ts): each kind's island, its roster
 // and its night's legends; and the map they make.
 import { describe, expect, it } from "vitest";
-import { dealLegends, homeIsland, OTHERS_MAX, homeKinds, isPlaceholder, islandOf, KIND_NAMES, KINDS, legendsFor, playableIsland, REAL_KINDS } from "./rosters";
+import { dealLegends, OTHERS_MAX, homeKinds, isPlaceholder, islandOf, KIND_NAMES, KINDS, legendsFor, playableIsland, REAL_KINDS } from "./rosters";
 import { AREA_TYPES, generateMap } from "./map";
 import { TUNING, type Tuning } from "./tuning";
 import { newGame } from "./game";
@@ -56,9 +56,7 @@ describe("islands by kind (islandOf)", () => {
       const again = dealLegends(i, night, found), unfound = pool.filter(x => x !== k && !found.has(x)).length;
       if (unfound >= again.length) expect(again.some(x => found.has(x))).toBe(false);
     }
-    // home: different nights deal different legends
-    const home = homeIsland(123), deals = new Set([1, 2, 3, 4, 5, 6, 7, 8].map(n => dealLegends(home, n).sort().join()));
-    expect(deals.size).toBeGreaterThan(2);
+    // W8, Ed 2026-11-02: home-deal variety over eight nights is reported, not pinned.
   });
 });
 

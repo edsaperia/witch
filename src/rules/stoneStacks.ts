@@ -69,6 +69,11 @@ export interface StackEntry { id: number; level: number; friend: boolean; legend
  *  spare), not leashed, not let go here at a knockout, not a party legend or a dancer in the won night's line. */
 const inStack = (c: Creature) => !c.homeGuard && !c.gone && !c.leashed && !c.dropped && c.fleeUntil !== Infinity && !c.wanderTo && !c.partyLegend && c.finale === undefined;
 
+/** Whether a creature's sigil shows friend-coloured on its stone's stack: invited (happy), or living in a friendly area (its
+ *  legend's quest done: c.friendly, rules/sigilButton.ts befriendArea) and not since enraged. Ed, 2026-11-02: "the wild animals in
+ *  that area should then become friendly, and you should be able to capture the stump". */
+export const stackFriend = (c: Creature): boolean => { const s = stateOf(c); return s === "happy" || (s === "wild" && !!c.friendly); };
+
 /** Whether a stone (an area's key) has a stack: not home's, not partified, not ruined. */
 export function stoneOpen(g: Game, key: string): boolean {
   return key !== keyOf(g.map.centreCell) && !g.party.areas.has(key) && !g.party.ruined?.has(key);
@@ -89,7 +94,7 @@ export function stoneStack(g: Game, key: string): StackEntry[] {
   const out: StackEntry[] = [], own = g.byArea?.get(key) ?? g.creatures;
   for (const c of own) {
     if (keyOf(c.cell) !== key || !inStack(c)) continue;
-    out.push({ id: c.id, level: c.boss ? LEGEND : c.level, friend: stateOf(c) === "happy", legend: !!c.boss });
+    out.push({ id: c.id, level: c.boss ? LEGEND : c.level, friend: stackFriend(c), legend: !!c.boss });
   }
   const hostiles = out.filter(hostileSigil);
   return (hostiles.length ? hostiles : out).sort(stackOrder);
@@ -99,7 +104,7 @@ export function stoneStack(g: Game, key: string): StackEntry[] {
 export const hostileSigil = (e: StackEntry): boolean => !e.friend && !e.legend && e.level > 0;
 
 /** Whether a stone's spell can be cast (Ed, 2026-10-29: "Stop you from casting until all wild animals are invited"): no enemy
- *  fighter left on its stack, every wild youth and adult of its area invited (happy, or leashed and so off it). Its babies don't
+ *  fighter left on its stack, every wild youth and adult of its area invited (happy, or leashed and so off it) or friendly (its area's: stackFriend). Its babies don't
  *  count (they turn friendly at the conversion), nor its sleeping legend. A wave converts it whatever. */
 export function castReady(g: Game, key: string): boolean {
   return !stoneStack(g, key).some(hostileSigil);
@@ -213,7 +218,7 @@ export function friendSigils(g: Game, key: string): { c: Creature; slot: number 
     // (one whose sigil is in the stack though it's off about its business just now, a happy one walking to its dance: its sigil falls
     // too, else it'd be left with none, neither in a stack nor on the ground)
     if (keyOf(c.cell) !== key || !(inStack(c) || (c.atStone && !c.gone && !c.leashed))) continue;
-    const friend = c.boss ? c.legendState !== "angry" : stateOf(c) === "happy"; // (an angry legend keeps its sigil)
+    const friend = c.boss ? c.legendState !== "angry" : stackFriend(c); // (an angry legend keeps its sigil)
     all.push({ id: c.id, level: c.boss ? LEGEND : c.level, friend, legend: !!c.boss }); byId.set(c.id, c);
   }
   return all.sort(stackOrder).map((e, slot) => ({ e, slot })).filter(x => x.e.friend).map(x => ({ c: byId.get(x.e.id)!, slot: x.slot }));

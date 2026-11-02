@@ -470,31 +470,31 @@ Code: `rules/treehouse.ts`, `art/ent.js`, `docs/backlog/treehouse.md`, `config/h
 
 - **`treehouse.house.look.indoor`**: Fade the entire crown and its string lights indoors.
   1. Ed, 2026-11-02: "The treehouse/tree needs work. It looks good on the horizon but weird to fly to and from."
-  Treehouse look trials; all four switches default off until Ed reviews.
+  Treehouse look settings; all four switches on by default, chosen by Ed on 2 November.
 - **`treehouse.house.look.noNotch`**: Remove the close crown dancefloor sight-cut; retain the original horizon landmark.
   1. Ed, 2026-11-02: "The treehouse/tree needs work. It looks good on the horizon but weird to fly to and from."
-  Treehouse look trials; all four switches default off until Ed reviews.
+  Treehouse look settings; all four switches on by default, chosen by Ed on 2 November.
 - **`treehouse.house.look.approach`**: Reveal the house floor beneath and around the flying witch near any room or branch.
   1. Ed, 2026-11-02: "The treehouse/tree needs work. It looks good on the horizon but weird to fly to and from."
-  Treehouse look trials; all four switches default off until Ed reviews.
+  Treehouse look settings; all four switches on by default, chosen by Ed on 2 November.
 - **`treehouse.house.look.noWalls`**: Hide upright walls and allow any room edge exit; broom flies, no broom uses the existing fall and edge respawn.
   1. Ed, 2026-11-02: "The treehouse/tree needs work. It looks good on the horizon but weird to fly to and from."
-  Treehouse look trials; all four switches default off until Ed reviews.
+  Treehouse look settings; all four switches on by default, chosen by Ed on 2 November.
 - **`treehouse.house.look.fade`**: Seconds for the whole-crown indoor reveal or return.
   1. Ed, 2026-11-02: "The treehouse/tree needs work. It looks good on the horizon but weird to fly to and from."
-  Treehouse look trials; all four switches default off until Ed reviews.
+  Treehouse look settings; all four switches on by default, chosen by Ed on 2 November.
 - **`treehouse.house.look.bark`**: Fraction of bark opacity retained indoors.
   1. Ed, 2026-11-02: "The treehouse/tree needs work. It looks good on the horizon but weird to fly to and from."
-  Treehouse look trials; all four switches default off until Ed reviews.
+  Treehouse look settings; all four switches on by default, chosen by Ed on 2 November.
 - **`treehouse.house.look.radius`**: Metres from the floor outline at which the flight reveal begins, and its local radius.
   1. Ed, 2026-11-02: "The treehouse/tree needs work. It looks good on the horizon but weird to fly to and from."
-  Treehouse look trials; all four switches default off until Ed reviews.
+  Treehouse look settings; all four switches on by default, chosen by Ed on 2 November.
 - **`treehouse.house.look.softness`**: Fraction of the reveal radius used for its soft edge.
   1. Ed, 2026-11-02: "The treehouse/tree needs work. It looks good on the horizon but weird to fly to and from."
-  Treehouse look trials; all four switches default off until Ed reviews.
+  Treehouse look settings; all four switches on by default, chosen by Ed on 2 November.
 - **`treehouse.house.look.ragged`**: Fractional irregularity of the reveal edge.
   1. Ed, 2026-11-02: "The treehouse/tree needs work. It looks good on the horizon but weird to fly to and from."
-  Treehouse look trials; all four switches default off until Ed reviews.
+  Treehouse look settings; all four switches on by default, chosen by Ed on 2 November.
 
 | knob | type | range |
 |---|---|---|
@@ -1667,6 +1667,9 @@ Code: `rules/win.ts`, `docs/backlog/journey.md`, `rules/guidance.ts`
   1. the coordinator, 2026-10-29: "Given current settings, the motes from sigils don't do much" (Ed, relayed; the art director's motes pass, #1398 (tools/shot/motes.cjs measures them))
 - **`leash.ranks.embers.bright`**: The embers rising off rank sigils (on the ground, in her stack, over the rune stones): their colour times this.
   1. the coordinator, 2026-10-29: "Given current settings, the motes from sigils don't do much" (Ed, relayed; the art director's motes pass, #1398 (tools/shot/motes.cjs measures them))
+- **`leash.ranks.chain.fall`**: How far (m) along its walking path a travelling follower's chain, hanging from its sigil, reaches the ground for every metre it falls (0: straight down to where the path starts).
+  1. Ed, 2026-11-02: "I am on the ground, and the chains of my leashed creatures are attached to me instead of to their sigils. When I'm in the air, it should still attach to their sigils, but fall to the ground quickly and become their walking path." (v7061; 0.5 is the builder's first value, for Ed to set in play)
+  Steepest under the sigil and flat where it meets the ground, then along the path to the creature; 0.5 lands a chain from 3 m up 1.5 m out. Code: render/leash/travelPose.ts sigilPath
 - **`leash.ranks.embers.crowd`**: Past this many of her sigils put down, each one's embers thinned by the square root, so a crowd of them isn't noise (0: never).
   1. the coordinator, 2026-10-29: "Given current settings, the motes from sigils don't do much" (Ed, relayed; the art director's motes pass, #1398 (tools/shot/motes.cjs measures them))
 
@@ -1748,6 +1751,7 @@ Code: `rules/win.ts`, `docs/backlog/journey.md`, `rules/guidance.ts`
 | `leash.ranks.chain.arcPull` | number | 0 to … |
 | `leash.ranks.chain.iterations` | number | 0 to … |
 | `leash.ranks.chain.jump` | number | 0 to … |
+| `leash.ranks.chain.fall` | number | 0 to … |
 
 ### `bond`
 
@@ -1805,6 +1809,20 @@ The fight's scale and speed [1]: fights are drawn and played at the ground camer
 | `fight.leap.through` | number |  |
 | `fight.leap.contact` | boolean |  |
 | `fight.leap.lead` | number | 0 to … |
+
+### `combatWaiting`
+
+Waiting movement favours room beyond default invitation reach while allowing deliberate close passes.
+
+1. Ed, 2026-11-02: "creatures should be moving most of the time, and tend to be outside of her (default bag) range if they're not attacking"
+reachScale multiplies dash distance times charges plus default invitation range; areaGrowth adds a fraction of area radius beyond that reference, without clamping small areas. passPower concentrates the smooth close-pass pulse; passDepth sets how far that pulse relaxes the outward preference. Species routes, speed and turning remain in the pack profiles.
+
+| knob | type | range |
+|---|---|---|
+| `combatWaiting.reachScale` | number | 0 to 3 |
+| `combatWaiting.areaGrowth` | number | 0 to 1 |
+| `combatWaiting.passPower` | number | 1 to 64 |
+| `combatWaiting.passDepth` | number | 0 to 1 |
 
 ### `creatureMomentum`
 
@@ -3274,6 +3292,31 @@ Code: `rules/partyOver.ts`
 ## View
 
 The camera and the view (drawing only): framing, pixel size, culling, fading, finding things.
+
+### `mushroomLight`
+
+Live mushroom halo, colour-pool and cap-glow controls, plus an optional sample row.
+
+1. Ed, 2026-11-02: "please give me some pause-menu controls for adjusting the mushroom lighting"
+Code: `src/rules/mushroomLight.ts`, `src/render/mushroomGlow.ts`, `src/render/mushrooms.ts`
+
+- **`mushroomLight.haloStrength`**: Strength of the halo that removes complementary light around each mushroom.
+- **`mushroomLight.poolStrength`**: Strength of the additive pool in the mushroom's own colour.
+- **`mushroomLight.capGlow`**: Brightness of marked cap spots and their one-texel spill.
+- **`mushroomLight.radius`**: Multiplier on the existing halo radius.
+- **`mushroomLight.height`**: Multiplier on the flat ground halo's small lift off the ground (0.04 m at 1), which keeps it clear of the ground's surface.
+- **`mushroomLight.complement`**: Amount of complementary colour removed by the halo; zero leaves the additive pool.
+- **`mushroomLight.testRow`**: Optional pickable nine-colour sample row near 40 m south of the dancefloor, with shared obstacle nudging; off by default.
+
+| knob | type | range |
+|---|---|---|
+| `mushroomLight.haloStrength` | number | 0 to 2 |
+| `mushroomLight.poolStrength` | number | 0 to 1.5 |
+| `mushroomLight.capGlow` | number | 0 to 10 |
+| `mushroomLight.radius` | number | 0.25 to 3 |
+| `mushroomLight.height` | number | 0 to 2 |
+| `mushroomLight.complement` | number | 0 to 2 |
+| `mushroomLight.testRow` | boolean |  |
 
 ### `sail`
 

@@ -10,13 +10,14 @@
 // E is held (rules/houseRooms.ts stepBed).
 import { approachStrength, houseApproachDistance, showHouseLayer } from "../rules/treehouseLook";
 import { setApproachDepth } from "./treehouseLook";
+import { HOUSE_FLOOR_OVERLAY_ORDER } from "./houseWitchPass";
 import APPROACH_OUTLINE from "../../config/house/outline.json";
 import { NEED_BAG } from "../rules/kit";
 import * as THREE from "three";
 import { gpuKind } from "./gpuLedger";
 import type { View } from "./view";
 import { deckOf, type Deck } from "../rules/treehouse";
-import { fromPlan, toPlan, HOUSE_ROOMS, hatsOnFloor, hatSlots, hatToTake, objectAt, type HouseObject } from "../rules/houseRooms";
+import { fromPlan, toPlan, HOUSE_ROOMS, hatsOnFloor, hatSlots, hatPromptAt, hatToTake, objectAt, type HouseObject } from "../rules/houseRooms";
 import { houseArtLayout, objectOffset } from "../rules/housePlacement";
 import { groundHeight } from "./height";
 import { alongRay } from "./view/home";
@@ -239,7 +240,7 @@ export class HouseRoomsView {
   constructor() {
     const R = ROOMS_ORDER;
     this.parts = [new Part(this.mat, R.back), new Part(this.mat, R.backNear), new Part(this.mat, R.front), new Part(this.mat, R.frontNear), new Part(this.mat, R.frontNear - 1e-4)];
-    this.floor.frustumCulled = false; this.floor.visible = false; this.floor.renderOrder = 19.925;
+    this.floor.frustumCulled = false; this.floor.visible = false; this.floor.renderOrder = HOUSE_FLOOR_OVERLAY_ORDER;
     this.terraceFloor.frustumCulled = false; this.terraceFloor.visible = false;
     this.furniture.add(this.spot.mesh, this.glow.mesh);
     this.loadingFloor.name = 'Loading house platform'; this.loadingFloor.visible = false; this.loadingFloor.frustumCulled = false; this.loadingFloor.renderOrder = 19.924;
@@ -426,8 +427,9 @@ export class HouseRoomsView {
     // (the hats' floor isn't a thing to use: the hat she's by is, hatToTake; Ed, 2026-10-29: "just an area where normal hat objects
     // are placed")
     const at0 = inside ? objectAt(D, w.x, w.z) : null, hatBy = at0?.use.kind === "hats" || HOUSE_ROOMS.layout ? hatToTake(W, D, w.x, w.z, g.tuning.leash.runeRadius) : null;
-    const hatArea = HOUSE_ROOMS.objects.find(o => o.use.kind === "hats");
-    const at = hatBy && HOUSE_ROOMS.layout && hatArea ? { ...hatArea, ...toPlan(D, hatBy.x, hatBy.z) } : at0?.use.kind === "hats" && !hatBy ? null : at0;
+    // (by a lying hat in Ed's arrangement, the prompt's the hats' own, id "hats", where the hat lies: there's no hats' floor there)
+    const hatSpot = hatBy && HOUSE_ROOMS.layout ? toPlan(D, hatBy.x, hatBy.z) : null;
+    const at = hatSpot ? hatPromptAt(hatSpot.x, hatSpot.z) : at0?.use.kind === "hats" && !hatBy ? null : at0;
     const lit = at && at.id !== v.houseOpen ? (hatBy ? (hatBy.slot !== undefined ? `hat:${hatBy.slot}` : "") : at.id) : undefined; // (lit, the one she can use; out while it's open)
     for (const P of this.parts) {
       let k = 0;
@@ -512,8 +514,10 @@ export class HouseRoomsView {
     // only in or near the Workshop (its pieces baked: they're baked as she nears them)
     const piece = (id: string) => { for (const p of this.pieces.values()) if (p.id === id && p.mesh.visible) return p; return null; };
     // (the hats on top of the hats' floor's own piece, wherever the house puts it)
-    const floorOf = HOUSE_ROOMS.objects.find(o => o.use.kind === "hats");
+    // (no hats' floor in Ed's arrangement: after the furniture of the half their spawn points lie in, hatsOrder's own fallback)
+    const floorOf = HOUSE_ROOMS.objects.find(o => o.use.kind === "hats"), points = floorOf ? [] : hatSlots({ x: 0, z: 0 });
     if (floorOf) this.parts[4].mesh.renderOrder = hatsOrder(south(floorOf.x, floorOf.z), piece(floorOf.id)?.mesh.renderOrder ?? null);
+    else if (points.length) this.parts[4].mesh.renderOrder = hatsOrder(points.reduce((s, p) => s + p.z, 0) / points.length, null);
     // (every frame the house shows, its pieces there or not: its pictures asked of the workers at once, laid once their pieces are in)
     {
       const tr = g.trunk, tonight = tr && tr.kind === "part" && !tr.found ? tr.item : null, where = broomWhere(g, stationOf(g, null, t)?.id ?? null, t);

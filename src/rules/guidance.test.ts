@@ -2,11 +2,12 @@
 // morning in Ed's order (2026-10-29: the dressing table, wardrobe, shoes, bags, invitations, cloak, hat, broom); later mornings the invitations desk and the lathe (her night's kit, rules/kit.ts); something new till
 // she's been to it; the map table for an island found she hasn't seen; the decks. Each gone once it's done, hidden at its target.
 import { newKit, takeBroom, takeInvites } from "./kit";
-import { describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it } from "vitest";
 import { TUNING } from "./tuning";
 import { newGame as fullGame, stepGame, STEP, type Controls, type Game } from "./game";
 import { smallWorld } from "../test/worlds";
-import { HOUSE_ROOMS, objectFront } from "./houseRooms";
+import { HAT_FLOOR, HOUSE_ROOMS, addFloorHat, hatSlots, hatsOnFloor, installEdLayout, objectFront, useHats } from "./houseRooms";
+import { usesEdLayout } from "../app/houseLayout";
 import { wakeInBedroom } from "./opening";
 import { startWake, WAKE_DEFAULT } from "./wakeUp";
 import { wearFromStation } from "./clothesPile";
@@ -83,6 +84,47 @@ describe("guidance pins", () => {
     expect(of(g)).toEqual({ kind: "dress", target: { object: "wardrobe" } });
     for (const st of ["wardrobe", "shoeRack", "cloakPegs", "bags"]) wearFromStation(g.wake!, st);
     expect(of(g)).toEqual({ kind: "dress", target: { object: "hats" } });
+  });
+
+  describe("in Ed's arrangement (the default house: app/houseLayout.ts)", () => {
+    afterEach(() => installEdLayout(false));
+    // (Ed's playtest of v7061, a fresh game: the hat pin led to the old hats' area in the Cloakroom, and nothing was there to take;
+    // the first morning's hat lies on hat spawn point 1, in the Parlour since his 2026-11-01 arrangement)
+    it("the hat pin points at her hat where it lies, on the first hat spawn point, not at the old hats' area", () => {
+      installEdLayout(usesEdLayout(new URLSearchParams()));
+      const g = newGame(123, TUNING), W = g.witches[0], at = g.map.treehouse;
+      W.spells.hats = []; // (a fresh game: no spell hats found yet, the floor empty)
+      g.party.spellAt = null; g.clock.paused = false; wakeInBedroom(g); startWake(g, g.herTime);
+      run(g, 0.1, { moveX: 1 }); run(g, WAKE_DEFAULT.stretch + 0.1);
+      expect(HOUSE_ROOMS.layout?.hatPoints.length).toBeGreaterThan(0);
+      const down = W.hat.down!, first = hatSlots(at)[0];
+      expect(down).toMatchObject({ x: first.x, z: first.z });
+      expect(HOUSE_ROOMS.objects.some(o => o.use.kind === "hats")).toBe(false); // (the old hats' area is gone: Ed, 2026-11-02)
+      g.wake!.styled = true;
+      for (const st of ["wardrobe", "shoeRack", "bags", "cloakPegs"]) wearFromStation(g.wake!, st);
+      const G = of(g)!;
+      expect(G).toEqual({ kind: "dress", target: { x: down.x, z: down.z } });
+      expect(atGuide(g, 0, G)).toBe(false);
+      W.body = { ...W.body, x: down.x + 0.5, z: down.z, vx: 0, vz: 0 };
+      expect(atGuide(g, 0, G)).toBe(true);
+      // (and where it points she can take it: on her head, the pin moves on)
+      expect(useHats(W, at, W.body.x, W.body.z, g.herTime, g.tuning.leash.runeRadius)?.kind).toBe("hatPicked");
+      expect(W.hat.down).toBeNull();
+    });
+
+    it("a hat she's found: its pin points at the spawn point it lies on, and goes once she's near enough to take it", () => {
+      installEdLayout(usesEdLayout(new URLSearchParams()));
+      const g = up(true), W = g.witches[0], at = g.map.treehouse, id = HAT_FLOOR[0];
+      W.spells.hats = [id]; addFloorHat(W, id); // (found: laid on the lowest free point, rules/finds.ts)
+      const spot = hatSlots(at)[hatsOnFloor(W).indexOf(id)];
+      const s: GuideSave = { unseen: [{ kind: "hat", id, at: "hats" }] };
+      expect(of(g, s)).toEqual({ kind: "hat", target: { x: spot.x, z: spot.z } });
+      expect(seeGuide(g, 0, s)).toBe(false); // (not near it yet)
+      W.body = { ...W.body, x: spot.x + 0.5, z: spot.z, vx: 0, vz: 0 };
+      expect(atGuide(g, 0, of(g, s)!)).toBe(true);
+      expect(seeGuide(g, 0, s)).toBe(true);
+      expect(s.unseen).toEqual([]);
+    });
   });
 
   it("the invitations desk, then the lathe, each till it's done (Lima's pickups; skipped while they say done)", () => {

@@ -39,7 +39,11 @@ export class BrewingView {
     const ppm = 1 / v.mpp, room = layout.room;
     const { width, height, ox, oy } = brewingFrame(layout, ppm, pitch, edLayoutRequested());
     for (const p of [this.halo, this.back, this.front]) {
-      if (p.canvas.width !== width || p.canvas.height !== height) { p.canvas.width = width; p.canvas.height = height; }
+      if (p.canvas.width !== width || p.canvas.height !== height) {
+        // A warm draw may already have allocated immutable GPU storage at the old size.
+        // Release that storage before repainting; needsUpdate below uploads the new dimensions.
+        p.texture.dispose(); p.canvas.width = width; p.canvas.height = height;
+      }
       const pos = p.mesh.geometry.getAttribute('position') as THREE.BufferAttribute;
       [[-ox, -oy], [width - ox, -oy], [width - ox, height - oy], [-ox, height - oy]].forEach(([dx, dy], i) => {
         const q = pxWorld(room.x, room.z, dx, dy); pos.setXYZ(i, q.x, q.y, q.z);

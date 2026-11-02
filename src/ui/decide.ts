@@ -11,6 +11,7 @@ import { byPr, changedIn, DECISION_LIST, decisionLine, groupOf, issueUrl, knobAt
 import { saveSetting } from "../app/settings";
 import { devVolume } from "../app/playerSettings";
 import { commentControls } from "./playtestComment";
+import { holdButton } from "./hold";
 export interface DecideHost { saveComment?: (text: string) => Promise<string>; restoreComment?: (file: File) => Promise<void> }
 export interface DecideHost { mutate?: (label: string, action: () => void) => void }
 export interface DecideHost { downloadReadableLog?: () => void }
@@ -19,6 +20,9 @@ export interface DecideHost { potionLab?: () => void }
 /** "Load latest version" (playtest 31 Oct item 11; Ed, 2026-10-31: "Can we put the 'load to latest version' button in the pause menu"):
  *  the newer build's label while one is out (app/newBuild.ts), and the reload. */
 export interface DecideHost { newBuild?: { latest(): string | null; load(): void } }
+/** Reset everything (Ed, 2026-11-02: "add [a full reset of the game state to a fresh game] to the pause menu"): every save deleted and
+ *  the page reloaded into a fresh one (app/saveSlots.ts deleteSave); an error to show, or null. Hidden while not `shown` (a visit). */
+export interface DecideHost { resetAll?: { run(): Promise<string | null>; shown(): boolean } }
 
 /** What the panel needs from the game. */
 export interface DecideHost { /** the Settings page (ui/settingsMenu.ts: Ed, 2026-10-28, its button at the very top for now) */ settings?: () => void; tuning: object; seed: number; version: string; /** URL switches the game can take while running (no reload), by param. */ live: Record<string, (v: string) => void>; /** The Report for a visual bug (ui/visualReport.ts), if the game offers it. */ report?: () => Promise<string>; /** Opens the Music Lab panel (ui/musicLabPanel.ts; Ed, 2026-10-15), if the game offers it. */ musicLab?: () => void; /** Opens the audio capacity test (tools/audio-test; Ed, 2026-10-26: "link to the page from the pause menu"), if the game offers it. */ audioTest?: () => void; /** Opens the Fight Arena in a new tab (app/fightArena.ts; Ed, 2026-10-27), if the game offers it. */ fightArena?: () => void; /** Saves the playtest log as JSON (platform/playtestLog.ts; Ed, 2026-10-29: "The \"download log\" L should also be a button on the pause menu rather than a key"), if the game offers it. */ downloadLog?: () => void; /** The debug switch "Unlock everything" (app/debugUnlock.ts; Ed, 2026-10-29): every outfit, bag, broom part, hat and island to choose, whatever she's found. */ unlockAll?: { get(): boolean; set(on: boolean): void }; /** The default look's dev tool (app/defaultLook.ts; Ed, 2026-10-29: "an easy way to select character creation defaults"): the defaults file's text from how she's dressed now, a new tab as a brand-new witch, and whether to show them (debug or Unlock everything on). */ defaults?: { text(): string; tryIt(): void; shown(): boolean }; /** Opens the finds' dev control (ui/findsPanel.ts; Ed, 2026-10-23), shown only while `findsShown` (dev tools on). */ finds?: () => void; findsShown?: () => boolean; /** The quality ladder (app/ladder.ts): its state in lines, its choices (auto, off, a rung to pin) and the one chosen. */ quality?: { lines(): string[]; options(): { value: string; label: string }[]; current(): string; choose(v: string): void } }
@@ -157,15 +161,26 @@ const PAUSE_CSS = `
 #pause-sliders .quality .qrow { display: flex; gap: 6px; align-items: center; min-width: 0; }
 #pause-sliders .quality select { font: inherit; flex: 1; min-width: 0; max-width: 100%; text-overflow: ellipsis; background: rgba(255,255,255,.07); color: inherit; border: 1px solid rgba(232,226,244,.25); border-radius: 4px; }
 #pause-sliders .quality pre { margin: 4px 0 0; white-space: pre-wrap; color: var(--dim, #9a93b4); font: inherit; }
-#pause-sliders { position: fixed; top: 0; left: 0; bottom: 0; width: 280px; z-index: 31; display: flex; flex-direction: column; background: none; font: 12px/1.35 ui-monospace, Menlo, Consolas, monospace; color: #f2ecfb; text-shadow: 0 0 2px #000, 0 0 3px #000, 1px 1px 0 #000; transform: translateX(-105%); transition: transform .22s ease-out; pointer-events: none; }
-#pause-sliders.open { transform: translateX(0); }
-#pause-sliders.backed { background: rgba(14,11,28,.88); box-shadow: 2px 0 12px rgba(0,0,0,.5); }
-#pause-sliders > * { pointer-events: auto; }
+#pause-sliders { --pause-slide-duration: .25s; position: fixed; inset: 0; z-index: 31; overflow: hidden; pointer-events: none; font: 12px/1.35 ui-monospace, Menlo, Consolas, monospace; color: #f2ecfb; text-shadow: 0 0 2px #000, 0 0 3px #000, 1px 1px 0 #000; }
+#pause-sliders .pane { box-sizing: border-box; position: absolute; top: 0; bottom: 0; width: min(300px, 41%); overflow: auto; overscroll-behavior: contain; overflow-wrap: anywhere; background: rgba(14,11,28,.78); visibility: hidden; transition: transform var(--pause-slide-duration) ease-out, visibility 0s var(--pause-slide-duration); }
+#pause-sliders .left { left: 0; transform: translateX(-101%); }
+#pause-sliders .right { right: 0; transform: translateX(101%); }
+#pause-sliders.open .pane { visibility: visible; transform: none; transition-delay: 0s; pointer-events: auto; }
+#pause-sliders.backed .pane { background: rgba(14,11,28,.94); }
+#pause-sliders #pause-btns { position: static !important; display: flex; flex-wrap: wrap; margin: 6px 10px; }
+@media (max-width: 560px) {
+  #pause-sliders .pane { width: 100%; max-height: 43%; }
+  #pause-sliders .left { bottom: auto; }
+  #pause-sliders .right { top: auto; }
+}
+@media (prefers-reduced-motion: reduce) { #pause-sliders .pane { transition: none; } }
 #pause-sliders .top { padding: 9px 10px 7px 16px; }
 #pause-sliders .title { color: var(--accent, #e8b46a); font-weight: 700; font-size: 13px; }
 #pause-sliders .hint { color: #d6cfe6; margin: 2px 0 6px; }
 #pause-sliders .copyall { font: inherit; text-shadow: inherit; width: 100%; background: rgba(14,11,28,.25); color: var(--accent, #e8b46a); border: 1px solid var(--accent, #e8b46a); border-radius: 4px; padding: 4px 6px; cursor: pointer; margin-bottom: 3px; }
 #pause-sliders .copyall:hover { background: var(--accent, #e8b46a); color: #1d1408; text-shadow: none; }
+#pause-sliders .copyall.reset { color: #ff9a8a; border-color: #ff9a8a; margin-top: 6px; touch-action: none; -webkit-touch-callout: none; background-image: linear-gradient(to right, rgba(255,154,138,.6) calc(var(--hold, 0) * 100%), transparent 0); }
+#pause-sliders .copyall.reset:hover { background-color: rgba(255,154,138,.18); color: #ff9a8a; text-shadow: inherit; }
 #pause-sliders .status { color: var(--accent, #e8b46a); font-size: 11px; min-height: 1em; margin-top: 3px; white-space: pre-wrap; }
 #pause-sliders .list { flex: 1; overflow-y: auto; direction: rtl; padding: 0 10px 8px 6px; scrollbar-color: var(--accent, #e8b46a) rgba(0,0,0,.35); scrollbar-width: thin; }
 #pause-sliders .list > * { direction: ltr; }
@@ -190,7 +205,7 @@ const PAUSE_CSS = `
 #pause-sliders .opt { font: inherit; text-shadow: inherit; color: inherit; background: rgba(14,11,28,.25); border: 1px solid rgba(242,236,251,.55); border-radius: 4px; padding: 1px 6px; cursor: pointer; }
 #pause-sliders .opt.on { background: var(--accent, #e8b46a); color: #1d1408; border-color: var(--accent, #e8b46a); text-shadow: none; }
 #pause-sliders .key { color: #d6cfe6; font-size: 11px; }
-#pause-sliders .stamp { margin: 0; padding: 6px 10px 6px 16px; color: #d6cfe6; white-space: pre; font-size: 11px; }
+#pause-sliders .stamp { margin: 0; padding: 6px 10px 6px 16px; color: #d6cfe6; white-space: pre-wrap; font-size: 11px; }
 `;
 
 /** The pause panel's "⟳ Load latest version (vNNNN)" (playtest 31 Oct item 11), in the copyall style: hidden while this page is the
@@ -212,6 +227,7 @@ export class PauseSliders {
   private values = new Map<string, string | number | boolean>();
   private readonly status = h("div", { class: "status" });
   private findsBtn: HTMLButtonElement | null = null;
+  private resetBtn: HTMLButtonElement | null = null;
   private latestBtn: HTMLButtonElement | null = null;
   private defaultBtns: HTMLButtonElement[] = [];
   private readonly stamp = h("pre", { class: "stamp" });
@@ -221,6 +237,7 @@ export class PauseSliders {
   constructor(private host: DecideHost, private readonly list: readonly Decision[] = DECISION_LIST) {
     const style = document.createElement("style"); style.textContent = PAUSE_CSS; document.head.append(style);
     this.el.id = "pause-sliders";
+    this.el.inert = true;
     const params = new URLSearchParams(location.search);
     for (const d of list) this.values.set(d.id, currentValue(d, host.tuning, params));
     const copy = button("Copy values", () => this.copy(), { class: "copyall", title: "Copy every slider's name, key, value and built default, to paste to the coordinator" });
@@ -242,30 +259,45 @@ export class PauseSliders {
       void Promise.resolve().then(() => host.downloadLog!()).then(() => { this.status.textContent = "playtest log saved"; }, error => { this.status.textContent = error instanceof Error ? error.message : "The playtest log could not be saved."; });
     }, { class: "copyall", title: "Save the playtest log (this browser's last few runs) as JSON, for the builders" })] : [];
     if (host.downloadReadableLog) logBtn.push(button("⬇ Download readable log", () => host.downloadReadableLog!(), { class: "copyall", title: "Save a text copy to read; use Download log for a builder's restore bundle" }));
-    const top = h("div", { class: "top", html: `<div class="title">❚❚ Paused · test sliders</div><p class="hint">Esc resumes · . steps (Shift+. ten) · changes show now; double-click a slider for its built value</p>` }, ...settingsBtn, ...latestBtn, copy, ...logBtn, ...(unlockBtn ? [unlockBtn] : []), ...this.defaultBtns, ...(host.report ? [button("Report", () => { this.status.textContent = "drawing the frame with each neutral pair…"; void host.report!().then(t => { this.status.textContent = t; }, e => { this.status.textContent = `report failed: ${e}`; }); }, { class: "copyall", title: "For a visual bug: draw this frame with each neutral pair of settings and save a picture and a JSON (where they differ, the GPU, her place, the repro link)" })] : []), ...(host.musicLab ? [button("🎛 Music Lab", () => host.musicLab!(), { class: "copyall", title: "The night's own music with the lab's sliders, down the right edge: the singer, the levels, a jump to any wave or section; Esc resumes with it up" })] : []), ...(host.audioTest ? [button("🔊 Audio test", () => host.audioTest!(), { class: "copyall", title: "About two minutes in a new tab: the game's music under a rising sound load, with and without AudioWorklets, then Copy results for the builders" })] : []), ...(host.fightArena ? [button("⚔ Fight arena", () => host.fightArena!(), { class: "copyall", title: "In a new tab: her alone against a random wild pack (a seed you can share), with slow motion and today's attacks" })] : []), ...(host.finds ? [this.findsBtn = button("🧪 Finds", () => host.finds!(), { class: "copyall", title: "Dev: give yourself finds, or spawn one near her (the debug overlay's tools are on)" })] : []), this.status);
+    const intro = h("div", { class: "top", html: `<div class="title">❚❚ Paused · test sliders</div><p class="hint">Esc resumes · . steps (Shift+. ten) · changes show now; double-click a slider for its built value</p>` });
+    const top = h("div", { class: "top" }, ...settingsBtn, ...latestBtn, copy, ...logBtn, ...(unlockBtn ? [unlockBtn] : []), ...this.defaultBtns, ...(host.report ? [button("Report", () => { this.status.textContent = "drawing the frame with each neutral pair…"; void host.report!().then(t => { this.status.textContent = t; }, e => { this.status.textContent = `report failed: ${e}`; }); }, { class: "copyall", title: "For a visual bug: draw this frame with each neutral pair of settings and save a picture and a JSON (where they differ, the GPU, her place, the repro link)" })] : []), ...(host.musicLab ? [button("🎛 Music Lab", () => host.musicLab!(), { class: "copyall", title: "The night's own music with the lab's sliders, down the right edge: the singer, the levels, a jump to any wave or section; Esc resumes with it up" })] : []), ...(host.audioTest ? [button("🔊 Audio test", () => host.audioTest!(), { class: "copyall", title: "About two minutes in a new tab: the game's music under a rising sound load, with and without AudioWorklets, then Copy results for the builders" })] : []), ...(host.fightArena ? [button("⚔ Fight arena", () => host.fightArena!(), { class: "copyall", title: "In a new tab: her alone against a random wild pack (a seed you can share), with slow motion and today's attacks" })] : []), ...(host.finds ? [this.findsBtn = button("🧪 Finds", () => host.finds!(), { class: "copyall", title: "Dev: give yourself finds, or spawn one near her (the debug overlay's tools are on)" })] : []), this.status);
     if (host.potionLab) top.append(button('Potion lab', () => host.potionLab!(), { class: 'copyall' }));
-    const body = h("div", { class: "list" });
-    if (host.saveComment && host.restoreComment) body.append(commentControls(host.saveComment, host.restoreComment));
+    // (held 1.5 s, its fill showing how far: Ed, 2026-11-02, "useful to be able to test from a fresh game")
+    const R = host.resetAll;
+    if (R) top.insertBefore(this.resetBtn = holdButton("🗑️ Reset everything (hold)", 1500, () => {
+      this.status.textContent = "Deleting every save…";
+      void R.run().then(err => { this.status.textContent = err ?? "Starting a fresh game…"; }, () => { this.status.textContent = "The saves could not be deleted. Please try again."; });
+    }, { class: "copyall reset", title: "Hold to delete every save and start a fresh game: progress, settings and controls (this device's playtest logs and quality stay)", label: "Hold to delete every save and start a fresh game" }), this.status);
+    const choices = h("div", { class: "list" });
+    const sliders = h("div", { class: "list" });
+    if (host.saveComment && host.restoreComment) choices.append(commentControls(host.saveComment, host.restoreComment));
     // (by the PR that added them, newest first: Ed, 2026-10-12, "The panel shows all the sliders in PR order")
     const ordered = byPr(list);
     // (each PR's group under a header that folds it, every one folded at first: Ed, 2026-10-26, "Can all the menu settings be grouped
     // by their title with the ability to fold, and start folded?"; the ones opened remembered on this browser)
     const open = openGroups();
-    for (const g of [...new Set(ordered.map(groupOf))]) {
-      const mine = ordered.filter(x => groupOf(x) === g), rows = h("div", { class: "rows" }, ...mine.map(d => this.row(d)));
-      const mark = h("span", { class: "mark" }), name = h("span", { class: "name", text: g }), count = h("span", { class: "count" });
-      const head = button("", () => { if (open.has(g)) open.delete(g); else open.add(g); saveOpenGroups(open); fold(); }, { class: "gh", title: `Show or hide ${g}'s sliders` });
-      head.append(mark, name, count);
-      const box = h("section", { class: "grp", data: { group: g } }, head, rows);
-      const fold = () => { const on = open.has(g); box.classList.toggle("folded", !on); head.setAttribute("aria-expanded", String(on)); mark.textContent = on ? "▾" : "▸"; };
-      this.heads.push(() => { const n = changedIn(mine, this.values); count.textContent = n ? ` ● ${n} changed` : ""; box.classList.toggle("changed", n > 0); });
-      fold();
-      body.append(box);
-    }
+    const fillGroups = (body: HTMLElement, decisions: Decision[]) => {
+      for (const g of [...new Set(decisions.map(groupOf))]) {
+        const mine = decisions.filter(x => groupOf(x) === g), rows = h("div", { class: "rows" }, ...mine.map(d => this.row(d)));
+        const mark = h("span", { class: "mark" }), name = h("span", { class: "name", text: g }), count = h("span", { class: "count" });
+        const head = button("", () => { if (open.has(g)) open.delete(g); else open.add(g); saveOpenGroups(open); this.paintHeads(); }, { class: "gh", title: `Show or hide ${g}` });
+        head.append(mark, name, count);
+        const box = h("section", { class: "grp", data: { group: g } }, head, rows);
+        const fold = () => { const on = open.has(g); box.classList.toggle("folded", !on); head.setAttribute("aria-expanded", String(on)); mark.textContent = on ? "▾" : "▸"; };
+        this.heads.push(() => { fold(); const n = changedIn(mine, this.values); count.textContent = n ? ` ● ${n} changed` : ""; box.classList.toggle("changed", n > 0); });
+        body.append(box);
+      }
+    };
+    fillGroups(sliders, ordered.filter(d => d.control.type === "slider"));
+    fillGroups(choices, ordered.filter(d => d.control.type !== "slider"));
     this.paintHeads();
     // (the quality ladder: where it is and why, and a rung to pin or the ladder off; app/ladder.ts)
     const Q = host.quality, quality = Q ? this.qualityBlock(Q) : null;
-    this.el.append(top, ...(quality ? [quality] : []), body, this.stamp);
+    const left = h("section", { class: "pane left" }, intro, sliders, this.stamp);
+    const right = h("section", { class: "pane right" }, top, ...(quality ? [quality] : []), choices);
+    left.setAttribute("aria-label", "Sliders");
+    right.setAttribute("aria-label", "Actions and switches");
+    this.el.append(left, right);
     for (const ev of ["pointerdown", "keydown", "keyup", "wheel", "contextmenu"]) this.el.addEventListener(ev, e => { if (!(e instanceof KeyboardEvent && (e.code === "Escape" || e.code === "Period"))) e.stopPropagation(); }); // (its own presses don't fly her; Esc and . still go to the freeze)
     document.body.append(this.el);
   }
@@ -273,11 +305,15 @@ export class PauseSliders {
   /** Slid in (frozen) or out; `backed` over the bedroom's own panel (Ed, 2026-10-14: paused from her room), where the
    *  see-through page would read as one with it. */
   show(on: boolean, backed = false): void {
+    this.el.inert = !on;
     this.el.classList.toggle("open", on);
+    const cornerButtons = on && document.getElementById("pause-btns");
+    if (cornerButtons && !this.el.contains(cornerButtons)) this.el.querySelector(".right")!.prepend(cornerButtons);
     this.el.classList.toggle("backed", on && backed);
     if (!on) return;
     this.status.textContent = "";
     if (this.findsBtn) this.findsBtn.style.display = this.host.findsShown?.() ? "" : "none";
+    if (this.resetBtn) this.resetBtn.style.display = this.host.resetAll?.shown() ? "" : "none";
     this.paintDefaults();
     this.paintNewBuild();
     // (afresh as it opens: a key may have moved a knob since, the fight's [ ] ; ' , . keys among them)

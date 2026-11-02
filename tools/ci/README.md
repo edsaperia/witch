@@ -83,6 +83,7 @@ Inventory real world-constructor calls and explicit small-fixture reasons; comme
 
 - `PLAN.md`
 - `PROOF-PLAN.md`
+- `behaviour-report.test.ts`
 - `effects-scene.test.ts`
 - `pages-policy.test.cjs`
 - `proofs.json`

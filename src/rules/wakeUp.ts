@@ -144,10 +144,13 @@ export function startWake(g: Game, ht: number, { dreaming = false, mirrored = fa
  *  head; picked up there, it's on (rules/houseRooms.ts useHats; rules/game.ts takes it out of what she has still to put on). No
  *  hat at all (the creator's "none": rules/hat.ts has), or no hats' floor, nothing. */
 function hatOnFloor(g: Game, ht: number, W: Witch): void {
+  // (Ed's arrangement has no hats' floor, Ed, 2026-11-02: on the first free spawn point)
   const o = HOUSE_ROOMS.objects.find(q => q.use.kind === "hats");
-  if (!o || !W.hat.has) return;
-  const slots = HOUSE_ROOMS.layout ? hatSlots(g.map.treehouse) : [], hats = slots.length ? floorHats(W) : [];
-  const free = hats.findIndex(id => !id), p = free >= 0 ? slots[free] : objectWorld(o, g.map.treehouse);
+  const slots = HOUSE_ROOMS.layout ? hatSlots(g.map.treehouse) : [];
+  if ((!o && !slots.length) || !W.hat.has) return;
+  const hats = slots.length ? floorHats(W) : [];
+  const free = hats.findIndex(id => !id), p = free >= 0 ? slots[free] : o ? objectWorld(o, g.map.treehouse) : null;
+  if (!p) return; // (every point taken: on her head, as with no hats' floor)
   W.hat.down = { x: p.x, z: p.z, at: ht }; delete W.hat.hold;
   reserveHatPoints(W, g.map.treehouse);
 }

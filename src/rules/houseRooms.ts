@@ -244,6 +244,16 @@ export function reserveHatPoints(W: Witch, at: At): void {
   reconcileHatPoints(H, slots.length, hatsElsewhere(W));
 }
 
+/** What the use prompt by a hat lying at (x, z) on the plan answers to: id "hats", which the guidance pin keeps clear of
+ *  (render/view/guidance.ts). The hats' floor itself, moved there, in the classic house; in Ed's arrangement, which has no hats'
+ *  floor (Ed, 2026-11-02: "we should remove the old cloakroom hats area"), a stand-in of no size with its id, label and use. */
+export function hatPromptAt(x: number, z: number, H = HOUSE_ROOMS): HouseObject {
+  const area = H.objects.find(o => o.use.kind === "hats");
+  if (area) return { ...area, x, z };
+  const was = H.layout?.baseline.objects.find(o => o.use.kind === "hats");
+  return { id: was?.id ?? "hats", label: was?.label ?? "Hats", room: shapeRoomAt(H.shape, x, z)?.id ?? was?.room ?? "", x, z, w: 0, d: 0, h: 0, use: { kind: "hats" } };
+}
+
 /** The hat E would take, standing at (x, z) on the hats' floor (Ed, 2026-10-29: "The floor hats are not a separate station; it's
  *  just an area where normal hat objects are placed when they spawn"): the nearest hat lying in its slot within `reach` (`slot`), or
  *  else her own lying within `radius` (her first morning's, in the floor's middle); null by none (the floor itself does nothing).

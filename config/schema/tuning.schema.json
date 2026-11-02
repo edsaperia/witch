@@ -1,6 +1,62 @@
 {
   "type": "object",
   "properties": {
+    "mushroomLight": {
+      "type": "object",
+      "properties": {
+        "haloStrength": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 2,
+          "description": "Strength of the halo that removes complementary light around each mushroom."
+        },
+        "poolStrength": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1.5,
+          "description": "Strength of the additive pool in the mushroom's own colour."
+        },
+        "capGlow": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 10,
+          "description": "Brightness of marked cap spots and their one-texel spill."
+        },
+        "radius": {
+          "type": "number",
+          "minimum": 0.25,
+          "maximum": 3,
+          "description": "Multiplier on the existing halo radius."
+        },
+        "height": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 2,
+          "description": "Multiplier on the flat ground halo's small lift off the ground (0.04 m at 1), which keeps it clear of the ground's surface."
+        },
+        "complement": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 2,
+          "description": "Amount of complementary colour removed by the halo; zero leaves the additive pool."
+        },
+        "testRow": {
+          "type": "boolean",
+          "description": "Optional pickable nine-colour sample row near 40 m south of the dancefloor, with shared obstacle nudging; off by default."
+        }
+      },
+      "required": [
+        "haloStrength",
+        "poolStrength",
+        "capGlow",
+        "radius",
+        "height",
+        "complement",
+        "testRow"
+      ],
+      "additionalProperties": false,
+      "description": "Live mushroom halo, colour-pool and cap-glow controls, plus an optional sample row."
+    },
     "mapAreas": {
       "type": "number",
       "minimum": 0
@@ -4668,6 +4724,11 @@
                 "jump": {
                   "type": "number",
                   "minimum": 0
+                },
+                "fall": {
+                  "type": "number",
+                  "minimum": 0,
+                  "description": "How far (m) along its walking path a travelling follower's chain, hanging from its sigil, reaches the ground for every metre it falls (0: straight down to where the path starts)."
                 }
               },
               "required": [
@@ -4678,7 +4739,8 @@
                 "gravity",
                 "arcPull",
                 "iterations",
-                "jump"
+                "jump",
+                "fall"
               ],
               "additionalProperties": false
             }
@@ -4860,6 +4922,39 @@
       ],
       "additionalProperties": false,
       "description": "The scale and speed fights are played at, with creatures running at about her speed."
+    },
+    "combatWaiting": {
+      "type": "object",
+      "properties": {
+        "reachScale": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 3
+        },
+        "areaGrowth": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1
+        },
+        "passPower": {
+          "type": "number",
+          "minimum": 1,
+          "maximum": 64
+        },
+        "passDepth": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1
+        }
+      },
+      "required": [
+        "reachScale",
+        "areaGrowth",
+        "passPower",
+        "passDepth"
+      ],
+      "additionalProperties": false,
+      "description": "Waiting movement favours room beyond default invitation reach while allowing deliberate close passes."
     },
     "creatureMomentum": {
       "type": "object",
@@ -13592,6 +13687,7 @@
     }
   },
   "required": [
+    "mushroomLight",
     "mapAreas",
     "map",
     "biomeLooks",
@@ -13676,6 +13772,7 @@
     "leash",
     "bond",
     "fight",
+    "combatWaiting",
     "creatureMomentum",
     "attackFx",
     "combat",

@@ -196,6 +196,7 @@ export function befriendArea(g: Game, key: string): void {
     if (c.gone || c.leashed || c.boss || c.partyLegend || cellKey(c.cell) !== key) continue;
     c.friendly = true;
     c.enraged = false; c.fight = undefined; c.siege = undefined;
+    if (c.state === "enraged") c.state = undefined; // (else it kept the enraged look, red tint and all: rules/creatureCues.ts lookOf)
   }
   g.byArea = null;
 }

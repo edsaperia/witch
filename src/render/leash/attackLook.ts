@@ -23,6 +23,8 @@ import { fxFor, type MagicFx } from "../fx/system";
 import { FORM_KEYS } from "../fx/model";
 
 type RGB = [number, number, number];
+/** The danger frame's red (Ed, 2026-11-02: "the telegraph should be red"; art/attackLook.js RED). */
+const DANGER: RGB = [230 / 255, 40 / 255, 40 / 255];
 /** How an attack is dressed: its element, its creature's level, and (a party animal's) its neon, which tints the element's grey. */
 /** look: a body's look tag (config/attack-look.json looks: an acorn, a feather...), its core drawn as that thing. */
 export interface Dress { el: string; level: number; tint?: RGB | null; look?: string }
@@ -306,7 +308,7 @@ export class AttackLook {
     const a = this.blink(left, time), sc = up ? 2.6 : 1, C = TAU * R;
     this.dashes(C, s => [x + Math.cos(s / R) * R, z + Math.sin(s / R) * R], time, a, up, sc);
     const r2 = R * (1 - clamp01(fill));
-    if (r2 > 0.3) { const C2 = TAU * r2, n = Math.round(C2 / ((3 * K * sc) / PPM)); for (let i = 0; i < n; i++) { const q = (i / n) * TAU; this.put(this.dl(up), "px", x + Math.cos(q) * r2, 0.03, z + Math.sin(q) * r2, sc * 0.5, 0.55 * a); } }
+    if (r2 > 0.3) { const C2 = TAU * r2, n = Math.round(C2 / ((3 * K * sc) / PPM)); for (let i = 0; i < n; i++) { const q = (i / n) * TAU; this.put(this.dl(up), "px", x + Math.cos(q) * r2, 0.03, z + Math.sin(q) * r2, sc * 0.5, 0.55 * a, DANGER); } }
     if (left < this.cfg.danger.flash && !comfort.reduceFlashing) this.put(up ? this.over : this.glow, `flash${Math.floor(time * 12) % 3}`, x, up ? 0.04 : 0.6, z, sc, 0.9);
   }
   /** A lane from (x0, z0) to (x1, z1), half its width each side: its two edges dashed and marching, chevrons filling it from the
@@ -317,12 +319,17 @@ export class AttackLook {
     const gap = 0.9 * sc, upto = L * clamp01(fill), shift = (time * 3) % gap;
     for (let s = 0.6 + shift; s < upto; s += gap) this.put(this.dl(up), "chev", x0 + ux * s, 0.03, z0 + uz * s, sc, a * 0.9);
   }
+  /** Ed, 2026-11-02: a moving wave of red dots, with no filled danger area or persistent border. */
+  trumpet(points: readonly { x: number; z: number }[], up = false): void {
+    const sc = up ? 2.6 : 1;
+    for (const p of points) this.put(this.dl(up), "px", p.x, 0.03, p.z, sc * 0.65, 0.85, DANGER);
+  }
   /** A beam's line, thin to full: one dashed line, then wider dashes, then (the last warning) a solid white bar. */
   beamLine(x0: number, z0: number, x1: number, z1: number, half: number, k: number, left: number, time: number, up = false): void {
     const dx = x1 - x0, dz = z1 - z0, L = Math.hypot(dx, dz) || 1, ux = dx / L, uz = dz / L, a = this.blink(left, time), sc = up ? 2.6 : 1;
     if (k < 0.4) this.dashes(L, s => [x0 + ux * s, z0 + uz * s], time, a, up, sc);
     else if (k < 0.8) { const w = half * 0.5; for (const side of [-1, 0, 1]) this.dashes(L, s => [x0 + ux * s - uz * w * side, z0 + uz * s + ux * w * side], time, a, up, sc); }
-    else { const w = half * 0.7, step = (2 * K * sc) / PPM; for (let s = 0; s < L; s += step) for (let q = -w; q <= w; q += step) this.put(this.dl(up), Math.abs(q) > w - step ? "warn" : "px", x0 + ux * s - uz * q, 0.03, z0 + uz * s + ux * q, Math.abs(q) > w - step ? sc : sc * 0.5, a); }
+    else { const w = half * 0.7, step = (2 * K * sc) / PPM; for (let s = 0; s < L; s += step) for (let q = -w; q <= w; q += step) this.put(this.dl(up), Math.abs(q) > w - step ? "warn" : "px", x0 + ux * s - uz * q, 0.03, z0 + uz * s + ux * q, Math.abs(q) > w - step ? sc : sc * 0.5, a, DANGER); }
   }
   /** A cone from (x, z) along angle, spread radians each side, out to R: its two sides and its arc dashed, its fill sweeping out. */
   cone(x: number, z: number, angle: number, spread: number, R: number, fill: number, left: number, time: number, up = false): void {
@@ -330,7 +337,7 @@ export class AttackLook {
     for (const side of [-1, 1]) { const q = angle + spread * side; this.dashes(R, s => [x + Math.cos(q) * s, z + Math.sin(q) * s], time, a, up, sc); }
     this.dashes(R * spread * 2, s => { const q = angle - spread + s / R; return [x + Math.cos(q) * R, z + Math.sin(q) * R]; }, time, a, up, sc);
     const r = R * clamp01(fill), n = Math.max(3, Math.round((r * spread * 2) / 0.5));
-    for (let i = 0; i <= n; i++) { const q = angle - spread + (2 * spread * i) / n; this.put(this.dl(up), "px", x + Math.cos(q) * r, 0.03, z + Math.sin(q) * r, sc * 0.5, 0.6 * a); }
+    for (let i = 0; i <= n; i++) { const q = angle - spread + (2 * spread * i) / n; this.put(this.dl(up), "px", x + Math.cos(q) * r, 0.03, z + Math.sin(q) * r, sc * 0.5, 0.6 * a, DANGER); }
   }
   /** A delayed blast's countdown: n pips over (x, y, z), the ones left lit. */
   pips(x: number, y: number, z: number, n: number, lit: number, up = false): void {
@@ -396,7 +403,7 @@ export class AttackLook {
     for (let i = 0; i < n; i++) {
       const x0 = P[i * 2], z0 = P[i * 2 + 1], x1 = P[((i + 1) % n) * 2], z1 = P[((i + 1) % n) * 2 + 1], L = Math.hypot(x1 - x0, z1 - z0) || 1, q = 1 - clamp01(fill);
       this.dashes(L, s => [x0 + ((x1 - x0) * s) / L, z0 + ((z1 - z0) * s) / L], time, a, up, sc);
-      if (q > 0.05) { const m = Math.round((L * q) / ((3 * K * sc) / PPM)); for (let j = 0; j <= m; j++) { const u = j / Math.max(1, m); this.put(this.dl(up), "px", cx + (x0 + (x1 - x0) * u - cx) * q, 0.03, cz + (z0 + (z1 - z0) * u - cz) * q, sc * 0.5, 0.55 * a); } }
+      if (q > 0.05) { const m = Math.round((L * q) / ((3 * K * sc) / PPM)); for (let j = 0; j <= m; j++) { const u = j / Math.max(1, m); this.put(this.dl(up), "px", cx + (x0 + (x1 - x0) * u - cx) * q, 0.03, cz + (z0 + (z1 - z0) * u - cz) * q, sc * 0.5, 0.55 * a, DANGER); } }
     }
     if (left < this.cfg.danger.flash && !comfort.reduceFlashing) this.put(up ? this.over : this.glow, `flash${Math.floor(time * 12) % 3}`, cx, up ? 0.04 : 0.6, cz, sc, 0.9);
   }
@@ -419,7 +426,7 @@ export class AttackLook {
   /** The wind-up tell: a white ring at its feet tightening, and the "!" over its head as it's about to (k 0 to 1). */
   tell(x: number, z: number, top: number, r: number, k: number, time: number, up = false): void {
     const R = r * (1.6 - 0.6 * k), sc = up ? 2.6 : 1, n = Math.round((TAU * R) / ((3 * K * sc) / PPM));
-    for (let i = 0; i < n; i++) { const q = (i / n) * TAU + time; this.put(this.dl(up), i % 2 ? "warn" : "px", x + Math.cos(q) * R, 0.03, z + Math.sin(q) * R, i % 2 ? sc : sc * 0.5, 0.4 + 0.6 * k); }
+    for (let i = 0; i < n; i++) { const q = (i / n) * TAU + time; this.put(this.dl(up), i % 2 ? "warn" : "px", x + Math.cos(q) * R, 0.03, z + Math.sin(q) * R, i % 2 ? sc : sc * 0.5, 0.4 + 0.6 * k, DANGER); }
     if (k > 0.55) this.put(up ? this.over : this.paint, "tick", x, top + 0.5 + (up ? 1 : 0), z, sc, k > 0.85 && !comfort.reduceFlashing && Math.floor(time * 16) % 2 ? 0.5 : 1);
   }
 

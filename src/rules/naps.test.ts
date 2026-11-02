@@ -1,7 +1,8 @@
 // Wild idlers nap (Ed, 2026-10-06: "I think animals in wild areas which are idling can sleep. They awake when you are
 // there in ground mode, but stay asleep if you're in treetop mode, or not in their area"): rules/creatures.ts NapRules.
 import { describe, expect, it } from "vitest";
-import type { Creature } from "./creatures";
+import { napper, napping, stepCreaturesNear, type Creature, type NapRules } from "./creatures";
+import type { ForestMap } from "./map";
 import { newGame, stepGame, STEP, type Controls, type Game } from "./game";
 import { TUNING, type Tuning } from "./tuning";
 import { cellKey } from "./party";
@@ -31,19 +32,27 @@ const wildHere = (g: Game, key: string) => g.creatures.filter(c => cellKey(c.cel
 const notBaby = (c: Creature) => !c.circle; // (a legend circle's baby has its own naps, woken only at its circle: below)
 const land = (g: Game, x: number, z: number) => { g.witch = { ...g.witch, x, z, vx: 0, vz: 0, mode: "ground", lift: 0, seated: false }; };
 
+// Supplied idle pause: chance/length force a known branch rather than a sampled nap deadline.
+const napFixture = () => {
+  const map = { tuning: { ...TUNING, stoneIdle: { ...TUNING.stoneIdle!, on: false } }, bounds: {}, cellSafe: () => ({ cell: [0, 0], safe: 0 }) } as unknown as ForestMap;
+  const c = { id: 0, species: "fox", level: 1, cell: [0, 0], x: 0, z: 0, tx: 0, tz: 0, homeX: 0, homeZ: 0, anchorX: 0, anchorZ: 0, range: 10, speed: 1, rest: 0, walk: 0, seen: 0, rand: () => 0 } as Creature;
+  const rules: NapRules = { chance: 1, length: [2, 2], wake: TUNING.naps!.wake, wild: () => true, roused: () => false };
+  const step = (list: Creature[], time: number, naps = rules) => stepCreaturesNear(list, 0, 0, 100, STEP, time, map, c => !!c.boss, undefined, undefined, naps);
+  return { c, rules, step };
+};
+
 describe("wild idlers nap (Ed, 2026-10-06)", () => {
-  it("has some of an area's idlers asleep at a time, not all, each for a while, with her in the treetops; never a legend", () => {
-    const { g, key } = overWild(), list = wildHere(g, key);
-    let most = 0, ever = new Set<number>(), woke = 0;
-    run(g, 120, () => {
-      const n = list.filter(c => c.asleep).length;
-      most = Math.max(most, n);
-      for (const c of list) { if (c.asleep) ever.add(c.id); else if (ever.has(c.id) && c.wakeUntil !== undefined) woke++; }
-      for (const c of g.creatures) if (c.boss) expect(c.asleep).toBeFalsy();
-    });
-    expect(ever.size, "some nap").toBeGreaterThan(0);
-    expect(most, "never all at once").toBeLessThan(list.length);
-    expect(woke, "and get up again by themselves").toBeGreaterThan(0);
+  it("naps a supplied eligible idler, excludes bosses and happy creatures, and wakes over configured wake time", () => {
+    const { c, rules, step } = napFixture(), boss = { ...c, id: 1, level: 3, boss: true } as Creature, happy = { ...c, id: 2, state: "happy" } as Creature;
+    expect(napper(c)).toBe(true); expect(napper(boss)).toBe(false); expect(napper(happy)).toBe(false);
+    step([c, boss, happy], 1);
+    expect(c.asleep).toBe(true); expect(c.napUntil).toBe(3);
+    expect(boss.asleep).toBeFalsy(); expect(happy.asleep).toBeFalsy();
+    step([c, boss, happy], 3, { ...rules, roused: () => true });
+    expect(c.asleep).toBe(false); expect(c.napUntil).toBeUndefined(); expect(c.wakeUntil).toBe(3 + rules.wake);
+    expect(napping(c, 3 + rules.wake * 0.5)).toBe(true); expect(napping(c, 3 + rules.wake)).toBe(false);
+    expect(boss.asleep).toBeFalsy(); expect([c.id, c.level]).toEqual([0, 1]);
+    // C1 reports the original seed77/120s nap, peak and wake-sample counts.
   }, 120_000);
 
   it("wakes them gently when she lands in their area: up over naps.wake, out of fights meanwhile, and no new naps while she's there", () => {
@@ -126,12 +135,18 @@ describe("a legend circle's baby naps most of the time (Ed, 2026-10-07)", () => 
     return { g, c };
   }
 
-  it("is asleep most of the time, getting up now and then, with her away from its circle", () => {
-    const { g, c } = overBaby();
-    let asleep = 0, all = 0, stirs = 0, was = false;
-    run(g, 300, () => { all++; if (c.asleep) asleep++; if (was && !c.asleep) stirs++; was = !!c.asleep; });
-    expect(asleep / all, "mostly asleep").toBeGreaterThan(0.6);
-    expect(stirs, "a stir now and then").toBeGreaterThan(0);
+  it("uses a supplied circle baby's own nap rules and wakes it when roused without losing its circle", () => {
+    const { c, rules, step } = napFixture(), circle = { x: 0, z: 0, r: 10, legendX: 0, legendZ: 0 };
+    c.level = 0; c.circle = circle;
+    const naps: NapRules = { ...rules, chance: 0, circle: { chance: 1, length: [3, 3] } };
+    step([c], 1, naps);
+    expect(c.asleep).toBe(true); expect(c.napUntil).toBe(4);
+    step([c], 2, naps); expect(c.asleep).toBe(true);
+    step([c], 2, { ...naps, roused: () => true });
+    expect(c.asleep).toBe(false); expect(c.wakeUntil).toBe(2 + rules.wake);
+    expect(c.circle).toBe(circle); expect([c.id, c.level]).toEqual([0, 0]);
+    expect(Number.isFinite(c.x) && Number.isFinite(c.z)).toBe(true);
+    // C1 reports the original nearest-circle seed77/300s sleep share and stirs.
   }, 120_000);
 
   it("sleeps on with her on the ground elsewhere in its area, and wakes when she comes to its circle (so she can invite it)", () => {

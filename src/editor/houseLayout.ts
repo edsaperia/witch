@@ -12,7 +12,7 @@ import { migratedGuestFurnitureId } from "../rules/guestFurnitureMigration";
 export const EDITOR_HOUSE = HOUSE_CONFIG as HouseConfig;
 
 export interface Placement { id: string; x: number; z: number; rotation: number }
-export interface Layout { version: 2; floorplan: string; objects: Placement[]; removed?: string[]; migration?: { from: 1; cameraPreserved: true; held: Placement[] } }
+export interface Layout { version: 2; floorplan: string; objects: Placement[]; removed?: string[]; /** objects removed outright: the old hats' area */ removedObjects?: string[]; migration?: { from: 1; cameraPreserved: true; held: Placement[] } }
 export interface LayoutItem extends HouseObject {
   anchor: { x: number; z: number }; synthetic?: boolean;
   facing: { yaw: number; foot: { w: number; d: number; h: number }; curve: number };
@@ -87,10 +87,15 @@ export function parseLayout(raw: unknown, items: LayoutItem[], floorplan: string
   const matchingSource = l?.floorplan === floorplan || (floorplan === identities.canonical && identities.legacy.includes(l?.floorplan));
   const removed = l?.removed ?? [];
   if (!Array.isArray(removed) || removed.some(id => typeof id !== "string" || !id.startsWith("clutter:") || !items.some(o => o.id === id)) || new Set(removed).size !== removed.length) throw Error("Only known clutter may be explicitly removed.");
-  if (!l || l.version !== 2 || !matchingSource || !Array.isArray(l.objects) || l.objects.length + removed.length !== items.length) throw Error("This layout does not match the current house. Export it again from the matching editor.");
+  // An object removed outright: only the old hats' area (Ed, 2026-11-02: "we should remove the old cloakroom hats area"; its hats
+  // lie on the spawn points). Not in the house at all (rules/housePlacement.ts applyEdLayout).
+  const removedObjects = l?.removedObjects ?? [];
+  if (!Array.isArray(removedObjects) || removedObjects.some(id => typeof id !== "string" || !items.some(o => o.id === id && isHatZone(o))) || new Set(removedObjects).size !== removedObjects.length) throw Error("Only the old hats area may be removed as an object.");
+  const gone = [...removed, ...removedObjects];
+  if (!l || l.version !== 2 || !matchingSource || !Array.isArray(l.objects) || l.objects.length + gone.length !== items.length) throw Error("This layout does not match the current house. Export it again from the matching editor.");
   const seen = new Set<string>(), ids = new Set(items.map(o => o.id));
   const objects = l.objects.map(p => {
-    if (!p || !ids.has(p.id) || removed.includes(p.id) || seen.has(p.id) || ![p.x, p.z, p.rotation].every(v => typeof v === "number" && Number.isFinite(v)) || Math.abs(p.x) > 10000 || Math.abs(p.z) > 10000 || Math.abs(p.rotation) > 360000) throw Error("Each object must have one known ID and finite coordinates and angle.");
+    if (!p || !ids.has(p.id) || gone.includes(p.id) || seen.has(p.id) || ![p.x, p.z, p.rotation].every(v => typeof v === "number" && Number.isFinite(v)) || Math.abs(p.x) > 10000 || Math.abs(p.z) > 10000 || Math.abs(p.rotation) > 360000) throw Error("Each object must have one known ID and finite coordinates and angle.");
     const pose = { id: p.id, x: p.x, z: p.z, rotation: normalAngle(p.rotation) };
     const supplied = (p as Placement & { useAnchor?: { x: number; z: number } }).useAnchor;
     if (supplied !== undefined) {
@@ -99,7 +104,7 @@ export function parseLayout(raw: unknown, items: LayoutItem[], floorplan: string
     }
     seen.add(p.id); return pose;
   });
-  const result: Layout = { version: 2, floorplan, objects: items.filter(o => !removed.includes(o.id)).map(o => objects.find(p => p.id === o.id)!), ...(removed.length ? { removed: [...removed] } : {}) };
+  const result: Layout = { version: 2, floorplan, objects: items.filter(o => !gone.includes(o.id)).map(o => objects.find(p => p.id === o.id)!), ...(removed.length ? { removed: [...removed] } : {}), ...(removedObjects.length ? { removedObjects: [...removedObjects] } : {}) };
   if (l.migration !== undefined) {
     const m = l.migration;
     if (!m || m.from !== 1 || m.cameraPreserved !== true || !Array.isArray(m.held) || m.held.some(p => !legacy.items.some(o => o.id === p?.id) || ![p.x, p.z, p.rotation].every(Number.isFinite))) throw Error("Invalid version-1 conversion record.");

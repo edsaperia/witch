@@ -62,12 +62,14 @@ describe("rank sigils", () => {
       at([0, 0], 0), at([0, 0], 1), at([0, 0], 3, { leashed: true }), // (her legend doesn't count)
       at([1, 0], 2), at([1, 0], 3), // (a legend home: yellow)
       at([3, 0], 2, { state: "happy" }), // (a friend now: only the hostile count)
+      at([4, 0], 2, { friendly: true }), at([4, 0], 0, { friendly: true }), // (a friendly area's, its legend's quest done: friends too, Ed 2026-11-02)
       at([2, 0], 2, { gone: true }), at([2, 0], 1, { fleeUntil: 5 }), at([2, 0], 2, { dancing: true }), at([2, 0], 2, { travelling: true }),
     ]);
     expect(stoneRank(top, [0, 0])).toBe(1);
     expect(stoneRank(top, [1, 0])).toBe(3);
     expect(stoneRank(top, [2, 0])).toBe(EMPTY_STONE); // (everyone gone, fled, dancing or travelling)
     expect(stoneRank(top, [3, 0])).toBe(EMPTY_STONE);
+    expect(stoneRank(top, [4, 0])).toBe(EMPTY_STONE);
     expect(stoneRank(top, [5, 5])).toBe(EMPTY_STONE);
   });
   it("a sleeping legend's sigil is the baby's purple, neutral; awake, its side's colour again (Ed, 2026-10-29)", () => {

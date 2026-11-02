@@ -60,10 +60,8 @@ describe("the circular map", () => {
         if (landArea(p.x - p.nx * 12, p.z - p.nz * 12) && !landArea(p.x + p.nx * 12, p.z + p.nz * 12)) agree++;
       }
       expect(agree / n).toBeGreaterThan(0.9); // (inside, an island's area; outside, none: but where a crumb of one area pokes into another, or a sliver under 16 m was smoothed away)
-      // not round: its headlands well out past its bays
-      const home = map.dancefloor, far: number[] = [];
-      for (let k = 0; k < sea.pts.length; k += 2) far.push(Math.hypot(sea.pts[k] - home.x, sea.pts[k + 1] - home.z));
-      expect(Math.max(...far) / Math.min(...far)).toBeGreaterThan(1.1);
+      // W8, Ed 2026-11-02: report only the aesthetic headland/bay radial ratio.
+      // The >90% numerical inside/outside agreement above remains blocking geometry correctness.
     }
     const k = TUNING.map!.coast!;
     expect(makeCoast(1, k)(1)).not.toBe(makeCoast(2, k)(1));

@@ -28,6 +28,9 @@ export function applyEdLayout(source: HouseConfig, on = edLayoutRequested()): Ho
   if (!on) return source;
   source = source.layout?.baseline ?? source;
   const H = structuredClone(source);
+  // Objects the layout removes outright are not in the house at all: the old Cloakroom hats' area (Ed, 2026-11-02: "we should
+  // remove the old cloakroom hats area"); its hats lie on the numbered spawn points (hatPoints), each its own object.
+  H.objects = H.objects.filter(o => !proposal.removedObjects.includes(o.id));
   for (const o of H.objects) {
     // The unused guest chest is replaced in place by Ed's requested dressing table.
     const placedId = publishedGuestFurnitureId(o.id);

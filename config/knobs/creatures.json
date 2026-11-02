@@ -2,6 +2,11 @@
   "section": "creatures",
   "about": "Creatures: how many and how they grow, move, notice, nap, guard and fight.",
   "knobs": {
+    "combatWaiting": {
+      "what": "Waiting movement favours room beyond default invitation reach while allowing deliberate close passes.",
+      "notes": "reachScale multiplies dash distance times charges plus default invitation range; areaGrowth adds a fraction of area radius beyond that reference, without clamping small areas. passPower concentrates the smooth close-pass pulse; passDepth sets how far that pulse relaxes the outward preference. Species routes, speed and turning remain in the pack profiles.",
+      "decisions": [{ "by": "Ed", "date": "2026-11-02", "quote": "creatures should be moving most of the time, and tend to be outside of her (default bag) range if they're not attacking" }]
+    },
     "fight": {
       "what": "The scale and speed fights are played at, with creatures running at about her speed.",
       "decisions": [

@@ -5,7 +5,8 @@ import { deckOf } from "../../rules/treehouse";
 import { potionBlackout, potionFall } from "../potionChoreography";
 import { updatePotionCaption } from "../potionCaption";
 import { onRoomFloor } from "../../rules/houseRooms";
-import { witchRoomPass, witchRoomDepth } from "../witchRoomPass";
+import { witchRoomPass } from "../witchRoomPass";
+import { houseWitchOverlay, setHouseWitchPass } from "../houseWitchPass";
 import { broomWhere, stationOf } from "../../rules/stations";
 import type { View } from "../view";
 import { captureRefractionCast } from "./refraction";
@@ -282,15 +283,13 @@ export function drawWitch(v: View, time: number, ht: number, onTreehouse: (px: n
     v.leashView.bristle.on = flying && !hidden;
   }
   submitWitchInstances(v.witchBatch, bare ? [] : her, repaintHeld);
-  // In a room off the hub: the rooms are drawn over the Ent's tree and tower and the forest round the house, which they lie behind,
-  // in the see-through pass (render/houseRooms.ts), so she's drawn after them there (her batch put in that pass while she's in
-  // one), over everything, and needs no silhouette.
-  const roomDepth = witchRoomDepth(inRoom);
+  // The indoor floor is a late overlay (houseRooms.ts). A perched walking/landing witch uses
+  // the later room pass on every floor/join, including the Terrace and the walking inset
+  // boundary. Keep inRoom above solely for its existing art projection, not this ordering.
+  const overFloor = houseWitchOverlay(deck, w, !!T.ent, inRoom);
   for (const b of [v.witchBatch, v.bareBatch]) if (b) {
-    const m = b.mesh.material as { depthTest: boolean; transparent: boolean; needsUpdate: boolean };
-    if (m.transparent !== inRoom) { m.transparent = inRoom; m.needsUpdate = true; }
-    m.depthTest = roomDepth.depthTest; b.mesh.renderOrder = roomDepth.renderOrder;
-    b.silhouette = djUpper < 0 && !inRoom;
+    setHouseWitchPass(b.mesh, overFloor);
+    b.silhouette = djUpper < 0 && !overFloor;
   }
   // Knocked off, her hat floats down (Ed, 2026-10-07: "the hat slowly floats to the floor over about 4 seconds"): from her head
   // to where it lies over the knockout's float (ko.at to ko.floatUntil, knockout.hatFloat: rules/knockout.ts), drifting over as it goes, swaying side to

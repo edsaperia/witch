@@ -552,6 +552,18 @@
         }
       ]
     },
+    "leash.ranks.chain.fall": {
+      "what": "How far (m) along its walking path a travelling follower's chain, hanging from its sigil, reaches the ground for every metre it falls (0: straight down to where the path starts).",
+      "notes": "Steepest under the sigil and flat where it meets the ground, then along the path to the creature; 0.5 lands a chain from 3 m up 1.5 m out. Code: render/leash/travelPose.ts sigilPath",
+      "decisions": [
+        {
+          "by": "Ed",
+          "date": "2026-11-02",
+          "quote": "I am on the ground, and the chains of my leashed creatures are attached to me instead of to their sigils. When I'm in the air, it should still attach to their sigils, but fall to the ground quickly and become their walking path.",
+          "rest": "v7061; 0.5 is the builder's first value, for Ed to set in play"
+        }
+      ]
+    },
     "leash.ranks.embers.crowd": {
       "what": "Past this many of her sigils put down, each one's embers thinned by the square root, so a crowd of them isn't noise (0: never).",
       "decisions": [
