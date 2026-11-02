@@ -65,6 +65,7 @@ import { View } from "./render/view";
 import { prewarmArtWorkers } from "./render/assets";
 import { AimHud } from "./render/aimhud";
 import { StallLog } from "./platform/stallLog";
+import { renderProgramCounts } from "./platform/renderProgramCounts";
 import { Freeze } from "./platform/freeze";
 import { StudioPlayer } from "./app/studio";
 import { StudioPanel } from "./ui/studioPanel";
@@ -1109,6 +1110,7 @@ const stallLog = new StallLog(summary => {
 });
 // (the playtest log's hooks read the night on now, so they carry to the next night's run as they are: app/night.ts)
 N().playtest.stalls = () => stallLog.stalls;
+const shotProgramCounts = params.has("shot") ? renderProgramCounts(() => view.renderer.info.programs, view.renderer.extensions.has("KHR_parallel_shader_compile")) : null;
 // What a builder needs from a screenshot of the overlay (Ed, 2026-10-14; app/repro.ts): the link that rebuilds what she saw, the
 // machine, and every setting changed from the build's; the same in the playtest log (the pause page's Download log).
 const repro = (() => {
@@ -1495,14 +1497,16 @@ function drawFrame(time: number, repaintHeld = false): void {
 }
 function frame(now: number): void {
   const start = performance.now(), gap = lastObservedFrame && !document.hidden ? now - lastObservedFrame : 0;
+  const programsBefore = shotProgramCounts?.begin();
   lastObservedFrame = now; measuredStep = measuredDraw = undefined; measuredParts = {};
   const n = N(), phase = sailing ? "sailing" : landingSleep.holds(n.game) ? "landing-sleep" : !n.flags.ready ? "building" : n.arrival && !n.flags.landed ? "arrival" : "play";
   try { frameBody(now); }
   finally {
     try {
+      const programs = shotProgramCounts && programsBefore ? shotProgramCounts.end(programsBefore) : null;
       if (params.has("shot") && (gap >= 100 || performance.now() - start >= 100)) {
         window.dispatchEvent(new CustomEvent("witch-slow-frame-evidence", { detail: {
-          sampledWallTimeMs: Date.now(), sampledAtMs: performance.now(), gap, work: performance.now() - start,
+          sampledWallTimeMs: Date.now(), sampledAtMs: performance.now(), gap, work: performance.now() - start, programs,
           step: measuredStep ?? null, draw: measuredDraw ?? null, parts: { ...measuredParts },
           loading: { phase, ready: n.flags.ready, ...view.readiness }, mode: n.game.witch.mode, perched: !!n.game.witch.perch,
         } }));

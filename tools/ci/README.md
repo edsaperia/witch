@@ -22,6 +22,10 @@ Pages publication policy: debounce previews outside the publisher lock; live req
 
 Canonical/cloud only.
 
+## `program-counts.cjs`
+
+Canonical/cloud program-count evidence only, not latency or native-route acceptance.
+
 ## `report-command.cjs`
 
 Stream a check unchanged, annotating named failures or its crash reason only when it exits unsuccessfully.
