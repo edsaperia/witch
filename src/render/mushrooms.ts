@@ -1,4 +1,3 @@
-import renderKnobs from '../../config/playtest-render.json';
 import * as THREE from 'three';
 import { packAtlas } from './atlas';
 import { SpriteBatch, type SpriteInstance } from './sprites';
@@ -24,7 +23,7 @@ export class MushroomView {
   private batch: SpriteBatch | null = null;
   private key = '';
   private readonly halo = new MushroomGlow();
-  private readonly capGlow = { value: renderKnobs.mushroomSpotGain };
+  private readonly capGlow = { value: MUSHROOM_LIGHT_DEFAULTS.capGlow };
   update(v: View): void {
     const state = v.game.mushrooms;
     const light = v.game.tuning.mushroomLight ?? MUSHROOM_LIGHT_DEFAULTS;

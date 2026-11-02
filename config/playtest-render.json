@@ -5,9 +5,5 @@
   "chainLiftStagger": 0.25,
   "mushroomSpotGain": 4.8,
   "mushroomHaloStrength": 0.8,
-  "mushroomPoolStrength": 0.45,
-  "mushroomHaloRadius": 1,
-  "mushroomHaloHeight": 1,
-  "mushroomComplement": 1,
-  "mushroomTestRow": false
+  "mushroomPoolStrength": 0.45
 }

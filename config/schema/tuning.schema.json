@@ -1,6 +1,62 @@
 {
   "type": "object",
   "properties": {
+    "mushroomLight": {
+      "type": "object",
+      "properties": {
+        "haloStrength": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 2,
+          "description": "Strength of the halo that removes complementary light around each mushroom."
+        },
+        "poolStrength": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1.5,
+          "description": "Strength of the additive pool in the mushroom's own colour."
+        },
+        "capGlow": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 10,
+          "description": "Brightness of marked cap spots and their one-texel spill."
+        },
+        "radius": {
+          "type": "number",
+          "minimum": 0.25,
+          "maximum": 3,
+          "description": "Multiplier on the existing halo radius."
+        },
+        "height": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 2,
+          "description": "Multiplier on the halo's height above ground."
+        },
+        "complement": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 2,
+          "description": "Amount of complementary colour removed by the halo; zero leaves the additive pool."
+        },
+        "testRow": {
+          "type": "boolean",
+          "description": "Optional pickable nine-colour sample row near 40 m south of the dancefloor, with shared obstacle nudging; off by default."
+        }
+      },
+      "required": [
+        "haloStrength",
+        "poolStrength",
+        "capGlow",
+        "radius",
+        "height",
+        "complement",
+        "testRow"
+      ],
+      "additionalProperties": false,
+      "description": "Live mushroom halo, colour-pool and cap-glow controls, plus an optional sample row."
+    },
     "mapAreas": {
       "type": "number",
       "minimum": 0
@@ -13592,6 +13648,7 @@
     }
   },
   "required": [
+    "mushroomLight",
     "mapAreas",
     "map",
     "biomeLooks",

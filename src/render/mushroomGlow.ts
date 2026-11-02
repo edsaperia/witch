@@ -1,5 +1,4 @@
 // Subtractive colour halos: remove the complementary light from the background rather than bleaching it with additive light.
-import renderKnobs from '../../config/playtest-render.json';
 import * as THREE from 'three';
 import { HEIGHT_GLSL, HEIGHT_UNIFORMS } from './height';
 import { SPRITE_UNIFORMS } from './sprites';
@@ -31,7 +30,7 @@ export class MushroomGlow {
     this.geometry.setAttribute('position', new THREE.BufferAttribute(new Float32Array([-1,-1,0, 1,-1,0, 1,1,0, -1,1,0]),3));
     this.geometry.setIndex([0,1,2,0,2,3]);
     this.material = new THREE.ShaderMaterial({
-      uniforms: { strength: { value: renderKnobs.mushroomHaloStrength }, ...HEIGHT_UNIFORMS, uRight: SPRITE_UNIFORMS.uRight, uUp: SPRITE_UNIFORMS.uUp },
+      uniforms: { strength: { value: MUSHROOM_LIGHT_DEFAULTS.haloStrength }, ...HEIGHT_UNIFORMS, uRight: SPRITE_UNIFORMS.uRight, uUp: SPRITE_UNIFORMS.uUp },
       vertexShader: `${HEIGHT_GLSL}
         attribute vec4 halo; attribute vec3 tint; attribute vec3 ownColour; varying vec2 local; varying vec3 colour;
         uniform vec3 uRight,uUp;
@@ -53,7 +52,7 @@ export class MushroomGlow {
     });
     // First remove complementary light, then add the mushroom hue even on black ground.
     this.poolMaterial = this.material.clone();
-    this.poolMaterial.uniforms = { ...this.material.uniforms, strength: { value: renderKnobs.mushroomPoolStrength } };
+    this.poolMaterial.uniforms = { ...this.material.uniforms, strength: { value: MUSHROOM_LIGHT_DEFAULTS.poolStrength } };
     this.poolMaterial.defines = { COLOUR_POOL: 1 };
     this.poolMaterial.blending = THREE.AdditiveBlending;
     subtractiveMaterial(this.material);
