@@ -44,7 +44,10 @@ export class MenuFocus {
     if (changed || opened) { this.clearFocus(); this.roots = roots; this.nav = new PadNav(); if (opened) this.nav.readBound(opened, pad?.axes ?? [], now); }
     const moves = this.nav.readBound(pad?.buttons.map(b => b.pressed) ?? [], pad?.axes ?? [], now);
     if (changed && !opened || !roots.length || !pad) return false;
-    const controls = roots.flatMap(root => [...root.querySelectorAll<HTMLElement>("button, a[href], input[type=range], input[type=checkbox], select")]).filter(el => !el.matches(":disabled") && !!el.getClientRects().length);
+    // The corner buttons can be mounted inside the actions pane after lazy loading.
+    const controls = roots.filter(root => !roots.some(other => other !== root && other.contains(root)))
+      .flatMap(root => [...root.querySelectorAll<HTMLElement>("button, a[href], input[type=range], input[type=checkbox], select")])
+      .filter(el => !el.matches(":disabled") && !!el.getClientRects().length);
     if (this.focused && !controls.includes(this.focused)) this.clearFocus();
     for (const move of moves) {
       if (move === "back") { back(); this.clearFocus(); break; }
