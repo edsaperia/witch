@@ -4,6 +4,7 @@ import * as THREE from 'three';
 import { HEIGHT_GLSL, HEIGHT_UNIFORMS } from './height';
 import { SPRITE_UNIFORMS } from './sprites';
 import { MUSHROOM_COLOURS } from './mushroomArt';
+import { MUSHROOM_LIGHT_DEFAULTS, type MushroomLight } from '../rules/mushroomLight';
 
 export function subtractiveMaterial(material: THREE.Material): void {
   material.blending = THREE.CustomBlending;
@@ -61,7 +62,9 @@ export class MushroomGlow {
     pool.frustumCulled = false; pool.renderOrder = 9.9;
     this.mesh.add(pool);
   }
-  set(items: MushroomHalo[]): void {
+  set(items: MushroomHalo[], settings: MushroomLight = MUSHROOM_LIGHT_DEFAULTS): void {
+    this.material.uniforms.strength.value = settings.haloStrength;
+    this.poolMaterial.uniforms.strength.value = settings.poolStrength;
     if (items.length > this.capacity) {
       this.capacity = Math.max(items.length, 16);
       this.geometry.dispose();
@@ -74,7 +77,7 @@ export class MushroomGlow {
     const h = this.geometry.getAttribute('halo') as THREE.InstancedBufferAttribute, c = this.geometry.getAttribute('tint') as THREE.InstancedBufferAttribute;
     const own = this.geometry.getAttribute('ownColour') as THREE.InstancedBufferAttribute;
     const rgb = new THREE.Color();
-    items.forEach((p,i)=>{ h.setXYZW(i,p.x,p.z,p.h,p.radius);c.setXYZ(i,...complement(p.type));rgb.set(MUSHROOM_COLOURS[p.type]);own.setXYZ(i,rgb.r,rgb.g,rgb.b); });
+    items.forEach((p,i)=>{ h.setXYZW(i,p.x,p.z,p.h * settings.height,p.radius * settings.radius);c.setXYZ(i,...complement(p.type).map(v => v * settings.complement) as [number, number, number]);rgb.set(MUSHROOM_COLOURS[p.type]);own.setXYZ(i,rgb.r,rgb.g,rgb.b); });
     h.needsUpdate = c.needsUpdate = own.needsUpdate = true;
   }
   dispose(): void { this.geometry.dispose(); this.material.dispose(); this.poolMaterial.dispose(); }

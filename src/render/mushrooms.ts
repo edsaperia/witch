@@ -5,6 +5,7 @@ import { SpriteBatch, type SpriteInstance } from './sprites';
 import { mushroomArt } from './mushroomArt';
 import type { View } from './view';
 import { MushroomGlow, type MushroomHalo } from './mushroomGlow';
+import { MUSHROOM_LIGHT_DEFAULTS } from '../rules/mushroomLight';
 
 function puffArt() {
   const A = document.createElement('canvas'), N = document.createElement('canvas'); A.width = N.width = 9; A.height = N.height = 9;
@@ -23,8 +24,11 @@ export class MushroomView {
   private batch: SpriteBatch | null = null;
   private key = '';
   private readonly halo = new MushroomGlow();
+  private readonly capGlow = { value: renderKnobs.mushroomSpotGain };
   update(v: View): void {
     const state = v.game.mushrooms;
+    const light = v.game.tuning.mushroomLight ?? MUSHROOM_LIGHT_DEFAULTS;
+    this.capGlow.value = light.capGlow;
     if (!state || v.game.cauldron) { this.batch?.set([]); this.halo.set([]); return; }
     if (!this.halo.mesh.parent) v.scene.add(this.halo.mesh);
     const key = `${v.mpp}:${v.assets.style.pixel}:` + state.patches.map(p => `${p.id}/${p.type}/${p.seed}`).join(',');
@@ -33,7 +37,7 @@ export class MushroomView {
       this.key = key;
       const images = state.patches.map(p => mushroomArt(v.assets.style, p.type, p.seed));
       images.push(puffArt());
-      this.batch = new SpriteBatch(packAtlas(images, 1024), v.mpp, { solid: true, glowGain: { value: renderKnobs.mushroomSpotGain }, spotSpill: true }).name('mushrooms');
+      this.batch = new SpriteBatch(packAtlas(images, 1024), v.mpp, { solid: true, glowGain: this.capGlow, spotSpill: true }).name('mushrooms');
       v.scene.add(...this.batch.meshes);
     }
     const b = this.batch!, items: SpriteInstance[] = [], halos: MushroomHalo[] = [], w = v.game.witch;
@@ -56,7 +60,7 @@ export class MushroomView {
       }
     }
     b.set(items);
-    this.halo.set(halos);
+    this.halo.set(halos, light);
   }
   dispose(scene: THREE.Scene): void {
     if (this.batch) { scene.remove(...this.batch.meshes); this.batch.dispose(); this.batch = null; }

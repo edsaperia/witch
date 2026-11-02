@@ -1,5 +1,6 @@
 // The tuning file, config/tuning.json, typed. Ed edits the JSON; nothing here holds a number.
 import raw from "../../config/tuning.json";
+import { MUSHROOM_LIGHT_DEFAULTS, type MushroomLight } from "./mushroomLight";
 import type { SchemaTuning } from "./tuning.generated";
 import type { ByRoute } from "./growth";
 import type { TreehouseLook } from "./treehouseLook";
@@ -94,6 +95,8 @@ export interface GladeTuning {
 export interface RevealKind { on: boolean; radius: number; ring?: number; width?: number; height?: number; /** metres round the thing itself never faded */ keep?: number; /** only the scenery within radius metres of it fades (the runestone's: Ed, 2026-10-26) */ bounded?: boolean }
 
 export interface Tuning {
+  /** Live mushroom lighting experiments; defaults from playtest-render.json. */
+  mushroomLight?: MushroomLight;
   /** Per-load spacing=1 experiment; absent uses packs.json spacing.on (default false). Never remembered. */
   combatSpacing?: boolean;
   /** Will-o'-the-wisps in the wild areas (render/wisps.ts, Ed 2026-10-07); off (or absent) for none. */
@@ -539,7 +542,7 @@ export interface Tuning {
 
 // schema.mjs --check validates the values; typegen.mjs derives this boundary from that schema.
 // Assignment to the public type also checks compatibility with its named types and optional experiment knobs.
-export const TUNING: Tuning = raw as SchemaTuning;
+export const TUNING: Tuning = { ...raw as SchemaTuning, mushroomLight: { ...MUSHROOM_LIGHT_DEFAULTS } };
 
 /** The tuning file with some values replaced, for tests and experiments. */
 export function withTuning(over: Partial<Tuning>): Tuning {
