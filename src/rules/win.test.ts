@@ -224,7 +224,7 @@ describe("the end of the route (rules/win.ts)", () => {
     run(g, 0.1);
     expect(atTheParty(g)).toBe(true);
     expect(w.settled).toBe(true);
-    expect(winFlare({ ...g, clock: { ...g.clock, time: w.wonAt! + W.flare } })).toBeNull(); // supplied configured expiration boundary, without a convergence wait
+    expect(winFlare({ ...g, clock: { ...g.clock, time: w.wonAt! + W.flare + STEP } })).toBeNull(); // first full step after expiry: nonzero wonAt addition/subtraction can round just below flare
     expect(g.partyOver).toBeNull();
   }, 120000);
 

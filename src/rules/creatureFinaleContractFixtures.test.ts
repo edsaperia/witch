@@ -25,9 +25,14 @@ it("keeps configured conga/trail/legend destination geometry and faces a supplie
   expect(legend.away).toBe(false);expect([legend.x,legend.z]).toEqual([p.x,p.z]);expect(legend.finale).toBe(-1);
 });
 
-it("shows the supplied won sigil before its configured expiration and clears it exactly at that boundary",()=>{
+it("shows the supplied won sigil before expiry and clears it after its full duration for fixed-step starts",()=>{
   const g=finale();expect(winFlare(g)).toEqual({sigil:"worldTree",drawn:0});
   g.clock.time=W.flare-1e-6;expect(winFlare(g)).not.toBeNull();
   g.clock.time=W.flare;expect(winFlare(g)).toBeNull();
+  // With wonAt=1/60, (wonAt+16)-wonAt is15.999999999999998. Query a fully elapsed frame, without changing the rule/tolerance.
+  for(const wonAt of [1/60,37/60,10+1/60]){
+    g.win!.wonAt=wonAt;g.clock.time=wonAt+W.flare-1/60;expect(winFlare(g)).not.toBeNull();
+    g.clock.time=wonAt+W.flare+1/60;expect(winFlare(g)).toBeNull();
+  }
   g.win!.phase="stragglers";g.clock.time=0;expect(winFlare(g)).toBeNull();
 });
