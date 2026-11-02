@@ -22,7 +22,7 @@ import { cellKey } from "./party";
 import { hexSpot, stackBottom, toBottom } from "./leash";
 import { groundedBy } from "./leashWeight";
 import { hasRune, runeNear, stateOf } from "./creatureStates";
-import { castingStone, castOf, castOn, castReady, castSpot, looseNear, stoneOpen } from "./stoneStacks";
+import { castingStone, castOf, castOn, castReady, castSpot, looseNear, stackFriend, stoneOpen } from "./stoneStacks";
 import { creatureValue, sideValue } from "./power";
 import type { Controls, Game } from "./game";
 import type { Creature } from "./creatures";
@@ -247,14 +247,14 @@ export function newBot(kind: BotKind, o: BotOptions = {}): Bot {
       for (const c of g.creatures) if (!c.gone && !c.boss && !c.leashed && c.fleeUntil === undefined && cellKey(c.cell) === key && c.species === sp) kin++;
       for (const c of g.creatures) {
         if (c.gone || c.boss || c.leashed || c.fleeUntil !== undefined || c.enraged || cellKey(c.cell) !== key) continue;
-        if (stacks && stateOf(c) === "happy") continue; // (won over already: its sigil waits in the stone's stack till she casts there)
+        if (stacks && stackFriend(c)) continue; // (won over already, or its area friendly: its sigil waits in the stone's stack till she casts there)
         if (keepKin && c.species === sp && kin <= K.kinKeep) continue;
         out.push(c);
       }
       return out;
     };
     /** Whether an area's stone holds any friend sigils (won over, waiting for her spell). */
-    const friendsAt = (key: string): boolean => g.creatures.some(c => !c.gone && !c.leashed && !c.boss && c.atStone && cellKey(c.cell) === key);
+    const friendsAt = (key: string): boolean => g.creatures.some(c => !c.gone && !c.leashed && !c.boss && (c.atStone || (stacks && stackFriend(c))) && cellKey(c.cell) === key);
     /** Where to recruit next: the nearest wild area with someone she may invite (the careful ones: the next waves' first). */
     const ahead = new Set([...(g.party.next ?? []), ...(g.party.afterNext ?? [])].map(c => cellKey(c)));
     const pickRecruit = () => {
