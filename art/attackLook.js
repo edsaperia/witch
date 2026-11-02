@@ -19,7 +19,7 @@ import { hash2 } from "./core.js";
 export const ATTACK_LOOK_PPM = 16;
 export const ATLAS_SIZE = 768;
 const GREY = [[92, 92, 92], [156, 156, 156], [218, 218, 218], [255, 255, 255]], GREY_ACCENT = [140, 140, 140];
-const WHITE = [255, 255, 255], INK = [16, 12, 20];
+const WHITE = [255, 255, 255], INK = [16, 12, 20], RED = [230, 40, 40]; // (the danger frame in red, Ed 2026-11-02: "the telegraph should be red")
 /** Each part's cell size (art pixels) and how many shapes and frames it has. */
 export const PARTS = { coreA: 16, coreL: 24, bit: 9, beam: 12, mark: 32, area: 16, cores: 4, bits: 3, bitFrames: 2, beams: 3, beamFrames: 2, areas: 2 };
 
@@ -182,15 +182,15 @@ function drawMark(c, kind, P, A, k) {
 
 // ---- the danger frame's pieces and the motifs ----
 const NEUTRAL = {
-  warn: [4, c => { c.disc(1.5, 1.5, 2.1, INK, 235); c.put(1, 1, WHITE); c.put(2, 1, WHITE); c.put(1, 2, WHITE); c.put(2, 2, WHITE); }],
-  pip: [5, c => { c.disc(2, 2, 2.4, INK, 235); c.disc(2, 2, 1.2, WHITE); }],
+  warn: [4, c => { c.disc(1.5, 1.5, 2.1, INK, 235); c.put(1, 1, RED); c.put(2, 1, RED); c.put(1, 2, RED); c.put(2, 2, RED); }],
+  pip: [5, c => { c.disc(2, 2, 2.4, INK, 235); c.disc(2, 2, 1.2, RED); }],
   pipOff: [5, c => { c.disc(2, 2, 2.4, INK, 200); c.ring(2, 2, 1.4, [120, 120, 130], 200); }],
-  tick: [11, c => { const o = 3; for (let y = 0; y < 11; y++) for (let x = 0; x < 5; x++) c.put(o + x, y, INK, 235); for (let y = 1; y < 7; y++) { c.put(o + 2, y, WHITE); if (y < 6) { c.put(o + 1, y, WHITE); c.put(o + 3, y, WHITE); } } for (let x = 1; x < 4; x++) c.put(o + x, 9, WHITE); }],
-  chev: [7, c => { for (let k = 0; k < 4; k++) { c.put(3 + k - 3, 3 - k, WHITE); c.put(3 + k - 3, 3 + k, WHITE); } c.outline(INK, 230); }],
+  tick: [11, c => { const o = 3; for (let y = 0; y < 11; y++) for (let x = 0; x < 5; x++) c.put(o + x, y, INK, 235); for (let y = 1; y < 7; y++) { c.put(o + 2, y, RED); if (y < 6) { c.put(o + 1, y, RED); c.put(o + 3, y, RED); } } for (let x = 1; x < 4; x++) c.put(o + x, 9, RED); }],
+  chev: [7, c => { for (let k = 0; k < 4; k++) { c.put(3 + k - 3, 3 - k, RED); c.put(3 + k - 3, 3 + k, RED); } c.outline(INK, 230); }],
   hatch: [16, c => { for (let y = 0; y < 16; y++) for (let x = 0; x < 16; x++) if ((x + y) % 6 < 2) c.put(x, y, INK, 255); else c.put(x, y, INK, 90); }],
 };
-for (let q = 0; q < 4; q++) NEUTRAL["bracket" + q] = [8, c => { const fx = q & 1 ? -1 : 1, fy = q & 2 ? -1 : 1, X = q & 1 ? 6 : 1, Y = q & 2 ? 6 : 1; for (let k = 0; k < 5; k++) { c.put(X + fx * k, Y, WHITE); c.put(X, Y + fy * k, WHITE); } c.outline(INK, 235); }];
-for (let f = 0; f < 3; f++) NEUTRAL["flash" + f] = [13, c => { const x = 6, y = 6, L = 2 + f * 2; for (let k = -L; k <= L; k++) { c.put(x + k, y, WHITE); c.put(x, y + k, WHITE); } if (f) for (let k = -L + 2; k <= L - 2; k++) { c.put(x + k, y + k, WHITE, 180); c.put(x + k, y - k, WHITE, 180); } c.disc(x, y, 1 + f * 0.5, WHITE); }];
+for (let q = 0; q < 4; q++) NEUTRAL["bracket" + q] = [8, c => { const fx = q & 1 ? -1 : 1, fy = q & 2 ? -1 : 1, X = q & 1 ? 6 : 1, Y = q & 2 ? 6 : 1; for (let k = 0; k < 5; k++) { c.put(X + fx * k, Y, RED); c.put(X, Y + fy * k, RED); } c.outline(INK, 235); }];
+for (let f = 0; f < 3; f++) NEUTRAL["flash" + f] = [13, c => { const x = 6, y = 6, L = 2 + f * 2; for (let k = -L; k <= L; k++) { c.put(x + k, y, RED); c.put(x, y + k, RED); } if (f) for (let k = -L + 2; k <= L - 2; k++) { c.put(x + k, y + k, RED, 180); c.put(x + k, y - k, RED, 180); } c.disc(x, y, 1 + f * 0.5, RED); }];
 // the motifs, white (the element's colour tints them): slow's chain (links, turning), stun's star, knockback's shock arc, confuse's spiral
 for (let f = 0; f < 4; f++) NEUTRAL["chain" + f] = [10, c => { for (let k = 0; k < 2; k++) { const x = 3 + k * 4, y = 5 + (k + f) % 2; c.ring(x, y, 2.2, WHITE, 255, k === f % 2 ? 0.55 : 1); } c.outline(INK, 160); }];
 for (let f = 0; f < 2; f++) NEUTRAL["star" + f] = [7, c => { const x = 3, y = 3; for (let k = -2; k <= 2; k++) { c.put(x + k, y, WHITE); c.put(x, y + k, WHITE); } if (f) { c.put(x - 1, y - 1, WHITE); c.put(x + 1, y + 1, WHITE); c.put(x + 1, y - 1, WHITE); c.put(x - 1, y + 1, WHITE); } }];

@@ -78,6 +78,19 @@ export type { Delivery, Modifier, Attack, CombatData, Trait, Target, Fight, Shot
 export { fighting, targetable, truce, guardOf, nearestSound } from "./combat/targeting";
 
 /** One step of every fight. Creatures fighting move here (their roam and leash leave them be). */
+/** How far a lunge goes (m) from where it stands to its aim (aimX, aimZ), reaching `reach`: with momentum (`chasing`) right to where
+ *  it aimed, up to a quarter again its reach; else stopping half its range short. Dug in: none. The strike's own reckoning (below)
+ *  and its telegraph's (render/leash/combat.ts: Ed, 2026-11-02, "the end of the line is where the lunge lands"). */
+export function lungeOf(c: Creature, A: Attack, reach: number, chasing: boolean, time: number, aimX: number, aimZ: number): number {
+  const ad = Math.hypot(aimX - c.x, aimZ - c.z), short = chasing ? 0 : A.range * 0.5, far = chasing ? Math.max(reach, Math.min(reach * 1.25, ad)) : reach;
+  return c.dug !== undefined && time < c.dug ? 0 : Math.min(far, Math.max(0, ad - short));
+}
+/** A lunge wound up now: how far it will go (m), reckoned as the strike will (lungeOf), at her with dodge.a's longer reach and her momentum. */
+export function lungeLength(c: Creature, A: Attack, atWitch: boolean, t: Tuning, time: number, aimX: number, aimZ: number): number {
+  const DA = t.dodge?.a.on ? t.dodge.a : null, chasing = atWitch && c.level !== LEGEND && !!momentumOf(c.species, t);
+  return lungeOf(c, A, (A.lunge ?? 0) * (DA && atWitch ? DA.lunge : 1), chasing, time, aimX, aimZ);
+}
+
 export function stepCombat(s: CombatState, w: CombatWorld, data: CombatData = COMBAT): void {
   // (Events gather over a frame's steps: stepGame clears them once a frame, for the view.)
   const { time, dt, t } = w, C = t.combat;
@@ -775,7 +788,7 @@ export function stepCombat(s: CombatState, w: CombatWorld, data: CombatData = CO
       // (with momentum, Ed 2026-10-27: its run-in may have left it short, so the committed lunge goes right to where the wind-up aimed,
       // up to a quarter again its usual length: a strike that starts stays reliable; at twice, a skilled bot backing away from a fight
       // was knocked out early in 3 seeds of 12, at a quarter 2, with no momentum none)
-      const ax = aimX - c.x, az = aimZ - c.z, ad = Math.hypot(ax, az), short = mo ? 0 : A.range * 0.5, far = mo ? Math.max(reach, Math.min(reach * 1.25, ad)) : reach, L = c.dug !== undefined && time < c.dug ? 0 : Math.min(far, Math.max(0, ad - short)); // (dug in: no lunge)
+      const ax = aimX - c.x, az = aimZ - c.z, ad = Math.hypot(ax, az), L = lungeOf(c, A, reach, !!mo, time, aimX, aimZ); // (dug in: no lunge)
       if (ad > 0.01 && L > 0.05) f.lunge = { dx: ax / ad, dz: az / ad, left: L, v: Math.hypot(c.vx ?? 0, c.vz ?? 0) };
       else if (Math.hypot(p.x - c.x, p.z - c.z) <= A.range * widthOf(f.target) + p.r) land(w, s, c, f.target, dmg, A, c.x, c.z);
     }
