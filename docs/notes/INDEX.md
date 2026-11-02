@@ -85,6 +85,7 @@ says what each note covers.
 
 ## [Creatures in play](gameplay.md)
 
+- Creature age roles
 - Combat waiting movement
 - Attack target identity
 - Sheltered attack effects
