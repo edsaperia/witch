@@ -87,6 +87,7 @@ it("shows guest movement and letter launch immediately while canonical simulatio
 });
 it("keeps the same visit across the host's new world and rebases after guest preparation", async () => {
   const f = fixture(), { joined } = await f.start(); await f.sync(); await joined;
+  f.guest.step(input(1), .05); expect(f.guest.predictionStats!.pending).toBeGreaterThan(0);
   f.hostGame.witches.forEach(w => { w.house = { slept: true, lastBed: "bed" }; });
   const next = newGame(456, structuredClone(f.hostGame.tuning));
   continueSharedNight(f.hostGame, next, { hats: new Set(), parts: new Set() });
@@ -98,11 +99,15 @@ it("keeps the same visit across the host's new world and rebases after guest pre
   const ready = f.guestMessages.find(m => (m.payload as { kind?: string } | undefined)?.kind === "night-ready")!;
   f.host.message(ready); f.guest.message(f.hostMessages.at(-1)!);
   expect(f.host.ready).toBe(true); expect(f.guest.ready).toBe(true); expect(f.guest.game!.seed).toBe(456);
+  expect(f.guest.predictionStats!.pending).toBe(0);
   const index = f.hostMessages.length; f.host.step(input(), .02);
   for (const message of f.hostMessages.slice(index)) f.guest.message(message);
   expect(snapshotGame(f.guest.game!)).toEqual(snapshotGame(next));
   expect(f.hostOptions.ended).not.toHaveBeenCalled(); expect(f.guestOptions.ended).not.toHaveBeenCalled();
   expect(f.hostOptions.failed).not.toHaveBeenCalled(); expect(f.guestOptions.failed).not.toHaveBeenCalled();
+  // Travel/replacement outside the shared rollover ends this predictor rather than carrying its old inputs.
+  f.guest.step(input(1), .05); expect(f.guest.predictionStats!.pending).toBeGreaterThan(0);
+  f.guest.nightChanged(); expect(f.guest.role).toBeNull(); expect(f.guest.predictionStats).toBeNull();
 });
 it.each(["hat", "broom"] as const)("orders competing %s claims in one host step and permits acquisition after release", async kind => {
   const f = fixture(), hat = HAT_SPELLS.find(h => h.built && h.id !== "none")!.id, part = PARTS[0];

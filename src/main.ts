@@ -1500,6 +1500,13 @@ function frame(now: number): void {
   try { frameBody(now); }
   finally {
     try {
+      if (params.has("shot") && (gap >= 100 || performance.now() - start >= 100)) {
+        window.dispatchEvent(new CustomEvent("witch-slow-frame-evidence", { detail: {
+          sampledWallTimeMs: Date.now(), sampledAtMs: performance.now(), gap, work: performance.now() - start,
+          step: measuredStep ?? null, draw: measuredDraw ?? null, parts: { ...measuredParts },
+          loading: { phase, ready: n.flags.ready, ...view.readiness }, mode: n.game.witch.mode, perched: !!n.game.witch.perch,
+        } }));
+      }
       if (!loop.manual) stallLog.frame({ t: n.game.clock.time, gap, work: performance.now() - start, step: measuredStep ?? 0, draw: measuredDraw, measured: { step: measuredStep !== undefined, draw: measuredDraw !== undefined }, parts: measuredParts, source: "raf", loading: { phase, ready: n.flags.ready, ...view.readiness }, mode: n.game.witch.mode, x: n.game.witch.x, z: n.game.witch.z, wave: n.game.party.wave, creatures: n.game.creatures.length });
     } catch (error) { logCaughtError(error, "slow-frame observation"); }
   }

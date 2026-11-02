@@ -68,18 +68,20 @@ export function guestPrediction(source: Game, player: number, report?: (event: P
       const next = state(actor);
       const transitions = (Object.keys(next) as (keyof typeof next)[]).filter(key => next[key] !== authoritative[key]);
       const discontinuity = transitions.length > 0;
-      const released = authoritative.held && !next.held;
+      // Sent quanta still belong to the host after flag changes, wake moves and even a large position correction.
+      // Only states whose authoritative path cannot replay ordinary locomotion invalidate that history.
+      const resetHistory = next.sleep || next.ko !== undefined || next.sleep !== authoritative.sleep || next.bed !== authoritative.bed || next.ko !== authoritative.ko;
       for (const reason of transitions) transitionReasons[reason] = (transitionReasons[reason] ?? 0) + 1;
       authoritative = next;
-      if (discontinuity && !released) pending.length = 0;
+      if (resetHistory) pending.length = 0;
       for (const input of pending) advance(input);
       const dx = visible.x - actor.body.x, dz = visible.z - actor.body.z, size = Math.hypot(dx, dz);
-      const snapped = discontinuity || size >= SNAP;
+      const snapped = resetHistory || size >= SNAP;
       const scale = snapped ? 0 : Math.min(1, MAX_OFFSET / Math.max(size, 1e-9));
       offset.x = dx * scale; offset.z = dz * scale;
-      corrections++; if (snapped) { snaps++; if (discontinuity) transitionSnaps++; else correctionSnaps++; } largest = Math.max(largest, size);
+      corrections++; if (snapped) { snaps++; if (discontinuity || resetHistory) transitionSnaps++; else correctionSnaps++; } largest = Math.max(largest, size);
       sizes.push(size); if (sizes.length > 240) sizes.shift();
-      const correction = { sequence, size, snapped, reason: discontinuity ? "authoritative-transition:" + transitions.join(",") : snapped ? "large-correction" : "reconcile" };
+      const correction = { sequence, size, snapped, reason: discontinuity ? "authoritative-transition:" + transitions.join(",") : resetHistory ? "authoritative-hold:" + (next.sleep ? "sleep" : "ko") : snapped ? "large-correction" : "reconcile" };
       report?.(correction);
       if (before && evidence && (size > .05 || snapped)) {
         // Actor-only diagnostic snapshot on actual divergence, never a per-frame world copy.

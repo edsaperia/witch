@@ -6,6 +6,9 @@ import { guestPrediction, type PredictionEvidence } from "./guestPrediction";
 import { localView } from "./localView";
 import { roomAt } from "../../rules/houseRooms";
 import { startWakeFor } from "../../rules/wakeUp";
+import { deckOf } from "../../rules/treehouse";
+import { knockOut, stepKnockout } from "../../rules/knockout";
+import { insideIsland } from "../../rules/zooMap";
 
 const input = (moveX: number): Controls => ({ moveX, moveZ: 0, toggleMode: false, zoom: 0 });
 function fixture() {
@@ -31,6 +34,7 @@ it("shows immediate guest input and braking through a private actor without adva
 it("snaps a host-forced relocation and clears pending locomotion on sleep", () => {
   const game = fixture(), corrections: unknown[] = [], p = guestPrediction(game, 1, c => corrections.push(c));
   p.input(0, input(1), 1 / 60);
+  p.input(1, input(1), 1 / 60); // Still unacknowledged when the host puts her to sleep.
   game.witches[1].body.x += 20;
   game.witches[1].house = { slept: true, lastBed: "bedroom2Bed" };
   p.reconcile(0);
@@ -74,6 +78,56 @@ it("replays sent but unacknowledged quanta when the authoritative wake releases 
   p.input(513,input(1),STEP);
   stepGame(game,[input(0),input(1)],STEP);p.reconcile(507);
   expect(events.at(-1)!.size).toBeLessThan(.001);
+});
+
+it("keeps unacknowledged walking quanta across a normal takeoff from the perch", () => {
+  const game = fixture(), W = game.witches[1], deck = deckOf(game.map, game.tuning)!;
+  Object.assign(W.body, { x: deck.house?.circle.x ?? deck.x, z: deck.house?.circle.z ?? deck.z,
+    perch: true, seated: false, mode: "rising", lift: .999, vx: 0, vz: 0 });
+  const events: { size: number }[] = [], p = guestPrediction(game, 1, event => events.push(event));
+  for (let n = 0; n <= 6; n++) p.input(n, input(1), STEP);
+  stepGame(game, [input(0), input(1)], STEP);
+  expect(W.body.perch).not.toBe(true); p.reconcile(0);
+  expect(p.pending).toBe(6);
+  stepGame(game, [input(0), input(1)], STEP); p.reconcile(1);
+  expect(events.at(-1)!.size).toBeLessThan(1e-7); expect(p.stats.snaps).toBe(0);
+});
+
+it("retains host-consumable quanta through the authoritative bedside wake placement", () => {
+  const game = fixture(), W = game.witches[1], p = guestPrediction(game, 1);
+  for (let n = 0; n < 3; n++) p.input(n, input(1), STEP);
+  expect(startWakeFor(game, 0, { yesterday: true }, W, { player: 1, room: "bedroom2" })).toBe(true);
+  p.reconcile(0); expect(p.pending).toBe(2);
+  expect(p.actor.body.x).toBe(W.body.x); expect(p.actor.body.z).toBe(W.body.z);
+  expect(p.stats.transitionSnaps).toBe(1); // Picture snaps to bed; transport history survives.
+});
+
+it("replays no-broom fall, thud and circle return without discarding future host inputs", () => {
+  const game = fixture(), W = game.witches[1], deck = deckOf(game.map, game.tuning)!;
+  const fall = deck.house!.fall;
+  Object.assign(W.body, { x: deck.house!.circle.x + 20, z: deck.house!.circle.z, perch: false,
+    mode: "ground", lift: 0, falling: fall.time - STEP / 2, vx: 1, vz: 0 });
+  const p = guestPrediction(game, 1), end = Math.ceil(((fall.beat ?? 0) + STEP * 3) / STEP);
+  for (let n = 0; n <= end + 6; n++) p.input(n, input(1), STEP);
+  for (let n = 0; n <= end; n++) { stepGame(game, [input(0), input(1)], STEP); p.reconcile(n); }
+  expect(W.body.falling).toBeUndefined(); expect(W.body.perch).toBe(true); expect(p.pending).toBe(6);
+  stepGame(game, [input(0), input(1)], STEP); p.reconcile(end + 1);
+  expect(p.stats.recentP95).toBeLessThan(1e-7);
+});
+
+it("clears ignored locomotion while a zoo knockout returns the guest outside the fences", () => {
+  // Zoo layout is essential here: its respawn intentionally has no house/perch.
+  const tuning = { ...structuredClone(TUNING), map: { ...TUNING.map!, shape: "zoo" as const, island: "", islandAreas: 0, found: ["*"] } };
+  const game = newGame(7, tuning, 2), W = game.witches[1], islands = game.map.zoo!.layout!.islands;
+  Object.assign(W.body, { x: islands[0].x, z: islands[0].z, perch: false, seated: false });
+  const p = guestPrediction(game, 1); p.input(0, input(1), STEP);
+  W.ko = knockOut(W.leash, game.creatures, game.clock.time, game.tuning); p.reconcile(-1);
+  expect(p.pending).toBe(0);
+  p.input(1, input(1), STEP);
+  W.body = stepKnockout(W.ko, W.body, W.leash, game.creatures, game.map, (W.ko.teleportAt + W.ko.inAt) / 2, () => false, []).body;
+  p.reconcile(-1); expect(p.pending).toBe(0); expect(p.actor.body.x).toBe(W.body.x);
+  expect(islands.every(i => !insideIsland(i, W.body.x, W.body.z))).toBe(true);
+  expect(p.stats.correctionSnaps).toBe(0);
 });
 
 it("emits a pending-cap proof without changing the existing120-input bound", () => {
