@@ -2,10 +2,12 @@ import { afterEach, describe, expect, it } from "vitest";
 import { ACTIONS, actionsOf, actionReach, type CreatureAction } from "./actions";
 import { PACKS, stepPacks, packGate, markStrike, packAttack } from "./packs";
 import { teamOf } from "./teams";
-import { newCombat, type CombatWorld } from "../combat";
+import { COMBAT, newCombat, type CombatWorld } from "../combat";
 import type { Creature } from "../creatures";
 import { withTuning } from "../tuning";
 import { speciesAttack } from "../attacks/species";
+import schema from "../../../config/schema/combat.schema.json";
+import { validate, type Schema } from "../schema";
 
 const original = ACTIONS.species;
 afterEach(() => { ACTIONS.species = original; });
@@ -19,6 +21,15 @@ function fixture(action: CreatureAction) {
   return {state, world, team, creatures};
 }
 describe("creature action contracts", () => {
+  it("keeps generated weapon records schema-safe when optional fields are absent", () => {
+    for (const species of Object.keys(PACKS.kinds)) for (const level of [1, 2] as const) for (const delivery of ["melee", "ranged"] as const) {
+      const weapon = packAttack(species, level, delivery);
+      if (!weapon) continue;
+      // The flat scaled view may have undefined optional slots; the shared source/config table must not.
+      for (const [key, value] of Object.entries(COMBAT.attacks[weapon.name])) expect(value, `${species}@${level}:${delivery}.${key}`).not.toBeUndefined();
+    }
+    expect(validate(COMBAT, schema as Schema, "combat")).toEqual([]);
+  });
   it("authors finite unique repertoires without a mandatory third action", () => {
     expect(Object.keys(ACTIONS.species).sort()).toEqual(Object.keys(PACKS.kinds).sort());
     for (const [species, actions] of Object.entries(ACTIONS.species)) {

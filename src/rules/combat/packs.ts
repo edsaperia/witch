@@ -155,7 +155,7 @@ export function packAttack(species: string, level: Level, move: Move, data: Pack
     let A = COMBAT.attacks[name];
     if (!A) {
       const B = COMBAT.attacks[base];
-      A = { ...B, range: B.range * age.lunge, lunge: B.lunge === undefined ? undefined : B.lunge * age.lunge, radius: B.radius === undefined ? undefined : B.radius * age.footprint, windup: B.windup * (young?.windup ?? 1) * age.windup, ...(K.melee.knockback ? { modifier: "knockback" as const, knockback: K.melee.knockback } : {}) };
+      A = { ...B, range: B.range * age.lunge, ...(B.lunge !== undefined ? {lunge: B.lunge * age.lunge} : {}), ...(B.radius !== undefined ? {radius: B.radius * age.footprint} : {}), windup: B.windup * (young?.windup ?? 1) * age.windup, ...(K.melee.knockback ? { modifier: "knockback" as const, knockback: K.melee.knockback } : {}) };
       COMBAT.attacks[name] = A;
     }
     const S = scaled(name, A);
