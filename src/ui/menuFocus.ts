@@ -1,5 +1,6 @@
 // Pad focus for the existing pause controls and its borrowed corner panels. Settings and in-world menus keep their own navigation.
 import { PadNav, type NavInput } from "./settingsNav";
+import { bindings } from "../platform/bindings";
 
 export function menuFocusStep(at: number, count: number, input: NavInput): number {
   if (!count) return -1;
@@ -28,6 +29,8 @@ export class MenuFocus {
   private nav = new PadNav();
   private roots: HTMLElement[] = [];
   private focused: HTMLElement | null = null;
+  /** A hold-to-confirm control (ui/hold.ts) choose is holding down. */
+  private holding: HTMLElement | null = null;
 
   constructor() {
     const style = document.createElement("style");
@@ -42,7 +45,8 @@ export class MenuFocus {
     const changed = roots.length !== this.roots.length || roots.some((r, i) => r !== this.roots[i]);
     // The DOM may stay the same if pause closes and reopens between menu frames. Its opening snapshot is authoritative.
     if (changed || opened) { this.clearFocus(); this.roots = roots; this.nav = new PadNav(); if (opened) this.nav.readBound(opened, pad?.axes ?? [], now); }
-    const moves = this.nav.readBound(pad?.buttons.map(b => b.pressed) ?? [], pad?.axes ?? [], now);
+    const buttons = pad?.buttons.map(b => b.pressed) ?? [], moves = this.nav.readBound(buttons, pad?.axes ?? [], now);
+    if (this.holding && (this.holding !== this.focused || !bindings.padHeld("menu.choose", buttons, pad?.axes ?? []))) this.endHold();
     if (changed && !opened || !roots.length || !pad) return false;
     // The corner buttons can be mounted inside the actions pane after lazy loading.
     const controls = roots.filter(root => !roots.some(other => other !== root && other.contains(root)))
@@ -59,6 +63,8 @@ export class MenuFocus {
       }
       const at = this.focused ? controls.indexOf(this.focused) : -1;
       if (at >= 0 && (move === "left" || move === "right" || move === "choose") && adjustMenuValue(this.focused!, move === "left" ? -1 : 1)) continue;
+      // (Ed, 2026-11-02: hold to confirm) held with choose, not clicked
+      if (move === "choose" && this.focused?.hasAttribute("data-hold")) { this.holding = this.focused; this.focused.dispatchEvent(new Event("hold:start")); break; }
       if (move === "choose" && this.focused) { this.focused.click(); break; }
       const next = controls[menuFocusStep(at, controls.length, move)];
       this.clearFocus();
@@ -67,5 +73,6 @@ export class MenuFocus {
     return moves.length > 0;
   }
 
-  private clearFocus(): void { this.focused?.classList.remove("pad-menu-focus"); this.focused = null; }
+  private clearFocus(): void { this.endHold(); this.focused?.classList.remove("pad-menu-focus"); this.focused = null; }
+  private endHold(): void { this.holding?.dispatchEvent(new Event("hold:end")); this.holding = null; }
 }
