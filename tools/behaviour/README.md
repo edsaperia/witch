@@ -2,6 +2,8 @@
 
 Ed, 2 November 2026: outcome statistics never block a release. This directory contains approved music M4, the first W8 world slice (12 focused declarations, #1659) and its separate shared-rules continuation (17 declarations, #1661). Later systems join only through their own reviewed PRs.
 
+C1 draft #1668 begins with six placement declarations in `creatures-placement.behaviour.ts`: original full seed123 berry coverage/patch query,800 growth draws, full rules speed-population share and largest-world stone-idle120s/friendly-off60s distributions at0.1s. Actual values, denominators and original fixture details are saved in required fresh `creatures-placement.json`. Nine accepted C1 motion/finale callbacks remain pending at this incremental checkpoint. See [exact changed tests and limits](../../docs/reports/creatures-behaviour-test-changes.md). No generated report has been executed by this source-validation milestone; no timing savings claimed.
+
 Run from the repository root:
 
 ```
