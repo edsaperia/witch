@@ -33,8 +33,9 @@ test('invalid measurement is an execution error rather than an outcome observati
   assert.match(text,/Execution error: fixture failed/);assert.doesNotMatch(text,/within reference \|/);
 });
 test('summary shows actual values and observations without calling them execution failures',()=>{
-  const text=summary({status:'complete',sha:'abc',seconds:1.25,systems:[{metrics:[metric('cue',0,'cues',{operator:'>=',value:3})]}]});
+  const text=summary({status:'complete',sha:'abc',seconds:1.25,systems:[{system:'conditional',metrics:[metric('cue',0,'cues',{operator:'>=',value:3})],notes:['No balloon share: original conditional sample was empty.']}]});
   assert.match(text,/0 cues/);assert.match(text,/outside reference/);assert.doesNotMatch(text,/Execution error:/);
+  assert.match(text,/conditional: No balloon share: original conditional sample was empty/);
 });
 test('workflow stays nightly/manual and survey discovery stays outside release tests',()=>{
   const workflow=YAML.parse(fs.readFileSync('.github/workflows/behaviour-report.yml','utf8'));

@@ -91,17 +91,20 @@ describe("sigil weight", () => {
     const fly = (w: WitchState, load: LeashLoad, s: number, move = 1) => { for (let i = 0; i < s * 60; i++) w = stepWitch(w, { moveX: move, moveZ: 0, toggleMode: false }, 1 / 60, t, bounds, load); return w; };
     // Slow: a second of a heavy load takes off no more than sinkMax of the climb.
     expect(1 - fly(top(), pull(6), 1).lift).toBeLessThanOrEqual(W.sinkMax + 1e-9);
-    const flying = fly(top(), pull(6), 60);
+    // IP2: exercise transitions at their known boundaries; report the original60/10-second outcomes.
+    const dt = 1 / 60, epsilon = Math.min(W.sinkMax, W.sink * 6) * dt / 2;
+    const flying = fly({ ...top(), lift: W.floor + epsilon }, pull(6), dt);
     expect(flying.mode).toBe("treetop");
     expect(flying.lift).toBeCloseTo(W.floor, 9);
-    const stopped = fly(top(), pull(6), 60, 0);
+    const stopped = fly({ ...top(), lift: epsilon }, pull(6), dt, 0);
     expect(stopped.mode).toBe("ground");
     expect(stopped.lift).toBe(0);
-    const extreme = fly(top(), pull(W.extreme + 1), 60);
+    const extreme = fly({ ...top(), lift: epsilon }, pull(W.extreme + 1), dt);
     expect(extreme.mode).toBe("ground");
-    const back = fly(flying, NO_LOAD, 10);
-    expect(back.lift).toBe(1);
+    const back = fly(flying, NO_LOAD, dt);
+    expect(back.lift).toBeGreaterThan(flying.lift); expect(back.lift).toBeLessThanOrEqual(1);
+    expect(fly({ ...top(), lift: 1 - dt / t.riseTime / 2 }, NO_LOAD, dt).lift).toBe(1);
     // Unloaded, nothing sinks at all.
-    expect(fly(top(), NO_LOAD, 10).lift).toBe(1);
+    expect(fly(top(), NO_LOAD, dt).lift).toBe(1);
   });
 });

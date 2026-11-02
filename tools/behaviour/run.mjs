@@ -7,7 +7,7 @@ import {fileURLToPath} from 'node:url';
 import {summary} from './results.mjs';
 
 const out=path.resolve(process.argv[2]??'out/behaviour'),started=performance.now();
-const registered=['music','world'];
+const registered=['music','world','invites-placement','invites-actors'];
 fs.mkdirSync(out,{recursive:true});
 // Fixed explicit filenames prevent a previous survey result from masquerading as this attempt.
 for(const name of [...registered.map(id=>`${id}.json`),'report.json','summary.md','run.log'])fs.rmSync(path.join(out,name),{force:true});
