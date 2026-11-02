@@ -11,6 +11,7 @@ import { deckOf } from './treehouse';
 import { kitchenPlacement } from './kitchenPlacement';
 import { roomAt as planRoomAt } from '../../config/house/shape.js';
 import { edLayoutRequested } from './housePlacement';
+import { mushroomRow } from './mushroomTestRow';
 
 export const MUSHROOM_COLOURS = ['blue', 'purple', 'pink', 'red', 'orange', 'yellow', 'green', 'turquoise', 'white'] as const;
 export type MushroomColour = typeof MUSHROOM_COLOURS[number];
@@ -74,6 +75,31 @@ export function placeMushrooms(map: ForestMap, forest: Forest): MushroomPatch[] 
 export function newMushrooms(map: ForestMap, forest: Forest): MushroomState {
   return { patches: placeMushrooms(map, forest), baskets: emptyBaskets(), carried: {}, flights: [], puffs: [], plops: [], ingredients: [], smoke: null, affected: {}, trips: {}, nextUnload: {}, serial: 0 };
 }
+const testRows = new WeakMap<MushroomState, MushroomPatch[]>();
+/** Optional samples use the ordinary pickup/inventory path; disabling removes only their visible patches. */
+export function syncMushroomTestRow(g: Pick<Game, 'mushrooms' | 'map' | 'forest' | 'tuning'>): void {
+  const s = g.mushrooms, prefix = 'light-test:';
+  if (!g.tuning.mushroomLight?.testRow) {
+    const existing = s.patches.filter(p => p.id.startsWith(prefix));
+    if (existing.length) testRows.set(s, existing); // Also retain picked state after a saved night is restored.
+    if (s.patches.some(p => p.id.startsWith(prefix))) s.patches = s.patches.filter(p => !p.id.startsWith(prefix));
+    return;
+  }
+  if (s.patches.some(p => p.id.startsWith(prefix))) return;
+  let patches = testRows.get(s);
+  if (!patches) {
+    const map = g.map, f = g.forest;
+    const near = (items: {x: number; z: number}[], x: number, z: number, r: number) => items.some(p => Math.hypot(p.x - x, p.z - z) < r);
+    const row = mushroomRow(map.dancefloor, MUSHROOM_COLOURS.length, (x, z) =>
+      isInside(map.bounds, x, z, 3) && !onLake(map.bounds, x, z, 2) && map.clearOfStones(x, z, 2) && !map.reserved(x, z, 2) &&
+      !near(f.treesNear(x, z, 4), x, z, 3) && !near(f.bushesNear(x, z, 4), x, z, 3) && !near(f.decorNear(x, z, 5), x, z, 4) &&
+      !near(f.wallsNear(x, z, 9), x, z, 8) && !near(f.bedsNear(x, z, 9), x, z, 8) &&
+      !near(f.setPiecesNear(x, z, 13), x, z, 12) && !near(f.relicsNear(x, z, 13), x, z, 12));
+    patches = row?.map((p, i) => ({...p, id: `${prefix}${MUSHROOM_COLOURS[i]}`, type: MUSHROOM_COLOURS[i], seed: Math.floor(hash2(i, 1643, map.seed) * 0xffffffff), picked: false})) ?? [];
+    testRows.set(s, patches);
+  }
+  s.patches.push(...patches);
+}
 export function kitchenPlan(optIn = edLayoutRequested()) {
   const room = HOUSE_ROOMS.rooms.find(r => r.id === 'kitchen')!;
   const cauldron = { x: room.x, z: room.z - 1.5 };
@@ -127,6 +153,7 @@ export function potionPhase(g: Game, W = g.witches[0]): 'spin' | 'fall' | 'sleep
 }
 /** Smoke membership is spatial, including entrants after the third mushroom landed. */
 export function stepMushrooms(g: Game): void {
+  syncMushroomTestRow(g);
   const s = g.mushrooms, at = g.herTime;
   s.puffs = s.puffs.filter(p => at - p.at < 1.2); s.plops = s.plops.filter(p => at - p.at < 1.2);
   const flights = s.flights; s.flights = [];

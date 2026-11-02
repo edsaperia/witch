@@ -4,6 +4,12 @@
 import type { Schema } from "./schema";
 
 export const TUNING_OVER: Record<string, Partial<Schema>> = {
+  "mushroomLight.haloStrength": { minimum: 0, maximum: 2 },
+  "mushroomLight.poolStrength": { minimum: 0, maximum: 1.5 },
+  "mushroomLight.capGlow": { minimum: 0, maximum: 10 },
+  "mushroomLight.radius": { minimum: 0.25, maximum: 3 },
+  "mushroomLight.height": { minimum: 0, maximum: 2 },
+  "mushroomLight.complement": { minimum: 0, maximum: 2 },
   "map.shape": { enum: ["circle", "square", "zoo"] },
   "light.mood": { enum: ["spooky", "plain"] },
   "suspects.seeSolid": { enum: ["off", "all", "circle", "rest"] },

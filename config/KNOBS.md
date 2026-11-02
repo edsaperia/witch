@@ -3275,6 +3275,31 @@ Code: `rules/partyOver.ts`
 
 The camera and the view (drawing only): framing, pixel size, culling, fading, finding things.
 
+### `mushroomLight`
+
+Live mushroom halo, colour-pool and cap-glow controls, plus an optional sample row.
+
+1. Ed, 2026-11-02: "please give me some pause-menu controls for adjusting the mushroom lighting"
+Code: `src/rules/mushroomLight.ts`, `src/render/mushroomGlow.ts`, `src/render/mushrooms.ts`
+
+- **`mushroomLight.haloStrength`**: Strength of the halo that removes complementary light around each mushroom.
+- **`mushroomLight.poolStrength`**: Strength of the additive pool in the mushroom's own colour.
+- **`mushroomLight.capGlow`**: Brightness of marked cap spots and their one-texel spill.
+- **`mushroomLight.radius`**: Multiplier on the existing halo radius.
+- **`mushroomLight.height`**: Multiplier on the halo's height above ground.
+- **`mushroomLight.complement`**: Amount of complementary colour removed by the halo; zero leaves the additive pool.
+- **`mushroomLight.testRow`**: Optional pickable nine-colour sample row near 40 m south of the dancefloor, with shared obstacle nudging; off by default.
+
+| knob | type | range |
+|---|---|---|
+| `mushroomLight.haloStrength` | number | 0 to 2 |
+| `mushroomLight.poolStrength` | number | 0 to 1.5 |
+| `mushroomLight.capGlow` | number | 0 to 10 |
+| `mushroomLight.radius` | number | 0.25 to 3 |
+| `mushroomLight.height` | number | 0 to 2 |
+| `mushroomLight.complement` | number | 0 to 2 |
+| `mushroomLight.testRow` | boolean |  |
+
 ### `sail`
 
 Sailing from the sea chart starts the next night on the same page, the old night's music fading into sea and wind, rather than reloading.
