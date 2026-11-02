@@ -3335,7 +3335,7 @@ function footModel(pose, frame, L = DEFAULT_LOOK) {
   const m = new Model({ blend: .03 }), hop = K.hop, sway = K.sway;
   const hipY = K.sit ? (K.seat ?? WITCH_SEAT_HEIGHT) + .06 : .45 - K.crouch * .21 + hop, hipX = -K.crouch * .12 + (K.hipX || 0);
   // the broom: astride it (the handle level between her legs), a binding point and a direction, through her far hand, or put down
-  const B = L.nightie || L.barefoot ? null : K.broom, astride = !!(B && B.astride), yb = hipY - .04; // (not yet dressed: never her broom)
+  const B = L.nightie || L.barefoot || L.broomless ? null : K.broom, astride = !!(B && B.astride), yb = hipY - .04; // (not yet dressed, or a station card's picture of her clothes: never her broom)
   // (a canoe, a basket, a bicycle, a jet or speeder bike, a drone isn't held like a staff: it stands on the ground beside her, art/brooms.js)
   const parked = !!B && !astride && PARKED[L.broom] !== undefined;
   const bdir = !B || astride || parked ? [1, 0, 0] : v3.norm(B.dir), bind = astride ? [-.36, yb, 0] : !B ? null : parked ? [-.5, PARKED[L.broom], -.36] : B.held !== undefined ? v3.sub(K.far, v3.mul(bdir, B.held)) : B.binding;
@@ -3386,6 +3386,7 @@ function footModel(pose, frame, L = DEFAULT_LOOK) {
   const H = v3.add(chest, v3.add(v3.mul(spine, .27), [K.look * .03 + K.nod * .07, -K.nod * .05, K.tilt * .04]));
   // arms: the far hand grips the broom (or not); the near hand is free (or on the handle, astride)
   const shoulder = side => v3.add(chest, v3.add(v3.mul(spine, .1), [0, 0, side * .12]));
+  m.cuts = { shoulder: v3.add(shoulder(0), v3.mul(spine, -.06)), thigh: [hipX, hipY - .08, 0] }; // (where a station card's picture of her is cut: witchCardSprite; not turned with her, read only standing)
   const grip = astride ? [.28, yb + .03, -.05] : parked ? [.03, hipY + .01, -.17] : B ? along(Math.max(.12, (Math.min(.62, hipY + .2) - bind[1]) / Math.max(.3, bdir[1]))) : null;
   const free = astride ? [.28, yb + .03, .05] : K.free ?? [hipX + .03, hipY + .02, .16]; // (a broom's frame drawn without it, not yet dressed: the hand at her side)
   for (const side of [-1, 1]) {
@@ -3587,6 +3588,46 @@ function liftShadow(sp, model, project) {
   for (let y = Math.max(0, y0 - 2); y <= Math.min(sp.h - 1, y1 + 2); y++) for (let x = Math.max(0, x0 - 2); x <= Math.min(sp.w - 1, x1 + 2); x++) if (sp.m[y * sp.w + x] === M.NOSE && y > project([cx, .2, cz])[1]) sp.m[y * sp.w + x] = 0; // (turned up or down the screen, a sliver of it fell outside its box; only below her knees, so never her mouth)
   for (let y = Math.max(0, y0); y <= Math.min(sp.h - 1, y1); y++) for (let x = Math.max(0, x0); x <= Math.min(sp.w - 1, x1); x++) if (sp.m[y * sp.w + x] === M.NOSE) sp.m[y * sp.w + x] = 0;
   sp.anchors = { ...(sp.anchors ?? {}), ground: project([cx, 0, cz]), shadow: [x1 - x0 - 2, y1 - y0 - 2] };
+}
+// A dressing station's card picture of what it puts on her (Ed, 2026-11-02: "in the preview boxes on the menu, show the clothing
+// item alone instead of a portrait of the witch"; ui/stationPanel.ts wearPicture), standing in `look`, by `show`:
+//   "bust": shoulders to the top of her head, her hat off, face on (the dressing table: "for skin tone / hair / earrings / glasses,
+//           render her from shoulders to top of her head, without hat");
+//   "legs": thighs down, face on (the shoe rack: "shoes should show her legs, thighs down");
+//   "back": all of her three-quarters from the back, her hat off (the cloak pegs: "cloak should be shown 3/4 from the back, hat removed");
+//   an item of WITCH_CARD_ITEMS ("jacket", "bag"): that alone, the rest of her left out of the model (so none of her hides it).
+// Each drawn at the scale that makes what's shown `size` pixels along its longer side (it fills its card: Ed, 2026-11-02).
+// Never with her broom (her hands at her sides).
+// The sprite keeps her model's box; the pixels outside the cut are empty (the panel crops to what's drawn). Null when nothing's drawn.
+const WITCH_CARD_ITEMS = {
+  // her top: a jacket (its sleeves and hem), a poncho, a cape, a sequinned or mesh top; the mesh's holes see through (her skin left out)
+  jacket: { pick: q => q.mat === M.JACKET, clear: [M.SKIN], yaw: WITCH_HEADINGS.towards },
+  // a bag and its strap (drawExtras, drawAccessories: the satchel's group, the bum bag's, the backpack's, the found bags'), side on (the
+  // flat ones' faces turned to us)
+  bag: { pick: q => [16, 22, 23, 24].includes(q.group), clear: [], yaw: 0 },
+};
+function witchCardSprite(st = {}, { look, show, size = show === "back" ? 44 : 32 } = {}) {
+  const L = { ...DEFAULT_LOOK, ...look, broomless: true, ...(show === "bust" || show === "back" ? { hat: "none" } : {}) }, item = WITCH_CARD_ITEMS[show];
+  const m = witchModel({ pose: "stand", look: L }), cuts = m.cuts, s0 = witchScale(witchHeight(st));
+  if (item) { m.parts = m.parts.filter(item.pick); m.flats = []; if (!m.parts.some(q => !q.cut)) return null; }
+  const draw = scale => {
+    const r = render(m, { scale, ...(show === "back" ? { facing: "away" } : { yaw: item ? item.yaw : WITCH_HEADINGS.towards }) });
+    liftShadow(r.sp, m, r.project);
+    if (item) for (let i = 0; i < r.sp.m.length; i++) if (item.clear.includes(r.sp.m[i])) r.sp.m[i] = 0;
+    const cut = show === "bust" ? r.project(cuts.shoulder)[1] : show === "legs" ? r.project(cuts.thigh)[1] : null;
+    if (cut !== null) for (let y = 0; y < r.sp.h; y++) if (show === "bust" ? y > cut : y < cut) r.sp.m.fill(0, y * r.sp.w, (y + 1) * r.sp.w);
+    cleanFlecks(r.sp); r.sp.scale = scale;
+    return r.sp;
+  };
+  const [w, h] = drawnSize(draw(s0)); if (!w) return null;
+  const sp = draw(s0 * size / Math.max(w, h)); // (again, at the scale that makes it `size` pixels across its longer side: it fills the card)
+  return drawnSize(sp)[0] ? sp : null;
+}
+// The width and height of what a sprite has drawn (its box's empty margins left out).
+function drawnSize(sp) {
+  let x0 = Infinity, x1 = -1, y0 = Infinity, y1 = -1;
+  for (let y = 0; y < sp.h; y++) for (let x = 0; x < sp.w; x++) if (sp.m[y * sp.w + x]) { x0 = Math.min(x0, x); x1 = Math.max(x1, x); y0 = Math.min(y0, y); y1 = Math.max(y1, y); }
+  return x1 < 0 ? [0, 0] : [x1 - x0 + 1, y1 - y0 + 1];
 }
 // Her hat lying on the ground where she was knocked out (Ed, 2026-10-06: "when you are killed, you drop your hat"): her
 // own hat (the look's shape, sizes and colours) alone, at her ordinary scale, sitting on its brim, knocked a little askew.
