@@ -850,14 +850,13 @@ Read-only source evidence supports current safety/rule/compatibility intent, not
 
 ## C1: Emergent travel, sleep, scenery and convergence thresholds
 
-outcome stats; 16 declarations; ~290 s of CI.
+outcome stats; 15 declarations; ~260 s of CI.
 
-Eight mixed tests pin a200m baby arrival in8s, squirrel glide/landing counts over120s, circle-baby sleep share over300s, normalized follower spacing after6s,800-draw level shares27–40%, idler naps, coarse marcher progress and skilled-bot victory. Preserve conservation, boundaries, glide speed/landing, forced-level/determinism, boss exclusion and immediate LOD transitions before splitting. Second pass6566223656 adds sampled berry-area/patch shares, stone-idle outside/center shares, roaming grid coverage, fast-species share and conga convergence. Preserve berry indexing/conservation and seed equality, no-cross-area/speed limits, direct configured speed ordering, victory/quest/legend/leash state and following-mode invariants.
+Mixed tests pin a200m baby arrival in8s, squirrel glide/landing counts over120s, circle-baby sleep share over300s, normalized follower spacing after6s,800-draw level shares27–40%, idler naps, coarse marcher progress. Preserve conservation, boundaries, glide speed/landing, forced-level/determinism, boss exclusion and immediate LOD transitions before splitting. Second pass6566223656 adds sampled berry-area/patch shares, stone-idle outside/center shares, roaming grid coverage, fast-species share and conga convergence. Preserve berry indexing/conservation and seed equality, no-cross-area/speed limits, direct configured speed ordering, victory/quest/legend/leash state and following-mode invariants.
 
 - [src/rules/babies.test.ts:120](../../src/rules/babies.test.ts#L120): one far off (200 m, out of sight) is back with her in seconds
 - [src/rules/berries.test.ts:38](../../src/rules/berries.test.ts#L38): every area has perArea berries, one per bush, and the same seed gives the same berries
 - [src/rules/berries.test.ts:124](../../src/rules/berries.test.ts#L124): bushes grow in patches: each bush has others of its patch close by
-- [src/rules/fixedPopulation.test.ts:47](../../src/rules/fixedPopulation.test.ts#L47): over a whole bot-played night: none made after the start, and every one that ran off (beaten, its soundsystem lost) asleep on the beach
 - [src/rules/glide.test.ts:12](../../src/rules/glide.test.ts#L12): glides to its far spots (held still through its pause, then sailing there), and only gliders do
 - [src/rules/growth.test.ts:25](../../src/rules/growth.test.ts#L25): picks each grown creature's level by the weights, the same from the same seed
 - [src/rules/naps.test.ts:35](../../src/rules/naps.test.ts#L35): has some of an area's idlers asleep at a time, not all, each for a while, with her in the treetops; never a legend
@@ -886,7 +885,7 @@ Controlled wave and visibility inputs verify pending-growth bookkeeping, no grow
 
 ## C3: Direct movement and creature integrity
 
-current rules; 92 declarations; ~331 s of CI.
+current rules; 90 declarations; ~301 s of CI.
 
 Remaining assertions protect count/identity conservation, floor/shore state, eligibility, scheduling and hysteresis. Scripted movement checks are not outcome gates merely because they take steps. Posse membership through a constructed fight is ownership/integrity, not win balance. Second pass adds literal creature-record property order, repeated seed/input digest equality, fixed-step/substep/once-only input integrity, current bag cadence/range, berry stage/adult caps, diagonal speed normalization, configured rise delay/nozzles and ordered victory/conga gates. Those are direct contracts even when numeric or stepped.
 
@@ -910,8 +909,6 @@ Remaining assertions protect count/identity conservation, floor/shore state, eli
 - [src/rules/berries.test.ts:130](../../src/rules/berries.test.ts#L130): a party animal takes a berry on its way (within the detour), not one off to the side
 - [src/rules/berries.test.ts:147](../../src/rules/berries.test.ts#L147): a party animal goes to a berry at its leash pace, not its idle amble
 - [src/rules/creatureShape.test.ts:14](../../src/rules/creatureShape.test.ts#L14): has every field, required then optional in one order, for every creature (legends too)
-- [src/rules/fixedPopulation.test.ts:60](../../src/rules/fixedPopulation.test.ts#L60): the party lost mid-night: nobody gone, every one asleep, those from the beach at home
-- [src/rules/fixedPopulation.test.ts:72](../../src/rules/fixedPopulation.test.ts#L72): a party animal knocked down runs off its leash to sleep on the beach
 - [src/rules/grounded.test.ts:39](../../src/rules/grounded.test.ts#L39): weighs the stack: each creature at creatureWeight, babies and the gone not at all
 - [src/rules/grounded.test.ts:51](../../src/rules/grounded.test.ts#L51): light and heavy species extrapolate: weight is level weight times strength
 - [src/rules/grounded.test.ts:59](../../src/rules/grounded.test.ts#L59): one adult, or three young, keep her on the ground: said, and no cooldown spent
@@ -1033,12 +1030,13 @@ The39 tests use scripted observations/frames and explicit player clocks, not gen
 
 ## creatures-movement: ruling review
 
-- The fixed-population long bot case mainly proves conservation. Its win predicate does not authorize moving its count/identity/beach assertions; only the outcome component is proposed for a report.
+- Historical fixed-population finding is CLOSED by1622 at released7f6dcba3: docs/plans/combat-spacing-test-changes.md replaces the bot-win prerequisite with explicit runaways and the actual victory transition while preserving IDs/count. The controlled defeat setup also changed. All three current cases are listed with1622, excluded from this audit’s proposed splits/keeps; the original pinned review remains historical evidence.
 - Explicit growth-on/off helper comparisons remain compatibility. They test once-per-wave pending counts only for wild areas, no materialization far away/in view, stable IDs and exact pending-count consumption when awakened. No old-vs-new ruling proved these helpers obsolete.
 - The review read51 cases, not the original1001 machine bucket. Remaining cases are shown as not reviewed/no change; no keep question covers them. Parameter/template and internal loops are not executed counts.
 - Expert defaults: expert-search.md old default-OFF coverage pilot is replaced by newest guarded coverage default-ON, with explicit false preserving comparison. expert-trace:262 tests guardedON by default; :139 retains unguarded mode deliberately. Delivery repair similarly defaultsON and explicit false preserves old cycling; trace:219 checks undefined matches repairedON. No comparison deletion follows from date alone.
 - Victory supersession: old win wording says legends home/lulled angry; gameplay.md52 now says only quest-complete legends dance, incomplete ones lull to their own circles, and completed timestamp0 counts. win:44 and:173 assert those replacements. D1/C1 only proposes reporting conga convergence, never moving these state gates. The28Oct arrival-based settlement rule is retained.
 - Current exactness is intentional: bags’29Oct Purse/Satchel roster,25.08/42.9 ranges and0.418/0.6985 cadences are direct current contracts. Rise delay distinguishes bare broom from Jet nozzles under23Oct rule and deliberately supports cooldown0. rules:510’s all30 title is stale wording, but AREA_TYPES is dynamic/current64; no assertion pinning30 is present.
+- Prototype refresh: canonical6566366307 requested merging released combat7f6dcba3. Source files outside combat/fixedPopulation/creatureStates retain their reviewed test bodies and line IDs; changed movement registrations are refreshed from static source and remain owner-only. This is no duplicate combat review.
 
 <a id="h1"></a>
 

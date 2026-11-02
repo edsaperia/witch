@@ -65,7 +65,7 @@
   "src/rules/alarms.test.ts": "invites-party",
   "src/rules/bootRing.test.ts": "invites-party",
   "src/rules/clear.test.ts": "invites-party",
-  "src/rules/creatureStates.test.ts": "invites-party",
+  "src/rules/creatureStates.test.ts": "combat",
   "src/rules/fireworks.test.ts": "invites-party",
   "src/rules/guestWake.test.ts": "invites-party",
   "src/rules/homeSpeakers.test.ts": "invites-party",
@@ -133,5 +133,10 @@
   "src/editor/smokeBedStart.test.ts": "house-treehouse",
   ".claude/skills/page-contract/tests/contract.test.ts": "tools-ci",
   "server/guards.test.mjs": "multiplayer",
-  "src/app/worldDrawGate.test.ts": "ui-menus-controls"
+  "src/app/worldDrawGate.test.ts": "ui-menus-controls",
+  "src/rules/combatSpacing.test.ts": "combat",
+  "src/rules/creatureProfile.test.ts": "combat",
+  "src/rules/locomotion.test.ts": "combat",
+  "src/rules/attackObservation.test.ts": "combat",
+  "src/rules/fightArena.test.ts": "combat"
 }

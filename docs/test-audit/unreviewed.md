@@ -8,12 +8,11 @@ No change is proposed for these tests. System placement uses the source file/mod
 
 ## Invites and party
 
-149 tests not reviewed; no change proposed.
+134 tests not reviewed; no change proposed.
 
 - [src/rules/alarms.test.ts](../../src/rules/alarms.test.ts): 5 tests; lines 14, 25, 34, 45, 54.
 - [src/rules/bootRing.test.ts](../../src/rules/bootRing.test.ts): 10 tests; lines 21, 27, 34, 40, 45, 50, 58, 68, 79, 106.
 - [src/rules/clear.test.ts](../../src/rules/clear.test.ts): 20 tests; lines 46, 55, 64, 72, 82, 93, 106, 115, 137, 151, 164, 180, 199, 220, 233, 245, 258, 265, 287, 305.
-- [src/rules/creatureStates.test.ts](../../src/rules/creatureStates.test.ts): 15 tests; lines 42, 48, 57, 69, 82, 109, 125, 137, 148, 170, 184, 192, 206, 217, 229.
 - [src/rules/fireworks.test.ts](../../src/rules/fireworks.test.ts): 3 tests; lines 5, 9, 26.
 - [src/rules/guestWake.test.ts](../../src/rules/guestWake.test.ts): 4 tests; lines 11, 20, 40, 52.
 - [src/rules/homeSpeakers.test.ts](../../src/rules/homeSpeakers.test.ts): 3 tests; lines 27, 36, 64.

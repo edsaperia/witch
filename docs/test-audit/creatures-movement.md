@@ -2,7 +2,7 @@
 
 1 changes proposed, 3 groups to keep as they are.
 
-Two bounded source reviews are integrated:6566093230 (51 tests) and6566223656/6566231272 (98 additional tests). The remaining creature manifest is fully reconciled into149 reviewed tests plus explicit combat/multiplayer ownership; no runtime execution is claimed.
+Pinned source reviews6566093230 and6566223656/6566231272 are preserved. After merging released prototype7f6dcba3 (v6972), three fixed-population cases and refreshed movement IDs are owner-only under1622. The146 still-current reviewed creature tests remain grouped; no new combat behavior is reviewed here.
 
 Timings are historical containing-file time, not savings. Partial-file and overlapping groups include other tests; do not add their times. Source counts are test templates, not expanded runs.
 
@@ -19,7 +19,7 @@ Timings are historical containing-file time, not savings. Partial-file and overl
 
 ### C1. Emergent travel, sleep, scenery and convergence thresholds
 
-**16 tests · outcome stats · ~290 s of CI.**
+**15 tests · outcome stats · ~260 s of CI.**
 
 Examples: [Squirrels complete a sampled number of glides and landings.](../../src/rules/glide.test.ts#L12); [Idlers show sampled nap and wake occurrences.](../../src/rules/naps.test.ts#L35); [A following party reaches a minimum sampled spacing.](../../src/rules/spacing.test.ts#L40).
 
@@ -29,7 +29,7 @@ Examples: [Squirrels complete a sampled number of glides and landings.](../../sr
 ## Keep as they are
 
 - [C2: Explicit growth comparison helpers](semantic-groups.md#c2): 2 tests; ~3 s of CI.
-- [C3: Direct movement and creature integrity](semantic-groups.md#c3): 92 tests; ~331 s of CI.
+- [C3: Direct movement and creature integrity](semantic-groups.md#c3): 90 tests; ~301 s of CI.
 - [C4: Human-limited bot observations and decisions](semantic-groups.md#c4): 39 tests; ~4 s of CI.
 
 <details>
@@ -45,9 +45,9 @@ Examples: [Pending creatures accumulate only under the allowed conditions.](../.
 
 ### C3. Direct movement and creature integrity
 
-**92 tests · current rules · ~331 s of CI.**
+**90 tests · current rules · ~301 s of CI.**
 
-Examples: [Parked animals do not ground the witch.](../../src/rules/grounded.test.ts#L73); [A blocked takeoff does not spend its cooldown.](../../src/rules/grounded.test.ts#L59); [A runaway sleeps safely outside the sea.](../../src/rules/fixedPopulation.test.ts#L60).
+Examples: [Parked animals do not ground the witch.](../../src/rules/grounded.test.ts#L73); [A blocked takeoff does not spend its cooldown.](../../src/rules/grounded.test.ts#L59); [A runaway sleeps safely outside the sea.](../../src/rules/runaway.test.ts#L37).
 
 [Assertions, rationale and exact membership](semantic-groups.md#c3).
 
