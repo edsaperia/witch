@@ -7,8 +7,13 @@
 //
 // Indoors (Ed: "indoors, whole room opens up; these holes should match the irregular shape of the room") it clears over the room
 // she's in, its floor's outline and its far wall, with a ragged soft edge 1 to 3.5 m out (faded as the forest's hole is, not dithered), or over her stretch of branch: a small
-// distance field of that floor, made when she changes room. Everywhere, the forest's own hole round her (render/sprites.ts: her
-// circle on the screen, uWitch and uOcc, its dithered way, uSeeDither) cuts it where it stands in front of her.
+// distance field of that floor, made when she changes room. Outdoors it takes the forest's own treatment (Ed, 2 Nov: "The 'see
+// through' effect on the treehouse tree canopy should work the same as the 'see through' effect in normal tree canopies"): the
+// cut-away round her (canopyCutout: uCutout, shut as she rises, uTopFade) and the hidden witch's soft circle where it stands in
+// front of her (occlusion: uWitch, uOcc, down to its fadeOpacity), split into passes as the forest's crowns are (render/sprites.ts):
+// its whole pixels in its own pass, writing depth (her silhouette shows where it hides her); after her, what's see-through for her
+// alone in a front pass writing depth, then whatever is half faded, blended. Indoors (and its lights), one pass, her circle dithered
+// as before (by the same fadeOpacity).
 import * as THREE from "three";
 import { advanceCrownFade, type TreehouseLook } from "../rules/treehouseLook";
 import { gpuKind } from "./gpuLedger";
@@ -42,6 +47,19 @@ uniform float uBendOn;
 vec3 mapPlan(vec3 p) { return uMapO + p.x * uMapX + p.y * uMapY + p.z * uMapZ; }
 uniform float uWarmK; // the house's warm light up into the crown (treehouse.house.crown.warm), times each part's own (warmAt)
 `;
+/** The see-through passes outdoors, undrawn whole when they can have no pixel: the front pass with her see-through off (or indoors);
+ *  the half-faded pass with nothing half faded anywhere (her cut-away shut, none of the look's fades, not behind the oak, no cut
+ *  fading out after she's left the house). */
+const SEE_VERT_GLSL = /* glsl */ `
+uniform float uSeePass, uIndoor, uTopFade, uBehind, uClearOn;
+uniform vec4 uOcc, uCutout, uLook, uHerHole;
+bool seeCulled() {
+  if (uSeePass < 0.5) return false;
+  if (uIndoor > 0.5) return true;
+  if (uSeePass > 1.5) return uOcc.w <= 0.0;
+  return (uCutout.z <= 0.0 || uTopFade >= 0.996) && uLook.x <= 0.0 && uLook.w <= 0.0 && uBehind <= 0.0 && uClearOn < 0.5 && uHerHole.z <= 0.0;
+}
+`;
 export const CLEAR_GLSL = /* glsl */ `
 uniform float uIndoor; // laid over the floors: no haze nor slowed time's grey (the floors' own colours aren't graded)
 vec3 crownHaze(vec3 c, vec3 P) { return uIndoor > 0.5 ? c : haze(c, P); }
@@ -58,6 +76,9 @@ uniform vec4 uLookShape; // approach radius, edge softness, raggedness, indoor t
 uniform vec2 uLookCenter; // her position on the crown plan
 uniform vec3 uLookWorldO, uLookWorldX, uLookWorldZ;
 uniform float uBehind; // she's behind the oak, north of it (0 to 1, eased): what of it stands nearer than her fades away
+uniform vec4 uCutout; // outdoors, the forest's own cut-away round her (render/sprites.ts, canopyCutout): middle, radius, edge (pixels)
+uniform float uTopFade; // and how far the crowns are back as she rises (1: whole, the cut-away shut)
+uniform float uSeePass; // which of its passes this is outdoors: 0 its own (solid); after her, 2 the front (see-through for her alone), 1 the half faded; -1 not split (its lights)
 uniform sampler2D uNoise; // a tiling value noise, 64 cells across (one lookup in place of four hashes: the crown is a lot of pixels)
 float vnoise2(vec2 p) { return texture2D(uNoise, (p + 0.5) / 64.0).r; }
 float bayer4(vec2 p) { vec2 q = mod(floor(p), 4.0); float i = q.x + q.y * 4.0;
@@ -96,7 +117,7 @@ float lookKeep(vec2 floorP, vec3 world) {
   }
   return keep;
 }
-float clearKeep(vec2 floorP, float depth, vec3 world) {
+float clearKeepBy(vec2 floorP, float depth, vec3 world, bool look) {
   float keep = 1.0;
   if (uLookShape.w < 0.5 && uClearOn > 0.5) {
     if (uClearW.x > 0.0) keep *= 1.0 - uClearW.x * inClear(uClear, floorP);
@@ -108,17 +129,51 @@ float clearKeep(vec2 floorP, float depth, vec3 world) {
     float wob = (vnoise2(floorP * 0.4) - 0.5) * uHerHole.w * uCutShape.x, r = uHerHole.z * (1.0 + uCutShape.z * rag);
     keep *= smoothstep(r - uHerHole.w, r + uHerHole.w * uCutShape.y, screenDistC(gl_FragCoord.xy, uHerHole.xy) + wob);
   }
+  // Outdoors, the forest's own cut-away round her (Ed, 2 Nov: "The 'see through' effect on the treehouse tree canopy should work
+  // the same as the 'see through' effect in normal tree canopies"): canopyCutout's hole, its middle, radius and soft ragged edge as
+  // the crowns have it (render/sprites.ts passOf), shut as she rises (uTopFade); the same wobble and outline as the hole indoors.
+  if (uIndoor < 0.5 && uCutout.z > 0.0 && uTopFade < 0.996) {
+    vec2 off = gl_FragCoord.xy - uCutout.xy;
+    float ang = atan(off.y, off.x), rag = 0.5 * sin(ang * 3.0 + 1.3) + 0.3 * sin(ang * 5.0 + 4.1) + 0.2 * sin(ang * 7.0 + 2.2);
+    float wob = (vnoise2(world.xz * 0.11 + world.y * 0.07) - 0.5) * uCutout.w * uCutShape.x, r = uCutout.z * (1.0 + uCutShape.z * rag);
+    keep *= max(smoothstep(r - uCutout.w, r + uCutout.w * uCutShape.y, screenDistC(gl_FragCoord.xy, uCutout.xy) + wob), uTopFade);
+  }
   // (Ed, 2026-10-26: "from the north of the oak, hide the crown and trunk of the treehouse as well, when you're behind them": the
   // camera looks north, so north of the oak it stands between the camera and her, its lobes filling the screen; everything of it
   // nearer than her goes, faded in and out as she comes and goes)
   if (uBehind > 0.0 && uIndoor < 0.5 && depth < uWitchDepth - 1.0) keep *= 1.0 - uBehind;
-  if (uOcc.w > 0.0 && depth < uWitchDepth - 0.5) {
+  // (in front of her, round her: dithered away here only where it isn't split into passes, its lights and indoors; outdoors the
+  // leaves and bark fade smoothly in their see-through pass instead, crownOccl, as the forest's crowns do)
+  if (uOcc.w > 0.0 && depth < uWitchDepth - 0.5 && (uSeePass < -0.5 || uIndoor > 0.5)) {
     float e = screenDistC(gl_FragCoord.xy, uWitch.xy) / max(max(uWitch.z, uWitch.w) * 1.2, 1.0);
-    float occl = 1.0 - smoothstep(0.3, 1.0 + uOcc.y, e);
+    float occl = (1.0 - smoothstep(0.3, 1.0 + uOcc.y, e)) * (1.0 - uOcc.x); // (down to occlusion.fadeOpacity: 0, wholly)
     if (bayer4(gl_FragCoord.xy) < occl) keep = 0.0;
   }
-  if (uLookShape.w > 0.5 || uLook.w > 0.0) keep *= lookKeep(floorP, world);
+  if (look && (uLookShape.w > 0.5 || uLook.w > 0.0)) keep *= lookKeep(floorP, world);
   return keep;
+}
+float clearKeep(vec2 floorP, float depth, vec3 world) { return clearKeepBy(floorP, depth, world, true); }
+// Outdoors, how see-through this is for standing in front of her (0 not at all, 1 down to occlusion.fadeOpacity): the hidden
+// witch's soft circle round her, as the forest's (render/sprites.ts passOf: occl, its vFront by this pixel's own depth).
+float crownOccl(float depth) {
+  if (uIndoor > 0.5 || uOcc.w <= 0.0 || uSeePass < -0.5) return 0.0;
+  float e = screenDistC(gl_FragCoord.xy, uWitch.xy) / max(max(uWitch.z, uWitch.w) * 1.2, 1.0);
+  return uOcc.w * smoothstep(0.0, 3.0, uWitchDepth - 0.5 - depth) * (1.0 - smoothstep(0.3, 1.0 + uOcc.y, e));
+}
+// Outdoors, which pass draws it (render/sprites.ts passOf's \`mine\`, its two see-through passes): whatever is whole in its own
+// pass, writing depth (so her silhouette shows where it hides her); after her, what's see-through for her alone (crownOccl) in the
+// front pass, writing depth, so the nearer wins as in the solid pass; whatever is half faded (the cut-away's edge, the look's fades,
+// behind the oak) in the last, blended. Indoors, and its lights, one pass as before. Its alpha, or -1: not this pass's.
+float crownAlpha(float keep, float depth) {
+  if (uSeePass < -0.5 || uIndoor > 0.5) return uSeePass > 0.5 ? -1.0 : keep;
+  float occl = crownOccl(depth);
+  bool part = keep < 0.996, occ = occl > 0.001;
+  bool mine = uSeePass < 0.5 ? !part && !occ : uSeePass > 1.5 ? occ && !part : part;
+  return mine ? keep * mix(1.0, uOcc.x, occl) : -1.0;
+}
+// The front pass: nothing further from her than her circle reaches (before the clearing's lookups).
+bool farFromHer() {
+  return uSeePass > 1.5 && screenDistC(gl_FragCoord.xy, uWitch.xy) > (1.0 + uOcc.y) * max(max(uWitch.z, uWitch.w) * 1.2, 1.0) + 1.0;
 }
 // Cleared away here? (the string lights: a bulb is there or not, dithered through a fade)
 bool cleared(vec2 floorP, float depth, vec3 world) { return clearKeep(floorP, depth, world) <= bayer4(gl_FragCoord.xy + vec2(2.0, 1.0)); }
@@ -139,11 +194,24 @@ varying float vDepth;
 varying vec3 vLight; // the light on it (its lamps, the moon's fill, her glow), once a vertex: the pixels add only the moon's shading
 varying float vWarm; // the house's light from below (its undersides the most)
 uniform vec3 uBack;
+uniform vec4 uWitch;
+uniform vec2 uRes;
 ${SHARED_GLSL}
+${SEE_VERT_GLSL}
 ${HEIGHT_VERT_GLSL}
 ${LIGHT_GLSL}
 void main() {
   vec3 c = mapPlan(iLobe.xyz), p = c + (corner.x * uRight + corner.y * uUp) * iLobe.w * uLobeK;
+  if (seeCulled()) { gl_Position = vec4(2.0, 2.0, 2.0, 1.0); return; }
+  // The front pass: only a lobe over her circle can have a pixel of it (crownOccl); the rest left undrawn whole (as the forest's,
+  // render/sprites.ts).
+  if (uSeePass > 1.5) {
+    vec3 cw = uBendOn > 0.5 ? bendW(c) : c, ew = uBendOn > 0.5 ? bendW(c + uRight * iLobe.w * uLobeK) : c + uRight * iLobe.w * uLobeK;
+    vec4 c0 = projectionMatrix * viewMatrix * vec4(cw, 1.0), c1 = projectionMatrix * viewMatrix * vec4(ew, 1.0);
+    vec2 s0 = (c0.xy / c0.w * 0.5 + 0.5) * uRes, s1 = (c1.xy / c1.w * 0.5 + 0.5) * uRes;
+    float R = (1.0 + uOcc.y) * max(max(uWitch.z, uWitch.w) * 1.2, 1.0), rr = length(s1 - s0) * 1.5 + 2.0;
+    if (c0.w <= 0.0 || length(s0 - uWitch.xy) > R + rr) { gl_Position = vec4(2.0, 2.0, 2.0, 1.0); return; }
+  }
   vLight = nightLight(normalize(uBack + uUp * 0.5 + (corner.x * uRight + corner.y * uUp) * 0.6), c + (corner.x * uRight + corner.y * uUp) * iLobe.w);
   vWorld = c + (corner.x * uRight + corner.y * uUp) * iLobe.w;
   vUv = corner; vData = iData;
@@ -177,7 +245,8 @@ void main() {
   float rag = vnoise2(vUv * 3.2 + s) * 0.28 + vnoise2(vUv * 7.0 + s * 1.7) * 0.12;
   if (rr > 1.0 - rag) discard;
   if (vData.x > 0.0 && vnoise2(vUv * 6.5 + s * 3.1) + vnoise2(vUv * 13.0 - s) * 0.4 < vData.x * 1.5) discard;
-  float keep = clearKeep(vFloor, vDepth, vWorld);
+  if (farFromHer()) discard;
+  float keep = crownAlpha(clearKeep(vFloor, vDepth, vWorld), vDepth);
   if (keep < 0.004) discard;
   // a billowing clump: a sphere's normal, lumped by its leaves, shaded by the moon on the light the vertices found
   vec2 u = vUv + (vec2(vnoise2(vUv * 5.0 + s * 0.3), vnoise2(vUv * 5.0 + s * 0.3 + 19.0)) - 0.5) * 0.45;
@@ -205,9 +274,11 @@ varying float vDepth;
 varying vec3 vLight;
 uniform vec3 uRight, uUp;
 ${SHARED_GLSL}
+${SEE_VERT_GLSL}
 ${HEIGHT_VERT_GLSL}
 ${LIGHT_GLSL}
 void main() {
+  if (seeCulled()) { gl_Position = vec4(2.0, 2.0, 2.0, 1.0); return; }
   vec3 p = mapPlan(position);
   vWorld = p; vBark = aBark;
   vN = normalize(aNormal.x * normalize(uMapX) + aNormal.y * normalize(uMapY) + aNormal.z * normalize(uMapZ));
@@ -230,7 +301,12 @@ varying float vWarm;
 ${LIGHT_GLSL}
 ${CLEAR_GLSL}
 void main() {
-  float keep = uLookShape.w > 0.5 ? mix(1.0, uLook.z, uLook.x) : clearKeep(vFloor, vDepth, vWorld);
+  if (farFromHer()) discard;
+  // (the indoor look's faint bark indoors; outdoors the leaves' clearing too: her cut-away and see-through, behind the oak)
+  float keep = uLookShape.w > 0.5 ? mix(1.0, uLook.z, uLook.x) : 1.0;
+  if (uLookShape.w < 0.5) keep *= clearKeep(vFloor, vDepth, vWorld);
+  else if (uIndoor < 0.5) keep *= clearKeepBy(vFloor, vDepth, vWorld, false); // (the look's own fades stay the leaves' alone, as before)
+  keep = crownAlpha(keep, vDepth);
   if (keep < 0.004) discard;
   vec3 N = normalize(vN);
   vec3 L = vLight;
@@ -320,6 +396,13 @@ export class CrownView {
   readonly meshes: THREE.Mesh[];
   readonly lobes: THREE.Mesh;
   readonly bark: THREE.Mesh;
+  /** Outdoors, their see-through passes (Ed, 2 Nov: as the forest's crowns, render/sprites.ts), after her: what of them is
+   *  see-through for standing in front of her alone, writing depth (uSeePass 2), then what's half faded, blended, writing none
+   *  (uSeePass 1); the same geometry and uniforms. */
+  readonly frontLobes: THREE.Mesh;
+  readonly frontBark: THREE.Mesh;
+  readonly seeLobes: THREE.Mesh;
+  readonly seeBark: THREE.Mesh;
   /** 0 outside (the world), 1 indoors (laid over the floors), eased between. */
   private k = 0;
   /** Drawn laid over the floors (indoors), with no depth, after the house. */
@@ -349,6 +432,7 @@ export class CrownView {
     this.uniforms = {
       ...LIGHT_UNIFORMS, ...HEIGHT_UNIFORMS,
       uRight: SPRITE_UNIFORMS.uRight, uUp: SPRITE_UNIFORMS.uUp, uWitch: SPRITE_UNIFORMS.uWitch, uWitchDepth: SPRITE_UNIFORMS.uWitchDepth, uOcc: SPRITE_UNIFORMS.uOcc, uCutShape: SPRITE_UNIFORMS.uCutShape,
+      uCutout: SPRITE_UNIFORMS.uCutout, uTopFade: SPRITE_UNIFORMS.uTopFade, uRes: SPRITE_UNIFORMS.uRes, uSeePass: { value: -1 }, // (-1 for its lights, render/strings.ts: not split)
       uMapO: { value: new THREE.Vector3() }, uMapX: { value: new THREE.Vector3(1, 0, 0) }, uMapY: { value: new THREE.Vector3(0, 1, 0) }, uMapZ: { value: new THREE.Vector3(0, 0, 1) },
       uBendOn: { value: 1 }, uIndoor: { value: 0 }, uLobeK: { value: 1 }, uBack: { value: this.back },
       uNoise: { value: noiseTexture() },
@@ -358,12 +442,22 @@ export class CrownView {
       uLook: { value: new THREE.Vector4(0, 1, 1, 0) }, uLookShape: { value: new THREE.Vector4(40, 0.25, 0.12, 0) }, uLookCenter: { value: new THREE.Vector2() },
       uLookWorldO: { value: new THREE.Vector3() }, uLookWorldX: { value: new THREE.Vector3(1, 0, 0) }, uLookWorldZ: { value: new THREE.Vector3(0, 0, 1) },
     };
-    const lobeMat = new THREE.ShaderMaterial({ name: "oak-crown-leaves", vertexShader: LOBE_VERT, fragmentShader: LOBE_FRAG, uniforms: this.uniforms });
-    const barkMat = new THREE.ShaderMaterial({ name: "oak-crown-bark", vertexShader: BARK_VERT, fragmentShader: BARK_FRAG, uniforms: this.uniforms });
+    // (each pass its own uSeePass, every other uniform the same object: render/sprites.ts's passes alike)
+    const pass = (n: number) => ({ ...this.uniforms, uSeePass: { value: n } });
+    const lobeMat = new THREE.ShaderMaterial({ name: "oak-crown-leaves", vertexShader: LOBE_VERT, fragmentShader: LOBE_FRAG, uniforms: pass(0) });
+    const barkMat = new THREE.ShaderMaterial({ name: "oak-crown-bark", vertexShader: BARK_VERT, fragmentShader: BARK_FRAG, uniforms: pass(0) });
     this.lobes = new THREE.Mesh(lobeGeometry(crown, outline.rooms), lobeMat);
     this.bark = new THREE.Mesh(barkGeometry(crown, outline.rooms), barkMat);
-    for (const m of [this.lobes, this.bark]) { m.frustumCulled = false; m.name = "crown"; }
-    this.meshes = [this.bark, this.lobes];
+    const see = (m: THREE.Mesh, name: string, n: number, frag: string, vert: string) => new THREE.Mesh(m.geometry, new THREE.ShaderMaterial({ name, vertexShader: vert, fragmentShader: frag, uniforms: pass(n), transparent: true, depthWrite: n === 2 }));
+    this.frontLobes = see(this.lobes, "oak-crown-leaves (front)", 2, LOBE_FRAG, LOBE_VERT);
+    this.frontBark = see(this.bark, "oak-crown-bark (front)", 2, BARK_FRAG, BARK_VERT);
+    this.seeLobes = see(this.lobes, "oak-crown-leaves (see-through)", 1, LOBE_FRAG, LOBE_VERT);
+    this.seeBark = see(this.bark, "oak-crown-bark (see-through)", 1, BARK_FRAG, BARK_VERT);
+    for (const m of [this.lobes, this.bark, this.frontLobes, this.frontBark, this.seeLobes, this.seeBark]) { m.frustumCulled = false; m.name = "crown"; }
+    // (after her, as the forest's see-through passes, render/sprites.ts: its front pass 10.9, its half-faded pass 11; the bark first)
+    this.frontBark.renderOrder = 10.9; this.frontLobes.renderOrder = 10.9001;
+    this.seeBark.renderOrder = 11; this.seeLobes.renderOrder = 11.0001;
+    this.meshes = [this.bark, this.lobes, this.frontBark, this.frontLobes, this.seeBark, this.seeLobes];
     this.bulbs = crownBulbs(crown, spacing, 0, lights);
     for (const l of crown.lobes) this.spreadRadius = Math.max(this.spreadRadius, Math.hypot(l.x - cx, l.z - cz) + l.r);
     for (const b of this.bulbs) this.spreadRadius = Math.max(this.spreadRadius, Math.hypot(b.x - cx, b.z - cz));
@@ -402,10 +496,13 @@ export class CrownView {
     (U.uLook.value as THREE.Vector4).set(this.lookFade, (this.spreadRadius + Math.hypot(px - this.crown.dome.cx, pz - this.crown.dome.cz)) * (1 + (look?.ragged ?? 0.12) * 0.5), look?.bark ?? 1, approach);
     (U.uLookShape.value as THREE.Vector4).set(look?.radius ?? 40, look?.softness ?? 0.25, look?.ragged ?? 0.12, look?.indoor ? 1 : 0);
     (U.uLookWorldO.value as THREE.Vector3).copy(world.o); (U.uLookWorldX.value as THREE.Vector3).copy(world.ex); (U.uLookWorldZ.value as THREE.Vector3).copy(world.ez);
-    const fading = this.lookFade > 0 || approach > 0;
     // (indoors in three.js's transparent list, so after the house's floors and walls, which are drawn there with no depth: in the
     // opaque list it came first and the floors painted over it)
-    for (const m of this.meshes) { const mt = m.material as THREE.ShaderMaterial; mt.depthTest = !indoors; mt.depthWrite = !indoors && !fading; mt.transparent = indoors || fading; }
+    // (outdoors split as the forest's crowns are: its whole pixels in its own pass, writing depth, so her silhouette shows where it
+    // hides her; what's see-through for her or half faded, the look's fades among them, in the see-through pass after her. Indoors
+    // one pass, as before, and no see-through pass)
+    for (const m of [this.bark, this.lobes]) { const mt = m.material as THREE.ShaderMaterial; mt.depthTest = !indoors; mt.depthWrite = !indoors; mt.transparent = indoors; }
+    for (const m of [this.frontBark, this.frontLobes, this.seeBark, this.seeLobes]) (m.material as THREE.Material).visible = !indoors;
     this.bark.renderOrder = indoors ? 19.96 : 0.5; this.lobes.renderOrder = indoors ? 19.97 : 0.5;
     // her room's floor (its own outline), or the branch she's on, as a distance field, when she moves into another
     const O = this.outline, room = indoors && here ? O.rooms.find(r => !r.locked && inPoly(r.outline, here.x, here.z)) ?? null : null;
@@ -460,7 +557,7 @@ export class CrownView {
   private behind = 0;
 
   dispose(): void {
-    for (const m of this.meshes) { m.geometry.dispose(); (m.material as THREE.Material).dispose(); }
+    for (const m of this.meshes) { m.geometry.dispose(); (m.material as THREE.Material).dispose(); } // (the see-through pass's geometry is theirs: disposing twice is harmless)
     for (const m of this.masks) m.tex.dispose(); (this.uniforms.uNoise.value as THREE.Texture).dispose();
   }
 }
