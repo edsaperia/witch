@@ -1,13 +1,14 @@
 // The wild flyers' swoop (hotel's phase-3 flyer table, built 2026-10-09; rules/movement.ts stepSwoop): circling out of reach,
 // telegraphing, diving along a line at where she'll be (lead at release) and climbing back; hittable and invitable only in the
 // dive and at its bottom.
-import { describe, expect, it } from "vitest";
+import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { setupArena } from "./arena";
 import { newGame, stepGame, STEP, type Controls, type Game } from "./game";
 import { TUNING } from "./tuning";
 import { targetable } from "./combat";
 import { invitableNow } from "./creatureStates";
 import { MOVEMENT, stepSwoop, swoopHeight, swoopStriking } from "./movement";
+import { setCombatRoles } from "../test/combatRoles";
 
 // Keep seed 5's radius arena: the straight-walk lead-at-release hit regression changes outcome on the small fixture (zero hits instead of one).
 const idle: Controls = { moveX: 0, moveZ: 0, toggleMode: false, zoom: 0, autoTalk: false };
@@ -28,6 +29,10 @@ function run(g: Game, secs: number, c: Controls = idle, until?: () => boolean, e
 }
 
 describe("wild flyers swoop (owl, bat, raven)", () => {
+  // These fixtures exercise a selected native dive, not the random draw between dive, ranged spell and effect.
+  let restore: () => void;
+  beforeEach(() => {restore = setCombatRoles({owl: "melee", bat: "melee", raven: "melee"});});
+  afterEach(() => {restore();});
   it("the owl rises out of reach, telegraphs, dives at her and climbs back: hittable and invitable only in the dive and at its bottom", () => {
     const { g, ids } = arena("owl*1@2"), o = g.creatures[ids[0]], mv = MOVEMENT.profiles.owl.move!;
     run(g, 10, idle, () => !!o.swoop?.up && o.swoop.phase === "circle" && swoopHeight(o.swoop, g.clock.time) > mv.height! * 0.9);

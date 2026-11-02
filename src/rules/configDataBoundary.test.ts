@@ -6,6 +6,7 @@ import { LEGEND } from "./creatureLevels";
 import { LEGEND as legacyLegend, type Level as LegacyLevel } from "./creatures";
 import { COMBAT, strengthOf } from "./combat/data";
 import { FIGHT } from "./movement";
+import { ageProfile } from "./combat/age";
 import { CREATURE_IDS, sectionOf, speciesWith } from "./creatureConfig";
 import raw from "../../config/combat.json";
 import tuning from "../../config/tuning.json";
@@ -25,6 +26,7 @@ it("preserves the legacy literal/export and identical default combat data and le
     if (name.endsWith("config/tuning.json")) return tuning;
     if (name === "../creatures") return { LEGEND: 3 };
     if (name === "../movement") return { FIGHT };
+    if (name === "./age") return { ageProfile };
     if (name === "../creatureConfig") return { sectionOf, speciesWith };
     throw Error(`Unexpected new runtime dependency ${name}`);
   };

@@ -17,3 +17,21 @@ Owned scope: age-profile config/resolver, combat action/position integration, sp
 - Default ranged fallbacks also use the existing grammar engine and effect drawing adapter. The native melee executors remain available, and committed movement, including braking, must finish before changing attack ownership.
 - Adults initially get 2.25x ranged cast/flight reach, 2x area width/radius, broader volleys, 1.5x body radius and durability, 0.9x travel speed and 0.85x tempo; youths get 1.15x speed and 1.12x tempo. These are independent tuning values, not a damage or berry-cost increase. Adults stay mobile, reduce incidental motion in their firing band and make fewer close passes. Legends keep their existing outer reach, gain 2.6x inner coverage, 2x pattern density (capped at 12), slower flight and 1.6x windup. The real engine warning geometry feeds waiting avoidance.
 - Small direct combat fixtures exercise armadillo, arctic fox and flying squirrel through actual team selection, casting, children and the effect drawing adapter. A player stepping aside during the child's warning lets splinters travel; standing on their birth point can make them hit immediately. These adapter checks establish wiring, not pixel quality or gameplay balance. Browser/cloud visual acceptance and full combined checks remain the coordinator's.
+
+## Cloud failure review: 1409a053 / CI 41373428283
+
+All four required unit shards completed with nine failures; read all failure details before changing tests. No runtime difficulty, native movement executor or bot strategy is changed in this repair.
+
+| Failure | Cause and bounded repair | Contract retained |
+| --- | --- | --- |
+| configDataBoundary replay | Its explicit require allowlist omitted the new pure age resolver; supply that same resolver in the replay. | Legacy level/export/strength equality and runtime graph isolation remain asserted. |
+| packs budget youth windup ordering | Old youths-slower assertion conflicts with the approved brisk soldiers/deliberate tanks direction. Reverse the ordering. | Exact per-shot DPS budget, absent weapons and adult volley size remain asserted. |
+| swoop lead-at-release, bat bout count, bat token cap | The fixtures did not select native melee, so the new action draw could choose a composed ranged weapon instead of a dive. Select native melee for this native-dive suite. | Every existing damage/miss, telegraph, bout, targetability, invitation and token-cap assertion remains. |
+| snake spring timing | Random action selection could choose its venom projectile. Explicitly select native melee. | Wait outside trigger, spring, and immediate windup assertions remain. |
+| boar charge momentum | Random selection could choose its new authored ranged runner. Explicitly select native melee. | Speed, acceleration, overshoot, braking, turn-rate and facing continuity bounds remain. |
+| area approach distance/time | The old fixture requires a randomly ranged adult to close within 18 m, regardless of its new firing range, at the old age-independent speed. Select melee and express its original speed bound with the explicit age modifier. | Crossing the real area from its far side, the same close-distance threshold, watch delay and prompt pursuit remain. |
+| bot seed1000 recruitment before 40 seconds | A timed recruitment outcome combines letter eligibility with revised combat balance. Retire it as a unit release gate. | Both real cross-border hit/wake/affection tests in lettersWake passed in this exact CI and remain unchanged, as do clear/inviteWakes and other bot tests. No bot strategy or difficulty tuning. |
+
+Additional direct 1–4 actor regressions cover chosen boar charge acceleration/overshoot/braking, snake spring+windup, and bat bout telegraphs/token cap without generating a world. These passed locally alongside dependency/budget checks; complete world fixtures remain cloud validation, not claimed locally verified.
+
+Balance observation to revisit only when the coordinator opens the next explicitly authorised balance-pass PR: seed1000, 10-area island, skilled bot, 40 simulated seconds, zero recruits at 1409a053 (old assertion expected at least one). Use this as an observation alongside current combat rather than a mandate to restore the old outcome. Ed deferred difficulty comparisons to that later pass; no new balance run is opened here.
