@@ -76,7 +76,7 @@ Scripts for building, checking and measuring the game, run from the repository r
 - [`stations/`](stations/README.md): 1 script — check.cjs
 - [`studio/`](studio/README.md): 1 script — check.cjs
 - [`telescope/`](telescope/README.md): 2 scripts — moon.cjs, shots.cjs
-- [`tests/`](tests/README.md): 1 script — inventory.mjs
+- [`tests/`](tests/README.md): 2 scripts — inventory.mjs, semantic.mjs
 - [`view/`](view/README.md): 9 scripts — build-budget.cjs, chart-target.cjs, coast-first-use.cjs, landing-limit-preload.cjs, sail-timing.cjs, start-hold.cjs, travel-failure.cjs, travel-probe.cjs, worker-checkpoint.cjs
 - [`voice/`](voice/README.md): 1 script — sing.mjs
 - [`witch/`](witch/README.md): 10 scripts — bags-sheet.mjs, brooms-gif.mjs, brooms-sheet.mjs, hats-sheet.mjs, longwear-sheet.mjs, nightie-sheet.mjs, slider-audit.mjs, sliders-sheet.mjs, thickness-sheet.mjs, walk-sheet.mjs

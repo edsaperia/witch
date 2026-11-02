@@ -1,5 +1,7 @@
 # Creatures and movement
 
+**Not ready for Ed: semantic review pending.** The generic prompts below are placeholders, not proposed group decisions.
+
 Audit only. Any implementation follows a separate, small system PR after Ed rules.
 
 ## What these tests aim to protect
@@ -12,8 +14,8 @@ Audit only. Any implementation follows a separate, small system PR after Ed rule
 
 | Kind | Declarations |
 |---|---:|
-| hard limits | 21 |
-| current rules | 454 |
+| hard limits | 19 |
+| current rules | 452 |
 | outcome stats | 0 |
 | leftovers | 1 |
 

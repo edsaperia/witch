@@ -5,6 +5,7 @@ import path from 'node:path';
 import crypto from 'node:crypto';
 import { fileURLToPath } from 'node:url';
 import ts from 'typescript';
+import { applyReviews, reviewOutputs } from './semantic.mjs';
 
 export const systems = {
   combat: ['Combat', 'Damage and fighting values follow the current rules.', 'Emergent victory rates remain separate from safety guarantees.', 'Combat decisions and test changes belong to #1622.'],
@@ -122,7 +123,7 @@ export function build(root) {
   return {schemaVersion:1,method:'Static declarations, not executed or expanded cases. Heuristic classifications are review prompts, not Ed rulings. Existing CI file durations are historical; case durations are unknown and never apportioned.',timingSource:timing._source,files:entries};
 }
 const cell = s => String(s).replaceAll('|','\\|').replaceAll('\n',' ').replaceAll('\r','');
-export function outputs(data) {
+export function outputs(data, reviews = {}) {
   const all=data.files.flatMap(f=>f.cases.map(c=>({...c,file:f.file})));
   const summary = `# Test audit inventory\n\nAudit only, #1631 / draft #1632. No test is changed or approved for deletion.\n\n${data.files.length} files; ${all.length} source case declarations. Parameterized and loop-generated cases are not expanded. CJS files are supplementary to the requested TS/MJS scope.\n\n${data.files.filter(f=>f.fileRuntimeSeconds!==null).length} files have historical CI durations from [the existing run](${data.timingSource}); all case durations are unknown. File duration includes runner effects and cannot be added to infer parallel CI wall time saved.\n\nKinds are first guesses. “Current rules” is a provisional default, not proof of a current Ed ruling. Historical citations may describe setup or compatibility. Supersession candidates require human confirmation. Nothing adopts the proposed standing rule.\n\nRun \`node tools/tests/inventory.mjs\` to refresh; \`--check\` verifies generated outputs. Reads source only; never imports or executes game tests.\n\n## System decisions\n\n${Object.entries(systems).map(([id,[title]])=>`- [${title}](${id}.md): ${all.filter(c=>c.system===id).length} declarations`).join('\n')}\n\nThe short system pages link to the exhaustive [case catalogue](cases.md) and [machine inventory](inventory.json). File timings live in the JSON. Review every cited assertion before granting a grouped deletion. No measured CI savings are claimed.\n`;
   const result = {'inventory.json':JSON.stringify(data,null,2)+'\n','README.md':summary};
@@ -133,12 +134,15 @@ export function outputs(data) {
     result[`${id}.md`]=`# ${title}\n\nAudit only. ${owner}\n\n## What these tests aim to protect\n\n${protections.map(p=>`- ${p}`).join('\n')}\n\n## First guesses\n\n| Kind | Declarations |\n|---|---:|\n${Object.entries(counts).map(([k,n])=>`| ${k} | ${n} |`).join('\n')}\n\nThese are machine guesses, not confirmed design decisions. See [all ${title.toLowerCase()} cases](cases.md#${id}) for names, citations, recommendations and runtime limits.\n\n## Group decisions for Ed\n\n1. Keep the safety and integrity protections. Review the provisional rule group against today's design before any changes.\n2. ${id==='combat'?'Apply #1622’s outcome-test decision through its owner; this audit proposes no duplicate edits.':id==='multiplayer'?'Have #1609 review these classifications after its integration; this audit proposes no authority-test edits.':`Review the ${counts['outcome stats']} outcome-stat declarations as a group for possible nonblocking reports. No move happens before your ruling.`}\n3. Review the ${counts.leftovers} historical-wording declarations for compatibility purpose. Choose keep, rewrite or delete only after checking the case and a specific superseding ruling. An older date alone is insufficient.\n\nCase runtimes are unknown. Historical file timings are in the inventory; no savings estimate or new benchmark run is claimed.\n`;
   }
   result['cases.md']='# Exhaustive case catalogue\n\nStatic declarations only. All classifications and currentness are provisional. Case runtime is unknown throughout; file timings and provenance are in inventory.json. Parameterized templates are not expanded.\n\n'+Object.entries(systems).map(([id,[title]])=>`<a id="${id}"></a>\n\n## ${title}\n\n`+all.filter(c=>c.system===id).map(c=>`- **${cell(c.fullName)}** — [${c.file}:${c.line}](../../${c.file}#L${c.line})${c.parameterized?' (parameterized template)':''}\n  - ${c.kind}; ${c.recommendation}. Currentness: unverified. Case runtime: unknown.\n  - Cited ruling: ${c.citations.length?c.citations.map(q=>`${q.scope}, line ${q.line}: ${cell(q.quote)}`).join(' / '):'none found in scoped comments; not proof that none exists.'}\n${c.supersessionCandidates.map(e=>`  - Possible later evidence: [${e.file}:${e.line}](../../${e.file}#L${e.line}): ${cell(e.quote)}. ${e.status}.\n`).join('')}`).join('\n')).join('\n');
-  return result;
+  result['README.md']=result['README.md'].replace('Audit only, #1631 / draft #1632.','Audit only, #1631 / draft #1632.\n\n**Semantic review in progress.** Saves/replay and legends are bounded format-check previews, with concrete groups in [semantic-groups.md](semantic-groups.md). Other system pages remain unreviewed placeholders and are not ready for Ed. Combat and multiplayer retain their existing owners. The initial catalogue remains a machine-first reading aid; reviewed classifications and membership are in inventory.json and semantic-groups.md.');
+  for(const id of Object.keys(systems))if(!reviews[id] && !['combat','multiplayer'].includes(id))result[`${id}.md`]=result[`${id}.md`].replace('\n\n','\n\n**Not ready for Ed: semantic review pending.** The generic prompts below are placeholders, not proposed group decisions.\n\n');
+  return {...result,...reviewOutputs(data,reviews)};
 }
 if (process.argv[1] && path.resolve(process.argv[1])===fileURLToPath(import.meta.url)) {
   const root=path.resolve(path.dirname(fileURLToPath(import.meta.url)),'../..');
   const out=path.join(root,'docs/test-audit');
-  const generated=outputs(build(root));
+  const reviews=JSON.parse(fs.readFileSync(path.join(root,'tools/tests/semantic-reviews.json'),'utf8'));
+  const generated=outputs(applyReviews(build(root),reviews),reviews);
   let stale=false;
   fs.mkdirSync(out,{recursive:true});
   for(const [name,content] of Object.entries(generated)) {

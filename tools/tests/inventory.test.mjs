@@ -3,6 +3,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { parseCases, classify, candidates, systemFor } from './inventory.mjs';
+import { applyReviews, reviewMembers, reviewOutputs } from './semantic.mjs';
 
 test('finds aliased nested declarations and parameterized templates without executing', () => {
   const result=parseCases(`import { it as check, describe } from 'vitest';
@@ -37,4 +38,21 @@ test('routes protected owner areas and tools',()=>{
   assert.equal(systemFor('src/rules/combat.test.ts'),'combat');
   assert.equal(systemFor('src/online/authority.test.ts'),'multiplayer');
   assert.equal(systemFor('tools/ci/select.test.ts'),'tools-ci');
+});
+test('semantic groups use explicit membership and preserve undivided file timing',()=>{
+  const data={files:[{file:'one.test.ts',fileRuntimeSeconds:10,cases:[{id:'one.test.ts:1',line:1,name:'keep'},{id:'one.test.ts:2',line:2,name:'other'}]}]};
+  const group={id:'S1',title:'Integrity',kind:'hard limits',files:['one.test.ts'],includeLines:[1],examples:['keep'],question:'Keep?',reason:'Exact equality.'};
+  const reviews={'saves-replay-robustness':{status:'preview',protections:[],rulings:[],groups:[group]}};
+  assert.equal(reviewMembers(data,group).length,1);
+  applyReviews(data,reviews);
+  assert.equal(data.files[0].cases[0].kind,'hard limits');
+  assert.equal(data.files[0].cases[1].kind,undefined);
+  assert.match(reviewOutputs(data,reviews)['saves-replay-robustness.md'],/~10.000 historical file-seconds/);
+});
+test('semantic review rejects missing examples and duplicate case assignments',()=>{
+  const data={files:[{file:'one.test.ts',cases:[{id:'one.test.ts:1',line:1,name:'keep'}]}]};
+  const group={id:'S1',files:['one.test.ts'],examples:['missing']};
+  assert.throws(()=>applyReviews(data,{x:{groups:[group]}}),/Example missing/);
+  group.examples=['keep'];
+  assert.throws(()=>applyReviews(data,{x:{groups:[group,group]}}),/Duplicate/);
 });

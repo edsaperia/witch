@@ -1,5 +1,7 @@
 # Invites and party
 
+**Not ready for Ed: semantic review pending.** The generic prompts below are placeholders, not proposed group decisions.
+
 Audit only. Any implementation follows a separate, small system PR after Ed rules.
 
 ## What these tests aim to protect

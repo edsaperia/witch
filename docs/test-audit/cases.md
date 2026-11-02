@@ -2557,18 +2557,6 @@ Static declarations only. All classifications and currentness are provisional. C
   - Possible later evidence: [docs/notes/island.md:21](../../docs/notes/island.md#L21): - **Zoo**: `?zoo` (Ed, 2026-10-13; laid out like the sea chart since Ed, 2026-10-26: `src/rules/zooMap.ts`, `src/rules/zoo.ts`, `config/zoo.json`; the mock: `previews/ed/zoo-map` on `claude/ed-shots`): every kind's island where the chart has it (`worldOf(world)`), its outline the chart's real coast where this browser has it (Ed, 2026-10-26: "We already know the real coastline shapes, can't we reuse them in the zoo without calculating anything?": the chart's worker keeps each island's biggest sea loop beside its outline, `app/chartCache.ts` `coastKey`/`keepCoast`, under the chart's own keys; the zoo's page reads them back before its map is made, at most 400 ms, `app/zooCoasts.ts`, and hands t. candidate only: same-topic wording and later inline date; not a verified superseding ruling.
   - Possible later evidence: [docs/notes/gameplay.md:42](../../docs/notes/gameplay.md#L42): - **Legend area** (Ed, 2026-10-26: "legends are spawned in additional areas that have legend circles where runestones usually are"; "extra areas are added to each island, and the legend areas can be adjacent to the same type of area, so it effectively becomes an area twice the size"; all legends in them; "The route only cares about runestones"; islands grow): on an island by roster, every kind a night could deal there (the roster's but the island's own kind and placeholders: one each, chosen by the island's own seed, so its shape, land, coast and chart outline are the same every night) gets an area of its own grown out of the island's frontier beside one of its kind's areas, its **pair**: th. candidate only: same-topic wording and later inline date; not a verified superseding ruling.
 
-- **a whole night's snapshot > keeps seeded streams at their cursor without changing the existing generator** — [src/rules/nightSnapshot.test.ts:30](../../src/rules/nightSnapshot.test.ts#L30)
-  - current rules; keep pending design review. Currentness: unverified. Case runtime: unknown.
-  - Cited ruling: none found in scoped comments; not proof that none exists.
-
-- **a whole night's snapshot > roundtrips a played night, its maps, sets, typed buffers, shared references and infinities** — [src/rules/nightSnapshot.test.ts:36](../../src/rules/nightSnapshot.test.ts#L36)
-  - hard limits; keep. Currentness: unverified. Case runtime: unknown.
-  - Cited ruling: none found in scoped comments; not proof that none exists.
-
-- **a whole night's snapshot > continues the same simulation, including RNG, after later waves and a knockout** — [src/rules/nightSnapshot.test.ts:64](../../src/rules/nightSnapshot.test.ts#L64)
-  - current rules; keep pending design review. Currentness: unverified. Case runtime: unknown.
-  - Cited ruling: none found in scoped comments; not proof that none exists.
-
 - **her posse defends her > one of hers goes for the creature on her before one on her animals, even a little further off** — [src/rules/posseDefends.test.ts:51](../../src/rules/posseDefends.test.ts#L51)
   - current rules; keep pending design review. Currentness: unverified. Case runtime: unknown.
   - Cited ruling: file, line 1: // Her posse defends her (Ed, 2026-10-09, via the coordinator: "Animals that are leashed should attack animals that are attacking
@@ -2958,10 +2946,6 @@ Static declarations only. All classifications and currentness are provisional. C
   - Cited ruling: file, line 1: // The simulation's level of detail (Ed, 2026-10-05: creatures far from the action frozen until
   - Possible later evidence: [docs/notes/balance.md:34](../../docs/notes/balance.md#L34): - **Population growth**: off (Ed, 2026-10-28: "during a night, no creatures are created and none are destroyed"; the game has read none since his 2026-10-07 "no growth on a clock", every area peopled at the start by its place on the route, and with `growth.on` false the simulators add none either). When on: every area starts with `population.start` (a baby and a young: Ed, 2026-10-05) and, while wild, gains `population.growth.perWave` creatures a wave (0.5, one every other wave: DECISION FOR ED, 2026-10-06) at levels by `growth.weights` (`rules/growth.ts`): kept as counts (`game.growth.pending`) until a witch comes within the creature simulation radius or the area wakes, then made out of her. candidate only: same-topic wording and later inline date; not a verified superseding ruling.
   - Possible later evidence: [DESIGN.md:54](../../DESIGN.md#L54): - **Knocked out** (Ed, 2026-10-04; since Ed's playtest of v4821, 2026-10-26: "When I get knocked out and my leashed animals are put down, I think they should become happy instead of leashed to a point by a floor sigil"): at no hits left she collapses where she is (no more hits, no input). **Her sigil stack comes down from the bottom up, about a second each** (`knockout.releaseEach`; since Ed's decisions of 2026-10-07, `releaseEach` 0: all at once as she goes down), each animal she carried **turning happy where it stands**: no sigil is made; its rune is at its feet, so she can leash it again by picking that up, as after an invite; meanwhile it idles near where it was dropped (Ed, later that d. candidate only: same-topic wording and later inline date; not a verified superseding ruling.
-
-- **sleeping creatures' logical ownership areas > preserves $name ownership from initial placement through both sleep states** — [src/rules/sleepCells.test.ts:24](../../src/rules/sleepCells.test.ts#L24) (parameterized template)
-  - hard limits; keep. Currentness: unverified. Case runtime: unknown.
-  - Cited ruling: none found in scoped comments; not proof that none exists.
 
 - **💌s and the circle's edge > vanishes, in a sparkle, crossing out of the circle from inside** — [src/rules/slowTime.test.ts:111](../../src/rules/slowTime.test.ts#L111)
   - current rules; keep pending design review. Currentness: unverified. Case runtime: unknown.
@@ -4680,10 +4664,6 @@ Static declarations only. All classifications and currentness are provisional. C
   - Possible later evidence: [docs/notes/island.md:16](../../docs/notes/island.md#L16): - **Kind table / roster / island by kind**: the kinds table (`src/rules/kinds.ts` `KINDS_TABLE`, one line a file since 2026-10-13: an area's creature's in its folder, `art/areas/<id>/kind.json`, a placeholder's in `config/kinds/<id>.json`, each with its `slot`, gathered by slot into `art/areas/index.js`; `config/kinds.json` before) gives each of the 64 kinds the phase it's introduced in (how many a phase, from which biomes: the table at the end of this note, made from the kinds' files; it was home 10, phase 1 10, phase 2 12, then 14 and 18 **placeholders**, `unknown-NN`, kinds not designed yet, their islands only on the sea chart, as '?', never played, dealt or on a roster; none left now, al. candidate only: same-topic wording and later inline date; not a verified superseding ruling.
   - Possible later evidence: [docs/notes/island.md:21](../../docs/notes/island.md#L21): - **Zoo**: `?zoo` (Ed, 2026-10-13; laid out like the sea chart since Ed, 2026-10-26: `src/rules/zooMap.ts`, `src/rules/zoo.ts`, `config/zoo.json`; the mock: `previews/ed/zoo-map` on `claude/ed-shots`): every kind's island where the chart has it (`worldOf(world)`), its outline the chart's real coast where this browser has it (Ed, 2026-10-26: "We already know the real coastline shapes, can't we reuse them in the zoo without calculating anything?": the chart's worker keeps each island's biggest sea loop beside its outline, `app/chartCache.ts` `coastKey`/`keepCoast`, under the chart's own keys; the zoo's page reads them back before its map is made, at most 400 ms, `app/zooCoasts.ts`, and hands t. candidate only: same-topic wording and later inline date; not a verified superseding ruling.
 
-- **applying > turns the legends' quake shake off and back on, and a legend's flash off with reduce flashing** — [src/app/playerSettings.test.ts:73](../../src/app/playerSettings.test.ts#L73)
-  - current rules; keep pending design review. Currentness: unverified. Case runtime: unknown.
-  - Cited ruling: none found in scoped comments; not proof that none exists.
-
 - **shared beetle controls and level palettes > applies palette and look patches at young levels, retaining the original legend** — [src/beetleControls.test.ts:23](../../src/beetleControls.test.ts#L23)
   - current rules; keep pending design review. Currentness: unverified. Case runtime: unknown.
   - Cited ruling: none found in scoped comments; not proof that none exists.
@@ -5210,53 +5190,53 @@ Static declarations only. All classifications and currentness are provisional. C
   - Cited ruling: none found in scoped comments; not proof that none exists.
 
 - **legend areas > `each of the night's legends lies in an area of its own beside one of its kind, off the route (${kind} island, seed ${seed})`** — [src/rules/legendAreas.test.ts:29](../../src/rules/legendAreas.test.ts#L29)
-  - current rules; keep pending design review. Currentness: unverified. Case runtime: unknown.
+  - hard limits; Keep paired-area identity, route exclusion and sleeping-ownership protections?. Currentness: unverified. Case runtime: unknown.
   - Cited ruling: none found in scoped comments; not proof that none exists.
 
 - **legend areas > holds even the biggest legends asleep: every legend in a legend area fits its circle with its margin, or has the most its area held** — [src/rules/legendAreas.test.ts:63](../../src/rules/legendAreas.test.ts#L63)
-  - current rules; keep pending design review. Currentness: unverified. Case runtime: unknown.
+  - hard limits; Keep paired-area identity, route exclusion and sleeping-ownership protections?. Currentness: unverified. Case runtime: unknown.
   - Cited ruling: none found in scoped comments; not proof that none exists.
 
 - **legend areas > shows no border inside a pair: the legend area wears its pair's look everywhere, so the area blend has nothing to blend there** — [src/rules/legendAreas.test.ts:77](../../src/rules/legendAreas.test.ts#L77)
-  - current rules; keep pending design review. Currentness: unverified. Case runtime: unknown.
+  - hard limits; Keep paired-area identity, route exclusion and sleeping-ownership protections?. Currentness: unverified. Case runtime: unknown.
   - Cited ruling: none found in scoped comments; not proof that none exists.
 
 - **legend areas > counts a legend area and its pair as one area: a point in either is in the pair's area, and the legend's cell is its pair's** — [src/rules/legendAreas.test.ts:92](../../src/rules/legendAreas.test.ts#L92)
-  - current rules; keep pending design review. Currentness: unverified. Case runtime: unknown.
+  - hard limits; Keep paired-area identity, route exclusion and sleeping-ownership protections?. Currentness: unverified. Case runtime: unknown.
   - Cited ruling: none found in scoped comments; not proof that none exists.
 
 - **legend areas > wild creatures defend the pair as one: one of the pair's chases her on into its legend area, and gives up only past its far edge** — [src/rules/legendAreas.test.ts:110](../../src/rules/legendAreas.test.ts#L110)
-  - current rules; keep pending design review. Currentness: unverified. Case runtime: unknown.
+  - hard limits; Keep paired-area identity, route exclusion and sleeping-ownership protections?. Currentness: unverified. Case runtime: unknown.
   - Cited ruling: none found in scoped comments; not proof that none exists.
 
 - **legend areas > a legend's rage counts the pair as one: its kin parked by sigil in its legend area keep it calm** — [src/rules/legendAreas.test.ts:123](../../src/rules/legendAreas.test.ts#L123)
-  - current rules; keep pending design review. Currentness: unverified. Case runtime: unknown.
+  - hard limits; Keep paired-area identity, route exclusion and sleeping-ownership protections?. Currentness: unverified. Case runtime: unknown.
   - Cited ruling: none found in scoped comments; not proof that none exists.
 
 - **legend areas > partifies a pair together: its legend area is partified with it, drawn as a zone of its own, and the party border runs round the outside of the pair** — [src/rules/legendAreas.test.ts:141](../../src/rules/legendAreas.test.ts#L141)
-  - current rules; keep pending design review. Currentness: unverified. Case runtime: unknown.
+  - hard limits; Keep paired-area identity, route exclusion and sleeping-ownership protections?. Currentness: unverified. Case runtime: unknown.
   - Cited ruling: none found in scoped comments; not proof that none exists.
 
 - **the legend circle's explainer > skips only legends too far for their circle: the same answers as searching every legend's clearing** — [src/rules/legendCircle.test.ts:16](../../src/rules/legendCircle.test.ts#L16)
-  - current rules; keep pending design review. Currentness: unverified. Case runtime: unknown.
+  - current rules; Keep the footprint, circle-size, indexed-lookup and explanation contracts?. Currentness: unverified. Case runtime: unknown.
   - Cited ruling: file, line 1: // The legend circle's explainer (rules/legendCircle.ts; Ed, 2026-10-06): it shows on the ground inside a legend's clearing only,
   - Possible later evidence: [docs/notes/gameplay.md:35](../../docs/notes/gameplay.md#L35): - **Legend circle explainer**: the panel beside a legend's clearing while she stands in it on the ground (Ed, 2026-10-06: "text appears on the screen to the side of the circle explaining mechanics to do with legends"; `src/rules/legendCircle.ts`: `legendCircleNear` (any state), `circleLines`, `circleShown` (its fade); drawn by `drawCirclePanel` in `src/render/leash.ts`, `.legend-panel` in `index.html`): Ed's four lines with the dreamt sigil (at its level) and a relic sigil as icons; its boon named (Ed, 2026-10-06) until Ed's 2026-10-18 change, since when it names none; restless, angry and happy say so; beside the circle on screen, the other side if it would run off; `node tools/smoke/legend-. candidate only: same-topic wording and later inline date; not a verified superseding ruling.
   - Possible later evidence: [docs/notes/island.md:21](../../docs/notes/island.md#L21): - **Zoo**: `?zoo` (Ed, 2026-10-13; laid out like the sea chart since Ed, 2026-10-26: `src/rules/zooMap.ts`, `src/rules/zoo.ts`, `config/zoo.json`; the mock: `previews/ed/zoo-map` on `claude/ed-shots`): every kind's island where the chart has it (`worldOf(world)`), its outline the chart's real coast where this browser has it (Ed, 2026-10-26: "We already know the real coastline shapes, can't we reuse them in the zoo without calculating anything?": the chart's worker keeps each island's biggest sea loop beside its outline, `app/chartCache.ts` `coastKey`/`keepCoast`, under the chart's own keys; the zoo's page reads them back before its map is made, at most 400 ms, `app/zooCoasts.ts`, and hands t. candidate only: same-topic wording and later inline date; not a verified superseding ruling.
 
 - **the legend circle's explainer > shows on the ground inside the clearing only, fading in on entering and out on leaving** — [src/rules/legendCircle.test.ts:38](../../src/rules/legendCircle.test.ts#L38)
-  - current rules; keep pending design review. Currentness: unverified. Case runtime: unknown.
+  - current rules; Keep the footprint, circle-size, indexed-lookup and explanation contracts?. Currentness: unverified. Case runtime: unknown.
   - Cited ruling: file, line 1: // The legend circle's explainer (rules/legendCircle.ts; Ed, 2026-10-06): it shows on the ground inside a legend's clearing only,
   - Possible later evidence: [docs/notes/gameplay.md:35](../../docs/notes/gameplay.md#L35): - **Legend circle explainer**: the panel beside a legend's clearing while she stands in it on the ground (Ed, 2026-10-06: "text appears on the screen to the side of the circle explaining mechanics to do with legends"; `src/rules/legendCircle.ts`: `legendCircleNear` (any state), `circleLines`, `circleShown` (its fade); drawn by `drawCirclePanel` in `src/render/leash.ts`, `.legend-panel` in `index.html`): Ed's four lines with the dreamt sigil (at its level) and a relic sigil as icons; its boon named (Ed, 2026-10-06) until Ed's 2026-10-18 change, since when it names none; restless, angry and happy say so; beside the circle on screen, the other side if it would run off; `node tools/smoke/legend-. candidate only: same-topic wording and later inline date; not a verified superseding ruling.
   - Possible later evidence: [docs/notes/house.md:76](../../docs/notes/house.md#L76): - **Treehouse deck** (Ed, 2026-10-11: "a circle with a wooden floor and a balustrade sitting on the ent. You land on it by being at treetop height, and during the night time slower 10x"; `src/rules/treehouse.ts`, the tuning's `treehouse.deck`, `on: false` for the old treehouse): a round deck (radius 7 m, its floor 22 m up) on the Ent at the treehouse's spot. From the treetops, coming down within its radius plus `grace` lands her on it (`witch.perch`, mode "ground", its floor her ground: `witchHeight`); she walks it, kept inside its rail (`keepOnDeck`), round the **map table** in its middle (Ed: "The world map is in the centre": E there opens the sea chart over the game, `ui/chartOverlay.ts` . candidate only: same-topic wording and later inline date; not a verified superseding ruling.
 
 - **the legend circle's explainer > shows for a legend in any state, and says what its state means, in Ed's plain words (2026-10-19)** — [src/rules/legendCircle.test.ts:61](../../src/rules/legendCircle.test.ts#L61)
-  - current rules; keep pending design review. Currentness: unverified. Case runtime: unknown.
+  - current rules; Keep the footprint, circle-size, indexed-lookup and explanation contracts?. Currentness: unverified. Case runtime: unknown.
   - Cited ruling: file, line 1: // The legend circle's explainer (rules/legendCircle.ts; Ed, 2026-10-06): it shows on the ground inside a legend's clearing only, / name, line 61: shows for a legend in any state, and says what its state means, in Ed's plain words (2026-10-19)
   - Possible later evidence: [docs/notes/house.md:76](../../docs/notes/house.md#L76): - **Treehouse deck** (Ed, 2026-10-11: "a circle with a wooden floor and a balustrade sitting on the ent. You land on it by being at treetop height, and during the night time slower 10x"; `src/rules/treehouse.ts`, the tuning's `treehouse.deck`, `on: false` for the old treehouse): a round deck (radius 7 m, its floor 22 m up) on the Ent at the treehouse's spot. From the treetops, coming down within its radius plus `grace` lands her on it (`witch.perch`, mode "ground", its floor her ground: `witchHeight`); she walks it, kept inside its rail (`keepOnDeck`), round the **map table** in its middle (Ed: "The world map is in the centre": E there opens the sea chart over the game, `ui/chartOverlay.ts` . candidate only: same-topic wording and later inline date; not a verified superseding ruling.
   - Possible later evidence: [docs/notes/island.md:21](../../docs/notes/island.md#L21): - **Zoo**: `?zoo` (Ed, 2026-10-13; laid out like the sea chart since Ed, 2026-10-26: `src/rules/zooMap.ts`, `src/rules/zoo.ts`, `config/zoo.json`; the mock: `previews/ed/zoo-map` on `claude/ed-shots`): every kind's island where the chart has it (`worldOf(world)`), its outline the chart's real coast where this browser has it (Ed, 2026-10-26: "We already know the real coastline shapes, can't we reuse them in the zoo without calculating anything?": the chart's worker keeps each island's biggest sea loop beside its outline, `app/chartCache.ts` `coastKey`/`keepCoast`, under the chart's own keys; the zoo's page reads them back before its map is made, at most 400 ms, `app/zooCoasts.ts`, and hands t. candidate only: same-topic wording and later inline date; not a verified superseding ruling.
 
 - **the legend circle's explainer > asks for its kind with no age and names no boon (Ed, 2026-10-18)** — [src/rules/legendCircle.test.ts:82](../../src/rules/legendCircle.test.ts#L82)
-  - current rules; keep pending design review. Currentness: unverified. Case runtime: unknown.
+  - current rules; Keep the footprint, circle-size, indexed-lookup and explanation contracts?. Currentness: unverified. Case runtime: unknown.
   - Cited ruling: file, line 1: // The legend circle's explainer (rules/legendCircle.ts; Ed, 2026-10-06): it shows on the ground inside a legend's clearing only, / name, line 82: asks for its kind with no age and names no boon (Ed, 2026-10-18)
   - Possible later evidence: [docs/notes/house.md:76](../../docs/notes/house.md#L76): - **Treehouse deck** (Ed, 2026-10-11: "a circle with a wooden floor and a balustrade sitting on the ent. You land on it by being at treetop height, and during the night time slower 10x"; `src/rules/treehouse.ts`, the tuning's `treehouse.deck`, `on: false` for the old treehouse): a round deck (radius 7 m, its floor 22 m up) on the Ent at the treehouse's spot. From the treetops, coming down within its radius plus `grace` lands her on it (`witch.perch`, mode "ground", its floor her ground: `witchHeight`); she walks it, kept inside its rail (`keepOnDeck`), round the **map table** in its middle (Ed: "The world map is in the centre": E there opens the sea chart over the game, `ui/chartOverlay.ts` . candidate only: same-topic wording and later inline date; not a verified superseding ruling.
   - Possible later evidence: [docs/notes/island.md:21](../../docs/notes/island.md#L21): - **Zoo**: `?zoo` (Ed, 2026-10-13; laid out like the sea chart since Ed, 2026-10-26: `src/rules/zooMap.ts`, `src/rules/zoo.ts`, `config/zoo.json`; the mock: `previews/ed/zoo-map` on `claude/ed-shots`): every kind's island where the chart has it (`worldOf(world)`), its outline the chart's real coast where this browser has it (Ed, 2026-10-26: "We already know the real coastline shapes, can't we reuse them in the zoo without calculating anything?": the chart's worker keeps each island's biggest sea loop beside its outline, `app/chartCache.ts` `coastKey`/`keepCoast`, under the chart's own keys; the zoo's page reads them back before its map is made, at most 400 ms, `app/zooCoasts.ts`, and hands t. candidate only: same-topic wording and later inline date; not a verified superseding ruling.
@@ -5268,67 +5248,73 @@ Static declarations only. All classifications and currentness are provisional. C
   - Possible later evidence: [docs/notes/island.md:21](../../docs/notes/island.md#L21): - **Zoo**: `?zoo` (Ed, 2026-10-13; laid out like the sea chart since Ed, 2026-10-26: `src/rules/zooMap.ts`, `src/rules/zoo.ts`, `config/zoo.json`; the mock: `previews/ed/zoo-map` on `claude/ed-shots`): every kind's island where the chart has it (`worldOf(world)`), its outline the chart's real coast where this browser has it (Ed, 2026-10-26: "We already know the real coastline shapes, can't we reuse them in the zoo without calculating anything?": the chart's worker keeps each island's biggest sea loop beside its outline, `app/chartCache.ts` `coastKey`/`keepCoast`, under the chart's own keys; the zoo's page reads them back before its map is made, at most 400 ms, `app/zooCoasts.ts`, and hands t. candidate only: same-topic wording and later inline date; not a verified superseding ruling.
 
 - **legend clearings > each holds a wild baby of its legend's kind, which keeps to the circle, comes back in if pushed out, and is free only while leashed** — [src/rules/legendClearing.test.ts:50](../../src/rules/legendClearing.test.ts#L50)
-  - current rules; keep pending design review. Currentness: unverified. Case runtime: unknown.
+  - outcome stats; Move these six long scenario/statistical checks to a nonblocking report, while retaining small rule and boundary tests?. Currentness: unverified. Case runtime: unknown.
   - Cited ruling: suite, line 16: // Each area's sleeping legend lies in a small circular clearing of its own (Ed, 2026-10-06), near its top.
   - Possible later evidence: [docs/notes/house.md:97](../../docs/notes/house.md#L97): - **Finds / travel trunk** (Ed, 2026-10-21, the station menus' part (b): "The items are found in the forest like other permanent upgrades. Hints are given by the crystal ball"; `src/rules/finds.ts`, `render/view/finds.ts`): each night the island she's on holds one permanent upgrade she hasn't found, a wearable in the trunk or a broom part in a wreck (the finds pool, below; the wearables `FINDABLE`, the wardrobe's items not hers from the start, never a broom shape: brooms are made of parts), drawn as one flask-sized object on a clear patch in its own pale gold-white light (the finds style guide, `docs/art-guide/FINDS.md`, Ed 2026-10-23: clothes a folded bundle, `find-bundle`; bags a little ba. candidate only: same-topic wording and later inline date; not a verified superseding ruling.
   - Possible later evidence: [docs/notes/island.md:21](../../docs/notes/island.md#L21): - **Zoo**: `?zoo` (Ed, 2026-10-13; laid out like the sea chart since Ed, 2026-10-26: `src/rules/zooMap.ts`, `src/rules/zoo.ts`, `config/zoo.json`; the mock: `previews/ed/zoo-map` on `claude/ed-shots`): every kind's island where the chart has it (`worldOf(world)`), its outline the chart's real coast where this browser has it (Ed, 2026-10-26: "We already know the real coastline shapes, can't we reuse them in the zoo without calculating anything?": the chart's worker keeps each island's biggest sea loop beside its outline, `app/chartCache.ts` `coastKey`/`keepCoast`, under the chart's own keys; the zoo's page reads them back before its map is made, at most 400 ms, `app/zooCoasts.ts`, and hands t. candidate only: same-topic wording and later inline date; not a verified superseding ruling.
 
 - **legend clearings > its befriended baby stays in the circle and dances there; only loose-sigil pickup makes it follow her** — [src/rules/legendClearing.test.ts:81](../../src/rules/legendClearing.test.ts#L81)
-  - current rules; keep pending design review. Currentness: unverified. Case runtime: unknown.
+  - outcome stats; Move these six long scenario/statistical checks to a nonblocking report, while retaining small rule and boundary tests?. Currentness: unverified. Case runtime: unknown.
+  - Cited ruling: suite, line 16: // Each area's sleeping legend lies in a small circular clearing of its own (Ed, 2026-10-06), near its top.
+  - Possible later evidence: [DESIGN.md:359](../../DESIGN.md#L359): - **Conversion, by the spell or a wave, the same rule:** the stone becomes a soundsystem; its babies turn friendly; its wild young and adults turn hostile and besiege it, as a wave does; and **every friend sigil falls and scatters** over its runestone clearing on free hex cells (Ed, 2026-10-28: "It's fine if they're scattered around the whole runestone clearing"; `cast.scatter`: its open ground out to 20 m (Ed's playtest, 2026-10-29: "sigils scatter too widely"; 34 free 6 m hex cells there, room for the biggest stacks, about 20), in a seeded order so they spread however many there are, never in the wedge just north of the soundsystem where its sprite would hide them), into `g.loose`, for any. candidate only: same-topic wording and later inline date; not a verified superseding ruling.
+  - Possible later evidence: [docs/notes/gameplay.md:34](../../docs/notes/gameplay.md#L34): - **Area legend / sleeping legend**: the one legend of its kind in about a fifth of the areas (`legends.share` 0.2: Ed, 2026-10-08; half before; never home), asleep (sunk and mossed over, scenery) near the top of its circle; waves don't wake it: it grows restless, then angry, while its area has none of its kind, and goes back to sleep when one is back or when worn down; a relic by it makes it happy (DESIGN.md, "Legends, redesigned"); in its circle it reads at a glance (Ed's round 14 playtest): the sleeping form's outline in its sigil's neon and a light floor (`uLegend` in `render/sprites.ts`), a soft neon glow on the ground under it asleep or happy (`legendSeen` in `render/leash.ts`), knobs . candidate only: same-topic wording and later inline date; not a verified superseding ruling.
+
+- **legend clearings > a fallen soundsystem's babies run off home and its besiegers march on: its legend, left without kin, grows restless, then angry** — [src/rules/legendClearing.test.ts:111](../../src/rules/legendClearing.test.ts#L111)
+  - outcome stats; Move these six long scenario/statistical checks to a nonblocking report, while retaining small rule and boundary tests?. Currentness: unverified. Case runtime: unknown.
   - Cited ruling: suite, line 16: // Each area's sleeping legend lies in a small circular clearing of its own (Ed, 2026-10-06), near its top.
   - Possible later evidence: [DESIGN.md:359](../../DESIGN.md#L359): - **Conversion, by the spell or a wave, the same rule:** the stone becomes a soundsystem; its babies turn friendly; its wild young and adults turn hostile and besiege it, as a wave does; and **every friend sigil falls and scatters** over its runestone clearing on free hex cells (Ed, 2026-10-28: "It's fine if they're scattered around the whole runestone clearing"; `cast.scatter`: its open ground out to 20 m (Ed's playtest, 2026-10-29: "sigils scatter too widely"; 34 free 6 m hex cells there, room for the biggest stacks, about 20), in a seeded order so they spread however many there are, never in the wedge just north of the soundsystem where its sprite would hide them), into `g.loose`, for any. candidate only: same-topic wording and later inline date; not a verified superseding ruling.
   - Possible later evidence: [docs/notes/gameplay.md:34](../../docs/notes/gameplay.md#L34): - **Area legend / sleeping legend**: the one legend of its kind in about a fifth of the areas (`legends.share` 0.2: Ed, 2026-10-08; half before; never home), asleep (sunk and mossed over, scenery) near the top of its circle; waves don't wake it: it grows restless, then angry, while its area has none of its kind, and goes back to sleep when one is back or when worn down; a relic by it makes it happy (DESIGN.md, "Legends, redesigned"); in its circle it reads at a glance (Ed's round 14 playtest): the sleeping form's outline in its sigil's neon and a light floor (`uLegend` in `render/sprites.ts`), a soft neon glow on the ground under it asleep or happy (`legendSeen` in `render/leash.ts`), knobs . candidate only: same-topic wording and later inline date; not a verified superseding ruling.
 
 - **legend clearings > each swells the forest round it, strongest at its edge and easing smoothly out into the area's own, all the way round** — [src/rules/legendClearing.test.ts:158](../../src/rules/legendClearing.test.ts#L158)
-  - current rules; keep pending design review. Currentness: unverified. Case runtime: unknown.
+  - outcome stats; Move these six long scenario/statistical checks to a nonblocking report, while retaining small rule and boundary tests?. Currentness: unverified. Case runtime: unknown.
   - Cited ruling: suite, line 16: // Each area's sleeping legend lies in a small circular clearing of its own (Ed, 2026-10-06), near its top.
   - Possible later evidence: [docs/notes/house.md:97](../../docs/notes/house.md#L97): - **Finds / travel trunk** (Ed, 2026-10-21, the station menus' part (b): "The items are found in the forest like other permanent upgrades. Hints are given by the crystal ball"; `src/rules/finds.ts`, `render/view/finds.ts`): each night the island she's on holds one permanent upgrade she hasn't found, a wearable in the trunk or a broom part in a wreck (the finds pool, below; the wearables `FINDABLE`, the wardrobe's items not hers from the start, never a broom shape: brooms are made of parts), drawn as one flask-sized object on a clear patch in its own pale gold-white light (the finds style guide, `docs/art-guide/FINDS.md`, Ed 2026-10-23: clothes a folded bundle, `find-bundle`; bags a little ba. candidate only: same-topic wording and later inline date; not a verified superseding ruling.
   - Possible later evidence: [docs/notes/music.md:9](../../docs/notes/music.md#L9): The music (`src/rules/musicPlan.ts`, `src/rules/musicScore.ts`, `src/platform/audio/musicEngine.ts`, `config/music-style.json`): A sleeping legend's clearing on the ground (Ed, 2026-10-06) muffles the music (`muffled`, rules/music.ts; the tuning's `music.circle`) under that legend's own layer (`legendCircleAt`, rules/musicPlan.ts; the style's `circle`: every legend's parts and its voice family's, each species its own patterns, melody, rhythm and octave in the music's key and chords, played over the muffle on the engine's second output); There the world slows to about a tenth (the game's time scale, `g.timeScale`) and the music follows it (Ed, 2026-10-06: "the music audibly slows down"): the . candidate only: same-topic wording and later inline date; not a verified superseding ruling.
 
 - **legend clearings > each is edged by the rim kit: small pieces just past its floor, all the way round** — [src/rules/legendClearing.test.ts:186](../../src/rules/legendClearing.test.ts#L186)
-  - current rules; keep pending design review. Currentness: unverified. Case runtime: unknown.
+  - outcome stats; Move these six long scenario/statistical checks to a nonblocking report, while retaining small rule and boundary tests?. Currentness: unverified. Case runtime: unknown.
   - Cited ruling: suite, line 16: // Each area's sleeping legend lies in a small circular clearing of its own (Ed, 2026-10-06), near its top.
   - Possible later evidence: [docs/notes/house.md:97](../../docs/notes/house.md#L97): - **Finds / travel trunk** (Ed, 2026-10-21, the station menus' part (b): "The items are found in the forest like other permanent upgrades. Hints are given by the crystal ball"; `src/rules/finds.ts`, `render/view/finds.ts`): each night the island she's on holds one permanent upgrade she hasn't found, a wearable in the trunk or a broom part in a wreck (the finds pool, below; the wearables `FINDABLE`, the wardrobe's items not hers from the start, never a broom shape: brooms are made of parts), drawn as one flask-sized object on a clear patch in its own pale gold-white light (the finds style guide, `docs/art-guide/FINDS.md`, Ed 2026-10-23: clothes a folded bundle, `find-bundle`; bags a little ba. candidate only: same-topic wording and later inline date; not a verified superseding ruling.
   - Possible later evidence: [docs/notes/island.md:21](../../docs/notes/island.md#L21): - **Zoo**: `?zoo` (Ed, 2026-10-13; laid out like the sea chart since Ed, 2026-10-26: `src/rules/zooMap.ts`, `src/rules/zoo.ts`, `config/zoo.json`; the mock: `previews/ed/zoo-map` on `claude/ed-shots`): every kind's island where the chart has it (`worldOf(world)`), its outline the chart's real coast where this browser has it (Ed, 2026-10-26: "We already know the real coastline shapes, can't we reuse them in the zoo without calculating anything?": the chart's worker keeps each island's biggest sea loop beside its outline, `app/chartCache.ts` `coastKey`/`keepCoast`, under the chart's own keys; the zoo's page reads them back before its map is made, at most 400 ms, `app/zooCoasts.ts`, and hands t. candidate only: same-topic wording and later inline date; not a verified superseding ruling.
 
 - **legend clearings > each keeps its edge minFromStone metres from its area's runestone, but in a sliver of an area too small to (the farthest it fits)** — [src/rules/legendClearing.test.ts:206](../../src/rules/legendClearing.test.ts#L206)
-  - current rules; keep pending design review. Currentness: unverified. Case runtime: unknown.
+  - outcome stats; Move these six long scenario/statistical checks to a nonblocking report, while retaining small rule and boundary tests?. Currentness: unverified. Case runtime: unknown.
   - Cited ruling: suite, line 16: // Each area's sleeping legend lies in a small circular clearing of its own (Ed, 2026-10-06), near its top.
   - Possible later evidence: [docs/notes/island.md:21](../../docs/notes/island.md#L21): - **Zoo**: `?zoo` (Ed, 2026-10-13; laid out like the sea chart since Ed, 2026-10-26: `src/rules/zooMap.ts`, `src/rules/zoo.ts`, `config/zoo.json`; the mock: `previews/ed/zoo-map` on `claude/ed-shots`): every kind's island where the chart has it (`worldOf(world)`), its outline the chart's real coast where this browser has it (Ed, 2026-10-26: "We already know the real coastline shapes, can't we reuse them in the zoo without calculating anything?": the chart's worker keeps each island's biggest sea loop beside its outline, `app/chartCache.ts` `coastKey`/`keepCoast`, under the chart's own keys; the zoo's page reads them back before its map is made, at most 400 ms, `app/zooCoasts.ts`, and hands t. candidate only: same-topic wording and later inline date; not a verified superseding ruling.
   - Possible later evidence: [DESIGN.md:359](../../DESIGN.md#L359): - **Conversion, by the spell or a wave, the same rule:** the stone becomes a soundsystem; its babies turn friendly; its wild young and adults turn hostile and besiege it, as a wave does; and **every friend sigil falls and scatters** over its runestone clearing on free hex cells (Ed, 2026-10-28: "It's fine if they're scattered around the whole runestone clearing"; `cast.scatter`: its open ground out to 20 m (Ed's playtest, 2026-10-29: "sigils scatter too widely"; 34 free 6 m hex cells there, room for the biggest stacks, about 20), in a seeded order so they spread however many there are, never in the wedge just north of the soundsystem where its sprite would hide them), into `g.loose`, for any. candidate only: same-topic wording and later inline date; not a verified superseding ruling.
 
 - **legend circles sized to fit their legends (rules/legendFit.ts) > has every area's creature measured (config/legend-footprints.json: node tools/legends/footprint.mjs)** — [src/rules/legendFit.test.ts:13](../../src/rules/legendFit.test.ts#L13)
-  - current rules; keep pending design review. Currentness: unverified. Case runtime: unknown.
+  - current rules; Keep the footprint, circle-size, indexed-lookup and explanation contracts?. Currentness: unverified. Case runtime: unknown.
   - Cited ruling: suite, line 11: // Ed, 2026-10-26: "Legend circles need to be larger. Often legends don't fit in them."
   - Possible later evidence: [docs/notes/island.md:16](../../docs/notes/island.md#L16): - **Kind table / roster / island by kind**: the kinds table (`src/rules/kinds.ts` `KINDS_TABLE`, one line a file since 2026-10-13: an area's creature's in its folder, `art/areas/<id>/kind.json`, a placeholder's in `config/kinds/<id>.json`, each with its `slot`, gathered by slot into `art/areas/index.js`; `config/kinds.json` before) gives each of the 64 kinds the phase it's introduced in (how many a phase, from which biomes: the table at the end of this note, made from the kinds' files; it was home 10, phase 1 10, phase 2 12, then 14 and 18 **placeholders**, `unknown-NN`, kinds not designed yet, their islands only on the sea chart, as '?', never played, dealt or on a roster; none left now, al. candidate only: same-topic wording and later inline date; not a verified superseding ruling.
   - Possible later evidence: [docs/notes/balance.md:36](../../docs/notes/balance.md#L36): - **Creature momentum** (Ed, 2026-10-27: "most animals don't have enough momentum and can turn too sharply, or alternatively track the witch too quickly and accurately ... less worth dodging"; his answer (a) the same day: momentum on the run-in and the wind-up, never the committed lunge; `rules/momentum.ts`, the tuning's `creatureMomentum`, the pause page's "Creature momentum" sliders): chasing her and closing in to strike (a pack's tell and combo too, and the grammar's casters; not fights between creatures, legends or marchers), a creature's heading turns at most `turn / (1 + speed / k)` degrees a second, slowing to turn tighter when she's far off its heading; it makes for where she was `de. candidate only: same-topic wording and later inline date; not a verified superseding ruling.
 
 - **legend circles sized to fit their legends (rules/legendFit.ts) > never makes a circle smaller than it was, nor bigger than the cap** — [src/rules/legendFit.test.ts:16](../../src/rules/legendFit.test.ts#L16)
-  - current rules; keep pending design review. Currentness: unverified. Case runtime: unknown.
+  - current rules; Keep the footprint, circle-size, indexed-lookup and explanation contracts?. Currentness: unverified. Case runtime: unknown.
   - Cited ruling: suite, line 11: // Ed, 2026-10-26: "Legend circles need to be larger. Often legends don't fit in them."
   - Possible later evidence: [docs/notes/balance.md:36](../../docs/notes/balance.md#L36): - **Creature momentum** (Ed, 2026-10-27: "most animals don't have enough momentum and can turn too sharply, or alternatively track the witch too quickly and accurately ... less worth dodging"; his answer (a) the same day: momentum on the run-in and the wind-up, never the committed lunge; `rules/momentum.ts`, the tuning's `creatureMomentum`, the pause page's "Creature momentum" sliders): chasing her and closing in to strike (a pack's tell and combo too, and the grammar's casters; not fights between creatures, legends or marchers), a creature's heading turns at most `turn / (1 + speed / k)` degrees a second, slowing to turn tighter when she's far off its heading; it makes for where she was `de. candidate only: same-topic wording and later inline date; not a verified superseding ruling.
   - Possible later evidence: [docs/notes/gameplay.md:52](../../docs/notes/gameplay.md#L52): Only quest-complete legends dance at the win (a completion timestamp of zero counts); all incomplete legends lull and return to their own circles. Since normal legend stepping stops at victory, win.ts finishes their return walks. Friendly legends use legends.friendRange (85 m): defend a witch in range first, otherwise engage enraged or witch-targeting/hunting wild creatures in range, otherwise follow tonight's route towards the drawing tip. Their attacks keep their kinds and cooldowns; friendly chargers resume the route after braking rather than return to their lairs. Friendly legends cannot be pursued or provoked. The optional 100-letter partyEgg exception is retained (COORDINATOR #1552, 20. candidate only: same-topic wording and later inline date; not a verified superseding ruling.
 
 - **legend circles sized to fit their legends (rules/legendFit.ts) > fits every legend that can fit under the cap, with its margin to spare, as the map places its circle** — [src/rules/legendFit.test.ts:23](../../src/rules/legendFit.test.ts#L23)
-  - current rules; keep pending design review. Currentness: unverified. Case runtime: unknown.
+  - current rules; Keep the footprint, circle-size, indexed-lookup and explanation contracts?. Currentness: unverified. Case runtime: unknown.
   - Cited ruling: suite, line 11: // Ed, 2026-10-26: "Legend circles need to be larger. Often legends don't fit in them."
   - Possible later evidence: [docs/notes/house.md:81](../../docs/notes/house.md#L81): - **Station menus** (Ed, 2026-10-21; the mock, previews/ed/station-menus-mock on claude/ed-shots; `config/wardrobe.json`, `src/rules/wardrobe.ts`, `src/app/owned.ts`, `src/ui/stationPanel.ts`, `src/rules/stations.ts`): at a dressing station (the house's reach, `rules/stations.ts` `stationOf`) it lights up with E over it, and E there slides its panel in from the left over the live game (Ed's playtest, 2026-10-26: "Menus should open when she presses E near an interactive object (dresser, map, etc) instead of them opening automatically just through proximity"; it was by nearness, no E, since 2026-10-21); E again (the pad's □) slides it out (Ed, 2026-10-26: "I think E should also close, and we c. candidate only: same-topic wording and later inline date; not a verified superseding ruling.
   - Possible later evidence: [docs/notes/house.md:106](../../docs/notes/house.md#L106): - **The great oak's crown** (Ed, 2026-10-24: "one great crown sounds good. it should have thicker and thinner patches. Perhaps there's also a layer that shows the bark of the tree underneath"; the mock, previews/ed/treehouse-layout-v4/crown/ on claude/treehouse-trunk-mock; the tuning's `treehouse.house.crown`): one crown over the whole house in place of the rooms' leaf roofs, grown from the house's outline (`config/house/outline.json`: its rooms' outlines, branches, stubs and take-off, in the frame with its origin at the Terrace's middle) and a seed (`src/rules/crown.ts` `makeCrown`, pure and tested, `crown.test.ts` against the outline itself), so it follows the rooms wherever they go: 300 t. candidate only: same-topic wording and later inline date; not a verified superseding ruling.
 
 - **legend circles sized to fit their legends (rules/legendFit.ts) > lists the legends too big for any circle under the cap (waiting on Ed's call: drawn smaller asleep, or the circles allowed bigger)** — [src/rules/legendFit.test.ts:34](../../src/rules/legendFit.test.ts#L34)
-  - current rules; keep pending design review. Currentness: unverified. Case runtime: unknown.
+  - leftovers; Replace this exact eleven-species list with a report of current footprint overflow, keeping the cap/margin safety checks?. Currentness: unverified. Case runtime: unknown.
   - Cited ruling: suite, line 11: // Ed, 2026-10-26: "Legend circles need to be larger. Often legends don't fit in them."
   - Possible later evidence: [docs/notes/gameplay.md:19](../../docs/notes/gameplay.md#L19): - **Rank sigils** (Ed, 2026-10-27, after mocks 3 to 9 in `previews/ed/youth-dial-*` and `rank-sigils-*`; `leash.ranks`; the default since Ed, 2026-10-27: "go ahead and push all the new sigil work", `?sigils=old` the old look and its 4 m hex grid; render/leash/ranks.ts): every leash sigil (her stack, placed sigils, happy runes, the ghost, the treetop projection, the bond and the sigils' light) is its species' bare glyph, no ring and no disc, in its rank's colour (`leash.ranks.colours`, baby to legend: turquoise, purple, red and yellow when this was written, 2026-10-27; the species' neon stays the world's: borders, rune stones, fireworks, the dancefloor, holograms, the chart), over a dark shad. candidate only: same-topic wording and later inline date; not a verified superseding ruling.
   - Possible later evidence: [docs/notes/gameplay.md:38](../../docs/notes/gameplay.md#L38): - **Fight Arena** (Ed, 2026-10-27: "we can press a button to randomise the settings and another generates a random enemy pack to fight, and then I can tweak and save/copy attack settings that are fun"): `?fight=<seed>[&pack=wolf*4@2,...]`, or the pause page's **⚔ Fight arena** (a new tab, a new seed): her alone against a wild pack (`setupArena(g, spec, { wildOnly: true })`: every group wild, side by side, none of hers) on the debug arena's ground, no waves, straight in (no spell to cast). The pack is the seed's roll (`rollPack`, rules/fightArena.ts: one time in eight a lone legend, else one kind or, one time in three, two, 2 to 6 of each, young or adult, at most 8; kinds with an attack at ev. candidate only: same-topic wording and later inline date; not a verified superseding ruling.
 
 - **legends in a share of the areas (legends.share) > puts one in legends.share of the areas (Ed, 2026-10-08: about a fifth), never home, seeded, spread so they don't clump** — [src/rules/legendShare.test.ts:21](../../src/rules/legendShare.test.ts#L21)
-  - current rules; keep pending design review. Currentness: unverified. Case runtime: unknown.
+  - leftovers; Keep these two radius-map comparison tests, including explicit half/all-area settings, separate from authored-island rules?. Currentness: unverified. Case runtime: unknown.
   - Cited ruling: name, line 21: puts one in legends.share of the areas (Ed, 2026-10-08: about a fifth), never home, seeded, spread so they don't clump
   - Possible later evidence: [docs/notes/house.md:106](../../docs/notes/house.md#L106): - **The great oak's crown** (Ed, 2026-10-24: "one great crown sounds good. it should have thicker and thinner patches. Perhaps there's also a layer that shows the bark of the tree underneath"; the mock, previews/ed/treehouse-layout-v4/crown/ on claude/treehouse-trunk-mock; the tuning's `treehouse.house.crown`): one crown over the whole house in place of the rooms' leaf roofs, grown from the house's outline (`config/house/outline.json`: its rooms' outlines, branches, stubs and take-off, in the frame with its origin at the Terrace's middle) and a seed (`src/rules/crown.ts` `makeCrown`, pure and tested, `crown.test.ts` against the outline itself), so it follows the rooms wherever they go: 300 t. candidate only: same-topic wording and later inline date; not a verified superseding ruling.
   - Possible later evidence: [docs/notes/island.md:9](../../docs/notes/island.md#L9): - **Archipelago**: where every island lies on the sea chart, how far its shape is turned and the patch it grows in (`src/rules/archipelago.ts`; Ed, 2026-10-12, the journey's tessellation: "the rings can be very relaxed, a pleasing layout is much more important", "you can make the sea larger so that they fit", "keep arms and irregularity" and coasts that mirror each other "like jigsaw pieces pulled apart"; then v3: "more open sea", "the phase rings should hardly show", a minimum gap between islands, islands turned to fit, "you can have larger gaps", and "add back the arms towards the edges of the map, since there's nothing to fit with there"): made once a world (`worldOf(world)` in rules/rost. candidate only: same-topic wording and later inline date; not a verified superseding ruling.
 
 - **legends in a share of the areas (legends.share) > puts one in every area but home at 1, and differs by seed** — [src/rules/legendShare.test.ts:41](../../src/rules/legendShare.test.ts#L41)
-  - current rules; keep pending design review. Currentness: unverified. Case runtime: unknown.
+  - leftovers; Keep these two radius-map comparison tests, including explicit half/all-area settings, separate from authored-island rules?. Currentness: unverified. Case runtime: unknown.
   - Cited ruling: none found in scoped comments; not proof that none exists.
 
 - **legends, redesigned (Ed, 2026-10-05; #87) > a friendly legend's attacks actually land on a wild witch-attacker, in grammar and classic modes** — [src/rules/legends.test.ts:50](../../src/rules/legends.test.ts#L50)
@@ -5709,8 +5695,12 @@ Static declarations only. All classifications and currentness are provisional. C
   - Possible later evidence: [docs/notes/gameplay.md:38](../../docs/notes/gameplay.md#L38): - **Fight Arena** (Ed, 2026-10-27: "we can press a button to randomise the settings and another generates a random enemy pack to fight, and then I can tweak and save/copy attack settings that are fun"): `?fight=<seed>[&pack=wolf*4@2,...]`, or the pause page's **⚔ Fight arena** (a new tab, a new seed): her alone against a wild pack (`setupArena(g, spec, { wildOnly: true })`: every group wild, side by side, none of hers) on the debug arena's ground, no waves, straight in (no spell to cast). The pack is the seed's roll (`rollPack`, rules/fightArena.ts: one time in eight a lone legend, else one kind or, one time in three, two, 2 to 6 of each, young or adult, at most 8; kinds with an attack at ev. candidate only: same-topic wording and later inline date; not a verified superseding ruling.
   - Possible later evidence: [docs/notes/gameplay.md:29](../../docs/notes/gameplay.md#L29): - **Attack grammar**: attacks as small trees of composable modules (Ed, 2026-10-27: "Put the focus on composability for these attack systems — and on telegraphing"; `docs/plans/attack-grammar.md`, `src/rules/attacks/`): cast (windup, cooldown, casts before a rest, the body's tell), telegraph, emit pattern, body, path terms, speed profile, life, hit (damage, effect, friendly fire, blink-dodgeable), `on` events spawning child attacks, pack interplay, beams, areas, traps. `config/attacks.json` is the source (an attack may `base` on another); `node tools/attacks/compile.mjs` compiles the ones today's runtime runs into `config/combat.json`'s `attacks` (run it after editing; `src/rules/attacks/att. candidate only: same-topic wording and later inline date; not a verified superseding ruling.
 
+- **sleeping creatures' logical ownership areas > preserves $name ownership from initial placement through both sleep states** — [src/rules/sleepCells.test.ts:24](../../src/rules/sleepCells.test.ts#L24) (parameterized template)
+  - hard limits; Keep paired-area identity, route exclusion and sleeping-ownership protections?. Currentness: unverified. Case runtime: unknown.
+  - Cited ruling: none found in scoped comments; not proof that none exists.
+
 - **sleeping creatures' logical ownership areas > rejects an unrelated area even for a boss, and rejects a non-circle wild creature in a paired legend area** — [src/rules/sleepCells.test.ts:51](../../src/rules/sleepCells.test.ts#L51)
-  - hard limits; keep. Currentness: unverified. Case runtime: unknown.
+  - hard limits; Keep paired-area identity, route exclusion and sleeping-ownership protections?. Currentness: unverified. Case runtime: unknown.
   - Cited ruling: none found in scoped comments; not proof that none exists.
 
 - **sleeping legends (Ed, 2026-10-04) > sleep through her standing beside them: no fight, no chat, not a step** — [src/rules/sleeping.test.ts:31](../../src/rules/sleeping.test.ts#L31)
@@ -6259,10 +6249,6 @@ Static declarations only. All classifications and currentness are provisional. C
   - Possible later evidence: [docs/notes/performance.md:180](../../docs/notes/performance.md#L180): **Quality ladder** (Ed, 2026-10-26: "scenery is not gameplay critical so it's better to preserve framerate and draw fewer things or draw slower if necessary"; his order, 2026-10-27, from India's study `previews/ed/quality-ladder/`; `rules/ladder.ts` the rungs and the controller, `app/ladder.ts` the running game): rungs from full quality down, in Ed's order: the forest's far edge dithered; trees ×0.9; area borders over 40 m; tall trees squeezed (treeCap.keep 0.35, `SQUEEZE_KEEP`); leaves still and no trunk shadows; the cut-away's crowns solid; trees ×0.8; a steady 30 fps (the loop draws every other frame at 60 Hz); px 4. Live rungs change the running night; load rungs (density, the blend, the. candidate only: same-topic wording and later inline date; not a verified superseding ruling.
   - Possible later evidence: [docs/notes/gameplay.md:38](../../docs/notes/gameplay.md#L38): - **Fight Arena** (Ed, 2026-10-27: "we can press a button to randomise the settings and another generates a random enemy pack to fight, and then I can tweak and save/copy attack settings that are fun"): `?fight=<seed>[&pack=wolf*4@2,...]`, or the pause page's **⚔ Fight arena** (a new tab, a new seed): her alone against a wild pack (`setupArena(g, spec, { wildOnly: true })`: every group wild, side by side, none of hers) on the debug arena's ground, no waves, straight in (no spell to cast). The pack is the seed's roll (`rollPack`, rules/fightArena.ts: one time in eight a lone legend, else one kind or, one time in three, two, 2 to 6 of each, young or adult, at most 8; kinds with an attack at ev. candidate only: same-topic wording and later inline date; not a verified superseding ruling.
 
-- **a whole night's snapshot > measures home and a later island's snapshot budget** — [src/rules/nightSnapshot.test.ts:95](../../src/rules/nightSnapshot.test.ts#L95)
-  - hard limits; keep. Currentness: unverified. Case runtime: unknown.
-  - Cited ruling: none found in scoped comments; not proof that none exists.
-
 - **only the island's roster appears (rules/rosters.ts) > a kind's island: every creature made over a night is in its roster** — [src/rules/roster.test.ts:42](../../src/rules/roster.test.ts#L42)
   - current rules; keep pending design review. Currentness: unverified. Case runtime: unknown.
   - Cited ruling: file, line 1: // Only the island's roster appears (Ed, 2026-10-14: "I'm on island=home and I see an owl, so something is broken"): every / file, line 4: // its ten at a campaign's start, and (Ed, 2026-10-10, journey.md "Home's size": one area per kind she knows) every kind whose
@@ -6636,14 +6622,6 @@ Static declarations only. All classifications and currentness are provisional. C
   - Cited ruling: file, line 1: // The opening's first load (app/opening.ts; Ed, 2026-10-23: "the first screen should be the witch waking up in her bedroom on the
   - Possible later evidence: [docs/notes/run.md:68](../../docs/notes/run.md#L68): - **The opening** (Ed, 2026-10-20; `app/opening.ts`, the storyboard and Ed's decisions in previews/ed/opening-mock/ on claude/ed-shots; on by default: the tuning's `opening.bedroom`, `?opening=bedroom\|old` for one load): every first load but a chart's arrival (`?arrive=`), a bot game, `?creator=0` or `?zoo` (Ed, 2026-10-25, on `?seed=497831`: "it should be loading straight to her bedroom in the treehouse, not the character creation screen": a link naming its seed or island too, in that island's treehouse) is home's night, asleep in the dark (`render/wakeUp.ts` `WakeCard.sleep`) while it's made, then she wakes in her bedroom there (main.ts `wakeFirst`; Ed, 2026-10-23: "the first screen should. candidate only: same-topic wording and later inline date; not a verified superseding ruling.
   - Possible later evidence: [docs/notes/house.md:81](../../docs/notes/house.md#L81): - **Station menus** (Ed, 2026-10-21; the mock, previews/ed/station-menus-mock on claude/ed-shots; `config/wardrobe.json`, `src/rules/wardrobe.ts`, `src/app/owned.ts`, `src/ui/stationPanel.ts`, `src/rules/stations.ts`): at a dressing station (the house's reach, `rules/stations.ts` `stationOf`) it lights up with E over it, and E there slides its panel in from the left over the live game (Ed's playtest, 2026-10-26: "Menus should open when she presses E near an interactive object (dresser, map, etc) instead of them opening automatically just through proximity"; it was by nearness, no E, since 2026-10-21); E again (the pad's □) slides it out (Ed, 2026-10-26: "I think E should also close, and we c. candidate only: same-topic wording and later inline date; not a verified superseding ruling.
-
-- **saving and loading > throws nothing away but what's wrong: bad values are their defaults** — [src/app/playerSettings.test.ts:35](../../src/app/playerSettings.test.ts#L35)
-  - current rules; keep pending design review. Currentness: unverified. Case runtime: unknown.
-  - Cited ruling: none found in scoped comments; not proof that none exists.
-
-- **saving and loading > works with no storage, or one that refuses** — [src/app/playerSettings.test.ts:39](../../src/app/playerSettings.test.ts#L39)
-  - current rules; keep pending design review. Currentness: unverified. Case runtime: unknown.
-  - Cited ruling: none found in scoped comments; not proof that none exists.
 
 - **the settings changed > lists every leaf that differs, by its path, and none of the notes or what the load sets elsewhere** — [src/app/repro.test.ts:12](../../src/app/repro.test.ts#L12)
   - current rules; keep pending design review. Currentness: unverified. Case runtime: unknown.
@@ -8067,10 +8045,6 @@ Static declarations only. All classifications and currentness are provisional. C
   - current rules; keep pending design review. Currentness: unverified. Case runtime: unknown.
   - Cited ruling: none found in scoped comments; not proof that none exists.
 
-- **a whole night's snapshot > migrates older nights without mushroom state and preserves new brewing snapshots exactly** — [src/rules/nightSnapshot.test.ts:18](../../src/rules/nightSnapshot.test.ts#L18)
-  - current rules; keep pending design review. Currentness: unverified. Case runtime: unknown.
-  - Cited ruling: none found in scoped comments; not proof that none exists.
-
 - **waking in her bedroom > is beside her bed, in its room (the Turret: Ed, 2026-10-26, "Move the bed to the turret"), on the house's floor** — [src/rules/opening.test.ts:16](../../src/rules/opening.test.ts#L16)
   - current rules; keep pending design review. Currentness: unverified. Case runtime: unknown.
   - Cited ruling: file, line 1: // The new opening's wake-up spot (rules/opening.ts; Ed, 2026-10-20): the chart's dive ends in her bedroom, beside her bed, on the / name, line 16: is beside her bed, in its room (the Turret: Ed, 2026-10-26, "Move the bed to the turret"), on the house's floor
@@ -9307,12 +9281,6 @@ Static declarations only. All classifications and currentness are provisional. C
   - Possible later evidence: [DESIGN.md:359](../../DESIGN.md#L359): - **Conversion, by the spell or a wave, the same rule:** the stone becomes a soundsystem; its babies turn friendly; its wild young and adults turn hostile and besiege it, as a wave does; and **every friend sigil falls and scatters** over its runestone clearing on free hex cells (Ed, 2026-10-28: "It's fine if they're scattered around the whole runestone clearing"; `cast.scatter`: its open ground out to 20 m (Ed's playtest, 2026-10-29: "sigils scatter too widely"; 34 free 6 m hex cells there, room for the biggest stacks, about 20), in a seeded order so they spread however many there are, never in the wedge just north of the soundsystem where its sprite would hide them), into `g.loose`, for any. candidate only: same-topic wording and later inline date; not a verified superseding ruling.
   - Possible later evidence: [docs/notes/art-checks.md:7](../../docs/notes/art-checks.md#L7): - `node art/check.mjs` — builds the lab, opens the source page and the built page in headless Chromium (no script errors, a bestiary card for every species, the scene drawn; each on a page of its own, drawing while the rest runs), and draws everything the art generators make (every creature at every level, face, texture and silhouette, the trees and bushes, the area types and their ground cover, the witch and the party witches in every pose, the hats, the sigils, the dancefloor and its speakers, the treehouse, the props, scenes, relics, paths and party objects, the attack effects, the sleeping legends, the live rig) and holds each to its rules: sizes by level and against the witch, what may . candidate only: same-topic wording and later inline date; not a verified superseding ruling.
 
-- **legend clearings > a fallen soundsystem's babies run off home and its besiegers march on: its legend, left without kin, grows restless, then angry** — [src/rules/legendClearing.test.ts:111](../../src/rules/legendClearing.test.ts#L111)
-  - current rules; keep pending design review. Currentness: unverified. Case runtime: unknown.
-  - Cited ruling: suite, line 16: // Each area's sleeping legend lies in a small circular clearing of its own (Ed, 2026-10-06), near its top.
-  - Possible later evidence: [DESIGN.md:359](../../DESIGN.md#L359): - **Conversion, by the spell or a wave, the same rule:** the stone becomes a soundsystem; its babies turn friendly; its wild young and adults turn hostile and besiege it, as a wave does; and **every friend sigil falls and scatters** over its runestone clearing on free hex cells (Ed, 2026-10-28: "It's fine if they're scattered around the whole runestone clearing"; `cast.scatter`: its open ground out to 20 m (Ed's playtest, 2026-10-29: "sigils scatter too widely"; 34 free 6 m hex cells there, room for the biggest stacks, about 20), in a seeded order so they spread however many there are, never in the wedge just north of the soundsystem where its sprite would hide them), into `g.loose`, for any. candidate only: same-topic wording and later inline date; not a verified superseding ruling.
-  - Possible later evidence: [docs/notes/gameplay.md:34](../../docs/notes/gameplay.md#L34): - **Area legend / sleeping legend**: the one legend of its kind in about a fifth of the areas (`legends.share` 0.2: Ed, 2026-10-08; half before; never home), asleep (sunk and mossed over, scenery) near the top of its circle; waves don't wake it: it grows restless, then angry, while its area has none of its kind, and goes back to sleep when one is back or when worn down; a relic by it makes it happy (DESIGN.md, "Legends, redesigned"); in its circle it reads at a glance (Ed's round 14 playtest): the sleeping form's outline in its sigil's neon and a light floor (`uLegend` in `render/sprites.ts`), a soft neon glow on the ground under it asleep or happy (`legendSeen` in `render/leash.ts`), knobs . candidate only: same-topic wording and later inline date; not a verified superseding ruling.
-
 - **legends, redesigned (Ed, 2026-10-05; #87) > sleep on when their area's soundsystem comes (soundsystems no longer wake them)** — [src/rules/legends.test.ts:63](../../src/rules/legends.test.ts#L63)
   - current rules; keep pending design review. Currentness: unverified. Case runtime: unknown.
   - Cited ruling: none found in scoped comments; not proof that none exists.
@@ -9985,30 +9953,6 @@ Static declarations only. All classifications and currentness are provisional. C
   - Cited ruling: file, line 1: // The dev Player pick shows only with the debug overlay on (Ed, 2026-10-11: "the Player dropdown moves into the debug overlay
   - Possible later evidence: [docs/notes/house.md:110](../../docs/notes/house.md#L110): - **Hats and brooms** (Ed, 2026-10-11; `src/rules/spells.ts`, docs/backlog/unlocks.md): two slots, a hat and a broom, each with a spell or none (the default; the plain broom's quicker rise is the parts' stats now: see **Sets**). Hats are worn (the Helmet: an extra hit, knocked off) or placed with E held (the Healing ring: a hit back every few seconds standing by it; Harvest: a ring of six berries grows round it; Dowsing: a pointer to the nearest relic for a minute; Sentry: it throws 💌s at wild creatures within 30 m; Slingshot: her 💌s passing within 10 m circle it, then fly at a creature up to 40 m off; Gathering: picked up again, it brings back every sigil of hers within 100 m; Bramble: wi. candidate only: same-topic wording and later inline date; not a verified superseding ruling.
   - Possible later evidence: [docs/notes/music.md:9](../../docs/notes/music.md#L9): The music (`src/rules/musicPlan.ts`, `src/rules/musicScore.ts`, `src/platform/audio/musicEngine.ts`, `config/music-style.json`): A sleeping legend's clearing on the ground (Ed, 2026-10-06) muffles the music (`muffled`, rules/music.ts; the tuning's `music.circle`) under that legend's own layer (`legendCircleAt`, rules/musicPlan.ts; the style's `circle`: every legend's parts and its voice family's, each species its own patterns, melody, rhythm and octave in the music's key and chords, played over the muffle on the engine's second output); There the world slows to about a tenth (the game's time scale, `g.timeScale`) and the music follows it (Ed, 2026-10-06: "the music audibly slows down"): the . candidate only: same-topic wording and later inline date; not a verified superseding ruling.
-
-- **saving and loading > is the defaults on a new browser** — [src/app/playerSettings.test.ts:19](../../src/app/playerSettings.test.ts#L19)
-  - current rules; keep pending design review. Currentness: unverified. Case runtime: unknown.
-  - Cited ruling: none found in scoped comments; not proof that none exists.
-
-- **applying > sets the volumes, master times each** — [src/app/playerSettings.test.ts:60](../../src/app/playerSettings.test.ts#L60)
-  - current rules; keep pending design review. Currentness: unverified. Case runtime: unknown.
-  - Cited ruling: none found in scoped comments; not proof that none exists.
-
-- **applying > scales every babbling voice from its built level, never compounding** — [src/app/playerSettings.test.ts:66](../../src/app/playerSettings.test.ts#L66)
-  - current rules; keep pending design review. Currentness: unverified. Case runtime: unknown.
-  - Cited ruling: none found in scoped comments; not proof that none exists.
-
-- **applying > maps quality onto the ladder: auto, full, the middle rung, the top** — [src/app/playerSettings.test.ts:80](../../src/app/playerSettings.test.ts#L80)
-  - current rules; keep pending design review. Currentness: unverified. Case runtime: unknown.
-  - Cited ruling: none found in scoped comments; not proof that none exists.
-
-- **applying > names a pad's glyphs from its name unless forced** — [src/app/playerSettings.test.ts:83](../../src/app/playerSettings.test.ts#L83)
-  - current rules; keep pending design review. Currentness: unverified. Case runtime: unknown.
-  - Cited ruling: none found in scoped comments; not proof that none exists.
-
-- **the pause page's own Volume sliders > move the settings with them (over master), so the next night keeps them** — [src/app/playerSettings.test.ts:92](../../src/app/playerSettings.test.ts#L92)
-  - current rules; keep pending design review. Currentness: unverified. Case runtime: unknown.
-  - Cited ruling: none found in scoped comments; not proof that none exists.
 
 - **paused playtest comments > roundtrips the actual played moment and continues from the same random/state cursor** — [src/app/playtestComments.test.ts:25](../../src/app/playtestComments.test.ts#L25)
   - hard limits; keep. Currentness: unverified. Case runtime: unknown.
@@ -10770,37 +10714,37 @@ Static declarations only. All classifications and currentness are provisional. C
   - Cited ruling: none found in scoped comments; not proof that none exists.
 
 - **the broom's save (witch.broom) > a first game's: no parts found, a bare broom** — [src/app/broomSave.test.ts:11](../../src/app/broomSave.test.ts#L11)
-  - current rules; keep pending design review. Currentness: unverified. Case runtime: unknown.
+  - current rules; Keep equipment ownership and old-save conversion checks, including the old broom and station-name fixtures?. Currentness: unverified. Case runtime: unknown.
   - Cited ruling: file, line 1: // Her broom's parts kept on this browser (app/broomSave.ts; the Workshop, Ed 2026-10-23), and the migration from the brooms
   - Possible later evidence: [docs/notes/house.md:97](../../docs/notes/house.md#L97): - **Finds / travel trunk** (Ed, 2026-10-21, the station menus' part (b): "The items are found in the forest like other permanent upgrades. Hints are given by the crystal ball"; `src/rules/finds.ts`, `render/view/finds.ts`): each night the island she's on holds one permanent upgrade she hasn't found, a wearable in the trunk or a broom part in a wreck (the finds pool, below; the wearables `FINDABLE`, the wardrobe's items not hers from the start, never a broom shape: brooms are made of parts), drawn as one flask-sized object on a clear patch in its own pale gold-white light (the finds style guide, `docs/art-guide/FINDS.md`, Ed 2026-10-23: clothes a folded bundle, `find-bundle`; bags a little ba. candidate only: same-topic wording and later inline date; not a verified superseding ruling.
   - Possible later evidence: [docs/notes/house.md:100](../../docs/notes/house.md#L100): - **Workshop** (Ed, 2026-10-22/23; docs/backlog/workshop.md). **One broom station** since Ed, 2026-10-29 ("The broom area can probably just be one station instead of two; one for colours, the other for components"): the **lathe** (`config/wardrobe.json` `stations.lathe`), where her night's broom is taken too (rules/kit.ts) and the guidance's broom pin points, its cards the three slots' part cards, the sets' chips and "Her broom", the Body and Trim colours, the Fit, and the pegboard's 3 × 3 board, read-only, as its last card; the bay and the pegboard are **scenery** (their use `{ "kind": "scenery" }`: no prompt, E does nothing; still drawn, her broom resting on the lathe while she's at it, th. candidate only: same-topic wording and later inline date; not a verified superseding ruling.
 
 - **the broom's save (witch.broom) > a part found is kept (even if the night's then lost: saved the moment she picks it up), not fitted: the bay fits it** — [src/app/broomSave.test.ts:16](../../src/app/broomSave.test.ts#L16)
-  - current rules; keep pending design review. Currentness: unverified. Case runtime: unknown.
+  - current rules; Keep equipment ownership and old-save conversion checks, including the old broom and station-name fixtures?. Currentness: unverified. Case runtime: unknown.
   - Cited ruling: file, line 1: // Her broom's parts kept on this browser (app/broomSave.ts; the Workshop, Ed 2026-10-23), and the migration from the brooms
   - Possible later evidence: [docs/notes/house.md:97](../../docs/notes/house.md#L97): - **Finds / travel trunk** (Ed, 2026-10-21, the station menus' part (b): "The items are found in the forest like other permanent upgrades. Hints are given by the crystal ball"; `src/rules/finds.ts`, `render/view/finds.ts`): each night the island she's on holds one permanent upgrade she hasn't found, a wearable in the trunk or a broom part in a wreck (the finds pool, below; the wearables `FINDABLE`, the wardrobe's items not hers from the start, never a broom shape: brooms are made of parts), drawn as one flask-sized object on a clear patch in its own pale gold-white light (the finds style guide, `docs/art-guide/FINDS.md`, Ed 2026-10-23: clothes a folded bundle, `find-bundle`; bags a little ba. candidate only: same-topic wording and later inline date; not a verified superseding ruling.
   - Possible later evidence: [docs/notes/house.md:100](../../docs/notes/house.md#L100): - **Workshop** (Ed, 2026-10-22/23; docs/backlog/workshop.md). **One broom station** since Ed, 2026-10-29 ("The broom area can probably just be one station instead of two; one for colours, the other for components"): the **lathe** (`config/wardrobe.json` `stations.lathe`), where her night's broom is taken too (rules/kit.ts) and the guidance's broom pin points, its cards the three slots' part cards, the sets' chips and "Her broom", the Body and Trim colours, the Fit, and the pegboard's 3 × 3 board, read-only, as its last card; the bay and the pegboard are **scenery** (their use `{ "kind": "scenery" }`: no prompt, E does nothing; still drawn, her broom resting on the lathe while she's at it, th. candidate only: same-topic wording and later inline date; not a verified superseding ruling.
 
 - **the broom's save (witch.broom) > the bay keeps only parts she's found (a ?parts= broom fitted for a load isn't saved)** — [src/app/broomSave.test.ts:28](../../src/app/broomSave.test.ts#L28)
-  - current rules; keep pending design review. Currentness: unverified. Case runtime: unknown.
+  - current rules; Keep equipment ownership and old-save conversion checks, including the old broom and station-name fixtures?. Currentness: unverified. Case runtime: unknown.
   - Cited ruling: file, line 1: // Her broom's parts kept on this browser (app/broomSave.ts; the Workshop, Ed 2026-10-23), and the migration from the brooms
   - Possible later evidence: [docs/notes/house.md:97](../../docs/notes/house.md#L97): - **Finds / travel trunk** (Ed, 2026-10-21, the station menus' part (b): "The items are found in the forest like other permanent upgrades. Hints are given by the crystal ball"; `src/rules/finds.ts`, `render/view/finds.ts`): each night the island she's on holds one permanent upgrade she hasn't found, a wearable in the trunk or a broom part in a wreck (the finds pool, below; the wearables `FINDABLE`, the wardrobe's items not hers from the start, never a broom shape: brooms are made of parts), drawn as one flask-sized object on a clear patch in its own pale gold-white light (the finds style guide, `docs/art-guide/FINDS.md`, Ed 2026-10-23: clothes a folded bundle, `find-bundle`; bags a little ba. candidate only: same-topic wording and later inline date; not a verified superseding ruling.
   - Possible later evidence: [docs/notes/house.md:100](../../docs/notes/house.md#L100): - **Workshop** (Ed, 2026-10-22/23; docs/backlog/workshop.md). **One broom station** since Ed, 2026-10-29 ("The broom area can probably just be one station instead of two; one for colours, the other for components"): the **lathe** (`config/wardrobe.json` `stations.lathe`), where her night's broom is taken too (rules/kit.ts) and the guidance's broom pin points, its cards the three slots' part cards, the sets' chips and "Her broom", the Body and Trim colours, the Fit, and the pegboard's 3 × 3 board, read-only, as its last card; the bay and the pegboard are **scenery** (their use `{ "kind": "scenery" }`: no prompt, E does nothing; still drawn, her broom resting on the lathe while she's at it, th. candidate only: same-topic wording and later inline date; not a verified superseding ruling.
 
 - **the broom's save (witch.broom) > fits only parts she has found, each in its own slot; unknown ones dropped** — [src/app/broomSave.test.ts:34](../../src/app/broomSave.test.ts#L34)
-  - current rules; keep pending design review. Currentness: unverified. Case runtime: unknown.
+  - current rules; Keep equipment ownership and old-save conversion checks, including the old broom and station-name fixtures?. Currentness: unverified. Case runtime: unknown.
   - Cited ruling: file, line 1: // Her broom's parts kept on this browser (app/broomSave.ts; the Workshop, Ed 2026-10-23), and the migration from the brooms
   - Possible later evidence: [docs/notes/house.md:97](../../docs/notes/house.md#L97): - **Finds / travel trunk** (Ed, 2026-10-21, the station menus' part (b): "The items are found in the forest like other permanent upgrades. Hints are given by the crystal ball"; `src/rules/finds.ts`, `render/view/finds.ts`): each night the island she's on holds one permanent upgrade she hasn't found, a wearable in the trunk or a broom part in a wreck (the finds pool, below; the wearables `FINDABLE`, the wardrobe's items not hers from the start, never a broom shape: brooms are made of parts), drawn as one flask-sized object on a clear patch in its own pale gold-white light (the finds style guide, `docs/art-guide/FINDS.md`, Ed 2026-10-23: clothes a folded bundle, `find-bundle`; bags a little ba. candidate only: same-topic wording and later inline date; not a verified superseding ruling.
   - Possible later evidence: [docs/notes/house.md:81](../../docs/notes/house.md#L81): - **Station menus** (Ed, 2026-10-21; the mock, previews/ed/station-menus-mock on claude/ed-shots; `config/wardrobe.json`, `src/rules/wardrobe.ts`, `src/app/owned.ts`, `src/ui/stationPanel.ts`, `src/rules/stations.ts`): at a dressing station (the house's reach, `rules/stations.ts` `stationOf`) it lights up with E over it, and E there slides its panel in from the left over the live game (Ed's playtest, 2026-10-26: "Menus should open when she presses E near an interactive object (dresser, map, etc) instead of them opening automatically just through proximity"; it was by nearness, no E, since 2026-10-21); E again (the pad's □) slides it out (Ed, 2026-10-26: "I think E should also close, and we c. candidate only: same-topic wording and later inline date; not a verified superseding ruling.
 
 - **the migration from the brooms before parts > an old save's broom shape goes back to the Classic look (its colours and fit kept) and its broom spell is dropped, once** — [src/app/broomSave.test.ts:44](../../src/app/broomSave.test.ts#L44)
-  - current rules; keep pending design review. Currentness: unverified. Case runtime: unknown.
+  - current rules; Keep equipment ownership and old-save conversion checks, including the old broom and station-name fixtures?. Currentness: unverified. Case runtime: unknown.
   - Cited ruling: file, line 1: // Her broom's parts kept on this browser (app/broomSave.ts; the Workshop, Ed 2026-10-23), and the migration from the brooms
   - Possible later evidence: [docs/notes/house.md:97](../../docs/notes/house.md#L97): - **Finds / travel trunk** (Ed, 2026-10-21, the station menus' part (b): "The items are found in the forest like other permanent upgrades. Hints are given by the crystal ball"; `src/rules/finds.ts`, `render/view/finds.ts`): each night the island she's on holds one permanent upgrade she hasn't found, a wearable in the trunk or a broom part in a wreck (the finds pool, below; the wearables `FINDABLE`, the wardrobe's items not hers from the start, never a broom shape: brooms are made of parts), drawn as one flask-sized object on a clear patch in its own pale gold-white light (the finds style guide, `docs/art-guide/FINDS.md`, Ed 2026-10-23: clothes a folded bundle, `find-bundle`; bags a little ba. candidate only: same-topic wording and later inline date; not a verified superseding ruling.
   - Possible later evidence: [docs/notes/house.md:100](../../docs/notes/house.md#L100): - **Workshop** (Ed, 2026-10-22/23; docs/backlog/workshop.md). **One broom station** since Ed, 2026-10-29 ("The broom area can probably just be one station instead of two; one for colours, the other for components"): the **lathe** (`config/wardrobe.json` `stations.lathe`), where her night's broom is taken too (rules/kit.ts) and the guidance's broom pin points, its cards the three slots' part cards, the sets' chips and "Her broom", the Body and Trim colours, the Fit, and the pegboard's 3 × 3 board, read-only, as its last card; the bay and the pegboard are **scenery** (their use `{ "kind": "scenery" }`: no prompt, E does nothing; still drawn, her broom resting on the lathe while she's at it, th. candidate only: same-topic wording and later inline date; not a verified superseding ruling.
 
 - **the migration from the brooms before parts > a fresh browser: nothing to change** — [src/app/broomSave.test.ts:60](../../src/app/broomSave.test.ts#L60)
-  - current rules; keep pending design review. Currentness: unverified. Case runtime: unknown.
+  - current rules; Keep equipment ownership and old-save conversion checks, including the old broom and station-name fixtures?. Currentness: unverified. Case runtime: unknown.
   - Cited ruling: file, line 1: // Her broom's parts kept on this browser (app/broomSave.ts; the Workshop, Ed 2026-10-23), and the migration from the brooms
   - Possible later evidence: [docs/notes/house.md:97](../../docs/notes/house.md#L97): - **Finds / travel trunk** (Ed, 2026-10-21, the station menus' part (b): "The items are found in the forest like other permanent upgrades. Hints are given by the crystal ball"; `src/rules/finds.ts`, `render/view/finds.ts`): each night the island she's on holds one permanent upgrade she hasn't found, a wearable in the trunk or a broom part in a wreck (the finds pool, below; the wearables `FINDABLE`, the wardrobe's items not hers from the start, never a broom shape: brooms are made of parts), drawn as one flask-sized object on a clear patch in its own pale gold-white light (the finds style guide, `docs/art-guide/FINDS.md`, Ed 2026-10-23: clothes a folded bundle, `find-bundle`; bags a little ba. candidate only: same-topic wording and later inline date; not a verified superseding ruling.
   - Possible later evidence: [docs/notes/house.md:81](../../docs/notes/house.md#L81): - **Station menus** (Ed, 2026-10-21; the mock, previews/ed/station-menus-mock on claude/ed-shots; `config/wardrobe.json`, `src/rules/wardrobe.ts`, `src/app/owned.ts`, `src/ui/stationPanel.ts`, `src/rules/stations.ts`): at a dressing station (the house's reach, `rules/stations.ts` `stationOf`) it lights up with E over it, and E there slides its panel in from the left over the live game (Ed's playtest, 2026-10-26: "Menus should open when she presses E near an interactive object (dresser, map, etc) instead of them opening automatically just through proximity"; it was by nearness, no E, since 2026-10-21); E again (the pad's □) slides it out (Ed, 2026-10-26: "I think E should also close, and we c. candidate only: same-topic wording and later inline date; not a verified superseding ruling.
@@ -10810,33 +10754,33 @@ Static declarations only. All classifications and currentness are provisional. C
   - Cited ruling: none found in scoped comments; not proof that none exists.
 
 - **the sea chart's save > starts with home alone unlocked** — [src/app/chartSave.test.ts:11](../../src/app/chartSave.test.ts#L11)
-  - current rules; keep pending design review. Currentness: unverified. Case runtime: unknown.
+  - current rules; Keep deterministic chart-unlock rules and settings persistence unchanged?. Currentness: unverified. Case runtime: unknown.
   - Cited ruling: none found in scoped comments; not proof that none exists.
 
 - **the sea chart's save > unlocks the islands of the legends a won night woke, each with its voyage from where she set out; a lost night only plays** — [src/app/chartSave.test.ts:17](../../src/app/chartSave.test.ts#L17)
-  - current rules; keep pending design review. Currentness: unverified. Case runtime: unknown.
+  - current rules; Keep deterministic chart-unlock rules and settings persistence unchanged?. Currentness: unverified. Case runtime: unknown.
   - Cited ruling: none found in scoped comments; not proof that none exists.
 
 - **the sea chart's save > keeps it in the browser, forgets it on Start over, and survives bad or blocked storage** — [src/app/chartSave.test.ts:33](../../src/app/chartSave.test.ts#L33)
-  - outcome stats; consider report after Ed rules. Currentness: unverified. Case runtime: unknown.
+  - current rules; Keep deterministic chart-unlock rules and settings persistence unchanged?. Currentness: unverified. Case runtime: unknown.
   - Cited ruling: none found in scoped comments; not proof that none exists.
 
 - **the sea chart's save > opens the whole chart for ?chart=all** — [src/app/chartSave.test.ts:47](../../src/app/chartSave.test.ts#L47)
-  - current rules; keep pending design review. Currentness: unverified. Case runtime: unknown.
+  - current rules; Keep deterministic chart-unlock rules and settings persistence unchanged?. Currentness: unverified. Case runtime: unknown.
   - Cited ruling: none found in scoped comments; not proof that none exists.
 
 - **the sea chart's save > keeps the campaign's world seed (0 with no save: the first world); Start over begins a new world, typed or random** — [src/app/chartSave.test.ts:57](../../src/app/chartSave.test.ts#L57)
-  - current rules; keep pending design review. Currentness: unverified. Case runtime: unknown.
+  - current rules; Keep deterministic chart-unlock rules and settings persistence unchanged?. Currentness: unverified. Case runtime: unknown.
   - Cited ruling: none found in scoped comments; not proof that none exists.
 
 - **the sea chart's save > sailing off from the treehouse's map table mid-night ends the night unwon, as a loss; once the night's over, it's already recorded (Ed, 2026-10-11: "Sail anytime")** — [src/app/chartSave.test.ts:75](../../src/app/chartSave.test.ts#L75)
-  - current rules; keep pending design review. Currentness: unverified. Case runtime: unknown.
+  - current rules; Keep deterministic chart-unlock rules and settings persistence unchanged?. Currentness: unverified. Case runtime: unknown.
   - Cited ruling: name, line 75: sailing off from the treehouse's map table mid-night ends the night unwon, as a loss; once the night's over, it's already recorded (Ed, 2026-10-11: "Sail anytime")
   - Possible later evidence: [docs/notes/house.md:76](../../docs/notes/house.md#L76): - **Treehouse deck** (Ed, 2026-10-11: "a circle with a wooden floor and a balustrade sitting on the ent. You land on it by being at treetop height, and during the night time slower 10x"; `src/rules/treehouse.ts`, the tuning's `treehouse.deck`, `on: false` for the old treehouse): a round deck (radius 7 m, its floor 22 m up) on the Ent at the treehouse's spot. From the treetops, coming down within its radius plus `grace` lands her on it (`witch.perch`, mode "ground", its floor her ground: `witchHeight`); she walks it, kept inside its rail (`keepOnDeck`), round the **map table** in its middle (Ed: "The world map is in the centre": E there opens the sea chart over the game, `ui/chartOverlay.ts` . candidate only: same-topic wording and later inline date; not a verified superseding ruling.
   - Possible later evidence: [docs/notes/island.md:20](../../docs/notes/island.md#L20): - **Sail in place**: sailing from the map table's sea chart without reloading the page (docs/plans/sail-without-reload.md PR 5; `src/app/sail.ts`, main.ts `sailFromChart`): the night recorded on the chart, the old one ended (`endNight`), the chart's last frame up while the next is made (`startNight` with `how: "sail"`, every pause-page slider carried but those its link sets: `carryKnobs`, `linkKnobs`), its link pushed (`?island=X&seed=S[&world=W]` and the page's other switches, without `arrive` and the repro and debug keys: `SAIL_DROPS`), then the chart's flight in, passed in memory; the old night's music fades out as a quiet sea and wind come in (`sound.sailing`, `Sailing` in `platform/audi. candidate only: same-topic wording and later inline date; not a verified superseding ruling.
 
 - **the sea chart's save > knows the islands she's found and not been to: found, no night played there, not where she is (Ed, 2026-10-26)** — [src/app/chartSave.test.ts:85](../../src/app/chartSave.test.ts#L85)
-  - current rules; keep pending design review. Currentness: unverified. Case runtime: unknown.
+  - current rules; Keep deterministic chart-unlock rules and settings persistence unchanged?. Currentness: unverified. Case runtime: unknown.
   - Cited ruling: name, line 85: knows the islands she's found and not been to: found, no night played there, not where she is (Ed, 2026-10-26)
   - Possible later evidence: [docs/notes/house.md:111](../../docs/notes/house.md#L111): - **Guidance pins** (Ed, 2026-10-26: "Pointers: let's work out what they help with and build it"; his list approved the same day): one pin at a time over what she should do next in the treehouse, icons only, no words (`rules/guidance.ts` guidanceOf, drawn by `render/view/guidance.ts` GuidePin with `view.pin`, render/pins.ts), the HUD's amber ring and Ed's icons in it, emoji drawn in pixels as the thrown 💌 is (`render/indicator.ts` emoji, render/bubbles.ts): 💤 the bed, 💌 the invitations desk, a pair of 🪽 the lathe (one 🪽 mirrored beside another), 🎁 anything new, 🧭 the map table, 🎶 the decks (the wave pointer's own 🎶 glyph, in cream: the emoji's black notes were lost on the dark floor. candidate only: same-topic wording and later inline date; not a verified superseding ruling.
   - Possible later evidence: [docs/notes/island.md:17](../../docs/notes/island.md#L17): - **Sea chart**: the journey's map of islands (`chart.html`, or `?chart`; `?chart=all` shows everything; Ed, 2026-10-11): the world's disc, home in the middle, all 64 islands drawn in their real outlines at their kinds' bearings on their phases' rings, a sigil (and a link) only on those she can travel to, voyages as dotted lines, won islands starred; click one to play it. **New islands** (Ed, 2026-10-26: the chart didn't show which islands are new): each island she's found and not yet been to (`app/chartSave.ts` `unvisited`: no night played there, and not the one she's on) sparkles, a ring of little stars twinkling round its sigil (`ChartIsland.fresh`, `render/chart/seaChart.ts` `spark`, nev. candidate only: same-topic wording and later inline date; not a verified superseding ruling.
@@ -10862,23 +10806,23 @@ Static declarations only. All classifications and currentness are provisional. C
   - Cited ruling: file, line 1: // The finds' keepers (app/finds.ts) and the dev control's grants (Ed, 2026-10-23: "a debug control that allows devs to give
 
 - **guidance's save > keeps the new things (one an item, newest last) and the islands seen; drops a thing gone, and anything unreadable** — [src/app/guideSave.test.ts:7](../../src/app/guideSave.test.ts#L7)
-  - current rules; keep pending design review. Currentness: unverified. Case runtime: unknown.
+  - current rules; Keep equipment ownership and old-save conversion checks, including the old broom and station-name fixtures?. Currentness: unverified. Case runtime: unknown.
   - Cited ruling: none found in scoped comments; not proof that none exists.
 
 - **her hats (app/hatSave.ts) > keeps a newly found hat in this page when storage refuses the write** — [src/app/hatSave.test.ts:8](../../src/app/hatSave.test.ts#L8)
-  - current rules; keep pending design review. Currentness: unverified. Case runtime: unknown.
+  - current rules; Keep equipment ownership and old-save conversion checks, including the old broom and station-name fixtures?. Currentness: unverified. Case runtime: unknown.
   - Cited ruling: file, line 1: // Her hats kept on this browser (app/hatSave.ts; Ed, 2026-10-23: the plain hat hers, every spell hat found).
   - Possible later evidence: [docs/notes/house.md:97](../../docs/notes/house.md#L97): - **Finds / travel trunk** (Ed, 2026-10-21, the station menus' part (b): "The items are found in the forest like other permanent upgrades. Hints are given by the crystal ball"; `src/rules/finds.ts`, `render/view/finds.ts`): each night the island she's on holds one permanent upgrade she hasn't found, a wearable in the trunk or a broom part in a wreck (the finds pool, below; the wearables `FINDABLE`, the wardrobe's items not hers from the start, never a broom shape: brooms are made of parts), drawn as one flask-sized object on a clear patch in its own pale gold-white light (the finds style guide, `docs/art-guide/FINDS.md`, Ed 2026-10-23: clothes a folded bundle, `find-bundle`; bags a little ba. candidate only: same-topic wording and later inline date; not a verified superseding ruling.
   - Possible later evidence: [docs/notes/view.md:64](../../docs/notes/view.md#L64): - **Test sliders / pause page** (Ed, 2026-10-12): every live test slider or switch a builder adds for Ed goes in the decisions registry, **one fragment a pull request's group** since 2026-10-13 (`config/decisions/<pr>-<group>.json`: `{ pr, group, decisions: [...] }`, each entry id, label, note, control, built default, and the tuning knob or URL switch it sets; a knob the game reads live, so a change shows on the frozen frame; `src/ui/decisions.ts` collects them newest PR first; `config/decisions.json` keeps only the format's note, and `node tools/data.mjs decisions adopt` moves any entry a merge pastes back into its array into its fragment, `check` fails while one is there), never a panel of. candidate only: same-topic wording and later inline date; not a verified superseding ruling.
 
 - **her hats (app/hatSave.ts) > start with none found, keep what she finds, and ignore what isn't a hat to find** — [src/app/hatSave.test.ts:19](../../src/app/hatSave.test.ts#L19)
-  - current rules; keep pending design review. Currentness: unverified. Case runtime: unknown.
+  - current rules; Keep equipment ownership and old-save conversion checks, including the old broom and station-name fixtures?. Currentness: unverified. Case runtime: unknown.
   - Cited ruling: file, line 1: // Her hats kept on this browser (app/hatSave.ts; Ed, 2026-10-23: the plain hat hers, every spell hat found).
   - Possible later evidence: [docs/notes/house.md:97](../../docs/notes/house.md#L97): - **Finds / travel trunk** (Ed, 2026-10-21, the station menus' part (b): "The items are found in the forest like other permanent upgrades. Hints are given by the crystal ball"; `src/rules/finds.ts`, `render/view/finds.ts`): each night the island she's on holds one permanent upgrade she hasn't found, a wearable in the trunk or a broom part in a wreck (the finds pool, below; the wearables `FINDABLE`, the wardrobe's items not hers from the start, never a broom shape: brooms are made of parts), drawn as one flask-sized object on a clear patch in its own pale gold-white light (the finds style guide, `docs/art-guide/FINDS.md`, Ed 2026-10-23: clothes a folded bundle, `find-bundle`; bags a little ba. candidate only: same-topic wording and later inline date; not a verified superseding ruling.
   - Possible later evidence: [docs/notes/gameplay.md:38](../../docs/notes/gameplay.md#L38): - **Fight Arena** (Ed, 2026-10-27: "we can press a button to randomise the settings and another generates a random enemy pack to fight, and then I can tweak and save/copy attack settings that are fun"): `?fight=<seed>[&pack=wolf*4@2,...]`, or the pause page's **⚔ Fight arena** (a new tab, a new seed): her alone against a wild pack (`setupArena(g, spec, { wildOnly: true })`: every group wild, side by side, none of hers) on the debug arena's ground, no waves, straight in (no spell to cast). The pack is the seed's roll (`rollPack`, rules/fightArena.ts: one time in eight a lone legend, else one kind or, one time in three, two, 2 to 6 of each, young or adult, at most 8; kinds with an attack at ev. candidate only: same-topic wording and later inline date; not a verified superseding ruling.
 
 - **her hats (app/hatSave.ts) > as this load's tuning: her save, ?hats=all or a list for one load, and a ?hat= worn counted as hers** — [src/app/hatSave.test.ts:28](../../src/app/hatSave.test.ts#L28)
-  - current rules; keep pending design review. Currentness: unverified. Case runtime: unknown.
+  - current rules; Keep equipment ownership and old-save conversion checks, including the old broom and station-name fixtures?. Currentness: unverified. Case runtime: unknown.
   - Cited ruling: file, line 1: // Her hats kept on this browser (app/hatSave.ts; Ed, 2026-10-23: the plain hat hers, every spell hat found).
   - Possible later evidence: [docs/notes/house.md:97](../../docs/notes/house.md#L97): - **Finds / travel trunk** (Ed, 2026-10-21, the station menus' part (b): "The items are found in the forest like other permanent upgrades. Hints are given by the crystal ball"; `src/rules/finds.ts`, `render/view/finds.ts`): each night the island she's on holds one permanent upgrade she hasn't found, a wearable in the trunk or a broom part in a wreck (the finds pool, below; the wearables `FINDABLE`, the wardrobe's items not hers from the start, never a broom shape: brooms are made of parts), drawn as one flask-sized object on a clear patch in its own pale gold-white light (the finds style guide, `docs/art-guide/FINDS.md`, Ed 2026-10-23: clothes a folded bundle, `find-bundle`; bags a little ba. candidate only: same-topic wording and later inline date; not a verified superseding ruling.
   - Possible later evidence: [docs/notes/house.md:111](../../docs/notes/house.md#L111): - **Guidance pins** (Ed, 2026-10-26: "Pointers: let's work out what they help with and build it"; his list approved the same day): one pin at a time over what she should do next in the treehouse, icons only, no words (`rules/guidance.ts` guidanceOf, drawn by `render/view/guidance.ts` GuidePin with `view.pin`, render/pins.ts), the HUD's amber ring and Ed's icons in it, emoji drawn in pixels as the thrown 💌 is (`render/indicator.ts` emoji, render/bubbles.ts): 💤 the bed, 💌 the invitations desk, a pair of 🪽 the lathe (one 🪽 mirrored beside another), 🎁 anything new, 🧭 the map table, 🎶 the decks (the wave pointer's own 🎶 glyph, in cream: the emoji's black notes were lost on the dark floor. candidate only: same-topic wording and later inline date; not a verified superseding ruling.
@@ -10921,11 +10865,11 @@ Static declarations only. All classifications and currentness are provisional. C
   - Cited ruling: none found in scoped comments; not proof that none exists.
 
 - **keeps an explicit-link conflict distinct and supplies a one-click link to the retained save** — [src/app/nightSave.test.ts:20](../../src/app/nightSave.test.ts#L20)
-  - current rules; keep pending design review. Currentness: unverified. Case runtime: unknown.
+  - hard limits; Keep compatible-night acceptance, identity checks and serialized writes unchanged?. Currentness: unverified. Case runtime: unknown.
   - Cited ruling: none found in scoped comments; not proof that none exists.
 
 - **accepts a build-counter jump under the cross-build save contract** — [src/app/nightSave.test.ts:32](../../src/app/nightSave.test.ts#L32)
-  - current rules; keep pending design review. Currentness: unverified. Case runtime: unknown.
+  - hard limits; Keep compatible-night acceptance, identity checks and serialized writes unchanged?. Currentness: unverified. Case runtime: unknown.
   - Cited ruling: none found in scoped comments; not proof that none exists.
 
 - **a borrowed save gate drains an in-flight own write and clears only once the visit is confirmed** — [src/app/nightSave.test.ts:45](../../src/app/nightSave.test.ts#L45)
@@ -10937,51 +10881,91 @@ Static declarations only. All classifications and currentness are provisional. C
   - Cited ruling: none found in scoped comments; not proof that none exists.
 
 - **resumable night storage > restores an actual captured game across build numbers while rejecting unknown formats** — [src/app/nightSave.test.ts:66](../../src/app/nightSave.test.ts#L66)
-  - hard limits; keep. Currentness: unverified. Case runtime: unknown.
+  - hard limits; Keep compatible-night acceptance, identity checks and serialized writes unchanged?. Currentness: unverified. Case runtime: unknown.
   - Cited ruling: none found in scoped comments; not proof that none exists.
 
 - **resumable night storage > doesn't offer a new night until she gets out of bed, even with the loading card hidden** — [src/app/nightSave.test.ts:77](../../src/app/nightSave.test.ts#L77)
-  - current rules; keep pending design review. Currentness: unverified. Case runtime: unknown.
+  - hard limits; Keep compatible-night acceptance, identity checks and serialized writes unchanged?. Currentness: unverified. Case runtime: unknown.
   - Cited ruling: none found in scoped comments; not proof that none exists.
 
 - **resumable night storage > keeps format and explicit night identity across builds; a plain game link can resume a later island** — [src/app/nightSave.test.ts:100](../../src/app/nightSave.test.ts#L100)
-  - current rules; keep pending design review. Currentness: unverified. Case runtime: unknown.
+  - hard limits; Keep compatible-night acceptance, identity checks and serialized writes unchanged?. Currentness: unverified. Case runtime: unknown.
   - Cited ruling: none found in scoped comments; not proof that none exists.
 
 - **resumable night storage > leaves bots, debug links and automation isolated unless resume is explicitly enabled** — [src/app/nightSave.test.ts:116](../../src/app/nightSave.test.ts#L116)
-  - current rules; keep pending design review. Currentness: unverified. Case runtime: unknown.
+  - hard limits; Keep compatible-night acceptance, identity checks and serialized writes unchanged?. Currentness: unverified. Case runtime: unknown.
   - Cited ruling: none found in scoped comments; not proof that none exists.
 
 - **resumable night storage > throttles periodic saves, forces a final checkpoint, and clears an ended night** — [src/app/nightSave.test.ts:123](../../src/app/nightSave.test.ts#L123)
-  - current rules; keep pending design review. Currentness: unverified. Case runtime: unknown.
+  - hard limits; Keep compatible-night acceptance, identity checks and serialized writes unchanged?. Currentness: unverified. Case runtime: unknown.
   - Cited ruling: none found in scoped comments; not proof that none exists.
 
 - **resumable night storage > doesn't overlap writes and reports a failed write without throwing into play** — [src/app/nightSave.test.ts:132](../../src/app/nightSave.test.ts#L132)
-  - current rules; keep pending design review. Currentness: unverified. Case runtime: unknown.
+  - hard limits; Keep compatible-night acceptance, identity checks and serialized writes unchanged?. Currentness: unverified. Case runtime: unknown.
   - Cited ruling: none found in scoped comments; not proof that none exists.
 
 - **resumable night storage > doesn't create a checkpoint while no playable night is active** — [src/app/nightSave.test.ts:142](../../src/app/nightSave.test.ts#L142)
-  - current rules; keep pending design review. Currentness: unverified. Case runtime: unknown.
+  - hard limits; Keep compatible-night acceptance, identity checks and serialized writes unchanged?. Currentness: unverified. Case runtime: unknown.
   - Cited ruling: none found in scoped comments; not proof that none exists.
 
 - **resumable night storage > flush waits for an active checkpoint then writes the latest state before a slot exit** — [src/app/nightSave.test.ts:146](../../src/app/nightSave.test.ts#L146)
-  - current rules; keep pending design review. Currentness: unverified. Case runtime: unknown.
+  - hard limits; Keep compatible-night acceptance, identity checks and serialized writes unchanged?. Currentness: unverified. Case runtime: unknown.
   - Cited ruling: none found in scoped comments; not proof that none exists.
 
 - **saving and loading > defaults rumble on for older saves and remembers it off** — [src/app/playerSettings.test.ts:13](../../src/app/playerSettings.test.ts#L13)
-  - current rules; keep pending design review. Currentness: unverified. Case runtime: unknown.
+  - current rules; Keep deterministic chart-unlock rules and settings persistence unchanged?. Currentness: unverified. Case runtime: unknown.
+  - Cited ruling: none found in scoped comments; not proof that none exists.
+
+- **saving and loading > is the defaults on a new browser** — [src/app/playerSettings.test.ts:19](../../src/app/playerSettings.test.ts#L19)
+  - current rules; Keep deterministic chart-unlock rules and settings persistence unchanged?. Currentness: unverified. Case runtime: unknown.
   - Cited ruling: none found in scoped comments; not proof that none exists.
 
 - **saving and loading > comes back as saved** — [src/app/playerSettings.test.ts:20](../../src/app/playerSettings.test.ts#L20)
-  - current rules; keep pending design review. Currentness: unverified. Case runtime: unknown.
+  - current rules; Keep deterministic chart-unlock rules and settings persistence unchanged?. Currentness: unverified. Case runtime: unknown.
   - Cited ruling: none found in scoped comments; not proof that none exists.
 
 - **saving and loading > carries over today's saved volumes and screen shake the first time, not after** — [src/app/playerSettings.test.ts:25](../../src/app/playerSettings.test.ts#L25)
-  - current rules; keep pending design review. Currentness: unverified. Case runtime: unknown.
+  - current rules; Keep deterministic chart-unlock rules and settings persistence unchanged?. Currentness: unverified. Case runtime: unknown.
+  - Cited ruling: none found in scoped comments; not proof that none exists.
+
+- **saving and loading > keeps the start screen's shake in step (witch.shake)** — [src/app/playerSettings.test.ts:32](../../src/app/playerSettings.test.ts#L32)
+  - current rules; Keep deterministic chart-unlock rules and settings persistence unchanged?. Currentness: unverified. Case runtime: unknown.
+  - Cited ruling: none found in scoped comments; not proof that none exists.
+
+- **saving and loading > throws nothing away but what's wrong: bad values are their defaults** — [src/app/playerSettings.test.ts:35](../../src/app/playerSettings.test.ts#L35)
+  - current rules; Keep deterministic chart-unlock rules and settings persistence unchanged?. Currentness: unverified. Case runtime: unknown.
+  - Cited ruling: none found in scoped comments; not proof that none exists.
+
+- **saving and loading > works with no storage, or one that refuses** — [src/app/playerSettings.test.ts:39](../../src/app/playerSettings.test.ts#L39)
+  - current rules; Keep deterministic chart-unlock rules and settings persistence unchanged?. Currentness: unverified. Case runtime: unknown.
   - Cited ruling: none found in scoped comments; not proof that none exists.
 
 - **applying > keeps original settings levels across a saved night, including disabled shake/flash and quieter voices** — [src/app/playerSettings.test.ts:49](../../src/app/playerSettings.test.ts#L49)
-  - current rules; keep pending design review. Currentness: unverified. Case runtime: unknown.
+  - current rules; Keep deterministic chart-unlock rules and settings persistence unchanged?. Currentness: unverified. Case runtime: unknown.
+  - Cited ruling: none found in scoped comments; not proof that none exists.
+
+- **applying > sets the volumes, master times each** — [src/app/playerSettings.test.ts:60](../../src/app/playerSettings.test.ts#L60)
+  - current rules; Keep deterministic chart-unlock rules and settings persistence unchanged?. Currentness: unverified. Case runtime: unknown.
+  - Cited ruling: none found in scoped comments; not proof that none exists.
+
+- **applying > scales every babbling voice from its built level, never compounding** — [src/app/playerSettings.test.ts:66](../../src/app/playerSettings.test.ts#L66)
+  - current rules; Keep deterministic chart-unlock rules and settings persistence unchanged?. Currentness: unverified. Case runtime: unknown.
+  - Cited ruling: none found in scoped comments; not proof that none exists.
+
+- **applying > turns the legends' quake shake off and back on, and a legend's flash off with reduce flashing** — [src/app/playerSettings.test.ts:73](../../src/app/playerSettings.test.ts#L73)
+  - current rules; Keep deterministic chart-unlock rules and settings persistence unchanged?. Currentness: unverified. Case runtime: unknown.
+  - Cited ruling: none found in scoped comments; not proof that none exists.
+
+- **applying > maps quality onto the ladder: auto, full, the middle rung, the top** — [src/app/playerSettings.test.ts:80](../../src/app/playerSettings.test.ts#L80)
+  - current rules; Keep deterministic chart-unlock rules and settings persistence unchanged?. Currentness: unverified. Case runtime: unknown.
+  - Cited ruling: none found in scoped comments; not proof that none exists.
+
+- **applying > names a pad's glyphs from its name unless forced** — [src/app/playerSettings.test.ts:83](../../src/app/playerSettings.test.ts#L83)
+  - current rules; Keep deterministic chart-unlock rules and settings persistence unchanged?. Currentness: unverified. Case runtime: unknown.
+  - Cited ruling: none found in scoped comments; not proof that none exists.
+
+- **the pause page's own Volume sliders > move the settings with them (over master), so the next night keeps them** — [src/app/playerSettings.test.ts:92](../../src/app/playerSettings.test.ts#L92)
+  - current rules; Keep deterministic chart-unlock rules and settings persistence unchanged?. Currentness: unverified. Case runtime: unknown.
   - Cited ruling: none found in scoped comments; not proof that none exists.
 
 - **paused playtest comments > preserves legacy report text through production-sized duplicated replay pressure, reload and both exports** — [src/app/playtestComments.test.ts:69](../../src/app/playtestComments.test.ts#L69)
@@ -10989,16 +10973,16 @@ Static declarations only. All classifications and currentness are provisional. C
   - Cited ruling: none found in scoped comments; not proof that none exists.
 
 - **her records > are every 10 bpm from 100 to 200 (Ed, 2026-10-29: "full set from 100 to 200, but only every 10 bpm"); she starts with 100 and 120, the other 9 are finds** — [src/app/recordSave.test.ts:12](../../src/app/recordSave.test.ts#L12)
-  - current rules; keep pending design review. Currentness: unverified. Case runtime: unknown.
+  - current rules; Keep equipment ownership and old-save conversion checks, including the old broom and station-name fixtures?. Currentness: unverified. Case runtime: unknown.
   - Cited ruling: file, line 1: // Her records kept (app/recordSave.ts; Ed, 2026-10-29: "Start with 100 and 120"): the starting ones always hers, finds added and / name, line 12: are every 10 bpm from 100 to 200 (Ed, 2026-10-29: "full set from 100 to 200, but only every 10 bpm"); she starts with 100 and 120, the other 9 are finds
 
 - **her records > keeps the starting ones always, adds and drops finds, remembers the last chosen while she has it** — [src/app/recordSave.test.ts:18](../../src/app/recordSave.test.ts#L18)
-  - current rules; keep pending design review. Currentness: unverified. Case runtime: unknown.
+  - current rules; Keep equipment ownership and old-save conversion checks, including the old broom and station-name fixtures?. Currentness: unverified. Case runtime: unknown.
   - Cited ruling: file, line 1: // Her records kept (app/recordSave.ts; Ed, 2026-10-29: "Start with 100 and 120"): the starting ones always hers, finds added and
   - Possible later evidence: [docs/notes/gameplay.md:39](../../docs/notes/gameplay.md#L39): - **Wild watch**: coming down into a wild area (not home, partified or friendly) for the first time in a while, its young and adults stop what they're doing, turn to look at her and back off to `wildWatch.hangBack` m, for `wildWatch.time` seconds (4: Ed, 2026-10-08, "Six second dormant period should be four seconds"; 5.5 before, from Ed's 2026-10-07 "slower ... time to run away"), then attack (`src/rules/wildWatch.ts`, `c.watchUntil`); nappers stretch awake first. Leaving or rising before it's up calls it off (they settle, don't chase; the next visit starts over). Once they've attacked it's once a visit: `game.wildEntry` remembers the area until she's been away `wildWatch.forget` seconds (20. candidate only: same-topic wording and later inline date; not a verified superseding ruling.
 
 - **her records > with Unlock everything on, offers every record, writing nothing** — [src/app/recordSave.test.ts:28](../../src/app/recordSave.test.ts#L28)
-  - current rules; keep pending design review. Currentness: unverified. Case runtime: unknown.
+  - current rules; Keep equipment ownership and old-save conversion checks, including the old broom and station-name fixtures?. Currentness: unverified. Case runtime: unknown.
   - Cited ruling: file, line 1: // Her records kept (app/recordSave.ts; Ed, 2026-10-29: "Start with 100 and 120"): the starting ones always hers, finds added and
 
 - **the page hooks keep both players, explicit mutation boundaries and a comment replay to the saved state** — [src/app/recordingHooks.test.ts:20](../../src/app/recordingHooks.test.ts#L20)
@@ -11010,11 +10994,11 @@ Static declarations only. All classifications and currentness are provisional. C
   - Cited ruling: none found in scoped comments; not proof that none exists.
 
 - **saved format contracts > requires an explicit envelope-format review when SavedNight changes** — [src/app/saveFormat.test.ts:37](../../src/app/saveFormat.test.ts#L37)
-  - current rules; keep pending design review. Currentness: unverified. Case runtime: unknown.
+  - hard limits; Keep all snapshot, deterministic-continuation and explicit format-review protections unchanged?. Currentness: unverified. Case runtime: unknown.
   - Cited ruling: none found in scoped comments; not proof that none exists.
 
 - **saved format contracts > requires an explicit rules-format review when Game or the graph format changes** — [src/app/saveFormat.test.ts:40](../../src/app/saveFormat.test.ts#L40)
-  - current rules; keep pending design review. Currentness: unverified. Case runtime: unknown.
+  - hard limits; Keep all snapshot, deterministic-continuation and explicit format-review protections unchanged?. Currentness: unverified. Case runtime: unknown.
   - Cited ruling: none found in scoped comments; not proof that none exists.
 
 - **save slots > keeps borrowed progress transient and slot bytes unchanged while personal volume still saves** — [src/app/saveSlots.test.ts:7](../../src/app/saveSlots.test.ts#L7)
@@ -11022,51 +11006,51 @@ Static declarations only. All classifications and currentness are provisional. C
   - Cited ruling: none found in scoped comments; not proof that none exists.
 
 - **save slots > preserves all legacy progress/settings bytes in the first slot and never deletes originals** — [src/app/saveSlots.test.ts:30](../../src/app/saveSlots.test.ts#L30)
-  - leftovers; review before any rewrite or deletion. Currentness: unverified. Case runtime: unknown.
+  - hard limits; Keep these slot isolation, migration and failed-write protections unchanged?. Currentness: unverified. Case runtime: unknown.
   - Cited ruling: none found in scoped comments; not proof that none exists.
 
 - **save slots > isolates new slots, persists last-used selection, and keeps night paths separate** — [src/app/saveSlots.test.ts:40](../../src/app/saveSlots.test.ts#L40)
-  - current rules; keep pending design review. Currentness: unverified. Case runtime: unknown.
+  - hard limits; Keep these slot isolation, migration and failed-write protections unchanged?. Currentness: unverified. Case runtime: unknown.
   - Cited ruling: none found in scoped comments; not proof that none exists.
 
 - **save slots > a corrupt slot's bytes cannot block another slot** — [src/app/saveSlots.test.ts:55](../../src/app/saveSlots.test.ts#L55)
-  - hard limits; keep. Currentness: unverified. Case runtime: unknown.
+  - hard limits; Keep these slot isolation, migration and failed-write protections unchanged?. Currentness: unverified. Case runtime: unknown.
   - Cited ruling: none found in scoped comments; not proof that none exists.
 
 - **save slots > does not mark incomplete migration complete and retains failed writes for this page** — [src/app/saveSlots.test.ts:62](../../src/app/saveSlots.test.ts#L62)
-  - current rules; keep pending design review. Currentness: unverified. Case runtime: unknown.
+  - hard limits; Keep these slot isolation, migration and failed-write protections unchanged?. Currentness: unverified. Case runtime: unknown.
   - Cited ruling: none found in scoped comments; not proof that none exists.
 
 - **save slots > does not complete migration after a failed legacy read** — [src/app/saveSlots.test.ts:74](../../src/app/saveSlots.test.ts#L74)
-  - leftovers; review before any rewrite or deletion. Currentness: unverified. Case runtime: unknown.
+  - hard limits; Keep these slot isolation, migration and failed-write protections unchanged?. Currentness: unverified. Case runtime: unknown.
   - Cited ruling: none found in scoped comments; not proof that none exists.
 
 - **save slots > refuses a reload selection when persistence fails** — [src/app/saveSlots.test.ts:81](../../src/app/saveSlots.test.ts#L81)
-  - current rules; keep pending design review. Currentness: unverified. Case runtime: unknown.
+  - hard limits; Keep these slot isolation, migration and failed-write protections unchanged?. Currentness: unverified. Case runtime: unknown.
   - Cited ruling: none found in scoped comments; not proof that none exists.
 
 - **save slots > leaves device diagnostics shared and exposes only copies of slot metadata** — [src/app/saveSlots.test.ts:86](../../src/app/saveSlots.test.ts#L86)
-  - current rules; keep pending design review. Currentness: unverified. Case runtime: unknown.
+  - hard limits; Keep these slot isolation, migration and failed-write protections unchanged?. Currentness: unverified. Case runtime: unknown.
   - Cited ruling: none found in scoped comments; not proof that none exists.
 
 - **save slots > reloads controls from the selected slot without changing the first slot's remap** — [src/app/saveSlots.test.ts:95](../../src/app/saveSlots.test.ts#L95)
-  - current rules; keep pending design review. Currentness: unverified. Case runtime: unknown.
+  - hard limits; Keep these slot isolation, migration and failed-write protections unchanged?. Currentness: unverified. Case runtime: unknown.
   - Cited ruling: none found in scoped comments; not proof that none exists.
 
 - **save slots > waits for the outgoing night before selection/reload and leaves a failed write open** — [src/app/saveSlots.test.ts:105](../../src/app/saveSlots.test.ts#L105)
-  - current rules; keep pending design review. Currentness: unverified. Case runtime: unknown.
+  - hard limits; Keep these slot isolation, migration and failed-write protections unchanged?. Currentness: unverified. Case runtime: unknown.
   - Cited ruling: none found in scoped comments; not proof that none exists.
 
 - **save slots > pins the outgoing storage adapter even after the last-used choice changes** — [src/app/saveSlots.test.ts:115](../../src/app/saveSlots.test.ts#L115)
-  - current rules; keep pending design review. Currentness: unverified. Case runtime: unknown.
+  - hard limits; Keep these slot isolation, migration and failed-write protections unchanged?. Currentness: unverified. Case runtime: unknown.
   - Cited ruling: none found in scoped comments; not proof that none exists.
 
 - **save slots > keeps newer slot bytes and a damaged index instead of rolling back to legacy data** — [src/app/saveSlots.test.ts:121](../../src/app/saveSlots.test.ts#L121)
-  - leftovers; review before any rewrite or deletion. Currentness: unverified. Case runtime: unknown.
+  - hard limits; Keep these slot isolation, migration and failed-write protections unchanged?. Currentness: unverified. Case runtime: unknown.
   - Cited ruling: none found in scoped comments; not proof that none exists.
 
 - **save slots > keeps other tabs' slots and last-used selection when an older tab saves metadata** — [src/app/saveSlots.test.ts:132](../../src/app/saveSlots.test.ts#L132)
-  - current rules; keep pending design review. Currentness: unverified. Case runtime: unknown.
+  - hard limits; Keep these slot isolation, migration and failed-write protections unchanged?. Currentness: unverified. Case runtime: unknown.
   - Cited ruling: none found in scoped comments; not proof that none exists.
 
 - **strips shared equipment from saves and restores originals on loss/hang-up, preserving private pre-visit loan** — [src/app/sharedFindLoan.test.ts:64](../../src/app/sharedFindLoan.test.ts#L64)
@@ -11161,8 +11145,28 @@ Static declarations only. All classifications and currentness are provisional. C
   - current rules; keep pending design review. Currentness: unverified. Case runtime: unknown.
   - Cited ruling: none found in scoped comments; not proof that none exists.
 
+- **a whole night's snapshot > migrates older nights without mushroom state and preserves new brewing snapshots exactly** — [src/rules/nightSnapshot.test.ts:18](../../src/rules/nightSnapshot.test.ts#L18)
+  - hard limits; Keep all snapshot, deterministic-continuation and explicit format-review protections unchanged?. Currentness: unverified. Case runtime: unknown.
+  - Cited ruling: none found in scoped comments; not proof that none exists.
+
+- **a whole night's snapshot > keeps seeded streams at their cursor without changing the existing generator** — [src/rules/nightSnapshot.test.ts:30](../../src/rules/nightSnapshot.test.ts#L30)
+  - hard limits; Keep all snapshot, deterministic-continuation and explicit format-review protections unchanged?. Currentness: unverified. Case runtime: unknown.
+  - Cited ruling: none found in scoped comments; not proof that none exists.
+
+- **a whole night's snapshot > roundtrips a played night, its maps, sets, typed buffers, shared references and infinities** — [src/rules/nightSnapshot.test.ts:36](../../src/rules/nightSnapshot.test.ts#L36)
+  - hard limits; Keep all snapshot, deterministic-continuation and explicit format-review protections unchanged?. Currentness: unverified. Case runtime: unknown.
+  - Cited ruling: none found in scoped comments; not proof that none exists.
+
+- **a whole night's snapshot > continues the same simulation, including RNG, after later waves and a knockout** — [src/rules/nightSnapshot.test.ts:64](../../src/rules/nightSnapshot.test.ts#L64)
+  - hard limits; Keep all snapshot, deterministic-continuation and explicit format-review protections unchanged?. Currentness: unverified. Case runtime: unknown.
+  - Cited ruling: none found in scoped comments; not proof that none exists.
+
 - **a whole night's snapshot > rejects incompatible, incomplete, executable and malformed saves** — [src/rules/nightSnapshot.test.ts:79](../../src/rules/nightSnapshot.test.ts#L79)
-  - hard limits; keep. Currentness: unverified. Case runtime: unknown.
+  - hard limits; Keep all snapshot, deterministic-continuation and explicit format-review protections unchanged?. Currentness: unverified. Case runtime: unknown.
+  - Cited ruling: none found in scoped comments; not proof that none exists.
+
+- **a whole night's snapshot > measures home and a later island's snapshot budget** — [src/rules/nightSnapshot.test.ts:95](../../src/rules/nightSnapshot.test.ts#L95)
+  - hard limits; Keep all snapshot, deterministic-continuation and explicit format-review protections unchanged?. Currentness: unverified. Case runtime: unknown.
   - Cited ruling: none found in scoped comments; not proof that none exists.
 
 - **one wake-up for every morning (Ed, 2026-10-26: "yes, and keep 3 second stretch for both"; it replaced the shorter one after the first) > the dressing table's first-ever visit is marked once: not again on a later morning (the page's save)** — [src/rules/wakeUp.test.ts:390](../../src/rules/wakeUp.test.ts#L390)
@@ -11972,10 +11976,6 @@ Static declarations only. All classifications and currentness are provisional. C
   - Cited ruling: file, line 1: // The dev Player pick shows only with the debug overlay on (Ed, 2026-10-11: "the Player dropdown moves into the debug overlay
   - Possible later evidence: [docs/notes/house.md:110](../../docs/notes/house.md#L110): - **Hats and brooms** (Ed, 2026-10-11; `src/rules/spells.ts`, docs/backlog/unlocks.md): two slots, a hat and a broom, each with a spell or none (the default; the plain broom's quicker rise is the parts' stats now: see **Sets**). Hats are worn (the Helmet: an extra hit, knocked off) or placed with E held (the Healing ring: a hit back every few seconds standing by it; Harvest: a ring of six berries grows round it; Dowsing: a pointer to the nearest relic for a minute; Sentry: it throws 💌s at wild creatures within 30 m; Slingshot: her 💌s passing within 10 m circle it, then fly at a creature up to 40 m off; Gathering: picked up again, it brings back every sigil of hers within 100 m; Bramble: wi. candidate only: same-topic wording and later inline date; not a verified superseding ruling.
   - Possible later evidence: [docs/notes/music.md:9](../../docs/notes/music.md#L9): The music (`src/rules/musicPlan.ts`, `src/rules/musicScore.ts`, `src/platform/audio/musicEngine.ts`, `config/music-style.json`): A sleeping legend's clearing on the ground (Ed, 2026-10-06) muffles the music (`muffled`, rules/music.ts; the tuning's `music.circle`) under that legend's own layer (`legendCircleAt`, rules/musicPlan.ts; the style's `circle`: every legend's parts and its voice family's, each species its own patterns, melody, rhythm and octave in the music's key and chords, played over the muffle on the engine's second output); There the world slows to about a tenth (the game's time scale, `g.timeScale`) and the music follows it (Ed, 2026-10-06: "the music audibly slows down"): the . candidate only: same-topic wording and later inline date; not a verified superseding ruling.
-
-- **saving and loading > keeps the start screen's shake in step (witch.shake)** — [src/app/playerSettings.test.ts:32](../../src/app/playerSettings.test.ts#L32)
-  - current rules; keep pending design review. Currentness: unverified. Case runtime: unknown.
-  - Cited ruling: none found in scoped comments; not proof that none exists.
 
 - **the link a sail in place pushes > is ?island=X&seed=S, the page's other switches kept, the chart's hand-off and the repro and debug places dropped** — [src/app/sail.test.ts:26](../../src/app/sail.test.ts#L26)
   - current rules; keep pending design review. Currentness: unverified. Case runtime: unknown.
@@ -14904,22 +14904,30 @@ Static declarations only. All classifications and currentness are provisional. C
   - Possible later evidence: [docs/notes/art-checks.md:16](../../docs/notes/art-checks.md#L16): - Ed's approved design pass (2026-10-29, PR #1467): polar bear's five-toed paw, unicorn's horn alone, beaver's incisors, wolf's cleaner face and squirrel's spiral tail. "Picking distinctive body parts will be key"; the other proposed replacements were not approved. Review sheets: `previews/ed/sigil-pass/` on `claude/ed-shots`. `node --test tools/leash/sigil-pass.test.mjs` checks candidate grid limits and the approved squirrel/snail and horn/hat separation; the coordinator captures the combined build in play.. candidate only: same-topic wording and later inline date; not a verified superseding ruling.
   - Possible later evidence: [docs/notes/house.md:106](../../docs/notes/house.md#L106): - **The great oak's crown** (Ed, 2026-10-24: "one great crown sounds good. it should have thicker and thinner patches. Perhaps there's also a layer that shows the bark of the tree underneath"; the mock, previews/ed/treehouse-layout-v4/crown/ on claude/treehouse-trunk-mock; the tuning's `treehouse.house.crown`): one crown over the whole house in place of the rooms' leaf roofs, grown from the house's outline (`config/house/outline.json`: its rooms' outlines, branches, stubs and take-off, in the frame with its origin at the Terrace's middle) and a seed (`src/rules/crown.ts` `makeCrown`, pure and tested, `crown.test.ts` against the outline itself), so it follows the rooms wherever they go: 300 t. candidate only: same-topic wording and later inline date; not a verified superseding ruling.
 
-- **finds aliased nested declarations and parameterized templates without executing** — [tools/tests/inventory.test.mjs:7](../../tools/tests/inventory.test.mjs#L7)
+- **finds aliased nested declarations and parameterized templates without executing** — [tools/tests/inventory.test.mjs:8](../../tools/tests/inventory.test.mjs#L8)
   - current rules; keep pending design review. Currentness: unverified. Case runtime: unknown.
   - Cited ruling: none found in scoped comments; not proof that none exists.
 
-- **ignores declaration-looking strings and records scoped dated comments** — [tools/tests/inventory.test.mjs:16](../../tools/tests/inventory.test.mjs#L16)
+- **ignores declaration-looking strings and records scoped dated comments** — [tools/tests/inventory.test.mjs:17](../../tools/tests/inventory.test.mjs#L17)
   - current rules; keep pending design review. Currentness: unverified. Case runtime: unknown.
   - Cited ruling: none found in scoped comments; not proof that none exists.
 
-- **keeps hard limits above outcome or historical wording** — [tools/tests/inventory.test.mjs:24](../../tools/tests/inventory.test.mjs#L24)
+- **keeps hard limits above outcome or historical wording** — [tools/tests/inventory.test.mjs:25](../../tools/tests/inventory.test.mjs#L25)
   - outcome stats; consider report after Ed rules. Currentness: unverified. Case runtime: unknown.
   - Cited ruling: none found in scoped comments; not proof that none exists.
 
-- **only suggests later same-topic evidence and labels it unverified** — [tools/tests/inventory.test.mjs:30](../../tools/tests/inventory.test.mjs#L30)
+- **only suggests later same-topic evidence and labels it unverified** — [tools/tests/inventory.test.mjs:31](../../tools/tests/inventory.test.mjs#L31)
   - current rules; keep pending design review. Currentness: unverified. Case runtime: unknown.
   - Cited ruling: none found in scoped comments; not proof that none exists.
 
-- **routes protected owner areas and tools** — [tools/tests/inventory.test.mjs:36](../../tools/tests/inventory.test.mjs#L36)
+- **routes protected owner areas and tools** — [tools/tests/inventory.test.mjs:37](../../tools/tests/inventory.test.mjs#L37)
   - current rules; keep pending design review. Currentness: unverified. Case runtime: unknown.
+  - Cited ruling: none found in scoped comments; not proof that none exists.
+
+- **semantic groups use explicit membership and preserve undivided file timing** — [tools/tests/inventory.test.mjs:42](../../tools/tests/inventory.test.mjs#L42)
+  - current rules; keep pending design review. Currentness: unverified. Case runtime: unknown.
+  - Cited ruling: none found in scoped comments; not proof that none exists.
+
+- **semantic review rejects missing examples and duplicate case assignments** — [tools/tests/inventory.test.mjs:52](../../tools/tests/inventory.test.mjs#L52)
+  - hard limits; keep. Currentness: unverified. Case runtime: unknown.
   - Cited ruling: none found in scoped comments; not proof that none exists.

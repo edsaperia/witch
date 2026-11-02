@@ -1089,9 +1089,9 @@
           ],
           "system": "saves-replay-robustness",
           "kind": "current rules",
-          "reason": "Provisional default; direct-rule intent and current design require review.",
-          "recommendation": "keep pending design review",
-          "currentness": "unverified: human design review required",
+          "reason": "Old broom spells and the broomBay name occur as migration inputs: assertions require the current Classic broom/lathe result. They do not restore obsolete gameplay. Records explicitly require the 29 Oct 100/120 BPM starters.",
+          "recommendation": "Keep equipment ownership and old-save conversion checks, including the old broom and station-name fixtures?",
+          "currentness": "setup and assertions read; proposed decision awaits Ed",
           "supersessionCandidates": [
             {
               "file": "docs/notes/house.md",
@@ -1138,7 +1138,8 @@
               "status": "candidate only: same-topic wording and later inline date; not a verified superseding ruling"
             }
           ],
-          "caseRuntimeSeconds": null
+          "caseRuntimeSeconds": null,
+          "semanticGroup": "S4"
         },
         {
           "id": "src/app/broomSave.test.ts:16",
@@ -1164,9 +1165,9 @@
           ],
           "system": "saves-replay-robustness",
           "kind": "current rules",
-          "reason": "Provisional default; direct-rule intent and current design require review.",
-          "recommendation": "keep pending design review",
-          "currentness": "unverified: human design review required",
+          "reason": "Old broom spells and the broomBay name occur as migration inputs: assertions require the current Classic broom/lathe result. They do not restore obsolete gameplay. Records explicitly require the 29 Oct 100/120 BPM starters.",
+          "recommendation": "Keep equipment ownership and old-save conversion checks, including the old broom and station-name fixtures?",
+          "currentness": "setup and assertions read; proposed decision awaits Ed",
           "supersessionCandidates": [
             {
               "file": "docs/notes/house.md",
@@ -1218,7 +1219,8 @@
               "status": "candidate only: same-topic wording and later inline date; not a verified superseding ruling"
             }
           ],
-          "caseRuntimeSeconds": null
+          "caseRuntimeSeconds": null,
+          "semanticGroup": "S4"
         },
         {
           "id": "src/app/broomSave.test.ts:28",
@@ -1244,9 +1246,9 @@
           ],
           "system": "saves-replay-robustness",
           "kind": "current rules",
-          "reason": "Provisional default; direct-rule intent and current design require review.",
-          "recommendation": "keep pending design review",
-          "currentness": "unverified: human design review required",
+          "reason": "Old broom spells and the broomBay name occur as migration inputs: assertions require the current Classic broom/lathe result. They do not restore obsolete gameplay. Records explicitly require the 29 Oct 100/120 BPM starters.",
+          "recommendation": "Keep equipment ownership and old-save conversion checks, including the old broom and station-name fixtures?",
+          "currentness": "setup and assertions read; proposed decision awaits Ed",
           "supersessionCandidates": [
             {
               "file": "docs/notes/house.md",
@@ -1297,7 +1299,8 @@
               "status": "candidate only: same-topic wording and later inline date; not a verified superseding ruling"
             }
           ],
-          "caseRuntimeSeconds": null
+          "caseRuntimeSeconds": null,
+          "semanticGroup": "S4"
         },
         {
           "id": "src/app/broomSave.test.ts:34",
@@ -1323,9 +1326,9 @@
           ],
           "system": "saves-replay-robustness",
           "kind": "current rules",
-          "reason": "Provisional default; direct-rule intent and current design require review.",
-          "recommendation": "keep pending design review",
-          "currentness": "unverified: human design review required",
+          "reason": "Old broom spells and the broomBay name occur as migration inputs: assertions require the current Classic broom/lathe result. They do not restore obsolete gameplay. Records explicitly require the 29 Oct 100/120 BPM starters.",
+          "recommendation": "Keep equipment ownership and old-save conversion checks, including the old broom and station-name fixtures?",
+          "currentness": "setup and assertions read; proposed decision awaits Ed",
           "supersessionCandidates": [
             {
               "file": "docs/notes/house.md",
@@ -1386,7 +1389,8 @@
               "status": "candidate only: same-topic wording and later inline date; not a verified superseding ruling"
             }
           ],
-          "caseRuntimeSeconds": null
+          "caseRuntimeSeconds": null,
+          "semanticGroup": "S4"
         },
         {
           "id": "src/app/broomSave.test.ts:44",
@@ -1412,9 +1416,9 @@
           ],
           "system": "saves-replay-robustness",
           "kind": "current rules",
-          "reason": "Provisional default; direct-rule intent and current design require review.",
-          "recommendation": "keep pending design review",
-          "currentness": "unverified: human design review required",
+          "reason": "Old broom spells and the broomBay name occur as migration inputs: assertions require the current Classic broom/lathe result. They do not restore obsolete gameplay. Records explicitly require the 29 Oct 100/120 BPM starters.",
+          "recommendation": "Keep equipment ownership and old-save conversion checks, including the old broom and station-name fixtures?",
+          "currentness": "setup and assertions read; proposed decision awaits Ed",
           "supersessionCandidates": [
             {
               "file": "docs/notes/house.md",
@@ -1461,7 +1465,8 @@
               "status": "candidate only: same-topic wording and later inline date; not a verified superseding ruling"
             }
           ],
-          "caseRuntimeSeconds": null
+          "caseRuntimeSeconds": null,
+          "semanticGroup": "S4"
         },
         {
           "id": "src/app/broomSave.test.ts:60",
@@ -1487,9 +1492,9 @@
           ],
           "system": "saves-replay-robustness",
           "kind": "current rules",
-          "reason": "Provisional default; direct-rule intent and current design require review.",
-          "recommendation": "keep pending design review",
-          "currentness": "unverified: human design review required",
+          "reason": "Old broom spells and the broomBay name occur as migration inputs: assertions require the current Classic broom/lathe result. They do not restore obsolete gameplay. Records explicitly require the 29 Oct 100/120 BPM starters.",
+          "recommendation": "Keep equipment ownership and old-save conversion checks, including the old broom and station-name fixtures?",
+          "currentness": "setup and assertions read; proposed decision awaits Ed",
           "supersessionCandidates": [
             {
               "file": "docs/notes/house.md",
@@ -1548,7 +1553,8 @@
               "status": "candidate only: same-topic wording and later inline date; not a verified superseding ruling"
             }
           ],
-          "caseRuntimeSeconds": null
+          "caseRuntimeSeconds": null,
+          "semanticGroup": "S4"
         }
       ]
     },
@@ -2524,11 +2530,12 @@
           "citations": [],
           "system": "saves-replay-robustness",
           "kind": "current rules",
-          "reason": "Provisional default; direct-rule intent and current design require review.",
-          "recommendation": "keep pending design review",
-          "currentness": "unverified: human design review required",
+          "reason": "Won/lost results are supplied directly; no night is simulated to obtain them. Settings use synthetic stores and cloned tuning to test migration, accessibility flags and noncompounding volume.",
+          "recommendation": "Keep deterministic chart-unlock rules and settings persistence unchanged?",
+          "currentness": "setup and assertions read; proposed decision awaits Ed",
           "supersessionCandidates": [],
-          "caseRuntimeSeconds": null
+          "caseRuntimeSeconds": null,
+          "semanticGroup": "S5"
         },
         {
           "id": "src/app/chartSave.test.ts:17",
@@ -2544,11 +2551,12 @@
           "citations": [],
           "system": "saves-replay-robustness",
           "kind": "current rules",
-          "reason": "Provisional default; direct-rule intent and current design require review.",
-          "recommendation": "keep pending design review",
-          "currentness": "unverified: human design review required",
+          "reason": "Won/lost results are supplied directly; no night is simulated to obtain them. Settings use synthetic stores and cloned tuning to test migration, accessibility flags and noncompounding volume.",
+          "recommendation": "Keep deterministic chart-unlock rules and settings persistence unchanged?",
+          "currentness": "setup and assertions read; proposed decision awaits Ed",
           "supersessionCandidates": [],
-          "caseRuntimeSeconds": null
+          "caseRuntimeSeconds": null,
+          "semanticGroup": "S5"
         },
         {
           "id": "src/app/chartSave.test.ts:33",
@@ -2563,12 +2571,13 @@
           "modifiers": [],
           "citations": [],
           "system": "saves-replay-robustness",
-          "kind": "outcome stats",
-          "reason": "Emergent outcome wording plus simulation signal; inspect assertions before acting.",
-          "recommendation": "consider report after Ed rules",
-          "currentness": "unverified: human design review required",
+          "kind": "current rules",
+          "reason": "Won/lost results are supplied directly; no night is simulated to obtain them. Settings use synthetic stores and cloned tuning to test migration, accessibility flags and noncompounding volume.",
+          "recommendation": "Keep deterministic chart-unlock rules and settings persistence unchanged?",
+          "currentness": "setup and assertions read; proposed decision awaits Ed",
           "supersessionCandidates": [],
-          "caseRuntimeSeconds": null
+          "caseRuntimeSeconds": null,
+          "semanticGroup": "S5"
         },
         {
           "id": "src/app/chartSave.test.ts:47",
@@ -2584,11 +2593,12 @@
           "citations": [],
           "system": "saves-replay-robustness",
           "kind": "current rules",
-          "reason": "Provisional default; direct-rule intent and current design require review.",
-          "recommendation": "keep pending design review",
-          "currentness": "unverified: human design review required",
+          "reason": "Won/lost results are supplied directly; no night is simulated to obtain them. Settings use synthetic stores and cloned tuning to test migration, accessibility flags and noncompounding volume.",
+          "recommendation": "Keep deterministic chart-unlock rules and settings persistence unchanged?",
+          "currentness": "setup and assertions read; proposed decision awaits Ed",
           "supersessionCandidates": [],
-          "caseRuntimeSeconds": null
+          "caseRuntimeSeconds": null,
+          "semanticGroup": "S5"
         },
         {
           "id": "src/app/chartSave.test.ts:57",
@@ -2604,11 +2614,12 @@
           "citations": [],
           "system": "saves-replay-robustness",
           "kind": "current rules",
-          "reason": "Provisional default; direct-rule intent and current design require review.",
-          "recommendation": "keep pending design review",
-          "currentness": "unverified: human design review required",
+          "reason": "Won/lost results are supplied directly; no night is simulated to obtain them. Settings use synthetic stores and cloned tuning to test migration, accessibility flags and noncompounding volume.",
+          "recommendation": "Keep deterministic chart-unlock rules and settings persistence unchanged?",
+          "currentness": "setup and assertions read; proposed decision awaits Ed",
           "supersessionCandidates": [],
-          "caseRuntimeSeconds": null
+          "caseRuntimeSeconds": null,
+          "semanticGroup": "S5"
         },
         {
           "id": "src/app/chartSave.test.ts:75",
@@ -2633,9 +2644,9 @@
           ],
           "system": "saves-replay-robustness",
           "kind": "current rules",
-          "reason": "Provisional default; direct-rule intent and current design require review.",
-          "recommendation": "keep pending design review",
-          "currentness": "unverified: human design review required",
+          "reason": "Won/lost results are supplied directly; no night is simulated to obtain them. Settings use synthetic stores and cloned tuning to test migration, accessibility flags and noncompounding volume.",
+          "recommendation": "Keep deterministic chart-unlock rules and settings persistence unchanged?",
+          "currentness": "setup and assertions read; proposed decision awaits Ed",
           "supersessionCandidates": [
             {
               "file": "docs/notes/house.md",
@@ -2679,7 +2690,8 @@
               "status": "candidate only: same-topic wording and later inline date; not a verified superseding ruling"
             }
           ],
-          "caseRuntimeSeconds": null
+          "caseRuntimeSeconds": null,
+          "semanticGroup": "S5"
         },
         {
           "id": "src/app/chartSave.test.ts:85",
@@ -2704,9 +2716,9 @@
           ],
           "system": "saves-replay-robustness",
           "kind": "current rules",
-          "reason": "Provisional default; direct-rule intent and current design require review.",
-          "recommendation": "keep pending design review",
-          "currentness": "unverified: human design review required",
+          "reason": "Won/lost results are supplied directly; no night is simulated to obtain them. Settings use synthetic stores and cloned tuning to test migration, accessibility flags and noncompounding volume.",
+          "recommendation": "Keep deterministic chart-unlock rules and settings persistence unchanged?",
+          "currentness": "setup and assertions read; proposed decision awaits Ed",
           "supersessionCandidates": [
             {
               "file": "docs/notes/house.md",
@@ -2758,7 +2770,8 @@
               "status": "candidate only: same-topic wording and later inline date; not a verified superseding ruling"
             }
           ],
-          "caseRuntimeSeconds": null
+          "caseRuntimeSeconds": null,
+          "semanticGroup": "S5"
         }
       ]
     },
@@ -3743,11 +3756,12 @@
           "citations": [],
           "system": "saves-replay-robustness",
           "kind": "current rules",
-          "reason": "Provisional default; direct-rule intent and current design require review.",
-          "recommendation": "keep pending design review",
-          "currentness": "unverified: human design review required",
+          "reason": "Old broom spells and the broomBay name occur as migration inputs: assertions require the current Classic broom/lathe result. They do not restore obsolete gameplay. Records explicitly require the 29 Oct 100/120 BPM starters.",
+          "recommendation": "Keep equipment ownership and old-save conversion checks, including the old broom and station-name fixtures?",
+          "currentness": "setup and assertions read; proposed decision awaits Ed",
           "supersessionCandidates": [],
-          "caseRuntimeSeconds": null
+          "caseRuntimeSeconds": null,
+          "semanticGroup": "S4"
         }
       ]
     },
@@ -3784,9 +3798,9 @@
           ],
           "system": "saves-replay-robustness",
           "kind": "current rules",
-          "reason": "Provisional default; direct-rule intent and current design require review.",
-          "recommendation": "keep pending design review",
-          "currentness": "unverified: human design review required",
+          "reason": "Old broom spells and the broomBay name occur as migration inputs: assertions require the current Classic broom/lathe result. They do not restore obsolete gameplay. Records explicitly require the 29 Oct 100/120 BPM starters.",
+          "recommendation": "Keep equipment ownership and old-save conversion checks, including the old broom and station-name fixtures?",
+          "currentness": "setup and assertions read; proposed decision awaits Ed",
           "supersessionCandidates": [
             {
               "file": "docs/notes/house.md",
@@ -3835,7 +3849,8 @@
               "status": "candidate only: same-topic wording and later inline date; not a verified superseding ruling"
             }
           ],
-          "caseRuntimeSeconds": null
+          "caseRuntimeSeconds": null,
+          "semanticGroup": "S4"
         },
         {
           "id": "src/app/hatSave.test.ts:19",
@@ -3861,9 +3876,9 @@
           ],
           "system": "saves-replay-robustness",
           "kind": "current rules",
-          "reason": "Provisional default; direct-rule intent and current design require review.",
-          "recommendation": "keep pending design review",
-          "currentness": "unverified: human design review required",
+          "reason": "Old broom spells and the broomBay name occur as migration inputs: assertions require the current Classic broom/lathe result. They do not restore obsolete gameplay. Records explicitly require the 29 Oct 100/120 BPM starters.",
+          "recommendation": "Keep equipment ownership and old-save conversion checks, including the old broom and station-name fixtures?",
+          "currentness": "setup and assertions read; proposed decision awaits Ed",
           "supersessionCandidates": [
             {
               "file": "docs/notes/house.md",
@@ -3909,7 +3924,8 @@
               "status": "candidate only: same-topic wording and later inline date; not a verified superseding ruling"
             }
           ],
-          "caseRuntimeSeconds": null
+          "caseRuntimeSeconds": null,
+          "semanticGroup": "S4"
         },
         {
           "id": "src/app/hatSave.test.ts:28",
@@ -3935,9 +3951,9 @@
           ],
           "system": "saves-replay-robustness",
           "kind": "current rules",
-          "reason": "Provisional default; direct-rule intent and current design require review.",
-          "recommendation": "keep pending design review",
-          "currentness": "unverified: human design review required",
+          "reason": "Old broom spells and the broomBay name occur as migration inputs: assertions require the current Classic broom/lathe result. They do not restore obsolete gameplay. Records explicitly require the 29 Oct 100/120 BPM starters.",
+          "recommendation": "Keep equipment ownership and old-save conversion checks, including the old broom and station-name fixtures?",
+          "currentness": "setup and assertions read; proposed decision awaits Ed",
           "supersessionCandidates": [
             {
               "file": "docs/notes/house.md",
@@ -3988,7 +4004,8 @@
               "status": "candidate only: same-topic wording and later inline date; not a verified superseding ruling"
             }
           ],
-          "caseRuntimeSeconds": null
+          "caseRuntimeSeconds": null,
+          "semanticGroup": "S4"
         }
       ]
     },
@@ -6920,12 +6937,13 @@
           "modifiers": [],
           "citations": [],
           "system": "saves-replay-robustness",
-          "kind": "current rules",
-          "reason": "Provisional default; direct-rule intent and current design require review.",
-          "recommendation": "keep pending design review",
-          "currentness": "unverified: human design review required",
+          "kind": "hard limits",
+          "reason": "Synthetic storage proves ordering and failure behavior. The stepped wake-up fixture checks an explicit save gate, not how quickly an uncontrolled night succeeds. Telephone and borrowed-visit cases are left to #1609.",
+          "recommendation": "Keep compatible-night acceptance, identity checks and serialized writes unchanged?",
+          "currentness": "setup and assertions read; proposed decision awaits Ed",
           "supersessionCandidates": [],
-          "caseRuntimeSeconds": null
+          "caseRuntimeSeconds": null,
+          "semanticGroup": "S3"
         },
         {
           "id": "src/app/nightSave.test.ts:32",
@@ -6938,12 +6956,13 @@
           "modifiers": [],
           "citations": [],
           "system": "saves-replay-robustness",
-          "kind": "current rules",
-          "reason": "Provisional default; direct-rule intent and current design require review.",
-          "recommendation": "keep pending design review",
-          "currentness": "unverified: human design review required",
+          "kind": "hard limits",
+          "reason": "Synthetic storage proves ordering and failure behavior. The stepped wake-up fixture checks an explicit save gate, not how quickly an uncontrolled night succeeds. Telephone and borrowed-visit cases are left to #1609.",
+          "recommendation": "Keep compatible-night acceptance, identity checks and serialized writes unchanged?",
+          "currentness": "setup and assertions read; proposed decision awaits Ed",
           "supersessionCandidates": [],
-          "caseRuntimeSeconds": null
+          "caseRuntimeSeconds": null,
+          "semanticGroup": "S3"
         },
         {
           "id": "src/app/nightSave.test.ts:45",
@@ -6995,11 +7014,12 @@
           "citations": [],
           "system": "saves-replay-robustness",
           "kind": "hard limits",
-          "reason": "Safety, integrity, determinism or budget signal in the case name.",
-          "recommendation": "keep",
-          "currentness": "unverified: human design review required",
+          "reason": "Synthetic storage proves ordering and failure behavior. The stepped wake-up fixture checks an explicit save gate, not how quickly an uncontrolled night succeeds. Telephone and borrowed-visit cases are left to #1609.",
+          "recommendation": "Keep compatible-night acceptance, identity checks and serialized writes unchanged?",
+          "currentness": "setup and assertions read; proposed decision awaits Ed",
           "supersessionCandidates": [],
-          "caseRuntimeSeconds": null
+          "caseRuntimeSeconds": null,
+          "semanticGroup": "S3"
         },
         {
           "id": "src/app/nightSave.test.ts:77",
@@ -7014,12 +7034,13 @@
           "modifiers": [],
           "citations": [],
           "system": "saves-replay-robustness",
-          "kind": "current rules",
-          "reason": "Provisional default; direct-rule intent and current design require review.",
-          "recommendation": "keep pending design review",
-          "currentness": "unverified: human design review required",
+          "kind": "hard limits",
+          "reason": "Synthetic storage proves ordering and failure behavior. The stepped wake-up fixture checks an explicit save gate, not how quickly an uncontrolled night succeeds. Telephone and borrowed-visit cases are left to #1609.",
+          "recommendation": "Keep compatible-night acceptance, identity checks and serialized writes unchanged?",
+          "currentness": "setup and assertions read; proposed decision awaits Ed",
           "supersessionCandidates": [],
-          "caseRuntimeSeconds": null
+          "caseRuntimeSeconds": null,
+          "semanticGroup": "S3"
         },
         {
           "id": "src/app/nightSave.test.ts:100",
@@ -7034,12 +7055,13 @@
           "modifiers": [],
           "citations": [],
           "system": "saves-replay-robustness",
-          "kind": "current rules",
-          "reason": "Provisional default; direct-rule intent and current design require review.",
-          "recommendation": "keep pending design review",
-          "currentness": "unverified: human design review required",
+          "kind": "hard limits",
+          "reason": "Synthetic storage proves ordering and failure behavior. The stepped wake-up fixture checks an explicit save gate, not how quickly an uncontrolled night succeeds. Telephone and borrowed-visit cases are left to #1609.",
+          "recommendation": "Keep compatible-night acceptance, identity checks and serialized writes unchanged?",
+          "currentness": "setup and assertions read; proposed decision awaits Ed",
           "supersessionCandidates": [],
-          "caseRuntimeSeconds": null
+          "caseRuntimeSeconds": null,
+          "semanticGroup": "S3"
         },
         {
           "id": "src/app/nightSave.test.ts:116",
@@ -7054,12 +7076,13 @@
           "modifiers": [],
           "citations": [],
           "system": "saves-replay-robustness",
-          "kind": "current rules",
-          "reason": "Provisional default; direct-rule intent and current design require review.",
-          "recommendation": "keep pending design review",
-          "currentness": "unverified: human design review required",
+          "kind": "hard limits",
+          "reason": "Synthetic storage proves ordering and failure behavior. The stepped wake-up fixture checks an explicit save gate, not how quickly an uncontrolled night succeeds. Telephone and borrowed-visit cases are left to #1609.",
+          "recommendation": "Keep compatible-night acceptance, identity checks and serialized writes unchanged?",
+          "currentness": "setup and assertions read; proposed decision awaits Ed",
           "supersessionCandidates": [],
-          "caseRuntimeSeconds": null
+          "caseRuntimeSeconds": null,
+          "semanticGroup": "S3"
         },
         {
           "id": "src/app/nightSave.test.ts:123",
@@ -7074,12 +7097,13 @@
           "modifiers": [],
           "citations": [],
           "system": "saves-replay-robustness",
-          "kind": "current rules",
-          "reason": "Provisional default; direct-rule intent and current design require review.",
-          "recommendation": "keep pending design review",
-          "currentness": "unverified: human design review required",
+          "kind": "hard limits",
+          "reason": "Synthetic storage proves ordering and failure behavior. The stepped wake-up fixture checks an explicit save gate, not how quickly an uncontrolled night succeeds. Telephone and borrowed-visit cases are left to #1609.",
+          "recommendation": "Keep compatible-night acceptance, identity checks and serialized writes unchanged?",
+          "currentness": "setup and assertions read; proposed decision awaits Ed",
           "supersessionCandidates": [],
-          "caseRuntimeSeconds": null
+          "caseRuntimeSeconds": null,
+          "semanticGroup": "S3"
         },
         {
           "id": "src/app/nightSave.test.ts:132",
@@ -7094,12 +7118,13 @@
           "modifiers": [],
           "citations": [],
           "system": "saves-replay-robustness",
-          "kind": "current rules",
-          "reason": "Provisional default; direct-rule intent and current design require review.",
-          "recommendation": "keep pending design review",
-          "currentness": "unverified: human design review required",
+          "kind": "hard limits",
+          "reason": "Synthetic storage proves ordering and failure behavior. The stepped wake-up fixture checks an explicit save gate, not how quickly an uncontrolled night succeeds. Telephone and borrowed-visit cases are left to #1609.",
+          "recommendation": "Keep compatible-night acceptance, identity checks and serialized writes unchanged?",
+          "currentness": "setup and assertions read; proposed decision awaits Ed",
           "supersessionCandidates": [],
-          "caseRuntimeSeconds": null
+          "caseRuntimeSeconds": null,
+          "semanticGroup": "S3"
         },
         {
           "id": "src/app/nightSave.test.ts:142",
@@ -7114,12 +7139,13 @@
           "modifiers": [],
           "citations": [],
           "system": "saves-replay-robustness",
-          "kind": "current rules",
-          "reason": "Provisional default; direct-rule intent and current design require review.",
-          "recommendation": "keep pending design review",
-          "currentness": "unverified: human design review required",
+          "kind": "hard limits",
+          "reason": "Synthetic storage proves ordering and failure behavior. The stepped wake-up fixture checks an explicit save gate, not how quickly an uncontrolled night succeeds. Telephone and borrowed-visit cases are left to #1609.",
+          "recommendation": "Keep compatible-night acceptance, identity checks and serialized writes unchanged?",
+          "currentness": "setup and assertions read; proposed decision awaits Ed",
           "supersessionCandidates": [],
-          "caseRuntimeSeconds": null
+          "caseRuntimeSeconds": null,
+          "semanticGroup": "S3"
         },
         {
           "id": "src/app/nightSave.test.ts:146",
@@ -7134,12 +7160,13 @@
           "modifiers": [],
           "citations": [],
           "system": "saves-replay-robustness",
-          "kind": "current rules",
-          "reason": "Provisional default; direct-rule intent and current design require review.",
-          "recommendation": "keep pending design review",
-          "currentness": "unverified: human design review required",
+          "kind": "hard limits",
+          "reason": "Synthetic storage proves ordering and failure behavior. The stepped wake-up fixture checks an explicit save gate, not how quickly an uncontrolled night succeeds. Telephone and borrowed-visit cases are left to #1609.",
+          "recommendation": "Keep compatible-night acceptance, identity checks and serialized writes unchanged?",
+          "currentness": "setup and assertions read; proposed decision awaits Ed",
           "supersessionCandidates": [],
-          "caseRuntimeSeconds": null
+          "caseRuntimeSeconds": null,
+          "semanticGroup": "S3"
         }
       ]
     },
@@ -8069,11 +8096,12 @@
           "citations": [],
           "system": "saves-replay-robustness",
           "kind": "current rules",
-          "reason": "Provisional default; direct-rule intent and current design require review.",
-          "recommendation": "keep pending design review",
-          "currentness": "unverified: human design review required",
+          "reason": "Won/lost results are supplied directly; no night is simulated to obtain them. Settings use synthetic stores and cloned tuning to test migration, accessibility flags and noncompounding volume.",
+          "recommendation": "Keep deterministic chart-unlock rules and settings persistence unchanged?",
+          "currentness": "setup and assertions read; proposed decision awaits Ed",
           "supersessionCandidates": [],
-          "caseRuntimeSeconds": null
+          "caseRuntimeSeconds": null,
+          "semanticGroup": "S5"
         },
         {
           "id": "src/app/playerSettings.test.ts:19",
@@ -8087,13 +8115,14 @@
           "dynamicName": false,
           "modifiers": [],
           "citations": [],
-          "system": "ui-menus-controls",
+          "system": "saves-replay-robustness",
           "kind": "current rules",
-          "reason": "Provisional default; direct-rule intent and current design require review.",
-          "recommendation": "keep pending design review",
-          "currentness": "unverified: human design review required",
+          "reason": "Won/lost results are supplied directly; no night is simulated to obtain them. Settings use synthetic stores and cloned tuning to test migration, accessibility flags and noncompounding volume.",
+          "recommendation": "Keep deterministic chart-unlock rules and settings persistence unchanged?",
+          "currentness": "setup and assertions read; proposed decision awaits Ed",
           "supersessionCandidates": [],
-          "caseRuntimeSeconds": null
+          "caseRuntimeSeconds": null,
+          "semanticGroup": "S5"
         },
         {
           "id": "src/app/playerSettings.test.ts:20",
@@ -8109,11 +8138,12 @@
           "citations": [],
           "system": "saves-replay-robustness",
           "kind": "current rules",
-          "reason": "Provisional default; direct-rule intent and current design require review.",
-          "recommendation": "keep pending design review",
-          "currentness": "unverified: human design review required",
+          "reason": "Won/lost results are supplied directly; no night is simulated to obtain them. Settings use synthetic stores and cloned tuning to test migration, accessibility flags and noncompounding volume.",
+          "recommendation": "Keep deterministic chart-unlock rules and settings persistence unchanged?",
+          "currentness": "setup and assertions read; proposed decision awaits Ed",
           "supersessionCandidates": [],
-          "caseRuntimeSeconds": null
+          "caseRuntimeSeconds": null,
+          "semanticGroup": "S5"
         },
         {
           "id": "src/app/playerSettings.test.ts:25",
@@ -8129,11 +8159,12 @@
           "citations": [],
           "system": "saves-replay-robustness",
           "kind": "current rules",
-          "reason": "Provisional default; direct-rule intent and current design require review.",
-          "recommendation": "keep pending design review",
-          "currentness": "unverified: human design review required",
+          "reason": "Won/lost results are supplied directly; no night is simulated to obtain them. Settings use synthetic stores and cloned tuning to test migration, accessibility flags and noncompounding volume.",
+          "recommendation": "Keep deterministic chart-unlock rules and settings persistence unchanged?",
+          "currentness": "setup and assertions read; proposed decision awaits Ed",
           "supersessionCandidates": [],
-          "caseRuntimeSeconds": null
+          "caseRuntimeSeconds": null,
+          "semanticGroup": "S5"
         },
         {
           "id": "src/app/playerSettings.test.ts:32",
@@ -8147,13 +8178,14 @@
           "dynamicName": false,
           "modifiers": [],
           "citations": [],
-          "system": "art-rendering",
+          "system": "saves-replay-robustness",
           "kind": "current rules",
-          "reason": "Provisional default; direct-rule intent and current design require review.",
-          "recommendation": "keep pending design review",
-          "currentness": "unverified: human design review required",
+          "reason": "Won/lost results are supplied directly; no night is simulated to obtain them. Settings use synthetic stores and cloned tuning to test migration, accessibility flags and noncompounding volume.",
+          "recommendation": "Keep deterministic chart-unlock rules and settings persistence unchanged?",
+          "currentness": "setup and assertions read; proposed decision awaits Ed",
           "supersessionCandidates": [],
-          "caseRuntimeSeconds": null
+          "caseRuntimeSeconds": null,
+          "semanticGroup": "S5"
         },
         {
           "id": "src/app/playerSettings.test.ts:35",
@@ -8167,13 +8199,14 @@
           "dynamicName": false,
           "modifiers": [],
           "citations": [],
-          "system": "house-treehouse",
+          "system": "saves-replay-robustness",
           "kind": "current rules",
-          "reason": "Provisional default; direct-rule intent and current design require review.",
-          "recommendation": "keep pending design review",
-          "currentness": "unverified: human design review required",
+          "reason": "Won/lost results are supplied directly; no night is simulated to obtain them. Settings use synthetic stores and cloned tuning to test migration, accessibility flags and noncompounding volume.",
+          "recommendation": "Keep deterministic chart-unlock rules and settings persistence unchanged?",
+          "currentness": "setup and assertions read; proposed decision awaits Ed",
           "supersessionCandidates": [],
-          "caseRuntimeSeconds": null
+          "caseRuntimeSeconds": null,
+          "semanticGroup": "S5"
         },
         {
           "id": "src/app/playerSettings.test.ts:39",
@@ -8187,13 +8220,14 @@
           "dynamicName": false,
           "modifiers": [],
           "citations": [],
-          "system": "house-treehouse",
+          "system": "saves-replay-robustness",
           "kind": "current rules",
-          "reason": "Provisional default; direct-rule intent and current design require review.",
-          "recommendation": "keep pending design review",
-          "currentness": "unverified: human design review required",
+          "reason": "Won/lost results are supplied directly; no night is simulated to obtain them. Settings use synthetic stores and cloned tuning to test migration, accessibility flags and noncompounding volume.",
+          "recommendation": "Keep deterministic chart-unlock rules and settings persistence unchanged?",
+          "currentness": "setup and assertions read; proposed decision awaits Ed",
           "supersessionCandidates": [],
-          "caseRuntimeSeconds": null
+          "caseRuntimeSeconds": null,
+          "semanticGroup": "S5"
         },
         {
           "id": "src/app/playerSettings.test.ts:49",
@@ -8209,11 +8243,12 @@
           "citations": [],
           "system": "saves-replay-robustness",
           "kind": "current rules",
-          "reason": "Provisional default; direct-rule intent and current design require review.",
-          "recommendation": "keep pending design review",
-          "currentness": "unverified: human design review required",
+          "reason": "Won/lost results are supplied directly; no night is simulated to obtain them. Settings use synthetic stores and cloned tuning to test migration, accessibility flags and noncompounding volume.",
+          "recommendation": "Keep deterministic chart-unlock rules and settings persistence unchanged?",
+          "currentness": "setup and assertions read; proposed decision awaits Ed",
           "supersessionCandidates": [],
-          "caseRuntimeSeconds": null
+          "caseRuntimeSeconds": null,
+          "semanticGroup": "S5"
         },
         {
           "id": "src/app/playerSettings.test.ts:60",
@@ -8227,13 +8262,14 @@
           "dynamicName": false,
           "modifiers": [],
           "citations": [],
-          "system": "ui-menus-controls",
+          "system": "saves-replay-robustness",
           "kind": "current rules",
-          "reason": "Provisional default; direct-rule intent and current design require review.",
-          "recommendation": "keep pending design review",
-          "currentness": "unverified: human design review required",
+          "reason": "Won/lost results are supplied directly; no night is simulated to obtain them. Settings use synthetic stores and cloned tuning to test migration, accessibility flags and noncompounding volume.",
+          "recommendation": "Keep deterministic chart-unlock rules and settings persistence unchanged?",
+          "currentness": "setup and assertions read; proposed decision awaits Ed",
           "supersessionCandidates": [],
-          "caseRuntimeSeconds": null
+          "caseRuntimeSeconds": null,
+          "semanticGroup": "S5"
         },
         {
           "id": "src/app/playerSettings.test.ts:66",
@@ -8247,13 +8283,14 @@
           "dynamicName": false,
           "modifiers": [],
           "citations": [],
-          "system": "ui-menus-controls",
+          "system": "saves-replay-robustness",
           "kind": "current rules",
-          "reason": "Provisional default; direct-rule intent and current design require review.",
-          "recommendation": "keep pending design review",
-          "currentness": "unverified: human design review required",
+          "reason": "Won/lost results are supplied directly; no night is simulated to obtain them. Settings use synthetic stores and cloned tuning to test migration, accessibility flags and noncompounding volume.",
+          "recommendation": "Keep deterministic chart-unlock rules and settings persistence unchanged?",
+          "currentness": "setup and assertions read; proposed decision awaits Ed",
           "supersessionCandidates": [],
-          "caseRuntimeSeconds": null
+          "caseRuntimeSeconds": null,
+          "semanticGroup": "S5"
         },
         {
           "id": "src/app/playerSettings.test.ts:73",
@@ -8267,13 +8304,14 @@
           "dynamicName": false,
           "modifiers": [],
           "citations": [],
-          "system": "legends",
+          "system": "saves-replay-robustness",
           "kind": "current rules",
-          "reason": "Provisional default; direct-rule intent and current design require review.",
-          "recommendation": "keep pending design review",
-          "currentness": "unverified: human design review required",
+          "reason": "Won/lost results are supplied directly; no night is simulated to obtain them. Settings use synthetic stores and cloned tuning to test migration, accessibility flags and noncompounding volume.",
+          "recommendation": "Keep deterministic chart-unlock rules and settings persistence unchanged?",
+          "currentness": "setup and assertions read; proposed decision awaits Ed",
           "supersessionCandidates": [],
-          "caseRuntimeSeconds": null
+          "caseRuntimeSeconds": null,
+          "semanticGroup": "S5"
         },
         {
           "id": "src/app/playerSettings.test.ts:80",
@@ -8287,13 +8325,14 @@
           "dynamicName": false,
           "modifiers": [],
           "citations": [],
-          "system": "ui-menus-controls",
+          "system": "saves-replay-robustness",
           "kind": "current rules",
-          "reason": "Provisional default; direct-rule intent and current design require review.",
-          "recommendation": "keep pending design review",
-          "currentness": "unverified: human design review required",
+          "reason": "Won/lost results are supplied directly; no night is simulated to obtain them. Settings use synthetic stores and cloned tuning to test migration, accessibility flags and noncompounding volume.",
+          "recommendation": "Keep deterministic chart-unlock rules and settings persistence unchanged?",
+          "currentness": "setup and assertions read; proposed decision awaits Ed",
           "supersessionCandidates": [],
-          "caseRuntimeSeconds": null
+          "caseRuntimeSeconds": null,
+          "semanticGroup": "S5"
         },
         {
           "id": "src/app/playerSettings.test.ts:83",
@@ -8307,13 +8346,14 @@
           "dynamicName": false,
           "modifiers": [],
           "citations": [],
-          "system": "ui-menus-controls",
+          "system": "saves-replay-robustness",
           "kind": "current rules",
-          "reason": "Provisional default; direct-rule intent and current design require review.",
-          "recommendation": "keep pending design review",
-          "currentness": "unverified: human design review required",
+          "reason": "Won/lost results are supplied directly; no night is simulated to obtain them. Settings use synthetic stores and cloned tuning to test migration, accessibility flags and noncompounding volume.",
+          "recommendation": "Keep deterministic chart-unlock rules and settings persistence unchanged?",
+          "currentness": "setup and assertions read; proposed decision awaits Ed",
           "supersessionCandidates": [],
-          "caseRuntimeSeconds": null
+          "caseRuntimeSeconds": null,
+          "semanticGroup": "S5"
         },
         {
           "id": "src/app/playerSettings.test.ts:92",
@@ -8327,13 +8367,14 @@
           "dynamicName": false,
           "modifiers": [],
           "citations": [],
-          "system": "ui-menus-controls",
+          "system": "saves-replay-robustness",
           "kind": "current rules",
-          "reason": "Provisional default; direct-rule intent and current design require review.",
-          "recommendation": "keep pending design review",
-          "currentness": "unverified: human design review required",
+          "reason": "Won/lost results are supplied directly; no night is simulated to obtain them. Settings use synthetic stores and cloned tuning to test migration, accessibility flags and noncompounding volume.",
+          "recommendation": "Keep deterministic chart-unlock rules and settings persistence unchanged?",
+          "currentness": "setup and assertions read; proposed decision awaits Ed",
           "supersessionCandidates": [],
-          "caseRuntimeSeconds": null
+          "caseRuntimeSeconds": null,
+          "semanticGroup": "S5"
         }
       ]
     },
@@ -8529,11 +8570,12 @@
           ],
           "system": "saves-replay-robustness",
           "kind": "current rules",
-          "reason": "Provisional default; direct-rule intent and current design require review.",
-          "recommendation": "keep pending design review",
-          "currentness": "unverified: human design review required",
+          "reason": "Old broom spells and the broomBay name occur as migration inputs: assertions require the current Classic broom/lathe result. They do not restore obsolete gameplay. Records explicitly require the 29 Oct 100/120 BPM starters.",
+          "recommendation": "Keep equipment ownership and old-save conversion checks, including the old broom and station-name fixtures?",
+          "currentness": "setup and assertions read; proposed decision awaits Ed",
           "supersessionCandidates": [],
-          "caseRuntimeSeconds": null
+          "caseRuntimeSeconds": null,
+          "semanticGroup": "S4"
         },
         {
           "id": "src/app/recordSave.test.ts:18",
@@ -8559,9 +8601,9 @@
           ],
           "system": "saves-replay-robustness",
           "kind": "current rules",
-          "reason": "Provisional default; direct-rule intent and current design require review.",
-          "recommendation": "keep pending design review",
-          "currentness": "unverified: human design review required",
+          "reason": "Old broom spells and the broomBay name occur as migration inputs: assertions require the current Classic broom/lathe result. They do not restore obsolete gameplay. Records explicitly require the 29 Oct 100/120 BPM starters.",
+          "recommendation": "Keep equipment ownership and old-save conversion checks, including the old broom and station-name fixtures?",
+          "currentness": "setup and assertions read; proposed decision awaits Ed",
           "supersessionCandidates": [
             {
               "file": "docs/notes/gameplay.md",
@@ -8581,7 +8623,8 @@
               "status": "candidate only: same-topic wording and later inline date; not a verified superseding ruling"
             }
           ],
-          "caseRuntimeSeconds": null
+          "caseRuntimeSeconds": null,
+          "semanticGroup": "S4"
         },
         {
           "id": "src/app/recordSave.test.ts:28",
@@ -8607,11 +8650,12 @@
           ],
           "system": "saves-replay-robustness",
           "kind": "current rules",
-          "reason": "Provisional default; direct-rule intent and current design require review.",
-          "recommendation": "keep pending design review",
-          "currentness": "unverified: human design review required",
+          "reason": "Old broom spells and the broomBay name occur as migration inputs: assertions require the current Classic broom/lathe result. They do not restore obsolete gameplay. Records explicitly require the 29 Oct 100/120 BPM starters.",
+          "recommendation": "Keep equipment ownership and old-save conversion checks, including the old broom and station-name fixtures?",
+          "currentness": "setup and assertions read; proposed decision awaits Ed",
           "supersessionCandidates": [],
-          "caseRuntimeSeconds": null
+          "caseRuntimeSeconds": null,
+          "semanticGroup": "S4"
         }
       ]
     },
@@ -9306,12 +9350,13 @@
           "modifiers": [],
           "citations": [],
           "system": "saves-replay-robustness",
-          "kind": "current rules",
-          "reason": "Provisional default; direct-rule intent and current design require review.",
-          "recommendation": "keep pending design review",
-          "currentness": "unverified: human design review required",
+          "kind": "hard limits",
+          "reason": "The generated world is input to a before/after equality proof, not a win/count target. The 4 MB size ceiling is a hard budget. Hash guards also retain the old v1 contract alongside the additive mushroom migration.",
+          "recommendation": "Keep all snapshot, deterministic-continuation and explicit format-review protections unchanged?",
+          "currentness": "setup and assertions read; proposed decision awaits Ed",
           "supersessionCandidates": [],
-          "caseRuntimeSeconds": null
+          "caseRuntimeSeconds": null,
+          "semanticGroup": "S2"
         },
         {
           "id": "src/app/saveFormat.test.ts:40",
@@ -9326,12 +9371,13 @@
           "modifiers": [],
           "citations": [],
           "system": "saves-replay-robustness",
-          "kind": "current rules",
-          "reason": "Provisional default; direct-rule intent and current design require review.",
-          "recommendation": "keep pending design review",
-          "currentness": "unverified: human design review required",
+          "kind": "hard limits",
+          "reason": "The generated world is input to a before/after equality proof, not a win/count target. The 4 MB size ceiling is a hard budget. Hash guards also retain the old v1 contract alongside the additive mushroom migration.",
+          "recommendation": "Keep all snapshot, deterministic-continuation and explicit format-review protections unchanged?",
+          "currentness": "setup and assertions read; proposed decision awaits Ed",
           "supersessionCandidates": [],
-          "caseRuntimeSeconds": null
+          "caseRuntimeSeconds": null,
+          "semanticGroup": "S2"
         }
       ]
     },
@@ -9377,12 +9423,13 @@
           "modifiers": [],
           "citations": [],
           "system": "saves-replay-robustness",
-          "kind": "leftovers",
-          "reason": "Historical-rule wording; compatibility coverage may still be required.",
-          "recommendation": "review before any rewrite or deletion",
-          "currentness": "unverified: human design review required",
+          "kind": "hard limits",
+          "reason": "In-memory stores exercise exact byte preservation, corrupt indexes, independent controls, cross-tab metadata and flush-before-reload; no emergent outcome target.",
+          "recommendation": "Keep these slot isolation, migration and failed-write protections unchanged?",
+          "currentness": "setup and assertions read; proposed decision awaits Ed",
           "supersessionCandidates": [],
-          "caseRuntimeSeconds": null
+          "caseRuntimeSeconds": null,
+          "semanticGroup": "S1"
         },
         {
           "id": "src/app/saveSlots.test.ts:40",
@@ -9397,12 +9444,13 @@
           "modifiers": [],
           "citations": [],
           "system": "saves-replay-robustness",
-          "kind": "current rules",
-          "reason": "Provisional default; direct-rule intent and current design require review.",
-          "recommendation": "keep pending design review",
-          "currentness": "unverified: human design review required",
+          "kind": "hard limits",
+          "reason": "In-memory stores exercise exact byte preservation, corrupt indexes, independent controls, cross-tab metadata and flush-before-reload; no emergent outcome target.",
+          "recommendation": "Keep these slot isolation, migration and failed-write protections unchanged?",
+          "currentness": "setup and assertions read; proposed decision awaits Ed",
           "supersessionCandidates": [],
-          "caseRuntimeSeconds": null
+          "caseRuntimeSeconds": null,
+          "semanticGroup": "S1"
         },
         {
           "id": "src/app/saveSlots.test.ts:55",
@@ -9418,11 +9466,12 @@
           "citations": [],
           "system": "saves-replay-robustness",
           "kind": "hard limits",
-          "reason": "Safety, integrity, determinism or budget signal in the case name.",
-          "recommendation": "keep",
-          "currentness": "unverified: human design review required",
+          "reason": "In-memory stores exercise exact byte preservation, corrupt indexes, independent controls, cross-tab metadata and flush-before-reload; no emergent outcome target.",
+          "recommendation": "Keep these slot isolation, migration and failed-write protections unchanged?",
+          "currentness": "setup and assertions read; proposed decision awaits Ed",
           "supersessionCandidates": [],
-          "caseRuntimeSeconds": null
+          "caseRuntimeSeconds": null,
+          "semanticGroup": "S1"
         },
         {
           "id": "src/app/saveSlots.test.ts:62",
@@ -9437,12 +9486,13 @@
           "modifiers": [],
           "citations": [],
           "system": "saves-replay-robustness",
-          "kind": "current rules",
-          "reason": "Provisional default; direct-rule intent and current design require review.",
-          "recommendation": "keep pending design review",
-          "currentness": "unverified: human design review required",
+          "kind": "hard limits",
+          "reason": "In-memory stores exercise exact byte preservation, corrupt indexes, independent controls, cross-tab metadata and flush-before-reload; no emergent outcome target.",
+          "recommendation": "Keep these slot isolation, migration and failed-write protections unchanged?",
+          "currentness": "setup and assertions read; proposed decision awaits Ed",
           "supersessionCandidates": [],
-          "caseRuntimeSeconds": null
+          "caseRuntimeSeconds": null,
+          "semanticGroup": "S1"
         },
         {
           "id": "src/app/saveSlots.test.ts:74",
@@ -9457,12 +9507,13 @@
           "modifiers": [],
           "citations": [],
           "system": "saves-replay-robustness",
-          "kind": "leftovers",
-          "reason": "Historical-rule wording; compatibility coverage may still be required.",
-          "recommendation": "review before any rewrite or deletion",
-          "currentness": "unverified: human design review required",
+          "kind": "hard limits",
+          "reason": "In-memory stores exercise exact byte preservation, corrupt indexes, independent controls, cross-tab metadata and flush-before-reload; no emergent outcome target.",
+          "recommendation": "Keep these slot isolation, migration and failed-write protections unchanged?",
+          "currentness": "setup and assertions read; proposed decision awaits Ed",
           "supersessionCandidates": [],
-          "caseRuntimeSeconds": null
+          "caseRuntimeSeconds": null,
+          "semanticGroup": "S1"
         },
         {
           "id": "src/app/saveSlots.test.ts:81",
@@ -9477,12 +9528,13 @@
           "modifiers": [],
           "citations": [],
           "system": "saves-replay-robustness",
-          "kind": "current rules",
-          "reason": "Provisional default; direct-rule intent and current design require review.",
-          "recommendation": "keep pending design review",
-          "currentness": "unverified: human design review required",
+          "kind": "hard limits",
+          "reason": "In-memory stores exercise exact byte preservation, corrupt indexes, independent controls, cross-tab metadata and flush-before-reload; no emergent outcome target.",
+          "recommendation": "Keep these slot isolation, migration and failed-write protections unchanged?",
+          "currentness": "setup and assertions read; proposed decision awaits Ed",
           "supersessionCandidates": [],
-          "caseRuntimeSeconds": null
+          "caseRuntimeSeconds": null,
+          "semanticGroup": "S1"
         },
         {
           "id": "src/app/saveSlots.test.ts:86",
@@ -9497,12 +9549,13 @@
           "modifiers": [],
           "citations": [],
           "system": "saves-replay-robustness",
-          "kind": "current rules",
-          "reason": "Provisional default; direct-rule intent and current design require review.",
-          "recommendation": "keep pending design review",
-          "currentness": "unverified: human design review required",
+          "kind": "hard limits",
+          "reason": "In-memory stores exercise exact byte preservation, corrupt indexes, independent controls, cross-tab metadata and flush-before-reload; no emergent outcome target.",
+          "recommendation": "Keep these slot isolation, migration and failed-write protections unchanged?",
+          "currentness": "setup and assertions read; proposed decision awaits Ed",
           "supersessionCandidates": [],
-          "caseRuntimeSeconds": null
+          "caseRuntimeSeconds": null,
+          "semanticGroup": "S1"
         },
         {
           "id": "src/app/saveSlots.test.ts:95",
@@ -9517,12 +9570,13 @@
           "modifiers": [],
           "citations": [],
           "system": "saves-replay-robustness",
-          "kind": "current rules",
-          "reason": "Provisional default; direct-rule intent and current design require review.",
-          "recommendation": "keep pending design review",
-          "currentness": "unverified: human design review required",
+          "kind": "hard limits",
+          "reason": "In-memory stores exercise exact byte preservation, corrupt indexes, independent controls, cross-tab metadata and flush-before-reload; no emergent outcome target.",
+          "recommendation": "Keep these slot isolation, migration and failed-write protections unchanged?",
+          "currentness": "setup and assertions read; proposed decision awaits Ed",
           "supersessionCandidates": [],
-          "caseRuntimeSeconds": null
+          "caseRuntimeSeconds": null,
+          "semanticGroup": "S1"
         },
         {
           "id": "src/app/saveSlots.test.ts:105",
@@ -9537,12 +9591,13 @@
           "modifiers": [],
           "citations": [],
           "system": "saves-replay-robustness",
-          "kind": "current rules",
-          "reason": "Provisional default; direct-rule intent and current design require review.",
-          "recommendation": "keep pending design review",
-          "currentness": "unverified: human design review required",
+          "kind": "hard limits",
+          "reason": "In-memory stores exercise exact byte preservation, corrupt indexes, independent controls, cross-tab metadata and flush-before-reload; no emergent outcome target.",
+          "recommendation": "Keep these slot isolation, migration and failed-write protections unchanged?",
+          "currentness": "setup and assertions read; proposed decision awaits Ed",
           "supersessionCandidates": [],
-          "caseRuntimeSeconds": null
+          "caseRuntimeSeconds": null,
+          "semanticGroup": "S1"
         },
         {
           "id": "src/app/saveSlots.test.ts:115",
@@ -9557,12 +9612,13 @@
           "modifiers": [],
           "citations": [],
           "system": "saves-replay-robustness",
-          "kind": "current rules",
-          "reason": "Provisional default; direct-rule intent and current design require review.",
-          "recommendation": "keep pending design review",
-          "currentness": "unverified: human design review required",
+          "kind": "hard limits",
+          "reason": "In-memory stores exercise exact byte preservation, corrupt indexes, independent controls, cross-tab metadata and flush-before-reload; no emergent outcome target.",
+          "recommendation": "Keep these slot isolation, migration and failed-write protections unchanged?",
+          "currentness": "setup and assertions read; proposed decision awaits Ed",
           "supersessionCandidates": [],
-          "caseRuntimeSeconds": null
+          "caseRuntimeSeconds": null,
+          "semanticGroup": "S1"
         },
         {
           "id": "src/app/saveSlots.test.ts:121",
@@ -9577,12 +9633,13 @@
           "modifiers": [],
           "citations": [],
           "system": "saves-replay-robustness",
-          "kind": "leftovers",
-          "reason": "Historical-rule wording; compatibility coverage may still be required.",
-          "recommendation": "review before any rewrite or deletion",
-          "currentness": "unverified: human design review required",
+          "kind": "hard limits",
+          "reason": "In-memory stores exercise exact byte preservation, corrupt indexes, independent controls, cross-tab metadata and flush-before-reload; no emergent outcome target.",
+          "recommendation": "Keep these slot isolation, migration and failed-write protections unchanged?",
+          "currentness": "setup and assertions read; proposed decision awaits Ed",
           "supersessionCandidates": [],
-          "caseRuntimeSeconds": null
+          "caseRuntimeSeconds": null,
+          "semanticGroup": "S1"
         },
         {
           "id": "src/app/saveSlots.test.ts:132",
@@ -9597,12 +9654,13 @@
           "modifiers": [],
           "citations": [],
           "system": "saves-replay-robustness",
-          "kind": "current rules",
-          "reason": "Provisional default; direct-rule intent and current design require review.",
-          "recommendation": "keep pending design review",
-          "currentness": "unverified: human design review required",
+          "kind": "hard limits",
+          "reason": "In-memory stores exercise exact byte preservation, corrupt indexes, independent controls, cross-tab metadata and flush-before-reload; no emergent outcome target.",
+          "recommendation": "Keep these slot isolation, migration and failed-write protections unchanged?",
+          "currentness": "setup and assertions read; proposed decision awaits Ed",
           "supersessionCandidates": [],
-          "caseRuntimeSeconds": null
+          "caseRuntimeSeconds": null,
+          "semanticGroup": "S1"
         }
       ]
     },
@@ -78063,12 +78121,13 @@
           "modifiers": [],
           "citations": [],
           "system": "legends",
-          "kind": "current rules",
-          "reason": "Provisional default; direct-rule intent and current design require review.",
-          "recommendation": "keep pending design review",
-          "currentness": "unverified: human design review required",
+          "kind": "hard limits",
+          "reason": "Generated maps are checked for logical relationships and rejection of unrelated ownership. The short sleep steps preserve those relationships; they are not survival statistics.",
+          "recommendation": "Keep paired-area identity, route exclusion and sleeping-ownership protections?",
+          "currentness": "setup and assertions read; proposed decision awaits Ed",
           "supersessionCandidates": [],
-          "caseRuntimeSeconds": null
+          "caseRuntimeSeconds": null,
+          "semanticGroup": "L1"
         },
         {
           "id": "src/rules/legendAreas.test.ts:63",
@@ -78083,12 +78142,13 @@
           "modifiers": [],
           "citations": [],
           "system": "legends",
-          "kind": "current rules",
-          "reason": "Provisional default; direct-rule intent and current design require review.",
-          "recommendation": "keep pending design review",
-          "currentness": "unverified: human design review required",
+          "kind": "hard limits",
+          "reason": "Generated maps are checked for logical relationships and rejection of unrelated ownership. The short sleep steps preserve those relationships; they are not survival statistics.",
+          "recommendation": "Keep paired-area identity, route exclusion and sleeping-ownership protections?",
+          "currentness": "setup and assertions read; proposed decision awaits Ed",
           "supersessionCandidates": [],
-          "caseRuntimeSeconds": null
+          "caseRuntimeSeconds": null,
+          "semanticGroup": "L1"
         },
         {
           "id": "src/rules/legendAreas.test.ts:77",
@@ -78103,12 +78163,13 @@
           "modifiers": [],
           "citations": [],
           "system": "legends",
-          "kind": "current rules",
-          "reason": "Provisional default; direct-rule intent and current design require review.",
-          "recommendation": "keep pending design review",
-          "currentness": "unverified: human design review required",
+          "kind": "hard limits",
+          "reason": "Generated maps are checked for logical relationships and rejection of unrelated ownership. The short sleep steps preserve those relationships; they are not survival statistics.",
+          "recommendation": "Keep paired-area identity, route exclusion and sleeping-ownership protections?",
+          "currentness": "setup and assertions read; proposed decision awaits Ed",
           "supersessionCandidates": [],
-          "caseRuntimeSeconds": null
+          "caseRuntimeSeconds": null,
+          "semanticGroup": "L1"
         },
         {
           "id": "src/rules/legendAreas.test.ts:92",
@@ -78123,12 +78184,13 @@
           "modifiers": [],
           "citations": [],
           "system": "legends",
-          "kind": "current rules",
-          "reason": "Provisional default; direct-rule intent and current design require review.",
-          "recommendation": "keep pending design review",
-          "currentness": "unverified: human design review required",
+          "kind": "hard limits",
+          "reason": "Generated maps are checked for logical relationships and rejection of unrelated ownership. The short sleep steps preserve those relationships; they are not survival statistics.",
+          "recommendation": "Keep paired-area identity, route exclusion and sleeping-ownership protections?",
+          "currentness": "setup and assertions read; proposed decision awaits Ed",
           "supersessionCandidates": [],
-          "caseRuntimeSeconds": null
+          "caseRuntimeSeconds": null,
+          "semanticGroup": "L1"
         },
         {
           "id": "src/rules/legendAreas.test.ts:110",
@@ -78143,12 +78205,13 @@
           "modifiers": [],
           "citations": [],
           "system": "legends",
-          "kind": "current rules",
-          "reason": "Provisional default; direct-rule intent and current design require review.",
-          "recommendation": "keep pending design review",
-          "currentness": "unverified: human design review required",
+          "kind": "hard limits",
+          "reason": "Generated maps are checked for logical relationships and rejection of unrelated ownership. The short sleep steps preserve those relationships; they are not survival statistics.",
+          "recommendation": "Keep paired-area identity, route exclusion and sleeping-ownership protections?",
+          "currentness": "setup and assertions read; proposed decision awaits Ed",
           "supersessionCandidates": [],
-          "caseRuntimeSeconds": null
+          "caseRuntimeSeconds": null,
+          "semanticGroup": "L1"
         },
         {
           "id": "src/rules/legendAreas.test.ts:123",
@@ -78163,12 +78226,13 @@
           "modifiers": [],
           "citations": [],
           "system": "legends",
-          "kind": "current rules",
-          "reason": "Provisional default; direct-rule intent and current design require review.",
-          "recommendation": "keep pending design review",
-          "currentness": "unverified: human design review required",
+          "kind": "hard limits",
+          "reason": "Generated maps are checked for logical relationships and rejection of unrelated ownership. The short sleep steps preserve those relationships; they are not survival statistics.",
+          "recommendation": "Keep paired-area identity, route exclusion and sleeping-ownership protections?",
+          "currentness": "setup and assertions read; proposed decision awaits Ed",
           "supersessionCandidates": [],
-          "caseRuntimeSeconds": null
+          "caseRuntimeSeconds": null,
+          "semanticGroup": "L1"
         },
         {
           "id": "src/rules/legendAreas.test.ts:141",
@@ -78183,12 +78247,13 @@
           "modifiers": [],
           "citations": [],
           "system": "legends",
-          "kind": "current rules",
-          "reason": "Provisional default; direct-rule intent and current design require review.",
-          "recommendation": "keep pending design review",
-          "currentness": "unverified: human design review required",
+          "kind": "hard limits",
+          "reason": "Generated maps are checked for logical relationships and rejection of unrelated ownership. The short sleep steps preserve those relationships; they are not survival statistics.",
+          "recommendation": "Keep paired-area identity, route exclusion and sleeping-ownership protections?",
+          "currentness": "setup and assertions read; proposed decision awaits Ed",
           "supersessionCandidates": [],
-          "caseRuntimeSeconds": null
+          "caseRuntimeSeconds": null,
+          "semanticGroup": "L1"
         }
       ]
     },
@@ -78418,9 +78483,9 @@
           ],
           "system": "legends",
           "kind": "current rules",
-          "reason": "Provisional default; direct-rule intent and current design require review.",
-          "recommendation": "keep pending design review",
-          "currentness": "unverified: human design review required",
+          "reason": "These compare geometry to the configured cap/margin and lookup to an exhaustive oracle. Coverage counts ensure the fixture visits circles; they are not measured gameplay success rates.",
+          "recommendation": "Keep the footprint, circle-size, indexed-lookup and explanation contracts?",
+          "currentness": "setup and assertions read; proposed decision awaits Ed",
           "supersessionCandidates": [
             {
               "file": "docs/notes/gameplay.md",
@@ -78469,7 +78534,8 @@
               "status": "candidate only: same-topic wording and later inline date; not a verified superseding ruling"
             }
           ],
-          "caseRuntimeSeconds": null
+          "caseRuntimeSeconds": null,
+          "semanticGroup": "L2"
         },
         {
           "id": "src/rules/legendCircle.test.ts:38",
@@ -78495,9 +78561,9 @@
           ],
           "system": "legends",
           "kind": "current rules",
-          "reason": "Provisional default; direct-rule intent and current design require review.",
-          "recommendation": "keep pending design review",
-          "currentness": "unverified: human design review required",
+          "reason": "These compare geometry to the configured cap/margin and lookup to an exhaustive oracle. Coverage counts ensure the fixture visits circles; they are not measured gameplay success rates.",
+          "recommendation": "Keep the footprint, circle-size, indexed-lookup and explanation contracts?",
+          "currentness": "setup and assertions read; proposed decision awaits Ed",
           "supersessionCandidates": [
             {
               "file": "docs/notes/gameplay.md",
@@ -78541,7 +78607,8 @@
               "status": "candidate only: same-topic wording and later inline date; not a verified superseding ruling"
             }
           ],
-          "caseRuntimeSeconds": null
+          "caseRuntimeSeconds": null,
+          "semanticGroup": "L2"
         },
         {
           "id": "src/rules/legendCircle.test.ts:61",
@@ -78575,9 +78642,9 @@
           ],
           "system": "legends",
           "kind": "current rules",
-          "reason": "Provisional default; direct-rule intent and current design require review.",
-          "recommendation": "keep pending design review",
-          "currentness": "unverified: human design review required",
+          "reason": "These compare geometry to the configured cap/margin and lookup to an exhaustive oracle. Coverage counts ensure the fixture visits circles; they are not measured gameplay success rates.",
+          "recommendation": "Keep the footprint, circle-size, indexed-lookup and explanation contracts?",
+          "currentness": "setup and assertions read; proposed decision awaits Ed",
           "supersessionCandidates": [
             {
               "file": "docs/notes/house.md",
@@ -78625,7 +78692,8 @@
               "status": "candidate only: same-topic wording and later inline date; not a verified superseding ruling"
             }
           ],
-          "caseRuntimeSeconds": null
+          "caseRuntimeSeconds": null,
+          "semanticGroup": "L2"
         },
         {
           "id": "src/rules/legendCircle.test.ts:82",
@@ -78659,9 +78727,9 @@
           ],
           "system": "legends",
           "kind": "current rules",
-          "reason": "Provisional default; direct-rule intent and current design require review.",
-          "recommendation": "keep pending design review",
-          "currentness": "unverified: human design review required",
+          "reason": "These compare geometry to the configured cap/margin and lookup to an exhaustive oracle. Coverage counts ensure the fixture visits circles; they are not measured gameplay success rates.",
+          "recommendation": "Keep the footprint, circle-size, indexed-lookup and explanation contracts?",
+          "currentness": "setup and assertions read; proposed decision awaits Ed",
           "supersessionCandidates": [
             {
               "file": "docs/notes/house.md",
@@ -78708,7 +78776,8 @@
               "status": "candidate only: same-topic wording and later inline date; not a verified superseding ruling"
             }
           ],
-          "caseRuntimeSeconds": null
+          "caseRuntimeSeconds": null,
+          "semanticGroup": "L2"
         }
       ]
     },
@@ -78889,10 +78958,10 @@
             }
           ],
           "system": "legends",
-          "kind": "current rules",
-          "reason": "Provisional default; direct-rule intent and current design require review.",
-          "recommendation": "keep pending design review",
-          "currentness": "unverified: human design review required",
+          "kind": "outcome stats",
+          "reason": "Assertions include baby return within 20 s; following beyond circle+10 m after 25 s; a 150 s siege-to-rage scenario; grove mean >0.6/<0.08; rim/south coverage >80%; runestone-gap exceptions <1.5%. Mixed safety/rule assertions need extraction before any move, not deletion of the whole file.",
+          "recommendation": "Move these six long scenario/statistical checks to a nonblocking report, while retaining small rule and boundary tests?",
+          "currentness": "setup and assertions read; proposed decision awaits Ed",
           "supersessionCandidates": [
             {
               "file": "docs/notes/house.md",
@@ -78944,7 +79013,8 @@
               "status": "candidate only: same-topic wording and later inline date; not a verified superseding ruling"
             }
           ],
-          "caseRuntimeSeconds": null
+          "caseRuntimeSeconds": null,
+          "semanticGroup": "L3"
         },
         {
           "id": "src/rules/legendClearing.test.ts:81",
@@ -78969,10 +79039,10 @@
             }
           ],
           "system": "legends",
-          "kind": "current rules",
-          "reason": "Provisional default; direct-rule intent and current design require review.",
-          "recommendation": "keep pending design review",
-          "currentness": "unverified: human design review required",
+          "kind": "outcome stats",
+          "reason": "Assertions include baby return within 20 s; following beyond circle+10 m after 25 s; a 150 s siege-to-rage scenario; grove mean >0.6/<0.08; rim/south coverage >80%; runestone-gap exceptions <1.5%. Mixed safety/rule assertions need extraction before any move, not deletion of the whole file.",
+          "recommendation": "Move these six long scenario/statistical checks to a nonblocking report, while retaining small rule and boundary tests?",
+          "currentness": "setup and assertions read; proposed decision awaits Ed",
           "supersessionCandidates": [
             {
               "file": "DESIGN.md",
@@ -79010,7 +79080,8 @@
               "status": "candidate only: same-topic wording and later inline date; not a verified superseding ruling"
             }
           ],
-          "caseRuntimeSeconds": null
+          "caseRuntimeSeconds": null,
+          "semanticGroup": "L3"
         },
         {
           "id": "src/rules/legendClearing.test.ts:111",
@@ -79034,11 +79105,11 @@
               ]
             }
           ],
-          "system": "music-audio",
-          "kind": "current rules",
-          "reason": "Provisional default; direct-rule intent and current design require review.",
-          "recommendation": "keep pending design review",
-          "currentness": "unverified: human design review required",
+          "system": "legends",
+          "kind": "outcome stats",
+          "reason": "Assertions include baby return within 20 s; following beyond circle+10 m after 25 s; a 150 s siege-to-rage scenario; grove mean >0.6/<0.08; rim/south coverage >80%; runestone-gap exceptions <1.5%. Mixed safety/rule assertions need extraction before any move, not deletion of the whole file.",
+          "recommendation": "Move these six long scenario/statistical checks to a nonblocking report, while retaining small rule and boundary tests?",
+          "currentness": "setup and assertions read; proposed decision awaits Ed",
           "supersessionCandidates": [
             {
               "file": "DESIGN.md",
@@ -79076,7 +79147,8 @@
               "status": "candidate only: same-topic wording and later inline date; not a verified superseding ruling"
             }
           ],
-          "caseRuntimeSeconds": null
+          "caseRuntimeSeconds": null,
+          "semanticGroup": "L3"
         },
         {
           "id": "src/rules/legendClearing.test.ts:158",
@@ -79101,10 +79173,10 @@
             }
           ],
           "system": "legends",
-          "kind": "current rules",
-          "reason": "Provisional default; direct-rule intent and current design require review.",
-          "recommendation": "keep pending design review",
-          "currentness": "unverified: human design review required",
+          "kind": "outcome stats",
+          "reason": "Assertions include baby return within 20 s; following beyond circle+10 m after 25 s; a 150 s siege-to-rage scenario; grove mean >0.6/<0.08; rim/south coverage >80%; runestone-gap exceptions <1.5%. Mixed safety/rule assertions need extraction before any move, not deletion of the whole file.",
+          "recommendation": "Move these six long scenario/statistical checks to a nonblocking report, while retaining small rule and boundary tests?",
+          "currentness": "setup and assertions read; proposed decision awaits Ed",
           "supersessionCandidates": [
             {
               "file": "docs/notes/house.md",
@@ -79152,7 +79224,8 @@
               "status": "candidate only: same-topic wording and later inline date; not a verified superseding ruling"
             }
           ],
-          "caseRuntimeSeconds": null
+          "caseRuntimeSeconds": null,
+          "semanticGroup": "L3"
         },
         {
           "id": "src/rules/legendClearing.test.ts:186",
@@ -79177,10 +79250,10 @@
             }
           ],
           "system": "legends",
-          "kind": "current rules",
-          "reason": "Provisional default; direct-rule intent and current design require review.",
-          "recommendation": "keep pending design review",
-          "currentness": "unverified: human design review required",
+          "kind": "outcome stats",
+          "reason": "Assertions include baby return within 20 s; following beyond circle+10 m after 25 s; a 150 s siege-to-rage scenario; grove mean >0.6/<0.08; rim/south coverage >80%; runestone-gap exceptions <1.5%. Mixed safety/rule assertions need extraction before any move, not deletion of the whole file.",
+          "recommendation": "Move these six long scenario/statistical checks to a nonblocking report, while retaining small rule and boundary tests?",
+          "currentness": "setup and assertions read; proposed decision awaits Ed",
           "supersessionCandidates": [
             {
               "file": "docs/notes/house.md",
@@ -79228,7 +79301,8 @@
               "status": "candidate only: same-topic wording and later inline date; not a verified superseding ruling"
             }
           ],
-          "caseRuntimeSeconds": null
+          "caseRuntimeSeconds": null,
+          "semanticGroup": "L3"
         },
         {
           "id": "src/rules/legendClearing.test.ts:206",
@@ -79253,10 +79327,10 @@
             }
           ],
           "system": "legends",
-          "kind": "current rules",
-          "reason": "Provisional default; direct-rule intent and current design require review.",
-          "recommendation": "keep pending design review",
-          "currentness": "unverified: human design review required",
+          "kind": "outcome stats",
+          "reason": "Assertions include baby return within 20 s; following beyond circle+10 m after 25 s; a 150 s siege-to-rage scenario; grove mean >0.6/<0.08; rim/south coverage >80%; runestone-gap exceptions <1.5%. Mixed safety/rule assertions need extraction before any move, not deletion of the whole file.",
+          "recommendation": "Move these six long scenario/statistical checks to a nonblocking report, while retaining small rule and boundary tests?",
+          "currentness": "setup and assertions read; proposed decision awaits Ed",
           "supersessionCandidates": [
             {
               "file": "docs/notes/island.md",
@@ -79298,7 +79372,8 @@
               "status": "candidate only: same-topic wording and later inline date; not a verified superseding ruling"
             }
           ],
-          "caseRuntimeSeconds": null
+          "caseRuntimeSeconds": null,
+          "semanticGroup": "L3"
         }
       ]
     },
@@ -79335,9 +79410,9 @@
           ],
           "system": "legends",
           "kind": "current rules",
-          "reason": "Provisional default; direct-rule intent and current design require review.",
-          "recommendation": "keep pending design review",
-          "currentness": "unverified: human design review required",
+          "reason": "These compare geometry to the configured cap/margin and lookup to an exhaustive oracle. Coverage counts ensure the fixture visits circles; they are not measured gameplay success rates.",
+          "recommendation": "Keep the footprint, circle-size, indexed-lookup and explanation contracts?",
+          "currentness": "setup and assertions read; proposed decision awaits Ed",
           "supersessionCandidates": [
             {
               "file": "docs/notes/island.md",
@@ -79379,7 +79454,8 @@
               "status": "candidate only: same-topic wording and later inline date; not a verified superseding ruling"
             }
           ],
-          "caseRuntimeSeconds": null
+          "caseRuntimeSeconds": null,
+          "semanticGroup": "L2"
         },
         {
           "id": "src/rules/legendFit.test.ts:16",
@@ -79405,9 +79481,9 @@
           ],
           "system": "legends",
           "kind": "current rules",
-          "reason": "Provisional default; direct-rule intent and current design require review.",
-          "recommendation": "keep pending design review",
-          "currentness": "unverified: human design review required",
+          "reason": "These compare geometry to the configured cap/margin and lookup to an exhaustive oracle. Coverage counts ensure the fixture visits circles; they are not measured gameplay success rates.",
+          "recommendation": "Keep the footprint, circle-size, indexed-lookup and explanation contracts?",
+          "currentness": "setup and assertions read; proposed decision awaits Ed",
           "supersessionCandidates": [
             {
               "file": "docs/notes/balance.md",
@@ -79440,7 +79516,8 @@
               "status": "candidate only: same-topic wording and later inline date; not a verified superseding ruling"
             }
           ],
-          "caseRuntimeSeconds": null
+          "caseRuntimeSeconds": null,
+          "semanticGroup": "L2"
         },
         {
           "id": "src/rules/legendFit.test.ts:23",
@@ -79466,9 +79543,9 @@
           ],
           "system": "legends",
           "kind": "current rules",
-          "reason": "Provisional default; direct-rule intent and current design require review.",
-          "recommendation": "keep pending design review",
-          "currentness": "unverified: human design review required",
+          "reason": "These compare geometry to the configured cap/margin and lookup to an exhaustive oracle. Coverage counts ensure the fixture visits circles; they are not measured gameplay success rates.",
+          "recommendation": "Keep the footprint, circle-size, indexed-lookup and explanation contracts?",
+          "currentness": "setup and assertions read; proposed decision awaits Ed",
           "supersessionCandidates": [
             {
               "file": "docs/notes/house.md",
@@ -79524,7 +79601,8 @@
               "status": "candidate only: same-topic wording and later inline date; not a verified superseding ruling"
             }
           ],
-          "caseRuntimeSeconds": null
+          "caseRuntimeSeconds": null,
+          "semanticGroup": "L2"
         },
         {
           "id": "src/rules/legendFit.test.ts:34",
@@ -79549,10 +79627,10 @@
             }
           ],
           "system": "legends",
-          "kind": "current rules",
-          "reason": "Provisional default; direct-rule intent and current design require review.",
-          "recommendation": "keep pending design review",
-          "currentness": "unverified: human design review required",
+          "kind": "leftovers",
+          "reason": "The assertion pins an exact species list and its comment says ‘waiting on Ed's call’. The 26 Oct paired-area/fit design permits the biggest fitting circle and documented elephant exceptions. This needs a current design ruling; it is a stale-looking baseline, not a proven obsolete test.",
+          "recommendation": "Replace this exact eleven-species list with a report of current footprint overflow, keeping the cap/margin safety checks?",
+          "currentness": "setup and assertions read; proposed decision awaits Ed",
           "supersessionCandidates": [
             {
               "file": "docs/notes/gameplay.md",
@@ -79592,7 +79670,8 @@
               "status": "candidate only: same-topic wording and later inline date; not a verified superseding ruling"
             }
           ],
-          "caseRuntimeSeconds": null
+          "caseRuntimeSeconds": null,
+          "semanticGroup": "L5"
         }
       ]
     },
@@ -79627,10 +79706,10 @@
             }
           ],
           "system": "legends",
-          "kind": "current rules",
-          "reason": "Provisional default; direct-rule intent and current design require review.",
-          "recommendation": "keep pending design review",
-          "currentness": "unverified: human design review required",
+          "kind": "leftovers",
+          "reason": "The default assertion already requires 0.2. Half, 0.3 and 1 are explicit overrides for the retained radius-map selector; its header says authored islands deal their own legends. This is old-mode coverage, not evidence the default still uses the superseded half-share rule.",
+          "recommendation": "Keep these two radius-map comparison tests, including explicit half/all-area settings, separate from authored-island rules?",
+          "currentness": "setup and assertions read; proposed decision awaits Ed",
           "supersessionCandidates": [
             {
               "file": "docs/notes/house.md",
@@ -79669,7 +79748,8 @@
               "status": "candidate only: same-topic wording and later inline date; not a verified superseding ruling"
             }
           ],
-          "caseRuntimeSeconds": null
+          "caseRuntimeSeconds": null,
+          "semanticGroup": "L4"
         },
         {
           "id": "src/rules/legendShare.test.ts:41",
@@ -79684,12 +79764,13 @@
           "modifiers": [],
           "citations": [],
           "system": "legends",
-          "kind": "current rules",
-          "reason": "Provisional default; direct-rule intent and current design require review.",
-          "recommendation": "keep pending design review",
-          "currentness": "unverified: human design review required",
+          "kind": "leftovers",
+          "reason": "The default assertion already requires 0.2. Half, 0.3 and 1 are explicit overrides for the retained radius-map selector; its header says authored islands deal their own legends. This is old-mode coverage, not evidence the default still uses the superseded half-share rule.",
+          "recommendation": "Keep these two radius-map comparison tests, including explicit half/all-area settings, separate from authored-island rules?",
+          "currentness": "setup and assertions read; proposed decision awaits Ed",
           "supersessionCandidates": [],
-          "caseRuntimeSeconds": null
+          "caseRuntimeSeconds": null,
+          "semanticGroup": "L4"
         }
       ]
     },
@@ -90307,13 +90388,14 @@
           "dynamicName": false,
           "modifiers": [],
           "citations": [],
-          "system": "house-treehouse",
-          "kind": "current rules",
-          "reason": "Provisional default; direct-rule intent and current design require review.",
-          "recommendation": "keep pending design review",
-          "currentness": "unverified: human design review required",
+          "system": "saves-replay-robustness",
+          "kind": "hard limits",
+          "reason": "The generated world is input to a before/after equality proof, not a win/count target. The 4 MB size ceiling is a hard budget. Hash guards also retain the old v1 contract alongside the additive mushroom migration.",
+          "recommendation": "Keep all snapshot, deterministic-continuation and explicit format-review protections unchanged?",
+          "currentness": "setup and assertions read; proposed decision awaits Ed",
           "supersessionCandidates": [],
-          "caseRuntimeSeconds": null
+          "caseRuntimeSeconds": null,
+          "semanticGroup": "S2"
         },
         {
           "id": "src/rules/nightSnapshot.test.ts:30",
@@ -90327,13 +90409,14 @@
           "dynamicName": false,
           "modifiers": [],
           "citations": [],
-          "system": "creatures-movement",
-          "kind": "current rules",
-          "reason": "Provisional default; direct-rule intent and current design require review.",
-          "recommendation": "keep pending design review",
-          "currentness": "unverified: human design review required",
+          "system": "saves-replay-robustness",
+          "kind": "hard limits",
+          "reason": "The generated world is input to a before/after equality proof, not a win/count target. The 4 MB size ceiling is a hard budget. Hash guards also retain the old v1 contract alongside the additive mushroom migration.",
+          "recommendation": "Keep all snapshot, deterministic-continuation and explicit format-review protections unchanged?",
+          "currentness": "setup and assertions read; proposed decision awaits Ed",
           "supersessionCandidates": [],
-          "caseRuntimeSeconds": null
+          "caseRuntimeSeconds": null,
+          "semanticGroup": "S2"
         },
         {
           "id": "src/rules/nightSnapshot.test.ts:36",
@@ -90347,13 +90430,14 @@
           "dynamicName": false,
           "modifiers": [],
           "citations": [],
-          "system": "creatures-movement",
+          "system": "saves-replay-robustness",
           "kind": "hard limits",
-          "reason": "Safety, integrity, determinism or budget signal in the case name.",
-          "recommendation": "keep",
-          "currentness": "unverified: human design review required",
+          "reason": "The generated world is input to a before/after equality proof, not a win/count target. The 4 MB size ceiling is a hard budget. Hash guards also retain the old v1 contract alongside the additive mushroom migration.",
+          "recommendation": "Keep all snapshot, deterministic-continuation and explicit format-review protections unchanged?",
+          "currentness": "setup and assertions read; proposed decision awaits Ed",
           "supersessionCandidates": [],
-          "caseRuntimeSeconds": null
+          "caseRuntimeSeconds": null,
+          "semanticGroup": "S2"
         },
         {
           "id": "src/rules/nightSnapshot.test.ts:64",
@@ -90367,13 +90451,14 @@
           "dynamicName": false,
           "modifiers": [],
           "citations": [],
-          "system": "creatures-movement",
-          "kind": "current rules",
-          "reason": "Provisional default; direct-rule intent and current design require review.",
-          "recommendation": "keep pending design review",
-          "currentness": "unverified: human design review required",
+          "system": "saves-replay-robustness",
+          "kind": "hard limits",
+          "reason": "The generated world is input to a before/after equality proof, not a win/count target. The 4 MB size ceiling is a hard budget. Hash guards also retain the old v1 contract alongside the additive mushroom migration.",
+          "recommendation": "Keep all snapshot, deterministic-continuation and explicit format-review protections unchanged?",
+          "currentness": "setup and assertions read; proposed decision awaits Ed",
           "supersessionCandidates": [],
-          "caseRuntimeSeconds": null
+          "caseRuntimeSeconds": null,
+          "semanticGroup": "S2"
         },
         {
           "id": "src/rules/nightSnapshot.test.ts:79",
@@ -90389,11 +90474,12 @@
           "citations": [],
           "system": "saves-replay-robustness",
           "kind": "hard limits",
-          "reason": "Safety, integrity, determinism or budget signal in the case name.",
-          "recommendation": "keep",
-          "currentness": "unverified: human design review required",
+          "reason": "The generated world is input to a before/after equality proof, not a win/count target. The 4 MB size ceiling is a hard budget. Hash guards also retain the old v1 contract alongside the additive mushroom migration.",
+          "recommendation": "Keep all snapshot, deterministic-continuation and explicit format-review protections unchanged?",
+          "currentness": "setup and assertions read; proposed decision awaits Ed",
           "supersessionCandidates": [],
-          "caseRuntimeSeconds": null
+          "caseRuntimeSeconds": null,
+          "semanticGroup": "S2"
         },
         {
           "id": "src/rules/nightSnapshot.test.ts:95",
@@ -90407,13 +90493,14 @@
           "dynamicName": false,
           "modifiers": [],
           "citations": [],
-          "system": "world-islands-lakes",
+          "system": "saves-replay-robustness",
           "kind": "hard limits",
-          "reason": "Safety, integrity, determinism or budget signal in the case name.",
-          "recommendation": "keep",
-          "currentness": "unverified: human design review required",
+          "reason": "The generated world is input to a before/after equality proof, not a win/count target. The 4 MB size ceiling is a hard budget. Hash guards also retain the old v1 contract alongside the additive mushroom migration.",
+          "recommendation": "Keep all snapshot, deterministic-continuation and explicit format-review protections unchanged?",
+          "currentness": "setup and assertions read; proposed decision awaits Ed",
           "supersessionCandidates": [],
-          "caseRuntimeSeconds": null
+          "caseRuntimeSeconds": null,
+          "semanticGroup": "S2"
         }
       ]
     },
@@ -104337,13 +104424,14 @@
             "each"
           ],
           "citations": [],
-          "system": "creatures-movement",
+          "system": "legends",
           "kind": "hard limits",
-          "reason": "Safety, integrity, determinism or budget signal in the case name.",
-          "recommendation": "keep",
-          "currentness": "unverified: human design review required",
+          "reason": "Generated maps are checked for logical relationships and rejection of unrelated ownership. The short sleep steps preserve those relationships; they are not survival statistics.",
+          "recommendation": "Keep paired-area identity, route exclusion and sleeping-ownership protections?",
+          "currentness": "setup and assertions read; proposed decision awaits Ed",
           "supersessionCandidates": [],
-          "caseRuntimeSeconds": null
+          "caseRuntimeSeconds": null,
+          "semanticGroup": "L1"
         },
         {
           "id": "src/rules/sleepCells.test.ts:51",
@@ -104359,11 +104447,12 @@
           "citations": [],
           "system": "legends",
           "kind": "hard limits",
-          "reason": "Safety, integrity, determinism or budget signal in the case name.",
-          "recommendation": "keep",
-          "currentness": "unverified: human design review required",
+          "reason": "Generated maps are checked for logical relationships and rejection of unrelated ownership. The short sleep steps preserve those relationships; they are not survival statistics.",
+          "recommendation": "Keep paired-area identity, route exclusion and sleeping-ownership protections?",
+          "currentness": "setup and assertions read; proposed decision awaits Ed",
           "supersessionCandidates": [],
-          "caseRuntimeSeconds": null
+          "caseRuntimeSeconds": null,
+          "semanticGroup": "L1"
         }
       ]
     },
@@ -133508,7 +133597,7 @@
     },
     {
       "file": "tools/tests/inventory.test.mjs",
-      "sha256": "74a545137a49c3be4a7fb9eb67fa432d4a8694ccc95fa37e9417ffafc9971158",
+      "sha256": "4eacacaa82e5e36495f67b798be9d0f9e85f976f802e17d2ecef34d52bf2438f",
       "scope": "requested TS/MJS",
       "fileRuntimeSeconds": null,
       "runtimeSource": null,
@@ -133516,8 +133605,8 @@
       "parseErrors": [],
       "cases": [
         {
-          "id": "tools/tests/inventory.test.mjs:7",
-          "line": 7,
+          "id": "tools/tests/inventory.test.mjs:8",
+          "line": 8,
           "name": "finds aliased nested declarations and parameterized templates without executing",
           "suites": [],
           "fullName": "finds aliased nested declarations and parameterized templates without executing",
@@ -133534,8 +133623,8 @@
           "caseRuntimeSeconds": null
         },
         {
-          "id": "tools/tests/inventory.test.mjs:16",
-          "line": 16,
+          "id": "tools/tests/inventory.test.mjs:17",
+          "line": 17,
           "name": "ignores declaration-looking strings and records scoped dated comments",
           "suites": [],
           "fullName": "ignores declaration-looking strings and records scoped dated comments",
@@ -133552,8 +133641,8 @@
           "caseRuntimeSeconds": null
         },
         {
-          "id": "tools/tests/inventory.test.mjs:24",
-          "line": 24,
+          "id": "tools/tests/inventory.test.mjs:25",
+          "line": 25,
           "name": "keeps hard limits above outcome or historical wording",
           "suites": [],
           "fullName": "keeps hard limits above outcome or historical wording",
@@ -133570,8 +133659,8 @@
           "caseRuntimeSeconds": null
         },
         {
-          "id": "tools/tests/inventory.test.mjs:30",
-          "line": 30,
+          "id": "tools/tests/inventory.test.mjs:31",
+          "line": 31,
           "name": "only suggests later same-topic evidence and labels it unverified",
           "suites": [],
           "fullName": "only suggests later same-topic evidence and labels it unverified",
@@ -133588,8 +133677,8 @@
           "caseRuntimeSeconds": null
         },
         {
-          "id": "tools/tests/inventory.test.mjs:36",
-          "line": 36,
+          "id": "tools/tests/inventory.test.mjs:37",
+          "line": 37,
           "name": "routes protected owner areas and tools",
           "suites": [],
           "fullName": "routes protected owner areas and tools",
@@ -133601,6 +133690,42 @@
           "kind": "current rules",
           "reason": "Provisional default; direct-rule intent and current design require review.",
           "recommendation": "keep pending design review",
+          "currentness": "unverified: human design review required",
+          "supersessionCandidates": [],
+          "caseRuntimeSeconds": null
+        },
+        {
+          "id": "tools/tests/inventory.test.mjs:42",
+          "line": 42,
+          "name": "semantic groups use explicit membership and preserve undivided file timing",
+          "suites": [],
+          "fullName": "semantic groups use explicit membership and preserve undivided file timing",
+          "parameterized": false,
+          "dynamicName": false,
+          "modifiers": [],
+          "citations": [],
+          "system": "tools-ci",
+          "kind": "current rules",
+          "reason": "Provisional default; direct-rule intent and current design require review.",
+          "recommendation": "keep pending design review",
+          "currentness": "unverified: human design review required",
+          "supersessionCandidates": [],
+          "caseRuntimeSeconds": null
+        },
+        {
+          "id": "tools/tests/inventory.test.mjs:52",
+          "line": 52,
+          "name": "semantic review rejects missing examples and duplicate case assignments",
+          "suites": [],
+          "fullName": "semantic review rejects missing examples and duplicate case assignments",
+          "parameterized": false,
+          "dynamicName": false,
+          "modifiers": [],
+          "citations": [],
+          "system": "tools-ci",
+          "kind": "hard limits",
+          "reason": "Safety, integrity, determinism or budget signal in the case name.",
+          "recommendation": "keep",
           "currentness": "unverified: human design review required",
           "supersessionCandidates": [],
           "caseRuntimeSeconds": null

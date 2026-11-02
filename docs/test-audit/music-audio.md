@@ -1,5 +1,7 @@
 # Music and audio
 
+**Not ready for Ed: semantic review pending.** The generic prompts below are placeholders, not proposed group decisions.
+
 Audit only. Any implementation follows a separate, small system PR after Ed rules.
 
 ## What these tests aim to protect
@@ -13,7 +15,7 @@ Audit only. Any implementation follows a separate, small system PR after Ed rule
 | Kind | Declarations |
 |---|---:|
 | hard limits | 7 |
-| current rules | 228 |
+| current rules | 227 |
 | outcome stats | 2 |
 | leftovers | 0 |
 

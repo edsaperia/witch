@@ -1,5 +1,7 @@
 # UI, menus and controls
 
+**Not ready for Ed: semantic review pending.** The generic prompts below are placeholders, not proposed group decisions.
+
 Audit only. Any implementation follows a separate, small system PR after Ed rules.
 
 ## What these tests aim to protect
@@ -13,7 +15,7 @@ Audit only. Any implementation follows a separate, small system PR after Ed rule
 | Kind | Declarations |
 |---|---:|
 | hard limits | 26 |
-| current rules | 183 |
+| current rules | 177 |
 | outcome stats | 0 |
 | leftovers | 0 |
 

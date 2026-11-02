@@ -1,5 +1,7 @@
 # House and treehouse
 
+**Not ready for Ed: semantic review pending.** The generic prompts below are placeholders, not proposed group decisions.
+
 Audit only. Any implementation follows a separate, small system PR after Ed rules.
 
 ## What these tests aim to protect
@@ -13,7 +15,7 @@ Audit only. Any implementation follows a separate, small system PR after Ed rule
 | Kind | Declarations |
 |---|---:|
 | hard limits | 14 |
-| current rules | 449 |
+| current rules | 446 |
 | outcome stats | 0 |
 | leftovers | 0 |
 
