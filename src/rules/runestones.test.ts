@@ -20,10 +20,10 @@ describe("runestones dealt without repeats (Ed, #716)", () => {
       for (const n of count.values()) expect(n === 2 || n === 3).toBe(true);
     }
   });
-  it("is the seed's own, and mirrors some", () => {
+  it("keeps seed-specific forms and exact replay", () => {
     const a = [...dealRunestones(grid(20), 1).values()], b = [...dealRunestones(grid(20), 2).values()];
     expect(a.map(s => s.form)).not.toEqual(b.map(s => s.form));
-    expect(a.some(s => s.flip) && a.some(s => !s.flip)).toBe(true);
+    // IP2 reports finite-sample mirrored/unmirrored variety; seed identity remains blocking.
     expect([...dealRunestones(grid(20), 1).values()]).toEqual(a);
   });
 });

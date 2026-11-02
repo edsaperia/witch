@@ -42,6 +42,7 @@ import { carvingMask, warmCarvings } from "./legendCarving";
 import { sigilColour } from "../../art/generator.js";
 import type { Game } from "../rules/game";
 import { stepTiltShare, tiltShareShown } from "./overlayTilt";
+import { forestShown, newForestReveal, stepForestReveal, type RevealPlace } from "./forestReveal";
 import { blinkCharges, poseOf, witchTuning } from "../rules/game";
 import { coolRoom, coolShare } from "../rules/cooldown";
 import { shotCamera, type Shot, type TreeExtent } from "../rules/arrive";
@@ -454,12 +455,14 @@ export class View {
   private smoke!: Smoke;
   /** The dark behind the house till the forest has loaded (Ed, 2026-10-26: "When the forest has loaded, fade it in gradually behind
    *  the whole treehouse"; it was dark behind the enclosed rooms always, Ed 2026-10-23; the tuning's treehouse.house.dark;
-   *  render/post.ts Post.behind): on foot in the house, any room or the Terrace, while the island isn't ready yet (g.islandReady:
-   *  its own art drawn, main.ts), only the house's own meshes are drawn (its rooms, the Ent's art with its crowns, her), over black;
-   *  the scenery is still listed and its art still asked for, only not drawn. As it's ready the forest fades in behind the whole
-   *  house, the whole picture at once, over dark.reveal seconds, and stays behind every room after. Leaving the house before
-   *  then (lifting off), it comes back from where she stands over dark.fade seconds; through the telescope, the whole picture over
-   *  the same. Eased on her clock (g.herTime: full speed in the house's slowed time, and the same on any machine). */
+   *  render/post.ts Post.behind; the reveal's own steps render/forestReveal.ts): on foot in the house, any room or the Terrace, or
+   *  through its telescope, while the island isn't ready yet (g.islandReady: its own art drawn, main.ts), only the house's own meshes
+   *  are drawn (its rooms, the Ent's art with its crowns, her), over black; the scenery is still listed and its art still asked for,
+   *  only not drawn. From the first frame it's ready the forest fades in, the whole picture at once, over dark.reveal seconds of her
+   *  clock, the same reveal in the house and through the telescope (Ed, 2026-11-02: no black then all at once, no sudden light through
+   *  the telescope), and stays after. Lifting off before then, it comes back from where she stands over dark.fade seconds. Eased on
+   *  her clock (g.herTime: full speed in the house's slowed time, and the same on any machine), a drawn frame counting at most
+   *  REVEAL_STEP_MAX of it. */
   /** No tilt-shift in the treehouse (Ed, 2026-10-26: "No tilt shift while you're in the treehouse"): on the house (its rooms,
    *  branches and Terrace, the stations' close-ups; her perch) the blur eases out over HOUSE_TILT_EASE seconds of her clock, and back
    *  in as she leaves; through the telescope it stays as it was (its own view of the island). Once a frame (render/view/witch.ts), its
@@ -472,27 +475,26 @@ export class View {
     this.tiltK = stepTiltShare(this.tiltK, want, dt, HOUSE_TILT_EASE);
     return tiltShareShown(this.tiltK);
   }
-  private dark = { k: 1, at: NaN, door: null as { x: number; z: number } | null, enclosed: false, reveal: false, uv: new THREE.Vector2() };
+  private dark = { reveal: newForestReveal(), place: null as RevealPlace | null, from: { x: 0, z: 0 }, uv: new THREE.Vector2() };
   private behindHouse(g: Game): void {
     // A late landing's house-only camera layer must still submit the critical ground to its readiness gate.
     this.ground.mesh.layers[this.shaderLandingLimited && this.shaderDrawStatus.active ? 'enable' : 'disable'](HOUSE_LAYER);
-    const D = this.dark, T = g.tuning.treehouse.house?.dark, deck = deckOf(g.map, g.tuning), w = g.witch;
-    const inHouse = !!T?.on && !!deck?.house?.rooms && !!w.perch && w.mode === "ground" && !this.telescope; // (on foot: rising out of it, the forest comes back as she lifts off)
-    const enclosed = inHouse && !g.islandReady;
-    // (where it comes back from: the whole picture as the island's ready, or through the telescope; else where she left the house)
-    if (enclosed !== D.enclosed) { D.reveal = !enclosed && inHouse; D.door = (this.telescope || D.reveal) && !enclosed ? null : { x: w.x, z: w.z }; D.enclosed = enclosed; }
-    const dt = Number.isFinite(D.at) ? Math.max(0, Math.min(0.1, g.herTime - D.at)) : 1e9;
-    D.at = g.herTime;
-    const fade = Math.max(1e-3, (D.reveal && !enclosed ? T?.reveal : undefined) ?? T?.fade ?? 0.6);
-    D.k = enclosed ? Math.max(0, D.k - dt / fade) : Math.min(1, D.k + dt / fade);
-    if (!T?.on) D.k = 1;
+    const D = this.dark, T = g.tuning.treehouse.house?.dark, deck = deckOf(g.map, g.tuning), w = g.witch, rooms = !!T?.on && !!deck?.house?.rooms;
+    // (on foot: rising out of it, the forest comes back as she lifts off)
+    const place: RevealPlace = !rooms ? "out" : this.telescope ? "scope" : w.perch && w.mode === "ground" ? "house" : "out";
+    if (place !== D.place) { D.place = place; D.from = { x: w.x, z: w.z }; } // (where she came in, or left)
+    const R = D.reveal;
+    stepForestReveal(R, place, !!g.islandReady, g.herTime, T);
     const P = this.post;
-    P.behind = D.k < 1 ? D.k * D.k * (3 - 2 * D.k) : 1; // (eased in and out)
-    if (D.k >= 1) return;
+    P.behind = forestShown(R.k);
+    if (R.k >= 1) return;
     // The house's own meshes on its layer as well as the scene's (they come and go: each frame).
     for (const o of [...(this.houseRooms?.meshes ?? []), ...(this.crown?.meshes ?? []), ...(this.strings?.crownMeshes ?? []), ...this.treehouseBatch.meshes, ...this.witchBatch.meshes, ...(this.bareBatch?.meshes ?? [])]) o.traverse(c => c.layers.enable(HOUSE_LAYER));
-    if (D.door) {
-      const p = this.v3.set(D.door.x, this.witchFeetY, D.door.z).project(this.camera);
+    // (from a point: back from where she lifted off, or closing in round her as she comes into the house before it's ready; else the
+    // whole picture: the island's reveal, and the telescope)
+    const door = R.out || (place === "house" && !g.islandReady) ? D.from : null;
+    if (door) {
+      const p = this.v3.set(door.x, this.witchFeetY, door.z).project(this.camera);
       P.behindAt = D.uv.set(p.x * 0.5 + 0.5, p.y * 0.5 + 0.5);
     } else P.behindAt = null;
   }

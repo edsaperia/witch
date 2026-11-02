@@ -46,6 +46,7 @@ jobs:
         if: steps.source.outputs.run == 'true'
       - name: Measure behaviour with one worker
         if: steps.source.outputs.run == 'true'
+        # Includes bounded sequential T6 replay integrity and informational fixture rows; never release CI.
         run: node tools/behaviour/run.mjs
       - name: Save measurements, summary and execution log
         if: ${{ always() && steps.source.outputs.run != 'false' }}

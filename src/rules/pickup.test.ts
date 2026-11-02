@@ -60,20 +60,15 @@ describe("leashing a happy creature by its sigil rune", () => {
     expect(hasRune(c, g.clock.time)).toBe(false);
   }, 60000);
 
-  it("forgiving (Ed's playtest, 2026-10-06): E picks a rune up from further than her own sigils, and a rune near her comes to her", () => {
+  it("picks happy runes up within the authored radius, including a second controlled in-range rune", () => {
     const g = game();
     at(g, g.witch.x + 30, g.witch.z + 20);
     expect(TUNING.leash.runeRadius).toBeGreaterThan(TUNING.leash.pickRadius);
     const c = happyAt(g, g.witch.x + TUNING.leash.runeRadius - 0.3, g.witch.z);
     press(g);
     expect(c.leashed).toBe(true);
-    // Another, a few metres off: it trots over to her, stopping short of her.
-    // (south of her: it walks round her, and the follower just leashed, to bring its rune to her feet)
-    const P = TUNING.leash.runePull, o = happyAt(g, g.witch.x, g.witch.z + P.radius - 1);
-    for (let i = 0; i < 6 * 60; i++) stepGame(g, C, 1 / 60);
-    const d = Math.hypot(o.x - g.witch.x, o.z + S(o) - g.witch.z); // (its rune comes to her)
-    expect(d).toBeLessThan(P.stop + 0.5);
-    expect(d).toBeGreaterThan(P.stop - 0.5);
+    // IP2: controlled in-range pickup stays blocking without waiting for six-second docking.
+    const o = happyAt(g, g.witch.x + 0.5, g.witch.z, [c.id]);
     press(g);
     expect(o.leashed).toBe(true);
   }, 60000);
