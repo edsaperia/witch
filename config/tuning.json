@@ -1,11 +1,11 @@
 {
   "mushroomLight": {
-    "haloStrength": 0.8,
-    "poolStrength": 0.45,
-    "capGlow": 4.8,
-    "radius": 1,
-    "height": 1,
-    "complement": 1,
+    "haloStrength": 0.3,
+    "poolStrength": 0.1,
+    "capGlow": 4.7,
+    "radius": 2.35,
+    "height": 1.2,
+    "complement": 0.1,
     "testRow": false
   },
   "mapAreas": 10,

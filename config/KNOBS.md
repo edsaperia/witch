@@ -3300,7 +3300,7 @@ Code: `src/rules/mushroomLight.ts`, `src/render/mushroomGlow.ts`, `src/render/mu
 - **`mushroomLight.poolStrength`**: Strength of the additive pool in the mushroom's own colour.
 - **`mushroomLight.capGlow`**: Brightness of marked cap spots and their one-texel spill.
 - **`mushroomLight.radius`**: Multiplier on the existing halo radius.
-- **`mushroomLight.height`**: Multiplier on the halo's height above ground.
+- **`mushroomLight.height`**: Multiplier on the flat ground halo's small lift off the ground (0.04 m at 1), which keeps it clear of the ground's surface.
 - **`mushroomLight.complement`**: Amount of complementary colour removed by the halo; zero leaves the additive pool.
 - **`mushroomLight.testRow`**: Optional pickable nine-colour sample row near 40 m south of the dancefloor, with shared obstacle nudging; off by default.
 
