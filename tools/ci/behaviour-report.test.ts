@@ -12,6 +12,8 @@ test('valid measurements outside every reference are data, not thrown failures',
   }
   assert.equal(metric('boundary',3,'count',{operator:'>=',value:3}).withinReference,true);
   assert.equal(metric('strict boundary',3,'count',{operator:'>',value:3}).withinReference,false);
+  assert.equal(metric('upper boundary',3,'count',{operator:'<=',value:3}).withinReference,true);
+  assert.equal(metric('upper exceeded',4,'count',{operator:'<=',value:3}).withinReference,false);
 });
 test('invalid measurement is an execution error rather than an outcome observation',()=>{
   assert.throws(()=>metric('broken',NaN,'count',{operator:'>',value:0}),/Invalid measurement/);

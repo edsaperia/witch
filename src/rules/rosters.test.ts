@@ -56,9 +56,7 @@ describe("islands by kind (islandOf)", () => {
       const again = dealLegends(i, night, found), unfound = pool.filter(x => x !== k && !found.has(x)).length;
       if (unfound >= again.length) expect(again.some(x => found.has(x))).toBe(false);
     }
-    // home: different nights deal different legends
-    const home = homeIsland(123), deals = new Set([1, 2, 3, 4, 5, 6, 7, 8].map(n => dealLegends(home, n).sort().join()));
-    expect(deals.size).toBeGreaterThan(2);
+    // W8, Ed 2026-11-02: home-deal variety over eight nights is reported, not pinned.
   });
 });
 

@@ -1,7 +1,7 @@
 // Behaviour metrics keep historical references informational and reject invalid measurements separately.
 export function metric(id, value, unit, reference) {
   if(!Number.isFinite(value))throw Error(`Invalid measurement ${id}: ${value}`);
-  const withinReference=reference.operator==='>='?value>=reference.value:reference.operator==='>'?value>reference.value:reference.operator==='<'?value<reference.value:undefined;
+  const withinReference=reference.operator==='>='?value>=reference.value:reference.operator==='>'?value>reference.value:reference.operator==='<'?value<reference.value:reference.operator==='<='?value<=reference.value:undefined;
   if(withinReference===undefined||!Number.isFinite(reference.value))throw Error(`Invalid reference for ${id}`);
   return {id,value,unit,reference,withinReference};
 }
