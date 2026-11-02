@@ -24,6 +24,25 @@ describe("the settings changed", () => {
     applySet(back, "no.such.path=1;=2;pixelSize"); // (nothing it can't place)
     expect(back.pixelSize).toBe(5);
   });
+  // Ed's v7114 report (2026-11-02): a night resumed from an older build's save had no leash.ranks.chain.fall, and its link said
+  // `leash.ranks.chain.fall=undefined`, which loading set as the text "undefined" on a number knob.
+  it("never writes a knob the live tuning hasn't got", () => {
+    const t = clone(TUNING);
+    delete (t.leash.ranks!.chain as Partial<NonNullable<NonNullable<typeof t.leash.ranks>["chain"]>>).fall;
+    t.pixelSize = 5;
+    expect(tuningDiff(t, TUNING)).toEqual([["pixelSize", 5]]);
+    expect(setText([["leash.ranks.chain.fall", undefined], ["pixelSize", 5]])).toBe("pixelSize=5");
+  });
+  it("?set= leaves out a value not of the knob's kind", () => {
+    const back = clone(TUNING), fall = back.leash.ranks!.chain!.fall, bag = back.spells.bag;
+    applySet(back, 'leash.ranks.chain.fall=undefined;pixelSize=lots;leash.ranks.on="yes";spells.bag="satchel";camera.curve.treetop=0.002');
+    expect(back.leash.ranks!.chain!.fall).toBe(fall);
+    expect(back.pixelSize).toBe(TUNING.pixelSize);
+    expect(back.leash.ranks!.on).toBe(TUNING.leash.ranks!.on);
+    expect([bag, back.spells.bag, back.camera.curve.treetop]).toEqual([bag, "satchel", 0.002]);
+    applySet(back, "leash.ranks.chain.fall=0.25;spells.bag=pouch"); // (a number for a number; bare text for text)
+    expect([back.leash.ranks!.chain!.fall, back.spells.bag]).toEqual([0.25, "pouch"]);
+  });
 });
 
 describe("the repro link", () => {
