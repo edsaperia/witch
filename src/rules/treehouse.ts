@@ -90,7 +90,7 @@ export const noRiseAt = (d: Deck, x: number, z: number): boolean => !!d.house?.f
 
 /** The trunk she lands on (Ed, 2026-10-26: "land anywhere in the trunk section from the dining room up to the boudoir"; "The whole
  *  trunk lands her by herself, like the Terrace does now"): its rooms from the Dining Room to the Boudoir and its limbs between them.
- *  The Bedroom, the Turret and the branch rooms aren't: over those she comes down to the ground beneath. */
+ *  Historical subset only: current landing eligibility uses the full authorized floor below. */
 export const LANDING_TRUNK = { from: "dining", to: "boudoir" } as const;
 /** On the landing trunk's floor (its rooms and limbs: LANDING_TRUNK), `pad` metres past it; the Terrace's alone with the house's rooms off. */
 export function onLandingTrunk(d: Deck, x: number, z: number, pad = 0): boolean {
@@ -99,10 +99,9 @@ export function onLandingTrunk(d: Deck, x: number, z: number, pad = 0): boolean 
   return trunkField(HOUSE_ROOMS.shape, p.x, p.z, LANDING_TRUNK.from, LANDING_TRUNK.to) <= pad;
 }
 
-/** Flying at treetop height over the trunk: she lands on it (Ed, 2026-10-14: "to enter the treehouse you fly directly onto a
- *  balcony"; the oak's Terrace since 2026-10-24; the whole trunk from the Dining Room to the Boudoir since 2026-10-26), where she is
- *  over its floor. */
-export const flyOnto = (d: Deck, x: number, z: number): boolean => !!d.house && onLandingTrunk(d, x, z, -d.rail) && onFloor(d, x, z, -d.rail);
+/** Flying onto any authorized room or connecting branch floor lands her (Ed, 2 November 2026).
+ *  Keep the existing rail inset and outside-entry rule in stepWitch so takeoff cannot immediately reland her. */
+export const flyOnto = (d: Deck, x: number, z: number): boolean => !!d.house && onFloor(d, x, z, -d.rail);
 
 /** Is she on the deck (landed, or landing or leaving it)? */
 export const perched = (w: WitchState): boolean => !!w.perch;
@@ -116,10 +115,9 @@ export function onTreehouse(g: Game, i = 0): boolean {
 
 /** Over the deck (or anywhere over the house's floor), near enough to land on it: where she stays perched, walking it. */
 export const overDeck = (d: Deck, x: number, z: number): boolean => onFloor(d, x, z, d.grace);
-/** Where coming down from the treetops with the button lands her on it: over the deck; the house only over its landing trunk (the
- *  Dining Room to the Boudoir: LANDING_TRUNK; over the rest of the oak, spread far over the forest round it, she lands on the ground
- *  beneath, as anywhere). */
-export const landsOn = (d: Deck, x: number, z: number): boolean => (d.house ? onLandingTrunk(d, x, z, d.grace) : overDeck(d, x, z));
+/** Space from the treetops lands on the actual authorized floor, not open air between rooms
+ *  (Ed, 2 November 2026). The original round deck retains its grace behavior. */
+export const landsOn = (d: Deck, x: number, z: number): boolean => (d.house ? onFloor(d, x, z) : overDeck(d, x, z));
 
 /** Clear of furniture (Ed, 2026-10-26: she always lands on clear walkable floor, never inside furniture or on a station): (x, z)
  *  outside every object's box on the plan, `pad` metres round, and the decks' desk's. */

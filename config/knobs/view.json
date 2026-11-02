@@ -2,6 +2,14 @@
   "section": "view",
   "about": "The camera and the view (drawing only): framing, pixel size, culling, fading, finding things.",
   "knobs": {
+    "mushroomLight": {"what":"Live mushroom halo, colour-pool and cap-glow controls, plus an optional sample row.","decisions":[{"by":"Ed","date":"2026-11-02","quote":"please give me some pause-menu controls for adjusting the mushroom lighting"}],"links":["src/rules/mushroomLight.ts","src/render/mushroomGlow.ts","src/render/mushrooms.ts"]},
+    "mushroomLight.haloStrength": {"what":"Strength of the halo that removes complementary light around each mushroom."},
+    "mushroomLight.poolStrength": {"what":"Strength of the additive pool in the mushroom's own colour."},
+    "mushroomLight.capGlow": {"what":"Brightness of marked cap spots and their one-texel spill."},
+    "mushroomLight.radius": {"what":"Multiplier on the existing halo radius."},
+    "mushroomLight.height": {"what":"Multiplier on the halo's height above ground."},
+    "mushroomLight.complement": {"what":"Amount of complementary colour removed by the halo; zero leaves the additive pool."},
+    "mushroomLight.testRow": {"what":"Optional pickable nine-colour sample row near 40 m south of the dancefloor, with shared obstacle nudging; off by default."},
     "sail": {
       "what": "Sailing from the sea chart starts the next night on the same page, the old night's music fading into sea and wind, rather than reloading.",
       "links": [

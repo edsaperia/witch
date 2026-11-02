@@ -1,0 +1,13 @@
+{
+  "pr": 1643,
+  "group": "Mushroom light",
+  "decisions": [
+    {"id":"mushroomHaloStrength","label":"Halo strength","note":"Removes complementary light around mushrooms. The built value is unchanged.","control":{"type":"slider","min":0,"max":2,"step":0.05},"default":0.8,"apply":{"knob":"mushroomLight.haloStrength"}},
+    {"id":"mushroomPoolStrength","label":"Colour pool strength","note":"Adds the mushroom's own colour on dark ground.","control":{"type":"slider","min":0,"max":1.5,"step":0.05},"default":0.45,"apply":{"knob":"mushroomLight.poolStrength"}},
+    {"id":"mushroomHaloRadius","label":"Halo radius","note":"Multiplies the current halo radius.","control":{"type":"slider","min":0.25,"max":3,"step":0.05},"default":1,"apply":{"knob":"mushroomLight.radius"}},
+    {"id":"mushroomComplement","label":"Complement colour amount","note":"How much complementary colour is removed; zero leaves only the additive pool.","control":{"type":"slider","min":0,"max":2,"step":0.05},"default":1,"apply":{"knob":"mushroomLight.complement"}},
+    {"id":"mushroomHaloHeight","label":"Halo height","note":"Multiplies the current halo's height above the ground.","control":{"type":"slider","min":0,"max":2,"step":0.05},"default":1,"apply":{"knob":"mushroomLight.height"}},
+    {"id":"mushroomCapGlow","label":"Cap spot glow","note":"Brightness of the cap's marked spots and their spill.","control":{"type":"slider","min":0,"max":10,"step":0.1},"default":4.8,"apply":{"knob":"mushroomLight.capGlow"}},
+    {"id":"mushroomTestRow","label":"Mushroom test row","note":"One of each colour, 10 m apart, near 40 m south of the dancefloor. The whole row moves together if blocked. Pickable; collected samples stay collected until a new night.","control":{"type":"toggle"},"default":false,"apply":{"knob":"mushroomLight.testRow"}}
+  ]
+}

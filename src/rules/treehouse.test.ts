@@ -174,7 +174,7 @@ describe("the treehouse's house", () => {
     expect(Math.abs(k.x - b.x) >= b.w / 2 || Math.abs(k.z - b.z) >= b.d / 2).toBe(true);
   });
 
-  it("lands her when she flies onto the Terrace at treetop height from the dancefloor's side, no button; over the Bedroom she only flies past", () => {
+  it("lands her when she flies onto the Terrace or Bedroom at treetop height, no button", () => {
     const g = game(JETS), d = deckOf(g.map, TUNING)!;
     run(g, 0.2, { moveZ: -1 }); press(g, { toggleMode: true }); run(g, 2);
     expect(g.witch.mode).toBe("treetop"); expect(g.witch.perch).toBeFalsy();
@@ -187,19 +187,19 @@ describe("the treehouse's house", () => {
     expect(onTerrace(d, g.witch.x, g.witch.z)).toBe(true);
     expect(witchHeight(g.witch, TUNING)).toBeCloseTo(22 + TUNING.groundHeight, 6);
     expect(events(g, "perch").map(e => e.on)).toEqual([true]); // (the landing's step: its own events)
-    // and over the rooms above the landing trunk, west to east across the Bedroom: no landing
+    // Ed, 2 November: flying onto the Bedroom floor now lands her too.
     press(g, { toggleMode: true }); run(g, 2);
     const B = HOUSE_ROOMS.rooms.find(r => r.id === "bedroom")!;
     g.witch = { ...g.witch, x: d.x + B.x - 40, z: d.z + B.z, vx: 20, vz: 0, mode: "treetop", lift: 1, perch: undefined };
-    for (let i = 0; i < 180; i++) press(g, { moveX: 1 });
-    expect(g.witch.x).toBeGreaterThan(d.x + B.x + B.r);
-    expect(g.witch.mode).toBe("treetop"); expect(g.witch.perch).toBeFalsy();
+    for (let i = 0; i < 900 && !(g.witch.mode === "ground" && g.witch.perch); i++) press(g, { moveX: 1 });
+    expect(g.witch.mode).toBe("ground"); expect(g.witch.perch).toBe(true);
+    expect(onFloor(d,g.witch.x,g.witch.z)).toBe(true);
   });
 
-  it("lands her on any of the trunk from the Dining Room to the Boudoir, flying over at treetop height or coming down over it; the Bedroom, Turret and branch rooms aren't (Ed, 2026-10-26)", () => {
+  it("lands her on room and branch floors beyond the historical landing trunk (Ed, 2026-11-02)", () => {
     const g0 = game(JETS), d = deckOf(g0.map, TUNING)!, at = (id: string) => { const r = HOUSE_ROOMS.rooms.find(q => q.id === id)!; return { ...fromPlan(d, r.x, r.z), r: r.r }; };
     for (const id of ["dining", "terrace", "parlour", "boudoir"]) { const p = at(id); expect(onLandingTrunk(d, p.x, p.z), id).toBe(true); expect(landsOn(d, p.x, p.z), id).toBe(true); }
-    for (const id of ["bedroom", "turret", "workshop", "studio", "bestiary", "solarium"]) { const p = at(id); expect(onLandingTrunk(d, p.x, p.z), id).toBe(false); expect(landsOn(d, p.x, p.z), id).toBe(false); }
+    for (const id of ["bedroom", "turret", "workshop", "studio", "bestiary", "solarium"]) { const p = at(id); expect(onLandingTrunk(d, p.x, p.z), id).toBe(false); expect(landsOn(d, p.x, p.z), id).toBe(true); }
     // the trunk's limbs between them land her too
     for (const c of ["dining-terrace", "terrace-parlour", "parlour-boudoir"]) { const q = HOUSE_ROOMS.corridors.find(k => k.id === c)!.pts!, m = q[Math.floor(q.length / 2)], p = fromPlan(d, m[0], m[1]); expect(flyOnto(d, p.x, p.z), c).toBe(true); }
     // flying in from the west at treetop height onto the Parlour, the Dining Room and the Boudoir: landed by herself, on clear floor
@@ -213,8 +213,8 @@ describe("the treehouse's house", () => {
       expect(clearOfFurniture(d, g.witch.x, g.witch.z, 0.3), id).toBe(true);
       expect(roomAt(d, g.witch.x, g.witch.z)?.id ?? "a limb", id).not.toMatch(/bedroom|turret/);
     }
-    // the button, over the Boudoir: on it; over the Bedroom: down to the ground beneath
-    for (const [id, onIt] of [["boudoir", true], ["bedroom", false]] as const) {
+    // The button lands her on both the Boudoir and Bedroom floors.
+    for (const [id, onIt] of [["boudoir", true], ["bedroom", true]] as const) {
       const g = game(JETS), p = at(id);
       g.witch = { ...g.witch, seated: false, perch: undefined, x: p.x, z: p.z, vx: 0, vz: 0, mode: "treetop", lift: 1 };
       press(g, { toggleMode: true }); run(g, 2);
