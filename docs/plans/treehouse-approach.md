@@ -23,7 +23,9 @@ The great oak's far look stays as it is. This work is about the close view: appr
    - The rooms become open platforms on the branches with bark edges, clearly outside, up in the tree.
    - Furniture already stands freestanding (Ed, 26 Oct: "her house doesn't really have walls").
    - The walls are drawn in `src/render/houseRooms.ts` (floors, walls, objects layers).
-   - **Edge behaviour is still Ed's call.** He asked: "Should she be able to walk to the edge of any room and fall off (without broom)/fly off (with broom)?" Until he answers, keep today's edges (she can't walk off a floor), but structure the edge code so either answer is a small change. Do not add falling.
+   - **Edges (Ed, 2 Nov):** with the walls off, she can walk off the edge of any room. With a broom, she flies off, as stepping off the Terrace rim does today. Without a broom, she falls, using the **existing** fall: Ed, "We have the fall already - she falls with a thud and then quickly respawns where she fell from" (the Terrace no-broom fall, `src/rules/kit.ts`, `sfx.thud` in `src/platform/audio/chimes.ts`, Ed 26 Oct). Reuse that path; don't build a new fall. Part of the walls switch, so with it off, today's edges are unchanged.
+   - Check the respawn point is the edge she fell from in every room, not the Terrace's.
+   - Multiplayer guests: don't change multiplayer files. Note in the REPORT how a guest's fall would go through the host, for #1609 to handle.
 
 ## How
 
