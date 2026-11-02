@@ -108,7 +108,7 @@ export class InviteView {
   private ringModel = new RingModel();
   private rings = new Map<number, { imgs: HTMLImageElement[]; dots: HTMLElement[]; joined: number[] }>();
   /** Envelopes falling out of orbit (then resting), and hearts rising off a full ring. */
-  private falling: { x: number; y: number; z: number; at: number; tilt: number; el: HTMLImageElement }[] = [];
+  private falling: { x: number; y: number; z: number; at: number; tilt: number; el: HTMLImageElement; what?: "drop" | "heart" | "letter" }[] = [];
   private hearts: { x: number; y: number; z: number; at: number; el: HTMLImageElement }[] = [];
   /** Each soundsystem's 💥s (Ed, 2026-10-28: its health as a ring of them, one a tenth of it left). */
   private booms = new Map<string, HTMLImageElement[]>();
@@ -368,7 +368,7 @@ export class InviteView {
     if (this.spins.size > 64) { const live = new Set(I.letters.map(L => L.n)); for (const n of this.spins.keys()) if (!live.has(n)) this.spins.delete(n); }
 
     // The rings: one slot a hit each creature's meter needs (invites.hits by its level), the envelopes it holds
-    // orbiting it, flat and spinning, the gaps faint marks; turning slowly round it at about its middle.
+    // orbiting it, flat and spinning, the gaps nothing (Ed 2026-11-02); turning slowly round it at about its middle.
     // (and its hearts and 💧s: combat as orbit slots, Ed 2026-10-28, rules/orbit.ts)
     const near = g.creatures.filter(c => !c.gone && Math.abs(c.x - w.x) < 60 && Math.abs(c.z - w.z) < 60 && (c.affection || c.drops || c.dazed || this.ringModel.rings.has(c.id))), D = drainOf(t);
     const changes = this.ringModel.update(near, c => ringOf(c.level, c.dazed ? 1 : A.affection(c), meterHits(t), fillsOf(c, g.clock.time, D), c.drops ?? 0), won);
@@ -396,7 +396,14 @@ export class InviteView {
       } else if (ch.kind === "drop" && c) {
         // Out of orbit: it falls from where it was to the ground, then rests a moment there (no piling up).
         const p = ringAt(c, ch.slot, ch.slots);
-        this.falling.push({ ...p, at: time, tilt: hash2(ch.id, ch.slot, 7) * 360, el: img("💌", n) });
+        // As what it held (Ed, 2026-11-02): a 💌 falls and rests; a 💧 falls as a 💧 and vanishes ("falling 💧s should not be drawn as
+        // 💌s"); a heart floats up and fades, as a full ring's do ("draining hearts should float upwards and disappear").
+        if (ch.what === "heart") this.hearts.push({ ...p, at: time, el: img("❤️", Math.max(5, Math.round(n * envSize(ch.slots) * 0.75))) });
+        else {
+          const el = img(ch.what === "drop" ? "💧" : "💌", n);
+          if (ch.what === "drop") el.style.filter = "drop-shadow(0 0 2px rgba(110,170,255,.9))";
+          this.falling.push({ ...p, at: time, tilt: hash2(ch.id, ch.slot, 7) * 360, el, what: ch.what });
+        }
       } else if (ch.kind === "hearts" && c) {
         // Full: the envelopes' paper vanishes, leaving each its ❤️, rising and fading.
         for (let s = 0; s < ch.slots; s++) this.hearts.push({ ...ringAt(c, s, ch.slots), at: time, el: img("❤️", Math.max(5, Math.round(n * envSize(ch.slots) * 0.75))) });
@@ -425,7 +432,7 @@ export class InviteView {
       for (let s = 0; s < r.imgs.length; s++) {
         const im = r.imgs[s], d = r.dots[s], on = s < now.filled, there = s < now.slots, kind = slotKind(now, s);
         im.style.display = on ? "block" : "none";
-        d.style.display = there && !on ? "block" : "none";
+        d.style.display = "none"; // (an empty slot shows nothing: Ed 2026-11-02, "please remove this so they are not shown at all")
         if (!there) continue;
         const p = ringAt(c, s, now.slots);
         if (on) {
@@ -436,7 +443,7 @@ export class InviteView {
           // (a heart or a 💧 stands upright, bobbing, in its own glow, so the three read apart: 💌 flat and spinning, warm)
           if (kind === "letter") { showTurned(im, "💌", n, sz * grow, sz * grow * flat, deg, k); im.style.filter = "drop-shadow(0 0 2px rgba(232,180,106,.6))"; }
           else { showTurned(im, kind === "drop" ? "💧" : "❤️", n, sz * grow * 0.9, sz * grow * 0.9, 0, k); im.style.filter = kind === "drop" ? "drop-shadow(0 0 2px rgba(110,170,255,.9))" : "drop-shadow(0 0 2px rgba(255,90,150,.8))"; }
-        } else { place(d, p.x, p.y, p.z); hide(d, rkey, rx, ry, rz); }
+        }
       }
     }
     // A soundsystem hurt: its health as a ring of 💥s round it, one a tenth of what's left, turning slowly (Ed, 2026-10-28; it was a
@@ -462,11 +469,12 @@ export class InviteView {
       const u = (time - f.at) / 0.45;
       if (u >= 1 || u < 0) {
         f.el.remove();
-        if (u >= 1) this.rest(f.x, f.z, time, f.tilt);
+        if (u >= 1 && (f.what ?? "letter") === "letter") this.rest(f.x, f.z, time, f.tilt); // (a 💌 rests a moment; a 💧 vanishes as it lands: Ed 2026-11-02)
         return false;
       }
       place(f.el, f.x, f.y * (1 - u * u), f.z);
-      showTurned(f.el, "💌", n, 0.7, 0.7 * flat, f.tilt + u * 200, k);
+      if ((f.what ?? "letter") === "letter") showTurned(f.el, "💌", n, 0.7, 0.7 * flat, f.tilt + u * 200, k);
+      else showTurned(f.el, "💧", n, 0.6, 0.6, 0, k); // (upright, as it was in orbit)
       hide(f.el, `f${f.at}:${f.tilt}`, f.x, f.y * (1 - u * u), f.z);
       return true;
     });
