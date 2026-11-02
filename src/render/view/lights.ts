@@ -19,6 +19,9 @@ import { LEGENDS } from "../../rules/legends";
 import { beachFires } from "../beach";
 import { findLight } from "./finds";
 import { relicsOut } from "../../rules/partyOver";
+import { sourcePattern, PATTERN_LOOK, type PatternLook } from "../lightPatternState";
+import { beginLightPatterns, writeLightPattern } from "../lightPatternUniforms";
+import { comfort } from "../comfort";
 
 const SOURCE_ITEMS: SpriteInstance[] = []; // (the sources' sprites: one list, emptied each frame)
 
@@ -41,7 +44,7 @@ export function updateSources(v: View, time: number): void {
       if (out >= 0.999) continue;
       const grow = Math.min(1, since / 0.5) * (1 - out), whoosh = Math.max(0, 1 - since / 1.2) * (1 - out);
       const flick = 0.8 + 0.12 * Math.sin(time * 11 + k * 40) + 0.08 * Math.sin(time * 23.7 + k * 13);
-      lights.push({ x: src.x + Math.sin(time * 9 + k) * 0.08, y: 1.2, z: src.z, reach: g.tuning.lights.campfire.reach * src.size, rgb: v.fire, strength: g.tuning.lights.campfire.strength * (flick * grow + whoosh * 2) });
+      lights.push({ x: src.x + Math.sin(time * 9 + k) * 0.08, y: 1.2, z: src.z, reach: g.tuning.lights.campfire.reach * src.size, rgb: v.fire, strength: g.tuning.lights.campfire.strength * (flick * grow + whoosh * 2), pattern: PATTERN_LOOK === "off" ? undefined : sourcePattern("flicker", time, comfort.reduceFlashing) });
       if (whoosh > 0) for (let i = 0; i < 10; i++) {
         const ang = i * 2.4 + k * 9, r = (1 - whoosh) * (0.4 + (i % 3) * 0.5);
         v.fireSparks.push({ x: src.x + Math.cos(ang) * r, y: 0.5 + (1 - whoosh) * (2 + (i % 4) * 1.2), z: src.z + Math.sin(ang) * r, colour: v.fire, alpha: whoosh });
@@ -53,7 +56,7 @@ export function updateSources(v: View, time: number): void {
       if (inView(v, src.x, src.z, fr.w * v.mpp, fr.h * v.mpp, 4)) items.push({ x: src.x, y: 0, z: src.z, frame: fr, flip: k < 0.5, ...(grow < 1 ? { sx: grow, sy: grow } : {}), fresh: mark(v, "prop", src.x, src.z, 2) });
     } else {
       const kind = k < 0.33 ? 1 : k < 0.66 ? 0 : 2, pulse = 0.7 + 0.3 * Math.sin(time * 0.9 + k * 20), fr = f[3 + kind];
-      lights.push({ x: src.x, y: 2, z: src.z, reach: v.game.tuning.lights.stone.reach * src.size, rgb: [v.runeCyan, v.runeViolet, v.runeGreen][kind], strength: v.game.tuning.lights.stone.strength * pulse });
+      lights.push({ x: src.x, y: 2, z: src.z, reach: v.game.tuning.lights.stone.reach * src.size, rgb: [v.runeCyan, v.runeViolet, v.runeGreen][kind], strength: v.game.tuning.lights.stone.strength * pulse, pattern: PATTERN_LOOK === "off" ? undefined : sourcePattern("flicker", time, comfort.reduceFlashing) });
       if (inView(v, src.x, src.z, fr.w * v.mpp, fr.h * v.mpp, 4)) items.push({ x: src.x, y: 0, z: src.z, frame: fr, flip: k < 0.5, fresh: mark(v, "prop", src.x, src.z, 2.6) });
     }
   }
@@ -72,7 +75,8 @@ export function updateSources(v: View, time: number): void {
 /** Shade with only the nearest lights (the light budget), fading out those at the budget's
  *  edge so none pops on or off. */
 const NEAR_L: ForestLight[] = [], NEAR_D: number[] = []; // (the nearest lights, kept sorted as they come: no record a light a frame)
-export function setLights(v: View, all: ForestLight[], x: number, z: number): void {
+export function setLights(v: View, all: ForestLight[], x: number, z: number, patternLook: PatternLook = PATTERN_LOOK): void {
+  beginLightPatterns();
   const budget = Math.min(MAX_LIGHTS, v.game.tuning.lightBudget), keep = budget + 1;
   // The nearest keep of them by distance less reach, in the order a stable sort would give (an equal distance after the earlier).
   NEAR_L.length = 0; NEAR_D.length = 0;
@@ -86,12 +90,19 @@ export function setLights(v: View, all: ForestLight[], x: number, z: number): vo
   // The light just outside the budget sets the fade: the last ones in fade as it nears them.
   const edge = NEAR_D.length > budget ? NEAR_D[budget] : Infinity, used = Math.min(budget, NEAR_D.length);
   const U = LIGHT_UNIFORMS;
-  let n = 0;
+  let n = 0, speakerPatternUsed = false, gentlePatternUsed = false;
   for (let i = 0; i < used; i++) {
     const l = NEAR_L[i], d = NEAR_D[i];
     const fade = Math.min(1, Math.max(0, (edge - d) / 15));
     U.uLightPos.value[n].set(l.x, l.y + groundHeight(l.x, l.z), l.z, l.reach); // its height above the rolling ground
     U.uLightCol.value[n].set(l.rgb.x, l.rgb.y, l.rgb.z, l.strength * fade);
+    // Only one selected soundsystem and one gentle source; selection/ranking/light count stay unchanged.
+    const pattern = l.pattern, speaker = pattern && pattern[0] >= 1 && pattern[0] <= 3, gentle = pattern?.[0] === 4;
+    if (patternLook !== "off" && !comfort.reduceFlashing && pattern && ((speaker && !speakerPatternUsed) || (gentle && !gentlePatternUsed))) {
+      writeLightPattern(n, pattern);
+      if (speaker) speakerPatternUsed = true;
+      if (gentle) gentlePatternUsed = true;
+    }
     n++;
   }
   U.uLightCount.value = n;
