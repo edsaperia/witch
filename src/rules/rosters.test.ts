@@ -1,7 +1,7 @@
 // The journey's rosters (Ed, 2026-10-11; docs/backlog/journey.md "Rosters", rules/rosters.ts): each kind's island, its roster
 // and its night's legends; and the map they make.
 import { describe, expect, it } from "vitest";
-import { dealLegends, homeIsland, OTHERS_MAX, homeKinds, isPlaceholder, islandOf, KIND_NAMES, KINDS, legendsFor, playableIsland, REAL_KINDS } from "./rosters";
+import { dealLegends, OTHERS_MAX, homeKinds, isPlaceholder, islandOf, KIND_NAMES, KINDS, legendsFor, playableIsland, REAL_KINDS } from "./rosters";
 import { AREA_TYPES, generateMap } from "./map";
 import { TUNING, type Tuning } from "./tuning";
 import { newGame } from "./game";
