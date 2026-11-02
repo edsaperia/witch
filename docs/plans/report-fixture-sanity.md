@@ -1,0 +1,9 @@
+# Report fixture sanity split (T6)
+
+Ed's 2 November ruling on1632#6576776394 routes the mixed tools/balance/report.test.mjs declaration to its combat/report owner. Approval6576916083 permits this separate tests-only follow-up after the1652 source checkpoint. PLAN6577922186 records exact scope before worktree creation. Base7313e5781, own codex/report-fixture-sanity/work/report-fixture-sanity; combat1654b6947061 stays independent.
+
+Keep the original replay declaration and every interleaved run, expert and stun equality comparison at unchanged seeds, loadouts and horizons. Keep phase-duration accounting and fixture-version identity as assertions. Extract four scenario predicates into a separate diagnostic command: first outcome censored; first stun completed; first stun hits positive; active boar retaliation positive. The single active30s scenario exists only for sanity, not replay equivalence, so moves with those observations. False scenario predicates produce report rows, not failed assertions; execution errors remain errors. Runtime/game/config/workflows remain untouched.
+
+Validate the extraction with synthetic rows/runners and source-manifest checks, syntax and typecheck. No local generated fight/replay simulation, browser or new balance measurement. Historical file time is UNKNOWN. Current default Vitest include and CI commands do not discover this MJS file, so do not claim observed CI savings or that existing replay is currently a release gate. Preserve its fail-on-difference command and flag that discovery to the coordinator instead of silently expanding CI workload.
+
+The shared nightly/manual behaviour workflow is1632's pattern owner's work. Provide the standalone invocation and report schema here; do not duplicate or edit its workflow. Report every predicate moved and every retained assertion. Source work and deferred integration must have exact head, checks and a checkable wake condition; no personal monitor.
