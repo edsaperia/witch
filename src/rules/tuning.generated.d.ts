@@ -290,6 +290,17 @@ export type SchemaTuning = {
         "wrap": number;
       };
       "terraceRoom": boolean;
+      "look": {
+        "indoor": boolean;
+        "noNotch": boolean;
+        "approach": boolean;
+        "noWalls": boolean;
+        "fade": number;
+        "bark": number;
+        "radius": number;
+        "softness": number;
+        "ragged": number;
+      };
     };
   };
   "home": {

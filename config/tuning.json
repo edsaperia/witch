@@ -414,7 +414,18 @@
         "warm": 1,
         "wrap": 2
       },
-      "terraceRoom": true
+      "terraceRoom": true,
+      "look": {
+        "indoor": false,
+        "noNotch": false,
+        "approach": false,
+        "noWalls": false,
+        "fade": 0.75,
+        "bark": 0.18,
+        "radius": 40,
+        "softness": 0.25,
+        "ragged": 0.12
+      }
     }
   },
   "home": {

@@ -39,7 +39,7 @@ export interface Deck {
   house?: { takeoff: { angle: number; half: number }; desk: { x: number; z: number; w: number; d: number; rotation?: number }; circle: { x: number; z: number; r: number }; landTime: number; /** on foot in it, her walking speed (m/s) */ walk: number; /** the walking speed her walk cycle is drawn for (m/s) */ stride: number; fall: { on: boolean; time: number; /** seconds after the thud before she is back at the circle */ beat?: number };
     /** The house's floor (rules/houseRooms.ts, config/house/: the oak's one shape), kept the rail in from its edge; null with the
      *  house's rooms off. */
-    rooms: RoomFloor | null };
+    rooms: RoomFloor | null; noWalls?: boolean };
 }
 
 const DEG = Math.PI / 180;
@@ -51,7 +51,7 @@ export function deckOf(map: { treehouse: { x: number; z: number }; zoo?: { layou
   if (H?.on) {
     const T = HOUSE_ROOMS.terrace, at = { x, z }, P = (p: { x: number; z: number }) => fromPlan(at, p.x, p.z), r = HOUSE_ROOMS.rooms.find(q => q.id === "terrace")?.r ?? 12.5;
     return { x, z, r, h: H.height, grace: H.grace, rail: H.rail, table: { r: 0, use: 0 }, decks: { inner: 0, outer: 0, from: 0, to: 0 }, seat: P(T.seat),
-      house: { takeoff: { angle: T.takeoff.angle * DEG, half: T.takeoff.half * DEG }, desk: { ...P(T.decks), w: T.decks.w, d: T.decks.d, ...(T.decks.rotation !== undefined ? { rotation: T.decks.rotation - (HOUSE_ROOMS.turn ?? 0) } : {}) }, circle: { ...P(T.circle), r: T.circle.r }, landTime: H.landTime, walk: H.walk ?? 5, stride: H.stride ?? 5, fall: { on: !!H.fall.on, time: H.fall.time, beat: H.fall.beat ?? 0 }, rooms: HOUSE_ROOMS.on ? floorRects(at, H.rail) : null } };
+      house: { takeoff: { angle: T.takeoff.angle * DEG, half: T.takeoff.half * DEG }, desk: { ...P(T.decks), w: T.decks.w, d: T.decks.d, ...(T.decks.rotation !== undefined ? { rotation: T.decks.rotation - (HOUSE_ROOMS.turn ?? 0) } : {}) }, circle: { ...P(T.circle), r: T.circle.r }, landTime: H.landTime, walk: H.walk ?? 5, stride: H.stride ?? 5, fall: { on: !!H.fall.on, time: H.fall.time, beat: H.fall.beat ?? 0 }, rooms: HOUSE_ROOMS.on ? floorRects(at, H.rail) : null, ...(H.look?.noWalls ? { noWalls: true } : {}) } };
   }
   if (!D?.on) return null;
   return { x, z, r: D.radius, h: D.height, grace: D.grace, rail: D.rail, table: { r: D.table, use: D.tableUse }, decks: { ...D.decks }, seat: { x, z: z + D.seat } };
@@ -188,7 +188,7 @@ export function keepInHouse(d: Deck, x: number, z: number): { x: number; z: numb
   if (!rooms || onRoomFloor(rooms, x, z)) return { ...outOfDeskBox(d, x, z), off: false };
   const n = nearestRoomFloor(rooms, x, z)!;
   // out over the open rim (past where the rest of the floor's edge keeps her, the rail in from it): off the house
-  if (atTakeoff(d, x, z)) return { x: n.x, z: n.z, off: true };
+  if (d.house!.noWalls || atTakeoff(d, x, z)) return { x: n.x, z: n.z, off: true };
   return { ...outOfDeskBox(d, n.x, n.z), off: false };
 }
 
