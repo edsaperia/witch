@@ -113,7 +113,7 @@ void main() {
   gl_Position.xy = (px / uRes * 2.0 - 1.0) * gl_Position.w;
   vColour = aColour; vWorld = p; vB = aBulb.xy;
 }`;
-const CROWN_BULB_FRAG = /* glsl */ `
+export const CROWN_BULB_FRAG = /* glsl */ `
 uniform float uTwinkle, uChase;
 varying vec3 vColour;
 varying vec3 vWorld;
@@ -122,7 +122,7 @@ varying vec2 vB, vFloor;
 ${LIGHT_GLSL}
 ${CLEAR_GLSL}
 void main() {
-  if (vOn < 0.5 || cleared(vFloor, vDepth)) discard;
+  if (vOn < 0.5 || cleared(vFloor, vDepth, vWorld)) discard;
   if (partyOff(vWorld) > fract(vB.x * 7.31 + vB.y * 0.37)) discard; // the party's over: bulb by bulb out as the front passes
   float b = 1.0 - uTwinkle * 0.5 * (1.0 + sin(uTime * (1.3 + vB.x) + vB.x * 40.0));
   if (fract((vB.y - uTime * uChase) / 60.0) < 0.06) b = 1.4;
@@ -144,14 +144,14 @@ void main() {
   vDepth = -mv.z;
   gl_Position = projectionMatrix * mv;
 }`;
-const CROWN_WIRE_FRAG = /* glsl */ `
+export const CROWN_WIRE_FRAG = /* glsl */ `
 varying vec3 vWorld;
 varying vec2 vFloor;
 varying float vDepth;
 ${LIGHT_GLSL}
 ${CLEAR_GLSL}
 void main() {
-  if (cleared(vFloor, vDepth)) discard;
+  if (cleared(vFloor, vDepth, vWorld)) discard;
   gl_FragColor = vec4(crownHaze(vec3(0.03, 0.025, 0.04), vWorld), 1.0);
 }`;
 
@@ -325,8 +325,8 @@ export class StringLightsView {
       for (const p of s.spans) { const at = (u: number) => [p.a[0] + (p.b[0] - p.a[0]) * u, p.a[1] + (p.b[1] - p.a[1]) * u - p.sag * 4 * u * (1 - u), p.a[2] + (p.b[2] - p.a[2]) * u]; for (let i = 0; i < 8; i++) wire.push(...at(i / 8), ...at((i + 1) / 8)); }
     }
     const U = view.uniforms, shared = { ...U, uWind: { value: this.game.tuning.canopyShadow.wind * 1.5 }, uRes: SPRITE_UNIFORMS.uRes };
-    const bulbMat = new THREE.ShaderMaterial({ vertexShader: CROWN_BULB_VERT, fragmentShader: CROWN_BULB_FRAG, uniforms: { ...shared, uNear: { value: 240 }, uTwinkle: { value: L.twinkle }, uChase: { value: L.chaseSpeed }, uOnAt: { value: 1e9 } } });
-    const wireMat = new THREE.ShaderMaterial({ vertexShader: CROWN_WIRE_VERT, fragmentShader: CROWN_WIRE_FRAG, uniforms: shared });
+    const bulbMat = new THREE.ShaderMaterial({ name: "oak-crown-bulbs", vertexShader: CROWN_BULB_VERT, fragmentShader: CROWN_BULB_FRAG, uniforms: { ...shared, uNear: { value: 240 }, uTwinkle: { value: L.twinkle }, uChase: { value: L.chaseSpeed }, uOnAt: { value: 1e9 } } });
+    const wireMat = new THREE.ShaderMaterial({ name: "oak-crown-wire", vertexShader: CROWN_WIRE_VERT, fragmentShader: CROWN_WIRE_FRAG, uniforms: shared });
     const bg = new THREE.BufferGeometry();
     bg.setAttribute("position", new THREE.Float32BufferAttribute(pos, 3)); bg.setAttribute("aColour", new THREE.Float32BufferAttribute(cols, 3)); bg.setAttribute("aBulb", new THREE.Float32BufferAttribute(data, 4));
     const wg = new THREE.BufferGeometry(); wg.setAttribute("position", new THREE.Float32BufferAttribute(wire, 3));
