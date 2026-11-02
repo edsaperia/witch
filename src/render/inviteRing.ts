@@ -38,7 +38,7 @@ export const slotKind = (r: RingNow, s: number): "drop" | "heart" | "letter" | n
 
 export type RingChange =
   | { kind: "join"; id: number; slot: number; slots: number }
-  | { kind: "drop"; id: number; slot: number; slots: number }
+  | { kind: "drop"; id: number; slot: number; slots: number; what: "drop" | "heart" | "letter" } // (`what` it held: it falls as itself, Ed 2026-11-02)
   | { kind: "hearts"; id: number; slots: number };
 
 /** Each creature's ring as last drawn, and what changed this frame. */
@@ -65,12 +65,12 @@ export class RingModel {
       if (was && (was.slots !== r.slots || was.level !== c.level)) { this.rings.delete(c.id); was = undefined; }
       const before = was?.filled ?? 0;
       for (let s = before; s < r.filled; s++) out.push({ kind: "join", id: c.id, slot: s, slots: r.slots });
-      for (let s = before - 1; s >= r.filled; s--) out.push({ kind: "drop", id: c.id, slot: s, slots: r.slots });
+      for (let s = before - 1; s >= r.filled; s--) out.push({ kind: "drop", id: c.id, slot: s, slots: r.slots, what: slotKind(was!, s) ?? "letter" });
       this.rings.set(c.id, { ...r, level: c.level });
     }
     // Emptied (or gone, or out of reach): what's left falls.
     for (const [id, r] of this.rings) if (!seen.has(id)) {
-      for (let s = r.filled - 1; s >= 0; s--) out.push({ kind: "drop", id, slot: s, slots: r.slots });
+      for (let s = r.filled - 1; s >= 0; s--) out.push({ kind: "drop", id, slot: s, slots: r.slots, what: slotKind(r, s) ?? "letter" });
       this.rings.delete(id);
     }
     return out;
