@@ -9,6 +9,7 @@ import { inviteCreature, newLeash } from "./leash";
 import { startSiege } from "./combat";
 import { cellKey } from "./party";
 import { smallWorldTuning } from "../test/worlds";
+import { queueCombatHit } from "../test/combatHit";
 
 // Creature states (Ed, 2026-10-05; issue #87).
 const idle: Controls = { moveX: 0, moveZ: 0, toggleMode: false, zoom: 0, autoTalk: false };
@@ -82,6 +83,7 @@ describe("creature states (#87)", () => {
   it("stuns a wild creature whose slots fill (nothing attacks it), her next 💌 converting it; left alone, it gets up wild", () => {
     const g = quiet(), w = place(g, "boar", 1, 4, 0), l = place(g, "wolf", 2, 0, 0, "leashed");
     w.affection = 0.95; w.affectionAt = g.clock.time;
+    queueCombatHit(g, l, w);
     let dazedAt = -1;
     run(g, TUNING.combat.daze + 12, () => { if (dazedAt < 0 && w.dazed) dazedAt = g.clock.time; });
     expect(dazedAt).toBeGreaterThan(0);
@@ -91,6 +93,7 @@ describe("creature states (#87)", () => {
     // While stunned: untouched, its slots held full, and one 💌 converts it.
     const g2 = quiet(), w2 = place(g2, "boar", 1, 4, 0), l2 = place(g2, "wolf", 2, 0, 0, "leashed");
     w2.affection = 0.95; w2.affectionAt = g2.clock.time;
+    queueCombatHit(g2, l2, w2);
     for (let i = 0; i < 60 / STEP && !w2.dazed; i++) stepGame(g2, idle, STEP); // (its slots draining meanwhile: hearts fade as 💌s do)
     expect(w2.dazed).toBe(true);
     expect(TUNING.combat.daze).toBe(20); // (Ed, 2026-10-06)
@@ -109,6 +112,7 @@ describe("creature states (#87)", () => {
   it("has a stunned enraged one run away for good (its 💧 over it), and one of hers or a happy one whose 💧s fill", () => {
     const g = quiet(), e = place(g, "wolf", 2, 0, 0, "enraged"), h = place(g, "boar", 2, 5, 0, "happy");
     e.affection = 0.95; e.affectionAt = g.clock.time;
+    queueCombatHit(g, h, e);
     let dazed = false;
     run(g, 10, () => { if (e.dazed) dazed = true; });
     expect(e.fleeUntil).toBeTruthy();
@@ -117,6 +121,7 @@ describe("creature states (#87)", () => {
     // (the happy boar took the wolf's blows as 💧s, never shed: full, it runs away too)
     const g2 = quiet(), e2 = place(g2, "wolf", 2, 0, 0, "enraged"), h2 = place(g2, "boar", 2, 5, 0, "happy");
     h2.drops = 0.95;
+    queueCombatHit(g2, e2, h2);
     run(g2, 10);
     expect(h2.fleeUntil).toBeTruthy(); expect(h2.ranOff).toBe(true);
     void h; void e2;

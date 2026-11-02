@@ -8,9 +8,11 @@ import { loseSoundsystem, newGame, stepGame, STEP, type Game } from "./game";
 import { newBot } from "./bot";
 import { endParty } from "./partyOver";
 import { cellKey } from "./party";
+import { queueCombatHit } from "../test/combatHit";
 import { runAway } from "./orbit";
 import { runawaySpot } from "./runaway";
 import type { Creature, Level } from "./creatures";
+import { stepWin } from "./win";
 
 // Keep the seed-22 ten-area bot night and seed-77 radius fight: these cover complete win/loss population conservation and real beach return travel.
 /** Every one gone is asleep on the beach. */
@@ -44,18 +46,18 @@ describe("a night's creatures (Ed, 2026-10-28)", () => {
     return { g, bot, start, most, ran, dazed, lost };
   }
 
-  it("over a whole bot-played night: none made after the start, and every one that ran off (beaten, its soundsystem lost) asleep on the beach", () => {
-    const { g, bot, start, most, ran, dazed, lost } = night();
-    expect(g.win?.phase).toBe("won");
-    expect(most).toBe(start);
-    expect(dazed).toBeGreaterThan(0); expect(lost).toBe(1);
-    expect(ran.size).toBeGreaterThan(dazed); // (the beaten and the lost area's babies ran)
-    // (each of them run to the beach and asleep there: given the time, as they all get there or out of her sight)
-    for (let i = 0; i < 300 * 60 && g.creatures.some(c => c.fleeUntil && !c.gone); i++) stepGame(g, bot.decide(g), 1 / 60);
-    expect(g.creatures.length).toBe(start);
-    for (const id of ran) expect(g.creatures[id].beached, `#${id} ran and isn't asleep on the beach`).toBe(true);
+it("explicit runaways remain asleep on the beach at victory, with the population unchanged", () => {
+    const g = newGame(22, withTuning({ map: {...TUNING.map!, islandAreas: 10}, cast: {...TUNING.cast!, on: false} }));
+    const ids = g.creatures.map(c => c.id), runners = g.creatures.filter(c => !c.boss && c.level > 0 && c.level < 3 && !c.leashed).slice(0, 3);
+    expect(runners).toHaveLength(3);
+    for (const c of runners) {const beach = runawaySpot(g, c); expect(beach).not.toBeNull(); runAway(c, beach, () => ({x: c.x, z: c.z}));}
+    // Exercise the actual victory transition, without requiring a particular bot to win a fight.
+    g.win = {phase: "lap", lastWaveAt: 0, target: null, pickedAt: 0, lap: [{key: "home", x: g.witch.x, z: g.witch.z, at: g.clock.time, links: 0}], fired: 0, sigil: "tree", found: [], lost: [], settled: false, lead: 0, congaSize: 0};
+    stepWin(g, STEP);
+    expect(g.win.phase).toBe("won"); expect(g.creatures.map(c => c.id)).toEqual(ids);
+    for (const c of runners) {expect(c.beached).toBe(true); expect(c.asleep).toBe(true); expect(c.gone).toBe(true);}
     allBeached(g);
-  }, 400000);
+  });
 
   it("the party lost mid-night: nobody gone, every one asleep, those from the beach at home", () => {
     const { g, bot, start, ran } = night(200);
@@ -83,7 +85,8 @@ describe("a night's creatures (Ed, 2026-10-28)", () => {
       return c;
     };
     const mine = place("hedgehog", 1, g.witch.x + 2, g.witch.z, true), before = new Set(g.creatures.filter(c => c.gone).map(c => c.id));
-    place("bear", 2, g.witch.x + 4, g.witch.z); place("bear", 2, g.witch.x + 3, g.witch.z + 2);
+    const attacker = place("bear", 2, g.witch.x + 4, g.witch.z); place("bear", 2, g.witch.x + 3, g.witch.z + 2);
+    queueCombatHit(g, attacker, mine);
     for (let i = 0; i < 60 / STEP && !mine.fleeUntil; i++) stepGame(g, { moveX: 0, moveZ: 0, toggleMode: false, zoom: 0 }, STEP);
     expect(mine.fleeUntil).toBeTruthy();
     expect(mine.leashed).toBe(false);

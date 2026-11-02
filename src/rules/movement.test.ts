@@ -3,6 +3,7 @@ import { type Level } from "./creatures";
 import { newGame, stepGame, STEP, type Controls, type Game } from "./game";
 import { MOVEMENT } from "./movement";
 import { TUNING, withTuning } from "./tuning";
+import { withCombatRoles } from "../test/combatRoles";
 /** The old attacks (config/combat.json), not each species' own in the grammar (?attacks=old): for the tests that pin one of them. */
 const OLD_ATTACKS = withTuning({ attacks: { reactionFloor: 0.45, species: false } });
 
@@ -53,13 +54,7 @@ describe("creature movement (Stage 5)", () => {
     expect(seen[Math.floor(seen.length / 2)]).toBeLessThan(Math.PI); // spread round her: mostly no half of the circle round her holds them all
   }, 60000);
 
-  it("has a hare dart in and back out (hit and run)", () => {
-    const g = quiet(), hare = pick(g, "hare", 1, 35, 0);
-    let near = Infinity, farAfter = 0, wasNear = false;
-    run(g, 10, () => { const d = Math.hypot(hare.x - g.witch.x, hare.z - g.witch.z); if (d < 5) { wasNear = true; near = Math.min(near, d); } if (wasNear) farAfter = Math.max(farAfter, d); });
-    expect(near).toBeLessThan(5);
-    expect(farAfter).toBeGreaterThan(15); // (out to a ring about 25 m round her)
-  }, 60000);
+// Numerical cadence/close passes replace a fixed-distance hit-and-run outcome (Ed, 2026-11-01).
 
   it("has a boar charge: a fast straight burst", () => {
     const g = quiet(), boar = pick(g, "boar", 1, 30, 0);
@@ -119,30 +114,30 @@ describe("creature movement (Stage 5)", () => {
     expect(struck).toBe(true); // in range of its beam: it strikes from where it lay
   }, 60000);
 
-  it("has a mole burrow (untouchable) to her and surface under her, striking", () => {
+  it("has a mole burrow (untouchable) to her and surface under her, striking", withCombatRoles({ mole: "melee" }, () => {
     const g = quiet(), W = g.witches[0], hp0 = W.health.hp, mole = pick(g, "mole", 1, 30, 0), seen = new Set<string>();
     let under = false;
     run(g, 8, () => { if (mole.burrow) under = true; for (const e of g.combat.events) if (e.id === mole.id) seen.add(e.kind); });
     expect(under).toBe(true);
     expect(seen.has("surfaced")).toBe(true);
     expect(W.health.hp).toBeLessThan(hp0);
-  }, 60000);
+  }), 60000);
 
-  it("has a toad leap at her and slam down where it lands", () => {
+  it("has a toad leap at her and slam down where it lands", withCombatRoles({ toad: "melee" }, () => {
     const g = quiet(), W = g.witches[0], hp0 = W.health.hp, toad = pick(g, "toad", 1, 20, 0);
     let flew = false, slammed = false;
     run(g, 6, () => { if (toad.leap) flew = true; if (g.combat.events.some(e => e.id === toad.id && e.kind === "slammed")) slammed = true; });
     expect(flew).toBe(true);
     expect(slammed).toBe(true);
     expect(W.health.hp).toBeLessThan(hp0);
-  }, 60000);
+  }), 60000);
 
-  it("has a bat screech: a pulse all round it (her bats': wild ones swoop)", () => grounded("bat", () => {
+  it("has a bat screech: a pulse all round it (her bats': wild ones swoop)", withCombatRoles({ bat: "melee" }, () => grounded("bat", () => {
     const g = quiet(OLD_ATTACKS), bat = pick(g, "bat", 1, 10, 0);
     let pulsed = false;
     run(g, 6, () => { if (g.combat.events.some(e => e.id === bat.id && e.kind === "pulse")) pulsed = true; });
     expect(pulsed).toBe(true);
-  }), 60000);
+  })), 60000);
 
   it("gives a boar's charge momentum: it builds speed, carries on past her, brakes and comes round in an arc (Ed, 2026-10-05)", () => {
     const g = quiet(), boar = pick(g, "boar", 1, 30, 0), M = MOVEMENT.profiles.boar.move!;

@@ -6,6 +6,7 @@ import { attackOf } from "./combat/data";
 import { newGame as fullGame, stepGame, STEP, type Controls } from "./game";
 import { smallWorld } from "../test/worlds";
 import { TUNING, withTuning } from "./tuning";
+import { withCombatRoles } from "../test/combatRoles";
 
 const newGame = smallWorld(fullGame, "Fight Arena setup and telegraph timing use explicitly injected local packs, independent of world extent.");
 const idle: Controls = { moveX: 0, moveZ: 0, toggleMode: false, zoom: 0, autoTalk: false };
@@ -84,7 +85,7 @@ describe("the Fight Arena's telegraph timings", () => {
     expect([w.count, w.shortest]).toEqual([0, Infinity]);
   }, 60000);
 
-  it("sees the species' own attacks' telegraphs (the grammar's, the default), not their windups as well", () => {
+  it("sees the chosen species melee's grammar telegraphs without duplicate windups", withCombatRoles({ wolf: "melee" }, () => {
     const g = newGame(5, TUNING);
     g.clock.paused = false; g.party.paused = true;
     setupArena(g, "wolf*3@2", { wildOnly: true });
@@ -97,7 +98,7 @@ describe("the Fight Arena's telegraph timings", () => {
     expect(species).toBeGreaterThan(0);
     expect(windups).toBe(0);
     expect(w.shortest).toBeGreaterThanOrEqual((TUNING.attacks?.reactionFloor ?? 0.45) - 1e-6); // (held to the floor)
-  }, 60000);
+  }), 60000);
 
     it("takes the grammar's telegraphs too (alive ones, with their own start), and not a grammar caster's windup twice", () => {
     const w = new TellWatch();
