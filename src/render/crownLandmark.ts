@@ -118,6 +118,8 @@ export class CrownLandmark {
     this.frame = { x: d.cx + (l + r) / 2, w: r - l + 2 * pad, h: t + pad - b, y0: b - yf };
     // (the crown's own map set to its plan's own frame for the bake, then put back)
     const keep = ["uMapO", "uMapX", "uMapY", "uMapZ"].map(k => (U[k].value as THREE.Vector3).clone()), keepS = [U.uBendOn.value, U.uIndoor.value, U.uClearOn.value, U.uLobeK.value];
+    const look = U.uLook.value.clone(), lookShape = U.uLookShape.value.clone();
+    U.uLook.value.set(0, 1, 1, 0); U.uLookShape.value.w = 0; // The horizon bake never inherits a close-view trial.
     const occ = SPRITE_UNIFORMS.uOcc.value.w, right = SPRITE_UNIFORMS.uRight.value.clone(), up = SPRITE_UNIFORMS.uUp.value.clone();
     (U.uMapO.value as THREE.Vector3).set(0, floor, 0); (U.uMapX.value as THREE.Vector3).set(1, 0, 0); (U.uMapY.value as THREE.Vector3).set(0, 1, 0); (U.uMapZ.value as THREE.Vector3).set(0, 0, 1);
     const hole = (U.uHerHole.value as THREE.Vector4).z; (U.uHerHole.value as THREE.Vector4).z = 0; // (and no hole round her in its picture)
@@ -134,6 +136,7 @@ export class CrownLandmark {
       ["uMapO", "uMapX", "uMapY", "uMapZ"].forEach((k, i) => (U[k].value as THREE.Vector3).copy(keep[i]));
       [U.uBendOn.value, U.uIndoor.value, U.uClearOn.value, U.uLobeK.value] = keepS; SPRITE_UNIFORMS.uOcc.value.w = occ; (U.uHerHole.value as THREE.Vector4).z = hole;
       SPRITE_UNIFORMS.uRight.value.copy(right); SPRITE_UNIFORMS.uUp.value.copy(up);
+      U.uLook.value.copy(look); U.uLookShape.value.copy(lookShape);
     }
     const uv = this.bulbs.geometry.getAttribute("aUv") as THREE.BufferAttribute;
     this.picked.forEach((b, i) => { const p = this.v.set(b.x, b.y + floor, b.z).project(cam); uv.setXY(i, p.x * 0.5 + 0.5, p.y * 0.5 + 0.5); });

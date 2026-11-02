@@ -1,0 +1,147 @@
+{
+  "pr": 1635,
+  "group": "Treehouse look",
+  "decisions": [
+    {
+      "id": "lookIndoor",
+      "pr": 1635,
+      "group": "Treehouse look",
+      "label": "Fade the whole crown indoors",
+      "note": "Close-view trial; default off until Ed reviews. The horizon landmark retains its original crown.",
+      "control": {
+        "type": "toggle"
+      },
+      "default": false,
+      "apply": {
+        "knob": "treehouse.house.look.indoor"
+      }
+    },
+    {
+      "id": "lookNoNotch",
+      "pr": 1635,
+      "group": "Treehouse look",
+      "label": "Fill the crown notch",
+      "note": "Close-view trial; default off until Ed reviews. The horizon landmark retains its original crown.",
+      "control": {
+        "type": "toggle"
+      },
+      "default": false,
+      "apply": {
+        "knob": "treehouse.house.look.noNotch"
+      }
+    },
+    {
+      "id": "lookApproach",
+      "pr": 1635,
+      "group": "Treehouse look",
+      "label": "Reveal floors while flying close",
+      "note": "Close-view trial; default off until Ed reviews. The horizon landmark retains its original crown.",
+      "control": {
+        "type": "toggle"
+      },
+      "default": false,
+      "apply": {
+        "knob": "treehouse.house.look.approach"
+      }
+    },
+    {
+      "id": "lookNoWalls",
+      "pr": 1635,
+      "group": "Treehouse look",
+      "label": "Open platforms without walls",
+      "note": "Walk off any room edge: with a broom she flies; without one the existing fall returns her to that edge. Default off until Ed reviews.",
+      "control": {
+        "type": "toggle"
+      },
+      "default": false,
+      "apply": {
+        "knob": "treehouse.house.look.noWalls"
+      }
+    },
+    {
+      "id": "look_fade",
+      "pr": 1635,
+      "group": "Treehouse look",
+      "label": "Crown fade time (s)",
+      "note": "Only affects its enabled Treehouse look trial.",
+      "control": {
+        "type": "slider",
+        "min": 0.5,
+        "max": 1,
+        "step": 0.05
+      },
+      "default": 0.75,
+      "apply": {
+        "knob": "treehouse.house.look.fade"
+      }
+    },
+    {
+      "id": "look_bark",
+      "pr": 1635,
+      "group": "Treehouse look",
+      "label": "Bark left indoors",
+      "note": "Only affects its enabled Treehouse look trial.",
+      "control": {
+        "type": "slider",
+        "min": 0,
+        "max": 0.5,
+        "step": 0.01
+      },
+      "default": 0.18,
+      "apply": {
+        "knob": "treehouse.house.look.bark"
+      }
+    },
+    {
+      "id": "look_radius",
+      "pr": 1635,
+      "group": "Treehouse look",
+      "label": "Approach reveal distance (m)",
+      "note": "Only affects its enabled Treehouse look trial.",
+      "control": {
+        "type": "slider",
+        "min": 10,
+        "max": 100,
+        "step": 5
+      },
+      "default": 40,
+      "apply": {
+        "knob": "treehouse.house.look.radius"
+      }
+    },
+    {
+      "id": "look_softness",
+      "pr": 1635,
+      "group": "Treehouse look",
+      "label": "Reveal edge softness",
+      "note": "Only affects its enabled Treehouse look trial.",
+      "control": {
+        "type": "slider",
+        "min": 0.05,
+        "max": 0.75,
+        "step": 0.05
+      },
+      "default": 0.25,
+      "apply": {
+        "knob": "treehouse.house.look.softness"
+      }
+    },
+    {
+      "id": "look_ragged",
+      "pr": 1635,
+      "group": "Treehouse look",
+      "label": "Reveal edge irregularity",
+      "note": "Only affects its enabled Treehouse look trial.",
+      "control": {
+        "type": "slider",
+        "min": 0,
+        "max": 0.4,
+        "step": 0.02
+      },
+      "default": 0.12,
+      "apply": {
+        "knob": "treehouse.house.look.ragged"
+      }
+    }
+  ]
+}

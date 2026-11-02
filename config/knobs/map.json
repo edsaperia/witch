@@ -828,6 +828,105 @@
     },
     "treeMarginFromSoundsystem": {
       "see": "setPieceFootprint"
+    },
+    "treehouse.house.look.indoor": {
+      "what": "Fade the entire crown and its string lights indoors.",
+      "decisions": [
+        {
+          "by": "Ed",
+          "date": "2026-11-02",
+          "quote": "The treehouse/tree needs work. It looks good on the horizon but weird to fly to and from."
+        }
+      ],
+      "notes": "Treehouse look trials; all four switches default off until Ed reviews."
+    },
+    "treehouse.house.look.noNotch": {
+      "what": "Remove the close crown dancefloor sight-cut; retain the original horizon landmark.",
+      "decisions": [
+        {
+          "by": "Ed",
+          "date": "2026-11-02",
+          "quote": "The treehouse/tree needs work. It looks good on the horizon but weird to fly to and from."
+        }
+      ],
+      "notes": "Treehouse look trials; all four switches default off until Ed reviews."
+    },
+    "treehouse.house.look.approach": {
+      "what": "Reveal the house floor beneath and around the flying witch near any room or branch.",
+      "decisions": [
+        {
+          "by": "Ed",
+          "date": "2026-11-02",
+          "quote": "The treehouse/tree needs work. It looks good on the horizon but weird to fly to and from."
+        }
+      ],
+      "notes": "Treehouse look trials; all four switches default off until Ed reviews."
+    },
+    "treehouse.house.look.noWalls": {
+      "what": "Hide upright walls and allow any room edge exit; broom flies, no broom uses the existing fall and edge respawn.",
+      "decisions": [
+        {
+          "by": "Ed",
+          "date": "2026-11-02",
+          "quote": "The treehouse/tree needs work. It looks good on the horizon but weird to fly to and from."
+        }
+      ],
+      "notes": "Treehouse look trials; all four switches default off until Ed reviews."
+    },
+    "treehouse.house.look.fade": {
+      "what": "Seconds for the whole-crown indoor reveal or return.",
+      "decisions": [
+        {
+          "by": "Ed",
+          "date": "2026-11-02",
+          "quote": "The treehouse/tree needs work. It looks good on the horizon but weird to fly to and from."
+        }
+      ],
+      "notes": "Treehouse look trials; all four switches default off until Ed reviews."
+    },
+    "treehouse.house.look.bark": {
+      "what": "Fraction of bark opacity retained indoors.",
+      "decisions": [
+        {
+          "by": "Ed",
+          "date": "2026-11-02",
+          "quote": "The treehouse/tree needs work. It looks good on the horizon but weird to fly to and from."
+        }
+      ],
+      "notes": "Treehouse look trials; all four switches default off until Ed reviews."
+    },
+    "treehouse.house.look.radius": {
+      "what": "Metres from the floor outline at which the flight reveal begins, and its local radius.",
+      "decisions": [
+        {
+          "by": "Ed",
+          "date": "2026-11-02",
+          "quote": "The treehouse/tree needs work. It looks good on the horizon but weird to fly to and from."
+        }
+      ],
+      "notes": "Treehouse look trials; all four switches default off until Ed reviews."
+    },
+    "treehouse.house.look.softness": {
+      "what": "Fraction of the reveal radius used for its soft edge.",
+      "decisions": [
+        {
+          "by": "Ed",
+          "date": "2026-11-02",
+          "quote": "The treehouse/tree needs work. It looks good on the horizon but weird to fly to and from."
+        }
+      ],
+      "notes": "Treehouse look trials; all four switches default off until Ed reviews."
+    },
+    "treehouse.house.look.ragged": {
+      "what": "Fractional irregularity of the reveal edge.",
+      "decisions": [
+        {
+          "by": "Ed",
+          "date": "2026-11-02",
+          "quote": "The treehouse/tree needs work. It looks good on the horizon but weird to fly to and from."
+        }
+      ],
+      "notes": "Treehouse look trials; all four switches default off until Ed reviews."
     }
   }
 }

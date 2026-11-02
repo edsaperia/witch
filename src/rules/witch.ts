@@ -37,6 +37,8 @@ export interface WitchState {
   perch?: boolean;
   /** Falling off the balcony's open rim with no broom (rules/treehouse.ts, house.fall): seconds fallen; at fall.time she's back at the circle. */
   falling?: number;
+  /** Only the open-platform trial returns a fall to its own safe edge. */
+  fallOrigin?: { x: number; z: number };
   /** Lying on the beach looking at the stars (the tuning's beach): she flew on out over the sand, so landed; any other way gets her up. */
   stargazing?: boolean;
   /** How long she's been pushing on out over the sand (seconds). */
@@ -104,7 +106,7 @@ export function stepWitch(w: WitchState, intent: Intent, dt: number, t: Tuning, 
   // beat (house.fall.beat) later, is back at the magic circle. No steering meanwhile.
   if (w.falling !== undefined && deck?.house) {
     const f = w.falling + dt, F = deck.house.fall;
-    if (f >= F.time + (F.beat ?? 0)) return { ...w, x: deck.house.circle.x, z: deck.house.circle.z, vx: 0, vz: 0, lift: 0, mode: "ground", falling: undefined, perch: true, lean: false, boost: 0, braking: false, away: false, heading: "side" };
+    if (f >= F.time + (F.beat ?? 0)) return { ...w, x: w.fallOrigin?.x ?? deck.house.circle.x, z: w.fallOrigin?.z ?? deck.house.circle.z, vx: 0, vz: 0, lift: 0, mode: "ground", falling: undefined, ...(w.fallOrigin ? { fallOrigin: undefined } : {}), perch: true, lean: false, boost: 0, braking: false, away: false, heading: "side" };
     if (f >= F.time) return { ...w, vx: 0, vz: 0, falling: f, lean: false, boost: 0, braking: false }; // (down there, unseen, a moment)
     const k = Math.exp(-3 * dt);
     return { ...w, x: w.x + w.vx * dt, z: w.z + w.vz * dt, vx: w.vx * k, vz: w.vz * k, falling: f, lean: false, boost: 0, braking: false };
@@ -180,10 +182,10 @@ export function stepWitch(w: WitchState, intent: Intent, dt: number, t: Tuning, 
   // On the deck (or coming down onto it): kept on it, inside its rail, round the map table and behind the decks. In the house
   // (rules/treehouse.ts keepInHouse): kept in by the hub's wall and the balcony's sides, but out over the balcony's open rim on
   // foot she's off: flying again (rising, as the button would), or falling with no broom (house.fall).
-  let falling: number | undefined;
+  let falling: number | undefined, fallOrigin: WitchState["fallOrigin"];
   if (perch && deck && mode !== "rising" && mode !== "treetop") {
     const p = deck.house ? keepInHouse(deck, x, z) : { ...keepOnDeck(deck, x, z), off: false };
-    if (p.off && mode === "ground") { if (deck.house!.fall.on) falling = 0; else mode = "rising"; }
+    if (p.off && mode === "ground") { if (deck.house!.fall.on) { falling = 0; if (deck.house!.noWalls) fallOrigin = { x: p.x, z: p.z }; } else mode = "rising"; }
     else if (p.x !== x || p.z !== z) { if (mode === "ground") { vx = (p.x - w.x) / Math.max(dt, 1e-6); vz = (p.z - w.z) / Math.max(dt, 1e-6); } x = p.x; z = p.z; }
     // Coming down onto the house: eased over what's left of the landing onto clear floor, never into furniture or a station (Ed,
     // 2026-10-26; rules/treehouse.ts landingSpot), there as she touches down.
@@ -194,7 +196,7 @@ export function stepWitch(w: WitchState, intent: Intent, dt: number, t: Tuning, 
   }
   const facing: 1 | -1 = vx > 0.3 ? 1 : vx < -0.3 ? -1 : w.facing;
   const speed = Math.hypot(vx, vz), away = facingAway(vx, vz, w.away, Math.max(1, max * 0.15), t), heading = headingOf(vx, vz, w.heading, Math.max(1, max * 0.15), t);
-  const next: WitchState = { x, z, vx, vz, lift, mode, facing, away, heading, lean: speed > max * t.leanAt, boost, braking, ...(perch ? { perch: true } : {}), ...(falling !== undefined ? { falling } : {}) };
+  const next: WitchState = { x, z, vx, vz, lift, mode, facing, away, heading, lean: speed > max * t.leanAt, boost, braking, ...(perch ? { perch: true } : {}), ...(falling !== undefined ? { falling } : {}), ...(fallOrigin ? { fallOrigin } : {}) };
   if (perch) return next; // (no beach up here)
   // Flying on out over the beach (Ed, 2026-10-06: "If you try and fly past the beach, you land and stargaze"): pushing seaward
   // against the edge's soft hold, on the sand, for restAfter seconds, she comes down (from the treetops too) and, landed, lies down.
