@@ -118,6 +118,17 @@ describe("combat waiting spacing", () => {
     const world = { creatures, active: creatures, t: tuning, time: 0, dt: 1 / 60, witches: [{ id: 0, x: 0, z: 0, onGround: true, down: false }], busy: () => false, leashPoint: () => null, parked: () => false, talkingTo: () => -1, exit: () => ({ x: 1000, z: 1000 }), unseen: () => false, asleep: () => false, inArea: () => true, hitWitch: () => {}, loseParty: () => {} } as CombatWorld;
     return { state, world };
   };
+  it("tracks the witch during an ordinary lunge without extending its released travel", () => {
+    const { state, world } = fight(true), c = world.creatures[0];
+    world.creatures.splice(1); world.active = world.creatures;
+    world.t = { ...world.t, combat: { ...world.t.combat, packs: { on: false } } };
+    c.x = 0; c.z = -20;
+    c.fight!.lunge = { dx: 1, dz: 0, left: 15, v: 20 };
+    stepCombat(state, world);
+    expect(c.fight!.lunge!.dz).toBeGreaterThan(0);
+    expect(c.fight!.lunge!.left).toBeLessThan(15);
+    expect(Math.hypot(c.x, c.z + 20) + c.fight!.lunge!.left).toBeCloseTo(15);
+  });
   it("runs a small seeded waiting-fight fixture without drawn-disc overlap", () => {
     SPACING.body = data.body;
     const { state, world } = fight(true);

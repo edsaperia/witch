@@ -23,7 +23,7 @@ export interface Attack {
   knockback?: number;
   slowMult?: number;
   slowTime?: number;
-  /** Melee: how far it lunges at where it aimed when the blow lands (dodgeable: it's committed). */
+  /** Melee: released travel budget; species strikeTurn controls subsequent heading correction. */
   lunge?: number;
   /** Lob: seconds in the air. Beam: its width, seconds it burns, seconds between its ticks, and how fast it sweeps (degrees a second). */
   flight?: number;

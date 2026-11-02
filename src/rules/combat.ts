@@ -15,7 +15,7 @@ import { FIGHT, advanceHop, landSwoop, legendSetOf, packsOf, profileOf, startCha
 import { type Tuning } from "./tuning";
 import { hash2 } from "./random";
 import { isHomeKey } from "./speakers";
-import { type Attack, type CombatData, COMBAT, traitsOf, type CombatState, attackOf, attackNamed, type CombatWorld, type Target } from "./combat/data";
+import { type Attack, type CombatData, COMBAT, type CombatState, attackOf, attackNamed, type CombatWorld, type Target } from "./combat/data";
 import { fighting, targetable, sideOf, truce, targetPos, headingOf, lightsNear, sheltered, gaveUp, valid, acquire, Grid, moveToward, nearestSound } from "./combat/targeting";
 import { contacted, touch, land, area, stepKnock, useData } from "./combat/hits";
 import { stepLegendAttack, stepLegend } from "./combat/legend";
@@ -26,7 +26,7 @@ import { bodyReach, hittableOf, meleeExtras, reachingFurther, spellAttack, speci
 import { observeAttack } from "./attackObservation";
 import type { AttackSpec } from "./attacks/types";
 import { PACKS, stepPacks, packsOn, packKindOf, packAttack, packGate, markStrike, dodgeAim, strikingNow, ownStrike, styleOf, type Directive } from "./combat/packs";
-import { chaseAt, limitTurn, momentumOf, noteWitches, witchWas } from "./momentum";
+import { chaseAt, limitTurn, momentumOf, noteWitches, turnHeading, witchWas } from "./momentum";
 import { SPACING, bodyGap, clearWaitingSlot, drawnRadius, hazardAvoidance, pathClearsHazard, spacingOn, waitingDrive, waitingProfile, waitingSlot, type WaitingHazard } from "./combatSpacing";
 import { teamOf } from "./combat/teams";
 import { actionReach } from "./combat/actions";
@@ -462,15 +462,14 @@ export function stepCombat(s: CombatState, w: CombatWorld, data: CombatData = CO
     const ownFrom = om && om.kind !== "swoop" ? (om.from ?? 10) * 1.4 * FIGHT.scale : 0, ownTo = om?.to ? om.to * 0.8 * (om.kind === "leap" ? FIGHT.leap.reach : 1) * FIGHT.scale : ownFrom;
     if (ownFrom) want = Math.max(want, ownFrom, Math.min(d, ownTo));
     if (spacing && pd?.action?.delivery === "effect") want = Math.min(want, actionReach(c, pd.action, PACKS) * 0.8);
-    // Its lunge under way: a dash-strike down the line it wound up on; at its end the blow lands, if it's still there.
+    // Its lunge under way: bounded course correction, with the original travel budget.
     if (f.lunge) {
-      // (At a creature it homes in: creatures can't read a telegraph; but not at a flier, which flits up out of its way.
-      // At the witch it keeps its line, so she can sidestep it.)
+      // Ed, 2026-11-02: tracking is a balance parameter, not a prohibition against tracking the witch.
       // (with momentum, Ed 2026-10-05: it builds up to 60 m/s and eases out at the end, carrying some speed on)
       const L = f.lunge, a = (300 * FIGHT.speed) / FIGHT.momentum, top = 60 * FIGHT.speed, v0 = L.v ?? 0;
       const v = Math.min(top, v0 + a * dt, Math.sqrt(Math.max(0, 2 * a * L.left + (12 * FIGHT.speed) ** 2))), step = Math.min(L.left, v * dt);
       L.v = v;
-      if (f.target.kind === "creature" && !traitsOf(w.creatures[f.target.id]?.species ?? "", data).includes("flier")) { const hx = p.x - c.x, hz = p.z - c.z, hd = Math.hypot(hx, hz); if (hd > 1e-3) { L.dx = hx / hd; L.dz = hz / hd; L.left = Math.min(L.left, Math.max(0, hd - A.range * 0.5)); } }
+      [L.dx, L.dz] = turnHeading(L.dx, L.dz, p.x - c.x, p.z - c.z, waitingProfile(c).strikeTurn / FIGHT.momentum, dt);
       advanceMotion(c, { vx: L.dx * step / dt, vz: L.dz * step / dt }, time, dt); L.left -= step; c.moving = true; c.walk += dt * 12; c.facing = L.dx >= 0 ? 1 : -1;
       c.vx = L.dx * v; c.vz = L.dz * v;
       if (L.left <= 1e-6) { f.lunge = undefined; if (Math.hypot(p.x - c.x, p.z - c.z) <= A.range * widthOf(f.target) + p.r) { const observation = { source: c.id, attack: spell?.name ?? null, delivery: "melee", phase: "damage" as const }; land(w, s, c, f.target, atk.damage, A, c.x, c.z, observation); if (spell) meleeExtras(w, s, f.target, spell.spec, c.x, c.z, c, observation); } if (c.taunt && time < c.taunt.until && w.creatures[c.taunt.by]) f.target = { kind: "creature", id: c.taunt.by }; } // (taunted mid-lunge: its lunge done, it turns on the taunter)
@@ -675,7 +674,7 @@ export function stepCombat(s: CombatState, w: CombatWorld, data: CombatData = CO
       const tactic = pd && pk && !(spacing && pd.action?.delivery === "effect") && (pk.tactic === "volley" || (!(pd.move === "melee" && packGate(pd) && free(f.target)) && (pk.tactic === "surround" || pk.tactic === "pincer" || pk.tactic === "flank"))) ? pk : null;
       // (Momentum: chasing her and closing in to strike, a pack's tell and combo too, it makes for where she was mo.delay seconds
       // ago, leading that by mo.chaseLead seconds of how she was going then, and turns no faster than its limit. Ed, 2026-10-27: on
-      // the run-in and the wind-up, never the committed lunge, which goes where the wind-up aimed.)
+      // the run-in and the wind-up; released lunges use their independent strikeTurn limit.)
       const chase = mo;
       const herAt = chase && f.target.kind === "witch" ? chaseAt(s, f.target.id, time, chase) ?? p : p;
       // Its fight style's place while it waits its turn (packs.json _styles; Ed's playtest, 2026-10-29: "circling, flanking, more
@@ -781,9 +780,7 @@ export function stepCombat(s: CombatState, w: CombatWorld, data: CombatData = CO
     if (spell && A.delivery !== "melee") continue; // (released by the engine as its windup ends: rules/attacks/engine.ts; a melee one is the lunge below)
     const dmg = atk.damage;
     if (A.delivery === "melee") {
-      // The lunge (Ed's motion scale pass: 12 to 16 m, a dash-strike): down the line to where it aimed
-      // when it wound up, so stepping aside dodges it; the blow lands at its end (above).
-      // Committed (dodge.a): at her, down the line it locked as it wound up (above), lunging dodge.a.lunge times as far.
+      // Release toward the wind-up aim. Its travel budget is fixed here; strikeTurn bounds later course correction.
       const aimX = f.aimX, aimZ = f.aimZ, reach = (A.lunge ?? 0) * (DA && f.target.kind === "witch" ? DA.lunge : 1);
       // (with momentum, Ed 2026-10-27: its run-in may have left it short, so the committed lunge goes right to where the wind-up aimed,
       // up to a quarter again its usual length: a strike that starts stays reliable; at twice, a skilled bot backing away from a fight

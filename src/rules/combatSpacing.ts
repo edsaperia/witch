@@ -11,6 +11,8 @@ export interface MotionProfile {
   headingFollow: number; bearing: number; sweep: number; laneSpread: number; trailGap: number; sideGap: number;
   speed: number; cadence: number; duty: number; restSpeed: number; turn: number; lift: number; stride: number; returnLead: number;
   rangeBias: number; centerShift: number; near: number;
+  /** Maximum lunge correction in degrees per second; zero keeps the release heading. */
+  strikeTurn: number;
   pathWeight?: number;
 }
 export interface WaitingGroup { seed: number; index: number; count: number; gap: number; until: number; minimum?: number }
