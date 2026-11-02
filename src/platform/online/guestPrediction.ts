@@ -4,9 +4,15 @@ const edges = ["toggleMode", "dash", "spell"] as const;
 const MAX_PENDING = 120, SNAP = 3, MAX_OFFSET = .75;
 export interface PredictionCorrection { sequence: number; size: number; snapped: boolean; reason: string }
 interface Input { sequence: number; controls: Controls; dt: number }
+export interface PredictionEvidence {
+  frameTick?: number;
+  correction: PredictionCorrection; transitions: string[];
+  before: { actor: Witch; acc: number; offset: { x: number; z: number }; acknowledged: number; pending: Input[] };
+  after: { actor: Witch; acc: number; canonical: Witch; sourceAcc: number; sourceHerTime: number; sourceClockTime: number; acknowledged: number; pending: Input[] };
+}
 
 /** Private presentation actor only. Canonical Game, creatures, inventory and saves are never advanced here. */
-export function guestPrediction(source: Game, player: number, report?: (event: PredictionCorrection) => void) {
+export function guestPrediction(source: Game, player: number, report?: (event: PredictionCorrection) => void, evidence?: (proof: PredictionEvidence) => void) {
   let actor = structuredClone(source.witches[player]), acc = source.acc, acknowledged = -1;
   const pending: Input[] = [];
   const sizes: number[] = []; let corrections = 0, snaps = 0, largest = 0, transitionSnaps = 0, correctionSnaps = 0, pendingCapSnaps = 0;
@@ -45,6 +51,7 @@ export function guestPrediction(source: Game, player: number, report?: (event: P
     },
     reconcile(sequence: number) {
       if (!Number.isSafeInteger(sequence) || sequence < acknowledged) throw Error("Invalid applied guest input acknowledgement");
+      const before = evidence ? { actor, acc, offset: { ...offset }, acknowledged, pending: [...pending] } : null;
       acknowledged = sequence;
       while (pending.length && pending[0].sequence <= sequence) pending.shift();
       const visible = { x: actor.body.x + offset.x, z: actor.body.z + offset.z };
@@ -62,7 +69,13 @@ export function guestPrediction(source: Game, player: number, report?: (event: P
       offset.x = dx * scale; offset.z = dz * scale;
       corrections++; if (snapped) { snaps++; if (discontinuity) transitionSnaps++; else correctionSnaps++; } largest = Math.max(largest, size);
       sizes.push(size); if (sizes.length > 240) sizes.shift();
-      report?.({ sequence, size, snapped, reason: discontinuity ? "authoritative-transition:" + transitions.join(",") : snapped ? "large-correction" : "reconcile" });
+      const correction = { sequence, size, snapped, reason: discontinuity ? "authoritative-transition:" + transitions.join(",") : snapped ? "large-correction" : "reconcile" };
+      report?.(correction);
+      if (before && evidence && (size > .05 || snapped)) {
+        // Actor-only diagnostic snapshot on actual divergence, never a per-frame world copy.
+        try { evidence(structuredClone({ correction, transitions, before, after: { actor, acc, canonical: source.witches[player], sourceAcc: source.acc,
+          sourceHerTime: source.herTime, sourceClockTime: source.clock.time, acknowledged, pending } })); } catch { /* A diagnostic sink cannot interrupt gameplay. */ }
+      }
     },
     get actor(): Witch { return { ...actor, body: { ...actor.body, x: actor.body.x + offset.x, z: actor.body.z + offset.z } }; },
     get pending() { return pending.length; },

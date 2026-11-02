@@ -2,7 +2,7 @@ import { expect, it } from "vitest";
 import { newGame, newWitchPlayer, type Controls } from "../../rules/game";
 import { TUNING } from "../../rules/tuning";
 import { snapshotGame } from "../../rules/nightSnapshot";
-import { guestPrediction } from "./guestPrediction";
+import { guestPrediction, type PredictionEvidence } from "./guestPrediction";
 import { localView } from "./localView";
 import { roomAt } from "../../rules/houseRooms";
 
@@ -43,6 +43,22 @@ it("counts large unexpected corrections separately from authoritative sleep/perc
   const game = fixture(), p = guestPrediction(game, 1);
   game.witches[1].body.x += 20; p.reconcile(-1);
   expect(p.stats).toMatchObject({ snaps: 1, correctionSnaps: 1, transitionSnaps: 0, pendingCapSnaps: 0 });
+});
+
+it("captures exact actor and pending state around divergence only and isolates a failing evidence sink", () => {
+  const game = fixture(), proofs: PredictionEvidence[] = [], p = guestPrediction(game, 1, undefined, proof => proofs.push(proof));
+  p.input(0, input(1), 1 / 60); p.reconcile(-1);
+  expect(proofs).toHaveLength(0);
+  game.witches[1].body.x += 20; p.reconcile(-1);
+  expect(proofs).toHaveLength(1);
+  expect(proofs[0].before.pending.map(i=>i.sequence)).toEqual([0]);
+  expect(proofs[0].after.pending.map(i=>i.sequence)).toEqual([0]);
+  expect(proofs[0].after.canonical.body.x).toBe(game.witches[1].body.x);
+  expect(proofs[0].correction.size).toBeGreaterThan(19);
+  const captured = proofs[0].before.actor.body.x;
+  p.input(1, input(1), 1 / 60); expect(proofs[0].before.actor.body.x).toBe(captured);
+  const throwing = guestPrediction(game, 1, undefined, () => { throw Error("broken diagnostic"); });
+  game.witches[1].body.x += 20; expect(()=>throwing.reconcile(-1)).not.toThrow();
 });
 it("does not call ordinary forest movement below a house outline an authoritative room change", () => {
   const game = fixture(), W = game.witches[1], at = game.map.treehouse;

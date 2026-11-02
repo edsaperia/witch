@@ -10,7 +10,7 @@ import { applyStationLook } from "./stationAppearance";
 import { bagOf, setBag } from "../../rules/bags";
 import { sharedCatalogue, type SharedCatalogue } from "./sharedCatalogue";
 import { houseSteps } from "./houseSteps";
-import { guestPrediction } from "./guestPrediction";
+import { guestPrediction, type PredictionEvidence } from "./guestPrediction";
 import { guestHitAuthority, guestHitPresentation } from "./guestHits";
 import { enableGuestEffects, disableGuestEffects } from "../../rules/guestEffects";
 
@@ -25,6 +25,8 @@ export interface SessionOptions {
   build: string;
   /** Local diagnostics only; never a gameplay message or admission decision. */
   trace?(stage: string, detail?: unknown): void;
+  /** Explicit private replay capture; absent during ordinary play. */
+  predictionEvidence?(proof: PredictionEvidence): void;
   hostGame(): Game;
   /** Page supplies the approved guest-room/equipment adapter; never reuse the prototype's host bedroom. */
   attach(game: Game): void;
@@ -66,6 +68,7 @@ export function onlineSession(options: SessionOptions) {
   let hits: ReturnType<typeof guestHitAuthority> | null = null, hitPresentation: ReturnType<typeof guestHitPresentation> | null = null;
   const trace = (stage: string, detail: unknown) => { try { options.trace?.(stage, detail); } catch { /* Diagnostics do not change admission/gameplay. */ } };
   const correction = (event: import("./guestPrediction").PredictionCorrection) => { if (event.snapped || event.size > .05 && event.sequence % 30 === 0) trace("prediction-correction", event); };
+  const predictionEvidence = options.predictionEvidence ? (proof: PredictionEvidence) => options.predictionEvidence!({ ...proof, frameTick: replica?.tick ?? tick }) : undefined;
   let accept: (() => void) | null = null, reject: ((error: Error) => void) | null = null;
   let stationSequence = 0, lastStation = -1;
   const requests: { player: 0 | 1; choice: StationChoice; sequence: number }[] = [];
@@ -223,7 +226,7 @@ export function onlineSession(options: SessionOptions) {
               replica = replayGuest(payload.start, options.build, replica.game); game = replica.game;
               if (game.witches.length !== 2) throw new Error("Invalid two-person night");
               if (!connection.sendActive()) throw new Error("The guest telephone disconnected.");
-              prediction = guestPrediction(game, 1, correction);
+              prediction = guestPrediction(game, 1, correction, predictionEvidence);
               hitPresentation = guestHitPresentation(game, request => { if (!connection?.sendInput(request)) throw Error("The guest cast couldn't be sent."); });
               ready = true; options.synchronized(game); accept?.(); accept = reject = null;
             }
@@ -243,7 +246,7 @@ export function onlineSession(options: SessionOptions) {
           if (payload?.kind === "checkpoint" && payload.start) {
             if (!ready || !replica || payload.start.tick !== replica.tick) throw new Error("Online station state lost its sequence. Hang up and call again.");
             replica = replayGuest(payload.start, options.build, replica.game); game = replica.game;
-            prediction = guestPrediction(game, 1, correction);
+            prediction = guestPrediction(game, 1, correction, predictionEvidence);
             if (game.witches.length !== 2) throw new Error("Invalid two-person night");
             return true;
           }
