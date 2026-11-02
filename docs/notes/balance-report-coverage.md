@@ -12,6 +12,8 @@ node tools/balance/report.mjs runs --seeds 2 --islands home,fox,ibex --bags satc
 node tools/balance/report.mjs stuns --species all --levels 1,2 --bags all --bpms 100,120,160,200 --seeds 2 --time 60 --out stuns.jsonl --build v5655
 node tools/balance/report.mjs report --out home.jsonl
 node --test --test-concurrency=1 tools/balance/report.test.mjs
+node tools/balance/report-fixture-sanity.mjs --out=previews/report-fixture-sanity.json
+node --test tools/balance/report-fixture-split.test.mjs
 ```
 
 `--seeds N` means N seeds starting at `1000 + 7919 * skip`, not an end index; `--skip` defaults to 0. `--islands all` selects every built island, including home. Phase summaries describe only the selected islands, equally weighted by run. Run phases are opening (before wave 1), waves, stragglers and lap. Completed phase durations and unfinished durations are separate; a cutoff is censored, not lost. The limit counts player seconds; durations count world seconds, which slow in legend circles. `wavesPassed` means later wave arrivals observed, not a count of won sieges. The latest wave may still have active besiegers when a run ends.
@@ -24,7 +26,11 @@ Night wins, discovered islands, islands kept by `win.found`, finds on loan and e
 
 ## Legacy coverage map
 
+T6 nightly hookup (#1667; coordinator1632#6578304163, 2026-11-02): the independent behaviour runner now invokes the original MJS replay test as an execution check and the separate fixture command for four informational observations. Both run sequentially with bounded subprocesses; actual outcomes, references, raw fixture JSON, logs and timings are retained in the report artifact. Replay failures remain execution errors; changed scenario predicates do not fail a release or reporting command. No new release CI discovery/gate was added. See [report usage](../../tools/behaviour/README.md). Cloud execution of this new hookup remains separate from source validation.
+
 Ed, 2026-11-02 (#1654): the seeded bot-night win/recruitment aggregates formerly in bot.test.ts are optional observations in `node tools/balance/bot-outcomes.mjs`. The original seeds11/22/33, ten-area starts,20-minute ceiling and15-recruit historical reference are retained, together with seed1000's40-second first-recruit scenario. False historical outcomes do not fail release checks. Direct invitation waking remains protected in inviteWakes.test.ts; bot replay contracts remain blocking. No new simulation run is required for release or claimed here.
+
+Ed, 2026-11-02, T6: replay equality and phase accounting remain assertions in the original replay test, with unchanged interleaving, seeds, loadouts and horizons. Fixture identity stays an assertion on the same stun executor. Four scenario predicates now belong to the separate fixture-sanity command: the first run being censored, the fox becoming stunned, the fox receiving hits, and the active boar retaliating. JSON reports observed values, their historical references and matchesReference; a changed outcome does not fail the command, while execution failures or malformed observations still fail. The active boar's30s-only sanity run moved out of replay. This is a diagnostic, not a simulation model or acceptance threshold. Default Vitest/CI does not currently discover the original MJS replay file; its explicit Node command still fails on integrity errors. No CI time saving is demonstrated. Shared nightly workflow integration is owned by1632's separate report-pattern PR.
 
 
 Do not retire the copied models until every needed row below has an explicit replacement or the coordinator rules that the experiment is obsolete. Current coverage is partial. Their numbers are historical hypotheses, not calibrated measurements of current pack/orbit combat.
