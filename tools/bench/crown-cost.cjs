@@ -12,6 +12,7 @@ let KEY = null;
 let playwright; try { playwright = require("playwright"); } catch { playwright = require("/opt/node22/lib/node_modules/playwright"); }
 const root = path.resolve(process.env.DIST || path.join(__dirname, "../../dist"));
 const SEED = process.env.SEED || "123", FRAMES = Number(process.env.FRAMES || 60), [W, H] = (process.env.SIZE || "1280x720").split("x").map(Number);
+const LINK = process.env.LINK || ""; // d_lookIndoor/NoNotch/Approach/NoWalls for matched exact-head trials
 const SCENES = (process.env.SCENES || "at:3208,2840,treetop|room:parlour|at:3208,3290,treetop").split("|");
 const types = { ".html": "text/html", ".js": "text/javascript", ".css": "text/css", ".json": "application/json", ".png": "image/png", ".wasm": "application/wasm", ".woff2": "font/woff2", ".ogg": "audio/ogg" };
 const med = a => { const s = [...a].sort((x, y) => x - y); return s.length ? s[Math.floor(s.length / 2)] : 0; };
@@ -25,7 +26,7 @@ const med = a => { const s = [...a].sort((x, y) => x - y); return s.length ? s[M
     for (const scene of SCENES) {
       const page = await browser.newPage({ viewport: { width: W, height: H } });
       const errors = []; page.on("pageerror", e => errors.push(e.message));
-      await page.goto(`http://127.0.0.1:${server.address().port}/?shot=${encodeURIComponent(scene)}&seed=${SEED}`);
+      await page.goto(`http://127.0.0.1:${server.address().port}/?shot=${encodeURIComponent(scene)}&seed=${SEED}&${LINK}`);
       await page.waitForFunction(() => window.witch && window.witch.ready, null, { timeout: 900000, polling: 500 });
       KEY ??= await pageKey(page, { spot: `crown-cost.cjs scenes ${SCENES.join(" | ")}` });
       await page.evaluate(() => { window.witch.manual = true; });

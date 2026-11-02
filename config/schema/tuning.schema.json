@@ -1469,6 +1469,67 @@
             },
             "terraceRoom": {
               "type": "boolean"
+            },
+            "look": {
+              "type": "object",
+              "properties": {
+                "indoor": {
+                  "type": "boolean",
+                  "description": "Fade the entire crown and its string lights indoors."
+                },
+                "noNotch": {
+                  "type": "boolean",
+                  "description": "Remove the close crown dancefloor sight-cut; retain the original horizon landmark."
+                },
+                "approach": {
+                  "type": "boolean",
+                  "description": "Reveal the house floor beneath and around the flying witch near any room or branch."
+                },
+                "noWalls": {
+                  "type": "boolean",
+                  "description": "Hide upright walls and allow any room edge exit; broom flies, no broom uses the existing fall and edge respawn."
+                },
+                "fade": {
+                  "type": "number",
+                  "minimum": 0,
+                  "description": "Seconds for the whole-crown indoor reveal or return."
+                },
+                "bark": {
+                  "type": "number",
+                  "minimum": 0,
+                  "description": "Fraction of bark opacity retained indoors.",
+                  "maximum": 1
+                },
+                "radius": {
+                  "type": "number",
+                  "minimum": 0,
+                  "description": "Metres from the floor outline at which the flight reveal begins, and its local radius."
+                },
+                "softness": {
+                  "type": "number",
+                  "minimum": 0,
+                  "description": "Fraction of the reveal radius used for its soft edge.",
+                  "maximum": 0.95
+                },
+                "ragged": {
+                  "type": "number",
+                  "minimum": 0,
+                  "description": "Fractional irregularity of the reveal edge.",
+                  "maximum": 0.5
+                }
+              },
+              "required": [
+                "indoor",
+                "noNotch",
+                "approach",
+                "noWalls",
+                "fade",
+                "bark",
+                "radius",
+                "softness",
+                "ragged"
+              ],
+              "additionalProperties": false
             }
           },
           "required": [
@@ -1482,7 +1543,8 @@
             "fall",
             "dark",
             "crown",
-            "terraceRoom"
+            "terraceRoom",
+            "look"
           ],
           "additionalProperties": false
         }

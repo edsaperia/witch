@@ -122,7 +122,7 @@ varying vec2 vB, vFloor;
 ${LIGHT_GLSL}
 ${CLEAR_GLSL}
 void main() {
-  if (vOn < 0.5 || cleared(vFloor, vDepth)) discard;
+  if (vOn < 0.5 || cleared(vFloor, vDepth, vWorld)) discard;
   if (partyOff(vWorld) > fract(vB.x * 7.31 + vB.y * 0.37)) discard; // the party's over: bulb by bulb out as the front passes
   float b = 1.0 - uTwinkle * 0.5 * (1.0 + sin(uTime * (1.3 + vB.x) + vB.x * 40.0));
   if (fract((vB.y - uTime * uChase) / 60.0) < 0.06) b = 1.4;
