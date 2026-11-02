@@ -1,0 +1,72 @@
+# Ed, 2026-11-02: outcome statistics never block a release. No PR/push trigger or release dependency.
+name: Behaviour report
+on:
+  schedule:
+    - cron: '47 4 * * *'
+  workflow_dispatch: {}
+concurrency:
+  group: behaviour-report-${{ github.event_name }}-${{ github.ref }}
+  cancel-in-progress: true
+permissions:
+  contents: read
+  issues: write
+jobs:
+  report:
+    name: informational behaviour report
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Resolve the exact report source
+        id: source
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const ref = context.eventName === 'schedule' ? 'claude/prototype' : context.sha;
+            const {data} = await github.rest.repos.getCommit({...context.repo, ref});
+            core.setOutput('sha', data.sha);
+            core.info(`Behaviour report source: ${ref} at ${data.sha}`);
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ steps.source.outputs.sha }}
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - name: Measure behaviour with one worker
+        run: node tools/behaviour/run.mjs
+      - name: Save measurements, summary and execution log
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: behaviour-report-${{ github.run_attempt }}
+          path: out/behaviour/
+          retention-days: 14
+          if-no-files-found: warn
+      - name: Update one standing nightly observation
+        if: ${{ always() && !cancelled() && github.event_name == 'schedule' }}
+        uses: actions/github-script@v7
+        env:
+          REPORT_RESULT: ${{ job.status }}
+          REPORT_SOURCE: ${{ steps.source.outputs.sha }}
+        with:
+          script: |
+            const fs = require('fs');
+            const marker = '<!-- witch-behaviour-nightly-result -->';
+            const {owner, repo} = context.repo, issue_number = 1476;
+            const prior = (await github.paginate(github.rest.issues.listComments, {owner, repo, issue_number, per_page:100}))
+              .find(c => c.body?.includes(marker) && c.user?.login === 'github-actions[bot]');
+            let report;
+            try { report = JSON.parse(fs.readFileSync('out/behaviour/report.json', 'utf8')); } catch {}
+            const error = process.env.REPORT_RESULT !== 'success' || report?.status !== 'complete';
+            const observations = (report?.systems ?? []).flatMap(s => s.metrics).filter(m => !m.withinReference);
+            if (!error && !observations.length && !prior) return;
+            const status = error ? 'EXECUTION ERROR' : observations.length ? 'OBSERVATIONS' : 'RECOVERED / within references';
+            const source = report?.sha || process.env.REPORT_SOURCE || 'unresolved';
+            const detail = error ? (report?.error || 'Setup, reporting or artifact step failed; see run log.')
+              : observations.length ? observations.map(m => `${m.id}: ${m.value} ${m.unit}; historical reference ${m.reference.operator} ${m.reference.value}`).join('\n')
+              : 'The latest complete report is within the historical references.';
+            const run = `https://github.com/${owner}/${repo}/actions/runs/${context.runId}`;
+            const body = `${marker}\nREPORT: Nightly behaviour ${status}, source ${source}.\n\n${detail}\n\nRun: ${run}\nUpdated ${new Date().toISOString()}. Numeric references are informational; builds, deploys and releases never wait for this report.`;
+            if (prior) await github.rest.issues.updateComment({owner,repo,comment_id:prior.id,body});
+            else await github.rest.issues.createComment({owner,repo,issue_number,body});
