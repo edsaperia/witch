@@ -47,9 +47,25 @@ test('reserved guest rejects wrong/expired tickets and retains the slot until it
   const ack=message(g);send(g,{type:'heartbeat'});await ack;
   const away=message(h.ws),closed=once(g,'close');g.terminate();await closed;await away;
   const bad=await connect(),rejected=once(bad,'close');send(bad,{type:'resume',...gi.resume,token:'0'.repeat(64)});assert.equal((await rejected)[0],1008);
+  for(const patch of [{player:0},{room:'7654321'}]){
+    const stranger=await connect(),denied=once(stranger,'close');send(stranger,{type:'resume',...gi.resume,...patch});assert.equal((await denied)[0],1008);
+  }
   clock=19999;const beat=message(h.ws);send(h.ws,{type:'heartbeat'});await beat;
   const left=message(h.ws);clock=20000;assert.equal((await left).type,'guest-left');
   const expired=await connect(),expiredClose=once(expired,'close');send(expired,{type:'resume',...gi.resume});assert.equal((await expiredClose)[0],1008);
+});
+
+test('reserved host expiry ends the guest and releases the old room without accepting an expired ticket', {timeout:5000},async t=>{
+  let clock=0;const connect=await fixture(t,{now:()=>clock,checkMs:5}),h=await host(connect),g=await connect();
+  const joined=message(g),notice=message(h.ws);send(g,{type:'join',room:h.info.room,token:h.info.token});await joined;await notice;
+  const hr=message(h.ws);send(h.ws,{type:'ready'});await hr;
+  const gr=message(g),gn=message(h.ws);send(g,{type:'ready'});await gr;await gn;send(g,{type:'active'});
+  const ack=message(g);send(g,{type:'heartbeat'});await ack;
+  const away=message(g),closed=once(h.ws,'close');h.ws.terminate();await closed;await away;
+  clock=19999;const beat=message(g);send(g,{type:'heartbeat'});await beat;assert.equal(g.readyState,WebSocket.OPEN);
+  const guestClosed=once(g,'close');clock=20000;await guestClosed;
+  const expired=await connect(),rejected=once(expired,'close');send(expired,{type:'resume',...h.info.resume});assert.equal((await rejected)[0],1008);
+  const replacement=await host(connect);assert.equal(replacement.info.room,h.info.room);
 });
 
 test('acknowledges every registered heartbeat without changing the room role', async t => {
