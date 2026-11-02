@@ -6,7 +6,7 @@ import { afterEach, describe, expect, it } from "vitest";
 import { TUNING } from "./tuning";
 import { newGame as fullGame, stepGame, STEP, type Controls, type Game } from "./game";
 import { smallWorld } from "../test/worlds";
-import { HAT_FLOOR, HOUSE_ROOMS, addFloorHat, hatSlots, hatsOnFloor, installEdLayout, objectFront, objectWorld, useHats } from "./houseRooms";
+import { HAT_FLOOR, HOUSE_ROOMS, addFloorHat, hatSlots, hatsOnFloor, installEdLayout, objectFront, useHats } from "./houseRooms";
 import { usesEdLayout } from "../app/houseLayout";
 import { wakeInBedroom } from "./opening";
 import { startWake, WAKE_DEFAULT } from "./wakeUp";
@@ -97,9 +97,9 @@ describe("guidance pins", () => {
       g.party.spellAt = null; g.clock.paused = false; wakeInBedroom(g); startWake(g, g.herTime);
       run(g, 0.1, { moveX: 1 }); run(g, WAKE_DEFAULT.stretch + 0.1);
       expect(HOUSE_ROOMS.layout?.hatPoints.length).toBeGreaterThan(0);
-      const down = W.hat.down!, first = hatSlots(at)[0], area = objectWorld(HOUSE_ROOMS.objects.find(o => o.use.kind === "hats")!, at);
+      const down = W.hat.down!, first = hatSlots(at)[0];
       expect(down).toMatchObject({ x: first.x, z: first.z });
-      expect(Math.hypot(area.x - down.x, area.z - down.z)).toBeGreaterThan(10); // (rooms apart: why the old target misled)
+      expect(HOUSE_ROOMS.objects.some(o => o.use.kind === "hats")).toBe(false); // (the old hats' area is gone: Ed, 2026-11-02)
       g.wake!.styled = true;
       for (const st of ["wardrobe", "shoeRack", "bags", "cloakPegs"]) wearFromStation(g.wake!, st);
       const G = of(g)!;
@@ -116,12 +116,10 @@ describe("guidance pins", () => {
       installEdLayout(usesEdLayout(new URLSearchParams()));
       const g = up(true), W = g.witches[0], at = g.map.treehouse, id = HAT_FLOOR[0];
       W.spells.hats = [id]; addFloorHat(W, id); // (found: laid on the lowest free point, rules/finds.ts)
-      const spot = hatSlots(at)[hatsOnFloor(W).indexOf(id)], area = objectWorld(HOUSE_ROOMS.objects.find(o => o.use.kind === "hats")!, at);
-      expect(Math.hypot(area.x - spot.x, area.z - spot.z)).toBeGreaterThan(10); // (rooms apart from the old hats' area)
+      const spot = hatSlots(at)[hatsOnFloor(W).indexOf(id)];
       const s: GuideSave = { unseen: [{ kind: "hat", id, at: "hats" }] };
       expect(of(g, s)).toEqual({ kind: "hat", target: { x: spot.x, z: spot.z } });
-      standAt(g, "hats");
-      expect(seeGuide(g, 0, s)).toBe(false); // (the old area isn't where it is)
+      expect(seeGuide(g, 0, s)).toBe(false); // (not near it yet)
       W.body = { ...W.body, x: spot.x + 0.5, z: spot.z, vx: 0, vz: 0 };
       expect(atGuide(g, 0, of(g, s)!)).toBe(true);
       expect(seeGuide(g, 0, s)).toBe(true);

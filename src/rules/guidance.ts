@@ -61,9 +61,9 @@ export const FIRST_MORNING: readonly ({ dress: PileSlot | "styled"; at: string }
 ];
 
 /** The first morning's hat step: her hat where it lies. In Ed's arrangement the hats' floor is numbered spawn points (rules/houseRooms.ts
- *  hatSlots), the first morning's hat on the first of them (rules/wakeUp.ts hatOnFloor), and the old hats' area that stays as decor
- *  can be rooms away (Ed's playtest of v7061: the pin led to the old area, and the hat wasn't there). The classic house lays it on
- *  the hats' floor itself: that object, as before. */
+ *  hatSlots), the first morning's hat on the first free one (rules/wakeUp.ts hatOnFloor); the old Cloakroom hats' area is gone
+ *  (Ed's playtest of v7061: the pin led to it, and the hat wasn't there; Ed, 2026-11-02: "we should remove the old cloakroom hats
+ *  area"), so with no hat lying there's nothing to point at. The classic house lays it on the hats' floor itself: that object. */
 function hatGuide(g: Game, w: number): Guide {
   const d = g.witches[w]?.hat.down;
   return HOUSE_ROOMS.layout?.hatPoints.length && d ? { kind: "dress", target: { x: d.x, z: d.z } } : { kind: "dress", target: { object: "hats" } };
