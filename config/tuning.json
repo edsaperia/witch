@@ -1093,7 +1093,8 @@
         "gravity": 9.8,
         "arcPull": 60,
         "iterations": 6,
-        "jump": 8
+        "jump": 8,
+        "fall": 0.5
       }
     }
   },

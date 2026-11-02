@@ -4724,6 +4724,11 @@
                 "jump": {
                   "type": "number",
                   "minimum": 0
+                },
+                "fall": {
+                  "type": "number",
+                  "minimum": 0,
+                  "description": "How far (m) along its walking path a travelling follower's chain, hanging from its sigil, reaches the ground for every metre it falls (0: straight down to where the path starts)."
                 }
               },
               "required": [
@@ -4734,7 +4739,8 @@
                 "gravity",
                 "arcPull",
                 "iterations",
-                "jump"
+                "jump",
+                "fall"
               ],
               "additionalProperties": false
             }
