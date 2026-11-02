@@ -9521,6 +9521,15 @@ registerProcessor("witch-fof", WitchFof);
 
   // config/tuning.json
   var tuning_default = {
+    mushroomLight: {
+      haloStrength: 0.8,
+      poolStrength: 0.45,
+      capGlow: 4.8,
+      radius: 1,
+      height: 1,
+      complement: 1,
+      testRow: false
+    },
     mapAreas: 10,
     map: {
       shape: "circle",
@@ -10637,6 +10646,12 @@ registerProcessor("witch-fof", WitchFof);
         contact: true,
         lead: 1
       }
+    },
+    combatWaiting: {
+      reachScale: 0.8,
+      areaGrowth: 0.2,
+      passPower: 12,
+      passDepth: 1
     },
     creatureMomentum: {
       on: true,
