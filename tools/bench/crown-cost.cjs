@@ -13,7 +13,7 @@ let playwright; try { playwright = require("playwright"); } catch { playwright =
 const root = path.resolve(process.env.DIST || path.join(__dirname, "../../dist"));
 const SEED = process.env.SEED || "123", FRAMES = Number(process.env.FRAMES || 60), [W, H] = (process.env.SIZE || "1280x720").split("x").map(Number);
 const LINK = process.env.LINK || ""; // d_lookIndoor/NoNotch/Approach/NoWalls for matched exact-head trials
-const SCENES = (process.env.SCENES || "at:3208,2840,treetop|room:parlour|at:3208,3290,treetop").split("|");
+const SCENES = (process.env.SCENES || (process.env.LOOK ? "room:terrace|room:parlour|look:approach|look:far" : "at:3208,2840,treetop|room:parlour|at:3208,3290,treetop")).split("|");
 const types = { ".html": "text/html", ".js": "text/javascript", ".css": "text/css", ".json": "application/json", ".png": "image/png", ".wasm": "application/wasm", ".woff2": "font/woff2", ".ogg": "audio/ogg" };
 const med = a => { const s = [...a].sort((x, y) => x - y); return s.length ? s[Math.floor(s.length / 2)] : 0; };
 
@@ -26,12 +26,12 @@ const med = a => { const s = [...a].sort((x, y) => x - y); return s.length ? s[M
     for (const scene of SCENES) {
       const page = await browser.newPage({ viewport: { width: W, height: H } });
       const errors = []; page.on("pageerror", e => errors.push(e.message));
-      await page.goto(`http://127.0.0.1:${server.address().port}/?shot=${encodeURIComponent(scene)}&seed=${SEED}&${LINK}`);
+      await page.goto(`http://127.0.0.1:${server.address().port}/?shot=${encodeURIComponent(scene.startsWith("look:") ? "room:terrace" : scene)}&seed=${SEED}&${LINK}`);
       await page.waitForFunction(() => window.witch && window.witch.ready, null, { timeout: 900000, polling: 500 });
       KEY ??= await pageKey(page, { spot: `crown-cost.cjs scenes ${SCENES.join(" | ")}` });
       await page.evaluate(() => { window.witch.manual = true; });
       if (await page.evaluate(() => window.witch.game.clock.paused)) { await page.keyboard.press("Enter"); await page.waitForFunction(() => !window.witch.game.clock.paused, null, { timeout: 60000 }).catch(() => {}); }
-      const said = await page.evaluate(s => window.witch.lastShot ?? window.witch.shot(s), scene);
+      const said = await page.evaluate(s => { const w = window.witch, th = w.game.map.treehouse; if (s === "look:approach" || s === "look:far") return w.shot("at:" + th.x + "," + (th.z + (s === "look:far" ? 1200 : 30)) + ",treetop"); return w.lastShot ?? w.shot(s); }, scene);
       if (!said.ok) throw new Error(said.say);
       const step = n => page.evaluate(n => { const w = window.witch; for (let i = 0; i < n; i++) w.frame({ moveX: 0, moveZ: 0, toggleMode: false, zoom: 0 }, 1 / 60, true); }, n);
       for (let round = 0, calm = 0; calm < 2 && round < 40; round++) { await step(10); if ((await page.evaluate(() => window.witch.view.assets.pending)) === 0) { calm++; continue; } calm = 0; await page.waitForFunction(() => window.witch.view.assets.pending === 0, null, { timeout: 900000, polling: 500 }); }

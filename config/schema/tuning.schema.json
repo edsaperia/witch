@@ -1497,8 +1497,8 @@
                 "bark": {
                   "type": "number",
                   "minimum": 0,
-                  "description": "Fraction of bark opacity retained indoors.",
-                  "maximum": 1
+                  "maximum": 1,
+                  "description": "Fraction of bark opacity retained indoors."
                 },
                 "radius": {
                   "type": "number",
@@ -1508,14 +1508,14 @@
                 "softness": {
                   "type": "number",
                   "minimum": 0,
-                  "description": "Fraction of the reveal radius used for its soft edge.",
-                  "maximum": 0.95
+                  "maximum": 0.95,
+                  "description": "Fraction of the reveal radius used for its soft edge."
                 },
                 "ragged": {
                   "type": "number",
                   "minimum": 0,
-                  "description": "Fractional irregularity of the reveal edge.",
-                  "maximum": 0.5
+                  "maximum": 0.5,
+                  "description": "Fractional irregularity of the reveal edge."
                 }
               },
               "required": [

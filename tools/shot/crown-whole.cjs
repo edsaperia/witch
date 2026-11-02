@@ -42,15 +42,21 @@ const ALL = process.env.LOOK ? { off: "", indoor: "d_lookIndoor=1", notch: "d_lo
       // flying over the house in the treetops, south of it, then over it
       await put(0, 40, "treetop"); await shot("over-south");
       await put(0, 0, "treetop"); await shot("over");
+      if (process.env.LOOK) { await put(-30, 0, "treetop"); await shot("approach-west"); await put(30, 0, "treetop"); await shot("approach-east"); }
       // from the dancefloor's side, on the ground, looking north at the oak (two thirds of the way from the oak to the dancefloor)
       await page.evaluate(({ df, th }) => { const g = window.witch.game, b = g.witches[0].body; g.witches[0].body = { ...b, x: th.x + (df.x - th.x) * 0.66, z: th.z + (df.z - th.z) * 0.66, vx: 0, vz: 0, mode: "ground", lift: 0, perch: false, seated: false }; }, map);
       await shot("dancefloor");
       // landing: over the Terrace in the treetops, Space, frames as she comes down
       await put(0, 4, "treetop"); await settle();
       await step(1, { toggleMode: true });
-      for (const k of [6, 12, 24]) { await step(k === 6 ? 6 : 6); await page.screenshot({ path: path.join(out, `landing-${k}-${name}.png`), timeout: 300000 }); }
+      let prior = 0;
+      for (const k of [6, 12, 24]) { await step(k - prior); prior = k; await page.screenshot({ path: path.join(out, `landing-${k}-${name}.png`), timeout: 300000 }); }
       await shot("landed");
       if (process.env.LOOK) {
+        const landing = await page.evaluate(() => window.witch.shot("room:parlour"));
+        if (!landing.ok) throw new Error(landing.say);
+        await page.evaluate(() => { const b = window.witch.game.witches[0].body; Object.assign(b, { perch: false, seated: false, mode: "treetop", lift: 1 }); });
+        await settle(); await step(1, { toggleMode: true }); await step(24); await shot("parlour-landed");
         for (const room of ["parlour", "bedroom"]) {
           const result = await page.evaluate(room => window.witch.shot("room:" + room), room);
           if (!result.ok) throw new Error(result.say); await shot(room);

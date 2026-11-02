@@ -21,8 +21,8 @@ No local browser, game build, art render, full suite, smoke or performance run. 
 
 Build/test the reported commit, prove served version.json sourceSHA, and use the same capture harness on the parent baseline for all-off parity. Compare fixed seed 160271 and identical labels/clocks; no arbitrary masks or thresholds.
 
-- LOOK=1 SEED=160271 DIST=<exact dist> node tools/shot/crown-whole.cjs <output>: off, indoor, notch, approach, walls and all; optional ONLY selects one. Includes Terrace/landing, Parlour/Bedroom, takeoff, dancefloor/overflight and far south shots. Add side approach and a non-Terrace landing sequence in the allocated manual play check; those are not claimed by the existing automated sequence.
-- SEED=160271 SCENES='room:parlour|room:bedroom|at:<house-relative approach>|at:<far south>' FRAMES=30 LINK='<d_look settings>' DIST=<exact dist> node tools/bench/crown-cost.cjs <output.json>. Use resolved actual shot coordinates, not literal angle-bracket placeholders. Run off, each switch separately and all together serially; report wall/draw/calls/triangles and errors.
+- LOOK=1 SEED=160271 DIST=<exact dist> node tools/shot/crown-whole.cjs <output>: off, indoor, notch, approach, walls and all; optional ONLY selects one. Includes Terrace and Parlour landing sequences, Parlour/Bedroom, takeoff, dancefloor/overflight, east/west approaches and far south shots. Rendering and actual interaction acceptance still require allocated play checks.
+- LOOK=1 SEED=160271 FRAMES=30 LINK='<d_look settings>' DIST=<exact dist> node tools/bench/crown-cost.cjs <output.json>. LOOK selects Terrace, Parlour, a house-relative approach and far south; coordinates are resolved from the actual island hub. Run off, each switch separately and all together serially; report wall/draw/calls/triangles and errors.
 - Confirm wall-off broom exit and no-broom thud/return in Terrace and another room. Rules contracts cover all 14 room shapes; real rendering and sounds still need play verification.
 
 ## New visible words

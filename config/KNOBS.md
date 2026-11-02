@@ -541,10 +541,10 @@ Code: `rules/treehouse.ts`, `art/ent.js`, `docs/backlog/treehouse.md`, `config/h
 | `treehouse.house.look.approach` | boolean |  |
 | `treehouse.house.look.noWalls` | boolean |  |
 | `treehouse.house.look.fade` | number | 0 to … |
-| `treehouse.house.look.bark` | number | 0 to … |
+| `treehouse.house.look.bark` | number | 0 to 1 |
 | `treehouse.house.look.radius` | number | 0 to … |
-| `treehouse.house.look.softness` | number | 0 to … |
-| `treehouse.house.look.ragged` | number | 0 to … |
+| `treehouse.house.look.softness` | number | 0 to 0.95 |
+| `treehouse.house.look.ragged` | number | 0 to 0.5 |
 
 ### `home`
 
