@@ -1,12 +1,11 @@
 import { describe, expect, it } from "vitest";
 import { type Creature, type Level } from "./creatures";
-import { newGame, stepGame, STEP, type Controls, type Game } from "./game";
+import { STEP } from "./game";
+import { newLeash, stepLeash } from "./leash";
 import { bodyRadius, spaceOut } from "./spacing";
-import { MOVEMENT } from "./movement";
+import { FIGHT, MOVEMENT } from "./movement";
 import { TUNING } from "./tuning";
 
-// Keep the radius world for the integrated follow test: it recruits eight creatures more than 200 m away before relocating them.
-const idle: Controls = { moveX: 0, moveZ: 0, toggleMode: false, zoom: 0, autoTalk: false };
 const fake = (id: number, species: string, level: Level, x: number, z: number) => ({ id, species, level, x, z } as Creature);
 const B = MOVEMENT.bodies;
 
@@ -37,16 +36,19 @@ describe("spacing (Ed, 2026-10-05)", () => {
     expect(Math.hypot(m.x, m.z)).toBeGreaterThan(bodyRadius(L) * B.factor);
   });
 
-  it("keeps her party from bunching as they follow her", () => {
-    const g: Game = newGame(77, TUNING);
-    g.clock.paused = false;
-    const d = g.map.dancefloor;
-    g.witch = { ...g.witch, seated: false, x: d.x, z: d.z + 20, mode: "ground", lift: 0 };
-    for (const c of g.creatures) if (Math.hypot(c.x - g.witch.x, c.z - g.witch.z) < 80 && !c.boss) c.gone = true;
-    const party = g.creatures.filter(c => !c.gone && !c.leashed && !c.boss && Math.hypot(c.x - g.witch.x, c.z - g.witch.z) > 200).slice(0, 8);
-    party.forEach((c, i) => { Object.assign(c, { species: i < 2 ? "bear" : "dormouse", level: 1, x: g.witch.x + 1, z: g.witch.z + 1, tx: g.witch.x, tz: g.witch.z, leashed: true }); g.leash.stack.push(c.id); });
-    for (let i = 0; i < 6 / STEP; i++) stepGame(g, { ...idle, moveX: i * STEP < 3 ? 1 : 0 }, STEP);
-    let closest = Infinity; for (const a of party) for (const b of party) if (a !== b) closest = Math.min(closest, Math.hypot(a.x - b.x, a.z - b.z) / ((bodyRadius(a) + bodyRadius(b)) * B.factor + B.margin));
-    expect(closest).toBeGreaterThan(0.6); // (each pair at least most of the room it wants)
+  it("keeps supplied followers on their leash with finite positions and configured bounded spacing pushes", () => {
+    const party = Array.from({ length: 8 }, (_, i) => ({ ...fake(i, i < 2 ? "bear" : "dormouse", 1, i * 0.1, i % 2 * 0.1), tx: 0, tz: 0, rest: 0, rand: () => 0.5, leashed: true, walk: 0, facing: 1, speed: TUNING.creatureSpeed } as Creature));
+    const s = newLeash(); s.stack = party.map(c => c.id);
+    stepLeash(s, party, { talk: false, sigil: false }, { x: 0, z: 0 }, true, STEP, STEP, TUNING);
+    const before = party.map(c => [c.x, c.z]);
+    spaceOut(party, STEP, () => false);
+    expect(s.stack).toEqual(party.map(c => c.id));
+    let moved = 0;
+    party.forEach((c, i) => { const distance = Math.hypot(c.x - before[i][0], c.z - before[i][1]); if (distance > 0) moved++;
+      expect(distance).toBeLessThanOrEqual(B.push * FIGHT.speed * STEP + 1e-9);
+      expect(Number.isFinite(c.x) && Number.isFinite(c.z)).toBe(true); expect(c.leashed).toBe(true);
+    });
+    expect(moved).toBeGreaterThan(0);
+    // C1 reports the original seed77/eight-followers/6s normalized minimum-gap outcome.
   }, 60000);
 });

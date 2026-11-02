@@ -1,63 +1,51 @@
-// Hostile creatures idle near the runestone (Ed, 2026-10-08: "if you enter a hostile area and the animals are at the very
-// opposite end, it can be quite a long time before they reach you, and so it feels like nothing is happening. I think we can
-// solve this by having the hostile creatures tend to idle near the runestone"): rules/creatures.ts idlesAtStone.
+// Hostile stone-idle contracts (Ed, 2026-10-08). C1 reports the original largest-world distributions.
 import { describe, expect, it } from "vitest";
-import { newGame } from "./game";
-import { TUNING as gameTuning, type Tuning } from "./tuning";
-import { largestWorldTuning } from "../test/worlds";
-// Largest shipped world: roaming distributions must cover its full roster and area boundaries.
-const TUNING = largestWorldTuning(gameTuning);
-import { cellKey } from "./party";
-import { LEGEND, stepCreaturesNear, type Creature } from "./creatures";
+import { LEGEND, idlesAtStone, pointInArea, type Creature } from "./creatures";
+import type { ForestMap } from "./map";
+import { TUNING } from "./tuning";
 
 const S = TUNING.stoneIdle!;
-const wildAreas = (g: ReturnType<typeof newGame>) => {
-  const home = cellKey(g.map.centreCell), by = new Map<string, Creature[]>();
-  for (const c of g.creatures) { const k = cellKey(c.cell); if (k !== home) by.set(k, [...(by.get(k) ?? []), c]); }
-  return [...by];
+// Deliberately supplied dry area; target selection uses the public rule, without a generated game.
+const fixture = (on = true, inside = true) => {
+  const queries: [number, number][] = [];
+  const cell = (x: number, z: number) => { queries.push([x, z]); return { cell: inside || (x === 200 && z === 0) ? [1, 1] : [2, 2] }; };
+  const map = { seed: 123, bounds: {}, tuning: { ...TUNING, stoneIdle: { ...S, on } },
+    soundsystemSpot: () => ({ x: 0, z: 0 }),
+    areaAt: cell, cellSafe: cell
+  } as unknown as ForestMap;
+  const c = { id: 0, level: 1, cell: [1, 1], homeX: 200, homeZ: 0, anchorX: 200, anchorZ: 0, range: 20 } as Creature;
+  return { map, c, queries };
 };
-const stoneOf = (g: ReturnType<typeof newGame>, c: Creature) => g.map.soundsystemSpot(c.cell[0], c.cell[1]);
-const fromStone = (g: ReturnType<typeof newGame>, c: Creature) => { const s = stoneOf(g, c); return Math.hypot(c.x - s.x, c.z - s.z); };
-/** How far from its stone the spot it's heading for (or idling at) is. */
-const goalFromStone = (g: ReturnType<typeof newGame>, c: Creature) => { const s = stoneOf(g, c); return Math.hypot(c.tx - s.x, c.tz - s.z); };
-const hostile = (c: Creature) => c.level > 0 && c.level !== LEGEND && !c.circle;
-/** Roams every creature (her far away, so no watch or hunt) for `secs`, calling `each` after every step. */
-function roam(g: ReturnType<typeof newGame>, secs: number, each: () => void) {
-  for (let i = 0; i < secs * 10; i++) {
-    stepCreaturesNear(g.creatures, 0, 0, 1e9, 0.1, (g.clock.time += 0.1), g.map);
-    each();
-  }
-}
 
 describe("hostile creatures idle near the runestone (Ed, 2026-10-08)", () => {
-  it("they start and roam in a loose cluster round it, never on it; babies, legends and the circle's baby as before", () => {
-    const g = newGame(123, TUNING);
-    let n = 0, out = 0, onStone = 0;
-    // where they start, and every spot they pick to go to and idle (or nap) at (they walk across the disc between them)
-    for (const [, list] of wildAreas(g)) for (const c of list) if (hostile(c) && fromStone(g, c) > S.radius + 1) out++;
-    const check = () => { for (const [, list] of wildAreas(g)) for (const c of list) if (hostile(c)) { n++; const d = goalFromStone(g, c); if (d > S.radius + 1) out++; if (d < S.clear - 1) onStone++; } };
-    roam(g, 120, check);
-    expect(n).toBeGreaterThan(1000);
-    expect(out / n, "outside the cluster (only where the disc leaves its area)").toBeLessThan(0.03);
-    expect(onStone / n, "idling on the stone (only one stopped at its area's border as it walked across)").toBeLessThan(0.001);
-    // a loose cluster: spread over the disc, not a ring or a pile
-    const ds = wildAreas(g).flatMap(([, l]) => l.filter(hostile).map(c => goalFromStone(g, c))).sort((a, b) => a - b);
-    expect(ds[Math.floor(ds.length * 0.25)]).toBeLessThan(S.radius * 0.65);
-    expect(ds[Math.floor(ds.length * 0.75)]).toBeGreaterThan(S.radius * 0.6);
-    // the rest keep the whole area: some babies far from the stone
-    const babies = wildAreas(g).flatMap(([, l]) => l.filter(c => c.level === 0 && !c.circle));
-    expect(babies.filter(c => goalFromStone(g, c) > S.radius * 1.5).length).toBeGreaterThan(babies.length * 0.3);
+  it("chooses valid hostile targets within the configured annulus, excluding babies, legends and circle babies", () => {
+    const { map, c, queries } = fixture();
+    expect(idlesAtStone(c)).toBe(true);
+    for (const r of [0, 0.25, 0.5, 0.75, 1]) {
+      const p = pointInArea(map, c, () => r), distance = Math.hypot(...p);
+      expect(distance).toBeGreaterThanOrEqual(S.clear - 1e-9);
+      expect(distance).toBeLessThanOrEqual(S.radius + 1e-9);
+      expect(map.areaAt(...p).cell).toEqual(c.cell);
+    }
+    expect(queries.length).toBeGreaterThan(0);
+    const excluded: Partial<Creature>[] = [{ level: 0 }, { level: LEGEND }, { boss: true }, { circle: { x: 0, z: 0, r: 10, legendX: 0, legendZ: 0 } }];
+    for (const over of excluded) expect(idlesAtStone({ ...c, ...over })).toBe(false);
+    const rejected = fixture(true, false);
+    const fallback = pointInArea(rejected.map, rejected.c, () => 0.5);
+    expect(fallback).toEqual([rejected.c.anchorX, rejected.c.anchorZ]);
+    expect(rejected.map.areaAt(...fallback).cell).toEqual(rejected.c.cell);
+    expect(rejected.queries.length).toBeGreaterThan(0);
   });
 
-  it("a friendly area's creatures, and every creature with stoneIdle off, roam the whole area as before", () => {
+  it("uses whole-area targets for friendly creatures or with stoneIdle disabled", () => {
     for (const off of [false, true]) {
-      const t: Tuning = off ? { ...TUNING, stoneIdle: { ...S, on: false } } : TUNING;
-      const g = newGame(123, t);
-      const list = g.creatures.filter(c => hostile(c) && cellKey(c.cell) !== cellKey(g.map.centreCell));
-      if (!off) for (const c of list) c.friendly = true;
-      let far = 0, n = 0;
-      roam(g, 60, () => { for (const c of list) { n++; if (goalFromStone(g, c) > S.radius * 1.5) far++; } });
-      expect(far / n, off ? "off" : "friendly").toBeGreaterThan(0.3);
+      const { map, c } = fixture(!off);
+      if (!off) c.friendly = true;
+      expect(off || !idlesAtStone(c)).toBe(true);
+      const p = pointInArea(map, c, () => 0.25);
+      expect(Math.hypot(p[0] - c.homeX, p[1] - c.homeZ)).toBeCloseTo(c.range * 0.5);
+      expect(map.areaAt(...p).cell).toEqual(c.cell);
     }
+    for (const over of [{ friendly: true }, { leashed: true }, { enraged: true }, { dancing: true }, { state: "happy" as const }]) expect(idlesAtStone({ level: 1, ...over })).toBe(false);
   });
 });

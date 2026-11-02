@@ -72,15 +72,18 @@ describe("marching besiegers", () => {
     return { g, marchers, home };
   }
 
-  it("far from her and the action they march coarsely, at their marching pace, and come into full near the soundsystem", () => {
-    const { g, marchers, home } = siege(L.action + 60, 2000);
+  it("classifies distant marchers coarsely and immediately brings supplied near-action marchers into full", () => {
+    const { g, marchers } = siege(L.action + 60, 2000);
     stepGame(g, idle, STEP);
     expect(g.lod!.marchCoarse).toBe(marchers.length);
-    const dist = (c: Creature) => Math.hypot(c.x - home.x, c.z - home.z), d0 = marchers.map(dist);
-    for (let i = 0; i < 60 * 30; i++) stepGame(g, idle, STEP);
-    marchers.forEach((c, i) => expect(d0[i] - dist(c)).toBeGreaterThan(Math.min(marchSpeed(c, TUNING) * 30 * 0.8, d0[i] - L.action - 40))); // (marching on, at their pace: or there by now)
-    for (let i = 0; i < 60 * 90; i++) stepGame(g, idle, STEP);
+    expect(marchers.length).toBeGreaterThan(0);
+    const sound = [...g.combat.sounds.values()].find(h => h.hp > 0)!;
+    expect(sound).toBeDefined();
+    marchers.forEach((c, i) => { c.x = sound.x + L.action * 0.5; c.z = sound.z + (i / (marchers.length + 1)) * L.action * 0.25; c.fight = undefined; c.lod = "coarse"; });
+    stepGame(g, idle, STEP);
     expect(g.lod!.marchCoarse).toBe(0); // (in full near the soundsystem)
+    expect(g.lod!.marchFull).toBe(marchers.length);
+    // C1 reports30s progress/120s arrival. Adjacent coarse/full pace and hysteresis checks remain.
   }, 120_000);
 
   it("near her they march in full", () => {
