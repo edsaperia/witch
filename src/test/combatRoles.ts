@@ -1,4 +1,4 @@
-import { SPACING } from "../rules/combatSpacing";
+import { ACTIONS } from "../rules/combat/actions";
 
 /** Select the intent a signature fixture exercises; retain the real attack executor. */
 export function withCombatRoles(roles: Record<string, "melee" | "ranged" | "special">, run: () => void): () => void {
@@ -9,10 +9,9 @@ export function withCombatRoles(roles: Record<string, "melee" | "ranged" | "spec
 }
 
 export function setCombatRoles(roles: Record<string, "melee" | "ranged" | "special">): () => void {
-  const original = SPACING.preferences;
-  SPACING.preferences = { default: original.default, species: { ...original.species } };
-  for (const [species, role] of Object.entries(roles)) SPACING.preferences.species[species] = {
-    ...original.species[species], melee: role === "melee" ? 1 : 0, ranged: role === "ranged" ? 1 : 0, special: role === "special" ? 1 : 0,
-  };
-  return () => { SPACING.preferences = original; };
+  const original = ACTIONS.species;
+  ACTIONS.species = { ...original };
+  // Existing signature fixtures use the old shorthand; production has no role preferences.
+  for (const [species, role] of Object.entries(roles)) ACTIONS.species[species] = (original[species] ?? []).map(action => ({...action, weight: action.delivery === (role === "special" ? "effect" : role) ? 1 : 0}));
+  return () => { ACTIONS.species = original; };
 }

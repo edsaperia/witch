@@ -2,7 +2,7 @@ import { afterEach, describe, expect, it } from "vitest";
 import { SPACING, bodyGap, clearWaitingSlot, drawnRadius, pathClearsHazard, spacingOn, waitingAvoidance, waitingDrive, waitingProfile, waitingSlot, type SpacingData } from "./combatSpacing";
 import { MOVEMENT, resetFight, steer } from "./movement";
 import { spaceOut } from "./spacing";
-import { PACKS, spreadLull } from "./combat/packs";
+import { PACKS, packAttack, spreadLull } from "./combat/packs";
 import { TUNING, withTuning } from "./tuning";
 import { tuningFromLink } from "../app/linkParams";
 import type { Creature, Level } from "./creatures";
@@ -11,6 +11,7 @@ import { rng } from "./random";
 import { withCombatRoles } from "../test/combatRoles";
 import { queueCombatHit } from "../test/combatHit";
 import type { Game } from "./game";
+import { observeAttacks, type AttackOutcome } from "./attackObservation";
 
 const data: SpacingData = { ...SPACING, body: { pixelSize: 3, source: "synthetic geometry fixture, not measured game radii", radii: { wolf: [10, 20, 30, 40], elephant: [20, 40, 60, 80] } } };
 const t = withTuning({ combatSpacing: true });
@@ -156,6 +157,12 @@ describe("combat waiting spacing", () => {
     expect(b.world.creatures[0].x).toBeCloseTo(a.world.creatures[0].x, 10);
     expect(b.world.creatures[0].z).toBeCloseTo(a.world.creatures[0].z, 10);
   });
+  it("a hunting ambusher approaches a distant chosen target instead of lying in wait", withCombatRoles({snake: "melee"}, () => {
+    const {state, world} = fight(true), c = world.creatures[0];
+    world.creatures.splice(1); world.active = world.creatures; c.species = "snake"; c.x = 100; c.z = 0;
+    for (let i = 0; i < 60; i++) {world.time = i * world.dt; stepCombat(state, world);}
+    expect(c.fight?.target).toEqual({kind: "witch", id: 0}); expect(c.x).toBeLessThan(100);
+  }));
   it("advances an active waiting hop exactly once, including its landing step", () => {
     const { state, world } = fight(true), c = world.creatures[0];
     world.creatures.splice(1); world.active = world.creatures;
@@ -167,7 +174,7 @@ describe("combat waiting spacing", () => {
     expect(c.x).toBeCloseTo(x + 10, 10); expect(c.z).toBeCloseTo(z, 10);
     expect(c.hop).toBeUndefined();
   });
-  it("admits a chosen special only after its waiting route lands", withCombatRoles({ toad: "special" }, () => {
+  it("admits a chosen spore leap only after its waiting route lands", withCombatRoles({ toad: "special" }, () => {
     const { state, world } = fight(true), c = world.creatures[0];
     world.creatures.splice(1); world.active = world.creatures; c.species = "toad"; c.x = 15; c.z = 0;
     stepCombat(state, world);
@@ -188,12 +195,45 @@ describe("combat waiting spacing", () => {
     world.time = world.dt; stepCombat(state, world);
     expect(victim.dazed).toBe(true); expect(state.shots).toHaveLength(0);
   });
-  for (const species of ["boar", "stoat", "bat"]) it(`${species} prepares and executes its chosen special without a melee opener`, withCombatRoles({ [species]: "special" }, () => {
+  it("attributes an explicitly missed charge's self-stun to that animal", () => {
+    const {state, world} = fight(true), c = world.creatures[0];
+    world.creatures.splice(1); world.active = world.creatures; c.species = "boar";
+    c.charge = {dx: 1, dz: 0, speed: 0, until: 0, braking: true}; c.vx = 0; c.vz = 0;
+    const rows: Readonly<AttackOutcome>[] = [];
+    observeAttacks(state, row => rows.push(row));
+    world.time = 1; stepCombat(state, world);
+    expect(rows.find(row => row.phase === "self-miss")).toMatchObject({source: c.id, targetId: c.id, attack: "move:charge", damageAccepted: false, stunApplied: true});
+  });
+  for (const species of ["boar", "stoat", "bat"]) it(`${species} prepares and executes its chosen action`, withCombatRoles({ [species]: species === "boar" ? "melee" : "special" }, () => {
     const { state, world } = fight(true), c = world.creatures[0];
     world.creatures.splice(1); world.active = world.creatures; c.species = species; c.x = 20; c.z = 0;
+    c.moveReadyAt = 0; c.fight!.readyAt = 0;
     let seen = false;
     world.packWorld = { confuse: () => { seen = true; } };
     for (let i = 0; i < 240; i++) { world.time = i * world.dt; stepCombat(state, world); if (species === "boar") seen ||= !!c.charge; }
     expect(seen).toBe(true);
+  }));
+  for (const species of ["ram", "bat"]) it(`${species} executes a selected projectile rather than its native close attack`, withCombatRoles({[species]: "ranged"}, () => {
+    const {state, world} = fight(true), c = world.creatures[0];
+    world.creatures.splice(1); world.active = world.creatures; c.species = species; c.x = 10; c.z = 0; c.moveReadyAt = 0; c.fight!.readyAt = 0;
+    world.t = withTuning({combatSpacing: true});
+    let fired = false;
+    for (let i = 0; i < 240; i++) {
+      world.time = i * world.dt; stepCombat(state, world); fired ||= state.shots.length > 0;
+      expect(c.charge).toBeUndefined(); expect(c.swoop?.phase).not.toBe("dive");
+    }
+    expect(fired).toBe(true);
+  }));
+  it("a party bat executes its selected close screech against a nearby foe", withCombatRoles({bat: "melee"}, () => {
+    const {state, world} = fight(true), c = world.creatures[0], foe = world.creatures[1];
+    world.creatures.splice(2); world.active = world.creatures;
+    Object.assign(c, {species: "bat", leashed: true, x: 2, z: 0, moveReadyAt: 0}); c.fight!.target = {kind: "creature", id: 1}; c.fight!.readyAt = 0;
+    Object.assign(foe, {x: 0, z: 0, stunUntil: Infinity, fight: undefined});
+    stepCombat(state, world);
+    const team = [...state.waitingTeams!.values()].find(t => t.members.includes(c.id))!;
+    team.phase = "combo"; team.nextAt = 5; c.x = 2; c.z = 0; c.vx = 0; c.vz = 0;
+    let pulsed = false;
+    for (let i = 0; i < 120; i++) {world.time = i * world.dt; stepCombat(state, world); pulsed ||= state.events.some(e => e.kind === "pulse" && e.id === c.id);}
+    expect(pulsed, JSON.stringify({gap: bodyGap(c, foe, world.t), attack: packAttack("bat", 2, "melee")?.attack, fight: c.fight, x: c.x, z: c.z, foe: {x: foe.x, z: foe.z}, team: [...state.waitingTeams!.values()][0], events: state.events.map(e => e.kind)})).toBe(true);
   }));
 });

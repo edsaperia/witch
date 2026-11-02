@@ -25,7 +25,7 @@ export interface SpacingData {
   hopper: { out: number; length: number; time: number; height: number; pause: number };
   steady: { out: number; carrot: number };
   motion: { default: MotionProfile; species: Record<string, Partial<MotionProfile>> };
-  team: { roundTime: number; attackWindow: number; active: number; melee: number; ranged: number; special: number };
+  team: { roundTime: number; attackWindow: number; active: number };
   preferences: { default: import("./combat/teams").RolePreferences; species: Record<string, Partial<import("./combat/teams").RolePreferences>> };
 }
 export const SPACING = raw.spacing as SpacingData;

@@ -1,24 +1,27 @@
 import { describe, expect, it } from "vitest";
-import { chooseTeamRoles, stepTeams, teamOf } from "./teams";
+import { chooseTeamActions, consumeAction, stepTeams, teamOf } from "./teams";
+import { ACTIONS, actionsOf, actionReach } from "./actions";
 import { PACKS } from "./packs";
 import { newCombat, type CombatWorld } from "../combat";
 import type { Creature } from "../creatures";
-import { withCombatRoles } from "../../test/combatRoles";
-import type { PackState } from "./packs";
+import { FIGHT } from "../movement";
 
 const animal = (id: number, species = "fox", level = 2) => ({ id, species, level, x: 0, z: 0, fight: { target: { kind: "witch", id: 0 } } } as Creature);
 describe("mixed combat teams", () => {
-  it("waits for another finite opportunity when the selected capability is cooling down", withCombatRoles({ fox: "special" }, () => {
+  it("waits for another finite opportunity when all its actions are cooling down", () => {
     const c = animal(0), state = newCombat(), world = { active: [c], time: 1, witches: [{ id: 0, x: 0, z: 0 }] } as CombatWorld;
-    state.packs = new Map([["cooling", { members: [0], specialReadyAt: 1000 } as PackState]]);
     stepTeams(state, world, PACKS, () => false);
     const team = teamOf(state, 0)!;
+    team.ready[0] = Object.fromEntries(actionsOf(c.species).map(a => [a.id, 1000]));
+    team.phase = "lull"; team.nextAt = 1;
+    stepTeams(state, world, PACKS, () => false);
     expect(team.roles[0]).toBe("hold"); expect(team.phase).toBe("lull");
     expect(Number.isFinite(team.nextAt)).toBe(true); expect(team.nextAt).toBeGreaterThan(world.time);
-  }));
-  it.each(["fox", "ram"])("lets a lone %s choose each role over successive rounds", species => {
-    const roles = new Set(Array.from({ length: 100 }, (_, round) => chooseTeamRoles([animal(1, species)], 123, round, PACKS)[1]));
-    expect(roles).toEqual(new Set(["lunger", "shooter", "special"]));
+  });
+  it.each(["fox", "ram"])("lets a lone %s choose its own repertoire without inventing a third role", species => {
+    const actions = new Set(Array.from({ length: 100 }, (_, round) => chooseTeamActions([animal(1, species)], 123, round)[1]?.id));
+    expect(actions).toEqual(new Set(actionsOf(species).map(a => a.id)));
+    expect(actions.size).toBe(2);
   });
   it("does not replace a committed intent at an encounter round boundary", () => {
     const c = animal(0), state = newCombat(), world = { active: [c], time: 1, witches: [{ id: 0, x: 0, z: 0 }] } as CombatWorld;
@@ -34,13 +37,46 @@ describe("mixed combat teams", () => {
     stepTeams(state, world, PACKS, () => false);
     expect(team.round).toBe(round + 1); expect(team.nextAt).toBeGreaterThan(world.time);
   });
-  it("shares role limits across species, filters unavailable specials and repeats deterministically", () => {
+  it("shares total pressure across species without reserving delivery slots", () => {
     const members = Array.from({ length: 12 }, (_, i) => animal(i, i % 2 ? "fox" : "hare", i % 3 ? 2 : 1));
-    const roles = chooseTeamRoles(members, 123, 2, PACKS, () => false);
-    expect(roles).toEqual(chooseTeamRoles(members, 123, 2, PACKS, () => false));
-    expect(Object.values(roles).filter(r => r === "lunger").length).toBeLessThanOrEqual(1);
-    expect(Object.values(roles).filter(r => r === "shooter").length).toBeLessThanOrEqual(2);
-    expect(Object.values(roles)).not.toContain("special");
+    const actions = chooseTeamActions(members, 123, 2, (_c, a) => a.delivery === "melee");
+    expect(actions).toEqual(chooseTeamActions(members, 123, 2, (_c, a) => a.delivery === "melee"));
+    expect(Object.values(actions).filter(Boolean)).toHaveLength(4);
+    expect(Object.values(actions).filter(Boolean).every(a => a?.delivery === "melee")).toBe(true);
+  });
+  it("accepts five actions with the same executor and cools down only the chosen action of its actor", () => {
+    const original = ACTIONS.species.fox;
+    try {
+      ACTIONS.species.fox = Array.from({length: 5}, (_, i) => ({id: `choice-${i}`, delivery: "effect", effect: "confusion", parameters: {range: 3 + i}, weight: i + 1, youngWeight: 1, cooldown: 7}));
+      const c = animal(0), state = newCombat(), world = {active: [c], time: 1} as CombatWorld;
+      stepTeams(state, world, PACKS, () => false);
+      const team = teamOf(state, 0)!, action = team.actions[0]!;
+      expect(new Set(Array.from({length: 400}, (_, round) => chooseTeamActions([c], 123, round)[0]?.id)).size).toBe(5);
+      expect(actionReach(c, action, PACKS)).toBe(action.parameters!.range! * FIGHT.scale);
+      consumeAction(team, 0, 10);
+      expect(team.ready[0]).toEqual({[action.id]: 17});
+      expect(team.ready[1]).toBeUndefined();
+      const next = chooseTeamActions([c], 123, 5, (actor, a) => (team.ready[actor.id]?.[a.id] ?? 0) <= 11)[0];
+      expect(next).toBeDefined(); expect(next!.id).not.toBe(action.id);
+    } finally { ACTIONS.species.fox = original; }
+  });
+  it("filters adult-only actions while retaining independent weights and youth preference", () => {
+    const actions = Array.from({length: 300}, (_, round) => chooseTeamActions([animal(0, "unicorn", 1)], 321, round)[0]);
+    expect(actions.every(a => a?.id !== "mind")).toBe(true);
+    expect(actionsOf("ram").find(a => a.delivery === "melee")?.knockback).toBeGreaterThan(0);
+    expect(actionsOf("ram").some(a => a.effect === "knockback")).toBe(false);
+  });
+  it("retains individual action cooldowns when an animal changes target", () => {
+    const c = animal(0), state = newCombat(), world = {active: [c], time: 1} as CombatWorld;
+    stepTeams(state, world, PACKS, () => false);
+    const first = teamOf(state, 0)!, action = first.actions[0]!;
+    consumeAction(first, 0, 10);
+    first.ready[0][action.id] = 20;
+    c.fight!.target = {kind: "creature", id: 1};
+    stepTeams(state, world, PACKS, () => false);
+    const next = teamOf(state, 0)!;
+    expect(next).not.toBe(first); expect(next.ready[0][action.id]).toBe(20);
+    expect(next.actions[0]?.id).not.toBe(action.id);
   });
   it("groups by side and target while excluding babies and legends", () => {
     const members = [animal(0), animal(1, "hare", 1), animal(2, "fox", 0), animal(3, "fox", 3), { ...animal(4), leashed: true }];

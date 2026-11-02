@@ -169,6 +169,8 @@ export type CombatEvent =
 export interface SoundHealth { hp: number; max: number; x: number; z: number; radius: number }
 
 export interface CombatState {
+  /** Individual action cooldowns survive changes of target/team. Live state, not profile data. */
+  actionReady?: Record<number, Record<string, number>>;
   /** Shared youth/adult attack rounds by side + target, including mixed species. */
   waitingTeams?: Map<string, import("./teams").TeamState>;
   shots: Shot[];

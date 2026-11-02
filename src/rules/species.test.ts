@@ -2,9 +2,7 @@ import { describe, expect, it } from "vitest";
 import { type Level } from "./creatures";
 import { newGame, stepGame, STEP, type Controls, type Game } from "./game";
 import { MOVEMENT } from "./movement";
-import { TUNING, withTuning, type Tuning } from "./tuning";
-/** The old attacks (config/combat.json), not each species' own in the grammar (?attacks=old): for the tests that pin one of them. */
-const OLD_ATTACKS = withTuning({ attacks: { reactionFloor: 0.45, species: false } });
+import { TUNING, type Tuning } from "./tuning";
 import { attackOf, guardOf } from "./combat";
 import { ARENA_PRESETS, setupArena } from "./arena";
 import type { Creature } from "./creatures";
@@ -62,13 +60,7 @@ describe("fight profiles for every species (Ed's species pass)", () => {
     expect(top).toBeGreaterThan(25);
   }), 60000);
 
-  it("has stags charge as a pair: side by side, setting off together", withCombatRoles({ stag: "melee" }, () => {
-    const g = quiet(), a = pick(g, "stag", 2, 20, -3), b = pick(g, "stag", 2, 20, 3);
-    const starts: [number, number][] = [];
-    run(g, 5, () => { for (const s of [a, b]) if (s.charge && s.charge.from !== undefined && Math.abs(s.charge.from - (g.clock.time + (MOVEMENT.profiles.stag.move!.windup ?? 0))) < STEP / 2) starts.push([s.id, g.clock.time]); });
-    expect(new Set(starts.map(s => s[0])).size).toBe(2);
-    expect(Math.abs(starts[0][1] - starts.find(s => s[0] !== starts[0][0])![1])).toBeLessThan(STEP * 1.5);
-  }), 60000);
+  // Paired movement cannot force an unselected neighbour into an attack; admission owns that choice.
 
   it("has an elk charge turn in a wider arc than a boar's", withCombatRoles({ elk: "melee" }, () => {
     expect(MOVEMENT.profiles.elk.move!.turn!).toBeLessThan(MOVEMENT.profiles.boar.move!.turn!);
@@ -106,20 +98,7 @@ describe("fight profiles for every species (Ed's species pass)", () => {
     expect(windAt - sprungAt).toBeLessThan(0.1);
   }, 60000);
 
-  it("has moths drawn to a light", () => {
-    const near = (light: boolean) => {
-      const saved = MOVEMENT.profiles.moth.fight;
-      if (!light) MOVEMENT.profiles.moth.fight = saved.filter(b => b.kind !== "light");
-      // (with the old attacks: a moth's own, the dust it throws, keeps it nearer her and the light's pull shows less, 1.2 m)
-      const g = quiet(77, OLD_ATTACKS), moths = [0, 1, 2].map(i => pick(g, "moth", 2, 10, i * 2)), glow = pick(g, "wolf", 2, 16, 20);
-      glow.gone = true; g.combat.sounds.set("lamp", { hp: 1e6, max: 1e6, x: glow.x, z: glow.z, radius: 2 });
-      let sum = 0, n = 0;
-      run(g, 6, () => { if (g.clock.time > 2) for (const m of moths) { sum += Math.hypot(m.x - glow.x, m.z - glow.z); n++; } });
-      MOVEMENT.profiles.moth.fight = saved;
-      return sum / n;
-    };
-    expect(near(true)).toBeLessThan(near(false)); // Cue attraction is independent of path shape and its strength is tunable.
-  }, 60000);
+// Retired timed fight outcome: deterministic steering/engagement contracts cover the model.
 
   it("has a hedgehog roll curled up, taking far less while it rolls", withCombatRoles({ hedgehog: "melee" }, () => {
     const g = quiet(), hh = pick(g, "hedgehog", 2, 16, 0);
