@@ -1,8 +1,8 @@
 # World, islands and lakes
 
-1 changes proposed, 5 groups to keep as they are.
+3 changes proposed, 6 groups to keep as they are.
 
-Read-only semantic review of the 97 originally assigned tests at 7ca190821 (comments6566078651 and6566081354). Snapshot size is kept on the saves page; two bot outcomes stay with #1622. Additional neighboring tests outside that original partition still need coverage reconciliation.
+Two bounded source reviews are integrated: original97-case partition plus122 additional IDs (reports6566078651/6566081354 and6566275689/6566277162). Shared save/creature cases and owner-only listings are counted elsewhere once. No world runtime was executed.
 
 Timings are historical containing-file time, not savings. Partial-file and overlapping groups include other tests; do not add their times. Source counts are test templates, not expanded runs.
 
@@ -24,8 +24,34 @@ Examples: [Dolphin appearances meet a sampled frequency band.](../../src/rules/s
 
 **Yes/no: Split these seven mixed tests so scenery-density and event-frequency targets become nightly reports? Yes keeps placement, no-set-piece, deterministic equality and shape-parameter checks blocking; only statistical components become informational.** [Assertions, rationale and exact membership](semantic-groups.md#w4).
 
+### W7. Procedural field and scenery quality
+
+**7 tests · outcome stats · ~131 s of CI.**
+
+Examples: [Area variance produces a minimum sampled size spread.](../../src/rules/rules.test.ts#L183); [A forest meets sampled dense and open shares.](../../src/rules/rules.test.ts#L200); [Generated patterns meet sampled glade and hedge shares.](../../src/rules/layoutPatterns.test.ts#L27).
+
+**Yes/no: Move these seven procedural-quality measurements to nightly/manual reports? Yes retains their measurements and design context, while those sampled appearance/distribution scores stop blocking releases.** [Assertions, rationale and exact membership](semantic-groups.md#w7).
+
+### W8. Mixed procedural quality and world integrity
+
+**29 tests · outcome stats · ~182 s of CI.**
+
+Examples: [Nearby islands retain a strait but also favor a closeness target.](../../src/rules/archipelago.test.ts#L22); [A shore sample meets a minimum reed count.](../../src/rules/groundcover.test.ts#L19); [Zoo streets meet a sampled median-distance target.](../../src/rules/zooMap.test.ts#L20).
+
+**Yes/no: Split these twenty-nine tests so only procedural density/variety/shape targets become reports? Yes keeps separation, valid content, numerical geometry correctness, equality, configured limits and meaningful nonempty coverage blocking. Whole mixed tests are not moved.** [Assertions, rationale and exact membership](semantic-groups.md#w8).
+
 
 ## Keep as they are
+
+- [W1: Campaign identity and map equivalence](semantic-groups.md#w1): 21 tests; ~313 s of CI.
+- [W2: Coast, lake and zoo boundaries](semantic-groups.md#w2): 25 tests; ~88 s of CI.
+- [W3: Authored rosters, biomes and lake looks](semantic-groups.md#w3): 27 tests; ~118 s of CI.
+- [W5: Map resource and test-helper budgets](semantic-groups.md#w5): 4 tests; ~77 s of CI.
+- [W6: Links, travel and explicit transition rules](semantic-groups.md#w6): 13 tests; ~91 s of CI.
+- [W9: World continuation, placement and explicit modes](semantic-groups.md#w9): 79 tests; ~603 s of CI.
+
+<details>
+<summary>Examples and evidence for the kept groups</summary>
 
 ### W1. Campaign identity and map equivalence
 
@@ -67,11 +93,20 @@ Examples: [An obsolete wave-pace link key is ignored.](../../src/app/linkParams.
 
 [Assertions, rationale and exact membership](semantic-groups.md#w6).
 
+### W9. World continuation, placement and explicit modes
 
-**Yes/no: Keep W1, W2, W3, W5, W6 as they are?** They protect campaign identity and map equivalence, spatial boundaries, authored world content, resource budgets and explicit link/transition rules.
+**79 tests · current rules · ~603 s of CI.**
+
+Examples: [Prepared and direct maps continue to the same state.](../../src/rules/mapPrep.test.ts#L59); [A travelling follower remains ashore around a lake.](../../src/rules/lakes.test.ts#L128); [Runestone grounds exclude special scenery.](../../src/rules/stoneKeepClear.test.ts#L50).
+
+[Assertions, rationale and exact membership](semantic-groups.md#w9).
+
+</details>
+
+**Yes/no: Keep W1, W2, W3, W5, W6, W9 as they are?** They protect campaign identity and map equivalence, spatial boundaries, authored world content, resource budgets and explicit link/transition rules.
 
 [Old/current ruling comparisons](semantic-groups.md#world-islands-lakes-ruling-review). No change happens before Ed rules.
 
 ## Not reviewed, no change proposed
 
-125 additional tests remain outside the reviewed groups. The keep question above covers only named groups. [Exact remaining file/line manifest](unreviewed.md).
+0 additional tests remain outside the reviewed groups. The keep question above covers only named groups. [Exact remaining file/line manifest](unreviewed.md).

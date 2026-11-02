@@ -35,6 +35,13 @@ Examples: [A tempo change cheers once on the next bar.](../../src/platform/audio
 
 ## Keep as they are
 
+- [M1: Audio safety, scheduling and sample integrity](semantic-groups.md#m1): 41 tests; ~2 s of CI.
+- [M2: Score form and explicit musical rules](semantic-groups.md#m2): 88 tests; ~166 s of CI.
+- [M3: Cue boundaries, potion routing and music-tool data](semantic-groups.md#m3): 37 tests; ~14 s of CI.
+
+<details>
+<summary>Examples and evidence for the kept groups</summary>
+
 ### M1. Audio safety, scheduling and sample integrity
 
 **41 tests · hard limits · ~2 s of CI.**
@@ -45,7 +52,7 @@ Examples: [Hitches never schedule a note twice.](../../src/platform/audio/musicE
 
 ### M2. Score form and explicit musical rules
 
-**63 tests · current rules · ~27 s of CI.**
+**88 tests · current rules · ~166 s of CI.**
 
 Examples: [A 32-bar tune returns to its first phrase.](../../src/rules/musicForm.test.ts#L21); [The singer stays within the approved alto range.](../../src/rules/musicForm.test.ts#L238); [Each wave changes at least two musical features.](../../src/rules/musicSet.test.ts#L24).
 
@@ -59,6 +66,7 @@ Examples: [A clearing event sounds once on the next half-beat.](../../src/platfo
 
 [Assertions, rationale and exact membership](semantic-groups.md#m3).
 
+</details>
 
 **Yes/no: Keep M1, M2, M3 as they are?** They protect audio resource limits and deterministic scheduling, the approved score structure, and explicit event-to-sound routing.
 
@@ -66,4 +74,4 @@ Examples: [A clearing event sounds once on the next half-beat.](../../src/platfo
 
 ## Not reviewed, no change proposed
 
-25 additional tests remain outside the reviewed groups. The keep question above covers only named groups. [Exact remaining file/line manifest](unreviewed.md).
+0 additional tests remain outside the reviewed groups. The keep question above covers only named groups. [Exact remaining file/line manifest](unreviewed.md).

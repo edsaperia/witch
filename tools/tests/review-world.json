@@ -1,7 +1,7 @@
 {
   "world-islands-lakes": {
     "title": "World, islands and lakes",
-    "status": "Read-only semantic review of the 97 originally assigned tests at 7ca190821 (comments6566078651 and6566081354). Snapshot size is kept on the saves page; two bot outcomes stay with #1622. Additional neighboring tests outside that original partition still need coverage reconciliation.",
+    "status": "Two bounded source reviews are integrated: original97-case partition plus122 additional IDs (reports6566078651/6566081354 and6566275689/6566277162). Shared save/creature cases and owner-only listings are counted elsewhere once. No world runtime was executed.",
     "keepSummary": "campaign identity and map equivalence, spatial boundaries, authored world content, resource budgets and explicit link/transition rules",
     "protections": [
       "A campaign retains island shapes across nights while permitted creature/type deals change.",
@@ -222,12 +222,187 @@
           "A new island’s explicit link overrides carried settings.",
           "The door can open while island preparation continues."
         ]
+      },
+      {
+        "id": "W7",
+        "title": "Procedural field and scenery quality",
+        "kind": "outcome stats",
+        "caseIds": [
+          "src/rules/layoutPatterns.test.ts:27",
+          "src/rules/rules.test.ts:183",
+          "src/rules/rules.test.ts:200",
+          "src/rules/rules.test.ts:218",
+          "src/rules/rules.test.ts:259",
+          "src/rules/rules.test.ts:296",
+          "src/rules/rules.test.ts:1140"
+        ],
+        "reason": "Seven bodies measure generated area-size spread, forest dense/open/gradient shares, type diversity, openness-band tree density, the deliberately reduced-density count, layout-pattern shares and path departure from a straight line. No save/replay/water/exclusion assertion occurs inside these quality-only bodies. These are procedural quality measurements, not seven fight simulations.",
+        "question": "Move these seven procedural-quality measurements to nightly/manual reports? Yes retains their measurements and design context, while those sampled appearance/distribution scores stop blocking releases.",
+        "examples": [
+          "varies area sizes more with areaSizeVariance, keeping 20 x 20 areas",
+          "is a forest with clearings: mostly dense woods, open ground in distinct clearings (their edges softened round each area's arena: Ed, 2026-10-05)",
+          "glades are the inverse of groves' idea (holes in a full wood), hedges thin lines, a grid rows crossing rows"
+        ],
+        "exampleLabels": [
+          "Area variance produces a minimum sampled size spread.",
+          "A forest meets sampled dense and open shares.",
+          "Generated patterns meet sampled glade and hedge shares."
+        ],
+        "action": true
+      },
+      {
+        "id": "W8",
+        "title": "Mixed procedural quality and world integrity",
+        "kind": "outcome stats",
+        "caseIds": [
+          "src/rules/archipelago.test.ts:22",
+          "src/rules/beachDecor.test.ts:35",
+          "src/rules/bufferClearings.test.ts:15",
+          "src/rules/groundcover.test.ts:19",
+          "src/rules/groundcover.test.ts:30",
+          "src/rules/lakeShore.test.ts:16",
+          "src/rules/lakeShore.test.ts:30",
+          "src/rules/layoutPatterns.test.ts:18",
+          "src/rules/layoutPatterns.test.ts:22",
+          "src/rules/mapShape.test.ts:53",
+          "src/rules/rosters.test.ts:44",
+          "src/rules/rules.test.ts:65",
+          "src/rules/rules.test.ts:80",
+          "src/rules/rules.test.ts:301",
+          "src/rules/rules.test.ts:766",
+          "src/rules/rules.test.ts:1049",
+          "src/rules/rules.test.ts:1063",
+          "src/rules/rules.test.ts:1110",
+          "src/rules/rules.test.ts:1121",
+          "src/rules/rules.test.ts:1131",
+          "src/rules/rules.test.ts:1148",
+          "src/rules/rules.test.ts:1172",
+          "src/rules/rules.test.ts:1200",
+          "src/rules/rules.test.ts:1221",
+          "src/rules/rules.test.ts:1231",
+          "src/rules/rules.test.ts:1513",
+          "src/rules/rules.test.ts:1524",
+          "src/rules/rules.test.ts:1621",
+          "src/rules/zooMap.test.ts:20"
+        ],
+        "reason": "Twenty-nine cases combine sampled density, variety, correlations, ring shapes, street proximity and route diversity with direct world protection. Keep coast separation, nonnegative masks, water/path/floor/clearing exclusions, current allowed/removed content, per-object counts, exact seed/chunk equality, configuration endpoints and exercised nonempty coverage. mapShape53’s >90% numerical boundary agreement is retained GEOMETRY CORRECTNESS, not demoted with its aesthetic headland ratio.",
+        "question": "Split these twenty-nine tests so only procedural density/variety/shape targets become reports? Yes keeps separation, valid content, numerical geometry correctness, equality, configured limits and meaningful nonempty coverage blocking. Whole mixed tests are not moved.",
+        "examples": [
+          "grows each island in its patch: home and its nearest neighbours' coasts never meet, a strait apart, and close enough to read as fitted",
+          "rings ponds with reeds and keeps the water clear",
+          "puts every kind's island at its chart place, size areas across, no two closer than the gap, the typical street about street (Ed: \"too small and too far apart\")"
+        ],
+        "exampleLabels": [
+          "Nearby islands retain a strait but also favor a closeness target.",
+          "A shore sample meets a minimum reed count.",
+          "Zoo streets meet a sampled median-distance target."
+        ],
+        "action": true
+      },
+      {
+        "id": "W9",
+        "title": "World continuation, placement and explicit modes",
+        "kind": "current rules",
+        "caseIds": [
+          "src/rules/areaRenames.test.ts:12",
+          "src/rules/areaRenames.test.ts:32",
+          "src/rules/arrive.test.ts:11",
+          "src/rules/arrive.test.ts:44",
+          "src/rules/arrive.test.ts:66",
+          "src/rules/arrive.test.ts:82",
+          "src/rules/arrive.test.ts:103",
+          "src/rules/beach.test.ts:158",
+          "src/rules/deal.test.ts:18",
+          "src/rules/deal.test.ts:31",
+          "src/rules/deal.test.ts:40",
+          "src/rules/deal.test.ts:67",
+          "src/rules/forestChunks.test.ts:11",
+          "src/rules/forestChunks.test.ts:23",
+          "src/rules/groundcover.test.ts:45",
+          "src/rules/homeArea.test.ts:15",
+          "src/rules/homeArea.test.ts:34",
+          "src/rules/homeArea.test.ts:56",
+          "src/rules/homeArea.test.ts:74",
+          "src/rules/island.test.ts:18",
+          "src/rules/islandGrowth.test.ts:56",
+          "src/rules/islandShape.test.ts:13",
+          "src/rules/lakes.test.ts:128",
+          "src/rules/lakes.test.ts:162",
+          "src/rules/land.test.ts:20",
+          "src/rules/land.test.ts:30",
+          "src/rules/land.test.ts:43",
+          "src/rules/land.test.ts:49",
+          "src/rules/mapPrep.test.ts:59",
+          "src/rules/mapPrep.test.ts:77",
+          "src/rules/mapPrep.test.ts:87",
+          "src/rules/mapShape.test.ts:20",
+          "src/rules/mapShape.test.ts:73",
+          "src/rules/mapShape.test.ts:90",
+          "src/rules/mapShape.test.ts:106",
+          "src/rules/pointFeatures.test.ts:18",
+          "src/rules/pointFeatures.test.ts:25",
+          "src/rules/roster.test.ts:31",
+          "src/rules/roster.test.ts:50",
+          "src/rules/rosters.test.ts:66",
+          "src/rules/rosters.test.ts:82",
+          "src/rules/rosters.test.ts:90",
+          "src/rules/rosters.test.ts:125",
+          "src/rules/rules.test.ts:56",
+          "src/rules/rules.test.ts:72",
+          "src/rules/rules.test.ts:91",
+          "src/rules/rules.test.ts:103",
+          "src/rules/rules.test.ts:121",
+          "src/rules/rules.test.ts:138",
+          "src/rules/rules.test.ts:144",
+          "src/rules/rules.test.ts:160",
+          "src/rules/rules.test.ts:169",
+          "src/rules/rules.test.ts:176",
+          "src/rules/rules.test.ts:224",
+          "src/rules/rules.test.ts:247",
+          "src/rules/rules.test.ts:279",
+          "src/rules/rules.test.ts:289",
+          "src/rules/rules.test.ts:1100",
+          "src/rules/rules.test.ts:1117",
+          "src/rules/rules.test.ts:1190",
+          "src/rules/rules.test.ts:1245",
+          "src/rules/rules.test.ts:1510",
+          "src/rules/rules.test.ts:1632",
+          "src/rules/stoneKeepClear.test.ts:50",
+          "src/rules/stoneKeepClear.test.ts:61",
+          "src/rules/terrain.test.ts:16",
+          "src/rules/zoo.test.ts:17",
+          "src/rules/zoo.test.ts:35",
+          "src/rules/zoo.test.ts:43",
+          "src/rules/zooCoast.test.ts:23",
+          "src/rules/zooFence.test.ts:60",
+          "src/rules/zooFence.test.ts:67",
+          "src/rules/zooFence.test.ts:86",
+          "src/rules/zooFence.test.ts:92",
+          "src/rules/zooFence.test.ts:100",
+          "src/rules/zooMap.test.ts:41",
+          "src/rules/zooMap.test.ts:59",
+          "src/rules/zooMap.test.ts:76",
+          "src/rules/zooMap.test.ts:92"
+        ],
+        "reason": "Seventy-nine tests protect matched prepared/direct moving state, corrupt-prep rejection, roster/save coherence, shore-safe routing, protected runestone ground, arrival step bounds, forest cache/query ordering and zoo transitions. A600s route escape bound checks every walked/drawn segment stays ashore; a40s flight checks coast containment. Numerical geometry/query-effectiveness and coverage bounds remain integrity/current rules, not generic sampled appearance scores.",
+        "question": "Keep this group unchanged?",
+        "examples": [
+          "plays the same game: its moving state after a few seconds' play",
+          "a leashed animal travelling to her across a lake (Ed, 2026-10-12) walks round its shore, never on the water, and its drawn route is where it goes",
+          "`nothing on Ed's list lies in a stone's keep-clear zone (${name}, seed ${seed})`"
+        ],
+        "exampleLabels": [
+          "Prepared and direct maps continue to the same state.",
+          "A travelling follower remains ashore around a lake.",
+          "Runestone grounds exclude special scenery."
+        ]
       }
     ],
     "ownerCases": {
       "1622": [
         "src/rules/bot.test.ts:52",
-        "src/rules/bot.test.ts:100"
+        "src/rules/bot.test.ts:100",
+        "src/rules/island.test.ts:49"
       ]
     },
     "rulings": [
@@ -235,7 +410,25 @@
       "Home-growth supersession: journey backlog Ed10/11Oct says first10 areas’ ‘places and their kinds’ remain the same; island.md Ed28Oct says ‘keep the route changing, shuffle the creatures and area types, retain the area shapes’. deal.test.ts:54 requires changed type deals with stable shapes; homeGrowth.test.ts:24 compares cell keys and sorted roster, not type-at-cell. They implement the replacement. The rosters comment saying the night ‘only deals its legends’ is stale explanation, not a reason to delete its count/coast protection.",
       "Placeholder supersession: journey backlog Ed11Oct describes32 kinds and32 placeholders; island.md now says all64 designed. rosters.test.ts:115 still checks64 valid island descriptors; its old placeholder title is stale, while rejecting unknown-01 remains legacy-ID safety. Neither that title nor the64-designed statement proves flora RETHEMING exclusions obsolete.",
       "G3 review limits: floraBiomes.test.ts:31 excludes11 RETHEMING IDs under a comment saying17; an art/data owner must confirm those exclusions. lakeLooks.test.ts:40 returns early if its sampled island has no lake. These are specific coverage-strengthening candidates, not established obsolete whole tests. This bounded review confirmed zero obsolete whole tests.",
-      "Timing overlaps: mapPrep, beach, beachDecor, islandGrowth, homeGuard, lakes, island, terrain and win appear in multiple groups. File durations include other tests and other systems. No group-time sum is a wall-time or savings estimate."
-    ]
+      "Timing overlaps: mapPrep, beach, beachDecor, islandGrowth, homeGuard, lakes, island, terrain and win appear in multiple groups. File durations include other tests and other systems. No group-time sum is a wall-time or savings estimate.",
+      "Second-pass set-piece evidence: rules.test.ts40–43 explicitly enables setPieceChance=.25, grounds/decor families and path pieces; stoneKeepClear14–16 opts in too. This is retained preview/placement compatibility under the29Oct phase-out, not a positive requirement for normal generation. Keep exclusion/placement rules; report only sampled quality portions.",
+      "Legacy zoo grid: old zoo.ts helpers draw borders/corners of a grid; island.md21 replaces the live zoo with chart-shaped islands26Oct. map.ts creates zooChartPlan, paths.ts omits grid strips with that layout, and the live map omits grid junctions. zoo35 directly tests retained zooPlan helpers, while the plan still supplies current jump-list rows. No live-grid requirement or helper-retirement permission is established.",
+      "Radius/square compatibility is explicit: island.md13 retains island=off and test/radiusMap sets islandAreas0. mapShape73 selects square intentionally; islandShape13 tests a still-used helper, while islandGrowth56 compares real outlines. Treehouse rules224 already asserts north-west after24Oct; no due-north-only assertion was found.",
+      "Owner-only second-pass listings: island49 master swarm curve belongs to1622. IslandShape9/24 and lakeShore38 are visual source tests; rules237 is house/input; rules1642/1653 are spawn-marker/replacement-rune party policy. They receive no automatic keep decision from the world reviewer and remain explicitly unread until an owner/lead review is recorded."
+    ],
+    "routing": {
+      "art-rendering": [
+        "src/rules/islandShape.test.ts:9",
+        "src/rules/islandShape.test.ts:24",
+        "src/rules/lakeShore.test.ts:38"
+      ],
+      "house-treehouse": [
+        "src/rules/rules.test.ts:237"
+      ],
+      "invites-party": [
+        "src/rules/rules.test.ts:1642",
+        "src/rules/rules.test.ts:1653"
+      ]
+    }
   }
 }

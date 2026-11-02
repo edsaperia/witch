@@ -12,46 +12,237 @@
     ],
     "groups": [
       {
-        "id": "M1", "title": "Audio safety, scheduling and sample integrity", "kind": "hard limits",
-        "files": ["src/platform/audio/buffer.test.ts", "src/platform/audio/shed.test.ts", "src/platform/audio/outputMeter.test.ts", "src/platform/audio/sfxBudget.test.ts", "src/platform/audio/musicAhead.test.ts", "src/platform/audio/musicEngine.test.ts", "src/platform/audio/fof/fof.test.ts", "src/samples.test.ts"],
+        "id": "M1",
+        "title": "Audio safety, scheduling and sample integrity",
+        "kind": "hard limits",
+        "files": [
+          "src/platform/audio/buffer.test.ts",
+          "src/platform/audio/shed.test.ts",
+          "src/platform/audio/outputMeter.test.ts",
+          "src/platform/audio/sfxBudget.test.ts",
+          "src/platform/audio/musicAhead.test.ts",
+          "src/platform/audio/musicEngine.test.ts",
+          "src/platform/audio/fof/fof.test.ts",
+          "src/samples.test.ts"
+        ],
         "question": "Keep audio integrity checks unchanged?",
         "reason": "Clocks and audio nodes are controlled stand-ins. Note uniqueness, finite scheduling, gate reset, bounded voices, drift recovery and compiled-voice determinism are pipeline guarantees, not outcomes of a generated fight. The sample manifest test enforces the existing licence/size contract. The old FOF implementation remains a lab comparison; its safety test does not select it as the game's voice.",
-        "examples": ["never schedules a sixteenth twice when the game runs slower than the audio or hitches (round 13: the music crackling, then quiet)", "lets a greater sound cut the least short", "a bar rendered across a reset (a new night: the timeline not anchored) is dropped, not started at a non-finite time"],
-        "exampleLabels": ["Hitches never schedule a note twice.", "A louder effect can replace a quieter voice at the cap.", "A stale rendered bar never starts at NaN."]
+        "examples": [
+          "never schedules a sixteenth twice when the game runs slower than the audio or hitches (round 13: the music crackling, then quiet)",
+          "lets a greater sound cut the least short",
+          "a bar rendered across a reset (a new night: the timeline not anchored) is dropped, not started at a non-finite time"
+        ],
+        "exampleLabels": [
+          "Hitches never schedule a note twice.",
+          "A louder effect can replace a quieter voice at the cap.",
+          "A stale rendered bar never starts at NaN."
+        ]
       },
       {
-        "id": "M2", "title": "Score form and explicit musical rules", "kind": "current rules",
-        "files": ["src/rules/musicPlan.test.ts", "src/rules/musicForm.test.ts", "src/rules/musicSet.test.ts", "src/rules/musicZones.test.ts", "src/rules/musicVictory.test.ts", "src/rules/legendCircle.music.test.ts"],
-        "excludeIds": ["src/rules/musicForm.test.ts:172"],
+        "id": "M2",
+        "title": "Score form and explicit musical rules",
+        "kind": "current rules",
+        "files": [
+          "src/rules/musicPlan.test.ts",
+          "src/rules/musicForm.test.ts",
+          "src/rules/musicSet.test.ts",
+          "src/rules/musicZones.test.ts",
+          "src/rules/musicVictory.test.ts",
+          "src/rules/legendCircle.music.test.ts",
+          "src/rules/beat.test.ts",
+          "src/rules/djSet.test.ts",
+          "src/rules/knockdownTempo.test.ts",
+          "src/rules/creatureVoices.test.ts"
+        ],
+        "excludeIds": [
+          "src/rules/musicForm.test.ts:172"
+        ],
         "question": "Keep current score contracts unchanged?",
-        "reason": "The planner receives synthetic wave clocks; the score receives explicit seeds and styles. Assertions directly implement the 9 Oct ABAC structure, 11 Oct nightly set and 14 Oct alto/stepwise redesign. A 30-minute planner loop is not a played night. The 120 BPM test supplies its own style-based beat tuning; it does not prohibit choosing a different record. Wide instrument phrases, retained soprano fallback and alternate lab arpeggios are explicit comparison modes, not stale default singer claims.",
-        "examples": ["is ABAC in 8-bar phrases, A coming back exactly, B and C different", "sings as an alto, G3 to G4 in the home key, whatever the seed", "changes at least two of genre, key, lead, bass, voice and density every wave (never the tempo: the gameplay's), and never the genre twice running"],
-        "exampleLabels": ["A 32-bar tune returns to its first phrase.", "The singer stays within the approved alto range.", "Each wave changes at least two musical features."]
+        "reason": "The planner receives synthetic wave clocks; the score receives explicit seeds and styles. Assertions directly implement the 9 Oct ABAC structure, 11 Oct nightly set and 14 Oct alto/stepwise redesign. A 30-minute planner loop is not a played night. The 120 BPM test supplies its own style-based beat tuning; it does not prohibit choosing a different record. Wide instrument phrases, retained soprano fallback and alternate lab arpeggios are explicit comparison modes, not stale default singer claims. Additional beat/DJ/knockdown tests use specified clocks and tuning, including explicit bpmStep1/cap5 comparison parameters. Their real wave integration checks the derived tempo/countdown ratio, not an emergent win target. Beat inverse/continuity and DJ stroke order remain direct contracts. Two monolithic music tests explicitly set position/time/speaker damage and call musicMix; they do not simulate sampled sound success.",
+        "examples": [
+          "is ABAC in 8-bar phrases, A coming back exactly, B and C different",
+          "sings as an alto, G3 to G4 in the home key, whatever the seed",
+          "changes at least two of genre, key, lead, bass, voice and density every wave (never the tempo: the gameplay's), and never the genre twice running"
+        ],
+        "exampleLabels": [
+          "A 32-bar tune returns to its first phrase.",
+          "The singer stays within the approved alto range.",
+          "Each wave changes at least two musical features."
+        ],
+        "caseIds": [
+          "src/rules/musicPlan.test.ts:31",
+          "src/rules/musicPlan.test.ts:37",
+          "src/rules/musicPlan.test.ts:50",
+          "src/rules/musicPlan.test.ts:57",
+          "src/rules/musicPlan.test.ts:75",
+          "src/rules/musicPlan.test.ts:84",
+          "src/rules/musicPlan.test.ts:93",
+          "src/rules/musicPlan.test.ts:99",
+          "src/rules/musicPlan.test.ts:105",
+          "src/rules/musicPlan.test.ts:113",
+          "src/rules/musicPlan.test.ts:123",
+          "src/rules/musicPlan.test.ts:150",
+          "src/rules/musicPlan.test.ts:162",
+          "src/rules/musicPlan.test.ts:168",
+          "src/rules/musicPlan.test.ts:181",
+          "src/rules/musicPlan.test.ts:200",
+          "src/rules/musicPlan.test.ts:208",
+          "src/rules/musicPlan.test.ts:216",
+          "src/rules/musicPlan.test.ts:223",
+          "src/rules/musicPlan.test.ts:249",
+          "src/rules/musicPlan.test.ts:264",
+          "src/rules/musicPlan.test.ts:273",
+          "src/rules/musicPlan.test.ts:282",
+          "src/rules/musicForm.test.ts:21",
+          "src/rules/musicForm.test.ts:38",
+          "src/rules/musicForm.test.ts:52",
+          "src/rules/musicForm.test.ts:71",
+          "src/rules/musicForm.test.ts:85",
+          "src/rules/musicForm.test.ts:104",
+          "src/rules/musicForm.test.ts:112",
+          "src/rules/musicForm.test.ts:128",
+          "src/rules/musicForm.test.ts:152",
+          "src/rules/musicForm.test.ts:190",
+          "src/rules/musicForm.test.ts:208",
+          "src/rules/musicForm.test.ts:223",
+          "src/rules/musicForm.test.ts:238",
+          "src/rules/musicForm.test.ts:247",
+          "src/rules/musicForm.test.ts:259",
+          "src/rules/musicForm.test.ts:270",
+          "src/rules/musicForm.test.ts:315",
+          "src/rules/musicSet.test.ts:18",
+          "src/rules/musicSet.test.ts:24",
+          "src/rules/musicSet.test.ts:35",
+          "src/rules/musicSet.test.ts:62",
+          "src/rules/musicSet.test.ts:69",
+          "src/rules/musicSet.test.ts:77",
+          "src/rules/musicSet.test.ts:91",
+          "src/rules/musicSet.test.ts:98",
+          "src/rules/musicZones.test.ts:22",
+          "src/rules/musicZones.test.ts:34",
+          "src/rules/musicZones.test.ts:40",
+          "src/rules/musicZones.test.ts:52",
+          "src/rules/musicZones.test.ts:60",
+          "src/rules/musicVictory.test.ts:15",
+          "src/rules/musicVictory.test.ts:21",
+          "src/rules/musicVictory.test.ts:32",
+          "src/rules/legendCircle.music.test.ts:18",
+          "src/rules/legendCircle.music.test.ts:32",
+          "src/rules/legendCircle.music.test.ts:40",
+          "src/rules/legendCircle.music.test.ts:51",
+          "src/rules/legendCircle.music.test.ts:62",
+          "src/rules/legendCircle.music.test.ts:78",
+          "src/rules/legendCircle.music.test.ts:91",
+          "src/rules/beat.test.ts:8",
+          "src/rules/beat.test.ts:15",
+          "src/rules/beat.test.ts:35",
+          "src/rules/beat.test.ts:47",
+          "src/rules/beat.test.ts:60",
+          "src/rules/beat.test.ts:65",
+          "src/rules/beat.test.ts:90",
+          "src/rules/beat.test.ts:100",
+          "src/rules/djSet.test.ts:11",
+          "src/rules/djSet.test.ts:19",
+          "src/rules/djSet.test.ts:25",
+          "src/rules/djSet.test.ts:32",
+          "src/rules/djSet.test.ts:41",
+          "src/rules/djSet.test.ts:59",
+          "src/rules/djSet.test.ts:76",
+          "src/rules/djSet.test.ts:81",
+          "src/rules/knockdownTempo.test.ts:14",
+          "src/rules/knockdownTempo.test.ts:25",
+          "src/rules/knockdownTempo.test.ts:34",
+          "src/rules/knockdownTempo.test.ts:42",
+          "src/rules/knockdownTempo.test.ts:72",
+          "src/rules/creatureVoices.test.ts:8",
+          "src/rules/creatureVoices.test.ts:15",
+          "src/rules/rules.test.ts:1538",
+          "src/rules/rules.test.ts:1548"
+        ]
       },
       {
-        "id": "M3", "title": "Cue boundaries, potion routing and music-tool data", "kind": "current rules",
-        "files": ["src/platform/audio/aggro.cues.test.ts", "src/platform/audio/cleared.cues.test.ts", "src/platform/audio/fireworks.cues.test.ts", "src/platform/audio/knockdownRecord.cues.test.ts", "src/platform/audio/nope.cues.test.ts", "src/platform/audio/sparkler.cues.test.ts", "src/platform/audio/sfxCues.test.ts", "src/platform/audio/seaLife.cues.test.ts", "src/platform/audio/night.test.ts", "src/platform/audio/potionAudio.test.ts", "src/platform/audio/potionFilter.test.ts", "src/app/sound.test.ts", "src/musicLabSettings.test.ts", "src/musicStudioMidi.test.ts"],
-        "excludeIds": ["src/platform/audio/seaLife.cues.test.ts:24", "src/platform/audio/seaLife.cues.test.ts:29", "src/app/sound.test.ts:17"],
+        "id": "M3",
+        "title": "Cue boundaries, potion routing and music-tool data",
+        "kind": "current rules",
+        "files": [
+          "src/platform/audio/aggro.cues.test.ts",
+          "src/platform/audio/cleared.cues.test.ts",
+          "src/platform/audio/fireworks.cues.test.ts",
+          "src/platform/audio/knockdownRecord.cues.test.ts",
+          "src/platform/audio/nope.cues.test.ts",
+          "src/platform/audio/sparkler.cues.test.ts",
+          "src/platform/audio/sfxCues.test.ts",
+          "src/platform/audio/seaLife.cues.test.ts",
+          "src/platform/audio/night.test.ts",
+          "src/platform/audio/potionAudio.test.ts",
+          "src/platform/audio/potionFilter.test.ts",
+          "src/app/sound.test.ts",
+          "src/musicLabSettings.test.ts",
+          "src/musicStudioMidi.test.ts"
+        ],
+        "excludeIds": [
+          "src/platform/audio/seaLife.cues.test.ts:24",
+          "src/platform/audio/seaLife.cues.test.ts:29",
+          "src/app/sound.test.ts:17"
+        ],
         "question": "Keep cue and audio data rules unchanged?",
         "reason": "Tests inject the watch, cleared-area, fireworks or knockdown event, manually advance clocks and log a fake sound call. Counts here prove exactly-once routing and configured limits. The inland sea-life case is the negative range boundary. Potion tests directly set trip times and check routing, fade and source disposal. Music Lab JSON/MIDI tests use synthetic input and roundtrip/validation assertions. The first sound.test authority case is excluded for #1609.",
-        "examples": ["plays once, on the next half-beat after the areaCleared event, louder near the new soundsystem", "routes both dry and filtered paths, starts dry and restores dry gain after Stop", "copies only what changed, and pastes back the same"],
-        "exampleLabels": ["A clearing event sounds once on the next half-beat.", "Stopping a potion restores dry sound.", "Copied Music Lab settings round-trip exactly."]
+        "examples": [
+          "plays once, on the next half-beat after the areaCleared event, louder near the new soundsystem",
+          "routes both dry and filtered paths, starts dry and restores dry gain after Stop",
+          "copies only what changed, and pastes back the same"
+        ],
+        "exampleLabels": [
+          "A clearing event sounds once on the next half-beat.",
+          "Stopping a potion restores dry sound.",
+          "Copied Music Lab settings round-trip exactly."
+        ]
       },
       {
-        "id": "M4", "title": "Generated cue rates and melody proportions", "kind": "outcome stats", "action": true,
-        "files": ["src/platform/audio/seaLife.cues.test.ts", "src/rules/musicForm.test.ts"], "includeLines": [24,29,172],
+        "id": "M4",
+        "title": "Generated cue rates and melody proportions",
+        "kind": "outcome stats",
+        "action": true,
+        "files": [
+          "src/platform/audio/seaLife.cues.test.ts",
+          "src/rules/musicForm.test.ts"
+        ],
+        "includeLines": [
+          24,
+          29,
+          172
+        ],
         "question": "Make these three rate/proportion tests informational? Yes moves the 60/600-second dolphin/kraken counts and 60-seed melody-pace survey to a nightly report; range, routing, note validity and explicit form rules keep blocking releases.",
         "reason": "Sea-life tests sample seeded timetables for 60/600 seconds and require at least three splashes or one groan. Melody pace samples 60 seeds × ABC, requiring <3.5 notes/bar, >1 whole note/phrase and >15% triplets. These quantify an intended feel; they do not establish no-NaN, ownership or exactly-once event delivery. Opposite-coast absence assertions in the mixed sea-life cases must first be retained as small range tests.",
-        "examples": ["by the east coast, the dolphins' splashes, now and then", "by the west coast, the kraken's groan and the water pouring off it, rarely", "is mostly slow, with whole notes and triplets often, and some busier bars"],
-        "exampleLabels": ["Dolphins splash at least three times in a minute.", "The kraken groans during a ten-minute sample.", "Generated phrases exceed a triplet-share target."]
+        "examples": [
+          "by the east coast, the dolphins' splashes, now and then",
+          "by the west coast, the kraken's groan and the water pouring off it, rarely",
+          "is mostly slow, with whole notes and triplets often, and some busier bars"
+        ],
+        "exampleLabels": [
+          "Dolphins splash at least three times in a minute.",
+          "The kraken groans during a ten-minute sample.",
+          "Generated phrases exceed a triplet-share target."
+        ]
       },
       {
-        "id": "M5", "title": "Outdated cheer-test descriptions", "kind": "leftovers", "action": true,
-        "files": ["src/platform/audio/tempoUp.cues.test.ts"],
+        "id": "M5",
+        "title": "Outdated cheer-test descriptions",
+        "kind": "leftovers",
+        "action": true,
+        "files": [
+          "src/platform/audio/tempoUp.cues.test.ts"
+        ],
         "question": "Update these two test descriptions to the current knockdown design? Yes removes the old +1 BPM and rewind wording; the existing one-cheer/on-return timing assertions stay unchanged.",
         "reason": "The suite still says +1 BPM (7 Oct), and a case name says after trumpet and rewind. The 9 Oct design instead adds 5 BPM and removes the rewind at the cut. Neither case asserts +1 or requires a rewind: one calls knockdownTempo with current tuning; the other supplies a synthetic return clock. This is stale explanation, not obsolete behavior or deletion authority.",
-        "examples": ["with no knockout under way, cheers once, on the bar line the tempo starts rising from", "knocked down, cheers once as she's back at her decks (after the trumpet and the rewind), on her clock"],
-        "exampleLabels": ["A tempo change cheers once on the next bar.", "Returning to the decks cheers once on her clock."]
+        "examples": [
+          "with no knockout under way, cheers once, on the bar line the tempo starts rising from",
+          "knocked down, cheers once as she's back at her decks (after the trumpet and the rewind), on her clock"
+        ],
+        "exampleLabels": [
+          "A tempo change cheers once on the next bar.",
+          "Returning to the decks cheers once on her clock."
+        ]
       }
     ],
     "rulings": [

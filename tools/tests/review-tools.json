@@ -1,7 +1,7 @@
 {
   "tools-ci": {
     "title": "Tools and CI",
-    "status": "Read-only semantic review of 49 files at 7ca190821, reports #1632 comments6565979619 and6565996723; integrated with the added synthetic inventory checks reviewed here. No tool/game run was used as audit evidence.",
+    "status": "Two read-only tools reviews integrated:226 original tests plus77 additional tests (reports6565979619/6565996723/6566258844), plus six added synthetic inventory checks and eleven house-measurement tests reviewed separately. Standalone/plugin execution scope is labeled separately; no test run supplied semantic evidence.",
     "keepSummary": "honest CI coverage and publication, trustworthy measurements, deterministic isolation, research provenance and safe preview tooling",
     "protections": [
       "CI cannot turn missing history, a failed prerequisite or stale proof into a pass.",
@@ -57,10 +57,13 @@
           "tools/bench/travel-probe.test.ts",
           "tools/bench/worker-checkpoint.test.ts",
           "tools/bench/worker-job-summary.test.ts",
-          "tools/bench/worker-profile.test.ts"
+          "tools/bench/worker-profile.test.ts",
+          "src/app/houseCpuFunctions.test.ts",
+          "src/app/houseProfile.test.ts",
+          "src/app/houseShotSession.test.ts"
         ],
         "question": "Keep this group unchanged?",
-        "reason": "Supplied traces, fake clocks/workers/GL and shader source tokens test honest telemetry, comparison boundaries and performance budgets. The30000 upload calls and256 masks are synthetic coverage, not game populations. Intentional shader changes may require a separately reviewed baseline; no replacing ruling was established.",
+        "reason": "Supplied traces, fake clocks/workers/GL and shader source tokens test honest telemetry, comparison boundaries and performance budgets. The30000 upload calls and256 masks are synthetic coverage, not game populations. Intentional shader changes may require a separately reviewed baseline; no replacing ruling was established. House reviewer verified eleven synthetic CPU attribution/quantile/missing-data, held-clock, draw/finish, PNG-drift and census-reconciliation tests; these are measurement integrity, not generated-house outcomes.",
         "examples": [
           "rejects an unmeasured API trip instead of counting missing telemetry as zero",
           "preserves worker handlers, receiver, return values and transfer-list identity",
@@ -95,7 +98,7 @@
       },
       {
         "id": "T4",
-        "title": "Research provenance and generated data",
+        "title": "Research, architecture and generated data",
         "kind": "current rules",
         "files": [
           "tools/balance/expert-contract.test.mjs",
@@ -114,10 +117,19 @@
           "tools/docs/glossary.test.ts",
           "tools/docs/tables.test.ts",
           "tools/tests/inventory.test.mjs",
-          "tools/balance/report.test.mjs"
+          "tools/balance/report.test.mjs",
+          "src/linkSwitches.test.ts",
+          "src/rules/configDataBoundary.test.ts",
+          "src/rules/configs.test.ts",
+          "src/rules/knobDocs.test.ts",
+          "src/rules/layer.test.ts",
+          "src/rules/tuningSchema.test.ts",
+          "src/changelog.test.ts",
+          "src/makingOf.test.ts",
+          "src/pagesWorkflow.test.ts"
         ],
         "question": "Keep this group unchanged?",
-        "reason": "Most inputs are fabricated rows/configs. Screen tests validate frozen experiment controls and gate text, not whether a bot wins. Toy ask/tell scores protect resumability. Tiny real expert-contract cases assert provenance, replay equality and honest unsupported results. The inventory classifier tests pass strings like advance(world); they never advance a world. Newly added synthetic inventory cases have been reviewed by the integrator.",
+        "reason": "Most inputs are fabricated rows/configs. Screen tests validate frozen experiment controls and gate text, not whether a bot wins. Toy ask/tell scores protect resumability. Tiny real expert-contract cases assert provenance, replay equality and honest unsupported results. The inventory classifier tests pass strings like advance(world); they never advance a world. Newly added synthetic inventory cases have been reviewed by the integrator. Second review6566258844 adds20 schema/architecture/reference contracts and11 change-history/site-publication cases. Old import boundaries are parity inputs; the NEW schema graph excludes game/render/DOM. Knob-date checks validate metadata format, not every ruling’s design currentness. Changelog34 is a frozen archive sanity floor; Pages tests preserve selected source and latest live snapshot, not a game outcome.",
         "excludeIds": [
           "tools/balance/report.test.mjs:36"
         ],
@@ -143,10 +155,15 @@
           "tools/refraction/depth-readback.test.cjs",
           "tools/roster/pixel-diff.test.mjs",
           "tools/roster/presets.test.mjs",
-          "tools/shots/push.test.ts"
+          "tools/shots/push.test.ts",
+          "src/artCheckAffected.test.ts",
+          "src/artCheckScope.test.ts",
+          "src/artDependencies.test.ts",
+          "src/artHash.test.ts",
+          "src/artJobFingerprints.test.ts"
         ],
         "question": "Keep this group unchanged?",
-        "reason": "Throwaway Git fixtures, small typed arrays/depth bits, stubbed wrappers and glyph/genome records prove safe tooling and opted-in comparisons. Deterministic shape/ink constants are readability rules, not night outcomes. Art/creature owners should confirm a future acceptance-constant change.",
+        "reason": "Throwaway Git fixtures, small typed arrays/depth bits, stubbed wrappers and glyph/genome records prove safe tooling and opted-in comparisons. Deterministic shape/ink constants are readability rules, not night outcomes. Art/creature owners should confirm a future acceptance-constant change. The32 art-cache handoff tests parse ASTs/hash source/JSON/binary bytes and use fake command exits, not drawing. They require fail-closed dependency analysis, exact successful keys, initialization-order coverage and old-v1 exact-input compatibility. Copy-heavy real-source fixtures account for historical cost but are not outcome simulations.",
         "examples": [
           "adds only the named files, whatever is staged or missing in the checkout",
           "keeps adjacent sampled float32 depths distinct instead of re-quantizing to DEPTH24",
@@ -156,7 +173,41 @@
           "Preview publishing adds only the named files.",
           "Depth readback preserves distinct neighboring values.",
           "An unused preview switch preserves production data."
-        ]
+        ],
+        "caseKinds": {
+          "src/artCheckAffected.test.ts:15": "hard limits",
+          "src/artCheckAffected.test.ts:23": "hard limits",
+          "src/artCheckAffected.test.ts:42": "hard limits",
+          "src/artCheckAffected.test.ts:62": "hard limits",
+          "src/artCheckAffected.test.ts:67": "hard limits",
+          "src/artCheckAffected.test.ts:78": "hard limits",
+          "src/artCheckAffected.test.ts:84": "hard limits",
+          "src/artCheckAffected.test.ts:108": "hard limits",
+          "src/artCheckAffected.test.ts:116": "hard limits",
+          "src/artCheckAffected.test.ts:125": "hard limits",
+          "src/artCheckAffected.test.ts:150": "hard limits",
+          "src/artCheckScope.test.ts:7": "hard limits",
+          "src/artCheckScope.test.ts:11": "hard limits",
+          "src/artCheckScope.test.ts:16": "hard limits",
+          "src/artDependencies.test.ts:6": "hard limits",
+          "src/artDependencies.test.ts:19": "hard limits",
+          "src/artDependencies.test.ts:23": "hard limits",
+          "src/artDependencies.test.ts:29": "hard limits",
+          "src/artDependencies.test.ts:32": "hard limits",
+          "src/artHash.test.ts:20": "hard limits",
+          "src/artHash.test.ts:29": "hard limits",
+          "src/artHash.test.ts:36": "hard limits",
+          "src/artJobFingerprints.test.ts:11": "hard limits",
+          "src/artJobFingerprints.test.ts:24": "hard limits",
+          "src/artJobFingerprints.test.ts:35": "hard limits",
+          "src/artJobFingerprints.test.ts:46": "hard limits",
+          "src/artJobFingerprints.test.ts:52": "hard limits",
+          "src/artJobFingerprints.test.ts:64": "hard limits",
+          "src/artJobFingerprints.test.ts:74": "hard limits",
+          "src/artJobFingerprints.test.ts:84": "hard limits",
+          "src/artJobFingerprints.test.ts:93": "hard limits",
+          "src/artJobFingerprints.test.ts:104": "hard limits"
+        }
       },
       {
         "id": "T6",
@@ -177,6 +228,39 @@
         "exampleLabels": [
           "Interleaved bots and bags replay deterministically."
         ]
+      },
+      {
+        "id": "T7",
+        "title": "Separate coordination-plugin contracts",
+        "kind": "current rules",
+        "caseIds": [
+          ".claude/skills/page-contract/tests/contract.test.ts:19",
+          ".claude/skills/page-contract/tests/contract.test.ts:25",
+          ".claude/skills/page-contract/tests/contract.test.ts:33",
+          ".claude/skills/page-contract/tests/contract.test.ts:42",
+          ".claude/skills/page-contract/tests/contract.test.ts:52",
+          ".claude/skills/page-contract/tests/contract.test.ts:58",
+          ".claude/skills/page-contract/tests/contract.test.ts:69",
+          ".claude/skills/page-contract/tests/contract.test.ts:79",
+          ".claude/skills/page-contract/tests/contract.test.ts:86",
+          ".claude/skills/page-contract/tests/contract.test.ts:92",
+          ".claude/skills/page-contract/tests/contract.test.ts:110",
+          ".claude/skills/page-contract/tests/contract.test.ts:129",
+          ".claude/skills/page-contract/tests/contract.test.ts:145",
+          ".claude/skills/page-contract/tests/contract.test.ts:164"
+        ],
+        "reason": "Fourteen contracts mock tool replies, clocks and session identity. They protect required status/option fields, atomic batches, version-pinned activity stamps and wake-thread identity. The plugin still has manifest/hooks, but live activation was not verified. These are OUTSIDE Witch Vitest includes, their timing is UNKNOWN, and no Witch CI saving is established. Activation/applicability remains with dev-ops owner.",
+        "question": "Keep the separate coordination-plugin contracts?",
+        "examples": [
+          "an item with no status is refused, saying why (draft PR #158 hid this way)",
+          "a batch is refused whole when one entry breaks the contract",
+          "a page-comment wake is told whose wake thread it came on (Topic, 2026-10-05)"
+        ],
+        "exampleLabels": [
+          "A page item requires a status.",
+          "A malformed batch cannot partly apply.",
+          "Wake requests retain the intended coordinator identity."
+        ]
       }
     ],
     "rulings": [
@@ -184,7 +268,10 @@
       "Pixel exception supersession: testing.md6561733936 replaces #1612’s exact-colour exception with at most eight pixels and channel delta32. proofs.test.cjs:30 checks 2small/8at32 pass and9pixels/40channel fail. No removed allowlist requirement remains.",
       "Art policy supersession: historical creatures.md says cloud art/canonical visual review are release gates; current testing.md says art runs nightly/manual and does not hold builds/releases. workflows.test.ts checks advisory nightly art, standing result and matching-tree reuse. This supports keeping the replacement guards, not deleting them.",
       "Compatibility is current: roster/presets.test.mjs legacy beetle branch is still implemented in art/roster/presets.js and creatures.md retains beetle Current. comparable old-log and hold-simulation old/new-loop inputs similarly prove compatibility. No whole-case obsolete design was established in these49 files.",
-      "run-unit.test.ts “slowest alone” still follows the current largest-first total-work algorithm for its300s file/150s remaining-work input. A separate case rejects hiding extra work under the longest file. The title alone does not pin the superseded longest-file objective."
+      "run-unit.test.ts “slowest alone” still follows the current largest-first total-work algorithm for its300s file/150s remaining-work input. A separate case rejects hiding extra work under the longest file. The title alone does not pin the superseded longest-file objective.",
+      "Second-pass schedule supersession: art-check/scope.mjs header says full check on every prototype push; art-checks.md5 Ed1Nov now says nightly03:17/manual and ‘No build, deploy or release waits on it’. affected23 asserts schedule/manual and NO PR/push triggers. fullCheck(event) and scope(paths) are exported compatibility helpers, not workflow triggers. The old header is stale commentary; no assertion enforcing the retired schedule was found.",
+      "Pure schema replacement: config.md7 now imports LEGEND from creatureLevels while creatures retains the old exports without changing assembled values. configDataBoundary13 builds an OLD-import parity reference; :37 requires the NEW independent runtime graph. Knob prose migration29Oct and generated gates approved30Oct are protected by knobDocs21/67. No request to restore retired imports or prose is present.",
+      "Known hash bug: artHash’s23Oct header records top-level-only hashing missing nested edits. Tests now require recursive subfolder changes; exact-v1 migration requires matching effective inputs. These are replacement bug guards, not old stale-cache behavior. No outcome/deletion group was established in the77-ID second pass."
     ]
   }
 }

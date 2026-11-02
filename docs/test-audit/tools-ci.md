@@ -1,8 +1,8 @@
 # Tools and CI
 
-1 changes proposed, 5 groups to keep as they are.
+1 changes proposed, 6 groups to keep as they are.
 
-Read-only semantic review of 49 files at 7ca190821, reports #1632 comments6565979619 and6565996723; integrated with the added synthetic inventory checks reviewed here. No tool/game run was used as audit evidence.
+Two read-only tools reviews integrated:226 original tests plus77 additional tests (reports6565979619/6565996723/6566258844), plus six added synthetic inventory checks and eleven house-measurement tests reviewed separately. Standalone/plugin execution scope is labeled separately; no test run supplied semantic evidence.
 
 Timings are historical containing-file time, not savings. Partial-file and overlapping groups include other tests; do not add their times. Source counts are test templates, not expanded runs.
 
@@ -27,6 +27,16 @@ Examples: [Interleaved bots and bags replay deterministically.](../../tools/bala
 
 ## Keep as they are
 
+- [T1: CI coverage, publication and proof guards](semantic-groups.md#t1): 71 tests; known files: <1 s of CI; 3 files have unknown timing.
+- [T2: Measurement and diagnostic contracts](semantic-groups.md#t2): 80 tests; ~3 s of CI.
+- [T3: Generated-world fingerprints and repeat-night isolation](semantic-groups.md#t3): 4 tests; ~16 s of CI.
+- [T4: Research, architecture and generated data](semantic-groups.md#t4): 93 tests; known files: ~4 s of CI; 12 files have unknown timing.
+- [T5: Preview and visual-review tool integrity](semantic-groups.md#t5): 57 tests; known files: ~122 s of CI; 6 files have unknown timing.
+- [T7: Separate coordination-plugin contracts](semantic-groups.md#t7): 14 tests; historical time unknown.
+
+<details>
+<summary>Examples and evidence for the kept groups</summary>
+
 ### T1. CI coverage, publication and proof guards
 
 **71 tests · current rules · known files: <1 s of CI; 3 files have unknown timing.**
@@ -37,7 +47,7 @@ Examples: [Missing history cannot produce a related-test pass.](../../tools/ci/t
 
 ### T2. Measurement and diagnostic contracts
 
-**69 tests · hard limits · ~3 s of CI.**
+**80 tests · hard limits · ~3 s of CI.**
 
 Examples: [An unmeasured trip is not recorded as zero cost.](../../tools/bench/travel-budget.test.ts#L12); [Instrumentation preserves worker message behavior.](../../tools/bench/travel-probe.test.ts#L5); [Transport backlog does not inflate stage time.](../../tools/bench/worker-checkpoint.test.ts#L31).
 
@@ -51,9 +61,9 @@ Examples: [Notes and unused knobs do not change the game fingerprint.](../../too
 
 [Assertions, rationale and exact membership](semantic-groups.md#t3).
 
-### T4. Research provenance and generated data
+### T4. Research, architecture and generated data
 
-**61 tests · current rules · known files: <1 s of CI; 12 files have unknown timing.**
+**93 tests · current rules · known files: ~4 s of CI; 12 files have unknown timing.**
 
 Examples: [Held-out and reserved seeds cannot leak into training rows.](../../tools/balance/expert-contract.test.mjs#L61); [Survey merges reject duplicate or missing work.](../../tools/balance/survey.test.mjs#L69); [Generated types retain optional and nullable fields.](../../tools/config/typegen.test.ts#L11).
 
@@ -61,17 +71,26 @@ Examples: [Held-out and reserved seeds cannot leak into training rows.](../../to
 
 ### T5. Preview and visual-review tool integrity
 
-**25 tests · current rules · known files: ~2 s of CI; 6 files have unknown timing.**
+**57 tests · current rules · known files: ~122 s of CI; 6 files have unknown timing.**
 
 Examples: [Preview publishing adds only the named files.](../../tools/shots/push.test.ts#L30); [Depth readback preserves distinct neighboring values.](../../tools/refraction/depth-readback.test.cjs#L3); [An unused preview switch preserves production data.](../../tools/roster/presets.test.mjs#L6).
 
 [Assertions, rationale and exact membership](semantic-groups.md#t5).
 
+### T7. Separate coordination-plugin contracts
 
-**Yes/no: Keep T1, T2, T3, T4, T5 as they are?** They protect honest CI coverage and publication, trustworthy measurements, deterministic isolation, research provenance and safe preview tooling.
+**14 tests · current rules · historical time unknown.**
+
+Examples: [A page item requires a status.](../../.claude/skills/page-contract/tests/contract.test.ts#L25); [A malformed batch cannot partly apply.](../../.claude/skills/page-contract/tests/contract.test.ts#L69); [Wake requests retain the intended coordinator identity.](../../.claude/skills/page-contract/tests/contract.test.ts#L164).
+
+[Assertions, rationale and exact membership](semantic-groups.md#t7).
+
+</details>
+
+**Yes/no: Keep T1, T2, T3, T4, T5, T7 as they are?** They protect honest CI coverage and publication, trustworthy measurements, deterministic isolation, research provenance and safe preview tooling.
 
 [Old/current ruling comparisons](semantic-groups.md#tools-ci-ruling-review). No change happens before Ed rules.
 
 ## Not reviewed, no change proposed
 
-45 additional tests remain outside the reviewed groups. The keep question above covers only named groups. [Exact remaining file/line manifest](unreviewed.md).
+0 additional tests remain outside the reviewed groups. The keep question above covers only named groups. [Exact remaining file/line manifest](unreviewed.md).

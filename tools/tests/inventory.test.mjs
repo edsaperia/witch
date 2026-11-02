@@ -72,3 +72,9 @@ test('system guesses use file ownership rather than incidental words in test pro
   assert.equal(systemFor('src/rules/party.test.ts','what music starts'),'invites-party');
   assert.equal(systemFor('src/render/soundsystemGen.test.ts'),'art-rendering');
 });
+test('finds simple local registration wrappers without calling them',()=>{
+  const source="import {test} from 'node:test'; const unrelated=(name)=>empty(); const run=(name,fn)=>test(name,{timeout:5000},fn); run('disconnect',async()=>{});";
+  const result=parseCases(source,'fixture.test.mjs');
+  assert.equal(result.cases.length,1);
+  assert.equal(result.cases[0].name,'disconnect');
+});

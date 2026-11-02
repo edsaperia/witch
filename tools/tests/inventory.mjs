@@ -44,6 +44,23 @@ export function parseCases(source, file) {
     if (bindings && ts.isNamedImports(bindings)) for (const el of bindings.elements) aliases.set(el.name.text, el.propertyName?.text ?? el.name.text);
     if (n.importClause?.name && n.moduleSpecifier.text === 'node:test') aliases.set(n.importClause.name.text, 'test');
   }
+  // Recognize simple local registration wrappers (e.g. run(name, fn) =>
+  // test(name, { timeout: 5000 }, fn)) without importing or executing them.
+  for(let pass=0;pass<3;pass++) {
+    function wrappers(n) {
+      if(ts.isVariableDeclaration(n) && ts.isIdentifier(n.name) && n.initializer && (ts.isArrowFunction(n.initializer)||ts.isFunctionExpression(n.initializer))) {
+        const fn=n.initializer, first=fn.parameters[0]?.name;
+        let body=fn.body;
+        if(ts.isBlock(body) && body.statements.length===1 && ts.isReturnStatement(body.statements[0]))body=body.statements[0].expression;
+        if(body && ts.isCallExpression(body) && first && ts.isIdentifier(first) && body.arguments[0] && ts.isIdentifier(body.arguments[0]) && body.arguments[0].text===first.text) {
+          const base=aliases.get(chain(body.expression,sf).split('.')[0]);
+          if(['it','test','describe'].includes(base))aliases.set(n.name.text,base);
+        }
+      }
+      ts.forEachChild(n,wrappers);
+    }
+    wrappers(sf);
+  }
   const scanner = ts.createScanner(ts.ScriptTarget.Latest, false, ts.LanguageVariant.Standard, source);
   const comments = [];
   for (let token = scanner.scan(); token !== ts.SyntaxKind.EndOfFileToken; token = scanner.scan()) if ([ts.SyntaxKind.SingleLineCommentTrivia, ts.SyntaxKind.MultiLineCommentTrivia].includes(token)) comments.push({start: scanner.getTokenPos(), end: scanner.getTextPos(), text: scanner.getTokenText()});
@@ -123,9 +140,10 @@ export function build(root) {
   const sources = evidence(root);
   const routing=JSON.parse(fs.readFileSync(path.join(root,'tools/tests/system-routing.json'),'utf8'));
   const entries = files(root).map(file=>{
-    const source = fs.readFileSync(path.join(root,file),'utf8');
+    const source = fs.readFileSync(path.join(root,file),'utf8').replaceAll('\r\n','\n');
     const parsed = parseCases(source,file);
-    return {file,sha256:hash(source),scope:file.endsWith('.cjs')?'supplementary CJS':'requested TS/MJS',fileRuntimeSeconds:timing.seconds[file] ?? null,runtimeSource:timing.seconds[file] == null ? null : timing._source,coverageNote:'Source declarations only: loops, factories, computed registrations and imported helper-generated cases may register additional runtime cases. File and suite citations are context, not necessarily the assertion ruling. Truncated excerpts retain a source line.',parseErrors:parsed.parseErrors,cases:parsed.cases.map(c=>{
+    const executionScope=/^src\/.*\.test\.ts$|^tools\/(bench|shots|docs|config|ci)\/[^/]+\.test\.ts$/.test(file)?'Witch Vitest include':file.startsWith('.claude/')?'external coordination-plugin tests; outside Witch Vitest includes':'standalone/helper tests; outside Witch Vitest includes';
+    return {file,sha256:hash(source),hashBasis:'UTF-8 source with CRLF normalized to LF',scope:file.endsWith('.cjs')?'supplementary CJS':'requested TS/MJS',executionScope,fileRuntimeSeconds:timing.seconds[file] ?? null,runtimeSource:timing.seconds[file] == null ? null : timing._source,coverageNote:'Source declarations only: loops, factories, computed registrations and imported helper-generated cases may register additional runtime cases. File and suite citations are context, not necessarily the assertion ruling. Truncated excerpts retain a source line.',registrationNote:parsed.cases.length?'Static named registrations; not expanded runtime executions.':'No named registration found: may be a standalone assertion script or unsupported helper. This is not zero-coverage evidence.',parseErrors:parsed.parseErrors,cases:parsed.cases.map(c=>{
       const {body,...rest}=c;
       const ownerBoundary=/\b(borrowed|guest follows the host|telephone proof)\b/i.test(c.name);
       let system=ownerBoundary?'multiplayer':routing[file]??systemFor(file,c.fullName);
@@ -158,7 +176,8 @@ export function outputs(data, reviews = {}) {
   }
   result['cases.md']='# Exhaustive case catalogue\n\nStatic declarations only. All classifications and currentness are provisional. Case runtime is unknown throughout; file timings and provenance are in inventory.json. Parameterized templates are not expanded.\n\n'+Object.entries(systems).map(([id,[title]])=>`<a id="${id}"></a>\n\n## ${title}\n\n`+all.filter(c=>c.system===id).map(c=>`- **${cell(c.fullName)}** — [${c.file}:${c.line}](../../${c.file}#L${c.line})${c.parameterized?' (parameterized template)':''}\n  - ${c.kind}; ${c.recommendation}. Currentness: unverified. Case runtime: unknown.\n  - Cited ruling: ${c.citations.length?c.citations.map(q=>`${q.scope}, line ${q.line}: ${cell(q.quote)}`).join(' / '):'none found in scoped comments; not proof that none exists.'}\n${c.supersessionCandidates.map(e=>`  - Possible later evidence: [${e.file}:${e.line}](../../${e.file}#L${e.line}): ${cell(e.quote)}. ${e.status}.\n`).join('')}`).join('\n')).join('\n');
   const reviewed=Object.keys(reviews).map(id=>`[${systems[id]?.[0]??id}](${id}.md)`).join(', ');
-  result['README.md']=result['README.md'].replace('Audit only, #1631 / draft #1632.',`Audit only, #1631 / draft #1632.\n\n**Semantic review in progress.** Concrete reviewed groups: ${reviewed}. Exact reviewed membership, assertion rationale and old/current ruling comparisons are in [semantic-groups.md](semantic-groups.md). Page scope statements identify bounded reviews; neighboring unreviewed cases are not silently treated as current. Other system pages remain placeholders and are not ready for Ed. Combat and multiplayer retain their existing owners. The initial catalogue remains a machine-first reading aid; reviewed classifications are in inventory.json.`);
+  result['README.md']=result['README.md'].replace('Audit only, #1631 / draft #1632.',`Audit only, #1631 / draft #1632.\n\n**Scoped semantic review.** Concrete reviewed groups: ${reviewed}. Exact reviewed membership, assertion rationale and old/current ruling comparisons are in [semantic-groups.md](semantic-groups.md). Page scope statements identify bounded reviews; neighboring unreviewed cases are not silently treated as current. These proposals await the coordinator's review before Ed sees them. Combat and multiplayer retain their existing owners. The initial catalogue remains a machine-first reading aid; reviewed classifications are in inventory.json.`);
+  result['README.md']+='\n## Coverage ledger\n\nCounts below are source test templates, not executions. “Existing owner” means no parallel review/proposal in this audit; “unread” means no change proposed.\n\n| System | Reviewed | Existing owner | Unread |\n|---|---:|---:|---:|\n'+Object.entries(systems).map(([id,[title]])=>{const cases=all.filter(c=>c.system===id),owner=['combat','multiplayer'].includes(id);return `| ${title} | ${cases.filter(c=>c.semanticGroup).length} | ${owner?cases.length:0} | ${owner?0:cases.filter(c=>!c.semanticGroup).length} |`;}).join('\n')+'\n\nSee [the exact unread file/line manifest](unreviewed.md). Standalone Node and external coordination-plugin files are included in the inventory but labeled outside Witch Vitest includes; their counts are not established Witch CI savings. A file with no named registrations may be a standalone assertion script, not zero coverage.\n';
   const combined={...result,...reviewOutputs(data,reviews)};
   let unread='# Tests not yet semantically reviewed\n\nNo change is proposed for these tests. System placement uses the source file/module and named suite; placement is not a semantic keep decision. Combat and multiplayer remain owner-only listings. IDs identify source templates, not expanded executions.\n\n';
   for(const [id,[title]] of Object.entries(systems)) {
@@ -170,7 +189,7 @@ export function outputs(data, reviews = {}) {
     else combined[`${id}.md`]+=`\n## Not reviewed, no change proposed\n\n${pending.length} additional tests remain outside the reviewed groups. The keep question above covers only named groups. [Exact remaining file/line manifest](unreviewed.md).\n`;
   }
   combined['unreviewed.md']=unread;
-  return combined;
+  return Object.fromEntries(Object.entries(combined).map(([file,content])=>[file,content.trimEnd()+'\n']));
 }
 if (process.argv[1] && path.resolve(process.argv[1])===fileURLToPath(import.meta.url)) {
   const root=path.resolve(path.dirname(fileURLToPath(import.meta.url)),'../..');

@@ -14,7 +14,8 @@ export function applyReviews(data,reviews) {
       if(used.has(member.id)) throw Error(`Duplicate semantic group member: ${member.id}`);
       used.add(member.id);
       const c=data.files.find(f=>f.file===member.file).cases.find(c=>c.id===member.id);
-      Object.assign(c,{system,kind:group.kind,reason:group.reason,semanticGroup:group.id,currentness:'setup and assertions read; proposed decision awaits Ed',recommendation:group.question});
+      const kind=group.caseKinds?.[c.id]??(group.kind==='current rules' && c.kind==='hard limits'?'hard limits':group.kind);
+      Object.assign(c,{system,kind,reason:group.reason,semanticGroup:group.id,currentness:'setup and assertions read; proposed decision awaits Ed',recommendation:group.question});
     }
   }
   for(const review of Object.values(reviews))for(const [owner,ids] of Object.entries(review.ownerCases??{}))for(const id of ids){
@@ -23,11 +24,16 @@ export function applyReviews(data,reviews) {
     if(used.has(id))throw Error(`Owner case already grouped ${id}`);
     Object.assign(c,{system:owner==='1622'?'combat':'multiplayer',owner:`#${owner}`,recommendation:`existing owner #${owner}; no parallel audit decision`});
   }
+  for(const review of Object.values(reviews))for(const [system,ids] of Object.entries(review.routing??{}))for(const id of ids){
+    const c=data.files.flatMap(f=>f.cases).find(c=>c.id===id);
+    if(!c)throw Error(`Missing routing case ${id}`);
+    if(!used.has(id))c.system=system;
+  }
   return data;
 }
 export function reviewOutputs(data,reviews) {
   const out={};
-  let appendix='# Semantic review membership and rulings\n\nCore-file format preview only; the rest of the audit remains in progress. Each group lists source declarations, not expanded executions. Durations use the sum of unique containing-file timings from the existing CI run. Partial-file groups include unrelated cases, overlapping groups reuse file timings, and none of these sums is CI wall time or savings.\n\n';
+  let appendix='# Semantic review membership and rulings\n\nReviewed source groups; the separate unreviewed manifest proposes no changes. No test change is authorized. Each group lists source templates, not expanded executions. Durations sum unique containing-file timings from the existing CI run. Partial-file groups include unrelated cases, overlapping groups reuse file timings, and none of these sums is CI wall time or savings.\n\n';
   for(const [system,review] of Object.entries(reviews)) {
     const changes=review.groups.filter(g=>g.action);
     const keeps=review.groups.filter(g=>!g.action);
@@ -39,10 +45,12 @@ export function reviewOutputs(data,reviews) {
       const timing=!known?'historical time unknown':`${missing?'known files: ':''}${Number(seconds)<0.5?'<1':`~${Math.round(Number(seconds))}`} s of CI${missing?`; ${missing} files have unknown timing`:''}`;
       appendix+=`<a id="${g.id.toLowerCase()}"></a>\n\n## ${g.id}: ${g.title}\n\n${g.kind}; ${members.length} declarations; ${timing}.\n\n${g.reason}\n\n`+members.map(c=>`- [${c.file}:${c.line}](../../${c.file}#L${c.line}): ${c.name}`).join('\n')+'\n\n';
       const examples=g.examples.map((n,i)=>{const c=members.find(c=>c.name===n);const label=g.exampleLabels?.[i]??n;return `[${label}](../../${c.file}#L${c.line})`;}).join('; ');
-      return {id:g.id,action:g.action,text:`### ${g.id}. ${g.title}\n\n**${members.length} tests · ${g.kind} · ${timing}.**\n\nExamples: ${examples}.\n\n${g.action?`**Yes/no: ${g.question}** `:''}[Assertions, rationale and exact membership](semantic-groups.md#${g.id.toLowerCase()}).\n`};
+      return {id:g.id,title:g.title,count:members.length,timing,action:g.action,text:`### ${g.id}. ${g.title}\n\n**${members.length} tests · ${g.kind} · ${timing}.**\n\nExamples: ${examples}.\n\n${g.action?`**Yes/no: ${g.question}** `:''}[Assertions, rationale and exact membership](semantic-groups.md#${g.id.toLowerCase()}).\n`};
     });
     appendix+=`## ${system}: ruling review\n\n`+review.rulings.map(s=>`- ${s}`).join('\n')+'\n\n';
-    out[`${system}.md`]=`# ${review.title??(system==='legends'?'Legends':'Saves, replay and robustness')}\n\n${changes.length} changes proposed, ${keeps.length} groups to keep as they are.\n\n${review.status}\n\nTimings are historical containing-file time, not savings. Partial-file and overlapping groups include other tests; do not add their times. Source counts are test templates, not expanded runs.\n\n## What these protect\n\n${review.protections.map(s=>`- ${s}`).join('\n')}\n\n## Proposed changes\n\n${changes.length?groups.filter(g=>g.action).map(g=>g.text).join('\n'):'None in the reviewed groups.'}\n\n## Keep as they are\n\n${groups.filter(g=>!g.action).map(g=>g.text).join('\n')}\n\n**Yes/no: Keep ${keeps.map(g=>g.id).join(', ')} as they are?** They protect ${review.keepSummary??'the rules and integrity guarantees described above'}.\n\n[Old/current ruling comparisons](semantic-groups.md#${system}-ruling-review). No change happens before Ed rules.\n`;
+    const kept=groups.filter(g=>!g.action);
+    const keepDetails=kept.map(g=>`- [${g.id}: ${g.title}](semantic-groups.md#${g.id.toLowerCase()}): ${g.count} tests; ${g.timing}.`).join('\n')+'\n\n<details>\n<summary>Examples and evidence for the kept groups</summary>\n\n'+kept.map(g=>g.text).join('\n')+'\n</details>';
+    out[`${system}.md`]=`# ${review.title??(system==='legends'?'Legends':'Saves, replay and robustness')}\n\n${changes.length} changes proposed, ${keeps.length} groups to keep as they are.\n\n${review.status}\n\nTimings are historical containing-file time, not savings. Partial-file and overlapping groups include other tests; do not add their times. Source counts are test templates, not expanded runs.\n\n## What these protect\n\n${review.protections.map(s=>`- ${s}`).join('\n')}\n\n## Proposed changes\n\n${changes.length?groups.filter(g=>g.action).map(g=>g.text).join('\n'):'None in the reviewed groups.'}\n\n## Keep as they are\n\n${keepDetails}\n\n**Yes/no: Keep ${keeps.map(g=>g.id).join(', ')} as they are?** They protect ${review.keepSummary??'the rules and integrity guarantees described above'}.\n\n[Old/current ruling comparisons](semantic-groups.md#${system}-ruling-review). No change happens before Ed rules.\n`;
   }
   out['semantic-groups.md']=appendix;
   for(const [id,owner] of [['combat',1622],['multiplayer',1609]])out[`${id}.md`]=`# ${id==='combat'?'Combat':'Multiplayer'}\n\nExisting owner: #${owner}. Its decisions and test changes remain with that owner. This audit lists declarations in the [inventory](inventory.json) and [catalogue](cases.md#${id}); it proposes no parallel system decision or test rewrite.\n`;

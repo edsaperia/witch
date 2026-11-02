@@ -86,10 +86,11 @@
           "src/app/broomSave.test.ts",
           "src/app/hatSave.test.ts",
           "src/app/recordSave.test.ts",
-          "src/app/guideSave.test.ts"
+          "src/app/guideSave.test.ts",
+          "src/app/mushroomStock.test.ts"
         ],
         "question": "Keep equipment ownership and old-save conversion checks, including the old broom and station-name fixtures?",
-        "reason": "Old broom spells and the broomBay name occur as migration inputs: assertions require the current Classic broom/lathe result. They do not restore obsolete gameplay. Records explicitly require the 29 Oct 100/120 BPM starters.",
+        "reason": "Old broom spells and the broomBay name occur as migration inputs: assertions require the current Classic broom/lathe result. They do not restore obsolete gameplay. Records explicitly require the 29 Oct 100/120 BPM starters. House reviewer additionally verified mushroomStock:6/16/23: slot/campaign isolation, once-only in-flight credit and malformed-state handling.",
         "examples": [
           "an old save's broom shape goes back to the Classic look (its colours and fit kept) and its broom spell is dropped, once",
           "keeps a newly found hat in this page when storage refuses the write",
@@ -352,10 +353,20 @@
           "src/bots/questOffering.test.ts:17",
           "src/bots/questOffering.test.ts:25",
           "src/bots/quest-ending.test.ts:14",
-          "src/bots/quest-ending.test.ts:24"
+          "src/bots/quest-ending.test.ts:24",
+          "src/rules/dream.test.ts:10",
+          "src/rules/dream.test.ts:21",
+          "src/rules/dream.test.ts:27",
+          "src/rules/dream.test.ts:36",
+          "src/rules/slowTime.test.ts:29",
+          "src/rules/slowTime.test.ts:49",
+          "src/rules/slowTime.test.ts:70",
+          "src/rules/slowTime.test.ts:85",
+          "src/rules/slowTime.test.ts:111",
+          "src/rules/slowTime.test.ts:116"
         ],
         "question": "Keep current legend and quest rules?",
-        "reason": "The setup isolates a legend, kin or gift and invokes the explicit transition: waves do not wake legends, kin restore sleep, only a placed sigil completes a quest at any age, no buff is awarded, and the 100-letter Easter egg has its own tether/release rules. Fixed steps here check the declared state/timer/boundary, not an uncontrolled win rate. The staggered five-second kin check is a per-frame work bound. Early-quest wording still says baby, but its assertion explicitly says any age; it does not enforce the retired age requirement. Known-quest and offering policies receive fabricated observations/stack acknowledgements and explicit deadlines; they cannot invent unseen cues. Ending cases advance only the wave/ending clock and force neutralization, checking automatic ending and observed/drawn-pointer agreement, not whether a bot wins a natural night.",
+        "reason": "The setup isolates a legend, kin or gift and invokes the explicit transition: waves do not wake legends, kin restore sleep, only a placed sigil completes a quest at any age, no buff is awarded, and the 100-letter Easter egg has its own tether/release rules. Fixed steps here check the declared state/timer/boundary, not an uncontrolled win rate. The staggered five-second kin check is a per-frame work bound. Early-quest wording still says baby, but its assertion explicitly says any age; it does not enforce the retired age requirement. Known-quest and offering policies receive fabricated observations/stack acknowledgements and explicit deadlines; they cannot invent unseen cues. Ending cases advance only the wave/ending clock and force neutralization, checking automatic ending and observed/drawn-pointer agreement, not whether a bot wins a natural night. Dream helpers directly check nearest-kind/compass results and quest-open flags. Slow-time tests force ring entry/exit, held headings and a boundary-crossing letter: clock-rate scaling and exclusion remain direct rules, despite numeric movement checks, rather than sampled battle outcomes.",
         "examples": [
           "completes on the very step its sigil is put down in the circle, its animal still far away",
           "has the dream quest wake it happy, fighting for her, no buff (Ed, 2026-10-18; the creature stays hers), and stay open while it sleeps, soundsystem on or not (Ed, 2026-10-06)",

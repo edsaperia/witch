@@ -17,8 +17,13 @@ Render bounded human reviews with explicit case membership and undivided file ti
 ## Also here
 
 - `inventory.test.mjs`
+- `review-art.json`
+- `review-creatures.json`
+- `review-house.json`
+- `review-invites.json`
 - `review-music.json`
 - `review-tools.json`
+- `review-ui.json`
 - `review-world.json`
 - `semantic-reviews.json`
 - `system-routing.json`

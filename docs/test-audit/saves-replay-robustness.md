@@ -19,6 +19,16 @@ None in the reviewed groups.
 
 ## Keep as they are
 
+- [S1: Slot migration and isolation](semantic-groups.md#s1): 14 tests; <1 s of CI.
+- [S2: Snapshot integrity and format guards](semantic-groups.md#s2): 8 tests; ~32 s of CI.
+- [S3: Solo autosave eligibility and identity](semantic-groups.md#s3): 10 tests; ~4 s of CI.
+- [S4: Equipment saves and compatibility migrations](semantic-groups.md#s4): 16 tests; <1 s of CI.
+- [S5: Campaign progress and personal settings](semantic-groups.md#s5): 21 tests; <1 s of CI.
+- [S6: Recorded inputs and retained playtest reports](semantic-groups.md#s6): 18 tests; ~97 s of CI.
+
+<details>
+<summary>Examples and evidence for the kept groups</summary>
+
 ### S1. Slot migration and isolation
 
 **14 tests · hard limits · <1 s of CI.**
@@ -45,7 +55,7 @@ Examples: [Compatible saves survive new builds.](../../src/app/nightSave.test.ts
 
 ### S4. Equipment saves and compatibility migrations
 
-**13 tests · current rules · <1 s of CI.**
+**16 tests · current rules · <1 s of CI.**
 
 Examples: [Old brooms convert once and retain colours.](../../src/app/broomSave.test.ts#L44); [Found hats survive a refused write in this page.](../../src/app/hatSave.test.ts#L8); [Old station names migrate to current ones.](../../src/app/guideSave.test.ts#L7).
 
@@ -67,6 +77,7 @@ Examples: [A paused tape replays the identical state.](../../src/platform/inputR
 
 [Assertions, rationale and exact membership](semantic-groups.md#s6).
 
+</details>
 
 **Yes/no: Keep S1, S2, S3, S4, S5, S6 as they are?** They protect slot isolation, exact save/replay continuation, safe checkpoints, equipment migrations, personal settings and retained report text.
 

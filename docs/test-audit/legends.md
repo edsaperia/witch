@@ -34,6 +34,14 @@ Examples: [The oversized-legend list stays exactly eleven species.](../../src/ru
 
 ## Keep as they are
 
+- [L1: Paired-area ownership and sleeping placement](semantic-groups.md#l1): 9 tests; ~49 s of CI.
+- [L2: Circle geometry and explanation contracts](semantic-groups.md#l2): 9 tests; ~50 s of CI.
+- [L4: Retained comparison settings](semantic-groups.md#l4): 5 tests; ~147 s of CI.
+- [L6: Quest completion, sleeping state and party-legend rules](semantic-groups.md#l6): 60 tests; ~221 s of CI.
+
+<details>
+<summary>Examples and evidence for the kept groups</summary>
+
 ### L1. Paired-area ownership and sleeping placement
 
 **9 tests · hard limits · ~49 s of CI.**
@@ -60,12 +68,13 @@ Examples: [Radius maps default to one-fifth legends.](../../src/rules/legendShar
 
 ### L6. Quest completion, sleeping state and party-legend rules
 
-**50 tests · current rules · ~201 s of CI.**
+**60 tests · current rules · ~221 s of CI.**
 
 Examples: [Placing the sigil completes the quest immediately.](../../src/rules/questDrop.test.ts#L41); [A completed quest wakes an ally and grants no buff.](../../src/rules/legends.test.ts#L251); [Only the final Easter-egg letter permits legend pickup.](../../src/rules/partyLegend.test.ts#L45).
 
 [Assertions, rationale and exact membership](semantic-groups.md#l6).
 
+</details>
 
 **Yes/no: Keep L1, L2, L4, L6 as they are?** They protect paired-area ownership, circle geometry and instructions, deliberate comparison settings, quest completion and sleeping/Easter-egg state rules.
 
@@ -73,4 +82,4 @@ Examples: [Placing the sigil completes the quest immediately.](../../src/rules/q
 
 ## Not reviewed, no change proposed
 
-11 additional tests remain outside the reviewed groups. The keep question above covers only named groups. [Exact remaining file/line manifest](unreviewed.md).
+1 additional tests remain outside the reviewed groups. The keep question above covers only named groups. [Exact remaining file/line manifest](unreviewed.md).
