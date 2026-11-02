@@ -1,0 +1,31 @@
+# Combat test dispositions, 2026-11-02
+
+Ed's rulings on 2026-11-01 (PR #1622 comments 6565532460 and 6565535116) permit rewriting or deleting old fight outcomes. His later instruction removes a universal special role from the model. No legacy preservation or difficulty study is required.
+
+## Removed
+
+- `combat/packs.test.ts`: positional three-role assignment; size/age-based legacy lull and retreat patterns; old switch/pack-formation outcomes; timed encounter cycles; observed pressure/lane maxima; party combo/hold counts; seven-species strike-plus-special matrix; timed ram special throw; timed spider pull; decoy duration during a fight; sphinx/serpent effect occurrence; unicorn mind-turn/expiry and aim fallback during a fight; heron blink occurrence; raven interception after waiting for a mirage; toad trail occurrence; continuous-chase hit counts; legacy hurt-role assignments; call occurrence plus observed dodge-token maxima; boar/toad charge/leap counts and fixed concurrency; flyer dive counts; mole burrow counts; bat pulse counts; snail trail quantity; wolf angular movement rate. These combine selection, pursuit and execution into deadlines, or prescribe the superseded role model. Their kernels are not removed from gameplay.
+- The previous per-species 30-second special/recovery matrix had already been removed at 1e204936 for the same reason.
+- `combat/packsLull1.test.ts`, `packsLull2.test.ts` and their `src/test/packsLull.ts` helper: generated-world travel/stationary percentages and split-suite bookkeeping. Replaced by deterministic path, cadence, return-envelope and separation contracts.
+- `combat/styles.test.ts`: the categorical charger/circler/flanker/hopper assignment and legacy style geometry/fight outcomes. Replaced by continuous numerical profile, trajectory, formation and avoidance contracts. No runtime movement type is introduced by the replacement.
+- `species.test.ts`: average moth-to-light distance over a fight; simultaneous stag starts within a fixed five-second fight. Light remains a weighted steering input, and paired charge preparation cannot override action selection/pressure. Remaining selected native-move tests stay.
+- `hunt.test.ts`: every distant hunter enters a fixed envelope by a fixed deadline. Area hunt membership/lifecycle tests remain. A direct hunting-snake fixture verifies it approaches a distant chosen target instead of remaining in ambush.
+
+## Retained or replaced with controlled contracts
+
+- `combat/packs.test.ts` retains weapon damage-budget arithmetic, controlled decoy interception, explicitly confused input steering, and controlled real-hit defeat.
+- `combat/teams.test.ts`: arbitrary repertoire sizes, seeded action variety, total admission pressure without delivery slots, readiness filtering, independent actor/action cooldowns including target changes, youth eligibility, committed-action preservation, mixed-side/target grouping and damage withdrawal.
+- `combat/actions.test.ts`: all species have finite unique repertoires; multiple selected effects execute independently despite the obsolete pack cooldown; selected parameters reach the executor; strike commitment records its cooldown and respects lane pressure; concurrent spore leaps retain separate pending effects and cannot replace an existing route.
+- `combatSpacing.test.ts`: anatomical calibration, continuous paths and gait, return coordination, avoidance and single movement ownership; chosen boar charge, stoat/bat effect and spore leap; ram/bat projectile choices cannot become a native close attack; party bat close screech executes from explicit in-range admission; distant hunting snake pursues; a controlled hit stuns; an explicitly missed charge produces correctly attributed self-stun.
+- `attackObservation.test.ts`: the old twenty-second natural-fight orbit/self-miss prerequisite is replaced with an actual controlled landed hit and explicit non-damaging stun. Orbit-fill, definition, acceptance and stun assertions remain; actual missed-charge execution/attribution is now the direct fixture above. Other attribution, diagnostic non-interference, grammar/engine and counter tests remain.
+- `locomotion.test.ts` retains trajectory endpoints, continuity and velocity ownership; `creatureProfile.test.ts` retains immutable resolved statistics, live tuning refresh and berry growth validity.
+
+No no-teleport bound, numerical-safety assertion, damage attribution rule, grammar/engine contract or readability floor is relaxed. These tests establish deterministic rules, not visual quality or combat balance.
+
+## Numerical repair checkpoint
+
+The configuration migration accidentally removed the youth physical effect multiplier while removing role weights. The every-species/every-age executable-action check caught a non-finite youth action reach, and a four-actor mixed-age roe fixture reproduced youth scatter's non-finite duration and positions at 26.47 seconds. Restoring the physical multiplier as `young.effectScale` makes that same fixture pass. The JSON age-scale shape is now compile-time checked, and noTeleport additionally reports the first non-finite actor state without relaxing its displacement bound. Adult-only fixtures did not expose this fault.
+
+Further controlled replacements: `counters.test.ts` now lands actual melee/beam/quake hits, checks actual normalized damage, knockback/stun and exact strong/resisted/neutral view flags; its old fight-winner prerequisites are removed. The hare's fixed five-metre-in/15-metre-out ten-second outcome is removed, with cadence and close-pass geometry covered directly. `fixedPopulation.test.ts` tests the actual victory transition with explicit beach runaways and unchanged IDs/count, rather than requiring a skilled bot to win before checking that rule. Its loss/return and controlled party defeat checks remain. The separate three-seed full-night bot win checks remain unchanged for cloud validation of the numerical repair; no bot win is claimed from the small fixtures.
+
+Additional action ownership regressions retain positions during protection and preserve a committed charge during group scatter. Every species/age must have a positive-weight executable action, finite positive admission reach, and real weapon definitions for weapon deliveries.

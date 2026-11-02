@@ -93,6 +93,8 @@ export interface GladeTuning {
 export interface RevealKind { on: boolean; radius: number; ring?: number; width?: number; height?: number; /** metres round the thing itself never faded */ keep?: number; /** only the scenery within radius metres of it fades (the runestone's: Ed, 2026-10-26) */ bounded?: boolean }
 
 export interface Tuning {
+  /** Per-load spacing=1 experiment; absent uses packs.json spacing.on (default false). Never remembered. */
+  combatSpacing?: boolean;
   /** Will-o'-the-wisps in the wild areas (render/wisps.ts, Ed 2026-10-07); off (or absent) for none. */
   wisps?: WispTuning;
   /** A legend's circle (Ed, 2026-10-06): slow, the world slowed to scale of its speed (eased over ease seconds) while she stands on the ground in the circle of a legend asleep or restless; on false (?slow=0) for none. */

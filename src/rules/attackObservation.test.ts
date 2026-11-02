@@ -8,6 +8,7 @@ import { cast, newSpells, stepSpells, type Hittable } from "./attacks/engine";
 import { TUNING } from "./tuning";
 import { newGame, stepGame, STEP } from "./game";
 import { setupArena } from "./arena";
+import { withCombatRoles } from "../test/combatRoles";
 
 function port() {
   const current: WitchHitState = { hp: 4, hurtAt: -Infinity, down: false, dashing: false, damageEnabled: true,
@@ -74,24 +75,21 @@ it("disposes only its own registration and never reads snapshots when disabled",
   expect(second).toHaveLength(1); dispose();
 });
 
-it("measures accepted orbit fill and separates a missed charge's self-stun", () => {
-  const g = newGame(7, TUNING); g.clock.paused = false; g.party.paused = true;
-  setupArena(g, "boar*3@2,fox*3@2"); g.witches[0].body.mode = "treetop"; g.witches[0].body.lift = 1;
-  const ids = new Set(g.arena!.ids); for (const c of g.creatures) if (!ids.has(c.id)) c.gone = true;
-  g.byArea = null; const rows: Readonly<AttackOutcome>[] = [];
-  observeAttacks(g.combat, row => rows.push(row));
-  for (let i = 0; i < 20 / STEP; i++) stepGame(g, { moveX: 0, moveZ: 0, toggleMode: false, zoom: 0 }, STEP);
-  expect(rows.some(row => row.targetKind === "creature" && row.damageAccepted && (row.orbitAdded ?? 0) > 0)).toBe(true);
-  expect(rows.filter(row => row.attack === null).every(row => typeof row.definition === "string")).toBe(true);
-  expect(rows.some(row => row.phase === "self-miss" && row.stunApplied && row.source === row.targetId)).toBe(true);
-  const p = port(); p.w.creatures = g.creatures; p.w.time = g.clock.time;
-  const target = g.creatures[g.arena!.ids[0]];
-  target.stunUntil = undefined; // isolate this explicit effect from a preceding charge's winded state
+it("measures accepted orbit fill separately from an explicit non-damaging stun", () => {
+  // A real controlled hit checks attribution without waiting for a seeded fight to miss a charge.
+  // The actual charge-ending self-stun has a direct stepCombat fixture in combatSpacing.test.ts.
+  const p = port(), target = p.w.creatures[1];
+  target.rand = () => 0.5;
+  land(p.w, p.s, null, {kind: "creature", id: 1}, 1, COMBAT.attacks.nip, 4, 0);
+  expect(p.rows[0]).toMatchObject({targetKind: "creature", damageAccepted: true});
+  expect(p.rows[0].orbitAdded).toBeGreaterThan(0);
+  expect(typeof p.rows[0].definition).toBe("string");
+  p.rows.length = 0; target.stunUntil = undefined;
   p.W.harm({ kind: "creature", id: target.id, x: target.x, z: target.z, r: 1, side: "party" },
     0, { stun: 0.4 }, 0, 0, 1, "explicit-stun", "bolt");
   expect(p.rows[0]).toMatchObject({ phase: "contact", attack: "explicit-stun", damageAccepted: false, stunApplied: true });
-  expect(attackObserverErrors(g.combat)).toBe(0);
-}, 60000);
+  expect(attackObserverErrors(p.s)).toBe(0);
+});
 
 it("leaves actual Game state, cues, events and RNG identical even if a diagnostic mutates and throws", () => {
   function run(enabled: boolean) {
@@ -131,7 +129,7 @@ it("leaves actual Game state, cues, events and RNG identical even if a diagnosti
   expect(on.outcomes.every(Object.isFrozen)).toBe(true);
 }, 60000);
 
-it("attributes her pack's accepted mind stun to its actual source", () => {
+it("attributes her pack's accepted mind stun to its actual source", withCombatRoles({ unicorn: "special" }, () => {
   const g = newGame(5, TUNING); g.clock.paused = false; g.party.paused = true;
   setupArena(g, "unicorn*3@2,wolf*3@2"); g.witches[0].body.mode = "treetop"; g.witches[0].body.lift = 1;
   const ids = new Set(g.arena!.ids); for (const c of g.creatures) if (!ids.has(c.id)) c.gone = true;
@@ -142,4 +140,4 @@ it("attributes her pack's accepted mind stun to its actual source", () => {
   expect(stun).toBeDefined();
   expect(g.creatures[stun!.source!].species).toBe("unicorn");
   expect(g.creatures[stun!.targetId as number].species).toBe("wolf");
-}, 60000);
+}), 60000);

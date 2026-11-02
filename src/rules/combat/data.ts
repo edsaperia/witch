@@ -169,6 +169,10 @@ export type CombatEvent =
 export interface SoundHealth { hp: number; max: number; x: number; z: number; radius: number }
 
 export interface CombatState {
+  /** Individual action cooldowns survive changes of target/team. Live state, not profile data. */
+  actionReady?: Record<number, Record<string, number>>;
+  /** Shared youth/adult attack rounds by side + target, including mixed species. */
+  waitingTeams?: Map<string, import("./teams").TeamState>;
   shots: Shot[];
   nextShot: number;
   sounds: Map<string, SoundHealth>;
@@ -207,11 +211,31 @@ export function strengthOf(species: string, level: Level = 0, data: CombatData =
   return data.strength?.species[species] ?? 1;
 }
 
+export interface CreatureCombatProfile {
+  readonly strength: number; readonly health: number; readonly durability: number; readonly damagePerSecond: number;
+}
+const profiles = new WeakMap<CombatData, Map<string, (CreatureCombatProfile | undefined)[]>>();
+/** Effective species/age statistics. Current wounds and invitation progress are
+ * instance state, not another copy of the animal's balancing definition. */
+export function combatProfile(species: string, level: Level, data: CombatData = COMBAT): CreatureCombatProfile {
+  const strength = strengthOf(species, level, data), health = data.levels.hp[Math.min(level, data.levels.hp.length - 1)] * strength;
+  const capacity = data.levels.stun ?? data.levels.hp, durability = capacity[Math.min(level, capacity.length - 1)] * strength;
+  const damagePerSecond = data.levels.dps[level] * strength;
+  let speciesProfiles = profiles.get(data);
+  if (!speciesProfiles) profiles.set(data, (speciesProfiles = new Map()));
+  let ages = speciesProfiles.get(species);
+  if (!ages) speciesProfiles.set(species, (ages = []));
+  let profile = ages[level];
+  if (!profile || profile.strength !== strength || profile.health !== health || profile.durability !== durability || profile.damagePerSecond !== damagePerSecond)
+    ages[level] = profile = Object.freeze({ strength, health, durability, damagePerSecond });
+  return profile;
+}
+
 export function attackOf(species: string, level: Level, data: CombatData = COMBAT): { name: string; attack: Attack; damage: number } | null {
   const list = data.bySpecies[species] ?? (data.ranged.includes(species) ? data.byLevel.ranged : data.byLevel.melee), name = list[level];
   if (!name) return null;
   const attack = scaled(name, attackNamed(name, data));
-  return { name, attack, damage: data.levels.dps[level] * strengthOf(species, level, data) * attack.cooldown * (attack.factor ?? 1) };
+  return { name, attack, damage: combatProfile(species, level, data).damagePerSecond * attack.cooldown * (attack.factor ?? 1) };
 }
 
 /** An attack at the fight's scale and speed (FIGHT): its lengths times scale, its shot's speed times speed. */
@@ -240,13 +264,10 @@ export const attackNamed = (name: string, data: CombatData = COMBAT): Attack => 
 export const maxHp = (level: Level, data: CombatData = COMBAT) => data.levels.hp[Math.min(level, data.levels.hp.length - 1)];
 /** A full 💌 ring's worth of blows' damage on c (levels.stun by its level, times its species' strength, as health was): a blow fills
  *  its damage over this of its slots (rules/orbit.ts). */
-export const stunWorth = (c: { species: string; level: Level }, data: CombatData = COMBAT) => {
-  const s = data.levels.stun ?? data.levels.hp;
-  return s[Math.min(c.level, s.length - 1)] * strengthOf(c.species, c.level, data);
-};
+export const stunWorth = (c: { species: string; level: Level }, data: CombatData = COMBAT) => combatProfile(c.species, c.level, data).durability;
 
 /** A creature's full health: its level's, times its species' strength. */
-export const creatureMaxHp = (c: { species: string; level: Level }, data: CombatData = COMBAT) => maxHp(c.level, data) * strengthOf(c.species, c.level, data);
+export const creatureMaxHp = (c: { species: string; level: Level }, data: CombatData = COMBAT) => combatProfile(c.species, c.level, data).health;
 
 /** What the rest of the game tells combat each step. */
 export interface CombatWorld {

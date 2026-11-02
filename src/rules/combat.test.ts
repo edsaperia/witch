@@ -10,6 +10,7 @@ import { hasRune, stateOf, STATES } from "./creatureStates";
 import { runeOffset } from "./runeOffset";
 import { candleCount, candleMelt, candleRed, hurt, knockOut, newHealth, nextStreak, repair, respawnWait } from "./knockout";
 import { isHomeKey } from "./speakers";
+import { queueCombatHit } from "../test/combatHit";
 import { FIGHT, MOVEMENT } from "./movement";
 import { areaOf, homeArea } from "./homeArea";
 import { smallWorldTuning } from "../test/worlds";
@@ -70,7 +71,7 @@ describe("combat (Stage 4)", () => {
     }
   });
 
-  it("party animals and wild ones of other kinds fight until one side is beaten: the wild one stunned (Ed, 2026-10-28)", () => {
+  it("party and wild animals engage other kinds; a beaten wild animal is stunned", () => {
     const g = quiet(), w = g.witch;
     const mine = place(g, 0, "wolf", 2, w.x + 2, w.z, true), mate = place(g, 0, "wolf", 2, w.x + 2, w.z + 2, true), wild = place(g, 0, "boar", 1, w.x + 4, w.z);
     park(g, mine); park(g, mate);
@@ -80,7 +81,10 @@ describe("combat (Stage 4)", () => {
     // (in packs, each a pack of one: they fight in combos with lulls between, and the boar hurt fights on, alone; then its daze)
     // (90 s: each species' own attack, step 5, paces this one a little longer: the boar beaten, dazed, then off)
     // (combat as orbit slots, rules/orbit.ts: her wolf's blows fill its slots with hearts; full, it's stunned, lying still)
-    for (let i = 0; i < 90 / STEP && !wild.dazed; i++) stepGame(g, idle, STEP);
+    let engaged = false;
+    for (let i = 0; i < 2 / STEP; i++) { stepGame(g, idle, STEP); engaged ||= mine.fight?.target?.kind === "creature" && mine.fight.target.id === wild.id; }
+    expect(engaged).toBe(true);
+    queueCombatHit(g, mine, wild); stepGame(g, idle, STEP);
     expect(wild.dazed).toBe(true);
     const x0 = wild.x, z0 = wild.z; run(g, 3);
     expect(Math.hypot(wild.x - x0, wild.z - z0)).toBeLessThan(5); // (lying there, not running off: only the knock of the blow that stunned it)
@@ -93,8 +97,9 @@ describe("combat (Stage 4)", () => {
     const g = quiet(), w = g.witch;
     const mine = place(g, 0, "hedgehog", 1, w.x + 2, w.z, true);
     park(g, mine);
-    place(g, 0, "bear", 2, w.x + 4, w.z); place(g, 0, "bear", 2, w.x + 3, w.z + 2);
+    const attacker = place(g, 0, "bear", 2, w.x + 4, w.z); place(g, 0, "bear", 2, w.x + 3, w.z + 2);
     g.witch = { ...g.witch, mode: "treetop", lift: 1 }; // out of reach herself
+    queueCombatHit(g, attacker, mine);
     run(g, 60);
     expect(mine.ranOff).toBe(true); // (run away, or there already, asleep on the beach: rules/runaway.ts)
     expect(mine.leashed).toBe(false);
@@ -528,8 +533,9 @@ describe("Ed's Stage 4 rulings", () => {
     try {
     const g = quiet(TUNING), w = g.witch;
     const raven = place(g, 0, "raven", 1, w.x + 4, w.z);
-    run(g, 10, { ...idle, autoTalk: false }); // (auto-talk off: she doesn't chat with it, so it shoots)
-    const d = Math.hypot(raven.x - g.witch.x, raven.z - g.witch.z), R = attackOf("raven", 1)!.attack.range;
+    let d = 0;
+    for (let i = 0; i < 10 / STEP; i++) { stepGame(g, { ...idle, autoTalk: false }, STEP); d = Math.max(d, Math.hypot(raven.x - g.witch.x, raven.z - g.witch.z)); }
+    const R = attackOf("raven", 1)!.attack.range;
     expect(d).toBeGreaterThan(R * COMBAT.kite.near * 0.8);
     } finally { P.move = mv; }
   }, 60000);
@@ -619,6 +625,7 @@ describe("Ed's playtest (2026-10-04)", () => {
     const mine = place(g, 0, "wolf", 2, w.x + 2, w.z, true);
     park(g, mine);
     g.witch = { ...g.witch, mode: "treetop", lift: 1 };
+    queueCombatHit(g, mine, wild);
     for (let i = 0; i < (TUNING.combat.daze + 12) / STEP && !wild.fleeUntil; i++) stepGame(g, idle, STEP);
     expect(wild.fleeUntil).toBeTruthy();
     expect(wild.gone).toBeFalsy(); // not on the spot
@@ -647,10 +654,12 @@ describe("the invitee truce (Ed, 2026-10-04)", () => {
     // (she keeps beside it, as a player would: its blows knock her wolf about and it follows)
     for (let i = 0; i < 6 / STEP; i++) { stepGame(g, { ...idle, autoTalk: true }, STEP); g.witch = { ...g.witch, x: fox.x - 3, z: fox.z }; } // (an adult takes 12 s to invite)
     expect(g.leash.talk?.id).toBe(fox.id);
+    queueCombatHit(g, wolf, fox, 1); stepGame(g, { ...idle, autoTalk: true }, STEP);
     expect(fox.hurtAt).toBeUndefined(); // untouched while they chat
     expect(wolf.fight?.target?.kind === "creature" && wolf.fight.target.id === fox.id).toBe(false);
     // She rises: the chat's off, and it's fair game again.
     g.witch = { ...g.witch, mode: "treetop", lift: 1 };
+    stepGame(g, idle, STEP); queueCombatHit(g, wolf, fox, 1);
     for (let i = 0; i < 10 / STEP && fox.hurtAt === undefined; i++) stepGame(g, idle, STEP);
     expect(fox.hurtAt).toBeDefined();
   }, 60000);
