@@ -161,11 +161,12 @@ export function legendShine(rank: number, time: number, seed = 0, period = 2.6):
  *  a sigil), nor any gone, fleeing, travelling or off dancing at the party; so it changes as they grow, are recruited away, come
  *  home or leave. */
 export const EMPTY_STONE = 4;
-type Resident = Pick<Creature, "cell" | "level" | "leashed"> & Partial<Pick<Creature, "gone" | "fleeUntil" | "travelling" | "dancing" | "partyLegend" | "state">>;
+type Resident = Pick<Creature, "cell" | "level" | "leashed"> & Partial<Pick<Creature, "gone" | "fleeUntil" | "travelling" | "dancing" | "partyLegend" | "state" | "friendly" | "enraged">>;
 export function areaTopRanks(creatures: readonly Resident[], out = new Map<string, number>()): Map<string, number> {
   out.clear();
   for (const c of creatures) {
     if (c.gone || c.leashed || c.state === "happy" || c.fleeUntil !== undefined || c.travelling || c.dancing || c.partyLegend) continue; // (only the still hostile: Ed, 2026-10-28, the stone in the enemy palette)
+    if (c.friendly && !c.enraged) continue; // (nor a friendly area's, its legend's quest done: Ed, 2026-11-02, friends on its stump's stack too)
     const k = c.cell[0] + "," + c.cell[1], r = rankOf(c);
     if ((out.get(k) ?? -1) < r) out.set(k, r);
   }
