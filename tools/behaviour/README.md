@@ -2,6 +2,8 @@
 
 Ed, 2 November 2026: outcome statistics never block a release. This directory contains approved music M4, the W8 world declarations (12 focused, #1659; 17 shared-rules, #1661) and IP2's 21 mixed invitation/party declarations (#1663). Later systems join only through their own reviewed PRs.
 
+C1 draft #1668 has six placement declarations in `creatures-placement.behaviour.ts`, five motion declarations in `creatures-motion.behaviour.ts` and four nap/win declarations in `creatures-finale.behaviour.ts`. Original samples include full seed123 berry/800 growth/species, largest-world stone-idle120s/friendly-off60s,200m baby catch-up/10s, small seed7/rng3 glide120s, scaled40-minute five-roamer grid, seed7 arena120s LOD, seed77/eight-followers/6s spacing, full seed77 nap120/300s and ten-area seed7 win40s/follow30s after original preparation. Required fresh JSON retains actual values, denominators and fixture details. Empty original loops are explicitly noted. All15 accepted source cases are implemented; exact-head CI and cloud report execution remain separate. The merged1669 dependency preserves both IP2 providers and T6 alongside music/world/world-rules and these three C1 providers. See [exact changed tests and limits](../../docs/reports/creatures-behaviour-test-changes.md). No generated report has been executed by this source-validation checkpoint; no timing savings claimed.
+
 Run from the repository root:
 
 ```

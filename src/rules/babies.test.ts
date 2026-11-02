@@ -5,7 +5,7 @@ import { describe, expect, it } from "vitest";
 import type { Creature, Level } from "./creatures";
 import { speedFactor, wanderRange } from "./creatures";
 import { newGame, stepGame, STEP, type Controls, type Game } from "./game";
-import { babiesOf, scatterSpot, trailPoint } from "./babies";
+import { babiesOf, scatterSpot, stepBaby, trailPoint } from "./babies";
 import { creatureWeight, freeOf, loadOf } from "./leashWeight";
 import { leashLoad } from "./game";
 import { isInside } from "./mapShape";
@@ -120,14 +120,18 @@ describe("babies on her leash", () => {
     }
   }, 60000);
 
-  it("one far off (200 m, out of sight) is back with her in seconds", () => {
-    const { g, babies } = scene(1), [b] = babies, w = g.witch;
-    Object.assign(b, { x: w.x + 200, z: w.z + 30, tx: w.x + 200, tz: w.z + 30 });
-    let at = -1;
-    const t0 = g.clock.time;
-    run(g, 10, idle, () => { if (at < 0 && Math.hypot(b.x - g.witch.x, b.z - g.witch.z) < 12) at = g.clock.time - t0; });
-    expect(at).toBeGreaterThan(0);
-    expect(at).toBeLessThan(8); // (within about 8 s of a 200 m gap; a youth at its run takes nearly a minute)
+  it("uses the configured far catch-up speed without overshoot or losing leash membership", () => {
+    const B = babiesOf(T), s = newLeash(), b = { id: 0, species: "fox", level: 0, x: 200, z: 30, tx: 200, tz: 30, speed: T.creatureSpeed, walk: 0, facing: 1, leashed: true, state: "leashed" } as Creature;
+    s.stack.push(b.id);
+    const distance = Math.hypot(b.x, b.z);
+    stepLeash(s, [b], { talk: false, sigil: false }, { x: 0, z: 0 }, true, STEP, STEP, T);
+    expect(distance - Math.hypot(b.x, b.z)).toBeCloseTo(B.farSpeed * STEP, 8);
+    expect(s.stack).toEqual([b.id]); expect(b.leashed).toBe(true); expect(b.level).toBe(0);
+    const target = { x: b.x + 0.1, z: b.z };
+    stepBaby(b, target.x, target.z, 0, 0, b.speed, 0, 1, T);
+    expect([b.x, b.z]).toEqual([target.x, target.z]);
+    expect(Number.isFinite(b.x) && Number.isFinite(b.z)).toBe(true);
+    // C1 reports the original200m/10s scenario and <8s arrival outcome.
   }, 60000);
 });
 
