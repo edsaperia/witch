@@ -23,6 +23,8 @@ export interface SessionConnection {
 }
 export interface SessionOptions {
   build: string;
+  /** Private diagnostics only; sink failures do not affect the session. */
+  lifecycleEvidence?(proof: Record<string, unknown>): void;
   /** Local diagnostics only; never a gameplay message or admission decision. */
   trace?(stage: string, detail?: unknown): void;
   /** Explicit private replay capture; absent during ordinary play. */
@@ -86,8 +88,17 @@ export function onlineSession(options: SessionOptions) {
     if (!next) throw new Error("Invalid host station catalogue.");
     return next;
   };
-  const stop = () => {
+  let sessionEnd: Record<string, unknown> | null = null;
+  const stop = (reason = "disconnect") => {
     const previous = role, previousGame = game, attached = present;
+    if (previous && options.lifecycleEvidence) {
+      try {
+        sessionEnd = structuredClone({ stage: "session-end", reason, role: previous, tick: replica?.tick ?? tick,
+          sampledAtMs: now(), sampledWallTimeMs: Date.now(), prediction: prediction?.stats ?? null,
+          inputs: previous === "host" ? buffer.stats : null, rejectedHits: hits?.rejected ?? {} });
+        options.lifecycleEvidence(structuredClone(sessionEnd));
+      } catch { /* Diagnostic only. */ }
+    }
     if (previousGame) disableGuestEffects(previousGame);
     epoch++; role = null; connection = null; game = null; present = prepared = ready = preparing = changed = false; replica = null; night = 0;
     prediction = hits = hitPresentation = null; buffer.clear(); removeAbort(); removeAbort = () => {}; controller?.abort(); controller = null;
@@ -101,7 +112,7 @@ export function onlineSession(options: SessionOptions) {
     if (previous === "host" && attached && previousGame) options.detach(previousGame);
     if (previous) options.ended(previous, previousGame);
   };
-  const fail = (value: unknown) => { const error = value instanceof Error ? value : new Error(String(value)); stop(); options.failed(error); };
+  const fail = (value: unknown) => { const error = value instanceof Error ? value : new Error(String(value)); stop("session-error: " + error.message); options.failed(error); };
   const sendStart = () => {
     if (options.appearance && looks.size !== 2) return; // No borrowed world admission until both cosmetic profiles are validated.
     if (options.catalogue) { catalogue = hostCatalogue(); options.catalogueApplied?.(structuredClone(catalogue)); }
@@ -109,6 +120,7 @@ export function onlineSession(options: SessionOptions) {
     beatSegments = game.beat.segs;
   };
   const api = {
+    get sessionEnd() { return sessionEnd ? structuredClone(sessionEnd) : null; },
     get catalogue() { return catalogue ? structuredClone(catalogue) : null; },
     get predicted() { return role === "guest" && ready && prediction ? hitPresentation?.actor(prediction.actor) ?? prediction.actor : undefined; },
     get rejectedHits() { return hits?.rejected ?? {}; },
@@ -120,8 +132,8 @@ export function onlineSession(options: SessionOptions) {
     connect(as: "host" | "guest", relay: SessionConnection, signal: AbortSignal): Promise<void> {
       if (role) return Promise.reject(new Error("An online night is already active."));
       if (signal.aborted) return Promise.reject(new Error("The call was cancelled."));
-      role = as; connection = relay; controller = new AbortController(); tick = sequence = progress = 0;
-      const abort = () => stop(); signal.addEventListener("abort", abort, { once: true }); removeAbort = () => signal.removeEventListener("abort", abort);
+      sessionEnd = null; role = as; connection = relay; controller = new AbortController(); tick = sequence = progress = 0;
+      const abort = () => stop("call-aborted"); signal.addEventListener("abort", abort, { once: true }); removeAbort = () => signal.removeEventListener("abort", abort);
       if (options.appearance) {
         const look = appearance(options.appearance());
         if (!look) { fail(new Error("Invalid personal witch appearance.")); return Promise.reject(new Error("Invalid personal witch appearance.")); }
@@ -176,7 +188,7 @@ export function onlineSession(options: SessionOptions) {
           }
           if (message.type === "guest-left" && message.player === 1) {
             if (!ready) fail(new Error("Your friend's visit couldn't start. The call has ended."));
-            else stop();
+            else stop("guest-left");
             return true;
           }
         } else if (message.type === "state" && message.player === 0) {
@@ -419,7 +431,7 @@ export function onlineSession(options: SessionOptions) {
       requests.push({ player: 0, choice, sequence: stationSequence++ }); return true;
     },
     /** Never carry a socket/replay into a replacement night; the page owns the next night. */
-    nightChanged() { if (role) stop(); },
+    nightChanged() { if (role) stop("night-changed"); },
   };
   return api;
 }

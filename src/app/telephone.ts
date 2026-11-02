@@ -17,6 +17,7 @@ export interface TelephoneOptions {
   digit?: (digit: string) => void; face?: (number: string) => Node | null;
   clearFaces?(): void;
   trouble?(on: boolean): void;
+  lifecycleEvidence?(proof: Record<string, unknown>): void;
 }
 /** Page-owned telephone; only mutually verified/accepted calls reach the ordinary-game session hook. */
 export function telephone(options: TelephoneOptions) {
@@ -27,12 +28,16 @@ export function telephone(options: TelephoneOptions) {
   let identity: Promise<TelephoneIdentity> | null = null, identityQueue = Promise.resolve();
   let state: TelephoneState = { own: book.number, recent: book.recent, saved: book.saved, status: "ended" };
   const paint = (patch: Partial<TelephoneState>) => { state = { ...state, ...patch, recent: book.recent, saved: book.saved }; menu.render(state); };
-  const hangUp = () => {
+  const hangUp = (reason = "local-hangup") => {
+    try { options.lifecycleEvidence?.({ stage: "telephone-hangup", reason, role, sampledWallTimeMs: Date.now(), sampledAtMs: performance.now() }); } catch { /* Diagnostic only. */ }
     options.trouble?.(false);
     generation++; attempt++; intent = null; trust?.cancel(); joinAbort?.abort(); joinAbort = null; connection?.close(); connection = null;
     const joined = role !== null; role = null; paint({ status: "ended" }); if (joined) options.departed();
   };
-  const fail = (error: unknown) => { hangUp(); paint({ status: "error", detail: error instanceof Error ? error.message : "The call couldn't connect." }); };
+  const fail = (error: unknown) => {
+    try { options.lifecycleEvidence?.({ stage: "telephone-error", reason: error instanceof Error ? error.message : "unknown", role, sampledWallTimeMs: Date.now(), sampledAtMs: performance.now() }); } catch { /* Diagnostic only. */ }
+    hangUp("telephone-error"); paint({ status: "error", detail: error instanceof Error ? error.message : "The call couldn't connect." });
+  };
   const agree = () => { if (!trust || !connection) return; trust.agree(); connection.identityVerified(); paint({ status: "joining", detail: undefined }); };
   const actions: TelephoneActions = {
     dial(number) { if (!telephoneNumber(number) || number === book.number || !connection || role || !["available", "busy", "unavailable"].includes(state.status)) return; if (connection.dial(number)) { intent = "host"; paint({ status: "dialling", peer: number, detail: undefined }); } },
@@ -63,6 +68,7 @@ export function telephone(options: TelephoneOptions) {
         if (options.callsEnabled === false) { paint({ status: "preparing" }); return; }
         trust = telephoneTrust(own, book.pinned);
         connection = connectRelay({ endpoint: options.endpoint ?? "wss://witch-relay.onrender.com", room: number, telephone: true, telephonePublicKey: own.publicKey, socket: options.socket,
+          lifecycleEvidence: options.lifecycleEvidence,
           onError(error) { if (current === generation) fail(error); },
             onTrouble(on) { if (current === generation && role) { paint({ detail: on ? "Connection trouble…" : undefined }); options.trouble?.(on); } },
           onClose() {
@@ -114,7 +120,7 @@ export function telephone(options: TelephoneOptions) {
     },
     redial() { if (state.peer) menu.redial(state.peer); }, hangUp,
     pollPad(pad: Gamepad | null, now: number) { menu.pollPad?.(pad, now); },
-    dispose() { open = false; menu.show(false); hangUp(); },
+    dispose() { open = false; menu.show(false); hangUp("telephone-dispose"); },
   };
   menu.render(state); return api;
 }

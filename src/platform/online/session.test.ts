@@ -28,6 +28,17 @@ const cleanups: (() => void)[] = [];
 afterEach(() => { for (const stop of cleanups.splice(0)) stop(); });
 const input = (moveX = 0): Controls => ({ moveX, moveZ: 0, zoom: 0, toggleMode: false, autoTalk: false });
 const turn = () => new Promise<void>(resolve => setTimeout(resolve, 0));
+it("latches session counters before teardown even if the private diagnostic sink throws", async () => {
+  const f = fixture();
+  f.hostOptions.lifecycleEvidence = () => { throw new Error("Broken private sink"); };
+  const { joined } = await f.start(); await f.sync(); await joined;
+  const before = structuredClone(f.host.inputStats);
+  f.host.nightChanged();
+  expect(f.host.role).toBeNull(); expect(f.host.inputStats).toBeNull();
+  expect(f.host.sessionEnd).toMatchObject({ stage: "session-end", role: "host", reason: "night-changed", inputs: before });
+  const end = f.host.sessionEnd;
+  f.host.disconnect(); expect(f.host.sessionEnd).toEqual(end);
+});
 it("emits guest fixed quanta and acknowledges each consumed host step instead of the newest packet", async () => {
   const f = fixture(),timing=vi.fn();f.guestOptions.protocolEvidence=timing;
   const { joined } = await f.start();

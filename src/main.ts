@@ -429,7 +429,9 @@ function traceVisit(stage: string, detail?: unknown): void {
   if (typeof message === "string") visitPreparation.failure = message.slice(0, 500);
   notable("telephone-preparation", stage, detail);
 }
-const phone = telephoneStation({ enabled: phoneEnabled, callsEnabled: phoneCallsEnabled, face: phoneFace, trouble: telephoneTrouble, clearFaces: () => { phoneFaces.clear(); phonePresence.refresh(); }, digit: digit => { if (phone.state.status !== "preparing") phoneSounds.digit(digit); }, storage: (() => { try { return localStorage; } catch { return null; } })(), session: {
+const lifecycleEvidence = params.has("shot") ? (proof: Record<string, unknown>) => { window.dispatchEvent(new CustomEvent("witch-lifecycle-evidence", { detail: proof })); } : undefined;
+const phone = telephoneStation({ lifecycleEvidence, enabled: phoneEnabled, callsEnabled: phoneCallsEnabled, face: phoneFace, trouble: telephoneTrouble, clearFaces: () => { phoneFaces.clear(); phonePresence.refresh(); }, digit: digit => { if (phone.state.status !== "preparing") phoneSounds.digit(digit); }, storage: (() => { try { return localStorage; } catch { return null; } })(), session: {
+  lifecycleEvidence,
   build: BUILD, hostGame: () => N().game,
   trace: traceVisit,
   predictionEvidence: params.has("shot") ? proof => { window.dispatchEvent(new CustomEvent("witch-prediction-evidence", { detail: proof })); } : undefined,
@@ -449,7 +451,7 @@ const phone = telephoneStation({ enabled: phoneEnabled, callsEnabled: phoneCalls
   },
   synchronized: game => { if (ordinaryVisit) void synchronizeVisit(ordinaryVisit, game, error => { logCaughtError(error, "visit confirmation"); phone.hangUp(); }); },
   ended: (role, game) => {
-    if (role === "host") phone.hangUp(); // Close the role-bearing socket on departure, not only its game session.
+    if (role === "host") phone.hangUp("host-session-ended"); // Close the role-bearing socket on departure, not only its game session.
     remoteArt.clear();
     if (role === "guest") {
       try { returnedUnlocks = game && game.witches.some(w => w.id === 1) ? visitUnlocks(game, 1) : null; }
@@ -473,7 +475,7 @@ const phone = telephoneStation({ enabled: phoneEnabled, callsEnabled: phoneCalls
       stations.reconcile(restored.kit.look as never, ownedToChoose(findsCtx().owned()), workshopNow()); booth.refresh(ownedRecords());
     }
   },
-  failed: error => { visitPreparation.failure = error.message; logCaughtError(error, "telephone session"); phone.hangUp(); telephoneNotice(error.message); },
+  failed: error => { visitPreparation.failure = error.message; logCaughtError(error, "telephone session"); phone.hangUp("session-error"); telephoneNotice(error.message); },
   advanceHost: (game, controls, dt) => recordedStep(game, controls, dt, BUILD, captureRecording),
   authorizeStation: stationAuthority(hostCollections),
   wardrobe: () => hostCollections(N().game).wardrobe,
@@ -1054,7 +1056,7 @@ const chartDepartureBoundary = chartDeparture({
   returnOwn: () => ordinaryVisit?.end() ?? Promise.reject(new Error("This browser cannot restore your saved night.")),
 });
 page.onNightEnd = () => {
-  if (phone.active && !phone.visiting && !sharedNightChanging) phone.hangUp(); // A shared bed rollover retains its call.
+  if (phone.active && !phone.visiting && !sharedNightChanging) phone.hangUp("host-night-ended"); // A shared bed rollover retains its call.
   if (!phone.visiting && page.night && !page.night.spec.borrowed && !endedNights.has(page.night.game)) {
     const hostOutcome = hostedUnlocks ?? (sharedNightChanging ? visitUnlocks(page.night.game, 0) : null);
     if (hostOutcome) {

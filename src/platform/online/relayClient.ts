@@ -5,7 +5,7 @@ export interface RelaySocket {
   readyState: number;
   send(data: string): void;
   close(): void;
-  addEventListener(type: string, listener: (event: { data?: unknown }) => void): void;
+  addEventListener(type: string, listener: (event: { data?: unknown; code?: number; reason?: string; wasClean?: boolean }) => void): void;
 }
 export interface RelayOptions {
   endpoint: string;
@@ -20,6 +20,7 @@ export interface RelayOptions {
   onClose(): void;
   onError(error: Error): void;
   onTrouble?(on: boolean): void;
+  lifecycleEvidence?(proof: Record<string, unknown>): void;
 }
 
 /** Browser transport only. The host session validates each game payload separately. */
@@ -35,6 +36,9 @@ export function connectRelay(options: RelayOptions) {
   let role: "host" | "guest" | null = options.telephone ? null : options.token ? "guest" : "host";
   let identityConfirmed = false;
   let active = false, lastDownstream = 0, troubled = false, watchdog: ReturnType<typeof setTimeout> | undefined;
+  const evidence = (stage: string, detail: Record<string, unknown> = {}) => {
+    try { options.lifecycleEvidence?.({ stage, role, active, stopped, sampledWallTimeMs: Date.now(), sampledAtMs: performance.now(), ...detail }); } catch { /* Diagnostic only. */ }
+  };
   const trouble = (on: boolean) => { if (on !== troubled) { troubled = on; options.onTrouble?.(on); } };
   const activate = () => { if (!active) { active = true; lastDownstream = Date.now(); arm(); } };
   const sendMessage = (message: Record<string, unknown>): boolean => {
@@ -49,6 +53,7 @@ export function connectRelay(options: RelayOptions) {
     if (!active || stopped) return;
     const silence = Date.now() - lastDownstream;
     if (silence >= 15000) {
+      evidence("relay-watchdog-end", { silenceMs: silence, limitMs: 15000 });
       stopped = true; cleanup(); trouble(false); ws.close();
       options.onError(new Error("The telephone connection went quiet.")); return;
     }
@@ -81,8 +86,8 @@ export function connectRelay(options: RelayOptions) {
       options.onMessage(m);
     } catch (error) { options.onError(error instanceof Error ? error : new Error("Invalid relay message")); }
   });
-  ws.addEventListener("error", () => { if (!stopped) options.onError(new Error("Relay connection failed")); });
-  ws.addEventListener("close", () => { cleanup(); trouble(false); if (!stopped) { stopped = true; options.onClose(); } });
+  ws.addEventListener("error", () => { evidence("relay-error"); if (!stopped) options.onError(new Error("Relay connection failed")); });
+  ws.addEventListener("close", event => { evidence("relay-close", { code: event.code, reason: event.reason, wasClean: event.wasClean }); cleanup(); trouble(false); if (!stopped) { stopped = true; options.onClose(); } });
   return {
     sendInput: (payload: unknown) => role === "guest" ? send("input", payload) : false,
     sendState: (payload: unknown) => role === "host" ? send("state", payload) : false,
@@ -96,7 +101,7 @@ export function connectRelay(options: RelayOptions) {
     sendReady: () => send("ready"),
     sendProgress: (sequence: number) => send("progress", sequence),
     sendActive: () => { const sent = role === "guest" && send("active"); if (sent) activate(); return sent; },
-    close() { if (stopped) return; stopped = true; cleanup(); trouble(false); ws.close(); },
+    close() { if (stopped) return; evidence("relay-local-close"); stopped = true; cleanup(); trouble(false); ws.close(); },
   };
 }
 
