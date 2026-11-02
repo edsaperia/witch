@@ -5,7 +5,10 @@ const MAX_PENDING = 120, SNAP = 3, MAX_OFFSET = .75;
 export interface PredictionCorrection { sequence: number; size: number; snapped: boolean; reason: string }
 interface Input { sequence: number; controls: Controls; dt: number }
 export interface PredictionEvidence {
+  phase?: "reconcile" | "pending-cap";
   frameTick?: number;
+  sampledAtMs?: number;
+  sampledWallTimeMs?: number;
   correction: PredictionCorrection; transitions: string[];
   before: { actor: Witch; acc: number; offset: { x: number; z: number }; acknowledged: number; pending: Input[] };
   after: { actor: Witch; acc: number; canonical: Witch; sourceAcc: number; sourceHerTime: number; sourceClockTime: number; acknowledged: number; pending: Input[] };
@@ -42,9 +45,15 @@ export function guestPrediction(source: Game, player: number, report?: (event: P
       const input = { sequence, controls: { moveX: controls.moveX, moveZ: controls.moveZ, toggleMode: controls.toggleMode,
         dash: controls.dash, spell: controls.spell, fire: controls.fire, aimX: controls.aimX, aimZ: controls.aimZ, zoom: 0 }, dt };
       if (pending.length >= MAX_PENDING) {
+        const before = evidence ? { actor, acc, offset: { ...offset }, acknowledged, pending: [...pending] } : null;
         snaps++; pendingCapSnaps++;
         report?.({ sequence, size: 0, snapped: true, reason: "pending-cap" });
         pending.length = 0; actor = structuredClone(source.witches[player]); acc = source.acc; pendingEdges = {}; offset.x = offset.z = 0;
+        if (before && evidence) {
+          try { evidence(structuredClone({ phase: "pending-cap", correction: { sequence, size: 0, snapped: true, reason: "pending-cap" }, transitions: [], before,
+            after: { actor, acc, canonical: source.witches[player], sourceAcc: source.acc, sourceHerTime: source.herTime,
+              sourceClockTime: source.clock.time, acknowledged, pending } })); } catch { /* Diagnostics cannot interrupt gameplay. */ }
+        }
       }
       pending.push(input); advance(input);
       const fade = Math.exp(-dt / .06); offset.x *= fade; offset.z *= fade;
@@ -59,9 +68,10 @@ export function guestPrediction(source: Game, player: number, report?: (event: P
       const next = state(actor);
       const transitions = (Object.keys(next) as (keyof typeof next)[]).filter(key => next[key] !== authoritative[key]);
       const discontinuity = transitions.length > 0;
+      const released = authoritative.held && !next.held;
       for (const reason of transitions) transitionReasons[reason] = (transitionReasons[reason] ?? 0) + 1;
       authoritative = next;
-      if (discontinuity) pending.length = 0;
+      if (discontinuity && !released) pending.length = 0;
       for (const input of pending) advance(input);
       const dx = visible.x - actor.body.x, dz = visible.z - actor.body.z, size = Math.hypot(dx, dz);
       const snapped = discontinuity || size >= SNAP;
@@ -73,7 +83,7 @@ export function guestPrediction(source: Game, player: number, report?: (event: P
       report?.(correction);
       if (before && evidence && (size > .05 || snapped)) {
         // Actor-only diagnostic snapshot on actual divergence, never a per-frame world copy.
-        try { evidence(structuredClone({ correction, transitions, before, after: { actor, acc, canonical: source.witches[player], sourceAcc: source.acc,
+        try { evidence(structuredClone({ phase: "reconcile", correction, transitions, before, after: { actor, acc, canonical: source.witches[player], sourceAcc: source.acc,
           sourceHerTime: source.herTime, sourceClockTime: source.clock.time, acknowledged, pending } })); } catch { /* A diagnostic sink cannot interrupt gameplay. */ }
       }
     },

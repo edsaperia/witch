@@ -1,10 +1,11 @@
 import { expect, it } from "vitest";
-import { newGame, newWitchPlayer, type Controls } from "../../rules/game";
+import { newGame, newWitchPlayer, stepGame, STEP, type Controls } from "../../rules/game";
 import { TUNING } from "../../rules/tuning";
 import { snapshotGame } from "../../rules/nightSnapshot";
 import { guestPrediction, type PredictionEvidence } from "./guestPrediction";
 import { localView } from "./localView";
 import { roomAt } from "../../rules/houseRooms";
+import { startWakeFor } from "../../rules/wakeUp";
 
 const input = (moveX: number): Controls => ({ moveX, moveZ: 0, toggleMode: false, zoom: 0 });
 function fixture() {
@@ -59,6 +60,29 @@ it("captures exact actor and pending state around divergence only and isolates a
   p.input(1, input(1), 1 / 60); expect(proofs[0].before.actor.body.x).toBe(captured);
   const throwing = guestPrediction(game, 1, undefined, () => { throw Error("broken diagnostic"); });
   game.witches[1].body.x += 20; expect(()=>throwing.reconcile(-1)).not.toThrow();
+});
+
+it("replays sent but unacknowledged quanta when the authoritative wake releases its hold", () => {
+  const game=fixture(),W=game.witches[1],events:{size:number}[]=[];
+  startWakeFor(game,0,{yesterday:true},W,{player:1,room:"bedroom2"});
+  W.wake!.beat="stretch";W.time=3;
+  const p=guestPrediction(game,1,event=>events.push(event));
+  for(let n=502;n<=512;n++)p.input(n,input(1),STEP);
+  W.wake!.beat="up";W.wake!.open=true;W.body.x+=4;
+  p.reconcile(506);
+  expect(p.pending).toBe(6);expect(p.stats.transitionSnaps).toBe(1);
+  p.input(513,input(1),STEP);
+  stepGame(game,[input(0),input(1)],STEP);p.reconcile(507);
+  expect(events.at(-1)!.size).toBeLessThan(.001);
+});
+
+it("emits a pending-cap proof without changing the existing120-input bound", () => {
+  const game=fixture(),proofs:PredictionEvidence[]=[],p=guestPrediction(game,1,undefined,proof=>proofs.push(proof));
+  for(let n=0;n<=120;n++)p.input(n,input(0),STEP);
+  const cap=proofs.find(proof=>proof.phase==="pending-cap")!;
+  expect(cap.correction).toMatchObject({sequence:120,reason:"pending-cap",snapped:true});
+  expect(cap.before.pending).toHaveLength(120);expect(cap.after.pending).toHaveLength(0);
+  expect(p.pending).toBe(1);expect(p.stats.pendingCapSnaps).toBe(1);
 });
 it("does not call ordinary forest movement below a house outline an authoritative room change", () => {
   const game = fixture(), W = game.witches[1], at = game.map.treehouse;

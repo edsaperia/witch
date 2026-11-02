@@ -433,6 +433,7 @@ const phone = telephoneStation({ enabled: phoneEnabled, callsEnabled: phoneCalls
   build: BUILD, hostGame: () => N().game,
   trace: traceVisit,
   predictionEvidence: params.has("shot") ? proof => { window.dispatchEvent(new CustomEvent("witch-prediction-evidence", { detail: proof })); } : undefined,
+  protocolEvidence: params.has("shot") ? proof => { window.dispatchEvent(new CustomEvent("witch-protocol-evidence", { detail: proof })); } : undefined,
   appearance: () => { sharedLoans.begin(personalKit(), loan); if (!phone.visiting) sharedLoans.observe(N().game, personalKit()); return appearance(page.look()) ?? appearance({}); },
   attach: game => { if (!guestAccess.ready) throw new Error("The guest room isn't ready yet."); callArrival.attach(game); if (remoteArt.has(1)) void remoteArt.start(game, 0).catch(error => { logCaughtError(error, "host remote appearance"); phone.hangUp(); }); },
   detach: game => callArrival.detach(game),

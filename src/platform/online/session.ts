@@ -27,6 +27,7 @@ export interface SessionOptions {
   trace?(stage: string, detail?: unknown): void;
   /** Explicit private replay capture; absent during ordinary play. */
   predictionEvidence?(proof: PredictionEvidence): void;
+  protocolEvidence?(proof: { stage: "guest-apply-start" | "guest-apply-end"; frameTick: number; sampledAtMs: number; sampledWallTimeMs: number }): void;
   hostGame(): Game;
   /** Page supplies the approved guest-room/equipment adapter; never reuse the prototype's host bedroom. */
   attach(game: Game): void;
@@ -68,7 +69,10 @@ export function onlineSession(options: SessionOptions) {
   let hits: ReturnType<typeof guestHitAuthority> | null = null, hitPresentation: ReturnType<typeof guestHitPresentation> | null = null;
   const trace = (stage: string, detail: unknown) => { try { options.trace?.(stage, detail); } catch { /* Diagnostics do not change admission/gameplay. */ } };
   const correction = (event: import("./guestPrediction").PredictionCorrection) => { if (event.snapped || event.size > .05 && event.sequence % 30 === 0) trace("prediction-correction", event); };
-  const predictionEvidence = options.predictionEvidence ? (proof: PredictionEvidence) => options.predictionEvidence!({ ...proof, frameTick: replica?.tick ?? tick }) : undefined;
+  const predictionEvidence = options.predictionEvidence ? (proof: PredictionEvidence) => options.predictionEvidence!({ ...proof, frameTick: replica?.tick ?? tick, sampledAtMs: now(), sampledWallTimeMs: Date.now() }) : undefined;
+  const protocolEvidence = (stage: "guest-apply-start" | "guest-apply-end", frameTick: number) => {
+    try { options.protocolEvidence?.({ stage, frameTick, sampledAtMs: now(), sampledWallTimeMs: Date.now() }); } catch { /* Diagnostic only. */ }
+  };
   let accept: (() => void) | null = null, reject: ((error: Error) => void) | null = null;
   let stationSequence = 0, lastStation = -1;
   const requests: { player: 0 | 1; choice: StationChoice; sequence: number }[] = [];
@@ -233,9 +237,11 @@ export function onlineSession(options: SessionOptions) {
             return true;
           }
           if (payload?.kind === "frame" && payload.frame) {
+            if (ready && replica) protocolEvidence("guest-apply-start", payload.frame.tick);
             if (ready && replica && !replica.apply(payload.frame)) throw new Error("Online state lost its sequence. Hang up and call again.");
             if (ready && prediction && payload.frame.guestSequence !== undefined) prediction.reconcile(payload.frame.guestSequence);
             if (ready && replica) receivedHouse.capture(replica.game, 1, replica.tick);
+            if (ready && replica) protocolEvidence("guest-apply-end", payload.frame.tick);
             return true;
           }
           if (payload?.kind === "catalogue") {

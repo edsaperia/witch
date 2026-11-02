@@ -29,7 +29,8 @@ afterEach(() => { for (const stop of cleanups.splice(0)) stop(); });
 const input = (moveX = 0): Controls => ({ moveX, moveZ: 0, zoom: 0, toggleMode: false, autoTalk: false });
 const turn = () => new Promise<void>(resolve => setTimeout(resolve, 0));
 it("emits guest fixed quanta and acknowledges each consumed host step instead of the newest packet", async () => {
-  const f = fixture(), { joined } = await f.start();
+  const f = fixture(),timing=vi.fn();f.guestOptions.protocolEvidence=timing;
+  const { joined } = await f.start();
   f.hostGame.clock.paused = false; Object.assign(f.hostGame.witches[1].body, { seated: false, perch: false });
   delete f.hostGame.witches[1].wake; delete f.hostGame.witches[1].kit;
   await f.sync(); await joined;
@@ -46,6 +47,11 @@ it("emits guest fixed quanta and acknowledges each consumed host step instead of
   f.guest.message(f.hostMessages.at(-1)!);
   expect(f.guestOptions.failed).not.toHaveBeenCalled();
   expect(snapshotGame(f.guest.game!)).toEqual(snapshotGame(f.hostGame));
+  expect(timing.mock.calls.map(([proof])=>proof.stage)).toEqual(["guest-apply-start","guest-apply-end"]);
+  expect(timing.mock.calls[0][0]).toMatchObject({frameTick:frame.tick,sampledAtMs:expect.any(Number),sampledWallTimeMs:expect.any(Number)});
+  f.guestOptions.protocolEvidence=()=>{throw Error("Broken timing sink");};
+  f.host.step(input(),1/60);f.guest.message(f.hostMessages.at(-1)!);
+  expect(f.guestOptions.failed).not.toHaveBeenCalled();
 });
 it("shows guest movement and letter launch immediately while canonical simulation waits for host frames", async () => {
   const f = fixture(), { joined } = await f.start();
