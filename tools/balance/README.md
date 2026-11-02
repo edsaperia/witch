@@ -10,6 +10,14 @@ Each bag's 💌s against one wild creature: the real rules headless, her standin
 node tools/balance/bagstun.mjs [--bags satchel,bumbag,...] [--species fox] [--levels 1,2] [--dists 10,20,30] [--seeds 2] [--time 60] [--pack 1]
 ```
 
+## `bot-outcomes.mjs`
+
+Optional observations, moved from bot.test.ts under Ed's 2 Nov outcome-statistics ruling.
+
+```
+node tools/balance/bot-outcomes.mjs > previews/bot-outcomes.json
+```
+
 ## `bottrace.mjs`
 
 A bot's run, as a trace: every change in what it's doing, with the clock, her place, mode, hits, stack, the wave and the soundsystems standing; for reading why a bot plays as it does.

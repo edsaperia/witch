@@ -221,15 +221,15 @@ export function steer(c: Creature, P: Profile, x: SteerContext): boolean {
   for (const b of P.fight) {
     switch (b.kind) {
       case "arrive": { const k = Math.max(-0.4, Math.min(1, (d - (x.arriveAt ?? x.want)) / (4 * S))); if (!slot) add(ux, uz, b.w * k); break; }
-      case "keepRange": { const near = x.range * (b.near ?? 0.5), far = x.range * (b.far ?? 0.9); if (d < near) add(-ux, -uz, b.w); else if (d > far) add(ux, uz, b.w); break; }
-      case "orbit": { const dir = hash2(c.id, 5, 7) < 0.5 ? 1 : -1, R = x.range * (b.radius ?? 0.7); add(-uz * dir, ux * dir, b.w); add(ux * (d - R) / Math.max(1, R), uz * (d - R) / Math.max(1, R), b.w * 0.6); break; }
+      case "keepRange": { if (x.spacing?.waiting && slot) break; const near = x.range * (b.near ?? 0.5), far = x.range * (b.far ?? 0.9); if (d < near) add(-ux, -uz, b.w); else if (d > far) add(ux, uz, b.w); break; }
+      case "orbit": { const dir = hash2(c.id, 5, 7) < 0.5 ? 1 : -1, R = x.spacing?.waiting && slot ? Math.hypot(slot.x - x.px, slot.z - x.pz) : x.range * (b.radius ?? 0.7); add(-uz * dir, ux * dir, b.w); add(ux * (d - R) / Math.max(1, R), uz * (d - R) / Math.max(1, R), b.w * 0.6); break; }
       case "strafe": { const dir = hash2(c.id, Math.floor(x.time / (b.swap ?? 2)), 11) < 0.5 ? 1 : -1; add(-uz * dir, ux * dir, b.w); break; }
       case "slot": { if (slot && !cut) {
         // A slot round the far side: it goes round its target, not through it.
         const ac = Math.atan2(c.z - x.pz, c.x - x.px), as = Math.atan2(slot.z - x.pz, slot.x - x.px), da = ((as - ac + Math.PI * 3) % (Math.PI * 2)) - Math.PI;
         const sd = Math.hypot(slot.x - c.x, slot.z - c.z);
         let gx = slot.x, gz = slot.z;
-        if (Math.abs(da) > 0.9) { const a = ac + Math.sign(da) * 0.9, R = Math.max(x.want + 3 * S, Math.min(d, x.want + 10 * S)); gx = x.px + Math.cos(a) * R; gz = x.pz + Math.sin(a) * R; }
+        if (Math.abs(da) > 0.9) { const a = ac + Math.sign(da) * 0.9, R = x.spacing?.waiting ? Math.hypot(slot.x - x.px, slot.z - x.pz) : Math.max(x.want + 3 * S, Math.min(d, x.want + 10 * S)); gx = x.px + Math.cos(a) * R; gz = x.pz + Math.sin(a) * R; }
         const sx = gx - c.x, sz = gz - c.z, gd = Math.hypot(sx, sz) || 1e-6; if (sd > 0.6 * S) add(sx / gd, sz / gd, b.w * Math.min(1, sd / (4 * S)));
         // Surrounding or pincering, it takes its place before it strikes.
         if ((pack?.tactic === "surround" || pack?.tactic === "pincer") && sd > 3 * S) may = false; } break; }

@@ -15,7 +15,7 @@ import { FIGHT, advanceHop, landSwoop, legendSetOf, packsOf, profileOf, startCha
 import { type Tuning } from "./tuning";
 import { hash2 } from "./random";
 import { isHomeKey } from "./speakers";
-import { type Attack, type CombatData, COMBAT, traitsOf, type CombatState, attackOf, attackNamed, type CombatWorld, type Target } from "./combat/data";
+import { type Attack, type CombatData, COMBAT, type CombatState, attackOf, attackNamed, type CombatWorld, type Target } from "./combat/data";
 import { fighting, targetable, sideOf, truce, targetPos, headingOf, lightsNear, sheltered, gaveUp, valid, acquire, Grid, moveToward, nearestSound } from "./combat/targeting";
 import { contacted, touch, land, area, stepKnock, useData } from "./combat/hits";
 import { stepLegendAttack, stepLegend } from "./combat/legend";
@@ -26,11 +26,12 @@ import { bodyReach, hittableOf, meleeExtras, reachingFurther, spellAttack, speci
 import { observeAttack } from "./attackObservation";
 import type { AttackSpec } from "./attacks/types";
 import { PACKS, stepPacks, packsOn, packKindOf, packAttack, packGate, markStrike, dodgeAim, strikingNow, ownStrike, styleOf, type Directive } from "./combat/packs";
-import { chaseAt, limitTurn, momentumOf, noteWitches, witchWas } from "./momentum";
+import { chaseAt, limitTurn, momentumOf, noteWitches, turnHeading, witchWas } from "./momentum";
 import { SPACING, bodyGap, clearWaitingSlot, drawnRadius, hazardAvoidance, pathClearsHazard, spacingOn, waitingDrive, waitingProfile, waitingSlot, type WaitingHazard } from "./combatSpacing";
 import { teamOf } from "./combat/teams";
 import { actionReach } from "./combat/actions";
 import { advanceMotion } from "./locomotion";
+import { lungeAdvance } from "./lungeMotion";
 
 /** A species' own attack as a pack member's strike: a lunger's if it's close (a lunge, or an area round itself), a shooter's if it's
  *  from afar (moving and timed as its pack's shooters, reaching as far) and its pack's shot is the plain bolt, not one of its own (the
@@ -215,7 +216,7 @@ export function stepCombat(s: CombatState, w: CombatWorld, data: CombatData = CO
    *  windup, whatever shortens other shots'). */
   const startSpell = (c: Creature, f: NonNullable<Creature["fight"]>, atk: { name: string; damage: number; attack: Attack; spec: AttackSpec }) => {
     const S = (s.spells ??= newSpells()), spec = f.target ? thrown(atk, f.target).spec : atk.spec;
-    f.windupUntil = time + (atk.spec.cast?.windup ?? 0.6);
+    f.windupAt = time; f.windupUntil = time + (atk.spec.cast?.windup ?? 0.6);
     f.spellCast = castSpell(S, spellWorld(w, s, grid, S.seed, data), spec, atk.name, { id: c.id, x: c.x, z: c.z, side: sideOf(c), species: c.species, heading: Math.atan2(f.aimZ - c.z, f.aimX - c.x) }, hittableOf(w, s, f.target), time, atk.damage, f.windupUntil);
   };
   /** May it start a strike at tg now (a token free; only her strikers are counted)? Takes the token if so. A pack member takes one as
@@ -429,10 +430,12 @@ export function stepCombat(s: CombatState, w: CombatWorld, data: CombatData = CO
       let gap = 0;
       for (const id of members) { const other = w.creatures[id]; if (other) gap = Math.max(gap, bodyGap(c, other, t)); }
       const tell = pd ? PACKS.rhythms[packKindOf(c.species)?.rhythm ?? "steady"].tell : 0;
-      const until = pd?.phase === "lull" ? pd.state.until + tell : pd?.phase === "tell" || pd?.phase === "combo" ? pd.state.until : Infinity;
+      const selected = !team || !!team.actions[c.id] && !team.used.includes(c.id) && pd?.role !== "hurt";
+      const until = !selected ? Infinity : pd?.phase === "lull" ? pd.state.until + tell : pd?.phase === "tell" || pd?.phase === "combo" ? pd.state.until : Infinity;
       const seed = team ? hash2(team.seed, 1620, 17) : pd?.state.seed;
       const retreat = pd?.role === "hurt" ? waitingProfile(c).radius * FIGHT.scale : 0;
-      return waitingSlot(c, origin, range + retreat, time, FIGHT.scale, SPACING, waitingHeading?.(), seed !== undefined ? { seed, index: Math.max(0, members.indexOf(c.id)), count: members.length, gap, until, minimum: drawnRadius(c, t) + p.r + SPACING.clearance } : undefined);
+      return waitingSlot(c, origin, range + retreat, time, FIGHT.scale, SPACING, waitingHeading?.(), seed !== undefined ? { seed, index: Math.max(0, members.indexOf(c.id)), count: members.length, gap, until, minimum: drawnRadius(c, t) + p.r + SPACING.clearance } : undefined,
+        { dashReach: t.dash.distance * (t.dash.charges ?? 1), inviteReach: t.invites.range, areaRadius: w.areaAt?.(c.homeX, c.homeZ)?.r ?? 0, speed: speed * waitingProfile(c).speed, parameters: t.combatWaiting });
     } : undefined;
     const waitingHazards: WaitingHazard[] = spacing ? [{ x: p.x, z: p.z, radius: p.r }] : [];
     if (spacing) for (const other of w.active) {
@@ -462,15 +465,13 @@ export function stepCombat(s: CombatState, w: CombatWorld, data: CombatData = CO
     const ownFrom = om && om.kind !== "swoop" ? (om.from ?? 10) * 1.4 * FIGHT.scale : 0, ownTo = om?.to ? om.to * 0.8 * (om.kind === "leap" ? FIGHT.leap.reach : 1) * FIGHT.scale : ownFrom;
     if (ownFrom) want = Math.max(want, ownFrom, Math.min(d, ownTo));
     if (spacing && pd?.action?.delivery === "effect") want = Math.min(want, actionReach(c, pd.action, PACKS) * 0.8);
-    // Its lunge under way: a dash-strike down the line it wound up on; at its end the blow lands, if it's still there.
+    // Its lunge under way: bounded course correction, with the original travel budget.
     if (f.lunge) {
-      // (At a creature it homes in: creatures can't read a telegraph; but not at a flier, which flits up out of its way.
-      // At the witch it keeps its line, so she can sidestep it.)
+      // Ed, 2026-11-02: tracking is a balance parameter, not a prohibition against tracking the witch.
       // (with momentum, Ed 2026-10-05: it builds up to 60 m/s and eases out at the end, carrying some speed on)
-      const L = f.lunge, a = (300 * FIGHT.speed) / FIGHT.momentum, top = 60 * FIGHT.speed, v0 = L.v ?? 0;
-      const v = Math.min(top, v0 + a * dt, Math.sqrt(Math.max(0, 2 * a * L.left + (12 * FIGHT.speed) ** 2))), step = Math.min(L.left, v * dt);
+      const L = f.lunge, travel = lungeAdvance(L.left, L.v ?? 0, dt), v = travel.speed, step = travel.step;
       L.v = v;
-      if (f.target.kind === "creature" && !traitsOf(w.creatures[f.target.id]?.species ?? "", data).includes("flier")) { const hx = p.x - c.x, hz = p.z - c.z, hd = Math.hypot(hx, hz); if (hd > 1e-3) { L.dx = hx / hd; L.dz = hz / hd; L.left = Math.min(L.left, Math.max(0, hd - A.range * 0.5)); } }
+      [L.dx, L.dz] = turnHeading(L.dx, L.dz, p.x - c.x, p.z - c.z, waitingProfile(c).strikeTurn / FIGHT.momentum, dt);
       advanceMotion(c, { vx: L.dx * step / dt, vz: L.dz * step / dt }, time, dt); L.left -= step; c.moving = true; c.walk += dt * 12; c.facing = L.dx >= 0 ? 1 : -1;
       c.vx = L.dx * v; c.vz = L.dz * v;
       if (L.left <= 1e-6) { f.lunge = undefined; if (Math.hypot(p.x - c.x, p.z - c.z) <= A.range * widthOf(f.target) + p.r) { const observation = { source: c.id, attack: spell?.name ?? null, delivery: "melee", phase: "damage" as const }; land(w, s, c, f.target, atk.damage, A, c.x, c.z, observation); if (spell) meleeExtras(w, s, f.target, spell.spec, c.x, c.z, c, observation); } if (c.taunt && time < c.taunt.until && w.creatures[c.taunt.by]) f.target = { kind: "creature", id: c.taunt.by }; } // (taunted mid-lunge: its lunge done, it turns on the taunter)
@@ -491,7 +492,7 @@ export function stepCombat(s: CombatState, w: CombatWorld, data: CombatData = CO
     if (pd && f.windupUntil === 0 && !c.charge && !c.leap && !c.burrow && !swoops(c)) { // (a flyer in a pack circles aloft through its lull: below)
       if (c.dug !== undefined && time < c.dug) {
         c.moving = false; c.vx = 0; c.vz = 0; c.facing = p.x >= c.x ? 1 : -1;
-        if (time >= f.readyAt && d <= A.range + p.r + 1.5 * FIGHT.scale && strikeNow(pd, f.target)) { f.windupUntil = time + A.windup * 0.7; f.aimX = p.x; f.aimZ = p.z; markStrike(pd, c, time); s.events.push({ kind: "windup", x: c.x, z: c.z, at: time, id: c.id }); if (spell) startSpell(c, f, spell); }
+        if (time >= f.readyAt && d <= A.range + p.r + 1.5 * FIGHT.scale && strikeNow(pd, f.target)) { f.windupAt = time; f.windupUntil = time + A.windup * 0.7; f.aimX = p.x; f.aimZ = p.z; markStrike(pd, c, time); s.events.push({ kind: "windup", x: c.x, z: c.z, at: time, id: c.id }); if (spell) startSpell(c, f, spell); }
         continue;
       }
       if (pd.slot) {
@@ -596,7 +597,7 @@ export function stepCombat(s: CombatState, w: CombatWorld, data: CombatData = CO
         if (r === "under" || r === "burrowed") continue;
         if (r === "surfaced") {
           s.events.push({ kind: "surfaced", x: c.x, z: c.z, at: time, id: c.id });
-          if (time >= f.readyAt && (!pd || strikeNow(pd, f.target))) { if (pd) markStrike(pd, c, time); f.windupUntil = time + Math.min(A.windup, 0.35); f.aimX = p.x; f.aimZ = p.z; s.events.push({ kind: "windup", x: c.x, z: c.z, at: time, id: c.id }); if (spell) startSpell(c, f, spell); }
+          if (time >= f.readyAt && (!pd || strikeNow(pd, f.target))) { if (pd) markStrike(pd, c, time); f.windupAt = time; f.windupUntil = time + Math.min(A.windup, 0.35); f.aimX = p.x; f.aimZ = p.z; s.events.push({ kind: "windup", x: c.x, z: c.z, at: time, id: c.id }); if (spell) startSpell(c, f, spell); }
           continue;
         }
       }
@@ -634,7 +635,7 @@ export function stepCombat(s: CombatState, w: CombatWorld, data: CombatData = CO
         // without a lunge at whatever's in reach; then it comes up and the move cools down.
         if (c.dug !== undefined && time < c.dug) {
           c.vx = 0; c.vz = 0; c.moving = false; c.facing = p.x >= c.x ? 1 : -1;
-          if (time >= f.readyAt && d <= A.range + p.r + 1.5 * S && strikeNow(pd, f.target)) { if (pd) markStrike(pd, c, time); f.windupUntil = time + A.windup * 0.7; f.aimX = p.x; f.aimZ = p.z; s.events.push({ kind: "windup", x: c.x, z: c.z, at: time, id: c.id }); if (spell) startSpell(c, f, spell); }
+          if (time >= f.readyAt && d <= A.range + p.r + 1.5 * S && strikeNow(pd, f.target)) { if (pd) markStrike(pd, c, time); f.windupAt = time; f.windupUntil = time + A.windup * 0.7; f.aimX = p.x; f.aimZ = p.z; s.events.push({ kind: "windup", x: c.x, z: c.z, at: time, id: c.id }); if (spell) startSpell(c, f, spell); }
           continue;
         }
         if (c.dug !== undefined) { c.dug = undefined; c.moveReadyAt = time + P.move.cooldown; }
@@ -675,7 +676,7 @@ export function stepCombat(s: CombatState, w: CombatWorld, data: CombatData = CO
       const tactic = pd && pk && !(spacing && pd.action?.delivery === "effect") && (pk.tactic === "volley" || (!(pd.move === "melee" && packGate(pd) && free(f.target)) && (pk.tactic === "surround" || pk.tactic === "pincer" || pk.tactic === "flank"))) ? pk : null;
       // (Momentum: chasing her and closing in to strike, a pack's tell and combo too, it makes for where she was mo.delay seconds
       // ago, leading that by mo.chaseLead seconds of how she was going then, and turns no faster than its limit. Ed, 2026-10-27: on
-      // the run-in and the wind-up, never the committed lunge, which goes where the wind-up aimed.)
+      // the run-in and the wind-up; released lunges use their independent strikeTurn limit.)
       const chase = mo;
       const herAt = chase && f.target.kind === "witch" ? chaseAt(s, f.target.id, time, chase) ?? p : p;
       // Its fight style's place while it waits its turn (packs.json _styles; Ed's playtest, 2026-10-29: "circling, flanking, more
@@ -737,7 +738,7 @@ export function stepCombat(s: CombatState, w: CombatWorld, data: CombatData = CO
       }
       if (may && time >= f.readyAt && strikeNow(pd, f.target)) {
         if (pd) markStrike(pd, c, time);
-        f.windupUntil = time + windupOf(A, f.target); f.aimX = p.x; f.aimZ = p.z; // (it glides to a stop as it winds up: below)
+        f.windupAt = time; f.windupUntil = time + windupOf(A, f.target); f.aimX = p.x; f.aimZ = p.z; // (it glides to a stop as it winds up: below)
         s.events.push({ kind: "windup", x: c.x, z: c.z, at: time, id: c.id });
         if (spell) startSpell(c, f, spell);
       }
@@ -751,7 +752,7 @@ export function stepCombat(s: CombatState, w: CombatWorld, data: CombatData = CO
       c.moving = false; c.facing = p.x >= c.x ? 1 : -1;
       if (time >= f.readyAt && strikeNow(pd, f.target)) {
         if (pd) markStrike(pd, c, time);
-        f.windupUntil = time + windupOf(A, f.target); f.aimX = p.x; f.aimZ = p.z;
+        f.windupAt = time; f.windupUntil = time + windupOf(A, f.target); f.aimX = p.x; f.aimZ = p.z;
         s.events.push({ kind: "windup", x: c.x, z: c.z, at: time, id: c.id });
         if (spell) startSpell(c, f, spell);
       }
@@ -781,9 +782,7 @@ export function stepCombat(s: CombatState, w: CombatWorld, data: CombatData = CO
     if (spell && A.delivery !== "melee") continue; // (released by the engine as its windup ends: rules/attacks/engine.ts; a melee one is the lunge below)
     const dmg = atk.damage;
     if (A.delivery === "melee") {
-      // The lunge (Ed's motion scale pass: 12 to 16 m, a dash-strike): down the line to where it aimed
-      // when it wound up, so stepping aside dodges it; the blow lands at its end (above).
-      // Committed (dodge.a): at her, down the line it locked as it wound up (above), lunging dodge.a.lunge times as far.
+      // Release toward the wind-up aim. Its travel budget is fixed here; strikeTurn bounds later course correction.
       const aimX = f.aimX, aimZ = f.aimZ, reach = (A.lunge ?? 0) * (DA && f.target.kind === "witch" ? DA.lunge : 1);
       // (with momentum, Ed 2026-10-27: its run-in may have left it short, so the committed lunge goes right to where the wind-up aimed,
       // up to a quarter again its usual length: a strike that starts stays reliable; at twice, a skilled bot backing away from a fight

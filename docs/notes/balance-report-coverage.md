@@ -24,6 +24,9 @@ Night wins, discovered islands, islands kept by `win.found`, finds on loan and e
 
 ## Legacy coverage map
 
+Ed, 2026-11-02 (#1654): the seeded bot-night win/recruitment aggregates formerly in bot.test.ts are optional observations in `node tools/balance/bot-outcomes.mjs`. The original seeds11/22/33, ten-area starts,20-minute ceiling and15-recruit historical reference are retained, together with seed1000's40-second first-recruit scenario. False historical outcomes do not fail release checks. Direct invitation waking remains protected in inviteWakes.test.ts; bot replay contracts remain blocking. No new simulation run is required for release or claimed here.
+
+
 Do not retire the copied models until every needed row below has an explicit replacement or the coordinator rules that the experiment is obsolete. Current coverage is partial. Their numbers are historical hypotheses, not calibrated measurements of current pack/orbit combat.
 
 | Old measurement | Existing entry point | Real-rules replacement / remaining gap |

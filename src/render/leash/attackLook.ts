@@ -319,6 +319,11 @@ export class AttackLook {
     const gap = 0.9 * sc, upto = L * clamp01(fill), shift = (time * 3) % gap;
     for (let s = 0.6 + shift; s < upto; s += gap) this.put(this.dl(up), "chev", x0 + ux * s, 0.03, z0 + uz * s, sc, a * 0.9);
   }
+  /** Ed, 2026-11-02: a moving wave of red dots, with no filled danger area or persistent border. */
+  trumpet(points: readonly { x: number; z: number }[], up = false): void {
+    const sc = up ? 2.6 : 1;
+    for (const p of points) this.put(this.dl(up), "px", p.x, 0.03, p.z, sc * 0.65, 0.85, DANGER);
+  }
   /** A beam's line, thin to full: one dashed line, then wider dashes, then (the last warning) a solid white bar. */
   beamLine(x0: number, z0: number, x1: number, z1: number, half: number, k: number, left: number, time: number, up = false): void {
     const dx = x1 - x0, dz = z1 - z0, L = Math.hypot(dx, dz) || 1, ux = dx / L, uz = dz / L, a = this.blink(left, time), sc = up ? 2.6 : 1;

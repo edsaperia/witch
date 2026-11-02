@@ -20,11 +20,34 @@ const original = SPACING.body;
 afterEach(() => { SPACING.body = original; resetFight(); });
 
 describe("combat waiting spacing", () => {
+  it("adds live reach and area room softly, with a smooth deliberate close pass", () => {
+    const flat = { ...data, motion: { default: { ...data.motion.default, radius: 8, period: 10, rangeBias: 0, radialWave: 0, centerShift: 0, stretch: 1 }, species: {} } };
+    const c = creature(1, 60, 0), p = { x: 0, z: 0 }, group = { seed: 0, index: 0, count: 1, gap: 1, until: Infinity };
+    const context = { dashReach: 30, inviteReach: 33, areaRadius: 20, speed: 20 };
+    const at = (time: number, areaRadius = 20) => waitingSlot(c, p, 5, time, 1, flat, null, group, { ...context, areaRadius });
+    expect(Math.hypot(at(5).x, at(5).z)).toBeCloseTo(8 + 63 * t.combatWaiting.reachScale);
+    expect(at(5)).toEqual(at(5, 0)); // Small areas never clamp the route.
+    expect(Math.hypot(at(5, 200).x, at(5, 200).z)).toBeCloseTo(8 + 63 * t.combatWaiting.reachScale + (200 - 63 * t.combatWaiting.reachScale) * t.combatWaiting.areaGrowth);
+    expect(Math.hypot(at(0).x, at(0).z)).toBeCloseTo(8); // A pass is allowed inside invitation reach.
+    expect(Math.hypot(at(0.0001).x - at(0).x, at(0.0001).z - at(0).z)).toBeLessThan(0.01);
+    const longer = waitingSlot(c, p, 5, 5, 1, flat, null, group, { ...context, dashReach: 60 });
+    expect(Math.hypot(longer.x, longer.z)).toBeCloseTo(8 + 93 * t.combatWaiting.reachScale);
+  });
   it("allows close passes while rejecting hops through the target body", () => {
     const c = creature(1, -10, 0), hazard = { x: 0, z: 0, radius: 1 };
     expect(pathClearsHazard(c, { x: 10, z: 0 }, hazard, t, data)).toBe(false);
     expect(pathClearsHazard({ ...c, z: 6 }, { x: 10, z: 6 }, hazard, t, data)).toBe(true);
     expect(pathClearsHazard(c, { x: 10, z: 0 }, { x: 0, z: -10, endX: 0, endZ: 10, radius: 1 }, t, data)).toBe(false);
+  });
+  it("lets a waiting route override inward weapon-range cues without changing attacking steering", () => {
+    const c = creature(1, 40, 0);
+    const P = { accel: 100, fight: [{ kind: "keepRange" as const, w: 2 }] };
+    const args = { px: 0, pz: 0, pr: 1, want: 5, range: 5, speed: 20, time: 0, dt: 1 / 60, pack: null, neighbours: [], threats: [], side: "wild" as const, ready: false, beat: 1, style: { x: 60, z: 0 } };
+    steer(c, P, { ...args, spacing: { tuning: t, data, waiting: true } });
+    expect(c.vx).toBeGreaterThan(0);
+    const attacking = creature(1, 40, 0);
+    steer(attacking, P, { ...args, spacing: { tuning: t, data, waiting: false } });
+    expect(attacking.vx).toBeLessThan(0);
   });
   it("ships the early system by default without a public legacy-spacing switch", () => {
     expect(spacingOn(TUNING)).toBe(true);
@@ -118,6 +141,17 @@ describe("combat waiting spacing", () => {
     const world = { creatures, active: creatures, t: tuning, time: 0, dt: 1 / 60, witches: [{ id: 0, x: 0, z: 0, onGround: true, down: false }], busy: () => false, leashPoint: () => null, parked: () => false, talkingTo: () => -1, exit: () => ({ x: 1000, z: 1000 }), unseen: () => false, asleep: () => false, inArea: () => true, hitWitch: () => {}, loseParty: () => {} } as CombatWorld;
     return { state, world };
   };
+  it("tracks the witch during an ordinary lunge without extending its released travel", () => {
+    const { state, world } = fight(true), c = world.creatures[0];
+    world.creatures.splice(1); world.active = world.creatures;
+    world.t = { ...world.t, combat: { ...world.t.combat, packs: { on: false } } };
+    c.x = 0; c.z = -20;
+    c.fight!.lunge = { dx: 1, dz: 0, left: 15, v: 20 };
+    stepCombat(state, world);
+    expect(c.fight!.lunge!.dz).toBeGreaterThan(0);
+    expect(c.fight!.lunge!.left).toBeLessThan(15);
+    expect(Math.hypot(c.x, c.z + 20) + c.fight!.lunge!.left).toBeCloseTo(15);
+  });
   it("runs a small seeded waiting-fight fixture without drawn-disc overlap", () => {
     SPACING.body = data.body;
     const { state, world } = fight(true);
