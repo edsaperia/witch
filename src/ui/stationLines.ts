@@ -10,6 +10,14 @@ import { itemsToChoose, shownItems, type Shelf } from "../rules/wardrobe";
 import type { Tuning } from "../rules/tuning";
 import { bindings, type Bindings } from "../platform/bindings";
 
+/** How a shelf's item cards picture each item (Ed, 2026-11-02: "In treehouse stations: dressing, wardrobe, cloak, hat mirror: in the
+ *  preview boxes on the menu, show the clothing item alone instead of a portrait of the witch"; art/witch.js witchCardSprite, drawn by
+ *  ui/stationPanel.ts wearPicture): the dressing table's her head and shoulders, hat off ("for skin tone / hair / earrings / glasses,
+ *  render her from shoulders to top of her head, without hat"); the shoe rack's her legs ("shoes should show her legs, thighs down");
+ *  the cloak pegs' all of her from behind, hat off ("cloak should be shown 3/4 from the back, hat removed"); the wardrobe's top and
+ *  the bags alone ("include shoes and bags (though bags also has animations - keep those)"). A shelf not here: her whole. */
+export const CARD_SHOW: Readonly<Record<string, "bust" | "legs" | "back" | "jacket" | "bag">> = { hair: "bust", skin: "bust", face: "bust", earrings: "bust", shoes: "legs", cloak: "back", scarf: "back", jacket: "jacket", bag: "bag" };
+
 /** One focusable line of the panel. `readOnly`: focus only, nothing chosen (the pegboard). */
 export interface Line { shelf: number; kind: "items" | "parts" | "grid" | "fit" | "cards" | "chips"; n: number; row?: number; axis?: string; readOnly?: boolean; /** a list shelf's line: the one item it is (its index among the shown items) */ item?: number }
 /** What the lines are made with: what she owns (items) and has found (parts), and which fit sliders mean anything on her now. */
