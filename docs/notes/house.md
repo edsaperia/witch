@@ -6,6 +6,8 @@ Current telephone default (canonical6552743521): authored boudoir use remains `s
 
 Ed, 2 November 2026 (follow-up #1638): all four Treehouse look settings are on by default, and house walking is 9 m/s (was 7.5); the forest ground speed remains 19.25, as he separately confirmed. This supersedes the original default-off trial notes below. The host movement path already forces the existing fall for a witch without a broom even when house.fall.on is false; with open platforms, fallOrigin returns her to the edge. No new fall or multiplayer wiring is introduced.
 
+Ed, 2 November 2026 (follow-up #1638 item 3): landing from the treetops now uses every authorized room and connecting branch floor, rather than only the Dining-to-Boudoir trunk. Space over open air does not snap to a nearby floor. Automatic landing retains its rail inset and entry-from-outside rule; landTime, furniture clearance, wake-up and knockout recovery are unchanged. Guest landing consumes the existing per-witch authorized floor; multiplayer transport/wiring remains with its owner.
+
 ## Treehouse layout editor
 
 Ownership return/rollback cleanup (1565#6551717228): `syncFloorHats(W: Witch): void` explicitly removes unowned cached floor/overflow and left copies, preserving floor array identity/slots and the currently worn hat. An unowned dropped current hat is cleared and its selection becomes plain `none`, rather than re-equipping a revoked spell. Known numbered-point reservations are refreshed. Unrestricted ownership does nothing, and no solo/pickup callsite invokes this automatically; multiplayer calls it after updating ownership on return/rollback.
