@@ -1,0 +1,11 @@
+# Creature age roles and composed attack integration
+
+Ed, 2026-11-02: exaggerate youth/adult differences even if the initial balance needs later tuning. Latest role description: youths are soldiers, adults are tanks, legends are artillery. Keep species recognisable; adults remain mobile. Broader coverage, range and durability should make adults useful without relying only on higher damage. Do not introduce new movement-type categories or a universal special role.
+
+Also trace the composable/chained attack upgrade through actual released combat and rendering. Ed reports seeing neither composed attacks nor the new magic effects in repeated playtests, with melee previously dominant. Release ancestry alone is not evidence that a creature actually casts or renders a composed attack.
+
+Starting point: prototype7f6dcba31, isolated work/combat-spacing worktree, new branch codex/creature-age-roles. Live metadata checked at pickup: v6972 /5d19a18; both #1326's species grammar and #1622's action model are ancestors of remote main. The species grammar shipped on27October (#1333 publication). Source currently filters species attacks by old close/ranged pack compatibility and can substitute old designed shots or native movement. Trace and test these routes before claiming a cause.
+
+Plan: one numerical age profile supplies action preferences, preferred engagement distance, waiting movement/relocation, attack footprint/range and durability. Transform composable attack trees through the existing engine while retaining elements, paths, effects and child triggers. Preserve native animal movement choices and the legends' existing artillery derivation. Verify real selected attacks and child/effect execution with small deterministic fixtures; do not infer visual quality from source presence.
+
+Owned scope: age-profile config/resolver, combat action/position integration, species attack growth/integration, nearby deterministic tests, documentation and own changelog. Any required rendering hooks will be reported to the coordinator before crossing another builder's ownership. No multiplayer/server changes. No local heavy world fights, browser, art or full suite; canonical owns combined checks and publication. No difficulty comparison is opened.
