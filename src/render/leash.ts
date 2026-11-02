@@ -106,7 +106,7 @@ export class LeashView {
   /** The placed sigils, and the happy creatures' runes (Ed, 2026-10-12), again where scenery or grass hides them (Ed, 2026-10-11: "Placed animal sigils should show through scenery"): only where
    *  something nearer is drawn and it is scenery or ground cover (their stencil marks), never the witch, at leash.placedThrough. */
   through: Instances;
-  /** Drawn over everything (no depth test): the berries' glints seen from the treetops. */
+  /** Drawn over everything (no depth test): the wild legends' glow and the fight's marks seen from the treetops. (Not the berries' glints: those are depth-tested, in `standing`.) */
   over: Instances;
   /** Not glowing (Ed's art director, #193): an attack's dust and the bits it throws, blended over the ground like the creatures. */
   solid: Instances;
@@ -282,8 +282,8 @@ export class LeashView {
     return s;
   }
 
-  /** Berries (rules/berries.ts): each one's soft red halo, and from the treetops a red glint over
-   *  the canopy; the ring of how near a party animal is to evolving; and evolving itself: motes
+  /** Berries (rules/berries.ts): each one's soft red halo, and from the treetops a red glint where
+   *  no crown hides it; the ring of how near a party animal is to evolving; and evolving itself: motes
    *  spiralling up through the bar, a flash on the bar line as it becomes its next level, a burst
    *  of party sparkles. */
   /** The ring stones' glowing dots this frame (render/view/home.ts drawSpeakers): each one's middle in the world and how bright. */
@@ -320,7 +320,10 @@ export class LeashView {
         const pulse = 0.75 + 0.25 * Math.sin(time * 4 + berry.id);
         this.standing.add(p.x, 0.8, p.z + 0.29, 4.6 * hs, dot, r * 2, gg * 1.6, b * 1.6, Math.min(1, 1.6 * hg) * pulse); // (a wide bright halo)
       }
-      if (treetops) this.over.add(p.x, 1, p.z + 0.25, 0.9, dot, r * 1.6 * tw, gg * 1.6, b * 1.6, 0.8 * glow);
+      // From the treetops a small glint, depth-tested like any ground thing (Ed, 2026-11-02: "I can see berries through the canopy,
+      // and I shouldn't be able to"): it shows where nothing nearer is drawn (a gap in the crowns, the cut-away round her), never
+      // over a crown. (It was in `over`, no depth test, since the berries came in: over every crown.)
+      if (treetops) this.standing.add(p.x, 1, p.z + 0.25, 0.9, dot, r * 1.6 * tw, gg * 1.6, b * 1.6, 0.8 * glow);
       else {
         this.standing.add(p.x, 0.8, p.z + 0.3, 2.8 * hs, dot, r * 1.5, gg * 1.5, b * 1.5, 0.95 * hg * tw); // the soft halo, easy to spot
         this.standing.add(p.x, 0.8, p.z + 0.31, 1.1 * hs, dot, r * 1.8, gg * 1.4, b * 1.4, 0.8 * hg); // its warm core
