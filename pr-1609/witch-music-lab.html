@@ -9521,6 +9521,15 @@ registerProcessor("witch-fof", WitchFof);
 
   // config/tuning.json
   var tuning_default = {
+    mushroomLight: {
+      haloStrength: 0.3,
+      poolStrength: 0.1,
+      capGlow: 4.7,
+      radius: 2.35,
+      height: 1.2,
+      complement: 0.1,
+      testRow: false
+    },
     mapAreas: 10,
     map: {
       shape: "circle",
@@ -9915,7 +9924,7 @@ registerProcessor("witch-fof", WitchFof);
         grace: 2,
         rail: 0.45,
         landTime: 0.35,
-        walk: 7.5,
+        walk: 9,
         stride: 5,
         fall: {
           on: false,
@@ -9938,10 +9947,10 @@ registerProcessor("witch-fof", WitchFof);
         },
         terraceRoom: true,
         look: {
-          indoor: false,
-          noNotch: false,
-          approach: false,
-          noWalls: false,
+          indoor: true,
+          noNotch: true,
+          approach: true,
+          noWalls: true,
           fade: 0.75,
           bark: 0.18,
           radius: 40,
@@ -10606,7 +10615,8 @@ registerProcessor("witch-fof", WitchFof);
           gravity: 9.8,
           arcPull: 60,
           iterations: 6,
-          jump: 8
+          jump: 8,
+          fall: 0.5
         }
       }
     },
@@ -10637,6 +10647,12 @@ registerProcessor("witch-fof", WitchFof);
         contact: true,
         lead: 1
       }
+    },
+    combatWaiting: {
+      reachScale: 0.8,
+      areaGrowth: 0.2,
+      passPower: 12,
+      passDepth: 1
     },
     creatureMomentum: {
       on: true,

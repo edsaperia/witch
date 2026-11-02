@@ -77,14 +77,16 @@
     #sigil { right: 126px; bottom: 30px; }
     #spell { right: 200px; bottom: 30px; }
     #bubbles { position: fixed; inset: 0; pointer-events: none; overflow: hidden; }
-    /* Pixel speech bubbles: an outline only (no fill), one game pixel thick (--px), its corners
-       notched, a stepped tail; the emoji in it are pixel sprites (see src/render/leash.ts). */
+    /* Pixel speech bubbles: the emoji alone, no outline or tail (Ed, 2026-11-02: "Remove the white box around emoji when
+       the witch and animals speak"); the emoji in it are pixel sprites (see src/render/leash.ts). The outline and its
+       stepped tail are kept below, switched off, so they are one line to bring back. */
     .bubble { --px: 3px; --ink: rgba(240, 232, 255, .9); position: absolute; transform: translate(-50%, calc(-100% - var(--px) * 3)); color: var(--ink); padding: calc(var(--px) * 2) calc(var(--px) * 3); font-size: 15px; line-height: 1.2; white-space: nowrap; display: none; text-shadow: 0 1px 0 #000; }
     .bubble::before { content: ""; position: absolute; inset: 0; border: var(--px) solid var(--ink);
       clip-path: polygon(var(--px) 0, calc(100% - var(--px)) 0, 100% var(--px), 100% calc(100% - var(--px)), calc(100% - var(--px)) 100%, var(--px) 100%, 0 calc(100% - var(--px)), 0 var(--px)); }
     .bubble::after { content: ""; position: absolute; left: 50%; top: 100%; width: var(--px); height: var(--px); background: var(--ink); box-shadow: 0 var(--px) 0 var(--ink), calc(var(--px) * -1) calc(var(--px) * 2) 0 var(--ink); }
     .bubble canvas { display: block; image-rendering: pixelated; }
     .bubble.on { display: block; }
+    .bubble::before, .bubble::after { display: none; }
     /* the legend circle's explainer (render/leash.ts drawCirclePanel; Ed, 2026-10-06) */
     .deck-bpm { position: absolute; transform: translate(-50%, -100%); padding: 1px 5px 0; border: 1px solid rgba(120, 255, 200, .45); border-radius: 2px; background: rgba(6, 14, 12, .82); color: rgb(120, 255, 200); font: 14px "Tiny5", ui-monospace, monospace; line-height: 14px; white-space: nowrap; pointer-events: none; z-index: 2; text-shadow: 0 0 4px rgba(120, 255, 200, .7); -webkit-font-smoothing: none; } /* the party's tempo over her decks, a DJ controller's display (render/leash/deckBpm.ts) */
     .deck-bpm .u { font-size: 9px; margin-left: 3px; opacity: .75; }
@@ -137,35 +139,35 @@
     .bubble .bar { position: absolute; left: 6px; right: 6px; bottom: calc(var(--px) * -5); height: 3px; background: rgba(255,255,255,.2); border-radius: 2px; overflow: hidden; }
     .bubble .bar i { display: block; height: 100%; background: var(--love); }
   </style>
-  <script type="module" crossorigin src="./assets/main-BQSNDTiI.js"></script>
+  <script type="module" crossorigin src="./assets/main-BCGxHWiP.js"></script>
   <link rel="modulepreload" crossorigin href="./assets/modulepreload-polyfill-B5Qt9EMX.js">
   <link rel="modulepreload" crossorigin href="./assets/witch-w90jPAu6.js">
   <link rel="modulepreload" crossorigin href="./assets/party-DIp2ce71.js">
-  <link rel="modulepreload" crossorigin href="./assets/forest-CLmCuTRX.js">
-  <link rel="modulepreload" crossorigin href="./assets/finds-DOpBBYd_.js">
-  <link rel="modulepreload" crossorigin href="./assets/saveSlots-Bwt3bwTH.js">
-  <link rel="modulepreload" crossorigin href="./assets/decisions-w_L9aZVT.js">
-  <link rel="modulepreload" crossorigin href="./assets/generator-jICfR-eK.js">
+  <link rel="modulepreload" crossorigin href="./assets/forest-k6s7R_AT.js">
+  <link rel="modulepreload" crossorigin href="./assets/finds-OdpTqtVp.js">
+  <link rel="modulepreload" crossorigin href="./assets/saveSlots-q9AAcYwI.js">
+  <link rel="modulepreload" crossorigin href="./assets/decisions-DGZ8xqvs.js">
+  <link rel="modulepreload" crossorigin href="./assets/generator-DhI2kGNK.js">
   <link rel="modulepreload" crossorigin href="./assets/potionSettings-BJW2Ha-p.js">
-  <link rel="modulepreload" crossorigin href="./assets/mushrooms-CrBB7TOx.js">
-  <link rel="modulepreload" crossorigin href="./assets/storageFallback-BJk_Ee41.js">
-  <link rel="modulepreload" crossorigin href="./assets/chartView-D8amlJB4.js">
-  <link rel="modulepreload" crossorigin href="./assets/musicSet-zquRohva.js">
-  <link rel="modulepreload" crossorigin href="./assets/win-FMIAPkGf.js">
-  <link rel="modulepreload" crossorigin href="./assets/game-CsjPGZ4U.js">
-  <link rel="modulepreload" crossorigin href="./assets/linkParams-DhwTylDd.js">
-  <link rel="modulepreload" crossorigin href="./assets/playerSettings-B0yEejpQ.js">
-  <link rel="modulepreload" crossorigin href="./assets/housePieces-Bfuy2Pzy.js">
-  <link rel="modulepreload" crossorigin href="./assets/mapPrep-CndPo7En.js">
+  <link rel="modulepreload" crossorigin href="./assets/mushrooms-CvfaDlfI.js">
+  <link rel="modulepreload" crossorigin href="./assets/storageFallback-DSdiAWXN.js">
+  <link rel="modulepreload" crossorigin href="./assets/chartView-B9jJt3xr.js">
+  <link rel="modulepreload" crossorigin href="./assets/playerSettings-Cy5SjMTO.js">
+  <link rel="modulepreload" crossorigin href="./assets/win-Dg_XX4se.js">
   <link rel="modulepreload" crossorigin href="./assets/dom-D4rI-PaU.js">
+  <link rel="modulepreload" crossorigin href="./assets/musicSet-zquRohva.js">
+  <link rel="modulepreload" crossorigin href="./assets/game-uphtLUXH.js">
   <link rel="modulepreload" crossorigin href="./assets/houseLayout-6b5l2G2Y.js">
-  <link rel="modulepreload" crossorigin href="./assets/playtestComments-Ba2bqEJD.js">
+  <link rel="modulepreload" crossorigin href="./assets/playtestComments--ua-9YAn.js">
+  <link rel="modulepreload" crossorigin href="./assets/linkParams-BCT6A-XE.js">
+  <link rel="modulepreload" crossorigin href="./assets/housePieces-rmnjqP9J.js">
+  <link rel="modulepreload" crossorigin href="./assets/mapPrep-DvZGV87k.js">
   <link rel="modulepreload" crossorigin href="./assets/mushroomArt-BiqcpcYK.js">
-  <link rel="modulepreload" crossorigin href="./assets/brewingProps-DWCU_2pZ.js">
-  <link rel="modulepreload" crossorigin href="./assets/botKinds-z38HlG5s.js">
-  <link rel="modulepreload" crossorigin href="./assets/zooControls-BlFRPYRz.js">
-  <link rel="modulepreload" crossorigin href="./assets/style-BFZnNbE4.js">
-  <link rel="modulepreload" crossorigin href="./assets/viewParams-CdCF_YHa.js">
+  <link rel="modulepreload" crossorigin href="./assets/brewingProps-CWDNSlO7.js">
+  <link rel="modulepreload" crossorigin href="./assets/botKinds-C2VRQSR1.js">
+  <link rel="modulepreload" crossorigin href="./assets/zooControls-DANrMA1N.js">
+  <link rel="modulepreload" crossorigin href="./assets/style-CNI56D_v.js">
+  <link rel="modulepreload" crossorigin href="./assets/viewParams-C9kWPQJC.js">
 </head>
 <body>
   <canvas id="game"></canvas>
