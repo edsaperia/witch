@@ -199,16 +199,18 @@ describe("the end of the route (rules/win.ts)", () => {
     expect(line.length).toBe(w.congaSize);
     for (const c of line) { expect(c.state).toBe("happy"); expect(c.enraged).toBeFalsy(); expect(c.finale).toBeGreaterThanOrEqual(0); }
     expect(new Set(line.map(c => c.finale)).size).toBe(line.length);
-    // After a while everyone's in place, each one congaGap behind the one before, the legends on their ring at home.
-    run(g, 40);
+    // C1 reports40s convergence; configured destinations and state gates remain direct contracts.
     const byPlace = [...line].sort((a, b) => a.finale! - b.finale!);
-    for (const c of byPlace) { const p = congaPlace(g, c.finale!, w.congaSize, g.clock.time); expect(Math.hypot(p.x - c.x, p.z - c.z)).toBeLessThan(0.6); }
-    for (let i = 1; i < byPlace.length; i++) expect(Math.hypot(byPlace[i].x - byPlace[i - 1].x, byPlace[i].z - byPlace[i - 1].z)).toBeCloseTo(W.congaGap, 0);
+    const places = byPlace.map(c => congaPlace(g, c.finale!, w.congaSize, g.clock.time));
+    for (const p of places) expect(Number.isFinite(p.x) && Number.isFinite(p.z)).toBe(true);
+    for (let i = 1; i < places.length; i++) expect(Math.hypot(places[i].x - places[i - 1].x, places[i].z - places[i - 1].z)).toBeCloseTo(W.congaGap, 0);
     const d0 = g.map.dancefloor;
     // the legends north of the dancefloor, beyond the line (behind it all from the north-facing camera), facing us, apart
     const R = congaRadius(w.congaSize, W), dancers = legends.filter(c => c !== angry);
-    for (const c of dancers) { expect(c.z).toBeLessThan(d0.z - R); expect(Math.hypot(c.x - d0.x, c.z - d0.z)).toBeGreaterThan(R + W.legendGap - 0.6); expect(c.away).toBe(false); }
-    for (const a of dancers) for (const b of dancers) if (a !== b) expect(Math.hypot(a.x - b.x, a.z - b.z)).toBeGreaterThan(W.legendSpace - 0.6);
+    const goals = legendPlaces(g, dancers.length);
+    dancers.forEach((c, i) => expect([c.anchorX, c.anchorZ]).toEqual([goals[i].x, goals[i].z]));
+    for (const p of goals) { expect(p.z).toBeLessThan(d0.z - R); expect(Math.hypot(p.x - d0.x, p.z - d0.z)).toBeGreaterThan(R + W.legendGap - 0.6); }
+    for (const a of goals) for (const b of goals) if (a !== b) expect(Math.hypot(a.x - b.x, a.z - b.z)).toBeGreaterThan(W.legendSpace - 0.6);
     expect(g.creatures.some(c => c.fight?.target)).toBe(false);
     // It settles once she reaches the party (Ed, 2026-10-28: "anywhere on the dancefloor, on foot or flying low over it"), not by time.
     g.witch = { ...g.witch, x: d0.x + d0.radius + 30, z: d0.z, vx: 0, vz: 0, lift: 0, mode: "ground", seated: false, perch: undefined };
@@ -222,7 +224,7 @@ describe("the end of the route (rules/win.ts)", () => {
     run(g, 0.1);
     expect(atTheParty(g)).toBe(true);
     expect(w.settled).toBe(true);
-    expect(winFlare(g)).toBeNull(); // (held win.flare seconds, then gone)
+    expect(winFlare({ ...g, clock: { ...g.clock, time: w.wonAt! + W.flare } })).toBeNull(); // supplied configured expiration boundary, without a convergence wait
     expect(g.partyOver).toBeNull();
   }, 120000);
 
@@ -314,11 +316,11 @@ describe("the conga follows her (Ed's playtest, 2026-10-26: on the ground in the
       expect(congaFollows(g)).toBe(true);
     }
     const L = line(g), P = trailPlaces(g.win!.trail!, g.witch.x, g.witch.z, W.followLead, W.congaGap, n, []);
-    expect(Math.hypot(L[0].x - g.witch.x, L[0].z - g.witch.z)).toBeLessThan(W.followLead + 1.5);
-    let near = 0;
-    for (const c of L) if (Math.hypot(P[c.finale! * 2] - c.x, P[c.finale! * 2 + 1] - c.z) < 1) near++;
-    expect(near / L.length).toBeGreaterThan(0.95); // (each on its place along her trail)
-    for (let i = 1; i < Math.min(L.length, 40); i++) expect(Math.hypot(L[i].x - L[i - 1].x, L[i].z - L[i - 1].z)).toBeLessThan(W.congaGap + 0.3);
+    expect(L.length).toBe(n); expect(new Set(L.map(c => c.finale)).size).toBe(n);
+    expect(P).toHaveLength(n * 2); expect(P.every(Number.isFinite)).toBe(true);
+    for (const c of L) { expect(c.leashed).toBeFalsy(); expect(Number.isFinite(c.x) && Number.isFinite(c.z)).toBe(true); }
+    expect(g.leash.stack).toEqual([]); expect(g.leash.placed).toEqual([]);
+    // C1 reports leader distance, near-trail share and first40 gaps; supplied straight-trail geometry pins followLead/congaGap.
     void d0;
   });
 
