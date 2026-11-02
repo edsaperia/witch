@@ -62,7 +62,7 @@ const CASES = [
   // Four-area world: pause/input shielding uses house overlays, not distant scenery or area diversity.
   await page.goto(`http://127.0.0.1:${server.address().port}/?creator=0&quick=1&seed=123&island=4&wave=off&debug`);
   await page.waitForFunction(() => window.witch && window.witch.ready, null, { timeout: 900000, polling: 1000 });
-  await page.addStyleTag({ content: "#pause-sliders { transition: none !important; }" }); // (where they rest, not mid-slide: a software GL draws a frame in seconds)
+  await page.emulateMedia({ reducedMotion: "reduce" }); // use the normal instant transition for deterministic hit tests
   await page.keyboard.press("Enter");
   await page.waitForFunction(() => window.witch.game.clock.time > 2, null, { timeout: 300000, polling: 500 });
   await timing("load and start", t0);
@@ -95,7 +95,7 @@ const CASES = [
     if (C.state) check(await page.$eval(C.sel, e => getComputedStyle(e).visibility === "hidden"), `${C.id}: station text is hidden behind the transparent pause page`);
     if (!(await isOpen())) console.log(`  ${C.id}: closed by ${JSON.stringify(await page.evaluate(() => (window.witch.stationShuts ?? []).slice(-3)))}`);
     const top = await page.evaluate(() => {
-      const s = document.getElementById("pause-sliders")?.getBoundingClientRect(), mid = (x, y) => document.elementFromPoint(x, y);
+      const s = document.querySelector("#pause-sliders .left")?.getBoundingClientRect(), mid = (x, y) => document.elementFromPoint(x, y);
       const atSliders = s ? mid(s.left + s.width / 2, s.top + Math.min(200, s.height / 2)) : null;
       const atMiddle = mid(innerWidth * 0.62, innerHeight / 2);
       const under = ["#chart-overlay", "#station-panel", "#studio-panel", "#finds-dev", "canvas"];
@@ -164,6 +164,37 @@ const CASES = [
     if (await page.evaluate(() => !!document.querySelector("#chart-overlay"))) console.log(`info ${C.id}: a chart is still up after it`);
     await timing(C.id, tc);
   }
+  // Check the real registry against the built menu, including folded groups.
+  const registry = path.resolve(__dirname, "../../config/decisions");
+  const decisions = [require("../../config/decisions.json"), ...fs.readdirSync(registry)
+    .filter(f => f.endsWith(".json")).map(f => JSON.parse(fs.readFileSync(path.join(registry, f), "utf8")))]
+    .flatMap(group => group.decisions.map(d => [d.id, d.control.type]));
+  await page.keyboard.press("Escape");
+  await page.waitForSelector("#pause-sliders.open");
+  const panes = await page.evaluate(expected => {
+    const root = document.querySelector("#pause-sliders");
+    const rows = [...root.querySelectorAll(".s[data-id]")];
+    return rows.length === expected.length && expected.every(([id, type]) => {
+      const hits = rows.filter(row => row.dataset.id === id);
+      return hits.length === 1 && !!hits[0].closest(type === "slider" ? ".left" : ".right");
+    }) && [...root.querySelectorAll(".copyall, select, textarea, #pause-btns button")].every(el => el.closest(".right"));
+  }, decisions);
+  check(panes, "every registered decision appears once, with sliders on the left and actions and switches on the right");
+  for (const [label, width, height] of [["desktop", 1280, 720], ["phone", 390, 844]]) {
+    await page.setViewportSize({ width, height });
+    const fits = await page.evaluate(() => {
+      const rect = side => document.querySelector("#pause-sliders ." + side).getBoundingClientRect();
+      const l = rect("left"), r = rect("right");
+      return document.documentElement.scrollWidth <= innerWidth && l.width > 0 && r.width > 0 &&
+        (l.right < r.left || l.bottom < r.top);
+    });
+    check(fits, label + ": both panes fit with visible space between them");
+  }
+  await page.keyboard.press("Escape");
+  await page.waitForFunction(() => !document.body.classList.contains("paused"));
+  check(await page.evaluate(() => document.querySelector("#pause-sliders").inert &&
+    [...document.querySelectorAll("#pause-sliders .pane")].every(el => getComputedStyle(el).visibility === "hidden")),
+  "both panes are hidden and unfocusable during play");
   check(errors.length === 0, `no page errors${errors.length ? ": " + errors.slice(0, 3).join("; ") : ""}`);
   await browser.close(); server.close();
   if (fail.length) { console.log(`FAILED (${fail.length}):\n` + fail.join("\n")); process.exit(1); }
