@@ -8,6 +8,7 @@ export function metric(id, value, unit, reference) {
 export function summary(report) {
   const lines=[`# Behaviour report: ${report.status}`,'',`Source: ${report.sha}. Duration: ${report.seconds.toFixed(3)} s.`,'','Historical numeric references are informational, not release gates. Execution errors are separate.','','| Measurement | Actual | Historical reference | Observation |','|---|---:|---:|---|'];
   for(const system of report.systems)for(const m of system.metrics)lines.push(`| ${m.id} | ${m.value} ${m.unit} | ${m.reference.operator} ${m.reference.value} | ${m.withinReference?'within reference':'outside reference'} |`);
+  for(const system of report.systems)for(const note of system.notes??[])lines.push('',`${system.system}: ${note}`);
   if(report.error)lines.push('',`Execution error: ${report.error}`);
   return lines.join('\n')+'\n';
 }

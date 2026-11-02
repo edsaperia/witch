@@ -1,5 +1,7 @@
 # The run
 
+Boot test ruling (Ed, 2026-11-02: "Don't pin it; just report it"): #1663 moves the historical195m path,8–9.5s first-speaker and sampled midpoint-count pins into the independent IP2 report. Tests retain geometric arrival formulas, configured speed, monotone activation, all-speakers completion, wave scheduling and pause shifts. The adjacent old3s test title is corrected without altering its assertions. This is a test/report change, not a new boot speed or gameplay timing.
+
 Native pause-key isolation (#1522, 2026-10-31): rejected Enter/NumpadEnter/Space keydown and keyup events aimed outside the pause UI cancel the browser default as well as propagation, so they cannot activate an underlying focused button. Opening pause focuses its visible button container with tabindex=-1 after mounting: immediate Enter/Space is cancelled, the first native Tab reaches Controls, and activation on a focused button still works. The container opens no corner panel, so the existing pad Back resumes immediately; Back in an explicitly opened corner panel closes that panel as before. Tab/Shift+Tab and arrows retain native defaults; resume does not restore old underlying focus. Native controls inside pause, Settings and the potion lab retain their existing defaults/routing. This preserves #1523's potion-lab Escape and single-step exceptions. Focused tests cover cancellation, native navigation, inside controls and focus; the coordinator owns real-browser acceptance.
 
 Pause input stack (#1495, Ed's approved architecture review, 2026-10-30):
