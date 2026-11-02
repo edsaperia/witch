@@ -301,6 +301,7 @@ says what each note covers.
 - Save format guards
 - Compatible mushroom extension (PR #1523)
 - Borrowed visits (PR #1538)
+- Deleting saves and Reset everything
 
 ## [Sound effects](sound.md)
 
