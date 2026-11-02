@@ -86,3 +86,56 @@ describe("the oak's crown indoors (Ed, 2026-10-26)", () => {
     expect(H4.z).toBe(0);
   });
 });
+
+// Ed, 2 Nov (v7061): "The 'see through' effect on the treehouse tree canopy should work the same as the 'see through' effect in
+// normal tree canopies". Outdoors the crown takes the forest's own cut-away round her (canopyCutout: uCutout, shut as she rises by
+// uTopFade) and the hidden witch's see-through (occlusion: uOcc round uWitch, nearer than uWitchDepth), split as the forest's crowns
+// are (render/sprites.ts): its whole pixels in its own pass writing depth (her silhouette shows where it hides her); after her (render
+// order 10), what's see-through for her alone in a front pass writing depth, then what's half faded, blended. Indoors, one pass and
+// its own look, as before.
+describe("the oak's crown outdoors: the forest's see-through and cut-away (Ed, 2 Nov)", () => {
+  it("reads the forest's own cut-away and hidden-witch uniforms, the very objects, in both its passes", async () => {
+    const { SPRITE_UNIFORMS } = await import("./sprites");
+    const { crown } = setup(0.4);
+    for (const m of [crown.lobes, crown.bark, crown.frontLobes, crown.frontBark, crown.seeLobes, crown.seeBark]) {
+      const u = (m.material as THREE.ShaderMaterial).uniforms;
+      for (const k of ["uCutout", "uTopFade", "uCutShape", "uOcc", "uWitch", "uWitchDepth"] as const) expect(u[k]).toBe(SPRITE_UNIFORMS[k]);
+    }
+    expect((crown.lobes.material as THREE.ShaderMaterial).uniforms.uSeePass.value).toBe(0);
+    expect((crown.frontLobes.material as THREE.ShaderMaterial).uniforms.uSeePass.value).toBe(2);
+    expect((crown.seeLobes.material as THREE.ShaderMaterial).uniforms.uSeePass.value).toBe(1);
+    expect(crown.uniforms.uSeePass.value).toBe(-1); // (its lights, render/strings.ts: one pass, dithered as before)
+  });
+
+  it("outdoors, draws its whole pixels writing depth and its see-through passes after her; indoors, one pass as before", () => {
+    const { crown, frame } = setup(0.4);
+    expect(crown.indoors).toBe(true);
+    for (const m of [crown.frontLobes, crown.frontBark, crown.seeLobes, crown.seeBark]) expect((m.material as THREE.Material).visible).toBe(false);
+    for (let i = 0; i < 30; i++) frame(null, 0.1, false);
+    expect(crown.indoors).toBe(false);
+    for (const m of [crown.lobes, crown.bark]) {
+      const mt = m.material as THREE.ShaderMaterial;
+      expect([mt.depthTest, mt.depthWrite, mt.transparent]).toEqual([true, true, false]);
+    }
+    for (const [m, depth] of [[crown.frontLobes, true], [crown.frontBark, true], [crown.seeLobes, false], [crown.seeBark, false]] as const) {
+      const mt = m.material as THREE.ShaderMaterial;
+      expect([mt.visible, mt.depthTest, mt.depthWrite, mt.transparent]).toEqual([true, true, depth, true]);
+      expect(m.renderOrder).toBeGreaterThan(10); // (after her: the witch's batch is 10)
+      expect(crown.meshes).toContain(m);
+    }
+    expect(crown.frontLobes.renderOrder).toBeLessThan(crown.seeBark.renderOrder); // (the front pass first, as the forest's: 10.9, then 11)
+    // (the approach's fade, flying near the house, no longer turns the whole crown's depth off: its faded lobes go to the see-through pass)
+    const camera = new THREE.PerspectiveCamera();
+    crown.update(camera, map(), null, null, 0.1, HOLE, 0.4, { x: 0, y: 30, z: 0 }, H.look, 1);
+    expect((crown.lobes.material as THREE.ShaderMaterial).depthWrite).toBe(true);
+  });
+
+  it("its leaves and bark both take the split (crownAlpha), and the cut-away outdoors by the forest's hole", () => {
+    for (const m of (() => { const { crown } = setup(0.4); return [crown.lobes, crown.bark]; })()) {
+      const fs = (m.material as THREE.ShaderMaterial).fragmentShader;
+      expect(fs).toMatch(/keep = crownAlpha\(/);
+      expect(fs).toMatch(/uIndoor < 0\.5 && uCutout\.z > 0\.0 && uTopFade < 0\.996/);
+      expect(fs).toMatch(/mix\(1\.0, uOcc\.x, occl\)/); // (down to occlusion.fadeOpacity, as the forest's)
+    }
+  });
+});
