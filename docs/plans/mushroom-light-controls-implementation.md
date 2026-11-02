@@ -1,0 +1,10 @@
+# Mushroom light controls implementation
+
+Ed, 2026-11-02; inbox #1640, brief `docs/plans/mushroom-light-test.md` at42148f06ea5c1678f007eec5b88aeb1f6562237f. Fresh branch `codex/mushroom-light-controls`, isolated worktree `work/mushroom-light-controls`; prior combat checkpoint and decision request on #1634 remain intact.
+
+1. Add a normal decision group, “Mushroom light”, for current halo/pool/cap brightness, radius, complement/saturation and height parameters. Retain today's defaults. No edits to overlayPause.ts or settingsPage.ts (#1639), or treehouse decision defaults (#1638).
+2. Add an OFF-by-default test-row switch in that group: each kind once, east–west, 10 m apart, centred nominally 40 m south of the dancefloor. Use deterministic shared row nudging to avoid water, stone keep-clear and scenery. State whether collection is supported and verify toggling cannot alter normal nights.
+3. Trace kitchen cauldron/basket placement, draw path/layers, transforms, transparency and readiness before proposing a visibility fix. Measure the failed invariant with nearby source-level/render-data tests where possible. No guessed “fixed” from source alone; cloud visual evidence remains required. Share findings with #1638 through its coordinator-facing PR, including whether subtractive halos contribute to the reported red tint.
+4. Nearby tests with one worker and typecheck only. No laptop browser allocation: #1609 owns the exclusive probe. Before REPORT, merge-check the live #1609 head without modifying multiplayer files. Coordinator owns combined cloud/browser/art checks and release. No new hardware/services.
+
+Source ownership: mushroom decision/config plumbing, mushroom row rules/presentation and kitchen visibility diagnosis. Coordinate before changing shared house draw-path hooks; preserve UI and multiplayer ownership. PLAN → REPORT → FINAL on own PR, short decision questions as separate QUESTION comments. Current source work is authorised; browser verification is explicitly unallocated.
