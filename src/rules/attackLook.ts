@@ -34,6 +34,9 @@ export interface SpellsConfig {
   default: string;
   /** other names for elements (the attack grammar's body.element tags: stone, light, spore, web, water, sound) */
   aliases: Record<string, string>;
+  /** element tags with magic colours of their own (config/fx/elements.json), where the atlas's twelve have none: the unicorn's
+   *  rainbow and the sphinx's gold (Ed, 2026-11-03); the atlas (?magic=old) still draws them as their alias's element */
+  magic?: Record<string, string>;
   /** a species' element that wins over its attack's own tag */
   overrides?: Record<string, string>;
   /** a body's look tag: its own core (LOOK_CORES), in its own palette (none: its element's colour) */
@@ -50,6 +53,12 @@ export function elementNamed(tag: string | undefined, cfg: SpellsConfig = ATTACK
   if (!tag) return undefined;
   const t = cfg.elements[tag] ? tag : cfg.aliases[tag];
   return t && cfg.elements[t] ? t : undefined;
+}
+
+/** An element tag's own magic colours (config/fx/elements.json's key: the rainbow's, the gold's), if it has some; undefined for
+ *  the rest, drawn in their element's. */
+export function magicNamed(tag: string | undefined, cfg: SpellsConfig = ATTACK_LOOK): string | undefined {
+  return tag ? cfg.magic?.[tag] : undefined;
 }
 
 /** A creature's element: its override if it has one, else an attack's own tag if it has one (tag), else the species' own (bySpecies), else its kind's biome's,
@@ -90,6 +99,7 @@ export function spellsProblems(cfg: SpellsConfig, species: readonly string[], bi
   if (!cfg.elements[cfg.default]) bad.push(`default: no element ${cfg.default}`);
   for (const [sp, e] of Object.entries(cfg.overrides ?? {})) { if (!cfg.elements[e]) bad.push(`overrides ${sp}: no element ${e}`); if (!species.includes(sp)) bad.push(`overrides: no species called ${sp}`); }
   for (const [a, e] of Object.entries(cfg.aliases ?? {})) if (!cfg.elements[e]) bad.push(`aliases ${a}: no element ${e}`);
+  for (const [t, m] of Object.entries(cfg.magic ?? {})) if (!cfg.aliases[t] && !cfg.elements[t]) bad.push(`magic ${t}: no alias or element (the atlas draws it as one) for ${m}`);
   for (const [l, L] of Object.entries(cfg.looks ?? {})) {
     if (!LOOK_CORES.includes(L.core)) bad.push(`look ${l}: no core called ${L.core}`);
     if (L.palette !== undefined && (!Array.isArray(L.palette) || L.palette.length !== 4 || !L.palette.every(hex))) bad.push(`look ${l}: its palette isn't four "#rrggbb" colours`);

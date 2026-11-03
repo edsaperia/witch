@@ -90,6 +90,8 @@ void main(){
   a*=vCol.a;if(a<0.01)discard;
   gl_FragColor=vec4(haze(rgb*vCol.rgb,vWorld),a);
 }`;
+/** How far a halo spreads past its core (1.45 of it), a little wider as its glow is raised. */
+export const haloSpread=(glow:number):number=>1.45*(1+0.15*Math.max(0,glow-1));
 export class FxBatches {
   readonly layers: Instances[]=[];
   readonly time={value:0}; readonly calm={value:0}; readonly secondary={value:1}; readonly distort={value:1};
@@ -110,27 +112,30 @@ export class FxBatches {
         uRight:SPRITE_UNIFORMS.uRight,uUp:SPRITE_UNIFORMS.uUp,uRes:SPRITE_UNIFORMS.uRes,uMpp:this.mpp,uHalo:{value:new THREE.Vector2(...settings.halo as [number,number])},uFxRamp:{value:ramp},uFlat:{value:flat},uLayer:{value:layer},uFxTime:this.time,uCalm:this.calm,uSecondary:this.secondary,uDistort:this.distort},
         transparent:true,depthWrite:false,depthTest:!through,blending:layer>=2?THREE.AdditiveBlending:THREE.NormalBlending});
       const batch=new Instances(mat);batch.mesh.name=through?"Magic canopy halo":`Magic ${flat?"ground":"upright"} layer ${layer}`;
-      // White warning marks (2.97) are composited after every new layer.
+      // The red warning marks (2.97; Ed, 2026-11-02: "the telegraph should be red") are composited after every new layer.
       batch.mesh.renderOrder=through?11.2:flat?2.9+layer*0.01:2.8+layer*0.01;scene.add(batch.mesh);this.layers.push(batch);
     }
   }
   begin(time:number,calm:boolean):void {this.time.value=time;this.calm.value=calm?1:0;this.count=0;for(const b of this.layers)b.begin();}
-  add(x:number,y:number,z:number,size:number,data:number[],alpha:number,ground:boolean,tint:readonly number[]|null=null,particles=true):void {
+  /** glow: the halo's strength and spread, times its own (1 for everything but the creatures' attacks: attackFx.visibility.bloom). */
+  add(x:number,y:number,z:number,size:number,data:number[],alpha:number,ground:boolean,tint:readonly number[]|null=null,particles=true,glow=1):void {
+    const halo=haloSpread(glow);
     for(let layer=0;layer<(particles?4:3);layer++){
       if(layer!==1){if(this.count>=settings.instances)continue;this.count++;}
-      this.layers[(ground?4:0)+layer].add(x,y,z,size*(layer===0?1.12:layer===2?1.45:1),data,tint?.[0]??1,tint?.[1]??1,tint?.[2]??1,alpha);
+      this.layers[(ground?4:0)+layer].add(x,y,z,size*(layer===0?1.12:layer===2?halo:1),data,tint?.[0]??1,tint?.[1]??1,tint?.[2]??1,layer===2?alpha*glow:alpha);
     }
     if(!ground&&this.canopy&&this.secondary.value>0.5&&this.count<settings.instances){
-      this.count++;this.layers[8].add(x,y,z,size*1.5,data,tint?.[0]??1,tint?.[1]??1,tint?.[2]??1,alpha*0.12);
+      this.count++;this.layers[8].add(x,y,z,size*1.5,data,tint?.[0]??1,tint?.[1]??1,tint?.[2]??1,alpha*0.12*glow);
     }
   }
-  beam(x:number,y:number,z:number,length:number,heading:number,width:number,data:number[],alpha:number,tint:readonly number[]|null):void {
+  beam(x:number,y:number,z:number,length:number,heading:number,width:number,data:number[],alpha:number,tint:readonly number[]|null,glow=1):void {
+    const halo=haloSpread(glow);
     for(let layer=0;layer<4;layer++){
       if(layer!==1){if(this.count>=settings.instances)continue;this.count++;}
-      this.layers[layer].add(x,y,z,width*(layer===0?1.12:layer===2?1.45:1),data,tint?.[0]??1,tint?.[1]??1,tint?.[2]??1,alpha,-length,false,heading);
+      this.layers[layer].add(x,y,z,width*(layer===0?1.12:layer===2?halo:1),data,tint?.[0]??1,tint?.[1]??1,tint?.[2]??1,layer===2?alpha*glow:alpha,-length,false,heading);
     }
     if(this.canopy&&this.secondary.value>0.5&&this.count<settings.instances){
-      this.count++;this.layers[8].add(x,y,z,width*1.5,data,tint?.[0]??1,tint?.[1]??1,tint?.[2]??1,alpha*0.12,-length,false,heading);
+      this.count++;this.layers[8].add(x,y,z,width*1.5,data,tint?.[0]??1,tint?.[1]??1,tint?.[2]??1,alpha*0.12*glow,-length,false,heading);
     }
   }
   end():void {for(const b of this.layers)b.end();}

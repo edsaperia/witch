@@ -1,6 +1,6 @@
 // Tonight's find (rules/finds.ts FIND_KINDS), as the finds style guide has it (Ed, 2026-10-23; docs/art-guide/FINDS.md): one
 // flask-sized object (art/country.js's find pieces: clothes a folded bundle, bags a little bag, a broom part the part), drawn each
-// frame from its own small atlas (a "find" art job: render/artBuild.ts) where the rules put it, under the canopy, on a patch of
+// frame from its own small atlas (a "find" art job: render/artBuild.ts) where the rules put it (rules/finds.ts placeTrunk), on a patch of
 // clear ground (findClear: no tufts on it, view.ts) in its own pale gold-white light (findLight, render/view/lights.ts), the
 // brightest and whitest thing there. Hidden from the treetops: the light lights only the ground under the crowns. Once she's taken
 // it, it's gone, and its patch and light with it. Not taken by the time the party's lost, it's gone from the map too (Ed,

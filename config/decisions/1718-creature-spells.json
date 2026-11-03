@@ -1,0 +1,108 @@
+{
+  "pr": 1718,
+  "group": "Creature spells",
+  "decisions": [
+    {
+      "id": "spellSize",
+      "pr": 1718,
+      "group": "Creature spells",
+      "label": "Spell size",
+      "note": "Every creature spell's size, times its old size: bolts, trails, hits, ground marks, beams' width, status icons, pack specials (Ed, 2026-11-03: \"Larger, extra Bloom\"). 1: as before.",
+      "control": {
+        "type": "slider",
+        "min": 0.5,
+        "max": 3,
+        "step": 0.05
+      },
+      "default": 1.75,
+      "apply": {
+        "knob": "attackFx.visibility.size"
+      }
+    },
+    {
+      "id": "spellOpacity",
+      "pr": 1718,
+      "group": "Creature spells",
+      "label": "Spell opacity",
+      "note": "How far each spell's own opacity is raised toward solid: 0 as before (a themed shot 0.45, a beam 0.65, a zone's tiles 0.6), 1 all solid.",
+      "control": {
+        "type": "slider",
+        "min": 0,
+        "max": 1,
+        "step": 0.05
+      },
+      "default": 0.9,
+      "apply": {
+        "knob": "attackFx.visibility.opacity"
+      }
+    },
+    {
+      "id": "spellBloom",
+      "pr": 1718,
+      "group": "Creature spells",
+      "label": "Spell glow",
+      "note": "The spells' halo, their glow through the crowns and the extra bloom round bolts, hits, beams and zones, times their old strength. 1: as before (no extra bloom).",
+      "control": {
+        "type": "slider",
+        "min": 0,
+        "max": 4,
+        "step": 0.1
+      },
+      "default": 2,
+      "apply": {
+        "knob": "attackFx.visibility.bloom"
+      }
+    },
+    {
+      "id": "spellDuration",
+      "pr": 1718,
+      "group": "Creature spells",
+      "label": "Spell duration",
+      "note": "How long hits, ground marks, quakes and trails last, times their old life (a hit 0.75 s, a mark 2.6 s, a quake's ground 1.4 s).",
+      "control": {
+        "type": "slider",
+        "min": 0.5,
+        "max": 3,
+        "step": 0.05
+      },
+      "default": 1.5,
+      "apply": {
+        "knob": "attackFx.visibility.duration"
+      }
+    },
+    {
+      "id": "spellZoneDensity",
+      "pr": 1718,
+      "group": "Creature spells",
+      "label": "Zone density",
+      "note": "The share of a lingering zone's tiles drawn (a puddle, fire, frost, a web): 0.25 every fourth, as before; 1 every one.",
+      "control": {
+        "type": "slider",
+        "min": 0.25,
+        "max": 1,
+        "step": 0.05
+      },
+      "default": 0.5,
+      "apply": {
+        "knob": "attackFx.visibility.zoneDensity"
+      }
+    },
+    {
+      "id": "spellGroundMark",
+      "pr": 1718,
+      "group": "Creature spells",
+      "label": "Ground marks",
+      "note": "How opaque the mark a hit leaves on the ground starts (it was 0.12).",
+      "control": {
+        "type": "slider",
+        "min": 0,
+        "max": 1,
+        "step": 0.01
+      },
+      "default": 0.45,
+      "apply": {
+        "knob": "attackFx.visibility.groundMark"
+      }
+    }
+  ]
+}

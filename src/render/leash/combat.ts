@@ -14,7 +14,8 @@ import type { LeashView } from "../leash";
 import type { Creature } from "../../rules/creatures";
 import { drawSlashes } from "./bubbles";
 import { PACKS, clouded, packKindOf, packMoveOf } from "../../rules/combat/packs";
-import { elementOf } from "../../rules/attackLook";
+import { elementOf, magicNamed } from "../../rules/attackLook";
+import { SPECIES_ATTACKS } from "../../rules/attacks/species";
 import type { Dress } from "./attackLook";
 import { drawSpells } from "./attackSpells";
 import { comfort } from "../comfort";
@@ -32,7 +33,7 @@ const dresses = new Map<string, Dress>();
 function dressOf(species: string, level: number, tint: { r: number; g: number; b: number } | null): Dress {
   const key = tint ? `${species}|${level}|${tint.r},${tint.g},${tint.b}` : `${species}|${level}`;
   let d = dresses.get(key);
-  if (!d) dresses.set(key, (d = { el: elementOf(species), level, tint: tint ? [tint.r, tint.g, tint.b] : null }));
+  if (!d) { const fx = magicNamed(SPECIES_ATTACKS[species]?.body?.element); dresses.set(key, (d = { el: elementOf(species), level, tint: tint ? [tint.r, tint.g, tint.b] : null, ...(fx ? { fx } : {}) })); }
   return d;
 }
 
@@ -76,6 +77,9 @@ function coatOf(species: string, tone: number): { r: number; g: number; b: numbe
  *  and teleport, the marker on creatures walking home, and the witch's claw slashes (her hits). */
 export function drawCombat(lv: LeashView, time: number, camera: THREE.Camera, width: number, height: number, hatTop: number): void {
   const g = lv.game, w = g.witch, W = g.witches[0], dot = lv.uv(0), sq = lv.uv(SQ), near = 90, t = g.tuning;
+  // How easy the creatures' spells are to see (Ed, 2026-11-03: "Larger, extra Bloom"): the pack specials, dust clouds and mirages
+  // drawn here too, their dots vs.size times bigger, lasting vs.duration times as long.
+  const vs = lv.look.vis, vsz = vs.size, vdur = vs.duration;
   const artPx = metresPerArtPixel(t); // one art pixel, in metres (the pixel star and bits sit on it)
   const close = (x: number, z: number, r = near) => Math.abs(x - w.x) < r && Math.abs(z - w.z) < r;
   // A legend's long-range attack (rules/combat.ts stepLegendAttack: it reaches legends.json attack.range, 420 m) is drawn as
@@ -109,18 +113,19 @@ export function drawCombat(lv: LeashView, time: number, camera: THREE.Camera, wi
       const top = (c && lv.tops.get(c.id)) ?? 1.6, big = e.big ? 2 : 1, bits = c ? hitBits(c.species, c.leashed || c.legendState === "happy") : HIT_BITS.fur, col = bits === HIT_BITS.confetti && c ? neon(c.species) : c ? coatOf(c.species, 0.75) : bits;
       const lf = e.big ? 1 + 2 * t.attackFx.legendFlash : 1; // (a legend's flash: attackFx.legendFlash, 0.5 twice anyone's)
       if (!comfort.reduceFlashing) lv.fx.push({ kind: "flash", x: e.x, y: Math.min(3.5, top * 0.55), z: e.z, at: time, life: 0.16 * lf, r: 1, g: 1, b: 0.95, seed: e.at * 53 + (e.id ?? 0), size: 0.9 * lf });
-      if (e.big) lv.fx.push({ kind: "ring", x: e.x, y: 0, z: e.z, at: time, life: 0.45, r: 1, g: 0.85, b: 0.6, seed: 0, size: 3.2, n: 28, dot: 0.8 }); // a legend's blow: a shockwave along the ground
+      if (e.big) lv.fx.push({ kind: "ring", x: e.x, y: 0, z: e.z, at: time, life: 0.45 * vdur, r: 1, g: 0.85, b: 0.6, seed: 0, size: 3.2 * vsz, n: Math.round(28 * vsz), dot: 0.8 * vsz }); // a legend's blow: a shockwave along the ground
       lv.fx.push({ kind: "dust", x: e.x, y: 0.2, z: e.z, at: time, life: 0.5, r: 0.5, g: 0.45, b: 0.38, seed: e.at * 59 + (e.id ?? 0), size: 0.7 * big });
       lv.fx.push({ kind: "bits", x: e.x, y: Math.min(3, top * 0.6), z: e.z, at: time, life: 0.8, r: col.r, g: col.g, b: col.b, seed: e.at * 61 + (e.id ?? 0), size: big, n: bits === HIT_BITS.confetti ? 12 : 8 });
     }
-    // Pack combat (rules/combat/packs.ts): its tell, a white ring at each member's feet (they glow, below); its special, a ring in its
-    // effect's tint (placeholders till the art step); her party animal splitting it, a white spark.
-    if (e.kind === "packTell" && c && close(e.x, e.z)) lv.fx.push({ kind: "ring", x: e.x, y: 0, z: e.z, at: time, life: 0.6, r: 1, g: 1, b: 1, seed: 0, size: 2.6, n: 22, dot: 0.6 });
-    if (e.kind === "packSpecial" && c && close(e.x, e.z)) { const col = packTint(c.species), R = (PACKS.specials[packKindOf(c.species)?.special ?? "call"]?.radius ?? 5) * FIGHT.scale; lv.fx.push({ kind: "ring", x: e.x, y: 0, z: e.z, at: time, life: 0.8, ...col, seed: 0, size: R, n: Math.round(R * 7), dot: 0.9 }); lv.fx.push({ kind: "spark", x: e.x, y: 1.2, z: e.z, at: time, life: 0.6, ...col, seed: e.at * 71 + e.id!, size: 2.5 }); }
+    // Pack combat (rules/combat/packs.ts): its tell, a white ring at each member's feet (they glow, below: the pack tell's own colour
+    // in docs/backlog/combat.md, Ed's "colour says the effect", not the danger frame's red); its special, a ring in its effect's
+    // tint (placeholders till the art step); her party animal splitting it, a white spark.
+    if (e.kind === "packTell" && c && close(e.x, e.z)) lv.fx.push({ kind: "ring", x: e.x, y: 0, z: e.z, at: time, life: 0.6, r: 1, g: 1, b: 1, seed: 0, size: 2.6, n: 22, dot: 0.6 * vsz });
+    if (e.kind === "packSpecial" && c && close(e.x, e.z)) { const col = packTint(c.species), R = (PACKS.specials[packKindOf(c.species)?.special ?? "call"]?.radius ?? 5) * FIGHT.scale; lv.fx.push({ kind: "ring", x: e.x, y: 0, z: e.z, at: time, life: 0.8 * vdur, ...col, seed: 0, size: R, n: Math.round(R * 7), dot: 0.9 * vsz }); lv.fx.push({ kind: "spark", x: e.x, y: 1.2, z: e.z, at: time, life: 0.6 * vdur, ...col, seed: e.at * 71 + e.id!, size: 2.5 * vsz }); }
     if (e.kind === "packSplit" && close(e.x, e.z)) lv.fx.push({ kind: "spark", x: e.x, y: 1.2, z: e.z, at: time, life: 0.5, r: 1, g: 1, b: 1, seed: e.at * 73, size: 1.6 });
     // Phase 1's (Echo): the heron blinking where she blinked, a white flash out and in; a mirage image bursting, a violet pop.
-    if (e.kind === "packSync" && close(e.x, e.z)) { lv.fx.push({ kind: "spark", x: e.x, y: 1.2, z: e.z, at: time, life: 0.45, r: 1, g: 1, b: 1, seed: e.at * 79 + (e.id ?? 0), size: 2.2 }); lv.fx.push({ kind: "ring", x: e.x, y: 0, z: e.z, at: time, life: 0.4, r: 1, g: 1, b: 1, seed: 0, size: 1.8, n: 14, dot: 0.6 }); }
-    if (e.kind === "mirageBurst" && close(e.x, e.z)) { lv.fx.push({ kind: "spark", x: e.x, y: 1, z: e.z, at: time, life: 0.6, ...PACK_TINTS.violet, seed: e.at * 83 + (e.id ?? 0), size: 2 }); lv.fx.push({ kind: "ring", x: e.x, y: 0, z: e.z, at: time, life: 0.5, ...PACK_TINTS.violet, seed: 0, size: 1.6, n: 14, dot: 0.6 }); }
+    if (e.kind === "packSync" && close(e.x, e.z)) { lv.fx.push({ kind: "spark", x: e.x, y: 1.2, z: e.z, at: time, life: 0.45 * vdur, r: 1, g: 1, b: 1, seed: e.at * 79 + (e.id ?? 0), size: 2.2 * vsz }); lv.fx.push({ kind: "ring", x: e.x, y: 0, z: e.z, at: time, life: 0.4 * vdur, r: 1, g: 1, b: 1, seed: 0, size: 1.8 * vsz, n: 14, dot: 0.6 * vsz }); }
+    if (e.kind === "mirageBurst" && close(e.x, e.z)) { lv.fx.push({ kind: "spark", x: e.x, y: 1, z: e.z, at: time, life: 0.6 * vdur, ...PACK_TINTS.violet, seed: e.at * 83 + (e.id ?? 0), size: 2 * vsz }); lv.fx.push({ kind: "ring", x: e.x, y: 0, z: e.z, at: time, life: 0.5 * vdur, ...PACK_TINTS.violet, seed: 0, size: 1.6 * vsz, n: 14, dot: 0.6 * vsz }); }
     if (e.kind === "witchHit") { lv.fx.push({ kind: "spark", x: e.x, y: 1.4, z: e.z, at: time, life: 0.5, r: 1, g: 0.25, b: 0.35, seed: e.at * 31, size: 1.6 }); if (!comfort.reduceFlashing) lv.fx.push({ kind: "flash", x: e.x, y: 1.3, z: e.z, at: time, life: 0.18, r: 1, g: 0.9, b: 0.92, seed: e.at * 67, size: 1.1 }); }
     if (e.kind === "fled" && close(e.x, e.z)) lv.fx.push({ kind: "puff", x: e.x, y: 0.5, z: e.z, at: time, life: 0.8, r: 0.8, g: 0.75, b: 0.7, seed: e.at * 13 });
     if (e.kind === "lost" && c) { const col = neon(c.species); lv.fx.push({ kind: "spark", x: e.x, y: 1, z: e.z, at: time, life: 1.2, r: col.r, g: col.g, b: col.b, seed: e.at * 7, size: 2.5 }); }
@@ -276,16 +281,16 @@ export function drawCombat(lv: LeashView, time: number, camera: THREE.Camera, wi
   for (const k of g.combat.clouds ?? []) {
     if (time >= k.until || !close(k.x, k.z)) continue;
     const left = Math.min(1, (k.until - time) / 1.5);
-    for (let i = 0; i < 18; i++) { const a = hash2(k.from, i, 51) * Math.PI * 2 + time * 0.2, q = Math.sqrt(hash2(k.from, i, 53)) * k.r; lv.solid.add(k.x + Math.cos(a) * q, 0.6 + hash2(k.from, i, 57) * 1.6, k.z + Math.sin(a) * q * 0.8, 2.2, dot, 0.5, 0.42, 0.33, 0.5 * left); }
+    for (let i = 0; i < 18; i++) { const a = hash2(k.from, i, 51) * Math.PI * 2 + time * 0.2, q = Math.sqrt(hash2(k.from, i, 53)) * k.r; lv.solid.add(k.x + Math.cos(a) * q, 0.6 + hash2(k.from, i, 57) * 1.6, k.z + Math.sin(a) * q * 0.8, 2.2 * vsz, dot, 0.5, 0.42, 0.33, lv.look.lift(0.5) * left); }
     // A flashing cloud (the moth's): a violet-white burst through it as it flashes.
-    if (k.flash !== undefined && time - k.flash < 0.5) { const f = 1 - (time - k.flash) / 0.5; for (let i = 0; i < 12; i++) { const a = (i / 12) * Math.PI * 2, q = k.r * (0.3 + 0.7 * (1 - f)); lv.standing.add(k.x + Math.cos(a) * q, 1.2, k.z + Math.sin(a) * q * 0.8, 0.5, dot, 0.95, 0.85, 1, f); } }
+    if (k.flash !== undefined && time - k.flash < 0.5) { const f = 1 - (time - k.flash) / 0.5; for (let i = 0; i < 12; i++) { const a = (i / 12) * Math.PI * 2, q = k.r * (0.3 + 0.7 * (1 - f)); lv.standing.add(k.x + Math.cos(a) * q, 1.2, k.z + Math.sin(a) * q * 0.8, 0.5 * vsz, dot, 0.95, 0.85, 1, f); } }
   }
   // The raven's mirage (placeholder till the art step's shimmer): each image a dark violet column of motes over a ring, flickering.
   for (const m of g.combat.mirages ?? []) {
     if (time >= m.until || !close(m.x, m.z)) continue;
     const left = Math.min(1, (m.until - time) / 1), fl = 0.6 + 0.4 * Math.sin(time * 9 + m.id);
-    for (let i = 0; i < 16; i++) { const a = (i / 16) * Math.PI * 2; lv.flat.add(m.x + Math.cos(a) * 1.2, 0, m.z + Math.sin(a) * 0.9, 0.45, dot, 0.75, 0.45, 1, 0.9 * left); }
-    for (let i = 0; i < 16; i++) { const a = hash2(m.id, i, 61) * Math.PI * 2, ph = (time * 0.8 + i / 16) % 1; lv.standing.add(m.x + Math.cos(a) * 0.5, 0.2 + ph * 2, m.z + Math.sin(a) * 0.35, 0.6, dot, 0.6, 0.35, 0.95, 0.9 * fl * left * (1 - ph * 0.5)); }
+    for (let i = 0; i < 16; i++) { const a = (i / 16) * Math.PI * 2; lv.flat.add(m.x + Math.cos(a) * 1.2 * vsz, 0, m.z + Math.sin(a) * 0.9 * vsz, 0.45 * vsz, dot, 0.75, 0.45, 1, lv.look.lift(0.9) * left); }
+    for (let i = 0; i < 16; i++) { const a = hash2(m.id, i, 61) * Math.PI * 2, ph = (time * 0.8 + i / 16) % 1; lv.standing.add(m.x + Math.cos(a) * 0.5 * vsz, 0.2 + ph * 2, m.z + Math.sin(a) * 0.35 * vsz, 0.6 * vsz, dot, 0.6, 0.35, 0.95, lv.look.lift(0.9) * fl * left * (1 - ph * 0.5)); }
   }
   // Her aim confused (the stoat's war dance): a violet swirl round her head.
   if (W.confused && time < W.confused.until && lookOn) lv.look.motif("confuse", null, w.x, 1.8, w.z, time, 0);

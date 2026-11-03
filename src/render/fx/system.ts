@@ -12,6 +12,11 @@ export const FX_QUALITY = { distortion:true, imprints:true, secondary:true, ligh
 type Light={x:number;y:number;z:number;reach:number;rgb:THREE.Vector3;strength:number;target:number;seen:number;score:number;fade:number};
 type Burst={element:string;form:FxForm;x:number;y:number;z:number;level:number;size:number;at:number;life:number;seed:number};
 const SYSTEMS=new WeakMap<THREE.Scene,MagicFx>();
+/** A trail's look, times the ribbon's own: width, opacity (its own 0.6), seconds of flight (its own up to 0.32 s) and glow. */
+export interface RibbonLook{width:number;alpha:number;life:number;glow:number}
+const PLAIN_RIBBON:RibbonLook={width:1,alpha:0.6,life:1,glow:1};
+/** A raised glow lifts an effect's light too, by half as much, at most 1.5 times (lights wash the scenery: kept gentle). */
+export const lightGain=(glow:number):number=>Math.max(0,Math.min(1.5,1+(glow-1)*0.5));
 export function fxFor(scene:THREE.Scene):MagicFx {let fx=SYSTEMS.get(scene);if(!fx){fx=new MagicFx(scene);SYSTEMS.set(scene,fx);}return fx;}
 export class MagicFx {
   readonly quality=FX_QUALITY;
@@ -58,18 +63,19 @@ export class MagicFx {
     const phase=Math.max(0,(this.time-this.screenAt)/layerPolicy.screen.seconds);
     return phase>=1?0:Math.min(layerPolicy.screen.shakeCap,this.screenStrength)*(1-phase)**2;
   }
-  draw(element:string,form:FxForm,x:number,y:number,z:number,level:number,size=1,alpha=1,phase=0,seed=0,tint:readonly number[]|null=null,intensity=intensityOf(level)):void {
+  /** glow: its halo, ground anchor and light times their own (1 but for the creatures' attacks: attackFx.visibility.bloom). */
+  draw(element:string,form:FxForm,x:number,y:number,z:number,level:number,size=1,alpha=1,phase=0,seed=0,tint:readonly number[]|null=null,intensity=intensityOf(level),glow=1):void {
     if(!this.enabled || !(alpha>0.01) || Math.hypot(x-this.cx,z-this.cz)>140)return;
     const key=fxElement(element),el=elements[key],f=forms[form];
     const pixel=this.batches.mpp.value;
     const diameter=Math.max(pixel,Math.round(f.size*size*mixIntensity(settings.size,intensity)/pixel)*pixel);
     if(intensity>=layerPolicy.screen.minimumIntensity&&(form==="burst"||form==="eruption")&&phase<0.15){this.screenAt=this.time;this.screenStrength=layerPolicy.screen.shakeCap*alpha;}
     this.data[0]=f.id;this.data[1]=ELEMENT_KEYS.indexOf(key);this.data[2]=intensity;this.data[3]=phase;
-    this.batches.add(x,y,z,diameter,this.data,alpha,f.ground,tint,FX_QUALITY.particles>0.5 || (seed&1)===0);
+    this.batches.add(x,y,z,diameter,this.data,alpha,f.ground,tint,FX_QUALITY.particles>0.5 || (seed&1)===0,glow);
     this.stats.instances++;
     // An airborne effect has a real ground anchor even when its core is above the canopy.
-    if(!f.ground){this.data[0]=forms.zone.id;this.batches.add(x,0,z,Math.min(diameter*0.75,12),this.data,alpha*0.18,true,tint,false);}
-    this.light(`${key}:${form}:${seed}`,x,y,z,key,intensity,alpha,tint);
+    if(!f.ground){this.data[0]=forms.zone.id;this.batches.add(x,0,z,Math.min(diameter*0.75,12),this.data,alpha*0.18*glow,true,tint,false);}
+    this.light(`${key}:${form}:${seed}`,x,y,z,key,intensity,alpha,tint,glow);
     if(FX_QUALITY.imprints && (form==="burst" || form==="zone" || form==="eruption" || form==="beam" || form==="projectile" || form==="vortex" || form==="pillar")) {
       this.field.stamp(x,z,Math.max(2,Math.min(18,diameter*0.6)),el.imprint as Imprint,intensity*alpha*(form==="projectile"?0.25:1));
     }
@@ -88,29 +94,30 @@ export class MagicFx {
       this.batches.add(x,0,z,Math.min(5,forms[d.form as FxForm].size*1.5),this.data,d.anchor*Math.min(1,amount),true,tint,false);
     }
   }
-  beam(element:string,x0:number,z0:number,x1:number,z1:number,y:number,width:number,level:number,alpha:number,seed:number,tint:readonly number[]|null=null,intensity=intensityOf(level)):void {
+  beam(element:string,x0:number,z0:number,x1:number,z1:number,y:number,width:number,level:number,alpha:number,seed:number,tint:readonly number[]|null=null,intensity=intensityOf(level),glow=1):void {
     const length=Math.hypot(x1-x0,z1-z0);if(!this.enabled || length<0.01 || alpha<=0.01)return;
     const key=fxElement(element),x=(x0+x1)/2,z=(z0+z1)/2;
     if(Math.hypot(x-this.cx,z-this.cz)>140+length/2)return;
     this.data[0]=forms.beam.id;this.data[1]=ELEMENT_KEYS.indexOf(key);this.data[2]=intensity;this.data[3]=this.time%1;
     const north=Math.abs(z1-z0)/length;
-    this.batches.beam(x,y,z,length,Math.atan2(z1-z0,x1-x0),Math.max(width,this.batches.mpp.value*3)*(1+north*0.35),this.data,alpha,tint);
+    this.batches.beam(x,y,z,length,Math.atan2(z1-z0,x1-x0),Math.max(width,this.batches.mpp.value*3)*(1+north*0.35),this.data,alpha,tint,glow);
     const n=Math.min(8,Math.max(1,Math.ceil(length/4)));
     for(let i=0;i<=n;i++){
       const px=x0+(x1-x0)*i/n,pz=z0+(z1-z0)*i/n;
-      this.light(`${key}:beam:${seed}:${i}`,px,y,pz,key,intensity,alpha,tint);
+      this.light(`${key}:beam:${seed}:${i}`,px,y,pz,key,intensity,alpha,tint,glow);
       if(FX_QUALITY.imprints)this.field.stamp(px,pz,Math.max(2,width*1.5),elements[key].imprint as Imprint,intensity*alpha);
     }
     this.stats.instances++;
   }
-  ribbon(element:string,x:number,y:number,z:number,vx:number,vy:number,vz:number,level:number,seed:number,tint:readonly number[]|null=null,intensity=intensityOf(level)):void{
+  /** look: a creature attack's trail, its width, opacity, length (seconds of flight) and glow times their own (attackFx.visibility). */
+  ribbon(element:string,x:number,y:number,z:number,vx:number,vy:number,vz:number,level:number,seed:number,tint:readonly number[]|null=null,intensity=intensityOf(level),look:RibbonLook=PLAIN_RIBBON):void{
     const speed=Math.hypot(vx,vz);if(!this.enabled||speed<0.1)return;
-    const life=Math.min(0.32,8/speed),length=speed*life,key=fxElement(element);
+    const life=Math.min(0.32,8/speed)*look.life,length=speed*life,key=fxElement(element);
     this.data[0]=forms.trail.id;this.data[1]=ELEMENT_KEYS.indexOf(key);this.data[2]=intensity;this.data[3]=vy*life;
-    this.batches.beam(x-vx*life/2,y-vy*life/2,z-vz*life/2,length,Math.atan2(vz,vx),0.55*mixIntensity(settings.size,intensity),this.data,0.6,tint);
+    this.batches.beam(x-vx*life/2,y-vy*life/2,z-vz*life/2,length,Math.atan2(vz,vx),0.55*look.width*mixIntensity(settings.size,intensity),this.data,look.alpha,tint,look.glow);
     if(FX_QUALITY.imprints&&(seed&3)===0)this.field.stamp(x-vx*life,z-vz*life,2,elements[key].imprint as Imprint,0.15*intensity);
   }
-  private light(id:string,x:number,y:number,z:number,element:keyof typeof elements,intensity:number,alpha:number,tint:readonly number[]|null):void {
+  private light(id:string,x:number,y:number,z:number,element:keyof typeof elements,intensity:number,alpha:number,tint:readonly number[]|null,glow=1):void {
     let light=this.lights.get(id);
     if(!light){
       if(this.lights.size>=settings.pool){
@@ -124,7 +131,7 @@ export class MagicFx {
     const n=parseInt(elements[element].ramp[1].slice(1),16);
     light.x=x;light.y=y;light.z=z;light.reach=mixIntensity(settings.lightReach,intensity);
     light.rgb.set(tint?.[0]??(n>>16)/255,tint?.[1]??((n>>8)&255)/255,tint?.[2]??(n&255)/255);
-    light.target=mixIntensity(settings.lightStrength,intensity)*Math.min(1,alpha)*(comfort.reduceFlashing?0.5:1);
+    light.target=mixIntensity(settings.lightStrength,intensity)*Math.min(1,alpha)*lightGain(glow)*(comfort.reduceFlashing?0.5:1);
     light.seen=this.time;
   }
   finish(budget:number):void {

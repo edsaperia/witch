@@ -1039,6 +1039,9 @@
     "grounded": {
       "weight": 2
     },
+    "anchor": {
+      "length": 30
+    },
     "weight": {
       "free": 2.5,
       "levels": [0.3, 0.8, 2, 3],
@@ -1187,7 +1190,15 @@
     "tumbleSecs": 0.5,
     "turnFrom": 0.3,
     "turnTo": 0.7,
-    "legendFlash": 0.5
+    "legendFlash": 0.5,
+    "visibility": {
+      "size": 1.75,
+      "opacity": 0.9,
+      "bloom": 2,
+      "duration": 1.5,
+      "zoneDensity": 0.5,
+      "groundMark": 0.45
+    }
   },
   "combat": {
     "packs": {
