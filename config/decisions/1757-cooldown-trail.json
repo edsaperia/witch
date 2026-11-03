@@ -7,7 +7,7 @@
       "pr": 1757,
       "group": "Cooldown trail",
       "label": "Cooldown trail (dots)",
-      "note": "On (Ed, 2026-11-03): behind her trail's buffer, a section of pixel dots for each dodge's worth of the shared cooldown, each its own colour, the tail's dots going one at a time; each section showing is a dodge not ready, only the buffer means all ready. Off: the smooth trail exactly as before.",
+      "note": "On (Ed, 2026-11-03): her trail as dotted sections of pixels in her preset's colours: the first (the buffer) as long as her speed makes it, then one for each dodge's worth of the shared cooldown, the tail's dots going one at a time; each cooldown section showing is a dodge not ready, only the first means all ready; behind the scenery as she is. Off: the smooth trail exactly as before.",
       "control": {
         "type": "toggle"
       },
@@ -68,20 +68,6 @@
       }
     },
     {
-      "id": "trailRing",
-      "pr": 1757,
-      "group": "Cooldown trail",
-      "label": "Take-off ring",
-      "note": "Where her dodges' room lets a take-off go before the counter's empty, a small ring where the tail must drain to, shown while the take-off is locked.",
-      "control": {
-        "type": "toggle"
-      },
-      "default": true,
-      "apply": {
-        "knob": "trail.steps.ring"
-      }
-    },
-    {
       "id": "trailHalo",
       "pr": 1757,
       "group": "Cooldown trail",
@@ -93,7 +79,7 @@
         "max": 0.6,
         "step": 0.02
       },
-      "default": 0.12,
+      "default": 0.16,
       "apply": {
         "knob": "trail.steps.halo"
       }
@@ -103,14 +89,14 @@
       "pr": 1757,
       "group": "Cooldown trail",
       "label": "Dot glow",
-      "note": "Each dot's soft glow (Ed: \"these dots should glow a little\"; 0 none). Strong merges the dots into a line.",
+      "note": "Each dot's soft glow (Ed: \"these dots should glow a little\"; \"Increase the cooldown trail glow a little\"; 0 none). Strong merges the dots into a line.",
       "control": {
         "type": "slider",
         "min": 0,
         "max": 1.5,
         "step": 0.05
       },
-      "default": 0.35,
+      "default": 0.5,
       "apply": {
         "knob": "trail.steps.glow"
       }
