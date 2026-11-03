@@ -28,7 +28,7 @@ ones that increased DPS felt fun but were insanely strong. The ones that didn't 
   | **Climbers and fliers** (trees, branches, swirl) | cat, flying squirrel, jaguar, red panda, snow leopard, spider, squirrel, owl, raven, moth, griffin★, feathered serpent★ | an extra dash charge per stack |
   | **Darters** (zigzag, leapfrog, arcs) | bat, dragonfly, hare, meerkat, roe, ibex, marten, toad | faster movement |
   | **Stalkers** (freeze) | arctic fox, dormouse, heron, komodo, lynx, rattlesnake, salamander, snake, tiger, frostwyrm★ | invites fly faster and further |
-  | **Heavies** (back line, hold) | bear, boar, crab, elephant, frost troll, polar bear, ram, badger, stegosaurus, hydra★, sphinx★ | between each shot, a second shot in the opposite direction. Stacked: 3 shots go out clockwise at 120° at 3× rate of fire, 4 at 90° at 4×, and so on |
+  | **Heavies** (back line, hold) | bear, boar, crab, elephant, frost troll★, polar bear, ram, badger, stegosaurus★, hydra★, sphinx★ | between each shot, a second shot in the opposite direction. Stacked: 3 shots go out clockwise at 120° at 3× rate of fire, 4 at 90° at 4×, and so on |
   | **Pack hunters** (flanks, split back, circle) | elk, lion, wolf, fennec, fox, raccoon, stag, cheetah, rhino, stoat, unicorn★ | faster rate of fire, but more spread |
   | **Shells, diggers and swimmers** (roll, huddle, shell, burrow, water) | armadillo, hedgehog, woodlouse, beetle, penguin, snail, mole, scorpion, beaver, crocodile, newt, otter | chaining shot; each stack adds a chain. Stacks with the bag that chains |
 
@@ -55,8 +55,12 @@ ones that increased DPS felt fun but were insanely strong. The ones that didn't 
   | Frostwyrm | dashes freeze what they pass through, but her movement slides as on ice |
   | Unicorn | unlimited dashes, each half length |
   | Sphinx | invites chain infinitely, and can go between the same creatures more than once |
+  | Frost troll | holding the invite button charges it up; on release it fires up to 3× her normal attack (Ed, 3 Nov) |
+  | Stegosaurus | a creature she invites fires a ring of invites as it's converted (Ed, 3 Nov) |
 
-  (Check each biome's fantastic kind against the roster; the list above is from the kinds found so far.)
+  One fantastic kind per biome, from the roster (docs/backlog/journey.md): badlands griffin, cold frost troll, cold
+  rainforest unicorn, hot sphinx, jungle feathered serpent, mangrove swamp hydra, mountains and glaciers frostwyrm, volcanic
+  stegosaurus.
 - **Where fantastic animals live:** "fantastic animals shouldn't be on the route (except on that animal's island), but are
   additional areas found in later phases of biomes." So they are extra off-route areas, like challenge areas, that she finds
   by exploring.
@@ -93,7 +97,7 @@ Not powerful items, which should come early to help new players and give variety
 
 ## Open questions for Ed
 
-1. Confirm each biome's fantastic kind.
+1. ~~Confirm each biome's fantastic kind.~~ Done 3 Nov (above).
 2. Buff magnitudes (extra dash per stack, how much faster, how much spread): first values to be set in play.
 
 ## Build order once approved
