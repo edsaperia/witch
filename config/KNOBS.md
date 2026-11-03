@@ -1717,7 +1717,8 @@ Code: `render/colourGrammar.ts`, `render/leash/ranks.ts`, `render/leash/rainbow.
   1. Ed, 2026-10-11: docs/backlog/gameplay.md
   2. Ed, 2026-10-26: "they should scatter further, e.g. outside of my camera view" (55, past the view's farthest edge at the usual ground zoom, its top 50 m from her; kept on the island's land, and pulling on her not at all while scattered)
   3. Ed, 2026-10-11
-  her leashed babies following her on the ground walk in single file along where she's been, in stack order (the stack's bottom one first), gap metres apart; while she's in a fight they scatter, scatter metres or a quarter more off to the side away from the first attacker [2], for the whole fight [3]: from the moment something goes for her or one of hers (closing in or winding up, not on the hit), the same way throughout, back into line once nothing has for calm seconds; one more than farAt metres from her (about off the screen) moves at farSpeed m/s, so it's with her in seconds.
+  4. Ed, 2026-11-03: "The spacing in this queue should adjust depending on how large the babies are (some are quite large and so smush together in the queue)" (each baby keeps half the one in front's length, half its own and margin between their middles, never under gap)
+  her leashed babies following her on the ground walk in single file along where she's been, in stack order (the stack's bottom one first), each clear of the one in front by their sizes [4]: half the one in front's length, half its own and margin (1) metres between their middles, never under gap (5) metres; half a baby's length is its drawn body (rules/combatSpacing.ts drawnRadius, the calibrated drawing at its kind and level) times size (0.75: that disc's corner overstates the side-on sprite), and the first keeps the same off her, her own half her (1.75) metres (her side-on sprite is about 3.5 m long). A baby fox or squirrel stays gap apart; a baby bear about 8 m, an elephant or rhino about 10, a crocodile about 20 (rules/babies.ts queueGap); while she's in a fight they scatter, scatter metres or a quarter more off to the side away from the first attacker [2] (and half its length further, so a big one is out of view end to end), for the whole fight [3]: from the moment something goes for her or one of hers (closing in or winding up, not on the hit), the same way throughout, back into line once nothing has for calm seconds; one more than farAt metres from her (about off the screen) moves at farSpeed m/s, so it's with her in seconds.
   Code: `docs/backlog/gameplay.md`
 - **`leash.ranks`**: Leash sigils drawn as bare glyphs in their rank's colour (baby, youth, adult, legend) with embers rising off them, so ranks are easy to tell apart at a glance.
   1. Ed, 2026-10-27: "larger sigils is good ... embers are good ... colours-for-rank is good; it's more important in rapid gameplay to be able to tell ranks apart than creatures" (after mocks 3 to 9; render/leash/ranks.ts)
@@ -1780,6 +1781,9 @@ Code: `render/colourGrammar.ts`, `render/leash/ranks.ts`, `render/leash/rainbow.
 | `leash.babies.calm` | number | 0 to … |
 | `leash.babies.farAt` | number | 0 to … |
 | `leash.babies.farSpeed` | number | 0 to … |
+| `leash.babies.margin` | number | 0 to … |
+| `leash.babies.size` | number | 0 to … |
+| `leash.babies.her` | number | 0 to … |
 | `leash.ranks.on` | boolean |  |
 | `leash.ranks.hex` | number | 0 to … |
 | `leash.ranks.glyph` | number | 0 to … |
@@ -1841,7 +1845,8 @@ Leashed adults (and legends) give her a buff by their group: each distinct kind 
 
 1. Ed, 2026-11-03: "Only adults, yes." … "since we have one per animal type, different animal types STACK!" … "no. only when leashed." … "When you're leashing a legend, this gives you the equivalent of 3x of that animal types' buff. (counts as that animal type so doesn't stack e.g. adult wolf and legend wolf just count once)" … "Maybe 10%" (docs/plans/follower-buffs-and-challenge-areas.md: six groups by retreat; 5 pips an adult, 2 minutes each, twinkling 10 s before one fades; legends need no berries; magnitudes first values, to be set in play)
 2. Ed, 2026-11-03: #1722: a new adult starts with 1 pip (2 minutes); parked adults' pips don't drain; a Heavies burst turns as a whole
-groups: each group's retreats (a kind's art/creatures/<id>/creature.js retreat decides its group). legend: the stacks a leashed legend gives (no berries needed). pips: max an adult holds, life seconds each (draining one at a time while it follows her; parked ones keep theirs), warn seconds before one fades it twinkles in her stack, start pips a new adult has before it has eaten (1). Per stack: climbers.dash more dash charges; darters.speed her speed times 1 + it; stalkers.speed and stalkers.range her 💌s' speed and range times 1 + each; heavies.shots more ways her shots go round her, clockwise, her fire rate times the ways (1 stack: a second shot opposite between each, 2: three at 120° at 3×); packHunters.rate her fire rate times 1 + it and packHunters.spread degrees more inaccuracy; shells.chain more chain hops, on top of the bag's.
+3. Ed, 2026-11-03: "A legend should have three buff icons, to show that it's three times as powerful." … "When you have multiple ones of the same species, the inactive buff icons are blue. When a buff is inactive, it twinkles in pink." (every leashed adult and legend shows its icon(s): amber active, blue redundant (#2d6eff, the wild adult's), pink twinkling unfed (#c8228c, the berries'))
+groups: each group's retreats (a kind's art/creatures/<id>/creature.js retreat decides its group). legend: the stacks a leashed legend gives (no berries needed). pips: max an adult holds, life seconds each (draining one at a time while it follows her; parked ones keep theirs), warn seconds before one fades it twinkles in her stack, start pips a new adult has before it has eaten (1). Per stack: climbers.dash more dash charges; darters.speed her speed times 1 + it; stalkers.speed and stalkers.range her 💌s' speed and range times 1 + each; heavies.shots more ways her shots go round her, clockwise, her fire rate times the ways (1 stack: a second shot opposite between each, 2: three at 120° at 3×); packHunters.rate her fire rate times 1 + it and packHunters.spread degrees more inaccuracy; shells.chain more chain hops, on top of the bag's. icons: blue, a redundant icon's colour (another of its kind gives the buff); pink, an unfed adult's, twinkling once a twinkle s.
 Code: `rules/buffs.ts`, `docs/plans/follower-buffs-and-challenge-areas.md`
 
 | knob | type | range |
@@ -1865,6 +1870,9 @@ Code: `rules/buffs.ts`, `docs/plans/follower-buffs-and-challenge-areas.md`
 | `buffs.packHunters.rate` | number | 0 to … |
 | `buffs.packHunters.spread` | number | 0 to … |
 | `buffs.shells.chain` | number | 0 to … |
+| `buffs.icons.blue` | array of number |  |
+| `buffs.icons.pink` | array of number |  |
+| `buffs.icons.twinkle` | number | 0 to … |
 
 ## Creatures
 

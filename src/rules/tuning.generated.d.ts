@@ -909,6 +909,9 @@ export type SchemaTuning = {
       "calm": number;
       "farAt": number;
       "farSpeed": number;
+      "margin": number;
+      "size": number;
+      "her": number;
     };
     "ranks": {
       "on": boolean;
@@ -999,6 +1002,11 @@ export type SchemaTuning = {
     };
     "shells": {
       "chain": number;
+    };
+    "icons": {
+      "blue": Array<number>;
+      "pink": Array<number>;
+      "twinkle": number;
     };
   };
   "difficulty": {

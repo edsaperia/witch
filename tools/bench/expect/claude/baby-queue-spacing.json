@@ -1,0 +1,9 @@
+{
+  "reason": "Her babies' queue spaced by their sizes (Ed, 2026-11-03: \"The spacing in this queue should adjust depending on how large the babies are\"): each keeps half the one in front's drawn length, half its own and leash.babies.margin (1 m) between their middles, never under leash.babies.gap (5 m), the first the same off her (leash.babies.her); scattering babies go half their length further. New knobs leash.babies.margin, size and her in the tuning.",
+  "rules": {
+    "*": "wherever babies follow her on the ground or scatter: their places (big ones further back or out), and what follows from them; and the tuning's three new leash.babies knobs wherever a copy of the tuning rides along"
+  },
+  "frames": {
+    "*": "wherever babies follow her: a big baby further back in the line, or further out when scattered"
+  }
+}

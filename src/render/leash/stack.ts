@@ -4,7 +4,7 @@ import * as THREE from "three";
 import { leashPoint, stackOrder } from "../../rules/leash";
 import { AT_END, chainLength, chainShown, weighingChains } from "../../rules/chains";
 import { buffsOf, pipCount, pipFading, pipFuel } from "../../rules/buffs";
-import { buffIconUv } from "./buffIcons";
+import { buffIconUv, ICON_BLUE, ICON_PINK, iconTwinkle } from "./buffIcons";
 import { AMBER } from "./glyphs";
 import type { LeashView } from "../leash";
 import renderKnobs from "../../../config/playtest-render.json";
@@ -94,12 +94,22 @@ export function drawStack(lv: LeashView, time: number, hatTop: number, dot: numb
           }
         }
         // Its buff's icon, to the right of its sigil and its dots (Ed, 2026-11-03: "an icon to the right of the creature's sigil in her
-        // stack"), one a kind (rules/buffs.ts icons), in her magic's amber (render/leash/buffIcons.ts).
-        const group = buffs.icons.has(it.id) ? buffs.givers.get(it.id) : undefined;
+        // stack"; render/leash/buffIcons.ts), on every leashed adult and legend (rules/buffs.ts icons), by its state (iconState; Ed,
+        // 2026-11-03: "When you have multiple ones of the same species, the inactive buff icons are blue. When a buff is inactive, it
+        // twinkles in pink."): the active one in her magic's amber, a redundant one blue and steady, an unfed one berry pink, twinkling.
+        // A legend's three in a row ("A legend should have three buff icons, to show that it's three times as powerful"; iconCount),
+        // each a little smaller and closer, so the row stays beside its bigger sigil, level with it, clear of the sigils above and below.
+        const group = buffs.iconGroup.get(it.id);
         if (group) {
-          const D = dotSets[0][0], ix = (D.n > 0 ? dotAt(D.n - 1, D.n, RK.dotsPerRow).x + 0.42 : 0.72) * size, is = size * 0.5;
-          if (back > 0) lv.stackBack.add(pos.x + ix, pos.y, pos.z, is * 1.25, dot, 0.02, 0.02, 0.035, back);
-          batch.add(pos.x + ix, pos.y, pos.z + 0.02, is, buffIconUv(lv, group), AMBER[0] * 1.2, AMBER[1] * 1.2, AMBER[2] * 1.2, 1);
+          const D = dotSets[0][0], m = buffs.iconCount.get(it.id) ?? 1, ix = (D.n > 0 ? dotAt(D.n - 1, D.n, RK.dotsPerRow).x + 0.42 : 0.72) * size;
+          const is = size * (m > 1 ? 0.42 : 0.5), gap = is * 0.92, state = buffs.iconState.get(it.id), I = t.buffs?.icons;
+          const rgb = state === "redundant" ? I?.blue ?? ICON_BLUE : state === "unfed" ? I?.pink ?? ICON_PINK : [AMBER[0] * 1.2, AMBER[1] * 1.2, AMBER[2] * 1.2];
+          const k = state === "unfed" ? iconTwinkle(time, I?.twinkle ?? 0.8, it.id) : 1;
+          for (let h = 0; h < m; h++) {
+            const x = pos.x + ix + h * gap;
+            if (back > 0) lv.stackBack.add(x, pos.y, pos.z, is * 1.25, dot, 0.02, 0.02, 0.035, back);
+            batch.add(x, pos.y, pos.z + 0.02, is, buffIconUv(lv, group), rgb[0] * k, rgb[1] * k, rgb[2] * k, 1);
+          }
         }
       }
     } else {

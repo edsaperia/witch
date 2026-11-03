@@ -1,0 +1,6 @@
+{
+  "reason": "Buff icons by state (Ed, 2026-11-03): every leashed adult and legend shows its buff icon right of its sigil in her stack, a legend three; amber when it gives its kind's buff, blue when another of its kind does, twinkling pink when it has no berry pips. Drawn only: the rules are unchanged.",
+  "frames": {
+    "*": "wherever adults or legends follow her: their buff icons beside their sigils, in amber, blue or twinkling pink"
+  }
+}
