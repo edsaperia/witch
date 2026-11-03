@@ -1,5 +1,5 @@
 {
-  "pr": 9999,
+  "pr": 1721,
   "group": "Party start",
   "decisions": [
     {"id": "partyStartOverHouse", "label": "Over the house", "note": "On: every piece drawn over the house's floors, walls and crown, still behind what's solid in front of her (the decks). Off: under them, as before. Replay it: E (the pad's square) at her decks once the party's on.", "control": {"type": "toggle"}, "default": true, "apply": {"knob": "partyStart.overHouse"}},
