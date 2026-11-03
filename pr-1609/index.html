@@ -139,35 +139,34 @@
     .bubble .bar { position: absolute; left: 6px; right: 6px; bottom: calc(var(--px) * -5); height: 3px; background: rgba(255,255,255,.2); border-radius: 2px; overflow: hidden; }
     .bubble .bar i { display: block; height: 100%; background: var(--love); }
   </style>
-  <script type="module" crossorigin src="./assets/main-BpbsY0FS.js"></script>
+  <script type="module" crossorigin src="./assets/main-C4bYtvOk.js"></script>
   <link rel="modulepreload" crossorigin href="./assets/modulepreload-polyfill-B5Qt9EMX.js">
   <link rel="modulepreload" crossorigin href="./assets/witch-DT_Ne75G.js">
-  <link rel="modulepreload" crossorigin href="./assets/party-DIp2ce71.js">
-  <link rel="modulepreload" crossorigin href="./assets/forest-CD4WEDGt.js">
-  <link rel="modulepreload" crossorigin href="./assets/finds-BJJ4kyki.js">
-  <link rel="modulepreload" crossorigin href="./assets/saveSlots-q9AAcYwI.js">
-  <link rel="modulepreload" crossorigin href="./assets/decisions-DLQXQQ87.js">
-  <link rel="modulepreload" crossorigin href="./assets/generator-BG8iuKEG.js">
+  <link rel="modulepreload" crossorigin href="./assets/party-2kuA8OzH.js">
+  <link rel="modulepreload" crossorigin href="./assets/mushrooms-BWVGQpTA.js">
+  <link rel="modulepreload" crossorigin href="./assets/finds-SmoHzmEk.js">
+  <link rel="modulepreload" crossorigin href="./assets/storageScope-eLqWSAgV.js">
+  <link rel="modulepreload" crossorigin href="./assets/saveSlots-CckapAt4.js">
+  <link rel="modulepreload" crossorigin href="./assets/decisions-B2tu2khR.js">
+  <link rel="modulepreload" crossorigin href="./assets/generator-CHY1UvCB.js">
   <link rel="modulepreload" crossorigin href="./assets/potionSettings-CfWLdOs4.js">
-  <link rel="modulepreload" crossorigin href="./assets/mushrooms-DSluvBXq.js">
-  <link rel="modulepreload" crossorigin href="./assets/storageFallback-DSdiAWXN.js">
-  <link rel="modulepreload" crossorigin href="./assets/chartView-Bfy5iiDk.js">
-  <link rel="modulepreload" crossorigin href="./assets/playerSettings-B4Guk55R.js">
-  <link rel="modulepreload" crossorigin href="./assets/leashWeight-DaMD6y3z.js">
+  <link rel="modulepreload" crossorigin href="./assets/storageFallback-CwG8Iu4h.js">
+  <link rel="modulepreload" crossorigin href="./assets/chartView-D38TMqbT.js">
+  <link rel="modulepreload" crossorigin href="./assets/playerSettings-usByk_Rb.js">
+  <link rel="modulepreload" crossorigin href="./assets/musicSet-CaAwnVqh.js">
+  <link rel="modulepreload" crossorigin href="./assets/game-Btz7tnw9.js">
   <link rel="modulepreload" crossorigin href="./assets/dom-D4rI-PaU.js">
-  <link rel="modulepreload" crossorigin href="./assets/musicSet-B0x2E1OO.js">
-  <link rel="modulepreload" crossorigin href="./assets/game-DVAny_2P.js">
   <link rel="modulepreload" crossorigin href="./assets/houseLayout-6b5l2G2Y.js">
-  <link rel="modulepreload" crossorigin href="./assets/playtestComments-C7At3PSu.js">
-  <link rel="modulepreload" crossorigin href="./assets/linkParams-CzFDPScB.js">
-  <link rel="modulepreload" crossorigin href="./assets/housePieces-DFJQY-FP.js">
-  <link rel="modulepreload" crossorigin href="./assets/mapPrep-BWHVSUTJ.js">
+  <link rel="modulepreload" crossorigin href="./assets/playtestComments-nvvaDdYw.js">
+  <link rel="modulepreload" crossorigin href="./assets/linkParams-UETO_SET.js">
+  <link rel="modulepreload" crossorigin href="./assets/housePieces-BZ0yQeWl.js">
+  <link rel="modulepreload" crossorigin href="./assets/mapPrep-B9-2Yl-t.js">
   <link rel="modulepreload" crossorigin href="./assets/mushroomArt-BtGLS3NX.js">
-  <link rel="modulepreload" crossorigin href="./assets/brewingProps-DkXlzn6d.js">
-  <link rel="modulepreload" crossorigin href="./assets/botKinds-CzEaEh7Q.js">
-  <link rel="modulepreload" crossorigin href="./assets/zooControls-CgRiWVM7.js">
-  <link rel="modulepreload" crossorigin href="./assets/style-ChB52GLB.js">
-  <link rel="modulepreload" crossorigin href="./assets/viewParams-CESylsma.js">
+  <link rel="modulepreload" crossorigin href="./assets/brewingProps-dVJ9sX6s.js">
+  <link rel="modulepreload" crossorigin href="./assets/botKinds-Bn6PjL0E.js">
+  <link rel="modulepreload" crossorigin href="./assets/zooControls-DbdtiMWt.js">
+  <link rel="modulepreload" crossorigin href="./assets/style-DyxV1_-q.js">
+  <link rel="modulepreload" crossorigin href="./assets/viewParams-oVgwnzB9.js">
 </head>
 <body>
   <canvas id="game"></canvas>
@@ -176,7 +175,7 @@
   <!-- (its push-in a CSS animation, so it moves from the first paint even while the page is busy making the night; and a word that it's landing, so the wait doesn't read as a hang: Ed's playtest, 2026-10-12) -->
   <style>@keyframes arrive-push { from { transform: scale(1) } to { transform: scale(1.06) } } #arrive-still { animation: arrive-push 8s cubic-bezier(.2,.6,.3,1) forwards } @keyframes arrive-breathe { 50% { opacity: .45 } } #arrive-landing { display: none; position: fixed; left: 0; right: 0; bottom: 14%; z-index: 41; text-align: center; font: 15px ui-monospace, monospace; letter-spacing: .3em; color: #e8e2f4; text-shadow: 0 0 8px #05060e; animation: arrive-breathe 2.4s ease-in-out infinite; pointer-events: none }</style>
   <div id="arrive-landing">landing…</div>
-  <script>(function () { try { if (new URLSearchParams(location.search).get("arrive") !== "1") return; var r = JSON.parse(sessionStorage.getItem("witch.arrive") || "null"); if (!r || !r.cam || Date.now() - r.at > 30000) return; var i = document.getElementById("arrive-still"); if (r.still) i.src = r.still; i.style.display = "block"; document.getElementById("arrive-landing").style.display = "block"; } catch (e) {} })();</script>
+  <script>(function () { try { var params = new URLSearchParams(location.search), f = params.get("fresh"); if (params.get("arrive") !== "1") return; var r = JSON.parse(sessionStorage.getItem((f && /^[a-z0-9]{8}$/.test(f) ? "witch.fresh." + f + "." : "") + "witch.arrive") || "null"); if (!r || !r.cam || Date.now() - r.at > 30000) return; var i = document.getElementById("arrive-still"); if (r.still) i.src = r.still; i.style.display = "block"; document.getElementById("arrive-landing").style.display = "block"; } catch (e) {} })();</script>
   <div id="seed"></div>
   <div id="version"></div>
   <div id="new-build">A newer version (<b></b>) is out <button type="button">reload</button></div>
