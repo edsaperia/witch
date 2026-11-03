@@ -8,9 +8,11 @@ import { TUNING, type Tuning } from "../rules/tuning";
 import { befriend } from "../rules/creatureStates";
 import { islandSigilOf } from "../rules/dancefloor";
 import { startPartyOver } from "../rules/partyOver";
-import { challengeCarving, challengeFloor, challengeRing, challengeShot } from "./challenge";
+import { challengeCarving, challengeFloor, challengeRing, challengeShot, columnTop } from "./challenge";
+import { challengeColumns, challengeReady } from "../rules/challenge";
+import { rankColour } from "./leash/ranks";
 import { NO_CARVING } from "./legendCarving";
-import { columnSpots } from "../rules/challenge";
+import { columnKinds, columnSpots } from "../rules/challenge";
 import { withTuning } from "../rules/tuning";
 import { readFileSync } from "node:fs";
 
@@ -61,6 +63,22 @@ describe("the challenge circle's light", () => {
     for (const id of ch.pack) { const c = g.creatures[id]; if (!c.gone) expect(Math.hypot(c.anchorX - ch.x, c.anchorZ - ch.z) + c.range).toBeLessThanOrEqual(ch.radius); } // (the pack dance on it)
   }, 60000);
 
+  it("lights a column's top steadily warm once its kind's all won over, the rest faint and cold; all lit, ready to cast (Ed, 2026-11-03)", () => {
+    const g = game(), ch = g.challenge!;
+    expect(challengeColumns(g).every(c => !columnTop(c, T).lit)).toBe(true); // (every kind still wild)
+    const [first] = challengeColumns(g);
+    for (const e of first.sigils) befriend(g.creatures[e.id], g.clock.time);
+    const cols = challengeColumns(g), top = columnTop(cols[0], T), cold = columnTop(cols[1], T);
+    expect(top.lit).toBe(true);
+    expect(top.rgb).toEqual(rankColour(T, 2, true)); // (the party's warm colour)
+    expect(top.alpha).toBeGreaterThan(cold.alpha);
+    expect(cold.lit).toBe(false);
+    expect(challengeReady(g)).toBe(false);
+    for (const id of ch.pack) befriend(g.creatures[id], g.clock.time);
+    expect(challengeColumns(g).every(c => columnTop(c, T).lit)).toBe(true);
+    expect(challengeReady(g)).toBe(true); // (every column lit: the spell's notes at its middle)
+  }, 60000);
+
   it("puts no beam of light over it, waiting, cleared or closed (Ed: \"remove the beam\")", () => {
     // (its only light is its own floor's, columns' and dancefloor's: nothing of it among the markers' beacons and lasers)
     const src = readFileSync("src/render/challenge.ts", "utf8"), home = readFileSync("src/render/view/home.ts", "utf8");
@@ -79,7 +97,8 @@ describe("the challenge circle's light", () => {
   }, 60000);
 
   it("fires a firework from one column each bar once cleared, the next clockwise each bar; none before clearing or after closing (Ed, 2026-11-03)", () => {
-    const g = game(), ch = g.challenge!, n = columnSpots(ch, T).length;
+    const g = game(), ch = g.challenge!, n = columnSpots(ch, columnKinds(g).length).length;
+    expect(n).toBe(new Set(g.map.island!.roster.map(r => r.kind)).size); // (a column a roster kind)
     expect(challengeShot(g)).toBeNull(); // (not cleared: nothing)
     for (const id of ch.pack) befriend(g.creatures[id], g.clock.time);
     for (const c of g.creatures) if (!ch.pack.includes(c.id) && Math.hypot(c.x - ch.x, c.z - ch.z) < 250) c.gone = true;
@@ -99,7 +118,7 @@ describe("the challenge circle's light", () => {
     const again = challengeShot(g, seen[1].bar)!;
     expect(again.column).toBe(seen[1].column);
     // (clockwise from above, north up: from the first column due north the second lies east of it)
-    const [a, b] = columnSpots(ch, T);
+    const [a, b] = columnSpots(ch, n);
     expect(a.z).toBeLessThan(ch.z); expect(b.x).toBeGreaterThan(a.x);
     // off with its knob
     expect(challengeShot({ ...g, tuning: withTuning({ challenge: { ...T.challenge!, fireworks: { ...T.challenge!.fireworks!, on: false } } }) } as Game)).toBeNull();

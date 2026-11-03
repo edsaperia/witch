@@ -36,6 +36,8 @@ export const napFrame = (level: number, f: number) => level * 2 + (f % 2);
 export interface RigArt { atlas: Atlas; meta: RigMeta; used: number }
 /** How many rig pages (a species at a level each) are kept at once. */
 const RIG_PAGES = 48;
+/** How recently (ms) a rig page drawn is kept whatever RIG_PAGES says (evictRigs). */
+const RIG_KEEP = 3000;
 
 type Reply = { job: ArtJob; result?: ArtResult; error?: string; ms?: number; cached?: boolean; /** Asked only if kept, and not kept. */ miss?: boolean };
 
@@ -487,12 +489,15 @@ export class AssetLibrary {
   }
   /** Rig pages asked for that came back empty (no rig parts for the species): never asked for again. */
   private noRig = new Set<string>();
-  /** Least recently used rig pages are let go past RIG_PAGES, their textures freed. */
+  /** Least recently used rig pages are let go past RIG_PAGES, their textures freed; never one drawn in the last RIG_KEEP ms (more on
+   *  screen than that, the challenge's 128-animal pack of 64 kinds at two levels: they all stay, else each was let go and baked again
+   *  in turn, the workers never done and a new batch each time; 2026-11-03). */
   private evictRigs(): void {
+    const keep = performance.now() - RIG_KEEP;
     while (this.rigs.size > RIG_PAGES) {
       let old: string | undefined, t = Infinity;
       for (const [k, v] of this.rigs) if (v.used < t) { t = v.used; old = k; }
-      if (old === undefined) break;
+      if (old === undefined || t >= keep) break;
       const v = this.rigs.get(old)!; v.atlas.albedo.dispose(); v.atlas.normal.dispose(); this.rigs.delete(old);
     }
   }

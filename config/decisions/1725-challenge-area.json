@@ -43,7 +43,7 @@
       "pr": 1725,
       "group": "Challenge area",
       "label": "Challenge circle radius (m)",
-      "note": "The challenge area's stone floor circle (Ed, 2026-11-03: \"a large stone floor circle (like the legend circle)\"; on #1725, three times wider: 36 m), its columns round its edge (their count is the knob challenge.columns, 30). A legend's circle is about 9 m. A new map: it reloads.",
+      "note": "The challenge area's stone floor circle (Ed, 2026-11-03: \"a large stone floor circle (like the legend circle)\"; on #1725, three times wider: 36 m), its columns round its edge, one a roster kind (the circle grows past this to keep them challenge.spacing apart: about 76 m on the late home). A legend's circle is about 9 m. A new map: it reloads.",
       "control": {
         "type": "slider",
         "min": 12,

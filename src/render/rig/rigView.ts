@@ -42,10 +42,17 @@ export interface RigLook { /** extra height (a dance, a hop, sinking) in metres 
 
 export interface RigLook { heat?: number }
 
+/** How many frames a rig batch may draw nothing before it's let go (its meshes out of the scene, its buffers freed). */
+const IDLE_FRAMES = 600;
+
 export class RigView {
   private bodies = new Map<number, RigBody>();
   private seen = new Set<number>();
   private batches = new Map<string, SpriteBatch>();
+  /** How many instances each batch was last handed (end), so one empty then and now is skipped. */
+  private sent = new Map<string, number>();
+  /** The frame (end's count) each batch last drew anything; one idle IDLE_FRAMES is let go. */
+  private last = new Map<string, number>(); private frames = 0;
   private out = new RigOut();
   // the instances handed to the batches: objects reused frame to frame (pool, and how many each list uses)
   private pool = new Map<string, SpriteInstance[]>(); private used = new Map<string, number>();
@@ -64,7 +71,7 @@ export class RigView {
     this.ground = ground;
     this.minPx = tuning?.minPx ?? RIG_MIN_PX; this.always = (tuning?.alwaysLevels ?? ["legend"]).map(l => RIG_LEVELS.indexOf(l)).filter(i => i >= 0);
     this.dt = this.time ? Math.min(0.1, Math.max(0, time - this.time)) : 0; this.time = time;
-    for (const k of this.used.keys()) this.used.set(k, 0);
+    this.used.clear(); // (none used yet this frame: read as 0, place and end)
     this.seen.clear();
     this.stats.creatures = 0; this.stats.instances = 0; this.stats.ms = 0;
     this.R.copy(SPRITE_UNIFORMS.uRight.value); this.U.copy(SPRITE_UNIFORMS.uUp.value); this.F.copy(SPRITE_UNIFORMS.uFacing.value);
@@ -126,7 +133,7 @@ export class RigView {
     const key = art.atlas.albedo.uuid, dkey = key + "|discs", discs = discFrames(art.meta);
     for (const k of [key, dkey]) if (!this.pool.has(k)) { this.pool.set(k, []); this.used.set(k, 0); }
     if (!this.batches.has(key)) for (const [k, rim] of [[key, true], [dkey, false]] as const) { const L = c.boss && !c.leashed && this.legendLook ? this.legendLook(c.species) : {}, b = new SpriteBatch(art.atlas, this.mpp, { solid: true, rim, find: !look.gear, tint: look.gear?.woken ? ENRAGED_TINT : undefined, ...(rim ? L : { steps: L.steps }) }); this.batches.set(k, b); this.scene.add(...b.meshes); } // (a legend's look: its rim on its body, not its legs' discs)
-    const pools = [this.pool.get(key)!, this.pool.get(dkey)!], ns = [this.used.get(key)!, this.used.get(dkey)!];
+    const pools = [this.pool.get(key)!, this.pool.get(dkey)!], ns = [this.used.get(key) ?? 0, this.used.get(dkey) ?? 0];
     const m = this.mpp * look.scale, ox = c.x + (look.dx ?? 0), oz = c.z + (look.dz ?? 0), R = this.R, U = this.U, F = this.F, sx = look.sx ?? 1, sy = look.sy ?? 1;
     for (let k = 0; k < this.out.n; k++) {
       const it = this.out.items[k], f = art.atlas.frames[it.piece.frame];
@@ -148,12 +155,23 @@ export class RigView {
   /** Another night (View.setGame): no bodies, nothing drawn (the pages' batches, by species, stay). */
   reset(): void {
     this.bodies.clear(); this.seen.clear(); this.heads.clear(); this.stiltRises.clear(); this.time = 0; this.dt = 0;
-    for (const [k, b] of this.batches) { const p = this.pool.get(k); if (p) p.length = 0; this.used.set(k, 0); b.set([]); }
+    for (const [k, b] of this.batches) { const p = this.pool.get(k); if (p) p.length = 0; this.used.set(k, 0); b.set([]); this.sent.set(k, 0); }
   }
 
   /** Hands every batch its instances; forgets creatures no longer drawn. */
   end(): void {
-    for (const [k, b] of this.batches) { const pool = this.pool.get(k) ?? [], n = this.used.get(k) ?? 0; if (pool.length > n) pool.length = n; b.set(pool); } // (trimmed to this frame's: the batch draws them all)
+    // (trimmed to this frame's: the batch draws them all; a batch empty this frame and last is left as it is, nothing to send or hide:
+    // a batch a species, level and look, so a big crowd's few hundred were each set every frame, most of them empty, the challenge's
+    // 128-animal pack, 2026-11-03)
+    this.frames++;
+    for (const [k, b] of this.batches) {
+      const pool = this.pool.get(k) ?? [], n = this.used.get(k) ?? 0;
+      if (pool.length > n) pool.length = n;
+      if (n) this.last.set(k, this.frames);
+      else if (this.frames - (this.last.get(k) ?? this.frames) > IDLE_FRAMES) { this.scene.remove(...b.meshes); b.release(); this.batches.delete(k); this.pool.delete(k); this.sent.delete(k); this.last.delete(k); continue; } // (long unused: its page likely let go, assets.ts evictRigs; made again if wanted)
+      if (n === 0 && this.sent.get(k) === 0) continue;
+      b.set(pool); this.sent.set(k, n);
+    }
     for (const id of this.bodies.keys()) if (!this.seen.has(id)) { this.bodies.delete(id); this.heads.delete(id); this.stiltRises.delete(id); }
   }
 }
