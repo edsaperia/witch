@@ -281,7 +281,7 @@ async function main() {
   try {
     // 0. Preflight: the build's page, its script and version; the relay's identity. HTTP 200 each, before any browser.
     await stage("preflight", 60, async () => {
-      const t = now(), index = await fetch(args.build, { cache: "no-store", signal: AbortSignal.timeout(20000) });
+      const t = now(), index = await fetch(args.build, { cache: "no-store", signal: AbortSignal.timeout(20000) }).catch(e => { throw Error(`${e.message}${process.env.HTTPS_PROXY && !process.env.NODE_USE_ENV_PROXY ? " (behind an HTTPS proxy, run with NODE_USE_ENV_PROXY=1)" : ""}`); });
       const html = await index.text(); if (index.status !== 200) throw Error(`game page HTTP ${index.status}`);
       const src = html.match(/<script[^>]+type="module"[^>]+src="([^"]+)"/)?.[1] ?? html.match(/<script[^>]+src="([^"]+\.js)"/)?.[1];
       const script = src ? await fetch(new URL(src, args.build), { cache: "no-store", signal: AbortSignal.timeout(30000) }) : null;

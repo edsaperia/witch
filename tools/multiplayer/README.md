@@ -26,7 +26,8 @@ node tools/multiplayer/route.cjs --build https://edsaperia.github.io/witch/pr-16
   --relay wss://witch-relay-playtest.onrender.com --expect-relay-build 24cded08 --out /tmp/mproute/live-1
 ```
 
-Run one at a time against the live relay and leave a few minutes between runs: other people's calls use it too (it keeps calls
+Behind an HTTPS proxy, Node's own `fetch` (the preflight) needs `NODE_USE_ENV_PROXY=1` (Node 22.21 or later); the browsers use
+the system's proxy settings. Run one at a time against the live relay and leave a few minutes between runs: other people's calls use it too (it keeps calls
 apart, but its room and connection limits are shared). The relay only admits pages from its allowed origin
 (https://edsaperia.github.io), so a local build cannot use the live relay.
 
