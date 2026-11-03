@@ -1,10 +1,10 @@
 {
-  "pr": 1700,
+  "pr": 1718,
   "group": "Creature spells",
   "decisions": [
     {
       "id": "spellSize",
-      "pr": 1700,
+      "pr": 1718,
       "group": "Creature spells",
       "label": "Spell size",
       "note": "Every creature spell's size, times its old size: bolts, trails, hits, ground marks, beams' width, status icons, pack specials (Ed, 2026-11-03: \"Larger, extra Bloom\"). 1: as before.",
@@ -21,7 +21,7 @@
     },
     {
       "id": "spellOpacity",
-      "pr": 1700,
+      "pr": 1718,
       "group": "Creature spells",
       "label": "Spell opacity",
       "note": "How far each spell's own opacity is raised toward solid: 0 as before (a themed shot 0.45, a beam 0.65, a zone's tiles 0.6), 1 all solid.",
@@ -38,7 +38,7 @@
     },
     {
       "id": "spellBloom",
-      "pr": 1700,
+      "pr": 1718,
       "group": "Creature spells",
       "label": "Spell glow",
       "note": "The spells' halo, their glow through the crowns and the extra bloom round bolts, hits, beams and zones, times their old strength. 1: as before (no extra bloom).",
@@ -55,7 +55,7 @@
     },
     {
       "id": "spellDuration",
-      "pr": 1700,
+      "pr": 1718,
       "group": "Creature spells",
       "label": "Spell duration",
       "note": "How long hits, ground marks, quakes and trails last, times their old life (a hit 0.75 s, a mark 2.6 s, a quake's ground 1.4 s).",
@@ -72,7 +72,7 @@
     },
     {
       "id": "spellZoneDensity",
-      "pr": 1700,
+      "pr": 1718,
       "group": "Creature spells",
       "label": "Zone density",
       "note": "The share of a lingering zone's tiles drawn (a puddle, fire, frost, a web): 0.25 every fourth, as before; 1 every one.",
@@ -89,7 +89,7 @@
     },
     {
       "id": "spellGroundMark",
-      "pr": 1700,
+      "pr": 1718,
       "group": "Creature spells",
       "label": "Ground marks",
       "note": "How opaque the mark a hit leaves on the ground starts (it was 0.12).",
