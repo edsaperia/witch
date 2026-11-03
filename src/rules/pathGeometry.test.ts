@@ -12,10 +12,11 @@ const payloadTuning = smallWorldTuning(TUNING, 'Worker payload cloning and hydra
 const finish = <T>(steps: Generator<undefined, T>): T => { for (;;) { const n = steps.next(); if (n.done) return n.value; } };
 
 it('retains exact pre-extraction ribbon arrays on a fixed map and a coastal island', () => {
-  // Generated from a4aad736d PathView.prep's original geometry loop, before extraction.
+  // Generated from a4aad736d PathView.prep's original geometry loop, before extraction; re-pinned 2026-11-03 when footpaths took
+  // their looks (art/paths.js variants, dealt one a line: the same ribbons, keyed kind:variant, so split among more keys).
   for (const [seed, island, hash] of [
-    [123, null, '699cec1899bc8a804b60972ff8d27b15aaa510cc82e547c55a71e208603c3291'],
-    [424242, 'fox', 'b54f5f8cf63b97aa0a3e408c742fd63b455b1325e099e323897677461a90703a'],
+    [123, null, '562529e2f7289085181516b24619b925926875ae6aa01ae12d192934a46c0662'],
+    [424242, 'fox', 'b390f847a0f4c1ec375744188b6336499da1da635025a1958f6f796520b6b17f'],
   ] as const) {
     // Override the suite's radius-map setup: the frozen reference uses shipped tuning.
     const tuning = { ...TUNING, map: { ...TUNING.map!, island: island ?? 'home', islandAreas: 10, world: 0 } };
@@ -57,4 +58,12 @@ it('the existing worker returns plain geometry without canvas or GPU objects', a
     expect(prepProblem(structuredClone(message!.rec!.prep))).toBeNull();
     expect(message!.rec!.prep.pathGeometry).toEqual(finish(pathGeometrySteps(generateMap(123, payloadTuning), catalog)));
   } finally { vi.unstubAllGlobals(); }
+});
+
+it("deals each footpath one of its kind's looks, an area's paths taking them in turn (Ed, 2026-11-03)", () => {
+  const tuning = { ...TUNING, map: { ...TUNING.map!, island: 'fox', islandAreas: 10, world: 0 } };
+  const keys = [...finish(pathGeometrySteps(generateMap(424242, tuning), catalog)).quads.keys()].map(k => k.split(':'));
+  for (const [kind, v] of keys) if (kind !== 'stream') expect(+v).toBeLessThan((PATH_KINDS as Record<string, { variants?: string[] }>)[kind].variants?.length ?? 1);
+  const looks = (kind: string) => keys.filter(([k]) => k === kind).length;
+  expect(Math.max(...['dirt', 'roots', 'animal', 'stepping', 'boardwalk'].map(looks))).toBeGreaterThanOrEqual(3); // (neighbouring paths of a kind differ)
 });

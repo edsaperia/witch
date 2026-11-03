@@ -3734,6 +3734,16 @@ Every end of a path, road, railway or stream (where it stops, peters out or is b
 | `pathFade.metres` | number | 0 to … |
 | `pathFade.dither` | boolean |  |
 
+### `pathLook`
+
+How the paths are lit: bump is how strongly each path's bump map (stones and cobbles raised and bevelled, planks, roots, ruts and joints sunk) catches the moon, her glow and the lamps, a stone lit on the side facing the light and shaded on the other; 0 lays them flat as before.
+
+1. Ed, 2026-11-03: "Can you give them bump maps to make them less flat?" (art/paths.js pathNormals, render/paths.ts)
+
+| knob | type | range |
+|---|---|---|
+| `pathLook.bump` | number | 0 to … |
+
 ### `trunkFade`
 
 On the ground, where the crowns are hidden, each trunk's top fades out in a pixel dither instead of ending in a flat cut.

@@ -412,6 +412,8 @@ export interface Tuning {
   find: { eyeshine: { range: number; strength: number; blink: number }; lightFloor: number; rim: number; ambient: number; moonHue: number; moonSat: number };
   trunkFade: { metres: number; share: number; dither: boolean; lightFloor: number; rim: number; crownShare: number };
   pathFade: { metres: number; dither: boolean };
+  /** the paths' look: bump, how strongly their bump maps (stones, planks, roots, ruts) catch the light, 0 flat (Ed, 2026-11-03) */
+  pathLook: { bump: number };
   runeMarkers: { variants: boolean; laser: { opacity: number; width: number; length: number }; scale: number; beamHeight: number; lightRange: number; dormant: { glow: number; light: number; reach: number; beam: number }; awake: { glow: number[]; light: number; lightBuild: number; reach: number; beam: number; motes: number; moteBuild: number; /** its motes' size in the picture's pixels (absent: 3), brightness times their colour (absent: 1) and how high they rise, m (absent: 7) (render/view/home.ts; the coordinator, 2026-10-29, Ed: "the motes from sigils don't do much") */ moteSize?: number; moteBright?: number; moteRise?: number }; flare: { time: number; light: number }; /** The great stumps in place of the stones (Ed, 2026-10-29; render/markers.ts, art/props/stumps.js): on; how many seeded variants of
    *  each area type's stump are dealt round its areas (each seen from its own angle, mirrored at random; baked as each is wanted); the clearing (m) the rules keep free of trees
    *  round its middle and the ground levelled under it; the cast's analyser lying on it, its bars from `inner` m round the rings'

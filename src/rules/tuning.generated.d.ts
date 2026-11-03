@@ -2189,6 +2189,9 @@ export type SchemaTuning = {
     "metres": number;
     "dither": boolean;
   };
+  "pathLook": {
+    "bump": number;
+  };
   "trunkFade": {
     "metres": number;
     "share": number;

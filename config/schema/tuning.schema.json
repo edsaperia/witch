@@ -11099,6 +11099,20 @@
       "additionalProperties": false,
       "description": "Every end of a path, road, railway or stream (where it stops, peters out or is broken) frays out over its last metres in an ordered dither on the art's pixel grid, broken up by noise (Ed, v149)."
     },
+    "pathLook": {
+      "type": "object",
+      "properties": {
+        "bump": {
+          "type": "number",
+          "minimum": 0
+        }
+      },
+      "required": [
+        "bump"
+      ],
+      "additionalProperties": false,
+      "description": "How the paths are lit: bump is how strongly each path's bump map (stones and cobbles raised and bevelled, planks, roots, ruts and joints sunk) catches the moon, her glow and the lamps, a stone lit on the side facing the light and shaded on the other; 0 lays them flat as before."
+    },
     "trunkFade": {
       "type": "object",
       "properties": {
@@ -13830,6 +13844,7 @@
     "canopyShadow",
     "rig",
     "pathFade",
+    "pathLook",
     "trunkFade",
     "load",
     "canopyCutout",

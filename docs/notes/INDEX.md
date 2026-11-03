@@ -377,6 +377,8 @@ says what each note covers.
 - Attack effects
 - Attack look
 - Path kinds
+- Path looks
+- Path bump maps
 - Hero dancefloor
 - Soundsystem generator
 - Dancefloor speakers
