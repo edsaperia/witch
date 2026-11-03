@@ -73,7 +73,7 @@ Written from `FIND_KINDS`, so it can't drift: `src/rules/findsList.test.ts` fail
 
 ## The find signature (Ed's rules)
 
-Every find carries the same three things, whatever its object, so a player who has seen one knows the next: **a clear patch, its own light, and one size.** Ed (2026-10-23): "clear patch, its own light, rules on size". Nothing else marks it: no wisp over it, no opening in the canopy, no shaft of moonlight.
+Every find carries the same three things, whatever its object, so a player who has seen one knows the next: **a clear patch, its own light, and one size.** Ed (2026-10-23): "clear patch, its own light, rules on size". Nothing else marks it: no wisp over it, no opening cut in the canopy for it (its own area's clearing since 2026-11-03 is the path network's, Ed: "keep the clearing"), no shaft of moonlight.
 
 ### 1. A clear patch
 
@@ -106,9 +106,9 @@ Every find carries the same three things, whatever its object, so a player who h
 
 - Once she's taken it, the object, its patch and its light all go: the ground grows back over, the forest is dark there again. The same once the party's lost.
 
-### 4. From the treetops: hidden
+### 4. From the treetops: in its clearing
 
-- A find can't be seen from the treetops (Ed's answer): its light lights the ground under the canopy, and nothing rises above the crowns. **The constellation through the telescope gives the way**; she comes down into the woods to look for it. (Written while finds lay under the canopy: in its own area's clearing since 2026-11-03, no crown stands over it.)
+- **Since 2026-11-03 the find stands in its own area's treeless clearing, open to the sky** (Ed, 2026-11-03: "keep the clearing"), where the footpaths from every touching area end. **The constellation through the telescope still gives the way**, and the paths lead her to it. Superseded: "a find can't be seen from the treetops" and "no opening in the canopy" (Ed, 2026-10-23), written while finds lay under the canopy in a wild area's woods; they still describe the old placement with `findArea` off.
 
 ### In every biome
 
