@@ -3568,8 +3568,9 @@ Code: `docs/plans/sail-without-reload.md`, `app/sail.ts`
 The loading screen: the World Tree and COVEN RUSH picked out in gold stars that light up as the game loads.
 
 1. Ed, 2026-10-26: src/ui/loadingScreen.js, before main.ts loads
-The loading screen [1]: the World Tree and COVEN RUSH in gold stars, lighting as the game loads, edge first by edge (0 plain random), at most rate stars a second, each flashing for flash seconds; ghost how bright the stars not yet lit show (0: an empty sky, Ed's call); the heart's star last, its supernova to white over nova seconds and the white clearing over clear seconds into the bedroom. It draws fps frames a second while the game loads (each frame costs the load a little), about 20 once it's ready. Read as the page opens, so the pause page's sliders (remembered on this browser) take effect on the next load.
-Code: `src/ui/loadingScreen.js`
+2. Ed, 2026-11-03: "can we fade from the loading screen to the bedroom over a few seconds" (fadeOut in place of the 1.2 s white clearing (clear), src/ui/loadingFade.js)
+The loading screen [1]: the World Tree and COVEN RUSH in gold stars, lighting as the game loads, edge first by edge (0 plain random), at most rate stars a second, each flashing for flash seconds; ghost how bright the stars not yet lit show (0: an empty sky, Ed's call); the heart's star last, its supernova to white over nova seconds, then the whole screen fading out over fadeOut seconds (eased out; at most 0.6 s with reduced motion) onto the bedroom, her wake-up starting as it begins [2]. It draws fps frames a second while the game loads (each frame costs the load a little), about 20 once it's ready. Read as the page opens, so the pause page's sliders (remembered on this browser) take effect on the next load.
+Code: `src/ui/loadingScreen.js`, `src/ui/loadingFade.js`
 
 | knob | type | range |
 |---|---|---|
@@ -3578,7 +3579,7 @@ Code: `src/ui/loadingScreen.js`
 | `loading.flash` | number | 0 to … |
 | `loading.ghost` | number | 0 to … |
 | `loading.nova` | number | 0 to … |
-| `loading.clear` | number | 0 to … |
+| `loading.fadeOut` | number | 0 to … |
 | `loading.fps` | number | 0 to … |
 
 ### `opening`

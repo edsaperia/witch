@@ -2068,7 +2068,7 @@ export type SchemaTuning = {
     "flash": number;
     "ghost": number;
     "nova": number;
-    "clear": number;
+    "fadeOut": number;
     "fps": number;
   };
   "opening": {
