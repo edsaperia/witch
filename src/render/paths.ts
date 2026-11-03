@@ -1,7 +1,7 @@
 // Paths, roads and railways on the ground: each line of the rules' network swept as a flat ribbon
 // along its curve, textured with the Art's strip for its kind (u across, v along, repeating), on the
-// art's pixel grid and lit like the floor. A path's kind follows the area it runs through (a dirt
-// track, then mossy flagstones across a garden...), switching at area borders; roads are overgrown
+// art's pixel grid and lit like the floor. A path takes the kind of the area it starts in (a dirt
+// track, mossy flagstones in a garden...) and keeps it all along (rules/pathGeometry.ts); roads are overgrown
 // tarmac, railways old track, with gaps where the line is broken. Dead ends taper away, and every
 // end of a drawn stretch frays out in a dithered fade (Ed, v149).
 // Each kind has several looks (the art's variants, dealt one a line by rules/pathGeometry.ts): one mesh

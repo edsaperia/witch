@@ -721,7 +721,7 @@ Paths, roads and railways (Ed): far fewer since 2026-10-11 [1]. rails [min,max] 
 
 - **`paths.network`**: every area with a site (a stump, a special site, home's dancefloor) joined by a footpath to every touching area's site, from the edge of one clearing to the other's, round the lakes; no trees on them.
   1. Ed, 2026-11-03: "Path network - Each non-lake area has a stump site or a special site (find and challenge areas); paths link each of these sites to the sites in adjacent areas. Paths don't have trees on them."
-- **`paths.linkChance`**: the share of the other neighbouring areas (an area with no site: the buffer's) joined by a meandering path; with paths.network off, of every neighbouring pair.
+- **`paths.linkChance`**: the share of the other neighbouring pairs (one an area with no site: the buffer's or a legend area's, never a lake) joined by a footpath, the odd path out into the buffer ring; with paths.network off, of every neighbouring pair.
 - **`paths.deadEndChance`**: the share of areas with a path out to nothing.
 - **`paths.pathHalf`, `paths.roadHalf`, `paths.railHalf`**: How wide the paths are kept clear of trees, with thick bushes along their edges.
   half each corridor's width (metres), kept clear of trees, with bushes thick along the edges for edgeBushes metres (bushBoost times as many); streams [min,max] long streams winding across the map (and short ones join wet areas that touch), streamHalf metres half-wide; along a railway, every landmarkSpacing metres, a landmarkChance of a landmark (a wagon, a carriage, a platform, a gantry) and otherwise sometimes a signal post; verge posts along roads every vergeSpacing metres; every 3D piece at least pieceGap metres from the next.
