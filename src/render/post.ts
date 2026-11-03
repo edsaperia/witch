@@ -62,6 +62,7 @@ const POOL_SPARE = 0.8;
 
 const COMPOSITE = /* glsl */ `
 uniform vec4 uPotionStyle; // saturation boost, edges, edge threshold, edge upper threshold
+uniform vec4 uSilentFilm; // envelope, grain, scratch probability, frame rate
 uniform float uPotionBackground, uPotionTime, uNightVision;
 uniform vec4 uPrintFold; // print amount, hatch spacing, folded view amount, wedge count
 uniform vec4 uPotionHue; // cyclic RGB rotation coefficients, blend strength
@@ -149,6 +150,16 @@ void main() {
     float phosphor = clamp(dot(c, vec3(0.3, 0.55, 0.15)), 0.0, 1.0);
     vec3 green = mix(vec3(0.025, 0.95, 0.12) * phosphor, vec3(0.78, 1.0, 0.72), smoothstep(0.65, 1.0, phosphor));
     c = mix(c, green, uNightVision);
+  }
+  if (uSilentFilm.x > 0.0) {
+    float frame = floor(uPotionTime * uSilentFilm.w);
+    vec2 px = floor(vUv * uLow);
+    float grain = irisHash(dot(px, vec2(1., 93.)) + frame * 57.) - .5;
+    float exposure = sqrt(clamp(dot(c, vec3(.299, .587, .114)), 0., 1.));
+    float scratchX = floor(irisHash(floor(frame / 4.)) * uLow.x);
+    float scratch = (1. - step(.5, abs(px.x - scratchX))) * step(1. - uSilentFilm.z, irisHash(frame + 11.));
+    vec3 printColour = vec3(1., .83, .58) * clamp(exposure + grain * uSilentFilm.y + .27 * scratch, 0., 1.);
+    c = mix(c, printColour, uSilentFilm.x);
   }
   // Knocked down with her hat on (Ed, 2026-10-07): the rest of the screen dims, her spot and her hat floating down left lit
   // (round her light's pool, uPool, and well above it, where the hat starts).
@@ -246,6 +257,7 @@ export class Post {
     this.mats.composite.uniforms.uPotionBackground = { value: .035 };
     this.mats.composite.uniforms.uPrintFold = { value: new THREE.Vector4(0, 5, 0, 6) };
     this.mats.composite.uniforms.uPotionHue = { value: new THREE.Vector4(1, 0, 0, 0) };
+    this.mats.composite.uniforms.uSilentFilm = { value: new THREE.Vector4() };
     this.mats.composite.uniforms.uNightVision = { value: 0 };
     this.mats.composite.uniforms.uPotionTime = { value: 0 };
     this.mats.composite.uniforms.uPotionWobble = { value: new THREE.Vector4() };
@@ -271,6 +283,7 @@ export class Post {
   potionHuePhase = 0;
   potionEdges = 0;
   potionWobble = 0;
+  potionSilentFilm = 0;
   potionTime = 0;
   /** How much of the tilt-shift's blur is on (0 none, 1 all): none in the treehouse (render/view.ts houseTilt). */
   tilt = 1;
@@ -416,6 +429,8 @@ export class Post {
       const edges = potionSettings('aurora-outlines'), wobble = potionSettings('trip-indicator');
       u.uPotionStyle.value.set(levels.saturation - 1, this.potionEdges * edges.strength, edges.edgeLow, edges.edgeHigh);
       u.uPotionBackground.value = edges.background;
+      const film = potionSettings('silent-film');
+      u.uSilentFilm.value.set(this.potionSilentFilm, film.grain, film.scratches, film.rate);
       u.uNightVision.value = this.potionNightVision;
       u.uPotionTime.value = this.potionTime;
       u.uPrintFold.value.set(this.potionWoodcut, potionSettings('woodcut').spacing, this.potionFold, Math.round(potionSettings('kaleidoscope').sectors / 2) * 2);

@@ -198,7 +198,7 @@ function* rebuild(v: View, { margin, pose, key, lift, radius, reach, canopy, tel
     // Squeeze the tallest variants so they never bury her flight (treeCap); a grove's a little beyond.
     const tall = whole.h * mpp, C = t.treeCap, scale = (tall > C.from ? (C.from + (tall - C.from) * C.keep) / tall : 1) * boost * (thinned ? TS.thinGrow : 1);
     const fresh = mark(v, "tree", p.x, p.z, tall * scale);
-    const at = stand(p.x, p.z, f[big.bot], mpp * scale);
+    const at = { ...stand(p.x, p.z, f[big.bot], mpp * scale), tree: true };
     const jitter = leafJitterOf(p); // (its own leaf colour, both halves alike: Ed, 2026-10-16)
     if (!near) { add(p.type, { ...at, frame: f[big.top!], flip: p.flip, top: true, fresh, scale, sway: 1, jitter, foot: f[big.bot].foot }); nt++; if (sliceDone()) { yield; resume(); } continue; } // (past the scenery's radius, in the treetops: its crown alone)
     // A tree's two halves share one box and sway alike (from its foot), so crown and trunk stay together.

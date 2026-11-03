@@ -1054,6 +1054,14 @@ export type SchemaTuning = {
     "turnFrom": number;
     "turnTo": number;
     "legendFlash": number;
+    "visibility": {
+      "size": number;
+      "opacity": number;
+      "bloom": number;
+      "duration": number;
+      "zoneDensity": number;
+      "groundMark": number;
+    };
   };
   "combat": {
     "packs": {

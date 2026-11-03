@@ -47,7 +47,7 @@
     ],
     "effect": "the-fear",
     "name": "The Fear",
-    "description": "Shadows become creatures, phantom footsteps surround her, and familiar animals loom twice their size.",
+    "description": "Shadows stalk and startle her but cannot hurt her. She hears phantom footsteps, and familiar animals loom twice their size.",
     "comingSoon": true,
     "id": 4
   },
@@ -60,7 +60,7 @@
     ],
     "effect": "alone",
     "name": "Alone",
-    "description": "Everyone vanishes and the world stands still. She can wander the empty forest.",
+    "description": "She wanders a private, harmless copy of the island alone. Her body lies on the grass in the shared world until she wakes there.",
     "comingSoon": true,
     "id": 5
   },
@@ -74,7 +74,7 @@
     "effect": "walking-wood",
     "name": "Walking Wood",
     "description": "The trees move around as if they can walk.",
-    "comingSoon": true,
+    "comingSoon": false,
     "id": 6
   },
   {
@@ -216,7 +216,7 @@
     ],
     "effect": "earsight",
     "name": "Earsight",
-    "description": "Only things that make sound are visible.",
+    "description": "Each sound sends out a ripple that briefly reveals nearby ground, trees and animals.",
     "comingSoon": true,
     "id": 17
   },
@@ -321,7 +321,7 @@
     "effect": "giant-trees",
     "name": "Giant Trees",
     "description": "The trees are three times taller.",
-    "comingSoon": true,
+    "comingSoon": false,
     "id": 25
   },
   {
@@ -398,7 +398,7 @@
     ],
     "effect": "the-whole-route",
     "name": "The Whole Route",
-    "description": "The entire route across the island shines into view.",
+    "description": "Her own connected sigil routes shine across the island, visible from end to end.",
     "comingSoon": true,
     "id": 31
   },
@@ -724,7 +724,7 @@
     "effect": "silent-film",
     "name": "Silent Film",
     "description": "Film grain and scratches, sepia, the world as a silent film.",
-    "comingSoon": true,
+    "comingSoon": false,
     "id": 56
   },
   {
@@ -763,7 +763,7 @@
     "effect": "contour-dream",
     "name": "Contour Dream",
     "description": "Vivid contour bands run across ground, animals and scenery.",
-    "comingSoon": true,
+    "comingSoon": false,
     "id": 59
   },
   {
@@ -801,8 +801,8 @@
     ],
     "effect": "folded-space",
     "name": "Folded Space",
-    "description": "Repeated mirrored sectors fold the forest around her.",
-    "comingSoon": true,
+    "description": "The landscape folds along fixed creases in the island. She can walk across the ridges and valleys.",
+    "comingSoon": false,
     "id": 62
   },
   {
@@ -841,7 +841,7 @@
     "effect": "concertina",
     "name": "Concertina",
     "description": "Shared scene deformation squeezes and stretches distance sideways.",
-    "comingSoon": true,
+    "comingSoon": false,
     "id": 65
   },
   {
@@ -971,7 +971,7 @@
     "effect": "seeing-through-seeing",
     "name": "Seeing Through Seeing",
     "description": "Perceive the masks that erase the canopy to make her visible.",
-    "comingSoon": true,
+    "comingSoon": false,
     "id": 75
   },
   {
@@ -1010,7 +1010,7 @@
     "effect": "held-breath",
     "name": "Held Breath",
     "description": "Wave/pulse progress gradually tightens the world bend or swells scenery, releasing as the wave arrives.",
-    "comingSoon": true,
+    "comingSoon": false,
     "id": 78
   },
   {
@@ -1023,7 +1023,7 @@
     "effect": "out-of-time",
     "name": "Out of Time",
     "description": "Mist, wind, plants and other animations borrow the wrong clock.",
-    "comingSoon": true,
+    "comingSoon": false,
     "id": 79
   },
   {
@@ -1062,7 +1062,7 @@
     "effect": "distant-giants",
     "name": "Distant Giants",
     "description": "Scenery grows with distance while nearby trees shrink.",
-    "comingSoon": true,
+    "comingSoon": false,
     "id": 82
   },
   {
@@ -1153,7 +1153,7 @@
     "effect": "underwater-light",
     "name": "Underwater Light",
     "description": "Moving caustic-like patterns sweep over the whole forest without necessarily changing movement or sound.",
-    "comingSoon": true,
+    "comingSoon": false,
     "id": 89
   },
   {
@@ -1192,7 +1192,7 @@
     "effect": "inside-out-relief",
     "name": "Inside-Out Relief",
     "description": "Reverse or exaggerate surface normals so bumps look like hollows and light seems to come from impossible directions.",
-    "comingSoon": true,
+    "comingSoon": false,
     "id": 92
   },
   {
@@ -1205,7 +1205,7 @@
     "effect": "living-bark",
     "name": "Living Bark",
     "description": "Bark and surface colour climb trees while silhouettes remain still.",
-    "comingSoon": true,
+    "comingSoon": false,
     "id": 93
   },
   {

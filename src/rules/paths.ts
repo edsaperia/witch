@@ -1,7 +1,8 @@
-// Paths, roads and railways (Ed, 2026-10-03): worn paths meander between areas' glades, fork,
-// loop and sometimes stop at a dead end; a broad old road or two sweeps across the forest; and
-// two to four railway lines cross many areas in long, gentle curves, with a branch line, broken
-// sections where the track is gone and trees grow between the sleepers. They carve tree-free
+// Paths, roads and railways (Ed, 2026-10-03): worn paths between areas' glades (since 2026-11-03 the
+// network: every site joined to each touching area's, in straight runs with gentle bends, footpath
+// below), now and then one out into the buffer and sometimes a dead end; a broad old road or two sweeps
+// across the forest; and railway lines cross many areas in long, gentle curves, with a branch line,
+// broken sections where the track is gone and trees grow between the sleepers. They carve tree-free
 // corridors with bushes along their edges. Seeded, so they never change; no drawing here.
 import { ashore, lakeKnobs, onLake, shoreDetours } from "./lakes";
 import { clamp, hash2, rng, vnoise } from "./random";
@@ -151,7 +152,8 @@ export class PathNetwork {
       };
       if (wetBefore) { wetStreams(wetBefore, r, false); wetStreams(wetNow, rng(map.seed * 7 + 4243), true); }
       else wetStreams(wetNow, r, true);
-      // Paths: between neighbouring areas' centres (some pairs), meandering; and a dead end or two
+      // Paths: between neighbouring areas' sites (some pairs: linkChance, with the network on only those
+      // out to an area with no site), straight runs with gentle bends (footpath); and a dead end or two
       // in some areas, out to nothing in particular (a ruin, later).
       // The network (Ed, 2026-11-03: "paths link each of these sites to the sites in adjacent areas"): every two touching areas
       // with a site (a stone, a special site or home's dancefloor) joined, from the edge of one's clearing to the other's, by a

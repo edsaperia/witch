@@ -173,7 +173,7 @@ export interface Tuning {
   creatureMomentum?: { on: boolean; turn: number; delay: number; chaseLead: number; strikeLead: number; classes: Record<"heavy" | "normal" | "light", import("./momentum").Momentum> };
   combatWaiting: { reachScale: number; areaGrowth: number; passPower: number; passDepth: number };
   /** How attacks feel on screen (render/attackFeel.ts): the wind-up's crouch, the lunge's stretch, a hit's squash and bounce, a knock-back's tumble. */
-  attackFx: { windupSquash: number; windupMax: number; lungeStretch: number; squash: number; squashSecs: number; tumbleKnock: number; tumbleHeight: number; tumbleSecs: number; turnFrom: number; turnTo: number; legendFlash: number };
+  attackFx: { windupSquash: number; windupMax: number; lungeStretch: number; squash: number; squashSecs: number; tumbleKnock: number; tumbleHeight: number; tumbleSecs: number; turnFrom: number; turnTo: number; legendFlash: number; /** the creatures' spells, dialled up (Ed, 2026-11-03): render/leash/attackLook.ts Visibility */ visibility: { size: number; opacity: number; bloom: number; duration: number; zoneDensity: number; groundMark: number } };
   /** The difficulty (Ed, 2026-11-03: "the game is much too easy"): creatureSpeed, every creature's movement speed in a fight times it
    *  (rules/movement.ts FIGHT.creature); rangedRange, every ranged attack's reach (a shot, a lob, a beam) times it (rules/combat.ts);
    *  adultStrength, an adult's health and damage in a fight times it (rules/combat/data.ts adultMult). All 1: as before. */

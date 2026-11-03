@@ -721,7 +721,7 @@ Paths, roads and railways (Ed): far fewer since 2026-10-11 [1]. rails [min,max] 
 
 - **`paths.network`**: every area with a site (a stump, a special site, home's dancefloor) joined by a footpath to every touching area's site, from the edge of one clearing to the other's, round the lakes; no trees on them.
   1. Ed, 2026-11-03: "Path network - Each non-lake area has a stump site or a special site (find and challenge areas); paths link each of these sites to the sites in adjacent areas. Paths don't have trees on them."
-- **`paths.linkChance`**: the share of the other neighbouring areas (an area with no site: the buffer's) joined by a meandering path; with paths.network off, of every neighbouring pair.
+- **`paths.linkChance`**: the share of the other neighbouring pairs (one an area with no site: the buffer's or a legend area's, never a lake) joined by a footpath, the odd path out into the buffer ring; with paths.network off, of every neighbouring pair.
 - **`paths.deadEndChance`**: the share of areas with a path out to nothing.
 - **`paths.pathHalf`, `paths.roadHalf`, `paths.railHalf`**: How wide the paths are kept clear of trees, with thick bushes along their edges.
   half each corridor's width (metres), kept clear of trees, with bushes thick along the edges for edgeBushes metres (bushBoost times as many); streams [min,max] long streams winding across the map (and short ones join wet areas that touch), streamHalf metres half-wide; along a railway, every landmarkSpacing metres, a landmarkChance of a landmark (a wagon, a carriage, a platform, a gantry) and otherwise sometimes a signal post; verge posts along roads every vergeSpacing metres; every 3D piece at least pieceGap metres from the next.
@@ -1958,6 +1958,10 @@ Code: `render/attackFeel.ts`
 
 - **`attackFx.legendFlash`**: how much bigger and longer a legend's blow flashes than anyone's (its flash 1 + 2 × legendFlash times; 0.5, twice: Ed's decisions panel, config/decisions.json).
   Code: `config/decisions.json`
+- **`attackFx.visibility`**: How easy the creatures' spells are to see: their size, opacity, glow, how long they last, how thick their lingering zones are and how strong the marks they leave on the ground (1, 0, 1, 1, 0.25 and 0.12 draw them as before 3 November).
+  1. Ed, 2026-11-03: "Let's dial up current creature spell effects a lot so they're easier to see. Larger, extra Bloom. Don't bring back the flash and rings yet." (size 1.75, opacity 0.9, bloom 2, duration 1.5, zoneDensity 0.5, groundMark 0.45; the pause page's Creature spells sliders (config/decisions))
+  size: every creature spell's size times this (bolts and lobs, their trails, hits, ground marks, beams' width, status icons, pack specials; a quake's or pulse's ground spreads a little past its true reach, 40% of the extra). opacity: how far each spell's own opacity is raised toward solid (0: as it was; 1: all solid), so a themed shot's 0.45 goes to 0.95 and a beam's 0.65 to 0.97. bloom: its halo, the halo seen through the crowns, its glow on the ground and the extra glow round bolts, hits, beams and zones, times their own (lights by half as much, at most 1.5 times). duration: hits, marks, quakes and trails last this many times as long. zoneDensity: the share of a lingering zone's tiles drawn (0.25 was every fourth; 1 every one). groundMark: how opaque a hit's mark on the ground starts (it was 0.12).
+  Code: `render/leash/attackLook.ts`, `render/fx/system.ts`
 
 | knob | type | range |
 |---|---|---|
@@ -1972,6 +1976,12 @@ Code: `render/attackFeel.ts`
 | `attackFx.turnFrom` | number | 0 to … |
 | `attackFx.turnTo` | number | 0 to … |
 | `attackFx.legendFlash` | number | 0 to 1 |
+| `attackFx.visibility.size` | number | 0.25 to 4 |
+| `attackFx.visibility.opacity` | number | 0 to 1 |
+| `attackFx.visibility.bloom` | number | 0 to 4 |
+| `attackFx.visibility.duration` | number | 0.25 to 4 |
+| `attackFx.visibility.zoneDensity` | number | 0.05 to 1 |
+| `attackFx.visibility.groundMark` | number | 0 to 1 |
 
 ### `combat`
 

@@ -205,7 +205,7 @@
   "impact": 18
  },
  "danger": {
-  "warn": "#ffffff",
+  "warn": "#e62828",
   "edge": "#100c14",
   "dash": 3,
   "gap": 3,
@@ -234,6 +234,10 @@
   "claw": "wind",
   "gold": "sand",
   "bone": "sand"
+ },
+ "magic": {
+  "rainbow": "rainbow",
+  "gold": "gold"
  },
  "byBiome": {
   "temperate": "earth",
