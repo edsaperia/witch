@@ -147,6 +147,7 @@ import { setFrameUniforms } from "./view/frameUniforms";
 import { newReveal, setReveal } from "./view/reveal";
 import { drawWitch, houseShiftOf } from "./view/witch";
 import { MushroomView } from './mushrooms';
+import { MasterplanView } from "./masterplan";
 import { PotionObserversView } from './potionObservers';
 import { chunkyPixelSize, potionStrength } from './potionEffects';
 import { drawPointers } from "./view/hud";
@@ -520,6 +521,7 @@ export class View {
   readonly assets: AssetLibrary;
   typeBatches = new Map<number, SpriteBatch>();
   private readonly mushroomView = new MushroomView();
+  private masterplan?: MasterplanView;
   private readonly potionObservers = new PotionObserversView();
   decorBatches = new Map<string, SpriteBatch>();
   /** The biome the ground cover's tufts were drawn in (none: temperate): drawn again for a night on an island in another. */
@@ -1357,6 +1359,7 @@ export class View {
     // The last night's: the scenery's rebuild under way, the creatures' caches, the candles; its area types' batches and their
     // shadows, and its soundsystems' (their atlases the art's: freed once, by reseat).
     cancelRefresh(this); resetCreatureCaches(); forgetCandles(this);
+    this.masterplan?.dispose(); this.masterplan = undefined;
     this.potionObservers.dispose(this);
     resetDodgeEchoes(this);
     for (const b of this.typeBatches.values()) { this.scene.remove(...b.meshes); b.release(); }
@@ -1885,6 +1888,9 @@ export class View {
     this.ground.prepareCoast(this.renderer, this.camera, this.scene);
     this.houseRooms?.update(this, onTreehouse, ht);
     this.potionObservers.update(this, onTreehouse);
+    const planStrength = potionStrength(g, "masterplan");
+    if (planStrength) (this.masterplan ??= new MasterplanView(this)).update(planStrength);
+    else if (this.masterplan) { this.masterplan.dispose(); this.masterplan = undefined; }
     if (this.crown && (this.crownNoNotch !== !!t.treehouse.house?.look?.noNotch || this.crown.lights !== (t.treehouse.house?.crown?.lights ?? 1) || (this.crown.crown.wrap ?? 0) !== (t.treehouse.house?.crown?.wrap ?? 0))) this.ensureCrown(this.game); // (its lights' density or their wrapping moved on the pause page: grown again)
     if (this.crown && deck) { // (the crown: in the world, or laid over the floors with her indoors: render/crown.ts)
       const W = this.crownWorld, a = ((HOUSE_ROOMS.turn ?? 0) * Math.PI) / 180, c = Math.cos(a), s = Math.sin(a);

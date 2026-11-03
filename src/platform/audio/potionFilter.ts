@@ -10,6 +10,15 @@ export function potionFilterState(g: Game) {
   const p = potionSettings('trip-audio');
   const amount = recipe && !['night-vision', 'heat-vision'].includes(recipe.effect)
     ? effectEnvelope(trip, g.clock.time) * p.mix : 0;
+  if (amount > 0) {
+    // Shape the existing mix for each perception. All four use the normal dry/wet trip envelope.
+    switch (recipe?.effect) {
+      case 'masterplan': return { amount, high: 260, low: 4300, gain: .93 };
+      case 'woodcut': return { amount, high: 520, low: 2500, gain: .95 };
+      case 'mirrorball': return { amount, high: 90, low: 3400 * 2 ** Math.sin(g.clock.time * potionSettings('mirrorball').spin * 6), gain: 1 };
+      case 'kaleidoscope': return { amount, high: 120, low: 1600 * 2 ** (1 + Math.cos(g.clock.time * 1.5)), gain: 1 };
+    }
+  }
   const small = recipe?.effect === 'miniature';
   if (recipe?.effect === 'the-forest-counts' && amount > 0) {
     const index = forestCountStep(g).index, depth = potionSettings('the-forest-counts').soundDepth;
