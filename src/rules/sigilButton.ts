@@ -3,9 +3,6 @@
 // growth spurt: every animal following her an adult at once; Ed, 2026-10-18), else the leash's own (put a sigil down, pick one up, a happy creature's rune;
 // rules/leash.ts); and a happy creature's rune near her trotting over to her. Then, after the 💌s, a sigil put down in
 // a legend's clearing finishing its quest (rules/quest.ts).
-// Feeding (Ed, 2026-11-03): where the press would otherwise put the bottom sigil down, and that animal can eat with a berry within
-// berries.feed.reach of her (feedOffer: the view marks that berry and shows the prompt), a tap queues it one more berry (rules/berries.ts
-// queueBerry), and holding the button berries.feed.hold seconds puts its sigil down instead (and, held on, starts a run as ever).
 import { wakeOf } from "./wakeUp";
 import { atZooExit } from "./zoo";
 import { mushroomButton } from "./mushrooms";
