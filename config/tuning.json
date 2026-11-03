@@ -381,6 +381,7 @@
     "clear": 9,
     "lightReach": 16,
     "lightStrength": 0.6,
+    "landCooldown": 3,
     "deck": {
       "on": true,
       "radius": 7,
@@ -2370,7 +2371,7 @@
     "flash": 0.6,
     "ghost": 0,
     "nova": 2.6,
-    "clear": 1.2,
+    "fadeOut": 2.5,
     "fps": 10
   },
   "opening": {

@@ -303,7 +303,7 @@ let onlineFocus = () => false;
 view.setIntroFocus = (game, focus) => introFocus(game, N().game, focus, onlineFocus(), pageFocus);
 // The loading screen (src/loading.js, src/ui/loadingScreen.js), up since the first paint: given the view for its count of the art
 // and the shaders; gone at once for a start with no wake-up in the bedroom, its supernova into the bedroom's alarm otherwise (below).
-const loading = (window as unknown as { witchLoading?: { view: unknown; finish(): void; cancel(): void } }).witchLoading;
+const loading = (window as unknown as { witchLoading?: { view: unknown; finish(wake: () => void): void; cancel(): void } }).witchLoading;
 if (loading) loading.view = view;
 loadTimes.view = performance.now();
 view.partsFound = partsNow(); // (the Workshop's pegboard hangs them: render/workshopArt.ts)
@@ -394,7 +394,7 @@ requestAnimationFrame(() => setTimeout(async () => {
   loadTimes.ready = performance.now();
   performance.mark("witch:ready");
   startEl.classList.remove("loading");
-  if (inBedroom) { loading?.finish(); wakeFirst(); }
+  if (inBedroom) { if (loading) loading.finish(wakeFirst); else wakeFirst(); } // (the wake-up as its supernova's white starts fading onto her bedroom: src/ui/loadingFade.js)
   else if (opensDirectly(params, { bedroom: inBedroom, arriving: !!night.arrival, resuming: !!resumeGame, bot: botKind ? bot ? "ready" : "loading" : "off" })) {
     startDirect();
     if (resumeGame) { if (restoringComment && !freeze.frozen) freeze.toggle(); resumeGame = undefined; resumeSave = null; }
@@ -816,6 +816,7 @@ function start(): boolean {
   if (sailing) return false; // (the next night being made in place)
   const { game, flags, arrival } = N();
   if (landingSleep.holds(game)) return false;
+  if (bootAsleep) return false; // (asleep under the loading screen till its wake-up: wakeFirst; no key starts the night early)
   if (!flags.ready || !game.clock.paused || freeze.frozen) return false;
   if (creator.open) return true;
   sound.start(); // (browsers keep sound off until the player presses something: the start is that press)

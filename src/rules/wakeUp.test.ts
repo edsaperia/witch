@@ -92,7 +92,9 @@ describe("getting up", () => {
   });
 
   it("a rise does too, but she doesn't fly", () => {
-    const g = woken();
+    // (no broom yet, as on a night that waits for her: app/gameParams.ts newKit. With one she'd take off from any room, Ed 2026-10-26;
+    // a press every step used to look grounded only by flipping her up and down, which the treehouse cooldown now stops: Ed, 2026-11-03)
+    const g = woken(); g.witches[0].kit = { invites: false, broom: false };
     run(g, STEP, { toggleMode: true });
     expect(g.wake!.beat).toBe("stretch");
     run(g, K.stretch + 0.1); run(g, 1, { toggleMode: true });

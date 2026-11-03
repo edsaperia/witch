@@ -34,6 +34,9 @@ export interface WitchState {
   seated?: boolean;
   /** On the treehouse deck (rules/treehouse.ts): landing on it, standing on it (mode "ground", its floor her ground), or rising off it. */
   perch?: boolean;
+  /** Seconds (her own time) till she may next land on a treehouse floor or leave one (treehouse.landCooldown): set as she leaves its floor
+   *  or touches down on it. Absent: ready. */
+  perchCool?: number;
   /** Falling off the balcony's open rim with no broom (rules/treehouse.ts, house.fall): seconds fallen; at fall.time she's back at the circle. */
   falling?: number;
   /** Only the open-platform trial returns a fall to its own safe edge. */
@@ -115,8 +118,17 @@ export function stepWitch(w: WitchState, intent: Intent, dt: number, t: Tuning, 
     return { ...w, x: w.x + w.vx * dt, z: w.z + w.vz * dt, vx: w.vx * k, vz: w.vz * k, falling: f, lean: false, boost: 0, braking: false };
   }
   let { mode, lift } = w, perch = !!w.perch && !!deck && overDeck(deck, w.x, w.z); // (put somewhere else, she's off it)
+  // A minimum time between leaving a treehouse floor and landing on one, and between landing and leaving (Ed, 2026-11-03: "Taking off
+  // from the treehouse and landing on the treehouse; there should be a minimum time between which either these things can happen,
+  // perhaps 3 seconds, because it's easy to e.g. take off from a branch and land immediately on the next branch"): for
+  // treehouse.landCooldown seconds of her own time after either, she flies on over its floors without landing (the press to come down
+  // over one dropped, as over a lake), and on its floor her press to rise is dropped and its open edges keep her in, as a rail would.
+  const coolLeft = Math.max(0, (w.perchCool ?? 0) - dt), cooling = !!deck && coolLeft > 0;
+  let toggle = intent.toggleMode;
+  if (toggle && cooling && perch && mode === "ground") toggle = false; // (just landed: no take-off yet)
+  if (toggle && cooling && (mode === "treetop" || mode === "rising") && (perch || landsOn(deck!, w.x, w.z))) toggle = false; // (just left: no coming down onto it yet)
   // (in the house's rooms and on its branches she rises only with a broom: rules/treehouse.ts noRiseAt)
-  if (intent.toggleMode && !(perch && mode === "ground" && deck && noRiseAt(deck, w.x, w.z))) mode = mode === "ground" || mode === "descending" ? "rising" : "descending";
+  if (toggle && !(perch && mode === "ground" && deck && noRiseAt(deck, w.x, w.z))) mode = mode === "ground" || mode === "descending" ? "rising" : "descending";
   // Rising off it, stepped off its edge or flown on past it, she rises from its floor till she's up (Ed's playtest, 2026-11-03: "When I
   // step off the treehouse with my broom, I seem to fall and rise again before taking off": dropped from it at a low lift, her height
   // fell to the ground's and climbed back). Off it in mid-air any other way (coming down past it), from the height she's at: no drop.
@@ -125,7 +137,7 @@ export function stepWitch(w: WitchState, intent: Intent, dt: number, t: Tuning, 
   if (rose) perch = true;
   if (w.perch && !perch && lift > 0) lift = liftFor(witchHeight(w, t), t);
   // The treehouse deck (rules/treehouse.ts): coming down from the treetops over it, she lands on it; rising takes her off it.
-  if (deck && intent.toggleMode && mode === "descending" && landsOn(deck, w.x, w.z)) perch = true;
+  if (deck && toggle && mode === "descending" && landsOn(deck, w.x, w.z)) perch = true;
   // The house's balcony (Ed, 2026-10-14): flying in over it at treetop height, she lands on it, no button (below, once this step's
   // move is known: she must come onto it from outside, so rising straight up off it doesn't land her again at once).
   const wasOver = !!deck?.house && flyOnto(deck, w.x, w.z);
@@ -168,13 +180,13 @@ export function stepWitch(w: WitchState, intent: Intent, dt: number, t: Tuning, 
     const q = bounds.fence.stop(w.x, w.z, x, z);
     if (q) { const into = vx * q.nx + vz * q.nz; if (into > 0) { vx -= q.nx * into; vz -= q.nz * into; } x = q.x; z = q.z; }
   }
-  if (deck?.house && !perch && mode === "treetop" && lift > 0.9 && !wasOver && flyOnto(deck, x, z)) { perch = true; mode = "descending"; }
+  if (deck?.house && !perch && !cooling && mode === "treetop" && lift > 0.9 && !wasOver && flyOnto(deck, x, z)) { perch = true; mode = "descending"; }
   // On the deck (or coming down onto it): kept on it, inside its rail, round the map table and behind the decks. In the house
   // (rules/treehouse.ts keepInHouse): kept in by the hub's wall and the balcony's sides, but out over the balcony's open rim on
   // foot she's off: flying again (rising, as the button would), or falling with no broom (house.fall).
   let falling: number | undefined, fallOrigin: WitchState["fallOrigin"];
   if (perch && deck && mode !== "rising" && mode !== "treetop") {
-    const p = deck.house ? keepInHouse(deck, x, z) : { ...keepOnDeck(deck, x, z), off: false };
+    const p = deck.house ? keepInHouse(deck, x, z, cooling && mode === "ground") : { ...keepOnDeck(deck, x, z), off: false };
     if (p.off && mode === "ground") { if (deck.house!.fall.on) { falling = 0; if (deck.house!.noWalls) fallOrigin = { x: p.x, z: p.z }; } else mode = "rising"; }
     else if (p.x !== x || p.z !== z) { if (mode === "ground") { vx = (p.x - w.x) / Math.max(dt, 1e-6); vz = (p.z - w.z) / Math.max(dt, 1e-6); } x = p.x; z = p.z; }
     // Coming down onto the house: eased over what's left of the landing onto clear floor, never into furniture or a station (Ed,
@@ -186,7 +198,9 @@ export function stepWitch(w: WitchState, intent: Intent, dt: number, t: Tuning, 
   }
   const facing: 1 | -1 = vx > 0.3 ? 1 : vx < -0.3 ? -1 : w.facing;
   const speed = Math.hypot(vx, vz), away = facingAway(vx, vz, w.away, Math.max(1, max * 0.15), t), heading = headingOf(vx, vz, w.heading, Math.max(1, max * 0.15), t);
-  const next: WitchState = { x, z, vx, vz, lift, mode, facing, away, heading, lean: speed > max * t.leanAt, boost, braking, ...(perch ? { perch: true } : {}), ...(falling !== undefined ? { falling } : {}), ...(fallOrigin ? { fallOrigin } : {}) };
+  // (the cooldown starts as she leaves a floor she stood on, rising or stepped off, or touches down on one)
+  const stood = !!w.perch && w.mode === "ground", stands = perch && mode === "ground", perchCool = deck && stood !== stands ? t.treehouse.landCooldown ?? 0 : coolLeft;
+  const next: WitchState = { x, z, vx, vz, lift, mode, facing, away, heading, lean: speed > max * t.leanAt, boost, braking, ...(perch ? { perch: true } : {}), ...(perchCool > 0 ? { perchCool } : {}), ...(falling !== undefined ? { falling } : {}), ...(fallOrigin ? { fallOrigin } : {}) };
   if (perch && !rose) return next; // (no beach up here)
   // Flying on out over the beach (Ed, 2026-10-06: "If you try and fly past the beach, you land and stargaze"): pushing seaward
   // against the edge's soft hold, on the sand, for restAfter seconds, she comes down (from the treetops too) and, landed, lies down.
