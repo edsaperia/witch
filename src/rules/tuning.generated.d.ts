@@ -732,7 +732,6 @@ export type SchemaTuning = {
       "dot": number;
       "gap": number;
       "section": number;
-      "ring": boolean;
       "halo": number;
       "glow": number;
       "glowSize": number;

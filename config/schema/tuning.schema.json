@@ -3695,10 +3695,6 @@
               "minimum": 0,
               "description": "a section's length: seconds times her top speed now (so longer with speed buffs and over the treetops); each still drains in a dodge's cooldown."
             },
-            "ring": {
-              "type": "boolean",
-              "description": "the small ring marking where the tail must drain to for a take-off, while it's locked (only where a take-off can go before the counter's empty)."
-            },
             "halo": {
               "type": "number",
               "minimum": 0,
@@ -3732,14 +3728,13 @@
             "dot",
             "gap",
             "section",
-            "ring",
             "halo",
             "glow",
             "glowSize",
             "preset"
           ],
           "additionalProperties": false,
-          "description": "The cooldown trail: behind the buffer (her trail by speed, in the area's colour), a section of pixel dots for each dash's worth of the shared cooldown, each its own colour of her preset, the tail's dots going one at a time as it drains; off, the smooth trail as before."
+          "description": "The cooldown trail: dotted sections of pixels in her preset's colours, the first (the buffer) as long as her speed makes it, then one for each dash's worth of the shared cooldown, the tail's dots going one at a time as it drains; behind the scenery as she is; off, the smooth trail as before."
         }
       },
       "required": [

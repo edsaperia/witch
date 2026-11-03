@@ -384,7 +384,7 @@ export class StationPanel {
         else if (!this.found_().has(p.id)) { title = "🔒"; locked = true; if (this.tried(at)) text = "Not found yet."; } // (unfound: a silhouette, no hint)
         else { title = p.name; sub = `${p.slot}${setsOf(p.id).length ? ` · ${setsOf(p.id).join(", ")} set${setsOf(p.id).length > 1 ? "s" : ""}` : ""}`; stats = this.ws ? partStats(p.id, this.ws.tuning) : []; text = this.ws?.fitted[p.slot] === p.id ? "On her broom." : "Choose it to fit it."; }
       } else if (l.kind === "chips") { const x = setChips(this.ws?.fitted ?? { tip: null, chassis: null, exhaust: null })[at.col]; title = `${x.name} · ${x.spell}`; text = x.whole ? `Whole: R casts ${x.spell}.` : `${x.fitted} of its ${x.of} parts on her broom.`; }
-      else if (l.kind === "trail") { const p = TRAIL_PRESETS[at.col]; title = `${p.name} ${p.emoji}`; text = p.id === this.trailNow ? "Her trail's colours: each dash still to come back is a band of dots, front to back." : "Choose it for her trail's colours."; }
+      else if (l.kind === "trail") { const p = TRAIL_PRESETS[at.col]; title = `${p.name} ${p.emoji}`; text = p.id === this.trailNow ? "Her trail's colours, front to back: the first band as she flies, then a band for each dodge still to come back." : "Choose it for her trail's colours."; }
       else if (l.kind === "parts") { const p = s.colour![at.col]; title = `Colour: ${PART_NAMES[p] ?? p}`; text = p === this.partOf(s) ? "The colours below are for this." : "Choose it to colour it below."; }
       else if (l.kind === "grid") { const [sc, sr] = this.chosenSwatch(s); title = `${s.label}: colour`; text = !this.c.awaitingDress && sc === at.col && sr === l.row ? "Wearing." : "Every colour is hers: choose to put it on."; }
       else { const on = !FIT_NEEDS[l.axis!] || FIT_NEEDS[l.axis!](this.g); title = FIT_NAMES[l.axis!] ?? l.axis!; text = on ? "◀ ▶ or drag to change it." : "Put it on first."; }
@@ -550,23 +550,22 @@ body.paused #station-panel { visibility: hidden; }
 }
 
 /** The Trail row's tile (Ed, 2026-11-03): a little picture of her cooldown trail in a preset's colours, on the night's dark: her broom's
- *  end on the right, the buffer's soft glow behind it, then four to six sections (its colours' count) of single-pixel dots a pixel apart, each a little aglow,
- *  in the preset's colours front to back (render/trailColours.ts: spread over its gradient). Drawn a pixel a pixel, shown pixelated. */
+ *  end on the right, then four to six sections (its colours' count; the first the buffer, as in play: render/trail.ts) of
+ *  single-pixel dots a pixel apart, each a little aglow, in the preset's colours front to back (render/trailColours.ts: spread over its
+ *  gradient). Drawn a pixel a pixel, shown pixelated. */
 export function trailTile(colours: readonly string[], w = 60, h = 15): HTMLCanvasElement {
   const c = document.createElement("canvas"); c.width = w; c.height = h;
   const x = c.getContext("2d");
   if (!x) return c;
   x.fillStyle = "#0b0716"; x.fillRect(0, 0, w, h);
-  const n = Math.max(4, Math.min(6, colours.length)), y = Math.floor(h / 2), buf = 12, per = n > 4 ? 3 : 5, secs = sectionColours(colours, n);
-  for (let i = 0; i < buf; i++) { const a = (1 - i / buf) ** 2; x.fillStyle = `rgba(205,180,255,${(0.85 * a).toFixed(3)})`; x.fillRect(w - 3 - i, y, 1, 1); x.fillStyle = `rgba(205,180,255,${(0.25 * a).toFixed(3)})`; x.fillRect(w - 3 - i, y - 1, 1, 3); }
-  let px = w - 4 - buf;
+  const n = Math.max(4, Math.min(6, colours.length)), y = Math.floor(h / 2), per = n > 4 ? 4 : 6, secs = sectionColours(colours, n);
+  let px = w - 3;
   secs.forEach(([r, g, b]) => {
     for (let d = 0; d < per && px >= 1; d++, px -= 2) {
-      x.fillStyle = `rgba(${r},${g},${b},0.22)`; x.fillRect(px - 1, y - 1, 3, 3); // (its glow)
+      x.fillStyle = `rgba(${r},${g},${b},0.3)`; x.fillRect(px - 1, y - 1, 3, 3); // (its glow)
       x.fillStyle = `rgb(${r},${g},${b})`; x.fillRect(px, y, 1, 1);
     }
     px -= 1;
   });
   return c;
 }
-
