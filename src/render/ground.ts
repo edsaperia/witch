@@ -724,6 +724,10 @@ void main() {
   if (shoreNear > 0.0) { moonK = mix(moonK, 1.0, shoreNear * 0.7); c = mix(c, c * vec3(0.95, 1.18, 1.0) * 1.2, shoreNear * 0.6); } // (by the sand, the woods' floor in more moonlight, greener)
   vec4 magicGround = fxField(p);
   c = fxTint(c, magicGround);
+  if (uLandscapeTrip.x == TRIP_INSIDE_OUT_RELIEF) {
+    N.xz *= mix(1., -uLandscapeTrip.z, uLandscapeTrip.y);
+    N = normalize(N);
+  }
   vec3 light = nightLightShaded(N, vWorld, moonK);
   vec3 lit = glowPool(min(vec3(1.0), c * light * 1.25), vWorld);
   float charge = fxExtra(p).r;

@@ -26,7 +26,10 @@ import { HeightSamples, knownHeightPrep, RES, N } from "../rules/heightSamples";
 export { blend, RES, N } from "../rules/heightSamples";
 
 /** Shared by every material that stands things on the ground or bends the world. */
+import { LANDSCAPE_GLSL, landscapeUniform } from "./landscapeUniforms";
+import { concertinaOffset, LANDSCAPE_POTIONS } from "../rules/landscapePotions";
 export const HEIGHT_UNIFORMS = {
+  uLandscapeTrip: landscapeUniform,
   uHeight: { value: null as THREE.Texture | null },
   // metres a sample (0: no hills), samples across, the window's centre x, z
   uHeightWin: { value: new THREE.Vector4(0, N, 0, 0) },
@@ -37,6 +40,7 @@ export const HEIGHT_UNIFORMS = {
 
 /** GLSL: groundH(xz), the ground's height; onGround(p), a point given as height above the ground lifted onto it; bendW(w), a world point bent. */
 export const HEIGHT_GLSL = /* glsl */ `
+${LANDSCAPE_GLSL}
 uniform sampler2D uHeight;
 uniform vec4 uHeightWin, uBend;
 uniform vec2 uBendFwd;
@@ -50,6 +54,10 @@ float groundH(vec2 p) {
 }
 vec3 onGround(vec3 p) { return vec3(p.x, p.y + groundH(p.xz), p.z); }
 vec3 bendW(vec3 w) {
+  if (uLandscapeTrip.x == TRIP_CONCERTINA) {
+    float k = 6.2831853 / uLandscapeTrip.z;
+    w.x += uLandscapeTrip.y * .9 / k * (sin(w.x * k) - sin(uBend.y * k));
+  }
   if (uBend.x == 0.0) return w;
   float d = max(0.0, dot(w.xz - uBend.yz, uBendFwd));
   return vec3(w.x, w.y - uBend.x * d * d, w.z);
@@ -135,6 +143,8 @@ export function groundHeight(x: number, z: number): number { return current ? cu
 /** A world point bent as the shaders bend it (in place). */
 export function bendPoint<V extends { x: number; y: number; z: number }>(v: V): V {
   const B = HEIGHT_UNIFORMS.uBend.value, F = HEIGHT_UNIFORMS.uBendFwd.value;
+  const trip = landscapeUniform.value;
+  if (trip.x === LANDSCAPE_POTIONS.concertina.id) v.x += concertinaOffset(v.x, B.y, trip.y, trip.z);
   if (B.x === 0) return v;
   const d = Math.max(0, (v.x - B.y) * F.x + (v.z - B.z) * F.y);
   v.y -= B.x * d * d;

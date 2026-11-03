@@ -1,6 +1,8 @@
 // The camera each frame (moved out of view.ts's render, unchanged): the hills' window and the ride under her and the camera,
 // the world's bend, the camera snapped to the pixel grid along the screen's axes, lifted over hills and shaken by a legend's quake.
 import * as THREE from "three";
+import { landscapeState } from "../../rules/landscapePotions";
+import { landscapeUniform } from "../landscapeUniforms";
 import type { View } from "../view";
 import { poseOf } from "../../rules/game";
 import { coastView, gazeAt } from "../../rules/camera";
@@ -42,6 +44,9 @@ export function easeCameraLift(current: number, need: number, seconds: number): 
 /** Places the camera for this frame; returns the camera's up (tilted with its pitch), for the sprites' facing. */
 export function placeCamera(v: View, time: number, pose: ReturnType<typeof poseOf>): THREE.Vector3 {
   const g = v.game, t = g.tuning;
+  const trip = landscapeState(g);
+  if (trip) landscapeUniform.value.set(trip.id, trip.amount, trip.setting, trip.phase);
+  else landscapeUniform.value.set(0, 0, 0, 0);
   const liftDt = Number.isFinite(v.camLiftTime) ? time - v.camLiftTime : 0;
   // drawWitch computes the house offset after camera placement. Repainting the
   // same instant must use the offset its first camera placement actually saw.
@@ -129,7 +134,8 @@ export function placeCamera(v: View, time: number, pose: ReturnType<typeof poseO
     SPRITE_UNIFORMS.uNearCut.value = V.gaze > 0.01 ? V.gaze * Math.max(0, pose.distance - 12) : 0; // (lying down, the camera low behind her: what's between it and her, from 12 m before her, dithers away)
     const ravine = potionStrength(g, 'ravine'), planet = potionStrength(g, 'little-planet');
     const k = potionBend(Math.max(C.ground + (C.treetop - C.ground) * m * m * (3 - 2 * m), gk), C.treetop, ravine, planet);
-    HEIGHT_UNIFORMS.uBend.value.set(k, pose.tx, pose.tz, t.ground.hills.on ? t.ground.hills.amplitude : 0); // (w: the hills' amplitude, for the horizon test)
+    const breath = trip?.effect === "held-breath" ? trip.phase * trip.amount * trip.setting : 0;
+    HEIGHT_UNIFORMS.uBend.value.set(k + breath, pose.tx, pose.tz, t.ground.hills.on ? t.ground.hills.amplitude : 0); // (w: the hills' amplitude, for the horizon test)
     // Keep ordinary geometry in the culling bounds throughout the fade back to normal.
     v.bendTo = Math.max(0, g.witch.mode === "rising" || g.witch.mode === "treetop" ? C.treetop : C.ground, gk, v.beachView.gazing ? C.treetop * (B?.stargazeCurve ?? 0) * seaKeep : 0);
     v.post.potionGlow = potionStrength(g, 'glow-up');
