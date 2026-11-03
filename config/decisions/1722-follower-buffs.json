@@ -31,7 +31,7 @@
         "max": 0.5,
         "step": 0.01
       },
-      "default": 0.1,
+      "default": 0.2,
       "apply": {
         "knob": "buffs.darters.speed"
       }
@@ -48,7 +48,7 @@
         "max": 0.5,
         "step": 0.01
       },
-      "default": 0.1,
+      "default": 0.2,
       "apply": {
         "knob": "buffs.stalkers.speed"
       }
@@ -65,7 +65,7 @@
         "max": 0.5,
         "step": 0.01
       },
-      "default": 0.1,
+      "default": 0.2,
       "apply": {
         "knob": "buffs.stalkers.range"
       }
