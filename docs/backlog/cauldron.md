@@ -375,6 +375,10 @@ Suggested variant: let the witch see a travelling friend's chain as a trail of i
 
 The treehouse and its occupants remain visible while the forest disappears into black; the world returns outward from a doorway or from her feet. The existing house-loading reveal already does this with `Post.behind`, `behindAt` and `HOUSE_LAYER`. A test that skipped drawing the reveal's frames exposed the intermediate state. This could be a variant of Alone, driven by her distance from home or the trip envelope. It needs no new rendering pass; a deliberate version must include her ground-level sprite in the retained layer so she does not disappear when leaving the branch. Suggestion only, with no recipe assignment.
 
+### Suggestion: Self-Eclipse (discovered fixing "witch is behind the floor", 2026-11-03)
+
+She fades out of her own picture: her occluder depth (`uWitchDepth`, render/sprites.ts) is taken a few metres behind where her sprite is drawn, so the see-through machinery treats her own body as something standing in front of her and drops it. In the bug she vanished wholly (her batch has no see-through pass); a deliberate version would route her batch through the existing see-through pass so she dithers to a ghost while creatures and the world stay solid, the offset breathing with the trip envelope. Existing hook: `render/view/witch.ts` where `uWitchDepth` is set; no new pass needed if her batch gains the fade pass the scenery already has. A variant of Alone / the house in the void (she, not the world, goes missing). Suggestion only, not approved or assigned.
+
 ## Catalogue follow-up
 
 ### Painting-style suggestions (discussion with Ed, 2026-10-31; not approved builds)
