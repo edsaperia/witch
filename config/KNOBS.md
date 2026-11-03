@@ -499,7 +499,8 @@ Code: `rules/treehouse.ts`, `art/ent.js`, `docs/backlog/treehouse.md`, `config/h
   Treehouse look settings; all four switches on by default, chosen by Ed on 2 November.
 - **`treehouse.house.look.bark`**: Fraction of bark opacity retained indoors.
   1. Ed, 2026-11-02: "The treehouse/tree needs work. It looks good on the horizon but weird to fly to and from."
-  Treehouse look settings; all four switches on by default, chosen by Ed on 2 November.
+  2. Ed, 2026-11-03: "bark off indoors"
+  Off (0) since Ed, 3 November: at 0.18 the oak's limbs lay a dark patch over the Dining room's cauldron and a dark band across the floor, drawn over the furniture and her (render/crown.ts, indoors after the house). The pause page's slider still brings it back.
 - **`treehouse.house.look.radius`**: Metres from the floor outline at which the flight reveal begins, and its local radius.
   1. Ed, 2026-11-02: "The treehouse/tree needs work. It looks good on the horizon but weird to fly to and from."
   Treehouse look settings; all four switches on by default, chosen by Ed on 2 November.
