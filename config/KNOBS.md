@@ -1446,6 +1446,17 @@ Her flight trail [1]: a ribbon of glow along her path, fading to nothing at its 
 - **`trail.bright`**: its brightness.
 - **`trail.fade`**: how it fades along its length (eased out: bright for its first stretch, then thinning to nothing; higher keeps it bright longer), its width tapering with it.
 - **`trail.sparks`**: the broom's little amber sparks as well. ?trail=0 hides it.
+- **`trail.steps`**: The cooldown trail: behind the buffer (her trail by speed, in the area's colour), a section of pixel dots for each dash's worth of the shared cooldown, each its own colour of her preset, the tail's dots going one at a time as it drains; off, the smooth trail as before.
+  1. Ed, 2026-11-03: "the trail is made of lots of little segments, and there are few colour sections from beginning to end, and you can see segments vanish one by one; so each colour section tells you if you have a dash" … "each segment could be just a single pixel, with a single pixel gap between" … "the number of small segments in each section relates to your speed, so it gets larger with buffs, and is larger in the treetop; but each section drains at the same rate" … "these dots should glow a little"
+  Each section showing (a part-drained one too) is a dash she hasn't got; only the buffer, everything's ready. Where her room lets a take-off go before the counter's empty, a small pixel ring marks the take-off threshold while it's locked. Sections' colours: config/trail-colours.json, chosen at the Broom station (render/trailColours.ts).
+- **`trail.steps.dot`**: a dot's size, the picture's pixels.
+- **`trail.steps.gap`**: the gap between dots, the picture's pixels.
+- **`trail.steps.section`**: a section's length: seconds times her top speed now (so longer with speed buffs and over the treetops); each still drains in a dodge's cooldown.
+- **`trail.steps.ring`**: the small ring marking where the tail must drain to for a take-off, while it's locked (only where a take-off can go before the counter's empty).
+- **`trail.steps.halo`**: the faint halo of each section's colour under its dots (0 none).
+- **`trail.steps.glow`**: each dot's soft glow, its strength (0 none).
+- **`trail.steps.glowSize`**: each dot's glow, pixels across.
+- **`trail.steps.preset`**: the colour preset (config/trail-colours.json) of a witch who hasn't chosen one at the Broom station.
 
 | knob | type | range |
 |---|---|---|
@@ -1463,6 +1474,15 @@ Her flight trail [1]: a ribbon of glow along her path, fading to nothing at its 
 | `trail.sparks` | boolean |  |
 | `trail.cooldown` | number | 0 to … |
 | `trail.bySpeed` | boolean |  |
+| `trail.steps.on` | boolean |  |
+| `trail.steps.dot` | number | 0 to … |
+| `trail.steps.gap` | number | 0 to … |
+| `trail.steps.section` | number | 0 to … |
+| `trail.steps.ring` | boolean |  |
+| `trail.steps.halo` | number | 0 to … |
+| `trail.steps.glow` | number | 0 to … |
+| `trail.steps.glowSize` | number | 0 to … |
+| `trail.steps.preset` | string | "warm" / "cool" / "pastel" / "party" / "gold" / "ice" |
 
 ### `swoopTrail`
 

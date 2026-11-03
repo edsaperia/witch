@@ -8,7 +8,7 @@
     "cloakPegs": ["cloak", "scarf"],
     "shoeRack": ["shoes"],
     "bags": ["bag", "bagFit"],
-    "lathe": ["tip", "chassis", "exhaust", "sets", "broomBody", "broomTrim", "broomFit", "pegboard"]
+    "lathe": ["tip", "chassis", "exhaust", "sets", "broomBody", "broomTrim", "broomFit", "trail", "pegboard"]
   },
   "shelves": {
     "hair": { "frame": "head", "label": "Hair", "colour": ["hair"], "items": [
@@ -70,6 +70,7 @@
     "broomBody": { "frame": "broom", "label": "Body", "colour": ["broom"], "items": [] },
     "broomTrim": { "frame": "broom", "label": "Trim", "colour": ["bristles"], "items": [] },
     "broomFit": { "frame": "broom", "label": "Fit", "fit": ["broomLength", "broomThickness", "broomBend", "bristles"], "items": [] },
+    "trail": { "frame": "broom", "label": "Trail", "trail": true, "items": [] },
     "pegboard": { "frame": "board", "label": "Her finds, laid out like the world", "board": true, "readOnly": true, "items": [] }
   }
 }
