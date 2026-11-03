@@ -37,12 +37,6 @@ describe("riding the hills", () => {
     r.update(0, 5.3, 0, 0, 0, 19, () => 100, T);
     expect(r.h).toBe(h);
   });
-  it("read a few metres away on a frame drawn with the clock still (a sail's dive), standing, it's on the ground there", () => {
-    const r = new Ride();
-    r.update(0, 0, 0, 0, 0, 19, () => -9, T);
-    r.update(0, 10, 0, 0, 0, 19, () => 8.75, T);
-    expect(r.h).toBe(8.75);
-  });
   it("placed somewhere new, it starts on the ground there", () => {
     const r = new Ride();
     r.update(1 / 60, 0, 0, 19, 0, 19, () => 0, T);

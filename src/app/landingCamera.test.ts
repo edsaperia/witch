@@ -8,7 +8,7 @@ import { afterEach, expect, it, vi } from "vitest";
 import { ArrivalFlight } from "./arrive";
 import type { Arrival } from "./arrival";
 import { View } from "../render/view";
-import { gameAim, ridePoint } from "../render/view/camera";
+import { gameAim, rideCamera, ridePoint } from "../render/view/camera";
 import { Ride } from "../render/ride";
 import { groundHeight } from "../render/height";
 import { newGame as fullGame, poseOf } from "../rules/game";
@@ -41,12 +41,12 @@ it("the dive lands on the game's own camera: its last frame and the game's first
   expect(pose).toEqual(pose0);
   // the game's first frame (render/view/camera.ts placeCamera): her pose's aim, over the ride's ground (she's lying still), moved
   // to where she's drawn
-  // (its ride as the dive left it: drawn with the night's clock still, its ground read first elsewhere, then at the house; the
-  // capture's first frame after landing aimed 8.6 m low, the ride still an earlier frame's)
-  const R = ridePoint(v, pose), ride = new Ride(), full = g.tuning.groundSpeed;
-  ride.update(0, R.x + 10, R.z, 0, 0, full, () => -9, g.tuning.witch, Infinity); // (a frame's ground a little way off, read with the clock still)
-  ride.update(0, R.x, R.z, 0, 0, full, groundHeight, g.tuning.witch, Infinity);
-  ride.update(0, R.x, R.z, 0, 0, full, groundHeight, g.tuning.witch, Infinity); // (the game's first frame: the same instant)
+  // (its ride as the dive left it: drawn with the night's clock still, the first ground it read under the house before the island's
+  // heights were in; the capture's first frame after landing aimed 8.6 m low, the ride still that ground)
+  const R = ridePoint(v, pose), ride = new Ride(), full = g.tuning.groundSpeed, still = { vx: 0, vz: 0 };
+  rideCamera(ride, true, 0, R, still, full, () => -9, g.tuning.witch); // (a dive frame: the heights not in yet)
+  rideCamera(ride, true, 0, R, still, full, groundHeight, g.tuning.witch); // (the dive's last frames)
+  rideCamera(ride, false, 0, R, still, full, groundHeight, g.tuning.witch); // (the game's first frame: the same instant)
   const aim = gameAim(pose, ride.h, v.houseCam), eps = 1e-6;
   expect(Math.abs(last!.tx - aim.x)).toBeLessThan(eps);
   expect(Math.abs(last!.ty - aim.y)).toBeLessThan(eps);

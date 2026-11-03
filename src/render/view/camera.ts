@@ -16,6 +16,7 @@ import { loanFind, nightFind } from "../../rules/finds";
 import { creaseHeight, groundHeight, HEIGHT_UNIFORMS } from "../height";
 import { SPRITE_UNIFORMS } from "../sprites";
 import { updateFrustum } from "./culling";
+import type { Ride, RideTuning } from "../ride";
 import { potionBend, potionStrength, potionCamera, vertigoAmount, tripIndicatorStrength, wormsEyeCamera } from "../potionEffects";
 import { potionSettings } from "../../rules/potionSettings";
 import { hueSpinPhase } from "../../rules/potionCycle";
@@ -48,6 +49,15 @@ export function gameAim(pose: { tx: number; ty: number; tz: number }, ride: numb
 export function ridePoint(v: Pick<View, "herOffset" | "game">, pose: { tx: number; tz: number }): { x: number; z: number } {
   const D = v.herOffset.on ? deckOf(v.game.map, v.game.tuning) : null;
   return D ? { x: D.x, z: D.z } : { x: pose.tx, z: pose.tz };
+}
+
+/** The camera's ride over the ground this frame (placeCamera's), at `R` (ridePoint). During a sail's dive (`flying`) the ground there
+ *  afresh each frame (nothing to smooth: the dive's shot is its own), so the game's first frame after it starts from the ground the
+ *  dive's last shot aimed by (View.landingShot): the dive is drawn with the night's clock still, and the ride kept the first ground it
+ *  read there, before the island's heights were in, 8.6 m below the house's, for the frame it landed (the cloud capture of the fix). */
+export function rideCamera(ride: Ride, flying: boolean, dt: number, R: { x: number; z: number }, W: { vx: number; vz: number }, full: number, ground: (x: number, z: number) => number, T: RideTuning): number {
+  if (flying) ride.h = Number.NaN;
+  return ride.update(dt, R.x, R.z, W.vx, W.vz, full, ground, T, Infinity);
 }
 
 /** Hill clearance used to ease by these fractions per frame at 60 Hz. */
@@ -122,8 +132,7 @@ export function placeCamera(v: View, time: number, pose: ReturnType<typeof poseO
     // plane, wherever they lie (render/view/witch.ts, render/houseRooms.ts); under the rules' place a room far from the Terrace had the
     // ground of 60 m away, the camera metres above or below her: Ed's playtest, 2026-10-25, "it doesn't seem to accurately know where
     // the witch is")
-    const R = ridePoint(v, pose);
-    v.camRide.update(rdt, R.x, R.z, W.vx, W.vz, full, groundHeight, t.witch, Infinity);
+    rideCamera(v.camRide, !!F, rdt, ridePoint(v, pose), W, full, groundHeight, t.witch);
     v.rideOff = W.seated || W.perch ? 0 : v.ride.h - groundHeight(W.x, W.z); // (on the treehouse deck: its floor is flat)
   }
   const target = F ? new THREE.Vector3(F.tx, F.ty, F.tz) : gameAim(pose, v.camRide.h, v.houseCamInput); // (the flight's aim is in the world's heights)
