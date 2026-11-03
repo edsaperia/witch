@@ -1783,7 +1783,7 @@ How hard the creatures are: faster in a fight, further with their ranged attacks
 Ed, 2026-11-03: "the game is much too easy". The pause page's Difficulty sliders set them live. All three at 1: as before.
 Code: `config/decisions/1701-difficulty.json`
 
-- **`difficulty.creatureSpeed`**: every creature's movement speed in a fight times this: its run, its sprint closing in and its chase at her, a heavy's top speed, charges, swoops, a legend's charge and walk home, a besieger's march (not her, not its shots, lunges, leaps or hops' timing, nor a creature's roaming or leash pace).
+- **`difficulty.creatureSpeed`**: every creature's movement speed in a fight times this: its run, its sprint closing in and its chase at her, a heavy's top speed, charges, swoops, a legend's charge, a besieger's march (not her, not its shots, lunges, leaps or hops' timing, nor a creature's roaming or leash pace).
 - **`difficulty.rangedRange`**: every ranged attack's reach times this, at anything: a shot, a lob or a beam (its cast's range, its bolt's life and a beam's length), never a melee one or a pulse round itself.
   On top of dodge.b.range at her. Legends' own throws and beams as they were.
 - **`difficulty.adultStrength`**: an adult's health (a full 💌 ring's worth of blows) and damage in a fight times this, hers and the wild's alike; its evolving cost and the swarm builder's estimates as they were.

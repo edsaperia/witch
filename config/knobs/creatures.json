@@ -28,7 +28,7 @@
       "notes": "Ed, 2026-11-03: \"the game is much too easy\". The pause page's Difficulty sliders set them live. All three at 1: as before."
     },
     "difficulty.creatureSpeed": {
-      "what": "every creature's movement speed in a fight times this: its run, its sprint closing in and its chase at her, a heavy's top speed, charges, swoops, a legend's charge and walk home, a besieger's march (not her, not its shots, lunges, leaps or hops' timing, nor a creature's roaming or leash pace)."
+      "what": "every creature's movement speed in a fight times this: its run, its sprint closing in and its chase at her, a heavy's top speed, charges, swoops, a legend's charge, a besieger's march (not her, not its shots, lunges, leaps or hops' timing, nor a creature's roaming or leash pace)."
     },
     "difficulty.rangedRange": {
       "what": "every ranged attack's reach times this, at anything: a shot, a lob or a beam (its cast's range, its bolt's life and a beam's length), never a melee one or a pulse round itself.",

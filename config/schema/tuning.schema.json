@@ -4834,7 +4834,7 @@
         "creatureSpeed": {
           "type": "number",
           "minimum": 0,
-          "description": "every creature's movement speed in a fight times this: its run, its sprint closing in and its chase at her, a heavy's top speed, charges, swoops, a legend's charge and walk home, a besieger's march (not her, not its shots, lunges, leaps or hops' timing, nor a creature's roaming or leash pace)."
+          "description": "every creature's movement speed in a fight times this: its run, its sprint closing in and its chase at her, a heavy's top speed, charges, swoops, a legend's charge, a besieger's march (not her, not its shots, lunges, leaps or hops' timing, nor a creature's roaming or leash pace)."
         },
         "rangedRange": {
           "type": "number",

@@ -7,7 +7,7 @@
       "pr": 1701,
       "group": "Difficulty",
       "label": "Creature speed ×",
-      "note": "Every creature's movement speed in a fight times this (difficulty.creatureSpeed; Ed, 2026-11-03: \"Animals +20% speed\", 1.2): its run, sprint and chase at her, a heavy's top speed, charges, swoops, a legend's charge and walk home, a besieger's march. Her speed, shots, lunges and leaps as they were. 1: as before. Live.",
+      "note": "Every creature's movement speed in a fight times this (difficulty.creatureSpeed; Ed, 2026-11-03: \"Animals +20% speed\", 1.2): its run, sprint and chase at her, a heavy's top speed, charges, swoops, a legend's charge, a besieger's march. Her speed, shots, lunges and leaps as they were. 1: as before. Live.",
       "control": {
         "type": "slider",
         "min": 0.5,

@@ -235,7 +235,7 @@ export function stepLongCharge(w: CombatWorld, s: CombatState, c: Creature, f: F
   // Home: back to where it lay at returnSpeed, then rest seconds before it may charge again.
   const dx = (c.lairX ?? c.x) - c.x, dz = (c.lairZ ?? c.z) - c.z, d = Math.hypot(dx, dz);
   if (d < 1) { c.run = undefined; c.moving = false; c.vx = 0; c.vz = 0; f.readyAt = Math.max(f.readyAt, time + K.rest); f.target = null; return; }
-  const v = Math.min(d, K.returnSpeed * FIGHT.speed * FIGHT.creature * dt);
+  const v = Math.min(d, K.returnSpeed * FIGHT.speed * dt);
   c.x += (dx / d) * v; c.z += (dz / d) * v; c.vx = (dx / d) * K.returnSpeed; c.vz = (dz / d) * K.returnSpeed;
   c.moving = true; c.walk += dt * 3; c.facing = dx >= 0 ? 1 : -1;
 }
