@@ -123,7 +123,7 @@ export function stepSigilButton(g: Game, c: Controls, W: Witch, t: Tuning, ht: n
   // and cast the music spell"): the same spell, on the circle, clearing it.
   const stone = !perched && onFoot ? castingStone(g, W) : null, ring = !stone && !perched && onFoot ? challengeCastAt(g, W) : null;
   stepCast(g, W, !!(stone ?? ring) && (!!c.sigilHeld || sigil || place), ht, hdt, cell => {
-    if (ring) { clearChallenge(g, W, ht, relicEvents); return; }
+    if (ring) { clearChallenge(g); return; }
     const a = clearArea(g.party, g.map, cell, g.clock.time);
     if (a?.soundsystem) g.waveEvents.push({ kind: "areaCleared", key: cellKey(cell), x: a.soundsystem.x, z: a.soundsystem.z, at: g.clock.time });
   }, relicEvents, stone ?? ring); // (after the leash's step, which starts its events afresh)

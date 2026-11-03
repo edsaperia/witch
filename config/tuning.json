@@ -602,7 +602,12 @@
     "adults": 1,
     "youths": 1,
     "castReach": 5,
-    "findSets": false
+    "findSets": false,
+    "fireworks": {
+      "on": true,
+      "height": 24,
+      "burst": 8
+    }
   },
   "treeMarginFromSoundsystem": 1.5,
   "treeDensity": 1,

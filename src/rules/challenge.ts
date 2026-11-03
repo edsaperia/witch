@@ -12,15 +12,18 @@
 //     stands, its sigil kept (c.atStone: no rune at its feet; stepChallenge).
 //   Clearing it: "When they're all invited or have run off, you can go to the special place and cast the music spell" (challengeReady):
 //     on foot within `castReach` of its middle, the sigil button held, the stones' spell (rules/stoneStacks.ts stepCast, its target
-//     the circle: challengeCastAt). Cast, "something cool appears" (the coordinator's pick: a small dancefloor rising): the sigil and
-//     columns light on the beat (render/challenge.ts), and the pack "become happy animals that party in the challenge area and can't
-//     be leashed" (clearChallenge).
-//   The reward: "when you clear it you get the find": tonight's find, at its middle (placeTrunk), can't be taken with E till then and
-//     is hers at the cast (the "found" event, as E at a find). Which find: for now the night's one draw over everything she hasn't
+//     the circle: challengeCastAt). Cast, "something cool appears" (Ed, on #1725: home's dancefloor, filling the circle): the
+//     columns light on the beat, home's dancefloor fills the circle in place of its stone floor (Ed, on #1725: "it should fill the
+//     circle, like the one at home does"; render/challenge.ts), and the pack "become happy animals that party in the challenge area
+//     and can't be leashed", dancing on it (clearChallenge).
+//   The reward: "when you clear it you get the find": tonight's find, unseen till then (render/view/finds.ts), comes down from the sky
+//     onto the middle of the new dancefloor over FIND_DESCENT seconds from the clearing (Ed, 2026-11-03, on #1725: "the find comes
+//     down from the sky when the challenge is cleared"; timed from clearedAt, so every player sees the same), and she picks it up
+//     there with E as any find (the "found" event; not before it's landed: lockedFind). Which find: for now the night's one draw over everything she hasn't
 //     found (Ed, 2026-11-03: "for now just make it one find selected at random and we will adjust later"); with `findSets` on, drawn
 //     from the island's own set instead (rules/findSets.ts; fillTrunk). Nothing left for her (or, with the sets, the set hers), the
-//     trunk is empty and the reward is a flask (Ed: "when you have them all you get a flask instead"): its sigil laid at the circle,
-//     drunk with E as any, a growth spurt. No boon: "No boons from challenges. Follower buffs replace them".
+//     trunk is empty and the reward is a flask (Ed: "when you have them all you get a flask instead"), coming down the same way: its
+//     sigil laid at the circle's middle as it lands, drunk with E as any, a growth spurt. No boon: "No boons from challenges. Follower buffs replace them".
 //   Timing: an uncleared challenge closes only once the night is won or lost (Ed, 2026-11-03, on #1725): its pack calm (a friendly
 //     area's: they leave her be), its find gone from the map, its sigil dark, nothing to cast (stepChallenge; the "closed" event, said
 //     under the clock).
@@ -31,7 +34,6 @@ import type { ForestMap, SpecialSite } from "./map";
 import { AREA_TYPES } from "./map";
 import type { Cell } from "./partition";
 import type { Tuning } from "./tuning";
-import type { LeashEvent } from "./leash";
 import { makeCreature, speedFactor, type Creature, type Level } from "./creatures";
 import { islandKinds } from "./dancefloor";
 import { holdsArea } from "./clear";
@@ -39,16 +41,14 @@ import { befriend, danceAt, stateOf } from "./creatureStates";
 import { cellKey } from "./party";
 import { won } from "./win";
 import { worldAsleep } from "./partyOver";
-import { findKind } from "./finds";
-import { addFloorHat } from "./houseRooms";
 import { LEGENDS, relicKinds } from "./legends";
 import { befriendArea } from "./sigilButton";
 import { castOn } from "./stoneStacks";
 import { hash2, rng } from "./random";
 
-export interface ChallengeTuning { on: boolean; radius: number; margin: number; columns: number; adults: number; youths: number; castReach: number; findSets: boolean }
-export const CHALLENGE_DEFAULT: ChallengeTuning = { on: false, radius: 36, margin: 3, columns: 30, adults: 1, youths: 1, castReach: 5, findSets: false };
-export const challengeOf = (t: Tuning): ChallengeTuning => ({ ...CHALLENGE_DEFAULT, ...t.challenge });
+export interface ChallengeTuning { on: boolean; radius: number; margin: number; columns: number; adults: number; youths: number; castReach: number; findSets: boolean; fireworks: { on: boolean; height: number; burst: number } }
+export const CHALLENGE_DEFAULT: ChallengeTuning = { on: false, radius: 36, margin: 3, columns: 30, adults: 1, youths: 1, castReach: 5, findSets: false, fireworks: { on: true, height: 24, burst: 8 } };
+export const challengeOf = (t: Tuning): ChallengeTuning => ({ ...CHALLENGE_DEFAULT, ...t.challenge, fireworks: { ...CHALLENGE_DEFAULT.fireworks, ...t.challenge?.fireworks } });
 
 /** What the page says of it (under the clock: main.ts): the pack all won over or gone (ready to cast), cleared (and its reward),
  *  closed (the final wave coming, or the night over). This frame's, emptied each frame as the waves' are. */
@@ -61,8 +61,14 @@ export interface ChallengeState {
   pack: number[];
   readyAt: number | null; clearedAt: number | null; closedAt: number | null;
   reward: "find" | "flask" | null;
+  /** When its reward lands on its dancefloor (game time: clearedAt + FIND_DESCENT), and the flask laid then (its relic's id). */
+  landsAt?: number | null;
+  flask?: number | null;
   events: ChallengeEvent[];
 }
+
+/** How long (s) its reward takes to come down from the sky onto its dancefloor once it's cleared (Ed: "over about 3 s"). */
+export const FIND_DESCENT = 3;
 
 /** The map's challenge area's site (map.specialSites, kind "challenge"), or null (none: the challenge off, the zoo, a map not grown
  *  from areas). */
@@ -131,14 +137,33 @@ export function challengeCastAt(g: Game, W: Witch): { key: string; cell: Cell; x
   return { key: `challenge:${ch.key}`, cell: ch.cell, x: ch.x, z: ch.z };
 }
 
-/** Whether a find is the challenge's, still locked (its reward: not taken with E before the circle's cleared). */
-export const lockedFind = (g: Pick<Game, "challenge">, T: { cell: readonly [number, number] } | null): boolean =>
-  !!T && !!g.challenge && g.challenge.clearedAt === null && T.cell[0] === g.challenge.cell[0] && T.cell[1] === g.challenge.cell[1];
+/** Whether a find is the challenge's, still locked: its reward, not taken with E (nor shown) before the circle's cleared, nor till it
+ *  has come down onto its dancefloor (landsAt). */
+export const lockedFind = (g: Pick<Game, "challenge" | "clock">, T: { cell: readonly [number, number] } | null): boolean => {
+  const ch = g.challenge;
+  if (!T || !ch || T.cell[0] !== ch.cell[0] || T.cell[1] !== ch.cell[1]) return false;
+  return ch.clearedAt === null || g.clock.time < (ch.landsAt ?? Infinity);
+};
+
+/** How high (m) its reward starts coming down from. */
+export const FALL_HEIGHT = 40;
+/** Where its reward is in its fall (drawing only: render/view/finds.ts, render/challenge.ts): hidden before the circle's cleared (Ed,
+ *  on #1725: "Before clearing, the find is NOT shown at the circle"); coming down, `k` of the way (0 to 1) and `y` metres up (slowing
+ *  to land gently); null once it's landed, or for a find that isn't the challenge's. Timed from clearedAt alone. */
+export function rewardFall(g: Pick<Game, "challenge" | "clock">, T: { cell: readonly [number, number] } | null = null): { hidden: boolean; k: number; y: number } | null {
+  const ch = g.challenge;
+  if (!ch || (T && (T.cell[0] !== ch.cell[0] || T.cell[1] !== ch.cell[1]))) return null;
+  if (ch.clearedAt === null) return T ? { hidden: true, k: 0, y: FALL_HEIGHT } : null;
+  const k = (g.clock.time - ch.clearedAt) / FIND_DESCENT;
+  if (k >= 1 || ch.landsAt == null) return null;
+  const e = Math.max(0, k);
+  return { hidden: false, k: e, y: FALL_HEIGHT * (1 - e) * (1 - e) };
+}
 
 /** The spell cast on the circle by witch W (at her time ht): cleared. The pack happy, partying round the circle, never to be leashed
- *  (their sigils kept: no rune); the reward hers: tonight's find ("found", as E at it), else (her set whole: the trunk empty) a flask's
- *  sigil laid at its middle. Its events into `events` (the sigil button's). */
-export function clearChallenge(g: Game, W: Witch, ht: number, events: LeashEvent[]): void {
+ *  (their sigils kept: no rune), dancing on its dancefloor; its reward coming down onto it over FIND_DESCENT seconds: tonight's find,
+ *  to pick up with E once it's landed, else (nothing left for her: the trunk empty) a flask, laid as it lands (stepChallenge). */
+export function clearChallenge(g: Game): void {
   const ch = g.challenge;
   if (!ch || ch.clearedAt !== null) return;
   const time = g.clock.time;
@@ -148,24 +173,18 @@ export function clearChallenge(g: Game, W: Witch, ht: number, events: LeashEvent
     if (!c || c.gone || c.leashed || c.fleeUntil === Infinity) continue;
     if (stateOf(c) !== "happy") befriend(c, time);
     Object.assign(c, { atStone: true, friendly: true, hunting: undefined, watchUntil: undefined, fight: undefined });
+    // (on its dancefloor, Ed on #1725: "they dance on it": each to a spot on it at once, and roaming it after, render/challenge.ts)
     danceAt(c, { x: ch.x, z: ch.z }, ch.radius * 0.8);
+    const a = c.rand() * Math.PI * 2, d = Math.sqrt(c.rand()) * ch.radius * 0.75;
+    c.tx = ch.x + Math.cos(a) * d; c.tz = ch.z + Math.sin(a) * d; c.rest = 0;
   }
   g.friendly.add(ch.key); // (no watch, no hunt: the pack's partying)
   g.wildEntry.delete(ch.key);
   g.byArea = null;
   const T = g.trunk;
-  if (T && T.item && !T.found && T.cell[0] === ch.cell[0] && T.cell[1] === ch.cell[1]) {
-    T.found = true;
-    findKind(T.kind).claim?.(W.spells, T.item);
-    if (T.kind === "hat") addFloorHat(W, T.item);
-    events.push({ kind: "found", id: W.id, x: T.x, z: T.z, at: ht, obj: T.item, find: T.kind });
-    ch.reward = "find";
-  } else {
-    const all = relicKinds(LEGENDS.relics), kind = all[Math.floor(hash2(g.seed, ch.cell[0] * 31 + ch.cell[1], 7753) * all.length) % all.length]?.kind ?? LEGENDS.relics.kinds[0];
-    const x = ch.x, z = ch.z + 2;
-    g.relics.push({ id: g.relics.length, kind, x, z, cell: [ch.cell[0], ch.cell[1]], state: "dropped", sx: x, sz: z });
-    ch.reward = "flask";
-  }
+  ch.reward = T && T.item && !T.found && T.cell[0] === ch.cell[0] && T.cell[1] === ch.cell[1] ? "find" : "flask";
+  if (T && ch.reward === "find") { T.x = ch.x; T.z = ch.z; } // (onto the middle of its dancefloor)
+  ch.landsAt = time + FIND_DESCENT;
   ch.events.push({ kind: "cleared", at: time, x: ch.x, z: ch.z, reward: ch.reward });
 }
 
@@ -183,5 +202,11 @@ export function stepChallenge(g: Game): void {
     ch.events.push({ kind: "closed", at: time, x: ch.x, z: ch.z });
   }
   for (const id of ch.pack) { const c = g.creatures[id]; if (c && !c.gone && !c.leashed && !c.atStone && stateOf(c) === "happy") c.atStone = true; }
+  // The flask (her finds all hers) laid on its dancefloor's middle as it lands: its sigil, drunk with E as any.
+  if (ch.reward === "flask" && ch.flask == null && ch.landsAt != null && time >= ch.landsAt) {
+    const all = relicKinds(LEGENDS.relics), kind = all[Math.floor(hash2(g.seed, ch.cell[0] * 31 + ch.cell[1], 7753) * all.length) % all.length]?.kind ?? LEGENDS.relics.kinds[0];
+    ch.flask = g.relics.length;
+    g.relics.push({ id: ch.flask, kind, x: ch.x, z: ch.z, cell: [ch.cell[0], ch.cell[1]], state: "dropped", sx: ch.x, sz: ch.z });
+  }
   if (ch.readyAt === null && challengeReady(g) && ch.pack.length) { ch.readyAt = time; ch.events.push({ kind: "ready", at: time, x: ch.x, z: ch.z }); }
 }

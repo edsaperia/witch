@@ -447,6 +447,11 @@ export type SchemaTuning = {
     "youths": number;
     "castReach": number;
     "findSets": boolean;
+    "fireworks": {
+      "on": boolean;
+      "height": number;
+      "burst": number;
+    };
   };
   "treeMarginFromSoundsystem": number;
   "treeDensity": number;

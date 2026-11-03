@@ -3,6 +3,6 @@ import type { ChallengeEvent } from "../rules/challenge";
 
 export function challengeWords(e: ChallengeEvent): string {
   if (e.kind === "ready") return "challenge: every animal won over · cast the music spell on the circle";
-  if (e.kind === "cleared") return e.reward === "flask" ? "challenge cleared · you have this island's whole set: a flask instead" : "challenge cleared · its find is yours";
+  if (e.kind === "cleared") return e.reward === "flask" ? "challenge cleared · you've found everything: a flask is coming down" : "challenge cleared · its find is coming down";
   return "the challenge circle has gone dark · the night is over";
 }

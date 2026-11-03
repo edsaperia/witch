@@ -2297,6 +2297,28 @@
         },
         "findSets": {
           "type": "boolean"
+        },
+        "fireworks": {
+          "type": "object",
+          "properties": {
+            "on": {
+              "type": "boolean"
+            },
+            "height": {
+              "type": "number",
+              "minimum": 0
+            },
+            "burst": {
+              "type": "number",
+              "minimum": 0
+            }
+          },
+          "required": [
+            "on",
+            "height",
+            "burst"
+          ],
+          "additionalProperties": false
         }
       },
       "required": [
@@ -2307,7 +2329,8 @@
         "adults",
         "youths",
         "castReach",
-        "findSets"
+        "findSets",
+        "fireworks"
       ],
       "additionalProperties": false,
       "description": "the challenge area: a stone circle `radius` m round with the island's sigil, `columns` columns and the woods `margin` m past it, guarded by `adults` adults and `youths` youths a roster kind; the music spell cast within `castReach` m of its middle clears it for the find."

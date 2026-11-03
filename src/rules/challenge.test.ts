@@ -7,7 +7,7 @@ import { TUNING, withTuning, type Tuning } from "./tuning";
 import { AREA_TYPES, generateMap } from "./map";
 import { cellKey, clearArea } from "./party";
 import { befriend, hasRune, stateOf } from "./creatureStates";
-import { challengeReady, challengeSite, columnSpots, packKinds, packLeft, spawnPack } from "./challenge";
+import { challengeReady, challengeSite, columnSpots, FIND_DESCENT, packKinds, packLeft, rewardFall, spawnPack } from "./challenge";
 import { fillTrunk, FIND_KINDS, nightPick, type FindKindId, type Found } from "./finds";
 import { FIND_SETS, allFinds, bandOf, biomeOf, islandSet, setPick } from "./findSets";
 import { flaskUnder } from "./legends";
@@ -141,27 +141,41 @@ describe("clearing it (Ed: \"When they're all invited or have run off, you can g
     expect(g.challenge!.clearedAt).toBeNull();
   }, 60000);
 
-  it("cast on, lights up: the pack happy, partying round it, never to be leashed; its find hers", () => {
+  it("cast on, lights up: the pack happy, partying on it, never to be leashed; its find comes down from the sky, hers with E once landed", () => {
     const g = game("fox", 2), ch = g.challenge!;
     fillTrunk(g, {});
     const item = g.trunk!.item!;
     expect({ kind: g.trunk!.kind, item }).toEqual(nightPick(g.map.seed, {})); // (the night's one draw over everything, Ed 2026-11-03: "for now just make it one find selected at random")
     winAll(g); atCircle(g);
-    let done = false, found: string | undefined;
+    expect(rewardFall(g, g.trunk)!.hidden).toBe(true); // (not shown at the circle before it's cleared)
+    let done = false;
     for (let i = 0; i < 60 * (TUNING.cast!.time + 1) && !done; i++) {
       stepGame(g, { ...still, sigilHeld: true }, 1 / 60);
       done = g.leashEvents.some(e => e.kind === "castDone");
-      found ??= g.leashEvents.find(e => e.kind === "found")?.obj;
+      expect(g.leashEvents.some(e => e.kind === "found")).toBe(false); // (not at the cast: it comes down first)
     }
     expect(done).toBe(true);
     expect(ch.clearedAt).not.toBeNull();
     expect(ch.reward).toBe("find");
+    expect(ch.landsAt).toBeCloseTo(ch.clearedAt! + FIND_DESCENT, 6);
+    expect([g.trunk!.x, g.trunk!.z]).toEqual([ch.x, ch.z]); // (onto the middle of its dancefloor)
+    // Coming down: shown, falling, not to be taken; E pressed there does nothing yet.
+    const mid = rewardFall(g, g.trunk)!;
+    expect(mid.hidden).toBe(false);
+    expect(mid.y).toBeGreaterThan(0);
+    for (let i = 0; i < 20; i++) stepGame(g, { ...still, place: i % 2 === 0 }, 1 / 60);
+    expect(g.trunk!.found).toBe(false);
+    run(g, FIND_DESCENT);
+    expect(rewardFall(g, g.trunk)).toBeNull(); // (landed)
+    let found: string | undefined;
+    for (let i = 0; i < 10 && !found; i++) { stepGame(g, { ...still, place: i % 2 === 0 }, 1 / 60); found = g.leashEvents.find(e => e.kind === "found")?.obj; }
     expect(found).toBe(item);
     expect(g.trunk!.found).toBe(true);
     for (const c of pack(g)) {
       expect(stateOf(c)).toBe("happy");
       expect(c.dancing).toBe(true);
       expect(Math.hypot(c.anchorX - ch.x, c.anchorZ - ch.z)).toBeLessThan(0.01);
+      expect(Math.hypot(c.tx - ch.x, c.tz - ch.z)).toBeLessThan(ch.radius); // (on its dancefloor: Ed on #1725, "they dance on it")
       expect(hasRune(c)).toBe(false); // (no rune: nothing to pick up)
     }
     // She stands at one and presses the sigil button: it stays where it is, unleashed.
@@ -207,6 +221,8 @@ describe("the reward (Ed: \"when you clear it you get the find ... when you have
     run(g, TUNING.cast!.time + 0.5, { ...still, sigilHeld: true });
     expect(ch.clearedAt).not.toBeNull();
     expect(ch.reward).toBe("flask");
+    expect(g.relics.length).toBe(before); // (coming down: not there yet)
+    run(g, FIND_DESCENT + 0.1);
     expect(g.relics.length).toBe(before + 1);
     const f = g.relics[before];
     expect(f.id).toBe(before);
