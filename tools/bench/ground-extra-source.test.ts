@@ -35,9 +35,17 @@ function active(source: string, defines: Record<string, string>): string {
 }
 
 it('retains exact active fragment tokens when all extras are present, plain/beach and every lake kind', () => {
+  // The only intentional addition to the frozen fragment is the potion-only
+  // normal adjustment immediately before lighting. Check its exact tokens
+  // and placement in every variant, then compare the sober path as before.
+  const lighting = 'vec3light=nightLightShaded(N,vWorld,moonK);';
+  const relief = 'if(uLandscapeTrip.x==TRIP_INSIDE_OUT_RELIEF){N.xz*=mix(1.,-uLandscapeTrip.z,uLandscapeTrip.y);N=normalize(N);}';
   for (const family of ['no-lakes', 'full-lakes', 'lakes:water', 'lakes:ice', 'lakes:lava', 'lakes:oasis', 'lakes:sinkhole', 'lakes:tarn', 'lakes:tar', 'lakes:rust', 'lakes:lily'] as const) for (const beach of [false, true]) {
     const row = family === 'no-lakes' ? 0 : family === 'full-lakes' ? 1 : family === 'lakes:water' ? 2 : 3;
-    expect(createHash('sha256').update(active(current, groundDefines(family, beach, GROUND_EXTRAS))).digest('hex')).toBe(baselineHashes[row][Number(beach)]);
+    const tokens = active(current, groundDefines(family, beach, GROUND_EXTRAS));
+    expect(tokens).toContain(relief + lighting);
+    const soberTokens = tokens.replace(relief + lighting, lighting);
+    expect(createHash('sha256').update(soberTokens).digest('hex')).toBe(baselineHashes[row][Number(beach)]);
   }
 });
 

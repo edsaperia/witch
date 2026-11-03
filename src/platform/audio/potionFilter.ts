@@ -3,6 +3,7 @@ import { effectEnvelope, potionRecipe } from '../../rules/potionRecipes';
 import { potionSettings } from '../../rules/potionSettings';
 import { hueSpinPhase } from '../../rules/potionCycle';
 import { forestCountStep } from '../../rules/forestCounts';
+import { borrowedClock, landscapeState } from '../../rules/landscapePotions';
 
 /** A fallback for existing/future trips; bespoke vision audio owns its own treatment. */
 export function potionFilterState(g: Game) {
@@ -11,15 +12,34 @@ export function potionFilterState(g: Game) {
   const amount = recipe && !['night-vision', 'heat-vision'].includes(recipe.effect)
     ? effectEnvelope(trip, g.clock.time) * p.mix : 0;
   if (amount > 0) {
-    // Shape the existing mix for each perception. All four use the normal dry/wet trip envelope.
+    // Shape the existing mix for each perception. Each uses the normal dry/wet trip envelope.
     switch (recipe?.effect) {
       case 'masterplan': return { amount, high: 260, low: 4300, gain: .93 };
       case 'woodcut': return { amount, high: 520, low: 2500, gain: .95 };
       case 'mirrorball': return { amount, high: 90, low: 3400 * 2 ** Math.sin(g.clock.time * potionSettings('mirrorball').spin * 6), gain: 1 };
       case 'kaleidoscope': return { amount, high: 120, low: 1600 * 2 ** (1 + Math.cos(g.clock.time * 1.5)), gain: 1 };
+      case 'silent-film': return { amount, high: 480, low: 2400, gain: .88 };
+      case 'folded-space': {
+        const phase = (.8 * g.witch.x + .6 * g.witch.z) / potionSettings('folded-space').period;
+        return { amount, high: 80, low: 2200 + 1600 * Math.cos(phase * 2 * Math.PI), gain: 1 };
+      }
+      case 'contour-dream': {
+        const step = Math.floor(g.witch.lift * 4);
+        return { amount, high: 120, low: 1700 * 2 ** (step * .45), gain: 1 };
+      }
     }
   }
   const small = recipe?.effect === 'miniature';
+  const landscape = amount > 0 && landscapeState(g);
+  if (landscape) {
+    const { effect, phase, setting, cutoff, sweep } = landscape;
+    let signal = Math.sin(phase * p.speed * 2 * Math.PI);
+    if (effect === 'held-breath') signal = 1 - 2 * phase;
+    if (effect === 'walking-wood') signal = Math.sin(phase * 1.3);
+    if (effect === 'out-of-time') signal = Math.sin(borrowedClock(phase, landscape.amount, setting) * .75);
+    if (effect === 'underwater-light') signal = Math.sin(phase * .65);
+    return { amount, high: 40, low: cutoff * 2 ** (sweep * signal), gain: 1 };
+  }
   if (recipe?.effect === 'the-forest-counts' && amount > 0) {
     const index = forestCountStep(g).index, depth = potionSettings('the-forest-counts').soundDepth;
     const steps = [-1, 1, -.5, .5];
