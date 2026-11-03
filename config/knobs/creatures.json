@@ -5,7 +5,37 @@
     "combatWaiting": {
       "what": "Waiting movement favours room beyond default invitation reach while allowing deliberate close passes.",
       "notes": "reachScale multiplies dash distance times charges plus default invitation range; areaGrowth adds a fraction of area radius beyond that reference, without clamping small areas. passPower concentrates the smooth close-pass pulse; passDepth sets how far that pulse relaxes the outward preference. Species routes, speed and turning remain in the pack profiles.",
-      "decisions": [{ "by": "Ed", "date": "2026-11-02", "quote": "creatures should be moving most of the time, and tend to be outside of her (default bag) range if they're not attacking" }]
+      "decisions": [
+        {
+          "by": "Ed",
+          "date": "2026-11-02",
+          "quote": "creatures should be moving most of the time, and tend to be outside of her (default bag) range if they're not attacking"
+        }
+      ]
+    },
+    "difficulty": {
+      "what": "How hard the creatures are: faster in a fight, further with their ranged attacks, and adults stronger.",
+      "decisions": [
+        {
+          "by": "Ed",
+          "date": "2026-11-03",
+          "quote": "Animals +20% speed, ranged attacks have +20% range, adults are stronger."
+        }
+      ],
+      "links": [
+        "config/decisions/1701-difficulty.json"
+      ],
+      "notes": "Ed, 2026-11-03: \"the game is much too easy\". The pause page's Difficulty sliders set them live. All three at 1: as before."
+    },
+    "difficulty.creatureSpeed": {
+      "what": "every creature's movement speed in a fight times this: its run, its sprint closing in and its chase at her, a heavy's top speed, charges, swoops, a legend's charge, a besieger's march (not her, not its shots, lunges, leaps or hops' timing, nor a creature's roaming or leash pace)."
+    },
+    "difficulty.rangedRange": {
+      "what": "every ranged attack's reach times this, at anything: a shot, a lob or a beam (its cast's range, its bolt's life and a beam's length), never a melee one or a pulse round itself.",
+      "notes": "On top of dodge.b.range at her. Legends' own throws and beams as they were."
+    },
+    "difficulty.adultStrength": {
+      "what": "an adult's health (a full 💌 ring's worth of blows) and damage in a fight times this, hers and the wild's alike; its evolving cost and the swarm builder's estimates as they were."
     },
     "fight": {
       "what": "The scale and speed fights are played at, with creatures running at about her speed.",
@@ -198,9 +228,15 @@
       ],
       "notes": "Hiding looks like a shadow [1]: while it's hidden (and can't be hit) it's drawn as its own sprite darkened by shade (0 its own colours, 1 black) at opacity, running round to where it comes back, fading from solid to shadow over fade seconds as it hides and back as it comes out (render/view/creatures.ts)."
     },
-    "combat.packs.shadow.shade": { "what": "How dark: 0 its own colours, 1 black." },
-    "combat.packs.shadow.opacity": { "what": "How opaque the shadow is (0 invisible, 1 solid)." },
-    "combat.packs.shadow.fade": { "what": "Seconds to turn from solid to shadow as it hides, and back as it comes out." },
+    "combat.packs.shadow.shade": {
+      "what": "How dark: 0 its own colours, 1 black."
+    },
+    "combat.packs.shadow.opacity": {
+      "what": "How opaque the shadow is (0 invisible, 1 solid)."
+    },
+    "combat.packs.shadow.fade": {
+      "what": "Seconds to turn from solid to shadow as it hides, and back as it comes out."
+    },
     "combat.packs": {
       "what": "Pack kinds fight in combos (the nearest lunges, the ranged fire where she'd dodge, one behind her throws its special) and fall back between them.",
       "decisions": [
@@ -225,7 +261,7 @@
       "what": "wild creatures go for party animals within this, and for the witch anywhere in their area."
     },
     "combat.leaveArea": {
-      "what": "How far past its area's edge a wild creature chases her before giving up and going home.",
+      "what": "How far past its area's edge a wild creature chases another creature, or comes out after her across its edge, before going home; once it's after her it follows her anywhere on the ground until she takes off.",
       "decisions": [
         {
           "by": "Ed",
@@ -237,7 +273,7 @@
           "rest": "round 13: 30; it was 10"
         }
       ],
-      "notes": "a wild one chasing the witch gives up once she's this far past its area's edge, and turns back home (besiegers keep witchLose: they give up once she's out of their area, out of range and this far off). a wild creature chases her (or her party) up to this many metres past its area's edge [2]; beyond it, or once she rises, it gives up and retreats into its area at its own pace, roaming again once it's in and within retreatHome metres of home, taking up a fight on the way only with someone back in its area (no flip-flopping at the edge). Besiegers march as before; happy and leashed ones aren't affected."
+      "notes": "Since Ed's 31 Oct playtest a wild creature after her follows her anywhere on the ground until she takes off (rules/combat/targeting.ts); this band now bounds only creature-against-creature chases and coming out after her across its edge. Before: a wild one chasing the witch gives up once she's this far past its area's edge, and turns back home (besiegers keep witchLose: they give up once she's out of their area, out of range and this far off). a wild creature chases her (or her party) up to this many metres past its area's edge [2]; beyond it, or once she rises, it gives up and retreats into its area at its own pace, roaming again once it's in and within retreatHome metres of home, taking up a fight on the way only with someone back in its area (no flip-flopping at the edge). Besiegers march as before; happy and leashed ones aren't affected."
     },
     "combat.pursuit": {
       "what": "how far from her (or its sigil, guarding) a party animal chases a foe before giving up."
@@ -357,7 +393,7 @@
       "what": "Metres past a sigil's edge a creature's middle still counts as on it."
     },
     "wildWatch": {
-      "what": "On her first landing in a wild area its creatures stare and redden for a few seconds before they attack, and how far they chase her after.",
+      "what": "On her landing anywhere on the ground in a wild area (flying over starts nothing) its creatures stare and redden for a few seconds before they attack; walking out or taking off in that time calls it off.",
       "decisions": [
         {
           "by": "Ed",
@@ -397,7 +433,7 @@
       "links": [
         "rules/power.ts"
       ],
-      "notes": "The wild watch [1]: on a witch's first coming down on the ground in a wild area (not partified, not friendly, not home), its wild young and adults (not legends, the enraged or besiegers; babies keep their notice) hold off for time seconds, standing and turning to stare at her, any within hangBack metres backing off a little; then they fight as ever. The area is forgotten forget seconds after the last witch was on the ground in it, so a later visit plays it again. Slower, with a warning [2]: time is 4 s [3]; leaving the area or rising before it is up calls it off (they settle back and don't chase; the next visit starts it over). Over the watch each watcher reddens, from faint as they notice her to full just before they attack, the whole area together: its red up to tint [4], times the area's danger, its watchers' fighting value over dangerF (F, rules/power.ts) capped at 1, so a deep, crowded area reads as worse than a first-ring one. When the watch ends (they attack, she invites one, she leaves or rises) the red eases out over fade seconds (1.5, Ed 2026-10-31; previously 0.7) [5]. The chase [6]: leave before the warning's up and none comes after her; once they've attacked (the warning over with her inside) they follow her out to combat.leaveArea metres past their edge; and a 💌 of hers landing on a wild creature provokes it for provoked seconds: it comes out after her across its edge, to the same band (no sniping from just outside)."
+      "notes": "The wild watch [1]: on a witch's first coming down on the ground in a wild area (not partified, not friendly, not home), its wild young and adults (not legends, the enraged or besiegers; babies keep their notice) hold off for time seconds, standing and turning to stare at her, any within hangBack metres backing off a little; then they fight as ever. The area is forgotten forget seconds after the last witch was on the ground in it, so a later visit plays it again. Slower, with a warning [2]: time is 4 s [3]; leaving the area or rising before it is up calls it off (they settle back and don't chase; the next visit starts it over). Over the watch each watcher reddens, from faint as they notice her to full just before they attack, the whole area together: its red up to tint [4], times the area's danger, its watchers' fighting value over dangerF (F, rules/power.ts) capped at 1, so a deep, crowded area reads as worse than a first-ring one. When the watch ends (they attack, she invites one, she leaves or rises) the red eases out over fade seconds (1.5, Ed 2026-10-31; previously 0.7) [5]. The chase [6]: leave before the warning's up and none comes after her; once they've attacked (the warning over with her inside) they follow her anywhere on the ground until she takes off (Ed's 31 Oct playtest; before, out to combat.leaveArea metres past their edge); and a 💌 of hers landing on a wild creature provokes it for provoked seconds: it comes out after her across its edge and on in the same way (no sniping from just outside)."
     },
     "wildWatch.on": {
       "what": "false: they attack at once, as before."
@@ -432,7 +468,7 @@
       "links": [
         "rules/hunt.ts"
       ],
-      "notes": "The hunt [1][2]: once a wild area's watch is over with her on the ground in it, every one of its own awake young and adults hunts her while she's in the area, wherever in it they are, never giving up or napping; over the treetops there they hold and come on again when she lands. It ends for one when it's invited, enraged, or knocked down and run off; for all of an area's when she leaves the area (they're ordinary wild creatures again: they give up combat.leaveArea metres past their edge and walk home, as before); for all of hers when she's knocked out (they give up, walk home and roam, DECISION FOR ED, and the area's watch plays again on her next visit). Back in an area she left, it hunts her again at once while it's remembered (wildWatch.forget seconds after she was last on the ground in it), else its watch plays again. Babies don't fight."
+      "notes": "The hunt [1][2]: once a wild area's watch is over with her on the ground in it, every one of its own awake young and adults hunts her while she's in the area, wherever in it they are, never giving up or napping; over the treetops there they hold and come on again when she lands. It ends for one when it's invited, enraged, or knocked down and run off; for all of an area's when she takes off outside the area (Ed's 31 Oct playtest: they follow her out on foot and hold while she's up over their own area; before, it ended as she left the area and they gave up combat.leaveArea metres past their edge); for all of hers when she's knocked out (they give up, walk home and roam, DECISION FOR ED, and the area's watch plays again on her next visit). Back in an area she left, it hunts her again at once while it's remembered (wildWatch.forget seconds after she was last on the ground in it), else its watch plays again. Babies don't fight."
     },
     "hunt.on": {
       "what": "false: the old rule (only those near her attack)."
@@ -564,7 +600,18 @@
       "links": [
         "rules/combat/data.ts"
       ],
-      "notes": "strong (cap 6), medium (cap 12: swarm.reference, and every species not listed) and light (cap 16; Ed: \"a swarm of 20 is too many; cap it at 16\"), each class's strength 12 / its cap on its creatures' health and damage (strong ×2, light ×0.75; rules/combat/data.ts), so moving a species is one line here. The target is the estimated power (Σhp × Σdps; the witch doesn't count: her three hits ignore damage) of a medium reference swarm of swarm.start + (swarm.endAverage − swarm.start)·p^swarm.curve creatures (1 + 11·p^1.3), its young share easing from swarm.youngShare[0] (1.0) to [1] (0.2). p is the master curve's [1]: by the area's wave, (wave − 1)/(swarm.waves − 1), so wave swarm.waves (64) brings today's final swarm, every island plays it from wave 1 as far as it has areas, and a bigger map holds there after."
+      "notes": "strong (cap 6), medium (cap 12: swarm.reference, and every species not listed) and light (cap 16; Ed: \"a swarm of 20 is too many; cap it at 16\"), each class's strength 12 / its cap on its creatures' health and damage (strong ×2, light ×0.75; rules/combat/data.ts), so moving a species is one line here. The target is the estimated power (Σhp × Σdps; the witch doesn't count: her three hits ignore damage) of a medium reference swarm of swarm.start + (swarm.endAverage − swarm.start)·p^swarm.curve creatures (1 + 11·p^0.8), its young share easing from swarm.youngShare[0] (1.0) to [1] (0.2). p is the area's place along its own island's route, (its place − 1)/(the route's length − 1), times the island's size (its route's length) over swarm.largestIsland, at most 1 (rules/swarm.ts islandShare), so the last area of the largest islands fields the final swarm and a smaller island's last its share of the way along the curve."
+    },
+    "population.swarm.largestIsland": {
+      "what": "the largest island's areas: an island this big or bigger reaches the final swarm at its last area, a smaller one its size over this of the way along the curve.",
+      "decisions": [
+        {
+          "by": "Ed",
+          "date": "2026-11-03",
+          "quote": "Pack growth: grows along each island's own length, scaled by the island's size, so only the largest islands reach full packs. The curve gets steeper (1.3 → 0.8) so packs grow sooner."
+        }
+      ],
+      "notes": "50: the phase-5 islands (rules/rosters.ts sizeOfPhase), the largest on the chart; home grows to 64 at the campaign's end and holds there. It replaces the master curve's length in waves (64, its old knob), under which a 10-area island's last area stopped at p 0.14."
     },
     "creatureSimRadius": {
       "see": "population"

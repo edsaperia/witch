@@ -242,8 +242,8 @@
     ],
     "effect": "mirrorball",
     "name": "Mirrorball",
-    "description": "The disco ball is huge.",
-    "comingSoon": true,
+    "description": "The moon becomes a giant turning disco ball, sweeping coloured dots of light across the world.",
+    "comingSoon": false,
     "id": 19
   },
   {
@@ -438,7 +438,7 @@
     "effect": "woodcut",
     "name": "Woodcut",
     "description": "Black-and-white engraving, crosshatched shadows.",
-    "comingSoon": true,
+    "comingSoon": false,
     "id": 34
   },
   {
@@ -451,7 +451,7 @@
     "effect": "kaleidoscope",
     "name": "Kaleidoscope",
     "description": "The screen mirrored into six slices round her.",
-    "comingSoon": true,
+    "comingSoon": false,
     "id": 35
   },
   {
@@ -737,7 +737,7 @@
     "effect": "masterplan",
     "name": "Masterplan",
     "description": "See how packs intend to move and attack: targets, destination slots, roles, formations and attack geometry.",
-    "comingSoon": true,
+    "comingSoon": false,
     "id": 57
   },
   {

@@ -12,11 +12,15 @@ Built means implementation in this source checkpoint, not a new visual or audio 
 | Recipe 9: Big Moon | **Built** | #1523 current recipe/renderer implementation; `render/potionEffects.ts`, `rules/potionSettings.ts`; first live version unverified |
 | Recipe 10: Ravine | **Built** | #1523 current recipe/renderer implementation; `render/potionEffects.ts`, `rules/potionSettings.ts`; first live version unverified |
 | Recipe 11: Chunky | **Built** | #1523 current recipe/renderer implementation; `render/potionEffects.ts`, `rules/potionSettings.ts`; first live version unverified |
+| Recipe 19: Mirrorball | **Built** | The sky moon and shared surface lighting use the trip envelope. |
 | Recipe 26: Night Vision | **Built** | #1531; `render/potionEffects.ts`, dedicated audio gates; first live version unverified |
 | Recipe 29: Stiltwalkers | **Built** | #1532; registry29/58, rig limb deformation; changelog v6523 |
 | Recipe 30: Thick Canopy | **Built** | #1523 current recipe/renderer implementation; `render/potionEffects.ts`, `rules/potionSettings.ts`; first live version unverified |
+| Recipe 34: Woodcut | **Built** | Recipe, Potion Lab controls and audio treatment implemented. |
+| Recipe 35: Kaleidoscope | **Built** | Recipe, Potion Lab controls and audio treatment implemented. |
 | Recipe 45: Worm's Eye | **Built** | #1530; camera controls and shared audio; first live version unverified |
 | Recipe 52: Heat Vision | **Built** | #1531; semantic creature heat and octave/audio routing; first live version unverified |
+| Recipe 57: Masterplan | **Built** | Recipe, Potion Lab controls and audio treatment implemented. |
 | Recipe 58: Stiltwalkers | **Built** | #1532; registry29/58, rig limb deformation; changelog v6523 |
 | Recipe 61: Aurora Outlines | **Built** | #1523 current recipe/renderer implementation; `render/potionEffects.ts`, `rules/potionSettings.ts`; first live version unverified |
 | Recipe 64: The Audience | **Built** | #1535; watching-tree lean/lag and shared audio; first live version unverified |
@@ -52,7 +56,7 @@ All potions last ten minutes of game time, start at full strength on waking, and
 | 16 | blue + purple + turquoise | Pride | Coming soon | She gets the party rainbow trail. |
 | 17 | blue + purple + white | Earsight | Coming soon | Only things that make sound are visible. |
 | 18 | blue + pink + pink | Roadworks | Coming soon | The forest is covered in large traffic cones that shrink until they vanish. |
-| 19 | blue + pink + red | Mirrorball | Coming soon | The disco ball is huge. |
+| 19 | blue + pink + red | Mirrorball | Implemented | The moon becomes a giant turning disco ball, sweeping coloured dots of light across the world. |
 | 20 | blue + pink + orange | Drift | Coming soon | The movement controls slowly rotate, with a dizzy look (gentle screen sway, swirling edges, colour smear). |
 | 21 | blue + pink + yellow | Blinker | Coming soon | Moving on the ground is all blinks, with no blink cooldown. |
 | 22 | blue + pink + green | Inverse Perspective | Coming soon | Creatures look bigger the further away they are; up close they all but vanish. |
@@ -67,8 +71,8 @@ All potions last ten minutes of game time, start at full strength on waking, and
 | 31 | blue + orange + orange | The Whole Route | Coming soon | The entire route across the island shines into view. |
 | 32 | blue + orange + yellow | Dreamseer | Coming soon | The area a legend's dream points to is easier to see. |
 | 33 | blue + orange + green | Paper Theatre | Coming soon | Everything becomes flat, wobbling cardboard cutouts. |
-| 34 | blue + orange + turquoise | Woodcut | Coming soon | Black-and-white engraving, crosshatched shadows. |
-| 35 | blue + orange + white | Kaleidoscope | Coming soon | The screen mirrored into six slices round her. |
+| 34 | blue + orange + turquoise | Woodcut | Implemented | Black-and-white engraving, crosshatched shadows. |
+| 35 | blue + orange + white | Kaleidoscope | Implemented | The screen mirrored into six slices round her. |
 | 36 | blue + yellow + yellow | Breathing | Coming soon | Ground, trees and rocks swell and shrink with the bpm. |
 | 37 | blue + yellow + green | Daybreak | Coming soon | The sun rises; a bright, ordinary green forest. |
 | 38 | blue + yellow + turquoise | Snow Globe | Coming soon | Heavy snow, muffled sound, glass-curved screen edges. |
@@ -90,7 +94,7 @@ All potions last ten minutes of game time, start at full strength on waking, and
 | 54 | purple + pink + pink | Synaesthesia | Coming soon | Colours pulse with the music, one colour per instrument, floods on the kick. |
 | 55 | purple + pink + red | Mirror Floor | Coming soon | The ground becomes a glossy mirror of everything above it. |
 | 56 | purple + pink + orange | Silent Film | Coming soon | Film grain and scratches, sepia, the world as a silent film. |
-| 57 | purple + pink + yellow | Masterplan | Coming soon | See how packs intend to move and attack: targets, destination slots, roles, formations and attack geometry. |
+| 57 | purple + pink + yellow | Masterplan | Implemented | See how packs intend to move and attack: targets, destination slots, roles, formations and attack geometry. |
 | 58 | purple + pink + green | Stiltwalkers | Implemented | Familiar animal bodies stand high on impossibly long legs, tapering from normal hips to tiny feet. |
 | 59 | purple + pink + turquoise | Contour Dream | Coming soon | Vivid contour bands run across ground, animals and scenery. |
 | 60 | purple + pink + white | Bottomless | Coming soon | The ground becomes a starfield, with creatures apparently standing over an abyss. |

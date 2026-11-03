@@ -6,7 +6,7 @@ The status index checks the requests below against prototype `ab06904b` and cite
 
 | Request / feature group | Status | Evidence and remaining gap |
 |---|---|---|
-| Tempo scales pulse and pause-page wave speed | **Built** | `rules/beat.ts`, party step; #527/#953 (first build versions unverified). Current pulseSpeed=1 and tempoRate multiplier. |
+| Tempo scales pulse and pause-page wave speed | **Built** | `rules/beat.ts`, party step; #527/#953 (first build versions unverified). Since 2026-11-03 the speed is a straight line in the tempo (1.0 m/s at 100 bpm to 5.0 at 200, `leyLines.pulseAt100`/`pulseAt200`), `pulseSpeed`=1 a multiplier on it. |
 | Invites block, refuse, vibrate and crumple on enraged | **Built** | #89/#923; `rules/invites.ts`, `render/invites.ts`, sfxCues; version unverified. |
 | Gamepad bindings, remapping and sigil runs | **Built** | #618/#649/#938; `platform/bindings.ts`, input.ts, rules/leash.ts. Dates/bindings below retain historical revisions; first versions unverified. |
 | Creator/treehouse and all menus on pad | **Partly built** | Ordinary station/chart/telescope/Studio/pause paths exist (#1076, #1456); old creator and all auxiliary panels are not certified complete. No browser acceptance claimed; versions unverified. |
@@ -30,7 +30,7 @@ Backlog (Ed, 2026-10-09 to 10-10). **Mixed implementation status; see the audit 
 
 ## Tempo is difficulty — partly built
 
-- **Built:** the pulse runs at `leyLines.pulseSpeed` × the party's tempo rate (`tempoRate` in `rules/beat.ts`, read by `stepParty` in `rules/party.ts`, #527): a knockdown's +5 bpm speeds the pulse as it speeds the music.
+- **Built:** the pulse runs at `leyLines.pulseSpeed` × the tempo's speed (`tempoRate` in `rules/beat.ts`, read by `stepParty` in `rules/party.ts`, #527; since Ed, 2026-11-03, a straight line from 1.0 m/s at 100 bpm to 5.0 at 200, `sparkSpeedAt`, #1701): a knockdown's +5 bpm speeds the pulse as it speeds the music.
 - **Built (#953; Ed, 2026-10-18):** the wave speed defaults to **1 m/s** (was 4), set from a slider on the pause page; the bedroom's "Waves:" dropdown is gone (`leyLines.pulseSpeed`, `config/decisions/953-waves.json`). **Open:** how the records' "pulse speed from the bpm" (journey.md, section 2) fits a wave speed now set on its own; Ed wants the early nights slow.
 
 ## Invitations bounce off the enraged (Ed, 2026-10-12) — built

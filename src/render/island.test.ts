@@ -74,14 +74,14 @@ describe("the island layers' disposes", () => {
   });
 
   it("the paths let go of their meshes' geometries and materials and their strips' textures", () => {
-    // (Made by hand: its strips bake on a canvas. Two strips, one stream with no texture.)
+    // (Made by hand: its strips bake on a canvas. Two strips, each with its bump map, one stream with no texture.)
     const p = Object.create(PathView.prototype) as PathView;
     (p as { group: THREE.Group }).group = new THREE.Group();
-    const strips = [new THREE.Texture(), new THREE.Texture()];
-    for (const t of [...strips, null]) p.group.add(new THREE.Mesh(new THREE.BufferGeometry(), new THREE.ShaderMaterial({ uniforms: { ...HEIGHT_UNIFORMS, ...(t ? { uStrip: { value: t } } : {}) } })));
-    const shared = watch([HEIGHT_UNIFORMS.uHeight.value as THREE.Texture].filter(Boolean)), n = watch([...parts([p.group]), ...strips]);
+    const strips = [new THREE.Texture(), new THREE.Texture()], bumps = [new THREE.Texture(), new THREE.Texture()];
+    for (const [i, t] of [...strips, null].entries()) p.group.add(new THREE.Mesh(new THREE.BufferGeometry(), new THREE.ShaderMaterial({ uniforms: { ...HEIGHT_UNIFORMS, ...(t ? { uStrip: { value: t }, uBump: { value: bumps[i] } } : {}) } })));
+    const shared = watch([HEIGHT_UNIFORMS.uHeight.value as THREE.Texture].filter(Boolean)), n = watch([...parts([p.group]), ...strips, ...bumps]);
     p.dispose();
-    expect(n.size).toBe(8);
+    expect(n.size).toBe(10);
     expect(allOnce(n)).toBe(true);
     expect([...shared.values()].every(k => k === 0)).toBe(true); // (the page's shared uniforms' textures left alone)
   });

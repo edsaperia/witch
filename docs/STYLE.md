@@ -132,6 +132,6 @@ Judge colour on the sheets (studio light) and mood in the game (night): both, ne
 
 ## Known gaps (tickets)
 
-- The attack-effects art (`art/effects.js`) is never used by the game: telegraphs and hits are pixel dots drawn in `src/render/leash.ts`.
+- (Closed since: attacks and their telegraphs are drawn by `src/render/leash/attackLook.ts` from `art/attackLook.js`'s atlas, every telegraph in red since Ed, 2026-11-02: "the telegraph should be red"; `art/effects.js` is drawn by the world art, `render/worldArt.ts`, and the hats' art, `render/view/hatArt.ts`.)
 - `palette.over` (named in ART-GUIDE §3 for per-species glows) and the tools `sheets.mjs` and `silhouettes.mjs` (ART-GUIDE §1, §4) don't exist in the code.
 - With the default `fx: "smooth"` the game's moonlight isn't banded (ART-GUIDE §0's "rung 0" describes the Lab and `?fx=pixel`); under bold the bands are baked into the sprites instead, so this is consistent, but ART-GUIDE should say so.

@@ -17,6 +17,7 @@ import { hsvInto, moodOf } from "../mood";
 import { cellKey, partifiedKey } from "../../rules/party";
 import { biomeJitter } from "../../../art/flora/biomes.js";
 import { FADE_MATERIALS, FADE_MESHES, SPRITE_UNIFORMS } from "../sprites";
+import { PATH_UNIFORMS } from "../paths";
 
 /** Sets this frame's sprite and light uniforms, after the camera (`up`, its tilted up). */
 /** How far her glow is cooled toward the wild's teal (0 to 1, eased) and when it was last eased (light.spooky.wildGlow). */
@@ -101,6 +102,7 @@ export function setFrameUniforms(v: View, time: number, up: THREE.Vector3): void
   // Each tree's own leaf colour (Ed, 2026-10-16 and 2026-10-19; the tuning's leafJitter: the autumn share, the value share and the hue degrees; render/sprites.ts).
   // The island's biome keeps its share of the autumn and the hue turn (art/flora/biomes.js: none under snow, so it stays white).
   const LJ = t.leafJitter, bj = biomeJitter(v.assets.style.biome ?? v.assets.typeBiome);
+  PATH_UNIFORMS.uPathBump.value = t.pathLook?.bump ?? 0; // the paths' bump maps (Ed, 2026-11-03; render/paths.ts)
   SPRITE_UNIFORMS.uLeafJitter.value.set(LJ ? LJ.autumn * bj : 0, LJ ? LJ.value : 0, LJ ? ((LJ.hue ?? 0) / 360) * bj : 0);
   // The wind: gentler over the treetops (Ed, v171: "gentle and lovely").
   const W = t.wind;

@@ -9,13 +9,14 @@ import { largestWorldTuning } from "../test/worlds";
 import { sleepCellAudit } from "../test/sleepCells";
 
 const idle = { moveX: 0, moveZ: 0, toggleMode: false, zoom: 0 };
-const expected = [[18, "newt", true], [19, "newt", false], [34, "snowleopard", true], [35, "snowleopard", false],
-  [86, "fennec", true], [87, "fennec", false], [164, "squirrel", true], [165, "squirrel", false],
-  [185, "lion", true], [186, "lion", false], [454, "polarbear", true], [455, "polarbear", false],
-  [485, "moth", true], [486, "moth", false]];
-// Largest roster reproduces the seven paired legend areas; small/radius fixtures guard the original non-paired contract.
+// (the largest island since the path network, 2026-11-03: grown one area more for tonight's find, its legends dealt anew: six paired;
+// the ids follow how many creatures the areas before them hold: the swarms by island, Ed 2026-11-03, put more in most)
+const expected = [[61, "snowleopard", true], [62, "snowleopard", false], [158, "crab", true], [159, "crab", false],
+  [173, "otter", true], [174, "otter", false], [219, "newt", true], [220, "newt", false],
+  [341, "moth", true], [342, "moth", false], [544, "polarbear", true], [545, "polarbear", false]];
+// Largest roster reproduces the six paired legend areas; small/radius fixtures guard the original non-paired contract.
 const fixtures = [
-  { name: "largest", tuning: largestWorldTuning(TUNING), raw: 14, cells: 65 },
+  { name: "largest", tuning: largestWorldTuning(TUNING), raw: 12, cells: 65 },
   { name: "four-area", tuning: { ...TUNING, map: { ...TUNING.map!, island: "", islandAreas: 4, found: [] } }, raw: 0, cells: 5 },
   { name: "radius", tuning: { ...TUNING, map: { ...TUNING.map!, island: "", islandAreas: 0, found: [] } }, raw: 0, cells: 98 },
 ];
@@ -49,7 +50,8 @@ describe("sleeping creatures' logical ownership areas", () => {
   });
 
   it("rejects an unrelated area even for a boss, and rejects a non-circle wild creature in a paired legend area", () => {
-    const g = newGame(123, largestWorldTuning(TUNING)), boss = g.creatures.find(c => c.boss)!;
+    // (a boss lying in a paired legend area: since 2026-11-03's maps the first boss lies in its own area)
+    const g = newGame(123, largestWorldTuning(TUNING)), boss = g.creatures.find(c => c.boss && g.map.legendAreas.has(g.map.cellSafe(c.x, c.z).cell.join(",")))!;
     const elsewhere = g.map.cells.map(([x, y]) => g.map.siteOf(x, y)).find(p => !g.map.sameArea(g.map.cellSafe(p.x, p.z).cell, boss.cell))!;
     const bad = { ...boss, x: elsewhere.x, z: elsewhere.z };
     expect(sleepCellAudit(g.map, [bad]).mismatches.map(c => c.id)).toEqual([boss.id]);
