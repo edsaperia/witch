@@ -438,6 +438,21 @@ export type SchemaTuning = {
     "on": boolean;
     "clear": number;
   };
+  "challenge": {
+    "on": boolean;
+    "radius": number;
+    "margin": number;
+    "columns": number;
+    "adults": number;
+    "youths": number;
+    "castReach": number;
+    "findSets": boolean;
+    "fireworks": {
+      "on": boolean;
+      "height": number;
+      "burst": number;
+    };
+  };
   "treeMarginFromSoundsystem": number;
   "treeDensity": number;
   "leafJitter": {

@@ -312,6 +312,16 @@ export interface Tuning {
    *  challenge areas)"): on, one seeded area holds tonight's find at its site, in a clearing `clear` metres round it, with no
    *  stump, wave or creatures of its own (map.specialSites); off, the find as before, in a wild area's woods. */
   findArea?: { on: boolean; clear: number };
+  /** The challenge area (Ed, 2026-11-03; docs/plans/follower-buffs-and-challenge-areas.md section 2): with findArea on, the find's area
+   *  becomes the challenge area: a stone floor circle `radius` metres across its middle with the island's sigil carved in it and
+   *  `columns` stone columns round its edge, its pack `adults` adults and `youths` youths of every kind on the island's roster, and
+   *  the music spell cast on it within `castReach` metres of its middle once the pack's all invited or run off (rules/challenge.ts).
+   *  Its clearing reaches `margin` metres past the circle, the woods right up to it. `findSets`: its find drawn from the island's
+   *  own set (rules/findSets.ts) rather than the night's one draw over everything (Ed, 2026-11-03: off for now). `fireworks`: once
+   *  it's cleared, a firework from one column's top at each bar, the next column clockwise each bar (Ed, 2026-11-03), bursting
+   *  `height` metres up into a burst `burst` metres round (render/challenge.ts fireChallenge).
+   *  Off: the find's area as before (an empty clearing, the find to pick up). */
+  challenge?: { on: boolean; radius: number; margin: number; columns: number; adults: number; youths: number; castReach: number; findSets: boolean; fireworks?: { on: boolean; height: number; burst: number } };
   treeMarginFromSoundsystem: number;
   bushDensity: number;
   /** How much bushes gather in clumps with open floor between (0 even, 1 strongly clumped). */

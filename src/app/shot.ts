@@ -10,13 +10,18 @@
 //   at:<x>,<z>[,treetop]   anywhere, on foot or in the treetops
 //   legend[:<n>[,<south>[,treetop]]]   south of a legend's circle (the nth biggest, 0 by default), <south> m from its middle (its
 //                radius and 12 m more by default: outside its ring of trees, looking in), on foot or in the treetops
+//   challenge[:<south>[,treetop][,cleared]]   south of the challenge circle (rules/challenge.ts), <south> m from its middle (its radius
+//                and 8 m more by default), on foot or in the treetops; cleared: its pack won over and the spell cast a few seconds ago (its
+//                dancefloor in, the pack on it, tonight's find landed at its middle)
 import { deckOf } from "../rules/treehouse";
 import { HOUSE_ROOMS, fromPlan, objectFront } from "../rules/houseRooms";
 import { AREA_TYPES } from "../rules/map";
 import { areaIdOf } from "../../art/areaRenames.js";
 import { newCamera } from "../rules/camera";
 import { witchHeight } from "../rules/witch";
-import { spawnFind, spawnSpot, type FindKindId } from "../rules/finds";
+import { fillTrunk, spawnFind, spawnSpot, type FindKindId } from "../rules/finds";
+import { clearChallenge, FIND_DESCENT } from "../rules/challenge";
+import { befriend } from "../rules/creatureStates";
 import type { Game } from "../rules/game";
 
 /** What a shot did: where she is and what's there, or why it couldn't (an unknown id, nothing of that kind on this island). */
@@ -92,6 +97,22 @@ export function applyShot(g: Game, scene: string): ShotResult {
       const t = g.map.typeOf(c.cell[0], c.cell[1]);
       return { ok: true, say: `${d.toFixed(0)} m south of the ${AREA_TYPES[t]?.creature ?? "?"} legend's circle (radius ${c.r.toFixed(1)} m)`, x, z };
     }
+    case "challenge": {
+      const ch = g.challenge;
+      if (!ch) return { ok: false, say: "no challenge area on this map" };
+      const [south, ...modes] = arg.split(","), d = south !== undefined && south !== "" && Number.isFinite(+south) ? +south : ch.radius + 8;
+      put(ch.x, ch.z + d, { treetop: modes.includes("treetop") });
+      if (modes.includes("cleared")) {
+        if (g.trunk && g.trunk.item === null) fillTrunk(g, {}); // (the page would fill it a frame on: a shot fills it now, from nothing found)
+        for (const id of ch.pack) befriend(g.creatures[id], g.clock.time);
+        clearChallenge(g);
+        const back = FIND_DESCENT + 3; // (some seconds ago: its floor all in, its find landed)
+        ch.clearedAt! -= back; ch.landsAt = ch.clearedAt! + FIND_DESCENT;
+        for (const id of ch.pack) { const c = g.creatures[id]; c.x = c.tx; c.z = c.tz; } // (on the floor already)
+        g.byArea = null;
+      }
+      return { ok: true, say: `${d.toFixed(0)} m south of the challenge circle (${ch.pack.length} in its pack)`, x: ch.x, z: ch.z + d };
+    }
     case "at": {
       const [x, z, mode] = arg.split(",");
       if (!Number.isFinite(+x) || !Number.isFinite(+z)) return { ok: false, say: `at needs x,z (got ${arg})` };
@@ -99,7 +120,7 @@ export function applyShot(g: Game, scene: string): ShotResult {
       return { ok: true, say: `at ${x}, ${z}`, x: +x, z: +z };
     }
   }
-  return { ok: false, say: `no scene ${what} (object, room, area, creature, find, at, legend)` };
+  return { ok: false, say: `no scene ${what} (object, room, area, creature, find, at, legend, challenge)` };
 }
 
 /** The last shot applied (the page's ?shot=, or window.witch.shot): what tools/shot/shot.cjs reports. */

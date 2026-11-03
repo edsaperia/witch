@@ -16,10 +16,24 @@ const CARVE_PX = 1.5;
 
 const cache = new Map<string, Uint8Array>();
 
+/** A floor with no carving (the challenge circle's legend slot: its sigil is carved by its own pass, render/ground.ts). */
+export const NO_CARVING = "-none-";
+
 /** Each species' carving mask, CARVING_SIZE square, 0..255 a pixel (made once a species). */
 export function carvingMask(species: string): Uint8Array {
   let m = cache.get(species);
-  if (!m) cache.set(species, (m = drawSigil(species, CARVING_SIZE) ?? drawCarving(species, CARVING_SIZE)));
+  if (!m) cache.set(species, (m = species === NO_CARVING ? new Uint8Array(CARVING_SIZE * CARVING_SIZE) : drawSigil(species, CARVING_SIZE) ?? drawCarving(species, CARVING_SIZE)));
+  return m;
+}
+
+/** The side (px) of the challenge circle's carving: fine enough that across its 72 m its grooves are about an art pixel a texel. */
+export const BIG_CARVING_SIZE = 768;
+/** A species' carving at BIG_CARVING_SIZE (the challenge circle's: Ed, 2026-11-03, on #1725, "it should look like it's carved into the
+ *  circle"), its grooves as wide for its size as the legends' are for theirs (made once a species, about 0.1 s). */
+export function bigCarvingMask(species: string): Uint8Array {
+  const key = `${species}@${BIG_CARVING_SIZE}`;
+  let m = cache.get(key);
+  if (!m) cache.set(key, (m = drawSigil(species, BIG_CARVING_SIZE, CARVE_PX * BIG_CARVING_SIZE / CARVING_SIZE) ?? drawCarving(species, BIG_CARVING_SIZE)));
   return m;
 }
 
@@ -33,9 +47,9 @@ export function warmCarvings(species: readonly string[]): void {
 }
 
 /** The legend's legendary sigil as grooves, or null if it has none. */
-function drawSigil(species: string, n: number): Uint8Array | null {
+function drawSigil(species: string, n: number, minPx = CARVE_PX): Uint8Array | null {
   let f: Float32Array;
-  try { f = (legendSigilMask as (id: string, size: number, o: { tier: number; minPx: number }) => Float32Array)(species, n, { tier: 2, minPx: CARVE_PX }); } catch { return null; }
+  try { f = (legendSigilMask as (id: string, size: number, o: { tier: number; minPx: number }) => Float32Array)(species, n, { tier: 2, minPx }); } catch { return null; }
   const out = new Uint8Array(n * n);
   let any = false;
   for (let i = 0; i < out.length; i++) { out[i] = Math.round(Math.max(0, Math.min(1, f[i])) * 255); if (out[i]) any = true; }

@@ -594,6 +594,21 @@
     "on": true,
     "clear": 6
   },
+  "challenge": {
+    "on": true,
+    "radius": 36,
+    "margin": 3,
+    "columns": 30,
+    "adults": 1,
+    "youths": 1,
+    "castReach": 5,
+    "findSets": false,
+    "fireworks": {
+      "on": true,
+      "height": 24,
+      "burst": 8
+    }
+  },
   "treeMarginFromSoundsystem": 1.5,
   "treeDensity": 1,
   "leafJitter": {

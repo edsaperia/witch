@@ -723,14 +723,25 @@ export function generateMap(runSeed: number, tuning: Tuning, only?: { landStep: 
     }
     if (at) {
       const [fx, fy] = at, k = cellKey(fx, fy), site = siteOf(fx, fy);
-      specials.set(k, { kind: "find", cell: [fx, fy], x: site.x, z: site.z, r: tuning.findArea!.clear });
+      // (the challenge area, tuning challenge, rules/challenge.ts: its clearing the stone circle and a narrow margin past it, its
+      // columns at the circle's edge; Ed, 2026-11-03: "trees should come close to the circle's edge")
+      const CH = tuning.challenge?.on ? tuning.challenge : null;
+      specials.set(k, { kind: CH ? "challenge" : "find", cell: [fx, fy], x: site.x, z: site.z, r: CH ? Math.max(tuning.findArea!.clear, CH.radius + (CH.margin ?? 3)) : tuning.findArea!.clear });
       if (extraKey && extraKey !== k && types.has(k)) types.set(extraKey, types.get(k)!);
       cells.splice(cells.findIndex(([x, y]) => x === fx && y === fy), 1);
     }
   }
   if (extraKey && !specials.size && others.length) { const [x, y] = others[0]; types.set(extraKey, types.get(cellKey(x, y))!); } // (no find's area after all: the extra a kind of the roster's)
   others = cells.filter(([x, y]) => x !== centreCell[0] || y !== centreCell[1]);
-  if (rosterIsland && others.length && (specials.size || extraKey)) { typeBeyond(); for (const [k, p] of legendAreas) types.set(k, types.get(p)!); } // (the find's area the woods of its nearest; the legend areas their pairs' still)
+  // The challenge area themed on the island's own animal (Ed, 2026-11-03: "Its type is themed of the island's animal (e.g. the squirrel
+  // map's challenge areas have squirrel area trees)"): its trees and ground its kind's area type's, whatever area it replaced (the
+  // island's extra area takes that one's kind, so the roster's kinds are all still dealt). Home has no one animal: its challenge area
+  // keeps the woods of its nearest area, as the find's area did.
+  // (the challenge area's site, if any: its clearing kept whole and its woods close, hardCell and treeWeight below)
+  const challengeAt = [...specials.values()].find(sp => sp.kind === "challenge") ?? null;
+  const ownType = rosterIsland && rosterIsland.kind !== "home" ? AREA_TYPES.findIndex(a => a.creature === rosterIsland.kind) : -1;
+  const themeSpecials = () => { if (ownType >= 0) for (const [k, sp] of specials) if (sp.kind === "challenge") types.set(k, ownType); };
+  if (rosterIsland && others.length && (specials.size || extraKey)) { typeBeyond(); for (const [k, p] of legendAreas) types.set(k, types.get(p)!); themeSpecials(); } // (the find's area the woods of its nearest; the legend areas their pairs' still)
   // (how far into a lake: rules/lakes.ts; nothing grows or is placed on one or its shore)
   const lakeShore = lakeKnobs(tuning).shore, lakeAt = (x: number, z: number) => (lakes ? lakeDepth({ lakes } as Bounds, x, z) : -Infinity);
   const areaAt = (x: number, z: number): AreaSample => {
@@ -805,13 +816,14 @@ export function generateMap(runSeed: number, tuning: Tuning, only?: { landStep: 
   const placeSites = () => {
     if (sited) return;
     sited = true;
-    const gap = tuning.stoneMinGap ?? 0, placed: { x: number; z: number }[] = [], moved: string[] = [];
-    const farEnough = (x: number, z: number) => placed.every(q => Math.hypot(q.x - x, q.z - z) >= gap);
+    // (a special site counts its clearing too: a stone stoneMinGap from its edge, not its middle, so a wide challenge circle keeps clear)
+    const gap = tuning.stoneMinGap ?? 0, placed: { x: number; z: number; r: number }[] = [], moved: string[] = [];
+    const farEnough = (x: number, z: number) => placed.every(q => Math.hypot(q.x - x, q.z - z) >= gap + q.r);
     for (const sp of specials.values()) {
       let p = ownGround(sp.cell[0], sp.cell[1]);
       if (onPath(p.x, p.z, sp.r)) p = nearestOk(p, sp.cell[0], sp.cell[1], (x, z) => !onPath(x, z, sp.r), A * 0.3, 2) ?? p;
       sp.x = p.x; sp.z = p.z;
-      placed.push(p);
+      placed.push({ x: p.x, z: p.z, r: sp.kind === "challenge" ? sp.r : 0 });
     }
     for (const [cx, cy] of cells) {
       if (cx === centreCell[0] && cy === centreCell[1]) continue;
@@ -821,7 +833,7 @@ export function generateMap(runSeed: number, tuning: Tuning, only?: { landStep: 
         if (q) p = q; else moved.push(`${cx},${cy}`);
       }
       soundSpots.set(cellKey(cx, cy), p);
-      placed.push(p);
+      placed.push({ x: p.x, z: p.z, r: 0 });
     }
     if (moved.length) console.info(`stones: seed ${seed}: ${moved.length} with no spot ${gap} m from the others in their areas: ${moved.join(", ")}`);
   };
@@ -921,6 +933,7 @@ export function generateMap(runSeed: number, tuning: Tuning, only?: { landStep: 
     if (lc && Math.hypot(x - lc.x, z - lc.z) < lc.r + (vnoise(x / 4, z / 4, seed + 93) - 0.5) * 3) return true; // a sleeping legend's clearing (its edge ragged by a metre and a half either way: the art director on #235)
     const sp = specials.size ? specials.get(key) : undefined;
     if (sp && Math.hypot(x - sp.x, z - sp.z) < sp.r) return true; // (a special site's clearing: tonight's find on its clear patch)
+    if (challengeAt && Math.hypot(x - challengeAt.x, z - challengeAt.z) < challengeAt.r) return true; // (the challenge circle's, whole, whichever area it reaches into)
     if (Math.hypot(x - treehouse.x, z - treehouse.z) < TH.clear) return true;
     for (const g of grounds) if (Math.abs(x - g.x) < g.r && Math.abs(z - g.z) < g.r && Math.hypot(x - g.x, z - g.z) < g.r) return true;
     for (const c of scenes) if (Math.abs(x - c.x) < c.r && Math.abs(z - c.z) < c.r && Math.hypot(x - c.x, z - c.z) < c.r * 0.85) return true; // a scene's ground is clear of trees
@@ -957,6 +970,9 @@ export function generateMap(runSeed: number, tuning: Tuning, only?: { landStep: 
     if (hardCell(x, z, cell)) return 0;
     // Clearings round area centres and random glades, each with a soft edge (Ed: no hard rings).
     const glade = 1 - smoothstep((vnoise(x / tuning.gladeScale, z / tuning.gladeScale, seed + 61) - (1 - tuning.gladeAmount)) / 0.12);
+    // (the challenge area: no open middle of its own, the woods right up to its clearing's edge, Ed 2026-11-03: "trees should come
+    // close to the circle's edge, with only a narrow clear margin outside it")
+    if (challengeAt && cell[0] === challengeAt.cell[0] && cell[1] === challengeAt.cell[1]) return smoothstep((Math.hypot(x - challengeAt.x, z - challengeAt.z) - challengeAt.r) / 2) * glade;
     return smoothstep((partition.openness(u, v) - tuning.clearingSize) / Math.max(0.01, tuning.clearingFalloff)) * glade * arenaIn(x, z, cell);
   };
 
@@ -1011,6 +1027,7 @@ export function generateMap(runSeed: number, tuning: Tuning, only?: { landStep: 
     const { types: dealt } = dealAlongRoute(deck, kindOfType, own, runSeed, d => legendsOf(d).slotOf.size);
     order.forEach((k, i) => types.set(k, dealt[i]));
     typeBeyond();
+    themeSpecials();
     // (the legend areas paired again: tonight's legends each beside one of its kind's areas where the matching found one, the rest
     // beside the area they were grown from, each taking its pair's look)
     const { kinds, slotOf, kindAt } = legendsOf(dealt), mine = new Map([...slotOf].map(([kind, s]) => [s, kind]));

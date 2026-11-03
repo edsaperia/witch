@@ -193,7 +193,7 @@ describe("the find's own area (findArea)", () => {
   it("puts tonight's find at its own area's site, an area with no stone, wave, ley-line stop or creatures", () => {
     for (const [kind, seed] of MAPS.slice(0, 4).concat([["tiger", 2]])) {
       const m = mapOf(kind, seed), f = new Forest(m), trunk = placeTrunk(m, f, placeRelics(m, f))!;
-      const finds = m.specialSites.filter(s => s.kind === "find");
+      const finds = m.specialSites.filter(s => s.kind === "find" || s.kind === "challenge"); // (the challenge area's, with the challenge on: rules/challenge.ts)
       expect(finds.length, `${kind} ${seed}`).toBe(1);
       const sp = finds[0], c = sp.cell, k = key(c), site = m.siteOf(c[0], c[1]);
       // at its site (or, where its site lies in a neighbour's ground, the nearest of its own), in its own area

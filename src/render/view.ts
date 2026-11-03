@@ -140,6 +140,7 @@ import { cancelRefresh, refresh, refreshSteps } from "./view/scenery";
 import { drawBerries, drawCreatures, resetCreatureCaches } from "./view/creatures";
 import { drawHatArt } from "./view/hatArt";
 import { drawFinds, findClear } from "./view/finds";
+import { challengeCarving, challengeFloor, challengeRing, drawChallengeColumns, fireChallenge } from "./challenge";
 import { drawMarkers, drawSpeakers, forgetCandles, placeTreehouse, entDeckDrawn } from "./view/home";
 import { miniTreehouse, ZooExitTag } from "./zooExit";
 import { CastTag } from "./castTag";
@@ -1641,7 +1642,7 @@ export class View {
     // (the zoo's plaza, Ed 2026-10-26: "Home appears as a stone plaza with the ent's sigil on it (drawn like the floor of a legend
     // circle)": a floor of its own round the dancefloor, the World Tree carved in, drawn after the legends' nearest five)
     const plaza = null as { x: number; z: number } | null; // (the zoo's plaza draws its own sigil now: render/ground.ts uZooPlaza)
-    const w = g.witch, dt = Math.min(0.1, Math.max(0, time - this.lastRingTime)), near = nearestClearings(g.map.legendClearings, w.x, w.z, this.nearRings, plaza ? 5 : 6);
+    const w = g.witch, dt = Math.min(0.1, Math.max(0, time - this.lastRingTime)), ch = challengeRing(g, w.x, w.z), near = nearestClearings(g.map.legendClearings, w.x, w.z, this.nearRings, plaza || ch ? 5 : 6);
     this.lastRingTime = time;
     for (const e of g.leashEvents) if (e.kind === "outsideCircle") {
       const L = g.creatures[e.id], c = L && g.map.legendClearing(L.cell[0], L.cell[1]);
@@ -1670,6 +1671,13 @@ export class View {
       f.glint = glint > 0 && L && !L.gone && (L.legendState === "asleep" || L.legendState === "restless") ? glint : 0;
     }
     if (plaza) { const f = this.floorItems[near.length]; f.species = "worldTree"; f.look = FALLBACK_LOOK; f.glint = 4; } // (its grooves glinting, so the World Tree reads)
+    // (the challenge circle, Ed 2026-11-03: "a large stone floor circle (like the legend circle) with the glowing sigil of the island
+    // carved into it": the last slot, its area's floor, the island's sigil, glowing; render/challenge.ts)
+    if (ch && this.ringCount < 6) {
+      const i = this.ringCount++, f = this.floorItems[i];
+      Object.assign(out[i], { x: ch.x, z: ch.z, r: ch.r, edge: ch.edge, glow: ch.glow });
+      f.species = ch.species; f.look = floorLook(AREA_TYPES[g.map.typeOf(g.challenge!.cell[0], g.challenge!.cell[1])].id); f.glint = ch.glint;
+    }
     return out;
   }
   private lakeSigils: { x: number; z: number; r: number; species: string; d: number }[] = [];
@@ -1724,12 +1732,15 @@ export class View {
     // The party's over (render/partyOver.ts): its lights go out in a ripple from home.
     const over = updatePartyOver(g, partyOverEase(g, this.overDebug), this.over), offAt = (x: number, z: number) => partyOff(over, x, z);
     this.leashView.partyOverEase = over.ease;
+    fireChallenge(g, this.fireworks); // (the cleared challenge circle's firework each bar: render/challenge.ts)
     this.fireworks.update(g.waveEvents, time, t, key => { const [cx, cy] = key.split(",").map(Number); return sigilColour(AREA_TYPES[g.map.typeOf(cx, cy)].creature) as number[]; }, at => !!g.win && g.win.lapAt !== undefined && at >= g.win.lapAt); // (the win's, from its victory lap on: the finale's palette; before the soundsystems: a celebrated one's lasers come on as its show starts)
     const party = this.partyView.update(g, time, (x, z, ww, hh) => inView(this, x, z, ww, hh, 4), () => false, this.fireworks.celebrated, offAt);
     if (over.front > 0) { for (const l of party.lights) l.strength *= 1 - offAt(l.x, l.z); party.playing = party.playing.filter(p => offAt(p.x, p.z) < 0.98); party.projectors = party.projectors.filter(p => offAt(p.x, p.z) < 0.98); }
     this.soundBatch.set(party.items);
     this.ground.setLegendRings(this.legendRings(g, time), this.ringCount);
     this.ground.setLegendFloors(this.floorItems, this.ringCount);
+    this.ground.setChallengeFloor(challengeFloor(g, g.witch.x, g.witch.z));
+    this.ground.setChallengeCarving(challengeCarving(g, g.witch.x, g.witch.z)); // (its sigil carved into its floor: render/challenge.ts) // (the challenge circle's dancefloor once cleared: render/challenge.ts)
     // (the zoo's undiscovered islands, rules/zooMap.ts: the nearest four lakes' sigils, faint on the water)
     if (g.map.zoo?.layout) {
       const L = g.map.zoo.layout, w = g.witch, items = this.lakeSigils;
@@ -1850,6 +1861,7 @@ export class View {
     for (let i = 0; i < cs.length; i++) { const c = cs[i]; if (Math.abs(c.x - w.x) < GR && Math.abs(c.z - w.z) < GR && hasRune(c)) clear.push({ x: c.x, z: c.z, r: t.groundCover.sigilClear }); } // (a happy one's rune at its feet)
     for (const r of relicsOut(g)) if ((r.state === "lying" || r.state === "dropped") && Math.abs(r.sx - w.x) < GR && Math.abs(r.sz - w.z) < GR) clear.push({ x: r.sx, z: r.sz, r: Math.max(t.groundCover.sigilClear, 3.4 * 0.45) }); // (and a relic's sigil, south of it)
     { const F = findClear(this); if (F) clear.unshift(F); } // (tonight's find's patch, first: render/view/finds.ts)
+    { const ch = g.challenge; if (ch && Math.hypot(ch.x - w.x, ch.z - w.z) < GR + ch.radius) clear.unshift({ x: ch.x, z: ch.z, r: ch.radius }); } // (the challenge circle's stone floor: render/challenge.ts)
     this.time("markers");
     this.grass.update(w.x, w.z, 1 - canopyShown(w), parts, t.suspects.groundCover ? LIGHT_UNIFORMS.uGlowR.value * 1.05 : t.groundCover.radius, clear); // out to the canopy hole's edge
     const partyObjectLights = this.partyObjects.update(g, time, this.camera, (x, z, ww, hh) => inView(this, x, z, ww, hh, 4), this.worldFires, this.lastView);
@@ -1938,6 +1950,7 @@ export class View {
     drawBerries(this, time);
     drawHatArt(this); // (the Harvest hat's sprouts, the Cyclone's whirlwind: render/view/hatArt.ts)
     drawFinds(this); // (tonight's travel trunk: render/view/finds.ts)
+    drawChallengeColumns(this); // (the challenge circle's columns: render/challenge.ts)
     checkPops(this, "moving");
     this.time("creatures");
     this.rulers.update(this.camera, this.canvas.clientWidth || window.innerWidth, this.canvas.clientHeight || window.innerHeight, w.x, w.z);
