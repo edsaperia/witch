@@ -11,8 +11,11 @@ node tools/multiplayer/route.cjs --build <game URL> --relay <ws:// or wss:// rel
   [--seed 123] [--link "px=6"] [--expect-version <text in version.json>] [--expect-relay-build <relay build prefix>]
   [--viewport 960x540] [--headed]
   bounds in seconds: [--overall 480] [--load 180] [--phone 20] [--wardrobe 16] [--rejoin 20] [--bedHold 15] [--walk 30]
-                     [--join 150] [--rollover 90] [--leave 90] [--redial 150]
+                     [--join 150] [--rollover 90] [--leave 90] [--redial 150] [--wake 25]
 ```
+
+`--wake` is the tool's own bound for each wake-up (a move key, then the 3 s stretch of her own time), not a T5B bound. A guest's
+clock runs only as fast as her page sends steps, so on a slow software renderer it may need longer (`--wake 120`).
 
 The build must be one with the telephone (the multiplayer branch, `codex/multiplayer-integration`). Both pages load it with
 `?telephone=1&telephoneCalls=1&resume=1&seed=<seed>` (the proof switches, docs/LINK-SWITCHES.md) plus anything given with

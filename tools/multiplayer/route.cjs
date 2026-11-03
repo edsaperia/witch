@@ -14,7 +14,7 @@ const DEFAULT_ENDPOINT = "wss://witch-relay-playtest.onrender.com"; // the game'
 const READY_TEXT = "The line is ready.";
 
 function parseArgs(argv) {
-  const a = { seed: "123", overall: 480, load: 180, phone: 20, wardrobe: 16, rejoin: 20, bedHold: 15, walk: 30, join: 150, rollover: 90, leave: 90, redial: 150, viewport: "960x540", headed: false };
+  const a = { seed: "123", overall: 480, load: 180, phone: 20, wardrobe: 16, rejoin: 20, bedHold: 15, walk: 30, join: 150, rollover: 90, leave: 90, wake: 25, redial: 150, viewport: "960x540", headed: false };
   for (let i = 0; i < argv.length; i++) {
     const k = argv[i];
     if (!k.startsWith("--")) throw Error(`Unexpected argument ${k}`);
@@ -30,7 +30,7 @@ function parseArgs(argv) {
 const USAGE = `Usage: node tools/multiplayer/route.cjs --build <game URL> --relay <ws:// or wss:// relay> --out <directory>
   [--seed 123] [--link "px=6"] [--expect-version <text in version.json>] [--expect-relay-build <relay build prefix>] [--viewport 960x540] [--headed]
   bounds in seconds: [--overall 480] [--load 180] [--phone 20] [--wardrobe 16] [--rejoin 20] [--bedHold 15] [--walk 30]
-                     [--join 150] [--rollover 90] [--leave 90] [--redial 150]`;
+                     [--join 150] [--rollover 90] [--leave 90] [--redial 150] [--wake 25]`;
 
 const sleep = ms => new Promise(r => setTimeout(r, ms));
 const now = () => Date.now();
@@ -104,7 +104,7 @@ async function main() {
   const R = {
     tool: "tools/multiplayer/route.cjs", startedAt: new Date(startedAt).toISOString(), finishedAt: null, verdict: "FAIL",
     build: { url: args.build }, relay: { url: relayBase, rewritten: relayBase !== DEFAULT_ENDPOINT },
-    bounds: { overallS: args.overall, loadS: args.load, phoneReadyS: args.phone, wardrobeS: args.wardrobe, rejoinS: args.rejoin, bedHoldS: args.bedHold, walkS: args.walk, joinS: args.join, rolloverS: args.rollover, leaveS: args.leave, redialS: args.redial },
+    bounds: { overallS: args.overall, loadS: args.load, phoneReadyS: args.phone, wardrobeS: args.wardrobe, rejoinS: args.rejoin, bedHoldS: args.bedHold, walkS: args.walk, joinS: args.join, rolloverS: args.rollover, leaveS: args.leave, redialS: args.redial, wakeS: args.wake },
     stages: [], checks: [], prediction: null, hostInputs: null, catchUp: null, guestHolds: null, sockets: { host: [], guest: [] }, wsEvents: { host: [], guest: [] },
     forcedClose: null, frameRate: [], walks: [], errors: { host: [], guest: [] }, screenshots: [], notes: [],
   };
@@ -326,10 +326,10 @@ async function main() {
 
     // 2. Each walks from her bed to her own telephone (the guest needs her line open to answer); the host presses E there.
     let house = null;
-    await stage("host-phone-ready", args.walk + args.phone + 25, async () => {
+    await stage("host-phone-ready", args.walk + args.phone + args.wake, async () => {
       house = await houseOf(host);
       const phone = objectFront(house, "telephone");
-      const up = await Promise.all([getUp(host, 0, 25000, "host"), getUp(guest, 0, 25000, "guest")]);
+      const up = await Promise.all([getUp(host, 0, args.wake * 1000, "host"), getUp(guest, 0, args.wake * 1000, "guest")]);
       const walks = await Promise.all([host, guest].map((p, i) => walk(p, 0, house, phone, { ms: args.walk * 1000, near: "telephone", label: `${i ? "guest" : "host"} to her telephone` })));
       const hostPhone = await openPhone(host, "host", args.phone * 1000);
       const guestPhone = await openPhone(guest, "guest", args.phone * 1000);
@@ -364,7 +364,7 @@ async function main() {
 
     // 4. The host leaves the phone menu and walks; the guest gets up. Each page sees the other move.
     let hostBedPlan = null;
-    await stage("both-move", 45, async () => {
+    await stage("both-move", 20 + args.wake, async () => {
       await host.getByRole("button", { name: "Step away", exact: true }).click();
       await until(host, 5000, "host phone menu closed", s => !s.menus.telephone);
       const g0 = await guest.evaluate(() => window.__mpPos(0));
@@ -382,7 +382,7 @@ async function main() {
         else if (now() - t > 10000) throw Error("the guest's page did not see the host move");
       }
       const h1 = await host.evaluate(() => window.__mpPos(1));
-      const guestUp = await getUp(guest, 1, 25000, "guest");
+      const guestUp = await getUp(guest, 1, args.wake * 1000, "guest");
       await until(host, 10000, "host sees the guest up", s => s.canonical.find(w => w.id === 1)?.wake?.open === true);
       return { hostWalk, guestSawHost: seen, guestUp, guestBeforeUp: h1 && { x: round(h1.x, 2), z: round(h1.z, 2) } };
     });
@@ -481,7 +481,7 @@ async function main() {
       check("redial: the host's number is ready to call", /^\d{7}$/.test(prefilled));
       // The host, waking in her next night, gets up and walks back to her telephone.
       const hs0 = await pageState(host);
-      const hostUp = await getUp(host, 0, 25000, "host next morning");
+      const hostUp = await getUp(host, 0, args.wake * 1000, "host next morning");
       const h0 = await pageState(host), here = h0.players.find(p => p.id === 0);
       const w = here.nearObjects.includes("telephone") ? null : await walk(host, 0, house, objectFront(house, "telephone"), { ms: args.walk * 1000, near: "telephone", label: "host back to her telephone" });
       if ((await pageState(host)).menus.telephone) await waitPanel(host, args.phone * 1000, READY_TEXT, "host line ready again");
