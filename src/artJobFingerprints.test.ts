@@ -123,6 +123,6 @@ describe("art job dispatcher roots and initialization safety", () => {
     expect(affectedArtJobs(before, creature)).not.toContain("housePiece");
     const shared = artJobFingerprints(edited("src/render/artPacking.ts"), options);
     expect(affectedArtJobs(before, shared)).toEqual(Object.keys(before.fingerprints).sort());
-    expect(Object.keys(before.fingerprints)).toHaveLength(34);
+    expect(Object.keys(before.fingerprints)).toHaveLength(33); // (33 since the room crown-mask job went: Ed, 2026-11-03, the treehouse as one room)
   });
 });
