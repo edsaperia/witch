@@ -1,7 +1,7 @@
 // The difficulty (Ed, 2026-11-03: "the game is much too easy"; tuning difficulty, the pause page's Difficulty sliders): creatures
 // faster in a fight (difficulty.creatureSpeed), ranged attacks reaching further (difficulty.rangedRange) and adults stronger
-// (difficulty.adultStrength), each by its knob, her own speed untouched; and the spark's speed by the tempo squared
-// (leyLines.tempoExponent). The swarm by island (population.swarm.largestIsland) is island.test.ts's.
+// (difficulty.adultStrength), each by its knob, her own speed untouched; and the spark's speed by the tempo, linear
+// (leyLines.pulseAt100, pulseAt200: 1.0 m/s at 100 bpm to 5.0 at 200, linear). The swarm by island (population.swarm.largestIsland) is island.test.ts's.
 import { afterEach, describe, expect, it } from "vitest";
 import { TUNING, type Tuning } from "./tuning";
 import { FIGHT, resetFight, startCharge, type Move } from "./movement";
@@ -9,7 +9,7 @@ import { attackOf, marchSpeedOf, newCombat, stunWorth, topSpeedOf } from "./comb
 import { adultMult, combatProfile } from "./combat/data";
 import { speciesSpell } from "./attacks/combatWorld";
 import { COMBAT } from "./combat/data";
-import { newBeatClock, recordTempo, tempoRate } from "./beat";
+import { newBeatClock, recordTempo, SPARK_FLOOR, sparkSpeedAt, targetTempo, tempoRate } from "./beat";
 import { newGame as fullGame, stepGame, STEP, type Controls } from "./game";
 import { smallWorld } from "../test/worlds";
 import { setupArena } from "./arena";
@@ -120,20 +120,34 @@ describe("the difficulty's knobs (Ed, 2026-11-03)", () => {
   }
 });
 
-describe("the spark's speed by the tempo squared (leyLines.tempoExponent; Ed, 2026-11-03)", () => {
+describe("the spark's speed by the tempo, 1.0 m/s at 100 bpm to 5.0 at 200, linear (leyLines.pulseAt100/pulseAt200; Ed, 2026-11-03)", () => {
   const rateAt = (bpm: number, t: Tuning = TUNING) => { const c = newBeatClock(120); recordTempo(c, t, bpm, 0); return tempoRate(c, t); };
-  it("is 2 as Ed asked: with pulseSpeed 1, about 0.69 m/s at 100 bpm, 1 at 120, 1.56 at 150 and 2.78 at 200: 4 times apart", () => {
-    expect(TUNING.leyLines.tempoExponent).toBe(2);
-    expect(TUNING.leyLines.pulseSpeed).toBe(1);
-    expect(rateAt(100)).toBeCloseTo((100 / 120) ** 2, 9); expect(rateAt(100)).toBeCloseTo(0.694, 3);
-    expect(rateAt(120)).toBeCloseTo(1, 9);
-    expect(rateAt(150)).toBeCloseTo(1.5625, 9);
-    expect(rateAt(200)).toBeCloseTo(2.778, 3);
-    expect(rateAt(200) / rateAt(100)).toBeCloseTo(4, 9);
+  it("is as Ed asked: with pulseSpeed 1, 1.0 m/s at 100 bpm, 1.8 at 120, 3.0 at 150 and 5.0 at 200, rising all the way", () => {
+    expect([TUNING.leyLines.pulseAt100, TUNING.leyLines.pulseAt200, TUNING.leyLines.pulseSpeed]).toEqual([1, 5, 1]);
+    expect(rateAt(100)).toBeCloseTo(1, 9);
+    expect(rateAt(120)).toBeCloseTo(1.8, 9);
+    expect(rateAt(150)).toBeCloseTo(3, 9);
+    expect(rateAt(200)).toBeCloseTo(5, 9);
+    for (let bpm = 81; bpm <= 260; bpm++) expect(rateAt(bpm)).toBeGreaterThan(rateAt(bpm - 1)); // (monotonic, on past both anchors)
+    expect(rateAt(250)).toBeCloseTo(7, 9); // (extrapolated the same way)
   });
-  it("at exponent 1, in step with the tempo as before (twice as fast at 200 as at 100)", () => {
-    const one: Tuning = { ...TUNING, leyLines: { ...TUNING.leyLines, tempoExponent: 1 } };
-    expect(rateAt(200, one) / rateAt(100, one)).toBeCloseTo(2, 9);
-    expect(rateAt(150, one)).toBeCloseTo(1.25, 9);
+  it("never slower than SPARK_FLOOR (0.2 m/s), however slow the record", () => {
+    expect(SPARK_FLOOR).toBe(0.2);
+    expect(rateAt(80)).toBeCloseTo(0.2, 9); expect(rateAt(60)).toBe(0.2); expect(sparkSpeedAt(1, TUNING)).toBe(0.2);
   });
+  it("follows its anchor knobs, and the knockdowns' bonus on the tempo", () => {
+    const t: Tuning = { ...TUNING, leyLines: { ...TUNING.leyLines, pulseAt100: 2, pulseAt200: 3 } };
+    expect(rateAt(100, t)).toBeCloseTo(2, 9); expect(rateAt(150, t)).toBeCloseTo(2.5, 9); expect(rateAt(200, t)).toBeCloseTo(3, 9);
+    const c = newBeatClock(120); c.bonus = 30;
+    expect(tempoRate(c, TUNING)).toBeCloseTo(sparkSpeedAt(150, TUNING), 9);
+  });
+  it("runs the pulse at pulseSpeed times it in a game", () => {
+    const g = newGame(5, TUNING);
+    g.clock.paused = false; g.party.paused = false; g.party.spellAt = undefined;
+    g.witch = { ...g.witch, seated: false, mode: "treetop", lift: 1 }; g.witches[0].health.hp = 1e6;
+    for (let i = 0; i < 120 / STEP && g.clock.time < g.party.bootUntil + 1; i++) stepGame(g, idle, STEP);
+    expect(g.clock.time).toBeGreaterThan(g.party.bootUntil);
+    expect(g.party.pulse.v).toBeCloseTo(TUNING.leyLines.pulseSpeed * sparkSpeedAt(targetTempo(g.beat, g.tuning), TUNING), 6);
+    expect(g.party.pulse.v).toBeCloseTo(1.8, 6); // (120 bpm, the night's own)
+  }, 60000);
 });

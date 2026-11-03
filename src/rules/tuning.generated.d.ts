@@ -1250,7 +1250,8 @@ export type SchemaTuning = {
   "leyLines": {
     "on": boolean;
     "pulseSpeed": number;
-    "tempoExponent": number;
+    "pulseAt100": number;
+    "pulseAt200": number;
     "reveal": number;
     "far": Array<number>;
     "behindBright": number;

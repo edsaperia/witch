@@ -6369,12 +6369,17 @@
         "pulseSpeed": {
           "type": "number",
           "minimum": 0,
-          "description": "How fast the pulse runs along the ley line, which sets how long each wave takes to arrive."
+          "description": "How fast the pulse runs along the ley line, times the spark's speed by the tempo (pulseAt100, pulseAt200), which sets how long each wave takes to arrive."
         },
-        "tempoExponent": {
+        "pulseAt100": {
           "type": "number",
           "minimum": 0,
-          "description": "the party's tempo's power on the pulse's speed: at 2 it runs (bpm ÷ the wave's tempo)² times pulseSpeed, so with pulseSpeed 1 about 0.69 m/s at 100 bpm, 1 at 120, 1.56 at 150 and 2.78 at 200 (4 times apart, not 2); 1, in step with the tempo as before."
+          "description": "the spark's speed in metres a second at 100 bpm: a straight line runs through it and pulseAt200, so with 1 and 5 it is 1.8 m/s at 120, 3 at 150 and 5 at 200, carried on the same way below 100 and above 200, never under 0.2."
+        },
+        "pulseAt200": {
+          "type": "number",
+          "minimum": 0,
+          "description": "the spark's speed in metres a second at 200 bpm, the line's other anchor (see pulseAt100)."
         },
         "reveal": {
           "type": "number",
@@ -6529,7 +6534,8 @@
       "required": [
         "on",
         "pulseSpeed",
-        "tempoExponent",
+        "pulseAt100",
+        "pulseAt200",
         "reveal",
         "far",
         "behindBright",

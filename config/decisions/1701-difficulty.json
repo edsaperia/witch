@@ -90,20 +90,37 @@
       }
     },
     {
-      "id": "tempoExponent",
+      "id": "pulseAt100",
       "pr": 1701,
       "group": "Difficulty",
-      "label": "Spark tempo power",
-      "note": "The tempo's power on the spark's speed (leyLines.tempoExponent; Ed, 2026-11-03: \"speed scales with bpm squared\", 2): its speed is pulseSpeed × (bpm ÷ the wave's tempo) to this, so at 2 about 0.69 m/s at 100 bpm and 2.78 at 200; 1, in step with the tempo as before; 0, the tempo doesn't touch it. Live.",
+      "label": "Spark at 100 bpm (m/s)",
+      "note": "The spark's speed at 100 bpm (leyLines.pulseAt100; Ed, 2026-11-03: \"a smooth increase from 100 bpm 1.0 m/s to 200 bpm 5.0 m/s\", \"I think it should be linear\"): a straight line runs through it and the 200 bpm speed, on past both (never under 0.2 m/s), by the party's tempo (her record and her knockdowns), times the Waves slider. Live.",
       "control": {
         "type": "slider",
-        "min": 0,
-        "max": 3,
-        "step": 0.1
+        "min": 0.25,
+        "max": 10,
+        "step": 0.25
       },
-      "default": 2,
+      "default": 1,
       "apply": {
-        "knob": "leyLines.tempoExponent"
+        "knob": "leyLines.pulseAt100"
+      }
+    },
+    {
+      "id": "pulseAt200",
+      "pr": 1701,
+      "group": "Difficulty",
+      "label": "Spark at 200 bpm (m/s)",
+      "note": "The spark's speed at 200 bpm (leyLines.pulseAt200, 5 as Ed asked), the line's other end: with 1 and 5, 1.8 m/s at 120 bpm and 3 at 150. Live.",
+      "control": {
+        "type": "slider",
+        "min": 0.25,
+        "max": 10,
+        "step": 0.25
+      },
+      "default": 5,
+      "apply": {
+        "knob": "leyLines.pulseAt200"
       }
     }
   ]
