@@ -168,18 +168,19 @@ const CASES = [
   const registry = path.resolve(__dirname, "../../config/decisions");
   const decisions = [require("../../config/decisions.json"), ...fs.readdirSync(registry)
     .filter(f => f.endsWith(".json")).map(f => JSON.parse(fs.readFileSync(path.join(registry, f), "utf8")))]
-    .flatMap(group => group.decisions.map(d => [d.id, d.control.type]));
+    .flatMap(group => group.decisions.map(d => d.id));
   await page.keyboard.press("Escape");
   await page.waitForSelector("#pause-sliders.open");
   const panes = await page.evaluate(expected => {
     const root = document.querySelector("#pause-sliders");
     const rows = [...root.querySelectorAll(".s[data-id]")];
-    return rows.length === expected.length && expected.every(([id, type]) => {
+    const groups = [...root.querySelectorAll(".grp")].map(group => group.dataset.group);
+    return groups.length === new Set(groups).size && rows.length === expected.length && expected.every(id => {
       const hits = rows.filter(row => row.dataset.id === id);
-      return hits.length === 1 && !!hits[0].closest(type === "slider" ? ".left" : ".right");
-    }) && [...root.querySelectorAll(".copyall, select, textarea, #pause-btns button")].every(el => el.closest(".right"));
+      return hits.length === 1 && !!hits[0].closest(".left");
+    }) && !root.querySelector(".right .grp, .right input[type=range]") && [...root.querySelectorAll(".copyall, select, textarea, #pause-btns button")].every(el => el.closest(".right"));
   }, decisions);
-  check(panes, "every registered decision appears once, with sliders on the left and actions and switches on the right");
+  check(panes, "every registered decision appears once, with every settings group on the left and actions on the right");
   for (const [label, width, height] of [["desktop", 1280, 720], ["phone", 390, 844]]) {
     await page.setViewportSize({ width, height });
     const fits = await page.evaluate(() => {
