@@ -1,0 +1,127 @@
+{
+  "pr": 1701,
+  "group": "Difficulty",
+  "decisions": [
+    {
+      "id": "creatureSpeed",
+      "pr": 1701,
+      "group": "Difficulty",
+      "label": "Creature speed ×",
+      "note": "Every creature's movement speed in a fight times this (difficulty.creatureSpeed; Ed, 2026-11-03: \"Animals +20% speed\", 1.2): its run, sprint and chase at her, a heavy's top speed, charges, swoops, a legend's charge, a besieger's march. Her speed, shots, lunges and leaps as they were. 1: as before. Live.",
+      "control": {
+        "type": "slider",
+        "min": 0.5,
+        "max": 2,
+        "step": 0.05
+      },
+      "default": 1.2,
+      "apply": {
+        "knob": "difficulty.creatureSpeed"
+      }
+    },
+    {
+      "id": "rangedRange",
+      "pr": 1701,
+      "group": "Difficulty",
+      "label": "Ranged range ×",
+      "note": "Every ranged attack's reach times this (difficulty.rangedRange; Ed, 2026-11-03: \"ranged attacks have +20% range\", 1.2): a shot, a lob or a beam is cast from and flies that much further, at her on top of dodge.b.range. Melee attacks and pulses round a creature as they were. 1: as before. Live.",
+      "control": {
+        "type": "slider",
+        "min": 0.5,
+        "max": 2,
+        "step": 0.05
+      },
+      "default": 1.2,
+      "apply": {
+        "knob": "difficulty.rangedRange"
+      }
+    },
+    {
+      "id": "adultStrength",
+      "pr": 1701,
+      "group": "Difficulty",
+      "label": "Adult strength ×",
+      "note": "An adult's health (a full 💌 ring's worth of blows) and damage in a fight times this, hers and the wild's alike (difficulty.adultStrength; Ed, 2026-11-03: \"adults are stronger\", 1.3). Young, babies and legends as they were. 1: as before. Live.",
+      "control": {
+        "type": "slider",
+        "min": 0.5,
+        "max": 3,
+        "step": 0.05
+      },
+      "default": 1.3,
+      "apply": {
+        "knob": "difficulty.adultStrength"
+      }
+    },
+    {
+      "id": "swarmCurve",
+      "pr": 1701,
+      "group": "Difficulty",
+      "label": "Pack growth curve",
+      "note": "The swarm's size curve's power (population.swarm.curve: n = 1 + 11·p^curve; Ed, 2026-11-03: \"The curve gets steeper (1.3 → 0.8) so packs grow sooner\"). Lower: bigger packs sooner along each island. A new map: it reloads.",
+      "control": {
+        "type": "slider",
+        "min": 0.3,
+        "max": 2,
+        "step": 0.05
+      },
+      "default": 0.8,
+      "apply": {
+        "knob": "population.swarm.curve",
+        "reload": true
+      }
+    },
+    {
+      "id": "largestIsland",
+      "pr": 1701,
+      "group": "Difficulty",
+      "label": "Largest island (areas)",
+      "note": "An island this many areas or more reaches full packs at its last area; a smaller one its size over this of the way along the curve (population.swarm.largestIsland; Ed, 2026-11-03: \"only the largest islands reach full packs\"; 50, the phase-5 islands). Lower: smaller islands reach fuller packs. A new map: it reloads.",
+      "control": {
+        "type": "slider",
+        "min": 10,
+        "max": 64,
+        "step": 1
+      },
+      "default": 50,
+      "apply": {
+        "knob": "population.swarm.largestIsland",
+        "reload": true
+      }
+    },
+    {
+      "id": "pulseAt100",
+      "pr": 1701,
+      "group": "Difficulty",
+      "label": "Spark at 100 bpm (m/s)",
+      "note": "The spark's speed at 100 bpm (leyLines.pulseAt100; Ed, 2026-11-03: \"a smooth increase from 100 bpm 1.0 m/s to 200 bpm 5.0 m/s\", \"I think it should be linear\"): a straight line runs through it and the 200 bpm speed, on past both (never under 0.2 m/s), by the party's tempo (her record and her knockdowns), times the Waves slider. Live.",
+      "control": {
+        "type": "slider",
+        "min": 0.25,
+        "max": 10,
+        "step": 0.25
+      },
+      "default": 1,
+      "apply": {
+        "knob": "leyLines.pulseAt100"
+      }
+    },
+    {
+      "id": "pulseAt200",
+      "pr": 1701,
+      "group": "Difficulty",
+      "label": "Spark at 200 bpm (m/s)",
+      "note": "The spark's speed at 200 bpm (leyLines.pulseAt200, 5 as Ed asked), the line's other end: with 1 and 5, 1.8 m/s at 120 bpm and 3 at 150. Live.",
+      "control": {
+        "type": "slider",
+        "min": 0.25,
+        "max": 10,
+        "step": 0.25
+      },
+      "default": 5,
+      "apply": {
+        "knob": "leyLines.pulseAt200"
+      }
+    }
+  ]
+}

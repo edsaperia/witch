@@ -131,12 +131,21 @@ export function recordTempo(c: BeatClock, t: Pick<Tuning, "beat">, bpm: number, 
   const s = c.segs[c.segs.length - 1]; s.bpm = s.bpmTo; // (at once: from this moment, not eased from the old)
 }
 
-/** How much faster than its wave's own tempo the party runs (her record's shift and her knockdowns' bonus over the wave's
- *  tempo): the wave countdown and the ley line's pulse run this many times as fast (Ed, 2026-10-07: the pulse travels at the
- *  tempo; 2026-10-29, the record: "Even at 200bpm the spark seems to be moving quite slowly, certainly not twice as fast as it
- *  does at 100bpm"). */
-export const tempoRate = (c: BeatClock, t: Pick<Tuning, "beat">): number =>
-  Math.max(0.1, 1 + ((c.shift ?? 0) + (c.bonus ?? 0)) / Math.max(1, waveTempo(t, c.wave)));
+/** The spark's speed (m/s, before leyLines.pulseSpeed's multiplier) at `bpm` (Ed, 2026-11-03: "a smooth increase from 100 bpm 1.0 m/s
+ *  to 200 bpm 5.0 m/s", then "I think it should be linear"): a straight line through leyLines.pulseAt100 at 100 bpm and pulseAt200 at
+ *  200, carried on the same way below 100 and above 200, never under SPARK_FLOOR (so a slow record still moves it). */
+export const SPARK_FLOOR = 0.2;
+export function sparkSpeedAt(bpm: number, t: { leyLines?: Pick<Tuning["leyLines"], "pulseAt100" | "pulseAt200"> }): number {
+  const a = t.leyLines?.pulseAt100 ?? 1, b = t.leyLines?.pulseAt200 ?? 5;
+  return Math.max(SPARK_FLOOR, a + ((b - a) * (bpm - 100)) / 100);
+}
+
+/** The spark's speed (m/s, times leyLines.pulseSpeed) at the party's tempo now: the wave's own, her record's shift and her knockdowns'
+ *  bonus on it (targetTempo), on the line (sparkSpeedAt; Ed, 2026-10-07: the pulse travels at the tempo; 2026-10-29: "Even at 200bpm
+ *  the spark seems to be moving quite slowly"; 2026-11-03: 1.0 m/s at 100 bpm to 5.0 at 200, linear). The wave countdown follows it. Only the
+ *  spark reads it. */
+export const tempoRate = (c: BeatClock, t: Pick<Tuning, "beat"> & { leyLines?: Pick<Tuning["leyLines"], "pulseAt100" | "pulseAt200"> }): number =>
+  sparkSpeedAt(targetTempo(c, t), t);
 
 /** She's been knocked down at `time` (Ed, 2026-10-07: "the BPM goes up by 1 each time you die"): the bonus rises by
  *  knockout.bpmStep (to knockout.bpmCap, if set), eased in over beat.knockBeats (a bar) from the next bar line (bonusAt), so

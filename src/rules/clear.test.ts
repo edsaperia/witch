@@ -52,20 +52,22 @@ describe("the hostile swarms by the runestone order (Ed, 2026-10-08: the swarm p
     expect(classStrengths({ reference: "medium", classes: { medium: { cap: 12, species: [] }, big: { cap: 4, species: ["x"] } } })).toEqual({ x: 3 });
   });
 
-  it("the target: a medium reference swarm of 1 + 11·p^1.3, its young share 1.0 to 0.2; growing along the order", () => {
+  it("the target: a medium reference swarm of 1 + 11·p^curve (0.8 since Ed, 2026-11-03; 1.3 before), its young share 1.0 to 0.2; growing along the order", () => {
+    expect(W.curve).toBe(0.8);
     expect(referenceAt(0, W)).toEqual({ size: 1, young: 1 });
     expect(referenceAt(1, W).size).toBe(12); expect(referenceAt(1, W).young).toBeCloseTo(0.2, 9);
-    expect(referenceAt(0.5, W).size).toBeCloseTo(1 + 11 * Math.pow(0.5, 1.3), 9);
+    expect(referenceAt(0.5, W).size).toBeCloseTo(1 + 11 * Math.pow(0.5, W.curve), 9);
     expect(targetPower(0, W)).toBe(45 * 3); // (one young)
     for (let p = 0; p < 1; p += 0.1) expect(targetPower(p + 0.1, W)).toBeGreaterThan(targetPower(p, W));
     const t = swarmTotals("bear", 1, 2); expect(t).toEqual({ hp: (45 + 320) * 2, siegeDps: (3 + 20) * 2, witchThreat: 3 }); expect(estimatedPower("bear", 1, 2)).toBe(t.hp * t.siegeDps);
   });
 
-  it("every species at p = 0, .25, .5, .75 and 1 comes within 15% of the target (or, at the first stone, as near as one creature can)", () => {
+  it("every species at p = 0, .25, .5, .75 and 1 fields the nearest swarm to the target it can (within mixTolerance of it, or 15%)", () => {
+    // (how near the nearest comes is an outcome of the curve and the caps, not a rule: with the curve at 0.8 a ram's best at p = .5 is
+    // 19% off; Ed's test rule, outcome statistics never block)
     for (const p of P5) for (const sp of kinds) {
       const best = Math.min(...options(p, sp).map(o => o.err));
       expect(errOf(p, sp), `${sp} at ${p}`).toBeLessThanOrEqual(Math.max(0.15, best + W.mixTolerance) + 1e-9);
-      if (p > 0) expect(errOf(p, sp), `${sp} at ${p}`).toBeLessThanOrEqual(0.15);
     }
   });
 
