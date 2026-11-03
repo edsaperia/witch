@@ -7,7 +7,7 @@
       "pr": 1732,
       "group": "Colour grammar",
       "label": "Colours: party/forest (new) vs old",
-      "note": "New (Ed, 2026-11-03: \"the forest is cold, the party is warm\"): your sigils, chains and runes pink, crimson, orange and gold by rank; the wild's lilac, purple, blue and turquoise; berries deep berry pink; the ley line ahead of its spark blue, purple and turquoise. Warnings stay pure red. Old: the colours before it (friends purple then three blues, the wild purple then three reds, cherry-red berries, the whole rainbow ahead). Reloads the night.",
+      "note": "New (Ed, 2026-11-03: \"the forest is cold, the party is warm\"): your sigils, chains and runes pink, crimson, orange and gold by rank; the wild's purple, blue and turquoise; every baby pink, a sleeping legend lilac; berries deep berry pink; the ley line ahead of its spark blue, purple and turquoise. Warnings stay pure red. Old: the colours before it (friends purple then three blues, the wild purple then three reds, cherry-red berries, the whole rainbow ahead). Reloads the night.",
       "control": {
         "type": "choice",
         "options": [

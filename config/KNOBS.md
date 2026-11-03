@@ -1642,7 +1642,7 @@ Code: `rules/win.ts`, `docs/backlog/journey.md`, `rules/guidance.ts`
 
 ### `colourGrammar`
 
-The colour grammar: new, the party's colours warm and the forest's cold (her sigils, chains and runes pink, crimson, orange and gold by rank, the wild's lilac, purple, blue and turquoise, the berries pink, the ley line cold ahead of its spark); old, the colours before it.
+The colour grammar: new, the party warm and the forest cold (her sigils pink, crimson, orange, gold by rank; the wild's purple, blue, turquoise; every baby pink, a sleeping legend lilac; berries pink; the ley line cold ahead of its spark); old, the colours before it.
 
 1. Ed, 2026-11-03: "the forest is cold, the party is warm" … "red telegraphs are right; red does mean warning" … "should be less colourful; a cold coloured rainbow, maybe just blue and purple and turquoise" (his table: yours baby pink, youth red, adult orange, legend gold; wild youth purple, adult blue, legend turquoise; the last quote the ley line ahead of the pulse. The warnings keep their pure red; a youth's red is a crimson, toward rose and darker. The pause page's Colours switch (old: the friends' purple then three blues, the wild's purple then three reds, cherry-red berries, the whole rainbow ahead of the spark); it reloads the night)
 Code: `render/colourGrammar.ts`, `render/leash/ranks.ts`, `render/leash/rainbow.ts`
@@ -1715,11 +1715,15 @@ Code: `render/colourGrammar.ts`, `render/leash/ranks.ts`, `render/leash/rainbow.
 - **`leash.ranks`**: Leash sigils drawn as bare glyphs in their rank's colour (baby, youth, adult, legend) with embers rising off them, so ranks are easy to tell apart at a glance.
   1. Ed, 2026-10-27: "larger sigils is good ... embers are good ... colours-for-rank is good; it's more important in rapid gameplay to be able to tell ranks apart than creatures" (after mocks 3 to 9; render/leash/ranks.ts)
   2. Ed, 2026-10-27: "go ahead and push all the new sigil work" (the default since; ?sigils=old turns them off and the hex grid back to 4 m)
-  3. Ed, 2026-11-03: "the forest is cold, the party is warm" (colours (a friend's): baby pink, youth crimson, adult orange, legend gold; enemy (the wild's): a baby's frost lilac, youth purple, adult blue, legend turquoise (before: a friend's purple then three blues, an enemy's purple then three reds; colourGrammar old))
+  3. Ed, 2026-11-03: "the forest is cold, the party is warm" (colours (a friend's): baby pink, youth crimson, adult orange, legend gold; enemy (the wild's): youth purple, adult blue, legend turquoise (before: a friend's purple then three blues, an enemy's purple then three reds; colourGrammar old))
+  4. Ed, 2026-11-03: on #1732: every baby sigil is her pink, on either side (a wild baby waiting on a stone's column always joins the party at its conversion and can never be hostile; enemy's first kept the same pink for the rune stones); the pale lilac means only neutral, asleep: a sleeping legend's sigil (asleep)
   on [2], every leash sigil (her stack, placed sigils, happy runes, the ghost, the treetop projection, the bond) is its bare glyph, no ring or disc, glyph metres across on the ground, in its rank's colour (colours: baby, youth, adult, legend; the species' neon stays the world's: borders, stones, fireworks, dancefloor, holograms, chart), with embers rising off its strokes (embers.count at once, each size metres, rising rise metres, by rank; in her stack stack of that), under a dark shade in the glyph's own shape (not a disc); a youth in her stack shows two rows of round dots off to its right, one a berry it eats on the move (toEvolve less the last, eaten at a placed sigil), at most dotsPerRow a row, bright eaten and dim not, pulsing when ready; and the hex grid is hex metres (leash.hex.size).
   Code: `render/leash/ranks.ts`
 - **`leash.placeMotes`**: A sigil put down or picked up: its burst of motes rising in its colour (render/leash.ts, drawn in render/leash/combat.ts): count, size (m), bright (times its colour), rise and life (times the old height and length).
   1. the coordinator, 2026-10-29: "Given current settings, the motes from sigils don't do much" (Ed, relayed; the art director's motes pass, #1398 (tools/shot/motes.cjs measures them))
+- **`leash.ranks.asleep`**: A sleeping legend's sigil colour (0-255): neutral, asleep, a pale frost lilac, used for nothing else.
+  1. Ed, 2026-11-03: on #1732: the pale lilac means only neutral, asleep; every baby is pink. Before the grammar a sleeping legend took the babies' purple (Ed, 2026-10-29), which colourGrammar old brings back
+  Code: `render/leash/ranks.ts`
 - **`leash.ranks.embers.bright`**: The embers rising off rank sigils (on the ground, in her stack, over the rune stones): their colour times this.
   1. the coordinator, 2026-10-29: "Given current settings, the motes from sigils don't do much" (Ed, relayed; the art director's motes pass, #1398 (tools/shot/motes.cjs measures them))
 - **`leash.ranks.chain.fall`**: How far (m) along its walking path a travelling follower's chain, hanging from its sigil, reaches the ground for every metre it falls (0: straight down to where the path starts).
@@ -1778,6 +1782,7 @@ Code: `render/colourGrammar.ts`, `render/leash/ranks.ts`, `render/leash/rainbow.
 | `leash.ranks.glyph` | number | 0 to … |
 | `leash.ranks.colours` | array of array |  |
 | `leash.ranks.enemy` | array of array |  |
+| `leash.ranks.asleep` | array of number |  |
 | `leash.ranks.sizes` | array of number |  |
 | `leash.ranks.embers.count` | array of number |  |
 | `leash.ranks.embers.size` | array of number |  |

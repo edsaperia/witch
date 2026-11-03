@@ -1,7 +1,8 @@
 // The colour grammar (Ed, 2026-11-03: "the forest is cold, the party is warm"; and on the warnings, "red telegraphs are right; red
 // does mean warning"): what marks a creature as hers or the party's is warm (the tuning's leash.ranks.colours: a baby's pink, a
 // youth's crimson, an adult's orange, a legend's gold), what marks it wild is cold (leash.ranks.enemy: a youth's purple, an adult's
-// blue, a legend's turquoise); the berries a deep berry pink (berries.colour); the ley line ahead of its spark "a cold coloured
+// blue, a legend's turquoise); every baby's her pink, on either side (Ed, 2026-11-03, on #1732: a wild baby always joins the party
+// at its stone's conversion and can never be hostile); a sleeping legend's alone a pale lilac, "neutral, asleep" (leash.ranks.asleep); the berries a deep berry pink (berries.colour); the ley line ahead of its spark "a cold coloured
 // rainbow, maybe just blue and purple and turquoise" (coldRainbow; render/leash/rainbow.ts, render/leylines.ts). The warnings keep
 // their pure red (render/leash/attackLook.ts RED, render DANGER, config danger.warn #e62828): a youth's crimson sits apart from it,
 // toward rose and darker. The elements' own colours (fire, frost...) are theirs, unchanged.
@@ -12,10 +13,11 @@ import type { Tuning } from "../rules/tuning";
 export const oldColours = (t: Pick<Tuning, "colourGrammar">): boolean => t.colourGrammar === "old";
 
 /** The rank colours before the grammar (0-255, baby to legend): a friend's purple then three blues, an enemy's purple then three
- *  reds (Ed, 2026-10-29: "more strictly do hostile reds vs friendly blues, no purples"). */
+ *  reds (Ed, 2026-10-29: "more strictly do hostile reds vs friendly blues, no purples"); a sleeping legend's the babies' purple. */
 export const OLD_RANK_COLOURS = {
   colours: [[180, 100, 255], [125, 145, 195], [55, 115, 220], [0, 135, 255]],
   enemy: [[180, 100, 255], [190, 105, 100], [225, 45, 40], [255, 55, 15]],
+  asleep: [180, 100, 255],
 };
 /** The berries' colour before the grammar: a shiny dark cherry red. */
 export const OLD_BERRY = "#9e1024";

@@ -4278,7 +4278,7 @@
         "new",
         "old"
       ],
-      "description": "The colour grammar: new, the party's colours warm and the forest's cold (her sigils, chains and runes pink, crimson, orange and gold by rank, the wild's lilac, purple, blue and turquoise, the berries pink, the ley line cold ahead of its spark); old, the colours before it."
+      "description": "The colour grammar: new, the party warm and the forest cold (her sigils pink, crimson, orange, gold by rank; the wild's purple, blue, turquoise; every baby pink, a sleeping legend lilac; berries pink; the ley line cold ahead of its spark); old, the colours before it."
     },
     "leash": {
       "type": "object",
@@ -4614,6 +4614,14 @@
                 }
               }
             },
+            "asleep": {
+              "type": "array",
+              "items": {
+                "type": "number",
+                "minimum": 0
+              },
+              "description": "A sleeping legend's sigil colour (0-255): neutral, asleep, a pale frost lilac, used for nothing else."
+            },
             "sizes": {
               "type": "array",
               "items": {
@@ -4807,6 +4815,7 @@
             "glyph",
             "colours",
             "enemy",
+            "asleep",
             "sizes",
             "embers",
             "dotsPerRow",
