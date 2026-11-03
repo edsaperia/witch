@@ -102,11 +102,12 @@ export function drawChallenge(lv: LeashView, time: number, dot: number[]): void 
   const cols = columnSpots(ch, t);
   // The island's sigil glowing in its floor (its legendary form: a magic circle with the animal at its middle, render/leash.ts
   // slotOf), over the floor's carving (the ground's: challengeRing), so it reads in the dark: moonlit while it waits, brighter once
-  // it's ready, the rainbow on the beat once cleared.
+  // it's ready, the rainbow on the beat once cleared. Its light alone, no dark backing as a sigil lying on the ground has (at this
+  // size that blacked out the stone floor under it).
   {
     const lit = ch.clearedAt !== null, ready = !lit && challengeReady(g), c = lit ? rainbow(time * 0.1) : [0.45, 0.85, 0.95];
-    const a = lit ? 0.7 + 0.3 * p : ready ? 0.85 + 0.15 * Math.sin(time * 3) : 0.7;
-    lv.groundSigil(ch.x, 0.02, ch.z, ch.radius * SIGIL_SIZE, lv.uv(lv.slotOf(islandSigilOf(g.map), LEGEND_LEVEL, true), 2), c[0], c[1], c[2], a);
+    const a = lit ? 0.5 + 0.45 * p : ready ? 0.7 + 0.1 * Math.sin(time * 3) : 0.55;
+    lv.flat.add(ch.x, 0.02, ch.z, ch.radius * SIGIL_SIZE, lv.uv(lv.slotOf(islandSigilOf(g.map), LEGEND_LEVEL, true), 2), c[0], c[1], c[2], a);
   }
   if (ch.clearedAt === null) {
     // Waiting: each column's top a faint cold glow; ready, the spell's notes at its middle, and her fill round her as she casts.
