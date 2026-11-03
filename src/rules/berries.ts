@@ -120,7 +120,7 @@ export function nearestBerry(s: BerryState, x: number, z: number, reach: number)
 }
 
 /** The berry a press would queue for `c` with her at (x, z): the nearest un-taken one within berries.feed.reach of her, while it has
- *  room; else null. (The view's marker shows this one: render/feedTag.ts.) */
+ *  room; else null. (The view makes this one glow brighter, the key over it: render/feedTag.ts.) */
 export const feedTarget = (s: BerryState, c: Creature | undefined, x: number, z: number, t: Tuning): Berry | null =>
   c && hasRoom(c, s, t) ? nearestBerry(s, x, z, feedKnobs(t).reach) : null;
 

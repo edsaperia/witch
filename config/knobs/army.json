@@ -84,9 +84,15 @@
           "date": "2026-11-03",
           "quote": "otherwise feeding berries becomes a way of moving creatures quickly rather than levelling them up",
           "rest": "speed: it goes to its berry at about its own pace, 1 to 1.2 times"
+        },
+        {
+          "by": "Ed",
+          "date": "2026-11-03",
+          "quote": "just \"[E]\" (or equivalent controller) key above the berry with a little down arrow, and the berry glows brighter",
+          "rest": "the prompt's words gone; glow, how much brighter the offered berry glows"
         }
       ],
-      "notes": "reach: metres from her a berry may be to be fed (the nearest un-taken one, marked, with the prompt). speed: the animal walks to each queued berry at its leash pace times this. hold: seconds the sigil button is held, with a feed on offer, to put the bottom sigil down instead of feeding it (a tap shorter than this feeds).",
+      "notes": "reach: metres from her a berry may be to be fed (the nearest un-taken one, glowing brighter, the key over it). speed: the animal walks to each queued berry at its leash pace times this. hold: seconds the sigil button is held, with a feed on offer, to put the bottom sigil down instead of feeding it (a tap shorter than this feeds). glow: how many times brighter the berry a tap would feed glows (its halo bigger and brighter, its core lit up; 1 the pulsing halo it had), the use key over it with a small down arrow and no words [3].",
       "links": [
         "rules/berries.ts",
         "rules/sigilButton.ts",
