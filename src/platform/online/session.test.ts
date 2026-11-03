@@ -11,7 +11,7 @@ import { WITCH_GENOME } from "../../../art/witchGenome.js";
 import { appearance } from "./appearance";
 import { stationLook } from "./stationAppearance";
 import { SHELVES, wear } from "../../rules/wardrobe";
-import { startWake } from "../../rules/wakeUp";
+import { startWake, startWakeFor } from "../../rules/wakeUp";
 import { deckOf } from "../../rules/treehouse";
 import { RECORDS } from "../../rules/records";
 import { stationAuthority } from "./stationAuthority";
@@ -28,6 +28,34 @@ const cleanups: (() => void)[] = [];
 afterEach(() => { for (const stop of cleanups.splice(0)) stop(); });
 const input = (moveX = 0): Controls => ({ moveX, moveZ: 0, zoom: 0, toggleMode: false, autoTalk: false });
 const turn = () => new Promise<void>(resolve => setTimeout(resolve, 0));
+it("resets a guest bed hold when E is released on a real guest quantum", async () => {
+  const f=fixture(),{joined}=await f.start();await f.sync();await joined;
+  const guest=f.hostGame.witches[1],bed=HOUSE_ROOMS.objects.find(o=>o.id==="bedroom2Bed")!;
+  startWakeFor(f.hostGame,guest.time??f.hostGame.herTime,{yesterday:true},guest,{player:1,room:"bedroom2"});
+  guest.wake!.open=true;guest.wake!.beat="up";
+  Object.assign(guest.body,objectFront(bed,f.hostGame.map.treehouse,.1),{perch:true,mode:"ground",seated:false});
+  for(let sequence=0;sequence<12;sequence++){
+    f.advanceTime(16);f.host.message({type:"input",player:1,payload:{sequence,controls:{...input(),sigilHeld:true}}});f.host.step(input(),.1);
+  }
+  expect(guest.house?.bedFrom).toBeDefined();expect(guest.house?.slept).not.toBe(true);
+  f.advanceTime(16);f.host.message({type:"input",player:1,payload:{sequence:12,controls:{...input(),sigilHeld:false}}});f.host.step(input(),.1);
+  expect(guest.house?.bedFrom).toBeUndefined();expect(guest.house?.slept).not.toBe(true);
+});
+it.each([1/60,.1])("keeps an undressed guest bed hold with host frame duration %s", async dt => {
+  const f=fixture(),{joined}=await f.start();await f.sync();await joined;
+  const guest=f.hostGame.witches[1],bed=HOUSE_ROOMS.objects.find(o=>o.id==="bedroom2Bed")!;
+  startWakeFor(f.hostGame,guest.time??f.hostGame.herTime,{yesterday:true},guest,{player:1,room:"bedroom2"});
+  guest.wake!.open=true;guest.wake!.beat="up"; // The captured guest was awake and still had her clothes pile.
+  Object.assign(guest.body,objectFront(bed,f.hostGame.map.treehouse,.1),{perch:true,mode:"ground",seated:false});
+  for(let sequence=0;sequence<180&&!guest.house?.slept;sequence++){
+    f.advanceTime(16);
+    f.host.message({type:"input",player:1,payload:{sequence,controls:{...input(),sigilHeld:true}}});
+    f.host.step(input(),dt); // The slower host frame adds catch-up quanta without a new guest input.
+  }
+  expect(guest.wake!.pile!.length).toBeGreaterThan(0);
+  expect(guest.house?.slept).toBe(true);
+  expect(f.hostGame.witches[0].house?.slept).not.toBe(true);
+});
 it("keeps the guest visit when a failed send synchronously reports transport-away", async () => {
   const f = fixture(); const { joined } = await f.start(); await f.sync(); await joined;
   const game = f.guest.game;

@@ -4,6 +4,7 @@
 // rules/leash.ts); and a happy creature's rune near her trotting over to her. Then, after the 💌s, a sigil put down in
 // a legend's clearing finishing its quest (rules/quest.ts).
 import { wakeOf, settleSleepingBed } from "./wakeUp";
+import { guestMotionReady } from "./onlineInputSteps";
 import { furnitureFor } from "./guestFurniture";
 import { isDressingTable } from "./clothesPile";
 import { atZooExit } from "./zoo";
@@ -87,7 +88,8 @@ export function stepSigilButton(g: Game, c: Controls, W: Witch, t: Tuning, ht: n
       relicEvents.push({ kind: "house", id: W.id, x: deck!.x + at.x, z: deck!.z + at.z, at: ht, obj: at.id });
       const waking = wakeOf(g, W); if (isDressingTable(at.id) && waking) waking.styled = true; // (her skin and hair seen to: the first morning's first step, rules/guidance.ts)
     }
-    const slept = (inHouse || W.house) && stepBed(W, at?.use.kind === "bed", !!c.sigilHeld && inHouse, ht).slept;
+    // A missing guest quantum pauses her clock; it is not a released use key.
+    const slept = (W !== g.witches[1] || guestMotionReady(g)) && (inHouse || W.house) && stepBed(W, at?.use.kind === "bed", !!c.sigilHeld && inHouse, ht).slept;
     if (slept && g.witches.length > 1 && at?.use.kind === "bed") settleSleepingBed(g, W, at.id, ht);
     if (slept && g.witches.every(w => w.house?.slept)) relicEvents.push({ kind: "house", id: W.id, x, z, at: ht, obj: "slept" });
     sigil = false; place = false;
