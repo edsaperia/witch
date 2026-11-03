@@ -6,6 +6,7 @@ import { newGame, stepGame, type Controls, type Game } from "../rules/game";
 import { TUNING, type Tuning } from "../rules/tuning";
 import { befriend } from "../rules/creatureStates";
 import { islandSigilOf } from "../rules/dancefloor";
+import { startPartyOver } from "../rules/partyOver";
 import { challengeBeacons, challengeRing } from "./challenge";
 import type { Beacon } from "./markers";
 
@@ -43,7 +44,7 @@ describe("the challenge circle's light", () => {
 
   it("is dark, with no beam, once closed", () => {
     const g = game(), ch = g.challenge!;
-    g.party.next = [g.map.cells[1]]; g.party.afterNext = [];
+    startPartyOver(g, g.clock.time); // (the night lost: Ed, on #1725, only then or once it's won)
     stepGame(g, still, 1 / 60);
     expect(ch.closedAt).not.toBeNull();
     expect(challengeRing(g, ch.x, ch.z)!.glint).toBe(0);

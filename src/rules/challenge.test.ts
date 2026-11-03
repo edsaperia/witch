@@ -8,12 +8,14 @@ import { AREA_TYPES, generateMap } from "./map";
 import { cellKey, clearArea } from "./party";
 import { befriend, hasRune, stateOf } from "./creatureStates";
 import { challengeReady, challengeSite, columnSpots, packKinds, packLeft, spawnPack } from "./challenge";
-import { fillTrunk, FIND_KINDS, type Found } from "./finds";
+import { fillTrunk, FIND_KINDS, nightPick, type FindKindId, type Found } from "./finds";
 import { FIND_SETS, allFinds, bandOf, biomeOf, islandSet, setPick } from "./findSets";
 import { flaskUnder } from "./legends";
 import { routeOf } from "./party";
 import { KINDS_TABLE } from "./kinds";
 import { restoreGame, snapshotGame } from "./nightSnapshot";
+import { startPartyOver } from "./partyOver";
+import { Forest } from "./forest";
 
 const islandOf = (kind: string, t: Tuning = TUNING): Tuning => ({ ...t, map: { ...t.map!, island: kind, islandAreas: 10 } });
 const still: Controls = { moveX: 0, moveZ: 0, toggleMode: false, zoom: 0, autoTalk: false };
@@ -56,6 +58,14 @@ describe("where it is (Ed, 2026-11-03: \"The challenge area shouldn't be adjacen
       if (kind !== "home") expect(AREA_TYPES[m.typeOf(sp.cell[0], sp.cell[1])].creature, kind).toBe(kind);
     }
   }, 120000);
+
+  it("keeps its whole circle clear, the woods right up to a narrow margin past its edge (Ed, on #1725)", () => {
+    const t = islandOf("fox"), m = generateMap(2, t), sp = challengeSite(m)!, f = new Forest(m), C = TUNING.challenge!;
+    expect(sp.r).toBeCloseTo(C.radius + C.margin, 6);
+    const near = f.treesNear(sp.x, sp.z, sp.r + 10).map(q => Math.hypot(q.x - sp.x, q.z - sp.z));
+    expect(near.filter(d => d < sp.r)).toEqual([]); // (none in it, whichever area a tree's in)
+    expect(near.filter(d => d >= sp.r && d < sp.r + 10).length).toBeGreaterThan(5); // (the woods close round it)
+  }, 60000);
 
   it("holds tonight's find at its middle", () => {
     const g = game("fox", 2), ch = g.challenge!;
@@ -134,8 +144,8 @@ describe("clearing it (Ed: \"When they're all invited or have run off, you can g
   it("cast on, lights up: the pack happy, partying round it, never to be leashed; its find hers", () => {
     const g = game("fox", 2), ch = g.challenge!;
     fillTrunk(g, {});
-    const item = g.trunk!.item!, set = islandSet(g.map.island)!;
-    expect(set.finds.some(f => f.item === item && f.kind === g.trunk!.kind)).toBe(true); // (from the island's own set)
+    const item = g.trunk!.item!;
+    expect({ kind: g.trunk!.kind, item }).toEqual(nightPick(g.map.seed, {})); // (the night's one draw over everything, Ed 2026-11-03: "for now just make it one find selected at random")
     winAll(g); atCircle(g);
     let done = false, found: string | undefined;
     for (let i = 0; i < 60 * (TUNING.cast!.time + 1) && !done; i++) {
@@ -183,13 +193,15 @@ describe("clearing it (Ed: \"When they're all invited or have run off, you can g
   }, 60000);
 });
 
+/** Everything of a list of finds, as found. */
+const owning = (finds: readonly { kind: FindKindId; item: string }[]): Found => { const o: Found = {}; for (const f of finds) o[f.kind] = new Set([...(o[f.kind] ?? []), f.item]); return o; };
+const everything = () => owning(FIND_KINDS.flatMap(k => k.items.map(item => ({ kind: k.id, item }))));
+
 describe("the reward (Ed: \"when you clear it you get the find ... when you have them all you get a flask instead\")", () => {
-  it("is a flask once she owns the island's whole set: its sigil at the circle, drunk with E", () => {
-    const g = game("fox", 2), ch = g.challenge!, set = islandSet(g.map.island)!;
-    const found: Found = {};
-    for (const f of set.finds) found[f.kind] = new Set([...(found[f.kind] ?? []), f.item]);
-    fillTrunk(g, found);
-    expect(g.trunk).toBeNull(); // (nothing of the set left: no find tonight)
+  it("is a flask once she has found everything: its sigil at the circle, drunk with E", () => {
+    const g = game("fox", 2), ch = g.challenge!;
+    fillTrunk(g, everything());
+    expect(g.trunk).toBeNull(); // (nothing left to find: no find tonight)
     const before = g.relics.length;
     winAll(g); atCircle(g);
     run(g, TUNING.cast!.time + 0.5, { ...still, sigilHeld: true });
@@ -201,6 +213,19 @@ describe("the reward (Ed: \"when you clear it you get the find ... when you have
     expect(f.state).toBe("dropped");
     expect(flaskUnder(g.relics, f.sx, f.sz, TUNING.leash.runeRadius)).toBe(f);
   }, 60000);
+
+  it("with the find sets on (findSets), draws from the island's own set, and gives a flask once that set's hers", () => {
+    const t = withTuning({ challenge: { ...TUNING.challenge!, findSets: true } }), g = game("fox", 2, t), set = islandSet(g.map.island)!;
+    fillTrunk(g, {});
+    expect(set.finds).toContainEqual({ kind: g.trunk!.kind, item: g.trunk!.item });
+    const g2 = game("fox", 2, t);
+    fillTrunk(g2, owning(set.finds));
+    expect(g2.trunk).toBeNull();
+    // (off, the default: the set owned is no matter while anything else is left)
+    const g3 = game("fox", 2);
+    fillTrunk(g3, owning(set.finds));
+    expect(g3.trunk?.item).toBeTruthy();
+  }, 120000);
 
   it("draws only from the island's set, the same night the same find", () => {
     const set = islandSet({ kind: "fox", phase: 1 })!;
@@ -233,12 +258,23 @@ describe("the find sets (by island stage and biome)", () => {
   });
 });
 
-describe("timing and the win (Ed: only before the final wave; optional)", () => {
-  it("closes at last call (the final wave's countdown): its pack calm, its find gone, no casting", () => {
+describe("timing and the win (Ed, 2026-11-03, on #1725: closed only once the night is won or lost; optional)", () => {
+  it("stays open at last call (the final wave's countdown)", () => {
     const g = game("fox", 2), ch = g.challenge!;
     fillTrunk(g, {});
     winAll(g);
     g.party.next = [g.map.cells[1]]; g.party.afterNext = []; // (the next wave's stone the route's last)
+    run(g, 0.1);
+    expect(ch.closedAt).toBeNull();
+    expect(challengeReady(g)).toBe(true);
+    expect(g.trunk?.item).toBeTruthy();
+  }, 60000);
+
+  it("closes once the night is lost: its pack calm, its find gone, no casting", () => {
+    const g = game("fox", 2), ch = g.challenge!;
+    fillTrunk(g, {});
+    winAll(g);
+    startPartyOver(g, g.clock.time);
     run(g, 0.1);
     expect(ch.closedAt).not.toBeNull();
     expect(g.trunk).toBeNull();

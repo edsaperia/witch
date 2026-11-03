@@ -1,9 +1,9 @@
 {
-  "reason": "The challenge area (Ed, 2026-11-03; docs/plans/follower-buffs-and-challenge-areas.md section 2): the find's own area becomes the challenge area. Its clearing widens to the 12 m stone circle and its ring of columns, its trees are the island's own animal's on a kind's island, and its pack (an adult and a youth of every roster kind) is added after every other creature. Nothing else on the route changes: the same areas, stones, route and waves.",
+  "reason": "The challenge area (Ed, 2026-11-03; docs/plans/follower-buffs-and-challenge-areas.md section 2; his rulings on #1725): the find's own area becomes the challenge area. Its clearing is the 36 m stone circle and a 3 m margin, cleared across area borders and level, with the woods right up to it (no open middle of its own); stones keep their gap from its edge; on a kind's island its trees are the island's own animal's; its pack (an adult and a youth of every roster kind) is added after every other creature.",
   "frames": {
-    "*": "the challenge area's wider clearing, its stone circle with the island's sigil, its columns and beam of light where they're in view, its pack among the creatures, and on a kind's island that area's trees its own kind's"
+    "*": "the challenge area's circle, its glowing sigil, its columns and beam of light where they're in view, the woods close round it, its pack among the creatures, the terrain levelled under it, and on a kind's island that area's trees its own kind's"
   },
   "rules": {
-    "*": "more creatures (the challenge's pack, appended to the list) and their fights where she meets them; the find's area's clearing and, on a kind's island, its type; the find drawn from the island's set"
+    "*": "more creatures (the challenge's pack, appended to the list) and their fights where she meets them; the challenge area's clearing, woods and, on a kind's island, its type; stones near it moved to keep their gap from its edge"
   }
 }

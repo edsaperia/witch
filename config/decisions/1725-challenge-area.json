@@ -8,9 +8,17 @@
       "group": "Challenge area",
       "label": "Challenge pack: adults per kind",
       "note": "How many adults of each kind on the island's roster guard the challenge circle (Ed, 2026-11-03: \"one adult and one youth of every creature kind on the island\"). 0 leaves only youths. A new night: it reloads.",
-      "control": { "type": "slider", "min": 0, "max": 3, "step": 1 },
+      "control": {
+        "type": "slider",
+        "min": 0,
+        "max": 3,
+        "step": 1
+      },
       "default": 1,
-      "apply": { "knob": "challenge.adults", "reload": true }
+      "apply": {
+        "knob": "challenge.adults",
+        "reload": true
+      }
     },
     {
       "id": "challengeYouths",
@@ -18,19 +26,53 @@
       "group": "Challenge area",
       "label": "Challenge pack: youths per kind",
       "note": "How many youths of each kind on the island's roster guard the challenge circle (Ed, 2026-11-03: \"one adult and one youth of every creature kind on the island\"). A new night: it reloads.",
-      "control": { "type": "slider", "min": 0, "max": 3, "step": 1 },
+      "control": {
+        "type": "slider",
+        "min": 0,
+        "max": 3,
+        "step": 1
+      },
       "default": 1,
-      "apply": { "knob": "challenge.youths", "reload": true }
+      "apply": {
+        "knob": "challenge.youths",
+        "reload": true
+      }
     },
     {
       "id": "challengeRadius",
       "pr": 1725,
       "group": "Challenge area",
       "label": "Challenge circle radius (m)",
-      "note": "The challenge area's stone floor circle (Ed, 2026-11-03: \"a large stone floor circle (like the legend circle)\"), its columns round its edge; its clearing reaches 3 m past it. A legend's circle is about 9 m. A new map: it reloads.",
-      "control": { "type": "slider", "min": 8, "max": 20, "step": 1 },
-      "default": 12,
-      "apply": { "knob": "challenge.radius", "reload": true }
+      "note": "The challenge area's stone floor circle (Ed, 2026-11-03: \"a large stone floor circle (like the legend circle)\"; on #1725, three times wider: 36 m), its columns round its edge (their count is the knob challenge.columns, 30). A legend's circle is about 9 m. A new map: it reloads.",
+      "control": {
+        "type": "slider",
+        "min": 12,
+        "max": 60,
+        "step": 2
+      },
+      "default": 36,
+      "apply": {
+        "knob": "challenge.radius",
+        "reload": true
+      }
+    },
+    {
+      "id": "challengeMargin",
+      "pr": 1725,
+      "group": "Challenge area",
+      "label": "Challenge clearing margin (m)",
+      "note": "How far past the challenge circle's edge the woods are cleared (Ed, 2026-11-03, on #1725: \"trees should come close to the circle's edge\"). A new map: it reloads.",
+      "control": {
+        "type": "slider",
+        "min": 0,
+        "max": 12,
+        "step": 1
+      },
+      "default": 3,
+      "apply": {
+        "knob": "challenge.margin",
+        "reload": true
+      }
     }
   ]
 }

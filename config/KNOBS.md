@@ -842,19 +842,22 @@ The area is seeded by the night (never home, an area touching home's (Ed, 2026-1
 
 ### `challenge`
 
-the challenge area in the find's area: a stone circle `radius` m round with the island's sigil and `columns` columns, guarded by `adults` adults and `youths` youths of each roster kind; once they're all invited or run off, the music spell cast within `castReach` m of its middle gives the find.
+the challenge area: a stone circle `radius` m round with the island's sigil, `columns` columns and the woods `margin` m past it, guarded by `adults` adults and `youths` youths a roster kind; the music spell cast within `castReach` m of its middle clears it for the find.
 
 1. Ed, 2026-11-03: "a large stone floor circle (like the legend circle) with the glowing sigil of the island carved into it, with a circle of stone columns around the edge (we already have art for this)" … "When they're all invited or have run off, you can go to the special place and cast the music spell" … "when you clear it you get the find. Each phase and biome have different set of finds; when you have them all you get a flask instead."
-The find is drawn from the island's own set; a flask once she owns the whole set. Its pack aggro as any wild area's (wildWatch) and only before the final wave (from last call it closes: the pack calm, the find gone); it never counts toward winning the island and gives no boon. Off: the find's area as before, its find to pick up with E. The find sets: config/find-sets.json (rules/findSets.ts).
+2. Ed, 2026-11-03: "for now just make it one find selected at random and we will adjust later" (his rulings on #1725, through the coordinator: the circle three times wider (radius 12 to 36, columns 10 to 30, the sigil filling the floor); trees close to its edge, a few metres' margin; the find the night's one draw (findSets off); closed only once the night is won or lost, not at last call.)
+The find is the night's one draw over everything she hasn't found; `findSets` on, the island's own set (config/find-sets.json) instead. Nothing left to give, a flask. Its pack aggro as any wild area's (wildWatch); it closes only once the night is won or lost (the pack calm, the find gone); it never counts toward winning the island and gives no boon. Off: the find's area as before, its find to pick up with E.
 
 | knob | type | range |
 |---|---|---|
 | `challenge.on` | boolean |  |
 | `challenge.radius` | number | 0 to … |
+| `challenge.margin` | number | 0 to … |
 | `challenge.columns` | number | 0 to … |
 | `challenge.adults` | number | 0 to … |
 | `challenge.youths` | number | 0 to … |
 | `challenge.castReach` | number | 0 to … |
+| `challenge.findSets` | boolean |  |
 
 ### `treeMarginFromSoundsystem`
 

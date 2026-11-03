@@ -2275,6 +2275,10 @@
           "type": "number",
           "minimum": 0
         },
+        "margin": {
+          "type": "number",
+          "minimum": 0
+        },
         "columns": {
           "type": "number",
           "minimum": 0
@@ -2290,18 +2294,23 @@
         "castReach": {
           "type": "number",
           "minimum": 0
+        },
+        "findSets": {
+          "type": "boolean"
         }
       },
       "required": [
         "on",
         "radius",
+        "margin",
         "columns",
         "adults",
         "youths",
-        "castReach"
+        "castReach",
+        "findSets"
       ],
       "additionalProperties": false,
-      "description": "the challenge area in the find's area: a stone circle `radius` m round with the island's sigil and `columns` columns, guarded by `adults` adults and `youths` youths of each roster kind; once they're all invited or run off, the music spell cast within `castReach` m of its middle gives the find."
+      "description": "the challenge area: a stone circle `radius` m round with the island's sigil, `columns` columns and the woods `margin` m past it, guarded by `adults` adults and `youths` youths a roster kind; the music spell cast within `castReach` m of its middle clears it for the find."
     },
     "treeMarginFromSoundsystem": {
       "type": "number",

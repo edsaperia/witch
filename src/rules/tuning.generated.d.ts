@@ -441,10 +441,12 @@ export type SchemaTuning = {
   "challenge": {
     "on": boolean;
     "radius": number;
+    "margin": number;
     "columns": number;
     "adults": number;
     "youths": number;
     "castReach": number;
+    "findSets": boolean;
   };
   "treeMarginFromSoundsystem": number;
   "treeDensity": number;

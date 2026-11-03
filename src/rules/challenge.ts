@@ -15,13 +15,15 @@
 //     the circle: challengeCastAt). Cast, "something cool appears" (the coordinator's pick: a small dancefloor rising): the sigil and
 //     columns light on the beat (render/challenge.ts), and the pack "become happy animals that party in the challenge area and can't
 //     be leashed" (clearChallenge).
-//   The reward: "when you clear it you get the find": tonight's find, at its middle (placeTrunk), drawn from the island's own set
-//     (rules/findSets.ts; fillTrunk), can't be taken with E till then and is hers at the cast (the "found" event, as E at a find);
-//     "when you have them all you get a flask instead" (the set hers, the trunk is empty: a flask's sigil laid at the circle, drunk with
-//     E as any, a growth spurt). No boon: "No boons from challenges. Follower buffs replace them".
-//   Timing: only before the final wave. From last call (the next wave's stone the route's last: rules/win.ts finalStone), or the night
-//     won or lost, an uncleared challenge closes: its pack calm (a friendly area's: they leave her be), its find gone from the map, its
-//     sigil dark, nothing to cast (stepChallenge; the "closed" event, said under the clock).
+//   The reward: "when you clear it you get the find": tonight's find, at its middle (placeTrunk), can't be taken with E till then and
+//     is hers at the cast (the "found" event, as E at a find). Which find: for now the night's one draw over everything she hasn't
+//     found (Ed, 2026-11-03: "for now just make it one find selected at random and we will adjust later"); with `findSets` on, drawn
+//     from the island's own set instead (rules/findSets.ts; fillTrunk). Nothing left for her (or, with the sets, the set hers), the
+//     trunk is empty and the reward is a flask (Ed: "when you have them all you get a flask instead"): its sigil laid at the circle,
+//     drunk with E as any, a growth spurt. No boon: "No boons from challenges. Follower buffs replace them".
+//   Timing: an uncleared challenge closes only once the night is won or lost (Ed, 2026-11-03, on #1725): its pack calm (a friendly
+//     area's: they leave her be), its find gone from the map, its sigil dark, nothing to cast (stepChallenge; the "closed" event, said
+//     under the clock).
 //   Optional: it isn't on the route, so it never holds up the win (rules/win.ts: the route and its areas only), nor do its pack.
 // Deterministic (online lockstep): every choice is the map's seed's, every change the fixed step's. No drawing here.
 import type { Game, Witch } from "./game";
@@ -35,7 +37,7 @@ import { islandKinds } from "./dancefloor";
 import { holdsArea } from "./clear";
 import { befriend, danceAt, stateOf } from "./creatureStates";
 import { cellKey } from "./party";
-import { finalStone } from "./win";
+import { won } from "./win";
 import { worldAsleep } from "./partyOver";
 import { findKind } from "./finds";
 import { addFloorHat } from "./houseRooms";
@@ -44,8 +46,8 @@ import { befriendArea } from "./sigilButton";
 import { castOn } from "./stoneStacks";
 import { hash2, rng } from "./random";
 
-export interface ChallengeTuning { on: boolean; radius: number; columns: number; adults: number; youths: number; castReach: number }
-export const CHALLENGE_DEFAULT: ChallengeTuning = { on: false, radius: 12, columns: 10, adults: 1, youths: 1, castReach: 5 };
+export interface ChallengeTuning { on: boolean; radius: number; margin: number; columns: number; adults: number; youths: number; castReach: number; findSets: boolean }
+export const CHALLENGE_DEFAULT: ChallengeTuning = { on: false, radius: 36, margin: 3, columns: 30, adults: 1, youths: 1, castReach: 5, findSets: false };
 export const challengeOf = (t: Tuning): ChallengeTuning => ({ ...CHALLENGE_DEFAULT, ...t.challenge });
 
 /** What the page says of it (under the clock: main.ts): the pack all won over or gone (ready to cast), cleared (and its reward),
@@ -114,8 +116,9 @@ export const packLeft = (g: Pick<Game, "challenge" | "creatures">): Creature[] =
 /** Whether it can still be cleared: not cleared, not closed. */
 export const challengeOpen = (g: Pick<Game, "challenge">): boolean => !!g.challenge && g.challenge.clearedAt === null && g.challenge.closedAt === null;
 
-/** Whether it's too late (Ed: "only before the final wave"): last call (the final wave's countdown on), the night won, or lost. */
-export const challengeLate = (g: Game): boolean => finalStone(g) || !!g.win || !!g.partyOver;
+/** Whether it's too late: the night won (the victory lap home) or lost (the party's over). Ed, 2026-11-03, on #1725: only then,
+ *  not at last call. */
+export const challengeLate = (g: Game): boolean => won(g) || !!g.partyOver;
 
 /** Whether the spell can be cast on it now: open, the party on, and every one of its pack invited or run off. */
 export const challengeReady = (g: Game): boolean => challengeOpen(g) && !worldAsleep(g) && !challengeLate(g) && packLeft(g).length === 0;

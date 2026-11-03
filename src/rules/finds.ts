@@ -121,7 +121,7 @@ export function placeTrunk(map: ForestMap, forest: { treesNear(x: number, z: num
 export function fillTrunk(g: { trunk: Trunk | null; map: ForestMap }, found: Found): void {
   if (!g.trunk) return;
   const T = g.trunk, ch = g.map.specialSites?.find(sp => sp.kind === "challenge" && sp.cell[0] === T.cell[0] && sp.cell[1] === T.cell[1]);
-  const set = ch ? islandSet(g.map.island) : null;
+  const set = ch && g.map.tuning.challenge?.findSets ? islandSet(g.map.island) : null; // (the sets off for now, Ed 2026-11-03: the one draw over everything)
   const pick = set ? setPick(g.map.seed, found, set) : nightPick(g.map.seed, found);
   if (pick) { g.trunk.kind = pick.kind; g.trunk.item = pick.item; } else g.trunk = null;
 }

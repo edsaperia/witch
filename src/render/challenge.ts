@@ -33,8 +33,8 @@ const NEAR = 260;
 const COLUMN = "column", ASK = 420;
 /** The small dancefloor: tiles a side, a tile's size (m), and how long it takes to rise (s). */
 const FLOOR_N = 5, FLOOR_TILE = 1.5, FLOOR_RISE = 1.6;
-/** The sigil's size on the floor, times the circle's radius (its legendary form's ring a little inside the stone ring). */
-const SIGIL_SIZE = 1.5;
+/** The sigil's size on the floor, times the circle's radius (Ed, 2026-11-03, on #1725: filling the floor, its ring just inside the columns). */
+const SIGIL_SIZE = 1.85;
 /** A column's top (m), where its light sits. */
 const COLUMN_TOP = 4.6;
 

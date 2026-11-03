@@ -16,8 +16,8 @@ it('retains the original quantised windows at arrival and after small and large 
   // (the island grown one area more for tonight's find, the stones spaced: other hills under the stones), the code unchanged; and for
   // the challenge area (rules/challenge.ts): its stone circle a terrace of its own, as a legend's circle is.
   for (const [seed, island, expected] of [
-    [123, 'home', ['df335192a540aa6da6db7a6434d8292cc034cfcc81874645370b25bcf7beaf4f', 'b6043e641cb6c250574097e7c8f7af4a4853d358da420a104adc73dbb53a8be4', '211c9e70da0879e0d83ef85f17394c85dedb41623ac8517b46d774cb0cafaef2']],
-    [424242, 'fox', ['b3e4530f3cac6c2c1c38fab59a330ef36e21b6eddaa5df457c62218f3089fc61', '6e4ec66a3562dfed81a7fd586da5da410775f4ae0f9954b02e00506979d6bcca', '211c9e70da0879e0d83ef85f17394c85dedb41623ac8517b46d774cb0cafaef2']],
+    [123, 'home', ['fbf446ab6f8fbaeaf2a4dd08b2ad1c4fb9a9bb1c66fec526f57076f88ca8a582', '9fb3bf08729b92123db45b8543eebea527e044fd27e27008009ff5d1f88dda48', '211c9e70da0879e0d83ef85f17394c85dedb41623ac8517b46d774cb0cafaef2']],
+    [424242, 'fox', ['24a513e7e13accf0d7511fb5ffe2eace5ad2b30d16b7197c1b2ebf2cad26fe4f', 'b1502868695434e325eed99107e022da196562032bf0b4f4c1c167cd3a0c6d02', '211c9e70da0879e0d83ef85f17394c85dedb41623ac8517b46d774cb0cafaef2']],
   ] as const) {
     const map = generateMap(seed, tuning(island)), H = arrivalHills(map.tuning), field = new HeightSamples(map, new Forest(map), H, DataUtils);
     const { x, z } = map.start;
