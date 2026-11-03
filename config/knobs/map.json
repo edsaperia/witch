@@ -927,6 +927,33 @@
         }
       ],
       "notes": "Treehouse look settings; all four switches on by default, chosen by Ed on 2 November."
+    },
+    "treehouse.house.cauldronReach": {
+      "what": "Metres round the cauldron's middle that a brew's smoke reaches: every witch on foot in the house within it while the smoke lasts takes the potion, and she unloads the mushrooms she carries within it (rules/mushrooms.ts inCauldronReach; the baskets work by their own nearness). It replaced the cauldron's room.",
+      "decisions": [
+        {
+          "by": "Ed",
+          "date": "2026-11-03",
+          "quote": "Is there still a good reason why the treehouse is split into different rooms, or can we join it all into one room? The cauldron it could affect all witches in a radius."
+        },
+        {
+          "by": "Ed",
+          "date": "2026-11-03",
+          "quote": "go on treehouse. 10m cauldron reach is fine."
+        }
+      ],
+      "notes": "The smoke's drawing spreads over the same circle (render/brewing.ts)."
+    },
+    "treehouse.house.cauldronSmoke": {
+      "what": "Seconds a brew's smoke hangs over the cauldron's reach once the third mushroom lands: a witch who walks into it at any moment before it clears takes the potion too, once.",
+      "decisions": [
+        {
+          "by": "Ed",
+          "date": "2026-11-03",
+          "quote": "The cauldron smoke effect should cover the 10m area for ten seconds or so, and if you walk into it you are affected by the potion."
+        }
+      ],
+      "notes": "Each witch's own spin before she falls lasts as the smoke used to, 4 seconds from when the smoke takes her (rules/mushrooms.ts SMOKE_SPIN)."
     }
   }
 }

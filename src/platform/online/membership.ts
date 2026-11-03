@@ -1,8 +1,8 @@
 import { type Game, type Witch } from "../../rules/game";
 import { startWake } from "../../rules/wakeUp";
 import { letGoHappy } from "../../rules/knockout";
-import { addFloorHat, roomAt } from "../../rules/houseRooms";
-import { bedRoom } from "../../rules/wakeUp";
+import { addFloorHat, onRoomFloor } from "../../rules/houseRooms";
+import { deckOf } from "../../rules/treehouse";
 
 /** Caller supplies equipment; this seam does not clone the host's equipped possessions. */
 export function attachGuest(game: Game, guest: Witch, wake: (game: Game, guest: Witch) => boolean = (g, W) => startWake(g, g.herTime, { yesterday: true }, W)): void {
@@ -28,7 +28,8 @@ export function attachGuest(game: Game, guest: Witch, wake: (game: Game, guest: 
 }
 
 /** Restore one-witch ownership after a dropped line; existing placed sigils stay in the world. */
-export function detachGuest(game: Game, guestRoom: string = bedRoom()): void {
+/** `_guestRoom`: her assigned bedroom, kept for the arrival seam (platform/online/guestArrival.ts); her hat no longer looks at it. */
+export function detachGuest(game: Game, _guestRoom?: string): void {
   if (game.witches.length !== 2) return;
   const [host, guest] = game.witches;
   for (const id of [...guest.leash.stack]) {
@@ -50,7 +51,9 @@ export function detachGuest(game: Game, guestRoom: string = bedRoom()): void {
   host.hat.left.push(...guest.hat.left);
   if (guest.hat.has) {
     const at = guest.hat.down ?? { x: guest.body.x, z: guest.body.z, at: game.herTime };
-    if (game.map.bounds.lakes?.inside(at.x, at.z) || roomAt(game.map.treehouse, at.x, at.z)?.id === guestRoom) addFloorHat(host, guest.spells.hat);
+    // (a hat she left anywhere on the house's floor goes to the hats' floor: the house one room, Ed 2026-11-03; it was her bedroom's only)
+    const floor = deckOf(game.map, game.tuning)?.house?.rooms;
+    if (game.map.bounds.lakes?.inside(at.x, at.z) || (floor && onRoomFloor(floor, at.x, at.z, floor.inset))) addFloorHat(host, guest.spells.hat);
     else host.hat.left.push({ ...at, spell: guest.spells.hat });
   }
   game.witches.pop();

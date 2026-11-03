@@ -10,7 +10,9 @@ const newGame = smallWorld(fullGame, "Alarm, dressing, doors and DJ intro routin
 import { HOUSE_ROOMS, floorHats, fromObject, fromPlan, hatSlots, objectAt, objectFront, toPlan } from "./houseRooms";
 import { inRoom as inBlob } from "../../config/house/shape.js";
 import { wakeInBedroom } from "./opening";
-import { atDecks, startParty, bedRoom, doorShut, endDream, startWake, WAKE_DEFAULT, type WakeEvent } from "./wakeUp";
+import { atDecks, startParty, doorShut, endDream, homeBed, startWake, WAKE_DEFAULT, type WakeEvent } from "./wakeUp";
+/** The room her bed stands in, to walk out of (the tests' own: no rule reads rooms since Ed, 2026-11-03). */
+const bedRoom = (): string => homeBed()!.room;
 import { dressed, pileOut, PILE_SLOTS, wearFromStation, wearPiece, wornGenome } from "./clothesPile";
 import { deckOf, onTerrace } from "./treehouse";
 import { heldByRoutine } from "./djSet";

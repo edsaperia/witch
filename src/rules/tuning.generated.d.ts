@@ -279,6 +279,8 @@ export type SchemaTuning = {
       "landTime": number;
       "walk": number;
       "stride": number;
+      "cauldronReach": number;
+      "cauldronSmoke": number;
       "fall": {
         "on": boolean;
         "time": number;

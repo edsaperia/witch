@@ -1,12 +1,12 @@
 import { describe, expect, it } from "vitest";
 import { CIRCLE, circleMark, floorFrame, onFloor, terraceCircle, onTakeoff, paintFloorPixels, paintFloorRows } from "./houseArt";
 import { HOUSE_ROOMS, type HouseConfig } from "../rules/houseRooms";
-import { fbm, field, inRoom, outline, roomAt } from "../../config/house/shape.js";
+import { fbm, field, inRoom, outline } from "../../config/house/shape.js";
 
 // The floor as it was painted before the boot freeze's fix (2026-10-25): a whole pass over the house for each part, the field with its
 // parts and roomAt at every pixel (and the Terrace's magic circle since, 2026-10-26). The one-pass painter must give the same pixels.
 const FORE = Math.sin((24 * Math.PI) / 180);
-const WOOD = { floor: [[78, 46, 28], [104, 64, 38], [132, 84, 48], [158, 106, 62]], ring: [62, 36, 22], bark: [[38, 28, 22], [56, 40, 28], [78, 58, 40]], moss: [[46, 66, 38], [70, 96, 50]], locked: [[52, 40, 34], [64, 50, 40]] };
+const WOOD = { floor: [[78, 46, 28], [104, 64, 38], [132, 84, 48], [158, 106, 62]], ring: [62, 36, 22], bark: [[38, 28, 22], [56, 40, 28], [78, 58, 40]], moss: [[46, 66, 38], [70, 96, 50]] };
 const hash = (x: number, y: number) => { const s = Math.sin(x * 127.1 + y * 311.7) * 43758.5453; return s - Math.floor(s); };
 type P = { kind: string; s: number; side?: number; t?: number; r?: { x: number; z: number }; a?: { x: number; z: number } };
 function grain(x: number, z: number, parts: P[]): number {
@@ -31,7 +31,7 @@ function paintBefore(H: HouseConfig, mpp: number, part: "terrace" | "rest"): Uin
     const mx = x + ox, mz = z + oz;
     if (d > -0.45 && onTakeoff(H, x, z)) { set(o, WOOD.floor[3]); continue; }
     if (d > -0.45) { const n = hash(i * 3 + 1, j * 7); set(o, fbm(mx * 0.8, mz * 0.8) > 0.6 ? WOOD.moss[n > 0.5 ? 1 : 0] : WOOD.bark[n > 0.66 ? 2 : n > 0.33 ? 1 : 0]); continue; }
-    if (H.rooms.find(r => r.id === roomAt(S, x, z)?.id)?.locked) { set(o, WOOD.locked[hash(i, j) < 0.5 ? 0 : 1]); continue; }
+    // (no locked room's dim boards since Ed, 2026-11-03: the house one room, every board its wood)
     const m = part === "terrace" && circ ? circleMark((x - circ.x) / circ.r, (z - circ.z) / circ.r) : null;
     if (m) { set(o, CIRCLE[m]); continue; }
     const gr = grain(mx, mz, parts) + (fbm(mx * 0.9, (mz / FORE) * 0.9) - 0.5) * 1.1, f = gr - Math.floor(gr);

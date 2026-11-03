@@ -1,5 +1,5 @@
 import type { Game, Witch } from "../../rules/game";
-import { startWakeFor, bedFor, doorFor, type WakeTarget } from "../../rules/wakeUp";
+import { startWakeFor, bedFor, type WakeTarget } from "../../rules/wakeUp";
 import { attachGuest, detachGuest } from "./membership";
 
 /** Released PR1553 exports, directly bound after normal prototype merge. No copied wake implementation. */
@@ -7,7 +7,6 @@ export type { WakeTarget };
 export interface GuestRoomHooks {
   startWakeFor: typeof startWakeFor;
   bedFor: typeof bedFor;
-  doorFor: typeof doorFor;
 }
 export const guestBedrooms = ["bedroom2", "bedroom3"] as const;
 export interface GuestArrivalOptions {
@@ -21,11 +20,12 @@ export interface GuestArrivalOptions {
 export function guestArrival(options: GuestArrivalOptions) {
   if (!guestBedrooms.includes(options.room)) throw new Error("A guest bedroom must be assigned.");
   let attached: Game | null = null;
-  const rooms = options.rooms ?? { startWakeFor, bedFor, doorFor };
+  const rooms = options.rooms ?? { startWakeFor, bedFor };
   return {
     attach(game: Game): void {
       if (attached || game.witches.length !== 1) throw new Error("A guest is already visiting.");
-      if (!rooms.bedFor(options.room) || !rooms.doorFor(options.room)) throw new Error("This island's guest bedroom isn't ready.");
+      // (no door to wait for: the bedrooms are open, Ed 2026-11-03)
+      if (!rooms.bedFor(options.room)) throw new Error("This island's guest bedroom isn't ready.");
       const guest = options.equipment(game);
       attachGuest(game, guest, (source, witch) => rooms.startWakeFor(source, source.herTime, { yesterday: true }, witch, { player: 1, room: options.room }));
       attached = game;

@@ -6,14 +6,15 @@ import { HOUSE_ROOMS, fromObject } from "../rules/houseRooms";
 import { decorPlan, ROOM_DECOR } from "./houseDecor";
 
 describe("the treehouse's rooms dressed", () => {
-  const rooms = HOUSE_ROOMS.rooms.filter(r => r.r && !r.locked);
+  const rooms = HOUSE_ROOMS.rooms.filter(r => r.r);
   it("gives each room a middle density (Ed's pick): a rug and up to six pieces, two or more in the bigger rooms (the small hubs crowded with branches, and the busy Workshop, take what fits)", () => {
     for (const r of rooms) {
       const items = decorPlan(r), pieces = items.filter(i => i.kind !== "rug" && i.kind !== "mess");
       if (r.r! >= 6) expect(pieces.length, r.id).toBeGreaterThanOrEqual(Math.min(2, (ROOM_DECOR[r.id] ?? []).filter(k => k !== "rug").length));
       expect(pieces.length, r.id).toBeLessThanOrEqual(6);
     }
-    expect(decorPlan(HOUSE_ROOMS.rooms.find(r => r.locked)!)).toEqual([]);
+    // (the guests' bedrooms, open since Ed, 2026-11-03, their furniture still under its sheets: nobody's things lying about)
+    for (const id of ["bedroom2", "bedroom3"]) expect(decorPlan(HOUSE_ROOMS.rooms.find(r => r.id === id)!), id).toEqual([]);
   });
   it("puts every piece on its room's floor by the wall, clear of the doorways, the ways in and every object's reach", () => {
     for (const r of rooms) {

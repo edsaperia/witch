@@ -10,7 +10,7 @@ const deck = () => deckOf({ treehouse: { x:200,z:300 } }, TUNING)!;
 describe("landing on the actual authorized treehouse floor (Ed, 2 November)", () => {
   for (const room of HOUSE_ROOMS.rooms) it(room.id + ": accepts the floor, descends in landTime and permits takeoff without snapping back", () => {
     const d = deck();
-    // The existing host-authorized floor opens only this guest's assigned room; no network fixture.
+    // A guest's floor through the multiplayer hook: the same floor as everyone's since nothing's locked (Ed, 2026-11-03); no network fixture.
     d.house = { ...d.house!, rooms: roomAccessFor(floorRects(d,H.rail),1,{player:1,room:room.id}) };
     const p = fromPlan(d,room.x,room.z), clear = landingSpot(d,p.x,p.z);
     expect(onFloor(d,clear.x,clear.z),room.id).toBe(true);
@@ -27,11 +27,11 @@ describe("landing on the actual authorized treehouse floor (Ed, 2 November)", ()
     const held = stepWitch(up,NO_INTENT,.1,TUNING,bounds,NO_LOAD,d);
     expect([held.mode,!!held.perch]).toEqual(["treetop",false]);
   });
-  it("keeps unassigned locked bedrooms unavailable while the assigned room is eligible", () => {
+  it("lands her on Bedrooms 2 and 3 in solo, open as every room (Ed, 2026-11-03)", () => {
     const d = deck();
-    for (const room of HOUSE_ROOMS.rooms.filter(r=>r.locked)) {
-      const p=fromPlan(d,room.x,room.z);
-      expect(landsOn(d,p.x,p.z)).toBe(false); expect(flyOnto(d,p.x,p.z)).toBe(false);
+    for (const id of ["bedroom2", "bedroom3"]) {
+      const room = HOUSE_ROOMS.rooms.find(r=>r.id===id)!, p=fromPlan(d,room.x,room.z);
+      expect(landsOn(d,p.x,p.z),id).toBe(true); expect(flyOnto(d,p.x,p.z),id).toBe(true);
     }
   });
   it("does not land over air even inside the old grace distance", () => {

@@ -13,7 +13,7 @@ type RGB = [number, number, number];
 /** The floor's foreshortening as the game draws it (the house's plane, 24 degrees: render/houseRooms.ts), so the rings, stretched
  *  on the plan by its inverse, read round on screen (the mock's FORE). */
 const FORE = Math.sin((24 * Math.PI) / 180);
-/** The tree's wood (the mock's WOOD): four floor tones darkest first, a growth line, bark, moss, a locked room's dim boards. */
+/** The tree's wood (the mock's WOOD): four floor tones darkest first, a growth line, bark, moss. */
 /** The Terrace's magic circle (Ed, 2026-10-26: "The magic circle should be larger and have the ent sigil on it"; config/house/base.json
  *  terrace.circle, where she comes back after a fall or a knockout): burnt into the boards, a double ring round the Ent's sigil, the
  *  World Tree (art/sigils.js), its lines the circle's red, the boards inside scorched. `mark(u, v)`: u, v -1 to 1 across it. */
@@ -34,7 +34,7 @@ export const terraceCircle = (H: HouseConfig): { x: number; z: number; r: number
   const tr = H.rooms.find(r => r.id === "terrace");
   return tr && H.terrace?.circle ? { x: (tr.x0 + tr.x1) / 2 + H.terrace.circle.x, z: (tr.z0 + tr.z1) / 2 + H.terrace.circle.z, r: H.terrace.circle.r } : null;
 };
-const WOOD = { floor: [[78, 46, 28], [104, 64, 38], [132, 84, 48], [158, 106, 62]] as RGB[], ring: [62, 36, 22] as RGB, bark: [[38, 28, 22], [56, 40, 28], [78, 58, 40]] as RGB[], moss: [[46, 66, 38], [70, 96, 50]] as RGB[], locked: [[52, 40, 34], [64, 50, 40]] as RGB[] };
+const WOOD = { floor: [[78, 46, 28], [104, 64, 38], [132, 84, 48], [158, 106, 62]] as RGB[], ring: [62, 36, 22] as RGB, bark: [[38, 28, 22], [56, 40, 28], [78, 58, 40]] as RGB[], moss: [[46, 66, 38], [70, 96, 50]] as RGB[] };
 const DEG = Math.PI / 180;
 
 /** On the Terrace's take-off, its open rim (base.json terrace.takeoff, as rules/treehouse.ts atTakeoff): within its angles and 3 m past
@@ -64,7 +64,7 @@ const hash = (x: number, y: number) => { const s = Math.sin(x * 127.1 + y * 311.
 /** The floor painted, an art pixel (`mpp` metres) a texel, top-down on the plan: the mock's floor, rim and take-off, as RGBA pixels (no
  *  DOM: render/houseFloor.worker.ts paints it off the page's thread). `rest` all but the Terrace's own floor (its room's outline),
  *  `terrace` only that (render/houseRooms.ts draws the two in different passes), from one pass (the boot freeze, 2026-10-25: two
- *  passes over the whole house, a `roomAt` a pixel, were 75 s on the page's thread at the start). Each pixel's room and the Terrace's
+ *  passes over the whole house, a `roomAt` a pixel, were 75 s on the page's thread at the start). Each pixel's Terrace
  *  test are read off the parts `field` measured there (the same blobs at the same point); blocks of it well clear of the floor (its
  *  middle further from it than the field could fall across the block) are left clear without a pixel's field. */
 export function paintFloorPixels(H: HouseConfig, mpp: number): FloorPixels {
@@ -82,7 +82,6 @@ export function paintFloorRows(H: HouseConfig, mpp: number, j0: number, j1: numb
   const S = H.shape, [ox, oz] = S.noiseAt, { w: W, h: Hh, x0, z0, B } = floorFrame(H, mpp);
   j1 = Math.min(j1, Hh);
   const rest = new Uint8ClampedArray(W * Math.max(0, j1 - j0) * 4), terrace = new Uint8ClampedArray(rest.length);
-  const locked = new Set(H.rooms.filter(r => r.locked).map(r => r.id));
   const circ = terraceCircle(H);
   const set = (px: Uint8ClampedArray, o: number, c: RGB) => { px[o] = c[0]; px[o + 1] = c[1]; px[o + 2] = c[2]; px[o + 3] = 255; };
   // (blocks about 2 m across; the field falls at most about 1.3 m a metre (a room's wobble), so 2 a metre and half a metre to spare)
@@ -96,13 +95,12 @@ export function paintFloorRows(H: HouseConfig, mpp: number, j0: number, j1: numb
       parts.length = 0;
       const d = field(S, x, z, false, parts);
       if (d >= 0) continue;
-      // (the room it's on, as shape.js roomAt: the first blob, in its order, nearest inside; the Terrace's own floor, inRoom)
-      let room: string | null = null, bd = 0, onTerrace = false;
-      for (const p of parts) if (p.kind === "ring") { if (p.s < bd) { bd = p.s; room = p.r!.id!; } if (p.r!.id === "terrace" && p.s <= 0) onTerrace = true; }
+      // (the Terrace's own floor, inRoom)
+      let onTerrace = false;
+      for (const p of parts) if (p.kind === "ring" && p.r!.id === "terrace" && p.s <= 0) onTerrace = true;
       const px = onTerrace ? terrace : rest, mx = x + ox, mz = z + oz;
       if (d > -0.45 && onTakeoff(H, x, z)) { set(px, o, WOOD.floor[3]); continue; } // (the open rim where she steps off: worn pale, no lip)
       if (d > -0.45) { const n = hash(i * 3 + 1, j * 7); set(px, o, fbm(mx * 0.8, mz * 0.8) > 0.6 ? WOOD.moss[n > 0.5 ? 1 : 0] : WOOD.bark[n > 0.66 ? 2 : n > 0.33 ? 1 : 0]); continue; }
-      if (room && locked.has(room)) { set(px, o, WOOD.locked[hash(i, j) < 0.5 ? 0 : 1]); continue; }
       if (onTerrace && circ) { const m = circleMark((x - circ.x) / circ.r, (z - circ.z) / circ.r); if (m) { set(px, o, CIRCLE[m]); continue; } } // (the magic circle)
       const gr = grain(mx, mz, parts) + (fbm(mx * 0.9, (mz / FORE) * 0.9) - 0.5) * 1.1, f = gr - Math.floor(gr);
       if (f < 0.09) { set(px, o, WOOD.ring); continue; } // (a growth line)

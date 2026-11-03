@@ -67,7 +67,7 @@ describe("rising in the treehouse, through the page's controls", () => {
   // night shared by a kind's rooms as the one test shared it.
   for (const how of ["pad", "keys"] as const) {
     let night: Game | null = null;
-    for (const r of HOUSE_ROOMS.rooms.filter(q => !q.locked && q.id !== "terrace")) { // (the Terrace: rising, and its open rim, are hers)
+    for (const r of HOUSE_ROOMS.rooms.filter(q => q.id !== "terrace")) { // (the Terrace: rising, and its open rim, are hers)
       it(`${how}: with no broom, pushed against the ${r.id}'s walls, she stays on the ground`, () => {
         const g = (night ??= inHouse()), d = deckOf(g.map, g.tuning)!, rose: string[] = [];
         const c = fromPlan(d, (r.x0 + r.x1) / 2, (r.z0 + r.z1) / 2);
@@ -104,7 +104,7 @@ describe("rising in the treehouse, through the page's controls", () => {
       const g = inHouse(true), d = deckOf(g.map, g.tuning)!;
       for (let i = 0; i < 3 / STEP; i++) stepGame(g, { moveX: 0, moveZ: 0, toggleMode: false, zoom: 0 }, STEP);
       const fresh = structuredClone(g.witches[0]);
-      for (const r of HOUSE_ROOMS.rooms.filter(q => !q.locked && q.id !== "terrace")) {
+      for (const r of HOUSE_ROOMS.rooms.filter(q => q.id !== "terrace")) {
         for (const a of [null, 0, 180]) {
           Object.assign(g.witches[0], structuredClone(fresh));
           const c = fromPlan(d, (r.x0 + r.x1) / 2, (r.z0 + r.z1) / 2);

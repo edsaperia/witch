@@ -19,7 +19,7 @@ export type WorkshopPic =
 /** A part's picture, lit in the Workshop's light in her broom's colours (render/workshopArt.ts broomColours). */
 export function partPicture(st: Style, colours: Record<string, number[]>, id: string, mk: MakeCanvas, o: { fit?: number; pitch?: number; yaw?: number; hung?: boolean } = {}): { c: AnyCanvas; ox: number; oy: number } {
   const d = partSprite(id, o) as Drawn;
-  return { c: litCanvas(d, "workshop", st, mk, 1, "", colours), ox: d.origin.x, oy: d.origin.y };
+  return { c: litCanvas(d, st, mk, 1, "", colours), ox: d.origin.x, oy: d.origin.y };
 }
 /** A picture as a dark outline (a part not found yet: the pegboard's empty pegs), its edge `edge` and its inside a faint dark. */
 export function outlinePicture(src: AnyCanvas, mk: MakeCanvas, edge: number[] = [150, 140, 170], inside: number[] = [16, 12, 24, 150]): AnyCanvas {
@@ -55,7 +55,7 @@ export function workshopPicture(p: WorkshopPic, st: Style, mk: MakeCanvas): Piec
   let pic: { c: AnyCanvas; ox: number; oy: number };
   if (p.what === "broom") {
     const d = restingBroomSprite(p.fitted, { ppm: p.ppm, pitch: p.pitch, yaw: p.yaw, scale: p.host === "lathe" ? 1.5 : 2 }) as Drawn;
-    pic = { c: litCanvas(d, "workshop", st, mk, 1, "", p.colours), ox: d.origin.x, oy: d.origin.y };
+    pic = { c: litCanvas(d, st, mk, 1, "", p.colours), ox: d.origin.x, oy: d.origin.y };
   } else {
     const q = partPicture(st, p.colours, p.part, mk, { fit: p.fit, pitch: p.pitch, yaw: p.yaw, hung: true });
     pic = p.state === "found" ? q : p.state === "tonight" ? { c: glowPicture(outlinePicture(q.c, mk), mk), ox: q.ox + 3, oy: q.oy + 3 } : { ...q, c: outlinePicture(q.c, mk) };

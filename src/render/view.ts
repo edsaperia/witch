@@ -25,7 +25,7 @@ import type { MapTable } from "./mapTable";
 import { islandArtSeed } from "./artCache";
 import { biomeKey } from "../rules/lakeLooks";
 import { HouseRoomsView } from "./houseRooms";
-import { CrownView, type PlanMap } from "./crown";
+import { CrownView, cutawayRadius, type PlanMap } from "./crown";
 import { CrownLandmark } from "./crownLandmark";
 import { makeCrown, type HouseOutline } from "../rules/crown";
 // (the house's outline for the crown: only what it reads, so the floor's traced rings stay out of the bundle)
@@ -568,7 +568,6 @@ export class View {
       // Trial removes only that close-crown reservation; the horizon keeps its original source.
       this.crown = new CrownView(noNotch ? makeCrown(crownLookInput(input, true)) : original, t.stringLights.bulbSpacing, outline, lights);
       this.crownFarSource = noNotch ? new CrownView(original, t.stringLights.bulbSpacing, outline, lights) : null;
-      this.crown.drawMask = (key, box) => { const p = this.assets.oneOff({ kind: "crownMask", id: `${key}@${box.map(v => v.toFixed(4)).join(",")}`, style: this.assets.style, box: [...box] }).then(r => r.mask ?? Promise.reject(new Error("no mask"))); this.assets.track(`crownMask:${key}`, p); return p; };
       this.scene.add(...this.crown.meshes);
       this.strings?.setCrown(this.crown); // (its string lights: render/strings.ts)
       this.crownFar = new CrownLandmark(this.crownFarSource ?? this.crown, t.stringLights.palette.map(h => new THREE.Color(h))); this.scene.add(...this.crownFar.meshes);
@@ -1889,15 +1888,15 @@ export class View {
     if (this.crown && deck) { // (the crown: in the world, or laid over the floors with her indoors: render/crown.ts)
       const W = this.crownWorld, a = ((HOUSE_ROOMS.turn ?? 0) * Math.PI) / 180, c = Math.cos(a), s = Math.sin(a);
       W.o.set(deck.x, groundHeight(deck.x, deck.z) + deck.h, deck.z); W.ex.set(c, 0, -s); W.ez.set(s, 0, c);
-      const plan = this.houseRooms?.plan ?? null, here = plan ? toPlan({ x: deck.x, z: deck.z }, w.x, w.z) : null;
+      const plan = this.houseRooms?.plan ?? null;
       const dt = Number.isFinite(this.crownAt) ? Math.min(0.1, Math.max(0, ht - this.crownAt)) : 0; this.crownAt = ht;
       // (indoors, the forest's hole round her as it would be outdoors, its middle where she's drawn: render/view/witch.ts set uWitch
       // this frame, her house's slide in it; Ed, 2026-10-26: "The witch should have a canopy circle cut around her in the treehouse")
       const cut = t.canopyCutout, hw = SPRITE_UNIFORMS.uWitch.value, CR = t.treehouse.house?.crown;
-      const hole = { x: hw.x, y: hw.y, r: 0.5 * cut.screenFraction * (t.suspects.holeCut ? 1 : 0) * this.width, edge: cut.edge * this.width };
+      const hole = { x: hw.x, y: hw.y, r: cutawayRadius(cut, this.width) * (t.suspects.holeCut ? 1 : 0), edge: cut.edge * this.width };
       this.crown.uniforms.uWarmK.value = CR?.warm ?? 0;
       if (this.crownFarSource) this.crownFarSource.uniforms.uWarmK.value = CR?.warm ?? 0; // (the house's warm light up into it, live from the pause page)
-      this.crown.update(this.camera, W, plan, here, dt, hole, CR?.cutFade ?? 0, { x: w.x, y: groundHeight(w.x, w.z) + witchHeight(w, t), z: w.z }, t.treehouse.house?.look, t.treehouse.house?.look?.approach && !w.perch && w.mode !== "ground" ? approachStrength(true, true, deck.house?.rooms ? houseApproachDistance(w.x, w.z, deck.x, deck.z, HOUSE_ROOMS.turn ?? 0, OUTLINE_ROOMS, OUTLINE_BRANCHES) : Infinity, t.treehouse.house.look.radius) : 0); // (her: the oak hidden when she's behind it)
+      this.crown.update(this.camera, W, plan, dt, hole, CR?.cutFade ?? 0, { x: w.x, y: groundHeight(w.x, w.z) + witchHeight(w, t), z: w.z }, t.treehouse.house?.look, t.treehouse.house?.look?.approach && !w.perch && w.mode !== "ground" ? approachStrength(true, true, deck.house?.rooms ? houseApproachDistance(w.x, w.z, deck.x, deck.z, HOUSE_ROOMS.turn ?? 0, OUTLINE_ROOMS, OUTLINE_BRANCHES) : Infinity, t.treehouse.house.look.radius) : 0); // (her: the oak hidden when she's behind it)
       if (this.crownFarSource) this.crownFarSource.uniforms.uBack.value.copy(this.crown.uniforms.uBack.value);
       if (this.crownFar) { // (and over the horizon from far off: its picture baked the first frame there is one)
         if (!this.shaderDrawStatus.active) this.crownFar.bake(this.renderer);

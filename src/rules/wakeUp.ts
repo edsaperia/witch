@@ -58,13 +58,14 @@ export interface WakeState {
 export interface WakeTuning { snooze: number; stretch: number; alarmMin: number }
 export const WAKE_DEFAULT: WakeTuning = { snooze: 5, stretch: 3, alarmMin: 0.4 };
 
-/** A room's configured bed, including the guest rooms' existing bare bed frames. No layout mutation. */
-export const bedFor = (room: string) => HOUSE_ROOMS.objects.find(o => o.room === room && (o.use.kind === "bed" || o.id === `${room}Bed`));
-/** The configured physical guest-room door, if that room has one; does not unlock it. */
-export const doorFor = (room: string) => HOUSE_ROOMS.objects.find(o => o.id === `${room}Door`);
+/** A guest's bed by her assignment (`bedroom2`: the object `bedroom2Bed`, the bare bed frames), by the bed's own id, not by which
+ *  room's floor it stands on (Ed, 2026-11-03: the house one room; his layout puts a piece where he likes). No layout mutation. */
+export const bedFor = (room: string) => HOUSE_ROOMS.objects.find(o => o.id === `${room}Bed`);
+/** Her own bed (the object `bed`), where she wakes every morning, whichever other beds there are. */
+export const homeBed = () => HOUSE_ROOMS.objects.find(o => o.id === "bed");
 
 /** The bed's middle, a little toward its head along its original local x axis. */
-function inBed(g: Game, bed = HOUSE_ROOMS.objects.find(o => o.use.kind === "bed")): { x: number; z: number } | null {
+function inBed(g: Game, bed = homeBed()): { x: number; z: number } | null {
   return bed ? objectWorld(bed, g.map.treehouse, bed.w * 0.15, 0) : null;
 }
 
@@ -102,8 +103,8 @@ function bedsideFor(g: Game, W: Witch): { x: number; z: number } | null {
 
 export function startWake(g: Game, ht: number, { dreaming = false, mirrored = false, yesterday = false }: WakeStart = {}, W: Witch = g.witches[0]): boolean {
   const at = inBed(g);
-  if (!at || !HOUSE_ROOMS.rooms.some(q => q.id === bedRoom())) return false;
-  const bed = HOUSE_ROOMS.objects.find(o => o.use.kind === "bed"), placement = bed?.placement;
+  if (!at) return false;
+  const placement = homeBed()?.placement;
   W.body = { ...W.body, x: at.x, z: at.z, vx: 0, vz: 0, seated: false, perch: true, mode: "ground", lift: 0, ...placementFacing(placement ? placement.rotation - placement.baseRotation : 0) };
   const wake: WakeState = { beat: dreaming ? "dream" : "alarm", at: ht, snoozes: 0, open: false, mirror: mirrored, events: [], pile: [...PILE_SLOTS], ...(yesterday ? { yesterday } : {}) };
   if (W === g.witches[0]) g.wake = wake; else W.wake = wake;
@@ -203,9 +204,6 @@ export function startParty(g: Game, bpm: number, W: Witch = g.witches[0]): boole
   wake.events.push("decks");
   return true;
 }
-
-/** The room her bed stands in (Ed, 2026-10-26: "Move the bed to the turret"; it was her Bedroom): where she wakes. */
-export const bedRoom = (): string => HOUSE_ROOMS.objects.find(o => o.use.kind === "bed")?.room ?? "bedroom";
 
 /** How far from her spot by the bed (m) she may be while she's still in bed: the hold, past which she's put back by it. */
 const BED_HOLD = 6;

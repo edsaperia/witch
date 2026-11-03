@@ -9,7 +9,7 @@ import legacy from "../../config/house/layouts/editor-v1-baseline.json";
 import supplied from "../../docs/evidence/treehouse-layout-ed-2026-10-31.v1.json";
 import proposal from "../../docs/evidence/treehouse-layout-ed-2026-10-31.v2-proposal.json";
 import current from "../../config/house/layouts/ed-current.json";
-import { artKey, attachedPoint, cameraYaw, corners, defaultLayout, exportLayout, floorplanKey, hitItem, isHatZone, itemKind, LayoutHistory, layoutItems, normalAngle, parseLayout, physicalRoom, rotate, zoneSlots } from "./houseLayout";
+import { artKey, attachedPoint, cameraYaw, corners, defaultLayout, exportLayout, floorplanKey, hitItem, isHatZone, itemKind, LayoutHistory, layoutItems, normalAngle, parseLayout, physicalRoom, RETIRED_OBJECTS, rotate, zoneSlots } from "./houseLayout";
 
 const items = layoutItems(), key = floorplanKey(HOUSE_ROOMS, items), defaults = () => defaultLayout(items, key);
 describe("treehouse authoring layouts", () => {
@@ -91,7 +91,7 @@ describe("treehouse authoring layouts", () => {
     const converted = parseLayout(supplied, items, key);
     expect(converted.version).toBe(2); expect(converted.objects).toHaveLength(items.length - current.removed.length);
     expect(converted.migration?.held.map(p => p.id)).toEqual(["cauldron"]);
-    for (const old of supplied.objects.filter(p => p.id !== "cauldron")) {
+    for (const old of supplied.objects.filter(p => p.id !== "cauldron" && !RETIRED_OBJECTS.includes(p.id))) { // (the guests' bedrooms' doors: gone since Ed, 2026-11-03)
       const base = legacy.items.find(o => o.id === old.id)!, p = converted.objects.find(p => p.id === old.id)!;
       expect(p.x).toBe(old.x); expect(p.z).toBe(old.z);
       const yaw = FURNITURE_IDS.includes(old.id) ? base.facing.yaw - old.rotation * Math.PI / 180 : old.rotation * Math.PI / 180;
@@ -103,16 +103,18 @@ describe("treehouse authoring layouts", () => {
     expect(converted.objects.filter(p => p.id.startsWith("clutter:")).length).toBeGreaterThan(20);
     expect(converted.objects.find(p => p.id === "terrace:decks")!.rotation).toBe(45); // camera proxy was already +45, not a model using subtraction
     expect(parseLayout(exportLayout(converted, items), items, key)).toEqual(converted);
-    // The retained proposal uses the registered pre-canonical identity; poses and all other metadata stay exact.
-    expect({ ...proposal, floorplan: key, removed: current.removed, objects: proposal.objects.filter(p => !current.removed.includes(p.id)) }).toEqual(exportLayout(converted, items));
+    // The retained proposal uses the registered pre-canonical identity; poses and all other metadata stay exact (less the retired doors,
+    // and each object's lighting room: one palette for the whole house since Ed, 2026-11-03).
+    const kept = proposal.objects.filter(p => !current.removed.includes(p.id) && !RETIRED_OBJECTS.includes(p.id)).map(p => { const { lightingRoom: _l, ...q } = p as typeof p & { lightingRoom?: string }; return q; });
+    expect({ ...proposal, floorplan: key, removed: current.removed, objects: kept }).toEqual(exportLayout(converted, items));
   });
-  it("separates clutter into stable selectable/exportable pieces and changes room lighting identity without changing station function", () => {
+  it("separates clutter into stable selectable/exportable pieces; moving a piece to another room changes neither its picture nor its function", () => {
     const clutter = items.filter(o => o.decor), repeated = layoutItems().filter(o => o.decor);
     expect(clutter.map(o => o.id)).toEqual(repeated.map(o => o.id));
     expect(clutter.some(o => o.decor?.kind === "rug")).toBe(true); expect(clutter.some(o => o.decor?.kind === "mess")).toBe(true);
     const wardrobe = items.find(o => o.id === "wardrobe")!, room = HOUSE_ROOMS.rooms.find(r => r.id === "workshop")!;
     const original = defaults().objects.find(p => p.id === wardrobe.id)!, moved = { ...original, x: room.x, z: room.z };
-    expect(physicalRoom(moved)).toBe("workshop"); expect(artKey(wardrobe, moved)).not.toBe(artKey(wardrobe, original));
+    expect(physicalRoom(moved)).toBe("workshop"); expect(artKey(wardrobe, moved)).toBe(artKey(wardrobe, original)); // (one palette: Ed, 2026-11-03)
     expect(wardrobe.use.kind).toBe("creator"); expect(wardrobe.id).toBe("wardrobe");
     const value = defaults(), c = value.objects.find(p => p.id === clutter[0].id)!;
     c.x += 3; c.rotation = 75;

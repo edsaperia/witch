@@ -1,5 +1,5 @@
 // The house's furniture and its rooms' dressing as pixels (render/houseFurniture.ts, render/houseDecor.ts): each piece drawn by its
-// id and footprint (art/furniture.js) or each room's dressing laid as one picture (art/houseDecor.js), baked in its room's colours and
+// id and footprint (art/furniture.js) or each room's dressing laid as one picture (art/houseDecor.js), baked in the house's one palette and
 // lit by its own lights, on whatever canvas `mk` makes. No three.js and no page here, so the art workers run it (render/artBuild.ts,
 // the "housePiece" job), not the page's thread: Ed's playtest of v4515 ("stuck_walking_down") had each piece baked on the page as she
 // came within 30 m of it, a frame of 120 to 220 ms each on his laptop, every second or so as she walked the house.
@@ -46,10 +46,10 @@ export function placedStanding(o: HouseObject): { yaw: number; foot: { w: number
 /** The room's own light for its furniture (the creator's room's: a dim cool night, the warm things in it). */
 const roomLight = (st: Style): Style => ({ ...st, ambient: .85, ambientHue: .09, moon: .4, shafts: 0, dither: 0 } as Style);
 
-/** A drawn piece (art/furniture.js modelSprite's), baked in a room's colours (times `dim`: a rug, flat to the light, darker) and lit by
- *  its own lights: its canvas. `over`: colours by material over the room's (her broom's, render/workshopArt.ts). */
-export function litCanvas(d: Drawn, room: string, st: Style, mk: MakeCanvas, dim = 1, id = "", over: Record<string, number[]> = {}): AnyCanvas {
-  const colours = Object.fromEntries(Object.entries({ ...furnitureColours(st, room, id), ...over }).map(([k, c]) => [k, dim === 1 ? c : (c as number[]).map(v => Math.round(v * dim))]));
+/** A drawn piece (art/furniture.js modelSprite's), baked in the house's one palette (times `dim`: a rug, flat to the light, darker) and
+ *  lit by its own lights: its canvas. `over`: colours by material over the palette's (her broom's, render/workshopArt.ts). */
+export function litCanvas(d: Drawn, st: Style, mk: MakeCanvas, dim = 1, id = "", over: Record<string, number[]> = {}): AnyCanvas {
+  const colours = Object.fromEntries(Object.entries({ ...furnitureColours(st, id), ...over }).map(([k, c]) => [k, dim === 1 ? c : (c as number[]).map(v => Math.round(v * dim))]));
   const b = (Art.bake as (sp: unknown, c: object, st: Style, outline: unknown, mk: MakeCanvas) => { A: AnyCanvas; N: AnyCanvas; w: number; h: number })(d.sp, colours, { ...st, styleInterior: false } as unknown as Style, (st as unknown as { cOutline: unknown }).cOutline, mk);
   const lit = mk(b.w, b.h);
   shade({ a: ctx2d(b.A), n: ctx2d(b.N), w: b.w, h: b.h }, lit, roomLight(st), d.lights, null);
@@ -68,19 +68,19 @@ export function furniturePiece(id: string, st: Style, ppm: number, pitch: number
   const o = H.objects.find(q => q.id === id);
   if (!o) return null;
   const { yaw, foot, curve } = placedStanding(o);
-  const d = furnitureSprite(o.id, foot, st, { ppm, pitch, yaw, state, curve }) as Drawn, lit = litCanvas(d, o.room, st, mk, 1, o.id);
+  const d = furnitureSprite(o.id, foot, st, { ppm, pitch, yaw, state, curve }) as Drawn, lit = litCanvas(d, st, mk, 1, o.id);
   return { px: pixelsOf(lit), w: lit.width, h: lit.height, ox: d.origin.x, oy: d.origin.y, marks: d.marks ?? {} };
 }
 
 /** A room's dressing (by its id) as one picture: each piece drawn (art/houseDecor.js, at the house's pixel and view), baked in the
- *  room's colours and lit by its own lights, then laid on one canvas at its place (the rug first, then far to near); its origin the
+ *  house's one palette and lit by its own lights, then laid on one canvas at its place (the rug first, then far to near); its origin the
  *  room's middle on the floor. Null for a room with none. */
 export function roomDecorPiece(roomId: string, st: Style, ppm: number, pitch: number, mk: MakeCanvas, H = HOUSE_ROOMS): PiecePixels | null {
   const room = H.rooms.find(r => r.id === roomId);
   const items = room ? decorPlan(room, H) : [];
   if (!room || !items.length) return null;
   const ky = Math.sin(pitch) * ppm, drawn = items.map(it => {
-    const d = (it.kind === "mess" ? messSprite(it.of!, it.foot!, st, { ppm, pitch, yaw: it.yaw }) : decorSprite(it.kind, it.k, st, { ppm, pitch, yaw: it.yaw, ...(it.r ? { r: it.r / SIZE } : {}) })) as Drawn, c = litCanvas(d, room.id, st, mk, it.kind === "rug" ? RUG_DIM : it.kind === "mess" ? MESS_DIM : 1);
+    const d = (it.kind === "mess" ? messSprite(it.of!, it.foot!, st, { ppm, pitch, yaw: it.yaw }) : decorSprite(it.kind, it.k, st, { ppm, pitch, yaw: it.yaw, ...(it.r ? { r: it.r / SIZE } : {}) })) as Drawn, c = litCanvas(d, st, mk, it.kind === "rug" ? RUG_DIM : it.kind === "mess" ? MESS_DIM : 1);
     return { it, c, left: it.x * ppm - d.origin.x, top: it.z * ky - d.origin.y };
   });
   const x0 = Math.floor(Math.min(...drawn.map(q => q.left))), y0 = Math.floor(Math.min(...drawn.map(q => q.top)));

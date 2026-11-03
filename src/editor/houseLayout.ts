@@ -74,12 +74,18 @@ export function defaultLayout(items: LayoutItem[], floorplan: string): Layout {
 }
 /** Model yaw and plan rotation have the same clockwise convention (art/model3d.ts toWorld). */
 export const cameraYaw = (p: Placement): number => p.rotation * Math.PI / 180;
+/** The room whose floor a placement stands on, by name, for the editor's room list and the export (a label only: no rule reads it
+ *  since Ed, 2026-11-03, the house one room). */
 export const physicalRoom = (p: Pick<Placement, "x" | "z">, H = HOUSE_ROOMS): string | null => shapeRoomAt(H.shape, p.x, p.z)?.id ?? null;
-export const lightingRoom = (p: Pick<Placement, "x" | "z">, H = HOUSE_ROOMS): string => physicalRoom(p, H) ?? [...H.rooms].sort((a, b) => Math.hypot(a.x - p.x, a.z - p.z) - Math.hypot(b.x - p.x, b.z - p.z))[0].id;
-export const artKey = (o: LayoutItem, p: Placement, H = HOUSE_ROOMS): string => `${o.id}:${p.rotation}:${lightingRoom(p, H)}`;
+/** A piece's picture by its pose (one palette for the whole house, art/furniture.js: where it stands doesn't change it). */
+export const artKey = (o: LayoutItem, p: Placement): string => `${o.id}:${p.rotation}`;
+/** Objects gone from the house that an older layout still places: the guests' bedrooms' doors (Ed, 2026-11-03: the bedrooms open).
+ *  Their placements are dropped on import, so his layouts from before still load. */
+export const RETIRED_OBJECTS: readonly string[] = ["bedroom2Door", "bedroom3Door"];
 export function parseLayout(raw: unknown, items: LayoutItem[], floorplan: string): Layout {
   if ((raw as { version?: unknown } | null)?.version === 1) return migrateCameraV1(raw, items, floorplan);
-  const l = raw as Layout;
+  let l = raw as Layout;
+  if (Array.isArray(l?.objects) && l.objects.some(p => RETIRED_OBJECTS.includes(p?.id))) l = { ...l, objects: l.objects.filter(p => !RETIRED_OBJECTS.includes(p?.id)) };
   const matchingSource = l?.floorplan === floorplan || (floorplan === identities.canonical && identities.legacy.includes(l?.floorplan));
   const removed = l?.removed ?? [];
   if (!Array.isArray(removed) || removed.some(id => typeof id !== "string" || !id.startsWith("clutter:") || !items.some(o => o.id === id)) || new Set(removed).size !== removed.length) throw Error("Only known clutter may be explicitly removed.");
@@ -117,6 +123,7 @@ export function migrateCameraV1(raw: unknown, items: LayoutItem[], floorplan: st
     const old = legacy.items.find(o => o.id === p?.id), current = items.find(o => o.id === p?.id);
     if (!old || seen.has(p.id) || ![p.x, p.z, p.rotation].every(v => typeof v === "number" && Number.isFinite(v)) || Math.abs(p.x) > 10000 || Math.abs(p.z) > 10000 || Math.abs(p.rotation) > 360000) throw Error("Invalid version-1 object ID, coordinate or angle.");
     seen.add(p.id);
+    if (RETIRED_OBJECTS.includes(p.id)) continue; // (gone from the house: nothing to place)
     // A changed object (notably the working mushroom kitchen) is not overwritten by its stale placeholder.
     if (!current || ["w", "d", "h"].some(k => old[k as "w" | "d" | "h"] !== current[k as "w" | "d" | "h"])) { held.push({ id: p.id, x: p.x, z: p.z, rotation: p.rotation }); continue; }
     const target = result.objects.find(q => q.id === p.id)!;
@@ -146,7 +153,7 @@ export function exportLayout(layout: Layout, items: LayoutItem[]): object {
     hatSpawnPoints: items.filter(o => o.hatPoint).map(o => { const p = layout.objects.find(p => p.id === o.id)!; return { id: o.hatPoint!, x: p.x, z: p.z }; }).sort((a, b) => a.id - b.id),
     objects: layout.objects.map(p => {
       const item = items.find(o => o.id === p.id)!;
-      return { ...p, physicalRoom: physicalRoom(p), lightingRoom: lightingRoom(p), ...(item.hatPoint ? { kind: "hat-spawn-point", order: item.hatPoint } : isHatZone(item) ? { kind: "hat-spawn-zone" } : { useAnchor: attachedPoint(item, p) }) };
+      return { ...p, physicalRoom: physicalRoom(p), ...(item.hatPoint ? { kind: "hat-spawn-point", order: item.hatPoint } : isHatZone(item) ? { kind: "hat-spawn-zone" } : { useAnchor: attachedPoint(item, p) }) };
     }) };
 }
 /** Future spawn positions, not hats or interaction points. Keep runtime's slot identities/order. */

@@ -17,4 +17,4 @@ for (const [name, value] of [['converted-layout.json', exportLayout(layout, item
   const file = resolve(output, name); if (file === resolve(input)) throw Error('Refusing to overwrite the supplied layout');
   writeFileSync(file, JSON.stringify(value, null, 2) + '\n');
 }
-console.log(JSON.stringify({ objectCount: audit.objectCount, clutterCount: audit.clutterCount, movedRooms: audit.objects.filter(o => o.crossesRooms).map(o => ({ id: o.id, from: o.sourceRoom, to: o.physicalRoom })), interactiveWarnings: audit.objects.filter(o => o.interactive && (o.anchorOutside > -.3 || !o.floorReachable || o.approachOverlaps.length)), overlaps: audit.overlaps, corridors: audit.corridors, held: audit.migration?.held }, null, 2));
+console.log(JSON.stringify({ objectCount: audit.objectCount, clutterCount: audit.clutterCount, interactiveWarnings: audit.objects.filter(o => o.interactive && (o.anchorOutside > -.3 || !o.floorReachable || o.approachOverlaps.length)), overlaps: audit.overlaps, corridors: audit.corridors, held: audit.migration?.held }, null, 2));

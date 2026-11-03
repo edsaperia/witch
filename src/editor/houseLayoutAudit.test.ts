@@ -8,7 +8,8 @@ describe("layout adoption audit", () => {
   const items = layoutItems(), key = floorplanKey(HOUSE_ROOMS, items);
   it("audits Ed's converted proposal without changing the published defaults", () => {
     const before = JSON.stringify(HOUSE_ROOMS), layout = parseLayout(supplied, items, key), audit = auditLayout(layout, items);
-    expect(audit.objectCount).toBe(44); expect(audit.clutterCount).toBe(73);
+    expect(audit.objectCount).toBe(42); expect(audit.clutterCount).toBe(73); // (44 less the guests' bedrooms' doors: gone since Ed, 2026-11-03)
+    expect(audit.objects.some(o => "locked" in o || "crossesRooms" in o)).toBe(false); // (rooms only labels: nothing locked, nothing to cross)
     expect(audit.overlaps).toEqual([["cauldron", "mushroom-basket:purple"], ["cauldron", "mushroom-basket:turquoise"]]); // Actual current-kitchen fit warnings are retained, not hidden.
     expect(audit.objects.filter(o => o.interactive && ((o.anchorOutside ?? 0) > -.3 || !o.floorReachable || o.approachOverlaps.length))).toEqual([]);
     const hats = audit.objects.find(o => o.id === "hats")!;

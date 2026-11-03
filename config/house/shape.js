@@ -7,7 +7,7 @@
 // from here, so she walks exactly where the floor is drawn. Pure; metres on the house's plan (x east, z south, the Terrace's middle 0).
 //
 // A shape (config/house/assemble.js makes it from the room files): `trunk`, its rooms bottom to top ({ id, x, z, r }); `spine`, the
-// limbs between them ({ a, b: trunk room ids, bend }); `branches`, the branch rooms ({ id, from, x, z, r, bend, locked }); `stubs`,
+// limbs between them ({ a, b: trunk room ids, bend }); `branches`, the branch rooms ({ id, from, x, z, r, bend }); `stubs`,
 // the floor's bulge where each branch room's limb leaves ({ room, a: { x, z }, b: { x, z }, w0, w1 }); `noiseAt`, where the plan's 0
 // lay on the mock's own (its noise and each room's wobble are seeded by place, so the field is worked out there: the shapes the
 // mock's, exactly).
@@ -65,17 +65,20 @@ function inMock(S) {
   // (its bounds, every room's wobble and limb's width in: far outside them the field's only how far it is to them, at least)
   const all = [...trunk, ...branches], pad = 12; // (a branch bows up to 4 m off its chord, 5.5 m wide)
   const box = { x0: Math.min(...all.map(r => r.x - r.r * 1.3)) - pad, x1: Math.max(...all.map(r => r.x + r.r * 1.3)) + pad, z0: Math.min(...all.map(r => r.z - r.r * 1.3)) - pad, z1: Math.max(...all.map(r => r.z + r.r * 1.3)) + pad };
-  return (S.m = { ox, oz, trunk, branches, byId, box, stubs: S.stubs.map(l => ({ ...l, a: pt(l.a), b: pt(l.b) })) });
+  // (kept on the shape, unenumerated: a copy or a comparison of the house sees only its own data)
+  Object.defineProperty(S, "m", { value: { ox, oz, trunk, branches, byId, box, stubs: S.stubs.map(l => ({ ...l, a: pt(l.a), b: pt(l.b) })) }, configurable: true, writable: true });
+  return S.m;
 }
 /** How far (x, z), in the mock's frame, lies outside the shape's bounds (0 within them). */
 const outside = (B, x, z) => Math.hypot(Math.max(0, B.x0 - x, x - B.x1), Math.max(0, B.z0 - z, z - B.z1));
-/** The floor's distance at (x, z) (negative inside). `walk`: only what she walks on (a locked room and its stub left out, its branch
- *  stopping at its door, the room's own rim). `parts`: also each part's distance, for the grain (render/houseArt.ts).
- *  @param {any} S0 @param {number} x0 @param {number} z0 @param {boolean} [walk] @param {any[] | null} [parts] */
-export function field(S0, x0, z0, walk = false, parts = null) {
+/** The floor's distance at (x, z) (negative inside). `walk`: what she walks on, which is all of it (Ed, 2026-11-03: the house one
+ *  room, no room locked; it left a locked room out, its branch stopping at its door); kept for its callers. `parts`: also each
+ *  part's distance, for the grain (render/houseArt.ts).
+ *  @param {any} S0 @param {number} x0 @param {number} z0 @param {boolean} [_walk] @param {any[] | null} [parts] */
+export function field(S0, x0, z0, _walk = false, parts = null) {
   const S = inMock(S0), byId = S.byId, x = x0 + S.ox, z = z0 + S.oz, far = outside(S.box, x, z);
   if (far > 0 && !parts) return far; // (clear of it: no nearer than its bounds)
-  let d = 1e9, lockedIn = 1e9;
+  let d = 1e9;
   for (const r of S.trunk) { const s = blob(r, x, z); if (parts) parts.push({ kind: "ring", r, s }); d = smin(d, s, 6); }
   for (let i = 1; i < S.trunk.length; i++) {
     const l = spineLimb(S.trunk[i - 1], S.trunk[i], i), [s, t, side] = limb(l.a, l.b, l.bend, l.w0, l.w1, x, z);
@@ -84,11 +87,10 @@ export function field(S0, x0, z0, walk = false, parts = null) {
   for (const r of S.branches) {
     const p = byId[r.from], l = branchLimb(p, r), [s, t, side] = limb(l.a, l.b, l.bend, l.w0, l.w1, x, z), sb = blob(r, x, z);
     if (parts) parts.push({ kind: "branch", r, s, side, t }, { kind: "ring", r, s: sb });
-    if (walk && r.locked) { d = smin(d, s, 5); lockedIn = Math.min(lockedIn, sb); } // (its branch up to its door: the room itself shut)
-    else d = smin(d, smin(s, sb, 3.5), 5);
+    d = smin(d, smin(s, sb, 3.5), 5);
   }
-  for (const l of S.stubs) { if (walk && byId[l.room]?.locked) continue; const [s] = stubAt(l, x, z); d = smin(d, s, 3); }
-  return walk && lockedIn < 1e8 ? Math.max(d, -lockedIn) : d;
+  for (const l of S.stubs) { const [s] = stubAt(l, x, z); d = smin(d, s, 3); }
+  return d;
 }
 
 /** The trunk's floor from room `from` to room `to` along it (rules/treehouse.ts: where she lands by herself, Ed 2026-10-26): their

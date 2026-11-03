@@ -495,6 +495,13 @@ Code: `rules/treehouse.ts`, `art/ent.js`, `docs/backlog/treehouse.md`, `config/h
 - **`treehouse.house.look.ragged`**: Fractional irregularity of the reveal edge.
   1. Ed, 2026-11-02: "The treehouse/tree needs work. It looks good on the horizon but weird to fly to and from."
   Treehouse look settings; all four switches on by default, chosen by Ed on 2 November.
+- **`treehouse.house.cauldronReach`**: Metres round the cauldron's middle that a brew's smoke reaches: every witch on foot in the house within it while the smoke lasts takes the potion, and she unloads the mushrooms she carries within it (rules/mushrooms.ts inCauldronReach; the baskets work by their own nearness). It replaced the cauldron's room.
+  1. Ed, 2026-11-03: "Is there still a good reason why the treehouse is split into different rooms, or can we join it all into one room? The cauldron it could affect all witches in a radius."
+  2. Ed, 2026-11-03: "go on treehouse. 10m cauldron reach is fine."
+  The smoke's drawing spreads over the same circle (render/brewing.ts).
+- **`treehouse.house.cauldronSmoke`**: Seconds a brew's smoke hangs over the cauldron's reach once the third mushroom lands: a witch who walks into it at any moment before it clears takes the potion too, once.
+  1. Ed, 2026-11-03: "The cauldron smoke effect should cover the 10m area for ten seconds or so, and if you walk into it you are affected by the potion."
+  Each witch's own spin before she falls lasts as the smoke used to, 4 seconds from when the smoke takes her (rules/mushrooms.ts SMOKE_SPIN).
 
 | knob | type | range |
 |---|---|---|
@@ -522,6 +529,8 @@ Code: `rules/treehouse.ts`, `art/ent.js`, `docs/backlog/treehouse.md`, `config/h
 | `treehouse.house.landTime` | number | 0 to … |
 | `treehouse.house.walk` | number | 0 to … |
 | `treehouse.house.stride` | number | 0 to … |
+| `treehouse.house.cauldronReach` | number | 0 to … |
+| `treehouse.house.cauldronSmoke` | number | 0 to … |
 | `treehouse.house.fall.on` | boolean |  |
 | `treehouse.house.fall.time` | number | 0 to … |
 | `treehouse.house.fall.beat` | number | 0 to … |

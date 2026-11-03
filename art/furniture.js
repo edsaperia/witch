@@ -1,6 +1,6 @@
 // The treehouse's furniture (Ed, 2026-10-23: real art for the house's objects, config/house/, in place of the plain boxes
 // render/houseRooms.ts drew). Ed's style: "a charming mismatched combination ... cozy cottage vibes sprouting leaves, occasional
-// gothic pieces, and random modern clutter"; a palette per room; its lights "a mix of magic, candles, gas lamps, modern lamps, fairy
+// gothic pieces, and random modern clutter"; a palette per room (one for the whole house since Ed, 2026-11-03: below); its lights "a mix of magic, candles, gas lamps, modern lamps, fairy
 // lights, neon lamps". From the mock (#1017), his answers: twice the size it was (as big as her creator bedroom's: house.json's
 // footprints are twice a real piece's, SIZE), the bed's canopy over its head half, the rooms dim with the glows lighting what's
 // near them, and the clutter fewer, chunkier things that read at a glance.
@@ -814,25 +814,7 @@ const PIECES = {
     (m.marks ??= {}).spot = [lamp[0], lamp[1] - .15, lamp[2] + .03];
   },
 
-  // A locked friend's room's door: a pointed gothic door of planks in its frame, iron straps and a ring, a wreath of leaves with a heart,
-  // a little neon "do not disturb" glow (a crescent) over it, a glowing lock.
-  bedroom2Door(m, s) { PIECES.door(m, s, 0); },
-  bedroom3Door(m, s) { PIECES.door(m, s, 1); },
-  door(m, { W, D, H }, k = 0) {
-    const w = Math.min(W, 1.1) / 2, h = Math.min(H, 2.2), z = 0;
-    m.flat([0, h / 2, z], X, Y, w, h / 2, (s, t) => { if (t > .5 && Math.hypot(s, (t - .5) / .5 * .95) > 1) return undefined; return Math.abs(((s * 3) % 1 + 1) % 1 - .5) > .45 ? M.BARKD : M.WOOD; }, { group: 1, bend: 0 });
-    m.chain([[-w - .06, 0, z, .06], [-w - .06, h * .6, z, .06], [-w * .6, h * .92, z, .06], [0, h + .05, z, .06], [w * .6, h * .92, z, .06], [w + .06, h * .6, z, .06], [w + .06, 0, z, .06]], M.BARKD, { group: 2 });
-    for (const y of [h * .25, h * .62]) m.box([-w * .4, y, z + .03], [w * .5, .025, .012], M.SHADES, { group: 3 });
-    m.ell([w * .55, h * .45, z + .04], [.05, .05, .02], M.SHADES, { group: 4, paint: p => (Math.hypot(p[0] - w * .55, p[1] - h * .45) < .025 ? undefined : M.SHADES) });
-    bulb(m, [w * .55, h * .38, z + .05], .025, M.MAGIC, 5, [MAGICL, 6, .2]);
-    // a wreath of leaves with a heart in it; a neon crescent over the door, each its own colour
-    for (let i = 0; i < 10; i++) { const a = i / 10 * Math.PI * 2; m.ell([Math.cos(a) * .17, h * .72 + Math.sin(a) * .17, z + .06], [.06, .045, .03], [M.LEAF, M.LEAF2, M.LEAF3][i % 3], { group: 6, dir: [-Math.sin(a), Math.cos(a), 0] }); }
-    m.ell([0, h * .72, z + .07], [.06, .05, .02], M.ACCENT, { group: 7 });
-    const neon = k ? M.COLLAR : M.MAGIC;
-    for (let i = 0; i < 8; i++) { const a = -1.9 + i * .45, b = a + .45; m.seg([Math.cos(a) * .14, h + .3 + Math.sin(a) * .14, z + .05], [Math.cos(b) * .14, h + .3 + Math.sin(b) * .14, z + .05], .018, .018, neon, { group: 8, extra: true }); }
-    light(m, [0, h + .3, z + .2], k ? FAIRY : MAGICL, 10, .3);
-  },
-  // the two locked bedrooms' placeholders, under dust sheets (art/sheeted.js)
+  // the two guests' bedrooms' placeholders, under dust sheets (art/sheeted.js)
   ...SHEETED_PIECES,
 };
 
@@ -840,12 +822,14 @@ const PIECES = {
 export const PARTS = { light, bulb, candle, sprig, ivy, can, disc, planks, WARM, FAIRY, MAGICL, SCREEN, GREEN };
 
 /** The ids drawn as art (every interactive object of the house; the hats on the hats' floor are its own, render/houseRooms.ts). */
-export const FURNITURE_IDS = Object.keys(PIECES).filter(id => id !== "door");
+export const FURNITURE_IDS = Object.keys(PIECES);
 /** Each piece's states, drawn once each (the first the default). */
 export const FURNITURE_STATES = { curtains: ["open", "shut"], invitations: ["8,8,8", "4,8,8", "0,8,8", "8,3,0", "0,0,0"], lathe: ["3", "2", "1", "0"] };
 
-// ---------- colours, a palette a room ----------
-// Each room its own (Ed: "per room"); materials: BARKD dark carved wood, WOOD warm wood, HAIR its carving's light, CLOTH the room's main
+// ---------- colours: one palette for the whole house ----------
+// One palette (Ed, 2026-11-03: the house one room, "I don't think the zones are doing anything"; it was one a room, Ed's "per room"
+// of the mock): the creator bedroom's, plum velvet and oxblood over dark oak, brass, which most of his layout's pieces already wore
+// (every room without its own took it). Materials: BARKD dark carved wood, WOOD warm wood, HAIR its carving's light, CLOTH the room's main
 // cloth (a duvet, a drape, a table's baize), ACCENT velvet, BODY its folds' shade, BELLY linen, paper and bone, FLOWER brass and gold,
 // FRAME metal, CRYSTAL glass, WEB a mirror, WATER the night or the sea, STONE and STONED stone, MOSS moss, BROOM and STRAW a broom; her
 // things: JACKET the hoodie and a puffer, TOP its print, HAT and HAT2 her cloaks, POM pink, IRIS blue, PHONES hot pink, SHOES and SOLE
@@ -862,31 +846,16 @@ const BASE = {
   [M.WOKEN]: [255, 222, 160], [M.COLLAR]: [255, 110, 214], [M.MAGIC]: [178, 120, 255], [M.MAGIC2]: [236, 220, 255], [M.GLINT]: [160, 226, 255], [M.GLOW]: [255, 184, 100], [M.RUNE]: [110, 255, 196],
   [M.LINE]: [24, 20, 30], [M.NOSE]: [14, 12, 18],
 };
-const ROOM_COLOURS = {
-  bedroom: {}, // plum velvet and oxblood over dark oak, brass
-  boudoir: { [M.CLOTH]: [36, 96, 102], [M.BODY]: [24, 66, 74], [M.ACCENT]: [196, 64, 92], [M.FRAME]: [214, 166, 80] }, // teal and rose, warm brass
-  parlour: { [M.CLOTH]: [40, 104, 70], [M.ACCENT]: [178, 120, 48], [M.BODY]: [26, 70, 48] }, // emerald and old gold
-  study: { [M.CLOTH]: [40, 56, 104], [M.ACCENT]: [170, 110, 46] }, // navy and ochre
-  workshop: { [M.CLOTH]: [74, 92, 64], [M.ACCENT]: [184, 74, 44] }, // oily green and rust
-  studio: { [M.CLOTH]: [52, 30, 80], [M.ACCENT]: [226, 60, 140], [M.FRAME]: [226, 230, 240] }, // midnight purple and neon pink; bright silver (the synth's cases)
-  kitchen: { [M.CLOTH]: [110, 138, 104], [M.ACCENT]: [196, 104, 60] }, // sage and copper
-  solarium: { [M.CLOTH]: [224, 206, 150], [M.ACCENT]: [226, 120, 120], [M.WOOD]: [176, 132, 86] }, // cream and sunny rose, pale wood
-  drawingRoom: { [M.CLOTH]: [34, 98, 62], [M.ACCENT]: [150, 30, 44] }, // baize green and crimson
-  bestiary: { [M.CLOTH]: [70, 84, 56], [M.ACCENT]: [120, 40, 40], [M.BODY3]: [40, 50, 40] }, // moss and dried blood
-  crowsNest: { [M.CLOTH]: [40, 74, 110], [M.ACCENT]: [200, 84, 56] }, // sea blue and a buoy's red
-  atrium: { [M.CLOTH]: [92, 62, 40], [M.ACCENT]: [186, 60, 52] }, // bark and a wax seal's red
-  ...SHEETED_COLOURS, // the two locked bedrooms: dull dust sheets (art/sheeted.js)
-};
-/** A piece's own colours over its room's (the biome board's frames). */
+/** A piece's own colours over the house's (the biome board's frames; the guests' rooms' dust sheets, art/sheeted.js). */
 /** (the biome frames dimmed, so the board's bright ones don't bloom over the parts hung in them) */
 const FRAME_DIM = .6;
 // (the letters' paper slightly off-white; the whole desk dimmed, PIECE_DIM)
-const PIECE_COLOURS = { invitations: { [M.BELLY]: [228, 222, 208], [M.IRIS]: [110, 162, 218], [M.ACCENT]: [238, 44, 70] }, pegboard: Object.fromEntries(BIOME_MATS.map((mm, i) => [mm, hexRgb(BIOMES[i]).map(v => Math.round(v * FRAME_DIM))])) };
+const PIECE_COLOURS = { ...SHEETED_COLOURS, invitations: { [M.BELLY]: [228, 222, 208], [M.IRIS]: [110, 162, 218], [M.ACCENT]: [238, 44, 70] }, pegboard: Object.fromEntries(BIOME_MATS.map((mm, i) => [mm, hexRgb(BIOMES[i]).map(v => Math.round(v * FRAME_DIM))])) };
 /** Pieces mostly flat to the light, their colours times this (as render/houseDecor.ts RUG_DIM a rug's): the invitations desk, its top
  *  and its letters lying face up, lit to a glare that bloomed at the house's camera (2026-10-26). */
 const PIECE_DIM = { invitations: .62 };
-export function furnitureColours(st = {}, room = "bedroom", id = "") {
-  const c = { ...BASE, ...(ROOM_COLOURS[room] ?? {}), ...(PIECE_COLOURS[id] ?? {}) }, k = PIECE_DIM[id];
+export function furnitureColours(st = {}, id = "") {
+  const c = { ...BASE, ...(PIECE_COLOURS[id] ?? {}) }, k = PIECE_DIM[id];
   return k ? Object.fromEntries(Object.entries(c).map(([m, rgb]) => [m, rgb.map(v => Math.round(v * k))])) : c;
 }
 
@@ -898,7 +867,7 @@ export function furnitureColours(st = {}, room = "bedroom", id = "") {
 /** @param {string} id @param {{ w: number, d: number, h: number }} foot @param {object} [st] @param {{ ppm?: number, pitch?: number, yaw?: number, state?: string, curve?: number }} [o] */
 export function furnitureSprite(id, foot, st = {}, { ppm = 32 / 3, pitch = .6, yaw = Math.PI / 4, state = undefined, curve = 0 } = {}) {
   const build = PIECES[id];
-  if (!build || id === "door") throw new Error(`no furniture "${id}"`);
+  if (!build) throw new Error(`no furniture "${id}"`);
   const m = new Model({ blend: .025 });
   const k = sizeOf(id);
   build(m, { W: foot.w / k, D: foot.d / k, H: foot.h / k }, state ?? FURNITURE_STATES[id]?.[0]);

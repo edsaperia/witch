@@ -16,7 +16,7 @@ it("preserves the complete export and all 109 kept poses/anchors; removes strict
   expect(current.removedObjects).toEqual(["hats"]);
   expect(current.removed).toHaveLength(22); expect(current.objects).toHaveLength(109);
   const items = layoutItems(), key = floorplanKey(EDITOR_HOUSE, items);
-  expect(parseLayout(authored, items, key).objects).toHaveLength(132); // Recorded source migration still fully validated.
+  expect(parseLayout(authored, items, key).objects).toHaveLength(130); // Recorded source migration still fully validated (less the guests' bedrooms' two doors, gone since Ed, 2026-11-03).
   const selected = publishedLayout(items, key, new URLSearchParams()), exported = exportLayout(selected, items);
   expect(parseLayout(exported, items, key)).toEqual(selected);
   const history = new LayoutHistory(selected); history.save(); history.value = structuredClone(selected); history.value.objects[0].x += 1; history.undo();

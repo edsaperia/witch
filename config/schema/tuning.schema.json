@@ -1438,6 +1438,16 @@
               "type": "number",
               "minimum": 0
             },
+            "cauldronReach": {
+              "type": "number",
+              "minimum": 0,
+              "description": "Metres round the cauldron's middle that a brew's smoke reaches: every witch on foot in the house within it while the smoke lasts takes the potion, and she unloads the mushrooms she carries within it (rules/mushrooms.ts inCauldronReach; the baskets work by their own nearness)."
+            },
+            "cauldronSmoke": {
+              "type": "number",
+              "minimum": 0,
+              "description": "Seconds a brew's smoke hangs over the cauldron's reach once the third mushroom lands: a witch who walks into it at any moment before it clears takes the potion too, once."
+            },
             "fall": {
               "type": "object",
               "properties": {
@@ -1596,6 +1606,8 @@
             "landTime",
             "walk",
             "stride",
+            "cauldronReach",
+            "cauldronSmoke",
             "fall",
             "dark",
             "crown",

@@ -17,7 +17,6 @@ import { entTreehouseSprites, propSprites, soundsystemGenSprites, soundsystemSpr
 import { canvasPixels, discoDrawn, seaSprites, stoneSprites, type CanvasPixels, type StoneSpec } from "./islandArt";
 import { housePiece, type PiecePixels } from "./housePieces";
 import { workshopPicture, type WorkshopPic } from "./workshopPieces";
-import { clearMask } from "./crownMask";
 import type { HouseArtLayout } from "../rules/housePlacement";
 
 export type AnyCanvas = HTMLCanvasElement | OffscreenCanvas;
@@ -124,9 +123,7 @@ export type ArtJob = { kind: "type"; id: number; style: Style; seed: number; K: 
    *  piece's key, then "@" and the pixel and view it's drawn at (so the cache keeps each). */
   | { kind: "housePiece"; id: string; style: Style; ppm: number; pitch: number; layout?: HouseArtLayout }
   /** One of the Workshop's pictures (render/workshopPieces.ts): her resting broom or a part on the pegboard; its id all it's drawn from. */
-  | { kind: "workshopPic"; id: string; style: Style; pic: WorkshopPic }
-  /** The crown's clearing over one floor (render/crownMask.ts): its id the floor's key, then "@" and the dome's box it's drawn over. */
-  | { kind: "crownMask"; id: string; style: Style; box: number[] };
+  | { kind: "workshopPic"; id: string; style: Style; pic: WorkshopPic };
 
 /** The beach's pieces in their atlas, by id (a print by "<id>~<heading>"): frame and ground point. */
 export interface BeachArt { pieces: Record<string, { frame: number; originX: number; originY: number }>; finds: string[]; prints: string[]; headings: number }
@@ -169,7 +166,7 @@ export interface TilePixels { albedo: Uint8Array; normal: Uint8Array; w: number;
 export type { StumpSpec } from "../rules/stumps";
 import type { StumpSpec } from "../rules/stumps";
 export interface StumpArt { origin: { x: number; y: number }; top: { x: number; y: number }; height: number; radius: number; /** The root area's outline: its radius (art pixels) at even angles round the rings' middle, from east towards the camera (art/props/stumps.js ROOT_ANGLES). */ roots: number[]; /** Metres over the ground a metre of the sprite's height reaches, as the art's camera saw it: it lies on the ground by this. */ depth: number }
-export interface ArtResult { /** The dancefloor's looks (kind disco). */ disco?: { base: CanvasPixels; lit: CanvasPixels; pitch: number; size: number; gridOrigin: number; rimOuter: number; radius: number }; /** The runestones' heights, in order (kind stones). */ stones?: number[]; /** The stumps' ground points and cuts (kind stumps), in order. */ stumps?: StumpArt[]; /** The sea creatures' frames' origins (kind sea). */ sea?: { x: number; y: number }[]; /** The beach's edge of the woods: its palms' frames (crown, trunk) and its shrubs' and grass clumps'. */ beachEdge?: BeachEdgeArt; /** The biome lakes' shore dressing. */ lakeShore?: LakeShoreArt; /** A sleeping legend's ground line in each frame: rows from its top (the art's origin). */ ground?: number[]; /** And how far its body's middle (the origin) lies right of the frame's middle, pixels. */ centre?: number[]; /** The live rig's parts (#79): their joints and pieces. */ rig?: RigMeta; px: AtlasPixels; layout?: TypeLayout; floor?: TilePixels; decor?: DecorPiece[]; pieces?: PathPieceArt[]; relics?: RelicArt[]; beach?: BeachArt; layouts?: RelicLayouts; speakers?: SpeakerArt; scenes?: SceneArt; witch?: PartyWitchArt; party?: PartyArt; /** Our witch's poses (render/homeArt.ts). */ ours?: WitchArt; /** The treehouse's anchors. */ treehouse?: TreehouseArt; /** A generated soundsystem's origins and projector tops. */ ss?: SoundsystemGenArt; /** A treehouse piece's picture (kinds housePiece and workshopPic; null: nothing to draw). */ housePiece?: PiecePixels | null; /** The crown's clearing over a floor (kind crownMask). */ mask?: Uint8Array }
+export interface ArtResult { /** The dancefloor's looks (kind disco). */ disco?: { base: CanvasPixels; lit: CanvasPixels; pitch: number; size: number; gridOrigin: number; rimOuter: number; radius: number }; /** The runestones' heights, in order (kind stones). */ stones?: number[]; /** The stumps' ground points and cuts (kind stumps), in order. */ stumps?: StumpArt[]; /** The sea creatures' frames' origins (kind sea). */ sea?: { x: number; y: number }[]; /** The beach's edge of the woods: its palms' frames (crown, trunk) and its shrubs' and grass clumps'. */ beachEdge?: BeachEdgeArt; /** The biome lakes' shore dressing. */ lakeShore?: LakeShoreArt; /** A sleeping legend's ground line in each frame: rows from its top (the art's origin). */ ground?: number[]; /** And how far its body's middle (the origin) lies right of the frame's middle, pixels. */ centre?: number[]; /** The live rig's parts (#79): their joints and pieces. */ rig?: RigMeta; px: AtlasPixels; layout?: TypeLayout; floor?: TilePixels; decor?: DecorPiece[]; pieces?: PathPieceArt[]; relics?: RelicArt[]; beach?: BeachArt; layouts?: RelicLayouts; speakers?: SpeakerArt; scenes?: SceneArt; witch?: PartyWitchArt; party?: PartyArt; /** Our witch's poses (render/homeArt.ts). */ ours?: WitchArt; /** The treehouse's anchors. */ treehouse?: TreehouseArt; /** A generated soundsystem's origins and projector tops. */ ss?: SoundsystemGenArt; /** A treehouse piece's picture (kinds housePiece and workshopPic; null: nothing to draw). */ housePiece?: PiecePixels | null; }
 
 export function runJob(job: ArtJob, mk: MakeCanvas): ArtResult {
   if (job.kind === "disco") { const d = discoDrawn(job.style, mk); return { px: packPixels([], 16), disco: { ...d, base: canvasPixels(d.base), lit: canvasPixels(d.lit) } }; }
@@ -189,7 +186,6 @@ export function runJob(job: ArtJob, mk: MakeCanvas): ArtResult {
     const mine = witchLookOf(job.style, job.genome), hat = (Art.witchHatSprite as (st: Style, o: object) => unknown)(job.style, { look: mine.look });
     return { px: packPixels(hat ? [Art.bake(hat, mine.colours, job.style, job.style.cOutline, mk) as Baked] : [], 256) };
   }
-  if (job.kind === "crownMask") return { px: packPixels([], 16), mask: clearMask(job.id.slice(0, job.id.lastIndexOf("@")), job.box) ?? undefined };
   if (job.kind === "workshopPic") return { px: packPixels([], 16), housePiece: workshopPicture(job.pic, job.style, mk) };
   if (job.kind === "housePiece") return { px: packPixels([], 16), housePiece: housePiece(job.id.slice(0, job.id.lastIndexOf("@")), job.style, job.ppm, job.pitch, mk, job.layout?.config) };
   if (job.kind === "find") {

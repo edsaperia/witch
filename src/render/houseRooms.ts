@@ -564,8 +564,7 @@ export class HouseRoomsView {
       else if (o?.use.kind === "say" && this.said?.at !== ht) this.said = { obj: o, at: ht, line: o.use.line };
       else if (o?.use.kind === "telephone") this.said = null; // The ordinary page opens its left station panel.
     }
-    if (this.said && (ht - this.said.at > SAY_FOR || this.said.at > ht || [...this.openGuestRooms ?? []].some(room => this.said?.obj.id === `${room}Door`))) this.said = null;
-    for (const piece of this.pieces.values()) if ([...this.openGuestRooms ?? []].some(room => piece.id === `${room}Door`)) piece.mesh.visible = false;
+    if (this.said && (ht - this.said.at > SAY_FOR || this.said.at > ht)) this.said = null;
     if (!inside) {
       this.box.style.display = "none"; this.sparkle?.draw(NO_GLINTS, 0, 1); this.tapUse = null; v.usePrompt.id = ""; this.telephoneScreen = null;
       this.ring.style.display = this.wakeL.style.display = this.wakeR.style.display = "none";

@@ -404,6 +404,8 @@
       "landTime": 0.35,
       "walk": 9,
       "stride": 5,
+      "cauldronReach": 10,
+      "cauldronSmoke": 10,
       "fall": {
         "on": false,
         "time": 0.9,

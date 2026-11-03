@@ -1,8 +1,8 @@
 import type { Controls, Game, Witch } from "./game";
 import { collectMushroom, newCauldronInventory, newCauldronStock, type CauldronStock, type MushroomKind } from "./cauldron";
 import { enterKitchen, leaveKitchen, newCauldronKitchen, stepKitchen, useKitchenBasket, type CauldronKitchen, type KitchenEvent } from "./cauldronKitchen";
-import { fromPlan, HOUSE_ROOMS, objectAt, roomAt } from "./houseRooms";
-import { deckOf } from "./treehouse";
+import { fromPlan, HOUSE_ROOMS, objectAt } from "./houseRooms";
+import { cauldronSmoke, inCauldronReach } from "./mushrooms";
 import { newMirrorFloorTrip, stepTrip } from "./cauldronTrip";
 import { tutorialTrip } from "./cauldron";
 
@@ -32,10 +32,10 @@ export function enableCauldron(g: Game, pickups: readonly MushroomPickup[]): voi
   for (const W of g.witches) W.mushrooms = newCauldronInventory(stock);
 }
 
+/** Within the cauldron's reach (rules/mushrooms.ts inCauldronReach: the same radius round the pot as the potion's own path, Ed
+ *  2026-11-03; it was the room called "kitchen"), and not knocked out. */
 export function inKitchen(g: Game, W: Witch): boolean {
-  const deck = deckOf(g.map, g.tuning);
-  return !!deck?.house?.rooms && !!W.body.perch && W.body.mode === "ground" && !W.body.seated && !W.ko
-    && roomAt(deck, W.body.x, W.body.z)?.id === "kitchen";
+  return !W.ko && inCauldronReach(g, W);
 }
 
 /** Six basket interaction spots on the kitchen's plan; rendering uses these same points. */
@@ -98,7 +98,7 @@ export function stepCauldronNight(g: Game, inputs: readonly Controls[], dt: numb
         return { ...c, place: false, sigil: false, sigilHeld: false, hatHold: false };
       return c;
     }
-    if ((c.place || c.sigil) && !W.ko) state.events.push(...useKitchenBasket(state.kitchen, W.mushrooms!, kinds[basket], W.id));
+    if ((c.place || c.sigil) && !W.ko) state.events.push(...useKitchenBasket(state.kitchen, W.mushrooms!, kinds[basket], W.id, cauldronSmoke(g.tuning)));
     return { ...c, place: false, sigil: false, sigilHeld: false, hatHold: false };
   });
 }

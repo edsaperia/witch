@@ -31,7 +31,7 @@ describe("standing witch pass over house floors and joins",()=>{
   });
   it("does not lose the overlay when a perched foot lies outside the stricter walking inset",()=>{
     const d=deck();let samples=0;
-    for(const r of HOUSE_ROOMS.rooms.filter(r=>!r.locked))for(let k=0;k<32;k++){
+    for(const r of HOUSE_ROOMS.rooms)for(let k=0;k<32;k++){
       const p=fromPlan(d,r.x+Math.cos(k*Math.PI/16)*(r.r-.01),r.z+Math.sin(k*Math.PI/16)*(r.r-.01));
       if(!onFloor(d,p.x,p.z)||onRoomFloor(d.house!.rooms!,p.x,p.z))continue;samples++;
       const w=standing(p.x,p.z);expect(houseWitchOverlay(d,w,true,legacy(d,w)),r.id).toBe(true);

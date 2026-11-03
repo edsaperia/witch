@@ -25,8 +25,8 @@ export const PENDING = new Set<string>([]);
 export const FURNITURE = new Set<string>(furnitureOn ? FURNITURE_IDS.filter((id: string) => id !== 'cauldron') : []);
 
 /** A drawn piece baked and lit on the page's own canvas (render/housePieces.ts litCanvas): the dream's and the Workshop's. */
-export const litCanvas = (d: Drawn, room: string, st: Style, dim = 1, id = "", over: Record<string, number[]> = {}): HTMLCanvasElement =>
-  piecesLit(d, room, st, pageCanvas, dim, id, over) as HTMLCanvasElement;
+export const litCanvas = (d: Drawn, st: Style, dim = 1, id = "", over: Record<string, number[]> = {}): HTMLCanvasElement =>
+  piecesLit(d, st, pageCanvas, dim, id, over) as HTMLCanvasElement;
 function pageCanvas(w: number, h: number): HTMLCanvasElement { const c = document.createElement("canvas"); c.width = w; c.height = h; c.getContext("2d", { willReadFrequently: true }); return c; }
 /** A canvas as the house's texture: an art pixel a texel, its colours as they are. */
 export function pixelTexture(c: HTMLCanvasElement): THREE.CanvasTexture {

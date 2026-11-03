@@ -7,8 +7,6 @@
   "x": 28,
   "z": -58,
   "r": 7,
-  "locked": true,
-  "door": {"label": "Door", "foot": [1.4, 1.4, 4.4], "use": {"kind": "say", "line": "A friend's room. Locked for now."}},
   "objects": [
     {"id":"bedroom2Bed","label":"A bare bed frame","use":{"kind":"say","line":"Waiting for its witch."},"offset":[2.6,-2.6],"box":{"w":4,"d":5.2,"h":1.2}},
     {"id":"bedroom2Wardrobe","label":"Something under a dust sheet","use":{"kind":"say","line":"Waiting for its witch."},"offset":[4,1.6],"box":{"w":1.4,"d":4,"h":4.4}},

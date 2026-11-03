@@ -16,7 +16,7 @@ import { reconcileHatPoints, spawnAtLowestEmpty } from "./hatFloorPoints";
 
 /** A rectangle of floor on the house's plan (config/house/): metres from the hub's centre along the plan's axes (x, z: east and
  *  south, turned by the plan's `turn`: fromPlan). */
-export interface Rect { x0: number; x1: number; z0: number; z1: number; /** a round room (Ed, 2026-10-23: "the rooms are probably round"): its radius about the rectangle's middle */ r?: number; /** a branch (Ed: "the corridors are tree branches"): its middle line on the plan and its width, the rectangle its bounds */ pts?: [number, number][]; w?: number; /** a room drawn but not walked yet (Bedrooms 2 and 3: Ed, 2026-10-23, "locked. The branch stops at the door") */ locked?: boolean }
+export interface Rect { x0: number; x1: number; z0: number; z1: number; /** a round room (Ed, 2026-10-23: "the rooms are probably round"): its radius about the rectangle's middle */ r?: number; /** a branch (Ed: "the corridors are tree branches"): its middle line on the plan and its width, the rectangle its bounds */ pts?: [number, number][]; w?: number }
 /** What E does at an object (config/house/ `use`). */
 export type HouseUse =
   | { kind: "creator"; axes: string[]; wear: string[]; parts: string[]; spell?: "hat" | "broom" }
@@ -32,10 +32,10 @@ export type HouseUse =
   | { kind: "pile" };
 export interface HouseObject { id: string; room: string; label: string; x: number; z: number; w: number; d: number; h: number; use: HouseUse; placement?: ObjectPlacement }
 /** A room of the oak (config/house/rooms/): its middle and size, a trunk room or the trunk room its branch leaves, its bounds. */
-export type HouseRoom = Rect & { id: string; label: string; x: number; z: number; r: number; trunk?: boolean; from?: string; locked?: boolean };
+export type HouseRoom = Rect & { id: string; label: string; x: number; z: number; r: number; trunk?: boolean; from?: string };
 /** The floor's one shape (config/house/shape.js; assemble.js makes it): the trunk's rooms, the branch rooms, the stubs, and where the
  *  plan's 0 lay on the mock's own plan (its noise seeded there). */
-export interface HouseShape { noiseAt: [number, number]; trunk: { id: string; x: number; z: number; r: number }[]; branches: { id: string; from: string; x: number; z: number; r: number; bend: number; locked?: boolean }[]; stubs: { room: string; a: { x: number; z: number }; b: { x: number; z: number }; w0: number; w1: number }[] }
+export interface HouseShape { noiseAt: [number, number]; trunk: { id: string; x: number; z: number; r: number }[]; branches: { id: string; from: string; x: number; z: number; r: number; bend: number }[]; stubs: { room: string; a: { x: number; z: number }; b: { x: number; z: number }; w0: number; w1: number }[] }
 /** The Terrace's own layout (config/house/base.json terrace), metres from its middle: the open rim's angle and half-span (degrees round
  *  from east, clockwise), the decks' desk, her seat behind it, the magic circle. */
 export interface TerraceLayout { takeoff: { angle: number; half: number }; decks: { x: number; z: number; w: number; d: number; rotation?: number }; seat: { x: number; z: number }; circle: { x: number; z: number; r: number } }
@@ -84,15 +84,11 @@ export interface RoomFloor { at: At; turn: number; shape: HouseShape; inset: num
 export function floorRects(at: At, inset = 0, H = HOUSE_ROOMS): RoomFloor {
   return { at: { x: at.x, z: at.z }, turn: H.turn ?? 0, shape: H.shape, inset };
 }
-/** Caller supplies its authoritative guest assignment; player 0 remains the host.
- * Only that guest's movement floor opens its bedroom. Shared shape/art and existing callers stay unchanged. */
-export function roomAccessFor(floor: RoomFloor, player: number, assignment?: { player: number; room: string }): RoomFloor {
-  if (!assignment || !Number.isInteger(player) || player <= 0 || assignment.player !== player ||
-      !["bedroom2", "bedroom3"].includes(assignment.room) || !floor.shape.branches.some(r => r.id === assignment.room && r.locked)) return floor;
-  // Omit the distance field's optional cached inMock data, which contains the original locks.
-  const shape: HouseShape = { noiseAt: floor.shape.noiseAt, trunk: floor.shape.trunk, stubs: floor.shape.stubs,
-    branches: floor.shape.branches.map(r => r.id === assignment.room ? { ...r, locked: false } : r) };
-  return { ...floor, shape };
+/** The floor a witch walks, given her guest assignment: the same floor for every witch, host or guest, assigned or not. Nothing is
+ *  locked (Ed, 2026-11-03: "can we join it all into one room? ... it's ok if they're open before being occupied"), so there's no
+ *  bedroom left to open for a guest; kept as the multiplayer seam's hook (rules/guestDeck.ts, platform/online/guestAccess.ts). */
+export function roomAccessFor(floor: RoomFloor, _player: number, _assignment?: { player: number; room: string }): RoomFloor {
+  return floor;
 }
 /** The nearest point of a floor shape to (x, z) on the plan, and how far (0 inside). */
 export function nearestIn(r: Rect, x: number, z: number): { x: number; z: number; d: number } {

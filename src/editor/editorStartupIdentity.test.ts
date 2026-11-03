@@ -28,7 +28,8 @@ it("starts with every authored pose under either one-ulp sine result, with the s
   const a = startup(false), b = startup(true);
   expect(a.key).toBe(identities.canonical); expect(b.key).toBe(a.key);
   expect(JSON.stringify(b.selected)).toBe(JSON.stringify(a.selected));
-  expect(a.selected.objects).toHaveLength(proposal.objects.length);
+  // (less the guests' bedrooms' doors: gone since Ed, 2026-11-03, their placements dropped on import)
+  expect(a.selected.objects).toHaveLength(proposal.objects.filter(p => !a.x.RETIRED_OBJECTS.includes(p.id)).length);
   for (const p of a.selected.objects) {
     const old = proposal.objects.find(o => o.id === p.id)!;
     expect(p).toEqual({ id: old.id, x: old.x, z: old.z, rotation: a.x.normalAngle(old.rotation) });
@@ -52,7 +53,8 @@ it("keeps the original v1 bytes and its camera-preserving import under both math
   expect(JSON.stringify(right)).toBe(JSON.stringify(left));
   expect(left.migration?.cameraPreserved).toBe(true);
   expect(left.migration?.held.map(p => p.id)).toContain("cauldron");
-  for (const old of original.objects.filter(p => p.id !== "cauldron")) {
+  expect(left.migration?.held.map(p => p.id)).not.toContain("bedroom2Door");
+  for (const old of original.objects.filter(p => p.id !== "cauldron" && !a.x.RETIRED_OBJECTS.includes(p.id))) {
     const recorded = legacy.items.find(p => p.id === old.id)!;
     const p = left.objects.find(p => p.id === old.id)!;
     expect(p.x).toBe(old.x); expect(p.z).toBe(old.z);

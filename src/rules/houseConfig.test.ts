@@ -24,28 +24,26 @@ describe("the house, a file a room (config/house/)", () => {
     const ids = H.objects.map(o => o.id);
     expect(new Set(ids).size, "object ids unique").toBe(ids.length);
   });
-  it("is the oak (the layout v4, Ed 2026-10-24): six rooms up the trunk, a pair of branch rooms off each of the first four, the last pair locked; the walk from her bed to the take-off about 93 m", () => {
+  it("is the oak (the layout v4, Ed 2026-10-24): six rooms up the trunk, a pair of branch rooms off each of the first four, none locked (Ed, 2026-11-03: the house one room); the walk from her bed to the take-off about 93 m", () => {
     const { base, rooms: files } = houseFiles(), P = roomPlaces(base, files) as Record<string, { id: string; parent?: string; trunk: boolean; x: number; z: number; r: number }>;
-    const H2 = H as unknown as { rooms: { id: string; trunk?: boolean; from?: string; locked?: boolean }[]; corridors: { id: string; pts: [number, number][] }[]; objects: { id: string; room: string; x: number; z: number }[]; shape: unknown };
+    const H2 = H as unknown as { rooms: { id: string; trunk?: boolean; from?: string }[]; corridors: { id: string; pts: [number, number][] }[]; objects: { id: string; room: string; x: number; z: number }[]; shape: unknown };
     expect(H2.rooms.filter(r => r.trunk).map(r => r.id)).toEqual(["dining", "terrace", "parlour", "boudoir", "bedroom", "turret"]);
     const pairs = Object.fromEntries(["dining", "terrace", "parlour", "boudoir"].map(t => [t, H2.rooms.filter(r => r.from === t).map(r => r.id).sort()]));
     expect(pairs).toEqual({ dining: ["kitchen", "workshop"], terrace: ["cloakroom", "studio"], parlour: ["bestiary", "solarium"], boudoir: ["bedroom2", "bedroom3"] });
-    expect(H2.rooms.filter(r => r.locked).map(r => r.id).sort()).toEqual(["bedroom2", "bedroom3"]);
+    expect(H2.rooms.filter(r => "locked" in r)).toEqual([]); expect(H2.objects.filter(o => o.id.endsWith("Door"))).toEqual([]);
     for (const gone of ["atrium", "drawingRoom", "study", "crowsNest", "curtains", "crystalBall"]) expect(H2.rooms.some(r => r.id === gone) || H2.objects.some(o => o.id === gone), gone).toBe(false);
-    // every object's middle on its own room's floor (a locked room's door on its rim; tools/house/organic.mjs checks the corners)
+    // every object's middle on its own room's floor (tools/house/organic.mjs checks the corners)
     for (const o of H2.objects) {
-      const door = o.id.endsWith("Door") ? o.id.slice(0, -4) : null, d = inRoom(H2.shape, door ?? o.room, o.x, o.z);
-      if (door) expect(Math.abs(d), `${o.id}: at ${door}'s rim`).toBeLessThan(0.6);
-      else if (o.id === "bed") expect(field(H2.shape, o.x, o.z, true), `${o.id}: on the trunk's floor (in the corridor up to the Turret: Ed, 2026-10-26)`).toBeLessThan(0);
+      const d = inRoom(H2.shape, o.room, o.x, o.z);
+      if (o.id === "bed") expect(field(H2.shape, o.x, o.z, true), `${o.id}: on the trunk's floor (in the corridor up to the Turret: Ed, 2026-10-26)`).toBeLessThan(0);
       else expect(d, `${o.id}: in ${o.room}`).toBeLessThan(0);
     }
-    // the limbs: the trunk's between its rooms in order, each branch from its trunk room into its room (or to its door)
+    // the limbs: the trunk's between its rooms in order, each branch from its trunk room into its room
     for (const c of H2.corridors) {
       const [from, to] = c.id.split("-"), s = c.pts[0], e = c.pts[c.pts.length - 1], room = H2.rooms.find(r => r.id === to)!;
       expect(room.trunk ? H2.rooms[H2.rooms.indexOf(room) - 1].id : room.from, `${c.id}: from the room below it, or its trunk room`).toBe(from);
       expect(inRoom(H2.shape, from, s[0], s[1]), `${c.id}: starts on ${from}'s floor`).toBeLessThan(0);
-      if (room.locked) expect(Math.abs(inRoom(H2.shape, to, e[0], e[1])), `${c.id}: ends at ${to}'s door`).toBeLessThan(0.1);
-      else expect(inRoom(H2.shape, to, e[0], e[1]), `${c.id}: ends on ${to}'s floor`).toBeLessThan(0);
+      expect(inRoom(H2.shape, to, e[0], e[1]), `${c.id}: ends on ${to}'s floor`).toBeLessThan(0);
     }
     const L = Object.values(P);
     for (let i = 0; i < L.length; i++) for (let j = i + 1; j < L.length; j++) {

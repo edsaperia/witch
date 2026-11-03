@@ -2,7 +2,7 @@ import { afterEach, expect, it } from "vitest";
 import { usesEdLayout } from "../app/houseLayout";
 import { HOUSE_ROOMS, installEdLayout, objectFront, objectWorld } from "./houseRooms";
 import { houseArtLayout } from "./housePlacement";
-import { bedFor, bedRoom, doorFor, startWake, startWakeFor, stepWake, WAKE_DEFAULT } from "./wakeUp";
+import { bedFor, homeBed, startWake, startWakeFor, stepWake, WAKE_DEFAULT } from "./wakeUp";
 import classicTurret from "../../config/house/rooms/turret.json";
 import { newGame as fullGame } from "./game";
 import { smallWorld } from "../test/worlds";
@@ -15,21 +15,20 @@ afterEach(() => installEdLayout(false));
 const newGame = smallWorld(fullGame, "Default-layout wake and art pins need only the current house.");
 const pose = (id: string) => proposal.objects.find(o => o.id === id)!;
 
-it("pins the default host/guest wake, bedside and doors to the authored layout", () => {
+it("pins the default host/guest wake and bedside to the authored layout (no doors since Ed, 2026-11-03)", () => {
   installEdLayout(usesEdLayout(new URLSearchParams()));
   const g = newGame(123, TUNING, 2), host = g.witches[0], guest = g.witches[1];
   const bed = HOUSE_ROOMS.objects.find(o => o.id === "bed")!;
   expect(bed).toMatchObject({ x: pose("bed").x, z: pose("bed").z });
-  expect(bedFor(bedRoom())?.id).toBe("bed");
+  expect(homeBed()?.id).toBe("bed");
   expect(startWake(g, 0, { yesterday: true })).toBe(true);
   expect(host.body).toMatchObject(objectWorld(bed, g.map.treehouse, bed.w * .15, 0));
   stepWake(g, { moveX: 1, moveZ: 0, toggleMode: false, zoom: 0 }, 1, WAKE_DEFAULT);
   stepWake(g, { moveX: 0, moveZ: 0, toggleMode: false, zoom: 0 }, 1 + WAKE_DEFAULT.stretch, WAKE_DEFAULT);
   expect(host.body).toMatchObject(objectFront(bed, g.map.treehouse, 1.4));
   for (const room of ["bedroom2", "bedroom3"]) {
-    const bed = bedFor(room)!, door = doorFor(room)!;
+    const bed = bedFor(room)!;
     expect(bed).toMatchObject({ x: pose(bed.id).x, z: pose(bed.id).z });
-    expect(door).toMatchObject({ x: pose(door.id).x, z: pose(door.id).z });
     expect(startWakeFor(g, 2, { yesterday: true }, guest, { player: 1, room })).toBe(true);
     expect(guest.body).toMatchObject(objectWorld(bed, g.map.treehouse, bed.w * .15, 0));
   }

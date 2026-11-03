@@ -8,7 +8,6 @@ import { HOUSE_ROOMS, type HouseConfig, type Rect } from "../rules/houseRooms";
 import { MESS } from "../../art/houseMess.js";
 import { FURNITURE_IDS } from "../../art/furniture.js";
 import { standing } from "./housePieces";
-import { roomAt as physicalRoomAt } from "../../config/house/shape.js";
 
 /** Whether the rooms are dressed (`?decor=0`: bare, as before). */
 export const decorOn = typeof location === "undefined" || new URLSearchParams(location.search).get("decor") !== "0";
@@ -29,6 +28,11 @@ export const ROOM_DECOR: Record<string, string[]> = {
   bestiary: ["rug", "mushrooms", "candles", "lantern", "books", "plant"],
   turret: ["lantern", "crates", "plant"],
   terrace: ["plant", "lantern", "candles"], // (no rug: the magic circle is burnt into its boards, render/houseArt.ts)
+  // The guests' bedrooms: open since Ed, 2026-11-03, their furniture still under its dust sheets ("Bedrooms 2 and 3: open and usable
+  // in solo, but still have dust sheets on the furniture"): nobody lives there yet, so nothing of anyone's lying about; and Ed's
+  // layout, which he dressed in the editor, is unchanged by their opening (src/editor/houseLayout.ts layoutItems).
+  bedroom2: [],
+  bedroom3: [],
 };
 const DEFAULT = ["rug", "plant", "lantern", "candles"];
 
@@ -53,8 +57,8 @@ const toSeg = (px: number, pz: number, a: [number, number], b: [number, number])
 
 /** Where a room's dressing goes (pure: the same every load): the rug, then each piece of its list by the wall, the first free place
  *  in a seeded order round its back and sides at least GAP from the last, clear of the doorways, the ways in and the objects' reach. */
-export function decorPlan(room: Rect & { id: string; r?: number; locked?: boolean }, H: HouseConfig = HOUSE_ROOMS): DecorItem[] {
-  if (!room.r || room.locked) return [];
+export function decorPlan(room: Rect & { id: string; r?: number }, H: HouseConfig = HOUSE_ROOMS): DecorItem[] {
+  if (!room.r) return [];
   const R = room.r, cx = (room.x0 + room.x1) / 2, cz = (room.z0 + room.z1) / 2, seed = idSeed(room.id), kinds = ROOM_DECOR[room.id] ?? DEFAULT;
   // the doorways: each branch's end on this room's floor, and the way in from it to the room's middle
   const doors: [number, number][] = [];
@@ -79,16 +83,18 @@ export function decorPlan(room: Rect & { id: string; r?: number; locked?: boolea
   return out;
 }
 
-/** Selected placements are resolved at draw time, never from the default DECOR_ROOMS initializer. */
-export function placedDecorPlan(room: Rect & { id: string; r?: number; locked?: boolean }, H: HouseConfig = HOUSE_ROOMS): DecorItem[] {
+/** Selected placements are resolved at draw time, never from the default DECOR_ROOMS initializer. Ed's layout: each piece exactly
+ *  where he put it (its plan x, z and turn), drawn in the picture of the room it came from (its id's: `clutter:<room>:...`), so no
+ *  piece is re-binned by the floor it stands on now (Ed, 2026-11-03: the house one room; one palette, art/furniture.js, so which
+ *  picture it's in changes nothing of how it looks), its place given from that picture's middle. */
+export function placedDecorPlan(room: Rect & { id: string; r?: number }, H: HouseConfig = HOUSE_ROOMS): DecorItem[] {
   if (!H.layout?.decor) return decorPlan(room, H);
-  const source = H.layout.baseline, target = H.rooms.find(r => r.id === room.id)!;
-  return source.rooms.flatMap(r => decorPlan(r, source).flatMap(it => {
-    const id = `clutter:${r.id}:${it.kind}:${it.of ?? it.k}`, p = H.layout!.decor!.find(p => p.id === id);
-    if (!p) return [];
-    const destination = physicalRoomAt(H.shape, p.x, p.z)?.id ?? [...H.rooms].sort((a, b) => Math.hypot(a.x - p.x, a.z - p.z) - Math.hypot(b.x - p.x, b.z - p.z))[0].id;
-    return destination === room.id ? [{ ...it, x: p.x - target.x, z: p.z - target.z, yaw: p.rotation * Math.PI / 180 }] : [];
-  }));
+  const source = H.layout.baseline, from = source.rooms.find(r => r.id === room.id), target = H.rooms.find(r => r.id === room.id);
+  if (!from || !target) return [];
+  return decorPlan(from, source).flatMap(it => {
+    const p = H.layout!.decor!.find(p => p.id === `clutter:${from.id}:${it.kind}:${it.of ?? it.k}`);
+    return p ? [{ ...it, x: p.x - target.x, z: p.z - target.z, yaw: p.rotation * Math.PI / 180 }] : [];
+  });
 }
 
 /** The rooms dressed (those with any), for render/houseRooms.ts. */
