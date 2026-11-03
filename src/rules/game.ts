@@ -79,6 +79,7 @@ import { newWitch, seaward, stepWitch, witchHeight, type Intent, type WitchState
 import { deckOf, onTreehouse } from "./treehouse";
 import { homeDown, startPartyOver, stepPartyOver, stepWorldAsleep, worldAsleep, type PartyOver } from "./partyOver";
 import { stepWin, winFlare, won, type WinState } from "./win";
+import { newChallenge, spawnPack, stepChallenge, type ChallengeState } from "./challenge";
 import { hasBroom, hasInvites, type Kit } from "./kit";
 import { pulseRouteMetres } from "./leypulse";
 
@@ -193,6 +194,8 @@ export interface Game {
   /** Tonight's travel trunk, a wearable to find in it (rules/finds.ts; Ed, 2026-10-21), or null: none on this map, or nothing
    *  she lacks (filled by the page from what she owns: fillTrunk). */
   trunk: Trunk | null;
+  /** The night's challenge area (rules/challenge.ts; Ed, 2026-11-03): its circle, its pack, cleared or closed; null with none. */
+  challenge?: ChallengeState | null;
   /** This frame's wave events (several steps' worth, or none): a soundsystem lost brings the next
    *  wave sooner (Ed, 2026-10-05), with the countdown it leaves, for the HUD and the music. */
   waveEvents: WaveEvent[];
@@ -321,6 +324,7 @@ export function newGame(seed: number, tuning: Tuning, players = 1, ready?: MapPr
   const witches = Array.from({ length: Math.max(1, players) }, (_, i) => newWitchPlayer(i, map.start.x + i * 2, map.start.z, tuning, !map.zoo?.layout));
   if (witches.length > 1) for (const W of witches) { W.time = 0; W.paused = false; W.pending = {}; }
   const body = witches[0].body, creatures = spawnCreatures(map), forest = new Forest(map);
+  creatures.push(...spawnPack(map, creatures.length)); // (the challenge area's pack, after every other: rules/challenge.ts)
   // the night's set (Ed, 2026-10-11: "Each night should be a full set"; rules/musicSet.ts): its arc for the music (the tempo stays the
   // gameplay's: Ed, "tempo is set by the gameplay")
   const set = nightFor(map, seed);
@@ -334,7 +338,7 @@ export function newGame(seed: number, tuning: Tuning, players = 1, ready?: MapPr
     speakerBoot: map.dancefloor.speakers.map(() => null),
     beat: newBeatClock(tuning.beat.bpm, waveTempo(tuning, 0)), knockdowns: [] as { at: number; back: number }[], musicSet: set,
     floor: newFloor(), partyWitches: newPartyWitches(seed), beach: newBeachWitches(seed, map.bounds, tuning),
-    combat: newCombat(), koEvents: [] as KnockoutEvent[], friendly: new Set<string>(), wildEntry: new Map(), questEvents: [] as QuestEvent[], islandsTonight: [] as string[], waveEvents: [] as WaveEvent[], leashEvents: [] as LeashEvent[], loose: [] as LooseSigil[], relics: placeRelics(map, forest), trunk: null as Trunk | null, tally: { berries: 0, invites: 0, evolved: 0 }, growth: newGrowth(), partyOver: null as PartyOver | null, win: null as WinState | null,
+    combat: newCombat(), koEvents: [] as KnockoutEvent[], friendly: new Set<string>(), wildEntry: new Map(), questEvents: [] as QuestEvent[], islandsTonight: [] as string[], waveEvents: [] as WaveEvent[], leashEvents: [] as LeashEvent[], loose: [] as LooseSigil[], relics: placeRelics(map, forest), trunk: null as Trunk | null, challenge: newChallenge(map, creatures), tally: { berries: 0, invites: 0, evolved: 0 }, growth: newGrowth(), partyOver: null as PartyOver | null, win: null as WinState | null,
     acc: 0, alpha: 1, timeScale: 1, herTime: 0, pending: {}, prev: { witches: [], creatures: new Float64Array(creatures.length * 2), camera: null },
   };
   g.trunk = placeTrunk(map, forest, g.relics);
@@ -378,6 +382,7 @@ export function stepGame(g: Game, controls: Controls | readonly Controls[], real
   if (multi) g.clock.paused = g.witches.every(W => W.paused);
   if (g.clock.paused || !(realDt > 0)) return;
   g.combat.events = []; if (g.combat.spells) g.combat.spells.events.length = 0; g.koEvents = []; g.questEvents = []; g.waveEvents = []; g.leashEvents = [];
+  if (g.challenge) g.challenge.events = [];
   for (const w of g.witches) { w.invites.events = []; if (w.wake) w.wake.events = []; }
   if (g.wake) g.wake.events = [];
   g.acc = Math.min(g.acc + Math.min(realDt, MAX_STEP), MAX_STEP + STEP);
@@ -765,6 +770,7 @@ function fixedStep(g: Game, controls: readonly Controls[]): void {
   stepSpeakerBoot(g);
   stepDancefloor(g, wave);
   stepWin(g, dt); // (the end of the route: last of all, so the finale's dancers keep their places, rules/win.ts)
+  stepChallenge(g); // (the challenge area: closed from last call, its happy pack unleashable, ready to cast: rules/challenge.ts)
   stepWitchParty(g, motions.map(m => m.c), dt);
   // Her hat's lasting spells where it lies (rules/hatSpells.ts: Bramble, Nursing, the Cyclone), after everything else has moved.
   for (const w of g.witches) stepHatSpells(g, w, hatsDown(w), dt, t);

@@ -162,6 +162,8 @@ says what each note covers.
 - The Studio's instruments
 - Finds / travel trunk
 - Find area
+- Challenge area
+- Find sets
 - Sleeping before the party
 - Finds pool
 - Workshop

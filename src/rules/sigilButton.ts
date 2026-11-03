@@ -29,6 +29,7 @@ import { isInside } from "./mapShape";
 import { cellKey, clearArea } from "./party";
 import { castOn, castingStone, looseAt, looseNear, stepCast, stoneNear } from "./stoneStacks";
 import { atDecks } from "./wakeUp";
+import { challengeCastAt, clearChallenge, lockedFind } from "./challenge";
 
 /** A legend's circle flashing: a sigil or relic put down outside its clearing (the leash's outsideCircle event). */
 /** How far in from the coast (m) a scattering baby stays (rules/leash.ts land). */
@@ -108,7 +109,8 @@ export function stepSigilButton(g: Game, c: Controls, W: Witch, t: Tuning, ht: n
   }
   // Tonight's find (rules/finds.ts; Ed, 2026-10-21): the travel trunk, or a wreck (Ed, 2026-10-23); E at it while the party's on
   // takes what's in it, hers for the night (on loan till she sleeps: app/loan.ts; the kind's claim, if it has one: a broom part waits at the Workshop, not fitted).
-  const trunk = (sigil || place) && onFoot && !worldAsleep(g) ? trunkAt(g.trunk, W.body.x, W.body.z) : null; // (not there in the world asleep: the afterparty, or before the party, Ed 2026-10-26)
+  // (the challenge area's find is its reward, hers only as the circle's cleared: rules/challenge.ts)
+  const trunk = (sigil || place) && onFoot && !worldAsleep(g) && !lockedFind(g, g.trunk) ? trunkAt(g.trunk, W.body.x, W.body.z) : null; // (not there in the world asleep: the afterparty, or before the party, Ed 2026-10-26)
   if (trunk) {
     trunk.found = true; sigil = false; place = false;
     findKind(trunk.kind).claim?.(W.spells, trunk.item!);
@@ -117,15 +119,18 @@ export function stepSigilButton(g: Game, c: Controls, W: Witch, t: Tuning, ht: n
   }
   // At a runestone with its stack (rules/stoneStacks.ts; Ed, 2026-10-28): the sigil button held casts the soundsystem spell, and
   // nothing else is put down or picked up there (no hat put down by the hold, no run).
-  const stone = !perched && onFoot ? castingStone(g, W) : null;
-  stepCast(g, W, !!stone && (!!c.sigilHeld || sigil || place), ht, hdt, cell => {
+  // Or at the challenge circle, its pack all invited or run off (rules/challenge.ts; Ed, 2026-11-03: "you can go to the special place
+  // and cast the music spell"): the same spell, on the circle, clearing it.
+  const stone = !perched && onFoot ? castingStone(g, W) : null, ring = !stone && !perched && onFoot ? challengeCastAt(g, W) : null;
+  stepCast(g, W, !!(stone ?? ring) && (!!c.sigilHeld || sigil || place), ht, hdt, cell => {
+    if (ring) { clearChallenge(g, W, ht, relicEvents); return; }
     const a = clearArea(g.party, g.map, cell, g.clock.time);
     if (a?.soundsystem) g.waveEvents.push({ kind: "areaCleared", key: cellKey(cell), x: a.soundsystem.x, z: a.soundsystem.z, at: g.clock.time });
-  }, relicEvents); // (after the leash's step, which starts its events afresh)
-  if (stone) { sigil = false; place = false; }
+  }, relicEvents, stone ?? ring); // (after the leash's step, which starts its events afresh)
+  if (stone || ring) { sigil = false; place = false; }
   // A run (rules/leash.ts, Ed 2026-10-15): the button held since a press that picked up keeps picking up (a lying relic's sigil too);
   // held since one that put down, nothing here (the leash puts the next down as she enters an empty hex).
-  const held = !!c.sigilHeld && onFoot && !stone, run = held && t.leash.runs !== false ? W.leash.run?.kind : undefined;
+  const held = !!c.sigilHeld && onFoot && !stone && !ring, run = held && t.leash.runs !== false ? W.leash.run?.kind : undefined;
   if ((sigil || place) && W.body.mode === "ground" && !run) {
     // A flask's sigil under her (Ed, 2026-10-18: "All flasks give growth spurt (all creatures following you become adults)"):
     // drunk on the spot, not carried. Every animal following her (on her stack, not parked at a sigil) younger than an adult
@@ -151,8 +156,8 @@ export function stepSigilButton(g: Game, c: Controls, W: Witch, t: Tuning, ht: n
   // down at her feet (rules/hat.ts putHat).
   // Use at an unready stump still belongs to the stump. Entering its ground also cancels an idle hold begun outside.
   const useTarget = onFoot && !!(c.hatHold ?? c.sigilHeld) && (atDecks(g, W) || (castOn(t) && !!stoneNear(g, W.body.x, W.body.z, 0, false)));
-  const idle = pressed && !stone && !useTarget && !W.leash.events.some(e => e.at === ht && e.kind !== "invited" && e.kind !== "befriended" && e.kind !== "cancelled");
-  if (putHat(W.hat, idle, !!(c.hatHold ?? c.sigilHeld) && onFoot && !stone && !useTarget, W.body.x, W.body.z, ht, t.leash.hatHold))
+  const idle = pressed && !stone && !ring && !useTarget && !W.leash.events.some(e => e.at === ht && e.kind !== "invited" && e.kind !== "befriended" && e.kind !== "cancelled");
+  if (putHat(W.hat, idle, !!(c.hatHold ?? c.sigilHeld) && onFoot && !stone && !ring && !useTarget, W.body.x, W.body.z, ht, t.leash.hatHold))
     W.leash.events.push({ kind: "hatPut", id: W.id, x: W.body.x, z: W.body.z, at: ht });
   // A happy creature's rune near her on the ground comes to her (Ed's playtest, 2026-10-06: "Floor sigils of happy creatures ... are
   // difficult to pick up"): its creature trots over (leash.runePull), so she needn't stop dead on it.

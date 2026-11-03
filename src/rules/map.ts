@@ -230,6 +230,9 @@ export interface ForestMap {
   special(cx: number, cy: number): SpecialSite | null;
 }
 
+/** How far past the challenge circle's edge (m) its clearing reaches: room for its ring of columns (rules/challenge.ts). */
+export const CHALLENGE_EDGE = 3;
+
 /** A special site (map.specialSites): what's there (the night's find; challenge areas later), its area, the spot (its site, on
  *  its own ground and off the rails and streams) and the clearing kept round it (m: no trees, bushes or scenery; paths end at its edge). */
 export interface SpecialSite { kind: "find" | "challenge"; cell: Cell; x: number; z: number; r: number }
@@ -723,14 +726,22 @@ export function generateMap(runSeed: number, tuning: Tuning, only?: { landStep: 
     }
     if (at) {
       const [fx, fy] = at, k = cellKey(fx, fy), site = siteOf(fx, fy);
-      specials.set(k, { kind: "find", cell: [fx, fy], x: site.x, z: site.z, r: tuning.findArea!.clear });
+      // (the challenge area, tuning challenge, rules/challenge.ts: its clearing the stone circle and its ring of columns, CHALLENGE_EDGE past it)
+      const CH = tuning.challenge?.on ? tuning.challenge : null;
+      specials.set(k, { kind: CH ? "challenge" : "find", cell: [fx, fy], x: site.x, z: site.z, r: CH ? Math.max(tuning.findArea!.clear, CH.radius + CHALLENGE_EDGE) : tuning.findArea!.clear });
       if (extraKey && extraKey !== k && types.has(k)) types.set(extraKey, types.get(k)!);
       cells.splice(cells.findIndex(([x, y]) => x === fx && y === fy), 1);
     }
   }
   if (extraKey && !specials.size && others.length) { const [x, y] = others[0]; types.set(extraKey, types.get(cellKey(x, y))!); } // (no find's area after all: the extra a kind of the roster's)
   others = cells.filter(([x, y]) => x !== centreCell[0] || y !== centreCell[1]);
-  if (rosterIsland && others.length && (specials.size || extraKey)) { typeBeyond(); for (const [k, p] of legendAreas) types.set(k, types.get(p)!); } // (the find's area the woods of its nearest; the legend areas their pairs' still)
+  // The challenge area themed on the island's own animal (Ed, 2026-11-03: "Its type is themed of the island's animal (e.g. the squirrel
+  // map's challenge areas have squirrel area trees)"): its trees and ground its kind's area type's, whatever area it replaced (the
+  // island's extra area takes that one's kind, so the roster's kinds are all still dealt). Home has no one animal: its challenge area
+  // keeps the woods of its nearest area, as the find's area did.
+  const ownType = rosterIsland && rosterIsland.kind !== "home" ? AREA_TYPES.findIndex(a => a.creature === rosterIsland.kind) : -1;
+  const themeSpecials = () => { if (ownType >= 0) for (const [k, sp] of specials) if (sp.kind === "challenge") types.set(k, ownType); };
+  if (rosterIsland && others.length && (specials.size || extraKey)) { typeBeyond(); for (const [k, p] of legendAreas) types.set(k, types.get(p)!); themeSpecials(); } // (the find's area the woods of its nearest; the legend areas their pairs' still)
   // (how far into a lake: rules/lakes.ts; nothing grows or is placed on one or its shore)
   const lakeShore = lakeKnobs(tuning).shore, lakeAt = (x: number, z: number) => (lakes ? lakeDepth({ lakes } as Bounds, x, z) : -Infinity);
   const areaAt = (x: number, z: number): AreaSample => {
@@ -1011,6 +1022,7 @@ export function generateMap(runSeed: number, tuning: Tuning, only?: { landStep: 
     const { types: dealt } = dealAlongRoute(deck, kindOfType, own, runSeed, d => legendsOf(d).slotOf.size);
     order.forEach((k, i) => types.set(k, dealt[i]));
     typeBeyond();
+    themeSpecials();
     // (the legend areas paired again: tonight's legends each beside one of its kind's areas where the matching found one, the rest
     // beside the area they were grown from, each taking its pair's look)
     const { kinds, slotOf, kindAt } = legendsOf(dealt), mine = new Map([...slotOf].map(([kind, s]) => [s, kind]));

@@ -16,6 +16,7 @@ import { groundHeight } from "../height";
 import { cellKey, spawnMarkers, waveCountdown, wavePlan } from "../../rules/party";
 import { leyKey } from "../../rules/leylines";
 import { columnShown, leyReachTimes } from "../../rules/leypulse";
+import { challengeBeacons } from "../challenge";
 import { routeSeen } from "../../rules/hatSpells";
 import { speakerBoot } from "../../rules/game";
 import type { ForestLight, View } from "../view";
@@ -220,6 +221,7 @@ export function drawMarkers(v: View, time: number): ForestLight[] {
     for (let i = 0; i < 8; i++) { const a = i * 0.785 + s.at * 3, r = 0.2 + k * 1.1; mote(s.x + Math.cos(a) * r, 1 + Math.sin(a * 2) * 0.4 * k + k * 0.6, s.z + Math.sin(a) * r, SPARKLE_RGB, (1 - k) * (i % 2 ? 1 : 0.6)); }
   }
   for (let i = 0; i < v.fireSparks.length; i++) motes.push(v.fireSparks[i]); // (after the markers' own, as the joined list was)
+  challengeBeacons(g, t, beacons); // (the challenge circle's beam: render/challenge.ts)
   v.markerFx.update(beacons, R.beamHeight, canopyShown(w), motes, lasers, R.awake.moteSize ?? 3);
   const up = canopyShown(w);
   // Wave numbers over the stones (Ed, 2026-10-04, a design aid): above the stone on the ground,

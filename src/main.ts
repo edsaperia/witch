@@ -27,6 +27,7 @@ import { stationLook } from "./platform/online/stationAppearance";
 import { localHouseAction } from "./app/houseActions";
 import type { HouseEvents } from "./platform/online/houseSteps";
 import { fillNightTrunk } from "./app/nightFindBoundary";
+import { challengeWords } from "./app/challengeWords";
 import { chartDeparture } from "./app/chartDeparture";
 import { soloDiagnostic } from "./app/soloDiagnostic";
 import { overlayPause } from "./app/overlayPause";
@@ -1571,6 +1572,8 @@ function frameBody(now: number): void {
     else if (e.find === "hat") hud.found(`found: the ${hatSpell(e.obj)?.name.toLowerCase() ?? e.obj} hat · on the hats' floor`); // (the rules laid it there: rules/houseRooms.ts addFloorHat)
     else { const it = itemById(e.obj), at = stationsShowing(shelfOf(e.obj)?.id ?? "")[0], where = HOUSE_ROOMS.objects.find(q => q.id === at)?.label.toLowerCase(); hud.found(`found: ${it?.name.toLowerCase() ?? e.obj}${where ? ` · at the ${where}` : ""}`); }
   }
+  // The challenge area (rules/challenge.ts): what it says under the clock, as a find does.
+  for (const e of game.challenge?.events ?? []) hud.found(challengeWords(e));
   if (spawnWanted && !game.witch.perch && game.witch.mode === "ground" && !game.witch.seated) {
     const [k, i] = spawnWanted.includes(":") ? spawnWanted.split(":") : [null, null];
     const said = spawnHere(k as FindKindId | null, i);

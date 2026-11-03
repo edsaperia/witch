@@ -840,6 +840,22 @@ The area is seeded by the night (never home, an area touching home's (Ed, 2026-1
 | `findArea.on` | boolean |  |
 | `findArea.clear` | number | 0 to … |
 
+### `challenge`
+
+the challenge area, in the find's area (findArea): a stone floor circle `radius` metres round its middle with the island's sigil carved in it and `columns` stone columns round its edge; its pack `adults` adults and `youths` youths of every kind on the island's roster, wild; cast the music spell within `castReach` metres of its middle once they're all invited or run off, and the find is hers (a flask once she owns the island's whole set of finds).
+
+1. Ed, 2026-11-03: "a large stone floor circle (like the legend circle) with the glowing sigil of the island carved into it, with a circle of stone columns around the edge (we already have art for this)" … "When they're all invited or have run off, you can go to the special place and cast the music spell" … "when you clear it you get the find. Each phase and biome have different set of finds; when you have them all you get a flask instead."
+Its pack aggro as any wild area's (wildWatch) and only before the final wave (from last call it closes: the pack calm, the find gone); it never counts toward winning the island and gives no boon. Off: the find's area as before, its find to pick up with E. The find sets: config/find-sets.json (rules/findSets.ts).
+
+| knob | type | range |
+|---|---|---|
+| `challenge.on` | boolean |  |
+| `challenge.radius` | number | 0 to … |
+| `challenge.columns` | number | 0 to … |
+| `challenge.adults` | number | 0 to … |
+| `challenge.youths` | number | 0 to … |
+| `challenge.castReach` | number | 0 to … |
+
 ### `treeMarginFromSoundsystem`
 
 See `setPieceFootprint`.

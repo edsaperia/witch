@@ -872,6 +872,21 @@
       ],
       "notes": "The area is seeded by the night (never home, an area touching home's (Ed, 2026-11-03: \"The challenge area shouldn't be adjacent to the home area\"; an island with none such takes its area farthest from home), a legend area's pair, or one whose going would cut the island in two) and is not playable, like a legend area; the island grows one area more for it, which takes its kind, so the island keeps its playable areas and roster. Off: the find as before, in a wild area's woods."
     },
+    "challenge": {
+      "what": "the challenge area, in the find's area (findArea): a stone floor circle `radius` metres round its middle with the island's sigil carved in it and `columns` stone columns round its edge; its pack `adults` adults and `youths` youths of every kind on the island's roster, wild; cast the music spell within `castReach` metres of its middle once they're all invited or run off, and the find is hers (a flask once she owns the island's whole set of finds).",
+      "decisions": [
+        {
+          "by": "Ed",
+          "date": "2026-11-03",
+          "quote": [
+            "a large stone floor circle (like the legend circle) with the glowing sigil of the island carved into it, with a circle of stone columns around the edge (we already have art for this)",
+            "When they're all invited or have run off, you can go to the special place and cast the music spell",
+            "when you clear it you get the find. Each phase and biome have different set of finds; when you have them all you get a flask instead."
+          ]
+        }
+      ],
+      "notes": "Its pack aggro as any wild area's (wildWatch) and only before the final wave (from last call it closes: the pack calm, the find gone); it never counts toward winning the island and gives no boon. Off: the find's area as before, its find to pick up with E. The find sets: config/find-sets.json (rules/findSets.ts)."
+    },
     "treeMarginFromSoundsystem": {
       "see": "setPieceFootprint"
     },

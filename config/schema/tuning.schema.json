@@ -2265,6 +2265,44 @@
       "additionalProperties": false,
       "description": "tonight's find in an area of its own, at its site, in a clearing `clear` metres round it; that area has no stump, wave or creatures, and every touching area's path leads to it."
     },
+    "challenge": {
+      "type": "object",
+      "properties": {
+        "on": {
+          "type": "boolean"
+        },
+        "radius": {
+          "type": "number",
+          "minimum": 0
+        },
+        "columns": {
+          "type": "number",
+          "minimum": 0
+        },
+        "adults": {
+          "type": "number",
+          "minimum": 0
+        },
+        "youths": {
+          "type": "number",
+          "minimum": 0
+        },
+        "castReach": {
+          "type": "number",
+          "minimum": 0
+        }
+      },
+      "required": [
+        "on",
+        "radius",
+        "columns",
+        "adults",
+        "youths",
+        "castReach"
+      ],
+      "additionalProperties": false,
+      "description": "the challenge area, in the find's area (findArea): a stone floor circle `radius` metres round its middle with the island's sigil carved in it and `columns` stone columns round its edge; its pack `adults` adults and `youths` youths of every kind on the island's roster, wild; cast the music spell within `castReach` metres of its middle once they're all invited or run off, and the find is hers (a flask once she owns the island's whole set of finds)."
+    },
     "treeMarginFromSoundsystem": {
       "type": "number",
       "minimum": 0,
@@ -13816,6 +13854,7 @@
     "stoneKeepClear",
     "stoneMinGap",
     "findArea",
+    "challenge",
     "treeMarginFromSoundsystem",
     "treeDensity",
     "leafJitter",

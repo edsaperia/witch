@@ -180,9 +180,10 @@ export function castingStone(g: Game, W: Witch): { key: string; cell: Cell; x: n
  *  her progress there drains (cast.drain a second); hit (hurt, or a blow thrown at her, since it began), it stops, and holding on
  *  does nothing till she lets go and holds again. Full: `convert` partifies the stone's area as a wave would (party.ts clearArea).
  *  Returns the converted stone's key, else null. Two witches at one stone each fill their own, no faster for it. */
-export function stepCast(g: Game, W: Witch, held: boolean, ht: number, hdt: number, convert: (cell: Cell) => void, events: LeashEvent[] = W.leash.events): string | null {
+export function stepCast(g: Game, W: Witch, held: boolean, ht: number, hdt: number, convert: (cell: Cell) => void, events: LeashEvent[] = W.leash.events, target?: { key: string; cell: Cell; x: number; z: number } | null): string | null {
   if (!castOn(g.tuning)) return null; // (the stacks off: nothing of hers changes)
-  const t = g.tuning, C = castOf(t), stone = castingStone(g, W);
+  // (`target`: what she casts at instead of a stone, given: the challenge circle, rules/challenge.ts; null, nothing)
+  const t = g.tuning, C = castOf(t), stone = target !== undefined ? target : castingStone(g, W);
   const casts = (W.casts ??= {});
   for (const k of Object.keys(casts)) if (k !== W.casting && castProgress(W, k, ht, t) <= 0) delete casts[k]; // (drained to nothing)
   if (!held) W.castBlocked = undefined;

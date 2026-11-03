@@ -594,6 +594,14 @@
     "on": true,
     "clear": 6
   },
+  "challenge": {
+    "on": true,
+    "radius": 12,
+    "columns": 10,
+    "adults": 1,
+    "youths": 1,
+    "castReach": 5
+  },
   "treeMarginFromSoundsystem": 1.5,
   "treeDensity": 1,
   "leafJitter": {

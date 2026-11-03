@@ -797,7 +797,7 @@ export class Ground {
     const params = typeof location === 'undefined' ? new URLSearchParams() : new URLSearchParams(location.search);
     const mutable = hasForcedLakeLook() || params.has('debug') || params.get('creator') === '1';
     const extras = groundExtras({ zoo: !!map.zoo?.layout, dancefloor: !map.zoo?.layout && map.dancefloor.radius > 0,
-      pavement: !map.zoo?.layout && pavement.uPave.value.y > 0, legends: map.legendClearings.length > 0,
+      pavement: !map.zoo?.layout && pavement.uPave.value.y > 0, legends: map.legendClearings.length > 0 || map.specialSites?.some(sp => sp.kind === "challenge"), // (the challenge circle's floor is drawn as a legend circle's: render/challenge.ts)
       legendFloor: !!map.tuning.legendClearing.floor?.on, koi: (lakes.uKoi.value as THREE.Vector4[]).some(k => k.z > 0), bare: (map.tuning.bare ?? 0) > 1.5 }, mutable);
     // The shader as two programs over one set of uniforms (the perf pass's fix C, 2026-10-23, tools/bench/ground.cjs: code a
     // pixel never runs still cost the ground a quarter to two fifths of its time on the cloud's renderer): the lakes' code only on
