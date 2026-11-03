@@ -3897,12 +3897,17 @@
             "hold": {
               "type": "number",
               "minimum": 0
+            },
+            "glow": {
+              "type": "number",
+              "minimum": 0
             }
           },
           "required": [
             "reach",
             "speed",
-            "hold"
+            "hold",
+            "glow"
           ],
           "additionalProperties": false,
           "description": "Feeding on command: a tap of the sigil button feeds the bottom of her stack a berry within reach of her; holding it puts that sigil down instead."
