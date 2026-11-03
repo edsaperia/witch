@@ -777,7 +777,7 @@
       ]
     },
     "paths.linkChance": {
-      "what": "the share of the other neighbouring areas (an area with no site: the buffer's) joined by a meandering path; with paths.network off, of every neighbouring pair."
+      "what": "the share of the other neighbouring pairs (one an area with no site: the buffer's or a legend area's, never a lake) joined by a footpath, the odd path out into the buffer ring; with paths.network off, of every neighbouring pair."
     },
     "paths.deadEndChance": {
       "what": "the share of areas with a path out to nothing."
