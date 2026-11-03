@@ -514,6 +514,12 @@ export interface Tuning {
     /** Anchor chains (Ed, 2026-11-03; rules/anchor.ts): each adult following her (its sigil in her stack) holds her within length m of it, and while one does she can't take off; 0 turns both off. */
     anchor?: { length: number };
     weight: { /** a baby's weight on the ground (the treetops': levels[0]) */ babyGround?: number; free: number; levels: number[]; drag: number; drift: number; rise: number; sink: number; sinkMax: number; floor: number; extreme: number; maxTension: number } };
+  /** Follower buffs (Ed, 2026-11-03; rules/buffs.ts): groups, the kinds' retreats in each group (art/creatures/<id>/creature.js
+   *  `retreat`); legend, the stacks a leashed legend gives; pips, an adult's berry pips (max, life s each, warn s before one fades
+   *  it twinkles, start: pips an adult has before it's eaten); and each group's magnitudes, a stack: climbers.dash charges,
+   *  darters.speed (her speed times 1 + it), stalkers.speed and .range (her 💌s', times 1 + each), heavies.shots (ways more round
+   *  her, each that much faster), packHunters.rate (fire rate times 1 + it) and .spread (degrees more), shells.chain (hops more). */
+  buffs?: { groups: Record<import("./buffs").BuffGroup, string[]>; legend: number; pips: { max: number; life: number; warn: number; start: number }; climbers: { dash: number }; darters: { speed: number }; stalkers: { speed: number; range: number }; heavies: { shots: number }; packHunters: { rate: number; spread: number }; shells: { chain: number } };
   bond: { rim: boolean; sparks: boolean; thread: boolean; sparkEvery: number; /** The thread's upward bow: metres per metre of length, from threadArcSlack when slack to threadArcTaut at full strain, up to threadArcMax. */ threadArcSlack: number; threadArcTaut: number; threadArcMax: number };
   tone: { black: number; gamma: number; ambient: number; moon: number };
   bloom: { on: boolean; strength: number; threshold: number };

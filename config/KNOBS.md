@@ -1813,6 +1813,36 @@ how a creature shows its tie to its sigil (rim: a glow at its feet in the sigil'
 | `bond.threadArcTaut` | number | 0 to … |
 | `bond.threadArcMax` | number | 0 to … |
 
+### `buffs`
+
+Leashed adults (and legends) give her a buff by their group: each distinct kind in a group adds a stack, a legend three; an adult's buff runs on its berry pips.
+
+1. Ed, 2026-11-03: "Only adults, yes." … "since we have one per animal type, different animal types STACK!" … "no. only when leashed." … "When you're leashing a legend, this gives you the equivalent of 3x of that animal types' buff. (counts as that animal type so doesn't stack e.g. adult wolf and legend wolf just count once)" … "Maybe 10%" (docs/plans/follower-buffs-and-challenge-areas.md: six groups by retreat; 5 pips an adult, 2 minutes each, twinkling 10 s before one fades; legends need no berries; magnitudes first values, to be set in play)
+groups: each group's retreats (a kind's art/creatures/<id>/creature.js retreat decides its group). legend: the stacks a leashed legend gives (no berries needed). pips: max an adult holds, life seconds each (draining one at a time while it follows her; parked ones keep theirs), warn seconds before one fades it twinkles in her stack, start pips before it has eaten. Per stack: climbers.dash more dash charges; darters.speed her speed times 1 + it; stalkers.speed and stalkers.range her 💌s' speed and range times 1 + each; heavies.shots more ways her shots go round her, clockwise, her fire rate times the ways (1 stack: a second shot opposite between each, 2: three at 120° at 3×); packHunters.rate her fire rate times 1 + it and packHunters.spread degrees more inaccuracy; shells.chain more chain hops, on top of the bag's.
+Code: `rules/buffs.ts`, `docs/plans/follower-buffs-and-challenge-areas.md`
+
+| knob | type | range |
+|---|---|---|
+| `buffs.groups.climbers` | array of string |  |
+| `buffs.groups.darters` | array of string |  |
+| `buffs.groups.stalkers` | array of string |  |
+| `buffs.groups.heavies` | array of string |  |
+| `buffs.groups.packHunters` | array of string |  |
+| `buffs.groups.shells` | array of string |  |
+| `buffs.legend` | number | 0 to … |
+| `buffs.pips.max` | number | 0 to … |
+| `buffs.pips.life` | number | 0 to … |
+| `buffs.pips.warn` | number | 0 to … |
+| `buffs.pips.start` | number | 0 to … |
+| `buffs.climbers.dash` | number | 0 to … |
+| `buffs.darters.speed` | number | 0 to … |
+| `buffs.stalkers.speed` | number | 0 to … |
+| `buffs.stalkers.range` | number | 0 to … |
+| `buffs.heavies.shots` | number | 0 to … |
+| `buffs.packHunters.rate` | number | 0 to … |
+| `buffs.packHunters.spread` | number | 0 to … |
+| `buffs.shells.chain` | number | 0 to … |
+
 ## Creatures
 
 Creatures: how many and how they grow, move, notice, nap, guard and fight.

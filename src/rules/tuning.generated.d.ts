@@ -951,6 +951,43 @@ export type SchemaTuning = {
     "threadArcTaut": number;
     "threadArcMax": number;
   };
+  "buffs": {
+    "groups": {
+      "climbers": Array<string>;
+      "darters": Array<string>;
+      "stalkers": Array<string>;
+      "heavies": Array<string>;
+      "packHunters": Array<string>;
+      "shells": Array<string>;
+    };
+    "legend": number;
+    "pips": {
+      "max": number;
+      "life": number;
+      "warn": number;
+      "start": number;
+    };
+    "climbers": {
+      "dash": number;
+    };
+    "darters": {
+      "speed": number;
+    };
+    "stalkers": {
+      "speed": number;
+      "range": number;
+    };
+    "heavies": {
+      "shots": number;
+    };
+    "packHunters": {
+      "rate": number;
+      "spread": number;
+    };
+    "shells": {
+      "chain": number;
+    };
+  };
   "difficulty": {
     "creatureSpeed": number;
     "rangedRange": number;
