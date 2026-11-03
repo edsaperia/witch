@@ -2121,6 +2121,55 @@
     "lightReach": 30,
     "lightStrength": 1.6
   },
+  "partyStart": {
+    "overHouse": true,
+    "sparkles": {
+      "on": true,
+      "count": 96,
+      "size": 9,
+      "opacity": 0.9,
+      "core": 0.7,
+      "life": 1.8,
+      "speed": 1.2,
+      "hueA": 0.1,
+      "satA": 0.55,
+      "hueB": 0.93,
+      "satB": 0.45
+    },
+    "pillar": {
+      "on": true,
+      "height": 30,
+      "width": 4,
+      "rise": 0.35,
+      "duration": 2.4,
+      "strength": 1
+    },
+    "dome": {
+      "on": true,
+      "size": 1,
+      "duration": 1.8,
+      "fill": 0.4
+    },
+    "light": {
+      "on": true,
+      "reach": 24,
+      "strength": 1.2,
+      "duration": 2.4
+    },
+    "shake": {
+      "on": true,
+      "amount": 0.18,
+      "duration": 0.5
+    },
+    "ground": {
+      "on": true,
+      "alpha": 0.35,
+      "size": 10
+    },
+    "refraction": {
+      "on": true
+    }
+  },
   "blood": {
     "on": true,
     "style": "prints+drops",

@@ -72,7 +72,9 @@ import { hsv2rgb } from "../../art/generator.js";
 import { Post } from "./post";
 import { GrassView } from "./grass";
 import { SpellFx } from "./spellfx";
-import { updateRefraction, resetRefraction } from "./view/refraction";
+import { updateRefraction, resetRefraction, captureRefractionCast } from "./view/refraction";
+import { PartyStartFx } from "./partyStart";
+import { MAKE_SOME_NOISE, partyStartOf, replayReady } from "../rules/partyStart";
 import { dodgeEchoesFor, resetDodgeEchoes } from "./view/dodgeEchoes";
 import { TRAIL_DEFAULT, WitchTrail } from "./trail";
 import { newPartyOverLook, partyOff, partyOverEase, updatePartyOver } from "./partyOver";
@@ -384,6 +386,8 @@ export class View {
   readonly renderer: THREE.WebGLRenderer;
   scene = new THREE.Scene();
   readonly magic = fxFor(this.scene);
+  /** The party start's pieces (render/partyStart.ts; Ed, 2026-11-03), drawn over the house at her decks. */
+  readonly partyStart = new PartyStartFx(this.scene);
   private magicBlink = -Infinity;
   /** Stage 0 art review only; absent in ordinary play. */
   fxMock: FxMock | null = null;
@@ -1401,7 +1405,7 @@ export class View {
     this.strings.setGame(game); this.leashView.setGame(game); this.lasers.setGame(game); this.borders.setGame(game); this.inviteView.setGame(game);
     this.partyObjects.reset(); this.rig?.reset(); this.holograms.reset(); this.glades.reset(); this.wisps?.reset();
     this.clouds.reseed(game.seed); this.lightRings?.reseed(game.map.seed);
-    this.fireworks.reset(); this.swoopTrails.reset(); this.spellFx.reset(); this.trail.newNight(); this.combatLight.reset(); this.occlusion.reset();
+    this.fireworks.reset(); this.swoopTrails.reset(); this.spellFx.reset(); this.partyStart.reset(); this.trail.newNight(); this.combatLight.reset(); this.occlusion.reset();
     resetRefraction(this);
     this.assets.prefetchType(HOME_LOOK); // home's meadow floor (no trees ask for it)
   }
@@ -1512,6 +1516,19 @@ export class View {
   runeCyan = new THREE.Vector3(0.3, 0.9, 1);
   runeViolet = new THREE.Vector3(0.75, 0.45, 1);
   runeGreen = new THREE.Vector3(0.45, 1, 0.5);
+  /** The party start played again at her decks (Ed, 2026-11-03: "press square at the decks after the party is started that replays
+   *  the visual effects ... (the dj says make some noise!!!)"): main.ts calls it on the use button there (rules/partyStart.ts
+   *  canReplayPartyStart). Every piece from the start where she was drawn seated, and her line over the decks; drawing only. Not
+   *  while a show's still playing, nor within a second of the last (rules/partyStart.ts replayReady): false then, or with no decks
+   *  to play it at. */
+  replayPartyStart(): boolean {
+    const P = this.partyStart, A = P.anchor ?? P.here, g = this.game;
+    if (!A || !replayReady(partyStartOf(g.tuning), P.showAt, P.now)) return false;
+    P.start(g.tuning, A.x, A.y, A.z, P.now);
+    captureRefractionCast(this, P.worldNow, A.x, A.y, A.z, true);
+    this.houseRooms?.sayAtDecks(MAKE_SOME_NOISE, P.now);
+    return true;
+  }
   /** A 💌 vanishes at a slowed circle's edge: a small sparkle there (its `vanished` invite event calls this, render/invites.ts). */
   edgeSparkle(x: number, z: number): void { if (this.edgeSparkles.length < 64) this.edgeSparkles.push({ x, z, at: LIGHT_UNIFORMS.uRealTime.value }); }
   /** ?bare: hide everything but the ground, the witch, soundsystems, the dancefloor and its
@@ -1519,7 +1536,7 @@ export class View {
   private hideForBare(): void {
     for (const b of [...this.typeBatches.values(), ...this.decorBatches.values(), ...this.creatureBatches.values(), this.treehouseBatch, this.propBatch, this.markerBatch])
       for (const m of b.meshes) m.visible = false;
-    for (const o of [this.grass.mesh, this.markerFx.group, this.borders.mesh, this.lasers.mesh, this.holograms.group, this.spellFx.trail, this.trail.mesh, this.swoopTrails.mesh]) o.visible = false;
+    for (const o of [this.grass.mesh, this.markerFx.group, this.borders.mesh, this.lasers.mesh, this.holograms.group, this.spellFx.trail, this.partyStart.sparkles, this.trail.mesh, this.swoopTrails.mesh]) o.visible = false;
   }
 
   readonly waveNumbers = new WaveNumbers();
@@ -1883,6 +1900,7 @@ export class View {
     }
     this.lightRings?.update(this.camera, w.x, witchHeight(w, t) + this.rideOff, w.z, canopyShown(w), time);
     const hatTop = drawWitch(this, time, ht, onTreehouse, repaintHeld);
+    this.partyStart.update(g.tuning, this.magic, ht, time);
     updateRefraction(this, time);
     this.mushroomView.update(this);
     this.ground.prepareCoast(this.renderer, this.camera, this.scene);

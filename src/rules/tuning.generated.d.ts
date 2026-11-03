@@ -1849,6 +1849,55 @@ export type SchemaTuning = {
     "lightReach": number;
     "lightStrength": number;
   };
+  "partyStart": {
+    "overHouse": boolean;
+    "sparkles": {
+      "on": boolean;
+      "count": number;
+      "size": number;
+      "opacity": number;
+      "core": number;
+      "life": number;
+      "speed": number;
+      "hueA": number;
+      "satA": number;
+      "hueB": number;
+      "satB": number;
+    };
+    "pillar": {
+      "on": boolean;
+      "height": number;
+      "width": number;
+      "rise": number;
+      "duration": number;
+      "strength": number;
+    };
+    "dome": {
+      "on": boolean;
+      "size": number;
+      "duration": number;
+      "fill": number;
+    };
+    "light": {
+      "on": boolean;
+      "reach": number;
+      "strength": number;
+      "duration": number;
+    };
+    "shake": {
+      "on": boolean;
+      "amount": number;
+      "duration": number;
+    };
+    "ground": {
+      "on": boolean;
+      "alpha": number;
+      "size": number;
+    };
+    "refraction": {
+      "on": boolean;
+    };
+  };
   "blood": {
     "on": boolean;
     "style": "prints" | "prints+drops" | "drops";

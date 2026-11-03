@@ -206,9 +206,13 @@ export function drawWitch(v: View, time: number, ht: number, onTreehouse: (px: n
         const j = R ? v.assets.djGestureFrame(R.gesture, R.frame) : KO && irisOn && KO.riseUntil === undefined && ht >= atDecksFrom(KO, true) && ht < KO.inAt ? v.assets.djGestureFrame("scratch", 0) : v.assets.djFrame(beatAt(g.beat, time), casting, respawnLeft(g.witches[0].ko, ht) !== null); // (its fallback: scratching through a knockout's wait, rules/knockout.ts)
         wf = Dj.full[j]; djUpper = Dj.upper[j];
       }
-      if (typeof sp === "number" && sp !== v.castSeen) { v.castSeen = sp; v.spellFx.partyBurst(wx, wyy, wz, sp); v.magic.emit("party", "pillar", wx, wyy+5, wz, 3, 1.5, 2.4, 914); v.magic.emit("party", "dome", wx, wyy+2, wz, 3, 1, 1.8, 915); captureRefractionCast(v, sp, wx, wyy, wz); }
+      // The party start (render/partyStart.ts, its pieces' knobs partyStart; Ed, 2026-11-03): at the cast, at her feet as drawn here;
+      // kept as she's drawn seated, so the decks' replay (View.replayPartyStart) plays it there again.
+      const A = (v.partyStart.anchor ??= { x: 0, y: 0, z: 0 }); A.x = wx; A.y = wyy; A.z = wz;
+      if (typeof sp === "number" && sp !== v.castSeen) { v.castSeen = sp; v.partyStart.start(g.tuning, wx, wyy, wz, sp + (ht - time)); captureRefractionCast(v, sp, wx, wyy, wz); }
     }
   }
+  { const H = (v.partyStart.here ??= { x: 0, y: 0, z: 0 }); H.x = wx; H.y = wyy; H.z = wz; } // (where she's drawn: the replay's place on a night resumed after its cast)
   // Knocked out (Ed, 2026-10-04): she sits slumped on the ground while her stack lets go, then
   // vanishes in a sparkle and comes back in one at the treehouse.
   // Mid-blink she's nowhere (from the step it starts, so she never slides between its two points).
