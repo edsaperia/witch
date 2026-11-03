@@ -38,11 +38,11 @@ import { sharedFindLoan, withSharedFind, type PersonalKit } from "./app/sharedFi
 import { chartOpen, closeChart, openChart, prepareChart, finishChartFlight, type Sailed } from "./ui/chartOverlay";
 import { openingWay, opensDirectly, opensInBedroom, opensWithCreator, sailLandsInBed } from "./app/opening";
 import { wakeInBedroom } from "./rules/opening";
-import { endDream, startParty, startWake } from "./rules/wakeUp";
+import { endDream, firstMorning, startParty, startWake } from "./rules/wakeUp";
 import { replayWanted } from "./rules/partyStart";
 import { WorldDrawGate } from "./app/worldDrawGate";
 import { LandingSleep } from './app/landingSleep';
-import { STATION_SLOT, wearFromStation, wornGenome } from "./rules/clothesPile";
+import { STATION_SLOT, wearFromStation, wornGenome, wornNow } from "./rules/clothesPile";
 import { WakeCard } from "./render/wakeUp";
 import { toggleCornerPanel, closeCornerPanel, cornerPanelRoot } from "./ui/cornerPanel";
 import { MenuFocus } from "./ui/menuFocus";
@@ -237,9 +237,10 @@ let lookNow = JSON.stringify(resumeSave?.look ?? savedLook);
 let shownLook = "";
 function showLook(): void {
   const canonical = (page.night ?? page.last)?.game;
-  const shown = canonical ? page.presentationGame?.(canonical) ?? canonical : undefined, pile = shown?.wake?.pile;
-  // (her hat still to put on but lying on the floor, the first morning's: its shape kept, so its frame lying there is drawn)
-  const lying = !!pile?.includes("hat") && !!shown?.witches[0]?.hat.down, key = `${lookNow}|${pile?.join() ?? ""}|${lying}`;
+  const shown = canonical ? page.presentationGame?.(canonical) ?? canonical : undefined;
+  // (her hat still to put on but lying on the floor, the first morning's: its shape kept, so its frame lying there is drawn; asleep
+  // under the loading screen before a first morning, that morning's as it will start: `firstAhead`)
+  const { pile, hatLying: lying } = wornNow(shown?.wake, !!shown?.witches[0]?.hat.down, firstAhead), key = `${lookNow}|${pile?.join() ?? ""}|${lying}`;
   if (key === shownLook) return;
   const look = JSON.parse(lookNow) as unknown;
   if (view.houseRooms) view.houseRooms.outfit = look;
@@ -269,6 +270,11 @@ const { tuning: bootTuning } = N();
 // there (wakeFirst); ?opening=old for the old start (the character creator as the loading cover).
 const inBedroom = !resumeGame && opensInBedroom(bootLink, bootTuning);
 if (!inBedroom) (window as unknown as { witchLoading?: { cancel(): void } }).witchLoading?.cancel();
+/** The first morning she'll wake to (rules/wakeUp.ts firstMorning), read ahead while she sleeps under the loading screen, till it
+ *  starts (wakeFirst): her art is made in her nightie with the start's own, and the loading screen waits for it (her hat-off frames
+ *  too, her hat lying on the hats' floor), so she's never drawn in her clothes first (Ed, 2026-11-03: "after the loading screen I look
+ *  at the bed and see the witch in her default clothes instead of in her nightie, and then after a second or two she's in her nightie"). */
+let firstAhead = inBedroom ? firstMorning(N().game) : null;
 if (N().game.map.zoo) void import("./zoo/panel").then(({ ZooPanel }) => { zooPanel = new ZooPanel(N().game); });
 // The settings as built (the tuning file's), for the debug overlay's and the playtest log's list of what's changed (app/repro.ts).
 const BUILT = JSON.parse(JSON.stringify(TUNING)) as object;
@@ -291,7 +297,8 @@ let dreamNext: { loan: Loan; won: boolean } | null = null;
 let dreamAfterDive: { loan: Loan; won: boolean } | null = null;
 /** The broom parts she has tonight: those she's found, and a part on loan. */
 const partsNow = (): Set<string> => withLoan("part", new Set(loadBroom().found), loan);
-const view = page.view = await View.create(canvas, N().game, gameStyle(style, bootTuning), savedLook); // (built a frame's budget at a time: the bedroom's frames go on meanwhile, render/slices.ts)
+const bootLook = firstAhead ? wornGenome(JSON.parse(lookNow) as never, firstAhead.pile, firstAhead.hatLying) : savedLook; // (in her nightie on a first morning: firstAhead)
+const view = page.view = await View.create(canvas, N().game, gameStyle(style, bootTuning), bootLook, { hatOff: !!firstAhead?.hatLying }); // (built a frame's budget at a time: the bedroom's frames go on meanwhile, render/slices.ts)
 let onlineFocus = () => false;
 view.setIntroFocus = (game, focus) => introFocus(game, N().game, focus, onlineFocus(), pageFocus);
 // The loading screen (src/loading.js, src/ui/loadingScreen.js), up since the first paint: given the view for its count of the art
@@ -1294,7 +1301,7 @@ function wakeFirst(): void {
 }
 function wakeFirstNow(): void {
   const n = N();
-  bootAsleep = false;
+  bootAsleep = false; firstAhead = null; // (the morning itself from here on: its wake-up's pile)
   firstEver = !wokenBefore();
   if (!wakeInBedroom(n.game) || !startWake(n.game, n.game.herTime, { mirrored: mirrored() })) { wakeCard?.hide(); dressCreator(); creator.show(); return; }
   mark("opening:wake");
