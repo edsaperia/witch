@@ -7,7 +7,7 @@
 import * as THREE from "three";
 import { gpuKind } from "./gpuLedger";
 import { BAYER_GLSL, VALUE_NOISE_GLSL } from "./shaders";
-import { CARVING_SIZE, carvingMask } from "./legendCarving";
+import { BIG_CARVING_SIZE, bigCarvingMask, CARVING_SIZE, carvingMask } from "./legendCarving";
 import { legendSigilStrokes } from "../../art/generator.js";
 import type { FloorLook } from "./legendFloor";
 import * as Art from "../../art/generator.js";
@@ -156,6 +156,14 @@ uniform vec4 uBlend; // ground blend: warp, fine (metres), band (metres), dither
 // (rgb, and intensity x 85 in alpha); geometry: metres a tile, art px a tile (pitch), the floor
 // texture's size, the grid's origin in it (px); and the rim's outer radius (px).
 uniform sampler2D uDiscoBase, uDiscoLit, uDiscoTiles;
+// The challenge circle's dancefloor once it's cleared (render/challenge.ts; Ed, 2026-11-03: "it can look the same as the home
+// dancefloor"): home's floor art scaled to fill its circle, its own tiles' lights; x, z, radius (m), and how far out it has come (0-1).
+uniform vec4 uFloor2;
+uniform sampler2D uDiscoTiles2;
+// The challenge circle's sigil carved into its stone floor (render/challenge.ts; Ed, 2026-11-03, on #1725: "it should look like it's
+// carved into the circle"): its middle x, z, its circle's radius (m; 0 none) and the soft moonlit glow in its grooves; its mask.
+uniform vec4 uChallengeCarve;
+uniform sampler2D uChallengeCarveMap;
 uniform vec4 uDiscoGeom;
 uniform float uDiscoRim;
 // The plaza round the floor (Ed, 2026-10-04): rings of flagstones from the rim out past the speakers.
@@ -519,6 +527,44 @@ void main() {
     if (uLegendGlow[i] > 0.0) c += vec3(0.35, 0.55, 0.6) * band * uLegendGlow[i] * 0.35;
   }
 #endif
+  // The challenge circle's carving (uChallengeCarve): the island's sigil cut into its flagstones, the grooves' edges clean (its mask
+  // fine and filtered, edged by a smoothstep): each groove a recess darker than the stone, its wall facing away from the moon in
+  // shadow and its far lip catching the light; a soft moonlit glow living in the grooves.
+#if !defined(GROUND_SPECIALIZED) || defined(GROUND_LEGENDS)
+  if (uChallengeCarve.z > 0.0) {
+    vec2 cuv = (p - uChallengeCarve.xy) / (uChallengeCarve.z * 0.92) * 0.5 + 0.5;
+    if (cuv.x > 0.0 && cuv.x < 1.0 && cuv.y > 0.0 && cuv.y < 1.0) {
+      vec2 mo = normalize(uMoonDir.xz + vec2(1e-4)) * (uPixel * 1.5) / (uChallengeCarve.z * 1.84);
+      float cg = smoothstep(0.3, 0.7, texture2D(uChallengeCarveMap, cuv).r);
+      float toward = smoothstep(0.3, 0.7, texture2D(uChallengeCarveMap, cuv - mo).r), away = smoothstep(0.3, 0.7, texture2D(uChallengeCarveMap, cuv + mo).r);
+      float lipLit = max(0.0, toward - cg), wall = max(0.0, cg - away);
+      c *= (1.0 - 0.5 * cg) * (1.0 - 0.35 * wall) * (1.0 + 0.45 * lipLit);
+      c += vec3(0.35, 0.72, 0.8) * cg * (1.0 - 0.5 * wall) * uChallengeCarve.w * 0.34;
+    }
+  }
+#endif
+  // The challenge circle's dancefloor (uFloor2): home's, the same art and tiles, scaled from home's rim to its radius.
+#if !defined(GROUND_SPECIALIZED) || defined(GROUND_DANCEFLOOR)
+  if (uFloor2.w > 0.0) {
+    vec2 f2 = p - uFloor2.xy;
+    if (length(f2) < uFloor2.z * uFloor2.w) {
+      vec2 fd = f2 * (uDiscoRim * uDiscoGeom.x / uDiscoGeom.y) / max(1.0, uFloor2.z);
+      vec2 bpx = floor(fd / uDiscoGeom.x * uDiscoGeom.y + uDiscoGeom.z * 0.5);
+      vec4 base = texture2D(uDiscoBase, (bpx + 0.5) / uDiscoGeom.z);
+      vec2 g = bpx - uDiscoGeom.w, tile = floor(g / uDiscoGeom.y), tp = g - tile * uDiscoGeom.y - 1.0;
+      if (tile.x >= 0.0 && tile.y >= 0.0 && tile.x < 32.0 && tile.y < 32.0 && tp.x >= 0.0 && tp.y >= 0.0 && tp.x < 14.0 && tp.y < 14.0) {
+        vec4 cell = texture2D(uDiscoTiles2, (tile + 0.5) / 32.0);
+        float k = floor(cell.a * 3.0 + 0.5);
+        if (k > 0.5) {
+          vec3 look = texture2D(uDiscoLit, (vec2(tp.x + (k - 1.0) * 14.0, tp.y) + 0.5) / vec2(42.0, 14.0)).rgb;
+          gl_FragColor = vec4(haze(look * cell.rgb * 1.25, vWorld), 1.0);
+          return;
+        }
+      }
+      if (base.a > 0.5) c = base.rgb;
+    }
+  }
+#endif
   // The dancefloor: the art's floor of glass tiles inside its stone rim; a lit tile glows in its
   // colour (unlit by the night: it is the light), the rest is lit like the ground.
 #if !defined(GROUND_SPECIALIZED) || defined(GROUND_DANCEFLOOR) || defined(GROUND_PAVEMENT)
@@ -774,6 +820,9 @@ export class Ground {
   private initialised = false;
   private floorReady = new Array(TYPE_SLOTS).fill(0);
   private floors: THREE.DataTexture;
+  private challengeCarve = (t => { t.magFilter = t.minFilter = THREE.LinearFilter; t.generateMipmaps = false; t.colorSpace = THREE.NoColorSpace; return t; })(new THREE.DataTexture(new Uint8Array(BIG_CARVING_SIZE * BIG_CARVING_SIZE * 4), BIG_CARVING_SIZE, BIG_CARVING_SIZE));
+  private challengeCarveOf = "";
+  private discoTiles2 = (t => { t.magFilter = t.minFilter = THREE.NearestFilter; t.generateMipmaps = false; t.colorSpace = THREE.NoColorSpace; return t; })(new THREE.DataTexture(new Uint8Array(32 * 32 * 4), 32, 32));
   private discoTiles = (t => { t.magFilter = t.minFilter = THREE.NearestFilter; t.generateMipmaps = false; t.colorSpace = THREE.NoColorSpace; return t; })(new THREE.DataTexture(new Uint8Array(32 * 32 * 4), 32, 32));
   private pendingFloors: [number, TilePixels][] = [];
   /** The nearby legend circles' carving masks, side by side (one slot a ring), and which species each slot holds. */
@@ -801,7 +850,7 @@ export class Ground {
     const params = typeof location === 'undefined' ? new URLSearchParams() : new URLSearchParams(location.search);
     const mutable = hasForcedLakeLook() || params.has('debug') || params.get('creator') === '1';
     const extras = groundExtras({ zoo: !!map.zoo?.layout, dancefloor: !map.zoo?.layout && map.dancefloor.radius > 0,
-      pavement: !map.zoo?.layout && pavement.uPave.value.y > 0, legends: map.legendClearings.length > 0,
+      pavement: !map.zoo?.layout && pavement.uPave.value.y > 0, legends: map.legendClearings.length > 0 || map.specialSites?.some(sp => sp.kind === "challenge"), // (the challenge circle's floor is drawn as a legend circle's: render/challenge.ts)
       legendFloor: !!map.tuning.legendClearing.floor?.on, koi: (lakes.uKoi.value as THREE.Vector4[]).some(k => k.z > 0), bare: (map.tuning.bare ?? 0) > 1.5 }, mutable);
     // The shader as two programs over one set of uniforms (the perf pass's fix C, 2026-10-23, tools/bench/ground.cjs: code a
     // pixel never runs still cost the ground a quarter to two fifths of its time on the cloud's renderer): the lakes' code only on
@@ -844,7 +893,7 @@ export class Ground {
         uLegendDebris: { value: Array.from({ length: 6 }, () => new THREE.Vector4()) },
         uLegendGrowth: { value: Array.from({ length: 6 }, () => new THREE.Vector4()) },
         uClearing: { value: new THREE.Vector2(map.tuning.clearingSize, map.tuning.clearingFalloff) },
-        uDiscoBase: { value: disco.base }, uDiscoLit: { value: disco.lit }, uDiscoTiles: { value: this.discoTiles },
+        uDiscoBase: { value: disco.base }, uDiscoLit: { value: disco.lit }, uDiscoTiles: { value: this.discoTiles }, uDiscoTiles2: { value: this.discoTiles2 }, uFloor2: { value: new THREE.Vector4() }, uChallengeCarve: { value: new THREE.Vector4() }, uChallengeCarveMap: { value: this.challengeCarve },
         uDiscoGeom: { value: new THREE.Vector4(disco.tileM, disco.pitch, disco.size, disco.gridOrigin) }, uDiscoRim: { value: disco.rimOuter },
         ...pavement,
         uZooPlaza: { value: new THREE.Vector4(map.zoo?.layout?.home.x ?? 0, map.zoo?.layout?.home.z ?? 0, ZOO_CONFIG.plaza ?? 60, map.zoo?.layout ? 1 : 0) }, uPlazaSigil: { value: this.plazaSigil },
@@ -906,6 +955,31 @@ export class Ground {
     const d = this.discoTiles.image.data as Uint8Array;
     for (let i = 0; i < d.length; i += 4) { d[i] = rgbi[i]; d[i + 1] = rgbi[i + 1]; d[i + 2] = rgbi[i + 2]; d[i + 3] = Math.min(255, rgbi[i + 3] * 85); }
     this.discoTiles.needsUpdate = true;
+  }
+
+  /** The challenge circle's carved sigil (render/challenge.ts challengeCarving): its middle, radius (0: none) and grooves' glow, and the
+   *  species whose sigil it is (its mask written once a species: render/legendCarving.ts bigCarvingMask). */
+  setChallengeCarving(f: { x: number; z: number; r: number; glow: number; species: string } | null): void {
+    const v = (this.mesh.material as THREE.ShaderMaterial).uniforms.uChallengeCarve.value as THREE.Vector4;
+    if (!f) { v.set(0, 0, 0, 0); return; }
+    if (this.challengeCarveOf !== f.species) {
+      this.challengeCarveOf = f.species;
+      const m = bigCarvingMask(f.species), d = this.challengeCarve.image.data as Uint8Array;
+      for (let i = 0; i < m.length; i++) { const o = i * 4; d[o] = d[o + 1] = d[o + 2] = m[i]; d[o + 3] = 255; }
+      this.challengeCarve.needsUpdate = true;
+    }
+    v.set(f.x, f.z, f.r, f.glow);
+  }
+
+  /** The challenge circle's dancefloor (render/challenge.ts): its middle, radius and how far out it has come (0 none), and its
+   *  tiles' lights (as setFloorTiles: r, g, b and intensity 0 to 3 a tile), or null with none. */
+  setChallengeFloor(f: { x: number; z: number; r: number; k: number; rgbi: Uint8Array } | null): void {
+    const v = (this.mesh.material as THREE.ShaderMaterial).uniforms.uFloor2.value as THREE.Vector4;
+    if (!f) { v.set(0, 0, 0, 0); return; }
+    v.set(f.x, f.z, f.r, f.k);
+    const d = this.discoTiles2.image.data as Uint8Array, s = f.rgbi;
+    for (let i = 0; i < d.length; i += 4) { d[i] = s[i]; d[i + 1] = s[i + 1]; d[i + 2] = s[i + 2]; d[i + 3] = Math.min(255, s[i + 3] * 85); }
+    this.discoTiles2.needsUpdate = true;
   }
 
   /** The sleeping legends' clearings nearest her (up to 6): their middles, radii, ring widths, and each ring's brightening (0-1). */
@@ -1084,7 +1158,7 @@ export class Ground {
     this.disposed = true;
     const u = (this.mesh.material as THREE.ShaderMaterial).uniforms;
     for (const k of ["uDiscoBase", "uDiscoLit", "uLakes", "uLakeLooks"]) (u[k]?.value as THREE.Texture | null)?.dispose();
-    this.near.dispose(); this.far.dispose(); this.landTex?.dispose(); this.floors.dispose(); this.carve.dispose(); this.lakeCarve.dispose(); this.plazaSigil.dispose(); this.discoTiles.dispose();
+    this.near.dispose(); this.far.dispose(); this.landTex?.dispose(); this.floors.dispose(); this.carve.dispose(); this.lakeCarve.dispose(); this.plazaSigil.dispose(); this.discoTiles.dispose(); this.discoTiles2.dispose(); this.challengeCarve.dispose();
     this.mesh.geometry.dispose(); this.plain.dispose(); this.beach?.dispose(); this.loadingFallback.dispose();
   }
 }

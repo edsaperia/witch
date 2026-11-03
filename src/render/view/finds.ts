@@ -9,6 +9,7 @@ import * as THREE from "three";
 import type { View } from "../view";
 import { findPiece } from "../../rules/finds";
 import { worldAsleep } from "../../rules/partyOver";
+import { rewardFall } from "../../rules/challenge";
 import { SpriteBatch, type SpriteInstance } from "../sprites";
 
 /** How near (m) she is before the trunk's drawn at all (a find on foot, under the canopy). */
@@ -24,18 +25,18 @@ const FIND_PATCH = 2.2;
 const FIND_GOLD = new THREE.Vector3(1, 0.96, 0.84);
 
 /** Tonight's find while it's there to take: on the map, not yet taken, the party not lost. */
-const findThere = (v: View) => { const T = v.game.trunk; return T && T.item && !T.found && !worldAsleep(v.game) ? T : null; }; // (not there in the world asleep: the afterparty, or before the party, Ed 2026-10-26)
+const findThere = (v: View) => { const T = v.game.trunk; return T && T.item && !T.found && !worldAsleep(v.game) && !rewardFall(v.game, T)?.hidden ? T : null; }; // (not there in the world asleep: the afterparty, or before the party, Ed 2026-10-26)
 
 /** Where the cover is cleared for tonight's find (view.ts, with the placed sigils'), or null. */
 export function findClear(v: View): { x: number; z: number; r: number } | null {
   const T = findThere(v);
-  return T ? { x: T.x, z: T.z, r: FIND_PATCH } : null;
+  return T && !rewardFall(v.game, T) ? { x: T.x, z: T.z, r: FIND_PATCH } : null; // (a challenge's coming down: no patch till it lands)
 }
 
 /** Tonight's find's own light, low over its patch, breathing slightly (never a flicker), or null once it's taken. */
 export function findLight(v: View, time: number): { x: number; y: number; z: number; reach: number; rgb: THREE.Vector3; strength: number } | null {
-  const T = findThere(v), L = v.game.tuning.lights.find;
-  return T ? { x: T.x, y: 0.6, z: T.z, reach: L.reach, rgb: FIND_GOLD, strength: L.strength * (0.9 + 0.1 * Math.sin((time * Math.PI * 2) / 2.4)) } : null;
+  const T = findThere(v), L = v.game.tuning.lights.find, f = T ? rewardFall(v.game, T) : null; // (a challenge's coming down: its light with it, growing as it comes)
+  return T ? { x: T.x, y: 0.6 + (f?.y ?? 0), z: T.z, reach: L.reach, rgb: FIND_GOLD, strength: L.strength * (f ? 0.3 + 0.7 * f.k : 1) * (0.9 + 0.1 * Math.sin((time * Math.PI * 2) / 2.4)) } : null;
 }
 
 export function drawFinds(v: View): void {
@@ -43,11 +44,12 @@ export function drawFinds(v: View): void {
   const T = v.game.trunk, id = T?.item ? findPiece(T) : "", key = `finds:${id}`;
   for (const [k, b] of v.decorBatches) if (k.startsWith("finds:") && k !== key) b.set([]);
   const batch = v.decorBatches.get(key);
-  if (!T || !T.item || T.found || worldAsleep(v.game)) { batch?.set([]); return; }
+  const fall = T ? rewardFall(v.game, T) : null; // (the challenge's: hidden till it's cleared, then coming down from the sky: rules/challenge.ts)
+  if (!T || !T.item || T.found || worldAsleep(v.game) || fall?.hidden) { batch?.set([]); return; }
   const w = v.game.witch, d = Math.hypot(w.x - T.x, w.z - T.z);
   if (d > TRUNK_ASK) { batch?.set([]); return; }
   const fa = v.assets.findArt(id, d <= TRUNK_SEEN), a = fa?.pieces[id];
   if (d > TRUNK_SEEN || !fa || !a) { batch?.set([]); return; }
-  const frame = fa.atlas.frames[a.frame], m = v.mpp, items: SpriteInstance[] = [{ x: T.x - (a.originX - frame.w / 2) * m, y: 0, z: T.z, frame, flip: false, scale: 1 }];
+  const frame = fa.atlas.frames[a.frame], m = v.mpp, items: SpriteInstance[] = [{ x: T.x - (a.originX - frame.w / 2) * m, y: fall?.y ?? 0, z: T.z, frame, flip: false, scale: 1 }];
   v.batchFor(v.decorBatches, key, () => new SpriteBatch(fa.atlas, v.mpp, { solid: true }))?.set(items);
 }

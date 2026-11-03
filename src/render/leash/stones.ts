@@ -274,7 +274,7 @@ export function drawStones(lv: LeashView, time: number, dot: number[]): void {
 }
 
 /** The music notes in the leash atlas (made once): the HUD's 🎶 (render/indicator.ts NOTES). */
-function notesSlot(lv: LeashView): number[] {
+export function notesSlot(lv: LeashView): number[] {
   const had = lv.slots.get("stone:notes");
   if (had !== undefined) return lv.uv(had);
   const s = lv.nextSlot++, g = lv.canvas.getContext("2d")!, ox = (s % SLOTS) * SLOT, oy = Math.floor(s / SLOTS) * SLOT;

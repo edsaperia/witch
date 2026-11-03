@@ -45,6 +45,7 @@ import type { Chain } from "./leash/chain";
 import { drawRainbow } from "./leash/rainbow";
 import type { LeyLines } from "./leylines";
 import { drawStones, newStoneView, resetStoneView, type StoneSpot } from "./leash/stones";
+import { drawChallenge } from "./challenge";
 import { drawProjection } from "./leash/projection";
 import { RUNE_SCALE, runeOffset, sigilSize } from "../rules/runeOffset";
 import { relicsOut } from "../rules/partyOver";
@@ -752,6 +753,7 @@ export class LeashView {
     }
 
     drawStones(this, time, dot); // (the rune stones' sigils, the spell's spot, its cast and the conversion: render/leash/stones.ts)
+    drawChallenge(this, time, dot); // (the challenge circle's notes, fill, columns' lights and little dancefloor: render/challenge.ts)
     drawRainbow(this, time, dot, camera); // (an early clear's rainbow wave along the ley line, and the analyser behind the spark: render/leash/rainbow.ts)
     drawBond(this, time, slotPos, dot); // (the bond: render/leash/stack.ts)
     this.look.end();

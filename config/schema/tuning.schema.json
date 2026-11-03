@@ -2265,6 +2265,76 @@
       "additionalProperties": false,
       "description": "tonight's find in an area of its own, at its site, in a clearing `clear` metres round it; that area has no stump, wave or creatures, and every touching area's path leads to it."
     },
+    "challenge": {
+      "type": "object",
+      "properties": {
+        "on": {
+          "type": "boolean"
+        },
+        "radius": {
+          "type": "number",
+          "minimum": 0
+        },
+        "margin": {
+          "type": "number",
+          "minimum": 0
+        },
+        "columns": {
+          "type": "number",
+          "minimum": 0
+        },
+        "adults": {
+          "type": "number",
+          "minimum": 0
+        },
+        "youths": {
+          "type": "number",
+          "minimum": 0
+        },
+        "castReach": {
+          "type": "number",
+          "minimum": 0
+        },
+        "findSets": {
+          "type": "boolean"
+        },
+        "fireworks": {
+          "type": "object",
+          "properties": {
+            "on": {
+              "type": "boolean"
+            },
+            "height": {
+              "type": "number",
+              "minimum": 0
+            },
+            "burst": {
+              "type": "number",
+              "minimum": 0
+            }
+          },
+          "required": [
+            "on",
+            "height",
+            "burst"
+          ],
+          "additionalProperties": false
+        }
+      },
+      "required": [
+        "on",
+        "radius",
+        "margin",
+        "columns",
+        "adults",
+        "youths",
+        "castReach",
+        "findSets",
+        "fireworks"
+      ],
+      "additionalProperties": false,
+      "description": "the challenge area: a stone circle `radius` m round with the island's sigil, `columns` columns and the woods `margin` m past it, guarded by `adults` adults and `youths` youths a roster kind; the music spell cast within `castReach` m of its middle clears it for the find."
+    },
     "treeMarginFromSoundsystem": {
       "type": "number",
       "minimum": 0,
@@ -14304,6 +14374,7 @@
     "stoneKeepClear",
     "stoneMinGap",
     "findArea",
+    "challenge",
     "treeMarginFromSoundsystem",
     "treeDensity",
     "leafJitter",
