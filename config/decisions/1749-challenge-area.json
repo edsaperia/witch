@@ -1,0 +1,24 @@
+{
+  "pr": 1749,
+  "group": "Challenge area",
+  "decisions": [
+    {
+      "id": "challengeSpacing",
+      "pr": 1749,
+      "group": "Challenge area",
+      "label": "Challenge columns: spacing (m)",
+      "note": "How far apart the challenge circle's columns stand along its edge, one a kind of the island's roster (Ed, 2026-11-03: \"the same number of columns as creature types\"): the circle's radius is the larger of its radius knob (36 m) and kinds x spacing / 2 pi, so at 7.5 m the late home's 64 kinds make about 76 m, and its area grows to hold it. A new map: it reloads.",
+      "control": {
+        "type": "slider",
+        "min": 4,
+        "max": 12,
+        "step": 0.5
+      },
+      "default": 7.5,
+      "apply": {
+        "knob": "challenge.spacing",
+        "reload": true
+      }
+    }
+  ]
+}
