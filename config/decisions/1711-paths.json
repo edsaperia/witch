@@ -1,0 +1,23 @@
+{
+  "pr": 1711,
+  "group": "Paths",
+  "decisions": [
+    {
+      "id": "pathBump",
+      "pr": 1711,
+      "group": "Paths",
+      "label": "Path bump strength",
+      "note": "How strongly the paths' bump maps catch the light (Ed, 2026-11-03: \"Can you give them bump maps to make them less flat?\"): stones, cobbles, planks and roots lit on the side facing the moon, her glow or a lamp and shaded on the other, joints, gaps and ruts sunk; the path as bright on the whole. 0: flat, as before; 2: as built; past about 4 the bevels go stark. Live: no rebake.",
+      "control": {
+        "type": "slider",
+        "min": 0,
+        "max": 6,
+        "step": 0.1
+      },
+      "default": 2,
+      "apply": {
+        "knob": "pathLook.bump"
+      }
+    }
+  ]
+}
