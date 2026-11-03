@@ -1,7 +1,6 @@
 {
-  "reason": "her trail draws the shared cooldown counter as bands of pixel dots behind its buffer (trail.steps on; render/trail.ts), so wherever the counter isn't empty in a scene (just after a take-off off the decks, a dodge in the fight) dots and their faint glow show behind her; the rules are unchanged",
+  "reason": "her trail draws the shared cooldown counter as bands of pixel dots behind its buffer (trail.steps on; render/trail.ts), so wherever the counter isn't empty in a scene (a dodge in the fight) dots and their faint glow show behind her; the rules are unchanged",
   "frames": {
-    "boot": "after she takes off the decks, the counter's sections as coloured pixel dots behind her trail's glow",
-    "wave-fight": "the same, behind her in the fight, wherever her counter isn't empty"
+    "wave-fight": "the counter's sections as coloured pixel dots behind her trail's glow, wherever her counter isn't empty in the fight"
   }
 }
