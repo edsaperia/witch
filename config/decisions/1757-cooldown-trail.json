@@ -131,46 +131,6 @@
       "apply": {
         "knob": "trail.steps.glowSize"
       }
-    },
-    {
-      "id": "trailPreset",
-      "pr": 1757,
-      "group": "Cooldown trail",
-      "label": "Default colours",
-      "note": "The section colours of a witch who hasn't chosen her own at the Broom station's Trail row (config/trail-colours.json).",
-      "control": {
-        "type": "choice",
-        "options": [
-          {
-            "value": "warm",
-            "label": "Warm 🟥🟧🟨⬜"
-          },
-          {
-            "value": "cool",
-            "label": "Cool 🟪🟦🟩🟨"
-          },
-          {
-            "value": "pastel",
-            "label": "Pastel 🩷🍑🍋🌿"
-          },
-          {
-            "value": "party",
-            "label": "Party 🌈"
-          },
-          {
-            "value": "gold",
-            "label": "Gold 🟨🟨🟨"
-          },
-          {
-            "value": "ice",
-            "label": "Ice ⬜🩵🟦"
-          }
-        ]
-      },
-      "default": "warm",
-      "apply": {
-        "knob": "trail.steps.preset"
-      }
     }
   ]
 }
