@@ -17,7 +17,7 @@ import type { Controls, Game, Witch } from "./game";
 import { castPartySpell } from "./party";
 import { recordTempo } from "./beat";
 import { deckOf } from "./treehouse";
-import { floorHats, hatSlots, HOUSE_ROOMS, objectAt, objectFront, objectWorld, reserveHatPoints } from "./houseRooms";
+import { floorHats, hatSlots, hatsOnFloor, HOUSE_ROOMS, objectAt, objectFront, objectWorld, reserveHatPoints } from "./houseRooms";
 import { placementFacing } from "./housePlacement";
 import { bedside } from "./opening";
 import { pileOut, PILE_SLOTS, type PileSlot } from "./clothesPile";
@@ -115,15 +115,29 @@ export function startWake(g: Game, ht: number, { dreaming = false, mirrored = fa
  *  head; picked up there, it's on (rules/houseRooms.ts useHats; rules/game.ts takes it out of what she has still to put on). No
  *  hat at all (the creator's "none": rules/hat.ts has), or no hats' floor, nothing. */
 function hatOnFloor(g: Game, ht: number, W: Witch): void {
+  const p = firstHatSpot(g, W, floorHats);
+  if (!p) return;
+  W.hat.down = { x: p.x, z: p.z, at: ht }; delete W.hat.hold;
+  reserveHatPoints(W, g.map.treehouse);
+}
+/** Where the first morning's hat lies (hatOnFloor): null, on her head (no hat, no hats' floor, or every point on it taken). `hats`:
+ *  the hats' floor's hats, laid out (floorHats) or as they'd be (hatsOnFloor, which changes nothing: firstMorning). */
+function firstHatSpot(g: Game, W: Witch, hats: (W: Witch) => string[]): { x: number; z: number } | null {
   // (Ed's arrangement has no hats' floor, Ed, 2026-11-02: on the first free spawn point)
   const o = HOUSE_ROOMS.objects.find(q => q.use.kind === "hats");
   const slots = HOUSE_ROOMS.layout ? hatSlots(g.map.treehouse) : [];
-  if ((!o && !slots.length) || !W.hat.has) return;
-  const hats = slots.length ? floorHats(W) : [];
-  const free = hats.findIndex(id => !id), p = free >= 0 ? slots[free] : o ? objectWorld(o, g.map.treehouse) : null;
-  if (!p) return; // (every point taken: on her head, as with no hats' floor)
-  W.hat.down = { x: p.x, z: p.z, at: ht }; delete W.hat.hold;
-  reserveHatPoints(W, g.map.treehouse);
+  if ((!o && !slots.length) || !W.hat.has) return null;
+  const laid = slots.length ? hats(W) : [];
+  const free = laid.findIndex(id => !id);
+  return free >= 0 ? slots[free] : o ? objectWorld(o, g.map.treehouse) : null;
+}
+
+/** A game's first morning as startWake (without `yesterday`) will start it, read ahead and changing nothing: every piece of her
+ *  outfit still to put on, and her hat lying on the hats' floor or not. The page makes her art in it with the start's own, so the
+ *  first frame after the loading screen draws her in her nightie (main.ts; Ed, 2026-11-03: "after the loading screen I look at the
+ *  bed and see the witch in her default clothes instead of in her nightie, and then after a second or two she's in her nightie"). */
+export function firstMorning(g: Game, W: Witch = g.witches[0]): { pile: PileSlot[]; hatLying: boolean } {
+  return { pile: [...PILE_SLOTS], hatLying: !!firstHatSpot(g, W, hatsOnFloor) };
 }
 
 /** The dream's over (the page's: it played to its end, or a key was pressed while the next island was still being made): her

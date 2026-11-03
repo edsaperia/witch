@@ -618,6 +618,13 @@ export class AssetLibrary {
     // (receive): a run of steps keeps the workers on previews, never on whole sets for looks she's passed
     this.ask(this.witchJob(genome, false, true), true);
   }
+  /** Her hat-off frames asked with the start's own art (View.create's `hatOff`: a game's first morning, her hat on the hats' floor from
+   *  the first frame, rules/wakeUp.ts): the whole set, urgent, so the loading screen waits for it (prepare's whenIdle) and she's never
+   *  drawn meanwhile from her frames with it on. */
+  askHatOff(): void {
+    if (this.bare || this.bareAsked) return;
+    this.bareAsked = true; this.ask(this.witchJob(this.witchGenome, true), true, true);
+  }
   private wearLook(look: { atlas: Atlas; art: WitchArt }): void { this.dropPreview(); this.witch = look.atlas; this.applyWitchTables(look.art); this.home.witch = true; }
   /** Her preview's frames, worn till her whole set lands (rebakeWitch). */
   private preview: Atlas | null = null;

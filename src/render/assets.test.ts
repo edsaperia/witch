@@ -7,6 +7,7 @@ import { loadStyle } from "./style";
 import type { ArtJob, ArtResult } from "./artBuild";
 import { partyGearOf } from "./creatureArt";
 import { partySheetKey } from "./partySheet";
+import { PILE_SLOTS, wornGenome } from "../rules/clothesPile";
 
 type Lib = { queue: (ArtJob & { gen?: number })[]; inFlight: Set<string>; receive(r: { job: ArtJob; result?: ArtResult }): void };
 const inner = (a: AssetLibrary) => a as unknown as Lib;
@@ -156,5 +157,27 @@ describe("AssetLibrary: a set asked ahead, then wanted on screen", () => {
     a.typeArt(28);
     expect(sent.map(j => `${j.kind}:${j.id}`)).toEqual(["type:28"]);
     expect(inner(a).queue.map(j => `${j.kind}:${j.id}`)).toEqual(["type:20"]);
+  });
+});
+
+// Ed, 2026-11-03: "after the loading screen I look at the bed and see the witch in her default clothes instead of in her nightie":
+// on a game's first morning her art is made in her nightie with the start's own (main.ts firstAhead), her hat-off frames too, the
+// loading screen waiting for them (prepare's whenIdle: the urgent sets), so nothing older is drawn on her meanwhile.
+describe("AssetLibrary: a first morning's nightie, made with the start's own art", () => {
+  const style = loadStyle(), nightie = wornGenome(null, PILE_SLOTS, true); // (the classic witch's, her hat lying on the hats' floor)
+  type Witchy = { urgentKeys: Set<string> };
+  const witchJobs = (a: AssetLibrary) => inner(a).queue.filter((j): j is Extract<ArtJob, { kind: "witch" }> => j.kind === "witch");
+  it("asks her nightie's whole set first, and her hat-off frames in it, urgent, ahead of everything but the start's own", () => {
+    const a = new AssetLibrary(style, 11, 4, nightie);
+    a.prefetchType(3); // (the island's trees, asked ahead)
+    a.askHatOff();
+    const jobs = witchJobs(a);
+    expect(jobs.map(j => ({ genome: j.genome, bare: j.bare, quick: !!j.quick }))).toEqual([{ genome: nightie, bare: false, quick: false }, { genome: nightie, bare: true, quick: false }]);
+    const q = inner(a).queue, bare = q.indexOf(jobs[1]);
+    expect(q.slice(0, bare).every(j => (j as { home?: boolean }).home)).toBe(true); // (behind the start's own sets only)
+    expect(q.findIndex(j => j.kind === "type")).toBeGreaterThan(bare);
+    expect((a as unknown as Witchy).urgentKeys.size).toBeGreaterThan(0);
+    expect([...(a as unknown as Witchy).urgentKeys].some(k => k.includes("-bare"))).toBe(true); // (the loading screen waits for it)
+    a.askHatOff(); expect(witchJobs(a)).toHaveLength(2); // (once)
   });
 });
