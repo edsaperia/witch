@@ -1,0 +1,7 @@
+{
+  "pr": 1756,
+  "group": "Treehouse cooldown",
+  "decisions": [
+    {"id": "treehouseLandCooldown", "label": "Treehouse landing cooldown (s)", "note": "Ed, 3 November: after she leaves a treehouse floor she can't land on one for this long, and after she lands she can't take off or step off. 3 by default; 0: none, as before.", "control": {"type": "slider", "min": 0, "max": 10, "step": 0.25}, "default": 3, "apply": {"knob": "treehouse.landCooldown"}}
+  ]
+}
