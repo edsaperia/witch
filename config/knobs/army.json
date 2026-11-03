@@ -41,7 +41,18 @@
       "notes": "Berries and evolving (Ed): every area has bushesPerArea berry bushes (normal bushes of that area) and perArea [min, max] berries on distinct ones at the start. Bushes grow in patches of patch.bushes [min, max] within patch.radius metres. Party animals (invited, not legends), following her or held at a sigil, take a berry on their way (Ed, v233): within detour metres of the line to where they're heading or of their sigil, never beyond their leash; they nip over, eat it (eatTime seconds) and carry on. The berry grows again at once on a free berry bush somewhere else on the map. A party animal evolves on the next bar line once it has eaten the berries its next level costs [1]: the fighting value it gains (cost.by \"value\": √(hp × dps), its species' strength included) at cost.per a berry, rounded, at least 1: so a berry buys the same fighting value for every species; one of normal strength costs 4 and 4 [2][3][4] (\"power\" would count hp × dps instead). Bigger patches since [5]: perArea and patch.bushes up a quarter to a half, so the first evolve's extra berry (2, was 1) and weaker species' one-berry minimum come out a little faster to feed than before. Evolving stops at adult [6]."
     },
     "berries.colour": {
-      "what": "the berry's (shiny dark cherry red)."
+      "what": "The berries' colour: a deep berry pink.",
+      "decisions": [
+        {
+          "by": "Ed",
+          "date": "2026-11-03",
+          "quote": "Berries: deep berry pink, instead of red.",
+          "rest": "red is the warnings' colour; a shiny dark cherry red (#9e1024) before, which colourGrammar old brings back"
+        }
+      ],
+      "links": [
+        "render/colourGrammar.ts"
+      ]
     },
     "berries.glow": {
       "what": "How strongly a berry's soft halo glows.",
@@ -278,6 +289,26 @@
         "rules/guidance.ts"
       ],
       "notes": "The end of the route [1][2]: the last wave landed, a pointer to the enraged animal nearest the centre while any lives (enraged legends don't count; retarget: seconds between re-picks); none left, the victory lap: the pulse races back along the route to home at lapSpeed m/s, every stone it passes firing its fireworks; home reached, the night won: the dealt legends wake (bar any still enraged, which go back to sleep, their islands not found) and dance in place on its far side [3], north of the dancefloor beyond the conga, behind everything from the north-facing camera: on arcs legendGap m outside the conga's circle, legendRow m apart, legendSpace m between them, from due north out to legendArc degrees across, clear of the treehouse, the island's sigil flares on the dancefloor (drawn on over flareDraw s, held flare s), every other animal joins one conga line round it (congaSpeed m/s, congaGap m apart, a circle of at least congaRadius m, as big as the line needs), walking to its place at joinSpeed m/s (out of her sight, seen m off, simply there); once she reaches the party after the win (anywhere on the dancefloor, on foot or flying low: Ed, 2026-10-28), it settles: the guidance pins lead her home [4]. The conga follows her [5]: with follow on, while she's on the ground in the home area (not at the treehouse or in the treetops) the leader trails followLead m behind her along where she's walked and the rest follow single file congaGap apart, walking to their places at joinSpeed or followSpeed times her own speed, whichever is faster; anywhere else the line goes back round the dancefloor."
+    },
+    "colourGrammar": {
+      "what": "The colour grammar: new, the party's colours warm and the forest's cold (her sigils, chains and runes pink, crimson, orange and gold by rank, the wild's lilac, purple, blue and turquoise, the berries pink, the ley line cold ahead of its spark); old, the colours before it.",
+      "decisions": [
+        {
+          "by": "Ed",
+          "date": "2026-11-03",
+          "quote": [
+            "the forest is cold, the party is warm",
+            "red telegraphs are right; red does mean warning",
+            "should be less colourful; a cold coloured rainbow, maybe just blue and purple and turquoise"
+          ],
+          "rest": "his table: yours baby pink, youth red, adult orange, legend gold; wild youth purple, adult blue, legend turquoise; the last quote the ley line ahead of the pulse. The warnings keep their pure red; a youth's red is a crimson, toward rose and darker. The pause page's Colours switch (old: the friends' purple then three blues, the wild's purple then three reds, cherry-red berries, the whole rainbow ahead of the spark); it reloads the night"
+        }
+      ],
+      "links": [
+        "render/colourGrammar.ts",
+        "render/leash/ranks.ts",
+        "render/leash/rainbow.ts"
+      ]
     },
     "leash": {},
     "leash.length": {
@@ -524,6 +555,12 @@
           "date": "2026-10-27",
           "quote": "go ahead and push all the new sigil work",
           "rest": "the default since; ?sigils=old turns them off and the hex grid back to 4 m"
+        },
+        {
+          "by": "Ed",
+          "date": "2026-11-03",
+          "quote": "the forest is cold, the party is warm",
+          "rest": "colours (a friend's): baby pink, youth crimson, adult orange, legend gold; enemy (the wild's): a baby's frost lilac, youth purple, adult blue, legend turquoise (before: a friend's purple then three blues, an enemy's purple then three reds; colourGrammar old)"
         }
       ],
       "links": [

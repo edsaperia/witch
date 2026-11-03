@@ -3737,7 +3737,7 @@
         },
         "colour": {
           "type": "string",
-          "description": "the berry's (shiny dark cherry red)."
+          "description": "The berries' colour: a deep berry pink."
         },
         "glow": {
           "type": "number",
@@ -4271,6 +4271,14 @@
       ],
       "additionalProperties": false,
       "description": "The end of the route: after the last wave a pointer leads her to the remaining enraged creatures, then the victory lap."
+    },
+    "colourGrammar": {
+      "type": "string",
+      "enum": [
+        "new",
+        "old"
+      ],
+      "description": "The colour grammar: new, the party's colours warm and the forest's cold (her sigils, chains and runes pink, crimson, orange and gold by rank, the wild's lilac, purple, blue and turquoise, the berries pink, the ley line cold ahead of its spark); old, the colours before it."
     },
     "leash": {
       "type": "object",
@@ -14403,6 +14411,7 @@
     "cast",
     "invite",
     "win",
+    "colourGrammar",
     "leash",
     "bond",
     "buffs",

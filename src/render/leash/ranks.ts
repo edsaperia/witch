@@ -2,7 +2,8 @@
 // is good; it's more important in rapid gameplay to be able to tell ranks apart than creatures"; tuning leash.ranks; the default since Ed, 2026-10-27:
 // "go ahead and push all the new sigil work"; ?sigils=old the old look):
 // every leash sigil (her stack, placed sigils, happy runes, the ghost, the treetop projection, the bond) is the bare glyph in its
-// rank's colour (a baby's purple on either side; a friend's three blues, an enemy's three reds: no ring, no disc), embers rising off its strokes (more,
+// rank's colour (Ed, 2026-11-03: "the forest is cold, the party is warm": hers pink, crimson, orange and gold, the wild's lilac,
+// purple, blue and turquoise; render/colourGrammar.ts; no ring, no disc), embers rising off its strokes (more,
 // bigger, brighter and higher each rank; a legend's white-hot), and a youth in her stack has two rows of round dots off to the
 // right of its glyph, one a berry it still eats on the move (bright eaten, dim not; all bright, they pulse: ready), the last berry
 // (eaten only at a sigil she's put down: rules/berries.ts lastBerry) its adult moment on the ground. Pure helpers here; the
@@ -12,6 +13,7 @@ import type { Tuning } from "../../rules/tuning";
 import { toEvolve } from "../../rules/berries";
 import { hash2 } from "../../rules/random";
 import type { Instances } from "./glyphs";
+import { OLD_RANK_COLOURS, oldColours } from "../colourGrammar";
 
 export interface RankKnobs {
   on: boolean;
@@ -19,14 +21,16 @@ export interface RankKnobs {
   hex: number;
   /** A placed sigil's glyph, across (m). */
   glyph: number;
-  /** A friend's colours (hers, and the invited), baby to legend (0-255): the baby's purple, then three blues by intensity, a youth's
-   *  muted, an adult's strong, a legend's the most saturated and vivid, pure brilliant blue, and shiny (legendShine) (Ed, 2026-10-29:
-   *  "more strictly do hostile reds vs friendly blues, no purples"; "baby sigils are purple (neither friend nor enemy)"; on the
-   *  legend: "the colour doesn't say 'elite' to me. It should be shiny or very saturated or clearly at the end of the colour
-   *  progression"; before, a lightness ramp to a pale legend, and before that pink, light purple, light blue and turquoise). */
+  /** A friend's colours (hers, and the invited), baby to legend (0-255), warm (Ed, 2026-11-03: "the forest is cold, the party is
+   *  warm"; his table: baby pink, youth red, adult orange, legend gold): a baby's pink, a youth's crimson (toward rose and darker than
+   *  the warnings' pure red, which stays theirs: "red telegraphs are right; red does mean warning"), an adult's orange, a legend's
+   *  gold, and shiny (legendShine). Before (colourGrammar "old", render/colourGrammar.ts OLD_RANK_COLOURS): the baby's purple, then
+   *  three blues by intensity (Ed, 2026-10-29: "more strictly do hostile reds vs friendly blues, no purples"). */
   colours: number[][];
-  /** An enemy's (the wild still at their stone), baby to legend: the same purple for a baby, then three reds by intensity, a youth's
-   *  muted, an adult's strong, a legend's a blazing red (no pink, magenta or purple). The baby's purple is the only purple there is. */
+  /** An enemy's (the wild still at their stone), baby to legend, cold (Ed, 2026-11-03: youth purple, adult blue, legend turquoise):
+   *  a baby's a pale frost lilac (his table leaves the wild baby open: a wild baby's sigil shows only in a stone's column once its
+   *  fighters are all invited, a rune stone with only babies home and a sleeping legend's neutral sigil), a youth's purple, an
+   *  adult's blue, a legend's turquoise. Before: the baby's purple, then three reds. */
   enemy: number[][];
   /** Each rank's sigil size, baby to legend, against an adult's (Ed, 2026-10-28: today's size the adult's, about 10% a step; a legend's
    *  1.35 since Ed's "I didn't notice any legends in any runestone sigil stacks", 2026-10-29: "Bigger is ok"). */
@@ -58,8 +62,8 @@ export const CHAIN_DEFAULT = { link: [0.62, 0.78, 1], tether: 1.3, slack: 0.12, 
 
 export const RANKS_DEFAULT: RankKnobs = {
   on: true, hex: 6, glyph: 5,
-  colours: [[180, 100, 255], [125, 145, 195], [55, 115, 220], [0, 135, 255]],
-  enemy: [[180, 100, 255], [190, 105, 100], [225, 45, 40], [255, 55, 15]],
+  colours: [[255, 130, 200], [190, 18, 64], [255, 140, 30], [255, 205, 40]],
+  enemy: [[200, 185, 240], [150, 80, 255], [45, 110, 255], [20, 230, 210]],
   sizes: [0.81, 0.9, 1, 1.35],
   embers: { count: [3, 5, 8, 12], size: [0.22, 0.26, 0.3, 0.36], rise: [1.6, 2.1, 2.8, 3.6], stack: 0.4 },
   dotsPerRow: 4, stoneGlow: 2.4, standScale: 1.5,
@@ -68,7 +72,7 @@ export const RANKS_DEFAULT: RankKnobs = {
 /** The leash hex grid's size (m) before the rank sigils (4: leash.spacing's density), as ?sigils=old brings it back. */
 export const OLD_HEX = 4;
 
-export const rankKnobs = (t: Tuning): RankKnobs => ({ ...RANKS_DEFAULT, ...(t.leash.ranks ?? {}) });
+export const rankKnobs = (t: Tuning): RankKnobs => { const K = { ...RANKS_DEFAULT, ...(t.leash.ranks ?? {}) }; return oldColours(t) ? { ...K, ...OLD_RANK_COLOURS } : K; }; // (the old colours: render/colourGrammar.ts)
 export const stoneKnobs = (t: Tuning): NonNullable<RankKnobs["stones"]> => ({ ...STONES_DEFAULT, ...(t.leash.ranks?.stones ?? {}) });
 export const chainKnobs = (t: Tuning): NonNullable<RankKnobs["chain"]> => ({ ...CHAIN_DEFAULT, ...(t.leash.ranks?.chain ?? {}) });
 export const ranksOn = (t: Tuning): boolean => !!t.leash.ranks?.on;
@@ -82,13 +86,13 @@ export function rankColour(t: Tuning, rank: number, friend = true): [number, num
   return [c[0] / 255, c[1] / 255, c[2] / 255];
 }
 
-/** Whether a creature is a sleeping legend: its sigil is neutral, the baby's purple (Ed, 2026-10-29: "Sleeping legend sigils should
- *  be purple, like babies, as they are neutral"), till it wakes (restless or angry, the enemy's; happy, the friend's). */
+/** Whether a creature is a sleeping legend: its sigil is neutral, a wild baby's (Ed, 2026-10-29: "Sleeping legend sigils should
+ *  be purple, like babies, as they are neutral"; the frost lilac since the grammar, 2026-11-03), till it wakes (restless or angry, the enemy's; happy, the friend's). */
 export const asleepLegend = (c: { boss?: unknown; legendState?: string } | undefined): boolean => !!c?.boss && c.legendState === "asleep";
 /** Whether a creature's sigil wears the legend's crown (art/sigils.js LEGEND_CROWN; Ed, 2026-10-29): every legend's. */
 export const crowned = (c: Pick<Creature, "level"> & { boss?: unknown }): boolean => !!c.boss || rankOf(c) >= 3;
-/** A sigil's colour, 0 to 1: its rank's, a friend's or an enemy's, or a sleeping legend's purple (asleepLegend). */
-export const sigilRankColour = (t: Tuning, rank: number, friend: boolean, asleep: boolean): [number, number, number] => rankColour(t, asleep ? 0 : rank, friend);
+/** A sigil's colour, 0 to 1: its rank's, a friend's or an enemy's, or a sleeping legend's neutral, a wild baby's whatever its side (asleepLegend). */
+export const sigilRankColour = (t: Tuning, rank: number, friend: boolean, asleep: boolean): [number, number, number] => (asleep ? rankColour(t, 0, false) : rankColour(t, rank, friend));
 
 /** The rank's sigil size against an adult's (Ed, 2026-10-28): 0.81, 0.9, 1, and a legend 1.35 (coordinator, 2026-10-29: unmistakable). */
 export const rankSize = (t: Tuning, rank: number): number => rankKnobs(t).sizes[Math.max(0, Math.min(3, rank))] ?? 1;

@@ -103,6 +103,7 @@ says what each note covers.
 - Sigil stack
 - Rank sigils
 - Sides and sizes
+- Colour grammar
 - Stone stack
 - Spell spot
 - Sigil motes
@@ -379,6 +380,7 @@ says what each note covers.
 - Party objects
 - Attack effects
 - Attack look
+- Colour temperatures
 - Path kinds
 - Path looks
 - Path bump maps

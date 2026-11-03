@@ -838,6 +838,7 @@ export type SchemaTuning = {
     "flare": number;
     "retarget": number;
   };
+  "colourGrammar": "new" | "old";
   "leash": {
     "length": number;
     "runSpeed": number;

@@ -487,6 +487,8 @@ export interface Tuning {
   /** Berries and evolving (rules/berries.ts): berries per area at the start [min, max], berry bushes
    *  per area, how far a party animal looks for one (m), how long it eats (s), berries to evolve
    *  (babies, young, adults), the berry's colour and glow. */
+  /** The colour grammar (Ed, 2026-11-03: "the forest is cold, the party is warm"; render/colourGrammar.ts): "new" hers warm and the wild cold, the berries pink, the ley line cold ahead of its spark; "old" the colours before it. */
+  colourGrammar?: "new" | "old";
   berries: { /** a baby eats only at its placed sigil, a berry within babyReach m of it; babyCost berries evolve it (Ed, 2026-10-11) */ babyReach?: number; babyCost?: number; perArea: number[]; bushesPerArea: number; patch: { bushes: number[]; radius: number }; detour: number; eatTime: number; /** Berries to evolve (Ed, 2026-10-05): the strength a level gains (by: "power", hp × dps, or "value", √ of it) over per, rounded, at least 1. */ cost: { by: "power" | "value"; per: number }; colour: string; glow: number };
   sigilProjection: { height: number; opacity: number; beam: number; size: number; /** Leashed and happy creatures' sigils over them from the treetops (Ed's playtest, 2026-10-06): the nearest `max` within `range` metres, `size` times their ground rune, `opacity` (happy ones dimmer by `happy`), fading out over the last `fade` of the range. */ creatures: { range: number; max: number; size: number; opacity: number; happy: number; fade: number } };
   /** The circle-bug suspects (Ed, 2026-10-14): each effect centred on her with a round edge, on as ever or off (the pause page's toggles). */
