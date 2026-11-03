@@ -98,6 +98,7 @@ says what each note covers.
 - Soundsystem spell / cast
 - Loose sigil
 - Legend tether
+- Anchor chain
 - Sigil stack
 - Rank sigils
 - Sides and sizes

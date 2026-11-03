@@ -511,6 +511,8 @@ export interface Tuning {
     /** Sigil weight (rules/leashWeight.ts): free allowance, levels' weights, drag, drift, rise, sink, sinkMax, floor, extreme, maxTension. */
     /** Who grounds her (Ed, 2026-10-18: "One adult stops you taking off. Three young do.", the numbers indicative, by weight; rules/leashWeight.ts groundedBy): the weight following her (their sigils in her stack, each at creatureWeight; babies not counted) at or over this and she can't take off; 2 is one adult of normal strength (three young 2.4, two 1.6); 0 turns it off. */
     grounded?: { weight: number };
+    /** Anchor chains (Ed, 2026-11-03; rules/anchor.ts): each adult following her (its sigil in her stack) holds her within length m of it, and while one does she can't take off; 0 turns both off. */
+    anchor?: { length: number };
     weight: { /** a baby's weight on the ground (the treetops': levels[0]) */ babyGround?: number; free: number; levels: number[]; drag: number; drift: number; rise: number; sink: number; sinkMax: number; floor: number; extreme: number; maxTension: number } };
   bond: { rim: boolean; sparks: boolean; thread: boolean; sparkEvery: number; /** The thread's upward bow: metres per metre of length, from threadArcSlack when slack to threadArcTaut at full strain, up to threadArcMax. */ threadArcSlack: number; threadArcTaut: number; threadArcMax: number };
   tone: { black: number; gamma: number; ambient: number; moon: number };

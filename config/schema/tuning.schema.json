@@ -4448,6 +4448,20 @@
           "additionalProperties": false,
           "description": "Too many heavy creatures on her leash stop her taking off."
         },
+        "anchor": {
+          "type": "object",
+          "properties": {
+            "length": {
+              "type": "number",
+              "minimum": 0
+            }
+          },
+          "required": [
+            "length"
+          ],
+          "additionalProperties": false,
+          "description": "Each adult following her holds her within length metres of it on a chain, and while one follows her she can't take off."
+        },
         "weight": {
           "type": "object",
           "properties": {
@@ -4815,6 +4829,7 @@
         "runs",
         "runePull",
         "grounded",
+        "anchor",
         "weight",
         "babies",
         "ranks"

@@ -56,6 +56,7 @@ import { wearPiece } from "./clothesPile";
 import { hatLetters, hatsDown, onHatPicked, onHatPut, stepHatSpells } from "./hatSpells";
 import { loadOf, type LeashLoad, groundedBy } from "./leashWeight";
 import { pinWitch, type Pinned } from "./partyLegend";
+import { anchorLength, anchorWitch } from "./anchor";
 import { castOf, castOn, circleSpot, friendSigils, looseAt, scatterSpots, stoneOpen, tetherWitch, type LooseSigil } from "./stoneStacks";
 import { liveRainbows, sendRainbow, stoneMetres, type RainbowWave } from "./rainbow";
 import { runeOffset } from "./runeOffset";
@@ -589,6 +590,7 @@ function fixedStep(g: Game, controls: readonly Controls[]): void {
     // Her own movement plays by her broom's parts (rules/broomParts.ts: speeds, turning, rise and fall, the cooldowns, blinks; the
     // bare broom's the tuning's own): `tw` for her steps, blinks and cooldowns below, `t` for the rest.
     const tw = broomTuning(t, W.spells.parts);
+    const pre = W.body; // (where she stood before this step: rules/anchor.ts)
     // Her broom's spell (rules/spells.ts): Speed's boost, or at once Ley jump (to the ley line's pulse) or Ground pound (rules/brooms.ts).
     if (c.spell && !W.ko && castSpell(W.spells, ht, t, W.spells.broom === "leyjump" ? !!leyJumpTarget(g) : W.spells.broom === "pound" ? canPound(W.body) : true)) {
       if (W.spells.broom === "leyjump") leyJump(g, W, (x, z) => blinkClear(g, x, z, W.body));
@@ -616,9 +618,12 @@ function fixedStep(g: Game, controls: readonly Controls[]): void {
     // by her taut, blazing leashes (render/view/witch.ts groundedHop, render/leash/stack.ts drawBond) and the landing's thud
     // (platform/audio/sfxCues.ts). Drawn only: she never leaves the ground, so it's no dodge. Only a take-off from the ground: up
     // in the treetops, or coming down, she flies on as before.
-    if (c.toggleMode && W.body.mode === "ground" && !W.body.seated && !g.map.bounds.fence && groundedBy(W.leash.stack, g.creatures, t).grounded) { // (never in the zoo: flying is the only way over its fences, Ed 2026-10-26, so nothing holds her down)
+    // (an adult on her leash grounds her however light, the anchor chains: rules/anchor.ts; said as the event's obj "anchor", for the
+    // view's hint the first time)
+    const held = c.toggleMode && W.body.mode === "ground" && !W.body.seated && !g.map.bounds.fence ? groundedBy(W.leash.stack, g.creatures, t) : null;
+    if (held?.grounded) { // (never in the zoo: flying is the only way over its fences, Ed 2026-10-26, so nothing holds her down)
       c = { ...c, toggleMode: false };
-      g.leashEvents.push({ kind: "grounded", id: W.id, x: W.body.x, z: W.body.z, at: ht });
+      g.leashEvents.push({ kind: "grounded", id: W.id, x: W.body.x, z: W.body.z, at: ht, ...(held.adult ? { obj: "anchor" } : {}) });
     }
     // No coming down over a lake (Ed, 2026-10-23: "At the moment you can press x to leave treetop mode while over a lake; you go
     // lower and move more slowly. I don't think you should be able to do that"): up in the treetops, or rising, over the water (the
@@ -661,6 +666,10 @@ function fixedStep(g: Game, controls: readonly Controls[]): void {
     if (shared) { const wait = coolWait(W.cool, tw.dash.cooldown, room); if (wait > 0) W.dash.readyAt = ht + wait; } // (the dash's readyAt kept true to the counter, for the reticle and the buffer)
     // On the treehouse deck or off it (rules/treehouse.ts): landed on it, or risen off it.
     const onDeck = (b: WitchState) => !!b.perch && b.mode === "ground", perchTurn = !was.seated && onDeck(was) !== onDeck(W.body) ? (onDeck(W.body) ? 1 : -1) : 0;
+    // The adults following her (the anchor chains, Ed 2026-11-03; rules/anchor.ts): not a step further than leash.anchor.length from
+    // any of them, walking, blinking or thrown, sliding round the chain's end; parked ones, youths and legends don't count. Not while
+    // she's knocked out, up in the treehouse (her followers guard home then: rules/houseGuard.ts), or in the zoo.
+    if (!W.ko && !W.body.perch && !g.map.bounds.fence && !potionPhase(g, W)) W.body = anchorWitch(W.body, pre, W.leash.stack, g.creatures, anchorLength(t)).body;
     // A party legend on her leash (the Easter egg): not a step past legends.partyReach of it, blinking, flying or thrown (rules/partyLegend.ts).
     if (t.legends.partyEgg && !potionPhase(g, W)) { const P = pinWitch(W.body, W.leash.stack, g.creatures, t.legends.partyReach, g.clock.time, W.pinned ?? null); W.body = P.body; W.pinned = P.pinned; }
     // A sleeping legend's sigil she carries (rules/stoneStacks.ts): not a step past its tether, blinking, flying or thrown.

@@ -1031,6 +1031,9 @@
     "grounded": {
       "weight": 2
     },
+    "anchor": {
+      "length": 30
+    },
     "weight": {
       "free": 2.5,
       "levels": [0.3, 0.8, 2, 3],

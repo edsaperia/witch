@@ -875,6 +875,9 @@ export type SchemaTuning = {
     "grounded": {
       "weight": number;
     };
+    "anchor": {
+      "length": number;
+    };
     "weight": {
       "free": number;
       "levels": Array<number>;
