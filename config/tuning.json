@@ -2471,7 +2471,7 @@
     "dither": true
   },
   "pathLook": {
-    "bump": 2
+    "bump": 3
   },
   "trunkFade": {
     "metres": 2.5,
