@@ -206,7 +206,7 @@ if (savesEnabled(bootLink, navigator.webdriver)) {
       if (kept) {
         const conflicts = nightLinkConflicts(kept, bootLink);
         logCaughtError(new Error(`Explicit link differs from saved night: ${conflicts.join(", ")}`), "save slot: saved night kept");
-        nightSaveNotice("This link opens a different night from your saved night. Your save has been kept; this new night will not replace it.", savedNightResumeLink(kept, location.pathname));
+        nightSaveNotice("This link opens a different night from your saved night. Your save has been kept; this new night will not replace it.", savedNightResumeLink(kept, location.pathname), { hideAfter: 12 });
       } else {
         logCaughtError(new Error("Incompatible saved-night format"), "save slot: saved night kept");
         nightSaveNotice("This saved night has an incompatible format. It has been kept; this new night will not replace it.");
