@@ -47,7 +47,7 @@
     ],
     "effect": "the-fear",
     "name": "The Fear",
-    "description": "Shadows become creatures, phantom footsteps surround her, and familiar animals loom twice their size.",
+    "description": "Shadows stalk and startle her but cannot hurt her. She hears phantom footsteps, and familiar animals loom twice their size.",
     "comingSoon": true,
     "id": 4
   },
@@ -60,7 +60,7 @@
     ],
     "effect": "alone",
     "name": "Alone",
-    "description": "Everyone vanishes and the world stands still. She can wander the empty forest.",
+    "description": "She wanders a private, harmless copy of the island alone. Her body lies on the grass in the shared world until she wakes there.",
     "comingSoon": true,
     "id": 5
   },
@@ -216,7 +216,7 @@
     ],
     "effect": "earsight",
     "name": "Earsight",
-    "description": "Only things that make sound are visible.",
+    "description": "Each sound sends out a ripple that briefly reveals nearby ground, trees and animals.",
     "comingSoon": true,
     "id": 17
   },
@@ -398,7 +398,7 @@
     ],
     "effect": "the-whole-route",
     "name": "The Whole Route",
-    "description": "The entire route across the island shines into view.",
+    "description": "Her own connected sigil routes shine across the island, visible from end to end.",
     "comingSoon": true,
     "id": 31
   },
@@ -724,7 +724,7 @@
     "effect": "silent-film",
     "name": "Silent Film",
     "description": "Film grain and scratches, sepia, the world as a silent film.",
-    "comingSoon": true,
+    "comingSoon": false,
     "id": 56
   },
   {
@@ -763,7 +763,7 @@
     "effect": "contour-dream",
     "name": "Contour Dream",
     "description": "Vivid contour bands run across ground, animals and scenery.",
-    "comingSoon": true,
+    "comingSoon": false,
     "id": 59
   },
   {
@@ -801,8 +801,8 @@
     ],
     "effect": "folded-space",
     "name": "Folded Space",
-    "description": "Repeated mirrored sectors fold the forest around her.",
-    "comingSoon": true,
+    "description": "The landscape folds along fixed creases in the island. She can walk across the ridges and valleys.",
+    "comingSoon": false,
     "id": 62
   },
   {

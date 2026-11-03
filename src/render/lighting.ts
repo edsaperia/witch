@@ -64,6 +64,7 @@ export const LIGHT_UNIFORMS = {
   uMirrorMoon: { value: new THREE.Vector3() }, // strength, rotation in radians, spot brightness
   uDisco: { value: new THREE.Vector4() },
   uDiscoParams: { value: new THREE.Vector4() },
+  uContourDream: { value: new THREE.Vector3(0, 1.5, .12) },
   uDiscoColour: { value: new THREE.Vector3(1, 1, 1) },
   // The scenery budget (view.ts): scenery fades out between radius - fade and radius metres
   // from the haze centre (the witch). x: radius, y: fade.
@@ -120,7 +121,7 @@ uniform vec4 uPartyOver;
 float partyOff(vec3 P) { if (uPartyOver.z <= 0.0) return 0.0; return smoothstep(0.0, 1.0, (uPartyOver.z - distance(P.xz, uPartyOver.xy)) / uPartyOver.w); }
 uniform vec3 uMirrorMoon;
 uniform vec4 uDisco, uDiscoParams;
-uniform vec3 uDiscoColour;
+uniform vec3 uDiscoColour, uContourDream;
 uniform vec2 uScenery;
 uniform float uCanopyReach;
 
@@ -249,6 +250,12 @@ vec3 nightLightShaded(vec3 N, vec3 P, float moonK) {
     float spot = (1.0 - smoothstep(.08, .22, length(fract(uv) - centre))) * step(.58, seed);
     vec3 tint = .65 + .35 * cos(seed * 6.2832 + vec3(0., 2.1, 4.2));
     l += tint * (spot * uMirrorMoon.x * uMirrorMoon.z);
+  }
+  if (uContourDream.x > 0.) {
+    float level = P.y / uContourDream.y;
+    float line = 1. - smoothstep(0., uContourDream.z, abs(fract(level + .5) - .5));
+    vec3 ink = .55 + .45 * cos(floor(level + .5) * 1.17 + vec3(0., 2.1, 4.2));
+    l = mix(l, l * .5 + ink * (line * 3. + .12), uContourDream.x);
   }
   return softKnee(l);
 }

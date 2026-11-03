@@ -11,12 +11,21 @@ export function potionFilterState(g: Game) {
   const amount = recipe && !['night-vision', 'heat-vision'].includes(recipe.effect)
     ? effectEnvelope(trip, g.clock.time) * p.mix : 0;
   if (amount > 0) {
-    // Shape the existing mix for each perception. All four use the normal dry/wet trip envelope.
+    // Shape the existing mix for each perception. Each uses the normal dry/wet trip envelope.
     switch (recipe?.effect) {
       case 'masterplan': return { amount, high: 260, low: 4300, gain: .93 };
       case 'woodcut': return { amount, high: 520, low: 2500, gain: .95 };
       case 'mirrorball': return { amount, high: 90, low: 3400 * 2 ** Math.sin(g.clock.time * potionSettings('mirrorball').spin * 6), gain: 1 };
       case 'kaleidoscope': return { amount, high: 120, low: 1600 * 2 ** (1 + Math.cos(g.clock.time * 1.5)), gain: 1 };
+      case 'silent-film': return { amount, high: 480, low: 2400, gain: .88 };
+      case 'folded-space': {
+        const phase = (.8 * g.witch.x + .6 * g.witch.z) / potionSettings('folded-space').period;
+        return { amount, high: 80, low: 2200 + 1600 * Math.cos(phase * 2 * Math.PI), gain: 1 };
+      }
+      case 'contour-dream': {
+        const step = Math.floor(g.witch.lift * 4);
+        return { amount, high: 120, low: 1700 * 2 ** (step * .45), gain: 1 };
+      }
     }
   }
   const small = recipe?.effect === 'miniature';

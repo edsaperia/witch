@@ -33,6 +33,7 @@ export const HEIGHT_UNIFORMS = {
   // the bend: curve (per metre), the camera's focus x, z; and its ground-forward axis
   uBend: { value: new THREE.Vector4(0, 0, 0, 0) },
   uBendFwd: { value: new THREE.Vector2(0, -1) },
+  uWorldFold: { value: new THREE.Vector3(0, 40, 0) }, // height, period, reference height at the witch
 };
 
 /** GLSL: groundH(xz), the ground's height; onGround(p), a point given as height above the ground lifted onto it; bendW(w), a world point bent. */
@@ -40,6 +41,7 @@ export const HEIGHT_GLSL = /* glsl */ `
 uniform sampler2D uHeight;
 uniform vec4 uHeightWin, uBend;
 uniform vec2 uBendFwd;
+uniform vec3 uWorldFold;
 float groundH(vec2 p) {
   if (uHeightWin.x <= 0.0) return 0.0;
   float hw = uHeightWin.y * uHeightWin.x * 0.5;
@@ -50,6 +52,10 @@ float groundH(vec2 p) {
 }
 vec3 onGround(vec3 p) { return vec3(p.x, p.y + groundH(p.xz), p.z); }
 vec3 bendW(vec3 w) {
+  if (uWorldFold.x > 0.0) {
+    float phase = dot(w.xz, vec2(.8, .6)) / uWorldFold.y;
+    w.y += uWorldFold.x * abs(fract(phase) * 2.0 - 1.0) - uWorldFold.z;
+  }
   if (uBend.x == 0.0) return w;
   float d = max(0.0, dot(w.xz - uBend.yz, uBendFwd));
   return vec3(w.x, w.y - uBend.x * d * d, w.z);
@@ -133,7 +139,13 @@ export function useHeightField(f: HeightField | null): void { current = f; }
 export function groundHeight(x: number, z: number): number { return current ? current.heightAt(x, z) : 0; }
 
 /** A world point bent as the shaders bend it (in place). */
+export function creaseHeight(x: number, z: number, height: number, period: number): number {
+  const phase = (.8 * x + .6 * z) / period;
+  return height * Math.abs(2 * (phase - Math.floor(phase)) - 1);
+}
 export function bendPoint<V extends { x: number; y: number; z: number }>(v: V): V {
+  const fold = HEIGHT_UNIFORMS.uWorldFold.value;
+  if (fold.x > 0) v.y += creaseHeight(v.x, v.z, fold.x, fold.y) - fold.z;
   const B = HEIGHT_UNIFORMS.uBend.value, F = HEIGHT_UNIFORMS.uBendFwd.value;
   if (B.x === 0) return v;
   const d = Math.max(0, (v.x - B.y) * F.x + (v.z - B.z) * F.y);
