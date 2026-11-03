@@ -1,8 +1,6 @@
 import { ONLINE_TIMING } from "./inputLease";
 import { validPublicKey, type TelephonePublicKey } from "./telephoneIdentity";
 
-const RECOVERY_ATTEMPT_MS = 4000;
-
 export interface RelaySocket {
   readyState: number;
   send(data: string): void;
@@ -37,7 +35,7 @@ export function connectRelay(options: RelayOptions) {
   let ws: RelaySocket;
   let resume: { room: string; player: 0 | 1; token: string } | null = null;
   let recovering = false, recoveryUntil = 0, retryAt = 0, recoveryTimer: ReturnType<typeof setTimeout> | undefined;
-  let pendingResume: RelaySocket | null = null;
+  let recoverySocket: RelaySocket | null = null;
   let peerUntil = 0, awaitingRebase = false, closingUntil = 0;
   const retired = new Set<RelaySocket>();
   const closeRetired = () => { for (const old of retired) old.close(); retired.clear(); };
@@ -45,6 +43,7 @@ export function connectRelay(options: RelayOptions) {
   let role: "host" | "guest" | null = options.telephone ? null : options.token ? "guest" : "host";
   let identityConfirmed = false;
   let active = false, lastDownstream = 0, troubled = false, watchdog: ReturnType<typeof setTimeout> | undefined;
+  let watchdogAt = 0;
   const evidence = (stage: string, detail: Record<string, unknown> = {}) => {
     try { options.lifecycleEvidence?.({ stage, role, active, stopped, sampledWallTimeMs: Date.now(), sampledAtMs: performance.now(), ...detail }); } catch { /* Diagnostic only. */ }
   };
@@ -77,13 +76,12 @@ export function connectRelay(options: RelayOptions) {
     const remaining = recoveryUntil - Date.now();
     if (remaining <= 0) { lost(); return; }
     trouble(true, remaining);
-    if (Date.now() >= retryAt && !(pendingResume === ws && ws.readyState === 1)) {
-      // A CONNECTING attempt has a bounded lifetime. Once resume is sent, the relay
-      // may have rotated the ticket, so keep that socket until its reply or close.
-      // The original recoveryUntil deadline still bounds the entire recovery.
-      retryAt = Date.now() + RECOVERY_ATTEMPT_MS;
+    if (Date.now() >= retryAt && (recoverySocket !== ws || ws.readyState >= 2)) {
+      // A slow page can delay both open and resume replies. Replace only a closed
+      // attempt; the original recoveryUntil deadline bounds every pending socket.
+      retryAt = Date.now() + 1000;
       const old = ws;
-      try { openSocket(); } catch { /* Retry only within the existing deadline. */ }
+      try { openSocket(); recoverySocket = ws; } catch { /* Retry only within the existing deadline. */ }
       if (old !== ws) { if (old.readyState === 1 && retired.size === 0) retired.add(old); else old.close(); }
     }
     recoveryTimer = setTimeout(checkRecovery, Math.min(250, remaining));
@@ -92,7 +90,7 @@ export function connectRelay(options: RelayOptions) {
     if (stopped) return;
     if (!active || !resume) { stopped = true; cleanup(); trouble(false); options.onClose(); return; }
     if (recovering) return;
-    recovering = true; recoveryUntil = until; retryAt = 0; closingUntil = 0;
+    recovering = true; recoveryUntil = until; retryAt = 0; closingUntil = 0; recoverySocket = null;
     cleanup(); trouble(true, Math.max(0, until - Date.now()));
     options.onMessage({ protocol: 1, type: "transport-away" });
     checkRecovery();
@@ -102,30 +100,43 @@ export function connectRelay(options: RelayOptions) {
     if (closingUntil) {
       if (Date.now() >= closingUntil) { lost(); return; }
       trouble(true, closingUntil - Date.now());
-      watchdog = setTimeout(checkDownstream, Math.min(250, closingUntil - Date.now())); return;
+      scheduleDownstream(Math.min(250, closingUntil - Date.now())); return;
     }
-    const silence = Date.now() - lastDownstream;
     const rejoinUntil = peerUntil || (awaitingRebase ? recoveryUntil : 0);
     if (rejoinUntil && Date.now() >= rejoinUntil) { lost(); return; }
+    const late = Math.max(0, Date.now() - watchdogAt);
+    if (!rejoinUntil && ws.readyState === 1 && late > heartbeatMs) {
+      // The page could not send heartbeats or dispatch queued replies while stalled.
+      // Exclude only the overdue time, then allow queued messages and one round trip.
+      // Explicit closing/peer/recovery deadlines above remain wall-clock deadlines.
+      lastDownstream += late;
+      send("heartbeat"); scheduleDownstream(heartbeatMs * 2); return;
+    }
+    const silence = Date.now() - lastDownstream;
     if (silence >= ONLINE_TIMING.dropMs) {
       evidence("relay-watchdog-end", { silenceMs: silence, limitMs: ONLINE_TIMING.dropMs });
       lost(); return;
     }
     if (resume && !peerUntil && !awaitingRebase) { recover(lastDownstream + ONLINE_TIMING.dropMs); return; }
     trouble(true, Math.max(0, Math.min(ONLINE_TIMING.dropMs - silence, rejoinUntil ? rejoinUntil - Date.now() : Infinity)));
-    watchdog = setTimeout(checkDownstream, Math.min(250, ONLINE_TIMING.dropMs - silence));
+    scheduleDownstream(Math.min(250, ONLINE_TIMING.dropMs - silence));
+  }
+  function scheduleDownstream(delay: number): void {
+    watchdogAt = Date.now() + delay;
+    watchdog = setTimeout(checkDownstream, delay);
   }
   function arm(): void {
     if (watchdog !== undefined) clearTimeout(watchdog);
-    watchdog = active && !stopped ? setTimeout(checkDownstream, peerUntil || awaitingRebase || closingUntil ? 250 : heartbeatMs * 2) : undefined;
+    watchdog = undefined;
+    if (active && !stopped) scheduleDownstream(peerUntil || awaitingRebase || closingUntil ? 250 : heartbeatMs * 2);
   }
   function openSocket(): void {
-  const socket = makeSocket(url.href); ws = socket; pendingResume = null;
+  const socket = makeSocket(url.href); ws = socket;
   socket.addEventListener("open", () => {
     if (stopped || socket !== ws) return;
     if (recovering) {
       if (Date.now() >= recoveryUntil) { lost(); return; }
-      if (sendMessage({ type: "resume", ...resume })) pendingResume = socket;
+      sendMessage({ type: "resume", ...resume });
       return;
     }
     sendMessage(options.telephone ? { type: "telephone", publicKey: options.telephonePublicKey } : { type: options.token ? "join" : "host", room: options.room, ...(options.token ? { token: options.token } : {}) });
@@ -140,7 +151,7 @@ export function connectRelay(options: RelayOptions) {
       if (recovering) {
         if (Date.now() >= recoveryUntil) { lost(); return; }
         if (m.type !== "resumed" || m.role !== role || m.player !== resume?.player) throw Error("Resume was not authenticated");
-        readTicket(m.resume); pendingResume = null; recovering = false; cleanup(); closeRetired();
+        readTicket(m.resume); recovering = false; cleanup(); closeRetired();
         lastDownstream = Date.now(); awaitingRebase = role === "guest";
         if (!awaitingRebase) trouble(false);
         arm();

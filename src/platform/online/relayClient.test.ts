@@ -23,7 +23,7 @@ it.each(["host", "guest"] as const)("keeps a slow %s replacement and its pending
   if (role === "host") sockets[0].emit("message", JSON.stringify({ protocol: 1, type: "ready-accepted" })); else c.sendActive();
   sockets[0].transportClose(1006, false);
   const attempt = sockets[1];
-  vi.advanceTimersByTime(1500); expect(sockets).toHaveLength(2); expect(attempt.readyState).toBe(0);
+  vi.advanceTimersByTime(7000); expect(sockets).toHaveLength(2); expect(attempt.readyState).toBe(0);
   attempt.open(); expect(attempt.sent).toEqual([{ protocol: 1, type: "resume", ...ticket }]);
   // The server has accepted and rotated its credential, but this reply takes another five seconds.
   vi.advanceTimersByTime(5000); expect(sockets).toHaveLength(2); expect(attempt.readyState).toBe(1);
@@ -34,19 +34,43 @@ it.each(["host", "guest"] as const)("keeps a slow %s replacement and its pending
   expect(sockets[2].sent).toEqual([{ protocol: 1, type: "resume", ...ticket, token: "b".repeat(64) }]);
   c.close(); expect(vi.getTimerCount()).toBe(0); expect(onError).not.toHaveBeenCalled();
 });
-it.each([false, true])("times out a stalled recovery attempt (socket opened=%s) without renewing the overall deadline", opened => {
+it.each([false, true])("keeps a pending recovery attempt (socket opened=%s) within the original deadline", opened => {
   vi.useFakeTimers(); const sockets: Socket[] = [], onError = vi.fn();
   const c = connectRelay({ endpoint: "ws://localhost:8787", room: "1234567", token: "join",
     socket: () => { const s = new Socket(); sockets.push(s); return s; }, onMessage: vi.fn(), onError, onClose: vi.fn() });
   sockets[0].open(); sockets[0].emit("message", JSON.stringify({ protocol: 1, type: "joined", resume: { room: "1234567", player: 1, token: "a".repeat(64) } })); c.sendActive();
   sockets[0].transportClose(1006, false); const attempt = sockets[1]; if (opened) attempt.open();
   vi.advanceTimersByTime(3999); expect(sockets).toHaveLength(2);
-  vi.advanceTimersByTime(1); expect(sockets).toHaveLength(opened ? 2 : 3);
-  // Only the timed-out CONNECTING attempt is retired; an opened resume still owns its reply.
-  if (!opened) { attempt.emit("message", "stale malformed reply"); expect(onError).not.toHaveBeenCalled(); }
+  vi.advanceTimersByTime(1); expect(sockets).toHaveLength(2);
   vi.advanceTimersByTime(15999); expect(onError).not.toHaveBeenCalled();
   vi.advanceTimersByTime(1); expect(onError).toHaveBeenCalledOnce(); expect(vi.getTimerCount()).toBe(0);
   c.close();
+});
+it.each([false, true])("lets a late watchdog probe its healthy socket before recovery (ticket=%s)", ticketed => {
+  vi.useFakeTimers(); const sockets: Socket[] = [], onError = vi.fn();
+  const c = connectRelay({ endpoint: "ws://localhost:8787", room: "1234567", token: "join",
+    socket: () => { const s = new Socket(); sockets.push(s); return s; }, onMessage: vi.fn(), onError, onClose: vi.fn() });
+  const socket = sockets[0]; socket.open();
+  if (ticketed) socket.emit("message", JSON.stringify({ protocol: 1, type: "joined", resume: { room: "1234567", player: 1, token: "a".repeat(64) } }));
+  c.sendActive();
+  // Wall time passes without running the page's timers or socket-message handlers.
+  vi.setSystemTime(Date.now() + 30000); vi.advanceTimersByTime(2000);
+  expect(sockets).toHaveLength(1); expect(socket.readyState).toBe(1); expect(onError).not.toHaveBeenCalled();
+  expect(socket.sent.at(-1)).toMatchObject({ type: "heartbeat" });
+  socket.emit("message", JSON.stringify({ protocol: 1, type: "heartbeat" }));
+  vi.advanceTimersByTime(1999); expect(sockets).toHaveLength(1); expect(onError).not.toHaveBeenCalled();
+  c.close(); expect(vi.getTimerCount()).toBe(0);
+});
+it("recovers actual downstream silence after the late-watchdog heartbeat probe gets no answer", () => {
+  vi.useFakeTimers(); const sockets: Socket[] = [], onError = vi.fn();
+  const c = connectRelay({ endpoint: "ws://localhost:8787", room: "1234567", token: "join",
+    socket: () => { const s = new Socket(); sockets.push(s); return s; }, onMessage: vi.fn(), onError, onClose: vi.fn() });
+  sockets[0].open(); sockets[0].emit("message", JSON.stringify({ protocol: 1, type: "joined", resume: { room: "1234567", player: 1, token: "a".repeat(64) } })); c.sendActive();
+  vi.setSystemTime(Date.now() + 10000); vi.advanceTimersByTime(2000);
+  expect(sockets).toHaveLength(1);
+  vi.advanceTimersByTime(2000); expect(sockets).toHaveLength(2);
+  vi.advanceTimersByTime(15999); expect(onError).not.toHaveBeenCalled();
+  vi.advanceTimersByTime(1); expect(onError).toHaveBeenCalledOnce(); expect(vi.getTimerCount()).toBe(0); c.close();
 });
 it("retries a closed resume attempt and rejects a reply arriving beyond the original deadline", () => {
   vi.useFakeTimers(); const sockets: Socket[] = [], onError = vi.fn();
