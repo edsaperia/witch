@@ -123,16 +123,16 @@ describe("each group's buff", () => {
     g.berries.pips = new Map([[c.id, 0]]);
     expect(blinkCharges(g, W)).toBe(base); // (its pips gone)
   });
-  it("Darters: faster movement, about 10% a stack", () => {
-    expect(speedBuff(stacks({ darters: 2 }), TUNING)).toBeCloseTo(1.2, 9);
+  it("Darters: faster movement, 20% a stack (Ed, 2026-11-03)", () => {
+    expect(speedBuff(stacks({ darters: 2 }), TUNING)).toBeCloseTo(1.4, 9);
     const S = newSpells(TUNING), W = { spells: S, invites: newInvites() };
     setBuffs(W, stacks({ darters: 1 }));
-    expect(speedMultiplierBuffed(S, 0, TUNING)).toBeCloseTo(1.1, 9);
+    expect(speedMultiplierBuffed(S, 0, TUNING)).toBeCloseTo(1.2, 9);
   });
-  it("Stalkers: invites fly faster and further", () => {
+  it("Stalkers: invites fly 20% faster and further a stack", () => {
     const I = invitesBuffed(TUNING, stacks({ stalkers: 2 })).invites;
-    expect(I.speed).toBeCloseTo(TUNING.invites.speed * 1.2, 9);
-    expect(I.range).toBeCloseTo(TUNING.invites.range * 1.2, 9);
+    expect(I.speed).toBeCloseTo(TUNING.invites.speed * 1.4, 9);
+    expect(I.range).toBeCloseTo(TUNING.invites.range * 1.4, 9);
   });
   it("Pack hunters: a faster rate of fire with more spread", () => {
     const I = invitesBuffed(TUNING, stacks({ packHunters: 1 })).invites;
