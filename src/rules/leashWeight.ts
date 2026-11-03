@@ -14,6 +14,7 @@ import type { Creature } from "./creatures";
 import type { Tuning } from "./tuning";
 import { strengthOf } from "./combat";
 import { babiesOf, isBaby } from "./babies";
+import { anchorLength, anchors } from "./anchor";
 
 export interface LeashLoad {
   /** The summed pull's size, in weight units (a young creature of normal strength on a fully taut leash is 1). */
@@ -72,14 +73,18 @@ export function loadOf(stack: readonly number[], creatures: readonly Creature[],
  *  are 2.4, two are 1.6) she can't take off from the ground: she tries and the leashes pull her straight back down (rules/game.ts
  *  keeps her on the ground and says so, the "grounded" leash event; the view draws the hop and the taut leashes). Apart from
  *  the pull (loadOf), which still slows a take-off it allows; once she's up it doesn't bring her down. 0 turns it off. */
-export interface Grounding { weight: number; grounded: boolean }
+/** And (Ed, 2026-11-03, the anchor chains: rules/anchor.ts): she can't take off while an adult is leashed, its sigil in her stack,
+ *  whatever it weighs (`adult`), with leash.anchor.length on. */
+export interface Grounding { weight: number; grounded: boolean; /** an adult anchors her (rules/anchor.ts): grounded however light */ adult: boolean }
 export function groundedBy(stack: readonly number[], creatures: readonly Creature[], t: Tuning): Grounding {
-  let weight = 0;
+  let weight = 0, adult = false;
+  const anchored = anchorLength(t) > 0;
   for (const id of stack) {
     const c = creatures[id];
     if (!c || c.gone || c.level === 0) continue;
     weight += creatureWeight(c, t);
+    if (anchored && anchors(c)) adult = true;
   }
   const at = t.leash.grounded?.weight ?? 0;
-  return { weight, grounded: at > 0 && weight >= at - 1e-9 };
+  return { weight, grounded: adult || (at > 0 && weight >= at - 1e-9), adult };
 }

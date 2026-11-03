@@ -51,7 +51,8 @@ describe("grounded by who follows her", () => {
   it("light and heavy species extrapolate: weight is level weight times strength", () => {
     const g = newGame(7, TUNING), byStrength = (f: (k: number) => boolean) => g.creatures.find(c => !c.boss && f(strengthOf(c.species, 2)));
     const light = byStrength(k => k * TUNING.leash.weight.levels[2] < TUNING.leash.grounded!.weight), heavy = byStrength(k => k > 1);
-    if (light) expect(groundedBy([light.id], g.creatures.map(c => (c.id === light.id ? ({ ...c, level: 2 } as Creature) : c)), TUNING).grounded).toBe(false); // (a light adult: not enough)
+    // (a light adult: not enough by weight; since the anchor chains, Ed 2026-11-03, any adult grounds her: rules/anchor.ts)
+    if (light) { const G = groundedBy([light.id], g.creatures.map(c => (c.id === light.id ? ({ ...c, level: 2 } as Creature) : c)), TUNING); expect(G.weight).toBeLessThan(TUNING.leash.grounded!.weight); expect(G).toMatchObject({ adult: true, grounded: true }); }
     if (heavy) expect(creatureWeight({ species: heavy.species, level: 1 }, TUNING)).toBeGreaterThan(TUNING.leash.weight.levels[1]); // (a heavy young weighs more than a young)
     expect(light || heavy).toBeTruthy();
   });
@@ -89,9 +90,10 @@ describe("grounded by who follows her", () => {
   });
 
   it("the weight is a knob (leash.grounded.weight), 0 turning it off", () => {
-    const off = onGround(withTuning({ leash: { ...TUNING.leash, grounded: { weight: 0 } } })); follow(off, [2, 1, 1, 1]);
+    // (young only: an adult grounds her by its anchor chain whatever the weight, rules/anchor.ts)
+    const off = onGround(withTuning({ leash: { ...TUNING.leash, grounded: { weight: 0 } } })); follow(off, [1, 1, 1, 1]);
     expect(press(off).up).toBe(true);
-    const more = onGround(withTuning({ leash: { ...TUNING.leash, grounded: { weight: 10 } } })); follow(more, [2]);
+    const more = onGround(withTuning({ leash: { ...TUNING.leash, grounded: { weight: 10 } } })); follow(more, [1, 1, 1]);
     expect(press(more).up).toBe(true);
   });
 

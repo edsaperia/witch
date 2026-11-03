@@ -1676,6 +1676,10 @@ Code: `rules/win.ts`, `docs/backlog/journey.md`, `rules/guidance.ts`
 - **`leash.grounded`**: Too many heavy creatures on her leash stop her taking off.
   1. Ed, 2026-10-18: "One adult stops you taking off. Three young do." … "if creatures are light or heavy you can extrapolate" (the numbers indicative)
   weight is the most the creatures following her may weigh, together, before she can't take off (their sigils in her stack, each at its leash.weight.levels weight times its species' strength, however near; parked ones at a sigil on the ground don't count, nor babies; 2 is one adult of normal strength, three young 2.4, two 1.6; 0 turns it off). Pressing rise she tries: she lifts a little and the leashes, taut and bright, pull her straight back down (drawn only: she never leaves the ground, so it's no dodge and spends no cooldown). Apart from the pull (weight below); once up she stays up, it only stops the next take-off.
+- **`leash.anchor`**: Each adult following her holds her within length metres of it on a chain, and while one follows her she can't take off.
+  1. Ed, 2026-11-03: "adults are slow and heavy; you should be able to move within a reasonable distance from them (the size of a typical fight), but when the chain gets to its max length you can't move further until they move." … "fine to start with" (30 m to start; she can't take off while an adult is leashed (docs/plans/follower-buffs-and-challenge-areas.md))
+  only adults whose sigils are in her stack: parked ones (at a placed sigil), youths, babies and legends don't anchor her. At the chain's end her motion away from the adult is taken off and her motion round it kept; she's never pulled in, so if she's already further she just can't go further. The adult runs after her as any follower does, which frees her. 0 turns the chains and the no-take-off off (the weight rule, leash.grounded, still applies).
+  Code: `rules/anchor.ts`
 - **`leash.weight`**: How the creatures on her leash pull on her: slower moving away from them, slower to rise, and sinking in the treetops when heavily loaded.
   1. Ed, 2026-10-06: "every sigil above your head pulls on you as well as attracting the animal; you find it slower to move in the opposite direction to where the leashes are, you are pulled off course, and rising to treetop is slower. And you're gradually pulled back down" (rules/leashWeight.ts)
   2. Ed, 2026-10-10: free in the treetops for 8 babies, 3 youths or 1 adult, and on the ground 5 youths or 2 adults (baby 0.3, youth 0.8, from 0.5 and 1)
@@ -1738,6 +1742,7 @@ Code: `rules/win.ts`, `docs/backlog/journey.md`, `rules/guidance.ts`
 | `leash.runePull.speed` | number | 0 to … |
 | `leash.runePull.stop` | number | 0 to … |
 | `leash.grounded.weight` | number | 0 to … |
+| `leash.anchor.length` | number | 0 to … |
 | `leash.weight.free` | number | 0 to … |
 | `leash.weight.levels` | array of number |  |
 | `leash.weight.drag` | number | 0 to … |
