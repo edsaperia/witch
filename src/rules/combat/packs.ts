@@ -22,7 +22,7 @@ import { type Creature, type Level } from "../creatures";
 import { foes, huntsWitch } from "../creatureStates";
 import { hash2 } from "../random";
 import { FIGHT, type Move as OwnMove, profileOf, startCharge, swoopStriking } from "../movement";
-import { type Attack, COMBAT, combatProfile, type CombatState, type CombatWorld, type Target, scaled, stunWorth } from "./data";
+import { type Attack, COMBAT, adultMult, combatProfile, type CombatState, type CombatWorld, type Target, scaled, stunWorth } from "./data";
 import { fighting, sideOf, targetPos, targetable } from "./targeting";
 import { SPACING, bodyGap, drawnRadius, spacingOn } from "../combatSpacing";
 import type { Tuning } from "../tuning";
@@ -145,7 +145,7 @@ export interface Directive {
 export function packAttack(species: string, level: Level, move: Move, data: PacksData = PACKS): { name: string; attack: Attack; damage: number; shots: number; spread: number } | null {
   const K = packKindOf(species, data);
   if (!K || level < 1 || level > 2) return null;
-  const young = level === 1 ? data.young : null, dps = combatProfile(species, level).damagePerSecond;
+  const young = level === 1 ? data.young : null, dps = combatProfile(species, level).damagePerSecond * adultMult(level);
   if (move === "melee") {
     if (!K.melee) return null;
     const base = K.melee.attacks?.[level] ?? (level === 1 ? "nip" : "maul");

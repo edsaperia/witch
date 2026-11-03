@@ -185,7 +185,7 @@ export function stepLongCharge(w: CombatWorld, s: CombatState, c: Creature, f: F
   if (run.phase === "run" || run.phase === "brake") {
     if (run.phase === "run") {
       // Building speed, and curving toward its target at no more than turn degrees a second.
-      run.speed = Math.min(K.speed * FIGHT.speed, run.speed + K.accel * FIGHT.speed * dt);
+      run.speed = Math.min(K.speed * FIGHT.speed * FIGHT.creature, run.speed + K.accel * FIGHT.speed * FIGHT.creature * dt);
       const p = posOf(run.target);
       if (p) { run.tx = p.x; run.tz = p.z; }
       const want = Math.atan2(run.tz - c.z, run.tx - c.x);
@@ -206,7 +206,7 @@ export function stepLongCharge(w: CombatWorld, s: CombatState, c: Creature, f: F
     c.x += vx * dt; c.z += vz * dt; c.vx = vx; c.vz = vz; run.ran += run.speed * dt;
     c.moving = true; c.walk += dt * (2 + run.speed * 0.4); c.facing = vx >= 0 ? 1 : -1;
     // Its lane: everything within laneWidth / 2 of it but its own side and kind, once each.
-    const share = run.speed / Math.max(1e-6, K.speed * FIGHT.speed), half = (K.laneWidth * S) / 2, kb = K.knockback * S * share;
+    const share = run.speed / Math.max(1e-6, K.speed * FIGHT.speed * FIGHT.creature), half = (K.laneWidth * S) / 2, kb = K.knockback * S * share;
     const blow: Attack = { delivery: "melee", modifier: "knockback", knockback: kb / 6, cooldown: 0, windup: 0, range: half };
     if (run.speed > 0.5) {
       for (const o of grid.near(c.x, c.z, half + 4)) {
@@ -235,7 +235,7 @@ export function stepLongCharge(w: CombatWorld, s: CombatState, c: Creature, f: F
   // Home: back to where it lay at returnSpeed, then rest seconds before it may charge again.
   const dx = (c.lairX ?? c.x) - c.x, dz = (c.lairZ ?? c.z) - c.z, d = Math.hypot(dx, dz);
   if (d < 1) { c.run = undefined; c.moving = false; c.vx = 0; c.vz = 0; f.readyAt = Math.max(f.readyAt, time + K.rest); f.target = null; return; }
-  const v = Math.min(d, K.returnSpeed * FIGHT.speed * dt);
+  const v = Math.min(d, K.returnSpeed * FIGHT.speed * FIGHT.creature * dt);
   c.x += (dx / d) * v; c.z += (dz / d) * v; c.vx = (dx / d) * K.returnSpeed; c.vz = (dz / d) * K.returnSpeed;
   c.moving = true; c.walk += dt * 3; c.facing = dx >= 0 ? 1 : -1;
 }
@@ -287,7 +287,7 @@ export function stepLegend(w: CombatWorld, s: CombatState, c: Creature, f: Fight
       s.events.push({ kind: "beam", x: c.x, z: c.z, at: time, id: c.id });
     } else {
       const dx = f.aimX - c.x, dz = f.aimZ - c.z, dd = Math.hypot(dx, dz) || 1;
-      c.charge = { dx: dx / dd, dz: dz / dd, speed: (A.speed ?? 8) * fast, until: time + (A.duration ?? 1.5), hit: [] };
+      c.charge = { dx: dx / dd, dz: dz / dd, speed: (A.speed ?? 8) * fast * FIGHT.creature, until: time + (A.duration ?? 1.5), hit: [] };
       s.events.push({ kind: "rush", x: c.x, z: c.z, at: time, id: c.id });
     }
     return;
@@ -296,10 +296,10 @@ export function stepLegend(w: CombatWorld, s: CombatState, c: Creature, f: Fight
   const reach = A.delivery === "quake" ? (A.radius ?? 5) * 0.7 : A.delivery === "shot" ? A.range * 0.6 : A.delivery === "beam" ? A.range * 0.7 : 14;
   if (A.delivery === "melee" && d < 6 && !(time >= f.readyAt && d >= 4)) {
     // Too close to charge: it backs off first, heavily, to get a run at its target.
-    if (d > 1e-3) { c.x -= ((p.x - c.x) / d) * C.legendRun * FIGHT.speed * 0.6 * dt; c.z -= ((p.z - c.z) / d) * C.legendRun * FIGHT.speed * 0.6 * dt; c.moving = true; c.walk += dt * 3; c.facing = p.x >= c.x ? 1 : -1; }
+    if (d > 1e-3) { c.x -= ((p.x - c.x) / d) * C.legendRun * FIGHT.speed * FIGHT.creature * 0.6 * dt; c.z -= ((p.z - c.z) / d) * C.legendRun * FIGHT.speed * FIGHT.creature * 0.6 * dt; c.moving = true; c.walk += dt * 3; c.facing = p.x >= c.x ? 1 : -1; }
     return;
   }
-  if (d > reach) { moveToward(c, p.x, p.z, reach * 0.9, C.legendRun * FIGHT.speed * fast, dt); return; }
+  if (d > reach) { moveToward(c, p.x, p.z, reach * 0.9, C.legendRun * FIGHT.speed * FIGHT.creature * fast, dt); return; }
   c.moving = false; c.facing = p.x >= c.x ? 1 : -1;
   if (time >= f.readyAt) {
     f.windupUntil = time + A.windup; f.aimX = p.x; f.aimZ = p.z; f.move = name;

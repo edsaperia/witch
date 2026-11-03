@@ -941,6 +941,11 @@ export type SchemaTuning = {
     "threadArcTaut": number;
     "threadArcMax": number;
   };
+  "difficulty": {
+    "creatureSpeed": number;
+    "rangedRange": number;
+    "adultStrength": number;
+  };
   "fight": {
     "scale": number;
     "speed": number;
@@ -1133,7 +1138,7 @@ export type SchemaTuning = {
     "swarm": {
       "start": number;
       "endAverage": number;
-      "waves": number;
+      "largestIsland": number;
       "curve": number;
       "youngShare": Array<number>;
       "reference": string;
@@ -1245,6 +1250,7 @@ export type SchemaTuning = {
   "leyLines": {
     "on": boolean;
     "pulseSpeed": number;
+    "tempoExponent": number;
     "reveal": number;
     "far": Array<number>;
     "behindBright": number;

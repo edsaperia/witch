@@ -60,12 +60,15 @@ export const glideOf = (species: string): Profile["glide"] => MOVEMENT.profiles[
  *  charge or jump much further ... much more momentum, travelling in wide arcs") every species' charge
  *  and leap scaled: tuning fight.charge (reach: its run's time and overshoot, turn: its turn rate,
  *  brake: how hard it slows) and fight.leap (reach: how far off it leaps from, through: metres past
- *  its target it lands; less than 0, short of it). Set from the tuning each step (rules/combat.ts). */
-export const FIGHT: { scale: number; speed: number; momentum: number; charge: { reach: number; turn: number; brake: number; chase?: number; miss?: number }; leap: { reach: number; through: number; lead?: number }; walk: number } = { scale: 1, speed: 1, momentum: 1, charge: { reach: 1, turn: 1, brake: 1 }, leap: { reach: 1, through: -1.5 }, walk: 0 };
+ *  its target it lands; less than 0, short of it). Set from the tuning each step (rules/combat.ts).
+ *  And the difficulty (Ed, 2026-11-03: "the game is much too easy"; tuning difficulty): creature, every creature's movement speed in a
+ *  fight times it (its run, sprint, chase, charge, swoop and walk home; not her, not its shots, lunges or leaps); adult, an adult's
+ *  health and damage times it (rules/combat/data.ts adultMult). */
+export const FIGHT: { scale: number; speed: number; momentum: number; charge: { reach: number; turn: number; brake: number; chase?: number; miss?: number }; leap: { reach: number; through: number; lead?: number }; walk: number; creature: number; adult: number } = { scale: 1, speed: 1, momentum: 1, charge: { reach: 1, turn: 1, brake: 1 }, leap: { reach: 1, through: -1.5 }, walk: 0, creature: 1, adult: 1 };
 /** FIGHT as a page starts, put back by newGame, so a night begun after another starts as a fresh
  *  page's does (the first steps run before stepCombat sets it: docs/plans/sail-without-reload.md). */
 export function resetFight(): void {
-  Object.assign(FIGHT, { scale: 1, speed: 1, momentum: 1, charge: { reach: 1, turn: 1, brake: 1 }, leap: { reach: 1, through: -1.5 }, walk: 0 });
+  Object.assign(FIGHT, { scale: 1, speed: 1, momentum: 1, charge: { reach: 1, turn: 1, brake: 1 }, leap: { reach: 1, through: -1.5 }, walk: 0, creature: 1, adult: 1 });
 }
 
 export const profileOf = (species: string, data: MovementData = MOVEMENT): Profile | null => data.profiles[species] ?? null;
@@ -351,7 +354,7 @@ export function startCharge(c: Creature, mv: Move, px: number, pz: number, time:
   // times her walking speed, and it runs on until it has caught up with her walking straight down its lane (or
   // its own time, if longer), so only stepping out of the lane (or a blink, or the treetops) gets her clear.
   const d = Math.hypot(px - c.x, pz - c.z) || 1e-6, wind = mv.windup ?? 0.5, walk = FIGHT.walk * FIGHT.speed, chase = FIGHT.charge.chase ?? 0;
-  const s = Math.max((mv.speed ?? 28) * FIGHT.speed, chase * walk), accel = ((mv.accel ?? 40) * FIGHT.speed) / FIGHT.momentum;
+  const s = Math.max((mv.speed ?? 28) * FIGHT.speed, chase * walk) * FIGHT.creature, accel = ((mv.accel ?? 40) * FIGHT.speed) / FIGHT.momentum;
   const catchUp = chase > 0 && s > walk ? (d + walk * wind + (s * s) / (2 * accel)) / (s - walk) : 0; // (the gap she opens walking away during its windup and while it builds speed, closed at s - walk)
   c.charge = { dx: (px - c.x) / d, dz: (pz - c.z) / d, speed: s, from: time + wind, until: time + wind + Math.max((mv.time ?? 1.6) * FIGHT.charge.reach, catchUp), ...(mv.curl ? { curl: mv.curl } : {}) };
   c.moveReadyAt = time + mv.cooldown;
@@ -427,7 +430,7 @@ export function landSwoop(c: Creature, time: number): void {
  *  the bottom), else "air". */
 export function stepSwoop(c: Creature, mv: Move, px: number, pz: number, ready: boolean, time: number, dt: number, tvx = 0, tvz = 0, may: boolean | (() => boolean) = true, commit = 0): "tele" | "dive" | "low" | "air" {
   const mayNow = () => (typeof may === "function" ? may() : may); // (asked only as a telegraph would start: the cap's token is taken then)
-  const S = FIGHT.scale, V = FIGHT.speed, H = (mv.height ?? 8) * S, R = (mv.radius ?? 12) * S, cs = (mv.circle ?? 8) * V;
+  const S = FIGHT.scale, V = FIGHT.speed, VC = V * FIGHT.creature, H = (mv.height ?? 8) * S, R = (mv.radius ?? 12) * S, cs = (mv.circle ?? 8) * VC; // (VC: its speeds, with the difficulty's; V its times)
   let s = c.swoop;
   if (!s) {
     // Up it goes, from wherever it stands, round its target the shorter way.
@@ -455,7 +458,7 @@ export function stepSwoop(c: Creature, mv: Move, px: number, pz: number, ready: 
     }
     case "climb": {
       // Pulling back up and away along its line, slowing, then round again.
-      const k = Math.max(0, 1 - (time - s.at) / s.dur), sp = (mv.speed ?? 24) * V * 0.35 * k + cs * (1 - k);
+      const k = Math.max(0, 1 - (time - s.at) / s.dur), sp = (mv.speed ?? 24) * VC * 0.35 * k + cs * (1 - k);
       advanceMotion(c, { vx: s.dx * sp, vz: s.dz * sp }, time, dt); c.moving = true; c.walk += dt * 6;
       if (done) {
         s.ang = Math.atan2(c.z - pz, c.x - px);
@@ -469,7 +472,7 @@ export function stepSwoop(c: Creature, mv: Move, px: number, pz: number, ready: 
       circling(0.4); c.facing = px >= c.x ? 1 : -1;
       // Where she'll be when it gets there, as she's going now (lead of it: the dodge work's lead-at-release), and on past.
       // (the flight time to where she'll be: a few steps to the intercept, so lead 1 meets her walking straight on)
-      const sp = Math.max(1, (mv.speed ?? 24) * V), lead = mv.lead ?? 0;
+      const sp = Math.max(1, (mv.speed ?? 24) * VC), lead = mv.lead ?? 0;
       const aim = (): [number, number] => {
         let fly = Math.hypot(px - c.x, pz - c.z) / sp;
         for (let i = 0; i < 4; i++) fly = Math.hypot(px + tvx * fly * lead - c.x, pz + tvz * fly * lead - c.z) / sp;
@@ -492,7 +495,7 @@ export function stepSwoop(c: Creature, mv: Move, px: number, pz: number, ready: 
     }
     case "low": {
       // Skimming the ground at the bottom, gliding on and slowing: the moment to catch it.
-      const sp = (mv.speed ?? 24) * V * 0.25;
+      const sp = (mv.speed ?? 24) * VC * 0.25;
       advanceMotion(c, { vx: s.dx * sp, vz: s.dz * sp }, time, dt); c.moving = true;
       if (done) phase(s, "climb", time, (mv.climb ?? 1) / V, H);
       return "low";

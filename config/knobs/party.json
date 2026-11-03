@@ -97,6 +97,16 @@
       ],
       "notes": "the pulse's speed along the route's own curves, metres a second [2], times the party's tempo (a knockdown's BPM speeds it); a wave lands as it reaches the next stone, so a wave's gap is its link's length over the speed; 0 holds the pulse where it is (no waves). The boot has its own speed (boot.speed)."
     },
+    "leyLines.tempoExponent": {
+      "what": "the party's tempo's power on the pulse's speed: at 2 it runs (bpm ÷ the wave's tempo)² times pulseSpeed, so with pulseSpeed 1 about 0.69 m/s at 100 bpm, 1 at 120, 1.56 at 150 and 2.78 at 200 (4 times apart, not 2); 1, in step with the tempo as before.",
+      "decisions": [
+        {
+          "by": "Ed",
+          "date": "2026-11-03",
+          "quote": "Spark: speed scales with bpm squared, so 100 bpm ≈ 0.7 m/s and 200 bpm ≈ 2.8 m/s, about 4× apart instead of today's 2×."
+        }
+      ]
+    },
     "leyLines.reveal": {
       "what": "How fast the ley line grows out from the treehouse ahead of the waves, so no stone pops on at once.",
       "decisions": [

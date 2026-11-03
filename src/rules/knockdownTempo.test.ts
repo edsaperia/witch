@@ -45,7 +45,7 @@ describe("knockdowns speed up the beat (Ed, 2026-10-07)", () => {
     const left = steady.party.nextAt - steady.clock.time;
     for (let i = 0; i < 3; i++) knockdownTempo(fast.beat, fast.tuning, fast.clock.time);
     const rate = tempoRate(fast.beat, fast.tuning);
-    expect(rate).toBeCloseTo(1 + (3 * (TUNING.knockout.bpmStep ?? 0)) / fast.beat.base, 6);
+    expect(rate).toBeCloseTo((1 + (3 * (TUNING.knockout.bpmStep ?? 0)) / fast.beat.base) ** (TUNING.leyLines.tempoExponent ?? 1), 6); // (the tempo's ratio squared: Ed, 2026-11-03)
     const from = fast.clock.time, wave = fast.party.wave;
     runUntil(fast, () => fast.party.wave > wave);
     expect(fast.clock.time - from).toBeCloseTo(left / rate, 0); // (within a second)
@@ -69,8 +69,8 @@ function runUntil(g: Game, done: () => boolean): void {
 }
 
 describe("the record's tempo runs the pulse (Ed, 2026-10-29: \"Even at 200bpm the spark seems to be moving quite slowly\")", () => {
-  it("a 200 bpm record runs the pulse and the countdown twice as fast as a 100 bpm one", () => {
+  it("a 200 bpm record runs the pulse and the countdown four times as fast as a 100 bpm one (by the tempo squared: Ed, 2026-11-03)", () => {
     const at = (bpm: number) => { const c = newBeatClock(120); recordTempo(c, TUNING, bpm, 0); return tempoRate(c, TUNING); };
-    expect(at(200) / at(100)).toBeCloseTo(2, 5);
+    expect(at(200) / at(100)).toBeCloseTo(4, 5);
   });
 });
