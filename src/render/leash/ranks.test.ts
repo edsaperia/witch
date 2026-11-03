@@ -6,6 +6,7 @@ import { crownGlyph, LEGEND_CROWN_W } from "../../../art/generator.js";
 import { DANGER } from "./attackLook";
 import attackLook from "../../../config/attack-look.json";
 import { berryColour } from "../colourGrammar";
+import { DECISION_LIST, applyKnobParams } from "../../ui/decisions";
 
 describe("rank sigils", () => {
   it("a youth's dots are its berries to adult less the last (eaten at a placed sigil), read from the rules", () => {
@@ -86,6 +87,16 @@ describe("rank sigils", () => {
     expect(berryColour(t)).toBe("#9e1024");
     expect(rankKnobs(t).sizes).toEqual(rankKnobs(TUNING).sizes); // (nothing else of the ranks changes)
     expect(berryColour(TUNING)).toBe(TUNING.berries.colour);
+  });
+  it("the pause page's Colours switch is the knob, new by default; old reloads the night with the old colours", () => {
+    const d = DECISION_LIST.find(x => x.id === "colourGrammar")!;
+    expect(d.label).toBe("Colours: party/forest (new) vs old");
+    expect(d.apply).toEqual({ knob: "colourGrammar", reload: true });
+    expect(d.default).toBe(TUNING.colourGrammar);
+    const t = structuredClone(TUNING);
+    applyKnobParams(t, new URLSearchParams("d_colourGrammar=old"));
+    expect(rankKnobs(t).colours).toEqual([[180, 100, 255], [125, 145, 195], [55, 115, 220], [0, 135, 255]]);
+    expect(berryColour(t)).toBe("#9e1024");
   });
   it("berries are a deep berry pink, not red (Ed, 2026-11-03: \"deep berry pink, instead of red\")", () => {
     const hex = berryColour(TUNING).replace("#", ""), c = [0, 2, 4].map(i => parseInt(hex.slice(i, i + 2), 16));
