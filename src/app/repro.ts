@@ -16,16 +16,29 @@ export const REPRO_KEYS = ["seed", "world", "found", "hat", "parts", "wave", "cl
  *  (app/linkParams.ts); the beat from the music style (the same); the prop generator, always on (app/viewParams.ts). */
 const SET_ELSEWHERE = new Set(["map.found", "map.world", "spells.hat", "spells.parts", "paths.fingerposts", "beat.bpm", "beat.tempos", "beat.blockBars", "beat.rampBars", "partyObjects.generated"]);
 
-/** Every leaf (a number, string, boolean or list) where `live` differs from `base`, by its dotted path; `_` notes skipped. */
+/** Every leaf (a number, string, boolean or list) where `live` differs from `base`, by its dotted path; `_` notes skipped, and a
+ *  knob `live` hasn't got at all (a night resumed from an older build's save, before the knob was added: its reader's default
+ *  applies) skipped too, as no link can set a knob to nothing (Ed's v7114 report wrote `leash.ranks.chain.fall=undefined`). */
 export function tuningDiff(live: unknown, base: unknown, prefix = "", out: [string, unknown][] = []): [string, unknown][] {
   if (live && base && typeof live === "object" && typeof base === "object" && !Array.isArray(live) && !Array.isArray(base)) {
     const keys = new Set([...Object.keys(live), ...Object.keys(base)]);
     for (const k of keys) if (!k.startsWith("_")) tuningDiff((live as Record<string, unknown>)[k], (base as Record<string, unknown>)[k], prefix ? `${prefix}.${k}` : k, out);
-  } else if (JSON.stringify(live) !== JSON.stringify(base) && !SET_ELSEWHERE.has(prefix)) out.push([prefix, live]);
+  } else if (live !== undefined && JSON.stringify(live) !== JSON.stringify(base) && !SET_ELSEWHERE.has(prefix)) out.push([prefix, live]);
   return out;
 }
+/** Whether `v` may stand in a knob now holding `now`: a finite number for a number, a boolean for a boolean, text for text, a list
+ *  for a list, a group for a group; a knob the tuning hasn't got (an optional one), any value written as JSON, but not bare text. */
+function fits(now: unknown, v: unknown, json: boolean): boolean {
+  if (v === undefined) return false;
+  if (now === undefined || now === null) return json;
+  if (typeof now === "number") return typeof v === "number" && Number.isFinite(v);
+  if (Array.isArray(now)) return Array.isArray(v);
+  if (typeof now === "object") return !!v && typeof v === "object" && !Array.isArray(v);
+  return typeof v === typeof now;
+}
 
-/** ?set=path=value;path=value: tuning overrides for this load, each value as JSON (else as a string), only on paths that exist. */
+/** ?set=path=value;path=value: tuning overrides for this load, each value as JSON (else as a string), only on paths that exist, and
+ *  only a value of the knob's own kind (fits): "undefined" or other text for a number knob is left out, the knob keeping its own. */
 export function applySet(tuning: object, raw: string | null): void {
   if (!raw) return;
   for (const part of raw.split(";")) {
@@ -33,12 +46,13 @@ export function applySet(tuning: object, raw: string | null): void {
     if (i <= 0) continue;
     const path = part.slice(0, i), text = part.slice(i + 1);
     if (knobAt(tuning, path.split(".").slice(0, -1).join(".") || "") === undefined && path.includes(".")) continue; // (its parent must exist)
-    let v: unknown = text;
-    try { v = JSON.parse(text); } catch { /* a plain string */ }
+    let v: unknown = text, json = true;
+    try { v = JSON.parse(text); } catch { json = false; /* a plain string */ }
+    if (!fits(knobAt(tuning, path), v, json)) continue;
     setKnob(tuning, path, v);
   }
 }
-export const setText = (diff: [string, unknown][]): string => diff.map(([p, v]) => `${p}=${JSON.stringify(v)}`).join(";");
+export const setText = (diff: [string, unknown][]): string => diff.filter(([, v]) => v !== undefined).map(([p, v]) => `${p}=${JSON.stringify(v)}`).join(";");
 
 /** The game state the link rebuilds. */
 export interface ReproState { seed: number; world?: number; found: string[]; hat: string; broom: string; /** her broom's parts (rules/broomParts.ts), a comma list */ parts?: string; wave: number; cleared: string[]; at?: [number, number]; mode?: "ground" | "treetop"; zoom: number; set: string }

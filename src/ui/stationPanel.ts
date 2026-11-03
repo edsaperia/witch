@@ -16,7 +16,7 @@ import { bareHeadAt, CLOTH_COLS, CLOTH_ROWS, GRID_ROWS, shownItems, SKIN_COLS, s
 import { BOARD, partById, type Fitted } from "../rules/broomParts";
 import type { Tuning } from "../rules/tuning";
 import { broomColours, partCanvas } from "../render/workshopArt";
-import { broomSummary, cardAt, itemAt, panelPad, partStats, partsFound, setChips, setsOf, spellLine, type Line } from "./stationLines";
+import { broomSummary, CARD_SHOW, cardAt, itemAt, panelPad, partStats, partsFound, setChips, setsOf, spellLine, type Line } from "./stationLines";
 import { PanelChoice } from "./stationChoice";
 import { bindings } from "../platform/bindings";
 import { classicPalette, cpuCanvas, slot, swatchAt } from "./creator";
@@ -44,8 +44,6 @@ const SLOT_ROLE: Record<string, string> = { tip: "steering", chassis: "body", ex
  *  (the night's find when it's a part, not yet taken: one's out there, never where) and the tuning her parts change. */
 export interface WorkshopCtx { found: ReadonlySet<string>; fitted: Fitted; tonight: string | null; tuning: Tuning }
 const PART_NAMES: Record<string, string> = { broom: "handle", bristles: "bristles", hat: "hat", plume: "band" };
-/** Where an item's picture is cut from her sprite (shares of its height; the broom's, her flying frame whole). */
-const CROP: Record<string, [number, number]> = { hair: [.1, .52], face: [.16, .5], earrings: [.14, .5], jacket: [.33, .8], shoes: [.72, 1], cloak: [.1, 1], scarf: [.1, .8], bag: [.25, 1], backpack: [.1, 1] };
 
 
 /** A list card's live picture (ui/bagPreview.ts BagPreview): its element, run or stopped, freed. */
@@ -300,7 +298,7 @@ export class StationPanel {
         shelf = l.shelf;
         const worn = s.slot ? partById(this.ws?.fitted[s.slot])?.name ?? "Empty" : shownItems(s).find(it => this.c.wears(it))?.name;
         const note = s.always ? "every colour" : s.slot ? SLOT_ROLE[s.slot] : s.board ? "north up" : "";
-        html += `<div class="sp-shelf${L[at.line]?.shelf === l.shelf ? " on" : ""}" data-shelf="${l.shelf}"><div class="sp-lab" data-card="${i}"><b>${esc(s.label)}</b>${worn ? `<span>${esc(worn)}</span>` : ""}${note ? `<em>${esc(note)}</em>` : ""}</div>`;
+        html += `<div class="sp-shelf${L[at.line]?.shelf === l.shelf ? " on" : ""}" data-shelf="${l.shelf}"><div class="sp-lab" data-card="${i}">${s.id === "hat" && (this.g.hat as { shape?: string } | undefined)?.shape !== "none" ? `<span class="sp-hatpic" data-thumb="hatpic:now:${hash(JSON.stringify(this.g))}"></span>` : ""}<b>${esc(s.label)}</b>${worn ? `<span>${esc(worn)}</span>` : ""}${note ? `<em>${esc(note)}</em>` : ""}</div>`;
       }
       const f = (c: number) => at.line === i && at.col === c ? " focus" : "";
       if (l.kind === "items" && l.item !== undefined) { const it = itemAt(s, l, 0), own = this.owned.has(it.id), on = this.c.wears(it), stat = own ? statOf(it) : ""; html += `<div class="sp-card sp-listrow${own ? "" : " locked"}${on ? " worn" : ""}${it.id === this.loaned ? " loaned" : ""}${f(0)}" data-line="${i}" data-col="0">${none(it) ? `<i class="sp-none">∅</i>` : `<span class="sp-pic" data-thumb="${this.thumbKey(it, s)}"></span>`}<span class="sp-stat"><b>${own ? esc(it.name) : "🔒"}</b>${esc(stat)}</span>${own && !none(it) && this.preview ? `<span class="sp-preview" data-preview="${esc(it.id)}"></span>` : ""}${on ? `<b class="sp-tick">✓</b>` : ""}</div>`; }
@@ -386,7 +384,7 @@ export class StationPanel {
     box.innerHTML = `<h3>${esc(title)}${sub ? `<small>${esc(sub)}</small>` : ""}</h3>${stats.map(r => `<p class="${r.better ? "up" : "down"}">${r.better ? "▲" : "▼"} ${esc(r.name)} ${esc(r.from)} → ${esc(r.to)}</p>`).join("")}<p>${esc(text)}</p>`;
   }
 
-  // ---- the items' pictures: her, as she is, with each one on (baked a few a frame, kept by look) ----
+  // ---- the items' pictures: each one as its shelf shows it, on her as she is (baked a few a frame, kept by look) ----
   private thumbKey(it: WardrobeItem, s: Shelf): string { return `${s.id}:${it.id}:${hash(JSON.stringify(wear(this.g, it)))}`; }
   /** A broom part's picture (the bay's and the pegboard's cards: render/workshopArt.ts), in her broom's colours. */
   private partKey(id: string): string { const c = broomColours(this.st, this.g); return `part:${id}:${hash(JSON.stringify([c[ART_M.BROOM], c[ART_M.STRAW]]))}`; }
@@ -396,7 +394,8 @@ export class StationPanel {
     const was = this.lastThumb.get(key.slice(0, key.lastIndexOf(":"))); if (was) el.replaceChildren(was); // (the last one shown, till the new one's baked)
     if (!this.queue.some(q => q.key === key)) {
       const [sid, iid] = key.split(":"), s = this.shelves.find(q => q.id === sid), it = s?.items.find(i => i.id === iid);
-      if (sid === "part" && partById(iid)) { const g = this.g; this.queue.push({ key, make: () => partCanvas(this.st, broomColours(this.st, g), iid, { fit: 58 }).c }); }
+      if (sid === "hatpic") { const g = this.g; this.queue.push({ key, make: () => hatPicture(this.st, g) ?? document.createElement("canvas") }); } // (the mirror's Hat card: her hat as it is now)
+      else if (sid === "part" && partById(iid)) { const g = this.g; this.queue.push({ key, make: () => partCanvas(this.st, broomColours(this.st, g), iid, { fit: 58 }).c }); }
       else if (s && it) this.queue.push({ key, make: () => wearPicture(this.st, this.g, it, s.id) });
     }
     if (!this.raf) this.raf = requestAnimationFrame(() => this.bakeSome());
@@ -415,18 +414,34 @@ export class StationPanel {
 
 }
 
-/** A picture of her (genome `g`) wearing `it`, cut to the part it's worn on (its shelf `shelf`'s; a broom, her whole flying
- *  frame): the panel's cards. */
+/** An item card's picture of `it` (her genome `g` with it on), as its shelf `shelf` shows it (CARD_SHOW: her head and shoulders, her
+ *  legs, her from behind, or the item alone; art/witch.js witchCardSprite), cut to what's drawn; a shelf with no way of its own (a
+ *  broom: her whole flying frame), her whole, standing. */
 export function wearPicture(st: Style, g: Record<string, unknown>, it: WardrobeItem, shelf: string): HTMLCanvasElement {
   const look = (Art.genomeLook as (g: unknown) => { look: object; outfit: object | null })(wear(g, it));
   const colours = (Art.witchColours as (st: Style, o?: object, x?: object) => object)(st, look.outfit ?? undefined, look.outfit ? { styleHues: false } : undefined);
+  const bake = (sp: unknown) => (Art.bake as (sp: unknown, c: object, st: Style, outline: unknown, mk: typeof cpuCanvas) => Sprite)(sp, colours, st, (st as unknown as { cOutline: unknown }).cOutline, cpuCanvas);
+  const show = CARD_SHOW[shelf], card = show ? (Art.witchCardSprite as (st: Style, o: object) => unknown)(st, { look: look.look, show }) : null;
+  if (card) return drawnPart(bake(card).A);
   const broom = shelf === "broom";
-  const sp = (Art.witchSprite as (st: Style, o: object) => unknown)(st, broom ? { look: look.look, frame: 0 } : { look: look.look, pose: "stand", frame: 0, heading: "towards" });
-  const b = (Art.bake as (sp: unknown, c: object, st: Style, outline: unknown, mk: typeof cpuCanvas) => Sprite)(sp, colours, st, (st as unknown as { cOutline: unknown }).cOutline, cpuCanvas);
-  const [y0, y1] = broom ? [0, 1] : CROP[shelf] ?? [0, 1];
-  const sy = Math.floor(b.h * y0), sh = Math.max(1, Math.ceil(b.h * y1) - sy), sw = broom ? b.w : Math.min(b.w, Math.ceil(b.w * .62));
-  const out = document.createElement("canvas"); out.width = sw; out.height = sh;
-  out.getContext("2d")!.drawImage(b.A, 0, sy, sw, sh, 0, 0, sw, sh);
+  return drawnPart(bake((Art.witchSprite as (st: Style, o: object) => unknown)(st, broom ? { look: look.look, frame: 0 } : { look: look.look, pose: "stand", frame: 0, heading: "towards" })).A);
+}
+/** Her hat alone (the mirror's Hat card: art/witch.js witchHatSprite), as she has it now, or null with none on. */
+function hatPicture(st: Style, g: Record<string, unknown>): HTMLCanvasElement | null {
+  const look = (Art.genomeLook as (g: unknown) => { look: object; outfit: object | null })(g);
+  const sp = (Art.witchHatSprite as (st: Style, o: object) => unknown)(st, { look: look.look });
+  if (!sp) return null;
+  const colours = (Art.witchColours as (st: Style, o?: object, x?: object) => object)(st, look.outfit ?? undefined, look.outfit ? { styleHues: false } : undefined);
+  return drawnPart((Art.bake as (sp: unknown, c: object, st: Style, outline: unknown, mk: typeof cpuCanvas) => Sprite)(sp, colours, st, (st as unknown as { cOutline: unknown }).cOutline, cpuCanvas).A);
+}
+/** A canvas cut to the box of what's drawn on it (its empty margins off), so the card's picture fills the card. */
+function drawnPart(c: HTMLCanvasElement): HTMLCanvasElement {
+  const { width: w, height: h } = c, d = c.getContext("2d")!.getImageData(0, 0, w, h).data;
+  let x0 = w, x1 = -1, y0 = h, y1 = -1;
+  for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) if (d[(y * w + x) * 4 + 3]) { if (x < x0) x0 = x; if (x > x1) x1 = x; if (y < y0) y0 = y; if (y > y1) y1 = y; }
+  if (x1 < 0) return c;
+  const out = document.createElement("canvas"); out.width = x1 - x0 + 1; out.height = y1 - y0 + 1;
+  out.getContext("2d")!.drawImage(c, x0, y0, out.width, out.height, 0, 0, out.width, out.height);
   return out;
 }
 
@@ -471,6 +486,7 @@ body.paused #station-panel { visibility: hidden; }
 #station-panel .sp-shelf.on { background: rgba(38,26,62,.94); box-shadow: inset 0 0 0 2px rgba(232,180,106,.85), 0 2px 14px rgba(0,0,0,.45); }
 #station-panel .sp-lab { display: flex; gap: .6em; align-items: baseline; cursor: pointer; }
 #station-panel .sp-lab b { font-size: 1.15em; letter-spacing: .5px; } #station-panel .sp-shelf.on .sp-lab b { color: var(--gold); }
+#station-panel .sp-lab .sp-hatpic { align-self: center; display: inline-flex; opacity: 1; } #station-panel .sp-hatpic canvas { image-rendering: pixelated; height: 2.2em; width: auto; max-width: 3.2em; object-fit: contain; }
 #station-panel .sp-lab span { font-size: .85em; opacity: .9; } #station-panel .sp-lab em { margin-left: auto; font-style: normal; font-size: .75em; opacity: .75; }
 #station-panel .sp-sub { font-size: .8em; display: flex; gap: .5em; opacity: .9; } #station-panel .sp-sub em { margin-left: auto; font-style: normal; opacity: .75; }
 #station-panel .sp-row { display: flex; flex-wrap: wrap; gap: .45em; }
