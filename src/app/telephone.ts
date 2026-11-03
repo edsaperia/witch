@@ -68,7 +68,7 @@ export function telephone(options: TelephoneOptions) {
         book.assigned(number); paint({ own: number });
         if (options.callsEnabled === false) { paint({ status: "preparing" }); return; }
         trust = telephoneTrust(own, book.pinned);
-        connection = connectRelay({ endpoint: options.endpoint ?? "wss://witch-relay.onrender.com", room: number, telephone: true, telephonePublicKey: own.publicKey, socket: options.socket,
+        connection = connectRelay({ endpoint: options.endpoint ?? "wss://witch-relay-playtest.onrender.com", room: number, telephone: true, telephonePublicKey: own.publicKey, socket: options.socket,
           lifecycleEvidence: options.lifecycleEvidence,
           onError(error) { if (current === generation) fail(error); },
             onTrouble(on, remainingMs) { if (current === generation && role) { paint({ detail: on ? "Attempting to reconnect…" : undefined }); options.trouble?.(on, remainingMs); } },

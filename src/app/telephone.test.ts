@@ -14,6 +14,16 @@ class Socket implements RelaySocket {
   receive(value: unknown) { this.emit("message", JSON.stringify({ protocol: 1, ...value as object })); }
 }
 const make = () => loadTelephoneIdentity({ read: async () => null, write: async () => {} });
+it("opens the ordinary telephone on the witch-workspace relay", async () => {
+  const own = await make(), ws = new Socket(), socket = vi.fn(() => ws);
+  const phone = telephone({ storage: null, loadIdentity: async () => own, socket,
+    connected: async () => {}, message: () => {}, departed: () => {},
+    menu: () => ({ show: () => {}, render: () => {}, redial: () => {} }) });
+  try {
+    await phone.show(true);
+    expect(socket).toHaveBeenCalledWith("wss://witch-relay-playtest.onrender.com/");
+  } finally { phone.hangUp(); }
+});
 async function fixture(pinWrongFriend = false) {
   const own = await make(), peer = await make(), ownNumber = await numberForKey(own.publicKey), peerNumber = await numberForKey(peer.publicKey);
   vi.useFakeTimers(); const ws = new Socket(), connected = vi.fn<TelephoneOptions["connected"]>(async () => {}), departed = vi.fn(), show = vi.fn(), trouble = vi.fn(); let actions!: TelephoneActions;
