@@ -5258,7 +5258,7 @@
         "leaveArea": {
           "type": "number",
           "minimum": 0,
-          "description": "How far past its area's edge a wild creature chases her before giving up and going home."
+          "description": "How far past its area's edge a wild creature chases another creature, or comes out after her across its edge, before going home; once it's after her it follows her anywhere on the ground until she takes off."
         },
         "pursuit": {
           "type": "number",
@@ -5700,7 +5700,7 @@
         "fade"
       ],
       "additionalProperties": false,
-      "description": "On her first landing in a wild area its creatures stare and redden for a few seconds before they attack, and how far they chase her after."
+      "description": "On her landing anywhere on the ground in a wild area (flying over starts nothing) its creatures stare and redden for a few seconds before they attack; walking out or taking off in that time calls it off."
     },
     "hunt": {
       "type": "object",
@@ -6266,7 +6266,7 @@
         "partyReach"
       ],
       "additionalProperties": false,
-      "description": "Which areas have a legend, and how far a happy one reaches."
+      "description": "Which areas have a legend (a happy one's reach is legends.friendRange)."
     },
     "wildLegends": {
       "type": "object",
