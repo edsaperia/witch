@@ -1,6 +1,6 @@
 import { expect, it } from "vitest";
 import * as THREE from "three";
-import { setApproachDepth } from "./treehouseLook";
+import { setApproachDepth, PROGRAM_TWINS, ROOMS_MATERIAL, FLOOR_MATERIAL, TERRACE_MATERIAL } from "./treehouseLook";
 import { CROWN_BULB_FRAG, CROWN_WIRE_FRAG } from "./strings";
 import { CrownView } from "./crown";
 import { makeCrown, type HouseOutline } from "../rules/crown";
@@ -34,4 +34,22 @@ it.each([["bulbs", CROWN_BULB_FRAG], ["wire", CROWN_WIRE_FRAG]])("%s clearing ca
   const calls = [...shader.matchAll(/\bcleared\(([^()]*)\)/g)].map(m => m[1]).filter(args => !args.startsWith("vec2"));
   expect(calls.length).toBeGreaterThan(0);
   for (const args of calls) expect(args.split(",").length).toBe(signature);
+});
+
+// What of a basic material picks its program (three.js WebGLPrograms.getParameters): a state with no twin's shape is compiled and
+// linked on the frame it's first drawn.
+const programShape = (m: THREE.MeshBasicMaterial) => JSON.stringify({ map: !!m.map, vertexColors: m.vertexColors, alphaTest: m.alphaTest > 0, opaque: !m.transparent && m.blending === THREE.NormalBlending && !m.alphaToCoverage, side: m.side, premultipliedAlpha: m.premultipliedAlpha, dithering: m.dithering, fog: m.fog, toneMapped: m.toneMapped });
+it("has a program twin for every state of the house's floors and rooms, the flight preview's too: none compiled as she flies off (Ed's playtest, 2026-11-03: a long freeze after leaving the balcony)", () => {
+  // (compiled at the start: the twins, and the materials themselves as made, before any picture comes back for a map)
+  const tex = new THREE.Texture(), twins = new Set([...PROGRAM_TWINS.map(({ params, textured }) => programShape(new THREE.MeshBasicMaterial({ ...params, ...(textured ? { map: tex } : {}) }))),
+    ...[ROOMS_MATERIAL, FLOOR_MATERIAL, TERRACE_MATERIAL].map(params => programShape(new THREE.MeshBasicMaterial(params)))]);
+  const states: [string, THREE.MeshBasicMaterialParameters, boolean, boolean | null][] = [
+    ["rooms indoors", ROOMS_MATERIAL, false, false], ["rooms in the flight preview", ROOMS_MATERIAL, false, true],
+    ["floor indoors", FLOOR_MATERIAL, true, false], ["floor in the flight preview", FLOOR_MATERIAL, true, true], ["Terrace", TERRACE_MATERIAL, true, null],
+  ];
+  for (const [name, params, textured, preview] of states) {
+    const m = new THREE.MeshBasicMaterial({ ...params, ...(textured ? { map: tex } : {}) });
+    if (preview !== null) { setApproachDepth(m, true, textured); if (!preview) setApproachDepth(m, false, textured); }
+    expect(twins.has(programShape(m)), name).toBe(true);
+  }
 });
