@@ -207,6 +207,8 @@ export class WitchTrail {
   private lastDx = 0;
   private lastDz = 1;
   private nDots = 0;
+  private colsKey = "";
+  private cols: [number, number, number][] = [];
   /** Its length now (m), and its colour now (eased toward the area's). */
   private len = 0;
   private rgb = new THREE.Vector3(-1, 0, 0);
@@ -379,7 +381,9 @@ export class WitchTrail {
     g.setDrawRange(0, this.n > 1 ? (this.n - 1) * 6 : 0);
     for (const k of DYNAMIC) (g.getAttribute(k) as THREE.BufferAttribute).needsUpdate = true;
     // the sections' colours: her preset's, spread over the most sections the counter can hold
-    const cols = sectionColours(trailPreset(this.preset ?? S.preset).colours, most), U = this.u.uSecCol.value;
+    const key = `${this.preset ?? S.preset}:${most}`;
+    if (key !== this.colsKey) { this.colsKey = key; this.cols = sectionColours(trailPreset(this.preset ?? S.preset).colours, most); } // (worked out when they change, not every frame)
+    const cols = this.cols, U = this.u.uSecCol.value;
     for (let i = 0; i < SECS; i++) { const c = cols[Math.min(i, cols.length - 1)] ?? [255, 255, 255]; U[i].set(c[0] / 255, c[1] / 255, c[2] / 255); }
     // the dots, stepped along the line on the screen, and the ring
     const ringOn = S.ring && ringWanted(C), ringAt = buf + (Math.max(0, C.room - C.rise) / dash) * sec;
