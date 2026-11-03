@@ -10629,6 +10629,11 @@ registerProcessor("witch-fof", WitchFof);
       threadArcTaut: 0.02,
       threadArcMax: 8
     },
+    difficulty: {
+      creatureSpeed: 1.2,
+      rangedRange: 1.2,
+      adultStrength: 1.3
+    },
     fight: {
       scale: 1,
       speed: 1,
@@ -10837,8 +10842,8 @@ registerProcessor("witch-fof", WitchFof);
       swarm: {
         start: 1,
         endAverage: 12,
-        waves: 64,
-        curve: 1.3,
+        largestIsland: 50,
+        curve: 0.8,
         youngShare: [1, 0.2],
         reference: "medium",
         classes: {
@@ -11022,6 +11027,8 @@ registerProcessor("witch-fof", WitchFof);
     leyLines: {
       on: true,
       pulseSpeed: 1,
+      pulseAt100: 1,
+      pulseAt200: 5,
       reveal: 2.5,
       far: [1, 1],
       behindBright: 1,
