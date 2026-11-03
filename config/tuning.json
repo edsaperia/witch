@@ -1242,6 +1242,11 @@
     "passPower": 12,
     "passDepth": 1
   },
+  "teamRounds": {
+    "reference": 20,
+    "strength": 0.5,
+    "floor": 0.4
+  },
   "creatureMomentum": {
     "on": true,
     "turn": 1,

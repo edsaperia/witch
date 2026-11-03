@@ -4,7 +4,7 @@ import { type CombatState, type CombatWorld } from "./data";
 import type { PacksData, Role, Phase } from "./packs";
 import { SPACING } from "../combatSpacing";
 import { hash2 } from "../random";
-import { fighting } from "./targeting";
+import { aloftHunted, fighting } from "./targeting";
 import { FIGHT } from "../movement";
 import { actionsOf, actionRole, actionReach, type CreatureAction } from "./actions";
 
@@ -30,6 +30,15 @@ export function chooseTeamActions(members: readonly Creature[], seed: number, ro
   }
   return actions;
 }
+/** How much of its round a team of `size` gets (Ed, 2026-11-03: "how about we have the attack round length decrease gradually as the
+ *  pack gets larger"; the tuning's teamRounds): 1 at or under `reference` animals (today's 5 s round, 3 s attack window and its kinds'
+ *  lull), then (reference / size) ^ strength (0.5: one over the square root), never under `floor`. Smooth and falling with size; the
+ *  tell and the dodge token are untouched (rules/combat.ts: still one strike at her at once). */
+export const ROUND_DEFAULT = { reference: 20, strength: 0.5, floor: 0.4 };
+export function roundScale(size: number, r: { reference: number; strength: number; floor: number } = ROUND_DEFAULT): number {
+  if (!(size > r.reference) || !(r.reference > 0)) return 1;
+  return Math.min(1, Math.max(r.floor, Math.pow(r.reference / size, r.strength)));
+}
 export function consumeAction(team: TeamState, id: number, time: number): void {
   if (!team.used.includes(id)) team.used.push(id);
   const action = team.actions[id];
@@ -50,6 +59,9 @@ export function stepTeams(state: CombatState, w: CombatWorld, data: PacksData, c
     let team = teams.get(key);
     if (!team) teams.set(key, (team = { seed: Math.floor(hash2(members[0].id, 1620, 73) * 0x7fffffff), round: -1, phase: "approach", at: w.time, cycleAt: w.time, nextAt: Infinity, members: [], actions: {}, ready: (state.actionReady ??= {}), roles: {}, used: [], withdrawn: {} }));
     team.members = members.map(c => c.id);
+    // She's up out of their reach (rules/combat/targeting.ts aloftHunted): they wait round under her and the round holds in its lull,
+    // nothing drawn, so her landing starts a fresh round (approach, the tell, the combo) as a new hunt would (Ed, 2026-11-03).
+    if (members.every(c => aloftHunted(w, c, c.fight!.target))) { if (team.phase !== "lull") { team.phase = "lull"; team.at = w.time; } team.nextAt = w.time; continue; }
     for (const c of members) {
       const P = rolePreferences(c.species), hurt = damage(c);
       if (!committed(c) && hurt > P.withdraw && team.withdrawn[c.id] === undefined) team.withdrawn[c.id] = w.time + P.rest;
@@ -78,16 +90,19 @@ export function stepTeams(state: CombatState, w: CombatWorld, data: PacksData, c
     const tell = rhythms.reduce((sum, rhythm) => sum + rhythm.tell, 0) / rhythms.length / tempo;
     const rest = rhythms.reduce((sum, rhythm) => sum + rhythm.lull, 0) / rhythms.length / tempo;
     const enter = (phase: Phase, until: number) => { team!.phase = phase; team!.at = w.time; team!.nextAt = until; };
-    if (team.phase === "approach" && !busy && available.every(c => team!.roles[c.id] === "hold" || team!.roles[c.id] === "hurt")) enter("lull", w.time + SPACING.team.roundTime / tempo);
+    // (a big team's round, attack window and least rest shortened together: the round's shape kept, only quicker; the rest too, as
+    // else it held the round at about 7 s whatever the round time; the tell, the warning, never)
+    const scale = roundScale(members.length, w.t?.teamRounds ?? ROUND_DEFAULT), roundTime = SPACING.team.roundTime * scale, attackWindow = SPACING.team.attackWindow * scale, least = rest * scale;
+    if (team.phase === "approach" && !busy && available.every(c => team!.roles[c.id] === "hold" || team!.roles[c.id] === "hurt")) enter("lull", w.time + roundTime / tempo);
     else if (team.phase === "approach" && position && available.some(c => {
       const role = team!.roles[c.id];
       const action = team!.actions[c.id];
       return role !== "hold" && role !== "hurt" && action && Math.hypot(c.x - position.x, c.z - position.z) <= actionReach(c, action, data) + data.limits.engage * FIGHT.scale;
     })) { team.cycleAt = w.time; enter("tell", w.time + tell); }
-    else if (team.phase === "tell" && w.time >= team.nextAt && !busy) enter("combo", w.time + SPACING.team.attackWindow / tempo);
+    else if (team.phase === "tell" && w.time >= team.nextAt && !busy) enter("combo", w.time + attackWindow / tempo);
     else if (team.phase === "combo" && !busy) {
       const done = available.every(c => team!.roles[c.id] === "hold" || team!.roles[c.id] === "hurt" || team!.used.includes(c.id));
-      if (done || w.time >= team.nextAt) enter("lull", Math.max(w.time + rest, team.cycleAt + SPACING.team.roundTime / tempo));
+      if (done || w.time >= team.nextAt) enter("lull", Math.max(w.time + least, team.cycleAt + roundTime / tempo));
     }
   }
 }

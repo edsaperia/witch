@@ -1,5 +1,7 @@
 import { describe, expect, it } from "vitest";
-import { chooseTeamActions, consumeAction, stepTeams, teamOf } from "./teams";
+import { chooseTeamActions, consumeAction, rolePreferences, roundScale, ROUND_DEFAULT, stepTeams, teamOf } from "./teams";
+import { SPACING } from "../combatSpacing";
+import { TUNING } from "../tuning";
 import { ACTIONS, actionsOf, actionReach } from "./actions";
 import { PACKS } from "./packs";
 import { newCombat, type CombatWorld } from "../combat";
@@ -100,3 +102,52 @@ describe("mixed combat teams", () => {
     expect(Object.values(teamOf(state, 0)!.roles).some(r => r !== "hold" && r !== "hurt")).toBe(true);
   });
 });
+
+// Ed, 2026-11-03: "how about we have the attack round length decrease gradually as the pack gets larger" (the tuning's teamRounds).
+describe("a big team's shorter rounds", () => {
+  it("leaves a team at or under the reference size as it was, then shrinks smoothly and never under the floor", () => {
+    const R = TUNING.teamRounds!;
+    expect(R).toEqual(ROUND_DEFAULT);
+    for (let n = 1; n <= R.reference; n++) expect(roundScale(n, R)).toBe(1);
+    let last = 1;
+    for (let n = R.reference + 1; n <= 512; n++) {
+      const k = roundScale(n, R);
+      expect(k).toBeLessThanOrEqual(last); expect(k).toBeGreaterThanOrEqual(R.floor);
+      expect(last - k, `no jump at ${n}`).toBeLessThan(0.03);
+      last = k;
+    }
+    expect(roundScale(1e6, R)).toBe(R.floor);
+    expect(roundScale(R.reference * 4, R)).toBeCloseTo(0.5, 6); // (inverse square root: four times the reference, half the round)
+    // (what the numbers give: 5 s rounds and a 3 s window at 20; 2.8 s and 1.7 s at 64; 2 s and 1.2 s, the floor, at 128)
+    const round = (n: number) => +(SPACING.team.roundTime * roundScale(n, R)).toFixed(2);
+    expect([round(20), round(64), round(128)]).toEqual([5, 2.8, 2]);
+    expect(roundScale(10, { reference: 20, strength: 0.5, floor: 0.4 })).toBe(1);
+    expect(roundScale(64, { reference: 20, strength: 0, floor: 0.4 })).toBe(1); // (strength 0: off)
+  });
+  it("gives a big team's combo window, round and least rest the same shortening, a small team's as before", () => {
+    const windowOf = (n: number) => {
+      const members = Array.from({ length: n }, (_, i) => ({ ...animal(i), x: i % 2 ? 1 : -1, z: Math.floor(i / 2) * 3 }));
+      const state = newCombat(), world = { active: members, time: 1, t: TUNING, witches: [{ id: 0, x: 0, z: 0, onGround: true, down: false }] } as unknown as CombatWorld;
+      stepTeams(state, world, PACKS, () => false);
+      const team = teamOf(state, 0)!;
+      expect(team.phase).toBe("tell");
+      world.time = team.nextAt;
+      stepTeams(state, world, PACKS, () => false);
+      expect(team.phase).toBe("combo");
+      return { window: team.nextAt - world.time, cycleAt: team.cycleAt, team, world, state, members };
+    };
+    const tempo = rolePreferences("fox").tempo, k = roundScale(80, TUNING.teamRounds);
+    expect(windowOf(4).window).toBeCloseTo(SPACING.team.attackWindow / tempo, 9);
+    expect(windowOf(20).window).toBeCloseTo(SPACING.team.attackWindow / tempo, 9);
+    const big = windowOf(80);
+    expect(k).toBeLessThan(0.6);
+    expect(big.window).toBeCloseTo(SPACING.team.attackWindow * k / tempo, 9);
+    // (its window over, its lull runs to the round's shortened end, or the kinds' own rest, shortened the same, if that's longer)
+    big.world.time = big.team.nextAt;
+    stepTeams(big.state, big.world, PACKS, () => false);
+    expect(big.team.phase).toBe("lull");
+    const rest = PACKS.rhythms[PACKS.kinds.fox.rhythm].lull / tempo;
+    expect(big.team.nextAt).toBeCloseTo(Math.max(big.world.time + rest * k, big.cycleAt + SPACING.team.roundTime * k / tempo), 9);
+  });
+});
+

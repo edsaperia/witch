@@ -1977,6 +1977,19 @@ reachScale multiplies dash distance times charges plus default invitation range;
 | `combatWaiting.passPower` | number | 1 to 64 |
 | `combatWaiting.passDepth` | number | 0 to 1 |
 
+### `teamRounds`
+
+A big pack's attack rounds come round faster: past `reference` animals in a team, its round time, attack window and least rest shrink smoothly with its size, never below `floor` of today's.
+
+1. Ed, 2026-11-03: "how about we have the attack round length decrease gradually as the pack gets larger"
+The round's scale is (reference / size) ^ strength, at least floor, and 1 at or under reference (rules/combat/teams.ts roundScale). With reference 20, strength 0.5 (inverse square root) and floor 0.4: 20 animals 5 s rounds and a 3 s attack window as before; 64, 2.8 s and 1.7 s; 128, 2 s and 1.2 s (the floor). The lull's least rest (its kinds' rhythm lull) shrinks the same, as it otherwise held the round at about 7 s; the tell before a combo is never shortened. Her dodge token (dodge.a.tokens, swarmTokens) is unchanged: still one creature winding up or striking at her at once.
+
+| knob | type | range |
+|---|---|---|
+| `teamRounds.reference` | number | 1 to 256 |
+| `teamRounds.strength` | number | 0 to 2 |
+| `teamRounds.floor` | number | 0.1 to 1 |
+
 ### `creatureMomentum`
 
 Creatures chasing her carry momentum on their run-in and wind-up, so she can dodge past them.

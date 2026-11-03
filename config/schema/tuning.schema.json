@@ -5402,6 +5402,33 @@
       "additionalProperties": false,
       "description": "Waiting movement favours room beyond default invitation reach while allowing deliberate close passes."
     },
+    "teamRounds": {
+      "type": "object",
+      "properties": {
+        "reference": {
+          "type": "number",
+          "minimum": 1,
+          "maximum": 256
+        },
+        "strength": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 2
+        },
+        "floor": {
+          "type": "number",
+          "minimum": 0.1,
+          "maximum": 1
+        }
+      },
+      "required": [
+        "reference",
+        "strength",
+        "floor"
+      ],
+      "additionalProperties": false,
+      "description": "A big pack's attack rounds come round faster: past `reference` animals in a team, its round time, attack window and least rest shrink smoothly with its size, never below `floor` of today's."
+    },
     "creatureMomentum": {
       "type": "object",
       "properties": {
@@ -14550,6 +14577,7 @@
     "difficulty",
     "fight",
     "combatWaiting",
+    "teamRounds",
     "creatureMomentum",
     "attackFx",
     "combat",

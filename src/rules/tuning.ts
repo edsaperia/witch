@@ -175,6 +175,10 @@ export interface Tuning {
   /** Creature momentum chasing the witch (Ed, 2026-10-27; rules/momentum.ts): global multipliers (turn, delay, strikeLead) and added chase lead over each class's and species' values; see config/tuning.json's _creatureMomentum. */
   creatureMomentum?: { on: boolean; turn: number; delay: number; chaseLead: number; strikeLead: number; classes: Record<"heavy" | "normal" | "light", import("./momentum").Momentum> };
   combatWaiting: { reachScale: number; areaGrowth: number; passPower: number; passDepth: number };
+  /** A team's attack round shortened as the team grows past `reference` animals (Ed, 2026-11-03: "how about we have the attack round
+   *  length decrease gradually as the pack gets larger"; rules/combat/teams.ts roundScale): its round time and attack window times
+   *  (reference / size) ^ strength, at least `floor`; at or under `reference`, as before. */
+  teamRounds?: { reference: number; strength: number; floor: number };
   /** How attacks feel on screen (render/attackFeel.ts): the wind-up's crouch, the lunge's stretch, a hit's squash and bounce, a knock-back's tumble. */
   attackFx: { windupSquash: number; windupMax: number; lungeStretch: number; squash: number; squashSecs: number; tumbleKnock: number; tumbleHeight: number; tumbleSecs: number; turnFrom: number; turnTo: number; legendFlash: number; /** the creatures' spells, dialled up (Ed, 2026-11-03): render/leash/attackLook.ts Visibility */ visibility: { size: number; opacity: number; bloom: number; duration: number; zoneDensity: number; groundMark: number } };
   /** The difficulty (Ed, 2026-11-03: "the game is much too easy"): creatureSpeed, every creature's movement speed in a fight times it
