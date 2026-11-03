@@ -256,6 +256,7 @@ export type SchemaTuning = {
     "clear": number;
     "lightReach": number;
     "lightStrength": number;
+    "landCooldown": number;
     "deck": {
       "on": boolean;
       "radius": number;

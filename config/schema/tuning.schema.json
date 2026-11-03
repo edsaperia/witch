@@ -1338,6 +1338,11 @@
           "type": "number",
           "minimum": 0
         },
+        "landCooldown": {
+          "type": "number",
+          "minimum": 0,
+          "description": "Seconds after she leaves a treehouse floor (rising or stepping off) before she can land on one, and after she lands before she can leave: meanwhile she flies on over its floors, and its open edges keep her in."
+        },
         "deck": {
           "type": "object",
           "properties": {
@@ -1617,6 +1622,7 @@
         "clear",
         "lightReach",
         "lightStrength",
+        "landCooldown",
         "deck",
         "house"
       ],
