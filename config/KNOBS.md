@@ -1923,6 +1923,10 @@ Code: `render/attackFeel.ts`
 
 - **`attackFx.legendFlash`**: how much bigger and longer a legend's blow flashes than anyone's (its flash 1 + 2 × legendFlash times; 0.5, twice: Ed's decisions panel, config/decisions.json).
   Code: `config/decisions.json`
+- **`attackFx.visibility`**: How easy the creatures' spells are to see: their size, opacity, glow, how long they last, how thick their lingering zones are and how strong the marks they leave on the ground (1, 0, 1, 1, 0.25 and 0.12 draw them as before 3 November).
+  1. Ed, 2026-11-03: "Let's dial up current creature spell effects a lot so they're easier to see. Larger, extra Bloom. Don't bring back the flash and rings yet." (size 1.75, opacity 0.9, bloom 2, duration 1.5, zoneDensity 0.5, groundMark 0.45; the pause page's Creature spells sliders (config/decisions))
+  size: every creature spell's size times this (bolts and lobs, their trails, hits, ground marks, beams' width, status icons, pack specials; a quake's or pulse's ground spreads a little past its true reach, 40% of the extra). opacity: how far each spell's own opacity is raised toward solid (0: as it was; 1: all solid), so a themed shot's 0.45 goes to 0.95 and a beam's 0.65 to 0.97. bloom: its halo, the halo seen through the crowns, its glow on the ground and the extra glow round bolts, hits, beams and zones, times their own (lights by half as much, at most 1.5 times). duration: hits, marks, quakes and trails last this many times as long. zoneDensity: the share of a lingering zone's tiles drawn (0.25 was every fourth; 1 every one). groundMark: how opaque a hit's mark on the ground starts (it was 0.12).
+  Code: `render/leash/attackLook.ts`, `render/fx/system.ts`
 
 | knob | type | range |
 |---|---|---|
@@ -1937,6 +1941,12 @@ Code: `render/attackFeel.ts`
 | `attackFx.turnFrom` | number | 0 to … |
 | `attackFx.turnTo` | number | 0 to … |
 | `attackFx.legendFlash` | number | 0 to 1 |
+| `attackFx.visibility.size` | number | 0.25 to 4 |
+| `attackFx.visibility.opacity` | number | 0 to 1 |
+| `attackFx.visibility.bloom` | number | 0 to 4 |
+| `attackFx.visibility.duration` | number | 0.25 to 4 |
+| `attackFx.visibility.zoneDensity` | number | 0.05 to 1 |
+| `attackFx.visibility.groundMark` | number | 0 to 1 |
 
 ### `combat`
 
