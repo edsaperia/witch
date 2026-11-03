@@ -11,7 +11,7 @@
 //
 // The boot's ring round the home speakers and the route are one path (Ed, 2026-10-29): the ring from the treehouse's front, its lap
 // ending where it came on; the route from there, on round the same way and off (rules/departure.ts); the rainbow's hue and the dots
-// run along both as one.
+// run along both as one. Ahead of the spark, a cold rainbow (Ed, 2026-11-03; render/colourGrammar.ts coldRainbow, uCold).
 // One ribbon mesh for the whole line, rebuilt only when the route changes (its links routed a
 // couple of milliseconds' worth a frame; moving on along it only sets a uniform); two draws,
 // nothing allocated a frame.
@@ -33,6 +33,7 @@ import { routeOf } from "../rules/party";
 import { leyRadius } from "../rules/leyroute";
 import type { ForestMap } from "../rules/map";
 import { bridgeNativeObject } from "./fx/native";
+import { COLD_GLSL, oldColours } from "./colourGrammar";
 
 export interface LeyTuning {
   on: boolean;
@@ -144,11 +145,13 @@ uniform vec2 uFlow;
 uniform vec4 uCore; // its pixel core's half-width and rim (metres) on the ground and over the treetops
 uniform float uMpp; // metres per art pixel
 uniform float uRainbow; // 1: the route, in the cycling rainbow (Ed, 2026-10-29: "The leyline should be rainbow"); 0: the line as it was (unused: the ring and the route are one rainbow line)
+uniform float uCold; // 1: ahead of the spark the cold rainbow (Ed, 2026-11-03; render/colourGrammar.ts coldRainbow); 0: the whole rainbow (colourGrammar "old")
 uniform float uRingLinks, uRingK; // the boot ring: the first uRingLinks links of the line (1, or 0 with no ring), drawn uRingK as strong (1 while home boots up, RING_AFTER after)
 varying float vSide, vS, vT, vLink, vSeen, vW, vLen, vRun;
 varying vec3 vCol;
 // The rainbow (render/indicator.ts rainbow, the soundsystem spell's): a hue round its wheel, its colour (0-1).
 vec3 rbow(float h) { vec3 q = mod(vec3(5.0, 3.0, 1.0) + h * 6.0, 6.0); return 1.0 - clamp(min(q, 4.0 - q), 0.0, 1.0); }
+${COLD_GLSL}
 float lh(float p) { return fract(sin(p * 127.1) * 43758.5453); }
 float soft0(float d) { return smoothstep(0.0, 8.0, d); }
 // The ripple (Ed, 2026-10-07: "The leyline should have an occasional ripple along its length that shows you which direction
@@ -205,7 +208,8 @@ void main() {
   if (along > pAlong && uRainbow > 0.5) {
     // Ahead of the spark (Ed, 2026-10-29: "The leyline should be dots instead of a line (like the analyser but only one dot tall)"):
     // the line itself is a row of single dots (render/leash/rainbow.ts); here only its faint glow from the treetops.
-    if (uGlowPass > 0.5) { gl_FragColor = vec4(hue * 0.14 * halo * uLift * uStrength * ringK, 1.0); return; }
+    vec3 ahead = uCold > 0.5 ? coldRbow((floor(vRun / uMpp) * uMpp) / ${RAINBOW_M.toFixed(1)} - uTime * 0.12) : hue; // (cold ahead: Ed, 2026-11-03)
+    if (uGlowPass > 0.5) { gl_FragColor = vec4(ahead * 0.14 * halo * uLift * uStrength * ringK, 1.0); return; }
     discard;
   }
   if (along > pAlong) {
@@ -332,7 +336,7 @@ export class LeyLines {
       uShift: { value: 0 }, uFar: { value: new THREE.Vector2(T.far[0], T.far[1]) }, uFlow: { value: new THREE.Vector2(T.flow[0], T.flow[1]) },
       uPulse: { value: new THREE.Vector2() }, uGrow: { value: new THREE.Vector2() }, uNear: { value: new THREE.Vector3(0, 0, NEAR) },
       uCore: { value: new THREE.Vector4(...(T.core ?? [0.3, 0.6, 0.15, 0.3])) }, uMpp: { value: map ? metresPerArtPixel(map.tuning) : 0.1 },
-      uRingLinks: this.ringLinksU, uRingK: this.ringK,
+      uRingLinks: this.ringLinksU, uRingK: this.ringK, uCold: { value: map && oldColours(map.tuning) ? 0 : 1 },
     };
     // One line (Ed, 2026-10-29: "merging the lines"): the boot ring is its first link, from the treehouse's front round the home ring
     // (rules/bootRing.ts), the route's links after it from where the lap ends; one geometry, one set of uniforms, one spark. (Before:

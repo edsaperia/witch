@@ -115,6 +115,7 @@ import { packAtlas } from "./atlas";
 import { GpuLedger } from "./gpuLedger";
 import { keepUnderBudget, newGpuState } from "./view/gpuBudget";
 import { berrySprite } from "./berries";
+import { berryColour } from "./colourGrammar";
 import { leyDrawnTo, RING_AFTER, shaderPulse, type LeyLines } from "./leylines";
 import { routeSeen } from "../rules/hatSpells";
 import { bootLineAt, bootPath, bootPulseAt } from "../rules/bootRing";
@@ -900,7 +901,7 @@ export class View {
     this.propBatch = new SpriteBatch(this.assets.props, this.mpp, { fade: true }).name("props");
     // Berries: a small shiny dark-red berry, drawn here (a highlight upper left, a darker side),
     // always drawn (gameplay), unlit so it reads at night; its halo and glints are in leash.ts.
-    this.berryBatch = new SpriteBatch(packAtlas([berrySprite(t.berries.colour)], 64), this.mpp, { unlit: true });
+    this.berryBatch = new SpriteBatch(packAtlas([berrySprite(berryColour(t))], 64), this.mpp, { unlit: true });
     this.scene.add(...this.berryBatch.meshes);
     this.scene.add(...this.propBatch.meshes);
     yield "party";
