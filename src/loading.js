@@ -6,7 +6,7 @@ import cinzel from "./ui/fonts/CinzelDecorative-Regular.ttf?url";
 import { startLoadingScreen } from "./ui/loadingScreen.js";
 import { loading as built } from "../config/tuning.json"; // (its one block, a named import, so the screen's script stays small)
 import { decisions as screen } from "../config/decisions/1194-loading-screen.json";
-import { decisions as fade } from "../config/decisions/0-loading-fade.json";
+import { decisions as fade } from "../config/decisions/1752-loading-fade.json";
 
 const p = new URLSearchParams(location.search);
 const off = p.get("loading") === "0" || (navigator.webdriver && p.get("loading") !== "1") || p.get("creator") === "0" || p.has("bot") || p.has("arrive") || p.has("zoo") || p.has("shot") || p.get("opening") === "old" || p.has("chart");

@@ -4,7 +4,7 @@
 import { readFileSync } from "node:fs";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import tuning from "../../config/tuning.json";
-import { decisions } from "../../config/decisions/0-loading-fade.json";
+import { decisions } from "../../config/decisions/1752-loading-fade.json";
 import { EASE_OUT, REDUCED_FADE, fadeSeconds, revealGame } from "./loadingFade.js";
 import { startLoadingScreen } from "./loadingScreen.js";
 
