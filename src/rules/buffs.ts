@@ -87,14 +87,18 @@ export interface Buffs {
   givers: Map<number, BuffGroup>;
   /** One of them per kind, the one whose sigil shows its group's icon in her stack (a legend first, then the topmost). */
   icons: Set<number>;
+  /** How many icons each of those shows (Ed, 2026-11-03: "A legend should have three buff icons, to show that it's three times as
+   *  powerful"): its kind's stacks, a legend buffs.legend (3), an adult 1; a kind's other givers none (a legend and an adult of a kind:
+   *  the legend's three). */
+  iconCount: Map<number, number>;
 }
 
 /** Her buffs from her stack (`stack`: creature ids, top first): each adult with pips gives its group one stack for its kind, a legend
  *  buffs.legend (3) with no berries needed; per kind the most of those, so two of a kind, or a legend and an adult of its kind, count
  *  once; each group's count the sum over its kinds. */
 export function buffsOf(stack: readonly number[], creatures: readonly Creature[], berries: Pick<BerryState, "pips">, t: Tuning): Buffs {
-  const B = buffKnobs(t), stacks = noBuffs(), givers = new Map<number, BuffGroup>(), icons = new Set<number>();
-  if (!B) return { stacks, givers, icons };
+  const B = buffKnobs(t), stacks = noBuffs(), givers = new Map<number, BuffGroup>(), icons = new Set<number>(), iconCount = new Map<number, number>();
+  if (!B) return { stacks, givers, icons, iconCount };
   const kinds = new Map<string, { group: BuffGroup; n: number; id: number }>();
   for (const id of stack) {
     const c = creatures[id];
@@ -107,8 +111,8 @@ export function buffsOf(stack: readonly number[], creatures: readonly Creature[]
     const had = kinds.get(c.species);
     if (!had || n > had.n) kinds.set(c.species, { group, n, id });
   }
-  for (const k of kinds.values()) { stacks[k.group] += k.n; icons.add(k.id); }
-  return { stacks, givers, icons };
+  for (const k of kinds.values()) { stacks[k.group] += k.n; icons.add(k.id); iconCount.set(k.id, Math.max(1, Math.round(k.n))); }
+  return { stacks, givers, icons, iconCount };
 }
 
 /** Her dashes: buffs.climbers.dash more charges a Climbers stack. */

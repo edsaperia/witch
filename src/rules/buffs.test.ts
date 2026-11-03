@@ -53,6 +53,12 @@ describe("stacking", () => {
     expect(buffsOf([0, 1, 2], cs, fed([0, 1, 2]), TUNING).stacks).toEqual(noBuffs());
     expect(buffsOf([], cs, fed([3]), TUNING).stacks).toEqual(noBuffs()); // (the bear parked: not in her stack)
   });
+  it("icons a giver: a legend three, an adult one, another of a kind none (a legend and an adult of a kind: the legend's three)", () => {
+    const cs = [crit(0, "wolf", 3, { partyLegend: true }), crit(1, "wolf", 2), crit(2, "bear", 2), crit(3, "bear", 2), crit(4, "fox", 2)];
+    const b = buffsOf([0, 1, 2, 3, 4], cs, fed([1, 2, 3, 4]), TUNING);
+    expect(B.legend).toBe(3);
+    expect([0, 1, 2, 3, 4].map(id => b.iconCount.get(id) ?? 0)).toEqual([3, 0, 1, 0, 1]);
+  });
   it("its givers and one icon a kind (a legend's before an adult's)", () => {
     const cs = [crit(0, "wolf", 2), crit(1, "wolf", 3), crit(2, "bear", 2), crit(3, "bear", 2)];
     const b = buffsOf([0, 1, 2, 3], cs, fed([0, 2, 3]), TUNING);

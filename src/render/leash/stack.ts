@@ -94,12 +94,18 @@ export function drawStack(lv: LeashView, time: number, hatTop: number, dot: numb
           }
         }
         // Its buff's icon, to the right of its sigil and its dots (Ed, 2026-11-03: "an icon to the right of the creature's sigil in her
-        // stack"), one a kind (rules/buffs.ts icons), in her magic's amber (render/leash/buffIcons.ts).
+        // stack"), one a kind (rules/buffs.ts icons), in her magic's amber (render/leash/buffIcons.ts); a legend's three in a row (Ed,
+        // 2026-11-03: "A legend should have three buff icons, to show that it's three times as powerful"; iconCount), each a little
+        // smaller and closer, so the row stays beside its bigger sigil, level with it, clear of the sigils above and below.
         const group = buffs.icons.has(it.id) ? buffs.givers.get(it.id) : undefined;
         if (group) {
-          const D = dotSets[0][0], ix = (D.n > 0 ? dotAt(D.n - 1, D.n, RK.dotsPerRow).x + 0.42 : 0.72) * size, is = size * 0.5;
-          if (back > 0) lv.stackBack.add(pos.x + ix, pos.y, pos.z, is * 1.25, dot, 0.02, 0.02, 0.035, back);
-          batch.add(pos.x + ix, pos.y, pos.z + 0.02, is, buffIconUv(lv, group), AMBER[0] * 1.2, AMBER[1] * 1.2, AMBER[2] * 1.2, 1);
+          const D = dotSets[0][0], m = buffs.iconCount.get(it.id) ?? 1, ix = (D.n > 0 ? dotAt(D.n - 1, D.n, RK.dotsPerRow).x + 0.42 : 0.72) * size;
+          const is = size * (m > 1 ? 0.42 : 0.5), gap = is * 0.92;
+          for (let k = 0; k < m; k++) {
+            const x = pos.x + ix + k * gap;
+            if (back > 0) lv.stackBack.add(x, pos.y, pos.z, is * 1.25, dot, 0.02, 0.02, 0.035, back);
+            batch.add(x, pos.y, pos.z + 0.02, is, buffIconUv(lv, group), AMBER[0] * 1.2, AMBER[1] * 1.2, AMBER[2] * 1.2, 1);
+          }
         }
       }
     } else {
