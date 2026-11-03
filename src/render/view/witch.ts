@@ -100,7 +100,8 @@ export function drawWitch(v: View, time: number, ht: number, onTreehouse: (px: n
   const still = Math.hypot(w.vx, w.vz) < 0.6;
   // Waking up in her bedroom (the new opening, rules/wakeUp.ts): sitting up in bed while the alarm rings and she snoozes, her arms
   // up in a stretch as she gets up.
-  const wk = g.wake, bedPose = wk && !wk.open && wk.beat !== "up" ? (wk.beat === "stretch" ? "liftSigil" : "sit") : null;
+  // (put to bed for a morning still to come, a sail's dive: asleep there as the wake-up's first beats have her, View.asleepInBed)
+  const wk = g.wake, bedPose = wk && !wk.open && wk.beat !== "up" ? (wk.beat === "stretch" ? "liftSigil" : "sit") : !wk && v.asleepInBed ? "sit" : null;
   // In the house (Ed, 2026-10-21: "she shouldn't use her broom until she steps off the balcony, and stop using it when she steps
   // on"): landed on its floor she's on foot, standing (idle) or walking, no broom; stepping off the balcony's rim she takes off
   // (the takeoff frames, as she rises), and coming down onto it she lands (the land frames) and walks.
@@ -114,7 +115,7 @@ export function drawWitch(v: View, time: number, ht: number, onTreehouse: (px: n
   if (v.spin && !(indoors && still && v.foot > 0.6)) { v.spin = null; v.turnUntil = 0; } // (walked off, or off her feet: no twirl)
   const pick = (pose: string, k: number) => { const fr = F[pose][side]; return fr[Math.max(0, Math.min(fr.length - 1, k))]; };
   if (v.foot > 0.6) {
-    if (bedPose && wk) wf = bedPose === "sit" ? pick("sit", Math.floor(ht * F.sit.fps) % F.sit[side].length) : pick("liftSigil", Math.floor((ht - wk.at) * F.liftSigil.fps));
+    if (bedPose) wf = bedPose === "sit" || !wk ? pick("sit", Math.floor(ht * F.sit.fps) % F.sit[side].length) : pick("liftSigil", Math.floor((ht - wk.at) * F.liftSigil.fps));
     else if (acting && v.footAct) wf = pick(v.footAct.pose, Math.floor((ht - v.footAct.at) * F[v.footAct.pose].fps));
     else if (L.talk && still) wf = pick("talk", Math.floor(ht * F.talk.fps) % F.talk[side].length);
     else if (indoors && F.walk && F.idle) {

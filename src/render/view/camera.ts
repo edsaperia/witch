@@ -36,6 +36,20 @@ function wholeAtStation(v: View, pose: ReturnType<typeof poseOf>): ReturnType<ty
   return { ...pose, distance, tx: pose.tx - (W.at - 0.5) * across * k, aim: (k * v.witchFeetTop) / (2 * v.witchTall) };
 }
 
+/** The game's own camera's aim for `pose` (placeCamera's, before a station's aim up her and the pixel snap), in the world's heights:
+ *  the pose's aim over the ground it rides (`ride`: camRide's height), and in the house off its hub, moved to where she's drawn
+ *  (`houseCam`, render/view/witch.ts: placeCamera reads the last frame's). A sail's dive ends on exactly this (View.landingShot,
+ *  app/arrive.ts), so the flight hands the game the camera it then has, with no jump as it lands (it had aimed at her place in the
+ *  rules over the ground there, and the game's camera then jumped here: the house's offset and the ride's ground both). */
+export function gameAim(pose: { tx: number; ty: number; tz: number }, ride: number, houseCam: { x: number; y: number; z: number }): THREE.Vector3 {
+  return new THREE.Vector3(pose.tx + houseCam.x, pose.ty + ride + houseCam.y, pose.tz + houseCam.z);
+}
+/** Where the camera's ride (camRide) reads the ground for `pose`: in the house (View.herOffset on) its middle, else the pose's aim. */
+export function ridePoint(v: Pick<View, "herOffset" | "game">, pose: { tx: number; tz: number }): { x: number; z: number } {
+  const D = v.herOffset.on ? deckOf(v.game.map, v.game.tuning) : null;
+  return D ? { x: D.x, z: D.z } : { x: pose.tx, z: pose.tz };
+}
+
 /** Hill clearance used to ease by these fractions per frame at 60 Hz. */
 export function easeCameraLift(current: number, need: number, seconds: number): number {
   const fraction = need > current ? 0.35 : 0.06;
@@ -51,7 +65,9 @@ export function placeCamera(v: View, time: number, pose: ReturnType<typeof poseO
   const liftDt = Number.isFinite(v.camLiftTime) ? time - v.camLiftTime : 0;
   // drawWitch computes the house offset after camera placement. Repainting the
   // same instant must use the offset its first camera placement actually saw.
-  if (time !== v.camLiftTime) v.houseCamInput.copy(v.houseCam as THREE.Vector3Like);
+  // (a sail's dive is drawn with the night's clock still, its frames new all the same: the offset taken on each, so the game's camera
+  // takes over from it with this frame's, the one the dive's last shot aimed by: View.landingShot)
+  if (time !== v.camLiftTime || v.fly) v.houseCamInput.copy(v.houseCam as THREE.Vector3Like);
   v.camLiftTime = time;
   pose = wholeAtStation(v, pose);
   const vertigo = v.fly || v.telescope ? 0 : vertigoAmount(potionStrength(g, 'vertigo'), g.witch.lift);
@@ -105,12 +121,11 @@ export function placeCamera(v: View, time: number, pose: ReturnType<typeof poseO
     // plane, wherever they lie (render/view/witch.ts, render/houseRooms.ts); under the rules' place a room far from the Terrace had the
     // ground of 60 m away, the camera metres above or below her: Ed's playtest, 2026-10-25, "it doesn't seem to accurately know where
     // the witch is")
-    const D = v.herOffset.on ? deckOf(g.map, t) : null;
-    v.camRide.update(rdt, D ? D.x : pose.tx, D ? D.z : pose.tz, W.vx, W.vz, full, groundHeight, t.witch, Infinity);
+    const R = ridePoint(v, pose);
+    v.camRide.update(rdt, R.x, R.z, W.vx, W.vz, full, groundHeight, t.witch, Infinity);
     v.rideOff = W.seated || W.perch ? 0 : v.ride.h - groundHeight(W.x, W.z); // (on the treehouse deck: its floor is flat)
   }
-  const target = new THREE.Vector3(pose.tx, F ? F.ty : pose.ty + v.camRide.h, pose.tz); // (the flight's aim is in the world's heights)
-  if (!F) target.add(v.houseCamInput);
+  const target = F ? new THREE.Vector3(F.tx, F.ty, F.tz) : gameAim(pose, v.camRide.h, v.houseCamInput); // (the flight's aim is in the world's heights)
   // At a station, aimed up her to the part being chosen (rules/camera.ts aim: a share of her height as drawn), along the way her
   // sprite stands (up the screen), so that part stays in the middle at any zoom.
   // From her feet as she's drawn (the last frame's: she stands still at a station), not the rules' height: indoors that's

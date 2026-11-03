@@ -147,7 +147,7 @@ import { drawMarkers, drawSpeakers, forgetCandles, placeTreehouse, entDeckDrawn 
 import { miniTreehouse, ZooExitTag } from "./zooExit";
 import { CastTag } from "./castTag";
 import { lanternLights, relicLights, setLights, sigilLights, updateSources } from "./view/lights";
-import { placeCamera } from "./view/camera";
+import { gameAim, placeCamera, ridePoint } from "./view/camera";
 import { setFrameUniforms } from "./view/frameUniforms";
 import { newReveal, setReveal } from "./view/reveal";
 import { drawWitch, houseShiftOf } from "./view/witch";
@@ -417,6 +417,9 @@ export class View {
   private landingFades = new LandingArtFade();
   landingHouseShare = 1;
   landingSleeping = false;
+  /** Put to bed before a sail's dive (main.ts bedFirst, rules/wakeUp.ts tuckIn), the wake-up not started till it lands: drawn asleep
+   *  in her bed as its first beats have her (render/view/witch.ts), not standing in it. */
+  asleepInBed = false;
   landingWakeReady(): boolean {
     const A = this.assets;
     return A.fullWitchReady && A.home.treehouse && this.treehouseBatch.atlas === A.treehouse.atlas && this.landingHouseShare === 1 &&
@@ -1583,13 +1586,31 @@ export class View {
     this.scene.add(...b.meshes);
     return b;
   }
-  /** The character creator changed her look (her genome, art/witchGenome.js): her frames re-baked and her batch swapped. */
-  setWitch(genome: unknown): void {
+  /** The character creator changed her look (her genome, art/witchGenome.js): her frames re-baked and her batch swapped.
+   *  `morning`: her next morning's look, read ahead (main.ts showLook: a sail's, or the bed's next night): her whole set asked at
+   *  once, ahead of all but the start's own, and her hat-off frames too if her hat will lie on the floor (`hatOff`, as View.create's);
+   *  `lookDrawn` says when it's on her. */
+  setWitch(genome: unknown, morning?: { hatOff: boolean }): void {
+    this.lookHatOff = !!morning?.hatOff;
     // (the look she has already, the boot's say (her nightie on a first morning, main.ts): nothing to redraw, her hat-off frames kept)
-    if (JSON.stringify(genome ?? null) === JSON.stringify(this.assets.witchGenome ?? null)) return;
-    this.assets.rebakeWitch(genome); // (drawn by an art worker: her batch takes the new frames when they arrive, swapHomeArt below)
+    if (JSON.stringify(genome ?? null) === JSON.stringify(this.assets.witchGenome ?? null)) { if (morning?.hatOff) this.assets.askHatOff(); return; }
+    this.assets.rebakeWitch(genome, !!morning); // (drawn by an art worker: her batch takes the new frames when they arrive, swapHomeArt below)
     if (this.bareBatch) { this.scene.remove(...this.bareBatch.meshes); this.bareBatch = null; this.bareAsked = false; }
+    if (morning?.hatOff) this.assets.askHatOff();
   }
+  /** The game's own camera as it will be on the next frame drawn without the flight's (render/view/camera.ts gameAim: her pose's aim,
+   *  over the ground its ride reads, she lying still in bed, and moved to where she's drawn in the house, the last frame's), as a
+   *  flight's shot: a sail's dive ends on it (app/arrive.ts), so the game takes over with the camera the dive landed on. */
+  landingShot(): Shot {
+    const g = this.game, p = poseOf(g), R = ridePoint(this, p), a = gameAim(p, groundHeight(R.x, R.z), this.houseCam);
+    return { tx: a.x, ty: a.y, tz: a.z, angle: p.angle, distance: p.distance, fov: g.tuning.camera.fov };
+  }
+  /** Her look's hat-off frames are wanted with it (setWitch's `morning`). */
+  private lookHatOff = false;
+  /** Her look now is on her whole, not a preview nor the look before (render/assets.ts fullWitchReady), and its hat-off frames too if
+   *  its morning wants them: a sail's dive holds short of her room till it is (app/arrive.ts), so she's never seen in bed in last
+   *  night's clothes first. */
+  get lookDrawn(): boolean { return this.assets.fullWitchReady && (!this.lookHatOff || this.assets.bareFresh); }
   /** The start's own art, drawn by the art workers (fast start (b)): each batch built on a stand-in takes its set once it arrives. */
   private swapHomeArt(): void {
     const A = this.assets;

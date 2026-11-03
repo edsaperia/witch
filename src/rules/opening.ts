@@ -21,9 +21,10 @@ export function bedside(g: Pick<Game, "map" | "tuning">, H = HOUSE_ROOMS): { x: 
 }
 
 /** She wakes in her bedroom: put beside her bed on the house's floor, standing (no longer seated at the decks), and the camera
- *  settled on her there as it would be after a while indoors. False (nothing changed) without the house's rooms. */
-export function wakeInBedroom(g: Game, W: Witch = g.witches[0]): boolean {
-  const at = bedside(g);
+ *  settled on her there as it would be after a while indoors. False (nothing changed) without the house's rooms. `spot`: put there
+ *  instead (rules/wakeUp.ts tuckIn: in her bed). */
+export function wakeInBedroom(g: Game, W: Witch = g.witches[0], spot?: { x: number; z: number }): boolean {
+  const side = bedside(g), at = side && (spot ?? side);
   if (!at) return false;
   W.body = { ...W.body, x: at.x, z: at.z, vx: 0, vz: 0, mode: "ground", lift: 0, boost: 0, seated: false, perch: true, facing: 1, away: false, heading: "side", lean: false };
   const w = W.body, target = { x: w.x, y: witchHeight(w, g.tuning), z: w.z };

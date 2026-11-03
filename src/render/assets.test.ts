@@ -181,3 +181,40 @@ describe("AssetLibrary: a first morning's nightie, made with the start's own art
     a.askHatOff(); expect(witchJobs(a)).toHaveLength(2); // (once)
   });
 });
+
+// A sail's morning and the bed's next one (main.ts aheadMorning, View.setWitch's `morning`): her nightie read ahead as she sails or
+// sleeps, its whole set asked at once, urgent, ahead of everything but the start's own (no preview first: its standing frames are no
+// way to be seen asleep in bed), so it's drawn before the dive comes down into her room (app/arrive.ts) or the sleep's dark lifts
+// (view.prepare's wait for the urgent sets); her hat-off frames with it when the morning has her hat lying on the floor.
+describe("AssetLibrary: a morning read ahead, before the landing", () => {
+  const style = loadStyle(), dressed = null; // (the classic witch, dressed)
+  type Witchy = { urgentKeys: Set<string>; bare: unknown; bareStale: boolean };
+  const witchJobs = (a: AssetLibrary) => inner(a).queue.filter((j): j is Extract<ArtJob, { kind: "witch" }> => j.kind === "witch");
+  const urgent = (a: AssetLibrary, j: ArtJob) => (a as unknown as Witchy).urgentKeys.has(`${j.kind}:${j.id}`);
+  it("asks her nightie's whole set, urgent, ahead of the island's sets asked ahead, and she isn't dressed in it till it lands", () => {
+    const a = new AssetLibrary(style, 11, 4, dressed); // (the night she's leaving, in her clothes)
+    a.prefetchType(3);
+    const night = wornGenome(dressed, PILE_SLOTS, false); // (rules/wakeUp.ts morningAfter: her hat in the pile)
+    a.rebakeWitch(night, true);
+    const jobs = witchJobs(a);
+    expect(jobs.map(j => ({ genome: j.genome, bare: j.bare, quick: !!j.quick }))).toEqual([{ genome: night, bare: false, quick: false }]); // (last night's look let go)
+    expect(urgent(a, jobs[0])).toBe(true);
+    expect((jobs[0] as { home?: boolean }).home).toBe(true);
+    const q = inner(a).queue;
+    expect(q.indexOf(jobs[0])).toBeLessThan(q.findIndex(j => j.kind === "type"));
+    expect(a.fullWitchReady).toBe(false); // (the dive holds short of her room till it is: View.lookDrawn)
+  });
+  it("and her hat-off frames too, urgent, when the morning has her hat lying, though last night's look had its own", () => {
+    const a = new AssetLibrary(style, 11, 4, dressed);
+    (a as unknown as Witchy).bare = {}; // (last night's hat-off frames, drawn)
+    a.prefetchType(3);
+    const lying = wornGenome(dressed, PILE_SLOTS, true);
+    a.rebakeWitch(lying, true); a.askHatOff(); // (View.setWitch with { hatOff: true })
+    const jobs = witchJobs(a);
+    expect(jobs.map(j => ({ genome: j.genome, bare: j.bare, quick: !!j.quick }))).toEqual([{ genome: lying, bare: false, quick: false }, { genome: lying, bare: true, quick: false }]);
+    expect(jobs.every(j => urgent(a, j))).toBe(true);
+    const q = inner(a).queue;
+    expect(q.indexOf(jobs[1])).toBeLessThan(q.findIndex(j => j.kind === "type"));
+    expect(a.bareFresh).toBe(false);
+  });
+});
