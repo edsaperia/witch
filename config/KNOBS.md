@@ -285,6 +285,17 @@ How much areas vary in size, some small and some large.
 |---|---|---|
 | `areaSizeVariance` | number | 0 to … |
 
+### `siteMargin`
+
+how far every area's site (its middle) is kept in from its cell's sides, as a share of the cell (0 to 0.5), so sites, stumps and the paths joining them spread out.
+
+1. Ed, 2026-11-03: "Minimum distance between stumps; it's just a bit strange finding two right next to each other; at least their clearings shouldn't overlap"
+0 (off) for now: any margin reshapes every island, and with it a dozen seeded gameplay tests' layouts (combat, brooms, swoops...) that other builders were changing at the time. 0.15 keeps two sites at least 0.3 of an area apart before the warp (about 50 m). stoneMinGap makes sure of the stones either way.
+
+| knob | type | range |
+|---|---|---|
+| `siteMargin` | number | 0 to 0.5 |
+
 ### `borderLayers`
 
 | knob | type | range |
@@ -708,7 +719,9 @@ Railways, old roads and streams crossing the island.
 1. Ed: "There are much too many paths" (linkChance 0.55 to 0.1, deadEndChance 0.3 to 0, rails [2,4] to [0,1], at most one railway)
 Paths, roads and railways (Ed): far fewer since 2026-10-11 [1]. rails [min,max] railway lines edge to edge in wide curves (one with a branch); roads [min,max] broad sweeping old roads (0: Ed, round 13, "remove the paths that are roads: only the kind that cars might drive on"; footpaths, railways and streams stay).
 
-- **`paths.linkChance`**: the share of neighbouring areas joined by a meandering path.
+- **`paths.network`**: every area with a site (a stump, a special site, home's dancefloor) joined by a footpath to every touching area's site, from the edge of one clearing to the other's, round the lakes; no trees on them.
+  1. Ed, 2026-11-03: "Path network - Each non-lake area has a stump site or a special site (find and challenge areas); paths link each of these sites to the sites in adjacent areas. Paths don't have trees on them."
+- **`paths.linkChance`**: the share of the other neighbouring areas (an area with no site: the buffer's) joined by a meandering path; with paths.network off, of every neighbouring pair.
 - **`paths.deadEndChance`**: the share of areas with a path out to nothing.
 - **`paths.pathHalf`, `paths.roadHalf`, `paths.railHalf`**: How wide the paths are kept clear of trees, with thick bushes along their edges.
   half each corridor's width (metres), kept clear of trees, with bushes thick along the edges for edgeBushes metres (bushBoost times as many); streams [min,max] long streams winding across the map (and short ones join wet areas that touch), streamHalf metres half-wide; along a railway, every landmarkSpacing metres, a landmarkChance of a landmark (a wagon, a carriage, a platform, a gantry) and otherwise sometimes a signal post; verge posts along roads every vergeSpacing metres; every 3D piece at least pieceGap metres from the next.
@@ -722,6 +735,7 @@ Paths, roads and railways (Ed): far fewer since 2026-10-11 [1]. rails [min,max] 
 |---|---|---|
 | `paths.rails` | array of number |  |
 | `paths.roads` | array of number |  |
+| `paths.network` | boolean |  |
 | `paths.linkChance` | number | 0 to … |
 | `paths.deadEndChance` | number | 0 to … |
 | `paths.pathHalf` | number | 0 to … |
@@ -802,6 +816,29 @@ Nothing special within it: no scene or set piece, ruin or freak tree (the giant 
 | knob | type | range |
 |---|---|---|
 | `stoneKeepClear` | number | 0 to … |
+
+### `stoneMinGap`
+
+the least distance between two areas' stones (great stumps or runestones), metres; a stone that would stand nearer one placed before it moves, in its own area, to the nearest spot far enough off.
+
+1. Ed, 2026-11-03: "Min 40 m between stumps."
+The special sites (tonight's find's) count as stones here. Placed all at once in a fixed order (rules/map.ts placeSites), so the same whichever is asked for first.
+
+| knob | type | range |
+|---|---|---|
+| `stoneMinGap` | number | 0 to … |
+
+### `findArea`
+
+tonight's find in an area of its own, at its site, in a clearing `clear` metres round it; that area has no stump, wave or creatures, and every touching area's path leads to it.
+
+1. Ed, 2026-11-03: "We can also have finds be at the site of their own area rather than in a random place, and then the path network can lead you to them." … "Each non-lake area has a stump site or a special site (find and challenge areas)"
+The area is seeded by the night (never home, an area touching home's (Ed, 2026-11-03: "The challenge area shouldn't be adjacent to the home area"; an island with none such takes its area farthest from home), a legend area's pair, or one whose going would cut the island in two) and is not playable, like a legend area; the island grows one area more for it, which takes its kind, so the island keeps its playable areas and roster. Off: the find as before, in a wild area's woods.
+
+| knob | type | range |
+|---|---|---|
+| `findArea.on` | boolean |  |
+| `findArea.clear` | number | 0 to … |
 
 ### `treeMarginFromSoundsystem`
 

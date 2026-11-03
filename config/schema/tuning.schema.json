@@ -918,6 +918,12 @@
       "minimum": 0,
       "description": "How much areas vary in size, some small and some large."
     },
+    "siteMargin": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 0.5,
+      "description": "how far every area's site (its middle) is kept in from its cell's sides, as a share of the cell (0 to 0.5), so sites, stumps and the paths joining them spread out."
+    },
     "borderLayers": {
       "type": "number",
       "minimum": 0
@@ -2096,10 +2102,14 @@
             "minimum": 0
           }
         },
+        "network": {
+          "type": "boolean",
+          "description": "every area with a site (a stump, a special site, home's dancefloor) joined by a footpath to every touching area's site, from the edge of one clearing to the other's, round the lakes; no trees on them."
+        },
         "linkChance": {
           "type": "number",
           "minimum": 0,
-          "description": "the share of neighbouring areas joined by a meandering path."
+          "description": "the share of the other neighbouring areas (an area with no site: the buffer's) joined by a meandering path; with paths.network off, of every neighbouring pair."
         },
         "deadEndChance": {
           "type": "number",
@@ -2175,6 +2185,7 @@
       "required": [
         "rails",
         "roads",
+        "network",
         "linkChance",
         "deadEndChance",
         "pathHalf",
@@ -2230,6 +2241,29 @@
       "type": "number",
       "minimum": 0,
       "description": "The keep-clear zone round each area's stone (its great stump, or its runestone with the stumps off), in metres from its middle."
+    },
+    "stoneMinGap": {
+      "type": "number",
+      "minimum": 0,
+      "description": "the least distance between two areas' stones (great stumps or runestones), metres; a stone that would stand nearer one placed before it moves, in its own area, to the nearest spot far enough off."
+    },
+    "findArea": {
+      "type": "object",
+      "properties": {
+        "on": {
+          "type": "boolean"
+        },
+        "clear": {
+          "type": "number",
+          "minimum": 0
+        }
+      },
+      "required": [
+        "on",
+        "clear"
+      ],
+      "additionalProperties": false,
+      "description": "tonight's find in an area of its own, at its site, in a clearing `clear` metres round it; that area has no stump, wave or creatures, and every touching area's path leads to it."
     },
     "treeMarginFromSoundsystem": {
       "type": "number",
@@ -13739,6 +13773,7 @@
     "areaScale",
     "arena",
     "areaSizeVariance",
+    "siteMargin",
     "borderLayers",
     "clearingSize",
     "clearingFalloff",
@@ -13765,6 +13800,8 @@
     "soundsystemFootprint",
     "reserveMargin",
     "stoneKeepClear",
+    "stoneMinGap",
+    "findArea",
     "treeMarginFromSoundsystem",
     "treeDensity",
     "leafJitter",

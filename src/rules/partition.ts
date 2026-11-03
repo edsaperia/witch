@@ -34,8 +34,11 @@ export interface Partition {
  *  circle, so the areas round it are made round it (partition units). */
 export interface HomeCircle { cell: Cell; radius: number; gap: number }
 
-/** grid: every layer-0 site at its cell's middle (the zoo's square blocks, rules/zoo.ts: with depth 0, an area is its cell). */
-export function makePartition(seed: number, depth: number, home?: HomeCircle, { grid = false }: { grid?: boolean } = {}): Partition {
+/** grid: every layer-0 site at its cell's middle (the zoo's square blocks, rules/zoo.ts: with depth 0, an area is its cell).
+ *  margin: every layer-0 site kept that share of its cell in from each side (0 to 0.5; Ed, 2026-11-03: "Minimum distance
+ *  between stumps", so two areas' sites are at least twice it apart in partition units, and the paths join well-spaced sites). */
+export function makePartition(seed: number, depth: number, home?: HomeCircle, { grid = false, margin = 0 }: { grid?: boolean; margin?: number } = {}): Partition {
+  const m0 = Math.max(0, Math.min(0.5, margin)), span = 1 - 2 * m0;
   const siteCache = new Map<number, [number, number]>();
   const rootCache = new Map<number, Cell>();
   // Integer keys: layers stay under 16 and cells within +-2^20, which a 20 x 20 map never nears.
@@ -48,7 +51,9 @@ export function makePartition(seed: number, depth: number, home?: HomeCircle, { 
     let s = siteCache.get(k);
     if (!s) {
       const c = Math.pow(2, -layer);
-      s = grid && layer === 0 ? [cx + 0.5, cy + 0.5] : [c * (cx + hash2(cx * 7 + layer, cy, seed)), c * (cy + hash2(cx, cy * 13 + layer, seed + 1))];
+      s = grid && layer === 0 ? [cx + 0.5, cy + 0.5]
+        : layer === 0 ? [cx + m0 + span * hash2(cx * 7, cy, seed), cy + m0 + span * hash2(cx, cy * 13, seed + 1)] // (kept in from the cell's sides by margin)
+        : [c * (cx + hash2(cx * 7 + layer, cy, seed)), c * (cy + hash2(cx, cy * 13 + layer, seed + 1))];
       // Home's neighbours keep their sites out past its circle (pushed straight out from its site).
       if (home && layer === 0 && !(cx === home.cell[0] && cy === home.cell[1])) {
         const h = site(0, home.cell[0], home.cell[1]), dx = s[0] - h[0], dy = s[1] - h[1], d = Math.hypot(dx, dy), R = home.radius + home.gap;

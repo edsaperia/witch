@@ -294,6 +294,7 @@
     "curve": "linear"
   },
   "areaSizeVariance": 0.7,
+  "siteMargin": 0,
   "borderLayers": 4,
   "clearingSize": 0.2,
   "clearingFalloff": 0.18,
@@ -562,6 +563,7 @@
   "paths": {
     "rails": [0, 1],
     "roads": [0, 0],
+    "network": true,
     "linkChance": 0.1,
     "deadEndChance": 0,
     "pathHalf": 2.2,
@@ -587,6 +589,11 @@
   "soundsystemFootprint": 6,
   "reserveMargin": 3,
   "stoneKeepClear": 40,
+  "stoneMinGap": 40,
+  "findArea": {
+    "on": true,
+    "clear": 6
+  },
   "treeMarginFromSoundsystem": 1.5,
   "treeDensity": 1,
   "leafJitter": {

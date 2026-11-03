@@ -3,7 +3,7 @@
 // two to four railway lines cross many areas in long, gentle curves, with a branch line, broken
 // sections where the track is gone and trees grow between the sleepers. They carve tree-free
 // corridors with bushes along their edges. Seeded, so they never change; no drawing here.
-import { lakeKnobs, onLake } from "./lakes";
+import { ashore, lakeKnobs, onLake, shoreDetours } from "./lakes";
 import { clamp, hash2, rng, vnoise } from "./random";
 import { AREA_TYPES, type ForestMap } from "./map";
 import { floorClearing } from "./speakers";
@@ -23,7 +23,16 @@ export interface PathLine {
   deadEnd?: boolean;
   /** The area it starts in: a path keeps that area's kind (dirt, flagstones...) for its whole length (Ed, v160). */
   area?: { cell: [number, number]; type: number };
+  /** The path network's (map's paths.network): the two areas' keys ("cx,cy") whose sites it joins. */
+  link?: [string, string];
 }
+
+/** Where the network's paths end at an area (rules/map.ts): its stone, special site or dancefloor, and the radius of the clearing
+ *  round it, where they stop. */
+export interface SiteEnd { x: number; z: number; r: number }
+/** The path network's sites (rules/map.ts): each area's end (null: an area with no site, the buffer's, a legend area, a lake), and
+ *  the circles its paths keep out of between their ends (the dancefloor, the treehouse, every stone and special site). */
+export interface SiteNet { ends(cx: number, cy: number): SiteEnd | null; keepOut: readonly { x: number; z: number; r: number }[] }
 
 /** A 3D piece along the network (its id is the art's path piece): a bridge where a path crosses a
  *  stream, a railway landmark, a level crossing, stairs, a verge post... r: the clear radius kept
@@ -50,6 +59,10 @@ export function spline(ctrl: [number, number][], step: number): [number, number]
 }
 
 
+/** How far past its half a network path keeps off a lake's bare shore (m): near enough to follow a shore round a lake between two
+ *  sites, where the other lines stop 8 m short of it. */
+const LINK_SHORE = 2;
+
 export class PathNetwork {
   readonly lines: PathLine[] = [];
   readonly pieces: PathPiece[] = [];
@@ -59,11 +72,17 @@ export class PathNetwork {
   private pieceGrid = new Map<string, PathPiece[]>();
   private grid = new Map<string, [number, number][]>(); // cell -> [line, segment]
   private readonly cell = 24;
+  /** The network's touching sites left unjoined ("a|b" keys): no way round a lake or the beach between them. */
+  readonly unlinked: string[] = [];
+  /** The network's touching sites whose clearings meet, so no path is needed between them ("a|b" keys). */
+  readonly meet: string[] = [];
 
   /** `wetBefore`: the night's deal (rules/deal.ts) made the paths once for the world's own types and now makes them for the
    *  night's: the streams between wet areas then follow the night's types from a draw of their own, while the draws the world's
    *  streams took are taken again (and their lines dropped), so every other line comes out exactly as before. */
-  constructor(readonly map: ForestMap, wetBefore?: (cx: number, cy: number) => boolean) {
+  /** `net`: the path network's sites (map's paths.network), once the stones are placed; without it, the paths between two sites
+   *  wait for it (the map lays them first without, so its stones keep off the railway and the streams). */
+  constructor(readonly map: ForestMap, wetBefore?: (cx: number, cy: number) => boolean, net?: SiteNet) {
     // Railways and roads run off the map's whole extent, so they leave it rather than stop at its edge.
     const t = map.tuning.paths, b = map.extent, r = rng(map.seed * 7 + 4242);
     // The zoo (rules/zoo.ts): a straight path along every border between its blocks, nothing else; laid out like the chart
@@ -134,7 +153,10 @@ export class PathNetwork {
       else wetStreams(wetNow, r, true);
       // Paths: between neighbouring areas' centres (some pairs), meandering; and a dead end or two
       // in some areas, out to nothing in particular (a ruin, later).
-      const seen = new Set<string>();
+      // The network (Ed, 2026-11-03: "paths link each of these sites to the sites in adjacent areas"): every two touching areas
+      // with a site (a stone, a special site or home's dancefloor) joined, from the edge of one's clearing to the other's, by a
+      // draw of their own (so the lines above and the paths out to the buffer come out the same whether or not they're laid).
+      const seen = new Set<string>(), network = !!t.network, sited = (cx: number, cy: number) => map.playable(cx, cy) || !!map.special?.(cx, cy), lr = rng(map.seed * 7 + 4245);
       for (const [k, nbrs] of map.neighbours) {
         const [ax, ay] = k.split(",").map(Number);
         for (const nk of nbrs) {
@@ -142,16 +164,25 @@ export class PathNetwork {
           if (seen.has(pair)) continue;
           seen.add(pair);
           const [bx, by] = nk.split(",").map(Number);
+          if (network && sited(ax, ay) && sited(bx, by)) {
+            const ea = net?.ends(ax, ay), eb = net?.ends(bx, by);
+            if (!ea || !eb) continue;
+            const pts = this.link(ea, eb, lr, net!.keepOut);
+            if (pts === "meet") this.meet.push(pair);
+            else if (pts) this.lines.push({ kind: "path", pts, half: t.pathHalf, link: k < nk ? [k, nk] : [nk, k] });
+            else this.unlinked.push(pair);
+            continue;
+          }
           if (!map.playable(bx, by) && !map.inBuffer(bx, by)) continue; // (where she can fly)
           if (map.shape === "circle" && !map.playable(ax, ay) && !map.inBuffer(ax, ay)) continue;
           if (hash2(ax * 31 + bx, ay * 31 + by, map.seed + 811) > t.linkChance) continue;
           const [a, c] = this.trim(map.siteOf(ax, ay), map.siteOf(bx, by), this.clearOf(ax, ay), this.clearOf(bx, by));
-          if (a) this.lines.push({ kind: "path", pts: this.meander(a, c, r), half: t.pathHalf });
+          if (a) this.lines.push({ kind: "path", pts: footpath(a, c, r), half: t.pathHalf });
         }
         if (hash2(ax, ay, map.seed + 813) < t.deadEndChance) {
           const s = map.siteOf(ax, ay), a = r() * Math.PI * 2, d = 30 + r() * 40, k = this.clearOf(ax, ay);
           const from = { x: s.x + Math.cos(a) * k, z: s.z + Math.sin(a) * k };
-          this.lines.push({ kind: "path", pts: this.meander(from, { x: from.x + Math.cos(a) * d, z: from.z + Math.sin(a) * d }, r), half: t.pathHalf, deadEnd: true });
+          this.lines.push({ kind: "path", pts: footpath(from, { x: from.x + Math.cos(a) * d, z: from.z + Math.sin(a) * d }, r), half: t.pathHalf, deadEnd: true });
         }
       }
     }
@@ -180,10 +211,10 @@ export class PathNetwork {
     const out: PathLine[] = [], remap = new Map<number, number[]>();
     let cut = false;
     this.lines.forEach((l, li) => {
-      const keep = l.half + 8, ids: number[] = [];
+      const keep = l.half + 8, lakeKeep = l.link ? l.half + LINK_SHORE : keep, ids: number[] = [];
       let run: [number, number][] = [];
       const flush = () => { if (run.length >= 2) { ids.push(out.length); out.push({ ...l, pts: run }); } run = []; };
-      for (const p of l.pts) { if ((!B || B.intoSand(p[0], p[1]) <= -keep) && (!lakes || !onLake(lakes, p[0], p[1], keep + shore))) run.push(p); else { cut = true; flush(); } } // (and short of a lake's shore: rules/lakes.ts)
+      for (const p of l.pts) { if ((!B || B.intoSand(p[0], p[1]) <= -keep) && (!lakes || !onLake(lakes, p[0], p[1], lakeKeep + shore))) run.push(p); else { cut = true; flush(); } } // (and short of a lake's shore: rules/lakes.ts)
       flush();
       remap.set(li, ids);
     });
@@ -310,7 +341,66 @@ export class PathNetwork {
     return [{ x: a.x + (dx / len) * ka, z: a.z + (dz / len) * ka }, { x: b.x - (dx / len) * kb, z: b.z - (dz / len) * kb }];
   }
 
-  /** A wandering path from a to b: a curve through a few points nudged sideways by noise. */
+  /** A path of the network from one site's clearing to the other's (null: no way round the lakes or the beach between them; "meet":
+   *  the two clearings all but touch, no path needed): a wandering path between the clearings' edges, its points pushed out of
+   *  every circle in keepOut on the way (smoothed after), then round the lakes along their shores, as the followers go
+   *  (rules/travel.ts). */
+  private link(a: SiteEnd, b: SiteEnd, r: () => number, keepOut: readonly { x: number; z: number; r: number }[]): [number, number][] | null | "meet" {
+    const dx = b.x - a.x, dz = b.z - a.z, len = Math.hypot(dx, dz);
+    if (len - a.r - b.r < 4) return "meet";
+    const ux = dx / len, uz = dz / len, half = this.map.tuning.paths.pathHalf;
+    // (its ends at the clearings' edges, toward each other; one by a lake brought ashore first, so the way can bend round it)
+    const B = this.map.bounds, keep = half + LINK_SHORE, shore = lakeKnobs(this.map.tuning).shore, pad = keep + shore + 1.5;
+    const from = ashore(B, a.x + ux * a.r, a.z + uz * a.r, pad), to = ashore(B, b.x - ux * b.r, b.z - uz * b.r, pad);
+    const x0 = Math.min(a.x, b.x) - 40, x1 = Math.max(a.x, b.x) + 40, z0 = Math.min(a.z, b.z) - 40, z1 = Math.max(a.z, b.z) + 40;
+    const near = keepOut.filter(o => o.x + o.r > x0 && o.x - o.r < x1 && o.z + o.r > z0 && o.z - o.r < z1);
+    // Round what it must keep out of (the dancefloor, the treehouse, the stones and special sites on the way): a corner put out past
+    // the deepest one it runs into, beside it on the side the path passed, and the corners rounded again; a few times over.
+    const P = footCorners(from, to, r);
+    let pts = rounded(P);
+    for (let k = 0; k < 8; k++) {
+      let worst: { o: (typeof near)[number]; p: [number, number]; d: number } | null = null;
+      for (let i = 1; i < pts.length - 1; i++) for (const o of near) {
+        const p = pts[i], d = Math.hypot(p[0] - o.x, p[1] - o.z) - (o.r + half + 1);
+        if (d < 0 && (!worst || d < worst.d)) worst = { o, p, d };
+      }
+      if (!worst) break;
+      const { o, p } = worst, ex = p[0] - o.x, ez = p[1] - o.z, e = Math.hypot(ex, ez), nx = e > 1e-6 ? ex / e : -uz, nz = e > 1e-6 ? ez / e : ux, R = o.r + half + 6;
+      const v: [number, number] = [o.x + nx * R, o.z + nz * R], at = (q: readonly [number, number]) => (q[0] - from.x) * ux + (q[1] - from.z) * uz;
+      // (in order along the way; a corner already within FOOT_GAP / 2 of it gives way to it, so no two crowd into a kink)
+      let i = 1;
+      while (i < P.length - 1 && at(P[i]) < at(v)) i++;
+      if (i < P.length - 1 && Math.hypot(P[i][0] - v[0], P[i][1] - v[1]) < FOOT_GAP / 2) P.splice(i, 1, v);
+      else if (i > 1 && Math.hypot(P[i - 1][0] - v[0], P[i - 1][1] - v[1]) < FOOT_GAP / 2) P.splice(i - 1, 1, v);
+      else P.splice(i, 0, v);
+      pts = rounded(P);
+    }
+    // Round the lakes: kept LINK_SHORE metres more than its half off the bare shore (clipToBeach cuts it there), along the shore where it crosses.
+    const wet = (q: [number, number][]) => q.some(p => onLake(B, p[0], p[1], keep + shore));
+    if (B.lakes && wet(pts)) {
+      // (first, one wide bend round it: a corner out to either side of the way's middle, nearer first, clear of the keep-outs too)
+      const mx = (from.x + to.x) / 2, mz = (from.z + to.z) / 2, clear = (q: [number, number][]) => q.every((p, i) => i === 0 || i === q.length - 1 || near.every(o => Math.hypot(p[0] - o.x, p[1] - o.z) >= o.r + half + 1));
+      bend: for (const off of [25, 40, 60, 85, 115, 150]) for (const side of [1, -1]) {
+        const q = rounded([[from.x, from.z], [mx - uz * off * side, mz + ux * off * side], [to.x, to.z]]);
+        if (!wet(q) && clear(q)) { pts = q; break bend; }
+      }
+    }
+    if (B.lakes && wet(pts)) {
+      for (let k = 0; k < 4 && pts.some(p => onLake(B, p[0], p[1], keep + shore)); k++) pts = shoreDetours(B, pts.map(p => ashore(B, p[0], p[1], pad + k)), pad + k, 2).map(p => [p.x, p.z]);
+      if (pts.some(p => onLake(B, p[0], p[1], keep + shore))) return null;
+      // (the way round eased, its kinks where it meets the shore smoothed while it keeps off the water)
+      for (let k = 0; k < 6; k++) {
+        const eased = pts.map((p, i): [number, number] => (i === 0 || i === pts.length - 1 ? p : [p[0] * 0.5 + (pts[i - 1][0] + pts[i + 1][0]) * 0.25, p[1] * 0.5 + (pts[i - 1][1] + pts[i + 1][1]) * 0.25]));
+        if (eased.some(p => onLake(B, p[0], p[1], keep + shore))) break;
+        pts = eased;
+      }
+    }
+    const sand = beachOf(B, this.map.tuning);
+    if (sand && pts.some(p => sand.intoSand(p[0], p[1]) > -(half + 8))) return null;
+    return pts;
+  }
+
+  /** A wandering line from a to b (the streams'): a curve through a few points nudged sideways by noise, bending to alternate sides. */
   private meander(a: { x: number; z: number }, b: { x: number; z: number }, r: () => number): [number, number][] {
     const dx = b.x - a.x, dz = b.z - a.z, len = Math.max(1, Math.hypot(dx, dz)), n = Math.max(2, Math.round(len / 25));
     const ctrl: [number, number][] = [[a.x, a.z]];
@@ -355,6 +445,55 @@ export class PathNetwork {
   railBroken(x: number, z: number): boolean {
     return vnoise(x / 60, z / 60, this.map.seed + 817) < this.map.tuning.paths.railBroken;
   }
+}
+
+/** A footpath's line from a to b (Ed, 2026-11-03: "Now that we will need a lot more footpaths ... They should also have straight
+ *  sections, and gentle curves."): straight runs joined by wide bends, never a zig-zag (footCorners, then rounded). Seeded by `r`. */
+export function footpath(a: { x: number; z: number }, b: { x: number; z: number }, r: () => number, step = 2): [number, number][] {
+  return rounded(footCorners(a, b, r), step);
+}
+
+/** A footpath's corners (its straight runs' ends), a to b: none on a way under 40 m; else one to three, about one a FOOT_RUN metres
+ *  and (but for a short way's one) never nearer than FOOT_GAP to each other or the ends, each a little to one side of the straight
+ *  line (at most FOOT_SWAY metres, and a fifth of the run before it), so no turn is sharp and no path ruler-straight. */
+export const FOOT_RUN = 80, FOOT_GAP = 45, FOOT_SWAY = 14, FOOT_RADIUS = 45;
+export function footCorners(a: { x: number; z: number }, b: { x: number; z: number }, r: () => number): [number, number][] {
+  const dx = b.x - a.x, dz = b.z - a.z, len = Math.max(1e-6, Math.hypot(dx, dz)), ux = dx / len, uz = dz / len;
+  const most = Math.max(1, Math.min(3, Math.floor(len / FOOT_GAP) - 1)), want = Math.round((len / FOOT_RUN) * (0.6 + 0.8 * r()));
+  const n = len < 40 ? 0 : Math.max(1, Math.min(most, want)), run = len / (n + 1), sway = Math.min(FOOT_SWAY, run / 5), P: [number, number][] = [[a.x, a.z]];
+  for (let i = 1; i <= n; i++) {
+    const along = (i + (r() - 0.5) * 0.3) * run, off = (r() < 0.5 ? -1 : 1) * (0.4 + 0.6 * r()) * sway;
+    P.push([a.x + ux * along - uz * off, a.z + uz * along + ux * off]);
+  }
+  P.push([b.x, b.z]);
+  return P;
+}
+
+/** A line through corners P, every corner rounded off by a circular arc of FOOT_RADIUS metres (smaller only where its runs are too
+ *  short to hold it: its tangent points no more than 45 % along either run), sampled every `step` metres; its ends P's. */
+export function rounded(P: readonly [number, number][], step = 2): [number, number][] {
+  const out: [number, number][] = [];
+  const line = (p: [number, number], q: [number, number]) => {
+    const L = Math.hypot(q[0] - p[0], q[1] - p[1]), m = Math.max(1, Math.ceil(L / step));
+    for (let k = out.length ? 1 : 0; k <= m; k++) out.push([p[0] + ((q[0] - p[0]) * k) / m, p[1] + ((q[1] - p[1]) * k) / m]);
+  };
+  let from = P[0];
+  for (let i = 1; i < P.length - 1; i++) {
+    const p = P[i], ax = p[0] - P[i - 1][0], az = p[1] - P[i - 1][1], bx = P[i + 1][0] - p[0], bz = P[i + 1][1] - p[1];
+    const la = Math.hypot(ax, az), lb = Math.hypot(bx, bz), turn = Math.acos(Math.max(-1, Math.min(1, (ax * bx + az * bz) / (la * lb || 1))));
+    if (turn < 1e-3 || la < 1e-6 || lb < 1e-6) continue;
+    const t = Math.min(FOOT_RADIUS * Math.tan(turn / 2), 0.45 * la, 0.45 * lb), R = t / Math.tan(turn / 2);
+    const t0: [number, number] = [p[0] - (ax / la) * t, p[1] - (az / la) * t], t1: [number, number] = [p[0] + (bx / lb) * t, p[1] + (bz / lb) * t];
+    line(from, t0);
+    // (the arc: its centre R off the first run toward the turn's inside, swept through the turn)
+    const side = Math.sign(ax * bz - az * bx) || 1, cx = t0[0] - (az / la) * R * side, cz = t0[1] + (ax / la) * R * side;
+    const a0 = Math.atan2(t0[1] - cz, t0[0] - cx), steps = Math.max(1, Math.ceil((R * turn) / step));
+    for (let k = 1; k <= steps; k++) { const ang = a0 + side * turn * (k / steps); out.push([cx + Math.cos(ang) * R, cz + Math.sin(ang) * R]); }
+    out[out.length - 1] = t1;
+    from = t1;
+  }
+  line(from, P[P.length - 1] as [number, number]);
+  return out;
 }
 
 /** Where segments ab and cd cross, if they do. */
