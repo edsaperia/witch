@@ -505,32 +505,6 @@ export class View {
     } else P.behindAt = null;
   }
 
-  /** What leaving the house draws for the first time, drawn once ahead while she's in it (Ed's playtest, 2026-11-03, "long freeze after
-   *  leaving the balcony"; Ed: "art loading for the outside world ... should ideally happen while she is in the treehouse"): the
-   *  tilt-shift, off indoors (houseTilt), its targets made and its passes drawn off-screen at no strength (Post.warmTilt), and the sky
-   *  over the bend and the clouds, hidden till she lifts off, drawn once into the scene's target after the frame's picture is out
-   *  (the next frame clears it). Once a night, and again for new targets after a resize: one frame's small slice, after its own draw. */
-  private outsideWarm: { sky: Sky; w: number; h: number } | null = null;
-  private warmOutside(): boolean {
-    const W = this.outsideWarm;
-    if (W && W.sky === this.sky && W.w === this.width && W.h === this.height) return false;
-    this.outsideWarm = { sky: this.sky, w: this.width, h: this.height };
-    this.post.warmTilt();
-    const R = this.renderer, was = R.getRenderTarget(), ac = R.autoClear;
-    R.setRenderTarget(this.post.sceneTarget); R.autoClear = false;
-    try {
-      for (const m of [this.sky.mesh, this.clouds.mesh]) {
-        // (the clouds with one instance, none being listed indoors: its slot as last left, or of no size, drawing next to nothing)
-        const geo = (m.geometry as THREE.InstancedBufferGeometry).isInstancedBufferGeometry ? m.geometry as THREE.InstancedBufferGeometry : null;
-        const n = geo?.instanceCount ?? 0, shown = m.visible;
-        m.visible = true; if (geo && !n) geo.instanceCount = 1;
-        try { R.render(m, this.camera); } finally { m.visible = shown; if (geo) geo.instanceCount = n; }
-      }
-    }
-    finally { R.autoClear = ac; R.setRenderTarget(was); }
-    return true;
-  }
-
   /** What the treehouse hides of the forest, left undrawn (render/hiz.ts; the perf pass, 2026-10-23): the Ent's solid pass on its
    *  occluder layer, the chain built while the camera is within HIZ_NEAR metres of the treehouse (the decks, the balcony, the house,
    *  flying round it), off elsewhere. `?hiz=0` never builds it (to compare). */
@@ -2027,10 +2001,6 @@ export class View {
     this.stats.sceneryRadius = this.budget.radius; this.stats.fps = this.budget.fps;
     this.stats.scenery = this.stats.trees + this.stats.bushes;
     this.stats.gameplay = this.stats.creatures + this.propBatch.count + this.soundBatch.count + (this.partyView.gen?.count ?? 0);
-    if (this.game.witch.perch && this.post.tilt <= 0 && !this.shaderDrawStatus.active) { // (after the frame's own counts; its own time alone)
-      const t0 = performance.now();
-      if (this.warmOutside()) this.ms.outside = performance.now() - t0;
-    }
   }
 }
 

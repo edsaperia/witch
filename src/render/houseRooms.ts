@@ -9,7 +9,7 @@
 // the object she's at, its name and E; a placeholder's line in a bubble a few seconds when she uses it; the bed's ring filling as
 // E is held (rules/houseRooms.ts stepBed).
 import { approachStrength, houseApproachDistance, showHouseLayer } from "../rules/treehouseLook";
-import { setApproachDepth, PROGRAM_TWINS, ROOMS_MATERIAL, FLOOR_MATERIAL, TERRACE_MATERIAL } from "./treehouseLook";
+import { setApproachDepth } from "./treehouseLook";
 import { HOUSE_FLOOR_OVERLAY_ORDER } from "./houseWitchPass";
 import APPROACH_OUTLINE from "../../config/house/outline.json";
 import { NEED_BAG } from "../rules/kit";
@@ -172,8 +172,7 @@ class Part {
  *  (View.compileAll), as the beach's (render/ground.ts): the floors and the furniture take their textured materials only as their
  *  pictures come back from the art workers, often after the start, and a program's first draw waits for its link there (the
  *  coordinator, 2026-10-26: 2 to 10 s held at the start in some cold starts). Each the same material as its own, with a texel for a map:
- *  the floor's, the Terrace's and the furniture's (the Workshop's pictures and last night's clothes share the furniture's), and the
- *  rooms' quads as the flight preview draws them (render/treehouseLook.ts PROGRAM_TWINS). */
+ *  the floor's, the Terrace's and the furniture's (the Workshop's pictures and last night's clothes share the furniture's). */
 function programTwins(): THREE.Mesh[] {
   const tex = new THREE.DataTexture(new Uint8Array(4), 1, 1, THREE.RGBAFormat);
   tex.colorSpace = THREE.NoColorSpace; tex.needsUpdate = true;
@@ -181,7 +180,11 @@ function programTwins(): THREE.Mesh[] {
   geo.setAttribute("position", new THREE.BufferAttribute(new Float32Array(12), 3));
   geo.setAttribute("uv", new THREE.BufferAttribute(new Float32Array([0, 0, 1, 0, 1, 1, 0, 1]), 2));
   geo.setIndex([0, 1, 2, 0, 2, 3]);
-  return PROGRAM_TWINS.map(({ params, textured }) => { const m = new THREE.Mesh(geo, new THREE.MeshBasicMaterial({ ...params, ...(textured ? { map: tex } : {}) })); m.visible = false; m.frustumCulled = false; return m; });
+  return [
+    { map: tex, transparent: true, depthWrite: false, depthTest: false, side: THREE.DoubleSide }, // (the floor's)
+    { map: tex, alphaTest: 0.5, side: THREE.DoubleSide }, // (the Terrace's)
+    { map: tex, transparent: true, alphaTest: 0.5, side: THREE.DoubleSide, depthWrite: false, depthTest: false }, // (a piece of furniture's)
+  ].map(o => { const m = new THREE.Mesh(geo, new THREE.MeshBasicMaterial(o)); m.visible = false; m.frustumCulled = false; return m; });
 }
 
 export class HouseRoomsView {
@@ -190,7 +193,7 @@ export class HouseRoomsView {
   // (a placeholder's floor plan over the picture: in the see-through pass (three.js draws every solid thing first), after the
   // trees' see-through passes, 11 and 19.9, before her, 19.95 in a room (render/view/witch.ts), so the trees round the house never
   // hide it nor it her; no depth, their own quads in order, the far ones first, floors, walls, then the objects)
-  private readonly mat = new THREE.MeshBasicMaterial(ROOMS_MATERIAL);
+  private readonly mat = new THREE.MeshBasicMaterial({ vertexColors: true, side: THREE.DoubleSide, transparent: true, depthWrite: false, depthTest: false });
   // (the rooms' quads in four parts: behind the hub and in front of it, each split again round its furniture, so what stands in
   // front of a room's floor and pieces, its near rail and its rim, layer 3, is drawn after them; and a fifth, the hats lying on
   // the hats' floor, on top of their own piece: hatsOrder)
@@ -242,7 +245,7 @@ export class HouseRoomsView {
   /** The Studio mic's cone of light from its spot lamp (render/spotlight.ts), drawn just after the mic. */
   private readonly spot = new Spotlight();
   // (the Ent's own floors, painted: render/houseArt.ts; a grid laid on the house's plane, an art pixel a texel)
-  private readonly floor = new THREE.Mesh(new THREE.BufferGeometry(), new THREE.MeshBasicMaterial(FLOOR_MATERIAL));
+  private readonly floor = new THREE.Mesh(new THREE.BufferGeometry(), new THREE.MeshBasicMaterial({ transparent: true, depthWrite: false, depthTest: false, side: THREE.DoubleSide }));
   readonly loadingFloor = new THREE.Mesh(new THREE.BufferGeometry(), new THREE.ShaderMaterial({
     uniforms: { ...LIGHT_UNIFORMS, uLoadingOpacity: { value: 1 } }, transparent: true, depthWrite: false, side: THREE.DoubleSide,
     vertexShader: `varying vec3 vWorld; void main() { vec4 p = modelMatrix * vec4(position, 1.0); vWorld = p.xyz; gl_Position = projectionMatrix * viewMatrix * p; }`,
@@ -256,7 +259,7 @@ export class HouseRoomsView {
   private floorCame: FloorPixels | null = null;
   // (the Terrace's own floor apart, in the solid pass, depth-tested, the same grid: she and the Ent's near half, its decks, stand on
   // it in front, where in the see-through pass it would be drawn over them; render/view/witch.ts draws her there, on the Terrace)
-  private readonly terraceFloor = new THREE.Mesh(this.floor.geometry, new THREE.MeshBasicMaterial(TERRACE_MATERIAL));
+  private readonly terraceFloor = new THREE.Mesh(this.floor.geometry, new THREE.MeshBasicMaterial({ alphaTest: 0.5, side: THREE.DoubleSide }));
   /** The floors' own map from the house's plan into the world this frame (render/crown.ts lays the great oak's crown over them by
    *  it, in place of the rooms' leaf roofs: Ed, 2026-10-24), null while she isn't in the house. */
   plan: PlanMap | null = null;

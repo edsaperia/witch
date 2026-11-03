@@ -30,6 +30,7 @@ import { chartOrder, islandPhase, OUTLINE_STEP } from "./chartWarm";
 import { chartChoice, chartOpensOn, type ChartHere } from "./sail";
 import { bindings, type ActionId } from "../platform/bindings";
 import { chartHint, type HintDevice } from "../ui/deviceHints";
+import { freshHref, localStore } from "../platform/storageScope";
 
 export type ChartMode = "look" | "sail" | "miniature";
 /** Where the chart's flight hands over to the game's dive (the tuning's arrive.handoff; Ed, 2026-10-24: "maybe it comes from further
@@ -202,11 +203,11 @@ export function mountChart(host: HTMLElement, opts: ChartViewOptions): ChartView
   // A 🧭 over each island she's found and not been to (Ed, 2026-10-26: "you see one per unvisited island"; render/chart/chartPin.ts),
   // till she's been there. Not on the map table's miniature.
   const pins = new Map<string, ChartPin>();
-  let sailAny = (() => { try { return localStorage.getItem(SAIL_ANY) === "1"; } catch { return false; } })();
+  let sailAny = (() => { try { return localStore()?.getItem(SAIL_ANY) === "1"; } catch { return false; } })();
   const worldNow = () => opts.world ?? save.world;
   /** The island she's on (in the world shown): choosing it takes her back to the night, not a new one. */
   const isHere = (id: string | null) => !!id && chartChoice(opts.here, id, worldNow()) === "stay";
-  const sailHref = (island: string) => `./?island=${island}${opts.world != null ? `&world=${worldNow()}` : ""}`;
+  const sailHref = (island: string) => freshHref(`./?island=${island}${opts.world != null ? `&world=${worldNow()}` : ""}`); // (a fresh game's ?fresh= carried: platform/storageScope.ts)
   // Sailing: the chart flies in to the island (Ed, 2026-10-12: "you zoom into the map into the island you chose"), then sails,
   // its flight's end kept for the game to carry on from (app/arrival.ts); any key or tap skips to the end.
   // The night's seed is chosen as the island is (app/landingBake.ts): its area types drawn ahead while she looks and flies in.
@@ -452,7 +453,7 @@ export function mountChart(host: HTMLElement, opts: ChartViewOptions): ChartView
   const showSailAny = () => { const b = $("sail-any"); b.setAttribute("aria-pressed", String(sailAny)); b.textContent = sailAny ? "🧪 Test: sailing anywhere (on)" : "🧪 Test: sail anywhere"; };
   showSailAny();
   $("sail-any").addEventListener("click", () => {
-    sailAny = !sailAny; try { localStorage.setItem(SAIL_ANY, sailAny ? "1" : "0"); } catch { /* storage blocked */ }
+    sailAny = !sailAny; try { localStore()?.setItem(SAIL_ANY, sailAny ? "1" : "0"); } catch { /* storage blocked */ }
     showSailAny(); const was = chart.selected; build(); choose(was);
   });
 

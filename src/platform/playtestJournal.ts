@@ -1,6 +1,7 @@
 // Incremental, per-page journal. A committed IDB transaction survives reload; an in-flight write cannot be guaranteed after a hard kill.
 import { LogRecords, readableRecords, recordBytes, type LogRecord, type LogLevel } from "./logRecords";
 import { RECORD_INPUTS } from "./diagnosticMode";
+import { localStore, pageIdb, sessionStore } from "./storageScope";
 export interface LogContext { build: string; t: number | null; island: string }
 export interface NotableEvent extends LogContext { at: number; kind: string; message: string; data?: unknown }
 export interface JournalEntry extends LogRecord { page: string }
@@ -205,13 +206,13 @@ export function beginBrowserJournal(build: string): PlaytestJournal | undefined 
   let id: string;
   try { id = crypto.randomUUID(); } catch { return undefined; }
   let session = id;
-  try { session = sessionStorage.getItem("witch.log-session") || id; sessionStorage.setItem("witch.log-session", session); } catch { /* separate page-only identity */ }
+  try { const s = sessionStore(); session = s?.getItem("witch.log-session") || id; s?.setItem("witch.log-session", session); } catch { /* separate page-only identity */ }
   const key = `witch.playtest-active:${location.pathname}:${session}`;
   const markers: MarkerStore = { read: () => {
-    const value = JSON.parse(localStorage.getItem(key) ?? "null") as JournalMarker | null;
+    const value = JSON.parse(localStore()?.getItem(key) ?? "null") as JournalMarker | null;
     return value && typeof value.owner === "string" && typeof value.active === "boolean" && Array.isArray(value.compact) ? { ...value, compact: value.compact.slice(-50) } : null;
-  }, write: marker => localStorage.setItem(key, JSON.stringify(marker)) };
-  active = new PlaytestJournal(location.pathname, session, id, build, browserJournalStore(globalThis.indexedDB), markers);
+  }, write: marker => { const s = localStore(); if (!s) throw new Error("Storage unavailable"); s.setItem(key, JSON.stringify(marker)); } };
+  active = new PlaytestJournal(location.pathname, session, id, build, browserJournalStore(pageIdb()!), markers);
   window.addEventListener("pagehide", event => { if (event.persisted) void active?.flush(); else active?.pageHidden(); });
   document.addEventListener("visibilitychange", () => { if (document.hidden) void active?.flush(); });
   return active;

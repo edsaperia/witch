@@ -4,6 +4,7 @@
 // look (render/houseRooms.ts), for ANCHOR_HINT_FOR seconds. Once on this browser (localStorage witch.hint.anchor; blocked: once a page).
 import type { Game } from "../rules/game";
 import { weighingChains } from "../rules/chains";
+import { localStore } from "../platform/storageScope";
 
 export const ANCHOR_HINT = "Adults and legends are too heavy to fly with. Put their sigils down to take off.";
 export const ANCHOR_HINT_KEY = "witch.hint.anchor";
@@ -11,7 +12,7 @@ export const ANCHOR_HINT_KEY = "witch.hint.anchor";
 export const ANCHOR_HINT_FOR = 4;
 
 type Store = Pick<Storage, "getItem" | "setItem">;
-const store = (): Store | null => { try { return typeof localStorage === "undefined" ? null : localStorage; } catch { return null; } };
+const store = (): Store | null => localStore();
 let seen = false, shownAt = -Infinity, box: HTMLDivElement | null = null;
 
 /** Whether this refusal should bring the hint: hers, with an adult anchoring her (`anchored`), and not yet seen. Marks it seen. */

@@ -38,6 +38,8 @@ What the night is: its seed, island, world, opening, sail and her kit.
 | `wave=<n>` / `wave=off` | The repro link: the night brought on to wave n before play; off holds the waves where they are (as pulse=off). | 2026-10-07 | app/gameParams.ts, app/repro.ts |
 | `world=<n>` / `world=<text>` | The campaign's world seed (every island's shape) for this load. | 2026-10-11 | app/chartPage.ts, app/linkParams.ts, app/sail.ts, main.ts |
 | `resume=0` / `resume=1` | Disable night saves, or explicitly enable them on a debug or automated link. | 2026-10-29 | app/nightSave.ts |
+| `fresh=1` | A brand-new player's very first morning, every time, on the newest deploy: a throwaway storage namespace of its own (nothing of this browser's saves read or written; settings, controls and the telephone's identity at their defaults), the boot writing ?fresh=<token> so a reload, sail or night in it carries on; ?fresh=1 again starts another. *Decision: Ed, 2026-11-03: "can you make a link that always starts a fresh game with the latest version?".* | 2026-11-03 | index.html, platform/storageScope.ts |
+| `latest=<build>` | Written by a fresh game's boot when version.json shows a newer build than the page running: the one reload to it, past the browser's cached page; a link with it never reloads again, and the boot takes it off. | 2026-11-03 | app/newBuild.ts, main.ts |
 
 ## Looks and their costs
 

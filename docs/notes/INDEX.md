@@ -261,6 +261,7 @@ says what each note covers.
 
 ## [The run](run.md)
 
+- Fresh game link
 - What's new in Settings
 - Direct play after loading
 - The phases of a run
@@ -309,6 +310,7 @@ says what each note covers.
 - Compatible mushroom extension (PR #1523)
 - Borrowed visits (PR #1538)
 - Deleting saves and Reset everything
+- Fresh game
 
 ## [Sound effects](sound.md)
 
