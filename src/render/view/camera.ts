@@ -1,6 +1,7 @@
 // The camera each frame (moved out of view.ts's render, unchanged): the hills' window and the ride under her and the camera,
 // the world's bend, the camera snapped to the pixel grid along the screen's axes, lifted over hills and shaken by a legend's quake.
 import * as THREE from "three";
+import { LIGHT_UNIFORMS } from "../lighting";
 import type { View } from "../view";
 import { poseOf } from "../../rules/game";
 import { coastView, gazeAt } from "../../rules/camera";
@@ -10,7 +11,7 @@ import { moonInSky, skyDirection, skyOnScreen } from "../../rules/telescope";
 import { moonKnobs, type ChartKnobs } from "../chart/moon";
 import { constellationFor } from "../../rules/constellations";
 import { loanFind, nightFind } from "../../rules/finds";
-import { groundHeight, HEIGHT_UNIFORMS } from "../height";
+import { creaseHeight, groundHeight, HEIGHT_UNIFORMS } from "../height";
 import { SPRITE_UNIFORMS } from "../sprites";
 import { updateFrustum } from "./culling";
 import { potionBend, potionStrength, potionCamera, vertigoAmount, tripIndicatorStrength, wormsEyeCamera } from "../potionEffects";
@@ -65,6 +66,11 @@ export function placeCamera(v: View, time: number, pose: ReturnType<typeof poseO
   THERMAL_UNIFORMS.uThermalDangerGain.value = thermal.dangerGain;
   v.ground.thermalVision(heat);
   v.post.potionEdges = potionStrength(g, 'aurora-outlines');
+  v.post.potionSilentFilm = potionStrength(g, 'silent-film');
+  const folds = potionSettings('folded-space'), height = potionStrength(g, 'folded-space') * folds.height;
+  HEIGHT_UNIFORMS.uWorldFold.value.set(height, folds.period, height ? creaseHeight(g.witch.x, g.witch.z, height, folds.period) : 0);
+  const contour = potionSettings('contour-dream');
+  LIGHT_UNIFORMS.uContourDream.value.set(potionStrength(g, 'contour-dream'), contour.interval, contour.width);
   v.post.potionWobble = tripIndicatorStrength(g);
   v.post.potionTime = g.clock.time;
   const a = (pose.angle * Math.PI) / 180;

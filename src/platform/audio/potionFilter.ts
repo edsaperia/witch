@@ -10,6 +10,15 @@ export function potionFilterState(g: Game) {
   const p = potionSettings('trip-audio');
   const amount = recipe && !['night-vision', 'heat-vision'].includes(recipe.effect)
     ? effectEnvelope(trip, g.clock.time) * p.mix : 0;
+  if (amount > 0 && recipe?.effect === 'silent-film') return { amount, high: 480, low: 2400, gain: .88 };
+  if (amount > 0 && recipe?.effect === 'folded-space') {
+    const phase = (.8 * g.witch.x + .6 * g.witch.z) / potionSettings('folded-space').period;
+    return { amount, high: 80, low: 2200 + 1600 * Math.cos(phase * 2 * Math.PI), gain: 1 };
+  }
+  if (amount > 0 && recipe?.effect === 'contour-dream') {
+    const step = Math.floor(g.witch.lift * 4);
+    return { amount, high: 120, low: 1700 * 2 ** (step * .45), gain: 1 };
+  }
   const small = recipe?.effect === 'miniature';
   if (recipe?.effect === 'the-forest-counts' && amount > 0) {
     const index = forestCountStep(g).index, depth = potionSettings('the-forest-counts').soundDepth;

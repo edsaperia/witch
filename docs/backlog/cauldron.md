@@ -76,12 +76,12 @@ The status index checks the requests below against prototype `ab06904b` and cite
 | Trip: Heat Vision | **Built** | #1531; semantic creature heat and octave/audio routing; first live version unverified |
 | Trip suggestion: Fisheye | — | No implementation found for this request; original proposal remains unmarked. |
 | Trip suggestion: Synaesthesia | — | No implementation found for this request; original proposal remains unmarked. |
-| Trip suggestion: Silent Film | — | No implementation found for this request; original proposal remains unmarked. |
+| Trip suggestion: Silent Film | **Built** | Recipe #56 and Potion Lab controls. |
 | Trip suggestion: Masterplan | — | No implementation found for this request; original proposal remains unmarked. |
-| Trip suggestion: Contour Dream | — | No implementation found for this request; original proposal remains unmarked. |
+| Trip suggestion: Contour Dream | **Built** | Recipe #59 and Potion Lab controls. |
 | Trip suggestion: Bottomless | — | No implementation found for this request; original proposal remains unmarked. |
 | Trip: Aurora Outlines | **Built** | #1523 current recipe/renderer implementation; `render/potionEffects.ts`, `rules/potionSettings.ts`; first live version unverified |
-| Trip suggestion: Folded Space | — | No implementation found for this request; original proposal remains unmarked. |
+| Trip suggestion: Folded Space | **Built** | World-space creases, recipe #62. |
 | Trip suggestion: Sliced World | — | No implementation found for this request; original proposal remains unmarked. |
 | Trip: The Audience | **Built** | #1535; watching-tree lean/lag and shared audio; first live version unverified |
 | Trip suggestion: Concertina | — | No implementation found for this request; original proposal remains unmarked. |
@@ -313,10 +313,10 @@ Captured 2026-10-30. Numbers continue the original list for reference, **not rec
 
 57. **Masterplan** (Ed-requested): see how packs intend to move and attack: targets, destination slots, roles, formations and attack geometry. `rules/combat/packs.ts` computes directives; `rules/combat.ts` currently keeps the complete directive map local. Publish a read-only snapshot for drawing instead of recomputing decisions. Existing line/ribbon renderers are foundations, not a complete overlay. Show current intentions first; abandoned plans and long histories would require new recording. Related: Foresight, Whole Route.
 58. **Stiltwalkers** (Ed's Dalí reference; supersedes Tall Tales, 2026-10-31): familiar animal bodies stand impossibly high on very long legs tapering from normal hips to tiny feet. Preserve body silhouettes and ground foot targets; extend existing rigs to the other legged body types. Recipe29 and58 are aliases. Potion Lab controls leg length (default6×,1–12×) and foot thickness (default.08×,.02–.5×). Existing game-clock envelope restores normal anatomy over the final two minutes. Check joint reach, continuous limb sampling, pooled piece scales and taller culling bounds. Scratch elephant, fox and badger mockups were explored earlier; not shipped artwork. Current build uses the game's own anatomy rather than those mockups.
-59. **Contour Dream:** vivid contour bands run across ground, animals and scenery. Shared world-height/position shading; a new small colour formula. A renderer mock was explored, not a production implementation. Related: Woodcut.
+59. **Contour Dream:** vivid contour bands run across ground, animals and scenery. Shared world-height/position shading; a new small colour formula. Implemented in the shared surface lighting. Related: Woodcut.
 60. **Bottomless:** the ground becomes a starfield, with creatures apparently standing over an abyss. Ground-material substitution rather than moving their gameplay positions. A renderer mock was explored. Related: Skylight.
 61. **Aurora Outlines:** luminous coloured edges replace most solid surfaces. Scene/depth edge filtering and bloom; an extra filter, not a free material toggle. A renderer mock was explored. Related: Cartoon.
-62. **Folded Space:** repeated mirrored sectors fold the forest around her. Screen-coordinate remapping; a renderer mock of the existing Kaleidoscope idea. Keep as a variant unless its experience is distinct enough for another recipe.
+62. **Folded Space:** The landscape folds along fixed creases in the island. She can walk across the ridges and valleys.
 63. **Sliced World:** horizontal world-height bands disappear, revealing stacked slices through animals and scenery. Shared clipping formula; check depth/shadow passes. Related: Cutaway.
 64. **The Audience:** amplify existing watching-tree lean and lag until the forest visibly follows her passage. Implemented in PR #1535 using `render/view/frameUniforms.ts` and the existing `render/sprites.ts` shader: 35 m watching radius, 4 m lean, 2 s lag, all adjustable in the Potion Lab, fading with the standard trip envelope. No new art or drawing pass; visual judgement awaits Ed's trip report. Related: Watched, Walking Wood.
 65. **Concertina:** shared scene deformation squeezes and stretches distance sideways. Extend the height/bend drawing path; keep CPU anchors consistent. Not an existing bend-axis slider. Related: Ravine, Little Planet.
@@ -397,3 +397,5 @@ Current pixelation has two layers: low-resolution generated sprite artwork with 
 - A shared adjustable wobbly-edge trip indicator now accompanies every active trip, including coming-soon recipes (Ed, 2026-10-31), fading over the final two game minutes. Its settings and the implemented effects' controls are in the pause menu's Potion lab.
 
 - **The build-cost sort is accepted as it stands** (Ed, 2026-10-11).
+
+Ed, 3 November 2026. Alone: the drinker explores a private, harmless copy; friends keep playing and see her body lying on the grass. She wakes in that spot. Earsight: each sound launches a ripple that briefly reveals nearby ground, trees and animals.

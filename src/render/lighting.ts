@@ -63,6 +63,7 @@ export const LIGHT_UNIFORMS = {
   // The disco ball: position (w: 1 when present), and spin, speck density, brightness, reach.
   uDisco: { value: new THREE.Vector4() },
   uDiscoParams: { value: new THREE.Vector4() },
+  uContourDream: { value: new THREE.Vector3(0, 1.5, .12) },
   uDiscoColour: { value: new THREE.Vector3(1, 1, 1) },
   // The scenery budget (view.ts): scenery fades out between radius - fade and radius metres
   // from the haze centre (the witch). x: radius, y: fade.
@@ -118,7 +119,7 @@ uniform vec4 uPartyOver;
 // The party's over: how far switched off a party light at P is (0 on, 1 off), the front rippling out from home.
 float partyOff(vec3 P) { if (uPartyOver.z <= 0.0) return 0.0; return smoothstep(0.0, 1.0, (uPartyOver.z - distance(P.xz, uPartyOver.xy)) / uPartyOver.w); }
 uniform vec4 uDisco, uDiscoParams;
-uniform vec3 uDiscoColour;
+uniform vec3 uDiscoColour, uContourDream;
 uniform vec2 uScenery;
 uniform float uCanopyReach;
 
@@ -236,6 +237,12 @@ vec3 nightLightShaded(vec3 N, vec3 P, float moonK) {
       float spot = 0.18 * (1.0 - dd / uDiscoParams.w * 0.5);
       if (pick < uDiscoParams.y && dot(f, f) < spot * spot) l += uDiscoColour * uDiscoParams.z * (1.0 - dd / uDiscoParams.w);
     }
+  }
+  if (uContourDream.x > 0.) {
+    float level = P.y / uContourDream.y;
+    float line = 1. - smoothstep(0., uContourDream.z, abs(fract(level + .5) - .5));
+    vec3 ink = .55 + .45 * cos(floor(level + .5) * 1.17 + vec3(0., 2.1, 4.2));
+    l = mix(l, l * .5 + ink * (line * 3. + .12), uContourDream.x);
   }
   return softKnee(l);
 }

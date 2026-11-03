@@ -17,8 +17,11 @@ Built means implementation in this source checkpoint, not a new visual or audio 
 | Recipe 30: Thick Canopy | **Built** | #1523 current recipe/renderer implementation; `render/potionEffects.ts`, `rules/potionSettings.ts`; first live version unverified |
 | Recipe 45: Worm's Eye | **Built** | #1530; camera controls and shared audio; first live version unverified |
 | Recipe 52: Heat Vision | **Built** | #1531; semantic creature heat and octave/audio routing; first live version unverified |
+| Recipe 56: Silent Film | **Built** | Game-clock film grain, scratches, sepia and band-limited sound. |
 | Recipe 58: Stiltwalkers | **Built** | #1532; registry29/58, rig limb deformation; changelog v6523 |
+| Recipe 59: Contour Dream | **Built** | World-height lighting bands and height-sensitive sound. |
 | Recipe 61: Aurora Outlines | **Built** | #1523 current recipe/renderer implementation; `render/potionEffects.ts`, `rules/potionSettings.ts`; first live version unverified |
+| Recipe 62: Folded Space | **Built** | Shared terrain bend and position-dependent sound. |
 | Recipe 64: The Audience | **Built** | #1535; watching-tree lean/lag and shared audio; first live version unverified |
 | Recipe 73: The Forest Counts | **Built** | #1544; held beat scenery/audio; first live version unverified |
 | Recipe 101: Glow Up | **Built** | #1523 current recipe/renderer implementation; `render/potionEffects.ts`, `rules/potionSettings.ts`; first live version unverified |
@@ -38,7 +41,7 @@ All potions last ten minutes of game time, start at full strength on waking, and
 | 2 | blue + blue + purple | Moon Boots | Coming soon | Taking off becomes a huge bouncing leap with no steering in the air. |
 | 3 | blue + blue + pink | Echo | Coming soon | Neon copies trail behind her, echoing her movements and invitations. |
 | 4 | blue + blue + red | The Fear | Coming soon | Shadows become creatures, phantom footsteps surround her, and familiar animals loom twice their size. |
-| 5 | blue + blue + orange | Alone | Coming soon | Everyone vanishes and the world stands still. She can wander the empty forest. |
+| 5 | blue + blue + orange | Alone | Coming soon | She wanders a private, harmless copy of the island alone. Her body lies on the grass in the shared world until she wakes there. |
 | 6 | blue + blue + yellow | Walking Wood | Coming soon | The trees move around as if they can walk. |
 | 7 | blue + blue + green | Floor Becomes Sky | Implemented | Ground and small foliage disappear into the starfield, while the ground's bend still hides objects beyond the horizon. |
 | 8 | blue + blue + turquoise | Brass Band | Coming soon | Every instrument in the music becomes a trumpet. |
@@ -50,7 +53,7 @@ All potions last ten minutes of game time, start at full strength on waking, and
 | 14 | blue + purple + yellow | Mirror Forest | Coming soon | Every creature looks like her. |
 | 15 | blue + purple + green | Skinny Dip | Coming soon | Every party witch wears only her hat, boots and a few strategically placed sparkles. |
 | 16 | blue + purple + turquoise | Pride | Coming soon | She gets the party rainbow trail. |
-| 17 | blue + purple + white | Earsight | Coming soon | Only things that make sound are visible. |
+| 17 | blue + purple + white | Earsight | Coming soon | Each sound sends out a ripple that briefly reveals nearby ground, trees and animals. |
 | 18 | blue + pink + pink | Roadworks | Coming soon | The forest is covered in large traffic cones that shrink until they vanish. |
 | 19 | blue + pink + red | Mirrorball | Coming soon | The disco ball is huge. |
 | 20 | blue + pink + orange | Drift | Coming soon | The movement controls slowly rotate, with a dizzy look (gentle screen sway, swirling edges, colour smear). |
@@ -89,13 +92,13 @@ All potions last ten minutes of game time, start at full strength on waking, and
 | 53 | purple + purple + white | Fisheye | Coming soon | Extreme wide angle; she sees further, everything bends. |
 | 54 | purple + pink + pink | Synaesthesia | Coming soon | Colours pulse with the music, one colour per instrument, floods on the kick. |
 | 55 | purple + pink + red | Mirror Floor | Coming soon | The ground becomes a glossy mirror of everything above it. |
-| 56 | purple + pink + orange | Silent Film | Coming soon | Film grain and scratches, sepia, the world as a silent film. |
+| 56 | purple + pink + orange | Silent Film | Implemented | Film grain and scratches, sepia, the world as a silent film. |
 | 57 | purple + pink + yellow | Masterplan | Coming soon | See how packs intend to move and attack: targets, destination slots, roles, formations and attack geometry. |
 | 58 | purple + pink + green | Stiltwalkers | Implemented | Familiar animal bodies stand high on impossibly long legs, tapering from normal hips to tiny feet. |
-| 59 | purple + pink + turquoise | Contour Dream | Coming soon | Vivid contour bands run across ground, animals and scenery. |
+| 59 | purple + pink + turquoise | Contour Dream | Implemented | Vivid contour bands run across ground, animals and scenery. |
 | 60 | purple + pink + white | Bottomless | Coming soon | The ground becomes a starfield, with creatures apparently standing over an abyss. |
 | 61 | purple + red + red | Aurora Outlines | Implemented | Luminous coloured edges replace most solid surfaces. |
-| 62 | purple + red + orange | Folded Space | Coming soon | Repeated mirrored sectors fold the forest around her. |
+| 62 | purple + red + orange | Folded Space | Implemented | The landscape folds along fixed creases in the island. She can walk across the ridges and valleys. |
 | 63 | purple + red + yellow | Sliced World | Coming soon | Horizontal world-height bands disappear, revealing stacked slices through animals and scenery. |
 | 64 | purple + red + green | The Audience | Implemented | Amplify existing watching-tree lean and lag until the forest visibly follows her passage. |
 | 65 | purple + red + turquoise | Concertina | Coming soon | Shared scene deformation squeezes and stretches distance sideways. |

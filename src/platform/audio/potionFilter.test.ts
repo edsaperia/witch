@@ -4,8 +4,17 @@ import { POTION_RECIPES } from '../../rules/potionRecipes';
 import { resetPotionSettings, setPotionSetting } from '../../rules/potionSettings';
 import { PotionFilter, potionFilterState } from './potionFilter';
 import { newBeatClock } from '../../rules/beat';
-const game=(id:number,time=0)=>({clock:{time},beat:newBeatClock(120),witches:[{id:0}],mushrooms:{trips:{0:{key:POTION_RECIPES.find(r=>r.id===id)!.key,at:0,until:600}}}} as unknown as Game);
+const game=(id:number,time=0)=>({clock:{time},beat:newBeatClock(120),witch:{lift:0,x:0,z:0},witches:[{id:0}],mushrooms:{trips:{0:{key:POTION_RECIPES.find(r=>r.id===id)!.key,at:0,until:600}}}} as unknown as Game);
 afterEach(()=>resetPotionSettings());
+it('narrows the film soundtrack and changes the contour filter as she rises', () => {
+  expect(potionFilterState(game(56, 540))).toEqual({amount:.5, high:480, low:2400, gain:.88});
+  const g = game(59, 540), low = potionFilterState(g);
+  g.witch.lift = 1;
+  expect(low.amount).toBe(.5);
+  expect(potionFilterState(g).low).toBeGreaterThan(low.low);
+  g.clock.time = 600;
+  expect(potionFilterState(g).amount).toBe(0);
+});
 it('covers every recipe with the fallback except the two explicitly bespoke vision effects',()=>{
   for(const r of POTION_RECIPES) expect(potionFilterState(game(r.id)).amount).toBe(['night-vision','heat-vision'].includes(r.effect)?0:1);
 });
