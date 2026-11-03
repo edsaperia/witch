@@ -27,8 +27,8 @@ const types = { ".html": "text/html", ".js": "text/javascript", ".css": "text/cs
       const g = window.witch.game, D = g.map.dancefloor, x = D.x + 40, z = D.z + 30;
       g.witch = { ...g.witch, x, z, vx: 0, vz: 0, seated: false, mode: "ground", lift: 0 };
       const pool = g.creatures.filter(c => !c.gone && !c.boss && !c.leashed && c.level >= 1 && c.level < 3);
-      // (followers: two close, three out toward their chains' end, west and south-west of her)
-      const spots = [[-6, 4, 1], [5, 6, 2], [-62, 8, 1], [-70, -20, 2], [-48, 44, 1]];
+      // (followers: two close, three out toward their chains' end, east and south-east of her: across the screen as she walks west)
+      const spots = [[-6, 4, 1], [5, 6, 2], [58, 6, 1], [66, -12, 2], [44, 30, 1]];
       const got = spots.map(([dx, dz, lv], i) => { const c = pool[i]; Object.assign(c, { level: lv, x: x + dx, z: z + dz, tx: x + dx, tz: z + dz, leashed: true, state: "leashed", enraged: false, siege: undefined, fight: undefined, rest: 3 }); g.leash.stack.push(c.id); return `${c.species}${lv}`; });
       // (a wild pack set on her, close by)
       const foes = pool.slice(6, 10);
@@ -36,8 +36,8 @@ const types = { ".html": "text/html", ".js": "text/javascript", ".css": "text/cs
       g.byArea = null;
       return got.join(" ");
     }));
-    for (let i = 0; i < 40; i++) await step({ zoom: -1 }); // (zoomed out a little)
-    for (let i = 0; i < 70; i++) await step({ moveX: 1, moveZ: 0.4 }); // (walking off east: the far chains drawn out taut)
+    for (let i = 0; i < 40; i++) await step({ zoom: i % 10 === 0 ? 1 : 0 }); // (zoomed out: four steps)
+    for (let i = 0; i < 70; i++) await step({ moveX: -1, moveZ: -0.2 }); // (walking off west: the far chains drawn out taut)
     for (let i = 0; i < 20; i++) await step({});
     await page.screenshot({ path: path.join(outDir, "chains-fight.png"), timeout: 300000 });
     console.log(await page.evaluate(() => { const g = window.witch.game, w = g.witch; return g.leash.stack.map(id => Math.round(Math.hypot(g.creatures[id].x - w.x, g.creatures[id].z - w.z))).join(" m, ") + " m"; }));
