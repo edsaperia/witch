@@ -267,6 +267,31 @@ describe("the treehouse's house", () => {
     expect([g2.witch.perch, g2.witch.mode]).toEqual([true, "ground"]);
   });
 
+  it("stepping off with her broom she flies straight on from the floor's height: no drop and climb, the camera's aim never dipping (Ed, 2026-11-03)", () => {
+    const deckH = 22 + TUNING.groundHeight, out = { moveX: Math.cos(40 * DEG), moveZ: Math.sin(40 * DEG) };
+    for (const descend of [false, true]) {
+      const g = game(JETS), d = deckOf(g.map, TUNING)!;
+      g.witches[0].kit = { invites: true, broom: true }; // (the broom taken at the lathe)
+      run(g, 0.2, { moveZ: -1 }); run(g, 1);
+      let h = witchHeight(g.witch, TUNING), ty = g.camera.ty, left = -1, flew = false;
+      for (let i = 0; i < Math.round(3 / STEP) && !flew; i++) {
+        press(g, { ...out, toggleMode: descend && left >= 0 && i === left + 30 }); // (and once, changing her mind past the edge: coming down from where she is)
+        const nh = witchHeight(g.witch, TUNING);
+        if (left < 0 && !onFloor(d, g.witch.x, g.witch.z)) left = i;
+        if (left >= 0 && !descend) {
+          expect(nh, `step ${i - left}`).toBeGreaterThan(deckH - 0.05);
+          expect(g.camera.ty, `step ${i - left}`).toBeGreaterThan(ty - 1e-6); // (eased up, never down)
+        }
+        expect(Math.abs(nh - h), `step ${i}: no jump`).toBeLessThan(1.5); // (coming down at full pace is about 1 m a step; the drop was 13 m)
+        h = nh; ty = g.camera.ty;
+        flew = descend ? left >= 0 && i > left + 30 && g.witch.mode === "ground" : g.witch.mode === "treetop";
+      }
+      expect(left).toBeGreaterThanOrEqual(0);
+      expect(flew).toBe(true);
+      expect(g.witch.perch).toBeFalsy();
+    }
+  });
+
   it("opens the chart with E at the map table (in the Solarium), and nothing goes down up there", () => {
     const g = game(JETS), d = deckOf(g.map, TUNING)!, t = HOUSE_ROOMS.objects.find(o => o.use.kind === "chart")!, f = objectFront(t, d, 0.4);
     expect(t.room).toBe("solarium");
