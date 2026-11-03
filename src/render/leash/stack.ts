@@ -12,7 +12,8 @@ import { sigilPath, travelPose } from "./travelPose";
 import { easeRoute } from "../routeEase";
 import { drawChain, rattleChain, stepChain, type Chain } from "./chain";
 import { DISC } from "./glyphs";
-import { chainKnobs, dotAt, drawEmbers, legendShine, rankKnobs, rankOf, rankSize, ranksOn, standScale, shownDots, youthDots } from "./ranks";
+import { chainKnobs, dotAt, drawEmbers, legendShine, queuedDot, rankKnobs, rankOf, rankSize, ranksOn, standScale, shownDots, youthDots } from "./ranks";
+import { queuedFor } from "../../rules/berries";
 import { meterHits } from "../../rules/game";
 
 /** A 💧's blue, for its dots in her stack. */
@@ -84,10 +85,12 @@ export function drawStack(lv: LeashView, time: number, hatTop: number, dot: numb
           [shownDots(pips ?? youthDots(c, g.berries.fed.get(c.id) ?? 0, t), RK.dotsPerRow), 1, lv.berryRgb],
           [shownDots({ n: drops, lit: Math.ceil((c.drops ?? 0) * drops - 1e-6) }, RK.dotsPerRow), -1, DROP_RGB],
         ];
+        // (a berry queued for it, Ed 2026-11-03: the dot it will fill twinkles, bright, till it's eaten: ranks.ts queuedDot)
+        const next = queuedDot(dotSets[0][0], queuedFor(g.berries, c.id)), glint = 0.5 + 0.9 * Math.abs(Math.sin(time * 7));
         for (const [D, side, rgb] of dotSets) if (D.n > 0) {
           const ready = side > 0 && !pips && D.lit >= D.n, beat = ready ? 0.65 + 0.35 * Math.sin(time * 6) : 1, ds = size * 0.24;
           for (let i = 0; i < D.n; i++) {
-            const q = dotAt(i, D.n, RK.dotsPerRow), qx = q.x * side, on = i < D.lit, k = (on ? (ready ? 1.25 * beat : 1) : 0.42) * (side > 0 && fading && i === D.lit - 1 ? twinkle : 1);
+            const q = dotAt(i, D.n, RK.dotsPerRow), qx = q.x * side, on = i < D.lit, k = (on ? (ready ? 1.25 * beat : 1) : side > 0 && i === next ? glint : 0.42) * (side > 0 && fading && i === D.lit - 1 ? twinkle : 1);
             if (back > 0) lv.stackBack.add(pos.x + qx * size, pos.y + q.y * size, pos.z, ds * 1.5, dot, 0.02, 0.02, 0.035, back);
             const lit = on ? 0.3 : 0; // (lit ones toward white a little, so they read over the dim)
             batch.add(pos.x + qx * size, pos.y + q.y * size, pos.z + 0.02, ds, dot, (rgb[0] + (1 - rgb[0]) * lit) * k, (rgb[1] + (1 - rgb[1]) * lit) * k, (rgb[2] + (1 - rgb[2]) * lit) * k, on ? 1 : 0.85);

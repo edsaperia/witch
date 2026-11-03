@@ -36,9 +36,15 @@
           "by": "Ed",
           "date": "2026-10-04",
           "rest": "legends are the areas' own, never grown"
+        },
+        {
+          "by": "Ed",
+          "date": "2026-11-03",
+          "quote": "No animal eats on its own",
+          "rest": "only the bottom of her stack eats, fed by her with the sigil button; the detour knob (Ed, v233) and the baby's reach at its placed sigil (2026-10-11) gone with it"
         }
       ],
-      "notes": "Berries and evolving (Ed): every area has bushesPerArea berry bushes (normal bushes of that area) and perArea [min, max] berries on distinct ones at the start. Bushes grow in patches of patch.bushes [min, max] within patch.radius metres. Party animals (invited, not legends), following her or held at a sigil, take a berry on their way (Ed, v233): within detour metres of the line to where they're heading or of their sigil, never beyond their leash; they nip over, eat it (eatTime seconds) and carry on. The berry grows again at once on a free berry bush somewhere else on the map. A party animal evolves on the next bar line once it has eaten the berries its next level costs [1]: the fighting value it gains (cost.by \"value\": √(hp × dps), its species' strength included) at cost.per a berry, rounded, at least 1: so a berry buys the same fighting value for every species; one of normal strength costs 4 and 4 [2][3][4] (\"power\" would count hp × dps instead). Bigger patches since [5]: perArea and patch.bushes up a quarter to a half, so the first evolve's extra berry (2, was 1) and weaker species' one-berry minimum come out a little faster to feed than before. Evolving stops at adult [6]."
+      "notes": "Berries and evolving (Ed): every area has bushesPerArea berry bushes (normal bushes of that area) and perArea [min, max] berries on distinct ones at the start. Bushes grow in patches of patch.bushes [min, max] within patch.radius metres. No animal eats on its own (Ed, 2026-11-03; see feed): the bottom of her stack eats a berry she feeds it, walking over and eating it (eatTime seconds). The berry grows again at once on a free berry bush somewhere else on the map. A party animal evolves on the next bar line once it has eaten the berries its next level costs [1]: the fighting value it gains (cost.by \"value\": √(hp × dps), its species' strength included) at cost.per a berry, rounded, at least 1: so a berry buys the same fighting value for every species; one of normal strength costs 4 and 4 [2][3][4] (\"power\" would count hp × dps instead). Bigger patches since [5]: perArea and patch.bushes up a quarter to a half, so the first evolve's extra berry (2, was 1) and weaker species' one-berry minimum come out a little faster to feed than before. Evolving stops at adult [6]."
     },
     "berries.colour": {
       "what": "The berries' colour: a deep berry pink.",
@@ -62,7 +68,30 @@
           "date": "2026-10-11"
         }
       ],
-      "notes": "its soft halo's strength. B (debug) feeds the nearest party animal one berry. Babies [1]: a baby eats only when its sigil is put down with a berry within babyReach metres of it (following her, it never stops for one; when a baby's sigil is next to go down, the berries within babyReach of her glow brightly), and babyCost berries evolve it into a youth."
+      "notes": "its soft halo's strength. B (debug) feeds the nearest party animal one berry. babyCost berries evolve a baby into a youth (one: Ed, 2026-10-11)."
+    },
+    "berries.feed": {
+      "what": "Feeding on command: a tap of the sigil button feeds the bottom of her stack a berry within reach of her; holding it puts that sigil down instead.",
+      "decisions": [
+        {
+          "by": "Ed",
+          "date": "2026-11-03",
+          "quote": "something she does deliberately and accurately under time pressure",
+          "rest": "no animal eats on its own; only the bottom of her stack, the one cycle moves through; each press queues one more berry, no hold-to-repeat"
+        },
+        {
+          "by": "Ed",
+          "date": "2026-11-03",
+          "quote": "otherwise feeding berries becomes a way of moving creatures quickly rather than levelling them up",
+          "rest": "speed: it goes to its berry at about its own pace, 1 to 1.2 times"
+        }
+      ],
+      "notes": "reach: metres from her a berry may be to be fed (the nearest un-taken one, marked, with the prompt). speed: the animal walks to each queued berry at its leash pace times this. hold: seconds the sigil button is held, with a feed on offer, to put the bottom sigil down instead of feeding it (a tap shorter than this feeds).",
+      "links": [
+        "rules/berries.ts",
+        "rules/sigilButton.ts",
+        "render/feedTag.ts"
+      ]
     },
     "invites": {
       "what": "The 💌 invite: on the ground she fires spinning love letters at creatures to win them over.",

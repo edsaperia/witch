@@ -912,7 +912,6 @@
       "bushes": [4, 7],
       "radius": 3.5
     },
-    "detour": 4.5,
     "eatTime": 0.25,
     "cost": {
       "by": "value",
@@ -920,8 +919,12 @@
     },
     "colour": "#c8228c",
     "glow": 0.8,
-    "babyReach": 10,
-    "babyCost": 1
+    "babyCost": 1,
+    "feed": {
+      "reach": 15,
+      "speed": 1,
+      "hold": 0.3
+    }
   },
   "invites": {
     "on": true,

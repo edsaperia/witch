@@ -756,7 +756,6 @@ export type SchemaTuning = {
       "bushes": Array<number>;
       "radius": number;
     };
-    "detour": number;
     "eatTime": number;
     "cost": {
       "by": "power" | "value";
@@ -764,8 +763,12 @@ export type SchemaTuning = {
     };
     "colour": string;
     "glow": number;
-    "babyReach": number;
     "babyCost": number;
+    "feed": {
+      "reach": number;
+      "speed": number;
+      "hold": number;
+    };
   };
   "invites": {
     "on": boolean;

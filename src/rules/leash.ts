@@ -28,7 +28,7 @@ export interface Talk {
   total: number;
 }
 
-export type LeashEventKind = /** her soundsystem spell at a runestone (rules/stoneStacks.ts): begun, let go or moved off, broken by a hit, done (the stone converted) */ "castStart" | "castStop" | "castBroken" | "castDone" | /** a stone converted, by the spell or its wave (`key` its area; id -1): its friend sigils have fallen (g.loose) */ "converted" | /** her fall off the Terrace with no broom hitting the ground, unseen below (rules/kit.ts; id: the witch) */ "thud" | /** her invitations or a broom taken in the house (rules/kit.ts; obj: "invites" or "broom") */ "kit" | /** E at the invitations desk with no bag to carry them (rules/kit.ts needsBag; obj: the desk's id) */ "needBag" | "invited" | "befriended" | "placed" | "picked" | "fizzled" | "cancelled" | "cycled" | /** a take-off pulled back down: her followers too heavy (rules/leashWeight.ts groundedBy; id: the witch) */ "grounded" | /** a coming-down refused: up in the treetops over a lake, she flies on (rules/game.ts; id: the witch) */ "lakeHold" | /** she walked off the balcony's open rim with no broom and fell (rules/treehouse.ts), back at the magic circle (id: the witch) */ "fell" | /** a relic picked up, or put down by a legend (id: the relic) */ "relicPicked" | "relicPlaced" | /** a flask drunk, a growth spurt for her followers (rules/sigilButton.ts; id: the relic) */ "flaskDrunk" | /** a relic's sigil put down on the ground, off any legend's clearing (id: the relic) */ "relicDropped" | /** her hat picked up and back on (rules/hat.ts; id: the witch) */ "hatPicked" | /** her hat put down at her feet, the sigil button held (rules/hat.ts putHat; id: the witch) */ "hatPut" | /** a quest sigil or a relic put down near a sleeping legend but outside its clearing, where it does nothing (id: the legend; x, z: its clearing's middle) */ "outsideCircle" | /** she landed on the treehouse deck (on) or rose off it (rules/treehouse.ts; id: the witch) */ "perch" | /** E at the treehouse's map table: open the sea chart (rules/treehouse.ts; id: the witch) */ "chart" | /** E at an object in the treehouse's rooms (rules/houseRooms.ts; id: the witch; obj: the object's id; "slept": the bed's hold done, the night over) */ "house" | /** E at tonight's find: a wearable in the travel trunk or a broom part in a wreck (rules/finds.ts; id: the witch; obj: the item's id; find: its kind) */ "found";
+export type LeashEventKind = /** her soundsystem spell at a runestone (rules/stoneStacks.ts): begun, let go or moved off, broken by a hit, done (the stone converted) */ "castStart" | "castStop" | "castBroken" | "castDone" | /** a stone converted, by the spell or its wave (`key` its area; id -1): its friend sigils have fallen (g.loose) */ "converted" | /** her fall off the Terrace with no broom hitting the ground, unseen below (rules/kit.ts; id: the witch) */ "thud" | /** her invitations or a broom taken in the house (rules/kit.ts; obj: "invites" or "broom") */ "kit" | /** E at the invitations desk with no bag to carry them (rules/kit.ts needsBag; obj: the desk's id) */ "needBag" | "invited" | "befriended" | "placed" | "picked" | /** a berry queued for the bottom of her stack by a tap of the sigil button (rules/sigilButton.ts; id: the creature; x, z: the berry) */ "fed" | "fizzled" | "cancelled" | "cycled" | /** a take-off pulled back down: her followers too heavy (rules/leashWeight.ts groundedBy; id: the witch) */ "grounded" | /** a coming-down refused: up in the treetops over a lake, she flies on (rules/game.ts; id: the witch) */ "lakeHold" | /** she walked off the balcony's open rim with no broom and fell (rules/treehouse.ts), back at the magic circle (id: the witch) */ "fell" | /** a relic picked up, or put down by a legend (id: the relic) */ "relicPicked" | "relicPlaced" | /** a flask drunk, a growth spurt for her followers (rules/sigilButton.ts; id: the relic) */ "flaskDrunk" | /** a relic's sigil put down on the ground, off any legend's clearing (id: the relic) */ "relicDropped" | /** her hat picked up and back on (rules/hat.ts; id: the witch) */ "hatPicked" | /** her hat put down at her feet, the sigil button held (rules/hat.ts putHat; id: the witch) */ "hatPut" | /** a quest sigil or a relic put down near a sleeping legend but outside its clearing, where it does nothing (id: the legend; x, z: its clearing's middle) */ "outsideCircle" | /** she landed on the treehouse deck (on) or rose off it (rules/treehouse.ts; id: the witch) */ "perch" | /** E at the treehouse's map table: open the sea chart (rules/treehouse.ts; id: the witch) */ "chart" | /** E at an object in the treehouse's rooms (rules/houseRooms.ts; id: the witch; obj: the object's id; "slept": the bed's hold done, the night over) */ "house" | /** E at tonight's find: a wearable in the travel trunk or a broom part in a wreck (rules/finds.ts; id: the witch; obj: the item's id; find: its kind) */ "found";
 export interface LeashEvent { kind: LeashEventKind; id: number; x: number; z: number; at: number; /** a "converted" event's: the stone's area key */ key?: string; /** a "cycled" event's: the sigil cycled was a relic's (id: the relic) */ relic?: boolean; /** a "perch" event's: on the deck (true) or off it */ on?: boolean; /** a "house" event's: the object used (config/house/), or "slept"; a "found" event's: the item */ obj?: string; /** a "found" event's: its kind (rules/finds.ts FIND_KINDS) */ find?: import("./finds").FindKindId }
 
 export interface LeashState {
@@ -66,6 +66,9 @@ export interface LeashState {
    *  `cell`, the hex cell she last put one down in or stood in (so one goes down only as she enters another), `x`,`z` where the
    *  last went down off the grid. Let go, it's over (undefined). */
   run?: { kind: "pick" | "place"; cell?: string; x: number; z: number };
+  /** A press of the sigil button while it would feed the bottom of her stack (rules/sigilButton.ts; Ed, 2026-11-03), held since this
+   *  time on her clock: let go before berries.feed.hold seconds, it was a tap and feeds; held that long, it puts the sigil down. */
+  feedHold?: number;
 }
 
 /** One sigil in her stack: a leashed creature's, or a carried relic's. */
@@ -148,6 +151,8 @@ export interface LeashControls {
   /** Place (E, Ed 2026-10-06: "E for place, Q for cycle"): on the ground, place the bottom sigil or
    *  pick one up; nothing in the treetops. */
   place?: boolean;
+  /** The press only puts the bottom sigil down, picking nothing up (a hold past the feed's tap: rules/sigilButton.ts). */
+  placeOnly?: boolean;
   /** Cycle (Q): the bottom sigil to the top, on the ground or in the treetops. */
   cycle?: boolean;
   /** Cycle back (the pad's L1, Ed 2026-10-28): the top sigil to the bottom. */
@@ -311,7 +316,7 @@ export function stepLeash(s: LeashState, creatures: Creature[], c: LeashControls
   const H = L.hex && L.hex.size > 0 ? L.hex : null;
   const cellOf = (x: number, z: number) => { const h = hexCell(x, z, H!.size); return `${h.q},${h.r}`; };
   if (pressed) {
-    const did = sigilPress(s, creatures, c, witch, time, t, undefined);
+    const did = sigilPress(s, creatures, c, witch, time, t, c.placeOnly ? "place" : undefined);
     if (did && runs && c.held) s.run = { kind: did, cell: H ? cellOf(witch.x, witch.z) : undefined, x: witch.x, z: witch.z };
   } else if (s.run && onGround) {
     const r = s.run;
@@ -361,12 +366,10 @@ export function stepLeash(s: LeashState, creatures: Creature[], c: LeashControls
   for (const p of guards.length ? [...s.placed, ...guards] : s.placed) if (!busy(p.id)) { const c = byId(p.id); stepLeashed(c, p.x, p.z - runeOffset(c, t, 1), dt, t); }
 }
 
-/** The sigil button on the ground at her feet (`only`: in a run, just picking up or just putting down; a press does whichever
- *  the spot asks): picks up her placed sigil in the hex cell she stands in (or within leash.pickRadius off the grid), else a
- *  happy creature's rune near her, else puts the bottom of her stack down (a relic's sigil on the ground, a creature's on the
- *  cell or at her feet). Returns what it did ("pick", "place"), or null when nothing happened (a fizzle counts as nothing). */
-function sigilPress(s: LeashState, creatures: Creature[], c: LeashControls, witch: { x: number; z: number }, time: number, t: Tuning, only: "pick" | "place" | undefined): "pick" | "place" | null {
-  const L = t.leash, byId = (id: number) => creatures[id];
+/** What a press of the sigil button at her feet finds: the hex cell (or spot) she stands on, her placed sigil there to pick up, a
+ *  loose sigil or a happy creature's rune near her (`only` "place": none of those looked for). */
+function pressTargets(s: LeashState, c: Pick<LeashControls, "sharedPlaced" | "rune" | "loose" | "barred">, witch: { x: number; z: number }, t: Tuning, only: "pick" | "place" | undefined) {
+  const L = t.leash;
   const floor = c.sharedPlaced ? { ...s, placed: [...s.placed, ...c.sharedPlaced.sigils] } : s;
   let pick = -1, pd = L.pickRadius;
   // On the hex grid (Ed, 2026-10-11: "a cluster of placed sigils reads cleanly"): the cell nearest her decides; taken, the press
@@ -380,6 +383,23 @@ function sigilPress(s: LeashState, creatures: Creature[], c: LeashControls, witc
   // (then a loose one, scattered at a stone's conversion: rules/stoneStacks.ts; then a happy creature's rune)
   const loose = pick < 0 && only !== "place" ? c.loose?.(witch.x, witch.z, L.runeRadius ?? L.pickRadius) ?? null : null;
   const rune = pick < 0 && !loose && only !== "place" ? c.rune?.(witch.x, witch.z, L.runeRadius ?? L.pickRadius) ?? null : null; // (further than her own sigils: Ed's playtest, "difficult to pick up")
+  return { floor, spot, pick, loose, rune };
+}
+
+/** Whether a press of the sigil button here would pick something up (her placed sigil in the cell she stands in, a loose sigil, a happy
+ *  creature's rune), rather than put the bottom of her stack down (or feed it: rules/sigilButton.ts feedOffer). */
+export function pressPicks(s: LeashState, c: Pick<LeashControls, "sharedPlaced" | "rune" | "loose" | "barred">, witch: { x: number; z: number }, t: Tuning): boolean {
+  const { pick, loose, rune } = pressTargets(s, c, witch, t, undefined);
+  return pick >= 0 || (!!loose && !(loose.tether !== undefined && s.tether)) || !!rune;
+}
+
+/** The sigil button on the ground at her feet (`only`: in a run, just picking up or just putting down; a press does whichever
+ *  the spot asks): picks up her placed sigil in the hex cell she stands in (or within leash.pickRadius off the grid), else a
+ *  happy creature's rune near her, else puts the bottom of her stack down (a relic's sigil on the ground, a creature's on the
+ *  cell or at her feet). Returns what it did ("pick", "place"), or null when nothing happened (a fizzle counts as nothing). */
+function sigilPress(s: LeashState, creatures: Creature[], c: LeashControls, witch: { x: number; z: number }, time: number, t: Tuning, only: "pick" | "place" | undefined): "pick" | "place" | null {
+  const byId = (id: number) => creatures[id];
+  const { floor, spot, pick, loose, rune } = pressTargets(s, c, witch, t, only);
   if (loose && loose.tether !== undefined && s.tether) {
     // (one legend's sigil at a time: it's too heavy to carry two)
   } else if (loose) {
@@ -467,6 +487,31 @@ export function hexSpot(s: LeashState, x: number, z: number, size: number, barre
     if (d < bd && !held.has(key(q, r)) && !barred(c.x, c.z)) { bd = d; best = c; }
   }
   return { taken: -1, at: best };
+}
+
+/** Where a sigil falls at her knockdown at (x, z) (Ed, 2026-11-03: "If you're knocked down, animals' sigils fall and stay where you
+ *  were knocked down"): the middle of the free hex cell nearest the spot (none of `placed` in it, not `barred`: under a runestone, a
+ *  soundsystem or a speaker), out to `rings` cells round it; off the grid, the spot itself, or the nearest point clear of `placed` by
+ *  leash.spacing on rings round it. Null: nowhere free. Deterministic: the same floor gives the same cell. */
+export function fallSpot(placed: readonly PlacedSigil[], x: number, z: number, t: Tuning, barred: (x: number, z: number) => boolean = () => false, rings = 6): { x: number; z: number } | null {
+  const H = t.leash.hex && t.leash.hex.size > 0 ? t.leash.hex : null;
+  if (H) {
+    const size = H.size, held = new Set(placed.map(p => { const h = hexCell(p.x, p.z, size); return `${h.q},${h.r}`; })), h0 = hexCell(x, z, size);
+    let best: { x: number; z: number } | null = null, bd = Infinity;
+    for (let dq = -rings; dq <= rings; dq++) for (let dr = -rings; dr <= rings; dr++) {
+      if (Math.abs(dq + dr) > rings) continue;
+      const q = h0.q + dq, r = h0.r + dr, c = hexCentre(q, r, size), d = Math.hypot(c.x - x, c.z - z);
+      if (d < bd - 1e-9 && !held.has(`${q},${r}`) && !barred(c.x, c.z)) { bd = d; best = c; }
+    }
+    return best;
+  }
+  const S = t.leash.spacing, clear = (px: number, pz: number) => !placed.some(p => Math.hypot(p.x - px, p.z - pz) < S) && !barred(px, pz);
+  if (clear(x, z)) return { x, z };
+  for (let k = 1; k <= rings; k++) for (let i = 0; i < 6 * k; i++) {
+    const a = (i / (6 * k)) * Math.PI * 2, px = x + Math.cos(a) * S * k, pz = z + Math.sin(a) * S * k;
+    if (clear(px, pz)) return { x: px, z: pz };
+  }
+  return null;
 }
 
 /** Whether a sigil put down at (x, z) would land on another. */

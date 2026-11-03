@@ -4,9 +4,9 @@
 // every leash sigil (her stack, placed sigils, happy runes, the ghost, the treetop projection, the bond) is the bare glyph in its
 // rank's colour (Ed, 2026-11-03: "the forest is cold, the party is warm": hers pink, crimson, orange and gold, the wild's purple,
 // blue and turquoise, every baby's her pink, a sleeping legend's a pale lilac; render/colourGrammar.ts; no ring, no disc), embers rising off its strokes (more,
-// bigger, brighter and higher each rank; a legend's white-hot), and a youth in her stack has two rows of round dots off to the
-// right of its glyph, one a berry it still eats on the move (bright eaten, dim not; all bright, they pulse: ready), the last berry
-// (eaten only at a sigil she's put down: rules/berries.ts lastBerry) its adult moment on the ground. Pure helpers here; the
+// bigger, brighter and higher each rank; a legend's white-hot), and a baby or a youth in her stack has round dots off to the right
+// of its glyph, two rows, one a berry it needs to grow (bright eaten, dim not; all bright, they pulse: ready), the next empty one
+// twinkling while she has a berry queued for it (Ed, 2026-11-03; rules/berries.ts queueBerry). Pure helpers here; the
 // drawing is render/leash.ts's and render/leash/stack.ts's.
 import type { Creature } from "../../rules/creatures";
 import type { Tuning } from "../../rules/tuning";
@@ -109,16 +109,21 @@ export const rankSize = (t: Tuning, rank: number): number => rankKnobs(t).sizes[
 /** How much bigger a rank sigil stands in her stack and a stone's column than at its rank's size (standScale). */
 export const standScale = (t: Tuning): number => rankKnobs(t).standScale ?? 1;
 
-/** A youth's dots in her stack: one for each berry it eats on the move (its cost to adult, less the last, eaten at a placed sigil:
- *  rules/berries.ts lastBerry), and how many it has eaten; none for any other rank. Read from the rules (toEvolve), so it follows
- *  the berry tuning. */
+/** A baby's or a youth's dots in her stack: one for each berry it needs to grow (a baby's one, a youth's cost to adult; since Ed's
+ *  2026-11-03 feeding on command every one is fed by her, the last too, so none is held back), and how many it has eaten; none for any
+ *  other rank. Read from the rules (toEvolve), so it follows the berry tuning. */
 export function youthDots(c: Pick<Creature, "level" | "species">, fed: number, t: Tuning): { n: number; lit: number } {
-  if (c.level !== 1) return { n: 0, lit: 0 };
-  const need = toEvolve(1, t, c.species);
+  if (c.level !== 0 && c.level !== 1) return { n: 0, lit: 0 };
+  const need = toEvolve(c.level, t, c.species);
   if (!Number.isFinite(need)) return { n: 0, lit: 0 };
-  const n = Math.max(0, Math.round(need) - 1);
+  const n = Math.max(0, Math.round(need));
   return { n, lit: Math.max(0, Math.min(n, Math.floor(fed))) };
 }
+
+/** Which of its berry dots twinkles (Ed, 2026-11-03: while a creature has a berry queued, "its next empty berry slot in the sigil stack
+ *  (the dot it will fill) twinkles"): the first unlit of the `n` shown, `lit` lit, while `queued` > 0; -1 for none (nothing queued, or
+ *  every dot lit). */
+export const queuedDot = (d: { n: number; lit: number }, queued: number): number => (queued > 0 && d.lit < d.n ? d.lit : -1);
 
 /** The dots drawn, two rows of at most `perRow`: a youth needing more (before the berry costs came down to 3 / 4 / 8, a strong
  *  one had 15 on the move) shows the most there's room for, lit in proportion. */
