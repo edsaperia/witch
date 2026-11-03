@@ -55,8 +55,8 @@ ones that increased DPS felt fun but were insanely strong. The ones that didn't 
   | Frostwyrm | dashes freeze what they pass through, but her movement slides as on ice |
   | Unicorn | unlimited dashes, each half length |
   | Sphinx | invites chain infinitely, and can go between the same creatures more than once |
-  | Frost troll | holding the invite button charges it up; on release it fires up to 3× her normal attack (Ed, 3 Nov) |
-  | Stegosaurus | a creature she invites fires a ring of invites as it's converted (Ed, 3 Nov) |
+  | Frost troll | holding the invite button charges it up; on release it fires up to 3× her normal attack (Ed, 3 Nov; no downside: "leave them as pure upside") |
+  | Stegosaurus | a creature she invites fires a ring of invites as it's converted (Ed, 3 Nov; no downside) |
 
   One fantastic kind per biome, from the roster (docs/backlog/journey.md): badlands griffin, cold frost troll, cold
   rainforest unicorn, hot sphinx, jungle feathered serpent, mangrove swamp hydra, mountains and glaciers frostwyrm, volcanic
