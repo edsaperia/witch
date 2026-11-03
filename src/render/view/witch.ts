@@ -210,6 +210,7 @@ export function drawWitch(v: View, time: number, ht: number, onTreehouse: (px: n
       if (typeof sp === "number" && sp !== v.castSeen) { v.castSeen = sp; v.partyStart.start(g.tuning, wx, wyy, wz, sp + (ht - time)); captureRefractionCast(v, sp, wx, wyy, wz); }
     }
   }
+  { const H = (v.partyStart.here ??= { x: 0, y: 0, z: 0 }); H.x = wx; H.y = wyy; H.z = wz; } // (where she's drawn: the replay's place on a night resumed after its cast)
   // Knocked out (Ed, 2026-10-04): she sits slumped on the ground while her stack lets go, then
   // vanishes in a sparkle and comes back in one at the treehouse.
   // Mid-blink she's nowhere (from the step it starts, so she never slides between its two points).

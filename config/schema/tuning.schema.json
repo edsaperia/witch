@@ -9626,7 +9626,7 @@
           "properties": {
             "on": {
               "type": "boolean",
-              "description": "on: the ripple in every game; off: only with ?refraction=1, as before (off by default: the picture's refraction is still a trial)."
+              "description": "on: the party start's own ripple in every game (its rings alone: every other ripple, the fires', still only with ?refraction=1); off: only with ?refraction=1, as before."
             }
           },
           "required": [

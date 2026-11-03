@@ -34,3 +34,20 @@ export function partyStartLength(k: PartyStartTuning): number {
 export function canReplayPartyStart(g: Game, W: Witch = g.witches[0]): boolean {
   return typeof g.party.spellAt === "number" && !W.ko && atDecks(g, W);
 }
+
+/** The shortest gap between two shows at the decks (s): a held or mashed button never restarts one (with every piece off, too). */
+export const REPLAY_GAP = 1;
+/** Whether the decks' replay may play at `now` (her clock): none yet, or the last (from `lastAt`) over, and at least REPLAY_GAP
+ *  seconds since it started. A show "from the future" (a clock gone back: another night) never holds it. */
+export function replayReady(k: PartyStartTuning, lastAt: number | null, now: number): boolean {
+  if (lastAt === null) return true;
+  const since = now - lastAt;
+  return since < 0 || since >= Math.max(REPLAY_GAP, partyStartLength(k));
+}
+
+/** Whether this frame's controls ask for the replay (main.ts): the use button pressed (E is `place`; the pad's square and a tap,
+ *  `sigil`) where it may play (canReplayPartyStart), and nothing else holding the press (`busy`: a menu or panel open or just shut on
+ *  it, the pause, a bot's game, a visit to another's night). */
+export function replayWanted(g: Game, c: { place?: boolean; sigil?: boolean }, busy: boolean): boolean {
+  return !busy && !!(c.place || c.sigil) && canReplayPartyStart(g);
+}

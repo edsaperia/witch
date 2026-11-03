@@ -74,7 +74,7 @@ import { GrassView } from "./grass";
 import { SpellFx } from "./spellfx";
 import { updateRefraction, resetRefraction, captureRefractionCast } from "./view/refraction";
 import { PartyStartFx } from "./partyStart";
-import { MAKE_SOME_NOISE } from "../rules/partyStart";
+import { MAKE_SOME_NOISE, partyStartOf, replayReady } from "../rules/partyStart";
 import { dodgeEchoesFor, resetDodgeEchoes } from "./view/dodgeEchoes";
 import { TRAIL_DEFAULT, WitchTrail } from "./trail";
 import { newPartyOverLook, partyOff, partyOverEase, updatePartyOver } from "./partyOver";
@@ -1519,10 +1519,11 @@ export class View {
   /** The party start played again at her decks (Ed, 2026-11-03: "press square at the decks after the party is started that replays
    *  the visual effects ... (the dj says make some noise!!!)"): main.ts calls it on the use button there (rules/partyStart.ts
    *  canReplayPartyStart). Every piece from the start where she was drawn seated, and her line over the decks; drawing only. Not
-   *  while a show's still playing (false then, or with no decks' show to play). */
+   *  while a show's still playing, nor within a second of the last (rules/partyStart.ts replayReady): false then, or with no decks
+   *  to play it at. */
   replayPartyStart(): boolean {
-    const P = this.partyStart, A = P.anchor, g = this.game;
-    if (!A || P.left(g.tuning, P.now) > 0) return false;
+    const P = this.partyStart, A = P.anchor ?? P.here, g = this.game;
+    if (!A || !replayReady(partyStartOf(g.tuning), P.showAt, P.now)) return false;
     P.start(g.tuning, A.x, A.y, A.z, P.now);
     captureRefractionCast(this, P.worldNow, A.x, A.y, A.z, true);
     this.houseRooms?.sayAtDecks(MAKE_SOME_NOISE, P.now);

@@ -3196,9 +3196,10 @@ Code: `rules/party.ts`, `rules/bootRing.ts`
 
 ### `partyStart`
 
-The party start's look, each piece on its own: the sparkles, the pillar, the dome, the light, the shake, the glow on the floor and the heat ripple, all drawing only. At her decks once the party has started, the use button (E; the pad's square) plays them again, and she calls "make some noise!!!".
+The party start's look, each piece on its own: the sparkles, the pillar, the dome, the light, the shake, the glow on the floor and the heat ripple, all drawing only.
 
 1. Ed, 2026-11-03: "Party start: agree. Isolate each of the effects so I can tweak. We could allow the player to press square at the decks after the party is started that replays the visual effects so it's easier for me to experiment (the dj says make some noise!!!)" (agreed: the spell drawn over the house instead of under it; the pillar rising above the crown, with real light, and the dome filled in; bigger, brighter sparkles; pause-page sliders)
+At her decks once the party has started, the use button (E; the pad's square) plays them again, and the DJ calls "make some noise!!!" (not while a show is still playing, nor within a second of the last).
 Code: `src/rules/partyStart.ts`, `src/render/partyStart.ts`
 
 - **`partyStart.overHouse`**: on: the party start drawn over the house's floors, walls and crown (with depth, so the decks and anything solid in front of her still cover it); off: under them, as before.
@@ -3240,7 +3241,7 @@ Code: `src/rules/partyStart.ts`, `src/render/partyStart.ts`
 - **`partyStart.ground.alpha`**: how bright (0.18 before).
 - **`partyStart.ground.size`**: how wide (m).
 - **`partyStart.refraction`**: The ripple of heat in the picture round her as she casts it (render/refraction.ts).
-- **`partyStart.refraction.on`**: on: the ripple in every game; off: only with ?refraction=1, as before (off by default: the picture's refraction is still a trial).
+- **`partyStart.refraction.on`**: on: the party start's own ripple in every game (its rings alone: every other ripple, the fires', still only with ?refraction=1); off: only with ?refraction=1, as before.
 
 | knob | type | range |
 |---|---|---|

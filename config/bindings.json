@@ -10,7 +10,7 @@
     "game.aimLeft": { "context": "game", "name": "Aim left", "about": "Aim the 💌 left.", "keys": [], "mouse": [], "pad": ["rsLeft"] },
     "game.aimRight": { "context": "game", "name": "Aim right", "about": "Aim the 💌 right.", "keys": [], "mouse": [], "pad": ["rsRight"] },
     "game.rise": { "context": "game", "name": "Rise / land", "about": "Rise to the treetops, or land. Nothing else (Ed: \"rising is not quite a free action\").", "keys": ["Space"], "mouse": [], "pad": ["cross"] },
-    "game.use": { "context": "game", "name": "Use", "about": "Use what's here: open a station, take a rune, put down or pick up a sigil. Held: a run, picking up or putting down as she goes.", "keys": ["KeyE"], "mouse": [], "pad": ["square"] },
+    "game.use": { "context": "game", "name": "Use", "about": "Use what's here: open a station, take a rune, put down or pick up a sigil; at her decks once the party's on, the party start again. Held: a run, picking up or putting down as she goes.", "keys": ["KeyE"], "mouse": [], "pad": ["square"] },
     "game.invite": { "context": "game", "name": "Invite 💌", "about": "Throw 💌 invites where she aims (held: keep throwing).", "keys": ["Digit1"], "mouse": ["left"], "pad": ["R2"] },
     "game.dodge": { "context": "game", "name": "Dodge", "about": "Blink the way she's going.", "keys": [], "mouse": ["right"], "pad": ["L2", "circle"] },
     "game.cycleNext": { "context": "game", "name": "Next sigil", "about": "Cycle the stack: the bottom sigil (the next put down) to the top.", "keys": ["KeyQ"], "mouse": [], "pad": ["R1"] },

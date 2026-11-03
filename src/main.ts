@@ -38,7 +38,7 @@ import { chartOpen, closeChart, openChart, prepareChart, finishChartFlight, type
 import { openingWay, opensDirectly, opensInBedroom, opensWithCreator, sailLandsInBed } from "./app/opening";
 import { wakeInBedroom } from "./rules/opening";
 import { endDream, startParty, startWake } from "./rules/wakeUp";
-import { canReplayPartyStart } from "./rules/partyStart";
+import { replayWanted } from "./rules/partyStart";
 import { WorldDrawGate } from "./app/worldDrawGate";
 import { LandingSleep } from './app/landingSleep';
 import { STATION_SLOT, wearFromStation, wornGenome } from "./rules/clothesPile";
@@ -1540,7 +1540,7 @@ function frameBody(now: number): void {
   // The party start again (Ed, 2026-11-03: "press square at the decks after the party is started that replays the visual effects ...
   // (the dj says make some noise!!!)"): the use button (E; the pad's square) at her decks once the party's on plays its pieces again
   // and she says it (render/partyStart.ts). Drawing only: the press still goes to the rules as ever (there, after the cast, it does nothing).
-  if (!bot && !phone.visiting && !freeze.frozen && !openNow && !shutTap && (c.place || c.sigil) && canReplayPartyStart(game)) view.replayPartyStart();
+  if (replayWanted(game, c, !!bot || !!phone.visiting || freeze.frozen || openNow || shutTap)) view.replayPartyStart();
   // Choosing at a station (the pointer or the d-pad in its panel, or stood still a moment): the camera eases in on her; she moves, out.
   if (c.moveX || c.moveZ) { stations.walked(); stillAt = 0; } else stillAt += dt;
   c.framing = !!stations.station && (stations.choosing || stillAt > 0.4);

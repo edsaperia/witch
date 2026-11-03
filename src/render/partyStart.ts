@@ -77,12 +77,14 @@ export class PartyStartFx {
   readonly drawn = { sparkles: 0, pillar: 0, dome: 0, light: 0, ground: 0, over: false };
   /** Where the decks' show plays: her drawn feet there, kept as she's drawn seated (render/view/witch.ts). */
   anchor: { x: number; y: number; z: number } | null = null;
+  /** Where she was last drawn (render/view/witch.ts): the replay's place when she's never been drawn seated this night. */
+  here: { x: number; y: number; z: number } | null = null;
   /** The last frame's clocks: hers (the show's) and the world's (the refraction's). */
   now = 0;
   worldNow = 0;
 
   constructor(scene: THREE.Scene) {
-    this.batches = new FxBatches(scene, { order: PARTY_START_ORDER, name: "Magic party start" });
+    this.batches = new FxBatches(scene, { order: PARTY_START_ORDER, name: "Magic party start", glow: true }); // (light alone: no dark backing over her)
     const geo = new THREE.BufferGeometry();
     geo.setAttribute("position", new THREE.BufferAttribute(this.pos, 3));
     geo.setAttribute("color", new THREE.BufferAttribute(this.col, 4));
@@ -93,8 +95,10 @@ export class PartyStartFx {
   }
 
   /** Another night: nothing playing. */
-  reset(): void { this.now = this.worldNow = 0; this.show = null; this.n = 0; this.shows = 0; this.anchor = null; this.pool.fill(0); this.sparkles.geometry.setDrawRange(0, 0); }
+  reset(): void { this.now = this.worldNow = 0; this.show = null; this.n = 0; this.shows = 0; this.anchor = this.here = null; this.pool.fill(0); this.sparkles.geometry.setDrawRange(0, 0); }
 
+  /** When the last show started (her clock), or null: none this night. */
+  get showAt(): number | null { return this.show?.at ?? null; }
   /** Seconds left of the show playing (0: none). */
   left(t: Tuning, ht: number): number { return this.show ? Math.max(0, this.show.at + partyStartLength(partyStartOf(t)) - ht) : 0; }
 

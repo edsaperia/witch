@@ -31,7 +31,7 @@ void main(){
   if(overBend(onGround(iPos))<0.5)gl_Position=vec4(2.0,2.0,2.0,1.0);
 }`;
 const FRAG=/* glsl */ `
-uniform sampler2D uFxRamp;uniform float uFxTime,uLayer,uCalm,uSecondary,uDistort;uniform vec2 uHalo;
+uniform sampler2D uFxRamp;uniform float uFxTime,uLayer,uCalm,uSecondary,uDistort,uGlow;uniform vec2 uHalo;
 varying vec2 vP;varying vec4 vData,vCol;varying vec3 vWorld;varying vec2 vGrid;
 ${LIGHT_GLSL}
 float hash(vec2 q){return fract(sin(dot(q,vec2(127.1,311.7)))*43758.5453);}
@@ -75,7 +75,13 @@ void main(){
   d+=(n-0.5)*0.12;
   if(uDistort>0.5 && strength>0.85)d+=sin(p.y*18.0+time*2.0)*0.035;
   vec3 rgb;float a=1.0;
-  if(uLayer<0.5){a=(1.0-smoothstep(0.7,1.4,d))*0.65;if(a<0.01)discard;rgb=ramp(0.0).rgb*(uSecondary>0.5?clamp(nightLight(vec3(0.0,1.0,0.0),vWorld),vec3(0.2),vec3(1.25)):vec3(0.65));}
+  // (uGlow, the party start's own batches, render/partyStart.ts: light alone, added on, no dark backing or rim to cover her and the house)
+  if(uGlow>0.5&&uLayer<1.5){
+    if(uLayer<0.5){a=(1.0-smoothstep(0.4,1.3,d))*0.22;rgb=ramp(1.0).rgb;}
+    else{if(d>0.95)discard;rgb=ramp(d<0.3?3.0:d<0.6?2.0:1.0).rgb;a=0.75*(1.0-smoothstep(0.35,0.95,d));}
+    if(a<0.01)discard;
+  }
+  else if(uLayer<0.5){a=(1.0-smoothstep(0.7,1.4,d))*0.65;if(a<0.01)discard;rgb=ramp(0.0).rgb*(uSecondary>0.5?clamp(nightLight(vec3(0.0,1.0,0.0),vWorld),vec3(0.2),vec3(1.25)):vec3(0.65));}
   else if(uLayer<1.5){
     if(d>0.95)discard;
     // A pale family-coloured core and a thin dark border separate from mid-green forest by value.
@@ -112,8 +118,9 @@ export class FxBatches {
   private count=0;
   canopy=false;
   /** `order`: its layers' draw order from this (ground layers, then upright ones, then the canopy halo) in place of the magic's own
-   *  (2.8 to 2.93, 11.2): the party start's over the house (render/partyStart.ts); `name`, its meshes' names' start. */
-  constructor(scene: THREE.Scene, opts: { order?: number; name?: string } = {}){
+   *  (2.8 to 2.93, 11.2): the party start's over the house (render/partyStart.ts); `name`, its meshes' names' start; `glow`, every
+   *  layer light alone, added on (no dark backing or rim: the party start's, drawn over her and the house). */
+  constructor(scene: THREE.Scene, opts: { order?: number; name?: string; glow?: boolean } = {}){
     const data=new Uint8Array(5*ELEMENT_KEYS.length*4);
     ELEMENT_KEYS.forEach((key,row)=>{
       const el=elements[key];[...el.ramp,el.contrast].forEach((hex,col)=>{
@@ -124,8 +131,8 @@ export class FxBatches {
     for(let slot=0;slot<9;slot++){
       const through=slot===8,flat=through?0:Math.floor(slot/4),layer=through?2:slot%4;
       const mat=new THREE.ShaderMaterial({vertexShader:VERT,fragmentShader:FRAG,uniforms:{...LIGHT_UNIFORMS,...HEIGHT_UNIFORMS,
-        uRight:SPRITE_UNIFORMS.uRight,uUp:SPRITE_UNIFORMS.uUp,uRes:SPRITE_UNIFORMS.uRes,uMpp:this.mpp,uHalo:{value:new THREE.Vector2(...settings.halo as [number,number])},uFxRamp:{value:ramp},uFlat:{value:flat},uLayer:{value:layer},uFxTime:this.time,uCalm:this.calm,uSecondary:this.secondary,uDistort:this.distort},
-        transparent:true,depthWrite:false,depthTest:!through,blending:layer>=2?THREE.AdditiveBlending:THREE.NormalBlending});
+        uRight:SPRITE_UNIFORMS.uRight,uUp:SPRITE_UNIFORMS.uUp,uRes:SPRITE_UNIFORMS.uRes,uMpp:this.mpp,uHalo:{value:new THREE.Vector2(...settings.halo as [number,number])},uFxRamp:{value:ramp},uFlat:{value:flat},uLayer:{value:layer},uFxTime:this.time,uCalm:this.calm,uSecondary:this.secondary,uDistort:this.distort,uGlow:{value:opts.glow?1:0}},
+        transparent:true,depthWrite:false,depthTest:!through,blending:layer>=2||opts.glow?THREE.AdditiveBlending:THREE.NormalBlending});
       const batch=new Instances(mat);batch.mesh.name=`${opts.name??"Magic"} ${through?"canopy halo":`${flat?"ground":"upright"} layer ${layer}`}`;
       batch.mesh.renderOrder=fxLayerOrder(slot,opts.order);scene.add(batch.mesh);this.layers.push(batch);
     }
