@@ -1,8 +1,11 @@
 // The challenge area's look (rules/challenge.ts; Ed, 2026-11-03: "a large stone floor circle (like the legend circle) with the glowing
 // sigil of the island carved into it, with a circle of stone columns around the edge (we already have art for this)"):
-//   - the floor: a legend circle's (render/ground.ts, its flagstones, its area's stone and debris, render/legendFloor.ts), the
-//     island's sigil carved in it (art/sigils.js islandSigil: home's the World Tree; render/legendCarving.ts) and glowing (the
-//     carving's glint), drawn in the ground's last legend-circle slot (view.ts legendRings: challengeRing);
+//   - the floor: a legend circle's (render/ground.ts, its flagstones, its area's stone and debris, render/legendFloor.ts), drawn in
+//     the ground's last legend-circle slot with no carving of its own (view.ts legendRings: challengeRing); the island's sigil
+//     (art/sigils.js islandSigil: home's the World Tree) carved into it by the ground's own pass (Ed, 2026-11-03, on #1725: "it
+//     should look like it's carved into the circle", not a pixellated glyph over it): its legendary sigil's mask at 768 px across
+//     the circle (render/legendCarving.ts bigCarvingMask), grooves with clean edges, shadowed walls and lit lips, a soft moonlit
+//     glow in them, brighter while she's in it or it's ready to cast (challengeCarving; render/ground.ts uChallengeCarve);
 //   - the columns: the classical ruins' standing column (art/landmarks.js "column"), drawn alone (a "find" art job, as tonight's find
 //     is: render/view/finds.ts), round its edge (rules/challenge.ts columnSpots);
 //   - no beam of light over it (Ed, 2026-11-03, on #1725: "remove the beam"): the telescope and the footpaths find it;
@@ -31,7 +34,7 @@ import { rainbow } from "./indicator";
 import { SpriteBatch, type SpriteInstance } from "./sprites";
 import type { LeashView } from "./leash";
 import { notesSlot } from "./leash/stones";
-import { LEGEND_LEVEL } from "./leash/glyphs";
+import { NO_CARVING } from "./legendCarving";
 import type { View } from "./view";
 
 /** How far (m) she is before its floor takes a legend circle's slot in the ground, and its columns and lights are drawn. */
@@ -42,8 +45,6 @@ const COLUMN = "column", ASK = 420;
 const FLOOR_RISE = 1.6;
 /** Its dancefloor's tiles a side (as home's: rules/dancefloor.ts GRID) and their lights this frame (reused). */
 const TILES = 32, FLOOR_RGBI = new Uint8Array(TILES * TILES * 4);
-/** The sigil's size on the floor, times the circle's radius (Ed, 2026-11-03, on #1725: filling the floor, its ring just inside the columns). */
-const SIGIL_SIZE = 1.85;
 /** A column's top (m), where its light sits. */
 const COLUMN_TOP = 4.6;
 
@@ -52,16 +53,26 @@ const beatPulse = (g: Game): number => { const b = beatAt(g.beat, g.clock.time);
 /** The beat's count (whole beats). */
 const beatNo = (g: Game): number => Math.floor(beatAt(g.beat, g.clock.time));
 
-/** The circle's floor for the ground (view.ts legendRings): its middle, radius and ring width, its band's brightening, the carving
- *  (the island's sigil) and its glint; null with none, or far off. */
+/** The circle's floor for the ground (view.ts legendRings): its middle, radius and ring width, its band's brightening, and no carving
+ *  of the legend slot's own (its sigil is carved by its own pass: challengeCarving); null with none, cleared, or far off. */
 export function challengeRing(g: Game, x: number, z: number): { x: number; z: number; r: number; edge: number; glow: number; species: string; glint: number } | null {
   const ch = g.challenge;
   if (!ch || ch.clearedAt !== null || Math.hypot(ch.x - x, ch.z - z) > NEAR + ch.radius) return null; // (cleared: its dancefloor instead, challengeFloor)
   const p = beatPulse(g), inside = g.witch.mode === "ground" && Math.hypot(g.witch.x - ch.x, g.witch.z - ch.z) <= ch.radius;
   const lit = ch.clearedAt !== null, dark = ch.closedAt !== null;
-  const glint = dark ? 0 : lit ? 2.5 + 6 * p : challengeReady(g) ? 3 + 1.5 * Math.sin(g.clock.time * 3) : 2.2;
   const glow = dark ? 0 : lit ? 0.35 + 0.65 * p : inside ? 0.55 : 0.2;
-  return { x: ch.x, z: ch.z, r: ch.radius, edge: g.tuning.legendClearing.edge, glow, species: islandSigilOf(g.map), glint };
+  return { x: ch.x, z: ch.z, r: ch.radius, edge: g.tuning.legendClearing.edge, glow, species: NO_CARVING, glint: 0 };
+}
+
+/** The island's sigil carved into the circle's floor (render/ground.ts setChallengeCarving): its middle, radius, whose sigil, and the
+ *  soft moonlit glow in its grooves (brighter with her in it, brighter still and breathing once it's ready to cast; none once closed);
+ *  null with none, cleared (its dancefloor covers it), or far off. */
+export function challengeCarving(g: Game, x: number, z: number): { x: number; z: number; r: number; glow: number; species: string } | null {
+  const ch = g.challenge;
+  if (!ch || ch.clearedAt !== null || Math.hypot(ch.x - x, ch.z - z) > NEAR + ch.radius) return null;
+  const inside = g.witch.mode === "ground" && Math.hypot(g.witch.x - ch.x, g.witch.z - ch.z) <= ch.radius;
+  const glow = ch.closedAt !== null ? 0 : challengeReady(g) ? 1.6 + 0.3 * Math.sin(g.clock.time * 3) : inside ? 1.2 : 0.7;
+  return { x: ch.x, z: ch.z, r: ch.radius, glow, species: islandSigilOf(g.map) };
 }
 
 /** Its columns (the view's decor batches, as tonight's find is drawn: render/view/finds.ts). */
@@ -105,15 +116,6 @@ export function drawChallenge(lv: LeashView, time: number, dot: number[]): void 
   const p = beatPulse(g), W = g.witches?.[0];
   if (ch.closedAt !== null) return; // (dark: nothing lit)
   const cols = columnSpots(ch, t);
-  // The island's sigil glowing in its floor (its legendary form: a magic circle with the animal at its middle, render/leash.ts
-  // slotOf), over the floor's carving (the ground's: challengeRing), so it reads in the dark: moonlit while it waits, brighter once
-  // it's ready, the rainbow on the beat once cleared. Its light alone, no dark backing as a sigil lying on the ground has (at this
-  // size that blacked out the stone floor under it).
-  if (ch.clearedAt === null) { // (cleared: its dancefloor replaces the floor and the sigil, challengeFloor)
-    const ready = challengeReady(g), c = [0.45, 0.85, 0.95];
-    const a = ready ? 0.7 + 0.1 * Math.sin(time * 3) : 0.55;
-    lv.flat.add(ch.x, 0.02, ch.z, ch.radius * SIGIL_SIZE, lv.uv(lv.slotOf(islandSigilOf(g.map), LEGEND_LEVEL, true), 2), c[0], c[1], c[2], a);
-  }
   if (ch.clearedAt === null) {
     // Waiting: each column's top a faint cold glow; ready, the spell's notes at its middle, and her fill round her as she casts.
     for (const s of cols) lv.standing.add(s.x, COLUMN_TOP, s.z, 1.1, dot, 0.45, 0.8, 0.9, 0.5, 1, true);

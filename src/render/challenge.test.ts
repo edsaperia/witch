@@ -8,7 +8,8 @@ import { TUNING, type Tuning } from "../rules/tuning";
 import { befriend } from "../rules/creatureStates";
 import { islandSigilOf } from "../rules/dancefloor";
 import { startPartyOver } from "../rules/partyOver";
-import { challengeFloor, challengeRing, challengeShot } from "./challenge";
+import { challengeCarving, challengeFloor, challengeRing, challengeShot } from "./challenge";
+import { NO_CARVING } from "./legendCarving";
 import { columnSpots } from "../rules/challenge";
 import { withTuning } from "../rules/tuning";
 import { readFileSync } from "node:fs";
@@ -27,9 +28,16 @@ describe("the challenge circle's light", () => {
   it("glows while it waits; cleared, home's dancefloor fills the circle in place of its stone floor, lit on the beat", () => {
     const g = game(), ch = g.challenge!;
     const at = () => challengeRing(g, ch.x, ch.z)!;
-    expect(at().species).toBe(islandSigilOf(g.map));
+    // (its sigil carved into its floor by the ground's own pass, Ed on #1725: "it should look like it's carved into the circle": the
+    // legend slot carves nothing, the carving the island's sigil, its grooves glowing softly)
+    expect(at().species).toBe(NO_CARVING);
+    const carved = challengeCarving(g, ch.x, ch.z)!;
+    expect(carved.species).toBe(islandSigilOf(g.map));
+    expect([carved.x, carved.z, carved.r]).toEqual([ch.x, ch.z, ch.radius]);
+    expect(carved.glow).toBeGreaterThan(0);
+    g.witch = { ...g.witch, x: ch.x + 3, z: ch.z, mode: "ground", lift: 0, seated: false, perch: undefined };
+    expect(challengeCarving(g, ch.x, ch.z)!.glow).toBeGreaterThan(carved.glow); // (brighter with her in it)
     expect(at().r).toBe(T.challenge!.radius);
-    expect(at().glint).toBeGreaterThan(0);
     expect(challengeFloor(g, ch.x, ch.z)).toBeNull(); // (no dancefloor before it's cleared)
     // cleared: the spell cast on it
     for (const id of ch.pack) befriend(g.creatures[id], g.clock.time);
@@ -57,6 +65,7 @@ describe("the challenge circle's light", () => {
     // (its only light is its own floor's, columns' and dancefloor's: nothing of it among the markers' beacons and lasers)
     const src = readFileSync("src/render/challenge.ts", "utf8"), home = readFileSync("src/render/view/home.ts", "utf8");
     expect(src).not.toMatch(/beacons\.push|lasers\.push|Beacon\b/);
+    expect(src).not.toMatch(/slotOf\(|LEGEND_LEVEL/); // (and no glyph sprite laid over its floor: its sigil is carved, challengeCarving)
     expect(home).not.toMatch(/challenge/i);
   });
 
@@ -65,7 +74,7 @@ describe("the challenge circle's light", () => {
     startPartyOver(g, g.clock.time); // (the night lost: Ed, on #1725, only then or once it's won)
     stepGame(g, still, 1 / 60);
     expect(ch.closedAt).not.toBeNull();
-    expect(challengeRing(g, ch.x, ch.z)!.glint).toBe(0);
+    expect(challengeCarving(g, ch.x, ch.z)!.glow).toBe(0); // (dark: no glow in its grooves)
     expect(challengeFloor(g, ch.x, ch.z)).toBeNull(); // (dark stone: no dancefloor)
   }, 60000);
 

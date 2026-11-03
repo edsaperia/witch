@@ -140,7 +140,7 @@ import { cancelRefresh, refresh, refreshSteps } from "./view/scenery";
 import { drawBerries, drawCreatures, resetCreatureCaches } from "./view/creatures";
 import { drawHatArt } from "./view/hatArt";
 import { drawFinds, findClear } from "./view/finds";
-import { challengeFloor, challengeRing, drawChallengeColumns, fireChallenge } from "./challenge";
+import { challengeCarving, challengeFloor, challengeRing, drawChallengeColumns, fireChallenge } from "./challenge";
 import { drawMarkers, drawSpeakers, forgetCandles, placeTreehouse, entDeckDrawn } from "./view/home";
 import { miniTreehouse, ZooExitTag } from "./zooExit";
 import { CastTag } from "./castTag";
@@ -1739,7 +1739,8 @@ export class View {
     this.soundBatch.set(party.items);
     this.ground.setLegendRings(this.legendRings(g, time), this.ringCount);
     this.ground.setLegendFloors(this.floorItems, this.ringCount);
-    this.ground.setChallengeFloor(challengeFloor(g, g.witch.x, g.witch.z)); // (the challenge circle's dancefloor once cleared: render/challenge.ts)
+    this.ground.setChallengeFloor(challengeFloor(g, g.witch.x, g.witch.z));
+    this.ground.setChallengeCarving(challengeCarving(g, g.witch.x, g.witch.z)); // (its sigil carved into its floor: render/challenge.ts) // (the challenge circle's dancefloor once cleared: render/challenge.ts)
     // (the zoo's undiscovered islands, rules/zooMap.ts: the nearest four lakes' sigils, faint on the water)
     if (g.map.zoo?.layout) {
       const L = g.map.zoo.layout, w = g.witch, items = this.lakeSigils;
