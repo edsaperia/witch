@@ -62,9 +62,12 @@ describe("stacking", () => {
 });
 
 describe("berry pips", () => {
-  it("an adult starts with none: no buff till it eats", () => {
+  it("a new adult starts with one pip (Ed, #1722): buffing at once, for its two minutes, then not till it eats", () => {
     const cs = [crit(0, "wolf", 2)], s: Pick<BerryState, "pips"> = {};
-    expect(B.pips.start).toBe(0);
+    expect(B.pips.start).toBe(1);
+    expect(pipCount(pipFuel(s, 0, TUNING), TUNING)).toBe(1);
+    expect(buffsOf([0], cs, s, TUNING).stacks.packHunters).toBe(1);
+    drainPips(s, [0], cs, LIFE, TUNING);
     expect(buffsOf([0], cs, s, TUNING).stacks.packHunters).toBe(0);
     addPip(s, 0, TUNING);
     expect(buffsOf([0], cs, s, TUNING).stacks.packHunters).toBe(1);
@@ -100,8 +103,8 @@ describe("berry pips", () => {
     expect(wantsPip(c, s, TUNING)).toBe(true);
     expect(canEat(c, s, TUNING)).toBe(true);
     feed(s, c, 1, TUNING);
-    expect(pipCount(pipFuel(s, c.id, TUNING), TUNING)).toBe(1);
-    for (let i = 0; i < 4; i++) feed(s, c, 1, TUNING);
+    expect(pipCount(pipFuel(s, c.id, TUNING), TUNING)).toBe(2); // (its first, and the berry's)
+    for (let i = 0; i < 3; i++) feed(s, c, 1, TUNING);
     expect(canEat(c, s, TUNING)).toBe(false); // (full)
   });
   it("pip count, life and warning are knobs", () => {
@@ -116,9 +119,9 @@ describe("each group's buff", () => {
     expect(dashBuff(stacks({ climbers: 2 }), TUNING)).toBe(2);
     const g = newGame(7, TUNING), W = g.witches[0], base = blinkCharges(g, W), c = g.creatures.find(k => !k.boss && groupOf(k.species, TUNING) === "climbers")!;
     c.level = 2; c.leashed = true; W.leash.stack.push(c.id);
-    expect(blinkCharges(g, W)).toBe(base); // (no pips yet)
-    addPip(g.berries, c.id, TUNING);
-    expect(blinkCharges(g, W)).toBe(base + 1);
+    expect(blinkCharges(g, W)).toBe(base + 1); // (its first pip)
+    g.berries.pips = new Map([[c.id, 0]]);
+    expect(blinkCharges(g, W)).toBe(base); // (its pips gone)
   });
   it("Darters: faster movement, about 10% a stack", () => {
     expect(speedBuff(stacks({ darters: 2 }), TUNING)).toBeCloseTo(1.2, 9);

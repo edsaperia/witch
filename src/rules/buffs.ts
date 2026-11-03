@@ -42,7 +42,7 @@ export function groupOf(species: string, t: Tuning): BuffGroup | null {
 
 /** An adult's level (rules/creatureLevels.ts). */
 const ADULT = 2;
-/** Seconds of buff an adult has left (its pips: whole ones and the draining one), on the berries' state; none kept yet: buffs.pips.start. */
+/** Seconds of buff an adult has left (its pips: whole ones and the draining one), on the berries' state; none kept yet: buffs.pips.start, 1 (Ed, 2026-11-03, #1722: "a new adult starts with 1 pip"). */
 export function pipFuel(s: Pick<BerryState, "pips">, id: number, t: Tuning): number {
   const P = buffKnobs(t)?.pips;
   if (!P) return 0;
