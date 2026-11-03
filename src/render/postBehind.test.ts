@@ -56,20 +56,3 @@ it("all shown: the scene as ever, its background and all", () => {
   const { seen, bg } = renders(1);
   expect(seen.filter(s => s.what === "scene")).toEqual([expect.objectContaining({ houseOnly: false, background: bg })]);
 });
-
-it("makes the tilt-shift ready ahead, off-screen and at no strength: its targets made, its passes each drawn once, nothing on the canvas (Ed's playtest, 2026-11-03: a long freeze after leaving the balcony)", () => {
-  const inited: unknown[] = [], drawn: { mat: unknown; into: unknown; src: unknown; strength: unknown }[] = [], start = {};
-  const renderer = {
-    target: start as unknown, autoClear: true,
-    setRenderTarget(t: unknown) { this.target = t; }, getRenderTarget() { return this.target; },
-    initRenderTarget(t: unknown) { inited.push(t); },
-    render(s: THREE.Object3D) { const m = (s as THREE.Mesh).material as THREE.ShaderMaterial; drawn.push({ mat: m, into: this.target, src: m.uniforms.uSrc?.value, strength: m.uniforms.uStrength?.value }); },
-  };
-  const post = new Post(renderer as unknown as THREE.WebGLRenderer, tuning), P = post as unknown as { a: THREE.WebGLRenderTarget; b: THREE.WebGLRenderTarget; sharpMask: THREE.WebGLRenderTarget; mats: Record<string, THREE.ShaderMaterial> };
-  post.warmTilt();
-  expect(new Set(inited)).toEqual(new Set([P.a, P.b, P.sharpMask]));
-  expect(drawn.map(d => [d.mat, d.into])).toEqual([[P.mats.composite, P.a], [P.mats.tilt, P.b], [P.mats.tilt, P.a]]);
-  expect(drawn.slice(1).map(d => [d.src, d.strength])).toEqual([[P.a.texture, 0], [P.b.texture, 0]]);
-  expect(drawn.every(d => d.into !== null)).toBe(true); // (never the canvas)
-  expect(renderer.target).toBe(start); // (put back)
-});

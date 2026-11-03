@@ -3673,6 +3673,73 @@
         },
         "bySpeed": {
           "type": "boolean"
+        },
+        "steps": {
+          "type": "object",
+          "properties": {
+            "on": {
+              "type": "boolean"
+            },
+            "dot": {
+              "type": "number",
+              "minimum": 0,
+              "description": "a dot's size, the picture's pixels."
+            },
+            "gap": {
+              "type": "number",
+              "minimum": 0,
+              "description": "the gap between dots, the picture's pixels."
+            },
+            "section": {
+              "type": "number",
+              "minimum": 0,
+              "description": "a section's length: seconds times her top speed now (so longer with speed buffs and over the treetops); each still drains in a dodge's cooldown."
+            },
+            "ring": {
+              "type": "boolean",
+              "description": "the small ring marking where the tail must drain to for a take-off, while it's locked (only where a take-off can go before the counter's empty)."
+            },
+            "halo": {
+              "type": "number",
+              "minimum": 0,
+              "description": "the faint halo of each section's colour under its dots (0 none)."
+            },
+            "glow": {
+              "type": "number",
+              "minimum": 0,
+              "description": "each dot's soft glow, its strength (0 none)."
+            },
+            "glowSize": {
+              "type": "number",
+              "minimum": 0,
+              "description": "each dot's glow, pixels across."
+            },
+            "preset": {
+              "type": "string",
+              "enum": [
+                "warm",
+                "cool",
+                "pastel",
+                "party",
+                "gold",
+                "ice"
+              ],
+              "description": "the colour preset (config/trail-colours.json) of a witch who hasn't chosen one at the Broom station."
+            }
+          },
+          "required": [
+            "on",
+            "dot",
+            "gap",
+            "section",
+            "ring",
+            "halo",
+            "glow",
+            "glowSize",
+            "preset"
+          ],
+          "additionalProperties": false,
+          "description": "The cooldown trail: behind the buffer (her trail by speed, in the area's colour), a section of pixel dots for each dash's worth of the shared cooldown, each its own colour of her preset, the tail's dots going one at a time as it drains; off, the smooth trail as before."
         }
       },
       "required": [
@@ -3689,7 +3756,8 @@
         "colourEase",
         "sparks",
         "cooldown",
-        "bySpeed"
+        "bySpeed",
+        "steps"
       ],
       "additionalProperties": false,
       "description": "Her flight trail: a glowing ribbon along her path in the colour of the area she's over."
@@ -10768,34 +10836,29 @@
           "additionalProperties": false,
           "description": "where the chart hands over, sea metres out to sea off the south coast below the dancefloor (negative: inland), its camera dist metres back and pitchDeg degrees down (the first flight's: -40, 600, 50); ?dive=near|far|skim for one load (app/chartView.ts DIVES)."
         },
-        "tree": {
+        "bend": {
           "type": "object",
           "properties": {
-            "height": {
+            "curve": {
               "type": "number",
               "minimum": 0
             },
-            "angle": {
+            "grow": {
               "type": "number",
               "minimum": 0
             },
-            "fill": {
-              "type": "number",
-              "minimum": 0
-            },
-            "time": {
+            "relax": {
               "type": "number",
               "minimum": 0
             }
           },
           "required": [
-            "height",
-            "angle",
-            "fill",
-            "time"
+            "curve",
+            "grow",
+            "relax"
           ],
           "additionalProperties": false,
-          "description": "Where the camera ends its arrival: the whole treehouse tree seen from the south, filling the frame."
+          "description": "The dive's bend: the world curving away so the treehouse crown comes up over the horizon as the camera flies in."
         }
       },
       "required": [
@@ -10810,10 +10873,10 @@
         "settle",
         "hold",
         "handoff",
-        "tree"
+        "bend"
       ],
       "additionalProperties": false,
-      "description": "Arriving on an island from the sea chart: the camera flies in over the sea, frames the dancefloor and comes round to the treehouse."
+      "description": "Arriving on an island from the sea chart: the camera flies in over the sea, frames the dancefloor and the treehouse, its crown coming up over the bent horizon, and into her bedroom."
     },
     "camera": {
       "type": "object",

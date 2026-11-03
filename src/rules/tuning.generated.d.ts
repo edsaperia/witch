@@ -727,6 +727,17 @@ export type SchemaTuning = {
     "sparks": boolean;
     "cooldown": number;
     "bySpeed": boolean;
+    "steps": {
+      "on": boolean;
+      "dot": number;
+      "gap": number;
+      "section": number;
+      "ring": boolean;
+      "halo": number;
+      "glow": number;
+      "glowSize": number;
+      "preset": "warm" | "cool" | "pastel" | "party" | "gold" | "ice";
+    };
   };
   "swoopTrail": {
     "on": boolean;
@@ -2112,11 +2123,10 @@ export type SchemaTuning = {
       "dist": number;
       "pitchDeg": number;
     };
-    "tree": {
-      "height": number;
-      "angle": number;
-      "fill": number;
-      "time": number;
+    "bend": {
+      "curve": number;
+      "grow": number;
+      "relax": number;
     };
   };
   "camera": {

@@ -1,6 +1,7 @@
 // Her broom's parts (the Workshop, Ed 2026-10-23; rules/broomParts.ts), kept on this browser (localStorage witch.broom): the parts
 // she has found (each from a wreck, rules/finds.ts) and which is fitted in each slot. A first game's broom is bare and she owns no
-// part. Storage blocked: this run only.
+// part. Storage blocked: this run only. And her trail's colours (Ed, 2026-11-03: "set the colour set of your trail in the broom
+// station"; render/trailColours.ts): the preset she chose at the Broom station's Trail row, absent till she chooses (the default's).
 //
 // The migration from the brooms before parts: a browser with no witch.broom yet had a broom shape in her look (witch.genome's
 // broom.kind) and maybe a broom spell (witch.loadout's broom). Shapes are parts' looks now, and spells come from sets, so the
@@ -11,10 +12,11 @@ import { LOADOUT_KEY } from "./loadout";
 import { unlockAll } from "./debugUnlock";
 import { defaultBroom, newWitch } from "./defaultLook";
 import { fallbackStorage } from "./storageFallback";
+import { TRAIL_PRESETS } from "../render/trailColours";
 
 export const BROOM_KEY = "witch.broom";
 const GENOME_KEY = "witch.genome";
-export interface BroomSave { v: 1; found: string[]; fitted: Fitted }
+export interface BroomSave { v: 1; found: string[]; fitted: Fitted; /** her trail's colour preset's id (render/trailColours.ts), absent: the default */ trail?: string }
 type Store = Pick<Storage, "getItem" | "setItem">;
 const storeOf = fallbackStorage;
 
@@ -26,6 +28,7 @@ export function loadBroom(storage?: Store | null): BroomSave {
     const o = JSON.parse(storeOf(storage)?.getItem(BROOM_KEY) ?? "null") as Partial<BroomSave> | null;
     if (!o) return firstBroom();
     out.found = PART_IDS.filter(id => Array.isArray(o.found) && o.found.includes(id));
+    if (typeof o.trail === "string" && TRAIL_PRESETS.some(p => p.id === o.trail)) out.trail = o.trail;
     for (const s of SLOTS) { const id = o.fitted?.[s]; if (id && (out.found.includes(id) || unlockAll()) && partById(id)?.slot === s) out.fitted[s] = id; } // (one she hasn't found, fitted under the pause page's Unlock everything, stays while it's on: app/debugUnlock.ts)
   } catch { /* spoilt: a bare broom */ }
   return out;
@@ -39,7 +42,7 @@ export function firstBroom(): BroomSave {
 
 export function saveBroom(b: BroomSave, storage?: Store | null): void {
   if (newWitch()) return;
-  try { storeOf(storage)?.setItem(BROOM_KEY, JSON.stringify({ v: 1, found: [...new Set(b.found)].sort(), fitted: b.fitted })); } catch { /* storage blocked: this run only */ }
+  try { storeOf(storage)?.setItem(BROOM_KEY, JSON.stringify({ v: 1, found: [...new Set(b.found)].sort(), fitted: b.fitted, ...(b.trail ? { trail: b.trail } : {}) })); } catch { /* storage blocked: this run only */ }
 }
 
 /** A part found (the "found" event of a wreck): hers for good, not fitted (it waits at the Workshop: the bay fits it). */
@@ -73,4 +76,12 @@ export function migrateBroom(storage?: Store | null): boolean {
     saveBroom(firstBroom(), st);
     return changed;
   } catch { return false; }
+}
+
+/** Her trail's colours chosen at the Broom station (ui/stationPanel.ts Trail row): kept with her broom (an unknown preset isn't). */
+export function chooseTrail(id: string, storage?: Store | null): BroomSave {
+  const b = loadBroom(storage);
+  if (TRAIL_PRESETS.some(p => p.id === id)) b.trail = id;
+  saveBroom(b, storage);
+  return loadBroom(storage);
 }

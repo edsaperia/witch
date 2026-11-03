@@ -1,3 +1,4 @@
+import { pageIdb } from "../storageScope";
 /** Public telephone addresses are short; identity is a signing key, never the address itself. */
 export interface TelephonePublicKey { algorithm: "Ed25519" | "ECDSA-P256"; spki: string }
 export interface TelephoneIdentity { publicKey: TelephonePublicKey; privateKey: CryptoKey }
@@ -55,7 +56,7 @@ export async function loadTelephoneIdentity(store: IdentityStore): Promise<Telep
   return identity;
 }
 
-export function browserTelephoneIdentityStore(factory: IDBFactory = indexedDB): IdentityStore {
+export function browserTelephoneIdentityStore(factory: IDBFactory = pageIdb()!): IdentityStore {
   let opened: Promise<IDBDatabase> | null = null;
   const db = () => opened ??= new Promise((resolve, reject) => {
     const request = factory.open("witch.telephone.identity", 1);

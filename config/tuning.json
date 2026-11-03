@@ -882,7 +882,18 @@
     "colourEase": 0.6,
     "sparks": true,
     "cooldown": 24,
-    "bySpeed": true
+    "bySpeed": true,
+    "steps": {
+      "on": true,
+      "dot": 1,
+      "gap": 1,
+      "section": 0.35,
+      "ring": true,
+      "halo": 0.12,
+      "glow": 0.35,
+      "glowSize": 5,
+      "preset": "warm"
+    }
   },
   "swoopTrail": {
     "on": true,
@@ -2389,7 +2400,7 @@
       "max": 8
     },
     "maxStep": 0.05,
-    "fade": 0.6,
+    "fade": 1,
     "speed": 110,
     "minLeg": 1.5,
     "low": {
@@ -2414,11 +2425,10 @@
       "dist": 520,
       "pitchDeg": 38
     },
-    "tree": {
-      "height": 34,
-      "angle": 10,
-      "fill": 0.8,
-      "time": 3.5
+    "bend": {
+      "curve": 0.0025,
+      "grow": 4,
+      "relax": 3
     }
   },
   "camera": {

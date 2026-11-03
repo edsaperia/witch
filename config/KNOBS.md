@@ -1450,6 +1450,17 @@ Her flight trail [1]: a ribbon of glow along her path, fading to nothing at its 
 - **`trail.bright`**: its brightness.
 - **`trail.fade`**: how it fades along its length (eased out: bright for its first stretch, then thinning to nothing; higher keeps it bright longer), its width tapering with it.
 - **`trail.sparks`**: the broom's little amber sparks as well. ?trail=0 hides it.
+- **`trail.steps`**: The cooldown trail: behind the buffer (her trail by speed, in the area's colour), a section of pixel dots for each dash's worth of the shared cooldown, each its own colour of her preset, the tail's dots going one at a time as it drains; off, the smooth trail as before.
+  1. Ed, 2026-11-03: "the trail is made of lots of little segments, and there are few colour sections from beginning to end, and you can see segments vanish one by one; so each colour section tells you if you have a dash" … "each segment could be just a single pixel, with a single pixel gap between" … "the number of small segments in each section relates to your speed, so it gets larger with buffs, and is larger in the treetop; but each section drains at the same rate" … "these dots should glow a little"
+  Each section showing (a part-drained one too) is a dash she hasn't got; only the buffer, everything's ready. Where her room lets a take-off go before the counter's empty, a small pixel ring marks the take-off threshold while it's locked. Sections' colours: config/trail-colours.json, chosen at the Broom station (render/trailColours.ts).
+- **`trail.steps.dot`**: a dot's size, the picture's pixels.
+- **`trail.steps.gap`**: the gap between dots, the picture's pixels.
+- **`trail.steps.section`**: a section's length: seconds times her top speed now (so longer with speed buffs and over the treetops); each still drains in a dodge's cooldown.
+- **`trail.steps.ring`**: the small ring marking where the tail must drain to for a take-off, while it's locked (only where a take-off can go before the counter's empty).
+- **`trail.steps.halo`**: the faint halo of each section's colour under its dots (0 none).
+- **`trail.steps.glow`**: each dot's soft glow, its strength (0 none).
+- **`trail.steps.glowSize`**: each dot's glow, pixels across.
+- **`trail.steps.preset`**: the colour preset (config/trail-colours.json) of a witch who hasn't chosen one at the Broom station.
 
 | knob | type | range |
 |---|---|---|
@@ -1467,6 +1478,15 @@ Her flight trail [1]: a ribbon of glow along her path, fading to nothing at its 
 | `trail.sparks` | boolean |  |
 | `trail.cooldown` | number | 0 to … |
 | `trail.bySpeed` | boolean |  |
+| `trail.steps.on` | boolean |  |
+| `trail.steps.dot` | number | 0 to … |
+| `trail.steps.gap` | number | 0 to … |
+| `trail.steps.section` | number | 0 to … |
+| `trail.steps.ring` | boolean |  |
+| `trail.steps.halo` | number | 0 to … |
+| `trail.steps.glow` | number | 0 to … |
+| `trail.steps.glowSize` | number | 0 to … |
+| `trail.steps.preset` | string | "warm" / "cool" / "pastel" / "party" / "gold" / "ice" |
 
 ### `swoopTrail`
 
@@ -3608,7 +3628,7 @@ Code: `app/opening.ts`
 
 ### `arrive`
 
-Arriving on an island from the sea chart: the camera flies in over the sea, frames the dancefloor and comes round to the treehouse.
+Arriving on an island from the sea chart: the camera flies in over the sea, frames the dancefloor and the treehouse, its crown coming up over the bent horizon, and into her bedroom.
 
 1. Ed, 2026-10-12: the zoom-to-island plan; rules/arrive.ts, app/arrive.ts
 2. Ed's playtest, 2026-10-12: the first frames at a new spot are heavy
@@ -3618,9 +3638,10 @@ Code: `rules/arrive.ts`, `app/arrive.ts`, `app/arrival.ts`
 
 - **`arrive.handoff`**: where the chart hands over, sea metres out to sea off the south coast below the dancefloor (negative: inland), its camera dist metres back and pitchDeg degrees down (the first flight's: -40, 600, 50); ?dive=near\|far\|skim for one load (app/chartView.ts DIVES).
   Code: `app/chartView.ts`
-- **`arrive.tree`**: Where the camera ends its arrival: the whole treehouse tree seen from the south, filling the frame.
-  1. Ed, 2026-10-24: "pan up to see the whole treehouse tree before we fly into her bedroom"
-  after framing the dancefloor, the camera comes round to the whole treehouse tree from the south, angle degrees up at its middle, far enough back that it fills fill of the frame's height (its height in metres from its art once drawn, height till then), time seconds after the frame, then settle seconds on into her bedroom.
+- **`arrive.bend`**: The dive's bend: the world curving away so the treehouse crown comes up over the horizon as the camera flies in.
+  1. Ed, 2026-11-03: "I think we can get the 'Coming round to the treehouse' effect by using the bend shader rather than using the camera angle; I want to see the treehouse crown coming over the horizon, and this will achieve that straightforwardly." … "The reason why we fly out over the sea is to do the transition between these scenes while looking at the water, which should make the transition less obvious because we can fade between while looking at a simple blue texture." (in place of the swing round to the whole treehouse tree (Ed, 2026-10-24: "pan up to see the whole treehouse tree before we fly into her bedroom"; the whole-tree shot and its knobs, gone))
+  the world's bend (render/height.ts, the curvature the treetops have) added on top of the night's own through the dive (rules/arrive.ts diveBend): none at the hand-off, so the crossfade from the chart's flat sea is over the same flat water, growing to curve (per metre; the treetops' own is camera.curve.treetop, 0.0015) over grow seconds as the camera comes down over the sea, so the island sits below the horizon; held while the camera flies straight in, the treehouse crown rising over the curve of the world; then eased back to none over the flight's last relax seconds, the night's own bend exactly as she lands in bed. 0 curve: no bend.
+  Code: `rules/arrive.ts`, `render/view/camera.ts`
 
 | knob | type | range |
 |---|---|---|
@@ -3645,10 +3666,9 @@ Code: `rules/arrive.ts`, `app/arrive.ts`, `app/arrival.ts`
 | `arrive.handoff.sea` | number |  |
 | `arrive.handoff.dist` | number | 0 to … |
 | `arrive.handoff.pitchDeg` | number | 0 to … |
-| `arrive.tree.height` | number | 0 to … |
-| `arrive.tree.angle` | number | 0 to … |
-| `arrive.tree.fill` | number | 0 to … |
-| `arrive.tree.time` | number | 0 to … |
+| `arrive.bend.curve` | number | 0 to … |
+| `arrive.bend.grow` | number | 0 to … |
+| `arrive.bend.relax` | number | 0 to … |
 
 ### `camera`
 
