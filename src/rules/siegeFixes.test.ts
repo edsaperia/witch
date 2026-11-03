@@ -31,8 +31,9 @@ function besieging(species: string, level: Level, from: number): { g: Game; c: C
 describe("besiegers hurry (combat.marchShare)", () => {
   it("march at half their top speed, their kind's own (a legend's too)", () => {
     expect(TUNING.combat.marchShare).toBe(0.5);
-    for (const sp of ["wolf", "boar", "snail", "hare", "owl"]) expect(marchSpeedOf(sp, 2, TUNING)).toBeCloseTo((profileOf(sp)?.speed ?? TUNING.combat.fightRun) * TUNING.fight.speed * 0.5, 9);
-    expect(marchSpeedOf("bear", LEGEND, TUNING)).toBeCloseTo(TUNING.combat.legendRun * TUNING.fight.speed * 0.5, 9);
+    const k = TUNING.fight.speed * TUNING.difficulty!.creatureSpeed; // (its top speed at the difficulty's too: Ed, 2026-11-03)
+    for (const sp of ["wolf", "boar", "snail", "hare", "owl"]) expect(marchSpeedOf(sp, 2, TUNING)).toBeCloseTo((profileOf(sp)?.speed ?? TUNING.combat.fightRun) * k * 0.5, 9);
+    expect(marchSpeedOf("bear", LEGEND, TUNING)).toBeCloseTo(TUNING.combat.legendRun * k * 0.5, 9);
     expect(marchSpeedOf("wolf", 2, TUNING)).toBeGreaterThan(4); // (it was 0.6 × 1.5)
   });
 

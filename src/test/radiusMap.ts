@@ -4,3 +4,8 @@
 import { TUNING } from "../rules/tuning";
 
 if (TUNING.map) TUNING.map = { ...TUNING.map, islandAreas: 0 };
+
+// (The test files share workers unisolated, vitest.config isolate false: the fight's knobs, FIGHT, set from a game's tuning at each
+// combat step, the difficulty's among them, start each file as a fresh page's do, not as the last file's game left them.)
+import { resetFight } from "../rules/movement";
+resetFight();
