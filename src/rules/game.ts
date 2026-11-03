@@ -57,18 +57,20 @@ import { hatLetters, hatsDown, onHatPicked, onHatPut, stepHatSpells } from "./ha
 import { loadOf, type LeashLoad, groundedBy } from "./leashWeight";
 import { pinWitch, type Pinned } from "./partyLegend";
 import { anchorLength, anchorWitch } from "./anchor";
+// (her follower buffs on her speed and her 💌s: rules/buffs.ts, in place of spells.ts speedMultiplier and invites.ts stepInvites)
+import { buffsOf, dashBuff, drainPips, setBuffs, speedMultiplierBuffed as speedMultiplier, stepInvitesBuffed as stepInvites } from "./buffs";
 import { castOf, castOn, circleSpot, friendSigils, looseAt, scatterSpots, stoneOpen, tetherWitch, type LooseSigil } from "./stoneStacks";
 import { liveRainbows, sendRainbow, stoneMetres, type RainbowWave } from "./rainbow";
 import { runeOffset } from "./runeOffset";
 import { hurt, knockOut, newHealth, nextStreak, repair, stepKnockout, stepWanderers, type Health, type Knockout, type KnockoutEvent } from "./knockout";
 import { bagTuning } from "./bags";
-import { newInvites, stepInvites, type Affection, type Decoy, type InviteControls, type Invites } from "./invites";
+import { newInvites, type Affection, type Decoy, type InviteControls, type Invites } from "./invites";
 import { burstMirage } from "./combat/packs";
 import { affection, blocksLetters, hit as hitAffection } from "./affection";
 import { knockWitch, newKnock, stepWitchKnock, stunned, type Blow, type Knock } from "./knock";
 import { applyDash, dashing, newDash, rechargeDash, startDash, type DashState } from "./dash";
 import { coolReady, coolRoom, coolSpend, coolWait, newCool, stepCool, type CoolState } from "./cooldown";
-import { castSpell, newSpells, pullOf, revealed, speedMultiplier, stepHealingRing, type SpellState } from "./spells";
+import { castSpell, newSpells, pullOf, revealed, stepHealingRing, type SpellState } from "./spells";
 import { broomTuning } from "./broomParts";
 import { batter, canPound, groundPound, hiddenWitch, leyJump, leyJumpTarget } from "./brooms";
 import type { HouseState } from "./houseRooms";
@@ -494,7 +496,7 @@ export function blinkClear(g: Game, x: number, z: number, body: WitchState = g.w
 export const witchTuning = (g: Game, W: Witch): Tuning => bagTuning(broomTuning(g.tuning, W.spells.parts), W.spells.bag); // (and her bag's 💌 stats: rules/bags.ts)
 
 /** Her blinks in hand before the cooldown: the tuning's two (Ed, 2026-10-08), Hare's Dash bursts' more, the Twig bristles' one more. */
-export const blinkCharges = (g: Game, W: Witch): number => broomTuning(g.tuning, W.spells.parts).dash.charges ?? 1;
+export const blinkCharges = (g: Game, W: Witch): number => (broomTuning(g.tuning, W.spells.parts).dash.charges ?? 1) + dashBuff(buffsOf(W.leash.stack, g.creatures, g.berries, g.tuning).stacks, g.tuning); // (and the Climbers buff: rules/buffs.ts)
 
 /** Note where everything was before a step, for drawing between steps. */
 function remember(g: Game): void {
@@ -565,6 +567,7 @@ function fixedStep(g: Game, controls: readonly Controls[]): void {
   if (!g.cauldron) stepMushrooms(g);
   const wave = g.party.wave;
   const anchorFrom = g.witches.map(W => ({ x: W.body.x, z: W.body.z })); // (where each stood before her step: the anchor chains, below)
+  for (const W of g.witches) { drainPips(g.berries, W.leash.stack, g.creatures, dt, g.tuning); setBuffs(W, buffsOf(W.leash.stack, g.creatures, g.berries, g.tuning).stacks); } // (her follower buffs this step: rules/buffs.ts)
   const legends = (g.legendIds ??= g.creatures.filter(k => k.boss).map(k => k.id));
   const t = g.tuning;
   const motions = g.witches.map((W, i) => {

@@ -1117,6 +1117,66 @@
     "threadArcTaut": 0.02,
     "threadArcMax": 8
   },
+  "buffs": {
+    "groups": {
+      "climbers": [
+        "trees",
+        "branches",
+        "swirl"
+      ],
+      "darters": [
+        "zigzagApart",
+        "leapfrog",
+        "arcs"
+      ],
+      "stalkers": [
+        "freeze"
+      ],
+      "heavies": [
+        "backLine",
+        "hold"
+      ],
+      "packHunters": [
+        "flanks",
+        "splitBack",
+        "circle"
+      ],
+      "shells": [
+        "rollApart",
+        "huddle",
+        "shell",
+        "burrowApart",
+        "water"
+      ]
+    },
+    "legend": 3,
+    "pips": {
+      "max": 5,
+      "life": 120,
+      "warn": 10,
+      "start": 1
+    },
+    "climbers": {
+      "dash": 1
+    },
+    "darters": {
+      "speed": 0.1
+    },
+    "stalkers": {
+      "speed": 0.1,
+      "range": 0.1
+    },
+    "heavies": {
+      "shots": 1
+    },
+    "packHunters": {
+      "rate": 0.1,
+      "spread": 3
+    },
+    "shells": {
+      "chain": 1
+    }
+  },
   "difficulty": {
     "creatureSpeed": 1.2,
     "rangedRange": 1.2,

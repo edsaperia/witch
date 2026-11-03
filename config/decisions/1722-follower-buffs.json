@@ -1,0 +1,193 @@
+{
+  "pr": 1722,
+  "group": "Follower buffs",
+  "decisions": [
+    {
+      "id": "buffClimbDash",
+      "pr": 1722,
+      "group": "Follower buffs",
+      "label": "Climbers: dashes a stack",
+      "note": "Extra dash charges each Climbers-and-fliers stack gives her (Ed, 2026-11-03: first values, \"to be set in play\").",
+      "control": {
+        "type": "slider",
+        "min": 0,
+        "max": 3,
+        "step": 1
+      },
+      "default": 1,
+      "apply": {
+        "knob": "buffs.climbers.dash"
+      }
+    },
+    {
+      "id": "buffDartSpeed",
+      "pr": 1722,
+      "group": "Follower buffs",
+      "label": "Darters: speed a stack",
+      "note": "Her speed, plus this share, each Darters stack (Ed: \"Maybe 10%\").",
+      "control": {
+        "type": "slider",
+        "min": 0,
+        "max": 0.5,
+        "step": 0.01
+      },
+      "default": 0.1,
+      "apply": {
+        "knob": "buffs.darters.speed"
+      }
+    },
+    {
+      "id": "buffStalkSpeed",
+      "pr": 1722,
+      "group": "Follower buffs",
+      "label": "Stalkers: 💌 speed a stack",
+      "note": "Her 💌s' speed, plus this share, each Stalkers stack (Ed, 2026-11-03: first values, \"to be set in play\").",
+      "control": {
+        "type": "slider",
+        "min": 0,
+        "max": 0.5,
+        "step": 0.01
+      },
+      "default": 0.1,
+      "apply": {
+        "knob": "buffs.stalkers.speed"
+      }
+    },
+    {
+      "id": "buffStalkRange",
+      "pr": 1722,
+      "group": "Follower buffs",
+      "label": "Stalkers: 💌 range a stack",
+      "note": "Her 💌s' range, plus this share, each Stalkers stack (Ed, 2026-11-03: first values, \"to be set in play\").",
+      "control": {
+        "type": "slider",
+        "min": 0,
+        "max": 0.5,
+        "step": 0.01
+      },
+      "default": 0.1,
+      "apply": {
+        "knob": "buffs.stalkers.range"
+      }
+    },
+    {
+      "id": "buffHeavyShots",
+      "pr": 1722,
+      "group": "Follower buffs",
+      "label": "Heavies: ways a stack",
+      "note": "More ways her shots go round her each Heavies stack, her fire rate times the ways (1: a second shot opposite between each).",
+      "control": {
+        "type": "slider",
+        "min": 0,
+        "max": 3,
+        "step": 1
+      },
+      "default": 1,
+      "apply": {
+        "knob": "buffs.heavies.shots"
+      }
+    },
+    {
+      "id": "buffPackRate",
+      "pr": 1722,
+      "group": "Follower buffs",
+      "label": "Pack hunters: fire rate a stack",
+      "note": "Her fire rate, plus this share, each Pack hunters stack (Ed: \"Maybe 10%\").",
+      "control": {
+        "type": "slider",
+        "min": 0,
+        "max": 0.5,
+        "step": 0.01
+      },
+      "default": 0.1,
+      "apply": {
+        "knob": "buffs.packHunters.rate"
+      }
+    },
+    {
+      "id": "buffPackSpread",
+      "pr": 1722,
+      "group": "Follower buffs",
+      "label": "Pack hunters: spread a stack",
+      "note": "Degrees more spread on her shots each Pack hunters stack (Ed, 2026-11-03: first values, \"to be set in play\").",
+      "control": {
+        "type": "slider",
+        "min": 0,
+        "max": 15,
+        "step": 0.5
+      },
+      "default": 3,
+      "apply": {
+        "knob": "buffs.packHunters.spread"
+      }
+    },
+    {
+      "id": "buffShellChain",
+      "pr": 1722,
+      "group": "Follower buffs",
+      "label": "Shells: chain hops a stack",
+      "note": "Extra chain hops on her 💌s each Shells-diggers-and-swimmers stack, on top of the chaining bag's.",
+      "control": {
+        "type": "slider",
+        "min": 0,
+        "max": 3,
+        "step": 1
+      },
+      "default": 1,
+      "apply": {
+        "knob": "buffs.shells.chain"
+      }
+    },
+    {
+      "id": "buffLegend",
+      "pr": 1722,
+      "group": "Follower buffs",
+      "label": "Legend stacks",
+      "note": "Stacks a leashed legend gives its group (Ed: \"the equivalent of 3x of that animal types' buff\").",
+      "control": {
+        "type": "slider",
+        "min": 0,
+        "max": 6,
+        "step": 1
+      },
+      "default": 3,
+      "apply": {
+        "knob": "buffs.legend"
+      }
+    },
+    {
+      "id": "buffPipMax",
+      "pr": 1722,
+      "group": "Follower buffs",
+      "label": "Pips per adult",
+      "note": "Berry pips an adult holds at most (Ed's note: 5).",
+      "control": {
+        "type": "slider",
+        "min": 1,
+        "max": 10,
+        "step": 1
+      },
+      "default": 5,
+      "apply": {
+        "knob": "buffs.pips.max"
+      }
+    },
+    {
+      "id": "buffPipLife",
+      "pr": 1722,
+      "group": "Follower buffs",
+      "label": "Pip life (s)",
+      "note": "Seconds each berry pip lasts, draining one at a time while it follows her (Ed's note: 2 minutes).",
+      "control": {
+        "type": "slider",
+        "min": 10,
+        "max": 300,
+        "step": 5
+      },
+      "default": 120,
+      "apply": {
+        "knob": "buffs.pips.life"
+      }
+    }
+  ]
+}
