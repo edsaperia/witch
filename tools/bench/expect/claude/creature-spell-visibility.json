@@ -1,0 +1,7 @@
+{
+  "reason": "the creatures' spells dialled up (Ed, 2026-11-03: \"Larger, extra Bloom\"): their bolts, trails, hits, ground marks, quakes, zones, beams, status icons and pack specials bigger, more solid, glowing more and lasting longer (attackFx.visibility); the unicorn's beam in rainbow bands, the sphinx's in gold; the rules unchanged",
+  "frames": {
+    "wave-fight": "the arena pack's attacks drawn bigger, brighter and longer-lived",
+    "waves": "the waves' fights: their spells drawn bigger, brighter and longer-lived"
+  }
+}
