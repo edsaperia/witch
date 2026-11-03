@@ -318,6 +318,9 @@ export function stepCombat(s: CombatState, w: CombatWorld, data: CombatData = CO
     // (Ed, 2026-10-05: "stick with the long range one for now": with legends.closeMoves off, a wild legend that isn't an area's uses it too.)
     if (c.partyLegend) { c.fight = undefined; continue; } // (a party legend dances and fights no one: rules/partyLegend.ts)
     if (c.level === LEGEND && !c.leashed && (c.boss ? c.legendState === "angry" || c.legendState === "happy" : !LEGENDS.closeMoves) && fighting(c)) { stepLegendAttack(w, s, c, data, grid); continue; }
+    // (one of hers busy with berries, or evolving, fights no one, guarding or not: Ed, 2026-11-03, "if you have given the instruction to a
+    // creature to eat a berry, it should priotise that over fighting"; a queued one is in rules/berries.ts feeding from the tap till its
+    // queue's eaten or cancelled, so its whole queue wins, then it fights as ever)
     if (!fighting(c) || w.asleep(c) || (c.leashed && w.busy(c.id))) { c.fight = undefined; continue; }
     // Stunned (an armoured one knocked over): it does nothing for a moment.
     if (c.stunUntil !== undefined && time < c.stunUntil) { c.moving = false; c.vx = 0; c.vz = 0; continue; }
