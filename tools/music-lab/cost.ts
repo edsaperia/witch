@@ -9,7 +9,7 @@
 // runs as fast as it can on its own thread, so this is the graph's own work, without a device's deadlines.
 import styleJson from "../../config/music-style.json";
 import { MusicEngine } from "../../src/platform/audio/musicEngine";
-import { newBeatClock, waveArrived, waveTempo, type BeatClock } from "../../src/rules/beat";
+import { newBeatClock, type BeatClock } from "../../src/rules/beat";
 import { barSeconds, type MusicCue } from "../../src/rules/musicPlan";
 import { resolveSection, type MusicStyle } from "../../src/rules/musicScore";
 
@@ -96,12 +96,11 @@ function emptied(name: string, keep: string[]): MusicStyle {
 /** A whole arrangement: the boot (`boot` bars), then a wave every `every` bars through the arc (and `extra` waves past
  *  it), rendered a block (`block` bars) at a time; under siege and with a party near for the second half of each wave. */
 async function run(boot = 16, every = 32, extra = 1, block = 4, onBlock?: (c: Cost & { bar: number; wave: number }) => void): Promise<(Cost & { bar: number; wave: number })[]> {
-  const tun = { beat: { bpm: STYLE.bpm, tempos: STYLE.arc.map(a => a.bpm ?? STYLE.bpm), blockBars: STYLE.blockBars, rampBars: STYLE.tempoRampBars ?? 8 } };
   const spBar = barSeconds(STYLE.bpm), nWaves = STYLE.arc.length - 1 + extra, end = boot + nWaves * every + every / 2, out: (Cost & { bar: number; wave: number })[] = [];
   for (let bar = 0; bar < end; bar += block) {
-    // the clock as the game's at this point: each wave's tempo eased in from its arrival (bars at the base tempo)
-    const clock = newBeatClock(STYLE.bpm, waveTempo(tun, 0)), waves: number[] = [];
-    for (let w = 1; w <= nWaves && boot + (w - 1) * every <= bar; w++) { waves.push(boot + (w - 1) * every); waveArrived(clock, tun, w, (boot + (w - 1) * every) * spBar); }
+    // the clock as the game's: the style's tempo every wave (Ed, 2026-11-03)
+    const clock = newBeatClock(STYLE.bpm), waves: number[] = [];
+    for (let w = 1; w <= nWaves && boot + (w - 1) * every <= bar; w++) waves.push(boot + (w - 1) * every);
     const wave = waves.length, into = wave ? bar - waves[wave - 1] : 0, busy = wave > 0 && into >= every / 2 ? 1 : 0;
     const cue: MusicCue = { waves, nextAt: boot + wave * every, bootUntil: boot, knockedOut: false, siege: busy, party: busy };
     const c = { ...(await measure(`bar ${bar}`, STYLE, cue, bar * spBar, block * spBar, clock)), bar, wave };

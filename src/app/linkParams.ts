@@ -100,8 +100,9 @@ export function tuningFromLink(params: URLSearchParams) {
   if (glowParam && glowParam[2] > 0) tuning.glowNear = glowParam[2];
   // The music's style (config/music-style.json) sets the beat everything pulses to.
   const musicStyle = musicStyleJson as unknown as MusicStyle;
-  // The beat's base tempo is the style's; each wave's tempo is its arc step's (Ed: 120 rising to about 140).
-  tuning.beat = { ...tuning.beat, bpm: musicStyle.bpm, tempos: musicStyle.arc.map(a => a.bpm ?? musicStyle.bpm), blockBars: musicStyle.blockBars, rampBars: musicStyle.tempoRampBars ?? 8 };
+  // The beat's tempo is the style's, the same every wave (Ed, 2026-11-03: "the tempo (pulse speed) should stay the same through
+  // the night, and only raises when you get knocked down").
+  tuning.beat = { ...tuning.beat, bpm: musicStyle.bpm };
   // ?music=off: no music; ?music=<section> plays that section of the style over and over (e.g.
   // ?music=drop); ?music=wave<N> plays wave N's music whatever the wave (e.g. ?music=wave7).
   const musicParam = params.get("music") ?? "";
@@ -110,8 +111,6 @@ export function tuningFromLink(params: URLSearchParams) {
   {
     const m = /^wave(\d+)$/.exec(musicParam);
     if (m || musicStyle.sections[musicParam]) musicCueNow = { waves: [], nextAt: Infinity, bootUntil: 0, knockedOut: false, siege: 0, forceWave: m ? +m[1] : undefined, forceSection: m ? undefined : musicParam };
-    // a wave's music plays at that wave's tempo throughout
-    if (m) tuning.beat = { ...tuning.beat, tempos: [tuning.beat.tempos![Math.min(+m[1], tuning.beat.tempos!.length - 1)]] };
   }
   // ?blend=off: neighbouring areas' floors meet on a plain edge (to compare); ?blend=<warp>,<fine>,<band> tunes it.
   const blendParam = params.get("blend");

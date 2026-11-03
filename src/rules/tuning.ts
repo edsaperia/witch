@@ -481,9 +481,9 @@ export interface Tuning {
   glowPower: number;
   /** The lighting's mood (render/mood.ts): spooky (the grade below) or plain (the light as it was). */
   light?: { mood: "spooky" | "plain"; spooky: Mood };
-  /** The beat clock (rules/beat.ts): the base tempo; each wave's tempo (from the music style's arc),
-   *  eased over rampBars from the block line (blockBars) its music lands on. */
-  beat: { bpm: number; tempos?: number[]; rampBars?: number; blockBars?: number; /** Beats a knockdown's tempo rise eases in over (rules/beat.ts knockdownTempo), 4 by default. */ knockBeats?: number };
+  /** The beat clock (rules/beat.ts): the night's tempo (the music style's), the same every wave (Ed, 2026-11-03), moved to her
+   *  record's at the decks and raised only by her knockdowns. */
+  beat: { bpm: number; /** Beats a knockdown's tempo rise eases in over (rules/beat.ts knockdownTempo), 4 by default. */ knockBeats?: number };
   /** Berries and evolving (rules/berries.ts): berries per area at the start [min, max], berry bushes
    *  per area, how far a party animal looks for one (m), how long it eats (s), berries to evolve
    *  (babies, young, adults), the berry's colour and glow. */

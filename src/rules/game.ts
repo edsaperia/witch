@@ -12,7 +12,7 @@ import { nightFor, type NightSet } from "./musicSet";
 import { bodyRadius, spaceOut, spaceRadius } from "./spacing";
 import { spacingOn } from "./combatSpacing";
 import { type QuestEvent } from "./quest";
-import { beatAt, knockdownTempo, newBeatClock, tempoRate, timeAt, waveArrived, waveTempo, type BeatClock } from "./beat";
+import { beatAt, knockdownTempo, newBeatClock, tempoRate, timeAt, type BeatClock } from "./beat";
 import { cameraPose, newCamera, stepCamera, type CameraPose, type CameraState, type CoastView } from "./camera";
 import { legendCircleNear } from "./legendCircle";
 import { MAX_STEP, newClock, type Clock } from "./clock";
@@ -241,7 +241,7 @@ export interface Game {
   /** When each home speaker was booted (Ed, 2026-10-06: they start as small runestones and the boot pulse turns them into
    *  speakers): the game time the pulse reached it, or null while it's still a stone. See bootSpeaker and speakerBoot. */
   speakerBoot: (number | null)[];
-  /** The beat clock: beats by game time, its tempo rising wave by wave (rules/beat.ts). */
+  /** The beat clock: beats by game time, its tempo steady through the night but for her knockdowns (rules/beat.ts). */
   beat: BeatClock;
   /** The night's set (rules/musicSet.ts; Ed, 2026-10-11): the music's arc for this night, a step a wave. */
   musicSet: NightSet | null;
@@ -335,7 +335,7 @@ export function newGame(seed: number, tuning: Tuning, players = 1, ready?: MapPr
     camera: newCamera(tuning, body.x, witchHeight(body, tuning), body.z), party: newParty(map), berries: newBerries(map, tuning), mushrooms: newMushrooms(map, forest),
     speakers: map.dancefloor.speakers.map(() => "playing" as SpeakerState),
     speakerBoot: map.dancefloor.speakers.map(() => null),
-    beat: newBeatClock(tuning.beat.bpm, waveTempo(tuning, 0)), knockdowns: [] as { at: number; back: number }[], musicSet: set,
+    beat: newBeatClock(tuning.beat.bpm), knockdowns: [] as { at: number; back: number }[], musicSet: set,
     floor: newFloor(), partyWitches: newPartyWitches(seed), beach: newBeachWitches(seed, map.bounds, tuning),
     combat: newCombat(), koEvents: [] as KnockoutEvent[], friendly: new Set<string>(), wildEntry: new Map(), questEvents: [] as QuestEvent[], islandsTonight: [] as string[], waveEvents: [] as WaveEvent[], leashEvents: [] as LeashEvent[], loose: [] as LooseSigil[], relics: placeRelics(map, forest), trunk: null as Trunk | null, tally: { berries: 0, invites: 0, evolved: 0 }, growth: newGrowth(), partyOver: null as PartyOver | null, win: null as WinState | null,
     acc: 0, alpha: 1, timeScale: 1, herTime: 0, pending: {}, prev: { witches: [], creatures: new Float64Array(creatures.length * 2), camera: null },
@@ -692,8 +692,6 @@ function fixedStep(g: Game, controls: readonly Controls[]): void {
   const celebrate = (a: Partified, wave: number) => { if (a.soundsystem) g.waveEvents.push({ kind: "waveCelebrate", key: cellKey(a.cell), x: a.soundsystem.x, z: a.soundsystem.z, at: g.clock.time, wave }); };
   if (c.nextWave && !calm && !lapping) { spreadWave(g.party, g.map, g.clock.time, celebrate); resetPulse(g.party, g.map, g.clock.time); } // (the pulse on from the stone it brought on)
   if (!calm && !lapping) stepParty(g.party, g.map, g.clock.time, dt, g.witches.every(W => !!W.body.seated), celebrate, tempoRate(g.beat, t));
-  // Each wave brings its tempo, eased in from the block line its music lands on.
-  if (g.party.wave !== g.beat.wave) waveArrived(g.beat, g.tuning, g.party.wave, g.clock.time);
   if (!still) stepLegends(g, legends, !!c.happyNearest);
   for (const { W, ht } of motions) {
     if (W.ko) {
