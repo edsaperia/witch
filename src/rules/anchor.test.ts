@@ -135,12 +135,12 @@ describe("anchor chains in play", () => {
 });
 
 describe("no take-off with an adult on her leash", () => {
-  const press = (g: Game) => { stepGame(g, { ...idle, toggleMode: true }, STEP); const e = g.leashEvents.find(k => k.kind === "grounded"); return { up: g.witches[0].body.mode !== "ground", grounded: !!e, obj: e?.obj }; };
+  const press = (g: Game) => { stepGame(g, { ...idle, toggleMode: true }, STEP); const e = g.leashEvents.find(k => k.kind === "grounded"); return { up: g.witches[0].body.mode !== "ground", grounded: !!e, adult: groundedBy(g.witches[0].leash.stack, g.creatures, g.tuning).adult }; };
 
-  it("refused, however light the adult, and said as the anchor's (for the hint)", () => {
+  it("refused, however light the adult, and known as the anchor's (for the hint)", () => {
     const light = withTuning({ leash: { ...TUNING.leash, grounded: { weight: 100 } } }); // (the weight rule alone wouldn't hold her)
     const g = onGround(light); lead(g, 2, 2, 0);
-    expect(press(g)).toEqual({ up: false, grounded: true, obj: "anchor" });
+    expect(press(g)).toEqual({ up: false, grounded: true, adult: true });
   });
 
   it("parked, the adult lets her fly; a youth alone doesn't hold her", () => {
