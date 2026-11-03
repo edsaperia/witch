@@ -4,6 +4,10 @@
 // track, then mossy flagstones across a garden...), switching at area borders; roads are overgrown
 // tarmac, railways old track, with gaps where the line is broken. Dead ends taper away, and every
 // end of a drawn stretch frays out in a dithered fade (Ed, v149).
+// Each kind has several looks (the art's variants, dealt one a line by rules/pathGeometry.ts): one mesh
+// a kind, its looks stacked in one strip texture (a row each) and picked by a vertex attribute, so more
+// looks cost no more draw calls. Beside it the strip's bump map (art/paths.js pathNormals; Ed, 2026-11-03:
+// "Can you give them bump maps to make them less flat?"): each pixel's normal, lit by the night's light.
 import * as THREE from "three";
 import { freeObjects } from "./free";
 import * as Art from "../../art/generator.js";
@@ -15,15 +19,21 @@ import { HEIGHT_UNIFORMS, HEIGHT_VERT_GLSL } from "./height";
 import { runSync, type Steps } from "./slices";
 import type { Style } from "./style";
 
-type Kind = { width: number; period: number };
+type Kind = { width: number; period: number; variants?: readonly string[] };
+
+/** The paths' shared uniforms: the bump's strength (the tuning's pathLook.bump, set each frame by render/view/frameUniforms.ts;
+ *  0 lays them flat, as before the bump maps). */
+export const PATH_UNIFORMS = { uPathBump: { value: 1 } };
 const KINDS = Art.PATH_KINDS as Record<string, Kind>;
 
 const VERT = /* glsl */ `
 attribute vec3 uvw; // across (0-1), along (in periods), metres to the nearer end of its stretch
 attribute vec2 centre; // the centreline's point across from this corner
+attribute float row; // its look's row in the strip texture
 varying vec3 vWorld;
 varying vec2 vUv;
 varying float vEnd;
+varying float vRow;
 ${HEIGHT_VERT_GLSL}
 void main() {
   // On the rolling ground, at its centreline's height: following the land along, level across
@@ -32,6 +42,7 @@ void main() {
   vWorld = w;
   vUv = uvw.xy;
   vEnd = uvw.z;
+  vRow = row;
   gl_Position = clipOf(w);
 }
 `;
@@ -56,10 +67,11 @@ bool pathEndGone(vec2 px) {
 `;
 
 const FRAG = /* glsl */ `
-uniform sampler2D uStrip;
-uniform float uPixel;
+uniform sampler2D uStrip, uBump;
+uniform float uPixel, uRows, uPathBump;
 varying vec3 vWorld;
 varying vec2 vUv;
+varying float vRow;
 ${LIGHT_GLSL}
 ${END_FADE}
 void main() {
@@ -71,10 +83,24 @@ void main() {
   if (abs(determinant(dw)) > 1e-9) uv += du * inverse(dw) * (p - vWorld.xz);
   if (uv.x < 0.0 || uv.x > 1.0) discard;
   if (pathEndGone(floor(vWorld.xz / uPixel))) discard;
-  vec4 c = texture2D(uStrip, vec2(uv.x, fract(uv.y)));
+  vec2 tc = vec2(uv.x, (vRow + fract(uv.y)) / uRows); // (its look's row)
+  vec4 c = texture2D(uStrip, tc);
   if (c.a < 0.5) discard;
   if (c.a < 0.999) { gl_FragColor = vec4(haze(c.rgb, vWorld), sceneryFade(vWorld)); return; } // the magic trail glows
-  vec3 light = nightLightShaded(vec3(0.0, 1.0, 0.0), vec3(p.x, 0.0, p.y), 1.0);
+  vec3 P = vec3(p.x, 0.0, p.y), light = nightLightShaded(vec3(0.0, 1.0, 0.0), P, 1.0);
+  // The bump: the pixel's normal (across, along, up) turned into the world by the ribbon's own directions there (world per uv,
+  // from the derivatives), its tilt times uPathBump. Its relief is half the difference between the light on it and on its mirror
+  // image, added to the flat light: stones lit on the side facing the moon (or her glow, or a lamp) and shaded on the other, the
+  // path as bright on the whole as when flat.
+  vec3 b = texture2D(uBump, tc).rgb;
+  vec2 t = (b.xy * 255.0 - 128.0) / 127.0;
+  if (uPathBump > 0.0 && dot(t, t) > 1e-4 && abs(determinant(du)) > 1e-12 && abs(determinant(dw)) > 1e-12) {
+    mat2 J = dw * inverse(du); // world (xz) per unit of u and v
+    vec3 Tu = vec3(normalize(J[0]), 0.0).xzy, Tv = vec3(normalize(J[1]), 0.0).xzy;
+    vec2 k = t * uPathBump;
+    vec3 Na = normalize(Tu * k.x + Tv * k.y + vec3(0.0, b.z, 0.0)), Nb = normalize(-Tu * k.x - Tv * k.y + vec3(0.0, b.z, 0.0));
+    light = max(vec3(0.0), light + (nightLightShaded(Na, P, 1.0) - nightLightShaded(Nb, P, 1.0)) * 0.5);
+  }
   gl_FragColor = vec4(haze(glowPool(min(vec3(1.0), c.rgb * light * 1.25), vec3(p.x, 0.0, p.y)), vWorld), sceneryFade(vWorld));
 }
 `;
@@ -105,9 +131,19 @@ void main() {
 }
 `;
 
+/** One kind's strips, baked: its looks' colour (A) and bump (N) stacked a row each, and each look's row. */
+export interface PathStrips { A: HTMLCanvasElement; N: HTMLCanvasElement; rows: number; row: Map<number, number> }
 /** A map's paths worked out ahead of their meshes (PathView.prep): each strip texture's quads (by kind and variant), the railway
- *  points' patches and each strip's texture, baked. */
-export interface PathPrep { quads: Map<string, { pos: number[]; uv: number[]; c: number[] }>; junctions: { pos: number[]; x: number; z: number; canvas: HTMLCanvasElement }[]; strips: Map<string, HTMLCanvasElement> }
+ *  points' patches and each kind's strips (the looks the map uses), baked. */
+export interface PathPrep { quads: Map<string, { pos: number[]; uv: number[]; c: number[] }>; junctions: { pos: number[]; x: number; z: number; canvas: HTMLCanvasElement }[]; strips: Map<string, PathStrips> }
+
+/** The looks a map's quads use, a kind's in order: { kind: [variant, ...] } (streams have no strip). */
+export function pathLooks(keys: Iterable<string>): Map<string, number[]> {
+  const out = new Map<string, number[]>();
+  for (const key of keys) { const [kind, v] = key.split(":"); if (kind === "stream") continue; const l = out.get(kind) ?? []; if (!l.includes(+v)) l.push(+v); out.set(kind, l); }
+  for (const l of out.values()) l.sort((a, b) => a - b);
+  return out;
+}
 
 export class PathView {
   readonly group = new THREE.Group();
@@ -117,7 +153,7 @@ export class PathView {
   static *prep(map: ForestMap, style: Style): Steps<PathPrep> {
     const net = map.paths, seed = map.seed;
     const { quads } = knownPathGeometry(map) ?? (yield* pathGeometrySteps(map, { kinds: KINDS, byArea: Art.areaPathKinds() as unknown as Record<string, string[]> }));
-    const colours = Art.pathColours(style), junctions: PathPrep["junctions"] = [], strips = new Map<string, HTMLCanvasElement>();
+    const colours = Art.pathColours(style), junctions: PathPrep["junctions"] = [], strips = new Map<string, PathStrips>();
     for (const j of net.junctions) {
       yield;
       const sp = Art.railPoints({ variant: Math.floor(hash2(j.line, 1, seed + 835) * 3) }) as { w: number; h: number }, ppm = Art.PATH_PPM as number;
@@ -127,11 +163,21 @@ export class PathView {
       const pos = [at(0, 0), at(W, 0), at(W, H), at(0, 0), at(W, H), at(0, H)].flat();
       junctions.push({ pos, x: j.x, z: j.z, canvas: (Art.bake(sp, colours, style, "none") as { A: HTMLCanvasElement }).A });
     }
-    for (const key of quads.keys()) {
-      const [kind, variant] = key.split(":");
-      if (kind === "stream") continue;
-      yield;
-      strips.set(key, (Art.bake(Art.pathTextures(kind, { variant: +variant }).strip, colours, style, "none") as { A: HTMLCanvasElement }).A);
+    for (const [kind, looks] of pathLooks(quads.keys())) {
+      const row = new Map<number, number>(), parts: { A: HTMLCanvasElement; N: HTMLCanvasElement }[] = [];
+      for (const variant of looks) {
+        yield;
+        const sp = Art.pathStrip(kind, { variant }) as { w: number; h: number };
+        row.set(variant, parts.length);
+        parts.push({ A: (Art.bake(sp, colours, style, "none") as { A: HTMLCanvasElement }).A, N: Art.pathNormalCanvas(sp, { wrap: true }) as HTMLCanvasElement });
+      }
+      const w = parts[0].A.width, h = parts[0].A.height, stack = (pick: (p: { A: HTMLCanvasElement; N: HTMLCanvasElement }) => HTMLCanvasElement) => {
+        if (parts.length === 1) return pick(parts[0]);
+        const c = Art.defaultCanvas(w, h * parts.length) as HTMLCanvasElement, g = c.getContext("2d")!;
+        parts.forEach((p, i) => g.drawImage(pick(p), 0, i * h));
+        return c;
+      };
+      strips.set(kind, { A: stack(p => p.A), N: stack(p => p.N), rows: parts.length, row });
     }
     return { quads, junctions, strips };
   }
@@ -149,16 +195,36 @@ export class PathView {
       g.setAttribute("position", new THREE.Float32BufferAttribute(pos, 3));
       g.setAttribute("uvw", new THREE.Float32BufferAttribute(uv, 3));
       g.setAttribute("centre", new THREE.Float32BufferAttribute(Array.from({ length: 6 }, () => [j.x, j.z]).flat(), 2)); // the points' patch: level, at the junction
-      const mesh = new THREE.Mesh(g, new THREE.ShaderMaterial({ vertexShader: VERT, fragmentShader: FRAG, transparent: true, depthWrite: false, side: THREE.DoubleSide, polygonOffset: true, polygonOffsetFactor: -2, polygonOffsetUnits: -6, uniforms: { ...LIGHT_UNIFORMS, ...HEIGHT_UNIFORMS, uStrip: { value: t }, uPixel: { value: mpp }, uPathFade: { value: fade } } }));
+      g.setAttribute("row", new THREE.Float32BufferAttribute(new Array(6).fill(0), 1));
+      const mesh = new THREE.Mesh(g, new THREE.ShaderMaterial({ vertexShader: VERT, fragmentShader: FRAG, transparent: true, depthWrite: false, side: THREE.DoubleSide, polygonOffset: true, polygonOffsetFactor: -2, polygonOffsetUnits: -6, uniforms: { ...LIGHT_UNIFORMS, ...HEIGHT_UNIFORMS, uStrip: { value: t }, uBump: { value: null }, uRows: { value: 1 }, uPathBump: { value: 0 }, uPixel: { value: mpp }, uPathFade: { value: fade } } })); // (flat: no bump map)
       mesh.renderOrder = 0.55; // over the track's own strip
       this.group.add(mesh);
     }
+    // One mesh a kind (its looks' quads together, each vertex naming its look's row), and one a stream.
+    const byKind = new Map<string, { pos: number[]; uv: number[]; c: number[]; row: number[] }>();
     for (const [key, q] of quads) {
-      const [kind] = key.split(":");
+      const [kind, variant] = key.split(":"), at = kind === "stream" ? key : kind;
+      let k = byKind.get(at);
+      if (!k) byKind.set(at, (k = { pos: [], uv: [], c: [], row: [] }));
+      const r = kind === "stream" ? 0 : strips.get(kind)!.row.get(+variant) ?? 0;
+      for (let i = 0; i < q.pos.length; i++) k.pos.push(q.pos[i]);
+      for (let i = 0; i < q.uv.length; i++) k.uv.push(q.uv[i]);
+      for (let i = 0; i < q.c.length; i++) k.c.push(q.c[i]);
+      for (let i = 0; i < q.pos.length / 3; i++) k.row.push(r);
+    }
+    const tex = (c: HTMLCanvasElement) => {
+      const t = new THREE.CanvasTexture(c);
+      t.magFilter = t.minFilter = THREE.NearestFilter; t.generateMipmaps = false; t.flipY = false;
+      t.colorSpace = THREE.NoColorSpace;
+      return t;
+    };
+    for (const [at, q] of byKind) {
+      const kind = at.split(":")[0];
       const g = new THREE.BufferGeometry();
       g.setAttribute("position", new THREE.Float32BufferAttribute(q.pos, 3));
       g.setAttribute("uvw", new THREE.Float32BufferAttribute(q.uv, 3));
       g.setAttribute("centre", new THREE.Float32BufferAttribute(q.c, 2));
+      g.setAttribute("row", new THREE.Float32BufferAttribute(q.row, 1));
       if (kind === "stream") {
         const m = new THREE.ShaderMaterial({ vertexShader: VERT, fragmentShader: WATER, transparent: true, depthWrite: false, polygonOffset: true, polygonOffsetFactor: -1, polygonOffsetUnits: -2, uniforms: { ...LIGHT_UNIFORMS, ...HEIGHT_UNIFORMS, uPixel: { value: mpp }, uPathFade: { value: fade } } });
         const mesh = new THREE.Mesh(g, m);
@@ -166,13 +232,11 @@ export class PathView {
         this.group.add(mesh);
         continue;
       }
-      const t = new THREE.CanvasTexture(strips.get(key)!);
-      t.magFilter = t.minFilter = THREE.NearestFilter; t.generateMipmaps = false; t.flipY = false;
-      t.wrapT = THREE.RepeatWrapping; t.colorSpace = THREE.NoColorSpace;
+      const S = strips.get(kind)!;
       const m = new THREE.ShaderMaterial({
         vertexShader: VERT, fragmentShader: FRAG, transparent: true, depthWrite: false,
         polygonOffset: true, polygonOffsetFactor: -1, polygonOffsetUnits: -4,
-        uniforms: { ...LIGHT_UNIFORMS, ...HEIGHT_UNIFORMS, uStrip: { value: t }, uPixel: { value: mpp }, uPathFade: { value: fade } },
+        uniforms: { ...LIGHT_UNIFORMS, ...HEIGHT_UNIFORMS, ...PATH_UNIFORMS, uStrip: { value: tex(S.A) }, uBump: { value: tex(S.N) }, uRows: { value: S.rows }, uPixel: { value: mpp }, uPathFade: { value: fade } },
       });
       const mesh = new THREE.Mesh(g, m);
       mesh.frustumCulled = false; // one mesh spans the map; the haze and the scenery fade see to distance
@@ -181,9 +245,9 @@ export class PathView {
     }
   }
 
-  /** Let go of its meshes' geometries and materials and the strips' textures. */
+  /** Let go of its meshes' geometries and materials and the strips' textures (colour and bump). */
   dispose(): void {
-    for (const o of this.group.children) ((o as THREE.Mesh).material as THREE.ShaderMaterial).uniforms.uStrip?.value?.dispose();
+    for (const o of this.group.children) { const u = ((o as THREE.Mesh).material as THREE.ShaderMaterial).uniforms; u.uStrip?.value?.dispose(); u.uBump?.value?.dispose(); }
     freeObjects([this.group]);
   }
 }

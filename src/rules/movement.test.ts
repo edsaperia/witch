@@ -6,6 +6,9 @@ import { TUNING, withTuning } from "./tuning";
 import { withCombatRoles } from "../test/combatRoles";
 /** The old attacks (config/combat.json), not each species' own in the grammar (?attacks=old): for the tests that pin one of them. */
 const OLD_ATTACKS = withTuning({ attacks: { reactionFloor: 0.45, species: false } });
+/** The difficulty's speed off (difficulty.creatureSpeed 1, Ed's 2026-11-03 bump aside: its own test, difficulty.test.ts): a move's
+ *  mechanics watched at the speeds they were tuned at (a faster mole is on her before its pack's turn to burrow comes). */
+const calm = (t = TUNING) => withTuning({ ...t, difficulty: { ...TUNING.difficulty!, creatureSpeed: 1 } });
 
 const idle: Controls = { moveX: 0, moveZ: 0, toggleMode: false, zoom: 0, autoTalk: false };
 /** A quiet game, the witch on the ground away from everything, too tough to knock out (to watch them move). */
@@ -115,7 +118,7 @@ describe("creature movement (Stage 5)", () => {
   }, 60000);
 
   it("has a mole burrow (untouchable) to her and surface under her, striking", withCombatRoles({ mole: "melee" }, () => {
-    const g = quiet(), W = g.witches[0], hp0 = W.health.hp, mole = pick(g, "mole", 1, 30, 0), seen = new Set<string>();
+    const g = quiet(calm()), W = g.witches[0], hp0 = W.health.hp, mole = pick(g, "mole", 1, 30, 0), seen = new Set<string>();
     let under = false;
     run(g, 8, () => { if (mole.burrow) under = true; for (const e of g.combat.events) if (e.id === mole.id) seen.add(e.kind); });
     expect(under).toBe(true);
@@ -133,7 +136,7 @@ describe("creature movement (Stage 5)", () => {
   }), 60000);
 
   it("has a bat screech: a pulse all round it (her bats': wild ones swoop)", withCombatRoles({ bat: "melee" }, () => grounded("bat", () => {
-    const g = quiet(OLD_ATTACKS), bat = pick(g, "bat", 1, 10, 0);
+    const g = quiet(calm(OLD_ATTACKS)), bat = pick(g, "bat", 1, 10, 0);
     let pulsed = false;
     run(g, 6, () => { if (g.combat.events.some(e => e.id === bat.id && e.kind === "pulse")) pulsed = true; });
     expect(pulsed).toBe(true);

@@ -40,7 +40,7 @@ The status index checks the requests below against prototype `ab06904b` and cite
 | Trip suggestion: Pride | — | No implementation found for this request; original proposal remains unmarked. |
 | Trip suggestion: Earsight | — | No implementation found for this request; original proposal remains unmarked. |
 | Trip suggestion: Roadworks | — | No implementation found for this request; original proposal remains unmarked. |
-| Trip suggestion: Mirrorball | — | No implementation found for this request; original proposal remains unmarked. |
+| Trip suggestion: Mirrorball | **Built** | Recipe #19 in the potion book. |
 | Trip suggestion: Drift | — | No implementation found for this request; original proposal remains unmarked. |
 | Trip suggestion: Blinker | — | No implementation found for this request; original proposal remains unmarked. |
 | Trip suggestion: Inverse Perspective | — | No implementation found for this request; original proposal remains unmarked. |
@@ -55,8 +55,8 @@ The status index checks the requests below against prototype `ab06904b` and cite
 | Trip suggestion: The Whole Route | — | No implementation found for this request; original proposal remains unmarked. |
 | Trip suggestion: Dreamseer | — | No implementation found for this request; original proposal remains unmarked. |
 | Trip suggestion: Paper Theatre | — | No implementation found for this request; original proposal remains unmarked. |
-| Trip suggestion: Woodcut | — | No implementation found for this request; original proposal remains unmarked. |
-| Trip suggestion: Kaleidoscope | — | No implementation found for this request; original proposal remains unmarked. |
+| Trip suggestion: Woodcut | **Built** | Recipe #34 in the potion book. |
+| Trip suggestion: Kaleidoscope | **Built** | Recipe #35 in the potion book. |
 | Trip suggestion: Breathing | — | No implementation found for this request; original proposal remains unmarked. |
 | Trip suggestion: Daybreak | — | No implementation found for this request; original proposal remains unmarked. |
 | Trip suggestion: Snow Globe | — | No implementation found for this request; original proposal remains unmarked. |
@@ -77,7 +77,7 @@ The status index checks the requests below against prototype `ab06904b` and cite
 | Trip suggestion: Fisheye | — | No implementation found for this request; original proposal remains unmarked. |
 | Trip suggestion: Synaesthesia | — | No implementation found for this request; original proposal remains unmarked. |
 | Trip suggestion: Silent Film | — | No implementation found for this request; original proposal remains unmarked. |
-| Trip suggestion: Masterplan | — | No implementation found for this request; original proposal remains unmarked. |
+| Trip suggestion: Masterplan | **Built** | Recipe #57 in the potion book. |
 | Trip suggestion: Contour Dream | — | No implementation found for this request; original proposal remains unmarked. |
 | Trip suggestion: Bottomless | — | No implementation found for this request; original proposal remains unmarked. |
 | Trip: Aurora Outlines | **Built** | #1523 current recipe/renderer implementation; `render/potionEffects.ts`, `rules/potionSettings.ts`; first live version unverified |
@@ -217,7 +217,7 @@ Agreed one by one with Ed (2026-10-09). Not yet assigned to recipes, apart from 
 16. **Pride** (Ed): she gets the party rainbow trail.
 17. **Earsight** (Ed): only things that make sound are visible.
 18. **Roadworks** (Ed): the forest is covered in large traffic cones that shrink until they vanish.
-19. **Mirrorball** (Ed): the disco ball is huge.
+19. **Mirrorball** (Ed, 3 November): the moon becomes a giant turning disco ball. Its coloured reflections move across the island even before the party starts.
 20. **Drift** (Ed): the movement controls slowly rotate, with a dizzy look (gentle screen sway, swirling edges, colour smear).
 21. **Blinker** (Ed): moving on the ground is all blinks, with no blink cooldown.
 22. **Inverse Perspective** (Ed): creatures look bigger the further away they are; up close they all but vanish. Sigils as normal.
@@ -233,7 +233,7 @@ Agreed one by one with Ed (2026-10-09). Not yet assigned to recipes, apart from 
 31. **The Whole Route** (Ed): the entire route is shown. (Also the Route-seer hat's power, built in #942; a trip may want something else.)
 32. **Dreamseer** (Ed): the area a legend's dream points to is easier to see.
 33. **Paper Theatre:** everything becomes flat, wobbling cardboard cutouts.
-34. **Woodcut:** black-and-white engraving, crosshatched shadows. Discussion2026-10-31: reuse existing edge detection and colour thresholds, with a small new hatching formula; remains a suggestion, not built.
+34. **Woodcut:** black-and-white engraving, crosshatched shadows. Discussion2026-10-31: reuse existing edge detection and colour thresholds, with a small new hatching formula; implemented as recipe 34.
 35. **Kaleidoscope:** the screen mirrored into six slices round her.
 36. **Breathing:** ground, trees and rocks swell and shrink with the bpm.
 37. **Daybreak:** the sun rises; a bright, ordinary green forest.

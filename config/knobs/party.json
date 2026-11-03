@@ -81,7 +81,7 @@
       "notes": "The pause page's Waves slider sets it live, 0 to 6, remembered on this browser (config/decisions/953-waves.json, app/settings.ts); ?pulse=<m/s> or ?pulse=off sets it from a link, over the saved one. The ley lines [1][2][3]: a glowing line through every wave's runestone in the order the waves wake them, home first, the whole route the whole time (party.picker route keeps it from crossing itself): the sections ahead of the last stone reached each fade times as bright as the one before, the one just left behind behindBright times as bright as the next and each before it fade times that, none fainter than far[0] ahead or far[1] behind (as shares). Each wanders along the low ground between its stones, straying up to valley of its length (80 m at most) to follow the hills' valleys, and a shimmer flows along it toward the next stone at flow[0] m/s, flow[1] m apart. It stays on the ground in both modes (Ed): width metres across on the ground and over the treetops (wider there, with a faint glow through the crowns), height metres over the ground in each. Round 14 [4][5]: on the ground the line is pixels, a hard core core[0] metres each side of its middle (core[1] over the treetops) in whole art pixels, a half-bright rim core[2] (core[3]) round it, its brightness worked out per art pixel along it in flat quarter steps, the pulse's head and the growing tip stepped the same way; round it the smooth glow it casts, over width; from the treetops the glow through the crowns stays smooth. brightness 0.3 -> 0.4, width [2, 4.5] -> [3, 5.5]. ?ley=0 turns them off. Its whole length [6]: fade, behindBright and far all 1, so every section is as bright as the next; unbroken into and out of each stone; laid on the ground every 2 m so it never sinks into a crest; shown through the trees (never through a hill, the witch or a creature) at the same brightness; the current link as bright as the rest, the pulse only adding its head and arrival flash."
     },
     "leyLines.pulseSpeed": {
-      "what": "How fast the pulse runs along the ley line, which sets how long each wave takes to arrive.",
+      "what": "How fast the pulse runs along the ley line, times the spark's speed by the tempo (pulseAt100, pulseAt200), which sets how long each wave takes to arrive.",
       "decisions": [
         {
           "by": "Ed",
@@ -95,7 +95,26 @@
           "rest": "1; 4 before"
         }
       ],
-      "notes": "the pulse's speed along the route's own curves, metres a second [2], times the party's tempo (a knockdown's BPM speeds it); a wave lands as it reaches the next stone, so a wave's gap is its link's length over the speed; 0 holds the pulse where it is (no waves). The boot has its own speed (boot.speed)."
+      "notes": "the pulse's speed along the route's own curves [2]: since 2026-11-03 a multiplier (1: as the line gives, 1.0 m/s at 100 bpm to 5.0 at 200) on the spark's speed by the party's tempo (a record's or a knockdown's BPM moves it along the line); a wave lands as it reaches the next stone, so a wave's gap is its link's length over the speed; 0 holds the pulse where it is (no waves). The boot has its own speed (boot.speed)."
+    },
+    "leyLines.pulseAt100": {
+      "what": "the spark's speed in metres a second at 100 bpm: a straight line runs through it and pulseAt200, so with 1 and 5 it is 1.8 m/s at 120, 3 at 150 and 5 at 200, carried on the same way below 100 and above 200, never under 0.2.",
+      "decisions": [
+        {
+          "by": "Ed",
+          "date": "2026-11-03",
+          "quote": "I think a smooth increase from 100 bpm 1.0 m/s to 200 bpm 5.0 m/s"
+        },
+        {
+          "by": "Ed",
+          "date": "2026-11-03",
+          "quote": "I think it should be linear"
+        }
+      ],
+      "notes": "speed = pulseAt100 + (pulseAt200 − pulseAt100) × (bpm − 100) ÷ 100, at least 0.2 m/s (rules/beat.ts SPARK_FLOOR), bpm the party's tempo as the spark reads it (the wave's own, her record's shift and her knockdowns' bonus); times pulseSpeed (rules/beat.ts sparkSpeedAt, tempoRate). It replaces the tempo's ratio to the wave's own."
+    },
+    "leyLines.pulseAt200": {
+      "what": "the spark's speed in metres a second at 200 bpm, the line's other anchor (see pulseAt100)."
     },
     "leyLines.reveal": {
       "what": "How fast the ley line grows out from the treehouse ahead of the waves, so no stone pops on at once.",

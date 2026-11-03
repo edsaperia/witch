@@ -447,6 +447,17 @@
     "pathFade": {
       "what": "Every end of a path, road, railway or stream (where it stops, peters out or is broken) frays out over its last metres in an ordered dither on the art's pixel grid, broken up by noise (Ed, v149)."
     },
+    "pathLook": {
+      "what": "How the paths are lit: bump is how strongly each path's bump map (stones and cobbles raised and bevelled, planks, roots, ruts and joints sunk) catches the moon, her glow and the lamps, a stone lit on the side facing the light and shaded on the other; 0 lays them flat as before.",
+      "decisions": [
+        {
+          "by": "Ed",
+          "date": "2026-11-03",
+          "quote": "Can you give them bump maps to make them less flat?",
+          "rest": "art/paths.js pathNormals, render/paths.ts"
+        }
+      ]
+    },
     "trunkFade": {
       "what": "On the ground, where the crowns are hidden, each trunk's top fades out in a pixel dither instead of ending in a flat cut.",
       "decisions": [

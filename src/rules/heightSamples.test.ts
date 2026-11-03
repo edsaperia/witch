@@ -12,10 +12,11 @@ const hash = (samples: unknown) => createHash('sha256').update(new Uint8Array((s
 const tuning = (island: string) => ({ ...TUNING, map: { ...TUNING.map!, island, islandAreas: 10, world: 0 } });
 
 it('retains the original quantised windows at arrival and after small and large moves', () => {
-  // Frozen from fb5d5e4cd's original HeightField before extraction, shipped tuning.
+  // Frozen from fb5d5e4cd's original HeightField before extraction, shipped tuning; re-frozen 2026-11-03 for the path network's maps
+  // (the island grown one area more for tonight's find, the stones spaced: other hills under the stones), the code unchanged.
   for (const [seed, island, expected] of [
-    [123, 'home', ['68c4a3371c7c7c03755dfbe4ccd5db35a48acaeaa3fc15bbf3fdc4ed43e196e8', 'ce7059bd2c357eef841c3dfb9483455e869894c86ad21808b1bd17887ec27c16', '211c9e70da0879e0d83ef85f17394c85dedb41623ac8517b46d774cb0cafaef2']],
-    [424242, 'fox', ['02dbc1296e91f85ff344019f140cf7a927931119b29179702772383ce07fc888', 'ee2962de444fbd25ab5b7aefb39fb16e738a2eaae2b2dade4f9bad642802bd16', '211c9e70da0879e0d83ef85f17394c85dedb41623ac8517b46d774cb0cafaef2']],
+    [123, 'home', ['7c5beeeea62901c0d5c093f8d7d58d0c7adef4d29fa9214078dd5b52af221333', 'c3129a3ff07a760a44df22c372b355a4cf8b265a82320e91593576f749f9273f', '211c9e70da0879e0d83ef85f17394c85dedb41623ac8517b46d774cb0cafaef2']],
+    [424242, 'fox', ['d58bdd1385ccccf6f72c2239bd10a9cbddfd61dd051b43922258b9cfedbdef55', '4654b61d284b85ce5403385d1ea302acd134686ce280e18b7b14f813fe2bf00e', '211c9e70da0879e0d83ef85f17394c85dedb41623ac8517b46d774cb0cafaef2']],
   ] as const) {
     const map = generateMap(seed, tuning(island)), H = arrivalHills(map.tuning), field = new HeightSamples(map, new Forest(map), H, DataUtils);
     const { x, z } = map.start;

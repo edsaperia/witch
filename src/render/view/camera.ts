@@ -2,6 +2,7 @@
 // the world's bend, the camera snapped to the pixel grid along the screen's axes, lifted over hills and shaken by a legend's quake.
 import * as THREE from "three";
 import type { View } from "../view";
+import { LIGHT_UNIFORMS } from "../lighting";
 import { poseOf } from "../../rules/game";
 import { coastView, gazeAt } from "../../rules/camera";
 import { witchHeight } from "../../rules/witch";
@@ -64,6 +65,10 @@ export function placeCamera(v: View, time: number, pose: ReturnType<typeof poseO
   THERMAL_UNIFORMS.uThermalColdBrightness.value = thermal.coldBrightness;
   THERMAL_UNIFORMS.uThermalDangerGain.value = thermal.dangerGain;
   v.ground.thermalVision(heat);
+  const mirror = potionStrength(g, 'mirrorball'), mirrorSettings = potionSettings('mirrorball');
+  LIGHT_UNIFORMS.uMirrorMoon.value.set(mirror, time * mirrorSettings.spin, mirrorSettings.spots);
+  v.post.potionWoodcut = potionStrength(g, 'woodcut');
+  v.post.potionFold = potionStrength(g, 'kaleidoscope');
   v.post.potionEdges = potionStrength(g, 'aurora-outlines');
   v.post.potionWobble = tripIndicatorStrength(g);
   v.post.potionTime = g.clock.time;
@@ -133,7 +138,7 @@ export function placeCamera(v: View, time: number, pose: ReturnType<typeof poseO
     // Keep ordinary geometry in the culling bounds throughout the fade back to normal.
     v.bendTo = Math.max(0, g.witch.mode === "rising" || g.witch.mode === "treetop" ? C.treetop : C.ground, gk, v.beachView.gazing ? C.treetop * (B?.stargazeCurve ?? 0) * seaKeep : 0);
     v.post.potionGlow = potionStrength(g, 'glow-up');
-    v.sky.potionMoon = 1 + (potionSettings('big-moon').size - 1) * potionStrength(g, 'big-moon');
+    v.sky.potionMoon = 1 + (potionSettings('big-moon').size - 1) * potionStrength(g, 'big-moon') + mirror * (mirrorSettings.size - 1);
     v.sky.potionMoonGlow = 1 + (potionSettings('big-moon').glow - 1) * potionStrength(g, 'big-moon');
     const floorSky = potionStrength(g, 'skylight');
     v.sky.potionFloor = floorSky;

@@ -41,8 +41,15 @@ it("binds existing depth plus bounded form uniforms in the real Post composite w
   expect(wobble).toBeGreaterThan(refraction); expect(scene).toBeGreaterThan(wobble);
   expect(grading).toBeGreaterThan(scene);
   expect(shader.match(/p = refractScene\(p\);/g)).toHaveLength(1);
-  expect(composite.fragmentShader).toContain("texture2D(uBloom, uPotionWobble.x > 0.0 ? p : vUv)");
-  expect(composite.fragmentShader).toContain("texture2D(uFx, vUv)");
+  // FX and ordinary bloom sample the original screen UV except during the
+  // deliberate kaleidoscope fold. Neither takes the scene's refraction offset.
+  const fold = shader.indexOf("if (uPrintFold.z > 0.0)");
+  expect(shader.indexOf("vec2 sampleUv = vUv;")).toBeGreaterThanOrEqual(0);
+  expect(fold).toBeGreaterThan(shader.indexOf("vec2 sampleUv = vUv;"));
+  expect(shader.indexOf("sampleUv = mix(vUv, clamp(folded", fold)).toBeLessThan(refraction);
+  expect(shader.match(/sampleUv\s*=/g)).toHaveLength(2);
+  expect(composite.fragmentShader).toContain("texture2D(uBloom, uPotionWobble.x > 0.0 ? p : sampleUv)");
+  expect(composite.fragmentShader).toContain("texture2D(uFx, sampleUv)");
 });
 it("the real View hook respects URL activation, quality, comfort and island reset", () => {
   const camera = new THREE.PerspectiveCamera(60, 1, 0.1, 100); camera.updateMatrixWorld();

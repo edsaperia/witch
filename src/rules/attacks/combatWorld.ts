@@ -8,7 +8,7 @@ import { attackNamed, type Attack, type CombatData, type CombatState, type Comba
 import { landUnobserved } from "../combat/hits";
 import { observeAttack, type AttackContext } from "../attackObservation";
 import { sheltered, sideOf, targetable, type Grid } from "../combat/targeting";
-import { strengthOf } from "../combat/data";
+import { adultMult, strengthOf } from "../combat/data";
 import { withBase, type Library } from "./parse";
 import { speciesAttack } from "./species";
 import { lifeRange, lifeTime, speedAt, type Hittable, type SpellWorld } from "./engine";
@@ -42,7 +42,7 @@ export function bodyReach(a: AttackSpec): number {
  *  creatures that I encountered seem to have a very short range"). */
 export function reachingFurther(a: AttackSpec, k: number): AttackSpec {
   if (k === 1) return a;
-  return { ...a, cast: { ...a.cast, range: (a.cast?.range ?? 20) * k }, life: { ...a.life, range: lifeRange(a) * k } };
+  return { ...a, cast: { ...a.cast, range: (a.cast?.range ?? 20) * k }, life: { ...a.life, range: lifeRange(a) * k }, ...(a.beam?.length !== undefined ? { beam: { ...a.beam, length: a.beam.length * k } } : {}) }; // (a beam's length too: difficulty.rangedRange)
 }
 
 /** A creature's attack in the grammar, if it has one: its name, the flat record for its movement, the damage of a cast (the level's
@@ -52,7 +52,7 @@ export function spellAttack(c: Creature, lib: Library, data: CombatData): { name
   const raw = lib[c.spell];
   if (!raw) return null;
   const spec = withBase(raw, lib), attack = asFightAttack(spec);
-  return { name: c.spell, attack, damage: data.levels.dps[c.level as Level] * strengthOf(c.species, c.level as Level, data) * attack.cooldown, spec };
+  return { name: c.spell, attack, damage: data.levels.dps[c.level as Level] * strengthOf(c.species, c.level as Level, data) * adultMult(c.level as Level) * attack.cooldown, spec };
 }
 
 /** A species' own attack in the grammar (rules/attacks/species.ts), unless the tuning's attacks.species is off (?attacks=old): as
@@ -61,7 +61,7 @@ export function speciesSpell(c: Creature, data: CombatData, floor?: number): { n
   const spec = speciesAttack(c.species, c.level, floor);
   if (!spec) return null;
   const attack = asFightAttack(spec);
-  return { name: `species:${c.species}`, attack, damage: data.levels.dps[c.level as Level] * strengthOf(c.species, c.level as Level, data) * attack.cooldown, spec };
+  return { name: `species:${c.species}`, attack, damage: data.levels.dps[c.level as Level] * strengthOf(c.species, c.level as Level, data) * adultMult(c.level as Level) * attack.cooldown, spec };
 }
 
 /** A melee attack's blow landed (the fight's lunge): the rest of its effect (a stun, a root, a pull, a burn) on what it hit. */

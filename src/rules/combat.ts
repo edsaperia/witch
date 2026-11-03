@@ -25,7 +25,7 @@ import { getUp } from "./orbit";
 import { bodyReach, hittableOf, meleeExtras, reachingFurther, spellAttack, speciesSpell, spellWorld } from "./attacks/combatWorld";
 import { observeAttack } from "./attackObservation";
 import type { AttackSpec } from "./attacks/types";
-import { PACKS, stepPacks, packsOn, packKindOf, packAttack, packGate, markStrike, dodgeAim, strikingNow, ownStrike, styleOf, type Directive } from "./combat/packs";
+import { PACKS, stepPacks, packsOn, packKindOf, packAttack, packGate, markStrike, dodgeAim, strikingNow, ownStrike, styleOf, observedPackPlans, type Directive } from "./combat/packs";
 import { chaseAt, limitTurn, momentumOf, noteWitches, turnHeading, witchWas } from "./momentum";
 import { SPACING, bodyGap, clearWaitingSlot, drawnRadius, hazardAvoidance, pathClearsHazard, spacingOn, waitingDrive, waitingProfile, waitingSlot, type WaitingHazard } from "./combatSpacing";
 import { teamOf } from "./combat/teams";
@@ -98,6 +98,7 @@ export function stepCombat(s: CombatState, w: CombatWorld, data: CombatData = CO
   const spacing = spacingOn(t);
   useData(data);
   FIGHT.scale = t.fight.scale; FIGHT.speed = t.fight.speed; FIGHT.momentum = t.fight.momentum ?? 1;
+  FIGHT.creature = t.difficulty?.creatureSpeed ?? 1; FIGHT.adult = t.difficulty?.adultStrength ?? 1; // (the difficulty: Ed, 2026-11-03)
   if (t.fight.charge) FIGHT.charge = t.fight.charge;
   if (t.fight.leap) FIGHT.leap = t.fight.leap;
   FIGHT.walk = t.groundSpeed;
@@ -227,19 +228,24 @@ export function stepCombat(s: CombatState, w: CombatWorld, data: CombatData = CO
   const token = (tg: Target): boolean => { if (!free(tg)) return false; take(tg); return true; };
   /** Its windup: a shot or lob at her winds up at most dodge.b.windup (a beam as before: a sweep a blink can't outrun needs its warning). */
   const windupOf = (A: Attack, tg: Target) => (DB && tg.kind === "witch" && (A.delivery === "shot" || A.delivery === "lob") ? Math.min(A.windup, DB.windup) : A.windup);
-  /** A shot or lob at her reaches dodge.b.range times as far (Ed, 2026-10-09: "I think shooters should have longer range"). */
-  const longer = new Map<Attack, Attack>();
+  /** A shot or lob at her reaches dodge.b.range times as far (Ed, 2026-10-09: "I think shooters should have longer range"); and every
+   *  ranged attack (a shot, a lob, a beam: never a melee one or a pulse round itself) difficulty.rangedRange times as far, at anything
+   *  (Ed, 2026-11-03: "ranged attacks have +20% range"). */
+  const RR = t.difficulty?.rangedRange ?? 1, rangedOf = (A: Attack) => (A.delivery === "shot" || A.delivery === "lob" || A.delivery === "beam" ? RR : 1);
+  const longer = new Map<Attack, Attack>(), longerAny = new Map<Attack, Attack>();
   const reachOf = (A: Attack, tg: Target): Attack => {
-    if (!DB || tg.kind !== "witch" || (A.delivery !== "shot" && A.delivery !== "lob") || DB.range === 1) return A;
-    let L = longer.get(A);
-    if (!L) longer.set(A, (L = { ...A, range: A.range * DB.range }));
+    const her = !!DB && tg.kind === "witch" && (A.delivery === "shot" || A.delivery === "lob"), k = (her ? DB!.range : 1) * rangedOf(A);
+    if (k === 1) return A;
+    const m = her ? longer : longerAny;
+    let L = m.get(A);
+    if (!L || L.range !== A.range * k) m.set(A, (L = { ...A, range: A.range * k }));
     return L;
   };
   /** An attack in the grammar thrown at tg: a shot at her reaching dodge.b.range times as far, its bolt too (rules/attacks/combatWorld.ts
    *  reachingFurther), and fired from no further than its bolt really gets (bodyReach: a frost shard that ends short and bursts, a
    *  roller that slows or stops and goes), so no shot is fired that can't reach. */
   const thrown = (sp: { attack: Attack; spec: AttackSpec }, tg: Target): Thrown => {
-    const her = !!DB && tg.kind === "witch" && sp.attack.delivery === "shot", k = her ? DB!.range : 1;
+    const her = !!DB && tg.kind === "witch" && sp.attack.delivery === "shot", k = (her ? DB!.range : 1) * rangedOf(sp.attack);
     let m = THROWN.get(sp.spec);
     if (!m) THROWN.set(sp.spec, (m = {}));
     const hit = her ? m.her : m.any;
@@ -262,6 +268,7 @@ export function stepCombat(s: CombatState, w: CombatWorld, data: CombatData = CO
   const velOf = (tg: Target) => { const v = tg.kind === "witch" ? w.witches[tg.id] : undefined; return { vx: v?.vx ?? 0, vz: v?.vz ?? 0 }; };
   // Pack combat (rules/combat/packs.ts; Ed, 2026-10-15, behind combat.packs.on): each pack's phase and each member's role and move.
   const PK = packsOn(t) ? stepPacks(s, w, w.packWorld ?? {}) : null;
+  if (observedPackPlans.has(s)) observedPackPlans.set(s, PK);
   /** May it start a strike now: its pack's turn and pressure (if it's in one), and at her a dodge token. A pack member kept waiting
    *  only by the token holds its combo open (packs.ts: held), so its pack's strikes at her come one after another, not all at once. */
   const strikeNow = (pd: Directive | undefined, tg: Target): boolean => {
@@ -402,7 +409,7 @@ export function stepCombat(s: CombatState, w: CombatWorld, data: CombatData = CO
         // once it's in and within combat.retreatHome metres of home (or its run has taken long enough).
         c.charge = undefined; c.vx = 0; c.vz = 0;
         if (c.retreatFrom === undefined) c.retreatFrom = time;
-        const sp = (profileOf(c.species)?.speed ?? C.fightRun) * FIGHT.speed;
+        const sp = (profileOf(c.species)?.speed ?? C.fightRun) * FIGHT.speed * FIGHT.creature;
         const left = moveToward(c, c.anchorX, c.anchorZ, 1, sp, dt);
         if ((w.inArea(c, c.x, c.z) && left <= C.retreatHome * FIGHT.scale) || time - c.retreatFrom > 30) { c.retreat = undefined; c.retreatFrom = undefined; c.tx = c.x; c.tz = c.z; c.fight = undefined; }
         continue;
@@ -485,7 +492,7 @@ export function stepCombat(s: CombatState, w: CombatWorld, data: CombatData = CO
     // (Committed strikes, dodge.a: at her it closes at dodge.a.chase times its sprint wherever she is, so a fast kind can't be outwalked; a slow one still can.)
     const sprint = profileOf(c.species)?.pursuit ?? C.pursuitRun, chasing = !!DA && f.target.kind === "witch" && c.level !== LEGEND;
     const heavy = chasing && DA!.heavy.species.includes(c.species); // (a heavy: its top speed, built up at its slow acceleration in steer)
-    const speed = (heavy ? DA!.heavy.speed : chasing ? Math.max(own, sprint * DA!.chase) : c.level !== LEGEND && d > 30 * S ? Math.max(own, sprint) : own) * FIGHT.speed * slow;
+    const speed = (heavy ? DA!.heavy.speed : chasing ? Math.max(own, sprint * DA!.chase) : c.level !== LEGEND && d > 30 * S ? Math.max(own, sprint) : own) * FIGHT.speed * FIGHT.creature * slow;
     // A pack member falling back in its lull, a hurt one keeping away (rules/combat/packs.ts); dug in (the badger's cover, its hold), it
     // stands, biting what comes in reach when its pack lets it.
     if (!pd?.slot || pd.phase !== "lull") c.packProwl = undefined; // (a new lull's prowl starts from its place)
@@ -727,7 +734,7 @@ export function stepCombat(s: CombatState, w: CombatWorld, data: CombatData = CO
         const g = shoot ? null : place ?? (Math.hypot(p.x - c.x, p.z - c.z) > want + YS.hopper.ring * S ? { x: p.x + ((c.x - p.x) / Math.max(1e-3, d)) * (want + YS.hopper.ring * S * 0.5), z: p.z + ((c.z - p.z) / Math.max(1e-3, d)) * (want + YS.hopper.ring * S * 0.5) } : null);
         if (g && Math.hypot(g.x - c.x, g.z - c.z) > 2 * S) { if (!startHop(c, g.x, g.z, time, hopOf(speed))) { c.moving = false; c.vx = 0; c.vz = 0; c.facing = p.x >= c.x ? 1 : -1; } continue; }
       }
-      const may = steer(c, heavy ? heavyOf(c, P) : P, { px: herAt.x, pz: herAt.z, pr: p.r, want, range: A0.range, fire: A.range, speed: cutoff ? Math.max(run * burst, DC!.sprint * FIGHT.speed) : run * burst, time, dt, pack: pd ? tactic : pk, neighbours: grid.near(c.x, c.z, spacing ? spacingSearch : 12 * S), threats: s.shots, side: sideOf(c), ready: time >= f.readyAt, beat: 60 / t.beat.bpm, heading, lights, cutoff, arriveAt: DA && A.delivery === "melee" && f.target.kind === "witch" && !ownFrom ? A.range + p.r : undefined, momentum: chase, now: herAt === p ? undefined : p, style: place, ...(spacing ? { spacing: { tuning: t, data: SPACING, waiting } } : {}) });
+      const may = steer(c, heavy ? heavyOf(c, P) : P, { px: herAt.x, pz: herAt.z, pr: p.r, want, range: A0.range, fire: A.range, speed: cutoff ? Math.max(run * burst, DC!.sprint * FIGHT.speed * FIGHT.creature) : run * burst, time, dt, pack: pd ? tactic : pk, neighbours: grid.near(c.x, c.z, spacing ? spacingSearch : 12 * S), threats: s.shots, side: sideOf(c), ready: time >= f.readyAt, beat: 60 / t.beat.bpm, heading, lights, cutoff, arriveAt: DA && A.delivery === "melee" && f.target.kind === "witch" && !ownFrom ? A.range + p.r : undefined, momentum: chase, now: herAt === p ? undefined : p, style: place, ...(spacing ? { spacing: { tuning: t, data: SPACING, waiting } } : {}) });
       if (spacing && waitingDrive(c, time).airborne && (!may || waiting || pd?.action?.delivery === "effect") && !strikingNow(c)) {
         const v = Math.hypot(c.vx ?? 0, c.vz ?? 0), length = hopOf(speed, c).length * S;
         if (v > SPACING.epsilon) {
@@ -767,7 +774,7 @@ export function stepCombat(s: CombatState, w: CombatWorld, data: CombatData = CO
       f.aimX = p.x + vx * ahead * DA.lead; f.aimZ = p.z + vz * ahead * DA.lead;
     }
     if (DA && A.delivery === "melee" && f.target.kind === "witch" && d > A.range + p.r && !(c.dug !== undefined && time < c.dug)) { // (not dug in: rooted)
-      const surge = c.level === LEGEND ? speed : heavy ? Math.max(own * FIGHT.speed * slow, Math.hypot(c.vx ?? 0, c.vz ?? 0)) : Math.max(speed, sprint * FIGHT.speed * DA.surge * slow); // (a heavy carries on at the speed it has built up)
+      const surge = c.level === LEGEND ? speed : heavy ? Math.max(own * FIGHT.speed * FIGHT.creature * slow, Math.hypot(c.vx ?? 0, c.vz ?? 0)) : Math.max(speed, sprint * FIGHT.speed * FIGHT.creature * DA.surge * slow); // (a heavy carries on at the speed it has built up)
       // (with momentum, its surge in too: for where she was, turning no faster than its limit; its aim, above, still leads her)
       const ms = mo, q = ms ? chaseAt(s, f.target.id, time, ms) ?? p : p, qd = Math.hypot(q.x - c.x, q.z - c.z) || 1e-6;
       let nx = ((q.x - c.x) / qd) * surge, nz = ((q.z - c.z) / qd) * surge;
@@ -853,9 +860,9 @@ export function startSiege(s: CombatState, key: string, at: { x: number; z: numb
 }
 
 /** A kind's top speed (m/s): its fight run, its movement profile's (movement.json speed) else combat.fightRun, a legend's
- *  combat.legendRun, at the fight's speed (fight.speed). */
+ *  combat.legendRun, at the fight's speed (fight.speed) and the difficulty's (difficulty.creatureSpeed). */
 export function topSpeedOf(species: string, level: number, t: Tuning): number {
-  return (level === LEGEND ? t.combat.legendRun : profileOf(species)?.speed ?? t.combat.fightRun) * (t.fight?.speed ?? 1);
+  return (level === LEGEND ? t.combat.legendRun : profileOf(species)?.speed ?? t.combat.fightRun) * (t.fight?.speed ?? 1) * (t.difficulty?.creatureSpeed ?? 1);
 }
 
 /** A besieger's marching pace (m/s), on its own area's soundsystem or marching on after a fall: combat.marchShare of its top

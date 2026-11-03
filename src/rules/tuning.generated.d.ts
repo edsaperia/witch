@@ -169,6 +169,7 @@ export type SchemaTuning = {
     "curve": "linear" | "smooth";
   };
   "areaSizeVariance": number;
+  "siteMargin": number;
   "borderLayers": number;
   "clearingSize": number;
   "clearingFalloff": number;
@@ -406,6 +407,7 @@ export type SchemaTuning = {
   "paths": {
     "rails": Array<number>;
     "roads": Array<number>;
+    "network": boolean;
     "linkChance": number;
     "deadEndChance": number;
     "pathHalf": number;
@@ -431,6 +433,11 @@ export type SchemaTuning = {
   "soundsystemFootprint": number;
   "reserveMargin": number;
   "stoneKeepClear": number;
+  "stoneMinGap": number;
+  "findArea": {
+    "on": boolean;
+    "clear": number;
+  };
   "treeMarginFromSoundsystem": number;
   "treeDensity": number;
   "leafJitter": {
@@ -941,6 +948,11 @@ export type SchemaTuning = {
     "threadArcTaut": number;
     "threadArcMax": number;
   };
+  "difficulty": {
+    "creatureSpeed": number;
+    "rangedRange": number;
+    "adultStrength": number;
+  };
   "fight": {
     "scale": number;
     "speed": number;
@@ -1133,7 +1145,7 @@ export type SchemaTuning = {
     "swarm": {
       "start": number;
       "endAverage": number;
-      "waves": number;
+      "largestIsland": number;
       "curve": number;
       "youngShare": Array<number>;
       "reference": string;
@@ -1245,6 +1257,8 @@ export type SchemaTuning = {
   "leyLines": {
     "on": boolean;
     "pulseSpeed": number;
+    "pulseAt100": number;
+    "pulseAt200": number;
     "reveal": number;
     "far": Array<number>;
     "behindBright": number;
@@ -2237,6 +2251,9 @@ export type SchemaTuning = {
   "pathFade": {
     "metres": number;
     "dither": boolean;
+  };
+  "pathLook": {
+    "bump": number;
   };
   "trunkFade": {
     "metres": number;

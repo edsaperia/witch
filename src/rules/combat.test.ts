@@ -406,7 +406,7 @@ describe("Ed's Stage 4 rulings", () => {
     g.witch = { ...g.witch, mode: "ground", lift: 0 };
     run(g, 0.5);
     expect(wolf.fight?.target).toEqual({ kind: "witch", id: 0 });
-    // Away out of its area, past its range and 30 m: it gives up and heads home.
+    // Away out of its area, past its range and 30 m: on the ground it keeps after her (Ed, 2026-10-31: until take-off).
     const far = { x: wolf.homeX + 400, z: wolf.homeZ };
     g.witch = { ...g.witch, x: far.x, z: far.z };
     run(g, 1);

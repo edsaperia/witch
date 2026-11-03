@@ -161,6 +161,7 @@ says what each note covers.
 - Wake-up keys
 - The Studio's instruments
 - Finds / travel trunk
+- Find area
 - Sleeping before the party
 - Finds pool
 - Workshop
@@ -377,6 +378,8 @@ says what each note covers.
 - Attack effects
 - Attack look
 - Path kinds
+- Path looks
+- Path bump maps
 - Hero dancefloor
 - Soundsystem generator
 - Dancefloor speakers
@@ -391,6 +394,8 @@ says what each note covers.
 - Prop generator
 - Great stump
 - Stone keep-clear zone
+- Site paths
+- Stone spacing
 - Set-piece generator (legacy art)
 - Area recipe
 - Area folder
