@@ -58,7 +58,9 @@ describe("a whole night's snapshot", () => {
     expect(h.map.typeOf(...h.map.centreCell)).toBe(g.map.typeOf(...g.map.centreCell));
     expect(h.forest.treesNear(h.witch.x, h.witch.z, 5)).toEqual(g.forest.treesNear(g.witch.x, g.witch.z, 5));
     expect(h.clock.paused).toBe(true); expect(h.pending).toEqual({}); expect(h.acc).toBe(0);
-    expect(stable(h)).toEqual(stable(g));
+    // (as JSON both: a snapshot goes through JSON, which writes -0 as 0; a creature at rest can hold a -0 speed, as one does on this
+    // map since 2026-11-03's path network)
+    expect(JSON.parse(JSON.stringify(stable(h)))).toEqual(JSON.parse(JSON.stringify(stable(g))));
   });
 
   it("continues the same simulation, including RNG, after later waves and a knockout", () => {

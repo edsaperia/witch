@@ -25,7 +25,7 @@ import { getUp } from "./orbit";
 import { bodyReach, hittableOf, meleeExtras, reachingFurther, spellAttack, speciesSpell, spellWorld } from "./attacks/combatWorld";
 import { observeAttack } from "./attackObservation";
 import type { AttackSpec } from "./attacks/types";
-import { PACKS, stepPacks, packsOn, packKindOf, packAttack, packGate, markStrike, dodgeAim, strikingNow, ownStrike, styleOf, type Directive } from "./combat/packs";
+import { PACKS, stepPacks, packsOn, packKindOf, packAttack, packGate, markStrike, dodgeAim, strikingNow, ownStrike, styleOf, observedPackPlans, type Directive } from "./combat/packs";
 import { chaseAt, limitTurn, momentumOf, noteWitches, turnHeading, witchWas } from "./momentum";
 import { SPACING, bodyGap, clearWaitingSlot, drawnRadius, hazardAvoidance, pathClearsHazard, spacingOn, waitingDrive, waitingProfile, waitingSlot, type WaitingHazard } from "./combatSpacing";
 import { teamOf } from "./combat/teams";
@@ -268,6 +268,7 @@ export function stepCombat(s: CombatState, w: CombatWorld, data: CombatData = CO
   const velOf = (tg: Target) => { const v = tg.kind === "witch" ? w.witches[tg.id] : undefined; return { vx: v?.vx ?? 0, vz: v?.vz ?? 0 }; };
   // Pack combat (rules/combat/packs.ts; Ed, 2026-10-15, behind combat.packs.on): each pack's phase and each member's role and move.
   const PK = packsOn(t) ? stepPacks(s, w, w.packWorld ?? {}) : null;
+  if (observedPackPlans.has(s)) observedPackPlans.set(s, PK);
   /** May it start a strike now: its pack's turn and pressure (if it's in one), and at her a dodge token. A pack member kept waiting
    *  only by the token holds its combo open (packs.ts: held), so its pack's strikes at her come one after another, not all at once. */
   const strikeNow = (pd: Directive | undefined, tg: Target): boolean => {

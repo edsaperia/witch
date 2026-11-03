@@ -138,6 +138,10 @@ export interface Directive {
   freeze?: boolean;
 }
 
+// Masterplan can read the solver's last output. Never run the solver a second
+// time for a picture: it also advances the pack's decisions and cooldowns.
+export const observedPackPlans = new WeakMap<CombatState, ReadonlyMap<number, Directive> | null>();
+
 // ---- Moves on the level's budget -------------------------------------------------------------------------------------------
 
 /** A kind's move at a level: its attack (scaled to the fight), the name the shot carries, and its damage (the level's dps times its

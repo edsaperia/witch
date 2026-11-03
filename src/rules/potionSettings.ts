@@ -2,6 +2,10 @@
 export interface PotionParameter { key: string; label: string; min: number; max: number; step: number; default: number }
 const p = (key: string, label: string, value: number, min: number, max: number, step = .05): PotionParameter => ({ key, label, default: value, min, max, step });
 export const POTION_PARAMETERS: Record<string, readonly PotionParameter[]> = {
+  'masterplan': [p('range', 'Visible animal plans (metres)', 60, 10, 160, 1), p('opacity', 'Plan line brightness', .85, .1, 1)],
+  'mirrorball': [p('size', 'Mirror moon size × normal', 5, 1, 12, .25), p('spin', 'Ball rotation (radians per second)', .32, .02, 1, .01), p('spots', 'Reflected light brightness', 1.4, 0, 4, .1)],
+  'woodcut': [p('spacing', 'Hatch spacing (art pixels)', 5, 3, 12, 1)],
+  'kaleidoscope': [p('sectors', 'Mirrored wedges', 6, 4, 16, 2)],
   'hue-spin': [p('period', 'Colour cycle (game seconds)', 20, 2, 120, 1), p('offset', 'Starting colour rotation (degrees)', 120, 0, 360, 1), p('strength', 'Colour rotation strength', 1, 0, 1), p('soundDepth', 'Sound sweep (octaves)', 2, 0, 4, .1)],
   'night-vision': [p('brightness', 'Shadow brightness', 3, 1, 6, .1), p('blackFloor', 'Black level', 0, 0, .3, .01), p('grade', 'Night-colour strength × normal', .2, 0, 1, .05)],
   'heat-vision': [p('coldBrightness', 'Cold scenery brightness', .35, .1, 1, .05), p('dangerGain', 'Danger heat strength', 1, 0, 2, .1), p('breathVolume', 'Mask breathing volume', .35, 0, 1, .05), p('breathRate', 'Breaths per second', .18, .08, .5, .01)],

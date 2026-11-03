@@ -4,7 +4,7 @@ import { floorClearing } from './speakers';
 import { hash2 } from './random';
 
 export interface PathGeometry { quads: Map<string, { pos: number[]; uv: number[]; c: number[] }> }
-export interface PathGeometryCatalog { kinds: Record<string, { width: number; period: number }>; byArea: Record<string, string[]> }
+export interface PathGeometryCatalog { kinds: Record<string, { width: number; period: number; /** its looks (art/paths.js), dealt one a line */ variants?: readonly string[] }>; byArea: Record<string, string[]> }
 const NOT_PATHS = new Set(['tarmac', 'railway', 'stairs', 'bridges']);
 const prepared = new WeakMap<ForestMap, PathGeometry>();
 export const knownPathGeometry = (map: ForestMap): PathGeometry | undefined => prepared.get(map);
@@ -25,25 +25,30 @@ export function* pathGeometrySteps(map: ForestMap, catalog: PathGeometryCatalog)
   const KINDS = catalog.kinds, byArea = catalog.byArea;
     const net = map.paths, seed = map.seed;
     // A path's kind: one of the kinds the area it starts in suits, seeded per area, for its whole
-    // length (Ed, v160: no switching mid-path); dirt where none.
-    const areaKind = new Map<string, string>();
+    // length (Ed, v160: no switching mid-path); dirt where none. And its look, one of the kind's
+    // variants (Ed, 2026-11-03: "several more variations of each kind of footpath so they look less
+    // repetitive"): the area's paths take its variants in turn from a seeded start, so neighbouring
+    // paths of a kind differ; a line keeps its look all along.
+    const areaKind = new Map<string, { kind: string; next: number }>();
     const pathKind = (a: { cell: readonly [number, number]; type: number }) => {
       const key = a.cell.join(",");
-      let k = areaKind.get(key);
-      if (!k) {
+      let e = areaKind.get(key);
+      if (!e) {
         const ok = (byArea[AREA_TYPES[a.type].id] ?? []).filter(k => !NOT_PATHS.has(k) && KINDS[k] && (k !== "magic" || hash2(a.cell[0], a.cell[1], seed + 831) < 0.15));
-        k = ok.length ? ok[Math.floor(hash2(a.cell[0], a.cell[1], seed + 833) * ok.length)] : "dirt";
-        areaKind.set(key, k);
+        const kind = ok.length ? ok[Math.floor(hash2(a.cell[0], a.cell[1], seed + 833) * ok.length)] : "dirt";
+        e = { kind, next: Math.floor(hash2(a.cell[0], a.cell[1], seed + 837) * (KINDS[kind]?.variants?.length ?? 1)) };
+        areaKind.set(key, e);
       }
-      return k;
+      return e;
     };
     // One geometry per strip texture (kind and variant).
     const quads = new Map<string, { pos: number[]; uv: number[]; c: number[] }>();
     for (let li = 0; li < net.lines.length; li++) {
       if (li % 16 === 0) yield;
       const l = net.lines[li];
-      const variant = l.kind === "rail" ? Math.floor(hash2(li, 1, seed + 835) * 3) : 0;
-      const lineKind = l.kind === "path" ? pathKind(l.area ?? map.areaAt(l.pts[0][0], l.pts[0][1])) : "dirt";
+      const look = l.kind === "path" ? pathKind(l.area ?? map.areaAt(l.pts[0][0], l.pts[0][1])) : null;
+      const lineKind = look ? look.kind : "dirt", looks = look ? KINDS[look.kind]?.variants?.length ?? 1 : 1;
+      const variant = l.kind === "rail" ? Math.floor(hash2(li, 1, seed + 835) * 3) : look ? look.next++ % looks : 0;
       const pts = l.pts, n = pts.length;
       // Distance along the line, and a mitred normal at each point (so neighbouring quads meet).
       const along = [0];

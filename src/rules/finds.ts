@@ -84,11 +84,15 @@ export function nightPick(seed: number, found: Found): { kind: FindKindId; item:
   return left[Math.floor(hash2(seed, left.length, 8123) * left.length) % left.length];
 }
 
-/** Where tonight's trunk stands (map.seed): in a seeded wild area (not home), in its woods round its middle, under the canopy
- *  if it can be (so the treetops hide it), off its clearings and its legend's circle, clear of the relics. Null on a map with
- *  nowhere for it (the zoo). */
+/** Where tonight's trunk stands (map.seed). In an area of its own (Ed, 2026-11-03: "We can also have finds be at the site of their
+ *  own area rather than in a random place, and then the path network can lead you to them"; tuning findArea): at that area's site,
+ *  on its clear patch (map.specialSites, "find"), the paths from every touching area's site leading to it. Else (findArea off) as
+ *  before: in a seeded wild area (not home), in its woods round its middle, under the canopy if it can be (so the treetops hide it),
+ *  off its clearings and its legend's circle, clear of the relics. Null on a map with nowhere for it (the zoo). */
 export function placeTrunk(map: ForestMap, forest: { treesNear(x: number, z: number, r: number): Plant[] }, relics: readonly Relic[]): Trunk | null {
   if (map.zoo) return null;
+  const own = map.specialSites?.find(sp => sp.kind === "find");
+  if (own) return { x: own.x, z: own.z, cell: [own.cell[0], own.cell[1]], kind: "wearable", item: null, found: false };
   const b = map.bounds, home = map.centreCell, s = map.seed + 8117;
   const cells = map.cells.filter(([cx, cy]) => !(cx === home[0] && cy === home[1]) && map.playable(cx, cy)).sort((a, c) => hash2(a[0], a[1], s) - hash2(c[0], c[1], s));
   const woods = (x: number, z: number) => forest.treesNear(x, z, 14).filter(t => Math.hypot(t.x - x, t.z - z) < 14).length >= 3;

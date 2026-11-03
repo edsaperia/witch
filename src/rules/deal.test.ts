@@ -12,7 +12,8 @@ type Tuning = typeof TUNING;
 // Keep every playable island's authored size/roster: counts, route adjacency, stable shapes and path clearance are the integration coverage.
 const onIsland = (island: string): Tuning => ({ ...TUNING, map: { ...TUNING.map!, island, found: [], ...(island === "home" ? { islandAreas: 10 } : {}) } });
 const kindsAlong = (map: ForestMap) => routeOf(map).order.map(k => { const [x, y] = k.split(",").map(Number); return AREA_TYPES[map.typeOf(x, y)].creature; });
-const shapes = (map: ForestMap) => ({ cells: map.cells, legendAreas: [...map.legendAreas.keys()].sort(), lakes: map.cells.filter(([x, y]) => map.isLake(x, y)), box: map.bounds.land?.box });
+// (its areas: the playable ones and the night's find's, which moves each night: Ed, 2026-11-03, the path network's special sites)
+const shapes = (map: ForestMap) => ({ cells: [...map.cells, ...map.specialSites.map(s => s.cell)].map(c => c.join()).sort(), legendAreas: [...map.legendAreas.keys()].sort(), lakes: map.cells.filter(([x, y]) => map.isLake(x, y)), box: map.bounds.land?.box });
 
 describe("dealing types along a route", () => {
   it("puts the own kind first and keeps every kind apart, whatever the deck that allows it", () => {

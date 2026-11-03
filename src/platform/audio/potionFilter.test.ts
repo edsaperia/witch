@@ -6,6 +6,12 @@ import { PotionFilter, potionFilterState } from './potionFilter';
 import { newBeatClock } from '../../rules/beat';
 const game=(id:number,time=0)=>({clock:{time},beat:newBeatClock(120),witches:[{id:0}],mushrooms:{trips:{0:{key:POTION_RECIPES.find(r=>r.id===id)!.key,at:0,until:600}}}} as unknown as Game);
 afterEach(()=>resetPotionSettings());
+it.each([19, 34, 35, 57])('recipe %i is brewable and fades its sound back to the dry mix', id => {
+  expect(POTION_RECIPES.find(r => r.id === id)?.comingSoon).toBe(false);
+  expect(potionFilterState(game(id, 1)).amount).toBe(1);
+  expect(potionFilterState(game(id, 540)).amount).toBe(.5);
+  expect(potionFilterState(game(id, 600)).amount).toBe(0);
+});
 it('covers every recipe with the fallback except the two explicitly bespoke vision effects',()=>{
   for(const r of POTION_RECIPES) expect(potionFilterState(game(r.id)).amount).toBe(['night-vision','heat-vision'].includes(r.effect)?0:1);
 });

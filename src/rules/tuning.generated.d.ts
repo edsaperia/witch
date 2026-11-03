@@ -169,6 +169,7 @@ export type SchemaTuning = {
     "curve": "linear" | "smooth";
   };
   "areaSizeVariance": number;
+  "siteMargin": number;
   "borderLayers": number;
   "clearingSize": number;
   "clearingFalloff": number;
@@ -406,6 +407,7 @@ export type SchemaTuning = {
   "paths": {
     "rails": Array<number>;
     "roads": Array<number>;
+    "network": boolean;
     "linkChance": number;
     "deadEndChance": number;
     "pathHalf": number;
@@ -431,6 +433,11 @@ export type SchemaTuning = {
   "soundsystemFootprint": number;
   "reserveMargin": number;
   "stoneKeepClear": number;
+  "stoneMinGap": number;
+  "findArea": {
+    "on": boolean;
+    "clear": number;
+  };
   "treeMarginFromSoundsystem": number;
   "treeDensity": number;
   "leafJitter": {
@@ -2195,6 +2202,9 @@ export type SchemaTuning = {
   "pathFade": {
     "metres": number;
     "dither": boolean;
+  };
+  "pathLook": {
+    "bump": number;
   };
   "trunkFade": {
     "metres": number;

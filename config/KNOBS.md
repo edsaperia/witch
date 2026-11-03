@@ -285,6 +285,17 @@ How much areas vary in size, some small and some large.
 |---|---|---|
 | `areaSizeVariance` | number | 0 to … |
 
+### `siteMargin`
+
+how far every area's site (its middle) is kept in from its cell's sides, as a share of the cell (0 to 0.5), so sites, stumps and the paths joining them spread out.
+
+1. Ed, 2026-11-03: "Minimum distance between stumps; it's just a bit strange finding two right next to each other; at least their clearings shouldn't overlap"
+0 (off) for now: any margin reshapes every island, and with it a dozen seeded gameplay tests' layouts (combat, brooms, swoops...) that other builders were changing at the time. 0.15 keeps two sites at least 0.3 of an area apart before the warp (about 50 m). stoneMinGap makes sure of the stones either way.
+
+| knob | type | range |
+|---|---|---|
+| `siteMargin` | number | 0 to 0.5 |
+
 ### `borderLayers`
 
 | knob | type | range |
@@ -708,7 +719,9 @@ Railways, old roads and streams crossing the island.
 1. Ed: "There are much too many paths" (linkChance 0.55 to 0.1, deadEndChance 0.3 to 0, rails [2,4] to [0,1], at most one railway)
 Paths, roads and railways (Ed): far fewer since 2026-10-11 [1]. rails [min,max] railway lines edge to edge in wide curves (one with a branch); roads [min,max] broad sweeping old roads (0: Ed, round 13, "remove the paths that are roads: only the kind that cars might drive on"; footpaths, railways and streams stay).
 
-- **`paths.linkChance`**: the share of neighbouring areas joined by a meandering path.
+- **`paths.network`**: every area with a site (a stump, a special site, home's dancefloor) joined by a footpath to every touching area's site, from the edge of one clearing to the other's, round the lakes; no trees on them.
+  1. Ed, 2026-11-03: "Path network - Each non-lake area has a stump site or a special site (find and challenge areas); paths link each of these sites to the sites in adjacent areas. Paths don't have trees on them."
+- **`paths.linkChance`**: the share of the other neighbouring areas (an area with no site: the buffer's) joined by a meandering path; with paths.network off, of every neighbouring pair.
 - **`paths.deadEndChance`**: the share of areas with a path out to nothing.
 - **`paths.pathHalf`, `paths.roadHalf`, `paths.railHalf`**: How wide the paths are kept clear of trees, with thick bushes along their edges.
   half each corridor's width (metres), kept clear of trees, with bushes thick along the edges for edgeBushes metres (bushBoost times as many); streams [min,max] long streams winding across the map (and short ones join wet areas that touch), streamHalf metres half-wide; along a railway, every landmarkSpacing metres, a landmarkChance of a landmark (a wagon, a carriage, a platform, a gantry) and otherwise sometimes a signal post; verge posts along roads every vergeSpacing metres; every 3D piece at least pieceGap metres from the next.
@@ -722,6 +735,7 @@ Paths, roads and railways (Ed): far fewer since 2026-10-11 [1]. rails [min,max] 
 |---|---|---|
 | `paths.rails` | array of number |  |
 | `paths.roads` | array of number |  |
+| `paths.network` | boolean |  |
 | `paths.linkChance` | number | 0 to … |
 | `paths.deadEndChance` | number | 0 to … |
 | `paths.pathHalf` | number | 0 to … |
@@ -802,6 +816,29 @@ Nothing special within it: no scene or set piece, ruin or freak tree (the giant 
 | knob | type | range |
 |---|---|---|
 | `stoneKeepClear` | number | 0 to … |
+
+### `stoneMinGap`
+
+the least distance between two areas' stones (great stumps or runestones), metres; a stone that would stand nearer one placed before it moves, in its own area, to the nearest spot far enough off.
+
+1. Ed, 2026-11-03: "Min 40 m between stumps."
+The special sites (tonight's find's) count as stones here. Placed all at once in a fixed order (rules/map.ts placeSites), so the same whichever is asked for first.
+
+| knob | type | range |
+|---|---|---|
+| `stoneMinGap` | number | 0 to … |
+
+### `findArea`
+
+tonight's find in an area of its own, at its site, in a clearing `clear` metres round it; that area has no stump, wave or creatures, and every touching area's path leads to it.
+
+1. Ed, 2026-11-03: "We can also have finds be at the site of their own area rather than in a random place, and then the path network can lead you to them." … "Each non-lake area has a stump site or a special site (find and challenge areas)"
+The area is seeded by the night (never home, an area touching home's (Ed, 2026-11-03: "The challenge area shouldn't be adjacent to the home area"; an island with none such takes its area farthest from home), a legend area's pair, or one whose going would cut the island in two) and is not playable, like a legend area; the island grows one area more for it, which takes its kind, so the island keeps its playable areas and roster. Off: the find as before, in a wild area's woods.
+
+| knob | type | range |
+|---|---|---|
+| `findArea.on` | boolean |  |
+| `findArea.clear` | number | 0 to … |
 
 ### `treeMarginFromSoundsystem`
 
@@ -1926,10 +1963,10 @@ Code: `config/combat.json`, `rules/speakers.ts`
   pack combat [1], on by default [2] and on the pause page to turn off for testing: on, packs of config/packs.json's kinds (home's ten and Phase 1's eleven) fight in combos (the nearest lunges, the ones at range fire where a dodge would go, the one behind her throws the special), fall back by their kind's retreat between combos, and her own pack combos without retreating.
   Code: `docs/backlog/combat.md`, `config/packs.json`
 - **`combat.aggro`**: wild creatures go for party animals within this, and for the witch anywhere in their area.
-- **`combat.leaveArea`**: How far past its area's edge a wild creature chases her before giving up and going home.
+- **`combat.leaveArea`**: How far past its area's edge a wild creature chases another creature, or comes out after her across its edge, before going home; once it's after her it follows her anywhere on the ground until she takes off.
   1. Ed, 2026-10-05
   2. Ed, 2026-10-06: round 13: 30; it was 10
-  a wild one chasing the witch gives up once she's this far past its area's edge, and turns back home (besiegers keep witchLose: they give up once she's out of their area, out of range and this far off). a wild creature chases her (or her party) up to this many metres past its area's edge [2]; beyond it, or once she rises, it gives up and retreats into its area at its own pace, roaming again once it's in and within retreatHome metres of home, taking up a fight on the way only with someone back in its area (no flip-flopping at the edge). Besiegers march as before; happy and leashed ones aren't affected.
+  Since Ed's 31 Oct playtest a wild creature after her follows her anywhere on the ground until she takes off (rules/combat/targeting.ts); this band now bounds only creature-against-creature chases and coming out after her across its edge. Before: a wild one chasing the witch gives up once she's this far past its area's edge, and turns back home (besiegers keep witchLose: they give up once she's out of their area, out of range and this far off). a wild creature chases her (or her party) up to this many metres past its area's edge [2]; beyond it, or once she rises, it gives up and retreats into its area at its own pace, roaming again once it's in and within retreatHome metres of home, taking up a fight on the way only with someone back in its area (no flip-flopping at the edge). Besiegers march as before; happy and leashed ones aren't affected.
 - **`combat.pursuit`**: how far from her (or its sigil, guarding) a party animal chases a foe before giving up.
 - **`combat.pursuitRun`**: how fast it closes in while over 30 m off (so an area's creatures are onto her in a few seconds when she lands in it).
 - **`combat.fightRun`**: how fast a creature runs in a fight (m/s), when its movement profile doesn't say (movement.json speed).
@@ -2062,7 +2099,7 @@ Creatures keep off floor sigils [1]: wild idlers, happy ones at their area, danc
 
 ### `wildWatch`
 
-On her first landing in a wild area its creatures stare and redden for a few seconds before they attack, and how far they chase her after.
+On her landing anywhere on the ground in a wild area (flying over starts nothing) its creatures stare and redden for a few seconds before they attack; walking out or taking off in that time calls it off.
 
 1. Ed, 2026-10-07: "stir, evade and hang back, turning to LOOK at her" (when she enters a dormant area its animals nap, then, then attack; every creature looks, no special art)
 2. Ed, 2026-10-07: "make the dormant-to-attacking choreography slower, with a visible sign of aggro (e.g. red tint) rising that lets a player who wanders into a dangerous area understand what's happening and have time to run away"
@@ -2070,7 +2107,7 @@ On her first landing in a wild area its creatures stare and redden for a few sec
 4. Ed, 2026-10-07: "remove the wild area aggro red glow" (the screen edges' red that went with it is gone)
 5. Ed, 2026-10-07: "should fade out rather than cut out instantly" (Initially 0.7 seconds; increased to 1.5 seconds by Ed on 2026-10-31 (coordinator brief #1476 comment 6549034570: the wild watch red should fade out more slowly).)
 6. Ed, 2026-10-13: "Animals should chase outside, and relatively far. The idea is to stop people just sitting near the edge of a territory and sniping/kiting. However if you leave the area before the warning ends then they don't attack"
-The wild watch [1]: on a witch's first coming down on the ground in a wild area (not partified, not friendly, not home), its wild young and adults (not legends, the enraged or besiegers; babies keep their notice) hold off for time seconds, standing and turning to stare at her, any within hangBack metres backing off a little; then they fight as ever. The area is forgotten forget seconds after the last witch was on the ground in it, so a later visit plays it again. Slower, with a warning [2]: time is 4 s [3]; leaving the area or rising before it is up calls it off (they settle back and don't chase; the next visit starts it over). Over the watch each watcher reddens, from faint as they notice her to full just before they attack, the whole area together: its red up to tint [4], times the area's danger, its watchers' fighting value over dangerF (F, rules/power.ts) capped at 1, so a deep, crowded area reads as worse than a first-ring one. When the watch ends (they attack, she invites one, she leaves or rises) the red eases out over fade seconds (1.5, Ed 2026-10-31; previously 0.7) [5]. The chase [6]: leave before the warning's up and none comes after her; once they've attacked (the warning over with her inside) they follow her out to combat.leaveArea metres past their edge; and a 💌 of hers landing on a wild creature provokes it for provoked seconds: it comes out after her across its edge, to the same band (no sniping from just outside).
+The wild watch [1]: on a witch's first coming down on the ground in a wild area (not partified, not friendly, not home), its wild young and adults (not legends, the enraged or besiegers; babies keep their notice) hold off for time seconds, standing and turning to stare at her, any within hangBack metres backing off a little; then they fight as ever. The area is forgotten forget seconds after the last witch was on the ground in it, so a later visit plays it again. Slower, with a warning [2]: time is 4 s [3]; leaving the area or rising before it is up calls it off (they settle back and don't chase; the next visit starts it over). Over the watch each watcher reddens, from faint as they notice her to full just before they attack, the whole area together: its red up to tint [4], times the area's danger, its watchers' fighting value over dangerF (F, rules/power.ts) capped at 1, so a deep, crowded area reads as worse than a first-ring one. When the watch ends (they attack, she invites one, she leaves or rises) the red eases out over fade seconds (1.5, Ed 2026-10-31; previously 0.7) [5]. The chase [6]: leave before the warning's up and none comes after her; once they've attacked (the warning over with her inside) they follow her anywhere on the ground until she takes off (Ed's 31 Oct playtest; before, out to combat.leaveArea metres past their edge); and a 💌 of hers landing on a wild creature provokes it for provoked seconds: it comes out after her across its edge and on in the same way (no sniping from just outside).
 Code: `rules/power.ts`
 
 - **`wildWatch.on`**: false: they attack at once, as before.
@@ -2096,7 +2133,7 @@ Once the wild watch is over, every awake young and adult in the area hunts her w
 
 1. Ed, 2026-10-07: "When I go to a wild area, after they are awoken all of the wild creatures from that area should fight with me until either I die or they are invited. When they are all invited, the runestone transforms into a soundsystem. The legend and the circle baby are the exceptions"
 2. "they should lose interest and go home if you leave their area, as they did before" (and; rules/hunt.ts)
-The hunt [1][2]: once a wild area's watch is over with her on the ground in it, every one of its own awake young and adults hunts her while she's in the area, wherever in it they are, never giving up or napping; over the treetops there they hold and come on again when she lands. It ends for one when it's invited, enraged, or knocked down and run off; for all of an area's when she leaves the area (they're ordinary wild creatures again: they give up combat.leaveArea metres past their edge and walk home, as before); for all of hers when she's knocked out (they give up, walk home and roam, DECISION FOR ED, and the area's watch plays again on her next visit). Back in an area she left, it hunts her again at once while it's remembered (wildWatch.forget seconds after she was last on the ground in it), else its watch plays again. Babies don't fight.
+The hunt [1][2]: once a wild area's watch is over with her on the ground in it, every one of its own awake young and adults hunts her while she's in the area, wherever in it they are, never giving up or napping; over the treetops there they hold and come on again when she lands. It ends for one when it's invited, enraged, or knocked down and run off; for all of an area's when she takes off outside the area (Ed's 31 Oct playtest: they follow her out on foot and hold while she's up over their own area; before, it ended as she left the area and they gave up combat.leaveArea metres past their edge); for all of hers when she's knocked out (they give up, walk home and roam, DECISION FOR ED, and the area's watch plays again on her next visit). Back in an area she left, it hunts her again at once while it's remembered (wildWatch.forget seconds after she was last on the ground in it), else its watch plays again. Babies don't fight.
 Code: `rules/hunt.ts`
 
 - **`hunt.on`**: false: the old rule (only those near her attack).
@@ -2280,11 +2317,11 @@ A sleeping legend's dream (or nightmare) bubble, and its pointer to the nearest 
 
 ### `legends`
 
-Which areas have a legend, and how far a happy one reaches.
+Which areas have a legend (a happy one's reach is legends.friendRange).
 
 1. Ed, 2026-10-06: "Legends should only appear in about half of areas (we can test this ratio); every area makes them too common." … "it should be more like 1/5" (share: the fraction of the areas (home never) with a sleeping legend (Ed, 2026-10-08:; 0.5 before), seeded per map and spread so they don't clump (no more than two neighbouring areas together where the map allows))
 2. 2026-10-06
-. The rest have no legend: no clearing, quest, restlessness or legend music. Read as the map is made: the decisions panel reloads. Ed's answers on #259 [2]: happyRange, a happy legend's reach in metres (relic allies: "They stay home, but if they're not useful enough right now, make their range longer").
+. The rest have no legend: no clearing, quest, restlessness or legend music. Read as the map is made: the decisions panel reloads. Ed's answers on #259 [2]: happyRange, a happy legend's reach in metres (relic allies: "They stay home, but if they're not useful enough right now, make their range longer"); since Ed, 2026-10-31, legends.friendRange (85 m) instead, the friendly legend walking the ley line.
 
 - **`legends.friendRange`**: A friendly legend defends a witch within this many metres, otherwise engages enemies in this range before walking towards the ley line tip.
   1. Ed, 2026-10-31: "about the average radius of an area" (85 m; replaces happyRange 420 m. Defend, engage, then walk the route towards its drawing tip.)
@@ -2305,7 +2342,7 @@ Which areas have a legend, and how far a happy one reaches.
   1. Ed, 2026-10-06: "perhaps" … "an angry legend simply stamps on the soundsystem in its area, destroying immediately. The angry legend waking timer may have to be longer" (a)
   2. Ed, 2026-10-06: "It would be funny if you could leash an elder, but it's so heavy that it stops you moving at all outside the leash slack distance, and it doesn't move towards you at all. Maybe you should be able to turn a happy legend into a party legend with an absurd number of invites (100?) and then pick up its sigil but it's totally useless" (rules/partyLegend.ts)
   3. Ed, 2026-10-06: "They're a high-roll mechanic; you don't know how hard the quest will be before you go off to try and find the creature" (the gamble kept)
-  on, a legend turning angry while its own area's soundsystem stands destroys it at once (ruined, as any fallen one), and legends are restless angryAfter seconds before they anger (legends.json angryAfter otherwise). The party-legend Easter egg [2]: partyEgg turns it on; a happy legend (by its relic or its quest) then takes 💌s, its meter partyHits long, draining partyDrain of a full meter a second; full, it's a party legend (it dances in place, fights no one, its rune at its feet); picked up, she can go anywhere within partyReach metres of it (the leash's slack: 0.85 of leash.length) and not a step further, and it never comes to her; put down (E), it's let go where it stands. questNear: 0, a legend dreams of any kind on the map [3]; N, one of the N nearest other kinds round it, an area nearer home counting as nearer (a knob for trying it).
+  on, a legend turning angry while its own area's soundsystem stands destroys it at once (ruined, as any fallen one), and legends are restless angryAfter seconds before they anger (legends.json angryAfter otherwise). The party-legend Easter egg [2]: partyEgg turns it on; a happy legend (by its quest) then takes 💌s, its meter partyHits long, draining partyDrain of a full meter a second; full, it's a party legend (it dances in place, fights no one, its rune at its feet); picked up, she can go anywhere within partyReach metres of it (the leash's slack: 0.85 of leash.length) and not a step further, and it never comes to her; put down (E), it's let go where it stands. questNear: 0, a legend dreams of any kind on the map [3]; N, one of the N nearest other kinds round it, an area nearer home counting as nearer (a knob for trying it).
   Code: `rules/partyLegend.ts`
 
 | knob | type | range |
@@ -2335,7 +2372,7 @@ What legends are for: optional quests, relics for powerful allies, and danger to
 3. 2026-10-05: "Legends, redesigned" (redesigned, DESIGN.md)
 4. Ed, 2026-10-08: legends.share, never home; half before
 5. 2026-10-04: wake seconds of heaving out of the ground when its wave woke it; heal hp a second while no enemy was near
-What legends are for [1]: a mostly optional layer of tasks; quick players do their quests (open as long as a legend sleeps; legend buffs designed 5 Oct, #87, removed 28 Oct), lucky ones find relics for powerful allies, and a losing player sees their babies hurt in sieges and them enraged, the loss spiral faster and more dramatic (his words in DESIGN.md, "Legends, redesigned", and config/legends.json). Area legends [2][3]: about a fifth of the areas [4] have one legend of its kind, sleeping, sunk into the ground like scenery (sink: the share of it under the ground, moss: how far its colours go toward moss). Waves no longer wake it: it grows restless, then angry, while its area has none of its kind, and a relic by it makes it happy (config/legends.json). A happy legend defends against the enraged within guard metres of where it stands; worn down, it goes back to sleep, any buff it gave kept. wake and heal are the first design's [5]; the redesigned rules don't read them (a happy one heals over legends.json healTime). Drawn scale times a legend's size, swelling by breathe as it breathes (once every breathEvery seconds); awake, an aura on the ground aura metres across and, from the treetops, a glow over the canopy (glow its strength) in a dark mix of its sigil's colour.
+What legends are for [1]: a mostly optional layer of tasks; quick players do their quests (open as long as a legend sleeps; legend buffs designed 5 Oct, #87, removed 28 Oct), lucky ones find relics for powerful allies (since Ed, 2026-10-18, relics are flasks, a growth spurt for her followers, and a quest done wakes its legend as her ally), and a losing player sees their babies hurt in sieges and them enraged, the loss spiral faster and more dramatic (his words in DESIGN.md, "Legends, redesigned", and config/legends.json). Area legends [2][3]: about a fifth of the areas [4] have one legend of its kind, sleeping, sunk into the ground like scenery (sink: the share of it under the ground, moss: how far its colours go toward moss). Waves no longer wake it: it grows restless, then angry, while its area has none of its kind, and its quest done wakes it happy (rules/quest.ts; a relic no longer does, Ed 2026-10-18). A happy legend defends her within legends.friendRange, else engages enemies in range, else walks the ley line towards its tip (Ed's 31 Oct playtest); worn down, it goes back to sleep. It gives no buff (legend buffs removed 28 Oct). wake and heal are the first design's [5]; the redesigned rules don't read them (a happy one heals over legends.json healTime). Drawn scale times a legend's size, swelling by breathe as it breathes (once every breathEvery seconds); awake, an aura on the ground aura metres across and, from the treetops, a glow over the canopy (glow its strength) in a dark mix of its sigil's colour.
 Code: `config/legends.json`
 
 - **`wildLegends.seen.dark`, `wildLegends.seen.liftMax`**: a legend whose floored look (seen.floor times its coat's luminance, its body colour as baked: render/legendLight.ts) is under seen.dark has its floor raised to seen.dark over that luminance, at most seen.liftMax; the bear, the boar and the others as dark are caught, lighter legends stay as they are.
@@ -3762,6 +3799,16 @@ Every end of a path, road, railway or stream (where it stops, peters out or is b
 |---|---|---|
 | `pathFade.metres` | number | 0 to … |
 | `pathFade.dither` | boolean |  |
+
+### `pathLook`
+
+How the paths are lit: bump is how strongly each path's bump map (stones and cobbles raised and bevelled, planks, roots, ruts and joints sunk) catches the moon, her glow and the lamps, a stone lit on the side facing the light and shaded on the other; 0 lays them flat as before.
+
+1. Ed, 2026-11-03: "Can you give them bump maps to make them less flat?" (art/paths.js pathNormals, render/paths.ts)
+
+| knob | type | range |
+|---|---|---|
+| `pathLook.bump` | number | 0 to … |
 
 ### `trunkFade`
 

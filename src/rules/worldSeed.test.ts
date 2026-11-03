@@ -10,7 +10,9 @@ import { newGame } from "./game";
 const at = (island: string, world: number, areas = 10): Tuning => ({ ...TUNING, map: { ...TUNING.map!, island, world, islandAreas: areas } });
 // Keep these authored island/world pairs: campaign shape persistence across night seeds is the test subject.
 // (its areas' types are the night's too, dealt along its route (Ed, 2026-10-28, rules/deal.ts); the roster they're dealt from, its world's)
-const shape = (m: ReturnType<typeof generateMap>) => ({ cells: m.cells, roster: m.cells.map(([x, y]) => AREA_TYPES[m.typeOf(x, y)].id).sort(), r: m.bounds.land!.box, coast: [0, 1, 2, 3, 4, 5].map(a => m.coast(a)) });
+// (its areas: the playable ones and the night's find's, which moves each night: Ed, 2026-11-03, the path network's special sites)
+const areasOf = (m: ReturnType<typeof generateMap>) => [...m.cells, ...m.specialSites.map(s => s.cell)].map(c => c.join()).sort();
+const shape = (m: ReturnType<typeof generateMap>) => ({ cells: areasOf(m), roster: m.cells.map(([x, y]) => AREA_TYPES[m.typeOf(x, y)].id).sort(), r: m.bounds.land!.box, coast: [0, 1, 2, 3, 4, 5].map(a => m.coast(a)) });
 const insides = (m: ReturnType<typeof generateMap>) => JSON.stringify({ types: m.cells.map(([x, y]) => m.typeOf(x, y)), scenes: m.scenes, grounds: m.grounds, legends: m.legendKinds, paths: m.paths.lines?.length ?? 0 });
 
 describe("the world seed", () => {
@@ -36,7 +38,7 @@ describe("the world seed", () => {
 
   it("places the creatures by the night too", () => {
     const a = newGame(11, at("fox", 4242)), b = newGame(22, at("fox", 4242));
-    expect(a.map.cells).toEqual(b.map.cells);
+    expect(areasOf(a.map)).toEqual(areasOf(b.map));
     const spots = (g: typeof a) => g.creatures.slice(0, 10).map(c => [Math.round(c.x), Math.round(c.z)].join());
     expect(spots(a)).not.toEqual(spots(b));
   }, 60000);

@@ -918,6 +918,12 @@
       "minimum": 0,
       "description": "How much areas vary in size, some small and some large."
     },
+    "siteMargin": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 0.5,
+      "description": "how far every area's site (its middle) is kept in from its cell's sides, as a share of the cell (0 to 0.5), so sites, stumps and the paths joining them spread out."
+    },
     "borderLayers": {
       "type": "number",
       "minimum": 0
@@ -2096,10 +2102,14 @@
             "minimum": 0
           }
         },
+        "network": {
+          "type": "boolean",
+          "description": "every area with a site (a stump, a special site, home's dancefloor) joined by a footpath to every touching area's site, from the edge of one clearing to the other's, round the lakes; no trees on them."
+        },
         "linkChance": {
           "type": "number",
           "minimum": 0,
-          "description": "the share of neighbouring areas joined by a meandering path."
+          "description": "the share of the other neighbouring areas (an area with no site: the buffer's) joined by a meandering path; with paths.network off, of every neighbouring pair."
         },
         "deadEndChance": {
           "type": "number",
@@ -2175,6 +2185,7 @@
       "required": [
         "rails",
         "roads",
+        "network",
         "linkChance",
         "deadEndChance",
         "pathHalf",
@@ -2230,6 +2241,29 @@
       "type": "number",
       "minimum": 0,
       "description": "The keep-clear zone round each area's stone (its great stump, or its runestone with the stumps off), in metres from its middle."
+    },
+    "stoneMinGap": {
+      "type": "number",
+      "minimum": 0,
+      "description": "the least distance between two areas' stones (great stumps or runestones), metres; a stone that would stand nearer one placed before it moves, in its own area, to the nearest spot far enough off."
+    },
+    "findArea": {
+      "type": "object",
+      "properties": {
+        "on": {
+          "type": "boolean"
+        },
+        "clear": {
+          "type": "number",
+          "minimum": 0
+        }
+      },
+      "required": [
+        "on",
+        "clear"
+      ],
+      "additionalProperties": false,
+      "description": "tonight's find in an area of its own, at its site, in a clearing `clear` metres round it; that area has no stump, wave or creatures, and every touching area's path leads to it."
     },
     "treeMarginFromSoundsystem": {
       "type": "number",
@@ -5224,7 +5258,7 @@
         "leaveArea": {
           "type": "number",
           "minimum": 0,
-          "description": "How far past its area's edge a wild creature chases her before giving up and going home."
+          "description": "How far past its area's edge a wild creature chases another creature, or comes out after her across its edge, before going home; once it's after her it follows her anywhere on the ground until she takes off."
         },
         "pursuit": {
           "type": "number",
@@ -5666,7 +5700,7 @@
         "fade"
       ],
       "additionalProperties": false,
-      "description": "On her first landing in a wild area its creatures stare and redden for a few seconds before they attack, and how far they chase her after."
+      "description": "On her landing anywhere on the ground in a wild area (flying over starts nothing) its creatures stare and redden for a few seconds before they attack; walking out or taking off in that time calls it off."
     },
     "hunt": {
       "type": "object",
@@ -6232,7 +6266,7 @@
         "partyReach"
       ],
       "additionalProperties": false,
-      "description": "Which areas have a legend, and how far a happy one reaches."
+      "description": "Which areas have a legend (a happy one's reach is legends.friendRange)."
     },
     "wildLegends": {
       "type": "object",
@@ -11139,6 +11173,20 @@
       "additionalProperties": false,
       "description": "Every end of a path, road, railway or stream (where it stops, peters out or is broken) frays out over its last metres in an ordered dither on the art's pixel grid, broken up by noise (Ed, v149)."
     },
+    "pathLook": {
+      "type": "object",
+      "properties": {
+        "bump": {
+          "type": "number",
+          "minimum": 0
+        }
+      },
+      "required": [
+        "bump"
+      ],
+      "additionalProperties": false,
+      "description": "How the paths are lit: bump is how strongly each path's bump map (stones and cobbles raised and bevelled, planks, roots, ruts and joints sunk) catches the moon, her glow and the lamps, a stone lit on the side facing the light and shaded on the other; 0 lays them flat as before."
+    },
     "trunkFade": {
       "type": "object",
       "properties": {
@@ -13739,6 +13787,7 @@
     "areaScale",
     "arena",
     "areaSizeVariance",
+    "siteMargin",
     "borderLayers",
     "clearingSize",
     "clearingFalloff",
@@ -13765,6 +13814,8 @@
     "soundsystemFootprint",
     "reserveMargin",
     "stoneKeepClear",
+    "stoneMinGap",
+    "findArea",
     "treeMarginFromSoundsystem",
     "treeDensity",
     "leafJitter",
@@ -13871,6 +13922,7 @@
     "canopyShadow",
     "rig",
     "pathFade",
+    "pathLook",
     "trunkFade",
     "load",
     "canopyCutout",
