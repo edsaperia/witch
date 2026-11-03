@@ -44,6 +44,7 @@ export const TUNING_OVER: Record<string, Partial<Schema>> = {
   "suspects.seeSolid": { enum: ["off", "all", "circle", "rest"] },
   "music.latency": { enum: ["interactive", "balanced", "playback"] },
   "berries.cost.by": { enum: ["power", "value"] },
+  "colourGrammar": { enum: ["new", "old"] },
   "arena.curve": { enum: ["linear", "smooth"] },
   "stringLights.mode": { enum: ["palette", "areaNeon"] },
   "blood.style": { enum: ["prints", "prints+drops", "drops"] },

@@ -1477,7 +1477,9 @@ Berries on the bushes of every area, which her creatures eat to evolve.
 6. Ed, 2026-10-04: legends are the areas' own, never grown
 Berries and evolving (Ed): every area has bushesPerArea berry bushes (normal bushes of that area) and perArea [min, max] berries on distinct ones at the start. Bushes grow in patches of patch.bushes [min, max] within patch.radius metres. Party animals (invited, not legends), following her or held at a sigil, take a berry on their way (Ed, v233): within detour metres of the line to where they're heading or of their sigil, never beyond their leash; they nip over, eat it (eatTime seconds) and carry on. The berry grows again at once on a free berry bush somewhere else on the map. A party animal evolves on the next bar line once it has eaten the berries its next level costs [1]: the fighting value it gains (cost.by "value": √(hp × dps), its species' strength included) at cost.per a berry, rounded, at least 1: so a berry buys the same fighting value for every species; one of normal strength costs 4 and 4 [2][3][4] ("power" would count hp × dps instead). Bigger patches since [5]: perArea and patch.bushes up a quarter to a half, so the first evolve's extra berry (2, was 1) and weaker species' one-berry minimum come out a little faster to feed than before. Evolving stops at adult [6].
 
-- **`berries.colour`**: the berry's (shiny dark cherry red).
+- **`berries.colour`**: The berries' colour: a deep berry pink.
+  1. Ed, 2026-11-03: "Berries: deep berry pink, instead of red." (red is the warnings' colour; a shiny dark cherry red (#9e1024) before, which colourGrammar old brings back)
+  Code: `render/colourGrammar.ts`
 - **`berries.glow`**: How strongly a berry's soft halo glows.
   1. Ed, 2026-10-11
   its soft halo's strength. B (debug) feeds the nearest party animal one berry. Babies [1]: a baby eats only when its sigil is put down with a berry within babyReach metres of it (following her, it never stops for one; when a baby's sigil is next to go down, the berries within babyReach of her glow brightly), and babyCost berries evolve it into a youth.
@@ -1638,6 +1640,17 @@ Code: `rules/win.ts`, `docs/backlog/journey.md`, `rules/guidance.ts`
 | `win.flare` | number | 0 to … |
 | `win.retarget` | number | 0 to … |
 
+### `colourGrammar`
+
+The colour grammar: new, the party warm and the forest cold (her sigils pink, crimson, orange, gold by rank; the wild's purple, blue, turquoise; every baby pink, a sleeping legend lilac; berries pink; the ley line cold ahead of its spark); old, the colours before it.
+
+1. Ed, 2026-11-03: "the forest is cold, the party is warm" … "red telegraphs are right; red does mean warning" … "should be less colourful; a cold coloured rainbow, maybe just blue and purple and turquoise" (his table: yours baby pink, youth red, adult orange, legend gold; wild youth purple, adult blue, legend turquoise; the last quote the ley line ahead of the pulse. The warnings keep their pure red; a youth's red is a crimson, toward rose and darker. The pause page's Colours switch (old: the friends' purple then three blues, the wild's purple then three reds, cherry-red berries, the whole rainbow ahead of the spark); it reloads the night)
+Code: `render/colourGrammar.ts`, `render/leash/ranks.ts`, `render/leash/rainbow.ts`
+
+| knob | type | range |
+|---|---|---|
+| `colourGrammar` | string | "new" / "old" |
+
 ### `leash`
 
 - **`leash.length`**: how far a leashed creature roams from its leash point (you, or its sigil on the ground).
@@ -1687,10 +1700,15 @@ Code: `rules/win.ts`, `docs/backlog/journey.md`, `rules/guidance.ts`
 - **`leash.ranks`**: Leash sigils drawn as bare glyphs in their rank's colour (baby, youth, adult, legend) with embers rising off them, so ranks are easy to tell apart at a glance.
   1. Ed, 2026-10-27: "larger sigils is good ... embers are good ... colours-for-rank is good; it's more important in rapid gameplay to be able to tell ranks apart than creatures" (after mocks 3 to 9; render/leash/ranks.ts)
   2. Ed, 2026-10-27: "go ahead and push all the new sigil work" (the default since; ?sigils=old turns them off and the hex grid back to 4 m)
+  3. Ed, 2026-11-03: "the forest is cold, the party is warm" (colours (a friend's): baby pink, youth crimson, adult orange, legend gold; enemy (the wild's): youth purple, adult blue, legend turquoise (before: a friend's purple then three blues, an enemy's purple then three reds; colourGrammar old))
+  4. Ed, 2026-11-03: on #1732: every baby sigil is her pink, on either side (a wild baby waiting on a stone's column always joins the party at its conversion and can never be hostile; enemy's first kept the same pink for the rune stones); the pale lilac means only neutral, asleep: a sleeping legend's sigil (asleep)
   on [2], every leash sigil (her stack, placed sigils, happy runes, the ghost, the treetop projection, the bond) is its bare glyph, no ring or disc, glyph metres across on the ground, in its rank's colour (colours: baby, youth, adult, legend; the species' neon stays the world's: borders, stones, fireworks, dancefloor, holograms, chart), with embers rising off its strokes (embers.count at once, each size metres, rising rise metres, by rank; in her stack stack of that), under a dark shade in the glyph's own shape (not a disc); a youth in her stack shows two rows of round dots off to its right, one a berry it eats on the move (toEvolve less the last, eaten at a placed sigil), at most dotsPerRow a row, bright eaten and dim not, pulsing when ready; and the hex grid is hex metres (leash.hex.size).
   Code: `render/leash/ranks.ts`
 - **`leash.placeMotes`**: A sigil put down or picked up: its burst of motes rising in its colour (render/leash.ts, drawn in render/leash/combat.ts): count, size (m), bright (times its colour), rise and life (times the old height and length).
   1. the coordinator, 2026-10-29: "Given current settings, the motes from sigils don't do much" (Ed, relayed; the art director's motes pass, #1398 (tools/shot/motes.cjs measures them))
+- **`leash.ranks.asleep`**: A sleeping legend's sigil colour (0-255): neutral, asleep, a pale frost lilac, used for nothing else.
+  1. Ed, 2026-11-03: on #1732: the pale lilac means only neutral, asleep; every baby is pink. Before the grammar a sleeping legend took the babies' purple (Ed, 2026-10-29), which colourGrammar old brings back
+  Code: `render/leash/ranks.ts`
 - **`leash.ranks.embers.bright`**: The embers rising off rank sigils (on the ground, in her stack, over the rune stones): their colour times this.
   1. the coordinator, 2026-10-29: "Given current settings, the motes from sigils don't do much" (Ed, relayed; the art director's motes pass, #1398 (tools/shot/motes.cjs measures them))
 - **`leash.ranks.chain.fall`**: How far (m) along its walking path a travelling follower's chain, hanging from its sigil, reaches the ground for every metre it falls (0: straight down to where the path starts).
@@ -1745,6 +1763,7 @@ Code: `rules/win.ts`, `docs/backlog/journey.md`, `rules/guidance.ts`
 | `leash.ranks.glyph` | number | 0 to … |
 | `leash.ranks.colours` | array of array |  |
 | `leash.ranks.enemy` | array of array |  |
+| `leash.ranks.asleep` | array of number |  |
 | `leash.ranks.sizes` | array of number |  |
 | `leash.ranks.embers.count` | array of number |  |
 | `leash.ranks.embers.size` | array of number |  |

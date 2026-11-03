@@ -48,6 +48,7 @@ import { drawStones, newStoneView, resetStoneView, type StoneSpot } from "./leas
 import { drawProjection } from "./leash/projection";
 import { RUNE_SCALE, runeOffset, sigilSize } from "../rules/runeOffset";
 import { relicsOut } from "../rules/partyOver";
+import { berryColour } from "./colourGrammar";
 import { crowned, drawEmbers, glyphPoints, legendShine, rankColour, rankKnobs, rankOf, rankSize, ranksOn, youthDots } from "./leash/ranks";
 export { BUBBLE_PX, bubblePx } from "./leash/bubbles";
 export { legendarySigil } from "./leash/glyphs";
@@ -213,7 +214,7 @@ export class LeashView {
     this.ink = new Instances(mat(1, true, true)); this.ink.mesh.renderOrder = 2.95;
     scene.add(this.standing.mesh, this.flat.mesh, this.through.mesh, this.over.mesh, this.solid.mesh, this.blood.mesh, this.backing.mesh, this.ink.mesh, this.stackBack.mesh, this.stackGlyphs.mesh);
     this.look = new AttackLook(scene, game);
-    const hex = game.tuning.berries.colour.replace("#", "");
+    const hex = berryColour(game.tuning).replace("#", ""); // (berry pink, or the old cherry red: render/colourGrammar.ts)
     this.berryRgb = [0, 2, 4].map(i => parseInt(hex.slice(i, i + 2), 16) / 255) as [number, number, number];
   }
 
@@ -563,8 +564,8 @@ export class LeashView {
   /** A rank sigil's shade (its glyph's own shape, grown: bareSlot) by its glyph's rect; null for any other glyph. */
   shadeOf(uv: number[]): number[] | null { return this.shades.get(`${uv[0]},${uv[1]}`) ?? null; }
 
-  /** A leash sigil's colour: with rank sigils on, its rank's (render/leash/ranks.ts: baby turquoise, youth purple, adult red, legend
-   *  yellow), else its species' neon. */
+  /** A leash sigil's colour: with rank sigils on, its rank's, a friend's (render/leash/ranks.ts: baby pink, youth crimson, adult
+   *  orange, legend gold; render/colourGrammar.ts), else its species' neon. */
   colOf(c: Creature): THREE.Color {
     if (ranksOn(this.game.tuning)) {
       if (!this.rankCols) this.rankCols = [0, 1, 2, 3].map(r => { const [cr, cg, cb] = rankColour(this.game.tuning, r); return new THREE.Color(cr, cg, cb); });

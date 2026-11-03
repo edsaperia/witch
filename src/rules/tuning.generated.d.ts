@@ -838,6 +838,7 @@ export type SchemaTuning = {
     "flare": number;
     "retarget": number;
   };
+  "colourGrammar": "new" | "old";
   "leash": {
     "length": number;
     "runSpeed": number;
@@ -900,6 +901,7 @@ export type SchemaTuning = {
       "glyph": number;
       "colours": Array<Array<number>>;
       "enemy": Array<Array<number>>;
+      "asleep": Array<number>;
       "sizes": Array<number>;
       "embers": {
         "count": Array<number>;
