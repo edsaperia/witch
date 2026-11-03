@@ -894,6 +894,9 @@ export type SchemaTuning = {
       "calm": number;
       "farAt": number;
       "farSpeed": number;
+      "margin": number;
+      "size": number;
+      "her": number;
     };
     "ranks": {
       "on": boolean;

@@ -1049,7 +1049,10 @@
       "scatter": 55,
       "calm": 3,
       "farAt": 35,
-      "farSpeed": 40
+      "farSpeed": 40,
+      "margin": 1,
+      "size": 0.75,
+      "her": 1.75
     },
     "ranks": {
       "on": true,

@@ -7,7 +7,7 @@
 // Sigils can't be put down on top of one another. Leashes are elastic: creatures walk or run to
 // their leash point at their own pace and never teleport. Legends can't be invited (for now).
 // No drawing here.
-import { attackerNear, BABIES_DEFAULT, babiesOf, isBaby, scatterSpot, stepBaby, trailPoint, updateTrail } from "./babies";
+import { attackerNear, BABIES_DEFAULT, babiesOf, isBaby, queueDistances, queueHalf, scatterSpot, stepBaby, trailPoint, updateTrail } from "./babies";
 import { runeOffset } from "./runeOffset";
 import { LEGEND, heal, speedFactor, type Creature } from "./creatures";
 import type { Tuning } from "./tuning";
@@ -328,9 +328,12 @@ export function stepLeash(s: LeashState, creatures: Creature[], c: LeashControls
 
   // (A party animal busy with a berry, or evolving, is moved by rules/berries.ts instead.)
   // Her babies following her on the ground (Ed, 2026-10-11; rules/babies.ts): single file along where she's been, in stack
-  // order from the bottom, babies.gap metres apart; scattering while she's in a fight.
+  // order from the bottom, each kept clear of the one in front by their sizes (Ed, 2026-11-03; babies.ts queueGap), at least
+  // babies.gap apart; scattering while she's in a fight.
   const BB = babiesOf(t), babies = onGround ? s.stack.filter(id => isBaby(byId(id))) : [];
-  if (babies.length) s.trail = updateTrail(s.trail, witch.x, witch.z, (babies.length + 2) * BB.gap + 4);
+  // (the line's order: the stack from its top down, as the loop below takes them)
+  const back = babies.length ? queueDistances(babies.map(id => byId(id)).reverse(), t) : [];
+  if (babies.length) s.trail = updateTrail(s.trail, witch.x, witch.z, back[back.length - 1] + 2 * BB.gap + 4);
   else if (s.trail) s.trail = undefined;
   const herSpeed = Math.hypot((witch as { vx?: number }).vx ?? 0, (witch as { vz?: number }).vz ?? 0);
   const foe = babies.length ? attackerNear(creatures, witch.x, witch.z, (t.combat.defendRadius ?? 30) * (t.fight?.scale ?? 1)) : null;
@@ -346,7 +349,7 @@ export function stepLeash(s: LeashState, creatures: Creature[], c: LeashControls
     if (!babies.length || !isBaby(c)) continue;
     const slot = k++;
     if (busy(id)) continue;
-    let to = s.scatter ? scatterSpot(c, witch.x, witch.z, s.scatter, BB.scatter) : trailPoint(s.trail, witch.x, witch.z, (slot + 1) * BB.gap);
+    let to = s.scatter ? scatterSpot(c, witch.x, witch.z, s.scatter, BB.scatter, queueHalf(c, t)) : trailPoint(s.trail, witch.x, witch.z, back[slot]);
     // (scattered off the screen, but never off the island: pulled back toward her till it's on land)
     for (let n = 0; s.scatter && land && n < 8 && !land(to.x, to.z); n++) to = { x: witch.x + (to.x - witch.x) * 0.75, z: witch.z + (to.z - witch.z) * 0.75 };
     stepBaby(c, to.x, to.z, witch.x, witch.z, leashSpeed(c, t), herSpeed, dt, t);

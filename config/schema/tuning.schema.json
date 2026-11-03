@@ -4536,6 +4536,18 @@
             "farSpeed": {
               "type": "number",
               "minimum": 0
+            },
+            "margin": {
+              "type": "number",
+              "minimum": 0
+            },
+            "size": {
+              "type": "number",
+              "minimum": 0
+            },
+            "her": {
+              "type": "number",
+              "minimum": 0
             }
           },
           "required": [
@@ -4543,7 +4555,10 @@
             "scatter",
             "calm",
             "farAt",
-            "farSpeed"
+            "farSpeed",
+            "margin",
+            "size",
+            "her"
           ],
           "additionalProperties": false,
           "description": "Her leashed babies follow her in single file and scatter out of the way while she's in a fight."
