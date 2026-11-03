@@ -20,6 +20,8 @@ const JETS = withTuning({ spells: { ...TUNING.spells, parts: "nozzles" } });
 const T0 = withTuning({ treehouse: { ...TUNING.treehouse, house: { ...HS, on: false } }, spells: JETS.spells });
 const game = (T = T0) => { const g = newGame(123, T); g.clock.paused = false; return g; };
 const events = (g: Game, kind: string) => g.leashEvents.filter(e => e.kind === kind);
+/** The treehouse's landing cooldown (Ed, 2026-11-03: rules/witch.ts perchCool): waited out between a take-off and a landing. */
+const COOL = TUNING.treehouse.landCooldown ?? 0;
 
 describe("the treehouse deck", () => {
   it("starts her at her decks on the deck, 22 m up, by the south rail behind the decks", () => {
@@ -67,6 +69,7 @@ describe("the treehouse deck", () => {
     expect(events(g, "perch").map(e => e.on)).toEqual([false]);
     run(g, 2);
     expect(g.witch.mode).toBe("treetop");
+    run(g, COOL); // (the take-off's cooldown out)
     press(g, { toggleMode: true });
     expect(events(g, "perch")).toEqual([]);
     run(g, 2);
@@ -85,7 +88,7 @@ describe("the treehouse deck", () => {
   it("tells of landing on it (the 'perch' event) and of E at the map table (the 'chart' event); nothing goes down up there", () => {
     const g = game(), d = deckOf(g.map, T0)!;
     run(g, 0.2, { moveX: 1 });
-    press(g, { toggleMode: true }); run(g, 2);
+    press(g, { toggleMode: true }); run(g, 2); run(g, COOL);
     press(g, { toggleMode: true });
     let landed = false;
     for (let i = 0; i < 200 && !landed; i++) { press(g, {}); landed = events(g, "perch").some(e => e.on); }
@@ -176,7 +179,7 @@ describe("the treehouse's house", () => {
 
   it("lands her when she flies onto the Terrace or Bedroom at treetop height, no button", () => {
     const g = game(JETS), d = deckOf(g.map, TUNING)!;
-    run(g, 0.2, { moveZ: -1 }); press(g, { toggleMode: true }); run(g, 2);
+    run(g, 0.2, { moveZ: -1 }); press(g, { toggleMode: true }); run(g, 2); run(g, COOL);
     expect(g.witch.mode).toBe("treetop"); expect(g.witch.perch).toBeFalsy();
     const a = K.angle * DEG;
     g.witch = { ...g.witch, x: d.x + Math.cos(a) * 60, z: d.z + Math.sin(a) * 60, vx: 0, vz: 0 };
@@ -188,7 +191,7 @@ describe("the treehouse's house", () => {
     expect(witchHeight(g.witch, TUNING)).toBeCloseTo(22 + TUNING.groundHeight, 6);
     expect(events(g, "perch").map(e => e.on)).toEqual([true]); // (the landing's step: its own events)
     // Ed, 2 November: flying onto the Bedroom floor now lands her too.
-    press(g, { toggleMode: true }); run(g, 2);
+    run(g, COOL); press(g, { toggleMode: true }); run(g, 2); run(g, COOL);
     const B = HOUSE_ROOMS.rooms.find(r => r.id === "bedroom")!;
     g.witch = { ...g.witch, x: d.x + B.x - 40, z: d.z + B.z, vx: 20, vz: 0, mode: "treetop", lift: 1, perch: undefined };
     for (let i = 0; i < 900 && !(g.witch.mode === "ground" && g.witch.perch); i++) press(g, { moveX: 1 });
