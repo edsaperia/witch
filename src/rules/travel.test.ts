@@ -133,14 +133,12 @@ describe("travelling and posse (Ed, 2026-10-05)", () => {
     expect(updateMode(c, { ...a, ground: false }, g.map, t + 10)).toBe(false);
   });
 
-  it("has only party animals in her posse eat berries: not travellers, not wild ones (Ed, 2026-10-05)", () => {
+  it("has only party animals eat berries, never wild ones; and none on its own, so a traveller passing ripe bushes claims none (Ed, 2026-11-03)", () => {
     const g = quiet(), c = g.creatures[0];
     Object.assign(c, { level: 1, leashed: true, travelling: false, fight: undefined });
-    expect(canEat(c, g.berries)).toBe(true);
-    c.travelling = true;
-    expect(canEat(c, g.berries)).toBe(false);
+    expect(canEat(c, g.berries, g.tuning)).toBe(true);
     Object.assign(c, { leashed: false, travelling: false });
-    expect(canEat(c, g.berries)).toBe(false);
+    expect(canEat(c, g.berries, g.tuning)).toBe(false);
     // In play: a traveller passing ripe bushes claims none.
     used.clear();
     const h = quiet(), w = h.witch;

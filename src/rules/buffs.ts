@@ -5,7 +5,8 @@
 // one per animal type, different animal types STACK!"), duplicates counting once. A leashed legend counts triple and needs no
 // berries ("When you're leashing a legend, this gives you the equivalent of 3x of that animal types' buff. (counts as that animal
 // type so doesn't stack e.g. adult wolf and legend wolf just count once)"). Each buff is personal: her dashes, her movement or
-// her invites. Berry pips: an adult eats berries as a youth does (rules/berries.ts) up to buffs.pips.max, each lasting
+// her invites. Berry pips: she feeds an adult berries as a youth, a tap of the sigil button a berry while it's at the bottom of her
+// stack (Ed, 2026-11-03: nothing eats on its own; rules/berries.ts, rules/sigilButton.ts), up to buffs.pips.max, each lasting
 // buffs.pips.life seconds, draining one at a time while it follows her; the draining one twinkles in her stack in its last
 // buffs.pips.warn seconds (render/leash/stack.ts). Every magnitude is a knob (tuning buffs). Pure: no drawing, no randomness,
 // so lockstep play stays deterministic.
@@ -58,7 +59,7 @@ export function pipFading(fuel: number, t: Tuning): boolean {
   const P = buffKnobs(t)?.pips, n = pipCount(fuel, t);
   return !!P && n > 0 && fuel - (n - 1) * P.life <= P.warn + 1e-9;
 }
-/** Whether an adult goes for a berry for its pips: a pip short of buffs.pips.max (rules/berries.ts canEat). */
+/** Whether an adult has room for a berry for its pips: a pip short of buffs.pips.max (rules/berries.ts feedRoom). */
 export const wantsPip = (c: Pick<Creature, "id" | "level" | "boss">, s: Pick<BerryState, "pips">, t: Tuning): boolean =>
   c.level === ADULT && !c.boss && !!buffKnobs(t) && pipCount(pipFuel(s, c.id, t), t) < (buffKnobs(t)!.pips.max);
 /** A berry eaten by an adult: one more pip, up to buffs.pips.max (rules/berries.ts feed). */

@@ -888,9 +888,8 @@
       "dot": 1,
       "gap": 1,
       "section": 0.35,
-      "ring": true,
-      "halo": 0.12,
-      "glow": 0.35,
+      "halo": 0.16,
+      "glow": 0.5,
       "glowSize": 5,
       "preset": "warm"
     }
@@ -913,7 +912,6 @@
       "bushes": [4, 7],
       "radius": 3.5
     },
-    "detour": 4.5,
     "eatTime": 0.25,
     "cost": {
       "by": "value",
@@ -921,8 +919,12 @@
     },
     "colour": "#c8228c",
     "glow": 0.8,
-    "babyReach": 10,
-    "babyCost": 1
+    "babyCost": 1,
+    "feed": {
+      "reach": 15,
+      "speed": 1,
+      "hold": 0.3
+    }
   },
   "invites": {
     "on": true,

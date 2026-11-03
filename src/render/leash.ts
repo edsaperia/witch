@@ -24,6 +24,7 @@ import { dormant, type Game } from "../rules/game";
 import type { Creature } from "../rules/creatures";
 
 import { blocked, stackBottom, talkTime } from "../rules/leash";
+import { feedOffer } from "../rules/sigilButton";
 import { toEvolve } from "../rules/berries";
 import { hash2 } from "../rules/random";
 import { hasRune, runeNear } from "../rules/creatureStates";
@@ -305,18 +306,19 @@ export class LeashView {
     const M = moodOf(t), hs = M?.berryHalo ?? 1, hg = glow * (M?.berryGlow ?? 1);
     for (const e of B.events) if (e.kind === "evolved") this.evolved.set(e.id, time);
     for (const [id, at] of this.evolved) if (time - at > 1) this.evolved.delete(id);
-    // A baby's sigil next to go down (Ed, 2026-10-11): the berries within berries.babyReach of her glow brightly, the ones it'll eat there.
-    const bot = !treetops && w.mode === "ground" ? stackBottom(g.leash) : null, babyNext = bot?.kind === "creature" && g.creatures[bot.id]?.level === 0;
-    const reach = t.berries.babyReach ?? 10;
+    // The berry a tap of the sigil button would feed the bottom of her stack (Ed, 2026-11-03; rules/sigilButton.ts feedOffer): marked,
+    // a pulsing halo and a ring of motes turning round it, the prompt beside it (render/feedTag.ts).
+    const offer = !treetops && w.mode === "ground" && g.witches?.[0] ? feedOffer(g, g.witches[0]) : null;
     for (const berry of B.berries) {
       if (berry.gone) continue; // (a Harvest berry eaten)
       const p = B.bushes[berry.bush];
       if (Math.hypot(p.x-w.x,p.z-w.z)<12) this.look.magic.draw("bloom", "aura", p.x, 0.8, p.z, 0, 0.18, 0.18, 0, 600000+berry.id);
       if (Math.abs(p.x - w.x) > near || Math.abs(p.z - w.z) > near) continue;
       const tw = 0.85 + 0.15 * Math.sin(time * 2.3 + berry.id);
-      if (babyNext && berry.claimedBy === null && Math.hypot(p.x - w.x, p.z - w.z) <= reach) {
-        const pulse = 0.75 + 0.25 * Math.sin(time * 4 + berry.id);
+      if (offer?.berry === berry.id) {
+        const pulse = 0.75 + 0.25 * Math.sin(time * 5);
         this.standing.add(p.x, 0.8, p.z + 0.29, 4.6 * hs, dot, r * 2, gg * 1.6, b * 1.6, Math.min(1, 1.6 * hg) * pulse); // (a wide bright halo)
+        for (let i = 0; i < 8; i++) { const a = time * 1.6 + (i / 8) * Math.PI * 2; this.standing.add(p.x + Math.cos(a) * 1.15, 0.8 + Math.sin(a) * 0.55, p.z + 0.34, 0.22, dot, 1, 0.85, 0.95, 0.9); } // (its ring of motes)
       }
       // From the treetops a small glint, depth-tested like any ground thing (Ed, 2026-11-02: "I can see berries through the canopy,
       // and I shouldn't be able to"): it shows where nothing nearer is drawn (a gap in the crowns, the cut-away round her), never
@@ -720,8 +722,8 @@ export class LeashView {
       this.groundSigil(w.x, 0, w.z, 3.4, this.uv(this.slotOf("relic", 0)), col.r, col.g, col.b, 0.22);
     } else if (w.mode === "ground" && stackBottom(s)?.kind === "creature" && !blocked(s, w.x, w.z, t) && !s.placed.some(p => Math.hypot(p.x - w.x, p.z - w.z) <= L.pickRadius) && !runeNear(g.creatures, w.x, w.z, L.runeRadius, time, undefined, k => runeOffset(k, t)) && !relicsOut(g).some(r => r.state === "lying" && Math.hypot(r.sx - w.x, r.sz - w.z) <= L.runeRadius)) { // (on a relic's sigil the button picks the relic up)
       const c = g.creatures[s.stack[s.stack.length - 1]], col = this.colOf(c);
-      const sg = this.sigilOf(c);
-      this.groundSigil(w.x, 0, w.z, ranks ? RK.glyph * rankSize(t, rankOf(c)) : (3 + c.level * 0.8) * sg.scale, sg.uv, col.r, col.g, col.b, 0.22);
+      const sg = this.sigilOf(c), feeds = !!g.witches?.[0] && !!feedOffer(g, g.witches[0]); // (a tap feeds it now, a hold puts it down: fainter, Ed 2026-11-03)
+      this.groundSigil(w.x, 0, w.z, ranks ? RK.glyph * rankSize(t, rankOf(c)) : (3 + c.level * 0.8) * sg.scale, sg.uv, col.r, col.g, col.b, feeds ? 0.12 : 0.22);
     }
 
     // Relics (#87): where one lies, its bottle stands among the scenery in its mound (render/view/scenery.ts, Ed 2026-10-09:
