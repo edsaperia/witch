@@ -575,7 +575,8 @@ function bedFirst(n: Night): void {
 function bedFirstNow(n: Night): void {
   n.flags.inBed = sailLandsInBed(n.params, n.tuning) && tuckIn(n.game); // (in her bed as the wake-up will have her: nothing moves as it lands)
   view.asleepInBed = n.flags.inBed;
-  if (!n.flags.inBed) { dreamAfterDive = null; aheadMorning(false); } // (no morning in bed after all: her look as it is)
+  if (n.flags.inBed) aheadMorning(true); // (asked as she sailed in place already; the island's link loaded anew, &arrive=1: now)
+  else { dreamAfterDive = null; aheadMorning(false); } // (no morning in bed after all: her look as it is)
 }
 /** A sail's or the bed's next morning read ahead from the moment she sails or sleeps (`morningAhead`: her nightie, rules/wakeUp.ts
  *  morningAfter), its whole set asked at once (showLook); off (`on` false) as its wake-up starts, or if there's to be none. */
@@ -1262,8 +1263,13 @@ function chartOverNight(table?: string): void {
   const here = island ? { island, world: n.tuning.map?.world ?? 0, label: stayLabel(n.game.partyOver ? "over" : n.game.win?.phase === "won" ? "won" : "on") } : undefined;
   if (table) chartAt = table;
   openChart((href, to) => { chartAt = null; void sailFromChart(href, to).catch(error => logCaughtError(error, "chart departure")); }, chartWorldArg(), { here, onDepart: departFromChart, onStay: () => console.info(`sea chart: ${island} chosen, she's there: back to the night (seed ${N().seed}, game time ${N().game.clock.time.toFixed(1)} s)`),
-    onFly: () => view.beginLandingShaders(true),
-    onLandingDue: dueAt => view.startLandingShaderGrace(dueAt),
+    // (she sails: her next morning's look asked for at once, as the island's build starts: aheadMorning)
+    onFly: () => { view.beginLandingShaders(true); if (sailLandsInBed(new URLSearchParams(location.search), N().tuning)) aheadMorning(true); },
+    // (the chart down at the water: no deadline for the island's shaders from here, Ed, 2026-11-03: "Don't limit the time, we have to
+    // wait for the island to be build anyway; zoom in over the map, switch to the island's sea, fly over the island, and show whatever
+    // is built, with mist over it if it's not built". The chart stays up, animated, till they're linked (app/chartView.ts hold); a
+    // 15 s grace from here used to cut them short, the dive skipped and the night drawn without what wasn't ready: his v7295 sail.)
+    onLandingDue: dueAt => performance.mark("chart:landing-due", { detail: { at: dueAt } }),
     ...(table ? { table: { onLeave: () => { chartAt = null; closeChart(); } } } : {}) });
 }
 /** The map table's chart (Ed, 2026-10-23: "Map menu slides in from the bottom when you go near it, like the clothes stations"; since

@@ -27,7 +27,7 @@ it("the dive lands on the game's own camera: its last frame and the game's first
   g.party.spellAt = null;
   expect(tuckIn(g)).toBe(true); // (main.ts bedFirst: in her bed before the dive)
   // (the view as the dive leaves it: in the house, she drawn far from her place in the rules, as in the capture: 78 m south)
-  const v = Object.assign(Object.create(View.prototype) as View, { game: g, fly: null, homeDone: true, limitedLandingReady: () => false, houseCam: { x: 0.4, y: -1.5, z: 78 }, herOffset: { on: true, x: 0, y: 0, z: 0 } });
+  const v = Object.assign(Object.create(View.prototype) as View, { game: g, fly: null as Shot | null, homeDone: true, limitedLandingReady: () => false, houseCam: { x: 0.4, y: -1.5, z: 78 }, herOffset: { on: true, x: 0, y: 0, z: 0 } });
   Object.defineProperty(v, "lookDrawn", { value: true });
   const f = new ArrivalFlight({ v: 1, island: "fox", world: 0, at: 0, still: "", cam: { x: 0, z: 700, height: 260, pitch: 0.45, fov: 40, speed: 60 } } as unknown as Arrival, TUNING.arrive!, null);
   f.begin(g, true);

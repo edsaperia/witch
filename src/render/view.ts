@@ -1032,7 +1032,8 @@ export class View {
    *  dive"; "the treehouse doesn't have to be ready at the start of the dive - only once it's in view"): metres from the dive's view
    *  (rules/arrive.ts diveReach): the area types drawn in that order, nearest first, under the loading mist; and the start waits only
    *  for the shaders (the hand-off's own ground is drawn by its first frames, main.ts warmAt): the house's art, the ground and the
-   *  forest round it are made on through the dive (`homeDone`; app/arrive.ts eases the dive if they're due in view before then). */
+   *  forest round it are made from the start, alongside them, and on through the dive if they're not done by its hand-off (`homeDone`;
+   *  app/arrive.ts eases the dive if they're due in view before then). */
   async prepare(o: { sail?: boolean; dive?: (x: number, z: number) => number; track?: [number, number, number, number][] } = {}): Promise<void> {
     performance.mark("witch:prep-start");
     if (o.sail) { this.homeDone = false; this.shaderDrawStatus.active = true; this.shaderDrawStatus.skipped = {}; this.shaderDrawStatus.fallback = {}; this.shaderDrawStatus.submitted = {}; if (!this.shaderChartLanding) this.startLandingShaderGrace(); }
@@ -1057,7 +1058,13 @@ export class View {
       this.homeDone = false;
       this.prepared = true;
       this.askIsland(near); // (the workers drawing the dive's areas while the shaders link)
-      await this.compileAll(o.sail);
+      // The house, the forest round it and the legends' carvings made from here on, while the shaders link and the chart flies on
+      // down to the water (Ed, 2026-11-03: "The zoom into the sea chart can be quite a few seconds long, the idea is to build the
+      // island during this time"): made only once the dive began, a slice a dive frame, they took 14.5 s of his laptop's dive for
+      // what the boot makes in 0.6 s, the dive flying over a forest not there. What's left as it hands over goes on through the dive.
+      const compiled = this.compileAll(o.sail), homeEpoch = this.shaderEpoch; // (compileAll's epoch: buildHome stops only for a newer night)
+      void this.buildHome(homeEpoch).catch(e => { console.error("the house's start after a sail went wrong", e); }).finally(() => { if (homeEpoch === this.shaderEpoch) { this.homeDone = true; performance.mark('landing:house-complete'); } });
+      await compiled;
       // The ground where the dive first sees the island (Ed, 2026-10-24: the dive's view needs the ground; Echo's island black through
       // the descent, its tiles not drawn yet): the first TRACK_AHEAD metres of its track in from the sea, TRACK_REACH each side, a few
       // tiles a frame under the chart; the rest of it as the dive goes, the view's own each frame (render/view/ahead.ts).
@@ -1067,8 +1074,6 @@ export class View {
         while (this.ground.fill(this.renderer, r, x0, z0, 6) > 0) await nextFrame();
       }
       performance.mark("witch:prep-track");
-      const homeEpoch = this.shaderEpoch;
-      void this.buildHome(homeEpoch).catch(e => { console.error("the house's start after a sail went wrong", e); }).finally(() => { if (homeEpoch === this.shaderEpoch) { this.homeDone = true; performance.mark('landing:house-complete'); } });
       return;
     }
     await runSliced(this.warmSteps(), "warm"); // (the first frame's own lazy work made ahead, a slice at a time)
