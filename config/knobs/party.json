@@ -1234,6 +1234,19 @@
     },
     "runeMarkers.stump.wisps.fill.height": {
       "what": "How high (m) over the stump the clearing's moonlight hangs."
+    },
+    "sfx.rattle": {
+      "what": "A refused take-off's chains rattling: a short metallic jangle, louder for more chains (platform/audio/chimes.ts rattle).",
+      "decisions": [
+        {
+          "by": "Ed",
+          "date": "2026-11-03",
+          "quote": "When you try and take off but you're weighed down by creatures, the chains rattle."
+        }
+      ],
+      "links": [
+        "platform/audio/chimes.ts"
+      ]
     }
   }
 }

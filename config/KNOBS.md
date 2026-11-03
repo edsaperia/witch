@@ -1673,26 +1673,11 @@ Code: `rules/win.ts`, `docs/backlog/journey.md`, `rules/guidance.ts`
   1. Ed, 2026-10-15: "Pick up and place in runs"
   with the sigil button held on since a press that picked a sigil up, she keeps picking up any sigil she runs over (her placed ones, happy creatures' runes, a relic's); held since a press that put one down, moving into each empty hex puts down the next (a press that did nothing starts no run, so holding E with nothing to do still puts her hat down). On the pad her hat is triangle's (placed or picked up), circle cycles the stack, L3 casts the broom's spell.
 - **`leash.runePull`**: on the ground, the nearest happy creature with its rune within radius (m) trots toward her at speed (m/s), stopping stop (m) from her, so its rune comes to her.
-- **`leash.grounded`**: Too many heavy creatures on her leash stop her taking off.
-  1. Ed, 2026-10-18: "One adult stops you taking off. Three young do." … "if creatures are light or heavy you can extrapolate" (the numbers indicative)
-  weight is the most the creatures following her may weigh, together, before she can't take off (their sigils in her stack, each at its leash.weight.levels weight times its species' strength, however near; parked ones at a sigil on the ground don't count, nor babies; 2 is one adult of normal strength, three young 2.4, two 1.6; 0 turns it off). Pressing rise she tries: she lifts a little and the leashes, taut and bright, pull her straight back down (drawn only: she never leaves the ground, so it's no dodge and spends no cooldown). Apart from the pull (weight below); once up she stays up, it only stops the next take-off.
-- **`leash.anchor`**: Each adult following her holds her within length metres of it on a chain, and while one follows her she can't take off.
+- **`leash.chain`**: Every creature on her leash is on a chain this long; taut and moving away, she drags it, slowed by the heaviest taut chain's drag by level (a legend's stops her).
   1. Ed, 2026-11-03: "adults are slow and heavy; you should be able to move within a reasonable distance from them (the size of a typical fight), but when the chain gets to its max length you can't move further until they move." … "fine to start with" (30 m to start; she can't take off while an adult is leashed (docs/plans/follower-buffs-and-challenge-areas.md))
-  only adults whose sigils are in her stack: parked ones (at a placed sigil), youths, babies and legends don't anchor her. At the chain's end her motion away from the adult is taken off and her motion round it kept; she's never pulled in, so if she's already further she just can't go further. The adult runs after her as any follower does, which frees her. 0 turns the chains and the no-take-off off (the weight rule, leash.grounded, still applies).
-  Code: `rules/anchor.ts`
-- **`leash.weight`**: How the creatures on her leash pull on her: slower moving away from them, slower to rise, and sinking in the treetops when heavily loaded.
-  1. Ed, 2026-10-06: "every sigil above your head pulls on you as well as attracting the animal; you find it slower to move in the opposite direction to where the leashes are, you are pulled off course, and rising to treetop is slower. And you're gradually pulled back down" (rules/leashWeight.ts)
-  2. Ed, 2026-10-10: free in the treetops for 8 babies, 3 youths or 1 adult, and on the ground 5 youths or 2 adults (baby 0.3, youth 0.8, from 0.5 and 1)
-  3. Ed, 2026-10-09: "extra free allowance on the ground should be the equivalent of one adult" (the first few sigils' worth, so early play feels the same; on the ground, plus one adult's weight, levels' adult)
-  sigil weight [1]: each sigil in her stack (placed ones weigh nothing) pulls her toward its creature by how taut its leash is (0 within 0.85 of length, up to maxTension a leash length further, however far: a far traveller can't pin her) times its weight (levels: baby, young, adult, legend; times its species' combat.json strength) [2]. Less free [3], that's her load (weight units, a young on a taut leash being 1).
-  Code: `rules/leashWeight.ts`
-- **`leash.weight.drag`**: moving away from the pull, that part of her speed is divided by 1 + drag x load (her input still steers).
-- **`leash.weight.drift`**: she drifts toward the pull at up to that share of her top speed, reached at an extreme load.
-- **`leash.weight.rise`**: rising takes 1 + rise x load times as long.
-- **`leash.weight.sink`**: Heavily loaded over the treetops she sinks toward the crowns, and lands if she stops.
-  over the treetops, loaded, she sinks by sink x load of the climb a second (at most sinkMax), to floor (of the climb, just over the crowns) while she flies on, and all the way down to land if she stops or her load reaches extreme; unloaded, she floats back up. The view reads leashLoad (rules/game.ts); the debug overlay shows it.
-  Code: `rules/game.ts`
-- **`leash.weight.babyGround`**: a baby's weight on the ground (the treetops' is weight.levels[0]), so 8 fill either allowance; a baby's species strength doesn't count, and in the line its leash's tension is measured from its place in the line.
+  2. Ed, 2026-11-03: "I don't think adults should be much faster; adult speed is a key balance factor. Instead, I agree that we should make chains longer and fixed length. Dragging youths slows you down a bit (e.g. 30%). Dragging adults slows you down a lot (e.g. 70%). Dragging legends slows you down completely (100%). Chains lie on the floor at full length so you can see how taut they are (though this might get messy-looking with many animals in a small space). Maybe they should all be the same length, about the size of a fight (80m?), so it mostly affects you when moving, not when fighting." … "They don't stack, you are just affected by the heaviest one." … "When you try and take off but you're weighed down by creatures, the chains rattle." … "I think leashed youths shouldn't stop you from taking off, only adults and legends do." … "A youth chain can make you rise more slowly, but effectively it's just a visual effect." (replaces the 30 m adult anchor; a chain fades in by how far along it the creature is (invisible close, opaque and glowing taut))
+  Only adults and legends stop her taking off. length (m, 80): every creature in her stack but babies (no chain) and a party legend (its own pin, legends.partyReach); a sleeping legend's sigil she carries tethers her at least this far (rules/sigilButton.ts). drag (youth 0.3, adult 0.7, legend 1): the share of her motion away a taut chain takes off; several taut: the heaviest; the creature is pulled after her at that pace, never faster than its top speed; her motion round it kept, never pulled in. She can't take off with an adult or legend on her leash; youths never stop her (rules/leashWeight.ts groundedBy). 0 length: no chains. Drawn: fadeFrom (0.3), the share of its length from which a chain shows, a smoothstep to whole at full length; glow (0.6), how much brighter it is taut; rattle: a refused take-off's jolt down the weighing chains, strength m at her end, for time s (and its sound, sfx.rattle). youthRise (0.85): with a youth on her leash her rise is drawn this much slower (drawn only: when she counts as up for the rules is unchanged).
+  Code: `rules/chains.ts`, `render/leash/chain.ts`, `render/leash/stack.ts`
 - **`leash.babies`**: Her leashed babies follow her in single file and scatter out of the way while she's in a fight.
   1. Ed, 2026-10-11: docs/backlog/gameplay.md
   2. Ed, 2026-10-26: "they should scatter further, e.g. outside of my camera view" (55, past the view's farthest edge at the usual ground zoom, its top 50 m from her; kept on the island's land, and pulling on her not at all while scattered)
@@ -1741,19 +1726,15 @@ Code: `rules/win.ts`, `docs/backlog/journey.md`, `rules/guidance.ts`
 | `leash.runePull.radius` | number | 0 to … |
 | `leash.runePull.speed` | number | 0 to … |
 | `leash.runePull.stop` | number | 0 to … |
-| `leash.grounded.weight` | number | 0 to … |
-| `leash.anchor.length` | number | 0 to … |
-| `leash.weight.free` | number | 0 to … |
-| `leash.weight.levels` | array of number |  |
-| `leash.weight.drag` | number | 0 to … |
-| `leash.weight.drift` | number | 0 to 1 |
-| `leash.weight.rise` | number | 0 to … |
-| `leash.weight.sink` | number | 0 to … |
-| `leash.weight.sinkMax` | number | 0 to … |
-| `leash.weight.floor` | number | 0 to 1 |
-| `leash.weight.extreme` | number | 0 to … |
-| `leash.weight.maxTension` | number | 0 to … |
-| `leash.weight.babyGround` | number | 0 to … |
+| `leash.chain.length` | number | 0 to … |
+| `leash.chain.drag.youth` | number | 0 to … |
+| `leash.chain.drag.adult` | number | 0 to … |
+| `leash.chain.drag.legend` | number | 0 to … |
+| `leash.chain.fadeFrom` | number | 0 to … |
+| `leash.chain.glow` | number | 0 to … |
+| `leash.chain.rattle.strength` | number | 0 to … |
+| `leash.chain.rattle.time` | number | 0 to … |
+| `leash.chain.youthRise` | number | 0 to … |
 | `leash.babies.gap` | number | 0 to … |
 | `leash.babies.scatter` | number | 0 to … |
 | `leash.babies.calm` | number | 0 to … |
@@ -1787,10 +1768,10 @@ Code: `rules/win.ts`, `docs/backlog/journey.md`, `rules/guidance.ts`
 | `leash.ranks.stones.ringTilt` | number | 0 to … |
 | `leash.ranks.chain.link` | array of number |  |
 | `leash.ranks.chain.tether` | number | 0 to … |
-| `leash.ranks.chain.slack` | number | 0 to … |
+| `leash.ranks.chain.segment` | number | 0 to … |
 | `leash.ranks.chain.damping` | number | 0 to … |
 | `leash.ranks.chain.gravity` | number | 0 to … |
-| `leash.ranks.chain.arcPull` | number | 0 to … |
+| `leash.ranks.chain.friction` | number | 0 to … |
 | `leash.ranks.chain.iterations` | number | 0 to … |
 | `leash.ranks.chain.jump` | number | 0 to … |
 | `leash.ranks.chain.fall` | number | 0 to … |
@@ -2917,6 +2898,9 @@ The sound effects, all synthesised in the music's key [1]: volume over the music
   1. Ed, 2026-10-07: "a sad trumpet sound"
   2. Ed, 2026-10-07: the teleport's midpoint, the knockout's cut; the hat's scene turns into her decks with a rewind
   knocked down, a muted trumpet's "wah-wah-wah-waaah" as her hat drops [1], the music dipped by duck under it; knocked down with no hat to drop, its shorter "wah-waaah" if bare is 1 (0: none); and as she's whisked to her decks [2] a backwards record scratch (rewind, times volume) cuts its last note off, never before that note has had cutAfter seconds.
+- **`sfx.rattle`**: A refused take-off's chains rattling: a short metallic jangle, louder for more chains (platform/audio/chimes.ts rattle).
+  1. Ed, 2026-11-03: "When you try and take off but you're weighed down by creatures, the chains rattle."
+  Code: `platform/audio/chimes.ts`
 
 | knob | type | range |
 |---|---|---|
@@ -3046,6 +3030,8 @@ The sound effects, all synthesised in the music's key [1]: volume over the music
 | `sfx.nope.gap` | number | 0 to … |
 | `sfx.thud.volume` | number | 0 to … |
 | `sfx.thud.gap` | number | 0 to … |
+| `sfx.rattle.volume` | number | 0 to … |
+| `sfx.rattle.gap` | number | 0 to … |
 | `sfx.alarm.volume` | number | 0 to … |
 | `sfx.alarm.gap` | number | 0 to … |
 | `sfx.refused.volume` | number | 0 to … |
@@ -3956,27 +3942,6 @@ In ground mode, where the crowns are hidden, each tree's trunk fades out over it
 | `trunkFade.lightFloor` | number | 0 to … |
 | `trunkFade.rim` | number | 0 to … |
 | `trunkFade.crownShare` | number | 0 to … |
-
-### `load`
-
-The weight of her leashed creatures made visible: her sigil stack sags and leans toward the pull, and she leans and her broom bows as she flies away from it.
-
-1. Ed, 2026-10-06: "We can make the mechanic obvious through the artwork." (render/load.ts)
-Sigil weight, made visible [1]: the load her carried leashes put on her (the rules' leashLoad, by tension and weight) shows from nothing (the rules' leashLoad: its over, the pull past leash.weight.free, so the first few sigils change nothing) to full weight units over: her sigil stack sags (its gaps closing by up to stackSag) and leans toward the pull (stackLean metres a sigil); carried leashes' threads show from threadFrom of the leash's length (0.85 unloaded), taut and brighter (threadBright); flying away from the pull she leans forward (witchLean metres per metre up), her broom tilts nose-up (broomTilt) and its shaft bows (broomBow art pixels), sparks splaying back from its bristles (sparks a second); over the treetops, sinking (her lift below 1 in treetop mode, the rules' leash.weight), sparks fall away below her.
-Code: `render/load.ts`
-
-| knob | type | range |
-|---|---|---|
-| `load.on` | boolean |  |
-| `load.full` | number | 0 to … |
-| `load.stackSag` | number | 0 to … |
-| `load.stackLean` | number | 0 to … |
-| `load.threadFrom` | number | 0 to … |
-| `load.threadBright` | number | 0 to … |
-| `load.witchLean` | number | 0 to … |
-| `load.broomTilt` | number | 0 to … |
-| `load.broomBow` | number | 0 to … |
-| `load.sparks` | number | 0 to … |
 
 ### `canopyCutout`
 

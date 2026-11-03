@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { barLevel, columnOf, stumpNoteSize } from "./stones";
 import renderKnobs from "../../../config/playtest-render.json";
-import { bowOf, layChain, LINK_ANGLES, linkAngle, stepChain, type Chain, type ChainMotion } from "./chain";
+import { CHAIN_FLOOR, layChain, LINK_ANGLES, linkAngle, rattleChain, stepChain, type Chain, type ChainMotion } from "./chain";
 import { CHAIN_DEFAULT } from "./ranks";
 
 describe("rune stones' sigils", () => {
@@ -25,41 +25,46 @@ describe("rune stones' sigils", () => {
   });
 });
 
-describe("chains", () => {
+describe("chains (lying on the ground at full length: the chain rework, Ed 2026-11-03)", () => {
   const M: ChainMotion = CHAIN_DEFAULT;
-  const run = (ch: Chain, n: number, a: number[], b: number[], h: number, s = 2) => { for (let f = 0; f < s * 60; f++) stepChain(ch, n, 1, a[0], a[1], a[2], b[0], b[1], b[2], h, 1 / 60, M); };
-  it("both ends pinned, its links their length, held up off the ground toward its bow, never under it", () => {
+  const run = (ch: Chain, n: number, seg: number, a: number[], b: number[], s = 2) => { for (let f = 0; f < s * 60; f++) stepChain(ch, n, seg, a[0], a[1], a[2], b[0], b[1], b[2], 1 / 60, M); };
+  const len = (ch: Chain) => ch.links.reduce((l, p, i) => i ? l + Math.hypot(p.x - ch.links[i - 1].x, p.y - ch.links[i - 1].y, p.z - ch.links[i - 1].z) : 0, 0);
+  it("no arc spring: a slack chain lies on the ground its full length, both ends pinned, never under it", () => {
+    expect("arcPull" in M).toBe(false);
     const ch: Chain = { links: [] };
-    run(ch, 14, [0, 3, 0], [12, 0.5, 0], 1.5);
+    run(ch, 40, 2, [0, 3, 0], [20, 0.5, 0]);
     const P = ch.links;
     expect([P[0].x, P[0].y, P[0].z]).toEqual([0, 3, 0]);
-    expect([P[14].x, P[14].y, P[14].z]).toEqual([12, 0.5, 0]);
-    for (let i = 0; i < 14; i++) expect(Math.hypot(P[i + 1].x - P[i].x, P[i + 1].y - P[i].y, P[i + 1].z - P[i].z)).toBeCloseTo(1, 1);
-    expect(Math.min(...P.map(p => p.y))).toBeGreaterThanOrEqual(0.15);
-    expect(P[7].y).toBeGreaterThan(1.2); // (up off the ground in the middle, as the bow)
+    expect([P[40].x, P[40].y, P[40].z]).toEqual([20, 0.5, 0]);
+    expect(len(ch)).toBeGreaterThan(80 * 0.88); // (its whole length, in curves: 80 m over a 20 m span)
+    expect(Math.min(...P.map(p => p.y))).toBeGreaterThanOrEqual(CHAIN_FLOOR);
+    const lying = P.slice(3, -3).filter(p => p.y <= CHAIN_FLOOR + 0.05).length;
+    expect(lying).toBeGreaterThanOrEqual(P.length - 8); // (all but near the pins down on the floor: nothing holds it up)
     for (const p of P) expect(Number.isFinite(p.x + p.y + p.z)).toBe(true);
   });
-  it("gains and loses links at the creature's end; laid afresh on a jump; settles (no runaway)", () => {
+  it("pulled taut (its ends as far apart as it's long), it runs straight", () => {
     const ch: Chain = { links: [] };
-    run(ch, 10, [0, 3, 0], [9, 0.5, 0], 1);
-    const near = { ...ch.links[1] };
-    run(ch, 14, [0, 3, 0], [13, 0.5, 0], 1, 0.05);
-    expect(ch.links.length).toBe(15);
-    expect(ch.links[1].x).toBeCloseTo(near.x, 0); // (her end's links stay where they were)
-    run(ch, 6, [0, 3, 0], [5, 0.5, 0], 1, 0.05);
-    expect(ch.links.length).toBe(7);
-    stepChain(ch, 6, 1, 40, 3, 0, 45, 0.5, 0, 1, 1 / 60, M); // (a blink: 40 m)
-    expect(ch.links[3].x).toBeGreaterThan(40);
-    run(ch, 6, [40, 3, 0], [45, 0.5, 0], 1, 3);
+    run(ch, 40, 2, [0, 0.5, 0], [80, 0.5, 0], 3);
+    for (const p of ch.links) expect(Math.abs(p.z)).toBeLessThan(0.5);
+  });
+  it("dragged, it stays where it was dragged (friction on the ground), and settles; laid afresh on a jump", () => {
+    const ch: Chain = { links: [] };
+    run(ch, 20, 2, [0, 3, 0], [10, 0.5, 0]);
+    const mid = { ...ch.links[10] };
+    run(ch, 20, 2, [0.5, 3, 0], [10, 0.5, 0], 1); // (her end a little on: the chain on the ground mostly stays)
+    expect(Math.hypot(ch.links[10].x - mid.x, ch.links[10].z - mid.z)).toBeLessThan(1);
     const v = Math.max(...ch.links.map(p => Math.hypot(p.x - p.px, p.y - p.py, p.z - p.pz)));
     expect(v).toBeLessThan(0.01);
+    stepChain(ch, 20, 2, 60, 3, 0, 65, 0.5, 0, 1 / 60, M); // (a blink: 60 m)
+    expect(ch.links[3].x).toBeGreaterThan(55);
   });
-  it("a tether's held length bows up as she comes closer", () => {
-    expect(bowOf(20, 20, 0)).toBe(0);
-    expect(bowOf(10, 20, 0)).toBeGreaterThan(4);
+  it("a rattle jolts it from her end, less down its length", () => {
     const ch: Chain = { links: [] };
-    layChain(ch, 16, 0, 2, 0, 10, 0.5, 0, bowOf(10, 16 * 1.3, 0.3));
-    expect(Math.max(...ch.links.map(l => l.y))).toBeGreaterThan(3);
+    layChain(ch, 20, 2, 0, 3, 0, 10, 0.5, 0);
+    rattleChain(ch, 1, 7);
+    const kick = (i: number) => Math.hypot(ch.links[i].x - ch.links[i].px, ch.links[i].y - ch.links[i].py, ch.links[i].z - ch.links[i].pz);
+    expect(kick(1)).toBeGreaterThan(0.3);
+    expect(kick(18)).toBeLessThan(kick(1) * 0.1);
   });
 });
 

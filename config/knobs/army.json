@@ -408,23 +408,8 @@
     "leash.runePull": {
       "what": "on the ground, the nearest happy creature with its rune within radius (m) trots toward her at speed (m/s), stopping stop (m) from her, so its rune comes to her."
     },
-    "leash.grounded": {
-      "what": "Too many heavy creatures on her leash stop her taking off.",
-      "decisions": [
-        {
-          "by": "Ed",
-          "date": "2026-10-18",
-          "quote": [
-            "One adult stops you taking off. Three young do.",
-            "if creatures are light or heavy you can extrapolate"
-          ],
-          "rest": "the numbers indicative"
-        }
-      ],
-      "notes": "weight is the most the creatures following her may weigh, together, before she can't take off (their sigils in her stack, each at its leash.weight.levels weight times its species' strength, however near; parked ones at a sigil on the ground don't count, nor babies; 2 is one adult of normal strength, three young 2.4, two 1.6; 0 turns it off). Pressing rise she tries: she lifts a little and the leashes, taut and bright, pull her straight back down (drawn only: she never leaves the ground, so it's no dodge and spends no cooldown). Apart from the pull (weight below); once up she stays up, it only stops the next take-off."
-    },
-    "leash.anchor": {
-      "what": "Each adult following her holds her within length metres of it on a chain, and while one follows her she can't take off.",
+    "leash.chain": {
+      "what": "Every creature on her leash is on a chain this long; taut and moving away, she drags it, slowed by the heaviest taut chain's drag by level (a legend's stops her).",
       "decisions": [
         {
           "by": "Ed",
@@ -434,57 +419,26 @@
             "fine to start with"
           ],
           "rest": "30 m to start; she can't take off while an adult is leashed (docs/plans/follower-buffs-and-challenge-areas.md)"
-        }
-      ],
-      "links": [
-        "rules/anchor.ts"
-      ],
-      "notes": "only adults whose sigils are in her stack: parked ones (at a placed sigil), youths, babies and legends don't anchor her. At the chain's end her motion away from the adult is taken off and her motion round it kept; she's never pulled in, so if she's already further she just can't go further. The adult runs after her as any follower does, which frees her. 0 turns the chains and the no-take-off off (the weight rule, leash.grounded, still applies)."
-    },
-    "leash.weight": {
-      "what": "How the creatures on her leash pull on her: slower moving away from them, slower to rise, and sinking in the treetops when heavily loaded.",
-      "decisions": [
-        {
-          "by": "Ed",
-          "date": "2026-10-06",
-          "quote": "every sigil above your head pulls on you as well as attracting the animal; you find it slower to move in the opposite direction to where the leashes are, you are pulled off course, and rising to treetop is slower. And you're gradually pulled back down",
-          "rest": "rules/leashWeight.ts"
         },
         {
           "by": "Ed",
-          "date": "2026-10-10",
-          "rest": "free in the treetops for 8 babies, 3 youths or 1 adult, and on the ground 5 youths or 2 adults (baby 0.3, youth 0.8, from 0.5 and 1)"
-        },
-        {
-          "by": "Ed",
-          "date": "2026-10-09",
-          "quote": "extra free allowance on the ground should be the equivalent of one adult",
-          "rest": "the first few sigils' worth, so early play feels the same; on the ground, plus one adult's weight, levels' adult"
+          "date": "2026-11-03",
+          "quote": [
+            "I don't think adults should be much faster; adult speed is a key balance factor. Instead, I agree that we should make chains longer and fixed length. Dragging youths slows you down a bit (e.g. 30%). Dragging adults slows you down a lot (e.g. 70%). Dragging legends slows you down completely (100%). Chains lie on the floor at full length so you can see how taut they are (though this might get messy-looking with many animals in a small space). Maybe they should all be the same length, about the size of a fight (80m?), so it mostly affects you when moving, not when fighting.",
+            "They don't stack, you are just affected by the heaviest one.",
+            "When you try and take off but you're weighed down by creatures, the chains rattle.",
+            "I think leashed youths shouldn't stop you from taking off, only adults and legends do.",
+            "A youth chain can make you rise more slowly, but effectively it's just a visual effect."
+          ],
+          "rest": "replaces the 30 m adult anchor; a chain fades in by how far along it the creature is (invisible close, opaque and glowing taut)"
         }
       ],
       "links": [
-        "rules/leashWeight.ts"
+        "rules/chains.ts",
+        "render/leash/chain.ts",
+        "render/leash/stack.ts"
       ],
-      "notes": "sigil weight [1]: each sigil in her stack (placed ones weigh nothing) pulls her toward its creature by how taut its leash is (0 within 0.85 of length, up to maxTension a leash length further, however far: a far traveller can't pin her) times its weight (levels: baby, young, adult, legend; times its species' combat.json strength) [2]. Less free [3], that's her load (weight units, a young on a taut leash being 1)."
-    },
-    "leash.weight.drag": {
-      "what": "moving away from the pull, that part of her speed is divided by 1 + drag x load (her input still steers)."
-    },
-    "leash.weight.drift": {
-      "what": "she drifts toward the pull at up to that share of her top speed, reached at an extreme load."
-    },
-    "leash.weight.rise": {
-      "what": "rising takes 1 + rise x load times as long."
-    },
-    "leash.weight.sink": {
-      "what": "Heavily loaded over the treetops she sinks toward the crowns, and lands if she stops.",
-      "links": [
-        "rules/game.ts"
-      ],
-      "notes": "over the treetops, loaded, she sinks by sink x load of the climb a second (at most sinkMax), to floor (of the climb, just over the crowns) while she flies on, and all the way down to land if she stops or her load reaches extreme; unloaded, she floats back up. The view reads leashLoad (rules/game.ts); the debug overlay shows it."
-    },
-    "leash.weight.babyGround": {
-      "what": "a baby's weight on the ground (the treetops' is weight.levels[0]), so 8 fill either allowance; a baby's species strength doesn't count, and in the line its leash's tension is measured from its place in the line."
+      "notes": "Only adults and legends stop her taking off. length (m, 80): every creature in her stack but babies (no chain) and a party legend (its own pin, legends.partyReach); a sleeping legend's sigil she carries tethers her at least this far (rules/sigilButton.ts). drag (youth 0.3, adult 0.7, legend 1): the share of her motion away a taut chain takes off; several taut: the heaviest; the creature is pulled after her at that pace, never faster than its top speed; her motion round it kept, never pulled in. She can't take off with an adult or legend on her leash; youths never stop her (rules/leashWeight.ts groundedBy). 0 length: no chains. Drawn: fadeFrom (0.3), the share of its length from which a chain shows, a smoothstep to whole at full length; glow (0.6), how much brighter it is taut; rattle: a refused take-off's jolt down the weighing chains, strength m at her end, for time s (and its sound, sfx.rattle). youthRise (0.85): with a youth on her leash her rise is drawn this much slower (drawn only: when she counts as up for the rules is unchanged)."
     },
     "leash.babies": {
       "what": "Her leashed babies follow her in single file and scatter out of the way while she's in a fight.",
