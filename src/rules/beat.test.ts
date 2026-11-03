@@ -1,8 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { beatAt, beatTime, blockLineAfter, bpmAt, newBeatClock, rampTo, recordTempo, shiftBeat, targetTempo, timeAt, waveArrived, waveTempo } from "./beat";
-import { TUNING, type Tuning } from "./tuning";
-
-const tuning = (tempos: number[]): Tuning => ({ ...TUNING, beat: { bpm: 120, tempos, blockBars: 4, rampBars: 8 } });
+import { beatAt, beatTime, bpmAt, knockdownTempo, newBeatClock, rampTo, recordTempo, shiftBeat, targetTempo, timeAt } from "./beat";
 
 describe("beat clock", () => {
   it("runs at its tempo, and turns beats back into times", () => {
@@ -44,24 +41,6 @@ describe("beat clock", () => {
     expect(bpmAt(c, timeAt(c, 48) + 1)).toBeCloseTo(100);
   });
 
-  it("brings each wave's tempo in from the block line its music lands on, over rampBars", () => {
-    const t = tuning([120, 125, 130]), c = newBeatClock(120);
-    waveArrived(c, t, 1, 100.3); // beat 200.6: the next 4-bar line is beat 208
-    expect(blockLineAfter(200.6, 4)).toBe(208);
-    expect(bpmAt(c, timeAt(c, 207.9))).toBeCloseTo(120);
-    expect(bpmAt(c, timeAt(c, 208 + 32) + 0.01)).toBeCloseTo(125);
-    waveArrived(c, t, 1, 120); // the same wave: nothing changes
-    expect(c.segs.length).toBe(2);
-    waveArrived(c, t, 7, 200); // past the arc's end: its last tempo
-    expect(bpmAt(c, 400)).toBeCloseTo(130);
-    expect(waveTempo(TUNING, 5)).toBe(TUNING.beat.bpm);
-  });
-
-  it("lands a wave a moment after a line on that line, like the music", () => {
-    expect(blockLineAfter(208.5, 4)).toBe(208);
-    expect(blockLineAfter(209.5, 4)).toBe(224);
-  });
-
   it("moves on by a stall's lost time: from then the beat is the music's, before it as it was, mid-ramp or not", () => {
     for (const [time, lost] of [[10, 1.5], [33, 1.5], [31, 3], [40, 0.4]] as const) {
       const c = newBeatClock(120);
@@ -85,21 +64,28 @@ describe("beat clock", () => {
 });
 
 
-describe("her record's tempo (Ed, 2026-10-29: the DJ booth's records, rules/records.ts)", () => {
-  const t = { beat: { bpm: 120, tempos: [120, 124, 130, 140], rampBars: 8, blockBars: 4 } };
-  it("sets the tempo to the record's at once and shifts the whole arc by the difference, beat-time's base unchanged", () => {
-    const c = newBeatClock(120, waveTempo(t, 0));
+describe("her record's tempo (Ed, 2026-10-29: the DJ booth's records, rules/records.ts), the night's tempo (Ed, 2026-11-03)", () => {
+  const t = { beat: { bpm: 120 }, knockout: { bpmStep: 5 } };
+  it("sets the tempo to the record's at once, for the whole night, beat-time's base unchanged", () => {
+    const c = newBeatClock(120);
     recordTempo(c, t, 100, 5);
-    expect(bpmAt(c, 5)).toBe(100); expect(bpmAt(c, 50)).toBe(100);
+    expect(bpmAt(c, 5)).toBe(100); expect(bpmAt(c, 50)).toBe(100); expect(bpmAt(c, 5000)).toBe(100);
     expect(c.base).toBe(120);
     expect(targetTempo(c, t)).toBe(100);
-    waveArrived(c, t, 2, 60);
-    expect(targetTempo(c, t)).toBe(110); // (wave 2's 130, 20 lower)
-    expect(bpmAt(c, 400)).toBeCloseTo(110, 6);
   });
-  it("at 120 (the arc's own start) changes nothing", () => {
-    const a = newBeatClock(120, waveTempo(t, 0)), b = newBeatClock(120, waveTempo(t, 0));
+  it("at 120 (the night's own) changes nothing", () => {
+    const a = newBeatClock(120), b = newBeatClock(120);
     recordTempo(b, t, 120, 3);
     for (const time of [0, 3, 10, 100]) expect(beatAt(b, time)).toBeCloseTo(beatAt(a, time), 9);
+  });
+  it("a knockdown raises it from the record's, eased in over knockBeats, and it holds there", () => {
+    const c = newBeatClock(120);
+    recordTempo(c, t, 140, 0);
+    expect(knockdownTempo(c, t, 30)).toBe(5);
+    expect(c.bonusAt).toBe(72); // (beat 70 at 30 s: the next bar line)
+    expect(bpmAt(c, timeAt(c, 72) - 0.01)).toBeCloseTo(140, 6);
+    expect(bpmAt(c, timeAt(c, 76) + 0.01)).toBeCloseTo(145, 6);
+    expect(bpmAt(c, 5000)).toBeCloseTo(145, 6);
+    expect(targetTempo(c, t)).toBe(145);
   });
 });

@@ -2488,7 +2488,9 @@ Code: `src/rules/stoneStacks.ts`
 
 The party's tempo in beats per minute, which the lasers sweep to and party animals dance to.
 
-The music's clock (beats per minute): the lasers sweep to it and party animals dance to it. Later the music itself drives it.
+1. Ed, 2026-11-03: "the tempo (pulse speed) should stay the same through the night, and only raises when you get knocked down" (supersedes Ed, 2026-10-04: the tempo rising from 120 to about 140 bpm over the waves)
+The music's clock (beats per minute): the lasers sweep to it and party animals dance to it. bpm is the night's tempo, the same every wave (the music style's; her record at the decks moves it to the record's): the waves change the music's style, never its tempo. Only her knockdowns raise it (knockout.bpmStep each), eased in over knockBeats beats from the next bar line so the beat never skips. The per-wave tempo (tempos, rampBars, blockBars) is gone.
+Code: `src/rules/beat.ts`
 
 | knob | type | range |
 |---|---|---|
@@ -2515,7 +2517,7 @@ Code: `config/decisions/953-waves.json`, `app/settings.ts`
 - **`leyLines.pulseAt100`**: the spark's speed in metres a second at 100 bpm: a straight line runs through it and pulseAt200, so with 1 and 5 it is 1.8 m/s at 120, 3 at 150 and 5 at 200, carried on the same way below 100 and above 200, never under 0.2.
   1. Ed, 2026-11-03: "I think a smooth increase from 100 bpm 1.0 m/s to 200 bpm 5.0 m/s"
   2. Ed, 2026-11-03: "I think it should be linear"
-  speed = pulseAt100 + (pulseAt200 − pulseAt100) × (bpm − 100) ÷ 100, at least 0.2 m/s (rules/beat.ts SPARK_FLOOR), bpm the party's tempo as the spark reads it (the wave's own, her record's shift and her knockdowns' bonus); times pulseSpeed (rules/beat.ts sparkSpeedAt, tempoRate). It replaces the tempo's ratio to the wave's own.
+  speed = pulseAt100 + (pulseAt200 − pulseAt100) × (bpm − 100) ÷ 100, at least 0.2 m/s (rules/beat.ts SPARK_FLOOR), bpm the party's tempo as the spark reads it (the night's own, her record's, plus her knockdowns' bonus: the same every wave, Ed 2026-11-03); times pulseSpeed (rules/beat.ts sparkSpeedAt, tempoRate). It replaces the tempo's ratio to the wave's own.
 - **`leyLines.pulseAt200`**: the spark's speed in metres a second at 200 bpm, the line's other anchor (see pulseAt100).
 - **`leyLines.reveal`**: How fast the ley line grows out from the treehouse ahead of the waves, so no stone pops on at once.
   1. Ed, 2026-10-06: "The pulse starts from the treehouse at the start of the first wave. before that, during boot up phase, there's no leyline ... Then the leyline appears, starting at the treehouse, moving three times (adjustable) the speed on the pulse (so it reaches runestone 3 by the time the first wave finishes)"

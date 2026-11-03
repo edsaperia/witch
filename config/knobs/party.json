@@ -4,7 +4,18 @@
   "knobs": {
     "beat": {
       "what": "The party's tempo in beats per minute, which the lasers sweep to and party animals dance to.",
-      "notes": "The music's clock (beats per minute): the lasers sweep to it and party animals dance to it. Later the music itself drives it."
+      "decisions": [
+        {
+          "by": "Ed",
+          "date": "2026-11-03",
+          "quote": "the tempo (pulse speed) should stay the same through the night, and only raises when you get knocked down",
+          "rest": "supersedes Ed, 2026-10-04: the tempo rising from 120 to about 140 bpm over the waves"
+        }
+      ],
+      "notes": "The music's clock (beats per minute): the lasers sweep to it and party animals dance to it. bpm is the night's tempo, the same every wave (the music style's; her record at the decks moves it to the record's): the waves change the music's style, never its tempo. Only her knockdowns raise it (knockout.bpmStep each), eased in over knockBeats beats from the next bar line so the beat never skips. The per-wave tempo (tempos, rampBars, blockBars) is gone.",
+      "links": [
+        "src/rules/beat.ts"
+      ]
     },
     "cast": {
       "what": "The runestone stacks and the soundsystem spell: she converts a stone by holding the sigil button at it.",
@@ -111,7 +122,7 @@
           "quote": "I think it should be linear"
         }
       ],
-      "notes": "speed = pulseAt100 + (pulseAt200 − pulseAt100) × (bpm − 100) ÷ 100, at least 0.2 m/s (rules/beat.ts SPARK_FLOOR), bpm the party's tempo as the spark reads it (the wave's own, her record's shift and her knockdowns' bonus); times pulseSpeed (rules/beat.ts sparkSpeedAt, tempoRate). It replaces the tempo's ratio to the wave's own."
+      "notes": "speed = pulseAt100 + (pulseAt200 − pulseAt100) × (bpm − 100) ÷ 100, at least 0.2 m/s (rules/beat.ts SPARK_FLOOR), bpm the party's tempo as the spark reads it (the night's own, her record's, plus her knockdowns' bonus: the same every wave, Ed 2026-11-03); times pulseSpeed (rules/beat.ts sparkSpeedAt, tempoRate). It replaces the tempo's ratio to the wave's own."
     },
     "leyLines.pulseAt200": {
       "what": "the spark's speed in metres a second at 200 bpm, the line's other anchor (see pulseAt100)."
