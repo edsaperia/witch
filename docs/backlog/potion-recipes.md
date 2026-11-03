@@ -40,7 +40,7 @@ All potions last ten minutes of game time, start at full strength on waking, and
 | 1 | blue + blue + blue | Bullet Time | Coming soon | The world slows to a crawl while she keeps her speed. Only she and nearby threats retain their colour. |
 | 2 | blue + blue + purple | Moon Boots | Coming soon | Taking off becomes a huge bouncing leap with no steering in the air. |
 | 3 | blue + blue + pink | Echo | Coming soon | Neon copies trail behind her, echoing her movements and invitations. |
-| 4 | blue + blue + red | The Fear | Coming soon | Shadows become creatures, phantom footsteps surround her, and familiar animals loom twice their size. |
+| 4 | blue + blue + red | The Fear | Coming soon | Shadows stalk and startle her but cannot hurt her. She hears phantom footsteps, and familiar animals loom twice their size. |
 | 5 | blue + blue + orange | Alone | Coming soon | She wanders a private, harmless copy of the island alone. Her body lies on the grass in the shared world until she wakes there. |
 | 6 | blue + blue + yellow | Walking Wood | Coming soon | The trees move around as if they can walk. |
 | 7 | blue + blue + green | Floor Becomes Sky | Implemented | Ground and small foliage disappear into the starfield, while the ground's bend still hides objects beyond the horizon. |
@@ -67,7 +67,7 @@ All potions last ten minutes of game time, start at full strength on waking, and
 | 28 | blue + red + green | Left Hook | Coming soon | Unlimited dodges, but they always veer left. |
 | 29 | blue + red + turquoise | Stiltwalkers | Implemented | Familiar animal bodies stand high on impossibly long legs, tapering from normal hips to tiny feet. |
 | 30 | blue + red + white | Thick Canopy | Implemented | The canopy closes over her; every colour grows vivid and the lighting gains deep contrast. |
-| 31 | blue + orange + orange | The Whole Route | Coming soon | The entire route across the island shines into view. |
+| 31 | blue + orange + orange | The Whole Route | Coming soon | Her own connected sigil routes shine across the island, visible from end to end. |
 | 32 | blue + orange + yellow | Dreamseer | Coming soon | The area a legend's dream points to is easier to see. |
 | 33 | blue + orange + green | Paper Theatre | Coming soon | Everything becomes flat, wobbling cardboard cutouts. |
 | 34 | blue + orange + turquoise | Woodcut | Coming soon | Black-and-white engraving, crosshatched shadows. |

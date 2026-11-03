@@ -399,3 +399,5 @@ Current pixelation has two layers: low-resolution generated sprite artwork with 
 - **The build-cost sort is accepted as it stands** (Ed, 2026-10-11).
 
 Ed, 3 November 2026. Alone: the drinker explores a private, harmless copy; friends keep playing and see her body lying on the grass. She wakes in that spot. Earsight: each sound launches a ripple that briefly reveals nearby ground, trees and animals.
+
+Ed, 3 November 2026. Defer both Bullet Time (#1) and Superhot (#12); revisit shared time only when Ed brings them back. The Whole Route (#31) illuminates her own connected sigil routes end to end. The Fear (#4) creates stalking, startling apparitions that cannot damage her.

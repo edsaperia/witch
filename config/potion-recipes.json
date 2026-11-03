@@ -47,7 +47,7 @@
     ],
     "effect": "the-fear",
     "name": "The Fear",
-    "description": "Shadows become creatures, phantom footsteps surround her, and familiar animals loom twice their size.",
+    "description": "Shadows stalk and startle her but cannot hurt her. She hears phantom footsteps, and familiar animals loom twice their size.",
     "comingSoon": true,
     "id": 4
   },
@@ -398,7 +398,7 @@
     ],
     "effect": "the-whole-route",
     "name": "The Whole Route",
-    "description": "The entire route across the island shines into view.",
+    "description": "Her own connected sigil routes shine across the island, visible from end to end.",
     "comingSoon": true,
     "id": 31
   },
