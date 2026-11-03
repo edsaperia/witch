@@ -36,7 +36,8 @@ export const ownedToChoose = (owned: ReadonlySet<string>, on = unlockAll()): Set
 /** The broom parts the Workshop offers: hers tonight, or with the switch on every part. */
 export const partsToChoose = (found: ReadonlySet<string>, on = unlockAll()): Set<string> => on ? new Set([...found, ...PART_IDS]) : new Set(found);
 
-/** Refresh the actual hats, not just the creator's choices (Ed, 2026-10-30: all hats spawn in the Cloakroom).
+/** Refresh the actual hats, not just the creator's choices (Ed, 2026-10-30: all hats spawn in the Cloakroom; in Ed's arrangement,
+ * which has no Cloakroom hats area since Ed, 2026-11-02, on the hat spawn points: addFloorHat).
  * Headless callers may omit params; no storage is written. Off restores the save or this load's ?hats= override. */
 export function syncHatUnlock(W: Witch, on: boolean, params = new URLSearchParams()): void {
   const owned = hatsFrom(params, params.get("hat") ?? "none");
