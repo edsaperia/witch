@@ -1,6 +1,7 @@
 // The tuning file, config/tuning.json, typed. Ed edits the JSON; nothing here holds a number.
 import raw from "../../config/tuning.json";
 import type { MushroomLight } from "./mushroomLight";
+import type { PartyStartTuning } from "./partyStart";
 import type { SchemaTuning } from "./tuning.generated";
 import type { ByRoute } from "./growth";
 import type { TreehouseLook } from "./treehouseLook";
@@ -97,6 +98,8 @@ export interface RevealKind { on: boolean; radius: number; ring?: number; width?
 export interface Tuning {
   /** Live mushroom lighting experiments; canonical values in tuning.json. */
   mushroomLight?: MushroomLight;
+  /** The party start's look, each piece on its own knobs (rules/partyStart.ts, render/partyStart.ts; Ed, 2026-11-03). */
+  partyStart?: PartyStartTuning;
   /** Per-load spacing=1 experiment; absent uses packs.json spacing.on (default false). Never remembered. */
   combatSpacing?: boolean;
   /** Will-o'-the-wisps in the wild areas (render/wisps.ts, Ed 2026-10-07); off (or absent) for none. */
@@ -514,6 +517,12 @@ export interface Tuning {
     /** Anchor chains (Ed, 2026-11-03; rules/anchor.ts): each adult following her (its sigil in her stack) holds her within length m of it, and while one does she can't take off; 0 turns both off. */
     anchor?: { length: number };
     weight: { /** a baby's weight on the ground (the treetops': levels[0]) */ babyGround?: number; free: number; levels: number[]; drag: number; drift: number; rise: number; sink: number; sinkMax: number; floor: number; extreme: number; maxTension: number } };
+  /** Follower buffs (Ed, 2026-11-03; rules/buffs.ts): groups, the kinds' retreats in each group (art/creatures/<id>/creature.js
+   *  `retreat`); legend, the stacks a leashed legend gives; pips, an adult's berry pips (max, life s each, warn s before one fades
+   *  it twinkles, start: pips a new adult has before it's eaten, 1); and each group's magnitudes, a stack: climbers.dash charges,
+   *  darters.speed (her speed times 1 + it), stalkers.speed and .range (her 💌s', times 1 + each), heavies.shots (ways more round
+   *  her, each that much faster), packHunters.rate (fire rate times 1 + it) and .spread (degrees more), shells.chain (hops more). */
+  buffs?: { groups: Record<import("./buffs").BuffGroup, string[]>; legend: number; pips: { max: number; life: number; warn: number; start: number }; climbers: { dash: number }; darters: { speed: number }; stalkers: { speed: number; range: number }; heavies: { shots: number }; packHunters: { rate: number; spread: number }; shells: { chain: number } };
   bond: { rim: boolean; sparks: boolean; thread: boolean; sparkEvery: number; /** The thread's upward bow: metres per metre of length, from threadArcSlack when slack to threadArcTaut at full strain, up to threadArcMax. */ threadArcSlack: number; threadArcTaut: number; threadArcMax: number };
   tone: { black: number; gamma: number; ambient: number; moon: number };
   bloom: { on: boolean; strength: number; threshold: number };

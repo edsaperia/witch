@@ -43,7 +43,7 @@ export class MagicFx {
   private selected:Light[]=[];
   private owner:object|null=null;
   private time=0;private dt=0;private cx=0;private cz=0;
-  private screenAt=-Infinity;private screenStrength=0;
+  private screenAt=-Infinity;private screenStrength=0;private screenSeconds:number=layerPolicy.screen.seconds;private screenCap:number=layerPolicy.screen.shakeCap;
   constructor(scene:THREE.Scene){this.batches=new FxBatches(scene);}
   begin(time:number,x:number,z:number,owner:object):void {
     time=this.captureTime??time;
@@ -57,11 +57,25 @@ export class MagicFx {
     FX_UNIFORMS.uFxTime.value=time;FX_UNIFORMS.uFxCalm.value=comfort.reduceFlashing?1:0;
     this.stats.instances=0;
   }
-  reset():void {this.field.reset();this.lights.clear();this.bursts.length=0;this.screenAt=-Infinity;this.screenStrength=0;}
+  reset():void {this.field.reset();this.lights.clear();this.bursts.length=0;this.screen();this.screenAt=-Infinity;this.screenStrength=0;}
   get screenKick():number {
     if(!this.enabled||comfort.reduceFlashing)return 0;
-    const phase=Math.max(0,(this.time-this.screenAt)/layerPolicy.screen.seconds);
-    return phase>=1?0:Math.min(layerPolicy.screen.shakeCap,this.screenStrength)*(1-phase)**2;
+    const phase=Math.max(0,(this.time-this.screenAt)/this.screenSeconds);
+    return phase>=1?0:Math.min(this.screenCap,this.screenStrength)*(1-phase)**2;
+  }
+  /** The screen's response from now: the policy's (config/fx/layers.json screen) unless given. */
+  private screen(strength=layerPolicy.screen.shakeCap,seconds=layerPolicy.screen.seconds,cap=layerPolicy.screen.shakeCap):void {this.screenAt=this.time;this.screenStrength=strength;this.screenSeconds=Math.max(0.01,seconds);this.screenCap=cap;}
+  /** A shake of its own (the party start's, render/partyStart.ts: its knobs): `amount` (at most 0.5) dying away over `seconds`.
+   *  Never with Reduce flashing (screenKick). */
+  kick(amount:number,seconds:number):void {this.screen(Math.max(0,amount),seconds,0.5);}
+  /** A light of its own this frame (the party start's), by id, eased in and out as every effect's: `rgb` 0 to 1, `reach` metres,
+   *  `strength` at its brightest. Asked for each frame it's on. */
+  lamp(id:string,x:number,y:number,z:number,rgb:readonly number[],reach:number,strength:number):void {
+    if(!this.enabled||!(strength>0.001)||!(reach>0))return;
+    let light=this.lights.get(id);
+    if(!light){if(this.lights.size>=settings.pool)return;light={x,y,z,reach:0,rgb:new THREE.Vector3(),strength:0,target:0,seen:this.time,score:0,fade:0};this.lights.set(id,light);}
+    light.x=x;light.y=y;light.z=z;light.reach=reach;light.rgb.set(rgb[0],rgb[1],rgb[2]);
+    light.target=strength*(comfort.reduceFlashing?0.5:1);light.seen=this.time;
   }
   /** glow: its halo, ground anchor and light times their own (1 but for the creatures' attacks: attackFx.visibility.bloom). */
   draw(element:string,form:FxForm,x:number,y:number,z:number,level:number,size=1,alpha=1,phase=0,seed=0,tint:readonly number[]|null=null,intensity=intensityOf(level),glow=1):void {
@@ -69,7 +83,7 @@ export class MagicFx {
     const key=fxElement(element),el=elements[key],f=forms[form];
     const pixel=this.batches.mpp.value;
     const diameter=Math.max(pixel,Math.round(f.size*size*mixIntensity(settings.size,intensity)/pixel)*pixel);
-    if(intensity>=layerPolicy.screen.minimumIntensity&&(form==="burst"||form==="eruption")&&phase<0.15){this.screenAt=this.time;this.screenStrength=layerPolicy.screen.shakeCap*alpha;}
+    if(intensity>=layerPolicy.screen.minimumIntensity&&(form==="burst"||form==="eruption")&&phase<0.15)this.screen(layerPolicy.screen.shakeCap*alpha);
     this.data[0]=f.id;this.data[1]=ELEMENT_KEYS.indexOf(key);this.data[2]=intensity;this.data[3]=phase;
     this.batches.add(x,y,z,diameter,this.data,alpha,f.ground,tint,FX_QUALITY.particles>0.5 || (seed&1)===0,glow);
     this.stats.instances++;
@@ -83,7 +97,7 @@ export class MagicFx {
   emit(element:string,form:FxForm,x:number,y:number,z:number,level:number,size=1,life=1.2,seed=0):void {
     if(this.bursts.length>=settings.pool)this.bursts.shift();
     this.bursts.push({element,form,x,y,z,level,size,at:this.time,life,seed});
-    if(level>=3&&size>=1){this.screenAt=this.time;this.screenStrength=layerPolicy.screen.shakeCap;}
+    if(level>=3&&size>=1)this.screen();
   }
   native(feature:NativeFx,x:number,y:number,z:number,amount=1,seed=0,tint:readonly number[]|null=null):void{
     if(!this.enabled||amount<=0.01||Math.hypot(x-this.cx,z-this.cz)>80)return;

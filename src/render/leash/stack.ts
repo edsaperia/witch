@@ -3,6 +3,9 @@
 import * as THREE from "three";
 import { leashPoint, stackOrder } from "../../rules/leash";
 import { tautAnchors } from "../../rules/anchor";
+import { buffsOf, pipCount, pipFading, pipFuel } from "../../rules/buffs";
+import { buffIconUv } from "./buffIcons";
+import { AMBER } from "./glyphs";
 import { hash2 } from "../../rules/random";
 import { LOAD_DEFAULT } from "../load";
 import type { LeashView } from "../leash";
@@ -40,6 +43,7 @@ export function drawStack(lv: LeashView, time: number, hatTop: number, dot: numb
   // depth test, after the see-through pass), brighter (stack.bright, in the batch's gain), each over a near-black disc (stack.backing).
   const batch = S.over ?? true ? lv.stackGlyphs : lv.standing, back = S.backing ?? 0, backUv = back > 0 ? lv.uv(DISC) : null;
   const ranks = ranksOn(t), RK = rankKnobs(t);
+  const buffs = buffsOf(s.stack, g.creatures, g.berries, t); // (her follower buffs: rules/buffs.ts; an adult's pips and each kind's icon, below)
   while (lv.chain.length < order.length) lv.chain.push({ x: 0, z: 0, vx: 0, vz: 0 });
   let below = { x: 0, z: 0 }, y = hatTop;
   for (const id of [...lv.stackY.keys()]) if (!keys.has(id)) lv.stackY.delete(id);
@@ -77,18 +81,30 @@ export function drawStack(lv: LeashView, time: number, hatTop: number, dot: numb
         drawEmbers(batch, dot, lv.glyphPts.get(`${sg!.uv[0]},${sg!.uv[1]}`) ?? [], pos.x, pos.y, pos.z, size, false, rankOf(c), [col.r, col.g, col.b], time, it.id * 3 + 1, RK.embers, RK.embers.stack);
         // (the berries' dots in the berries' own colour, and on the left its 💧s in blue: Ed, 2026-10-28, rules/orbit.ts)
         const drops = c.drops ? meterHits(t)[Math.min(3, c.level)] ?? 4 : 0;
+        // (an adult's berry pips the same way, Ed 2026-11-03: "shown in the sigil bar the same way as a youth growing up"; the draining
+        // one twinkling in its last buffs.pips.warn seconds: rules/buffs.ts)
+        const fuel = c.level === 2 && t.buffs ? pipFuel(g.berries, c.id, t) : 0, pips = c.level === 2 && t.buffs ? { n: t.buffs.pips.max, lit: pipCount(fuel, t) } : null;
+        const fading = !!pips && pipFading(fuel, t), twinkle = 0.35 + 0.65 * Math.abs(Math.sin(time * 9));
         const dotSets: [{ n: number; lit: number }, number, [number, number, number]][] = [
-          [shownDots(youthDots(c, g.berries.fed.get(c.id) ?? 0, t), RK.dotsPerRow), 1, lv.berryRgb],
+          [shownDots(pips ?? youthDots(c, g.berries.fed.get(c.id) ?? 0, t), RK.dotsPerRow), 1, lv.berryRgb],
           [shownDots({ n: drops, lit: Math.ceil((c.drops ?? 0) * drops - 1e-6) }, RK.dotsPerRow), -1, DROP_RGB],
         ];
         for (const [D, side, rgb] of dotSets) if (D.n > 0) {
-          const ready = side > 0 && D.lit >= D.n, beat = ready ? 0.65 + 0.35 * Math.sin(time * 6) : 1, ds = size * 0.24;
+          const ready = side > 0 && !pips && D.lit >= D.n, beat = ready ? 0.65 + 0.35 * Math.sin(time * 6) : 1, ds = size * 0.24;
           for (let i = 0; i < D.n; i++) {
-            const q = dotAt(i, D.n, RK.dotsPerRow), qx = q.x * side, on = i < D.lit, k = on ? (ready ? 1.25 * beat : 1) : 0.42;
+            const q = dotAt(i, D.n, RK.dotsPerRow), qx = q.x * side, on = i < D.lit, k = (on ? (ready ? 1.25 * beat : 1) : 0.42) * (side > 0 && fading && i === D.lit - 1 ? twinkle : 1);
             if (back > 0) lv.stackBack.add(pos.x + qx * size, pos.y + q.y * size, pos.z, ds * 1.5, dot, 0.02, 0.02, 0.035, back);
             const lit = on ? 0.3 : 0; // (lit ones toward white a little, so they read over the dim)
             batch.add(pos.x + qx * size, pos.y + q.y * size, pos.z + 0.02, ds, dot, (rgb[0] + (1 - rgb[0]) * lit) * k, (rgb[1] + (1 - rgb[1]) * lit) * k, (rgb[2] + (1 - rgb[2]) * lit) * k, on ? 1 : 0.85);
           }
+        }
+        // Its buff's icon, to the right of its sigil and its dots (Ed, 2026-11-03: "an icon to the right of the creature's sigil in her
+        // stack"), one a kind (rules/buffs.ts icons), in her magic's amber (render/leash/buffIcons.ts).
+        const group = buffs.icons.has(it.id) ? buffs.givers.get(it.id) : undefined;
+        if (group) {
+          const D = dotSets[0][0], ix = (D.n > 0 ? dotAt(D.n - 1, D.n, RK.dotsPerRow).x + 0.42 : 0.72) * size, is = size * 0.5;
+          if (back > 0) lv.stackBack.add(pos.x + ix, pos.y, pos.z, is * 1.25, dot, 0.02, 0.02, 0.035, back);
+          batch.add(pos.x + ix, pos.y, pos.z + 0.02, is, buffIconUv(lv, group), AMBER[0] * 1.2, AMBER[1] * 1.2, AMBER[2] * 1.2, 1);
         }
       }
     } else {
@@ -127,6 +143,8 @@ export function drawBond(lv: LeashView, time: number, slotPos: Map<number, THREE
   const solid = groundedSolid(time - lv.tugAt), chains = ranksOn(t), CK = chainKnobs(t), live = new Set<number>();
   // The anchor chains (Ed, 2026-11-03; rules/anchor.ts): an adult's chain at its full length, holding her, drawn taut and glowing.
   const anchored = tautAnchors(s.stack, g.creatures, w.x, w.z, t);
+  // Follower buffs (Ed, 2026-11-03: "While an animal is buffing her, the chain to its sigil glows"; rules/buffs.ts givers): brighter, breathing.
+  const buffing = buffsOf(s.stack, g.creatures, g.berries, t).givers, glow = 0.45 + 0.15 * Math.sin(time * 3);
   for (const id of leashed) {
 
     const c = g.creatures[id], col = ranksOn(t) ? lv.colOf(c) : lv.colours.get(c.species); // (rank sigils: the rank's colour, ranks.ts)
@@ -156,7 +174,7 @@ export function drawBond(lv: LeashView, time: number, slotPos: Map<number, THREE
       // The leash as a chain (Ed, 2026-10-28; render/leash/chain.ts): links its rank's size, from its sigil in her stack (or its placed
       // sigil) to it, real chain physics pulled toward an upward bow, high while it's slack and flattening as it goes taut (Ed,
       // 2026-10-06), a little longer than its span while slack; flashing bright while it holds her down.
-      const strain = whole ? 1 : Math.max(0, Math.min(1, (d - L.length * from0) / L.length + ld * 0.5)), lit = 1 + LT2.threadBright * ld + (whole ? 0.6 : 0);
+      const strain = whole ? 1 : Math.max(0, Math.min(1, (d - L.length * from0) / L.length + ld * 0.5)), lit = 1 + LT2.threadBright * ld + (whole ? 0.6 : 0) + (carried && buffing.has(id) ? glow : 0);
       const link = CK.link[rankOf(c) - 1], ch: Chain = lv.chains.get(id) ?? { links: [] };
       lv.chains.set(id, ch); live.add(id);
       const span = Math.hypot(c.x - from.x, 0.5 - from.y, c.z - from.z), arc = Math.min(B.threadArcMax, d * (B.threadArcTaut + (B.threadArcSlack - B.threadArcTaut) * (1 - strain)));
