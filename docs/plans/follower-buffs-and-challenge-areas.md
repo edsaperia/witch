@@ -36,6 +36,15 @@ ones that increased DPS felt fun but were insanely strong. The ones that didn't 
   types' buff. (counts as that animal type so doesn't stack e.g. adult wolf and legend wolf just count once)." So a legend
   adds 3 stacks to its group instead of 1, and a legend plus an adult of the same kind still counts as one kind (3 stacks).
 
+- **Berries power the buff.** An adult's buff is only active while it has berry pips. Adults feed themselves the way
+  youths do now (rules/berries.ts: a party animal eats a berry near its path and the berry regrows elsewhere), so the player's
+  part is routing: leading her following past berry patches, or parking a sigil in a patch.
+  - **5 pips per adult**, shown in the sigil bar the same way as a youth growing up.
+  - **Each pip lasts 2 minutes**, draining one at a time; a pip **twinkles when it's 10 seconds from fading**.
+  - **While an animal is buffing her, the chain to its sigil glows.**
+  - **Legends don't need berries**: a leashed legend's triple buff is always on.
+  - Pip count, pip life and the twinkle warning are knobs.
+
 - **Fantastic animals** give their group's buff plus their own: stronger, with a memorable downside.
 
   | Fantastic | Buff |
