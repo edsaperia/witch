@@ -333,6 +333,9 @@ export function onlineSession(options: SessionOptions) {
             guestAccumulator += dt;
             while (guestAccumulator >= STEP - 1e-9) {
               guestAccumulator -= STEP;
+              // The host still applies every quantum it receives. Past the prediction's history she waits for
+              // acknowledgements: a sent step dropped from that history would be walked again (T5B run 4).
+              if (prediction?.full && !game.clock.paused) { for (const edge of INPUT_EDGES) delete guestEdges[edge]; continue; }
               const quantum = { ...controls };
               for (const edge of INPUT_EDGES) { quantum[edge] = !!guestEdges[edge]; delete guestEdges[edge]; }
               if (!connection.sendInput({ sequence, controls: quantum })) {

@@ -1,5 +1,5 @@
 import { afterEach, expect, it, vi } from "vitest";
-import { newGame, newWitchPlayer, stepGame, type Controls, type Game } from "../../rules/game";
+import { newGame, newWitchPlayer, STEP, stepGame, type Controls, type Game } from "../../rules/game";
 import { TUNING } from "../../rules/tuning";
 import { snapshotGame } from "../../rules/nightSnapshot";
 import { attachGuest, detachGuest } from "./membership";
@@ -20,7 +20,7 @@ import { ITEMS } from "../../rules/wardrobe";
 import { fillNightTrunk } from "../../app/nightFindBoundary";
 import { bareBroom, PARTS } from "../../rules/broomParts";
 import { HAT_SPELLS } from "../../rules/spells";
-import { HOUSE_ROOMS, objectFront } from "../../rules/houseRooms";
+import { HOUSE_ROOMS, installEdLayout, objectFront, roomAt } from "../../rules/houseRooms";
 import type { StationChoice } from "./stationChoice";
 import { continueSharedNight } from "../../app/sharedNight";
 
@@ -55,6 +55,43 @@ it.each([1/60,.1])("keeps an undressed guest bed hold with host frame duration %
   expect(guest.wake!.pile!.length).toBeGreaterThan(0);
   expect(guest.house?.slept).toBe(true);
   expect(f.hostGame.witches[0].house?.slept).not.toBe(true);
+});
+it.each(["host frames", "guest quanta"] as const)("keeps a guest walking indoors to bedroom2Wardrobe on the floor when the relay holds her %s past the prediction cap", async held => {
+  // T5B run 4: three pending-cap snaps, then the guest flying at treetop speed far east of the treehouse.
+  installEdLayout(true); cleanups.push(() => installEdLayout(false)); // The ordinary page's house: tuning noWalls makes every floor edge a take-off.
+  const f = fixture(), { joined } = await f.start();
+  const host = f.hostGame, guest = host.witches[1], at = host.map.treehouse;
+  startWakeFor(host, guest.time ?? host.herTime, { yesterday: true }, guest, { player: 1, room: "bedroom2" });
+  guest.wake!.open = true; guest.wake!.beat = "up"; Object.assign(guest.body, { perch: true, mode: "ground", seated: false, vx: 0, vz: 0 });
+  await f.sync(); await joined;
+  const target = objectFront(HOUSE_ROOMS.objects.find(o => o.id === "bedroom2Wardrobe")!, at, .6); // telephoneProof's front
+  // The driver steers the guest's own predicted witch, which is what the guest page shows and reports.
+  const drive = (): Controls => {
+    const b = f.guest.predicted!.body, dx = target.x - b.x, dz = target.z - b.z;
+    return Math.hypot(dx, dz) < .6 ? input() : { ...input(), moveX: Math.max(-1, Math.min(1, dx)), moveZ: Math.max(-1, Math.min(1, dz)) };
+  };
+  // One relay stall of 2.8 s in one direction while the walk is under way; nothing is lost, only delayed.
+  const stall = { from: 30, to: 198 }, up: { at: number; message: Record<string, unknown> }[] = [], down: typeof up = [];
+  const deliver = (frame: number) => frame >= stall.from && frame < stall.to ? stall.to : frame;
+  let sent = f.guestMessages.length, received = f.hostMessages.length, left = 0;
+  for (let frame = 0; frame < 360; frame++) {
+    f.advanceTime(STEP * 1000);
+    while (down[0] && down[0].at <= frame) f.guest.message(down.shift()!.message);
+    f.guest.step(frame < 36 ? input() : drive(), STEP);
+    for (const message of f.guestMessages.slice(sent)) up.push({ at: held === "guest quanta" ? deliver(frame) : frame, message });
+    sent = f.guestMessages.length;
+    while (up[0] && up[0].at <= frame) f.host.message(up.shift()!.message);
+    f.host.step(input(), STEP);
+    for (const message of f.hostMessages.slice(received)) down.push({ at: held === "host frames" ? deliver(frame) : frame, message });
+    received = f.hostMessages.length;
+    if (!guest.body.perch || guest.body.mode !== "ground") left++;
+  }
+  expect(f.hostOptions.failed).not.toHaveBeenCalled(); expect(f.guestOptions.failed).not.toHaveBeenCalled();
+  const b = guest.body;
+  expect({ framesOffTheFloor: left, perch: !!b.perch, mode: b.mode, room: roomAt(at, b.x, b.z)?.id ?? null }).toEqual({ framesOffTheFloor: 0, perch: true, mode: "ground", room: "bedroom2" });
+  expect(Math.hypot(b.x - target.x, b.z - target.z)).toBeLessThan(1);
+  expect(Math.hypot(f.guest.predicted!.body.x - b.x, f.guest.predicted!.body.z - b.z)).toBeLessThan(.05);
+  expect(f.guest.predictionStats!.pendingCapSnaps).toBe(0); expect(f.host.inputStats!.discarded).toBe(0);
 });
 it("keeps the guest visit when a failed send synchronously reports transport-away", async () => {
   const f = fixture(); const { joined } = await f.start(); await f.sync(); await joined;

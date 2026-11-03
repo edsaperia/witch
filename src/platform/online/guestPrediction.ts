@@ -91,6 +91,8 @@ export function guestPrediction(source: Game, player: number, report?: (event: P
     },
     get actor(): Witch { return { ...actor, body: { ...actor.body, x: actor.body.x + offset.x, z: actor.body.z + offset.z } }; },
     get pending() { return pending.length; },
+    /** Every sent quantum must stay replayable until the host acknowledges it; at this limit the caller sends nothing new. */
+    get full() { return pending.length >= MAX_PENDING; },
     get acknowledged() { return acknowledged; },
     get stats() { const ordered = [...sizes].sort((a, b) => a - b); return { corrections, snaps, transitionSnaps, correctionSnaps, pendingCapSnaps, transitionReasons: { ...transitionReasons }, largest, recentP95: ordered[Math.floor(ordered.length * .95)] ?? 0, pending: pending.length, acknowledged }; },
   };
