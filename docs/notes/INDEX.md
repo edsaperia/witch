@@ -99,6 +99,7 @@ says what each note covers.
 - Loose sigil
 - Legend tether
 - Anchor chain
+- Follower buffs
 - Sigil stack
 - Rank sigils
 - Sides and sizes

@@ -1,0 +1,9 @@
+{
+  "reason": "Follower buffs (Ed, 2026-11-03; docs/plans/follower-buffs-and-challenge-areas.md): adults on her leash with berry pips (and leashed legends) buff her by group (dash charges, speed, 💌 speed and range, Heavies' shots round her, fire rate and spread, chain hops); leashed adults now eat berries for pips. On top of the anchor chains (anchor-chains.json).",
+  "rules": {
+    "*": "wherever an adult follows her or is leashed: its berry pips and the berries it eats (and where those regrow), and, once it has pips, her speed, dashes and 💌s with what follows from them; plus the anchor chains' changes"
+  },
+  "frames": {
+    "*": "wherever an adult follows her: its pips and buff icon beside its sigil in her stack, its chain glowing while it buffs her, and what her buffs change; plus the anchor chains' changes"
+  }
+}

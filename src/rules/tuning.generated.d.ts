@@ -966,6 +966,43 @@ export type SchemaTuning = {
     "threadArcTaut": number;
     "threadArcMax": number;
   };
+  "buffs": {
+    "groups": {
+      "climbers": Array<string>;
+      "darters": Array<string>;
+      "stalkers": Array<string>;
+      "heavies": Array<string>;
+      "packHunters": Array<string>;
+      "shells": Array<string>;
+    };
+    "legend": number;
+    "pips": {
+      "max": number;
+      "life": number;
+      "warn": number;
+      "start": number;
+    };
+    "climbers": {
+      "dash": number;
+    };
+    "darters": {
+      "speed": number;
+    };
+    "stalkers": {
+      "speed": number;
+      "range": number;
+    };
+    "heavies": {
+      "shots": number;
+    };
+    "packHunters": {
+      "rate": number;
+      "spread": number;
+    };
+    "shells": {
+      "chain": number;
+    };
+  };
   "difficulty": {
     "creatureSpeed": number;
     "rangedRange": number;
@@ -1863,6 +1900,55 @@ export type SchemaTuning = {
     "transition": number;
     "lightReach": number;
     "lightStrength": number;
+  };
+  "partyStart": {
+    "overHouse": boolean;
+    "sparkles": {
+      "on": boolean;
+      "count": number;
+      "size": number;
+      "opacity": number;
+      "core": number;
+      "life": number;
+      "speed": number;
+      "hueA": number;
+      "satA": number;
+      "hueB": number;
+      "satB": number;
+    };
+    "pillar": {
+      "on": boolean;
+      "height": number;
+      "width": number;
+      "rise": number;
+      "duration": number;
+      "strength": number;
+    };
+    "dome": {
+      "on": boolean;
+      "size": number;
+      "duration": number;
+      "fill": number;
+    };
+    "light": {
+      "on": boolean;
+      "reach": number;
+      "strength": number;
+      "duration": number;
+    };
+    "shake": {
+      "on": boolean;
+      "amount": number;
+      "duration": number;
+    };
+    "ground": {
+      "on": boolean;
+      "alpha": number;
+      "size": number;
+    };
+    "refraction": {
+      "on": boolean;
+    };
   };
   "blood": {
     "on": boolean;

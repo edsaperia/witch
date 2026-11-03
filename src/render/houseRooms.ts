@@ -54,6 +54,8 @@ interface Quad { p: [number, number, number][]; rgb: [number, number, number]; o
 const KIND: Record<HouseObject["use"]["kind"], [number, number, number]> = { creator: [0.32, 0.62, 0.45], hats: [0.32, 0.62, 0.45], zoo: [0.32, 0.62, 0.45], telescope: [0.32, 0.62, 0.45], telephone: [0.48, 0.42, 0.56], bed: [0.82, 0.62, 0.3], say: [0.48, 0.42, 0.56], chart: [0.32, 0.62, 0.45], instrument: [0.62, 0.36, 0.7], invites: [0.32, 0.62, 0.45], pile: [0.32, 0.62, 0.45], scenery: [0.48, 0.42, 0.56] };
 /** How long a placeholder's line stays up (s). */
 const SAY_FOR = 3.5;
+/** How high over the floor (m) her line at the decks is said (sayAtDecks): over her head behind them. */
+const DECKS_SAY = 1.9;
 const NO_GLINTS: { x: number; y: number; r: number }[] = [];
 
 /** How far south a point of the plan lies in the world (the hub's centre 0): the drawing's depth. */
@@ -186,6 +188,8 @@ export class HouseRoomsView {
   private readonly wakeR: HTMLDivElement;
   private wakeKey = "";
   private said: { obj: HouseObject; at: number; line: string } | null = null;
+  /** A line for over her decks, said at the next frame (sayAtDecks). */
+  private decksLine: { at: number; line: string } | null = null;
   private readonly labels: { el: HTMLDivElement; x: number; z: number }[] = [];
   /** The furniture drawn as art (render/houseFurniture.ts): each piece's picture and its quad, baked a piece a frame as she first comes in. */
   private readonly furniture = new THREE.Group();
@@ -269,8 +273,11 @@ export class HouseRoomsView {
     document.body.append(this.box);
   }
 
+  /** She says `line` over her decks (from her clock's `ht`, for SAY_FOR seconds): the DJ's "make some noise!!!" as the party start
+   *  plays again (View.replayPartyStart; Ed, 2026-11-03). The house's own bubble, as a placeholder's line. */
+  sayAtDecks(line: string, ht: number): void { this.decksLine = { at: ht, line }; }
   /** Another night at a house with rooms (View.setGame): its plan made afresh, nothing said. */
-  reset(): void {
+  reset(): void { this.decksLine = null;
     this.loadingFloor.visible = false;
     this.hub = -1; this.quads = []; this.hatsKey = ""; this.said = null; this.box.style.display = "none";
     for (const p of this.parts) p.mesh.visible = false;
@@ -564,6 +571,7 @@ export class HouseRoomsView {
       else if (o?.use.kind === "say" && this.said?.at !== ht) this.said = { obj: o, at: ht, line: o.use.line };
       else if (o?.use.kind === "telephone") this.said = null; // The ordinary page opens its left station panel.
     }
+    if (this.decksLine && d) { this.said = { obj: { ...decksSpot(d), h: DECKS_SAY }, at: this.decksLine.at, line: this.decksLine.line }; this.decksLine = null; }
     if (this.said && (ht - this.said.at > SAY_FOR || this.said.at > ht || [...this.openGuestRooms ?? []].some(room => this.said?.obj.id === `${room}Door`))) this.said = null;
     for (const piece of this.pieces.values()) if ([...this.openGuestRooms ?? []].some(room => piece.id === `${room}Door`)) piece.mesh.visible = false;
     if (!inside) {

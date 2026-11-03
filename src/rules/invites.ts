@@ -86,6 +86,8 @@ export interface Invites {
   bloomAt?: number;
   /** When the Sentry hat may throw its next 💌. */
   sentryAt?: number;
+  /** The Heavies buff (rules/buffs.ts stepInvitesBuffed): bursts fired round her since she began holding fire. */
+  turn?: number;
   /** This frame's events, for the view (stepGame clears them each frame, like combat's). */
   events: InviteEvent[];
 }
