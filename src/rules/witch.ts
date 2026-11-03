@@ -122,7 +122,9 @@ export function stepWitch(w: WitchState, intent: Intent, dt: number, t: Tuning, 
   // Rising off it, stepped off its edge or flown on past it, she rises from its floor till she's up (Ed's playtest, 2026-11-03: "When I
   // step off the treehouse with my broom, I seem to fall and rise again before taking off": dropped from it at a low lift, her height
   // fell to the ground's and climbed back). Off it in mid-air any other way (coming down past it), from the height she's at: no drop.
-  if (w.perch && !perch && deck && mode === "rising") perch = true;
+  // (only her height's: past the floor her speed's and the beach's are the ground's again, as before)
+  const rose = !perch && !!w.perch && !!deck && mode === "rising";
+  if (rose) perch = true;
   if (w.perch && !perch && lift > 0) lift = liftFor(witchHeight(w, t), t);
   // The treehouse deck (rules/treehouse.ts): coming down from the treetops over it, she lands on it; rising takes her off it.
   if (deck && intent.toggleMode && mode === "descending" && landsOn(deck, w.x, w.z)) perch = true;
@@ -152,7 +154,7 @@ export function stepWitch(w: WitchState, intent: Intent, dt: number, t: Tuning, 
   if (len > 1) { mx /= len; mz /= len; }
   // On foot in the house (Ed, 2026-10-21: "she shouldn't use her broom until she steps off the balcony"): she walks, at the house's
   // walk, not her broom's ground speed.
-  const ground = perch && deck?.house ? deck.house.walk : t.groundSpeed;
+  const ground = perch && !rose && deck?.house ? deck.house.walk : t.groundSpeed;
   const L = smoothstep(lift), max = lerp(ground, t.treetopSpeed, L);
   // On the ground: snappy, straight to the input's speed (Ed: "ground should feel snappy").
   const kg = 1 - Math.exp(-t.groundAcceleration * dt);
@@ -207,7 +209,7 @@ export function stepWitch(w: WitchState, intent: Intent, dt: number, t: Tuning, 
   const facing: 1 | -1 = vx > 0.3 ? 1 : vx < -0.3 ? -1 : w.facing;
   const speed = Math.hypot(vx, vz), away = facingAway(vx, vz, w.away, Math.max(1, max * 0.15), t), heading = headingOf(vx, vz, w.heading, Math.max(1, max * 0.15), t);
   const next: WitchState = { x, z, vx, vz, lift, mode, facing, away, heading, lean: speed > max * t.leanAt, boost, braking, ...(perch ? { perch: true } : {}), ...(falling !== undefined ? { falling } : {}), ...(fallOrigin ? { fallOrigin } : {}) };
-  if (perch) return next; // (no beach up here)
+  if (perch && !rose) return next; // (no beach up here)
   // Flying on out over the beach (Ed, 2026-10-06: "If you try and fly past the beach, you land and stargaze"): pushing seaward
   // against the edge's soft hold, on the sand, for restAfter seconds, she comes down (from the treetops too) and, landed, lies down.
   const B = t.beach, beach = B?.on ? beachOf(bounds, t) : null;
