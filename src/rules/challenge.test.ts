@@ -4,20 +4,25 @@
 import { describe, expect, it } from "vitest";
 import { newGame, stepGame, type Controls, type Game } from "./game";
 import { TUNING, withTuning, type Tuning } from "./tuning";
-import { AREA_TYPES, generateMap } from "./map";
+import { AREA_TYPES, generateMap, hydrateMap, prepOf, type ForestMap } from "./map";
 import { cellKey, clearArea } from "./party";
 import { befriend, hasRune, stateOf } from "./creatureStates";
-import { challengeReady, challengeSite, columnSpots, FIND_DESCENT, packKinds, packLeft, rewardFall, spawnPack } from "./challenge";
+import { castReachOf, challengeCastAt, challengeColumns, challengeReady, challengeSite, columnKinds, columnSpots, FIND_DESCENT, packKinds, packLeft, rewardFall, spawnPack } from "./challenge";
+import { challengeCircle } from "./challengeCircle";
+import { hostileSigil } from "./stoneStacks";
 import { fillTrunk, FIND_KINDS, nightPick, type FindKindId, type Found } from "./finds";
 import { FIND_SETS, allFinds, bandOf, biomeOf, islandSet, setPick } from "./findSets";
 import { flaskUnder } from "./legends";
 import { routeOf } from "./party";
 import { KINDS_TABLE } from "./kinds";
+import { knownKinds } from "./rosters";
 import { restoreGame, snapshotGame } from "./nightSnapshot";
 import { startPartyOver } from "./partyOver";
 import { Forest } from "./forest";
 
 const islandOf = (kind: string, t: Tuning = TUNING): Tuning => ({ ...t, map: { ...t.map!, island: kind, islandAreas: 10 } });
+/** The late-campaign home: every kind known (home's 10 first), an area each (rules/rosters.ts homeIsland). */
+const lateHome = (n: number, t: Tuning = TUNING): Tuning => { const all = knownKinds(Object.keys(KINDS_TABLE)).slice(0, n); return { ...t, map: { ...t.map!, island: "home", islandAreas: all.length, found: all } }; };
 const still: Controls = { moveX: 0, moveZ: 0, toggleMode: false, zoom: 0, autoTalk: false };
 const run = (g: Game, secs: number, c: Controls = still) => { for (let i = 0; i < Math.round(secs * 60); i++) stepGame(g, c, 1 / 60); };
 const key = (c: readonly [number, number]) => `${c[0]},${c[1]}`;
@@ -73,10 +78,13 @@ describe("where it is (Ed, 2026-11-03: \"The challenge area shouldn't be adjacen
     expect([g.trunk!.x, g.trunk!.z, key(g.trunk!.cell)]).toEqual([ch.x, ch.z, ch.key]);
   }, 60000);
 
-  it("stands its columns round its edge, as many as the knob says", () => {
-    const t = withTuning({ challenge: { ...TUNING.challenge!, columns: 7, radius: 10 } }), at = { x: 100, z: 50 }, cols = columnSpots(at, t);
+  it("stands its columns evenly round its edge, as many as asked, the first due north and on clockwise", () => {
+    const at = { x: 100, z: 50, radius: 10 }, cols = columnSpots(at, 7);
     expect(cols.length).toBe(7);
     for (const c of cols) expect(Math.hypot(c.x - at.x, c.z - at.z)).toBeCloseTo(10, 6);
+    for (let i = 1; i < 7; i++) expect(Math.hypot(cols[i].x - cols[i - 1].x, cols[i].z - cols[i - 1].z)).toBeCloseTo(2 * 10 * Math.sin(Math.PI / 7), 6);
+    expect([cols[0].x, cols[0].z]).toEqual([100, 40]); // (due north: north is -z)
+    expect(cols[1].x).toBeGreaterThan(100); // (then east of it: clockwise seen from above, north up)
   });
 
   it("is off with the challenge off: the find's area as before, nothing to clear", () => {
@@ -119,6 +127,152 @@ describe("its pack (Ed: \"one adult and one youth of every creature kind on the 
     run(g, TUNING.wildWatch!.time + 1);
     expect(pack(g).some(c => c.hunting === 0)).toBe(true);
   }, 60000);
+});
+
+describe("its columns, its sigil stack (Ed, 2026-11-03: \"the same number of columns as creature types, and the sigils are on top of the columns, one type per column\")", () => {
+  it("has a column for every kind on the island's roster, in the roster's order", () => {
+    for (const [kind, seed] of [["home", 1], ["fox", 2]] as const) {
+      const g = game(kind, seed), cols = challengeColumns(g), roster = [...new Set(g.map.island!.roster.map(r => r.kind))];
+      expect(cols.length, kind).toBe(roster.length);
+      expect(cols.map(c => c.kind)).toEqual(packKinds(g.map));
+      expect(columnKinds(g)).toEqual(packKinds(g.map));
+      const spots = columnSpots(g.challenge!, roster.length);
+      expect(cols.map(c => [c.x, c.z])).toEqual(spots.map(s => [s.x, s.z])); // (round its edge, clockwise from north)
+    }
+  }, 120000);
+
+  it("shows only its kind's wild fighters still standing, adult below and youth above; one invited or run off leaves it", () => {
+    const g = game("fox", 2), cols = challengeColumns(g);
+    for (const col of cols) {
+      expect(col.sigils.map(e => g.creatures[e.id].species)).toEqual([col.kind, col.kind]);
+      expect(col.sigils.map(e => e.level)).toEqual([2, 1]); // (bottom first: the adult, then the youth)
+      expect(col.sigils.every(hostileSigil)).toBe(true); // (the rune stones' rule: wild fighters, rules/stoneStacks.ts)
+    }
+    const [a, b] = cols, adult = g.creatures[a.sigils[0].id], youth = g.creatures[b.sigils[1].id];
+    befriend(adult, g.clock.time); // (invited)
+    youth.fleeUntil = Infinity; // (run off for good)
+    const after = challengeColumns(g);
+    expect(after[0].sigils.map(e => e.level)).toEqual([1]);
+    expect(after[1].sigils.map(e => e.level)).toEqual([2]);
+    expect(after.slice(2).every(c => c.sigils.length === 2)).toBe(true);
+  }, 60000);
+
+  it("empties a column once its kind's all won over: that column lit, the rest still waiting", () => {
+    const g = game("fox", 2), cols = challengeColumns(g), first = cols[0];
+    for (const e of first.sigils) befriend(g.creatures[e.id], g.clock.time);
+    const after = challengeColumns(g);
+    expect(after[0].sigils).toEqual([]);
+    expect(after.slice(1).every(c => c.sigils.length > 0)).toBe(true);
+    expect(challengeReady(g)).toBe(false);
+  }, 60000);
+
+  it("is ready to cast exactly when every column is lit", () => {
+    const g = game("fox", 2), cols = challengeColumns(g);
+    for (const col of cols.slice(0, -1)) for (const e of col.sigils) befriend(g.creatures[e.id], g.clock.time);
+    expect(challengeColumns(g).filter(c => c.sigils.length).length).toBe(1);
+    expect(challengeReady(g)).toBe(false);
+    const last = cols[cols.length - 1];
+    befriend(g.creatures[last.sigils[0].id], g.clock.time);
+    g.creatures[last.sigils[1].id].fleeUntil = Infinity;
+    expect(challengeColumns(g).every(c => c.sigils.length === 0)).toBe(true);
+    expect(challengeReady(g)).toBe(true);
+  }, 60000);
+});
+
+describe("its circle grows with the roster (Ed, 2026-11-03: \"128 animal pack is the ultimate challenge ... the area will have to be big to fit a huge circle\")", () => {
+  it("keeps its columns about spacing apart: radius the larger of the knob's and kinds x spacing / 2 pi", () => {
+    const C = TUNING.challenge!, at = (n: number) => challengeCircle(n, TUNING);
+    expect(C.spacing).toBe(7.5);
+    expect(at(6).radius).toBe(C.radius); // (a 10-area island: few columns, Ed: "few is ok")
+    expect(at(26).radius).toBe(C.radius); // (a 50-area island: 26 x 7.5 / 2 pi is 31 m)
+    expect(at(64).radius).toBeCloseTo((64 * 7.5) / (2 * Math.PI), 6); // (the late home: about 76 m)
+    expect(at(64).radius).toBeCloseTo(76.4, 1);
+    const n = 64, R = at(n).radius;
+    expect(2 * R * Math.sin(Math.PI / n)).toBeCloseTo(7.5, 1); // (neighbouring columns 7.5 m apart)
+    // (its margin and the spell's reach grow with it)
+    expect(at(64).margin).toBeCloseTo(C.margin * R / C.radius, 6);
+    expect(at(64).castReach).toBeCloseTo(C.castReach * R / C.radius, 6);
+    expect(at(6).castReach).toBe(C.castReach);
+  });
+
+  it("sizes the night's circle by its island's kinds: the knob's on a 10-area island, about 76 m on the late home of 64", () => {
+    const g = game("fox", 2);
+    expect(g.challenge!.radius).toBe(TUNING.challenge!.radius);
+    expect(castReachOf(g.challenge!, TUNING)).toBe(TUNING.challenge!.castReach);
+    const m = generateMap(1, lateHome(64)), sp = challengeSite(m)!;
+    expect(packKinds(m).length).toBe(64);
+    expect(sp.radius).toBeCloseTo(76.4, 1);
+    expect(sp.r).toBeCloseTo(challengeCircle(64, TUNING).radius + challengeCircle(64, TUNING).margin, 6);
+  }, 120000);
+
+  it("on the late home, casts from further out (its reach grown with it) and fills it with 128 animals", () => {
+    const g = newGame(1, lateHome(64)), ch = g.challenge!;
+    expect(ch.pack.length).toBe(128);
+    expect(challengeColumns(g).length).toBe(64);
+    expect(challengeColumns(g).every(c => c.sigils.length === 2)).toBe(true);
+    for (const id of ch.pack) befriend(g.creatures[id], g.clock.time);
+    g.clock.paused = false; g.party.spellAt = undefined;
+    const reach = castReachOf(ch, g.tuning);
+    expect(reach).toBeGreaterThan(TUNING.challenge!.castReach * 2);
+    const W = g.witches[0];
+    W.body = { ...W.body, x: ch.x + reach - 0.5, z: ch.z, mode: "ground", seated: false, perch: undefined };
+    expect(challengeCastAt(g, W)).toBeTruthy();
+    W.body = { ...W.body, x: ch.x + reach + 0.5 };
+    expect(challengeCastAt(g, W)).toBeNull();
+  }, 120000);
+});
+
+describe("its area holds its whole circle (Ed, 2026-11-03: \"the area will have to be big to fit a huge circle\")", () => {
+  /** Every promise the map makes of the challenge area and its paths (#1713, #1725), on map m (another night of its island: m2). */
+  const holds = (m: ForestMap, m2: ForestMap, what: string) => {
+    const sp = challengeSite(m)!, k = key(sp.cell), home = key(m.centreCell), bad: string[] = [];
+    expect(sp.claimed, what).toBe(true);
+    // (the circle and its margin all its own ground, whichever way)
+    for (let r = 0; r <= sp.r; r += 2) for (let a = 0; a < 96; a++) { const x = sp.x + Math.cos((a / 96) * Math.PI * 2) * r, z = sp.z + Math.sin((a / 96) * Math.PI * 2) * r; if (key(m.areaAt(x, z).cell) !== k) bad.push(`${what}: ${x.toFixed(0)},${z.toFixed(0)} not its own`); }
+    // (not home, not touching it, not a legend area's pair, not playable)
+    if (k === home || m.neighbours.get(home)?.has(k)) bad.push(`${what}: touches home`);
+    if ([...m.legendAreas.values()].includes(k)) bad.push(`${what}: a legend pair`);
+    expect(m.playable(sp.cell[0], sp.cell[1])).toBe(false);
+    // (the island one piece without it)
+    const cells = new Set(m.cells.map(key)), seen = new Set([home]), todo = [home];
+    while (todo.length) for (const q of m.neighbours.get(todo.pop()!) ?? []) if (cells.has(q) && !seen.has(q)) { seen.add(q); todo.push(q); }
+    if (seen.size !== cells.size) bad.push(`${what}: the island cut in two`);
+    // (every two touching sited areas joined by a path, or their clearings meeting, or (a lake between) every site still reached)
+    const sited = new Set([...cells, k]), joined = new Set<string>(), adj = new Map<string, string[]>();
+    const add = (a: string, b: string) => { joined.add(a < b ? `${a}|${b}` : `${b}|${a}`); for (const [p, q] of [[a, b], [b, a]]) (adj.get(p) ?? adj.set(p, []).get(p)!).push(q); };
+    for (const l of m.paths.lines) if (l.link) add(l.link[0], l.link[1]);
+    for (const p of m.paths.meet) { const [a, b] = p.split("|"); add(a, b); }
+    for (const a of sited) for (const b of m.neighbours.get(a) ?? []) if (sited.has(b) && a < b && !joined.has(`${a}|${b}`) && !m.paths.unlinked.includes(`${a}|${b}`)) bad.push(`${what}: ${a}|${b} unjoined`);
+    const reach = new Set([home]), go = [home];
+    while (go.length) for (const q of adj.get(go.pop()!) ?? []) if (!reach.has(q)) { reach.add(q); go.push(q); }
+    if (!reach.has(k)) bad.push(`${what}: no path to it`);
+    // (no path over its floor: the network's end at its edge, the rest cut short of it)
+    for (const l of m.paths.lines) for (const p of l.pts) if (Math.hypot(p[0] - sp.x, p[1] - sp.z) < sp.r - 0.01) { bad.push(`${what}: a ${l.kind} over its floor`); break; }
+    // (every stone in its own area, stoneMinGap from every other and from the circle's clearing)
+    const gap = m.tuning.stoneMinGap!, stones = m.cells.filter(c => key(c) !== home).map(c => ({ cell: key(c), ...m.soundsystemSpot(c[0], c[1]) }));
+    for (const s of stones) {
+      if (key(m.areaAt(s.x, s.z).cell) !== s.cell) bad.push(`${what}: ${s.cell}'s stone off its ground`);
+      if (Math.hypot(s.x - sp.x, s.z - sp.z) - sp.r < gap) bad.push(`${what}: ${s.cell}'s stone ${(Math.hypot(s.x - sp.x, s.z - sp.z) - sp.r).toFixed(0)} m from its edge`);
+    }
+    for (let i = 0; i < stones.length; i++) for (let j = i + 1; j < stones.length; j++) if (Math.hypot(stones[i].x - stones[j].x, stones[i].z - stones[j].z) < gap) bad.push(`${what}: ${stones[i].cell} and ${stones[j].cell} stones close`);
+    // (the coast the same every night, whichever area holds it)
+    expect(m2.bounds.land!.box, what).toEqual(m.bounds.land!.box);
+    expect([...m2.bounds.land!.dist.slice(0, 4000)]).toEqual([...m.bounds.land!.dist.slice(0, 4000)]);
+    expect(bad).toEqual([]);
+  };
+  it("on a 10-area island", () => { holds(generateMap(1, islandOf("home")), generateMap(2, islandOf("home")), "home 10"); holds(generateMap(2, islandOf("fox")), generateMap(3, islandOf("fox")), "fox"); }, 300000);
+  it("on a 50-area island", () => holds(generateMap(1, islandOf("griffin")), generateMap(2, islandOf("griffin")), "griffin"), 300000);
+  it("on the late home of 64 kinds, its circle about 76 m round", () => {
+    const m = generateMap(1, lateHome(64));
+    expect(challengeSite(m)!.radius).toBeCloseTo(76.4, 1);
+    holds(m, generateMap(2, lateHome(64)), "home 64");
+  }, 300000);
+  it("comes out the same from its prep (another page's worker: the island grown from the partition as cut)", () => {
+    const t = lateHome(64), m = generateMap(3, t), again = hydrateMap(3, t, prepOf(m)), sp = challengeSite(m)!;
+    expect(challengeSite(again)).toEqual(sp);
+    expect([...again.neighbours].map(([q, v]) => [q, [...v]])).toEqual([...m.neighbours].map(([q, v]) => [q, [...v]]));
+    expect(again.paths.lines.map(l => l.pts.length)).toEqual(m.paths.lines.map(l => l.pts.length));
+  }, 300000);
 });
 
 describe("clearing it (Ed: \"When they're all invited or have run off, you can go to the special place and cast the music spell\")", () => {

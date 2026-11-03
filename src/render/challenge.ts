@@ -7,7 +7,14 @@
 //     the circle (render/legendCarving.ts bigCarvingMask), grooves with clean edges, shadowed walls and lit lips, a soft moonlit
 //     glow in them, brighter while she's in it or it's ready to cast (challengeCarving; render/ground.ts uChallengeCarve);
 //   - the columns: the classical ruins' standing column (art/landmarks.js "column"), drawn alone (a "find" art job, as tonight's find
-//     is: render/view/finds.ts), round its edge (rules/challenge.ts columnSpots);
+//     is: render/view/finds.ts), round its edge (rules/challenge.ts columnSpots), one a kind of the island's roster;
+//   - the columns are its sigil stack (Ed, 2026-11-03: "the sigils are on top of the columns, one type per column"): on each column's
+//     top its kind's wild fighters still standing (rules/challenge.ts challengeColumns), adult below and youth above, drawn as a rune
+//     stone's column draws its sigils (render/leash/stones.ts columnSigil: the rank's size, the wild colours, embers), and only
+//     within the stones' columns' range of her (leash.ranks.stones.range, fading over `fade`), so they don't give the circle away
+//     from far off (Ed removed the beam so finding it stays a task); one invited or run off, its sigil gone; a column with none
+//     left, that kind won, its top lit steadily in the party's warm colour (the friends' adult's, leash.ranks.colours) where the
+//     others glow faint and cold; every column lit, the spell's notes at its middle;
 //   - no beam of light over it (Ed, 2026-11-03, on #1725: "remove the beam"): the telescope and the footpaths find it;
 //   - ready to cast: the spell's music notes at its middle, as at a stone (render/leash/stones.ts); casting, its fill a ring of
 //     rainbow dots round her;
@@ -22,7 +29,8 @@
 //     scheduled by challengeShot from the beat clock and the map's seed alone, so every player sees the same column fire.
 //   - closed (the night won or lost, uncleared): dark.
 import type { Game } from "../rules/game";
-import { challengeOf, challengeReady, columnSpots, rewardFall } from "../rules/challenge";
+import type { Tuning } from "../rules/tuning";
+import { challengeColumns, challengeOf, challengeReady, columnKinds, columnSpots, rewardFall } from "../rules/challenge";
 import * as THREE from "three";
 import { castOf, castProgress } from "../rules/stoneStacks";
 import { beatAt, timeAt } from "../rules/beat";
@@ -33,7 +41,8 @@ import { hash2 } from "../rules/random";
 import { rainbow } from "./indicator";
 import { SpriteBatch, type SpriteInstance } from "./sprites";
 import type { LeashView } from "./leash";
-import { notesSlot } from "./leash/stones";
+import { columnOf, columnSigil, columnSigilSize, notesSlot, upY, upZ } from "./leash/stones";
+import { rankColour, sigilRankColour, stoneKnobs } from "./leash/ranks";
 import { NO_CARVING } from "./legendCarving";
 import type { View } from "./view";
 
@@ -48,6 +57,7 @@ const TILES = 32, FLOOR_RGBI = new Uint8Array(TILES * TILES * 4);
 /** A column's top (m), where its light sits. */
 const COLUMN_TOP = 4.6;
 
+const smooth = (k: number) => { const q = Math.max(0, Math.min(1, k)); return q * q * (3 - 2 * q); };
 /** 1 on the beat, falling away before the next. */
 const beatPulse = (g: Game): number => { const b = beatAt(g.beat, g.clock.time); return Math.pow(1 - (b - Math.floor(b)), 3); };
 /** The beat's count (whole beats). */
@@ -75,6 +85,12 @@ export function challengeCarving(g: Game, x: number, z: number): { x: number; z:
   return { x: ch.x, z: ch.z, r: ch.radius, glow, species: islandSigilOf(g.map) };
 }
 
+/** A waiting column's top light (Ed, 2026-11-03: a column with no sigils left is that kind finished): lit, steady and warm (the
+ *  party's colour: the friends' adult's, leash.ranks.colours) once its kind's all won over; else a faint cold glow. */
+export function columnTop(col: { sigils: readonly unknown[] }, t: Tuning): { lit: boolean; rgb: [number, number, number]; size: number; alpha: number } {
+  return col.sigils.length === 0 ? { lit: true, rgb: rankColour(t, 2, true), size: 2, alpha: 0.9 } : { lit: false, rgb: [0.45, 0.8, 0.9], size: 1.1, alpha: 0.5 };
+}
+
 /** Its columns (the view's decor batches, as tonight's find is drawn: render/view/finds.ts). */
 export function drawChallengeColumns(v: View): void {
   const g = v.game, ch = g.challenge, key = "challenge:columns", batch = v.decorBatches.get(key);
@@ -82,7 +98,7 @@ export function drawChallengeColumns(v: View): void {
   if (!ch || d > ASK) { batch?.set([]); return; }
   const fa = v.assets.findArt(COLUMN, d <= NEAR), a = fa?.pieces[COLUMN];
   if (d > NEAR || !fa || !a) { batch?.set([]); return; }
-  const frame = fa.atlas.frames[a.frame], m = v.mpp, items: SpriteInstance[] = columnSpots(ch, g.tuning).map((s, i) => {
+  const frame = fa.atlas.frames[a.frame], m = v.mpp, items: SpriteInstance[] = columnSpots(ch, columnKinds(g).length).map((s, i) => {
     const flip = hash2(i, ch.cell[0], ch.cell[1] + 71) < 0.5;
     return { x: s.x - (a.originX - frame.w / 2) * m * (flip ? -1 : 1), y: 0, z: s.z, frame, flip, scale: 1 };
   });
@@ -115,10 +131,21 @@ export function drawChallenge(lv: LeashView, time: number, dot: number[]): void 
   if (!ch || Math.hypot(ch.x - w.x, ch.z - w.z) > NEAR + ch.radius) return;
   const p = beatPulse(g), W = g.witches?.[0];
   if (ch.closedAt !== null) return; // (dark: nothing lit)
-  const cols = columnSpots(ch, t);
+  const cols = columnSpots(ch, columnKinds(g).length);
   if (ch.clearedAt === null) {
-    // Waiting: each column's top a faint cold glow; ready, the spell's notes at its middle, and her fill round her as she casts.
-    for (const s of cols) lv.standing.add(s.x, COLUMN_TOP, s.z, 1.1, dot, 0.45, 0.8, 0.9, 0.5, 1, true);
+    // Waiting: each column's top a faint cold glow, or, its kind all won over, lit steadily in the party's warm colour; on it, within
+    // the stones' columns' range of her, its kind's wild fighters' sigils, adult below and youth above (as a rune stone's column).
+    const K = stoneKnobs(t), sigils = !!t.leash.ranks?.on;
+    for (const col of challengeColumns(g)) {
+      const top = columnTop(col, t), lit = top.lit;
+      lv.standing.add(col.x, COLUMN_TOP, col.z, top.size, dot, top.rgb[0], top.rgb[1], top.rgb[2], top.alpha, 1, true);
+      if (lit) lv.flat.add(col.x, 0.03, col.z, 2.6, dot, top.rgb[0], top.rgb[1], top.rgb[2], 0.18, 1, true); // (and a little warm light at its foot)
+      const vis = smooth((K.range - Math.hypot(col.x - w.x, col.z - w.z)) / Math.max(1, K.fade));
+      if (lit || !sigils || vis <= 0.01) continue;
+      const P = columnOf(col.sigils, lvl => columnSigilSize(t, lvl));
+      col.sigils.forEach((it, i) => { const h = COLUMN_TOP + P[i].y; columnSigil(lv, time, dot, it.id, it.level, col.x, upY(col.x, col.z, h), upZ(col.z, h), P[i].size, vis, sigilRankColour(t, it.level, false, false)); });
+    }
+    // Ready (every column lit): the spell's notes at its middle, and her fill round her as she casts.
     if (!challengeReady(g)) return;
     const col = rainbow(time * 0.25), on = Math.max(0, Math.min(1, (24 - Math.hypot(w.x - ch.x, w.z - ch.z)) / 12)), size = 2.2;
     if (on > 0.01) {
@@ -166,7 +193,7 @@ const SHELL_KINDS: ShellKind[] = ["peony", "peony", "ring", "crackle"];
 export function challengeShot(g: Game, bar?: number): { bar: number; column: number; at: number; x: number; z: number } | null {
   const ch = g.challenge, C = challengeOf(g.tuning);
   if (!ch || ch.clearedAt === null || ch.closedAt !== null || !C.fireworks.on) return null;
-  const spots = columnSpots(ch, g.tuning), n = spots.length;
+  const spots = columnSpots(ch, columnKinds(g).length), n = spots.length;
   if (!n) return null;
   const first = Math.ceil(beatAt(g.beat, ch.clearedAt) / BEATS_PER_BAR - 1e-9), b = bar ?? Math.floor(beatAt(g.beat, g.clock.time) / BEATS_PER_BAR + 1e-9);
   if (b < first) return null;
