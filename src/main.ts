@@ -1470,16 +1470,16 @@ async function nightInPlace(spec: NightSpec, href: string): Promise<void> {
   creator.loadout = { hat: n.game.spells.hat }; creator.hats = unlockAll() ? undefined : n.game.spells.hats;
   worldDraw = new WorldDrawGate();
   displayedStep = -1;
-  const tucked = wakes && tuckIn(n.game); // (in her bed before the start's made round her: its first frames have her drawn there, and the camera on her, as the wake-up will)
+  if (wakes) tuckIn(n.game); // (in her bed before the start's made round her: its first frames have her drawn there, and the camera on her, as the wake-up will)
   await view.prepare();
   n.flags.ready = true;
   startEl.classList.remove("loading");
   input.clearPresses();
   sailing = false;
-  const woke = tucked && startWake(n.game, n.game.herTime, { dreaming: !!dream && !dream.over, mirrored: mirrored(), yesterday: true });
-  aheadMorning(false); // (woken, the morning's own pile from here: the look read ahead, so nothing's redrawn)
-  if (woke) { mark("opening:bed"); start(); } // (after the bed: last night's clothes in their pile)
+  if (wakes && wakeInBedroom(n.game) && startWake(n.game, n.game.herTime, { dreaming: !!dream && !dream.over, mirrored: mirrored(), yesterday: true })) { mark("opening:bed"); start(); } // (after the bed: last night's clothes in their pile)
   else if (!room && !wakes) startDirect();
+  if (wakes && n.game.wake) tuckIn(n.game); // (the camera settled on her in her bed again, where the wake-up has her: wakeInBedroom put it beside the bed)
+  aheadMorning(false); // (woken, the morning's own pile from here: the look read ahead, so nothing's redrawn)
 }
 /** The bot game left (its exit in place): the bot and its tag gone, her own look back (the creator's, as a fresh page has it). */
 function leaveBot(): void {
