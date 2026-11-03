@@ -10414,7 +10414,17 @@ registerProcessor("witch-fof", WitchFof);
       colourEase: 0.6,
       sparks: true,
       cooldown: 24,
-      bySpeed: true
+      bySpeed: true,
+      steps: {
+        on: true,
+        dot: 1,
+        gap: 1,
+        section: 0.35,
+        halo: 0.16,
+        glow: 0.5,
+        glowSize: 5,
+        preset: "warm"
+      }
     },
     swoopTrail: {
       on: true,
@@ -10434,7 +10444,6 @@ registerProcessor("witch-fof", WitchFof);
         bushes: [4, 7],
         radius: 3.5
       },
-      detour: 4.5,
       eatTime: 0.25,
       cost: {
         by: "value",
@@ -10442,8 +10451,12 @@ registerProcessor("witch-fof", WitchFof);
       },
       colour: "#c8228c",
       glow: 0.8,
-      babyReach: 10,
-      babyCost: 1
+      babyCost: 1,
+      feed: {
+        reach: 15,
+        speed: 1,
+        hold: 0.3
+      }
     },
     invites: {
       on: true,
@@ -11921,7 +11934,7 @@ registerProcessor("witch-fof", WitchFof);
         max: 8
       },
       maxStep: 0.05,
-      fade: 0.6,
+      fade: 1,
       speed: 110,
       minLeg: 1.5,
       low: {
@@ -11946,11 +11959,10 @@ registerProcessor("witch-fof", WitchFof);
         dist: 520,
         pitchDeg: 38
       },
-      tree: {
-        height: 34,
-        angle: 10,
-        fill: 0.8,
-        time: 3.5
+      bend: {
+        curve: 25e-4,
+        grow: 4,
+        relax: 3
       }
     },
     camera: {
