@@ -99,6 +99,7 @@ says what each note covers.
 - Loose sigil
 - Legend tether
 - Chain drag
+- Commanded feeding
 - Follower buffs
 - Sigil stack
 - Rank sigils
@@ -251,6 +252,7 @@ says what each note covers.
 - The start's shaders
 - The stall hunt
 - The boot freeze
+- The challenge's 128-animal pack
 - The zoo's cost
 - The ground's area texture
 - Like with like

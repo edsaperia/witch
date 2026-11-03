@@ -1,0 +1,9 @@
+{
+  "version": null,
+  "items": [
+    "Feeding is now up to you: no animal eats on its own. Stand within 15 m of a berry and tap the sigil button (E, square) to feed the animal at the bottom of your stack; each tap queues one more berry. The berry it'll go for is marked, with the prompt beside it",
+    "With a berry marked, hold the sigil button for a moment to put that animal's sigil down instead",
+    "A sigil in your stack twinkles the dot it's about to fill while it has a berry queued; babies now show their one berry dot",
+    "Knocked down, your animals' sigils fall where you went down and stay there: they wait for you there, parked, and guard the spot"
+  ]
+}

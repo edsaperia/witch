@@ -443,7 +443,7 @@ export type SchemaTuning = {
     "on": boolean;
     "radius": number;
     "margin": number;
-    "columns": number;
+    "spacing": number;
     "adults": number;
     "youths": number;
     "castReach": number;
@@ -732,7 +732,6 @@ export type SchemaTuning = {
       "dot": number;
       "gap": number;
       "section": number;
-      "ring": boolean;
       "halo": number;
       "glow": number;
       "glowSize": number;
@@ -757,7 +756,6 @@ export type SchemaTuning = {
       "bushes": Array<number>;
       "radius": number;
     };
-    "detour": number;
     "eatTime": number;
     "cost": {
       "by": "power" | "value";
@@ -765,8 +763,12 @@ export type SchemaTuning = {
     };
     "colour": string;
     "glow": number;
-    "babyReach": number;
     "babyCost": number;
+    "feed": {
+      "reach": number;
+      "speed": number;
+      "hold": number;
+    };
   };
   "invites": {
     "on": boolean;

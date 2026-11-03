@@ -4,10 +4,9 @@
 import { deckOf, onTerrace } from "../../rules/treehouse";
 import { potionBlackout, potionFall } from "../potionChoreography";
 import { updatePotionCaption } from "../potionCaption";
-import { updateAnchorHint } from "../anchorHint";
 import { youthRising } from "../../rules/chains";
 import { onRoomFloor } from "../../rules/houseRooms";
-import { houseWitchOverlay, setHouseWitchPass } from "../houseWitchPass";
+import { depthWhereDrawn, houseWitchOverlay, setHouseWitchPass } from "../houseWitchPass";
 import { broomWhere, stationOf } from "../../rules/stations";
 import type { View } from "../view";
 import { captureRefractionCast } from "./refraction";
@@ -169,7 +168,6 @@ export function drawWitch(v: View, time: number, ht: number, onTreehouse: (px: n
   // rules/game.ts): drawn only, the rules keep her on the ground. She lifts off, slowing, to GROUNDED_HOP metres, is yanked
   // straight back down by her taut leashes (render/leash/stack.ts) and lands with a little bounce.
   for (const e of g.leashEvents) if (e.kind === "grounded") v.groundedAt = e.at;
-  updateAnchorHint(g, ht); // (the first time an adult holds her down: why, in a line; render/anchorHint.ts)
   const hop = groundedHop(ht - v.groundedAt);
   wyy += hop;
   // Staggered by a blow (rules/knock.ts): a wobble side to side, fading as it wears off.
@@ -340,7 +338,7 @@ export function drawWitch(v: View, time: number, ht: number, onTreehouse: (px: n
     SPRITE_UNIFORMS.uWitch.value.set((base[0] + top[0]) / 2, (base[1] + top[1]) / 2, Math.abs(side[0] - base[0]) + 1, Math.abs(top[1] - base[1]) / 2 + 1);
     // (in a room off the hub, at her feet as drawn: from her flight's height her own sprite stood in front of her there, and the
     // fade round her cut her out)
-    SPRITE_UNIFORMS.uWitchDepth.value = -placed(v.v3.set(wx, v.seatK > 0 || inRoom ? wyy : h + v.rideOff + hop, wz)).applyMatrix4(v.camera.matrixWorldInverse).z;
+    SPRITE_UNIFORMS.uWitchDepth.value = -placed(v.v3.set(wx, depthWhereDrawn(v.seatK > 0, inRoom, overFloor) ? wyy : h + v.rideOff + hop, wz)).applyMatrix4(v.camera.matrixWorldInverse).z;
     // Her pool on screen, for the grade to spare (render/post.ts: on a dark floor her light sits among the tones the
     // spooky grade drains to blue, and it vanished: the art director's round 3, the fern forest): its centre under her
     // feet and its half-widths across and up the screen, out to half her light's reach.

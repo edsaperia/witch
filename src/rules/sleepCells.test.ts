@@ -9,14 +9,15 @@ import { largestWorldTuning } from "../test/worlds";
 import { sleepCellAudit } from "../test/sleepCells";
 
 const idle = { moveX: 0, moveZ: 0, toggleMode: false, zoom: 0 };
-// (the largest island since the path network, 2026-11-03: grown one area more for tonight's find, its legends dealt anew: six paired;
-// the ids follow how many creatures the areas before them hold: the swarms by island, Ed 2026-11-03, put more in most)
-const expected = [[61, "snowleopard", true], [62, "snowleopard", false], [158, "crab", true], [159, "crab", false],
-  [173, "otter", true], [174, "otter", false], [219, "newt", true], [220, "newt", false],
-  [341, "moth", true], [342, "moth", false], [544, "polarbear", true], [545, "polarbear", false]];
-// Largest roster reproduces the six paired legend areas; small/radius fixtures guard the original non-paired contract.
+// (the largest island since the challenge circle's claim, 2026-11-03: its area takes the whole circle from the areas round it, so
+// the route and the night's deal move on, and its legends with them: seven paired; the ids follow how many creatures the areas
+// before them hold)
+const expected = [[14, "crab", true], [15, "crab", false], [31, "bear", true], [32, "bear", false], [63, "otter", true], [64, "otter", false],
+  [91, "fennec", true], [92, "fennec", false], [145, "lion", true], [146, "lion", false], [165, "newt", true], [166, "newt", false],
+  [527, "hedgehog", true], [528, "hedgehog", false]];
+// Largest roster reproduces the seven paired legend areas; small/radius fixtures guard the original non-paired contract.
 const fixtures = [
-  { name: "largest", tuning: largestWorldTuning(TUNING), raw: 12, cells: 65 },
+  { name: "largest", tuning: largestWorldTuning(TUNING), raw: 14, cells: 65 },
   { name: "four-area", tuning: { ...TUNING, map: { ...TUNING.map!, island: "", islandAreas: 4, found: [] } }, raw: 0, cells: 5 },
   { name: "radius", tuning: { ...TUNING, map: { ...TUNING.map!, island: "", islandAreas: 0, found: [] } }, raw: 0, cells: 98 },
 ];

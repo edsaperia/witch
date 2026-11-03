@@ -355,8 +355,9 @@ export function drawCreatures(v: View, time = 0): void {
     v.shadows.set(all);
   }
 }
-/** A batch with no creature in it this frame shows nothing. */
-const clearUnused = (b: SpriteBatch, s: string): void => { const l = PER.get(s); if (!l || !l.length) b.set(NONE); };
+/** A batch with no creature in it this frame shows nothing (one already showing nothing left be: a batch a species and look, a big
+ *  crowd's every one emptied every frame otherwise; the challenge's 128-animal pack, 2026-11-03). */
+const clearUnused = (b: SpriteBatch, s: string): void => { const l = PER.get(s); if ((!l || !l.length) && b.count !== 0) b.set(NONE); };
 
 /** A wild legend's batch (Ed's round 14 playtest: "Legends in the circle are not very distinct"; "the same pixel density and palette
  *  discipline as the rest of the scene"): its sleeping outline in its sigil's neon (a little toward white, so a deep colour still shows

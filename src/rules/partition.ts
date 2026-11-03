@@ -157,3 +157,31 @@ export function makePartition(seed: number, depth: number, home?: HomeCircle, { 
     },
   };
 }
+
+/** A circle of partition space given wholly to one area (rules/map.ts: the challenge area's circle and its margin, Ed 2026-11-03: "the
+ *  area will have to be big to fit a huge circle"): every point within r of (u, v) is cell's, however the partition would cut it. */
+export interface Claim { cell: Cell; u: number; v: number; r: number }
+
+/** A partition over `base` with room for one claim (null: none, the base's own cuts everywhere), set once the map has chosen it:
+ *  inside the claim's circle every point is its cell's; outside, the base's, its safe distance kept short of the circle's edge.
+ *  Everything else (sites, centreness, openness) is the base's. */
+export function claimable(base: Partition): Partition & { claim: Claim | null } {
+  const P: Partition & { claim: Claim | null } = {
+    ...base,
+    claim: null,
+    partition(px, py) {
+      const c = P.claim;
+      if (c) { const dx = px - c.u, dy = py - c.v; if (dx * dx + dy * dy < c.r * c.r) return c.cell; }
+      return base.partition(px, py);
+    },
+    partitionSafe(px, py) {
+      const c = P.claim;
+      if (!c) return base.partitionSafe(px, py);
+      const d = Math.hypot(px - c.u, py - c.v);
+      if (d < c.r) return { cell: c.cell, safe: Math.min(c.r - d, Math.pow(2, -base.depth)) };
+      const b = base.partitionSafe(px, py);
+      return { cell: b.cell, safe: Math.min(b.safe, d - c.r) };
+    },
+  };
+  return P;
+}

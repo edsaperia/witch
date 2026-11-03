@@ -846,18 +846,19 @@ The area is seeded by the night (never home, an area touching home's (Ed, 2026-1
 
 ### `challenge`
 
-the challenge area: a stone circle `radius` m round with the island's sigil, `columns` columns and the woods `margin` m past it, guarded by `adults` adults and `youths` youths a roster kind; the music spell cast within `castReach` m of its middle clears it for the find.
+the challenge area: a stone circle at least `radius` m round with a column a roster kind `spacing` m apart, the woods `margin` m past it, guarded by `adults` adults and `youths` youths a kind; the spell cast within `castReach` m of its middle clears it.
 
 1. Ed, 2026-11-03: "a large stone floor circle (like the legend circle) with the glowing sigil of the island carved into it, with a circle of stone columns around the edge (we already have art for this)" … "When they're all invited or have run off, you can go to the special place and cast the music spell" … "when you clear it you get the find. Each phase and biome have different set of finds; when you have them all you get a flask instead."
 2. Ed, 2026-11-03: "for now just make it one find selected at random and we will adjust later" (his rulings on #1725, through the coordinator: the circle three times wider (radius 12 to 36, columns 10 to 30, the sigil filling the floor); trees close to its edge, a few metres' margin; the find the night's one draw (findSets off); closed only once the night is won or lost, not at last call.)
-The find is the night's one draw over everything she hasn't found; `findSets` on, the island's own set (config/find-sets.json) instead. Nothing left to give, a flask. Cleared, home's dancefloor fills the circle and each bar one column fires a firework, the next clockwise each bar (Ed, 2026-11-03: "fireworks start coming out of one column at the start of each bar, going around the circle clockwise"): `fireworks.on`, its burst `fireworks.height` m up and `fireworks.burst` m round; the find comes down from the sky onto the floor, picked up with E. Its pack aggro as any wild area's (wildWatch); it closes only once the night is won or lost (the pack calm, the find gone); it never counts toward winning the island and gives no boon. Off: the find's area as before, its find to pick up with E.
+3. Ed, 2026-11-03: "The challenge area has no sigil stack, so you can't see how many wild creatures still standing. How about there are the same number of columns as creature types, and the sigils are on top of the columns, one type per column?" … "few is ok" … "128 animal pack is the ultimate challenge … A place to use all those stacked buffs that melt waves! Also the area will have to be big to fit a huge circle." (the fixed `columns` (30) replaced by a column a roster kind, `spacing` 7.5 m apart along the edge: the radius the larger of `radius` and kinds x spacing / 2 pi (36 m to about 30 kinds; 76 m at the late home's 64), its margin, cast reach, dancefloor and carved sigil grown with it, its area claiming the whole circle (rules/map.ts).)
+The circle grows to fit its columns (radius the larger of `radius` and kinds x `spacing` / 2 pi), its margin and the spell's reach with it; the island's sigil is carved in it, and clearing it gives the find. Each column carries its kind's wild fighters still standing (adult below, youth above, the rune stones' sizes, colours and embers), drawn within the stones' columns' range (leash.ranks.stones.range); one invited or run off leaves its column; a column with none left lights steadily warm, and every column lit, the spell can be cast. The find is the night's one draw over everything she hasn't found; `findSets` on, the island's own set (config/find-sets.json) instead. Nothing left to give, a flask. Cleared, home's dancefloor fills the circle and each bar one column fires a firework, the next clockwise each bar (Ed, 2026-11-03: "fireworks start coming out of one column at the start of each bar, going around the circle clockwise"): `fireworks.on`, its burst `fireworks.height` m up and `fireworks.burst` m round; the find comes down from the sky onto the floor, picked up with E. Its pack aggro as any wild area's (wildWatch); it closes only once the night is won or lost (the pack calm, the find gone); it never counts toward winning the island and gives no boon. Off: the find's area as before, its find to pick up with E.
 
 | knob | type | range |
 |---|---|---|
 | `challenge.on` | boolean |  |
 | `challenge.radius` | number | 0 to … |
 | `challenge.margin` | number | 0 to … |
-| `challenge.columns` | number | 0 to … |
+| `challenge.spacing` | number | 0 to … |
 | `challenge.adults` | number | 0 to … |
 | `challenge.youths` | number | 0 to … |
 | `challenge.castReach` | number | 0 to … |
@@ -1269,7 +1270,7 @@ The witch [1]: she takes hits (one point each, whatever hits her) before she's k
 
 ### `knockout`
 
-What happens when she's knocked out: her creatures go free, she comes back at the treehouse after a wait that grows with each knockdown, and the beat speeds up.
+What happens when she's knocked out: her carried sigils fall where she went down, she comes back at the treehouse after a wait, and the beat speeds up.
 
 1. Ed, 2026-10-04
 2. 2026-10-26: Ed's playtest of v4821: no sigil made; its rune at its feet, so she can leash it again
@@ -1278,7 +1279,8 @@ What happens when she's knocked out: her creatures go free, she comes back at th
 5. Ed, 2026-10-07: 6, 8, 10, 12
 6. "We can remove the extra knockdown time" (then, with each knockdown costing a BPM instead,: step 0 and max 6, so every knockdown waits the flat base and the desk's candles are all white)
 7. Ed, 2026-10-07: "the BPM goes up by 1 each time you die" (the DJ is off the decks and the crowd gets restless)
-Knocked out [1]: she collapses where she is; her sigil stack lets go from the bottom up, one every releaseEach seconds (releaseMax caps the whole release, 0 no cap; an empty stack waits emptyBeat seconds), each animal turning happy where it stands [2][3]; then she sparkles out and back in behind her decks in the treehouse over teleport seconds. Creatures at sigils she had put down on the ground stay hers. One timeline [4], the whole wait counted from her going down: her hat (if it drops) floats to the ground over hatFloat seconds, the screen dimmed, a sad trumpet; she sparkles out and back in behind her decks (teleport seconds); and she scratches there ("Every time she respawns she could do a bit of scratching to increase the respawn time") for the rest of the wait, at least respawn.minScratch, her army fighting on without her, a countdown over her. The wait ("any more than about six seconds to wait will be frustrating ... make each successive death a bit longer, with a cooldown"): respawn.base seconds, respawn.step more for each knockdown within respawn.cooldown seconds of the last, up to respawn.max [5][6]. releaseEach 0 (Ed): her sigils all drop at once as she goes down, under the hat's float. The beat speeds up [7]: each knockdown adds bpmStep to the party's tempo for the rest of the run (bpmCap, if set, is the most it can add), eased in over beat.knockBeats beats (4, a bar) from the next bar line; the music follows the beat clock, and the wave countdown and the ley line's pulse run that much faster (tempo plus bonus over the wave's own tempo), so the waves come sooner.
+8. Ed, 2026-11-03: "If you're knocked down, animals' sigils fall and stay where you were knocked down" (each on the free hex cell nearest the spot, its animal parked there, guarding; queued berries cancelled. dropRadius stays only for a guest leaving an online night (letGoHappy))
+Knocked out [1]: she collapses where she is; her sigil stack lets go from the bottom up, one every releaseEach seconds (releaseMax caps the whole release, 0 no cap; an empty stack waits emptyBeat seconds), each sigil falling on the free hex cell nearest where she went down, its animal parked there [8] (from [2][3] till then each turned happy where it stood); then she sparkles out and back in behind her decks in the treehouse over teleport seconds. Creatures at sigils she had put down on the ground stay hers. One timeline [4], the whole wait counted from her going down: her hat (if it drops) floats to the ground over hatFloat seconds, the screen dimmed, a sad trumpet; she sparkles out and back in behind her decks (teleport seconds); and she scratches there ("Every time she respawns she could do a bit of scratching to increase the respawn time") for the rest of the wait, at least respawn.minScratch, her army fighting on without her, a countdown over her. The wait ("any more than about six seconds to wait will be frustrating ... make each successive death a bit longer, with a cooldown"): respawn.base seconds, respawn.step more for each knockdown within respawn.cooldown seconds of the last, up to respawn.max [5][6]. releaseEach 0 (Ed): her sigils all drop at once as she goes down, under the hat's float. The beat speeds up [7]: each knockdown adds bpmStep to the party's tempo for the rest of the run (bpmCap, if set, is the most it can add), eased in over beat.knockBeats beats (4, a bar) from the next bar line; the music follows the beat clock, and the wave countdown and the ley line's pulse run that much faster (tempo plus bonus over the wave's own tempo), so the waves come sooner.
 
 - **`knockout.legendsLoyal`**: leashed legends stay with her (false: they're let go too: 'they're too old for this'; only a party legend is ever leashed now, and it's always let go).
 - **`knockout.dropHat`**: When knocked out she drops her hat where she fell, and wears none till she goes back and picks it up.
@@ -1450,13 +1452,12 @@ Her flight trail [1]: a ribbon of glow along her path, fading to nothing at its 
 - **`trail.bright`**: its brightness.
 - **`trail.fade`**: how it fades along its length (eased out: bright for its first stretch, then thinning to nothing; higher keeps it bright longer), its width tapering with it.
 - **`trail.sparks`**: the broom's little amber sparks as well. ?trail=0 hides it.
-- **`trail.steps`**: The cooldown trail: behind the buffer (her trail by speed, in the area's colour), a section of pixel dots for each dash's worth of the shared cooldown, each its own colour of her preset, the tail's dots going one at a time as it drains; off, the smooth trail as before.
-  1. Ed, 2026-11-03: "the trail is made of lots of little segments, and there are few colour sections from beginning to end, and you can see segments vanish one by one; so each colour section tells you if you have a dash" … "each segment could be just a single pixel, with a single pixel gap between" … "the number of small segments in each section relates to your speed, so it gets larger with buffs, and is larger in the treetop; but each section drains at the same rate" … "these dots should glow a little"
-  Each section showing (a part-drained one too) is a dash she hasn't got; only the buffer, everything's ready. Where her room lets a take-off go before the counter's empty, a small pixel ring marks the take-off threshold while it's locked. Sections' colours: config/trail-colours.json, chosen at the Broom station (render/trailColours.ts).
+- **`trail.steps`**: The cooldown trail: dotted sections of pixels in her preset's colours, the first (the buffer) as long as her speed makes it, then one for each dash's worth of the shared cooldown, the tail's dots going one at a time as it drains; behind the scenery as she is; off, the smooth trail as before.
+  1. Ed, 2026-11-03: "the trail is made of lots of little segments, and there are few colour sections from beginning to end, and you can see segments vanish one by one; so each colour section tells you if you have a dash" … "each segment could be just a single pixel, with a single pixel gap between" … "the number of small segments in each section relates to your speed, so it gets larger with buffs, and is larger in the treetop; but each section drains at the same rate" … "these dots should glow a little" … "The buffer … should be part of the sections as the first section, same dotted style in the trail colours." … "The cooldown trail goes behind scenery in the same way as the witch herself does." … "Increase the cooldown trail glow a little" … "remove the ring"
+  Each cooldown section showing (a part-drained one too) is a dash she hasn't got; only the first section, everything's ready. Sections' colours: config/trail-colours.json, chosen at the Broom station (render/trailColours.ts), the buffer taking the first.
 - **`trail.steps.dot`**: a dot's size, the picture's pixels.
 - **`trail.steps.gap`**: the gap between dots, the picture's pixels.
 - **`trail.steps.section`**: a section's length: seconds times her top speed now (so longer with speed buffs and over the treetops); each still drains in a dodge's cooldown.
-- **`trail.steps.ring`**: the small ring marking where the tail must drain to for a take-off, while it's locked (only where a take-off can go before the counter's empty).
 - **`trail.steps.halo`**: the faint halo of each section's colour under its dots (0 none).
 - **`trail.steps.glow`**: each dot's soft glow, its strength (0 none).
 - **`trail.steps.glowSize`**: each dot's glow, pixels across.
@@ -1482,7 +1483,6 @@ Her flight trail [1]: a ribbon of glow along her path, fading to nothing at its 
 | `trail.steps.dot` | number | 0 to … |
 | `trail.steps.gap` | number | 0 to … |
 | `trail.steps.section` | number | 0 to … |
-| `trail.steps.ring` | boolean |  |
 | `trail.steps.halo` | number | 0 to … |
 | `trail.steps.glow` | number | 0 to … |
 | `trail.steps.glowSize` | number | 0 to … |
@@ -1521,14 +1521,20 @@ Berries on the bushes of every area, which her creatures eat to evolve.
 4. Ed, 2026-10-27: "We can change 6/8/16=>3/4/8, and reduce berry spawns (keep the current cluster size but reduce frequency of clusters.)" (a youth showing a dot per berry eaten, two rows of 4 at most:: cost.per back to 7.25, so 3, 4 and 8, and bushesPerArea and perArea halved, half as many patches of the same size, the same share of their bushes in berry)
 5. Ed, 2026-10-05: "we can make the berry clusters bigger"
 6. Ed, 2026-10-04: legends are the areas' own, never grown
-Berries and evolving (Ed): every area has bushesPerArea berry bushes (normal bushes of that area) and perArea [min, max] berries on distinct ones at the start. Bushes grow in patches of patch.bushes [min, max] within patch.radius metres. Party animals (invited, not legends), following her or held at a sigil, take a berry on their way (Ed, v233): within detour metres of the line to where they're heading or of their sigil, never beyond their leash; they nip over, eat it (eatTime seconds) and carry on. The berry grows again at once on a free berry bush somewhere else on the map. A party animal evolves on the next bar line once it has eaten the berries its next level costs [1]: the fighting value it gains (cost.by "value": √(hp × dps), its species' strength included) at cost.per a berry, rounded, at least 1: so a berry buys the same fighting value for every species; one of normal strength costs 4 and 4 [2][3][4] ("power" would count hp × dps instead). Bigger patches since [5]: perArea and patch.bushes up a quarter to a half, so the first evolve's extra berry (2, was 1) and weaker species' one-berry minimum come out a little faster to feed than before. Evolving stops at adult [6].
+7. Ed, 2026-11-03: "No animal eats on its own" (only the bottom of her stack eats, fed by her with the sigil button; the detour knob (Ed, v233) and the baby's reach at its placed sigil (2026-10-11) gone with it)
+Berries and evolving (Ed): every area has bushesPerArea berry bushes (normal bushes of that area) and perArea [min, max] berries on distinct ones at the start. Bushes grow in patches of patch.bushes [min, max] within patch.radius metres. No animal eats on its own (Ed, 2026-11-03; see feed): the bottom of her stack eats a berry she feeds it, walking over and eating it (eatTime seconds). The berry grows again at once on a free berry bush somewhere else on the map. A party animal evolves on the next bar line once it has eaten the berries its next level costs [1]: the fighting value it gains (cost.by "value": √(hp × dps), its species' strength included) at cost.per a berry, rounded, at least 1: so a berry buys the same fighting value for every species; one of normal strength costs 4 and 4 [2][3][4] ("power" would count hp × dps instead). Bigger patches since [5]: perArea and patch.bushes up a quarter to a half, so the first evolve's extra berry (2, was 1) and weaker species' one-berry minimum come out a little faster to feed than before. Evolving stops at adult [6].
 
 - **`berries.colour`**: The berries' colour: a deep berry pink.
   1. Ed, 2026-11-03: "Berries: deep berry pink, instead of red." (red is the warnings' colour; a shiny dark cherry red (#9e1024) before, which colourGrammar old brings back)
   Code: `render/colourGrammar.ts`
 - **`berries.glow`**: How strongly a berry's soft halo glows.
   1. Ed, 2026-10-11
-  its soft halo's strength. B (debug) feeds the nearest party animal one berry. Babies [1]: a baby eats only when its sigil is put down with a berry within babyReach metres of it (following her, it never stops for one; when a baby's sigil is next to go down, the berries within babyReach of her glow brightly), and babyCost berries evolve it into a youth.
+  its soft halo's strength. B (debug) feeds the nearest party animal one berry. babyCost berries evolve a baby into a youth (one: Ed, 2026-10-11).
+- **`berries.feed`**: Feeding on command: a tap of the sigil button feeds the bottom of her stack a berry within reach of her; holding it puts that sigil down instead.
+  1. Ed, 2026-11-03: "something she does deliberately and accurately under time pressure" (no animal eats on its own; only the bottom of her stack, the one cycle moves through; each press queues one more berry, no hold-to-repeat)
+  2. Ed, 2026-11-03: "otherwise feeding berries becomes a way of moving creatures quickly rather than levelling them up" (speed: it goes to its berry at about its own pace, 1 to 1.2 times)
+  reach: metres from her a berry may be to be fed (the nearest un-taken one, marked, with the prompt). speed: the animal walks to each queued berry at its leash pace times this. hold: seconds the sigil button is held, with a feed on offer, to put the bottom sigil down instead of feeding it (a tap shorter than this feeds).
+  Code: `rules/berries.ts`, `rules/sigilButton.ts`, `render/feedTag.ts`
 
 | knob | type | range |
 |---|---|---|
@@ -1536,14 +1542,15 @@ Berries and evolving (Ed): every area has bushesPerArea berry bushes (normal bus
 | `berries.bushesPerArea` | number | 0 to … |
 | `berries.patch.bushes` | array of number |  |
 | `berries.patch.radius` | number | 0 to … |
-| `berries.detour` | number | 0 to … |
 | `berries.eatTime` | number | 0 to … |
 | `berries.cost.by` | string | "power" / "value" |
 | `berries.cost.per` | number | 0 to … |
 | `berries.colour` | string |  |
 | `berries.glow` | number | 0 to … |
-| `berries.babyReach` | number | 0 to … |
 | `berries.babyCost` | number | 0 to … |
+| `berries.feed.reach` | number | 0 to … |
+| `berries.feed.speed` | number | 0 to … |
+| `berries.feed.hold` | number | 0 to … |
 
 ### `invites`
 

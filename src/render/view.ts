@@ -146,6 +146,7 @@ import { challengeCarving, challengeFloor, challengeRing, drawChallengeColumns, 
 import { drawMarkers, drawSpeakers, forgetCandles, placeTreehouse, entDeckDrawn } from "./view/home";
 import { miniTreehouse, ZooExitTag } from "./zooExit";
 import { CastTag } from "./castTag";
+import { FeedTag } from "./feedTag";
 import { lanternLights, relicLights, setLights, sigilLights, updateSources } from "./view/lights";
 import { gameAim, placeCamera, ridePoint } from "./view/camera";
 import { setFrameUniforms } from "./view/frameUniforms";
@@ -553,6 +554,8 @@ export class View {
   zooExitTag: ZooExitTag | null = null;
   /** The spell's key prompt by its 🎶 (render/castTag.ts), made the first frame. */
   castTag: CastTag | null = null;
+  /** The feed prompt by the berry a tap would feed (render/feedTag.ts; Ed, 2026-11-03), made the first frame. */
+  feedTag: FeedTag | null = null;
   /** The great oak's crown over the house (render/crown.ts), with the house's rooms and treehouse.house.crown on. */
   crown: CrownView | null = null;
   /** The crown seen over the horizon from far off (render/crownLandmark.ts). */
@@ -1985,6 +1988,7 @@ export class View {
     this.time("hud");
     this.leashView.update(ht, this.camera, this.canvas.clientWidth || window.innerWidth, this.canvas.clientHeight || window.innerHeight, hatTop, this.witchBodyY, this.witchFeetY, this.witchFrameH);
     (this.castTag ??= new CastTag()).update(this); // (the spell's key prompt by its 🎶, drawn just now: render/castTag.ts)
+    (this.feedTag ??= new FeedTag()).update(this); // (the feed prompt by the berry a tap would feed: render/feedTag.ts)
     this.time("leash");
     this.magic.finish(t.lightBudget);
     this.stats.lights = LIGHT_UNIFORMS.uLightCount.value;

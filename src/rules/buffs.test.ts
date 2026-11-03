@@ -4,7 +4,7 @@
 import { describe, expect, it } from "vitest";
 import { TUNING, withTuning } from "./tuning";
 import { addPip, buffsOf, dashBuff, drainPips, groupOf, heavyWays, invitesBuffed, noBuffs, pipCount, pipFading, pipFuel, setBuffs, speedBuff, speedMultiplierBuffed, stepInvitesBuffed, wantsPip, type BuffStacks } from "./buffs";
-import { canEat, feed, type BerryState } from "./berries";
+import { canEat, feed, feedRoom, type BerryState } from "./berries";
 import { bagTuning } from "./bags";
 import { newInvites, type Affection } from "./invites";
 import { newSpells } from "./spells";
@@ -131,11 +131,12 @@ describe("berry pips", () => {
     drainPips(s, [], cs, LIFE, TUNING);
     expect(pipFuel(s, 0, TUNING)).toBe(2 * LIFE);
   });
-  it("adults feed themselves as youths do: a pip short, it wants a berry, and one eaten is a pip", () => {
+  it("an adult's berry is a pip, fed it by her (Ed, 2026-11-03: by command, as a youth's): a pip short, it has room for one, and one eaten is a pip", () => {
     const g = newGame(7, TUNING), c = g.creatures.find(k => !k.boss)!, s = g.berries;
     c.level = 2; c.leashed = true;
     expect(wantsPip(c, s, TUNING)).toBe(true);
     expect(canEat(c, s, TUNING)).toBe(true);
+    expect(feedRoom(c, s, TUNING)).toBe(B.pips.max - 1); // (its first pip, room for the rest)
     feed(s, c, 1, TUNING);
     expect(pipCount(pipFuel(s, c.id, TUNING), TUNING)).toBe(2); // (its first, and the berry's)
     for (let i = 0; i < 3; i++) feed(s, c, 1, TUNING);

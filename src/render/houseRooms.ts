@@ -316,6 +316,16 @@ export class HouseRoomsView {
     this.hub = -1; this.quads = []; this.hatsKey = ""; this.said = null; this.box.style.display = "none";
     for (const p of this.parts) p.mesh.visible = false;
   }
+  /** The house's drawing as it stands, for the pause page's Report (main.ts reportHost, ui/visualReport.ts): Ed's report of
+   *  2026-11-03, "Treehouse floor invisible" (furniture and rugs over the forest, no floor), not reproduced in the cloud; so the next
+   *  one says which of the floor's gates held it back: not asked, never painted (the workers' floor), not compiled after a late
+   *  landing, or faded to nothing by the landing's clocks. */
+  reportState(v: View): Record<string, unknown> {
+    const m = this.floor.material as THREE.MeshBasicMaterial, r = (n: number) => Math.round(n);
+    return { floor: { shown: this.floor.visible, asked: this.floorAsked, painted: !!this.floorCame, art: !!this.floorArt, compiled: this.floorCompiled, opacity: +m.opacity.toFixed(3), arrivalAt: Number.isFinite(this.floorArrivalAt) ? r(this.floorArrivalAt) : null },
+      loading: this.loadingFloor.visible, furniture: this.furniture.visible, pieces: this.pieces.size, rooms: this.parts.map(p => p.mesh.visible ? 1 : 0).join(""),
+      landing: { late: v.shaderLandingLimited, share: +v.landingHouseShare.toFixed(3), sleeping: v.landingSleeping, now: r(v.landingPresentationMs + v.game.clock.time * 1000) }, behind: +v.post.behind.toFixed(3) };
+  }
   /** The actual floor and bed, not optional props/ground/detail programs. */
   landingReady(renderer: THREE.WebGLRenderer): boolean {
     const bed = HOUSE_ROOMS.objects.find(o => o.use.kind === 'bed');
@@ -579,7 +589,7 @@ export class HouseRoomsView {
       const q = onTreehouse(T.ent!.deck.x + x / v.mpp, T.ent!.deck.y + z * ky + v.houseShift), full = alongRay(v, { x: q.x, y: q.y + g0, z: q.z }, z);
       return { x: b.x + anchor.x - full.x, y: b.y + anchor.y - full.y, z: b.z + anchor.z - full.z };
     };
-    this.brewing.update(v, pxWorld, ky * v.mpp);
+    this.brewing.update(v, pxWorld, ky * v.mpp, here); // (the cauldron and baskets in front of her drawn over her: render/houseWitchPass.ts inFrontOfHer)
     let glowed = false;
     const now = v.game.clock.time;
     for (const [k, { art, mesh, pos, id, x, z }] of this.pieces) {

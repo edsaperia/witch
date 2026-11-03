@@ -19,6 +19,7 @@ import { RUNE_SCALE, sigilSize } from "../../rules/runeOffset";
 import { hash2 } from "../../rules/random";
 import type { LeashView } from "../leash";
 import { SPRITE_UNIFORMS } from "../sprites";
+import type { Tuning } from "../../rules/tuning";
 import { groundHeight } from "../height";
 import { SLOT, SLOTS } from "./glyphs";
 import { asleepLegend, drawEmbers, legendShine, rankColour, rankKnobs, rankSize, sigilRankColour, standScale, stoneKnobs } from "./ranks";
@@ -93,21 +94,28 @@ export function stumpNoteSize(normal: number, pxPerMetre: number): number | unde
   return pxPerMetre > 0 ? Math.max(normal, renderKnobs.stumpIconMinPixels / pxPerMetre) : undefined;
 }
 
+/** A column's sigil's size (m) by its rank: a stone's and the challenge's columns' alike (render/challenge.ts). */
+export const columnSigilSize = (t: Tuning, lvl: number): number => (2 + 2 * 0.4) * t.stack.scale * rankSize(t, lvl) * standScale(t);
+/** One sigil standing in a column (a stone's, or a challenge column's: render/challenge.ts): creature `id`'s bare glyph at rank
+ *  `level`, `size` m, in colour c, its backing behind it and its embers round it while it's mostly shown. */
+export function columnSigil(lv: LeashView, time: number, dot: number[], id: number, level: number, x: number, y: number, z: number, size: number, alpha: number, c: [number, number, number]): void {
+  const g = lv.game, S = g.tuning.stack, RK = rankKnobs(g.tuning), sp = g.creatures[id]?.species ?? "fox", uv = lv.uv(lv.bareSlot(sp, level >= 3)), sh = lv.shadeOf(uv);
+  if (sh) lv.stackBack.add(x, y, z, size, sh, 0.02, 0.02, 0.035, (S.backing ?? 0.6) * alpha);
+  lv.stackGlyphs.add(x, y, z, size, uv, c[0], c[1], c[2], alpha, 1, false, legendShine(level, time, id)); // (a legend's shiny: ranks.ts)
+  if (alpha > 0.5) drawEmbers(lv.stackGlyphs, dot, lv.glyphPts.get(`${uv[0]},${uv[1]}`) ?? [], x, y, z, size, false, level, c, time, id * 7 + 3, RK.embers, RK.embers.stack);
+}
+/** A point `h` m up a standing sprite's face from its foot at (x, z) (its sprite's up: leaning back toward the camera), a little in
+ *  front of it: where a column's sigils stand. (The batches stand things on the ground under them, render/height.ts onGround, and a
+ *  point up a face is over ground further north, maybe higher or lower on a hill: the difference taken off, so it's the foot's
+ *  ground it stands on.) */
+export const upZ = (z: number, h: number): number => z + 0.3 + h * SPRITE_UNIFORMS.uUp.value.z;
+export const upY = (x: number, z: number, h: number): number => h * SPRITE_UNIFORMS.uUp.value.y + groundHeight(x, z) - groundHeight(x, upZ(z, h));
+
 export function drawStones(lv: LeashView, time: number, dot: number[]): void {
-  const g = lv.game, t = g.tuning, V = lv.stoneView, K = stoneKnobs(t), RK = rankKnobs(t), w = g.witch, S = t.stack;
+  const g = lv.game, t = g.tuning, V = lv.stoneView, K = stoneKnobs(t), RK = rankKnobs(t), w = g.witch;
   if (!t.leash.ranks?.on) return;
-  const sizeOf = (lvl: number) => (2 + 2 * 0.4) * S.scale * rankSize(t, lvl) * standScale(t), notes = notesSlot(lv);
-  const sigil = (id: number, level: number, x: number, y: number, z: number, size: number, alpha: number, c: [number, number, number]) => {
-    const sp = g.creatures[id]?.species ?? "fox", uv = lv.uv(lv.bareSlot(sp, level >= 3)), sh = lv.shadeOf(uv);
-    if (sh) lv.stackBack.add(x, y, z, size, sh, 0.02, 0.02, 0.035, (S.backing ?? 0.6) * alpha);
-    lv.stackGlyphs.add(x, y, z, size, uv, c[0], c[1], c[2], alpha, 1, false, legendShine(level, time, id)); // (a legend's shiny: ranks.ts)
-    if (alpha > 0.5) drawEmbers(lv.stackGlyphs, dot, lv.glyphPts.get(`${uv[0]},${uv[1]}`) ?? [], x, y, z, size, false, level, c, time, id * 7 + 3, RK.embers, RK.embers.stack);
-  };
-  // A point `h` m up a stone's face (its sprite's up: leaning back toward the camera), a little in front of it.
-  // (The batches stand things on the ground under them, render/height.ts onGround, and a point up a stone's face is over ground
-  // further north, maybe higher or lower on a hill: the difference taken off, so it's the stone's foot's ground it stands on.)
-  const U = SPRITE_UNIFORMS.uUp.value, upZ = (z: number, h: number) => z + 0.3 + h * U.z;
-  const upY = (x: number, z: number, h: number) => h * U.y + groundHeight(x, z) - groundHeight(x, upZ(z, h));
+  const sizeOf = (lvl: number) => columnSigilSize(t, lvl), notes = notesSlot(lv);
+  const sigil = (id: number, level: number, x: number, y: number, z: number, size: number, alpha: number, c: [number, number, number]) => columnSigil(lv, time, dot, id, level, x, y, z, size, alpha, c);
   const shown = new Set<string>();
   V.notes = null;
   const W0 = g.witches?.[0];

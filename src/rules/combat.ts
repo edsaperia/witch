@@ -287,6 +287,13 @@ export function stepCombat(s: CombatState, w: CombatWorld, data: CombatData = CO
     return false;
   };
   const ownStruck = (pd: Directive | undefined, c: Creature, tg: Target): void => { if (pd) { take(tg); markStrike(pd, c, time); } };
+  // (the legends among them, whose telegraphed strikes the waiting keep clear of: found once a step, not once a creature; each one's
+  // windup still read as it is when each creature looks, as before)
+  const legendsHere = spacing ? w.active.filter(o => o.level === LEGEND) : [];
+  // (a team's widest body, for its members' waiting gap: max of bodyGap over the members is its own radius plus the widest's, the
+  // same sum; worked out once a members list, not once a member)
+  const widest = new Map<readonly number[], number>();
+  const widestOf = (members: readonly number[]) => { let r = widest.get(members); if (r === undefined) { r = -Infinity; for (const id of members) { const o = w.creatures[id]; if (o) r = Math.max(r, drawnRadius(o, t)); } widest.set(members, r); } return r; };
   for (const c of w.active) {
     if (c.cheerUntil !== undefined && time >= c.cheerUntil) c.cheerUntil = undefined; // (its celebration over: back in the fight, rules/affection.ts)
     stepKnock(c, dt);
@@ -433,9 +440,8 @@ export function stepCombat(s: CombatState, w: CombatWorld, data: CombatData = CO
       return a && b && Math.hypot(b.x - a.x, b.z - a.z) > SPACING.epsilon ? { x: b.x - a.x, z: b.z - a.z } : null;
     } : undefined;
     const movingGoal = spacing ? (origin: { x: number; z: number }, range: number) => {
-      const team = teamOf(s, c.id), members = team?.members ?? pd?.state.members ?? [];
-      let gap = 0;
-      for (const id of members) { const other = w.creatures[id]; if (other) gap = Math.max(gap, bodyGap(c, other, t)); }
+      const team = teamOf(s, c.id), members = team?.members ?? pd?.state.members ?? [], wide = widestOf(members);
+      const gap = wide > -Infinity ? Math.max(0, drawnRadius(c, t) + wide + SPACING.clearance) : 0;
       const tell = pd ? PACKS.rhythms[packKindOf(c.species)?.rhythm ?? "steady"].tell : 0;
       const selected = !team || !!team.actions[c.id] && !team.used.includes(c.id) && pd?.role !== "hurt";
       const until = !selected ? Infinity : pd?.phase === "lull" ? pd.state.until + tell : pd?.phase === "tell" || pd?.phase === "combo" ? pd.state.until : Infinity;
@@ -445,9 +451,9 @@ export function stepCombat(s: CombatState, w: CombatWorld, data: CombatData = CO
         { dashReach: t.dash.distance * (t.dash.charges ?? 1), inviteReach: t.invites.range, areaRadius: w.areaAt?.(c.homeX, c.homeZ)?.r ?? 0, speed: speed * waitingProfile(c).speed, parameters: t.combatWaiting });
     } : undefined;
     const waitingHazards: WaitingHazard[] = spacing ? [{ x: p.x, z: p.z, radius: p.r }] : [];
-    if (spacing) for (const other of w.active) {
+    if (spacing) for (const other of legendsHere) {
       const warning = other.fight;
-      if (other.level !== LEGEND || sideOf(other) === sideOf(c) || !warning || warning.windupUntil <= time) continue;
+      if (sideOf(other) === sideOf(c) || !warning || warning.windupUntil <= time) continue;
       const attack = warning.move ? attackNamed(warning.move, data) : attackOf(other.species, other.level, data)?.attack;
       if (!attack) continue;
       if (attack.delivery === "quake" || attack.delivery === "pulse") waitingHazards.push({ x: other.x, z: other.z, radius: attack.radius ?? 5 });
