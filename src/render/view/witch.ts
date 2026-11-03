@@ -22,6 +22,7 @@ import { setOverlayTilt } from "../overlayTilt";
 import { miniatureTilt, potionStrength } from "../potionEffects";
 import { SPRITE_UNIFORMS, SpriteBatch, type SpriteInstance } from "../sprites";
 import { hatKey, noteHatLooks } from "./hatLooks";
+import { hatsOnHouseFloor } from "../houseRooms";
 import { inView } from "./culling";
 import { alongRay, DJ_DEPTH, entDepth, nearerCamera } from "./home";
 import { aggroGlow } from "../aggro";
@@ -30,7 +31,6 @@ import { djRoutineAt } from "../../rules/djSet";
 import { respawnLeft } from "../../rules/knockout";
 import { HAT_BESIDE } from "../view";
 import { hatFlight } from "../hatFlight";
-import { letterAt } from "../invites";
 import { atDecksFrom, koIris } from "../koIris";
 import { spinAt, spinFacing, spinLift } from "../spin";
 
@@ -297,17 +297,16 @@ export function drawWitch(v: View, time: number, ht: number, onTreehouse: (px: n
   // to where it lies over the knockout's float (ko.at to ko.floatUntil, knockout.hatFloat: rules/knockout.ts), drifting over as it goes, swaying side to
   // side less as it settles and rocking with each swing (the sprite turned as it swings back), its shadow gathering under it.
   const fk = bare && hatFrame && KO && KO.floatUntil > KO.at ? Math.max(0, Math.min(1, (ht - KO.at) / (KO.floatUntil - KO.at))) : 1;
-  let hat = bare && hatFrame ? hatFlight(Hat.down!.x, Hat.down!.z, fk, Math.max(0, hatTop - hatFrame.h * v.mpp * 0.6), HAT_BESIDE) : null;
-  // (lying on the house's floor, the hats' floor on a first morning: drawn where the house is, slid with her in it, on its floor
-  // outside it, as the house's pins are: render/pins.ts pinSpot)
-  const inHouse = !!(hat && deck?.house?.rooms && onRoomFloor(deck.house.rooms, Hat.down!.x, Hat.down!.z));
-  if (hat && inHouse) { const [X, Y, Z] = v.herOffset.on ? letterAt(v.herOffset, hat.x, hat.y, hat.z, groundHeight) : [hat.x, hat.y + deck!.h, hat.z]; hat = { ...hat, x: X, y: Y, z: Z }; }
+  // (lying on the house's floor, a first morning's on its hat spawn point: the house draws it, on its floor, in its order, as it does
+  // the clothes pile: render/houseRooms.ts hatsOnHouseFloor; Ed's report, 2026-11-03, "First night hat spawn is hidden in the floor")
+  const housed = hatsOnHouseFloor(g.witches[0], deck?.house?.rooms, ht);
+  const hat = bare && hatFrame && !housed.some(q => q.own) ? hatFlight(Hat.down!.x, Hat.down!.z, fk, Math.max(0, hatTop - hatFrame.h * v.mpp * 0.6), HAT_BESIDE) : null;
   if (v.bareBatch) submitWitchInstances(v.bareBatch, bare ? (hat ? [...her, { x: hat.x, y: hat.y + groundHeight(hat.x, hat.z), z: hat.z, frame: hatFrame!, flip: hat.flip }] : her) : [], repaintHeld);
   captureDodgeEchoes(v, ht, bare ? v.bareBatch : v.witchBatch, her, wsink, D);
-  const lying = drawLeftHats(v);
+  const lying = drawLeftHats(v, new Set(housed.map(hatKey)));
   // The party's and the beach's witches' shadows, and a small one under her hat (gathering as it comes down).
   v.witchShadows = [...v.partyWitchView.shadows, ...v.beachView.shadows];
-  if (hat && !inHouse) { const s = 0.35 + 0.65 * fk * fk; v.witchShadows.push({ x: hat.x, z: hat.z, w: hatFrame!.w * v.mpp * 0.9 * s, d: hatFrame!.w * v.mpp * 0.35 * s }); }
+  if (hat) { const s = 0.35 + 0.65 * fk * fk; v.witchShadows.push({ x: hat.x, z: hat.z, w: hatFrame!.w * v.mpp * 0.9 * s, d: hatFrame!.w * v.mpp * 0.35 * s }); }
   for (const q of lying) v.witchShadows.push({ x: q.x, z: q.z, w: q.w * 0.9, d: q.w * 0.35 });
   // The rest of the screen dims while she's down with her hat floating off (render/post.ts uKoDim): in over half a second from
   // the knockdown, held till she sparkles away, out as she goes. No hat to lose, no dim.
@@ -373,10 +372,11 @@ function brimOf(v: View, x: number, y: number, z: number, half: number): number 
 /** Her other hats lying about, left when she took a new one in her room (rules/hat.ts left; Ed, 2026-10-12: "the previous one(s)
  *  stay in the world"), each in the look it went down in (render/view/hatLooks.ts), a batch a look. Returns where each lies and
  *  how wide (m), for its shadow. */
-function drawLeftHats(v: View): { x: number; z: number; w: number }[] {
+function drawLeftHats(v: View, housed: ReadonlySet<string>): { x: number; z: number; w: number }[] {
   noteHatLooks(v);
   const out: { x: number; z: number; w: number }[] = [], by = new Map<string, SpriteInstance[]>();
   for (const q of v.game.witches[0].hat.left) {
+    if (housed.has(hatKey(q))) continue; // (on the house's floor: the house draws it, render/houseRooms.ts)
     const look = v.hatLooks.get(hatKey(q)) ?? v.assets.witchGenome, atlas = v.assets.hatArt(look), frame = atlas?.frames[0];
     if (!atlas || !frame) continue;
     const id = `lyingHat:${JSON.stringify(look ?? null)}`, x = q.x + HAT_BESIDE;

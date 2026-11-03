@@ -480,6 +480,8 @@ export interface Tuning {
     /** the whole treehouse tree before her bedroom (rules/arrive.ts treeShot): height metres (till its art says), angle up, fill of the frame, time seconds to it */
     tree?: { height: number; angle: number; fill: number; time: number } };
   treehouse: { /** metres from the speaker ring's outer edge to its footprint's nearest edge */ gap: number; angle: number; clear: number; lightReach: number; lightStrength: number;
+    /** Seconds after she leaves a treehouse floor before she can land on one, and after she lands before she can leave (Ed, 2026-11-03; rules/witch.ts perchCool; 0 or absent: none). */
+    landCooldown?: number;
     /** The deck on the Ent (rules/treehouse.ts): its radius and floor height (m), the landing grace, the rail's keep-in, the map table's radius and reach, the decks' arc (inner, outer m; from, to degrees, 90 south) and her seat behind them (m south). */
     deck?: { on: boolean; radius: number; height: number; grace: number; rail: number; table: number; tableUse: number; decks: { inner: number; outer: number; from: number; to: number }; seat: number };
     /** The house on the Ent (rules/treehouse.ts, docs/backlog/treehouse.md step 1; on: in place of the deck; the oak since 2026-10-24, its floor and the Terrace's layout config/house/'s): its floor height (m), the landing grace, the edge's keep-in; landTime: seconds to come down onto the Terrace flying onto it; fall: with no broom she falls off the Terrace's open rim (on: for now a switch, the brooms as objects to come; time: seconds till she's back at the circle). */

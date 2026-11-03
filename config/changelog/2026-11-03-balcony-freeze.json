@@ -1,0 +1,6 @@
+{
+  "version": null,
+  "items": [
+    "Flying off the treehouse no longer freezes the game for a few seconds: the house's floor preview is made ready while the night loads, and the sky, the clouds and the tilt-shift are made ready while you're in the house, not on the moment you leave."
+  ]
+}

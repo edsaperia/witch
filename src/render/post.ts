@@ -466,6 +466,23 @@ export class Post {
     this.pass("tilt", out === this.b ? this.a : out, u => { common(u); u.uSrc.value = this.b.texture; u.uDir.value.set(0, 1); });
   }
 
+  /** The tilt-shift made ready ahead, off-screen and at no strength (View.warmOutside; Ed's playtest, 2026-11-03, "long freeze after
+   *  leaving the balcony"): its targets (the ping-pong pair and the sharp mask) made on the GPU, and its passes (the composite into a
+   *  target, the blur each way) drawn once into them, so none of it is a first on the frame the blur comes back as she leaves the
+   *  house. The pair is scratch between frames: nothing reads it till the next frame draws it again. */
+  warmTilt(): void {
+    const r = this.renderer, was = r.getRenderTarget();
+    for (const t of [this.a, this.b, this.sharpMask]) r.initRenderTarget(t);
+    this.pass("composite", this.a, () => {}); // (as last set: only the program and the target matter here)
+    const blur = (src: THREE.WebGLRenderTarget, x: number) => (u: Record<string, THREE.IUniform>) => {
+      u.uSrc.value = src.texture; u.uDepth.value = this.scene.depthTexture; u.uSharp.value = this.sharpMask.texture; u.uSharpOn.value = 0;
+      u.uStrength.value = 0; u.uDir.value.set(x, 1 - x);
+    };
+    this.pass("tilt", this.b, blur(this.a, 1));
+    this.pass("tilt", this.a, blur(this.b, 0));
+    r.setRenderTarget(was);
+  }
+
   /** The sharp mask drawn (Post.sharp); false when there's nothing to keep sharp (no stack, or tiltShift.stackSharp off). */
   private drawSharp(camera: THREE.Camera): boolean {
     const live = this.tuning.tiltShift.stackSharp !== false ? this.sharp.filter(s => s.mesh.visible && ((s.mesh.geometry as THREE.InstancedBufferGeometry).instanceCount ?? 0) > 0) : [];
