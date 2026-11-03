@@ -1739,7 +1739,7 @@ export class View {
     const canopyTo = TL ? TL.reach : g.witch.mode !== "ground" ? Math.min(t.haze.far, t.scenery.canopyReach ?? 0) : 0;
     this.canopyNow += (canopyTo - this.canopyNow) * (Math.abs(canopyTo - this.canopyNow) < 1 ? 1 : 0.08);
     LIGHT_UNIFORMS.uCanopyReach.value = this.canopyNow;
-    const up = placeCamera(this, time, pose);
+    const up = placeCamera(this, time, pose, repaintHeld);
 
     if (!repaintHeld) this.swapHomeArt();
     setFrameUniforms(this, time, up);

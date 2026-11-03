@@ -57,7 +57,7 @@ export function easeCameraLift(current: number, need: number, seconds: number): 
 }
 
 /** Places the camera for this frame; returns the camera's up (tilted with its pitch), for the sprites' facing. */
-export function placeCamera(v: View, time: number, pose: ReturnType<typeof poseOf>): THREE.Vector3 {
+export function placeCamera(v: View, time: number, pose: ReturnType<typeof poseOf>, repaint = false): THREE.Vector3 {
   const g = v.game, t = g.tuning;
   const trip = landscapeState(g);
   if (trip) landscapeUniform.value.set(trip.id, trip.amount, trip.setting, trip.phase);
@@ -65,9 +65,10 @@ export function placeCamera(v: View, time: number, pose: ReturnType<typeof poseO
   const liftDt = Number.isFinite(v.camLiftTime) ? time - v.camLiftTime : 0;
   // drawWitch computes the house offset after camera placement. Repainting the
   // same instant must use the offset its first camera placement actually saw.
-  // (a sail's dive is drawn with the night's clock still, its frames new all the same: the offset taken on each, so the game's camera
-  // takes over from it with this frame's, the one the dive's last shot aimed by: View.landingShot)
-  if (time !== v.camLiftTime || v.fly) v.houseCamInput.copy(v.houseCam as THREE.Vector3Like);
+  // (only a repaint of a held world keeps it, `repaint`: a sail's dive and the first frames of a night are drawn with its clock
+  // still, new frames all the same, and took a stale offset, the last night's or the dive's first frame's; now each takes the last
+  // drawn, so the game's camera takes over from the dive with the one its last shot aimed by, View.landingShot)
+  if (time !== v.camLiftTime || !repaint) v.houseCamInput.copy(v.houseCam as THREE.Vector3Like);
   v.camLiftTime = time;
   pose = wholeAtStation(v, pose);
   const vertigo = v.fly || v.telescope ? 0 : vertigoAmount(potionStrength(g, 'vertigo'), g.witch.lift);
