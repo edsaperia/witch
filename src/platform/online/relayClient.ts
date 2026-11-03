@@ -37,6 +37,7 @@ export function connectRelay(options: RelayOptions) {
   let ws: RelaySocket;
   let resume: { room: string; player: 0 | 1; token: string } | null = null;
   let recovering = false, recoveryUntil = 0, retryAt = 0, recoveryTimer: ReturnType<typeof setTimeout> | undefined;
+  let pendingResume: RelaySocket | null = null;
   let peerUntil = 0, awaitingRebase = false, closingUntil = 0;
   const retired = new Set<RelaySocket>();
   const closeRetired = () => { for (const old of retired) old.close(); retired.clear(); };
@@ -76,11 +77,10 @@ export function connectRelay(options: RelayOptions) {
     const remaining = recoveryUntil - Date.now();
     if (remaining <= 0) { lost(); return; }
     trouble(true, remaining);
-    if (Date.now() >= retryAt) {
-      // Keep this attempt alive while connecting or awaiting its authenticated reply.
-      // A relay may already have rotated the ticket: replacing it every second can
-      // discard that reply and repeatedly retry the stale credential. The overall
-      // recoveryUntil deadline still takes precedence over this per-attempt window.
+    if (Date.now() >= retryAt && !(pendingResume === ws && ws.readyState === 1)) {
+      // A CONNECTING attempt has a bounded lifetime. Once resume is sent, the relay
+      // may have rotated the ticket, so keep that socket until its reply or close.
+      // The original recoveryUntil deadline still bounds the entire recovery.
       retryAt = Date.now() + RECOVERY_ATTEMPT_MS;
       const old = ws;
       try { openSocket(); } catch { /* Retry only within the existing deadline. */ }
@@ -120,10 +120,14 @@ export function connectRelay(options: RelayOptions) {
     watchdog = active && !stopped ? setTimeout(checkDownstream, peerUntil || awaitingRebase || closingUntil ? 250 : heartbeatMs * 2) : undefined;
   }
   function openSocket(): void {
-  const socket = makeSocket(url.href); ws = socket;
+  const socket = makeSocket(url.href); ws = socket; pendingResume = null;
   socket.addEventListener("open", () => {
     if (stopped || socket !== ws) return;
-    if (recovering) { sendMessage({ type: "resume", ...resume }); return; }
+    if (recovering) {
+      if (Date.now() >= recoveryUntil) { lost(); return; }
+      if (sendMessage({ type: "resume", ...resume })) pendingResume = socket;
+      return;
+    }
     sendMessage(options.telephone ? { type: "telephone", publicKey: options.telephonePublicKey } : { type: options.token ? "join" : "host", room: options.room, ...(options.token ? { token: options.token } : {}) });
     timer = setInterval(() => send("heartbeat"), heartbeatMs);
   });
@@ -134,8 +138,9 @@ export function connectRelay(options: RelayOptions) {
       const m = JSON.parse(event.data) as Record<string, unknown>;
       if (!m || typeof m !== "object" || m.protocol !== 1 || typeof m.type !== "string") throw new Error("Incompatible relay message");
       if (recovering) {
+        if (Date.now() >= recoveryUntil) { lost(); return; }
         if (m.type !== "resumed" || m.role !== role || m.player !== resume?.player) throw Error("Resume was not authenticated");
-        readTicket(m.resume); recovering = false; cleanup(); closeRetired();
+        readTicket(m.resume); pendingResume = null; recovering = false; cleanup(); closeRetired();
         lastDownstream = Date.now(); awaitingRebase = role === "guest";
         if (!awaitingRebase) trouble(false);
         arm();

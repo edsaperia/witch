@@ -202,7 +202,7 @@ Allocated T5B on d1e0790 passed join, movement, wardrobe and mutual witch pixels
 
 ## Reconnect attempt lifetime (3 November 2026)
 
-Each replacement socket gets four seconds for connecting and its authenticated resume reply before another attempt replaces it. The original 20-second recovery deadline still ends the call exactly once; attempts never renew it. This avoids throwing away a delayed reply after the relay has rotated the actor ticket. Focused fake-socket tests cover slow handshakes, delayed rotated tickets for both roles, timed-out attempts, stale callbacks, explicit Leave and existing policy/deadline behavior. No relay or wire change; browser acceptance still requires a fresh canonical allocation.
+Each replacement socket gets four seconds for connecting. Once it opens and sends resume, it remains current until its authenticated reply or close, bounded by the original 20-second recovery deadline; attempts never renew that deadline. This avoids throwing away even a reply delayed beyond four seconds after the relay has rotated the actor ticket. A reply or socket-open event delivered after the deadline cannot revive the call, even if the timer callback is delayed. Focused fake-socket tests cover slow handshakes, delayed rotated tickets for both roles, timed-out connecting attempts, closed attempts, stale callbacks, explicit Leave and existing policy/deadline behavior. No relay or wire change; browser acceptance still requires a fresh canonical allocation.
 
 ## Guest bed hold across missing input quanta (3 November 2026)
 
