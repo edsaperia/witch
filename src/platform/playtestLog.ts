@@ -11,6 +11,7 @@ import type { CompareKey } from "../app/compareKey";
 import { setCaughtErrorSink } from "./caughtError";
 import { beginBrowserJournal, currentJournal, journalEntry, notable, recentNotables, setLogContext, type NotableEvent } from "./playtestJournal";
 import { packLog } from "./logCodec";
+import { localStore } from "./storageScope";
 export { logCaughtError } from "./caughtError";
 
 /** Ed, 2026-10-30: keep the last 20 crashes in the L log, including failures before play starts. */
@@ -110,7 +111,7 @@ export interface PlaytestRun { errors?: PlaytestError[] }
 const round = (x: number) => Math.round(x * 10) / 10;
 
 function readRuns(): PlaytestRun[] {
-  try { const v = localStorage.getItem(KEY); return v ? (JSON.parse(v) as PlaytestRun[]) : []; } catch { return []; }
+  try { const v = localStore()?.getItem(KEY); return v ? (JSON.parse(v) as PlaytestRun[]) : []; } catch { return []; }
 }
 
 export class PlaytestLog {
@@ -183,7 +184,7 @@ export class PlaytestLog {
     try {
       const runs = readRuns().filter(r => r.started !== this.run.started);
       runs.push(this.run);
-      localStorage.setItem(KEY, JSON.stringify(runs.slice(-KEEP)));
+      localStore()?.setItem(KEY, JSON.stringify(runs.slice(-KEEP)));
     } catch { /* storage full or blocked: the log is a convenience */ }
   }
   /** The fight's scale or speed changed (the debug overlay's knobs): noted, with the game time. */

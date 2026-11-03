@@ -1815,6 +1815,33 @@
    "readIn": [
     "src/app/nightSave.ts"
    ]
+  },
+  {
+   "name": "fresh",
+   "values": [
+    "1"
+   ],
+   "does": "A brand-new player's very first morning, every time, on the newest deploy: a throwaway storage namespace of its own (nothing of this browser's saves read or written; settings, controls and the telephone's identity at their defaults), the boot writing ?fresh=<token> so a reload, sail or night in it carries on; ?fresh=1 again starts another.",
+   "group": "run",
+   "since": "2026-11-03",
+   "decision": "Ed, 2026-11-03: \"can you make a link that always starts a fresh game with the latest version?\"",
+   "readIn": [
+    "index.html",
+    "src/platform/storageScope.ts"
+   ]
+  },
+  {
+   "name": "latest",
+   "values": [
+    "<build>"
+   ],
+   "does": "Written by a fresh game's boot when version.json shows a newer build than the page running: the one reload to it, past the browser's cached page; a link with it never reloads again, and the boot takes it off.",
+   "group": "run",
+   "since": "2026-11-03",
+   "readIn": [
+    "src/app/newBuild.ts",
+    "src/main.ts"
+   ]
   }
  ],
  "patterns": [

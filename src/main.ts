@@ -110,7 +110,8 @@ import { addNew, dropNew, loadGuide, storeGuide } from "./app/guideSave";
 import { GuidePin } from "./render/view/guidance";
 import { warmChart } from "./app/chartWarm";
 import { powerLines } from "./app/hud";
-import { NewBuildNotice } from "./app/newBuild";
+import { latestBuildLink, NewBuildNotice } from "./app/newBuild";
+import { freshHref, localStore, storageScope } from "./platform/storageScope";
 import { SPRITE_UNIFORMS } from "./render/sprites";
 import { setupKnobs } from "./app/knobs";
 import { Sound } from "./app/sound";
@@ -150,6 +151,18 @@ declare const __BUILD__: string;
 const BUILD = typeof __BUILD__ === "string" ? __BUILD__ : "dev";
 
 performance.mark("witch:main"); // (the load's steps, for timing the arrival: witch:main, :game, :view, :ready; app/arrive.ts :landed)
+// A fresh game (?fresh=1; Ed, 2026-11-03: "a link that always starts a fresh game with the latest version"): its throwaway storage
+// made before anything reads the link (platform/storageScope.ts: ?fresh=1 becomes ?fresh=<token>), then the newest deploy loaded
+// if this page is an older one (app/newBuild.ts latestBuildLink: once at most, its ?latest= taken off the link after).
+{
+  const scope = storageScope();
+  if (scope.fresh) {
+    const to = await latestBuildLink(BUILD, location.href, { restart: scope.began });
+    if (to) { location.replace(to); await new Promise(() => undefined); }
+    const link = new URL(location.href);
+    if (link.searchParams.has("latest")) { link.searchParams.delete("latest"); history.replaceState(history.state, "", link); }
+  }
+}
 prewarmArtWorkers(); // (the art workers load their code while the night is made: render/assets.ts)
 const params = new URLSearchParams(location.search);
 // Proof admission belongs to this incoming page, never a saved night's later parameter restoration.
@@ -334,7 +347,7 @@ const setAutoTalk = (on: boolean) => {
   try { slotStorage.setItem("witch.autotalk", on ? "on" : "off"); } catch { /* fine */ }
 };
 
-document.getElementById("version")!.textContent = typeof __BUILD__ === "string" ? __BUILD__ : "dev";
+document.getElementById("version")!.textContent = (typeof __BUILD__ === "string" ? __BUILD__ : "dev") + (storageScope().fresh ? " · fresh game" : ""); // (?fresh: a throwaway game, its saves not hers)
 // The old card remains only as a hidden home for the Controls/Options nodes borrowed by menus.
 // Ed, 2026-10-30: no start screen and no eager update notes.
 const seedEl = document.getElementById("seed")!;
@@ -427,7 +440,7 @@ function hostCollections(game: Game) {
   return { wardrobe, bags: new Set(BAGS.filter(b => wardrobe.has(b.id)).map(b => b.id)), hats: withSharedFind(game, "hat", new Set(game.witches[0].spells.hats ?? HAT_SPELLS.filter(hat => hat.built).map(hat => hat.id))), parts: withSharedFind(game, "part", partsNow()), records: withSharedFind(game, "record", new Set(ownedRecords())) };
 }
 const phoneSounds = telephoneCues(() => sound.sfx);
-const phoneFaces = telephoneFaces(phoneEnabled ? (() => { try { return localStorage; } catch { return null; } })() : null);
+const phoneFaces = telephoneFaces(phoneEnabled ? localStore() : null);
 const phoneFace = (number: string) => { const face = phoneFaces.get(number); return face ? telephoneFaceCanvas(face) : null; };
 const visitPreparation = { stage: "not-started", at: 0, advancedAt: 0, progress: 0, failure: "" };
 function traceVisit(stage: string, detail?: unknown): void {
@@ -436,7 +449,7 @@ function traceVisit(stage: string, detail?: unknown): void {
   if (typeof message === "string") visitPreparation.failure = message.slice(0, 500);
   notable("telephone-preparation", stage, detail);
 }
-const phone = telephoneStation({ enabled: phoneEnabled, callsEnabled: phoneCallsEnabled, face: phoneFace, clearFaces: () => { phoneFaces.clear(); phonePresence.refresh(); }, digit: digit => { if (phone.state.status !== "preparing") phoneSounds.digit(digit); }, storage: (() => { try { return localStorage; } catch { return null; } })(), session: {
+const phone = telephoneStation({ enabled: phoneEnabled, callsEnabled: phoneCallsEnabled, face: phoneFace, clearFaces: () => { phoneFaces.clear(); phonePresence.refresh(); }, digit: digit => { if (phone.state.status !== "preparing") phoneSounds.digit(digit); }, storage: localStore(), session: {
   build: BUILD, hostGame: () => N().game,
   trace: traceVisit,
   appearance: () => { sharedLoans.begin(personalKit(), loan); if (!phone.visiting) sharedLoans.observe(N().game, personalKit()); return appearance(page.look()) ?? appearance({}); },
@@ -981,7 +994,7 @@ async function restoreComment(file: File): Promise<void> {
   soloDiagnostic(phone.active, N().spec.borrowed === true, () => {});
   await browserNightStore(location.pathname + ":comment-restore").write(comment.night);
   soloDiagnostic(phone.active, N().spec.borrowed === true, () => {});
-  const url = new URL(location.href); url.search = "?restore=comment&resume=1"; location.href = url.toString();
+  const url = new URL(location.href); url.search = "?restore=comment&resume=1"; location.href = freshHref(url.toString());
 }
 let nightWriteReported = false;
 const visitNightSaves = nightStore ? borrowedNightSaves(nightStore) : null;
@@ -1082,11 +1095,11 @@ const ladder = new QualityLadder(gpuName(view.renderer.getContext()), params);
 // game (its saves are borrowed: app/visitSaves.ts) or on a call; the page's own slot stops saving its night and reloads.
 const savesLocked = () => browserSaveSlots().visiting || !!visitNightSaves?.suspended || phone.active;
 const deleteSaves = (id: string | null) => savesLocked() ? Promise.resolve("Finish your visit or call before deleting saves.") :
-  deleteSave(browserSaveSlots(), id, bootSlot, { stop: async () => { await autosave?.stop(); }, resume: () => autosave?.resume(), clear: which => clearSlotNights(which) }, () => { forgetArrival(); location.assign(location.pathname); });
+  deleteSave(browserSaveSlots(), id, bootSlot, { stop: async () => { await autosave?.stop(); }, resume: () => autosave?.resume(), clear: which => clearSlotNights(which) }, () => { forgetArrival(); location.assign(freshHref(location.pathname)); });
 // The player's Settings page (app/settingsPage.ts): its settings on the live pieces now, the page itself opened from the pause page's dev menu.
 const settingsPage = new SettingsPage({ mutate, input, shake, ladder, freeze, audio: on => sound.freeze(!on), tuning: () => phone.preferences(N().game), version: BUILD,
   saves: { list: () => browserSaveSlots().list(), active: () => bootSlot, choose: id =>
-    switchSave(browserSaveSlots(), () => autosave?.flush(performance.now()) ?? Promise.resolve(true), () => { forgetArrival(); location.assign(location.pathname); }, id),
+    switchSave(browserSaveSlots(), () => autosave?.flush(performance.now()) ?? Promise.resolve(true), () => { forgetArrival(); location.assign(freshHref(location.pathname)); }, id),
     delete: id => deleteSaves(id), locked: savesLocked },
 });
 ladder.mutate = mutate;
@@ -1213,7 +1226,7 @@ view.onGpuEvent = what => N().playtest.gpuEvent(what, Math.round(view.ledger.tot
 view.onContextRestored = () => {
   N().playtest.gpuEvent("context restored: the night loaded again");
   const link = repro.link();
-  location.replace(N().params.has("debug") ? link : link.replace(/&debug$/, ""));
+  location.replace(freshHref(N().params.has("debug") ? link : link.replace(/&debug$/, "")));
 };
 N().playtest.frameState = () => {
   const r = frameStats.recent(), pct = (a: number[], p: number) => { if (!a.length) return null; const s = [...a].sort((x, y) => x - y); return Math.round(s[Math.min(s.length - 1, Math.floor(p * s.length))] * 10) / 10; };
@@ -1258,8 +1271,8 @@ async function sailFromChart(href: string, to: Sailed): Promise<boolean> {
   const d = departing?.island === to.island && departing.seed === to.seed ? departing : null;
   departing = null;
   if (!d) recordSail();
-  if (sailWay(N().params, N().tuning) === "reload") { location.href = href; return Promise.resolve(false); }
-  return sailOrReload(() => sailInPlace(to, d?.night), href, h => { location.href = h; }, e => {
+  if (sailWay(N().params, N().tuning) === "reload") { location.href = freshHref(href); return Promise.resolve(false); }
+  return sailOrReload(() => sailInPlace(to, d?.night), href, h => { location.href = freshHref(h); }, e => {
     console.error("sail in place: it went wrong, so the island's page loads instead", e);
     N().playtest.sail(String((e as Error)?.stack ?? e).slice(0, 600));
   });
