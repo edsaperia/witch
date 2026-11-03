@@ -1,11 +1,11 @@
 // The journey's islands, step 1 (Ed, 2026-10-11; docs/backlog/journey.md "First prototype"): an island of so many areas the
-// waves reach (map.islandAreas: home and that many more, the nearest home's), round; the swarms by wave number on one master
-// curve (population.swarm.waves: wave 64 brings today's final swarm, every island plays it from wave 1 as far as it has areas).
+// waves reach (map.islandAreas: home and that many more, the nearest home's), round; the swarms along each island's own route,
+// scaled by its size (Ed, 2026-11-03: population.swarm.largestIsland, only the largest islands reach the final swarm).
 import { describe, expect, it } from "vitest";
 import { TUNING, type Tuning } from "./tuning";
 import { AREA_TYPES, generateMap } from "./map";
 import { isInside } from "./mapShape";
-import { routeShare, referenceAt } from "./swarm";
+import { islandShare, referenceAt } from "./swarm";
 import { routeIndex, routePopulation } from "./growth";
 import { routeOf } from "./party";
 import { newGame, stepGame, STEP } from "./game";
@@ -44,27 +44,34 @@ describe("islands by area count (map.islandAreas)", () => {
   }, 120000);
 });
 
-describe("the master curve (population.swarm.waves)", () => {
+describe("the swarm curve by island (population.swarm.largestIsland; Ed, 2026-11-03)", () => {
   const S = TUNING.population.swarm;
-  it("is by wave number: wave 1 the start, wave 64 today's final swarm, whatever the map's size", () => {
-    expect(S.waves).toBe(64);
-    expect(routeShare(1, S.waves!)).toBe(0);
-    expect(routeShare(64, S.waves!)).toBe(1);
-    expect(routeShare(100, S.waves!)).toBe(1); // (a bigger map holds there)
-    expect(referenceAt(routeShare(64, S.waves!), S).size).toBeCloseTo(S.endAverage, 9);
-    expect(referenceAt(routeShare(10, S.waves!), S).size).toBeLessThan(2); // (a 10-area island's last: gentle)
+  it("grows along each island's own route, scaled by its size: only the largest islands' last area reaches the final swarm", () => {
+    expect(S.largestIsland).toBe(50); // (the phase-5 islands: rules/rosters.ts sizeOfPhase)
+    expect(S.curve).toBe(0.8);
+    expect(islandShare(1, 10, S)).toBe(0);
+    expect(islandShare(10, 10, S)).toBeCloseTo(10 / 50, 12); // (a 10-area island's last: a fifth of the way)
+    expect(islandShare(5, 10, S)).toBeCloseTo((4 / 9) * (10 / 50), 12);
+    expect(islandShare(25, 50, S)).toBeCloseTo(24 / 49, 12);
+    expect(islandShare(50, 50, S)).toBe(1);
+    expect(islandShare(64, 64, S)).toBe(1); // (home at the campaign's end: bigger than the largest, held at 1)
+    expect(islandShare(40, 64, S)).toBeCloseTo(39 / 63, 12);
+    expect(referenceAt(islandShare(50, 50, S), S).size).toBeCloseTo(S.endAverage, 9);
+    // (the curve steeper early, 0.8: a 10-area island's last area's reference swarm is 1 + 11·0.2^0.8, about 4, not 1.9 as by wave)
+    expect(referenceAt(islandShare(10, 10, S), S).size).toBeCloseTo(1 + 11 * Math.pow(0.2, 0.8), 9);
+    for (const n of [10, 20, 30, 40]) expect(islandShare(n, n, S)).toBeLessThan(islandShare(n + 10, n + 10, S));
   });
 
-  it("peoples each area by its wave alone: the same wave, the same swarm, on a 10-area island and a 50-area one", () => {
+  it("peoples each area by its place on its island and the island's size, as islandShare says", () => {
     const R = TUNING.population.byRoute, start = TUNING.population.start;
     for (const n of [10, 50]) {
       const map = generateMap(123, island(n)), at = routeIndex(routeOf(map).order), made = spawnCreatures(map);
+      expect(at.size).toBe(n);
       for (const [key, i] of at) {
         const [cx, cy] = key.split(",").map(Number), species = AREA_TYPES[map.typeOf(cx, cy)].creature;
         const mine = made.filter(c => c.cell[0] === cx && c.cell[1] === cy && !c.boss && !c.circle);
         const want = routePopulation(i, at.size, R, S, start, species);
-        expect([1, 2].map(l => mine.filter(c => c.level === l).length), `${n} areas, wave ${i} (${species})`).toEqual([want[1], want[2]]);
-        expect(want).toEqual(routePopulation(i, 999, R, S, start, species)); // (by its wave, not the route's length)
+        expect([1, 2].map(l => mine.filter(c => c.level === l).length), `${n} areas, place ${i} (${species})`).toEqual([want[1], want[2]]);
       }
     }
   }, 240000);

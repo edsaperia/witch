@@ -10,7 +10,7 @@
 import { makeCreature, type Creature, type Level } from "./creatures";
 import { AREA_TYPES, type ForestMap } from "./map";
 import { COMBAT, strengthOf, type CombatData } from "./combat";
-import { buildSwarm, POWER_TABLE, routeShare, type PowerTable, type SwarmTuning } from "./swarm";
+import { buildSwarm, islandShare, POWER_TABLE, type PowerTable, type SwarmTuning } from "./swarm";
 import { hash2, rng } from "./random";
 
 export interface Pending { level: Level; wave: number; n: number }
@@ -66,10 +66,10 @@ export interface ByRoute {
 }
 
 /** An area's whole starting population [babies, young, adults] (its legend and its circle's baby aside), by its place on the
- *  route (`index` of `length`): its hostile swarm (rules/swarm.ts buildSwarm) over population.start's young and adults (times
+ *  route (`index` of `length`, its island's route: islandShare, the island's size over the largest's too): its hostile swarm (rules/swarm.ts buildSwarm) over population.start's young and adults (times
  *  its count scale), at least minHostile of them; and its babies, byRoute.babies (or start's, if more), at most babyCap. */
 export function routePopulation(index: number, length: number, R: ByRoute, S: SwarmTuning, start: { babies: number; young: number; adults: number }, species: string, table: PowerTable = POWER_TABLE, data: CombatData = COMBAT): [number, number, number] {
-  const scale = countScale(species), [sy, sa] = buildSwarm(routeShare(index, S.waves ?? length), S, species, table, data); // (by its wave on the master curve: S.waves)
+  const scale = countScale(species), [sy, sa] = buildSwarm(islandShare(index, length, S), S, species, table, data); // (along its own island, scaled by its size: Ed, 2026-11-03)
   const babies = Math.min(Math.max(0, R.babyCap), Math.max(startCount(start.babies, scale), R.babies));
   const young = startCount(start.young, scale) + sy, adults = startCount(start.adults, scale) + sa;
   return [babies, young + Math.max(0, (R.minHostile ?? 0) - young - adults), adults]; // (at least minHostile young or adults: Ed, 2026-10-07)
