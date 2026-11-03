@@ -1,0 +1,7 @@
+{
+  "pr": 1774,
+  "group": "Feeding",
+  "decisions": [
+    {"id": "feedGlow", "label": "Feeding: berry glow (×)", "note": "Ed, 3 November: \"the berry glows brighter\": how many times brighter the berry a tap would feed glows (its halo bigger and brighter, its core lit). 2.5 by default; 1: the pulsing halo it had.", "control": {"type": "slider", "min": 1, "max": 5, "step": 0.25}, "default": 2.5, "apply": {"knob": "berries.feed.glow"}}
+  ]
+}
