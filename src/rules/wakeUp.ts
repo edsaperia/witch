@@ -15,11 +15,12 @@
 // itself (the page's endDream) or any key or move is pressed, her phone's alarm goes off and the wake-up goes on as ever.
 import type { Controls, Game, Witch } from "./game";
 import { castPartySpell } from "./party";
+import { wakeInBedroom } from "./opening"; // (tuckIn)
 import { recordTempo } from "./beat";
 import { deckOf } from "./treehouse";
 import { floorHats, hatSlots, hatsOnFloor, HOUSE_ROOMS, objectAt, objectFront, objectWorld, reserveHatPoints } from "./houseRooms";
 import { placementFacing } from "./housePlacement";
-import { bedside, wakeInBedroom } from "./opening";
+import { bedside } from "./opening";
 import { pileOut, PILE_SLOTS, type PileSlot } from "./clothesPile";
 
 export type WakeBeat = /** asleep, dreaming (finds on loan) */ "dream" | "alarm" | "snooze" | "stretch" | "up";
@@ -101,31 +102,14 @@ function bedsideFor(g: Game, W: Witch): { x: number; z: number } | null {
 }
 
 export function startWake(g: Game, ht: number, { dreaming = false, mirrored = false, yesterday = false }: WakeStart = {}, W: Witch = g.witches[0]): boolean {
-  if (!intoBed(g, W)) return false;
-  const wake: WakeState = { beat: dreaming ? "dream" : "alarm", at: ht, snoozes: 0, open: false, mirror: mirrored, events: [], pile: [...PILE_SLOTS], ...(yesterday ? { yesterday } : {}) };
-  if (W === g.witches[0]) g.wake = wake; else W.wake = wake;
-  if (!yesterday) hatOnFloor(g, ht, W);
-  return true;
-}
-
-/** Her put in her bed, as the wake-up has her (startWake's place and facing); false (nothing changed) without her bedroom. */
-function intoBed(g: Game, W: Witch): boolean {
   const at = inBed(g);
   if (!at || !HOUSE_ROOMS.rooms.some(q => q.id === bedRoom())) return false;
   const bed = HOUSE_ROOMS.objects.find(o => o.use.kind === "bed"), placement = bed?.placement;
   W.body = { ...W.body, x: at.x, z: at.z, vx: 0, vz: 0, seated: false, perch: true, mode: "ground", lift: 0, ...placementFacing(placement ? placement.rotation - placement.baseRotation : 0) };
+  const wake: WakeState = { beat: dreaming ? "dream" : "alarm", at: ht, snoozes: 0, open: false, mirror: mirrored, events: [], pile: [...PILE_SLOTS], ...(yesterday ? { yesterday } : {}) };
+  if (W === g.witches[0]) g.wake = wake; else W.wake = wake;
+  if (!yesterday) hatOnFloor(g, ht, W);
   return true;
-}
-
-/** Put to bed for a morning still to come (a sail's dive, main.ts bedFirst; the bed's next night as it's made): in her bed, where and
- *  as startWake will have her, and the camera settled on her there (rules/opening.ts wakeInBedroom's), so nothing moves as the
- *  wake-up starts: the dive's last shot is the game's camera as it lands (app/arrive.ts), with no ease across her room after (she was
- *  put beside the bed, the camera settled there, then moved into it as the wake-up started, the camera following her 3 m and more).
- *  False (nothing changed) without the house's bedroom. */
-export function tuckIn(g: Game, W: Witch = g.witches[0]): boolean {
-  const at = inBed(g);
-  if (!at || !HOUSE_ROOMS.rooms.some(q => q.id === bedRoom())) return false;
-  return wakeInBedroom(g, W, at) && intoBed(g, W);
 }
 
 /** The first morning's hat (startWake): hers, lying in the middle of the hats' floor (between its two rows of found hats), off her
@@ -165,6 +149,27 @@ export function firstMorning(g: Game, W: Witch = g.witches[0]): { pile: PileSlot
  *  only as the wake-up started). */
 export function morningAfter(): { pile: PileSlot[]; hatLying: boolean } {
   return { pile: [...PILE_SLOTS], hatLying: false };
+}
+
+/** Her put in her bed, as the wake-up has her (startWake's place and facing, as it puts her there); false (nothing changed) without
+ *  her bedroom. */
+function intoBed(g: Game, W: Witch): boolean {
+  const at = inBed(g);
+  if (!at || !HOUSE_ROOMS.rooms.some(q => q.id === bedRoom())) return false;
+  const bed = HOUSE_ROOMS.objects.find(o => o.use.kind === "bed"), placement = bed?.placement;
+  W.body = { ...W.body, x: at.x, z: at.z, vx: 0, vz: 0, seated: false, perch: true, mode: "ground", lift: 0, ...placementFacing(placement ? placement.rotation - placement.baseRotation : 0) };
+  return true;
+}
+
+/** Put to bed for a morning still to come (a sail's dive, main.ts bedFirst; the bed's next night as it's made): in her bed, where and
+ *  as startWake will have her, and the camera settled on her there (rules/opening.ts wakeInBedroom's), so nothing moves as the
+ *  wake-up starts: the dive's last shot is the game's camera as it lands (app/arrive.ts), with no ease across her room after (she was
+ *  put beside the bed, the camera settled there, then moved into it as the wake-up started, the camera following her 3 m and more).
+ *  False (nothing changed) without the house's bedroom. */
+export function tuckIn(g: Game, W: Witch = g.witches[0]): boolean {
+  const at = inBed(g);
+  if (!at || !HOUSE_ROOMS.rooms.some(q => q.id === bedRoom())) return false;
+  return wakeInBedroom(g, W, at) && intoBed(g, W);
 }
 
 /** The dream's over (the page's: it played to its end, or a key was pressed while the next island was still being made): her
