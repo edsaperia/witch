@@ -1,11 +1,11 @@
-// The anchor chains' hint (Ed, 2026-11-03; rules/anchor.ts): the first time she tries to take off with an adult on her leash (the
-// "grounded" leash event, rules/game.ts, with an adult in her stack: rules/anchor.ts anchorsOf), besides the hop, the flashing chains and the thud every refusal has
+// The adults' hint (Ed, 2026-11-03; rules/chains.ts): the first time she tries to take off with an adult on her leash (the
+// "grounded" leash event, rules/game.ts, with an adult or legend in her stack: rules/chains.ts weighingChains), besides the hop, the rattling chains and the thud every refusal has
 // (render/view/witch.ts, render/leash/stack.ts, platform/audio/sfxCues.ts), a short line says why, in the house's word bubble's
 // look (render/houseRooms.ts), for ANCHOR_HINT_FOR seconds. Once on this browser (localStorage witch.hint.anchor; blocked: once a page).
 import type { Game } from "../rules/game";
-import { anchorLength, anchorsOf } from "../rules/anchor";
+import { weighingChains } from "../rules/chains";
 
-export const ANCHOR_HINT = "Adults are too heavy to fly with. Put their sigils down to take off.";
+export const ANCHOR_HINT = "Adults and legends are too heavy to fly with. Put their sigils down to take off.";
 export const ANCHOR_HINT_KEY = "witch.hint.anchor";
 /** Seconds the line shows. */
 export const ANCHOR_HINT_FOR = 4;
@@ -28,7 +28,7 @@ export const resetAnchorHint = () => { seen = false; shownAt = -Infinity; };
 /** This frame's hint: shown from the first anchored refusal for ANCHOR_HINT_FOR seconds of her clock. */
 export function updateAnchorHint(g: Game, ht: number): void {
   if (typeof document === "undefined") return;
-  const W = g.witches[0], at = g.leashEvents.length ? anchorHintDue(g.leashEvents, W.id, anchorLength(g.tuning) > 0 && anchorsOf(W.leash.stack, g.creatures).length > 0) : null;
+  const W = g.witches[0], at = g.leashEvents.length ? anchorHintDue(g.leashEvents, W.id, weighingChains(W.leash.stack, g.creatures).length > 0) : null;
   if (at !== null) shownAt = at;
   const on = ht >= shownAt && ht - shownAt < ANCHOR_HINT_FOR;
   if (!on) { if (box) box.hidden = true; return; }

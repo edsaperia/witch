@@ -5,7 +5,6 @@ import { lakeKnobs, onLake, stopAtShore } from "./lakes";
 import { clamp, lerp, smoothstep } from "./random";
 import type { Tuning } from "./tuning";
 import { beachOf, keepIn, softEdge, type Bounds } from "./mapShape";
-import { NO_LOAD, type LeashLoad } from "./leashWeight";
 import { flyOnto, keepInHouse, keepOnDeck, landingSpot, landsOn, noRiseAt, overDeck, type Deck } from "./treehouse";
 
 export type Mode = "ground" | "rising" | "treetop" | "descending";
@@ -93,10 +92,9 @@ export function liftFor(height: number, t: Tuning): number {
 /** How much of the canopy shows: 0 in ground mode, 1 in treetop mode. */
 export const canopyShown = (w: WitchState) => smoothstep(w.lift);
 
-/** `load`: the pull of the sigils she carries (rules/leashWeight.ts): slower away from it, a little drift toward it, a
- *  slower rise, and over the treetops a slow sink (to leash.weight.floor while she flies on; all the way, and down to
- *  the ground, if she stops or the load is extreme). */
-export function stepWitch(w: WitchState, intent: Intent, dt: number, t: Tuning, bounds: Bounds, load: LeashLoad = NO_LOAD, deck: Deck | null = null): WitchState {
+/** (`_load`: retired with the sigil weight, Ed 2026-11-03, "the weight system goes"; nothing pulls on her now but her chains,
+ *  rules/chains.ts. The argument stays only so the step's call site, being moved by #1609, merges cleanly: rules/leashWeight.ts loadOf.) */
+export function stepWitch(w: WitchState, intent: Intent, dt: number, t: Tuning, bounds: Bounds, _load?: unknown, deck: Deck | null = null): WitchState {
   if (w.seated) {
     if (!intent.toggleMode && Math.hypot(intent.moveX, intent.moveZ) < 0.1) return w;
     w = { ...w, seated: false };
@@ -131,20 +129,9 @@ export function stepWitch(w: WitchState, intent: Intent, dt: number, t: Tuning, 
   // The house's balcony (Ed, 2026-10-14): flying in over it at treetop height, she lands on it, no button (below, once this step's
   // move is known: she must come onto it from outside, so rising straight up off it doesn't land her again at once).
   const wasOver = !!deck?.house && flyOnto(deck, w.x, w.z);
-  const Wt = t.leash.weight, over = load.over, steering = Math.hypot(intent.moveX, intent.moveZ) > 0.1;
-  if (mode === "rising") { lift += dt / Math.max(1e-3, t.riseTime * (1 + Wt.rise * over)); if (lift >= 1) { lift = 1; mode = "treetop"; perch = false; } }
+  if (mode === "rising") { lift += dt / Math.max(1e-3, t.riseTime); if (lift >= 1) { lift = 1; mode = "treetop"; perch = false; } }
   else if (mode === "descending") { lift -= dt / Math.max(1e-3, perch && deck?.house ? deck.house.landTime : t.descendTime); if (lift <= 0) { lift = 0; mode = "ground"; } }
-  else if (mode === "treetop") {
-    // Loaded, she's slowly pulled down: to the floor while she flies on (never dropped into a fight she didn't choose),
-    // all the way if she stops or the load is extreme, landing; unloaded, she floats back up.
-    if (over > 0) {
-      // Over a lake (Ed, 2026-10-23: never down over the water from the treetops) the pull stops at its floor: she never lands there.
-      const lake = !!bounds.lakes && onLake(bounds, w.x, w.z, lakeKnobs(t).pad);
-      const floor = lake ? Math.max(Wt.floor, LAKE_HOVER) : steering && !load.extreme ? Wt.floor : 0;
-      if (lift > floor) lift = Math.max(floor, lift - Math.min(Wt.sinkMax, Wt.sink * over) * dt);
-      if (lift <= 0) { lift = 0; mode = "ground"; }
-    } else if (lift < 1) lift = Math.min(1, lift + dt / Math.max(1e-3, t.riseTime));
-  }
+  else if (mode === "treetop" && lift < 1) lift = Math.min(1, lift + dt / Math.max(1e-3, t.riseTime)); // (nothing pulls her out of the sky: Ed, 2026-11-03)
 
   // Never down on a lake's water (Ed, 2026-10-11: rules/lakes.ts): coming down over it, she holds a little off it, and lands
   // once she's over the shore.
@@ -164,17 +151,8 @@ export function stepWitch(w: WitchState, intent: Intent, dt: number, t: Tuning, 
   // Rising and descending blend the two, keeping her speed.
   let vx = lerp(gx, top.vx, L), vz = lerp(gz, top.vz, L);
   const boost = top.boost * L, braking = top.braking && L > 0.5;
-  // Her sigils' pull (rules/leashWeight.ts): moving away from it, that part of her speed is cut (her input still steers);
-  // and she drifts a little toward it (to driftShare of her top speed at an extreme load).
-  let driftX = 0, driftZ = 0;
-  if (over > 0) {
-    const away = -(vx * load.x + vz * load.z);
-    if (away > 0) { const cut = away * (1 - 1 / (1 + Wt.drag * over)); vx += load.x * cut; vz += load.z * cut; }
-    const drift = Wt.drift * max * Math.min(1, over / Math.max(1e-6, Wt.extreme));
-    driftX = load.x * drift; driftZ = load.z * drift;
-  }
   if (bounds.land) ({ vx, vz } = softEdge(bounds, w.x, w.z, vx, vz, Math.max(max, Math.hypot(vx, vz)), t.map?.push ?? 0, t.map?.drift ?? 0)); // (the island's soft edge)
-  let x = w.x + (vx + driftX) * dt, z = w.z + (vz + driftZ) * dt;
+  let x = w.x + vx * dt, z = w.z + vz * dt;
   if (bounds.land) { const p = keepIn(bounds, x, z); if (p.x !== x || p.z !== z) { const n = bounds.land.inward(p.x, p.z), out = -(vx * n.x + vz * n.z); if (out > 0) { vx += n.x * out; vz += n.z * out; } x = p.x; z = p.z; } }
   else {
     if (x < bounds.minX || x > bounds.maxX) { x = clamp(x, bounds.minX, bounds.maxX); vx = 0; }

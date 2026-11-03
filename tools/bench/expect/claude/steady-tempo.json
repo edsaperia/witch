@@ -1,0 +1,6 @@
+{
+  "reason": "The night's tempo is steady (Ed, 2026-11-03: \"the tempo (pulse speed) should stay the same through the night, and only raises when you get knocked down\"): the per-wave tempo is removed (beat.tempos, waveTempo, waveArrived, the beat clock's wave field). The music style's arc was already flat at 120, so the tempo, beats and spark are unchanged in play; only the beat clock's state loses its unused wave field.",
+  "rules": {
+    "beat": "the beat clock no longer carries a wave field (the wave whose tempo it was heading for); its segments, bonus and shift are unchanged"
+  }
+}

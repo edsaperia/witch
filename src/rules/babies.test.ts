@@ -6,8 +6,6 @@ import type { Creature, Level } from "./creatures";
 import { speedFactor, wanderRange } from "./creatures";
 import { newGame, stepGame, STEP, type Controls, type Game } from "./game";
 import { babiesOf, scatterSpot, stepBaby, trailPoint } from "./babies";
-import { creatureWeight, freeOf, loadOf } from "./leashWeight";
-import { leashLoad } from "./game";
 import { isInside } from "./mapShape";
 import { toEvolve } from "./berries";
 import { TUNING, withTuning } from "./tuning";
@@ -98,13 +96,12 @@ describe("babies on her leash", () => {
       Object.assign(boar, { species: "boar", level: 1 as Level, x: from.x, z: from.z, tx: from.x, tz: from.z, anchorX: from.x, anchorZ: from.z, cell: g.map.cellSafe(w.x, w.z).cell, gone: false, hp: undefined, hunting: 0, fight: { target: { kind: "witch", id: 0 }, readyAt: 1e9, windupUntil: 0, aimX: 0, aimZ: 0 } });
       g.byArea = null;
     };
-    // (in the open: all of them out past the edge, and her load nothing)
+    // (in the open: all of them out past the edge)
     {
       const { g, babies } = scene(4), w = g.witch;
       fight(g, { x: w.x + 10, z: w.z });
       run(g, 4);
       for (const c of babies) expect(Math.hypot(c.x - g.witch.x, c.z - g.witch.z)).toBeGreaterThanOrEqual(B.scatter * 0.98);
-      expect(leashLoad(g).total).toBe(0);
     }
     // (by the coast, the fight coming from inland: they flee seaward, but stop on the land)
     {
@@ -166,29 +163,4 @@ describe("babies and berries", () => {
     expect(berry.claimedBy).toBeNull();
     expect(b.level).toBe(0);
   }, 60000);
-});
-
-describe("babies' weight", () => {
-  it("8 babies fill her free allowance on the ground and in the treetops, whatever their species", () => {
-    const t = T, W = t.leash.weight;
-    for (const species of ["fox", "bear", "bat"]) {
-      expect(creatureWeight({ species, level: 0 }, t, false)).toBeCloseTo(W.levels[0], 9);
-      expect(creatureWeight({ species, level: 0 }, t, true)).toBeCloseTo(W.babyGround!, 9);
-    }
-    expect(8 * creatureWeight({ species: "bear", level: 0 }, t, true)).toBeLessThanOrEqual(freeOf(t, true) + 1e-9);
-    expect(9 * creatureWeight({ species: "bear", level: 0 }, t, true)).toBeGreaterThan(freeOf(t, true));
-    expect(8 * creatureWeight({ species: "bear", level: 0 }, t, false)).toBeLessThanOrEqual(freeOf(t, false) + 1e-9);
-    expect(9 * creatureWeight({ species: "bear", level: 0 }, t, false)).toBeGreaterThan(freeOf(t, false));
-    // a youth still weighs its strength
-    expect(creatureWeight({ species: "bear", level: 1 }, t)).toBeGreaterThan(creatureWeight({ species: "fox", level: 1 }, t));
-  });
-
-  it("a tidy line costs nothing: babies at their places behind her pull no load; one left far behind pulls", () => {
-    const t = T, gap = babiesOf(t).gap, mk = (id: number, x: number) => ({ id, species: "fox", level: 0, x, z: 0, gone: false } as unknown as Creature);
-    const cs = Array.from({ length: 8 }, (_, i) => mk(i, -(8 - i) * gap)); // (the stack's bottom, id 7, nearest)
-    const stack = cs.map(c => c.id), at = { x: 0, z: 0, mode: "ground" };
-    expect(loadOf(stack, cs, at, t).total).toBe(0);
-    cs[0].x = -60; // the oldest left behind
-    expect(loadOf(stack, cs, at, t).total).toBeGreaterThan(0);
-  });
 });

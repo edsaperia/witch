@@ -4,7 +4,7 @@
 // its arrival sections and then loops; a build (a riser, a sweep, a snare roll) leads into the
 // next wave, ending as it lands. Sections change only on block lines (style.blockBars, 4 bars), so
 // every change lands on a phrase. Bars are the beat clock's (rules/beat.ts): bar 0 at game time 0,
-// the tempo rising wave by wave.
+// the tempo steady all night but for her knockdowns (Ed, 2026-11-03).
 // Hooks for later: knockedOut plays the knockout section (a breakdown under a filter); siege adds the
 // style's siege parts (rules/musicScore.ts); party, near a woken area that has joined the party,
 // its party parts. Numbers only: the platform plays them.

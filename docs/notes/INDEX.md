@@ -98,7 +98,7 @@ says what each note covers.
 - Soundsystem spell / cast
 - Loose sigil
 - Legend tether
-- Anchor chain
+- Chain drag
 - Follower buffs
 - Sigil stack
 - Rank sigils

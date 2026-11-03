@@ -47,14 +47,14 @@ export interface RankKnobs {
    *  `far`; the cast's ring of `bars` bars `radius` m round the stone's foot, each step `cell` m, stretched north-south by `ringTilt` against the camera's foreshortening; the conversion `convert` seconds. */
   stones?: { range: number; fade: number; size: number; near: number; far: number; bars: number; radius: number; cell: number; convert: number; ringTilt?: number };
   /** The leashes as chains (render/leash/chain.ts): a link's length (m) by rank, youth to legend (babies have no leash: Ed, 2026-10-11, and again 2026-10-28); a legend's tether's links `tether` times
-   *  its rank's; a slack leash `slack` longer than its span; and their motion (chain.ts ChainMotion: damping, gravity, arcPull,
-   *  iterations, jump); a travelling follower's chain hanging from its sigil reaches the ground `fall` m along its walking path for
+   *  its rank's; its verlet points `segment` m apart (each span drawn as links); and their motion (chain.ts ChainMotion: damping, gravity,
+   *  friction on the ground, iterations, jump); a travelling follower's chain hanging from its sigil reaches the ground `fall` m along its walking path for
    *  every metre it falls (travelPose.ts sigilPath). */
-  chain?: { link: number[]; tether: number; slack: number; damping: number; gravity: number; arcPull: number; iterations: number; jump: number; fall: number };
+  chain?: { link: number[]; tether: number; segment: number; damping: number; gravity: number; friction: number; iterations: number; jump: number; fall: number };
 }
 
 export const STONES_DEFAULT = { range: 90, fade: 20, size: 4.4, near: 5, far: 10, bars: 36, radius: 4.4, cell: 0.55, convert: 2.4, ringTilt: 1.6 };
-export const CHAIN_DEFAULT = { link: [0.62, 0.78, 1], tether: 1.3, slack: 0.12, damping: 0.96, gravity: 9.8, arcPull: 60, iterations: 6, jump: 8, fall: 0.5 };
+export const CHAIN_DEFAULT = { link: [0.62, 0.78, 1], tether: 1.3, segment: 2, damping: 0.96, gravity: 9.8, friction: 0.6, iterations: 6, jump: 8, fall: 0.5 };
 
 export const RANKS_DEFAULT: RankKnobs = {
   on: true, hex: 6, glyph: 5,

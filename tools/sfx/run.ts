@@ -10,7 +10,7 @@ import { Sfx } from "../../src/platform/audio/sfx";
 import { voiceOf } from "../../src/platform/audio/voices";
 import { TUNING } from "../../src/rules/tuning";
 import { mixAt, nearness } from "../../src/rules/music";
-import { newBeatClock, waveArrived, waveTempo, type BeatClock } from "../../src/rules/beat";
+import { newBeatClock, type BeatClock } from "../../src/rules/beat";
 import { barAt, type MusicCue } from "../../src/rules/musicPlan";
 import type { MusicStyle } from "../../src/rules/musicScore";
 import type { Creature } from "../../src/rules/creatures";
@@ -117,8 +117,7 @@ function at(t: number): Stretch {
 async function render(fx: boolean, seed: () => void): Promise<{ buf: AudioBuffer; sections: { t: number; section: string; wave: number; pass?: number }[] }> {
   seed();
   const oc = new OfflineAudioContext(2, Math.ceil(SECONDS * RATE), RATE), M = TUNING.music;
-  const beatT = { beat: { bpm: style.bpm, tempos: style.arc.map(a => a.bpm ?? style.bpm), blockBars: style.blockBars, rampBars: style.tempoRampBars ?? 8 } };
-  const clock: BeatClock = newBeatClock(style.bpm, waveTempo(beatT, 0));
+  const clock: BeatClock = newBeatClock(style.bpm); // (the style's tempo every wave: Ed, 2026-11-03)
   const m = new Music(oc, M.volume * LEVEL, style, 7);
   const s = new Sfx(oc, fx ? M.volume * LEVEL : 0, TUNING.sfx, style.root + 24);
   const duck = (by: number, sec: number) => m.duck(by, sec), cues = [...CUES].sort((a, b) => a.at - b.at), sections: { t: number; section: string; wave: number; pass?: number }[] = [];
@@ -126,7 +125,7 @@ async function render(fx: boolean, seed: () => void): Promise<{ buf: AudioBuffer
   for (let f = 0; f * STEP < SECONDS - 0.05; f++) {
     const t = f * STEP;
     void oc.suspend(Math.round(t * RATE) / RATE).then(() => {
-      while (wave < WAVES.length && WAVES[wave] <= t) waveArrived(clock, beatT, ++wave, t);
+      while (wave < WAVES.length && WAVES[wave] <= t) ++wave;
       const st = at(t), bar = (x: number) => barAt(clock, x);
       const cue = { waves: WAVES.slice(0, wave).map(bar), nextAt: bar(WAVES[wave] ?? Infinity), bootUntil: bar(BOOT), knockedOut: !!st.ko, siege: st.siege ?? 0, party: st.party ?? 0, legend: st.legend ?? 0 } as MusicCue;
       m.update(mixAt(M, nearness(M, st.dist), 0, st.dist), cue, t, clock, true);
