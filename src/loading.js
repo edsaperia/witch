@@ -5,7 +5,8 @@
 import cinzel from "./ui/fonts/CinzelDecorative-Regular.ttf?url";
 import { startLoadingScreen } from "./ui/loadingScreen.js";
 import { loading as built } from "../config/tuning.json"; // (its one block, a named import, so the screen's script stays small)
-import { decisions } from "../config/decisions/1194-loading-screen.json";
+import { decisions as screen } from "../config/decisions/1194-loading-screen.json";
+import { decisions as fade } from "../config/decisions/1752-loading-fade.json";
 
 const p = new URLSearchParams(location.search);
 const off = p.get("loading") === "0" || (navigator.webdriver && p.get("loading") !== "1") || p.get("creator") === "0" || p.has("bot") || p.has("arrive") || p.has("zoo") || p.has("shot") || p.get("opening") === "old" || p.has("chart");
@@ -26,7 +27,7 @@ function knobs() {
     const key = index?.version === 1 && /^s[1-9][0-9]*$/.test(index.active) ? `witch.save.${index.active}.witch.settings` : "witch.settings";
     saved = JSON.parse(localStorage.getItem(key) || "{}");
   } catch { /* storage blocked: as built */ }
-  for (const d of decisions) {
+  for (const d of [...screen, ...fade]) {
     const v = saved[d.id];
     if (typeof v === "number" && v >= d.control.min && v <= d.control.max) k[d.apply.knob.slice("loading.".length)] = v;
   }

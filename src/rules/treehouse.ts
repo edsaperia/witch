@@ -180,13 +180,14 @@ function outOfDeskBox(d: Deck, x: number, z: number): { x: number; z: number } {
 }
 
 /** The nearest place to (x, z) she can stand in the house: on its floor, the rail in from its edge, and out of the decks' desk; `off`
- *  when (x, z) has gone out over the Terrace's open rim (she flies, or falls), the place given then on the floor's edge there. */
-export function keepInHouse(d: Deck, x: number, z: number): { x: number; z: number; off: boolean } {
+ *  when (x, z) has gone out over the Terrace's open rim (she flies, or falls), the place given then on the floor's edge there. `hold`:
+ *  every edge keeps her in, the open rims too (just landed: treehouse.landCooldown, rules/witch.ts). */
+export function keepInHouse(d: Deck, x: number, z: number, hold = false): { x: number; z: number; off: boolean } {
   const rooms = d.house!.rooms;
   if (!rooms || onRoomFloor(rooms, x, z)) return { ...outOfDeskBox(d, x, z), off: false };
   const n = nearestRoomFloor(rooms, x, z)!;
   // out over the open rim (past where the rest of the floor's edge keeps her, the rail in from it): off the house
-  if (d.house!.noWalls || atTakeoff(d, x, z)) return { x: n.x, z: n.z, off: true };
+  if (!hold && (d.house!.noWalls || atTakeoff(d, x, z))) return { x: n.x, z: n.z, off: true };
   return { ...outOfDeskBox(d, n.x, n.z), off: false };
 }
 

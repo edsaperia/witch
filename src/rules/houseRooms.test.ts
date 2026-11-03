@@ -141,7 +141,7 @@ describe("the oak's rooms", () => {
     const cool = structuredClone(W.cool);
     const rise = (x: number, z: number) => {
       W.body = { ...W.body, x: d.x + x, z: d.z + z, vx: 0, vz: 0, perch: true, mode: "ground", lift: 0 };
-      W.cool = structuredClone(cool); W.landedAt = undefined; // (no rise cooldown between tries)
+      W.cool = structuredClone(cool); W.landedAt = undefined; W.body.perchCool = undefined; // (no rise cooldown between tries, nor the treehouse's landing one)
       stepGame(g, { ...idle, toggleMode: true }, STEP); for (let i = 0; i < 0.2 / STEP; i++) stepGame(g, idle, STEP);
       return W.body.mode;
     };
