@@ -12,7 +12,7 @@ import { nightFor, type NightSet } from "./musicSet";
 import { bodyRadius, spaceOut, spaceRadius } from "./spacing";
 import { spacingOn } from "./combatSpacing";
 import { type QuestEvent } from "./quest";
-import { beatAt, knockdownTempo, newBeatClock, tempoRate, timeAt, waveArrived, waveTempo, type BeatClock } from "./beat";
+import { beatAt, knockdownTempo, newBeatClock, tempoRate, timeAt, type BeatClock } from "./beat";
 import { cameraPose, newCamera, stepCamera, type CameraPose, type CameraState, type CoastView } from "./camera";
 import { legendCircleNear } from "./legendCircle";
 import { MAX_STEP, newClock, type Clock } from "./clock";
@@ -54,9 +54,9 @@ export const ZOO_EDGE_PUSH = 0.5;
 import { keepInBedroom, stepWake, wakeOf, WAKE_DEFAULT, type WakeState } from "./wakeUp";
 import { wearPiece } from "./clothesPile";
 import { hatLetters, hatsDown, onHatPicked, onHatPut, stepHatSpells } from "./hatSpells";
-import { loadOf, type LeashLoad, groundedBy } from "./leashWeight";
+import { loadOf, groundedBy } from "./leashWeight";
 import { pinWitch, type Pinned } from "./partyLegend";
-import { anchorLength, anchorWitch } from "./anchor";
+import { beginChains, chainLength, dragWitch } from "./chains";
 // (her follower buffs on her speed and her 💌s: rules/buffs.ts, in place of spells.ts speedMultiplier and invites.ts stepInvites)
 import { buffsOf, dashBuff, drainPips, setBuffs, speedMultiplierBuffed as speedMultiplier, stepInvitesBuffed as stepInvites } from "./buffs";
 import { castOf, castOn, circleSpot, friendSigils, looseAt, scatterSpots, stoneOpen, tetherWitch, type LooseSigil } from "./stoneStacks";
@@ -244,7 +244,7 @@ export interface Game {
   /** When each home speaker was booted (Ed, 2026-10-06: they start as small runestones and the boot pulse turns them into
    *  speakers): the game time the pulse reached it, or null while it's still a stone. See bootSpeaker and speakerBoot. */
   speakerBoot: (number | null)[];
-  /** The beat clock: beats by game time, its tempo rising wave by wave (rules/beat.ts). */
+  /** The beat clock: beats by game time, its tempo steady through the night but for her knockdowns (rules/beat.ts). */
   beat: BeatClock;
   /** The night's set (rules/musicSet.ts; Ed, 2026-10-11): the music's arc for this night, a step a wave. */
   musicSet: NightSet | null;
@@ -339,7 +339,7 @@ export function newGame(seed: number, tuning: Tuning, players = 1, ready?: MapPr
     camera: newCamera(tuning, body.x, witchHeight(body, tuning), body.z), party: newParty(map), berries: newBerries(map, tuning), mushrooms: newMushrooms(map, forest),
     speakers: map.dancefloor.speakers.map(() => "playing" as SpeakerState),
     speakerBoot: map.dancefloor.speakers.map(() => null),
-    beat: newBeatClock(tuning.beat.bpm, waveTempo(tuning, 0)), knockdowns: [] as { at: number; back: number }[], musicSet: set,
+    beat: newBeatClock(tuning.beat.bpm), knockdowns: [] as { at: number; back: number }[], musicSet: set,
     floor: newFloor(), partyWitches: newPartyWitches(seed), beach: newBeachWitches(seed, map.bounds, tuning),
     combat: newCombat(), koEvents: [] as KnockoutEvent[], friendly: new Set<string>(), wildEntry: new Map(), questEvents: [] as QuestEvent[], islandsTonight: [] as string[], waveEvents: [] as WaveEvent[], leashEvents: [] as LeashEvent[], loose: [] as LooseSigil[], relics: placeRelics(map, forest), trunk: null as Trunk | null, challenge: newChallenge(map, creatures), tally: { berries: 0, invites: 0, evolved: 0 }, growth: newGrowth(), partyOver: null as PartyOver | null, win: null as WinState | null,
     acc: 0, alpha: 1, timeScale: 1, herTime: 0, pending: {}, prev: { witches: [], creatures: new Float64Array(creatures.length * 2), camera: null },
@@ -442,7 +442,6 @@ export const affectionOf = (g: Game, W: Witch = g.witches[0]): Affection => {
 /** Hits to fill a meter, by level: the tuning's invites.hits, a legend's the party-legend egg's (legends.partyHits). */
 export const meterHits = (t: Tuning): number[] => [...t.invites.hits.slice(0, 3), t.legends.partyHits];
 
-export const leashLoad = (g: Game, w: Witch = g.witches[0]): LeashLoad => loadOf(w.leash.stack, g.creatures, w.body, g.tuning, pullOf(w.spells), !!w.leash.scatter); // (the Canoe hull's lighter: rules/broomParts.ts)
 
 export function hitWitch(g: Game, id: number, worldAt: number, t: Tuning = g.tuning, blow?: Blow): void {
   // (her health, blinks, knocks and hat run on her clock, rules/slowTime.ts: the world's moment `worldAt` on hers, by how far it is from now)
@@ -571,7 +570,7 @@ function fixedStep(g: Game, controls: readonly Controls[]): void {
   // Explicit legacy cauldron preview owns its own inventory/inputs while enabled.
   if (!g.cauldron) stepMushrooms(g);
   const wave = g.party.wave;
-  const anchorFrom = g.witches.map(W => ({ x: W.body.x, z: W.body.z })); // (where each stood before her step: the anchor chains, below)
+  const anchorFrom = g.witches.map(W => ({ x: W.body.x, z: W.body.z })); // (where each stood before her step: the chains, below)
   for (const W of g.witches) { drainPips(g.berries, W.leash.stack, g.creatures, dt, g.tuning); setBuffs(W, buffsOf(W.leash.stack, g.creatures, g.berries, g.tuning).stacks); } // (her follower buffs this step: rules/buffs.ts)
   const legends = (g.legendIds ??= g.creatures.filter(k => k.boss).map(k => k.id));
   const t = g.tuning;
@@ -681,10 +680,12 @@ function fixedStep(g: Game, controls: readonly Controls[]): void {
     const routed = stepCauldronNight(g, motions.map(m => m.c), hdt);
     motions.forEach((m, i) => { m.c = routed[i]; });
   }
-  // The adults following each witch (the anchor chains, Ed 2026-11-03; rules/anchor.ts): not a step further than leash.anchor.length
-  // from any of them, walking, blinking or thrown, sliding round the chain's end; parked ones, youths and legends don't count. Not
+  // Her chains (Ed, 2026-11-03; rules/chains.ts): every creature on her leash at leash.chain.length; past it, moving away, she drags it,
+  // slowed by the heaviest taut one (a legend's stops her), and it's pulled after her; sliding round the chain's end. Each witch by her
+  // own; replaces the old 30 m anchor (and, on the ground, the sigils' pull: rules/witch.ts). Walking, blinking, flying or thrown; not
   // while she's knocked out, up in the treehouse (her followers guard home then: rules/houseGuard.ts), or in the zoo.
-  if (anchorLength(t) > 0 && !g.map.bounds.fence) g.witches.forEach((W, i) => { if (!W.ko && !W.body.perch && !potionPhase(g, W)) W.body = anchorWitch(W.body, anchorFrom[i], W.leash.stack, g.creatures, anchorLength(t)).body; });
+  beginChains();
+  if (chainLength(t) > 0 && !g.map.bounds.fence) g.witches.forEach((W, i) => { if (!W.ko && !W.body.perch && !potionPhase(g, W)) W.body = dragWitch(W.body, anchorFrom[i], W.leash.stack, g.creatures, t, hdt, pullOf(W.spells)).body; });
   const c = motions[0].c;
   g.camera = stepCamera(g.camera, c.zoom, { x: g.witch.x, y: witchHeight(g.witch, g.tuning), z: g.witch.z }, { x: g.witch.vx, z: g.witch.vz }, g.witch.lift, hdt, g.tuning, !!g.witch.seated, g.introFocus, coastOf(g), g.tuning.camera.circle?.on ? legendCircleNear(g, g.witch)?.legend ?? null : null, onTreehouse(g), !!c.framing && onTreehouse(g), c.framePart ?? null); // (in a legend's circle: the lower view, camera.circle; indoors, camera.house; choosing at a station, camera.station)
   // The afterparty (rules/partyOver.ts): the waves have stopped for good.
@@ -697,8 +698,6 @@ function fixedStep(g: Game, controls: readonly Controls[]): void {
   const celebrate = (a: Partified, wave: number) => { if (a.soundsystem) g.waveEvents.push({ kind: "waveCelebrate", key: cellKey(a.cell), x: a.soundsystem.x, z: a.soundsystem.z, at: g.clock.time, wave }); };
   if (c.nextWave && !calm && !lapping) { spreadWave(g.party, g.map, g.clock.time, celebrate); resetPulse(g.party, g.map, g.clock.time); } // (the pulse on from the stone it brought on)
   if (!calm && !lapping) stepParty(g.party, g.map, g.clock.time, dt, g.witches.every(W => !!W.body.seated), celebrate, tempoRate(g.beat, t));
-  // Each wave brings its tempo, eased in from the block line its music lands on.
-  if (g.party.wave !== g.beat.wave) waveArrived(g.beat, g.tuning, g.party.wave, g.clock.time);
   if (!still) stepLegends(g, legends, !!c.happyNearest);
   for (const { W, ht } of motions) {
     if (W.ko) {

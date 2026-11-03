@@ -1043,24 +1043,20 @@
       "speed": 1.5,
       "stop": 1.5
     },
-    "grounded": {
-      "weight": 2
-    },
-    "anchor": {
-      "length": 30
-    },
-    "weight": {
-      "free": 2.5,
-      "levels": [0.3, 0.8, 2, 3],
-      "drag": 0.35,
-      "drift": 0.12,
-      "rise": 0.3,
-      "sink": 0.05,
-      "sinkMax": 0.12,
-      "floor": 0.75,
-      "extreme": 8,
-      "maxTension": 1,
-      "babyGround": 0.56
+    "chain": {
+      "length": 80,
+      "drag": {
+        "youth": 0.3,
+        "adult": 0.7,
+        "legend": 1
+      },
+      "fadeFrom": 0.3,
+      "glow": 0.6,
+      "rattle": {
+        "strength": 1,
+        "time": 0.5
+      },
+      "youthRise": 0.85
     },
     "babies": {
       "gap": 5,
@@ -1113,10 +1109,10 @@
       "chain": {
         "link": [0.62, 0.78, 1],
         "tether": 1.3,
-        "slack": 0.12,
+        "segment": 2,
         "damping": 0.96,
         "gravity": 9.8,
-        "arcPull": 60,
+        "friction": 0.6,
         "iterations": 6,
         "jump": 8,
         "fall": 0.5
@@ -2024,6 +2020,10 @@
       "volume": 0.6,
       "gap": 0.5
     },
+    "rattle": {
+      "volume": 0.4,
+      "gap": 0.3
+    },
     "alarm": {
       "volume": 0.3,
       "gap": 1.2
@@ -2629,18 +2629,6 @@
     "lightFloor": 0.8,
     "rim": 0.5,
     "crownShare": 0.85
-  },
-  "load": {
-    "on": true,
-    "full": 6,
-    "stackSag": 0.4,
-    "stackLean": 0.35,
-    "threadFrom": 0.45,
-    "threadBright": 1.2,
-    "witchLean": 0.16,
-    "broomTilt": 0.12,
-    "broomBow": 1.5,
-    "sparks": 14
   },
   "canopyCutout": {
     "screenFraction": 0.4,

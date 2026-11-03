@@ -27,7 +27,6 @@ import { blocked, stackBottom, talkTime } from "../rules/leash";
 import { toEvolve } from "../rules/berries";
 import { hash2 } from "../rules/random";
 import { hasRune, runeNear } from "../rules/creatureStates";
-import { newLoadView, type LoadView } from "./load";
 import { relicGlints } from "../rules/legends";
 import { SPRITE_UNIFORMS, metresPerArtPixel } from "./sprites";
 import { letterAt, lobHeight, type HerOffset } from "./invites";
@@ -41,7 +40,7 @@ import { BLOOD_PULL, BloodPool, bloodKnobs } from "./leash/blood";
 import { bubbles, drawCirclePanel, drawDreams, drawSnores } from "./leash/bubbles";
 import { ZooPlates } from "./zooPlates";
 import { drawDeckBpm } from "./leash/deckBpm";
-import { drawBond, drawStack, drawStrain, stackKey } from "./leash/stack";
+import { drawBond, drawStack, stackKey } from "./leash/stack";
 import type { Chain } from "./leash/chain";
 import { drawRainbow } from "./leash/rainbow";
 import type { LeyLines } from "./leylines";
@@ -139,9 +138,6 @@ export class LeashView {
   lastTime = 0;
   /** Her last take-off the leashes wouldn't allow (the "grounded" leash event), on her clock: their tug (render/leash/stack.ts drawBond). */
   tugAt = -9;
-  /** The load she carries as the art reads it (render/load.ts; the view sets it each frame), and where her broom's bristles are. */
-  load: LoadView = newLoadView();
-  bristle = { x: 0, y: 0, z: 0, on: false };
   bubbleWitch = document.getElementById("bubble-witch");
   bubbleCreature = document.getElementById("bubble-creature");
   /** The zoo's nameplates (render/zooPlates.ts), on a zoo's map only. */
@@ -230,7 +226,7 @@ export class LeashView {
     for (const m of [this.ruts, this.evolved, this.cycledAt, this.joined, this.stackY, this.lastSlots, this.routes, this.tops, this.halfW, this.heads, this.dreamStones, this.chains]) m.clear();
     this.look.reset(); this.stones.length = 0; resetStoneView(this.stoneView);
     this.bursts = []; this.chain = []; this.fx = []; this.ringGlows = []; this.dreams = []; this.snoreNear = []; this.projected = [];
-    this.lastTime = 0; this.tugAt = -9; this.load = newLoadView(); this.bristle = { x: 0, y: 0, z: 0, on: false };
+    this.lastTime = 0; this.tugAt = -9;
     this.shakeAt = -Infinity; this.shakeAmp = 0; this.boingAt = -Infinity; this.partyOverEase = 0; this.lettersSeen = -Infinity;
     this.bodyY = 0.8; this.hatTop = 1.6; this.feetY = 0; this.frameH = 0;
     this.deckBonus = 0; this.circleFade = 0; this.circleAt = 0; this.circleLast = null;
@@ -759,7 +755,6 @@ export class LeashView {
     drawChallenge(this, time, dot); // (the challenge circle's notes, fill, columns' lights and little dancefloor: render/challenge.ts)
     drawRainbow(this, time, dot, camera); // (an early clear's rainbow wave along the ley line, and the analyser behind the spark: render/leash/rainbow.ts)
     drawBond(this, time, slotPos, dot); // (the bond: render/leash/stack.ts)
-    drawStrain(this, time, dot);
     this.look.end();
     this.standing.end(); this.flat.end(); this.through.end(); this.over.end(); this.solid.end(); this.blood.end(); this.backing.end(); this.ink.end(); this.stackBack.end(); this.stackGlyphs.end();
     bubbles(this, time, camera, width, height);

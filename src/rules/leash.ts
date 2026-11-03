@@ -14,6 +14,7 @@ import type { Tuning } from "./tuning";
 import { befriend, inConga, invitableNow, stateOf } from "./creatureStates";
 import { facingAway } from "./witch";
 import { offSigils, onFloorSigil } from "./sigilAvoid";
+import { takePulled } from "./chains";
 
 export interface PlacedSigil { id: number; x: number; z: number; /** game time it was put down */ at: number }
 
@@ -489,7 +490,7 @@ export function stepLeashed(c: Creature, px: number, pz: number, dt: number, t: 
   const dx = c.tx - c.x, dz = c.tz - c.z, d = Math.hypot(dx, dz);
   if (d < 1e-4) { c.moving = false; return; }
   const speed = (far ? leashSpeed(c, t) : c.speed * 1.5);
-  const step = Math.min(d, speed * dt);
+  const step = Math.min(d, Math.max(0, speed * dt - takePulled(c))); // (less what her chain pulled it this step: rules/chains.ts)
   c.x += (dx / d) * step; c.z += (dz / d) * step;
   if (Math.abs(dx) > 0.02) c.facing = dx > 0 ? 1 : -1;
   c.away = facingAway(dx, dz, c.away, 0, t);

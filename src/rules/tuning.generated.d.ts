@@ -887,24 +887,20 @@ export type SchemaTuning = {
       "speed": number;
       "stop": number;
     };
-    "grounded": {
-      "weight": number;
-    };
-    "anchor": {
+    "chain": {
       "length": number;
-    };
-    "weight": {
-      "free": number;
-      "levels": Array<number>;
-      "drag": number;
-      "drift": number;
-      "rise": number;
-      "sink": number;
-      "sinkMax": number;
-      "floor": number;
-      "extreme": number;
-      "maxTension": number;
-      "babyGround": number;
+      "drag": {
+        "youth": number;
+        "adult": number;
+        "legend": number;
+      };
+      "fadeFrom": number;
+      "glow": number;
+      "rattle": {
+        "strength": number;
+        "time": number;
+      };
+      "youthRise": number;
     };
     "babies": {
       "gap": number;
@@ -947,10 +943,10 @@ export type SchemaTuning = {
       "chain": {
         "link": Array<number>;
         "tether": number;
-        "slack": number;
+        "segment": number;
         "damping": number;
         "gravity": number;
-        "arcPull": number;
+        "friction": number;
         "iterations": number;
         "jump": number;
         "fall": number;
@@ -1729,6 +1725,10 @@ export type SchemaTuning = {
       "volume": number;
       "gap": number;
     };
+    "rattle": {
+      "volume": number;
+      "gap": number;
+    };
     "alarm": {
       "volume": number;
       "gap": number;
@@ -2325,18 +2325,6 @@ export type SchemaTuning = {
     "lightFloor": number;
     "rim": number;
     "crownShare": number;
-  };
-  "load": {
-    "on": boolean;
-    "full": number;
-    "stackSag": number;
-    "stackLean": number;
-    "threadFrom": number;
-    "threadBright": number;
-    "witchLean": number;
-    "broomTilt": number;
-    "broomBow": number;
-    "sparks": number;
   };
   "canopyCutout": {
     "screenFraction": number;

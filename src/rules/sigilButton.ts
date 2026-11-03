@@ -28,6 +28,7 @@ import { onAreaDone } from "./leylines";
 import { isInside } from "./mapShape";
 import { cellKey, clearArea } from "./party";
 import { castOn, castingStone, looseAt, looseNear, stepCast, stoneNear } from "./stoneStacks";
+import { chainLength } from "./chains";
 import { atDecks } from "./wakeUp";
 import { challengeCastAt, clearChallenge, lockedFind } from "./challenge";
 
@@ -148,7 +149,7 @@ export function stepSigilButton(g: Game, c: Controls, W: Witch, t: Tuning, ht: n
     take(id: number) { for (const w of g.witches) if (w !== W) { const i = w.leash.placed.findIndex(p => p.id === id); if (i >= 0) w.leash.placed.splice(i, 1); } },
   } : undefined;
   stepLeash(W.leash, g.creatures, { sigil, place, held, sharedPlaced, cycle: !!c.cycle && !W.ko, cycleBack: !!c.cycleBack && !W.ko, rune: (x, z, r) => runeNear(g.creatures, x, z, r, g.clock.time, undefined, k => runeOffset(k, t)), dropRelic: (id, x, z) => Object.assign(g.relics[id], { state: "dropped", sx: x, sz: z }), inviteNearest: c.inviteNearest, barred: (x, z) => sigilBarred(g, x, z, t) || looseAt(g.loose, x, z, t),
-    loose: (x, z, r) => { const i = looseNear(g.loose, x, z, r); if (i < 0) return null; const p = g.loose[i], L = g.creatures[p.id]; return { id: p.id, x: p.x, z: p.z, ...(p.legend ? { tether: Math.hypot(p.x - L.x, p.z - L.z) } : {}) }; },
+    loose: (x, z, r) => { const i = looseNear(g.loose, x, z, r); if (i < 0) return null; const p = g.loose[i], L = g.creatures[p.id]; return { id: p.id, x: p.x, z: p.z, ...(p.legend ? { tether: Math.max(chainLength(g.tuning), Math.hypot(p.x - L.x, p.z - L.z)) } : {}) }; },
     takeLoose: id => { g.loose = g.loose.filter(p => p.id !== id); g.creatures[id].loose = undefined; },
     dropTether: (id, x, z) => { g.loose.push({ id, x, z, at: g.clock.time, legend: true }); g.creatures[id].loose = true; }, land: (x, z) => isInside(g.map.bounds, x, z, BABY_COAST), talk: !t.invites.on && (c.autoTalk !== false || !!c.talkHeld) }, W.body, W.body.mode === "ground" && !perched && !W.ko, ht, hdt, t, id => busy(id) || heldByCombat(g.creatures[id]) || !!g.creatures[id].travelling, guards);
   W.leash.events.push(...relicEvents);
