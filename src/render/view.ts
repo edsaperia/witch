@@ -79,7 +79,6 @@ import { dodgeEchoesFor, resetDodgeEchoes } from "./view/dodgeEchoes";
 import { TRAIL_DEFAULT, WitchTrail } from "./trail";
 import { newPartyOverLook, partyOff, partyOverEase, updatePartyOver } from "./partyOver";
 import { SWOOP_TRAIL_DEFAULT, SwoopTrails } from "./swoopTrails";
-import { LOAD_DEFAULT, loadView } from "./load";
 import { HAND, InviteView, letterAt, type HerOffset } from "./invites";
 import { StateMarks } from "./looks";
 import type { Dancefloor } from "./dancefloor";
@@ -1832,9 +1831,6 @@ export class View {
       // (and its length at least the shared cooldown's share: rules/cooldown.ts, Ed 2026-10-15; the ribbon along her blink's line)
       const tw = witchTuning(g, W0), cool = tw.cooldown?.shared ? coolShare(W0.cool, coolRoom(tw, blinkCharges(g, W0))) : 0; // (her broom's parts: rules/broomParts.ts)
       this.trail.update(w.x - w.vx * back, witchHeight(w, t) + 0.25 + this.rideOff, w.z - w.vz * back, sp, top, lift, c, ht, dt, D.at, D, cool);
-      // the load she carries (render/load.ts): read once a frame, for the stack, the threads, her lean and her broom
-      loadView(g, t.load ?? LOAD_DEFAULT, dt, this.leashView.load);
-      const Bp = this.leashView.bristle; Bp.x = w.x - w.vx * back; Bp.y = witchHeight(w, t) + 0.25 + this.rideOff; Bp.z = w.z - w.vz * back;
     }
     // Tufts part round her and the three nearest creatures.
     // (only those within reach made into objects: mapping every creature, a thousand late in a run, every frame was much of the frame's garbage)

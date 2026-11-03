@@ -38,7 +38,7 @@ Scripts for building, checking and measuring the game, run from the repository r
 - [`islands/`](islands/README.md): 3 scripts — chart.mjs, map.mjs, sheet.mjs
 - [`labs/`](labs/README.md): 1 script — publish.mjs
 - [`lakes/`](lakes/README.md): 4 scripts — leylines.mjs, looks-map.mjs, looks.cjs, shots.cjs
-- [`leash/`](leash/README.md): 8 scripts — arc-shots.cjs, bold-sheet.mjs, grounded-shots.cjs, route-strip.mjs, runs-gif.cjs, sigil-pass-candidates.mjs, sigil-pass.mjs, stack-shots.cjs
+- [`leash/`](leash/README.md): 9 scripts — arc-shots.cjs, bold-sheet.mjs, chain-shots.cjs, grounded-shots.cjs, route-strip.mjs, runs-gif.cjs, sigil-pass-candidates.mjs, sigil-pass.mjs, stack-shots.cjs
 - [`legends/`](legends/README.md): 1 script — footprint.mjs
 - [`leylines/`](leylines/README.md): 2 scripts — boot-shots.cjs, win-shots.cjs
 - [`lib/`](lib/README.md): 3 scripts — entries.mjs, genomeRecords.mjs, kinds.mjs

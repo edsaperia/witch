@@ -5,6 +5,7 @@ import { deckOf, onTerrace } from "../../rules/treehouse";
 import { potionBlackout, potionFall } from "../potionChoreography";
 import { updatePotionCaption } from "../potionCaption";
 import { updateAnchorHint } from "../anchorHint";
+import { youthRising } from "../../rules/chains";
 import { onRoomFloor } from "../../rules/houseRooms";
 import { houseWitchOverlay, setHouseWitchPass } from "../houseWitchPass";
 import { broomWhere, stationOf } from "../../rules/stations";
@@ -17,7 +18,6 @@ import { stunned } from "../../rules/knock";
 import { canopyShown, witchHeight } from "../../rules/witch";
 import { bendPoint, groundHeight, placed } from "../height";
 import { LIGHT_UNIFORMS } from "../lighting";
-import { LOAD_DEFAULT } from "../load";
 import { setOverlayTilt } from "../overlayTilt";
 import { miniatureTilt, potionStrength } from "../potionEffects";
 import { SPRITE_UNIFORMS, SpriteBatch, type SpriteInstance } from "../sprites";
@@ -58,7 +58,9 @@ export function submitWitchInstances(batch: SpriteBatch, items: SpriteInstance[]
 /** Draws her for this frame; returns her hat's top (m over the ground), for the sigil stack over it. onTreehouse: a point on
  *  the treehouse's sprite (its pixels) in the world. */
 export function drawWitch(v: View, time: number, ht: number, onTreehouse: (px: number, py: number) => { x: number; y: number; z: number }, repaintHeld = false): number {
-  const g = v.game, t = g.tuning, w = g.witch, h = witchHeight(w, t), T = v.assets.treehouse;
+  // (with a youth on her leash, her rise drawn a little slower, Ed 2026-11-03: "A youth chain can make you rise more slowly, but
+  // effectively it's just a visual effect"; leash.chain.youthRise: only her drawn height, the rules rise as ever)
+  const g = v.game, t = g.tuning, w = g.witch, h = witchHeight(youthRising(g) ? { ...w, lift: Math.pow(w.lift, 1 / Math.max(0.1, t.leash.chain!.youthRise)) } : w, t), T = v.assets.treehouse;
   const KO = g.witches[0].ko;
   const potion = g.mushrooms?.affected[g.witches[0].id];
   const potionSpin = !!potion && ht < potion.fallAt;
@@ -281,12 +283,7 @@ export function drawWitch(v: View, time: number, ht: number, onTreehouse: (px: n
     } else { const up = nearerCamera(v, b, DJ_DEPTH.upper - DJ_DEPTH.her); her.push({ ...up, frame: watlas.frames[djUpper], flip: false }); }
   }
   const hatFrame = bare && Hat.down ? bare.atlas.frames[v.assets.witchHatFrame] : undefined;
-  { // Under a load (render/load.ts), in flight: she leans forward flying away from the pull, her broom tilts nose-up and bows.
-    const LV = v.leashView.load, LT = t.load ?? LOAD_DEFAULT, flying = !w.seated && !KO && v.foot < 0.05 && !v.partyWitchView.herIdle;
-    const fwd = w.facing < 0 ? -1 : 1, k = flying ? LV.load : 0;
-    v.witchBatch.leanU.value.set(fwd * LT.witchLean * k * LV.away, fwd * LT.broomTilt * k, LT.broomBow * k, 0);
-    v.leashView.bristle.on = flying && !hidden;
-  }
+  v.witchBatch.leanU.value.set(0, 0, 0, 0); // (no load to lean against since the sigil weight went: Ed, 2026-11-03)
   submitWitchInstances(v.witchBatch, bare ? [] : her, repaintHeld);
   // The indoor floor is a late overlay (houseRooms.ts). A perched walking/landing witch uses
   // the later room pass on every floor/join, including the Terrace and the walking inset

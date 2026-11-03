@@ -2,14 +2,42 @@
   "section": "view",
   "about": "The camera and the view (drawing only): framing, pixel size, culling, fading, finding things.",
   "knobs": {
-    "mushroomLight": {"what":"Live mushroom halo, colour-pool and cap-glow controls, plus an optional sample row.","decisions":[{"by":"Ed","date":"2026-11-02","quote":"please give me some pause-menu controls for adjusting the mushroom lighting"}],"links":["src/rules/mushroomLight.ts","src/render/mushroomGlow.ts","src/render/mushrooms.ts"]},
-    "mushroomLight.haloStrength": {"what":"Strength of the halo that removes complementary light around each mushroom."},
-    "mushroomLight.poolStrength": {"what":"Strength of the additive pool in the mushroom's own colour."},
-    "mushroomLight.capGlow": {"what":"Brightness of marked cap spots and their one-texel spill."},
-    "mushroomLight.radius": {"what":"Multiplier on the existing halo radius."},
-    "mushroomLight.height": {"what":"Multiplier on the flat ground halo's small lift off the ground (0.04 m at 1), which keeps it clear of the ground's surface."},
-    "mushroomLight.complement": {"what":"Amount of complementary colour removed by the halo; zero leaves the additive pool."},
-    "mushroomLight.testRow": {"what":"Optional pickable nine-colour sample row near 40 m south of the dancefloor, with shared obstacle nudging; off by default."},
+    "mushroomLight": {
+      "what": "Live mushroom halo, colour-pool and cap-glow controls, plus an optional sample row.",
+      "decisions": [
+        {
+          "by": "Ed",
+          "date": "2026-11-02",
+          "quote": "please give me some pause-menu controls for adjusting the mushroom lighting"
+        }
+      ],
+      "links": [
+        "src/rules/mushroomLight.ts",
+        "src/render/mushroomGlow.ts",
+        "src/render/mushrooms.ts"
+      ]
+    },
+    "mushroomLight.haloStrength": {
+      "what": "Strength of the halo that removes complementary light around each mushroom."
+    },
+    "mushroomLight.poolStrength": {
+      "what": "Strength of the additive pool in the mushroom's own colour."
+    },
+    "mushroomLight.capGlow": {
+      "what": "Brightness of marked cap spots and their one-texel spill."
+    },
+    "mushroomLight.radius": {
+      "what": "Multiplier on the existing halo radius."
+    },
+    "mushroomLight.height": {
+      "what": "Multiplier on the flat ground halo's small lift off the ground (0.04 m at 1), which keeps it clear of the ground's surface."
+    },
+    "mushroomLight.complement": {
+      "what": "Amount of complementary colour removed by the halo; zero leaves the additive pool."
+    },
+    "mushroomLight.testRow": {
+      "what": "Optional pickable nine-colour sample row near 40 m south of the dancefloor, with shared obstacle nudging; off by default."
+    },
     "sail": {
       "what": "Sailing from the sea chart starts the next night on the same page, the old night's music fading into sea and wind, rather than reloading.",
       "links": [
@@ -469,21 +497,6 @@
         }
       ],
       "notes": "In ground mode, where the crowns are hidden, each tree's trunk fades out over its top metres in an ordered dither on the art's pixel grid (Ed, v149), instead of ending in a flat cut; over at most share of the trunk's visible height, so short trees keep a solid trunk (Ed, v233). Trunks stand in the canopy's shadow: never darker than lightFloor of their unlit look, with a rim from her glow; and the cut between trunk and crown is where crownShare of the crown's pixels lie above, not its lowest low bough [1]."
-    },
-    "load": {
-      "what": "The weight of her leashed creatures made visible: her sigil stack sags and leans toward the pull, and she leans and her broom bows as she flies away from it.",
-      "decisions": [
-        {
-          "by": "Ed",
-          "date": "2026-10-06",
-          "quote": "We can make the mechanic obvious through the artwork.",
-          "rest": "render/load.ts"
-        }
-      ],
-      "links": [
-        "render/load.ts"
-      ],
-      "notes": "Sigil weight, made visible [1]: the load her carried leashes put on her (the rules' leashLoad, by tension and weight) shows from nothing (the rules' leashLoad: its over, the pull past leash.weight.free, so the first few sigils change nothing) to full weight units over: her sigil stack sags (its gaps closing by up to stackSag) and leans toward the pull (stackLean metres a sigil); carried leashes' threads show from threadFrom of the leash's length (0.85 unloaded), taut and brighter (threadBright); flying away from the pull she leans forward (witchLean metres per metre up), her broom tilts nose-up (broomTilt) and its shaft bows (broomBow art pixels), sparks splaying back from its bristles (sparks a second); over the treetops, sinking (her lift below 1 in treetop mode, the rules' leash.weight), sparks fall away below her."
     },
     "canopyCutout": {
       "what": "On the ground the forest roof stays drawn at the screen's edges, with a hole cut round her so she can be seen.",

@@ -1,0 +1,9 @@
+{
+  "reason": "Chain rework (Ed, 2026-11-03): every leashed creature on an 80 m chain; taut, she drags it, slowed by the heaviest chain's level (youth 0.3, adult 0.7, legend 1), the creature pulled along; only adults and legends stop take-off; the sigil weight (leash.weight: drag, drift, slower rise, sinking over the treetops) and the take-off weight rule (leash.grounded) removed; the 30 m adult anchor replaced. Chains drawn lying on the ground at full length, fading in by distance, rattling on a refused take-off; the load visuals (stack sag and lean, broom strain) gone.",
+  "rules": {
+    "*": "wherever creatures follow her: where she is and how fast she moves (no load; the chain drag at 80 m), when she can take off (youths no longer stop her) and rise (no slower rise or sinking), where dragged creatures are, and what follows from these"
+  },
+  "frames": {
+    "*": "wherever creatures follow her: chains lying on the ground and fading in by distance instead of bowing, her stack without the load's sag and lean, her broom without strain sparks, and where she and they are"
+  }
+}

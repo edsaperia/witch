@@ -18,6 +18,14 @@ The bold sigils' sheet, for drawing and checking them: every species in a row, l
 node tools/leash/bold-sheet.mjs <out.png> [id,id,...]
 ```
 
+## `chain-shots.cjs`
+
+Chains lying on the ground in a fight: the built game at 1280×720 on a seed; on home's open ground she has youths and adults following her at spread distances, a wild pack set on them, and walks away for a moment so the far chains go taut; frames are shot…
+
+```
+npm run build && node tools/leash/chain-shots.cjs <out dir> [seed]
+```
+
 ## `grounded-shots.cjs`
 
 A take-off pulled back down: the built game at 1280×720 on a seed; on home's open ground she stands with animals following her, presses rise once, and frames are shot across the next 0.6 s.

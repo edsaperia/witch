@@ -54,9 +54,9 @@ export const ZOO_EDGE_PUSH = 0.5;
 import { keepInBedroom, stepWake, wakeOf, WAKE_DEFAULT, type WakeState } from "./wakeUp";
 import { wearPiece } from "./clothesPile";
 import { hatLetters, hatsDown, onHatPicked, onHatPut, stepHatSpells } from "./hatSpells";
-import { loadOf, type LeashLoad, groundedBy } from "./leashWeight";
+import { loadOf, groundedBy } from "./leashWeight";
 import { pinWitch, type Pinned } from "./partyLegend";
-import { anchorLength, anchorWitch } from "./anchor";
+import { beginChains, chainLength, dragWitch } from "./chains";
 // (her follower buffs on her speed and her 💌s: rules/buffs.ts, in place of spells.ts speedMultiplier and invites.ts stepInvites)
 import { buffsOf, dashBuff, drainPips, setBuffs, speedMultiplierBuffed as speedMultiplier, stepInvitesBuffed as stepInvites } from "./buffs";
 import { castOf, castOn, circleSpot, friendSigils, looseAt, scatterSpots, stoneOpen, tetherWitch, type LooseSigil } from "./stoneStacks";
@@ -437,7 +437,6 @@ export const affectionOf = (g: Game, W: Witch = g.witches[0]): Affection => {
 /** Hits to fill a meter, by level: the tuning's invites.hits, a legend's the party-legend egg's (legends.partyHits). */
 export const meterHits = (t: Tuning): number[] => [...t.invites.hits.slice(0, 3), t.legends.partyHits];
 
-export const leashLoad = (g: Game, w: Witch = g.witches[0]): LeashLoad => loadOf(w.leash.stack, g.creatures, w.body, g.tuning, pullOf(w.spells), !!w.leash.scatter); // (the Canoe hull's lighter: rules/broomParts.ts)
 
 export function hitWitch(g: Game, id: number, worldAt: number, t: Tuning = g.tuning, blow?: Blow): void {
   // (her health, blinks, knocks and hat run on her clock, rules/slowTime.ts: the world's moment `worldAt` on hers, by how far it is from now)
@@ -566,7 +565,7 @@ function fixedStep(g: Game, controls: readonly Controls[]): void {
   // Explicit legacy cauldron preview owns its own inventory/inputs while enabled.
   if (!g.cauldron) stepMushrooms(g);
   const wave = g.party.wave;
-  const anchorFrom = g.witches.map(W => ({ x: W.body.x, z: W.body.z })); // (where each stood before her step: the anchor chains, below)
+  const anchorFrom = g.witches.map(W => ({ x: W.body.x, z: W.body.z })); // (where each stood before her step: the chains, below)
   for (const W of g.witches) { drainPips(g.berries, W.leash.stack, g.creatures, dt, g.tuning); setBuffs(W, buffsOf(W.leash.stack, g.creatures, g.berries, g.tuning).stacks); } // (her follower buffs this step: rules/buffs.ts)
   const legends = (g.legendIds ??= g.creatures.filter(k => k.boss).map(k => k.id));
   const t = g.tuning;
@@ -676,10 +675,12 @@ function fixedStep(g: Game, controls: readonly Controls[]): void {
     const routed = stepCauldronNight(g, motions.map(m => m.c), hdt);
     motions.forEach((m, i) => { m.c = routed[i]; });
   }
-  // The adults following each witch (the anchor chains, Ed 2026-11-03; rules/anchor.ts): not a step further than leash.anchor.length
-  // from any of them, walking, blinking or thrown, sliding round the chain's end; parked ones, youths and legends don't count. Not
+  // Her chains (Ed, 2026-11-03; rules/chains.ts): every creature on her leash at leash.chain.length; past it, moving away, she drags it,
+  // slowed by the heaviest taut one (a legend's stops her), and it's pulled after her; sliding round the chain's end. Each witch by her
+  // own; replaces the old 30 m anchor (and, on the ground, the sigils' pull: rules/witch.ts). Walking, blinking, flying or thrown; not
   // while she's knocked out, up in the treehouse (her followers guard home then: rules/houseGuard.ts), or in the zoo.
-  if (anchorLength(t) > 0 && !g.map.bounds.fence) g.witches.forEach((W, i) => { if (!W.ko && !W.body.perch && !potionPhase(g, W)) W.body = anchorWitch(W.body, anchorFrom[i], W.leash.stack, g.creatures, anchorLength(t)).body; });
+  beginChains();
+  if (chainLength(t) > 0 && !g.map.bounds.fence) g.witches.forEach((W, i) => { if (!W.ko && !W.body.perch && !potionPhase(g, W)) W.body = dragWitch(W.body, anchorFrom[i], W.leash.stack, g.creatures, t, hdt, pullOf(W.spells)).body; });
   const c = motions[0].c;
   g.camera = stepCamera(g.camera, c.zoom, { x: g.witch.x, y: witchHeight(g.witch, g.tuning), z: g.witch.z }, { x: g.witch.vx, z: g.witch.vz }, g.witch.lift, hdt, g.tuning, !!g.witch.seated, g.introFocus, coastOf(g), g.tuning.camera.circle?.on ? legendCircleNear(g, g.witch)?.legend ?? null : null, onTreehouse(g), !!c.framing && onTreehouse(g), c.framePart ?? null); // (in a legend's circle: the lower view, camera.circle; indoors, camera.house; choosing at a station, camera.station)
   // The afterparty (rules/partyOver.ts): the waves have stopped for good.

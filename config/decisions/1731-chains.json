@@ -1,0 +1,74 @@
+{
+  "pr": 1731,
+  "group": "Chains",
+  "decisions": [
+    {
+      "id": "chainLength",
+      "pr": 1731,
+      "group": "Chains",
+      "label": "Chain length (m)",
+      "note": "Every leashed creature's chain; at full length she drags it (Ed, 2026-11-03: \"about the size of a fight (80m?)\"). 0: no chains.",
+      "control": {
+        "type": "slider",
+        "min": 0,
+        "max": 160,
+        "step": 1
+      },
+      "default": 80,
+      "apply": {
+        "knob": "leash.chain.length"
+      }
+    },
+    {
+      "id": "chainDragYouth",
+      "pr": 1731,
+      "group": "Chains",
+      "label": "Youth drag",
+      "note": "The share of her motion away a taut youth's chain takes (Ed, 2026-11-03: \"Dragging youths slows you down a bit (e.g. 30%). Dragging adults slows you down a lot (e.g. 70%). Dragging legends slows you down completely (100%)\").",
+      "control": {
+        "type": "slider",
+        "min": 0,
+        "max": 1,
+        "step": 0.05
+      },
+      "default": 0.3,
+      "apply": {
+        "knob": "leash.chain.drag.youth"
+      }
+    },
+    {
+      "id": "chainDragAdult",
+      "pr": 1731,
+      "group": "Chains",
+      "label": "Adult drag",
+      "note": "The share of her motion away a taut adult's chain takes (Ed, 2026-11-03: \"Dragging youths slows you down a bit (e.g. 30%). Dragging adults slows you down a lot (e.g. 70%). Dragging legends slows you down completely (100%)\").",
+      "control": {
+        "type": "slider",
+        "min": 0,
+        "max": 1,
+        "step": 0.05
+      },
+      "default": 0.7,
+      "apply": {
+        "knob": "leash.chain.drag.adult"
+      }
+    },
+    {
+      "id": "chainDragLegend",
+      "pr": 1731,
+      "group": "Chains",
+      "label": "Legend drag",
+      "note": "The share of her motion away a taut legend's chain takes (1: she can't go further) (Ed, 2026-11-03: \"Dragging youths slows you down a bit (e.g. 30%). Dragging adults slows you down a lot (e.g. 70%). Dragging legends slows you down completely (100%)\").",
+      "control": {
+        "type": "slider",
+        "min": 0,
+        "max": 1,
+        "step": 0.05
+      },
+      "default": 1,
+      "apply": {
+        "knob": "leash.chain.drag.legend"
+      }
+    }
+  ]
+}

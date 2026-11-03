@@ -4,8 +4,6 @@ import path from "node:path";
 import {it} from "vitest";
 import {metric} from "./results.mjs";
 import {TUNING} from "../../src/rules/tuning";
-import {newWitch,stepWitch,type WitchState} from "../../src/rules/witch";
-import {NO_LOAD,type LeashLoad} from "../../src/rules/leashWeight";
 import {newPartyWitches,stepPartyWitches,OFF_FLOOR,type PartyWitches,type PlayerView} from "../../src/rules/partyWitches";
 import {generateMap} from "../../src/rules/map";
 import {spawnCreatures,stepCreature,type Creature} from "../../src/rules/creatures";
@@ -18,15 +16,7 @@ import {runeOffset} from "../../src/rules/runeOffset";
 it("reports IP2 actor activity and arrival measurements",()=>{
   const metrics:ReturnType<typeof metric>[]=[],samples:Record<string,unknown>={};
   const add=(id:string,value:number,operator:">"|"<"|">="|"<=",bound:number,unit="count")=>metrics.push(metric(id,value,unit,{operator,value:bound}));
-  // leashWeight:89: same synthetic +x loads, bounds,60Hz and60/10-second windows.
-  const W=TUNING.leash.weight,bounds={minX:-1e5,maxX:1e5,minZ:-1e5,maxZ:1e5};
-  const pull=(over:number):LeashLoad=>({total:over+W.free,over,x:1,z:0,extreme:over>=W.extreme});
-  const top=():WitchState=>({...newWitch(0,0),lift:1,mode:"treetop"});
-  const fly=(w:WitchState,load:LeashLoad,seconds:number,move=1)=>{for(let i=0;i<seconds*60;i++)w=stepWitch(w,{moveX:move,moveZ:0,toggleMode:false},1/60,TUNING,bounds,load);return w;};
-  const flying=fly(top(),pull(6),60),stopped=fly(top(),pull(6),60,0),extreme=fly(top(),pull(W.extreme+1),60),back=fly(flying,NO_LOAD,10);
-  add("loaded flying remains treetop after60s",Number(flying.mode==="treetop"),">=",1,"boolean");add("loaded flying floor error after60s",Math.abs(flying.lift-W.floor),"<",0.5e-9,"lift error");
-  add("stopped landing after60s",Number(stopped.mode==="ground"&&stopped.lift===0),">=",1,"boolean");add("extreme landing after60s",Number(extreme.mode==="ground"),">=",1,"boolean");add("unloaded recovery lift after10s",back.lift,">=",1,"lift");add("unloaded recovery lift upper",back.lift,"<=",1,"lift");
-  samples.load={hz:60,loadedSeconds:60,recoverySeconds:10,flying:{mode:flying.mode,lift:flying.lift},stopped:{mode:stopped.mode,lift:stopped.lift},extreme:{mode:extreme.mode,lift:extreme.lift},back:{mode:back.mode,lift:back.lift}};
+  // (leashWeight:89's loaded-flight survey retired with the sigil weight: Ed, 2026-11-03, "the weight system goes")
 
   // partyWitches:26/82/102/124: original seeds, actor counts, windows and20Hz cadence.
   const floor={x:100,z:200,radius:15},P=TUNING.partyWitches,areas=(n:number)=>Array.from({length:n},(_,i)=>({key:`a${i}`,x:floor.x+Math.cos(i)*150,z:floor.z+Math.sin(i)*150}));
@@ -64,5 +54,5 @@ it("reports IP2 actor activity and arrival measurements",()=>{
   add("rune distance after6s upper",docking,"<",pullT.stop+0.5,"m");add("rune distance after6s lower",docking,">",pullT.stop-0.5,"m");add("rune pickup after sampled approach",Number(!!other.leashed),">=",1,"boolean");samples.pickup={seed:123,hexSize:4,cast:false,hz:60,seconds:6,docking,leashed:!!other.leashed};
 
   const out=process.env.BEHAVIOUR_OUTPUT_DIR;if(!out)throw Error("Run via node tools/behaviour/run.mjs to preserve report artifacts");
-  fs.writeFileSync(path.join(out,"invites-actors.json"),JSON.stringify({system:"invites-actors",group:"IP2",sourceDeclarations:7,samples,metrics},null,2)+"\n");
+  fs.writeFileSync(path.join(out,"invites-actors.json"),JSON.stringify({system:"invites-actors",group:"IP2",sourceDeclarations:6,samples,metrics},null,2)+"\n");
 },300_000);
