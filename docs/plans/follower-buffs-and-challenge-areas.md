@@ -81,6 +81,7 @@ ones that increased DPS felt fun but were insanely strong. The ones that didn't 
   set, the reward is a flask instead.
 - **Timing:** only before the final wave.
 - **Optional:** it doesn't count toward winning the island.
+- **Not next to home:** "The challenge area shouldn't be adjacent to the home area."
 - **No boons from challenges.** Follower buffs replace them.
 
 ## 3. Later: committed players (parked)
