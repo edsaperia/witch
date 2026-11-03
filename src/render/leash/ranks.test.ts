@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { TUNING } from "../../rules/tuning";
 import { toEvolve } from "../../rules/berries";
-import { areaTopRanks, asleepLegend, crowned, dotAt, EMPTY_STONE, legendShine, rankColour, rankKnobs, standScale, rankOf, rankSize, shownDots, sigilRankColour, stoneRank, youthDots, RANKS_DEFAULT } from "./ranks";
+import { areaTopRanks, asleepLegend, crowned, dotAt, EMPTY_STONE, legendShine, queuedDot, rankColour, rankKnobs, standScale, rankOf, rankSize, shownDots, sigilRankColour, stoneRank, youthDots, RANKS_DEFAULT } from "./ranks";
 import { crownGlyph, LEGEND_CROWN_W } from "../../../art/generator.js";
 import { DANGER } from "./attackLook";
 import attackLook from "../../../config/attack-look.json";
@@ -9,24 +9,33 @@ import { berryColour } from "../colourGrammar";
 import { DECISION_LIST, applyKnobParams } from "../../ui/decisions";
 
 describe("rank sigils", () => {
-  it("a youth's dots are its berries to adult less the last (eaten at a placed sigil), read from the rules", () => {
+  it("a youth's dots are its berries to adult, every one (Ed, 2026-11-03: all fed by her, none held back for a sigil), read from the rules", () => {
     for (const species of ["snail", "fox", "bear"]) {
       const need = toEvolve(1, TUNING, species);
-      expect(youthDots({ level: 1, species }, 0, TUNING)).toEqual({ n: Math.round(need) - 1, lit: 0 });
-      expect(youthDots({ level: 1, species }, 99, TUNING).lit).toBe(Math.round(need) - 1); // (never more lit than it has)
+      expect(youthDots({ level: 1, species }, 0, TUNING)).toEqual({ n: Math.round(need), lit: 0 });
+      expect(youthDots({ level: 1, species }, 99, TUNING).lit).toBe(Math.round(need)); // (never more lit than it has)
     }
-    // follows the berry tuning: a cost of 4 (Foxtrot's normal) is three dots
+    // follows the berry tuning: a cost of 4 (Foxtrot's normal) is four dots
     const t = structuredClone(TUNING), d = youthDots({ level: 1, species: "fox" }, 2, t);
-    expect(d.n).toBe(Math.round(toEvolve(1, t, "fox")) - 1);
+    expect(d.n).toBe(Math.round(toEvolve(1, t, "fox")));
     expect(d.lit).toBe(2);
+  });
+  it("a baby's one dot, its one berry to a youth (berries.babyCost)", () => {
+    expect(youthDots({ level: 0, species: "fox" }, 0, TUNING)).toEqual({ n: toEvolve(0, TUNING), lit: 0 });
+  });
+  it("while a berry's queued for it, the dot it will fill twinkles: the next empty one (Ed, 2026-11-03)", () => {
+    expect(queuedDot({ n: 4, lit: 1 }, 2)).toBe(1);
+    expect(queuedDot({ n: 4, lit: 1 }, 0), "none queued").toBe(-1);
+    expect(queuedDot({ n: 4, lit: 4 }, 1), "every dot lit").toBe(-1);
+    expect(queuedDot({ n: 5, lit: 0 }, 1), "an adult's pips the same way").toBe(0);
   });
   it("at most two rows of four drawn, lit in proportion", () => {
     expect(shownDots({ n: 7, lit: 3 })).toEqual({ n: 7, lit: 3 });
     expect(shownDots({ n: 15, lit: 15 })).toEqual({ n: 8, lit: 8 });
     expect(shownDots({ n: 15, lit: 7 })).toEqual({ n: 8, lit: 3 });
   });
-  it("only a youth has dots", () => {
-    for (const level of [0, 2, 3] as const) expect(youthDots({ level, species: "fox" }, 3, TUNING).n).toBe(0);
+  it("only a baby or a youth has growth dots", () => {
+    for (const level of [2, 3] as const) expect(youthDots({ level, species: "fox" }, 3, TUNING).n).toBe(0);
   });
   it("two rows off to the right, at most four a row, the rows interlocking", () => {
     const pts = Array.from({ length: 8 }, (_, i) => dotAt(i, 8));

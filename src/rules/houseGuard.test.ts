@@ -78,7 +78,7 @@ describe("her followers while she's in the treehouse", () => {
     expect(g.leash.stack).toEqual(ids);
   }, 120000);
 
-  it("a baby at its home spot doesn't eat the berries there (Ed, 2026-10-24), though at a real placed sigil it does", () => {
+  it("a baby at its home spot doesn't eat the berries there (Ed, 2026-10-24), nor at a real placed sigil (Ed, 2026-11-03: nothing eats on its own)", () => {
     const ate = (real: boolean) => {
       const { g, ids } = night("house"), baby = g.creatures[ids[2]];
       play(g, 40); // (at its spot)
@@ -89,7 +89,7 @@ describe("her followers while she's in the treehouse", () => {
       return play(g, 6, () => g.berries.feeding.has(baby.id) || g.berries.evolving.has(baby.id) || baby.level > 0);
     };
     expect(ate(false)).toBe(false); // (at its home spot while she's in the treehouse: no)
-    expect(ate(true)).toBe(true); // (at a real sigil: as ever)
+    expect(ate(true)).toBe(false); // (at a real sigil: no longer, she feeds them)
   }, 120000);
 
   it("defend the home area as placed-sigil creatures do: they engage a wild creature in it that they'd pass by while travelling to her", () => {

@@ -177,8 +177,9 @@ export function drawCombat(lv: LeashView, time: number, camera: THREE.Camera, wi
       const c = g.creatures[e.id], col = neon(c.species), from = lv.lastSlots.get(e.id);
       const fx = from ? from.x : w.x, fy = from ? from.y : hatTop + 1, fz = from ? from.z : w.z;
       lv.fx.push({ kind: "splash", x: fx, y: fy, z: fz, at: time, life: 1.1, r: col.r, g: col.g, b: col.b, seed: e.id * 17 + 3 });
-      lv.fx.push({ kind: "snap", x: fx, y: fy, z: fz, at: time, life: 0.9, r: col.r, g: col.g, b: col.b, seed: e.id, tx: c.x, tz: c.z });
-      lv.fx.push({ kind: "puff", x: c.x, y: 0.6, z: c.z, at: time, life: 0.8, r: col.r, g: col.g, b: col.b, seed: e.id * 5 });
+      // (its sigil falls where she went down, Ed 2026-11-03: the event's x, z; a party legend's at its feet)
+      lv.fx.push({ kind: "snap", x: fx, y: fy, z: fz, at: time, life: 0.9, r: col.r, g: col.g, b: col.b, seed: e.id, tx: e.x, tz: e.z });
+      lv.fx.push({ kind: "puff", x: e.x, y: 0.6, z: e.z, at: time, life: 0.8, r: col.r, g: col.g, b: col.b, seed: e.id * 5 });
     }
     if (e.kind === "sparkleOut" || e.kind === "sparkleIn") {
       const at = e.kind === "sparkleIn" && lv.seatAt ? lv.seatAt : { x: e.x, y: 0, z: e.z }; // (back behind her decks: there)

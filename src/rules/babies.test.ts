@@ -1,6 +1,6 @@
 // Babies behave differently (Ed, 2026-10-11; docs/backlog/gameplay.md "Babies"; rules/babies.ts): single file along her
-// trail in stack order, scattering in a fight, very fast when far off, eating only at their placed sigil, one berry to a
-// youth, and weighing so 8 fill either allowance, whatever their species.
+// trail in stack order, scattering in a fight, very fast when far off, eating only when she feeds them (Ed, 2026-11-03), one
+// berry to a youth, and weighing so 8 fill either allowance, whatever their species.
 import { describe, expect, it } from "vitest";
 import type { Creature, Level } from "./creatures";
 import { speedFactor, wanderRange } from "./creatures";
@@ -206,26 +206,32 @@ describe("babies and berries", () => {
     return b;
   };
 
-  it("following her, a baby never stops for a berry; its sigil put down with a berry within babyReach, it eats it, and one berry makes it a youth", () => {
+  it("never eats on its own, following her or parked by ripe berries (Ed, 2026-11-03); at the bottom of her stack, a tap of the sigil button feeds it, and one berry makes it a youth", () => {
     const { g, babies } = scene(1), [b] = babies, w = g.witch;
     expect(toEvolve(0, g.tuning)).toBe(1);
     const berry = berryNear(g, 3);
     run(g, 3);
     expect(g.berries.feeding.has(b.id)).toBe(false); // (right by it, following: no)
     expect(berry.claimedBy).toBeNull();
-    // her sigil put down: the berry 3 m off is within reach
+    // parked right by it: still no (nothing eats on its own)
     g.leash.stack = []; g.leash.placed.push({ id: b.id, x: w.x, z: w.z, at: g.clock.time });
+    run(g, 4);
+    expect(berry.claimedBy).toBeNull();
+    expect(b.level).toBe(0);
+    // back on her stack, at the bottom: a tap feeds it
+    g.leash.placed = []; g.leash.stack.push(b.id);
+    stepGame(g, { ...idle, place: true }, STEP);
+    expect(berry.claimedBy).toBe(b.id);
     let evolving = false;
     run(g, 6, idle, () => { evolving ||= g.berries.evolving.has(b.id) || b.level === 1; });
     expect(evolving).toBe(true);
   }, 60000);
 
-  it("doesn't eat a berry further than babyReach from its placed sigil", () => {
-    const { g, babies } = scene(1), [b] = babies, w = g.witch;
-    const berry = berryNear(g, (g.tuning.berries.babyReach ?? 10) + 4);
-    g.leash.stack = []; g.leash.placed.push({ id: b.id, x: w.x, z: w.z, at: g.clock.time });
-    run(g, 4);
+  it("isn't fed a berry further than berries.feed.reach from her", () => {
+    const { g, babies } = scene(1), [b] = babies;
+    const berry = berryNear(g, (g.tuning.berries.feed?.reach ?? 15) + 4);
+    stepGame(g, { ...idle, place: true }, STEP);
     expect(berry.claimedBy).toBeNull();
-    expect(b.level).toBe(0);
+    expect(g.berries.feeding.has(b.id)).toBe(false);
   }, 60000);
 });

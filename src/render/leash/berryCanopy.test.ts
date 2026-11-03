@@ -7,7 +7,7 @@ import { LeashView } from "../leash";
 function view(lift: number) {
   const standing = { add: vi.fn() }, over = { add: vi.fn() }, flat = { add: vi.fn() };
   const game = {
-    tuning: { beat: { bpm: 120 }, berries: { glow: 1, babyReach: 10 } },
+    tuning: { beat: { bpm: 120 }, berries: { glow: 1 } },
     witch: { x: 0, z: 0, lift, mode: lift > 0.5 ? "treetop" : "ground" },
     berries: { events: [], berries: [{ id: 0, bush: 0, gone: false, claimedBy: null }, { id: 1, bush: 1, gone: false, claimedBy: null }], bushes: [{ x: 30, z: 20 }, { x: -80, z: 5 }], evolving: new Map(), fed: new Map(), ateAt: new Map() },
     creatures: [],
