@@ -116,3 +116,13 @@ export function buffIconUv(lv: Atlas, group: BuffGroup): number[] {
   m.set(group, uv);
   return uv;
 }
+
+/** A redundant icon's blue (the wild adult's, #2d6eff) and an unfed one's pink (the berries', #c8228c), when the tuning has none
+ *  (buffs.icons). */
+export const ICON_BLUE = [0.176, 0.431, 1], ICON_PINK = [0.784, 0.133, 0.549];
+/** An unfed icon's twinkle (Ed, 2026-11-03: "it twinkles in pink"): its brightness, 0.25 to 1.2, once a `period` s, each creature's
+ *  its own phase (by `seed`). */
+export function iconTwinkle(time: number, period: number, seed: number): number {
+  const p = Math.max(0.05, period), ph = ((time / p + seed * 0.618) % 1 + 1) % 1, k = Math.pow(Math.abs(Math.sin(ph * Math.PI)), 3);
+  return 0.25 + 0.95 * k;
+}

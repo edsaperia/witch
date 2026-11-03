@@ -53,17 +53,45 @@ describe("stacking", () => {
     expect(buffsOf([0, 1, 2], cs, fed([0, 1, 2]), TUNING).stacks).toEqual(noBuffs());
     expect(buffsOf([], cs, fed([3]), TUNING).stacks).toEqual(noBuffs()); // (the bear parked: not in her stack)
   });
-  it("icons a giver: a legend three, an adult one, another of a kind none (a legend and an adult of a kind: the legend's three)", () => {
+  it("icons: a legend shows three, an adult one, whatever its state", () => {
     const cs = [crit(0, "wolf", 3, { partyLegend: true }), crit(1, "wolf", 2), crit(2, "bear", 2), crit(3, "bear", 2), crit(4, "fox", 2)];
     const b = buffsOf([0, 1, 2, 3, 4], cs, fed([1, 2, 3, 4]), TUNING);
     expect(B.legend).toBe(3);
-    expect([0, 1, 2, 3, 4].map(id => b.iconCount.get(id) ?? 0)).toEqual([3, 0, 1, 0, 1]);
+    expect([0, 1, 2, 3, 4].map(id => b.iconCount.get(id) ?? 0)).toEqual([3, 1, 1, 1, 1]);
+    expect([...b.givers.keys()]).toEqual([0, 1, 2, 3, 4]); // (every fed one's chain glows)
   });
-  it("its givers and one icon a kind (a legend's before an adult's)", () => {
-    const cs = [crit(0, "wolf", 2), crit(1, "wolf", 3), crit(2, "bear", 2), crit(3, "bear", 2)];
-    const b = buffsOf([0, 1, 2, 3], cs, fed([0, 2, 3]), TUNING);
-    expect([...b.givers.keys()]).toEqual([0, 1, 2, 3]);
-    expect(b.icons).toEqual(new Set([1, 2]));
+  describe("each icon's state (Ed: \"the inactive buff icons are blue. When a buff is inactive, it twinkles in pink\")", () => {
+    const states = (cs: Creature[], fedIds: number[], stack = cs.map(c => c.id)) => { const b = buffsOf(stack, cs, { pips: new Map(stack.map(id => [id, fedIds.includes(id) ? LIFE : 0])) }, TUNING); return stack.map(id => b.iconState.get(id)); }; // (the unfed ones' pips run out: none, not the starting one)
+    it("two fed bears: the first leashed active, the other blue", () => {
+      expect(states([crit(0, "bear", 2), crit(1, "bear", 2)], [0, 1])).toEqual(["active", "redundant"]);
+    });
+    it("one fed and one starved bear: the fed one active, wherever it is, the starved one pink", () => {
+      expect(states([crit(0, "bear", 2), crit(1, "bear", 2)], [1])).toEqual(["unfed", "active"]);
+      expect(states([crit(0, "bear", 2), crit(1, "bear", 2)], [0])).toEqual(["active", "unfed"]);
+    });
+    it("a legend and a fed adult of a kind: the legend active (its three), the adult blue; a second legend blue too", () => {
+      expect(states([crit(0, "wolf", 2), crit(1, "wolf", 3)], [0])).toEqual(["redundant", "active"]);
+      const two = [crit(0, "wolf", 3), crit(1, "wolf", 3)], b = buffsOf([0, 1], two, fed([]), TUNING);
+      expect([b.iconState.get(0), b.iconState.get(1), b.iconCount.get(1)]).toEqual(["active", "redundant", 3]);
+      expect(b.stacks.packHunters).toBe(3);
+    });
+    it("all starved: every one pink, and no buff; legends never starve", () => {
+      const cs = [crit(0, "bear", 2), crit(1, "bear", 2)], b = buffsOf([0, 1], cs, { pips: new Map([[0, 0], [1, 0]]) }, TUNING);
+      expect([b.iconState.get(0), b.iconState.get(1)]).toEqual(["unfed", "unfed"]);
+      expect(b.stacks.heavies).toBe(0);
+      expect(states([crit(0, "wolf", 3)], [])).toEqual(["active"]);
+    });
+    it("the active one starving, the next fed one of its kind takes over", () => {
+      const cs = [crit(0, "bear", 2), crit(1, "bear", 2)], s: Pick<BerryState, "pips"> = { pips: new Map([[0, 5], [1, 2 * LIFE]]) };
+      expect([0, 1].map(id => buffsOf([0, 1], cs, s, TUNING).iconState.get(id))).toEqual(["active", "redundant"]);
+      drainPips(s, [0, 1], cs, 6, TUNING);
+      expect([0, 1].map(id => buffsOf([0, 1], cs, s, TUNING).iconState.get(id))).toEqual(["unfed", "active"]);
+    });
+    it("youths and babies show none; the colours and the twinkle are knobs", () => {
+      const b = buffsOf([0, 1], [crit(0, "bear", 1), crit(1, "bear", 0)], fed([0, 1]), TUNING);
+      expect(b.icons.size).toBe(0);
+      expect(B.icons).toEqual({ blue: [0.176, 0.431, 1], pink: [0.784, 0.133, 0.549], twinkle: 0.8 });
+    });
   });
 });
 

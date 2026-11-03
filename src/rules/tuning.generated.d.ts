@@ -983,6 +983,11 @@ export type SchemaTuning = {
     "shells": {
       "chain": number;
     };
+    "icons": {
+      "blue": Array<number>;
+      "pink": Array<number>;
+      "twinkle": number;
+    };
   };
   "difficulty": {
     "creatureSpeed": number;
