@@ -60,10 +60,8 @@ export class ArrivalFlight {
   private easedAt = -1;
   private dueMarked = false;
   private readyMarked = false;
-  private dressingMarked = false;
   /** The flight's last frame, on its end shot, drawn: the next lands. */
   private ended = false;
-  private dressedMarked = false;
 
   /** A frame (`now`, ms): the flight's shot put on the view, or, landed, the view's own camera back. True once landed. */
   frame(v: View, g: Game, now: number): boolean {
@@ -73,8 +71,8 @@ export class ArrivalFlight {
     const end = this.plan.keys[this.plan.keys.length - 1] = this.end(g, v); // (the opening shot as the game's camera has it now)
     if (this.due === Infinity) this.due = dueAt(this.plan, homeSpots(g), innerWidth / Math.max(1, innerHeight));
     if (v.homeDone && !this.readyMarked) { this.readyMarked = true; performance.mark("dive:house-ready"); }
-    if (this.skipped && v.homeDone && dressed(v)) { this.land(v); return true; }
-    if (this.skipped) return false; // (skipped with the house, or her look, still to come: held where it is till it's ready)
+    if (this.skipped && v.homeDone) { this.land(v); return true; }
+    if (this.skipped) return false; // (skipped with the house still to come: held where it is till it's ready)
     const before = this.clock.s;
     if (stepFlightClock(this.clock, now, this.warmT).faded) this.fadeStill();
     this.guard(v, before, now);
@@ -91,18 +89,13 @@ export class ArrivalFlight {
 
   /** The house not made yet as it's due in view: the flight eased from `GUARD_LEAD` seconds short of it into a hover there, never
    *  shown half-built; on, its pace eased back, once it's ready. Logged (the marks dive:eased, dive:house-due, dive:on; the console).
-   *  And her look (her next morning's, her nightie, asked for as she sailed: main.ts showLook) not on her yet as the last leg down
-   *  into her room comes, where she's seen in her bed: eased into a hover at the frame over the dancefloor and the treehouse till it
-   *  is (View.lookDrawn), so she's never seen there in last night's clothes (marks dive:dressing, dive:dressed). */
+   *  Never for her look: her nightie not drawn yet, she's in her covers (render/view/witch.ts inCovers; Ed, 2026-11-03, no hold). */
   private guard(v: View, before: number, now: number): void {
     const ds = this.clock.s - before;
     if (ds <= 0) return;
-    const ready = v.homeDone, worn = dressed(v), room = this.plan ? this.plan.times[Math.max(0, this.plan.times.length - 2)] : Infinity;
-    const target = Math.min(ready ? 1 : dueRate(before, this.due, GUARD_LEAD), worn ? 1 : dueRate(before, room, GUARD_LEAD));
+    const ready = v.homeDone, target = ready ? 1 : dueRate(before, this.due, GUARD_LEAD);
     this.rate += (target - this.rate) * (1 - Math.exp(-ds / GUARD_EASE));
-    if (!ready || !worn) this.rate = Math.min(this.rate, target);
-    if (!worn && target < 1 && !this.dressingMarked) { this.dressingMarked = true; performance.mark("dive:dressing"); console.info("arrival: the dive held short of her room till her nightie's drawn"); }
-    if (worn && this.dressingMarked && !this.dressedMarked) { this.dressedMarked = true; performance.mark("dive:dressed"); }
+    if (!ready) this.rate = Math.min(this.rate, target);
     this.clock.s = before + ds * this.rate;
     if (!ready && target < 1 && this.easedAt < 0) {
       this.easedAt = now; performance.mark("dive:eased");
@@ -143,9 +136,6 @@ export class ArrivalFlight {
 
 /** The guard's lead (seconds of the flight before the house is due in view that it starts to ease) and its pace's ease (s). */
 const GUARD_LEAD = 2.5, GUARD_EASE = 0.4;
-
-/** Her look is on her whole (View.lookDrawn; a view without it, as the tests' stand-ins: yes). */
-const dressed = (v: View): boolean => (v as Partial<Pick<View, "lookDrawn">>).lookDrawn !== false;
 
 /** What comes into view as the house (the guard's): the treehouse and the dancefloor, a few metres up. */
 const homeSpots = (g: Game) => [g.map.treehouse, g.map.dancefloor].map(p => ({ x: p.x, y: groundHeight(p.x, p.z) + 6, z: p.z }));

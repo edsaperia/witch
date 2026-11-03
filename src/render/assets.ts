@@ -338,7 +338,7 @@ export class AssetLibrary {
       else {
         const look = { atlas: { ...atlas, grounds: r.result.ours!.grounds }, art: r.result.ours! }, k = JSON.stringify(r.job.genome ?? null);
         this.witchLooks.delete(k); this.witchLooks.set(k, look);
-        if (this.witchLooks.size > 4) this.witchLooks.delete(this.witchLooks.keys().next().value!);
+        if (this.witchLooks.size > 4) { const old = [...this.witchLooks.keys()].find(q => q !== k && !this.keptLooks.has(q)); if (old !== undefined) this.witchLooks.delete(old); } // (the oldest let go, never a look kept: keepLook)
         if (k === JSON.stringify(this.witchGenome ?? null)) { this.wearLook(look); this.lookOn = true; } // (a look since replaced by the creator's next: kept, not hers)
       }
     } else if (r.job.kind === "props") { this.props = atlas; this.home.props = true; }
@@ -612,7 +612,7 @@ export class AssetLibrary {
     // step, each ahead of the next, and the one she'd landed on came last; Ed's playtest of v4821, "I don't see changes on the
     // witch immediately")
     const mine = JSON.stringify(genome ?? null);
-    const stale = (q?: ArtJob) => q?.kind === "witch" && !this.once.has(this.key(q)) && JSON.stringify(q.genome ?? null) !== mine;
+    const stale = (q?: ArtJob) => q?.kind === "witch" && !this.once.has(this.key(q)) && JSON.stringify(q.genome ?? null) !== mine && !(!q.bare && this.keptLooks.has(JSON.stringify(q.genome ?? null)));
     const forget = (q: ArtJob) => { cancelWorkerTrace(q, 'witch-look-superseded'); const k = this.key(q); this.inFlight.delete(k); this.promoted.delete(k); this.urgentKeys.delete(k); };
     this.queue = this.queue.filter(q => !stale(q) || (forget(q), false));
     // and one already drawing, if it's a whole set (seconds of a worker's time; tens in the cloud): its worker let go for another
@@ -626,6 +626,21 @@ export class AssetLibrary {
     // (receive): a run of steps keeps the workers on previews, never on whole sets for looks she's passed
     this.ask(this.witchJob(genome, false, true), true);
   }
+  /** A look of hers kept for good once drawn (her nightie, the same every morning after a night played while her look is the same:
+   *  main.ts keepNightie; Ed, 2026-11-03: "it's the same nightie on every island every morning. Why do we need to keep re-drawing
+   *  it?"): its whole set asked now, behind what's asked already (in the background, the first night), never let go from her last
+   *  looks (they keep four: a station's choices pushed it out) nor dropped from the queue by a change of look, so a sail or the bed
+   *  puts it on at once (rebakeWitch). One look at a time: the last kept is let go to the usual four when another is. */
+  keepLook(genome: unknown): void {
+    const k = JSON.stringify(genome ?? null);
+    if (this.keptLooks.has(k)) return;
+    this.keptLooks = new Set([k]);
+    if (!this.witchLooks.has(k)) this.ask(this.witchJob(genome, false));
+  }
+  /** The looks kept for good (keepLook). */
+  private keptLooks = new Set<string>();
+  /** Whether a look's whole set is drawn and held (keepLook's, or one of her last few). */
+  hasLook(genome: unknown): boolean { return this.witchLooks.has(JSON.stringify(genome ?? null)); }
   /** Her hat-off frames asked with the start's own art (View.create's `hatOff`: a game's first morning, her hat on the hats' floor from
    *  the first frame, rules/wakeUp.ts; or View.setWitch's, a morning read ahead): the whole set, urgent, so the loading screen waits
    *  for it (prepare's whenIdle) and she's never drawn meanwhile from her frames with it on. */

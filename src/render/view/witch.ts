@@ -219,6 +219,7 @@ export function drawWitch(v: View, time: number, ht: number, onTreehouse: (px: n
   // Mid-blink she's nowhere (from the step it starts, so she never slides between its two points).
   const D = g.witches[0].dash;
   let hidden = ht >= D.at - STEP && ht < D.until;
+  if (inCovers(bedPose, v.lookDrawn)) hidden = true; // (in bed, her look still being drawn: under her covers till it's on her)
   let riseK = 1; // the house (rules/knockout.ts riseUntil; Ed, 2026-10-14): back at the magic circle she rises out of its floor, red
   if (KO) {
     if (ht < KO.teleportAt) { wf = F.sit.towards[Math.floor(ht * F.sit.fps) % F.sit.towards.length]; wyy = 0; djUpper = -1; }
@@ -411,3 +412,8 @@ export function houseShiftOf(v: View): number {
   const off = Math.min(1, Math.max(0, (Math.hypot(w.x - deck.x, dz) - deck.r) / 3));
   return -dz * ky * off;
 }
+
+/** In bed (asleep, or her alarm ringing: `bedPose`) with her look not on her whole yet (View.lookDrawn: her nightie still being
+ *  drawn, on a fresh game's first sail before its background bake is done, main.ts keepNightie): she's under her covers, not drawn,
+ *  rather than seen in last night's clothes, and nothing waits for it (Ed, 2026-11-03: no hold for the nightie). */
+export const inCovers = (bedPose: string | null, lookDrawn: boolean): boolean => !!bedPose && !lookDrawn;

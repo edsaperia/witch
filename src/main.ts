@@ -53,9 +53,8 @@ import { gpuName, QualityLadder } from "./app/ladder";
 import { musicCue } from "./rules/musicPlan";
 import { areaUnderWitch, interpolated, newWitchPlayer, STEP, type Game } from "./rules/game";
 import { enableCauldron, homeMushroomPickups } from "./rules/cauldronNight";
-import { TUNING, type Tuning } from "./rules/tuning";
-import { diveReach, diveTrack, handoffShot, newFlightClock, stepFlightClock, type Shot } from "./rules/arrive";
-import { nextFrame, runSliced } from "./render/slices";
+import { TUNING } from "./rules/tuning";
+import { diveReach, diveTrack } from "./rules/arrive";
 import { compareKey, rendererOf, sceneMode } from "./app/compareKey";
 import { debugText, machineLines, precisionLines, reproLine, reproQuery, reproState, tuningDiff } from "./app/repro";
 import { currentValue, DECISION_LIST, valuesText } from "./ui/decisions";
@@ -259,6 +258,16 @@ function showLook(): void {
   const look = JSON.parse(lookNow) as unknown;
   if (view.houseRooms) view.houseRooms.outfit = look;
   shownLook = key; view.setWitch(wornGenome(look as never, pile, lying), morningAhead ? { hatOff: lying } : undefined); // (a morning ahead: her whole set at once, urgent)
+  keepNightie(look);
+}
+/** Her nightie for every morning after a night played (rules/wakeUp.ts morningAfter: her hat in the pile, so no hat-off frames: those
+ *  are a first morning's only), drawn in the background from the first night on and kept for good (AssetLibrary.keepLook; Ed,
+ *  2026-11-03: "it's the same nightie on every island every morning. Why do we need to keep re-drawing it?"): the same genome
+ *  each morning while her look is, so a sail or the bed puts it on at once. Drawn again only when her look changes (its genome
+ *  carries her whole outfit, the hidden pieces too, so the art cache keys it anew). */
+function keepNightie(look: unknown): void {
+  const after = morningAfter();
+  view.assets.keepLook(wornGenome(look as never, after.pile, after.hatLying));
 }
 // The page and the night (app/night.ts; docs/plans/sail-without-reload.md B): the page made once, the night (its link, tuning,
 // game, playtest run, HUD, arrival and flags) held in `page.night`, read there by everything that needs it, never captured.
@@ -289,8 +298,9 @@ if (!inBedroom) (window as unknown as { witchLoading?: { cancel(): void } }).wit
  *  (her hat-off frames too, her hat lying on the hats' floor), so she's never drawn in her clothes first (Ed, 2026-11-03: "after the
  *  loading screen I look at the bed and see the witch in her default clothes instead of in her nightie, and then after a second or
  *  two she's in her nightie"). A sail's or the bed's (rules/wakeUp.ts morningAfter), from the moment she sails or sleeps (aheadMorning):
- *  her nightie's whole set asked then, while the chart flies or she sleeps, and the dive (app/arrive.ts, View.lookDrawn) or the sleep's
- *  dark (view.prepare's wait for the urgent sets) held till it's on her, so she's never seen in bed in last night's clothes. */
+ *  her nightie put on (kept since the first night: keepNightie), or its whole set asked then if it isn't yet; the sleep's dark waits
+ *  for it (view.prepare's wait for the urgent sets), the dive never does: in bed she's under her covers till it's on her
+ *  (render/view/witch.ts inCovers), never seen there in last night's clothes. */
 let morningAhead: { pile: PileSlot[]; hatLying: boolean } | null = inBedroom ? firstMorning(N().game) : null;
 if (N().game.map.zoo) void import("./zoo/panel").then(({ ZooPanel }) => { zooPanel = new ZooPanel(N().game); });
 // The settings as built (the tuning file's), for the debug overlay's and the playtest log's list of what's changed (app/repro.ts).
@@ -1373,7 +1383,8 @@ async function sailInPlace(to: Sailed, made?: Promise<Night>): Promise<void> {
 /** A sail's night made (sailInPlace, or under the chart's flight: departFromChart): the old night's music fading to the sea and the
  *  wind, the old night ended, the night's link pushed (and Back's guard), the night made (startNight) and its start readied: the
  *  ground, the house and the shaders, not the trees (Ed, 2026-10-24: "Don't wait for the trees": they come under the loading mist,
- *  the dive's own areas first, rules/arrive.ts diveReach); `at`, the chart's hand-off, its first frames drawn there ahead. */
+ *  the dive's own areas first, rules/arrive.ts diveReach); `at`, the chart's hand-off: made under its flight, nothing but the night
+ *  itself waited for. */
 async function makeSailNight(to: Sailed, arrival?: Arrival, at?: FlightEnd["cam"] | null): Promise<Night> {
   if (sailFail) throw new Error("?debug=sail: the sail in place made to fail"); // (window.witch.sail's test of the fallback)
   if (at === undefined) view.beginLandingShaders(false);
@@ -1393,34 +1404,22 @@ async function makeSailNight(to: Sailed, arrival?: Arrival, at?: FlightEnd["cam"
   bedFirst(n); // (the flight in ends on her asleep in her bedroom, rules/opening.ts)
   worldDraw = new WorldDrawGate();
   displayedStep = -1;
-  const A = n.tuning.arrive;
-  await view.prepare({ sail: true, ...(A && at !== undefined ? { dive: diveReach(n.game.map, A), track: diveTrack(n.game.map, A) } : {}) });
-  if (at && A && !view.shaderLandingLimited) await warmAt(n, handoffShot({ cam: at }, n.game.map), A);
-  if (view.shaderLandingLimited) await view.waitForLandingWitch();
-  if (view.shaderLandingLimited) finishChartFlight();
+  const A = n.tuning.arrive, underChart = !!A && at !== undefined;
+  const prep = view.prepare({ sail: true, ...(underChart ? { dive: diveReach(n.game.map, A), track: diveTrack(n.game.map, A), underDive: true } : {}) });
+  if (underChart) {
+    // Made under the chart's flight: it hands over as soon as the night is (its map, and the island's layers the view draws), and
+    // the rest is built on under the dive: the shaders, the house, the forest, the ground along its track, shown as they're
+    // made, the loading mist over what isn't (Ed, 2026-11-03: "zoom in over the map, switch to the island's sea, fly over the
+    // island, and show whatever is built, with mist over it if it's not built"). It used to wait under the chart for the shaders,
+    // the track's ground and the hand-off's first frames.
+    void prep.catch(e => console.error("the island's build under the dive went wrong", e));
+  } else {
+    await prep;
+    if (view.shaderLandingLimited) await view.waitForLandingWitch();
+    if (view.shaderLandingLimited) finishChartFlight();
+  }
   mark("sail:ready");
   return n;
-}
-/** The night's first frames drawn at `shot` (the chart's hand-off), under the chart, until they come calm as the flight's warm-up
- *  waits for (rules/arrive.ts stepFlightClock): the heavy ones over before the dive, not at its start. */
-async function warmAt(n: Night, shot: Shot, A: NonNullable<Tuning["arrive"]>): Promise<void> {
-  await runSliced(view.heights.fillSteps(shot.tx, shot.tz), "handoff-heights");
-  const c = newFlightClock();
-  view.fly = shot;
-  view.assets.hold(true); // (the art workers paused for them: the first draws not fighting them for the machine)
-  try {
-    while (!stepFlightClock(c, performance.now(), A).faded) {
-      view.limitedLandingReady();
-      if (view.shaderLandingLimited) break;
-      const t0 = performance.now();
-      view.render(n.game.clock.time);
-      try {
-      stallLog.frame({ t: n.game.clock.time, gap: 0, work: performance.now() - t0, step: 0, draw: performance.now() - t0, measured: { step: false, draw: true }, parts: Object.fromEntries(Object.entries(view.ms).map(([name, ms]) => [`draw.${name}`, ms])), source: "warm-draw", loading: { phase: "handoff-warm", ready: n.flags.ready, ...view.readiness }, mode: n.game.witch.mode, x: n.game.witch.x, z: n.game.witch.z, wave: n.game.party.wave, creatures: n.game.creatures.length });
-      } catch (error) { logCaughtError(error, "warm-draw observation"); }
-      if (TIMING) console.info(`sail-timing: warm frame ${Math.round(performance.now() - t0)} ms`, JSON.stringify(Object.fromEntries(Object.entries(view.ms).filter(([, v]) => v > 20).map(([k, v]) => [k, Math.round(v)]))));
-      await nextFrame();
-    }
-  } finally { view.fly = null; view.assets.hold(false); }
 }
 /** Another way to a new night (the plan's PR 6: the bed, the bot game's exit): in place as a sail is (the tuning's sail.inPlace,
  *  ?sail=), else, in a bot game for any but its exit (the bot's on the old night), or on anything going wrong, the link loaded as
