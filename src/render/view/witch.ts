@@ -4,7 +4,6 @@
 import { deckOf, onTerrace } from "../../rules/treehouse";
 import { potionBlackout, potionFall } from "../potionChoreography";
 import { updatePotionCaption } from "../potionCaption";
-import { updateAnchorHint } from "../anchorHint";
 import { youthRising } from "../../rules/chains";
 import { onRoomFloor } from "../../rules/houseRooms";
 import { houseWitchOverlay, setHouseWitchPass } from "../houseWitchPass";
@@ -168,7 +167,6 @@ export function drawWitch(v: View, time: number, ht: number, onTreehouse: (px: n
   // rules/game.ts): drawn only, the rules keep her on the ground. She lifts off, slowing, to GROUNDED_HOP metres, is yanked
   // straight back down by her taut leashes (render/leash/stack.ts) and lands with a little bounce.
   for (const e of g.leashEvents) if (e.kind === "grounded") v.groundedAt = e.at;
-  updateAnchorHint(g, ht); // (the first time an adult holds her down: why, in a line; render/anchorHint.ts)
   const hop = groundedHop(ht - v.groundedAt);
   wyy += hop;
   // Staggered by a blow (rules/knock.ts): a wobble side to side, fading as it wears off.
