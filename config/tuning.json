@@ -2484,6 +2484,9 @@
     "metres": 6,
     "dither": true
   },
+  "pathLook": {
+    "bump": 3
+  },
   "trunkFade": {
     "metres": 2.5,
     "share": 0.3,
