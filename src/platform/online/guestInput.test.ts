@@ -79,3 +79,27 @@ it("never invents motion on underrun and drains received quanta across a slow pa
   expect(input.stats.longestHoldMs).toBe(784);
   input.clear(); expect(input.stats.longestHoldMs).toBe(0);
 });
+
+it("keeps a hold's controls current without queueing a physics quantum", () => {
+  const input = guestInput();
+  expect(input.accept({ sequence: 0, controls: { moveX: 1 } }, 0)).toBe(true);
+  expect(input.accept({ sequence: 1, controls: { moveX: 1, pausePage: true }, hold: true }, 1)).toBe(true);
+  expect(input.sample(2)).toMatchObject({ pausePage: true });
+  expect(input.stats).toMatchObject({ received: 1, queued: 1 });
+  expect(input.accept({ sequence: 1, controls: { moveX: -1 } }, 3)).toBe(false); // A hold still orders the stream.
+});
+
+it("drains a backlog above the threshold oldest first and always leaves this step's own quantum", () => {
+  const input = guestInput(250, 1);
+  for (let sequence = 0; sequence < 8; sequence++) input.accept({ sequence, controls: { moveX: sequence / 10 } }, sequence);
+  expect(input.catchUp(1, 4)).toEqual([]); // Not started: the jitter buffer decides when quanta begin.
+  expect(input.consume(10)).toMatchObject({ sequence: 0, motion: true });
+  const extra = input.catchUp(1, 4);
+  expect(extra.map(e => [e.sequence, e.controls.moveX])).toEqual([[1, .1]]);
+  expect(input.sequence).toBe(1);
+  expect(input.consume(11)).toMatchObject({ sequence: 2, motion: true });
+  expect(input.catchUp(3, 4).map(e => e.sequence)).toEqual([3]); // Five wait: down to the threshold, no further.
+  expect(input.catchUp(3, 4)).toEqual([]);
+  expect(input.catchUp(9, 0).map(e => e.sequence)).toEqual([4, 5, 6]); // One always stays for consume().
+  expect(input.consume(12)).toMatchObject({ sequence: 7, motion: true });
+});

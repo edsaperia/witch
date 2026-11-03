@@ -1,5 +1,6 @@
 import { STEP, type Controls, type Game } from "../../rules/game";
 import { guestInput, wireControls, INPUT_EDGES } from "./guestInput";
+import { ONLINE_TIMING } from "./inputLease";
 import { withGuestInputSteps, holdGuestMotion } from "../../rules/onlineInputSteps";
 import { prepareJoin } from "./joinPreparation";
 import { replayGuest, replayHostStep, replayStart, type ReplayFrame, type ReplayStart } from "./replay";
@@ -333,20 +334,23 @@ export function onlineSession(options: SessionOptions) {
             guestAccumulator += dt;
             while (guestAccumulator >= STEP - 1e-9) {
               guestAccumulator -= STEP;
-              // The host still applies every quantum it receives. Past the prediction's history she waits for
-              // acknowledgements: a sent step dropped from that history would be walked again (T5B run 4).
-              if (prediction?.full && !game.clock.paused) { for (const edge of INPUT_EDGES) delete guestEdges[edge]; continue; }
+              // The host applies every quantum it receives, so each one sent must be in the prediction's history:
+              // a sent step missing from it is walked again (T5B run 4). While her copy of the clock is paused the
+              // prediction cannot replay a step, and past its history she waits for acknowledgements; either way she
+              // sends a hold instead, which keeps her pause vote and held controls without a physics quantum.
+              // Edges pressed meanwhile are dropped.
+              const hold = game.clock.paused || !!prediction?.full;
               const quantum = { ...controls };
-              for (const edge of INPUT_EDGES) { quantum[edge] = !!guestEdges[edge]; delete guestEdges[edge]; }
-              if (!connection.sendInput({ sequence, controls: quantum })) {
+              for (const edge of INPUT_EDGES) { quantum[edge] = !hold && !!guestEdges[edge]; delete guestEdges[edge]; }
+              if (!connection.sendInput(hold ? { sequence, controls: quantum, hold: true } : { sequence, controls: quantum })) {
                 // Transport-away may arrive synchronously while a closing socket
                 // rejects this send. Keep the visit for its authenticated rejoin.
                 if (resuming && !ready) return true;
                 throw new Error("The guest telephone disconnected.");
               }
-              if (!game.clock.paused) prediction?.input(sequence, quantum, STEP);
+              if (!hold) prediction?.input(sequence, quantum, STEP);
               sequence++;
-              if (prediction) hitPresentation?.step(prediction.actor, quantum, STEP);
+              if (prediction && !hold) hitPresentation?.step(prediction.actor, quantum, STEP);
             }
           }
           return true;
@@ -404,15 +408,26 @@ export function onlineSession(options: SessionOptions) {
         if (controls.pausePage && guestControls.pausePage) buffer.suspend();
         const pve = ready ? hits?.drain() : null;
         const guestSteps: NonNullable<ReplayFrame["guestSteps"]> = [];
+        const quantum = (original: Controls, motion: Controls): Controls => game!.witches[1].paused ? original : { ...original, moveX: motion.moveX, moveZ: motion.moveZ,
+          toggleMode: motion.toggleMode, dash: motion.dash, spell: motion.spell, fire: motion.fire, aimX: motion.aimX, aimZ: motion.aimZ };
         const frame = withGuestInputSteps(game, original => {
           const consumed = ready ? buffer.consume(now()) : { sequence: -1, controls: wireControls({})!, motion: false };
           if (!consumed.motion) holdGuestMotion(game!);
-          const motion = consumed.controls;
-          const applied = game!.witches[1].paused ? original : { ...original, moveX: motion.moveX, moveZ: motion.moveZ,
-            toggleMode: motion.toggleMode, dash: motion.dash, spell: motion.spell, fire: motion.fire, aimX: motion.aimX, aimZ: motion.aimZ };
+          const applied = quantum(original, consumed.controls);
           guestSteps.push({ sequence: consumed.sequence, controls: applied, motion: consumed.motion });
           return applied;
-        }, () => replayHostStep(game!, [controls, guestControls], dt, ++tick, options.advanceHost), { steps: guestSteps, casts: pve?.casts, effects: pve?.effects });
+        }, () => replayHostStep(game!, [controls, guestControls], dt, ++tick, options.advanceHost), { steps: guestSteps, casts: pve?.casts, effects: pve?.effects }, original => {
+          // A stall's backlog drains: older quanta first, each a whole guest step (ONLINE_TIMING.catchUpAbove/catchUpPerStep).
+          // This step's one-shot edges stay with its own quantum.
+          if (!ready) return [];
+          const base = { ...original, zoom: 0 };
+          for (const edge of INPUT_EDGES) base[edge] = false;
+          return buffer.catchUp(ONLINE_TIMING.catchUpPerStep - 1, ONLINE_TIMING.catchUpAbove).map(tick => {
+            const applied = quantum(base, tick.controls);
+            guestSteps.push({ sequence: tick.sequence, controls: applied, motion: true, catchUp: true });
+            return applied;
+          });
+        });
         hits?.observed();
         frame.guestSequence = buffer.sequence;
         frame.guestSteps = guestSteps;

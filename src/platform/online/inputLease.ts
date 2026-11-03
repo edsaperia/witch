@@ -1,4 +1,7 @@
-export const ONLINE_TIMING = { heldInputMs: 250, dropMs: 20000 } as const;
+/** catchUpAbove/catchUpPerStep: while more than catchUpAbove guest quanta wait on the host, each host physics step
+ * applies up to catchUpPerStep of them (each one a whole guest step of her clock and locomotion), so a relay stall's
+ * backlog drains instead of staying as input latency for the rest of the visit. */
+export const ONLINE_TIMING = { heldInputMs: 250, dropMs: 20000, catchUpAbove: 4, catchUpPerStep: 2 } as const;
 
 /** Held controls only, never one-shot edges. Host samples on its clock; arrival never steps the game.
  * Connection liveness is tracked separately by the relay, including heartbeats. */

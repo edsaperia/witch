@@ -1,6 +1,7 @@
 import { stepGame, type Controls, type Game } from "../../rules/game";
 import { restoreGame, snapshotGame, type NightSnapshot } from "../../rules/nightSnapshot";
 import { wireControls } from "./guestInput";
+import { ONLINE_TIMING } from "./inputLease";
 import { withGuestInputSteps, holdGuestMotion } from "../../rules/onlineInputSteps";
 import { restoreGuestEffects, guestEffectsEnabled, pendingGuestEffects, queueGuestEffects, startGuestLetters, type GuestEffect, type GuestLetterCast } from "../../rules/guestEffects";
 
@@ -10,7 +11,7 @@ export interface ReplayStart {
   snapshot: NightSnapshot;
   transient: { acc: number; paused: boolean; pending: Partial<Controls>; witches: { paused?: boolean; pending?: Partial<Controls> }[]; guestClaims?: boolean; guestEffects?: GuestEffect[] };
 }
-export interface ReplayFrame { tick: number; dt: number; inputs: Controls[]; guestSequence?: number; guestSteps?: { sequence: number; controls: Controls; motion?: boolean }[]; guestCasts?: GuestLetterCast[]; guestEffects?: GuestEffect[] }
+export interface ReplayFrame { tick: number; dt: number; inputs: Controls[]; guestSequence?: number; guestSteps?: { sequence: number; controls: Controls; motion?: boolean; catchUp?: boolean }[]; guestCasts?: GuestLetterCast[]; guestEffects?: GuestEffect[] }
 
 /** A network handoff preserves input queues/accumulator; a disk resume deliberately clears them. */
 export function replayStart(game: Game, build: string, tick: number): ReplayStart {
@@ -56,13 +57,19 @@ export function replayGuest(start: ReplayStart, build: string, reuse?: Game, val
       }
       queueGuestEffects(game, frame.guestEffects ?? []);
       if (frame.guestSteps) {
-        if (frame.guestSteps.length > 16 || frame.guestSteps.some(step => !Number.isSafeInteger(step.sequence) || step.sequence < -1 || !validateControls(step.controls) || step.motion !== undefined && typeof step.motion !== "boolean")) return false;
+        // A frame crosses at most 7 fixed steps (MAX_STEP + STEP), each with its own quantum and any catch-up quanta before it.
+        if (frame.guestSteps.length > 8 * ONLINE_TIMING.catchUpPerStep || frame.guestSteps.some(step => !Number.isSafeInteger(step.sequence) || step.sequence < -1 || !validateControls(step.controls)
+          || step.motion !== undefined && typeof step.motion !== "boolean" || step.catchUp !== undefined && (step.catchUp !== true || step.motion === false))) return false;
         let index = 0;
         withGuestInputSteps(game, () => {
-          const step = frame.guestSteps![index++]; if (!step) throw Error("Guest physics steps lost their sequence");
+          const step = frame.guestSteps![index++]; if (!step || step.catchUp) throw Error("Guest physics steps lost their sequence");
           if (step.motion === false) holdGuestMotion(game);
           return validateControls(step.controls)!;
-        }, () => stepGame(game, inputs as Controls[], frame.dt));
+        }, () => stepGame(game, inputs as Controls[], frame.dt), undefined, () => {
+          const extra: Controls[] = [];
+          while (frame.guestSteps![index]?.catchUp) extra.push(validateControls(frame.guestSteps![index++].controls)!);
+          return extra;
+        });
         if (index !== frame.guestSteps.length || index > 0 && frame.guestSequence !== frame.guestSteps[index - 1].sequence) return false;
       } else stepGame(game, inputs as Controls[], frame.dt);
       tick = frame.tick;

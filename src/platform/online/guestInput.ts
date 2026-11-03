@@ -52,8 +52,12 @@ export function guestInput(heldInputMs: number = ONLINE_TIMING.heldInputMs, jitt
       const p = payload as Record<string, unknown>;
       if (!Number.isSafeInteger(p.sequence) || (p.sequence as number) < 0 || (p.sequence as number) <= sequence) return false;
       const controls = wireControls(p.controls); if (!controls) return false;
-      if (ticks.length >= 120) { ticks.shift(); discarded++; }
-      ticks.push({ sequence: p.sequence as number, controls, at: now });
+      // A hold keeps her held controls and pause vote current without a physics quantum: the guest sends one
+      // whenever she could not replay that quantum herself (her copy of the clock paused, or her history full).
+      if (p.hold !== true) {
+        if (ticks.length >= 120) { ticks.shift(); discarded++; }
+        ticks.push({ sequence: p.sequence as number, controls, at: now });
+      }
       for (const key of edges) if (controls[key]) pending[key] = true;
       current = controls; receivedAt = now; sequence = p.sequence as number;
       return true;
@@ -75,6 +79,16 @@ export function guestInput(heldInputMs: number = ONLINE_TIMING.heldInputMs, jitt
       underruns++;
       measureHold(now, false);
       return { sequence: applied, controls: neutral(), motion: false };
+    },
+    /** Extra quanta, oldest first, for the physics step whose own quantum consume() takes next: at most `limit`, and
+     * only while more than `above` wait. A backlog left by a stall drains; one quantum always stays for consume(). */
+    catchUp(limit: number, above: number): { sequence: number; controls: Controls }[] {
+      const extra: { sequence: number; controls: Controls }[] = [];
+      while (started && extra.length < limit && ticks.length > Math.max(1, above)) {
+        const tick = ticks.shift()!; applied = tick.sequence;
+        extra.push({ sequence: tick.sequence, controls: { ...tick.controls } });
+      }
+      return extra;
     },
     suspend(): void { discarded += ticks.length; ticks.length = 0; started = false; warmTicks = 0; holdSince = null; },
     clear(): void { current = neutral(); receivedAt = -Infinity; sequence = applied = -1; ticks.length = 0; started = false; warmTicks = 0; underruns = discarded = 0; holdSince = null; longestHoldMs = lastConsumeAt = 0; for (const key of edges) delete pending[key]; },

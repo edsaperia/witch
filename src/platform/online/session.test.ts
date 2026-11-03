@@ -93,6 +93,93 @@ it.each(["host frames", "guest quanta"] as const)("keeps a guest walking indoors
   expect(Math.hypot(f.guest.predicted!.body.x - b.x, f.guest.predicted!.body.z - b.z)).toBeLessThan(.05);
   expect(f.guest.predictionStats!.pendingCapSnaps).toBe(0); expect(f.host.inputStats!.discarded).toBe(0);
 });
+it.each(["guest quanta", "host frames"] as const)("drains the guest input backlog within seconds after the relay holds her %s for 2.8 s", async held => {
+  // After one stall the host used to apply one guest quantum per step for good: ~119 queued, two seconds of input lag.
+  installEdLayout(true); cleanups.push(() => installEdLayout(false));
+  const f = fixture(), { joined } = await f.start();
+  const host = f.hostGame, guest = host.witches[1], at = host.map.treehouse;
+  startWakeFor(host, guest.time ?? host.herTime, { yesterday: true }, guest, { player: 1, room: "bedroom2" });
+  guest.wake!.open = true; guest.wake!.beat = "up"; Object.assign(guest.body, { perch: true, mode: "ground", seated: false, vx: 0, vz: 0 });
+  await f.sync(); await joined;
+  const wardrobe = objectFront(HOUSE_ROOMS.objects.find(o => o.id === "bedroom2Wardrobe")!, at, .6), start = { x: guest.body.x, z: guest.body.z };
+  // The driver walks the shown witch to the wardrobe and back again, so she is still walking while the backlog drains.
+  let target = wardrobe;
+  const drive = (): Controls => {
+    const b = f.guest.predicted!.body, dx = target.x - b.x, dz = target.z - b.z;
+    if (Math.hypot(dx, dz) < .6) { target = target === wardrobe ? start : wardrobe; return input(); }
+    return { ...input(), moveX: Math.max(-1, Math.min(1, dx)), moveZ: Math.max(-1, Math.min(1, dz)) };
+  };
+  const stall = { from: 30, to: 198 }, up: { at: number; message: Record<string, unknown> }[] = [], down: typeof up = [];
+  const deliver = (frame: number) => frame >= stall.from && frame < stall.to ? stall.to : frame;
+  let sent = f.guestMessages.length, received = f.hostMessages.length, drainedAt = -1, worstAfter = 0;
+  for (let frame = 0; frame < stall.to + 360; frame++) {
+    f.advanceTime(STEP * 1000);
+    while (down[0] && down[0].at <= frame) f.guest.message(down.shift()!.message);
+    f.guest.step(frame < 36 || frame >= stall.to + 300 ? input() : drive(), STEP); // She stops for the last second.
+    for (const message of f.guestMessages.slice(sent)) up.push({ at: held === "guest quanta" ? deliver(frame) : frame, message });
+    sent = f.guestMessages.length;
+    while (up[0] && up[0].at <= frame) f.host.message(up.shift()!.message);
+    f.host.step(input(), STEP);
+    for (const message of f.hostMessages.slice(received)) down.push({ at: held === "host frames" ? deliver(frame) : frame, message });
+    received = f.hostMessages.length;
+    const pending = f.guest.predictionStats!.pending;
+    if (frame > stall.to && drainedAt < 0 && pending <= 6 && f.host.inputStats!.queued <= 4) drainedAt = frame;
+    if (drainedAt >= 0) worstAfter = Math.max(worstAfter, pending);
+    }
+  expect(f.hostOptions.failed).not.toHaveBeenCalled(); expect(f.guestOptions.failed).not.toHaveBeenCalled();
+  expect(drainedAt).toBeGreaterThan(stall.to);
+  expect((drainedAt - stall.to) * STEP).toBeLessThan(3);
+  expect(worstAfter).toBeLessThanOrEqual(6);
+  const stats = f.guest.predictionStats!;
+  expect({ pendingCapSnaps: stats.pendingCapSnaps, correctionSnaps: stats.correctionSnaps, discarded: f.host.inputStats!.discarded }).toEqual({ pendingCapSnaps: 0, correctionSnaps: 0, discarded: 0 });
+  // Every quantum the host applied, two to a step or one, landed where her shown witch had already walked it.
+  expect(stats.largest).toBeLessThan(.05);
+  expect(Math.hypot(f.guest.predicted!.body.x - guest.body.x, f.guest.predicted!.body.z - guest.body.z)).toBeLessThan(.05);
+  for (const { message } of down.splice(0)) f.guest.message(message);
+  expect(snapshotGame(f.guest.game!)).toEqual(snapshotGame(host)); // The replica replays the catch-up steps exactly.
+  expect({ perch: !!guest.body.perch, mode: guest.body.mode, room: roomAt(at, guest.body.x, guest.body.z)?.id ?? null }).toEqual({ perch: true, mode: "ground", room: "bedroom2" });
+});
+it("never lets the host apply a guest quantum her prediction did not record while her copy of the clock is paused", async () => {
+  // session.ts sent quanta while the guest's replica showed a shared pause, without recording them. Leaving the
+  // pause page before the host's frame arrived, her first steps were walked on the host but never shown until acknowledged.
+  const f = fixture(), { joined } = await f.start();
+  const host = f.hostGame, walker = host.witches[1];
+  startWakeFor(host, walker.time ?? host.herTime, { yesterday: true }, walker, { player: 1, room: "bedroom2" });
+  walker.wake!.open = true; walker.wake!.beat = "up"; Object.assign(walker.body, { perch: true, mode: "ground", seated: false, vx: 0, vz: 0 });
+  await f.sync(); await joined;
+  const latency = 6, down: { at: number; message: Record<string, unknown> }[] = [];
+  let received = f.hostMessages.length, sent = f.guestMessages.length;
+  const wardrobe = objectFront(HOUSE_ROOMS.objects.find(o => o.id === "bedroom2Wardrobe")!, host.map.treehouse, .6);
+  const drive = (): Controls => {
+    const b = f.guest.predicted!.body, dx = wardrobe.x - b.x, dz = wardrobe.z - b.z;
+    return Math.hypot(dx, dz) < .6 ? input() : { ...input(), moveX: Math.max(-1, Math.min(1, dx)), moveZ: Math.max(-1, Math.min(1, dz)) };
+  };
+  const run = (frames: number, hostPause: boolean, guest: () => Controls, from: number) => {
+    for (let frame = from; frame < from + frames; frame++) {
+      f.advanceTime(STEP * 1000);
+      while (down[0] && down[0].at <= frame) f.guest.message(down.shift()!.message);
+      f.guest.step(guest(), STEP);
+      for (const message of f.guestMessages.slice(sent)) f.host.message(message);
+      sent = f.guestMessages.length;
+      f.host.step({ ...input(), pausePage: hostPause }, STEP);
+      for (const message of f.hostMessages.slice(received)) down.push({ at: frame + latency, message });
+      received = f.hostMessages.length;
+    }
+    return from + frames;
+  };
+  let frame = run(30, true, () => ({ ...input(), pausePage: true }), 0);
+  expect(f.hostGame.clock.paused).toBe(true); expect(f.guest.game!.clock.paused).toBe(true);
+  const before = { ...f.hostGame.witches[1].body };
+  frame = run(150, true, drive, frame); // She leaves the pause page walking to the wardrobe; the host stays on it.
+  frame = run(60, true, input, frame);
+  expect(f.hostOptions.failed).not.toHaveBeenCalled(); expect(f.guestOptions.failed).not.toHaveBeenCalled();
+  expect(f.hostGame.clock.paused).toBe(false);
+  expect(Math.hypot(f.hostGame.witches[1].body.x - before.x, f.hostGame.witches[1].body.z - before.z)).toBeGreaterThan(1);
+  expect({ mode: walker.body.mode, perch: !!walker.body.perch, room: roomAt(host.map.treehouse, walker.body.x, walker.body.z)?.id ?? null }).toEqual({ mode: "ground", perch: true, room: "bedroom2" });
+  expect(f.guest.predictionStats!.largest).toBeLessThan(.05);
+  const shown = f.guest.predicted!.body, actual = f.hostGame.witches[1].body;
+  expect(Math.hypot(shown.x - actual.x, shown.z - actual.z)).toBeLessThan(.05);
+});
 it("keeps the guest visit when a failed send synchronously reports transport-away", async () => {
   const f = fixture(); const { joined } = await f.start(); await f.sync(); await joined;
   const game = f.guest.game;

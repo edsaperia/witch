@@ -81,7 +81,7 @@ import { homeDown, startPartyOver, stepPartyOver, stepWorldAsleep, worldAsleep, 
 import { stepWin, winFlare, won, type WinState } from "./win";
 import { hasBroom, hasInvites, type Kit } from "./kit";
 import { applyGuestEffects, guestEffectsEnabled, recordAutomaticHit } from "./guestEffects";
-import { guestInputStep, guestMotionReady } from "./onlineInputSteps";
+import { guestCatchUpSteps, guestInputStep, guestMotionReady } from "./onlineInputSteps";
 import { pulseRouteMetres } from "./leypulse";
 
 /** One player's witch (Stage 4: game.witches, one per player, the first this machine's): her
@@ -391,10 +391,11 @@ export function stepGame(g: Game, controls: Controls | readonly Controls[], real
       step.zoom = (P.zoom as number) ?? 0; delete P.zoom;
       return multi && g.witches[i].paused ? { moveX: 0, moveZ: 0, toggleMode: false, zoom: 0 } : step;
     });
+    const caughtUp = multi ? guestCatchUpSteps(g, steps[1]) : [];
     if (multi) steps[1] = guestInputStep(g, steps[1]);
     remember(g);
     setFloorSigils(gatherFloorSigils(g));
-    try { fixedStep(g, steps); } finally { setFloorSigils(null); }
+    try { fixedStep(g, steps, caughtUp); } finally { setFloorSigils(null); }
   }
   g.alpha = Math.max(0, Math.min(1, g.acc / STEP));
 }
@@ -669,12 +670,21 @@ export function stepWitchLocomotion(g: Game, W: Witch, input: Controls, hdt: num
   return { W, c, ht, was, deck, perchTurn, firing, LV: null as ReturnType<typeof leashView> | null };
 }
 
-function fixedStep(g: Game, controls: readonly Controls[]): void {
+function fixedStep(g: Game, controls: readonly Controls[], guestCatchUp: readonly Controls[] = []): void {
   // Two clocks (rules/slowTime.ts): the world's runs at timeScale (slowed in a sleeping legend's circle), hers at full speed.
   stepTimeScale(g, STEP);
   const dt = STEP * g.timeScale, hdt = STEP;
   g.clock.time += dt;
   g.herTime += hdt;
+  // An online guest's backlog draining (platform/online/guestInput.ts catchUp): each older quantum is one whole step of
+  // her clock and locomotion before this step's own, as her prediction replays it (platform/online/guestPrediction.ts).
+  const guestWas = g.witches[1]?.body;
+  let guestTurn = 0;
+  for (const c of guestCatchUp) {
+    const W = g.witches[1];
+    if (W.time !== undefined) W.time += hdt;
+    guestTurn += stepWitchLocomotion(g, W, c, hdt).perchTurn;
+  }
   for (const W of g.witches) if (W.time !== undefined && (W !== g.witches[1] || guestMotionReady(g))) W.time += hdt;
   // Explicit legacy cauldron preview owns its own inventory/inputs while enabled.
   if (!g.cauldron) stepMushrooms(g);
@@ -682,6 +692,7 @@ function fixedStep(g: Game, controls: readonly Controls[]): void {
   const legends = (g.legendIds ??= g.creatures.filter(k => k.boss).map(k => k.id));
   const t = g.tuning;
   const motions = g.witches.map((W, i) => stepWitchLocomotion(g, W, controls[i], hdt));
+  if (guestCatchUp.length) { const m = motions[1]; m.was = guestWas; m.perchTurn = Math.sign(guestTurn + m.perchTurn); } // (a fall or a deck crossed in either step)
   if (g.cauldron) {
     const routed = stepCauldronNight(g, motions.map(m => m.c), hdt);
     motions.forEach((m, i) => { m.c = routed[i]; });
