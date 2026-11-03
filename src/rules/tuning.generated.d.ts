@@ -442,7 +442,7 @@ export type SchemaTuning = {
     "on": boolean;
     "radius": number;
     "margin": number;
-    "columns": number;
+    "spacing": number;
     "adults": number;
     "youths": number;
     "castReach": number;

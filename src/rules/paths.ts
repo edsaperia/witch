@@ -33,7 +33,8 @@ export interface PathLine {
 export interface SiteEnd { x: number; z: number; r: number }
 /** The path network's sites (rules/map.ts): each area's end (null: an area with no site, the buffer's, a legend area, a lake), and
  *  the circles its paths keep out of between their ends (the dancefloor, the treehouse, every stone and special site). */
-export interface SiteNet { ends(cx: number, cy: number): SiteEnd | null; keepOut: readonly { x: number; z: number; r: number }[] }
+/** keepOut's `rim`: a wide circle (the challenge circle's) whose points a path's corners leave in it are put out on its rim. */
+export interface SiteNet { ends(cx: number, cy: number): SiteEnd | null; keepOut: readonly { x: number; z: number; r: number; rim?: boolean }[] }
 
 /** A 3D piece along the network (its id is the art's path piece): a bridge where a path crosses a
  *  stream, a railway landmark, a level crossing, stairs, a verge post... r: the clear radius kept
@@ -209,14 +210,17 @@ export class PathNetwork {
    *  stops a little before it, in as many pieces as it crosses in and out (a junction kept on its piece). */
   private clipToBeach(): void {
     const B = beachOf(this.map.bounds, this.map.tuning), lakes = this.map.bounds.lakes ? this.map.bounds : null, shore = lakeKnobs(this.map.tuning).shore;
-    if (!B && !lakes) return;
+    // (and, but for the network's own paths, which end at its edge, short of a claimed challenge circle: its area's whole, the railway,
+    // the streams and the paths out to the buffer stopping at its woods' edge rather than running over its floor; rules/map.ts)
+    const rings = (this.map.specialSites ?? []).filter(sp => sp.kind === "challenge" && sp.claimed);
+    if (!B && !lakes && !rings.length) return;
     const out: PathLine[] = [], remap = new Map<number, number[]>();
     let cut = false;
     this.lines.forEach((l, li) => {
       const keep = l.half + 8, lakeKeep = l.link ? l.half + LINK_SHORE : keep, ids: number[] = [];
       let run: [number, number][] = [];
       const flush = () => { if (run.length >= 2) { ids.push(out.length); out.push({ ...l, pts: run }); } run = []; };
-      for (const p of l.pts) { if ((!B || B.intoSand(p[0], p[1]) <= -keep) && (!lakes || !onLake(lakes, p[0], p[1], lakeKeep + shore))) run.push(p); else { cut = true; flush(); } } // (and short of a lake's shore: rules/lakes.ts)
+      for (const p of l.pts) { if ((!B || B.intoSand(p[0], p[1]) <= -keep) && (!lakes || !onLake(lakes, p[0], p[1], lakeKeep + shore)) && (l.link || rings.every(sp => Math.hypot(p[0] - sp.x, p[1] - sp.z) >= sp.r + l.half + 2))) run.push(p); else { cut = true; flush(); } } // (and short of a lake's shore: rules/lakes.ts)
       flush();
       remap.set(li, ids);
     });
@@ -347,7 +351,7 @@ export class PathNetwork {
    *  the two clearings all but touch, no path needed): a wandering path between the clearings' edges, its points pushed out of
    *  every circle in keepOut on the way (smoothed after), then round the lakes along their shores, as the followers go
    *  (rules/travel.ts). */
-  private link(a: SiteEnd, b: SiteEnd, r: () => number, keepOut: readonly { x: number; z: number; r: number }[]): [number, number][] | null | "meet" {
+  private link(a: SiteEnd, b: SiteEnd, r: () => number, keepOut: SiteNet["keepOut"]): [number, number][] | null | "meet" {
     const dx = b.x - a.x, dz = b.z - a.z, len = Math.hypot(dx, dz);
     if (len - a.r - b.r < 4) return "meet";
     const ux = dx / len, uz = dz / len, half = this.map.tuning.paths.pathHalf;
@@ -376,6 +380,12 @@ export class PathNetwork {
       else if (i > 1 && Math.hypot(P[i - 1][0] - v[0], P[i - 1][1] - v[1]) < FOOT_GAP / 2) P.splice(i - 1, 1, v);
       else P.splice(i, 0, v);
       pts = rounded(P);
+    }
+    // (a wide circle the corners couldn't clear, the challenge circle's: the points still in it put out on its rim, the way following
+    // its edge round; none left in it, nothing moves)
+    for (const o of near) if (o.rim) for (let i = 1; i < pts.length - 1; i++) {
+      const p = pts[i], ex = p[0] - o.x, ez = p[1] - o.z, e = Math.hypot(ex, ez), R = o.r + half + 1;
+      if (e < R) pts[i] = e > 1e-6 ? [o.x + (ex / e) * R, o.z + (ez / e) * R] : [o.x - uz * R, o.z + ux * R];
     }
     // Round the lakes: kept LINK_SHORE metres more than its half off the bare shore (clipToBeach cuts it there), along the shore where it crosses.
     const wet = (q: [number, number][]) => q.some(p => onLake(B, p[0], p[1], keep + shore));

@@ -8,7 +8,8 @@ import { seatOffset } from "./treehouse";
 import { AREAS, HOME_AREA } from "../../art/areas.js";
 import { areaIdOf } from "../../art/areaRenames.js";
 import { SCENES as SCENES_RAW, SCENE_BY_ID as SCENE_BY_ID_RAW } from "../../art/scenes.js";
-import { makePartition, type Cell, type Partition } from "./partition";
+import { claimable, makePartition, type Cell, type Claim, type Partition } from "./partition";
+import { challengeCircle } from "./challengeCircle";
 import { hash2, rng, smoothstep, vnoise } from "./random";
 import type { Tuning } from "./tuning";
 import { floorClearing, speakerRadius, speakerRing, type Speaker } from "./speakers";
@@ -232,7 +233,18 @@ export interface ForestMap {
 
 /** A special site (map.specialSites): what's there (the night's find; challenge areas later), its area, the spot (its site, on
  *  its own ground and off the rails and streams) and the clearing kept round it (m: no trees, bushes or scenery; paths end at its edge). */
-export interface SpecialSite { kind: "find" | "challenge"; cell: Cell; x: number; z: number; r: number }
+export interface SpecialSite {
+  kind: "find" | "challenge"; cell: Cell; x: number; z: number; r: number;
+  /** The challenge's: its stone circle's radius (m: rules/challengeCircle.ts, by the island's roster; r is that and its margin), and
+   *  whether its area claims the whole circle as its own ground (rules/partition.ts claimable; false: no area could, logged). */
+  radius?: number; claimed?: boolean;
+}
+
+/** How far past the challenge circle's clearing (m) its area's claim reaches: the woods' edge round it its own too. */
+const CLAIM_PAD = 4;
+/** A claimed map's neighbours as the partition first cut them (by the map's neighbours), for its prep (prepOf: the island grows
+ *  from those, the claim made again from them). */
+const BASE_NEIGHBOURS = new WeakMap<object, [string, string[]][]>();
 
 /** flip: the whole arrangement mirrored left to right. */
 export interface Ground { kind: string; x: number; z: number; r: number; flip: boolean }
@@ -299,7 +311,7 @@ const landData = (L: LandMap | undefined): LandData | null => (L ? { x0: L.x0, z
 /** A map's prep (see MapPrep): to make the same map again quickly, on another thread or page. */
 export function prepOf(map: ForestMap): MapPrep {
   const b = map.bounds;
-  return { neighbours: [...map.neighbours].map(([k, v]) => [k, [...v]]), land: landData(b.land), lakes: landData(b.lakes), route: knownRoute(map) ?? null, ...(knownPathGeometry(map) ? { pathGeometry: knownPathGeometry(map) } : {}), ...(knownHeightPrep(map) ? { heightSamples: knownHeightPrep(map) } : {}) };
+  return { neighbours: BASE_NEIGHBOURS.get(map.neighbours) ?? [...map.neighbours].map(([k, v]) => [k, [...v]]), land: landData(b.land), lakes: landData(b.lakes), route: knownRoute(map) ?? null, ...(knownPathGeometry(map) ? { pathGeometry: knownPathGeometry(map) } : {}), ...(knownHeightPrep(map) ? { heightSamples: knownHeightPrep(map) } : {}) };
 }
 
 /** What's wrong with a prep, if anything (a record from another build's code, cut short, or not a prep at all): its shapes checked
@@ -423,7 +435,9 @@ export function generateMap(runSeed: number, tuning: Tuning, only?: { landStep: 
     const a = (k / 96) * Math.PI * 2, [u, v] = toPart(homeWorld[0] + Math.cos(a) * homeRadius, homeWorld[1] + Math.sin(a) * homeRadius);
     homeR = Math.max(homeR, Math.hypot(u - homeSite[0], v - homeSite[1]));
   }
-  const partition = zooAt ? plain : makePartition(shapeSeed, depth, { cell: centreCell, radius: homeR * 1.03, gap: H.gap }, { grid: !!zoo, margin: siteMargin });
+  const basePartition = zooAt ? plain : makePartition(shapeSeed, depth, { cell: centreCell, radius: homeR * 1.03, gap: H.gap }, { grid: !!zoo, margin: siteMargin });
+  // (and room for the challenge area's claim on its circle, set once it's chosen, below: until then the partition as cut)
+  const partition = claimable(basePartition);
   // (circular: the extent a square round the flight circle, edge areas past it; the cells it covers, and one more for the warp)
   const ext = round ? { minX: homeWorld[0] - flightR * most - edgeK * A, maxX: homeWorld[0] + flightR * most + edgeK * A, minZ: homeWorld[1] - flightR * most - edgeK * A, maxZ: homeWorld[1] + flightR * most + edgeK * A } : null;
   const lo = ext ? Math.floor(Math.min(ext.minX, ext.minZ) / A) - 1 : -margin, hi = ext ? Math.ceil(Math.max(ext.maxX, ext.maxZ) / A) + 1 : n + margin;
@@ -712,21 +726,89 @@ export function generateMap(runSeed: number, tuning: Tuning, only?: { landStep: 
   if (findOn && cells.length > 2) {
     const pairs = new Set(legendAreas.values()), s0 = seed + 8117, homeKey = cellKey(centreCell[0], centreCell[1]);
     const keys = new Set(cells.map(([x, y]) => cellKey(x, y)));
-    const joinedWithout = (k: string) => { const seen = new Set([homeKey, k]), todo = [homeKey]; while (todo.length) for (const q of neighbours.get(todo.pop()!) ?? []) if (keys.has(q) && !seen.has(q)) { seen.add(q); todo.push(q); } return seen.size === keys.size; };
-    const byHome = neighbours.get(homeKey), ok = ([x, y]: Cell) => !pairs.has(cellKey(x, y)) && joinedWithout(cellKey(x, y));
+    const joinedIn = (nb: ReadonlyMap<string, ReadonlySet<string>>, k: string) => { const seen = new Set([homeKey, k]), todo = [homeKey]; while (todo.length) for (const q of nb.get(todo.pop()!) ?? []) if (keys.has(q) && !seen.has(q)) { seen.add(q); todo.push(q); } return seen.size === keys.size; };
+    const byHome = neighbours.get(homeKey), ok = ([x, y]: Cell) => !pairs.has(cellKey(x, y)) && joinedIn(neighbours, cellKey(x, y));
     const cand = cells.filter(([x, y]) => cellKey(x, y) !== homeKey && !byHome?.has(cellKey(x, y))).sort((a, c) => hash2(a[0], a[1], s0) - hash2(c[0], c[1], s0));
-    let at = cand.find(ok);
+    // (the challenge area, tuning challenge, rules/challenge.ts: its clearing the stone circle and a narrow margin past it, its
+    // columns at the circle's edge; Ed, 2026-11-03: "trees should come close to the circle's edge"; the circle sized by the roster,
+    // a column a kind: rules/challengeCircle.ts)
+    const kinds = rosterIsland ? new Set(rosterIsland.roster.map(q => q.kind)).size : new Set(cells.filter(([x, y]) => cellKey(x, y) !== homeKey).map(([x, y]) => AREA_TYPES[typeOf(x, y)]?.creature)).size;
+    const CH = tuning.challenge?.on ? challengeCircle(kinds, tuning) : null, clearR = CH ? Math.max(tuning.findArea!.clear, CH.radius + CH.margin) : tuning.findArea!.clear;
+    // The challenge area big enough for its circle (Ed, 2026-11-03: "the area will have to be big to fit a huge circle"): it claims
+    // the whole circle and its margin (and CLAIM_PAD more, its woods' edge), every point of it its own ground (rules/partition.ts
+    // claimable), taken from the areas round it. Only where that keeps every promise the map makes: the circle wholly on the
+    // island's playable ground (never home's, a legend area's, a lake's or the buffer's, so the land, coast and lakes made above
+    // are the same every night), every area it takes from left most of its ground, not touching home's afterwards and the island
+    // still one piece, and each area it takes from keeping ground stoneMinGap past its clearing for its stone (placeSites moves a
+    // stone there if it must). The seeded candidates tried in turn (so it still moves night to night); none fits, the area as before
+    // (its circle over its neighbours' ground), logged.
+    const fitClaim = ([fx, fy]: Cell) => {
+      const k = cellKey(fx, fy), site = siteOf(fx, fy), rc = clearR + CLAIM_PAD, gap = tuning.stoneMinGap ?? 0;
+      const [u0, v0] = toPart(site.x, site.z);
+      let rp = 0;
+      for (let i = 0; i < 48; i++) { const a = (i / 48) * Math.PI * 2, [u, v] = toPart(site.x + Math.cos(a) * rc, site.z + Math.sin(a) * rc); rp = Math.max(rp, Math.hypot(u - u0, v - v0)); }
+      rp *= 1.02;
+      // (its ground the island's: a playable area's, or an inland buffer area's, never home's, a legend area's or a lake's; and, as
+      // everything placed for play, the buffer's depth from the sea)
+      const allowed = (c: string) => c === k || (c !== homeKey && !legendAreas.has(c) && !lakeCells.has(c) && (keys.has(c) || landCells.has(c)));
+      const touched = new Set<string>([k]), deep = MS.buffer * A * 0.85;
+      // (the circle's ground, finely, in metres: each point of it the claim takes, an allowed area's and inland)
+      for (let dx = -rc * 1.3; dx <= rc * 1.3; dx += 4) for (let dz = -rc * 1.3; dz <= rc * 1.3; dz += 4) {
+        const [u, v] = toPart(site.x + dx, site.z + dz);
+        if ((u - u0) ** 2 + (v - v0) ** 2 >= rp * rp) continue;
+        const c = basePartition.partition(u, v), ck = cellKey(c[0], c[1]);
+        if (!allowed(ck) || (land && land.distAt(site.x + dx, site.z + dz) < deep)) return null;
+        touched.add(ck);
+      }
+      // (which areas touch which, afresh round it: findNeighbours' own samples, over a box holding every touched area's ground whole)
+      const per = 6;
+      for (let M = 2; M <= 4; M++) {
+        const i0 = Math.floor((u0 - rp - M - lo) * per), i1 = Math.ceil((u0 + rp + M - lo) * per), j0 = Math.floor((v0 - rp - M - lo) * per), j1 = Math.ceil((v0 + rp + M - lo) * per);
+        const w = i1 - i0 + 1, at: string[] = new Array(w * (j1 - j0 + 1)), was = new Map<string, number>(), now = new Map<string, number>(), far = new Set<string>();
+        let edge = false;
+        const farP = ((clearR + gap + 6) / A) * 1.1;
+        for (let j = j0; j <= j1; j++) for (let i = i0; i <= i1; i++) {
+          const pu = lo + i / per, pv = lo + j / per, b = basePartition.partition(pu, pv), bk = cellKey(b[0], b[1]), d = Math.hypot(pu - u0, pv - v0), ck = d < rp ? k : bk;
+          if (d < rp && !allowed(bk)) return null;
+          if (d < rp) touched.add(bk);
+          at[(j - j0) * w + (i - i0)] = ck;
+          was.set(bk, (was.get(bk) ?? 0) + 1); now.set(ck, (now.get(ck) ?? 0) + 1);
+          if (d >= farP) far.add(ck);
+          if ((i === i0 || i === i1 || j === j0 || j === j1) && touched.has(bk)) edge = true;
+        }
+        if (edge) continue; // (a touched area's ground reaches the box's edge: a bigger box)
+        // (a playable area it takes from keeps most of its ground, and ground for its stone far enough out; a buffer area, whatever)
+        for (const t of touched) if (t !== k && keys.has(t) && ((now.get(t) ?? 0) < Math.max(4, 0.4 * (was.get(t) ?? 0)) || !far.has(t))) return null;
+        // The neighbours afterwards: every touched area's links dropped, then those its samples in the box make again.
+        const nb = new Map(neighbours), own = (q: string) => { const set = new Set(nb.get(q) ?? []); nb.set(q, set); return set; };
+        for (const t of touched) { for (const q of neighbours.get(t) ?? []) own(q).delete(t); own(t).clear(); }
+        const link = (a: string, b: string) => { if (a === b || (!touched.has(a) && !touched.has(b))) return; own(a).add(b); own(b).add(a); };
+        for (let j = j0; j <= j1; j++) for (let i = i0; i <= i1; i++) { const q = at[(j - j0) * w + (i - i0)]; if (i > i0) link(q, at[(j - j0) * w + (i - i0 - 1)]); if (j > j0) link(q, at[(j - j0 - 1) * w + (i - i0)]); }
+        if (nb.get(homeKey)?.has(k) || !joinedIn(nb, k)) return null;
+        return { claim: { cell: [fx, fy] as Cell, u: u0, v: v0, r: rp } satisfies Claim, nb };
+      }
+      return null;
+    };
+    let at: Cell | undefined, fit: ReturnType<typeof fitClaim> = null;
+    if (CH) for (const c of cand) if (ok(c) && (fit = fitClaim(c))) { at = c; break; }
+    if (!at) at = cand.find(ok);
     if (!at) {
       const far = cells.filter(([x, y]) => cellKey(x, y) !== homeKey).map(c => ({ c, d: Math.hypot(siteOf(c[0], c[1]).x - centre.x, siteOf(c[0], c[1]).z - centre.z) })).sort((a, b) => b.d - a.d).map(o => o.c);
       at = far.find(ok) ?? far[0];
       if (at) console.info(`find area: seed ${seed}: no area clear of home's neighbours; the farthest from home, ${cellKey(at[0], at[1])}`);
+      if (at && CH) fit = fitClaim(at);
     }
     if (at) {
       const [fx, fy] = at, k = cellKey(fx, fy), site = siteOf(fx, fy);
-      // (the challenge area, tuning challenge, rules/challenge.ts: its clearing the stone circle and a narrow margin past it, its
-      // columns at the circle's edge; Ed, 2026-11-03: "trees should come close to the circle's edge")
-      const CH = tuning.challenge?.on ? tuning.challenge : null;
-      specials.set(k, { kind: CH ? "challenge" : "find", cell: [fx, fy], x: site.x, z: site.z, r: CH ? Math.max(tuning.findArea!.clear, CH.radius + (CH.margin ?? 3)) : tuning.findArea!.clear });
+      specials.set(k, { kind: CH ? "challenge" : "find", cell: [fx, fy], x: site.x, z: site.z, r: clearR, ...(CH ? { radius: CH.radius, claimed: !!fit } : {}) });
+      if (CH && !fit) console.info(`challenge area: seed ${seed}: no area holds its ${CH.radius.toFixed(0)} m circle whole; ${k}, its circle over its neighbours' ground`);
+      if (fit) {
+        // (its claim set, and which areas touch which made again round it; the partition as cut kept for a map's prep, MapPrep)
+        BASE_NEIGHBOURS.set(neighbours, [...neighbours].map(([q, v]): [string, string[]] => [q, [...v]]));
+        partition.claim = fit.claim;
+        neighbours.clear();
+        for (const [q, v] of fit.nb) neighbours.set(q, v as Set<string>);
+      }
       if (extraKey && extraKey !== k && types.has(k)) types.set(extraKey, types.get(k)!);
       cells.splice(cells.findIndex(([x, y]) => x === fx && y === fy), 1);
     }
@@ -821,7 +903,9 @@ export function generateMap(runSeed: number, tuning: Tuning, only?: { landStep: 
     const farEnough = (x: number, z: number) => placed.every(q => Math.hypot(q.x - x, q.z - z) >= gap + q.r);
     for (const sp of specials.values()) {
       let p = ownGround(sp.cell[0], sp.cell[1]);
-      if (onPath(p.x, p.z, sp.r)) p = nearestOk(p, sp.cell[0], sp.cell[1], (x, z) => !onPath(x, z, sp.r), A * 0.3, 2) ?? p;
+      // (a claimed challenge circle stays where its claim is, at its area's site: the lines that cross it are cut at its edge, rules/paths.ts)
+      if (sp.claimed) p = { x: sp.x, z: sp.z };
+      else if (onPath(p.x, p.z, sp.r)) p = nearestOk(p, sp.cell[0], sp.cell[1], (x, z) => !onPath(x, z, sp.r), A * 0.3, 2) ?? p;
       sp.x = p.x; sp.z = p.z;
       placed.push({ x: p.x, z: p.z, r: sp.kind === "challenge" ? sp.r : 0 });
     }
@@ -1057,8 +1141,8 @@ export function generateMap(runSeed: number, tuning: Tuning, only?: { landStep: 
   if (!zooAt) placeSites(); // (every stone and special site, now the lines they keep off are laid)
   if (tuning.paths.network && !zoo) {
     const S = tuning.runeMarkers?.stump, stumpClear = S?.on ? S.clear : tuning.soundsystemFootprint + tuning.treeMarginFromSoundsystem + 4;
-    const keepOut: { x: number; z: number; r: number }[] = [{ x: centre.x, z: centre.z, r: floorClear }, { x: treehouse.x, z: treehouse.z, r: TH.clear }];
-    for (const sp of specials.values()) keepOut.push({ x: sp.x, z: sp.z, r: sp.r });
+    const keepOut: { x: number; z: number; r: number; rim?: boolean }[] = [{ x: centre.x, z: centre.z, r: floorClear }, { x: treehouse.x, z: treehouse.z, r: TH.clear }];
+    for (const sp of specials.values()) keepOut.push({ x: sp.x, z: sp.z, r: sp.r, ...(sp.kind === "challenge" ? { rim: true } : {}) });
     for (const [cx, cy] of cells) if (cx !== centreCell[0] || cy !== centreCell[1]) { const q = soundsystemSpot(cx, cy); keepOut.push({ x: q.x, z: q.z, r: tuning.soundsystemFootprint + 3 }); }
     const ends = (cx: number, cy: number) => {
       if (cx === centreCell[0] && cy === centreCell[1]) return { x: centre.x, z: centre.z, r: floorClear + tuning.paths.pathHalf + 3 }; // (out past the keep-out round it)

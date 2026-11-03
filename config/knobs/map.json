@@ -873,7 +873,7 @@
       "notes": "The area is seeded by the night (never home, an area touching home's (Ed, 2026-11-03: \"The challenge area shouldn't be adjacent to the home area\"; an island with none such takes its area farthest from home), a legend area's pair, or one whose going would cut the island in two) and is not playable, like a legend area; the island grows one area more for it, which takes its kind, so the island keeps its playable areas and roster. Off: the find as before, in a wild area's woods."
     },
     "challenge": {
-      "what": "the challenge area: a stone circle `radius` m round with the island's sigil, `columns` columns and the woods `margin` m past it, guarded by `adults` adults and `youths` youths a roster kind; the music spell cast within `castReach` m of its middle clears it for the find.",
+      "what": "the challenge area: a stone circle at least `radius` m round with the island's sigil, a column a roster kind `spacing` m apart round its edge (the circle grows to fit them; its margin and reach with it) and the woods `margin` m past it, guarded by `adults` adults and `youths` youths a roster kind; the music spell cast within `castReach` m of its middle clears it for the find.",
       "decisions": [
         {
           "by": "Ed",
@@ -889,9 +889,19 @@
           "date": "2026-11-03",
           "quote": "for now just make it one find selected at random and we will adjust later",
           "rest": "his rulings on #1725, through the coordinator: the circle three times wider (radius 12 to 36, columns 10 to 30, the sigil filling the floor); trees close to its edge, a few metres' margin; the find the night's one draw (findSets off); closed only once the night is won or lost, not at last call."
+        },
+        {
+          "by": "Ed",
+          "date": "2026-11-03",
+          "quote": [
+            "The challenge area has no sigil stack, so you can't see how many wild creatures still standing. How about there are the same number of columns as creature types, and the sigils are on top of the columns, one type per column?",
+            "few is ok",
+            "128 animal pack is the ultimate challenge … A place to use all those stacked buffs that melt waves! Also the area will have to be big to fit a huge circle."
+          ],
+          "rest": "the fixed `columns` (30) replaced by a column a roster kind, `spacing` 7.5 m apart along the edge: the radius the larger of `radius` and kinds x spacing / 2 pi (36 m to about 30 kinds; 76 m at the late home's 64), its margin, cast reach, dancefloor and carved sigil grown with it, its area claiming the whole circle (rules/map.ts)."
         }
       ],
-      "notes": "The find is the night's one draw over everything she hasn't found; `findSets` on, the island's own set (config/find-sets.json) instead. Nothing left to give, a flask. Cleared, home's dancefloor fills the circle and each bar one column fires a firework, the next clockwise each bar (Ed, 2026-11-03: \"fireworks start coming out of one column at the start of each bar, going around the circle clockwise\"): `fireworks.on`, its burst `fireworks.height` m up and `fireworks.burst` m round; the find comes down from the sky onto the floor, picked up with E. Its pack aggro as any wild area's (wildWatch); it closes only once the night is won or lost (the pack calm, the find gone); it never counts toward winning the island and gives no boon. Off: the find's area as before, its find to pick up with E."
+      "notes": "Each column carries its kind's wild fighters still standing (adult below, youth above, the rune stones' sizes, colours and embers), drawn within the stones' columns' range (leash.ranks.stones.range); one invited or run off leaves its column; a column with none left lights steadily warm, and every column lit, the spell can be cast. The find is the night's one draw over everything she hasn't found; `findSets` on, the island's own set (config/find-sets.json) instead. Nothing left to give, a flask. Cleared, home's dancefloor fills the circle and each bar one column fires a firework, the next clockwise each bar (Ed, 2026-11-03: \"fireworks start coming out of one column at the start of each bar, going around the circle clockwise\"): `fireworks.on`, its burst `fireworks.height` m up and `fireworks.burst` m round; the find comes down from the sky onto the floor, picked up with E. Its pack aggro as any wild area's (wildWatch); it closes only once the night is won or lost (the pack calm, the find gone); it never counts toward winning the island and gives no boon. Off: the find's area as before, its find to pick up with E."
     },
     "treeMarginFromSoundsystem": {
       "see": "setPieceFootprint"

@@ -2279,7 +2279,7 @@
           "type": "number",
           "minimum": 0
         },
-        "columns": {
+        "spacing": {
           "type": "number",
           "minimum": 0
         },
@@ -2325,7 +2325,7 @@
         "on",
         "radius",
         "margin",
-        "columns",
+        "spacing",
         "adults",
         "youths",
         "castReach",
@@ -2333,7 +2333,7 @@
         "fireworks"
       ],
       "additionalProperties": false,
-      "description": "the challenge area: a stone circle `radius` m round with the island's sigil, `columns` columns and the woods `margin` m past it, guarded by `adults` adults and `youths` youths a roster kind; the music spell cast within `castReach` m of its middle clears it for the find."
+      "description": "the challenge area: a stone circle at least `radius` m round with the island's sigil, a column a roster kind `spacing` m apart round its edge (the circle grows to fit them; its margin and reach with it) and the woods `margin` m past it, guarded by `adults` adults and `youths` youths a roster kind; the music spell cast within `castReach` m of its middle clears it for the find."
     },
     "treeMarginFromSoundsystem": {
       "type": "number",

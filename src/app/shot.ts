@@ -10,9 +10,10 @@
 //   at:<x>,<z>[,treetop]   anywhere, on foot or in the treetops
 //   legend[:<n>[,<south>[,treetop]]]   south of a legend's circle (the nth biggest, 0 by default), <south> m from its middle (its
 //                radius and 12 m more by default: outside its ring of trees, looking in), on foot or in the treetops
-//   challenge[:<south>[,treetop][,cleared]]   south of the challenge circle (rules/challenge.ts), <south> m from its middle (its radius
-//                and 8 m more by default), on foot or in the treetops; cleared: its pack won over and the spell cast a few seconds ago (its
-//                dancefloor in, the pack on it, tonight's find landed at its middle)
+//   challenge[:<south>[,treetop][,cleared][,won=<n>]]   south of the challenge circle (rules/challenge.ts), <south> m from its middle
+//                (its radius and 8 m more by default), on foot or in the treetops; cleared: its pack won over and the spell cast a few
+//                seconds ago (its dancefloor in, the pack on it, tonight's find landed at its middle); won=<n>: the first n columns' kinds
+//                won over (their columns lit, their sigils gone), the rest still wild (to see the columns' sigils mid-fight)
 import { deckOf } from "../rules/treehouse";
 import { HOUSE_ROOMS, fromPlan, objectFront } from "../rules/houseRooms";
 import { AREA_TYPES } from "../rules/map";
@@ -20,7 +21,7 @@ import { areaIdOf } from "../../art/areaRenames.js";
 import { newCamera } from "../rules/camera";
 import { witchHeight } from "../rules/witch";
 import { fillTrunk, spawnFind, spawnSpot, type FindKindId } from "../rules/finds";
-import { clearChallenge, FIND_DESCENT } from "../rules/challenge";
+import { challengeColumns, clearChallenge, FIND_DESCENT } from "../rules/challenge";
 import { befriend } from "../rules/creatureStates";
 import type { Game } from "../rules/game";
 
@@ -102,6 +103,8 @@ export function applyShot(g: Game, scene: string): ShotResult {
       if (!ch) return { ok: false, say: "no challenge area on this map" };
       const [south, ...modes] = arg.split(","), d = south !== undefined && south !== "" && Number.isFinite(+south) ? +south : ch.radius + 8;
       put(ch.x, ch.z + d, { treetop: modes.includes("treetop") });
+      const won = Number(modes.find(m => m.startsWith("won="))?.slice(4));
+      if (Number.isFinite(won) && won > 0) for (const col of challengeColumns(g).slice(0, won)) for (const e of col.sigils) befriend(g.creatures[e.id], g.clock.time);
       if (modes.includes("cleared")) {
         if (g.trunk && g.trunk.item === null) fillTrunk(g, {}); // (the page would fill it a frame on: a shot fills it now, from nothing found)
         for (const id of ch.pack) befriend(g.creatures[id], g.clock.time);

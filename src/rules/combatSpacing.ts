@@ -66,9 +66,16 @@ export function pathClearsHazard(c: Creature, end: Point, h: WaitingHazard, t: T
   return gap >= drawnRadius(c, t, data) + h.radius + data.clearance;
 }
 
+/** The calibrated radii by species as a Map (the data's own object is a dictionary of some seventy keys: looked up by name a pair at
+ *  a time, it was most of a crowded fight's spacing cost; the challenge's 128-animal pack, 2026-11-03), the last data's kept. */
+let radiiData: SpacingData | null = null, radiiMap = new Map<string, readonly number[]>();
+const radiiOf = (data: SpacingData): Map<string, readonly number[]> => {
+  if (radiiData !== data) { radiiData = data; radiiMap = new Map(Object.entries(data.body.radii)); }
+  return radiiMap;
+};
 /** Conservative anatomical X/Z disc at the actual fitted drawing scale. Does not change damage/hit reach. */
 export function drawnRadius(c: Body, t: Tuning, data: SpacingData = SPACING): number {
-  const pixels = data.body.radii[c.species]?.[c.level];
+  const pixels = radiiOf(data).get(c.species)?.[c.level] as number; // (undefined: an uncalibrated species, below)
   // Synthetic/extension creatures have no anatomical art to calibrate. They
   // retain the existing body contract; real species still require calibration.
   if (pixels === undefined && !profileOf(c.species)) return bodyRadius(c);
@@ -124,13 +131,15 @@ export function waitingSlot(c: Creature, p: Point, want: number, time: number, s
 
 /** Project a waiting goal clear of neighbours' predicted anatomical discs. It moves only the goal, never any body. */
 export function clearWaitingSlot(c: Creature, goal: Point, neighbours: readonly Creature[], t: Tuning, data: SpacingData = SPACING): Point {
-  const out = { ...goal };
+  const out = { ...goal }, rc = drawnRadius(c, t, data); // (its own radius once: bodyGap's sum, the same order)
   for (let pass = 0; pass < data.slotPasses; pass++) {
     let changed = false;
     for (const o of neighbours) {
       if (o === c || o.gone || o.burrow || o.leap || o.swoop?.up) continue;
       const px = o.x + (o.vx ?? 0) * data.predict, pz = o.z + (o.vz ?? 0) * data.predict;
-      const dx = out.x - px, dz = out.z - pz, d = Math.hypot(dx, dz), gap = bodyGap(c, o, t, data);
+      const dx = out.x - px, dz = out.z - pz, gap = rc + drawnRadius(o, t, data) + data.clearance;
+      if (dx * dx + dz * dz >= gap * gap) continue; // (clear of it: hypot, slow, only for the near)
+      const d = Math.hypot(dx, dz);
       if (d >= gap) continue;
       const angle = hash2(c.id, o.id, 1620) * Math.PI * 2;
       out.x += (d > data.epsilon ? dx / d : Math.cos(angle)) * (gap - d + data.epsilon);
@@ -145,12 +154,15 @@ export function clearWaitingSlot(c: Creature, goal: Point, neighbours: readonly 
 /** Predictive relief force for the waiting animal; normal steering applies acceleration/turn limits afterwards. */
 export function waitingAvoidance(c: Creature, neighbours: Iterable<Creature>, t: Tuning, data: SpacingData = SPACING): Point {
   let x = 0, z = 0;
+  const rc = drawnRadius(c, t, data);
   for (const o of neighbours) {
     if (o === c || o.gone || o.burrow || o.leap || o.swoop?.up) continue;
     const dx = c.x - o.x, dz = c.z - o.z, vx = (c.vx ?? 0) - (o.vx ?? 0), vz = (c.vz ?? 0) - (o.vz ?? 0);
     const speed2 = vx * vx + vz * vz;
     const at = speed2 > data.epsilon ? Math.max(0, Math.min(data.predict, -(dx * vx + dz * vz) / speed2)) : 0;
-    const nx = dx + vx * at, nz = dz + vz * at, d = Math.hypot(nx, nz), gap = bodyGap(c, o, t, data);
+    const nx = dx + vx * at, nz = dz + vz * at, gap = rc + drawnRadius(o, t, data) + data.clearance;
+    if (nx * nx + nz * nz >= gap * gap) continue;
+    const d = Math.hypot(nx, nz);
     if (d >= gap) continue;
     // Use the present side when paths cross, so a head-on pair doesn't switch sides every step.
     const current = Math.hypot(dx, dz), angle = hash2(Math.min(c.id, o.id), Math.max(c.id, o.id), 1620) * Math.PI * 2, sign = c.id < o.id ? 1 : -1;

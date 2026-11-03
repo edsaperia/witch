@@ -2,20 +2,27 @@
 // map: the find's own area (tuning findArea, map.specialSites, kind "challenge": never home or an area touching it, off the ley route,
 // no stump, wave or ley-line stop, every touching area's path leading to it, the telescope's constellation at its bearing).
 //   The place: "a large stone floor circle (like the legend circle) with the glowing sigil of the island carved into it, with a circle
-//     of stone columns around the edge (we already have art for this)": `radius` metres round its site, `columns` columns round its
-//     edge (render/challenge.ts draws them; here only where they stand: columnSpots). Its area is themed on the island's own animal
-//     (rules/map.ts themeSpecials).
+//     of stone columns around the edge (we already have art for this)": round its site, its columns round its edge (render/challenge.ts
+//     draws them; here only where they stand: columnSpots). Its area is themed on the island's own animal (rules/map.ts themeSpecials).
+//   Its columns are its sigil stack (Ed, 2026-11-03: "The challenge area has no sigil stack, so you can't see how many wild creatures
+//     still standing. How about there are the same number of columns as creature types, and the sigils are on top of the columns, one
+//     type per column?"): one column a kind of the island's roster (its kinds: packKinds, in the roster's order), evenly round the
+//     circle clockwise from north, `spacing` metres apart along its edge, so the circle grows with the roster (rules/challengeCircle.ts:
+//     the larger of `radius` and kinds x spacing / 2 pi; Ed: "the area will have to be big to fit a huge circle", which the map's
+//     claim makes room for: rules/map.ts). On each column, its kind's wild fighters still standing, as a rune stone's column shows
+//     them (rules/stoneStacks.ts: hostileSigil), adult below and youth above (challengeColumns): one invited, or run off, gone from
+//     it; a column with none left is that kind won, lit; every column lit, the pack's cleared and the spell can be cast.
 //   Its pack: "one adult and one youth of every creature kind on the island" (`adults` and `youths` of each kind of its roster:
 //     packKinds), wild animals of the challenge area (their cell its cell; spawnPack, appended after every other creature): they watch
 //     her as she comes down in it, the wild watch's warning (rules/wildWatch.ts), then hunt her till she takes off (rules/hunt.ts),
 //     at the difficulty as every wild creature (tuning difficulty, in combat). They can't be leashed: one invited is happy where it
-//     stands, its sigil kept (c.atStone: no rune at its feet; stepChallenge).
+//     stands, no rune at its feet (c.atStone; stepChallenge).
 //   Clearing it: "When they're all invited or have run off, you can go to the special place and cast the music spell" (challengeReady):
-//     on foot within `castReach` of its middle, the sigil button held, the stones' spell (rules/stoneStacks.ts stepCast, its target
-//     the circle: challengeCastAt). Cast, "something cool appears" (Ed, on #1725: home's dancefloor, filling the circle): the
-//     columns light on the beat, home's dancefloor fills the circle in place of its stone floor (Ed, on #1725: "it should fill the
-//     circle, like the one at home does"; render/challenge.ts), and the pack "become happy animals that party in the challenge area
-//     and can't be leashed", dancing on it (clearChallenge).
+//     on foot within `castReach` of its middle (grown with the circle: castReachOf), the sigil button held, the stones' spell
+//     (rules/stoneStacks.ts stepCast, its target the circle: challengeCastAt). Cast, "something cool appears" (Ed, on #1725: home's
+//     dancefloor, filling the circle): the columns light on the beat, home's dancefloor fills the circle in place of its stone floor
+//     (Ed, on #1725: "it should fill the circle, like the one at home does"; render/challenge.ts), and the pack "become happy animals
+//     that party in the challenge area and can't be leashed", dancing on it (clearChallenge).
 //   The reward: "when you clear it you get the find": tonight's find, unseen till then (render/view/finds.ts), comes down from the sky
 //     onto the middle of the new dancefloor over FIND_DESCENT seconds from the clearing (Ed, 2026-11-03, on #1725: "the find comes
 //     down from the sky when the challenge is cleared"; timed from clearedAt, so every player sees the same), and she picks it up
@@ -45,9 +52,11 @@ import { LEGENDS, relicKinds } from "./legends";
 import { befriendArea } from "./sigilButton";
 import { castOn } from "./stoneStacks";
 import { hash2, rng } from "./random";
+import { challengeCircle } from "./challengeCircle";
+import type { StackEntry } from "./stoneStacks";
 
-export interface ChallengeTuning { on: boolean; radius: number; margin: number; columns: number; adults: number; youths: number; castReach: number; findSets: boolean; fireworks: { on: boolean; height: number; burst: number } }
-export const CHALLENGE_DEFAULT: ChallengeTuning = { on: false, radius: 36, margin: 3, columns: 30, adults: 1, youths: 1, castReach: 5, findSets: false, fireworks: { on: true, height: 24, burst: 8 } };
+export interface ChallengeTuning { on: boolean; radius: number; margin: number; spacing: number; adults: number; youths: number; castReach: number; findSets: boolean; fireworks: { on: boolean; height: number; burst: number } }
+export const CHALLENGE_DEFAULT: ChallengeTuning = { on: false, radius: 36, margin: 3, spacing: 7.5, adults: 1, youths: 1, castReach: 5, findSets: false, fireworks: { on: true, height: 24, burst: 8 } };
 export const challengeOf = (t: Tuning): ChallengeTuning => ({ ...CHALLENGE_DEFAULT, ...t.challenge, fireworks: { ...CHALLENGE_DEFAULT.fireworks, ...t.challenge?.fireworks } });
 
 /** What the page says of it (under the clock: main.ts): the pack all won over or gone (ready to cast), cleared (and its reward),
@@ -58,6 +67,8 @@ export interface ChallengeEvent { kind: "ready" | "cleared" | "closed"; at: numb
  *  or closed (game time; null not yet), its reward once cleared. */
 export interface ChallengeState {
   key: string; cell: Cell; x: number; z: number; radius: number;
+  /** Its columns' kinds, one a column clockwise from north (packKinds; a night saved before the columns: none, packKinds then). */
+  kinds?: string[];
   pack: number[];
   readyAt: number | null; clearedAt: number | null; closedAt: number | null;
   reward: "find" | "flask" | null;
@@ -77,13 +88,32 @@ export const challengeSite = (map: Pick<ForestMap, "specialSites">): SpecialSite
 /** The kinds its pack is of: every kind on the island's roster, in the roster's order (a map not by roster: its areas' kinds). */
 export const packKinds = (map: ForestMap): string[] => [...islandKinds(map, t => AREA_TYPES[t]?.creature ?? "")].filter(Boolean);
 
-/** Where its columns stand (Ed: "a circle of stone columns around the edge"): `columns` evenly round its circle's edge, the first
- *  due north. */
-export function columnSpots(site: { x: number; z: number }, t: Tuning): { x: number; z: number }[] {
-  const C = challengeOf(t), n = Math.max(0, Math.round(C.columns)), out: { x: number; z: number }[] = [];
-  for (let i = 0; i < n; i++) { const a = -Math.PI / 2 + (i / n) * Math.PI * 2; out.push({ x: site.x + Math.cos(a) * C.radius, z: site.z + Math.sin(a) * C.radius }); }
+/** Where its columns stand (Ed: "a circle of stone columns around the edge"; one a kind, "the same number of columns as creature
+ *  types"): `n` evenly round its circle's edge (its radius), the first due north, then clockwise seen from above (north up). */
+export function columnSpots(site: { x: number; z: number; radius: number }, n: number): { x: number; z: number }[] {
+  const out: { x: number; z: number }[] = [], m = Math.max(0, Math.round(n));
+  for (let i = 0; i < m; i++) { const a = -Math.PI / 2 + (i / m) * Math.PI * 2; out.push({ x: site.x + Math.cos(a) * site.radius, z: site.z + Math.sin(a) * site.radius }); }
   return out;
 }
+
+/** Its columns' kinds (one a column, in order round from north): its own list, else (a night saved before the columns) the roster's. */
+export const columnKinds = (g: Pick<Game, "challenge" | "map">): string[] => g.challenge?.kinds ?? (g.challenge ? packKinds(g.map) : []);
+
+/** One column of the circle's: its kind, where it stands, and its sigil stack, bottom first (Ed, 2026-11-03: "the sigils are on top
+ *  of the columns, one type per column"): its kind's wild fighters still standing (the pack still holding it: packLeft's), adults
+ *  below and youths above, as a rune stone's column shows them (rules/stoneStacks.ts: stoneStack's hostiles, hostileSigil), an
+ *  invited one or one run off gone from it. Empty: that kind's won over, the column lit. */
+export interface ChallengeColumn { kind: string; x: number; z: number; sigils: StackEntry[] }
+export function challengeColumns(g: Pick<Game, "challenge" | "creatures" | "map">): ChallengeColumn[] {
+  const ch = g.challenge;
+  if (!ch) return [];
+  const kinds = columnKinds(g), spots = columnSpots(ch, kinds.length), of = new Map<string, StackEntry[]>(kinds.map(k => [k, []]));
+  for (const id of ch.pack) { const c = g.creatures[id]; if (c && holdsArea(c)) of.get(c.species)?.push({ id, level: c.level, friend: false, legend: false }); }
+  return kinds.map((kind, i) => ({ kind, x: spots[i].x, z: spots[i].z, sigils: of.get(kind)!.sort((a, b) => b.level - a.level || a.id - b.id) }));
+}
+
+/** How near its middle (m) the spell's cast on it: castReach, grown with the circle (rules/challengeCircle.ts). */
+export const castReachOf = (ch: { radius: number }, t: Tuning): number => { const C = challengeOf(t); return C.castReach * Math.max(1, C.radius > 0 ? ch.radius / C.radius : 1); };
 
 /** Its pack (Ed: "one adult and one youth of every creature kind on the island"): `adults` adults and `youths` youths of each of
  *  packKinds, wild creatures of its area, ids from `first` on (they're appended to the night's creatures). None without one. */
@@ -110,7 +140,8 @@ export function newChallenge(map: ForestMap, creatures: readonly Creature[]): Ch
   const S = challengeSite(map);
   if (!S) return null;
   const key = cellKey(S.cell);
-  return { key, cell: [S.cell[0], S.cell[1]], x: S.x, z: S.z, radius: challengeOf(map.tuning).radius, pack: creatures.filter(c => cellKey(c.cell) === key).map(c => c.id), readyAt: null, clearedAt: null, closedAt: null, reward: null, events: [] };
+  const kinds = packKinds(map);
+  return { key, cell: [S.cell[0], S.cell[1]], x: S.x, z: S.z, radius: S.radius ?? challengeCircle(kinds.length, map.tuning).radius, kinds, pack: creatures.filter(c => cellKey(c.cell) === key).map(c => c.id), readyAt: null, clearedAt: null, closedAt: null, reward: null, events: [] };
 }
 
 /** Whether a creature is of the challenge's pack (a creature of its area). */
@@ -133,7 +164,7 @@ export const challengeReady = (g: Game): boolean => challengeOpen(g) && !worldAs
 export function challengeCastAt(g: Game, W: Witch): { key: string; cell: Cell; x: number; z: number } | null {
   const ch = g.challenge, b = W.body;
   if (!ch || !castOn(g.tuning) || b.mode !== "ground" || b.seated || b.perch || W.ko) return null;
-  if (Math.hypot(b.x - ch.x, b.z - ch.z) > challengeOf(g.tuning).castReach || !challengeReady(g)) return null;
+  if (Math.hypot(b.x - ch.x, b.z - ch.z) > castReachOf(ch, g.tuning) || !challengeReady(g)) return null;
   return { key: `challenge:${ch.key}`, cell: ch.cell, x: ch.x, z: ch.z };
 }
 

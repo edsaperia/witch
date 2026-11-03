@@ -598,7 +598,7 @@
     "on": true,
     "radius": 36,
     "margin": 3,
-    "columns": 30,
+    "spacing": 7.5,
     "adults": 1,
     "youths": 1,
     "castReach": 5,

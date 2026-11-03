@@ -8,7 +8,7 @@ import { sectionOf } from "./creatureConfig";
 import type { Creature } from "./creatures";
 import { hash2 } from "./random";
 import { limitTurn } from "./momentum";
-import { bodyGap, clearWaitingSlot, hazardAvoidance, waitingAvoidance, waitingDrive, waitingProfile, type SpacingData, type WaitingHazard } from "./combatSpacing";
+import { clearWaitingSlot, drawnRadius, hazardAvoidance, waitingAvoidance, waitingDrive, waitingProfile, type SpacingData, type WaitingHazard } from "./combatSpacing";
 import type { Tuning } from "./tuning";
 import { advanceMotion } from "./locomotion";
 
@@ -273,7 +273,7 @@ export function steer(c: Creature, P: Profile, x: SteerContext): boolean {
     add(force.x, force.z, 1);
     const danger = hazardAvoidance(c, x.spacing.hazards ?? [], x.spacing.tuning, x.spacing.data);
     add(danger.x, danger.z, 1);
-    for (const o of x.neighbours) if (o !== c && Math.hypot(c.x - o.x, c.z - o.z) < bodyGap(c, o, x.spacing.tuning, x.spacing.data)) may = false;
+    if (may) { const rc = drawnRadius(c, x.spacing.tuning, x.spacing.data), cl = x.spacing.data.clearance; for (const o of x.neighbours) { if (o === c) continue; const ox = c.x - o.x, oz = c.z - o.z, gap = rc + drawnRadius(o, x.spacing.tuning, x.spacing.data) + cl; if (ox * ox + oz * oz < gap * gap && Math.hypot(ox, oz) < gap) { may = false; break; } } } // (bodyGap's sum, its radius once; none to find once one's found)
   }
   const m = Math.hypot(vx, vz);
   if (m > 1) { vx /= m; vz /= m; }
