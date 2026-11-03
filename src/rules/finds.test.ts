@@ -24,7 +24,9 @@ const at = (g: Game, x: number, z: number) => { g.witch = { ...g.witch, x, z, vx
 const press = (g: Game) => { stepGame(g, { ...C, place: true }, 1 / 60); };
 
 describe("tonight's travel trunk", () => {
-  it("stands in a wild area's woods, never home's, off its clearings and clear of the relics", () => {
+  // (the tests' radius map, src/test/radiusMap.ts, has no find area, so the trunk stands as it did before it; on the game's islands
+  // it stands at its own area's site: src/rules/pathNetwork.test.ts)
+  it("with no find area, stands in a wild area's woods, never home's, off its clearings and clear of the relics", () => {
     for (const seed of [123, 7, 4242, 90210]) {
       const g = game(seed), T = g.trunk!;
       expect(T, `seed ${seed}`).toBeTruthy();

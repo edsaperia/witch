@@ -2,7 +2,7 @@
 // permanent upgrades. Hints are given by the crystal ball"; his answers on the proposal, the same day): each night the island
 // she's on holds one wearable she hasn't found yet (the night's seed picks it from rules/wardrobe.ts's: never the brooms, which
 // come from the Workshop's parts, docs/backlog/workshop.md), in an old travel trunk half-sunk in a wild area's woods, under the
-// canopy (a ground-mode find, like the garage's wrecks: no glint). E at it while the party's on, and it's hers for the night (the
+// canopy (since 2026-11-03 at the site of an area of its own, where the paths lead: placeTrunk) (a ground-mode find, like the garage's wrecks: no glint). E at it while the party's on, and it's hers for the night (the
 // "found" leash event): on loan from the stars till she sleeps (Ed, 2026-10-24, below). Its hint is written in the stars (Ed, 2026-10-22):
 // the wearable's outline as a constellation, seen through the telescope at the trunk's bearing from the treehouse, never how far
 // (rules/constellations.ts; the crystal ball's vision is gone, the ball a placeholder again). Where the trunk stands is the night's (map.seed); what's in it

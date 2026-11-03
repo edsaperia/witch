@@ -2,7 +2,7 @@
 
 Ed (2026-10-23): "For the permanent-upgrade finds … while they are different objects, we should make a styleguide for their design so that it's easy for players to recognise when they've found one. e.g. they should have consistent size and lighting design, and should be easy to see on the ground even when in the middle of dense forest."
 
-A **find** is the night's one permanent upgrade (`src/rules/finds.ts`). There's one a night, drawn from everything she hasn't found yet. It lies on the ground in a wild area's woods, under the canopy, and is hinted by a constellation through the telescope. She takes it with E while the party's on. Every kind of find (wearables in a travel trunk, broom parts in a wreck, and hats, bags and records to come) follows this guide, whatever its object.
+A **find** is the night's one permanent upgrade (`src/rules/finds.ts`). There's one a night, drawn from everything she hasn't found yet. It lies on the ground at the middle of an area of its own, where the footpaths lead (since 2026-11-03; before, in a wild area's woods, under the canopy), and is hinted by a constellation through the telescope. She takes it with E while the party's on. Every kind of find (wearables in a travel trunk, broom parts in a wreck, and hats, bags and records to come) follows this guide, whatever its object.
 
 > **Status: Ed's rules** (2026-10-23, his answers to the proposal's four questions, and on size: "the whole find is flask-sized"). Applied to every kind in `art/country.js` (the find pieces), `rules/finds.ts` (`FIND_KINDS`' pieces) and `render/view/finds.ts` (the patch and the light). The proof shots are in [`finds/`](finds/).
 
@@ -73,13 +73,13 @@ Written from `FIND_KINDS`, so it can't drift: `src/rules/findsList.test.ts` fail
 
 ## The find signature (Ed's rules)
 
-Every find carries the same three things, whatever its object, so a player who has seen one knows the next: **a clear patch, its own light, and one size.** Ed (2026-10-23): "clear patch, its own light, rules on size". Nothing else marks it: no wisp over it, no opening in the canopy, no shaft of moonlight.
+Every find carries the same three things, whatever its object, so a player who has seen one knows the next: **a clear patch, its own light, and one size.** Ed (2026-10-23): "clear patch, its own light, rules on size". Nothing else marks it: no wisp over it, no opening cut in the canopy for it (its own area's clearing since 2026-11-03 is the path network's, Ed: "keep the clearing"), no shaft of moonlight.
 
 ### 1. A clear patch
 
 - A round patch of bare ground about **1.3 m** in radius round the find: no tufts on it, and the cover trodden short a little past it (the ground cover's `uClear`, as round a placed sigil). The forest floor's own earth, so the find and its light read against the tufts round it.
 - Tufts and ferns grow right up to it but never over it, so the find's outline is never broken.
-- It lies where `placeTrunk` puts it: in a wild area's woods, under the canopy, off its clearings and its legend's circle, clear of the relics.
+- It lies where `placeTrunk` puts it: since 2026-11-03 (`findArea`) at the site of an area of its own, in a treeless clearing `findArea.clear` (6 m) round it, where the footpaths from every touching area end; with `findArea` off (and on the tests' radius map), as before, in a wild area's woods, under the canopy, off its clearings and its legend's circle, clear of the relics.
 
 ### 2. Its own light: pale gold-white
 
@@ -106,9 +106,9 @@ Every find carries the same three things, whatever its object, so a player who h
 
 - Once she's taken it, the object, its patch and its light all go: the ground grows back over, the forest is dark there again. The same once the party's lost.
 
-### 4. From the treetops: hidden
+### 4. From the treetops: in its clearing
 
-- A find can't be seen from the treetops (Ed's answer): its light lights the ground under the canopy, and nothing rises above the crowns. **The constellation through the telescope gives the way**; she comes down into the woods to look for it.
+- **Since 2026-11-03 the find stands in its own area's treeless clearing, open to the sky** (Ed, 2026-11-03: "keep the clearing"), where the footpaths from every touching area end. **The constellation through the telescope still gives the way**, and the paths lead her to it. Superseded: "a find can't be seen from the treetops" and "no opening in the canopy" (Ed, 2026-10-23), written while finds lay under the canopy in a wild area's woods; they still describe the old placement with `findArea` off.
 
 ### In every biome
 
