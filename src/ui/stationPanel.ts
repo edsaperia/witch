@@ -502,7 +502,7 @@ body.paused #station-panel { visibility: hidden; }
 #station-panel .sp-sub { font-size: .8em; display: flex; gap: .5em; opacity: .9; } #station-panel .sp-sub em { margin-left: auto; font-style: normal; opacity: .75; }
 #station-panel .sp-row { display: flex; flex-wrap: wrap; gap: .45em; }
 #station-panel .sp-card { position: relative; width: 4.6em; height: 4.6em; border-radius: .5em; background: rgba(11,7,22,.55); box-shadow: inset 0 0 0 1px rgba(232,226,244,.14); display: grid; place-items: center; cursor: pointer; box-sizing: border-box; }
-#station-panel .sp-trail { width: 6.4em; } #station-panel .sp-trail canvas { height: 1.6em; max-width: 6em; }
+#station-panel .sp-card.sp-trail { width: 6.4em; } #station-panel .sp-card.sp-trail canvas { height: 1.5em; width: 6em; max-width: 6em; }
 #station-panel .sp-card canvas { image-rendering: pixelated; width: auto; height: 4.2em; max-width: 4.3em; object-fit: contain; filter: drop-shadow(1px 0 0 var(--ol)) drop-shadow(-1px 0 0 var(--ol)) drop-shadow(0 1px 0 var(--ol)) drop-shadow(0 -1px 0 var(--ol)); }
 #station-panel .sp-card.locked { cursor: default; } #station-panel .sp-card.locked canvas { filter: brightness(0) invert(.22) drop-shadow(1px 0 0 rgba(232,226,244,.5)) drop-shadow(-1px 0 0 rgba(232,226,244,.5)) drop-shadow(0 1px 0 rgba(232,226,244,.5)) drop-shadow(0 -1px 0 rgba(232,226,244,.5)); }
 #station-panel .focus { outline: 3px solid #fff; outline-offset: 2px; box-shadow: 0 0 12px rgba(255,255,255,.75), inset 0 0 0 1px var(--ol); }
