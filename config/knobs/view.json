@@ -53,12 +53,19 @@
           "by": "Ed",
           "date": "2026-10-26",
           "rest": "src/ui/loadingScreen.js, before main.ts loads"
+        },
+        {
+          "by": "Ed",
+          "date": "2026-11-03",
+          "quote": "can we fade from the loading screen to the bedroom over a few seconds",
+          "rest": "fadeOut in place of the 1.2 s white clearing (clear), src/ui/loadingFade.js"
         }
       ],
       "links": [
-        "src/ui/loadingScreen.js"
+        "src/ui/loadingScreen.js",
+        "src/ui/loadingFade.js"
       ],
-      "notes": "The loading screen [1]: the World Tree and COVEN RUSH in gold stars, lighting as the game loads, edge first by edge (0 plain random), at most rate stars a second, each flashing for flash seconds; ghost how bright the stars not yet lit show (0: an empty sky, Ed's call); the heart's star last, its supernova to white over nova seconds and the white clearing over clear seconds into the bedroom. It draws fps frames a second while the game loads (each frame costs the load a little), about 20 once it's ready. Read as the page opens, so the pause page's sliders (remembered on this browser) take effect on the next load."
+      "notes": "The loading screen [1]: the World Tree and COVEN RUSH in gold stars, lighting as the game loads, edge first by edge (0 plain random), at most rate stars a second, each flashing for flash seconds; ghost how bright the stars not yet lit show (0: an empty sky, Ed's call); the heart's star last, its supernova to white over nova seconds, then the whole screen fading out over fadeOut seconds (eased out; at most 0.6 s with reduced motion) onto the bedroom, her wake-up starting as it begins [2]. It draws fps frames a second while the game loads (each frame costs the load a little), about 20 once it's ready. Read as the page opens, so the pause page's sliders (remembered on this browser) take effect on the next load."
     },
     "opening": {
       "what": "A plain first load wakes her in her bedroom on the home island while the night is made.",
@@ -91,7 +98,7 @@
       ]
     },
     "arrive": {
-      "what": "Arriving on an island from the sea chart: the camera flies in over the sea, frames the dancefloor and comes round to the treehouse.",
+      "what": "Arriving on an island from the sea chart: the camera flies in over the sea, frames the dancefloor and the treehouse, its crown coming up over the bent horizon, and into her bedroom.",
       "decisions": [
         {
           "by": "Ed",
@@ -123,16 +130,24 @@
         "app/chartView.ts"
       ]
     },
-    "arrive.tree": {
-      "what": "Where the camera ends its arrival: the whole treehouse tree seen from the south, filling the frame.",
+    "arrive.bend": {
+      "what": "The dive's bend: the world curving away so the treehouse crown comes up over the horizon as the camera flies in.",
       "decisions": [
         {
           "by": "Ed",
-          "date": "2026-10-24",
-          "quote": "pan up to see the whole treehouse tree before we fly into her bedroom"
+          "date": "2026-11-03",
+          "quote": [
+            "I think we can get the 'Coming round to the treehouse' effect by using the bend shader rather than using the camera angle; I want to see the treehouse crown coming over the horizon, and this will achieve that straightforwardly.",
+            "The reason why we fly out over the sea is to do the transition between these scenes while looking at the water, which should make the transition less obvious because we can fade between while looking at a simple blue texture."
+          ],
+          "rest": "in place of the swing round to the whole treehouse tree (Ed, 2026-10-24: \"pan up to see the whole treehouse tree before we fly into her bedroom\"; the whole-tree shot and its knobs, gone)"
         }
       ],
-      "notes": "after framing the dancefloor, the camera comes round to the whole treehouse tree from the south, angle degrees up at its middle, far enough back that it fills fill of the frame's height (its height in metres from its art once drawn, height till then), time seconds after the frame, then settle seconds on into her bedroom."
+      "links": [
+        "rules/arrive.ts",
+        "render/view/camera.ts"
+      ],
+      "notes": "the world's bend (render/height.ts, the curvature the treetops have) added on top of the night's own through the dive (rules/arrive.ts diveBend): none at the hand-off, so the crossfade from the chart's flat sea is over the same flat water, growing to curve (per metre; the treetops' own is camera.curve.treetop, 0.0015) over grow seconds as the camera comes down over the sea, so the island sits below the horizon; held while the camera flies straight in, the treehouse crown rising over the curve of the world; then eased back to none over the flight's last relax seconds, the night's own bend exactly as she lands in bed. 0 curve: no bend."
     },
     "camera": {
       "what": "The camera: near-isometric on the ground, starting close in on her seat in the treehouse and easing out once she moves.",

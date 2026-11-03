@@ -2,7 +2,7 @@
 import { describe, expect, it } from "vitest";
 import { TUNING } from "./tuning";
 import { newGame, poseOf } from "./game";
-import { arrivePlan, diveReach, dueAt, dueRate, inShot, newFlightClock, treeShot, planLength, shotAt, shotCamera, southCoast, stepFlightClock, type Handoff, type Shot } from "./arrive";
+import { arrivePlan, diveBend, diveIndoors, diveReach, dueAt, dueRate, handoffShot, inShot, newFlightClock, planLength, shotAt, shotCamera, southCoast, stepFlightClock, type Handoff, type Shot } from "./arrive";
 
 const A = TUNING.arrive!;
 // Keep this seeded spatial fixture: arrival duration and framing depend on its real south coast and treehouse distance.
@@ -28,7 +28,7 @@ describe("arriving from the sea chart", () => {
     expect(shotAt(plan, T)).toEqual(end);
     // north all the way to the frame (the camera never turns back south), and never into the ground
     let lastZ = Infinity;
-    const fi = plan.times.length - (A.tree ? 3 : 2); // (the frame's key: then the whole tree's, if it's on, then her decks)
+    const fi = plan.times.length - 2; // (the frame's key: then her decks)
     for (let s = 0; s <= plan.times[fi]; s += 0.1) { const c = shotCamera(shotAt(plan, s)); expect(c.z).toBeLessThanOrEqual(lastZ + 1e-6); lastZ = c.z; }
     for (let s = 0; s <= T; s += 0.1) expect(shotCamera(shotAt(plan, s)).y).toBeGreaterThan(8);
     // down to treetop height over the forest: low there (the chart hands over high, over the coast)
@@ -99,20 +99,92 @@ describe("the house due in view (Ed, 2026-10-24: \"the treehouse doesn't have to
   });
 });
 
-describe("the whole treehouse tree (Ed, 2026-10-24: \"pan up to see the whole treehouse tree before we fly into her bedroom\")", () => {
-  it("comes round to the whole tree, its foot, top and sides on screen, between the frame and her decks, by the tree as measured", () => {
-    const g = newGame(123, TUNING), map = g.map, d = map.dancefloor, th = map.treehouse, coast = southCoast(map), T = A.tree!, aspect = 16 / 9;
-    const pitch = 0.66, back = 520, hand: Handoff = { cam: { x: 0, z: coast + 420 - d.z + Math.cos(pitch) * back, height: Math.sin(pitch) * back, pitch, fov: 20, speed: 100 } };
-    const p0 = poseOf(g), end: Shot = { tx: p0.tx, ty: p0.ty, tz: p0.tz, angle: p0.angle, distance: p0.distance, fov: TUNING.camera.fov };
-    // (the Ent's art as it was, and the great oak's crown: about 185 m across, rules/crown.ts)
-    for (const tree of [{ x: th.x, z: th.z, height: 18, width: 24 }, { x: th.x + 10, z: th.z - 20, height: 90, width: 190 }]) {
-      const plan = arrivePlan(hand, map, A, () => 0, end, undefined, tree, aspect), n = plan.keys.length, shot = plan.keys[n - 2];
-      expect(shot).toEqual(treeShot(T, () => 0, end.fov, tree, aspect));
-      expect(plan.times[n - 2] - plan.times[n - 3]).toBeCloseTo(T.time, 6);
-      for (const p of [{ x: tree.x, y: 0.5, z: tree.z }, { x: tree.x, y: tree.height - 0.5, z: tree.z }, { x: tree.x - tree.width / 2 + 1, y: tree.height / 2, z: tree.z }, { x: tree.x + tree.width / 2 - 1, y: tree.height / 2, z: tree.z }])
-        expect(inShot(shot, p, aspect, 1)).toBe(true);
-      expect(shot.angle).toBeLessThan(A.frame.angle); // (lower than the frame's: the camera's come down and looks up the tree)
-      expect(shotAt(plan, planLength(plan))).toEqual(end);
+// Ed, 2026-11-03: "The reason why we fly out over the sea is to do the transition between these scenes while looking at the water,
+// which should make the transition less obvious because we can fade between while looking at a simple blue texture"; and "I think we
+// can get the 'Coming round to the treehouse' effect by using the bend shader rather than using the camera angle; I want to see the
+// treehouse crown coming over the horizon, and this will achieve that straightforwardly."
+describe("the sail's hand-off over the water and the crown over the bent horizon (Ed, 2026-11-03)", () => {
+  const g = newGame(123, TUNING), map = g.map, d = map.dancefloor, th = map.treehouse, coast = southCoast(map), ground = () => 0;
+  // (the chart's hand-off as its flight makes it from the tuning's arrive.handoff: render/chart/seaChart.ts flightEnd)
+  const H = A.handoff!, pitch = (H.pitchDeg * Math.PI) / 180;
+  const hand: Handoff = { cam: { x: 0, z: coast + H.sea - d.z + Math.cos(pitch) * H.dist, height: Math.sin(pitch) * H.dist, pitch, fov: TUNING.camera.fov, speed: 100 } };
+  const p0 = poseOf(g), end: Shot = { tx: p0.tx, ty: p0.ty, tz: p0.tz, angle: p0.angle, distance: p0.distance, fov: TUNING.camera.fov };
+  const plan = arrivePlan(hand, map, A, ground, end), T = planLength(plan), B = A.bend!;
+  /** Whether a point shows over the horizon of ground bent by `k` ahead of shot `s`'s aim, seen from its camera (render/height.ts
+   *  overBendAt's sum, the bend's focus the shot's aim, looking north; level ground). */
+  const overBend = (s: Shot, k: number, p: { x: number; y: number; z: number }): boolean => {
+    const c = shotCamera(s), ahead = s.tz - p.z;
+    if (k <= 0 || ahead <= 0) return true;
+    const D = Math.max(1, c.z - s.tz), h = c.y - s.ty + 3, dh = -D + Math.sqrt(D * D + h / k);
+    if (ahead <= dh) return true;
+    const m = (h + k * dh * dh) / (dh + D);
+    return (h - (p.y - s.ty) + k * ahead * ahead) / (ahead + D) <= m + 0.02;
+  };
+  /** How far below level (degrees) the bent ground's horizon lies, seen from shot `s`'s camera (0 unbent: the flat sea's, far off). */
+  const horizonDip = (s: Shot, k: number): number => {
+    if (k <= 0) return 0;
+    const c = shotCamera(s), D = Math.max(1, c.z - s.tz), h = c.y - s.ty, dh = -D + Math.sqrt(D * D + h / k);
+    return (Math.atan(2 * k * dh) * 180) / Math.PI;
+  };
+
+  it("hands over looking only at the open sea, and the dive's bend leaves it flat through the crossfade, as the chart's sea is", () => {
+    const s0 = handoffShot(hand, map), c = shotCamera(s0), land = map.bounds.land!;
+    expect(shotAt(plan, 0)).toEqual(s0);
+    // every ray across the frame (a 16:9 screen and a tall one) meets the sea, south of the coast, none the island's land
+    for (const aspect of [16 / 9, 3 / 4]) for (let u = -1; u <= 1; u += 0.25) for (let v = -1; v <= 1; v += 0.25) {
+      const t = Math.tan(((s0.fov * Math.PI) / 180) / 2), a = (s0.angle * Math.PI) / 180;
+      const dy = -Math.sin(a) + v * t * Math.cos(a), dz = -Math.cos(a) - v * t * Math.sin(a), dx = u * t * aspect; // (forward, up and right)
+      expect(dy).toBeLessThan(0); // (looking down: no sky in it)
+      const k = c.y / -dy, x = c.x + dx * k, z = c.z + dz * k;
+      expect(z).toBeGreaterThan(coast + 20);
+      expect(land.inside(x, z)).toBe(false);
     }
+    // the bend none at the hand-off, and through the crossfade (A.fade s) its horizon stays above the top of the frame
+    expect(diveBend(plan, 0, B)).toBe(0);
+    for (let s = 0; s <= A.fade; s += 0.05) { const k = shotAt(plan, s); expect(horizonDip(k, diveBend(plan, s, B))).toBeLessThan(k.angle - k.fov / 2 - 2); }
+  });
+
+  it("bends the world strongly through the dive, the crown rising over the horizon as it flies straight in, and relaxes exactly to the night's own as it lands", () => {
+    // no swing round: the hand-off, the low passes over the sea and the forest, the frame over the dancefloor and the treehouse, her bedroom
+    const lows = plan.keys.length - 3;
+    expect(lows).toBeGreaterThanOrEqual(1);
+    expect(plan.keys.slice(1, 1 + lows).every(k => k.angle === A.low.angle && k.distance === A.low.distance)).toBe(true);
+    expect(plan.keys.at(-2)).toMatchObject({ angle: A.frame.angle, distance: A.frame.distance });
+    expect(plan.keys.at(-1)).toEqual(end);
+    expect("tree" in A).toBe(false);
+    // the camera's angle never comes down below the low passes' to look up at a tree (the old swing's 10 degrees)
+    for (let s = plan.times[1]; s <= T; s += 0.1) expect(shotAt(plan, s).angle).toBeGreaterThan(A.low.angle - 3);
+    // the bend: none at the hand-off, at its strongest as the camera's down low over the sea, back to none exactly as it lands
+    expect(B.curve).toBeGreaterThan(TUNING.camera.curve.treetop); // (stronger than the treetops')
+    const low = plan.times[1];
+    expect(diveBend(plan, low, B)).toBeGreaterThan(B.curve * 0.95);
+    let peak = 0;
+    for (let s = 0; s <= T; s += 0.05) peak = Math.max(peak, diveBend(plan, s, B));
+    expect(peak).toBeCloseTo(B.curve, 6);
+    expect(diveBend(plan, T, B)).toBe(0);
+    expect(diveBend(plan, T + 1, B)).toBe(0);
+    expect(diveBend(plan, T - 1e-6, B)).toBeLessThan(B.curve * 1e-9);
+    for (let s = T - B.relax, last = Infinity; s <= T; s += 0.05) { const k = diveBend(plan, s, B); expect(k).toBeLessThanOrEqual(last + 1e-12); last = k; }
+    // the crown (the great oak's, about 60 m over the ground; the old Ent's, 18): hidden under the bent horizon as the camera comes
+    // down low over the sea, then risen over it before the bend relaxes, and never sinking back once up
+    for (const top of [18, 60]) {
+      const crown = { x: th.x, y: top, z: th.z };
+      expect(overBend(shotAt(plan, low), diveBend(plan, low, B), crown)).toBe(false);
+      let up = -1;
+      for (let s = low; s <= T; s += 0.05) {
+        const seen = overBend(shotAt(plan, s), diveBend(plan, s, B), crown);
+        if (seen && up < 0) up = s;
+        if (up >= 0) expect(seen).toBe(true);
+      }
+      expect(up).toBeGreaterThan(low);
+      expect(up).toBeLessThan(T - B.relax);
+    }
+    // the oak seen from outside (standing in the world, bent with it) till the last leg down into her room, then the house from inside
+    const down = plan.times.at(-2)!;
+    for (let s = 0; s < down; s += 0.25) expect(diveIndoors(plan, s)).toBe(false);
+    for (let s = down; s <= T + 1; s += 0.25) expect(diveIndoors(plan, s)).toBe(true);
+    // with no bend knob, or none, the dive is unbent
+    expect(diveBend(plan, low, undefined)).toBe(0);
+    expect(diveBend(plan, low, { ...B, curve: 0 })).toBe(0);
   });
 });

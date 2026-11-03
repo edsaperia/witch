@@ -479,6 +479,9 @@ The witch's home in the great oak beside the dancefloor: where it stands, its de
 The witch's treehouse, home [1][2]: its foot (the Terrace's middle; clear metres round it) stands gap metres beyond the dancefloor's ring of speakers (so however many speakers or how far out, it stays outside them; 22 keeps the oak's rooms, up in its crown, clear of the dancefloor's clearing), at angle degrees (-135: north-west; -90 due north, straight up the screen), always facing south, to the floor and the camera; and keeps a clearing of clear metres round its foot (at least the art's footprint: 8.2 m for the v2 tower); its lantern and fairy lights light lightReach metres round at lightStrength. The game starts with her sitting on its terrace; the first move or rise takes her off. The deck [3]: on (false: the old treehouse), a round deck radius metres across its middle at the Ent (the treehouse's spot), its floor height metres up [4]; in the treetops, landing within radius + grace metres of its middle lands her on it; she walks it, kept rail metres inside its edge, round the map table in its middle (table metres round; Ed: "The world map is in the centre"; E within tableUse metres of its edge opens the sea chart) and behind the decks along its south edge [5], where she starts and comes back, seat metres south of the middle. On it, landed, time runs as in a calm legend circle (legendCircle.slow). The house [6][7]: its floor the oak's one shape (config/house/shape.js) at height metres, rail its edge's keep-in, the Terrace one of its trunk rooms at the treehouse's spot, its layout config/house/base.json's (terrace: the open rim, the decks, her seat, the magic circle): at treetop height she flies straight onto the Terrace and lands over landTime seconds, walks off its rim to fly again, or, with no broom (fall.on, a switch till the brooms are objects), falls for fall.time seconds and comes back at the magic circle (circle.out south of the hub's centre, circle.r), where a knockout brings her back too. The house's walk [8]: on foot in the house (the hub, the balcony, the rooms) she walks, walk metres a second, not at her broom's groundSpeed [9]; her walk cycle is drawn for stride metres a second, its steps quickening above it so her feet don't slide. The dark behind the house [10][11]: with dark.on, on foot in the house, any room or the Terrace, only the house, the Ent's crowns and her are drawn, over black, till the island's ready (its art drawn: g.islandReady); then the forest fades in behind the whole house over dark.reveal seconds and stays behind every room after; leaving the house before then, it comes back from where she stands over dark.fade seconds, and through the telescope it fades in over the same. The great oak's crown [12]: with crown.on, one crown over the whole house in place of the rooms' leaf roofs, grown from the house's outline (config/house/outline.json) and crown.seed: its lobes, the oak's limbs through its gaps, the Terrace's notch open to the sky out to its edge, its string lights and its far landmark. Indoors [13]: the crown cleared over her room (or branch) opens over crown.cutFade seconds as she comes in and fills back in over the same as she leaves, and the forest's hole round her (canopyCutout: its size, its soft edge) is cut in it too, round where she's drawn, opening and closing with it; the Terrace's notch stays open as ever. Its lights [14]: lights of its strings hung, whole strings by a hash (0.5; 1 every one), each string hung its own way (rules/crown.ts: swags with their own sag and steps, some part way, tails hanging off them, spirals round the big limbs, drapes near or long across a gap, garlands part way or all round, tilted and wavering, the bulbs the same spacing on every one, Ed: "The same bulb spacing"). Its wrap [15]: wrap long strands spiralling out over its top from its middle as seen from above, in place of its drapes and garlands, each resting on the lobes, its height smoothed along it and sagging across the gaps between them (rules/crown.ts makeCrown); 2, as Ed chose; 0 its drapes and garlands instead. Its warm light [16]: warm times the house's light spilling up onto the lobes' and limbs' undersides over its open rooms (render/crown.ts warmAt: a glow round each room's middle 1.5 m over its floor, its size and 3 m more across, worked out once as the crown's made), in flat quarter steps; 0 none, 1 as Ed chose it from the mock; both live on the pause page's Oak crown group.
 Code: `rules/treehouse.ts`, `art/ent.js`, `docs/backlog/treehouse.md`, `config/house/shape.js`, `config/house/base.json`, `rules/crown.ts`, `render/crown.ts`, `config/house/outline.json`
 
+- **`treehouse.landCooldown`**: Seconds after she leaves a treehouse floor (rising or stepping off) before she can land on one, and after she lands before she can leave: meanwhile she flies on over its floors, and its open edges keep her in. 0: no wait.
+  1. Ed, 2026-11-03: "Taking off from the treehouse and landing on the treehouse; there should be a minimum time between which either these things can happen, perhaps 3 seconds, because it's easy to e.g. take off from a branch and land immediately on the next branch, which is probably not what the player intends to do."
+  Her own clock (rules/witch.ts perchCool), each witch her own. Landing blocked: the auto-landing flying onto a floor doesn't happen, and her press to come down over a floor (or rising off one) is dropped. Leaving blocked: her press to rise is dropped and the open edges hold her as a rail would (no fall either).
 - **`treehouse.house.look.indoor`**: Fade the entire crown and its string lights indoors.
   1. Ed, 2026-11-02: "The treehouse/tree needs work. It looks good on the horizon but weird to fly to and from."
   Treehouse look settings; all four switches on by default, chosen by Ed on 2 November.
@@ -514,6 +517,7 @@ Code: `rules/treehouse.ts`, `art/ent.js`, `docs/backlog/treehouse.md`, `config/h
 | `treehouse.clear` | number | 0 to … |
 | `treehouse.lightReach` | number | 0 to … |
 | `treehouse.lightStrength` | number | 0 to … |
+| `treehouse.landCooldown` | number | 0 to … |
 | `treehouse.deck.on` | boolean |  |
 | `treehouse.deck.radius` | number | 0 to … |
 | `treehouse.deck.height` | number | 0 to … |
@@ -1266,7 +1270,7 @@ The witch [1]: she takes hits (one point each, whatever hits her) before she's k
 
 ### `knockout`
 
-What happens when she's knocked out: her creatures go free, she comes back at the treehouse after a wait that grows with each knockdown, and the beat speeds up.
+What happens when she's knocked out: her carried sigils fall where she went down, she comes back at the treehouse after a wait, and the beat speeds up.
 
 1. Ed, 2026-10-04
 2. 2026-10-26: Ed's playtest of v4821: no sigil made; its rune at its feet, so she can leash it again
@@ -1275,7 +1279,8 @@ What happens when she's knocked out: her creatures go free, she comes back at th
 5. Ed, 2026-10-07: 6, 8, 10, 12
 6. "We can remove the extra knockdown time" (then, with each knockdown costing a BPM instead,: step 0 and max 6, so every knockdown waits the flat base and the desk's candles are all white)
 7. Ed, 2026-10-07: "the BPM goes up by 1 each time you die" (the DJ is off the decks and the crowd gets restless)
-Knocked out [1]: she collapses where she is; her sigil stack lets go from the bottom up, one every releaseEach seconds (releaseMax caps the whole release, 0 no cap; an empty stack waits emptyBeat seconds), each animal turning happy where it stands [2][3]; then she sparkles out and back in behind her decks in the treehouse over teleport seconds. Creatures at sigils she had put down on the ground stay hers. One timeline [4], the whole wait counted from her going down: her hat (if it drops) floats to the ground over hatFloat seconds, the screen dimmed, a sad trumpet; she sparkles out and back in behind her decks (teleport seconds); and she scratches there ("Every time she respawns she could do a bit of scratching to increase the respawn time") for the rest of the wait, at least respawn.minScratch, her army fighting on without her, a countdown over her. The wait ("any more than about six seconds to wait will be frustrating ... make each successive death a bit longer, with a cooldown"): respawn.base seconds, respawn.step more for each knockdown within respawn.cooldown seconds of the last, up to respawn.max [5][6]. releaseEach 0 (Ed): her sigils all drop at once as she goes down, under the hat's float. The beat speeds up [7]: each knockdown adds bpmStep to the party's tempo for the rest of the run (bpmCap, if set, is the most it can add), eased in over beat.knockBeats beats (4, a bar) from the next bar line; the music follows the beat clock, and the wave countdown and the ley line's pulse run that much faster (tempo plus bonus over the wave's own tempo), so the waves come sooner.
+8. Ed, 2026-11-03: "If you're knocked down, animals' sigils fall and stay where you were knocked down" (each on the free hex cell nearest the spot, its animal parked there, guarding; queued berries cancelled. dropRadius stays only for a guest leaving an online night (letGoHappy))
+Knocked out [1]: she collapses where she is; her sigil stack lets go from the bottom up, one every releaseEach seconds (releaseMax caps the whole release, 0 no cap; an empty stack waits emptyBeat seconds), each sigil falling on the free hex cell nearest where she went down, its animal parked there [8] (from [2][3] till then each turned happy where it stood); then she sparkles out and back in behind her decks in the treehouse over teleport seconds. Creatures at sigils she had put down on the ground stay hers. One timeline [4], the whole wait counted from her going down: her hat (if it drops) floats to the ground over hatFloat seconds, the screen dimmed, a sad trumpet; she sparkles out and back in behind her decks (teleport seconds); and she scratches there ("Every time she respawns she could do a bit of scratching to increase the respawn time") for the rest of the wait, at least respawn.minScratch, her army fighting on without her, a countdown over her. The wait ("any more than about six seconds to wait will be frustrating ... make each successive death a bit longer, with a cooldown"): respawn.base seconds, respawn.step more for each knockdown within respawn.cooldown seconds of the last, up to respawn.max [5][6]. releaseEach 0 (Ed): her sigils all drop at once as she goes down, under the hat's float. The beat speeds up [7]: each knockdown adds bpmStep to the party's tempo for the rest of the run (bpmCap, if set, is the most it can add), eased in over beat.knockBeats beats (4, a bar) from the next bar line; the music follows the beat clock, and the wave countdown and the ley line's pulse run that much faster (tempo plus bonus over the wave's own tempo), so the waves come sooner.
 
 - **`knockout.legendsLoyal`**: leashed legends stay with her (false: they're let go too: 'they're too old for this'; only a party legend is ever leashed now, and it's always let go).
 - **`knockout.dropHat`**: When knocked out she drops her hat where she fell, and wears none till she goes back and picks it up.
@@ -1447,6 +1452,16 @@ Her flight trail [1]: a ribbon of glow along her path, fading to nothing at its 
 - **`trail.bright`**: its brightness.
 - **`trail.fade`**: how it fades along its length (eased out: bright for its first stretch, then thinning to nothing; higher keeps it bright longer), its width tapering with it.
 - **`trail.sparks`**: the broom's little amber sparks as well. ?trail=0 hides it.
+- **`trail.steps`**: The cooldown trail: dotted sections of pixels in her preset's colours, the first (the buffer) as long as her speed makes it, then one for each dash's worth of the shared cooldown, the tail's dots going one at a time as it drains; behind the scenery as she is; off, the smooth trail as before.
+  1. Ed, 2026-11-03: "the trail is made of lots of little segments, and there are few colour sections from beginning to end, and you can see segments vanish one by one; so each colour section tells you if you have a dash" … "each segment could be just a single pixel, with a single pixel gap between" … "the number of small segments in each section relates to your speed, so it gets larger with buffs, and is larger in the treetop; but each section drains at the same rate" … "these dots should glow a little" … "The buffer … should be part of the sections as the first section, same dotted style in the trail colours." … "The cooldown trail goes behind scenery in the same way as the witch herself does." … "Increase the cooldown trail glow a little" … "remove the ring"
+  Each cooldown section showing (a part-drained one too) is a dash she hasn't got; only the first section, everything's ready. Sections' colours: config/trail-colours.json, chosen at the Broom station (render/trailColours.ts), the buffer taking the first.
+- **`trail.steps.dot`**: a dot's size, the picture's pixels.
+- **`trail.steps.gap`**: the gap between dots, the picture's pixels.
+- **`trail.steps.section`**: a section's length: seconds times her top speed now (so longer with speed buffs and over the treetops); each still drains in a dodge's cooldown.
+- **`trail.steps.halo`**: the faint halo of each section's colour under its dots (0 none).
+- **`trail.steps.glow`**: each dot's soft glow, its strength (0 none).
+- **`trail.steps.glowSize`**: each dot's glow, pixels across.
+- **`trail.steps.preset`**: the colour preset (config/trail-colours.json) of a witch who hasn't chosen one at the Broom station.
 
 | knob | type | range |
 |---|---|---|
@@ -1464,6 +1479,14 @@ Her flight trail [1]: a ribbon of glow along her path, fading to nothing at its 
 | `trail.sparks` | boolean |  |
 | `trail.cooldown` | number | 0 to … |
 | `trail.bySpeed` | boolean |  |
+| `trail.steps.on` | boolean |  |
+| `trail.steps.dot` | number | 0 to … |
+| `trail.steps.gap` | number | 0 to … |
+| `trail.steps.section` | number | 0 to … |
+| `trail.steps.halo` | number | 0 to … |
+| `trail.steps.glow` | number | 0 to … |
+| `trail.steps.glowSize` | number | 0 to … |
+| `trail.steps.preset` | string | "warm" / "cool" / "pastel" / "party" / "gold" / "ice" |
 
 ### `swoopTrail`
 
@@ -1498,14 +1521,20 @@ Berries on the bushes of every area, which her creatures eat to evolve.
 4. Ed, 2026-10-27: "We can change 6/8/16=>3/4/8, and reduce berry spawns (keep the current cluster size but reduce frequency of clusters.)" (a youth showing a dot per berry eaten, two rows of 4 at most:: cost.per back to 7.25, so 3, 4 and 8, and bushesPerArea and perArea halved, half as many patches of the same size, the same share of their bushes in berry)
 5. Ed, 2026-10-05: "we can make the berry clusters bigger"
 6. Ed, 2026-10-04: legends are the areas' own, never grown
-Berries and evolving (Ed): every area has bushesPerArea berry bushes (normal bushes of that area) and perArea [min, max] berries on distinct ones at the start. Bushes grow in patches of patch.bushes [min, max] within patch.radius metres. Party animals (invited, not legends), following her or held at a sigil, take a berry on their way (Ed, v233): within detour metres of the line to where they're heading or of their sigil, never beyond their leash; they nip over, eat it (eatTime seconds) and carry on. The berry grows again at once on a free berry bush somewhere else on the map. A party animal evolves on the next bar line once it has eaten the berries its next level costs [1]: the fighting value it gains (cost.by "value": √(hp × dps), its species' strength included) at cost.per a berry, rounded, at least 1: so a berry buys the same fighting value for every species; one of normal strength costs 4 and 4 [2][3][4] ("power" would count hp × dps instead). Bigger patches since [5]: perArea and patch.bushes up a quarter to a half, so the first evolve's extra berry (2, was 1) and weaker species' one-berry minimum come out a little faster to feed than before. Evolving stops at adult [6].
+7. Ed, 2026-11-03: "No animal eats on its own" (only the bottom of her stack eats, fed by her with the sigil button; the detour knob (Ed, v233) and the baby's reach at its placed sigil (2026-10-11) gone with it)
+Berries and evolving (Ed): every area has bushesPerArea berry bushes (normal bushes of that area) and perArea [min, max] berries on distinct ones at the start. Bushes grow in patches of patch.bushes [min, max] within patch.radius metres. No animal eats on its own (Ed, 2026-11-03; see feed): the bottom of her stack eats a berry she feeds it, walking over and eating it (eatTime seconds). The berry grows again at once on a free berry bush somewhere else on the map. A party animal evolves on the next bar line once it has eaten the berries its next level costs [1]: the fighting value it gains (cost.by "value": √(hp × dps), its species' strength included) at cost.per a berry, rounded, at least 1: so a berry buys the same fighting value for every species; one of normal strength costs 4 and 4 [2][3][4] ("power" would count hp × dps instead). Bigger patches since [5]: perArea and patch.bushes up a quarter to a half, so the first evolve's extra berry (2, was 1) and weaker species' one-berry minimum come out a little faster to feed than before. Evolving stops at adult [6].
 
 - **`berries.colour`**: The berries' colour: a deep berry pink.
   1. Ed, 2026-11-03: "Berries: deep berry pink, instead of red." (red is the warnings' colour; a shiny dark cherry red (#9e1024) before, which colourGrammar old brings back)
   Code: `render/colourGrammar.ts`
 - **`berries.glow`**: How strongly a berry's soft halo glows.
   1. Ed, 2026-10-11
-  its soft halo's strength. B (debug) feeds the nearest party animal one berry. Babies [1]: a baby eats only when its sigil is put down with a berry within babyReach metres of it (following her, it never stops for one; when a baby's sigil is next to go down, the berries within babyReach of her glow brightly), and babyCost berries evolve it into a youth.
+  its soft halo's strength. B (debug) feeds the nearest party animal one berry. babyCost berries evolve a baby into a youth (one: Ed, 2026-10-11).
+- **`berries.feed`**: Feeding on command: a tap of the sigil button feeds the bottom of her stack a berry within reach of her; holding it puts that sigil down instead.
+  1. Ed, 2026-11-03: "something she does deliberately and accurately under time pressure" (no animal eats on its own; only the bottom of her stack, the one cycle moves through; each press queues one more berry, no hold-to-repeat)
+  2. Ed, 2026-11-03: "otherwise feeding berries becomes a way of moving creatures quickly rather than levelling them up" (speed: it goes to its berry at about its own pace, 1 to 1.2 times)
+  reach: metres from her a berry may be to be fed (the nearest un-taken one, marked, with the prompt). speed: the animal walks to each queued berry at its leash pace times this. hold: seconds the sigil button is held, with a feed on offer, to put the bottom sigil down instead of feeding it (a tap shorter than this feeds).
+  Code: `rules/berries.ts`, `rules/sigilButton.ts`, `render/feedTag.ts`
 
 | knob | type | range |
 |---|---|---|
@@ -1513,14 +1542,15 @@ Berries and evolving (Ed): every area has bushesPerArea berry bushes (normal bus
 | `berries.bushesPerArea` | number | 0 to … |
 | `berries.patch.bushes` | array of number |  |
 | `berries.patch.radius` | number | 0 to … |
-| `berries.detour` | number | 0 to … |
 | `berries.eatTime` | number | 0 to … |
 | `berries.cost.by` | string | "power" / "value" |
 | `berries.cost.per` | number | 0 to … |
 | `berries.colour` | string |  |
 | `berries.glow` | number | 0 to … |
-| `berries.babyReach` | number | 0 to … |
 | `berries.babyCost` | number | 0 to … |
+| `berries.feed.reach` | number | 0 to … |
+| `berries.feed.speed` | number | 0 to … |
+| `berries.feed.hold` | number | 0 to … |
 
 ### `invites`
 
@@ -3569,8 +3599,9 @@ Code: `docs/plans/sail-without-reload.md`, `app/sail.ts`
 The loading screen: the World Tree and COVEN RUSH picked out in gold stars that light up as the game loads.
 
 1. Ed, 2026-10-26: src/ui/loadingScreen.js, before main.ts loads
-The loading screen [1]: the World Tree and COVEN RUSH in gold stars, lighting as the game loads, edge first by edge (0 plain random), at most rate stars a second, each flashing for flash seconds; ghost how bright the stars not yet lit show (0: an empty sky, Ed's call); the heart's star last, its supernova to white over nova seconds and the white clearing over clear seconds into the bedroom. It draws fps frames a second while the game loads (each frame costs the load a little), about 20 once it's ready. Read as the page opens, so the pause page's sliders (remembered on this browser) take effect on the next load.
-Code: `src/ui/loadingScreen.js`
+2. Ed, 2026-11-03: "can we fade from the loading screen to the bedroom over a few seconds" (fadeOut in place of the 1.2 s white clearing (clear), src/ui/loadingFade.js)
+The loading screen [1]: the World Tree and COVEN RUSH in gold stars, lighting as the game loads, edge first by edge (0 plain random), at most rate stars a second, each flashing for flash seconds; ghost how bright the stars not yet lit show (0: an empty sky, Ed's call); the heart's star last, its supernova to white over nova seconds, then the whole screen fading out over fadeOut seconds (eased out; at most 0.6 s with reduced motion) onto the bedroom, her wake-up starting as it begins [2]. It draws fps frames a second while the game loads (each frame costs the load a little), about 20 once it's ready. Read as the page opens, so the pause page's sliders (remembered on this browser) take effect on the next load.
+Code: `src/ui/loadingScreen.js`, `src/ui/loadingFade.js`
 
 | knob | type | range |
 |---|---|---|
@@ -3579,7 +3610,7 @@ Code: `src/ui/loadingScreen.js`
 | `loading.flash` | number | 0 to … |
 | `loading.ghost` | number | 0 to … |
 | `loading.nova` | number | 0 to … |
-| `loading.clear` | number | 0 to … |
+| `loading.fadeOut` | number | 0 to … |
 | `loading.fps` | number | 0 to … |
 
 ### `opening`
@@ -3604,7 +3635,7 @@ Code: `app/opening.ts`
 
 ### `arrive`
 
-Arriving on an island from the sea chart: the camera flies in over the sea, frames the dancefloor and comes round to the treehouse.
+Arriving on an island from the sea chart: the camera flies in over the sea, frames the dancefloor and the treehouse, its crown coming up over the bent horizon, and into her bedroom.
 
 1. Ed, 2026-10-12: the zoom-to-island plan; rules/arrive.ts, app/arrive.ts
 2. Ed's playtest, 2026-10-12: the first frames at a new spot are heavy
@@ -3614,9 +3645,10 @@ Code: `rules/arrive.ts`, `app/arrive.ts`, `app/arrival.ts`
 
 - **`arrive.handoff`**: where the chart hands over, sea metres out to sea off the south coast below the dancefloor (negative: inland), its camera dist metres back and pitchDeg degrees down (the first flight's: -40, 600, 50); ?dive=near\|far\|skim for one load (app/chartView.ts DIVES).
   Code: `app/chartView.ts`
-- **`arrive.tree`**: Where the camera ends its arrival: the whole treehouse tree seen from the south, filling the frame.
-  1. Ed, 2026-10-24: "pan up to see the whole treehouse tree before we fly into her bedroom"
-  after framing the dancefloor, the camera comes round to the whole treehouse tree from the south, angle degrees up at its middle, far enough back that it fills fill of the frame's height (its height in metres from its art once drawn, height till then), time seconds after the frame, then settle seconds on into her bedroom.
+- **`arrive.bend`**: The dive's bend: the world curving away so the treehouse crown comes up over the horizon as the camera flies in.
+  1. Ed, 2026-11-03: "I think we can get the 'Coming round to the treehouse' effect by using the bend shader rather than using the camera angle; I want to see the treehouse crown coming over the horizon, and this will achieve that straightforwardly." … "The reason why we fly out over the sea is to do the transition between these scenes while looking at the water, which should make the transition less obvious because we can fade between while looking at a simple blue texture." (in place of the swing round to the whole treehouse tree (Ed, 2026-10-24: "pan up to see the whole treehouse tree before we fly into her bedroom"; the whole-tree shot and its knobs, gone))
+  the world's bend (render/height.ts, the curvature the treetops have) added on top of the night's own through the dive (rules/arrive.ts diveBend): none at the hand-off, so the crossfade from the chart's flat sea is over the same flat water, growing to curve (per metre; the treetops' own is camera.curve.treetop, 0.0015) over grow seconds as the camera comes down over the sea, so the island sits below the horizon; held while the camera flies straight in, the treehouse crown rising over the curve of the world; then eased back to none over the flight's last relax seconds, the night's own bend exactly as she lands in bed. 0 curve: no bend.
+  Code: `rules/arrive.ts`, `render/view/camera.ts`
 
 | knob | type | range |
 |---|---|---|
@@ -3641,10 +3673,9 @@ Code: `rules/arrive.ts`, `app/arrive.ts`, `app/arrival.ts`
 | `arrive.handoff.sea` | number |  |
 | `arrive.handoff.dist` | number | 0 to … |
 | `arrive.handoff.pitchDeg` | number | 0 to … |
-| `arrive.tree.height` | number | 0 to … |
-| `arrive.tree.angle` | number | 0 to … |
-| `arrive.tree.fill` | number | 0 to … |
-| `arrive.tree.time` | number | 0 to … |
+| `arrive.bend.curve` | number | 0 to … |
+| `arrive.bend.grow` | number | 0 to … |
+| `arrive.bend.relax` | number | 0 to … |
 
 ### `camera`
 

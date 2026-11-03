@@ -1,0 +1,9 @@
+{
+  "reason": "Ed, 2026-11-03: no animal eats on its own; only the bottom of her stack eats, fed by a tap of the sigil button with a berry within berries.feed.reach (15 m), a hold of berries.feed.hold (0.3 s) putting it down instead; at a knockdown her carried sigils fall where she went down, the animals parked there, their queued berries cancelled (no longer let go happy).",
+  "rules": {
+    "*": "her party animals no longer detour to berries or eat at placed sigils, so their positions, levels, pips, the berries' bushes and the creatures fed differ; after a knockdown her animals stay hers, parked where she went down, instead of turning happy"
+  },
+  "frames": {
+    "*": "a baby's sigil in her stack now shows its one berry dot, and berries a tap would feed are marked; where the bench's animals stand differs as they no longer wander off to eat"
+  }
+}

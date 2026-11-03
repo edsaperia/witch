@@ -4,6 +4,7 @@ import type { Game } from "../rules/game";
 import type { InputRecording } from "../platform/inputRecording";
 import { recentNotables, type NotableEvent } from "../platform/playtestJournal";
 import { jsonBytes, LOG_EXPANDED_BYTES, packLog, unpackLog, type PackedLog } from "../platform/logCodec";
+import { pageIdb, sessionStore } from "../platform/storageScope";
 
 export const COMMENT_TEXT = 2000, COMMENT_BYTES = 32 * 1024 * 1024, COMMENT_TOTAL = 64 * 1024 * 1024, COMMENT_COUNT = 8;
 export const COMMENT_PACKED_BYTES = 8 * 1024 * 1024, COMMENT_PACKED_TOTAL = 32 * 1024 * 1024;
@@ -166,12 +167,12 @@ export class CommentBook {
 /** Session identity survives reload in this tab. IDB avoids localStorage's small synchronous quota. */
 export function browserCommentStore(): CommentStore {
   let session: string;
-  try { session = sessionStorage.getItem("witch.comment-session") || crypto.randomUUID(); sessionStorage.setItem("witch.comment-session", session); }
+  try { const s = sessionStore(); if (!s) throw Error("Session storage unavailable"); session = s.getItem("witch.comment-session") || crypto.randomUUID(); s.setItem("witch.comment-session", session); }
   catch { return { read: async () => [], write: async () => { throw Error("Session storage unavailable"); } }; }
   const key = `${location.pathname}:${session}`;
   const db = new Promise<IDBDatabase>((resolve, reject) => {
     try {
-      const r = indexedDB.open("witch.playtest-comments", 1);
+      const idb = pageIdb(); if (!idb) throw new Error("No IndexedDB on this page."); const r = idb.open("witch.playtest-comments", 1);
       r.onupgradeneeded = () => r.result.createObjectStore("sessions");
       r.onsuccess = () => resolve(r.result); r.onerror = () => reject(r.error); r.onblocked = () => reject(Error("Comment storage busy"));
     } catch (e) { reject(e); }

@@ -145,7 +145,9 @@ export function placeCamera(v: View, time: number, pose: ReturnType<typeof poseO
     const ravine = potionStrength(g, 'ravine'), planet = potionStrength(g, 'little-planet');
     const k = potionBend(Math.max(C.ground + (C.treetop - C.ground) * m * m * (3 - 2 * m), gk), C.treetop, ravine, planet);
     const breath = trip?.effect === "held-breath" ? trip.phase * trip.amount * trip.setting : 0;
-    HEIGHT_UNIFORMS.uBend.value.set(k + breath, pose.tx, pose.tz, t.ground.hills.on ? t.ground.hills.amplitude : 0); // (w: the hills' amplitude, for the horizon test)
+    // (arriving from the sea chart: the dive's own bend on top, rules/arrive.ts diveBend; none once it lands, the night's as it was)
+    const dive = F?.bend ?? 0;
+    HEIGHT_UNIFORMS.uBend.value.set(k + breath + dive, pose.tx, pose.tz, t.ground.hills.on ? t.ground.hills.amplitude : 0); // (w: the hills' amplitude, for the horizon test)
     // Keep ordinary geometry in the culling bounds throughout the fade back to normal.
     v.bendTo = Math.max(0, g.witch.mode === "rising" || g.witch.mode === "treetop" ? C.treetop : C.ground, gk, v.beachView.gazing ? C.treetop * (B?.stargazeCurve ?? 0) * seaKeep : 0);
     v.post.potionGlow = potionStrength(g, 'glow-up');
@@ -163,7 +165,7 @@ export function placeCamera(v: View, time: number, pose: ReturnType<typeof poseO
     const lit = litConstellation(v, { fov, pitch: 12 });
     if (lit) v.sky.constellation(lit.stars, lit.lines, lit.lineStrength, 1);
     else v.sky.constellation(NO_STARS, NO_LINES, 0, 0);
-    v.sky.update(Math.max(k, V.coast + V.gaze > 0.01 ? 1e-5 : 0), pose.tx, pose.tz, far, // (by the sea the sky shows over the flat water even unbent)
+    v.sky.update(Math.max(k + dive, V.coast + V.gaze > 0.01 ? 1e-5 : 0), pose.tx, pose.tz, far, // (by the sea the sky shows over the flat water even unbent)
       2 * far * Math.tan((t.camera.fov * Math.PI) / 360) * (v.width / v.height), moonNow);
     v.ground.moonRoad(moonNow.x, v.width, moonNow.lit > 0.02);
   }

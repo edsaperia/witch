@@ -5,6 +5,7 @@ import type { Game } from "../rules/game";
 import type { Loan } from "./loan";
 import { settingsBase, type SettingsBase } from "./playerSettings";
 import { houseLayoutIdentity } from "./houseLayout";
+import { pageIdb } from "../platform/storageScope";
 
 export interface SavedNight {
   version: 1;
@@ -95,7 +96,7 @@ export function captureNight(game: Game, context: Omit<SavedNight, "version" | "
   return { ...structuredClone(context), version: 1, at, game: snapshotGame(game), settingsBase: base };
 }
 
-export function browserNightStore(path: string, factory: IDBFactory = indexedDB): NightStore {
+export function browserNightStore(path: string, factory: IDBFactory = pageIdb()!): NightStore {
   let opened: Promise<IDBDatabase> | null = null;
   const db = () => (opened ??= new Promise<IDBDatabase>((resolve, reject) => {
     const r = factory.open("witch.nights", 1);
@@ -133,7 +134,7 @@ export function nightOfSlot(key: string, id: string | null): boolean {
   return m ? m[1] === id : id === "s1" && !key.endsWith(":comment-restore");
 }
 /** A deleted slot's nights, on every path this origin served (null: every night, Reset everything's). */
-export async function clearSlotNights(id: string | null, factory: IDBFactory = indexedDB): Promise<void> {
+export async function clearSlotNights(id: string | null, factory: IDBFactory = pageIdb()!): Promise<void> {
   const d = await new Promise<IDBDatabase>((resolve, reject) => {
     const r = factory.open("witch.nights", 1);
     r.onupgradeneeded = () => r.result.createObjectStore("nights");

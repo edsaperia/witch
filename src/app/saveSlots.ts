@@ -1,6 +1,7 @@
 // Ed, 2026-10-30: save slots hold progress and settings and reopen the previous slot.
 // Keep records independent: a corrupt slot cannot make the index or another slot unreadable.
 import { logCaughtError } from "../platform/caughtError";
+import { localStore } from "../platform/storageScope";
 export interface SlotStorage { getItem(key: string): string | null; setItem(key: string, value: string): void; removeItem?(key: string): void; /** (localStorage's: lets delete find every witch.save.<id>.* key) */ readonly length?: number; key?(index: number): string | null }
 export interface SlotStorageView extends SlotStorage { removeItem(key: string): void }
 export interface SaveSlot { id: string; name: string; created: number; updated: number; island?: string; nights?: number }
@@ -200,8 +201,7 @@ export class SaveSlots {
 const browsers = new WeakMap<SlotStorage, { saves: SaveSlots; storage: SlotStorageView }>();
 let unavailable: { saves: SaveSlots; storage: SlotStorageView } | undefined;
 function browser() {
-  let store: Storage | null = null;
-  try { store = globalThis.localStorage ?? null; } catch { /* access itself can be denied */ }
+  const store = localStore(); // (access itself can be denied: null. A fresh game, ?fresh=: its own namespace, platform/storageScope.ts)
   if (store) {
     let entry = browsers.get(store);
     if (!entry) { const saves = new SaveSlots(store); entry = { saves, storage: saves.storage() }; browsers.set(store, entry); }

@@ -17,6 +17,7 @@ export interface Shelf { id: string; label: string; items: WardrobeItem[]; /** i
   /** the Workshop's bay: a row of part cards for this slot of her broom (rules/broomParts.ts), the empty slot first */ slot?: Slot;
   /** the bay: the sets' progress, a chip each */ sets?: boolean;
   /** the pegboard: the parts on the 3 × 3 biome map (broomParts.ts BOARD) */ board?: boolean;
+  /** the Broom station's Trail row: her cooldown trail's colour presets, a tile each (render/trailColours.ts; Ed, 2026-11-03) */ trail?: boolean;
   /** to look at, nothing chosen (the pegboard: Ed, 2026-10-23, "its own read-only station menu; fitting stays at the bay") */ readOnly?: boolean }
 type Genome = Record<string, unknown>;
 

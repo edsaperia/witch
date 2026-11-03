@@ -4,6 +4,8 @@ A videogame by Ed Saperia: a witch throws a rave in a magical forest. **How the 
 
 ## The fly-around prototype
 
+**A fresh game on the latest version: https://edsaperia.github.io/witch/?fresh=1** — a brand-new player's very first morning, every time, on the newest deploy; your own saves are neither read nor touched, and the plain link plays them as ever (`docs/notes/run.md`, **Fresh game link**).
+
 Fly the witch round a generated forest at night, on a laptop or a phone. Add `?seed=123` to the link to play a given map (the seed shows bottom left). Add `&tilt=before`, `&tilt=after` or `&tilt=off` to compare the tilt-shift variants, `&bloom=off` to drop the glow, `&debug` to open the debug overlay.
 
 - **Keyboard and mouse**: WASD or arrows fly · the mouse aims, left click throws 💌 invites · right click dodges · Space rises to the treetops or lands · E puts down a sigil, Q cycles them · R spell · the mouse wheel, Z/X or −/+ zoom · `~` debug overlay

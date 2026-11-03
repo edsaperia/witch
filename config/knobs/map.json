@@ -906,6 +906,17 @@
     "treeMarginFromSoundsystem": {
       "see": "setPieceFootprint"
     },
+    "treehouse.landCooldown": {
+      "what": "Seconds after she leaves a treehouse floor (rising or stepping off) before she can land on one, and after she lands before she can leave: meanwhile she flies on over its floors, and its open edges keep her in. 0: no wait.",
+      "decisions": [
+        {
+          "by": "Ed",
+          "date": "2026-11-03",
+          "quote": "Taking off from the treehouse and landing on the treehouse; there should be a minimum time between which either these things can happen, perhaps 3 seconds, because it's easy to e.g. take off from a branch and land immediately on the next branch, which is probably not what the player intends to do."
+        }
+      ],
+      "notes": "Her own clock (rules/witch.ts perchCool), each witch her own. Landing blocked: the auto-landing flying onto a floor doesn't happen, and her press to come down over a floor (or rising off one) is dropped. Leaving blocked: her press to rise is dropped and the open edges hold her as a rail would (no fall either)."
+    },
     "treehouse.house.look.indoor": {
       "what": "Fade the entire crown and its string lights indoors.",
       "decisions": [

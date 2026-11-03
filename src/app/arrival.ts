@@ -5,6 +5,7 @@
 // sessionStorage: the island, the world, when, the chart's last frame (shown while the night is made) and its camera in the
 // game's terms (seaChart.ts FlightEnd).
 import type { FlightEnd } from "../render/chart/seaChart";
+import { sessionStore } from "../platform/storageScope";
 
 export const ARRIVE_KEY = "witch.arrive";
 /** A record older than this (ms) is stale: a reload long after, not the sail. */
@@ -13,7 +14,7 @@ export const ARRIVE_FRESH = 30_000;
 export interface Arrival extends FlightEnd { v: 1; island: string; world: number; at: number }
 
 type Store = Pick<Storage, "getItem" | "setItem" | "removeItem">;
-const session = (): Store | null => { try { return sessionStorage; } catch { return null; } };
+const session = (): Store | null => sessionStore();
 
 /** Keep the flight's end for the page about to load. */
 export function writeArrival(island: string, world: number, end: FlightEnd, store: Store | null = session(), now = Date.now()): void {

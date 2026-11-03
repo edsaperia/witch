@@ -256,6 +256,7 @@ export type SchemaTuning = {
     "clear": number;
     "lightReach": number;
     "lightStrength": number;
+    "landCooldown": number;
     "deck": {
       "on": boolean;
       "radius": number;
@@ -726,6 +727,16 @@ export type SchemaTuning = {
     "sparks": boolean;
     "cooldown": number;
     "bySpeed": boolean;
+    "steps": {
+      "on": boolean;
+      "dot": number;
+      "gap": number;
+      "section": number;
+      "halo": number;
+      "glow": number;
+      "glowSize": number;
+      "preset": "warm" | "cool" | "pastel" | "party" | "gold" | "ice";
+    };
   };
   "swoopTrail": {
     "on": boolean;
@@ -745,7 +756,6 @@ export type SchemaTuning = {
       "bushes": Array<number>;
       "radius": number;
     };
-    "detour": number;
     "eatTime": number;
     "cost": {
       "by": "power" | "value";
@@ -753,8 +763,12 @@ export type SchemaTuning = {
     };
     "colour": string;
     "glow": number;
-    "babyReach": number;
     "babyCost": number;
+    "feed": {
+      "reach": number;
+      "speed": number;
+      "hold": number;
+    };
   };
   "invites": {
     "on": boolean;
@@ -2068,7 +2082,7 @@ export type SchemaTuning = {
     "flash": number;
     "ghost": number;
     "nova": number;
-    "clear": number;
+    "fadeOut": number;
     "fps": number;
   };
   "opening": {
@@ -2111,11 +2125,10 @@ export type SchemaTuning = {
       "dist": number;
       "pitchDeg": number;
     };
-    "tree": {
-      "height": number;
-      "angle": number;
-      "fill": number;
-      "time": number;
+    "bend": {
+      "curve": number;
+      "grow": number;
+      "relax": number;
     };
   };
   "camera": {

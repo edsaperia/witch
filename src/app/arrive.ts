@@ -7,7 +7,7 @@
 // skips it). Any key or tap skips to the end. main.ts starts the night (her clock, the party spell's cast) when it lands.
 import type { Game } from "../rules/game";
 import { poseOf } from "../rules/game";
-import { arrivePlan, dueAt, dueRate, newFlightClock, planLength, shotAt, stepFlightClock, treeShot, type ArrivePlan, type ArriveTuning, type FlightClock, type Shot } from "../rules/arrive";
+import { arrivePlan, diveBend, diveIndoors, dueAt, dueRate, newFlightClock, planLength, shotAt, stepFlightClock, type ArrivePlan, type ArriveTuning, type FlightClock, type Shot } from "../rules/arrive";
 import type { Arrival } from "./arrival";
 import { groundHeight } from "../render/height";
 import type { View } from "../render/view";
@@ -43,7 +43,7 @@ export class ArrivalFlight {
   begin(g: Game, warmed = false): void {
     if (this.plan || this.done) return;
     if (warmed) this.warmT = { ...this.A, warm: { ...this.A.warm, frames: 0 } };
-    this.plan = arrivePlan(this.rec, g.map, this.A, groundHeight, this.end(g), this.frameAt, null, innerWidth / Math.max(1, innerHeight));
+    this.plan = arrivePlan(this.rec, g.map, this.A, groundHeight, this.end(g), this.frameAt);
   }
 
   /** Any key or tap: straight to her decks (once the art is ready, and the house, if they aren't yet). */
@@ -64,8 +64,6 @@ export class ArrivalFlight {
     if (!this.plan) return false;
     if (v.limitedLandingReady(now)) { performance.mark('landing:early-land'); this.land(v); return true; }
     this.plan.keys[this.plan.keys.length - 1] = this.end(g); // (the opening shot as the game's camera has it now)
-    const tree = v.treeExtent(); // (the whole tree's shot by the tree as it's measured once it's there, the crown or the Ent's art: rules/arrive.ts treeShot)
-    if (this.A.tree && tree && this.plan.keys.length >= 3) this.plan.keys[this.plan.keys.length - 2] = treeShot(this.A.tree, groundHeight, this.end(g).fov, tree, innerWidth / Math.max(1, innerHeight));
     if (this.due === Infinity) this.due = dueAt(this.plan, homeSpots(g), innerWidth / Math.max(1, innerHeight));
     if (v.homeDone && !this.readyMarked) { this.readyMarked = true; performance.mark("dive:house-ready"); }
     if (this.skipped && v.homeDone) { this.land(v); return true; }
@@ -74,7 +72,7 @@ export class ArrivalFlight {
     if (stepFlightClock(this.clock, now, this.warmT).faded) this.fadeStill();
     this.guard(v, before, now);
     if (this.clock.s >= planLength(this.plan)) { this.land(v); return true; }
-    v.fly = shotAt(this.plan, this.clock.s); // (warming up: the hand-off's own shot, behind the still)
+    v.fly = { ...shotAt(this.plan, this.clock.s), bend: diveBend(this.plan, this.clock.s, this.A.bend), indoors: diveIndoors(this.plan, this.clock.s) }; // (warming up: the hand-off's own shot, behind the still, unbent; the dive's bend: the crown over the horizon)
     return false;
   }
 

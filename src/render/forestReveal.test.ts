@@ -107,6 +107,18 @@ describe("the forest's reveal behind the house", () => {
     expect(s.island).toBe(0);
   });
 
+  it("a sail's dive (Ed, 2026-11-03: \"we can fade between while looking at a simple blue texture\"): the whole picture from the hand-off, the island not ready and she in bed for its end; landed in the house, the dark closes in over the fade", () => {
+    const s = newForestReveal();
+    run(s, "house", false, 1); // (the night made under the chart: she's put in bed, the island not ready)
+    expect(s.k).toBe(0);
+    const dive = run(s, "dive", false, 12);
+    expect(dive.every(v => v === 1)).toBe(true); // (from its first frame: the chart's sea cross-fades into the game's, never into black)
+    const landed = run(s, "house", false, 2);
+    expect(landed[0]).toBeGreaterThan(0.9); expect(landed.at(-1)).toBe(0);
+    expect(biggestStep(landed)).toBeLessThan(0.1); // (closing in over the fade, not at once)
+    run(s, "dive", true, 1); expect(s.k).toBe(1); // (and a dive with the island ready the same)
+  });
+
   it("is off with the dark: the whole picture always", () => {
     const s = newForestReveal();
     stepForestReveal(s, "house", false, 0, { ...T, on: false });

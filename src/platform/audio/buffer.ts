@@ -5,6 +5,7 @@
 // (`music.buffer`), and a browser that under-runs anyway remembers to ask for twice as much next load (`witch.audioBuffer`,
 // up to MAX_BUFFER). The music is scheduled early by the context's own latency (musicEngine.ts `lead`), so it stays on the beat
 // the game shows; only the sound effects come that much later.
+import { localStore } from "../storageScope";
 
 /** The most it will ask for (s). */
 export const MAX_BUFFER = 0.24;
@@ -31,7 +32,7 @@ export function nextBuffer(underruns: number | null, base: number, learnt: numbe
 
 /** The buffer this browser learnt it needs (s), or null. */
 export function learntBuffer(): number | null {
-  try { const v = Number(localStorage.getItem(KEY)); return Number.isFinite(v) && v > 0 ? v : null; } catch { return null; }
+  try { const v = Number(localStore()?.getItem(KEY)); return Number.isFinite(v) && v > 0 ? v : null; } catch { return null; }
 }
 /** Remember it for the next load. */
-export function learnBuffer(s: number): void { try { localStorage.setItem(KEY, String(Math.round(s * 1000) / 1000)); } catch { /* no storage */ } }
+export function learnBuffer(s: number): void { try { localStore()?.setItem(KEY, String(Math.round(s * 1000) / 1000)); } catch { /* no storage */ } }
