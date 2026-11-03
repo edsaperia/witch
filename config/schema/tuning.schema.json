@@ -4448,6 +4448,20 @@
           "additionalProperties": false,
           "description": "Too many heavy creatures on her leash stop her taking off."
         },
+        "anchor": {
+          "type": "object",
+          "properties": {
+            "length": {
+              "type": "number",
+              "minimum": 0
+            }
+          },
+          "required": [
+            "length"
+          ],
+          "additionalProperties": false,
+          "description": "Each adult following her holds her within length metres of it on a chain, and while one follows her she can't take off."
+        },
         "weight": {
           "type": "object",
           "properties": {
@@ -4815,6 +4829,7 @@
         "runs",
         "runePull",
         "grounded",
+        "anchor",
         "weight",
         "babies",
         "ranks"
@@ -5184,6 +5199,51 @@
           "minimum": 0,
           "maximum": 1,
           "description": "how much bigger and longer a legend's blow flashes than anyone's (its flash 1 + 2 × legendFlash times; 0.5, twice: Ed's decisions panel, config/decisions.json)."
+        },
+        "visibility": {
+          "type": "object",
+          "properties": {
+            "size": {
+              "type": "number",
+              "minimum": 0.25,
+              "maximum": 4
+            },
+            "opacity": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 1
+            },
+            "bloom": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 4
+            },
+            "duration": {
+              "type": "number",
+              "minimum": 0.25,
+              "maximum": 4
+            },
+            "zoneDensity": {
+              "type": "number",
+              "minimum": 0.05,
+              "maximum": 1
+            },
+            "groundMark": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 1
+            }
+          },
+          "required": [
+            "size",
+            "opacity",
+            "bloom",
+            "duration",
+            "zoneDensity",
+            "groundMark"
+          ],
+          "additionalProperties": false,
+          "description": "How easy the creatures' spells are to see: their size, opacity, glow, how long they last, how thick their lingering zones are and how strong the marks they leave on the ground (1, 0, 1, 1, 0.25 and 0.12 draw them as before 3 November)."
         }
       },
       "required": [
@@ -5197,7 +5257,8 @@
         "tumbleSecs",
         "turnFrom",
         "turnTo",
-        "legendFlash"
+        "legendFlash",
+        "visibility"
       ],
       "additionalProperties": false,
       "description": "How attacks feel on screen: attackers crouch and lunge, hits squash their target, and hard knock-backs send it tumbling."

@@ -875,6 +875,9 @@ export type SchemaTuning = {
     "grounded": {
       "weight": number;
     };
+    "anchor": {
+      "length": number;
+    };
     "weight": {
       "free": number;
       "levels": Array<number>;
@@ -1014,6 +1017,14 @@ export type SchemaTuning = {
     "turnFrom": number;
     "turnTo": number;
     "legendFlash": number;
+    "visibility": {
+      "size": number;
+      "opacity": number;
+      "bloom": number;
+      "duration": number;
+      "zoneDensity": number;
+      "groundMark": number;
+    };
   };
   "combat": {
     "packs": {

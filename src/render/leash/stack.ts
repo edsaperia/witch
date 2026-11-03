@@ -2,6 +2,7 @@
 // route and the thread under strain), and her broom straining under the sigils' weight (render/load.ts).
 import * as THREE from "three";
 import { leashPoint, stackOrder } from "../../rules/leash";
+import { tautAnchors } from "../../rules/anchor";
 import { hash2 } from "../../rules/random";
 import { LOAD_DEFAULT } from "../load";
 import type { LeashView } from "../leash";
@@ -124,6 +125,8 @@ export function drawBond(lv: LeashView, time: number, slotPos: Map<number, THREE
   // to solid, taut lines as they pull her back down (GROUNDED_FLASH), then back.
   for (const e of g.leashEvents) if (e.kind === "grounded") lv.tugAt = e.at;
   const solid = groundedSolid(time - lv.tugAt), chains = ranksOn(t), CK = chainKnobs(t), live = new Set<number>();
+  // The anchor chains (Ed, 2026-11-03; rules/anchor.ts): an adult's chain at its full length, holding her, drawn taut and glowing.
+  const anchored = tautAnchors(s.stack, g.creatures, w.x, w.z, t);
   for (const id of leashed) {
 
     const c = g.creatures[id], col = ranksOn(t) ? lv.colOf(c) : lv.colours.get(c.species); // (rank sigils: the rank's colour, ranks.ts)
@@ -147,7 +150,7 @@ export function drawBond(lv: LeashView, time: number, slotPos: Map<number, THREE
     if (!ground) lv.routes.delete(id);
     const d = Math.hypot(c.x - lp.x, c.z - lp.z);
     // (under a load, carried leashes pull taut sooner and brighter: render/load.ts)
-    const carried = s.stack.includes(id), whole = carried && solid;
+    const carried = s.stack.includes(id), whole = carried && (solid || anchored.has(id));
     const ld = carried ? lv.load.load : 0, LT2 = t.load ?? LOAD_DEFAULT, from0 = 0.85 - (0.85 - LT2.threadFrom) * ld;
     if (chains || ground || lv.chains.get(id)?.pose?.start || lv.chains.get(id)?.pose?.ground) {
       // The leash as a chain (Ed, 2026-10-28; render/leash/chain.ts): links its rank's size, from its sigil in her stack (or its placed

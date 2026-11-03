@@ -56,6 +56,7 @@ import { wearPiece } from "./clothesPile";
 import { hatLetters, hatsDown, onHatPicked, onHatPut, stepHatSpells } from "./hatSpells";
 import { loadOf, type LeashLoad, groundedBy } from "./leashWeight";
 import { pinWitch, type Pinned } from "./partyLegend";
+import { anchorLength, anchorWitch } from "./anchor";
 import { castOf, castOn, circleSpot, friendSigils, looseAt, scatterSpots, stoneOpen, tetherWitch, type LooseSigil } from "./stoneStacks";
 import { liveRainbows, sendRainbow, stoneMetres, type RainbowWave } from "./rainbow";
 import { runeOffset } from "./runeOffset";
@@ -563,6 +564,7 @@ function fixedStep(g: Game, controls: readonly Controls[]): void {
   // Explicit legacy cauldron preview owns its own inventory/inputs while enabled.
   if (!g.cauldron) stepMushrooms(g);
   const wave = g.party.wave;
+  const anchorFrom = g.witches.map(W => ({ x: W.body.x, z: W.body.z })); // (where each stood before her step: the anchor chains, below)
   const legends = (g.legendIds ??= g.creatures.filter(k => k.boss).map(k => k.id));
   const t = g.tuning;
   const motions = g.witches.map((W, i) => {
@@ -671,6 +673,10 @@ function fixedStep(g: Game, controls: readonly Controls[]): void {
     const routed = stepCauldronNight(g, motions.map(m => m.c), hdt);
     motions.forEach((m, i) => { m.c = routed[i]; });
   }
+  // The adults following each witch (the anchor chains, Ed 2026-11-03; rules/anchor.ts): not a step further than leash.anchor.length
+  // from any of them, walking, blinking or thrown, sliding round the chain's end; parked ones, youths and legends don't count. Not
+  // while she's knocked out, up in the treehouse (her followers guard home then: rules/houseGuard.ts), or in the zoo.
+  if (anchorLength(t) > 0 && !g.map.bounds.fence) g.witches.forEach((W, i) => { if (!W.ko && !W.body.perch && !potionPhase(g, W)) W.body = anchorWitch(W.body, anchorFrom[i], W.leash.stack, g.creatures, anchorLength(t)).body; });
   const c = motions[0].c;
   g.camera = stepCamera(g.camera, c.zoom, { x: g.witch.x, y: witchHeight(g.witch, g.tuning), z: g.witch.z }, { x: g.witch.vx, z: g.witch.vz }, g.witch.lift, hdt, g.tuning, !!g.witch.seated, g.introFocus, coastOf(g), g.tuning.camera.circle?.on ? legendCircleNear(g, g.witch)?.legend ?? null : null, onTreehouse(g), !!c.framing && onTreehouse(g), c.framePart ?? null); // (in a legend's circle: the lower view, camera.circle; indoors, camera.house; choosing at a station, camera.station)
   // The afterparty (rules/partyOver.ts): the waves have stopped for good.
