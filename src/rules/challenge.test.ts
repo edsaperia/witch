@@ -13,6 +13,7 @@ import { FIND_SETS, allFinds, bandOf, biomeOf, islandSet, setPick } from "./find
 import { flaskUnder } from "./legends";
 import { routeOf } from "./party";
 import { KINDS_TABLE } from "./kinds";
+import { restoreGame, snapshotGame } from "./nightSnapshot";
 
 const islandOf = (kind: string, t: Tuning = TUNING): Tuning => ({ ...t, map: { ...t.map!, island: kind, islandAreas: 10 } });
 const still: Controls = { moveX: 0, moveZ: 0, toggleMode: false, zoom: 0, autoTalk: false };
@@ -259,5 +260,16 @@ describe("timing and the win (Ed: only before the final wave; optional)", () => 
     expect(g.party.areas.has(ch.key)).toBe(false);
     expect(packLeft(g).length).toBeGreaterThan(0); // (still wild, and it didn't matter)
     expect(ch.clearedAt).toBeNull();
+  }, 60000);
+});
+
+describe("saved nights", () => {
+  it("keeps the challenge through a save, and restores a night saved before the challenge area with none", () => {
+    const g = game("fox", 2), ch = g.challenge!;
+    const back = restoreGame(JSON.parse(JSON.stringify(snapshotGame(g))));
+    expect(back.challenge).toEqual(ch);
+    delete (g as unknown as { challenge?: unknown }).challenge;
+    const old = restoreGame(JSON.parse(JSON.stringify(snapshotGame(g))));
+    expect(old.challenge).toBeNull();
   }, 60000);
 });

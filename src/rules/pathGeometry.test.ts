@@ -13,10 +13,11 @@ const finish = <T>(steps: Generator<undefined, T>): T => { for (;;) { const n = 
 
 it('retains exact pre-extraction ribbon arrays on a fixed map and a coastal island', () => {
   // Generated from a4aad736d PathView.prep's original geometry loop, before extraction; re-pinned 2026-11-03 for the path network's maps (site-to-site, straight runs, wide bends) and when footpaths took
-  // their looks (art/paths.js variants, dealt one a line: the same ribbons, keyed kind:variant, so split among more keys).
+  // their looks (art/paths.js variants, dealt one a line: the same ribbons, keyed kind:variant, so split among more keys); re-pinned
+  // for the challenge area (rules/challenge.ts): its clearing wider (the stone circle and its columns), so the footpaths end further out.
   for (const [seed, island, hash] of [
-    [123, null, '7cebea7467b7811a732311926381f5f2886344608a4088b94a7809657e529cfd'],
-    [424242, 'fox', '3684445b19b9d879a220354435548db9f74ccde452e33d01677e79b0938f3df8'],
+    [123, null, 'f2793049c2cfa74cfe6a2375cac4f899dcacfd2a2fbbf1c76ef82f393b0b4cea'],
+    [424242, 'fox', 'e7ee686b18b4562e6a784019b94d3b7846351f1cc780ced50a4155e1cb50090f'],
   ] as const) {
     // Override the suite's radius-map setup: the frozen reference uses shipped tuning.
     const tuning = { ...TUNING, map: { ...TUNING.map!, island: island ?? 'home', islandAreas: 10, world: 0 } };

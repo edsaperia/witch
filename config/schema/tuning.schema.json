@@ -2301,7 +2301,7 @@
         "castReach"
       ],
       "additionalProperties": false,
-      "description": "the challenge area, in the find's area (findArea): a stone floor circle `radius` metres round its middle with the island's sigil carved in it and `columns` stone columns round its edge; its pack `adults` adults and `youths` youths of every kind on the island's roster, wild; cast the music spell within `castReach` metres of its middle once they're all invited or run off, and the find is hers (a flask once she owns the island's whole set of finds)."
+      "description": "the challenge area in the find's area: a stone circle `radius` m round with the island's sigil and `columns` columns, guarded by `adults` adults and `youths` youths of each roster kind; once they're all invited or run off, the music spell cast within `castReach` m of its middle gives the find."
     },
     "treeMarginFromSoundsystem": {
       "type": "number",

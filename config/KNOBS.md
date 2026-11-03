@@ -842,10 +842,10 @@ The area is seeded by the night (never home, an area touching home's (Ed, 2026-1
 
 ### `challenge`
 
-the challenge area, in the find's area (findArea): a stone floor circle `radius` metres round its middle with the island's sigil carved in it and `columns` stone columns round its edge; its pack `adults` adults and `youths` youths of every kind on the island's roster, wild; cast the music spell within `castReach` metres of its middle once they're all invited or run off, and the find is hers (a flask once she owns the island's whole set of finds).
+the challenge area in the find's area: a stone circle `radius` m round with the island's sigil and `columns` columns, guarded by `adults` adults and `youths` youths of each roster kind; once they're all invited or run off, the music spell cast within `castReach` m of its middle gives the find.
 
 1. Ed, 2026-11-03: "a large stone floor circle (like the legend circle) with the glowing sigil of the island carved into it, with a circle of stone columns around the edge (we already have art for this)" … "When they're all invited or have run off, you can go to the special place and cast the music spell" … "when you clear it you get the find. Each phase and biome have different set of finds; when you have them all you get a flask instead."
-Its pack aggro as any wild area's (wildWatch) and only before the final wave (from last call it closes: the pack calm, the find gone); it never counts toward winning the island and gives no boon. Off: the find's area as before, its find to pick up with E. The find sets: config/find-sets.json (rules/findSets.ts).
+The find is drawn from the island's own set; a flask once she owns the whole set. Its pack aggro as any wild area's (wildWatch) and only before the final wave (from last call it closes: the pack calm, the find gone); it never counts toward winning the island and gives no boon. Off: the find's area as before, its find to pick up with E. The find sets: config/find-sets.json (rules/findSets.ts).
 
 | knob | type | range |
 |---|---|---|

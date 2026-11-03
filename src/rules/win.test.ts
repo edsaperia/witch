@@ -3,7 +3,7 @@
 // before the win still loses. On a 10-area island, every wave brought on at once.
 import { describe, expect, it } from "vitest";
 import { newGame, stepGame, STEP, type Game } from "./game";
-import { TUNING, withTuning } from "./tuning";
+import { TUNING, withTuning, type Tuning } from "./tuning";
 import { LEGEND, type Creature } from "./creatures";
 import { anger } from "./legends";
 import { befriend } from "./creatureStates";
@@ -25,9 +25,9 @@ const W = { ...WIN_DEFAULT, ...(TUNING.win ?? {}) };
 const run = (g: Game, secs: number, each?: () => void) => { for (let i = 0; i < secs / STEP; i++) { stepGame(g, idle, STEP); each?.(); } };
 
 /** A 10-area island, waves held, every wave brought on (the last noted when it's the final stone); she hovers out of it all. */
-function toTheEnd(seed = 7): { g: Game; finalSeen: boolean } {
+function toTheEnd(seed = 7, over: Partial<Tuning> = {}): { g: Game; finalSeen: boolean } {
   // Retain ten authored areas for the complete reverse victory lap, dealt legends and population-sized conga.
-  const g = newGame(seed, withTuning({ map: { ...TUNING.map!, islandAreas: 10 } }));
+  const g = newGame(seed, withTuning({ map: { ...TUNING.map!, islandAreas: 10 }, ...over }));
   g.clock.paused = false; g.party.spellAt = undefined; g.party.paused = true;
   g.witch = { ...g.witch, seated: false, mode: "treetop", lift: 1 };
   stepGame(g, idle, STEP);
@@ -109,7 +109,9 @@ describe("the end of the route (rules/win.ts)", () => {
   }, 60000);
 
   it("finds disappear once the night is won (Ed, 2026-10-24): one not yet taken is gone, E taking nothing after", () => {
-    const { g } = toTheEnd();
+    // (the find as it was before the challenge area: with it on, the find is the challenge's, gone already at last call,
+    // rules/challenge.test.ts "closes at last call")
+    const { g } = toTheEnd(7, { challenge: { ...TUNING.challenge!, on: false } });
     fillTrunk(g, {});
     expect(g.trunk?.item).toBeTruthy();
     run(g, 0.2); calmAll(g); run(g, 0.2);

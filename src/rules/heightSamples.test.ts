@@ -13,10 +13,11 @@ const tuning = (island: string) => ({ ...TUNING, map: { ...TUNING.map!, island, 
 
 it('retains the original quantised windows at arrival and after small and large moves', () => {
   // Frozen from fb5d5e4cd's original HeightField before extraction, shipped tuning; re-frozen 2026-11-03 for the path network's maps
-  // (the island grown one area more for tonight's find, the stones spaced: other hills under the stones), the code unchanged.
+  // (the island grown one area more for tonight's find, the stones spaced: other hills under the stones), the code unchanged; and for
+  // the challenge area (rules/challenge.ts): its stone circle a terrace of its own, as a legend's circle is.
   for (const [seed, island, expected] of [
-    [123, 'home', ['7c5beeeea62901c0d5c093f8d7d58d0c7adef4d29fa9214078dd5b52af221333', 'c3129a3ff07a760a44df22c372b355a4cf8b265a82320e91593576f749f9273f', '211c9e70da0879e0d83ef85f17394c85dedb41623ac8517b46d774cb0cafaef2']],
-    [424242, 'fox', ['d58bdd1385ccccf6f72c2239bd10a9cbddfd61dd051b43922258b9cfedbdef55', '4654b61d284b85ce5403385d1ea302acd134686ce280e18b7b14f813fe2bf00e', '211c9e70da0879e0d83ef85f17394c85dedb41623ac8517b46d774cb0cafaef2']],
+    [123, 'home', ['df335192a540aa6da6db7a6434d8292cc034cfcc81874645370b25bcf7beaf4f', 'b6043e641cb6c250574097e7c8f7af4a4853d358da420a104adc73dbb53a8be4', '211c9e70da0879e0d83ef85f17394c85dedb41623ac8517b46d774cb0cafaef2']],
+    [424242, 'fox', ['b3e4530f3cac6c2c1c38fab59a330ef36e21b6eddaa5df457c62218f3089fc61', '6e4ec66a3562dfed81a7fd586da5da410775f4ae0f9954b02e00506979d6bcca', '211c9e70da0879e0d83ef85f17394c85dedb41623ac8517b46d774cb0cafaef2']],
   ] as const) {
     const map = generateMap(seed, tuning(island)), H = arrivalHills(map.tuning), field = new HeightSamples(map, new Forest(map), H, DataUtils);
     const { x, z } = map.start;
