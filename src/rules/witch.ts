@@ -85,6 +85,11 @@ export function newWitch(x: number, z: number): WitchState {
 export const witchHeight = (w: WitchState, t: Tuning) => w.perch && t.treehouse.deck
   ? lerp(t.treehouse.deck.height + t.groundHeight, t.treetopHeight, smoothstep(w.lift)) // (on the deck its floor is her ground)
   : lerp(t.groundHeight, t.treetopHeight, smoothstep(w.lift));
+/** The lift (0 to 1) off the ground that puts her `height` up (witchHeight's off the deck, inverted: the smoothstep's inverse). */
+export function liftFor(height: number, t: Tuning): number {
+  const y = clamp((height - t.groundHeight) / Math.max(1e-6, t.treetopHeight - t.groundHeight), 0, 1);
+  return 0.5 - Math.sin(Math.asin(1 - 2 * y) / 3);
+}
 /** How much of the canopy shows: 0 in ground mode, 1 in treetop mode. */
 export const canopyShown = (w: WitchState) => smoothstep(w.lift);
 
@@ -114,6 +119,11 @@ export function stepWitch(w: WitchState, intent: Intent, dt: number, t: Tuning, 
   let { mode, lift } = w, perch = !!w.perch && !!deck && overDeck(deck, w.x, w.z); // (put somewhere else, she's off it)
   // (in the house's rooms and on its branches she rises only with a broom: rules/treehouse.ts noRiseAt)
   if (intent.toggleMode && !(perch && mode === "ground" && deck && noRiseAt(deck, w.x, w.z))) mode = mode === "ground" || mode === "descending" ? "rising" : "descending";
+  // Rising off it, stepped off its edge or flown on past it, she rises from its floor till she's up (Ed's playtest, 2026-11-03: "When I
+  // step off the treehouse with my broom, I seem to fall and rise again before taking off": dropped from it at a low lift, her height
+  // fell to the ground's and climbed back). Off it in mid-air any other way (coming down past it), from the height she's at: no drop.
+  if (w.perch && !perch && deck && mode === "rising") perch = true;
+  if (w.perch && !perch && lift > 0) lift = liftFor(witchHeight(w, t), t);
   // The treehouse deck (rules/treehouse.ts): coming down from the treetops over it, she lands on it; rising takes her off it.
   if (deck && intent.toggleMode && mode === "descending" && landsOn(deck, w.x, w.z)) perch = true;
   // The house's balcony (Ed, 2026-10-14): flying in over it at treetop height, she lands on it, no button (below, once this step's
