@@ -32,6 +32,10 @@ ones that increased DPS felt fun but were insanely strong. The ones that didn't 
   | **Pack hunters** (flanks, split back, circle) | elk, lion, wolf, fennec, fox, raccoon, stag, cheetah, rhino, stoat, unicorn★ | faster rate of fire, but more spread |
   | **Shells, diggers and swimmers** (roll, huddle, shell, burrow, water) | armadillo, hedgehog, woodlouse, beetle, penguin, snail, mole, scorpion, beaver, crocodile, newt, otter | chaining shot; each stack adds a chain. Stacks with the bag that chains |
 
+- **Leashed legends count triple.** Ed: "When you're leashing a legend, this gives you the equivalent of 3x of that animal
+  types' buff. (counts as that animal type so doesn't stack e.g. adult wolf and legend wolf just count once)." So a legend
+  adds 3 stacks to its group instead of 1, and a legend plus an adult of the same kind still counts as one kind (3 stacks).
+
 - **Fantastic animals** give their group's buff plus their own: stronger, with a memorable downside.
 
   | Fantastic | Buff |
