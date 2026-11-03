@@ -1269,7 +1269,7 @@ The witch [1]: she takes hits (one point each, whatever hits her) before she's k
 
 ### `knockout`
 
-What happens when she's knocked out: her creatures go free, she comes back at the treehouse after a wait that grows with each knockdown, and the beat speeds up.
+What happens when she's knocked out: her carried sigils fall where she went down, she comes back at the treehouse after a wait, and the beat speeds up.
 
 1. Ed, 2026-10-04
 2. 2026-10-26: Ed's playtest of v4821: no sigil made; its rune at its feet, so she can leash it again
@@ -1278,7 +1278,8 @@ What happens when she's knocked out: her creatures go free, she comes back at th
 5. Ed, 2026-10-07: 6, 8, 10, 12
 6. "We can remove the extra knockdown time" (then, with each knockdown costing a BPM instead,: step 0 and max 6, so every knockdown waits the flat base and the desk's candles are all white)
 7. Ed, 2026-10-07: "the BPM goes up by 1 each time you die" (the DJ is off the decks and the crowd gets restless)
-Knocked out [1]: she collapses where she is; her sigil stack lets go from the bottom up, one every releaseEach seconds (releaseMax caps the whole release, 0 no cap; an empty stack waits emptyBeat seconds), each animal turning happy where it stands [2][3]; then she sparkles out and back in behind her decks in the treehouse over teleport seconds. Creatures at sigils she had put down on the ground stay hers. One timeline [4], the whole wait counted from her going down: her hat (if it drops) floats to the ground over hatFloat seconds, the screen dimmed, a sad trumpet; she sparkles out and back in behind her decks (teleport seconds); and she scratches there ("Every time she respawns she could do a bit of scratching to increase the respawn time") for the rest of the wait, at least respawn.minScratch, her army fighting on without her, a countdown over her. The wait ("any more than about six seconds to wait will be frustrating ... make each successive death a bit longer, with a cooldown"): respawn.base seconds, respawn.step more for each knockdown within respawn.cooldown seconds of the last, up to respawn.max [5][6]. releaseEach 0 (Ed): her sigils all drop at once as she goes down, under the hat's float. The beat speeds up [7]: each knockdown adds bpmStep to the party's tempo for the rest of the run (bpmCap, if set, is the most it can add), eased in over beat.knockBeats beats (4, a bar) from the next bar line; the music follows the beat clock, and the wave countdown and the ley line's pulse run that much faster (tempo plus bonus over the wave's own tempo), so the waves come sooner.
+8. Ed, 2026-11-03: "If you're knocked down, animals' sigils fall and stay where you were knocked down" (each on the free hex cell nearest the spot, its animal parked there, guarding; queued berries cancelled. dropRadius stays only for a guest leaving an online night (letGoHappy))
+Knocked out [1]: she collapses where she is; her sigil stack lets go from the bottom up, one every releaseEach seconds (releaseMax caps the whole release, 0 no cap; an empty stack waits emptyBeat seconds), each sigil falling on the free hex cell nearest where she went down, its animal parked there [8] (from [2][3] till then each turned happy where it stood); then she sparkles out and back in behind her decks in the treehouse over teleport seconds. Creatures at sigils she had put down on the ground stay hers. One timeline [4], the whole wait counted from her going down: her hat (if it drops) floats to the ground over hatFloat seconds, the screen dimmed, a sad trumpet; she sparkles out and back in behind her decks (teleport seconds); and she scratches there ("Every time she respawns she could do a bit of scratching to increase the respawn time") for the rest of the wait, at least respawn.minScratch, her army fighting on without her, a countdown over her. The wait ("any more than about six seconds to wait will be frustrating ... make each successive death a bit longer, with a cooldown"): respawn.base seconds, respawn.step more for each knockdown within respawn.cooldown seconds of the last, up to respawn.max [5][6]. releaseEach 0 (Ed): her sigils all drop at once as she goes down, under the hat's float. The beat speeds up [7]: each knockdown adds bpmStep to the party's tempo for the rest of the run (bpmCap, if set, is the most it can add), eased in over beat.knockBeats beats (4, a bar) from the next bar line; the music follows the beat clock, and the wave countdown and the ley line's pulse run that much faster (tempo plus bonus over the wave's own tempo), so the waves come sooner.
 
 - **`knockout.legendsLoyal`**: leashed legends stay with her (false: they're let go too: 'they're too old for this'; only a party legend is ever leashed now, and it's always let go).
 - **`knockout.dropHat`**: When knocked out she drops her hat where she fell, and wears none till she goes back and picks it up.
@@ -1501,14 +1502,20 @@ Berries on the bushes of every area, which her creatures eat to evolve.
 4. Ed, 2026-10-27: "We can change 6/8/16=>3/4/8, and reduce berry spawns (keep the current cluster size but reduce frequency of clusters.)" (a youth showing a dot per berry eaten, two rows of 4 at most:: cost.per back to 7.25, so 3, 4 and 8, and bushesPerArea and perArea halved, half as many patches of the same size, the same share of their bushes in berry)
 5. Ed, 2026-10-05: "we can make the berry clusters bigger"
 6. Ed, 2026-10-04: legends are the areas' own, never grown
-Berries and evolving (Ed): every area has bushesPerArea berry bushes (normal bushes of that area) and perArea [min, max] berries on distinct ones at the start. Bushes grow in patches of patch.bushes [min, max] within patch.radius metres. Party animals (invited, not legends), following her or held at a sigil, take a berry on their way (Ed, v233): within detour metres of the line to where they're heading or of their sigil, never beyond their leash; they nip over, eat it (eatTime seconds) and carry on. The berry grows again at once on a free berry bush somewhere else on the map. A party animal evolves on the next bar line once it has eaten the berries its next level costs [1]: the fighting value it gains (cost.by "value": √(hp × dps), its species' strength included) at cost.per a berry, rounded, at least 1: so a berry buys the same fighting value for every species; one of normal strength costs 4 and 4 [2][3][4] ("power" would count hp × dps instead). Bigger patches since [5]: perArea and patch.bushes up a quarter to a half, so the first evolve's extra berry (2, was 1) and weaker species' one-berry minimum come out a little faster to feed than before. Evolving stops at adult [6].
+7. Ed, 2026-11-03: "No animal eats on its own" (only the bottom of her stack eats, fed by her with the sigil button; the detour (berries.detour, Ed v233) and the baby's reach at its placed sigil (berries.babyReach, 2026-10-11) gone with it)
+Berries and evolving (Ed): every area has bushesPerArea berry bushes (normal bushes of that area) and perArea [min, max] berries on distinct ones at the start. Bushes grow in patches of patch.bushes [min, max] within patch.radius metres. No animal eats on its own (Ed, 2026-11-03; see feed): the bottom of her stack eats a berry she feeds it, walking over and eating it (eatTime seconds). The berry grows again at once on a free berry bush somewhere else on the map. A party animal evolves on the next bar line once it has eaten the berries its next level costs [1]: the fighting value it gains (cost.by "value": √(hp × dps), its species' strength included) at cost.per a berry, rounded, at least 1: so a berry buys the same fighting value for every species; one of normal strength costs 4 and 4 [2][3][4] ("power" would count hp × dps instead). Bigger patches since [5]: perArea and patch.bushes up a quarter to a half, so the first evolve's extra berry (2, was 1) and weaker species' one-berry minimum come out a little faster to feed than before. Evolving stops at adult [6].
 
 - **`berries.colour`**: The berries' colour: a deep berry pink.
   1. Ed, 2026-11-03: "Berries: deep berry pink, instead of red." (red is the warnings' colour; a shiny dark cherry red (#9e1024) before, which colourGrammar old brings back)
   Code: `render/colourGrammar.ts`
 - **`berries.glow`**: How strongly a berry's soft halo glows.
   1. Ed, 2026-10-11
-  its soft halo's strength. B (debug) feeds the nearest party animal one berry. Babies [1]: a baby eats only when its sigil is put down with a berry within babyReach metres of it (following her, it never stops for one; when a baby's sigil is next to go down, the berries within babyReach of her glow brightly), and babyCost berries evolve it into a youth.
+  its soft halo's strength. B (debug) feeds the nearest party animal one berry. babyCost berries evolve a baby into a youth (one: Ed, 2026-10-11).
+- **`berries.feed`**: Feeding on command: a tap of the sigil button feeds the bottom of her stack a berry within reach of her; holding it puts that sigil down instead.
+  1. Ed, 2026-11-03: "something she does deliberately and accurately under time pressure" (no animal eats on its own; only the bottom of her stack, the one cycle moves through; each press queues one more berry, no hold-to-repeat)
+  2. Ed, 2026-11-03: "otherwise feeding berries becomes a way of moving creatures quickly rather than levelling them up" (speed: it goes to its berry at about its own pace, 1 to 1.2 times)
+  reach: metres from her a berry may be to be fed (the nearest un-taken one, marked, with the prompt). speed: the animal walks to each queued berry at its leash pace times this. hold: seconds the sigil button is held, with a feed on offer, to put the bottom sigil down instead of feeding it (a tap shorter than this feeds).
+  Code: `rules/berries.ts`, `rules/sigilButton.ts`, `render/feedTag.ts`
 
 | knob | type | range |
 |---|---|---|
@@ -1516,14 +1523,15 @@ Berries and evolving (Ed): every area has bushesPerArea berry bushes (normal bus
 | `berries.bushesPerArea` | number | 0 to … |
 | `berries.patch.bushes` | array of number |  |
 | `berries.patch.radius` | number | 0 to … |
-| `berries.detour` | number | 0 to … |
 | `berries.eatTime` | number | 0 to … |
 | `berries.cost.by` | string | "power" / "value" |
 | `berries.cost.per` | number | 0 to … |
 | `berries.colour` | string |  |
 | `berries.glow` | number | 0 to … |
-| `berries.babyReach` | number | 0 to … |
 | `berries.babyCost` | number | 0 to … |
+| `berries.feed.reach` | number | 0 to … |
+| `berries.feed.speed` | number | 0 to … |
+| `berries.feed.hold` | number | 0 to … |
 
 ### `invites`
 

@@ -26,7 +26,7 @@ import { placeTrunk, type Trunk } from "./finds";
 import { befriend, danceAt, huntsWitch, invitableNow, stateOf, STATES, type State } from "./creatureStates";
 import { GUEST_DEPTH, guestGap, guestSlot, guestSpot, partySpots, ROW_OFFSETS, SLOT_RANGE, SPOT_RANGE } from "./partyGuests";
 import type { Cell } from "./partition";
-import { feedNearest, newBerries, stepBerries, type BerryState } from "./berries";
+import { cancelFeeding, feedNearest, newBerries, stepBerries, type BerryState } from "./berries";
 import { heldByRoutine } from "./djSet";
 import { castPartySpell, cellKey, clearArea, heldBySpell, newParty, resetPulse, spreadWave, stepParty, type Partified, type PartyState } from "./party";
 import { clearedAreas } from "./clear";
@@ -464,7 +464,10 @@ export function hitWitch(g: Game, id: number, worldAt: number, t: Tuning = g.tun
     const start = g.map.start, walk = house ? Math.hypot(start.x - house.circle.x, start.z - house.circle.z) / Math.max(1, t.groundSpeed * 0.5) : 0;
     // A legend's sigil she carried (rules/stoneStacks.ts) falls loose at the legend's feet, to pick up again.
     if (w.leash.tether) { const L = g.creatures[w.leash.tether.id]; g.loose.push({ id: L.id, x: L.x, z: L.z + runeOffset(L, t), at: g.clock.time, legend: true }); L.loose = true; w.leash.tether = null; }
-    w.ko = knockOut(w.leash, g.creatures, at, t, { hatFloats, streak, ...(house ? { house: { rise: t.knockout.rise ?? 0, walk } } : {}) }); g.koEvents.push({ kind: "down", at, x: w.body.x, z: w.body.z });
+    w.ko = knockOut(w.leash, g.creatures, at, t, { hatFloats, streak, at: { x: w.body.x, z: w.body.z }, ...(house ? { house: { rise: t.knockout.rise ?? 0, walk } } : {}) }); g.koEvents.push({ kind: "down", at, x: w.body.x, z: w.body.z });
+    // (her feeding stops: every queued berry of hers cancelled, and a press waiting on its hold dropped; Ed, 2026-11-03)
+    for (const id of [...w.leash.stack, ...w.leash.placed.map(p => p.id)]) cancelFeeding(g.berries, id);
+    delete w.leash.feedHold;
     knockdownTempo(g.beat, t, g.clock.time); // (the beat speeds up: Ed, 2026-10-07, "the BPM goes up by 1 each time you die")
     // her wait ends on a bar line at the new tempo, the nearest to it (never under knockout.respawn.minScratch of scratching):
     // her scratching on the new record leads straight into its first downbeat (Ed, 2026-10-09; the wait a second or so off knockout.respawn
@@ -701,9 +704,9 @@ function fixedStep(g: Game, controls: readonly Controls[]): void {
   if (!still) stepLegends(g, legends, !!c.happyNearest);
   for (const { W, ht } of motions) {
     if (W.ko) {
-      const wasMoved = W.ko.moved, r = stepKnockout(W.ko, W.body, W.leash, g.creatures, g.map, ht, k => g.party.areas.has(k), g.koEvents);
+      const wasMoved = W.ko.moved, r = stepKnockout(W.ko, W.body, W.leash, g.creatures, g.map, ht, k => g.party.areas.has(k), g.koEvents, () => [...g.witches.flatMap(o => o.leash.placed), ...g.loose], (x, z) => sigilBarred(g, x, z, t));
       W.body = r.body;
-      if (g.koEvents.some(e => e.kind === "released" && e.at === ht)) g.byArea = null; // (let go happy where they stand: indexed there now)
+      if (g.koEvents.some(e => e.kind === "released" && e.at === ht)) g.byArea = null; // (parked where she went down: indexed there now)
       // The cut to her decks (the "cut" event, render/koIris.ts): the camera's there at once, not gliding over the map.
       if (W.ko.moved && !wasMoved && W === g.witches[0]) g.camera = { ...g.camera, tx: W.body.x, ty: witchHeight(W.body, t), tz: W.body.z, vx: 0, vy: 0, vz: 0, ax: 0, az: 0 };
       if (r.done) { W.ko = null; W.health.hp = t.witchHealth.hits; W.health.repairAt = Infinity; }
@@ -764,7 +767,7 @@ function fixedStep(g: Game, controls: readonly Controls[]): void {
   stepBerries(B, g.creatures, id => {
     for (const { W, LV } of motions) { const p = LV!.placed.find(q => q.id === id); if (p) return { x: p.x, z: p.z }; if (W.leash.stack.includes(id)) return leashPoint(W.leash, id, W.body.x, W.body.z); }
     return leashPoint(g.leash, id, g.witch.x, g.witch.z);
-  }, g.clock.time, dt, t, g.beat, id => { for (const W of g.witches) { const p = W.leash.placed.find(q => q.id === id); if (p) return { x: p.x, z: p.z }; } return null; });
+  }, g.clock.time, dt, t, g.beat);
   for (const { W } of motions) {
     for (const e of W.leash.events) if (e.kind === "invited" || e.kind === "befriended") g.tally.invites++;
     // Made happy in an area whose stone still stands (rules/stoneStacks.ts; Ed, 2026-10-28): its sigil turns friend-coloured in the

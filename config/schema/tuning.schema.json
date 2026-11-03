@@ -3106,7 +3106,7 @@
         "dropRadius"
       ],
       "additionalProperties": false,
-      "description": "What happens when she's knocked out: her creatures go free, she comes back at the treehouse after a wait that grows with each knockdown, and the beat speeds up."
+      "description": "What happens when she's knocked out: her carried sigils fall where she went down, she comes back at the treehouse after a wait, and the beat speeds up."
     },
     "dash": {
       "type": "object",
@@ -3782,10 +3782,6 @@
           ],
           "additionalProperties": false
         },
-        "detour": {
-          "type": "number",
-          "minimum": 0
-        },
         "eatTime": {
           "type": "number",
           "minimum": 0
@@ -3820,26 +3816,45 @@
           "minimum": 0,
           "description": "How strongly a berry's soft halo glows."
         },
-        "babyReach": {
-          "type": "number",
-          "minimum": 0
-        },
         "babyCost": {
           "type": "number",
           "minimum": 0
+        },
+        "feed": {
+          "type": "object",
+          "properties": {
+            "reach": {
+              "type": "number",
+              "minimum": 0
+            },
+            "speed": {
+              "type": "number",
+              "minimum": 0
+            },
+            "hold": {
+              "type": "number",
+              "minimum": 0
+            }
+          },
+          "required": [
+            "reach",
+            "speed",
+            "hold"
+          ],
+          "additionalProperties": false,
+          "description": "Feeding on command: a tap of the sigil button feeds the bottom of her stack a berry within reach of her; holding it puts that sigil down instead."
         }
       },
       "required": [
         "perArea",
         "bushesPerArea",
         "patch",
-        "detour",
         "eatTime",
         "cost",
         "colour",
         "glow",
-        "babyReach",
-        "babyCost"
+        "babyCost",
+        "feed"
       ],
       "additionalProperties": false,
       "description": "Berries on the bushes of every area, which her creatures eat to evolve."
