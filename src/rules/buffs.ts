@@ -80,35 +80,51 @@ export function drainPips(s: Pick<BerryState, "pips">, stack: readonly number[],
 
 // ---- her buffs ----
 
+/** A buff icon's state in her stack (Ed, 2026-11-03: "When you have multiple ones of the same species, the inactive buff icons are blue.
+ *  When a buff is inactive, it twinkles in pink."): `active`, the one giving its kind's buff (amber); `redundant`, fed (or a legend)
+ *  but another of its kind gives it (blue, steady); `unfed`, an adult with no pips, its buff off (berry pink, twinkling). */
+export type IconState = "active" | "redundant" | "unfed";
+
 export interface Buffs {
   /** Each group's stack count. */
   stacks: BuffStacks;
   /** The creatures buffing her now (an adult with pips, a legend), with their group: their chains glow (render/leash/stack.ts). */
   givers: Map<number, BuffGroup>;
-  /** One of them per kind, the one whose sigil shows its group's icon in her stack (a legend first, then the topmost). */
+  /** Every leashed adult and legend of a kind with a group: its sigil shows its group's icon(s) in her stack, by `iconState`. */
   icons: Set<number>;
+  /** How many icons each shows (Ed, 2026-11-03: "A legend should have three buff icons, to show that it's three times as powerful"):
+   *  a legend buffs.legend (3), an adult 1, whatever its state. */
+  iconCount: Map<number, number>;
+  /** Each one's state: per kind the active one a legend first, else the first fed adult in her stack; the rest redundant if fed (or a
+   *  legend), unfed if not; a kind all unfed all unfed. */
+  iconState: Map<number, IconState>;
+  /** Each one's group. */
+  iconGroup: Map<number, BuffGroup>;
 }
 
-/** Her buffs from her stack (`stack`: creature ids, top first): each adult with pips gives its group one stack for its kind, a legend
- *  buffs.legend (3) with no berries needed; per kind the most of those, so two of a kind, or a legend and an adult of its kind, count
- *  once; each group's count the sum over its kinds. */
+/** Her buffs from her stack (`stack`: creature ids, oldest first): each adult with pips gives its group one stack for its kind, a legend
+ *  buffs.legend (3) with no berries needed; per kind only its active one counts (a legend first, else the first fed adult), so two of a
+ *  kind, or a legend and an adult of its kind, count once; each group's count the sum over its kinds. */
 export function buffsOf(stack: readonly number[], creatures: readonly Creature[], berries: Pick<BerryState, "pips">, t: Tuning): Buffs {
-  const B = buffKnobs(t), stacks = noBuffs(), givers = new Map<number, BuffGroup>(), icons = new Set<number>();
-  if (!B) return { stacks, givers, icons };
+  const B = buffKnobs(t), stacks = noBuffs(), givers = new Map<number, BuffGroup>(), icons = new Set<number>(), iconCount = new Map<number, number>(), iconState = new Map<number, IconState>(), iconGroup = new Map<number, BuffGroup>();
+  const out = { stacks, givers, icons, iconCount, iconState, iconGroup };
+  if (!B) return out;
   const kinds = new Map<string, { group: BuffGroup; n: number; id: number }>();
   for (const id of stack) {
     const c = creatures[id];
-    if (!c || c.gone) continue;
-    const legend = c.level === LEGEND, n = legend ? B.legend : c.level === ADULT && pipFuel(berries, id, t) > 0 ? 1 : 0;
-    if (n <= 0) continue;
+    if (!c || c.gone || (c.level !== ADULT && c.level !== LEGEND)) continue;
     const group = groupOf(c.species, t);
     if (!group) continue;
+    const legend = c.level === LEGEND, n = legend ? B.legend : pipFuel(berries, id, t) > 0 ? 1 : 0;
+    icons.add(id); iconGroup.set(id, group); iconCount.set(id, legend ? Math.max(1, Math.round(B.legend)) : 1);
+    iconState.set(id, n > 0 ? "redundant" : "unfed");
+    if (n <= 0) continue;
     givers.set(id, group);
     const had = kinds.get(c.species);
     if (!had || n > had.n) kinds.set(c.species, { group, n, id });
   }
-  for (const k of kinds.values()) { stacks[k.group] += k.n; icons.add(k.id); }
-  return { stacks, givers, icons };
+  for (const k of kinds.values()) { stacks[k.group] += k.n; iconState.set(k.id, "active"); }
+  return out;
 }
 
 /** Her dashes: buffs.climbers.dash more charges a Climbers stack. */

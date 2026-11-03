@@ -5102,6 +5102,35 @@
             "chain"
           ],
           "additionalProperties": false
+        },
+        "icons": {
+          "type": "object",
+          "properties": {
+            "blue": {
+              "type": "array",
+              "items": {
+                "type": "number",
+                "minimum": 0
+              }
+            },
+            "pink": {
+              "type": "array",
+              "items": {
+                "type": "number",
+                "minimum": 0
+              }
+            },
+            "twinkle": {
+              "type": "number",
+              "minimum": 0
+            }
+          },
+          "required": [
+            "blue",
+            "pink",
+            "twinkle"
+          ],
+          "additionalProperties": false
         }
       },
       "required": [
@@ -5113,7 +5142,8 @@
         "stalkers",
         "heavies",
         "packHunters",
-        "shells"
+        "shells",
+        "icons"
       ],
       "additionalProperties": false,
       "description": "Leashed adults (and legends) give her a buff by their group: each distinct kind in a group adds a stack, a legend three; an adult's buff runs on its berry pips."
