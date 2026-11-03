@@ -148,7 +148,7 @@ void main() {
 }`;
 
 // The cooldown trail's dots and the ring (above): each a square of whole pixels where the CPU stepped it (aPix, the picture's pixels),
-// at its place's depth (its world point, so the trees still hide it); the glow pass the same points bigger, soft and faint, under them.
+// drawn over the scenery (its world point only placing it); the glow pass the same points bigger, soft and faint, under them.
 const DOT_VERT = /* glsl */ `
 attribute vec2 aPix;
 attribute vec3 aCol;
@@ -253,10 +253,12 @@ export class WitchTrail {
     d.setDrawRange(0, 0);
     const points = (u: object, additive: boolean) => new THREE.Points(d, new THREE.ShaderMaterial({
       vertexShader: DOT_VERT, fragmentShader: DOT_FRAG, uniforms: { ...HEIGHT_UNIFORMS, ...u },
-      transparent: true, depthWrite: false, blending: additive ? THREE.AdditiveBlending : THREE.NormalBlending,
+      // (over the scenery, no depth test, as her sigils' glyphs are: it's her counter, read at a glance; under the trees it went
+      // missing in bits, a section's worth behind a crown)
+      transparent: true, depthWrite: false, depthTest: false, blending: additive ? THREE.AdditiveBlending : THREE.NormalBlending,
     }));
     this.glow = points(this.gu, true); this.dots = points(this.du, false);
-    for (const [o, r] of [[this.glow, 13], [this.dots, 14]] as const) { o.frustumCulled = false; o.renderOrder = r; o.visible = false; this.mesh.add(o); }
+    for (const [o, r] of [[this.glow, 29], [this.dots, 30]] as const) { o.frustumCulled = false; o.renderOrder = r; o.visible = false; this.mesh.add(o); }
   }
 
   /** Forgets her path (a blink, a teleport home): the trail starts again from where she is. */
