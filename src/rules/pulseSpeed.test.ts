@@ -7,12 +7,13 @@ import { TUNING } from "./tuning";
 import { leyReachTimes, pulseRouteMetres } from "./leypulse";
 import { behindLength, stretchLengths } from "./pulseRoute";
 import { bootPath, bootSeconds } from "./bootRing";
-import { tempoRate } from "./beat";
+import { sparkSpeedAt, tempoRate } from "./beat";
 
 // Four authored areas retain the fixed 195 m boot path and three real stone-to-stone intervals without simulating the full island.
 const tuning = () => ({ ...TUNING, map: { ...TUNING.map!, island: "", islandAreas: 4, found: [] } });
 const still = { moveX: 0, moveZ: 0, toggleMode: false, zoom: 0, autoTalk: false };
-const V = TUNING.leyLines.pulseSpeed;
+// (its speed at the night's own 120 bpm: pulseSpeed times the line through 1.0 m/s at 100 bpm and 5.0 at 200, 1.8; Ed, 2026-11-03)
+const V = TUNING.leyLines.pulseSpeed * sparkSpeedAt(TUNING.beat.bpm, TUNING);
 function game(): Game {
   const g = newGame(123, tuning());
   g.clock.paused = false; g.party.spellAt = undefined;
@@ -25,7 +26,7 @@ const run = (g: Game, secs: number) => { for (let i = 0; i < Math.round(secs * 6
 describe("the ley pulse at a constant speed (Ed, 2026-10-09)", () => {
   it("is 1 m/s (Ed, 2026-10-18), and the boot runs its 195 m path at its own 4 m/s: about 49 s, whatever the waves' speed", () => {
     const g = game();
-    expect(V).toBe(1); expect(TUNING.boot.speed).toBe(4);
+    expect(TUNING.leyLines.pulseSpeed).toBe(1); expect(V).toBeCloseTo(1.8, 9); expect(TUNING.boot.speed).toBe(4);
     expect(bootPath(g.map).length).toBeCloseTo(195, 0); // (179 m while the treehouse stood due north; the oak's front is farther out, north-west)
     expect(bootSeconds(g.map)).toBeCloseTo(195 / 4, 0);
     run(g, 0.05);
@@ -42,7 +43,7 @@ describe("the ley pulse at a constant speed (Ed, 2026-10-09)", () => {
     g.beat.bonus = 60; const rate = tempoRate(g.beat, g.tuning); // (a knockdown's BPM, many times over)
     expect(rate).toBeGreaterThan(1.4);
     const m1 = pulseRouteMetres(g.party, g.map, g.clock.time), w = g.party.wave; run(g, 3);
-    if (g.party.wave === w) expect(pulseRouteMetres(g.party, g.map, g.clock.time) - m1).toBeCloseTo(3 * V * rate, 1); // (the new speed from the next step on)
+    if (g.party.wave === w) expect(pulseRouteMetres(g.party, g.map, g.clock.time) - m1).toBeCloseTo(3 * TUNING.leyLines.pulseSpeed * rate, 1); // (the new speed from the next step on)
   }, 60000);
 
   it("lands each wave as the pulse reaches its stone: the gap its link's length over the speed", () => {
@@ -68,6 +69,7 @@ describe("the ley pulse at a constant speed (Ed, 2026-10-09)", () => {
     expect(g.party.wave).toBe(0); expect(g.party.nextAt).toBe(Infinity);
     for (const t of leyReachTimes(g.party, g.map)!.values()) expect(Number.isNaN(t)).toBe(false);
     g.tuning.leyLines.pulseSpeed = 3; run(g, 2);
-    expect(pulseRouteMetres(g.party, g.map, g.clock.time)).toBeCloseTo(m0 + 6, 1);
+    const v3 = 3 * sparkSpeedAt(TUNING.beat.bpm, TUNING); // (within a step's metres at the new speed: it takes it from the next step on)
+    expect(Math.abs(pulseRouteMetres(g.party, g.map, g.clock.time) - (m0 + 2 * v3))).toBeLessThanOrEqual(v3 / 60 + 1e-6);
   });
 });

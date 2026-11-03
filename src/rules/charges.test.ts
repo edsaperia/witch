@@ -59,7 +59,9 @@ function charge(t: Tuning) {
 
 describe("charges and leaps go further (Ed, 2026-10-06)", () => {
   it("runs a boar's charge much further past her, swinging out wider, with the knobs up", () => {
-    const before = charge(OLD), after = charge(TUNING);
+    // (at the speeds the knobs were tuned at: the difficulty's creatureSpeed, Ed 2026-11-03, aside; difficulty.test.ts has its own)
+    const calm = (t: Tuning) => withTuning({ ...t, difficulty: { ...TUNING.difficulty!, creatureSpeed: 1 } });
+    const before = charge(calm(OLD)), after = charge(calm(TUNING));
     expect(before.started && after.started).toBe(true);
     expect(TUNING.fight.charge.reach).toBeGreaterThan(1);
     expect(after.past).toBeGreaterThan(before.past * 1.5);

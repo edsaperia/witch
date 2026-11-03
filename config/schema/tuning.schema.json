@@ -4828,6 +4828,33 @@
       "additionalProperties": false,
       "description": "How a leashed creature shows its tie to its sigil: a glow at its feet, sparks, and a thread when the leash is strained."
     },
+    "difficulty": {
+      "type": "object",
+      "properties": {
+        "creatureSpeed": {
+          "type": "number",
+          "minimum": 0,
+          "description": "every creature's movement speed in a fight times this: its run, its sprint closing in and its chase at her, a heavy's top speed, charges, swoops, a legend's charge, a besieger's march (not her, not its shots, lunges, leaps or hops' timing, nor a creature's roaming or leash pace)."
+        },
+        "rangedRange": {
+          "type": "number",
+          "minimum": 0,
+          "description": "every ranged attack's reach times this, at anything: a shot, a lob or a beam (its cast's range, its bolt's life and a beam's length), never a melee one or a pulse round itself."
+        },
+        "adultStrength": {
+          "type": "number",
+          "minimum": 0,
+          "description": "an adult's health (a full 💌 ring's worth of blows) and damage in a fight times this, hers and the wild's alike; its evolving cost and the swarm builder's estimates as they were."
+        }
+      },
+      "required": [
+        "creatureSpeed",
+        "rangedRange",
+        "adultStrength"
+      ],
+      "additionalProperties": false,
+      "description": "How hard the creatures are: faster in a fight, further with their ranged attacks, and adults stronger."
+    },
     "fight": {
       "type": "object",
       "properties": {
@@ -5791,9 +5818,10 @@
               "type": "number",
               "minimum": 0
             },
-            "waves": {
+            "largestIsland": {
               "type": "number",
-              "minimum": 0
+              "minimum": 0,
+              "description": "the largest island's areas: an island this big or bigger reaches the final swarm at its last area, a smaller one its size over this of the way along the curve."
             },
             "curve": {
               "type": "number",
@@ -5844,7 +5872,7 @@
           "required": [
             "start",
             "endAverage",
-            "waves",
+            "largestIsland",
             "curve",
             "youngShare",
             "reference",
@@ -6341,7 +6369,17 @@
         "pulseSpeed": {
           "type": "number",
           "minimum": 0,
-          "description": "How fast the pulse runs along the ley line, which sets how long each wave takes to arrive."
+          "description": "How fast the pulse runs along the ley line, times the spark's speed by the tempo (pulseAt100, pulseAt200), which sets how long each wave takes to arrive."
+        },
+        "pulseAt100": {
+          "type": "number",
+          "minimum": 0,
+          "description": "the spark's speed in metres a second at 100 bpm: a straight line runs through it and pulseAt200, so with 1 and 5 it is 1.8 m/s at 120, 3 at 150 and 5 at 200, carried on the same way below 100 and above 200, never under 0.2."
+        },
+        "pulseAt200": {
+          "type": "number",
+          "minimum": 0,
+          "description": "the spark's speed in metres a second at 200 bpm, the line's other anchor (see pulseAt100)."
         },
         "reveal": {
           "type": "number",
@@ -6496,6 +6534,8 @@
       "required": [
         "on",
         "pulseSpeed",
+        "pulseAt100",
+        "pulseAt200",
         "reveal",
         "far",
         "behindBright",
@@ -13771,6 +13811,7 @@
     "win",
     "leash",
     "bond",
+    "difficulty",
     "fight",
     "combatWaiting",
     "creatureMomentum",

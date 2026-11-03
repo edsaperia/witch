@@ -1,6 +1,6 @@
 // An area's hostile swarm (Ed, 2026-10-08, the swarm plan's phase 1): its own young and adults, the ones a wave enrages and
 // sets marching on a soundsystem. Its challenge grows with the area's place in the runestone order (p, 0 at the first stone,
-// 1 at the last), and picking a species never changes it: "Our goal is to be able to have any species at any point along the
+// 1 at the last; times its island's size over the largest island's, Ed 2026-11-03: islandShare), and picking a species never changes it: "Our goal is to be able to have any species at any point along the
 // wave and create a swarm that is close to the challenge we want. The fixed points are creature number caps."
 //
 // - Classes (population.swarm.classes): strong (cap 6), medium (cap 12, every species not listed) and light (cap 16; Ed: "a
@@ -11,7 +11,7 @@
 // - powerOf: the one source the builder reads, config/swarm-power.json's simulated power where it has the swarm, else the
 //   estimate (phase 1: the file is empty).
 // - targetPower(p): the estimated power of a medium reference swarm of n(p) = start + (endAverage − start)·p^curve creatures
-//   (1 + 11·p^1.3), its young share easing from youngShare[0] (1.0) to youngShare[1] (0.2).
+//   (1 + 11·p^0.8, Ed 2026-11-03; 1.3 before), its young share easing from youngShare[0] (1.0) to youngShare[1] (0.2).
 // - buildSwarm: of every size up to the species' cap (scaled along the same curve, capScales) and every young/adult split,
 //   the nearest the target; among those within mixTolerance of the nearest, a mix of young and adults first (Ed: "one adult +
 //   one youth is better than 4 youths even if they're the same difficulty"), then the nearest. No drawing here.
@@ -26,9 +26,12 @@ export interface SwarmTuning {
   start: number;
   /** Its size at the last (the end of the game): what a medium species fields there, the swarms' average. */
   endAverage: number;
-  /** The master curve's length in waves (Ed, 2026-10-10, 2026-10-11): an area's p is (its wave − 1)/(waves − 1), so this wave
-   *  brings the final swarm, whatever the map's size (left out: the route's own length, as before). */
-  waves?: number;
+  /** The largest island's areas (Ed, 2026-11-03: "Pack growth: grows along each island's own length, scaled by the island's size, so
+   *  only the largest islands reach full packs"): an area's p is (its place − 1)/(its island's route length − 1) times that length
+   *  over this (at most 1; islandShare), so the last area of an island this big or bigger fields the final swarm and a smaller
+   *  island's last its share of the way along the curve. 50, the phase-5 islands (rules/rosters.ts sizeOfPhase); left out, every
+   *  island its whole curve. */
+  largestIsland?: number;
   /** The size curve's power k: n(p) = start + (endAverage − start)·p^k. */
   curve: number;
   /** The reference swarm's young share at the first runestone and at the last (the rest adults). */
@@ -49,6 +52,11 @@ export const POWER_TABLE: PowerTable = SIM as PowerTable;
 
 /** How far along the route (0 the first runestone, 1 the last) an area at route index `index` of `length` is. */
 export const routeShare = (index: number, length: number): number => Math.max(0, Math.min(1, (index - 1) / Math.max(1, length - 1)));
+
+/** An area's p on the swarm curve (Ed, 2026-11-03): its share along its own island's route (routeShare), times the island's size
+ *  (its route's length) over swarm.largestIsland, at most 1; so only the largest islands reach the final swarm. */
+export const islandShare = (index: number, length: number, S: Pick<SwarmTuning, "largestIsland">): number =>
+  routeShare(index, length) * (S.largestIsland ? Math.min(1, length / S.largestIsland) : 1);
 
 /** The reference swarm at route share `p`: its size (fractional) and young share. */
 export function referenceAt(p: number, S: SwarmTuning): { size: number; young: number } {
