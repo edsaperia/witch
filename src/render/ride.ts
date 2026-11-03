@@ -37,10 +37,13 @@ export class Ride {
    *  she is drawn over the ride (her feet), so the clearance is kept under her feet, not the ride. */
   update(dt: number, x: number, z: number, vx: number, vz: number, full: number, ground: (x: number, z: number) => number, T: RideTuning, lift = 0): number {
     const here = ground(x, z), speed = Math.hypot(vx, vz), k = Math.min(1, speed / Math.max(0.1, full));
-    const jumped = !(Math.hypot(x - this.x, z - this.z) < 30); // (moved there at once: placed, not flown)
+    const jumped = !(Math.hypot(x - this.x, z - this.z) < 30), moved = x !== this.x || z !== this.z; // (jumped: moved there at once, placed, not flown)
     this.x = x; this.z = z;
     if (!(T.heightSmooth > 0) || Number.isNaN(this.h) || dt > 1 || jumped) { this.h = here; this.v = 0; return this.h; }
-    if (dt <= 0) return this.h; // (the same moment drawn again, or paused)
+    // (the same moment drawn again, or paused: as it was; but read somewhere else while standing still, on the ground there, as below:
+    // a sail's dive is drawn with the night's clock still, and the camera's ride kept an earlier frame's ground, 8.6 m below the
+    // house's, for the first frame after it landed)
+    if (dt <= 0) { if (moved && k < 0.02) { this.h = here; this.v = 0; } return this.h; }
     // Where it's heading: the ground averaged over a stretch of her path behind and ahead of her
     // (heightLookAhead seconds of flight each way, weighted to her: a symmetric window has no lag
     // on a steady slope, so it follows the hills and only smooths their bumps; a crest ahead lifts

@@ -41,8 +41,12 @@ it("the dive lands on the game's own camera: its last frame and the game's first
   expect(pose).toEqual(pose0);
   // the game's first frame (render/view/camera.ts placeCamera): her pose's aim, over the ride's ground (she's lying still), moved
   // to where she's drawn
-  const R = ridePoint(v, pose), ride = new Ride();
-  ride.update(1 / 60, R.x, R.z, 0, 0, g.tuning.groundSpeed, groundHeight, g.tuning.witch, Infinity);
+  // (its ride as the dive left it: drawn with the night's clock still, its ground read first elsewhere, then at the house; the
+  // capture's first frame after landing aimed 8.6 m low, the ride still an earlier frame's)
+  const R = ridePoint(v, pose), ride = new Ride(), full = g.tuning.groundSpeed;
+  ride.update(0, R.x + 10, R.z, 0, 0, full, () => -9, g.tuning.witch, Infinity); // (a frame's ground a little way off, read with the clock still)
+  ride.update(0, R.x, R.z, 0, 0, full, groundHeight, g.tuning.witch, Infinity);
+  ride.update(0, R.x, R.z, 0, 0, full, groundHeight, g.tuning.witch, Infinity); // (the game's first frame: the same instant)
   const aim = gameAim(pose, ride.h, v.houseCam), eps = 1e-6;
   expect(Math.abs(last!.tx - aim.x)).toBeLessThan(eps);
   expect(Math.abs(last!.ty - aim.y)).toBeLessThan(eps);
