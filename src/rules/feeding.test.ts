@@ -198,6 +198,28 @@ describe("feeding on command (Ed, 2026-11-03)", () => {
   }, 60000);
 });
 
+describe("fed before fighting (Ed, 2026-11-03: \"if you have given the instruction to a creature to eat a berry, it should priotise that over fighting\")", () => {
+  it("a queued creature with a wild foe in range walks to its berries and eats them, fighting no one meanwhile; then it fights again", () => {
+    const { g, mine, site } = scene([1], 3), [y] = mine;
+    // a wild boar a few metres off, going for her (and in reach of hers), enraged
+    const boar = g.creatures.find(c => !c.gone && !c.leashed && !c.boss && c.level > 0 && Math.hypot(c.x - site.x, c.z - site.z) > 300)!;
+    const bx = site.x + 10, bz = site.z + 4;
+    Object.assign(boar, { species: "boar", level: 1, x: bx, z: bz, tx: bx, tz: bz, anchorX: bx, anchorZ: bz, homeX: bx, homeZ: bz, cell: g.map.cellSafe(bx, bz).cell, enraged: true, state: "enraged", fight: undefined, rest: 0, friendly: false, siege: undefined, hunting: 0 });
+    g.byArea = null;
+    tap(g); tap(g);
+    expect(queuedFor(g.berries, y.id)).toBe(2);
+    let fought = false;
+    run(g, 12, idle, () => { if (queuedFor(g.berries, y.id) > 0 && y.fight?.target) fought = true; });
+    expect(fought, "no fight while it has berries queued").toBe(false);
+    expect(fed(g, y), "it ate them both").toBe(2);
+    expect(queuedFor(g.berries, y.id)).toBe(0);
+    // its queue eaten, it goes back to fighting as ever
+    let back = false;
+    if (!boar.gone && boar.enraged) run(g, 6, idle, () => { back ||= y.fight?.target?.kind === "creature" && y.fight.target.id === boar.id; });
+    expect(back || boar.gone || !boar.enraged, "fighting again (or the boar's done for)").toBe(true);
+  }, 60000);
+});
+
 describe("knocked down (Ed, 2026-11-03: \"If you're knocked down, animals' sigils fall and stay where you were knocked down\")", () => {
   const knock = (g: Game, W: Witch) => { W.health.hp = 1; hitWitch(g, W.id, g.clock.time, g.tuning); expect(W.ko).not.toBeNull(); };
 

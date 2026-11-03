@@ -768,6 +768,7 @@ export type SchemaTuning = {
       "reach": number;
       "speed": number;
       "hold": number;
+      "glow": number;
     };
   };
   "invites": {

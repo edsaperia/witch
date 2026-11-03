@@ -25,6 +25,7 @@ import type { Creature } from "../rules/creatures";
 
 import { blocked, stackBottom, talkTime } from "../rules/leash";
 import { feedOffer } from "../rules/sigilButton";
+import { offerGlow } from "./feedTag";
 import { toEvolve } from "../rules/berries";
 import { hash2 } from "../rules/random";
 import { hasRune, runeNear } from "../rules/creatureStates";
@@ -306,9 +307,10 @@ export class LeashView {
     const M = moodOf(t), hs = M?.berryHalo ?? 1, hg = glow * (M?.berryGlow ?? 1);
     for (const e of B.events) if (e.kind === "evolved") this.evolved.set(e.id, time);
     for (const [id, at] of this.evolved) if (time - at > 1) this.evolved.delete(id);
-    // The berry a tap of the sigil button would feed the bottom of her stack (Ed, 2026-11-03; rules/sigilButton.ts feedOffer): marked,
-    // a pulsing halo and a ring of motes turning round it, the prompt beside it (render/feedTag.ts).
-    const offer = !treetops && w.mode === "ground" && g.witches?.[0] ? feedOffer(g, g.witches[0]) : null;
+    // The berry a tap of the sigil button would feed the bottom of her stack (Ed, 2026-11-03; rules/sigilButton.ts feedOffer): it glows
+    // brighter (Ed: "the berry glows brighter"; berries.feed.glow, render/feedTag.ts offerGlow), a pulsing halo and a bright core, the
+    // key over it (render/feedTag.ts).
+    const offer = !treetops && w.mode === "ground" && g.witches?.[0] ? feedOffer(g, g.witches[0]) : null, OG = t.berries.feed?.glow ?? 2.5;
     for (const berry of B.berries) {
       if (berry.gone) continue; // (a Harvest berry eaten)
       const p = B.bushes[berry.bush];
@@ -316,9 +318,9 @@ export class LeashView {
       if (Math.abs(p.x - w.x) > near || Math.abs(p.z - w.z) > near) continue;
       const tw = 0.85 + 0.15 * Math.sin(time * 2.3 + berry.id);
       if (offer?.berry === berry.id) {
-        const pulse = 0.75 + 0.25 * Math.sin(time * 5);
-        this.standing.add(p.x, 0.8, p.z + 0.29, 4.6 * hs, dot, r * 2, gg * 1.6, b * 1.6, Math.min(1, 1.6 * hg) * pulse); // (a wide bright halo)
-        for (let i = 0; i < 8; i++) { const a = time * 1.6 + (i / 8) * Math.PI * 2; this.standing.add(p.x + Math.cos(a) * 1.15, 0.8 + Math.sin(a) * 0.55, p.z + 0.34, 0.22, dot, 1, 0.85, 0.95, 0.9); } // (its ring of motes)
+        const G = offerGlow(OG, 0.75 + 0.25 * Math.sin(time * 5)), a = Math.min(1, 1.6 * hg);
+        this.standing.add(p.x, 0.8, p.z + 0.29, G.haloSize * hs, dot, r * 2 * G.haloGain, gg * 1.6 * G.haloGain, b * 1.6 * G.haloGain, a); // (a wide bright halo)
+        this.standing.add(p.x, 0.8, p.z + 0.335, G.coreSize * hs, dot, r * 1.8 * G.coreGain, gg * 1.4 * G.coreGain, b * 1.4 * G.coreGain, Math.min(1, 0.8 * hg * G.coreGain)); // (its core, lit up)
       }
       // From the treetops a small glint, depth-tested like any ground thing (Ed, 2026-11-02: "I can see berries through the canopy,
       // and I shouldn't be able to"): it shows where nothing nearer is drawn (a gap in the crowns, the cut-away round her), never

@@ -194,7 +194,7 @@ function pickControls(g: Game, W: Witch, t: Tuning): Pick<LeashControls, "shared
  *  (rules/berries.ts hasRoom) and an un-taken berry within berries.feed.reach of her; and nothing the press does first in the way, in
  *  stepSigilButton's order: a mushroom or a basket, the zoo's way out, a hat of hers to pick up, tonight's find, a stump's or the
  *  challenge circle's spell, a flask's sigil, a legend's sigil she carries, a run, or something to pick up (rules/leash.ts pressPicks).
- *  The view marks that berry and shows the prompt from this (render/feedTag.ts), so what's shown is what the press does. */
+ *  The view makes that berry glow brighter and shows the key over it from this (render/feedTag.ts), so what's shown is what the press does. */
 export function feedOffer(g: Game, W: Witch, t: Tuning = g.tuning): { id: number; berry: number; x: number; z: number } | null {
   const b = W.body;
   if (W.ko || b.mode !== "ground" || b.seated || b.perch || W.leash.tether || W.leash.run) return null;
