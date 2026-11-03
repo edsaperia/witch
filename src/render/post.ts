@@ -182,6 +182,8 @@ export class Post {
   /** First visual-response slice: opt-in until canonical's comparison/GPU review. No extra render targets. */
   readonly refraction = new Refraction();
   refractionEnabled = new URLSearchParams(globalThis.location?.search ?? "").get("refraction") === "1";
+  /** The party start's own ripple on without ?refraction=1 (its knob, partyStart.refraction.on: render/view/refraction.ts): only its rings. */
+  refractionParty = false;
   /** The scene is drawn into this, at low resolution. */
   readonly scene: THREE.WebGLRenderTarget;
   private bright = target(1, 1, THREE.LinearFilter);
@@ -387,7 +389,7 @@ export class Post {
     const effectiveTilt = miniatureTilt(t.tiltShift, this.potionMiniature);
     const tilt = (effectiveTilt.on && effectiveTilt.strength > 0 || this.potionVertigo > 0) && this.tilt > 0;
     this.pass("composite", tilt ? this.a : out, u => {
-      u.uRefractionCount.value = this.refractionEnabled ? this.refraction.count : 0;
+      u.uRefractionCount.value = this.refractionEnabled || this.refractionParty ? this.refraction.count : 0;
       u.uScene.value = this.scene.texture; u.uBloom.value = this.bright.texture; u.uLow.value.copy(this.low); u.uBloomStrength.value = bloomOn ? bloom.strength : 0;
       const levels = potionLevels(t.tone.black, t.tone.gamma, this.potionCanopy);
       u.uBlack.value = levels.black; u.uGamma.value = levels.gamma;

@@ -3128,6 +3128,90 @@ Code: `rules/party.ts`, `rules/bootRing.ts`
 | `party.lightReach` | number | 0 to … |
 | `party.lightStrength` | number | 0 to … |
 
+### `partyStart`
+
+The party start's look, each piece on its own: the sparkles, the pillar, the dome, the light, the shake, the glow on the floor and the heat ripple, all drawing only. At her decks once the party has started, the use button (E; the pad's square) plays them again, and she calls "make some noise!!!".
+
+1. Ed, 2026-11-03: "Party start: agree. Isolate each of the effects so I can tweak. We could allow the player to press square at the decks after the party is started that replays the visual effects so it's easier for me to experiment (the dj says make some noise!!!)" (agreed: the spell drawn over the house instead of under it; the pillar rising above the crown, with real light, and the dome filled in; bigger, brighter sparkles; pause-page sliders)
+Code: `src/rules/partyStart.ts`, `src/render/partyStart.ts`
+
+- **`partyStart.overHouse`**: on: the party start drawn over the house's floors, walls and crown (with depth, so the decks and anything solid in front of her still cover it); off: under them, as before.
+- **`partyStart.sparkles`**: The burst of amber and rose sparkles round her, rising and spreading: each a little pixel star whose centre glows toward white.
+- **`partyStart.sparkles.on`**: the sparkles on or off.
+- **`partyStart.sparkles.count`**: how many sparkles (64 before).
+- **`partyStart.sparkles.size`**: a sparkle's size on screen (pixels; 5 before, a plain square); from 3 up, a plus-shaped star in thirds of it.
+- **`partyStart.sparkles.opacity`**: how bright each starts (they add light; 0.55 before), fading to nothing over its life.
+- **`partyStart.sparkles.core`**: how far a sparkle's centre goes toward white (0 its colour alone, as before; 1 white).
+- **`partyStart.sparkles.life`**: the longest a sparkle lasts (s); each lasts 55% to all of it, the last starting half a second in.
+- **`partyStart.sparkles.speed`**: how fast they fly up and out, times the old spread (1.5 to 5 m/s out, 1.2 to 3.6 m/s up).
+- **`partyStart.sparkles.hueA`**: two of every three sparkles' colour (hue and saturation at full brightness; 0.1 and 0.55, amber).
+- **`partyStart.sparkles.satA`**: see hueA.
+- **`partyStart.sparkles.hueB`**: the other third's colour (hue and saturation; 0.93 and 0.45, rose).
+- **`partyStart.sparkles.satB`**: see hueB.
+- **`partyStart.pillar`**: The tall column of party light rising out of her, its top above the crown.
+- **`partyStart.pillar.on`**: the pillar on or off.
+- **`partyStart.pillar.height`**: how high its top reaches over her feet (m; about 14 before, under the crown).
+- **`partyStart.pillar.width`**: how wide it is at its foot (m), narrowing to about a quarter of that at its top.
+- **`partyStart.pillar.rise`**: seconds it takes to grow from her to its full height.
+- **`partyStart.pillar.duration`**: how long it lasts (s), fading in over the first 0.2 s and out over the last 0.3 s; the glow on the floor lasts as long.
+- **`partyStart.pillar.strength`**: its brightness (1 full).
+- **`partyStart.dome`**: The dome of light round her, a ring with its inside filled with a dithered glow.
+- **`partyStart.dome.on`**: the dome on or off.
+- **`partyStart.dome.size`**: its size, times the magic's dome (1: about 8.4 m across, as before).
+- **`partyStart.dome.duration`**: how long it lasts (s).
+- **`partyStart.dome.fill`**: how much its inside glows (0: the ring alone, as before; 1 full).
+- **`partyStart.light`**: The real light the spell casts on what's round her (a magic light, one of the effects' few).
+- **`partyStart.light.on`**: the light on or off.
+- **`partyStart.light.reach`**: how far it reaches (m; 18 before).
+- **`partyStart.light.strength`**: how strong it is at its brightest (0.85 before), falling away over its last 60%.
+- **`partyStart.light.duration`**: how long it lasts (s).
+- **`partyStart.shake`**: The camera's little shake as she casts it.
+- **`partyStart.shake.on`**: the shake on or off (never with Reduce flashing).
+- **`partyStart.shake.amount`**: how hard (0.18 before, the magic's cap).
+- **`partyStart.shake.duration`**: how long it takes to die away (s).
+- **`partyStart.ground`**: The glow on the floor under her (and the bloom left on the ground under the house).
+- **`partyStart.ground.on`**: the glow on the floor on or off.
+- **`partyStart.ground.alpha`**: how bright (0.18 before).
+- **`partyStart.ground.size`**: how wide (m).
+- **`partyStart.refraction`**: The ripple of heat in the picture round her as she casts it (render/refraction.ts).
+- **`partyStart.refraction.on`**: on: the ripple in every game; off: only with ?refraction=1, as before (off by default: the picture's refraction is still a trial).
+
+| knob | type | range |
+|---|---|---|
+| `partyStart.overHouse` | boolean |  |
+| `partyStart.sparkles.on` | boolean |  |
+| `partyStart.sparkles.count` | number | 0 to 256 |
+| `partyStart.sparkles.size` | number | 1 to 24 |
+| `partyStart.sparkles.opacity` | number | 0 to 2 |
+| `partyStart.sparkles.core` | number | 0 to 1 |
+| `partyStart.sparkles.life` | number | 0.1 to 5 |
+| `partyStart.sparkles.speed` | number | 0 to 4 |
+| `partyStart.sparkles.hueA` | number | 0 to 1 |
+| `partyStart.sparkles.satA` | number | 0 to 1 |
+| `partyStart.sparkles.hueB` | number | 0 to 1 |
+| `partyStart.sparkles.satB` | number | 0 to 1 |
+| `partyStart.pillar.on` | boolean |  |
+| `partyStart.pillar.height` | number | 0 to 60 |
+| `partyStart.pillar.width` | number | 0.5 to 20 |
+| `partyStart.pillar.rise` | number | 0 to 2 |
+| `partyStart.pillar.duration` | number | 0.1 to 6 |
+| `partyStart.pillar.strength` | number | 0 to 2 |
+| `partyStart.dome.on` | boolean |  |
+| `partyStart.dome.size` | number | 0.1 to 4 |
+| `partyStart.dome.duration` | number | 0.1 to 6 |
+| `partyStart.dome.fill` | number | 0 to 1 |
+| `partyStart.light.on` | boolean |  |
+| `partyStart.light.reach` | number | 0 to 60 |
+| `partyStart.light.strength` | number | 0 to 4 |
+| `partyStart.light.duration` | number | 0.1 to 6 |
+| `partyStart.shake.on` | boolean |  |
+| `partyStart.shake.amount` | number | 0 to 0.5 |
+| `partyStart.shake.duration` | number | 0.05 to 2 |
+| `partyStart.ground.on` | boolean |  |
+| `partyStart.ground.alpha` | number | 0 to 1 |
+| `partyStart.ground.size` | number | 0 to 30 |
+| `partyStart.refraction.on` | boolean |  |
+
 ### `blood`
 
 Blood trails [1]: a hurt creature within range metres of her leaves small dark-red pixel marks on the ground as it moves, fading over fade seconds; the more hurt, the more often and the redder.

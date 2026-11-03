@@ -1,6 +1,7 @@
 // The tuning file, config/tuning.json, typed. Ed edits the JSON; nothing here holds a number.
 import raw from "../../config/tuning.json";
 import type { MushroomLight } from "./mushroomLight";
+import type { PartyStartTuning } from "./partyStart";
 import type { SchemaTuning } from "./tuning.generated";
 import type { ByRoute } from "./growth";
 import type { TreehouseLook } from "./treehouseLook";
@@ -97,6 +98,8 @@ export interface RevealKind { on: boolean; radius: number; ring?: number; width?
 export interface Tuning {
   /** Live mushroom lighting experiments; canonical values in tuning.json. */
   mushroomLight?: MushroomLight;
+  /** The party start's look, each piece on its own knobs (rules/partyStart.ts, render/partyStart.ts; Ed, 2026-11-03). */
+  partyStart?: PartyStartTuning;
   /** Per-load spacing=1 experiment; absent uses packs.json spacing.on (default false). Never remembered. */
   combatSpacing?: boolean;
   /** Will-o'-the-wisps in the wild areas (render/wisps.ts, Ed 2026-10-07); off (or absent) for none. */

@@ -9281,6 +9281,300 @@
       ],
       "additionalProperties": false
     },
+    "partyStart": {
+      "type": "object",
+      "properties": {
+        "overHouse": {
+          "type": "boolean",
+          "description": "on: the party start drawn over the house's floors, walls and crown (with depth, so the decks and anything solid in front of her still cover it); off: under them, as before."
+        },
+        "sparkles": {
+          "type": "object",
+          "properties": {
+            "on": {
+              "type": "boolean",
+              "description": "the sparkles on or off."
+            },
+            "count": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 256,
+              "description": "how many sparkles (64 before)."
+            },
+            "size": {
+              "type": "number",
+              "minimum": 1,
+              "maximum": 24,
+              "description": "a sparkle's size on screen (pixels; 5 before, a plain square); from 3 up, a plus-shaped star in thirds of it."
+            },
+            "opacity": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 2,
+              "description": "how bright each starts (they add light; 0.55 before), fading to nothing over its life."
+            },
+            "core": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 1,
+              "description": "how far a sparkle's centre goes toward white (0 its colour alone, as before; 1 white)."
+            },
+            "life": {
+              "type": "number",
+              "minimum": 0.1,
+              "maximum": 5,
+              "description": "the longest a sparkle lasts (s); each lasts 55% to all of it, the last starting half a second in."
+            },
+            "speed": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 4,
+              "description": "how fast they fly up and out, times the old spread (1.5 to 5 m/s out, 1.2 to 3.6 m/s up)."
+            },
+            "hueA": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 1,
+              "description": "two of every three sparkles' colour (hue and saturation at full brightness; 0.1 and 0.55, amber)."
+            },
+            "satA": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 1,
+              "description": "see hueA."
+            },
+            "hueB": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 1,
+              "description": "the other third's colour (hue and saturation; 0.93 and 0.45, rose)."
+            },
+            "satB": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 1,
+              "description": "see hueB."
+            }
+          },
+          "required": [
+            "on",
+            "count",
+            "size",
+            "opacity",
+            "core",
+            "life",
+            "speed",
+            "hueA",
+            "satA",
+            "hueB",
+            "satB"
+          ],
+          "additionalProperties": false,
+          "description": "The burst of amber and rose sparkles round her, rising and spreading: each a little pixel star whose centre glows toward white."
+        },
+        "pillar": {
+          "type": "object",
+          "properties": {
+            "on": {
+              "type": "boolean",
+              "description": "the pillar on or off."
+            },
+            "height": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 60,
+              "description": "how high its top reaches over her feet (m; about 14 before, under the crown)."
+            },
+            "width": {
+              "type": "number",
+              "minimum": 0.5,
+              "maximum": 20,
+              "description": "how wide it is at its foot (m), narrowing to about a quarter of that at its top."
+            },
+            "rise": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 2,
+              "description": "seconds it takes to grow from her to its full height."
+            },
+            "duration": {
+              "type": "number",
+              "minimum": 0.1,
+              "maximum": 6,
+              "description": "how long it lasts (s), fading in over the first 0.2 s and out over the last 0.3 s; the glow on the floor lasts as long."
+            },
+            "strength": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 2,
+              "description": "its brightness (1 full)."
+            }
+          },
+          "required": [
+            "on",
+            "height",
+            "width",
+            "rise",
+            "duration",
+            "strength"
+          ],
+          "additionalProperties": false,
+          "description": "The tall column of party light rising out of her, its top above the crown."
+        },
+        "dome": {
+          "type": "object",
+          "properties": {
+            "on": {
+              "type": "boolean",
+              "description": "the dome on or off."
+            },
+            "size": {
+              "type": "number",
+              "minimum": 0.1,
+              "maximum": 4,
+              "description": "its size, times the magic's dome (1: about 8.4 m across, as before)."
+            },
+            "duration": {
+              "type": "number",
+              "minimum": 0.1,
+              "maximum": 6,
+              "description": "how long it lasts (s)."
+            },
+            "fill": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 1,
+              "description": "how much its inside glows (0: the ring alone, as before; 1 full)."
+            }
+          },
+          "required": [
+            "on",
+            "size",
+            "duration",
+            "fill"
+          ],
+          "additionalProperties": false,
+          "description": "The dome of light round her, a ring with its inside filled with a dithered glow."
+        },
+        "light": {
+          "type": "object",
+          "properties": {
+            "on": {
+              "type": "boolean",
+              "description": "the light on or off."
+            },
+            "reach": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 60,
+              "description": "how far it reaches (m; 18 before)."
+            },
+            "strength": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 4,
+              "description": "how strong it is at its brightest (0.85 before), falling away over its last 60%."
+            },
+            "duration": {
+              "type": "number",
+              "minimum": 0.1,
+              "maximum": 6,
+              "description": "how long it lasts (s)."
+            }
+          },
+          "required": [
+            "on",
+            "reach",
+            "strength",
+            "duration"
+          ],
+          "additionalProperties": false,
+          "description": "The real light the spell casts on what's round her (a magic light, one of the effects' few)."
+        },
+        "shake": {
+          "type": "object",
+          "properties": {
+            "on": {
+              "type": "boolean",
+              "description": "the shake on or off (never with Reduce flashing)."
+            },
+            "amount": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 0.5,
+              "description": "how hard (0.18 before, the magic's cap)."
+            },
+            "duration": {
+              "type": "number",
+              "minimum": 0.05,
+              "maximum": 2,
+              "description": "how long it takes to die away (s)."
+            }
+          },
+          "required": [
+            "on",
+            "amount",
+            "duration"
+          ],
+          "additionalProperties": false,
+          "description": "The camera's little shake as she casts it."
+        },
+        "ground": {
+          "type": "object",
+          "properties": {
+            "on": {
+              "type": "boolean",
+              "description": "the glow on the floor on or off."
+            },
+            "alpha": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 1,
+              "description": "how bright (0.18 before)."
+            },
+            "size": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 30,
+              "description": "how wide (m)."
+            }
+          },
+          "required": [
+            "on",
+            "alpha",
+            "size"
+          ],
+          "additionalProperties": false,
+          "description": "The glow on the floor under her (and the bloom left on the ground under the house)."
+        },
+        "refraction": {
+          "type": "object",
+          "properties": {
+            "on": {
+              "type": "boolean",
+              "description": "on: the ripple in every game; off: only with ?refraction=1, as before (off by default: the picture's refraction is still a trial)."
+            }
+          },
+          "required": [
+            "on"
+          ],
+          "additionalProperties": false,
+          "description": "The ripple of heat in the picture round her as she casts it (render/refraction.ts)."
+        }
+      },
+      "required": [
+        "overHouse",
+        "sparkles",
+        "pillar",
+        "dome",
+        "light",
+        "shake",
+        "ground",
+        "refraction"
+      ],
+      "additionalProperties": false,
+      "description": "The party start's look, each piece on its own: the sparkles, the pillar, the dome, the light, the shake, the glow on the floor and the heat ripple, all drawing only."
+    },
     "blood": {
       "type": "object",
       "properties": {
@@ -13808,6 +14102,7 @@
     "alarms",
     "boot",
     "party",
+    "partyStart",
     "blood",
     "soundsystemGen",
     "stringLights",
