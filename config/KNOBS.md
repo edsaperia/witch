@@ -1532,7 +1532,8 @@ Berries and evolving (Ed): every area has bushesPerArea berry bushes (normal bus
 - **`berries.feed`**: Feeding on command: a tap of the sigil button feeds the bottom of her stack a berry within reach of her; holding it puts that sigil down instead.
   1. Ed, 2026-11-03: "something she does deliberately and accurately under time pressure" (no animal eats on its own; only the bottom of her stack, the one cycle moves through; each press queues one more berry, no hold-to-repeat)
   2. Ed, 2026-11-03: "otherwise feeding berries becomes a way of moving creatures quickly rather than levelling them up" (speed: it goes to its berry at about its own pace, 1 to 1.2 times)
-  reach: metres from her a berry may be to be fed (the nearest un-taken one, marked, with the prompt). speed: the animal walks to each queued berry at its leash pace times this. hold: seconds the sigil button is held, with a feed on offer, to put the bottom sigil down instead of feeding it (a tap shorter than this feeds).
+  3. Ed, 2026-11-03: "just "[E]" (or equivalent controller) key above the berry with a little down arrow, and the berry glows brighter" (the prompt's words gone; glow, how much brighter the offered berry glows)
+  reach: metres from her a berry may be to be fed (the nearest un-taken one, glowing brighter, the key over it). speed: the animal walks to each queued berry at its leash pace times this. hold: seconds the sigil button is held, with a feed on offer, to put the bottom sigil down instead of feeding it (a tap shorter than this feeds). glow: how many times brighter the berry a tap would feed glows (its halo bigger and brighter, its core lit up; 1 the pulsing halo it had), the use key over it with a small down arrow and no words [3].
   Code: `rules/berries.ts`, `rules/sigilButton.ts`, `render/feedTag.ts`
 
 | knob | type | range |
@@ -1550,6 +1551,7 @@ Berries and evolving (Ed): every area has bushesPerArea berry bushes (normal bus
 | `berries.feed.reach` | number | 0 to … |
 | `berries.feed.speed` | number | 0 to … |
 | `berries.feed.hold` | number | 0 to … |
+| `berries.feed.glow` | number | 0 to … |
 
 ### `invites`
 
