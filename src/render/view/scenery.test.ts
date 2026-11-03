@@ -1,9 +1,11 @@
 import { afterEach, expect, it, vi } from "vitest";
 import type { View } from "../view";
 
-vi.mock("../../rules/game", () => ({ poseOf: () => ({ distance: 100, angle: 45 }) }));
-vi.mock("../../rules/partyOver", () => ({ relicsOut: () => [] }));
-vi.mock("./culling", () => ({ focusOf: () => ({ x: 0, z: 0 }), viewRect: () => ({ minX: -100, maxX: 100, minZ: -100, maxZ: 100 }), inView: () => false }));
+// (partial mocks, the rest real: test files share module state (isolate false), so a bare mock missing an export breaks a later
+// file in the same worker, as zooPad.test.ts did on worldAsleep)
+vi.mock("../../rules/game", async importOriginal => ({ ...(await importOriginal<typeof import("../../rules/game")>()), poseOf: () => ({ distance: 100, angle: 45 }) }));
+vi.mock("../../rules/partyOver", async importOriginal => ({ ...(await importOriginal<typeof import("../../rules/partyOver")>()), relicsOut: () => [] }));
+vi.mock("./culling", async importOriginal => ({ ...(await importOriginal<typeof import("./culling")>()), focusOf: () => ({ x: 0, z: 0 }), viewRect: () => ({ minX: -100, maxX: 100, minZ: -100, maxZ: 100 }), inView: () => false }));
 
 afterEach(() => vi.restoreAllMocks());
 
