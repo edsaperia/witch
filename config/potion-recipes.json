@@ -74,7 +74,7 @@
     "effect": "walking-wood",
     "name": "Walking Wood",
     "description": "The trees move around as if they can walk.",
-    "comingSoon": true,
+    "comingSoon": false,
     "id": 6
   },
   {
@@ -321,7 +321,7 @@
     "effect": "giant-trees",
     "name": "Giant Trees",
     "description": "The trees are three times taller.",
-    "comingSoon": true,
+    "comingSoon": false,
     "id": 25
   },
   {
@@ -841,7 +841,7 @@
     "effect": "concertina",
     "name": "Concertina",
     "description": "Shared scene deformation squeezes and stretches distance sideways.",
-    "comingSoon": true,
+    "comingSoon": false,
     "id": 65
   },
   {
@@ -971,7 +971,7 @@
     "effect": "seeing-through-seeing",
     "name": "Seeing Through Seeing",
     "description": "Perceive the masks that erase the canopy to make her visible.",
-    "comingSoon": true,
+    "comingSoon": false,
     "id": 75
   },
   {
@@ -1010,7 +1010,7 @@
     "effect": "held-breath",
     "name": "Held Breath",
     "description": "Wave/pulse progress gradually tightens the world bend or swells scenery, releasing as the wave arrives.",
-    "comingSoon": true,
+    "comingSoon": false,
     "id": 78
   },
   {
@@ -1023,7 +1023,7 @@
     "effect": "out-of-time",
     "name": "Out of Time",
     "description": "Mist, wind, plants and other animations borrow the wrong clock.",
-    "comingSoon": true,
+    "comingSoon": false,
     "id": 79
   },
   {
@@ -1062,7 +1062,7 @@
     "effect": "distant-giants",
     "name": "Distant Giants",
     "description": "Scenery grows with distance while nearby trees shrink.",
-    "comingSoon": true,
+    "comingSoon": false,
     "id": 82
   },
   {
@@ -1153,7 +1153,7 @@
     "effect": "underwater-light",
     "name": "Underwater Light",
     "description": "Moving caustic-like patterns sweep over the whole forest without necessarily changing movement or sound.",
-    "comingSoon": true,
+    "comingSoon": false,
     "id": 89
   },
   {
@@ -1192,7 +1192,7 @@
     "effect": "inside-out-relief",
     "name": "Inside-Out Relief",
     "description": "Reverse or exaggerate surface normals so bumps look like hollows and light seems to come from impossible directions.",
-    "comingSoon": true,
+    "comingSoon": false,
     "id": 92
   },
   {
@@ -1205,7 +1205,7 @@
     "effect": "living-bark",
     "name": "Living Bark",
     "description": "Bark and surface colour climb trees while silhouettes remain still.",
-    "comingSoon": true,
+    "comingSoon": false,
     "id": 93
   },
   {

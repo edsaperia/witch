@@ -27,7 +27,7 @@ The status index checks the requests below against prototype `ab06904b` and cite
 | Trip suggestion: Echo | — | No implementation found for this request; original proposal remains unmarked. |
 | Trip suggestion: The Fear | — | No implementation found for this request; original proposal remains unmarked. |
 | Trip suggestion: Alone | — | No implementation found for this request; original proposal remains unmarked. |
-| Trip suggestion: Walking Wood | — | No implementation found for this request; original proposal remains unmarked. |
+| Trip suggestion: Walking Wood | **Built** | Recipe #6 in the developer book. |
 | Trip: Skylight | **Built** | #1523 current recipe/renderer implementation; `render/potionEffects.ts`, `rules/potionSettings.ts`; first live version unverified |
 | Trip suggestion: Brass Band | — | No implementation found for this request; original proposal remains unmarked. |
 | Trip: Big Moon | **Built** | #1523 current recipe/renderer implementation; `render/potionEffects.ts`, `rules/potionSettings.ts`; first live version unverified |
@@ -46,7 +46,7 @@ The status index checks the requests below against prototype `ab06904b` and cite
 | Trip suggestion: Inverse Perspective | — | No implementation found for this request; original proposal remains unmarked. |
 | Trip suggestion: Drum Solo | — | No implementation found for this request; original proposal remains unmarked. |
 | Trip suggestion: Watched | — | No implementation found for this request; original proposal remains unmarked. |
-| Trip suggestion: Giant Trees | — | No implementation found for this request; original proposal remains unmarked. |
+| Trip suggestion: Giant Trees | **Built** | Recipe #25 in the developer book. |
 | Trip: Night Vision | **Built** | #1531; `render/potionEffects.ts`, dedicated audio gates; first live version unverified |
 | Trip suggestion: Flask Finder | — | No implementation found for this request; original proposal remains unmarked. |
 | Trip suggestion: Left Hook | — | No implementation found for this request; original proposal remains unmarked. |
@@ -84,7 +84,7 @@ The status index checks the requests below against prototype `ab06904b` and cite
 | Trip suggestion: Folded Space | **Built** | World-space creases, recipe #62. |
 | Trip suggestion: Sliced World | — | No implementation found for this request; original proposal remains unmarked. |
 | Trip: The Audience | **Built** | #1535; watching-tree lean/lag and shared audio; first live version unverified |
-| Trip suggestion: Concertina | — | No implementation found for this request; original proposal remains unmarked. |
+| Trip suggestion: Concertina | **Built** | Recipe #65 in the developer book. |
 | Trip suggestion: Far Sight | — | No implementation found for this request; original proposal remains unmarked. |
 | Trip suggestion: The World Is Late | — | No implementation found for this request; original proposal remains unmarked. |
 | Trip suggestion: Sympathetic Forest | — | No implementation found for this request; original proposal remains unmarked. |
@@ -94,25 +94,25 @@ The status index checks the requests below against prototype `ab06904b` and cite
 | Trip suggestion: Too Much Happening | — | No implementation found for this request; original proposal remains unmarked. |
 | Trip: The Forest Counts | **Built** | #1544; held beat scenery/audio; first live version unverified |
 | Trip suggestion: Spilling Habitats | — | No implementation found for this request; original proposal remains unmarked. |
-| Trip suggestion: Seeing Through Seeing | — | No implementation found for this request; original proposal remains unmarked. |
+| Trip suggestion: Seeing Through Seeing | **Built** | Recipe #75 in the developer book. |
 | Trip suggestion: Lovesick Leaves | — | No implementation found for this request; original proposal remains unmarked. |
 | Trip suggestion: Borrowed Attention | — | No implementation found for this request; original proposal remains unmarked. |
-| Trip suggestion: Held Breath | — | No implementation found for this request; original proposal remains unmarked. |
-| Trip suggestion: Out of Time | — | No implementation found for this request; original proposal remains unmarked. |
+| Trip suggestion: Held Breath | **Built** | Recipe #78 in the developer book. |
+| Trip suggestion: Out of Time | **Built** | Recipe #79 in the developer book. |
 | Trip suggestion: Pack Weather | — | No implementation found for this request; original proposal remains unmarked. |
 | Trip suggestion: Pressure Beneath the Feet | — | No implementation found for this request; original proposal remains unmarked. |
-| Trip suggestion: Distant Giants | — | No implementation found for this request; original proposal remains unmarked. |
+| Trip suggestion: Distant Giants | **Built** | Recipe #82 in the developer book. |
 | Trip suggestion: Musical Ground | — | No implementation found for this request; original proposal remains unmarked. |
 | Trip suggestion: Forest Current | — | No implementation found for this request; original proposal remains unmarked. |
 | Trip suggestion: Luminous Footprints | — | No implementation found for this request; original proposal remains unmarked. |
 | Trip suggestion: Rolling Sea | — | No implementation found for this request; original proposal remains unmarked. |
 | Trip suggestion: Thick Air | — | No implementation found for this request; original proposal remains unmarked. |
 | Trip suggestion: Mushroom Lenses | — | No implementation found for this request; original proposal remains unmarked. |
-| Trip suggestion: Underwater Light | — | No implementation found for this request; original proposal remains unmarked. |
+| Trip suggestion: Underwater Light | **Built** | Recipe #89 in the developer book. |
 | Trip suggestion: Striped Intentions | — | No implementation found for this request; original proposal remains unmarked. |
 | Trip suggestion: Wax Menagerie | — | No implementation found for this request; original proposal remains unmarked. |
-| Trip suggestion: Inside-Out Relief | — | No implementation found for this request; original proposal remains unmarked. |
-| Trip suggestion: Living Bark | — | No implementation found for this request; original proposal remains unmarked. |
+| Trip suggestion: Inside-Out Relief | **Built** | Recipe #92 in the developer book. |
+| Trip suggestion: Living Bark | **Built** | Recipe #93 in the developer book. |
 | Trip suggestion: Travelling Markings | — | No implementation found for this request; original proposal remains unmarked. |
 | Trip suggestion: Long Echoes | — | No implementation found for this request; original proposal remains unmarked. |
 | Trip suggestion: Recursive Memories | — | No implementation found for this request; original proposal remains unmarked. |

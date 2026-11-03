@@ -3,6 +3,7 @@ import { effectEnvelope, potionRecipe } from '../../rules/potionRecipes';
 import { potionSettings } from '../../rules/potionSettings';
 import { hueSpinPhase } from '../../rules/potionCycle';
 import { forestCountStep } from '../../rules/forestCounts';
+import { borrowedClock, landscapeState } from '../../rules/landscapePotions';
 
 /** A fallback for existing/future trips; bespoke vision audio owns its own treatment. */
 export function potionFilterState(g: Game) {
@@ -29,6 +30,16 @@ export function potionFilterState(g: Game) {
     }
   }
   const small = recipe?.effect === 'miniature';
+  const landscape = amount > 0 && landscapeState(g);
+  if (landscape) {
+    const { effect, phase, setting, cutoff, sweep } = landscape;
+    let signal = Math.sin(phase * p.speed * 2 * Math.PI);
+    if (effect === 'held-breath') signal = 1 - 2 * phase;
+    if (effect === 'walking-wood') signal = Math.sin(phase * 1.3);
+    if (effect === 'out-of-time') signal = Math.sin(borrowedClock(phase, landscape.amount, setting) * .75);
+    if (effect === 'underwater-light') signal = Math.sin(phase * .65);
+    return { amount, high: 40, low: cutoff * 2 ** (sweep * signal), gain: 1 };
+  }
   if (recipe?.effect === 'the-forest-counts' && amount > 0) {
     const index = forestCountStep(g).index, depth = potionSettings('the-forest-counts').soundDepth;
     const steps = [-1, 1, -.5, .5];

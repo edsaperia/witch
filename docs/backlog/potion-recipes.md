@@ -8,11 +8,13 @@ Built means implementation in this source checkpoint, not a new visual or audio 
 
 | Item | Status | Source / version |
 |---|---|---|
+| Recipe 6: Walking Wood | **Built** | Landscape perception, shared sound filter and Potion Lab control. |
 | Recipe 7: Floor Becomes Sky | **Built** | #1523 current recipe/renderer implementation; `render/potionEffects.ts`, `rules/potionSettings.ts`; first live version unverified |
 | Recipe 9: Big Moon | **Built** | #1523 current recipe/renderer implementation; `render/potionEffects.ts`, `rules/potionSettings.ts`; first live version unverified |
 | Recipe 10: Ravine | **Built** | #1523 current recipe/renderer implementation; `render/potionEffects.ts`, `rules/potionSettings.ts`; first live version unverified |
 | Recipe 11: Chunky | **Built** | #1523 current recipe/renderer implementation; `render/potionEffects.ts`, `rules/potionSettings.ts`; first live version unverified |
 | Recipe 19: Mirrorball | **Built** | The sky moon and shared surface lighting use the trip envelope. |
+| Recipe 25: Giant Trees | **Built** | Landscape perception, shared sound filter and Potion Lab control. |
 | Recipe 26: Night Vision | **Built** | #1531; `render/potionEffects.ts`, dedicated audio gates; first live version unverified |
 | Recipe 29: Stiltwalkers | **Built** | #1532; registry29/58, rig limb deformation; changelog v6523 |
 | Recipe 30: Thick Canopy | **Built** | #1523 current recipe/renderer implementation; `render/potionEffects.ts`, `rules/potionSettings.ts`; first live version unverified |
@@ -27,7 +29,15 @@ Built means implementation in this source checkpoint, not a new visual or audio 
 | Recipe 61: Aurora Outlines | **Built** | #1523 current recipe/renderer implementation; `render/potionEffects.ts`, `rules/potionSettings.ts`; first live version unverified |
 | Recipe 62: Folded Space | **Built** | Shared terrain bend and position-dependent sound. |
 | Recipe 64: The Audience | **Built** | #1535; watching-tree lean/lag and shared audio; first live version unverified |
+| Recipe 65: Concertina | **Built** | Landscape perception, shared sound filter and Potion Lab control. |
 | Recipe 73: The Forest Counts | **Built** | #1544; held beat scenery/audio; first live version unverified |
+| Recipe 75: Seeing Through Seeing | **Built** | Landscape perception, shared sound filter and Potion Lab control. |
+| Recipe 78: Held Breath | **Built** | Landscape perception, shared sound filter and Potion Lab control. |
+| Recipe 79: Out of Time | **Built** | Landscape perception, shared sound filter and Potion Lab control. |
+| Recipe 82: Distant Giants | **Built** | Landscape perception, shared sound filter and Potion Lab control. |
+| Recipe 89: Underwater Light | **Built** | Landscape perception, shared sound filter and Potion Lab control. |
+| Recipe 92: Inside-Out Relief | **Built** | Landscape perception, shared sound filter and Potion Lab control. |
+| Recipe 93: Living Bark | **Built** | Landscape perception, shared sound filter and Potion Lab control. |
 | Recipe 101: Glow Up | **Built** | #1523 current recipe/renderer implementation; `render/potionEffects.ts`, `rules/potionSettings.ts`; first live version unverified |
 | Recipe 102: Miniature | **Built** | #1536; miniatureTilt and shared filtered audio; first live version unverified |
 | Recipe 103: Little Planet | **Built** | #1523 current recipe/renderer implementation; `render/potionEffects.ts`, `rules/potionSettings.ts`; first live version unverified |
@@ -46,7 +56,7 @@ All potions last ten minutes of game time, start at full strength on waking, and
 | 3 | blue + blue + pink | Echo | Coming soon | Neon copies trail behind her, echoing her movements and invitations. |
 | 4 | blue + blue + red | The Fear | Coming soon | Shadows stalk and startle her but cannot hurt her. She hears phantom footsteps, and familiar animals loom twice their size. |
 | 5 | blue + blue + orange | Alone | Coming soon | She wanders a private, harmless copy of the island alone. Her body lies on the grass in the shared world until she wakes there. |
-| 6 | blue + blue + yellow | Walking Wood | Coming soon | The trees move around as if they can walk. |
+| 6 | blue + blue + yellow | Walking Wood | Implemented | The trees move around as if they can walk. |
 | 7 | blue + blue + green | Floor Becomes Sky | Implemented | Ground and small foliage disappear into the starfield, while the ground's bend still hides objects beyond the horizon. |
 | 8 | blue + blue + turquoise | Brass Band | Coming soon | Every instrument in the music becomes a trumpet. |
 | 9 | blue + blue + white | Big Moon | Implemented | An enormous moon fills the sky, with a strong luminous halo. |
@@ -65,7 +75,7 @@ All potions last ten minutes of game time, start at full strength on waking, and
 | 22 | blue + pink + green | Inverse Perspective | Coming soon | Creatures look bigger the further away they are; up close they all but vanish. |
 | 23 | blue + pink + turquoise | Drum Solo | Coming soon | The music is just a drum solo. |
 | 24 | blue + pink + white | Watched | Coming soon | Every legend on the map stands and stares at her. |
-| 25 | blue + red + red | Giant Trees | Coming soon | The trees are three times taller. |
+| 25 | blue + red + red | Giant Trees | Implemented | The trees are three times taller. |
 | 26 | blue + red + orange | Night Vision | Implemented | The forest turns black and phosphor green. A rising electronic whine gives way to creature sounds alone. |
 | 27 | blue + red + yellow | Flask Finder | Coming soon | Flasks are easier to find. |
 | 28 | blue + red + green | Left Hook | Coming soon | Unlimited dodges, but they always veer left. |
@@ -105,7 +115,7 @@ All potions last ten minutes of game time, start at full strength on waking, and
 | 62 | purple + red + orange | Folded Space | Implemented | The landscape folds along fixed creases in the island. She can walk across the ridges and valleys. |
 | 63 | purple + red + yellow | Sliced World | Coming soon | Horizontal world-height bands disappear, revealing stacked slices through animals and scenery. |
 | 64 | purple + red + green | The Audience | Implemented | Amplify existing watching-tree lean and lag until the forest visibly follows her passage. |
-| 65 | purple + red + turquoise | Concertina | Coming soon | Shared scene deformation squeezes and stretches distance sideways. |
+| 65 | purple + red + turquoise | Concertina | Implemented | Shared scene deformation squeezes and stretches distance sideways. |
 | 66 | purple + red + white | Far Sight | Coming soon | Nearby scenery dissolves into haze while distant scenery is unnaturally crisp. |
 | 67 | purple + orange + orange | The World Is Late | Coming soon | Her light, canopy opening and tree attention follow her past position, catching up when she stops. |
 | 68 | purple + orange + yellow | Sympathetic Forest | Coming soon | Trees crouch with attack wind-up, stretch with lunges and flinch when animals are hit. |
@@ -115,25 +125,25 @@ All potions last ten minutes of game time, start at full strength on waking, and
 | 72 | purple + yellow + yellow | Too Much Happening | Coming soon | Nearby combat makes the scene increasingly luminous until a fight dissolves into light, then settles. |
 | 73 | purple + yellow + green | The Forest Counts | Implemented | Wind and mist advance in musical steps while she and animals remain fluid. |
 | 74 | purple + yellow + turquoise | Spilling Habitats | Coming soon | Ground textures and habitat colours spill across borders while trees and inhabitants stay put. |
-| 75 | purple + yellow + white | Seeing Through Seeing | Coming soon | Perceive the masks that erase the canopy to make her visible. |
+| 75 | purple + yellow + white | Seeing Through Seeing | Implemented | Perceive the masks that erase the canopy to make her visible. |
 | 76 | purple + green + green | Lovesick Leaves | Coming soon | Current affection controls nearby leaf colour, glow or motion. |
 | 77 | purple + green + turquoise | Borrowed Attention | Coming soon | The light pool or canopy opening follows an animal's current target rather than her. |
-| 78 | purple + green + white | Held Breath | Coming soon | Wave/pulse progress gradually tightens the world bend or swells scenery, releasing as the wave arrives. |
-| 79 | purple + turquoise + turquoise | Out of Time | Coming soon | Mist, wind, plants and other animations borrow the wrong clock. |
+| 78 | purple + green + white | Held Breath | Implemented | Wave/pulse progress gradually tightens the world bend or swells scenery, releasing as the wave arrives. |
+| 79 | purple + turquoise + turquoise | Out of Time | Implemented | Mist, wind, plants and other animations borrow the wrong clock. |
 | 80 | purple + turquoise + white | Pack Weather | Coming soon | A nearby pack's approach, tell, combo and lull become wind and atmospheric phases. |
 | 81 | purple + white + white | Pressure Beneath the Feet | Coming soon | Attack wind-up locally raises or depresses the drawn ground; release sends a ripple. |
-| 82 | pink + pink + pink | Distant Giants | Coming soon | Scenery grows with distance while nearby trees shrink. |
+| 82 | pink + pink + pink | Distant Giants | Implemented | Scenery grows with distance while nearby trees shrink. |
 | 83 | pink + pink + red | Musical Ground | Coming soon | Bass drives apparent ground height, percussion drives vegetation, melody drives light. |
 | 84 | pink + pink + orange | Forest Current | Coming soon | Pack movement/steering becomes the foliage force field; the entire forest streams toward targets. |
 | 85 | pink + pink + yellow | Luminous Footprints | Coming soon | Extend the disturbance field's lifetime and colour it so every passage remains visible. |
 | 86 | pink + pink + green | Rolling Sea | Coming soon | Landing ripples persist and overlap until the ground and its plants roll like waves. |
 | 87 | pink + pink + turquoise | Thick Air | Coming soon | Animals pull the image behind them like syrup. |
 | 88 | pink + pink + white | Mushroom Lenses | Coming soon | Mushrooms become local magnifying/distorting lenses. |
-| 89 | pink + red + red | Underwater Light | Coming soon | Moving caustic-like patterns sweep over the whole forest without necessarily changing movement or sound. |
+| 89 | pink + red + red | Underwater Light | Implemented | Moving caustic-like patterns sweep over the whole forest without necessarily changing movement or sound. |
 | 90 | pink + red + orange | Striped Intentions | Coming soon | Attack preparation tightens patterned illumination around its source, then releases. |
 | 91 | pink + red + yellow | Wax Menagerie | Coming soon | Animals gleam like wax, wet paint or polished metal. |
-| 92 | pink + red + green | Inside-Out Relief | Coming soon | Reverse or exaggerate surface normals so bumps look like hollows and light seems to come from impossible directions. |
-| 93 | pink + red + turquoise | Living Bark | Coming soon | Bark and surface colour climb trees while silhouettes remain still. |
+| 92 | pink + red + green | Inside-Out Relief | Implemented | Reverse or exaggerate surface normals so bumps look like hollows and light seems to come from impossible directions. |
+| 93 | pink + red + turquoise | Living Bark | Implemented | Bark and surface colour climb trees while silhouettes remain still. |
 | 94 | pink + red + white | Travelling Markings | Coming soon | Animal markings flow independently of their bodies. |
 | 95 | pink + orange + orange | Long Echoes | Coming soon | Sparse world-position pose echoes become numerous and long-lived. |
 | 96 | pink + orange + yellow | Recursive Memories | Coming soon | Previous screen images shrink, rotate or drift into the current one. |

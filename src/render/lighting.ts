@@ -10,7 +10,9 @@ export const MAX_LIGHTS = 24;
 /** The sleeping legends' clearings lit at once, the nearest (render/glades.ts). */
 export const MAX_GLADES = 4;
 
+import { LANDSCAPE_GLSL, landscapeUniform } from "./landscapeUniforms";
 export const LIGHT_UNIFORMS = {
+  uLandscapeTrip: landscapeUniform,
   uAmb: { value: new THREE.Vector3() },
   /** What nothing lights, darkened: the ambient and the moonlight times this (the mood's unlit; 1 as they are). */
   uUnlitDim: { value: 1 },
@@ -100,6 +102,7 @@ export function applyStyleLight(st: Style, glowReach: number, metresPerArtPixel:
 }
 
 export const LIGHT_GLSL = /* glsl */ `
+${LANDSCAPE_GLSL}
 uniform vec3 uAmb, uMoon, uMoonDir, uMoonBeam, uGlowPos, uGlowRgb;
 uniform float uUnlitDim;
 uniform vec4 uMoonUp;
@@ -256,6 +259,13 @@ vec3 nightLightShaded(vec3 N, vec3 P, float moonK) {
     float line = 1. - smoothstep(0., uContourDream.z, abs(fract(level + .5) - .5));
     vec3 ink = .55 + .45 * cos(floor(level + .5) * 1.17 + vec3(0., 2.1, 4.2));
     l = mix(l, l * .5 + ink * (line * 3. + .12), uContourDream.x);
+  }
+  if (uLandscapeTrip.x == TRIP_UNDERWATER_LIGHT) {
+    vec2 q = P.xz * .42 + P.y * vec2(.19, -.15);
+    float t = uLandscapeTrip.w * .65;
+    float lattice = sin(q.x + .8 * sin(q.y + t)) + cos(q.y * 1.2 - t + .6 * sin(q.x - t));
+    float caustic = 1.0 - smoothstep(.025, .22, abs(lattice));
+    l += vec3(.25, .8, .94) * caustic * uLandscapeTrip.y * uLandscapeTrip.z;
   }
   return softKnee(l);
 }
