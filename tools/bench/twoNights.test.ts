@@ -37,10 +37,10 @@ describe("two nights in one page (test C1)", () => {
   }, 120_000);
   it("a new game puts the fight's settings back as a page starts them (the last night's are read before its first fight)", () => {
     const other = structuredClone(TUNING);
-    other.fight = { ...other.fight, scale: 2 }; other.groundSpeed *= 2;
+    other.fight = { ...other.fight, scale: 2 }; other.groundSpeed *= 2; other.difficulty = { creatureSpeed: 1.7, rangedRange: 1.5, adultStrength: 2 };
     night(123, other, 2, 60);
-    expect(FIGHT.scale).toBe(2);
+    expect(FIGHT.scale).toBe(2); expect([FIGHT.creature, FIGHT.adult]).toEqual([1.7, 2]);
     newGame(165272, TUNING);
-    expect(FIGHT).toEqual({ scale: 1, speed: 1, momentum: 1, charge: { reach: 1, turn: 1, brake: 1 }, leap: { reach: 1, through: -1.5 }, walk: 0 });
+    expect(FIGHT).toEqual({ scale: 1, speed: 1, momentum: 1, charge: { reach: 1, turn: 1, brake: 1 }, leap: { reach: 1, through: -1.5 }, walk: 0, creature: 1, adult: 1 }); // (the difficulty's too: Ed, 2026-11-03)
   }, 120_000);
 });

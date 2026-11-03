@@ -419,7 +419,10 @@ describe("the bots and the spell", () => {
   it("the skilled bot converts a stone by casting it, then gathers its loose sigils (seed 11, the 10-area home)", async () => {
     // Retain the seeded ten-area route for this bot's conversion/gathering integration scenario.
     const { newBot } = await import("./bot");
-    const g = newGame(11, withTuning({ cast: { ...BUILT.cast, on: true }, map: { ...BUILT.map!, islandAreas: 10 } }));
+    // (the swarms as they were before Ed's 2026-11-03 bump, curve 1.3 and the old 64-wave scale: the bot's casting and gathering is
+    // what's watched here, not whether it wins the bigger fights the steeper curve now puts in the home island's first areas)
+    const swarm = { ...BUILT.population.swarm, curve: 1.3, largestIsland: 64 };
+    const g = newGame(11, withTuning({ cast: { ...BUILT.cast, on: true }, map: { ...BUILT.map!, islandAreas: 10 }, population: { ...BUILT.population, swarm } }));
     g.clock.paused = false; g.witch = { ...g.witch, seated: false, perch: false };
     const bot = newBot("skilled");
     let cast = false, gathered = false;

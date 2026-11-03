@@ -9,10 +9,11 @@ import { largestWorldTuning } from "../test/worlds";
 import { sleepCellAudit } from "../test/sleepCells";
 
 const idle = { moveX: 0, moveZ: 0, toggleMode: false, zoom: 0 };
+// (the ids follow how many creatures the areas before them hold: the swarms by island, Ed 2026-11-03, put more in most)
 const expected = [[18, "newt", true], [19, "newt", false], [34, "snowleopard", true], [35, "snowleopard", false],
-  [86, "fennec", true], [87, "fennec", false], [164, "squirrel", true], [165, "squirrel", false],
-  [185, "lion", true], [186, "lion", false], [454, "polarbear", true], [455, "polarbear", false],
-  [485, "moth", true], [486, "moth", false]];
+  [89, "fennec", true], [90, "fennec", false], [186, "squirrel", true], [187, "squirrel", false],
+  [208, "lion", true], [209, "lion", false], [514, "polarbear", true], [515, "polarbear", false],
+  [546, "moth", true], [547, "moth", false]];
 // Largest roster reproduces the seven paired legend areas; small/radius fixtures guard the original non-paired contract.
 const fixtures = [
   { name: "largest", tuning: largestWorldTuning(TUNING), raw: 14, cells: 65 },

@@ -1,0 +1,8 @@
+{
+  "version": null,
+  "items": [
+    "Harder fights: creatures run 20% faster, their ranged attacks reach 20% further and adults are stronger, each with a Difficulty slider on the pause page.",
+    "Packs grow sooner and with each island's size: most areas start with more creatures, and only the largest islands' last areas field the biggest packs.",
+    "The spark's speed now rises in a straight line with the tempo: 1 m/s at 100 bpm, 1.8 at the usual 120, 3 at 150 and 5 at 200, with two Difficulty sliders for the 100 and 200 bpm speeds."
+  ]
+}

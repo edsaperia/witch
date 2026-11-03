@@ -1775,6 +1775,25 @@ how a creature shows its tie to its sigil (rim: a glow at its feet in the sigil'
 
 Creatures: how many and how they grow, move, notice, nap, guard and fight.
 
+### `difficulty`
+
+How hard the creatures are: faster in a fight, further with their ranged attacks, and adults stronger.
+
+1. Ed, 2026-11-03: "Animals +20% speed, ranged attacks have +20% range, adults are stronger."
+Ed, 2026-11-03: "the game is much too easy". The pause page's Difficulty sliders set them live. All three at 1: as before.
+Code: `config/decisions/1701-difficulty.json`
+
+- **`difficulty.creatureSpeed`**: every creature's movement speed in a fight times this: its run, its sprint closing in and its chase at her, a heavy's top speed, charges, swoops, a legend's charge, a besieger's march (not her, not its shots, lunges, leaps or hops' timing, nor a creature's roaming or leash pace).
+- **`difficulty.rangedRange`**: every ranged attack's reach times this, at anything: a shot, a lob or a beam (its cast's range, its bolt's life and a beam's length), never a melee one or a pulse round itself.
+  On top of dodge.b.range at her. Legends' own throws and beams as they were.
+- **`difficulty.adultStrength`**: an adult's health (a full 💌 ring's worth of blows) and damage in a fight times this, hers and the wild's alike; its evolving cost and the swarm builder's estimates as they were.
+
+| knob | type | range |
+|---|---|---|
+| `difficulty.creatureSpeed` | number | 0 to … |
+| `difficulty.rangedRange` | number | 0 to … |
+| `difficulty.adultStrength` | number | 0 to … |
+
 ### `fight`
 
 The scale and speed fights are played at, with creatures running at about her speed.
@@ -2141,8 +2160,11 @@ Code: `rules/growth.ts`, `rules/swarm.ts`, `config/swarm-power.json`, `tools/bal
   1. Ed, 2026-10-07: "every wild area has at least one hostile wild creature"
 - **`population.swarm.classes`**: Swarm species come in strong, medium and light classes, smaller swarms of stronger creatures.
   1. Ed, 2026-10-10: 2026-10-11
-  strong (cap 6), medium (cap 12: swarm.reference, and every species not listed) and light (cap 16; Ed: "a swarm of 20 is too many; cap it at 16"), each class's strength 12 / its cap on its creatures' health and damage (strong ×2, light ×0.75; rules/combat/data.ts), so moving a species is one line here. The target is the estimated power (Σhp × Σdps; the witch doesn't count: her three hits ignore damage) of a medium reference swarm of swarm.start + (swarm.endAverage − swarm.start)·p^swarm.curve creatures (1 + 11·p^1.3), its young share easing from swarm.youngShare[0] (1.0) to [1] (0.2). p is the master curve's [1]: by the area's wave, (wave − 1)/(swarm.waves − 1), so wave swarm.waves (64) brings today's final swarm, every island plays it from wave 1 as far as it has areas, and a bigger map holds there after.
+  strong (cap 6), medium (cap 12: swarm.reference, and every species not listed) and light (cap 16; Ed: "a swarm of 20 is too many; cap it at 16"), each class's strength 12 / its cap on its creatures' health and damage (strong ×2, light ×0.75; rules/combat/data.ts), so moving a species is one line here. The target is the estimated power (Σhp × Σdps; the witch doesn't count: her three hits ignore damage) of a medium reference swarm of swarm.start + (swarm.endAverage − swarm.start)·p^swarm.curve creatures (1 + 11·p^0.8), its young share easing from swarm.youngShare[0] (1.0) to [1] (0.2). p is the area's place along its own island's route, (its place − 1)/(the route's length − 1), times the island's size (its route's length) over swarm.largestIsland, at most 1 (rules/swarm.ts islandShare), so the last area of the largest islands fields the final swarm and a smaller island's last its share of the way along the curve.
   Code: `rules/combat/data.ts`
+- **`population.swarm.largestIsland`**: the largest island's areas: an island this big or bigger reaches the final swarm at its last area, a smaller one its size over this of the way along the curve.
+  1. Ed, 2026-11-03: "Pack growth: grows along each island's own length, scaled by the island's size, so only the largest islands reach full packs. The curve gets steeper (1.3 → 0.8) so packs grow sooner."
+  50: the phase-5 islands (rules/rosters.ts sizeOfPhase), the largest on the chart; home grows to 64 at the campaign's end and holds there. It replaces the master curve's length in waves (64, its old knob), under which a 10-area island's last area stopped at p 0.14.
 
 | knob | type | range |
 |---|---|---|
@@ -2154,7 +2176,7 @@ Code: `rules/growth.ts`, `rules/swarm.ts`, `config/swarm-power.json`, `tools/bal
 | `population.byRoute.minHostile` | number | 0 to … |
 | `population.swarm.start` | number | 0 to … |
 | `population.swarm.endAverage` | number | 0 to … |
-| `population.swarm.waves` | number | 0 to … |
+| `population.swarm.largestIsland` | number | 0 to … |
 | `population.swarm.curve` | number | 0 to … |
 | `population.swarm.youngShare` | array of number |  |
 | `population.swarm.reference` | string |  |
@@ -2403,10 +2425,15 @@ The glowing line on the ground that joins the runestones in the order the waves 
 The pause page's Waves slider sets it live, 0 to 6, remembered on this browser (config/decisions/953-waves.json, app/settings.ts); ?pulse=<m/s> or ?pulse=off sets it from a link, over the saved one. The ley lines [1][2][3]: a glowing line through every wave's runestone in the order the waves wake them, home first, the whole route the whole time (party.picker route keeps it from crossing itself): the sections ahead of the last stone reached each fade times as bright as the one before, the one just left behind behindBright times as bright as the next and each before it fade times that, none fainter than far[0] ahead or far[1] behind (as shares). Each wanders along the low ground between its stones, straying up to valley of its length (80 m at most) to follow the hills' valleys, and a shimmer flows along it toward the next stone at flow[0] m/s, flow[1] m apart. It stays on the ground in both modes (Ed): width metres across on the ground and over the treetops (wider there, with a faint glow through the crowns), height metres over the ground in each. Round 14 [4][5]: on the ground the line is pixels, a hard core core[0] metres each side of its middle (core[1] over the treetops) in whole art pixels, a half-bright rim core[2] (core[3]) round it, its brightness worked out per art pixel along it in flat quarter steps, the pulse's head and the growing tip stepped the same way; round it the smooth glow it casts, over width; from the treetops the glow through the crowns stays smooth. brightness 0.3 -> 0.4, width [2, 4.5] -> [3, 5.5]. ?ley=0 turns them off. Its whole length [6]: fade, behindBright and far all 1, so every section is as bright as the next; unbroken into and out of each stone; laid on the ground every 2 m so it never sinks into a crest; shown through the trees (never through a hill, the witch or a creature) at the same brightness; the current link as bright as the rest, the pulse only adding its head and arrival flash.
 Code: `config/decisions/953-waves.json`, `app/settings.ts`
 
-- **`leyLines.pulseSpeed`**: How fast the pulse runs along the ley line, which sets how long each wave takes to arrive.
+- **`leyLines.pulseSpeed`**: How fast the pulse runs along the ley line, times the spark's speed by the tempo (pulseAt100, pulseAt200), which sets how long each wave takes to arrive.
   1. Ed, 2026-10-09: "Pure constant speed"
   2. Ed, 2026-10-18: "Default starting wave speed is 1m/s" (1; 4 before)
-  the pulse's speed along the route's own curves, metres a second [2], times the party's tempo (a knockdown's BPM speeds it); a wave lands as it reaches the next stone, so a wave's gap is its link's length over the speed; 0 holds the pulse where it is (no waves). The boot has its own speed (boot.speed).
+  the pulse's speed along the route's own curves [2]: since 2026-11-03 a multiplier (1: as the line gives, 1.0 m/s at 100 bpm to 5.0 at 200) on the spark's speed by the party's tempo (a record's or a knockdown's BPM moves it along the line); a wave lands as it reaches the next stone, so a wave's gap is its link's length over the speed; 0 holds the pulse where it is (no waves). The boot has its own speed (boot.speed).
+- **`leyLines.pulseAt100`**: the spark's speed in metres a second at 100 bpm: a straight line runs through it and pulseAt200, so with 1 and 5 it is 1.8 m/s at 120, 3 at 150 and 5 at 200, carried on the same way below 100 and above 200, never under 0.2.
+  1. Ed, 2026-11-03: "I think a smooth increase from 100 bpm 1.0 m/s to 200 bpm 5.0 m/s"
+  2. Ed, 2026-11-03: "I think it should be linear"
+  speed = pulseAt100 + (pulseAt200 − pulseAt100) × (bpm − 100) ÷ 100, at least 0.2 m/s (rules/beat.ts SPARK_FLOOR), bpm the party's tempo as the spark reads it (the wave's own, her record's shift and her knockdowns' bonus); times pulseSpeed (rules/beat.ts sparkSpeedAt, tempoRate). It replaces the tempo's ratio to the wave's own.
+- **`leyLines.pulseAt200`**: the spark's speed in metres a second at 200 bpm, the line's other anchor (see pulseAt100).
 - **`leyLines.reveal`**: How fast the ley line grows out from the treehouse ahead of the waves, so no stone pops on at once.
   1. Ed, 2026-10-06: "The pulse starts from the treehouse at the start of the first wave. before that, during boot up phase, there's no leyline ... Then the leyline appears, starting at the treehouse, moving three times (adjustable) the speed on the pulse (so it reaches runestone 3 by the time the first wave finishes)"
   from the end of home's boot the line grows out from the treehouse along the route at this many links a wave (this many times the pulse's speed), a soft glow at its tip, reaching this stone as the first wave lands and going on at that pace until the whole route is drawn (so no stone pops on at once; rules/leypulse.ts leyReachTimes gives when it reaches each, for the beacons); none at all while home boots up. The pulse itself (render/leylines.ts) runs along the link from the last stone reached by the wave countdown's share (rules/leypulse.ts, as the HUD's wave pointer), the stretch behind it brighter, the whole link brightening toward the wave. The boot (rules/bootRing.ts): the party spell sends the pulse from the treehouse round the home ring clockwise from the top, turning each stone into its speaker, the line drawn ahead of it at reveal times its pace. ?ley=0 turns them off.
@@ -2425,6 +2452,8 @@ Code: `config/decisions/953-waves.json`, `app/settings.ts`
 |---|---|---|
 | `leyLines.on` | boolean |  |
 | `leyLines.pulseSpeed` | number | 0 to … |
+| `leyLines.pulseAt100` | number | 0 to … |
+| `leyLines.pulseAt200` | number | 0 to … |
 | `leyLines.reveal` | number | 0 to … |
 | `leyLines.far` | array of number |  |
 | `leyLines.behindBright` | number | 0 to … |
