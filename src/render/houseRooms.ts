@@ -304,7 +304,7 @@ export class HouseRoomsView {
   /** A frame: `onTreehouse` takes a point of the Ent's art (pixels) into the world (render/view.ts); `ht`, her clock. */
   update(v: View, onTreehouse: (px: number, py: number) => V3, ht: number): void {
     const g = v.game, w = g.witch, t = g.tuning, T = v.assets.treehouse, d = deckOf(g.map, t);
-    const inside = !!(d?.house?.rooms && T.ent && w.perch && (w.mode === "ground" || w.mode === "descending")); // (at her decks too: the Terrace the oak's floor, render/houseArt.ts)
+    const inside = !!(d?.house?.rooms && T.ent && w.perch && (w.mode === "ground" || w.mode === "descending") && (!v.fly || v.fly.indoors)); // (at her decks too: the Terrace the oak's floor, render/houseArt.ts; a sail's dive: only on its way down into her room, rules/arrive.ts diveIndoors)
     const look = t.treehouse.house?.look;
     const preview = !!look?.approach && !w.perch && w.mode !== "ground" && !!d?.house?.rooms && approachStrength(true, true, houseApproachDistance(w.x, w.z, d.x, d.z, HOUSE_ROOMS.turn ?? 0, APPROACH_OUTLINE.rooms, APPROACH_OUTLINE.branches), look?.radius ?? 40) > 0;
     const shown = inside || preview;

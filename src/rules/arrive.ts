@@ -17,7 +17,8 @@ export interface Handoff { cam: { x: number; z: number; height: number; pitch: n
 /** A camera shot as the game's camera is posed (render/view/culling.ts poseCamera): looking north at (tx, ty, tz) from angle
  *  degrees above it and distance metres back; ty in the world's heights (not over the ground); fov degrees, vertical. */
 export interface Shot { tx: number; ty: number; tz: number; angle: number; distance: number; fov: number;
-  /** the dive's own bend (diveBend: curvature per metre), on top of the night's; none if absent */ bend?: number }
+  /** the dive's own bend (diveBend: curvature per metre), on top of the night's; none if absent */ bend?: number;
+  /** the dive on its way down into her room (diveIndoors): the house drawn as from inside; absent or false, the oak from outside */ indoors?: boolean }
 
 /** The flight: its shots and the seconds at which it passes each (times[0] = 0). */
 export interface ArrivePlan { keys: Shot[]; times: number[]; /** the target's speed north at the start (m/s): the chart's, carried on */ v0: number }
@@ -82,6 +83,11 @@ export function diveBend(p: ArrivePlan, s: number, B: ArriveTuning["bend"]): num
   const grow = B.grow > 0 ? smooth(s / B.grow) : 1, relax = B.relax > 0 ? 1 - smooth((s - (T - B.relax)) / B.relax) : 1;
   return B.curve * grow * relax;
 }
+/** Whether the dive's camera is on its way down into her room, `s` seconds into plan `p`: its last leg, from the frame over the
+ *  dancefloor and the treehouse down into her bedroom. From there the house is drawn as from inside (its rooms, the crown laid open
+ *  over them), as when she walks in; before it, the oak as from outside, standing in the world and bent with it, so its crown can come
+ *  up over the horizon (Ed, 2026-11-03, diveBend). */
+export const diveIndoors = (p: ArrivePlan, s: number): boolean => s >= p.times[Math.max(0, p.times.length - 2)];
 const smooth = (u: number): number => { const x = Math.max(0, Math.min(1, u)); return x * x * (3 - 2 * x); };
 
 /** How far a spot is from the dive's view (Ed, 2026-10-24, the sail's transition: "we only really need the scenery south of the

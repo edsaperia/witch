@@ -2,7 +2,7 @@
 import { describe, expect, it } from "vitest";
 import { TUNING } from "./tuning";
 import { newGame, poseOf } from "./game";
-import { arrivePlan, diveBend, diveReach, dueAt, dueRate, handoffShot, inShot, newFlightClock, planLength, shotAt, shotCamera, southCoast, stepFlightClock, type Handoff, type Shot } from "./arrive";
+import { arrivePlan, diveBend, diveIndoors, diveReach, dueAt, dueRate, handoffShot, inShot, newFlightClock, planLength, shotAt, shotCamera, southCoast, stepFlightClock, type Handoff, type Shot } from "./arrive";
 
 const A = TUNING.arrive!;
 // Keep this seeded spatial fixture: arrival duration and framing depend on its real south coast and treehouse distance.
@@ -179,6 +179,10 @@ describe("the sail's hand-off over the water and the crown over the bent horizon
       expect(up).toBeGreaterThan(low);
       expect(up).toBeLessThan(T - B.relax);
     }
+    // the oak seen from outside (standing in the world, bent with it) till the last leg down into her room, then the house from inside
+    const down = plan.times.at(-2)!;
+    for (let s = 0; s < down; s += 0.25) expect(diveIndoors(plan, s)).toBe(false);
+    for (let s = down; s <= T + 1; s += 0.25) expect(diveIndoors(plan, s)).toBe(true);
     // with no bend knob, or none, the dive is unbent
     expect(diveBend(plan, low, undefined)).toBe(0);
     expect(diveBend(plan, low, { ...B, curve: 0 })).toBe(0);

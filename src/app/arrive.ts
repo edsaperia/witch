@@ -7,7 +7,7 @@
 // skips it). Any key or tap skips to the end. main.ts starts the night (her clock, the party spell's cast) when it lands.
 import type { Game } from "../rules/game";
 import { poseOf } from "../rules/game";
-import { arrivePlan, diveBend, dueAt, dueRate, newFlightClock, planLength, shotAt, stepFlightClock, type ArrivePlan, type ArriveTuning, type FlightClock, type Shot } from "../rules/arrive";
+import { arrivePlan, diveBend, diveIndoors, dueAt, dueRate, newFlightClock, planLength, shotAt, stepFlightClock, type ArrivePlan, type ArriveTuning, type FlightClock, type Shot } from "../rules/arrive";
 import type { Arrival } from "./arrival";
 import { groundHeight } from "../render/height";
 import type { View } from "../render/view";
@@ -72,7 +72,7 @@ export class ArrivalFlight {
     if (stepFlightClock(this.clock, now, this.warmT).faded) this.fadeStill();
     this.guard(v, before, now);
     if (this.clock.s >= planLength(this.plan)) { this.land(v); return true; }
-    v.fly = { ...shotAt(this.plan, this.clock.s), bend: diveBend(this.plan, this.clock.s, this.A.bend) }; // (warming up: the hand-off's own shot, behind the still, unbent; the dive's bend: the crown over the horizon)
+    v.fly = { ...shotAt(this.plan, this.clock.s), bend: diveBend(this.plan, this.clock.s, this.A.bend), indoors: diveIndoors(this.plan, this.clock.s) }; // (warming up: the hand-off's own shot, behind the still, unbent; the dive's bend: the crown over the horizon)
     return false;
   }
 
