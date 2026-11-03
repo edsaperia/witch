@@ -929,7 +929,7 @@
       "notes": "Treehouse look settings; all four switches on by default, chosen by Ed on 2 November."
     },
     "treehouse.house.cauldronReach": {
-      "what": "Metres round the cauldron's middle that a brew's smoke reaches: every witch on foot in the house within it while the smoke lasts takes the potion, and she unloads the mushrooms she carries within it (rules/mushrooms.ts inCauldronReach; the baskets work by their own nearness). It replaced the cauldron's room.",
+      "what": "Metres round the cauldron's middle that a brew's smoke reaches: every witch on foot in the house within it while the smoke lasts takes the potion.",
       "decisions": [
         {
           "by": "Ed",
@@ -942,7 +942,7 @@
           "quote": "go on treehouse. 10m cauldron reach is fine."
         }
       ],
-      "notes": "The smoke's drawing spreads over the same circle (render/brewing.ts)."
+      "notes": "It replaced the cauldron's room. She unloads the mushrooms she carries within it too (rules/mushrooms.ts inCauldronReach); the baskets work by their own nearness. The smoke's drawing spreads over the same circle (render/brewing.ts)."
     },
     "treehouse.house.cauldronSmoke": {
       "what": "Seconds a brew's smoke hangs over the cauldron's reach once the third mushroom lands: a witch who walks into it at any moment before it clears takes the potion too, once.",
