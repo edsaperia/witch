@@ -4839,7 +4839,7 @@
         "rangedRange": {
           "type": "number",
           "minimum": 0,
-          "description": "every ranged attack's reach times this, at anything: a shot, a lob, a beam (its cast's range, its bolt's life and a beam's length; on top of dodge.b.range at her); never a melee one or a pulse round itself."
+          "description": "every ranged attack's reach times this, at anything: a shot, a lob or a beam (its cast's range, its bolt's life and a beam's length), never a melee one or a pulse round itself."
         },
         "adultStrength": {
           "type": "number",

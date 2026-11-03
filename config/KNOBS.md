@@ -1781,10 +1781,11 @@ How hard the creatures are: faster in a fight, further with their ranged attacks
 
 1. Ed, 2026-11-03: "Animals +20% speed, ranged attacks have +20% range, adults are stronger."
 Ed, 2026-11-03: "the game is much too easy". The pause page's Difficulty sliders set them live. All three at 1: as before.
-Code: `config/decisions/difficulty-difficulty.json`
+Code: `config/decisions/1701-difficulty.json`
 
 - **`difficulty.creatureSpeed`**: every creature's movement speed in a fight times this: its run, its sprint closing in and its chase at her, a heavy's top speed, charges, swoops, a legend's charge and walk home, a besieger's march (not her, not its shots, lunges, leaps or hops' timing, nor a creature's roaming or leash pace).
-- **`difficulty.rangedRange`**: every ranged attack's reach times this, at anything: a shot, a lob, a beam (its cast's range, its bolt's life and a beam's length; on top of dodge.b.range at her); never a melee one or a pulse round itself. Legends' own throws and beams as they were.
+- **`difficulty.rangedRange`**: every ranged attack's reach times this, at anything: a shot, a lob or a beam (its cast's range, its bolt's life and a beam's length), never a melee one or a pulse round itself.
+  On top of dodge.b.range at her. Legends' own throws and beams as they were.
 - **`difficulty.adultStrength`**: an adult's health (a full 💌 ring's worth of blows) and damage in a fight times this, hers and the wild's alike; its evolving cost and the swarm builder's estimates as they were.
 
 | knob | type | range |
@@ -2163,7 +2164,7 @@ Code: `rules/growth.ts`, `rules/swarm.ts`, `config/swarm-power.json`, `tools/bal
   Code: `rules/combat/data.ts`
 - **`population.swarm.largestIsland`**: the largest island's areas: an island this big or bigger reaches the final swarm at its last area, a smaller one its size over this of the way along the curve.
   1. Ed, 2026-11-03: "Pack growth: grows along each island's own length, scaled by the island's size, so only the largest islands reach full packs. The curve gets steeper (1.3 → 0.8) so packs grow sooner."
-  50: the phase-5 islands (rules/rosters.ts sizeOfPhase), the largest on the chart; home grows to 64 at the campaign's end and holds there. It replaces swarm.waves (64), the master curve's length in waves, under which a 10-area island's last area stopped at p 0.14.
+  50: the phase-5 islands (rules/rosters.ts sizeOfPhase), the largest on the chart; home grows to 64 at the campaign's end and holds there. It replaces the master curve's length in waves (64, its old knob), under which a 10-area island's last area stopped at p 0.14.
 
 | knob | type | range |
 |---|---|---|
