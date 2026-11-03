@@ -1182,7 +1182,7 @@
     "legendFlash": 0.5,
     "visibility": {
       "size": 1.75,
-      "opacity": 0.8,
+      "opacity": 0.9,
       "bloom": 2,
       "duration": 1.5,
       "zoneDensity": 0.5,

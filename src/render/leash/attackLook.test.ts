@@ -29,7 +29,7 @@ const NEW = TUNING.attackFx.visibility;
 
 describe("the creatures' spells, dialled up (attackFx.visibility)", () => {
   it("defaults to Ed's 3 November dial-up: bigger, more solid, more glow, longer, denser zones, stronger ground marks", () => {
-    expect(NEW).toEqual({ size: 1.75, opacity: 0.8, bloom: 2, duration: 1.5, zoneDensity: 0.5, groundMark: 0.45 });
+    expect(NEW).toEqual({ size: 1.75, opacity: 0.9, bloom: 2, duration: 1.5, zoneDensity: 0.5, groundMark: 0.45 });
     expect(NEW.size).toBeGreaterThan(OLD_VISIBILITY.size); expect(NEW.bloom).toBeGreaterThan(OLD_VISIBILITY.bloom);
     expect(NEW.groundMark).toBeGreaterThan(OLD_VISIBILITY.groundMark); expect(zoneEvery(NEW.zoneDensity)).toBeLessThan(zoneEvery(OLD_VISIBILITY.zoneDensity));
   });
