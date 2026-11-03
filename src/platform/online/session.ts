@@ -335,7 +335,12 @@ export function onlineSession(options: SessionOptions) {
               guestAccumulator -= STEP;
               const quantum = { ...controls };
               for (const edge of INPUT_EDGES) { quantum[edge] = !!guestEdges[edge]; delete guestEdges[edge]; }
-              if (!connection.sendInput({ sequence, controls: quantum })) throw new Error("The guest telephone disconnected.");
+              if (!connection.sendInput({ sequence, controls: quantum })) {
+                // Transport-away may arrive synchronously while a closing socket
+                // rejects this send. Keep the visit for its authenticated rejoin.
+                if (resuming && !ready) return true;
+                throw new Error("The guest telephone disconnected.");
+              }
               if (!game.clock.paused) prediction?.input(sequence, quantum, STEP);
               sequence++;
               if (prediction) hitPresentation?.step(prediction.actor, quantum, STEP);

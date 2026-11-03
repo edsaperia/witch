@@ -14,6 +14,45 @@ class Socket implements RelaySocket {
   open() { this.readyState = 1; this.emit("open"); }
 }
 afterEach(() => vi.useRealTimers());
+it.each([1001,1008])("does not resume a closing guest after non-recoverable code %s", code => {
+  vi.useFakeTimers(); const sockets: Socket[]=[],onClose=vi.fn(),onError=vi.fn();
+  const c=connectRelay({endpoint:"ws://localhost:8787",room:"1234567",token:"join",socket:()=>{const s=new Socket();sockets.push(s);return s;},onMessage:vi.fn(),onClose,onError});
+  sockets[0].open(); sockets[0].emit("message",JSON.stringify({protocol:1,type:"joined",resume:{room:"1234567",player:1,token:"a".repeat(64)}})); c.sendActive();
+  sockets[0].readyState=2;c.sendInput({});sockets[0].transportClose(code,true);
+  expect(onClose).toHaveBeenCalledOnce(); expect(sockets).toHaveLength(1);
+  vi.advanceTimersByTime(30000);expect(onClose).toHaveBeenCalledOnce();expect(onError).not.toHaveBeenCalled();expect(vi.getTimerCount()).toBe(0);
+});
+it("keeps the original20s deadline when the close event arrives late and falls back once",()=>{
+  vi.useFakeTimers();const sockets:Socket[]=[],onError=vi.fn();
+  const c=connectRelay({endpoint:"ws://localhost:8787",room:"1234567",token:"join",socket:()=>{const s=new Socket();sockets.push(s);return s;},onMessage:vi.fn(),onClose:vi.fn(),onError});
+  sockets[0].open();sockets[0].emit("message",JSON.stringify({protocol:1,type:"joined",resume:{room:"1234567",player:1,token:"a".repeat(64)}}));c.sendActive();
+  sockets[0].readyState=2;c.sendInput({});vi.advanceTimersByTime(5000);expect(sockets).toHaveLength(1);
+  sockets[0].transportClose(1005,true);vi.advanceTimersByTime(14999);expect(onError).not.toHaveBeenCalled();
+  vi.advanceTimersByTime(1);expect(onError).toHaveBeenCalledOnce();expect(onError.mock.calls[0][0].message).toBe("Connection lost");
+  vi.advanceTimersByTime(30000);expect(onError).toHaveBeenCalledOnce();expect(vi.getTimerCount()).toBe(0);
+});
+it("cancels a pending closing-socket recovery on explicit Leave",()=>{
+  vi.useFakeTimers();const sockets:Socket[]=[],onError=vi.fn(),onClose=vi.fn();
+  const c=connectRelay({endpoint:"ws://localhost:8787",room:"1234567",token:"join",socket:()=>{const s=new Socket();sockets.push(s);return s;},onMessage:vi.fn(),onClose,onError});
+  sockets[0].open();sockets[0].emit("message",JSON.stringify({protocol:1,type:"joined",resume:{room:"1234567",player:1,token:"a".repeat(64)}}));c.sendActive();
+  sockets[0].readyState=2;c.sendInput({});c.close();vi.advanceTimersByTime(30000);
+  expect(sockets).toHaveLength(1);expect(onError).not.toHaveBeenCalled();expect(onClose).not.toHaveBeenCalled();expect(vi.getTimerCount()).toBe(0);
+});
+it("pauses a closing telephone before its close event, then resumes without registering again", () => {
+  vi.useFakeTimers(); const sockets: Socket[] = [], onMessage=vi.fn(), onError=vi.fn(), onClose=vi.fn();
+  const publicKey = { algorithm: "Ed25519" as const, spki: "MCowBQYDK2VwAyEADV7zdnqg1CPihvUiq-gktcY8RGA6lz4lu0wePSxaWWA" };
+  const c=connectRelay({endpoint:"wss://example.test",room:"",telephone:true,telephonePublicKey:publicKey,
+    socket:()=>{const s=new Socket();sockets.push(s);return s;},onMessage,onError,onClose});
+  const old=sockets[0], ticket={room:"1234567",player:1,token:"a".repeat(64)};
+  old.open(); c.identityVerified(); old.emit("message",JSON.stringify({protocol:1,type:"call-connected",role:"guest",player:1,resume:ticket}));c.sendActive();
+  old.readyState=2; expect(c.sendInput({sequence:1})).toBe(false);
+  expect(onMessage).toHaveBeenLastCalledWith({protocol:1,type:"transport-away"});
+  expect(sockets).toHaveLength(1); // Wait for the code before deciding whether a close is recoverable.
+  old.transportClose(1005,true); sockets[1].open();
+  expect(sockets[1].sent).toEqual([{protocol:1,type:"resume",...ticket}]);
+  expect(onClose).not.toHaveBeenCalled(); expect(onError).not.toHaveBeenCalled();
+  c.close(); expect(vi.getTimerCount()).toBe(0);
+});
 it.each(["host", "guest"] as const)("authenticates a replacement %s socket with a rotating actor ticket and ignores old callbacks", role => {
   vi.useFakeTimers(); const sockets:Socket[]=[], onMessage=vi.fn(),onError=vi.fn(),onClose=vi.fn(),onTrouble=vi.fn();
   const c=connectRelay({endpoint:"ws://localhost:8787",room:"1234567",...(role==="guest"?{token:"join"}:{}),socket:()=>{const s=new Socket();sockets.push(s);return s;},onMessage,onError,onClose,onTrouble});

@@ -35,7 +35,7 @@ export function connectRelay(options: RelayOptions) {
   let ws: RelaySocket;
   let resume: { room: string; player: 0 | 1; token: string } | null = null;
   let recovering = false, recoveryUntil = 0, retryAt = 0, recoveryTimer: ReturnType<typeof setTimeout> | undefined;
-  let peerUntil = 0, awaitingRebase = false;
+  let peerUntil = 0, awaitingRebase = false, closingUntil = 0;
   const retired = new Set<RelaySocket>();
   const closeRetired = () => { for (const old of retired) old.close(); retired.clear(); };
   let stopped = false, timer: ReturnType<typeof setInterval> | undefined;
@@ -48,6 +48,14 @@ export function connectRelay(options: RelayOptions) {
   const trouble = (on: boolean, remainingMs?: number) => { if (on || on !== troubled) { troubled = on; options.onTrouble?.(on, remainingMs); } };
   const activate = () => { if (!active) { active = true; lastDownstream = Date.now(); arm(); } };
   const sendMessage = (message: Record<string, unknown>): boolean => {
+    // readyState changes before the close event. Stop guest stepping now, but wait
+    // for the event's code before deciding whether this actor may resume.
+    if (!stopped && !recovering && active && resume && ws.readyState >= 2 && message.type !== "leave" && !closingUntil) {
+      closingUntil = Date.now() + ONLINE_TIMING.dropMs;
+      trouble(true, ONLINE_TIMING.dropMs);
+      options.onMessage({ protocol: 1, type: "transport-away" });
+      arm();
+    }
     if (stopped || ws.readyState !== 1 || recovering && message.type !== "resume") return false;
     ws.send(JSON.stringify({ protocol: 1, ...message })); return true;
   };
@@ -74,17 +82,22 @@ export function connectRelay(options: RelayOptions) {
     }
     recoveryTimer = setTimeout(checkRecovery, Math.min(250, remaining));
   }
-  function recover(until = Date.now() + ONLINE_TIMING.dropMs): void {
+  function recover(until = closingUntil || Date.now() + ONLINE_TIMING.dropMs): void {
     if (stopped) return;
     if (!active || !resume) { stopped = true; cleanup(); trouble(false); options.onClose(); return; }
     if (recovering) return;
-    recovering = true; recoveryUntil = until; retryAt = 0;
+    recovering = true; recoveryUntil = until; retryAt = 0; closingUntil = 0;
     cleanup(); trouble(true, Math.max(0, until - Date.now()));
     options.onMessage({ protocol: 1, type: "transport-away" });
     checkRecovery();
   }
   function checkDownstream(): void {
     if (!active || stopped) return;
+    if (closingUntil) {
+      if (Date.now() >= closingUntil) { lost(); return; }
+      trouble(true, closingUntil - Date.now());
+      watchdog = setTimeout(checkDownstream, Math.min(250, closingUntil - Date.now())); return;
+    }
     const silence = Date.now() - lastDownstream;
     const rejoinUntil = peerUntil || (awaitingRebase ? recoveryUntil : 0);
     if (rejoinUntil && Date.now() >= rejoinUntil) { lost(); return; }
@@ -98,7 +111,7 @@ export function connectRelay(options: RelayOptions) {
   }
   function arm(): void {
     if (watchdog !== undefined) clearTimeout(watchdog);
-    watchdog = active && !stopped ? setTimeout(checkDownstream, peerUntil || awaitingRebase ? 250 : heartbeatMs * 2) : undefined;
+    watchdog = active && !stopped ? setTimeout(checkDownstream, peerUntil || awaitingRebase || closingUntil ? 250 : heartbeatMs * 2) : undefined;
   }
   function openSocket(): void {
   const socket = makeSocket(url.href); ws = socket;

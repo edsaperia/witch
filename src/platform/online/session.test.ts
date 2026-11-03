@@ -28,6 +28,15 @@ const cleanups: (() => void)[] = [];
 afterEach(() => { for (const stop of cleanups.splice(0)) stop(); });
 const input = (moveX = 0): Controls => ({ moveX, moveZ: 0, zoom: 0, toggleMode: false, autoTalk: false });
 const turn = () => new Promise<void>(resolve => setTimeout(resolve, 0));
+it("keeps the guest visit when a failed send synchronously reports transport-away", async () => {
+  const f = fixture(); const { joined } = await f.start(); await f.sync(); await joined;
+  const game = f.guest.game;
+  f.guestConnection.sendInput = () => { f.guest.message({ type: "transport-away" }); return false; };
+  f.guest.step(input(1), 1/60);
+  expect(f.guestOptions.failed).not.toHaveBeenCalled();
+  expect(f.guestOptions.ended).not.toHaveBeenCalled();
+  expect(f.guest.game).toBe(game); expect(f.guest.ready).toBe(false);
+});
 it("recovers a station approval missed at disconnect only through the authenticated resume checkpoint",async()=>{
   const f=fixture(),seen=vi.fn(),resolved=vi.fn();
   f.hostOptions.appearance=f.guestOptions.appearance=()=>WITCH_GENOME;
@@ -295,10 +304,11 @@ function fixture() {
   const hostOptions = options(), guestOptions = options();
   hostOptions.advanceHost = vi.fn((g: Game, controls: readonly Controls[], dt: number) => stepGame(g, controls, dt));
   const host = onlineSession(hostOptions), guest = onlineSession(guestOptions), hostAbort = new AbortController(), guestAbort = new AbortController();
+  const guestConnection = connection(guestMessages);
   cleanups.push(host.disconnect, guest.disconnect);
   const start = async () => {
     await host.connect("host", connection(hostMessages), hostAbort.signal);
-    const joined = guest.connect("guest", connection(guestMessages), guestAbort.signal);
+    const joined = guest.connect("guest", guestConnection, guestAbort.signal);
     host.message({ type: "guest-joined", player: 1 });
     for (const message of guestMessages) if ((message.payload as { kind?: string } | undefined)?.kind === "appearance") host.message(message);
     const first = hostMessages.find(m => m.type === "state")!;
@@ -308,7 +318,7 @@ function fixture() {
     await turn(); expect(guestMessages.some(m => m.type === "ready")).toBe(true);
     host.message({ type: "guest-ready", player: 1 }); guest.message(hostMessages.at(-1)!);
   };
-  return { host, guest, hostGame, hostOptions, guestOptions, hostMessages, guestMessages, hostAbort, guestAbort, start, sync, advanceTime: (ms: number) => { time += ms; } };
+  return { host, guest, guestConnection, hostGame, hostOptions, guestOptions, hostMessages, guestMessages, hostAbort, guestAbort, start, sync, advanceTime: (ms: number) => { time += ms; } };
 }
 it("rebases after loading and advances the existing host only once through its recording callback", async () => {
   const f = fixture(), { joined } = await f.start();
