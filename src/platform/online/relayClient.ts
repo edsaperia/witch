@@ -1,6 +1,8 @@
 import { ONLINE_TIMING } from "./inputLease";
 import { validPublicKey, type TelephonePublicKey } from "./telephoneIdentity";
 
+const RECOVERY_ATTEMPT_MS = 4000;
+
 export interface RelaySocket {
   readyState: number;
   send(data: string): void;
@@ -75,7 +77,11 @@ export function connectRelay(options: RelayOptions) {
     if (remaining <= 0) { lost(); return; }
     trouble(true, remaining);
     if (Date.now() >= retryAt) {
-      retryAt = Date.now() + 1000;
+      // Keep this attempt alive while connecting or awaiting its authenticated reply.
+      // A relay may already have rotated the ticket: replacing it every second can
+      // discard that reply and repeatedly retry the stale credential. The overall
+      // recoveryUntil deadline still takes precedence over this per-attempt window.
+      retryAt = Date.now() + RECOVERY_ATTEMPT_MS;
       const old = ws;
       try { openSocket(); } catch { /* Retry only within the existing deadline. */ }
       if (old !== ws) { if (old.readyState === 1 && retired.size === 0) retired.add(old); else old.close(); }

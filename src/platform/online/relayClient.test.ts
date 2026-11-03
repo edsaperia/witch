@@ -14,6 +14,40 @@ class Socket implements RelaySocket {
   open() { this.readyState = 1; this.emit("open"); }
 }
 afterEach(() => vi.useRealTimers());
+it.each(["host", "guest"] as const)("keeps a slow %s replacement and its pending rotated-ticket reply alive", role => {
+  vi.useFakeTimers(); const sockets: Socket[] = [], onMessage = vi.fn(), onError = vi.fn();
+  const c = connectRelay({ endpoint: "ws://localhost:8787", room: "1234567", ...(role === "guest" ? { token: "join" } : {}),
+    socket: () => { const s = new Socket(); sockets.push(s); return s; }, onMessage, onError, onClose: vi.fn() });
+  const player = role === "host" ? 0 : 1, ticket = { room: "1234567", player, token: "a".repeat(64) };
+  sockets[0].open(); sockets[0].emit("message", JSON.stringify({ protocol: 1, type: role === "host" ? "hosted" : "joined", resume: ticket }));
+  if (role === "host") sockets[0].emit("message", JSON.stringify({ protocol: 1, type: "ready-accepted" })); else c.sendActive();
+  sockets[0].transportClose(1006, false);
+  const attempt = sockets[1];
+  vi.advanceTimersByTime(1500); expect(sockets).toHaveLength(2); expect(attempt.readyState).toBe(0);
+  attempt.open(); expect(attempt.sent).toEqual([{ protocol: 1, type: "resume", ...ticket }]);
+  // The server has accepted and rotated its credential, but this reply takes another 1.5 seconds.
+  vi.advanceTimersByTime(1500); expect(sockets).toHaveLength(2); expect(attempt.readyState).toBe(1);
+  attempt.emit("message", JSON.stringify({ protocol: 1, type: "resumed", role, player, resume: { ...ticket, token: "b".repeat(64) } }));
+  expect(onMessage).toHaveBeenLastCalledWith({ protocol: 1, type: "transport-resumed" });
+  if (role === "guest") attempt.emit("message", JSON.stringify({ protocol: 1, type: "state", payload: { kind: "start" } }));
+  attempt.transportClose(1006, false); sockets[2].open();
+  expect(sockets[2].sent).toEqual([{ protocol: 1, type: "resume", ...ticket, token: "b".repeat(64) }]);
+  c.close(); expect(vi.getTimerCount()).toBe(0); expect(onError).not.toHaveBeenCalled();
+});
+it.each([false, true])("times out a stalled recovery attempt (socket opened=%s) without renewing the overall deadline", opened => {
+  vi.useFakeTimers(); const sockets: Socket[] = [], onError = vi.fn();
+  const c = connectRelay({ endpoint: "ws://localhost:8787", room: "1234567", token: "join",
+    socket: () => { const s = new Socket(); sockets.push(s); return s; }, onMessage: vi.fn(), onError, onClose: vi.fn() });
+  sockets[0].open(); sockets[0].emit("message", JSON.stringify({ protocol: 1, type: "joined", resume: { room: "1234567", player: 1, token: "a".repeat(64) } })); c.sendActive();
+  sockets[0].transportClose(1006, false); const attempt = sockets[1]; if (opened) attempt.open();
+  vi.advanceTimersByTime(3999); expect(sockets).toHaveLength(2);
+  vi.advanceTimersByTime(1); expect(sockets).toHaveLength(3);
+  // No reply on a retired attempt may adopt a credential or end recovery.
+  attempt.emit("message", "stale malformed reply"); expect(onError).not.toHaveBeenCalled();
+  vi.advanceTimersByTime(15999); expect(onError).not.toHaveBeenCalled();
+  vi.advanceTimersByTime(1); expect(onError).toHaveBeenCalledOnce(); expect(vi.getTimerCount()).toBe(0);
+  c.close();
+});
 it.each([1001,1008])("does not resume a closing guest after non-recoverable code %s", code => {
   vi.useFakeTimers(); const sockets: Socket[]=[],onClose=vi.fn(),onError=vi.fn();
   const c=connectRelay({endpoint:"ws://localhost:8787",room:"1234567",token:"join",socket:()=>{const s=new Socket();sockets.push(s);return s;},onMessage:vi.fn(),onClose,onError});
