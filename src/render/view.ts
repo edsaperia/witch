@@ -30,7 +30,7 @@ import { CrownLandmark } from "./crownLandmark";
 import { makeCrown, type HouseOutline } from "../rules/crown";
 // (the house's outline for the crown: only what it reads, so the floor's traced rings stay out of the bundle)
 import { rooms as OUTLINE_ROOMS, branches as OUTLINE_BRANCHES, stubs as OUTLINE_STUBS, takeoff as OUTLINE_TAKEOFF } from "../../config/house/outline.json";
-import { fromPlan, HOUSE_ROOMS, toPlan } from "../rules/houseRooms";
+import { HOUSE_ROOMS, toPlan } from "../rules/houseRooms";
 import { speakerRadius } from "../rules/speakers";
 import { Hiz, HIZ_LAYER } from "./hiz";
 /** How near the treehouse (m, the camera) its occluders are built (render/hiz.ts). */
@@ -45,7 +45,7 @@ import { stepTiltShare, tiltShareShown } from "./overlayTilt";
 import { forestShown, newForestReveal, stepForestReveal, type RevealPlace } from "./forestReveal";
 import { blinkCharges, poseOf, witchTuning } from "../rules/game";
 import { coolRoom, coolShare } from "../rules/cooldown";
-import { shotCamera, type Shot, type TreeExtent } from "../rules/arrive";
+import { shotCamera, type Shot } from "../rules/arrive";
 import { FALLBACK_LOOK, floorLook, type FloorLook } from "./legendFloor";
 import { AREA_TYPES, HOME_LOOK, nearestClearings, type LegendClearing } from "../rules/map";
 import { ZOO_CONFIG } from "../rules/zoo";
@@ -1086,23 +1086,6 @@ export class View {
     await this.compileAll(o.sail);
     this.askIsland(near);
     this.homeDone = true;
-  }
-
-  /** The treehouse tree as the dive's whole-tree shot frames it (rules/arrive.ts TreeExtent; the coordinator, 2026-10-24: the one
-   *  measure of it): the great oak's crown, from its lobes, where there is one (render/crown.ts; its middle, its top from the ground
-   *  and its width east to west), else the Ent's art at the treehouse once it's come; null till then. */
-  treeExtent(): TreeExtent | null {
-    const g = this.game, deck = deckOf(g.map, g.tuning);
-    if (this.crown && deck) {
-      let x0 = Infinity, x1 = -Infinity, z0 = Infinity, z1 = -Infinity, top = 0;
-      for (const l of this.crown.crown.lobes) {
-        const p = fromPlan({ x: deck.x, z: deck.z }, l.x, l.z);
-        x0 = Math.min(x0, p.x - l.r); x1 = Math.max(x1, p.x + l.r); z0 = Math.min(z0, p.z - l.r); z1 = Math.max(z1, p.z + l.r); top = Math.max(top, l.y + l.r);
-      }
-      if (Number.isFinite(x0)) return { x: (x0 + x1) / 2, z: (z0 + z1) / 2, height: deck.h + top, width: x1 - x0 };
-    }
-    const a = this.assets, th = g.map.treehouse;
-    return a.home.treehouse ? { x: th.x, z: th.z, height: a.treehouse.base.y * this.mpp, width: (a.treehouse.atlas.frames[0]?.w ?? 0) * this.mpp } : null;
   }
 
   /** Whether the start's house is made: its art (her, home, the soundsystems, the treehouse), the ground and the forest round it.

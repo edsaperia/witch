@@ -10762,34 +10762,29 @@
           "additionalProperties": false,
           "description": "where the chart hands over, sea metres out to sea off the south coast below the dancefloor (negative: inland), its camera dist metres back and pitchDeg degrees down (the first flight's: -40, 600, 50); ?dive=near|far|skim for one load (app/chartView.ts DIVES)."
         },
-        "tree": {
+        "bend": {
           "type": "object",
           "properties": {
-            "height": {
+            "curve": {
               "type": "number",
               "minimum": 0
             },
-            "angle": {
+            "grow": {
               "type": "number",
               "minimum": 0
             },
-            "fill": {
-              "type": "number",
-              "minimum": 0
-            },
-            "time": {
+            "relax": {
               "type": "number",
               "minimum": 0
             }
           },
           "required": [
-            "height",
-            "angle",
-            "fill",
-            "time"
+            "curve",
+            "grow",
+            "relax"
           ],
           "additionalProperties": false,
-          "description": "Where the camera ends its arrival: the whole treehouse tree seen from the south, filling the frame."
+          "description": "The dive's bend: the world curving away so the treehouse crown comes up over the horizon as the camera flies in."
         }
       },
       "required": [
@@ -10804,10 +10799,10 @@
         "settle",
         "hold",
         "handoff",
-        "tree"
+        "bend"
       ],
       "additionalProperties": false,
-      "description": "Arriving on an island from the sea chart: the camera flies in over the sea, frames the dancefloor and comes round to the treehouse."
+      "description": "Arriving on an island from the sea chart: the camera flies in over the sea, frames the dancefloor and the treehouse, its crown coming up over the bent horizon, and into her bedroom."
     },
     "camera": {
       "type": "object",

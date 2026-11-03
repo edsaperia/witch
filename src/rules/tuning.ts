@@ -477,8 +477,8 @@ export interface Tuning {
     hold?: { rate: number; ease: number; cap: number };
     /** where the chart's flight hands over: sea metres out to sea off the south coast, its camera dist metres back, pitchDeg down */
     handoff?: { sea: number; dist: number; pitchDeg: number };
-    /** the whole treehouse tree before her bedroom (rules/arrive.ts treeShot): height metres (till its art says), angle up, fill of the frame, time seconds to it */
-    tree?: { height: number; angle: number; fill: number; time: number } };
+    /** the dive's bend (rules/arrive.ts diveBend): the world's curvature at its strongest (per metre) on top of the night's, grown over grow seconds from the hand-off, eased back to none over the flight's last relax seconds */
+    bend?: { curve: number; grow: number; relax: number } };
   treehouse: { /** metres from the speaker ring's outer edge to its footprint's nearest edge */ gap: number; angle: number; clear: number; lightReach: number; lightStrength: number;
     /** The deck on the Ent (rules/treehouse.ts): its radius and floor height (m), the landing grace, the rail's keep-in, the map table's radius and reach, the decks' arc (inner, outer m; from, to degrees, 90 south) and her seat behind them (m south). */
     deck?: { on: boolean; radius: number; height: number; grace: number; rail: number; table: number; tableUse: number; decks: { inner: number; outer: number; from: number; to: number }; seat: number };

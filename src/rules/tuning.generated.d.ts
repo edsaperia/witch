@@ -2111,11 +2111,10 @@ export type SchemaTuning = {
       "dist": number;
       "pitchDeg": number;
     };
-    "tree": {
-      "height": number;
-      "angle": number;
-      "fill": number;
-      "time": number;
+    "bend": {
+      "curve": number;
+      "grow": number;
+      "relax": number;
     };
   };
   "camera": {
