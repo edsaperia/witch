@@ -359,6 +359,8 @@ says what each note covers.
 - Sky
 - Constellation
 - Moon
+- Cooldown trail
+- Trail colours
 
 ## [The witch's art](witch-art.md)
 

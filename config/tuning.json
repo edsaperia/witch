@@ -882,7 +882,18 @@
     "colourEase": 0.6,
     "sparks": true,
     "cooldown": 24,
-    "bySpeed": true
+    "bySpeed": true,
+    "steps": {
+      "on": true,
+      "dot": 1,
+      "gap": 1,
+      "section": 0.35,
+      "ring": true,
+      "halo": 0.12,
+      "glow": 0.35,
+      "glowSize": 5,
+      "preset": "warm"
+    }
   },
   "swoopTrail": {
     "on": true,

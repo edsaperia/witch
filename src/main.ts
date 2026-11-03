@@ -84,7 +84,7 @@ import { usesEdLayout } from "./app/houseLayout";
 import { stationOf, tableOf } from "./rules/stations";
 import { itemById, shelfOf, shelvesAt, stationsShowing } from "./rules/wardrobe";
 import { FIND_KINDS, fillTrunk, findKind, loanFind, spawnFind, spawnSpot, type FindKindId } from "./rules/finds";
-import { fitBroom, loadBroom, migrateBroom } from "./app/broomSave";
+import { chooseTrail, fitBroom, loadBroom, migrateBroom } from "./app/broomSave";
 import { bareBroom, partById } from "./rules/broomParts";
 import { loadOwned } from "./app/owned";
 import { ownedToChoose, partsToChoose, setUnlockAll, stockMushroomBaskets, syncHatUnlock, unlockAll } from "./app/debugUnlock";
@@ -665,6 +665,11 @@ stations.onFit = f => {
   if (phone.active) { if (!phone.choose({ kind: "broom", fitted: { ...f } })) reconcilePickers(); return; }
   mutate("dressing: broom fitting", () => { const { game } = N(); setParts(game.witches[0].spells, f); fitBroom(partsWithoutLoan(f, loan)); });
 }; // Solo keeps fitted parts without any loan; online choices wait for host approval.
+// Her trail's colours (Ed, 2026-11-03: "set the colour set of your trail in the broom station and there are a few presets"; the Broom
+// station's Trail row, render/trailColours.ts): drawn at once and kept with her broom (app/broomSave.ts); cosmetic, her own view only
+// (the other player's trail isn't drawn online), so nothing waits on the host; a borrowed game's isn't kept.
+{ const t = loadBroom().trail ?? null; view.trailPreset = t; stations.setTrail(t); }
+stations.onTrail = id => { view.trailPreset = id; if (!N().spec.borrowed) chooseTrail(id); };
 /** What the Workshop's stations show (ui/stationPanel.ts): the parts found, her broom, tonight's part to find, her tuning. */
 const workshopNow = (): WorkshopCtx => { const { game, tuning } = N(), t = game.trunk; return { found: phone.active ? new Set(phone.catalogue?.parts ?? []) : partsToChoose(partsNow()), fitted: phone.active ? { ...phone.presented(game).spells.parts } : game.witches[0].spells.parts, tonight: t && t.kind === "part" && !t.found ? t.item : null, tuning }; };
 function reconcilePickers(): void {

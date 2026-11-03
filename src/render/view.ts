@@ -45,6 +45,8 @@ import { stepTiltShare, tiltShareShown } from "./overlayTilt";
 import { forestShown, newForestReveal, stepForestReveal, type RevealPlace } from "./forestReveal";
 import { blinkCharges, poseOf, witchTuning } from "../rules/game";
 import { coolRoom, coolShare } from "../rules/cooldown";
+import { buffsOf, speedBuff } from "../rules/buffs";
+import { speedMultiplier } from "../rules/spells";
 import { shotCamera, type Shot } from "../rules/arrive";
 import { FALLBACK_LOOK, floorLook, type FloorLook } from "./legendFloor";
 import { AREA_TYPES, HOME_LOOK, nearestClearings, type LegendClearing } from "../rules/map";
@@ -627,6 +629,10 @@ export class View {
   get dodgeEchoes() { return dodgeEchoesFor(this); }
   /** Her flight trail: a ribbon of glow in the colour of the area she's over (render/trail.ts). */
   private trail!: WitchTrail;
+  /** Her cooldown trail's colour preset (config/trail-colours.json; chosen at the Broom station, kept with her broom: main.ts). */
+  private trailPresetId: string | null = null;
+  get trailPreset(): string | null { return this.trailPresetId; }
+  set trailPreset(id: string | null) { this.trailPresetId = id; if (this.trail) this.trail.preset = id; }
   private trailRgb = new THREE.Vector3();
   shadow!: THREE.Mesh;
   mpp: number; // metres per art pixel
@@ -922,6 +928,7 @@ export class View {
     this.scene.add(this.spellFx.trail);
     this.magic.legacyParty=(x,y,z,age)=>{this.spellFx.reset();this.spellFx.partyBurst(x,y,z,this.game.herTime-age);this.spellFx.update(this.game,this.game.herTime,y);};
     this.trail = new WitchTrail(game.tuning.trail ?? TRAIL_DEFAULT);
+    this.trail.preset = this.trailPresetId;
     this.scene.add(this.trail.mesh);
     bridgeNativeObject(this.trail.mesh,"flightTrail");
     bridgeNativeObject(this.spellFx.trail,"broomSpark");
@@ -1854,7 +1861,12 @@ export class View {
       const dt = this.trailAt < 0 ? 0 : Math.min(0.1, Math.max(0, ht - this.trailAt)); this.trailAt = ht;
       const back = sp > 0.1 ? 0.6 / sp : 0, W0 = g.witches[0], D = W0.dash;
       // (and its length at least the shared cooldown's share: rules/cooldown.ts, Ed 2026-10-15; the ribbon along her blink's line)
-      const tw = witchTuning(g, W0), cool = tw.cooldown?.shared ? coolShare(W0.cool, coolRoom(tw, blinkCharges(g, W0))) : 0; // (her broom's parts: rules/broomParts.ts)
+      const tw = witchTuning(g, W0), room = coolRoom(tw, blinkCharges(g, W0)), cool = tw.cooldown?.shared ? coolShare(W0.cool, room) : 0; // (her broom's parts: rules/broomParts.ts)
+      // (the cooldown trail, render/trail.ts steps: the counter itself, and her top speed now, her broom's parts, a speed spell and
+      // Darters in; on a guest, her predicted witch's: render only)
+      this.trail.counter = tw.cooldown?.shared ? { left: W0.cool.left, room, dash: tw.dash.cooldown, rise: tw.cooldown.rise ?? 0, landing: tw.riseCooldown ?? 0,
+        top: (tw.groundSpeed + (tw.treetopSpeed - tw.groundSpeed) * lift) * speedMultiplier(W0.spells, ht, tw) * speedBuff(buffsOf(W0.leash.stack, g.creatures, g.berries, g.tuning).stacks, g.tuning) } : null;
+      this.trail.screen = { camera: this.camera, w: this.width, h: this.height };
       this.trail.update(w.x - w.vx * back, witchHeight(w, t) + 0.25 + this.rideOff, w.z - w.vz * back, sp, top, lift, c, ht, dt, D.at, D, cool);
     }
     // Tufts part round her and the three nearest creatures.
