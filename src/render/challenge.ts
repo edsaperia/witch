@@ -5,15 +5,13 @@
 //     carving's glint), drawn in the ground's last legend-circle slot (view.ts legendRings: challengeRing);
 //   - the columns: the classical ruins' standing column (art/landmarks.js "column"), drawn alone (a "find" art job, as tonight's find
 //     is: render/view/finds.ts), round its edge (rules/challenge.ts columnSpots);
-//   - a beam of light over it, as over a stone, so it's seen from the treetops and through the telescope (view/home.ts drawMarkers);
+//   - no beam of light over it (Ed, 2026-11-03, on #1725: "remove the beam"): the telescope and the footpaths find it;
 //   - ready to cast: the spell's music notes at its middle, as at a stone (render/leash/stones.ts); casting, its fill a ring of
 //     rainbow dots round her;
 //   - cleared: the sigil and the columns light on the beat, a small dancefloor rises at its middle, tile by tile from the middle
 //     out, with the party's eruption and dome (render/fx, the stones' conversion's: not restyled); its pack dance round it.
-//   - closed (the final wave coming, uncleared): dark, no beam.
-import * as THREE from "three";
+//   - closed (the night won or lost, uncleared): dark.
 import type { Game } from "../rules/game";
-import type { Tuning } from "../rules/tuning";
 import { challengeReady, columnSpots } from "../rules/challenge";
 import { castOf, castProgress } from "../rules/stoneStacks";
 import { beatAt } from "../rules/beat";
@@ -25,7 +23,6 @@ import type { LeashView } from "./leash";
 import { notesSlot } from "./leash/stones";
 import { LEGEND_LEVEL, SLOT, SLOTS } from "./leash/glyphs";
 import type { View } from "./view";
-import type { Beacon } from "./markers";
 
 /** How far (m) she is before its floor takes a legend circle's slot in the ground, and its columns and lights are drawn. */
 const NEAR = 260;
@@ -68,15 +65,6 @@ export function drawChallengeColumns(v: View): void {
   });
   items.sort((p, q) => q.z - p.z); // (nearest the camera first, as the scenery's)
   v.batchFor(v.decorBatches, key, () => new SpriteBatch(fa.atlas, v.mpp, { solid: true }))?.set(items);
-}
-
-/** Its beam of light, over the canopy (view/home.ts drawMarkers' beacons): moonlit cyan while it waits, the rainbow on the beat once
- *  cleared; none once closed. */
-export function challengeBeacons(g: Game, t: Tuning, beacons: Beacon[]): void {
-  const ch = g.challenge;
-  if (!ch || ch.closedAt !== null) return;
-  const R = t.runeMarkers, lit = ch.clearedAt !== null, p = beatPulse(g), c = lit ? rainbow(g.clock.time * 0.2) : [0.45, 0.85, 0.95];
-  beacons.push({ x: ch.x, z: ch.z, colour: new THREE.Vector3(c[0], c[1], c[2]), strength: (R.dormant.beam ?? 0.1) * (lit ? 2 + 2 * p : 2), base: 0.5, height: R.beamHeight });
 }
 
 /** The clear each night's eruption was set off for (once a clear). */
