@@ -16,13 +16,55 @@ import type { Game } from "../game";
 import { leyChain, leyKey } from "../leylines";
 import { frontMetres, TIP_PACE } from "../leypulse";
 import { linkLine } from "../pulseRoute";
+import { ashore, lakeDepth, lakeKnobs, shoreDetours } from "../lakes";
+import type { Bounds } from "../mapShape";
 
 const attacksWitch = (c: Creature, id: number) => c.hunting === id || (c.fight?.target?.kind === "witch" && c.fight.target.id === id);
 const friendlyEnemy = (c: Creature) => stateOf(c) === "enraged" || (stateOf(c) === "wild" && (c.hunting !== undefined || c.fight?.target?.kind === "witch"));
 
 type RoutePoint = readonly [number, number];
-const routeLines = new WeakMap<Game, { key: number; line: RoutePoint[] }>();
-/** The same curved links and drawing-front metres used by the ley line, not its slower wave pulse. */
+/** A route kept off the lakes (Ed, 2026-11-03: "Legends walk round lakes"): its points on or within `clear` metres of a lake's
+ *  water left out (its ends put ashore), then every stretch across water replaced by the shorter way round that lake's shore
+ *  (rules/lakes.ts shoreDetours, as followers' travel does), `clear` metres off it, a point every `step` metres. With each of its
+ *  points, the metres along the given line it stands for (rising; a detour's spread evenly over the stretch it replaces), so a
+ *  front measured along the ley line maps onto it. The line itself (no copy) and its own metres with no lakes in the way. */
+export function dryRoute(b: Bounds, line: readonly RoutePoint[], clear: number, step: number): { line: readonly RoutePoint[]; source: readonly number[] } {
+  const along = [0];
+  for (let i = 1; i < line.length; i++) along.push(along[i - 1] + Math.hypot(line[i][0] - line[i - 1][0], line[i][1] - line[i - 1][1]));
+  if (!b.lakes || line.length < 2 || line.every(([x, z]) => lakeDepth(b, x, z) <= -clear)) return { line, source: along };
+  const kept = new Map<{ x: number; z: number }, number>(), pts: { x: number; z: number }[] = [];
+  line.forEach(([x, z], i) => {
+    const end = i === 0 || i === line.length - 1;
+    if (!end && lakeDepth(b, x, z) > -clear) return; // (in or by the water: the detour round it stands for it)
+    const p = end ? ashore(b, x, z, clear) : { x, z };
+    kept.set(p, along[i]); pts.push(p);
+  });
+  const out = shoreDetours(b, pts, clear, step), source: number[] = out.map(p => kept.get(p) ?? NaN);
+  // (a detour's points: the metres between the kept points either side of it, by how far round it they are)
+  for (let i = 1; i < out.length; i++) {
+    if (!Number.isNaN(source[i])) continue;
+    let j = i; while (Number.isNaN(source[j])) j++;
+    const run = [0];
+    for (let k = i; k <= j; k++) run.push(run[run.length - 1] + Math.hypot(out[k].x - out[k - 1].x, out[k].z - out[k - 1].z));
+    for (let k = i; k < j; k++) source[k] = source[i - 1] + (source[j] - source[i - 1]) * (run[k - i + 1] / (run[run.length - 1] || 1));
+    i = j;
+  }
+  return { line: out.map(p => [p.x, p.z] as const), source };
+}
+/** Where `metres` along the given line falls along a dry route (its own metres). */
+function dryMetres(dry: { line: readonly RoutePoint[]; source: readonly number[] }, metres: number): number {
+  const { line, source } = dry;
+  let at = 0;
+  for (let i = 1; i < line.length; i++) {
+    const seg = Math.hypot(line[i][0] - line[i - 1][0], line[i][1] - line[i - 1][1]);
+    if (metres <= source[i]) return at + seg * Math.max(0, Math.min(1, (metres - source[i - 1]) / (source[i] - source[i - 1] || 1)));
+    at += seg;
+  }
+  return at;
+}
+const routeLines = new WeakMap<Game, { key: number; line: readonly RoutePoint[]; source: readonly number[] }>();
+/** The same curved links and drawing-front metres used by the ley line, not its slower wave pulse; kept round the lakes (dryRoute:
+ *  the ley line itself may cross one), its front mapped onto the way round. */
 export function friendlyLegendRoute(g: Game): { line: readonly RoutePoint[]; tip: number } {
   const key = leyKey(g.party);
   let cached = routeLines.get(g);
@@ -32,14 +74,15 @@ export function friendlyLegendRoute(g: Game): { line: readonly RoutePoint[]; tip
       const link = linkLine(g.map, stones[i - 1], stones[i]);
       line.push(...(line.length ? link.slice(1) : link));
     }
-    cached = { key, line }; routeLines.set(g, cached);
+    cached = { key, ...dryRoute(g.map.bounds, line, lakeKnobs(g.tuning).shore + 4, 4) }; routeLines.set(g, cached);
   }
-  return { line: cached.line, tip: frontMetres(g.party, g.map, g.clock.time, g.tuning.leyLines.reveal ?? TIP_PACE) };
+  const tip = frontMetres(g.party, g.map, g.clock.time, g.tuning.leyLines.reveal ?? TIP_PACE);
+  return { line: cached.line, tip: dryMetres(cached, tip) };
 }
 const friendRoutes = new WeakMap<Creature, { line: readonly RoutePoint[]; at: number; x: number; z: number }>();
 /** Join the nearest point on tonight's route, then walk along its curves towards the growing front, stopping at it.
  * The transient progress hint disambiguates crossings; after displacement or a changed route the legend rejoins. */
-export function walkFriendlyRoute(c: Creature, line: readonly RoutePoint[], tip: number, dt: number, speed = c.speed): void {
+export function walkFriendlyRoute(c: Creature, line: readonly RoutePoint[], tip: number, dt: number, speed = c.speed, round?: CombatWorld["round"]): void {
   if (line.length < 2) return;
   const lengths = [0];
   for (let i = 1; i < line.length; i++) lengths.push(lengths[i - 1] + Math.hypot(line[i][0] - line[i - 1][0], line[i][1] - line[i - 1][1]));
@@ -65,7 +108,13 @@ export function walkFriendlyRoute(c: Creature, line: readonly RoutePoint[], tip:
   let left = speed * FIGHT.speed * dt;
   const before = { x: c.x, z: c.z };
   if (distance > 0) {
-    const step = Math.min(left, distance); c.x += (join[0] - c.x) / distance * step; c.z += (join[1] - c.z) / distance * step; left -= step;
+    // (joining it round any lake in the way, as combat's movement goes: rules/lakes.ts roundLakes; on round it, not yet joined)
+    const via = round?.(c.x, c.z, join[0], join[1]);
+    if (via) {
+      const dv = Math.hypot(via.x - c.x, via.z - c.z), step = Math.min(left, dv);
+      if (dv > 0) { c.x += (via.x - c.x) / dv * step; c.z += (via.z - c.z) / dv * step; }
+      left = 0;
+    } else { const step = Math.min(left, distance); c.x += (join[0] - c.x) / distance * step; c.z += (join[1] - c.z) / distance * step; left -= step; }
   }
   if (left > 0) {
     const end = Math.max(0, Math.min(tip, lengths[lengths.length - 1]));
@@ -138,7 +187,7 @@ export function stepLegendAttack(w: CombatWorld, s: CombatState, c: Creature, da
     f.target = null; f.readyAt = time + A.recheck;
     if (!angry && !c.homeGuard && w.friendlyRoute) {
       const route = w.friendlyRoute();
-      walkFriendlyRoute(c, route.line, route.tip, w.dt, w.t.combat.legendRun);
+      walkFriendlyRoute(c, route.line, route.tip, w.dt, w.t.combat.legendRun, w.round);
     }
     return;
   }
@@ -233,8 +282,10 @@ export function stepLongCharge(w: CombatWorld, s: CombatState, c: Creature, f: F
   }
   if (!angry) { c.run = undefined; c.moving = false; c.vx = 0; c.vz = 0; f.readyAt = Math.max(f.readyAt, time + K.rest); f.target = null; return; }
   // Home: back to where it lay at returnSpeed, then rest seconds before it may charge again.
-  const dx = (c.lairX ?? c.x) - c.x, dz = (c.lairZ ?? c.z) - c.z, d = Math.hypot(dx, dz);
-  if (d < 1) { c.run = undefined; c.moving = false; c.vx = 0; c.vz = 0; f.readyAt = Math.max(f.readyAt, time + K.rest); f.target = null; return; }
+  const hx = c.lairX ?? c.x, hz = c.lairZ ?? c.z;
+  if (Math.hypot(hx - c.x, hz - c.z) < 1) { c.run = undefined; c.moving = false; c.vx = 0; c.vz = 0; f.readyAt = Math.max(f.readyAt, time + K.rest); f.target = null; return; }
+  // (round any lake in the way, its shore's way: rules/lakes.ts roundLakes; Ed, 2026-11-03)
+  const via = w.round?.(c.x, c.z, hx, hz) ?? { x: hx, z: hz }, dx = via.x - c.x, dz = via.z - c.z, d = Math.hypot(dx, dz) || 1;
   const v = Math.min(d, K.returnSpeed * FIGHT.speed * dt);
   c.x += (dx / d) * v; c.z += (dz / d) * v; c.vx = (dx / d) * K.returnSpeed; c.vz = (dz / d) * K.returnSpeed;
   c.moving = true; c.walk += dt * 3; c.facing = dx >= 0 ? 1 : -1;
