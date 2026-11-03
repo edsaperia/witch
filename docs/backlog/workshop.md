@@ -138,7 +138,7 @@ Alternatives:
 - **By island**: each island holds a fixed kind (dealt like the hat shrines in unlocks.md), so a player learns where wrecks lie. This fights the "never two at once" rule less than it fights the one-a-night rhythm: some nights would have nothing to find.
 - **By canopy**: wrecks only in areas with thin canopy, trunks under thick. This is a placement rule more than a pick, and it could sit on top of the recommendation.
 
-Where a wreck stands: as `placeTrunk` does today (a seeded wild area, never home, in its woods round its middle, off clearings and the legend's circle, clear of the relics), with no glint, and drawn only within 120 m. It's the same `find` art job, keyed by the part. What's in the stars is the part's own outline (`OUTLINES` by its id: a nose cone, a ladder, a canoe).
+Where a wreck stands: as `placeTrunk` does (since 2026-11-03 at the site of an area of its own, where the footpaths lead: the find area, `docs/notes/house.md`; before, a seeded wild area, never home, in its woods round its middle, off clearings and the legend's circle, clear of the relics), with no glint, and drawn only within 120 m. It's the same `find` art job, keyed by the part. What's in the stars is the part's own outline (`OUTLINES` by its id: a nose cone, a ladder, a canoe).
 
 ## Wreck scenes
 

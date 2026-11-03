@@ -35,6 +35,7 @@ import { PARTY_CAST } from "../../rules/party";
 import { djGesture } from "../../../art/witch.js";
 import { djRoutineAt, djStrokes } from "../../rules/djSet";
 import { kitchenLayout } from "../../rules/mushrooms";
+import { weighingChains } from "../../rules/chains";
 
 /** ?partyover=<s>: the party over from that game time (debug; as the look's, render/view.ts). */
 export const OVER_DEBUG: number | null = (() => { const v = new URLSearchParams(globalThis.location?.search ?? "").get("partyover"); return v === null ? null : Number(v) || 0; })();
@@ -167,7 +168,11 @@ export class SfxCues {
       else if (e.kind === "lakeHold") S.nope(pan(e.x)); // (a coming-down refused over a lake: the same soft "nope"; Ed, 2026-10-23)
       else if (e.kind === "thud") S.thud(pan(e.x)); // (her fall off the Terrace with no broom hitting the ground: rules/kit.ts)
       else if (e.kind === "kit") { if (e.obj === "invites") S.invited(0, pan(e.x)); else S.hit(pan(e.x)); } // (her invitations or a broom taken)
-      else if (e.kind === "grounded") this.yank = { at: time + 0.38, pan: pan(e.x) }; // (a take-off her leashes won't allow: the thud as they pull her back down, render/view/witch.ts groundedHop; Ed, 2026-10-18)
+      else if (e.kind === "grounded") { // (a take-off her leashes won't allow: the thud as they pull her back down, render/view/witch.ts groundedHop; Ed, 2026-10-18)
+        this.yank = { at: time + 0.38, pan: pan(e.x) };
+        const W = g.witches.find(q => q.id === e.id); // (and the chains holding her rattle, once: Ed, 2026-11-03; rules/chains.ts weighingChains)
+        if (W) S.rattle(pan(e.x), weighingChains(W.leash.stack, g.creatures).length);
+      }
       else if (e.kind === "outsideCircle") S.land(pan(e.x), 0.5); // (put down outside a legend's circle: it does nothing; a soft thud, and the circle flashes)
   }
 

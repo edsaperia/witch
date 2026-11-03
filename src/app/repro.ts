@@ -13,7 +13,8 @@ import { fittedParts } from "../rules/broomParts";
 /** The link's switches the repro link writes itself (anything else on the page's own link is carried over as it was). */
 export const REPRO_KEYS = ["seed", "world", "found", "hat", "parts", "wave", "cleared", "at", "mode", "zoom", "creator", "spell", "set"] as const;
 /** Tuning paths every load sets from elsewhere: never listed as changed. The link's own switches, the chart's save and her loadout
- *  (app/linkParams.ts); the beat from the music style (the same); the prop generator, always on (app/viewParams.ts). */
+ *  (app/linkParams.ts); the beat from the music style (the same; tempos, blockBars and rampBars only in older saves' tunings,
+ *  from before the night's tempo was steady); the prop generator, always on (app/viewParams.ts). */
 const SET_ELSEWHERE = new Set(["map.found", "map.world", "spells.hat", "spells.parts", "paths.fingerposts", "beat.bpm", "beat.tempos", "beat.blockBars", "beat.rampBars", "partyObjects.generated"]);
 
 /** Every leaf (a number, string, boolean or list) where `live` differs from `base`, by its dotted path; `_` notes skipped, and a

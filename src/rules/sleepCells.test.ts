@@ -9,11 +9,12 @@ import { largestWorldTuning } from "../test/worlds";
 import { sleepCellAudit } from "../test/sleepCells";
 
 const idle = { moveX: 0, moveZ: 0, toggleMode: false, zoom: 0 };
-// (the ids follow how many creatures the areas before them hold: the swarms by island, Ed 2026-11-03, put more in most)
-const expected = [[18, "newt", true], [19, "newt", false], [34, "snowleopard", true], [35, "snowleopard", false],
-  [89, "fennec", true], [90, "fennec", false], [186, "squirrel", true], [187, "squirrel", false],
-  [208, "lion", true], [209, "lion", false], [514, "polarbear", true], [515, "polarbear", false],
-  [546, "moth", true], [547, "moth", false]];
+// (the largest island since the challenge circle's claim, 2026-11-03: its area takes the whole circle from the areas round it, so
+// the route and the night's deal move on, and its legends with them: seven paired; the ids follow how many creatures the areas
+// before them hold)
+const expected = [[14, "crab", true], [15, "crab", false], [31, "bear", true], [32, "bear", false], [63, "otter", true], [64, "otter", false],
+  [91, "fennec", true], [92, "fennec", false], [145, "lion", true], [146, "lion", false], [165, "newt", true], [166, "newt", false],
+  [527, "hedgehog", true], [528, "hedgehog", false]];
 // Largest roster reproduces the seven paired legend areas; small/radius fixtures guard the original non-paired contract.
 const fixtures = [
   { name: "largest", tuning: largestWorldTuning(TUNING), raw: 14, cells: 65 },
@@ -50,7 +51,8 @@ describe("sleeping creatures' logical ownership areas", () => {
   });
 
   it("rejects an unrelated area even for a boss, and rejects a non-circle wild creature in a paired legend area", () => {
-    const g = newGame(123, largestWorldTuning(TUNING)), boss = g.creatures.find(c => c.boss)!;
+    // (a boss lying in a paired legend area: since 2026-11-03's maps the first boss lies in its own area)
+    const g = newGame(123, largestWorldTuning(TUNING)), boss = g.creatures.find(c => c.boss && g.map.legendAreas.has(g.map.cellSafe(c.x, c.z).cell.join(",")))!;
     const elsewhere = g.map.cells.map(([x, y]) => g.map.siteOf(x, y)).find(p => !g.map.sameArea(g.map.cellSafe(p.x, p.z).cell, boss.cell))!;
     const bad = { ...boss, x: elsewhere.x, z: elsewhere.z };
     expect(sleepCellAudit(g.map, [bad]).mismatches.map(c => c.id)).toEqual([boss.id]);

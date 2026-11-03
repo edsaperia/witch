@@ -1,10 +1,10 @@
-// The beat clock (Ed, 2026-10-04: the tempo rises from 120 to about 140 bpm through the run, and
-// everything on the beat follows the music): how many beats have gone by at any game time. The
-// tempo eases from one wave's to the next (the music style's arc, as beat.tempos in the tuning),
-// starting on the block line the wave's music lands on (every 4 bars) and ramping smoothly over
-// beat.rampBars, so the beat never skips: a ramp starts exactly where the old tempo has got to.
-// Beat-time is game time as it would be at the base tempo (beat.bpm): anything that reckons beats
-// as time × bpm / 60 stays on the beat by being given beat-time instead of time.
+// The beat clock: how many beats have gone by at any game time. The night's tempo is steady (Ed, 2026-11-03: "the tempo
+// (pulse speed) should stay the same through the night, and only raises when you get knocked down"; it supersedes his
+// 2026-10-04 "the tempo rises from 120 to about 140 bpm through the run"): the record she put on (recordTempo), or beat.bpm
+// with none, the waves' music styles changing everything but the tempo. Only her knockdowns raise it (knockdownTempo), each
+// rise eased in (rampTo) so the beat never skips: a ramp starts exactly where the old tempo has got to.
+// Beat-time is game time as it would be at the base tempo (beat.bpm): anything that reckons beats as time × bpm / 60 stays on
+// the beat by being given beat-time instead of time.
 import type { Tuning } from "./tuning";
 
 /** From `time` (seconds) at `beat`, the tempo goes linearly from bpm to bpmTo over dur seconds, then holds. */
@@ -14,20 +14,18 @@ export interface BeatClock {
   /** The base tempo beat-time is reckoned at (tuning beat.bpm). */
   base: number;
   segs: TempoSegment[];
-  /** The wave whose tempo it is heading for. */
-  wave: number;
   /** BPM added by her knockdowns this run (Ed, 2026-10-07: "the BPM goes up by 1 each time you die": the DJ's off the
    *  decks, the crowd gets restless and the beat speeds up), knockout.bpmStep each, up to knockout.bpmCap; never down. */
   bonus?: number;
   /** The beat her latest knockdown's rise starts on (the next bar line after it): the music lands a crowd cue there. */
   bonusAt?: number;
-  /** BPM the night's whole arc is shifted by: the record she put on at her DJ booth less the arc's first tempo (Ed, 2026-10-29:
-   *  "select a record (each record has a bpm ...)"; recordTempo). 0 or unset: the arc as it is. */
+  /** BPM the night's tempo is moved by: the record she put on at her DJ booth less beat.bpm (Ed, 2026-10-29: "select a record
+   *  (each record has a bpm ...)"; recordTempo). 0 or unset: beat.bpm. */
   shift?: number;
 }
 
 export function newBeatClock(base: number, bpm = base): BeatClock {
-  return { base, segs: [{ time: 0, beat: 0, bpm, bpmTo: bpm, dur: 0 }], wave: 0 };
+  return { base, segs: [{ time: 0, beat: 0, bpm, bpmTo: bpm, dur: 0 }] };
 }
 
 function segAtTime(c: BeatClock, time: number): TempoSegment {
@@ -106,27 +104,15 @@ export function shiftBeat(c: BeatClock, time: number, lost: number): void {
   c.segs = [...before, { time, beat, bpm, bpmTo: to, dur: left }, ...after];
 }
 
-/** The tempo for a wave: its step of the music's arc (beat.tempos), the last one holding on. */
-export function waveTempo(t: Pick<Tuning, "beat">, wave: number): number {
-  const T = t.beat.tempos;
-  return T && T.length ? T[Math.max(0, Math.min(T.length - 1, wave))] : t.beat.bpm;
-}
+/** The tempo the clock is heading for: the night's (beat.bpm, moved to her record's by shift), plus her knockdowns' bonus. The
+ *  same every wave (Ed, 2026-11-03). */
+export const targetTempo = (c: BeatClock, t: Pick<Tuning, "beat">): number => t.beat.bpm + (c.shift ?? 0) + (c.bonus ?? 0);
 
-/** The block line (every blockBars bars, in beats) on or just after beat `beat`: a wave within a
- *  quarter bar after a line lands on it, as the music's sections do (rules/musicPlan.ts). */
-export function blockLineAfter(beat: number, blockBars: number): number {
-  const B = 4 * Math.max(1, blockBars), b = Math.floor(beat / B) * B;
-  return beat - b <= 1 ? b : b + B;
-}
-
-/** The tempo the clock is heading for: its wave's, shifted by her record (shift), plus her knockdowns' bonus. */
-export const targetTempo = (c: BeatClock, t: Pick<Tuning, "beat">): number => waveTempo(t, c.wave) + (c.shift ?? 0) + (c.bonus ?? 0);
-
-/** The record she put on at her DJ booth (Ed, 2026-10-29) at `time`, before the party: the night's arc shifted to start at its
- *  `bpm` (the arc's rise and her knockdowns' steps kept on top), the tempo there at once (nothing's playing yet: the needle drop's
+/** The record she put on at her DJ booth (Ed, 2026-10-29) at `time`, before the party: the night's tempo its `bpm` the whole
+ *  night (Ed, 2026-11-03; her knockdowns' steps kept on top), the tempo there at once (nothing's playing yet: the needle drop's
  *  routine, rules/djSet.ts, plays at it). Beat-time's base is unchanged, so nothing reckoned in beats moves. */
 export function recordTempo(c: BeatClock, t: Pick<Tuning, "beat">, bpm: number, time: number): void {
-  c.shift = bpm - waveTempo(t, 0);
+  c.shift = bpm - t.beat.bpm;
   rampTo(c, beatAt(c, time), targetTempo(c, t), 0);
   const s = c.segs[c.segs.length - 1]; s.bpm = s.bpmTo; // (at once: from this moment, not eased from the old)
 }
@@ -140,10 +126,11 @@ export function sparkSpeedAt(bpm: number, t: { leyLines?: Pick<Tuning["leyLines"
   return Math.max(SPARK_FLOOR, a + ((b - a) * (bpm - 100)) / 100);
 }
 
-/** The spark's speed (m/s, times leyLines.pulseSpeed) at the party's tempo now: the wave's own, her record's shift and her knockdowns'
- *  bonus on it (targetTempo), on the line (sparkSpeedAt; Ed, 2026-10-07: the pulse travels at the tempo; 2026-10-29: "Even at 200bpm
- *  the spark seems to be moving quite slowly"; 2026-11-03: 1.0 m/s at 100 bpm to 5.0 at 200, linear). The wave countdown follows it. Only the
- *  spark reads it. */
+/** The spark's speed (m/s, times leyLines.pulseSpeed) at the party's tempo now: the night's own (her record's) and her
+ *  knockdowns' bonus on it (targetTempo), so steady from wave to wave and faster only for her knockdowns (Ed, 2026-11-03), on
+ *  the line (sparkSpeedAt; Ed, 2026-10-07: the pulse travels at the tempo; 2026-10-29: "Even at 200bpm the spark seems to be
+ *  moving quite slowly"; 2026-11-03: 1.0 m/s at 100 bpm to 5.0 at 200, linear). The wave countdown follows it. Only the spark
+ *  reads it. */
 export const tempoRate = (c: BeatClock, t: Pick<Tuning, "beat"> & { leyLines?: Pick<Tuning["leyLines"], "pulseAt100" | "pulseAt200"> }): number =>
   sparkSpeedAt(targetTempo(c, t), t);
 
@@ -158,13 +145,4 @@ export function knockdownTempo(c: BeatClock, t: Pick<Tuning, "beat"> & { knockou
   c.bonusAt = Math.ceil(beatAt(c, time) / 4 - 1e-9) * 4; // (the next bar line)
   rampTo(c, c.bonusAt, targetTempo(c, t), Math.max(0, t.beat.knockBeats ?? 4));
   return next - was;
-}
-
-/** A wave came at `time`: ease to its tempo (and her knockdowns' bonus) from the block line its music lands on. */
-export function waveArrived(c: BeatClock, t: Pick<Tuning, "beat">, wave: number, time: number): void {
-  if (wave === c.wave) return;
-  c.wave = wave;
-  const target = targetTempo(c, t), line = blockLineAfter(beatAt(c, time), t.beat.blockBars ?? 4);
-  if (Math.abs(target - bpmAt(c, timeAt(c, line))) < 1e-6) return;
-  rampTo(c, line, target, 4 * (t.beat.rampBars ?? 8));
 }

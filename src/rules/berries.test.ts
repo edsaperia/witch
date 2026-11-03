@@ -1,10 +1,10 @@
 import { describe, expect, it, beforeAll, afterAll } from "vitest";
 import { COMBAT } from "./combat";
-import { feed, lastBerry, newBerries, stepBerries, toEvolve, type BerryState, berryCounts } from "./berries";
+import { cancelFeeding, feed, feedRoom, hasRoom, newBerries, queueBerry, queuedFor, stepBerries, toEvolve, type BerryState, berryCounts } from "./berries";
 import { LEGEND, spawnCreatures, type Creature, type Level } from "./creatures";
 import { invitable, leashSpeed, newLeash } from "./leash";
 import { generateMap } from "./map";
-import { TUNING } from "./tuning";
+import { TUNING, withTuning } from "./tuning";
 import { smallWorldTuning } from "../test/worlds";
 
 /** Every species at strength 1 for these tests (Ed, 2026-10-08, gave the species strengths by class; these test other
@@ -49,10 +49,26 @@ describe("berries and evolving", () => {
     expect(again.bushes.slice(0, 50)).toEqual(s.bushes.slice(0, 50));
   });
 
-  it("party animals walk to a berry and eat it; it grows again elsewhere, so the total never changes", () => {
+  /** Every berry taken but `n`, those set round (x, z) at `d` metres (a ring), for a clean test. */
+  const only = (s: BerryState, n: number, x: number, z: number, d = 3) => {
+    for (const b of s.berries) b.claimedBy = -1;
+    return s.berries.slice(0, n).map((b, i) => { b.claimedBy = null; Object.assign(s.bushes[b.bush], { x: x + Math.cos(i * 1.3) * d, z: z + Math.sin(i * 1.3) * d }); return b; });
+  };
+
+  it("nothing eats on its own (Ed, 2026-11-03): hers by ripe berries, following or parked, hungry or hurt, claim none", () => {
+    const s = newBerries(map, t), cs = spawnCreatures(map).slice(0, 3), points = new Map<number, { x: number; z: number }>();
+    cs.forEach((c, i) => points.set(c.id, beside(s, c, i * 40, true, i as Level)));
+    cs[2].drops = 0.5; // (a hurt adult)
+    run(s, cs, points, 6);
+    expect(s.feeding.size).toBe(0);
+    expect(s.ateAt.size).toBe(0);
+    expect(s.berries.every(b => b.claimedBy === null)).toBe(true);
+  });
+
+  it("fed, a party animal walks to its berry and eats it; it grows again elsewhere, so the total never changes", () => {
     const s = newBerries(map, t), cs = spawnCreatures(map).slice(0, 3), total = s.berries.length;
     const points = new Map<number, { x: number; z: number }>();
-    cs.forEach((c, i) => points.set(c.id, beside(s, c, i * 40, true, 0)));
+    cs.forEach((c, i) => { points.set(c.id, beside(s, c, i * 40, true, 0)); expect(queueBerry(s, c, c.x, c.z, 0, t)).not.toBeNull(); });
     const before = s.berries.map(b => b.bush);
     run(s, cs, points, 6);
     expect(s.berries.length).toBe(total);
@@ -61,14 +77,69 @@ describe("berries and evolving", () => {
     expect(s.berries.filter((b, i) => b.bush !== before[i]).length).toBeGreaterThanOrEqual(3); // eaten ones moved
   });
 
-  it("wild animals and legends never eat", () => {
-    const s = newBerries(map, t), cs = spawnCreatures(map).slice(0, 2), points = new Map<number, { x: number; z: number }>();
-    beside(s, cs[0], 0, false, 0); // wild
-    points.set(cs[1].id, beside(s, cs[1], 5, true, LEGEND)); // a party legend
-    run(s, cs, points, 6);
-    expect(s.fed.size).toBe(0);
-    expect(s.feeding.size).toBe(0);
+  it("wild animals and legends never eat: no room (Ed, 2026-11-03: \"Legends still need no berries\"), not even hurt", () => {
+    const s = newBerries(map, t), cs = spawnCreatures(map).slice(0, 2);
+    beside(s, cs[0], 0, false, 1); // wild
+    beside(s, cs[1], 5, true, LEGEND); // a party legend
+    cs[1].drops = 0.5;
+    for (const c of cs) { expect(feedRoom(c, s, t)).toBe(0); expect(queueBerry(s, c, c.x, c.z, 0, t)).toBeNull(); }
     expect(s.berries.every(b => b.claimedBy === null)).toBe(true);
+  });
+
+  it("each press queues one more, capped by the berries within berries.feed.reach of her and by the animal's room", () => {
+    const map = mechanicsMap(), s = newBerries(map, t), [y] = spawnCreatures(map), need = toEvolve(1, t);
+    Object.assign(y, { leashed: true, level: 1, x: 0, z: 0 });
+    const R = t.berries.feed!.reach;
+    // three in reach, two beyond
+    only(s, 5, 0, 0, 3).forEach((b, i) => { if (i >= 3) Object.assign(s.bushes[b.bush], { x: R + 4 + i, z: 0 }); });
+    expect(feedRoom(y, s, t)).toBe(need);
+    for (let i = 0; i < 6; i++) queueBerry(s, y, 0, 0, 0, t);
+    expect(queuedFor(s, y.id), "the three in reach").toBe(Math.min(3, need));
+    // room: a youth two berries from adult takes two however many are near
+    const s2 = newBerries(map, t);
+    only(s2, 8, 0, 0, 3);
+    s2.fed.set(y.id, need - 2);
+    for (let i = 0; i < 6; i++) queueBerry(s2, y, 0, 0, 0, t);
+    expect(queuedFor(s2, y.id)).toBe(2);
+    expect(hasRoom(y, s2, t)).toBe(false);
+    // hurt, one more (the berry that heals it counts for nothing else)
+    y.drops = 0.4;
+    expect(hasRoom(y, s2, t)).toBe(true);
+    expect(queueBerry(s2, y, 0, 0, 0, t)).not.toBeNull();
+    expect(queuedFor(s2, y.id)).toBe(3);
+    // cancelled, every one's let go
+    cancelFeeding(s2, y.id);
+    expect(queuedFor(s2, y.id)).toBe(0);
+    expect(s2.berries.every(b => b.claimedBy !== y.id)).toBe(true);
+  });
+
+  it("eats its queue in order, then stops; the queue's berries can't be taken by another", () => {
+    const map = mechanicsMap(), s = newBerries(map, t), [a, b] = spawnCreatures(map);
+    Object.assign(a, { leashed: true, level: 1, x: 0, z: 0, rest: 0 }); Object.assign(b, { leashed: true, level: 1, x: 0, z: 0, rest: 0 });
+    const bs = only(s, 3, 0, 0, 4);
+    for (let i = 0; i < 2; i++) queueBerry(s, a, 0, 0, 0, t);
+    const order = [s.feeding.get(a.id)!.berry, ...s.queue!.get(a.id)!];
+    expect(queueBerry(s, b, 0, 0, 0, t)?.id, "b gets the one left").toBe(bs.find(x => !order.includes(x.id))!.id);
+    const ate: number[] = [];
+    let time = 0;
+    for (let i = 0; i < 20 * 20; i++) { time += 0.05; stepBerries(s, [a, b], () => ({ x: 0, z: 0 }), time, 0.05, t); for (const e of s.events) if (e.kind === "ate" && e.id === a.id) ate.push(e.at); }
+    expect(ate.length).toBe(2);
+    expect(s.fed.get(a.id)).toBe(2);
+    expect(queuedFor(s, a.id)).toBe(0);
+  });
+
+  it("goes to its berry at its leash pace times berries.feed.speed (Ed, 2026-11-03: not much faster, or feeding's a way of moving them quickly)", () => {
+    for (const speed of [1, 1.2]) {
+      const tt = withTuning({ berries: { ...t.berries, feed: { ...t.berries.feed!, speed } } });
+      const map = mechanicsMap(), s = newBerries(map, tt), [a] = spawnCreatures(map);
+      only(s, 1, 0, 0, 10);
+      const p = s.bushes[s.berries[0].bush];
+      Object.assign(a, { x: p.x - 8, z: p.z + 0.6, leashed: true, level: 1, rest: 0 });
+      queueBerry(s, a, p.x - 8, p.z, 0, tt);
+      const x0 = a.x;
+      stepBerries(s, [a], () => ({ x: a.x, z: a.z }), 0.05, 0.05, tt);
+      expect((a.x - x0) / 0.05).toBeCloseTo(leashSpeed(a, tt) * speed, 5);
+    }
   });
 
   it("evolves after 1 and 4 berries (a baby's one: Ed, 2026-10-11; the youth's by its strength gained, Ed 2026-10-05; 3 / 4 / 8 by strength, Ed 2026-10-27), on a bar line, up to adult and no further (Ed, 2026-10-04); legends can't be invited", () => {
@@ -98,29 +169,6 @@ describe("berries and evolving", () => {
     expect(invitable(wild)).toBe(false);
   });
 
-  it("following her, a youth eats the berries it passes up to one short of adult and leaves the rest; only at a sigil she's put down does it eat the last and grow (Ed, 2026-10-27); a baby following her eats none", () => {
-    const s = newBerries(map, t), [y, baby] = spawnCreatures(map), need = toEvolve(1, t);
-    // a patch of eight berries round one spot, the youth and the baby there, their leash points (her, following) there too
-    const at = s.bushes[s.berries[0].bush], spot = { x: at.x, z: at.z };
-    for (let i = 0; i < 8; i++) { const p = s.bushes[s.berries[i].bush]; p.x = spot.x + Math.cos(i) * 2; p.z = spot.z + Math.sin(i) * 2; }
-    Object.assign(y, { x: spot.x, z: spot.z + 1, leashed: true, level: 1, rest: 0 });
-    Object.assign(baby, { x: spot.x + 1, z: spot.z + 1, leashed: true, level: 0, rest: 0 });
-    s.fed.set(y.id, need - 4); // four short: three to eat on the move
-    let time = 0, sigil: { x: number; z: number } | null = null;
-    const step = (secs: number) => { for (let i = 0; i < secs * 20; i++) { time += 0.05; stepBerries(s, [y, baby], () => spot, time, 0.05, t, undefined, id => (id === y.id ? sigil : null)); expect(y.level, "never an adult on the move").toBe(1); } };
-    step(40);
-    expect(s.fed.get(y.id), "one short of adult").toBe(need - 1);
-    expect(lastBerry(y, s, t)).toBe(true);
-    expect(s.evolving.has(y.id)).toBe(false);
-    expect(s.feeding.has(y.id), "the berries it passes are left").toBe(false);
-    expect(baby.level, "a baby following her eats none").toBe(0);
-    expect(s.fed.get(baby.id) ?? 0).toBe(0);
-    // she puts its sigil down here: it eats the last berry and grows
-    sigil = spot;
-    for (let i = 0; i < 40 * 20 && y.level === 1; i++) { time += 0.05; stepBerries(s, [y], () => spot, time, 0.05, t, undefined, () => sigil); }
-    expect(y.level, "at her sigil it grows").toBe(2);
-  });
-
   it("keeps exercised berry bushes finite and their berry indices consistent", () => {
     const s = newBerries(map, t);
     expect(s.bushes.length).toBeGreaterThan(0); expect(s.berries.length).toBeGreaterThan(0);
@@ -129,35 +177,4 @@ describe("berries and evolving", () => {
     // C1 reports the original full-population patch-neighbour share.
   });
 
-  it("a party animal takes a berry on its way (within the detour), not one off to the side", () => {
-    const s = newBerries(map, t), [a, b] = spawnCreatures(map), D = t.berries.detour;
-    // Lone berries, for a clean test: everything else is taken.
-    for (const x of s.berries) x.claimedBy = -1;
-    // the second the furthest from the first (two close by would put both on a's way, whatever the map)
-    const on = s.berries[0], po = s.bushes[on.bush], far = (x: typeof on) => Math.hypot(s.bushes[x.bush].x - po.x, s.bushes[x.bush].z - po.z);
-    const off = s.berries.reduce((m, x) => (far(x) > far(m) ? x : m)), pf = s.bushes[off.bush];
-    on.claimedBy = off.claimedBy = null;
-    // a walks towards its leash point past the first berry, 1 m off its line; b's line passes far from the second.
-    Object.assign(a, { x: po.x - 5, z: po.z + 1, leashed: true, level: 0, rest: 0 });
-    Object.assign(b, { x: pf.x - 5, z: pf.z + D + 3, leashed: true, level: 0, rest: 0 });
-    const points = new Map([[a.id, { x: po.x + 5, z: po.z + 1 }], [b.id, { x: pf.x + 5, z: pf.z + D + 3 }]]);
-    stepBerries(s, [a, b], id => points.get(id) ?? null, 0.05, 0.05, t);
-    expect(s.feeding.get(a.id)?.berry).toBe(on.id);
-    expect(s.feeding.has(b.id)).toBe(false);
-  });
-
-  it("a party animal goes to a berry at its leash pace, not its idle amble", () => {
-    const map = mechanicsMap();
-    const s = newBerries(map, t), [a] = spawnCreatures(map);
-    for (const x of s.berries) x.claimedBy = -1;
-    const on = s.berries[0], p = s.bushes[on.bush];
-    on.claimedBy = null;
-    Object.assign(a, { x: p.x - 4, z: p.z + 0.6, leashed: true, level: 1, rest: 0 });
-    const lp = { x: p.x + 4, z: p.z + 0.6 };
-    stepBerries(s, [a], () => lp, 0.05, 0.05, t); // claims it
-    const x0 = a.x;
-    stepBerries(s, [a], () => lp, 0.1, 0.05, t);
-    expect((a.x - x0) / 0.05).toBeCloseTo(leashSpeed(a, t), 5);
-    expect(leashSpeed(a, t)).toBeGreaterThan(a.speed * 1.5);
-  });
 });

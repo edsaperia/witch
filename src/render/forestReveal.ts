@@ -13,8 +13,9 @@
 export interface ForestDarkTuning { on: boolean; fade: number; reveal?: number }
 
 /** Where she sees it from this frame: on foot in the house (any room or the Terrace), through its telescope, or out of it (lifting
- *  off, flying, or no house's rooms). */
-export type RevealPlace = "house" | "scope" | "out";
+ *  off, flying, or no house's rooms); or a sail's dive in from the sea chart (View.fly), the camera out over the sea and the island
+ *  while she lies in bed for its end. */
+export type RevealPlace = "house" | "scope" | "out" | "dive";
 
 export interface ForestReveal {
   /** The forest's share drawn: 0 the house alone over black, 1 the whole picture (linear: forestShown eases it). */
@@ -41,6 +42,10 @@ export function stepForestReveal(s: ForestReveal, place: RevealPlace, ready: boo
   s.at = ht;
   const reveal = Math.max(1e-3, T?.reveal ?? T?.fade ?? 0.6), fade = Math.max(1e-3, T?.fade ?? 0.6);
   s.island = ready ? Math.min(1, s.island + dt / reveal) : 0;
+  // (the dive: the whole picture from its first frame, the loading mist over what isn't drawn yet; the dark here cross-faded the
+  // chart's sea into black: Ed, 2026-11-03, "we can fade between while looking at a simple blue texture". Landed in her room with the
+  // island not ready, the dark closes in from there over `fade`, as it does in the house.)
+  if (place === "dive") { s.out = false; s.k = 1; return; }
   if (place !== "out") s.out = false;
   else if (!ready) s.out = true;
   if (!T?.on) s.k = 1;

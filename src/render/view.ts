@@ -30,7 +30,7 @@ import { CrownLandmark } from "./crownLandmark";
 import { makeCrown, type HouseOutline } from "../rules/crown";
 // (the house's outline for the crown: only what it reads, so the floor's traced rings stay out of the bundle)
 import { rooms as OUTLINE_ROOMS, branches as OUTLINE_BRANCHES, stubs as OUTLINE_STUBS, takeoff as OUTLINE_TAKEOFF } from "../../config/house/outline.json";
-import { fromPlan, HOUSE_ROOMS, toPlan } from "../rules/houseRooms";
+import { HOUSE_ROOMS, toPlan } from "../rules/houseRooms";
 import { speakerRadius } from "../rules/speakers";
 import { Hiz, HIZ_LAYER } from "./hiz";
 /** How near the treehouse (m, the camera) its occluders are built (render/hiz.ts). */
@@ -45,7 +45,9 @@ import { stepTiltShare, tiltShareShown } from "./overlayTilt";
 import { forestShown, newForestReveal, stepForestReveal, type RevealPlace } from "./forestReveal";
 import { blinkCharges, poseOf, witchTuning } from "../rules/game";
 import { coolRoom, coolShare } from "../rules/cooldown";
-import { shotCamera, type Shot, type TreeExtent } from "../rules/arrive";
+import { buffsOf, speedBuff } from "../rules/buffs";
+import { speedMultiplier } from "../rules/spells";
+import { shotCamera, type Shot } from "../rules/arrive";
 import { FALLBACK_LOOK, floorLook, type FloorLook } from "./legendFloor";
 import { AREA_TYPES, HOME_LOOK, nearestClearings, type LegendClearing } from "../rules/map";
 import { ZOO_CONFIG } from "../rules/zoo";
@@ -72,12 +74,13 @@ import { hsv2rgb } from "../../art/generator.js";
 import { Post } from "./post";
 import { GrassView } from "./grass";
 import { SpellFx } from "./spellfx";
-import { updateRefraction, resetRefraction } from "./view/refraction";
+import { updateRefraction, resetRefraction, captureRefractionCast } from "./view/refraction";
+import { PartyStartFx } from "./partyStart";
+import { MAKE_SOME_NOISE, partyStartOf, replayReady } from "../rules/partyStart";
 import { dodgeEchoesFor, resetDodgeEchoes } from "./view/dodgeEchoes";
 import { TRAIL_DEFAULT, WitchTrail } from "./trail";
 import { newPartyOverLook, partyOff, partyOverEase, updatePartyOver } from "./partyOver";
 import { SWOOP_TRAIL_DEFAULT, SwoopTrails } from "./swoopTrails";
-import { LOAD_DEFAULT, loadView } from "./load";
 import { HAND, InviteView, letterAt, type HerOffset } from "./invites";
 import { StateMarks } from "./looks";
 import type { Dancefloor } from "./dancefloor";
@@ -114,6 +117,7 @@ import { packAtlas } from "./atlas";
 import { GpuLedger } from "./gpuLedger";
 import { keepUnderBudget, newGpuState } from "./view/gpuBudget";
 import { berrySprite } from "./berries";
+import { berryColour } from "./colourGrammar";
 import { leyDrawnTo, RING_AFTER, shaderPulse, type LeyLines } from "./leylines";
 import { routeSeen } from "../rules/hatSpells";
 import { bootLineAt, bootPath, bootPulseAt } from "../rules/bootRing";
@@ -138,15 +142,18 @@ import { cancelRefresh, refresh, refreshSteps } from "./view/scenery";
 import { drawBerries, drawCreatures, resetCreatureCaches } from "./view/creatures";
 import { drawHatArt } from "./view/hatArt";
 import { drawFinds, findClear } from "./view/finds";
+import { challengeCarving, challengeFloor, challengeRing, drawChallengeColumns, fireChallenge } from "./challenge";
 import { drawMarkers, drawSpeakers, forgetCandles, placeTreehouse, entDeckDrawn } from "./view/home";
 import { miniTreehouse, ZooExitTag } from "./zooExit";
 import { CastTag } from "./castTag";
+import { FeedTag } from "./feedTag";
 import { lanternLights, relicLights, setLights, sigilLights, updateSources } from "./view/lights";
 import { placeCamera } from "./view/camera";
 import { setFrameUniforms } from "./view/frameUniforms";
 import { newReveal, setReveal } from "./view/reveal";
 import { drawWitch, houseShiftOf } from "./view/witch";
 import { MushroomView } from './mushrooms';
+import { MasterplanView } from "./masterplan";
 import { PotionObserversView } from './potionObservers';
 import { chunkyPixelSize, potionStrength } from './potionEffects';
 import { drawPointers } from "./view/hud";
@@ -383,6 +390,8 @@ export class View {
   readonly renderer: THREE.WebGLRenderer;
   scene = new THREE.Scene();
   readonly magic = fxFor(this.scene);
+  /** The party start's pieces (render/partyStart.ts; Ed, 2026-11-03), drawn over the house at her decks. */
+  readonly partyStart = new PartyStartFx(this.scene);
   private magicBlink = -Infinity;
   /** Stage 0 art review only; absent in ordinary play. */
   fxMock: FxMock | null = null;
@@ -481,10 +490,10 @@ export class View {
     this.ground.mesh.layers[this.shaderLandingLimited && this.shaderDrawStatus.active ? 'enable' : 'disable'](HOUSE_LAYER);
     const D = this.dark, T = g.tuning.treehouse.house?.dark, deck = deckOf(g.map, g.tuning), w = g.witch, rooms = !!T?.on && !!deck?.house?.rooms;
     // (on foot: rising out of it, the forest comes back as she lifts off)
-    const place: RevealPlace = !rooms ? "out" : this.telescope ? "scope" : w.perch && w.mode === "ground" ? "house" : "out";
+    const place: RevealPlace = this.fly && !this.fly.indoors ? "dive" : !rooms ? "out" : this.telescope ? "scope" : w.perch && w.mode === "ground" ? "house" : "out";
     if (place !== D.place) { D.place = place; D.from = { x: w.x, z: w.z }; } // (where she came in, or left)
     const R = D.reveal;
-    stepForestReveal(R, place, !!g.islandReady, g.herTime, T);
+    stepForestReveal(R, place, !!g.islandReady, g.herTime, T); // (a sail's dive, "dive": the whole picture, though she's in bed for its end; on its way down into her room, the house's as she'll wake in it)
     const P = this.post;
     P.behind = forestShown(R.k);
     if (R.k >= 1) return;
@@ -520,6 +529,7 @@ export class View {
   readonly assets: AssetLibrary;
   typeBatches = new Map<number, SpriteBatch>();
   private readonly mushroomView = new MushroomView();
+  private masterplan?: MasterplanView;
   private readonly potionObservers = new PotionObserversView();
   decorBatches = new Map<string, SpriteBatch>();
   /** The biome the ground cover's tufts were drawn in (none: temperate): drawn again for a night on an island in another. */
@@ -541,6 +551,8 @@ export class View {
   zooExitTag: ZooExitTag | null = null;
   /** The spell's key prompt by its 🎶 (render/castTag.ts), made the first frame. */
   castTag: CastTag | null = null;
+  /** The feed prompt by the berry a tap would feed (render/feedTag.ts; Ed, 2026-11-03), made the first frame. */
+  feedTag: FeedTag | null = null;
   /** The great oak's crown over the house (render/crown.ts), with the house's rooms and treehouse.house.crown on. */
   crown: CrownView | null = null;
   /** The crown seen over the horizon from far off (render/crownLandmark.ts). */
@@ -594,6 +606,10 @@ export class View {
   get dodgeEchoes() { return dodgeEchoesFor(this); }
   /** Her flight trail: a ribbon of glow in the colour of the area she's over (render/trail.ts). */
   private trail!: WitchTrail;
+  /** Her cooldown trail's colour preset (config/trail-colours.json; chosen at the Broom station, kept with her broom: main.ts). */
+  private trailPresetId: string | null = null;
+  get trailPreset(): string | null { return this.trailPresetId; }
+  set trailPreset(id: string | null) { this.trailPresetId = id; if (this.trail) this.trail.preset = id; }
   private trailRgb = new THREE.Vector3();
   shadow!: THREE.Mesh;
   mpp: number; // metres per art pixel
@@ -812,9 +828,11 @@ export class View {
   /** A View whose island is built a frame's budget at a time (render/slices.ts; Ed's laptop, 2026-10-20: the build was one 10 s
    *  task, the bedroom's alarm, its music and every animation stopped): the same steps in the same order as `new View`, the page
    *  given its frames between them. Nothing is drawn until it's whole (the caller waits for it). */
-  static async create(canvas: HTMLCanvasElement, game: Game, style: Style, witchGenome: unknown = null, budgetMs = 8): Promise<View> {
+  /** `hatOff`: her hat-off frames are the start's own art too (a game's first morning, her hat on the hats' floor: main.ts). */
+  static async create(canvas: HTMLCanvasElement, game: Game, style: Style, witchGenome: unknown = null, { budgetMs = 8, hatOff = false }: { budgetMs?: number; hatOff?: boolean } = {}): Promise<View> {
     await nextFrame(); // (a turn of its own: the renderer and the light made apart from whatever came before, the night's map)
     const v = new View(canvas, game, style, witchGenome, true);
+    if (hatOff) v.assets.askHatOff();
     await runSliced(v.build(), "view", budgetMs);
     return v;
   }
@@ -887,6 +905,7 @@ export class View {
     this.scene.add(this.spellFx.trail);
     this.magic.legacyParty=(x,y,z,age)=>{this.spellFx.reset();this.spellFx.partyBurst(x,y,z,this.game.herTime-age);this.spellFx.update(this.game,this.game.herTime,y);};
     this.trail = new WitchTrail(game.tuning.trail ?? TRAIL_DEFAULT);
+    this.trail.preset = this.trailPresetId;
     this.scene.add(this.trail.mesh);
     bridgeNativeObject(this.trail.mesh,"flightTrail");
     bridgeNativeObject(this.spellFx.trail,"broomSpark");
@@ -895,7 +914,7 @@ export class View {
     this.propBatch = new SpriteBatch(this.assets.props, this.mpp, { fade: true }).name("props");
     // Berries: a small shiny dark-red berry, drawn here (a highlight upper left, a darker side),
     // always drawn (gameplay), unlit so it reads at night; its halo and glints are in leash.ts.
-    this.berryBatch = new SpriteBatch(packAtlas([berrySprite(t.berries.colour)], 64), this.mpp, { unlit: true });
+    this.berryBatch = new SpriteBatch(packAtlas([berrySprite(berryColour(t))], 64), this.mpp, { unlit: true });
     this.scene.add(...this.berryBatch.meshes);
     this.scene.add(...this.propBatch.meshes);
     yield "party";
@@ -1077,23 +1096,6 @@ export class View {
     await this.compileAll(o.sail);
     this.askIsland(near);
     this.homeDone = true;
-  }
-
-  /** The treehouse tree as the dive's whole-tree shot frames it (rules/arrive.ts TreeExtent; the coordinator, 2026-10-24: the one
-   *  measure of it): the great oak's crown, from its lobes, where there is one (render/crown.ts; its middle, its top from the ground
-   *  and its width east to west), else the Ent's art at the treehouse once it's come; null till then. */
-  treeExtent(): TreeExtent | null {
-    const g = this.game, deck = deckOf(g.map, g.tuning);
-    if (this.crown && deck) {
-      let x0 = Infinity, x1 = -Infinity, z0 = Infinity, z1 = -Infinity, top = 0;
-      for (const l of this.crown.crown.lobes) {
-        const p = fromPlan({ x: deck.x, z: deck.z }, l.x, l.z);
-        x0 = Math.min(x0, p.x - l.r); x1 = Math.max(x1, p.x + l.r); z0 = Math.min(z0, p.z - l.r); z1 = Math.max(z1, p.z + l.r); top = Math.max(top, l.y + l.r);
-      }
-      if (Number.isFinite(x0)) return { x: (x0 + x1) / 2, z: (z0 + z1) / 2, height: deck.h + top, width: x1 - x0 };
-    }
-    const a = this.assets, th = g.map.treehouse;
-    return a.home.treehouse ? { x: th.x, z: th.z, height: a.treehouse.base.y * this.mpp, width: (a.treehouse.atlas.frames[0]?.w ?? 0) * this.mpp } : null;
   }
 
   /** Whether the start's house is made: its art (her, home, the soundsystems, the treehouse), the ground and the forest round it.
@@ -1357,6 +1359,7 @@ export class View {
     // The last night's: the scenery's rebuild under way, the creatures' caches, the candles; its area types' batches and their
     // shadows, and its soundsystems' (their atlases the art's: freed once, by reseat).
     cancelRefresh(this); resetCreatureCaches(); forgetCandles(this);
+    this.masterplan?.dispose(); this.masterplan = undefined;
     this.potionObservers.dispose(this);
     resetDodgeEchoes(this);
     for (const b of this.typeBatches.values()) { this.scene.remove(...b.meshes); b.release(); }
@@ -1398,7 +1401,7 @@ export class View {
     this.strings.setGame(game); this.leashView.setGame(game); this.lasers.setGame(game); this.borders.setGame(game); this.inviteView.setGame(game);
     this.partyObjects.reset(); this.rig?.reset(); this.holograms.reset(); this.glades.reset(); this.wisps?.reset();
     this.clouds.reseed(game.seed); this.lightRings?.reseed(game.map.seed);
-    this.fireworks.reset(); this.swoopTrails.reset(); this.spellFx.reset(); this.trail.newNight(); this.combatLight.reset(); this.occlusion.reset();
+    this.fireworks.reset(); this.swoopTrails.reset(); this.spellFx.reset(); this.partyStart.reset(); this.trail.newNight(); this.combatLight.reset(); this.occlusion.reset();
     resetRefraction(this);
     this.assets.prefetchType(HOME_LOOK); // home's meadow floor (no trees ask for it)
   }
@@ -1509,6 +1512,19 @@ export class View {
   runeCyan = new THREE.Vector3(0.3, 0.9, 1);
   runeViolet = new THREE.Vector3(0.75, 0.45, 1);
   runeGreen = new THREE.Vector3(0.45, 1, 0.5);
+  /** The party start played again at her decks (Ed, 2026-11-03: "press square at the decks after the party is started that replays
+   *  the visual effects ... (the dj says make some noise!!!)"): main.ts calls it on the use button there (rules/partyStart.ts
+   *  canReplayPartyStart). Every piece from the start where she was drawn seated, and her line over the decks; drawing only. Not
+   *  while a show's still playing, nor within a second of the last (rules/partyStart.ts replayReady): false then, or with no decks
+   *  to play it at. */
+  replayPartyStart(): boolean {
+    const P = this.partyStart, A = P.anchor ?? P.here, g = this.game;
+    if (!A || !replayReady(partyStartOf(g.tuning), P.showAt, P.now)) return false;
+    P.start(g.tuning, A.x, A.y, A.z, P.now);
+    captureRefractionCast(this, P.worldNow, A.x, A.y, A.z, true);
+    this.houseRooms?.sayAtDecks(MAKE_SOME_NOISE, P.now);
+    return true;
+  }
   /** A 💌 vanishes at a slowed circle's edge: a small sparkle there (its `vanished` invite event calls this, render/invites.ts). */
   edgeSparkle(x: number, z: number): void { if (this.edgeSparkles.length < 64) this.edgeSparkles.push({ x, z, at: LIGHT_UNIFORMS.uRealTime.value }); }
   /** ?bare: hide everything but the ground, the witch, soundsystems, the dancefloor and its
@@ -1516,7 +1532,7 @@ export class View {
   private hideForBare(): void {
     for (const b of [...this.typeBatches.values(), ...this.decorBatches.values(), ...this.creatureBatches.values(), this.treehouseBatch, this.propBatch, this.markerBatch])
       for (const m of b.meshes) m.visible = false;
-    for (const o of [this.grass.mesh, this.markerFx.group, this.borders.mesh, this.lasers.mesh, this.holograms.group, this.spellFx.trail, this.trail.mesh, this.swoopTrails.mesh]) o.visible = false;
+    for (const o of [this.grass.mesh, this.markerFx.group, this.borders.mesh, this.lasers.mesh, this.holograms.group, this.spellFx.trail, this.partyStart.sparkles, this.trail.mesh, this.swoopTrails.mesh]) o.visible = false;
   }
 
   readonly waveNumbers = new WaveNumbers();
@@ -1572,6 +1588,8 @@ export class View {
   }
   /** The character creator changed her look (her genome, art/witchGenome.js): her frames re-baked and her batch swapped. */
   setWitch(genome: unknown): void {
+    // (the look she has already, the boot's say (her nightie on a first morning, main.ts): nothing to redraw, her hat-off frames kept)
+    if (JSON.stringify(genome ?? null) === JSON.stringify(this.assets.witchGenome ?? null)) return;
     this.assets.rebakeWitch(genome); // (drawn by an art worker: her batch takes the new frames when they arrive, swapHomeArt below)
     if (this.bareBatch) { this.scene.remove(...this.bareBatch.meshes); this.bareBatch = null; this.bareAsked = false; }
   }
@@ -1621,7 +1639,7 @@ export class View {
     // (the zoo's plaza, Ed 2026-10-26: "Home appears as a stone plaza with the ent's sigil on it (drawn like the floor of a legend
     // circle)": a floor of its own round the dancefloor, the World Tree carved in, drawn after the legends' nearest five)
     const plaza = null as { x: number; z: number } | null; // (the zoo's plaza draws its own sigil now: render/ground.ts uZooPlaza)
-    const w = g.witch, dt = Math.min(0.1, Math.max(0, time - this.lastRingTime)), near = nearestClearings(g.map.legendClearings, w.x, w.z, this.nearRings, plaza ? 5 : 6);
+    const w = g.witch, dt = Math.min(0.1, Math.max(0, time - this.lastRingTime)), ch = challengeRing(g, w.x, w.z), near = nearestClearings(g.map.legendClearings, w.x, w.z, this.nearRings, plaza || ch ? 5 : 6);
     this.lastRingTime = time;
     for (const e of g.leashEvents) if (e.kind === "outsideCircle") {
       const L = g.creatures[e.id], c = L && g.map.legendClearing(L.cell[0], L.cell[1]);
@@ -1650,6 +1668,13 @@ export class View {
       f.glint = glint > 0 && L && !L.gone && (L.legendState === "asleep" || L.legendState === "restless") ? glint : 0;
     }
     if (plaza) { const f = this.floorItems[near.length]; f.species = "worldTree"; f.look = FALLBACK_LOOK; f.glint = 4; } // (its grooves glinting, so the World Tree reads)
+    // (the challenge circle, Ed 2026-11-03: "a large stone floor circle (like the legend circle) with the glowing sigil of the island
+    // carved into it": the last slot, its area's floor, the island's sigil, glowing; render/challenge.ts)
+    if (ch && this.ringCount < 6) {
+      const i = this.ringCount++, f = this.floorItems[i];
+      Object.assign(out[i], { x: ch.x, z: ch.z, r: ch.r, edge: ch.edge, glow: ch.glow });
+      f.species = ch.species; f.look = floorLook(AREA_TYPES[g.map.typeOf(g.challenge!.cell[0], g.challenge!.cell[1])].id); f.glint = ch.glint;
+    }
     return out;
   }
   private lakeSigils: { x: number; z: number; r: number; species: string; d: number }[] = [];
@@ -1704,12 +1729,15 @@ export class View {
     // The party's over (render/partyOver.ts): its lights go out in a ripple from home.
     const over = updatePartyOver(g, partyOverEase(g, this.overDebug), this.over), offAt = (x: number, z: number) => partyOff(over, x, z);
     this.leashView.partyOverEase = over.ease;
+    fireChallenge(g, this.fireworks); // (the cleared challenge circle's firework each bar: render/challenge.ts)
     this.fireworks.update(g.waveEvents, time, t, key => { const [cx, cy] = key.split(",").map(Number); return sigilColour(AREA_TYPES[g.map.typeOf(cx, cy)].creature) as number[]; }, at => !!g.win && g.win.lapAt !== undefined && at >= g.win.lapAt); // (the win's, from its victory lap on: the finale's palette; before the soundsystems: a celebrated one's lasers come on as its show starts)
     const party = this.partyView.update(g, time, (x, z, ww, hh) => inView(this, x, z, ww, hh, 4), () => false, this.fireworks.celebrated, offAt);
     if (over.front > 0) { for (const l of party.lights) l.strength *= 1 - offAt(l.x, l.z); party.playing = party.playing.filter(p => offAt(p.x, p.z) < 0.98); party.projectors = party.projectors.filter(p => offAt(p.x, p.z) < 0.98); }
     this.soundBatch.set(party.items);
     this.ground.setLegendRings(this.legendRings(g, time), this.ringCount);
     this.ground.setLegendFloors(this.floorItems, this.ringCount);
+    this.ground.setChallengeFloor(challengeFloor(g, g.witch.x, g.witch.z));
+    this.ground.setChallengeCarving(challengeCarving(g, g.witch.x, g.witch.z)); // (its sigil carved into its floor: render/challenge.ts) // (the challenge circle's dancefloor once cleared: render/challenge.ts)
     // (the zoo's undiscovered islands, rules/zooMap.ts: the nearest four lakes' sigils, faint on the water)
     if (g.map.zoo?.layout) {
       const L = g.map.zoo.layout, w = g.witch, items = this.lakeSigils;
@@ -1810,11 +1838,13 @@ export class View {
       const dt = this.trailAt < 0 ? 0 : Math.min(0.1, Math.max(0, ht - this.trailAt)); this.trailAt = ht;
       const back = sp > 0.1 ? 0.6 / sp : 0, W0 = g.witches[0], D = W0.dash;
       // (and its length at least the shared cooldown's share: rules/cooldown.ts, Ed 2026-10-15; the ribbon along her blink's line)
-      const tw = witchTuning(g, W0), cool = tw.cooldown?.shared ? coolShare(W0.cool, coolRoom(tw, blinkCharges(g, W0))) : 0; // (her broom's parts: rules/broomParts.ts)
+      const tw = witchTuning(g, W0), room = coolRoom(tw, blinkCharges(g, W0)), cool = tw.cooldown?.shared ? coolShare(W0.cool, room) : 0; // (her broom's parts: rules/broomParts.ts)
+      // (the cooldown trail, render/trail.ts steps: the counter itself, and her top speed now, her broom's parts, a speed spell and
+      // Darters in; on a guest, her predicted witch's: render only)
+      this.trail.counter = tw.cooldown?.shared ? { left: W0.cool.left, room, dash: tw.dash.cooldown, rise: tw.cooldown.rise ?? 0, landing: tw.riseCooldown ?? 0,
+        top: (tw.groundSpeed + (tw.treetopSpeed - tw.groundSpeed) * lift) * speedMultiplier(W0.spells, ht, tw) * speedBuff(buffsOf(W0.leash.stack, g.creatures, g.berries, g.tuning).stacks, g.tuning) } : null;
+      this.trail.screen = { camera: this.camera, w: this.width, h: this.height };
       this.trail.update(w.x - w.vx * back, witchHeight(w, t) + 0.25 + this.rideOff, w.z - w.vz * back, sp, top, lift, c, ht, dt, D.at, D, cool);
-      // the load she carries (render/load.ts): read once a frame, for the stack, the threads, her lean and her broom
-      loadView(g, t.load ?? LOAD_DEFAULT, dt, this.leashView.load);
-      const Bp = this.leashView.bristle; Bp.x = w.x - w.vx * back; Bp.y = witchHeight(w, t) + 0.25 + this.rideOff; Bp.z = w.z - w.vz * back;
     }
     // Tufts part round her and the three nearest creatures.
     // (only those within reach made into objects: mapping every creature, a thousand late in a run, every frame was much of the frame's garbage)
@@ -1833,6 +1863,7 @@ export class View {
     for (let i = 0; i < cs.length; i++) { const c = cs[i]; if (Math.abs(c.x - w.x) < GR && Math.abs(c.z - w.z) < GR && hasRune(c)) clear.push({ x: c.x, z: c.z, r: t.groundCover.sigilClear }); } // (a happy one's rune at its feet)
     for (const r of relicsOut(g)) if ((r.state === "lying" || r.state === "dropped") && Math.abs(r.sx - w.x) < GR && Math.abs(r.sz - w.z) < GR) clear.push({ x: r.sx, z: r.sz, r: Math.max(t.groundCover.sigilClear, 3.4 * 0.45) }); // (and a relic's sigil, south of it)
     { const F = findClear(this); if (F) clear.unshift(F); } // (tonight's find's patch, first: render/view/finds.ts)
+    { const ch = g.challenge; if (ch && Math.hypot(ch.x - w.x, ch.z - w.z) < GR + ch.radius) clear.unshift({ x: ch.x, z: ch.z, r: ch.radius }); } // (the challenge circle's stone floor: render/challenge.ts)
     this.time("markers");
     this.grass.update(w.x, w.z, 1 - canopyShown(w), parts, t.suspects.groundCover ? LIGHT_UNIFORMS.uGlowR.value * 1.05 : t.groundCover.radius, clear); // out to the canopy hole's edge
     const partyObjectLights = this.partyObjects.update(g, time, this.camera, (x, z, ww, hh) => inView(this, x, z, ww, hh, 4), this.worldFires, this.lastView);
@@ -1880,11 +1911,15 @@ export class View {
     }
     this.lightRings?.update(this.camera, w.x, witchHeight(w, t) + this.rideOff, w.z, canopyShown(w), time);
     const hatTop = drawWitch(this, time, ht, onTreehouse, repaintHeld);
+    this.partyStart.update(g.tuning, this.magic, ht, time);
     updateRefraction(this, time);
     this.mushroomView.update(this);
     this.ground.prepareCoast(this.renderer, this.camera, this.scene);
     this.houseRooms?.update(this, onTreehouse, ht);
     this.potionObservers.update(this, onTreehouse);
+    const planStrength = potionStrength(g, "masterplan");
+    if (planStrength) (this.masterplan ??= new MasterplanView(this)).update(planStrength);
+    else if (this.masterplan) { this.masterplan.dispose(); this.masterplan = undefined; }
     if (this.crown && (this.crownNoNotch !== !!t.treehouse.house?.look?.noNotch || this.crown.lights !== (t.treehouse.house?.crown?.lights ?? 1) || (this.crown.crown.wrap ?? 0) !== (t.treehouse.house?.crown?.wrap ?? 0))) this.ensureCrown(this.game); // (its lights' density or their wrapping moved on the pause page: grown again)
     if (this.crown && deck) { // (the crown: in the world, or laid over the floors with her indoors: render/crown.ts)
       const W = this.crownWorld, a = ((HOUSE_ROOMS.turn ?? 0) * Math.PI) / 180, c = Math.cos(a), s = Math.sin(a);
@@ -1917,6 +1952,7 @@ export class View {
     drawBerries(this, time);
     drawHatArt(this); // (the Harvest hat's sprouts, the Cyclone's whirlwind: render/view/hatArt.ts)
     drawFinds(this); // (tonight's travel trunk: render/view/finds.ts)
+    drawChallengeColumns(this); // (the challenge circle's columns: render/challenge.ts)
     checkPops(this, "moving");
     this.time("creatures");
     this.rulers.update(this.camera, this.canvas.clientWidth || window.innerWidth, this.canvas.clientHeight || window.innerHeight, w.x, w.z);
@@ -1926,6 +1962,7 @@ export class View {
     this.time("hud");
     this.leashView.update(ht, this.camera, this.canvas.clientWidth || window.innerWidth, this.canvas.clientHeight || window.innerHeight, hatTop, this.witchBodyY, this.witchFeetY, this.witchFrameH);
     (this.castTag ??= new CastTag()).update(this); // (the spell's key prompt by its 🎶, drawn just now: render/castTag.ts)
+    (this.feedTag ??= new FeedTag()).update(this); // (the feed prompt by the berry a tap would feed: render/feedTag.ts)
     this.time("leash");
     this.magic.finish(t.lightBudget);
     this.stats.lights = LIGHT_UNIFORMS.uLightCount.value;

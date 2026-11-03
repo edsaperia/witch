@@ -1,0 +1,6 @@
+{
+  "reason": "The treehouse's landing cooldown (Ed, 2026-11-03: \"there should be a minimum time between which either these things can happen, perhaps 3 seconds\"): for treehouse.landCooldown (3) seconds after she leaves a treehouse floor she can't land on one, and after she lands she can't leave. Her body carries perchCool while it runs; the new knob treehouse.landCooldown is in the tuning.",
+  "rules": {
+    "*": "her body's perchCool for 3 s after she leaves the treehouse's floor (off her decks) or lands on it, and anything following from a landing that now waits; and the tuning's new treehouse.landCooldown wherever a copy of the tuning rides along"
+  }
+}

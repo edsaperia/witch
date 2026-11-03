@@ -169,6 +169,7 @@ export type SchemaTuning = {
     "curve": "linear" | "smooth";
   };
   "areaSizeVariance": number;
+  "siteMargin": number;
   "borderLayers": number;
   "clearingSize": number;
   "clearingFalloff": number;
@@ -255,6 +256,7 @@ export type SchemaTuning = {
     "clear": number;
     "lightReach": number;
     "lightStrength": number;
+    "landCooldown": number;
     "deck": {
       "on": boolean;
       "radius": number;
@@ -406,6 +408,7 @@ export type SchemaTuning = {
   "paths": {
     "rails": Array<number>;
     "roads": Array<number>;
+    "network": boolean;
     "linkChance": number;
     "deadEndChance": number;
     "pathHalf": number;
@@ -431,6 +434,26 @@ export type SchemaTuning = {
   "soundsystemFootprint": number;
   "reserveMargin": number;
   "stoneKeepClear": number;
+  "stoneMinGap": number;
+  "findArea": {
+    "on": boolean;
+    "clear": number;
+  };
+  "challenge": {
+    "on": boolean;
+    "radius": number;
+    "margin": number;
+    "spacing": number;
+    "adults": number;
+    "youths": number;
+    "castReach": number;
+    "findSets": boolean;
+    "fireworks": {
+      "on": boolean;
+      "height": number;
+      "burst": number;
+    };
+  };
   "treeMarginFromSoundsystem": number;
   "treeDensity": number;
   "leafJitter": {
@@ -704,6 +727,16 @@ export type SchemaTuning = {
     "sparks": boolean;
     "cooldown": number;
     "bySpeed": boolean;
+    "steps": {
+      "on": boolean;
+      "dot": number;
+      "gap": number;
+      "section": number;
+      "halo": number;
+      "glow": number;
+      "glowSize": number;
+      "preset": "warm" | "cool" | "pastel" | "party" | "gold" | "ice";
+    };
   };
   "swoopTrail": {
     "on": boolean;
@@ -723,7 +756,6 @@ export type SchemaTuning = {
       "bushes": Array<number>;
       "radius": number;
     };
-    "detour": number;
     "eatTime": number;
     "cost": {
       "by": "power" | "value";
@@ -731,8 +763,12 @@ export type SchemaTuning = {
     };
     "colour": string;
     "glow": number;
-    "babyReach": number;
     "babyCost": number;
+    "feed": {
+      "reach": number;
+      "speed": number;
+      "hold": number;
+    };
   };
   "invites": {
     "on": boolean;
@@ -831,6 +867,7 @@ export type SchemaTuning = {
     "flare": number;
     "retarget": number;
   };
+  "colourGrammar": "new" | "old";
   "leash": {
     "length": number;
     "runSpeed": number;
@@ -865,21 +902,20 @@ export type SchemaTuning = {
       "speed": number;
       "stop": number;
     };
-    "grounded": {
-      "weight": number;
-    };
-    "weight": {
-      "free": number;
-      "levels": Array<number>;
-      "drag": number;
-      "drift": number;
-      "rise": number;
-      "sink": number;
-      "sinkMax": number;
-      "floor": number;
-      "extreme": number;
-      "maxTension": number;
-      "babyGround": number;
+    "chain": {
+      "length": number;
+      "drag": {
+        "youth": number;
+        "adult": number;
+        "legend": number;
+      };
+      "fadeFrom": number;
+      "glow": number;
+      "rattle": {
+        "strength": number;
+        "time": number;
+      };
+      "youthRise": number;
     };
     "babies": {
       "gap": number;
@@ -887,6 +923,9 @@ export type SchemaTuning = {
       "calm": number;
       "farAt": number;
       "farSpeed": number;
+      "margin": number;
+      "size": number;
+      "her": number;
     };
     "ranks": {
       "on": boolean;
@@ -894,6 +933,7 @@ export type SchemaTuning = {
       "glyph": number;
       "colours": Array<Array<number>>;
       "enemy": Array<Array<number>>;
+      "asleep": Array<number>;
       "sizes": Array<number>;
       "embers": {
         "count": Array<number>;
@@ -922,10 +962,10 @@ export type SchemaTuning = {
       "chain": {
         "link": Array<number>;
         "tether": number;
-        "slack": number;
+        "segment": number;
         "damping": number;
         "gravity": number;
-        "arcPull": number;
+        "friction": number;
         "iterations": number;
         "jump": number;
         "fall": number;
@@ -940,6 +980,48 @@ export type SchemaTuning = {
     "threadArcSlack": number;
     "threadArcTaut": number;
     "threadArcMax": number;
+  };
+  "buffs": {
+    "groups": {
+      "climbers": Array<string>;
+      "darters": Array<string>;
+      "stalkers": Array<string>;
+      "heavies": Array<string>;
+      "packHunters": Array<string>;
+      "shells": Array<string>;
+    };
+    "legend": number;
+    "pips": {
+      "max": number;
+      "life": number;
+      "warn": number;
+      "start": number;
+    };
+    "climbers": {
+      "dash": number;
+    };
+    "darters": {
+      "speed": number;
+    };
+    "stalkers": {
+      "speed": number;
+      "range": number;
+    };
+    "heavies": {
+      "shots": number;
+    };
+    "packHunters": {
+      "rate": number;
+      "spread": number;
+    };
+    "shells": {
+      "chain": number;
+    };
+    "icons": {
+      "blue": Array<number>;
+      "pink": Array<number>;
+      "twinkle": number;
+    };
   };
   "difficulty": {
     "creatureSpeed": number;
@@ -1007,6 +1089,14 @@ export type SchemaTuning = {
     "turnFrom": number;
     "turnTo": number;
     "legendFlash": number;
+    "visibility": {
+      "size": number;
+      "opacity": number;
+      "bloom": number;
+      "duration": number;
+      "zoneDensity": number;
+      "groundMark": number;
+    };
   };
   "combat": {
     "packs": {
@@ -1659,6 +1749,10 @@ export type SchemaTuning = {
       "volume": number;
       "gap": number;
     };
+    "rattle": {
+      "volume": number;
+      "gap": number;
+    };
     "alarm": {
       "volume": number;
       "gap": number;
@@ -1831,6 +1925,55 @@ export type SchemaTuning = {
     "lightReach": number;
     "lightStrength": number;
   };
+  "partyStart": {
+    "overHouse": boolean;
+    "sparkles": {
+      "on": boolean;
+      "count": number;
+      "size": number;
+      "opacity": number;
+      "core": number;
+      "life": number;
+      "speed": number;
+      "hueA": number;
+      "satA": number;
+      "hueB": number;
+      "satB": number;
+    };
+    "pillar": {
+      "on": boolean;
+      "height": number;
+      "width": number;
+      "rise": number;
+      "duration": number;
+      "strength": number;
+    };
+    "dome": {
+      "on": boolean;
+      "size": number;
+      "duration": number;
+      "fill": number;
+    };
+    "light": {
+      "on": boolean;
+      "reach": number;
+      "strength": number;
+      "duration": number;
+    };
+    "shake": {
+      "on": boolean;
+      "amount": number;
+      "duration": number;
+    };
+    "ground": {
+      "on": boolean;
+      "alpha": number;
+      "size": number;
+    };
+    "refraction": {
+      "on": boolean;
+    };
+  };
   "blood": {
     "on": boolean;
     "style": "prints" | "prints+drops" | "drops";
@@ -1939,7 +2082,7 @@ export type SchemaTuning = {
     "flash": number;
     "ghost": number;
     "nova": number;
-    "clear": number;
+    "fadeOut": number;
     "fps": number;
   };
   "opening": {
@@ -1982,11 +2125,10 @@ export type SchemaTuning = {
       "dist": number;
       "pitchDeg": number;
     };
-    "tree": {
-      "height": number;
-      "angle": number;
-      "fill": number;
-      "time": number;
+    "bend": {
+      "curve": number;
+      "grow": number;
+      "relax": number;
     };
   };
   "camera": {
@@ -2196,6 +2338,9 @@ export type SchemaTuning = {
     "metres": number;
     "dither": boolean;
   };
+  "pathLook": {
+    "bump": number;
+  };
   "trunkFade": {
     "metres": number;
     "share": number;
@@ -2203,18 +2348,6 @@ export type SchemaTuning = {
     "lightFloor": number;
     "rim": number;
     "crownShare": number;
-  };
-  "load": {
-    "on": boolean;
-    "full": number;
-    "stackSag": number;
-    "stackLean": number;
-    "threadFrom": number;
-    "threadBright": number;
-    "witchLean": number;
-    "broomTilt": number;
-    "broomBow": number;
-    "sparks": number;
   };
   "canopyCutout": {
     "screenFraction": number;

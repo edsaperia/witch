@@ -6,10 +6,11 @@
 // across the page's reload and written into the new page's run of the L log (`timing`), in wall-clock milliseconds from the
 // first mark, with each step's own time.
 import { sliceLog } from "../render/slices";
+import { sessionStore } from "../platform/storageScope";
 
 const KEY = "witch.timing", ON = "witch.timing.on";
 
-const store = (): Storage | null => { try { return sessionStorage; } catch { return null; } };
+const store = (): Storage | null => sessionStore();
 
 /** Whether this tab times its transitions (?timing=1 once, then kept for the tab; ?timing=0 stops it). */
 export function timingOn(params: URLSearchParams): boolean {

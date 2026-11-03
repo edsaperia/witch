@@ -67,7 +67,9 @@ describe("the map of an island by roster", () => {
       expect(map.island?.kind).toBe(k);
       expect(map.cells.length).toBe(i.size + 1);
       // the shape and areas are the island's alone; the night (the run's seed) only deals its legends
-      expect(other.cells).toEqual(map.cells);
+      // (its areas: the playable ones and the night's find's, which moves each night: Ed, 2026-11-03, the path network's special sites)
+      const areas = (m: typeof map) => [...m.cells, ...m.specialSites.map(s => s.cell)].map(c => c.join()).sort();
+      expect(areas(other)).toEqual(areas(map));
       expect(other.bounds.land!.box).toEqual(map.bounds.land!.box); // (the same coast)
       const home = map.centreCell, count = new Map<string, number>();
       for (const [x, y] of map.cells) if (x !== home[0] || y !== home[1]) { const c = AREA_TYPES[map.typeOf(x, y)].creature; count.set(c, (count.get(c) ?? 0) + 1); }

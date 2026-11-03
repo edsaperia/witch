@@ -108,7 +108,7 @@ describe("the decisions panel", () => {
   it("draws a colour's swatch as the light takes it (the Hidden witch group's glow; Ed, 2026-10-26)", () => {
     for (const [h, sv] of [[0.08, 0.55], [0.6, 1], [0.33, 0], [0.95, 0.3]]) expect(swatchCss(h, sv)).toBe(`rgb(${hsv2rgb(h, sv, 1).join(", ")})`);
     const glow = DECISION_LIST.filter(d => d.control.type === "slider" && d.control.swatch);
-    expect(glow.map(d => d.apply.knob).sort()).toEqual(["light.spooky.glowHue", "light.spooky.glowSat"]);
+    expect(glow.map(d => d.apply.knob).sort()).toEqual(["light.spooky.glowHue", "light.spooky.glowSat", "partyStart.sparkles.hueA", "partyStart.sparkles.hueB", "partyStart.sparkles.satA", "partyStart.sparkles.satB"]); // (and the party start's sparkles' two colours, Ed 2026-11-03)
   });
   it("shows \"Load latest version\" only while a newer build is out, with its number, and a click loads it (playtest 31 Oct item 11)", () => {
     const clicks: (() => void)[] = [];

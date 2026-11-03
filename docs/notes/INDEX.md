@@ -98,9 +98,13 @@ says what each note covers.
 - Soundsystem spell / cast
 - Loose sigil
 - Legend tether
+- Chain drag
+- Commanded feeding
+- Follower buffs
 - Sigil stack
 - Rank sigils
 - Sides and sizes
+- Colour grammar
 - Stone stack
 - Spell spot
 - Sigil motes
@@ -133,6 +137,7 @@ says what each note covers.
 ## [The treehouse and its house](house.md)
 
 - Telephone
+- Landing cooldown
 - Current brewing authority (Ed, 2026-10-31):
 - Mushrooms and brewing
 - Mushroom kitchen artwork
@@ -161,6 +166,9 @@ says what each note covers.
 - Wake-up keys
 - The Studio's instruments
 - Finds / travel trunk
+- Find area
+- Challenge area
+- Find sets
 - Sleeping before the party
 - Finds pool
 - Workshop
@@ -244,6 +252,7 @@ says what each note covers.
 - The start's shaders
 - The stall hunt
 - The boot freeze
+- The challenge's 128-animal pack
 - The zoo's cost
 - The ground's area texture
 - Like with like
@@ -254,6 +263,7 @@ says what each note covers.
 
 ## [The run](run.md)
 
+- Fresh game link
 - What's new in Settings
 - Direct play after loading
 - The phases of a run
@@ -302,6 +312,7 @@ says what each note covers.
 - Compatible mushroom extension (PR #1523)
 - Borrowed visits (PR #1538)
 - Deleting saves and Reset everything
+- Fresh game
 
 ## [Sound effects](sound.md)
 
@@ -352,6 +363,8 @@ says what each note covers.
 - Sky
 - Constellation
 - Moon
+- Cooldown trail
+- Trail colours
 
 ## [The witch's art](witch-art.md)
 
@@ -376,7 +389,10 @@ says what each note covers.
 - Party objects
 - Attack effects
 - Attack look
+- Colour temperatures
 - Path kinds
+- Path looks
+- Path bump maps
 - Hero dancefloor
 - Soundsystem generator
 - Dancefloor speakers
@@ -391,6 +407,8 @@ says what each note covers.
 - Prop generator
 - Great stump
 - Stone keep-clear zone
+- Site paths
+- Stone spacing
 - Set-piece generator (legacy art)
 - Area recipe
 - Area folder

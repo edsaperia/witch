@@ -70,8 +70,9 @@ describe("attacks in the grammar in the real fight", () => {
 
   it("lets a lone one of a pack kind throw its own attack, not its pack's lunge (Ed's playtest, 2026-10-29: no projectiles seen)", () => {
     // (a fox alone is a pack of one, its own lunger: its bolt, not the fox pack's bite; seed 6: the creatures the arena borrows follow the
-    // map's population, and since the swarms by island, Ed 2026-11-03, seed 5's fox is in among them biting before it bolts)
-    const g = newGame(6, TUNING);
+    // map's population, and since the swarms by island, Ed 2026-11-03, seed 5's fox is in among them biting before it bolts; seed 8 since
+    // the path network the same day moved the stones the creatures idle round, seed 6's fox biting too)
+    const g = newGame(8, TUNING);
     g.clock.paused = false; g.party.paused = true;
     setupArena(g, "wolf*3@2,fox*1@2");
     const fox = g.arena!.ids.find(id => g.creatures[id].species === "fox")!;

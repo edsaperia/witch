@@ -1,5 +1,8 @@
 // Babies behave differently (Ed, 2026-10-11; docs/backlog/gameplay.md "Babies"): leashed and following her on the ground they
-// walk in single file along where she's been, in stack order (the stack's bottom baby first, leash.babies.gap metres apart);
+// walk in single file along where she's been, in stack order (the stack's bottom baby first), each kept clear of the one in
+// front by their sizes (Ed, 2026-11-03: "The spacing in this queue should adjust depending on how large the babies are (some
+// are quite large and so smush together in the queue)"): half the one in front's length, half its own and leash.babies.margin,
+// never under leash.babies.gap; the first the same off her (queueGap);
 // while she's in a fight they scatter, leash.babies.scatter metres or a quarter more off to the side away from the first attacker
 // (Ed, 2026-10-26: "they should scatter further, e.g. outside of my camera view": past the view's edge; on the island's land,
 // rules/leash.ts; pulling on her not at all meanwhile, rules/leashWeight.ts), from the moment
@@ -7,14 +10,37 @@
 // more than leash.babies.farAt metres from her (about off the screen) moves at leash.babies.farSpeed, so it's always with
 // her in seconds. Berries, evolving and weight: rules/berries.ts and rules/leashWeight.ts. No drawing here.
 import type { Creature } from "./creatures";
+import { drawnRadius } from "./combatSpacing";
 import { hash2 } from "./random";
 import type { Tuning } from "./tuning";
 
-export const BABIES_DEFAULT = { gap: 1.6, scatter: 55, calm: 3, farAt: 35, farSpeed: 40 };
+export const BABIES_DEFAULT = { gap: 1.6, scatter: 55, calm: 3, farAt: 35, farSpeed: 40, margin: 1, size: 0.75, her: 1.75 };
 export const babiesOf = (t: Tuning) => t.leash.babies ?? BABIES_DEFAULT;
 
 /** A baby on her leash: level 0, and not a party legend. */
 export const isBaby = (c: Creature | undefined): boolean => !!c && c.level === 0 && !c.partyLegend;
+
+/** Half a baby's length in her line (m): its drawn body (rules/combatSpacing.ts drawnRadius, the calibrated drawing's support
+ *  at its kind and level, so it matches what's drawn) times leash.babies.size (that disc's corner overstates the side-on
+ *  sprite: half its drawn length measured 0.64 to 0.75 of it, fox to bear, 2026-11-03). */
+export function queueHalf(c: Pick<Creature, "species" | "level">, t: Tuning): number {
+  return drawnRadius(c, t) * (babiesOf(t).size ?? BABIES_DEFAULT.size);
+}
+
+/** Metres between neighbours' middles in her line, given their halves: both halves and leash.babies.margin, never under gap. */
+export function queueGap(front: number, back: number, t: Tuning): number {
+  const B = babiesOf(t);
+  return Math.max(B.gap, front + back + (B.margin ?? BABIES_DEFAULT.margin));
+}
+
+/** Each baby's distance back along her trail, in line order (the first nearest her): her own half (leash.babies.her) for the
+ *  first's neighbour, then each baby's off the one in front. */
+export function queueDistances(line: readonly Pick<Creature, "species" | "level">[], t: Tuning): number[] {
+  const out: number[] = [];
+  let front = babiesOf(t).her ?? BABIES_DEFAULT.her, at = 0;
+  for (const c of line) { const half = queueHalf(c, t); at += queueGap(front, half, t); out.push(at); front = half; }
+  return out;
+}
 
 /** Breadcrumbs of where she's walked, newest first, as flat [x0, z0, x1, z1, ...], one every TRAIL_STEP metres. */
 export const TRAIL_STEP = 0.5;
@@ -57,12 +83,13 @@ export function attackerNear(creatures: readonly Creature[], wx: number, wz: num
 }
 
 /** Where a baby scatters to in a fight: `scatter` metres from her or up to a quarter more (its own, seeded: never nearer, so off
- *  the screen whichever way it runs), along `away` (the way from the attacker to her when the fight began, kept so a charge
+ *  the screen whichever way it runs), plus `half` (half its length, queueHalf: so a big one's near end is past the view's edge
+ *  too, not just its middle), along `away` (the way from the attacker to her when the fight began, kept so a charge
  *  through her doesn't send them back across her) and off to one side (its own, seeded). */
-export function scatterSpot(c: Creature, wx: number, wz: number, away: { x: number; z: number }, scatter: number): { x: number; z: number } {
+export function scatterSpot(c: Creature, wx: number, wz: number, away: { x: number; z: number }, scatter: number, half = 0): { x: number; z: number } {
   const a = Math.atan2(away.z, away.x);
   const side = hash2(c.id, 0, 7717) < 0.5 ? -1 : 1, turn = side * (0.6 + 0.9 * hash2(c.id, 1, 7717)); // (35° to 85° off the line away from it)
-  const r = scatter * (1 + 0.25 * hash2(c.id, 2, 7717));
+  const r = scatter * (1 + 0.25 * hash2(c.id, 2, 7717)) + half;
   return { x: wx + Math.cos(a + turn) * r, z: wz + Math.sin(a + turn) * r };
 }
 

@@ -1096,8 +1096,10 @@ describe("paths, roads and railways", () => {
     const crossers = P.lines.filter(l => l.kind === "path" && new Set(l.pts.map(p => map.areaAt(p[0], p[1]).cell.join(","))).size > 1);
     expect(crossers.length).toBeGreaterThan(0); // exercise crossing identity; W8 reports the >5 quantity
   });
-  it("meander: no path is a ruler-straight line", () => {
-    for (const l of P.lines.filter(l => l.kind === "path")) {
+  // (Ed, 2026-11-03: "They should also have straight sections, and gentle curves": a footpath's runs are straight now, so a piece of
+  // one the beach cut off can be; every whole path from site to site still bends somewhere: pathNetwork.test.ts checks how gently)
+  it("meander: no whole path from site to site is a ruler-straight line", () => {
+    for (const l of P.lines.filter(l => l.kind === "path" && l.link)) {
       const a = l.pts[0], b = l.pts[l.pts.length - 1], len = Math.hypot(b[0] - a[0], b[1] - a[1]);
       if (len < 40) continue;
       const off = Math.max(...l.pts.map(p => Math.abs(((p[0] - a[0]) * (b[1] - a[1]) - (p[1] - a[1]) * (b[0] - a[0])) / len)));

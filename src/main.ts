@@ -28,6 +28,7 @@ import { localHouseAction } from "./app/houseActions";
 import { continueSharedNight } from "./app/sharedNight";
 import type { HouseEvents } from "./platform/online/houseSteps";
 import { fillNightTrunk } from "./app/nightFindBoundary";
+import { challengeWords } from "./app/challengeWords";
 import { chartDeparture } from "./app/chartDeparture";
 import { soloDiagnostic } from "./app/soloDiagnostic";
 import { overlayPause } from "./app/overlayPause";
@@ -38,10 +39,11 @@ import { sharedFindLoan, withSharedFind, type PersonalKit } from "./app/sharedFi
 import { chartOpen, closeChart, openChart, prepareChart, finishChartFlight, type Sailed } from "./ui/chartOverlay";
 import { openingWay, opensDirectly, opensInBedroom, opensWithCreator, sailLandsInBed } from "./app/opening";
 import { wakeInBedroom } from "./rules/opening";
-import { endDream, startParty, startWake } from "./rules/wakeUp";
+import { endDream, firstMorning, startParty, startWake } from "./rules/wakeUp";
+import { replayWanted } from "./rules/partyStart";
 import { WorldDrawGate } from "./app/worldDrawGate";
 import { LandingSleep } from './app/landingSleep';
-import { STATION_SLOT, wearFromStation, wornGenome } from "./rules/clothesPile";
+import { STATION_SLOT, wearFromStation, wornGenome, wornNow } from "./rules/clothesPile";
 import { WakeCard } from "./render/wakeUp";
 import { toggleCornerPanel, closeCornerPanel, cornerPanelRoot } from "./ui/cornerPanel";
 import { MenuFocus } from "./ui/menuFocus";
@@ -85,7 +87,7 @@ import { usesEdLayout } from "./app/houseLayout";
 import { stationOf, tableOf } from "./rules/stations";
 import { itemById, shelfOf, shelvesAt, stationsShowing } from "./rules/wardrobe";
 import { FIND_KINDS, fillTrunk, findKind, loanFind, spawnFind, spawnSpot, type FindKindId } from "./rules/finds";
-import { fitBroom, loadBroom, migrateBroom } from "./app/broomSave";
+import { chooseTrail, fitBroom, loadBroom, migrateBroom } from "./app/broomSave";
 import { bareBroom, partById } from "./rules/broomParts";
 import { loadOwned } from "./app/owned";
 import { ownedToChoose, partsToChoose, setUnlockAll, stockMushroomBaskets, syncHatUnlock, unlockAll } from "./app/debugUnlock";
@@ -111,7 +113,8 @@ import { addNew, dropNew, loadGuide, storeGuide } from "./app/guideSave";
 import { GuidePin } from "./render/view/guidance";
 import { warmChart } from "./app/chartWarm";
 import { powerLines } from "./app/hud";
-import { NewBuildNotice } from "./app/newBuild";
+import { latestBuildLink, NewBuildNotice } from "./app/newBuild";
+import { freshHref, localStore, storageScope } from "./platform/storageScope";
 import { SPRITE_UNIFORMS } from "./render/sprites";
 import { setupKnobs } from "./app/knobs";
 import { Sound } from "./app/sound";
@@ -151,6 +154,18 @@ declare const __BUILD__: string;
 const BUILD = typeof __BUILD__ === "string" ? __BUILD__ : "dev";
 
 performance.mark("witch:main"); // (the load's steps, for timing the arrival: witch:main, :game, :view, :ready; app/arrive.ts :landed)
+// A fresh game (?fresh=1; Ed, 2026-11-03: "a link that always starts a fresh game with the latest version"): its throwaway storage
+// made before anything reads the link (platform/storageScope.ts: ?fresh=1 becomes ?fresh=<token>), then the newest deploy loaded
+// if this page is an older one (app/newBuild.ts latestBuildLink: once at most, its ?latest= taken off the link after).
+{
+  const scope = storageScope();
+  if (scope.fresh) {
+    const to = await latestBuildLink(BUILD, location.href, { restart: scope.began });
+    if (to) { location.replace(to); await new Promise(() => undefined); }
+    const link = new URL(location.href);
+    if (link.searchParams.has("latest")) { link.searchParams.delete("latest"); history.replaceState(history.state, "", link); }
+  }
+}
 prewarmArtWorkers(); // (the art workers load their code while the night is made: render/assets.ts)
 const params = new URLSearchParams(location.search);
 // Proof admission belongs to this incoming page, never a saved night's later parameter restoration.
@@ -194,7 +209,7 @@ if (savesEnabled(bootLink, navigator.webdriver)) {
       if (kept) {
         const conflicts = nightLinkConflicts(kept, bootLink);
         logCaughtError(new Error(`Explicit link differs from saved night: ${conflicts.join(", ")}`), "save slot: saved night kept");
-        nightSaveNotice("This link opens a different night from your saved night. Your save has been kept; this new night will not replace it.", savedNightResumeLink(kept, location.pathname));
+        nightSaveNotice("This link opens a different night from your saved night. Your save has been kept; this new night will not replace it.", savedNightResumeLink(kept, location.pathname), { hideAfter: 12 });
       } else {
         logCaughtError(new Error("Incompatible saved-night format"), "save slot: saved night kept");
         nightSaveNotice("This saved night has an incompatible format. It has been kept; this new night will not replace it.");
@@ -238,9 +253,10 @@ let lookNow = JSON.stringify(resumeSave?.look ?? savedLook);
 let shownLook = "";
 function showLook(): void {
   const canonical = (page.night ?? page.last)?.game;
-  const shown = canonical ? page.presentationGame?.(canonical) ?? canonical : undefined, pile = shown?.wake?.pile;
-  // (her hat still to put on but lying on the floor, the first morning's: its shape kept, so its frame lying there is drawn)
-  const lying = !!pile?.includes("hat") && !!shown?.witches[0]?.hat.down, key = `${lookNow}|${pile?.join() ?? ""}|${lying}`;
+  const shown = canonical ? page.presentationGame?.(canonical) ?? canonical : undefined;
+  // (her hat still to put on but lying on the floor, the first morning's: its shape kept, so its frame lying there is drawn; asleep
+  // under the loading screen before a first morning, that morning's as it will start: `firstAhead`)
+  const { pile, hatLying: lying } = wornNow(shown?.wake, !!shown?.witches[0]?.hat.down, firstAhead), key = `${lookNow}|${pile?.join() ?? ""}|${lying}`;
   if (key === shownLook) return;
   const look = JSON.parse(lookNow) as unknown;
   if (view.houseRooms) view.houseRooms.outfit = look;
@@ -270,6 +286,11 @@ const { tuning: bootTuning } = N();
 // there (wakeFirst); ?opening=old for the old start (the character creator as the loading cover).
 const inBedroom = !resumeGame && opensInBedroom(bootLink, bootTuning);
 if (!inBedroom) (window as unknown as { witchLoading?: { cancel(): void } }).witchLoading?.cancel();
+/** The first morning she'll wake to (rules/wakeUp.ts firstMorning), read ahead while she sleeps under the loading screen, till it
+ *  starts (wakeFirst): her art is made in her nightie with the start's own, and the loading screen waits for it (her hat-off frames
+ *  too, her hat lying on the hats' floor), so she's never drawn in her clothes first (Ed, 2026-11-03: "after the loading screen I look
+ *  at the bed and see the witch in her default clothes instead of in her nightie, and then after a second or two she's in her nightie"). */
+let firstAhead = inBedroom ? firstMorning(N().game) : null;
 if (N().game.map.zoo) void import("./zoo/panel").then(({ ZooPanel }) => { zooPanel = new ZooPanel(N().game); });
 // The settings as built (the tuning file's), for the debug overlay's and the playtest log's list of what's changed (app/repro.ts).
 const BUILT = JSON.parse(JSON.stringify(TUNING)) as object;
@@ -292,12 +313,13 @@ let dreamNext: { loan: Loan; won: boolean } | null = null;
 let dreamAfterDive: { loan: Loan; won: boolean } | null = null;
 /** The broom parts she has tonight: those she's found, and a part on loan. */
 const partsNow = (): Set<string> => withLoan("part", new Set(loadBroom().found), loan);
-const view = page.view = await View.create(canvas, N().game, gameStyle(style, bootTuning), savedLook); // (built a frame's budget at a time: the bedroom's frames go on meanwhile, render/slices.ts)
+const bootLook = firstAhead ? wornGenome(JSON.parse(lookNow) as never, firstAhead.pile, firstAhead.hatLying) : savedLook; // (in her nightie on a first morning: firstAhead)
+const view = page.view = await View.create(canvas, N().game, gameStyle(style, bootTuning), bootLook, { hatOff: !!firstAhead?.hatLying }); // (built a frame's budget at a time: the bedroom's frames go on meanwhile, render/slices.ts)
 let onlineFocus = () => false;
 view.setIntroFocus = (game, focus) => introFocus(game, N().game, focus, onlineFocus(), pageFocus);
 // The loading screen (src/loading.js, src/ui/loadingScreen.js), up since the first paint: given the view for its count of the art
 // and the shaders; gone at once for a start with no wake-up in the bedroom, its supernova into the bedroom's alarm otherwise (below).
-const loading = (window as unknown as { witchLoading?: { view: unknown; finish(): void; cancel(): void } }).witchLoading;
+const loading = (window as unknown as { witchLoading?: { view: unknown; finish(wake: () => void): void; cancel(): void } }).witchLoading;
 if (loading) loading.view = view;
 loadTimes.view = performance.now();
 view.partsFound = partsNow(); // (the Workshop's pegboard hangs them: render/workshopArt.ts)
@@ -328,7 +350,7 @@ const setAutoTalk = (on: boolean) => {
   try { slotStorage.setItem("witch.autotalk", on ? "on" : "off"); } catch { /* fine */ }
 };
 
-document.getElementById("version")!.textContent = typeof __BUILD__ === "string" ? __BUILD__ : "dev";
+document.getElementById("version")!.textContent = (typeof __BUILD__ === "string" ? __BUILD__ : "dev") + (storageScope().fresh ? " · fresh game" : ""); // (?fresh: a throwaway game, its saves not hers)
 // The old card remains only as a hidden home for the Controls/Options nodes borrowed by menus.
 // Ed, 2026-10-30: no start screen and no eager update notes.
 const seedEl = document.getElementById("seed")!;
@@ -388,7 +410,7 @@ requestAnimationFrame(() => setTimeout(async () => {
   loadTimes.ready = performance.now();
   performance.mark("witch:ready");
   startEl.classList.remove("loading");
-  if (inBedroom) { loading?.finish(); wakeFirst(); }
+  if (inBedroom) { if (loading) loading.finish(wakeFirst); else wakeFirst(); } // (the wake-up as its supernova's white starts fading onto her bedroom: src/ui/loadingFade.js)
   else if (opensDirectly(params, { bedroom: inBedroom, arriving: !!night.arrival, resuming: !!resumeGame, bot: botKind ? bot ? "ready" : "loading" : "off" })) {
     startDirect();
     if (resumeGame) { if (restoringComment && !freeze.frozen) freeze.toggle(); resumeGame = undefined; resumeSave = null; }
@@ -423,7 +445,7 @@ function hostCollections(game: Game) {
   return { wardrobe, bags: new Set(BAGS.filter(b => wardrobe.has(b.id)).map(b => b.id)), hats: withSharedFind(game, "hat", new Set(game.witches[0].spells.hats ?? HAT_SPELLS.filter(hat => hat.built).map(hat => hat.id))), parts: withSharedFind(game, "part", partsNow()), records: withSharedFind(game, "record", new Set(ownedRecords())) };
 }
 const phoneSounds = telephoneCues(() => sound.sfx);
-const phoneFaces = telephoneFaces(phoneEnabled ? (() => { try { return localStorage; } catch { return null; } })() : null);
+const phoneFaces = telephoneFaces(phoneEnabled ? localStore() : null);
 const phoneFace = (number: string) => { const face = phoneFaces.get(number); return face ? telephoneFaceCanvas(face) : null; };
 const visitPreparation = { stage: "not-started", at: 0, advancedAt: 0, progress: 0, failure: "" };
 function traceVisit(stage: string, detail?: unknown): void {
@@ -433,7 +455,7 @@ function traceVisit(stage: string, detail?: unknown): void {
   notable("telephone-preparation", stage, detail);
 }
 const lifecycleEvidence = params.has("shot") ? (proof: Record<string, unknown>) => { window.dispatchEvent(new CustomEvent("witch-lifecycle-evidence", { detail: proof })); } : undefined;
-const phone = telephoneStation({ lifecycleEvidence, enabled: phoneEnabled, callsEnabled: phoneCallsEnabled, face: phoneFace, trouble: telephoneTrouble, clearFaces: () => { phoneFaces.clear(); phonePresence.refresh(); }, digit: digit => { if (phone.state.status !== "preparing") phoneSounds.digit(digit); }, storage: (() => { try { return localStorage; } catch { return null; } })(), session: {
+const phone = telephoneStation({ lifecycleEvidence, enabled: phoneEnabled, callsEnabled: phoneCallsEnabled, face: phoneFace, trouble: telephoneTrouble, clearFaces: () => { phoneFaces.clear(); phonePresence.refresh(); }, digit: digit => { if (phone.state.status !== "preparing") phoneSounds.digit(digit); }, storage: localStore(), session: {
   lifecycleEvidence,
   build: BUILD, hostGame: () => N().game,
   trace: traceVisit,
@@ -678,6 +700,11 @@ stations.onFit = f => {
   if (phone.active) { if (!phone.choose({ kind: "broom", fitted: { ...f } })) reconcilePickers(); return; }
   mutate("dressing: broom fitting", () => { const { game } = N(); setParts(game.witches[0].spells, f); fitBroom(partsWithoutLoan(f, loan)); });
 }; // Solo keeps fitted parts without any loan; online choices wait for host approval.
+// Her trail's colours (Ed, 2026-11-03: "set the colour set of your trail in the broom station and there are a few presets"; the Broom
+// station's Trail row, render/trailColours.ts): drawn at once and kept with her broom (app/broomSave.ts); cosmetic, her own view only
+// (the other player's trail isn't drawn online), so nothing waits on the host; a borrowed game's isn't kept.
+{ const t = loadBroom().trail ?? null; view.trailPreset = t; stations.setTrail(t); }
+stations.onTrail = id => { view.trailPreset = id; if (!N().spec.borrowed) chooseTrail(id); };
 /** What the Workshop's stations show (ui/stationPanel.ts): the parts found, her broom, tonight's part to find, her tuning. */
 const workshopNow = (): WorkshopCtx => { const { game, tuning } = N(), t = game.trunk; return { found: phone.active ? new Set(phone.catalogue?.parts ?? []) : partsToChoose(partsNow()), fitted: phone.active ? { ...phone.presented(game).spells.parts } : game.witches[0].spells.parts, tonight: t && t.kind === "part" && !t.found ? t.item : null, tuning }; };
 function reconcilePickers(): void {
@@ -829,6 +856,7 @@ function start(): boolean {
   if (sailing) return false; // (the next night being made in place)
   const { game, flags, arrival } = N();
   if (landingSleep.holds(game)) return false;
+  if (bootAsleep) return false; // (asleep under the loading screen till its wake-up: wakeFirst; no key starts the night early)
   if (!flags.ready || !game.clock.paused || freeze.frozen) return false;
   if (creator.open) return true;
   sound.start(); // (browsers keep sound off until the player presses something: the start is that press)
@@ -988,7 +1016,7 @@ async function restoreComment(file: File): Promise<void> {
   soloDiagnostic(phone.active, N().spec.borrowed === true, () => {});
   await browserNightStore(location.pathname + ":comment-restore").write(comment.night);
   soloDiagnostic(phone.active, N().spec.borrowed === true, () => {});
-  const url = new URL(location.href); url.search = "?restore=comment&resume=1"; location.href = url.toString();
+  const url = new URL(location.href); url.search = "?restore=comment&resume=1"; location.href = freshHref(url.toString());
 }
 let nightWriteReported = false;
 const visitNightSaves = nightStore ? borrowedNightSaves(nightStore) : null;
@@ -1099,11 +1127,11 @@ const ladder = new QualityLadder(gpuName(view.renderer.getContext()), params);
 // game (its saves are borrowed: app/visitSaves.ts) or on a call; the page's own slot stops saving its night and reloads.
 const savesLocked = () => browserSaveSlots().visiting || !!visitNightSaves?.suspended || phone.active;
 const deleteSaves = (id: string | null) => savesLocked() ? Promise.resolve("Finish your visit or call before deleting saves.") :
-  deleteSave(browserSaveSlots(), id, bootSlot, { stop: async () => { await autosave?.stop(); }, resume: () => autosave?.resume(), clear: which => clearSlotNights(which) }, () => { forgetArrival(); location.assign(location.pathname); });
+  deleteSave(browserSaveSlots(), id, bootSlot, { stop: async () => { await autosave?.stop(); }, resume: () => autosave?.resume(), clear: which => clearSlotNights(which) }, () => { forgetArrival(); location.assign(freshHref(location.pathname)); });
 // The player's Settings page (app/settingsPage.ts): its settings on the live pieces now, the page itself opened from the pause page's dev menu.
 const settingsPage = new SettingsPage({ mutate, input, shake, ladder, freeze, audio: on => sound.freeze(!on), tuning: () => phone.preferences(N().game), version: BUILD,
   saves: { list: () => browserSaveSlots().list(), active: () => bootSlot, choose: id =>
-    switchSave(browserSaveSlots(), () => autosave?.flush(performance.now()) ?? Promise.resolve(true), () => { forgetArrival(); location.assign(location.pathname); }, id),
+    switchSave(browserSaveSlots(), () => autosave?.flush(performance.now()) ?? Promise.resolve(true), () => { forgetArrival(); location.assign(freshHref(location.pathname)); }, id),
     delete: id => deleteSaves(id), locked: savesLocked },
 });
 ladder.mutate = mutate;
@@ -1189,7 +1217,7 @@ const reportHost = () => {
   return {
     canvas, gl: view.renderer.getContext(), tuning: game.tuning, seed: game.seed, version, link: repro.link, changed: repro.changed,
     witch: (): [number, number] | null => { const u = SPRITE_UNIFORMS.uWitch.value, low = view.post.lowSize; return low.x > 0 ? [u.x * canvas.width / low.x, (low.y - u.y) * canvas.height / low.y] : null; },
-    world: () => ({ x: w.x, z: w.z, mode: w.mode, lift: w.lift, area: game.map.areaAt(w.x, w.z).type, camera: { zoomStep: c.zoomStep, zoom: c.zoom, tx: c.tx, ty: c.ty, tz: c.tz } }),
+    world: () => ({ x: w.x, z: w.z, mode: w.mode, lift: w.lift, area: game.map.areaAt(w.x, w.z).type, camera: { zoomStep: c.zoomStep, zoom: c.zoom, tx: c.tx, ty: c.ty, tz: c.tz }, ...(view.houseRooms ? { house: view.houseRooms.reportState(view) } : {}) }),
   };
 };
 (window as unknown as { __neutralCheck: () => Promise<unknown> }).__neutralCheck = () => import("./ui/visualReport").then(({ neutralCheck }) => neutralCheck(reportHost()));
@@ -1231,7 +1259,7 @@ view.onGpuEvent = what => N().playtest.gpuEvent(what, Math.round(view.ledger.tot
 view.onContextRestored = () => {
   N().playtest.gpuEvent("context restored: the night loaded again");
   const link = repro.link();
-  location.replace(N().params.has("debug") ? link : link.replace(/&debug$/, ""));
+  location.replace(freshHref(N().params.has("debug") ? link : link.replace(/&debug$/, "")));
 };
 N().playtest.frameState = () => {
   const r = frameStats.recent(), pct = (a: number[], p: number) => { if (!a.length) return null; const s = [...a].sort((x, y) => x - y); return Math.round(s[Math.min(s.length - 1, Math.floor(p * s.length))] * 10) / 10; };
@@ -1276,8 +1304,8 @@ async function sailFromChart(href: string, to: Sailed): Promise<boolean> {
   const d = departing?.island === to.island && departing.seed === to.seed ? departing : null;
   departing = null;
   if (!d) recordSail();
-  if (sailWay(N().params, N().tuning) === "reload") { location.href = href; return Promise.resolve(false); }
-  return sailOrReload(() => sailInPlace(to, d?.night), href, h => { location.href = h; }, e => {
+  if (sailWay(N().params, N().tuning) === "reload") { location.href = freshHref(href); return Promise.resolve(false); }
+  return sailOrReload(() => sailInPlace(to, d?.night), href, h => { location.href = freshHref(h); }, e => {
     console.error("sail in place: it went wrong, so the island's page loads instead", e);
     N().playtest.sail(String((e as Error)?.stack ?? e).slice(0, 600));
   });
@@ -1325,7 +1353,7 @@ function wakeFirst(): void {
 }
 function wakeFirstNow(): void {
   const n = N();
-  bootAsleep = false;
+  bootAsleep = false; firstAhead = null; // (the morning itself from here on: its wake-up's pile)
   firstEver = !wokenBefore();
   if (!wakeInBedroom(n.game) || !startWake(n.game, n.game.herTime, { mirrored: mirrored() })) { wakeCard?.hide(); dressCreator(); creator.show(); return; }
   mark("opening:wake");
@@ -1587,6 +1615,10 @@ function frameBody(now: number): void {
   if (bot) botTag?.update(bot.doing);
   if (!phone.active && !N().spec.borrowed && F.castWanted && !game.clock.paused) { if (awaitingSpell(game.party)) c.castParty = !bot; else F.castWanted = false; }
   if (c.toggleAutoTalk) setAutoTalk(!autoTalk);
+  // The party start again (Ed, 2026-11-03: "press square at the decks after the party is started that replays the visual effects ...
+  // (the dj says make some noise!!!)"): the use button (E; the pad's square) at her decks once the party's on plays its pieces again
+  // and she says it (render/partyStart.ts). Drawing only: the press still goes to the rules as ever (there, after the cast, it does nothing).
+  if (replayWanted(game, c, !!bot || !!phone.visiting || freeze.frozen || openNow || shutTap)) view.replayPartyStart();
   // Choosing at a station (the pointer or the d-pad in its panel, or stood still a moment): the camera eases in on her; she moves, out.
   if (c.moveX || c.moveZ) { stations.walked(); stillAt = 0; } else stillAt += dt;
   c.framing = !!stations.station && (stations.choosing || stillAt > 0.4);
@@ -1622,6 +1654,8 @@ function frameBody(now: number): void {
     else if (e.find === "hat") hud.found(`found: the ${hatSpell(e.obj)?.name.toLowerCase() ?? e.obj} hat · on the hats' floor`); // (the rules laid it there: rules/houseRooms.ts addFloorHat)
     else { const it = itemById(e.obj), at = stationsShowing(shelfOf(e.obj)?.id ?? "")[0], where = HOUSE_ROOMS.objects.find(q => q.id === at)?.label.toLowerCase(); hud.found(`found: ${it?.name.toLowerCase() ?? e.obj}${where ? ` · at the ${where}` : ""}`); }
   }
+  // The challenge area (rules/challenge.ts): what it says under the clock, as a find does.
+  for (const e of game.challenge?.events ?? []) hud.found(challengeWords(e));
   if (spawnWanted && !game.witch.perch && game.witch.mode === "ground" && !game.witch.seated) {
     const [k, i] = spawnWanted.includes(":") ? spawnWanted.split(":") : [null, null];
     const said = spawnHere(k as FindKindId | null, i);

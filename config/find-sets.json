@@ -1,0 +1,31 @@
+{
+  "sets": [
+    { "biome": "temperate", "band": "early", "finds": ["part:twigs", "hat:healing", "hat:harvest", "bag:tote", "wearable:top-sequins", "record:record-110"] },
+    { "biome": "temperate", "band": "mid", "finds": ["hat:helmet", "hat:dowsing", "bag:duffel", "wearable:shades", "record:record-130"] },
+    { "biome": "temperate", "band": "late", "finds": ["hat:sentry", "hat:gathering", "bag:briefcase", "wearable:hair-mohawk", "record:record-140"] },
+    { "biome": "badlands", "band": "early", "finds": ["part:nozzles", "record:record-150"] },
+    { "biome": "badlands", "band": "mid", "finds": ["hat:slingshot"] },
+    { "biome": "badlands", "band": "late", "finds": ["bag:messenger"] },
+    { "biome": "cold rainforest", "band": "early", "finds": ["part:oar", "record:record-160"] },
+    { "biome": "cold rainforest", "band": "mid", "finds": ["hat:lullaby"] },
+    { "biome": "cold rainforest", "band": "late", "finds": ["bag:backpack"] },
+    { "biome": "cold", "band": "early", "finds": ["part:ladder", "record:record-170"] },
+    { "biome": "cold", "band": "mid", "finds": ["hat:edgeseer"] },
+    { "biome": "cold", "band": "late", "finds": ["wearable:cloak-long"] },
+    { "biome": "hot", "band": "early", "finds": ["part:curl", "record:record-180"] },
+    { "biome": "hot", "band": "mid", "finds": ["hat:routeseer"] },
+    { "biome": "hot", "band": "late", "finds": ["wearable:top-mesh"] },
+    { "biome": "jungle", "band": "early", "finds": ["part:horse", "record:record-190"] },
+    { "biome": "jungle", "band": "mid", "finds": ["hat:bramble"] },
+    { "biome": "jungle", "band": "late", "finds": ["wearable:top-cape"] },
+    { "biome": "mangrove swamp", "band": "early", "finds": ["part:canoe", "record:record-200"] },
+    { "biome": "mangrove swamp", "band": "mid", "finds": ["hat:nursing"] },
+    { "biome": "mangrove swamp", "band": "late", "finds": ["bag:clutch"] },
+    { "biome": "mountains and glaciers", "band": "early", "finds": ["part:missile"] },
+    { "biome": "mountains and glaciers", "band": "mid", "finds": ["hat:cyclone"] },
+    { "biome": "mountains and glaciers", "band": "late", "finds": ["wearable:cloak-hooded"] },
+    { "biome": "volcanic", "band": "early", "finds": ["part:fairing"] },
+    { "biome": "volcanic", "band": "mid", "finds": ["hat:mine"] },
+    { "biome": "volcanic", "band": "late", "finds": ["wearable:shoes-chunky"] }
+  ]
+}

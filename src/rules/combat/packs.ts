@@ -138,6 +138,10 @@ export interface Directive {
   freeze?: boolean;
 }
 
+// Masterplan can read the solver's last output. Never run the solver a second
+// time for a picture: it also advances the pack's decisions and cooldowns.
+export const observedPackPlans = new WeakMap<CombatState, ReadonlyMap<number, Directive> | null>();
+
 // ---- Moves on the level's budget -------------------------------------------------------------------------------------------
 
 /** A kind's move at a level: its attack (scaled to the fight), the name the shot carries, and its damage (the level's dps times its
@@ -262,6 +266,8 @@ export function stepPacks(s: CombatState, w: CombatWorld, pw: PackWorld = {}, da
   if (s.mirages?.length) s.mirages = s.mirages.filter(m => time < m.until);
   if (s.decoys?.length) s.decoys = s.decoys.filter(q => time < q.until && !!w.creatures[q.id] && !w.creatures[q.id].gone);
   for (const k of [...states.keys()]) if (!groups.has(k)) states.delete(k);
+  // (her party animals among them, the only ones a pack splits for: found once a step, not once a pack; the challenge's 64 packs)
+  const partyActive = w.active.filter(o => o.leashed);
   for (const [key, members] of groups) {
     members.sort((a, b) => a.id - b.id);
     const c0 = members[0], K = packKindOf(c0.species, data)!, R = rhythmOf(K, data), tg = c0.fight!.target!, p = targetPos(w, s, tg);
@@ -363,7 +369,7 @@ export function stepPacks(s: CombatState, w: CombatWorld, pw: PackWorld = {}, da
     // Her party animal engaging one of them: the pack splits, the half nearest it turning on it.
     if (!st.hers && st.split !== st.combo && st.phase !== "lull") {
       const side = sideOf(c0);
-      for (const o of w.active) {
+      for (const o of partyActive) {
         const ot = o.fight?.target;
         if (!o.leashed || ot?.kind !== "creature" || !members.some(m => m.id === ot.id) || !targetable(o) || !foes(sideOf(o), side)) continue;
         if (Math.hypot(o.x - w.creatures[ot.id].x, o.z - w.creatures[ot.id].z) > data.limits.split * FIGHT.scale || members.length < 2) continue;

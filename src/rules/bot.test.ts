@@ -1,7 +1,7 @@
 // The bots (rules/bot.ts): the balance tool's and the bot game's one player made of rules.
 import { describe, expect, it } from "vitest";
 import { TUNING } from "./tuning";
-import { newGame, stepGame, type Game } from "./game";
+import { hitWitch, newGame, stepGame, type Game } from "./game";
 import { article, BOT_GAME, newBot, plural, type BotKind, type BotOptions } from "./bot";
 
 // Seeded movement and replay contracts remain here. Full-night/recruitment outcomes are tools/balance/bot-outcomes.mjs.
@@ -42,9 +42,34 @@ describe("the bot", () => {
     const far = Math.max(...track.map(p => { const [x, z] = p.split(",").map(Number); return Math.hypot(x - home.x, z - home.z); }));
     expect(far).toBeGreaterThan(30);
     expect([...said].some(s => /^(flying to|inviting) the /.test(s))).toBe(true);
-    // (leashed: their runes picked up; or, knocked out lately, let go happy where they stood till she fetches them: rules/knockout.ts letGoHappy)
-    expect(g.leash.stack.length + g.leash.placed.length + g.creatures.filter(c => c.dropped && !c.gone).length).toBeGreaterThan(0);
+    // (leashed: their runes picked up; or, knocked out lately, parked where she went down till she fetches them: rules/knockout.ts)
+    expect(g.leash.stack.length + g.leash.placed.length).toBeGreaterThan(0);
   });
+
+  it("back from a knockout, the skilled bot goes back to where she went down and picks up the sigils that fell there (Ed, 2026-11-03)", () => {
+    const g = fresh(123), W = g.witches[0], d = g.map.dancefloor;
+    g.party.spellAt = -100; g.party.paused = true; // (the party on, no waves)
+    const spot = { x: d.x + 30, z: d.z + 40 };
+    W.body = { ...W.body, seated: false, perch: false, mode: "ground", lift: 0, x: spot.x, z: spot.z };
+    for (const c of g.creatures) if (!c.boss && Math.hypot(c.x - spot.x, c.z - spot.z) < 150) c.gone = true;
+    const mine = g.creatures.filter(c => !c.gone && !c.boss && !c.leashed && c.level === 1).slice(0, 2);
+    for (const c of mine) { Object.assign(c, { x: spot.x - 2, z: spot.z + 2, tx: spot.x - 2, tz: spot.z + 2, leashed: true, state: "leashed", fight: undefined, siege: undefined, enraged: false }); W.leash.stack.push(c.id); }
+    g.byArea = null;
+    const bot = newBot("skilled", { feed: false, quests: false, relics: false });
+    stepGame(g, bot.decide(g), 1 / 60); // (it notes what she carries)
+    W.health.hp = 1; hitWitch(g, 0, g.clock.time, g.tuning);
+    expect(W.ko).not.toBeNull();
+    const said = new Set<string>();
+    let fell = false;
+    for (let i = 0; i < 150 * 60 && (W.ko || !mine.every(c => W.leash.stack.includes(c.id))); i++) {
+      stepGame(g, bot.decide(g), 1 / 60); said.add(bot.doing);
+      fell ||= mine.every(c => W.leash.placed.some(p => p.id === c.id && Math.hypot(p.x - spot.x, p.z - spot.z) < 15));
+    }
+    expect(fell, "they fell where she went down").toBe(true);
+    expect(W.leash.placed.filter(p => mine.some(c => c.id === p.id)), "every fallen sigil picked up").toEqual([]);
+    expect(mine.every(c => W.leash.stack.includes(c.id))).toBe(true);
+    expect([...said].some(t => /^gathering her posse/.test(t))).toBe(true);
+  }, 240000);
 
   it("is deterministic: the same game and steps give the same run", () => {
     const a = play(fresh(7), "skilled", 60).track, b = play(fresh(7), "skilled", 60).track;

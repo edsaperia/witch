@@ -150,10 +150,10 @@ export class Fireworks {
   }
 
   /** A shell: its rocket, then its burst's stars (`win`: the island won's finale palette, winStar). */
-  private shell(s: Shell, sx: number, sz: number, win = false): void {
+  private shell(s: Shell, sx: number, sz: number, win = false, fromY = FROM_Y): void {
     const rise = s.burst - s.launch, c = this.rgb;
     { const b = this.bursts[this.nextBurst]; this.nextBurst = (this.nextBurst + 1) % FLASHES; neon(s.hue, c); if (s.kind === "willow" || (win && s.kind !== "peony")) set3(c, s.kind === "crackle" ? SILVER : GOLD); b.t = s.burst; b.x = s.x; b.z = s.z; b.rgb.set(c[0], c[1], c[2]); }
-    this.put(sx, FROM_Y, sz, s.launch, (s.x - sx) / rise, (s.height - FROM_Y) / rise, (s.z - sz) / rise, rise, 1, 0.8, 0.45, 0);
+    this.put(sx, fromY, sz, s.launch, (s.x - sx) / rise, (s.height - fromY) / rise, (s.z - sz) / rise, rise, 1, 0.8, 0.45, 0);
     // (Fewer when the finale's go up together: so many add up to a white blob from afar.)
     const n = Math.round((s.kind === "ring" ? 40 : s.kind === "crackle" ? 36 : s.kind === "willow" ? 48 : 54) * (s.finale ? 0.8 : 1) * (win ? WIN_STARS : 1));
     // A ring lies tilted: its plane's normal.
@@ -216,6 +216,12 @@ export class Fireworks {
     this.u.uNow.value = time;
     this.mesh.visible = time < this.liveTill;
     for (let i = 0; i < 3; i++) this.dirty[i].flush(this.attrs[i]);
+  }
+
+  /** One shell from (sx, fromY, sz): the challenge circle's, a column's each bar (render/challenge.ts fireChallenge). */
+  launch(s: Shell, sx: number, sz: number, fromY: number): void {
+    this.shell(s, sx, sz, false, fromY);
+    this.liveTill = Math.max(this.liveTill, s.burst + 3);
   }
 
   /** The win's finale over (x, z) from `at` (Ed, 2026-10-11): the same schedule as a wave's show there (rules/fireworks.ts), drawn

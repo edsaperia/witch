@@ -68,9 +68,9 @@ describe("the broom's parts (the lathe's first cards: the broom one station sinc
 });
 
 describe("the lathe", () => {
-  it("is the broom's one station: its parts and sets, then its two colour grids (body and trim, 5 rows each) and its fit, then the pegboard; no items, no shapes, no power", () => {
+  it("is the broom's one station: its parts and sets, then its two colour grids (body and trim, 5 rows each) and its fit, its trail's colours, then the pegboard; no items, no shapes, no power", () => {
     const { sh, L } = linesAt("lathe");
-    expect(sh.map(s => s.id)).toEqual(["tip", "chassis", "exhaust", "sets", "broomBody", "broomTrim", "broomFit", "pegboard"]);
+    expect(sh.map(s => s.id)).toEqual(["tip", "chassis", "exhaust", "sets", "broomBody", "broomTrim", "broomFit", "trail", "pegboard"]); // (her trail's colours, the Trail row: Ed, 2026-11-03)
     expect(L.filter(l => l.kind === "grid").length).toBe(10);
     expect(L.filter(l => l.kind === "fit").map(l => l.axis)).toEqual(["broomLength", "broomThickness", "broomBend", "bristles"]);
     expect(L.some(l => l.kind === "items")).toBe(false);

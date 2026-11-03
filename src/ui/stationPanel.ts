@@ -22,6 +22,7 @@ import { bindings } from "../platform/bindings";
 import { classicPalette, cpuCanvas, slot, swatchAt } from "./creator";
 import { SlideIn } from "./slideIn";
 import { glyphOf, keycapHtml } from "./keyHint";
+import { TRAIL_PRESETS, TRAIL_PRESET_DEFAULT, sectionColours, trailPreset } from "../render/trailColours";
 
 type Genome = Record<string, unknown> & { palette: Record<string, number[]> | null; accessories: Record<string, unknown> };
 type Sprite = { A: HTMLCanvasElement; w: number; h: number };
@@ -57,6 +58,11 @@ export class StationPanel {
   onChange: () => void = () => {};
   /** A step changed her look (not her broom's parts): she twirls while it draws (render/spin.ts). */
   onDress: () => void = () => {};
+  /** Her trail's colours chosen at the Broom station's Trail row (a preset's id: main.ts keeps it with her broom and draws it at once). */
+  onTrail: (id: string) => void = () => {};
+  /** Her trail's colour preset now (main.ts sets it as the game starts). */
+  private trailNow = TRAIL_PRESET_DEFAULT;
+  setTrail(id: string | null): void { this.trailNow = trailPreset(id).id; if (this.id && this.c) { this.c.trail = this.trailNow; this.paint(); } }
   /** Her broom's parts changed at the bay (a card chosen: fitted at once). */
   onFit: (f: Fitted) => void = () => {};
   /** Back (platform/bindings.ts menu.back: E, the pad's circle) pressed while it's open: main.ts closes it (the pad's goes through padControls). */
@@ -151,6 +157,7 @@ export class StationPanel {
       palette: g2 => ({ ...classicPalette(this.st), ...g2.palette }),
       fitOn: (a, g2) => !FIT_NEEDS[a] || FIT_NEEDS[a](g2 as Genome),
     }, awaitingDress);
+    this.c.trail = this.trailNow;
     this.navAt = -1e9; this.hover = null;
     this.padChoose = true; // (the pad's use button that opened it is held: let go first, then a press chooses)
     const L = this.lines(), first = L.findIndex(l => l.kind === "items" || (l.kind === "cards" && !l.readOnly));
@@ -256,6 +263,7 @@ export class StationPanel {
     const r = this.c.choose();
     if (r.look) this.change(r.look);
     if (r.fitted && this.ws) { this.ws = { ...this.ws, fitted: r.fitted }; this.onFit(r.fitted); this.onChange(); }
+    if (r.trail) { this.trailNow = r.trail; this.onTrail(r.trail); }
     this.paint();
   }
   private tried(at: { line: number; col: number }): boolean { const n = this.c.nope; return !!n && n.line === at.line && n.col === at.col; }
@@ -296,7 +304,7 @@ export class StationPanel {
       if (l.shelf !== shelf) {
         if (shelf >= 0) html += shut(shelf);
         shelf = l.shelf;
-        const worn = s.slot ? partById(this.ws?.fitted[s.slot])?.name ?? "Empty" : shownItems(s).find(it => this.c.wears(it))?.name;
+        const worn = s.slot ? partById(this.ws?.fitted[s.slot])?.name ?? "Empty" : s.trail ? trailPreset(this.trailNow).name : shownItems(s).find(it => this.c.wears(it))?.name;
         const note = s.always ? "every colour" : s.slot ? SLOT_ROLE[s.slot] : s.board ? "north up" : "";
         html += `<div class="sp-shelf${L[at.line]?.shelf === l.shelf ? " on" : ""}" data-shelf="${l.shelf}"><div class="sp-lab" data-card="${i}">${s.id === "hat" && (this.g.hat as { shape?: string } | undefined)?.shape !== "none" ? `<span class="sp-hatpic" data-thumb="hatpic:now:${hash(JSON.stringify(this.g))}"></span>` : ""}<b>${esc(s.label)}</b>${worn ? `<span>${esc(worn)}</span>` : ""}${note ? `<em>${esc(note)}</em>` : ""}</div>`;
       }
@@ -311,6 +319,7 @@ export class StationPanel {
         const id = cardAt(s, l, c), own = id === null || this.found_().has(id), on = (this.ws?.fitted[s.slot!] ?? null) === id;
         return `<div class="sp-card sp-wide${own ? "" : " locked"}${on ? " worn" : ""}${id !== null && id === this.loaned ? " loaned" : ""}${f(c)}" data-line="${i}" data-col="${c}">${id === null ? `<i class="sp-none">∅</i>` : `<span data-thumb="${this.partKey(id)}"></span>`}${on ? `<b class="sp-tick">✓</b>` : ""}${own ? "" : `<b class="sp-lock">🔒</b>`}</div>`;
       }).join("")}</div>`;
+      else if (l.kind === "trail") html += `<div class="sp-row">${TRAIL_PRESETS.map((p, c) => `<div class="sp-card sp-trail${p.id === this.trailNow ? " worn" : ""}${f(c)}" data-line="${i}" data-col="${c}" data-trail="${esc(p.id)}"><span data-thumb="trail:${esc(p.id)}:1"></span>${p.id === this.trailNow ? `<b class="sp-tick">✓</b>` : ""}</div>`).join("")}</div>`;
       else if (l.kind === "chips") html += `<div class="sp-chips">${setChips(this.ws?.fitted ?? { tip: null, chassis: null, exhaust: null }).map((x, c) => `<span class="${x.whole ? "whole" : x.fitted ? "some" : ""}${f(c)}" data-line="${i}" data-col="${c}">${x.whole ? "✦ " : ""}${esc(x.name)} ${x.fitted}/${x.of} · ${esc(x.spell)}</span>`).join("")}</div>`;
       else if (l.kind === "parts") html += `<div class="sp-parts">${s.colour!.map((p, c) => `<span class="${p === this.partOf(s) ? "on" : ""}${f(c)}" data-line="${i}" data-col="${c}"><i style="background:${css(this.colourOf(p))}"></i>${esc(PART_NAMES[p] ?? p)}</span>`).join("")}</div>`;
       else if (l.kind === "grid") { const [sc, sr] = this.chosenSwatch(s); html += `<div class="sp-grid" style="grid-template-columns:repeat(${l.n},1fr)">${Array.from({ length: l.n }, (_, c) => `<i class="${!this.c.awaitingDress && sc === c && sr === l.row ? "sel" : ""}${f(c)}" data-line="${i}" data-col="${c}" style="background:${css(this.swatch(s, c, l.row!))}"></i>`).join("")}</div>`; }
@@ -375,6 +384,7 @@ export class StationPanel {
         else if (!this.found_().has(p.id)) { title = "🔒"; locked = true; if (this.tried(at)) text = "Not found yet."; } // (unfound: a silhouette, no hint)
         else { title = p.name; sub = `${p.slot}${setsOf(p.id).length ? ` · ${setsOf(p.id).join(", ")} set${setsOf(p.id).length > 1 ? "s" : ""}` : ""}`; stats = this.ws ? partStats(p.id, this.ws.tuning) : []; text = this.ws?.fitted[p.slot] === p.id ? "On her broom." : "Choose it to fit it."; }
       } else if (l.kind === "chips") { const x = setChips(this.ws?.fitted ?? { tip: null, chassis: null, exhaust: null })[at.col]; title = `${x.name} · ${x.spell}`; text = x.whole ? `Whole: R casts ${x.spell}.` : `${x.fitted} of its ${x.of} parts on her broom.`; }
+      else if (l.kind === "trail") { const p = TRAIL_PRESETS[at.col]; title = `${p.name} ${p.emoji}`; text = p.id === this.trailNow ? "Her trail's colours, front to back: the first band as she flies, then a band for each dodge still to come back." : "Choose it for her trail's colours."; }
       else if (l.kind === "parts") { const p = s.colour![at.col]; title = `Colour: ${PART_NAMES[p] ?? p}`; text = p === this.partOf(s) ? "The colours below are for this." : "Choose it to colour it below."; }
       else if (l.kind === "grid") { const [sc, sr] = this.chosenSwatch(s); title = `${s.label}: colour`; text = !this.c.awaitingDress && sc === at.col && sr === l.row ? "Wearing." : "Every colour is hers: choose to put it on."; }
       else { const on = !FIT_NEEDS[l.axis!] || FIT_NEEDS[l.axis!](this.g); title = FIT_NAMES[l.axis!] ?? l.axis!; text = on ? "◀ ▶ or drag to change it." : "Put it on first."; }
@@ -394,7 +404,8 @@ export class StationPanel {
     const was = this.lastThumb.get(key.slice(0, key.lastIndexOf(":"))); if (was) el.replaceChildren(was); // (the last one shown, till the new one's baked)
     if (!this.queue.some(q => q.key === key)) {
       const [sid, iid] = key.split(":"), s = this.shelves.find(q => q.id === sid), it = s?.items.find(i => i.id === iid);
-      if (sid === "hatpic") { const g = this.g; this.queue.push({ key, make: () => hatPicture(this.st, g) ?? document.createElement("canvas") }); } // (the mirror's Hat card: her hat as it is now)
+      if (sid === "trail") this.queue.push({ key, make: () => trailTile(trailPreset(iid).colours) });
+      else if (sid === "hatpic") { const g = this.g; this.queue.push({ key, make: () => hatPicture(this.st, g) ?? document.createElement("canvas") }); } // (the mirror's Hat card: her hat as it is now)
       else if (sid === "part" && partById(iid)) { const g = this.g; this.queue.push({ key, make: () => partCanvas(this.st, broomColours(this.st, g), iid, { fit: 58 }).c }); }
       else if (s && it) this.queue.push({ key, make: () => wearPicture(this.st, this.g, it, s.id) });
     }
@@ -491,6 +502,7 @@ body.paused #station-panel { visibility: hidden; }
 #station-panel .sp-sub { font-size: .8em; display: flex; gap: .5em; opacity: .9; } #station-panel .sp-sub em { margin-left: auto; font-style: normal; opacity: .75; }
 #station-panel .sp-row { display: flex; flex-wrap: wrap; gap: .45em; }
 #station-panel .sp-card { position: relative; width: 4.6em; height: 4.6em; border-radius: .5em; background: rgba(11,7,22,.55); box-shadow: inset 0 0 0 1px rgba(232,226,244,.14); display: grid; place-items: center; cursor: pointer; box-sizing: border-box; }
+#station-panel .sp-card.sp-trail { width: 6.4em; } #station-panel .sp-card.sp-trail canvas { height: 1.5em; width: 6em; max-width: 6em; }
 #station-panel .sp-card canvas { image-rendering: pixelated; width: auto; height: 4.2em; max-width: 4.3em; object-fit: contain; filter: drop-shadow(1px 0 0 var(--ol)) drop-shadow(-1px 0 0 var(--ol)) drop-shadow(0 1px 0 var(--ol)) drop-shadow(0 -1px 0 var(--ol)); }
 #station-panel .sp-card.locked { cursor: default; } #station-panel .sp-card.locked canvas { filter: brightness(0) invert(.22) drop-shadow(1px 0 0 rgba(232,226,244,.5)) drop-shadow(-1px 0 0 rgba(232,226,244,.5)) drop-shadow(0 1px 0 rgba(232,226,244,.5)) drop-shadow(0 -1px 0 rgba(232,226,244,.5)); }
 #station-panel .focus { outline: 3px solid #fff; outline-offset: 2px; box-shadow: 0 0 12px rgba(255,255,255,.75), inset 0 0 0 1px var(--ol); }
@@ -535,4 +547,25 @@ body.paused #station-panel { visibility: hidden; }
 #station-panel .sp-foot img.kc { transform: scale(1.4); margin: 0 .3em; }
 `;
   document.head.append(s);
+}
+
+/** The Trail row's tile (Ed, 2026-11-03): a little picture of her cooldown trail in a preset's colours, on the night's dark: her broom's
+ *  end on the right, then four to six sections (its colours' count; the first the buffer, as in play: render/trail.ts) of
+ *  single-pixel dots a pixel apart, each a little aglow, in the preset's colours front to back (render/trailColours.ts: spread over its
+ *  gradient). Drawn a pixel a pixel, shown pixelated. */
+export function trailTile(colours: readonly string[], w = 60, h = 15): HTMLCanvasElement {
+  const c = document.createElement("canvas"); c.width = w; c.height = h;
+  const x = c.getContext("2d");
+  if (!x) return c;
+  x.fillStyle = "#0b0716"; x.fillRect(0, 0, w, h);
+  const n = Math.max(4, Math.min(6, colours.length)), y = Math.floor(h / 2), per = n > 4 ? 4 : 6, secs = sectionColours(colours, n);
+  let px = w - 3;
+  secs.forEach(([r, g, b]) => {
+    for (let d = 0; d < per && px >= 1; d++, px -= 2) {
+      x.fillStyle = `rgba(${r},${g},${b},0.3)`; x.fillRect(px - 1, y - 1, 3, 3); // (its glow)
+      x.fillStyle = `rgb(${r},${g},${b})`; x.fillRect(px, y, 1, 1);
+    }
+    px -= 1;
+  });
+  return c;
 }

@@ -2,7 +2,6 @@
   "name": "Forest rave",
   "notes": "Witch's music style (2026-10-04). The mood, Ed's two best references from his playlist (a screenshot he shared in the music builder's session): Grimes' \"4ÆM\" and Grimes and Janelle Monáe's \"Venus Fly\": dreamy, ethereal layers (airy pads, choir-like voices) crashing into hard, distorted, industrial drums and breakbeat energy, a gritty reese bass, string stabs. The rest of his playlist adds melodic organic house and techno, dark synth and French electro, chiptune and hyperpop, dark minimal pop and phonk. Only their genres are used: every sound is synthesised and every tune generated. The arc, one step per wave: an ethereal forest (choir, marimba, heartbeat), deep house, melodic techno, dark synth, industrial, breakbeat, a frenzy, phonk, and the finale; breakdowns go dreamy (the choir and sung notes) or minimal and dark (snaps over a sub). Variants (overnight, 2026-10-06): an arc step's later passes round its loop take its variants in turn, each pass with a new seeded melody, its chords a step on and its \"?\" hits falling differently, so a 30-minute run doesn't loop audibly. Legend: parts added while an angry legend is near (charging, or shooting from afar), the mood darkening.",
   "bpm": 120,
-  "tempoRampBars": 8,
   "swing": 0.08,
   "root": 33,
   "scale": "dorian",

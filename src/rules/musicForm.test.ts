@@ -4,7 +4,7 @@
 // down, in which case it gains 5bpm. Being knocked down changes the music to a random new seed."
 import { describe, expect, it } from "vitest";
 import styleJson from "../../config/music-style.json";
-import { bpmAt, timeAt, waveArrived, waveTempo } from "./beat";
+import { bpmAt, targetTempo, timeAt } from "./beat";
 import { hitWitch, newGame as fullGame } from "./game";
 import { smallWorld } from "../test/worlds";
 const newGame = smallWorld(fullGame, "Music cue and knockdown tempo integration consumes one witch's beat state, not distant areas.");
@@ -100,12 +100,12 @@ describe("everything in dorian, each stage in its own key", () => {
 });
 
 describe("the tempo: 120, and 5 more a knockdown", () => {
-  const t: Tuning = { ...TUNING, beat: { ...TUNING.beat, bpm: style.bpm, tempos: style.arc.map(a => a.bpm ?? style.bpm) } };
-  it("stays at 120 through every wave", () => {
+  const t: Tuning = { ...TUNING, beat: { ...TUNING.beat, bpm: style.bpm } };
+  it("stays at 120 through every wave (Ed, 2026-11-03): no step of the arc has a tempo of its own", () => {
     expect(style.bpm).toBe(120);
-    for (let w = 0; w < 40; w++) expect(waveTempo(t, w)).toBe(120);
+    for (const a of style.arc) expect(Object.hasOwn(a, "bpm"), a.name).toBe(false);
     const g = newGame(3, t);
-    for (let w = 1; w <= 9; w++) waveArrived(g.beat, t, w, w * 60);
+    for (let w = 1; w <= 9; w++) { g.party.wave = w; expect(targetTempo(g.beat, t)).toBe(120); }
     expect(bpmAt(g.beat, 1000)).toBe(120);
   });
 

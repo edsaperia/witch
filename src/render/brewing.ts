@@ -1,18 +1,22 @@
-// Pixel-art kitchen props and short brewing animation. Bounded textures: halos, furniture, then smoke in front.
+// Pixel-art kitchen props and short brewing animation. Bounded textures: halos, furniture behind her, furniture in front of her
+// (the painter's rule: a prop whose foot is south of hers covers her), then smoke in front.
 import * as THREE from 'three';
 import { paintKitchenCauldron, paintMushroomBasket } from './brewingProps';
 import type { View } from './view';
 import { kitchenPlan, basketNear } from '../rules/mushrooms';
-import { toPlan } from '../rules/houseRooms';
+import { fromPlan, toPlan } from '../rules/houseRooms';
 import { deckOf } from '../rules/treehouse';
 import { MUSHROOM_COLOURS } from './mushroomArt';
 import { pixelTexture } from './houseFurniture';
 import { complement, subtractiveMaterial } from './mushroomGlow';
 import { brewingFrame } from './brewingFrame';
 import { edLayoutRequested } from '../rules/housePlacement';
+import { HOUSE_OVER_HER_ORDER, inFrontOfHer } from './houseWitchPass';
 
 type Point = { x: number; y: number; z: number };
 type PixelMap = (x: number, z: number, dx: number, dy: number) => Point;
+/** How far south of the hub a point of the plan lies (render/houseRooms.ts south): the house's drawing depth. */
+const south = (x: number, z: number) => fromPlan({ x: 0, z: 0 }, x, z).z;
 function panel(order: number) {
   const canvas = document.createElement('canvas'), texture = pixelTexture(canvas), geometry = new THREE.BufferGeometry();
   geometry.setAttribute('position', new THREE.BufferAttribute(new Float32Array(12), 3));
@@ -29,16 +33,19 @@ export class BrewingView {
   readonly group = new THREE.Group();
   private readonly back = panel(19.943);
   private readonly halo = panel(19.9429);
+  /** The props standing in front of her (inFrontOfHer), drawn after her room pass (HOUSE_OVER_HER_ORDER); the rest stay on `back`. */
+  private readonly over = panel(HOUSE_OVER_HER_ORDER);
   private readonly front = panel(19.956);
   private lastFrame = '';
-  constructor() { subtractiveMaterial(this.halo.mesh.material); this.group.add(this.halo.mesh, this.back.mesh, this.front.mesh); }
-  update(v: View, pxWorld: PixelMap, pitch: number): void {
+  constructor() { subtractiveMaterial(this.halo.mesh.material); this.group.add(this.halo.mesh, this.back.mesh, this.over.mesh, this.front.mesh); }
+  /** `her`: her point on the house's plan (null: she isn't in it); the cauldron and each basket south of it are painted over her. */
+  update(v: View, pxWorld: PixelMap, pitch: number, her: { x: number; z: number } | null = null): void {
     const g = v.game, state = g.mushrooms, layout = kitchenPlan();
     if (!state || !layout || g.cauldron) { this.group.visible = false; return; }
     this.group.visible = true;
     const ppm = 1 / v.mpp, room = layout.room;
     const { width, height, ox, oy } = brewingFrame(layout, ppm, pitch, edLayoutRequested());
-    for (const p of [this.halo, this.back, this.front]) {
+    for (const p of this.panels) {
       if (p.canvas.width !== width || p.canvas.height !== height) {
         // A warm draw may already have allocated immutable GPU storage at the old size.
         // Release that storage before repainting; needsUpdate below uploads the new dimensions.
@@ -50,13 +57,15 @@ export class BrewingView {
       }); pos.needsUpdate = true;
     }
     const selected = basketNear(g)?.type ?? '';
-    const key = `${Math.floor(g.herTime * 12)}:${width}:${height}:${ox}:${oy}:${pitch.toFixed(3)}:${selected}`;
+    const herSouth = her ? south(her.x, her.z) : null, inFront = (q: { x: number; z: number }) => inFrontOfHer(south(q.x, q.z), herSouth);
+    const potOver = inFront(layout.cauldron), basketsOver = layout.baskets.map(inFront);
+    const key = `${Math.floor(g.herTime * 12)}:${width}:${height}:${ox}:${oy}:${pitch.toFixed(3)}:${selected}:${+potOver}${basketsOver.map(Number).join('')}`;
     if (this.lastFrame === key) return;
     this.lastFrame = key;
-    const c = this.back.canvas.getContext('2d')!, f = this.front.canvas.getContext('2d')!, halo = this.halo.canvas.getContext('2d')!;
+    const c = this.back.canvas.getContext('2d')!, o = this.over.canvas.getContext('2d')!, f = this.front.canvas.getContext('2d')!, halo = this.halo.canvas.getContext('2d')!;
     halo.clearRect(0, 0, width, height);
-    c.clearRect(0, 0, width, height); f.clearRect(0, 0, width, height);
-    c.imageSmoothingEnabled = f.imageSmoothingEnabled = false;
+    c.clearRect(0, 0, width, height); o.clearRect(0, 0, width, height); f.clearRect(0, 0, width, height);
+    c.imageSmoothingEnabled = o.imageSmoothingEnabled = f.imageSmoothingEnabled = false;
     const p = (x: number, z: number, h = 0) => [Math.round(ox + (x - room.x) * ppm), Math.round(oy + ((z - room.z) * pitch - h) * ppm)];
     const ellipse = (ctx: CanvasRenderingContext2D, x: number, y: number, rx: number, ry: number, colour: string) => {
       ctx.fillStyle = colour; ctx.beginPath(); ctx.ellipse(Math.round(x), Math.round(y), Math.max(.5, rx), Math.max(.5, ry), 0, 0, Math.PI * 2); ctx.fill();
@@ -70,10 +79,10 @@ export class BrewingView {
     const contents = state.ingredients, smoke = state.smoke;
     const colours = (smoke?.recipe ?? contents).map(type => MUSHROOM_COLOURS[type]);
     const paint = { c, f, ppm, p, ellipse, darkGlow, rgba };
-    paintKitchenCauldron(paint, { ...pot, id: "cauldron" }, state, g.herTime);
+    paintKitchenCauldron(potOver ? { ...paint, c: o } : paint, { ...pot, id: "cauldron" }, state, g.herTime);
     // Woven baskets, tiny natural variations, with their mushroom colour visible in the lining even when empty.
     layout.baskets.forEach((basket, i) => {
-      paintMushroomBasket(paint, { ...basket, id: `mushroom-basket:${basket.type}`, index: i }, state, selected);
+      paintMushroomBasket(basketsOver[i] ? { ...paint, c: o } : paint, { ...basket, id: `mushroom-basket:${basket.type}`, index: i }, state, selected);
     });
     const deck = deckOf(g.map, g.tuning);
     if (deck) for (const flight of state.flights) {
@@ -97,9 +106,13 @@ export class BrewingView {
       }
     }
     // Snap the physical artwork to whole opaque pixels. Smoke keeps its translucent pixel coverage.
-    const pixels = c.getImageData(0, 0, width, height);
-    for (let i = 3; i < pixels.data.length; i += 4) pixels.data[i] = pixels.data[i] < 100 ? 0 : 255;
-    c.putImageData(pixels, 0, 0); this.back.texture.needsUpdate = this.front.texture.needsUpdate = this.halo.texture.needsUpdate = true;
+    for (const ctx of [c, o]) {
+      const pixels = ctx.getImageData(0, 0, width, height);
+      for (let i = 3; i < pixels.data.length; i += 4) pixels.data[i] = pixels.data[i] < 100 ? 0 : 255;
+      ctx.putImageData(pixels, 0, 0);
+    }
+    for (const p of this.panels) p.texture.needsUpdate = true;
   }
-  dispose(): void { for (const p of [this.halo, this.back, this.front]) { p.texture.dispose(); p.mesh.geometry.dispose(); p.mesh.material.dispose(); } }
+  private get panels() { return [this.halo, this.back, this.over, this.front]; }
+  dispose(): void { for (const p of this.panels) { p.texture.dispose(); p.mesh.geometry.dispose(); p.mesh.material.dispose(); } }
 }

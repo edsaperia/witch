@@ -1,6 +1,7 @@
 // The runestone stacks and the soundsystem spell (Ed, 2026-10-28; rules/stoneStacks.ts): every wild creature's sigil in its stone's
 // stack, friends above enemies; no auto-clearing; she converts a stone by holding the sigil button at it (a hit stops it, it drains
 // while she's away), or a wave does; either way its friend sigils scatter round it, loose for anyone; a legend's tethers her.
+import { chainLength } from "./chains";
 import { describe, expect, it } from "vitest";
 import { affectionOf, loseSoundsystem, newGame, newWitchPlayer, stepGame, type Controls, type Game } from "./game";
 import { TUNING as BUILT, withTuning } from "./tuning";
@@ -384,7 +385,7 @@ describe("a legend's sigil in its stone's stack (Ed's playtest, 2026-10-29: \"I 
 });
 
 describe("loose sigils (Ed, 2026-10-28)", () => {
-  it("are picked up like any sigil, leashing the creature; a legend's tethers her at the distance it lay, till she puts it down", () => {
+  it("are picked up like any sigil, leashing the creature; a legend's tethers her at the chain's length (or the distance it lay, if further), till she puts it down", () => {
     const g = game(), a = area(g, true), W = g.witches[0];
     at(g, a);
     run(g, C.time + 0.5, hold);
@@ -401,13 +402,13 @@ describe("loose sigils (Ed, 2026-10-28)", () => {
     // the legend's
     const L = g.loose.find(q => q.legend);
     if (!L) return; // (an angry legend keeps its sigil)
-    const legend = g.creatures[L.id], len = Math.hypot(L.x - legend.x, L.z - legend.z);
+    const legend = g.creatures[L.id], len = Math.max(chainLength(g.tuning), Math.hypot(L.x - legend.x, L.z - legend.z)); // (the chain rework, Ed 2026-11-03: one length for every chain)
     g.witch = { ...g.witch, x: L.x, z: L.z };
     stepGame(g, { ...still, place: true }, 1 / 60);
     expect(W.leash.tether).toEqual({ id: L.id, length: len });
     expect(legend.leashed).toBeFalsy(); // (it sleeps on)
     expect(W.leash.stack).not.toContain(L.id);
-    run(g, 3, { ...still, moveX: 1 }); // (she walks away: held at its length)
+    run(g, 8, { ...still, moveX: 1 }); // (she walks away: held at its length)
     expect(Math.hypot(g.witch.x - legend.x, g.witch.z - legend.z)).toBeLessThanOrEqual(len + 0.05);
     stepGame(g, { ...still, place: true }, 1 / 60);
     expect(W.leash.tether).toBeNull();

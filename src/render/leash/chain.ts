@@ -1,10 +1,13 @@
 // The leashes as chains (Ed, 2026-10-28, after the runestone mocks): every leash line, from its sigil in her stack (or its placed
 // sigil) to its creature, drawn as a chain of links in its rank's colour, each link as long as its rank's (tuning leash.ranks.chain),
-// a legend's tether's bigger still. Real chain physics (Ed, 2026-10-28: "a) real chain physics that still arc above the ground"):
-// verlet points with their links' lengths held, both ends pinned, gravity, and a spring toward a still arc bowing up off the ground
-// so they hang in the air as the threads did; the step clamped and cut into substeps, a chain laid afresh on a jump, every point
-// kept above the ground, and `damping` for calm or lively. As a chain lengthens or shortens it gains or loses links at the
-// creature's end.
+// a legend's tether's bigger still. Since the chain rework (Ed, 2026-11-03: "Chains lie on the floor at full length so you can see
+// how taut they are"), every chain is its full length (rules/chains.ts, leash.chain.length) and lies on the ground: verlet points
+// `segment` m apart (each span drawn as as many links as fit), both ends pinned, gravity, and on the ground friction, so a slack chain
+// stays in loose curves where it was dragged, and a taut one pulls straight. No spring bows it up any more (the old arcPull). The
+// constraints are a rope's: a span pulled longer than `segment` is drawn back, one bunched under 0.9 of it pushed apart, so slack
+// lies in loose curves its full length. The step
+// clamped and cut into substeps, a chain laid afresh on a jump, every point kept above the ground, and `damping` for calm or lively.
+// A refused take-off rattles the chains weighing her down (rattleChain).
 import type { PosePoint, TravelPose } from "./travelPose";
 import type { LeashView } from "../leash";
 import { SLOT, SLOTS } from "./glyphs";
@@ -12,8 +15,9 @@ import { SPRITE_UNIFORMS } from "../sprites";
 
 /** A chain's point: where it is and where it was (verlet). */
 export interface ChainLink { x: number; y: number; z: number; px: number; py: number; pz: number }
-/** A chain: its points from her end (0) to the creature's (the last), and where her end was last frame (to see a jump). */
-export interface Chain { links: ChainLink[]; ax?: number; az?: number; pose?: TravelPose }
+/** A chain: its points from her end (0) to the creature's (the last), and where her end was last frame (to see a jump); `rattle`, a
+ *  refused take-off's jangle: when it began (on the view's clock). */
+export interface Chain { links: ChainLink[]; ax?: number; az?: number; pose?: TravelPose; rattle?: number }
 
 /** The chain's motion (tuning leash.ranks.chain). */
 export interface ChainMotion {
@@ -21,61 +25,80 @@ export interface ChainMotion {
   damping: number;
   /** Its fall (m/s²). */
   gravity: number;
-  /** The spring toward its still arc (1/s²): what holds it up off the ground. */
-  arcPull: number;
+  /** The share of a point's sideways speed it keeps a substep while it lies on the ground (lower: it stays where it was dragged). */
+  friction: number;
   /** Passes over the links' lengths a substep. */
   iterations: number;
   /** Her end moving further than this (m) in a frame lays the chain afresh (a blink, a new night, the stack cycling far). */
   jump: number;
 }
 
-/** Where point i of n sits on the still arc from a to b, bowing up h in the middle (y is over the ground there). */
-function arcAt(i: number, n: number, ax: number, ay: number, az: number, bx: number, by: number, bz: number, h: number): [number, number, number] {
-  const k = i / n;
-  return [ax + (bx - ax) * k, ay + (by - ay) * k + Math.sin(k * Math.PI) * h, az + (bz - az) * k];
+/** How high (m) a chain's points rest: just off the ground. */
+export const CHAIN_FLOOR = 0.15;
+
+/** The points of a chain of n spans `seg` m long from a to b laid on the ground (a's own point where it is): straight when the span is
+ *  as long as the chain, else snaking to and fro either side of the line between them, as wide as takes up the chain's length. */
+function layPoints(n: number, seg: number, ax: number, ay: number, az: number, bx: number, bz: number, out: [number, number, number][]): void {
+  const D = Math.hypot(bx - ax, bz - az) || 1e-6, ux = (bx - ax) / D, uz = (bz - az) / D, S = n * seg, waves = Math.max(1, Math.round((S - D) / 12));
+  const at = (A: number) => { out.length = 0; for (let i = 0; i <= n; i++) { const k = i / n, w = A * Math.sin(k * Math.PI * waves); out.push([ax + ux * D * k - uz * w, i === 0 ? ay : CHAIN_FLOOR, az + uz * D * k + ux * w]); } };
+  const len = () => { let l = 0; for (let i = 1; i < out.length; i++) l += Math.hypot(out[i][0] - out[i - 1][0], out[i][2] - out[i - 1][2]); return l; };
+  if (S <= D) { at(0); return; }
+  let lo = 0, hi = S;
+  for (let k = 0; k < 24; k++) { const m = (lo + hi) / 2; at(m); if (len() < S) lo = m; else hi = m; }
+  at(lo);
 }
+const LAY: [number, number, number][] = [];
 
-/** How high a held chain of `len` metres bows over a span of `span` (a parabola of its length: s ≈ d + 8h²/3d), or `arc`, the higher. */
-export const bowOf = (span: number, len: number, arc: number): number => Math.max(arc, len > span ? Math.sqrt((3 * span * (len - span)) / 8) : 0);
-
-/** Lay `ch` still, n links from a to b, bowing up h: its points on the arc, at rest. */
-export function layChain(ch: Chain, n: number, ax: number, ay: number, az: number, bx: number, by: number, bz: number, h: number): void {
+/** Lay `ch` still, n spans `seg` m long from a (her end) to b (the creature's), on the ground (layPoints), at rest. */
+export function layChain(ch: Chain, n: number, seg: number, ax: number, ay: number, az: number, bx: number, by: number, bz: number): void {
   ch.links.length = Math.min(ch.links.length, n + 1);
   while (ch.links.length < n + 1) ch.links.push({ x: 0, y: 0, z: 0, px: 0, py: 0, pz: 0 });
-  for (let i = 0; i <= n; i++) { const [x, y, z] = arcAt(i, n, ax, ay, az, bx, by, bz, h), L = ch.links[i]; L.x = L.px = x; L.y = L.py = y; L.z = L.pz = z; }
+  layPoints(n, seg, ax, ay, az, bx, bz, LAY);
+  for (let i = 0; i <= n; i++) { const L = ch.links[i], [x, y, z] = LAY[i]; L.x = L.px = x; L.y = L.py = i === n ? by : y; L.z = L.pz = z; }
   ch.ax = ax; ch.az = az;
 }
 
-/** One frame of a chain of `n` links each `link` m long, pinned at a (her end) and b (the creature's), pulled toward the arc bowing
- *  up `h` m: gains or loses links at b's end, then steps (dt clamped, in substeps of at most 1/120 s). */
-export function stepChain(ch: Chain, n: number, link: number, ax: number, ay: number, az: number, bx: number, by: number, bz: number, h: number, dt: number, M: ChainMotion): void {
+/** One frame of a chain of n spans each `seg` m long (its full length n × seg), pinned at a (her end) and b (the creature's), lying
+ *  on the ground (dt clamped, in substeps of at most 1/120 s). Laid afresh when new, when its length changed, or on a jump. */
+export function stepChain(ch: Chain, n: number, seg: number, ax: number, ay: number, az: number, bx: number, by: number, bz: number, dt: number, M: ChainMotion): void {
   n = Math.max(1, Math.round(n));
-  if (!ch.links.length || ch.ax === undefined || Math.hypot(ax - ch.ax, az - (ch.az ?? az)) > M.jump) { layChain(ch, n, ax, ay, az, bx, by, bz, h); return; }
+  if (ch.links.length !== n + 1 || ch.ax === undefined || Math.hypot(ax - ch.ax, az - (ch.az ?? az)) > M.jump) { layChain(ch, n, seg, ax, ay, az, bx, by, bz); return; }
   ch.ax = ax; ch.az = az;
   const P = ch.links;
-  // (links on or off at the creature's end: a new one where the last but one was, an old one gone from beside the end)
-  while (P.length < n + 1) { const q = P[P.length - 1]; P.splice(P.length - 1, 0, { ...q }); }
-  while (P.length > n + 1 && P.length > 2) P.splice(P.length - 2, 1);
   const T = Math.min(Math.max(0, dt), 1 / 20), sub = Math.max(1, Math.ceil(T / (1 / 120))), s = T / sub, s2 = s * s;
   for (let k = 0; k < sub; k++) {
     for (let i = 1; i < n; i++) {
-      const L = P[i], [tx, ty, tz] = arcAt(i, n, ax, ay, az, bx, by, bz, h);
-      const vx = (L.x - L.px) * M.damping, vy = (L.y - L.py) * M.damping, vz = (L.z - L.pz) * M.damping;
+      const L = P[i], floor = L.y <= CHAIN_FLOOR + 1e-3, f = floor ? M.friction : 1;
+      const vx = (L.x - L.px) * M.damping * f, vy = (L.y - L.py) * M.damping, vz = (L.z - L.pz) * M.damping * f;
       L.px = L.x; L.py = L.y; L.pz = L.z;
-      L.x += vx + M.arcPull * (tx - L.x) * s2; L.y += vy + (M.arcPull * (ty - L.y) - M.gravity) * s2; L.z += vz + M.arcPull * (tz - L.z) * s2;
+      L.x += vx; L.y += vy - M.gravity * s2; L.z += vz;
     }
     const a = P[0], b = P[n];
     a.x = a.px = ax; a.y = a.py = ay; a.z = a.pz = az; b.x = b.px = bx; b.y = b.py = by; b.z = b.pz = bz;
     for (let it = 0; it < M.iterations; it++) {
       for (let i = 0; i < n; i++) {
-        const p = P[i], q = P[i + 1], dx = q.x - p.x, dy = q.y - p.y, dz = q.z - p.z, d = Math.hypot(dx, dy, dz) || 1e-6, e = (d - link) / d;
-        const wp = i === 0 ? 0 : 1, wq = i + 1 === n ? 0 : 1, w = wp + wq;
+        const p = P[i], q = P[i + 1], dx = q.x - p.x, dy = q.y - p.y, dz = q.z - p.z, d = Math.hypot(dx, dy, dz) || 1e-6;
+        if (d <= seg && d >= seg * 0.9) continue; // (a rope: pulled straight past its length, pushed apart only bunched past a tenth, so slack lies in loose curves)
+        const e = (d - (d > seg ? seg : seg * 0.9)) / d, wp = i === 0 ? 0 : 1, wq = i + 1 === n ? 0 : 1, w = wp + wq;
         if (!w) continue;
         p.x += dx * e * (wp / w); p.y += dy * e * (wp / w); p.z += dz * e * (wp / w);
         q.x -= dx * e * (wq / w); q.y -= dy * e * (wq / w); q.z -= dz * e * (wq / w);
       }
     }
-    for (let i = 1; i < n; i++) if (P[i].y < 0.15) { P[i].y = 0.15; if (P[i].py < 0.15) P[i].py = 0.15; } // (never into the ground)
+    for (let i = 1; i < n; i++) if (P[i].y < CHAIN_FLOOR) { P[i].y = CHAIN_FLOOR; if (P[i].py < CHAIN_FLOOR) P[i].py = CHAIN_FLOOR; } // (never into the ground)
+  }
+}
+
+/** A refused take-off's rattle (Ed, 2026-11-03: "When you try and take off but you're weighed down by creatures, the chains rattle"):
+ *  a jolt into the points at her end that runs down the chain, `strength` m at her end (half up, half to and fro along it), less
+ *  further down; `seed` keeps each chain's jolt its own. Called each frame of the rattle with its strength falling, so the links
+ *  jangle (render/leash/stack.ts). */
+export function rattleChain(ch: Chain, strength: number, seed: number): void {
+  const P = ch.links, n = P.length - 1;
+  if (n < 2 || !(strength > 0)) return;
+  for (let i = 1; i < n; i++) {
+    const k = strength * Math.exp((-4 * i) / n), h = Math.sin(seed * 12.9898 + i * 78.233) * 43758.5453, r = (h - Math.floor(h)) * 2 - 1;
+    P[i].py -= k * 0.5; P[i].px -= r * k * 0.35; P[i].pz += r * k * 0.35; // (a kick: verlet's speed is where it was against where it is)
   }
 }
 
@@ -114,11 +137,16 @@ export function linkSlots(lv: LeashView): { face: number[][]; edge: number[][] }
 /** Draw a chain: a link on each span between its points, alternately face on and edge on, each turned along its span as the screen
  *  shows it (the sprites' right and up: render/sprites.ts), crisp (the solid batch), each with a faint glow of its colour. */
 export function drawChain(lv: LeashView, ch: { links: readonly PosePoint[] }, link: number, r: number, g: number, b: number, a: number, dot: number[], glow = 0.12, batch = lv.solid): void {
+  if (a <= 0.004) return; // (faded out: nothing drawn)
   const S = linkSlots(lv), P = ch.links, R = SPRITE_UNIFORMS.uRight.value, U = SPRITE_UNIFORMS.uUp.value;
-  for (let i = 0; i + 1 < P.length; i++) {
-    const p = P[i], q = P[i + 1], x = (p.x + q.x) / 2, y = (p.y + q.y) / 2, z = (p.z + q.z) / 2, face = i % 2 === 1;
-    const dx = q.x - p.x, dy = q.y - p.y, dz = q.z - p.z, k = linkAngle(dx * R.x + dy * R.y + dz * R.z, dx * U.x + dy * U.y + dz * U.z);
-    batch.add(x, y, z, link * (face ? 1.25 : 1.1), face ? S.face[k] : S.edge[k], r, g, b, a);
-    if (glow > 0) lv.over.add(x, y, z, link * 1.6, dot, r, g, b, glow * a, 1, true);
+  // (each span as many links as fit along it, a link a link's length: a span between the physics' points may be several links long)
+  for (let i = 0, j = 0; i + 1 < P.length; i++) {
+    const p = P[i], q = P[i + 1], dx = q.x - p.x, dy = q.y - p.y, dz = q.z - p.z, m = Math.max(1, Math.round(Math.hypot(dx, dy, dz) / link));
+    const k = linkAngle(dx * R.x + dy * R.y + dz * R.z, dx * U.x + dy * U.y + dz * U.z);
+    for (let h = 0; h < m; h++, j++) {
+      const f = (h + 0.5) / m, x = p.x + dx * f, y = p.y + dy * f, z = p.z + dz * f, face = j % 2 === 1;
+      batch.add(x, y, z, link * (face ? 1.25 : 1.1), face ? S.face[k] : S.edge[k], r, g, b, a);
+      if (glow > 0) lv.over.add(x, y, z, link * 1.6, dot, r, g, b, glow * a, 1, true);
+    }
   }
 }

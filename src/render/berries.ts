@@ -1,6 +1,7 @@
-// The berry (rules/berries.ts): a small shiny dark-red berry, like a cherry, drawn here in a few
-// pixels (Ed, 2026-10-04): a deep red body, a darker shadow side and a crisp near-white highlight
-// upper left. Its soft red halo and the glints seen from the treetops (through gaps in the crowns
+// The berry (rules/berries.ts): a small shiny berry, drawn here in a few pixels (Ed, 2026-10-04): a deep
+// body in berries.colour, a darker shadow side and a crisp near-white highlight upper left; a deep berry pink since
+// Ed's colour grammar (2026-11-03: berries "deep berry pink, instead of red", red being the warnings'; a dark cherry
+// red before, colourGrammar "old": render/colourGrammar.ts berryColour). Its soft halo and the glints seen from the treetops (through gaps in the crowns
 // only) are drawn with the sigils' glow sprites (leash.ts). A placeholder until the art builder draws one.
 import type { Baked } from "./atlas";
 

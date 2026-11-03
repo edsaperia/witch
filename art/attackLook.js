@@ -8,8 +8,9 @@
 //   beam      a beam's beads, strung along it: 3 shapes, 2 frames each
 //   mark      what a hit leaves on the ground (seen from above), and area: 2 smaller tiles scattered over a quake's or pulse's ground
 //
-// and, in neutral white and dark, the danger frame's pieces (every wild attack's warning, whatever its element: Ed, 2026-10-27,
-// "composability and telegraphing"): warn (a white pixel pair in a dark edge, strung into dashes), pip and pipOff (a delayed
+// and, in red and dark, the danger frame's pieces (every wild attack's warning, whatever its element: Ed, 2026-10-27,
+// "composability and telegraphing"; red, Ed 2026-11-02: "the telegraph should be red"; config danger.warn): warn (a red pixel
+// pair in a dark edge, strung into dashes), pip and pipOff (a delayed
 // blast's countdown), bracket (a lock-on's corner, 4 turns), tick (a wind-up's "!"), chev (a lane's chevron), hatch (the shrinking
 // safe circle's outside) and flash (the "now" star, 3 frames); and the side effects' motifs (by shape, never colour: slow chains,
 // stun stars, knockback shockwave, confuse spiral), white, for the element's colour to tint. Slot 0 is a soft dot (the glyph

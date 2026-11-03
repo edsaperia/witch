@@ -24,10 +24,10 @@ import { dormant, type Game } from "../rules/game";
 import type { Creature } from "../rules/creatures";
 
 import { blocked, stackBottom, talkTime } from "../rules/leash";
+import { feedOffer } from "../rules/sigilButton";
 import { toEvolve } from "../rules/berries";
 import { hash2 } from "../rules/random";
 import { hasRune, runeNear } from "../rules/creatureStates";
-import { newLoadView, type LoadView } from "./load";
 import { relicGlints } from "../rules/legends";
 import { SPRITE_UNIFORMS, metresPerArtPixel } from "./sprites";
 import { letterAt, lobHeight, type HerOffset } from "./invites";
@@ -41,14 +41,16 @@ import { BLOOD_PULL, BloodPool, bloodKnobs } from "./leash/blood";
 import { bubbles, drawCirclePanel, drawDreams, drawSnores } from "./leash/bubbles";
 import { ZooPlates } from "./zooPlates";
 import { drawDeckBpm } from "./leash/deckBpm";
-import { drawBond, drawStack, drawStrain, stackKey } from "./leash/stack";
+import { drawBond, drawStack, stackKey } from "./leash/stack";
 import type { Chain } from "./leash/chain";
 import { drawRainbow } from "./leash/rainbow";
 import type { LeyLines } from "./leylines";
 import { drawStones, newStoneView, resetStoneView, type StoneSpot } from "./leash/stones";
+import { drawChallenge } from "./challenge";
 import { drawProjection } from "./leash/projection";
 import { RUNE_SCALE, runeOffset, sigilSize } from "../rules/runeOffset";
 import { relicsOut } from "../rules/partyOver";
+import { berryColour } from "./colourGrammar";
 import { crowned, drawEmbers, glyphPoints, legendShine, rankColour, rankKnobs, rankOf, rankSize, ranksOn, youthDots } from "./leash/ranks";
 export { BUBBLE_PX, bubblePx } from "./leash/bubbles";
 export { legendarySigil } from "./leash/glyphs";
@@ -138,9 +140,6 @@ export class LeashView {
   lastTime = 0;
   /** Her last take-off the leashes wouldn't allow (the "grounded" leash event), on her clock: their tug (render/leash/stack.ts drawBond). */
   tugAt = -9;
-  /** The load she carries as the art reads it (render/load.ts; the view sets it each frame), and where her broom's bristles are. */
-  load: LoadView = newLoadView();
-  bristle = { x: 0, y: 0, z: 0, on: false };
   bubbleWitch = document.getElementById("bubble-witch");
   bubbleCreature = document.getElementById("bubble-creature");
   /** The zoo's nameplates (render/zooPlates.ts), on a zoo's map only. */
@@ -217,7 +216,7 @@ export class LeashView {
     this.ink = new Instances(mat(1, true, true)); this.ink.mesh.renderOrder = 2.95;
     scene.add(this.standing.mesh, this.flat.mesh, this.through.mesh, this.over.mesh, this.solid.mesh, this.blood.mesh, this.backing.mesh, this.ink.mesh, this.stackBack.mesh, this.stackGlyphs.mesh);
     this.look = new AttackLook(scene, game);
-    const hex = game.tuning.berries.colour.replace("#", "");
+    const hex = berryColour(game.tuning).replace("#", ""); // (berry pink, or the old cherry red: render/colourGrammar.ts)
     this.berryRgb = [0, 2, 4].map(i => parseInt(hex.slice(i, i + 2), 16) / 255) as [number, number, number];
   }
 
@@ -229,7 +228,7 @@ export class LeashView {
     for (const m of [this.ruts, this.evolved, this.cycledAt, this.joined, this.stackY, this.lastSlots, this.routes, this.tops, this.halfW, this.heads, this.dreamStones, this.chains]) m.clear();
     this.look.reset(); this.stones.length = 0; resetStoneView(this.stoneView);
     this.bursts = []; this.chain = []; this.fx = []; this.ringGlows = []; this.dreams = []; this.snoreNear = []; this.projected = [];
-    this.lastTime = 0; this.tugAt = -9; this.load = newLoadView(); this.bristle = { x: 0, y: 0, z: 0, on: false };
+    this.lastTime = 0; this.tugAt = -9;
     this.shakeAt = -Infinity; this.shakeAmp = 0; this.boingAt = -Infinity; this.partyOverEase = 0; this.lettersSeen = -Infinity;
     this.bodyY = 0.8; this.hatTop = 1.6; this.feetY = 0; this.frameH = 0;
     this.deckBonus = 0; this.circleFade = 0; this.circleAt = 0; this.circleLast = null;
@@ -307,18 +306,19 @@ export class LeashView {
     const M = moodOf(t), hs = M?.berryHalo ?? 1, hg = glow * (M?.berryGlow ?? 1);
     for (const e of B.events) if (e.kind === "evolved") this.evolved.set(e.id, time);
     for (const [id, at] of this.evolved) if (time - at > 1) this.evolved.delete(id);
-    // A baby's sigil next to go down (Ed, 2026-10-11): the berries within berries.babyReach of her glow brightly, the ones it'll eat there.
-    const bot = !treetops && w.mode === "ground" ? stackBottom(g.leash) : null, babyNext = bot?.kind === "creature" && g.creatures[bot.id]?.level === 0;
-    const reach = t.berries.babyReach ?? 10;
+    // The berry a tap of the sigil button would feed the bottom of her stack (Ed, 2026-11-03; rules/sigilButton.ts feedOffer): marked,
+    // a pulsing halo and a ring of motes turning round it, the prompt beside it (render/feedTag.ts).
+    const offer = !treetops && w.mode === "ground" && g.witches?.[0] ? feedOffer(g, g.witches[0]) : null;
     for (const berry of B.berries) {
       if (berry.gone) continue; // (a Harvest berry eaten)
       const p = B.bushes[berry.bush];
       if (Math.hypot(p.x-w.x,p.z-w.z)<12) this.look.magic.draw("bloom", "aura", p.x, 0.8, p.z, 0, 0.18, 0.18, 0, 600000+berry.id);
       if (Math.abs(p.x - w.x) > near || Math.abs(p.z - w.z) > near) continue;
       const tw = 0.85 + 0.15 * Math.sin(time * 2.3 + berry.id);
-      if (babyNext && berry.claimedBy === null && Math.hypot(p.x - w.x, p.z - w.z) <= reach) {
-        const pulse = 0.75 + 0.25 * Math.sin(time * 4 + berry.id);
+      if (offer?.berry === berry.id) {
+        const pulse = 0.75 + 0.25 * Math.sin(time * 5);
         this.standing.add(p.x, 0.8, p.z + 0.29, 4.6 * hs, dot, r * 2, gg * 1.6, b * 1.6, Math.min(1, 1.6 * hg) * pulse); // (a wide bright halo)
+        for (let i = 0; i < 8; i++) { const a = time * 1.6 + (i / 8) * Math.PI * 2; this.standing.add(p.x + Math.cos(a) * 1.15, 0.8 + Math.sin(a) * 0.55, p.z + 0.34, 0.22, dot, 1, 0.85, 0.95, 0.9); } // (its ring of motes)
       }
       // From the treetops a small glint, depth-tested like any ground thing (Ed, 2026-11-02: "I can see berries through the canopy,
       // and I shouldn't be able to"): it shows where nothing nearer is drawn (a gap in the crowns, the cut-away round her), never
@@ -567,8 +567,8 @@ export class LeashView {
   /** A rank sigil's shade (its glyph's own shape, grown: bareSlot) by its glyph's rect; null for any other glyph. */
   shadeOf(uv: number[]): number[] | null { return this.shades.get(`${uv[0]},${uv[1]}`) ?? null; }
 
-  /** A leash sigil's colour: with rank sigils on, its rank's (render/leash/ranks.ts: baby turquoise, youth purple, adult red, legend
-   *  yellow), else its species' neon. */
+  /** A leash sigil's colour: with rank sigils on, its rank's, a friend's (render/leash/ranks.ts: baby pink, youth crimson, adult
+   *  orange, legend gold; render/colourGrammar.ts), else its species' neon. */
   colOf(c: Creature): THREE.Color {
     if (ranksOn(this.game.tuning)) {
       if (!this.rankCols) this.rankCols = [0, 1, 2, 3].map(r => { const [cr, cg, cb] = rankColour(this.game.tuning, r); return new THREE.Color(cr, cg, cb); });
@@ -589,7 +589,7 @@ export class LeashView {
   update(time: number, camera: THREE.Camera, width: number, height: number, hatTop: number, bodyY = hatTop * 0.5, feetY = 0, frameH = 0): void {
     this.bodyY = bodyY; this.hatTop = hatTop; this.feetY = feetY; this.frameH = frameH;
     const g = this.game, s = g.leash, t = g.tuning, w = g.witch, L = t.leash, dot = this.uv(0);
-    this.look.begin();
+    this.look.begin(t.attackFx?.visibility);
     this.standing.begin(); this.flat.begin(); this.through.begin(); this.over.begin(); this.solid.begin(); this.blood.begin(); this.backing.begin(); this.ink.begin(); this.stackBack.begin(); this.stackGlyphs.begin();
     // Every sigil's glyph (placed, happy runes, the ghost, a relic's, her stack, the treetop projection, one walking home) under the
     // bloom's threshold, and its halo (Ed's pick B, 2026-10-12: "it's their glow that makes them hard to see, not the pixellation").
@@ -722,8 +722,8 @@ export class LeashView {
       this.groundSigil(w.x, 0, w.z, 3.4, this.uv(this.slotOf("relic", 0)), col.r, col.g, col.b, 0.22);
     } else if (w.mode === "ground" && stackBottom(s)?.kind === "creature" && !blocked(s, w.x, w.z, t) && !s.placed.some(p => Math.hypot(p.x - w.x, p.z - w.z) <= L.pickRadius) && !runeNear(g.creatures, w.x, w.z, L.runeRadius, time, undefined, k => runeOffset(k, t)) && !relicsOut(g).some(r => r.state === "lying" && Math.hypot(r.sx - w.x, r.sz - w.z) <= L.runeRadius)) { // (on a relic's sigil the button picks the relic up)
       const c = g.creatures[s.stack[s.stack.length - 1]], col = this.colOf(c);
-      const sg = this.sigilOf(c);
-      this.groundSigil(w.x, 0, w.z, ranks ? RK.glyph * rankSize(t, rankOf(c)) : (3 + c.level * 0.8) * sg.scale, sg.uv, col.r, col.g, col.b, 0.22);
+      const sg = this.sigilOf(c), feeds = !!g.witches?.[0] && !!feedOffer(g, g.witches[0]); // (a tap feeds it now, a hold puts it down: fainter, Ed 2026-11-03)
+      this.groundSigil(w.x, 0, w.z, ranks ? RK.glyph * rankSize(t, rankOf(c)) : (3 + c.level * 0.8) * sg.scale, sg.uv, col.r, col.g, col.b, feeds ? 0.12 : 0.22);
     }
 
     // Relics (#87): where one lies, its bottle stands among the scenery in its mound (render/view/scenery.ts, Ed 2026-10-09:
@@ -755,9 +755,9 @@ export class LeashView {
     }
 
     drawStones(this, time, dot); // (the rune stones' sigils, the spell's spot, its cast and the conversion: render/leash/stones.ts)
+    drawChallenge(this, time, dot); // (the challenge circle's notes, fill, columns' lights and little dancefloor: render/challenge.ts)
     drawRainbow(this, time, dot, camera); // (an early clear's rainbow wave along the ley line, and the analyser behind the spark: render/leash/rainbow.ts)
     drawBond(this, time, slotPos, dot); // (the bond: render/leash/stack.ts)
-    drawStrain(this, time, dot);
     this.look.end();
     this.standing.end(); this.flat.end(); this.through.end(); this.over.end(); this.solid.end(); this.blood.end(); this.backing.end(); this.ink.end(); this.stackBack.end(); this.stackGlyphs.end();
     bubbles(this, time, camera, width, height);
