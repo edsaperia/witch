@@ -1717,7 +1717,8 @@ Code: `render/colourGrammar.ts`, `render/leash/ranks.ts`, `render/leash/rainbow.
   1. Ed, 2026-10-11: docs/backlog/gameplay.md
   2. Ed, 2026-10-26: "they should scatter further, e.g. outside of my camera view" (55, past the view's farthest edge at the usual ground zoom, its top 50 m from her; kept on the island's land, and pulling on her not at all while scattered)
   3. Ed, 2026-10-11
-  her leashed babies following her on the ground walk in single file along where she's been, in stack order (the stack's bottom one first), gap metres apart; while she's in a fight they scatter, scatter metres or a quarter more off to the side away from the first attacker [2], for the whole fight [3]: from the moment something goes for her or one of hers (closing in or winding up, not on the hit), the same way throughout, back into line once nothing has for calm seconds; one more than farAt metres from her (about off the screen) moves at farSpeed m/s, so it's with her in seconds.
+  4. Ed, 2026-11-03: "The spacing in this queue should adjust depending on how large the babies are (some are quite large and so smush together in the queue)" (each baby keeps half the one in front's length, half its own and margin between their middles, never under gap)
+  her leashed babies following her on the ground walk in single file along where she's been, in stack order (the stack's bottom one first), each clear of the one in front by their sizes [4]: half the one in front's length, half its own and margin (1) metres between their middles, never under gap (5) metres; half a baby's length is its drawn body (rules/combatSpacing.ts drawnRadius, the calibrated drawing at its kind and level) times size (0.75: that disc's corner overstates the side-on sprite), and the first keeps the same off her, her own half her (1.75) metres (her side-on sprite is about 3.5 m long). A baby fox or squirrel stays gap apart; a baby bear about 8 m, an elephant or rhino about 10, a crocodile about 20 (rules/babies.ts queueGap); while she's in a fight they scatter, scatter metres or a quarter more off to the side away from the first attacker [2] (and half its length further, so a big one is out of view end to end), for the whole fight [3]: from the moment something goes for her or one of hers (closing in or winding up, not on the hit), the same way throughout, back into line once nothing has for calm seconds; one more than farAt metres from her (about off the screen) moves at farSpeed m/s, so it's with her in seconds.
   Code: `docs/backlog/gameplay.md`
 - **`leash.ranks`**: Leash sigils drawn as bare glyphs in their rank's colour (baby, youth, adult, legend) with embers rising off them, so ranks are easy to tell apart at a glance.
   1. Ed, 2026-10-27: "larger sigils is good ... embers are good ... colours-for-rank is good; it's more important in rapid gameplay to be able to tell ranks apart than creatures" (after mocks 3 to 9; render/leash/ranks.ts)
@@ -1780,6 +1781,9 @@ Code: `render/colourGrammar.ts`, `render/leash/ranks.ts`, `render/leash/rainbow.
 | `leash.babies.calm` | number | 0 to … |
 | `leash.babies.farAt` | number | 0 to … |
 | `leash.babies.farSpeed` | number | 0 to … |
+| `leash.babies.margin` | number | 0 to … |
+| `leash.babies.size` | number | 0 to … |
+| `leash.babies.her` | number | 0 to … |
 | `leash.ranks.on` | boolean |  |
 | `leash.ranks.hex` | number | 0 to … |
 | `leash.ranks.glyph` | number | 0 to … |
