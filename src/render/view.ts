@@ -487,10 +487,10 @@ export class View {
     this.ground.mesh.layers[this.shaderLandingLimited && this.shaderDrawStatus.active ? 'enable' : 'disable'](HOUSE_LAYER);
     const D = this.dark, T = g.tuning.treehouse.house?.dark, deck = deckOf(g.map, g.tuning), w = g.witch, rooms = !!T?.on && !!deck?.house?.rooms;
     // (on foot: rising out of it, the forest comes back as she lifts off)
-    const place: RevealPlace = this.fly ? "dive" : !rooms ? "out" : this.telescope ? "scope" : w.perch && w.mode === "ground" ? "house" : "out";
+    const place: RevealPlace = this.fly && !this.fly.indoors ? "dive" : !rooms ? "out" : this.telescope ? "scope" : w.perch && w.mode === "ground" ? "house" : "out";
     if (place !== D.place) { D.place = place; D.from = { x: w.x, z: w.z }; } // (where she came in, or left)
     const R = D.reveal;
-    stepForestReveal(R, place, !!g.islandReady, g.herTime, T); // (a sail's dive, "dive": the whole picture, though she's in bed for its end)
+    stepForestReveal(R, place, !!g.islandReady, g.herTime, T); // (a sail's dive, "dive": the whole picture, though she's in bed for its end; on its way down into her room, the house's as she'll wake in it)
     const P = this.post;
     P.behind = forestShown(R.k);
     if (R.k >= 1) return;
