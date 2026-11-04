@@ -1,0 +1,269 @@
+{
+  "sourceCommit": "a36373cae4d7902814de2c466671a6023cfd1c34",
+  "sourceSha256": "439935f75d388d9dadf063ef5a8b69067ce774480fa85fa839c7697aa04620e7",
+  "casesPerMethod": 144,
+  "exports": [
+    "BROOM_KINDS",
+    "NEW_BROOMS",
+    "PARKED",
+    "SIT_IN"
+  ],
+  "newBrooms": [
+    "missile",
+    "curl",
+    "handlebars",
+    "hobbyhorse",
+    "jetbike",
+    "oar",
+    "mop",
+    "pitchfork",
+    "canoe",
+    "ladder",
+    "speeder",
+    "bicycle",
+    "drone",
+    "gyrocopter"
+  ],
+  "sitIn": [
+    "canoe"
+  ],
+  "parked": {
+    "canoe": 0.15,
+    "gyrocopter": 0.3,
+    "bicycle": 0.35,
+    "jetbike": 0.14,
+    "speeder": 0.1,
+    "drone": 0.11
+  },
+  "members": [
+    [
+      "missile",
+      [
+        "body",
+        "tail"
+      ]
+    ],
+    [
+      "curl",
+      [
+        "bristles",
+        "body"
+      ]
+    ],
+    [
+      "handlebars",
+      [
+        "bristles",
+        "body"
+      ]
+    ],
+    [
+      "hobbyhorse",
+      [
+        "body",
+        "tail"
+      ]
+    ],
+    [
+      "jetbike",
+      [
+        "body",
+        "tail"
+      ]
+    ],
+    [
+      "oar",
+      [
+        "body",
+        "tail"
+      ]
+    ],
+    [
+      "mop",
+      [
+        "body",
+        "tail"
+      ]
+    ],
+    [
+      "pitchfork",
+      [
+        "body",
+        "tail"
+      ]
+    ],
+    [
+      "canoe",
+      [
+        "body"
+      ]
+    ],
+    [
+      "ladder",
+      [
+        "body"
+      ]
+    ],
+    [
+      "speeder",
+      [
+        "body",
+        "tail"
+      ]
+    ],
+    [
+      "bicycle",
+      [
+        "body"
+      ]
+    ],
+    [
+      "drone",
+      [
+        "body"
+      ]
+    ],
+    [
+      "gyrocopter",
+      [
+        "body",
+        "tail"
+      ]
+    ]
+  ],
+  "fingerprints": {
+    "missile": {
+      "body": {
+        "source": "42fb2ec8876a0a963fe9e1e976f878d1a78d2d7f4b0ca060bc4f3a753705532b",
+        "commands": "a568224e87403b56a8c5da90503cb08352fea9376359a1932ed7e4ef902db18c"
+      },
+      "tail": {
+        "source": "556bfac9f0f50ce27e9d77e5a4d87989f1f8e7d2d2cc856de64394f5f51d4071",
+        "commands": "62bae2497689d0054525097c4711e5a61e118beab8b23af5b56ca10b8cbd97aa"
+      }
+    },
+    "curl": {
+      "bristles": {
+        "value": true
+      },
+      "body": {
+        "source": "3fb3b2273eb1b0a44faacf3fc4e06060fc69266b7624aab0d026589f45daa614",
+        "commands": "7322ae5f0170c8df8bda84438502bff588d67fbbfa18bf9df64a35d5fe062538"
+      }
+    },
+    "handlebars": {
+      "bristles": {
+        "value": true
+      },
+      "body": {
+        "source": "fd924b78d9dfd1a2bf57163858aa73b1a0c49668db0aad2d1446a2298a8ee0a2",
+        "commands": "dd9e188dd72d260824c8c5570a60e6278dda700242802af132153fdb42a08c01"
+      }
+    },
+    "hobbyhorse": {
+      "body": {
+        "source": "87a34ab2da8c7885cb95def0b01e5d857ce3f13e73447f14543972beb6abfbdd",
+        "commands": "d08757a0d7482d7758b3dc43e7554eb693d8fe411a95ecc9483fb5514b7e4eed"
+      },
+      "tail": {
+        "source": "42c05d7e9207e1ec05e09e507765c1529b1424cdaffae5ac98f613cf1e903c66",
+        "commands": "a4ca005457b9d2c6ec0cef5801b596d11795c9fc5480f3ca89e6da03b688beed"
+      }
+    },
+    "jetbike": {
+      "body": {
+        "source": "651ddce96e08b656c8187384446a69ed8ffbf930cff957dd61ab261a6d9eaf95",
+        "commands": "1ad02b5b884c2eb37f2298c49c210b113b9b6adf1aaa4a0f5bcb868ce6d3a348"
+      },
+      "tail": {
+        "source": "8fa9c7f6b10b92bfa5303996b7b0a2c18fcc2b10f1280938e88200be88cb5270",
+        "commands": "400c694f6ceb174b3c082468d4bf5f89d80ad3bf3fe75b85447afeff89f6805d"
+      }
+    },
+    "oar": {
+      "body": {
+        "source": "09e76617d67ba29584059755251b95750cde34da47e286062271887ad6d886cc",
+        "commands": "3c5a16d5221945cb81914d095666cafb0d42d9d60ec67e36d7017adb22b46c9f"
+      },
+      "tail": {
+        "source": "17495b640189a3dab1c685f8906ec1a1243cb4c08c6b6b470bd1ac5597e01cce",
+        "commands": "829befc1d0e3f7361dc60fcaaf88bf9c8e5069098a3d4bf5d3e5bb9220d062c4"
+      }
+    },
+    "mop": {
+      "body": {
+        "source": "09e76617d67ba29584059755251b95750cde34da47e286062271887ad6d886cc",
+        "commands": "3c5a16d5221945cb81914d095666cafb0d42d9d60ec67e36d7017adb22b46c9f"
+      },
+      "tail": {
+        "source": "d27b0803dd6e3f82f5af964c2e81a9849435c06815af7702909efe8f5dd074f4",
+        "commands": "ecc5b511e3d12053378f57ff8e20f02f163f117152b992f65a44686b11b09cb6"
+      }
+    },
+    "pitchfork": {
+      "body": {
+        "source": "09e76617d67ba29584059755251b95750cde34da47e286062271887ad6d886cc",
+        "commands": "3c5a16d5221945cb81914d095666cafb0d42d9d60ec67e36d7017adb22b46c9f"
+      },
+      "tail": {
+        "source": "aaa3ee38652fc277ec8aba390dd1b0060b6b7991c4f10706f84445bf03ecc353",
+        "commands": "5fd325411e239a12dea8d4718f406382526b8fd39466c409bc9c73911934b7af"
+      }
+    },
+    "canoe": {
+      "body": {
+        "source": "b118458807279b5db80106f30683be3148be6bcefcec4359fd44536178242358",
+        "commands": "33a18ba8726f3f2574b4286763851d0cd1deed10d9c50071c7d275690a4e8c9b"
+      }
+    },
+    "ladder": {
+      "body": {
+        "source": "6290e71b2b7bd26d1081c0db93db727533dd99ad4e2810435cbfb8c1c9957e64",
+        "commands": "c2ff95f1de0109f188be417b4225946319a282653185d4cafa1904c82f669acc"
+      }
+    },
+    "speeder": {
+      "body": {
+        "source": "79a0b729dde8b90aa555a58e276be77e1aa4885bdee595999de95ab3a5ac6869",
+        "commands": "cc9502fcd535cbc449e9b98f96e0871fb0717476fc83e33e9b992ddfeed59bb5"
+      },
+      "tail": {
+        "source": "eff71dfa5aa3670164464609547b80c1662ec4407e7b476455bbcf4672889c65",
+        "commands": "64d803e661697e30f6c6625e7ae7c999eea4bf7dea95e9b13c301d516bece082"
+      }
+    },
+    "bicycle": {
+      "body": {
+        "source": "c9f977d20f5a0f49d94a83fb42aea85a80930faa494a20cfbf2d41f6199d078e",
+        "commands": "1432b34934833b13a1e595d8e4e5e12fa226ba7e8540e89623bc758e89f8bc76"
+      }
+    },
+    "drone": {
+      "body": {
+        "source": "ce5259a87a7f7fbe2da29bb46250b7d2b0e5a13fa508567d6deadaa3705d9048",
+        "commands": "9654dbe9d893ab35759b64cc5a80cc2df9d795fee32975962abafa032bd37016"
+      }
+    },
+    "gyrocopter": {
+      "body": {
+        "source": "01573c14e0ab3b8bfbc3000cdab5b8a050b845b708e462b9e9aed213ce42fff0",
+        "commands": "8f3577a3f3ec3e097f291500e0a24af52c9237d4dbe1b8be9a922211ece9dcbb"
+      },
+      "tail": {
+        "source": "d2279aba2d1f800a095fa5cd547651660dcdee1e5ffb4eeac2451d94585af26a",
+        "commands": "dc87854c3ba1ce19a93fb000da0e58d8faaa92f06832f419d1c97263c577fa3f"
+      }
+    }
+  },
+  "helpers": [
+    "5af6f71ee3ae75a021cd98fdbac035195e3a84f8cd3d8380124bd45a9789ce41",
+    "76f11825552ce277a91fe1e78bbb23bf0b37fb964be0031185f184e2a1356f0f",
+    "afe252b85ec6a330910b36bf2748a23c3b47f0a7db516748dd846f2ab2233074",
+    "1d603e362c3673b44c83045df3a06426b6c7ed7c0931bc0902ee2d565e0c8571",
+    "3181ac2d451e899244cf54a5960cee149b2291dd9e9647f11a7eb6d830383bdb",
+    "fc4eab2288dab76a0120a7ce611a1cf676affbddfdf89a4898e4762e2ec9fc56",
+    "09e76617d67ba29584059755251b95750cde34da47e286062271887ad6d886cc",
+    "6f2b95977b509361d2c420ba243e2590138658ded78498d6af1ee8d405ff4a2f",
+    "83d1b04455436e8343926cf89df2149716abfd248f40a5169530f44e99f953e5"
+  ]
+}

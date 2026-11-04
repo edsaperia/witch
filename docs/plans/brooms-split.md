@@ -23,3 +23,12 @@ suite, smoke, heavy proof, merge, release or production push. Full visual proof
 is left to the coordinator/nightly art gate; no visual change is intended.
 
 A4 production APPLY remains separately fenced off.
+
+Source checkpoint: prototype `a36373cae4d7902814de2c466671a6023cfd1c34`.
+Original `art/brooms.js` SHA256 (LF):
+`439935f75d388d9dadf063ef5a8b69067ce774480fa85fa839c7697aa04620e7`.
+Draft PR #1839; first plan commit `a8033bb42`. Four tip body methods, seven
+chassis body methods and eight exhaust methods moved; three kinds retain the
+shared stick body. The frozen CPU fixture records the original public metadata,
+literal function/helper hashes and 144 geometry-command inputs per drawing
+method. The test lives in the regular `src` test selection so CI runs it.
