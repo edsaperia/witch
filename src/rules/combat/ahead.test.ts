@@ -10,7 +10,7 @@ import { actionReach } from "./actions";
 import { PACKS } from "./packs";
 import { FIGHT } from "../movement";
 
-const lateHome = (n: number, t: Tuning): Tuning => { const all = knownKinds(Object.keys(KINDS_TABLE)).slice(0, n); return { ...t, map: { ...t.map!, island: "home", islandAreas: all.length, found: all } }; };
+const lateHome = (n: number, t: Tuning): Tuning => { const all = knownKinds(Object.keys(KINDS_TABLE)).slice(0, n); return { ...t, map: { ...t.map!, island: "home", islandAreas: all.length, found: all }, challenge: { ...t.challenge!, statues: { ...t.challenge!.statues!, on: false } } }; }; // (its statues off, rules/challengeStatues.ts: the pack wild from the start, the fight measured as before)
 const SEED_128 = 4;
 const withAhead = (ahead: number): Tuning => ({ ...TUNING, teamRounds: { ...TUNING.teamRounds!, ahead } });
 

@@ -104,6 +104,7 @@ says what each note covers.
 - Legend tether
 - Chain drag
 - Commanded feeding
+- Won ones out of the way
 - Follower buffs
 - Sigil stack
 - Rank sigils

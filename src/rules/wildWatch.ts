@@ -23,7 +23,7 @@ import { stealthed } from "./spells";
 export interface WildEntry { at: number; until: number; last: number; danger: number }
 
 /** Who watches: the area's wild young and adults, not legends, the enraged or besiegers (babies have their own notice). */
-export const watcher = (c: Creature): boolean => !c.leashed && !c.gone && !c.boss && c.level > 0 && c.level !== LEGEND && !c.enraged && !c.siege && c.state !== "happy" && !c.fight?.target;
+export const watcher = (c: Creature): boolean => !c.leashed && !c.gone && !c.boss && c.level > 0 && c.level !== LEGEND && !c.enraged && !c.siege && c.state !== "happy" && !c.fight?.target && !c.statue;
 
 /** Each step: a witch on the ground in a wild area not entered lately starts its watch; one left (no witch on the ground in it)
  *  before its watch is up calls it off; an area no witch has been on the ground in for wildWatch.forget seconds is forgotten. */
@@ -31,6 +31,8 @@ export function stepWildWatch(g: Game, t: Tuning): void {
   const W = t.wildWatch, time = g.clock.time;
   if (!W?.on) { if (g.wildEntry.size) g.wildEntry.clear(); return; }
   const home = cellKey(g.map.centreCell);
+  // (the challenge area while its pack are statues, stone or waking: no watch, its wake-up its warning; rules/challengeStatues.ts)
+  const stone = g.challenge?.statues && g.challenge.statues.phase !== "awake" ? g.challenge.key : null;
   const here = new Set<string>(); // (every occupied area, including three witches on separate islands)
   for (const w of g.witches) {
     if (w.body.mode !== "ground" || w.body.seated || w.body.perch || w.ko) continue; // (up on the treehouse deck: not in any area)
@@ -38,7 +40,7 @@ export function stepWildWatch(g: Game, t: Tuning): void {
     const k = cellKey(areaCellAt(g.map, w.body.x, w.body.z)), e = g.wildEntry.get(k);
     here.add(k);
     if (e) { e.last = time; continue; }
-    if (k === home || g.party.areas.has(k) || g.friendly.has(k)) continue;
+    if (k === home || k === stone || g.party.areas.has(k) || g.friendly.has(k)) continue;
     let F = 0;
     for (const c of g.creatures) if (cellKey(c.cell) === k && watcher(c)) { c.watchUntil = time + W.time; F += creatureValue(c); }
     g.wildEntry.set(k, { at: time, until: time + W.time, last: time, danger: Math.min(1, F / Math.max(1, W.dangerF ?? 90)) });
