@@ -1,6 +1,14 @@
 {
-  "reason": "Ed, 2026-11-04: \"Further apart, same line\": the challenge circle's statues stand further apart on their column-to-centre line (gap 3.5 -> 12.5 m), the youth in front of its adult south of the middle.",
+  "reason": "Ed, 2026-11-04, on #1827: \"youths should be closer to the middle of the circle than the elder. If this doesn't fit, make the circle bigger.\" and \"Statue sigils should sit comfortably above the top of their columns\": the challenge circle 36 to 50 m, its statues column / adult / youth / centre 19 m apart, its column sigils over the tops. This branch carries #1807 (claude/legend-sites: 196 m areas, 50 m site gaps), which the bigger circle needs, so its differences are declared here too until it lands.",
+  "frames": {
+    "*": "#1807's island a sixth bigger (everything stands elsewhere); and the challenge circle bigger, its statues further apart and its column sigils higher, where it's in view"
+  },
   "rules": {
-    "creatures": "The challenge pack's statue posts move (further apart on the same line, youth nearer the column on the southern columns), so those creatures' positions differ from the first step they stand as statues."
+    "*": "#1807's map a sixth bigger, its stones, legends and creatures placed afresh; and the challenge circle 50 m round, its area's claim, its pack's posts and its columns moved with it"
+  },
+  "start": {
+    "boot": "#1807's island a sixth bigger: home's treehouse, where she starts, lies elsewhere",
+    "bedroom": "#1807's island a sixth bigger: home's treehouse, where she starts, lies elsewhere",
+    "wave-fight": "#1807's island a sixth bigger: home's treehouse, where she starts, lies elsewhere"
   }
 }

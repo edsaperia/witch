@@ -16,10 +16,11 @@ it('retains the original quantised windows at arrival and after small and large 
   // (the island grown one area more for tonight's find, the stones spaced: other hills under the stones), the code unchanged; and for
   // the challenge area (rules/challenge.ts): its stone circle a terrace of its own, as a legend's circle is; and for its claim on the
   // whole circle (rules/map.ts: the areas round it cut afresh, so their stones, paths and hills move), the code unchanged; and for
-  // areas 196 m across with every two sites 50 m apart (#1807, 2026-11-04: the map a sixth bigger, its stones moved), the code unchanged.
+  // areas 196 m across with every two sites 50 m apart (#1807, 2026-11-04: the map a sixth bigger, its stones moved), the code unchanged; and for the challenge circle 36 to 50 m (#1827,
+  // Ed: "If this doesn't fit, make the circle bigger.": its claim, terrace and the stones round it moved), the code unchanged.
   for (const [seed, island, expected] of [
-    [123, 'home', ['4f072685e30d9aa19a17160e913268becefa90d763b410c2657e3d4cf48a4be7', '21e9f3e588fdd94bb9a015e43dc17e57b7721013c248dd47af9aab18c54200fd', '211c9e70da0879e0d83ef85f17394c85dedb41623ac8517b46d774cb0cafaef2']],
-    [424242, 'fox', ['6ecb150a77182c07038d029fab26411df2b5f28406106219ed8b96ffc71a7dda', 'dd4ec15bbda32dc46b165b8b63fe683fafea7d04a7b3dd283426efcfcd199ae1', '211c9e70da0879e0d83ef85f17394c85dedb41623ac8517b46d774cb0cafaef2']],
+    [123, 'home', ['e1bd80ed34c87edace0be066c503436c6cd6b6b8cebdbc9a4c6bfc11271ac0fa', '29aec5d2ee22c065894266b9d2cd1fc1ce0e1211d59f87a24832bf6d0001843a', '211c9e70da0879e0d83ef85f17394c85dedb41623ac8517b46d774cb0cafaef2']],
+    [424242, 'fox', ['f9ea6208cd3e616a99c0274695da3b83724e84a11c50fe1159c987b565b7b180', '8457f75ea7cc929a2b5ac26629d1456262fc174e76e547d0aaa40de2fb409517', '211c9e70da0879e0d83ef85f17394c85dedb41623ac8517b46d774cb0cafaef2']],
   ] as const) {
     const map = generateMap(seed, tuning(island)), H = arrivalHills(map.tuning), field = new HeightSamples(map, new Forest(map), H, DataUtils);
     const { x, z } = map.start;

@@ -288,7 +288,8 @@ describe("its circle grows with the roster (Ed, 2026-11-03: \"128 animal pack is
     for (const id of ch.pack) befriend(g.creatures[id], g.clock.time);
     g.clock.paused = false; g.party.spellAt = undefined;
     const reach = castReachOf(ch, g.tuning);
-    expect(reach).toBeGreaterThan(TUNING.challenge!.castReach * 2);
+    expect(reach).toBeCloseTo(TUNING.challenge!.castReach * ch.radius / TUNING.challenge!.radius, 6); // (grown by the share its circle has: 76 m over the 50 m knob, Ed on #1827)
+    expect(reach).toBeGreaterThan(TUNING.challenge!.castReach * 1.3);
     const W = g.witches[0];
     W.body = { ...W.body, x: ch.x + reach - 0.5, z: ch.z, mode: "ground", seated: false, perch: undefined };
     expect(challengeCastAt(g, W)).toBeTruthy();

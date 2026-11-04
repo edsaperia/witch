@@ -68,7 +68,7 @@ export interface CarvingTuning { stone: number; red: number; wild: number; warm:
 /** `sigilGap`: how far (m) its columns' sigils float over their tops (render/challenge.ts columnSigilsAt; Ed, 2026-11-04, on #1827:
  *  "Statue sigils should sit comfortably above the top of their columns"). */
 export interface ChallengeTuning { carving: CarvingTuning; on: boolean; radius: number; margin: number; spacing: number; sigilGap: number; adults: number; youths: number; castReach: number; findSets: boolean; fireworks: { on: boolean; height: number; burst: number }; statues: StatueTuning; analyser: { bars: number; steps: number; fill: number } }
-export const CHALLENGE_DEFAULT: ChallengeTuning = { on: false, radius: 56, margin: 3, spacing: 7.5, sigilGap: 1.5, adults: 1, youths: 1, castReach: 5, findSets: false, fireworks: { on: true, height: 24, burst: 8 }, statues: { on: false, bars: 4, first: 3.5, gap: 21.5, walkBack: 1.5, keepOut: 2, grey: [0.6, 0.6, 0.63], tint: 0.9, red: 1 }, analyser: { bars: 72, steps: 36, fill: 0.94 }, carving: { stone: 0.35, red: 2.2, wild: 1.2, warm: 1.8, fade: 2, floor: 0.3 } };
+export const CHALLENGE_DEFAULT: ChallengeTuning = { on: false, radius: 50, margin: 3, spacing: 7.5, sigilGap: 1.5, adults: 1, youths: 1, castReach: 5, findSets: false, fireworks: { on: true, height: 24, burst: 8 }, statues: { on: false, bars: 4, first: 3.5, gap: 19, walkBack: 1.5, keepOut: 2, grey: [0.6, 0.6, 0.63], tint: 0.9, red: 1 }, analyser: { bars: 72, steps: 36, fill: 0.94 }, carving: { stone: 0.35, red: 2.2, wild: 1.2, warm: 1.8, fade: 2, floor: 0.3 } };
 export const challengeOf = (t: Tuning): ChallengeTuning => ({ ...CHALLENGE_DEFAULT, ...t.challenge, fireworks: { ...CHALLENGE_DEFAULT.fireworks, ...t.challenge?.fireworks }, statues: { ...CHALLENGE_DEFAULT.statues, ...t.challenge?.statues }, analyser: { ...CHALLENGE_DEFAULT.analyser, ...t.challenge?.analyser }, carving: { ...CHALLENGE_DEFAULT.carving, ...t.challenge?.carving } });
 
 /** What the page says of it (under the clock: main.ts): the pack all won over or gone (ready to cast), cleared (and its reward),
@@ -137,10 +137,11 @@ export const castReachOf = (ch: { radius: number }, t: Tuning): number => { cons
  *  middle of the circle than the elder. If this doesn't fit, make the circle bigger."): each on its kind's column's radius, in from
  *  the column toward the middle, its kind's adults then its youths, each by id, on every column, the first `first` m in and each next
  *  `gap` m further, squeezed to fit when more than two must stand by `POST_REACH` of the way to the middle (so always nearer its
- *  column than the middle). The gap (21.5 m) lifts the youth up the screen past its adult's head on the column due south, where the
- *  line runs straight away from the game's camera: clear of every adult up to 11 m tall at the start camera (32 degrees: 21.5 sin 32
- *  = 11.4 m), the tallest (the hare's 15.4 m) still showing most of its youth; the circle's `radius` (56 m) is what fits the youth
- *  that far in, 25 m, inside the 0.45 reach, and the most the smallest islands' areas hold its claim at (#1807's 196 m areas). By
+ *  column than the middle). The gap (19 m) lifts the youth up the screen past its adult's head on the column due south, where the
+ *  line runs straight away from the game's camera: clear of every adult up to 10 m tall at the start camera (32 degrees: 19 sin 32
+ *  = 10.1 m), the tallest (the hare's 15.4 m) still showing about half its youth; the circle's `radius` (50 m) is what fits the youth
+ *  that far in, 22.5 m, at the 0.45 reach: the most at which, on #1807's 196 m areas, the challenge area still moves night to night
+ *  on home's 10-area island and a 51-area one. By
  *  creature id. */
 /** The furthest in a statue's post goes, a share of the way from its column to the middle: under half, so nearer its column. */
 export const POST_REACH = 0.45;
