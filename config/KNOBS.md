@@ -18,7 +18,8 @@ The map and its places: the areas, their size and shape, the beach, glades, path
 
 The forest's size: how many areas there are and how big each one is.
 
-The forest: mapAreas x mapAreas areas cut by the fractal partition. An area is areaSize x areaScale metres across on average (areaScale 4 makes them four times as wide as the first 28 m areas; push it for bigger).
+1. Ed, 2026-11-04: "minimum distance between sites/circles/dancefloor/treehouse of 50m, tunable. 10m from a lake edge. If this can't fit, increase area sizes." (areaScale 6 to 7: areas about 196 m across, not 168, so the sites' gaps (siteGap, siteLakeGap) hold on every measured night but one; the sea chart grows with them (rules/archipelago.ts CHART_GROWTH))
+The forest: mapAreas x mapAreas areas cut by the fractal partition. An area is areaSize x areaScale metres across on average (areaScale 4 makes them four times as wide as the first 28 m areas; push it for bigger). The sea chart's every length scales with areaSize x areaScale over 168 (rules/archipelago.ts CHART_GROWTH), so islands keep their shapes in their patches.
 
 - **`map.shape`**: The map's shape [1].
   1. Ed, 2026-10-06: "The map as a whole should be circular rather than square, with a buffer zone with no runestones around the edge"
@@ -279,7 +280,7 @@ every area is mostly open within radius metres of its centre and its soundsystem
 How much areas vary in size, some small and some large.
 
 1. 2026-10-05: "make areas larger; each is effectively a fighting arena"
-(0-1) makes areas vary in size, some small, some large. borderLayers sets how wiggly borders are. Ed [1]: 14 x 14 areas of 168 m (areaScale 6), about the same world as 20 x 112 m.
+(0-1) makes areas vary in size, some small, some large. borderLayers sets how wiggly borders are. Ed [1]: 14 x 14 areas of 168 m (areaScale 6), about the same world as 20 x 112 m; areaScale 7 (196 m) since 2026-11-04 (map).
 
 | knob | type | range |
 |---|---|---|
@@ -290,7 +291,7 @@ How much areas vary in size, some small and some large.
 how far every area's site (its middle) is kept in from its cell's sides, as a share of the cell (0 to 0.5), so sites, stumps and the paths joining them spread out.
 
 1. Ed, 2026-11-03: "Minimum distance between stumps; it's just a bit strange finding two right next to each other; at least their clearings shouldn't overlap"
-0 (off) for now: any margin reshapes every island, and with it a dozen seeded gameplay tests' layouts (combat, brooms, swoops...) that other builders were changing at the time. 0.15 keeps two sites at least 0.3 of an area apart before the warp (about 50 m). stoneMinGap makes sure of the stones either way.
+0 (off) for now: any margin reshapes every island, and with it a dozen seeded gameplay tests' layouts (combat, brooms, swoops...) that other builders were changing at the time. 0.15 keeps two sites at least 0.3 of an area apart before the warp (about 50 m). siteGap makes sure of the stones either way.
 
 | knob | type | range |
 |---|---|---|
@@ -831,16 +832,28 @@ Nothing special within it: no scene or set piece, ruin or freak tree (the giant 
 |---|---|---|
 | `stoneKeepClear` | number | 0 to … |
 
-### `stoneMinGap`
+### `siteGap`
 
-the least distance between two areas' stones (great stumps or runestones), metres; a stone that would stand nearer one placed before it moves, in its own area, to the nearest spot far enough off.
+the least gap, metres edge to edge, between any two sites' footprints: stones' clearings, legends' circles, the challenge's claim or the find's clearing, home's dancefloor clearing and treehouse.
 
-1. Ed, 2026-11-03: "Min 40 m between stumps."
-The special sites (tonight's find's) count as stones here. Placed all at once in a fixed order (rules/map.ts placeSites), so the same whichever is asked for first.
+1. Ed, 2026-11-03: "Min 40 m between stumps." (folded in: two stones' middles now 2 x their clearing (runeMarkers.stump.clear) + siteGap apart (84 m))
+2. Ed, 2026-11-04: "minimum distance between sites/circles/dancefloor/treehouse of 50m, tunable. 10m from a lake edge. If this can't fit, increase area sizes."
+Placed in turn (rules/map.ts siteRules): the challenge's claim taking only ground that leaves room (fitClaim), then the stones (placeSites: one that would be nearer moves, in its own area, to the nearest spot that keeps every gap, logged where none does), then the legends' circles (their fits, shrinking in fine steps where they must; the last resort, logged, may break it). stoneKeepClear (40 m round a stone's middle) still keeps scenery off the stones; a legend's circle keeps the stricter siteGap from a stone's clearing (67 m from its middle). areaScale went 6 to 7 so it holds on every measured night but one: docs/notes/world-art.md Site gaps.
 
 | knob | type | range |
 |---|---|---|
-| `stoneMinGap` | number | 0 to … |
+| `siteGap` | number | 0 to … |
+
+### `siteLakeGap`
+
+the least gap, metres, between any site's footprint and a lake's water.
+
+1. Ed, 2026-11-04: "10m from a lake edge."
+Stones' clearings (placeSites), legends' circles (their fits) and the challenge's claim (fitClaim). Home never has a lake beside it.
+
+| knob | type | range |
+|---|---|---|
+| `siteLakeGap` | number | 0 to … |
 
 ### `findArea`
 
@@ -2346,8 +2359,10 @@ Creatures parked at a sigil on the ground guard it, fighting any wild creature t
 1. Ed, 2026-10-04
 2. Ed, 2026-10-11: "Animals leashed inside the home area should aggro enemy creatures within that area"
 3. Ed, 2026-10-15: "Placing a sigil in any area should work as home does: the creatures defend the whole area, plus a radius round the sigil"
-Parked party animals (at a sigil on the ground) guard it [1]: they take on any wild creature of another kind within radius metres of the sigil, and come back to it. One parked with its sigil in the home area (the dancefloor's) guards all of that area instead [2]: any wild or enraged creature anywhere in it, never one outside it, whatever radius says. Parked in any other area [3], it guards all of its sigil's area and radius metres round the sigil besides (rules/homeArea.ts areaOf).
-Code: `rules/homeArea.ts`
+4. Ed, 2026-11-04: "A parked creature should guard its chain length, now that's a fixed number, with home area an exception"
+5. Ed, 2026-11-04: "Animals parked in the home area can roam it freely."
+Parked party animals (at a sigil on the ground) guard it [1]: they take on any wild creature of another kind near the sigil, and come back to it. One parked with its sigil in the home area (the dancefloor's) guards all of that area instead [2]: any wild or enraged creature anywhere in it, never one outside it; and it isn't held by its sigil there: it roams the whole home area freely [5] (rules/leash.ts roamHome); radius (40 m) is left only for a map with no home area or no chains. Parked in any other area [3], it guards all of its sigil's area and its chain's length round the sigil besides [4]: leash.chain.length (80 m), derived from it, not radius (rules/combat.ts guardRadius; with no chains, radius).
+Code: `rules/homeArea.ts`, `rules/combat.ts guardRadius`
 
 | knob | type | range |
 |---|---|---|

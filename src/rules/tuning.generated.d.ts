@@ -436,7 +436,8 @@ export type SchemaTuning = {
   "soundsystemFootprint": number;
   "reserveMargin": number;
   "stoneKeepClear": number;
-  "stoneMinGap": number;
+  "siteGap": number;
+  "siteLakeGap": number;
   "findArea": {
     "on": boolean;
     "clear": number;

@@ -82,7 +82,8 @@ describe("a legend's quest is done by the drop alone (Ed, 2026-10-19)", () => {
     // Preserve Ed's historical stoat/coordinates fixture; the default no-cap dream spread is covered in quest.test.ts.
     const T = withTuning({ legends: { ...TUNING.legends, questCap: 6 }, mapAreas: 14, map: { ...TUNING.map, radius: 14 / Math.sqrt(Math.PI) } } as never), g = preppedGame(162218, T);
     g.clock.paused = false; g.party.paused = true; g.witches[0].health.hp = 1e6;
-    const L = g.creatures.filter(c => c.boss).sort((a, b) => Math.hypot(a.x - 2566, a.z - 1923) - Math.hypot(b.x - 2566, b.z - 1923))[0];
+    // (his spot, 2566, 1923 when he played it, the map a sixth bigger since areas grew to 196 m, 2026-11-04)
+    const X = 2566 * 7 / 6, Z = 1923 * 7 / 6, L = g.creatures.filter(c => c.boss).sort((a, b) => Math.hypot(a.x - X, a.z - Z) - Math.hypot(b.x - X, b.z - Z))[0];
     expect(L.quest).toMatchObject({ species: "stoat" });
     const ring = g.map.legendClearing(L.cell[0], L.cell[1])!;
     g.witch = { ...g.witch, x: ring.x, z: ring.z + ring.r * 0.4, mode: "ground", lift: 0, seated: false };

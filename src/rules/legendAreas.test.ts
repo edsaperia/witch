@@ -20,10 +20,10 @@ import { sharedMap } from "../test/preppedGame"; // (maps the tests only read, m
 // and defending, the adjacent areas should count as one").
 // Retain the authored ten-area roster matrix: paired legend geometry, route exclusion and neighbours are the subject.
 const islandOf = (kind: string): Tuning => ({ ...TUNING, map: { ...TUNING.map!, island: kind, islandAreas: 10 } }); // (the game's islands by roster: the tests' tuning is the radius map)
-// (lion's seed 3, its seed 2 till the challenge area went to the island's edge, Ed 2026-11-04: on seed 2 now two legend areas pair
-// with one area, tonight's legend's, so one's clearing is in the other; the re-pairing's own limit, on about 1 night in 10 on the
-// base build too, measured when it moved)
-const MAPS: [string, number][] = [["home", 1], ["home", 2], ["tiger", 1], ["lion", 3], ["elephant", 1]];
+// (lion's seed 2 back, Ed 2026-11-04: "Please fix": on it, after the challenge area went to the island's edge, two legend areas had
+// paired with one area, tonight's legend's, so one's clearing was in the other; every legend area has a pair of its own now,
+// rules/deal.ts pairLegendAreas, siteGaps.test.ts)
+const MAPS: [string, number][] = [["home", 1], ["home", 2], ["tiger", 1], ["lion", 2], ["elephant", 1]];
 const cellOf = (k: string): [number, number] => { const [x, y] = k.split(",").map(Number); return [x, y]; };
 const kindAt = (map: ForestMap, k: string) => AREA_TYPES[map.typeOf(...cellOf(k))].creature;
 const withLegend = (map: ForestMap) => [...map.legendAreas].find(([, p]) => map.hasLegend(...cellOf(p)))!; // (a legend area with tonight's legend)
@@ -33,6 +33,8 @@ describe("legend areas", () => {
     it(`each of the night's legends lies in an area of its own beside one of its kind, off the route (${kind} island, seed ${seed})`, () => {
       const map = sharedMap(seed, islandOf(kind)), route = new Set(routeOf(map).order), home = map.centreCell.join(","), forest = new Forest(map);
       expect(map.legendAreas.size).toBeGreaterThan(0);
+      // (each its own pair: none shared, Ed 2026-11-04: "Please fix")
+      expect(new Set(map.legendAreas.values()).size).toBe(map.legendAreas.size);
       for (const [la, pair] of map.legendAreas) {
         const [lx, ly] = cellOf(la), [px, py] = cellOf(pair);
         // grown out of the island: no runestone, soundsystem or route stop of its own; its pair a playable area of the same kind beside it
@@ -74,10 +76,11 @@ describe("legend areas", () => {
         if (o > -(LC.fit?.margin ?? 0) + 1e-6) over.push(`${sp} ${o.toFixed(1)} m (r ${c.r.toFixed(0)})`);
       }
     }
-    // (the elephant, 83 m asleep, needs 50: in the smaller legend areas it gets what fits, a few metres short; and, since the challenge
-    // area went to the island's edge (Ed, 2026-11-04) and the route's first areas deal the night's legends, the elk on the elephant
-    // island's seed 1 is dealt a legend area that holds 23 m, 2.8 m short of its margin: the most its area held)
-    expect(over.filter(s => !s.startsWith("elephant"))).toEqual(["elk 2.8 m (r 23)"]);
+    // (the elephant, 83 m asleep, needs 50: in the smaller legend areas it gets what fits, a few metres short. The elk on the elephant
+    // island's seed 1, 2.8 m short in a legend area of 23 m after the challenge area went to the island's edge, fits since the stumps
+    // beside its lakes keep their clearings out of the water (Ed, 2026-11-04: "Look at minimum distances between sites too"): their
+    // route, and so its deal, is another, the elk's legend area one that holds it)
+    expect(over.filter(s => !s.startsWith("elephant"))).toEqual([]);
   });
 
   it("shows no border inside a pair: the legend area wears its pair's look everywhere, so the area blend has nothing to blend there", () => {

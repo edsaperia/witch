@@ -4,7 +4,7 @@
 import { describe, expect, it } from "vitest";
 import { stepGame, type Controls, type Game } from "./game";
 import { TUNING, withTuning, type Tuning } from "./tuning";
-import { AREA_TYPES, generateMap, hydrateMap, prepOf, type ForestMap } from "./map";
+import { siteRules, AREA_TYPES, generateMap, hydrateMap, prepOf, type ForestMap } from "./map";
 import { cellKey, clearArea } from "./party";
 import { befriend, hasRune, stateOf } from "./creatureStates";
 import { castReachOf, challengeCastAt, challengeColumns, challengeReady, challengeSite, columnKinds, columnSpots, FIND_DESCENT, packKinds, packLeft, rewardFall, spawnPack } from "./challenge";
@@ -323,13 +323,13 @@ describe("its area holds its whole circle (Ed, 2026-11-03: \"the area will have 
     if (!reach.has(k)) bad.push(`${what}: no path to it`);
     // (no path over its floor: the network's end at its edge, the rest cut short of it)
     for (const l of m.paths.lines) for (const p of l.pts) if (Math.hypot(p[0] - sp.x, p[1] - sp.z) < sp.r - 0.01) { bad.push(`${what}: a ${l.kind} over its floor`); break; }
-    // (every stone in its own area, stoneMinGap from every other and from the circle's clearing)
-    const gap = m.tuning.stoneMinGap!, stones = m.cells.filter(c => key(c) !== home).map(c => ({ cell: key(c), ...m.soundsystemSpot(c[0], c[1]) }));
+    // (every stone in its own area, its clearing siteGap from every other's and from the circle's claim: siteRules, Ed 2026-11-04)
+    const R = siteRules(m.tuning), stones = m.cells.filter(c => key(c) !== home).map(c => ({ cell: key(c), ...m.soundsystemSpot(c[0], c[1]) }));
     for (const s of stones) {
       if (key(m.areaAt(s.x, s.z).cell) !== s.cell) bad.push(`${what}: ${s.cell}'s stone off its ground`);
-      if (Math.hypot(s.x - sp.x, s.z - sp.z) - sp.r < gap) bad.push(`${what}: ${s.cell}'s stone ${(Math.hypot(s.x - sp.x, s.z - sp.z) - sp.r).toFixed(0)} m from its edge`);
+      if (Math.hypot(s.x - sp.x, s.z - sp.z) - sp.r - (sp.claimed ? 4 : 0) - R.stoneClear < R.siteGap - 0.01) bad.push(`${what}: ${s.cell}'s stone ${(Math.hypot(s.x - sp.x, s.z - sp.z) - sp.r).toFixed(0)} m from its edge`);
     }
-    for (let i = 0; i < stones.length; i++) for (let j = i + 1; j < stones.length; j++) if (Math.hypot(stones[i].x - stones[j].x, stones[i].z - stones[j].z) < gap) bad.push(`${what}: ${stones[i].cell} and ${stones[j].cell} stones close`);
+    for (let i = 0; i < stones.length; i++) for (let j = i + 1; j < stones.length; j++) if (Math.hypot(stones[i].x - stones[j].x, stones[i].z - stones[j].z) < R.stoneSpacing - 0.01) bad.push(`${what}: ${stones[i].cell} and ${stones[j].cell} stones close`);
     // (the coast the same every night, whichever area holds it)
     expect(m2.bounds.land!.box, what).toEqual(m.bounds.land!.box);
     expect([...m2.bounds.land!.dist.slice(0, 4000)]).toEqual([...m.bounds.land!.dist.slice(0, 4000)]);

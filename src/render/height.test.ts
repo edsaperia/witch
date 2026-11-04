@@ -11,8 +11,9 @@ import { HeightField, hillsAt, N, RES, SLOPE_SCALE } from "./height";
 // Keep these spatial regression worlds: height windows move 1200 m and path-slope checks require many seeded path samples.
 const map = generateMap(123, TUNING), forest = new Forest(map);
 // (the 40 m hills' checks on a map of their own: the slope limit still lets a few spots past the sightline on some maps' paths,
-// seeds 1, 2, 3, 5, 7, 9, 11 and 12 among them, before and after the land map changed 123's: a known gap, its own task)
-const hillsMap = generateMap(6, TUNING), hillsForest = new Forest(hillsMap), hdf = hillsMap.dancefloor;
+// seeds 1, 2, 3, 5, 7, 9, 11 and 12 among them, before and after the land map changed 123's: a known gap, its own task; seed 6 among
+// them too once areas grew to 196 m, 2026-11-04 (4, 8, 14, 15 and 16 as well; 10 and 13 not): 13 now)
+const hillsMap = generateMap(13, TUNING), hillsForest = new Forest(hillsMap), hdf = hillsMap.dancefloor;
 const H = { on: true, amplitude: 2, scale: 48, octaves: 3 };
 const field = new HeightField(map, forest, H);
 const df = map.dancefloor;

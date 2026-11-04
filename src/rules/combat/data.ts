@@ -323,7 +323,7 @@ export interface CombatWorld {
    *  with its sigil in it guards the whole of it (Ed, 2026-10-11). */
   home?: { inside: (x: number, z: number) => boolean; x: number; z: number; r: number };
   /** The area (x, z) lies in, the same way (rules/homeArea.ts areaOf): a party animal parked with its sigil anywhere guards the whole
-   *  of its sigil's area, plus guard.radius round the sigil (Ed, 2026-10-15: "Placing a sigil in any area should work as home does"). */
+   *  of its sigil's area, plus its guard radius round the sigil (its chain's length: rules/combat.ts guardRadius) (Ed, 2026-10-15: "Placing a sigil in any area should work as home does"). */
   areaAt?: (x: number, z: number) => { inside: (x: number, z: number) => boolean; x: number; z: number; r: number } | null;
   /** Whether (x, z) is in the creature's own area. */
   inArea: (c: Creature, x: number, z: number) => boolean;

@@ -2260,10 +2260,15 @@
       "minimum": 0,
       "description": "The keep-clear zone round each area's stone (its great stump, or its runestone with the stumps off), in metres from its middle."
     },
-    "stoneMinGap": {
+    "siteGap": {
       "type": "number",
       "minimum": 0,
-      "description": "the least distance between two areas' stones (great stumps or runestones), metres; a stone that would stand nearer one placed before it moves, in its own area, to the nearest spot far enough off."
+      "description": "the least gap, metres edge to edge, between any two sites' footprints: stones' clearings, legends' circles, the challenge's claim or the find's clearing, home's dancefloor clearing and treehouse."
+    },
+    "siteLakeGap": {
+      "type": "number",
+      "minimum": 0,
+      "description": "the least gap, metres, between any site's footprint and a lake's water."
     },
     "findArea": {
       "type": "object",
@@ -14720,7 +14725,8 @@
     "soundsystemFootprint",
     "reserveMargin",
     "stoneKeepClear",
-    "stoneMinGap",
+    "siteGap",
+    "siteLakeGap",
     "findArea",
     "challenge",
     "treeMarginFromSoundsystem",
