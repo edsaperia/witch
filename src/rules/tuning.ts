@@ -310,13 +310,12 @@ export interface Tuning {
   /** The keep-clear zone round each area's stone (its great stump or runestone), metres from its middle: no special scenery, finds,
    *  flasks, legends' clearings, walls, ponds, campfires, picnics or grounds in it (Ed, 2026-10-29; map.clearOfStones). Absent: 40. */
   stoneKeepClear?: number;
-  /** The least distance between two areas' stones (their great stumps or runestones), metres (Ed, 2026-11-03: "Min 40 m between
-   *  stumps"): a stone that would stand nearer an earlier one is moved, in its own area (map.soundsystemSpot). Absent: 0. */
-  stoneMinGap?: number;
-  /** The least gap between two sites' footprints that aren't two stones', edge to edge, metres (Ed, 2026-11-04: "Look at minimum
-   *  distances between sites too"): a legend's circle from every other legend's circle, the challenge's claim (the find's clearing)
-   *  and home's dancefloor clearing and treehouse; a stone's clearing from home's two (map.ts placeSites). Absent: 0. */
+  /** The least gap between any two sites' footprints, edge to edge, metres (Ed, 2026-11-04: "minimum distance between sites/circles/
+   *  dancefloor/treehouse of 50m, tunable"): stones' clearings, legends' circles, the challenge's claim or the find's clearing, home's
+   *  dancefloor clearing and treehouse (rules/map.ts siteRules; two stones' middles 2 x their clearing + this apart). Absent: 0. */
   siteGap?: number;
+  /** The least gap between any site's footprint and a lake's water, metres (Ed, 2026-11-04: "10m from a lake edge"). Absent: 0. */
+  siteLakeGap?: number;
   /** The night's find in an area of its own (Ed, 2026-11-03: "Each non-lake area has a stump site or a special site (find and
    *  challenge areas)"): on, one seeded area holds tonight's find at its site, in a clearing `clear` metres round it, with no
    *  stump, wave or creatures of its own (map.specialSites); off, the find as before, in a wild area's woods. */

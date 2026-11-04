@@ -1,10 +1,11 @@
 // The legend areas' pairs and the least gaps between sites (Ed, 2026-11-04: "Please fix. Look at minimum distances between sites
-// too. If necessary we can make areas bigger."). Every legend area has its own pair after the night's deal (no area paired twice, so
-// no legend's circle goes into another legend area), and every site keeps its gap: a stone's clearing out of a lake's water by its
-// shore, a legend's circle siteGap from the other sites that aren't stones, the stones keeping their own rules (pathNetwork.test.ts).
+// too. If necessary we can make areas bigger."; then "minimum distance between sites/circles/dancefloor/treehouse of 50m, tunable.
+// 10m from a lake edge. If this can't fit, increase area sizes."). Every legend area has its own pair after the night's deal (no area
+// paired twice, so no legend's circle goes into another legend area), and every two sites' footprints keep siteGap apart and
+// siteLakeGap off a lake's water (rules/map.ts siteRules).
 import { describe, expect, it } from "vitest";
-import { generateMap, type ForestMap } from "./map";
-import { lakeDepth, lakeKnobs } from "./lakes";
+import { generateMap, siteRules, type ForestMap } from "./map";
+import { lakeDepth } from "./lakes";
 import { floorClearing } from "./speakers";
 import { TUNING, type Tuning } from "./tuning";
 
@@ -39,41 +40,49 @@ describe("the legend areas' pairs", () => {
   }
 });
 
+// Every site's footprint (Ed, 2026-11-04: "minimum distance between sites/circles/dancefloor/treehouse of 50m, tunable. 10m from a lake
+// edge"; "The dancefloor and treehouse can be closer! they're a set piece": home's two one site, nothing between them).
+const sitesOf = (m: ForestMap) => {
+  const T = m.tuning, R = siteRules(T), home = key(m.centreCell), out: { what: string; x: number; z: number; r: number }[] = [];
+  for (const c of m.cells) if (key(c) !== home) { const q = m.soundsystemSpot(c[0], c[1]); out.push({ what: `stone ${key(c)}`, x: q.x, z: q.z, r: R.stoneClear }); }
+  for (const c of m.legendClearings) out.push({ what: `legend ${key(c.cell)}`, x: c.x, z: c.z, r: c.r });
+  for (const sp of m.specialSites) out.push({ what: `${sp.kind} ${key(sp.cell)}`, x: sp.x, z: sp.z, r: sp.r + (sp.claimed ? 4 : 0) });
+  out.push({ what: "home dancefloor", x: m.dancefloor.x, z: m.dancefloor.z, r: floorClearing(T) }, { what: "home treehouse", x: m.treehouse.x, z: m.treehouse.z, r: T.treehouse.clear });
+  return out;
+};
+// (the nights above, and a few of the largest islands and the late home's)
+const GAPPED: [string, number][] = [...PAIRED, ...WET, ["griffin", 1], ["elephant", 2], ["tiger", 1]];
+
 describe("the least gaps between sites", () => {
-  it("keeps every stone's clearing off a lake's water by its shore, where the stones stood in it before", () => {
-    const wet: string[] = [];
-    for (const [kind, seed] of WET) {
-      const m = mapOf(kind, seed), T = m.tuning, clear = T.runeMarkers!.stump!.clear, shore = lakeKnobs(T).shore, home = key(m.centreCell);
-      expect(m.bounds.lakes).toBeTruthy();
-      for (const c of m.cells) {
-        if (key(c) === home) continue;
-        const q = m.soundsystemSpot(c[0], c[1]), gap = -lakeDepth(m.bounds, q.x, q.z) - clear;
-        if (gap < shore - 0.5) wet.push(`${kind} ${seed}: ${key(c)} ${gap.toFixed(1)} m`); // (the lakes' map is sampled: half a metre's play)
+  it("keeps every two sites' footprints siteGap (50 m) apart, home's dancefloor and treehouse one site", () => {
+    const near: string[] = [];
+    for (const [kind, seed] of GAPPED) {
+      const m = mapOf(kind, seed), gap = siteRules(m.tuning).siteGap, all = sitesOf(m);
+      expect(gap).toBe(50);
+      for (let i = 0; i < all.length; i++) for (let j = i + 1; j < all.length; j++) {
+        const a = all[i], b = all[j];
+        if (a.what.startsWith("home") && b.what.startsWith("home")) continue; // (a set piece)
+        const g = Math.hypot(a.x - b.x, a.z - b.z) - a.r - b.r;
+        if (g < gap - 0.01) near.push(`${kind} ${seed}: ${a.what} to ${b.what} ${g.toFixed(1)} m`);
       }
     }
-    expect(wet).toEqual([]);
-  }, 60000);
-
-  it("keeps every legend's circle siteGap from the other legends' circles, the challenge's claim and home's dancefloor and treehouse", () => {
-    const near: string[] = [];
-    for (const [kind, seed] of [...PAIRED, ...WET]) {
-      const m = mapOf(kind, seed), T = m.tuning, gap = T.siteGap!;
-      expect(gap).toBe(25);
-      const others = [
-        ...m.specialSites.map(s => ({ what: s.kind, x: s.x, z: s.z, r: s.r + (s.claimed ? 4 : 0) })),
-        { what: "dancefloor", x: m.dancefloor.x, z: m.dancefloor.z, r: floorClearing(T) },
-        { what: "treehouse", x: m.treehouse.x, z: m.treehouse.z, r: T.treehouse.clear },
-      ];
-      const cs = m.legendClearings;
-      cs.forEach((c, i) => {
-        for (const o of [...others, ...cs.slice(i + 1).map(d => ({ what: `legend ${key(d.cell)}`, ...d }))]) {
-          const g = Math.hypot(c.x - o.x, c.z - o.z) - c.r - o.r;
-          if (g < gap) near.push(`${kind} ${seed}: legend ${key(c.cell)} to ${o.what} ${g.toFixed(1)} m`);
-        }
-      });
-    }
     expect(near).toEqual([]);
-  }, 60000);
+  }, 300000);
+
+  it("keeps every site's footprint siteLakeGap (10 m) off a lake's water, where the stones stood in it before", () => {
+    const wet: string[] = [];
+    for (const [kind, seed] of GAPPED) {
+      const m = mapOf(kind, seed), lake = siteRules(m.tuning).lakeGap;
+      expect(lake).toBe(10);
+      if (!m.bounds.lakes) continue;
+      for (const s of sitesOf(m)) {
+        const g = -lakeDepth(m.bounds, s.x, s.z) - s.r;
+        if (g < lake - 0.5) wet.push(`${kind} ${seed}: ${s.what} ${g.toFixed(1)} m`); // (the lakes' map is sampled: half a metre's play)
+      }
+    }
+    expect(WET.every(([k, s]) => !!mapOf(k, s).bounds.lakes)).toBe(true);
+    expect(wet).toEqual([]);
+  }, 300000);
 
   it("makes the same map from the same seed", () => {
     const a = mapOf("crab", 3), b = generateMap(3, islandOf("crab"));

@@ -284,7 +284,7 @@
     }
   },
   "areaSize": 28,
-  "areaScale": 6,
+  "areaScale": 7,
   "arena": {
     "radius": 5,
     "band": 50,
@@ -590,8 +590,8 @@
   "soundsystemFootprint": 6,
   "reserveMargin": 3,
   "stoneKeepClear": 40,
-  "stoneMinGap": 40,
-  "siteGap": 25,
+  "siteGap": 50,
+  "siteLakeGap": 10,
   "findArea": {
     "on": true,
     "clear": 6

@@ -3,7 +3,7 @@
 // have trees on them."; "Min 40 m between stumps."; "We can also have finds be at the site of their own area rather than in a
 // random place, and then the path network can lead you to them."
 import { describe, expect, it } from "vitest";
-import { generateMap, type ForestMap } from "./map";
+import { generateMap, siteRules, type ForestMap } from "./map";
 import { Forest } from "./forest";
 import { placeTrunk } from "./finds";
 import { placeRelics } from "./legends";
@@ -42,15 +42,17 @@ const MAPS: [string, number][] = [...[1, 2, 3, 4, 5, 6, 7, 8].map((s): [string, 
 const made = new Map<string, ForestMap>();
 const mapOf = (kind: string, seed: number) => { const k = `${kind} ${seed}`; let m = made.get(k); if (!m) made.set(k, (m = generateMap(seed, islandOf(kind)))); return m; };
 
-describe("the stones' spacing (stoneMinGap)", () => {
-  it("keeps every two stones, and every stone and special site, at least stoneMinGap (40 m) apart", () => {
+// (Ed, 2026-11-03: "Min 40 m between stumps"; folded into siteGap, Ed 2026-11-04: "minimum distance between sites/circles/dancefloor/
+// treehouse of 50m": two stones' clearings, and a stone's clearing and a special site's footprint, siteGap apart edge to edge)
+describe("the stones' spacing (siteGap)", () => {
+  it("keeps every two stones' clearings, and every stone's clearing and special site, at least siteGap (50 m) apart", () => {
     const short: string[] = [];
     for (const [kind, seed] of MAPS) {
-      const m = mapOf(kind, seed), gap = m.tuning.stoneMinGap!, pts = [...stonesOf(m), ...m.specialSites.map(s => ({ cell: key(s.cell), x: s.x, z: s.z }))];
-      expect(gap).toBe(40);
+      const m = mapOf(kind, seed), R = siteRules(m.tuning), pts = [...stonesOf(m).map(s => ({ ...s, r: R.stoneClear })), ...m.specialSites.map(s => ({ cell: key(s.cell), x: s.x, z: s.z, r: s.r + (s.claimed ? 4 : 0) }))];
+      expect(R.siteGap).toBe(50);
       for (let i = 0; i < pts.length; i++) for (let j = i + 1; j < pts.length; j++) {
-        const d = Math.hypot(pts[i].x - pts[j].x, pts[i].z - pts[j].z);
-        if (d < gap) short.push(`${kind} ${seed}: ${pts[i].cell} and ${pts[j].cell} ${d.toFixed(1)} m`);
+        const g = Math.hypot(pts[i].x - pts[j].x, pts[i].z - pts[j].z) - pts[i].r - pts[j].r;
+        if (g < R.siteGap - 0.01) short.push(`${kind} ${seed}: ${pts[i].cell} and ${pts[j].cell} ${g.toFixed(1)} m`);
       }
     }
     expect(short).toEqual([]);
@@ -63,9 +65,9 @@ describe("the stones' spacing (stoneMinGap)", () => {
       const t = { ...islandOf("home"), siteMargin: 0 }, m = generateMap(seed, t), stones = stonesOf(m);
       for (let i = 0; i < stones.length; i++) for (let j = i + 1; j < stones.length; j++) {
         const d = Math.hypot(stones[i].x - stones[j].x, stones[i].z - stones[j].z);
-        if (d < 40) short.push(`${seed}: ${stones[i].cell} and ${stones[j].cell} ${d.toFixed(1)} m`);
+        if (d < siteRules(t).stoneSpacing - 0.01) short.push(`${seed}: ${stones[i].cell} and ${stones[j].cell} ${d.toFixed(1)} m`);
       }
-      const loose = generateMap(seed, { ...t, stoneMinGap: 0 });
+      const loose = generateMap(seed, { ...t, siteGap: 0 });
       moved += stonesOf(loose).filter((s, i) => Math.hypot(s.x - stones[i].x, s.z - stones[i].z) > 0.01).length;
       for (const s of stones) expect(key(m.areaAt(s.x, s.z).cell), s.cell).toBe(s.cell);
     }
