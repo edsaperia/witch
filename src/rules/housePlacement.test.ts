@@ -8,7 +8,7 @@ import proposal from "../../config/house/layouts/ed-current.json";
 
 describe("explicit opt-in house placement", () => {
   const source = HOUSE_CONFIG as HouseConfig;
-  it("leaves the published default and fixed shape unchanged and only applies Ed on explicit opt-in", () => {
+  it("applies the explicit Ed placement mode without mutating its source or fixed shape", () => {
     const before = JSON.stringify(source);
     expect(applyEdLayout(source, false)).toBe(source);
     const H = applyEdLayout(source, true);
