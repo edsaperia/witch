@@ -10140,6 +10140,30 @@ registerProcessor("witch-fof", WitchFof);
         on: true,
         height: 24,
         burst: 8
+      },
+      statues: {
+        on: true,
+        bars: 4,
+        first: 3.5,
+        gap: 3.5,
+        walkBack: 1.5,
+        keepOut: 2,
+        grey: [0.6, 0.6, 0.63],
+        tint: 0.9,
+        red: 1
+      },
+      analyser: {
+        bars: 72,
+        steps: 36,
+        fill: 0.94
+      },
+      carving: {
+        stone: 0.35,
+        red: 2.2,
+        wild: 1.2,
+        warm: 1.8,
+        fade: 2,
+        floor: 0.3
       }
     },
     treeMarginFromSoundsystem: 1.5,
@@ -10511,6 +10535,10 @@ registerProcessor("witch-fof", WitchFof);
         homing: 420,
         cone: 80,
         range: 18
+      },
+      wonAway: {
+        on: true,
+        radius: 6
       }
     },
     cast: {
