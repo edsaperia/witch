@@ -28,6 +28,32 @@ const cleanups: (() => void)[] = [];
 afterEach(() => { for (const stop of cleanups.splice(0)) stop(); });
 const input = (moveX = 0): Controls => ({ moveX, moveZ: 0, zoom: 0, toggleMode: false, autoTalk: false });
 const turn = () => new Promise<void>(resolve => setTimeout(resolve, 0));
+it.each([60, 20])("advances two awake sessions at real time at %s fps with fake clocks and no network delay", async fps => {
+  const f = fixture(), { joined } = await f.start();
+  // Controlled clock-rate contract: authored treehouse/legend slow time is intentional,
+  // so exclude it here instead of mistaking that separate world-clock rule for network pacing.
+  f.hostGame.tuning.legendCircle!.slow.on = false;
+  f.hostGame.clock.paused = false;
+  for (const w of f.hostGame.witches) { delete w.wake; w.paused = false; delete w.house; }
+  await f.sync(); await joined;
+  const start = { world: f.hostGame.clock.time, guest: f.hostGame.witches[1].time! };
+  let sent = f.guestMessages.length, received = f.hostMessages.length;
+  const seconds = 5;
+  for (let frame = 0; frame < seconds * fps; frame++) {
+    f.advanceTime(1000 / fps);
+    f.guest.step(input(), 1 / fps);
+    for (const m of f.guestMessages.slice(sent)) f.host.message(m); sent = f.guestMessages.length;
+    f.host.step(input(), 1 / fps);
+    for (const m of f.hostMessages.slice(received)) f.guest.message(m); received = f.hostMessages.length;
+  }
+  expect(f.hostOptions.failed).not.toHaveBeenCalled(); expect(f.guestOptions.failed).not.toHaveBeenCalled();
+  const elapsed = { world: f.hostGame.clock.time - start.world, guest: f.hostGame.witches[1].time! - start.guest };
+  console.log(JSON.stringify({ evidence: "no-delay-clock-rate", fps, wallSeconds: seconds, ...elapsed, pending: f.guest.predictionStats!.pending, queued: f.host.inputStats!.queued }));
+  expect(elapsed.world).toBeCloseTo(seconds, 5);
+  expect(Math.abs(elapsed.guest - seconds)).toBeLessThanOrEqual(3 * STEP + 1e-8); // Initial jitter buffer only.
+  expect(snapshotGame(f.guest.game!)).toEqual(snapshotGame(f.hostGame));
+  expect(f.guest.predictionStats!.pendingCapSnaps).toBe(0); expect(f.host.inputStats!.discarded).toBe(0);
+});
 it("resets a guest bed hold when E is released on a real guest quantum", async () => {
   const f=fixture(),{joined}=await f.start();await f.sync();await joined;
   const guest=f.hostGame.witches[1],bed=HOUSE_ROOMS.objects.find(o=>o.id==="bedroom2Bed")!;
