@@ -124,7 +124,7 @@ describe("a big team's shorter rounds", () => {
     expect(roundScale(10, { reference: 20, strength: 0.5, floor: 0.4 })).toBe(1);
     expect(roundScale(64, { reference: 20, strength: 0, floor: 0.4 })).toBe(1); // (strength 0: off)
   });
-  it("gives a big team's combo window, round and least rest the same shortening, a small team's as before", () => {
+  it("gives a big team's round and least rest the same shortening, its window no less than teamRounds.window of it, a small team's as before", () => {
     const windowOf = (n: number) => {
       const members = Array.from({ length: n }, (_, i) => ({ ...animal(i), x: i % 2 ? 1 : -1, z: Math.floor(i / 2) * 3 }));
       const state = newCombat(), world = { active: members, time: 1, t: TUNING, witches: [{ id: 0, x: 0, z: 0, onGround: true, down: false }] } as unknown as CombatWorld;
@@ -141,7 +141,7 @@ describe("a big team's shorter rounds", () => {
     expect(windowOf(20).window).toBeCloseTo(SPACING.team.attackWindow / tempo, 9);
     const big = windowOf(80);
     expect(k).toBeLessThan(0.6);
-    expect(big.window).toBeCloseTo(SPACING.team.attackWindow * k / tempo, 9);
+    expect(big.window).toBeCloseTo(SPACING.team.attackWindow * Math.max(k, TUNING.teamRounds!.window!) / tempo, 9);
     // (its window over, its lull runs to the round's shortened end, or the kinds' own rest, shortened the same, if that's longer)
     big.world.time = big.team.nextAt;
     stepTeams(big.state, big.world, PACKS, () => false);
@@ -156,7 +156,7 @@ describe("a big team's shorter rounds", () => {
       stepTeams(state, world, PACKS, () => false);
       const team = teamOf(state, 0)!, log: string[] = [];
       expect(team.round).toBe(0);
-      expect(team.next?.map(n => n.round)).toEqual([1, 2].slice(0, TUNING.teamRounds!.ahead));
+      expect(team.next?.map(n => n.round)).toEqual(Array.from({ length: TUNING.teamRounds!.ahead! }, (_, k) => k + 1));
       for (let r = 0; r < 4; r++) {
         const coming = team.next![0];
         expect(coming.readyBy).toBeGreaterThan(world.time);
@@ -177,6 +177,27 @@ describe("a big team's shorter rounds", () => {
     const state = newCombat(), world = { active: members, time: 1, t: TUNING, witches: [{ id: 0, x: 0, z: 0, onGround: true, down: false }] } as unknown as CombatWorld;
     stepTeams(state, world, PACKS, () => false);
     expect(teamOf(state, 0)!.next).toBeUndefined();
+  });
+  it("puts a big team in waiting rings of teamRounds.ring, this round's attackers and the coming rounds' picks in the inner one", () => {
+    const cap = TUNING.teamRounds!.ring!;
+    const members = Array.from({ length: 128 }, (_, i) => ({ ...animal(i, i % 2 ? "fox" : "hare", i % 3 ? 2 : 1), x: 40 + i, z: i * 2 }));
+    const state = newCombat(), world = { active: members, time: 1, t: TUNING, witches: [{ id: 0, x: 0, z: 0, onGround: true, down: false }] } as unknown as CombatWorld;
+    stepTeams(state, world, PACKS, () => false);
+    const team = teamOf(state, 0)!, inner = new Set(team.order!.slice(0, cap));
+    expect(cap).toBe(20);
+    expect(team.order).toHaveLength(128); expect(new Set(team.order).size).toBe(128);
+    const coming = [...new Set(members.map(c => c.id).filter(id => team.actions[id] || team.next!.some(n => n.actions[id])))];
+    expect(coming.length).toBeGreaterThan(0); expect(coming.length).toBeLessThanOrEqual(cap);
+    for (const id of coming) expect(inner.has(id), `${id} in the inner ring`).toBe(true);
+    // (one strikes: it rotates out, behind the coming rounds' picks)
+    const struck = Number(Object.keys(team.actions).find(id => team.actions[+id]));
+    team.used.push(struck); world.time += 0.1;
+    stepTeams(state, world, PACKS, () => false);
+    expect(team.order!.indexOf(struck)).toBeGreaterThanOrEqual(Object.values(team.actions).filter(Boolean).length - 1);
+    // (a team of the cap or fewer has no rings: one, as before)
+    const small = newCombat(), few = { ...world, active: members.slice(0, cap) } as CombatWorld;
+    stepTeams(small, few, PACKS, () => false);
+    expect(teamOf(small, 0)!.order).toBeUndefined();
   });
 });
 

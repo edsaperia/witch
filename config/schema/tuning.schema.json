@@ -5434,6 +5434,11 @@
           "type": "number",
           "minimum": 0,
           "maximum": 128
+        },
+        "window": {
+          "type": "number",
+          "minimum": 0.1,
+          "maximum": 1
         }
       },
       "required": [
@@ -5441,7 +5446,8 @@
         "strength",
         "floor",
         "ahead",
-        "ring"
+        "ring",
+        "window"
       ],
       "additionalProperties": false,
       "description": "A big pack's attack rounds come round faster: past `reference` animals in a team, its round time, attack window and least rest shrink smoothly with its size, never below `floor` of today's."

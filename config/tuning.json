@@ -1248,7 +1248,8 @@
     "strength": 0.5,
     "floor": 0.4,
     "ahead": 3,
-    "ring": 20
+    "ring": 20,
+    "window": 1
   },
   "creatureMomentum": {
     "on": true,

@@ -298,6 +298,9 @@ export function stepCombat(s: CombatState, w: CombatWorld, data: CombatData = CO
   // (a team's widest body, for its members' waiting gap: max of bodyGap over the members is its own radius plus the widest's, the
   // same sum; worked out once a members list, not once a member)
   const widest = new Map<readonly number[], number>();
+  // (a ring's gap: its members' bodies and clearances round its circle, shared out; worked out once a ring a step)
+  const ringGaps = new Map<string, number>();
+  const ringGap = (ring: readonly number[]) => { const key = ring.join(","); let g = ringGaps.get(key); if (g === undefined) { g = 0; for (const id of ring) { const o = w.creatures[id]; if (o) g += 2 * drawnRadius(o, t) + SPACING.clearance; } g /= Math.max(1, ring.length); ringGaps.set(key, g); } return g; };
   const widestOf = (members: readonly number[]) => { let r = widest.get(members); if (r === undefined) { r = -Infinity; for (const id of members) { const o = w.creatures[id]; if (o) r = Math.max(r, drawnRadius(o, t)); } widest.set(members, r); } return r; };
   for (const c of w.active) {
     if (c.cheerUntil !== undefined && time >= c.cheerUntil) c.cheerUntil = undefined; // (its celebration over: back in the fight, rules/affection.ts)
@@ -480,9 +483,13 @@ export function stepCombat(s: CombatState, w: CombatWorld, data: CombatData = CO
       const seed = team ? hash2(team.seed, 1620, 17) : pd?.state.seed;
       const retreat = pd?.role === "hurt" ? waitingProfile(c).radius * FIGHT.scale : 0;
       // (a big team's rings: its place among the `ring` sharing its ring, and which ring: rules/combat/teams.ts order)
+      // (its index in its ring by id among those sharing it, so a ring's places don't all shift as its picks change)
       const cap = Math.floor(t.teamRounds?.ring ?? 20), at = team?.order ? team.order.indexOf(c.id) : -1, rank = at >= 0 ? Math.floor(at / cap) : 0;
-      const place = at >= 0 ? { index: at % cap, count: Math.min(cap, team!.order!.length - rank * cap), rank } : { index: Math.max(0, members.indexOf(c.id)), count: members.length };
-      return waitingSlot(c, origin, range + retreat, time, FIGHT.scale, SPACING, waitingHeading?.(), seed !== undefined ? { seed, ...place, gap, until, minimum: drawnRadius(c, t) + p.r + SPACING.clearance } : undefined,
+      const ring = at >= 0 ? team!.order!.slice(rank * cap, rank * cap + cap) : null;
+      // (and its ring's own gap: the room its members' bodies take round it, each its width and the clearance, shared out, not the
+      // widest of all 128 for everyone, which made each ring as wide as one ring of all of them)
+      const place = ring ? { index: ring.filter(id => id < c.id).length, count: ring.length, rank, gap: ringGap(ring) } : { index: Math.max(0, members.indexOf(c.id)), count: members.length, gap };
+      return waitingSlot(c, origin, range + retreat, time, FIGHT.scale, SPACING, waitingHeading?.(), seed !== undefined ? { seed, ...place, until, minimum: drawnRadius(c, t) + p.r + SPACING.clearance } : undefined,
         { dashReach: t.dash.distance * (t.dash.charges ?? 1), inviteReach: t.invites.range, areaRadius: w.areaAt?.(c.homeX, c.homeZ)?.r ?? 0, speed: speed * waitingProfile(c).speed, parameters: t.combatWaiting });
     } : undefined;
     const waitingHazards: WaitingHazard[] = spacing ? [{ x: p.x, z: p.z, radius: p.r }] : [];
