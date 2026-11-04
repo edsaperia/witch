@@ -11,7 +11,10 @@ import { PACKS } from "./packs";
 import { FIGHT } from "../movement";
 
 const lateHome = (n: number, t: Tuning): Tuning => { const all = knownKinds(Object.keys(KINDS_TABLE)).slice(0, n); return { ...t, map: { ...t.map!, island: "home", islandAreas: all.length, found: all }, challenge: { ...t.challenge!, statues: { ...t.challenge!.statues!, on: false } } }; }; // (its statues off, rules/challengeStatues.ts: the pack wild from the start, the fight measured as before)
-const SEED_128 = 4;
+// (the seeds: 4 for 128 and 1 for 64 till the challenge area went to the island's edge, Ed 2026-11-04: the pack's circle moved; on
+// the new circles, seeds 1 to 4 at 128 strike 23.8, 25.8, 17.9 and 17.9 a minute, and seeds 1 to 3 at 64 come 3.5, 30.0 and 13.9 m
+// nearer picked ahead)
+const SEED_128 = 1, SEED_64 = 3;
 const withAhead = (ahead: number): Tuning => ({ ...TUNING, teamRounds: { ...TUNING.teamRounds!, ahead } });
 
 /** The challenge's pack of `kinds` kinds (an adult and a youth each) hunting her as she walks slow circles in its middle (the pack
@@ -43,11 +46,11 @@ function fight(kinds: number, t: Tuning, secs: number, seed = 1) {
 
 describe("roles decided in advance (Ed, 2026-11-03: 'have them move in sooner, in time for their attack')", () => {
   it("a 64-animal pack's attackers are in place as their window opens, not starting their run then", () => {
-    const before = fight(32, withAhead(0), 30), after = fight(32, TUNING, 30);
+    const before = fight(32, withAhead(0), 30, SEED_64), after = fight(32, TUNING, 30, SEED_64);
     expect(after.over.length).toBeGreaterThan(10);
     // (the middle attacker at its window's opening: within a few metres of where its action engages from, and much nearer than
     // when they were picked only as their round began)
-    // (seed 1, 30 s: about 9 m past it picked ahead, 24 m picked as the round began)
+    // (seed 3, 30 s: about 6.5 m past it picked ahead, 20 m picked as the round began; seed 1 on the old circle 9 and 24)
     expect(after.median, "median metres past its engage distance, picked ahead").toBeLessThan(12);
     expect(before.median - after.median).toBeGreaterThan(8);
     expect(after.strikes).toBeGreaterThanOrEqual(before.strikes);

@@ -10,15 +10,15 @@ import { sleepCellAudit } from "../test/sleepCells";
 import { preppedGame } from "../test/preppedGame"; // (games on a map made once a file from its prep)
 
 const idle = { moveX: 0, moveZ: 0, toggleMode: false, zoom: 0 };
-// (the largest island since the challenge circle's claim, 2026-11-03: its area takes the whole circle from the areas round it, so
-// the route and the night's deal move on, and its legends with them: seven paired; the ids follow how many creatures the areas
-// before them hold)
-const expected = [[14, "crab", true], [15, "crab", false], [31, "bear", true], [32, "bear", false], [63, "otter", true], [64, "otter", false],
-  [91, "fennec", true], [92, "fennec", false], [145, "lion", true], [146, "lion", false], [165, "newt", true], [166, "newt", false],
-  [527, "hedgehog", true], [528, "hedgehog", false]];
-// Largest roster reproduces the seven paired legend areas; small/radius fixtures guard the original non-paired contract.
+// (the largest island since the challenge area went to its edge, 2026-11-04 (Ed: "The route should avoid going through the challenge
+// area"), the circle's claim before that, 2026-11-03: the route and the night's deal move with it, and its legends with them: eight
+// paired; the ids follow how many creatures the areas before them hold)
+const expected = [[18, "newt", true], [19, "newt", false], [34, "snowleopard", true], [35, "snowleopard", false], [91, "fennec", true], [92, "fennec", false],
+  [191, "squirrel", true], [192, "squirrel", false], [422, "moth", true], [423, "moth", false], [500, "crab", true], [501, "crab", false],
+  [518, "lion", true], [519, "lion", false], [525, "polarbear", true], [526, "polarbear", false]];
+// Largest roster reproduces the paired legend areas; small/radius fixtures guard the original non-paired contract.
 const fixtures = [
-  { name: "largest", tuning: largestWorldTuning(TUNING), raw: 14, cells: 65 },
+  { name: "largest", tuning: largestWorldTuning(TUNING), raw: 16, cells: 65 },
   { name: "four-area", tuning: { ...TUNING, map: { ...TUNING.map!, island: "", islandAreas: 4, found: [] } }, raw: 0, cells: 5 },
   { name: "radius", tuning: { ...TUNING, map: { ...TUNING.map!, island: "", islandAreas: 0, found: [] } }, raw: 0, cells: 98 },
 ];
