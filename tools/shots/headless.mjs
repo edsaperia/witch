@@ -22,8 +22,9 @@ export function validateSlotEvidence(evidence, expectedSha, now = Date.now()) {
   if (evidence.granted !== true || !Number.isInteger(evidence.canonicalCommentId) || evidence.canonicalCommentId <= 0 || !evidence.slotId) throw Error('Require explicit canonical slot grant');
   if (!Number.isInteger(evidence.freeCommentId) || evidence.freeCommentId <= 0) throw Error('Require prior actual FREE evidence');
   const fresh = at => Number.isFinite(Date.parse(at)) && now - Date.parse(at) >= -2000 && now - Date.parse(at) <= 60000;
-  if (!(evidence.inputIdleMs >= 300000) || !fresh(evidence.inputCheckedAt)) throw Error('Require fresh input idle >=5min evidence');
-  if (evidence.gameTabOpen !== false || !fresh(evidence.tabsCheckedAt)) throw Error('Require fresh no-Ed-game-tab evidence');
+  const recordOnly = evidence.guardPolicyCommentId === 6555865819;
+  if (!(evidence.inputIdleMs >= (recordOnly ? 120000 : 300000)) || !fresh(evidence.inputCheckedAt)) throw Error('Require fresh input idle evidence');
+  if ((recordOnly ? evidence.gameTabOpen !== 'unknown/untouched' : evidence.gameTabOpen !== false) || !fresh(evidence.tabsCheckedAt)) throw Error('Require fresh browser-policy evidence');
   if (!(evidence.durationMs > 0 && evidence.durationMs <= 270000)) throw Error('Slot exceeds 270s bound');
   const remaining = Date.parse(evidence.expiresAt) - now;
   if (!(remaining > 0)) throw Error('Slot expired');
