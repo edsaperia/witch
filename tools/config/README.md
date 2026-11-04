@@ -57,6 +57,15 @@ node tools/config/schema.mjs --init      (re)infer every schema from its file as
 node tools/config/schema.mjs --add       add the knobs the file has and the schema lacks (inferred), drop the ones it no longer has, keep the rest
 ```
 
+## `stampChangelog.mjs`
+
+Stamps the changelog's fragments with the build they went live in.
+
+```
+node tools/config/stampChangelog.mjs <release commit> <build>   stamp every null fragment that commit holds with <build>
+node tools/config/stampChangelog.mjs --check [<ref>]            list null fragments already in <ref> (origin/main by default); exit 1 if any
+```
+
 ## `typegen.mjs`
 
 Derives the tuning data's static type from the schema; validation stays in schema.mjs --check and tuningSchema.test.ts.
@@ -70,4 +79,5 @@ node tools/config/typegen.mjs --check
 
 - `format.test.ts`
 - `inventory.test.ts`
+- `stampChangelog.test.ts`
 - `typegen.test.ts`
