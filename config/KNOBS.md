@@ -835,10 +835,10 @@ The special sites (tonight's find's) count as stones here. Placed all at once in
 
 ### `siteGap`
 
-the least gap, metres edge to edge, between two sites' footprints that aren't two stones': a legend's circle from every other legend's circle, the challenge circle's claim (or the find's clearing), home's dancefloor clearing and the treehouse; a stone's clearing from home's dancefloor clearing and treehouse. Stones keep their own (stoneMinGap between them, stoneKeepClear round them), and a stone's clearing keeps a lake's bare shore (lakes.shore) off the water.
+the least gap, metres edge to edge, between two sites that aren't two stones: a legend's circle from the other legends' circles, the challenge's claim (or the find's clearing), home's dancefloor and treehouse; a stone's clearing from home's two.
 
 1. Ed, 2026-11-04: "Please fix. Look at minimum distances between sites too. If necessary we can make areas bigger."
-25 m held already on every island and seed measured (2026-11-04: every real island x seeds 1-8, home, the 64-area home; least seen 48 m legend circle to the dancefloor's clearing, 49 m to the challenge's claim, 51 m between two legends, 27 m stump clearing to the dancefloor's), so it changes no map today: it is the guarantee. A legend's circle with no spot anywhere in its area (the last resort, logged) may break it.
+Stones keep their own gaps (stoneMinGap between them, stoneKeepClear round them), and a stone's clearing keeps a lake's bare shore (lakes.shore) off the water (rules/map.ts placeSites). 25 m held already on every island and seed measured (2026-11-04: every real island x seeds 1-8, home, the 64-area home; least seen 48 m legend circle to the dancefloor's clearing, 49 m to the challenge's claim, 51 m between two legends, 27 m stump clearing to the dancefloor's), so it changes no map today: it is the guarantee. A legend's circle with no spot anywhere in its area (the last resort, logged) may break it.
 
 | knob | type | range |
 |---|---|---|

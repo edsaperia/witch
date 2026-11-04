@@ -13,8 +13,9 @@ import { FIGHT } from "../movement";
 const lateHome = (n: number, t: Tuning): Tuning => { const all = knownKinds(Object.keys(KINDS_TABLE)).slice(0, n); return { ...t, map: { ...t.map!, island: "home", islandAreas: all.length, found: all } }; };
 // (the seeds: 4 for 128 and 1 for 64 till the challenge area went to the island's edge, Ed 2026-11-04: the pack's circle moved; on
 // the new circles, seeds 1 to 4 at 128 strike 23.8, 25.8, 17.9 and 17.9 a minute, and seeds 1 to 3 at 64 come 3.5, 30.0 and 13.9 m
-// nearer picked ahead)
-const SEED_128 = 1, SEED_64 = 3;
+// nearer picked ahead. 128's seed 2 since each legend area got a pair of its own (Ed, 2026-11-04: "Please fix"): seed 1's late home
+// had two sharing one, and with its legends placed afresh it strikes 16.9 a minute; seeds 2 to 4 as they were)
+const SEED_128 = 2, SEED_64 = 3;
 const withAhead = (ahead: number): Tuning => ({ ...TUNING, teamRounds: { ...TUNING.teamRounds!, ahead } });
 
 /** The challenge's pack of `kinds` kinds (an adult and a youth each) hunting her as she walks slow circles in its middle (the pack
