@@ -4,6 +4,8 @@ import * as THREE from "three";
 import { landscapeState } from "../../rules/landscapePotions";
 import { landscapeUniform } from "../landscapeUniforms";
 import type { View } from "../view";
+import { easeCameraLift } from "../renderEasing";
+export { easeCameraLift } from "../renderEasing";
 import { LIGHT_UNIFORMS } from "../lighting";
 import { poseOf } from "../../rules/game";
 import { coastView, gazeAt } from "../../rules/camera";
@@ -60,19 +62,12 @@ export function rideCamera(ride: Ride, flying: boolean, dt: number, R: { x: numb
   return ride.update(dt, R.x, R.z, W.vx, W.vz, full, ground, T, Infinity);
 }
 
-/** Hill clearance used to ease by these fractions per frame at 60 Hz. */
-export function easeCameraLift(current: number, need: number, seconds: number): number {
-  const fraction = need > current ? 0.35 : 0.06;
-  return current + (Math.max(0, need) - current) * (1 - Math.pow(1 - fraction, 60 * Math.max(0, seconds)));
-}
-
 /** Places the camera for this frame; returns the camera's up (tilted with its pitch), for the sprites' facing. */
 export function placeCamera(v: View, time: number, pose: ReturnType<typeof poseOf>, repaint = false): THREE.Vector3 {
   const g = v.game, t = g.tuning;
   const trip = landscapeState(g);
   if (trip) landscapeUniform.value.set(trip.id, trip.amount, trip.setting, trip.phase);
   else landscapeUniform.value.set(0, 0, 0, 0);
-  const liftDt = Number.isFinite(v.camLiftTime) ? time - v.camLiftTime : 0;
   // drawWitch computes the house offset after camera placement. Repainting the
   // same instant must use the offset its first camera placement actually saw.
   // (only a repaint of a held world keeps it, `repaint`: a sail's dive and the first frames of a night are drawn with its clock
@@ -213,7 +208,7 @@ export function placeCamera(v: View, time: number, pose: ReturnType<typeof poseO
       const px = target.x + back.x * f, pz = target.z + back.z * f, line = target.y + back.y * f;
       need = Math.max(need, (groundHeight(px, pz) + 4 - line) / f);
     }
-    v.camLift = easeCameraLift(v.camLift, need, liftDt);
+    v.camLift = easeCameraLift(v.camLift, need, v.renderEaseDt);
     v.camera.position.y += v.camLift;
   }
   v.camera.up.set(0, 1, 0);

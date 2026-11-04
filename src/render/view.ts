@@ -12,6 +12,7 @@ import type { Creature } from "../rules/creatures";
 import { partyGearOf } from "./artBuild";
 import { beatTime } from "../rules/beat";
 import * as THREE from "three";
+import { renderDelta, easeCanopyReach } from "./renderEasing";
 import { monitorProgramLink, waitForPrograms, type ReadyProgram } from "./programReadiness";
 import { installShaderDrawGate, materialProgramsReady, type ShaderDrawStatus } from "./shaderDrawGate";
 import { LandingArtFade, lateLandingReady } from './landingReadiness';
@@ -218,6 +219,9 @@ function nightState(t: Tuning) {
     numbersAt: 0,
     /** How far the camera is lifted to see her over a hill in between (metres, eased). */
     camLift: 0,
+    /** Camera/canopy relaxation on her interpolated clock, reset with this night. */
+    renderEaseAt: NaN,
+    renderEaseDt: 0,
     camLiftTime: Number.NaN,
     houseCamInput: new THREE.Vector3(),
     /** The charcoal huts' smouldering mounds near her (looked up when she has moved far), for the smoke. */
@@ -1101,8 +1105,15 @@ export class View {
       }
     } else await this.assets.homeArt(); // initial boot still waits for all home art
     performance.mark("witch:prep-home");
+    // The house's rooms made now, under the loading screen (Ed, 2026-11-04: "why don't we do this during the loading screen"): its
+    // floor, every piece of furniture in every state, the rooms' dressing and the Workshop's pictures, asked once the Ent's art is in
+    // (its anchors set their pitch) and made into their meshes before the compile below uploads their textures; so the first time
+    // she's in the house nothing's made. Kept across nights (HouseRoomsView.reset), so the bed's next night and a visit find it made.
+    const house = this.houseRooms?.preload(this);
     await this.assets.whenIdle(true); // (what the view asked for as needed now; the scenery kits and creatures draw on and fade in: the first-load hunt, 2026-10-20, half the cold load)
     performance.mark("witch:prep-idle");
+    await house;
+    performance.mark("witch:prep-rooms");
     this.render(0, false);
     await runSliced(refreshSteps(this), "refresh"); // (refresh(this, true), a slice at a time)
     this.prepared = true;
@@ -1733,6 +1744,7 @@ export class View {
     // Her clock (rules/slowTime.ts): she and everything of hers (her frames, blinks, trail, 💌s, sigils, the action bar) at full
     // speed, while the world (time) may run slow in a sleeping legend's circle; eased between steps as the world's is.
     const ht = Math.max(0, g.herTime - Math.max(0, g.clock.time - time) / Math.max(1e-3, g.timeScale));
+    this.renderEaseDt = renderDelta(this.renderEaseAt, ht); this.renderEaseAt = ht;
     // CPU effects read these too. Stamp them before drawing any markers or sparkles.
     LIGHT_UNIFORMS.uTime.value = time; LIGHT_UNIFORMS.uRealTime.value = ht;
     this.magic.begin(ht, g.witch.x, g.witch.z, g);
@@ -1752,7 +1764,7 @@ export class View {
     const TL = this.telescope && t.telescope, haze = LIGHT_UNIFORMS.uHazeRange.value;
     if (TL) { this.hazeBeforeTelescope ??= haze.clone(); haze.set(TL.hazeNear, TL.hazeFar); } else if (this.hazeBeforeTelescope) { haze.copy(this.hazeBeforeTelescope); this.hazeBeforeTelescope = null; }
     const canopyTo = TL ? TL.reach : g.witch.mode !== "ground" ? Math.min(t.haze.far, t.scenery.canopyReach ?? 0) : 0;
-    this.canopyNow += (canopyTo - this.canopyNow) * (Math.abs(canopyTo - this.canopyNow) < 1 ? 1 : 0.08);
+    this.canopyNow = easeCanopyReach(this.canopyNow, canopyTo, this.renderEaseDt);
     LIGHT_UNIFORMS.uCanopyReach.value = this.canopyNow;
     const up = placeCamera(this, time, pose, repaintHeld);
 

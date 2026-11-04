@@ -131,7 +131,7 @@ node tools/inventory.mjs [--check]
 - [`sfx/`](sfx/README.md): 9 scripts — audit.cjs, check.mjs, compare.mjs, live.cjs, mix.mjs, mix.ts, render.ts, run.mjs, run.ts
 - [`shadows/`](shadows/README.md): 4 scripts — prop-light-shots.cjs, scenery-shots.cjs, trunk-cover.cjs, trunk-walkup.cjs
 - [`shot/`](shot/README.md): 10 scripts — contrast.cjs, crown-gap.cjs, crown-look.cjs, crown-whole.cjs, motes.cjs, pixels.cjs, playtest-render.cjs, shot.cjs, stump-diagnostic.cjs, wisps.cjs
-- [`shots/`](shots/README.md): 1 script — push.mjs
+- [`shots/`](shots/README.md): 6 scripts — headless.mjs, mask-coverage.mjs, pixels.mjs, push.mjs, run.mjs, still.mjs
 - [`sigils/`](sigils/README.md): 2 scripts — legendary-sheet.mjs, sheet.mjs
 - [`smoke/`](smoke/README.md): 46 scripts — alarm.cjs, bedroom.cjs, bounce-off.cjs, canopy-hole.cjs, cheer-shots.cjs, creator-menus.cjs, creator.cjs, decide.cjs, dream-way.cjs, dreams.cjs, effects-scene.cjs, flask-stack.cjs, house-bed-start.cjs, hud.cjs, knockdown-bpm.cjs, large-world.cjs, legend-attack.cjs, legend-panel.cjs, legendary-sigil.cjs, legends-flasks.cjs, looks.cjs, magic-dodge.cjs, magic-letters.cjs, magic-sigils.cjs, music-lab-pause.cjs, orbit-combat.cjs, packs.cjs, party-join.cjs, party-life.cjs, partyspell.cjs, pause-on-top.cjs, paused-pixels.cjs, paused-settle.cjs, paused-world.cjs, places.cjs, quick.cjs, room-walk.cjs, smoke.cjs, spell-scroll.cjs, start-screen.cjs, swoop.cjs, trail-cooldown.cjs, trail.cjs, treetop-sigils.cjs, wild-left.cjs, witch-pool.cjs
 - [`soundsystem/`](soundsystem/README.md): 3 scripts — build-preview.mjs, ingame.cjs, sheet.mjs
@@ -153,6 +153,8 @@ node tools/inventory.mjs [--check]
 - [`music-lab/live/player.ts`](music-lab/live/player.ts)
 - [`music-lab/live/ptWorker.ts`](music-lab/live/ptWorker.ts)
 - [`music-lab/live/settings.ts`](music-lab/live/settings.ts)
+- [`shots/scenarios/dodge.mjs`](shots/scenarios/dodge.mjs)
+- [`shots/scenarios/refraction.mjs`](shots/scenarios/refraction.mjs)
 - [`voice/fof/build.mjs`](voice/fof/build.mjs)
 - [`voice/pink-trombone/Noise.js`](voice/pink-trombone/Noise.js)
 - [`voice/pink-trombone/index.js`](voice/pink-trombone/index.js)

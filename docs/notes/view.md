@@ -2,6 +2,16 @@
 
 Patterned lighting (Ed's section4 first slice, strong/default-on rulings on2026-10-31): the opt-in candidate applies automatic texture modulation on one selected soundsystem, one gentle existing treehouse light or campfire (or magic stone if present) and one existing moonlight-aura spell light. `?patternlight=off` keeps original lighting; reduce flashing forces OFF. Explicit `auto|spokes|stripes|bands` cycles or holds looks; omitted/unknown stays off. Shared `LIGHT_GLSL` uses light-local world contacts for ground, grass and sprites; no extra point lights/textures or shadow/normal changes. Three existing slots at most, reset when world/magic/gallery writers replace them. Spatially constant gentle flicker and inverse scale are now prepared in the existing uniform slots; ring sampling reuses the existing light distance. The original spoke atan/centre calculation is retained: the proposed algebra failed the CPU reference centre grid. No uniform array, cap, contrast, falloff or light selection was added/changed. Public/default-on release remains conditional on the [exact-SHA Intel cost gate](../patterned-lighting-review.md).
 
+**Elapsed-time view easing** (#1556, 2026-10-31): camera hill clearance and canopy
+reach use her interpolated elapsed time instead of one fixed step per render.
+The .35/.06 camera and .08 canopy gains match a60Hz step; repeat/pause frames
+advance neither, and their timestamp resets per night. The canopy's final-metre
+snap is after the step, at most one60Hz frame earlier near that boundary, preserving
+equal-total-time behavior. Loading mist remains a wall-time loading overlay;
+the shared tools/shots still harness holds its clock and prepared scene for tests.
+No extra pass/texture or art/potion change. Bench/visual acceptance remains pending;
+see testing.md for the declared frame changes and allocated capture rules.
+
 **Heat/refraction preview** (Ed/root, 2026-10-31; #1543): opt-in `?refraction=1`,
 off by default pending visual/GPU acceptance. One nearest visible campfire plume
 and one party-cast pressure wave use namespaced uniforms in the existing Post
