@@ -92,7 +92,7 @@ for (const delay of [100, 250]) for (const route of ["straight", "turning", "ind
         return Array.from({length:9},(_,i)=>{ const t=i/8;return point({x:(1-t)**2*a.x+2*(1-t)*t*cx+t*t*b.x,z:(1-t)**2*a.z+2*(1-t)*t*cz+t*t*b.z}); });
       };
       for (const id of ["bedroom2Wardrobe", "bedroom2DressingTable"]) waypoints.push(objectFront(HOUSE_ROOMS.objects.find(o=>o.id===id)!,at));
-      waypoints.push(point(branch),objectFront(HOUSE_ROOMS.objects.find(o=>o.id==="bedroom2Door")!,at),...curve(parent,branch,branch.bend).reverse());
+      waypoints.push(point(branch),...curve(parent,branch,branch.bend).reverse()); // (no door on her way out since Ed, 2026-11-03: the bedrooms open)
       waypoints.push(point({x:parent.x+1,z:parent.z}));
       const terrace = shape.trunk.findIndex(r=>r.id==="terrace");
       for(let i=parentIndex;i>terrace;i--)waypoints.push(...curve(shape.trunk[i-1],shape.trunk[i],i%2?1:-1).reverse());

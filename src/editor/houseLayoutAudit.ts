@@ -13,10 +13,11 @@ export function auditLayout(layout: Layout, items: LayoutItem[], H: HouseConfig 
     return Math.abs(d.x) < o.facing.foot.w / 2 + pad && Math.abs(d.z) < o.facing.foot.d / 2 + pad;
   };
   const rows = solid.map(p => {
-    const o = byId.get(p.id)!, anchor = isHatZone(o) ? null : attachedPoint(o, p), room = physicalRoom(p, H), locked = !!H.rooms.find(r => r.id === room)?.locked;
+    const o = byId.get(p.id)!, anchor = isHatZone(o) ? null : attachedPoint(o, p), room = physicalRoom(p, H);
     const footprintOutside = Math.max(...corners(o, p).map(c => distance(c.x, c.z)));
     const blockers = anchor ? solid.filter(q => q.id !== p.id && !isHatZone(byId.get(q.id)!) && inside(byId.get(q.id)!, q, anchor.x, anchor.z, .2)).map(q => q.id) : [];
-    return { id: p.id, function: o.use.kind, sourceRoom: o.room, physicalRoom: room, crossesRooms: o.room !== room, locked, interactive: interactive(o),
+    // (its rooms only as labels: no rule reads them since Ed, 2026-11-03, the house one room; nothing's locked)
+    return { id: p.id, function: o.use.kind, sourceRoom: o.room, physicalRoom: room, interactive: interactive(o),
       ...(isHatZone(o) ? { kind: "hat-spawn-zone", spawnSlots: zoneSlots(o, p, H) } : {}),
       anchor, centerOutside: +distance(p.x, p.z).toFixed(3), footprintOutside: +footprintOutside.toFixed(3), anchorOutside: anchor ? +distance(anchor.x, anchor.z).toFixed(3) : null, approachOverlaps: blockers };
   });
@@ -39,7 +40,7 @@ export function auditLayout(layout: Layout, items: LayoutItem[], H: HouseConfig 
   return { version: 1, floorplan: layout.floorplan, objectCount: solid.length, clutterCount: items.filter(o => o.decor).length,
     hatSpawnPoints: layout.objects.filter(p => byId.get(p.id)!.hatPoint).map(p => ({ id: byId.get(p.id)!.hatPoint!, x: p.x, z: p.z, floorOutside: +distance(p.x, p.z).toFixed(3), footprintOverlaps: solid.filter(q => !isHatZone(byId.get(q.id)!) && inside(byId.get(q.id)!, q, p.x, p.z, .35)).map(q => q.id) })),
     migration: layout.migration ?? null, objects: rows.map((r, i) => ({ ...r, floorReachable: floorReachable[i] })), overlaps, corridors,
-    limitations: ["Floor reachability is a 0.75m sampled walkable-shape check, not navigation/play acceptance.", "Furniture overlap/path crossings are advisory; runtime walking currently has no furniture collision solver.", "Current kitchen baskets/smoke are room-anchored, not moved by a cauldron object transform.", "Bed wake pose/UI and DJ desk/seat orientation need runtime integration before enabling rotated adoption.", "Room labels are display text; stable object use kinds keep station functions, physical membership controls destination lighting."] };
+    limitations: ["Floor reachability is a 0.75m sampled walkable-shape check, not navigation/play acceptance.", "Furniture overlap/path crossings are advisory; runtime walking currently has no furniture collision solver.", "The potion's smoke and the baskets reach a radius round the cauldron (treehouse.house.cauldronReach), not a room.", "Bed wake pose/UI and DJ desk/seat orientation need runtime integration before enabling rotated adoption.", "Room labels are display text only; stable object use kinds keep station functions, and the house has one furniture palette."] };
 }
 function reachableAnchors(H: HouseConfig, anchors: { x: number; z: number }[], start: { x: number; z: number }): boolean[] {
   const step = .75, x0 = Math.min(...H.rooms.map(r => r.x0)) - 4, z0 = Math.min(...H.rooms.map(r => r.z0)) - 4;

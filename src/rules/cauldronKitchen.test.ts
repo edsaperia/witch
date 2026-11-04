@@ -77,24 +77,38 @@ describe("kitchen sequence", () => {
     expect(kitchen.brew?.elapsed).toBe(0);
   });
 
-  it("fixes all recipients at the third ingredient; late arrivals stay normal and leavers still exit", () => {
+  // Ed, 2026-11-03: "The cauldron smoke effect should cover the 10m area for ten seconds or so, and if you walk into it you are
+  // affected by the potion" (in place of the snapshot at the third ingredient, the coordinator's ruling of 2026-10-30).
+  it("takes everyone in reach at the third, then whoever walks in while the smoke hangs, each once, a second later out", () => {
     const stock = newCauldronStock(), kitchen = newCauldronKitchen();
     const host = newCauldronInventory(stock), guest = newCauldronInventory(stock), late = newCauldronInventory(stock);
     for (let i = 0; i < 3; i++) collectMushroom(host, "B");
     enterKitchen(kitchen, host, 4);
     enterKitchen(kitchen, guest, 2);
-    useKitchenBasket(kitchen, host, "B", 4);
-    useKitchenBasket(kitchen, guest, "B", 2);
-    // A witch who left before the third is excluded even if she contributed.
+    useKitchenBasket(kitchen, host, "B", 4, 10);
+    useKitchenBasket(kitchen, guest, "B", 2, 10);
+    // A witch who left before the third isn't taken then, even if she contributed.
     leaveKitchen(kitchen, 2);
-    const events = useKitchenBasket(kitchen, host, "B", 4);
+    const events = useKitchenBasket(kitchen, host, "B", 4, 10);
     expect(events[1]).toMatchObject({ kind: "brewing", recipients: [4] });
-    // Rejoining during smoke does not qualify her; the original occupant leaving does not remove her.
-    enterKitchen(kitchen, guest, 2);
-    enterKitchen(kitchen, late, 7);
-    leaveKitchen(kitchen, 4);
+    leaveKitchen(kitchen, 4); // (leaving doesn't untake her)
     expect(stepKitchen(kitchen, 1)).toEqual([{ kind: "exit", recipe: ["B", "B", "B"], recipients: [4] }]);
-    expect(kitchen.occupants).toEqual([2, 7]);
+    // she comes back at 5 s: taken, out a second later
+    expect(stepKitchen(kitchen, 4)).toEqual([]);
+    enterKitchen(kitchen, guest, 2);
+    expect(kitchen.brew?.recipients).toEqual([4, 2]);
+    expect(stepKitchen(kitchen, 0.5)).toEqual([]);
+    expect(stepKitchen(kitchen, 0.5)).toEqual([{ kind: "exit", recipe: ["B", "B", "B"], recipients: [2] }]);
+    // nobody twice: the host back into the smoke at 7 s is not taken again
+    expect(stepKitchen(kitchen, 1)).toEqual([]);
+    enterKitchen(kitchen, host, 4);
+    expect(kitchen.brew?.recipients).toEqual([4, 2]);
+    // the smoke clears at 10 s: one who arrives at 10.5 s stays normal
+    expect(stepKitchen(kitchen, 3)).toEqual([]);
+    expect(kitchen.brew).toBeNull();
+    stepKitchen(kitchen, 0.5); enterKitchen(kitchen, late, 7);
+    expect(stepKitchen(kitchen, 5)).toEqual([]);
+    expect(kitchen.occupants).toEqual([4, 7]);
   });
 
   it("includes every witch present, only once, regardless of who contributed", () => {

@@ -46,6 +46,7 @@ import { LIGHT_UNIFORMS } from './lighting';
 import { LOADING_LIGHT_GLSL } from './loadingLight';
 import { materialProgramsReady } from './shaderDrawGate';
 import { loanFind } from "../rules/finds";
+import { houseObjectFor } from "../rules/guestFurniture";
 
 type V3 = { x: number; y: number; z: number };
 /** A quad of the rooms in metres on the house's plan (x, z from the hub's centre, rules/houseRooms.ts; h up off the floor) and its
@@ -460,7 +461,7 @@ export class HouseRoomsView {
           (mesh.geometry.getAttribute('position') as THREE.BufferAttribute).needsUpdate = true;
         }
       } else if (late && d?.house?.rooms && w.perch) {
-        const at = objectAt(d, w.x, w.z);
+        const near = objectAt(d, w.x, w.z), at = near && houseObjectFor(g, near);
         if (at && at.use.kind !== 'scenery') {
           const p = toWorld(at.x, at.z, 1.5), s = v.v3.set(p.x, p.y, p.z).project(v.camera), cv = v.canvas.getBoundingClientRect();
           this.box.style.display = 'block'; this.tag.style.display = this.bubble.style.display = 'block';
@@ -530,7 +531,7 @@ export class HouseRoomsView {
       const o = flat(0, 0, 0); this.plan = { o, ex: flat(1, 0, 0).sub(o), ey: flat(0, 0, 1).sub(o), ez: flat(0, 1, 0).sub(o) }; } else this.plan = null;
     // (the hats' floor isn't a thing to use: the hat she's by is, hatToTake; Ed, 2026-10-29: "just an area where normal hat objects
     // are placed")
-    const at0 = inside ? objectAt(D, w.x, w.z) : null, hatBy = at0?.use.kind === "hats" || HOUSE_ROOMS.layout ? hatToTake(W, D, w.x, w.z, g.tuning.leash.runeRadius) : null;
+    const near0 = inside ? objectAt(D, w.x, w.z) : null, at0 = near0 && houseObjectFor(g, near0), hatBy = at0?.use.kind === "hats" || HOUSE_ROOMS.layout ? hatToTake(W, D, w.x, w.z, g.tuning.leash.runeRadius) : null;
     // (by a lying hat in Ed's arrangement, the prompt's the hats' own, id "hats", where the hat lies: there's no hats' floor there)
     const hatSpot = hatBy && HOUSE_ROOMS.layout ? toPlan(D, hatBy.x, hatBy.z) : null;
     const at = hatSpot ? hatPromptAt(hatSpot.x, hatSpot.z) : at0?.use.kind === "hats" && !hatBy ? null : at0;
@@ -664,14 +665,13 @@ export class HouseRoomsView {
     if (!glowed) this.glow.set(null);
     // on the page: the object she's at, a placeholder's line, the bed's ring
     for (const e of g.leashEvents) if ((e.kind === "house" || e.kind === "needBag") && e.obj) {
-      const o = HOUSE_ROOMS.objects.find(q => q.id === e.obj);
+      const found = HOUSE_ROOMS.objects.find(q => q.id === e.obj), o = found && houseObjectFor(g, found); // (a guest's bedroom's piece in solo: its placeholder's line)
       if (o && e.kind === "needBag") this.said = { obj: o, at: ht, line: NEED_BAG }; // (the desk with no bag to carry them: rules/kit.ts)
       else if (o?.use.kind === "say" && this.said?.at !== ht) this.said = { obj: o, at: ht, line: o.use.line };
       else if (o?.use.kind === "telephone") this.said = null; // The ordinary page opens its left station panel.
     }
     if (this.decksLine && d) { this.said = { obj: { ...decksSpot(d), h: DECKS_SAY }, at: this.decksLine.at, line: this.decksLine.line }; this.decksLine = null; }
-    if (this.said && (ht - this.said.at > SAY_FOR || this.said.at > ht || [...this.openGuestRooms ?? []].some(room => this.said?.obj.id === `${room}Door`))) this.said = null;
-    for (const piece of this.pieces.values()) if ([...this.openGuestRooms ?? []].some(room => piece.id === `${room}Door`)) piece.mesh.visible = false;
+    if (this.said && (ht - this.said.at > SAY_FOR || this.said.at > ht)) this.said = null; // (no guest-room doors to hide since Ed, 2026-11-03)
     if (!inside) {
       this.box.style.display = "none"; this.sparkle?.draw(NO_GLINTS, 0, 1); this.tapUse = null; v.usePrompt.id = ""; this.telephoneScreen = null;
       this.ring.style.display = this.wakeL.style.display = this.wakeR.style.display = "none";

@@ -6,7 +6,7 @@ import { KINDS } from './rosters';
 import { rng, hash2 } from './random';
 import { isInside } from './mapShape';
 import { onLake } from './lakes';
-import { HOUSE_ROOMS, fromPlan, roomAt } from './houseRooms';
+import { HOUSE_ROOMS, fromPlan } from './houseRooms';
 import { deckOf } from './treehouse';
 import { kitchenPlacement } from './kitchenPlacement';
 import { roomAt as planRoomAt } from '../../config/house/shape.js';
@@ -17,6 +17,14 @@ export const MUSHROOM_COLOURS = ['blue', 'purple', 'pink', 'red', 'orange', 'yel
 export type MushroomColour = typeof MUSHROOM_COLOURS[number];
 export const BIOME_MUSHROOM: Record<string, MushroomColour> = { temperate: 'red', cold: 'blue', 'mountains and glaciers': 'white', volcanic: 'orange', badlands: 'purple', hot: 'yellow', 'mangrove swamp': 'turquoise', jungle: 'pink', 'cold rainforest': 'green' };
 export const POTION_SECONDS = 600, MUSHROOM_REACH = 2.5, BASKET_REACH = 2.4;
+/** A witch's spin in the smoke before she falls (s), from when it takes her: as long as the whole smoke lasted before it hung over the
+ *  cauldron's reach (Ed, 2026-11-03), so the one at the pot falls when she always did. */
+export const SMOKE_SPIN = 4;
+/** The cauldron's reach (m) and how long its smoke hangs (s): the tuning's treehouse.house.cauldronReach and cauldronSmoke (Ed,
+ *  2026-11-03: "10m cauldron reach is fine"; "The cauldron smoke effect should cover the 10m area for ten seconds or so, and if you
+ *  walk into it you are affected by the potion"). */
+export const cauldronReach = (t: Game['tuning']): number => t.treehouse?.house?.cauldronReach ?? 10;
+export const cauldronSmoke = (t: Game['tuning']): number => t.treehouse?.house?.cauldronSmoke ?? 10;
 export interface MushroomPatch { id: string; x: number; z: number; type: MushroomColour; seed: number; picked: boolean }
 export interface MushroomFlight { id: number; type: MushroomColour; kind: 'unload' | 'brew'; witch: number; from: { x: number; z: number }; to: { x: number; z: number }; at: number; lands: number }
 export interface PotionExposure { at: number; fallAt: number; landAt: number; wakeAt: number; freeAt: number; from: { x: number; z: number }; to: { x: number; z: number }; recipe: MushroomColour[]; woken?: boolean }
@@ -29,7 +37,9 @@ export interface MushroomState {
   puffs: { id: number; x: number; z: number; type: MushroomColour; at: number }[];
   plops: { id: number; type: MushroomColour; at: number }[];
   ingredients: MushroomColour[];
-  smoke: { at: number; until: number; recipe: MushroomColour[] } | null;
+  /** A brew's smoke over the cauldron's reach, from the third mushroom's plop till `until` (cauldronSmoke seconds); `taken`: the
+   *  witches it has taken, each once (absent in an older save: none yet). */
+  smoke: { at: number; until: number; recipe: MushroomColour[]; taken?: number[] } | null;
   affected: Record<number, PotionExposure>;
   trips: Record<number, PotionTrip>;
   nextUnload: Record<number, number>;
@@ -108,6 +118,7 @@ export function kitchenPlan(optIn = edLayoutRequested()) {
     return { type, x: room.x + Math.cos(a) * radius, z: room.z + Math.sin(a) * radius };
   });
   const selected = kitchenPlacement({ room, cauldron, baskets }, optIn);
+  // (`room`: the room under the pot, only where its picture is anchored, render/brewing.ts; who it reaches is cauldronReach's)
   const destination = planRoomAt(HOUSE_ROOMS.shape, selected.cauldron.x, selected.cauldron.z)?.id;
   return { ...selected, room: HOUSE_ROOMS.rooms.find(r => r.id === destination) ?? room };
 }
@@ -115,12 +126,20 @@ export function kitchenLayout(g: Pick<Game, 'map' | 'tuning'>) {
   const plan = kitchenPlan(), at = deckOf(g.map, g.tuning) ?? g.map.treehouse;
   return { room: plan.room, cauldron: fromPlan(at, plan.cauldron.x, plan.cauldron.z), baskets: plan.baskets.map(b => ({ type: b.type, ...fromPlan(at, b.x, b.z) })) };
 }
-export function inKitchen(g: Game, W: Witch): boolean {
+/** Within the cauldron's reach: on foot in the house (on its floor, not seated), at most cauldronReach metres from the pot's middle
+ *  (Ed, 2026-11-03: "The cauldron it could affect all witches in a radius"; it was the room the pot stands in). The one rule for
+ *  the potion's smoke and unloading what she carries, and for the legacy kitchen (rules/cauldronNight.ts). */
+export function inCauldronReach(g: Pick<Game, 'map' | 'tuning'>, W: Witch): boolean {
   const d = deckOf(g.map, g.tuning), w = W.body;
-  return !!d && !!w.perch && w.mode === 'ground' && !w.seated && roomAt(d, w.x, w.z)?.id === kitchenPlan().room.id;
+  if (!d?.house?.rooms || !w.perch || w.mode !== 'ground' || w.seated) return false;
+  const pot = kitchenLayout(g).cauldron;
+  return Math.hypot(w.x - pot.x, w.z - pot.z) <= cauldronReach(g.tuning);
 }
+/** The basket she's at: on foot in the house (on its floor, not seated), within BASKET_REACH of it, wherever Ed's layout puts it (the
+ *  baskets work by their own nearness, not the cauldron's reach: some of his stand 11 m from the pot). */
 export function basketNear(g: Game, W = g.witches[0]) {
-  if (!inKitchen(g, W)) return null;
+  const d = deckOf(g.map, g.tuning), w = W.body;
+  if (!d?.house?.rooms || !w.perch || w.mode !== 'ground' || w.seated) return null;
   return kitchenLayout(g).baskets.map(b => ({ ...b, distance: Math.hypot(b.x - W.body.x, b.z - W.body.z) })).filter(b => b.distance <= BASKET_REACH).sort((a, b) => a.distance - b.distance)[0] ?? null;
 }
 export function mushroomNear(g: Game, W = g.witches[0]): MushroomPatch | null {
@@ -162,12 +181,15 @@ export function stepMushrooms(g: Game): void {
     if (f.kind === 'unload') s.baskets[f.type]++;
     else {
       s.ingredients.push(f.type); s.plops.push({ id: f.id, type: f.type, at });
-      if (s.ingredients.length === 3) s.smoke = { at, until: at + 4, recipe: [...s.ingredients] };
+      if (s.ingredients.length === 3) s.smoke = { at, until: at + cauldronSmoke(g.tuning), recipe: [...s.ingredients], taken: [] };
     }
   }
+  // (anyone on foot in the house who is within the reach at any moment while the smoke lasts, walking in after the brew too: once each)
   if (s.smoke && at < s.smoke.until) for (const W of g.witches) {
-    if (W.ko || s.affected[W.id] || !inKitchen(g, W)) continue;
-    const fallAt = s.smoke.until, landAt = fallAt + 1.1, wakeAt = landAt + 2;
+    const taken = s.smoke.taken ??= [];
+    if (W.ko || s.affected[W.id] || taken.includes(W.id) || !inCauldronReach(g, W)) continue;
+    taken.push(W.id);
+    const fallAt = at + SMOKE_SPIN, landAt = fallAt + 1.1, wakeAt = landAt + 2;
     s.affected[W.id] = { at, fallAt, landAt, wakeAt, freeAt: wakeAt + 3, from: { x: W.body.x, z: W.body.z }, to: { x: W.body.x, z: W.body.z + 2 }, recipe: [...s.smoke.recipe] };
     W.dash.until = at; W.dash.bufferUntil = undefined;
   }
@@ -186,7 +208,7 @@ export function stepMushrooms(g: Game): void {
     }
     if (s.trips[W.id] && g.clock.time >= s.trips[W.id].until) delete s.trips[W.id];
     const bag = s.carried[W.id];
-    if (!p && bag?.length && inKitchen(g, W) && at >= (s.nextUnload[W.id] ?? 0)) {
+    if (!p && bag?.length && inCauldronReach(g, W) && at >= (s.nextUnload[W.id] ?? 0)) {
       const type = bag.shift()!, to = kitchenLayout(g).baskets.find(b => b.type === type)!;
       s.flights.push({ id: s.serial++, type, kind: 'unload', witch: W.id, from: { x: W.body.x, z: W.body.z }, to: { x: to.x, z: to.z }, at, lands: at + .7 });
       s.nextUnload[W.id] = at + .5;

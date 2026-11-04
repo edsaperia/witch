@@ -9,7 +9,9 @@ import { stationOf } from "../../rules/stations";
 import { stationAuthority } from "./stationAuthority";
 import { applyStationChoice, stationChoice } from "./stationChoice";
 import { localView } from "./localView";
-import { furnitureFor } from "../../rules/guestFurniture";
+import { furnitureFor, houseObjectFor } from "../../rules/guestFurniture";
+import { furnitureState, furnitureStates } from "../../render/houseFurniture";
+import { GUEST_FURNITURE } from "../../../art/furniture.js";
 import { houseSteps } from "./houseSteps";
 import { localHouseAction } from "../../app/houseActions";
 
@@ -32,7 +34,7 @@ const use = (g: Game, w: Witch, time: number, held = false) => {
 };
 const authority = stationAuthority(() => ({ bags: new Set(), hats: new Set(), parts: new Set() }));
 
-it("keeps home bed/wardrobe dispatch and leaves solo guest rooms unavailable", () => {
+it("keeps home bed/wardrobe dispatch; in solo the open guest rooms' furniture waits under dust sheets (Ed, 2026-11-03)", () => {
   const g = fresh(), host = g.witches[0], bed = object("bed");
   at(g, host, "wardrobe"); use(g, host, 0);
   expect(g.leashEvents.some(e => e.kind === "house" && e.obj === "wardrobe" && e.id === 0)).toBe(true);
@@ -43,9 +45,34 @@ it("keeps home bed/wardrobe dispatch and leaves solo guest rooms unavailable", (
   expect(host.house?.slept).toBe(true);
   expect(g.leashEvents.filter(e => e.obj === "slept")).toHaveLength(1);
   for (const room of ["bedroom2", "bedroom3"]) {
-    expect(HOUSE_ROOMS.rooms.find(r => r.id === room)?.locked).toBe(true);
+    expect(HOUSE_ROOMS.rooms.find(r => r.id === room), room).not.toHaveProperty("locked"); // (open to walk in: Ed, 2026-11-03)
     expect(furnitureFor(g, host, object(`${room}Wardrobe`))).toBe(false);
+    for (const kind of ["Bed", "Wardrobe", "DressingTable"]) {
+      const id = `${room}${kind}`;
+      expect(furnitureState(id, g), id).toBe("sheeted");
+      at(g, host, id); g.leashEvents = []; if (host.house) { host.house.slept = false; delete host.house.bedFrom; } use(g, host, 50); use(g, host, 51, true); use(g, host, 51 + HOUSE_ROOMS.bed.hold + 1, true);
+      // E only says it waits: a house event whose object, as E finds it, is the placeholder's line; no station, no bed hold.
+      expect(g.leashEvents.some(e => e.kind === "house" && e.obj === id), id).toBe(true);
+      expect(houseObjectFor(g, object(id)).use, id).toEqual({ kind: "say", line: "Waiting for its witch." });
+      expect(stationOf(g, null)?.id, id).not.toBe(id); expect(authority(g, 0, { kind: "look", station: id, changes: {} }), id).toBe(false);
+      expect(host.house?.bedFrom, id).toBeUndefined();
+    }
   }
+});
+
+it("draws the guests' bedrooms' furniture uncovered once a visit starts and sheeted again once it ends, switching once each way", () => {
+  const g = fresh(), ids = HOUSE_ROOMS.objects.filter(o => GUEST_FURNITURE.has(o.id)).map(o => o.id);
+  expect(ids).toHaveLength(6);
+  for (const id of ids) expect(furnitureStates(id), id).toEqual(["sheeted", "open"]); // (both baked up front: the switch bakes nothing)
+  const states: string[] = [], frame = () => states.push(ids.map(id => furnitureState(id, g)).join());
+  frame(); frame();
+  const guest = newWitchPlayer(1, 0, 0, g.tuning); g.witches.push(guest); frame(); // (joined, not yet woken in her room: still solo's)
+  expect(startWakeFor(g, 0, { yesterday: true }, guest, { player: 1, room: "bedroom3" })).toBe(true);
+  frame(); frame();
+  for (const id of ids) expect(houseObjectFor(g, object(id)), id).toBe(object(id));
+  g.witches.pop(); delete guest.wake; frame(); frame();
+  const changes = states.filter((s, i) => i > 0 && s !== states[i - 1]);
+  expect(states[0]).toBe(ids.map(() => "sheeted").join()); expect(changes).toEqual([ids.map(() => "open").join(), states[0]]);
 });
 
 it.each(["bedroom2", "bedroom3"] as const)("shares all visit dressing furniture after first arrival in %s", room => {
