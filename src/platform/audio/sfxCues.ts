@@ -43,6 +43,7 @@ import { nightKind } from "./night";
 import { AREA_TYPES } from "../../rules/map";
 import { leyPulse, pointerShown, type P2 } from "../../rules/leypulse";
 import { aggroOf } from "../../rules/wildWatch";
+import { wakeAggro } from "../../rules/challengeStatues";
 import { fireworkShells, type Shell } from "../../rules/fireworks";
 
 /** The combat events that are a creature attacking (its id the attacker): each a burst of its speech. */
@@ -570,10 +571,11 @@ export class SfxCues {
   /** The wild watch's warning (art builder 3's aggroOf, rules/wildWatch.ts): rising while a wild area's watchers stare at
    *  her; when it ends, a hit if the watch ran its course (they attack) or a fall if it was called off (she rose, left or
    *  was knocked out). aggroOf goes null on the attack's own step too, so the last k tells which (art builder 3: k reaches
-   *  1 on the step the watch ends; a call-off leaves it below about 0.98). */
+   *  1 on the step the watch ends; a call-off leaves it below about 0.98). The challenge circle's wake-up plays it too (Ed, 2026-11-04:
+   *  "all the animals glow red ... and after 8 seconds, they all awaken"; a rising build over its bars, its hit on the bar they wake). */
   private aggro({ g }: Here): void {
     if (!g.tuning.sfx.aggro) return;
-    const a = aggroOf(g);
+    const a = aggroOf(g) ?? wakeAggro(g); // (or the challenge circle's statues waking, its warning: rules/challengeStatues.ts, Ed 2026-11-04)
     if (a) { this.aggroK = a.k; this.aggroDanger = a.danger; this.sfx.aggro(a.k, a.danger); return; }
     if (this.aggroK === null) return;
     const w = g.witches[0], attacked = this.aggroK >= 0.98 && !!w && w.body.mode === "ground" && !w.ko;

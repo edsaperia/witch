@@ -5,7 +5,9 @@
 //     (art/sigils.js islandSigil: home's the World Tree) carved into it by the ground's own pass (Ed, 2026-11-03, on #1725: "it
 //     should look like it's carved into the circle", not a pixellated glyph over it): its legendary sigil's mask at 768 px across
 //     the circle (render/legendCarving.ts bigCarvingMask), grooves with clean edges, shadowed walls and lit lips, a soft moonlit
-//     glow in them, brighter while she's in it or it's ready to cast (challengeCarving; render/ground.ts uChallengeCarve);
+//     glow in them following the fight (carvingLook; Ed, 2026-11-04, on #1804: asleep a little moonlight, waking red, fighting cold,
+//     won warm, back to stone fading to dark; challengeCarving; render/ground.ts uChallengeCarve, uChallengeLook), and a little
+//     moonlight on its stone floor so it reads as a circle (challenge.carving.floor);
 //   - the columns: the classical ruins' standing column (art/landmarks.js "column"), drawn alone (a "find" art job, as tonight's find
 //     is: render/view/finds.ts), round its edge (rules/challenge.ts columnSpots), one a kind of the island's roster;
 //   - the columns are its sigil stack (Ed, 2026-11-03: "the sigils are on top of the columns, one type per column"): on each column's
@@ -16,8 +18,13 @@
 //     left, that kind won, its top lit steadily in the party's warm colour (the friends' adult's, leash.ranks.colours) where the
 //     others glow faint and cold; every column lit, the spell's notes at its middle;
 //   - no beam of light over it (Ed, 2026-11-03, on #1725: "remove the beam"): the telescope and the footpaths find it;
-//   - ready to cast: the spell's music notes at its middle, as at a stone (render/leash/stones.ts); casting, its fill a ring of
-//     rainbow dots round her;
+//   - its pack as statues (rules/challengeStatues.ts; Ed, 2026-11-04): their sigils on the columns grey while they're stone, glowing
+//     from grey to their wild colours on the beat as they wake (render/statues.ts statueSigilColour); the statues themselves,
+//     render/view/creatures.ts;
+//   - ready to cast: the spell's music notes at its middle, as at a stone (render/leash/stones.ts); casting, the music spell's analyser
+//     filling the whole circle (Ed, 2026-11-04: "should be larger, the audio analyser filling the whole stone circle"; challengeAnalyser:
+//     its bars out from its middle to near its edge at the music's loudest, as the great stumps' dial, filling round as the cast fills),
+//     held a moment as it's cleared;
 //   - cleared: home's dancefloor fills the circle in place of its stone floor and sigil (Ed, 2026-11-03, on #1725: "it should fill
 //     the circle, like the one at home does ... it can look the same as the home dancefloor, replacing the previous floor"): the
 //     ground's dancefloor art, scaled from home's rim to the circle's radius (render/ground.ts uFloor2), coming in from the middle
@@ -32,7 +39,7 @@ import type { Game } from "../rules/game";
 import type { Tuning } from "../rules/tuning";
 import { challengeColumns, challengeOf, challengeReady, columnKinds, columnSpots, rewardFall } from "../rules/challenge";
 import * as THREE from "three";
-import { castOf, castProgress } from "../rules/stoneStacks";
+import { castProgress } from "../rules/stoneStacks";
 import { beatAt, timeAt } from "../rules/beat";
 import type { Shell, ShellKind } from "../rules/fireworks";
 import type { Fireworks } from "./fireworks";
@@ -41,7 +48,10 @@ import { hash2 } from "../rules/random";
 import { rainbow } from "./indicator";
 import { SpriteBatch, type SpriteInstance } from "./sprites";
 import type { LeashView } from "./leash";
-import { columnOf, columnSigil, columnSigilSize, notesSlot, upY, upZ } from "./leash/stones";
+import { barLevel, columnOf, columnSigil, columnSigilSize, notesSlot, upY, upZ } from "./leash/stones";
+import { statueSigilColour } from "./statues";
+import { wakeK } from "../rules/challengeStatues";
+import { DANGER } from "./leash/attackLook";
 import { rankColour, sigilRankColour, stoneKnobs } from "./leash/ranks";
 import { NO_CARVING } from "./legendCarving";
 import type { View } from "./view";
@@ -74,15 +84,45 @@ export function challengeRing(g: Game, x: number, z: number): { x: number; z: nu
   return { x: ch.x, z: ch.z, r: ch.radius, edge: g.tuning.legendClearing.edge, glow, species: NO_CARVING, glint: 0 };
 }
 
-/** The island's sigil carved into the circle's floor (render/ground.ts setChallengeCarving): its middle, radius, whose sigil, and the
- *  soft moonlit glow in its grooves (brighter with her in it, brighter still and breathing once it's ready to cast; none once closed);
- *  null with none, cleared (its dancefloor covers it), or far off. */
-export function challengeCarving(g: Game, x: number, z: number): { x: number; z: number; r: number; glow: number; species: string } | null {
+/** The moonlit glow in its grooves (the carving's own, before the statues). */
+export const MOONLIT: [number, number, number] = [0.35, 0.72, 0.8];
+
+/** Its carved sigil's look as the fight goes (Ed, 2026-11-04, on #1804, by the colour grammar, render/colourGrammar.ts: red the
+ *  warning, cold the wild, warm the won; challenge.carving): its glow's strength and colour, and which state that is.
+ *  - "stone" (its statues asleep): dark but readable, a carving catching a little moonlight (`stone`), not glowing;
+ *  - "waking": glowing red with the statues over the wake-up's bars, rising to `red`, brighter on each beat (the danger red);
+ *  - "fight" (the pack awake): a steady cold wild glow (`wild`, the wild adult's colour);
+ *  - "won" (every column lit, the spell to cast): warm (`warm`, the party adult's colour), breathing; the dancefloor covers it once cast;
+ *  - "fading" (back to stone after a fight): from the cold glow back to dark over `fade` seconds;
+ *  - "dark" (closed): nothing; "moonlit" (the statues off, or a night from before them): the carving's glow as it was (brighter with
+ *    her in it, brighter still ready to cast). */
+export function carvingLook(g: Game): { glow: number; rgb: [number, number, number]; state: "stone" | "waking" | "fight" | "won" | "fading" | "dark" | "moonlit" } {
+  const ch = g.challenge!, t = g.tuning, C = challengeOf(t).carving, st = ch.statues, time = g.clock.time;
+  if (ch.closedAt !== null) return { glow: 0, rgb: MOONLIT, state: "dark" };
+  if (!st) {
+    const inside = g.witch.mode === "ground" && Math.hypot(g.witch.x - ch.x, g.witch.z - ch.z) <= ch.radius;
+    return { glow: challengeReady(g) ? 1.6 + 0.3 * Math.sin(time * 3) : inside ? 1.2 : 0.7, rgb: MOONLIT, state: "moonlit" };
+  }
+  if (challengeReady(g)) return { glow: C.warm * (0.9 + 0.1 * Math.sin(time * 3)), rgb: rankColour(t, 2, true), state: "won" };
+  const k = wakeK(g);
+  if (st.phase === "waking" && k !== null) return { glow: C.stone + (C.red - C.stone) * k * (0.75 + 0.25 * beatPulse(g)), rgb: [...DANGER], state: "waking" };
+  if (st.phase === "awake") return { glow: C.wild, rgb: rankColour(t, 2, false), state: "fight" };
+  const f = st.back && st.at !== undefined ? (time - st.at) / Math.max(0.05, C.fade) : 1;
+  if (f < 1) {
+    const e = smooth(f), w = rankColour(t, 2, false);
+    return { glow: C.wild + (C.stone - C.wild) * e, rgb: [w[0] + (MOONLIT[0] - w[0]) * e, w[1] + (MOONLIT[1] - w[1]) * e, w[2] + (MOONLIT[2] - w[2]) * e], state: "fading" };
+  }
+  return { glow: C.stone, rgb: MOONLIT, state: "stone" };
+}
+
+/** The island's sigil carved into the circle's floor (render/ground.ts setChallengeCarving): its middle, radius, whose sigil, the glow
+ *  in its grooves and its colour (carvingLook), and the moonlight on its stone floor (challenge.carving.floor: so the circle reads as
+ *  a circle before she steps in); null with none, cleared (its dancefloor covers it), or far off. */
+export function challengeCarving(g: Game, x: number, z: number): { x: number; z: number; r: number; glow: number; rgb: [number, number, number]; floor: number; species: string } | null {
   const ch = g.challenge;
   if (!ch || ch.clearedAt !== null || Math.hypot(ch.x - x, ch.z - z) > NEAR + ch.radius) return null;
-  const inside = g.witch.mode === "ground" && Math.hypot(g.witch.x - ch.x, g.witch.z - ch.z) <= ch.radius;
-  const glow = ch.closedAt !== null ? 0 : challengeReady(g) ? 1.6 + 0.3 * Math.sin(g.clock.time * 3) : inside ? 1.2 : 0.7;
-  return { x: ch.x, z: ch.z, r: ch.radius, glow, species: islandSigilOf(g.map) };
+  const L = carvingLook(g), floor = ch.closedAt !== null || !ch.statues ? 0 : Math.max(0, challengeOf(g.tuning).carving.floor);
+  return { x: ch.x, z: ch.z, r: ch.radius, glow: L.glow, rgb: L.rgb, floor, species: islandSigilOf(g.map) };
 }
 
 /** A waiting column's top light (Ed, 2026-11-03: a column with no sigils left is that kind finished): lit, steady and warm (the
@@ -143,7 +183,7 @@ export function drawChallenge(lv: LeashView, time: number, dot: number[]): void 
       const vis = smooth((K.range - Math.hypot(col.x - w.x, col.z - w.z)) / Math.max(1, K.fade));
       if (lit || !sigils || vis <= 0.01) continue;
       const P = columnOf(col.sigils, lvl => columnSigilSize(t, lvl));
-      col.sigils.forEach((it, i) => { const h = COLUMN_TOP + P[i].y; columnSigil(lv, time, dot, it.id, it.level, col.x, upY(col.x, col.z, h), upZ(col.z, h), P[i].size, vis, sigilRankColour(t, it.level, false, false)); });
+      col.sigils.forEach((it, i) => { const h = COLUMN_TOP + P[i].y; columnSigil(lv, time, dot, it.id, it.level, col.x, upY(col.x, col.z, h), upZ(col.z, h), P[i].size, vis, statueSigilColour(g, sigilRankColour(t, it.level, false, false))); }); // (grey while its pack's stone, glowing as they wake: render/statues.ts)
     }
     // Ready (every column lit): the spell's notes at its middle, and her fill round her as she casts.
     if (!challengeReady(g)) return;
@@ -154,12 +194,11 @@ export function drawChallenge(lv: LeashView, time: number, dot: number[]): void 
       lv.flat.add(ch.x, 0, ch.z, size, notesSlot(lv), col[0], col[1], col[2], 0.6 * on);
     }
     const key = `challenge:${ch.key}`, k = W ? castProgress(W, key, W.time ?? g.herTime, t) : 0;
-    if (k > 0) {
-      const n = 48, R = castOf(t).radius + 1.2;
-      for (let i = 0; i < Math.round(n * k); i++) { const a = -Math.PI / 2 + (i / n) * Math.PI * 2, c = rainbow(i / n + time * 0.15); lv.flat.add(w.x + Math.cos(a) * R, 0.06, w.z + Math.sin(a) * R, 0.6, dot, c[0], c[1], c[2], 0.9, 1, true); }
-    }
+    if (k > 0) drawAnalyser(lv, dot, time, k, W?.casting === key ? 1 : 0.6, 1);
     return;
   }
+  // (the analyser held full a moment as it clears, fading as its dancefloor comes in)
+  { const e = g.clock.time - ch.clearedAt, hold = FLOOR_RISE * 2; if (e >= 0 && e < hold) drawAnalyser(lv, dot, time, 1, 1, 1 - e / hold); }
   // Cleared: the columns light on the beat, each its own colour round the rainbow; the party's eruption as it clears, its dome while
   // its dancefloor comes in (the ground's: challengeFloor).
   const e = g.clock.time - ch.clearedAt;
@@ -180,6 +219,38 @@ export function drawChallenge(lv: LeashView, time: number, dot: number[]): void 
     }
     if (ch.reward === "flask") lv.over.add(ch.x, f.y + 0.6, ch.z, 1.2 + 0.4 * f.k, dot, 1, 0.85, 0.5, 0.95, 1, true);
   }
+}
+
+/** The music spell's analyser at the circle (Ed, 2026-11-04: "should be larger, the audio analyser filling the whole stone circle";
+ *  challenge.analyser): `bars` bars round its middle, the first due south (toward the camera) and on round as the great stumps' dial,
+ *  the first `k` of them lit (the cast's share), each reaching out `reach` x its level (0 to 1) of its `steps` dots, the last at `fill`
+ *  of its radius, so it fills the circle however big it's grown (rules/challengeCircle.ts). Each dot to `emit`: where, its size (m),
+ *  its bar's share round (0 to 1) and whether it's its bar's tip. */
+export function challengeAnalyser(ch: { x: number; z: number; radius: number }, t: Tuning, k: number, reach: number, level: (i: number, n: number) => number, emit: (x: number, z: number, size: number, f: number, tip: boolean) => void): void {
+  const A = challengeOf(t).analyser, n = Math.max(8, Math.round(A.bars)), steps = Math.max(2, Math.round(A.steps));
+  const out = ch.radius * Math.max(0.1, Math.min(1, A.fill)), cell = out / (steps + 1), inner = cell; // (from a dot out from her at its middle)
+  for (let i = 0; i < n; i++) {
+    const f = i / n;
+    if (f >= k) break;
+    const top = Math.max(0, Math.min(steps - 1, Math.round(level(i, n) * reach * (steps - 1)))), a = Math.PI / 2 + f * Math.PI * 2, ux = Math.cos(a), uz = Math.sin(a);
+    for (let j = 0; j <= top; j++) { const r = inner + (j + 1) * cell; emit(ch.x + ux * r, ch.z + uz * r, cell, f, j === top); }
+  }
+}
+
+/** The analyser drawn (challengeAnalyser) in the leash's layers, its bars the music's spectrum (the stones' eased levels: the
+ *  stones' view reads it while it's wanted), painted on and glowing in their own colour, as a stump's (render/leash/stones.ts). */
+function drawAnalyser(lv: LeashView, dot: number[], time: number, k: number, reach: number, alpha: number): void {
+  const g = lv.game, ch = g.challenge!, V = lv.stoneView, spec = V.spectrum, dt = Math.min(0.1, lv.frameDt);
+  V.wantsSpectrum = true;
+  const level = (i: number, m: number) => {
+    const j = i % V.bars.length, live = spec ? barLevel(spec, i, m) : 0.25 + 0.2 * Math.abs(Math.sin(time * 1.3 + i * 1.7) * 0.6 + Math.sin(time * 2.1 + i * 0.9) * 0.4);
+    return (V.bars[j] = Math.max(live, V.bars[j] - dt * 1.8));
+  };
+  challengeAnalyser(ch, g.tuning, k, reach, level, (x, z, size, f, tip) => {
+    const c = rainbow(f + time * 0.15), lo = Math.min(c[0], c[1], c[2]) * 0.9;
+    lv.ink.add(x, 0.06, z, size, dot, c[0], c[1], c[2], alpha * (tip ? 1 : 0.9));
+    lv.flat.add(x, 0.08, z, size * 1.8, dot, (c[0] - lo) * 1.2, (c[1] - lo) * 1.2, (c[2] - lo) * 1.2, alpha * (tip ? 0.6 : 0.45), 1, true);
+  });
 }
 
 /** Beats in a bar (the music's 4/4: rules/game.ts reckons bars so). */
