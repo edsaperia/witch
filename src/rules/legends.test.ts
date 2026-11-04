@@ -335,8 +335,10 @@ describe("charging legends' long charge (Ed, 2026-10-05; legends.json charge)", 
     const { g, L, target } = angryBoar(70);
     const lair = { x: L.x, z: L.z };
     target.z += 12; target.anchorZ = target.z; // (a little off its first lane: it curves)
+    const tx = target.x, tz = target.z;
     let windups = 0, maxAway = 0, bentBy = 0, a0: number | null = null, braking = false, home = false;
     run(g, 60, idle, () => {
+      Object.assign(target, { x: tx, z: tz, fight: undefined }); // (it stands where it was parked: the boar's lair is within its chain's length of its sigil, so it would go for the boar, Ed 2026-11-04 "A parked creature should guard its chain length")
       const r = L.run;
       if (r?.phase === "windup") { if (g.clock.time - r.at < 1e-6) { windups++; expect(Math.hypot(L.x - L.lairX!, L.z - L.lairZ!)).toBeLessThan(3); } a0 = r.angle; }
       if (r && a0 !== null && r.phase !== "windup") bentBy = Math.max(bentBy, Math.abs(Math.atan2(Math.sin(r.angle - a0), Math.cos(r.angle - a0))));
