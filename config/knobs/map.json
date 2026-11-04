@@ -76,6 +76,23 @@
       ],
       "notes": "an island grows out from home over its areas' neighbours, each step the area nearest home for the island's reach that way, by its phase's shape (shapes[phase], index 0 home: near-round; 1 gently lobed; 2 bays and a peninsula; 3 arms and inlets; 4 and 5 strongly irregular): lobes, how far its outline swells and shrinks round home (a share of its reach) over harmonics bumps; arms, how far its peninsulas reach past it (a share), armCount[0] to [1] of them, each armWidth radians across; bays, how deep its bays cut in, bayCount[0] to [1] of them; jitter, each area's own seeded nudge in areas (ragged edges). Home's neighbours are always its first. an island's phase when it isn't one by roster (?phase=0 to 5; a kind's island takes its own)."
     },
+    "map.rosterNeighbourhood": {
+      "what": "How many degrees either side of an island's bearing its compass neighbourhood reaches: the other kinds it takes one area each before any kind gets a second.",
+      "decisions": [
+        {
+          "by": "Ed",
+          "date": "2026-11-04",
+          "quote": [
+            "Now that islands have fewer areas, we can have fewer (none?) repeats of creature types on an island, besides the island of the creature type itself."
+          ],
+          "rest": "offered no repeats at all, a middle way or keep; he chose the middle way: no repeats (each other kind on one area) wherever a kind from the island's own compass neighbourhood is still available, 2 areas a kind only when the neighbourhood runs out. Before: every other kind on up to 2 areas by weight (Ed, 2026-10-28: \"Of other kinds, there should be no more than 2\"), so a phase-1 island had its own kind and 4 others, 2 areas each."
+        }
+      ],
+      "links": [
+        "rules/rosters.ts"
+      ],
+      "notes": "90: the half of the compass the island faces (its other kinds' mean bearing about 45 to 50 degrees off its own, as before; none past 90 unless the neighbourhood runs out). A phase-1 island (10 areas) then has 6 or 7 kinds, not 5. 0 is the 2026-10-28 rule exactly (every other kind on 2 areas, by weight); 180 the whole compass (still weighted toward near bearings). The 1-3 kinds new to the island's phase come first whatever it is. The night's map reads it (a new map: it reloads); the sea chart's island pictures keep the file's."
+    },
     "map.coast": {
       "what": "How irregular the island's coastline is, with gentle bays and headlands rather than a perfect circle.",
       "decisions": [

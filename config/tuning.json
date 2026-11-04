@@ -16,6 +16,7 @@
     "island": "home",
     "found": [],
     "phase": 0,
+    "rosterNeighbourhood": 90,
     "shapes": [
       {
         "lobes": 0.08,

@@ -37,6 +37,10 @@ The forest: mapAreas x mapAreas areas cut by the fractal partition. An area is a
   1. Ed, 2026-10-11: the journey's irregular islands: rules/islandGrowth.ts
   an island grows out from home over its areas' neighbours, each step the area nearest home for the island's reach that way, by its phase's shape (shapes[phase], index 0 home: near-round; 1 gently lobed; 2 bays and a peninsula; 3 arms and inlets; 4 and 5 strongly irregular): lobes, how far its outline swells and shrinks round home (a share of its reach) over harmonics bumps; arms, how far its peninsulas reach past it (a share), armCount[0] to [1] of them, each armWidth radians across; bays, how deep its bays cut in, bayCount[0] to [1] of them; jitter, each area's own seeded nudge in areas (ragged edges). Home's neighbours are always its first. an island's phase when it isn't one by roster (?phase=0 to 5; a kind's island takes its own).
   Code: `rules/islandGrowth.ts`
+- **`map.rosterNeighbourhood`**: How many degrees either side of an island's bearing its compass neighbourhood reaches: the other kinds it takes one area each before any kind gets a second.
+  1. Ed, 2026-11-04: "Now that islands have fewer areas, we can have fewer (none?) repeats of creature types on an island, besides the island of the creature type itself." (offered no repeats at all, a middle way or keep; he chose the middle way: no repeats (each other kind on one area) wherever a kind from the island's own compass neighbourhood is still available, 2 areas a kind only when the neighbourhood runs out. Before: every other kind on up to 2 areas by weight (Ed, 2026-10-28: "Of other kinds, there should be no more than 2"), so a phase-1 island had its own kind and 4 others, 2 areas each.)
+  90: the half of the compass the island faces (its other kinds' mean bearing about 45 to 50 degrees off its own, as before; none past 90 unless the neighbourhood runs out). A phase-1 island (10 areas) then has 6 or 7 kinds, not 5. 0 is the 2026-10-28 rule exactly (every other kind on 2 areas, by weight); 180 the whole compass (still weighted toward near bearings). The 1-3 kinds new to the island's phase come first whatever it is. The night's map reads it (a new map: it reloads); the sea chart's island pictures keep the file's.
+  Code: `rules/rosters.ts`
 - **`map.coast`**: How irregular the island's coastline is, with gentle bays and headlands rather than a perfect circle.
   1. Ed, 2026-10-06: "The island shouldn't be a totally perfect circle; make the coast slightly irregular"
   which areas are playable and which the buffer's goes by their centres' distance from home over the same seeded coast, up to amp of its radius in or out (0 for a perfect circle): harmonics gentle bays and headlands (from two round the island up), plus detail (a share) of finer wobble. shape square: mapAreas x mapAreas as before (?shape=square to compare). ?mapAreas=<n> on the circular map sets the radius for about n x n areas.
@@ -49,6 +53,7 @@ The forest: mapAreas x mapAreas areas cut by the fractal partition. An area is a
 | `map.island` | string |  |
 | `map.found` | array of any |  |
 | `map.phase` | number | 0 to … |
+| `map.rosterNeighbourhood` | number | 0 to 180 |
 | `map.shapes` | array of object |  |
 | `map.buffer` | number | 0 to … |
 | `map.push` | number | 0 to … |

@@ -374,7 +374,7 @@ export function generateMap(runSeed: number, tuning: Tuning, only?: { landStep: 
   const world = MS.world ?? 0;
   // Home grows (Ed, 2026-10-10, journey.md "Home's size"): one area per kind she knows, home's 10 and every kind found since
   // (map.found, the save's); islandAreas turns it on, and is its least (past one each, the kinds again in turn).
-  const rosterIsland = only ? only.island : !round || zoo ? null : MS.island === "home" ? ((MS.islandAreas ?? 0) > 0 ? homeIsland(world, knownKinds(MS.found ?? []), Math.round(MS.islandAreas!)) : null) : MS.island && playableIsland(MS.island) ? islandOf(MS.island, world, tuning.islands?.phaseSizes) : null; // (never a placeholder's: rules/rosters.ts; its size its phase's, islands.phaseSizes)
+  const rosterIsland = only ? only.island : !round || zoo ? null : MS.island === "home" ? ((MS.islandAreas ?? 0) > 0 ? homeIsland(world, knownKinds(MS.found ?? []), Math.round(MS.islandAreas!)) : null) : MS.island && playableIsland(MS.island) ? islandOf(MS.island, world, tuning.islands?.phaseSizes, MS.rosterNeighbourhood) : null; // (never a placeholder's: rules/rosters.ts; its size its phase's, islands.phaseSizes)
   const seed = runSeed, shapeSeed = rosterIsland ? rosterIsland.seed : runSeed;
   // An island of so many areas (Ed, 2026-10-11, the journey's first step: map.islandAreas): home and exactly that many more, the
   // nearest home's (found below, once the areas are cut); until then a radius sure to hold them sizes the grid and the forest.

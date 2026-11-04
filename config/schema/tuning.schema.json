@@ -95,6 +95,12 @@
           "minimum": 0,
           "description": "How an island grows out from home, its outline rounder or more lobed, bayed and armed the further out it is."
         },
+        "rosterNeighbourhood": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 180,
+          "description": "How many degrees either side of an island's bearing its compass neighbourhood reaches: the other kinds it takes one area each before any kind gets a second."
+        },
         "shapes": {
           "type": "array",
           "items": {
@@ -214,6 +220,7 @@
         "island",
         "found",
         "phase",
+        "rosterNeighbourhood",
         "shapes",
         "buffer",
         "push",

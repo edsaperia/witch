@@ -62,8 +62,9 @@ describe("home grows with the kinds she knows", () => {
     save = recordNight(save, "home", { won: true, found: night1.legendKinds });
     expect(save.found.length).toBe(2);
     expect(areas(generateMap(6, home(save.found))).size).toBe(10);
-    // one of those islands won: the kinds new to it found, and home grows by each with an area type
-    const isle = save.found[0], night2 = generateMap(7, { ...TUNING, map: { ...TUNING.map!, island: isle, found: save.found } });
+    // one of those islands won: the kinds new to it found, and home grows by each with an area type (night 8: the hare island's
+    // roster has more of home's kinds since Ed, 2026-11-04, rules/rosters.ts, and night 7 dealt two of them, toad, its new kind, not)
+    const isle = save.found[0], night2 = generateMap(8, { ...TUNING, map: { ...TUNING.map!, island: isle, found: save.found } });
     expect(night2.island?.kind).toBe(isle);
     save = recordNight(save, isle, { won: true, found: night2.legendKinds });
     const known = knownKinds(save.found), next = generateMap(8, home(save.found));
