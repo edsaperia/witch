@@ -1,12 +1,12 @@
 import { describe, expect, it, vi } from 'vitest';
-import { chartWarmEligible, ChartWarmSchedule, type ChartWarmRequest } from './chartWarmSchedule';
+import { chartWarmEligible, ChartWarmSchedule, type ChartWarmRequest, type ChartWarmState } from './chartWarmSchedule';
 const request = (world = 0, found = ['fox']): ChartWarmRequest => ({ world, found, ids: ['home', ...found] });
 
 describe('speculative chart scheduling', () => {
   it('allows only ready treehouse work; MAP is handed to its existing demand worker', () => {
-    const ready = { enabled: true, ready: true, treehouse: true, map: false, blocked: false };
+    const ready: ChartWarmState = { enabled: true, ready: true, treehouse: true, map: false, sailing: false, sleeping: false, hidden: false, paused: false, manual: false, arriving: false };
     expect(chartWarmEligible(ready)).toBe(true);
-    for (const changed of [{ enabled: false }, { ready: false }, { treehouse: false }, { map: true }, { blocked: true }])
+    for (const changed of [{ enabled: false }, { ready: false }, { treehouse: false }, { map: true }, { sailing: true }, { sleeping: true }, { hidden: true }, { paused: true }, { manual: true }, { arriving: true }])
       expect(chartWarmEligible({ ...ready, ...changed })).toBe(false);
   });
   it('stops immediately on leaving, resumes the same cached request, ignores the old reply', () => {

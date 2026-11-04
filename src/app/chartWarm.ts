@@ -1,6 +1,6 @@
 // Making the sea chart ahead (Ed, 2026-10-12: "Generating the map on the map screen is slow; can we do it earlier, before we need
 // to show it? I believe it doesn't change through the entire campaign except for the home island"): once a night has started
-// and its forest is grown, a worker of its own makes reachable islands while she's in the treehouse, one at a time off the page's thread,
+// and its forest is grown, a worker of its own makes only home and found islands while she's awake in the treehouse (Ed, 2026-11-04),
 // and keeps each (app/chartCache.ts); the map table, and chart.html in this browser, then open on them at once. What's kept is
 // kept across visits, so later nights only check it (home again when what she's found grows: its size).
 import { islandOf, isPlaceholder, KIND_NAMES } from "../rules/rosters";
@@ -39,15 +39,17 @@ export function chartIslandIds(world: number): string[] {
 let running: Worker | null = null;
 
 /** Only speculative work is restricted: chartIslandIds/chartOrder still include every demand island. */
-export function reachableChartIslandIds(world: number, found: string[]): string[] {
-  const reachable = new Set(unlocked({ ...emptySave(world), found }));
-  return chartIslandIds(world).filter(id => reachable.has(id) && (id === 'home' || !isPlaceholder(id)));
+export function foundChartIslandIds(world: number, found: string[]): string[] {
+  const saved = new Set(unlocked({ ...emptySave(world), found }));
+  return chartIslandIds(world).filter(id => saved.has(id) && (id === 'home' || !isPlaceholder(id)));
 }
 
 /** Make and keep the chart's islands for `world` and what she's `found`, in the background; `done` with how many were made and
  *  how many were already kept; `progress` as each is kept. Once at a time (a second call while one runs does nothing). */
-export function warmChart(world: number, found: string[], done?: (made: number, kept: number) => void, progress?: (id: string, made: boolean) => void, ids = reachableChartIslandIds(world, found), failed?: () => void): void {
+export function warmChart(world: number, found: string[], done?: (made: number, kept: number) => void, progress?: (id: string, made: boolean) => void, ids = foundChartIslandIds(world, found), failed?: () => void): void {
   if (running) return;
+  const allowed = new Set(foundChartIslandIds(world, found));
+  ids = [...new Set(ids)].filter(id => allowed.has(id));
   let w: Worker;
   try { w = new Worker(new URL("./chartOutlines.worker.ts", import.meta.url), { type: "module" }); } catch { failed?.(); return; }
   running = w;

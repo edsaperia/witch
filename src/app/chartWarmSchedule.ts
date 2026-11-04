@@ -1,8 +1,13 @@
 export interface ChartWarmRequest { world: number; found: string[]; ids: string[] }
+export interface ChartWarmState {
+  enabled: boolean; ready: boolean; treehouse: boolean; map: boolean;
+  sailing: boolean; sleeping: boolean; hidden: boolean; paused: boolean; manual: boolean; arriving: boolean;
+}
 
 /** MAP's own all-island demand worker takes over; never run a duplicate speculative worker there. */
-export function chartWarmEligible(state: { enabled: boolean; ready: boolean; treehouse: boolean; map: boolean; blocked: boolean }): boolean {
-  return state.enabled && state.ready && state.treehouse && !state.map && !state.blocked;
+export function chartWarmEligible(state: ChartWarmState): boolean {
+  return state.enabled && state.ready && state.treehouse && !state.map && !state.sailing && !state.sleeping
+    && !state.hidden && !state.paused && !state.manual && !state.arriving;
 }
 
 /** Owns only speculative work. Cancelled/old replies cannot complete a newer request. */
@@ -11,6 +16,13 @@ export class ChartWarmSchedule {
   private active = '';
   private completed = '';
   constructor(private start: (request: ChartWarmRequest, done: () => void) => void, private stop: () => void) {}
+  /** Check cancellation before even reading the save or waiting for a throttled cache check. */
+  update(state: ChartWarmState, request: () => ChartWarmRequest | null): boolean {
+    if (!chartWarmEligible(state)) { this.pause(); return false; }
+    const next = request();
+    if (next) this.tick(next);
+    return true;
+  }
   pause(): void {
     if (!this.active) return;
     this.generation++; this.active = ''; this.stop();

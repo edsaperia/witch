@@ -110,9 +110,8 @@ import { readZooCoasts } from "./app/zooCoasts";
 import { guidanceOf, seeGuide, GUIDANCE_HOOKS } from "./rules/guidance";
 import { addNew, dropNew, loadGuide, storeGuide } from "./app/guideSave";
 import { GuidePin } from "./render/view/guidance";
-import { reachableChartIslandIds, stopWarmChart, warmChart } from "./app/chartWarm";
-import { chartWarmEligible, ChartWarmSchedule } from './app/chartWarmSchedule';
-import { REAL_KINDS } from './rules/rosters';
+import { foundChartIslandIds, stopWarmChart, warmChart } from "./app/chartWarm";
+import { ChartWarmSchedule } from './app/chartWarmSchedule';
 import { powerLines } from "./app/hud";
 import { latestBuildLink, NewBuildNotice } from "./app/newBuild";
 import { freshHref, localStore, storageScope } from "./platform/storageScope";
@@ -404,7 +403,7 @@ const showProgress = setInterval(() => {
   if (ready && !a.pending) { progressEl.classList.add("done"); clearInterval(showProgress); }
 }, 250);
 // The sea chart made ahead (app/chartWarm.ts; Ed, 2026-10-12: "can we do it earlier, before we need to show it?"): once the
-// forest has grown and the tab is in view, a worker makes and keeps the chart's islands, so the map table opens on them at once.
+// forest has grown, prepare only home and saved found islands while she's awake in the treehouse (Ed, 2026-11-04).
 // Not under automation (the smoke and bench runs time the game's own frames), unless ?warmChart=1.
 const chartWorld = () => (params.has("world") ? N().tuning.map?.world ?? 0 : loadSave().world);
 const warmOn = params.get("warmChart") === "1" || (params.get("warmChart") !== "0" && !navigator.webdriver);
@@ -414,15 +413,16 @@ const chartWarmer = new ChartWarmSchedule(({ world, found, ids }, done) => {
 let chartWarmNextCheck = 0;
 function updateChartWarm(): void {
   const n = N();
-  if (!chartWarmEligible({ enabled: warmOn, ready: n.flags.ready, treehouse: !!n.game.witch.perch && n.game.witch.mode === 'ground', map: chartOpen(),
-    blocked: loop.manual || sailing || document.hidden || freeze.frozen || landingSleep.holds(n.game) || (!!n.arrival && !n.flags.landed) })) {
-    chartWarmer.pause(); chartWarmNextCheck = 0; return;
-  }
-  // Cancellation is per frame; storage/reachability checks need not run at frame frequency.
-  if (view.assets.pending || performance.now() < chartWarmNextCheck) return;
-  chartWarmNextCheck = performance.now() + 1000;
-  const world = chartWorld(), found = loadSave().found;
-  chartWarmer.tick({ world, found, ids: reachableChartIslandIds(world, unlockAll() ? [...REAL_KINDS] : found) });
+  if (!chartWarmer.update({ enabled: warmOn, ready: n.flags.ready, treehouse: !!n.game.witch.perch && n.game.witch.mode === 'ground', map: chartOpen(),
+    manual: loop.manual, sailing, hidden: document.hidden, paused: freeze.frozen,
+    sleeping: landingSleep.holds(n.game) || !!n.game.witches[0].house?.slept || n.game.wake?.open === false,
+    arriving: !!n.arrival && !n.flags.landed }, () => {
+    // Cancellation is per frame; reading the save and checking the cache can wait.
+    if (view.assets.pending || performance.now() < chartWarmNextCheck) return null;
+    chartWarmNextCheck = performance.now() + 1000;
+    const world = chartWorld(), found = loadSave().found;
+    return { world, found, ids: foundChartIslandIds(world, found) };
+  })) chartWarmNextCheck = 0;
 }
 requestAnimationFrame(() => setTimeout(async () => {
   const night = N();
@@ -1127,6 +1127,7 @@ const chartDepartureBoundary = chartDeparture({
   returnOwn: () => ordinaryVisit?.end() ?? Promise.reject(new Error("This browser cannot restore your saved night.")),
 });
 page.onNightEnd = () => {
+  chartWarmer.pause();
   if (phone.active && !phone.visiting && !sharedNightChanging) phone.hangUp("host-night-ended"); // A shared bed rollover retains its call.
   if (!phone.visiting && page.night && !page.night.spec.borrowed && !endedNights.has(page.night.game)) {
     const hostOutcome = hostedUnlocks ?? (sharedNightChanging ? visitUnlocks(page.night.game, 0) : null);
@@ -1435,6 +1436,7 @@ async function sailInPlace(to: Sailed, made?: Promise<Night>): Promise<void> {
  *  the dive's own areas first, rules/arrive.ts diveReach); `at`, the chart's hand-off: made under its flight, nothing but the night
  *  itself waited for. */
 async function makeSailNight(to: Sailed, arrival?: Arrival, at?: FlightEnd["cam"] | null): Promise<Night> {
+  chartWarmer.pause();
   if (sailFail) throw new Error("?debug=sail: the sail in place made to fail"); // (window.witch.sail's test of the fallback)
   if (at === undefined) view.beginLandingShaders(false);
   sailing = true;
@@ -1496,6 +1498,7 @@ function newNight(how: NightWay): void {
  *  start card under ?creator=0), the night made (startNight: the view taking it, the sliders carried), its start's art made;
  *  no flight in. The bot game's exit leaves the bot and her seeded look first. */
 async function nightInPlace(spec: NightSpec, href: string): Promise<void> {
+  chartWarmer.pause();
   if (sailFail) throw new Error("?debug=sail: the night in place made to fail");
   if (freeze.frozen) freeze.toggle(); // (a fresh page isn't paused: the bot game's Esc out pauses it too, the freeze's key first)
   sailing = true;
