@@ -149,5 +149,34 @@ describe("a big team's shorter rounds", () => {
     const rest = PACKS.rhythms[PACKS.kinds.fox.rhythm].lull / tempo;
     expect(big.team.nextAt).toBeCloseTo(Math.max(big.world.time + rest * k, big.cycleAt + SPACING.team.roundTime * k / tempo), 9);
   });
+  it("picks a big team's attackers rounds ahead (Ed: 'decide the roles in advance'), the same seeded draw each round would make", () => {
+    const run = () => {
+      const members = Array.from({ length: 30 }, (_, i) => ({ ...animal(i, i % 2 ? "fox" : "hare", i % 3 ? 2 : 1), x: 40 + i, z: i * 2 }));
+      const state = newCombat(), world = { active: members, time: 1, t: TUNING, witches: [{ id: 0, x: 0, z: 0, onGround: true, down: false }] } as unknown as CombatWorld;
+      stepTeams(state, world, PACKS, () => false);
+      const team = teamOf(state, 0)!, log: string[] = [];
+      expect(team.round).toBe(0);
+      expect(team.next?.map(n => n.round)).toEqual([1, 2].slice(0, TUNING.teamRounds!.ahead));
+      for (let r = 0; r < 4; r++) {
+        const coming = team.next![0];
+        expect(coming.readyBy).toBeGreaterThan(world.time);
+        // (round r over: its lull run out; the next round's actions are the ones picked a round (or more) ago)
+        team.phase = "lull"; team.nextAt = world.time; world.time += 0.5;
+        stepTeams(state, world, PACKS, () => false);
+        expect(team.round).toBe(coming.round);
+        expect(team.actions).toEqual(Object.fromEntries(Object.entries(coming.actions).filter(([, a]) => a)));
+        expect(team.next![team.next!.length - 1].round).toBe(team.round + TUNING.teamRounds!.ahead!);
+        log.push(JSON.stringify(Object.entries(team.actions).map(([id, a]) => [id, a?.id])));
+      }
+      return log;
+    };
+    expect(run()).toEqual(run()); // (lockstep: the same picks every time)
+  });
+  it("leaves a team of the reference size or fewer drawing as its round starts, as before", () => {
+    const members = Array.from({ length: 20 }, (_, i) => ({ ...animal(i), x: 40 + i, z: i * 2 }));
+    const state = newCombat(), world = { active: members, time: 1, t: TUNING, witches: [{ id: 0, x: 0, z: 0, onGround: true, down: false }] } as unknown as CombatWorld;
+    stepTeams(state, world, PACKS, () => false);
+    expect(teamOf(state, 0)!.next).toBeUndefined();
+  });
 });
 
