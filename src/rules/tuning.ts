@@ -325,9 +325,14 @@ export interface Tuning {
    *  up to it (margin and reach grown with the circle), its area claiming the whole of it (rules/map.ts). `findSets`: its find drawn from the island's
    *  own set (rules/findSets.ts) rather than the night's one draw over everything (Ed, 2026-11-03: off for now). `fireworks`: once
    *  it's cleared, a firework from one column's top at each bar, the next column clockwise each bar (Ed, 2026-11-03), bursting
-   *  `height` metres up into a burst `burst` metres round (render/challenge.ts fireChallenge).
+   *  `height` metres up into a burst `burst` metres round (render/challenge.ts fireChallenge). `statues` (Ed, 2026-11-04: "taking on
+   *  the challenge area is more intentional"; rules/challengeStatues.ts): its pack grey stone statues at their posts (`first` metres in
+   *  from their kind's column, each next `gap` further in) till a witch sets foot on its floor; then from the next bar line they glow
+   *  red for `bars` bars and wake wild; every witch off the floor, the un-won walk back (`walkBack` times their pace) and are stone
+   *  again, whole; drawn `tint` of the way to the stone colour `grey`, `red` the red at the wake's end. `analyser`: the music spell's
+   *  analyser cast on it, `bars` bars from its middle out to `fill` of its radius in `steps` dots (render/challenge.ts).
    *  Off: the find's area as before (an empty clearing, the find to pick up). */
-  challenge?: { on: boolean; radius: number; margin: number; spacing: number; adults: number; youths: number; castReach: number; findSets: boolean; fireworks?: { on: boolean; height: number; burst: number } };
+  challenge?: { on: boolean; radius: number; margin: number; spacing: number; adults: number; youths: number; castReach: number; findSets: boolean; fireworks?: { on: boolean; height: number; burst: number }; statues?: { on: boolean; bars: number; first: number; gap: number; walkBack: number; grey: number[]; tint: number; red: number }; analyser?: { bars: number; steps: number; fill: number } };
   treeMarginFromSoundsystem: number;
   bushDensity: number;
   /** How much bushes gather in clumps with open floor between (0 even, 1 strongly clumped). */

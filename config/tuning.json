@@ -608,6 +608,21 @@
       "on": true,
       "height": 24,
       "burst": 8
+    },
+    "statues": {
+      "on": true,
+      "bars": 4,
+      "first": 3.5,
+      "gap": 3.5,
+      "walkBack": 1.5,
+      "grey": [0.6, 0.6, 0.63],
+      "tint": 0.9,
+      "red": 1
+    },
+    "analyser": {
+      "bars": 72,
+      "steps": 36,
+      "fill": 0.94
     }
   },
   "treeMarginFromSoundsystem": 1.5,

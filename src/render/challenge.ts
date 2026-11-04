@@ -16,8 +16,13 @@
 //     left, that kind won, its top lit steadily in the party's warm colour (the friends' adult's, leash.ranks.colours) where the
 //     others glow faint and cold; every column lit, the spell's notes at its middle;
 //   - no beam of light over it (Ed, 2026-11-03, on #1725: "remove the beam"): the telescope and the footpaths find it;
-//   - ready to cast: the spell's music notes at its middle, as at a stone (render/leash/stones.ts); casting, its fill a ring of
-//     rainbow dots round her;
+//   - its pack as statues (rules/challengeStatues.ts; Ed, 2026-11-04): their sigils on the columns grey while they're stone, glowing
+//     from grey to their wild colours on the beat as they wake (render/statues.ts statueSigilColour); the statues themselves,
+//     render/view/creatures.ts;
+//   - ready to cast: the spell's music notes at its middle, as at a stone (render/leash/stones.ts); casting, the music spell's analyser
+//     filling the whole circle (Ed, 2026-11-04: "should be larger, the audio analyser filling the whole stone circle"; challengeAnalyser:
+//     its bars out from its middle to near its edge at the music's loudest, as the great stumps' dial, filling round as the cast fills),
+//     held a moment as it's cleared;
 //   - cleared: home's dancefloor fills the circle in place of its stone floor and sigil (Ed, 2026-11-03, on #1725: "it should fill
 //     the circle, like the one at home does ... it can look the same as the home dancefloor, replacing the previous floor"): the
 //     ground's dancefloor art, scaled from home's rim to the circle's radius (render/ground.ts uFloor2), coming in from the middle
@@ -32,7 +37,7 @@ import type { Game } from "../rules/game";
 import type { Tuning } from "../rules/tuning";
 import { challengeColumns, challengeOf, challengeReady, columnKinds, columnSpots, rewardFall } from "../rules/challenge";
 import * as THREE from "three";
-import { castOf, castProgress } from "../rules/stoneStacks";
+import { castProgress } from "../rules/stoneStacks";
 import { beatAt, timeAt } from "../rules/beat";
 import type { Shell, ShellKind } from "../rules/fireworks";
 import type { Fireworks } from "./fireworks";
@@ -41,7 +46,8 @@ import { hash2 } from "../rules/random";
 import { rainbow } from "./indicator";
 import { SpriteBatch, type SpriteInstance } from "./sprites";
 import type { LeashView } from "./leash";
-import { columnOf, columnSigil, columnSigilSize, notesSlot, upY, upZ } from "./leash/stones";
+import { barLevel, columnOf, columnSigil, columnSigilSize, notesSlot, upY, upZ } from "./leash/stones";
+import { statueSigilColour } from "./statues";
 import { rankColour, sigilRankColour, stoneKnobs } from "./leash/ranks";
 import { NO_CARVING } from "./legendCarving";
 import type { View } from "./view";
@@ -143,7 +149,7 @@ export function drawChallenge(lv: LeashView, time: number, dot: number[]): void 
       const vis = smooth((K.range - Math.hypot(col.x - w.x, col.z - w.z)) / Math.max(1, K.fade));
       if (lit || !sigils || vis <= 0.01) continue;
       const P = columnOf(col.sigils, lvl => columnSigilSize(t, lvl));
-      col.sigils.forEach((it, i) => { const h = COLUMN_TOP + P[i].y; columnSigil(lv, time, dot, it.id, it.level, col.x, upY(col.x, col.z, h), upZ(col.z, h), P[i].size, vis, sigilRankColour(t, it.level, false, false)); });
+      col.sigils.forEach((it, i) => { const h = COLUMN_TOP + P[i].y; columnSigil(lv, time, dot, it.id, it.level, col.x, upY(col.x, col.z, h), upZ(col.z, h), P[i].size, vis, statueSigilColour(g, sigilRankColour(t, it.level, false, false))); }); // (grey while its pack's stone, glowing as they wake: render/statues.ts)
     }
     // Ready (every column lit): the spell's notes at its middle, and her fill round her as she casts.
     if (!challengeReady(g)) return;
@@ -154,12 +160,11 @@ export function drawChallenge(lv: LeashView, time: number, dot: number[]): void 
       lv.flat.add(ch.x, 0, ch.z, size, notesSlot(lv), col[0], col[1], col[2], 0.6 * on);
     }
     const key = `challenge:${ch.key}`, k = W ? castProgress(W, key, W.time ?? g.herTime, t) : 0;
-    if (k > 0) {
-      const n = 48, R = castOf(t).radius + 1.2;
-      for (let i = 0; i < Math.round(n * k); i++) { const a = -Math.PI / 2 + (i / n) * Math.PI * 2, c = rainbow(i / n + time * 0.15); lv.flat.add(w.x + Math.cos(a) * R, 0.06, w.z + Math.sin(a) * R, 0.6, dot, c[0], c[1], c[2], 0.9, 1, true); }
-    }
+    if (k > 0) drawAnalyser(lv, dot, time, k, W?.casting === key ? 1 : 0.6, 1);
     return;
   }
+  // (the analyser held full a moment as it clears, fading as its dancefloor comes in)
+  { const e = g.clock.time - ch.clearedAt, hold = FLOOR_RISE * 2; if (e >= 0 && e < hold) drawAnalyser(lv, dot, time, 1, 1, 1 - e / hold); }
   // Cleared: the columns light on the beat, each its own colour round the rainbow; the party's eruption as it clears, its dome while
   // its dancefloor comes in (the ground's: challengeFloor).
   const e = g.clock.time - ch.clearedAt;
@@ -180,6 +185,38 @@ export function drawChallenge(lv: LeashView, time: number, dot: number[]): void 
     }
     if (ch.reward === "flask") lv.over.add(ch.x, f.y + 0.6, ch.z, 1.2 + 0.4 * f.k, dot, 1, 0.85, 0.5, 0.95, 1, true);
   }
+}
+
+/** The music spell's analyser at the circle (Ed, 2026-11-04: "should be larger, the audio analyser filling the whole stone circle";
+ *  challenge.analyser): `bars` bars round its middle, the first due south (toward the camera) and on round as the great stumps' dial,
+ *  the first `k` of them lit (the cast's share), each reaching out `reach` x its level (0 to 1) of its `steps` dots, the last at `fill`
+ *  of its radius, so it fills the circle however big it's grown (rules/challengeCircle.ts). Each dot to `emit`: where, its size (m),
+ *  its bar's share round (0 to 1) and whether it's its bar's tip. */
+export function challengeAnalyser(ch: { x: number; z: number; radius: number }, t: Tuning, k: number, reach: number, level: (i: number, n: number) => number, emit: (x: number, z: number, size: number, f: number, tip: boolean) => void): void {
+  const A = challengeOf(t).analyser, n = Math.max(8, Math.round(A.bars)), steps = Math.max(2, Math.round(A.steps));
+  const out = ch.radius * Math.max(0.1, Math.min(1, A.fill)), cell = out / (steps + 1), inner = cell; // (from a dot out from her at its middle)
+  for (let i = 0; i < n; i++) {
+    const f = i / n;
+    if (f >= k) break;
+    const top = Math.max(0, Math.min(steps - 1, Math.round(level(i, n) * reach * (steps - 1)))), a = Math.PI / 2 + f * Math.PI * 2, ux = Math.cos(a), uz = Math.sin(a);
+    for (let j = 0; j <= top; j++) { const r = inner + (j + 1) * cell; emit(ch.x + ux * r, ch.z + uz * r, cell, f, j === top); }
+  }
+}
+
+/** The analyser drawn (challengeAnalyser) in the leash's layers, its bars the music's spectrum (the stones' eased levels: the
+ *  stones' view reads it while it's wanted), painted on and glowing in their own colour, as a stump's (render/leash/stones.ts). */
+function drawAnalyser(lv: LeashView, dot: number[], time: number, k: number, reach: number, alpha: number): void {
+  const g = lv.game, ch = g.challenge!, V = lv.stoneView, spec = V.spectrum, dt = Math.min(0.1, lv.frameDt);
+  V.wantsSpectrum = true;
+  const level = (i: number, m: number) => {
+    const j = i % V.bars.length, live = spec ? barLevel(spec, i, m) : 0.25 + 0.2 * Math.abs(Math.sin(time * 1.3 + i * 1.7) * 0.6 + Math.sin(time * 2.1 + i * 0.9) * 0.4);
+    return (V.bars[j] = Math.max(live, V.bars[j] - dt * 1.8));
+  };
+  challengeAnalyser(ch, g.tuning, k, reach, level, (x, z, size, f, tip) => {
+    const c = rainbow(f + time * 0.15), lo = Math.min(c[0], c[1], c[2]) * 0.9;
+    lv.ink.add(x, 0.06, z, size, dot, c[0], c[1], c[2], alpha * (tip ? 1 : 0.9));
+    lv.flat.add(x, 0.08, z, size * 1.8, dot, (c[0] - lo) * 1.2, (c[1] - lo) * 1.2, (c[2] - lo) * 1.2, alpha * (tip ? 0.6 : 0.45), 1, true);
+  });
 }
 
 /** Beats in a bar (the music's 4/4: rules/game.ts reckons bars so). */

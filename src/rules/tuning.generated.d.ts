@@ -453,6 +453,21 @@ export type SchemaTuning = {
       "height": number;
       "burst": number;
     };
+    "statues": {
+      "on": boolean;
+      "bars": number;
+      "first": number;
+      "gap": number;
+      "walkBack": number;
+      "grey": Array<number>;
+      "tint": number;
+      "red": number;
+    };
+    "analyser": {
+      "bars": number;
+      "steps": number;
+      "fill": number;
+    };
   };
   "treeMarginFromSoundsystem": number;
   "treeDensity": number;

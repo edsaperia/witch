@@ -854,6 +854,15 @@ the challenge area: a stone circle at least `radius` m round with a column a ros
 3. Ed, 2026-11-03: "The challenge area has no sigil stack, so you can't see how many wild creatures still standing. How about there are the same number of columns as creature types, and the sigils are on top of the columns, one type per column?" … "few is ok" … "128 animal pack is the ultimate challenge … A place to use all those stacked buffs that melt waves! Also the area will have to be big to fit a huge circle." (the fixed `columns` (30) replaced by a column a roster kind, `spacing` 7.5 m apart along the edge: the radius the larger of `radius` and kinds x spacing / 2 pi (36 m to about 30 kinds; 76 m at the late home's 64), its margin, cast reach, dancefloor and carved sigil grown with it, its area claiming the whole circle (rules/map.ts).)
 The circle grows to fit its columns (radius the larger of `radius` and kinds x `spacing` / 2 pi), its margin and the spell's reach with it; the island's sigil is carved in it, and clearing it gives the find. Each column carries its kind's wild fighters still standing (adult below, youth above, the rune stones' sizes, colours and embers), drawn within the stones' columns' range (leash.ranks.stones.range); one invited or run off leaves its column; a column with none left lights steadily warm, and every column lit, the spell can be cast. The find is the night's one draw over everything she hasn't found; `findSets` on, the island's own set (config/find-sets.json) instead. Nothing left to give, a flask. Cleared, home's dancefloor fills the circle and each bar one column fires a firework, the next clockwise each bar (Ed, 2026-11-03: "fireworks start coming out of one column at the start of each bar, going around the circle clockwise"): `fireworks.on`, its burst `fireworks.height` m up and `fireworks.burst` m round; the find comes down from the sky onto the floor, picked up with E. Its pack aggro as any wild area's (wildWatch); it closes only once the night is won or lost (the pack calm, the find gone); it never counts toward winning the island and gives no boon. Off: the find's area as before, its find to pick up with E.
 
+- **`challenge.statues`**: its pack stand as grey stone statues at their posts by their columns (`first` m in, each next `gap` m further), uninvitable and unhittable, till a witch sets foot on its floor, then wake wild after `bars` bars and go back to stone, whole, once every witch is off the floor.
+  1. Ed, 2026-11-04: "taking on the challenge area is more intentional; the creatures around it only start to aggro you when you go into the challenge circle. The wild creatures should somehow look like they're not invitable." … "grey statues, all facing the centre of the circle" … "landing in the circle is the same as walking in" … "all the animals glow red, the sigils start glowing, and after 8 seconds, they all awaken and become wild animals" (through the coordinator: posts column / adult / youth / centre; the wake-up starts on the next bar line and lasts 4 bars at the steady 120 bpm, landing on a bar; leaving the circle before then stops it; leaving mid-fight or knocked down, the un-won go back to their posts as stone, reset to full, the invited staying won; with two witches, stone again only once both are off the floor. Its sigils on the columns grey while stone, glowing as they wake.)
+  2. Ed, 2026-11-04: "they should be closer to their column than to the centre" (through the coordinator: both posts in the outer part of the radius, near their column, the middle open for her to step into; the post distances knobs with sliders.)
+  Posts: column / adult / youth / centre, all facing its middle, always nearer their column than the middle (never past 0.45 of the way in: Ed, 2026-11-04, "they should be closer to their column than to the centre"), the middle left open. The wake-up starts on the next bar line; they glow red (up to `red`) and their sigils on the columns glow from grey as it goes, and they wake on the bar `bars` bars on. Leaving the floor (stepping or flying off, or knocked down) before then stops it; once awake, the ones not yet won walk back at `walkBack` times their pace and turn to stone again, reset to full, the invited staying won. Drawn `tint` of the way to the stone colour `grey`. rules/challengeStatues.ts (the phases, the walk back, the reset), rules/challenge.ts statuePosts and spawnPack (the posts), render/view/creatures.ts and render/statues.ts (the stone look, the wild watch's red over it while it wakes), render/challenge.ts (the grey sigils), platform/audio/sfxCues.ts (the wild watch's rising warning over the wake-up, its hit as they wake). Off: the pack wild from the start, watching her come down anywhere in its area as any wild area's.
+- **`challenge.analyser`**: the music spell's analyser as she casts at the circle: `bars` bars from its middle out to `fill` of its radius at the music's loudest, `steps` dots a bar, grown with the circle.
+  1. Ed, 2026-11-04: "should be larger, the audio analyser filling the whole stone circle" (the soundsystem spell cast at the challenge circle; before, a small ring of rainbow dots round her.)
+  It fills round as the cast fills, each bar as far out as the music's level, and is held a moment as the circle clears.
+  Code: `src/render/challenge.ts`
+
 | knob | type | range |
 |---|---|---|
 | `challenge.on` | boolean |  |
@@ -867,6 +876,17 @@ The circle grows to fit its columns (radius the larger of `radius` and kinds x `
 | `challenge.fireworks.on` | boolean |  |
 | `challenge.fireworks.height` | number | 0 to … |
 | `challenge.fireworks.burst` | number | 0 to … |
+| `challenge.statues.on` | boolean |  |
+| `challenge.statues.bars` | number | 1 to 16 |
+| `challenge.statues.first` | number | 0 to … |
+| `challenge.statues.gap` | number | 0 to … |
+| `challenge.statues.walkBack` | number | 0 to … |
+| `challenge.statues.grey` | array of number |  |
+| `challenge.statues.tint` | number | 0 to 1 |
+| `challenge.statues.red` | number | 0 to 1 |
+| `challenge.analyser.bars` | number | 8 to 128 |
+| `challenge.analyser.steps` | number | 4 to 120 |
+| `challenge.analyser.fill` | number | 0.1 to 1 |
 
 ### `treeMarginFromSoundsystem`
 
