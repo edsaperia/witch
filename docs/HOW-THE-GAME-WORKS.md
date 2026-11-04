@@ -256,16 +256,16 @@ The young's moves are weaker and slower (`young`: wind-ups 1.3 times as long, bo
 - **Put down the sigil of an animal of that kind, any age, inside its circle**, while the legend sleeps (or is restless), and the quest is done **on the spot**, wherever the animal is; it walks over to its sigil afterwards. **Only putting the sigil down does it** (Ed, 2026-10-19: "The reward should be given when the sigil is placed, not when the animal enters the circle"): one of yours of that kind walking into the circle, following you or parked, does nothing. The animal stays yours.
 - **The legend wakes happy at once and fights for you** (below), and **its island is found tonight**. The island is kept on the sea chart **only if the night is won** (Ed, 2026-10-18: "The island is only kept if the night is won"); lose the night and tonight's islands are not kept.
 - **No boon** (Ed, 2026-10-18: "Finishing quests no longer gives boons").
-- **The circle's panel** (Ed, 2026-10-19: short and plain, one idea a line, the action said exactly; `rules/legendCircle.ts` `circleLines`):
-  - sleeping: "A sleeping legend: the hare." / "Put down [sigil] a fox's sigil, any age, inside this circle." / "It will wake, fight for you and show you its island." / "Leave none of its kind in its area and it grows restless.";
-  - restless: "A restless legend: the hare.", the same ask, then "Bring one of its kind back to its area to calm it.";
-  - angry: "An angry legend: the hare!" / "Wear it down, or bring one of its kind back to its area, and it will settle.";
-  - happy: "Your ally: the hare." / "It fights for you and guards its area." / (its quest done) "Its island is found: win the night to keep it.";
-  - a wrong kind's sigil put down inside: "Not this one: it wants a fox's sigil, and you put down an elk's.";
-  - once the party's over: "A sleeping legend: the hare." / "The party's over: it sleeps on."
+- **The circle's panel** (Ed's rewrite, 2026-11-04; `rules/legendCircle.ts` `circleLines`, `broughtLine`):
+  - sleeping, its quest open: "A sleeping elder hare!" / "If you place [sigil] a fox's sigil inside this circle it will join your party, and invite you to its island if you survive the night." / "Taking its children away will anger it.";
+  - restless, its quest open: "An unhappy elder hare. Bring one of its children here to calm it." / the same "If you place ..." line;
+  - its quest not open (before the party, after it, in the zoo; or no quest): "A sleeping elder hare." (restless: "An unhappy elder hare. Bring one of its children here to calm it." alone);
+  - angry: "An angry elder hare!" / "Bring one of its children home to calm it.";
+  - woken, your ally: "A friendly elder hare!" / (its island found, ticked) "It will invite you to its island if you survive the night.";
+  - a wrong kind's sigil put down inside: "The elder hare wants a fox's sigil - (this is an elk's)."
 - If the area's wave hasn't come yet, the area counts as **friendly**: its wild animals count as friends (Ed, 2026-11-02: "the wild animals in that area should then become friendly, and you should be able to capture the stump"): friend-coloured sigils on its stump's stack, so the stump is ready and you can cast its soundsystem spell there. (The ley pulse still never skips it: its wave celebrates when it comes, `leyLines.advance` "wave".)
 - Drop the sigil just outside the circle and the circle flashes as a hint.
-- **Once the party's over, no legend takes a quest** (Ed, 2026-10-18: permanent unlocks only happen while the party is on): its dream closes and the panel says it sleeps on.
+- **Once the party's over, no legend takes a quest** (Ed, 2026-10-18: permanent unlocks only happen while the party is on): its dream closes and the panel says only "A sleeping elder hare."
 
 **Restless and angry.**
 - Each legend checks every **5 s** whether any of its own kind is in its area. That counts any state: wild, happy, your parked ones, babies.
