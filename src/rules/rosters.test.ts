@@ -1,7 +1,7 @@
 // The journey's rosters (Ed, 2026-10-11; docs/backlog/journey.md "Rosters", rules/rosters.ts): each kind's island, its roster
 // and its night's legends; and the map they make.
 import { describe, expect, it } from "vitest";
-import { dealLegends, OTHERS_MAX, homeKinds, isPlaceholder, islandOf, KIND_NAMES, KINDS, legendsFor, playableIsland, REAL_KINDS } from "./rosters";
+import { dealLegends, OTHERS_MAX, homeKinds, homeRoster, isPlaceholder, islandOf, KIND_NAMES, KINDS, legendsFor, playableIsland, REAL_KINDS } from "./rosters";
 import { AREA_TYPES, generateMap } from "./map";
 import { TUNING, type Tuning } from "./tuning";
 import { newGame } from "./game";
@@ -79,12 +79,14 @@ describe("the map of an island by roster", () => {
     }
   }, 120000);
 
-  it("plays home by default: one area per kind she knows, two legends a night among them", () => {
+  it("plays home by default: 5 of home's starting kinds at a campaign's start, an area each, one legend a night among them (Ed, 2026-11-04)", () => {
     const map = generateMap(123, { ...onIsland("home"), map: { ...onIsland("home").map!, islandAreas: 10 } }), home = map.centreCell;
     const kinds = map.cells.filter(([x, y]) => x !== home[0] || y !== home[1]).map(([x, y]) => AREA_TYPES[map.typeOf(x, y)].creature).sort();
-    expect(kinds).toEqual([...homeKinds()].sort());
-    expect(map.legendKinds.length).toBe(2);
-    expect(map.legendCells.size).toBe(2);
+    expect(kinds).toEqual([...homeRoster([], 123)].sort());
+    expect(kinds).toHaveLength(5);
+    for (const k of kinds) expect(homeKinds()).toContain(k);
+    expect(map.legendKinds.length).toBe(1);
+    expect(map.legendCells.size).toBe(1);
   }, 60000);
 
   it("has the game's legends the night's dealt kinds, favouring islands not yet found", () => {

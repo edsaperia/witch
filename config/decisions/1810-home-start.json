@@ -19,6 +19,24 @@
         "knob": "home.start",
         "reload": true
       }
+    },
+    {
+      "id": "homeChallengeAt",
+      "pr": 1810,
+      "group": "Home start",
+      "label": "Home's challenge at (islands found)",
+      "note": "How many islands she must have found before home gets its challenge area and its find (Ed, 2026-11-04: \"When you unlock every island, home gets a challenge area and you get a special reward for completing it\"; \"no find at home until endgame\"). 64 is every island on the chart; lower it to play home's endgame early. Its pack is an adult and a youth of each kind on home tonight. Its reward for now is the challenge's find (Ed: special reward to be decided). A new map: it reloads.",
+      "control": {
+        "type": "slider",
+        "min": 0,
+        "max": 64,
+        "step": 1
+      },
+      "default": 64,
+      "apply": {
+        "knob": "home.challengeAt",
+        "reload": true
+      }
     }
   ]
 }

@@ -15,9 +15,10 @@ it('retains the original quantised windows at arrival and after small and large 
   // Frozen from fb5d5e4cd's original HeightField before extraction, shipped tuning; re-frozen 2026-11-03 for the path network's maps
   // (the island grown one area more for tonight's find, the stones spaced: other hills under the stones), the code unchanged; and for
   // the challenge area (rules/challenge.ts): its stone circle a terrace of its own, as a legend's circle is; and for its claim on the
-  // whole circle (rules/map.ts: the areas round it cut afresh, so their stones, paths and hills move), the code unchanged.
+  // whole circle (rules/map.ts: the areas round it cut afresh, so their stones, paths and hills move), the code unchanged; and for
+  // Ed's 2026-11-04 home (5 areas at the start, no find or challenge area till every island is found), the code unchanged.
   for (const [seed, island, expected] of [
-    [123, 'home', ['273a9ea15587d69287fa783794c7058cabe8b2e2a3783d2cd6478a201268f177', 'ecb4d52cd955b874ebf4e219ff2234fc483e22778213d121ed9bf585f032f704', '211c9e70da0879e0d83ef85f17394c85dedb41623ac8517b46d774cb0cafaef2']],
+    [123, 'home', ['e34953736d39c235f0423ca63c9deb47268f2068da20b6c86f70447809092fd6', '3c1ba7467d5c06b68b64fb3b74c6a78a3947bd1241c4e5e975be6361f1267a9d', '211c9e70da0879e0d83ef85f17394c85dedb41623ac8517b46d774cb0cafaef2']],
     [424242, 'fox', ['e5b0274aad5724ebd1df62bf9e6580728589a751515e878126fe7ff6d194181c', '6174b7943dc214fc03d83d8dd2b71903e89e36f5f997b91b8cde9a9c0534fa6d', '211c9e70da0879e0d83ef85f17394c85dedb41623ac8517b46d774cb0cafaef2']],
   ] as const) {
     const map = generateMap(seed, tuning(island)), H = arrivalHills(map.tuning), field = new HeightSamples(map, new Forest(map), H, DataUtils);

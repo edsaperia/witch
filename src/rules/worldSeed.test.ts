@@ -29,8 +29,9 @@ describe("the world seed", () => {
 
   it("keeps an island's shape every night in one world, its insides the night's own; another world, another shape", () => {
     for (const island of ["home", "fox"]) {
-      const nights = [11, 22, 33].map(night => generateMap(night, at(island, 4242)));
-      for (const m of nights) expect(shape(m)).toEqual(shape(nights[0]));
+      // (home's kinds are the night's too, Ed 2026-11-04: "home has 5 areas chosen at random from the phase 1 creatures")
+      const nights = [11, 22, 33].map(night => generateMap(night, at(island, 4242))), of = (m: ReturnType<typeof generateMap>) => island === "home" ? { ...shape(m), roster: [] } : shape(m);
+      for (const m of nights) expect(of(m)).toEqual(of(nights[0]));
       expect(new Set(nights.map(insides)).size).toBeGreaterThan(1);
       expect(shape(generateMap(11, at(island, 777)))).not.toEqual(shape(nights[0]));
     }

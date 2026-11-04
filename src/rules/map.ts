@@ -32,7 +32,7 @@ import { knownRoute, rememberRoute, type LeyRoute } from "./leyroute";
 import { lakeDepth, lakeKnobs } from "./lakes";
 import { growIsland, lakePlan, placeLakes, reachOf, shapeOf, type Candidate, type PatchGrowth } from "./islandGrowth";
 import { patchAt, STRAIT } from "./archipelago";
-import { allIslandsFound, dealLegends, foundKinds, HOME_START, homeIsland, homeKinds, homeRoster, islandOf, isPlaceholder, knownKinds, playableIsland, REAL_KINDS, type Island } from "./rosters";
+import { dealLegends, foundKinds, HOME_START, homeEndgame, homeIsland, homeKinds, homeRoster, islandOf, isPlaceholder, knownKinds, playableIsland, REAL_KINDS, type Island } from "./rosters";
 import { CLASSIC_SLOTS, KIND_SLOTS } from "./kinds";
 import { ZOO_CONFIG, zooChartPlan, zooJunctions, type ZooPlan } from "./zoo";
 import { coastAlong, zooFence, zooLayout, zooPartition } from "./zooMap";
@@ -500,7 +500,7 @@ export function generateMap(runSeed: number, tuning: Tuning, only?: { landStep: 
   // maps keep the find as before): the island grown one area more, its last, which takes the find's area's kind each night, below;
   // so the island keeps its playable areas and its roster whichever area holds the find)
   // (none at home till every island on the chart is found, Ed 2026-11-04: "no find at home until endgame"; then its challenge area)
-  const findOn = !zoo && !!tuning.findArea?.on && island > 0 && (rosterIsland?.kind !== "home" || allIslandsFound(MS.found ?? [])), findExtra = findOn ? 1 : 0;
+  const findOn = !zoo && !!tuning.findArea?.on && island > 0 && (rosterIsland?.kind !== "home" || homeEndgame(MS.found ?? [], tuning.home.challengeAt)), findExtra = findOn ? 1 : 0;
   // (an area of the grid the island could have grown into, inside its patch: where a legend area may grow, below)
   let growable: (k: string) => boolean = () => false;
   if (island) {

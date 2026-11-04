@@ -13,7 +13,7 @@ import { spawnCreatures } from "./creatures";
 import { preppedGame } from "../test/preppedGame"; // (games on a map made once a file from its prep)
 
 // Keep the explicit 10–50-area matrix: exact area counts, coast reach, route exhaustion and size-independent swarm scaling are tested against it.
-const island = (n: number): Tuning => ({ ...TUNING, map: { ...TUNING.map!, islandAreas: n } });
+const island = (n: number): Tuning => ({ ...TUNING, map: { ...TUNING.map!, island: "", islandAreas: n } }); // (?island=N: random types, not home, whose size is the islands found since Ed's 2026-11-04 home)
 
 describe("islands by area count (map.islandAreas)", () => {
   it("is home and exactly that many areas grown from home (its phase's shape: rules/islandGrowth.ts), with everything for play inside her flight", () => {

@@ -68,7 +68,7 @@ describe("stone at their posts (Ed, 2026-11-04: \"grey statues, all facing the c
   }, 60000);
 
   it("stand nearer their column than the middle, the middle left open (Ed, 2026-11-04: \"they should be closer to their column than to the centre\")", () => {
-    for (const [kind, seed, t] of [["fox", 2, TUNING], ["home", 1, TUNING], ["fox", 2, withTuning({ challenge: { ...TUNING.challenge!, adults: 3, youths: 3, statues: { ...TUNING.challenge!.statues!, first: 12, gap: 9 } } })]] as const) {
+    for (const [kind, seed, t] of [["fox", 2, TUNING], ["hare", 1, TUNING], ["fox", 2, withTuning({ challenge: { ...TUNING.challenge!, adults: 3, youths: 3, statues: { ...TUNING.challenge!.statues!, first: 12, gap: 9 } } })]] as const) {
       const g = game(kind, seed, t), ch = g.challenge!, kinds = columnKinds(g), cols = columnSpots(ch, kinds.length);
       kinds.forEach((k, i) => {
         for (const c of pack(g).filter(c => c.species === k)) {

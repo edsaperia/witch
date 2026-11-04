@@ -27,8 +27,9 @@ const run = (g: Game, secs: number, each?: () => void) => { for (let i = 0; i < 
 
 /** A 10-area island, waves held, every wave brought on (the last noted when it's the final stone); she hovers out of it all. */
 function toTheEnd(seed = 7): { g: Game; finalSeen: boolean } {
-  // Retain ten authored areas for the complete reverse victory lap, dealt legends and population-sized conga.
-  const g = preppedGame(seed, withTuning({ map: { ...TUNING.map!, islandAreas: 10 } }));
+  // Retain ten authored areas for the complete reverse victory lap, dealt legends and population-sized conga (home as it was: its ten
+  // starting kinds and its find from the first night; Ed's 2026-11-04 home is 5 areas, no find till every island is found).
+  const g = preppedGame(seed, withTuning({ home: { ...TUNING.home, start: 10, challengeAt: 0 }, map: { ...TUNING.map!, islandAreas: 10 } }));
   g.clock.paused = false; g.party.spellAt = undefined; g.party.paused = true;
   g.witch = { ...g.witch, seated: false, mode: "treetop", lift: 1 };
   stepGame(g, idle, STEP);

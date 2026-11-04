@@ -39,7 +39,7 @@ import { HAT_SPELLS, type SpellState } from "./spells";
 import { deckOf, onFloor } from "./treehouse";
 import type { Game } from "./game";
 import { islandSet, setPick } from "./findSets";
-import { allIslandsFound } from "./rosters";
+import { homeEndgame } from "./rosters";
 
 /** The kinds of permanent upgrade found in the forest, one a night across them all. */
 export type FindKindId = "wearable" | "part" | "hat" | "bag" | "record";
@@ -91,13 +91,13 @@ export function nightPick(seed: number, found: Found): { kind: FindKindId; item:
  *  on its clear patch (map.specialSites, "find"), the paths from every touching area's site leading to it. Else (findArea off) as
  *  before: in a seeded wild area (not home), in its woods round its middle, under the canopy if it can be (so the treetops hide it),
  *  off its clearings and its legend's circle, clear of the relics. Null on a map with nowhere for it (the zoo), and at home till
- *  every island is found (rules/rosters.ts allIslandsFound). */
+ *  every island is found (rules/rosters.ts homeEndgame). */
 export function placeTrunk(map: ForestMap, forest: { treesNear(x: number, z: number, r: number): Plant[] }, relics: readonly Relic[]): Trunk | null {
   if (map.zoo) return null;
   const own = map.specialSites?.find(sp => sp.kind === "find" || sp.kind === "challenge"); // (the challenge area's: its reward, rules/challenge.ts)
   if (own) return { x: own.x, z: own.z, cell: [own.cell[0], own.cell[1]], kind: "wearable", item: null, found: false };
   // (no find at home till every island on the chart is found, Ed 2026-11-04: "no find at home until endgame"; then its challenge's)
-  if (map.island?.kind === "home" && map.tuning.findArea?.on && !allIslandsFound(map.tuning.map?.found ?? [])) return null;
+  if (map.island?.kind === "home" && map.tuning.findArea?.on && !homeEndgame(map.tuning.map?.found ?? [], map.tuning.home.challengeAt)) return null;
   const b = map.bounds, home = map.centreCell, s = map.seed + 8117;
   const cells = map.cells.filter(([cx, cy]) => !(cx === home[0] && cy === home[1]) && map.playable(cx, cy)).sort((a, c) => hash2(a[0], a[1], s) - hash2(c[0], c[1], s));
   const woods = (x: number, z: number) => forest.treesNear(x, z, 14).filter(t => Math.hypot(t.x - x, t.z - z) < 14).length >= 3;

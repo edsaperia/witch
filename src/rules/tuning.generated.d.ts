@@ -318,6 +318,7 @@ export type SchemaTuning = {
     "margin": number;
     "gap": number;
     "start": number;
+    "challengeAt": number;
   };
   "scenes": {
     "chance": number;

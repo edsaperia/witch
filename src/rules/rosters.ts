@@ -112,6 +112,12 @@ export function allIslandsFound(found: readonly string[] = []): boolean {
   return REAL_KINDS.every(k => !AREA_KINDS.has(k) || f.has(k));
 }
 
+/** Whether home has its endgame tonight, its challenge area and find (Ed, 2026-11-04: "no find at home until endgame"): once she's
+ *  found every island on the chart (allIslandsFound), or `at` of them (tuning home.challengeAt: 64, every one; lower to bring it on
+ *  early, to play it). */
+export const homeEndgame = (found: readonly string[] = [], at?: number): boolean =>
+  allIslandsFound(found) || (at != null && foundKinds(found).length >= at);
+
 /** Home's kinds tonight (see above): the found ones in the order found, then home's starting kinds whose islands are unfound, in
  *  the night's seeded order, up to `start` (and one at least while any is left). The same count every night for one `found`. */
 export function homeRoster(found: readonly string[] = [], night = 0, start = HOME_START): string[] {
