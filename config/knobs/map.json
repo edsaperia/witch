@@ -206,6 +206,22 @@
       ],
       "notes": "Islands other than home (the wave 2 finale's dream bubbles and the sea chart; rules/islandShape.ts, art/islands.js; Ed, docs/backlog/journey.md): coast, the coastline's knobs as map.coast's (amp, the most it strays from round, a share of the radius; harmonics, how many bays and headlands; detail, the finer wobble), stronger than home's so every island has a shape of its own, read at a bubble's 30 pixels."
     },
+    "islands.phaseSizes": {
+      "what": "How many areas (stumps and waves) each phase's islands have, phase 1 first.",
+      "decisions": [
+        {
+          "by": "Ed",
+          "date": "2026-11-04",
+          "quote": "We could make waves 5 / 10 / 15 / 20 / 25 / 30 / 64",
+          "rest": "then \"yes, start island sizes\""
+        }
+      ],
+      "links": [
+        "rules/rosters.ts",
+        "rules/archipelago.ts"
+      ],
+      "notes": "10 / 15 / 20 / 25 / 30 for phases 1 to 5 (10 / 20 / 30 / 40 / 50 till 2026-11-04); home is its own, 5 at first growing to 64. A phase past the list takes its last. What follows the size follows it: the night's legends (1 in 5 areas, rules/rosters.ts legendsFor), the roster's kinds and so the challenge's pack. The sea chart's layout keeps the room it gave 10 × phase areas (rules/archipelago.ts: every island where it was, more sea round it, home unchanged), and its outlines draw the built sizes; the decisions panel's sliders change the island played."
+    },
     "beach": {
       "what": "The strip of sand round the island's edge, where she can lie down to stargaze and meet other witches.",
       "decisions": [

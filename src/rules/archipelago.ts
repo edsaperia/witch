@@ -99,6 +99,8 @@ export function archipelago(world: number, kinds: readonly { id: string; phase: 
     const K = SHAPES[Math.min(5, phase)], reach = reachOf(K, seed).reach, table = new Float32Array(SHAPE_ANGLES);
     let I = 0;
     for (let a = 0; a < SHAPE_ANGLES; a++) { table[a] = reach((a / SHAPE_ANGLES) * TAU); I += table[a] ** 2 * (TAU / SHAPE_ANGLES); }
+    // (the room the chart gives a phase's island: 10 × its phase areas, as the islands were till Ed's 2026-11-04 sizes, 10 / 15 / 20 / 25 / 30,
+    // rules/rosters.ts sizeOfPhase; the smaller islands grow in the same patches with more sea between, and home's patch, so home, is unchanged)
     const areas = (phase ? 10 * phase : HOME_AREAS) + lakePlan(K, seed).reduce((t, n) => t + n, 0), k = AREA_METRES * Math.sqrt((2 * areas) / I), pad = COAST_PAD[Math.min(5, phase)];
     const h = Math.floor(seed * 7919) % 100003, aim = phase ? Math.max(ring[1] * 0.5, Math.min(0.95, ring[phase] + MINGLE * ringGap * (2 * hash2(h, 13, 9031 + world) - 1))) * R : 0;
     const b = (bearing * Math.PI) / 180, turn = phase ? hash2(h, 17, 9041 + world) * TAU : 0;

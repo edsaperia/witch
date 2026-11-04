@@ -74,10 +74,10 @@ describe("legend areas", () => {
         if (o > -(LC.fit?.margin ?? 0) + 1e-6) over.push(`${sp} ${o.toFixed(1)} m (r ${c.r.toFixed(0)})`);
       }
     }
-    // (the elephant, 83 m asleep, needs 50: in the smaller legend areas it gets what fits, a few metres short; and, since the challenge
-    // area went to the island's edge (Ed, 2026-11-04) and the route's first areas deal the night's legends, the elk on the elephant
-    // island's seed 1 is dealt a legend area that holds 23 m, 2.8 m short of its margin: the most its area held)
-    expect(over.filter(s => !s.startsWith("elephant"))).toEqual(["elk 2.8 m (r 23)"]);
+    // (the elephant, 83 m asleep, needs 50: in the smaller legend areas it gets what fits, a few metres short; the elk the elephant
+    // island's seed 1 was dealt from the challenge area's move to the edge, 2.8 m short in a 23 m area, isn't dealt there since the
+    // islands' sizes by phase, Ed 2026-11-04: its island 20 areas, not 30, deals 4 legends, not 6)
+    expect(over.filter(s => !s.startsWith("elephant"))).toEqual([]);
   });
 
   it("shows no border inside a pair: the legend area wears its pair's look everywhere, so the area blend has nothing to blend there", () => {

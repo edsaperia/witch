@@ -413,10 +413,19 @@
             "detail"
           ],
           "additionalProperties": false
+        },
+        "phaseSizes": {
+          "type": "array",
+          "items": {
+            "type": "number",
+            "minimum": 0
+          },
+          "description": "How many areas (stumps and waves) each phase's islands have, phase 1 first."
         }
       },
       "required": [
-        "coast"
+        "coast",
+        "phaseSizes"
       ],
       "additionalProperties": false,
       "description": "How the other islands look on the sea chart and in the dream bubbles: their coastlines and shapes."
@@ -6502,10 +6511,10 @@
               "type": "number",
               "minimum": 0
             },
-            "largestIsland": {
+            "fullPhase": {
               "type": "number",
               "minimum": 0,
-              "description": "the largest island's areas: an island this big or bigger reaches the final swarm at its last area, a smaller one its size over this of the way along the curve."
+              "description": "the phase whose islands reach the full swarm at their last area; an island of an earlier phase its phase over this of the way along the curve."
             },
             "curve": {
               "type": "number",
@@ -6556,7 +6565,7 @@
           "required": [
             "start",
             "endAverage",
-            "largestIsland",
+            "fullPhase",
             "curve",
             "youngShare",
             "reference",

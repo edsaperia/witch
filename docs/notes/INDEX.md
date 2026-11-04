@@ -200,6 +200,7 @@ says what each note covers.
 - Beach
 - Island
 - Master curve
+- Island sizes by phase
 - Journey art kit
 - Kind table / roster / island by kind
 - Sea chart

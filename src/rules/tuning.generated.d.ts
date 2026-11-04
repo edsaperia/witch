@@ -78,6 +78,7 @@ export type SchemaTuning = {
       "harmonics": number;
       "detail": number;
     };
+    "phaseSizes": Array<number>;
   };
   "beach": {
     "on": boolean;
@@ -1267,7 +1268,7 @@ export type SchemaTuning = {
     "swarm": {
       "start": number;
       "endAverage": number;
-      "largestIsland": number;
+      "fullPhase": number;
       "curve": number;
       "youngShare": Array<number>;
       "reference": string;

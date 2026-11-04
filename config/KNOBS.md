@@ -138,11 +138,17 @@ How the other islands look on the sea chart and in the dream bubbles: their coas
 Islands other than home (the wave 2 finale's dream bubbles and the sea chart; rules/islandShape.ts, art/islands.js; Ed, docs/backlog/journey.md): coast, the coastline's knobs as map.coast's (amp, the most it strays from round, a share of the radius; harmonics, how many bays and headlands; detail, the finer wobble), stronger than home's so every island has a shape of its own, read at a bubble's 30 pixels.
 Code: `rules/islandShape.ts`, `art/islands.js`, `docs/backlog/journey.md`
 
+- **`islands.phaseSizes`**: How many areas (stumps and waves) each phase's islands have, phase 1 first.
+  1. Ed, 2026-11-04: "We could make waves 5 / 10 / 15 / 20 / 25 / 30 / 64" (then "yes, start island sizes")
+  10 / 15 / 20 / 25 / 30 for phases 1 to 5 (10 / 20 / 30 / 40 / 50 till 2026-11-04); home is its own, 5 at first growing to 64. A phase past the list takes its last. What follows the size follows it: the night's legends (1 in 5 areas, rules/rosters.ts legendsFor), the roster's kinds and so the challenge's pack. The sea chart's layout keeps the room it gave 10 × phase areas (rules/archipelago.ts: every island where it was, more sea round it, home unchanged), and its outlines draw the built sizes; the decisions panel's sliders change the island played.
+  Code: `rules/rosters.ts`, `rules/archipelago.ts`
+
 | knob | type | range |
 |---|---|---|
 | `islands.coast.amp` | number | 0 to … |
 | `islands.coast.harmonics` | number | 0 to … |
 | `islands.coast.detail` | number | 0 to … |
+| `islands.phaseSizes` | array of number |  |
 
 ### `beach`
 
@@ -2370,11 +2376,12 @@ Code: `rules/growth.ts`, `rules/swarm.ts`, `config/swarm-power.json`, `tools/bal
   1. Ed, 2026-10-07: "every wild area has at least one hostile wild creature"
 - **`population.swarm.classes`**: Swarm species come in strong, medium and light classes, smaller swarms of stronger creatures.
   1. Ed, 2026-10-10: 2026-10-11
-  strong (cap 6), medium (cap 12: swarm.reference, and every species not listed) and light (cap 16; Ed: "a swarm of 20 is too many; cap it at 16"), each class's strength 12 / its cap on its creatures' health and damage (strong ×2, light ×0.75; rules/combat/data.ts), so moving a species is one line here. The target is the estimated power (Σhp × Σdps; the witch doesn't count: her three hits ignore damage) of a medium reference swarm of swarm.start + (swarm.endAverage − swarm.start)·p^swarm.curve creatures (1 + 11·p^0.8), its young share easing from swarm.youngShare[0] (1.0) to [1] (0.2). p is the area's place along its own island's route, (its place − 1)/(the route's length − 1), times the island's size (its route's length) over swarm.largestIsland, at most 1 (rules/swarm.ts islandShare), so the last area of the largest islands fields the final swarm and a smaller island's last its share of the way along the curve.
+  strong (cap 6), medium (cap 12: swarm.reference, and every species not listed) and light (cap 16; Ed: "a swarm of 20 is too many; cap it at 16"), each class's strength 12 / its cap on its creatures' health and damage (strong ×2, light ×0.75; rules/combat/data.ts), so moving a species is one line here. The target is the estimated power (Σhp × Σdps; the witch doesn't count: her three hits ignore damage) of a medium reference swarm of swarm.start + (swarm.endAverage − swarm.start)·p^swarm.curve creatures (1 + 11·p^0.8), its young share easing from swarm.youngShare[0] (1.0) to [1] (0.2). p is the area's place along its own island's route, (its place − 1)/(the route's length − 1), times its island's reach (its phase over swarm.fullPhase, at most 1; home's the share of the islands found: rules/swarm.ts islandShare, rules/growth.ts islandReach), so the last area of a phase 5 island fields the final swarm and an earlier phase's its share of the way along the curve.
   Code: `rules/combat/data.ts`
-- **`population.swarm.largestIsland`**: the largest island's areas: an island this big or bigger reaches the final swarm at its last area, a smaller one its size over this of the way along the curve.
-  1. Ed, 2026-11-03: "Pack growth: grows along each island's own length, scaled by the island's size, so only the largest islands reach full packs. The curve gets steeper (1.3 → 0.8) so packs grow sooner."
-  50: the phase-5 islands (rules/rosters.ts sizeOfPhase), the largest on the chart; home grows to 64 at the campaign's end and holds there. It replaces the master curve's length in waves (64, its old knob), under which a 10-area island's last area stopped at p 0.14.
+- **`population.swarm.fullPhase`**: the phase whose islands reach the full swarm at their last area; an island of an earlier phase its phase over this of the way along the curve.
+  1. Ed, 2026-11-04: "we should rebalance this so phase 5 islands get to full packs"
+  5: a phase 5 island's last area fields the full swarm whatever its size, a phase 1 island's a fifth of the way (rules/swarm.ts phaseReach, rules/growth.ts islandReach). Home's reach is the share of the islands she's found (rules/rosters.ts foundShare: none at first, every island at the end); a map that's no island by roster plays the whole curve. It replaces the largest island's areas (largestIsland 50, 2026-11-03 to 11-04: an island's size over it, which only the 50-area phase 5 islands reached).
+  Code: `rules/growth.ts`, `rules/rosters.ts`
 
 | knob | type | range |
 |---|---|---|
@@ -2386,7 +2393,7 @@ Code: `rules/growth.ts`, `rules/swarm.ts`, `config/swarm-power.json`, `tools/bal
 | `population.byRoute.minHostile` | number | 0 to … |
 | `population.swarm.start` | number | 0 to … |
 | `population.swarm.endAverage` | number | 0 to … |
-| `population.swarm.largestIsland` | number | 0 to … |
+| `population.swarm.fullPhase` | number | 0 to … |
 | `population.swarm.curve` | number | 0 to … |
 | `population.swarm.youngShare` | array of number |  |
 | `population.swarm.reference` | string |  |

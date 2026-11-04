@@ -621,18 +621,22 @@
       "links": [
         "rules/combat/data.ts"
       ],
-      "notes": "strong (cap 6), medium (cap 12: swarm.reference, and every species not listed) and light (cap 16; Ed: \"a swarm of 20 is too many; cap it at 16\"), each class's strength 12 / its cap on its creatures' health and damage (strong ×2, light ×0.75; rules/combat/data.ts), so moving a species is one line here. The target is the estimated power (Σhp × Σdps; the witch doesn't count: her three hits ignore damage) of a medium reference swarm of swarm.start + (swarm.endAverage − swarm.start)·p^swarm.curve creatures (1 + 11·p^0.8), its young share easing from swarm.youngShare[0] (1.0) to [1] (0.2). p is the area's place along its own island's route, (its place − 1)/(the route's length − 1), times the island's size (its route's length) over swarm.largestIsland, at most 1 (rules/swarm.ts islandShare), so the last area of the largest islands fields the final swarm and a smaller island's last its share of the way along the curve."
+      "notes": "strong (cap 6), medium (cap 12: swarm.reference, and every species not listed) and light (cap 16; Ed: \"a swarm of 20 is too many; cap it at 16\"), each class's strength 12 / its cap on its creatures' health and damage (strong ×2, light ×0.75; rules/combat/data.ts), so moving a species is one line here. The target is the estimated power (Σhp × Σdps; the witch doesn't count: her three hits ignore damage) of a medium reference swarm of swarm.start + (swarm.endAverage − swarm.start)·p^swarm.curve creatures (1 + 11·p^0.8), its young share easing from swarm.youngShare[0] (1.0) to [1] (0.2). p is the area's place along its own island's route, (its place − 1)/(the route's length − 1), times its island's reach (its phase over swarm.fullPhase, at most 1; home's the share of the islands found: rules/swarm.ts islandShare, rules/growth.ts islandReach), so the last area of a phase 5 island fields the final swarm and an earlier phase's its share of the way along the curve."
     },
-    "population.swarm.largestIsland": {
-      "what": "the largest island's areas: an island this big or bigger reaches the final swarm at its last area, a smaller one its size over this of the way along the curve.",
+    "population.swarm.fullPhase": {
+      "what": "the phase whose islands reach the full swarm at their last area; an island of an earlier phase its phase over this of the way along the curve.",
       "decisions": [
         {
           "by": "Ed",
-          "date": "2026-11-03",
-          "quote": "Pack growth: grows along each island's own length, scaled by the island's size, so only the largest islands reach full packs. The curve gets steeper (1.3 → 0.8) so packs grow sooner."
+          "date": "2026-11-04",
+          "quote": "we should rebalance this so phase 5 islands get to full packs"
         }
       ],
-      "notes": "50: the phase-5 islands (rules/rosters.ts sizeOfPhase), the largest on the chart; home grows to 64 at the campaign's end and holds there. It replaces the master curve's length in waves (64, its old knob), under which a 10-area island's last area stopped at p 0.14."
+      "links": [
+        "rules/growth.ts",
+        "rules/rosters.ts"
+      ],
+      "notes": "5: a phase 5 island's last area fields the full swarm whatever its size, a phase 1 island's a fifth of the way (rules/swarm.ts phaseReach, rules/growth.ts islandReach). Home's reach is the share of the islands she's found (rules/rosters.ts foundShare: none at first, every island at the end); a map that's no island by roster plays the whole curve. It replaces the largest island's areas (largestIsland 50, 2026-11-03 to 11-04: an island's size over it, which only the 50-area phase 5 islands reached)."
     },
     "creatureSimRadius": {
       "see": "population"
