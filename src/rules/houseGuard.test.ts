@@ -36,7 +36,7 @@ function night(where: "house" | "treetops"): { g: Game; ids: number[] } {
 const play = (g: Game, secs: number, each?: () => boolean) => { const end = g.clock.time + secs; for (let i = 0; g.clock.time < end && i < 2e5; i++) { stepGame(g, idle, STEP); if (each?.()) return true; } return false; };
 
 describe("her followers while she's in the treehouse", () => {
-  it("head into the home area to spots of their own and guard there, not to her: no sigil put down, her stack unchanged", () => {
+  it("head into the home area to spots of their own, roam it and guard there, not to her: no sigil put down, her stack unchanged", () => {
     const { g, ids } = night("house"), H = homeArea(g.map), C = (id: number) => g.creatures[id];
     expect(inHouse(g.witches[0])).toBe(true);
     const spots = new Map(houseGuards(g.witches[0], g.creatures, g.map, g.tuning).map(p => [p.id, p]));
@@ -46,9 +46,9 @@ describe("her followers while she's in the treehouse", () => {
     expect(g.leash.stack).toEqual(ids); // (still on her stack, in its order)
     expect(g.leash.placed).toEqual([]); // (no sigil put down)
     for (const id of ids) {
-      const c = C(id), s = spots.get(id)!;
+      const c = C(id);
+      // (in the home area, roaming it, not resting by its spot: Ed, 2026-11-04, "Animals parked in the home area can roam it freely")
       expect(H.inside(c.x, c.z), `${c.species} in the home area`).toBe(true);
-      expect(Math.hypot(c.x - s.x, c.z - s.z), `${c.species} by its spot`).toBeLessThan(12);
       expect(Math.hypot(c.x - g.witch.x, c.z - g.witch.z), `${c.species} not at her x/z`).toBeGreaterThan(10);
       expect(c.travelling, `${c.species} there, guarding (not travelling)`).toBe(false);
     }

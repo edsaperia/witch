@@ -2310,8 +2310,10 @@ Creatures parked at a sigil on the ground guard it, fighting any wild creature t
 1. Ed, 2026-10-04
 2. Ed, 2026-10-11: "Animals leashed inside the home area should aggro enemy creatures within that area"
 3. Ed, 2026-10-15: "Placing a sigil in any area should work as home does: the creatures defend the whole area, plus a radius round the sigil"
-Parked party animals (at a sigil on the ground) guard it [1]: they take on any wild creature of another kind within radius metres of the sigil, and come back to it. One parked with its sigil in the home area (the dancefloor's) guards all of that area instead [2]: any wild or enraged creature anywhere in it, never one outside it, whatever radius says. Parked in any other area [3], it guards all of its sigil's area and radius metres round the sigil besides (rules/homeArea.ts areaOf).
-Code: `rules/homeArea.ts`
+4. Ed, 2026-11-04: "A parked creature should guard its chain length, now that's a fixed number, with home area an exception"
+5. Ed, 2026-11-04: "Animals parked in the home area can roam it freely."
+Parked party animals (at a sigil on the ground) guard it [1]: they take on any wild creature of another kind near the sigil, and come back to it. One parked with its sigil in the home area (the dancefloor's) guards all of that area instead [2]: any wild or enraged creature anywhere in it, never one outside it; and it isn't held by its sigil there: it roams the whole home area freely [5] (rules/leash.ts roamHome); radius (40 m) is left only for a map with no home area or no chains. Parked in any other area [3], it guards all of its sigil's area and its chain's length round the sigil besides [4]: leash.chain.length (80 m), derived from it, not radius (rules/combat.ts guardRadius; with no chains, radius).
+Code: `rules/homeArea.ts`, `rules/combat.ts guardRadius`
 
 | knob | type | range |
 |---|---|---|
