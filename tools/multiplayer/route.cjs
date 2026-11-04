@@ -33,7 +33,7 @@ const USAGE = `Usage: node tools/multiplayer/route.cjs --build <game URL> --rela
   [--seed 123] [--link "px=6"] [--expect-version <text in version.json>] [--expect-relay-build <relay build prefix>] [--viewport 960x540] [--headed]
   bounds in seconds: [--overall 480] [--load 180] [--phone 20] [--wardrobe 16] [--rejoin 20] [--bedHold 15] [--walk 30]
                      [--join 150] [--rollover 90] [--leave 90] [--redial 150] [--wake 25]
-  diagnosis: [--watch <seconds>: once a second, both pages' clocks, step pipeline counts, renderer.info and canvas sizes, from the dial to that long after connecting] [--gl: with WebGL call counts] [--profile <seconds>: CPU profiles of both pages for that long once the visit starts] [--trace: and a Chrome trace of the host page] [--stop-after <stage>]`;
+  diagnosis: [--watch <seconds>: once a second, both pages' clocks, step pipeline counts, renderer.info and canvas sizes, from the dial to that long after connecting] [--gl: with WebGL call counts] [--profile <seconds>: CPU profiles and call counts of both pages for that long once the visit starts] [--profile-again <seconds>: a second window that long after the first] [--trace: and a Chrome trace of the host page] [--stop-after <stage>]`;
 
 const sleep = ms => new Promise(r => setTimeout(r, ms));
 const now = () => Date.now();
@@ -449,19 +449,34 @@ async function main() {
     }
     if (watcher) { clearInterval(watcher); watcher = null; }
     if (args.profile && !failed) {
-      // Diagnosis only: both pages' CPU profiles (DevTools .cpuprofile) for --profile seconds, right after the visit starts.
+      // Diagnosis only: both pages' CPU profiles (DevTools .cpuprofile) and function call counts (V8 precise coverage) for --profile
+      // seconds right after the visit starts, and again --profile-again seconds after that window ends, if given.
       const sessions = await Promise.all([host, guest].map(async page => { const cdp = await page.context().newCDPSession(page); await cdp.send("Profiler.enable"); await cdp.send("Profiler.setSamplingInterval", { interval: 1000 }); return cdp; }));
-      const t0 = now();
-      const pageFacts = () => Promise.all([host, guest].map(page => page.evaluate(() => ({ domNodes: document.getElementsByTagName("*").length, bodyChildren: document.body.children.length, canvases: document.getElementsByTagName("canvas").length, heapMB: performance.memory ? Math.round(performance.memory.usedJSHeapSize / 1048576) : null })).catch(e => ({ unavailable: e.message.split("\n")[0] }))));
-      R.profileFacts = { before: await pageFacts() };
-      if (args.trace) await browser.startTracing(host, { path: path.join(out, "host-trace.json"), categories: ["devtools.timeline", "disabled-by-default-devtools.timeline", "disabled-by-default-devtools.timeline.frame", "blink", "cc", "gpu", "v8.execute"] });
-      await Promise.all(sessions.map(cdp => cdp.send("Profiler.start")));
-      await sleep(args.profile * 1000);
-      if (args.trace) await browser.stopTracing();
-      R.profileFacts.after = await pageFacts();
-      await frameRate("profiled");
-      const profiles = await Promise.all(sessions.map(cdp => cdp.send("Profiler.stop")));
-      for (const [i, role] of ["host", "guest"].entries()) { const file = `${role}.cpuprofile`; fs.writeFileSync(path.join(out, file), JSON.stringify(profiles[i].profile)); R.notes.push(`CPU profile ${file}: ${round((now() - t0) / 1000, 1)} s`); }
+      const pageFacts = () => Promise.all([host, guest].map(page => page.evaluate(() => { const m = window.__mpRoute; return { at: Date.now(), frames: m?.frames, types: { ...(m?.types ?? {}) }, catchUpSteps: m?.catchUpSteps, domNodes: document.getElementsByTagName("*").length, heapMB: performance.memory ? Math.round(performance.memory.usedJSHeapSize / 1048576) : null }; }).catch(e => ({ unavailable: e.message.split("\n")[0] }))));
+      const windows = [0, ...(args["profile-again"] ? [args["profile-again"]] : [])];
+      R.profileWindows = [];
+      for (const [k, delay] of windows.entries()) {
+        if (delay) await sleep(delay * 1000);
+        if (left() <= args.profile * 1000) break;
+        const t0 = now(), before = await pageFacts();
+        await Promise.all(sessions.map(cdp => cdp.send("Profiler.startPreciseCoverage", { callCount: true, detailed: false })));
+        await Promise.all(sessions.map(cdp => cdp.send("Profiler.takePreciseCoverage"))); // (counts from here)
+        if (args.trace && k === 0) await browser.startTracing(host, { path: path.join(out, "host-trace.json"), categories: ["devtools.timeline", "disabled-by-default-devtools.timeline", "disabled-by-default-devtools.timeline.frame", "blink", "cc", "gpu", "v8.execute"] });
+        await Promise.all(sessions.map(cdp => cdp.send("Profiler.start")));
+        await sleep(args.profile * 1000);
+        const profiles = await Promise.all(sessions.map(cdp => cdp.send("Profiler.stop")));
+        const coverage = await Promise.all(sessions.map(cdp => cdp.send("Profiler.takePreciseCoverage")));
+        await Promise.all(sessions.map(cdp => cdp.send("Profiler.stopPreciseCoverage")));
+        if (args.trace && k === 0) await browser.stopTracing();
+        const after = await pageFacts();
+        for (const [i, role] of ["host", "guest"].entries()) {
+          fs.writeFileSync(path.join(out, `${role}-w${k}.cpuprofile`), JSON.stringify(profiles[i].profile));
+          const calls = coverage[i].result.filter(sc => /\.js/.test(sc.url)).flatMap(sc => sc.functions.filter(f => f.ranges[0]?.count > 0).map(f => ({ url: sc.url.split("/").pop(), name: f.functionName, offset: f.ranges[0].startOffset, count: f.ranges[0].count })));
+          fs.writeFileSync(path.join(out, `${role}-w${k}.calls.json`), JSON.stringify(calls));
+        }
+        R.profileWindows.push({ window: k, startS: round((t0 - startedAt) / 1000, 1), seconds: round((now() - t0) / 1000, 1), before, after });
+        R.notes.push(`profile window ${k}: ${round((t0 - startedAt) / 1000, 1)} s into the run, ${round((now() - t0) / 1000, 1)} s`);
+      }
       await Promise.all(sessions.map(cdp => cdp.detach().catch(() => {})));
     }
 
