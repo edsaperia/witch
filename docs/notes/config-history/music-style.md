@@ -25,3 +25,5 @@ A night's set (Ed, 2026-10-11: "Each night should be a full set, starting quite 
 ## curated
 
 The first home night (10 waves; the boot's warm-up as step 0): hand-picked as a first impression. A gentle forest start, a build through deep and organic house and garage to a first peak, a dark dub breakdown, then a bigger build to the climax on the last wave.
+
+Since 2026-11-04: with home starting at 5 waves (PR #1810) this 10-wave set no longer fits, and Ed chose the generated set instead ("Generated is fine"; docs/backlog/music.md). It applies only to a home night of exactly 10 waves.

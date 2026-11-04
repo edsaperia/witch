@@ -240,6 +240,7 @@ jobs:
           path: |
             ci-unit-results.json
             ci-unit-timings.json
+            ci-unit-outcomes.json
           if-no-files-found: ignore
           retention-days: 14
     needs:
