@@ -222,7 +222,7 @@ describe("shared CI game build", () => {
   it("keeps real largest-world drawing coverage separate from small unit worlds", () => {
     expect(jobs["large-world"].steps.some((s: any) => s.run?.includes("tools/smoke/large-world.cjs"))).toBe(true);
     expect(jobs["large-world"].steps.find((s: any) => s.uses === "actions/download-artifact@v4").with.name).toBe("game-dist");
-    expect(jobs["large-world"]["timeout-minutes"]).toBe(20);
+    expect(jobs["large-world"]["timeout-minutes"]).toBe(30); // (20 till areas went 196 m across: the second sampled site then loads every kind's art, tools/smoke/large-world.cjs)
   });
   it("allows cancellation of stale consumer jobs rather than always keeping them alive", () => {
     for (const name of ["check", "smoke", "large-world"]) {
