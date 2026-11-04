@@ -11,6 +11,10 @@ it('generates the same readable inventory from CRLF and LF and detects drift', (
   try {
     fs.mkdirSync(path.join(root, 'tools/demo'), { recursive: true });
     fs.writeFileSync(path.join(root, 'tools/inventory-notes.json'), '{}');
+    fs.writeFileSync(path.join(root, 'tools/root.mjs'), '// A root-level command that must be indexed.\n//   node tools/root.mjs check\n');
+    fs.writeFileSync(path.join(root, 'tools/root.test.ts'), '');
+    fs.mkdirSync(path.join(root, 'tools/demo/live'), { recursive: true });
+    fs.writeFileSync(path.join(root, 'tools/demo/live/entry.ts'), '');
     fs.writeFileSync(path.join(root, 'tools/demo/effects-scene.test.ts'), '');
     fs.writeFileSync(path.join(root, 'tools/demo/PLAN.md'), '');
     const script = path.join(root, 'tools/demo/example.mjs');
@@ -21,6 +25,11 @@ it('generates the same readable inventory from CRLF and LF and detects drift', (
     const have = fs.readFileSync(output, 'utf8');
     expect(have).toContain('Describes a useful example tool.');
     expect(have).toContain('# tools/demo');
+    const index = fs.readFileSync(path.join(root, 'tools/README.md'), 'utf8');
+    expect(index).toContain('[`root.mjs`](root.mjs)');
+    expect(index).toContain('node tools/root.mjs check');
+    expect(index).not.toContain('root.test.ts');
+    expect(index).toContain('[`demo/live/entry.ts`](demo/live/entry.ts)');
     expect(have).toContain('- `PLAN.md`\n- `effects-scene.test.ts`');
     fs.writeFileSync(script, text);
     fs.writeFileSync(output, have.replace(/\n/g, '\r\n'));

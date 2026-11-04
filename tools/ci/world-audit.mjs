@@ -33,7 +33,7 @@ export function worldCalls(source, file = "test.ts") {
   return { calls, reasons };
 }
 
-export function auditWorlds(root = process.cwd()) {
+function auditWorlds(root = process.cwd()) {
   const rows = [];
   const walk = dir => { for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
     const full = path.join(dir, entry.name);

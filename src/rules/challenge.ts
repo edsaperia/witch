@@ -144,9 +144,6 @@ export function newChallenge(map: ForestMap, creatures: readonly Creature[]): Ch
   return { key, cell: [S.cell[0], S.cell[1]], x: S.x, z: S.z, radius: S.radius ?? challengeCircle(kinds.length, map.tuning).radius, kinds, pack: creatures.filter(c => cellKey(c.cell) === key).map(c => c.id), readyAt: null, clearedAt: null, closedAt: null, reward: null, events: [] };
 }
 
-/** Whether a creature is of the challenge's pack (a creature of its area). */
-export const inPack = (g: Pick<Game, "challenge">, c: Creature): boolean => !!g.challenge && c.cell[0] === g.challenge.cell[0] && c.cell[1] === g.challenge.cell[1];
-
 /** Its pack still holding it (rules/clear.ts holdsArea: wild or enraged, not invited, not run off). */
 export const packLeft = (g: Pick<Game, "challenge" | "creatures">): Creature[] => (g.challenge ? g.challenge.pack.map(id => g.creatures[id]).filter(c => c && holdsArea(c)) : []);
 
