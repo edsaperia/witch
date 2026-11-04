@@ -1,0 +1,11 @@
+{
+  "authority": "COORDINATOR1476#6643908630, 2026-11-04 22:36:18Z; earlier6643311785 item5",
+  "branch": "codex/art-shards-nightly",
+  "worktree": "work/art-shards-nightly",
+  "base": "b29e5a3701aca479e95d5de3429042439963f002",
+  "status": "PLAN ONLY; no implementation or art execution yet",
+  "ownership": [".github/workflows/art-check.yml", "tools/art-check/shards.mjs and focused tests", "tools/art-check/task-times.json historical data", "necessary art-specific planner/cache/proof integration and notes/index"],
+  "separateOwners": "Pages/Windows gate and identical-tree CI reuse own their workflows; no ci.yml/pages.yml edit. Raise an ownership conflict with root before edits.",
+  "plan": "Use three advisory art shards, preserving existing nightly03:17 UTC/manual triggers and exact-source resolution. Keep all named tasks plus atomic auxiliary/labs, every assertion, current fingerprints/result cache/exact-tree proof reuse and full fallback. Strict combined proof rejects missing/duplicate/extra/stale/failed results; one standing nightly result remains. Historical durations are packing hints only, not speed acceptance.",
+  "validation": "Focused synthetic planner/proof/workflow tests, typecheck and required config/inventory checks with one worker. No full suite/smoke/art/browser/cold dispatch locally, no release/merge/prototype push/force/new service/spend. Root centrally watches exact PR; checkpoint and end after concrete milestone."
+}
