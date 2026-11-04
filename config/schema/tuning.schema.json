@@ -5450,7 +5450,7 @@
         "window"
       ],
       "additionalProperties": false,
-      "description": "A big pack's attacks come round faster and keep coming: past `reference` animals in a team its round time and least rest shrink smoothly with its size (never below `floor`, its attack window never below `window` of today's), its attackers are picked `ahead` rounds early and come in in time, and it waits in rings of `ring`."
+      "description": "A big pack's attacks come round faster and keep coming: shorter rounds past `reference` animals, attackers picked `ahead` rounds early, and waiting rings of `ring`."
     },
     "creatureMomentum": {
       "type": "object",
