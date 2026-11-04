@@ -111,6 +111,31 @@ for (const cause of ['transport', 'silence']) test(`correct host ticket after ${
   }
 });
 
+test('three-Hz client activity is not20s silence and still delivers the resumed guest checkpoint', { timeout: 5000 }, async t => {
+  let clock = 0;
+  const logs = [], connect = await fixture(t, { now: () => clock, checkMs: 5, log: row => logs.push(row) });
+  const h = await host(connect), hostReady = message(h.ws); send(h.ws, { type: 'ready' }); await hostReady;
+  const guest = await connect(), joined = message(guest), notice = message(h.ws);
+  send(guest, { type: 'join', room: h.info.room, token: h.info.token }); const gi = await joined; await notice;
+  const ready = message(guest), readyNotice = message(h.ws); send(guest, { type: 'ready' }); await ready; await readyNotice;
+  send(guest, { type: 'active' });
+  // Model message activity at three frames/second, not an actual browser FPS claim.
+  for (let frame = 0; frame <= 180; frame++) {
+    clock = frame * (1000 / 3);
+    const hostBeat = message(h.ws); send(h.ws, { type: 'heartbeat' }); await hostBeat;
+    const guestBeat = message(guest); send(guest, { type: 'heartbeat' }); await guestBeat;
+  }
+  assert.equal(h.ws.readyState, WebSocket.OPEN); assert.equal(logs.some(row => row.rule === 'silence'), false);
+  const away = message(h.ws), closed = once(guest, 'close'); guest.terminate(); await closed; await away;
+  clock += 1000;
+  const replacement = await connect(), resumed = message(replacement), peerResumed = message(h.ws);
+  send(replacement, { type: 'resume', ...gi.resume }); assert.equal((await resumed).type, 'resumed');
+  assert.equal((await peerResumed).type, 'peer-resumed');
+  const received = message(replacement); send(h.ws, { type: 'state', payload: { kind: 'start', tick: 123 } });
+  assert.deepEqual((await received).payload, { kind: 'start', tick: 123 });
+  assert.equal(h.ws.readyState, WebSocket.OPEN);
+});
+
 test('joins a running host and relays state/input with connection-bound identities', { timeout: 5000 }, async t => {
   const connect = await fixture(t), h = await host(connect), guest = await connect();
   const joined = message(guest), notice = message(h.ws);
