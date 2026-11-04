@@ -66,7 +66,7 @@ node tools/inventory.mjs [--check]
 
 - [`arrive/`](arrive/README.md): 2 scripts — boot.cjs, time.cjs
 - [`art-cache/`](art-cache/README.md): 4 scripts — history.mjs, load.mjs, map.mjs, parity.mjs
-- [`art-check/`](art-check/README.md): 3 scripts — affected.mjs, checked-tree.mjs, scope.mjs
+- [`art-check/`](art-check/README.md): 4 scripts — affected.mjs, checked-tree.mjs, scope.mjs, shards.mjs
 - [`art-check-legacy/`](art-check-legacy/README.md): 0 scripts
 - [`art-iterations/`](art-iterations/README.md): 2 scripts — evolutions.js, ladder.mjs
 - [`art-lab/`](art-lab/README.md): 1 script — build.mjs
