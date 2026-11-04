@@ -22,6 +22,14 @@ Test files that mock a module with vi.mock, run apart in Vitest's isolated proje
 
 Pages publication policy: debounce previews outside the publisher lock; live requests preempt older publication.
 
+## `perch-profile.cjs`
+
+Canonical/cloud only.
+
+## `program-counts.cjs`
+
+Canonical/cloud program-count evidence only, not latency or native-route acceptance.
+
 ## `report-command.cjs`
 
 Stream a check unchanged, annotating named failures or its crash reason only when it exits unsuccessfully.

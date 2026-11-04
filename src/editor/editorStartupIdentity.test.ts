@@ -30,8 +30,10 @@ it("starts with every authored pose under either one-ulp sine result, with the s
   expect(JSON.stringify(b.selected)).toBe(JSON.stringify(a.selected));
   expect(a.selected.objects).toHaveLength(proposal.objects.length);
   for (const p of a.selected.objects) {
-    const old = proposal.objects.find(o => o.id === p.id)!;
-    expect(p).toEqual({ id: old.id, x: old.x, z: old.z, rotation: a.x.normalAngle(old.rotation) });
+    // Migration v1 substitutes only the two guest chests (Ed 1609#6557564092).
+    const sourceId = p.id === "bedroom2DressingTable" ? "bedroom2Chest" : p.id === "bedroom3DressingTable" ? "bedroom3Chest" : p.id;
+    const old = proposal.objects.find(o => o.id === sourceId)!;
+    expect(p).toEqual({ id: p.id, x: old.x, z: old.z, rotation: a.x.normalAngle(old.rotation) });
   }
   a.x.physicalRoom({ x: 0, z: 0 }, a.x.EDITOR_HOUSE); // Cached shape lookup cannot change identity.
   expect(a.x.floorplanKey(a.x.EDITOR_HOUSE, a.items)).toBe(a.key);
@@ -54,7 +56,8 @@ it("keeps the original v1 bytes and its camera-preserving import under both math
   expect(left.migration?.held.map(p => p.id)).toContain("cauldron");
   for (const old of original.objects.filter(p => p.id !== "cauldron")) {
     const recorded = legacy.items.find(p => p.id === old.id)!;
-    const p = left.objects.find(p => p.id === old.id)!;
+    const loadedId = old.id === "bedroom2Chest" ? "bedroom2DressingTable" : old.id === "bedroom3Chest" ? "bedroom3DressingTable" : old.id;
+    const p = left.objects.find(p => p.id === loadedId)!;
     expect(p.x).toBe(old.x); expect(p.z).toBe(old.z);
     const yaw = FURNITURE_IDS.includes(old.id) ? recorded.facing.yaw - old.rotation * Math.PI / 180 : old.rotation * Math.PI / 180;
     expect(Math.sin(a.x.cameraYaw(p))).toBeCloseTo(Math.sin(yaw), 12);

@@ -10,9 +10,9 @@
   "locked": true,
   "door": {"label": "Door", "foot": [1.4, 1.4, 4.4], "use": {"kind": "say", "line": "A friend's room. Locked for now."}},
   "objects": [
-    {"id":"bedroom2Bed","label":"A bare bed frame","use":{"kind":"say","line":"Waiting for its witch."},"offset":[2.6,-2.6],"box":{"w":4,"d":5.2,"h":1.2}},
-    {"id":"bedroom2Wardrobe","label":"Something under a dust sheet","use":{"kind":"say","line":"Waiting for its witch."},"offset":[4,1.6],"box":{"w":1.4,"d":4,"h":4.4}},
-    {"id":"bedroom2Chest","label":"Something under a dust sheet","use":{"kind":"say","line":"Waiting for its witch."},"offset":[-1.2,-4.1],"box":{"w":2.8,"d":1.6,"h":1.8}},
+    {"id":"bedroom2Bed","label":"Bed","use":{"kind":"bed"},"offset":[2.6,-2.6],"box":{"w":4,"d":5.2,"h":1.2}},
+    {"id":"bedroom2Wardrobe","label":"Wardrobe","use":{"kind":"creator","axes":["top"],"wear":[],"parts":["jacket","top","jeans"]},"offset":[4,1.6],"box":{"w":1.4,"d":4,"h":4.4}},
+    {"id":"bedroom2DressingTable","label":"Dressing table","use":{"kind":"creator","axes":["hair"],"wear":["earrings"],"parts":["hair","skin"]},"offset":[-1.2,-4.1],"box":{"w":2.8,"d":1.6,"h":4.6}},
     {"id":"bedroom2Crates","label":"Packing crates","use":{"kind":"say","line":"Waiting for its witch."},"offset":[-0.6,4.3],"box":{"w":3,"d":1.6,"h":2.6}}
   ]
 }

@@ -42,3 +42,64 @@ it("tolerates a frame timestamp before packet arrival and neutralizes invalid cl
   expect(input.sample(NaN).moveX).toBe(0);
   expect(input.sample(350.5).moveX).toBe(0);
 });
+it("consumes bunched movement quanta in order and acknowledges applied rather than newest received sequence", () => {
+  const input = guestInput();
+  input.accept({ sequence: 0, controls: { moveX: 1, dash: true } }, 0);
+  expect(input.consume(0).sequence).toBe(-1);
+  input.accept({ sequence: 1, controls: { moveX: 0 } }, 1);
+  input.accept({ sequence: 2, controls: { moveX: -1 } }, 2);
+  expect(input.receivedSequence).toBe(2); expect(input.sequence).toBe(-1);
+  expect(input.consume(2)).toMatchObject({ sequence: 0, controls: { moveX: 1, dash: true } });
+  expect(input.sequence).toBe(0);
+  expect(input.consume(3)).toMatchObject({ sequence: 1, controls: { moveX: 0 } });
+  expect(input.consume(4)).toMatchObject({ sequence: 2, controls: { moveX: -1 } });
+  expect(input.consume(5)).toMatchObject({ sequence: 2, controls: { moveX: 0 }, motion: false });
+  expect(input.consume(252)).toMatchObject({ sequence: 2, controls: { moveX: 0 } });
+});
+it("bounds the input queue and can release a lone edge after the startup delay", () => {
+  const input = guestInput(); input.accept({ sequence: 0, controls: { dash: true } }, 0);
+  expect(input.consume(49).sequence).toBe(-1); expect(input.consume(50).sequence).toBe(0);
+  for (let n = 1; n <= 130; n++) input.accept({ sequence: n, controls: {} }, n);
+  expect(input.stats.queued).toBe(120); expect(input.stats.discarded).toBe(10);
+  input.suspend(); expect(input.stats.queued).toBe(0); expect(input.sequence).toBe(0);
+});
+
+it("never invents motion on underrun and drains received quanta across a slow page gap", () => {
+  const input = guestInput(250, 0);
+  input.accept({ sequence: 0, controls: { moveX: 1 } }, 0);
+  expect(input.consume(0)).toMatchObject({ sequence: 0, motion: true });
+  for (let n = 1; n <= 20; n++) expect(input.consume(n * 16)).toMatchObject({ sequence: 0, motion: false, controls: { moveX: 0 } });
+  input.accept({ sequence: 1, controls: { moveZ: 1 } }, 450);
+  expect(input.consume(800)).toMatchObject({ sequence: 1, motion: true, controls: { moveZ: 1 } });
+  expect(input.stats.discarded).toBe(0);
+  expect(input.stats.longestHoldMs).toBe(784);
+  expect(input.stats.currentHoldMs).toBe(0);
+  input.suspend(); input.consume(1000); input.consume(1050);
+  expect(input.stats.currentHoldMs).toBe(50);
+  expect(input.stats.longestHoldMs).toBe(784);
+  input.clear(); expect(input.stats.longestHoldMs).toBe(0);
+});
+
+it("keeps a hold's controls current without queueing a physics quantum", () => {
+  const input = guestInput();
+  expect(input.accept({ sequence: 0, controls: { moveX: 1 } }, 0)).toBe(true);
+  expect(input.accept({ sequence: 1, controls: { moveX: 1, pausePage: true }, hold: true }, 1)).toBe(true);
+  expect(input.sample(2)).toMatchObject({ pausePage: true });
+  expect(input.stats).toMatchObject({ received: 1, queued: 1 });
+  expect(input.accept({ sequence: 1, controls: { moveX: -1 } }, 3)).toBe(false); // A hold still orders the stream.
+});
+
+it("drains a backlog above the threshold oldest first and always leaves this step's own quantum", () => {
+  const input = guestInput(250, 1);
+  for (let sequence = 0; sequence < 8; sequence++) input.accept({ sequence, controls: { moveX: sequence / 10 } }, sequence);
+  expect(input.catchUp(1, 4)).toEqual([]); // Not started: the jitter buffer decides when quanta begin.
+  expect(input.consume(10)).toMatchObject({ sequence: 0, motion: true });
+  const extra = input.catchUp(1, 4);
+  expect(extra.map(e => [e.sequence, e.controls.moveX])).toEqual([[1, .1]]);
+  expect(input.sequence).toBe(1);
+  expect(input.consume(11)).toMatchObject({ sequence: 2, motion: true });
+  expect(input.catchUp(3, 4).map(e => e.sequence)).toEqual([3]); // Five wait: down to the threshold, no further.
+  expect(input.catchUp(3, 4)).toEqual([]);
+  expect(input.catchUp(9, 0).map(e => e.sequence)).toEqual([4, 5, 6]); // One always stays for consume().
+  expect(input.consume(12)).toMatchObject({ sequence: 7, motion: true });
+});

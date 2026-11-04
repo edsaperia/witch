@@ -835,6 +835,12 @@ const PIECES = {
   // the two locked bedrooms' placeholders, under dust sheets (art/sheeted.js)
   ...SHEETED_PIECES,
 };
+// Occupied guest bedrooms use the same working furniture as home, with their own footprints.
+for (const room of ["bedroom2", "bedroom3"]) {
+  PIECES[`${room}Bed`] = PIECES.bed;
+  PIECES[`${room}Wardrobe`] = PIECES.wardrobe;
+  PIECES[`${room}DressingTable`] = PIECES.dressingTable;
+}
 
 /** The pieces' helpers, for the rooms' dressing (art/houseDecor.js): a light, a bulb, a candle, a sprig, ivy, a pot, a disc. */
 export const PARTS = { light, bulb, candle, sprig, ivy, can, disc, planks, WARM, FAIRY, MAGICL, SCREEN, GREEN };
