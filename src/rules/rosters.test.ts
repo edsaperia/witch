@@ -104,8 +104,8 @@ describe("islands by kind (islandOf)", () => {
 
     it("is the same roster for the same island every time (seeded), and its map's neighbourhood the tuning's", () => {
       for (const c of cases.slice(0, 64)) expect(rosterOf(c.K, c.phase, c.bearing, c.size, c.seed, c.hood), c.label).toEqual(c.roster);
-      for (const K of REAL_KINDS) for (const world of [0, 5]) expect(islandOf(K, world)!.roster).toEqual(islandOf(K, world, TUNING.map.rosterNeighbourhood)!.roster);
-      expect(ROSTER_NEIGHBOURHOOD).toBe(TUNING.map.rosterNeighbourhood);
+      for (const K of REAL_KINDS) for (const world of [0, 5]) expect(islandOf(K, world)!.roster).toEqual(islandOf(K, world, TUNING.map!.rosterNeighbourhood)!.roster);
+      expect(ROSTER_NEIGHBOURHOOD).toBe(TUNING.map!.rosterNeighbourhood);
     });
   });
 
