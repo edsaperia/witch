@@ -34,6 +34,9 @@ $taskEvidence = (Resolve-Path $EvidenceDir).Path
 $taskStamp = [DateTime]::UtcNow.ToString('yyyyMMdd-HHmmss-fff')
 $taskPrefix = Join-Path $taskEvidence "$taskStamp-$Step"
 $taskReport = [ordered]@{ schema=1; step=$Step; sha=$taskHead; grantComment=$GrantComment; previousDoneComment=$PreviousDoneComment; command=$taskCommands[$Step]; started=[DateTime]::UtcNow.ToString('o'); timeoutMs=270000; status='preflight'; stopReason=$null; inputStop=$false; externalBrowserStop=$false; cpuStop=$false; watchdogStop=$false; processTreeClean=$false }
+$taskReport.guardPolicy = '6555865819: idle120s before start; input/CPU record-only; existing browsers not inspected'
+$taskReport.guardEvents = @()
+$taskReport.timingLabel = 'measured under load'
 $taskChild = $null
 $taskWatchdog = $null
 $taskOriginalWitchSha = $env:WITCH_SHA
@@ -85,17 +88,26 @@ function Get-A4ExternalBrowsers {
 function Read-A4Guard {
   $taskLastTick = [A4ProofInput]::LastTick()
   $taskIdle = [A4ProofInput]::Idle($taskLastTick)
-  $taskProcesses = @(Get-CimInstance Win32_Process | Select-Object ProcessId,ParentProcessId,Name)
-  if ($taskProcesses.Count -eq 0) { throw 'Process inventory unavailable.' }
-  $taskExternal = @(Get-A4ExternalBrowsers -TaskProcesses $taskProcesses -TaskOwned $taskOwned)
-  foreach ($taskOwnId in @($taskOwned)) {
-    if (-not $taskOwnedCreated.ContainsKey($taskOwnId)) {
+  # Query descendants of verified owned parents only. Existing browsers/windows
+  # are allowed and are never enumerated or inspected by this guard.
+  $taskParents = [System.Collections.Generic.Queue[int]]::new()
+  $taskVisited = [System.Collections.Generic.HashSet[int]]::new()
+  $taskParents.Enqueue($PID)
+  while ($taskParents.Count) {
+    $taskOwnId = $taskParents.Dequeue()
+    if (-not $taskVisited.Add($taskOwnId)) { continue }
       $taskLive = Get-A4LiveProcess -TaskProcessId $taskOwnId
-      if ($null -ne $taskLive) { $taskOwnedCreated[$taskOwnId]=$taskLive.created }
+    if ($null -eq $taskLive) { continue }
+    if ($taskOwnedCreated.ContainsKey($taskOwnId) -and $taskOwnedCreated[$taskOwnId] -ne $taskLive.created) { continue }
+    $taskOwnedCreated[$taskOwnId]=$taskLive.created
+    $taskChildren = @(Get-CimInstance Win32_Process -Filter "ParentProcessId = $taskOwnId" | Select-Object ProcessId,ParentProcessId,Name)
+    foreach ($taskOwnChild in $taskChildren) {
+      [void]$taskOwned.Add([int]$taskOwnChild.ProcessId)
+      $taskParents.Enqueue([int]$taskOwnChild.ProcessId)
     }
   }
   # Store only the guard outcome. Do not publish process inventories or window data.
-  return @{at=[DateTime]::UtcNow.ToString('o');lastInputTick=$taskLastTick;idleMs=$taskIdle;externalBrowserCount=$taskExternal.Count;ownedProcessCount=$taskOwned.Count}
+  return @{at=[DateTime]::UtcNow.ToString('o');lastInputTick=$taskLastTick;idleMs=$taskIdle;browserPolicy='allowed_not_inspected';ownedProcessCount=$taskOwned.Count}
 }
 function Stop-A4Owned {
   # The root PID is the only kill target; /T includes this step's descendants.
@@ -117,14 +129,12 @@ $taskStarted = [DateTime]::UtcNow
 try {
   $taskBefore = Read-A4Guard
   $taskReport.preflight = $taskBefore
-  if ($taskBefore.idleMs -lt 300000) { $taskReport.inputStop=$true; throw 'preflight_input_not_idle' }
-  if ($taskBefore.externalBrowserCount -gt 0) { $taskReport.externalBrowserStop=$true; throw 'preflight_external_browser' }
-  # The existing laptop drivers use a 70% contamination ceiling. Sample before
-  # launch only; never poll this gate during this step's own build/art startup.
+  if ($taskBefore.idleMs -lt 120000) { $taskReport.inputStop=$true; throw 'preflight_input_not_idle_120s' }
+  # CPU is recorded, never gated (6555865819).
   $taskCpuJs = "const os=require('node:os'),a=os.cpus();setTimeout(()=>{let i=0,t=0;os.cpus().forEach((c,n)=>{i+=c.times.idle-a[n].times.idle;for(const k in c.times)t+=c.times[k]-a[n].times[k]});console.log(t>0?100*(1-i/t):-1)},1000)"
-  $taskCpu = [double]((& node -e $taskCpuJs).Trim())
+  try { $taskCpu = [double]((& node -e $taskCpuJs).Trim()) } catch { $taskCpu = [double]::NaN }
   $taskReport.preflightCpuPercent = $taskCpu
-  if ([double]::IsNaN($taskCpu) -or [double]::IsInfinity($taskCpu) -or $taskCpu -lt 0 -or $taskCpu -ge 70) { $taskReport.cpuStop=$true; throw 'cpu_prelaunch' }
+  if ([double]::IsNaN($taskCpu) -or [double]::IsInfinity($taskCpu) -or $taskCpu -lt 0 -or $taskCpu -ge 70) { $taskReport.guardEvents += @{category='cpu_busy_or_unavailable';atSeconds=0} }
   if ($Step -eq 'bench-quick') {
     $taskVersion = Get-Content -Raw -LiteralPath (Join-Path $taskRoot 'dist/version.json') | ConvertFrom-Json
     if ($taskVersion.version -notlike "*$($ExpectedSha.Substring(0,7))*") { throw 'bench_dist_source_identity_mismatch' }
@@ -163,11 +173,14 @@ if (`$null -ne `$taskTarget) { try { if ([A4Watch]::Created(`$taskTarget.Handle)
   [void]$taskOwned.Add($taskWatchdog.Id)
   $taskOwnedCreated[$taskWatchdog.Id] = [A4ProofInput]::Created($taskWatchdog.Handle)
   $taskReport.status = 'running'
+  $taskRecordedInputTick = $taskBefore.lastInputTick
   while (-not $taskChild.HasExited) {
     if ($taskLaunch.ElapsedMilliseconds -ge 270000) { $taskReport.watchdogStop=$true; throw 'watchdog_270s' }
     $taskGuard = Read-A4Guard
-    if ($taskGuard.lastInputTick -ne $taskBefore.lastInputTick) { $taskReport.inputStop=$true; throw 'ed_input_returned' }
-    if ($taskGuard.externalBrowserCount -gt 0) { $taskReport.externalBrowserStop=$true; throw 'external_browser_appeared' }
+    if ($taskGuard.lastInputTick -ne $taskRecordedInputTick) {
+      $taskReport.guardEvents += @{category='input';atSeconds=[Math]::Round($taskLaunch.Elapsed.TotalSeconds,3)}
+      $taskRecordedInputTick = $taskGuard.lastInputTick
+    }
     Start-Sleep -Milliseconds 250
     $taskChild.Refresh()
   }
@@ -178,6 +191,7 @@ if (`$null -ne `$taskTarget) { try { if ([A4Watch]::Created(`$taskTarget.Handle)
   if (Test-Path -LiteralPath "$taskPrefix.watchdog") { $taskReport.watchdogStop=$true; $taskReport.status='stopped'; $taskReport.stopReason='watchdog_265s' }
   if (Test-Path -LiteralPath "$taskPrefix.browser.jsonl") {
     $taskBrowserRows = @(Get-Content -LiteralPath "$taskPrefix.browser.jsonl" | ForEach-Object { $_ | ConvertFrom-Json })
+    foreach ($taskFlag in @($taskBrowserRows | Where-Object { $_.kind -eq 'guard-flag' })) { $taskReport.guardEvents += @{category=$taskFlag.category;at=$taskFlag.at} }
     $taskBrowserStop = @($taskBrowserRows | Where-Object { $_.kind -eq 'stop' } | Select-Object -Last 1)
     if ($taskBrowserStop.Count) { $taskReport.status='stopped'; $taskReport.stopReason=$taskBrowserStop[0].reason; $taskReport.cpuStop=($taskBrowserStop[0].reason -eq 'cpu_measurement') }
   }

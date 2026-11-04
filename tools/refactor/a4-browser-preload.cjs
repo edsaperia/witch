@@ -47,8 +47,7 @@ pw.chromium.launch = async options => {
         const percent = total > 0 ? 100 * (1 - idle / total) : null;
         record({ kind: 'cpu-measurement', percent, limit: 70 });
         if (percent === null || !Number.isFinite(percent) || percent >= 70) {
-          record({ kind: 'stop', reason: 'cpu_measurement' });
-          throw Error('A4_CPU_MEASUREMENT: invalid/contaminated measurement window');
+          record({ kind: 'guard-flag', category: percent === null || !Number.isFinite(percent) ? 'cpu_unavailable' : 'cpu_busy', timingLabel: 'measured under load' });
         }
         return result;
       };

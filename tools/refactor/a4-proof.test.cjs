@@ -2,6 +2,28 @@
 const fs = require('node:fs'), vm = require('node:vm'), cp = require('node:child_process');
 const assert = require('node:assert/strict'), test = require('node:test');
 
+test('record-only policy records input without a stop and never inventories external browsers', () => {
+  const file = require('node:path').resolve('tools/refactor/a4-proof-step.ps1').replaceAll("'", "''");
+  const source = fs.readFileSync(file, 'utf8');
+  assert.match(source, /idleMs -lt 120000/);
+  assert.doesNotMatch(source, /throw 'ed_input_returned'|throw 'cpu_prelaunch'|throw 'external_browser_appeared'|throw 'preflight_external_browser'/);
+  assert.match(source, /Get-CimInstance Win32_Process -Filter "ParentProcessId = \$taskOwnId"/);
+  const script = `
+$ErrorActionPreference='Stop'; $tokens=$null; $errors=$null
+$ast=[System.Management.Automation.Language.Parser]::ParseFile('${file}',[ref]$tokens,[ref]$errors)
+if($errors.Count){throw 'parse failure'}
+$guard=$ast.Find({param($n) $n -is [System.Management.Automation.Language.IfStatementAst] -and $n.Extent.Text.StartsWith('if ($taskGuard.lastInputTick')},$true)
+$taskGuard=@{lastInputTick=2}; $taskRecordedInputTick=1
+$taskReport=@{guardEvents=@()}; $taskLaunch=@{Elapsed=@{TotalSeconds=12.5}}
+Invoke-Expression $guard.Extent.Text
+if($taskReport.guardEvents.Count -ne 1 -or $taskReport.guardEvents[0].category -ne 'input' -or $taskReport.guardEvents[0].atSeconds -ne 12.5 -or $taskRecordedInputTick -ne 2){throw 'input was not recorded'}
+'PASS mocked record-only input'
+`;
+  const result = cp.spawnSync('powershell.exe', ['-NoProfile','-NonInteractive','-Command',script], {encoding:'utf8',windowsHide:true,timeout:10000});
+  assert.equal(result.status, 0, result.stderr || result.error?.message);
+  assert.match(result.stdout, /PASS mocked/);
+});
+
 test('complete redirected supervisor finalizes known-exit and watchdog fixtures with cleanup', () => {
   const path = require('node:path');
   const source = fs.readFileSync('tools/refactor/a4-proof-step.ps1', 'utf8');
@@ -84,7 +106,9 @@ test('preload is inert on import, uses fresh headless launch and neutralizes fav
   const server = { process: () => ({ pid: 123 }), wsEndpoint: () => 'ws://fixture', close: async () => { serverClosed = true; } };
   const pw = { chromium: { launchServer: async supplied => { launched++; options = supplied; return server; }, connect: async () => browser } };
   const source = fs.readFileSync('tools/refactor/a4-browser-preload.cjs', 'utf8');
-  vm.runInNewContext(source, { require: name => name === 'node:fs' ? { appendFileSync: (_file, line) => log.push(JSON.parse(line)) } : pw,
+  let cpuSample = 0;
+  const fakeOs = { cpus: () => [{times: {idle:100,user:cpuSample++ ? 100 : 0}}] };
+  vm.runInNewContext(source, { require: name => name === 'node:fs' ? { appendFileSync: (_file, line) => log.push(JSON.parse(line)) } : name === 'node:os' ? fakeOs : pw,
     process: { env: { A4_CHROME: 'fixture-chrome', A4_BROWSER_LOG: 'fixture-log' } }, URL, Date });
   assert.equal(launched, 0);
   const owned = await pw.chromium.launch({ args: ['unchanged-renderer-option'] });
@@ -102,6 +126,11 @@ test('preload is inert on import, uses fresh headless launch and neutralizes fav
   const softwarePage = { evaluate: async () => ({ renderer: 'ANGLE (Google SwiftShader)', vendor: 'Google' }), on: () => {} };
   events.page(softwarePage);
   await assert.rejects(softwarePage.evaluate(() => 42), /A4_RENDERER/);
+  const busyPage = { evaluate: async fn => fn.toString().includes('getContext') ? {renderer:'ANGLE (Intel UHD Direct3D11)',vendor:'Intel'} : 42, on: () => {} };
+  events.page(busyPage);
+  assert.equal(await busyPage.evaluate(() => 42, {timed:true,n:1,DT:1/60}), 42);
+  assert.equal(log.filter(row => row.kind === 'guard-flag' && row.category === 'cpu_busy').length, 1);
+  assert.equal(log.filter(row => row.kind === 'stop' && row.reason === 'cpu_measurement').length, 0);
   await owned.close();
   assert.equal(serverClosed, true);
   assert.equal(log.filter(row => row.kind === 'console-noise').length, 1);
