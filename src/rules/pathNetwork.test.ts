@@ -15,7 +15,9 @@ import { footpath, FOOT_RADIUS } from "./paths";
 import { rng } from "./random";
 import { TUNING, type Tuning } from "./tuning";
 
-const islandOf = (kind: string): Tuning => ({ ...TUNING, map: { ...TUNING.map!, island: kind, islandAreas: 10 } }); // (the game's islands)
+// (the game's islands; home as the 10-area home these were measured on, its ten starting kinds and its find from the first night:
+// Ed's 2026-11-04 home is 5 areas, with no find till every island is found, rules/homeStart.test.ts)
+const islandOf = (kind: string): Tuning => ({ ...TUNING, ...(kind === "home" ? { home: { ...TUNING.home, start: 10, challengeAt: 0 } } : {}), map: { ...TUNING.map!, island: kind, islandAreas: 10 } });
 const key = (c: readonly [number, number]) => `${c[0]},${c[1]}`;
 const cellOf = (k: string): [number, number] => { const [x, y] = k.split(",").map(Number); return [x, y]; };
 /** A line's tightest bend (m: the radius over any 10 m of it) and its share of straight 2 m steps. */

@@ -23,7 +23,7 @@ const islandOf = (kind: string): Tuning => ({ ...TUNING, map: { ...TUNING.map!, 
 // (lion's seed 3, its seed 2 till the challenge area went to the island's edge, Ed 2026-11-04: on seed 2 now two legend areas pair
 // with one area, tonight's legend's, so one's clearing is in the other; the re-pairing's own limit, on about 1 night in 10 on the
 // base build too, measured when it moved)
-const MAPS: [string, number][] = [["home", 1], ["home", 2], ["tiger", 1], ["lion", 3], ["elephant", 1]];
+const MAPS: [string, number][] = [["hare", 1], ["hare", 2], ["tiger", 1], ["lion", 3], ["elephant", 1]];
 const cellOf = (k: string): [number, number] => { const [x, y] = k.split(",").map(Number); return [x, y]; };
 const kindAt = (map: ForestMap, k: string) => AREA_TYPES[map.typeOf(...cellOf(k))].creature;
 const withLegend = (map: ForestMap) => [...map.legendAreas].find(([, p]) => map.hasLegend(...cellOf(p)))!; // (a legend area with tonight's legend)

@@ -32,7 +32,7 @@ import { knownRoute, rememberRoute, type LeyRoute } from "./leyroute";
 import { lakeDepth, lakeKnobs } from "./lakes";
 import { growIsland, lakePlan, placeLakes, reachOf, shapeOf, type Candidate, type PatchGrowth } from "./islandGrowth";
 import { patchAt, STRAIT } from "./archipelago";
-import { dealLegends, homeIsland, homeKinds, islandOf, isPlaceholder, knownKinds, playableIsland, type Island } from "./rosters";
+import { dealLegends, foundKinds, HOME_START, homeEndgame, homeIsland, homeKinds, homeRoster, islandOf, isPlaceholder, knownKinds, playableIsland, REAL_KINDS, type Island } from "./rosters";
 import { CLASSIC_SLOTS, KIND_SLOTS } from "./kinds";
 import { ZOO_CONFIG, zooChartPlan, zooJunctions, type ZooPlan } from "./zoo";
 import { coastAlong, zooFence, zooLayout, zooPartition } from "./zooMap";
@@ -372,9 +372,12 @@ export function generateMap(runSeed: number, tuning: Tuning, only?: { landStep: 
   // its own, from the campaign's world (map.world) and its kind, the same every night (shapeSeed); everything inside it (paths,
   // scenery, set pieces, creatures, the night's legends; map.seed) is the night's, the run's seed.
   const world = MS.world ?? 0;
-  // Home grows (Ed, 2026-10-10, journey.md "Home's size"): one area per kind she knows, home's 10 and every kind found since
-  // (map.found, the save's); islandAreas turns it on, and is its least (past one each, the kinds again in turn).
-  const rosterIsland = only ? only.island : !round || zoo ? null : MS.island === "home" ? ((MS.islandAreas ?? 0) > 0 ? homeIsland(world, knownKinds(MS.found ?? []), Math.round(MS.islandAreas!)) : null) : MS.island && playableIsland(MS.island) ? islandOf(MS.island, world, tuning.islands?.phaseSizes, MS.rosterNeighbourhood) : null; // (never a placeholder's: rules/rosters.ts; its size its phase's, islands.phaseSizes)
+  // Home (Ed, 2026-11-04: "home has 5 areas chosen at random from the phase 1 creatures, and grows as you unlock islands"; rules/
+  // rosters.ts homeRoster): one area per island found (map.found, the save's), at least home.start, filled each night with home's
+  // starting kinds whose islands are unfound, chosen by the night's seed; its legends as any island's (rules/rosters.ts dealLegends).
+  // islandAreas turns it on.
+  const homeStart = Math.max(1, Math.round(tuning.home.start ?? HOME_START));
+  const rosterIsland = only ? only.island : !round || zoo ? null : MS.island === "home" ? ((MS.islandAreas ?? 0) > 0 ? homeIsland(world, homeRoster(MS.found ?? [], runSeed, homeStart)) : null) : MS.island && playableIsland(MS.island) ? islandOf(MS.island, world, tuning.islands?.phaseSizes, MS.rosterNeighbourhood) : null; // (never a placeholder's: rules/rosters.ts; its size its phase's, islands.phaseSizes)
   const seed = runSeed, shapeSeed = rosterIsland ? rosterIsland.seed : runSeed;
   // An island of so many areas (Ed, 2026-10-11, the journey's first step: map.islandAreas): home and exactly that many more, the
   // nearest home's (found below, once the areas are cut); until then a radius sure to hold them sizes the grid and the forest.
@@ -395,9 +398,10 @@ export function generateMap(runSeed: number, tuning: Tuning, only?: { landStep: 
   const coast = round ? makeCoast(shapeSeed, coastKnobs) : () => 1, most = 1 + (round ? Math.max(0, coastKnobs?.amp ?? 0) : 0);
   const across = (r: number) => 2 * Math.ceil(r + 0.5 + MS.buffer + 1) + 1;
   const n = zoo ? zoo.n : round ? across(R) : tuning.mapAreas, margin = round ? Math.ceil(edgeK) : 2;
-  // Home grown (more kinds known than home's 10): its grid's middle stays where the 10-area home's is, so the partition, home's
-  // cell and its first areas are the same every night of the campaign; the grid reaches further round it (from cell `first`).
-  const homeBase = rosterIsland?.kind === "home" ? homeKinds().length : 0, grown = homeBase > 0 && island > homeBase;
+  // Home grown (more islands found than its start, home.start): its grid's middle stays where the starting home's is, so the
+  // partition, home's cell and its first areas are the same every night of the campaign; the grid reaches further round it (from
+  // cell `first`).
+  const homeBase = rosterIsland?.kind === "home" ? homeStart : 0, grown = homeBase > 0 && island > homeBase;
   // Areas vary in size: the world is warped smoothly before it is cut, so in some stretches of
   // the map the cells spread out (big areas) and in others they crowd (small ones). The warp
   // never folds (its slope stays under 1), so every area keeps its place and the map stays
@@ -495,7 +499,8 @@ export function generateMap(runSeed: number, tuning: Tuning, only?: { landStep: 
   // (tonight's find in an area of its own, tuning findArea, on an island grown from its areas (the game's: the radius and square
   // maps keep the find as before): the island grown one area more, its last, which takes the find's area's kind each night, below;
   // so the island keeps its playable areas and its roster whichever area holds the find)
-  const findOn = !zoo && !!tuning.findArea?.on && island > 0, findExtra = findOn ? 1 : 0;
+  // (none at home till every island on the chart is found, Ed 2026-11-04: "no find at home until endgame"; then its challenge area)
+  const findOn = !zoo && !!tuning.findArea?.on && island > 0 && (rosterIsland?.kind !== "home" || homeEndgame(MS.found ?? [], tuning.home.challengeAt)), findExtra = findOn ? 1 : 0;
   // (an area of the grid the island could have grown into, inside its patch: where a legend area may grow, below)
   let growable: (k: string) => boolean = () => false;
   if (island) {
@@ -530,17 +535,19 @@ export function generateMap(runSeed: number, tuning: Tuning, only?: { landStep: 
   // (the find's extra area, the last grown, apart till the find's area is known: it takes that area's kind, below)
   const extraKey = findExtra && growOrder.length > 1 ? growOrder[growOrder.length - 1] : null;
   let others = cells.filter(([x, y]) => (x !== centreCell[0] || y !== centreCell[1]) && cellKey(x, y) !== extraKey);
-  if (rosterIsland && !grown) assignRoster(rosterIsland, others, types, neighbours, shapeSeed);
+  // (home: its areas' kinds as made here are its world's, not the night's, so its legend areas, land and coast are the same every
+  // night for what she's found: the first home.start areas dealt as the world's own starting home, each area past them a kind of its
+  // own (the kinds found first, in the order found); tonight's kinds (homeRoster, the night's) are dealt onto them along tonight's
+  // route, below, as every island's are)
+  let shapeKinds: string[] | null = null;
+  if (rosterIsland && rosterIsland.kind !== "home") assignRoster(rosterIsland, others, types, neighbours, shapeSeed);
   else if (rosterIsland) {
-    // Home grown: its first 10 areas dealt as the 10-area home's (the same areas, the same kinds), then each kind found since
-    // given the next area out, in the order found.
     const at = new Map(growOrder.map((k, i) => [k, i])), inBase = (x: number, y: number) => (at.get(cellKey(x, y)) ?? Infinity) <= homeBase, extra = others.filter(([x, y]) => !inBase(x, y)).sort((a, b) => at.get(cellKey(a[0], a[1]))! - at.get(cellKey(b[0], b[1]))!);
-    assignRoster(homeIsland(world), others.filter(([x, y]) => inBase(x, y)), types, neighbours, shapeSeed);
-    const known = knownKinds(MS.found ?? []), more = known.slice(homeBase);
-    more.forEach((kind, i) => { const c = extra[i]; if (c) types.set(cellKey(c[0], c[1]), AREA_TYPES.findIndex(a => a.creature === kind)); });
-    // (past one area each, islandAreas's padding: the kinds again, dealt as any roster's)
-    const pad = extra.slice(more.length);
-    if (pad.length) assignRoster(homeIsland(world, known, known.length + pad.length), pad, types, neighbours, shapeSeed, known.length);
+    const base = homeRoster([], shapeSeed, homeStart);
+    assignRoster(homeIsland(world, base, homeStart), others.filter(([x, y]) => inBase(x, y)), types, neighbours, shapeSeed);
+    const more = [...new Set([...foundKinds(MS.found ?? []), ...homeKinds(), ...REAL_KINDS])].filter(k => !base.includes(k) && AREA_TYPES.some(a => a.creature === k));
+    extra.forEach((c, i) => { const kind = more[i % more.length]; types.set(cellKey(c[0], c[1]), AREA_TYPES.findIndex(a => a.creature === kind)); });
+    shapeKinds = [...base, ...more.slice(0, extra.length)];
   }
   // (an island by roster grows only its roster's species, Ed 2026-10-12: every area past its playable ones, the buffer ring's, the
   // sea's and the lakes', takes the type of the nearest playable area but home's, centre to centre, so its shore is its own forest)
@@ -598,7 +605,7 @@ export function generateMap(runSeed: number, tuning: Tuning, only?: { landStep: 
     // (one for every kind a night could deal here, not just tonight's: the island's shape, and so its land, coast and chart
     // outline, is its world's every night; tonight's legends take theirs, the rest stand empty. The early quest's kinds choose
     // first, then the rest in an order seeded by the island's own seed.)
-    const pool = [...new Set(rosterIsland.roster.map(r => r.kind))].filter(k => k !== rosterIsland.kind && !isPlaceholder(k)).sort();
+    const pool = [...new Set(shapeKinds ?? rosterIsland.roster.map(r => r.kind))].filter(k => k !== rosterIsland.kind && !isPlaceholder(k)).sort(); // (home's: its world's kinds as made above)
     const order = [...pool.filter(k => early.includes(k)), ...pool.filter(k => !early.includes(k)).sort((a, b) => hash2(pool.indexOf(a), 3, shapeSeed + 6153) - hash2(pool.indexOf(b), 3, shapeSeed + 6153))];
     order.forEach((kind, ki) => {
       const want = legendRadius(kind, LC0, areaMax);
@@ -1102,7 +1109,9 @@ export function generateMap(runSeed: number, tuning: Tuning, only?: { landStep: 
     const order = routeOf(map as unknown as ForestMap).order, at = (k: string): Cell => { const [x, y] = k.split(",").map(Number); return [x, y]; };
     for (const k of order) { const [x, y] = at(k); soundsystemSpot(x, y); } // (kept: the route's stones)
     const kindOfType = (t: number) => AREA_TYPES[t]?.creature ?? "", own = rosterIsland.kind === "home" ? null : rosterIsland.kind;
-    const deck = order.map(k => types.get(k)!), found = new Set(MS.found ?? []), before = new Map(types);
+    // (home's deck tonight's kinds, homeRoster: one area each, whatever kinds its areas were made with above)
+    const homeDeck = rosterIsland.kind === "home" ? rosterIsland.roster.flatMap(q => Array.from({ length: q.areas }, () => AREA_TYPES.findIndex(a => a.creature === q.kind))) : null;
+    const deck = homeDeck && homeDeck.length ? order.map((_, i) => homeDeck[i % homeDeck.length]) : order.map(k => types.get(k)!), found = new Set(MS.found ?? []), before = new Map(types);
     // (the legend areas each of tonight's legends could have, given a deal: those beside one of its kind's areas, the roomiest
     // for it first; tonight's legends as the route's first three areas deal them, rules/rosters.ts dealLegends)
     const slots = [...legendAreas.keys()], homeKey = cellKey(centreCell[0], centreCell[1]);

@@ -10,7 +10,7 @@ import { actionReach } from "./actions";
 import { PACKS } from "./packs";
 import { FIGHT } from "../movement";
 
-const lateHome = (n: number, t: Tuning): Tuning => { const all = knownKinds(Object.keys(KINDS_TABLE)).slice(0, n); return { ...t, map: { ...t.map!, island: "home", islandAreas: all.length, found: all }, challenge: { ...t.challenge!, statues: { ...t.challenge!.statues!, on: false } } }; }; // (its statues off, rules/challengeStatues.ts: the pack wild from the start, the fight measured as before)
+const lateHome = (n: number, t: Tuning): Tuning => { const all = knownKinds(Object.keys(KINDS_TABLE)).slice(0, n); return { ...t, home: { ...t.home, challengeAt: 0 }, map: { ...t.map!, island: "home", islandAreas: all.length, found: all }, challenge: { ...t.challenge!, statues: { ...t.challenge!.statues!, on: false } } }; }; // (its statues off, rules/challengeStatues.ts: the pack wild from the start, the fight measured as before)
 // (the seeds: 4 for 128 and 1 for 64 till the challenge area went to the island's edge, Ed 2026-11-04: the pack's circle moved; on
 // the new circles, seeds 1 to 4 at 128 strike 23.8, 25.8, 17.9 and 17.9 a minute, and seeds 1 to 3 at 64 come 3.5, 30.0 and 13.9 m
 // nearer picked ahead; seed 3 for 64 till home's packs grew by the islands found, Ed 2026-11-04: 22 of 49 found, so its areas' swarms

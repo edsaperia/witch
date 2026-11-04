@@ -7,14 +7,14 @@ import { AREA_TYPES, generateMap } from "./map";
 import { isInside } from "./mapShape";
 import { islandShare, phaseReach, referenceAt } from "./swarm";
 import { islandReach, routeIndex, routePopulation } from "./growth";
-import { AREA_KINDS, foundShare, homeIsland, homeKinds, islandOf, knownKinds, REAL_KINDS } from "./rosters";
+import { AREA_KINDS, foundShare, homeIsland, homeKinds, homeRoster, islandOf, REAL_KINDS } from "./rosters";
 import { routeOf } from "./party";
 import { stepGame, STEP } from "./game";
 import { spawnCreatures } from "./creatures";
 import { preppedGame } from "../test/preppedGame"; // (games on a map made once a file from its prep)
 
 // Keep the explicit 10–50-area matrix: exact area counts, coast reach, route exhaustion and size-independent swarm scaling are tested against it.
-const island = (n: number): Tuning => ({ ...TUNING, map: { ...TUNING.map!, islandAreas: n } });
+const island = (n: number): Tuning => ({ ...TUNING, map: { ...TUNING.map!, island: "", islandAreas: n } }); // (?island=N: random types, not home, whose size is the islands found since Ed's 2026-11-04 home)
 
 describe("islands by area count (map.islandAreas)", () => {
   it("is home and exactly that many areas grown from home (its phase's shape: rules/islandGrowth.ts), with everything for play inside her flight", () => {
@@ -66,9 +66,9 @@ describe("the swarm curve by island's phase (population.swarm.fullPhase; Ed, 202
   });
 
   it("takes each island's reach from its phase, home's from the islands found, and the whole curve off the roster", () => {
-    const kinds = REAL_KINDS.filter(k => AREA_KINDS.has(k) && !homeKinds().includes(k));
+    const kinds = REAL_KINDS.filter(k => AREA_KINDS.has(k));
     expect(foundShare([])).toBe(0);
-    expect(foundShare(homeKinds())).toBe(0); // (home's own kinds aren't islands found)
+    expect(foundShare(homeKinds())).toBeCloseTo(homeKinds().length / kinds.length, 12); // (home's starting kinds' phase-1 islands count, as home's areas do: rules/rosters.ts homeRoster)
     expect(foundShare(kinds.slice(0, 9))).toBeCloseTo(9 / kinds.length, 12);
     expect(foundShare(kinds)).toBe(1);
     expect(foundShare([...kinds, "dragon"])).toBe(1);
@@ -76,7 +76,7 @@ describe("the swarm curve by island's phase (population.swarm.fullPhase; Ed, 202
       const I = islandOf(k)!, map = { island: I, tuning: TUNING };
       expect(islandReach(map)).toBeCloseTo(I.phase / 5, 12);
     }
-    const home = (found: string[]) => ({ island: homeIsland(0, knownKinds(found)), tuning: { ...TUNING, map: { ...TUNING.map!, found } } });
+    const home = (found: string[]) => ({ island: homeIsland(0, homeRoster(found)), tuning: { ...TUNING, map: { ...TUNING.map!, found } } });
     expect(islandReach(home([]))).toBe(0);
     expect(islandReach(home(kinds.slice(0, 18)))).toBeCloseTo(18 / kinds.length, 12);
     expect(islandReach(home(kinds))).toBe(1);

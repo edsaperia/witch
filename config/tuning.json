@@ -451,7 +451,9 @@
   },
   "home": {
     "margin": 10,
-    "gap": 0.3
+    "gap": 0.3,
+    "start": 5,
+    "challengeAt": 64
   },
   "scenes": {
     "chance": 0.12,

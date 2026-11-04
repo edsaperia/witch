@@ -6,7 +6,9 @@
 // almost never, recently introduced kinds favoured), every other kind on at most 2 areas (Ed, 2026-10-28: "we should reduce the
 // number of repeats. Of its own kind, we should have about 1 in 6 as we have now. Of other kinds, there should be no more than 2";
 // it was about a third as many kinds as areas, each about three times), and on one area while the island's compass neighbourhood has kinds left (Ed, 2026-11-04: rosterOf). Each night's legends (1 in 5 areas)
-// are dealt from the roster, favouring kinds whose islands aren't found yet, never K. Home: one area per kind she knows.
+// are dealt from the roster, favouring kinds whose islands aren't found yet, never K. Home (Ed, 2026-11-04): one area per island
+// she's found, at least 5 (homeRoster); its legends as any island's, an unfound phase-1 island's among them while there is one
+// (dealLegends); no challenge and no find till every island is found.
 // Where each type lies is the night's (Ed, 2026-10-28, rules/deal.ts): the island's shapes are its world's, and each night its types are
 // dealt onto them along that night's route, K first, no kind twice in a row.
 import { archipelago, rememberArchipelago, type Archipelago } from "./archipelago";
@@ -79,30 +81,81 @@ export const worldOf = (world = 0) => archipelago(world, KIND_NAMES.map(k => { c
  *  a kind designed before its area would wait for it). */
 export const AREA_KINDS: ReadonlySet<string> = new Set((AREAS as unknown as { creature: string }[]).map(a => a.creature));
 
-/** The kinds she knows (Ed, 2026-10-10, journey.md "Home's size"): home's 10, then each kind whose island she's found (its legend's
- *  quest done in a night she then won: app/chartSave.ts found), in the order found; designed kinds with an area type only, none twice. */
+/** The kinds she knows: home's 10, then each kind whose island she's found (its legend's quest done in a night she then won:
+ *  app/chartSave.ts found), in the order found; designed kinds with an area type only, none twice. The zoo's (rules/zooMap.ts); home
+ *  itself was one area each of these till Ed's 2026-11-04 home (homeRoster, below). */
 export function knownKinds(found: readonly string[] = []): string[] {
   const known = homeKinds();
   for (const k of found) if (KINDS[k] && !isPlaceholder(k) && AREA_KINDS.has(k) && !known.includes(k)) known.push(k);
   return known;
 }
 
-/** How far home's crowds have grown (Ed, 2026-11-04: home "reaching full packs only when all islands are found"): the share of the
- *  islands she can find (the designed kinds with an area type, home's own aside) whose island she's found (knownKinds), 0 to 1. */
-export function foundShare(found: readonly string[] = []): number {
-  const base = homeKinds().length, all = knownKinds(REAL_KINDS).length - base;
-  return all > 0 ? Math.min(1, Math.max(0, (knownKinds(found).length - base) / all)) : 1;
+// Home (Ed, 2026-11-04: "home has 5 areas chosen at random from the phase 1 creatures, and grows as you unlock islands, and has no
+// challenge area. When you unlock every island, home gets a challenge area and you get a special reward for completing it."; his
+// answers: the phase 1 creatures are home's 10 starting kinds, whose islands are the phase-1 islands; random each night, "always to
+// somewhere new if possible"; "no find at home until endgame"; the special reward "we'll figure this out later"; every island is
+// all on the chart). Home's areas tonight: one per kind whose island she's found (any kind, home's too), then, while that's under 5
+// (tuning home.start), home's starting kinds whose islands she hasn't found, chosen at random each night (seeded by the night). Its
+// legends (Ed, 2026-11-04: "Home legends: Same as other islands, which I think is 1 in 5? But including undiscovered islands of
+// phase 1 if possible"): legendsFor(size), unfound islands first, and while any phase-1 island is unfound one of them an unfound
+// phase-1 island's; so while there's one, at least one such kind is among tonight's areas, one more area past the found ones where
+// it must.
+
+/** Home's least size (Ed, 2026-11-04: "home has 5 areas"): tuning home.start. */
+export const HOME_START = 5;
+
+/** The kinds whose islands she's found (app/chartSave.ts found), in the order found: designed kinds with an area type only, none twice. */
+export function foundKinds(found: readonly string[] = []): string[] {
+  const out: string[] = [];
+  for (const k of found) if (KINDS[k] && !isPlaceholder(k) && AREA_KINDS.has(k) && !out.includes(k)) out.push(k);
+  return out;
 }
 
-/** Home's island (the Ent's) in the world: one area per kind she knows (knownKinds: 10 at first, growing as islands are found,
- *  about 64 at the end); its shape fixed for the campaign (its seed the world's, as an island in the middle), growing outward
- *  (rules/map.ts: its first areas keep their places and kinds, each new kind an area further out). */
-export function homeIsland(world = 0, known: readonly string[] = homeKinds(), size = known.length): Island {
+/** Whether she's found every island on the chart (Ed, 2026-11-04: "When you unlock every island, home gets a challenge area"):
+ *  every designed kind's with an area type (64; a placeholder's island is never played). */
+export function allIslandsFound(found: readonly string[] = []): boolean {
+  const f = new Set(foundKinds(found));
+  return REAL_KINDS.every(k => !AREA_KINDS.has(k) || f.has(k));
+}
+
+/** Whether home has its endgame tonight, its challenge area and find (Ed, 2026-11-04: "no find at home until endgame"): once she's
+ *  found every island on the chart (allIslandsFound), or `at` of them (tuning home.challengeAt: 64, every one; lower to bring it on
+ *  early, to play it). */
+export const homeEndgame = (found: readonly string[] = [], at?: number): boolean =>
+  allIslandsFound(found) || (at != null && foundKinds(found).length >= at);
+
+/** Home's kinds tonight (see above): the found ones in the order found, then home's starting kinds whose islands are unfound, in
+ *  the night's seeded order, up to `start` (and one at least while any is left). The same count every night for one `found`. */
+export function homeRoster(found: readonly string[] = [], night = 0, start = HOME_START): string[] {
+  const mine = foundKinds(found);
+  const spare = homeKinds().filter(k => AREA_KINDS.has(k) && !mine.includes(k))
+    .map((k, i) => ({ k, h: hash2(i, night, 7369) })).sort((a, b) => a.h - b.h).map(x => x.k);
+  return [...mine, ...spare.slice(0, Math.max(start - mine.length, spare.length ? 1 : 0))];
+}
+
+/** How many areas home has for a campaign that's found `found` (homeRoster's count, any night). */
+export const homeSize = (found: readonly string[] = [], start = HOME_START): number => homeRoster(found, 0, start).length;
+
+/** How far home's crowds have grown (Ed, 2026-11-04: home "reaching full packs only when all islands are found"): the share of the
+ *  islands on the chart (the designed kinds with an area type, 64) whose island she's found (foundKinds; home's starting kinds'
+ *  phase-1 islands among them, as home's areas count them: homeRoster), 0 to 1. */
+export function foundShare(found: readonly string[] = []): number {
+  const all = REAL_KINDS.filter(k => AREA_KINDS.has(k)).length;
+  return all > 0 ? Math.min(1, Math.max(0, foundKinds(found).length / all)) : 1;
+}
+
+/** Home's island (the Ent's) in the world: one area each of `kinds` (homeRoster: 5 at first, growing as islands are found, 64 at
+ *  the end); its shape fixed for the campaign (its seed the world's, as an island in the middle), growing outward (rules/map.ts:
+ *  its first areas keep their places, each new one an area further out; which kind is where is the night's deal, rules/deal.ts). */
+export function homeIsland(world = 0, kinds: readonly string[] = homeRoster(), size = kinds.length): Island {
   // (at least `size` areas: past one each, the kinds again in turn, the old ?island=20 home)
-  const counts = new Map<string, number>(), n = Math.max(size, known.length);
-  for (let i = 0; i < n; i++) { const k = known[i % known.length]; counts.set(k, (counts.get(k) ?? 0) + 1); }
+  const counts = new Map<string, number>(), n = Math.max(size, kinds.length);
+  for (let i = 0; i < n; i++) { const k = kinds[i % kinds.length]; counts.set(k, (counts.get(k) ?? 0) + 1); }
   return { kind: "home", phase: 0, bearing: 0, size: n, seed: islandSeed(0, 0, world), roster: [...counts].map(([kind, areas]) => ({ kind, areas })), patch: worldOf(world).islands.get("home")?.patch, turn: worldOf(world).islands.get("home")?.turn };
 }
+
+/** Home's island as the sea chart draws it for a campaign that's found `found` (its shape: its size, any night's kinds). */
+export const homeShape = (world = 0, found: readonly string[] = [], start = HOME_START): Island => homeIsland(world, homeRoster(found, 0, start));
 
 /** The most areas any kind but the island's own has on its roster (Ed, 2026-10-28), and only once its compass neighbourhood has run
  *  out of kinds (Ed, 2026-11-04: rosterOf). */
@@ -159,14 +212,25 @@ export function rosterOf(K: string, phase: number, bearing: number, size: number
 
 /** The night's legends on an island: legendsFor(size) kinds dealt from its roster, never its own kind, no two alike; kinds whose
  *  islands aren't `found` yet first (a found one only to make up the number); `prefer` (kinds she can quest for early: the
- *  route's first areas) has one dealt where it can. Seeded by the night. */
+ *  route's first areas) has one dealt where it can. At home, while any phase-1 island is unfound and its kind is on the roster,
+ *  one of them is an unfound phase-1 kind (Ed, 2026-11-04: "including undiscovered islands of phase 1 if possible"), an early one
+ *  where there is one; with one legend, it wins over `prefer`. Seeded by the night. */
 export function dealLegends(island: Island, night: number, found: ReadonlySet<string> = new Set(), prefer: readonly string[] = []): string[] {
-  const pool = island.roster.map(x => x.kind).filter(k => k !== island.kind && !isPlaceholder(k));
+  const pool = [...new Set(island.roster.map(x => x.kind))].filter(k => k !== island.kind && !isPlaceholder(k));
   const n = Math.min(pool.length, legendsFor(island.size));
   const keyed = pool.map((k, i) => ({ k, h: hash2(i, night, 7351 + island.seed % 1000) + (found.has(k) ? 1 : 0) })).sort((a, b) => a.h - b.h).map(x => x.k);
   const dealt = keyed.slice(0, n);
   const early = keyed.filter(k => prefer.includes(k));
   if (n && early.length && !dealt.some(k => prefer.includes(k))) dealt[n - 1] = early[0];
+  if (island.kind === "home" && n) {
+    const phase1 = new Set(homeKinds()), open = keyed.filter(k => phase1.has(k) && !found.has(k)).sort((a, b) => Number(prefer.includes(b)) - Number(prefer.includes(a)));
+    if (open.length && !dealt.some(k => open.includes(k))) {
+      // (in place of the last that isn't the early quest's; with one legend, that one)
+      let i = n - 1;
+      while (i > 0 && prefer.includes(dealt[i])) i--;
+      dealt[i] = open[0];
+    }
+  }
   return dealt;
 }
 

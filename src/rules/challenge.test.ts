@@ -31,7 +31,7 @@ const run = (g: Game, secs: number, c: Controls = still) => { for (let i = 0; i 
 const key = (c: readonly [number, number]) => `${c[0]},${c[1]}`;
 
 /** A night under way on an island (the party on, no waves unless a test brings one), her high over home, hard to knock out. */
-function game(kind = "home", seed = 1, t: Tuning = TUNING): Game {
+function game(kind = "hare", seed = 1, t: Tuning = TUNING): Game {
   const g = preppedGame(seed, islandOf(kind, t));
   g.clock.paused = false; g.party.spellAt = undefined; g.party.paused = true;
   g.witch = { ...g.witch, seated: false, mode: "treetop", lift: 1 };
@@ -51,7 +51,7 @@ const winAll = (g: Game) => { for (const c of pack(g)) befriend(c, g.clock.time)
 
 describe("where it is (Ed, 2026-11-03: \"The challenge area shouldn't be adjacent to the home area\")", () => {
   it("is the find's own area, one a map: not home, not touching it, off the route, at its site, themed on the island's animal", () => {
-    for (const [kind, seed] of [["home", 1], ["home", 5], ["fox", 2], ["tiger", 1]] as const) {
+    for (const [kind, seed] of [["hare", 1], ["hare", 5], ["fox", 2], ["tiger", 1]] as const) {
       const m = sharedMap(seed, islandOf(kind)), sites = m.specialSites.filter(s => s.kind === "challenge"), sp = challengeSite(m)!;
       expect(sites.length, `${kind} ${seed}`).toBe(1);
       expect(m.specialSites.filter(s => s.kind === "find")).toEqual([]); // (the find's area is the challenge area)
@@ -63,7 +63,7 @@ describe("where it is (Ed, 2026-11-03: \"The challenge area shouldn't be adjacen
       expect(key(m.areaAt(sp.x, sp.z).cell)).toBe(key(sp.cell));
       expect(sp.r).toBeGreaterThanOrEqual(TUNING.challenge!.radius); // (its clearing holds the circle and its columns)
       // (Ed: "Its type is themed of the island's animal (e.g. the squirrel map's challenge areas have squirrel area trees)")
-      if (kind !== "home") expect(AREA_TYPES[m.typeOf(sp.cell[0], sp.cell[1])].creature, kind).toBe(kind);
+      expect(AREA_TYPES[m.typeOf(sp.cell[0], sp.cell[1])].creature, kind).toBe(kind);
     }
   }, 120000);
 
@@ -91,7 +91,7 @@ describe("where it is (Ed, 2026-11-03: \"The challenge area shouldn't be adjacen
   });
 
   it("is off with the challenge off: the find's area as before, nothing to clear", () => {
-    const t = withTuning({ challenge: { ...TUNING.challenge!, on: false } }), m = generateMap(1, islandOf("home", t));
+    const t = withTuning({ challenge: { ...TUNING.challenge!, on: false } }), m = generateMap(1, islandOf("hare", t));
     expect(m.specialSites.map(s => s.kind)).toEqual(["find"]);
     expect(spawnPack(m, 0)).toEqual([]);
   }, 60000);
@@ -133,7 +133,7 @@ describe("where it goes (Ed, 2026-11-04: \"The route should avoid going through 
     expect({ edge, far: steps.get(k)! >= PLACE.far * Math.max(...steps.values()), clear: gap >= sp.r }, `${what}: ${k}, ${steps.get(k)} of ${Math.max(...steps.values())} areas out, the route ${gap.toFixed(0)} m from its middle`).toEqual({ edge: true, far: true, clear: true });
   };
   it("on 10-area islands: on the edge, in the outer half, the route clear of its circle", () => {
-    for (const [kind, seed] of [["home", 1], ["home", 5], ["fox", 2], ["fox", 3]] as const) placedWell(sharedMap(seed, islandOf(kind)), `${kind} ${seed}`);
+    for (const [kind, seed] of [["hare", 1], ["hare", 5], ["fox", 2], ["fox", 3]] as const) placedWell(sharedMap(seed, islandOf(kind)), `${kind} ${seed}`);
   }, 120000);
   it("on 31 and 51-area islands and the late home of 64", () => {
     for (const [kind, seed] of [["owl", 1], ["owl", 2], ["griffin", 1], ["griffin", 2]] as const) placedWell(sharedMap(seed, islandOf(kind)), `${kind} ${seed}`);
@@ -152,7 +152,7 @@ describe("where it goes (Ed, 2026-11-04: \"The route should avoid going through 
     // (the shortest line between two of the route's stones that crosses the circle, those two taken one after the other; on the
     // first of these maps with one: where the map puts it, most have none)
     let m: ForestMap | null = null, r: ReturnType<typeof routeOf> | null = null, best: [number, number] | null = null, len = Infinity;
-    for (const map of [sharedMap(1, lateHome(64)), sharedMap(1, islandOf("owl")), sharedMap(2, islandOf("owl")), sharedMap(1, islandOf("home"))]) {
+    for (const map of [sharedMap(1, lateHome(64)), sharedMap(1, islandOf("owl")), sharedMap(2, islandOf("owl")), sharedMap(1, islandOf("hare"))]) {
       const q = routeOf(map);
       for (let i = 1; i < q.stones.length; i++) for (let j = 1; j < q.stones.length; j++) if (i !== j && overChallenge(map, q.stones[i], q.stones[j])) { const d = Math.hypot(q.stones[i][0] - q.stones[j][0], q.stones[i][1] - q.stones[j][1]); if (d < len) { len = d; best = [i, j]; } }
       if (best) { m = map; r = q; break; }
@@ -172,7 +172,7 @@ describe("where it goes (Ed, 2026-11-04: \"The route should avoid going through 
 
 describe("its pack (Ed: \"one adult and one youth of every creature kind on the island\")", () => {
   it("is an adult and a youth of every kind on the island's roster, wild creatures of its area", () => {
-    for (const [kind, seed] of [["home", 1], ["fox", 2]] as const) {
+    for (const [kind, seed] of [["hare", 1], ["fox", 2]] as const) {
       const g = game(kind, seed), P = pack(g), roster = g.map.island!.roster.map(r => r.kind);
       expect(new Set(packKinds(g.map))).toEqual(new Set(roster));
       expect(P.length, kind).toBe(roster.length * 2);
@@ -187,13 +187,13 @@ describe("its pack (Ed: \"one adult and one youth of every creature kind on the 
   }, 120000);
 
   it("takes its size from the knobs", () => {
-    const m = generateMap(1, islandOf("home", withTuning({ challenge: { ...TUNING.challenge!, adults: 2, youths: 0 } }))), P = spawnPack(m, 0);
+    const m = generateMap(1, islandOf("hare", withTuning({ challenge: { ...TUNING.challenge!, adults: 2, youths: 0 } }))), P = spawnPack(m, 0);
     expect(P.length).toBe(packKinds(m).length * 2);
     expect(P.every(c => c.level === 2)).toBe(true);
   }, 60000);
 
   it("stands stone till she comes down on its floor, then wakes over its bars and attacks, no wild watch (Ed, 2026-11-04; rules/challengeStatues.test.ts has the rest)", () => {
-    const g = game("home", 1), ch = g.challenge!;
+    const g = game("hare", 1), ch = g.challenge!;
     g.witch = { ...g.witch, x: ch.x, z: ch.z, mode: "ground", lift: 0, seated: false, perch: undefined };
     run(g, 0.2);
     expect(g.wildEntry.get(ch.key)).toBeUndefined();
@@ -206,7 +206,7 @@ describe("its pack (Ed: \"one adult and one youth of every creature kind on the 
 
 describe("its columns, its sigil stack (Ed, 2026-11-03: \"the same number of columns as creature types, and the sigils are on top of the columns, one type per column\")", () => {
   it("has a column for every kind on the island's roster, in the roster's order", () => {
-    for (const [kind, seed] of [["home", 1], ["fox", 2]] as const) {
+    for (const [kind, seed] of [["hare", 1], ["fox", 2]] as const) {
       const g = game(kind, seed), cols = challengeColumns(g), roster = [...new Set(g.map.island!.roster.map(r => r.kind))];
       expect(cols.length, kind).toBe(roster.length);
       expect(cols.map(c => c.kind)).toEqual(packKinds(g.map));
@@ -335,7 +335,7 @@ describe("its area holds its whole circle (Ed, 2026-11-03: \"the area will have 
     expect([...m2.bounds.land!.dist.slice(0, 4000)]).toEqual([...m.bounds.land!.dist.slice(0, 4000)]);
     expect(bad).toEqual([]);
   };
-  it("on a 10-area island", () => { holds(sharedMap(1, islandOf("home")), sharedMap(2, islandOf("home")), "home 10"); holds(sharedMap(2, islandOf("fox")), sharedMap(3, islandOf("fox")), "fox"); }, 300000);
+  it("on a 10-area island", () => { holds(sharedMap(1, islandOf("hare")), sharedMap(2, islandOf("hare")), "hare"); holds(sharedMap(2, islandOf("fox")), sharedMap(3, islandOf("fox")), "fox"); }, 300000);
   it("on a 50-area island", () => holds(sharedMap(1, islandOf("griffin")), sharedMap(2, islandOf("griffin")), "griffin"), 300000);
   it("on the late home of 64 kinds, its circle about 76 m round", () => {
     const m = sharedMap(1, lateHome(64));

@@ -626,6 +626,43 @@
         }
       ]
     },
+    "home.start": {
+      "what": "How many areas home has at the start of a campaign [1]: home grows by one area per island she's found, and while that's fewer than this, home's starting kinds whose islands she hasn't found fill it up to this, chosen at random each night.",
+      "decisions": [
+        {
+          "by": "Ed",
+          "date": "2026-11-04",
+          "quote": [
+            "home has 5 areas chosen at random from the phase 1 creatures, and grows as you unlock islands, and has no challenge area. When you unlock every island, home gets a challenge area and you get a special reward for completing it.",
+            "Home legends: Same as other islands, which I think is 1 in 5? But including undiscovered islands of phase 1 if possible."
+          ]
+        }
+      ],
+      "links": [
+        "rules/rosters.ts",
+        "rules/map.ts"
+      ],
+      "notes": "rules/rosters.ts homeRoster: one area per kind whose island she's found (map.found, any kind), then home's starting kinds whose islands are unfound, by the night's seed, up to this; while any phase-1 island is unfound at least one such kind is on, one area more past the found ones where it must. Its legends as any island's (1 in 5 areas), an unfound phase-1 island's among them while there is one. No find and no challenge area at home till every island on the chart is found; then its challenge area with the full pack (an adult and a youth of each kind). Its places grow outward from the starting home's; which kind is on which area is the night's deal (rules/deal.ts). A new map: it reloads."
+    },
+    "home.challengeAt": {
+      "what": "How many islands she must have found before home gets its challenge area and its find [1]: 64, every island on the chart; lower to bring home's endgame on early, to play it.",
+      "decisions": [
+        {
+          "by": "Ed",
+          "date": "2026-11-04",
+          "quote": [
+            "When you unlock every island, home gets a challenge area and you get a special reward for completing it.",
+            "no find at home until endgame"
+          ]
+        }
+      ],
+      "links": [
+        "rules/rosters.ts",
+        "rules/map.ts",
+        "rules/finds.ts"
+      ],
+      "notes": "rules/rosters.ts homeEndgame: on once every island on the chart is found, or this many. Then home's find goes in its challenge area, its pack an adult and a youth of each kind on tonight's roster (the full 128 at 64). Its reward for now is the challenge's find, as on any island: Ed, special reward to be decided (\"we'll figure this out later\"). A new map: it reloads."
+    },
     "scenes": {
       "what": "Small vignettes and large landmarks (a farmyard corner, a bus stop, a cemetery, castle ruins) placed about the island.",
       "decisions": [
