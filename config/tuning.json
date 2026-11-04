@@ -1246,7 +1246,8 @@
   "teamRounds": {
     "reference": 20,
     "strength": 0.5,
-    "floor": 0.4
+    "floor": 0.4,
+    "ahead": 2
   },
   "creatureMomentum": {
     "on": true,

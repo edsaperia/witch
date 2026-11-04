@@ -1058,6 +1058,7 @@ export type SchemaTuning = {
     "reference": number;
     "strength": number;
     "floor": number;
+    "ahead": number;
   };
   "creatureMomentum": {
     "on": boolean;

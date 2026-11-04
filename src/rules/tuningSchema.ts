@@ -11,6 +11,7 @@ export const TUNING_OVER: Record<string, Partial<Schema>> = {
   "teamRounds.reference": { minimum: 1, maximum: 256 },
   "teamRounds.strength": { minimum: 0, maximum: 2 },
   "teamRounds.floor": { minimum: 0.1, maximum: 1 },
+  "teamRounds.ahead": { minimum: 0, maximum: 4 },
   "mushroomLight.haloStrength": { minimum: 0, maximum: 2 },
   "mushroomLight.poolStrength": { minimum: 0, maximum: 1.5 },
   "mushroomLight.capGlow": { minimum: 0, maximum: 10 },

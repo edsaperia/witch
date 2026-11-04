@@ -9,7 +9,10 @@ import { FIGHT } from "../movement";
 import { actionsOf, actionRole, actionReach, type CreatureAction } from "./actions";
 
 export interface RolePreferences { tempo: number; withdraw: number; rejoin: number; rest: number }
-export interface TeamState { seed: number; round: number; phase: Phase; at: number; cycleAt: number; nextAt: number; members: number[]; actions: Record<number, CreatureAction | undefined>; ready: Record<number, Record<string, number>>; roles: Record<number, Role>; used: number[]; withdrawn: Record<number, number> }
+export interface TeamState { seed: number; round: number; phase: Phase; at: number; cycleAt: number; nextAt: number; members: number[]; actions: Record<number, CreatureAction | undefined>; ready: Record<number, Record<string, number>>; roles: Record<number, Role>; used: number[]; withdrawn: Record<number, number>;
+  /** A big team's coming rounds' attackers, drawn `teamRounds.ahead` rounds ahead (as each round starts), each with when its window
+   *  should open (an estimate kept up each step): its picks close in to be ready by then (rules/combat.ts movingGoal). */
+  next?: { round: number; actions: Record<number, CreatureAction | undefined>; readyBy: number }[] }
 export const rolePreferences = (species: string): RolePreferences => ({ ...SPACING.preferences.default, ...SPACING.preferences.species[species] });
 const damage = (c: Creature): number => c.leashed || c.state === "happy" ? c.drops ?? 0 : c.dazed ? 1 : c.affection ?? 0;
 export function teamOf(state: CombatState, id: number): TeamState | undefined { return [...(state.waitingTeams?.values() ?? [])].find(team => team.members.includes(id)); }
@@ -34,8 +37,8 @@ export function chooseTeamActions(members: readonly Creature[], seed: number, ro
  *  pack gets larger"; the tuning's teamRounds): 1 at or under `reference` animals (today's 5 s round, 3 s attack window and its kinds'
  *  lull), then (reference / size) ^ strength (0.5: one over the square root), never under `floor`. Smooth and falling with size; the
  *  tell and the dodge token are untouched (rules/combat.ts: still one strike at her at once). */
-export const ROUND_DEFAULT = { reference: 20, strength: 0.5, floor: 0.4 };
-export function roundScale(size: number, r: { reference: number; strength: number; floor: number } = ROUND_DEFAULT): number {
+export const ROUND_DEFAULT = { reference: 20, strength: 0.5, floor: 0.4, ahead: 2 };
+export function roundScale(size: number, r: { reference: number; strength: number; floor: number; ahead?: number } = ROUND_DEFAULT): number {
   if (!(size > r.reference) || !(r.reference > 0)) return 1;
   return Math.min(1, Math.max(r.floor, Math.pow(r.reference / size, r.strength)));
 }
@@ -77,7 +80,35 @@ export function stepTeams(state: CombatState, w: CombatWorld, data: PacksData, c
     const round = changed ? team.round + 1 : team.round;
     const ready = (c: Creature, a: CreatureAction) => (team!.ready[c.id]?.[a.id] ?? 0) <= w.time;
     const draw = () => { team!.actions = chooseTeamActions(available, team!.seed, round, ready); team!.roles = Object.fromEntries(Object.entries(team!.actions).map(([id, a]) => [id, a ? actionRole(a) : "hold"])); };
-    if (changed) { team.round = round; team.phase = "approach"; team.at = w.time; team.nextAt = Infinity; draw(); team.used = []; }
+    const rhythms = members.map(c => data.rhythms[data.kinds[c.species].rhythm] ?? data.rhythms.steady);
+    const tempo = Math.max(0.1, members.reduce((sum, c) => sum + rolePreferences(c.species).tempo, 0) / members.length);
+    const tell = rhythms.reduce((sum, rhythm) => sum + rhythm.tell, 0) / rhythms.length / tempo;
+    const rest = rhythms.reduce((sum, rhythm) => sum + rhythm.lull, 0) / rhythms.length / tempo;
+    // (a big team's round, attack window and least rest shortened together: the round's shape kept, only quicker; the rest too, as
+    // else it held the round at about 7 s whatever the round time; the tell, the warning, never)
+    const RT = w.t?.teamRounds ?? ROUND_DEFAULT, scale = roundScale(members.length, RT), roundTime = SPACING.team.roundTime * scale / tempo, attackWindow = SPACING.team.attackWindow * scale / tempo, least = rest * scale;
+    // Roles decided in advance (Ed, 2026-11-03, on #1782: "can we decide the roles in advance and have them move in sooner, in time for
+    // their attack?"): a team past the reference size (20) keeps its next `teamRounds.ahead` rounds' attackers drawn, each drawn as the
+    // round that many before it starts, the same seeded draw that round would make (chooseTeamActions, its round number, each action
+    // ready by when that round should start), so they leave the waiting ring in time, each by its own pace, and are at their ready
+    // distance as their window opens (movingGoal, rules/combat.ts). Nothing's struck sooner: the tell, the window, the rest and her dodge
+    // token are as they were. 20 or fewer: drawn as their round starts, as before; ahead 0, off.
+    const ahead = members.length > RT.reference ? Math.max(0, Math.floor(RT.ahead ?? ROUND_DEFAULT.ahead)) : 0;
+    // (a round's nominal length: its round time, or its tell, window and least rest if longer; for estimating the ones to come)
+    const nominal = Math.max(roundTime, tell + attackWindow + least);
+    if (changed) {
+      team.round = round; team.phase = "approach"; team.at = w.time; team.nextAt = Infinity; team.used = [];
+      const picked = team.next?.[0]?.round === round ? team.next.shift()! : null;
+      if (picked) {
+        // (picked rounds ago: kept, but for any withdrawn since or whose action isn't ready after all; none left, the reserves' draw below)
+        team.actions = {}; team.roles = {};
+        for (const c of available) { const a = picked.actions[c.id]; if (a && ready(c, a)) { team.actions[c.id] = a; team.roles[c.id] = actionRole(a); } }
+      } else { draw(); team.next = undefined; }
+      const next = (team.next ??= []);
+      next.length = Math.min(next.length, ahead);
+      for (let k = next.length + 1; k <= ahead; k++) { const by = w.time + nominal * k; next.push({ round: round + k, actions: chooseTeamActions(available, team.seed, round + k, (c, a) => (team!.ready[c.id]?.[a.id] ?? 0) <= by), readyBy: Infinity }); }
+      if (!next.length) team.next = undefined;
+    }
     for (const c of members) if (!available.includes(c) && !committed(c)) team.roles[c.id] = "hurt";
     // Replace a withdrawn member from reserves without rerolling the whole team.
     const active = available.filter(c => team!.roles[c.id] && team!.roles[c.id] !== "hold" && team!.roles[c.id] !== "hurt");
@@ -85,24 +116,26 @@ export function stepTeams(state: CombatState, w: CombatWorld, data: PacksData, c
     for (const c of members) if (team.roles[c.id] === undefined) team.roles[c.id] = "hold";
     const target = members[0].fight!.target!;
     const position = target.kind === "witch" ? w.witches?.find(v => v.id === target.id) : target.kind === "creature" ? w.creatures?.[target.id] : undefined;
-    const rhythms = members.map(c => data.rhythms[data.kinds[c.species].rhythm] ?? data.rhythms.steady);
-    const tempo = Math.max(0.1, members.reduce((sum, c) => sum + rolePreferences(c.species).tempo, 0) / members.length);
-    const tell = rhythms.reduce((sum, rhythm) => sum + rhythm.tell, 0) / rhythms.length / tempo;
-    const rest = rhythms.reduce((sum, rhythm) => sum + rhythm.lull, 0) / rhythms.length / tempo;
     const enter = (phase: Phase, until: number) => { team!.phase = phase; team!.at = w.time; team!.nextAt = until; };
-    // (a big team's round, attack window and least rest shortened together: the round's shape kept, only quicker; the rest too, as
-    // else it held the round at about 7 s whatever the round time; the tell, the warning, never)
-    const scale = roundScale(members.length, w.t?.teamRounds ?? ROUND_DEFAULT), roundTime = SPACING.team.roundTime * scale, attackWindow = SPACING.team.attackWindow * scale, least = rest * scale;
-    if (team.phase === "approach" && !busy && available.every(c => team!.roles[c.id] === "hold" || team!.roles[c.id] === "hurt")) enter("lull", w.time + roundTime / tempo);
+    if (team.phase === "approach" && !busy && available.every(c => team!.roles[c.id] === "hold" || team!.roles[c.id] === "hurt")) enter("lull", w.time + roundTime);
     else if (team.phase === "approach" && position && available.some(c => {
       const role = team!.roles[c.id];
       const action = team!.actions[c.id];
       return role !== "hold" && role !== "hurt" && action && Math.hypot(c.x - position.x, c.z - position.z) <= actionReach(c, action, data) + data.limits.engage * FIGHT.scale;
     })) { team.cycleAt = w.time; enter("tell", w.time + tell); }
-    else if (team.phase === "tell" && w.time >= team.nextAt && !busy) enter("combo", w.time + attackWindow / tempo);
+    else if (team.phase === "tell" && w.time >= team.nextAt && !busy) enter("combo", w.time + attackWindow);
     else if (team.phase === "combo" && !busy) {
       const done = available.every(c => team!.roles[c.id] === "hold" || team!.roles[c.id] === "hurt" || team!.used.includes(c.id));
-      if (done || w.time >= team.nextAt) enter("lull", Math.max(w.time + least, team.cycleAt + roundTime / tempo));
+      if (done || w.time >= team.nextAt) enter("lull", Math.max(w.time + least, team.cycleAt + roundTime));
+    }
+    // (when the next round's window should open, from where this one is: its picks' deadline, kept up each step, so it moves with the
+    // fight and nothing's committed early; the round's own end at its shortest, then the next tell)
+    if (team.next) {
+      const first = team.phase === "lull" ? team.nextAt + tell
+        : team.phase === "combo" ? Math.max(team.cycleAt + roundTime, team.nextAt + least) + tell
+        : team.phase === "tell" ? Math.max(team.cycleAt + roundTime, team.nextAt + attackWindow + least) + tell
+        : w.time + nominal + tell;
+      team.next.forEach((n, k) => { n.readyBy = first + k * nominal; });
     }
   }
 }

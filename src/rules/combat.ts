@@ -86,6 +86,11 @@ export function lungeOf(c: Creature, A: Attack, reach: number, chasing: boolean,
   const ad = Math.hypot(aimX - c.x, aimZ - c.z), short = chasing ? 0 : A.range * 0.5, far = chasing ? Math.max(reach, Math.min(reach * 1.25, ad)) : reach;
   return c.dug !== undefined && time < c.dug ? 0 : Math.min(far, Math.max(0, ad - short));
 }
+/** How much of its top waiting pace a pick for a coming round counts on making good toward its ready spot (rules/combat.ts movingGoal):
+ *  the crowd's avoidance, its path's curve and its gait's turns cost the rest (measured in the challenge's 128-animal pack, 2026-11-04:
+ *  about 8 m/s made good against 15 to 20 m/s top). Low, so it sets off early rather than late: waiting at its ready spot commits it
+ *  to nothing. */
+const SET_OFF_PACE = 0.4;
 /** A lunge wound up now: how far it will go (m), reckoned as the strike will (lungeOf), at her with dodge.a's longer reach and her momentum. */
 export function lungeLength(c: Creature, A: Attack, atWitch: boolean, t: Tuning, time: number, aimX: number, aimZ: number): number {
   const DA = t.dodge?.a.on ? t.dodge.a : null, chasing = atWitch && c.level !== LEGEND && !!momentumOf(c.species, t);
@@ -456,7 +461,22 @@ export function stepCombat(s: CombatState, w: CombatWorld, data: CombatData = CO
       const gap = wide > -Infinity ? Math.max(0, drawnRadius(c, t) + wide + SPACING.clearance) : 0;
       const tell = pd ? PACKS.rhythms[packKindOf(c.species)?.rhythm ?? "steady"].tell : 0;
       const selected = !team || !!team.actions[c.id] && !team.used.includes(c.id) && pd?.role !== "hurt";
-      const until = !selected ? Infinity : pd?.phase === "lull" ? pd.state.until + tell : pd?.phase === "tell" || pd?.phase === "combo" ? pd.state.until : Infinity;
+      // (picked for the next round, a big team's, rules/combat/teams.ts: it closes in to be ready as that round's window opens, setting
+      // off by its own speed: waitingSlot's return; aloft, no directive, it only waits)
+      const coming = !selected && !!pd && pd.role !== "hurt" ? team?.next?.find(n => n.actions[c.id]) : undefined, nextPick = !!coming;
+      if (nextPick) {
+        // Its ready spot: in the reach its next action engages from (not where its present role waits, a shooter's), on its own bearing
+        // from her, re-aimed at her each step. It leaves the ring when, at its own waiting pace (its stride's share of the time on the
+        // move), it would only just get there by its round's window opening (its readyBy), with its return lead to spare; till then, its
+        // place in the ring. Only a goal: nothing's committed, it strikes only when its round comes.
+        const m = waitingProfile(c), ready = Math.max(Math.min(range, actionReach(c, coming!.actions[c.id]!, PACKS) + PACKS.limits.engage * FIGHT.scale * 0.5), drawnRadius(c, t) + p.r + SPACING.clearance);
+        const pace = SET_OFF_PACE * speed * m.speed * (m.lift > 0 || m.cadence > 0 ? m.duty + (1 - m.duty) * m.restSpeed : 1), off = Math.hypot(c.x - origin.x, c.z - origin.z);
+        if (time >= coming!.readyBy - Math.max(0, off - ready) / Math.max(1, pace) - m.returnLead) {
+          const k = off > SPACING.epsilon ? ready / off : 0, a = hash2(c.id, 29, 1620) * Math.PI * 2;
+          return off > SPACING.epsilon ? { x: origin.x + (c.x - origin.x) * k, z: origin.z + (c.z - origin.z) * k } : { x: origin.x + Math.cos(a) * ready, z: origin.z + Math.sin(a) * ready };
+        }
+      }
+      const until = nextPick ? Infinity : !selected ? Infinity : pd?.phase === "lull" ? pd.state.until + tell : pd?.phase === "tell" || pd?.phase === "combo" ? pd.state.until : Infinity;
       const seed = team ? hash2(team.seed, 1620, 17) : pd?.state.seed;
       const retreat = pd?.role === "hurt" ? waitingProfile(c).radius * FIGHT.scale : 0;
       return waitingSlot(c, origin, range + retreat, time, FIGHT.scale, SPACING, waitingHeading?.(), seed !== undefined ? { seed, index: Math.max(0, members.indexOf(c.id)), count: members.length, gap, until, minimum: drawnRadius(c, t) + p.r + SPACING.clearance } : undefined,
