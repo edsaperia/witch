@@ -87,7 +87,7 @@ describe("Ed's redo (2026-10-23): nothing with no choice in it, the broom till t
     expect(itemsToChoose(face, new Set([...STARTING_SET, "shades"]))).toBe(true);
     expect(itemsToChoose(earrings, new Set(STARTING_SET))).toBe(true);
   });
-  it("the broom stand is gone (the Workshop's bay, lathe and pegboard in its place), and no station offers a broom's power or shape", () => {
+  it("the lathe is the one broom station, the old stand, bay and separate pegboard gone; no station offers a broom's power or shape", () => {
     expect(shelvesAt("broomStand")).toBeNull();
     expect(shelvesAt("lathe")!.map(s => s.id)).toEqual(["tip", "chassis", "exhaust", "sets", "broomBody", "broomTrim", "broomFit", "trail", "pegboard"]); // (one broom station: Ed, 2026-10-29, "one for colours, the other for components")
     for (const id of ["broomBay", "pegboard"]) expect(shelvesAt(id), id).toBeNull();

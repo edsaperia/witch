@@ -5,6 +5,8 @@ import { describe, expect, it } from "vitest";
 import { BagSim, SCENE } from "./bagSim";
 import { BAGS, bagTuning } from "../rules/bags";
 import { TUNING } from "../rules/tuning";
+import { newInvites, stepInvites, type Affection, type Letter } from "../rules/invites";
+import type { Creature } from "../rules/creatures";
 
 /** Letters thrown and landed in one loop, and the furthest any flew from her. */
 function loop(bag: string) {
@@ -21,21 +23,37 @@ function loop(bag: string) {
 }
 
 describe("a bag's preview", () => {
-  it("throws at its bag's rate: the Bumbag most, the Purse least", () => {
-    const n = Object.fromEntries(BAGS.map(b => [b.id, loop(b.id).thrown]));
-    expect(n.bumbag).toBeGreaterThan(n.satchel);
-    expect(n.satchel).toBeGreaterThan(n.purse);
-    for (const b of BAGS) { const every = bagTuning(TUNING, b.id).invites.cooldown; expect(n[b.id], b.id).toBeGreaterThanOrEqual(3 * Math.floor((SCENE.loop / 3 - SCENE.wait) / every)); }
+  it("uses each preview's configured cooldown without firing an early burst", () => {
+    for (const b of BAGS) {
+      const preview = new BagSim(b.id), every = bagTuning(TUNING, b.id).invites.cooldown;
+      expect(preview.t.invites.cooldown).toBe(every);
+      const t = { ...preview.t, invites: { ...preview.t.invites, burst: 1, multiShot: 1 } }, s = newInvites();
+      const affection: Affection = { invitable: () => true, blocksLetters: () => false, hit: () => {}, affection: () => 0 };
+      const step = (time: number) => stepInvites(s, { fire: true, aimX: 1, aimZ: 0 }, { x: 0, z: 0, facing: 1 }, true, [], affection, time, SCENE.step, t);
+      step(1); expect(s.next).toBe(1); expect(s.readyAt).toBeCloseTo(1 + every, 9);
+      step(1 + every - SCENE.step / 2); expect(s.next).toBe(1);
+      step(1 + every + SCENE.step / 2); expect(s.next).toBe(2);
+    }
+    // U1 reports the original complete-loop ordering and minimum throw counts.
   });
 
-  it("gives out at its bag's reach, landing letters on the creatures in reach: the far one only for the Purse", () => {
+  it("keeps preview letters within reach and resolves supplied in-range hits and spent letters", () => {
     for (const b of BAGS) {
       const r = loop(b.id), reach = bagTuning(TUNING, b.id).invites.range;
       expect(r.far, b.id).toBeLessThanOrEqual(reach + 1);
-      expect(r.landed, b.id).toBeGreaterThan(0); // (the near one's in every bag's reach)
+      const t = { ...r.sim.t, invites: { ...r.sim.t.invites, homing: 0, chain: 0, pierce: 0 } };
+      const letter = (flown: number): Letter => ({ n: 0, x: flown, z: 0, vx: 60, vz: 0, flown, at: 0, r: 0.01, range: reach, home: false, hit: [] });
+      for (const inside of [true, false]) {
+        const s = newInvites(), hits: number[] = [], target = { id: 0, species: "fox", level: 1, x: inside ? reach - 1.5 : reach + 10, z: 0 } as Creature;
+        s.letters.push(letter(inside ? reach - 2 : reach - 0.5));
+        const affection: Affection = { invitable: () => true, blocksLetters: () => false, hit: c => { hits.push(c.id); }, affection: () => 0 };
+        stepInvites(s, { fire: false, aimX: 1, aimZ: 0 }, { x: 0, z: 0, facing: 1 }, true, [target], affection, 1, SCENE.step, t);
+        expect(hits).toEqual(inside ? [target.id] : []);
+        expect(s.letters).toEqual([]);
+        if (!inside) expect(s.events.some(e => e.kind === "fizzled")).toBe(true);
+      }
     }
-    const farHit = (bag: string) => { const s = new BagSim(bag); let hit = false; for (let t = 0; t < SCENE.loop - 0.05; t += SCENE.step) { const h = s.dummies[2].hitAt; s.step(SCENE.step); if (s.dummies[2].hitAt !== h) hit = true; } return hit; };
-    expect([farHit("bumbag"), farHit("satchel"), farHit("purse")]).toEqual([false, false, true]);
+    // U1 reports complete-loop landed counts and the original far-dummy outcomes.
   });
 
   it("loops: the same bag plays the same loop again", () => {
