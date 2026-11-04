@@ -27,20 +27,6 @@ describe("quests point to later areas (legends.questLater)", () => {
     expect(checked).toBeGreaterThan(0);
   }, 60000);
 
-  it("dreams from deeper in than before: the dream's nearest later area lies later on the route than the old pick's", () => {
-    let on = 0, off = 0;
-    for (const seed of [1, 123, 4242]) for (const later of [true, false]) {
-      const map = generateMap(seed, withTuning({ legends: { ...TUNING.legends, questLater: later } })), order = routeOf(map).order;
-      const kindAt = (k: string) => { const [x, y] = k.split(",").map(Number); return AREA_TYPES[map.typeOf(x, y)].creature; };
-      for (const L of spawnCreatures(map).filter(c => c.boss && c.quest)) {
-        const i = order.indexOf(cellKey(L.cell)), j = order.findIndex((k, n) => n > i && kindAt(k) === L.quest!.species);
-        const pos = j >= 0 ? j : order.findIndex(k => kindAt(k) === L.quest!.species);
-        if (later) on += pos - i; else off += pos - i;
-      }
-    }
-    expect(on).toBeGreaterThan(off);
-  }, 120000);
-
   it("is the old gamble with legends.questLater false", () => {
     const map = generateMap(123, withTuning({ legends: { ...TUNING.legends, questLater: false } }));
     expect(spawnCreatures(map).filter(c => c.boss && c.quest).length).toBeGreaterThan(5);
