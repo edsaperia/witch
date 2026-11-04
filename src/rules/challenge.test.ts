@@ -152,7 +152,7 @@ describe("where it goes (Ed, 2026-11-04: \"The route should avoid going through 
     // (the shortest line between two of the route's stones that crosses the circle, those two taken one after the other; on the
     // first of these maps with one: where the map puts it, most have none)
     let m: ForestMap | null = null, r: ReturnType<typeof routeOf> | null = null, best: [number, number] | null = null, len = Infinity;
-    for (const map of [sharedMap(1, lateHome(64)), sharedMap(1, islandOf("owl")), sharedMap(2, islandOf("owl")), sharedMap(1, islandOf("hare"))]) {
+    for (const map of [[1, lateHome(64)], [1, islandOf("owl")], [2, islandOf("owl")], [1, islandOf("hare")], ...[1, 2, 3, 4].flatMap(s => ["wolf", "lion", "hydra", "fox"].map(k => [s, islandOf(k)] as const))].map(([s, i]) => sharedMap(s as number, i as Parameters<typeof sharedMap>[1]))) { // (more candidates since the bigger, sparser areas of #1807/#1818: fewer maps have such a pair)
       const q = routeOf(map);
       for (let i = 1; i < q.stones.length; i++) for (let j = 1; j < q.stones.length; j++) if (i !== j && overChallenge(map, q.stones[i], q.stones[j])) { const d = Math.hypot(q.stones[i][0] - q.stones[j][0], q.stones[i][1] - q.stones[j][1]); if (d < len) { len = d; best = [i, j]; } }
       if (best) { m = map; r = q; break; }
