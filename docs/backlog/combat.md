@@ -109,6 +109,7 @@ Ed: "flying animals are not fun to fight right now ... they should only take off
 - **Combos everywhere** (Ed: 15c), on home from the first night, their speed and overlap tuned up the **master curve** (journey.md): home's packs young, small and slow, so combos come rarely and loosely; the later islands' tight and fast.
 - **Readability** at the game's pixel size: tells as shapes by slot and colours by effect (above); a pack tell every member shares (a glow, and the call's own art: a howl's rings, a stamp's dust); never more than one lane and two lines at her at once.
 - **Performance** (Ed: 17a): a pack's combo takes at most 8 members (the rest hold back and slot), at most 6 shots in the air a pack, the pack planning once a step for packs within the creature simulation radius only, and the retreat patterns steered by the same behaviours as today (nothing a frame per creature beyond a slot).
+  - Not a performance item (Ed, 2026-11-04, on capping packs' combos): "big packs are cool, making them readable is a design question, making them balanced is a balance question".
 
 ### Kinds keep their own moves (Ed, 2026-10-20)
 
