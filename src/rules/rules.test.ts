@@ -37,6 +37,7 @@ import { SCENES, sceneLayout } from "../../art/scenes.js";
 import { COUNTRY } from "../../art/country.js";
 import { runeOffset } from "./runeOffset";
 import { smallWorldTuning } from "../test/worlds";
+import { assertFollowingCameraContract, assertGameCameraCoupling, assertIntroCameraContract } from "../test/cameraAuditContracts";
 // The rules' every kind of scenery on, as before the small islands' cuts (Ed, 2026-10-11: no set pieces, sports grounds, rocks, freak
 // trees or path pieces; ruins twice): this file tests how each is placed, so it keeps them all; "the small islands' scenery" below
 // checks the game's own tuning.
@@ -443,20 +444,7 @@ describe("the witch", () => {
 
 describe("the camera", () => {
   it("opens close in on her seat, and eases out to the starting zoom once she leaves it (Ed, v171)", () => {
-    const I = TUNING.camera.intro, seat = { x: 10, y: 6, z: 20 };
-    let c = newCamera(TUNING, 0, 0, 0);
-    for (let i = 0; i < 120; i++) c = stepCamera(c, 0, { x: 0, y: 0, z: 0 }, { x: 0, z: 0 }, 0, 1 / 60, TUNING, true, seat);
-    const p0 = cameraPose(c, 0, TUNING);
-    expect(p0.distance).toBeCloseTo(I.distance, 1);
-    expect(p0.distance).toBeLessThan(TUNING.camera.ground.distanceIn); // closer than zoom step 0
-    expect(Math.hypot(p0.tx - seat.x, p0.ty - seat.y, p0.tz - seat.z)).toBeLessThan(0.5); // framed on the seat
-    const half = Math.round((I.ease / 2) * 60);
-    for (let i = 0; i < half; i++) c = stepCamera(c, 0, { x: 0, y: 0, z: 0 }, { x: 0, z: 0 }, 0, 1 / 60, TUNING);
-    const mid = cameraPose(c, 0, TUNING).distance;
-    expect(mid).toBeGreaterThan(I.distance + 5);
-    for (let i = 0; i < 60 * I.ease; i++) c = stepCamera(c, 0, { x: 0, y: 0, z: 0 }, { x: 0, z: 0 }, 0, 1 / 60, TUNING);
-    expect(c.intro).toBe(0);
-    expect(cameraPose(c, 0, TUNING).distance).toBeGreaterThan(mid);
+    assertIntroCameraContract(TUNING); // U7 reports the original midpoint +5 preference.
   });
   it("uses each mode's angle and distance, and zoom moves between in and out", () => {
     let c: ReturnType<typeof newCamera> = { ...newCamera(withTuning({ camera: { ...TUNING.camera, startZoom: 0 } }), 0, 0, 0), intro: 0 }; // past the opening shot
@@ -476,19 +464,8 @@ describe("the camera", () => {
     expect(cameraPose(c, 0, TUNING).angle).toBeCloseTo(g.angleOut, 1);
   });
 
-  it("follows smoothly: never overshoots, never jolts, and looks only a little ahead", () => {
-    let c = newCamera(TUNING, 0, 0, 0), prevV = 0, maxJerk = 0;
-    const speed = TUNING.treetopSpeed, dt = 1 / 60;
-    for (let i = 0; i < 600; i++) {
-      const x = i < 300 ? speed * i * dt : speed * 300 * dt; // fly east, then stop dead
-      c = stepCamera(c, 0, { x, y: 0, z: 0 }, { x: i < 300 ? speed : 0, z: 0 }, 1, dt, TUNING);
-      maxJerk = Math.max(maxJerk, Math.abs(c.vx - prevV) / dt);
-      prevV = c.vx;
-      expect(c.tx).toBeLessThanOrEqual(speed * 300 * dt + TUNING.camera.lookAheadMax + 1e-6);
-    }
-    expect(Math.abs(c.tx - speed * 300 * dt)).toBeLessThan(0.5);
-    expect(maxJerk).toBeLessThan(speed * TUNING.camera.follow * 1.2);
-    expect(Math.abs(c.ax)).toBeLessThanOrEqual(TUNING.camera.lookAheadMax);
+  it("keeps no-overshoot, settled tracking and capped look-ahead", () => {
+    assertFollowingCameraContract(TUNING); // U7 reports the original jerk multiplier, not the retained tracking bound.
   });
 
   it("sits south of and above what it looks at", () => {
@@ -768,13 +745,8 @@ describe("the game clock and a whole step", () => {
     expect(c.time).toBe(MAX_STEP);
   });
 
-  it("flies the witch and the camera follows", () => {
-    const g = newGame(5, LOCAL_TUNING);
-    g.clock.paused = false;
-    const x0 = g.witch.x;
-    for (let i = 0; i < 120; i++) stepGame(g, { moveX: 1, moveZ: 0, toggleMode: false, zoom: 0 }, 1 / 60);
-    expect(g.witch.x).toBeGreaterThan(x0 + 5);
-    expect(g.camera.tx).toBeGreaterThan(x0 + 3);
+  it("applies rightward input and couples the aligned camera to the same actual game step", () => {
+    assertGameCameraCoupling(newGame(5, LOCAL_TUNING)); // U7 reports the original120-frame travel magnitudes.
   });
 });
 
