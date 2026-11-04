@@ -72,7 +72,7 @@ it("runs ordered spawn/pick/drop and legacy save loading through the actual opt-
   expect(W.hat.down).toBeNull(); expect(W.spells.hat).toBe("lullaby");
 });
 
-it("restores an opt-in save to default spell slots without losing occupants when the opt-in is removed", async () => {
+it("restores a version2 floor-hat save to the classic slots without losing occupants", async () => {
   vi.resetModules(); const rules = await import("./houseRooms"), { newGame: fullGame } = await import("./game"), { TUNING } = await import("./tuning");
   const W = smallWorld(fullGame, "Save-mode compatibility needs only the current house.")(123, TUNING).witches[0];
   W.spells.hat = "none"; W.house = { hats: ["mine", "", "lullaby"], hatFloorVersion: 2, hatOverflow: ["healing"] };
