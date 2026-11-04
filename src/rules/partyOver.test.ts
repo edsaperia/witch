@@ -112,6 +112,23 @@ describe("the party's over", () => {
     expect(g.creatures.filter(c => !c.gone && !c.asleep && Math.hypot(c.x - g.witch.x, c.z - g.witch.z) > TUNING.haze.far + 60).length).toBe(0);
   }, 120000);
 
+  it("one whose bed lies by a sleeper's still walks there and lies down, in her sight", () => {
+    // (a sleeper holds its ground in the easing apart, game.ts stepSpacing, and the walker was eased back as fast as it walked:
+    // awake for good, walking on the spot by its bed while she watched; fixedPopulation.test.ts's badger #11, seed 22)
+    const g = game(), w = g.witch;
+    const [walker, sleeper] = g.creatures.filter(c => !c.boss && !c.gone && c.level > 0);
+    Object.assign(walker, { x: w.x + 8, z: w.z + 4 });
+    endParty(g);
+    const b = walker.bed!;
+    expect(b).toBeTruthy();
+    Object.assign(sleeper, { x: b.x + 0.4, z: b.z, tx: b.x + 0.4, tz: b.z, asleep: true, bed: undefined }); // (asleep right by the walker's bed)
+    Object.assign(walker, { x: b.x - 4, z: b.z });
+    g.witch = { ...g.witch, x: b.x, z: b.z + 8 }; // (her beside it, watching)
+    run(g, 4 / (walker.speed * TUNING.partyOver.walk) + 2);
+    expect(walker.asleep).toBe(true);
+    expect(Math.hypot(walker.x - b.x, walker.z - b.z)).toBeLessThan(0.1);
+  }, 60000);
+
   it("a creature napping when the party ends stays asleep for good, even with her landing in its area", () => {
     const g = game(), w = g.witch;
     const c = g.creatures.find(k => !k.boss && !k.gone)!;

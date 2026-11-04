@@ -591,7 +591,9 @@ export interface Tuning {
 // Assignment to the public type also checks compatibility with its named types and optional experiment knobs.
 export const TUNING: Tuning = raw as SchemaTuning;
 
-/** The tuning file with some values replaced, for tests and experiments. */
+/** The tuning file with some values replaced, for tests and experiments: its own copy all the way down, so a nested value changed
+ *  on it (or on a part passed in, `{ ...TUNING.map, ... }` sharing the map's own parts) never reaches TUNING. (It copied only the
+ *  top: `withTuning({}).partyObjects.generated = true` set it for every later test in the worker; test health, 2026-11-04.) */
 export function withTuning(over: Partial<Tuning>): Tuning {
-  return { ...TUNING, ...over, camera: { ...TUNING.camera, ...(over.camera ?? {}) } };
+  return structuredClone({ ...TUNING, ...over, camera: { ...TUNING.camera, ...(over.camera ?? {}) } });
 }
