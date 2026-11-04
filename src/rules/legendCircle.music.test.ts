@@ -1,17 +1,17 @@
 import { describe, expect, it } from "vitest";
 import styleJson from "../../config/music-style.json";
-import { newGame } from "./game";
 import { TUNING } from "./tuning";
 import { circleCue, legendCircleAt } from "./musicPlan";
 import { mixAt, muffled } from "./music";
 import { circleParts, notesAt, type BlockPlan, type MusicStyle } from "./musicScore";
+import { preppedGame } from "../test/preppedGame"; // (games on a map made once a file from its prep)
 
 // Keep the seeded multi-clearing radius map: music lookup is checked at every clearing and against the original legend-radius boundary regression.
 const style = styleJson as unknown as MusicStyle;
 
 describe("a sleeping legend's clearing in the music (Ed, 2026-10-06)", () => {
   const setup = () => {
-    const g = newGame(123, TUNING), L = g.creatures.find(c => c.boss && !c.gone && c.legendState === "asleep")!;
+    const g = preppedGame(123, TUNING), L = g.creatures.find(c => c.boss && !c.gone && c.legendState === "asleep")!;
     return { g, L };
   };
 

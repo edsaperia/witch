@@ -2,14 +2,15 @@
 // the Terrace and out along every branch, kept in by its edge, the locked rooms' doors, each object's E, the hats' floor, and the bed.
 import { describe, expect, it } from "vitest";
 import { TUNING, withTuning } from "./tuning";
-import { newGame as fullGame, stepGame, STEP, type Controls, type Game } from "./game";
+import { stepGame, STEP, type Controls, type Game } from "./game";
 import { smallWorld } from "../test/worlds";
-const newGame = smallWorld(fullGame, "Room walls, furniture, doors and Terrace landings use one house's layout, independent of island extent.");
+const newGame = smallWorld(preppedGame, "Room walls, furniture, doors and Terrace landings use one house's layout, independent of island extent.");
 import { deckOf, keepInHouse, onFloor, onTerrace } from "./treehouse";
 import { HOUSE_ROOMS, floorHats, fromPlan, hatSlots, hatToTake, objectAt, objectFront, objectWorld, toPlan } from "./houseRooms";
 import { field, inRoom } from "../../config/house/shape.js";
 import { wearing } from "./hat";
 import { endParty } from "./partyOver";
+import { preppedGame } from "../test/preppedGame"; // (games on a map made once a file from its prep)
 
 const idle: Controls = { moveX: 0, moveZ: 0, toggleMode: false, zoom: 0, autoTalk: false };
 const deck = (g: Game) => deckOf(g.map, g.tuning)!;
@@ -270,10 +271,10 @@ describe("the oak's rooms", () => {
     }
   });
 
-  it("the other bedrooms hold their placeholders (Ed, 2026-10-23: \"fill the other two with placeholders for now\"): a bare bed, a sheeted wardrobe and chest, crates; out of her reach, the way in from their door clear", () => {
+  it("the guest bedrooms stay locked in solo play, their furniture out of reach and the way in from their door clear", () => {
     for (const r of HOUSE_ROOMS.rooms.filter(q => q.locked)) {
       const door = obj(`${r.id}Door`), mine = HOUSE_ROOMS.objects.filter(o => o.room === r.id);
-      expect(mine.map(o => o.id).sort(), r.id).toEqual(["Bed", "Chest", "Crates", "Wardrobe"].map(k => r.id + k));
+      expect(mine.map(o => o.id).sort(), r.id).toEqual(["Bed", "Crates", "DressingTable", "Wardrobe"].map(k => r.id + k));
       for (const o of mine) {
         expect(Math.hypot(o.x - door.x, o.z - door.z) - Math.hypot(o.w, o.d) / 2, `${o.id}: clear of the door`).toBeGreaterThan(2.5);
         const g = inHouse(0, 0), at = before(o); put(g, at.x, at.z);
@@ -287,7 +288,9 @@ describe("the oak's rooms", () => {
     for (const o of HOUSE_ROOMS.objects) {
       if (o.id.endsWith("Door")) continue; // (a locked room's door: at its rim, above)
       // (her bed in the corridor up to the Turret, Ed 2026-10-26: "it can go in the corridor": on the house's floor, not a room's)
-      for (const [dx, dz] of [[0, 0], [-1, -1], [1, -1], [1, 1], [-1, 1]]) expect(o.use.kind === "bed" ? field(S, o.x + (dx * o.w) / 2, o.z + (dz * o.d) / 2, true) : inRoom(S, o.room, o.x + (dx * o.w) / 2, o.z + (dz * o.d) / 2), `${o.id}: on ${o.room}'s floor`).toBeLessThan(0.6);
+      // Only the home bed stands in a corridor. Guest beds stay inside their room outlines,
+      // which are deliberately excluded from the locked solo walking floor.
+      for (const [dx, dz] of [[0, 0], [-1, -1], [1, -1], [1, 1], [-1, 1]]) expect(o.id === "bed" ? field(S, o.x + (dx * o.w) / 2, o.z + (dz * o.d) / 2, true) : inRoom(S, o.room, o.x + (dx * o.w) / 2, o.z + (dz * o.d) / 2), `${o.id}: on ${o.room}'s floor`).toBeLessThan(0.6);
       if (room(o.room).locked) continue;
       const f = before(o), k = keepInHouse(d, d.x + f.x, d.z + f.z);
       expect(Math.hypot(k.x - d.x - f.x, k.z - d.z - f.z), `${o.id}: in front of it is floor`).toBeLessThan(0.05);

@@ -2,12 +2,13 @@
 // invitations her 💌s don't fly; without a broom she falls off the Terrace (a thud, then back at the magic circle); E takes each.
 import { describe, expect, it } from "vitest";
 import { TUNING, withTuning } from "./tuning";
-import { hitWitch, newGame as fullGame, stepGame, STEP, type Game } from "./game";
+import { hitWitch, stepGame, STEP, type Game } from "./game";
 import { smallWorld } from "../test/worlds";
-const newGame = smallWorld(fullGame, "Kit pickup and Terrace falls use one house and nearby open ground, independent of distant areas.");
+const newGame = smallWorld(preppedGame, "Kit pickup and Terrace falls use one house and nearby open ground, independent of distant areas.");
 import { deckOf } from "./treehouse";
 import { HOUSE_ROOMS, objectFront } from "./houseRooms";
 import { broomsLeft, hasBag, hasBroom, hasInvites, KIT_BROOMS, needsBag, newKit, takeBroom, takeInvites } from "./kit";
+import { preppedGame } from "../test/preppedGame"; // (games on a map made once a file from its prep)
 
 const run = (g: Game, secs: number, c: object = {}) => { for (let i = 0; i < Math.round(secs / STEP); i++) stepGame(g, { moveX: 0, moveZ: 0, toggleMode: false, zoom: 0, ...c } as Parameters<typeof stepGame>[1], STEP); };
 const events = (g: Game, kind: string) => g.leashEvents.filter(e => e.kind === kind);

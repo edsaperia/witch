@@ -13,6 +13,7 @@ import { queueCombatHit } from "../test/combatHit";
 import { FIGHT, MOVEMENT } from "./movement";
 import { areaOf, homeArea } from "./homeArea";
 import { smallWorldTuning } from "../test/worlds";
+import { preppedGame } from "../test/preppedGame"; // (games on a map made once a file from its prep)
 const PEOPLED = withTuning({ population: { ...TUNING.population, start: { ...TUNING.population.start, young: 1 } } }); // (a young in every area, whatever the tuning's curve: the mechanics, not the balance)
 
 const idle: Controls = { moveX: 0, moveZ: 0, toggleMode: false, zoom: 0 };
@@ -23,7 +24,7 @@ const CHAT = withTuning({ invites: { ...TUNING.invites, on: false } });
 
 function quiet(t: Tuning = TUNING, local = false): Game {
   // Retain seeded terrain for area guards, cross-area pursuit, beach escape and 900 m recovery scenarios.
-  const g = newGame(77, local ? smallWorldTuning(t, "Direct knockout candle and hat timing uses explicit timestamps and leash state, not world extent.") : t);
+  const g = preppedGame(77, local ? smallWorldTuning(t, "Direct knockout candle and hat timing uses explicit timestamps and leash state, not world extent.") : t);
   g.clock.paused = false;
   const d = g.map.dancefloor;
   g.witch = { ...g.witch, seated: false, x: d.x, z: d.z + 20, mode: "ground", lift: 0 };
@@ -504,7 +505,7 @@ describe("Ed's Stage 4 rulings", () => {
   }, 60000);
 
   it("leaves a woken area's babies out of its siege: they stay home, happy, with no invitation or personal rune", () => {
-    const g = newGame(77, { ...TUNING, cast: { ...TUNING.cast, on: false } }); // (their runes at their feet: the game without the stone stacks, ?cast=0)
+    const g = preppedGame(77, { ...TUNING, cast: { ...TUNING.cast, on: false } }); // (their runes at their feet: the game without the stone stacks, ?cast=0)
     g.clock.paused = false;
     g.witch = { ...g.witch, seated: false, mode: "treetop", lift: 1 };
     const next = g.party.next[0], here = g.creatures.filter(c => c.cell[0] === next[0] && c.cell[1] === next[1] && !c.boss); // (its legend sleeps on: legends.test.ts)
@@ -594,7 +595,7 @@ describe("Ed's playtest (2026-10-04)", () => {
   }, 60000);
 
   it("cannot invite enraged creatures or babies; a woken area befriends its babies without personal runes", () => {
-    const g = newGame(77, { ...TUNING, cast: { ...TUNING.cast, on: false } }); // (their runes at their feet: the game without the stone stacks, ?cast=0)
+    const g = preppedGame(77, { ...TUNING, cast: { ...TUNING.cast, on: false } }); // (their runes at their feet: the game without the stone stacks, ?cast=0)
     g.clock.paused = false;
     g.witch = { ...g.witch, seated: false, mode: "treetop", lift: 1 };
     const next = g.party.next[0], here = g.creatures.filter(c => c.cell[0] === next[0] && c.cell[1] === next[1]);
@@ -713,7 +714,7 @@ describe("the motion scale pass (Ed, 2026-10-04)", () => {
 
 describe("sieges far from her (found by the overnight playthrough)", () => {
   it("march from the wave on, wherever she is: their besiegers are stepped, not only once she comes near", () => {
-    const g = newGame(7, PEOPLED);
+    const g = preppedGame(7, PEOPLED);
     g.clock.paused = false;
     const B = g.map.bounds;
     g.witch = { ...g.witch, seated: false, mode: "treetop", lift: 1, x: B.minX + 5, z: B.minZ + 5 }; // (far off, in a corner)

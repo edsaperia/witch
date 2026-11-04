@@ -102,6 +102,8 @@ export interface Page {
   presentationGame?: (canonical: Game) => Game;
   /** Forget the resumable night before replacing it (including a direct startNight). */
   onNightEnd?: () => void;
+  /** Optional page-owned shared-night setup, after ordinary link rules and before the View adopts it. */
+  prepareNight?: (game: Game, spec: NightSpec) => void;
   /** The night just ended (endNight) while the next one is made: what the page's pieces read meanwhile, and what the next
    *  carries on from (its sliders, the log's hooks, the overlay); let go once the next is on. */
   last?: Night;
@@ -176,6 +178,7 @@ export async function startNight(page: Page, spec: NightSpec): Promise<Night> {
   }
   // The link's switches for the game: the spell, quest, party's over, arena and waves (app/gameParams.ts).
   if (!spec.resume) { cleanups.push(gameFromLink(game, tuning, params)); wearHat(game, page.look()); }
+  if (!spec.resume) page.prepareNight?.(game, spec);
   // The playtest log (Ed, 2026-10-04): a new run each night, or the nights would merge under the first's seed.
   const playtest = new PlaytestLog(game, page.build);
   if (old) for (const k of LOG_HOOKS) (playtest as unknown as Record<string, unknown>)[k] = old.playtest[k];

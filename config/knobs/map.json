@@ -859,7 +859,7 @@
       "notes": "The special sites (tonight's find's) count as stones here. Placed all at once in a fixed order (rules/map.ts placeSites), so the same whichever is asked for first."
     },
     "findArea": {
-      "what": "tonight's find in an area of its own, at its site, in a clearing `clear` metres round it; that area has no stump, wave or creatures, and every touching area's path leads to it.",
+      "what": "tonight's find in an area of its own, at its site, in a clearing `clear` metres round it; that area has no stump or wave, and no creatures but the challenge area's pack (challenge on), and every touching area's path leads to it.",
       "decisions": [
         {
           "by": "Ed",

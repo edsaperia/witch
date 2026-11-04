@@ -43,6 +43,8 @@ const diveOptions = (): FlyOptions => {
 };
 /** The testing toggle's key (this browser): sail to any island with a creature. */
 const SAIL_ANY = "witch.chart.sailAnywhere";
+/** How long (ms) the landing bake's workers wait for the island's map before they start anyway (bakeFor): the map first. */
+const MAP_FIRST = 8000;
 export interface ChartViewOptions {
   mode: ChartMode;
   /** What she's found, won and sailed (default: loadSave()). */
@@ -224,8 +226,13 @@ export function mountChart(host: HTMLElement, opts: ChartViewOptions): ChartView
     void bake?.job.then(b => b?.stop());
     void bake?.map.then(m => m?.stop());
     if (!id || !islands.find(i => i.id === id)?.sail || opts.noBake?.(id) || isHere(id)) { bake = null; return; } // (the island she's on: never sailed to from here)
-    const job = import("./landingBake").then(m => m.bakeLanding(id, opts.world, seedOf(id))).catch(() => null);
-    bake = { island: id, job, map: job.then(b => (b ? import("./mapPrep").then(m => m.startMapPrep(id, opts.world, b.seed)) : null)).catch(() => null) };
+    // (the map first, with the night's seed, chosen here: the night can't be made without it, and it waited on the bake's module and
+    // shared the cores with its up to six workers; the bake once the map's made, or MAP_FIRST on: Ed, 2026-11-03, the sail's wait)
+    const seed = seedOf(id), mine = { island: id } as NonNullable<typeof bake>;
+    const map = import("./mapPrep").then(m => m.startMapPrep(id, opts.world, seed)).catch(() => null);
+    const job = map.then(m => (m ? Promise.race([m.done, new Promise(res => setTimeout(res, MAP_FIRST))]) : null))
+      .then(() => (bake === mine ? import("./landingBake").then(m => m.bakeLanding(id, opts.world, seed)) : null)).catch(() => null);
+    bake = Object.assign(mine, { job, map });
   };
   /** Where she'll likely sail: her last voyage's island, else the nearest she's found, else home (her first game). */
   const likely = (): string => {
@@ -238,8 +245,7 @@ export function mountChart(host: HTMLElement, opts: ChartViewOptions): ChartView
   // The night made under the chart as it flies (onDepart): the island and seed it's for, and whether it's ready for the dive.
   let departed: { island: string; seed: number; ready: boolean } | null = null;
   const depart = async (id: string) => {
-    const b = bake?.island === id ? await bake.job : null, seed = b?.seed ?? seedOf(id);
-    await b?.settle();
+    const seed = seedOf(id); // (the bake's too: not waited for, the night only needs its map)
     const m = bake?.island === id ? await bake.map : null; // (its map, made in a worker: the night takes it, as go's does)
     if (m) await Promise.race([m.done, new Promise(res => setTimeout(res, 8000))]);
     const d: NonNullable<typeof departed> = departed = { island: id, seed, ready: false };

@@ -14,17 +14,18 @@ import { telephoneCues } from "./app/telephoneCues";
 import { telephoneFaces } from "./app/telephoneFaces";
 import { telephoneFaceCanvas } from "./render/telephoneFace";
 import { TelephonePresence } from "./ui/telephonePresence";
-import { telephoneNotice } from "./ui/telephone";
+import { telephoneNotice, telephoneTrouble } from "./ui/telephone";
 import { guestArrival } from "./platform/online/guestArrival";
 import { guestAccess } from "./platform/online/guestAccess";
 import { visitSaves } from "./app/visitSaves";
-import { visitLifecycle } from "./app/visitLifecycle";
+import { visitLifecycle, synchronizeVisit } from "./app/visitLifecycle";
 import { visitUnlocks } from "./app/visitUnlocks";
 import { stationAuthority } from "./platform/online/stationAuthority";
 import { remoteWitchAppearance } from "./platform/online/remoteAppearance";
 import { appearance } from "./platform/online/appearance";
 import { stationLook } from "./platform/online/stationAppearance";
 import { localHouseAction } from "./app/houseActions";
+import { continueSharedNight } from "./app/sharedNight";
 import type { HouseEvents } from "./platform/online/houseSteps";
 import { fillNightTrunk } from "./app/nightFindBoundary";
 import { challengeWords } from "./app/challengeWords";
@@ -38,11 +39,11 @@ import { sharedFindLoan, withSharedFind, type PersonalKit } from "./app/sharedFi
 import { chartOpen, closeChart, openChart, prepareChart, finishChartFlight, type Sailed } from "./ui/chartOverlay";
 import { openingWay, opensDirectly, opensInBedroom, opensWithCreator, sailLandsInBed } from "./app/opening";
 import { wakeInBedroom } from "./rules/opening";
-import { endDream, firstMorning, startParty, startWake } from "./rules/wakeUp";
+import { endDream, firstMorning, morningAfter, startParty, startWake, tuckIn } from "./rules/wakeUp";
 import { replayWanted } from "./rules/partyStart";
 import { WorldDrawGate } from "./app/worldDrawGate";
 import { LandingSleep } from './app/landingSleep';
-import { STATION_SLOT, wearFromStation, wornGenome, wornNow } from "./rules/clothesPile";
+import { STATION_SLOT, wearFromStation, wornGenome, wornNow, type PileSlot } from "./rules/clothesPile";
 import { WakeCard } from "./render/wakeUp";
 import { toggleCornerPanel, closeCornerPanel, cornerPanelRoot } from "./ui/cornerPanel";
 import { MenuFocus } from "./ui/menuFocus";
@@ -53,9 +54,8 @@ import { gpuName, QualityLadder } from "./app/ladder";
 import { musicCue } from "./rules/musicPlan";
 import { areaUnderWitch, interpolated, newWitchPlayer, STEP, type Game } from "./rules/game";
 import { enableCauldron, homeMushroomPickups } from "./rules/cauldronNight";
-import { TUNING, type Tuning } from "./rules/tuning";
-import { diveReach, diveTrack, handoffShot, newFlightClock, stepFlightClock, type Shot } from "./rules/arrive";
-import { nextFrame, runSliced } from "./render/slices";
+import { TUNING } from "./rules/tuning";
+import { diveReach, diveTrack } from "./rules/arrive";
 import { compareKey, rendererOf, sceneMode } from "./app/compareKey";
 import { debugText, machineLines, precisionLines, reproLine, reproQuery, reproState, tuningDiff } from "./app/repro";
 import { currentValue, DECISION_LIST, valuesText } from "./ui/decisions";
@@ -66,6 +66,7 @@ import { View } from "./render/view";
 import { prewarmArtWorkers } from "./render/assets";
 import { AimHud } from "./render/aimhud";
 import { StallLog } from "./platform/stallLog";
+import { renderProgramCounts } from "./platform/renderProgramCounts";
 import { Freeze } from "./platform/freeze";
 import { StudioPlayer } from "./app/studio";
 import { StudioPanel } from "./ui/studioPanel";
@@ -78,7 +79,8 @@ import type { DecidePanel } from "./ui/decide";
 import { saveLoadout } from "./app/loadout";
 import { castable, HAT_SPELLS, hatSpell, setParts } from "./rules/spells";
 import { changeLoadout } from "./rules/hatSpells";
-import { HOUSE_ROOMS, addFloorHat, syncFloorHats, installEdLayout } from "./rules/houseRooms";
+import { HOUSE_ROOMS, addFloorHat, syncFloorHats, installEdLayout, objectFront, roomAt, fromObject } from "./rules/houseRooms";
+import { remoteBodyBatch } from "./platform/online/otherWitches";
 import { setEdLayoutActive } from "./rules/housePlacement";
 import { usesEdLayout } from "./app/houseLayout";
 import { stationOf, tableOf } from "./rules/stations";
@@ -252,12 +254,23 @@ function showLook(): void {
   const canonical = (page.night ?? page.last)?.game;
   const shown = canonical ? page.presentationGame?.(canonical) ?? canonical : undefined;
   // (her hat still to put on but lying on the floor, the first morning's: its shape kept, so its frame lying there is drawn; asleep
-  // under the loading screen before a first morning, that morning's as it will start: `firstAhead`)
-  const { pile, hatLying: lying } = wornNow(shown?.wake, !!shown?.witches[0]?.hat.down, firstAhead), key = `${lookNow}|${pile?.join() ?? ""}|${lying}`;
+  // under the loading screen before a first morning, or before a sail's or the bed's next morning, that morning's as it will start,
+  // not the night's she's leaving: `morningAhead`)
+  const { pile, hatLying: lying } = wornNow(morningAhead ? undefined : shown?.wake, !!shown?.witches[0]?.hat.down, morningAhead), key = `${lookNow}|${pile?.join() ?? ""}|${lying}`;
   if (key === shownLook) return;
   const look = JSON.parse(lookNow) as unknown;
   if (view.houseRooms) view.houseRooms.outfit = look;
-  shownLook = key; view.setWitch(wornGenome(look as never, pile, lying));
+  shownLook = key; view.setWitch(wornGenome(look as never, pile, lying), morningAhead ? { hatOff: lying } : undefined); // (a morning ahead: her whole set at once, urgent)
+  keepNightie(look);
+}
+/** Her nightie for every morning after a night played (rules/wakeUp.ts morningAfter: her hat in the pile, so no hat-off frames: those
+ *  are a first morning's only), drawn in the background from the first night on and kept for good (AssetLibrary.keepLook; Ed,
+ *  2026-11-03: "it's the same nightie on every island every morning. Why do we need to keep re-drawing it?"): the same genome
+ *  each morning while her look is, so a sail or the bed puts it on at once. Drawn again only when her look changes (its genome
+ *  carries her whole outfit, the hidden pieces too, so the art cache keys it anew). */
+function keepNightie(look: unknown): void {
+  const after = morningAfter();
+  view.assets.keepLook(wornGenome(look as never, after.pile, after.hatLying));
 }
 // The page and the night (app/night.ts; docs/plans/sail-without-reload.md B): the page made once, the night (its link, tuning,
 // game, playtest run, HUD, arrival and flags) held in `page.night`, read there by everything that needs it, never captured.
@@ -283,11 +296,15 @@ const { tuning: bootTuning } = N();
 // there (wakeFirst); ?opening=old for the old start (the character creator as the loading cover).
 const inBedroom = !resumeGame && opensInBedroom(bootLink, bootTuning);
 if (!inBedroom) (window as unknown as { witchLoading?: { cancel(): void } }).witchLoading?.cancel();
-/** The first morning she'll wake to (rules/wakeUp.ts firstMorning), read ahead while she sleeps under the loading screen, till it
- *  starts (wakeFirst): her art is made in her nightie with the start's own, and the loading screen waits for it (her hat-off frames
- *  too, her hat lying on the hats' floor), so she's never drawn in her clothes first (Ed, 2026-11-03: "after the loading screen I look
- *  at the bed and see the witch in her default clothes instead of in her nightie, and then after a second or two she's in her nightie"). */
-let firstAhead = inBedroom ? firstMorning(N().game) : null;
+/** The next morning she'll wake to, read ahead till its wake-up starts. The first (rules/wakeUp.ts firstMorning), while she sleeps
+ *  under the loading screen (wakeFirst): her art is made in her nightie with the start's own, and the loading screen waits for it
+ *  (her hat-off frames too, her hat lying on the hats' floor), so she's never drawn in her clothes first (Ed, 2026-11-03: "after the
+ *  loading screen I look at the bed and see the witch in her default clothes instead of in her nightie, and then after a second or
+ *  two she's in her nightie"). A sail's or the bed's (rules/wakeUp.ts morningAfter), from the moment she sails or sleeps (aheadMorning):
+ *  her nightie put on (kept since the first night: keepNightie), or its whole set asked then if it isn't yet; the sleep's dark waits
+ *  for it (view.prepare's wait for the urgent sets), the dive never does: in bed she's under her covers till it's on her
+ *  (render/view/witch.ts inCovers), never seen there in last night's clothes. */
+let morningAhead: { pile: PileSlot[]; hatLying: boolean } | null = inBedroom ? firstMorning(N().game) : null;
 if (N().game.map.zoo) void import("./zoo/panel").then(({ ZooPanel }) => { zooPanel = new ZooPanel(N().game); });
 // The settings as built (the tuning file's), for the debug overlay's and the playtest log's list of what's changed (app/repro.ts).
 const BUILT = JSON.parse(JSON.stringify(TUNING)) as object;
@@ -310,8 +327,8 @@ let dreamNext: { loan: Loan; won: boolean } | null = null;
 let dreamAfterDive: { loan: Loan; won: boolean } | null = null;
 /** The broom parts she has tonight: those she's found, and a part on loan. */
 const partsNow = (): Set<string> => withLoan("part", new Set(loadBroom().found), loan);
-const bootLook = firstAhead ? wornGenome(JSON.parse(lookNow) as never, firstAhead.pile, firstAhead.hatLying) : savedLook; // (in her nightie on a first morning: firstAhead)
-const view = page.view = await View.create(canvas, N().game, gameStyle(style, bootTuning), bootLook, { hatOff: !!firstAhead?.hatLying }); // (built a frame's budget at a time: the bedroom's frames go on meanwhile, render/slices.ts)
+const bootLook = morningAhead ? wornGenome(JSON.parse(lookNow) as never, morningAhead.pile, morningAhead.hatLying) : savedLook; // (in her nightie on a first morning: morningAhead)
+const view = page.view = await View.create(canvas, N().game, gameStyle(style, bootTuning), bootLook, { hatOff: !!morningAhead?.hatLying }); // (built a frame's budget at a time: the bedroom's frames go on meanwhile, render/slices.ts)
 let onlineFocus = () => false;
 view.setIntroFocus = (game, focus) => introFocus(game, N().game, focus, onlineFocus(), pageFocus);
 // The loading screen (src/loading.js, src/ui/loadingScreen.js), up since the first paint: given the view for its count of the art
@@ -429,6 +446,8 @@ const callArrival = guestArrival({ room: "bedroom2", equipment: game => {
 } });
 let returnedUnlocks: ReturnType<typeof visitUnlocks> | null = null;
 let hostedUnlocks: ReturnType<typeof visitUnlocks> | null = null;
+const completedGuestNights: ReturnType<typeof visitUnlocks>[] = [];
+let sharedNightChanging = false, sharedNightFrom: Game | null = null;
 const remoteArt = remoteWitchAppearance(view);
 const sharedLoans = sharedFindLoan();
 function personalKit(game: Game = N().game, player = 0): PersonalKit {
@@ -449,19 +468,29 @@ function traceVisit(stage: string, detail?: unknown): void {
   if (typeof message === "string") visitPreparation.failure = message.slice(0, 500);
   notable("telephone-preparation", stage, detail);
 }
-const phone = telephoneStation({ enabled: phoneEnabled, callsEnabled: phoneCallsEnabled, face: phoneFace, clearFaces: () => { phoneFaces.clear(); phonePresence.refresh(); }, digit: digit => { if (phone.state.status !== "preparing") phoneSounds.digit(digit); }, storage: localStore(), session: {
+const lifecycleEvidence = params.has("shot") ? (proof: Record<string, unknown>) => { window.dispatchEvent(new CustomEvent("witch-lifecycle-evidence", { detail: proof })); } : undefined;
+const phone = telephoneStation({ lifecycleEvidence, enabled: phoneEnabled, callsEnabled: phoneCallsEnabled, face: phoneFace, trouble: telephoneTrouble, clearFaces: () => { phoneFaces.clear(); phonePresence.refresh(); }, digit: digit => { if (phone.state.status !== "preparing") phoneSounds.digit(digit); }, storage: localStore(), session: {
+  lifecycleEvidence,
   build: BUILD, hostGame: () => N().game,
   trace: traceVisit,
+  predictionEvidence: params.has("shot") ? proof => { window.dispatchEvent(new CustomEvent("witch-prediction-evidence", { detail: proof })); } : undefined,
+  protocolEvidence: params.has("shot") ? proof => { window.dispatchEvent(new CustomEvent("witch-protocol-evidence", { detail: proof })); } : undefined,
   appearance: () => { sharedLoans.begin(personalKit(), loan); if (!phone.visiting) sharedLoans.observe(N().game, personalKit()); return appearance(page.look()) ?? appearance({}); },
   attach: game => { if (!guestAccess.ready) throw new Error("The guest room isn't ready yet."); callArrival.attach(game); if (remoteArt.has(1)) void remoteArt.start(game, 0).catch(error => { logCaughtError(error, "host remote appearance"); phone.hangUp(); }); },
   detach: game => callArrival.detach(game),
-  prepareGuest: (game, signal, advanced) => {
+  continuedHost: (previous, next) => {
+    callArrival.continued(previous, next);
+    if (remoteArt.has(1)) void remoteArt.start(next, 0).catch(error => { logCaughtError(error, "host continued remote appearance"); phone.hangUp(); });
+  },
+  prepareGuest: (game, signal, advanced, continuing) => {
     if (!ordinaryVisit) { traceVisit("save-boundary:unavailable"); return Promise.reject(new Error("This browser isn't ready to protect your saved night.")); }
+    if (continuing) { completedGuestNights.push(visitUnlocks(N().game, 1)); return ordinaryVisit.nextNight(game, signal, advanced); }
+    completedGuestNights.length = 0;
     return ordinaryVisit.prepare(game, signal, advanced);
   },
-  synchronized: game => { void ordinaryVisit?.synchronized(game).catch(error => { logCaughtError(error, "visit confirmation"); phone.hangUp(); }); },
+  synchronized: game => { if (ordinaryVisit) void synchronizeVisit(ordinaryVisit, game, error => { logCaughtError(error, "visit confirmation"); phone.hangUp(); }); },
   ended: (role, game) => {
-    if (role === "host") phone.hangUp(); // Close the role-bearing socket on departure, not only its game session.
+    if (role === "host") phone.hangUp("host-session-ended"); // Close the role-bearing socket on departure, not only its game session.
     remoteArt.clear();
     if (role === "guest") {
       try { returnedUnlocks = game && game.witches.some(w => w.id === 1) ? visitUnlocks(game, 1) : null; }
@@ -485,13 +514,20 @@ const phone = telephoneStation({ enabled: phoneEnabled, callsEnabled: phoneCalls
       stations.reconcile(restored.kit.look as never, ownedToChoose(findsCtx().owned()), workshopNow()); booth.refresh(ownedRecords());
     }
   },
-  failed: error => { visitPreparation.failure = error.message; logCaughtError(error, "telephone session"); phone.hangUp(); telephoneNotice(error.message); },
+  failed: error => { visitPreparation.failure = error.message; logCaughtError(error, "telephone session"); phone.hangUp("session-error"); telephoneNotice(error.message); },
   advanceHost: (game, controls, dt) => recordedStep(game, controls, dt, BUILD, captureRecording),
   authorizeStation: stationAuthority(hostCollections),
   wardrobe: () => hostCollections(N().game).wardrobe,
   catalogue: () => { const shared = hostCollections(N().game); return { wardrobe: [...shared.wardrobe], parts: [...shared.parts], hats: [...shared.hats], records: [...shared.records] }; },
   catalogueApplied: catalogue => { creator.hats = catalogue.hats as typeof creator.hats; view.partsFound = new Set(catalogue.parts); reconcilePickers(); },
-  stationResolved: player => { if (player === (phone.visiting ? 1 : 0)) reconcilePickers(); },
+  stationResolved: (player, choice, accepted) => {
+    if (player !== (phone.visiting ? 1 : 0)) return;
+    reconcilePickers();
+    if (accepted) return;
+    const others = N().game.witches.filter(w => w.id !== player);
+    if (choice.kind === "hat" && choice.id !== "none" && others.some(w => w.spells.hat === choice.id)) telephoneNotice("Your friend is using that hat.");
+    if (choice.kind === "broom" && others.some(w => Object.values(choice.fitted).some(id => id !== null && Object.values(w.spells.parts ?? {}).includes(id)))) telephoneNotice("Your friend is using that broom part.");
+  },
   stationPalette: () => classicPalette(style),
   stationApplied: (player, choice) => {
     if (choice.kind === "party") { booth.close(); if (!phone.visiting && ownedRecords().includes(choice.id)) chooseRecord(choice.id); }
@@ -569,8 +605,17 @@ function bedFirst(n: Night): void {
   pageMutation(n.game, "wake: bed arrival", () => bedFirstNow(n));
 }
 function bedFirstNow(n: Night): void {
-  n.flags.inBed = sailLandsInBed(n.params, n.tuning) && wakeInBedroom(n.game);
-  if (!n.flags.inBed) dreamAfterDive = null;
+  n.flags.inBed = sailLandsInBed(n.params, n.tuning) && tuckIn(n.game); // (in her bed as the wake-up will have her: nothing moves as it lands)
+  view.asleepInBed = n.flags.inBed;
+  if (n.flags.inBed) aheadMorning(true); // (asked as she sailed in place already; the island's link loaded anew, &arrive=1: now)
+  else { dreamAfterDive = null; aheadMorning(false); } // (no morning in bed after all: her look as it is)
+}
+/** A sail's or the bed's next morning read ahead from the moment she sails or sleeps (`morningAhead`: her nightie, rules/wakeUp.ts
+ *  morningAfter), its whole set asked at once (showLook); off (`on` false) as its wake-up starts, or if there's to be none. */
+function aheadMorning(on: boolean): void {
+  if (!on && !morningAhead) return;
+  morningAhead = on ? morningAfter() : null;
+  showLook();
 }
 /** It's landed: in her bed, she wakes as after the bed (the one wake-up, every morning: Ed, 2026-10-26, in place of his decision 10's shorter one), dreaming
  *  first of a find on loan; at her decks (?opening=old), the night starts, the party spell cast, as the bedroom's scroll would. */
@@ -584,7 +629,7 @@ function arrivedNow(): void {
   sound.sailing(0); // (sailed in place: the sea and the wind fade as the night's start comes in)
   const n = N();
   if (view.shaderLandingLimited && n.flags.inBed && !view.landingWakeReady()) {
-    startWake(n.game, n.game.herTime, { dreaming: true, mirrored: mirrored(), yesterday: true });
+    startWake(n.game, n.game.herTime, { dreaming: true, mirrored: mirrored(), yesterday: true }); aheadMorning(false); view.asleepInBed = false; // (the morning's own pile from here: the same look)
     landingSleep.begin(n.game); view.landingSleeping = true; view.foot = 1; view.seatK = 0; n.game.clock.paused = true;
     input.release(); input.clearPresses(); (wakeCard ??= new WakeCard()).sleep();
     mark('landing:asleep'); return;
@@ -593,11 +638,12 @@ function arrivedNow(): void {
 }
 function wakeArrival(): void { mutate("wake: arrival", wakeArrivalNow); }
 function wakeArrivalNow(): void {
-  view.landingSleeping = false;
+  view.landingSleeping = false; view.asleepInBed = false; // (the wake-up has her in bed from here)
   // (landed asleep in her bed: with a loan settled, dreaming it, the alarm when it ends; else the alarm at once: rules/wakeUp.ts, render/dream.ts)
   const dd = dreamAfterDive;
   dreamAfterDive = null;
   if (N().flags.inBed && startWake(N().game, N().game.herTime, { dreaming: !!dd, mirrored: mirrored(), yesterday: true }) && dd) startDream(dd); // (a sail: a night played, last night's clothes in their pile)
+  aheadMorning(false); // (the morning's own pile from here: the look read ahead, so nothing's redrawn)
   if (start()) queueCast(); // (woken in her bedroom, the dive's landing: not yet, rules/wakeUp.ts)
   if (N().game.wake) mark("opening:alarm");
   if (!gestured) soundNote(); else sound.wake();
@@ -777,7 +823,7 @@ telescope.onChange = on => {
 };
 const useHouse = (obj: string): void => mutate("house: use", () => {
   const { game, tuning, flags: { chartRecorded, overRecorded } } = N();
-  if (obj === "slept" && phone.visiting) { phone.hangUp(); return; } // Borrowed bed exit returns through the guarded visit lifecycle.
+  if (obj === "slept" && phone.visiting) { sailing = true; input.release(); input.clearPresses(); return; } // The host rolls the shared world; Leave visit is the guest exit.
   if (obj === "slept") { if (!chartRecorded && !overRecorded) nightOver(tuning.map?.island ?? "", { won: false }, undefined, tuning.map?.world ?? 0); setTimeout(() => newNight("bed"), 0); return; } // (the sea chart: played, as the afterparty records it; then a new seed: app/newForest.ts; after this frame, in place)
   const o = HOUSE_ROOMS.objects.find(q => q.id === obj);
   if (!o || creator.open || game.witches[phone.visiting ? 1 : 0]?.ko) return;
@@ -1021,6 +1067,7 @@ const ordinaryVisit = visitNightSaves ? visitLifecycle({
     loan = null; owned = null; // Own private loan is retained in the lifecycle snapshot, never reused as a host-world loan.
     const p = new URLSearchParams(N().params); p.delete("arrive");
     await startNight(page, { how: "bed", island: game.tuning.map?.island ?? "home", seed: game.seed, world: game.tuning.map?.world, params: p, resume: game, borrowed: true });
+    seedEl.innerHTML = `seed <a href="?seed=${N().seed}">${N().seed}</a>`;
     reportAdvance(); signal.throwIfAborted();
     if (remoteArt.has(0)) { await remoteArt.start(game, 1, signal); reportAdvance(); }
     const markAt = performance.now(), timingAt = view.assets.timings.length;
@@ -1046,6 +1093,8 @@ const ordinaryVisit = visitNightSaves ? visitLifecycle({
     creator.hats = unlockAll() ? undefined : own.night.game.spells.hats; view.partsFound = partsNow();
     if (fresh) {
       const ownCollection = loadOwned(lookWithoutLoan(own.look, own.loan));
+      for (const outcome of completedGuestNights) outcome.apply(browserSaveSlots(), { spells: own.night.game.spells, owned: () => ownCollection });
+      completedGuestNights.length = 0;
       returnedUnlocks?.apply(browserSaveSlots(), { spells: own.night.game.spells, owned: () => ownCollection });
       returnedUnlocks = null; owned = null;
       const href = nightHref("bed", own.href); await nightInPlace(nightFromHref("bed", href), href); syncFloorHats(N().game.witches[0]);
@@ -1054,6 +1103,7 @@ const ordinaryVisit = visitNightSaves ? visitLifecycle({
     } else {
       returnedUnlocks = null;
       const restored = await startNight(page, { ...own.night.spec, how: "bed", resume: own.night.game, borrowed: false });
+      seedEl.innerHTML = `seed <a href="?seed=${restored.seed}">${restored.seed}</a>`;
       syncFloorHats(restored.game.witches[0]); await view.prepare(); Object.assign(restored.flags, own.night.flags, { last: 0 }); sailing = false; input.clearPresses();
     }
   },
@@ -1065,16 +1115,22 @@ const chartDepartureBoundary = chartDeparture({
   returnOwn: () => ordinaryVisit?.end() ?? Promise.reject(new Error("This browser cannot restore your saved night.")),
 });
 page.onNightEnd = () => {
-  if (phone.active && !phone.visiting) phone.hangUp(); // Capture the host result before its own bed/sail replaces this night.
+  if (phone.active && !phone.visiting && !sharedNightChanging) phone.hangUp("host-night-ended"); // A shared bed rollover retains its call.
   if (!phone.visiting && page.night && !page.night.spec.borrowed && !endedNights.has(page.night.game)) {
-    if (hostedUnlocks) {
+    const hostOutcome = hostedUnlocks ?? (sharedNightChanging ? visitUnlocks(page.night.game, 0) : null);
+    if (hostOutcome) {
       const collection = loadOwned(lookWithoutLoan(page.look() as Record<string, unknown> | null, loan));
       // The host may continue its own night after the friend leaves; use its final own verdict, never update the departed guest's captured outcome.
-      visitUnlocks(page.night.game, 0).apply(browserSaveSlots(), { spells: page.night.game.spells, owned: () => collection }); hostedUnlocks = null; owned = null;
+      hostOutcome.apply(browserSaveSlots(), { spells: page.night.game.spells, owned: () => collection }); hostedUnlocks = null; owned = null;
     }
     endedNights.add(page.night.game); browserSaveSlots().summary(page.night.game.tuning.map?.island ?? "home", true, bootSlot);
   }
   void autosave?.clear();
+};
+page.prepareNight = (game, spec) => {
+  if (!sharedNightChanging || !sharedNightFrom || spec.how !== "bed") return;
+  continueSharedNight(sharedNightFrom, game, hostCollections(game));
+  if (!phone.nextNight(game)) throw new Error("The shared night couldn't continue.");
 };
 if (autosave) {
   setInterval(() => { void autosave.save(performance.now()); }, 5000);
@@ -1118,6 +1174,7 @@ const stallLog = new StallLog(summary => {
 });
 // (the playtest log's hooks read the night on now, so they carry to the next night's run as they are: app/night.ts)
 N().playtest.stalls = () => stallLog.stalls;
+const shotProgramCounts = params.has("shot") ? renderProgramCounts(() => view.renderer.info.programs, view.renderer.extensions.has("KHR_parallel_shader_compile")) : null;
 // What a builder needs from a screenshot of the overlay (Ed, 2026-10-14; app/repro.ts): the link that rebuilds what she saw, the
 // machine, and every setting changed from the build's; the same in the playtest log (the pause page's Download log).
 const repro = (() => {
@@ -1253,8 +1310,13 @@ function chartOverNight(table?: string): void {
   const here = island ? { island, world: n.tuning.map?.world ?? 0, label: stayLabel(n.game.partyOver ? "over" : n.game.win?.phase === "won" ? "won" : "on") } : undefined;
   if (table) chartAt = table;
   openChart((href, to) => { chartAt = null; void sailFromChart(href, to).catch(error => logCaughtError(error, "chart departure")); }, chartWorldArg(), { here, onDepart: departFromChart, onStay: () => console.info(`sea chart: ${island} chosen, she's there: back to the night (seed ${N().seed}, game time ${N().game.clock.time.toFixed(1)} s)`),
-    onFly: () => view.beginLandingShaders(true),
-    onLandingDue: dueAt => view.startLandingShaderGrace(dueAt),
+    // (she sails: her next morning's look asked for at once, as the island's build starts: aheadMorning)
+    onFly: () => { view.beginLandingShaders(true); if (sailLandsInBed(new URLSearchParams(location.search), N().tuning)) aheadMorning(true); },
+    // (the chart down at the water: no deadline for the island's shaders from here, Ed, 2026-11-03: "Don't limit the time, we have to
+    // wait for the island to be build anyway; zoom in over the map, switch to the island's sea, fly over the island, and show whatever
+    // is built, with mist over it if it's not built". The chart stays up, animated, till they're linked (app/chartView.ts hold); a
+    // 15 s grace from here used to cut them short, the dive skipped and the night drawn without what wasn't ready: his v7295 sail.)
+    onLandingDue: dueAt => performance.mark("chart:landing-due", { detail: { at: dueAt } }),
     ...(table ? { table: { onLeave: () => { chartAt = null; closeChart(); } } } : {}) });
 }
 /** The map table's chart (Ed, 2026-10-23: "Map menu slides in from the bottom when you go near it, like the clothes stations"; since
@@ -1324,7 +1386,7 @@ function wakeFirst(): void {
 }
 function wakeFirstNow(): void {
   const n = N();
-  bootAsleep = false; firstAhead = null; // (the morning itself from here on: its wake-up's pile)
+  bootAsleep = false; morningAhead = null; // (the morning itself from here on: its wake-up's pile)
   firstEver = !wokenBefore();
   if (!wakeInBedroom(n.game) || !startWake(n.game, n.game.herTime, { mirrored: mirrored() })) { wakeCard?.hide(); dressCreator(); creator.show(); return; }
   mark("opening:wake");
@@ -1358,17 +1420,20 @@ async function sailInPlace(to: Sailed, made?: Promise<Night>): Promise<void> {
 /** A sail's night made (sailInPlace, or under the chart's flight: departFromChart): the old night's music fading to the sea and the
  *  wind, the old night ended, the night's link pushed (and Back's guard), the night made (startNight) and its start readied: the
  *  ground, the house and the shaders, not the trees (Ed, 2026-10-24: "Don't wait for the trees": they come under the loading mist,
- *  the dive's own areas first, rules/arrive.ts diveReach); `at`, the chart's hand-off, its first frames drawn there ahead. */
+ *  the dive's own areas first, rules/arrive.ts diveReach); `at`, the chart's hand-off: made under its flight, nothing but the night
+ *  itself waited for. */
 async function makeSailNight(to: Sailed, arrival?: Arrival, at?: FlightEnd["cam"] | null): Promise<Night> {
   if (sailFail) throw new Error("?debug=sail: the sail in place made to fail"); // (window.witch.sail's test of the fallback)
   if (at === undefined) view.beginLandingShaders(false);
   sailing = true;
   gestured = true; // (she's played: the sound's woken already)
   sound.sailing(1);
+  const p = sailParams(new URLSearchParams(location.search), to.island, to.seed, to.world);
+  // (she'll land asleep in her bed: her next morning's look, her nightie, asked for now, while the chart flies and the night's made)
+  if (sailLandsInBed(p, N().tuning)) aheadMorning(true);
   forgetArrival(); // (the reload's copy, sessionStorage's: a reload later doesn't fly again)
   chartHeld = false; view.assets.hold(false); // (the chart closed, or flying in: the art workers free for the next island)
   endNight(page, params.get("debug") === "sail");
-  const p = sailParams(new URLSearchParams(location.search), to.island, to.seed, to.world);
   backGuard.sailed("?" + p.toString() + location.hash);
   armBack();
   const n = await startNight(page, { how: "sail", island: to.island, seed: to.seed, world: to.world, arrival, params: p });
@@ -1376,51 +1441,43 @@ async function makeSailNight(to: Sailed, arrival?: Arrival, at?: FlightEnd["cam"
   bedFirst(n); // (the flight in ends on her asleep in her bedroom, rules/opening.ts)
   worldDraw = new WorldDrawGate();
   displayedStep = -1;
-  const A = n.tuning.arrive;
-  await view.prepare({ sail: true, ...(A && at !== undefined ? { dive: diveReach(n.game.map, A), track: diveTrack(n.game.map, A) } : {}) });
-  if (at && A && !view.shaderLandingLimited) await warmAt(n, handoffShot({ cam: at }, n.game.map), A);
-  if (view.shaderLandingLimited) await view.waitForLandingWitch();
-  if (view.shaderLandingLimited) finishChartFlight();
+  const A = n.tuning.arrive, underChart = !!A && at !== undefined;
+  const prep = view.prepare({ sail: true, ...(underChart ? { dive: diveReach(n.game.map, A), track: diveTrack(n.game.map, A), underDive: true } : {}) });
+  if (underChart) {
+    // Made under the chart's flight: it hands over as soon as the night is (its map, and the island's layers the view draws), and
+    // the rest is built on under the dive: the shaders, the house, the forest, the ground along its track, shown as they're
+    // made, the loading mist over what isn't (Ed, 2026-11-03: "zoom in over the map, switch to the island's sea, fly over the
+    // island, and show whatever is built, with mist over it if it's not built"). It used to wait under the chart for the shaders,
+    // the track's ground and the hand-off's first frames.
+    void prep.catch(e => console.error("the island's build under the dive went wrong", e));
+  } else {
+    await prep;
+    if (view.shaderLandingLimited) await view.waitForLandingWitch();
+    if (view.shaderLandingLimited) finishChartFlight();
+  }
   mark("sail:ready");
   return n;
-}
-/** The night's first frames drawn at `shot` (the chart's hand-off), under the chart, until they come calm as the flight's warm-up
- *  waits for (rules/arrive.ts stepFlightClock): the heavy ones over before the dive, not at its start. */
-async function warmAt(n: Night, shot: Shot, A: NonNullable<Tuning["arrive"]>): Promise<void> {
-  await runSliced(view.heights.fillSteps(shot.tx, shot.tz), "handoff-heights");
-  const c = newFlightClock();
-  view.fly = shot;
-  view.assets.hold(true); // (the art workers paused for them: the first draws not fighting them for the machine)
-  try {
-    while (!stepFlightClock(c, performance.now(), A).faded) {
-      view.limitedLandingReady();
-      if (view.shaderLandingLimited) break;
-      const t0 = performance.now();
-      view.render(n.game.clock.time);
-      try {
-      stallLog.frame({ t: n.game.clock.time, gap: 0, work: performance.now() - t0, step: 0, draw: performance.now() - t0, measured: { step: false, draw: true }, parts: Object.fromEntries(Object.entries(view.ms).map(([name, ms]) => [`draw.${name}`, ms])), source: "warm-draw", loading: { phase: "handoff-warm", ready: n.flags.ready, ...view.readiness }, mode: n.game.witch.mode, x: n.game.witch.x, z: n.game.witch.z, wave: n.game.party.wave, creatures: n.game.creatures.length });
-      } catch (error) { logCaughtError(error, "warm-draw observation"); }
-      if (TIMING) console.info(`sail-timing: warm frame ${Math.round(performance.now() - t0)} ms`, JSON.stringify(Object.fromEntries(Object.entries(view.ms).filter(([, v]) => v > 20).map(([k, v]) => [k, Math.round(v)]))));
-      await nextFrame();
-    }
-  } finally { view.fly = null; view.assets.hold(false); }
 }
 /** Another way to a new night (the plan's PR 6: the bed, the bot game's exit): in place as a sail is (the tuning's sail.inPlace,
  *  ?sail=), else, in a bot game for any but its exit (the bot's on the old night), or on anything going wrong, the link loaded as
  *  before (app/sail.ts nightHref's), quietly. */
 function newNight(how: NightWay): void {
   if (sailing) return;
+  if (how === "bed" && phone.active) {
+    if (phone.visiting || sharedNightChanging) return;
+    sharedNightChanging = true; sharedNightFrom = N().game;
+  }
   page.onNightEnd?.();
   // (she sleeps: tonight's loan settled, won or not, and on the bed's way she dreams it: app/loan.ts, render/dream.ts)
   const settled = settleLoan(N().game.win?.phase === "won");
   dreamNext = dreamsAfter(how) ? settled : null;
   const n = N(), href = nightHref(how, location.href);
-  const reload = (h: string) => { location.href = h; };
-  if ((botKind && how !== "bot") || sailWay(n.params, n.tuning) === "reload") { reload(href); return; }
+  const reload = (h: string) => { if (sharedNightChanging) phone.hangUp(); sharedNightChanging = false; sharedNightFrom = null; location.href = h; };
+  if (!sharedNightChanging && ((botKind && how !== "bot") || sailWay(n.params, n.tuning) === "reload")) { reload(href); return; }
   void sailOrReload(() => nightInPlace(nightFromHref(how, href), href), href, reload, e => {
     console.error(`a new night in place (${how}): it went wrong, so the page loads instead`, e);
     N().playtest.sail(String((e as Error)?.stack ?? e).slice(0, 600));
-  });
+  }).finally(() => { sharedNightChanging = false; sharedNightFrom = null; });
 }
 /** A new night in place by one of those ways (docs/plans/sail-without-reload.md B), starting as a fresh load of its link would: the
  *  old night's music faded and the night ended, the link pushed (and Back's guard), the bedroom open as the loading screen (the
@@ -1430,6 +1487,11 @@ async function nightInPlace(spec: NightSpec, href: string): Promise<void> {
   if (sailFail) throw new Error("?debug=sail: the night in place made to fail");
   if (freeze.frozen) freeze.toggle(); // (a fresh page isn't paused: the bot game's Esc out pauses it too, the freeze's key first)
   sailing = true;
+  // After the bed in the new opening (Ed's decision 10): asleep in the dark while the next island's made, then the wake-up (one for every morning since Ed, 2026-10-26)
+  // in her bedroom, its curtains waiting on that island's build (rules/wakeUp.ts); else the bedroom as the loading screen, as before.
+  // Her next morning's look, her nightie, asked for as she falls asleep (aheadMorning): the start below waits for it (view.prepare).
+  const wakes = spec.how === "bed" && openingWay(spec.params, N().tuning) === "bedroom";
+  if (wakes) aheadMorning(true);
   sound.music?.fadeOut(N().tuning.sfx.sail?.fade ?? 1.5); // (a fresh page's music is silent till the home speakers boot)
   chartHeld = false; view.assets.hold(false);
   endNight(page, params.get("debug") === "sail");
@@ -1437,9 +1499,6 @@ async function nightInPlace(spec: NightSpec, href: string): Promise<void> {
   const u = new URL(href);
   backGuard.sailed(u.search + u.hash);
   armBack();
-  // After the bed in the new opening (Ed's decision 10): asleep in the dark while the next island's made, then the wake-up (one for every morning since Ed, 2026-10-26)
-  // in her bedroom, its curtains waiting on that island's build (rules/wakeUp.ts); else the bedroom as the loading screen, as before.
-  const wakes = spec.how === "bed" && openingWay(spec.params, N().tuning) === "bedroom";
   const room = !wakes && spec.params.get("creator") !== "0";
   startEl.classList.add("loading");
   startEl.style.display = "none";
@@ -1452,13 +1511,21 @@ async function nightInPlace(spec: NightSpec, href: string): Promise<void> {
   creator.loadout = { hat: n.game.spells.hat }; creator.hats = unlockAll() ? undefined : n.game.spells.hats;
   worldDraw = new WorldDrawGate();
   displayedStep = -1;
+  if (wakes) tuckIn(n.game); // (in her bed before the start's made round her: its first frames have her drawn there, and the camera on her, as the wake-up will)
   await view.prepare();
   n.flags.ready = true;
   startEl.classList.remove("loading");
   input.clearPresses();
   sailing = false;
-  if (wakes && wakeInBedroom(n.game) && startWake(n.game, n.game.herTime, { dreaming: !!dream && !dream.over, mirrored: mirrored(), yesterday: true })) { mark("opening:bed"); start(); } // (after the bed: last night's clothes in their pile)
+  if (sharedNightChanging) {
+    n.flags.ready = n.flags.landed = true; n.flags.last = 0;
+    n.game.clock.paused = false; startedNights.add(n.game); sound.start(); revealArt();
+    mark("opening:shared-bed");
+  }
+  else if (wakes && wakeInBedroom(n.game) && startWake(n.game, n.game.herTime, { dreaming: !!dream && !dream.over, mirrored: mirrored(), yesterday: true })) { mark("opening:bed"); start(); } // (after the bed: last night's clothes in their pile)
   else if (!room && !wakes) startDirect();
+  if (wakes && n.game.wake) tuckIn(n.game); // (the camera settled on her in her bed again, where the wake-up has her: wakeInBedroom put it beside the bed)
+  aheadMorning(false); // (woken, the morning's own pile from here: the look read ahead, so nothing's redrawn)
 }
 /** The bot game left (its exit in place): the bot and its tag gone, her own look back (the creator's, as a fresh page has it). */
 function leaveBot(): void {
@@ -1495,11 +1562,20 @@ function drawFrame(time: number, repaintHeld = false): void {
 }
 function frame(now: number): void {
   const start = performance.now(), gap = lastObservedFrame && !document.hidden ? now - lastObservedFrame : 0;
+  const programsBefore = shotProgramCounts?.begin();
   lastObservedFrame = now; measuredStep = measuredDraw = undefined; measuredParts = {};
   const n = N(), phase = sailing ? "sailing" : landingSleep.holds(n.game) ? "landing-sleep" : !n.flags.ready ? "building" : n.arrival && !n.flags.landed ? "arrival" : "play";
   try { frameBody(now); }
   finally {
     try {
+      const programs = shotProgramCounts && programsBefore ? shotProgramCounts.end(programsBefore) : null;
+      if (params.has("shot") && (gap >= 100 || performance.now() - start >= 100)) {
+        window.dispatchEvent(new CustomEvent("witch-slow-frame-evidence", { detail: {
+          sampledWallTimeMs: Date.now(), sampledAtMs: performance.now(), gap, work: performance.now() - start, programs,
+          step: measuredStep ?? null, draw: measuredDraw ?? null, parts: { ...measuredParts },
+          loading: { phase, ready: n.flags.ready, ...view.readiness }, mode: n.game.witch.mode, perched: !!n.game.witch.perch,
+        } }));
+      }
       if (!loop.manual) stallLog.frame({ t: n.game.clock.time, gap, work: performance.now() - start, step: measuredStep ?? 0, draw: measuredDraw, measured: { step: measuredStep !== undefined, draw: measuredDraw !== undefined }, parts: measuredParts, source: "raf", loading: { phase, ready: n.flags.ready, ...view.readiness }, mode: n.game.witch.mode, x: n.game.witch.x, z: n.game.witch.z, wave: n.game.party.wave, creatures: n.game.creatures.length });
     } catch (error) { logCaughtError(error, "slow-frame observation"); }
   }
@@ -1520,7 +1596,7 @@ function frameBody(now: number): void {
   freeze.pollPad();
   phone.frame(game, now); // Normal wrapped pad, after pause; closes across night replacement without touching a save.
   phoneSounds.update(phone.state, phone.open || phone.active || phone.state.status === "ended", now);
-  if (view.houseRooms) view.houseRooms.openGuestRooms = phone.active ? new Set(["bedroom2"]) : phone.open ? new Set() : null;
+  if (view.houseRooms) view.houseRooms.openGuestRooms = phone.active ? new Set(["bedroom2", "bedroom3"]) : phone.open ? new Set() : null;
   phonePresence.update(phone.state, phone.active, phone.visiting, view.houseRooms?.telephoneScreen ?? null, now);
   if (phone.active) void remoteArt.refresh().catch(error => { logCaughtError(error, "remote clothing"); phone.hangUp(); });
   frameHouseEvents = phone.houseEvents(); // Guest drains captured replay steps once; solo/host keep their original transient events.
@@ -1767,10 +1843,39 @@ requestAnimationFrame(frame);
 
 // For the smoke test, the tools and for poking at in the console (app/hooks.ts).
 installHooks({ night: N, view, sound, meter, shake, frameStats, ladder, loadTimes, loop, advance: (game, controls, dt) => soloDiagnostic(phone.active, N().spec.borrowed === true, () => recordedStep(game, controls, dt, BUILD, captureRecording)) });
+if (phoneEnabled && phoneCallsEnabled && params.has("shot")) {
+  (window as unknown as { witch: Record<string, unknown> }).witch.telephoneReplayRecording = () => recordingFor(N().game, BUILD, captureRecording).export();
+}
+const telephoneBatchProof = (batch: typeof view.witchBatch | null) => {
+  if (!batch) return null;
+  const material = batch.mesh.material as { depthTest?: boolean; transparent?: boolean };
+  const up = SPRITE_UNIFORMS.uUp.value;
+  return { count: batch.count, visible: batch.mesh.visible, renderOrder: batch.mesh.renderOrder,
+    depthTest: material.depthTest, transparent: material.transparent, atlas: batch.atlas.albedo.uuid,
+    matchesDressedAtlas: batch.atlas === view.assets.witch, textureVersion: batch.atlas.albedo.version,
+    instances: batch.items.slice(0, 4).map(p => {
+      const height = (p.sy === undefined ? p.frame.h : Math.max(1, Math.round(p.frame.h * p.sy))) * batch.metresPerPixel * (p.scale ?? 1);
+      return { x: p.x, y: p.y, z: p.z, frame: batch.atlas.frames.indexOf(p.frame),
+        feet: view.screenOf(p.x, p.y, p.z, true),
+        centre: view.screenOf(p.x + up.x * height / 2, p.y + up.y * height / 2, p.z + up.z * height / 2, true) };
+    }) };
+};
 if (phoneEnabled && phoneCallsEnabled) (window as unknown as { witch: Record<string, unknown> }).witch.telephoneProof = () => ({
   preparation: { ...visitPreparation }, saveBoundaryReady: ordinaryVisit !== null,
+  network: phone.network(),
   status: phone.state.status, active: phone.active, visiting: phone.visiting,
   seed: N().game.seed, borrowed: N().spec.borrowed === true, worldReady: N().flags.ready,
+  viewSeed: view.game.seed, viewUsesCanonicalMap: view.game.map === N().game.map,
+  seedLabel: seedEl.textContent,
+  draw: { dressed: telephoneBatchProof(view.witchBatch), bare: telephoneBatchProof(view.bareBatch), remote: telephoneBatchProof(remoteBodyBatch(view)) },
+  players: view.game.witches.map(w => ({ id: w.id, x: w.body.x, z: w.body.z, room: w.wake?.room,
+    atRoom: roomAt(N().game.map.treehouse, w.body.x, w.body.z)?.id ?? null,
+    perched: !!w.body.perch, slept: w.house?.slept === true, wakeOpen: w.wake?.open,
+    pile: w.wake?.pile, lastBed: w.house?.lastBed,
+    nearObjects: HOUSE_ROOMS.objects.filter(o => fromObject(o, N().game.map.treehouse, w.body.x, w.body.z) <= HOUSE_ROOMS.reach).map(o => o.id),
+    screen: view.screenOf(w.body.x, w.body.perch ? N().tuning.treehouse.house?.height ?? 0 : 0, w.body.z) })),
+  house: { at: N().game.map.treehouse, turn: HOUSE_ROOMS.turn ?? 0, shape: HOUSE_ROOMS.shape, bedHold: HOUSE_ROOMS.bed.hold, terrace: HOUSE_ROOMS.terrace,
+    objects: HOUSE_ROOMS.objects.map(o => ({ id: o.id, use: o.use.kind, front: objectFront(o, N().game.map.treehouse, .6) })) },
   artPending: view.assets.pending, artDone: view.assets.done, paused: freeze.frozen,
   menus: { telephone: phone.open, creator: creator.open, station: stations.station, chart: chartOpen() },
 });

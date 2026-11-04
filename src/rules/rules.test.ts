@@ -38,6 +38,7 @@ import { COUNTRY } from "../../art/country.js";
 import { runeOffset } from "./runeOffset";
 import { smallWorldTuning } from "../test/worlds";
 import { assertFollowingCameraContract, assertGameCameraCoupling, assertIntroCameraContract } from "../test/cameraAuditContracts";
+import { preppedGame, sharedMap } from "../test/preppedGame"; // fresh games; shared maps only for read-only tests
 // The rules' every kind of scenery on, as before the small islands' cuts (Ed, 2026-10-11: no set pieces, sports grounds, rocks, freak
 // trees or path pieces; ruins twice): this file tests how each is placed, so it keeps them all; "the small islands' scenery" below
 // checks the game's own tuning.
@@ -48,7 +49,7 @@ const MODERN_POOL = [...RELICS.filter(r => r.family === "modern" && (r as { scat
 const MODERN = MODERN_POOL.length;
 
 // Retain this shared full map for explicit area-count, >1000-neighbour, 25-kind and scenery-distribution assertions.
-const map = generateMap(123, TUNING);
+const map = sharedMap(123, TUNING);
 // Retain full extent for >5-area railway crossings, >20 paths and 600 m corridor/distribution samples.
 // A map with plenty of paths and railways, for the tests of how they behave (the game's own numbers make few: Ed, 2026-10-11).
 const NET = { ...TUNING, paths: { ...TUNING.paths, rails: [2, 4] as [number, number], linkChance: 0.55, deadEndChance: 0.3 } }, NET_MAP = generateMap(123, NET);
@@ -103,7 +104,8 @@ describe("fractal partition", () => {
 
   it("matches the Witch Art Lab's makePartition point for point", () => {
     // The lab's own function, lifted out of its page and run beside the port.
-    const page = readFileSync(new URL("../../tools/art-lab/witch-art-lab.html", import.meta.url), "utf8");
+    // The source page is CRLF on Windows; extract the same function as from an LF checkout.
+    const page = readFileSync(new URL("../../tools/art-lab/witch-art-lab.html", import.meta.url), "utf8").replace(/\r\n/g, "\n");
     const start = page.indexOf("function makePartition("), end = page.indexOf("\n}\n", start) + 2;
     const labMake = new Function("hash2", page.slice(start, end) + "\nreturn makePartition;")(labHash2);
     for (const [seed, depth] of [[3, 4], [123, 4], [8, 2], [99, 6]]) {
@@ -236,7 +238,7 @@ describe("the map", () => {
     expect(Math.hypot(map.start.x - th.x - seatOffset(TUNING).x, map.start.z - th.z - seatOffset(TUNING).z)).toBeLessThan(1e-9); // (at her decks: on the balcony or the deck, rules/treehouse.ts)
   });
   it("starts the witch seated on the terrace; she stays put till the first move or rise", () => {
-    const g = newGame(5, LOCAL_TUNING);
+    const g = preppedGame(5, LOCAL_TUNING);
     expect(g.witch.seated).toBe(true);
     const still = stepWitch(g.witch, NO_INTENT, 1, g.tuning, g.map.bounds);
     expect(still.seated).toBe(true);
@@ -544,7 +546,7 @@ describe("creatures", () => {
   }, 180000);
 
   it("only move near the witch, and pick up plausibly when she comes back", () => {
-    const g = newGame(123, TUNING);
+    const g = preppedGame(123, TUNING);
     g.clock.paused = false;
     const far = g.creatures.filter(c => Math.abs(c.homeX - g.witch.x) > simRadius(g) + 10); // (the radius grows with the areas)
     const before = far.map(c => [c.x, c.z, c.rest]);
@@ -740,7 +742,7 @@ describe("the game clock and a whole step", () => {
   });
 
   it("applies rightward input and couples the aligned camera to the same actual game step", () => {
-    assertGameCameraCoupling(newGame(5, LOCAL_TUNING)); // U7 reports the original120-frame travel magnitudes.
+    assertGameCameraCoupling(preppedGame(5, LOCAL_TUNING)); // U7 reports the original120-frame travel magnitudes.
   });
 });
 
@@ -926,7 +928,7 @@ describe("inviting and leashing", () => {
   });
 
   it("goes through the game: the debug invite and the sigil button in its controls", () => {
-    const g = newGame(123, LOCAL_TUNING);
+    const g = preppedGame(123, LOCAL_TUNING);
     g.clock.paused = false; g.witch.perch = false; // (down on the ground, off the treehouse deck)
     stepGame(g, { ...NO_INTENT, zoom: 0, inviteNearest: true }, 1 / 60);
     expect(g.leash.stack.length).toBe(1);
@@ -1028,7 +1030,7 @@ describe("paths, roads and railways", () => {
   // neighbours, dead ends), since the game's own are sparse now (Ed, 2026-10-11: "There are much too many paths"; tested below).
   const map = NET_MAP, P = map.paths, T = NET.paths;
   it("respect configured rail and branch caps and the unchanged stream minimum", () => {
-    const sparse = generateMap(123, TUNING).paths.lines, of = (k: string, ls = sparse) => ls.filter(l => l.kind === k);
+    const sparse = sharedMap(123, TUNING).paths.lines, of = (k: string, ls = sparse) => ls.filter(l => l.kind === k);
     expect(of("rail").filter(l => l.pts.length > 100).length).toBeLessThanOrEqual(TUNING.paths.rails[1]);
     expect(of("rail").length).toBeLessThanOrEqual(TUNING.paths.rails[1] + 1);
     // W8 reports footpath abundance against the deliberately dense NET comparison.
@@ -1161,7 +1163,7 @@ describe("set pieces, again", () => {
 });
 
 describe("finds, each at most once per map (Ed, v160)", () => {
-  const maps = [11, 22, 33, 44, 55].map(seed => generateMap(seed, TUNING));
+  const maps = [11, 22, 33, 44, 55].map(seed => sharedMap(seed, TUNING));
   const whole = (m: ReturnType<typeof generateMap>) => { const b = m.extent; return [(b.minX + b.maxX) / 2, (b.minZ + b.maxZ) / 2, b.maxX - b.minX] as const; };
   // The view's lists: each family's pieces in the art's table order, a ruin's conditions in a row.
   const ruinOf: number[] = [];
@@ -1259,7 +1261,7 @@ describe("the dancefloor's speakers (Ed, v160)", () => {
   }, 30000); // (nine maps)
   it("are the dancefloor's only sound: no soundsystem stands in their ring or the floor's clearing, over seeds (Ed, v183)", () => {
     for (const seed of [1, 2, 3, 123]) {
-      const m = generateMap(seed, TUNING), d = m.dancefloor;
+      const m = sharedMap(seed, TUNING), d = m.dancefloor;
       for (let y = 0; y < m.n; y++) for (let x = 0; x < m.n; x++) {
         if (x === m.centreCell[0] && y === m.centreCell[1]) continue;
         const q = m.soundsystemSpot(x, y);
@@ -1277,7 +1279,7 @@ describe("the dancefloor's speakers (Ed, v160)", () => {
     expect(nextSpeakerState("playing")).toBe("damaged");
     expect(nextSpeakerState("damaged")).toBe("destroyed");
     expect(nextSpeakerState("destroyed")).toBe("playing");
-    const g = newGame(5, LOCAL_TUNING);
+    const g = preppedGame(5, LOCAL_TUNING);
     expect(g.speakers.every(s => s === "playing")).toBe(true); // (works with the clock paused too)
     stepGame(g, { ...NO_INTENT, zoom: 0, cycleSpeakers: true }, 1 / 60);
     expect(g.speakers.every(s => s === "damaged")).toBe(true);
@@ -1286,7 +1288,7 @@ describe("the dancefloor's speakers (Ed, v160)", () => {
 
 describe("the home speakers start as runestones (Ed, 2026-10-06)", () => {
   it("turn into speakers one by one as the boot reaches them, each over boot.transform, all of them by its end", () => {
-    const g = newGame(3, LOCAL_TUNING), n = g.speakerBoot.length, T = TUNING.boot.transform;
+    const g = preppedGame(3, LOCAL_TUNING), n = g.speakerBoot.length, T = TUNING.boot.transform;
     g.clock.paused = false;
     expect(n).toBe(12);
     for (let i = 0; i < 30; i++) stepGame(g, { ...NO_INTENT, zoom: 0 }, 1 / 60);
@@ -1304,7 +1306,7 @@ describe("the home speakers start as runestones (Ed, 2026-10-06)", () => {
     expect(g.speakerBoot.every((_, k) => speakerBoot(g, k) === 1)).toBe(true);
   });
   it("can be booted by the pulse: bootSpeaker turns one now, once", () => {
-    const g = newGame(3, LOCAL_TUNING);
+    const g = preppedGame(3, LOCAL_TUNING);
     g.clock.time = 5;
     bootSpeaker(g, 7);
     expect(g.speakerBoot[7]).toBe(5);
@@ -1319,7 +1321,7 @@ describe("the dancefloor's tile lights (Ed, v160)", () => {
   const inputs = (time: number, o: Partial<FloorInputs> = {}): FloorInputs => ({ time, seed: 7, level: 2, partifiedAreas: new Set(), witch: { x: -50, y: -50, lift: 1, rgb: [255, 238, 70] }, dancers: [], ...o });
   const run = (f: ReturnType<typeof newFloor>, from: number, to: number, o: Partial<FloorInputs> = {}) => { for (let t = from; t <= to; t += 1 / 30) stepFloor(f, inputs(t, o), TUNING); };
   it("shows only the moon before the first wave (with the island's sigil off), in its twilight palette, and switches on, once, when the first wave comes", () => {
-    const T = smallWorldTuning(withTuning({ dancefloor: { ...TUNING.dancefloor, island: { ...TUNING.dancefloor.island, on: false } } }), "First-wave floor lighting needs the home floor and its initial pulse, not distant areas."), g = newGame(3, T), P = TUNING.moon.floor.palette.map(c => c.join());
+    const T = smallWorldTuning(withTuning({ dancefloor: { ...TUNING.dancefloor, island: { ...TUNING.dancefloor.island, on: false } } }), "First-wave floor lighting needs the home floor and its initial pulse, not distant areas."), g = preppedGame(3, T), P = TUNING.moon.floor.palette.map(c => c.join());
     g.clock.paused = false;
     const colours = () => { const o = composeFloor(g.floor, floorInputs(g), T).rgbi, seen = new Set<string>(); let max = 0; for (let i = 0; i < o.length; i += 4) if (o[i + 3]) { seen.add(`${o[i]},${o[i + 1]},${o[i + 2]}`); max = Math.max(max, o[i + 3]); } return { seen, max }; };
     for (let i = 0; i < 30; i++) stepGame(g, { ...NO_INTENT, zoom: 0 }, 1 / 60);
@@ -1346,7 +1348,7 @@ describe("the dancefloor's tile lights (Ed, v160)", () => {
   it("shows the island's sigil through the boot (home's: the World Tree), written on as the pulse goes round, the moon before", () => {
     expect(islandSigilOf({})).toBe("worldTree");
     expect(islandSigilOf({ island: "nowhere" })).toBe("worldTree"); // an island without its own sigil yet: home's
-    const g = newGame(3, smallWorldTuning(TUNING, "The home sigil's boot progress and tile drawing are independent of distant areas.")), ghost = TUNING.moon.floor.palette[0].join(), moon = TUNING.moon.floor.palette.map(c => c.join());
+    const g = preppedGame(3, smallWorldTuning(TUNING, "The home sigil's boot progress and tile drawing are independent of distant areas.")), ghost = TUNING.moon.floor.palette[0].join(), moon = TUNING.moon.floor.palette.map(c => c.join());
     g.clock.paused = false;
     const tiles = () => { const o = composeFloor(g.floor, floorInputs(g), TUNING).rgbi; let lit = 0, faint = 0, other = 0; for (let i = 0; i < o.length; i += 4) { if (!o[i + 3]) continue; const c = `${o[i]},${o[i + 1]},${o[i + 2]}`; if (o[i + 3] >= 2 && !moon.includes(c)) lit++; else if (c === ghost) faint++; else other++; } return { lit, faint, other }; };
     for (let i = 0; i < 30; i++) stepGame(g, { ...NO_INTENT, zoom: 0 }, 1 / 60);
@@ -1435,7 +1437,7 @@ describe("ground cover (Ed, v171)", () => {
 describe("music by proximity (Ed, 2026-10-04)", () => {
   const M = TUNING.music;
   // Retain extent: farDist and 2*farDist listener samples must keep the original coastal attenuation geometry.
-  const g0 = newGame(6, TUNING), map = g0.map; // the game's own map
+  const g0 = preppedGame(6, TUNING), map = g0.map; // the game's own map
   g0.party.bootFrom = 0; g0.party.bootUntil = bootSeconds(map); // (off her decks at the start)
   const atW = (x: number, z: number, time: number) => { const g = at(x, z, time); return [g, g.witch] as const; };
   const at = (x: number, z: number, time: number) => { const g = { ...g0, speakers: [...g0.speakers], clock: { ...g0.clock, time } }; g.witch = { ...g.witch, x, z, seated: false, perch: false }; return g; };
@@ -1476,7 +1478,7 @@ describe("the Speed broom (Ed, 2026-10-04; a broom since 2026-10-11)", () => {
     expect(castSpell(s, 10 + S.duration + S.cooldown, TUNING)).toBe(true);
   });
   it("makes her fly faster in the game", () => {
-    const run = (spell: boolean) => { const g = newGame(4, SPEED); g.clock.paused = false; g.witch = { ...g.witch, seated: false, perch: false }; stepGame(g, { ...NO_INTENT, zoom: 0, spell }, 1 / 60); for (let i = 0; i < 60; i++) stepGame(g, { ...NO_INTENT, moveX: 1, zoom: 0 }, 1 / 60); return Math.hypot(g.witch.vx, g.witch.vz); };
+    const run = (spell: boolean) => { const g = preppedGame(4, SPEED); g.clock.paused = false; g.witch = { ...g.witch, seated: false, perch: false }; stepGame(g, { ...NO_INTENT, zoom: 0, spell }, 1 / 60); for (let i = 0; i < 60; i++) stepGame(g, { ...NO_INTENT, moveX: 1, zoom: 0 }, 1 / 60); return Math.hypot(g.witch.vx, g.witch.vz); };
     expect(run(true)).toBeGreaterThan(run(false) * (S.mult - 0.3));
   });
 });
@@ -1573,7 +1575,7 @@ describe("the simulation (Stage 4)", () => {
     return (h >>> 0).toString(16);
   };
   const play = (frames: number[]) => {
-    const g = newGame(321, simulationTuning);
+    const g = preppedGame(321, simulationTuning);
     g.clock.paused = false;
     frames.forEach((dt, i) => stepGame(g, { moveX: Math.sin(i / 40), moveZ: Math.cos(i / 55), toggleMode: i === 200, zoom: 0, spell: i === 90 }, dt));
     return g;
@@ -1585,7 +1587,7 @@ describe("the simulation (Stage 4)", () => {
   }, 60000);
 
   it("steps in fixed steps: a frame's length only decides how many", () => {
-    const g = newGame(321, simulationTuning);
+    const g = preppedGame(321, simulationTuning);
     g.clock.paused = false;
     stepGame(g, { moveX: 0, moveZ: 0, toggleMode: false, zoom: 0 }, 1 / 120);
     expect(g.clock.time).toBe(0); // half a step: nothing yet, eased between
@@ -1597,7 +1599,7 @@ describe("the simulation (Stage 4)", () => {
   });
 
   it("keeps a press made in a frame too short for a step for the next step", () => {
-    const g = newGame(321, simulationTuning);
+    const g = preppedGame(321, simulationTuning);
     g.clock.paused = false;
     g.witch = { ...g.witch, seated: false, perch: false };
     g.witches[0].cool.left = 0; // (the shared cooldown empty: the bare broom's take-off needs all its room, Ed 2026-10-23)
@@ -1608,7 +1610,7 @@ describe("the simulation (Stage 4)", () => {
   });
 
   it("applies a press once, however many steps a slow frame runs", () => {
-    const g = newGame(321, simulationTuning);
+    const g = preppedGame(321, simulationTuning);
     g.clock.paused = false;
     g.witch = { ...g.witch, seated: false, perch: false };
     g.witches[0].cool.left = 0; // (the shared cooldown empty: the bare broom's take-off needs all its room, Ed 2026-10-23)
@@ -1617,7 +1619,7 @@ describe("the simulation (Stage 4)", () => {
   });
 
   it("has a witch per player, the first the camera's", () => {
-    const g = newGame(321, simulationTuning, 3);
+    const g = preppedGame(321, simulationTuning, 3);
     expect(g.witches.length).toBe(3);
     expect(g.witch).toBe(g.witches[0].body);
     expect(g.leash).toBe(g.witches[0].leash);
@@ -1625,7 +1627,7 @@ describe("the simulation (Stage 4)", () => {
 });
 
 describe("the dash (Ed, 2026-10-04)", () => {
-  const ready = (local = false) => { const g = newGame(321, local ? smallWorldTuning(TUNING, "Dash timing, buffering and immunity need local movement space only.") : TUNING); g.clock.paused = false; g.witch = { ...g.witch, seated: false, perch: false }; return g; };
+  const ready = (local = false) => { const g = preppedGame(321, local ? smallWorldTuning(TUNING, "Dash timing, buffering and immunity need local movement space only.") : TUNING); g.clock.paused = false; g.witch = { ...g.witch, seated: false, perch: false }; return g; };
   const run = (g: ReturnType<typeof newGame>, n: number, c: Partial<Parameters<typeof stepGame>[1]> = {}) => { for (let i = 0; i < n; i++) stepGame(g, { moveX: 0, moveZ: 0, toggleMode: false, zoom: 0, ...c }, STEP); };
 
   it("blinks dash.distance metres the way she steers in one step, gone for a moment, then waits out its cooldown", () => {
@@ -1721,7 +1723,7 @@ describe("the dash (Ed, 2026-10-04)", () => {
   });
 
   it("does nothing over the treetops or while she sits", () => {
-    const g = newGame(321, smallWorldTuning(TUNING, "Seated and treetop dash eligibility is independent of world extent.")); g.clock.paused = false;
+    const g = preppedGame(321, smallWorldTuning(TUNING, "Seated and treetop dash eligibility is independent of world extent.")); g.clock.paused = false;
     const x0 = g.witch.x;
     run(g, 1, { dash: true });
     expect(g.witches[0].dash.until).toBe(-Infinity);

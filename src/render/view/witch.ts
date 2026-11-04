@@ -1,11 +1,11 @@
 // Her, each frame (moved out of view.ts's render, unchanged): her pose (hover, lean, rise and descend, brake and fast, her
 // headings, on foot, the treehouse's seat, a knockout, mid-blink), her hat knocked off, her sprite stood by its frame's ground,
 // the party's and the beach's views of her, where she is on screen, and her shadow.
-import { deckOf, onTerrace } from "../../rules/treehouse";
+import { deckOf } from "../../rules/treehouse";
 import { potionBlackout, potionFall } from "../potionChoreography";
 import { updatePotionCaption } from "../potionCaption";
 import { youthRising } from "../../rules/chains";
-import { onRoomFloor } from "../../rules/houseRooms";
+import { witchRoomPass } from "../witchRoomPass";
 import { depthWhereDrawn, houseWitchOverlay, setHouseWitchPass } from "../houseWitchPass";
 import { broomWhere, stationOf } from "../../rules/stations";
 import type { View } from "../view";
@@ -99,7 +99,8 @@ export function drawWitch(v: View, time: number, ht: number, onTreehouse: (px: n
   const still = Math.hypot(w.vx, w.vz) < 0.6;
   // Waking up in her bedroom (the new opening, rules/wakeUp.ts): sitting up in bed while the alarm rings and she snoozes, her arms
   // up in a stretch as she gets up.
-  const wk = g.wake, bedPose = wk && !wk.open && wk.beat !== "up" ? (wk.beat === "stretch" ? "liftSigil" : "sit") : null;
+  // (put to bed for a morning still to come, a sail's dive: asleep there as the wake-up's first beats have her, View.asleepInBed)
+  const wk = g.wake, bedPose = wk && !wk.open && wk.beat !== "up" ? (wk.beat === "stretch" ? "liftSigil" : "sit") : !wk && v.asleepInBed ? "sit" : null;
   // In the house (Ed, 2026-10-21: "she shouldn't use her broom until she steps off the balcony, and stop using it when she steps
   // on"): landed on its floor she's on foot, standing (idle) or walking, no broom; stepping off the balcony's rim she takes off
   // (the takeoff frames, as she rises), and coming down onto it she lands (the land frames) and walks.
@@ -113,7 +114,7 @@ export function drawWitch(v: View, time: number, ht: number, onTreehouse: (px: n
   if (v.spin && !(indoors && still && v.foot > 0.6)) { v.spin = null; v.turnUntil = 0; } // (walked off, or off her feet: no twirl)
   const pick = (pose: string, k: number) => { const fr = F[pose][side]; return fr[Math.max(0, Math.min(fr.length - 1, k))]; };
   if (v.foot > 0.6) {
-    if (bedPose && wk) wf = bedPose === "sit" ? pick("sit", Math.floor(ht * F.sit.fps) % F.sit[side].length) : pick("liftSigil", Math.floor((ht - wk.at) * F.liftSigil.fps));
+    if (bedPose) wf = bedPose === "sit" || !wk ? pick("sit", Math.floor(ht * F.sit.fps) % F.sit[side].length) : pick("liftSigil", Math.floor((ht - wk.at) * F.liftSigil.fps));
     else if (acting && v.footAct) wf = pick(v.footAct.pose, Math.floor((ht - v.footAct.at) * F[v.footAct.pose].fps));
     else if (L.talk && still) wf = pick("talk", Math.floor(ht * F.talk.fps) % F.talk[side].length);
     else if (indoors && F.walk && F.idle) {
@@ -148,7 +149,7 @@ export function drawWitch(v: View, time: number, ht: number, onTreehouse: (px: n
   // ellipse is the art's view, not the camera's) in the plane through the deck's middle, then moved along the ray from the camera
   // by how far toward it she stands (so she's between the Ent's halves, render/view/home.ts ENT_DEPTH) and scaled to land on those
   // pixels; eased off as she rises (her lift) into the world's own place.
-  const inRoom = !!(T.ent && deck?.house?.rooms && w.perch && !onTerrace(deck, w.x, w.z) && onRoomFloor(deck.house.rooms, w.x, w.z)); // (in a room off the Terrace, rules/houseRooms.ts)
+  const inRoom = !!T.ent && witchRoomPass(g, g.witches[0]);
   v.houseCam.x = v.houseCam.y = v.houseCam.z = 0;
   if (T.ent && deck && w.perch) {
     const m = (1 - w.lift) * v.landingHouseShare, ky = (T.seat.y - T.ent.deck.y) / Math.max(0.1, deck.seat.z - deck.z), dz = w.z - deck.z;
@@ -218,6 +219,7 @@ export function drawWitch(v: View, time: number, ht: number, onTreehouse: (px: n
   // Mid-blink she's nowhere (from the step it starts, so she never slides between its two points).
   const D = g.witches[0].dash;
   let hidden = ht >= D.at - STEP && ht < D.until;
+  if (inCovers(bedPose, v.lookDrawn)) hidden = true; // (in bed, her look still being drawn: under her covers till it's on her)
   let riseK = 1; // the house (rules/knockout.ts riseUntil; Ed, 2026-10-14): back at the magic circle she rises out of its floor, red
   if (KO) {
     if (ht < KO.teleportAt) { wf = F.sit.towards[Math.floor(ht * F.sit.fps) % F.sit.towards.length]; wyy = 0; djUpper = -1; }
@@ -410,3 +412,8 @@ export function houseShiftOf(v: View): number {
   const off = Math.min(1, Math.max(0, (Math.hypot(w.x - deck.x, dz) - deck.r) / 3));
   return -dz * ky * off;
 }
+
+/** In bed (asleep, or her alarm ringing: `bedPose`) with her look not on her whole yet (View.lookDrawn: her nightie still being
+ *  drawn, on a fresh game's first sail before its background bake is done, main.ts keepNightie): she's under her covers, not drawn,
+ *  rather than seen in last night's clothes, and nothing waits for it (Ed, 2026-11-03: no hold for the nightie). */
+export const inCovers = (bedPose: string | null, lookDrawn: boolean): boolean => !!bedPose && !lookDrawn;

@@ -1054,6 +1054,14 @@ export type SchemaTuning = {
     "passPower": number;
     "passDepth": number;
   };
+  "teamRounds": {
+    "reference": number;
+    "strength": number;
+    "floor": number;
+    "ahead": number;
+    "ring": number;
+    "window": number;
+  };
   "creatureMomentum": {
     "on": boolean;
     "turn": number;

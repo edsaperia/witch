@@ -3,8 +3,8 @@
 // in sessionStorage ("witch.arrive") before loading ./?island=X&arrive=1. The game shows that still while the night builds,
 // then takes over at the same camera and flies the rest (Ed: "fly from the south end of the island, over the sea and over the
 // forest, to give a taste of the terrain, before settling on the home area"; "make sure the camera path shows the dancefloor
-// and the island legend under the Ent"), looking north the whole way, down to today's opening shot at her decks (Ed: "Land at
-// the decks"). Any key skips to the end. Here: the flight's path from the chart's hand-off (app/arrival.ts reads it), in the camera's own terms
+// and the island legend under the Ent"), looking north the whole way, down to the shot it's given to end on (her asleep in bed since Ed, 2026-10-25; at first her
+// decks, Ed: "Land at the decks"). Any key skips to the end. Here: the flight's path from the chart's hand-off (app/arrival.ts reads it), in the camera's own terms
 // (rules/camera.ts: a target, an angle down to it and a distance back). Pure: no clock, no page.
 import type { ForestMap } from "./map";
 import type { Tuning } from "./tuning";

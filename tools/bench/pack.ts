@@ -2,7 +2,8 @@
 // (64 by default, --kinds), her down in the middle of its challenge circle with its whole pack (an adult and a youth of each kind)
 // hunting her, timing every stepGame over --steps (600: 10 s) of the fight; then, for comparison on the same machine, a normal heavy
 // wave fight (the home of 10, brought to --wave 28 with the playtest key and flown along perf.ts's path). Her health held: she
-// never falls. Per run: step mean/p50/p95/p99/worst, steps over 4 and 16.7 ms (perf.ts's), the pack hunting her, its attacks.
+// never falls. Per run: step mean/p50/p95/p99/worst, steps over 4 and 16.7 ms (perf.ts's), the pack hunting her, its attacks (strikes
+// begun, and a minute: the whole run's, the wild watch included).
 // node tools/bench/ts.mjs pack [--kinds=64] [--steps=600] [--seed=1] [--wave=28]. Report only: it changes nothing in the game.
 import { newGame, stepGame, STEP, type Controls, type Game } from "../../src/rules/game";
 import { TUNING, type Tuning } from "../../src/rules/tuning";
@@ -48,7 +49,7 @@ function packFight(): unknown {
   // (the timed part: from the wild watch's end on, the fight itself)
   const watch = Math.round((TUNING.wildWatch?.time ?? 4) / STEP) + 30;
   const fight = times.slice(watch);
-  return { kinds, pack: ch.pack.length, radius: ch.radius, creatures: g.creatures.length, makeMs: Math.round(made), hunting, within6m: near, hurtSteps: hits, windups, distance: { p10: r3(pct(dist.sort((a, b) => a - b), 0.1)), p50: r3(pct(dist, 0.5)), p90: r3(pct(dist, 0.9)) }, all: stats(times), fight: stats(fight) };
+  return { kinds, pack: ch.pack.length, radius: ch.radius, creatures: g.creatures.length, makeMs: Math.round(made), hunting, within6m: near, hurtSteps: hits, windups, strikesPerMin: r3(windups / (steps * STEP / 60)), distance: { p10: r3(pct(dist.sort((a, b) => a - b), 0.1)), p50: r3(pct(dist, 0.5)), p90: r3(pct(dist, 0.9)) }, all: stats(times), fight: stats(fight) };
 }
 
 function waveFight(): unknown {

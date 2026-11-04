@@ -16,7 +16,11 @@ export interface MotionProfile {
   strikeTurn: number;
   pathWeight?: number;
 }
-export interface WaitingGroup { seed: number; index: number; count: number; gap: number; until: number; minimum?: number }
+/** A member's place in its team's waiting formation: its index among the `count` sharing its ring, and its ring (`rank`, 0 the inner
+ *  one; a big team's members past its ring cap wait in rings further out: rules/combat/teams.ts waitingOrder). */
+export interface WaitingGroup { seed: number; index: number; count: number; gap: number; until: number; minimum?: number; rank?: number }
+/** How far apart a big team's waiting rings stand, in body gaps (Ed, 2026-11-04: "Resolve the attack rate limit for 128"). */
+export const RANK_GAP = 1.5;
 export interface WaitingContext { dashReach: number; inviteReach: number; areaRadius: number; speed: number; parameters?: Tuning["combatWaiting"] }
 
 export interface SpacingData {
@@ -110,7 +114,7 @@ export function waitingSlot(c: Creature, p: Point, want: number, time: number, s
   const side = Math.sin((index + 0.5) * Math.PI), front = heading ? Math.atan2(heading.z, heading.x) : seed * Math.PI * 2;
   const a = slotPhase * (1 - m.headingFollow) + (front + side * (m.bearing + m.sweep * Math.sin(phase)) * Math.PI / 180) * m.headingFollow;
   const gap = group?.gap ?? data.clearance;
-  const r = Math.max(want * m.rangeBias + m.radius * scale, gap * count / (2 * Math.PI)) * (1 + m.radialWave * Math.cos(m.lobes * slotPhase));
+  const r = (Math.max(want * m.rangeBias + m.radius * scale, gap * count / (2 * Math.PI)) + (group?.rank ?? 0) * RANK_GAP * gap) * (1 + m.radialWave * Math.cos(m.lobes * slotPhase));
   const rank = index - (count - 1) / 2;
   let x = p.x + Math.cos(a) * (r + rank * m.sideGap * gap) + Math.sin(a) * index * m.trailGap * gap + Math.cos(seed * Math.PI * 2) * r * m.centerShift;
   let z = p.z + Math.sin(a) * (r * m.stretch + rank * m.sideGap * gap) - Math.cos(a) * index * m.trailGap * gap + side * m.laneSpread * scale + Math.sin(seed * Math.PI * 2) * r * m.centerShift;

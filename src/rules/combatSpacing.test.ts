@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it } from "vitest";
-import { SPACING, bodyGap, clearWaitingSlot, drawnRadius, pathClearsHazard, spacingOn, waitingAvoidance, waitingDrive, waitingProfile, waitingSlot, type SpacingData } from "./combatSpacing";
+import { RANK_GAP, SPACING, bodyGap, clearWaitingSlot, drawnRadius, pathClearsHazard, spacingOn, waitingAvoidance, waitingDrive, waitingProfile, waitingSlot, type SpacingData } from "./combatSpacing";
 import { MOVEMENT, resetFight, steer } from "./movement";
 import { spaceOut } from "./spacing";
 import { PACKS, packAttack, spreadLull } from "./combat/packs";
@@ -282,3 +282,17 @@ describe("combat waiting spacing", () => {
     }
   });
 });
+
+// Ed, 2026-11-04: "Resolve the attack rate limit for 128". A big team waits in rings of teamRounds.ring (rules/combat/teams.ts order):
+// the inner ring's radius is a ring of that many, whatever the team's size; each further ring a step of RANK_GAP body gaps out.
+describe("a big team's waiting rings", () => {
+  it("keeps the inner ring's radius at a ring of 20's, rings further out a step each, and one ring of 128 far wider", () => {
+    const c = creature(1, 500, 0), p = { x: 0, z: 0 }, gap = 6;
+    const radius = (group: { index: number; count: number; rank?: number }) => { const q = waitingSlot(c, p, 5, 3, 1, SPACING, null, { seed: 0.3, gap, until: Infinity, ...group }); return Math.hypot(q.x, q.z); };
+    const twenty = radius({ index: 4, count: 20 }), inner = radius({ index: 4, count: 20, rank: 0 }), third = radius({ index: 4, count: 20, rank: 2 }), all = radius({ index: 4, count: 128 });
+    expect(inner).toBe(twenty);
+    expect(third).toBeGreaterThan(inner + RANK_GAP * gap);
+    expect(all).toBeGreaterThan(inner + 50);
+  });
+});
+

@@ -2269,7 +2269,7 @@
         "clear"
       ],
       "additionalProperties": false,
-      "description": "tonight's find in an area of its own, at its site, in a clearing `clear` metres round it; that area has no stump, wave or creatures, and every touching area's path leads to it."
+      "description": "tonight's find in an area of its own, at its site, in a clearing `clear` metres round it; that area has no stump or wave, and no creatures but the challenge area's pack (challenge on), and every touching area's path leads to it."
     },
     "challenge": {
       "type": "object",
@@ -3755,7 +3755,7 @@
         "steps"
       ],
       "additionalProperties": false,
-      "description": "Her flight trail: a glowing ribbon along her path in the colour of the area she's over."
+      "description": "Her flight trail: the cooldown trail's dotted sections in her preset's colours (trail.steps, on); with that off, a glowing ribbon along her path in the colour of the area she's over."
     },
     "swoopTrail": {
       "type": "object",
@@ -5406,6 +5406,51 @@
       ],
       "additionalProperties": false,
       "description": "Waiting movement favours room beyond default invitation reach while allowing deliberate close passes."
+    },
+    "teamRounds": {
+      "type": "object",
+      "properties": {
+        "reference": {
+          "type": "number",
+          "minimum": 1,
+          "maximum": 256
+        },
+        "strength": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 2
+        },
+        "floor": {
+          "type": "number",
+          "minimum": 0.1,
+          "maximum": 1
+        },
+        "ahead": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 4
+        },
+        "ring": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 128
+        },
+        "window": {
+          "type": "number",
+          "minimum": 0.1,
+          "maximum": 1
+        }
+      },
+      "required": [
+        "reference",
+        "strength",
+        "floor",
+        "ahead",
+        "ring",
+        "window"
+      ],
+      "additionalProperties": false,
+      "description": "A big pack's attacks come round faster and keep coming: shorter rounds past `reference` animals, attackers picked `ahead` rounds early, and waiting rings of `ring`."
     },
     "creatureMomentum": {
       "type": "object",
@@ -14555,6 +14600,7 @@
     "difficulty",
     "fight",
     "combatWaiting",
+    "teamRounds",
     "creatureMomentum",
     "attackFx",
     "combat",

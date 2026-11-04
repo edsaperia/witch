@@ -1,17 +1,18 @@
 import { describe, expect, it } from "vitest";
 import { spawnCreatures } from "./creatures";
-import { newGame, stepGame, STEP, type Controls, type Game } from "./game";
+import { stepGame, STEP, type Controls, type Game } from "./game";
 import { AREA_TYPES, generateMap } from "./map";
 import { cellKey } from "./party";
 import { setupQuestDemo } from "./quest";
 import { TUNING, withTuning } from "./tuning";
+import { preppedGame, sharedMap } from "../test/preppedGame"; // (games on a map made once a file from its prep)
 
 // Keep the radius route/population: a combat case recruits beyond 300 m, and questCap's near/far distribution is compared across the original seed matrix.
 const idle: Controls = { moveX: 0, moveZ: 0, toggleMode: false, zoom: 0, autoTalk: false };
 const run = (g: Game, secs: number, first: Controls = idle) => { for (let i = 0; i < Math.round(secs / STEP); i++) stepGame(g, i === 0 ? first : idle, STEP); };
 /** The demo set-up: beside the nearest sleeping legend with what it dreams of on her stack. */
 function demo(): { g: Game; L: Game["creatures"][number]; gift: Game["creatures"][number] } {
-  const g = newGame(123, TUNING);
+  const g = preppedGame(123, TUNING);
   g.clock.paused = false; g.party.paused = true;
   const L = setupQuestDemo(g, (x, z) => { g.witch = { ...g.witch, x, z, mode: "ground", lift: 0, seated: false }; })!;
   g.witches[0].health.hp = 1e6;
@@ -60,7 +61,7 @@ describe("the first quest (Ed, 2026-10-04)", () => {
   }, 60000);
 
   it("wakes an area whose quest isn't done angry: its creatures go for the nearest party animal or soundsystem", () => {
-    const g = newGame(123, TUNING);
+    const g = preppedGame(123, TUNING);
     g.clock.paused = false;
     g.witch = { ...g.witch, seated: false, mode: "treetop", lift: 1 };
     const next = g.party.next[0];
@@ -109,7 +110,7 @@ describe("legends.questCap: dreams from anywhere but the truly far (Ed, 2026-10-
   /** Each legend's distance (in areas) to the nearest area of the kind it dreams of, and its quest's far. */
   // (half the areas with legends, as when this was written: enough dreams to see the spread, whatever legends.share, Ed 2026-10-08)
   const dists = (questCap: number, seed = 8919) => {
-    const map = generateMap(seed, withTuning({ legends: { ...TUNING.legends, questCap, questLater: false, share: 0.5 } })), out: { d: number; far: number }[] = [];
+    const map = sharedMap(seed, withTuning({ legends: { ...TUNING.legends, questCap, questLater: false, share: 0.5 } })), out: { d: number; far: number }[] = [];
     for (const L of spawnCreatures(map).filter(c => c.boss && c.quest)) {
       const s = map.siteOf(L.cell[0], L.cell[1]);
       out.push({ far: L.quest!.far!, d: Math.min(...map.cells.filter(([cx, cy]) => !(cx === map.centreCell[0] && cy === map.centreCell[1]) && AREA_TYPES[map.typeOf(cx, cy)].creature === L.quest!.species).map(([cx, cy]) => { const t = map.siteOf(cx, cy); return Math.hypot(t.x - s.x, t.z - s.z); })) / map.areaSize });
