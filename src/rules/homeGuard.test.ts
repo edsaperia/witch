@@ -6,7 +6,7 @@ import { TUNING, withTuning } from "./tuning";
 import { REAL_KINDS, playableIsland } from "./rosters";
 import { homeArea } from "./homeArea";
 import { dealtLegends, stepWin } from "./win";
-import { newGame, stepGame, STEP, type Game } from "./game";
+import { stepGame, STEP, type Game } from "./game";
 import { levelCounts } from "./power";
 import { hasRune, invitableNow, partyEggOpen } from "./creatureStates";
 import { hit } from "./affection";
@@ -15,6 +15,7 @@ import { legendOf } from "./quest";
 import { stepLegendStates } from "./legends";
 import { cellKey } from "./party";
 import { friendSigils, stoneStack } from "./stoneStacks";
+import { preppedGame } from "../test/preppedGame"; // (games on a map made once a file from its prep)
 
 const mapOf = (island: string) => generateMap(11, withTuning({ map: { ...TUNING.map!, island, islandAreas: 10 } }));
 
@@ -41,7 +42,7 @@ describe("the island-kind home guard", () => {
   });
 
   it("never scatters a stack sigil or joins the win dance, even though other legends do", () => {
-    const g = newGame(11, withTuning({ map: { ...TUNING.map!, island: "tiger", islandAreas: 10 } }));
+    const g = preppedGame(11, withTuning({ map: { ...TUNING.map!, island: "tiger", islandAreas: 10 } }));
     const c = g.creatures.find(c => c.homeGuard)!, at = { x: c.x, z: c.z };
     expect(stoneStack(g, cellKey(c.cell))).toEqual([]);
     expect(friendSigils(g, cellKey(c.cell)).some(s => s.c === c)).toBe(false);
@@ -54,7 +55,7 @@ describe("the island-kind home guard", () => {
   });
 
   it("the final game boundary keeps the guard inside home even after an external displacement", () => {
-    const g = newGame(11, withTuning({ map: { ...TUNING.map!, island: "tiger", islandAreas: 10 } }));
+    const g = preppedGame(11, withTuning({ map: { ...TUNING.map!, island: "tiger", islandAreas: 10 } }));
     g.clock.paused = false; g.party.spellAt = undefined;
     const c = g.creatures.find(c => c.homeGuard)!;
     c.x = g.map.bounds.maxX + 100; c.z = g.map.bounds.maxZ + 100;

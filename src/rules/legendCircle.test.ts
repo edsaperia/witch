@@ -1,17 +1,17 @@
 // The legend circle's explainer (rules/legendCircle.ts; Ed, 2026-10-06): it shows on the ground inside a legend's clearing only,
 // fading in as she walks in and out as she walks out, and its words follow the legend's state.
 import { describe, expect, it } from "vitest";
-import { newGame } from "./game";
 import { TUNING as gameTuning } from "./tuning";
 import { largestWorldTuning } from "../test/worlds";
 import { circleLines, circleShown, circleReach, legendCircleNear, sigilWords } from "./legendCircle";
 import { legendCircleAt } from "./musicPlan";
+import { preppedGame } from "../test/preppedGame"; // (games on a map made once a file from its prep)
 
 // Largest shipped world: compare indexed circle lookup against every legend's actual clearing across the full available roster.
 const TUNING = largestWorldTuning(gameTuning);
 
 describe("the legend circle's explainer", () => {
-  const setup = () => { const g = newGame(123, TUNING), L = g.creatures.find(c => c.boss && !c.gone && c.legendState === "asleep")!; return { g, L }; };
+  const setup = () => { const g = preppedGame(123, TUNING), L = g.creatures.find(c => c.boss && !c.gone && c.legendState === "asleep")!; return { g, L }; };
 
   it("skips only legends too far for their circle: the same answers as searching every legend's clearing", () => {
     const { g } = setup(), R = g.tuning.music.circle.radius, ks = g.map.legendClearings;

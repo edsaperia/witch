@@ -6,11 +6,12 @@ import { describe, expect, it } from "vitest";
 import { TUNING, withTuning, type Tuning } from "./tuning";
 import { beginChains, chainDrag, chainLength, chainShown, chained, dragWitch, takePulled, weighingChains } from "./chains";
 import { leashSpeed } from "./leash";
-import { newGame as fullGame, newWitchPlayer, stepGame, STEP, type Controls, type Game } from "./game";
+import { newWitchPlayer, stepGame, STEP, type Controls, type Game } from "./game";
 import { newWitch } from "./witch";
 import { smallWorld } from "../test/worlds";
 import type { Creature } from "./creatures";
-const newGame = smallWorld(fullGame, "Chains check one or two witches with a few creatures placed beside them on home's open ground.");
+import { preppedGame } from "../test/preppedGame"; // (games on a map made once a file from its prep)
+const newGame = smallWorld(preppedGame, "Chains check one or two witches with a few creatures placed beside them on home's open ground.");
 
 const idle: Controls = { moveX: 0, moveZ: 0, toggleMode: false, zoom: 0, autoTalk: false };
 const C = TUNING.leash.chain!, L = C.length;

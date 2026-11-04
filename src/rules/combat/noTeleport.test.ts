@@ -5,10 +5,11 @@
 // "trees" retreat, the squirrels' scatter), or a leap caught up all at once after a stun.
 import { describe, expect, it } from "vitest";
 import { setupArena } from "../arena";
-import { newGame, stepGame, STEP, type Controls } from "../game";
+import { stepGame, STEP, type Controls } from "../game";
 import { TUNING } from "../tuning";
 import { FIGHT } from "../movement";
 import { PACKS } from "./packs";
+import { preppedGame } from "../../test/preppedGame"; // (games on a map made once a file from its prep)
 
 // Keep seed 5's arena landscape: terrain-dependent hides/retreats during the moving 30-second pack fight are the regression under test.
 // The kinds that hide in a lull (trees, burrow, water, branches), scatter, or leap; the ibex Ed saw; and a plain lunger.
@@ -18,7 +19,7 @@ describe("no creature jumps in a fight (Ed's playtest, 2026-10-29)", () => {
   it("a step's move is never more than its fastest move (a lunge, a leap's arc) takes in a step", () => {
     const bad: string[] = [];
     for (const k of KINDS) {
-      const g = newGame(5, TUNING);
+      const g = preppedGame(5, TUNING);
       g.clock.paused = false; g.party.paused = true;
       setupArena(g, `pack-${k}`);
       const ids = g.arena!.ids, prev = new Map<number, { x: number; z: number; leap: number }>();

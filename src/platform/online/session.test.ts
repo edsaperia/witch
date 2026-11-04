@@ -1,5 +1,5 @@
 import { afterEach, expect, it, vi } from "vitest";
-import { newGame, newWitchPlayer, stepGame, type Controls, type Game } from "../../rules/game";
+import { newWitchPlayer, stepGame, type Controls, type Game } from "../../rules/game";
 import { TUNING } from "../../rules/tuning";
 import { snapshotGame } from "../../rules/nightSnapshot";
 import { attachGuest, detachGuest } from "./membership";
@@ -18,6 +18,7 @@ import { stationAuthority } from "./stationAuthority";
 import { bpmAt } from "../../rules/beat";
 import { ITEMS } from "../../rules/wardrobe";
 import { fillNightTrunk } from "../../app/nightFindBoundary";
+import { preppedGame } from "../../test/preppedGame"; // (games on a map made once a file from its prep)
 
 const cleanups: (() => void)[] = [];
 afterEach(() => { for (const stop of cleanups.splice(0)) stop(); });
@@ -125,7 +126,7 @@ it("replicates only host-owned approved wardrobe changes before the next frame",
 function fixture() {
   // Four areas supply the existing test-only bedroom geometry; distant area count does not affect session replication.
   const tuning = structuredClone(TUNING); tuning.map!.island = "home"; tuning.map!.islandAreas = 4;
-  const hostGame = newGame(123, tuning);
+  const hostGame = preppedGame(123, tuning);
   let time = 1000;
   const hostMessages: Record<string, unknown>[] = [], guestMessages: Record<string, unknown>[] = [];
   const connection = (messages: Record<string, unknown>[]): SessionConnection => ({

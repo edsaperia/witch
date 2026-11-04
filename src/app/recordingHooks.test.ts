@@ -1,5 +1,5 @@
 import { expect, it, vi } from "vitest";
-import { newGame, STEP, stepGame, type Controls } from "../rules/game";
+import { STEP, stepGame, type Controls } from "../rules/game";
 import { snapshotGame } from "../rules/nightSnapshot";
 import { TUNING } from "../rules/tuning";
 import { captureNight } from "./nightSave";
@@ -8,11 +8,12 @@ import { pageMutation, pageFocus, recordedStep, recordingFor } from "./recording
 import { replayRecording } from "../platform/inputRecording";
 import { captureComment, parseComment } from "./playtestComments";
 import * as diagnostics from "../platform/caughtError";
+import { preppedGame } from "../test/preppedGame"; // (games on a map made once a file from its prep)
 
 const idle: Controls = { moveX: 0, moveZ: 0, zoom: 0, toggleMode: false };
 function fixture(players = 1) {
   const t = structuredClone(TUNING); t.map!.islandAreas = 4;
-  const game = newGame(123, t, players); game.clock.paused = false;
+  const game = preppedGame(123, t, players); game.clock.paused = false;
   restoreSettingsBase(game.tuning, { voices: {}, shake: 1, legendFlash: 1 });
   const context = { build: "test", params: "seed=123", look: null, loan: null, flags: { chartRecorded: false, overRecorded: false } };
   return { game, context, capture: () => captureNight(game, context) };

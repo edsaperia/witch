@@ -3,12 +3,12 @@
 // to the next stone as the next wave comes; the wave pointer hidden while home boots up.
 import { describe, expect, it } from "vitest";
 import { TUNING } from "./tuning";
-import { newGame } from "./game";
 import { awaitingSpell, clockSeconds, clockStart, clockText, columnShown, leyPulse, leyReachTimes, routeLengths, TIP_PACE, pointAlong, POINTER_FADE, pointerShown, pulseProgress, straightLink } from "./leypulse";
 import { bootPath } from "./bootRing";
 import { bootSeconds } from "./bootRing";
 import { stretchLengths } from "./pulseRoute";
 import { castPartySpell, cellKey, spawnMarkers, waveCountdown } from "./party";
+import { preppedGame } from "../test/preppedGame"; // (games on a map made once a file from its prep)
 
 // Keep the seeded radius route: first/third stone arrival and far-half-of-map reveal timing depend on its complete boot-plus-route geometry.
 describe("the game clock", () => {
@@ -26,11 +26,11 @@ describe("the game clock", () => {
 
 describe("the game clock's start (Ed, 2026-10-06: at the party spell)", () => {
   it("runs from the start of play in a build without the party spell", () => {
-    const g = newGame(123, TUNING), p = { ...g.party, spellAt: undefined };
+    const g = preppedGame(123, TUNING), p = { ...g.party, spellAt: undefined };
     expect(clockStart(p)).toBe(0); expect(clockSeconds(p, 75)).toBe(75); expect(awaitingSpell(p)).toBe(false);
   });
   it("stays at 00:00 and prompts while waiting for the spell, then counts from the cast", () => {
-    const g = newGame(123, TUNING), waiting = { ...g.party, spellAt: null }, cast = { ...g.party, spellAt: 40 };
+    const g = preppedGame(123, TUNING), waiting = { ...g.party, spellAt: null }, cast = { ...g.party, spellAt: 40 };
     expect(clockStart(waiting)).toBeNull(); expect(clockText(clockSeconds(waiting, 300))).toBe("00:00"); expect(awaitingSpell(waiting)).toBe(true);
     expect(clockText(clockSeconds(cast, 101))).toBe("01:01"); expect(clockSeconds(cast, 10)).toBe(0); expect(awaitingSpell(cast)).toBe(false);
   });
@@ -46,7 +46,7 @@ describe("the wave pointer's target, the ley line's pulse", () => {
     expect(pointAlong(line, 2)).toEqual({ x: 10, z: 30 });
   });
   it("runs from the last stone reached to the next at the pulse's speed (Ed, 2026-10-09: \"Pure constant speed\"), along the link as drawn", () => {
-    const g = newGame(123, TUNING), p = g.party, map = g.map, v = map.tuning.leyLines.pulseSpeed;
+    const g = preppedGame(123, TUNING), p = g.party, map = g.map, v = map.tuning.leyLines.pulseSpeed;
     p.bootUntil = 0; p.pulse.at = 0; p.pulse.d = 0; p.pulse.v = v; // (past the boot: the pulse on its way to wave 1's stone)
     const link = straightLink(p, map), L = stretchLengths(p, map).reduce((a, b) => a + b, 0);
     expect(link, "a next stone to run toward").not.toBeNull();
@@ -64,7 +64,7 @@ describe("the wave pointer's target, the ley line's pulse", () => {
     expect(leyPulse(p, map, at(0.5), drawn)).toMatchObject(pointAlong(drawn, 0.5));
   });
   it("hides while home boots up, then sets off from the link's start and fades in (Ed: \"first appears when bootup finishes\")", () => {
-    const g = newGame(123, TUNING), p = g.party, map = g.map, B = bootSeconds(map);
+    const g = preppedGame(123, TUNING), p = g.party, map = g.map, B = bootSeconds(map);
     expect(B, "a boot to test").toBeGreaterThan(0);
     const mid = p.bootUntil - B / 2;
     expect(pointerShown(p, map, mid)).toBe(0);
@@ -81,7 +81,7 @@ describe("the wave pointer's target, the ley line's pulse", () => {
 
 describe("a runestone's column of light (Ed, 2026-10-06: \"first appears when the leyline meets it\")", () => {
   it("none before the line's tip reaches the stone; it shoots up with a flare when it does, then stays", () => {
-    const g = newGame(123, TUNING), p = g.party, F = TUNING.runeMarkers.flare.time;
+    const g = preppedGame(123, TUNING), p = g.party, F = TUNING.runeMarkers.flare.time;
     p.spellAt = null; // waiting for the party spell
     expect(leyReachTimes(p, g.map)).toBeNull(); // the tip waits for it
     castPartySpell(p, g.map, 10);

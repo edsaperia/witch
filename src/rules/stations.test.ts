@@ -2,14 +2,15 @@
 // one at a time, with a little slack at the edge; never off foot in the house.
 import { describe, expect, it } from "vitest";
 import { TUNING } from "./tuning";
-import { newGame as fullGame, stepGame, STEP, type Controls, type Game } from "./game";
+import { stepGame, STEP, type Controls, type Game } from "./game";
 import { smallWorld } from "../test/worlds";
-const newGame = smallWorld(fullGame, "Dressing station proximity and camera framing use one house, independent of distant areas.");
+const newGame = smallWorld(preppedGame, "Dressing station proximity and camera framing use one house, independent of distant areas.");
 import { deckOf } from "./treehouse";
 import { HOUSE_ROOMS, objectFrontAt } from "./houseRooms";
 import { STATION_SLACK, broomWhere, stationAt, stationOf, tableOf } from "./stations";
 import { cameraPose } from "./camera";
 import { SHELVES } from "./wardrobe";
+import { preppedGame } from "../test/preppedGame"; // (games on a map made once a file from its prep)
 
 const idle: Controls = { moveX: 0, moveZ: 0, toggleMode: false, zoom: 0, autoTalk: false };
 const deck = (g: Game) => deckOf(g.map, g.tuning)!;
