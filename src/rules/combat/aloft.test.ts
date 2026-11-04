@@ -10,6 +10,7 @@ import { knownKinds } from "../rosters";
 import { KINDS_TABLE } from "../kinds";
 import { bodyGap } from "../combatSpacing";
 import type { Creature } from "../creatures";
+import { outcome } from "../../test/outcome";
 
 const idle: Controls = { moveX: 0, moveZ: 0, toggleMode: false, zoom: 0 };
 const lateHome = (n: number, t: Tuning = TUNING): Tuning => { const all = knownKinds(Object.keys(KINDS_TABLE)).slice(0, n); return { ...t, map: { ...t.map!, island: "home", islandAreas: all.length, found: all }, challenge: { ...t.challenge!, statues: { ...t.challenge!.statues!, on: false } } }; }; // (its statues off, rules/challengeStatues.ts: the pack wild from the start, the fight measured as before)
@@ -39,8 +40,14 @@ const closest = (list: readonly Creature[]) => {
   return worst;
 };
 
+/** The reported numbers as last measured (seed 1, 2026-11-04). */
+const WAS = { moved: 1, worst: 0.63, nearest: 6.56 };
+
 describe("she rises out of the pack's reach (Ed, 2026-11-03: 'act how they would when they're waiting to attack')", () => {
-  it("they wait round the point under her, moving and spaced, and never strike; landing, they attack again", () => {
+  // (how far they move, how close they gather and how near the point under her they come are outcome statistics: reported, never
+  // failing (Ed, 2026-11-04: "Report only"; src/test/outcome.ts). Keeping her as their target, no strike while she's up, someone
+  // moving and the attack again once she's down are the rule, and fail.)
+  it("they wait round the point under her, moving and spaced, and never strike; landing, they attack again", ctx => {
     const { g, run, pack, strikes } = packHunting(1);
     run((TUNING.wildWatch?.time ?? 4) + 6); // (the watch, then the hunt under way)
     expect(pack().filter(c => c.hunting === 0).length).toBe(pack().length);
@@ -58,12 +65,13 @@ describe("she rises out of the pack's reach (Ed, 2026-11-03: 'act how they would
       for (const c of list) nearest = Math.min(nearest, Math.hypot(c.x - g.witch.x, c.z - g.witch.z));
     }
     expect(strikes.n - before, "strikes begun while she's aloft").toBe(0);
-    // (moving in their formation, not stood where they were when she rose)
+    // (moving in their formation, not stood where they were when she rose: before, every one stood dead still)
     const moved = pack().filter(c => Math.hypot(c.x - was.get(c.id)!.x, c.z - was.get(c.id)!.z) > 2).length;
-    expect(moved).toBeGreaterThanOrEqual(pack().length * 0.8);
+    expect(moved, "hunters that moved over 2 m while she was up").toBeGreaterThan(0);
+    outcome(ctx, "share of the 20-pack moved over 2 m while she's up", moved / pack().length, { unit: "share", was: WAS.moved, near: 0.15, line: ">= 0.8" });
     // (no heap: the closest pair over those 8 s keeps most of its bodies' gap, and nobody stands on the point under her)
-    expect(worst, "closest pair, as a share of its body gap").toBeGreaterThan(0.6);
-    expect(nearest, "nearest to the point under her (m)").toBeGreaterThan(3);
+    outcome(ctx, "closest pair over 8 s aloft, as a share of its body gap", worst, { unit: "share", was: WAS.worst, near: 0.15, line: "> 0.6" });
+    outcome(ctx, "nearest to the point under her over 8 s aloft", nearest, { unit: "m", was: WAS.nearest, near: 2, line: "> 3" });
     // Down again: the hunt goes on where it was.
     g.witch = { ...g.witch, mode: "ground", lift: 0 };
     const down = strikes.n;
