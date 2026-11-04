@@ -156,8 +156,10 @@ export function curved(map: ForestMap, r: LeyRoute): LeyRoute {
 }
 /** The most line curved's untangling compares (fitWays' work, pieces of line against pieces), a bound on its time:
  *  about a second (most maps' whole route fits in 3e7; seed 4 with the oak once took 5e9, 25 s). Counted, never timed,
- *  so every machine plans the same route. */
-export const CURVE_WORK = 1e9;
+ *  so every machine plans the same route. 1e9 when areas were areaScale 6; with them 7 (2026-11-04, Ed's 50 m between
+ *  sites) every link is a sixth longer and the work, pieces against pieces, a third more: 1.4e9 (the default map's
+ *  seed 15 ran out at 1.04e9 one try short of keeping Ed's crossing rules). */
+export const CURVE_WORK = 1.4e9;
 /** Every order of four (but the one they're in). */
 const PERMS4 = ((): number[][] => { const out: number[][] = [], go = (p: number[], rest: number[]) => { if (!rest.length) { if (p.join() !== "0,1,2,3") out.push(p); return; } rest.forEach((r, k) => go([...p, r], [...rest.slice(0, k), ...rest.slice(k + 1)])); }; go([], [0, 1, 2, 3]); return out; })();
 /** The tightest the ley line turns (metres; leyLines.minRadius, 30 by default). */
