@@ -18,6 +18,7 @@ export type SchemaTuning = {
     "island": string;
     "found": Array<typeof raw["map"]["found"][number]>;
     "phase": number;
+    "rosterNeighbourhood": number;
     "shapes": Array<{
       "lobes": number;
       "harmonics": number;
