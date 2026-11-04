@@ -12,7 +12,10 @@ export interface RolePreferences { tempo: number; withdraw: number; rejoin: numb
 export interface TeamState { seed: number; round: number; phase: Phase; at: number; cycleAt: number; nextAt: number; members: number[]; actions: Record<number, CreatureAction | undefined>; ready: Record<number, Record<string, number>>; roles: Record<number, Role>; used: number[]; withdrawn: Record<number, number>;
   /** A big team's coming rounds' attackers, drawn `teamRounds.ahead` rounds ahead (as each round starts), each with when its window
    *  should open (an estimate kept up each step): its picks close in to be ready by then (rules/combat.ts movingGoal). */
-  next?: { round: number; actions: Record<number, CreatureAction | undefined>; readyBy: number }[] }
+  next?: { round: number; actions: Record<number, CreatureAction | undefined>; readyBy: number }[];
+  /** A team past its ring cap (teamRounds.ring): its members in waiting order, this round's unused attackers first, then the coming
+   *  rounds' picks, then the rest, the hurt last; each `ring` of them shares one waiting ring, the first the inner (waitingPlace). */
+  order?: number[] }
 export const rolePreferences = (species: string): RolePreferences => ({ ...SPACING.preferences.default, ...SPACING.preferences.species[species] });
 const damage = (c: Creature): number => c.leashed || c.state === "happy" ? c.drops ?? 0 : c.dazed ? 1 : c.affection ?? 0;
 export function teamOf(state: CombatState, id: number): TeamState | undefined { return [...(state.waitingTeams?.values() ?? [])].find(team => team.members.includes(id)); }
@@ -37,8 +40,8 @@ export function chooseTeamActions(members: readonly Creature[], seed: number, ro
  *  pack gets larger"; the tuning's teamRounds): 1 at or under `reference` animals (today's 5 s round, 3 s attack window and its kinds'
  *  lull), then (reference / size) ^ strength (0.5: one over the square root), never under `floor`. Smooth and falling with size; the
  *  tell and the dodge token are untouched (rules/combat.ts: still one strike at her at once). */
-export const ROUND_DEFAULT = { reference: 20, strength: 0.5, floor: 0.4, ahead: 2 };
-export function roundScale(size: number, r: { reference: number; strength: number; floor: number; ahead?: number } = ROUND_DEFAULT): number {
+export const ROUND_DEFAULT = { reference: 20, strength: 0.5, floor: 0.4, ahead: 3, ring: 20, window: 1 };
+export function roundScale(size: number, r: { reference: number; strength: number; floor: number; ahead?: number; ring?: number; window?: number } = ROUND_DEFAULT): number {
   if (!(size > r.reference) || !(r.reference > 0)) return 1;
   return Math.min(1, Math.max(r.floor, Math.pow(r.reference / size, r.strength)));
 }
@@ -86,7 +89,7 @@ export function stepTeams(state: CombatState, w: CombatWorld, data: PacksData, c
     const rest = rhythms.reduce((sum, rhythm) => sum + rhythm.lull, 0) / rhythms.length / tempo;
     // (a big team's round, attack window and least rest shortened together: the round's shape kept, only quicker; the rest too, as
     // else it held the round at about 7 s whatever the round time; the tell, the warning, never)
-    const RT = w.t?.teamRounds ?? ROUND_DEFAULT, scale = roundScale(members.length, RT), roundTime = SPACING.team.roundTime * scale / tempo, attackWindow = SPACING.team.attackWindow * scale / tempo, least = rest * scale;
+    const RT = w.t?.teamRounds ?? ROUND_DEFAULT, scale = roundScale(members.length, RT), roundTime = SPACING.team.roundTime * scale / tempo, attackWindow = SPACING.team.attackWindow * Math.max(scale, RT.window ?? ROUND_DEFAULT.window) / tempo, least = rest * scale;
     // Roles decided in advance (Ed, 2026-11-03, on #1782: "can we decide the roles in advance and have them move in sooner, in time for
     // their attack?"): a team past the reference size (20) keeps its next `teamRounds.ahead` rounds' attackers drawn, each drawn as the
     // round that many before it starts, the same seeded draw that round would make (chooseTeamActions, its round number, each action
@@ -130,6 +133,18 @@ export function stepTeams(state: CombatState, w: CombatWorld, data: PacksData, c
     }
     // (when the next round's window should open, from where this one is: its picks' deadline, kept up each step, so it moves with the
     // fight and nothing's committed early; the round's own end at its shortest, then the next tell)
+    // Its waiting rings (Ed, 2026-11-04: "Resolve the attack rate limit for 128"): past `ring` members (20) one ring would grow with the
+    // team (waitingSlot's gap x count / 2 pi: 90 to 150 m at 128), so they wait in rings of `ring`, the inner one this round's attackers
+    // and the coming rounds' picks first, the rest behind in rings further out, rotating in as those ahead strike, withdraw or go.
+    const cap = Math.floor(RT.ring ?? ROUND_DEFAULT.ring);
+    if (cap > 0 && members.length > cap) {
+      const order: number[] = [], seen = new Set<number>(), put = (id: number) => { if (!seen.has(id)) { seen.add(id); order.push(id); } };
+      for (const c of available) if (team.actions[c.id] && !team.used.includes(c.id)) put(c.id);
+      for (const n of team.next ?? []) for (const c of available) if (n.actions[c.id]) put(c.id);
+      for (const c of available) put(c.id);
+      for (const c of members) put(c.id);
+      team.order = order;
+    } else team.order = undefined;
     if (team.next) {
       const first = team.phase === "lull" ? team.nextAt + tell
         : team.phase === "combo" ? Math.max(team.cycleAt + roundTime, team.nextAt + least) + tell

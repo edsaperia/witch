@@ -1994,6 +1994,7 @@ The round's scale is (reference / size) ^ strength, at least floor, and 1 at or 
 | `teamRounds.strength` | number | 0 to 2 |
 | `teamRounds.floor` | number | 0.1 to 1 |
 | `teamRounds.ahead` | number | 0 to 4 |
+| `teamRounds.ring` | number | 0 to 128 |
 
 ### `creatureMomentum`
 
