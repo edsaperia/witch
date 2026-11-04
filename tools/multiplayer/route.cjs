@@ -32,7 +32,7 @@ const USAGE = `Usage: node tools/multiplayer/route.cjs --build <game URL> --rela
   [--seed 123] [--link "px=6"] [--expect-version <text in version.json>] [--expect-relay-build <relay build prefix>] [--viewport 960x540] [--headed]
   bounds in seconds: [--overall 480] [--load 180] [--phone 20] [--wardrobe 16] [--rejoin 20] [--bedHold 15] [--walk 30]
                      [--join 150] [--rollover 90] [--leave 90] [--redial 150] [--wake 25]
-  diagnosis: [--profile <seconds>: CPU profiles of both pages for that long once the visit starts] [--trace: and a Chrome trace of the host page] [--stop-after <stage>]`;
+  diagnosis: [--watch <seconds>: once a second, both pages' renderer.info, canvas sizes and WebGL counts, from the dial to that long after connecting] [--profile <seconds>: CPU profiles of both pages for that long once the visit starts] [--trace: and a Chrome trace of the host page] [--stop-after <stage>]`;
 
 const sleep = ms => new Promise(r => setTimeout(r, ms));
 const now = () => Date.now();
@@ -77,6 +77,52 @@ function initScript({ from, to }) {
   // Rendered positions (the local view, the guest's prediction) without the whole telephone proof.
   window.__mpPos = id => { const w = window.witch?.view?.game?.witches?.find(q => q.id === id); return w ? { x: w.body.x, z: w.body.z, perched: !!w.body.perch } : null; };
 }
+
+
+/** Diagnosis (--watch): counts per WebGL context of draws (and instances), the pixels their viewports cover, clears, reads back and
+ *  uploads, cumulative; read once a second. Counts only. */
+function glStatsScript() {
+  const all = []; window.__mpGl = all;
+  const wrap = (proto, name, fn) => { const orig = proto[name]; if (typeof orig !== "function") return; proto[name] = function (...a) { try { fn(this, a); } catch { /* counting only */ } return orig.apply(this, a); }; };
+  const stat = gl => { let s = gl.__mpStat; if (!s) { s = gl.__mpStat = { canvas: gl.canvas?.id || (typeof HTMLCanvasElement !== "undefined" && gl.canvas instanceof HTMLCanvasElement ? "canvas" : "offscreen"), cw: gl.canvas?.width, ch: gl.canvas?.height, vw: 0, vh: 0, draws: 0, instances: 0, drawPx: 0, clears: 0, clearPx: 0, reads: 0, readPx: 0, bufReads: 0, bufReadBytes: 0, texBytes: 0, bufBytes: 0, fbos: 0, maxVp: 0 }; all.push(s); } s.cw = gl.canvas?.width; s.ch = gl.canvas?.height; return s; };
+  for (const proto of [window.WebGL2RenderingContext?.prototype, window.WebGLRenderingContext?.prototype].filter(Boolean)) {
+    wrap(proto, "viewport", (gl, a) => { const s = stat(gl); s.vw = a[2]; s.vh = a[3]; s.maxVp = Math.max(s.maxVp, a[2] * a[3]); });
+    for (const n of ["drawArrays", "drawElements"]) wrap(proto, n, gl => { const s = stat(gl); s.draws++; s.instances++; s.drawPx += s.vw * s.vh; });
+    wrap(proto, "drawArraysInstanced", (gl, a) => { const s = stat(gl); s.draws++; s.instances += a[3]; s.drawPx += s.vw * s.vh; });
+    wrap(proto, "drawElementsInstanced", (gl, a) => { const s = stat(gl); s.draws++; s.instances += a[4]; s.drawPx += s.vw * s.vh; });
+    wrap(proto, "clear", gl => { const s = stat(gl); s.clears++; s.clearPx += s.vw * s.vh; });
+    wrap(proto, "readPixels", (gl, a) => { const s = stat(gl); s.reads++; s.readPx += a[2] * a[3]; });
+    wrap(proto, "getBufferSubData", (gl, a) => { const s = stat(gl); s.bufReads++; s.bufReadBytes += a[2]?.byteLength ?? 0; });
+    // (texImage2D(target, level, internal, width, height, border, format, type, data) or (target, level, internal, format, type, source))
+    const dims = (a, w, h, src) => (a.length > src + 1 && typeof a[w] === "number" ? a[w] * a[h] : (a[src]?.width ?? 0) * (a[src]?.height ?? 0));
+    wrap(proto, "texImage2D", (gl, a) => { const s = stat(gl); s.texUploads = (s.texUploads ?? 0) + 1; s.texBytes += 4 * (a.length >= 9 ? a[3] * a[4] : dims(a, 3, 4, 5)); if (a.length < 9 && a[5]) { const k = `${a[5].constructor?.name}:${a[5].width}x${a[5].height}`; (s.sources ??= {})[k] = (s.sources[k] ?? 0) + 1; } });
+    wrap(proto, "texSubImage2D", (gl, a) => { const s = stat(gl); s.texUploads = (s.texUploads ?? 0) + 1; s.texBytes += 4 * (a.length >= 9 ? a[4] * a[5] : (a[6]?.width ?? 0) * (a[6]?.height ?? 0)); if (a.length < 9 && a[6]) { const k = `sub ${a[6].constructor?.name}:${a[6].width}x${a[6].height}`; (s.sources ??= {})[k] = (s.sources[k] ?? 0) + 1; } });
+    wrap(proto, "bufferData", (gl, a) => { stat(gl).bufBytes += a[1]?.byteLength ?? 0; });
+    wrap(proto, "bufferSubData", (gl, a) => { stat(gl).bufBytes += a[2]?.byteLength ?? 0; });
+    wrap(proto, "bindFramebuffer", gl => { stat(gl).fbos++; });
+  }
+}
+
+
+/** Diagnosis (--watch): the visible meshes of the view's scene grouped by name, material and geometry, with their draw counts,
+ *  instances and triangles, biggest first. */
+const sceneTop = page => page.evaluate(() => {
+  const v = window.witch?.view, groups = new Map();
+  const roots = [v?.scene, ...Object.values(v ?? {}).filter(o => o && o.isScene && o !== v?.scene)].filter(Boolean);
+  const visible = o => { for (let x = o; x; x = x.parent) if (!x.visible) return false; return true; };
+  const path = o => { const names = []; for (let x = o; x && names.length < 4; x = x.parent) if (x.name) names.push(x.name); return names.join("<"); };
+  roots.forEach((root, ri) => root.traverse(o => {
+    if (!(o.isMesh || o.isPoints || o.isLine || o.isSprite) || !visible(o)) return;
+    const g = o.geometry, idx = g?.index ? g.index.count : g?.attributes?.position?.count ?? 0, range = g?.drawRange?.count;
+    const per = Math.min(idx, Number.isFinite(range) ? range : Infinity) / 3;
+    const inst = o.isInstancedMesh ? o.count : g?.isInstancedBufferGeometry ? (g.instanceCount ?? 0) : 1;
+    const m = Array.isArray(o.material) ? o.material[0] : o.material;
+    const key = `${ri}:${path(o) || "(unnamed)"} | ${m?.name || m?.type || "?"} | ${g?.type ?? "?"}`;
+    const e = groups.get(key) ?? { key, meshes: 0, instances: 0, triangles: 0, renderOrder: o.renderOrder };
+    e.meshes++; e.instances += inst; e.triangles += Math.round(per * inst); groups.set(key, e);
+  }));
+  return [...groups.values()].sort((a, b) => b.triangles - a.triangles).slice(0, 40);
+}).catch(e => ({ unavailable: e.message.split("\n")[0] }));
 
 /** Canonical (window.witch.game) facts the route waits on: wake, sleep and room, plus the page's telephone proof. No numbers. */
 const pageState = page => page.evaluate(() => {
@@ -316,6 +362,7 @@ async function main() {
       const make = async role => {
         const context = await browser.newContext({ viewport: { width: vw, height: vh } });
         await context.addInitScript(initScript, rewrite);
+        if (args.watch) await context.addInitScript(glStatsScript);
         const page = await context.newPage(); watch(role, page); return page;
       };
       host = await make("host"); guest = await make("guest");
@@ -344,7 +391,25 @@ async function main() {
 
     // 3. The host dials the guest's number (the relay makes the caller the host), the guest answers, both confirm the new number,
     //    and the guest's page joins the host's night: two witches in one world.
+    let watcher = null;
+    const watchSample = async label => {
+      const at = now();
+      const one = page => page.evaluate(() => {
+        const v = window.witch?.view, r = v?.renderer, c = r?.domElement, gl = r?.getContext?.();
+        const targets = [], seen = new Set();
+        const scan = (o, name, depth) => { if (!o || typeof o !== "object" || seen.has(o) || depth > 3) return; seen.add(o); if (o.isWebGLRenderTarget) { targets.push(`${name}:${o.width}x${o.height}`); return; } if (o.isObject3D || o.isTexture || o.isMaterial || o.isBufferGeometry) return; if (Array.isArray(o)) { o.slice(0, 20).forEach((x, i) => scan(x, `${name}[${i}]`, depth + 1)); return; } for (const k of Object.keys(o)) { if (["game", "assets", "scene", "renderer"].includes(k)) continue; try { scan(o[k], `${name}.${k}`, depth + 1); } catch { /* getters */ } } };
+        try { scan(v, "view", 0); } catch { /* best effort */ }
+        return { info: r && { calls: r.info.render.calls, triangles: r.info.render.triangles, points: r.info.render.points, lines: r.info.render.lines, programs: r.info.programs?.length, geometries: r.info.memory.geometries, textures: r.info.memory.textures },
+          canvas: c && { w: c.width, h: c.height, cssW: c.clientWidth, cssH: c.clientHeight, dbW: gl?.drawingBufferWidth, dbH: gl?.drawingBufferHeight }, pixelRatio: r?.getPixelRatio?.(), pixelScale: v?.pixelScale, dpr: devicePixelRatio,
+          witches: v?.game?.witches?.length, canvases: document.getElementsByTagName("canvas").length, targets: targets.slice(0, 60), gl: (window.__mpGl ?? []).map(x => ({ ...x })) };
+      }).catch(e => ({ unavailable: e.message.split("\n")[0] }));
+      const [h, g] = await Promise.all([one(host), one(guest)]);
+      (R.watch ??= []).push({ t: round((at - startedAt) / 1000, 1), label, host: h, guest: g });
+    };
+    const startWatch = () => { if (!args.watch || watcher) return; let busy = false; watcher = setInterval(() => { if (busy) return; busy = true; void watchSample("").finally(() => { busy = false; }); }, 1000); };
     await stage("call-and-consent", args.join, async boundS => {
+      if (args.watch) R.sceneBefore = { host: await sceneTop(host), guest: await sceneTop(guest) };
+      startWatch();
       const t0 = now(), number = await guestNumber(guest);
       if (!number) throw Error("the guest's number is not shown");
       const input = host.getByRole("textbox", { name: "Number to call", exact: true });
@@ -367,6 +432,13 @@ async function main() {
       return { ringingMs, consentShownMs, connectedMs: now() - t0, seed: hs.seed };
     });
     await frameRate("connected");
+    if (args.watch && !failed) {
+      (R.watch ??= []).push({ t: round((now() - startedAt) / 1000, 1), label: "connected" });
+      await sleep(args.watch * 1000);
+      R.sceneAfter = { host: await sceneTop(host), guest: await sceneTop(guest) };
+      await frameRate("watched");
+    }
+    if (watcher) { clearInterval(watcher); watcher = null; }
     if (args.profile && !failed) {
       // Diagnosis only: both pages' CPU profiles (DevTools .cpuprofile) for --profile seconds, right after the visit starts.
       const sessions = await Promise.all([host, guest].map(async page => { const cdp = await page.context().newCDPSession(page); await cdp.send("Profiler.enable"); await cdp.send("Profiler.setSamplingInterval", { interval: 1000 }); return cdp; }));
