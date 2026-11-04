@@ -192,15 +192,14 @@ describe("its pack (Ed: \"one adult and one youth of every creature kind on the 
     expect(P.every(c => c.level === 2)).toBe(true);
   }, 60000);
 
-  it("watches her come down among them and attacks after the wild watch's warning", () => {
+  it("stands stone till she comes down on its floor, then wakes over its bars and attacks, no wild watch (Ed, 2026-11-04; rules/challengeStatues.test.ts has the rest)", () => {
     const g = game("home", 1), ch = g.challenge!;
     g.witch = { ...g.witch, x: ch.x, z: ch.z, mode: "ground", lift: 0, seated: false, perch: undefined };
     run(g, 0.2);
-    const e = g.wildEntry.get(ch.key);
-    expect(e).toBeTruthy();
-    expect(e!.until - e!.at).toBeCloseTo(TUNING.wildWatch!.time, 6);
-    // (awake by then: napping ones roused by her coming down in their area)
-    run(g, TUNING.wildWatch!.time + 1);
+    expect(g.wildEntry.get(ch.key)).toBeUndefined();
+    expect(ch.statues!.phase).toBe("waking");
+    run(g, (TUNING.challenge!.statues!.bars + 1) * 4 * 60 / TUNING.beat.bpm + 1);
+    expect(ch.statues!.phase).toBe("awake");
     expect(pack(g).some(c => c.hunting === 0)).toBe(true);
   }, 60000);
 });

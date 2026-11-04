@@ -928,6 +928,65 @@
       ],
       "notes": "The circle grows to fit its columns (radius the larger of `radius` and kinds x `spacing` / 2 pi), its margin and the spell's reach with it; the island's sigil is carved in it, and clearing it gives the find. Each column carries its kind's wild fighters still standing (adult below, youth above, the rune stones' sizes, colours and embers), drawn within the stones' columns' range (leash.ranks.stones.range); one invited or run off leaves its column; a column with none left lights steadily warm, and every column lit, the spell can be cast. The find is the night's one draw over everything she hasn't found; `findSets` on, the island's own set (config/find-sets.json) instead. Nothing left to give, a flask. Cleared, home's dancefloor fills the circle and each bar one column fires a firework, the next clockwise each bar (Ed, 2026-11-03: \"fireworks start coming out of one column at the start of each bar, going around the circle clockwise\"): `fireworks.on`, its burst `fireworks.height` m up and `fireworks.burst` m round; the find comes down from the sky onto the floor, picked up with E. Its pack aggro as any wild area's (wildWatch); it closes only once the night is won or lost (the pack calm, the find gone); it never counts toward winning the island and gives no boon. Off: the find's area as before, its find to pick up with E."
     },
+    "challenge.statues": {
+      "what": "its pack stand as grey stone statues by their columns (`first` m in, each next `gap` m on) till a witch steps onto its floor, wake wild after `bars` bars, and turn back to stone, whole, once every witch is down or in the treetops outside its area.",
+      "decisions": [
+        {
+          "by": "Ed",
+          "date": "2026-11-04",
+          "quote": [
+            "taking on the challenge area is more intentional; the creatures around it only start to aggro you when you go into the challenge circle. The wild creatures should somehow look like they're not invitable.",
+            "grey statues, all facing the centre of the circle",
+            "landing in the circle is the same as walking in",
+            "all the animals glow red, the sigils start glowing, and after 8 seconds, they all awaken and become wild animals"
+          ],
+          "rest": "through the coordinator: posts column / adult / youth / centre; the wake-up starts on the next bar line and lasts 4 bars at the steady 120 bpm, landing on a bar; leaving the circle before then stops it; leaving mid-fight or knocked down, the un-won go back to their posts as stone, reset to full, the invited staying won; with two witches, stone again only once both are off the floor. Its sigils on the columns grey while stone, glowing as they wake."
+        },
+        {
+          "by": "Ed",
+          "date": "2026-11-04",
+          "quote": "they should be closer to their column than to the centre",
+          "rest": "through the coordinator: both posts in the outer part of the radius, near their column, the middle open for her to step into; the post distances knobs with sliders."
+        },
+        {
+          "by": "Ed",
+          "date": "2026-11-04",
+          "quote": [
+            "only being in the outside of the area while at treetops should end the fight, otherwise they pursue you and don't reset.",
+            "While the fight is going on, won creatures should avoid the circle.",
+            "they should roam the whole area, and avoid creatures that are fighting. Do this in a simple way - we just want them out of the way of the fight"
+          ],
+          "rest": "his rulings on #1804, through the coordinator: before, stepping or flying off the floor reset them; now only every witch knocked down (as built) or up in the treetops outside the area ends the fight; dazed ones reset with the rest and ones running off are left be; the analyser lingers and fades; the statues keep the moonlit rim; the won ones roam the area off the circle (`keepOut`) and away from fighters (`avoid`), both sliders."
+        }
+      ],
+      "notes": "Posts: column / adult / youth / centre, all facing its middle, always nearer their column than the middle (never past 0.45 of the way in: Ed, 2026-11-04, \"they should be closer to their column than to the centre\"), the middle left open. The wake-up starts on the next bar line; they glow red (up to `red`) and their sigils on the columns glow from grey as it goes, and they wake on the bar `bars` bars on. Leaving the floor (stepping or flying off, or knocked down) before then stops it. Once awake they pursue her as any wild pack, on the ground anywhere, stepped off the floor or knocked out of the circle; only when every witch is knocked down or up in the treetops outside the challenge area do the ones not yet won walk back at `walkBack` times their pace and turn to stone again, reset to full (dazed ones too; ones running off left be), the invited staying won. While the fight's on, the won ones roam its area with their own happy roam out of the fight's way: `keepOut` m off the circle, and clear of the fighters as every area's won ones are (invites.wonAway) (Ed, 2026-11-04: \"they should roam the whole area, and avoid creatures that are fighting. Do this in a simple way - we just want them out of the way of the fight\"). Drawn `tint` of the way to the stone colour `grey`, with the moonlit rim. rules/challengeStatues.ts (the phases, the walk back, the reset, keeping the won out), rules/challenge.ts statuePosts and spawnPack (the posts), render/view/creatures.ts and render/statues.ts (the stone look, the wild watch's red over it while it wakes), render/challenge.ts (the grey sigils), platform/audio/sfxCues.ts (the wild watch's rising warning over the wake-up, its hit as they wake). Off: the pack wild from the start, watching her come down anywhere in its area as any wild area's."
+    },
+    "challenge.analyser": {
+      "what": "the music spell's analyser as she casts at the circle: `bars` bars from its middle out to `fill` of its radius at the music's loudest, `steps` dots a bar, grown with the circle.",
+      "decisions": [
+        {
+          "by": "Ed",
+          "date": "2026-11-04",
+          "quote": "should be larger, the audio analyser filling the whole stone circle",
+          "rest": "the soundsystem spell cast at the challenge circle; before, a small ring of rainbow dots round her."
+        }
+      ],
+      "links": [
+        "src/render/challenge.ts"
+      ],
+      "notes": "It fills round as the cast fills, each bar as far out as the music's level, and is held a moment as the circle clears."
+    },
+    "challenge.carving": {
+      "what": "the challenge circle's carved sigil follows the fight: `stone` a little moonlight while its statues sleep, rising to `red` as they wake, a steady cold `wild` while they fight, `warm` once won, fading back to dark over `fade` s as they return to stone; `floor` the moonlight on its stone floor.",
+      "decisions": [
+        {
+          "by": "Ed",
+          "date": "2026-11-04",
+          "rest": "on #1804, through the coordinator, after the screenshot showed the carved sigil barely visible and the floor hardly showing in the dark: the floor sigil's states with the fight (asleep dark but readable, catching a little moonlight; the wake-up red with the statues over the 4 bars, on the beat; the fight a steady cold wild glow; won warm, then the dancefloor covers it; back to stone fading to dark), in the colour grammar's red, cold and warm, with sliders; and a little more moonlight on the stone floor so the circle reads before she steps in, kept subtle."
+        }
+      ],
+      "notes": "render/challenge.ts carvingLook (the states, tested in src/render/challenge.test.ts), render/ground.ts uChallengeLook (the grooves' colour and the floor's light). The colours: the danger red (render/leash/attackLook.ts DANGER), the wild adult's and the party adult's rank colours (leash.ranks). With the statues off, the carving as before (moonlit, brighter with her in it, brighter ready to cast) and no extra floor light."
+    },
     "treeMarginFromSoundsystem": {
       "see": "setPieceFootprint"
     },

@@ -13,9 +13,10 @@
 //     them (rules/stoneStacks.ts: hostileSigil), adult below and youth above (challengeColumns): one invited, or run off, gone from
 //     it; a column with none left is that kind won, lit; every column lit, the pack's cleared and the spell can be cast.
 //   Its pack: "one adult and one youth of every creature kind on the island" (`adults` and `youths` of each kind of its roster:
-//     packKinds), wild animals of the challenge area (their cell its cell; spawnPack, appended after every other creature): they watch
-//     her as she comes down in it, the wild watch's warning (rules/wildWatch.ts), then hunt her till she takes off (rules/hunt.ts),
-//     at the difficulty as every wild creature (tuning difficulty, in combat). They can't be leashed: one invited is happy where it
+//     packKinds), wild animals of the challenge area (their cell its cell; spawnPack, appended after every other creature): stone
+//     statues at their posts till she sets foot on its floor, then waking over 4 bars into a wild pack that hunts her, going back to
+//     stone, whole, only once she's knocked down or up in the treetops outside its area (Ed, 2026-11-04; rules/challengeStatues.ts), at the difficulty as every
+//     wild creature (tuning difficulty, in combat); with the statues off, they watch her come down anywhere in its area as before. They can't be leashed: one invited is happy where it
 //     stands, no rune at its feet (c.atStone; stepChallenge).
 //   Clearing it: "When they're all invited or have run off, you can go to the special place and cast the music spell" (challengeReady):
 //     on foot within `castReach` of its middle (grown with the circle: castReachOf), the sigil button held, the stones' spell
@@ -55,9 +56,17 @@ import { hash2, rng } from "./random";
 import { challengeCircle } from "./challengeCircle";
 import type { StackEntry } from "./stoneStacks";
 
-export interface ChallengeTuning { on: boolean; radius: number; margin: number; spacing: number; adults: number; youths: number; castReach: number; findSets: boolean; fireworks: { on: boolean; height: number; burst: number } }
-export const CHALLENGE_DEFAULT: ChallengeTuning = { on: false, radius: 36, margin: 3, spacing: 7.5, adults: 1, youths: 1, castReach: 5, findSets: false, fireworks: { on: true, height: 24, burst: 8 } };
-export const challengeOf = (t: Tuning): ChallengeTuning => ({ ...CHALLENGE_DEFAULT, ...t.challenge, fireworks: { ...CHALLENGE_DEFAULT.fireworks, ...t.challenge?.fireworks } });
+/** Its statues' knobs (rules/challengeStatues.ts; Ed, 2026-11-04): on; the wake-up's length in bars; the posts, `first` m in from
+ *  their column and each next `gap` m further in; the walk back at `walkBack` times their pace; drawn `tint` of the way to `grey`,
+ *  `red` the red they reach as they wake. */
+export interface StatueTuning { on: boolean; bars: number; first: number; gap: number; walkBack: number; keepOut: number; grey: number[]; tint: number; red: number }
+/** Its floor's look (render/challenge.ts carvingLook; Ed, 2026-11-04, on #1804): its carved sigil's glow while the statues are stone
+ *  (`stone`: a little moonlight), waking (`red`, at the wake-up's end), awake (`wild`, steady and cold), won (`warm`), going back to
+ *  stone over `fade` seconds; and the moonlight on its stone floor (`floor`). */
+export interface CarvingTuning { stone: number; red: number; wild: number; warm: number; fade: number; floor: number }
+export interface ChallengeTuning { carving: CarvingTuning; on: boolean; radius: number; margin: number; spacing: number; adults: number; youths: number; castReach: number; findSets: boolean; fireworks: { on: boolean; height: number; burst: number }; statues: StatueTuning; analyser: { bars: number; steps: number; fill: number } }
+export const CHALLENGE_DEFAULT: ChallengeTuning = { on: false, radius: 36, margin: 3, spacing: 7.5, adults: 1, youths: 1, castReach: 5, findSets: false, fireworks: { on: true, height: 24, burst: 8 }, statues: { on: false, bars: 4, first: 3.5, gap: 3.5, walkBack: 1.5, keepOut: 2, grey: [0.6, 0.6, 0.63], tint: 0.9, red: 1 }, analyser: { bars: 72, steps: 36, fill: 0.94 }, carving: { stone: 0.35, red: 2.2, wild: 1.2, warm: 1.8, fade: 2, floor: 0.3 } };
+export const challengeOf = (t: Tuning): ChallengeTuning => ({ ...CHALLENGE_DEFAULT, ...t.challenge, fireworks: { ...CHALLENGE_DEFAULT.fireworks, ...t.challenge?.fireworks }, statues: { ...CHALLENGE_DEFAULT.statues, ...t.challenge?.statues }, analyser: { ...CHALLENGE_DEFAULT.analyser, ...t.challenge?.analyser }, carving: { ...CHALLENGE_DEFAULT.carving, ...t.challenge?.carving } });
 
 /** What the page says of it (under the clock: main.ts): the pack all won over or gone (ready to cast), cleared (and its reward),
  *  closed (the final wave coming, or the night over). This frame's, emptied each frame as the waves' are. */
@@ -72,6 +81,10 @@ export interface ChallengeState {
   pack: number[];
   readyAt: number | null; clearedAt: number | null; closedAt: number | null;
   reward: "find" | "flask" | null;
+  /** Its pack's statues (rules/challengeStatues.ts; Ed, 2026-11-04): stone at their posts till a witch sets foot on its floor, then
+   *  waking from beat `wake` (a bar line) for the tuning's `statues.bars` bars, then awake (a wild pack) till every witch is off its
+   *  floor; null `wake` unless waking. Unset: the statues off, or a night saved before them (its pack wild from the start). */
+  statues?: { phase: "stone" | "waking" | "awake"; wake: number | null; /** when it woke, or last went back to stone (game time), and whether that was from a fight (`back`): for the floor's sigil fading (render/challenge.ts carvingLook) */ at?: number; back?: boolean };
   /** When its reward lands on its dancefloor (game time: clearedAt + FIND_DESCENT), and the flask laid then (its relic's id). */
   landsAt?: number | null;
   flask?: number | null;
@@ -115,8 +128,31 @@ export function challengeColumns(g: Pick<Game, "challenge" | "creatures" | "map"
 /** How near its middle (m) the spell's cast on it: castReach, grown with the circle (rules/challengeCircle.ts). */
 export const castReachOf = (ch: { radius: number }, t: Tuning): number => { const C = challengeOf(t); return C.castReach * Math.max(1, C.radius > 0 ? ch.radius / C.radius : 1); };
 
+/** Where its pack stand as statues (Ed, 2026-11-04: "grey statues, all facing the centre of the circle"; through the coordinator:
+ *  column / adult / youth / centre; and "they should be closer to their column than to the centre", the middle left open for her to
+ *  step into): each on its kind's column's radius, in from the column toward the middle, its kind's adults first (nearest the column)
+ *  then its youths, each by id, the first `first` m in and each next `gap` m further, never past 0.45 of the way to the middle (so
+ *  always nearer its column than the middle). By creature id. */
+/** The furthest in a statue's post goes, a share of the way from its column to the middle: under half, so nearer its column. */
+export const POST_REACH = 0.45;
+export function statuePosts(site: { x: number; z: number; radius: number }, kinds: readonly string[], pack: readonly { id: number; species: string; level: number }[], S: Pick<StatueTuning, "first" | "gap">): Map<number, { x: number; z: number }> {
+  const spots = columnSpots(site, kinds.length), out = new Map<number, { x: number; z: number }>(), R = Math.max(1e-6, site.radius);
+  kinds.forEach((kind, i) => {
+    const col = spots[i], ux = (site.x - col.x) / R, uz = (site.z - col.z) / R;
+    pack.filter(c => c.species === kind).sort((a, b) => b.level - a.level || a.id - b.id).forEach((c, j) => {
+      const d = Math.min(R * POST_REACH, S.first + j * S.gap);
+      out.set(c.id, { x: col.x + ux * d, z: col.z + uz * d });
+    });
+  });
+  return out;
+}
+
+/** Turned to face the circle's middle (x, z) as it stands (render/view/creatures.ts draws its facing and whether it's turned away). */
+export function faceMiddle(c: Creature, x: number, z: number): void { c.facing = x >= c.x ? 1 : -1; c.away = z < c.z - 1; }
+
 /** Its pack (Ed: "one adult and one youth of every creature kind on the island"): `adults` adults and `youths` youths of each of
- *  packKinds, wild creatures of its area, ids from `first` on (they're appended to the night's creatures). None without one. */
+ *  packKinds, wild creatures of its area, ids from `first` on (they're appended to the night's creatures). None without one. With
+ *  the statues on (rules/challengeStatues.ts), each stone at its post (statuePosts), facing the middle. */
 export function spawnPack(map: ForestMap, first: number): Creature[] {
   const S = challengeSite(map);
   if (!S) return [];
@@ -128,9 +164,14 @@ export function spawnPack(map: ForestMap, first: number): Creature[] {
     c.species = kind;
     out.push(c);
   };
-  for (const kind of packKinds(map)) {
+  const kinds = packKinds(map);
+  for (const kind of kinds) {
     for (let i = 0; i < Math.round(C.adults); i++) make(kind, 2);
     for (let i = 0; i < Math.round(C.youths); i++) make(kind, 1);
+  }
+  if (C.statues.on) {
+    const site = { x: S.x, z: S.z, radius: S.radius ?? challengeCircle(kinds.length, t).radius }, posts = statuePosts(site, kinds, out, C.statues);
+    for (const c of out) { const p = posts.get(c.id)!; c.x = c.tx = p.x; c.z = c.tz = p.z; c.statue = "stone"; c.moving = false; faceMiddle(c, site.x, site.z); }
   }
   return out;
 }
@@ -141,7 +182,7 @@ export function newChallenge(map: ForestMap, creatures: readonly Creature[]): Ch
   if (!S) return null;
   const key = cellKey(S.cell);
   const kinds = packKinds(map);
-  return { key, cell: [S.cell[0], S.cell[1]], x: S.x, z: S.z, radius: S.radius ?? challengeCircle(kinds.length, map.tuning).radius, kinds, pack: creatures.filter(c => cellKey(c.cell) === key).map(c => c.id), readyAt: null, clearedAt: null, closedAt: null, reward: null, events: [] };
+  return { key, cell: [S.cell[0], S.cell[1]], x: S.x, z: S.z, radius: S.radius ?? challengeCircle(kinds.length, map.tuning).radius, kinds, pack: creatures.filter(c => cellKey(c.cell) === key).map(c => c.id), readyAt: null, clearedAt: null, closedAt: null, reward: null, events: [], ...(challengeOf(map.tuning).statues.on ? { statues: { phase: "stone" as const, wake: null } } : {}) };
 }
 
 /** Its pack still holding it (rules/clear.ts holdsArea: wild or enraged, not invited, not run off). */
@@ -200,7 +241,7 @@ export function clearChallenge(g: Game): void {
     const c = g.creatures[id];
     if (!c || c.gone || c.leashed || c.fleeUntil === Infinity) continue;
     if (stateOf(c) !== "happy") befriend(c, time);
-    Object.assign(c, { atStone: true, friendly: true, hunting: undefined, watchUntil: undefined, fight: undefined });
+    Object.assign(c, { atStone: true, friendly: true, hunting: undefined, watchUntil: undefined, fight: undefined, statue: undefined });
     // (on its dancefloor, Ed on #1725: "they dance on it": each to a spot on it at once, and roaming it after, render/challenge.ts)
     danceAt(c, { x: ch.x, z: ch.z }, ch.radius * 0.8);
     const a = c.rand() * Math.PI * 2, d = Math.sqrt(c.rand()) * ch.radius * 0.75;

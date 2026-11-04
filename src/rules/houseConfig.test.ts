@@ -24,7 +24,7 @@ describe("the house, a file a room (config/house/)", () => {
     const ids = H.objects.map(o => o.id);
     expect(new Set(ids).size, "object ids unique").toBe(ids.length);
   });
-  it("is the oak (the layout v4, Ed 2026-10-24): six rooms up the trunk, a pair of branch rooms off each of the first four, the last pair locked; the walk from her bed to the take-off about 93 m", () => {
+  it("preserves the v4 oak room and corridor structure with a 99 m authored bed-to-take-off route", () => {
     const { base, rooms: files } = houseFiles(), P = roomPlaces(base, files) as Record<string, { id: string; parent?: string; trunk: boolean; x: number; z: number; r: number }>;
     const H2 = H as unknown as { rooms: { id: string; trunk?: boolean; from?: string; locked?: boolean }[]; corridors: { id: string; pts: [number, number][] }[]; objects: { id: string; room: string; x: number; z: number }[]; shape: unknown };
     expect(H2.rooms.filter(r => r.trunk).map(r => r.id)).toEqual(["dining", "terrace", "parlour", "boudoir", "bedroom", "turret"]);
