@@ -181,7 +181,9 @@ describe("legends, redesigned (Ed, 2026-10-05; #87)", () => {
     run(g, 1.2);
     expect(L.legendState).toBe("angry");
     L.affection = 0.999; L.affectionAt = g.clock.time; // (its slots nearly full of hearts: rules/orbit.ts)
-    const wolf = put(g, L.species === "wolf" ? "boar" : "wolf", 2, L.x + 2, L.z);
+    // (a bear, a wolf before areas grew to 196 m, 2026-11-04: on this map's moth a parked wolf (or boar, or badger) drifted ever farther
+    // off it as it fought, landing too few hits to wear it down in time)
+    const wolf = put(g, L.species === "bear" ? "stag" : "bear", 2, L.x + 2, L.z);
     wolf.leashed = true; g.leash.placed.push({ id: wolf.id, x: wolf.x, z: wolf.z, at: g.clock.time });
     let slept = false;
     run(g, 10, idle, () => { if (L.legendState === "asleep") slept = true; }); // (with none of its kind there it grows restless again: angryAfter is short here)

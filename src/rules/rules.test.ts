@@ -214,7 +214,7 @@ describe("the map", () => {
     // (Ed, 2026-10-05, at v473: the woods thin gradually across most of an area towards its runestone,
     // so as much lies on that gradient as in full woods; and there's real open ground.)
     expect(dense / n).toBeGreaterThan(0.35);
-    expect(between / n).toBeGreaterThan(0.25); // a long, soft gradient, not a step
+    expect(between / n).toBeGreaterThan(0.2); // a long, soft gradient, not a step (0.25 till areas grew to 196 m, 2026-11-04, Ed's band 50 m kept: 0.23 on this map, 0.28 before)
     expect(open / n).toBeGreaterThan(0.03);
   });
 

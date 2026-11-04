@@ -11,14 +11,15 @@ import { preppedGame } from "../test/preppedGame"; // (games on a map made once 
 
 const idle = { moveX: 0, moveZ: 0, toggleMode: false, zoom: 0 };
 // (the largest island since the challenge area went to its edge, 2026-11-04 (Ed: "The route should avoid going through the challenge
-// area"), the circle's claim before that, 2026-11-03: the route and the night's deal move with it, and its legends with them: eight
-// paired; the ids follow how many creatures the areas before them hold)
-const expected = [[18, "newt", true], [19, "newt", false], [34, "snowleopard", true], [35, "snowleopard", false], [91, "fennec", true], [92, "fennec", false],
-  [191, "squirrel", true], [192, "squirrel", false], [422, "moth", true], [423, "moth", false], [500, "crab", true], [501, "crab", false],
-  [518, "lion", true], [519, "lion", false], [525, "polarbear", true], [526, "polarbear", false]];
+// area"), the circle's claim before that, 2026-11-03: the route and the night's deal move with it, and its legends with them; and since
+// its areas grew to 196 m and every two sites keep 50 m, 2026-11-04 (#1807): seven paired; the ids follow how many creatures the areas
+// before them hold)
+const expected = [[80, "polarbear", true], [81, "polarbear", false], [146, "moth", true], [147, "moth", false], [187, "otter", true], [188, "otter", false],
+  [298, "toad", true], [299, "toad", false], [355, "crab", true], [356, "crab", false], [427, "griffin", true], [428, "griffin", false],
+  [537, "fennec", true], [538, "fennec", false]];
 // Largest roster reproduces the paired legend areas; small/radius fixtures guard the original non-paired contract.
 const fixtures = [
-  { name: "largest", tuning: largestWorldTuning(TUNING), raw: 16, cells: 65 },
+  { name: "largest", tuning: largestWorldTuning(TUNING), raw: 14, cells: 65 },
   { name: "four-area", tuning: { ...TUNING, map: { ...TUNING.map!, island: "", islandAreas: 4, found: [] } }, raw: 0, cells: 5 },
   { name: "radius", tuning: { ...TUNING, map: { ...TUNING.map!, island: "", islandAreas: 0, found: [] } }, raw: 0, cells: 98 },
 ];
