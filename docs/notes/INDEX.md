@@ -86,6 +86,10 @@ says what each note covers.
 ## [Creatures in play](gameplay.md)
 
 - Combat waiting movement
+- Waiting under her
+- Big teams' shorter rounds
+- Roles decided in advance
+- Waiting rings and the 128 rate
 - Attack target identity
 - Sheltered attack effects
 - Momentum class selection
