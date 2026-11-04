@@ -568,10 +568,16 @@ Home's area [1]: the map is cut with home first, a circle round the dancefloor o
 
 1. Ed, 2026-10-05: "Home area should be big enough that the whole circle, centre the dancefloor, edge the treehouse, is within it"
 
+- **`home.start`**: How many areas home has at the start of a campaign [1]: home grows by one area per island she's found, and while that's fewer than this, home's starting kinds whose islands she hasn't found fill it up to this, chosen at random each night.
+  1. Ed, 2026-11-04: "home has 5 areas chosen at random from the phase 1 creatures, and grows as you unlock islands, and has no challenge area. When you unlock every island, home gets a challenge area and you get a special reward for completing it." … "Home legends: Same as other islands, which I think is 1 in 5? But including undiscovered islands of phase 1 if possible."
+  rules/rosters.ts homeRoster: one area per kind whose island she's found (map.found, any kind), then home's starting kinds whose islands are unfound, by the night's seed, up to this; while any phase-1 island is unfound at least one such kind is on, one area more past the found ones where it must. Its legends as any island's (1 in 5 areas), an unfound phase-1 island's among them while there is one. No find and no challenge area at home till every island on the chart is found; then its challenge area with the full pack (an adult and a youth of each kind). Its places grow outward from the starting home's; which kind is on which area is the night's deal (rules/deal.ts). A new map: it reloads.
+  Code: `rules/rosters.ts`, `rules/map.ts`
+
 | knob | type | range |
 |---|---|---|
 | `home.margin` | number | 0 to … |
 | `home.gap` | number | 0 to … |
+| `home.start` | number | 1 to 64 |
 
 ### `scenes`
 

@@ -1639,11 +1639,18 @@
         "gap": {
           "type": "number",
           "minimum": 0
+        },
+        "start": {
+          "type": "number",
+          "minimum": 1,
+          "maximum": 64,
+          "description": "How many areas home has at the start of a campaign: home grows by one area per island she's found, and while that's fewer than this, home's starting kinds whose islands she hasn't found fill it up to this, chosen at random each night."
         }
       },
       "required": [
         "margin",
-        "gap"
+        "gap",
+        "start"
       ],
       "additionalProperties": false,
       "description": "Home's area: the map is cut with home first, a circle round the dancefloor out past the treehouse's footprint (its distance and clear) and margin metres more all home's; the areas round it are cut round it, their centres kept at least gap of an area beyond the circle."

@@ -317,6 +317,7 @@ export type SchemaTuning = {
   "home": {
     "margin": number;
     "gap": number;
+    "start": number;
   };
   "scenes": {
     "chance": number;
