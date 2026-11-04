@@ -4,6 +4,7 @@ import { CauldronView } from "../cauldronView";
 import { FxMock } from "../fxMock";
 import { beatTime } from "../../rules/beat";
 import * as THREE from "three";
+import { renderDelta, easeCanopyReach } from "../renderEasing";
 import { deckOf } from "../../rules/treehouse";
 import { approachStrength, houseApproachDistance } from "../../rules/treehouseLook";
 import { cutawayRadius } from "../crown";
@@ -73,6 +74,7 @@ export function render(a4ViewHost: View, a4PrivateHost: ViewInternals, a4SharedH
     // Her clock (rules/slowTime.ts): she and everything of hers (her frames, blinks, trail, 💌s, sigils, the action bar) at full
     // speed, while the world (time) may run slow in a sleeping legend's circle; eased between steps as the world's is.
     const ht = Math.max(0, g.herTime - Math.max(0, g.clock.time - time) / Math.max(1e-3, g.timeScale));
+    a4ViewHost.renderEaseDt = renderDelta(a4ViewHost.renderEaseAt, ht); a4ViewHost.renderEaseAt = ht;
     // CPU effects read these too. Stamp them before drawing any markers or sparkles.
     LIGHT_UNIFORMS.uTime.value = time; LIGHT_UNIFORMS.uRealTime.value = ht;
     a4ViewHost.magic.begin(ht, g.witch.x, g.witch.z, g);
@@ -92,7 +94,7 @@ export function render(a4ViewHost: View, a4PrivateHost: ViewInternals, a4SharedH
     const TL = a4ViewHost.telescope && t.telescope, haze = LIGHT_UNIFORMS.uHazeRange.value;
     if (TL) { a4PrivateHost.hazeBeforeTelescope ??= haze.clone(); haze.set(TL.hazeNear, TL.hazeFar); } else if (a4PrivateHost.hazeBeforeTelescope) { haze.copy(a4PrivateHost.hazeBeforeTelescope); a4PrivateHost.hazeBeforeTelescope = null; }
     const canopyTo = TL ? TL.reach : g.witch.mode !== "ground" ? Math.min(t.haze.far, t.scenery.canopyReach ?? 0) : 0;
-    a4ViewHost.canopyNow += (canopyTo - a4ViewHost.canopyNow) * (Math.abs(canopyTo - a4ViewHost.canopyNow) < 1 ? 1 : 0.08);
+    a4ViewHost.canopyNow = easeCanopyReach(a4ViewHost.canopyNow, canopyTo, a4ViewHost.renderEaseDt);
     LIGHT_UNIFORMS.uCanopyReach.value = a4ViewHost.canopyNow;
     const up = placeCamera(a4ViewHost, time, pose, repaintHeld);
 

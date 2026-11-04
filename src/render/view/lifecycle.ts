@@ -260,8 +260,15 @@ export async function prepare(a4ViewHost: View, a4PrivateHost: ViewInternals, a4
       }
     } else await a4ViewHost.assets.homeArt(); // initial boot still waits for all home art
     performance.mark("witch:prep-home");
+    // The house's rooms made now, under the loading screen (Ed, 2026-11-04: "why don't we do this during the loading screen"): its
+    // floor, every piece of furniture in every state, the rooms' dressing and the Workshop's pictures, asked once the Ent's art is in
+    // (its anchors set their pitch) and made into their meshes before the compile below uploads their textures; so the first time
+    // she's in the house nothing's made. Kept across nights (HouseRoomsView.reset), so the bed's next night and a visit find it made.
+    const house = a4ViewHost.houseRooms?.preload(a4ViewHost);
     await a4ViewHost.assets.whenIdle(true); // (what the view asked for as needed now; the scenery kits and creatures draw on and fade in: the first-load hunt, 2026-10-20, half the cold load)
     performance.mark("witch:prep-idle");
+    await house;
+    performance.mark("witch:prep-rooms");
     a4ViewHost.render(0, false);
     await runSliced(refreshSteps(a4ViewHost), "refresh"); // (refresh(this, true), a slice at a time)
     a4ViewHost.prepared = true;

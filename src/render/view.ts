@@ -12,6 +12,7 @@ import type { Creature } from "../rules/creatures";
 import { partyGearOf } from "./artBuild";
 
 import * as THREE from "three";
+
 import { type ReadyProgram } from "./programReadiness";
 import { installShaderDrawGate, type ShaderDrawStatus } from "./shaderDrawGate";
 import { LandingArtFade } from './landingReadiness';
@@ -214,6 +215,9 @@ function nightState(t: Tuning) {
     numbersAt: 0,
     /** How far the camera is lifted to see her over a hill in between (metres, eased). */
     camLift: 0,
+    /** Camera/canopy relaxation on her interpolated clock, reset with this night. */
+    renderEaseAt: NaN,
+    renderEaseDt: 0,
     camLiftTime: Number.NaN,
     houseCamInput: new THREE.Vector3(),
     /** The charcoal huts' smouldering mounds near her (looked up when she has moved far), for the smoke. */

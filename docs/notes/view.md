@@ -1,5 +1,15 @@
 # The view
 
+**Elapsed-time view easing** (#1556, 2026-10-31): camera hill clearance and canopy
+reach use her interpolated elapsed time instead of one fixed step per render.
+The .35/.06 camera and .08 canopy gains match a60Hz step; repeat/pause frames
+advance neither, and their timestamp resets per night. The canopy's final-metre
+snap is after the step, at most one60Hz frame earlier near that boundary, preserving
+equal-total-time behavior. Loading mist remains a wall-time loading overlay;
+the shared tools/shots still harness holds its clock and prepared scene for tests.
+No extra pass/texture or art/potion change. Bench/visual acceptance remains pending;
+see testing.md for the declared frame changes and allocated capture rules.
+
 **Heat/refraction preview** (Ed/root, 2026-10-31; #1543): opt-in `?refraction=1`,
 off by default pending visual/GPU acceptance. One nearest visible campfire plume
 and one party-cast pressure wave use namespaced uniforms in the existing Post

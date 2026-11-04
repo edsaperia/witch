@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "sourceCommit": "b29e5a3701aca479e95d5de3429042439963f002",
+  "sourceCommit": "2c9009ba36b65d8817dd35af0caaeda2de6f4041",
   "sourceHistory": [
     {
       "from": "e169c3723369947f26de1ba42a5677ffdea8901e",
@@ -16,6 +16,14 @@
       "from": "e841734fa1fbfee187e2cd1a29dd3d3ab83e6db7",
       "to": "b29e5a3701aca479e95d5de3429042439963f002",
       "reason": "reviewed prototype source refresh resolving the two owned cut-file conflicts"
+    },
+    {
+      "from": "b29e5a3701aca479e95d5de3429042439963f002",
+      "to": "2c9009ba36b65d8817dd35af0caaeda2de6f4041",
+      "reason": "reviewed prototype source refresh resolving owned cut-file conflicts",
+      "conflicts": [
+        "src/render/view.ts"
+      ]
     }
   ],
   "status": "mechanical rehearsal; typecheck/unit/bench proof pending canonical slot",
@@ -28,9 +36,9 @@
     },
     {
       "file": "src/render/view.ts",
-      "sha256": "c99fb8413f04143dbea30d037425517aac5557b2a94365b0bdfdee23287115d9",
-      "bytes": 155162,
-      "lines": 2040
+      "sha256": "9a0928dd01222c9f94115ed0ed4002e623573b381e5b20da00b33c3591a5123a",
+      "bytes": 156058,
+      "lines": 2052
     }
   ],
   "cuts": [
@@ -10268,12 +10276,12 @@
       "source": "src/render/view.ts",
       "name": "render",
       "output": "src/render/view/frame.ts",
-      "originalSha256": "2f0a7509dea6f25d561d3c1e87a5a26baa244c997d708a8b5bfd387f975ef11b",
-      "sourceStart": 124373,
-      "sourceEnd": 155128,
-      "generatedSha256": "62fb5b4f6ab0c10efbfbb5a49cae55a145f7e7311a987515c4e9512a3d8696fc",
-      "outputBodyStart": 3518,
-      "outputBodyEnd": 36639,
+      "originalSha256": "0a37dc453acf69b193a203d059e3faa8629357cff41831900ef09a5b1d83880a",
+      "sourceStart": 125208,
+      "sourceEnd": 156024,
+      "generatedSha256": "b2ad911a715b23aeadd593577416e1dd2044d2841d2ba19a980d3ac1b22a1c60",
+      "outputBodyStart": 3582,
+      "outputBodyEnd": 36782,
       "edits": [
         {
           "start": 103,
@@ -10402,2265 +10410,2286 @@
           "generatedStart": 1122
         },
         {
-          "start": 1543,
-          "end": 1553,
-          "before": "this.magic",
-          "after": "a4ViewHost.magic",
-          "generatedStart": 1672
+          "start": 1381,
+          "end": 1398,
+          "before": "this.renderEaseDt",
+          "after": "a4ViewHost.renderEaseDt",
+          "generatedStart": 1510
         },
         {
-          "start": 1594,
-          "end": 1604,
-          "before": "this.magic",
-          "after": "a4ViewHost.magic",
-          "generatedStart": 1729
+          "start": 1413,
+          "end": 1430,
+          "before": "this.renderEaseAt",
+          "after": "a4ViewHost.renderEaseAt",
+          "generatedStart": 1548
         },
         {
-          "start": 1625,
-          "end": 1633,
+          "start": 1437,
+          "end": 1454,
+          "before": "this.renderEaseAt",
+          "after": "a4ViewHost.renderEaseAt",
+          "generatedStart": 1578
+        },
+        {
+          "start": 1627,
+          "end": 1637,
+          "before": "this.magic",
+          "after": "a4ViewHost.magic",
+          "generatedStart": 1774
+        },
+        {
+          "start": 1678,
+          "end": 1688,
+          "before": "this.magic",
+          "after": "a4ViewHost.magic",
+          "generatedStart": 1831
+        },
+        {
+          "start": 1709,
+          "end": 1717,
           "before": "this.mpp",
           "after": "a4ViewHost.mpp",
-          "generatedStart": 1766
+          "generatedStart": 1868
         },
         {
-          "start": 1639,
-          "end": 1649,
+          "start": 1723,
+          "end": 1733,
           "before": "this.magic",
           "after": "a4ViewHost.magic",
-          "generatedStart": 1786
+          "generatedStart": 1888
         },
         {
-          "start": 1840,
-          "end": 1853,
+          "start": 1924,
+          "end": 1937,
           "before": "this.lastReal",
           "after": "a4ViewHost.lastReal",
-          "generatedStart": 1993
+          "generatedStart": 2095
         },
         {
-          "start": 1855,
-          "end": 1866,
+          "start": 1939,
+          "end": 1950,
           "before": "this.budget",
           "after": "a4ViewHost.budget",
-          "generatedStart": 2014
+          "generatedStart": 2116
         },
         {
-          "start": 1880,
-          "end": 1891,
+          "start": 1964,
+          "end": 1975,
           "before": "this.budget",
           "after": "a4ViewHost.budget",
-          "generatedStart": 2045
+          "generatedStart": 2147
         },
         {
-          "start": 1900,
-          "end": 1913,
+          "start": 1984,
+          "end": 1997,
           "before": "this.lastReal",
           "after": "a4ViewHost.lastReal",
-          "generatedStart": 2071
+          "generatedStart": 2173
         },
         {
-          "start": 1933,
-          "end": 1946,
+          "start": 2017,
+          "end": 2030,
           "before": "this.lastReal",
           "after": "a4ViewHost.lastReal",
-          "generatedStart": 2110
+          "generatedStart": 2212
         },
         {
-          "start": 1968,
-          "end": 1985,
+          "start": 2052,
+          "end": 2069,
           "before": "this.sceneryFixed",
           "after": "a4ViewHost.sceneryFixed",
-          "generatedStart": 2151
+          "generatedStart": 2253
         },
         {
-          "start": 1996,
-          "end": 2007,
+          "start": 2080,
+          "end": 2091,
           "before": "this.budget",
           "after": "a4ViewHost.budget",
-          "generatedStart": 2185
+          "generatedStart": 2287
         },
         {
-          "start": 2050,
-          "end": 2067,
+          "start": 2134,
+          "end": 2151,
           "before": "this.sceneryFixed",
           "after": "a4ViewHost.sceneryFixed",
-          "generatedStart": 2245
+          "generatedStart": 2347
         },
         {
-          "start": 2109,
-          "end": 2120,
+          "start": 2193,
+          "end": 2204,
           "before": "this.budget",
           "after": "a4ViewHost.budget",
-          "generatedStart": 2310
+          "generatedStart": 2412
         },
         {
-          "start": 2310,
-          "end": 2322,
+          "start": 2394,
+          "end": 2406,
           "before": "HOLE_HARD_AT",
           "after": "a4SharedHost.HOLE_HARD_AT",
-          "generatedStart": 2517
+          "generatedStart": 2619
         },
         {
-          "start": 2686,
-          "end": 2700,
+          "start": 2770,
+          "end": 2784,
           "before": "this.telescope",
           "after": "a4ViewHost.telescope",
-          "generatedStart": 2906
+          "generatedStart": 3008
         },
         {
-          "start": 2771,
-          "end": 2795,
+          "start": 2855,
+          "end": 2879,
           "before": "this.hazeBeforeTelescope",
           "after": "a4PrivateHost.hazeBeforeTelescope",
-          "generatedStart": 2997
+          "generatedStart": 3099
         },
         {
-          "start": 2860,
-          "end": 2884,
+          "start": 2944,
+          "end": 2968,
           "before": "this.hazeBeforeTelescope",
           "after": "a4PrivateHost.hazeBeforeTelescope",
-          "generatedStart": 3095
+          "generatedStart": 3197
         },
         {
-          "start": 2898,
-          "end": 2922,
+          "start": 2982,
+          "end": 3006,
           "before": "this.hazeBeforeTelescope",
           "after": "a4PrivateHost.hazeBeforeTelescope",
-          "generatedStart": 3142
+          "generatedStart": 3244
         },
         {
-          "start": 2925,
-          "end": 2949,
+          "start": 3009,
+          "end": 3033,
           "before": "this.hazeBeforeTelescope",
           "after": "a4PrivateHost.hazeBeforeTelescope",
-          "generatedStart": 3178
+          "generatedStart": 3280
         },
         {
-          "start": 3083,
-          "end": 3097,
+          "start": 3167,
+          "end": 3181,
           "before": "this.canopyNow",
           "after": "a4ViewHost.canopyNow",
-          "generatedStart": 3345
+          "generatedStart": 3447
         },
         {
-          "start": 3113,
-          "end": 3127,
+          "start": 3200,
+          "end": 3214,
           "before": "this.canopyNow",
           "after": "a4ViewHost.canopyNow",
-          "generatedStart": 3381
+          "generatedStart": 3486
         },
         {
-          "start": 3152,
-          "end": 3166,
+          "start": 3226,
+          "end": 3243,
+          "before": "this.renderEaseDt",
+          "after": "a4ViewHost.renderEaseDt",
+          "generatedStart": 3518
+        },
+        {
+          "start": 3286,
+          "end": 3300,
           "before": "this.canopyNow",
           "after": "a4ViewHost.canopyNow",
-          "generatedStart": 3426
+          "generatedStart": 3584
         },
         {
-          "start": 3225,
-          "end": 3239,
-          "before": "this.canopyNow",
-          "after": "a4ViewHost.canopyNow",
-          "generatedStart": 3505
-        },
-        {
-          "start": 3268,
-          "end": 3272,
+          "start": 3329,
+          "end": 3333,
           "before": "this",
           "after": "a4ViewHost",
-          "generatedStart": 3554
+          "generatedStart": 3633
         },
         {
-          "start": 3323,
-          "end": 3339,
+          "start": 3384,
+          "end": 3400,
           "before": "this.swapHomeArt",
           "after": "a4PrivateHost.swapHomeArt",
-          "generatedStart": 3615
+          "generatedStart": 3694
         },
         {
-          "start": 3364,
-          "end": 3368,
+          "start": 3425,
+          "end": 3429,
           "before": "this",
           "after": "a4ViewHost",
-          "generatedStart": 3665
+          "generatedStart": 3744
         },
         {
-          "start": 3395,
-          "end": 3399,
+          "start": 3456,
+          "end": 3460,
           "before": "this",
           "after": "a4ViewHost",
-          "generatedStart": 3702
+          "generatedStart": 3781
         },
         {
-          "start": 3435,
-          "end": 3444,
+          "start": 3496,
+          "end": 3505,
           "before": "this.time",
           "after": "a4ViewHost.time",
-          "generatedStart": 3748
+          "generatedStart": 3827
         },
         {
-          "start": 3476,
-          "end": 3480,
+          "start": 3537,
+          "end": 3541,
           "before": "this",
           "after": "a4ViewHost",
-          "generatedStart": 3795
+          "generatedStart": 3874
         },
         {
-          "start": 3493,
-          "end": 3502,
+          "start": 3554,
+          "end": 3563,
           "before": "this.time",
           "after": "a4ViewHost.time",
-          "generatedStart": 3818
+          "generatedStart": 3897
         },
         {
-          "start": 3733,
-          "end": 3747,
+          "start": 3794,
+          "end": 3808,
           "before": "this.overDebug",
           "after": "a4PrivateHost.overDebug",
-          "generatedStart": 4064
+          "generatedStart": 4143
         },
         {
-          "start": 3750,
-          "end": 3759,
+          "start": 3811,
+          "end": 3820,
           "before": "this.over",
           "after": "a4ViewHost.over",
-          "generatedStart": 4090
+          "generatedStart": 4169
         },
         {
-          "start": 3822,
-          "end": 3836,
+          "start": 3883,
+          "end": 3897,
           "before": "this.leashView",
           "after": "a4ViewHost.leashView",
-          "generatedStart": 4168
+          "generatedStart": 4247
         },
         {
-          "start": 3885,
-          "end": 3899,
+          "start": 3946,
+          "end": 3960,
           "before": "this.fireworks",
           "after": "a4ViewHost.fireworks",
-          "generatedStart": 4237
+          "generatedStart": 4316
         },
         {
-          "start": 3981,
-          "end": 3995,
+          "start": 4042,
+          "end": 4056,
           "before": "this.fireworks",
           "after": "a4ViewHost.fireworks",
-          "generatedStart": 4339
+          "generatedStart": 4418
         },
         {
-          "start": 4383,
-          "end": 4397,
+          "start": 4444,
+          "end": 4458,
           "before": "this.partyView",
           "after": "a4PrivateHost.partyView",
-          "generatedStart": 4747
+          "generatedStart": 4826
         },
         {
-          "start": 4439,
-          "end": 4443,
+          "start": 4500,
+          "end": 4504,
           "before": "this",
           "after": "a4ViewHost",
-          "generatedStart": 4812
+          "generatedStart": 4891
         },
         {
-          "start": 4476,
-          "end": 4490,
+          "start": 4537,
+          "end": 4551,
           "before": "this.fireworks",
           "after": "a4ViewHost.fireworks",
-          "generatedStart": 4855
+          "generatedStart": 4934
         },
         {
-          "start": 4748,
-          "end": 4763,
+          "start": 4809,
+          "end": 4824,
           "before": "this.soundBatch",
           "after": "a4PrivateHost.soundBatch",
-          "generatedStart": 5133
+          "generatedStart": 5212
         },
         {
-          "start": 4786,
-          "end": 4797,
+          "start": 4847,
+          "end": 4858,
           "before": "this.ground",
           "after": "a4ViewHost.ground",
-          "generatedStart": 5180
+          "generatedStart": 5259
         },
         {
-          "start": 4813,
-          "end": 4829,
+          "start": 4874,
+          "end": 4890,
           "before": "this.legendRings",
           "after": "a4PrivateHost.legendRings",
-          "generatedStart": 5213
+          "generatedStart": 5292
         },
         {
-          "start": 4840,
-          "end": 4854,
+          "start": 4901,
+          "end": 4915,
           "before": "this.ringCount",
           "after": "a4ViewHost.ringCount",
-          "generatedStart": 5249
+          "generatedStart": 5328
         },
         {
-          "start": 4861,
-          "end": 4872,
+          "start": 4922,
+          "end": 4933,
           "before": "this.ground",
           "after": "a4ViewHost.ground",
-          "generatedStart": 5276
+          "generatedStart": 5355
         },
         {
-          "start": 4889,
-          "end": 4904,
+          "start": 4950,
+          "end": 4965,
           "before": "this.floorItems",
           "after": "a4PrivateHost.floorItems",
-          "generatedStart": 5310
+          "generatedStart": 5389
         },
         {
-          "start": 4906,
-          "end": 4920,
+          "start": 4967,
+          "end": 4981,
           "before": "this.ringCount",
           "after": "a4ViewHost.ringCount",
-          "generatedStart": 5336
+          "generatedStart": 5415
         },
         {
-          "start": 4927,
-          "end": 4938,
+          "start": 4988,
+          "end": 4999,
           "before": "this.ground",
           "after": "a4ViewHost.ground",
-          "generatedStart": 5363
+          "generatedStart": 5442
         },
         {
-          "start": 5003,
-          "end": 5014,
+          "start": 5064,
+          "end": 5075,
           "before": "this.ground",
           "after": "a4ViewHost.ground",
-          "generatedStart": 5445
+          "generatedStart": 5524
         },
         {
-          "start": 5403,
-          "end": 5418,
+          "start": 5464,
+          "end": 5479,
           "before": "this.lakeSigils",
           "after": "a4PrivateHost.lakeSigils",
-          "generatedStart": 5851
+          "generatedStart": 5930
         },
         {
-          "start": 5698,
-          "end": 5709,
+          "start": 5759,
+          "end": 5770,
           "before": "this.ground",
           "after": "a4ViewHost.ground",
-          "generatedStart": 6155
+          "generatedStart": 6234
         },
         {
-          "start": 5754,
-          "end": 5765,
+          "start": 5815,
+          "end": 5826,
           "before": "this.lasers",
           "after": "a4PrivateHost.lasers",
-          "generatedStart": 6217
+          "generatedStart": 6296
         },
         {
-          "start": 5789,
-          "end": 5805,
+          "start": 5850,
+          "end": 5866,
           "before": "this.speakerTops",
           "after": "a4ViewHost.speakerTops",
-          "generatedStart": 6261
+          "generatedStart": 6340
         },
         {
-          "start": 5904,
-          "end": 5918,
+          "start": 5965,
+          "end": 5979,
           "before": "this.holograms",
           "after": "a4PrivateHost.holograms",
-          "generatedStart": 6382
+          "generatedStart": 6461
         },
         {
-          "start": 6286,
-          "end": 6299,
+          "start": 6347,
+          "end": 6360,
           "before": "this.leyParty",
           "after": "a4ViewHost.leyParty",
-          "generatedStart": 6773
+          "generatedStart": 6852
         },
         {
-          "start": 6391,
-          "end": 6399,
+          "start": 6452,
+          "end": 6460,
           "before": "this.ley",
           "after": "a4ViewHost.ley",
-          "generatedStart": 6884
+          "generatedStart": 6963
         },
         {
-          "start": 6414,
-          "end": 6427,
+          "start": 6475,
+          "end": 6488,
           "before": "this.leyParty",
           "after": "a4ViewHost.leyParty",
-          "generatedStart": 6913
+          "generatedStart": 6992
         },
         {
-          "start": 6430,
-          "end": 6446,
+          "start": 6491,
+          "end": 6507,
           "before": "this.leyChainNow",
           "after": "a4PrivateHost.leyChainNow",
-          "generatedStart": 6935
+          "generatedStart": 7014
         },
         {
-          "start": 6448,
-          "end": 6462,
+          "start": 6509,
+          "end": 6523,
           "before": "this.leyColour",
           "after": "a4PrivateHost.leyColour",
-          "generatedStart": 6962
+          "generatedStart": 7041
         },
         {
-          "start": 6647,
-          "end": 6659,
+          "start": 6708,
+          "end": 6720,
           "before": "this.leyBase",
           "after": "a4PrivateHost.leyBase",
-          "generatedStart": 7170
+          "generatedStart": 7249
         },
         {
-          "start": 6720,
-          "end": 6734,
+          "start": 6781,
+          "end": 6795,
           "before": "this.leyScaled",
           "after": "a4ViewHost.leyScaled",
-          "generatedStart": 7252
+          "generatedStart": 7331
         },
         {
-          "start": 6738,
-          "end": 6752,
+          "start": 6799,
+          "end": 6813,
           "before": "this.leyScaled",
           "after": "a4ViewHost.leyScaled",
-          "generatedStart": 7276
+          "generatedStart": 7355
         },
         {
-          "start": 6761,
-          "end": 6769,
+          "start": 6822,
+          "end": 6830,
           "before": "this.ley",
           "after": "a4ViewHost.ley",
-          "generatedStart": 7305
+          "generatedStart": 7384
         },
         {
-          "start": 7283,
-          "end": 7291,
+          "start": 7344,
+          "end": 7352,
           "before": "this.ley",
           "after": "a4ViewHost.ley",
-          "generatedStart": 7833
+          "generatedStart": 7912
         },
         {
-          "start": 7455,
-          "end": 7463,
+          "start": 7516,
+          "end": 7524,
           "before": "this.ley",
           "after": "a4ViewHost.ley",
-          "generatedStart": 8011
+          "generatedStart": 8090
         },
         {
-          "start": 7910,
-          "end": 7918,
+          "start": 7971,
+          "end": 7979,
           "before": "this.ley",
           "after": "a4ViewHost.ley",
-          "generatedStart": 8472
+          "generatedStart": 8551
         },
         {
-          "start": 8047,
-          "end": 8055,
+          "start": 8108,
+          "end": 8116,
           "before": "this.ley",
           "after": "a4ViewHost.ley",
-          "generatedStart": 8615
+          "generatedStart": 8694
         },
         {
-          "start": 8529,
-          "end": 8537,
+          "start": 8590,
+          "end": 8598,
           "before": "this.ley",
           "after": "a4ViewHost.ley",
-          "generatedStart": 9103
+          "generatedStart": 9182
         },
         {
-          "start": 8632,
-          "end": 8643,
+          "start": 8693,
+          "end": 8704,
           "before": "this.leyRgb",
           "after": "a4PrivateHost.leyRgb",
-          "generatedStart": 9212
+          "generatedStart": 9291
         },
         {
-          "start": 8667,
-          "end": 8675,
+          "start": 8728,
+          "end": 8736,
           "before": "this.ley",
           "after": "a4ViewHost.ley",
-          "generatedStart": 9256
+          "generatedStart": 9335
         },
         {
-          "start": 8857,
-          "end": 8865,
+          "start": 8918,
+          "end": 8926,
           "before": "this.ley",
           "after": "a4ViewHost.ley",
-          "generatedStart": 9452
+          "generatedStart": 9531
         },
         {
-          "start": 8876,
-          "end": 8884,
+          "start": 8937,
+          "end": 8945,
           "before": "this.ley",
           "after": "a4ViewHost.ley",
-          "generatedStart": 9477
+          "generatedStart": 9556
         },
         {
-          "start": 8905,
-          "end": 8915,
+          "start": 8966,
+          "end": 8976,
           "before": "this.magic",
           "after": "a4ViewHost.magic",
-          "generatedStart": 9512
+          "generatedStart": 9591
         },
         {
-          "start": 9005,
-          "end": 9019,
+          "start": 9066,
+          "end": 9080,
           "before": "this.leashView",
           "after": "a4ViewHost.leashView",
-          "generatedStart": 9618
+          "generatedStart": 9697
         },
         {
-          "start": 9026,
-          "end": 9034,
+          "start": 9087,
+          "end": 9095,
           "before": "this.ley",
           "after": "a4ViewHost.ley",
-          "generatedStart": 9645
+          "generatedStart": 9724
         },
         {
-          "start": 9309,
-          "end": 9323,
+          "start": 9370,
+          "end": 9384,
           "before": "this.gladeTime",
           "after": "a4ViewHost.gladeTime",
-          "generatedStart": 9934
+          "generatedStart": 10013
         },
         {
-          "start": 9327,
-          "end": 9341,
+          "start": 9388,
+          "end": 9402,
           "before": "this.gladeTime",
           "after": "a4ViewHost.gladeTime",
-          "generatedStart": 9958
+          "generatedStart": 10037
         },
         {
-          "start": 9779,
-          "end": 9790,
+          "start": 9840,
+          "end": 9851,
           "before": "this.glades",
           "after": "a4PrivateHost.glades",
-          "generatedStart": 10416
+          "generatedStart": 10495
         },
         {
-          "start": 9859,
-          "end": 9873,
+          "start": 9920,
+          "end": 9934,
           "before": "this.telescope",
           "after": "a4ViewHost.telescope",
-          "generatedStart": 10505
+          "generatedStart": 10584
         },
         {
-          "start": 9924,
-          "end": 9934,
+          "start": 9985,
+          "end": 9995,
           "before": "this.wisps",
           "after": "a4PrivateHost.wisps",
-          "generatedStart": 10576
+          "generatedStart": 10655
         },
         {
-          "start": 10019,
-          "end": 10028,
+          "start": 10080,
+          "end": 10089,
           "before": "this.time",
           "after": "a4ViewHost.time",
-          "generatedStart": 10680
+          "generatedStart": 10759
         },
         {
-          "start": 11042,
-          "end": 11054,
+          "start": 11103,
+          "end": 11115,
           "before": "this.strings",
           "after": "a4PrivateHost.strings",
-          "generatedStart": 11709
+          "generatedStart": 11788
         },
         {
-          "start": 11069,
-          "end": 11081,
+          "start": 11130,
+          "end": 11142,
           "before": "this.borders",
           "after": "a4PrivateHost.borders",
-          "generatedStart": 11745
+          "generatedStart": 11824
         },
         {
-          "start": 11186,
-          "end": 11201,
+          "start": 11247,
+          "end": 11262,
           "before": "this.houseShift",
           "after": "a4ViewHost.houseShift",
-          "generatedStart": 11871
+          "generatedStart": 11950
         },
         {
-          "start": 11217,
-          "end": 11221,
+          "start": 11278,
+          "end": 11282,
           "before": "this",
           "after": "a4ViewHost",
-          "generatedStart": 11908
+          "generatedStart": 11987
         },
         {
-          "start": 11305,
-          "end": 11316,
+          "start": 11366,
+          "end": 11377,
           "before": "this.assets",
           "after": "a4ViewHost.assets",
-          "generatedStart": 12002
+          "generatedStart": 12081
         },
         {
-          "start": 11373,
-          "end": 11377,
+          "start": 11434,
+          "end": 11438,
           "before": "this",
           "after": "a4ViewHost",
-          "generatedStart": 12076
+          "generatedStart": 12155
         },
         {
-          "start": 11549,
-          "end": 11557,
+          "start": 11610,
+          "end": 11618,
           "before": "this.mpp",
           "after": "a4ViewHost.mpp",
-          "generatedStart": 12258
+          "generatedStart": 12337
         },
         {
-          "start": 11579,
-          "end": 11587,
+          "start": 11640,
+          "end": 11648,
           "before": "this.mpp",
           "after": "a4ViewHost.mpp",
-          "generatedStart": 12294
+          "generatedStart": 12373
         },
         {
-          "start": 11764,
-          "end": 11777,
+          "start": 11825,
+          "end": 11838,
           "before": "this.mapTable",
           "after": "a4ViewHost.mapTable",
-          "generatedStart": 12485
+          "generatedStart": 12564
         },
         {
-          "start": 11943,
-          "end": 11956,
+          "start": 12004,
+          "end": 12017,
           "before": "this.mapTable",
           "after": "a4ViewHost.mapTable",
-          "generatedStart": 12670
+          "generatedStart": 12749
         },
         {
-          "start": 12908,
-          "end": 12924,
+          "start": 12969,
+          "end": 12985,
           "before": "DECK_LANTERN_RGB",
           "after": "a4SharedHost.DECK_LANTERN_RGB",
-          "generatedStart": 13641
+          "generatedStart": 13720
         },
         {
-          "start": 13365,
-          "end": 13369,
+          "start": 13426,
+          "end": 13430,
           "before": "this",
           "after": "a4ViewHost",
-          "generatedStart": 14111
+          "generatedStart": 14190
         },
         {
-          "start": 13417,
-          "end": 13421,
+          "start": 13478,
+          "end": 13482,
           "before": "this",
           "after": "a4ViewHost",
-          "generatedStart": 14169
+          "generatedStart": 14248
         },
         {
-          "start": 13446,
-          "end": 13458,
+          "start": 13507,
+          "end": 13519,
           "before": "this.spellFx",
           "after": "a4ViewHost.spellFx",
-          "generatedStart": 14204
+          "generatedStart": 14283
         },
         {
-          "start": 13499,
-          "end": 13511,
+          "start": 13560,
+          "end": 13572,
           "before": "this.rideOff",
           "after": "a4ViewHost.rideOff",
-          "generatedStart": 14263
+          "generatedStart": 14342
         },
         {
-          "start": 13585,
-          "end": 13595,
+          "start": 13646,
+          "end": 13656,
           "before": "this.magic",
           "after": "a4ViewHost.magic",
-          "generatedStart": 14355
+          "generatedStart": 14434
         },
         {
-          "start": 13679,
-          "end": 13689,
+          "start": 13740,
+          "end": 13750,
           "before": "this.magic",
           "after": "a4ViewHost.magic",
-          "generatedStart": 14455
+          "generatedStart": 14534
         },
         {
-          "start": 13807,
-          "end": 13822,
+          "start": 13868,
+          "end": 13883,
           "before": "this.magicBlink",
           "after": "a4PrivateHost.magicBlink",
-          "generatedStart": 14589
+          "generatedStart": 14668
         },
         {
-          "start": 13879,
-          "end": 13894,
+          "start": 13940,
+          "end": 13955,
           "before": "this.magicBlink",
           "after": "a4PrivateHost.magicBlink",
-          "generatedStart": 14670
+          "generatedStart": 14749
         },
         {
-          "start": 13913,
-          "end": 13923,
+          "start": 13974,
+          "end": 13984,
           "before": "this.magic",
           "after": "a4ViewHost.magic",
-          "generatedStart": 14713
+          "generatedStart": 14792
         },
         {
-          "start": 14009,
-          "end": 14019,
+          "start": 14070,
+          "end": 14080,
           "before": "this.magic",
           "after": "a4ViewHost.magic",
-          "generatedStart": 14815
+          "generatedStart": 14894
         },
         {
-          "start": 14484,
-          "end": 14497,
+          "start": 14545,
+          "end": 14558,
           "before": "this.trailRgb",
           "after": "a4PrivateHost.trailRgb",
-          "generatedStart": 15296
+          "generatedStart": 15375
         },
         {
-          "start": 14517,
-          "end": 14530,
+          "start": 14578,
+          "end": 14591,
           "before": "this.trailRgb",
           "after": "a4PrivateHost.trailRgb",
-          "generatedStart": 15338
+          "generatedStart": 15417
         },
         {
-          "start": 14536,
-          "end": 14550,
+          "start": 14597,
+          "end": 14611,
           "before": "this.markerArt",
           "after": "a4ViewHost.markerArt",
-          "generatedStart": 15366
+          "generatedStart": 15445
         },
         {
-          "start": 14594,
-          "end": 14607,
+          "start": 14655,
+          "end": 14668,
           "before": "this.trailRgb",
           "after": "a4PrivateHost.trailRgb",
-          "generatedStart": 15430
+          "generatedStart": 15509
         },
         {
-          "start": 14644,
-          "end": 14656,
+          "start": 14705,
+          "end": 14717,
           "before": "this.trailAt",
           "after": "a4ViewHost.trailAt",
-          "generatedStart": 15489
+          "generatedStart": 15568
         },
         {
-          "start": 14698,
-          "end": 14710,
+          "start": 14759,
+          "end": 14771,
           "before": "this.trailAt",
           "after": "a4ViewHost.trailAt",
-          "generatedStart": 15549
+          "generatedStart": 15628
         },
         {
-          "start": 14714,
-          "end": 14726,
+          "start": 14775,
+          "end": 14787,
           "before": "this.trailAt",
           "after": "a4ViewHost.trailAt",
-          "generatedStart": 15571
+          "generatedStart": 15650
         },
         {
-          "start": 15331,
-          "end": 15341,
+          "start": 15392,
+          "end": 15402,
           "before": "this.trail",
           "after": "a4PrivateHost.trail",
-          "generatedStart": 16194
-        },
-        {
-          "start": 15701,
-          "end": 15711,
-          "before": "this.trail",
-          "after": "a4PrivateHost.trail",
-          "generatedStart": 16573
-        },
-        {
-          "start": 15731,
-          "end": 15742,
-          "before": "this.camera",
-          "after": "a4ViewHost.camera",
-          "generatedStart": 16612
-        },
-        {
-          "start": 15747,
-          "end": 15757,
-          "before": "this.width",
-          "after": "a4ViewHost.width",
-          "generatedStart": 16634
+          "generatedStart": 16273
         },
         {
           "start": 15762,
-          "end": 15773,
-          "before": "this.height",
-          "after": "a4ViewHost.height",
-          "generatedStart": 16655
-        },
-        {
-          "start": 15783,
-          "end": 15793,
+          "end": 15772,
           "before": "this.trail",
           "after": "a4PrivateHost.trail",
-          "generatedStart": 16682
+          "generatedStart": 16652
         },
         {
-          "start": 15847,
-          "end": 15859,
-          "before": "this.rideOff",
-          "after": "a4ViewHost.rideOff",
-          "generatedStart": 16755
-        },
-        {
-          "start": 16630,
-          "end": 16644,
-          "before": "this.leashView",
-          "after": "a4ViewHost.leashView",
-          "generatedStart": 17544
-        },
-        {
-          "start": 17196,
-          "end": 17206,
-          "before": "HAT_BESIDE",
-          "after": "a4SharedHost.HAT_BESIDE",
-          "generatedStart": 18116
-        },
-        {
-          "start": 17295,
-          "end": 17305,
-          "before": "HAT_BESIDE",
-          "after": "a4SharedHost.HAT_BESIDE",
-          "generatedStart": 18228
-        },
-        {
-          "start": 17901,
-          "end": 17905,
-          "before": "this",
-          "after": "a4ViewHost",
-          "generatedStart": 18847
-        },
-        {
-          "start": 18203,
-          "end": 18212,
-          "before": "this.time",
-          "after": "a4ViewHost.time",
-          "generatedStart": 19155
-        },
-        {
-          "start": 18229,
-          "end": 18239,
-          "before": "this.grass",
-          "after": "a4ViewHost.grass",
-          "generatedStart": 19187
-        },
-        {
-          "start": 18439,
-          "end": 18456,
-          "before": "this.partyObjects",
-          "after": "a4ViewHost.partyObjects",
-          "generatedStart": 19403
-        },
-        {
-          "start": 18473,
-          "end": 18484,
+          "start": 15792,
+          "end": 15803,
           "before": "this.camera",
           "after": "a4ViewHost.camera",
-          "generatedStart": 19443
+          "generatedStart": 16691
         },
         {
-          "start": 18511,
-          "end": 18515,
+          "start": 15808,
+          "end": 15818,
+          "before": "this.width",
+          "after": "a4ViewHost.width",
+          "generatedStart": 16713
+        },
+        {
+          "start": 15823,
+          "end": 15834,
+          "before": "this.height",
+          "after": "a4ViewHost.height",
+          "generatedStart": 16734
+        },
+        {
+          "start": 15844,
+          "end": 15854,
+          "before": "this.trail",
+          "after": "a4PrivateHost.trail",
+          "generatedStart": 16761
+        },
+        {
+          "start": 15908,
+          "end": 15920,
+          "before": "this.rideOff",
+          "after": "a4ViewHost.rideOff",
+          "generatedStart": 16834
+        },
+        {
+          "start": 16691,
+          "end": 16705,
+          "before": "this.leashView",
+          "after": "a4ViewHost.leashView",
+          "generatedStart": 17623
+        },
+        {
+          "start": 17257,
+          "end": 17267,
+          "before": "HAT_BESIDE",
+          "after": "a4SharedHost.HAT_BESIDE",
+          "generatedStart": 18195
+        },
+        {
+          "start": 17356,
+          "end": 17366,
+          "before": "HAT_BESIDE",
+          "after": "a4SharedHost.HAT_BESIDE",
+          "generatedStart": 18307
+        },
+        {
+          "start": 17962,
+          "end": 17966,
           "before": "this",
           "after": "a4ViewHost",
-          "generatedStart": 19487
+          "generatedStart": 18926
         },
         {
-          "start": 18535,
-          "end": 18550,
-          "before": "this.worldFires",
-          "after": "a4ViewHost.worldFires",
-          "generatedStart": 19517
+          "start": 18264,
+          "end": 18273,
+          "before": "this.time",
+          "after": "a4ViewHost.time",
+          "generatedStart": 19234
         },
         {
-          "start": 18552,
-          "end": 18565,
-          "before": "this.lastView",
-          "after": "a4ViewHost.lastView",
-          "generatedStart": 19540
+          "start": 18290,
+          "end": 18300,
+          "before": "this.grass",
+          "after": "a4ViewHost.grass",
+          "generatedStart": 19266
+        },
+        {
+          "start": 18500,
+          "end": 18517,
+          "before": "this.partyObjects",
+          "after": "a4ViewHost.partyObjects",
+          "generatedStart": 19482
+        },
+        {
+          "start": 18534,
+          "end": 18545,
+          "before": "this.camera",
+          "after": "a4ViewHost.camera",
+          "generatedStart": 19522
         },
         {
           "start": 18572,
-          "end": 18588,
-          "before": "this.updateSteam",
-          "after": "a4PrivateHost.updateSteam",
+          "end": 18576,
+          "before": "this",
+          "after": "a4ViewHost",
           "generatedStart": 19566
         },
         {
-          "start": 18603,
-          "end": 18617,
-          "before": "this.lakeShore",
-          "after": "a4PrivateHost.lakeShore",
-          "generatedStart": 19606
+          "start": 18596,
+          "end": 18611,
+          "before": "this.worldFires",
+          "after": "a4ViewHost.worldFires",
+          "generatedStart": 19596
         },
         {
-          "start": 18628,
-          "end": 18639,
+          "start": 18613,
+          "end": 18626,
+          "before": "this.lastView",
+          "after": "a4ViewHost.lastView",
+          "generatedStart": 19619
+        },
+        {
+          "start": 18633,
+          "end": 18649,
+          "before": "this.updateSteam",
+          "after": "a4PrivateHost.updateSteam",
+          "generatedStart": 19645
+        },
+        {
+          "start": 18664,
+          "end": 18678,
+          "before": "this.lakeShore",
+          "after": "a4PrivateHost.lakeShore",
+          "generatedStart": 19685
+        },
+        {
+          "start": 18689,
+          "end": 18700,
           "before": "this.assets",
           "after": "a4ViewHost.assets",
-          "generatedStart": 19640
+          "generatedStart": 19719
         },
         {
-          "start": 18656,
-          "end": 18672,
+          "start": 18717,
+          "end": 18733,
           "before": "this.updateSmoke",
           "after": "a4PrivateHost.updateSmoke",
-          "generatedStart": 19674
+          "generatedStart": 19753
         },
         {
-          "start": 19136,
-          "end": 19151,
+          "start": 19197,
+          "end": 19212,
           "before": "this.dancefloor",
           "after": "a4PrivateHost.dancefloor",
-          "generatedStart": 20163
+          "generatedStart": 20242
         },
         {
-          "start": 19165,
-          "end": 19176,
+          "start": 19226,
+          "end": 19237,
           "before": "this.ground",
           "after": "a4ViewHost.ground",
-          "generatedStart": 20201
+          "generatedStart": 20280
         },
         {
-          "start": 19330,
-          "end": 19347,
+          "start": 19391,
+          "end": 19408,
           "before": "this.speakerBatch",
           "after": "a4ViewHost.speakerBatch",
-          "generatedStart": 20372
+          "generatedStart": 20451
         },
         {
-          "start": 19364,
-          "end": 19379,
+          "start": 19425,
+          "end": 19440,
           "before": "this.dancefloor",
           "after": "a4PrivateHost.dancefloor",
-          "generatedStart": 20412
+          "generatedStart": 20491
         },
         {
-          "start": 19386,
-          "end": 19401,
+          "start": 19447,
+          "end": 19462,
           "before": "this.dancefloor",
           "after": "a4PrivateHost.dancefloor",
-          "generatedStart": 20443
+          "generatedStart": 20522
         },
         {
-          "start": 19408,
-          "end": 19423,
+          "start": 19469,
+          "end": 19484,
           "before": "this.dancefloor",
           "after": "a4PrivateHost.dancefloor",
-          "generatedStart": 20474
+          "generatedStart": 20553
         },
         {
-          "start": 19457,
-          "end": 19476,
+          "start": 19518,
+          "end": 19537,
           "before": "this.treehouseBatch",
           "after": "a4ViewHost.treehouseBatch",
-          "generatedStart": 20532
+          "generatedStart": 20611
         },
         {
-          "start": 19495,
-          "end": 19499,
+          "start": 19556,
+          "end": 19560,
           "before": "this",
           "after": "a4ViewHost",
-          "generatedStart": 20576
+          "generatedStart": 20655
         },
         {
-          "start": 19569,
-          "end": 19584,
+          "start": 19630,
+          "end": 19645,
           "before": "this.zooExitTag",
           "after": "a4ViewHost.zooExitTag",
-          "generatedStart": 20656
+          "generatedStart": 20735
         },
         {
-          "start": 19614,
-          "end": 19618,
+          "start": 19675,
+          "end": 19679,
           "before": "this",
           "after": "a4ViewHost",
-          "generatedStart": 20707
+          "generatedStart": 20786
         },
         {
-          "start": 19644,
-          "end": 19655,
+          "start": 19705,
+          "end": 19716,
           "before": "this.island",
           "after": "a4ViewHost.island",
-          "generatedStart": 20743
+          "generatedStart": 20822
         },
         {
-          "start": 19821,
-          "end": 19833,
+          "start": 19882,
+          "end": 19894,
           "before": "this.rideOff",
           "after": "a4ViewHost.rideOff",
-          "generatedStart": 20926
+          "generatedStart": 21005
         },
         {
-          "start": 19849,
-          "end": 19860,
+          "start": 19910,
+          "end": 19921,
           "before": "this.island",
           "after": "a4ViewHost.island",
-          "generatedStart": 20960
+          "generatedStart": 21039
         },
         {
-          "start": 19915,
-          "end": 19919,
+          "start": 19976,
+          "end": 19980,
           "before": "this",
           "after": "a4ViewHost",
-          "generatedStart": 21032
+          "generatedStart": 21111
         },
         {
-          "start": 19951,
-          "end": 19955,
+          "start": 20012,
+          "end": 20016,
           "before": "this",
           "after": "a4ViewHost",
-          "generatedStart": 21074
+          "generatedStart": 21153
         },
         {
-          "start": 20232,
-          "end": 20241,
+          "start": 20293,
+          "end": 20302,
           "before": "PLAZA_RGB",
           "after": "a4SharedHost.PLAZA_RGB",
-          "generatedStart": 21361
+          "generatedStart": 21440
         },
         {
-          "start": 20287,
-          "end": 20301,
+          "start": 20348,
+          "end": 20362,
           "before": "this.fireworks",
           "after": "a4ViewHost.fireworks",
-          "generatedStart": 21429
+          "generatedStart": 21508
         },
         {
-          "start": 20403,
-          "end": 20407,
+          "start": 20464,
+          "end": 20468,
           "before": "this",
           "after": "a4ViewHost",
-          "generatedStart": 21551
-        },
-        {
-          "start": 20419,
-          "end": 20433,
-          "before": "this.lakeShore",
-          "after": "a4PrivateHost.lakeShore",
-          "generatedStart": 21573
+          "generatedStart": 21630
         },
         {
           "start": 20480,
-          "end": 20484,
-          "before": "this",
-          "after": "a4ViewHost",
-          "generatedStart": 21643
+          "end": 20494,
+          "before": "this.lakeShore",
+          "after": "a4PrivateHost.lakeShore",
+          "generatedStart": 21652
         },
         {
-          "start": 20512,
-          "end": 20524,
+          "start": 20541,
+          "end": 20545,
+          "before": "this",
+          "after": "a4ViewHost",
+          "generatedStart": 21722
+        },
+        {
+          "start": 20573,
+          "end": 20585,
           "before": "this.rideOff",
           "after": "a4ViewHost.rideOff",
-          "generatedStart": 21681
+          "generatedStart": 21760
         },
         {
-          "start": 20569,
-          "end": 20573,
+          "start": 20630,
+          "end": 20634,
           "before": "this",
           "after": "a4ViewHost",
-          "generatedStart": 21744
+          "generatedStart": 21823
         },
         {
-          "start": 20585,
-          "end": 20602,
+          "start": 20646,
+          "end": 20663,
           "before": "this.forestLights",
           "after": "a4ViewHost.forestLights",
-          "generatedStart": 21766
+          "generatedStart": 21845
         },
         {
-          "start": 21050,
-          "end": 21073,
+          "start": 21111,
+          "end": 21134,
           "before": "this.trunkShadowBatches",
           "after": "a4ViewHost.trunkShadowBatches",
-          "generatedStart": 22237
+          "generatedStart": 22316
         },
         {
-          "start": 21106,
-          "end": 21117,
+          "start": 21167,
+          "end": 21178,
           "before": "this.castOn",
           "after": "a4PrivateHost.castOn",
-          "generatedStart": 22299
+          "generatedStart": 22378
         },
         {
-          "start": 21185,
-          "end": 21199,
+          "start": 21246,
+          "end": 21260,
           "before": "this.beachView",
           "after": "a4ViewHost.beachView",
-          "generatedStart": 22387
+          "generatedStart": 22466
         },
         {
-          "start": 21213,
-          "end": 21227,
+          "start": 21274,
+          "end": 21288,
           "before": "this.beachView",
           "after": "a4ViewHost.beachView",
-          "generatedStart": 22421
+          "generatedStart": 22500
         },
         {
-          "start": 21447,
-          "end": 21464,
+          "start": 21508,
+          "end": 21525,
           "before": "this.shadowLights",
           "after": "a4PrivateHost.shadowLights",
-          "generatedStart": 22661
+          "generatedStart": 22740
         },
         {
-          "start": 21516,
-          "end": 21533,
+          "start": 21577,
+          "end": 21594,
           "before": "this.forestLights",
           "after": "a4ViewHost.forestLights",
-          "generatedStart": 22739
+          "generatedStart": 22818
         },
         {
-          "start": 21549,
-          "end": 21558,
+          "start": 21610,
+          "end": 21619,
           "before": "this.fire",
           "after": "a4ViewHost.fire",
-          "generatedStart": 22778
+          "generatedStart": 22857
         },
         {
-          "start": 23113,
-          "end": 23122,
+          "start": 23174,
+          "end": 23183,
           "before": "this.time",
           "after": "a4ViewHost.time",
-          "generatedStart": 24348
+          "generatedStart": 24427
         },
         {
-          "start": 23144,
-          "end": 23153,
+          "start": 23205,
+          "end": 23214,
           "before": "this.mist",
           "after": "a4ViewHost.mist",
-          "generatedStart": 24385
+          "generatedStart": 24464
         },
         {
-          "start": 23189,
-          "end": 23205,
+          "start": 23250,
+          "end": 23266,
           "before": "this.loadingMist",
           "after": "a4ViewHost.loadingMist",
-          "generatedStart": 24436
+          "generatedStart": 24515
         },
         {
-          "start": 23327,
-          "end": 23343,
+          "start": 23388,
+          "end": 23404,
           "before": "this.loadingMist",
           "after": "a4ViewHost.loadingMist",
-          "generatedStart": 24580
+          "generatedStart": 24659
         },
         {
-          "start": 23363,
-          "end": 23374,
+          "start": 23424,
+          "end": 23435,
           "before": "this.assets",
           "after": "a4ViewHost.assets",
-          "generatedStart": 24622
+          "generatedStart": 24701
         },
         {
-          "start": 23399,
-          "end": 23414,
+          "start": 23460,
+          "end": 23475,
           "before": "this.lightRings",
           "after": "a4ViewHost.lightRings",
-          "generatedStart": 24664
+          "generatedStart": 24743
         },
         {
-          "start": 23423,
-          "end": 23434,
+          "start": 23484,
+          "end": 23495,
           "before": "this.camera",
           "after": "a4ViewHost.camera",
-          "generatedStart": 24694
+          "generatedStart": 24773
         },
         {
-          "start": 23461,
-          "end": 23473,
+          "start": 23522,
+          "end": 23534,
           "before": "this.rideOff",
           "after": "a4ViewHost.rideOff",
-          "generatedStart": 24738
+          "generatedStart": 24817
         },
         {
-          "start": 23532,
-          "end": 23536,
+          "start": 23593,
+          "end": 23597,
           "before": "this",
           "after": "a4ViewHost",
-          "generatedStart": 24815
+          "generatedStart": 24894
         },
         {
-          "start": 23579,
-          "end": 23594,
+          "start": 23640,
+          "end": 23655,
           "before": "this.partyStart",
           "after": "a4ViewHost.partyStart",
-          "generatedStart": 24868
-        },
-        {
-          "start": 23612,
-          "end": 23622,
-          "before": "this.magic",
-          "after": "a4ViewHost.magic",
-          "generatedStart": 24907
-        },
-        {
-          "start": 23656,
-          "end": 23660,
-          "before": "this",
-          "after": "a4ViewHost",
-          "generatedStart": 24957
+          "generatedStart": 24947
         },
         {
           "start": 23673,
-          "end": 23690,
-          "before": "this.mushroomView",
-          "after": "a4PrivateHost.mushroomView",
-          "generatedStart": 24980
+          "end": 23683,
+          "before": "this.magic",
+          "after": "a4ViewHost.magic",
+          "generatedStart": 24986
         },
         {
-          "start": 23698,
-          "end": 23702,
+          "start": 23717,
+          "end": 23721,
           "before": "this",
           "after": "a4ViewHost",
-          "generatedStart": 25014
-        },
-        {
-          "start": 23709,
-          "end": 23720,
-          "before": "this.ground",
-          "after": "a4ViewHost.ground",
-          "generatedStart": 25031
+          "generatedStart": 25036
         },
         {
           "start": 23734,
-          "end": 23747,
+          "end": 23751,
+          "before": "this.mushroomView",
+          "after": "a4PrivateHost.mushroomView",
+          "generatedStart": 25059
+        },
+        {
+          "start": 23759,
+          "end": 23763,
+          "before": "this",
+          "after": "a4ViewHost",
+          "generatedStart": 25093
+        },
+        {
+          "start": 23770,
+          "end": 23781,
+          "before": "this.ground",
+          "after": "a4ViewHost.ground",
+          "generatedStart": 25110
+        },
+        {
+          "start": 23795,
+          "end": 23808,
           "before": "this.renderer",
           "after": "a4ViewHost.renderer",
-          "generatedStart": 25062
+          "generatedStart": 25141
         },
         {
-          "start": 23749,
-          "end": 23760,
+          "start": 23810,
+          "end": 23821,
           "before": "this.camera",
           "after": "a4ViewHost.camera",
-          "generatedStart": 25083
+          "generatedStart": 25162
         },
         {
-          "start": 23762,
-          "end": 23772,
+          "start": 23823,
+          "end": 23833,
           "before": "this.scene",
           "after": "a4ViewHost.scene",
-          "generatedStart": 25102
+          "generatedStart": 25181
         },
         {
-          "start": 23779,
-          "end": 23794,
+          "start": 23840,
+          "end": 23855,
           "before": "this.houseRooms",
           "after": "a4ViewHost.houseRooms",
-          "generatedStart": 25125
+          "generatedStart": 25204
         },
         {
-          "start": 23803,
-          "end": 23807,
+          "start": 23864,
+          "end": 23868,
           "before": "this",
           "after": "a4ViewHost",
-          "generatedStart": 25155
+          "generatedStart": 25234
         },
         {
-          "start": 23831,
-          "end": 23851,
+          "start": 23892,
+          "end": 23912,
           "before": "this.potionObservers",
           "after": "a4PrivateHost.potionObservers",
-          "generatedStart": 25189
+          "generatedStart": 25268
         },
         {
-          "start": 23859,
-          "end": 23863,
+          "start": 23920,
+          "end": 23924,
           "before": "this",
           "after": "a4ViewHost",
-          "generatedStart": 25226
+          "generatedStart": 25305
         },
         {
-          "start": 23960,
-          "end": 23975,
+          "start": 24021,
+          "end": 24036,
           "before": "this.masterplan",
           "after": "a4PrivateHost.masterplan",
-          "generatedStart": 25333
-        },
-        {
-          "start": 23999,
-          "end": 24003,
-          "before": "this",
-          "after": "a4ViewHost",
-          "generatedStart": 25381
-        },
-        {
-          "start": 24041,
-          "end": 24056,
-          "before": "this.masterplan",
-          "after": "a4PrivateHost.masterplan",
-          "generatedStart": 25429
+          "generatedStart": 25412
         },
         {
           "start": 24060,
-          "end": 24075,
-          "before": "this.masterplan",
-          "after": "a4PrivateHost.masterplan",
-          "generatedStart": 25457
+          "end": 24064,
+          "before": "this",
+          "after": "a4ViewHost",
+          "generatedStart": 25460
         },
         {
-          "start": 24087,
-          "end": 24102,
+          "start": 24102,
+          "end": 24117,
           "before": "this.masterplan",
           "after": "a4PrivateHost.masterplan",
-          "generatedStart": 25493
+          "generatedStart": 25508
         },
         {
-          "start": 24126,
+          "start": 24121,
           "end": 24136,
+          "before": "this.masterplan",
+          "after": "a4PrivateHost.masterplan",
+          "generatedStart": 25536
+        },
+        {
+          "start": 24148,
+          "end": 24163,
+          "before": "this.masterplan",
+          "after": "a4PrivateHost.masterplan",
+          "generatedStart": 25572
+        },
+        {
+          "start": 24187,
+          "end": 24197,
           "before": "this.crown",
           "after": "a4ViewHost.crown",
-          "generatedStart": 25541
+          "generatedStart": 25620
         },
         {
-          "start": 24141,
-          "end": 24158,
+          "start": 24202,
+          "end": 24219,
           "before": "this.crownNoNotch",
           "after": "a4PrivateHost.crownNoNotch",
-          "generatedStart": 25562
+          "generatedStart": 25641
         },
         {
-          "start": 24201,
-          "end": 24211,
+          "start": 24262,
+          "end": 24272,
           "before": "this.crown",
           "after": "a4ViewHost.crown",
-          "generatedStart": 25631
+          "generatedStart": 25710
         },
         {
-          "start": 24267,
-          "end": 24277,
+          "start": 24328,
+          "end": 24338,
           "before": "this.crown",
           "after": "a4ViewHost.crown",
-          "generatedStart": 25703
+          "generatedStart": 25782
         },
         {
-          "start": 24339,
-          "end": 24355,
+          "start": 24400,
+          "end": 24416,
           "before": "this.ensureCrown",
           "after": "a4PrivateHost.ensureCrown",
-          "generatedStart": 25781
+          "generatedStart": 25860
         },
         {
-          "start": 24356,
-          "end": 24365,
+          "start": 24417,
+          "end": 24426,
           "before": "this.game",
           "after": "a4ViewHost.game",
-          "generatedStart": 25807
+          "generatedStart": 25886
         },
         {
-          "start": 24456,
-          "end": 24466,
+          "start": 24517,
+          "end": 24527,
           "before": "this.crown",
           "after": "a4ViewHost.crown",
-          "generatedStart": 25913
+          "generatedStart": 25992
         },
         {
-          "start": 24582,
-          "end": 24597,
+          "start": 24643,
+          "end": 24658,
           "before": "this.crownWorld",
           "after": "a4PrivateHost.crownWorld",
-          "generatedStart": 26045
+          "generatedStart": 26124
         },
         {
-          "start": 24808,
-          "end": 24823,
+          "start": 24869,
+          "end": 24884,
           "before": "this.houseRooms",
           "after": "a4ViewHost.houseRooms",
-          "generatedStart": 26280
+          "generatedStart": 26359
         },
         {
-          "start": 24872,
-          "end": 24884,
+          "start": 24933,
+          "end": 24945,
           "before": "this.crownAt",
           "after": "a4PrivateHost.crownAt",
-          "generatedStart": 26350
+          "generatedStart": 26429
         },
         {
-          "start": 24919,
-          "end": 24931,
+          "start": 24980,
+          "end": 24992,
           "before": "this.crownAt",
           "after": "a4PrivateHost.crownAt",
-          "generatedStart": 26406
+          "generatedStart": 26485
         },
         {
-          "start": 24939,
-          "end": 24951,
+          "start": 25000,
+          "end": 25012,
           "before": "this.crownAt",
           "after": "a4PrivateHost.crownAt",
-          "generatedStart": 26435
-        },
-        {
-          "start": 25388,
-          "end": 25398,
-          "before": "this.width",
-          "after": "a4ViewHost.width",
-          "generatedStart": 26893
+          "generatedStart": 26514
         },
         {
           "start": 25449,
           "end": 25459,
           "before": "this.width",
           "after": "a4ViewHost.width",
-          "generatedStart": 26960
+          "generatedStart": 26972
         },
         {
-          "start": 25469,
-          "end": 25479,
+          "start": 25510,
+          "end": 25520,
+          "before": "this.width",
+          "after": "a4ViewHost.width",
+          "generatedStart": 27039
+        },
+        {
+          "start": 25530,
+          "end": 25540,
           "before": "this.crown",
           "after": "a4ViewHost.crown",
-          "generatedStart": 26986
+          "generatedStart": 27065
         },
         {
-          "start": 25529,
-          "end": 25548,
+          "start": 25590,
+          "end": 25609,
           "before": "this.crownFarSource",
           "after": "a4PrivateHost.crownFarSource",
-          "generatedStart": 27052
+          "generatedStart": 27131
         },
         {
-          "start": 25550,
-          "end": 25569,
+          "start": 25611,
+          "end": 25630,
           "before": "this.crownFarSource",
           "after": "a4PrivateHost.crownFarSource",
-          "generatedStart": 27082
+          "generatedStart": 27161
         },
         {
-          "start": 25680,
-          "end": 25690,
+          "start": 25741,
+          "end": 25751,
           "before": "this.crown",
           "after": "a4ViewHost.crown",
-          "generatedStart": 27221
+          "generatedStart": 27300
         },
         {
-          "start": 25698,
-          "end": 25709,
+          "start": 25759,
+          "end": 25770,
           "before": "this.camera",
           "after": "a4ViewHost.camera",
-          "generatedStart": 27245
+          "generatedStart": 27324
         },
         {
-          "start": 26169,
-          "end": 26188,
+          "start": 26230,
+          "end": 26249,
           "before": "this.crownFarSource",
           "after": "a4PrivateHost.crownFarSource",
-          "generatedStart": 27722
+          "generatedStart": 27801
         },
         {
-          "start": 26190,
-          "end": 26209,
+          "start": 26251,
+          "end": 26270,
           "before": "this.crownFarSource",
           "after": "a4PrivateHost.crownFarSource",
-          "generatedStart": 27752
+          "generatedStart": 27831
         },
         {
-          "start": 26236,
-          "end": 26246,
+          "start": 26297,
+          "end": 26307,
           "before": "this.crown",
           "after": "a4ViewHost.crown",
-          "generatedStart": 27807
+          "generatedStart": 27886
         },
         {
-          "start": 26280,
-          "end": 26293,
+          "start": 26341,
+          "end": 26354,
           "before": "this.crownFar",
           "after": "a4PrivateHost.crownFar",
-          "generatedStart": 27857
+          "generatedStart": 27936
         },
         {
-          "start": 26397,
-          "end": 26418,
+          "start": 26458,
+          "end": 26479,
           "before": "this.shaderDrawStatus",
           "after": "a4ViewHost.shaderDrawStatus",
-          "generatedStart": 27983
+          "generatedStart": 28062
         },
         {
-          "start": 26427,
-          "end": 26440,
+          "start": 26488,
+          "end": 26501,
           "before": "this.crownFar",
           "after": "a4PrivateHost.crownFar",
-          "generatedStart": 28019
+          "generatedStart": 28098
         },
         {
-          "start": 26446,
-          "end": 26459,
+          "start": 26507,
+          "end": 26520,
           "before": "this.renderer",
           "after": "a4ViewHost.renderer",
-          "generatedStart": 28047
+          "generatedStart": 28126
         },
         {
-          "start": 26506,
-          "end": 26519,
+          "start": 26567,
+          "end": 26580,
           "before": "this.crownFar",
           "after": "a4PrivateHost.crownFar",
-          "generatedStart": 28113
+          "generatedStart": 28192
         },
         {
-          "start": 26527,
-          "end": 26538,
+          "start": 26588,
+          "end": 26599,
           "before": "this.camera",
           "after": "a4ViewHost.camera",
-          "generatedStart": 28143
+          "generatedStart": 28222
         },
         {
-          "start": 26607,
-          "end": 26617,
+          "start": 26668,
+          "end": 26678,
           "before": "this.crown",
           "after": "a4ViewHost.crown",
-          "generatedStart": 28229
+          "generatedStart": 28308
         },
         {
-          "start": 26865,
-          "end": 26878,
+          "start": 26926,
+          "end": 26939,
           "before": "this.crownFar",
           "after": "a4PrivateHost.crownFar",
-          "generatedStart": 28493
+          "generatedStart": 28572
         },
         {
-          "start": 26912,
-          "end": 26927,
+          "start": 26973,
+          "end": 26988,
           "before": "this.crownDrawn",
           "after": "a4PrivateHost.crownDrawn",
-          "generatedStart": 28549
+          "generatedStart": 28628
         },
         {
-          "start": 26931,
-          "end": 26946,
+          "start": 26992,
+          "end": 27007,
           "before": "this.crownDrawn",
           "after": "a4PrivateHost.crownDrawn",
-          "generatedStart": 28577
+          "generatedStart": 28656
         },
         {
-          "start": 26976,
-          "end": 26986,
+          "start": 27037,
+          "end": 27047,
           "before": "this.crown",
           "after": "a4ViewHost.crown",
-          "generatedStart": 28631
+          "generatedStart": 28710
         },
         {
-          "start": 26999,
-          "end": 27011,
+          "start": 27060,
+          "end": 27072,
           "before": "this.strings",
           "after": "a4PrivateHost.strings",
-          "generatedStart": 28660
+          "generatedStart": 28739
         },
         {
-          "start": 27065,
-          "end": 27074,
+          "start": 27126,
+          "end": 27135,
           "before": "this.time",
           "after": "a4ViewHost.time",
-          "generatedStart": 28735
+          "generatedStart": 28814
         },
         {
-          "start": 27097,
-          "end": 27101,
+          "start": 27158,
+          "end": 27162,
           "before": "this",
           "after": "a4ViewHost",
-          "generatedStart": 28773
+          "generatedStart": 28852
         },
         {
-          "start": 27108,
-          "end": 27117,
+          "start": 27169,
+          "end": 27178,
           "before": "this.time",
           "after": "a4ViewHost.time",
-          "generatedStart": 28790
+          "generatedStart": 28869
         },
         {
-          "start": 27134,
-          "end": 27152,
+          "start": 27195,
+          "end": 27213,
           "before": "this.easeAppearing",
           "after": "a4PrivateHost.easeAppearing",
-          "generatedStart": 28822
+          "generatedStart": 28901
         },
         {
-          "start": 27174,
-          "end": 27178,
+          "start": 27235,
+          "end": 27239,
           "before": "this",
           "after": "a4ViewHost",
-          "generatedStart": 28871
+          "generatedStart": 28950
         },
         {
-          "start": 27203,
-          "end": 27207,
+          "start": 27264,
+          "end": 27268,
           "before": "this",
           "after": "a4ViewHost",
-          "generatedStart": 28906
+          "generatedStart": 28985
         },
         {
-          "start": 27231,
-          "end": 27235,
+          "start": 27292,
+          "end": 27296,
           "before": "this",
           "after": "a4ViewHost",
-          "generatedStart": 28940
+          "generatedStart": 29019
         },
         {
-          "start": 27331,
-          "end": 27335,
+          "start": 27392,
+          "end": 27396,
           "before": "this",
           "after": "a4ViewHost",
-          "generatedStart": 29046
+          "generatedStart": 29125
         },
         {
-          "start": 27413,
-          "end": 27417,
+          "start": 27474,
+          "end": 27478,
           "before": "this",
           "after": "a4ViewHost",
-          "generatedStart": 29134
+          "generatedStart": 29213
         },
         {
-          "start": 27491,
-          "end": 27495,
+          "start": 27552,
+          "end": 27556,
           "before": "this",
           "after": "a4ViewHost",
-          "generatedStart": 29218
+          "generatedStart": 29297
         },
         {
-          "start": 27512,
-          "end": 27521,
+          "start": 27573,
+          "end": 27582,
           "before": "this.time",
           "after": "a4ViewHost.time",
-          "generatedStart": 29245
+          "generatedStart": 29324
         },
         {
-          "start": 27540,
-          "end": 27551,
+          "start": 27601,
+          "end": 27612,
           "before": "this.rulers",
           "after": "a4ViewHost.rulers",
-          "generatedStart": 29279
+          "generatedStart": 29358
         },
         {
-          "start": 27559,
-          "end": 27570,
+          "start": 27620,
+          "end": 27631,
           "before": "this.camera",
           "after": "a4ViewHost.camera",
-          "generatedStart": 29304
+          "generatedStart": 29383
         },
         {
-          "start": 27572,
-          "end": 27583,
+          "start": 27633,
+          "end": 27644,
           "before": "this.canvas",
           "after": "a4ViewHost.canvas",
-          "generatedStart": 29323
+          "generatedStart": 29402
         },
         {
-          "start": 27618,
-          "end": 27629,
+          "start": 27679,
+          "end": 27690,
           "before": "this.canvas",
           "after": "a4ViewHost.canvas",
-          "generatedStart": 29375
+          "generatedStart": 29454
         },
         {
-          "start": 27809,
-          "end": 27821,
+          "start": 27870,
+          "end": 27882,
           "before": "this.minimap",
           "after": "a4ViewHost.minimap",
-          "generatedStart": 29572
+          "generatedStart": 29651
         },
         {
-          "start": 27866,
-          "end": 27870,
+          "start": 27927,
+          "end": 27931,
           "before": "this",
           "after": "a4ViewHost",
-          "generatedStart": 29635
-        },
-        {
-          "start": 27883,
-          "end": 27892,
-          "before": "this.time",
-          "after": "a4ViewHost.time",
-          "generatedStart": 29658
-        },
-        {
-          "start": 27905,
-          "end": 27919,
-          "before": "this.leashView",
-          "after": "a4ViewHost.leashView",
-          "generatedStart": 29686
-        },
-        {
-          "start": 27931,
-          "end": 27942,
-          "before": "this.camera",
-          "after": "a4ViewHost.camera",
-          "generatedStart": 29718
+          "generatedStart": 29714
         },
         {
           "start": 27944,
-          "end": 27955,
-          "before": "this.canvas",
-          "after": "a4ViewHost.canvas",
+          "end": 27953,
+          "before": "this.time",
+          "after": "a4ViewHost.time",
           "generatedStart": 29737
         },
         {
-          "start": 27990,
-          "end": 28001,
+          "start": 27966,
+          "end": 27980,
+          "before": "this.leashView",
+          "after": "a4ViewHost.leashView",
+          "generatedStart": 29765
+        },
+        {
+          "start": 27992,
+          "end": 28003,
+          "before": "this.camera",
+          "after": "a4ViewHost.camera",
+          "generatedStart": 29797
+        },
+        {
+          "start": 28005,
+          "end": 28016,
           "before": "this.canvas",
           "after": "a4ViewHost.canvas",
-          "generatedStart": 29789
+          "generatedStart": 29816
         },
         {
-          "start": 28046,
-          "end": 28061,
+          "start": 28051,
+          "end": 28062,
+          "before": "this.canvas",
+          "after": "a4ViewHost.canvas",
+          "generatedStart": 29868
+        },
+        {
+          "start": 28107,
+          "end": 28122,
           "before": "this.witchBodyY",
           "after": "a4ViewHost.witchBodyY",
-          "generatedStart": 29851
+          "generatedStart": 29930
         },
         {
-          "start": 28063,
-          "end": 28078,
+          "start": 28124,
+          "end": 28139,
           "before": "this.witchFeetY",
           "after": "a4ViewHost.witchFeetY",
-          "generatedStart": 29874
+          "generatedStart": 29953
         },
         {
-          "start": 28080,
-          "end": 28096,
+          "start": 28141,
+          "end": 28157,
           "before": "this.witchFrameH",
           "after": "a4ViewHost.witchFrameH",
-          "generatedStart": 29897
+          "generatedStart": 29976
         },
         {
-          "start": 28104,
-          "end": 28116,
+          "start": 28165,
+          "end": 28177,
           "before": "this.castTag",
           "after": "a4ViewHost.castTag",
-          "generatedStart": 29927
+          "generatedStart": 30006
         },
         {
-          "start": 28143,
-          "end": 28147,
+          "start": 28204,
+          "end": 28208,
           "before": "this",
           "after": "a4ViewHost",
-          "generatedStart": 29972
+          "generatedStart": 30051
         },
         {
-          "start": 28228,
-          "end": 28240,
+          "start": 28289,
+          "end": 28301,
           "before": "this.feedTag",
           "after": "a4ViewHost.feedTag",
-          "generatedStart": 30063
+          "generatedStart": 30142
         },
         {
-          "start": 28267,
-          "end": 28271,
+          "start": 28328,
+          "end": 28332,
           "before": "this",
           "after": "a4ViewHost",
-          "generatedStart": 30108
+          "generatedStart": 30187
         },
         {
-          "start": 28348,
-          "end": 28357,
+          "start": 28409,
+          "end": 28418,
           "before": "this.time",
           "after": "a4ViewHost.time",
-          "generatedStart": 30195
+          "generatedStart": 30274
         },
         {
-          "start": 28372,
-          "end": 28382,
+          "start": 28433,
+          "end": 28443,
           "before": "this.magic",
           "after": "a4ViewHost.magic",
-          "generatedStart": 30225
+          "generatedStart": 30304
         },
         {
-          "start": 28410,
-          "end": 28420,
+          "start": 28471,
+          "end": 28481,
           "before": "this.stats",
           "after": "a4ViewHost.stats",
-          "generatedStart": 30269
+          "generatedStart": 30348
         },
         {
-          "start": 28472,
-          "end": 28484,
+          "start": 28533,
+          "end": 28545,
           "before": "FX_MOCK_MODE",
           "after": "a4SharedHost.FX_MOCK_MODE",
-          "generatedStart": 30337
+          "generatedStart": 30416
         },
         {
-          "start": 28487,
-          "end": 28498,
+          "start": 28548,
+          "end": 28559,
           "before": "this.fxMock",
           "after": "a4ViewHost.fxMock",
-          "generatedStart": 30365
+          "generatedStart": 30444
         },
         {
-          "start": 28514,
-          "end": 28518,
+          "start": 28575,
+          "end": 28579,
           "before": "this",
           "after": "a4ViewHost",
-          "generatedStart": 30398
+          "generatedStart": 30477
         },
         {
-          "start": 28520,
-          "end": 28532,
+          "start": 28581,
+          "end": 28593,
           "before": "FX_MOCK_MODE",
           "after": "a4SharedHost.FX_MOCK_MODE",
-          "generatedStart": 30410
+          "generatedStart": 30489
         },
         {
-          "start": 28542,
-          "end": 28546,
+          "start": 28603,
+          "end": 28607,
           "before": "this",
           "after": "a4ViewHost",
-          "generatedStart": 30445
+          "generatedStart": 30524
         },
         {
-          "start": 28751,
-          "end": 28755,
+          "start": 28812,
+          "end": 28816,
           "before": "this",
           "after": "a4ViewHost",
-          "generatedStart": 30660
+          "generatedStart": 30739
         },
         {
-          "start": 28766,
-          "end": 28780,
+          "start": 28827,
+          "end": 28841,
           "before": "this.debugCull",
           "after": "a4ViewHost.debugCull",
-          "generatedStart": 30681
-        },
-        {
-          "start": 28793,
-          "end": 28797,
-          "before": "this",
-          "after": "a4ViewHost",
-          "generatedStart": 30714
-        },
-        {
-          "start": 28833,
-          "end": 28846,
-          "before": "this.renderer",
-          "after": "a4ViewHost.renderer",
           "generatedStart": 30760
         },
         {
-          "start": 28865,
-          "end": 28874,
-          "before": "this.post",
-          "after": "a4ViewHost.post",
-          "generatedStart": 30798
+          "start": 28854,
+          "end": 28858,
+          "before": "this",
+          "after": "a4ViewHost",
+          "generatedStart": 30793
         },
         {
-          "start": 28882,
-          "end": 28891,
+          "start": 28894,
+          "end": 28907,
+          "before": "this.renderer",
+          "after": "a4ViewHost.renderer",
+          "generatedStart": 30839
+        },
+        {
+          "start": 28926,
+          "end": 28935,
+          "before": "this.post",
+          "after": "a4ViewHost.post",
+          "generatedStart": 30877
+        },
+        {
+          "start": 28943,
+          "end": 28952,
           "before": "this.game",
           "after": "a4ViewHost.game",
-          "generatedStart": 30821
+          "generatedStart": 30900
         },
         {
-          "start": 28908,
-          "end": 28917,
+          "start": 28969,
+          "end": 28978,
           "before": "this.post",
           "after": "a4ViewHost.post",
-          "generatedStart": 30853
+          "generatedStart": 30932
         },
         {
-          "start": 28940,
-          "end": 28950,
+          "start": 29001,
+          "end": 29011,
           "before": "this.tiltK",
           "after": "a4ViewHost.tiltK",
-          "generatedStart": 30891
+          "generatedStart": 30970
         },
         {
-          "start": 29006,
-          "end": 29022,
+          "start": 29067,
+          "end": 29083,
           "before": "this.hideForBare",
           "after": "a4PrivateHost.hideForBare",
-          "generatedStart": 30963
+          "generatedStart": 31042
         },
         {
-          "start": 29030,
-          "end": 29046,
+          "start": 29091,
+          "end": 29107,
           "before": "this.behindHouse",
           "after": "a4PrivateHost.behindHouse",
-          "generatedStart": 30996
+          "generatedStart": 31075
         },
         {
-          "start": 29047,
-          "end": 29056,
+          "start": 29108,
+          "end": 29117,
           "before": "this.game",
           "after": "a4ViewHost.game",
-          "generatedStart": 31022
+          "generatedStart": 31101
         },
         {
-          "start": 29148,
-          "end": 29157,
+          "start": 29209,
+          "end": 29218,
           "before": "this.post",
           "after": "a4ViewHost.post",
-          "generatedStart": 31129
+          "generatedStart": 31208
         },
         {
-          "start": 29170,
-          "end": 29182,
+          "start": 29231,
+          "end": 29243,
           "before": "this.castMap",
           "after": "a4PrivateHost.castMap",
-          "generatedStart": 31157
+          "generatedStart": 31236
         },
         {
-          "start": 29190,
-          "end": 29203,
+          "start": 29251,
+          "end": 29264,
           "before": "this.renderer",
           "after": "a4ViewHost.renderer",
-          "generatedStart": 31186
+          "generatedStart": 31265
         },
         {
-          "start": 29205,
-          "end": 29215,
+          "start": 29266,
+          "end": 29276,
           "before": "this.scene",
           "after": "a4ViewHost.scene",
-          "generatedStart": 31207
+          "generatedStart": 31286
         },
         {
-          "start": 29217,
-          "end": 29226,
+          "start": 29278,
+          "end": 29287,
           "before": "this.game",
           "after": "a4ViewHost.game",
-          "generatedStart": 31225
+          "generatedStart": 31304
         },
         {
-          "start": 29236,
-          "end": 29245,
+          "start": 29297,
+          "end": 29306,
           "before": "this.game",
           "after": "a4ViewHost.game",
-          "generatedStart": 31250
+          "generatedStart": 31329
         },
         {
-          "start": 29255,
-          "end": 29266,
+          "start": 29316,
+          "end": 29327,
           "before": "this.castOn",
           "after": "a4PrivateHost.castOn",
-          "generatedStart": 31275
+          "generatedStart": 31354
         },
         {
-          "start": 29273,
-          "end": 29287,
+          "start": 29334,
+          "end": 29348,
           "before": "this.occluders",
           "after": "a4PrivateHost.occluders",
-          "generatedStart": 31302
+          "generatedStart": 31381
         },
         {
-          "start": 29295,
-          "end": 29305,
+          "start": 29356,
+          "end": 29366,
           "before": "this.magic",
           "after": "a4ViewHost.magic",
-          "generatedStart": 31333
+          "generatedStart": 31412
         },
         {
-          "start": 29319,
-          "end": 29329,
+          "start": 29380,
+          "end": 29390,
           "before": "this.scene",
           "after": "a4ViewHost.scene",
-          "generatedStart": 31363
+          "generatedStart": 31442
         },
         {
-          "start": 29340,
-          "end": 29349,
+          "start": 29401,
+          "end": 29410,
           "before": "this.game",
           "after": "a4ViewHost.game",
-          "generatedStart": 31390
+          "generatedStart": 31469
         },
         {
-          "start": 29362,
-          "end": 29379,
+          "start": 29423,
+          "end": 29440,
           "before": "this.cauldronLook",
           "after": "a4PrivateHost.cauldronLook",
-          "generatedStart": 31418
+          "generatedStart": 31497
         },
         {
-          "start": 29382,
-          "end": 29399,
+          "start": 29443,
+          "end": 29460,
           "before": "this.cauldronLook",
           "after": "a4PrivateHost.cauldronLook",
-          "generatedStart": 31447
+          "generatedStart": 31526
         },
         {
-          "start": 29431,
-          "end": 29435,
+          "start": 29492,
+          "end": 29496,
           "before": "this",
           "after": "a4ViewHost",
-          "generatedStart": 31505
+          "generatedStart": 31584
         },
         {
-          "start": 29442,
-          "end": 29451,
+          "start": 29503,
+          "end": 29512,
           "before": "this.post",
           "after": "a4ViewHost.post",
-          "generatedStart": 31522
+          "generatedStart": 31601
         },
         {
-          "start": 29459,
-          "end": 29469,
+          "start": 29520,
+          "end": 29530,
           "before": "this.scene",
           "after": "a4ViewHost.scene",
-          "generatedStart": 31545
+          "generatedStart": 31624
         },
         {
-          "start": 29471,
-          "end": 29482,
+          "start": 29532,
+          "end": 29543,
           "before": "this.camera",
           "after": "a4ViewHost.camera",
-          "generatedStart": 31563
+          "generatedStart": 31642
         },
         {
-          "start": 29489,
-          "end": 29506,
+          "start": 29550,
+          "end": 29567,
           "before": "this.cauldronLook",
           "after": "a4PrivateHost.cauldronLook",
-          "generatedStart": 31587
+          "generatedStart": 31666
         },
         {
-          "start": 29515,
-          "end": 29519,
+          "start": 29576,
+          "end": 29580,
           "before": "this",
           "after": "a4ViewHost",
-          "generatedStart": 31622
+          "generatedStart": 31701
         },
         {
-          "start": 29526,
-          "end": 29536,
+          "start": 29587,
+          "end": 29597,
           "before": "this.magic",
           "after": "a4ViewHost.magic",
-          "generatedStart": 31639
+          "generatedStart": 31718
         },
         {
-          "start": 29553,
-          "end": 29563,
+          "start": 29614,
+          "end": 29624,
           "before": "this.scene",
           "after": "a4ViewHost.scene",
-          "generatedStart": 31672
+          "generatedStart": 31751
         },
         {
-          "start": 29570,
-          "end": 29584,
+          "start": 29631,
+          "end": 29645,
           "before": "this.occlusion",
           "after": "a4ViewHost.occlusion",
-          "generatedStart": 31695
+          "generatedStart": 31774
         },
         {
-          "start": 29658,
-          "end": 29667,
+          "start": 29719,
+          "end": 29728,
           "before": "this.time",
           "after": "a4ViewHost.time",
-          "generatedStart": 31789
+          "generatedStart": 31868
         },
         {
-          "start": 29681,
-          "end": 29693,
+          "start": 29742,
+          "end": 29754,
           "before": "this.drawEst",
           "after": "a4ViewHost.drawEst",
-          "generatedStart": 31818
+          "generatedStart": 31897
         },
         {
-          "start": 29710,
-          "end": 29717,
+          "start": 29771,
+          "end": 29778,
           "before": "this.ms",
           "after": "a4ViewHost.ms",
-          "generatedStart": 31853
+          "generatedStart": 31932
         },
         {
-          "start": 29726,
-          "end": 29738,
+          "start": 29787,
+          "end": 29799,
           "before": "this.drawEst",
           "after": "a4ViewHost.drawEst",
-          "generatedStart": 31875
+          "generatedStart": 31954
         },
         {
-          "start": 29904,
-          "end": 29911,
+          "start": 29965,
+          "end": 29972,
           "before": "DROPPED",
           "after": "a4SharedHost.DROPPED",
-          "generatedStart": 32059
+          "generatedStart": 32138
         },
         {
-          "start": 29914,
-          "end": 29928,
+          "start": 29975,
+          "end": 29989,
           "before": "this.propBatch",
           "after": "a4ViewHost.propBatch",
-          "generatedStart": 32082
+          "generatedStart": 32161
         },
         {
-          "start": 29939,
-          "end": 29954,
+          "start": 30000,
+          "end": 30015,
           "before": "this.soundBatch",
           "after": "a4PrivateHost.soundBatch",
-          "generatedStart": 32113
+          "generatedStart": 32192
         },
         {
-          "start": 29966,
-          "end": 29983,
+          "start": 30027,
+          "end": 30044,
           "before": "this.speakerBatch",
           "after": "a4ViewHost.speakerBatch",
-          "generatedStart": 32149
+          "generatedStart": 32228
         },
         {
-          "start": 30004,
-          "end": 30020,
+          "start": 30065,
+          "end": 30081,
           "before": "this.typeBatches",
           "after": "a4ViewHost.typeBatches",
-          "generatedStart": 32193
+          "generatedStart": 32272
         },
         {
-          "start": 30029,
-          "end": 30039,
+          "start": 30090,
+          "end": 30100,
           "before": "addDropped",
           "after": "a4SharedHost.addDropped",
-          "generatedStart": 32224
+          "generatedStart": 32303
         },
         {
-          "start": 30042,
-          "end": 30062,
+          "start": 30103,
+          "end": 30123,
           "before": "this.creatureBatches",
           "after": "a4ViewHost.creatureBatches",
-          "generatedStart": 32250
+          "generatedStart": 32329
         },
         {
-          "start": 30071,
-          "end": 30081,
+          "start": 30132,
+          "end": 30142,
           "before": "addDropped",
           "after": "a4SharedHost.addDropped",
-          "generatedStart": 32285
+          "generatedStart": 32364
         },
         {
-          "start": 30140,
-          "end": 30147,
+          "start": 30201,
+          "end": 30208,
           "before": "DROPPED",
           "after": "a4SharedHost.DROPPED",
-          "generatedStart": 32367
+          "generatedStart": 32446
         },
         {
-          "start": 30169,
-          "end": 30179,
+          "start": 30230,
+          "end": 30240,
           "before": "this.stats",
           "after": "a4ViewHost.stats",
-          "generatedStart": 32409
+          "generatedStart": 32488
         },
         {
-          "start": 30262,
-          "end": 30272,
+          "start": 30323,
+          "end": 30333,
           "before": "this.stats",
           "after": "a4ViewHost.stats",
-          "generatedStart": 32508
+          "generatedStart": 32587
         },
         {
-          "start": 30296,
-          "end": 30306,
+          "start": 30357,
+          "end": 30367,
           "before": "this.stats",
           "after": "a4ViewHost.stats",
-          "generatedStart": 32548
+          "generatedStart": 32627
         },
         {
-          "start": 30319,
-          "end": 30332,
+          "start": 30380,
+          "end": 30393,
           "before": "this.renderer",
           "after": "a4ViewHost.renderer",
-          "generatedStart": 32577
+          "generatedStart": 32656
         },
         {
-          "start": 30356,
-          "end": 30366,
+          "start": 30417,
+          "end": 30427,
           "before": "this.stats",
           "after": "a4ViewHost.stats",
-          "generatedStart": 32620
+          "generatedStart": 32699
         },
         {
-          "start": 30377,
-          "end": 30393,
+          "start": 30438,
+          "end": 30454,
           "before": "this.typeBatches",
           "after": "a4ViewHost.typeBatches",
-          "generatedStart": 32647
+          "generatedStart": 32726
         },
         {
-          "start": 30401,
-          "end": 30421,
+          "start": 30462,
+          "end": 30482,
           "before": "this.creatureBatches",
           "after": "a4ViewHost.creatureBatches",
-          "generatedStart": 32677
+          "generatedStart": 32756
         },
         {
-          "start": 30448,
-          "end": 30452,
+          "start": 30509,
+          "end": 30513,
           "before": "this",
           "after": "a4ViewHost",
-          "generatedStart": 32730
+          "generatedStart": 32809
         },
         {
-          "start": 30478,
-          "end": 30488,
+          "start": 30539,
+          "end": 30549,
           "before": "this.stats",
           "after": "a4ViewHost.stats",
-          "generatedStart": 32766
+          "generatedStart": 32845
         },
         {
-          "start": 30505,
-          "end": 30516,
+          "start": 30566,
+          "end": 30577,
           "before": "this.budget",
           "after": "a4ViewHost.budget",
-          "generatedStart": 32799
+          "generatedStart": 32878
         },
         {
-          "start": 30525,
-          "end": 30535,
+          "start": 30586,
+          "end": 30596,
           "before": "this.stats",
           "after": "a4ViewHost.stats",
-          "generatedStart": 32825
-        },
-        {
-          "start": 30542,
-          "end": 30553,
-          "before": "this.budget",
-          "after": "a4ViewHost.budget",
-          "generatedStart": 32848
-        },
-        {
-          "start": 30563,
-          "end": 30573,
-          "before": "this.stats",
-          "after": "a4ViewHost.stats",
-          "generatedStart": 32875
-        },
-        {
-          "start": 30584,
-          "end": 30594,
-          "before": "this.stats",
-          "after": "a4ViewHost.stats",
-          "generatedStart": 32902
+          "generatedStart": 32904
         },
         {
           "start": 30603,
-          "end": 30613,
-          "before": "this.stats",
-          "after": "a4ViewHost.stats",
+          "end": 30614,
+          "before": "this.budget",
+          "after": "a4ViewHost.budget",
           "generatedStart": 32927
         },
         {
-          "start": 30626,
-          "end": 30636,
+          "start": 30624,
+          "end": 30634,
           "before": "this.stats",
           "after": "a4ViewHost.stats",
-          "generatedStart": 32956
+          "generatedStart": 32954
         },
         {
-          "start": 30648,
-          "end": 30658,
+          "start": 30645,
+          "end": 30655,
           "before": "this.stats",
           "after": "a4ViewHost.stats",
-          "generatedStart": 32984
+          "generatedStart": 32981
         },
         {
-          "start": 30671,
-          "end": 30685,
+          "start": 30664,
+          "end": 30674,
+          "before": "this.stats",
+          "after": "a4ViewHost.stats",
+          "generatedStart": 33006
+        },
+        {
+          "start": 30687,
+          "end": 30697,
+          "before": "this.stats",
+          "after": "a4ViewHost.stats",
+          "generatedStart": 33035
+        },
+        {
+          "start": 30709,
+          "end": 30719,
+          "before": "this.stats",
+          "after": "a4ViewHost.stats",
+          "generatedStart": 33063
+        },
+        {
+          "start": 30732,
+          "end": 30746,
           "before": "this.propBatch",
           "after": "a4ViewHost.propBatch",
-          "generatedStart": 33013
+          "generatedStart": 33092
         },
         {
-          "start": 30694,
-          "end": 30709,
+          "start": 30755,
+          "end": 30770,
           "before": "this.soundBatch",
           "after": "a4PrivateHost.soundBatch",
-          "generatedStart": 33042
+          "generatedStart": 33121
         },
         {
-          "start": 30719,
-          "end": 30733,
+          "start": 30780,
+          "end": 30794,
           "before": "this.partyView",
           "after": "a4PrivateHost.partyView",
-          "generatedStart": 33076
+          "generatedStart": 33155
         }
       ]
     },
@@ -12669,11 +12698,11 @@
       "name": "replayPartyStart",
       "output": "src/render/view/frame.ts",
       "originalSha256": "242831d98041101de448d56fb33e7076c32ef0b825ef33a343719531f8f6ee5e",
-      "sourceStart": 110124,
-      "sourceEnd": 110467,
+      "sourceStart": 110959,
+      "sourceEnd": 111302,
       "generatedSha256": "142b79ea9b0dfb6899c158ba286d94b987507fc63078c79ab08c4adbf5af29f7",
-      "outputBodyStart": 36759,
-      "outputBodyEnd": 37126,
+      "outputBodyStart": 36902,
+      "outputBodyEnd": 37269,
       "edits": [
         {
           "start": 16,
@@ -12710,8 +12739,8 @@
       "name": "houseTilt",
       "output": "src/render/view/houseFrame.ts",
       "originalSha256": "cf962d9a53da64f48daafdf86e4a234bbe8ec6a1ec95a306d175c121e9c6d04f",
-      "sourceStart": 30528,
-      "sourceEnd": 30826,
+      "sourceStart": 30721,
+      "sourceEnd": 31019,
       "generatedSha256": "9a07dfe0e2f00eaa00d42ab3c40aad36422a7901499686942eb3c55bf3927125",
       "outputBodyStart": 1225,
       "outputBodyEnd": 1587,
@@ -12779,8 +12808,8 @@
       "name": "behindHouse",
       "output": "src/render/view/houseFrame.ts",
       "originalSha256": "0afc802fffd2799065c0018868e5f365845b165ab945da3887dfc784070ab9f0",
-      "sourceStart": 30994,
-      "sourceEnd": 32878,
+      "sourceStart": 31187,
+      "sourceEnd": 33071,
       "generatedSha256": "ac70aac8e902ec6ae8cfbab519df9842238e54af936680a88e48a23a6c5a7f36",
       "outputBodyStart": 1707,
       "outputBodyEnd": 3699,
@@ -12911,8 +12940,8 @@
       "name": "occluders",
       "output": "src/render/view/houseFrame.ts",
       "originalSha256": "496be000b09d3f4addcba405efe64369bda30c560a3cc429790e6109f4f90061",
-      "sourceStart": 33391,
-      "sourceEnd": 33786,
+      "sourceStart": 33584,
+      "sourceEnd": 33979,
       "generatedSha256": "9044eb1271f5c7d5656371774bdc135d70ccbfc23508d45cabf7f512cde2550a",
       "outputBodyStart": 3807,
       "outputBodyEnd": 4318,
@@ -13029,8 +13058,8 @@
       "name": "ensureCrown",
       "output": "src/render/view/houseFrame.ts",
       "originalSha256": "152baca9758a6c278530043050405f9c973d32994baa8fdc252a5a0f3d34c81a",
-      "sourceStart": 36575,
-      "sourceEnd": 39246,
+      "sourceStart": 36768,
+      "sourceEnd": 39439,
       "generatedSha256": "2c7d2852b6e6a646c96c835d856c37719ee038db276bd44d0cdf42e8e61a254c",
       "outputBodyStart": 4441,
       "outputBodyEnd": 7433,
@@ -13343,8 +13372,8 @@
       "name": "buildHome",
       "output": "src/render/view/houseFrame.ts",
       "originalSha256": "ac8a310f8a9ca00686762f9b627be0cc2d832d6fb02894dbb27df730ddd4163d",
-      "sourceStart": 78042,
-      "sourceEnd": 79174,
+      "sourceStart": 78877,
+      "sourceEnd": 80009,
       "generatedSha256": "3440fcfe4be4e4e776bcfa1625e05654eba070d4f6628ea82db4c100805ecabc",
       "outputBodyStart": 7611,
       "outputBodyEnd": 8839,
@@ -13447,8 +13476,8 @@
       "name": "swapHomeArt",
       "output": "src/render/view/houseFrame.ts",
       "originalSha256": "6a086b4652cd1a4efbbd2a276ffaba07f54481bc1d09522d8d2cc490f04a97ca",
-      "sourceStart": 117474,
-      "sourceEnd": 118939,
+      "sourceStart": 118309,
+      "sourceEnd": 119774,
       "generatedSha256": "1a6aedab0fb4da325575ee6b4ed95045ccda1154005ae565a4dc3e736872e002",
       "outputBodyStart": 8950,
       "outputBodyEnd": 10628,
@@ -13684,8 +13713,8 @@
       "name": "legendRings",
       "output": "src/render/view/markers.ts",
       "originalSha256": "88f986a6e85bfcbb1521b63e74fae172a6df0ca901476fb3058c64565f0bfdb7",
-      "sourceStart": 120685,
-      "sourceEnd": 124053,
+      "sourceStart": 121520,
+      "sourceEnd": 124888,
       "generatedSha256": "d3cd517ff30fa6b497c1c66d96f03b7fc31ad72bf6caf32bb3205234820ec27e",
       "outputBodyStart": 777,
       "outputBodyEnd": 4268,
@@ -13823,8 +13852,8 @@
       "name": "pin",
       "output": "src/render/view/markers.ts",
       "originalSha256": "4aa130c199c30575ea9f8f756c695f7aef2d18086ca261fe5da04be69129dae7",
-      "sourceStart": 44900,
-      "sourceEnd": 45050,
+      "sourceStart": 45093,
+      "sourceEnd": 45243,
       "generatedSha256": "030be2f91d14600209444a7856670790afa3836ec64e338f750f6784af035c9e",
       "outputBodyStart": 4426,
       "outputBodyEnd": 4588,
@@ -13850,8 +13879,8 @@
       "name": "inviteStart",
       "output": "src/render/view/markers.ts",
       "originalSha256": "55bc5945bf05b541f6a60e27d626dc10c9a55c975914fc67c3a9fefe3355024f",
-      "sourceStart": 48045,
-      "sourceEnd": 48187,
+      "sourceStart": 48238,
+      "sourceEnd": 48380,
       "generatedSha256": "4d4b93a88416a8856cb94fad9f968046fbc8810aead74a9df0ab1b8e132d6bfa",
       "outputBodyStart": 4756,
       "outputBodyEnd": 4904,
@@ -13870,8 +13899,8 @@
       "name": "updateMoon",
       "output": "src/render/view/atmosphere.ts",
       "originalSha256": "e9402433590b8865354ee06ee60ddea62edaa964288c9e83dd8d6116ff94e12d",
-      "sourceStart": 111881,
-      "sourceEnd": 112616,
+      "sourceStart": 112716,
+      "sourceEnd": 113451,
       "generatedSha256": "21355eece5a06b0a367a6a6672279da4337742b8a0fabe702b18cba4e2f60e66",
       "outputBodyStart": 676,
       "outputBodyEnd": 1471,
@@ -13932,8 +13961,8 @@
       "name": "updateSteam",
       "output": "src/render/view/atmosphere.ts",
       "originalSha256": "104b1bac0384cd11ff129e56eb64d2265acccbcf84579fea1624bbdb99d2779f",
-      "sourceStart": 112790,
-      "sourceEnd": 113196,
+      "sourceStart": 113625,
+      "sourceEnd": 114031,
       "generatedSha256": "261d6e1b09717852b012427bb32d89afb9dd8f736e81d72dc777a1a9f0132be4",
       "outputBodyStart": 1606,
       "outputBodyEnd": 2048,
@@ -13973,8 +14002,8 @@
       "name": "updateSmoke",
       "output": "src/render/view/atmosphere.ts",
       "originalSha256": "b46b18e26e4a4d8191ae4ca0e57326093f9d4403928f18feda0497adfc12ec83",
-      "sourceStart": 113387,
-      "sourceEnd": 114333,
+      "sourceStart": 114222,
+      "sourceEnd": 115168,
       "generatedSha256": "28a0d6859c7ea0ad65f2723cb3526b1954af0fb6ac92d3a67115c895f7559ed5",
       "outputBodyStart": 2182,
       "outputBodyEnd": 3209,
@@ -14077,8 +14106,8 @@
       "name": "readyPrograms",
       "output": "src/render/view/readiness.ts",
       "originalSha256": "93fec4edf59ecf5a3db10acecef62e4a0947f266803e0fdc4acaec42becd59a7",
-      "sourceStart": 25184,
-      "sourceEnd": 25494,
+      "sourceStart": 25377,
+      "sourceEnd": 25687,
       "generatedSha256": "0ca1dce4137199e1727c436f536589c0f2b5790261b09d976df69640b9ce360a",
       "outputBodyStart": 843,
       "outputBodyEnd": 1183,
@@ -14118,8 +14147,8 @@
       "name": "landingWakeReady",
       "output": "src/render/view/readiness.ts",
       "originalSha256": "855f0f350423bdf2527daafdcb3ebc8b0a2ac033ccaa936ad90fb25350665af7",
-      "sourceStart": 26014,
-      "sourceEnd": 26447,
+      "sourceStart": 26207,
+      "sourceEnd": 26640,
       "generatedSha256": "9d9de95f676589356b72b9dc6f53c93d1c3d60827ba3a4995fdcaf065a937182",
       "outputBodyStart": 1303,
       "outputBodyEnd": 1784,
@@ -14187,8 +14216,8 @@
       "name": "beginLandingShaders",
       "output": "src/render/view/readiness.ts",
       "originalSha256": "bf55303550bcc1d0595262e182ac69a6bcf3298e738946bce16bc6cbd941b9b4",
-      "sourceStart": 26492,
-      "sourceEnd": 26739,
+      "sourceStart": 26685,
+      "sourceEnd": 26932,
       "generatedSha256": "650c5370b9bb2767447a286c62babc350b79801bb2e96c11a1204c4f9f96de1e",
       "outputBodyStart": 1919,
       "outputBodyEnd": 2226,
@@ -14256,8 +14285,8 @@
       "name": "armLimitedLanding",
       "output": "src/render/view/readiness.ts",
       "originalSha256": "ee94761010d408525613f4b8d9919d5974ebb5d5f2fc8c3e470f780b46d181c4",
-      "sourceStart": 26776,
-      "sourceEnd": 26944,
+      "sourceStart": 26969,
+      "sourceEnd": 27137,
       "generatedSha256": "6bde572b1b3e68facc5b1217fe6a214f25e6fb9e0b4c7cbf567e04ef7a0de535",
       "outputBodyStart": 2343,
       "outputBodyEnd": 2538,
@@ -14297,8 +14326,8 @@
       "name": "limitedLandingReady",
       "output": "src/render/view/readiness.ts",
       "originalSha256": "51a8dd8cf7221d2010afa9534c6217080a77bf7ad725351c12db527d389b0fa8",
-      "sourceStart": 27001,
-      "sourceEnd": 27541,
+      "sourceStart": 27194,
+      "sourceEnd": 27734,
       "generatedSha256": "023a20d951f6912f62d0d5f6c1f73b62c7e05741cab7b2efeeec277d1e0306c1",
       "outputBodyStart": 2722,
       "outputBodyEnd": 3337,
@@ -14387,8 +14416,8 @@
       "name": "waitForLandingWitch",
       "output": "src/render/view/readiness.ts",
       "originalSha256": "634b9a5e950aad1117df93ab540355f3042b7b5712203ba35c97a154983ce069",
-      "sourceStart": 27587,
-      "sourceEnd": 27809,
+      "sourceStart": 27780,
+      "sourceEnd": 28002,
       "generatedSha256": "80564015abdf5a6665a607e26cd5f1ea91ed29c48010a59fc040133f2f4885fc",
       "outputBodyStart": 3472,
       "outputBodyEnd": 3712,
@@ -14421,8 +14450,8 @@
       "name": "startLandingShaderGrace",
       "output": "src/render/view/readiness.ts",
       "originalSha256": "8bd0fcb3e4f6b9f4f7e778f86fc0502e059d79f2ee3458b99f4a64527bfbfdda",
-      "sourceStart": 27866,
-      "sourceEnd": 28074,
+      "sourceStart": 28059,
+      "sourceEnd": 28267,
       "generatedSha256": "98084c787fe704268ab7d5e9174d53586768c2991e012618d1af08e5e1d4473d",
       "outputBodyStart": 3901,
       "outputBodyEnd": 4136,
@@ -14455,8 +14484,8 @@
       "name": "compileAll",
       "output": "src/render/view/readiness.ts",
       "originalSha256": "28534191a8eedaeb19bd5bb9d1f6675d85648e0ae40eb7326abd7c5097074742",
-      "sourceStart": 83825,
-      "sourceEnd": 91957,
+      "sourceStart": 84660,
+      "sourceEnd": 92792,
       "generatedSha256": "fe197f44c1274c803cea2e57226e8d5b5e06f82c1f30dac3cff82129790d69bc",
       "outputBodyStart": 4382,
       "outputBodyEnd": 12872,
@@ -14804,8 +14833,8 @@
       "name": "gpuCaughtUp",
       "output": "src/render/view/readiness.ts",
       "originalSha256": "9006b725d035716686d9e969018223c7eed008a7ca378f89c15f765e4be15544",
-      "sourceStart": 92636,
-      "sourceEnd": 93099,
+      "sourceStart": 93471,
+      "sourceEnd": 93934,
       "generatedSha256": "94ff513ce580f8c13b89110a6fd6623e3a6d0b7d72ae48d0aa2dba59c69c562d",
       "outputBodyStart": 12999,
       "outputBodyEnd": 13468,
@@ -14824,8 +14853,8 @@
       "name": "warmDraws",
       "output": "src/render/view/readiness.ts",
       "originalSha256": "98193056d0c0f3a35fdfe1301f54b8b5b004d2ebbe1b58725e2d44b606dc3414",
-      "sourceStart": 93635,
-      "sourceEnd": 95621,
+      "sourceStart": 94470,
+      "sourceEnd": 96456,
       "generatedSha256": "a66c67968c4fc23dc0a3c6e058dfc29a5a0707e818082e397f2b1028245a6129",
       "outputBodyStart": 13592,
       "outputBodyEnd": 15674,
@@ -14928,8 +14957,8 @@
       "name": "warmSteps",
       "output": "src/render/view/readiness.ts",
       "originalSha256": "83c70bdf7672c2026fb0ff654e42661fef7dffcae909d764a6f0deb3f565dbc2",
-      "sourceStart": 80841,
-      "sourceEnd": 81300,
+      "sourceStart": 81676,
+      "sourceEnd": 82135,
       "generatedSha256": "68dabf830bf6734185ff8a7e243b4acf7202ff39e3281ea54f5290e1ddcede07",
       "outputBodyStart": 15786,
       "outputBodyEnd": 16251,
@@ -14948,8 +14977,8 @@
       "name": "setReadiness",
       "output": "src/render/view/readiness.ts",
       "originalSha256": "5f7747fa15b72df36f968d8b0b800e736ddd618a208c6d95d3984bee9c6eba7b",
-      "sourceStart": 82846,
-      "sourceEnd": 83154,
+      "sourceStart": 83681,
+      "sourceEnd": 83989,
       "generatedSha256": "1558efbe8e0dc750ee83185b8f0e19077a291f8bab3652e48d81fa8e5ce4c03f",
       "outputBodyStart": 16428,
       "outputBodyEnd": 16742,
@@ -14968,8 +14997,8 @@
       "name": "build",
       "output": "src/render/view/lifecycle.ts",
       "originalSha256": "7a236014f275ae8d7add8bdfc10dd288ed899c617c56ddd4810ae94bac4db94c",
-      "sourceStart": 58711,
-      "sourceEnd": 68476,
+      "sourceStart": 58904,
+      "sourceEnd": 68669,
       "generatedSha256": "9f1b490dce293f28b50b4782f67a4150232a6eea6c0d41490837cb4301b38f9b",
       "outputBodyStart": 2700,
       "outputBodyEnd": 13679,
@@ -16268,12 +16297,12 @@
       "source": "src/render/view.ts",
       "name": "prepare",
       "output": "src/render/view/lifecycle.ts",
-      "originalSha256": "904c77f84845a324857ab77263ab0a13ba651171e7f63f17e3dc7fc2d7d1b847",
-      "sourceStart": 72173,
-      "sourceEnd": 77464,
-      "generatedSha256": "d6f6a7f4ac82489bea9802513f70baa7abfc883296fd85dcd80df9b02beea8c4",
+      "originalSha256": "7a68570844d147d4bdf52db0eb32fb6f9570a3d6f004cea94cc044bcbcc4a017",
+      "sourceStart": 72366,
+      "sourceEnd": 78299,
+      "generatedSha256": "7bbf6f4804e52cea83ff0cfef5fd9d3a8a48a165a687a30eb97b800d460e95ca",
       "outputBodyStart": 13929,
-      "outputBodyEnd": 19623,
+      "outputBodyEnd": 20277,
       "edits": [
         {
           "start": 62,
@@ -16605,53 +16634,67 @@
           "generatedStart": 5065
         },
         {
-          "start": 4835,
-          "end": 4846,
-          "before": "this.assets",
-          "after": "a4ViewHost.assets",
-          "generatedStart": 5190
+          "start": 5376,
+          "end": 5391,
+          "before": "this.houseRooms",
+          "after": "a4ViewHost.houseRooms",
+          "generatedStart": 5731
         },
         {
-          "start": 5056,
-          "end": 5067,
-          "before": "this.render",
-          "after": "a4ViewHost.render",
-          "generatedStart": 5417
-        },
-        {
-          "start": 5112,
-          "end": 5116,
+          "start": 5401,
+          "end": 5405,
           "before": "this",
           "after": "a4ViewHost",
-          "generatedStart": 5479
+          "generatedStart": 5762
         },
         {
-          "start": 5179,
-          "end": 5192,
+          "start": 5418,
+          "end": 5429,
+          "before": "this.assets",
+          "after": "a4ViewHost.assets",
+          "generatedStart": 5785
+        },
+        {
+          "start": 5698,
+          "end": 5709,
+          "before": "this.render",
+          "after": "a4ViewHost.render",
+          "generatedStart": 6071
+        },
+        {
+          "start": 5754,
+          "end": 5758,
+          "before": "this",
+          "after": "a4ViewHost",
+          "generatedStart": 6133
+        },
+        {
+          "start": 5821,
+          "end": 5834,
           "before": "this.prepared",
           "after": "a4ViewHost.prepared",
-          "generatedStart": 5552
+          "generatedStart": 6206
         },
         {
-          "start": 5211,
-          "end": 5226,
+          "start": 5853,
+          "end": 5868,
           "before": "this.compileAll",
           "after": "a4PrivateHost.compileAll",
-          "generatedStart": 5590
+          "generatedStart": 6244
         },
         {
-          "start": 5240,
-          "end": 5254,
+          "start": 5882,
+          "end": 5896,
           "before": "this.askIsland",
           "after": "a4PrivateHost.askIsland",
-          "generatedStart": 5628
+          "generatedStart": 6282
         },
         {
-          "start": 5266,
-          "end": 5279,
+          "start": 5908,
+          "end": 5921,
           "before": "this.homeDone",
           "after": "a4ViewHost.homeDone",
-          "generatedStart": 5663
+          "generatedStart": 6317
         }
       ]
     },
@@ -16660,11 +16703,11 @@
       "name": "askIsland",
       "output": "src/render/view/lifecycle.ts",
       "originalSha256": "9f3ba406e97f4f1f70b68383b1fab6b4b61afa17dc4eb980d2db06b13e492fef",
-      "sourceStart": 95849,
-      "sourceEnd": 97774,
+      "sourceStart": 96684,
+      "sourceEnd": 98609,
       "generatedSha256": "1bddfb2414e2083d6233d1ef2da8b102aa53fe89286f4db1a3a14a5df9530926",
-      "outputBodyStart": 19760,
-      "outputBodyEnd": 21751,
+      "outputBodyStart": 20414,
+      "outputBodyEnd": 22405,
       "edits": [
         {
           "start": 153,
@@ -16750,11 +16793,11 @@
       "name": "setGameSteps",
       "output": "src/render/view/lifecycle.ts",
       "originalSha256": "bafe7b056ba0877af61d1fc08a24be57312f4af87cfc8cc6f172c038e6d3b266",
-      "sourceStart": 99158,
-      "sourceEnd": 103314,
+      "sourceStart": 99993,
+      "sourceEnd": 104149,
       "generatedSha256": "af607837f57c7397a6c319a5aac5014fea15cf6be4aac6f914926633b779624d",
-      "outputBodyStart": 21876,
-      "outputBodyEnd": 26557,
+      "outputBodyStart": 22530,
+      "outputBodyEnd": 27211,
       "edits": [
         {
           "start": 6,
@@ -17295,11 +17338,11 @@
       "name": "retype",
       "output": "src/render/view/lifecycle.ts",
       "originalSha256": "b853eac075ed51b89b7039f307a14a04a01c61b6d77ce5056de3947642ce8ccd",
-      "sourceStart": 103586,
-      "sourceEnd": 104038,
+      "sourceStart": 104421,
+      "sourceEnd": 104873,
       "generatedSha256": "995d1722026358e53bdd4cba9a10da8b9d5f5bb37fe5962f9f660d6e08c0c343",
-      "outputBodyStart": 26681,
-      "outputBodyEnd": 27175,
+      "outputBodyStart": 27335,
+      "outputBodyEnd": 27829,
       "edits": [
         {
           "start": 47,
@@ -17357,8 +17400,8 @@
       "name": "landingShot",
       "output": "src/render/view/viewport.ts",
       "originalSha256": "dc45fba5d3d7dba5c7062b699e28ec8d00e68ebd8cad59b31058c5dd14806582",
-      "sourceStart": 116543,
-      "sourceEnd": 116773,
+      "sourceStart": 117378,
+      "sourceEnd": 117608,
       "generatedSha256": "6bef0c33bd8ca767c718a16948cb989d5abb3d7a3de290a989b3ba4f4935d2f3",
       "outputBodyStart": 622,
       "outputBodyEnd": 870,
@@ -17391,8 +17434,8 @@
       "name": "scenePixelSize",
       "output": "src/render/view/viewport.ts",
       "originalSha256": "25e14d075d8ae29d9a1b43913d5cd755c2851cb28473fc2c840eda727754e889",
-      "sourceStart": 69671,
-      "sourceEnd": 70036,
+      "sourceStart": 69864,
+      "sourceEnd": 70229,
       "generatedSha256": "53ed0a5001d2e911e9e140560c025c230ca3ec8b0a9e509ca028db7c554f1d50",
       "outputBodyStart": 987,
       "outputBodyEnd": 1376,
@@ -17432,8 +17475,8 @@
       "name": "resize",
       "output": "src/render/view/viewport.ts",
       "originalSha256": "4695ff3d95dd79fa3e6bb5362a128d85a71ff391e28196279ceed8eebdfbde08",
-      "sourceStart": 70183,
-      "sourceEnd": 71025,
+      "sourceStart": 70376,
+      "sourceEnd": 71218,
       "generatedSha256": "bb00350412d8d6bc974d6a76a057f82c321b1f61558c37ebb6f16d72bf2f940b",
       "outputBodyStart": 1510,
       "outputBodyEnd": 2496,
@@ -17606,8 +17649,8 @@
       "name": "screenOf",
       "output": "src/render/view/viewport.ts",
       "originalSha256": "d8c152a4d0f91a0bf6ccf3822238ac8f30b1b31ba2b4d3fee544482f51d97d59",
-      "sourceStart": 108493,
-      "sourceEnd": 108629,
+      "sourceStart": 109328,
+      "sourceEnd": 109464,
       "generatedSha256": "486875d05784a3484a70173eccb5ff603a14fc73347ac14ac00fbc5601b78afa",
       "outputBodyStart": 2703,
       "outputBodyEnd": 2851,
@@ -17633,8 +17676,8 @@
       "name": "aimAt",
       "output": "src/render/view/viewport.ts",
       "originalSha256": "d5dd4ea72543483e59e8e276a552c8297dc5c8e5855d8e7f6506d4fa4784b9ad",
-      "sourceStart": 119329,
-      "sourceEnd": 119782,
+      "sourceStart": 120164,
+      "sourceEnd": 120617,
       "generatedSha256": "a0c052ddba0ca86614572ef81e67fc8a248d7b993aee06c975a2cb2860f3f9ee",
       "outputBodyStart": 3017,
       "outputBodyEnd": 3512,
@@ -17693,17 +17736,17 @@
     "src/app/pageFrame.ts": "4755afe06c24dc51407ed758d47236e081a645e59b4516b8fac6c2d5f8d0edcc",
     "src/app/pageBuildNotice.ts": "fef08d64edecb2bdf842e7ec9e69fe0454ed7844509844a5b1d1919f5edff872",
     "src/main.ts": "581564e7c66cdb3464d49b5a3ce284ae4765ee1924444508b3386bb7ed0ef2f6",
-    "src/render/view/frame.ts": "a9100f96f15103fad276588acff048c3c880f5fab7228bf1ba90d19fb450a72b",
+    "src/render/view/frame.ts": "d2f62d2b2c23df3f75d7f509a3565c0b060abdb59bb7ada2057af21798480459",
     "src/render/view/houseFrame.ts": "62d8047ec88aa8015ce348d5cb1a9e8dd4a514d4c7a9916bae74a399e4de92dc",
     "src/render/view/markers.ts": "4a300f5d2984bdfdf2e89b49ff82c0f4c7711356a269daf87802699c6da24263",
     "src/render/view/atmosphere.ts": "d0927ecfa6ba88b6fc6ac599065d96eab314fdec1e9d1ebcd8fc378cde772c3d",
     "src/render/view/readiness.ts": "0740aceb669caceb4e7577eb392685ed5e2479fd35424e968a6ba68c2535292e",
-    "src/render/view/lifecycle.ts": "11cdc4ede5cee89e200b8d5528e35602b68ff63b3572d1ed35e407d3f6c49ad4",
+    "src/render/view/lifecycle.ts": "249b19caee87ab7b871788cf00e8e4fb4e8fd17388fdd6af3f4db4e05068f67f",
     "src/render/view/viewport.ts": "e9ae6933f890590f2960541972dfe048650d4c1b1ceb6b09997d277437115d5b",
-    "src/render/view.ts": "1b6dc12b6897fd740d9a28ed8e898613f15b625d3323d410526427bc135861f7",
+    "src/render/view.ts": "9e587f52cb739e04cf2736c4e0101d35fef610751a95eafe887aa1381b115317",
     "config/link-switches.json": "5b58f16edf931cf1a8b2f8d32f09786339339e4782c2a928b91dc617924bf27a",
     "docs/LINK-SWITCHES.md": "6f00e74ef5273e1d6e0c2fff832d62ded5894578f0b3c9c8e6af80d0565eb710"
   },
   "viewApiSha256": "8fc975fa4cbdafb763cc7532ad939a4ea7525490a55e7e5bf272f753a0784987",
-  "applyMs": 2268.2
+  "applyMs": 2934
 }

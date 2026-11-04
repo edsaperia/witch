@@ -331,3 +331,24 @@ View overlap ruling: #1556 comment 6644289136. Regenerate from prototype with
 #1556 if landed; otherwise use then-current prototype and #1556 adapts its two
 render hunks into view/frame.ts by normal merge. Preserve paused-repaint
 houseCamInput and early LIGHT_UNIFORMS ordering. This does not hold up prep.
+
+## Current-source refresh including #1556 (4 November)
+
+After the source advanced, #1562 became conflicting and GitHub suppressed its
+pull-request CI trigger. The normal prototype merge and regeneration were
+authorized; production APPLY is still fenced off. Source is now
+`2c9009ba36b65d8817dd35af0caaeda2de6f4041`, including #1556's elapsed-time camera
+and canopy easing and the house preparation during loading. Only View conflicted;
+main's source hash is unchanged. The refresh guard now accepts either the prior
+two-cut-file conflict set or this exact View-only set. It still requires the
+active merge head, explicit reviewed hashes for both sources, unchanged source
+and working output for an unconflicted main, and all prior output integrity
+checks. A wrong reviewed View hash was verified to refuse before any output write.
+
+Current View SHA256 (LF):
+`9a0928dd01222c9f94115ed0ed4002e623573b381e5b20da00b33c3591a5123a`.
+The 159-cut inverse proof and all 18 output hashes pass. The source history and
+old incomplete behavioral evidence remain intact. Early light uniforms, personal
+clock easing, paused-repaint `houseCamInput`, and the house preload/wait ordering
+come directly from the newly pinned source. No manual full-CI dispatch or local
+browser/full-suite/art proof is part of this refresh.

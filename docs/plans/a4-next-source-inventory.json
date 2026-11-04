@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "sourceCommit": "b29e5a3701aca479e95d5de3429042439963f002",
+  "sourceCommit": "2c9009ba36b65d8817dd35af0caaeda2de6f4041",
   "status": "inventory-only; no extraction or behavioural proof",
   "sources": [
     {
@@ -347,25 +347,25 @@
     },
     {
       "file": "src/render/view.ts",
-      "sha256": "c99fb8413f04143dbea30d037425517aac5557b2a94365b0bdfdee23287115d9",
-      "bytes": 155162,
-      "lines": 2040,
+      "sha256": "9a0928dd01222c9f94115ed0ed4002e623573b381e5b20da00b33c3591a5123a",
+      "bytes": 156058,
+      "lines": 2052,
       "cuts": {
         "frame": [
           {
             "name": "render",
-            "start": 124312,
-            "end": 155128,
-            "line": 1717,
-            "bytes": 30822,
-            "sha256": "58c0fe92cadd940b42c0e0afe0e90ebdcae414cdb32a7ce879f7c9f88a49d904",
-            "bodySha256": "2f0a7509dea6f25d561d3c1e87a5a26baa244c997d708a8b5bfd387f975ef11b"
+            "start": 125147,
+            "end": 156024,
+            "line": 1728,
+            "bytes": 30883,
+            "sha256": "7296519cd4f7fe0140f85985f15d516ceb61998e36a343bb8f150f3ac24435cd",
+            "bodySha256": "0a37dc453acf69b193a203d059e3faa8629357cff41831900ef09a5b1d83880a"
           },
           {
             "name": "replayPartyStart",
-            "start": 110096,
-            "end": 110467,
-            "line": 1536,
+            "start": 110931,
+            "end": 111302,
+            "line": 1547,
             "bytes": 371,
             "sha256": "8af3535aa75fbd65573cf70da76eec4fa1fa867a89ab5718e69a0b7a25984224",
             "bodySha256": "242831d98041101de448d56fb33e7076c32ef0b825ef33a343719531f8f6ee5e"
@@ -374,54 +374,54 @@
         "houseFrame": [
           {
             "name": "houseTilt",
-            "start": 30501,
-            "end": 30826,
-            "line": 484,
+            "start": 30694,
+            "end": 31019,
+            "line": 488,
             "bytes": 325,
             "sha256": "498f39c91d55197104c2eb65ad43e93876078f24960e45e13bbe226272bf1489",
             "bodySha256": "cf962d9a53da64f48daafdf86e4a234bbe8ec6a1ec95a306d175c121e9c6d04f"
           },
           {
             "name": "behindHouse",
-            "start": 30959,
-            "end": 32878,
-            "line": 491,
+            "start": 31152,
+            "end": 33071,
+            "line": 495,
             "bytes": 1919,
             "sha256": "2b0d0503eec2ac1aee523d382964b59905def74c1a7e8ef68825b3390809a948",
             "bodySha256": "0afc802fffd2799065c0018868e5f365845b165ab945da3887dfc784070ab9f0"
           },
           {
             "name": "occluders",
-            "start": 33365,
-            "end": 33786,
-            "line": 519,
+            "start": 33558,
+            "end": 33979,
+            "line": 523,
             "bytes": 421,
             "sha256": "75555504fa425dfc2b87dbaa5ded147820280d6e37b43d5bb1115672dd0c0be6",
             "bodySha256": "496be000b09d3f4addcba405efe64369bda30c560a3cc429790e6109f4f90061"
           },
           {
             "name": "ensureCrown",
-            "start": 36537,
-            "end": 39246,
-            "line": 569,
+            "start": 36730,
+            "end": 39439,
+            "line": 573,
             "bytes": 2709,
             "sha256": "e1804d36a4eef8147e67cc9f652fdb02a1320d6b275d6169c5e12ead11fd96bb",
             "bodySha256": "152baca9758a6c278530043050405f9c973d32994baa8fdc252a5a0f3d34c81a"
           },
           {
             "name": "buildHome",
-            "start": 77977,
-            "end": 79174,
-            "line": 1116,
+            "start": 78812,
+            "end": 80009,
+            "line": 1127,
             "bytes": 1197,
             "sha256": "4108d26c66fe4a458686cf08b3bd0b2ad469db8e555e65d3968605a967f26c2d",
             "bodySha256": "ac8a310f8a9ca00686762f9b627be0cc2d832d6fb02894dbb27df730ddd4163d"
           },
           {
             "name": "swapHomeArt",
-            "start": 117446,
-            "end": 118939,
-            "line": 1631,
+            "start": 118281,
+            "end": 119774,
+            "line": 1642,
             "bytes": 1493,
             "sha256": "6b0174fc7b5afb2c5c2ff0bfe20f527241be5ab43e053561fc359d60723a0d12",
             "bodySha256": "6a086b4652cd1a4efbbd2a276ffaba07f54481bc1d09522d8d2cc490f04a97ca"
@@ -430,27 +430,27 @@
         "markers": [
           {
             "name": "legendRings",
-            "start": 120575,
-            "end": 124053,
-            "line": 1672,
+            "start": 121410,
+            "end": 124888,
+            "line": 1683,
             "bytes": 3478,
             "sha256": "9b38416707fca1915a2fa35ae13316ba6a59fe77549454afa99f86a3ba91fd09",
             "bodySha256": "88f986a6e85bfcbb1521b63e74fae172a6df0ca901476fb3058c64565f0bfdb7"
           },
           {
             "name": "pin",
-            "start": 44836,
-            "end": 45050,
-            "line": 685,
+            "start": 45029,
+            "end": 45243,
+            "line": 689,
             "bytes": 214,
             "sha256": "9e4a8663efd685bcae6eec2269afdcd072dfee365a010afb9c1eadaa2aeb58e3",
             "bodySha256": "4aa130c199c30575ea9f8f756c695f7aef2d18086ca261fe5da04be69129dae7"
           },
           {
             "name": "inviteStart",
-            "start": 47971,
-            "end": 48187,
-            "line": 728,
+            "start": 48164,
+            "end": 48380,
+            "line": 732,
             "bytes": 216,
             "sha256": "62e47264d3e75220f117a8d199a75a8075e59c09babcb871b4697666c181926f",
             "bodySha256": "55bc5945bf05b541f6a60e27d626dc10c9a55c975914fc67c3a9fefe3355024f"
@@ -459,27 +459,27 @@
         "atmosphere": [
           {
             "name": "updateMoon",
-            "start": 111850,
-            "end": 112616,
-            "line": 1561,
+            "start": 112685,
+            "end": 113451,
+            "line": 1572,
             "bytes": 766,
             "sha256": "4b9df9e3b21d6308ed79bfc4e4577e53f618041f6a61e555ba8504ca54e8907c",
             "bodySha256": "e9402433590b8865354ee06ee60ddea62edaa964288c9e83dd8d6116ff94e12d"
           },
           {
             "name": "updateSteam",
-            "start": 112741,
-            "end": 113196,
-            "line": 1572,
+            "start": 113576,
+            "end": 114031,
+            "line": 1583,
             "bytes": 455,
             "sha256": "aa2f27fb05573a8640a475beb3a6029d65f7a0b95714b726ae7e0ed673133f5d",
             "bodySha256": "104b1bac0384cd11ff129e56eb64d2265acccbcf84579fea1624bbdb99d2779f"
           },
           {
             "name": "updateSmoke",
-            "start": 113338,
-            "end": 114333,
-            "line": 1582,
+            "start": 114173,
+            "end": 115168,
+            "line": 1593,
             "bytes": 995,
             "sha256": "36f77fa3ed896e39ae1467dcf5c00b782229f51bb2b6de113fd343ff7f5ba6fb",
             "bodySha256": "b46b18e26e4a4d8191ae4ca0e57326093f9d4403928f18feda0497adfc12ec83"
@@ -488,108 +488,108 @@
         "readiness": [
           {
             "name": "readyPrograms",
-            "start": 25144,
-            "end": 25494,
-            "line": 407,
+            "start": 25337,
+            "end": 25687,
+            "line": 411,
             "bytes": 350,
             "sha256": "f8d0c1b893f063a6ed4122a4ccbda3d25120eef1a674d39216367290e34b416d",
             "bodySha256": "93fec4edf59ecf5a3db10acecef62e4a0947f266803e0fdc4acaec42becd59a7"
           },
           {
             "name": "landingWakeReady",
-            "start": 25986,
-            "end": 26447,
-            "line": 424,
+            "start": 26179,
+            "end": 26640,
+            "line": 428,
             "bytes": 461,
             "sha256": "a8e9865f7138028b7c98340a244db507eab9faebb7f3aecbf8c5e46f42d6a3a9",
             "bodySha256": "855f0f350423bdf2527daafdcb3ebc8b0a2ac033ccaa936ad90fb25350665af7"
           },
           {
             "name": "beginLandingShaders",
-            "start": 26450,
-            "end": 26739,
-            "line": 430,
+            "start": 26643,
+            "end": 26932,
+            "line": 434,
             "bytes": 289,
             "sha256": "7992962810e32e0a7ec2a8c1b7e185b244b75eb675bdb86efdd5ce22529be99c",
             "bodySha256": "bf55303550bcc1d0595262e182ac69a6bcf3298e738946bce16bc6cbd941b9b4"
           },
           {
             "name": "armLimitedLanding",
-            "start": 26742,
-            "end": 26944,
-            "line": 431,
+            "start": 26935,
+            "end": 27137,
+            "line": 435,
             "bytes": 202,
             "sha256": "8b404e2a5fad8c10edca44610078491d24b0b01ce89bd8430e6ad7a644e600df",
             "bodySha256": "ee94761010d408525613f4b8d9919d5974ebb5d5f2fc8c3e470f780b46d181c4"
           },
           {
             "name": "limitedLandingReady",
-            "start": 26947,
-            "end": 27541,
-            "line": 436,
+            "start": 27140,
+            "end": 27734,
+            "line": 440,
             "bytes": 594,
             "sha256": "020dfa20280ac90625f85ce475ff3d33f1c7142458d6328e7155c331e4c95d83",
             "bodySha256": "51a8dd8cf7221d2010afa9534c6217080a77bf7ad725351c12db527d389b0fa8"
           },
           {
             "name": "waitForLandingWitch",
-            "start": 27544,
-            "end": 27809,
-            "line": 444,
+            "start": 27737,
+            "end": 28002,
+            "line": 448,
             "bytes": 265,
             "sha256": "3a0b7dfa0dc3d844d494a8748dc6bf4ca9ee95ee9fd1eb0639f1d14d8b016d8d",
             "bodySha256": "634b9a5e950aad1117df93ab540355f3042b7b5712203ba35c97a154983ce069"
           },
           {
             "name": "startLandingShaderGrace",
-            "start": 27812,
-            "end": 28074,
-            "line": 450,
+            "start": 28005,
+            "end": 28267,
+            "line": 454,
             "bytes": 262,
             "sha256": "8e0842cff548de1984ac53a0682f43b5ca0bd6aa6f83d5f9e900978f4fd7f8ea",
             "bodySha256": "8bd0fcb3e4f6b9f4f7e778f86fc0502e059d79f2ee3458b99f4a64527bfbfdda"
           },
           {
             "name": "compileAll",
-            "start": 83744,
-            "end": 91957,
-            "line": 1191,
+            "start": 84579,
+            "end": 92792,
+            "line": 1202,
             "bytes": 8213,
             "sha256": "a3fc8408b30bb2428a8ee2df46db2900ac1bd3ffe3b3f913f843c71cc38ff19f",
             "bodySha256": "28534191a8eedaeb19bd5bb9d1f6675d85648e0ae40eb7326abd7c5097074742"
           },
           {
             "name": "gpuCaughtUp",
-            "start": 92593,
-            "end": 93099,
-            "line": 1296,
+            "start": 93428,
+            "end": 93934,
+            "line": 1307,
             "bytes": 506,
             "sha256": "9014b827dd4211864e6c7216ff7084469516078b6e72a0d058f65f52e3da3b6d",
             "bodySha256": "9006b725d035716686d9e969018223c7eed008a7ca378f89c15f765e4be15544"
           },
           {
             "name": "warmDraws",
-            "start": 93594,
-            "end": 95621,
-            "line": 1311,
+            "start": 94429,
+            "end": 96456,
+            "line": 1322,
             "bytes": 2027,
             "sha256": "ffc7d153f65dabc03d8b9fbf710b45d17c1ce2d446480a1478d9af46b44e21c5",
             "bodySha256": "98193056d0c0f3a35fdfe1301f54b8b5b004d2ebbe1b58725e2d44b606dc3414"
           },
           {
             "name": "warmSteps",
-            "start": 80813,
-            "end": 81300,
-            "line": 1152,
+            "start": 81648,
+            "end": 82135,
+            "line": 1163,
             "bytes": 487,
             "sha256": "0845b5429d94f45ce3656f38ff225dca38bdf50d47bc3ce0fc9dc2c774b79a42",
             "bodySha256": "83c70bdf7672c2026fb0ff654e42661fef7dffcae909d764a6f0deb3f565dbc2"
           },
           {
             "name": "setReadiness",
-            "start": 82755,
-            "end": 83154,
-            "line": 1180,
+            "start": 83590,
+            "end": 83989,
+            "line": 1191,
             "bytes": 399,
             "sha256": "e78b72fd751b30f9cde528ffadba6a312b068a354c1aa5e1d218b64b1eb21052",
             "bodySha256": "5f7747fa15b72df36f968d8b0b800e736ddd618a208c6d95d3984bee9c6eba7b"
@@ -598,45 +598,45 @@
         "lifecycle": [
           {
             "name": "build",
-            "start": 58687,
-            "end": 68476,
-            "line": 846,
+            "start": 58880,
+            "end": 68669,
+            "line": 850,
             "bytes": 9791,
             "sha256": "98b1451164a5cadab9ac7b5c5a6f7914ef8db1280ff5a26684cce590fd182ad8",
             "bodySha256": "7a236014f275ae8d7add8bdfc10dd288ed899c617c56ddd4810ae94bac4db94c"
           },
           {
             "name": "prepare",
-            "start": 72010,
-            "end": 77464,
-            "line": 1041,
-            "bytes": 5454,
-            "sha256": "ea5d3590ab7e0be9e0c64bff6d876dafc713142e5d1d63d3e3a09a36a1a310cb",
-            "bodySha256": "904c77f84845a324857ab77263ab0a13ba651171e7f63f17e3dc7fc2d7d1b847"
+            "start": 72203,
+            "end": 78299,
+            "line": 1045,
+            "bytes": 6096,
+            "sha256": "b39e2d4eb8d4b849b3712ca1fc074cd0de380fbf1fb8d03effca0b9e84575eee",
+            "bodySha256": "7a68570844d147d4bdf52db0eb32fb6f9570a3d6f004cea94cc044bcbcc4a017"
           },
           {
             "name": "askIsland",
-            "start": 95798,
-            "end": 97774,
-            "line": 1340,
+            "start": 96633,
+            "end": 98609,
+            "line": 1351,
             "bytes": 1976,
             "sha256": "987c005ce624af2af23c31d09a9bc31f52876e65294d0132fd04f23994e129cb",
             "bodySha256": "9f3ba406e97f4f1f70b68383b1fab6b4b61afa17dc4eb980d2db06b13e492fef"
           },
           {
             "name": "setGameSteps",
-            "start": 99117,
-            "end": 103314,
-            "line": 1372,
+            "start": 99952,
+            "end": 104149,
+            "line": 1383,
             "bytes": 4197,
             "sha256": "ca0e32271840c9395d4a5e1aa6cf9835b8eb6d4f5fd0707154534bfb34fa0371",
             "bodySha256": "bafe7b056ba0877af61d1fc08a24be57312f4af87cfc8cc6f172c038e6d3b266"
           },
           {
             "name": "retype",
-            "start": 103556,
-            "end": 104038,
-            "line": 1427,
+            "start": 104391,
+            "end": 104873,
+            "line": 1438,
             "bytes": 482,
             "sha256": "5aeb36d7a8402dc5b220eb11ca3da48404832875ed48f4220d5d88a03cd0f54d",
             "bodySha256": "b853eac075ed51b89b7039f307a14a04a01c61b6d77ce5056de3947642ce8ccd"
@@ -645,45 +645,45 @@
         "viewport": [
           {
             "name": "landingShot",
-            "start": 116523,
-            "end": 116773,
-            "line": 1620,
+            "start": 117358,
+            "end": 117608,
+            "line": 1631,
             "bytes": 250,
             "sha256": "9552dbbc8848c24b96894e988054d166194a65814bdf3bb6b1ffd63e217621c1",
             "bodySha256": "dc45fba5d3d7dba5c7062b699e28ec8d00e68ebd8cad59b31058c5dd14806582"
           },
           {
             "name": "scenePixelSize",
-            "start": 69638,
-            "end": 70036,
-            "line": 1009,
+            "start": 69831,
+            "end": 70229,
+            "line": 1013,
             "bytes": 398,
             "sha256": "c5f3fe3be2aefe0cf3b100aff3a3ae6a3789654cb7b28022503323808634ffa6",
             "bodySha256": "25e14d075d8ae29d9a1b43913d5cd755c2851cb28473fc2c840eda727754e889"
           },
           {
             "name": "resize",
-            "start": 70142,
-            "end": 71025,
-            "line": 1016,
+            "start": 70335,
+            "end": 71218,
+            "line": 1020,
             "bytes": 883,
             "sha256": "24eb7dea157fec098781b49d5f13fac3a11fabc037a35ea1c30f00a608e81744",
             "bodySha256": "4695ff3d95dd79fa3e6bb5362a128d85a71ff391e28196279ceed8eebdfbde08"
           },
           {
             "name": "screenOf",
-            "start": 108418,
-            "end": 108629,
-            "line": 1507,
+            "start": 109253,
+            "end": 109464,
+            "line": 1518,
             "bytes": 211,
             "sha256": "86dfa7d7a276a85f21d08b6392b09ff707e12152d82b34d170247e2728b7c0d2",
             "bodySha256": "d8c152a4d0f91a0bf6ccf3822238ac8f30b1b31ba2b4d3fee544482f51d97d59"
           },
           {
             "name": "aimAt",
-            "start": 119256,
-            "end": 119782,
-            "line": 1655,
+            "start": 120091,
+            "end": 120617,
+            "line": 1666,
             "bytes": 526,
             "sha256": "bcf480b9405f335a4362b96a2377db3512cfa6c745e5e1470acdfb6b4f08100e",
             "bodySha256": "d5dd4ea72543483e59e8e276a552c8297dc5c8e5855d8e7f6506d4fa4784b9ad"
