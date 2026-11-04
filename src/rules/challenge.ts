@@ -57,15 +57,16 @@ import { challengeCircle } from "./challengeCircle";
 import type { StackEntry } from "./stoneStacks";
 
 /** Its statues' knobs (rules/challengeStatues.ts; Ed, 2026-11-04): on; the wake-up's length in bars; the posts, `first` m in from
- *  their column and each next `gap` m further in; the walk back at `walkBack` times their pace; drawn `tint` of the way to `grey`,
- *  `red` the red they reach as they wake. */
-export interface StatueTuning { on: boolean; bars: number; first: number; gap: number; walkBack: number; keepOut: number; grey: number[]; tint: number; red: number }
+ *  their column and each next `gap` m further in (Ed, 2026-11-04: "Further apart, same line"), the youth on the camera's side of the
+ *  adult with `youthFront`; the walk back at `walkBack` times their pace; drawn `tint` of the way to `grey`, `red` the red they reach
+ *  as they wake. */
+export interface StatueTuning { on: boolean; bars: number; first: number; gap: number; youthFront: boolean; walkBack: number; keepOut: number; grey: number[]; tint: number; red: number }
 /** Its floor's look (render/challenge.ts carvingLook; Ed, 2026-11-04, on #1804): its carved sigil's glow while the statues are stone
  *  (`stone`: a little moonlight), waking (`red`, at the wake-up's end), awake (`wild`, steady and cold), won (`warm`), going back to
  *  stone over `fade` seconds; and the moonlight on its stone floor (`floor`). */
 export interface CarvingTuning { stone: number; red: number; wild: number; warm: number; fade: number; floor: number }
 export interface ChallengeTuning { carving: CarvingTuning; on: boolean; radius: number; margin: number; spacing: number; adults: number; youths: number; castReach: number; findSets: boolean; fireworks: { on: boolean; height: number; burst: number }; statues: StatueTuning; analyser: { bars: number; steps: number; fill: number } }
-export const CHALLENGE_DEFAULT: ChallengeTuning = { on: false, radius: 36, margin: 3, spacing: 7.5, adults: 1, youths: 1, castReach: 5, findSets: false, fireworks: { on: true, height: 24, burst: 8 }, statues: { on: false, bars: 4, first: 3.5, gap: 3.5, walkBack: 1.5, keepOut: 2, grey: [0.6, 0.6, 0.63], tint: 0.9, red: 1 }, analyser: { bars: 72, steps: 36, fill: 0.94 }, carving: { stone: 0.35, red: 2.2, wild: 1.2, warm: 1.8, fade: 2, floor: 0.3 } };
+export const CHALLENGE_DEFAULT: ChallengeTuning = { on: false, radius: 36, margin: 3, spacing: 7.5, adults: 1, youths: 1, castReach: 5, findSets: false, fireworks: { on: true, height: 24, burst: 8 }, statues: { on: false, bars: 4, first: 3.5, gap: 12.5, youthFront: true, walkBack: 1.5, keepOut: 2, grey: [0.6, 0.6, 0.63], tint: 0.9, red: 1 }, analyser: { bars: 72, steps: 36, fill: 0.94 }, carving: { stone: 0.35, red: 2.2, wild: 1.2, warm: 1.8, fade: 2, floor: 0.3 } };
 export const challengeOf = (t: Tuning): ChallengeTuning => ({ ...CHALLENGE_DEFAULT, ...t.challenge, fireworks: { ...CHALLENGE_DEFAULT.fireworks, ...t.challenge?.fireworks }, statues: { ...CHALLENGE_DEFAULT.statues, ...t.challenge?.statues }, analyser: { ...CHALLENGE_DEFAULT.analyser, ...t.challenge?.analyser }, carving: { ...CHALLENGE_DEFAULT.carving, ...t.challenge?.carving } });
 
 /** What the page says of it (under the clock: main.ts): the pack all won over or gone (ready to cast), cleared (and its reward),
@@ -130,17 +131,25 @@ export const castReachOf = (ch: { radius: number }, t: Tuning): number => { cons
 
 /** Where its pack stand as statues (Ed, 2026-11-04: "grey statues, all facing the centre of the circle"; through the coordinator:
  *  column / adult / youth / centre; and "they should be closer to their column than to the centre", the middle left open for her to
- *  step into): each on its kind's column's radius, in from the column toward the middle, its kind's adults first (nearest the column)
- *  then its youths, each by id, the first `first` m in and each next `gap` m further, never past 0.45 of the way to the middle (so
- *  always nearer its column than the middle). By creature id. */
+ *  step into; then, the youth hidden behind its adult, "Further apart, same line"): each on its kind's column's radius, in from the
+ *  column toward the middle, its kind's adults then its youths, each by id, the first `first` m in and each next `gap` m further (12.5:
+ *  the youth 16 m in on the 36 m circle), squeezed to fit when more than two must stand by `POST_REACH` of the way to the middle (so
+ *  always nearer its column than the middle). With `youthFront`, on the columns on the camera's side of the middle (south of it: the
+ *  game's camera looks north, rules/camera.ts) that order runs the other way, youths nearest the column, so the smaller always stands
+ *  in front of the bigger as the camera sees it: on one line straight away from the camera no spacing nearer the column than the
+ *  middle lifts the youth clear of a tall adult in front of it (an adult's sprite is drawn 7 to 15 m tall; 12.5 m back lifts the
+ *  youth only 6.6 m up the screen at the default 32 degree camera). By creature id. */
 /** The furthest in a statue's post goes, a share of the way from its column to the middle: under half, so nearer its column. */
 export const POST_REACH = 0.45;
-export function statuePosts(site: { x: number; z: number; radius: number }, kinds: readonly string[], pack: readonly { id: number; species: string; level: number }[], S: Pick<StatueTuning, "first" | "gap">): Map<number, { x: number; z: number }> {
+export function statuePosts(site: { x: number; z: number; radius: number }, kinds: readonly string[], pack: readonly { id: number; species: string; level: number }[], S: Pick<StatueTuning, "first" | "gap"> & Partial<Pick<StatueTuning, "youthFront">>): Map<number, { x: number; z: number }> {
   const spots = columnSpots(site, kinds.length), out = new Map<number, { x: number; z: number }>(), R = Math.max(1e-6, site.radius);
+  const reach = R * POST_REACH, first = Math.min(reach, Math.max(0, S.first));
   kinds.forEach((kind, i) => {
     const col = spots[i], ux = (site.x - col.x) / R, uz = (site.z - col.z) / R;
-    pack.filter(c => c.species === kind).sort((a, b) => b.level - a.level || a.id - b.id).forEach((c, j) => {
-      const d = Math.min(R * POST_REACH, S.first + j * S.gap);
+    const mine = pack.filter(c => c.species === kind).sort((a, b) => b.level - a.level || a.id - b.id), n = mine.length;
+    const step = n > 1 ? Math.min(Math.max(0, S.gap), (reach - first) / (n - 1)) : 0, flip = !!S.youthFront && col.z > site.z + 1e-6 * R;
+    mine.forEach((c, j) => {
+      const d = first + (flip ? n - 1 - j : j) * step;
       out.set(c.id, { x: col.x + ux * d, z: col.z + uz * d });
     });
   });

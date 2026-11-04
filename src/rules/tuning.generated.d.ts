@@ -460,6 +460,7 @@ export type SchemaTuning = {
       "bars": number;
       "first": number;
       "gap": number;
+      "youthFront": boolean;
       "walkBack": number;
       "keepOut": number;
       "grey": Array<number>;
