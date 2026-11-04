@@ -58,7 +58,8 @@ describe("a legend's quest is done by the drop alone (Ed, 2026-10-19)", () => {
     stepGame(g, { ...idle, sigil: true }, STEP);
     expect(L.quest!.done).toBeUndefined();
     const near = legendCircleNear(g, g.witch)!;
-    expect(broughtLine(g, near)!.text).toBe(`Not this one: it wants ${sigilWords(want)}, and you put down ${sigilWords(gift.species, true)}.`);
+    const name = L.species === "beetle" ? "stag beetle" : L.species === "cat" ? "wildcat" : L.species;
+    expect(broughtLine(g, near)!.text).toBe(`The elder ${name} wants ${sigilWords(want)} - (this is ${sigilWords(gift.species, true)}).`); // (Ed, 2026-11-04)
     // (picked up again, made the right kind at another age, and put down: done)
     stepGame(g, { ...idle, sigil: true }, STEP);
     expect(g.leash.stack).toContain(gift.id);
