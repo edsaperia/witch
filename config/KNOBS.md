@@ -4661,7 +4661,7 @@ Code: `docs/plans/attack-grammar.md`
 How much graphics memory the game lets itself use, letting go of the art used longest ago when it's over.
 
 1. the coordinator's ask, 2026-10-26: Ed-approved; render/gpuLedger.ts counts every texture and render buffer at the GL calls, render/view/gpuBudget.ts keeps it
-The game-wide GPU memory budget [1]: mb MB for a window of refWidth x refHeight physical pixels, scaled by this window's (Google Maps' rule), never under floor nor over ceil. Every every seconds, over it, the art used longest ago (an area type's trees, a creature set, a rig page) is let go till it's under headroom of the budget, nothing used in the last keep seconds (what's on screen is used every frame); it comes back from the art cache when wanted. GL's out-of-memory error, read every errorEvery seconds (each read waits on the GPU), lowers the budget to headroom of what was held then.
+The game-wide GPU memory budget [1]: mb MB for a window of refWidth x refHeight physical pixels, scaled by this window's (Google Maps' rule), never under floor nor over ceil. Every every seconds, over it, the art used longest ago (an area type's trees, a creature set, a rig page) is let go till it's under headroom of the budget, nothing used in the last keep seconds (what's on screen is used every frame); it comes back from the art cache when wanted. GL's out-of-memory error, read every errorEvery seconds if anything was allocated since the last read (each read waits on the GPU), lowers the budget to headroom of what was held then.
 Code: `render/gpuLedger.ts`, `render/view/gpuBudget.ts`
 
 | knob | type | range |
