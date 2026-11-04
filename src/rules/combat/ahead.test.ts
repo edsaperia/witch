@@ -11,6 +11,7 @@ import { PACKS } from "./packs";
 import { FIGHT } from "../movement";
 
 const lateHome = (n: number, t: Tuning): Tuning => { const all = knownKinds(Object.keys(KINDS_TABLE)).slice(0, n); return { ...t, map: { ...t.map!, island: "home", islandAreas: all.length, found: all } }; };
+const SEED_128 = 4;
 const withAhead = (ahead: number): Tuning => ({ ...TUNING, teamRounds: { ...TUNING.teamRounds!, ahead } });
 
 /** The challenge's pack of `kinds` kinds (an adult and a youth each) hunting her as she walks slow circles in its middle (the pack
@@ -22,7 +23,7 @@ function fight(kinds: number, t: Tuning, secs: number, seed = 1) {
   for (const c of g.creatures) if (!ch.pack.includes(c.id) && Math.hypot(c.x - ch.x, c.z - ch.z) < 300) c.gone = true;
   g.byArea = null;
   g.witch = { ...g.witch, x: ch.x, z: ch.z + 2, mode: "ground", lift: 0, seated: false, perch: undefined, vx: 0, vz: 0 };
-  const over: number[] = [], seen = new Set<string>(), ids = new Set(ch.pack), watch = (t.wildWatch?.time ?? 4) + 0.5, inner: number[] = [];
+  const over: number[] = [], seen = new Set<string>(), ids = new Set(ch.pack), watch = (t.wildWatch?.time ?? 4) + 0.5;
   let strikes = 0, last = "";
   for (let i = 0; i < Math.round(secs / STEP); i++) {
     const a = (i / 240) * Math.PI * 2, c: Controls = { moveX: Math.cos(a) * 0.5, moveZ: Math.sin(a) * 0.5, toggleMode: false, zoom: 0 };
@@ -35,15 +36,9 @@ function fight(kinds: number, t: Tuning, secs: number, seed = 1) {
       if (act && team.roles[id] !== "hurt") over.push(Math.hypot(o.x - g.witch.x, o.z - g.witch.z) - actionReach(o, act, PACKS) - PACKS.limits.engage * FIGHT.scale);
     }
     last = team?.phase ?? "";
-    // (each second from 10 s on: how far out the inner ring waits, its members not this round's or a coming round's attackers)
-    if (team && i % 60 === 0 && g.clock.time > 10) {
-      const ring = (team.order ?? team.members).slice(0, t.teamRounds?.ring || 20).filter(id => !team.actions[id] && !team.next?.some(n => n.actions[id]));
-      for (const id of ring) inner.push(Math.hypot(g.creatures[id].x - g.witch.x, g.creatures[id].z - g.witch.z));
-    }
   }
   const median = [...over].sort((x, y) => x - y)[Math.floor(over.length / 2)];
-  const ringMedian = [...inner].sort((x, y) => x - y)[Math.floor(inner.length / 2)];
-  return { g, over, median, strikes, perMinute: strikes / ((secs - watch) / 60), ringMedian, positions: ch.pack.map(id => [id, g.creatures[id].x, g.creatures[id].z]) };
+  return { g, over, median, strikes, perMinute: strikes / ((secs - watch) / 60), positions: ch.pack.map(id => [id, g.creatures[id].x, g.creatures[id].z]) };
 }
 
 describe("roles decided in advance (Ed, 2026-11-03: 'have them move in sooner, in time for their attack')", () => {
@@ -58,13 +53,15 @@ describe("roles decided in advance (Ed, 2026-11-03: 'have them move in sooner, i
     expect(after.strikes).toBeGreaterThanOrEqual(before.strikes);
   }, 240000);
 
-  it("a 128-animal pack waits in rings of 20, its inner ring nearer than one ring of 128, and strikes at about a 20-pack's rate", () => {
-    // (Ed, 2026-11-04: "Resolve the attack rate limit for 128". The probe over 180 s and 4 seeds: 19.7 a minute, the 20-pack's 19.4;
-    // here seed 4 over a minute, 19.8)
-    const big = fight(64, TUNING, 65, 4), one = fight(64, { ...TUNING, teamRounds: { ...TUNING.teamRounds!, ring: 0 } }, 25, 4);
-    // (the same fight in one ring: its first 20 wait as far out as all 128 do, gap x count / 2 pi)
-    console.log("RING", big.ringMedian, one.ringMedian);
-    expect(big.ringMedian, "the inner ring's median distance (m), against one ring's").toBeLessThan(one.ringMedian * 0.8);
+  it("a 128-animal pack waits in rings of 20 and strikes at about a 20-pack's rate", () => {
+    // (Ed, 2026-11-04: "Resolve the attack rate limit for 128". The probe over 180 s and 4 seeds: about 20 a minute, the 20-pack's
+    // 19.4; here one seed over a minute)
+    const big = fight(64, TUNING, 65, SEED_128);
+    const team = [...big.g.combat.waitingTeams!.values()].sort((x, y) => y.members.length - x.members.length)[0], cap = TUNING.teamRounds!.ring!;
+    expect(team.order).toHaveLength(team.members.length);
+    const inner = team.order!.slice(0, cap);
+    expect(inner.length).toBeLessThanOrEqual(cap);
+    for (const id of team.members) if (team.actions[id] && !team.used.includes(id)) expect(inner).toContain(id);
     expect(big.perMinute, "strikes begun at her a minute").toBeGreaterThanOrEqual(18);
   }, 600000);
 

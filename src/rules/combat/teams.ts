@@ -87,8 +87,9 @@ export function stepTeams(state: CombatState, w: CombatWorld, data: PacksData, c
     const tempo = Math.max(0.1, members.reduce((sum, c) => sum + rolePreferences(c.species).tempo, 0) / members.length);
     const tell = rhythms.reduce((sum, rhythm) => sum + rhythm.tell, 0) / rhythms.length / tempo;
     const rest = rhythms.reduce((sum, rhythm) => sum + rhythm.lull, 0) / rhythms.length / tempo;
-    // (a big team's round, attack window and least rest shortened together: the round's shape kept, only quicker; the rest too, as
-    // else it held the round at about 7 s whatever the round time; the tell, the warning, never)
+    // (a big team's round and least rest shortened together, the rest too as else it held the round at about 7 s whatever the round
+    // time; its attack window no shorter than teamRounds.window of it (1: kept, Ed 2026-11-04: shortened, barely one strike a round got
+    // through her dodge token); the tell, the warning, never)
     const RT = w.t?.teamRounds ?? ROUND_DEFAULT, scale = roundScale(members.length, RT), roundTime = SPACING.team.roundTime * scale / tempo, attackWindow = SPACING.team.attackWindow * Math.max(scale, RT.window ?? ROUND_DEFAULT.window) / tempo, least = rest * scale;
     // Roles decided in advance (Ed, 2026-11-03, on #1782: "can we decide the roles in advance and have them move in sooner, in time for
     // their attack?"): a team past the reference size (20) keeps its next `teamRounds.ahead` rounds' attackers drawn, each drawn as the

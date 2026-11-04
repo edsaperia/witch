@@ -3,6 +3,7 @@
   "items": [
     "When you fly up out of a hunting pack's reach, it keeps circling round under you as it does while waiting its turn, instead of freezing in a heap",
     "Big packs (more than 20 animals on you) attack in quicker rounds, the bigger the quicker",
-    "In big packs the animals whose turn is coming leave the circle early, so they're ready to attack when their turn starts"
+    "In big packs the animals whose turn is coming leave the circle early, so they're ready to attack when their turn starts",
+    "The biggest packs wait for their turn in rings round you and attack about as often as a pack of 20"
   ]
 }
