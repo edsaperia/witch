@@ -63,7 +63,9 @@ it("explicit runaways remain asleep on the beach at victory, with the population
   });
 
   it("the party lost mid-night: nobody gone, every one asleep, those from the beach at home", () => {
-    const { g, bot, start, ran } = night(200);
+    // (lost at 150 s: 200 till home's packs grew by the islands found, Ed 2026-11-04, none found here so every area one young, when
+    // the bot wins this night at about 181 s)
+    const { g, bot, start, ran } = night(150);
     expect(g.partyOver).toBeTruthy();
     expect(ran.size).toBeGreaterThan(0);
     expect(g.creatures.filter(c => c.gone || c.beached).map(c => c.id)).toEqual([]); // (up off the beach at once)
