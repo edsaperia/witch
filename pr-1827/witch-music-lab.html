@@ -9816,7 +9816,7 @@ registerProcessor("witch-fof", WitchFof);
       }
     },
     areaSize: 28,
-    areaScale: 6,
+    areaScale: 7,
     arena: {
       radius: 5,
       band: 50,
@@ -10124,16 +10124,18 @@ registerProcessor("witch-fof", WitchFof);
     soundsystemFootprint: 6,
     reserveMargin: 3,
     stoneKeepClear: 40,
-    stoneMinGap: 40,
+    siteGap: 50,
+    siteLakeGap: 10,
     findArea: {
       on: true,
       clear: 6
     },
     challenge: {
       on: true,
-      radius: 36,
+      radius: 50,
       margin: 3,
       spacing: 7.5,
+      sigilGap: 1.5,
       adults: 1,
       youths: 1,
       castReach: 5,
@@ -10147,8 +10149,7 @@ registerProcessor("witch-fof", WitchFof);
         on: true,
         bars: 4,
         first: 3.5,
-        gap: 12.5,
-        youthFront: true,
+        gap: 19,
         walkBack: 1.5,
         keepOut: 2,
         grey: [0.6, 0.6, 0.63],
@@ -12625,7 +12626,7 @@ registerProcessor("witch-fof", WitchFof);
       headroom: 0.85,
       keep: 3,
       every: 1,
-      errorEvery: 5
+      errorEvery: 60
     },
     mist: {
       on: true,
