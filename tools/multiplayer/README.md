@@ -12,7 +12,12 @@ node tools/multiplayer/route.cjs --build <game URL> --relay <ws:// or wss:// rel
   [--viewport 960x540] [--headed]
   bounds in seconds: [--overall 480] [--load 180] [--phone 20] [--wardrobe 16] [--rejoin 20] [--bedHold 15] [--walk 30]
                      [--join 150] [--rollover 90] [--leave 90] [--redial 150] [--wake 25]
+  diagnosis: [--profile <seconds>] [--trace] [--stop-after <stage>]
 ```
+
+`--profile 20 --stop-after call-and-consent` writes both pages' CPU profiles (`host.cpuprofile`, `guest.cpuprofile`, for DevTools)
+for 20 s right after the visit starts, and `--trace` adds a Chrome trace of the host page (`host-trace.json`, which also holds the
+shared GPU process). Profile an unminified build with source maps (`npx vite build --minify false --sourcemap --outDir dist-prof`).
 
 `--wake` is the tool's own bound for each wake-up (a move key, then the 3 s stretch of her own time), not a T5B bound. A guest's
 clock runs only as fast as her page sends steps, so on a slow software renderer it may need longer (`--wake 120`).

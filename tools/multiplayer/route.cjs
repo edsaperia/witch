@@ -20,9 +20,10 @@ function parseArgs(argv) {
     if (!k.startsWith("--")) throw Error(`Unexpected argument ${k}`);
     const key = k.slice(2);
     if (key === "headed") { a.headed = true; continue; }
+    if (key === "trace") { a.trace = true; continue; }
     if (key === "help") { a.help = true; continue; }
     const v = argv[++i]; if (v === undefined) throw Error(`${k} needs a value`);
-    a[key] = ["seed", "build", "relay", "out", "viewport", "link", "expect-version", "expect-relay-build"].includes(key) ? v : Number(v);
+    a[key] = ["seed", "build", "relay", "out", "viewport", "link", "stop-after", "expect-version", "expect-relay-build"].includes(key) ? v : Number(v);
     if (typeof a[key] === "number" && !Number.isFinite(a[key])) throw Error(`${k} needs a number`);
   }
   return a;
@@ -30,7 +31,8 @@ function parseArgs(argv) {
 const USAGE = `Usage: node tools/multiplayer/route.cjs --build <game URL> --relay <ws:// or wss:// relay> --out <directory>
   [--seed 123] [--link "px=6"] [--expect-version <text in version.json>] [--expect-relay-build <relay build prefix>] [--viewport 960x540] [--headed]
   bounds in seconds: [--overall 480] [--load 180] [--phone 20] [--wardrobe 16] [--rejoin 20] [--bedHold 15] [--walk 30]
-                     [--join 150] [--rollover 90] [--leave 90] [--redial 150] [--wake 25]`;
+                     [--join 150] [--rollover 90] [--leave 90] [--redial 150] [--wake 25]
+  diagnosis: [--profile <seconds>: CPU profiles of both pages for that long once the visit starts] [--trace: and a Chrome trace of the host page] [--stop-after <stage>]`;
 
 const sleep = ms => new Promise(r => setTimeout(r, ms));
 const now = () => Date.now();
@@ -126,8 +128,12 @@ async function main() {
     }
   }
   /** One stage: PASS when `fn` returns, FAIL (screenshots and both pages' state kept) when it throws or a bound passes. */
+  let stopped = null;
   async function stage(name, boundS, fn) {
-    if (failed) { R.stages.push({ name, result: "UNRUN", boundS }); return null; }
+    if (failed || stopped) { R.stages.push({ name, result: "UNRUN", boundS, ...(stopped ? { note: `stopped after ${stopped} (--stop-after)` } : {}) }); return null; }
+    try { return await stageRun(name, boundS, fn); } finally { if (args["stop-after"] === name) stopped = name; }
+  }
+  async function stageRun(name, boundS, fn) {
     const t0 = now(), row = { name, result: "RUNNING", boundS, startedAt: new Date(t0).toISOString(), atS: round((t0 - startedAt) / 1000, 1) };
     R.stages.push(row); save();
     console.log(`[${row.atS}s] ${name} ...`);
@@ -361,6 +367,22 @@ async function main() {
       return { ringingMs, consentShownMs, connectedMs: now() - t0, seed: hs.seed };
     });
     await frameRate("connected");
+    if (args.profile && !failed) {
+      // Diagnosis only: both pages' CPU profiles (DevTools .cpuprofile) for --profile seconds, right after the visit starts.
+      const sessions = await Promise.all([host, guest].map(async page => { const cdp = await page.context().newCDPSession(page); await cdp.send("Profiler.enable"); await cdp.send("Profiler.setSamplingInterval", { interval: 1000 }); return cdp; }));
+      const t0 = now();
+      const pageFacts = () => Promise.all([host, guest].map(page => page.evaluate(() => ({ domNodes: document.getElementsByTagName("*").length, bodyChildren: document.body.children.length, canvases: document.getElementsByTagName("canvas").length, heapMB: performance.memory ? Math.round(performance.memory.usedJSHeapSize / 1048576) : null })).catch(e => ({ unavailable: e.message.split("\n")[0] }))));
+      R.profileFacts = { before: await pageFacts() };
+      if (args.trace) await browser.startTracing(host, { path: path.join(out, "host-trace.json"), categories: ["devtools.timeline", "disabled-by-default-devtools.timeline", "disabled-by-default-devtools.timeline.frame", "blink", "cc", "gpu", "v8.execute"] });
+      await Promise.all(sessions.map(cdp => cdp.send("Profiler.start")));
+      await sleep(args.profile * 1000);
+      if (args.trace) await browser.stopTracing();
+      R.profileFacts.after = await pageFacts();
+      await frameRate("profiled");
+      const profiles = await Promise.all(sessions.map(cdp => cdp.send("Profiler.stop")));
+      for (const [i, role] of ["host", "guest"].entries()) { const file = `${role}.cpuprofile`; fs.writeFileSync(path.join(out, file), JSON.stringify(profiles[i].profile)); R.notes.push(`CPU profile ${file}: ${round((now() - t0) / 1000, 1)} s`); }
+      await Promise.all(sessions.map(cdp => cdp.detach().catch(() => {})));
+    }
 
     // 4. The host leaves the phone menu and walks; the guest gets up. Each page sees the other move.
     let hostBedPlan = null;
@@ -512,7 +534,8 @@ async function main() {
       await Promise.all([until(guest, 20000, "caller line ended", s => !s.active), until(host, 20000, "answerer line ended", s => !s.active)]);
       return { ms: now() - t0 };
     });
-    if (!failed) R.verdict = "PASS";
+    if (!failed && !stopped) R.verdict = "PASS";
+    else if (!failed) R.verdict = `STOPPED after ${stopped}`;
   } catch (e) {
     R.notes.push(`driver error: ${String(e.stack ?? e).split("\n").slice(0, 4).join(" | ")}`); failed = true;
     await shot("driver-error").catch(() => {});
