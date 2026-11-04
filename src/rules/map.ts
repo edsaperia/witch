@@ -1406,12 +1406,14 @@ export function generateMap(runSeed: number, tuning: Tuning, only?: { landStep: 
   // that has (one of the route's first three for the early quest's, so its quest stays early), before the last resort.
   const routeOrder = rosterIsland || tuning.legends?.earlyQuest !== false ? routeOf(map as unknown as ForestMap).order : [];
   const kindOfCell = (k: string) => { const [x, y] = k.split(",").map(Number); return AREA_TYPES[typeOf(x, y)].creature; };
+  // (on a map by legends.share, the move keeps its spread: no more than two neighbouring legend areas together, chooseLegendCells)
+  const runWith = (o: string, without: string) => { const seen = new Set([o]), todo = [o]; while (todo.length) for (const x of neighbours.get(todo.pop()!) ?? []) if (x !== without && legendCells.has(x) && !seen.has(x)) { seen.add(x); todo.push(x); } return seen.size; };
   for (const [cx, cy] of cells) {
     const k = cellKey(cx, cy);
     if (!legendCells.has(k) || clearings.has(k)) continue; // (no legend, no clearing: home, and the areas legends.share leaves out)
     if (placeClearing(cx, cy, false)) continue;
     const early = routeOrder.slice(0, 3).includes(k), kind = kindOfCell(k);
-    const alt = (routeOrder.length ? routeOrder : cells.map(c => cellKey(c[0], c[1]))).filter(o => o !== k && !legendCells.has(o) && kindOfCell(o) === kind && (!early || routeOrder.slice(0, 3).includes(o)))
+    const alt = (routeOrder.length ? routeOrder : cells.map(c => cellKey(c[0], c[1]))).filter(o => o !== k && !legendCells.has(o) && kindOfCell(o) === kind && (!early || routeOrder.slice(0, 3).includes(o)) && (!!rosterIsland || runWith(o, k) <= 2))
       .find(o => { const [x, y] = o.split(",").map(Number); return placeClearing(x, y, false); });
     if (alt) { legendCells.delete(k); legendCells.add(alt); moved.push(`${k} to ${alt}`); continue; }
     placeClearing(cx, cy, true);
