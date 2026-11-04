@@ -114,6 +114,8 @@ export function restoreGame(input: unknown): Game {
   // Saved nights from before the nine-colour mushroom system retain their exact night;
   // only the new subsystem starts fresh, deterministically placed from the saved seed.
   if (!Object.hasOwn(state, 'mushrooms')) state.mushrooms = game.mushrooms;
+  // Saved nights from before the challenge area (rules/challenge.ts) have no pack among their creatures: no challenge that night.
+  if (!Object.hasOwn(state, 'challenge')) state.challenge = null;
   // A compatible save has every non-optional field made by newGame. Extra fields are allowed only
   // if they belong to Game (optional fields aren't all present on a new night).
   for (const key of Object.keys(game)) if (!OMIT.has(key) && !Object.hasOwn(state, key)) return invalid();

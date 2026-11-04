@@ -58,6 +58,7 @@ export function enrage(c: Creature): boolean {
  *  second step (states.leash). Enraged ones, legends and leashed ones can't. */
 export function invitableNow(c: Creature, data: StatesData = STATES): boolean {
   if (c.homeGuard) return false;
+  if (c.statue) return false; // (the challenge's pack as statues, stone or walking back to their posts: rules/challengeStatues.ts)
   if (c.level === 0) return false; // Ed, 2026-10-31: "No, no baby is invitable", including the circle baby.
   if (c.asleep || c.bed) return false; // (asleep, or walking home to bed: rules/partyOver.ts)
   if (inConga(c)) return false; // (the won night's line: never hers again)
@@ -88,6 +89,7 @@ export function makePartyLegend(c: Creature, time: number): void {
  *  (pickupDelay after the hearts); without, whether it has one at all (the view draws it popping out). */
 export function hasRune(c: Creature, time?: number, data: StatesData = STATES): boolean {
   if (c.homeGuard) return false;
+  if (c.statue) return false; // (the challenge's pack as statues, stone or walking back to their posts: rules/challengeStatues.ts)
   if (c.level === 0) return false; // Babies join at soundsystem conversion, through its loose sigils, never a personal rune.
   if (c.asleep || c.bed || inConga(c) || c.packHide) return false; // (hiding in a pack's lull, a shadow of itself: no rune till it's back, Ed 2026-10-29)
   if (c.atStone || c.loose) return false; // (its sigil in its stone's stack, or lying loose by its soundsystem: rules/stoneStacks.ts)

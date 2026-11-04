@@ -63,8 +63,12 @@ export class GpuLedger {
   private attached = new WeakSet<WebGLTexture>();
   private texBytes = 0;
   private rbBytes = 0;
+  /** Calls that asked the GPU for memory (textures, render buffers, buffers) since GL's error was last read: `checkIfAllocated`. */
+  private allocs = 0;
   /** Out-of-memory errors seen (GL's own, read now and then: `check`). */
   ooms = 0;
+  /** GL's error reads (each one waits on the GPU): for the tests and the frame-sync checks. */
+  errorReads = 0;
 
   constructor(private readonly gl: GL, private readonly canvasBytes: () => number = () => 0) {
     const g = gl as unknown as Record<string, (...a: unknown[]) => unknown>, self = this;
@@ -81,6 +85,7 @@ export class GpuLedger {
     const slot = (target: number) => (target >= CUBE_FACE0 && target < CUBE_FACE0 + 6 ? CUBE : target);
     const current = (target: number) => self.bound.get((self.unit << 16) | slot(target)) ?? null;
     const set = (target: number, level: number, bytes: number) => {
+      self.allocs++;
       const t = current(target);
       if (!t) return;
       let r = self.tex.get(t);
@@ -116,12 +121,14 @@ export class GpuLedger {
     wrap("framebufferTextureLayer", a => { if (a[2]) self.attached.add(a[2] as WebGLTexture); });
     wrap("bindRenderbuffer", a => { self.rb = (a[1] as WebGLRenderbuffer | null) ?? null; });
     const storage = (internal: number, w: number, h: number, samples: number) => {
+      self.allocs++;
       if (!self.rb) return;
       const was = self.rbs.get(self.rb) ?? 0, b = w * h * texelBytes(internal) * Math.max(1, samples);
       self.rbs.set(self.rb, b); self.rbBytes += b - was;
     };
     wrap("renderbufferStorage", a => { const [, internal, w, h] = a as number[]; storage(internal, w, h, 1); });
     wrap("renderbufferStorageMultisample", a => { const [, samples, internal, w, h] = a as number[]; storage(internal, w, h, samples); });
+    wrap("bufferData", () => { self.allocs++; }); // (not counted in bytes: only so an out-of-memory there is read too)
     wrap("deleteRenderbuffer", a => { const b = self.rbs.get(a[0] as WebGLRenderbuffer); if (b !== undefined) { self.rbBytes -= b; self.rbs.delete(a[0] as WebGLRenderbuffer); } }, true);
   }
 
@@ -159,10 +166,18 @@ export class GpuLedger {
   /** GL's own error now (read only now and then: each read waits on the GPU): out of memory counted and said. */
   check(): boolean {
     let oom = false;
+    this.allocs = 0; this.errorReads++;
     for (let i = 0, e = this.gl.getError(); e && i < 8; i++, e = this.gl.getError()) if (e === OUT_OF_MEMORY) oom = true;
     if (oom) this.ooms++;
     return oom;
   }
+
+  /** `check`, but only when something has asked the GPU for memory since GL's error was last read; else false, without reading.
+   *  Out of memory comes from an allocation, and GL keeps an error till it's read, so none is missed, only read at the next check
+   *  after one: while nothing new is made (most of play) the budget's check never makes the page wait on the GPU. Each read
+   *  waits for everything drawn so far (the frame-sync hunt, 2026-11-04: up to 1.7 s a read in the cloud's software renderer, 10% of
+   *  a guest's JavaScript; a frame's GPU time on a machine whose graphics are the bottleneck). */
+  checkIfAllocated(): boolean { return this.allocs > 0 ? this.check() : false; }
 }
 
 /** A ledger's line (MB), the biggest kinds first. */

@@ -1,16 +1,17 @@
 import { describe, expect, it } from "vitest";
-import { hitWitch, newGame, stepGame, STEP, type Controls, type Game } from "./game";
+import { hitWitch, stepGame, STEP, type Controls, type Game } from "./game";
 import { enableCauldron, kitchenBasketPoints } from "./cauldronNight";
 import { fromPlan, HOUSE_ROOMS } from "./houseRooms";
 import { restoreGame, snapshotGame } from "./nightSnapshot";
 import { TUNING } from "./tuning";
+import { preppedGame } from "../test/preppedGame"; // (games on a map made once a file from its prep)
 
 const idle: Controls = { moveX: 0, moveZ: 0, toggleMode: false, zoom: 0 };
 // Four-area authored home is sufficient: kitchen occupancy, local pickups and shared snapshot references do not need distant terrain.
 function fresh(players = 1): Game {
   const tuning = structuredClone(TUNING);
   tuning.map!.island = "home"; tuning.map!.islandAreas = 4;
-  const g = newGame(123, tuning, players);
+  const g = preppedGame(123, tuning, players);
   g.clock.paused = false; g.party.spellAt = -100;
   for (const W of g.witches) W.body = { ...W.body, seated: false, perch: false, mode: "ground", lift: 0 };
   return g;

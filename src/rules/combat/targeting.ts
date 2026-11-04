@@ -7,6 +7,7 @@ import { bodyRadius } from "../spacing";
 import { isHomeKey } from "../speakers";
 import { FIGHT, profileOf } from "../movement";
 import { type Delivery, type Target, type CombatState, attackOf, type CombatWorld } from "./data";
+import { spacingOn } from "../combatSpacing";
 
 /** Whether a creature takes part in fights now: alive, not wandering home neutral, not asleep. */
 export const fighting = (c: Creature) => c.cheerUntil === undefined && !c.gone && !c.asleep && !c.bed && !c.fleeUntil && !c.wanderTo && !c.dazed && !(c.leashed && c.travelling); // (a dazed one lies still: rules/creatureStates.ts) // (one won over celebrates first: rules/affection.ts) // (a travelling party animal is quiet both ways: rules/travel.ts)
@@ -68,6 +69,17 @@ export const sheltered = (v: CombatWorld["witches"][number], c: Creature | null)
 /** The creature she's inviting (Ed, 2026-10-04): her party leaves it be while they chat. */
 export const inviting = (w: CombatWorld, c: Creature, o: Creature) => !huntsWitch(sideOf(c)) && w.talkingTo(o.id) >= 0;
 
+/** She's up in the air (rising, over the treetops, coming down) over the area of a hunter that's after her (rules/hunt.ts: the hunt
+ *  holds there), with the combat spacing on: nothing on the ground can reach her, so it waits round the point under her, as it
+ *  would waiting its turn to attack, keeping her as its target but never striking (rules/combat.ts; Ed, 2026-11-03, on the
+ *  challenge's 128-animal pack heaping up under her as she rose: "I suggest that they just act how they would when they're waiting
+ *  to attack"). Before, it lost her as a target and stood still wherever it was till she landed. */
+export function aloftHunted(w: CombatWorld, c: Creature, tg: Target | null | undefined): boolean {
+  if (tg?.kind !== "witch" || c.hunting !== tg.id || !spacingOn(w.t)) return false;
+  const v = w.witches[tg.id];
+  return !!v && !v.onGround && !v.down && !sheltered(v, c);
+}
+
 /** Why a wild one lost its target, if it's a chase it gives up (not one she's inviting, a fall, a knockout):
  *  she's risen to the treetops, or it (her or a party animal) is past its band beyond its area's edge. */
 export function gaveUp(w: CombatWorld, c: Creature, tg: Target): boolean {
@@ -88,7 +100,8 @@ export function valid(w: CombatWorld, s: CombatState, c: Creature, tg: Target): 
     // A besieger keeps the old rule: out of its area, out of its
     // attack range and at least combat.witchLose away. (Only wild ones go for her at all.)
     const v = w.witches[tg.id];
-    if (!huntsWitch(sideOf(c)) || !v || !v.onGround || v.down || w.talkingTo(c.id) === tg.id || sheltered(v, c)) return false;
+    if (!huntsWitch(sideOf(c)) || !v || v.down || w.talkingTo(c.id) === tg.id || sheltered(v, c)) return false;
+    if (!v.onGround) return aloftHunted(w, c, tg); // (up out of reach: only a hunter after her keeps her, waiting under her)
     if (v.hidden !== undefined && Math.hypot(v.x - c.x, v.z - c.z) > v.hidden) return false; // (her Stealth broom: out of its range, it's lost her)
     if (c.hunting === tg.id) return true; // (hunting her: she's in its area, rules/hunt.ts; once she leaves it the hunt ends and pastEdge applies, 30 m)
     if (!c.siege) return true; // Ed, 2026-10-31: ordinary pursuers follow anywhere on the ground until take-off.
@@ -115,7 +128,7 @@ export function acquire(w: CombatWorld, c: Creature, x: number, z: number, range
   // treetops, knocked out, sheltered in a calm circle) or inviting it.
   if (c.hunting !== undefined && huntsWitch(sideOf(c))) {
     const v = w.witches[c.hunting];
-    return v && v.onGround && !v.down && !sheltered(v, c) && w.talkingTo(c.id) !== v.id && !unseen(v, c) ? { kind: "witch", id: v.id } : null;
+    return v && (v.onGround || aloftHunted(w, c, { kind: "witch", id: v.id })) && !v.down && !sheltered(v, c) && w.talkingTo(c.id) !== v.id && !unseen(v, c) ? { kind: "witch", id: v.id } : null;
   }
   // (an enraged one goes for a happy legend within legends.attack.wornReach: it wears it down)
   const legReach = sideOf(c) === "enraged" ? LEGENDS.attack.wornReach * FIGHT.scale : 0;

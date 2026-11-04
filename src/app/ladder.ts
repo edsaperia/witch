@@ -7,6 +7,8 @@
 import { clampRung, inEffect, loadEffects, newLadder, pending, RUNGS, setMode, stepLadder, type LadderState } from "../rules/ladder";
 import type { Tuning } from "../rules/tuning";
 import { FX_QUALITY } from "../render/fx/system";
+import { localStore } from "../platform/storageScope";
+import { glRendererName } from "../platform/glRenderer";
 
 /** A frame's budget (ms): 60 fps; at the steady-30 rung, 30. */
 const BUDGET = 1000 / 60, BUDGET30 = 1000 / 30;
@@ -107,7 +109,7 @@ export class QualityLadder {
   /** The next night's load rungs are made at the rung it's on now (applyLoadRungs). */
   private sync(): void { live = this.state.mode === "off" ? 0 : this.state.rung; }
   private save(): void {
-    try { localStorage.setItem(this.key, JSON.stringify({ rung: this.state.rung, at: Date.now() })); } catch { /* (private window, storage off: not remembered) */ }
+    try { localStore()?.setItem(this.key, JSON.stringify({ rung: this.state.rung, at: Date.now() })); } catch { /* (private window, storage off: not remembered) */ }
   }
 }
 
@@ -121,7 +123,7 @@ function startState(params: URLSearchParams, saved: number): LadderState {
   return newLadder(saved);
 }
 function readRung(key: string): number {
-  try { const v = JSON.parse(localStorage.getItem(key) ?? "null"); return clampRung(Number(v?.rung ?? 0)); } catch { return 0; }
+  try { const v = JSON.parse(localStore()?.getItem(key) ?? "null"); return clampRung(Number(v?.rung ?? 0)); } catch { return 0; }
 }
 
 // The load rungs (the forest's density, the area blend, the art pixel): put on a night's tuning as it's made, after this browser's
@@ -157,7 +159,7 @@ function probeGpu(): string {
 
 /** The device's GPU by name, to remember its rung by (its renderer string; the browser's generic one where that's hidden). */
 export function gpuName(gl: WebGLRenderingContext | WebGL2RenderingContext): string {
-  try { const d = gl.getExtension("WEBGL_debug_renderer_info"); return String(d ? gl.getParameter(d.UNMASKED_RENDERER_WEBGL) : gl.getParameter(gl.RENDERER)); } catch { return "unknown"; }
+  try { return String(glRendererName(gl)); } catch { return "unknown"; }
 }
 
 /** A switch the rungs add to the tuning, left out while off (as the night was built), so a night off the ladder reads the same in

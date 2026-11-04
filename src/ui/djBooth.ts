@@ -90,6 +90,13 @@ export class DjBooth {
     this.root.classList.add("in");
   }
   close(): void { if (!this.nav) return; this.nav = null; this.root.classList.remove("in"); this.slide.out(); }
+  /** Optional shared-catalogue refresh: retain focus and a still-owned selection, without sliding or choosing. */
+  refresh(owned: readonly string[]): void {
+    if (!this.nav) return;
+    const focus = this.nav.focus;
+    this.nav = new BoothNav(new Set(owned), this.nav.chosen); this.nav.focus = focus;
+    this.said = ""; this.paint();
+  }
 
   /** Each frame while open: the pad's d-pad or stick moves (repeating while held), its choose chooses (once a press). */
   update(time: number): void {

@@ -5,6 +5,7 @@ import type { Game } from "../rules/game";
 import type { Loan } from "./loan";
 import { settingsBase, type SettingsBase } from "./playerSettings";
 import { houseLayoutIdentity } from "./houseLayout";
+import { pageIdb } from "../platform/storageScope";
 
 export interface SavedNight {
   version: 1;
@@ -21,6 +22,33 @@ export interface NightStore {
   read(): Promise<unknown>;
   write(value: SavedNight): Promise<void>;
   clear(): Promise<void>;
+}
+
+/** Suspend before adopting a borrowed game. Confirmation alone discards the interrupted solo checkpoint;
+ * a failed/preparing call can resume its own game without having deleted that checkpoint. */
+export function borrowedNightSaves(original: NightStore) {
+  let held = false, tail = Promise.resolve(), barrier: Promise<void> | null = null, confirmation: Promise<void> | null = null;
+  const queue = (action: () => Promise<void>) => {
+    const operation = tail.then(action); tail = operation.catch(() => {}); return operation;
+  };
+  const store: NightStore = {
+    read: () => held ? Promise.resolve(undefined) : original.read(),
+    write: value => held ? Promise.resolve() : queue(() => held ? Promise.resolve() : original.write(value)),
+    clear: () => held ? Promise.resolve() : queue(() => held ? Promise.resolve() : original.clear()),
+  };
+  return {
+    store,
+    get suspended() { return held; },
+    suspendForVisit(): Promise<void> { if (!held) { held = true; barrier = tail; } return barrier ?? Promise.resolve(); },
+    confirmVisit(): Promise<void> {
+      if (!held) return Promise.reject(new Error("Suspend own night saves before confirming a visit."));
+      return confirmation ??= (barrier ?? tail).then(() => original.clear());
+    },
+    /** Only after an own solo game has replaced the borrowed game. Never flush borrowed snapshots. */
+    async resumeSolo(): Promise<void> {
+      await (confirmation ?? barrier)?.catch(() => {}); held = false; barrier = confirmation = null;
+    },
+  };
 }
 
 /** Hiding the loading card also happens while she is still asleep: wait until she's up before saving. */
@@ -68,7 +96,7 @@ export function captureNight(game: Game, context: Omit<SavedNight, "version" | "
   return { ...structuredClone(context), version: 1, at, game: snapshotGame(game), settingsBase: base };
 }
 
-export function browserNightStore(path: string, factory: IDBFactory = indexedDB): NightStore {
+export function browserNightStore(path: string, factory: IDBFactory = pageIdb()!): NightStore {
   let opened: Promise<IDBDatabase> | null = null;
   const db = () => (opened ??= new Promise<IDBDatabase>((resolve, reject) => {
     const r = factory.open("witch.nights", 1);
@@ -98,15 +126,42 @@ export function browserNightStore(path: string, factory: IDBFactory = indexedDB)
   };
 }
 
+/** (Ed, 2026-11-02: hold to delete) Whether an IndexedDB night key (a path, `<path>#save=<id>`, or a comment's restore) is slot `id`'s,
+ *  or with null any. Slot 1's are the bare paths (SaveSlots.nightKey). */
+export function nightOfSlot(key: string, id: string | null): boolean {
+  if (id === null) return true;
+  const m = /#save=(s[1-9][0-9]*)$/.exec(key);
+  return m ? m[1] === id : id === "s1" && !key.endsWith(":comment-restore");
+}
+/** A deleted slot's nights, on every path this origin served (null: every night, Reset everything's). */
+export async function clearSlotNights(id: string | null, factory: IDBFactory = pageIdb()!): Promise<void> {
+  const d = await new Promise<IDBDatabase>((resolve, reject) => {
+    const r = factory.open("witch.nights", 1);
+    r.onupgradeneeded = () => r.result.createObjectStore("nights");
+    r.onerror = () => reject(r.error);
+    r.onblocked = () => reject(new Error("Night storage is busy in another tab."));
+    r.onsuccess = () => resolve(r.result);
+  });
+  try {
+    await new Promise<void>((resolve, reject) => {
+      const tx = d.transaction("nights", "readwrite"), store = tx.objectStore("nights"), keys = store.getAllKeys();
+      keys.onsuccess = () => { for (const k of keys.result) if (typeof k === "string" && nightOfSlot(k, id)) store.delete(k); };
+      tx.oncomplete = () => resolve();
+      tx.onerror = tx.onabort = () => reject(tx.error ?? new Error("The night could not be deleted."));
+    });
+  } finally { d.close(); }
+}
+
 /** Throttled saves, with a final best-effort transaction on pagehide/visibilitychange. */
 export class NightAutosave {
   private last = -Infinity;
   private busy = false;
   private generation = 0;
   private settled: Promise<void> = Promise.resolve();
+  private stopped = false;
   constructor(private store: NightStore, private capture: () => SavedNight | null, private failed: (error: unknown) => void) {}
   async save(now: number, force = false, allowEmpty = false): Promise<boolean> {
-    if (this.busy || (!force && now - this.last < 5000)) return false;
+    if (this.stopped || this.busy || (!force && now - this.last < 5000)) return false;
     this.last = now; this.busy = true;
     let release!: () => void;
     this.settled = new Promise<void>(resolve => { release = resolve; });
@@ -122,6 +177,9 @@ export class NightAutosave {
   }
   /** Await an in-flight autosave, then capture the final paused state before leaving its slot. */
   async flush(now: number): Promise<boolean> { await this.settled; return this.save(now, true, true); }
+  /** (Ed, 2026-11-02: deleting this page's save) No more saves, once a write in flight has landed; `resume` if the delete failed. */
+  async stop(): Promise<void> { this.stopped = true; this.generation++; await this.settled; }
+  resume(): void { this.stopped = false; }
   async clear(): Promise<void> {
     this.generation++;
     try { await this.store.clear(); } catch (e) { this.failed(e); }

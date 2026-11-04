@@ -5,10 +5,11 @@
 // "trees" retreat, the squirrels' scatter), or a leap caught up all at once after a stun.
 import { describe, expect, it } from "vitest";
 import { setupArena } from "../arena";
-import { newGame, stepGame, STEP, type Controls } from "../game";
+import { stepGame, STEP, type Controls } from "../game";
 import { TUNING } from "../tuning";
 import { FIGHT } from "../movement";
 import { PACKS } from "./packs";
+import { preppedGame } from "../../test/preppedGame"; // (games on a map made once a file from its prep)
 
 // Keep seed 5's arena landscape: terrain-dependent hides/retreats during the moving 30-second pack fight are the regression under test.
 // The kinds that hide in a lull (trees, burrow, water, branches), scatter, or leap; the ibex Ed saw; and a plain lunger.
@@ -18,7 +19,7 @@ describe("no creature jumps in a fight (Ed's playtest, 2026-10-29)", () => {
   it("a step's move is never more than its fastest move (a lunge, a leap's arc) takes in a step", () => {
     const bad: string[] = [];
     for (const k of KINDS) {
-      const g = newGame(5, TUNING);
+      const g = preppedGame(5, TUNING);
       g.clock.paused = false; g.party.paused = true;
       setupArena(g, `pack-${k}`);
       const ids = g.arena!.ids, prev = new Map<number, { x: number; z: number; leap: number }>();
@@ -30,6 +31,7 @@ describe("no creature jumps in a fight (Ed's playtest, 2026-10-29)", () => {
         stepGame(g, c, STEP);
         for (const id of ids) {
           const o = g.creatures[id], p = prev.get(id);
+          expect([o.x, o.z, o.vx ?? 0, o.vz ?? 0].every(Number.isFinite), JSON.stringify({species: k, id, time: g.clock.time, previous: p, x: o.x, z: o.z, vx: o.vx, vz: o.vz, leap: o.leap, hop: o.hop, hide: o.packHide, fight: o.fight})).toBe(true);
           const L = o.leap, leap = L ? Math.hypot(L.tx - L.fx, L.tz - L.fz) / Math.max(0.01, L.lands - L.at) : 0;
           if (p && !o.gone) {
             const d = Math.hypot(o.x - p.x, o.z - p.z), most = Math.max(60 * FIGHT.speed, leap, p.leap) * STEP * 1.05 + 0.01;

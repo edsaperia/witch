@@ -1,5 +1,5 @@
 import { describe, expect, it, vi, afterEach } from "vitest";
-import { newGame, stepGame, STEP } from "../rules/game";
+import { stepGame, STEP } from "../rules/game";
 import { TUNING } from "../rules/tuning";
 import { restoreGame, snapshotGame } from "../rules/nightSnapshot";
 import { restoreSettingsBase } from "./playerSettings";
@@ -8,11 +8,12 @@ import { packLog, unpackLog, jsonBytes } from "../platform/logCodec";
 import { InputRecorder } from "../platform/inputRecording";
 import { readablePlaytest, type PlaytestRun } from "../platform/playtestLog";
 import { notable } from "../platform/playtestJournal";
+import { preppedGame } from "../test/preppedGame"; // (games on a map made once a file from its prep)
 
 function fixture() {
   // Four areas suffice for comment storage/continuation; full-roster snapshot coverage lives in nightSnapshot.test.ts.
   const t = structuredClone(TUNING); t.map!.islandAreas = 4;
-  const game = newGame(123, t); restoreSettingsBase(game.tuning, { voices: {}, shake: 1, legendFlash: 1 });
+  const game = preppedGame(123, t); restoreSettingsBase(game.tuning, { voices: {}, shake: 1, legendFlash: 1 });
   game.clock.paused = false;
   for (let i = 0; i < 45; i++) stepGame(game, { moveX: 1, moveZ: 0, toggleMode: false, zoom: 0 }, STEP);
   game.clock.paused = true;

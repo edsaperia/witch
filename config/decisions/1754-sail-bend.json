@@ -1,0 +1,36 @@
+{
+  "pr": 1754,
+  "group": "Sail bend",
+  "decisions": [
+    {
+      "id": "sailBendCurve",
+      "pr": 1754,
+      "group": "Sail bend",
+      "label": "Dive bend (curvature)",
+      "note": "How strongly the world curves away through the sail's dive in from the sea chart (Ed, 2026-11-03: \"I want to see the treehouse crown coming over the horizon\"; arrive.bend.curve, per metre; the treetops' own is 0.0015): the island sits under the horizon as the camera comes down low over the sea and the treehouse's crown rises over the curve as it flies in. 0: no bend, the island in plain view. Takes effect on the next sail.",
+      "control": { "type": "slider", "min": 0, "max": 0.01, "step": 0.0005 },
+      "default": 0.0025,
+      "apply": { "knob": "arrive.bend.curve" }
+    },
+    {
+      "id": "sailBendGrow",
+      "pr": 1754,
+      "group": "Sail bend",
+      "label": "Dive bend: grows over (s)",
+      "note": "Seconds after the hand-off from the chart over which the dive's bend grows from none (arrive.bend.grow): none at the hand-off, so the crossfade from the chart's flat sea is over the same flat water. Takes effect on the next sail.",
+      "control": { "type": "slider", "min": 0, "max": 10, "step": 0.5 },
+      "default": 4,
+      "apply": { "knob": "arrive.bend.grow" }
+    },
+    {
+      "id": "sailBendRelax",
+      "pr": 1754,
+      "group": "Sail bend",
+      "label": "Dive bend: relaxes over (s)",
+      "note": "The flight's last seconds over which the dive's bend eases back to none (arrive.bend.relax), so she lands in bed with the night's own bend exactly. Takes effect on the next sail.",
+      "control": { "type": "slider", "min": 0, "max": 10, "step": 0.5 },
+      "default": 3,
+      "apply": { "knob": "arrive.bend.relax" }
+    }
+  ]
+}

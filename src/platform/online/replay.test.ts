@@ -3,6 +3,7 @@ import { newGame, STEP, type Controls } from "../../rules/game";
 import { TUNING } from "../../rules/tuning";
 import { snapshotGame } from "../../rules/nightSnapshot";
 import { replayGuest, replayHostStep, replayStart } from "./replay";
+import { preppedGame } from "../../test/preppedGame"; // (games on a map made once a file from its prep)
 
 // Four-area home worlds: replay and accumulator equality need two players, not distant area diversity.
 
@@ -31,7 +32,7 @@ it("serializes a mid-frame handoff and replays authoritative two-witch inputs id
 
 it("accepts the real fixed-step accumulator's tiny negative boundary remainder", () => {
   const tuning = structuredClone(TUNING); tuning.map!.island = "home"; tuning.map!.islandAreas = 4;
-  const host = newGame(123, tuning, 2); host.clock.paused = false;
+  const host = preppedGame(123, tuning, 2); host.clock.paused = false;
   const idle: Controls = { moveX: 0, moveZ: 0, toggleMode: false, zoom: 0 };
   replayHostStep(host, [idle, idle], STEP - 5e-10, 1);
   expect(host.acc).toBeLessThan(0);

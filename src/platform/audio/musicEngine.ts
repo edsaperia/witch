@@ -2,7 +2,7 @@
 // (rules/musicScore.ts) from the conductor's sections (rules/musicPlan.ts) with Web Audio, every
 // sound synthesised (no samples). Each frame it schedules the sixteenths of the next fraction of a
 // second on the audio clock, on the game's beat clock (rules/beat.ts: step 0 is game time 0, the
-// tempo rising wave by wave). Two outputs: the music, which Music (platform/music.ts) puts through
+// tempo steady all night but for her knockdowns). Two outputs: the music, which Music (platform/music.ts) puts through
 // the proximity mix (the Music Lab plays it straight); and a sleeping legend's clearing layer
 // (Ed, 2026-10-06), its own reverb and limiter, which Music plays over the muffle.
 // The parts share a reverb (a generated impulse, pre-delayed, its tail darkening), a dotted delay

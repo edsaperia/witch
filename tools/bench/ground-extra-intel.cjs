@@ -88,7 +88,7 @@ let browser, timer, stopping = false;
         w.manual = true; g.wake = undefined; g.islandReady = true; g.clock.paused = false;
         const point = [0, Math.PI / 2, Math.PI, Math.PI * 1.5].map(a => w.coastFacing(a)).find(Boolean); if (!point) throw Error('No coast');
         const shot = w.shot(`at:${point.x - point.nx * 30},${point.z - point.nz * 30}`); if (!shot.ok) throw Error(shot.say);
-        v.dark.k = 1; v.dark.at = NaN; v.fly = null; p.coastAt = performance.now(); p.methods = {}; p.unsafeReads = [];
+        v.dark.reveal.k = 1; v.dark.reveal.island = 1; v.dark.reveal.at = NaN; v.fly = null; p.coastAt = performance.now(); p.methods = {}; p.unsafeReads = [];
         const draw = v.renderer.renderBufferDirect.bind(v.renderer);
         v.renderer.renderBufferDirect = (...args) => { if (args[4] === v.ground.mesh) p.ground.push({ at: performance.now(), material: args[3].name || args[3].type, beach: 'GROUND_BEACH' in (args[3].defines || {}), share: v.ground.coastReadiness?.share ?? null }); return draw(...args); };
         requestAnimationFrame(function render() { if (!w.manual) return; v.render(g.clock.time); requestAnimationFrame(render); });

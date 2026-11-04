@@ -1,5 +1,42 @@
 # Hats and brooms
 
+**Audit status (2026-11-01): Partly built: hats, broom sets, bags and shared finds exist; old achievement/shrine systems were superseded and several proposed extras remain absent.**
+
+The status index checks the requests below against prototype `ab06904b` and cited history. **Built** means code is present, not a new play/audition/performance pass. **Partly built** states the missing part. An em dash leaves an unimplemented request unmarked. Versions are verified changelog build labels where available; “unverified” means no first-live number was established. Historical/superseded requests are preserved, not re-authorised. Repeated details/build-order summaries are counted with their feature group, not again.
+
+| Request / feature group | Status | Evidence and remaining gap |
+|---|---|---|
+| Hat/broom slots, default no-power and swap loop | **Built** | #695/#719/#721/#728, v2828/v2886/v2902/v2927 legacy spells; later parts #1037 and current floor hats #1044 v4187. |
+| Placed hats persist, multiple hats, worn Helmet | **Built** | rules/hatSpells.ts, hat.ts, hatsDown; #719/#721, v2886/v2902. Collection-limited floor objects now constrain ownership. |
+| Healing ring, Harvest, Dowsing, Sentry, Slingshot, Gathering | **Built** | #695/#719; hatSpells.ts, v2886 later Hats A; first per-hat build labels unverified. |
+| Bramble, Mine, Cyclone, Nursing and Lullaby | **Built** | #721 v2902; hatSpells.ts. Old Decoy renamed/replaced, not still pending. |
+| Edge-seer and Route-seer | **Built** | #939 v3820/#942 v3832; worn seer selectors and view reads. |
+| Thermal-vision hat sees through foliage | — | No thermal hat spell in spells.ts/hatSpells.ts. Heat Vision potion is a different feature and does not fulfil this hat request. |
+| Welcome mend: invite heals witch fully | — | Creature invitation heals that creature, not the proposed full-health witch power; no matching hat/bag/part found. |
+| Speed/Battering/Ley jump/Stealth/Ground pound | **Built** | #728 v2927 legacy brooms; current set spells in #1037/#1040 v4181. |
+| Long/Double blink/Haul as parts | **Built** | #1037; Curled tip/Twigs/Canoe stats in broom-parts.json, room v4181. Original standalone brooms are retired. |
+| Hats at themed shrines and carried home | **Partly built** | Hats found as shared draw objects #1044 v4187, kept on won night #1109 v4406; no themed shrine/carry-home loop. Historical request is not implemented as written. |
+| Bags change invitation weapon and are found | **Partly built** | Weapon multipliers/additions and bag finds are built; original themed shrines and every suggested old boon are not. rules/bags.ts, wardrobe.json; #1044 v4187, later bag work version unverified. |
+| Crystal-ball locator of upgrades on other unlocked islands | — | Telescope constellation shows tonight's find, not this remote-island locator. |
+| Permanent unlocks only during party, kept even on loss | **Partly built** | Claim-window behaviour exists; keep-on-loss explicitly superseded by #1109 v4406, only won-night loans persist. No outstanding instruction to restore old retention. |
+| Parts/slots/stats/sets, bare broom, fitting and collection | **Built** | #1037/#1040/#1056, v4181/v4221; Workshop table gives per-feature source. |
+| Ground-floor garage with creeper and welding | **Partly built** | Current Workshop/lathe exists; root-door garage and working-under-broom pose missing. #1040 v4181; v5440 lathe consolidation. |
+| Pegboard, collection outlines and tonight hint | **Built** | #1040/#1056 v4181/v4221; board renderer and part lookup. |
+| Shared host collection, one part per witch | **Partly built** | #1538 source approval helpers exist; ordinary calls off and complete proof outstanding. No enabled-call version claimed. |
+| Full-set treetop trails | — | No implementation found for this request; original proposal remains unmarked. |
+| Silly hobby-horse/bicycle/bell set | — | No implementation found for this request; original proposal remains unmarked. |
+| Heavy chassis adds carry weight | — | No implementation found for this request; original proposal remains unmarked. |
+| Wrecks under biome lakes | — | No implementation found for this request; original proposal remains unmarked. |
+| Crystal ball remembers past broom | — | No implementation found for this request; original proposal remains unmarked. |
+| Lap test loop and candle timer | — | No implementation found for this request; original proposal remains unmarked. |
+| Achievement-based unlocks and new-unlocks card | — | Historical system superseded by finds/loans; no current achievement reward implementation. Preserve original ideas without reviving them. |
+| Choose owned equipment in house and style it | **Built** | #1040/#1044 v4181/v4187; panels/floor hats and v5440 combined lathe. Achievement silhouettes below describe old design. |
+| Each collectible hat has one power | **Built** | FIND_HATS and floor objects fix spell identity; #1044 v4187. Shape/fit remains at mirror, not a separate power dropdown. |
+| Spells affect enraged without witch damage | **Built** | Hat stun/slow/heal rules, #719/#721 v2886/v2902; no witch damage introduced by those powers. |
+| Final lists, passives, cooldowns and remaining hat designs | **Partly built** | Existing lists/cooldowns implemented; full final balance and Welcome mend remain design work. No new implementation requested by this audit. |
+| Beacon hat gathers followers | — | Explicitly dropped in the decisions below; no pending implementation implied. |
+
+
 Backlog (Ed, 2026-10-09); **Ed's go 2026-10-11, built** (rules/spells.ts; #695, #719, #721, the brooms #728; the brooms since rebuilt as Workshop parts and sets, #1037; the first PR: the two slots, the picker, the plain broom, Speed, Long, Double blink, the Helmet and the Healing ring; the second, Hats A: Harvest, Dowsing, Sentry, Slingshot and Gathering, rules/hatSpells.ts; the third, Hats B: Bramble, Mine, Lullaby, Cyclone and Nursing). The roguelite unlocks: a second axis of progress next to islands and records (see [journey.md](journey.md), section 2).
 
 ## The two slots

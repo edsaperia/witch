@@ -1,17 +1,218 @@
 import { afterEach, expect, it, vi } from "vitest";
 import { connectRelay, invitationLink, soloHome, type RelaySocket } from "./relayClient";
 
+type SocketEvent = { data?: unknown; code?: number; wasClean?: boolean };
 class Socket implements RelaySocket {
   readyState = 0;
   sent: Record<string, unknown>[] = [];
-  listeners = new Map<string, ((event: { data?: unknown }) => void)[]>();
+  listeners = new Map<string, ((event: SocketEvent) => void)[]>();
   send(data: string) { this.sent.push(JSON.parse(data)); }
   close() { this.readyState = 3; this.emit("close"); }
-  addEventListener(type: string, listener: (event: { data?: unknown }) => void) { this.listeners.set(type, [...this.listeners.get(type) ?? [], listener]); }
+  addEventListener(type: string, listener: (event: SocketEvent) => void) { this.listeners.set(type, [...this.listeners.get(type) ?? [], listener]); }
+  transportClose(code: number, wasClean: boolean) { this.readyState=3;for(const listener of this.listeners.get("close")??[])listener({code,wasClean}); }
   emit(type: string, data?: unknown) { for (const listener of this.listeners.get(type) ?? []) listener({ data }); }
   open() { this.readyState = 1; this.emit("open"); }
 }
 afterEach(() => vi.useRealTimers());
+it.each(["host", "guest"] as const)("keeps a slow %s replacement and its pending rotated-ticket reply alive", role => {
+  vi.useFakeTimers(); const sockets: Socket[] = [], onMessage = vi.fn(), onError = vi.fn();
+  const c = connectRelay({ endpoint: "ws://localhost:8787", room: "1234567", ...(role === "guest" ? { token: "join" } : {}),
+    socket: () => { const s = new Socket(); sockets.push(s); return s; }, onMessage, onError, onClose: vi.fn() });
+  const player = role === "host" ? 0 : 1, ticket = { room: "1234567", player, token: "a".repeat(64) };
+  sockets[0].open(); sockets[0].emit("message", JSON.stringify({ protocol: 1, type: role === "host" ? "hosted" : "joined", resume: ticket }));
+  if (role === "host") sockets[0].emit("message", JSON.stringify({ protocol: 1, type: "ready-accepted" })); else c.sendActive();
+  sockets[0].transportClose(1006, false);
+  const attempt = sockets[1];
+  vi.advanceTimersByTime(7000); expect(sockets).toHaveLength(2); expect(attempt.readyState).toBe(0);
+  attempt.open(); expect(attempt.sent).toEqual([{ protocol: 1, type: "resume", ...ticket }]);
+  // The server has accepted and rotated its credential, but this reply takes another five seconds.
+  vi.advanceTimersByTime(5000); expect(sockets).toHaveLength(2); expect(attempt.readyState).toBe(1);
+  attempt.emit("message", JSON.stringify({ protocol: 1, type: "resumed", role, player, resume: { ...ticket, token: "b".repeat(64) } }));
+  expect(onMessage).toHaveBeenLastCalledWith({ protocol: 1, type: "transport-resumed" });
+  if (role === "guest") attempt.emit("message", JSON.stringify({ protocol: 1, type: "state", payload: { kind: "start" } }));
+  attempt.transportClose(1006, false); sockets[2].open();
+  expect(sockets[2].sent).toEqual([{ protocol: 1, type: "resume", ...ticket, token: "b".repeat(64) }]);
+  c.close(); expect(vi.getTimerCount()).toBe(0); expect(onError).not.toHaveBeenCalled();
+});
+it.each([false, true])("keeps a pending recovery attempt (socket opened=%s) within the original deadline", opened => {
+  vi.useFakeTimers(); const sockets: Socket[] = [], onError = vi.fn();
+  const c = connectRelay({ endpoint: "ws://localhost:8787", room: "1234567", token: "join",
+    socket: () => { const s = new Socket(); sockets.push(s); return s; }, onMessage: vi.fn(), onError, onClose: vi.fn() });
+  sockets[0].open(); sockets[0].emit("message", JSON.stringify({ protocol: 1, type: "joined", resume: { room: "1234567", player: 1, token: "a".repeat(64) } })); c.sendActive();
+  sockets[0].transportClose(1006, false); const attempt = sockets[1]; if (opened) attempt.open();
+  vi.advanceTimersByTime(3999); expect(sockets).toHaveLength(2);
+  vi.advanceTimersByTime(1); expect(sockets).toHaveLength(2);
+  vi.advanceTimersByTime(15999); expect(onError).not.toHaveBeenCalled();
+  vi.advanceTimersByTime(1); expect(onError).toHaveBeenCalledOnce(); expect(vi.getTimerCount()).toBe(0);
+  c.close();
+});
+it.each([false, true])("lets a late watchdog probe its healthy socket before recovery (ticket=%s)", ticketed => {
+  vi.useFakeTimers(); const sockets: Socket[] = [], onError = vi.fn();
+  const c = connectRelay({ endpoint: "ws://localhost:8787", room: "1234567", token: "join",
+    socket: () => { const s = new Socket(); sockets.push(s); return s; }, onMessage: vi.fn(), onError, onClose: vi.fn() });
+  const socket = sockets[0]; socket.open();
+  if (ticketed) socket.emit("message", JSON.stringify({ protocol: 1, type: "joined", resume: { room: "1234567", player: 1, token: "a".repeat(64) } }));
+  c.sendActive();
+  // Wall time passes without running the page's timers or socket-message handlers.
+  vi.setSystemTime(Date.now() + 30000); vi.advanceTimersByTime(2000);
+  expect(sockets).toHaveLength(1); expect(socket.readyState).toBe(1); expect(onError).not.toHaveBeenCalled();
+  expect(socket.sent.at(-1)).toMatchObject({ type: "heartbeat" });
+  socket.emit("message", JSON.stringify({ protocol: 1, type: "heartbeat" }));
+  vi.advanceTimersByTime(1999); expect(sockets).toHaveLength(1); expect(onError).not.toHaveBeenCalled();
+  c.close(); expect(vi.getTimerCount()).toBe(0);
+});
+it("recovers actual downstream silence after the late-watchdog heartbeat probe gets no answer", () => {
+  vi.useFakeTimers(); const sockets: Socket[] = [], onError = vi.fn();
+  const c = connectRelay({ endpoint: "ws://localhost:8787", room: "1234567", token: "join",
+    socket: () => { const s = new Socket(); sockets.push(s); return s; }, onMessage: vi.fn(), onError, onClose: vi.fn() });
+  sockets[0].open(); sockets[0].emit("message", JSON.stringify({ protocol: 1, type: "joined", resume: { room: "1234567", player: 1, token: "a".repeat(64) } })); c.sendActive();
+  vi.setSystemTime(Date.now() + 10000); vi.advanceTimersByTime(2000);
+  expect(sockets).toHaveLength(1);
+  vi.advanceTimersByTime(2000); expect(sockets).toHaveLength(2);
+  vi.advanceTimersByTime(15999); expect(onError).not.toHaveBeenCalled();
+  vi.advanceTimersByTime(1); expect(onError).toHaveBeenCalledOnce(); expect(vi.getTimerCount()).toBe(0); c.close();
+});
+it("retries a closed resume attempt and rejects a reply arriving beyond the original deadline", () => {
+  vi.useFakeTimers(); const sockets: Socket[] = [], onError = vi.fn();
+  const c = connectRelay({ endpoint: "ws://localhost:8787", room: "1234567", token: "join",
+    socket: () => { const s = new Socket(); sockets.push(s); return s; }, onMessage: vi.fn(), onError, onClose: vi.fn() });
+  const ticket = { room: "1234567", player: 1, token: "a".repeat(64) };
+  sockets[0].open(); sockets[0].emit("message", JSON.stringify({ protocol: 1, type: "joined", resume: ticket })); c.sendActive();
+  sockets[0].transportClose(1006, false); sockets[1].open(); sockets[1].transportClose(1006, false);
+  vi.advanceTimersByTime(4000); expect(sockets).toHaveLength(3); sockets[2].open();
+  // A stalled event loop may deliver a reply before it delivers the overdue timeout callback.
+  vi.setSystemTime(Date.now() + 16000);
+  sockets[2].emit("message", JSON.stringify({ protocol: 1, type: "resumed", role: "guest", player: 1, resume: { ...ticket, token: "b".repeat(64) } }));
+  expect(onError).toHaveBeenCalledOnce(); expect(onError.mock.calls[0][0].message).toBe("Connection lost");
+  expect(vi.getTimerCount()).toBe(0); c.close();
+});
+it.each([1001,1008])("does not resume a closing guest after non-recoverable code %s", code => {
+  vi.useFakeTimers(); const sockets: Socket[]=[],onClose=vi.fn(),onError=vi.fn();
+  const c=connectRelay({endpoint:"ws://localhost:8787",room:"1234567",token:"join",socket:()=>{const s=new Socket();sockets.push(s);return s;},onMessage:vi.fn(),onClose,onError});
+  sockets[0].open(); sockets[0].emit("message",JSON.stringify({protocol:1,type:"joined",resume:{room:"1234567",player:1,token:"a".repeat(64)}})); c.sendActive();
+  sockets[0].readyState=2;c.sendInput({});sockets[0].transportClose(code,true);
+  expect(onClose).toHaveBeenCalledOnce(); expect(sockets).toHaveLength(1);
+  vi.advanceTimersByTime(30000);expect(onClose).toHaveBeenCalledOnce();expect(onError).not.toHaveBeenCalled();expect(vi.getTimerCount()).toBe(0);
+});
+it("keeps the original20s deadline when the close event arrives late and falls back once",()=>{
+  vi.useFakeTimers();const sockets:Socket[]=[],onError=vi.fn();
+  const c=connectRelay({endpoint:"ws://localhost:8787",room:"1234567",token:"join",socket:()=>{const s=new Socket();sockets.push(s);return s;},onMessage:vi.fn(),onClose:vi.fn(),onError});
+  sockets[0].open();sockets[0].emit("message",JSON.stringify({protocol:1,type:"joined",resume:{room:"1234567",player:1,token:"a".repeat(64)}}));c.sendActive();
+  sockets[0].readyState=2;c.sendInput({});vi.advanceTimersByTime(5000);expect(sockets).toHaveLength(1);
+  sockets[0].transportClose(1005,true);vi.advanceTimersByTime(14999);expect(onError).not.toHaveBeenCalled();
+  vi.advanceTimersByTime(1);expect(onError).toHaveBeenCalledOnce();expect(onError.mock.calls[0][0].message).toBe("Connection lost");
+  vi.advanceTimersByTime(30000);expect(onError).toHaveBeenCalledOnce();expect(vi.getTimerCount()).toBe(0);
+});
+it("cancels a pending closing-socket recovery on explicit Leave",()=>{
+  vi.useFakeTimers();const sockets:Socket[]=[],onError=vi.fn(),onClose=vi.fn();
+  const c=connectRelay({endpoint:"ws://localhost:8787",room:"1234567",token:"join",socket:()=>{const s=new Socket();sockets.push(s);return s;},onMessage:vi.fn(),onClose,onError});
+  sockets[0].open();sockets[0].emit("message",JSON.stringify({protocol:1,type:"joined",resume:{room:"1234567",player:1,token:"a".repeat(64)}}));c.sendActive();
+  sockets[0].readyState=2;c.sendInput({});c.close();vi.advanceTimersByTime(30000);
+  expect(sockets).toHaveLength(1);expect(onError).not.toHaveBeenCalled();expect(onClose).not.toHaveBeenCalled();expect(vi.getTimerCount()).toBe(0);
+});
+it("pauses a closing telephone before its close event, then resumes without registering again", () => {
+  vi.useFakeTimers(); const sockets: Socket[] = [], onMessage=vi.fn(), onError=vi.fn(), onClose=vi.fn();
+  const publicKey = { algorithm: "Ed25519" as const, spki: "MCowBQYDK2VwAyEADV7zdnqg1CPihvUiq-gktcY8RGA6lz4lu0wePSxaWWA" };
+  const c=connectRelay({endpoint:"wss://example.test",room:"",telephone:true,telephonePublicKey:publicKey,
+    socket:()=>{const s=new Socket();sockets.push(s);return s;},onMessage,onError,onClose});
+  const old=sockets[0], ticket={room:"1234567",player:1,token:"a".repeat(64)};
+  old.open(); c.identityVerified(); old.emit("message",JSON.stringify({protocol:1,type:"call-connected",role:"guest",player:1,resume:ticket}));c.sendActive();
+  old.readyState=2; expect(c.sendInput({sequence:1})).toBe(false);
+  expect(onMessage).toHaveBeenLastCalledWith({protocol:1,type:"transport-away"});
+  expect(sockets).toHaveLength(1); // Wait for the code before deciding whether a close is recoverable.
+  old.transportClose(1005,true); sockets[1].open();
+  expect(sockets[1].sent).toEqual([{protocol:1,type:"resume",...ticket}]);
+  expect(onClose).not.toHaveBeenCalled(); expect(onError).not.toHaveBeenCalled();
+  c.close(); expect(vi.getTimerCount()).toBe(0);
+});
+it.each(["host", "guest"] as const)("authenticates a replacement %s socket with a rotating actor ticket and ignores old callbacks", role => {
+  vi.useFakeTimers(); const sockets:Socket[]=[], onMessage=vi.fn(),onError=vi.fn(),onClose=vi.fn(),onTrouble=vi.fn();
+  const c=connectRelay({endpoint:"ws://localhost:8787",room:"1234567",...(role==="guest"?{token:"join"}:{}),socket:()=>{const s=new Socket();sockets.push(s);return s;},onMessage,onError,onClose,onTrouble});
+  const old=sockets[0], player=role==="host"?0:1, credential={room:"1234567",player,token:"a".repeat(64)};
+  old.open();old.emit("message",JSON.stringify({protocol:1,type:role==="host"?"hosted":"joined",resume:credential}));
+  if(role==="host")old.emit("message",JSON.stringify({protocol:1,type:"ready-accepted"}));else c.sendActive();
+  old.transportClose(1000,true);expect(onClose).not.toHaveBeenCalled();expect(onMessage).toHaveBeenLastCalledWith({protocol:1,type:"transport-away"});
+  expect(onTrouble).toHaveBeenLastCalledWith(true,20000);
+  const fresh=sockets[1];fresh.open();expect(fresh.sent).toEqual([{protocol:1,type:"resume",...credential}]);
+  expect(c.sendState({kind:"frame"})).toBe(false);expect(c.sendInput({sequence:8})).toBe(false);
+  old.emit("message","stale invalid data");expect(onError).not.toHaveBeenCalled();
+  fresh.emit("message",JSON.stringify({protocol:1,type:"resumed",role,player,resume:{...credential,token:"b".repeat(64)}}));
+  expect(onMessage).toHaveBeenLastCalledWith({protocol:1,type:"transport-resumed"});
+  if(role==="guest")fresh.emit("message",JSON.stringify({protocol:1,type:"state",payload:{kind:"start"}}));
+  expect(onTrouble).toHaveBeenLastCalledWith(false,undefined);
+  fresh.close();sockets[2].open();expect(sockets[2].sent[0]).toMatchObject({type:"resume",token:"b".repeat(64)});
+  c.close();vi.advanceTimersByTime(21000);expect(sockets).toHaveLength(3);expect(vi.getTimerCount()).toBe(0);expect(onError).not.toHaveBeenCalled();
+});
+it("bounds failed rejoin attempts to20s and never falls back before the deadline",()=>{
+  vi.useFakeTimers();const sockets:Socket[]=[],onError=vi.fn(),onClose=vi.fn();
+  const c=connectRelay({endpoint:"ws://localhost:8787",room:"1234567",token:"join",socket:()=>{const s=new Socket();sockets.push(s);return s;},onMessage:vi.fn(),onClose,onError});
+  sockets[0].open();sockets[0].emit("message",JSON.stringify({protocol:1,type:"joined",resume:{room:"1234567",player:1,token:"a".repeat(64)}}));c.sendActive();sockets[0].close();
+  vi.advanceTimersByTime(19999);expect(onError).not.toHaveBeenCalled();expect(onClose).not.toHaveBeenCalled();
+  vi.advanceTimersByTime(1);expect(onError).toHaveBeenCalledWith(expect.objectContaining({message:"Connection lost"}));
+  expect(vi.getTimerCount()).toBe(0);const count=sockets.length;vi.advanceTimersByTime(30000);expect(sockets).toHaveLength(count);
+});
+it("replaces a silent half-open socket inside its original20s window without closing its actor first",()=>{
+  vi.useFakeTimers();const sockets:Socket[]=[],onMessage=vi.fn(),onError=vi.fn(),onTrouble=vi.fn();
+  const c=connectRelay({endpoint:"ws://localhost:8787",room:"1234567",token:"join",socket:()=>{const s=new Socket();sockets.push(s);return s;},onMessage,onError,onClose:vi.fn(),onTrouble});
+  const old=sockets[0],credential={room:"1234567",player:1,token:"a".repeat(64)};
+  old.open();old.emit("message",JSON.stringify({protocol:1,type:"joined",resume:credential}));c.sendActive();
+  vi.advanceTimersByTime(2000);expect(old.readyState).toBe(1);expect(sockets).toHaveLength(2);expect(onTrouble).toHaveBeenLastCalledWith(true,18000);
+  sockets[1].open();expect(sockets[1].sent[0]).toMatchObject({type:"resume",...credential});
+  sockets[1].emit("message",JSON.stringify({protocol:1,type:"resumed",role:"guest",player:1,resume:{...credential,token:"b".repeat(64)}}));
+  expect(old.readyState).toBe(3);
+  expect(onTrouble).not.toHaveBeenLastCalledWith(false,undefined);
+  sockets[1].emit("message",JSON.stringify({protocol:1,type:"state",payload:{kind:"start"}}));expect(onTrouble).toHaveBeenLastCalledWith(false,undefined);
+  c.close();expect(vi.getTimerCount()).toBe(0);expect(onError).not.toHaveBeenCalled();
+});
+it.each(["host", "guest"] as const)("keeps %s heartbeats alive through recoverable silence and ends at20s", role => {
+  vi.useFakeTimers(); const socket = new Socket(), onError = vi.fn(), onTrouble = vi.fn();
+  const c = connectRelay({ endpoint: "ws://localhost:8787", room: "1234567", ...(role === "guest" ? { token: "fixture" } : {}), socket: () => socket,
+    onMessage: vi.fn(), onClose: vi.fn(), onError, onTrouble });
+  socket.open();
+  if (role === "guest") c.sendActive(); else socket.emit("message", JSON.stringify({protocol:1,type:"ready-accepted"}));
+  vi.advanceTimersByTime(19999);
+  expect(onError).not.toHaveBeenCalled();
+  expect(socket.sent.filter(m => m.type === "heartbeat").length).toBe(19);
+  socket.emit("message", JSON.stringify({protocol:1,type:"heartbeat"}));
+  expect(onTrouble).toHaveBeenLastCalledWith(false, undefined);
+  vi.advanceTimersByTime(19999); expect(onError).not.toHaveBeenCalled();
+  vi.advanceTimersByTime(1); expect(onError).toHaveBeenCalledOnce(); expect(vi.getTimerCount()).toBe(0);
+});
+it("records the 20s watchdog deadline before teardown and tolerates a throwing diagnostic sink", () => {
+  vi.useFakeTimers(); const socket = new Socket(), onError = vi.fn(), events: Record<string, unknown>[] = [];
+  const c = connectRelay({ endpoint: "ws://localhost:8787", room: "1234567", token: "fixture", socket: () => socket,
+    onMessage: vi.fn(), onClose: vi.fn(), onError, lifecycleEvidence: event => { events.push(event); throw Error("sink"); } });
+  socket.open(); c.sendActive(); vi.advanceTimersByTime(19999); expect(onError).not.toHaveBeenCalled();
+  vi.advanceTimersByTime(1); expect(onError).toHaveBeenCalledOnce();
+  expect(events).toContainEqual(expect.objectContaining({ stage: "relay-watchdog-end", silenceMs: 20000, limitMs: 20000 }));
+  expect(onError.mock.calls[0][0].message).toBe("Connection lost");
+});
+
+it("clears the countdown on downstream traffic and restarts the20s silence deadline", () => {
+  vi.useFakeTimers(); const socket = new Socket(), onTrouble = vi.fn(), onError = vi.fn();
+  const c = connectRelay({ endpoint: "ws://localhost:8787", room: "1234567", token: "fixture", socket: () => socket, onMessage: vi.fn(), onClose: vi.fn(), onError, onTrouble });
+  socket.open(); expect(c.sendActive()).toBe(true);
+  vi.advanceTimersByTime(2000); expect(onTrouble).toHaveBeenLastCalledWith(true, 18000); expect(onError).not.toHaveBeenCalled();
+  vi.advanceTimersByTime(1000); expect(onTrouble).toHaveBeenLastCalledWith(true, 17000);
+  socket.emit("message", JSON.stringify({ protocol: 1, type: "heartbeat" })); expect(onTrouble).toHaveBeenLastCalledWith(false, undefined);
+  vi.advanceTimersByTime(19999); expect(onError).not.toHaveBeenCalled();
+  vi.advanceTimersByTime(1); expect(onError).toHaveBeenCalledOnce(); expect(socket.readyState).toBe(3); expect(vi.getTimerCount()).toBe(0);
+});
+
+it("telephone signaling grants no gameplay role before a server-confirmed answer", () => {
+  vi.useFakeTimers(); const socket = new Socket(), onError = vi.fn();
+  const publicKey = { algorithm: "Ed25519" as const, spki: "MCowBQYDK2VwAyEADV7zdnqg1CPihvUiq-gktcY8RGA6lz4lu0wePSxaWWA" };
+  const c = connectRelay({ endpoint: "wss://witch-relay.onrender.com", room: "", telephone: true, telephonePublicKey: publicKey, socket: () => socket, onMessage: vi.fn(), onClose: vi.fn(), onError });
+  socket.open(); expect(socket.sent[0]).toEqual({ protocol: 1, type: "telephone", publicKey });
+  expect(c.sendInput({})).toBe(false); expect(c.sendState({})).toBe(false);
+  c.dial("7654321"); expect(socket.sent.at(-1)).toEqual({ protocol: 1, type: "dial", number: "7654321" });
+  socket.emit("message", JSON.stringify({ protocol: 1, type: "call-connected", role: "guest", player: 0 }));
+  expect(onError).toHaveBeenCalledOnce(); expect(c.sendInput({})).toBe(false);
+  c.identityVerified(); expect(c.sendState({})).toBe(false);
+  socket.emit("message", JSON.stringify({ protocol: 1, type: "call-connected", role: "guest", player: 1 }));
+  expect(c.sendInput({})).toBe(true); expect(c.sendState({})).toBe(false);
+  c.available(false); expect(socket.sent.at(-1)).toMatchObject({ type: "available", payload: false }); c.close();
+});
 
 it("hosts, sends heartbeat, and stops timers on explicit close", () => {
   vi.useFakeTimers(); const socket = new Socket();

@@ -4,7 +4,7 @@
 // down, in which case it gains 5bpm. Being knocked down changes the music to a random new seed."
 import { describe, expect, it } from "vitest";
 import styleJson from "../../config/music-style.json";
-import { bpmAt, timeAt, waveArrived, waveTempo } from "./beat";
+import { bpmAt, targetTempo, timeAt } from "./beat";
 import { hitWitch, newGame as fullGame } from "./game";
 import { smallWorld } from "../test/worlds";
 const newGame = smallWorld(fullGame, "Music cue and knockdown tempo integration consumes one witch's beat state, not distant areas.");
@@ -100,12 +100,12 @@ describe("everything in dorian, each stage in its own key", () => {
 });
 
 describe("the tempo: 120, and 5 more a knockdown", () => {
-  const t: Tuning = { ...TUNING, beat: { ...TUNING.beat, bpm: style.bpm, tempos: style.arc.map(a => a.bpm ?? style.bpm) } };
-  it("stays at 120 through every wave", () => {
+  const t: Tuning = { ...TUNING, beat: { ...TUNING.beat, bpm: style.bpm } };
+  it("stays at 120 through every wave (Ed, 2026-11-03): no step of the arc has a tempo of its own", () => {
     expect(style.bpm).toBe(120);
-    for (let w = 0; w < 40; w++) expect(waveTempo(t, w)).toBe(120);
+    for (const a of style.arc) expect(Object.hasOwn(a, "bpm"), a.name).toBe(false);
     const g = newGame(3, t);
-    for (let w = 1; w <= 9; w++) waveArrived(g.beat, t, w, w * 60);
+    for (let w = 1; w <= 9; w++) { g.party.wave = w; expect(targetTempo(g.beat, t)).toBe(120); }
     expect(bpmAt(g.beat, 1000)).toBe(120);
   });
 
@@ -169,23 +169,8 @@ describe("a knockdown: the record scratched, silence, a new record from the top 
 });
 
 describe("the melodies' pace (Ed, 2026-10-09: \"keep the melodies relatively slow, but not always. Use whole notes and triplets quite often\")", () => {
-  it("is mostly slow, with whole notes and triplets often, and some busier bars", () => {
-    let notes = 0, whole = 0, triplet = 0, short = 0, phrases = 0;
-    for (let seed = 0; seed < 60; seed++) for (const L of "ABC") {
-      phrases++;
-      for (const n of formPhrase(style, seed, L)) if (n) {
-        notes++;
-        if (n.dur >= 12) whole++;
-        if (n.dur % 1) triplet++;
-        if (n.dur <= 2) short++;
-      }
-    }
-    const perBar = notes / (phrases * 8);
-    expect(perBar).toBeLessThan(3.5); // (relatively slow: a few notes a bar)
-    expect(whole / phrases).toBeGreaterThan(1); // (a whole note or more a phrase)
-    expect(triplet / notes).toBeGreaterThan(0.15);
-    expect(short).toBeGreaterThan(0); // (not always slow)
-  });
+  // M4, Ed 2026-11-02: the unchanged 60-seed ABC pace survey is now in
+  // tools/behaviour/music.behaviour.ts; sampled proportions never block a release.
 
   it("plays triplets straight, three in the time of two", () => {
     for (const seed of seeds) {

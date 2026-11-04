@@ -2,17 +2,18 @@
 // when the animal enters the circle"): a sigil of the kind it dreams of, any age, put down inside its circle; her animal of that kind
 // walking in, following her or parked, does nothing. A wrong sigil put down there is named on the circle's panel.
 import { describe, expect, it } from "vitest";
-import { newGame, stepGame, STEP, type Controls, type Game } from "./game";
+import { stepGame, STEP, type Controls, type Game } from "./game";
 import { broughtLine, legendCircleNear, sigilWords } from "./legendCircle";
 import { setupQuestDemo } from "./quest";
 import { TUNING, withTuning } from "./tuning";
+import { preppedGame } from "../test/preppedGame"; // (games on a map made once a file from its prep)
 
 // Keep the radius fixtures: drop-versus-creature separation uses 200 m, and Ed's seed-162218 regression depends on its exact 14-area legend/coordinates.
 const idle: Controls = { moveX: 0, moveZ: 0, toggleMode: false, zoom: 0, autoTalk: false };
 const run = (g: Game, secs: number) => { for (let i = 0; i < Math.round(secs / STEP); i++) stepGame(g, idle, STEP); };
 /** Beside the nearest sleeping legend with what it dreams of on her stack, standing in its circle. */
 function demo() {
-  const g = newGame(123, TUNING);
+  const g = preppedGame(123, TUNING);
   g.clock.paused = false; g.party.paused = true;
   const L = setupQuestDemo(g, (x, z) => { g.witch = { ...g.witch, x, z, mode: "ground", lift: 0, seated: false }; })!;
   g.witches[0].health.hp = 1e6;
@@ -79,7 +80,7 @@ describe("a legend's quest is done by the drop alone (Ed, 2026-10-19)", () => {
 
   it("Ed's case (seed 162218, 14 areas): his parked adults of the dreamt kind standing in the circle no longer finish it", () => {
     // Preserve Ed's historical stoat/coordinates fixture; the default no-cap dream spread is covered in quest.test.ts.
-    const T = withTuning({ legends: { ...TUNING.legends, questCap: 6 }, mapAreas: 14, map: { ...TUNING.map, radius: 14 / Math.sqrt(Math.PI) } } as never), g = newGame(162218, T);
+    const T = withTuning({ legends: { ...TUNING.legends, questCap: 6 }, mapAreas: 14, map: { ...TUNING.map, radius: 14 / Math.sqrt(Math.PI) } } as never), g = preppedGame(162218, T);
     g.clock.paused = false; g.party.paused = true; g.witches[0].health.hp = 1e6;
     const L = g.creatures.filter(c => c.boss).sort((a, b) => Math.hypot(a.x - 2566, a.z - 1923) - Math.hypot(b.x - 2566, b.z - 1923))[0];
     expect(L.quest).toMatchObject({ species: "stoat" });

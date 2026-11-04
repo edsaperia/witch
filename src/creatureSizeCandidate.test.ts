@@ -3,13 +3,15 @@ import { SIZE_CLASSES } from "../art/genome/size-ranks.js";
 import { candidateSizePixels } from "../art/genome/size-candidate.js";
 import {critter,defaultStyle} from "../art/generator.js";
 import {styleFromLink} from "./app/viewParams";
-import {withTuning} from "./rules/tuning";
+import {TUNING} from "./rules/tuning";
 
 describe("Ed's opt-in body size candidate", () => {
   it("enables revised sizes by default after Ed's adoption",()=>expect(defaultStyle().creatureSizeCandidate).toBe(1));
   it("lets Ed compare old sizes from the game link",()=>{
-    expect(styleFromLink(new URLSearchParams(),withTuning({})).creatureSizeCandidate).toBe(1);
-    expect(styleFromLink(new URLSearchParams("creatureSizeCandidate=0"),withTuning({})).creatureSizeCandidate).toBe(0);
+    // (each its own copy of the tuning: styleFromLink sets the tuning's partyObjects.generated, and withTuning({}) shares TUNING's,
+    // which then stayed set for every later file in the worker)
+    expect(styleFromLink(new URLSearchParams(),structuredClone(TUNING)).creatureSizeCandidate).toBe(1);
+    expect(styleFromLink(new URLSearchParams("creatureSizeCandidate=0"),structuredClone(TUNING)).creatureSizeCandidate).toBe(0);
   });
   it("fits anatomical bodies only when opted in and isolates the sprite cache", () => {
     const st={...defaultStyle(),creatureSizeCandidate:0}, before=critter("dormouse",2,0,st);

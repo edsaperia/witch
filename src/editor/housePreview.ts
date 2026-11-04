@@ -9,7 +9,7 @@ import { paintKitchenCauldron, paintMushroomBasket } from "../render/brewingProp
 import { emptyBaskets } from "../rules/mushrooms";
 import { litCanvas, type Drawn } from "../render/housePieces";
 import { loadStyle } from "../render/style";
-import { EDITOR_HOUSE as HOUSE_ROOMS, artKey, attachedPoint, cameraYaw, corners, isHatZone, lightingRoom, rotate, type Layout, type LayoutItem, type Placement } from "./houseLayout";
+import { EDITOR_HOUSE as HOUSE_ROOMS, artKey, attachedPoint, cameraYaw, corners, isHatZone, rotate, type Layout, type LayoutItem, type Placement } from "./houseLayout";
 
 const PITCH = 24 * Math.PI / 180, SIN = Math.sin(PITCH), COS = Math.cos(PITCH), PPM = 6;
 export const makeCanvas = (w: number, h: number): HTMLCanvasElement => { const c = document.createElement("canvas"); c.width = w; c.height = h; return c; };
@@ -48,7 +48,7 @@ export class HousePreview {
       : decorSprite(d.kind, d.k, this.style, { ppm: PPM, pitch: PITCH, yaw, ...(d.r ? { r: d.r / SIZE } : {}) })
       : furnitureSprite(item.id, base.foot, this.style, { ppm: PPM, pitch: PITCH, yaw, curve: base.curve })) as Drawn;
     const dim = d?.kind === "rug" ? RUG_DIM : d?.kind === "mess" ? MESS_DIM : 1;
-    const canvas = litCanvas(drawn, lightingRoom(pose), this.style, makeCanvas, dim, d ? "" : item.id) as HTMLCanvasElement;
+    const canvas = litCanvas(drawn, this.style, makeCanvas, dim, d ? "" : item.id) as HTMLCanvasElement;
     this.art.set(key, { canvas, ox: drawn.origin.x, oy: drawn.origin.y });
     // Authoring may explore many angles; retain a bounded image cache.
     if (this.art.size > 400) this.art.delete(this.art.keys().next().value!);

@@ -1,0 +1,6 @@
+{
+  "reason": "Ed, 2026-11-03: \"When I step off the treehouse with my broom, I seem to fall and rise again before taking off, which causes the camera to jerk.\" Her height is now held on the house's scale while she rises off it, so she no longer drops ~13 m mid-rise and the camera no longer dips and climbs again.",
+  "rules": {
+    "camera": "the bench's witch steps off the Terrace and flies: the camera's height now eases up smoothly instead of following her dip below the floor and back"
+  }
+}

@@ -12,10 +12,13 @@ const hash = (samples: unknown) => createHash('sha256').update(new Uint8Array((s
 const tuning = (island: string) => ({ ...TUNING, map: { ...TUNING.map!, island, islandAreas: 10, world: 0 } });
 
 it('retains the original quantised windows at arrival and after small and large moves', () => {
-  // Frozen from fb5d5e4cd's original HeightField before extraction, shipped tuning.
+  // Frozen from fb5d5e4cd's original HeightField before extraction, shipped tuning; re-frozen 2026-11-03 for the path network's maps
+  // (the island grown one area more for tonight's find, the stones spaced: other hills under the stones), the code unchanged; and for
+  // the challenge area (rules/challenge.ts): its stone circle a terrace of its own, as a legend's circle is; and for its claim on the
+  // whole circle (rules/map.ts: the areas round it cut afresh, so their stones, paths and hills move), the code unchanged.
   for (const [seed, island, expected] of [
-    [123, 'home', ['68c4a3371c7c7c03755dfbe4ccd5db35a48acaeaa3fc15bbf3fdc4ed43e196e8', 'ce7059bd2c357eef841c3dfb9483455e869894c86ad21808b1bd17887ec27c16', '211c9e70da0879e0d83ef85f17394c85dedb41623ac8517b46d774cb0cafaef2']],
-    [424242, 'fox', ['02dbc1296e91f85ff344019f140cf7a927931119b29179702772383ce07fc888', 'ee2962de444fbd25ab5b7aefb39fb16e738a2eaae2b2dade4f9bad642802bd16', '211c9e70da0879e0d83ef85f17394c85dedb41623ac8517b46d774cb0cafaef2']],
+    [123, 'home', ['273a9ea15587d69287fa783794c7058cabe8b2e2a3783d2cd6478a201268f177', 'ecb4d52cd955b874ebf4e219ff2234fc483e22778213d121ed9bf585f032f704', '211c9e70da0879e0d83ef85f17394c85dedb41623ac8517b46d774cb0cafaef2']],
+    [424242, 'fox', ['e5b0274aad5724ebd1df62bf9e6580728589a751515e878126fe7ff6d194181c', '6174b7943dc214fc03d83d8dd2b71903e89e36f5f997b91b8cde9a9c0534fa6d', '211c9e70da0879e0d83ef85f17394c85dedb41623ac8517b46d774cb0cafaef2']],
   ] as const) {
     const map = generateMap(seed, tuning(island)), H = arrivalHills(map.tuning), field = new HeightSamples(map, new Forest(map), H, DataUtils);
     const { x, z } = map.start;

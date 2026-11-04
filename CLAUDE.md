@@ -21,7 +21,7 @@ Pages must be switched on once in the repository's settings (Source: *Deploy fro
 The start screen shows a **What's new** panel: the last three entries of the changelog, newest first. The changelog is **one small file per change** in `config/changelog/` (Ed, 2026-10-05: so builders working in parallel don't conflict), collected at build time by `src/changelog.ts`:
 
 - Every push that changes something Ed can see **adds a new fragment file**, `config/changelog/<yyyy-mm-dd>-<slug>.json` (e.g. `2026-10-05-bigger-areas.json`), holding `{ "version": null, "items": ["…"] }`: its bullets in plain player-facing words ("Trees no longer pop in and out"), not commit-speak. Several pushes of one piece of work may add to that same fragment.
-- Once its build has a number (the playable-link comment), **write that number into your own fragment's `version`** on your next push. Never edit anyone else's fragment.
+- Leave `version` null. At each release the coordinator stamps every fragment it ships with that build's number: `node tools/config/stampChangelog.mjs <release commit> <build>` (`--check [<ref>]` lists live fragments still null). Never edit anyone else's fragment.
 - `config/changelog/archive.json` holds everything up to round 9 and is frozen: never edit it. There is no shared list to edit.
 - Fragments with the same version make one entry (the newest file's items first); the current build's (`version: null`) shows as the build being played. `src/changelog.test.ts` checks every file's shape.
 
@@ -108,3 +108,4 @@ The rest of what builders need lives in a note an area, under `docs/notes/` (hou
 - [`docs/notes/performance.md`](docs/notes/performance.md): Performance: the View's build in slices, the start's shaders, the stall hunt.
 - [`docs/notes/making-of.md`](docs/notes/making-of.md): The Making Of: the static site about how the game was made.
 - [`docs/notes/online-prototype.md`](docs/notes/online-prototype.md): The separate two-browser prototype: local relay, host authority, joining, checks and current limits.
+- [`docs/notes/telephone-proof.md`](docs/notes/telephone-proof.md): The explicit two-client telephone proof, default-off switches, allocation and evidence requirements.

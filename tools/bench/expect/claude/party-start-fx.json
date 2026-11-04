@@ -1,0 +1,7 @@
+{
+  "reason": "The party start (Ed, 2026-11-03: \"Party start: agree. Isolate each of the effects so I can tweak\"): each piece on its own partyStart knobs and drawn over the house and the crown at her decks; the pillar 30 m tall with its own light, the dome filled, the sparkles bigger and brighter, the heat ripple on for its own rings. Drawing only: the rules unchanged. The bench's night is cast long before its shots (party.spellAt -100), so its scenes should not change; declared in case a frame lands inside a show.",
+  "frames": {
+    "booth": "at her decks: the party start's pieces, if a frame lands inside the show (over the house, taller, brighter)",
+    "boot": "off the decks just after the start: the same, if a frame lands inside the show"
+  }
+}

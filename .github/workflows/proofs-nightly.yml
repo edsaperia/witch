@@ -1,0 +1,105 @@
+# Informational repaint proof only: never a PR trigger or required-check dependency.
+name: Nightly repaint proof
+on:
+  schedule:
+    - cron: '17 3 * * *'
+  workflow_dispatch:
+concurrency:
+  group: nightly-repaint-${{ github.ref }}
+  cancel-in-progress: false
+permissions:
+  contents: read
+jobs:
+  pixels:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    permissions:
+      contents: read
+      issues: write
+    env:
+      PLAYWRIGHT_VERSION: 1.56.1
+      PROOF_MODE: pixels
+      PAUSE_SETTLE_MS: '300000'
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event_name == 'schedule' && 'claude/prototype' || github.ref }}
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - name: Freeze candidate SHA
+        id: candidate
+        run: echo "sha=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
+      - name: Build nightly candidate once
+        run: node tools/config/check.mjs && npm run build
+        env:
+          WITCH_VERSION: nightly-proof-${{ github.run_number }}
+          WITCH_SHA: ${{ steps.candidate.outputs.sha }}
+      - uses: actions/checkout@v4
+        with:
+          ref: claude/prototype
+          path: proof-baseline
+      - name: Freeze baseline SHA once
+        id: baseline
+        run: echo "sha=$(git -C proof-baseline rev-parse HEAD)" >> "$GITHUB_OUTPUT"
+      - uses: actions/cache@v4
+        with:
+          path: ~/.cache/ms-playwright
+          key: playwright-${{ runner.os }}-${{ env.PLAYWRIGHT_VERSION }}
+      - run: npm install --prefix .pw --no-save --no-package-lock playwright@${{ env.PLAYWRIGHT_VERSION }}
+      - name: Install Chromium (bounded, one retry)
+        shell: bash
+        run: |
+          for try in 1 2; do
+            timeout 300 .pw/node_modules/.bin/playwright install --with-deps chromium && exit 0
+            echo "Chromium install attempt $try failed or exceeded 300 s"; sleep 5
+          done
+          exit 1
+      - uses: actions/cache/restore@v4
+        id: proof-cache
+        with:
+          path: |
+            proof-baseline/dist
+            proof-cache
+          key: proofs-v2-pixels-${{ runner.os }}-node22-pw${{ env.PLAYWRIGHT_VERSION }}-${{ steps.baseline.outputs.sha }}-${{ hashFiles('tools/ci/*proof*', 'tools/smoke/paused-*.cjs') }}
+      - name: Prepare immutable baseline
+        id: prepare-baseline
+        env:
+          PROOF_BASE_SHA: ${{ steps.baseline.outputs.sha }}
+        run: node tools/ci/build-proof-baseline.cjs
+      - name: Settled repaint comparison (information only)
+        env:
+          NODE_PATH: ${{ github.workspace }}/.pw/node_modules
+          PROOF_BASE_SHA: ${{ steps.baseline.outputs.sha }}
+          PROOF_HEAD_SHA: ${{ steps.candidate.outputs.sha }}
+        run: node tools/ci/run-proofs.cjs
+      - uses: actions/cache/save@v4
+        if: ${{ always() && steps.prepare-baseline.outcome == 'success' && steps.proof-cache.outputs.cache-hit != 'true' && hashFiles('proof-cache/paused-world-pixels.json') != '' }}
+        with:
+          path: |
+            proof-baseline/dist
+            proof-cache
+          key: ${{ steps.proof-cache.outputs.cache-primary-key }}
+      - name: Keep nightly evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: nightly-repaint-${{ github.run_attempt }}
+          path: proof-results
+          retention-days: 14
+          if-no-files-found: warn
+      - name: Update the single standing failure report
+        if: failure()
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const marker = '<!-- witch-nightly-repaint-failure -->';
+            const {owner, repo} = context.repo, issue_number = 1476;
+            const url = `https://github.com/${owner}/${repo}/actions/runs/${context.runId}`;
+            const body = `${marker}\nREPORT: Informational nightly repaint proof FAILED. ${url}\nCandidate ${{ steps.candidate.outputs.sha }}; baseline ${{ steps.baseline.outputs.sha }}. See nightly-repaint artifact for status/timing, PNGs, diff and pixel trace. This is not a PR gate. Latest failure: ${new Date().toISOString()}.`;
+            const comments = await github.paginate(github.rest.issues.listComments, {owner, repo, issue_number, per_page:100});
+            const previous = comments.find(c => c.user?.login === 'github-actions[bot]' && c.body?.includes(marker));
+            if (previous) await github.rest.issues.updateComment({owner, repo, comment_id: previous.id, body});
+            else await github.rest.issues.createComment({owner, repo, issue_number, body});

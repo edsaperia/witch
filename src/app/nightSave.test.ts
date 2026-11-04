@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { captureNight, nightHasStarted, NightAutosave, savedNight, savedNightResumeLink, nightLinkConflicts, savesEnabled, type NightStore, type SavedNight } from "./nightSave";
+import { borrowedNightSaves, captureNight, nightHasStarted, nightOfSlot, NightAutosave, savedNight, savedNightResumeLink, nightLinkConflicts, savesEnabled, type NightStore, type SavedNight } from "./nightSave";
 import { applySettings, DEFAULTS } from "./playerSettings";
 import { restoreGame, snapshotGame } from "../rules/nightSnapshot";
 import { newGame as fullGame, stepGame, STEP } from "../rules/game";
@@ -11,6 +11,12 @@ import { startWake, WAKE_DEFAULT } from "../rules/wakeUp";
 
 const saved = (): SavedNight => ({ version: 1, build: "test", at: 123, params: "seed=123&island=wolf&world=42", look: null, loan: null,
   flags: { chartRecorded: false, overRecorded: false }, settingsBase: { voices: {}, shake: 1, legendFlash: 1 }, game: { version: 1, seed: 123, tuning: {} as never, state: { root: null, nodes: [] } } });
+it("requires explicit saved-night opt-in for the actual headless telephone proof URL", () => {
+  const proof = new URLSearchParams("creator=0&quick=1&seed=456&telephone=1&telephoneCalls=1&shot=object:telephone");
+  expect(savesEnabled(proof, true)).toBe(false);
+  proof.set("resume", "1"); expect(savesEnabled(proof, true)).toBe(true);
+  proof.set("resume", "0"); expect(savesEnabled(proof, true)).toBe(false);
+});
 it("keeps an explicit-link conflict distinct and supplies a one-click link to the retained save", () => {
   const n = saved();
   const incoming = new URLSearchParams("seed=1");
@@ -35,6 +41,26 @@ const memory = () => {
   const store: NightStore = { read: async () => value, write: async n => { value = n; }, clear: async () => { value = undefined; } };
   return store;
 };
+
+it("a borrowed save gate drains an in-flight own write and clears only once the visit is confirmed", async () => {
+  let value: unknown = saved(), finish!: () => void, entered = false, clears = 0;
+  const own = { ...saved(), params: "own night" }, guest = { ...saved(), params: "borrowed host night" };
+  const gate = borrowedNightSaves({ read: async () => value, write: async next => { entered = true; await new Promise<void>(resolve => { finish = resolve; }); value = next; }, clear: async () => { clears++; value = undefined; } });
+  const pending = gate.store.write(own); await Promise.resolve(); expect(entered).toBe(true);
+  const suspended = gate.suspendForVisit(); await gate.store.write(guest); await gate.store.clear();
+  expect(clears).toBe(0); finish(); await pending; await suspended; expect(value).toBe(own);
+  expect(await gate.store.read()).toBeUndefined(); await gate.confirmVisit(); await gate.confirmVisit();
+  expect(clears).toBe(1); expect(value).toBeUndefined(); await gate.resumeSolo(); expect(gate.suspended).toBe(false);
+});
+
+it("an aborted visit keeps the interrupted checkpoint, and solo saves resume only explicitly", async () => {
+  let value: unknown = saved(), writes = 0, clears = 0;
+  const gate = borrowedNightSaves({ read: async () => value, write: async next => { writes++; value = next; }, clear: async () => { clears++; value = undefined; } });
+  const before = value; await gate.suspendForVisit(); await gate.store.write({ ...saved(), params: "borrowed" }); await gate.store.clear();
+  expect(value).toBe(before); expect(writes).toBe(0); expect(clears).toBe(0);
+  await gate.resumeSolo(); expect(await gate.store.read()).toBe(before);
+  const fresh = { ...saved(), params: "own fresh solo" }; await gate.store.write(fresh); expect(value).toBe(fresh); expect(writes).toBe(1);
+});
 
 describe("resumable night storage", () => {
   it("restores an actual captured game across build numbers while rejecting unknown formats", () => {
@@ -127,5 +153,22 @@ describe("resumable night storage", () => {
     expect(await active).toBe(true); expect(await flushed).toBe(true); expect(writes).toBe(2);
     const empty = new NightAutosave(memory(), () => null, () => {});
     expect(await empty.flush(0)).toBe(true);
+  });
+  // (Ed, 2026-11-02: hold to delete; Reset everything)
+  it("finds a slot's nights on any path, slot 1's the bare paths, and every night for a reset", () => {
+    expect(nightOfSlot("/witch/", "s1")).toBe(true); expect(nightOfSlot("/witch/pr-9/", "s1")).toBe(true);
+    expect(nightOfSlot("/witch/#save=s12345", "s1")).toBe(false); expect(nightOfSlot("/witch/#save=s12345", "s12345")).toBe(true);
+    expect(nightOfSlot("/witch/#save=s123456", "s12345")).toBe(false); expect(nightOfSlot("/witch/:comment-restore", "s1")).toBe(false);
+    for (const key of ["/witch/", "/witch/#save=s12345", "/witch/:comment-restore"]) expect(nightOfSlot(key, null)).toBe(true);
+  });
+  it("a stopped autosave waits for its write in flight and then saves nothing, pagehide included, until resumed", async () => {
+    let release!: () => void, writes = 0;
+    const store: NightStore = { read: async () => undefined, write: () => { writes++; return new Promise<void>(r => { release = r; }); }, clear: async () => {} };
+    const a = new NightAutosave(store, saved, () => {}), pending = a.save(0);
+    let stopped = false; const stopping = a.stop().then(() => { stopped = true; });
+    await Promise.resolve(); expect(stopped).toBe(false);
+    release(); await stopping; expect(await pending).toBe(false);
+    expect(await a.save(10_000, true)).toBe(false); expect(await a.flush(20_000)).toBe(false); expect(writes).toBe(1);
+    a.resume(); const again = a.save(30_000, true); release(); expect(await again).toBe(true); expect(writes).toBe(2);
   });
 });

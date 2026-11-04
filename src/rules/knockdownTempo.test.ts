@@ -1,7 +1,7 @@
 // The beat speeds up as she's knocked down (Ed, 2026-10-07: "the BPM goes up by 1 each time you die"): the party's tempo
 // rises by knockout.bpmStep a knockdown, eased in from the next beat, and the wave countdown runs that much faster.
 import { describe, expect, it } from "vitest";
-import { beatAt, bpmAt, knockdownTempo, newBeatClock, recordTempo, tempoRate } from "./beat";
+import { beatAt, bpmAt, knockdownTempo, newBeatClock, recordTempo, sparkSpeedAt, tempoRate } from "./beat";
 import { hitWitch, newGame as fullGame, stepGame, type Controls, type Game } from "./game";
 import { smallWorld } from "../test/worlds";
 const newGame = smallWorld(fullGame, "Knockdown beat and countdown ratios need only the initial waves, independent of distant area diversity.");
@@ -44,8 +44,10 @@ describe("knockdowns speed up the beat (Ed, 2026-10-07)", () => {
     for (const g of [steady, fast]) runUntil(g, () => g.clock.time >= g.party.bootUntil + 10);
     const left = steady.party.nextAt - steady.clock.time;
     for (let i = 0; i < 3; i++) knockdownTempo(fast.beat, fast.tuning, fast.clock.time);
-    const rate = tempoRate(fast.beat, fast.tuning);
-    expect(rate).toBeCloseTo(1 + (3 * (TUNING.knockout.bpmStep ?? 0)) / fast.beat.base, 6);
+    // (the spark's speed on the line through 1.0 m/s at 100 bpm and 5.0 at 200: Ed, 2026-11-03; the wave sooner by the speeds' ratio)
+    const rate = tempoRate(fast.beat, fast.tuning) / tempoRate(steady.beat, steady.tuning);
+    expect(tempoRate(fast.beat, fast.tuning)).toBeCloseTo(sparkSpeedAt(fast.beat.base + 3 * (TUNING.knockout.bpmStep ?? 0), TUNING), 6);
+    expect(rate).toBeGreaterThan(1);
     const from = fast.clock.time, wave = fast.party.wave;
     runUntil(fast, () => fast.party.wave > wave);
     expect(fast.clock.time - from).toBeCloseTo(left / rate, 0); // (within a second)
@@ -69,8 +71,8 @@ function runUntil(g: Game, done: () => boolean): void {
 }
 
 describe("the record's tempo runs the pulse (Ed, 2026-10-29: \"Even at 200bpm the spark seems to be moving quite slowly\")", () => {
-  it("a 200 bpm record runs the pulse and the countdown twice as fast as a 100 bpm one", () => {
+  it("a 200 bpm record runs the pulse and the countdown five times as fast as a 100 bpm one (1.0 to 5.0 m/s: Ed, 2026-11-03)", () => {
     const at = (bpm: number) => { const c = newBeatClock(120); recordTempo(c, TUNING, bpm, 0); return tempoRate(c, TUNING); };
-    expect(at(200) / at(100)).toBeCloseTo(2, 5);
+    expect(at(200) / at(100)).toBeCloseTo(5, 5);
   });
 });

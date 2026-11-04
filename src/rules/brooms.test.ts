@@ -1,13 +1,14 @@
 // The brooms (Ed, 2026-10-11/12; rules/brooms.ts, rules/spells.ts): Battering's blink stuns what's in her path, Ley jump puts
-// her at the pulse, the Canoe hull lightens her sigils' pull, Ground pound rises or lands at once with a shockwave (the landing stuns),
+// her at the pulse, the Canoe hull lightens her chains' drag, Ground pound rises or lands at once with a shockwave (the landing stuns),
 // and Stealth keeps her unseen unless she's inviting or putting down or picking up.
 import { describe, expect, it } from "vitest";
 import { TUNING, type Tuning } from "./tuning";
-import { leashLoad, newGame, stepGame, type Controls, type Game } from "./game";
+import { newGame, stepGame, type Controls, type Game } from "./game";
+import { chainLength, dragWitch } from "./chains";
+import { newWitch } from "./witch";
 import { castSpell, stealthed } from "./spells";
 import { leyJumpTarget } from "./brooms";
 import { SETS, fittedOf, partsPull } from "./broomParts";
-import { inviteCreature } from "./leash";
 import { cellKey } from "./party";
 import type { Creature } from "./creatures";
 import { smallWorldTuning } from "../test/worlds";
@@ -72,18 +73,16 @@ describe("Ley jump", () => {
   });
 });
 
-describe("the Canoe hull (Haul's old job, a part since the Workshop: Ed, 2026-10-23)", () => {
-  it("her sigils pull on her less: times its pull", () => {
-    const pulled = (t: Tuning) => {
-      const g = game(t, true), p = spot(g), W = g.witches[0];
-      at(g, p.x, p.z);
-      for (const k of [0, 1, 2]) { const c = wild(g, p.x + 30 + k, p.z, 2); inviteCreature(W.leash, c, c.x, c.z, g.clock.time); }
-      return leashLoad(g).total;
-    };
-    const plain = pulled(TUNING), hauled = pulled({ ...TUNING, spells: { ...TUNING.spells, parts: "canoe" } });
-    expect(plain).toBeGreaterThan(0);
-    expect(hauled).toBeCloseTo(plain * partsPull(fittedOf("canoe")), 5);
-    expect(partsPull(fittedOf("canoe"))).toBeCloseTo(0.65);
+describe("the Canoe hull (Haul's old job, a part since the Workshop: Ed, 2026-10-23; since the chain rework, its chains drag her less)", () => {
+  it("a youth's and an adult's drag times its pull; a legend's still stops her", () => {
+    const p = partsPull(fittedOf("canoe"));
+    expect(p).toBeCloseTo(0.65);
+    const mk = (level: number) => [{ id: 0, x: 0, z: 0, level, species: "wolf", gone: false, speed: 100 } as unknown as Creature];
+    const L = chainLength(TUNING), body = { ...newWitch(L + 1, 0), vx: 60, vz: 0 }, from = { x: L, z: 0 };
+    const moved = (level: number, pull: number) => dragWitch(body, from, [0], mk(level), TUNING, 1 / 60, pull).body.x - L;
+    expect(moved(2, p)).toBeCloseTo(1 - TUNING.leash.chain!.drag.adult * p, 6);
+    expect(moved(2, 1)).toBeCloseTo(1 - TUNING.leash.chain!.drag.adult, 6);
+    expect(moved(3, p)).toBeCloseTo(0, 6);
   });
 });
 

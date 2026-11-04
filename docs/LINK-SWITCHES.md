@@ -38,6 +38,8 @@ What the night is: its seed, island, world, opening, sail and her kit.
 | `wave=<n>` / `wave=off` | The repro link: the night brought on to wave n before play; off holds the waves where they are (as pulse=off). | 2026-10-07 | app/gameParams.ts, app/repro.ts |
 | `world=<n>` / `world=<text>` | The campaign's world seed (every island's shape) for this load. | 2026-10-11 | app/chartPage.ts, app/linkParams.ts, app/sail.ts, main.ts |
 | `resume=0` / `resume=1` | Disable night saves, or explicitly enable them on a debug or automated link. | 2026-10-29 | app/nightSave.ts |
+| `fresh=1` | A brand-new player's very first morning, every time, on the newest deploy: a throwaway storage namespace of its own (nothing of this browser's saves read or written; settings, controls and the telephone's identity at their defaults), the boot writing ?fresh=<token> so a reload, sail or night in it carries on; ?fresh=1 again starts another. *Decision: Ed, 2026-11-03: "can you make a link that always starts a fresh game with the latest version?".* | 2026-11-03 | index.html, platform/storageScope.ts |
+| `latest=<build>` | Written by a fresh game's boot when version.json shows a newer build than the page running: the one reload to it, past the browser's cached page; a link with it never reloads again, and the boot takes it off. | 2026-11-03 | app/newBuild.ts, main.ts |
 
 ## Looks and their costs
 
@@ -86,6 +88,8 @@ For the builders, the smoke and bench runs, the repro link and the arenas.
 
 | switch | does | since | read in |
 |---|---|---|---|
+| `telephoneCalls=1` | Explicit two-client proof only: admits calls only when telephone=1 is also supplied. Ordinary calls remain off until canonical GO. | 2026-11-01 | app/telephoneSwitch.ts |
+| `telephone=1` | Proof-only: shows the unfinished telephone station panel; default play keeps the existing quiet-line message. Calls stay off unless telephoneCalls=1 is also explicitly supplied. | 2026-11-01 | app/telephoneSwitch.ts |
 | `refraction=0` / `refraction=1` | Preview world-anchored campfire heat and party-cast pressure refraction; off by default, and disabled by reduced flashing or the magic shimmer quality rung. | 2026-10-31 | render/post.ts |
 | `layout=ed` / `layout=classic` | Ed's house arrangement is the default; classic selects the previous layout, and ed selects the default explicitly. | 2026-10-31 | app/houseLayout.ts, app/nightSave.ts |
 | `recording=0` / `recording=1` | Profile-only: 0 disables input recording and incremental log journalling; ordinary games keep both enabled. | 2026-10-30 | platform/diagnosticMode.ts |

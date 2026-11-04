@@ -1,6 +1,38 @@
 # The treehouse
 
-Backlog (Ed, 2026-10-14, from an interview with Juliet). **Not built yet; don't build without Ed's go.** This page is the treehouse's plan: its shape, its rooms and what each is for, how she moves between them, the night's loop through it, how it grows over the campaign, and how it ties to the hats and brooms, the records, the zoo and the journey. Where it overrides older notes: the room table and "the octagon, for now" in [journey.md](journey.md) section 3, and the "where she chooses" notes in [unlocks.md](unlocks.md) and [creator-and-house.md](creator-and-house.md). What's built today (the deck on the Ent, #717; the Bedroom button, #737; the character creator) stays until this replaces it.
+**Audit status (2026-11-01): Partly built: the walkable house and most stations are implemented; room rewards, cards, portable personal bedrooms and full ordinary multiplayer are not.**
+
+The status index checks the requests below against prototype `ab06904b` and cited history. **Built** means code is present, not a new play/audition/performance pass. **Partly built** states the missing part. An em dash leaves an unimplemented request unmarked. Versions are verified changelog build labels where available; “unverified” means no first-live number was established. Historical/superseded requests are preserved, not re-authorised. Repeated details/build-order summaries are counted with their feature group, not again.
+
+| Request / feature group | Status | Evidence and remaining gap |
+|---|---|---|
+| Walkable connected rooms, indoor camera and exterior view | **Built** | rules/houseRooms.ts, treehouse.ts, render/houseRooms.ts, config/house/; branch-house changelog v4094, oak v4439. Original house PR unverified; current layout follow-up #1565 v6713. |
+| Hub/map water feature, dome and clockwork moon | **Partly built** | Atrium map table and sea chart are built; complete described koi-floor-pool/grating/glass-dome/orrery composition is not. render/mapTable.ts; chart #735/#738 v2961, house v4094. |
+| Wide branches, room levels, complete house from first night | **Built** | Config room graph/heights and branch rendering; branch-house v4094, oak v4439. Originating PR unverified; layout #1565 v6713. |
+| Fly onto/off Terrace; fall without broom | **Built** | rules/treehouse.ts, witch.ts, kit.ts; treehouse build-order step1 and kit changelog v4769. Original step1 PR/version unverified. |
+| Decks/respawn circle and scratch routine | **Built** | rules/knockout.ts, wakeUp.ts, render/koIris.ts and home art; historical treehouse implementation. Originating PR/version unverified; this audit claims source presence, not a new visual test. |
+| Tea/greenhouse waiting animation and tarot game | **Partly built** | Furniture/use pose exists (houseRooms use table); no complete custom 1–3 player tarot rules or networked card game. House v4094; original PR unverified. |
+| Three bedrooms, locks and guest wake | **Partly built** | Guest rooms/furniture built (v4185), guest wake #1553 and #1538 opt-in source. Ordinary accepted visits remain incomplete; custom furnishings/trophies/portable bedroom not built. |
+| Telephone lobby and three-player start | **Partly built** | Telephone #1538 opt-in source; app/telephoneSwitch.ts default disabled. Full ordinary calling, three-player lobby and lifecycle acceptance not delivered. First enabled-call version absent. |
+| Personal dressing stations | **Built** | Wardrobe, dressing table, shoes and cloak station data/panels; #1076, v4103 rows, v5440 cards. Walkable station flow supersedes wizard tabs. |
+| Washing machine for yesterday or random clothes | **Partly built** | Yesterday's clothes pile is built (rules/clothesPile.ts, wake-first v4240); washing-machine randomise furniture/interaction not found. |
+| Owned hats as world objects, hat mirror styling | **Built** | #1044 v4187; houseRooms floor hats, hatSave and station panels. Hooks/grimoire wording below is historical; current floor/mirror arrangement is the implementation. |
+| Full garage scene, creeper and welding | **Partly built** | Parts/lathe/pegboard built (#1037/#1040/#1056 v4181/v4221), combined lathe v5440. Creeper/welding pose and root-level garage are not built; three separate stations have been superseded. |
+| Studio records and instruments | **Partly built** | Playable keys/drums/mic exist (v4125); records now chosen at DJ booth as BPM items, not island-quest genre shelf progression. rules/studio.ts, records.ts. Original instrument PR unverified. |
+| Kitchen cauldron and baskets | **Built** | #1472 v5764 legacy preview; #1523 current nine-colour kitchen, #1565 moves authored placement to Dining. First current nine-colour release version unverified. |
+| Library/zoo, biome skeletons and island skull souvenirs | **Partly built** | Bestiary book opens zoo; specimens/furniture exist. Campaign-earned per-biome skeletons and per-island skull collection absent. app/zooOverlay.ts, render/houseRooms.ts; originating PR/version unverified. |
+| Crow's nest telescope, full-screen view and compass | **Built** | rules/telescope.ts, app/telescope.ts and camera; telescope follow-ups in house notes. Originating PR/first version unverified; current E-open behaviour supersedes old nearness-open text. |
+| Side station panels and bottom table/chart slide | **Built** | #1076 and chartOverlay/SlideIn; v4724 E-open, v5303 Choose, v5440 cards. Stick no longer walks her while open; historical automatic-open text below is not current. |
+| Wake, dress, obtain kit, cast party and revisit rooms | **Built** | wakeUp/guidance/kit/DJ booth; wake v3982/v4240, invitations/broom v4769. Each feature present; original combined PR unverified. |
+| Campaign fills house with hats, records, skeletons and trophies | **Partly built** | Owned hats/parts appear; BPM records are unlocks. Achievement trophies, biome skeleton/skull rewards and record-on-shelf progression not all implemented. #1044 v4187, #1056 v4221. |
+| Map/table remains a drawing while chart grows | **Partly built** | True-shape chart/home growth exists; map table remains a rendered miniature rather than exactly the proposed static drawing. render/mapTable.ts, chartSave; #735/#738 v2961. |
+| Portable customised bedrooms, furniture, hot tub and achievements | — | No implementation found for this request; original proposal remains unmarked. |
+| Shared lobby band | **Partly built** | Solo Studio instruments and multi-witch groundwork exist; accepted three-player shared instrument performance not established. rules/studio.ts; v4125, #1538 incomplete. |
+| Crystal-ball run history/remote-island upgrade locator | — | Tonight's find constellation/telescope is built; it does not implement the requested remote-island locator/history device. |
+| Guidance pins for first dressing/new finds | **Built** | #1189/#1226/#1255; rules/guidance.ts, render/view/guidance.ts. Versions unverified; first-morning ordering remains source-defined. |
+
+
+Backlog (Ed, 2026-10-14, from an interview with Juliet). **Mixed implementation status; see the audit below. No unbuilt work is authorised by this page.** This page is the treehouse's plan: its shape, its rooms and what each is for, how she moves between them, the night's loop through it, how it grows over the campaign, and how it ties to the hats and brooms, the records, the zoo and the journey. Where it overrides older notes: the room table and "the octagon, for now" in [journey.md](journey.md) section 3, and the "where she chooses" notes in [unlocks.md](unlocks.md) and [creator-and-house.md](creator-and-house.md). What's built today (the deck on the Ent, #717; the Bedroom button, #737; the character creator) stays until this replaces it.
 
 ![A section of the treehouse](treehouse-section.png)
 
