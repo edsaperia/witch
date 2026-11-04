@@ -81,6 +81,36 @@ async function host(connect) {
   return { ws, info: await reply };
 }
 
+// Saved route v7425 observed host1006 then replacement1008. Characterize one possible
+// cause without assuming that unretained relay logs prove it happened in that run.
+for (const cause of ['transport', 'silence']) test(`correct host ticket after ${cause}: reservation versus expired room`, { timeout: 5000 }, async t => {
+  let clock = 0;
+  const logs = [], connect = await fixture(t, { now: () => clock, checkMs: 5, log: row => logs.push(row) });
+  const h = await host(connect), accepted = message(h.ws);
+  send(h.ws, { type: 'ready' }); await accepted;
+  const closed = once(h.ws, 'close');
+  if (cause === 'transport') { clock = 19999; h.ws.terminate(); }
+  else clock = 20000;
+  assert.equal((await closed)[0], 1006);
+  // The original close callback must finish before a replacement connects.
+  for (let i = 0; !logs.some(row => row.role === 'host') && i < 50; i++) await new Promise(resolve => setTimeout(resolve, 5));
+  const original = logs.find(row => row.role === 'host');
+  assert.equal(original.rule, cause === 'transport' ? 'client-close' : 'silence');
+  if (cause === 'silence') assert.equal(original.limitMs, 20000);
+  clock = 20001;
+  const replacement = await connect();
+  if (cause === 'transport') {
+    const resumed = message(replacement); send(replacement, { type: 'resume', ...h.info.resume });
+    assert.equal((await resumed).type, 'resumed');
+    const heartbeat = message(replacement); send(replacement, { type: 'heartbeat' });
+    assert.equal((await heartbeat).type, 'heartbeat');
+  } else {
+    const rejected = once(replacement, 'close'); send(replacement, { type: 'resume', ...h.info.resume });
+    const [code, reason] = await rejected;
+    assert.equal(code, 1008); assert.equal(reason.toString(), 'Resume unavailable');
+  }
+});
+
 test('joins a running host and relays state/input with connection-bound identities', { timeout: 5000 }, async t => {
   const connect = await fixture(t), h = await host(connect), guest = await connect();
   const joined = message(guest), notice = message(h.ws);
