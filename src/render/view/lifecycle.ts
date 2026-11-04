@@ -8,10 +8,8 @@ import { StationBackdrop } from "../stationBackdrop";
 import { islandArtSeed } from "../artCache";
 import { biomeKey } from "../../rules/lakeLooks";
 import { HouseRoomsView } from "../houseRooms";
-import { fromPlan } from "../../rules/houseRooms";
 import { warmCarvings } from "../legendCarving";
 import type { Game } from "../../rules/game";
-import { type TreeExtent } from "../../rules/arrive";
 import { AREA_TYPES, HOME_LOOK } from "../../rules/map";
 import { IslandLayers } from "../island";
 import { Sky } from "../sky";
@@ -24,6 +22,7 @@ import { HEIGHT_UNIFORMS } from "../height";
 import { LIGHT_UNIFORMS } from "../lighting";
 import { AreaMoods, moodOf } from "../mood";
 import { GrassView } from "../grass";
+import { resetRefraction } from "./refraction";
 import { resetDodgeEchoes } from "./dodgeEchoes";
 import { TRAIL_DEFAULT, WitchTrail } from "../trail";
 import { SWOOP_TRAIL_DEFAULT, SwoopTrails } from "../swoopTrails";
@@ -44,6 +43,7 @@ import { LightRings } from "../lightRings";
 import { SHADOW_DEBUG, ShadowBatch } from "../shadows";
 import { packAtlas } from "../atlas";
 import { berrySprite } from "../berries";
+import { berryColour } from "../colourGrammar";
 import { Glades } from "../glades";
 import { Wisps } from "../wisps";
 import { SPRITE_UNIFORMS, SpriteBatch } from "../sprites";
@@ -119,6 +119,7 @@ export function* build(a4ViewHost: View, a4PrivateHost: ViewInternals, a4SharedH
     a4ViewHost.scene.add(a4ViewHost.spellFx.trail);
     a4ViewHost.magic.legacyParty=(x,y,z,age)=>{a4ViewHost.spellFx.reset();a4ViewHost.spellFx.partyBurst(x,y,z,a4ViewHost.game.herTime-age);a4ViewHost.spellFx.update(a4ViewHost.game,a4ViewHost.game.herTime,y);};
     a4PrivateHost.trail = new WitchTrail(game.tuning.trail ?? TRAIL_DEFAULT);
+    a4PrivateHost.trail.preset = a4PrivateHost.trailPresetId;
     a4ViewHost.scene.add(a4PrivateHost.trail.mesh);
     bridgeNativeObject(a4PrivateHost.trail.mesh,"flightTrail");
     bridgeNativeObject(a4ViewHost.spellFx.trail,"broomSpark");
@@ -127,7 +128,7 @@ export function* build(a4ViewHost: View, a4PrivateHost: ViewInternals, a4SharedH
     a4ViewHost.propBatch = new SpriteBatch(a4ViewHost.assets.props, a4ViewHost.mpp, { fade: true }).name("props");
     // Berries: a small shiny dark-red berry, drawn here (a highlight upper left, a darker side),
     // always drawn (gameplay), unlit so it reads at night; its halo and glints are in leash.ts.
-    a4ViewHost.berryBatch = new SpriteBatch(packAtlas([berrySprite(t.berries.colour)], 64), a4ViewHost.mpp, { unlit: true });
+    a4ViewHost.berryBatch = new SpriteBatch(packAtlas([berrySprite(berryColour(t))], 64), a4ViewHost.mpp, { unlit: true });
     a4ViewHost.scene.add(...a4ViewHost.berryBatch.meshes);
     a4ViewHost.scene.add(...a4ViewHost.propBatch.meshes);
     yield "party";
@@ -200,7 +201,7 @@ export function* build(a4ViewHost: View, a4PrivateHost: ViewInternals, a4SharedH
     a4ViewHost.scene.add(a4ViewHost.shadow);
   }
 
-export async function prepare(a4ViewHost: View, a4PrivateHost: ViewInternals, a4SharedHost: ViewShared, o: { sail?: boolean; dive?: (x: number, z: number) => number; track?: [number, number, number, number][] }): Promise<void> {
+export async function prepare(a4ViewHost: View, a4PrivateHost: ViewInternals, a4SharedHost: ViewShared, o: { sail?: boolean; dive?: (x: number, z: number) => number; track?: [number, number, number, number][]; underDive?: boolean }): Promise<void> {
     performance.mark("witch:prep-start");
     if (o.sail) { a4ViewHost.homeDone = false; a4ViewHost.shaderDrawStatus.active = true; a4ViewHost.shaderDrawStatus.skipped = {}; a4ViewHost.shaderDrawStatus.fallback = {}; a4ViewHost.shaderDrawStatus.submitted = {}; if (!a4PrivateHost.shaderChartLanding) a4ViewHost.startLandingShaderGrace(); }
     a4PrivateHost.makeLoadingMist();
@@ -224,7 +225,13 @@ export async function prepare(a4ViewHost: View, a4PrivateHost: ViewInternals, a4
       a4ViewHost.homeDone = false;
       a4ViewHost.prepared = true;
       a4PrivateHost.askIsland(near); // (the workers drawing the dive's areas while the shaders link)
-      await a4PrivateHost.compileAll(o.sail);
+      // The house, the forest round it and the legends' carvings made from here on, while the shaders link and the chart flies on
+      // down to the water (Ed, 2026-11-03: "The zoom into the sea chart can be quite a few seconds long, the idea is to build the
+      // island during this time"): made only once the dive began, a slice a dive frame, they took 14.5 s of his laptop's dive for
+      // what the boot makes in 0.6 s, the dive flying over a forest not there. What's left as it hands over goes on through the dive.
+      const compiled = a4PrivateHost.compileAll(o.sail, !!o.underDive), homeEpoch = a4PrivateHost.shaderEpoch; // (compileAll's epoch: buildHome stops only for a newer night)
+      void a4PrivateHost.buildHome(homeEpoch).catch(e => { console.error("the house's start after a sail went wrong", e); }).finally(() => { if (homeEpoch === a4PrivateHost.shaderEpoch) { a4ViewHost.homeDone = true; performance.mark('landing:house-complete'); } });
+      await compiled;
       // The ground where the dive first sees the island (Ed, 2026-10-24: the dive's view needs the ground; Echo's island black through
       // the descent, its tiles not drawn yet): the first TRACK_AHEAD metres of its track in from the sea, TRACK_REACH each side, a few
       // tiles a frame under the chart; the rest of it as the dive goes, the view's own each frame (render/view/ahead.ts).
@@ -234,8 +241,6 @@ export async function prepare(a4ViewHost: View, a4PrivateHost: ViewInternals, a4
         while (a4ViewHost.ground.fill(a4ViewHost.renderer, r, x0, z0, 6) > 0) await nextFrame();
       }
       performance.mark("witch:prep-track");
-      const homeEpoch = a4PrivateHost.shaderEpoch;
-      void a4PrivateHost.buildHome(homeEpoch).catch(e => { console.error("the house's start after a sail went wrong", e); }).finally(() => { if (homeEpoch === a4PrivateHost.shaderEpoch) { a4ViewHost.homeDone = true; performance.mark('landing:house-complete'); } });
       return;
     }
     await runSliced(a4PrivateHost.warmSteps(), "warm"); // (the first frame's own lazy work made ahead, a slice at a time)
@@ -265,20 +270,6 @@ export async function prepare(a4ViewHost: View, a4PrivateHost: ViewInternals, a4
     a4ViewHost.homeDone = true;
   }
 
-export function treeExtent(a4ViewHost: View, _a4PrivateHost: ViewInternals, _a4SharedHost: ViewShared): TreeExtent | null {
-    const g = a4ViewHost.game, deck = deckOf(g.map, g.tuning);
-    if (a4ViewHost.crown && deck) {
-      let x0 = Infinity, x1 = -Infinity, z0 = Infinity, z1 = -Infinity, top = 0;
-      for (const l of a4ViewHost.crown.crown.lobes) {
-        const p = fromPlan({ x: deck.x, z: deck.z }, l.x, l.z);
-        x0 = Math.min(x0, p.x - l.r); x1 = Math.max(x1, p.x + l.r); z0 = Math.min(z0, p.z - l.r); z1 = Math.max(z1, p.z + l.r); top = Math.max(top, l.y + l.r);
-      }
-      if (Number.isFinite(x0)) return { x: (x0 + x1) / 2, z: (z0 + z1) / 2, height: deck.h + top, width: x1 - x0 };
-    }
-    const a = a4ViewHost.assets, th = g.map.treehouse;
-    return a.home.treehouse ? { x: th.x, z: th.z, height: a.treehouse.base.y * a4ViewHost.mpp, width: (a.treehouse.atlas.frames[0]?.w ?? 0) * a4ViewHost.mpp } : null;
-  }
-
 export function askIsland(a4ViewHost: View, _a4PrivateHost: ViewInternals, _a4SharedHost: ViewShared, near: Map<number, number>): void {
     // Each legend's carving (render/legendCarving.ts: 10-80 ms a kind) made in idle time now, not the first time she comes near one.
     warmCarvings(a4ViewHost.game.map.legendClearings.map(c => AREA_TYPES[a4ViewHost.game.map.typeOf(c.cell[0], c.cell[1])].creature));
@@ -304,6 +295,7 @@ export function* setGameSteps(a4ViewHost: View, a4PrivateHost: ViewInternals, a4
     // The last night's: the scenery's rebuild under way, the creatures' caches, the candles; its area types' batches and their
     // shadows, and its soundsystems' (their atlases the art's: freed once, by reseat).
     cancelRefresh(a4ViewHost); resetCreatureCaches(); forgetCandles(a4ViewHost);
+    a4PrivateHost.masterplan?.dispose(); a4PrivateHost.masterplan = undefined;
     a4PrivateHost.potionObservers.dispose(a4ViewHost);
     resetDodgeEchoes(a4ViewHost);
     for (const b of a4ViewHost.typeBatches.values()) { a4ViewHost.scene.remove(...b.meshes); b.release(); }
@@ -345,7 +337,8 @@ export function* setGameSteps(a4ViewHost: View, a4PrivateHost: ViewInternals, a4
     a4PrivateHost.strings.setGame(game); a4ViewHost.leashView.setGame(game); a4PrivateHost.lasers.setGame(game); a4PrivateHost.borders.setGame(game); a4ViewHost.inviteView.setGame(game);
     a4ViewHost.partyObjects.reset(); a4ViewHost.rig?.reset(); a4PrivateHost.holograms.reset(); a4PrivateHost.glades.reset(); a4PrivateHost.wisps?.reset();
     a4ViewHost.clouds.reseed(game.seed); a4ViewHost.lightRings?.reseed(game.map.seed);
-    a4ViewHost.fireworks.reset(); a4ViewHost.swoopTrails.reset(); a4ViewHost.spellFx.reset(); a4PrivateHost.trail.newNight(); a4ViewHost.combatLight.reset(); a4ViewHost.occlusion.reset();
+    a4ViewHost.fireworks.reset(); a4ViewHost.swoopTrails.reset(); a4ViewHost.spellFx.reset(); a4ViewHost.partyStart.reset(); a4PrivateHost.trail.newNight(); a4ViewHost.combatLight.reset(); a4ViewHost.occlusion.reset();
+    resetRefraction(a4ViewHost);
     a4ViewHost.assets.prefetchType(HOME_LOOK); // home's meadow floor (no trees ask for it)
   }
 

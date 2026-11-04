@@ -161,9 +161,6 @@ export interface ArcStep {
   /** Semitones above the style's root: the stage's key (its scale is the style's one, dorian: Ed, 2026-10-09, "Keep it all
    *  in the dorian"; the key changes between stages stay). */
   transpose?: number;
-  /** Its tempo (bpm; the style's bpm if none): the beat clock eases to it as the wave lands. Ed, 2026-10-09: none has
-   *  one now (the tempo stays at the style's 120 but for her knockdowns, rules/beat.ts knockdownTempo). */
-  bpm?: number;
   /** Its sections on the form (Ed, 2026-10-09: "ABAC; the first two sections should be 4 on the floor, the third sections
    *  breakbeats, and the fourth a breakdown"): A and B one four-on-the-floor block (`land` the first time round, as the
    *  wave lands), the second A a breakbeat one, C a breakdown; each list taken in turn on later passes. With these,
@@ -197,10 +194,8 @@ export interface CircleUse { p: string | string[]; level?: number }
 export interface MusicStyle {
   name: string;
   notes?: string;
-  /** The base tempo: the first wave's, unless its arc step has its own. */
+  /** The night's tempo (beat.bpm), the same every wave (Ed, 2026-11-03): no step of the arc has its own. */
   bpm: number;
-  /** Bars a tempo change takes to ease in, from the block line the wave's music lands on. */
-  tempoRampBars?: number;
   /** 0 straight, 0.5 the off sixteenths pushed half a sixteenth late. */
   swing: number;
   /** MIDI note of the style's root (the bass's lowest octave). */

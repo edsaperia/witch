@@ -118,7 +118,7 @@ export function stepWorldAsleep(g: Game, time: number): void {
       // not a dream"; rules/legends.ts opens its quest again once the spell's cast)
       if (c.boss) c.questOpen = false;
       if (c.asleep && c.napUntil === undefined) continue;
-      if (c.gone || c.leashed || c.partyLegend || arena.has(c.id)) continue;
+      if (c.gone || c.leashed || c.partyLegend || c.statue || arena.has(c.id)) continue; // (the challenge's statues stay stone at their posts)
       putToBed(g, c, time); put = true;
     }
     if (put) g.byArea = null;
@@ -150,6 +150,7 @@ export function startPartyOver(g: Game, time: number): void {
     w.health.hp = g.tuning.witchHealth.hits; w.knock = undefined; w.slowUntil = undefined;
   }
   for (const c of g.creatures) {
+    if (c.statue) continue; // (the challenge's statues: stone where they stand, rules/challengeStatues.ts)
     offTheBeach(c); // (a beaten one asleep on the beach: up, and home with the rest, Ed 2026-10-28; rules/runaway.ts)
     if (c.asleep) { calm(c, time); sleep(c, time); continue; } // (a napper too: asleep for good now, its nap's end gone)
     if (c.gone) {
@@ -178,7 +179,7 @@ export function stepPartyOver(g: Game, dt: number): void {
   const time = g.clock.time;
   P.ease = partyOverEase(P.at, time, g.tuning.partyOver.ease);
   for (const c of g.creatures) {
-    if (c.gone) continue;
+    if (c.gone || c.statue) continue; // (the challenge's statues: rules/challengeStatues.ts)
     if (c.asleep) { if (c.napUntil !== undefined) sleep(c, time); continue; }
     if (!c.bed) { calm(c, time); if (c.leashed) c.leashed = false; c.dropped = undefined; const b = bedOf(g, c); c.bed = b; }
     const b = c.bed!, dx = b.x - c.x, dz = b.z - c.z, d = Math.hypot(dx, dz), step = c.speed * g.tuning.partyOver.walk * dt;

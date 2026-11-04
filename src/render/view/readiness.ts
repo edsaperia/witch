@@ -26,7 +26,7 @@ export function landingWakeReady(a4ViewHost: View, _a4PrivateHost: ViewInternals
       !!a4ViewHost.houseRooms?.landingReady(a4ViewHost.renderer);
   }
 
-export function beginLandingShaders(a4ViewHost: View, a4PrivateHost: ViewInternals, _a4SharedHost: ViewShared, chart: boolean): void { a4PrivateHost.shaderEpoch++; a4PrivateHost.shaderLandingDeadline = Infinity; a4PrivateHost.shaderChartLanding = chart; a4ViewHost.shaderLandingLimited = false; a4ViewHost.landingSleeping = false; a4PrivateHost.landingFades.reset(); a4ViewHost.landingHouseShare = 1; }
+export function beginLandingShaders(a4ViewHost: View, a4PrivateHost: ViewInternals, _a4SharedHost: ViewShared, chart: boolean): void { a4ViewHost.landingPresentationMs = 0; a4PrivateHost.shaderEpoch++; a4PrivateHost.shaderLandingDeadline = Infinity; a4PrivateHost.shaderChartLanding = chart; a4ViewHost.shaderLandingLimited = false; a4ViewHost.landingSleeping = false; a4PrivateHost.landingFades.reset(); a4ViewHost.landingHouseShare = 1; }
 
 export function armLimitedLanding(a4ViewHost: View, a4PrivateHost: ViewInternals, _a4SharedHost: ViewShared): void {
     if (a4ViewHost.shaderLandingLimited) return;
@@ -56,7 +56,7 @@ export function startLandingShaderGrace(_a4ViewHost: View, a4PrivateHost: ViewIn
     performance.mark('chart:landing-due', { detail: { at, deadline: a4PrivateHost.shaderLandingDeadline } });
   }
 
-export async function compileAll(a4ViewHost: View, a4PrivateHost: ViewInternals, _a4SharedHost: ViewShared, allowPartial: NonNullable<Parameters<View["compileAll"]>[0]>): Promise<void> {
+export async function compileAll(a4ViewHost: View, a4PrivateHost: ViewInternals, _a4SharedHost: ViewShared, allowPartial: NonNullable<Parameters<View["compileAll"]>[0]>, underDive: NonNullable<Parameters<View["compileAll"]>[1]>): Promise<void> {
     const epoch = ++a4PrivateHost.shaderEpoch;
     if (allowPartial && !a4PrivateHost.shaderChartLanding) a4ViewHost.startLandingShaderGrace();
     a4PrivateHost.setReadiness("compile", 0, 1);
@@ -103,6 +103,22 @@ export async function compileAll(a4ViewHost: View, a4PrivateHost: ViewInternals,
       return detail;
     };
     record('start');
+    // (the programs finished in the background: each uniform read once it's linked, then the draw gate let go)
+    const background = () => (async () => {
+      await waitForPrograms(allPrograms, compiled, () => {}, () => {}, undefined, undefined, () => epoch === a4PrivateHost.shaderEpoch ? Infinity : -Infinity);
+      if (epoch !== a4PrivateHost.shaderEpoch) return;
+      const programs = [...(a4ViewHost.renderer.info.programs ?? [])];
+      await runSliced((function* (_view: View) {
+        for (const p of programs) {
+          if (epoch !== a4PrivateHost.shaderEpoch) return;
+          if ((p as unknown as ReadyProgram).isReady()) p.getUniforms();
+          yield;
+        }
+      })(a4ViewHost), 'background-programs');
+      if (epoch !== a4PrivateHost.shaderEpoch) return;
+      record('background-ready'); a4ViewHost.shaderDrawStatus.active = false; releaseDisposals();
+    })().catch(error => console.error('background shader readiness failed; retaining safe fallback', error));
+    if (underDive) { void background(); a4PrivateHost.setReadiness('ready', 1, 1); return; }
     // Ed6520617385: a sail may land after its15s grace; unfinished programs must never force a uniform read or draw.
     const complete = await waitForPrograms(allPrograms, compiled, (ready, total) => a4PrivateHost.setReadiness('compile', ready, total), (pending, elapsed) => {
       console.warn('view: shaders still pending; keeping the chart up', record('pending', pending, elapsed));
@@ -110,20 +126,7 @@ export async function compileAll(a4ViewHost: View, a4PrivateHost: ViewInternals,
     if (!complete) {
       a4PrivateHost.armLimitedLanding();
       record('landing-limit', allPrograms().filter(p => !p.isReady()), performance.now() - a4PrivateHost.shaderLandingDeadline + 15000);
-      void (async () => {
-        await waitForPrograms(allPrograms, compiled, () => {}, () => {}, undefined, undefined, () => epoch === a4PrivateHost.shaderEpoch ? Infinity : -Infinity);
-        if (epoch !== a4PrivateHost.shaderEpoch) return;
-        const programs = [...(a4ViewHost.renderer.info.programs ?? [])];
-        await runSliced((function* (_view: View) {
-          for (const p of programs) {
-            if (epoch !== a4PrivateHost.shaderEpoch) return;
-            if ((p as unknown as ReadyProgram).isReady()) p.getUniforms();
-            yield;
-          }
-        })(a4ViewHost), 'background-programs');
-        if (epoch !== a4PrivateHost.shaderEpoch) return;
-        record('background-ready'); a4ViewHost.shaderDrawStatus.active = false; releaseDisposals();
-      })().catch(error => console.error('background shader readiness failed; retaining safe fallback', error));
+      void background();
       a4PrivateHost.setReadiness('ready', 1, 1);
       return; // no unfinished uniform reads, warm draws, uploads or GPU fence on the landing path
     }

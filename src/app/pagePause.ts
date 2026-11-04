@@ -1,5 +1,7 @@
 // A4 mechanical extraction from src/main.ts; body identity is checked by tools/refactor/a4-split.mjs.
 import type { PageHost } from "../main";
+import { leaveVisit } from "./visitHome";
+import { soloDiagnostic } from "./soloDiagnostic";
 import { toggleCornerPanel, closeCornerPanel, cornerPanelRoot } from "../ui/cornerPanel";
 import { setUnlockAll, stockMushroomBaskets, syncHatUnlock, unlockAll } from "./debugUnlock";
 import { defaultsText, newWitchLink } from "./defaultLook";
@@ -11,13 +13,15 @@ import { notable } from "../platform/playtestJournal";
 import { recordedStep } from "./recordingHooks";
 
 export async function openPotionLab(pageHost: PageHost): Promise<void> {
+  if (pageHost.phone.active || pageHost.N().spec.borrowed) return;
   const { PotionLab } = await import("../ui/potionLab");
-  pageHost.potionLab ??= new PotionLab(() => pageHost.N().game, pageHost.style, pageHost.BUILD, () => { if (pageHost.freeze.frozen) pageHost.freeze.toggle(); }, pageHost.mutate);
+  if (pageHost.phone.active || pageHost.N().spec.borrowed) return;
+  pageHost.potionLab ??= new PotionLab(() => pageHost.N().game, pageHost.style, pageHost.BUILD, () => { if (pageHost.freeze.frozen) pageHost.freeze.toggle(); }, (label, action) => soloDiagnostic(pageHost.phone.active, pageHost.N().spec.borrowed === true, () => pageHost.mutate(label, action)));
   if (pageHost.freeze.frozen) pageHost.potionLab.show();
 }
 
 export function pauseControls(pageHost: PageHost, on: boolean): void {
-  if (!on || pageHost.dressed) { if (pageHost.pauseBtns) pageHost.pauseBtns.style.display = "none"; closeCornerPanel(); return; }
+  if (!on || (pageHost.dressed && !pageHost.phone.active)) { if (pageHost.pauseBtns) pageHost.pauseBtns.style.display = "none"; closeCornerPanel(); return; }
   if (!pageHost.pauseBtns) {
     pageHost.pauseBtns = document.createElement("div");
     pageHost.pauseBtns.id = "pause-btns"; pageHost.pauseBtns.style.cssText = "position:fixed;right:12px;top:12px;z-index:61;display:flex;gap:8px";
@@ -30,9 +34,13 @@ export function pauseControls(pageHost: PageHost, on: boolean): void {
       b.addEventListener("click", () => toggleCornerPanel(document.body, id, title, [el]));
       pageHost.pauseBtns.append(b);
     }
+    pageHost.leaveVisitButton = document.createElement("button"); pageHost.leaveVisitButton.type = "button"; pageHost.leaveVisitButton.textContent = "Leave visit";
+    pageHost.leaveVisitButton.addEventListener("click", () => leaveVisit(pageHost.phone.active, () => pageHost.phone.hangUp(), () => { if (pageHost.freeze.frozen) pageHost.freeze.toggle(); }));
+    pageHost.pauseBtns.append(pageHost.leaveVisitButton);
     document.body.append(pageHost.pauseBtns);
   }
   pageHost.pauseBtns.style.display = "";
+  if (pageHost.leaveVisitButton) pageHost.leaveVisitButton.hidden = !pageHost.phone.active;
 }
 
 export function updatePauseMenus(pageHost: PageHost, now: number): void {
@@ -58,7 +66,7 @@ pageHost.freeze.mutate = pageHost.mutate;
 }
 
 export function installPause2(pageHost: PageHost): void {
-pageHost.freeze.advance = (game, controls, dt) => recordedStep(game, controls, dt, pageHost.BUILD, pageHost.captureRecording);
+pageHost.freeze.advance = (game, controls, dt) => { if (!pageHost.phone.active && !pageHost.N().spec.borrowed) recordedStep(game, controls, dt, pageHost.BUILD, pageHost.captureRecording); };
 }
 
 export function installPause3(pageHost: PageHost): void {
@@ -83,6 +91,7 @@ pageHost.freeze.onStamp = text => pageHost.pauseSliders?.setStamp(text);
 
 export function installPause8(pageHost: PageHost): void {
 pageHost.freeze.onToggle = on => {
+  if (on) pageHost.houseAtPause = pageHost.view.houseRooms ? { at: Math.round(performance.now()), ...pageHost.view.houseRooms.reportState(pageHost.view) } : null;
   notable("screen", on ? "Paused" : "Resumed");
   pageHost.input.release(); // Held keys and pending presses belong to the old input owner, never to the resumed game.
   pageHost.settingsPage.gate(); // (suspended while paused, and muted in the background if so set: app/settingsPage.ts)
@@ -96,7 +105,7 @@ pageHost.freeze.onToggle = on => {
   pageHost.pauseLoading = true;
   void import("../ui/decide").then(({ PauseSliders }) => {
     const report = () => import("../ui/visualReport").then(({ report }) => report(pageHost.reportHost()));
-    pageHost.pauseSliders = new PauseSliders({ newBuild: { latest: () => pageHost.newBuild.latest, load: () => location.reload() }, mutate: pageHost.mutate, saveComment: pageHost.saveComment, restoreComment: pageHost.restoreComment, downloadReadableLog: () => { void pageHost.N().playtest.download("text"); }, settings: () => pageHost.settingsPage.show(), get tuning() { return pageHost.N().game.tuning; }, get seed() { return pageHost.N().game.seed; }, version: pageHost.BUILD, live: pageHost.knobLive, report, potionLab: () => { void pageHost.openPotionLab(); }, musicLab: pageHost.openMusicLab, audioTest: () => { window.open("audio-test/", "_blank", "noopener"); }, downloadLog: () => pageHost.N().playtest.download(), unlockAll: { get: () => unlockAll(), set: on => pageHost.mutate("debug: unlock all", () => { setUnlockAll(on); if (on) stockMushroomBaskets(pageHost.N().game); for (const W of pageHost.N().game.witches) syncHatUnlock(W, on, pageHost.params); pageHost.creator.hats = pageHost.N().game.spells.hats; }) }, defaults: { text: () => defaultsText(lookWithoutLoan((pageHost.page.look() ?? pageHost.creator.genome()) as Record<string, unknown> | null, pageHost.loan), partsWithoutLoan(pageHost.N().game.witches[0].spells.parts, pageHost.loan)), tryIt: () => { window.open(newWitchLink(location.href), "_blank", "noopener"); }, shown: () => pageHost.N().hud.debugOn || unlockAll() }, fightArena: () => { window.open(fightLink(newFightSeed()), "_blank", "noopener"); }, finds: () => pageHost.findsPanel.toggle(true), findsShown: () => pageHost.N().hud.debugOn || pageHost.devFinds, quality: { lines: () => pageHost.ladder.lines(), options: () => pageHost.ladder.options(), current: () => pageHost.ladder.current(), choose: v => { pageHost.ladder.choose(v); pageHost.ladder.apply(pageHost.N().game.tuning); } } });
+    pageHost.pauseSliders = new PauseSliders({ resetAll: { run: () => pageHost.deleteSaves(null), shown: () => !pageHost.savesLocked() }, newBuild: { latest: () => pageHost.newBuild.latest, load: () => location.reload() }, mutate: pageHost.tuningMutation, saveComment: pageHost.saveComment, restoreComment: pageHost.restoreComment, downloadReadableLog: () => { void pageHost.N().playtest.download("text"); }, settings: () => pageHost.settingsPage.show(), get tuning() { return pageHost.phone.preferences(pageHost.N().game); }, get seed() { return pageHost.N().game.seed; }, version: pageHost.BUILD, live: pageHost.knobLive, report, potionLab: () => { void pageHost.openPotionLab(); }, musicLab: pageHost.openMusicLab, audioTest: () => { window.open("audio-test/", "_blank", "noopener"); }, downloadLog: () => pageHost.N().playtest.download(), unlockAll: { get: () => unlockAll(), set: on => { if (pageHost.phone.active) return; pageHost.mutate("debug: unlock all", () => { setUnlockAll(on); if (on) stockMushroomBaskets(pageHost.N().game); for (const W of pageHost.N().game.witches) syncHatUnlock(W, on, pageHost.params); pageHost.creator.hats = pageHost.N().game.spells.hats; }); } }, defaults: { text: () => defaultsText(lookWithoutLoan((pageHost.page.look() ?? pageHost.creator.genome()) as Record<string, unknown> | null, pageHost.loan), partsWithoutLoan(pageHost.N().game.witches[0].spells.parts, pageHost.loan)), tryIt: () => { window.open(newWitchLink(location.href), "_blank", "noopener"); }, shown: () => pageHost.N().hud.debugOn || unlockAll() }, fightArena: () => { window.open(fightLink(newFightSeed()), "_blank", "noopener"); }, finds: () => pageHost.findsPanel.toggle(true), findsShown: () => pageHost.N().hud.debugOn || pageHost.devFinds, quality: { lines: () => pageHost.ladder.lines(), options: () => pageHost.ladder.options(), current: () => pageHost.ladder.current(), choose: v => { pageHost.ladder.choose(v); pageHost.ladder.apply(pageHost.phone.preferences(pageHost.N().game)); pageHost.viewRevision++; } } });
     requestAnimationFrame(() => pageHost.pauseSliders!.show(pageHost.freeze.frozen, pageHost.creator.open)); // (a frame shut first, so it slides in)
   }, () => { // (its files replaced under it: Ed, 2026-10-14, "the menu does not appear")
     pageHost.pauseLoading = false;

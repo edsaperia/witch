@@ -23,7 +23,7 @@ export interface Attack {
   knockback?: number;
   slowMult?: number;
   slowTime?: number;
-  /** Melee: how far it lunges at where it aimed when the blow lands (dodgeable: it's committed). */
+  /** Melee: released travel budget; species strikeTurn controls subsequent heading correction. */
   lunge?: number;
   /** Lob: seconds in the air. Beam: its width, seconds it burns, seconds between its ticks, and how fast it sweeps (degrees a second). */
   flight?: number;
@@ -115,6 +115,8 @@ export interface Fight {
   readyAt: number;
   /** Winding up: the game time it lands or flies, and where it was aimed then (a shot flies at that point). */
   windupUntil: number;
+  /** Actual preparation start, for warning waves with modified wind-up durations. */
+  windupAt?: number;
   aimX: number;
   aimZ: number;
   /** A wild legend's move being wound up (Stage 5), for the view's telegraph. */
@@ -169,6 +171,10 @@ export type CombatEvent =
 export interface SoundHealth { hp: number; max: number; x: number; z: number; radius: number }
 
 export interface CombatState {
+  /** Individual action cooldowns survive changes of target/team. Live state, not profile data. */
+  actionReady?: Record<number, Record<string, number>>;
+  /** Shared youth/adult attack rounds by side + target, including mixed species. */
+  waitingTeams?: Map<string, import("./teams").TeamState>;
   shots: Shot[];
   nextShot: number;
   sounds: Map<string, SoundHealth>;
@@ -207,11 +213,36 @@ export function strengthOf(species: string, level: Level = 0, data: CombatData =
   return data.strength?.species[species] ?? 1;
 }
 
+/** The difficulty's on an adult (Ed, 2026-11-03: "adults are stronger"; tuning difficulty.adultStrength, set each combat step as
+ *  FIGHT.adult): its health (a full 💌 ring's worth, stunWorth) and its damage times it in a fight; 1 for any other level. Its
+ *  value and evolving costs (combatProfile, rules/berries.ts) and the swarm builder's estimates stay as they were. */
+export const adultMult = (level: Level): number => (level === 2 ? FIGHT.adult : 1);
+
+export interface CreatureCombatProfile {
+  readonly strength: number; readonly health: number; readonly durability: number; readonly damagePerSecond: number;
+}
+const profiles = new WeakMap<CombatData, Map<string, (CreatureCombatProfile | undefined)[]>>();
+/** Effective species/age statistics. Current wounds and invitation progress are
+ * instance state, not another copy of the animal's balancing definition. */
+export function combatProfile(species: string, level: Level, data: CombatData = COMBAT): CreatureCombatProfile {
+  const strength = strengthOf(species, level, data), health = data.levels.hp[Math.min(level, data.levels.hp.length - 1)] * strength;
+  const capacity = data.levels.stun ?? data.levels.hp, durability = capacity[Math.min(level, capacity.length - 1)] * strength;
+  const damagePerSecond = data.levels.dps[level] * strength;
+  let speciesProfiles = profiles.get(data);
+  if (!speciesProfiles) profiles.set(data, (speciesProfiles = new Map()));
+  let ages = speciesProfiles.get(species);
+  if (!ages) speciesProfiles.set(species, (ages = []));
+  let profile = ages[level];
+  if (!profile || profile.strength !== strength || profile.health !== health || profile.durability !== durability || profile.damagePerSecond !== damagePerSecond)
+    ages[level] = profile = Object.freeze({ strength, health, durability, damagePerSecond });
+  return profile;
+}
+
 export function attackOf(species: string, level: Level, data: CombatData = COMBAT): { name: string; attack: Attack; damage: number } | null {
   const list = data.bySpecies[species] ?? (data.ranged.includes(species) ? data.byLevel.ranged : data.byLevel.melee), name = list[level];
   if (!name) return null;
   const attack = scaled(name, attackNamed(name, data));
-  return { name, attack, damage: data.levels.dps[level] * strengthOf(species, level, data) * attack.cooldown * (attack.factor ?? 1) };
+  return { name, attack, damage: combatProfile(species, level, data).damagePerSecond * adultMult(level) * attack.cooldown * (attack.factor ?? 1) };
 }
 
 /** An attack at the fight's scale and speed (FIGHT): its lengths times scale, its shot's speed times speed. */
@@ -234,19 +265,35 @@ export function scaled(name: string, A: Attack): Attack {
   return out;
 }
 const LAST_SCALED = new Map<string, { A: Attack; scale: number; speed: number; out: Attack }>();
-/** An attack by its name, at the fight's scale (for the view, and data lookups). */
-export const attackNamed = (name: string, data: CombatData = COMBAT): Attack => scaled(name, data.attacks[name]);
+/** Attacks made at run time from the file's (a pack's moves at a level: rules/combat/packs.ts packAttack), by name. Kept here,
+ *  never written into the combat file's `attacks`: the config is read-only at run time (it was once the cache, so a test's or a
+ *  tool's own combat data missed them, and a page that hadn't made one yet, a resumed night's shot in flight say, found none). */
+const MADE = new Map<string, Attack>();
+let maker: ((name: string) => void) | null = null;
+/** The attack made under `name`, made by `make` the first time it's asked for and the same object after. */
+export function madeAttack(name: string, make: () => Attack): Attack {
+  let A = MADE.get(name);
+  if (!A) MADE.set(name, (A = make()));
+  return A;
+}
+/** Who makes a made attack asked for by name before anything made it (rules/combat/packs.ts, for its `pack:` names). */
+export function setAttackMaker(make: (name: string) => void): void { maker = make; }
+function namedAttack(name: string, data: CombatData): Attack {
+  const A = data.attacks[name] ?? MADE.get(name);
+  if (A || !maker) return A;
+  maker(name);
+  return MADE.get(name) as Attack;
+}
+/** An attack by its name, at the fight's scale (for the view, and data lookups): the combat file's, else a made one. */
+export const attackNamed = (name: string, data: CombatData = COMBAT): Attack => scaled(name, namedAttack(name, data));
 
 export const maxHp = (level: Level, data: CombatData = COMBAT) => data.levels.hp[Math.min(level, data.levels.hp.length - 1)];
 /** A full 💌 ring's worth of blows' damage on c (levels.stun by its level, times its species' strength, as health was): a blow fills
  *  its damage over this of its slots (rules/orbit.ts). */
-export const stunWorth = (c: { species: string; level: Level }, data: CombatData = COMBAT) => {
-  const s = data.levels.stun ?? data.levels.hp;
-  return s[Math.min(c.level, s.length - 1)] * strengthOf(c.species, c.level, data);
-};
+export const stunWorth = (c: { species: string; level: Level }, data: CombatData = COMBAT) => combatProfile(c.species, c.level, data).durability * adultMult(c.level);
 
 /** A creature's full health: its level's, times its species' strength. */
-export const creatureMaxHp = (c: { species: string; level: Level }, data: CombatData = COMBAT) => maxHp(c.level, data) * strengthOf(c.species, c.level, data);
+export const creatureMaxHp = (c: { species: string; level: Level }, data: CombatData = COMBAT) => combatProfile(c.species, c.level, data).health * adultMult(c.level);
 
 /** What the rest of the game tells combat each step. */
 export interface CombatWorld {

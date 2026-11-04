@@ -8,12 +8,18 @@
 // walks on them; drawn only while she's in the house (from outside the house isn't seen: treehouse.md). Over them, on the page:
 // the object she's at, its name and E; a placeholder's line in a bubble a few seconds when she uses it; the bed's ring filling as
 // E is held (rules/houseRooms.ts stepBed).
+import { approachStrength, houseApproachDistance, showHouseLayer } from "../rules/treehouseLook";
+import { setApproachDepth } from "./treehouseLook";
+import { HOUSE_FLOOR_OVERLAY_ORDER } from "./houseWitchPass";
+import APPROACH_OUTLINE from "../../config/house/outline.json";
 import { NEED_BAG } from "../rules/kit";
 import * as THREE from "three";
 import { gpuKind } from "./gpuLedger";
 import type { View } from "./view";
 import { deckOf, type Deck } from "../rules/treehouse";
-import { fromPlan, toPlan, HOUSE_ROOMS, hatsOnFloor, hatSlots, hatToTake, objectAt, type HouseObject } from "../rules/houseRooms";
+import { fromPlan, toPlan, HOUSE_ROOMS, hatsOnFloor, hatSlots, hatPromptAt, hatToTake, objectAt, onRoomFloor, type HouseObject, type RoomFloor } from "../rules/houseRooms";
+import type { Witch } from "../rules/game";
+import { hatKey } from "./view/hatLooks";
 import { houseArtLayout, objectOffset } from "../rules/housePlacement";
 import { groundHeight } from "./height";
 import { alongRay } from "./view/home";
@@ -29,7 +35,7 @@ import { broomWhere, stationOf } from "../rules/stations";
 import * as Art from "../../art/generator.js";
 import { witchLookOf } from "./artBuild";
 import { pileOut } from "../rules/clothesPile";
-import { DECOR_ROOMS, placedDecorPlan } from "./houseDecor";
+import { placedDecorRooms } from "./houseDecor";
 import { Spotlight } from "./spotlight";
 import { LoanSparkle } from "./loanSparkle";
 import { UseGlow } from "./useGlow";
@@ -40,6 +46,7 @@ import { LIGHT_UNIFORMS } from './lighting';
 import { LOADING_LIGHT_GLSL } from './loadingLight';
 import { materialProgramsReady } from './shaderDrawGate';
 import { loanFind } from "../rules/finds";
+import { houseObjectFor } from "../rules/guestFurniture";
 
 type V3 = { x: number; y: number; z: number };
 /** A quad of the rooms in metres on the house's plan (x, z from the hub's centre, rules/houseRooms.ts; h up off the floor) and its
@@ -47,9 +54,12 @@ type V3 = { x: number; y: number; z: number };
  *  within it, `depth`: how far south its nearest point is in the world (the far drawn first). */
 interface Quad { p: [number, number, number][]; rgb: [number, number, number]; obj?: string; layer: number; depth: number }
 
-const KIND: Record<HouseObject["use"]["kind"], [number, number, number]> = { creator: [0.32, 0.62, 0.45], hats: [0.32, 0.62, 0.45], zoo: [0.32, 0.62, 0.45], telescope: [0.32, 0.62, 0.45], bed: [0.82, 0.62, 0.3], say: [0.48, 0.42, 0.56], chart: [0.32, 0.62, 0.45], instrument: [0.62, 0.36, 0.7], invites: [0.32, 0.62, 0.45], pile: [0.32, 0.62, 0.45], scenery: [0.48, 0.42, 0.56] };
+const KIND: Record<HouseObject["use"]["kind"], [number, number, number]> = { creator: [0.32, 0.62, 0.45], hats: [0.32, 0.62, 0.45], zoo: [0.32, 0.62, 0.45], telescope: [0.32, 0.62, 0.45], telephone: [0.48, 0.42, 0.56], bed: [0.82, 0.62, 0.3], say: [0.48, 0.42, 0.56], chart: [0.32, 0.62, 0.45], instrument: [0.62, 0.36, 0.7], invites: [0.32, 0.62, 0.45], pile: [0.32, 0.62, 0.45], scenery: [0.48, 0.42, 0.56] };
 /** How long a placeholder's line stays up (s). */
 const SAY_FOR = 3.5;
+/** How high over the floor (m) her line at the decks is said (sayAtDecks): over her head behind them. */
+const DECKS_SAY = 1.9;
+const NO_GLINTS: { x: number; y: number; r: number }[] = [];
 
 /** How far south a point of the plan lies in the world (the hub's centre 0): the drawing's depth. */
 const south = (x: number, z: number) => fromPlan({ x: 0, z: 0 }, x, z).z;
@@ -113,6 +123,33 @@ export const furnitureOrder = (dz: number, decor = false): number => (dz < BEHIN
  *  them): just after that piece, else after their half's furniture, and before its near rails, so a rail in front still hides them. */
 export const hatsOrder = (dz: number, rug: number | null): number => (rug !== null ? rug + 1e-6 : dz < BEHIND ? ROOMS_ORDER.backNear - 1e-4 : ROOMS_ORDER.frontNear - 1e-4);
 
+/** Her hats lying on the house's floor (rules/hat.ts: her own, `down`, once it has floated down, and those she left), where they
+ *  lie in the world: the house draws these (HouseRooms.layLyingHats), her own drawing leaves them out (render/view/witch.ts). Ed's
+ *  report, 2026-11-03, "First night hat spawn is hidden in the floor": the first morning's hat on hat spawn point 1 (rules/wakeUp.ts
+ *  hatOnFloor) was drawn in her own batch, slid by her own place in the house, and that batch's shader drops whatever of it stands
+ *  nearer the camera than she does as an occluder (render/sprites.ts passOf: her batch has no see-through pass to draw it in), so
+ *  from the bedroom's side the hat on the floor in front of her wasn't drawn at all. */
+export function hatsOnHouseFloor(W: Pick<Witch, "hat" | "ko">, rooms: RoomFloor | null | undefined, ht: number): { x: number; z: number; at: number; own: boolean }[] {
+  if (!rooms) return [];
+  const on = (q: { x: number; z: number }) => onRoomFloor(rooms, q.x, q.z, rooms.inset), out: { x: number; z: number; at: number; own: boolean }[] = []; // (anywhere on the floor, out to its edge)
+  const K = W.ko, floating = !!K && K.floatUntil > K.at && ht < K.floatUntil; // (knocked off: drawn in her flight till it's down, render/hatFlight.ts)
+  const d = W.hat.down;
+  if (W.hat.has && d && !floating && on(d)) out.push({ x: d.x, z: d.z, at: d.at, own: true });
+  for (const q of W.hat.left) if (on(q)) out.push({ x: q.x, z: q.z, at: q.at, own: false });
+  return out;
+}
+/** A hat lying on the house's floor at (px, pz) on the plan, its picture `w` × `h` pixels: its corners (top left, top right, bottom
+ *  right, bottom left) by `pxWorld`, the map the house's furniture and the clothes pile are laid by (its foot's middle on the floor
+ *  there, at the floor's own height), and its draw order: with the hats lying on the spawn points (hatsOrder), after the floors and
+ *  the furniture of its half of the house, before that half's near rails. */
+export function lyingHatQuad(px: number, pz: number, w: number, h: number, pxWorld: (px: number, pz: number, dx: number, dy: number) => V3): { corners: V3[]; order: number } {
+  return { corners: [[-w / 2, -h], [w / 2, -h], [w / 2, 0], [-w / 2, 0]].map(([dx, dy]) => pxWorld(px, pz, dx, dy)), order: hatsOrder(south(px, pz), null) };
+}
+/** A lying hat's material: as the furniture's and the clothes pile's, a picture drawn in the house's order with no depth (the house's
+ *  floors are drawn without it, late: HOUSE_FLOOR_OVERLAY_ORDER). */
+export const lyingHatMaterial = (map: THREE.Texture | null): THREE.MeshBasicMaterial =>
+  new THREE.MeshBasicMaterial({ map, transparent: true, alphaTest: 0.5, side: THREE.DoubleSide, depthWrite: false, depthTest: false });
+
 /** One of the two halves of the rooms' drawing: behind the hub (drawn first) or in front of it. */
 class Part {
   readonly geo = new THREE.BufferGeometry();
@@ -164,6 +201,8 @@ export class HouseRoomsView {
   private readonly parts: [Part, Part, Part, Part, Part];
   private quads: Quad[] = [];
   private hub = -1;
+  private noWalls = false;
+  private previewFloor = false;
   private hatsKey = "";
   /** A hat on loan lying on the hats' floor, sparkling (render/loanSparkle.ts; Ed, 2026-10-24). */
   private sparkle: LoanSparkle | null = null;
@@ -179,11 +218,16 @@ export class HouseRoomsView {
   private readonly wakeR: HTMLDivElement;
   private wakeKey = "";
   private said: { obj: HouseObject; at: number; line: string } | null = null;
+  /** A line for over her decks, said at the next frame (sayAtDecks). */
+  private decksLine: { at: number; line: string } | null = null;
   private readonly labels: { el: HTMLDivElement; x: number; z: number }[] = [];
   /** The furniture drawn as art (render/houseFurniture.ts): each piece's picture and its quad, baked a piece a frame as she first comes in. */
   private readonly furniture = new THREE.Group();
   /** Named points of the furniture in the world this frame, "<id>.<mark>" (the mic's spot lamp: "microphone.spot"), for the view. */
   readonly marks = new Map<string, V3>();
+  /** Online presentation only; absent in solo. No collision/config changes. */
+  openGuestRooms: ReadonlySet<string> | null = null;
+  telephoneScreen: readonly number[] | null = null;
   private readonly pieces = new Map<string, { art: FurnitureArt; mesh: THREE.Mesh; pos: Float32Array; id: string; x: number; z: number }>();
   /** The Workshop's: her broom on the bay (or the lathe) and the parts on the pegboard, laid on those pieces' marks (render/workshopArt.ts). */
   private readonly workshop = new WorkshopArt();
@@ -213,6 +257,8 @@ export class HouseRoomsView {
   private floorArt: FloorPixels | null = null;
   /** The floor being painted off the page's thread (render/houseFloor.ts), and what came back. */
   private floorAsked = false;
+  /** The floor's paint as asked (the view's metres a pixel then) and whether its workers failed: for reportState. */
+  private floorPaint = { mpp: NaN, failed: false };
   private floorCame: FloorPixels | null = null;
   // (the Terrace's own floor apart, in the solid pass, depth-tested, the same grid: she and the Ent's near half, its decks, stand on
   // it in front, where in the see-through pass it would be drawn over them; render/view/witch.ts draws her there, on the Terrace)
@@ -226,16 +272,21 @@ export class HouseRoomsView {
   // (last night's clothes by her bed while she's not yet dressed: her outfit's own sprite, art/witch.js clothesPileSprite, of what's
   // still in the pile; drawn as the furniture is, a picture in the house's plane)
   private pile: { key: string; mesh: THREE.Mesh; pos: Float32Array; w: number; h: number } | null = null;
+  // (her hats lying on the house's floor, hatsOnHouseFloor: each a picture of her hat alone, art/witch.js witchHatSprite, laid as the
+  // pile is; by where and when it went down (render/view/hatLooks.ts hatKey), its pictures by look)
+  private readonly lyingHatGroup = new THREE.Group();
+  private readonly lyingHats = new Map<string, { look: string; mesh: THREE.Mesh; pos: Float32Array; w: number; h: number }>();
+  private readonly hatPics = new Map<string, { tex: THREE.CanvasTexture; w: number; h: number } | null>();
 
   constructor() {
     const R = ROOMS_ORDER;
     this.parts = [new Part(this.mat, R.back), new Part(this.mat, R.backNear), new Part(this.mat, R.front), new Part(this.mat, R.frontNear), new Part(this.mat, R.frontNear - 1e-4)];
-    this.floor.frustumCulled = false; this.floor.visible = false; this.floor.renderOrder = 19.925;
+    this.floor.frustumCulled = false; this.floor.visible = false; this.floor.renderOrder = HOUSE_FLOOR_OVERLAY_ORDER;
     this.terraceFloor.frustumCulled = false; this.terraceFloor.visible = false;
     this.furniture.add(this.spot.mesh, this.glow.mesh);
     this.loadingFloor.name = 'Loading house platform'; this.loadingFloor.visible = false; this.loadingFloor.frustumCulled = false; this.loadingFloor.renderOrder = 19.924;
     this.loadingFloor.geometry.setAttribute('position', new THREE.BufferAttribute(new Float32Array(12), 3)); this.loadingFloor.geometry.setIndex([0, 1, 2, 0, 2, 3]);
-    this.meshes = [this.loadingFloor, this.floor, this.terraceFloor, ...this.parts.map(p => p.mesh), this.furniture, this.workshop.group, this.brewing.group, ...programTwins()];
+    this.meshes = [this.loadingFloor, this.floor, this.terraceFloor, ...this.parts.map(p => p.mesh), this.furniture, this.lyingHatGroup, this.workshop.group, this.brewing.group, ...programTwins()];
     this.box = document.createElement("div");
     this.box.id = "house-tags"; // (hidden under a table's chart: ui/chartOverlay.ts)
     this.box.style.cssText = "position:fixed;inset:0;pointer-events:none;z-index:11;display:none";
@@ -259,11 +310,26 @@ export class HouseRoomsView {
     document.body.append(this.box);
   }
 
+  /** She says `line` over her decks (from her clock's `ht`, for SAY_FOR seconds): the DJ's "make some noise!!!" as the party start
+   *  plays again (View.replayPartyStart; Ed, 2026-11-03). The house's own bubble, as a placeholder's line. */
+  sayAtDecks(line: string, ht: number): void { this.decksLine = { at: ht, line }; }
   /** Another night at a house with rooms (View.setGame): its plan made afresh, nothing said. */
-  reset(): void {
+  reset(): void { this.decksLine = null;
     this.loadingFloor.visible = false;
     this.hub = -1; this.quads = []; this.hatsKey = ""; this.said = null; this.box.style.display = "none";
     for (const p of this.parts) p.mesh.visible = false;
+  }
+  /** The house's drawing as it stands, for the pause page's Report (main.ts reportHost, ui/visualReport.ts): Ed's report of
+   *  2026-11-03, "Treehouse floor invisible" (furniture and rugs over the forest, no floor), not reproduced in the cloud; so the next
+   *  one says which of the floor's gates held it back: not asked, never painted (the workers' floor), not compiled after a late
+   *  landing, or faded to nothing by the landing's clocks. */
+  reportState(v: View): Record<string, unknown> {
+    const m = this.floor.material as THREE.MeshBasicMaterial, r = (n: number) => Math.round(n);
+    const A = this.floorArt, pos = this.floor.geometry.getAttribute("position") as THREE.BufferAttribute | undefined, first = pos ? [pos.getX(0), pos.getY(0), pos.getZ(0)] : null;
+    return { floor: { shown: this.floor.visible, asked: this.floorAsked, painted: !!this.floorCame, art: !!A, compiled: this.floorCompiled, opacity: +m.opacity.toFixed(3), arrivalAt: Number.isFinite(this.floorArrivalAt) ? r(this.floorArrivalAt) : null,
+        paintMpp: +this.floorPaint.mpp.toFixed(4), mpp: +v.mpp.toFixed(4), paintFailed: this.floorPaint.failed, size: A ? [A.w, A.h] : null, map: !!m.map, mat: [m.transparent ? 1 : 0, m.depthTest ? 1 : 0, m.depthWrite ? 1 : 0, m.side, m.alphaTest].join(","), layers: this.floor.layers.mask, inScene: !!this.floor.parent, corner: first && first.every(Number.isFinite) ? first.map(r) : first },
+      loading: this.loadingFloor.visible, furniture: this.furniture.visible, pieces: this.pieces.size, rooms: this.parts.map(p => p.mesh.visible ? 1 : 0).join(""),
+      landing: { late: v.shaderLandingLimited, share: +v.landingHouseShare.toFixed(3), sleeping: v.landingSleeping, now: r(v.landingPresentationMs + v.game.clock.time * 1000) }, behind: +v.post.behind.toFixed(3) };
   }
   /** The actual floor and bed, not optional props/ground/detail programs. */
   landingReady(renderer: THREE.WebGLRenderer): boolean {
@@ -278,22 +344,78 @@ export class HouseRoomsView {
     for (const p of this.parts) p.geo.dispose();
     this.mat.dispose(); this.box.remove();
     for (const { art, mesh } of this.pieces.values()) { art.tex.dispose(); mesh.geometry.dispose(); (mesh.material as THREE.Material).dispose(); }
+    for (const k of [...this.lyingHats.keys()]) this.dropLyingHat(k);
+    for (const p of this.hatPics.values()) p?.tex.dispose();
     this.workshop.dispose();
     this.brewing.dispose();
     this.spot.dispose();
     this.sparkle?.canvas.remove();
   }
 
+  /** Her hats lying on the house's floor (hatsOnHouseFloor), each laid where it lies as the clothes pile is (lyingHatQuad), the one E
+   *  would pick up brighter, as a piece she can use is. */
+  private layLyingHats(v: View, D: Deck, ht: number, pxWorld: (px: number, pz: number, dx: number, dy: number) => V3, by: { x: number; z: number; slot?: number } | null): void {
+    const W = v.game.witches[0], seen = new Set<string>();
+    for (const q of hatsOnHouseFloor(W, D.house?.rooms, ht)) {
+      // (her own in the look she has now, as her hat-off frames are; one she left in the look it went down in, as out in the world)
+      const key = hatKey(q), look = q.own ? v.assets.witchGenome : v.hatLooks.get(key) ?? v.assets.witchGenome, lk = JSON.stringify(look ?? null), pic = this.hatPic(v, look, lk);
+      if (!pic) continue;
+      let H = this.lyingHats.get(key);
+      if (H && H.look !== lk) { this.dropLyingHat(key); H = undefined; }
+      if (!H) {
+        const geo = new THREE.BufferGeometry(), pos = new Float32Array(12);
+        geo.setAttribute("position", new THREE.BufferAttribute(pos, 3)); geo.setAttribute("uv", new THREE.BufferAttribute(new Float32Array([0, 0, 1, 0, 1, 1, 0, 1]), 2)); geo.setIndex([0, 1, 2, 0, 2, 3]);
+        const mesh = new THREE.Mesh(geo, lyingHatMaterial(pic.tex));
+        mesh.frustumCulled = false; mesh.name = "Lying hat"; this.lyingHatGroup.add(mesh);
+        this.lyingHats.set(key, H = { look: lk, mesh, pos, w: pic.w, h: pic.h });
+      }
+      seen.add(key);
+      const p = toPlan(D, q.x, q.z), L = lyingHatQuad(p.x, p.z, H.w, H.h, pxWorld);
+      L.corners.forEach((c, i) => { H!.pos[i * 3] = c.x; H!.pos[i * 3 + 1] = c.y; H!.pos[i * 3 + 2] = c.z; });
+      (H.mesh.geometry.getAttribute("position") as THREE.BufferAttribute).needsUpdate = true;
+      H.mesh.renderOrder = L.order; H.mesh.visible = true;
+      (H.mesh.material as THREE.MeshBasicMaterial).color.setScalar(by && by.slot === undefined && by.x === q.x && by.z === q.z ? 1.15 : 1);
+    }
+    for (const k of [...this.lyingHats.keys()]) if (!seen.has(k)) this.dropLyingHat(k);
+  }
+  private dropLyingHat(key: string): void {
+    const H = this.lyingHats.get(key);
+    if (!H) return;
+    this.lyingHatGroup.remove(H.mesh); H.mesh.geometry.dispose(); (H.mesh.material as THREE.Material).dispose(); this.lyingHats.delete(key);
+  }
+  /** Her hat alone in a look (art/witch.js witchHatSprite, the picture her hat-off frames lay on the ground: render/homeArt.ts), baked
+   *  here once a look, as the clothes pile is (a small picture); null for a look with no hat. */
+  private hatPic(v: View, look: unknown, lk: string): { tex: THREE.CanvasTexture; w: number; h: number } | null {
+    if (this.hatPics.has(lk)) return this.hatPics.get(lk)!;
+    const st = v.assets.style, mine = witchLookOf(st, look), sp = (Art.witchHatSprite as (st: object, o: object) => object | null)(st, { look: mine.look });
+    let pic: { tex: THREE.CanvasTexture; w: number; h: number } | null = null;
+    if (sp) {
+      const A = (Art.bake as (sp: object, c: object, st: object, o: unknown) => { A: HTMLCanvasElement })(sp, mine.colours, st, (st as { cOutline?: unknown }).cOutline).A, tex = gpuKind(new THREE.CanvasTexture(A), "house");
+      tex.magFilter = tex.minFilter = THREE.NearestFilter; tex.generateMipmaps = false; tex.colorSpace = THREE.NoColorSpace; tex.flipY = false;
+      pic = { tex, w: A.width, h: A.height };
+    }
+    this.hatPics.set(lk, pic);
+    return pic;
+  }
+
   /** A frame: `onTreehouse` takes a point of the Ent's art (pixels) into the world (render/view.ts); `ht`, her clock. */
   update(v: View, onTreehouse: (px: number, py: number) => V3, ht: number): void {
     const g = v.game, w = g.witch, t = g.tuning, T = v.assets.treehouse, d = deckOf(g.map, t);
-    const shown = !!(d?.house?.rooms && T.ent && w.perch && (w.mode === "ground" || w.mode === "descending")); // (at her decks too: the Terrace the oak's floor, render/houseArt.ts)
-    const late = v.shaderLandingLimited, share = v.landingHouseShare, arrivalNow = performance.now();
+    const inside = !!(d?.house?.rooms && T.ent && w.perch && (w.mode === "ground" || w.mode === "descending") && (!v.fly || v.fly.indoors)); // (at her decks too: the Terrace the oak's floor, render/houseArt.ts; a sail's dive: only on its way down into her room, rules/arrive.ts diveIndoors)
+    const look = t.treehouse.house?.look;
+    const preview = !!look?.approach && !w.perch && w.mode !== "ground" && !!d?.house?.rooms && approachStrength(true, true, houseApproachDistance(w.x, w.z, d.x, d.z, HOUSE_ROOMS.turn ?? 0, APPROACH_OUTLINE.rooms, APPROACH_OUTLINE.branches), look?.radius ?? 40) > 0;
+    const shown = inside || preview;
+    if (this.previewFloor !== preview) {
+      this.previewFloor = preview;
+      const floorMat = this.floor.material as THREE.MeshBasicMaterial;
+      setApproachDepth(floorMat, preview, true); setApproachDepth(this.mat, preview, false);
+    }
+    const late = v.shaderLandingLimited, share = v.landingHouseShare, arrivalNow = v.landingPresentationMs + g.clock.time * 1000;
     const world = (px: number, pz: number, h: number): V3 => { const p = fromPlan(d!, px, pz); return { ...p, y: groundHeight(p.x, p.z) + d!.h + h }; };
     const g0 = d ? groundHeight(d.x, d.z) : 0;
     const ky = T.ent && d ? (T.seat.y - T.ent.deck.y) / Math.max(0.1, d.seat.z - d.z) : 0;
     const toWorld = (px: number, pz: number, h: number): V3 => {
-      if (!T.ent) return world(px, pz, h);
+      if (!T.ent || !inside) return world(px, pz, h);
       const { x, z } = fromPlan({ x: 0, z: 0 }, px, pz), p = onTreehouse(T.ent.deck.x + x / v.mpp, T.ent.deck.y + z * ky + v.houseShift - h / v.mpp);
       const b = alongRay(v, { x: p.x, y: p.y + g0, z: p.z }, z);
       if (!late || share >= 1) return b;
@@ -302,7 +424,7 @@ export class HouseRoomsView {
     };
     const floorShare = this.floorArt && this.floorCompiled ? Math.min(1, Math.max(0, (arrivalNow - this.floorArrivalAt) / 800)) : 0;
     const terraceMaterial = this.terraceFloor.material as THREE.MeshBasicMaterial;
-    if (terraceMaterial.transparent !== late) { terraceMaterial.transparent = late; terraceMaterial.needsUpdate = true; }
+    if (terraceMaterial.transparent !== (late && inside)) { terraceMaterial.transparent = late && inside; terraceMaterial.needsUpdate = true; }
     this.loadingFloor.visible = !!(late && d?.house?.rooms && w.perch && share * floorShare < 1);
     if (this.loadingFloor.visible) {
       const b = loadingFloorBounds([...HOUSE_ROOMS.rooms, ...HOUSE_ROOMS.corridors], d!.r), pos = this.loadingFloor.geometry.getAttribute('position') as THREE.BufferAttribute;
@@ -311,9 +433,10 @@ export class HouseRoomsView {
     }
     this.mat.opacity = late ? share : 1;
     for (const p of this.parts) p.mesh.visible = shown;
-    this.furniture.visible = shown;
-    this.workshop.group.visible = shown;
-    this.brewing.group.visible = shown;
+    this.furniture.visible = inside;
+    this.lyingHatGroup.visible = inside;
+    this.workshop.group.visible = inside;
+    this.brewing.group.visible = inside;
     this.floor.visible = this.terraceFloor.visible = shown;
     if (!shown) {
       this.box.style.display = "none"; this.plan = null; this.sparkle?.draw([], 0, 1); v.usePrompt.id = "";
@@ -338,7 +461,7 @@ export class HouseRoomsView {
           (mesh.geometry.getAttribute('position') as THREE.BufferAttribute).needsUpdate = true;
         }
       } else if (late && d?.house?.rooms && w.perch) {
-        const at = objectAt(d, w.x, w.z);
+        const near = objectAt(d, w.x, w.z), at = near && houseObjectFor(g, near);
         if (at && at.use.kind !== 'scenery') {
           const p = toWorld(at.x, at.z, 1.5), s = v.v3.set(p.x, p.y, p.z).project(v.camera), cv = v.canvas.getBoundingClientRect();
           this.box.style.display = 'block'; this.tag.style.display = this.bubble.style.display = 'block';
@@ -352,7 +475,8 @@ export class HouseRoomsView {
       return;
     }
     const D = d as Deck & { house: NonNullable<Deck["house"]> };
-    if (this.hub !== D.r) { this.hub = D.r; this.quads = buildQuads(); this.hatsKey = ""; }
+    const wallsChanged = this.noWalls !== !!look?.noWalls;
+    if (this.hub !== D.r || wallsChanged) { this.hub = D.r; this.noWalls = !!look?.noWalls; this.quads = buildQuads().filter(q => showHouseLayer(q.layer, this.noWalls)); this.hatsKey = wallsChanged ? "\0" : ""; }
     // her hats on the hats' floor (rules/houseRooms.ts floorHats: laid out the first time she comes in)
     const W = g.witches[0], hats = hatsOnFloor(W), key = hats.join();
     if (key !== this.hatsKey) {
@@ -369,7 +493,7 @@ export class HouseRoomsView {
     // (each point of the plan turned into the house's metres first: rules/houseRooms.ts fromPlan)
     if (this.floor.visible && !this.floorArt) {
       // (painted by workers, the first time it's shown: the boot freeze, 2026-10-25; the floor shows once it's come)
-      if (!this.floorAsked) { this.floorAsked = true; const p = paintFloorOff(v.mpp).then(F => { this.floorCame = F; }); v.assets.track("houseFloor", p); }
+      if (!this.floorAsked) { this.floorAsked = true; this.floorPaint = { mpp: v.mpp, failed: false }; const p = paintFloorOff(v.mpp).then(F => { this.floorCame = F; }, e => { this.floorPaint.failed = true; throw e; }); v.assets.track("houseFloor", p); }
       if (!this.floorCame) this.floor.visible = this.terraceFloor.visible = false;
     }
     let floorCreated = false;
@@ -396,20 +520,21 @@ export class HouseRoomsView {
     }
     if (late && floorCreated) {
       this.floorCompiled = false;
-      void Promise.all([v.renderer.compileAsync(this.floor, v.camera, v.scene), v.renderer.compileAsync(this.terraceFloor, v.camera, v.scene)]).then(() => { this.floorCompiled = true; this.floorArrivalAt = performance.now(); }, () => {});
+      void Promise.all([v.renderer.compileAsync(this.floor, v.camera, v.scene), v.renderer.compileAsync(this.terraceFloor, v.camera, v.scene)]).then(() => { this.floorCompiled = true; this.floorArrivalAt = v.landingPresentationMs + g.clock.time * 1000; }, () => {});
     }
     const nativeShare = late ? share * (this.floorArt && this.floorCompiled ? Math.min(1, Math.max(0, (arrivalNow - this.floorArrivalAt) / 800)) : 0) : 1;
     (this.floor.material as THREE.MeshBasicMaterial).opacity = nativeShare;
     terraceMaterial.opacity = nativeShare;
     // (the floors' map without the push along the camera's rays, which moves nothing on the screen: what's laid over them in their
     // plane, the crown, is drawn after them with no depth)
-    { const flat = (px: number, pz: number, h: number) => { const { x, z } = fromPlan({ x: 0, z: 0 }, px, pz), p = onTreehouse(T.ent!.deck.x + x / v.mpp, T.ent!.deck.y + z * ky + v.houseShift - h / v.mpp); return new THREE.Vector3(p.x, p.y + g0, p.z); }; // (slid with the rooms: houseShift)
-      const o = flat(0, 0, 0); this.plan = { o, ex: flat(1, 0, 0).sub(o), ey: flat(0, 0, 1).sub(o), ez: flat(0, 1, 0).sub(o) }; }
+    if (inside) { const flat = (px: number, pz: number, h: number) => { const { x, z } = fromPlan({ x: 0, z: 0 }, px, pz), p = onTreehouse(T.ent!.deck.x + x / v.mpp, T.ent!.deck.y + z * ky + v.houseShift - h / v.mpp); return new THREE.Vector3(p.x, p.y + g0, p.z); }; // (slid with the rooms: houseShift)
+      const o = flat(0, 0, 0); this.plan = { o, ex: flat(1, 0, 0).sub(o), ey: flat(0, 0, 1).sub(o), ez: flat(0, 1, 0).sub(o) }; } else this.plan = null;
     // (the hats' floor isn't a thing to use: the hat she's by is, hatToTake; Ed, 2026-10-29: "just an area where normal hat objects
     // are placed")
-    const at0 = objectAt(D, w.x, w.z), hatBy = at0?.use.kind === "hats" || HOUSE_ROOMS.layout ? hatToTake(W, D, w.x, w.z, g.tuning.leash.runeRadius) : null;
-    const hatArea = HOUSE_ROOMS.objects.find(o => o.use.kind === "hats");
-    const at = hatBy && HOUSE_ROOMS.layout && hatArea ? { ...hatArea, ...toPlan(D, hatBy.x, hatBy.z) } : at0?.use.kind === "hats" && !hatBy ? null : at0;
+    const near0 = inside ? objectAt(D, w.x, w.z) : null, at0 = near0 && houseObjectFor(g, near0), hatBy = at0?.use.kind === "hats" || HOUSE_ROOMS.layout ? hatToTake(W, D, w.x, w.z, g.tuning.leash.runeRadius) : null;
+    // (by a lying hat in Ed's arrangement, the prompt's the hats' own, id "hats", where the hat lies: there's no hats' floor there)
+    const hatSpot = hatBy && HOUSE_ROOMS.layout ? toPlan(D, hatBy.x, hatBy.z) : null;
+    const at = hatSpot ? hatPromptAt(hatSpot.x, hatSpot.z) : at0?.use.kind === "hats" && !hatBy ? null : at0;
     const lit = at && at.id !== v.houseOpen ? (hatBy ? (hatBy.slot !== undefined ? `hat:${hatBy.slot}` : "") : at.id) : undefined; // (lit, the one she can use; out while it's open)
     for (const P of this.parts) {
       let k = 0;
@@ -431,7 +556,7 @@ export class HouseRoomsView {
     const here = toPlanAt0(w.x - D.x, w.z - D.z), pitch = Math.asin(Math.min(.95, Math.max(.2, ky * v.mpp))), ppm = 1 / v.mpp;
     const wanted: { key: string; x: number; z: number }[] = [];
     for (const o of HOUSE_ROOMS.objects) if (FURNITURE.has(o.id)) wanted.push({ key: pieceKey(o), x: o.x, z: o.z });
-    const decorRooms = HOUSE_ROOMS.layout ? HOUSE_ROOMS.rooms.filter(r => placedDecorPlan(r).length) : DECOR_ROOMS;
+    const decorRooms = placedDecorRooms();
     for (const r of decorRooms) wanted.push({ key: `decor:${r.id}`, x: (r.x0 + r.x1) / 2, z: (r.z0 + r.z1) / 2 });
     // (and every other state a piece can be in, after the rest: rules/kit.ts's desk and lathe, swapped at once when she takes from them)
     const spare = HOUSE_ROOMS.objects.filter(o => FURNITURE.has(o.id)).flatMap(o => furnitureStates(o.id).map(st => ({ key: `${o.id}|${st}`, x: o.x, z: o.z })).filter(q => !wanted.some(w => w.key === q.key)));
@@ -469,9 +594,9 @@ export class HouseRoomsView {
       const q = onTreehouse(T.ent!.deck.x + x / v.mpp, T.ent!.deck.y + z * ky + v.houseShift), full = alongRay(v, { x: q.x, y: q.y + g0, z: q.z }, z);
       return { x: b.x + anchor.x - full.x, y: b.y + anchor.y - full.y, z: b.z + anchor.z - full.z };
     };
-    this.brewing.update(v, pxWorld, ky * v.mpp);
+    this.brewing.update(v, pxWorld, ky * v.mpp, here); // (the cauldron and baskets in front of her drawn over her: render/houseWitchPass.ts inFrontOfHer)
     let glowed = false;
-    const now = performance.now() / 1000;
+    const now = v.game.clock.time;
     for (const [k, { art, mesh, pos, id, x, z }] of this.pieces) {
       if (mesh.userData.loadingOrder !== undefined) { mesh.renderOrder = mesh.userData.loadingOrder; delete mesh.userData.loadingOrder; }
       const o = HOUSE_ROOMS.objects.find(q => q.id === id);
@@ -494,8 +619,10 @@ export class HouseRoomsView {
     // only in or near the Workshop (its pieces baked: they're baked as she nears them)
     const piece = (id: string) => { for (const p of this.pieces.values()) if (p.id === id && p.mesh.visible) return p; return null; };
     // (the hats on top of the hats' floor's own piece, wherever the house puts it)
-    const floorOf = HOUSE_ROOMS.objects.find(o => o.use.kind === "hats");
+    // (no hats' floor in Ed's arrangement: after the furniture of the half their spawn points lie in, hatsOrder's own fallback)
+    const floorOf = HOUSE_ROOMS.objects.find(o => o.use.kind === "hats"), points = floorOf ? [] : hatSlots({ x: 0, z: 0 });
     if (floorOf) this.parts[4].mesh.renderOrder = hatsOrder(south(floorOf.x, floorOf.z), piece(floorOf.id)?.mesh.renderOrder ?? null);
+    else if (points.length) this.parts[4].mesh.renderOrder = hatsOrder(points.reduce((s, p) => s + p.z, 0) / points.length, null);
     // (every frame the house shows, its pieces there or not: its pictures asked of the workers at once, laid once their pieces are in)
     {
       const tr = g.trunk, tonight = tr && tr.kind === "part" && !tr.found ? tr.item : null, where = broomWhere(g, stationOf(g, null, t)?.id ?? null, t);
@@ -534,15 +661,25 @@ export class HouseRoomsView {
         if (po.id === lit && !glowed) { this.glow.set((P.mesh.material as THREE.MeshBasicMaterial).map, P.w, P.h, -P.w / 2, -P.h, (dx, dy) => pxWorld(po.x, po.z, dx, dy), P.mesh.renderOrder, now); glowed = true; }
       }
     } else if (this.pile) this.pile.mesh.visible = false;
+    this.layLyingHats(v, D, ht, pxWorld, hatBy);
     if (!glowed) this.glow.set(null);
     // on the page: the object she's at, a placeholder's line, the bed's ring
     for (const e of g.leashEvents) if ((e.kind === "house" || e.kind === "needBag") && e.obj) {
-      const o = HOUSE_ROOMS.objects.find(q => q.id === e.obj);
+      const found = HOUSE_ROOMS.objects.find(q => q.id === e.obj), o = found && houseObjectFor(g, found); // (a guest's bedroom's piece in solo: its placeholder's line)
       if (o && e.kind === "needBag") this.said = { obj: o, at: ht, line: NEED_BAG }; // (the desk with no bag to carry them: rules/kit.ts)
       else if (o?.use.kind === "say" && this.said?.at !== ht) this.said = { obj: o, at: ht, line: o.use.line };
+      else if (o?.use.kind === "telephone") this.said = null; // The ordinary page opens its left station panel.
     }
-    if (this.said && (ht - this.said.at > SAY_FOR || this.said.at > ht)) this.said = null;
+    if (this.decksLine && d) { this.said = { obj: { ...decksSpot(d), h: DECKS_SAY }, at: this.decksLine.at, line: this.decksLine.line }; this.decksLine = null; }
+    if (this.said && (ht - this.said.at > SAY_FOR || this.said.at > ht)) this.said = null; // (no guest-room doors to hide since Ed, 2026-11-03)
+    if (!inside) {
+      this.box.style.display = "none"; this.sparkle?.draw(NO_GLINTS, 0, 1); this.tapUse = null; v.usePrompt.id = ""; this.telephoneScreen = null;
+      this.ring.style.display = this.wakeL.style.display = this.wakeR.style.display = "none";
+      for (const label of this.labels) label.el.style.display = "none";
+      return;
+    }
     const cv = v.canvas.getBoundingClientRect(), screen = (o: HouseObject, up: number) => { const p = toWorld(o.x, o.z, o.h + up), s = v.v3.set(p.x, p.y, p.z).project(v.camera); return [cv.left + (s.x + 1) / 2 * cv.width, cv.top + (1 - s.y) / 2 * cv.height]; };
+    const phone = HOUSE_ROOMS.objects.find(o => o.use.kind === "telephone"); this.telephoneScreen = this.openGuestRooms && phone ? screen(phone, 1) : null;
     const place = (el: HTMLElement, o: HouseObject | null, up: number, text?: string) => {
       if (!o) { el.style.display = "none"; return; }
       const [x, y] = screen(o, up); el.style.display = "block"; el.style.left = `${x}px`; el.style.top = `${y}px`;
@@ -559,7 +696,7 @@ export class HouseRoomsView {
       const sl = toPlanAt0(hatSlots({ x: 0, z: 0 })[li].x, hatSlots({ x: 0, z: 0 })[li].z), p = toWorld(sl.x, sl.z, 0.2), q = v.v3.set(p.x, p.y, p.z).project(v.camera), px = cv.width / v.width / v.mpp;
       glints.push({ x: cv.left + (q.x + 1) / 2 * cv.width, y: cv.top + (1 - q.y) / 2 * cv.height, r: Math.max(18, px * 0.45) });
     }
-    if (glints.length || this.sparkle) (this.sparkle ??= new LoanSparkle()).draw(glints, performance.now() / 1000, Math.max(2, Math.round(cv.width / v.width * 3)));
+    if (glints.length || this.sparkle) (this.sparkle ??= new LoanSparkle()).draw(glints, v.game.clock.time, Math.max(2, Math.round(cv.width / v.width * 3)));
     const waking = !!g.wake && (!g.wake.open || (at?.use.kind === "bed" && g.party.spellAt === null)); // (the new opening's wake-up, rules/wakeUp.ts: no tag while she's in bed; the bed's not for sleeping yet)
     // over it, the button that uses it (Ed's playtest, 2026-10-26: "there's a prompt showing the button to press to open it"; then
     // "Please remove words from the station tags. We used to have little keys to show 'WASD', can we use these for E"): a keycap

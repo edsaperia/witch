@@ -1,10 +1,12 @@
 // The witch's health and knockout (Ed, 2026-10-04). She takes knockout hits (one point each,
 // whatever hits her); one comes back every repairTime seconds, the timer starting over at every
-// hit. At none she's knocked out: she collapses where she is (no more hits, no input), her sigil
-// stack comes down from the bottom up, one every releaseEach seconds, each animal turning happy
-// where it stands (Ed's playtest of v4821, 2026-10-26: "they should become happy instead of leashed to a point by a floor
-// sigil"; before, #87, each sigil was put down where its animal stood and they stayed hers, parked): its rune at its feet
-// to pick up again, it idles where it was dropped (not going home) and defends what's round it as any happy one does. One timeline (Ed, 2026-10-07), the whole wait counted from her going down (knockout.respawn: short, longer for
+// hit. At none she's knocked out: she collapses where she is (no more hits, no input), and her sigil stack comes down from the
+// bottom up, one every releaseEach seconds, each sigil falling on the hex grid round the spot where she went down and staying
+// there (Ed, 2026-11-03: "If you're knocked down, animals' sigils fall and stay where you were knocked down"): its animal parked
+// there, hers still, guarding as any parked one does, till she comes back for it. (Since nothing eats on its own any more,
+// parking them can't hand out free growth, which was why they were let go happy before: Ed's playtest of v4821, 2026-10-26, "they
+// should become happy instead of leashed to a point by a floor sigil"; letGoHappy is kept for a guest leaving an online night.)
+// Its queued berries are cancelled as she goes down (rules/game.ts). One timeline (Ed, 2026-10-07), the whole wait counted from her going down (knockout.respawn: short, longer for
 // knockdowns close together, back to base after a cooldown): her hat floats to the ground (knockout.hatFloat, the screen
 // dimmed, a sad trumpet; if she had one to drop), she sparkles out and back in behind her decks, and scratches there for the
 // rest of the wait ("Every time she respawns she could do a bit of scratching to increase the respawn time"), her army
@@ -12,7 +14,7 @@
 import { areaCellAt, type ForestMap } from "./map";
 import { cellKey } from "./party";
 import { anchorOf, LEGEND, wanderRange, type Creature } from "./creatures";
-import { letPartyLegendGo, type LeashState } from "./leash";
+import { fallSpot, letPartyLegendGo, type LeashState, type PlacedSigil } from "./leash";
 import type { Tuning } from "./tuning";
 import type { WitchState } from "./witch";
 import { deckOf } from "./treehouse";
@@ -28,6 +30,9 @@ export interface Health {
 export interface Knockout {
   /** Game time she went down. */
   at: number;
+  /** Where she went down: her carried sigils fall round it (Ed, 2026-11-03). Absent (an older save), where she lies. */
+  x?: number;
+  z?: number;
   /** The creatures to let go, bottom of the stack first, and when each goes. */
   order: number[];
   times: number[];
@@ -92,9 +97,9 @@ export function respawnWait(streak: number, t: Tuning): number {
   return Math.min(Math.max(R.base, R.max), R.base + R.step * streak);
 }
 
-/** She goes down: her hat floats down if it dropped (hatFloats), then her stack is let go happy, bottom first (legends kept if
- *  they're loyal), then the teleport home and her scratching behind her decks for the rest of the wait. */
-export function knockOut(leash: LeashState, creatures: Creature[], time: number, t: Tuning, o: { hatFloats?: boolean; streak?: number; /** the house: seconds rising out of the circle's floor, and the walk to her decks */ house?: { rise: number; walk: number } } = {}): Knockout {
+/** She goes down (at `o.at`, where she stands): her hat floats down if it dropped (hatFloats), then her stack's sigils fall where she went
+ *  down, bottom first (legends kept if they're loyal), then the teleport home and her scratching behind her decks for the rest of the wait. */
+export function knockOut(leash: LeashState, creatures: Creature[], time: number, t: Tuning, o: { hatFloats?: boolean; streak?: number; /** the house: seconds rising out of the circle's floor, and the walk to her decks */ house?: { rise: number; walk: number }; /** where she went down */ at?: { x: number; z: number } } = {}): Knockout {
   const K = t.knockout, R = K.respawn ?? RESPAWN_NONE, streak = o.streak ?? 0, order = [...leash.stack].reverse().filter(id => !(K.legendsLoyal && creatures[id].level === LEGEND && !creatures[id].partyLegend)); // (a party legend is always let go: it doesn't move)
   const each = K.releaseMax > 0 && order.length * K.releaseEach > K.releaseMax ? K.releaseMax / order.length : K.releaseEach;
   const times = order.map((_, i) => time + (i + 1) * each);
@@ -102,10 +107,11 @@ export function knockOut(leash: LeashState, creatures: Creature[], time: number,
   const teleportAt = Math.max(floatUntil, order.length ? times[times.length - 1] + each * 0.5 : time + K.emptyBeat);
   const inAt = teleportAt + K.teleport, H = o.house, riseUntil = H ? inAt + Math.max(0, H.rise) : undefined, seatAt = H ? riseUntil! + Math.max(0, H.walk) : inAt;
   const backAt = Math.max(seatAt + R.minScratch, time + respawnWait(streak, t));
-  return { at: time, order, times, released: 0, floatUntil, teleportAt, inAt, ...(riseUntil !== undefined ? { riseUntil } : {}), seatAt, backAt, streak, wait: respawnWait(streak, t), out: false, moved: false };
+  return { at: time, ...(o.at ? { x: o.at.x, z: o.at.z } : {}), order, times, released: 0, floatUntil, teleportAt, inAt, ...(riseUntil !== undefined ? { riseUntil } : {}), seatAt, backAt, streak, wait: respawnWait(streak, t), out: false, moved: false };
 }
 
-/** Let a carried one go happy where it stands (Ed, 2026-10-26): off her stack, no sigil made; happy now, so its rune is at its
+/** Let a carried one go happy where it stands (Ed, 2026-10-26; at a knockout till 2026-11-03, now only for a guest leaving an online night,
+ *  platform/online/membership.ts): off her stack, no sigil made; happy now, so its rune is at its
  *  feet once states' pickupDelay has passed (she leashes it again by picking that up), it fights only the enraged (never the
  *  wild). It idles near where it was dropped (Ed, later that day: "they should idle near where they were dropped, not walk back
  *  to their area"; `dropped`, knockout.dropRadius metres round it), dancing if that's a party area, till she leashes it again
@@ -116,13 +122,24 @@ export function letGoHappy(c: Creature, leash: LeashState, map: ForestMap, time:
   Object.assign(c, { leashed: false, state: "happy", happyAt: time, enraged: false, siege: undefined, fight: undefined, taunt: undefined, wanderTo: undefined, affection: undefined, dancing, dropped: { x: c.x, z: c.z, r, cell: [cell[0], cell[1]] }, anchorX: c.x, anchorZ: c.z, tx: c.x, tz: c.z, rest: 0, safeR: undefined });
 }
 
-/** One step of a knockout: her carried ones let go happy on time, then the teleport. Returns true once she's back. */
-export function stepKnockout(k: Knockout, body: WitchState, leash: LeashState, creatures: Creature[], map: ForestMap, time: number, partified: (key: string) => boolean, events: KnockoutEvent[]): { body: WitchState; done: boolean } {
+/** A carried one's sigil fallen at her knockdown (Ed, 2026-11-03: "animals' sigils fall and stay where you were knocked down"): off her
+ *  stack and down on the free hex cell nearest where she went down (rules/leash.ts fallSpot; `floor`, every sigil on the ground, hers
+ *  and anyone's; `barred`, the cells no sigil may take), its animal parked there, hers still. Returns where it fell. */
+export function fallAtKnockdown(c: Creature, leash: LeashState, x: number, z: number, time: number, t: Tuning, floor: readonly PlacedSigil[] = leash.placed, barred?: (x: number, z: number) => boolean): { x: number; z: number } {
+  const at = fallSpot(floor, x, z, t, barred) ?? { x, z };
+  leash.stack = leash.stack.filter(id => id !== c.id);
+  leash.placed.push({ id: c.id, x: at.x, z: at.z, at: time });
+  return at;
+}
+
+/** One step of a knockout: her carried ones' sigils falling where she went down, on time, then the teleport. `floor` gives every sigil on
+ *  the ground (another witch's too) and `barred` the cells no sigil may take (rules/game.ts). Returns true once she's back. */
+export function stepKnockout(k: Knockout, body: WitchState, leash: LeashState, creatures: Creature[], map: ForestMap, time: number, _partified: (key: string) => boolean, events: KnockoutEvent[], floor?: () => readonly PlacedSigil[], barred?: (x: number, z: number) => boolean): { body: WitchState; done: boolean } {
   while (k.released < k.order.length && time >= k.times[k.released]) {
     const c = creatures[k.order[k.released++]];
-    // (each carried one happy where it stands, Ed 2026-10-26: no sigil put down; a party legend dancing there as ever)
+    // (a party legend let go, dancing there as ever)
     if (c?.partyLegend && leash.stack.includes(c.id)) { leash.stack = leash.stack.filter(id => id !== c.id); letPartyLegendGo(c); events.push({ kind: "released", at: time, x: c.x, z: c.z, id: c.id }); }
-    else if (c && c.leashed && leash.stack.includes(c.id)) { letGoHappy(c, leash, map, time, partified); events.push({ kind: "released", at: time, x: c.x, z: c.z, id: c.id }); }
+    else if (c && c.leashed && leash.stack.includes(c.id)) { const at = fallAtKnockdown(c, leash, k.x ?? body.x, k.z ?? body.z, time, map.tuning, floor?.() ?? leash.placed, barred); events.push({ kind: "released", at: time, x: at.x, z: at.z, id: c.id }); }
   }
   if (time >= k.teleportAt && !k.out) { k.out = true; events.push({ kind: "sparkleOut", at: time, x: body.x, z: body.z }); }
   const mid = (k.teleportAt + k.inAt) / 2;

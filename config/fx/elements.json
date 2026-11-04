@@ -11,5 +11,7 @@
   "sand": { "ramp": ["#41302c", "#9b7142", "#dcb67a", "#f4e1b2"], "contrast": "#bba38c", "motion": 5, "imprint": "push", "sound": "earth" },
   "wood": { "ramp": ["#233025", "#536542", "#a1a66a", "#e2d7a6"], "contrast": "#c6a26f", "motion": 7, "imprint": "bloom", "sound": "nature" },
   "wind": { "ramp": ["#283c41", "#629298", "#abd1cf", "#edf2da"], "contrast": "#e0d8b1", "motion": 3, "imprint": "push", "sound": "wind" },
-  "party": { "ramp": ["#352239", "#a65879", "#dfad66", "#fff0c2"], "contrast": "#e598bb", "motion": 7, "imprint": "bloom", "sound": "party" }
+  "party": { "ramp": ["#352239", "#a65879", "#dfad66", "#fff0c2"], "contrast": "#e598bb", "motion": 7, "imprint": "bloom", "sound": "party" },
+  "rainbow": { "ramp": ["#4a3a6a", "#d0c8f0", "#f4f0ff", "#ffffff"], "contrast": "#ffe9a8", "motion": 3, "imprint": "bloom", "sound": "light" },
+  "gold": { "ramp": ["#4a2c06", "#c08414", "#ffd23c", "#fff7c8"], "contrast": "#fffbe8", "motion": 3, "imprint": "charge", "sound": "light" }
 }

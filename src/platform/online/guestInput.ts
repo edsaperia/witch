@@ -2,6 +2,7 @@ import type { Controls } from "../../rules/game";
 import { ONLINE_TIMING } from "./inputLease";
 
 const edges = ["toggleMode", "sigil", "place", "hat", "cycle", "cycleBack", "spell", "castParty", "dash"] as const;
+export const INPUT_EDGES = edges;
 const held = ["fire", "sigilHeld", "hatHold", "held", "autoTalk", "talkHeld", "pausePage"] as const;
 const axes = ["moveX", "moveZ"] as const;
 const neutral = (): Controls => ({ moveX: 0, moveZ: 0, toggleMode: false, zoom: 0, autoTalk: false });
@@ -27,17 +28,36 @@ export function wireControls(input: unknown): Controls | null {
   return result;
 }
 
-/** Host samples once per frame; stepGame retains edges until its next fixed step. */
-export function guestInput(heldInputMs: number = ONLINE_TIMING.heldInputMs) {
+/** Latest controls serve host-owned actions; ordered locomotion quanta are consumed separately per fixed step. */
+export function guestInput(heldInputMs: number = ONLINE_TIMING.heldInputMs, jitterTicks = 3) {
   if (!Number.isFinite(heldInputMs) || heldInputMs < 0) throw new Error("Invalid input expiry");
+  if (!Number.isSafeInteger(jitterTicks) || jitterTicks < 0 || jitterTicks > 3) throw new Error("Invalid guest jitter depth");
   let current = neutral(), receivedAt = -Infinity, sequence = -1;
+  let applied = -1, started = false, warmTicks = 0, underruns = 0, discarded = 0;
+  let holdSince: number | null = null, longestHoldMs = 0, lastConsumeAt = 0;
+  const measureHold = (now: number, motion: boolean) => {
+    if (!Number.isFinite(now)) return;
+    lastConsumeAt = Math.max(lastConsumeAt, now);
+    if (holdSince !== null) longestHoldMs = Math.max(longestHoldMs, lastConsumeAt - holdSince);
+    if (motion) holdSince = null; else holdSince ??= lastConsumeAt;
+  };
+  const ticks: { sequence: number; controls: Controls; at: number }[] = [];
   const pending: Partial<Controls> = {};
   return {
+    get sequence() { return applied; },
+    get receivedSequence() { return sequence; },
+    get stats() { return { applied, received: sequence, queued: ticks.length, underruns, discarded, longestHoldMs, currentHoldMs: holdSince === null ? 0 : lastConsumeAt - holdSince }; },
     accept(payload: unknown, now: number): boolean {
       if (!payload || typeof payload !== "object" || !Number.isFinite(now) || now < receivedAt) return false;
       const p = payload as Record<string, unknown>;
       if (!Number.isSafeInteger(p.sequence) || (p.sequence as number) < 0 || (p.sequence as number) <= sequence) return false;
       const controls = wireControls(p.controls); if (!controls) return false;
+      // A hold keeps her held controls and pause vote current without a physics quantum: the guest sends one
+      // whenever she could not replay that quantum herself (her copy of the clock paused, or her history full).
+      if (p.hold !== true) {
+        if (ticks.length >= 120) { ticks.shift(); discarded++; }
+        ticks.push({ sequence: p.sequence as number, controls, at: now });
+      }
       for (const key of edges) if (controls[key]) pending[key] = true;
       current = controls; receivedAt = now; sequence = p.sequence as number;
       return true;
@@ -49,6 +69,28 @@ export function guestInput(heldInputMs: number = ONLINE_TIMING.heldInputMs) {
       for (const key of edges) { result[key] = live && !!pending[key]; delete pending[key]; }
       return result;
     },
-    clear(): void { current = neutral(); receivedAt = -Infinity; sequence = -1; for (const key of edges) delete pending[key]; },
+    /** Called once per actual physics quantum, not once per render frame. */
+    consume(now: number): { sequence: number; controls: Controls; motion: boolean } {
+      if (!started && ticks.length) warmTicks++;
+      if (!started && (ticks.length >= Math.max(1, jitterTicks) || warmTicks > jitterTicks || ticks[0] && now - ticks[0].at >= jitterTicks * 1000 / 60)) started = true;
+      if (!started) { measureHold(now, false); return { sequence: applied, controls: neutral(), motion: false }; }
+      const tick = ticks.shift();
+      if (tick) { measureHold(now, true); applied = tick.sequence; return { sequence: applied, controls: { ...tick.controls }, motion: true }; }
+      underruns++;
+      measureHold(now, false);
+      return { sequence: applied, controls: neutral(), motion: false };
+    },
+    /** Extra quanta, oldest first, for the physics step whose own quantum consume() takes next: at most `limit`, and
+     * only while more than `above` wait. A backlog left by a stall drains; one quantum always stays for consume(). */
+    catchUp(limit: number, above: number): { sequence: number; controls: Controls }[] {
+      const extra: { sequence: number; controls: Controls }[] = [];
+      while (started && extra.length < limit && ticks.length > Math.max(1, above)) {
+        const tick = ticks.shift()!; applied = tick.sequence;
+        extra.push({ sequence: tick.sequence, controls: { ...tick.controls } });
+      }
+      return extra;
+    },
+    suspend(): void { discarded += ticks.length; ticks.length = 0; started = false; warmTicks = 0; holdSince = null; },
+    clear(): void { current = neutral(); receivedAt = -Infinity; sequence = applied = -1; ticks.length = 0; started = false; warmTicks = 0; underruns = discarded = 0; holdSince = null; longestHoldMs = lastConsumeAt = 0; for (const key of edges) delete pending[key]; },
   };
 }

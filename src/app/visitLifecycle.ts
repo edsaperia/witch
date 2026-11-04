@@ -1,0 +1,76 @@
+import type { Game } from "../rules/game";
+import type { visitSaves } from "./visitSaves";
+
+export interface VisitLifecycleOptions<Own> {
+  saves: ReturnType<typeof visitSaves>;
+  own(): Own;
+  adoptBorrowed(game: Game, signal: AbortSignal, advanced: () => void): Promise<void>;
+  adoptOwn(own: Own, fresh: boolean): Promise<void>;
+  playing(game: Game): void;
+}
+/** One ordinary page/View: serialize late preparation before return, never race two night replacements. */
+export function visitLifecycle<Own>(options: VisitLifecycleOptions<Own>) {
+  let own: Own | undefined, active = false, ending = false, synchronizationStarted = false, confirmed = false;
+  let preparedGame: Game | null = null, generation = 0;
+  let preparing: Promise<void> = Promise.resolve(), synchronizing: Promise<void> = Promise.resolve(), returning: Promise<void> | null = null;
+  return {
+    admission(game: Game): number | null { return active && !ending && game === preparedGame ? generation : null; },
+    prepare(game: Game, signal: AbortSignal, advanced: () => void): Promise<void> {
+      if (active) return Promise.reject(new Error("A visit is already being prepared."));
+      preparedGame = game; generation++;
+      own = options.own(); active = true; ending = synchronizationStarted = confirmed = false;
+      preparing = (async () => {
+        await options.saves.prepare(); signal.throwIfAborted();
+        await options.adoptBorrowed(game, signal, advanced); signal.throwIfAborted();
+      })();
+      return preparing;
+    },
+    nextNight(game: Game, signal: AbortSignal, advanced: () => void): Promise<void> {
+      if (!active || ending || !confirmed || !synchronizationStarted) return Promise.reject(new Error("A confirmed visit is required for another night."));
+      const previous = preparing, synchronized = synchronizing;
+      preparedGame = game; generation++; synchronizationStarted = false;
+      preparing = (async () => {
+        await previous; await synchronized; signal.throwIfAborted();
+        if (ending) throw new Error("The visit ended during its next night.");
+        await options.adoptBorrowed(game, signal, advanced); signal.throwIfAborted();
+      })();
+      return preparing;
+    },
+    synchronized(game: Game): Promise<void> {
+      // Preserve an aborted preparation's rejection, but never let an old host confirm the next visit.
+      if (!active || ending) return preparing;
+      if (game !== preparedGame) return Promise.resolve();
+      if (synchronizationStarted) return synchronizing;
+      const current = generation, preparation = preparing;
+      synchronizationStarted = true;
+      synchronizing = (async () => {
+        await preparation;
+        if (!active || ending || current !== generation || game !== preparedGame) return;
+        if (!confirmed) { await options.saves.confirm(); confirmed = true; }
+        if (active && !ending && current === generation && game === preparedGame) options.playing(game);
+      })();
+      return synchronizing;
+    },
+    end(): Promise<void> {
+      if (!active) return Promise.resolve();
+      if (returning) return returning;
+      ending = true; generation++;
+      returning = (async () => {
+        try {
+          await preparing.catch(() => {}); await synchronizing.catch(() => {});
+          await options.saves.returnOwn(fresh => options.adoptOwn(own!, fresh));
+          active = confirmed = false; own = undefined; preparedGame = null;
+        } finally { returning = null; }
+      })();
+      return returning;
+    },
+  };
+}
+
+/** The page may handle a rejected current admission, but an old promise must not hang up a newer call. */
+export function synchronizeVisit(visit: { admission(game: Game): number | null; synchronized(game: Game): Promise<void> }, game: Game, failed: (error: unknown) => void): Promise<void> {
+  const admission = visit.admission(game);
+  return visit.synchronized(game).catch(error => {
+    if (admission !== null && visit.admission(game) === admission) failed(error);
+  });
+}

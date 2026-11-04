@@ -1,5 +1,6 @@
 // A4 mechanical extraction from src/main.ts; body identity is checked by tools/refactor/a4-split.mjs.
 import type { PageHost } from "../main";
+
 import { chartOpen } from "../ui/chartOverlay";
 import { endDream } from "../rules/wakeUp";
 import { saveGenome } from "../ui/creator";
@@ -47,7 +48,7 @@ export function startDream(pageHost: PageHost, s: { loan: Loan; won: boolean }, 
   const of = { item: s.loan.id, name: loanName(s.loan), piece: findKind(s.loan.kind).piece(s.loan.id), won: s.won, home: homeOf(s.loan, id => stationsShowing(shelfOf(id)?.id ?? "")) };
   pageHost.dream = new DreamView(of, dreamArt(of, pageHost.view.assets.style), veil, pageHost.herHead).play(veil && pageHost.params.has("shot"));
   pageHost.dreamAsleep = !veil; // (asleep: its end rings the next night's alarm; shown over a night, ?dream= or the dev panel, nothing)
-  pageHost.dream.onOver = () => { const n = pageHost.page.night; if (pageHost.dreamAsleep && n?.game.wake) pageHost.mutate("wake: dream dismissed", () => endDream(n.game, n.game.herTime)); };
+  pageHost.dream.onOver = () => { const n = pageHost.page.night; if (!pageHost.phone.active && !n?.spec.borrowed && pageHost.dreamAsleep && n?.game.wake) pageHost.mutate("wake: dream dismissed", () => endDream(n.game, n.game.herTime)); };
   (window as unknown as { __dream?: DreamView }).__dream = pageHost.dream; // (the shot tools draw it at a time: tools/loan/dream-shots.cjs)
 }
 
@@ -59,8 +60,8 @@ export function herHead(pageHost: PageHost): { x: number; y: number } | null {
 }
 
 export function stepGuide(pageHost: PageHost, now: number): void {
-  const { game } = pageHost.N();
-  if (seeGuide(game, 0, pageHost.guide)) storeGuide(pageHost.guide);
+  const game = pageHost.phone.presented(pageHost.N().game);
+  if (!pageHost.phone.visiting && !pageHost.N().spec.borrowed && seeGuide(game, 0, pageHost.guide)) storeGuide(pageHost.guide);
   if (now - pageHost.chartFound.at > 1000) pageHost.chartFound = { at: now, unvisited: unvisited(loadSave(), pageHost.N().tuning.map?.island ?? "home") }; // (where she is counts as been to: app/chartSave.ts unvisited)
   const G = guidanceOf(game, 0, pageHost.guide, pageHost.chartFound.unvisited);
   pageHost.guidePin.update(G, !!G && !pageHost.creator.open && !chartOpen() && !pageHost.sailing); // (wherever she is, at its target too: Ed, 2026-10-28)

@@ -1,47 +1,47 @@
 {
   "schema": 1,
-  "sourceCommit": "e67842754af816e233ddadf6ba932f51b191aa7c",
+  "sourceCommit": "b29e5a3701aca479e95d5de3429042439963f002",
   "status": "inventory-only; no extraction or behavioural proof",
   "sources": [
     {
       "file": "src/main.ts",
-      "sha256": "ced6a1a761eaffa38512ee1b9ab165e38fbcd3ef5d1fdfa772f1e547c56717a2",
-      "bytes": 126697,
-      "lines": 1516,
+      "sha256": "c2f08ebccda005e918a4d6614e0002ec17b67f9aab490b4685b5b0f688f95a9c",
+      "bytes": 165173,
+      "lines": 1967,
       "cuts": {
         "pagePause": [
           {
             "name": "openPotionLab",
-            "start": 51304,
-            "end": 51564,
-            "line": 654,
-            "bytes": 260,
-            "sha256": "1638e7f9f02c7c1f5a6ce90b00b50fdd73fe13480c49ed970f562c398afec849",
-            "bodySha256": "e5edac58c134e9e38411c62528394bf141500def24dd1593dd4503d2069fbeb8"
+            "start": 71286,
+            "end": 71742,
+            "line": 901,
+            "bytes": 456,
+            "sha256": "8d19539dd398185ac4f11f0982522a480f98e7d1eedf1fe9d662558a32e7ef42",
+            "bodySha256": "804c68552354d53c7311be0916f5f962b85eb125e0e552edaee3ff6966369200"
           },
           {
             "name": "openMusicLab",
-            "start": 52021,
-            "end": 52712,
-            "line": 663,
+            "start": 72199,
+            "end": 72890,
+            "line": 912,
             "bytes": 691,
             "sha256": "8cd1cb5a72a17393c46bfcce37a8ae656913a8474d87d397cad2bd5b8b7fbccd",
             "bodySha256": null
           },
           {
             "name": "pauseControls",
-            "start": 53566,
-            "end": 54617,
-            "line": 684,
-            "bytes": 1055,
-            "sha256": "ee05317387c82685a33613ae13745535118a363e114cd76514103cf60f864bf8",
-            "bodySha256": "7706b3846340b2acf05477717a93d54a87ef963c77ac740685a9a098b9eb8047"
+            "start": 73799,
+            "end": 75260,
+            "line": 934,
+            "bytes": 1465,
+            "sha256": "2a5cc45522d3465be4aa2e49e49eef295dfc3f069f5b2f3e0d582fc14291f91a",
+            "bodySha256": "cc91aa6e1e734540002f580f569fcc827b44e4c2aadd2fb8ef86e32f432d358f"
           },
           {
             "name": "updatePauseMenus",
-            "start": 118212,
-            "end": 118754,
-            "line": 1409,
+            "start": 152876,
+            "end": 153418,
+            "line": 1816,
             "bytes": 542,
             "sha256": "5aeb5d9266c598d5266c8a08aeb29b7096e176704910b8314710233e7a55fc05",
             "bodySha256": "adb7b101e5fe65843ba52a5990eba294e7a0d940136394ef4fe520767ce4b4f3"
@@ -49,37 +49,46 @@
         ],
         "pageStations": [
           {
+            "name": "reconcilePickers",
+            "start": 57935,
+            "end": 58244,
+            "line": 734,
+            "bytes": 309,
+            "sha256": "5dbc5d7ed3fc11102a04501443e4ab3b83ca1da30306f5886ddfe0811e23a286",
+            "bodySha256": "8968c3d5105366dc9869985777ca7d6dea31f9137ddcba1fc2b207ba97bd0aae"
+          },
+          {
             "name": "findsCtx",
-            "start": 36488,
-            "end": 36670,
-            "line": 478,
+            "start": 53928,
+            "end": 54110,
+            "line": 692,
             "bytes": 182,
             "sha256": "cfe4282c3c916bed07b636512a5da9884ed15770ef43a30cd5f74ce24f4cd332",
             "bodySha256": null
           },
           {
             "name": "workshopNow",
-            "start": 38760,
-            "end": 38994,
-            "line": 498,
-            "bytes": 234,
-            "sha256": "51dd29a39ae9d9f41389751d1cddf35aa59fe55980bd513b3ff2a2163a864afd",
+            "start": 57585,
+            "end": 57933,
+            "line": 733,
+            "bytes": 348,
+            "sha256": "3fcf20110fefa7eb07a97b67e0cd8f303ce8a9bc9ea6cab36d7cac8a9ef09676",
             "bodySha256": null
           },
           {
             "name": "useHouse",
-            "start": 46012,
-            "end": 46847,
-            "line": 583,
-            "bytes": 835,
-            "sha256": "5e47262dc57a3d298deb68436629206d7949e1fc9fc50a86752004315c83c528",
+            "start": 65394,
+            "end": 66488,
+            "line": 824,
+            "bytes": 1094,
+            "sha256": "cf2f9b74301c438c2ca65d45756c310adf856bf12536a8d20caee646c35e3222",
             "bodySha256": null
           },
           {
             "name": "shutStation",
-            "start": 95935,
-            "end": 96164,
-            "line": 1181,
+            "start": 126365,
+            "end": 126594,
+            "line": 1548,
             "bytes": 229,
             "sha256": "e926e33328bb5e2ee81fbd0831143d3cedae210a85b497b5b8ab35a6fe692463",
             "bodySha256": "2534efe3ea516f22c73a8d35324bcdb7c01473b61ded1b796bcc2e050d2f2bb0"
@@ -87,118 +96,154 @@
         ],
         "pageNight": [
           {
+            "name": "keepNightie",
+            "start": 18617,
+            "end": 18773,
+            "line": 271,
+            "bytes": 156,
+            "sha256": "faeb5089349fd796e93da27c0ae62773322e68924310fd7dc34102cb5ae5b98e",
+            "bodySha256": "73206daaab57526c8308e49c2d6cffd2061e89be4df4291359fbb0ee4170b031"
+          },
+          {
+            "name": "personalKit",
+            "start": 34716,
+            "end": 35012,
+            "line": 453,
+            "bytes": 296,
+            "sha256": "74db6f21b981e0525f74907ee3c8baeaf15e6e9747ba75241e1e2551dd1465eb",
+            "bodySha256": "5ec0fdb1df0363423b3a968b1a9621b9796a1a3daad73b4a043f0e8fcfe5b1c4"
+          },
+          {
+            "name": "hostCollections",
+            "start": 35013,
+            "end": 35463,
+            "line": 457,
+            "bytes": 450,
+            "sha256": "6928514f87adaf28a216e270855c41c2f9e05fb39c35e7ff24ef26a11e909a5b",
+            "bodySha256": "8f10c10b6823c3c5d863865b55e52adc885f9e27bd69b0d63a22e37557d7f635"
+          },
+          {
+            "name": "traceVisit",
+            "start": 35814,
+            "end": 36161,
+            "line": 465,
+            "bytes": 347,
+            "sha256": "a9604524e18330a2e5c2bf319a25b613b5c87631678f47510dd75cca5fa342da",
+            "bodySha256": "338ac0e338b38eeeb928fb8c39f100b908b6e138701fc43b84e2cd6a43a6aad8"
+          },
+          {
+            "name": "aheadMorning",
+            "start": 47453,
+            "end": 47592,
+            "line": 615,
+            "bytes": 139,
+            "sha256": "15949d236b6eae92a7f89dc745102630d3f11ec7baa72ce1a78c9aed10332134",
+            "bodySha256": "44bf67820b7b0608ccf102cddd363e94739422c2bf4bb34aad149e6fc0954ae5"
+          },
+          {
             "name": "bedFirst",
-            "start": 30256,
-            "end": 30360,
-            "line": 404,
+            "start": 46630,
+            "end": 46734,
+            "line": 604,
             "bytes": 104,
             "sha256": "13132aa1ae0f4276b647cfb67808d12bdc41cb0f575b1122386f91e1b4288e4a",
             "bodySha256": "aadef8bd3e0098b5554c221c4817835d080605962c5eec2a5fe4814408079118"
           },
           {
             "name": "arrived",
-            "start": 30816,
-            "end": 30884,
-            "line": 413,
+            "start": 47883,
+            "end": 47951,
+            "line": 622,
             "bytes": 68,
             "sha256": "1e6e0dba6814d9e8df28f70aa159567b5ee8468ccabfbf68092b64f7bd65aa26",
             "bodySha256": "5f31dc9241256f140609010554c86ba1298df25b8fda755ced9e6d7ca0ca1dfc"
           },
           {
             "name": "wakeArrival",
-            "start": 31655,
-            "end": 31728,
-            "line": 430,
+            "start": 48822,
+            "end": 48895,
+            "line": 639,
             "bytes": 73,
             "sha256": "e89a3a2512002a5bd05b63abd2e1c479965352f0a8760afe291df4aa97b1d7bf",
             "bodySha256": "e39ba658ee635c7119ff420a4a0eab274582c5c8d1ff86866dd6dea2784bef16"
           },
           {
             "name": "wakeFirst",
-            "start": 84825,
-            "end": 84902,
-            "line": 1025,
+            "start": 114570,
+            "end": 114647,
+            "line": 1384,
             "bytes": 77,
             "sha256": "998a4a347de940f7e3f93866078a9531d1b4e73f66bcf258fbf313f47eeac918",
             "bodySha256": "d4cdc0fbf4c6af9fa95816fb67eace5a21443b202fdb072087d2a028342c1b46"
           },
           {
             "name": "sailFromChart",
-            "start": 81106,
-            "end": 81687,
-            "line": 979,
-            "bytes": 581,
-            "sha256": "4bbacb93ef2b51393918abbdb8ed677ddce4be4e530a75a7179f4065e04bc3ff",
-            "bodySha256": "0d1d87857708915e8d2de22a68eb9f24e0b929e13a4ee90db6311061a1d46e2b"
+            "start": 110328,
+            "end": 111261,
+            "line": 1332,
+            "bytes": 933,
+            "sha256": "312321ed8270e1d8592920495135814fc0ccc55a7403bb824d9eb26b8761425c",
+            "bodySha256": "7e54ba9803d4104ab72997ddd311c59cc9e050873b55ab7e5f977c909986719a"
           },
           {
             "name": "recordSail",
-            "start": 81811,
-            "end": 82373,
-            "line": 990,
+            "start": 111385,
+            "end": 111947,
+            "line": 1347,
             "bytes": 562,
             "sha256": "384a9f65177fb6bb371f46b19baa23502f62864d19bb99855db9b491b9c96229",
             "bodySha256": "78591d8a0b0f8a7d9384f1dc9067131216d304d871087bde19cac27c91fa76b4"
           },
           {
             "name": "departFromChart",
-            "start": 83064,
-            "end": 83406,
-            "line": 1004,
-            "bytes": 342,
-            "sha256": "2fe2db780ee2744586d7e2e328f934c633886933c6f4c690e449902bd112b834",
-            "bodySha256": "7a0e34cbb947531fcf3cdc676e6e96962d495120c8cd6a517c9f6d4e06da5991"
+            "start": 112638,
+            "end": 113151,
+            "line": 1361,
+            "bytes": 513,
+            "sha256": "d329759e69f8148dca1d870cd4ffc35fee91d712a8a3793d7e897d938fdf45ff",
+            "bodySha256": "3c394245af24a4cd7fa97e7a41055d553c1fa6b9492ca166e636112ffbe27359"
           },
           {
             "name": "sailInPlace",
-            "start": 86295,
-            "end": 87298,
-            "line": 1046,
+            "start": 116118,
+            "end": 117121,
+            "line": 1405,
             "bytes": 1005,
             "sha256": "2e185017022844011e3f2cdf4b1f36983532017991578794dc23cba3932a815f",
             "bodySha256": "9f30871a8710b2100326667cb2e0857a831c928a468d2a49ba4e0fa1310d2c86"
           },
           {
             "name": "makeSailNight",
-            "start": 87821,
-            "end": 89367,
-            "line": 1065,
-            "bytes": 1546,
-            "sha256": "dae1a9577193057661a37f7b82d62a9afa9d8ab6ea66997eb778f162ca03d829",
-            "bodySha256": "b0b1a4bb54f89b9fd1d1b9bb6811ebb50be786877ee3ce8cae432c351e0682ae"
-          },
-          {
-            "name": "warmAt",
-            "start": 89606,
-            "end": 91045,
-            "line": 1091,
-            "bytes": 1439,
-            "sha256": "d5588cb63632b9d38810516fe14f755c12925079145a51fbfa52499a4970d319",
-            "bodySha256": "494b58b6b93d4ddcbbbca88d997589cbb8729ac1f0a7db60fc40495bf1c0ba22"
+            "start": 117676,
+            "end": 120122,
+            "line": 1425,
+            "bytes": 2446,
+            "sha256": "fdd88e6e805c58240272cbacba5fc51ae9fb29400d3fbfbefab5d79763a8f901",
+            "bodySha256": "33e6fa9f564bba02e81b4879404381c0769ea3ad058a7be011153dae8da19b32"
           },
           {
             "name": "newNight",
-            "start": 91357,
-            "end": 92157,
-            "line": 1113,
-            "bytes": 800,
-            "sha256": "1a841937634ab6fe820d3189a013be00376694e6510964e0c172e95718cd4607",
-            "bodySha256": "72a7d6e5451fd3ad1e113004e5bb00138baaac0765d7dc3bb791eb19c7e51696"
+            "start": 120434,
+            "end": 121584,
+            "line": 1464,
+            "bytes": 1150,
+            "sha256": "c8411e78bfada2e0b2e56f26fe03be42e74722f58f34442bca52dab040213635",
+            "bodySha256": "71a2775b849da56d0f8b930d50cd787195a4037344b85b8bd6f38f4431fab4b8"
           },
           {
             "name": "nightInPlace",
-            "start": 92629,
-            "end": 94614,
-            "line": 1131,
-            "bytes": 1985,
-            "sha256": "1332295f0d0b9325fe0330e844ff41ce2c5337ffb275d9e6ecb64ca8cb9f6053",
-            "bodySha256": "eb53651a145ffb79b19340d748c72c1a4db6e2911e80bd0a05069d36408fa4b2"
+            "start": 122056,
+            "end": 124897,
+            "line": 1486,
+            "bytes": 2841,
+            "sha256": "904f94541797baf113ca10b4a774a55268cfeda9bd7e27a14a5624a70d0f592f",
+            "bodySha256": "96414b205ba0a329506daaa189011515d720b6c6d24b1aaecbbf9f5f34a13af2"
           },
           {
             "name": "leaveBot",
-            "start": 94746,
-            "end": 94918,
-            "line": 1165,
+            "start": 125029,
+            "end": 125201,
+            "line": 1531,
             "bytes": 172,
             "sha256": "b25eca16723d9299957c9a08b532e83f791533f1cdd0798621e6c558d05b24af",
             "bodySha256": "a57ad073e9763fa72fbebff9e7035eacae19bc61d18c26fbd952bb4a90c398ad"
@@ -207,92 +252,92 @@
         "pageFinds": [
           {
             "name": "lendFind",
-            "start": 39128,
-            "end": 39859,
-            "line": 500,
+            "start": 58377,
+            "end": 59108,
+            "line": 741,
             "bytes": 731,
             "sha256": "52c260ffccafe0b4ffc2dfea0c1443053fa58ec51b19a9de3223fb1cb6687088",
             "bodySha256": "0452ce91b64bd0c22f2d14481fd0b8ea4bd8544e8edecbd8162e510dd6d98acb"
           },
           {
             "name": "settleLoan",
-            "start": 41098,
-            "end": 41237,
-            "line": 524,
+            "start": 60406,
+            "end": 60545,
+            "line": 765,
             "bytes": 139,
             "sha256": "4648d741930a59535983a0918b7566fb4578ab692c6c7a3645185b92fd0830ef",
             "bodySha256": "3dee612e92fc3d40e51e49da23b99fb61adb58d0e90f69b8b326d972159c6039"
           },
           {
             "name": "settleLoanNow",
-            "start": 41238,
-            "end": 42060,
-            "line": 527,
+            "start": 60546,
+            "end": 61368,
+            "line": 768,
             "bytes": 822,
             "sha256": "3980df398136c2e7ffc7a6913ebd6bfe211683376075cbb9594285257248c376",
             "bodySha256": "90f80118debf7964b888689d81019188493450be5cccaaadb27d6745c8cf4ef0"
           },
           {
             "name": "startDream",
-            "start": 42160,
-            "end": 42967,
-            "line": 541,
-            "bytes": 807,
-            "sha256": "f769420d9188eec77dfff6bec8328a3538b96b40acf8c700915925ce6f342380",
-            "bodySha256": "5e5e7517c65254e9d93fb934da8b83ef48d8873b0b188a85dea9e7152831d232"
+            "start": 61468,
+            "end": 62313,
+            "line": 782,
+            "bytes": 845,
+            "sha256": "b5e25b176b7bf2ed1314ae96359c2b8f820bc37b458ea80c9ec86bc5e6da265d",
+            "bodySha256": "aac1b1aaa1b0d7ac55e5e23f68e63795516de3c079259f0cc4dc3f8e977a714e"
           },
           {
             "name": "herHead",
-            "start": 43122,
-            "end": 43511,
-            "line": 551,
+            "start": 62468,
+            "end": 62857,
+            "line": 792,
             "bytes": 389,
             "sha256": "e6891c6c10e75b13d6a870f7dfb4c0231e2015eae96b91083787e644ba322063",
             "bodySha256": "0c293fb89a1f24d883a05851bf960a69844fe8b84177ee955ff1dce971d8bec9"
           },
           {
             "name": "stepGuide",
-            "start": 40301,
-            "end": 40799,
-            "line": 514,
-            "bytes": 498,
-            "sha256": "f84afd26203be6a856bf90b51885446cac3bd269d8e21b5f898575248387d5c2",
-            "bodySha256": "96f790e42ece7a46eec2ae1f53abcd7b702b859e6a4f22e58413020aae7cd692"
+            "start": 59550,
+            "end": 60107,
+            "line": 755,
+            "bytes": 557,
+            "sha256": "3f30706fdedde7623b50e0398eec5991f01e2f1d749c35a3ecbf8d7eb5486e9d",
+            "bodySha256": "a957aa92f35ace2ffe4b0625351622906e8f3fddb2b8b6e1b098eaa82e4cb4dd"
           }
         ],
         "pageFrame": [
           {
             "name": "drawFrame",
-            "start": 96312,
-            "end": 96687,
-            "line": 1188,
-            "bytes": 375,
-            "sha256": "5e9ea8149d2a24d569e00f1743b5d20e1fd7e6b4401b078f66134a2ec8e4a617",
-            "bodySha256": "b3b298557677467507960cdc57312f69cae77afd92b8946a27914cc2556c3345"
+            "start": 126742,
+            "end": 127157,
+            "line": 1555,
+            "bytes": 415,
+            "sha256": "ef7dcd9aa917eb4453936752406b66287fba61c667a680cb13606636a8a4216d",
+            "bodySha256": "878e47edd633ff34e090a79d4f863ceff05f39d90fd0ad23bdb08fae2efed96e"
           },
           {
             "name": "frame",
-            "start": 96688,
-            "end": 97676,
-            "line": 1196,
-            "bytes": 988,
-            "sha256": "4968ba8cb7dd604697b6971eb271a68d9bd68152437e6f4c2c9d5515e724db65",
-            "bodySha256": "54447a143f4eebac267fac5afd7833b216bd8d83aea7bb4503f21b2aaf29b378"
+            "start": 127158,
+            "end": 128842,
+            "line": 1563,
+            "bytes": 1684,
+            "sha256": "68fd9f8bf024354ffb6b16dbecae90453429dbcfd5b233478d9a8df868614049",
+            "bodySha256": "4033ead870e7eb45969c457ace883da239386dabe5135e6b9e38edcbbd9aaf4d"
           },
           {
             "name": "frameBody",
-            "start": 97677,
-            "end": 118111,
-            "line": 1207,
-            "bytes": 20452,
-            "sha256": "a1e59ead87d37b019b842daeb6865d9dd1afce0fd7a8a391435a63bf005a078f",
-            "bodySha256": "a676008d7293366e8b73b7f10d87883eb4eac3043bc3e8fcf3be963bef54fbf3"
+            "start": 128843,
+            "end": 152775,
+            "line": 1583,
+            "bytes": 23948,
+            "sha256": "c31d5699c684c4d749e680d36b3ad57e7350377ed0a2960956651a29b020a7ab",
+            "bodySha256": "cff723e7bfba5427c1b8c7ab529d8996ad3e7451246fa0f0d80d2579498c19bb"
           },
           {
             "name": "overlayHead",
-            "start": 118858,
-            "end": 119819,
-            "line": 1416,
+            "start": 153522,
+            "end": 154483,
+            "line": 1823,
             "bytes": 961,
             "sha256": "ac40a309fc2e8cbd5af604d405bb5175757cd0fce4492bd7a4f67401f5475d90",
             "bodySha256": "924517a971e7fdda4d95a5c09bbedefe1fe62426c1728c5b26bf65f6724ea6a2"
@@ -302,101 +347,110 @@
     },
     {
       "file": "src/render/view.ts",
-      "sha256": "58ba804b5efa1dc6a1db1507d0287a1ec64259ed61e7acca04d9f398f6c5d0c9",
-      "bytes": 146159,
-      "lines": 1947,
+      "sha256": "c99fb8413f04143dbea30d037425517aac5557b2a94365b0bdfdee23287115d9",
+      "bytes": 155162,
+      "lines": 2040,
       "cuts": {
         "frame": [
           {
             "name": "render",
-            "start": 117415,
-            "end": 146125,
-            "line": 1641,
-            "bytes": 28716,
-            "sha256": "735ec1fef3c16dd199ad8fc18d2af7162a76f9001892bfe7c845434ca7b79606",
-            "bodySha256": "820b698fa237ffca851312327408df21fbd7a9eb954a1eb2ebe8cf3211aef4f8"
+            "start": 124312,
+            "end": 155128,
+            "line": 1717,
+            "bytes": 30822,
+            "sha256": "58c0fe92cadd940b42c0e0afe0e90ebdcae414cdb32a7ce879f7c9f88a49d904",
+            "bodySha256": "2f0a7509dea6f25d561d3c1e87a5a26baa244c997d708a8b5bfd387f975ef11b"
+          },
+          {
+            "name": "replayPartyStart",
+            "start": 110096,
+            "end": 110467,
+            "line": 1536,
+            "bytes": 371,
+            "sha256": "8af3535aa75fbd65573cf70da76eec4fa1fa867a89ab5718e69a0b7a25984224",
+            "bodySha256": "242831d98041101de448d56fb33e7076c32ef0b825ef33a343719531f8f6ee5e"
           }
         ],
         "houseFrame": [
           {
             "name": "houseTilt",
-            "start": 29067,
-            "end": 29392,
-            "line": 464,
+            "start": 30501,
+            "end": 30826,
+            "line": 484,
             "bytes": 325,
             "sha256": "498f39c91d55197104c2eb65ad43e93876078f24960e45e13bbe226272bf1489",
             "bodySha256": "cf962d9a53da64f48daafdf86e4a234bbe8ec6a1ec95a306d175c121e9c6d04f"
           },
           {
             "name": "behindHouse",
-            "start": 29535,
-            "end": 31458,
-            "line": 471,
-            "bytes": 1923,
-            "sha256": "7f27b065d416b606e0a95db28e83209ef06d4b6aca5ee11b18cf49241163ec37",
-            "bodySha256": "5564f6c8bd350e9514e5a39274009b7ed1ac20c5d828d978e83dc66088b85037"
+            "start": 30959,
+            "end": 32878,
+            "line": 491,
+            "bytes": 1919,
+            "sha256": "2b0d0503eec2ac1aee523d382964b59905def74c1a7e8ef68825b3390809a948",
+            "bodySha256": "0afc802fffd2799065c0018868e5f365845b165ab945da3887dfc784070ab9f0"
           },
           {
             "name": "occluders",
-            "start": 31945,
-            "end": 32366,
-            "line": 500,
+            "start": 33365,
+            "end": 33786,
+            "line": 519,
             "bytes": 421,
             "sha256": "75555504fa425dfc2b87dbaa5ded147820280d6e37b43d5bb1115672dd0c0be6",
             "bodySha256": "496be000b09d3f4addcba405efe64369bda30c560a3cc429790e6109f4f90061"
           },
           {
             "name": "ensureCrown",
-            "start": 34847,
-            "end": 37177,
-            "line": 545,
-            "bytes": 2330,
-            "sha256": "5bd87b8af20ad4635c6ff8a5437fdbcbc7139bf26c0648b63e72a2fb89634ab2",
-            "bodySha256": "926f1db7421f0fb903b440df212c3659999fb61c9b1f058bc415d554ded921da"
+            "start": 36537,
+            "end": 39246,
+            "line": 569,
+            "bytes": 2709,
+            "sha256": "e1804d36a4eef8147e67cc9f652fdb02a1320d6b275d6169c5e12ead11fd96bb",
+            "bodySha256": "152baca9758a6c278530043050405f9c973d32994baa8fdc252a5a0f3d34c81a"
           },
           {
             "name": "buildHome",
-            "start": 75459,
-            "end": 76656,
-            "line": 1089,
+            "start": 77977,
+            "end": 79174,
+            "line": 1116,
             "bytes": 1197,
             "sha256": "4108d26c66fe4a458686cf08b3bd0b2ad469db8e555e65d3968605a967f26c2d",
             "bodySha256": "ac8a310f8a9ca00686762f9b627be0cc2d832d6fb02894dbb27df730ddd4163d"
           },
           {
             "name": "swapHomeArt",
-            "start": 111202,
-            "end": 112656,
-            "line": 1562,
-            "bytes": 1454,
-            "sha256": "2fbe422530b16f9b1ce7252c4bb5a9b465fad04e7cdbaecccf8bf22558f7ad5e",
-            "bodySha256": "b976b9d74f959d0570e2ac2eb1cebbaff2e93aa35ab4b638f835af3bf5588a7f"
+            "start": 117446,
+            "end": 118939,
+            "line": 1631,
+            "bytes": 1493,
+            "sha256": "6b0174fc7b5afb2c5c2ff0bfe20f527241be5ab43e053561fc359d60723a0d12",
+            "bodySha256": "6a086b4652cd1a4efbbd2a276ffaba07f54481bc1d09522d8d2cc490f04a97ca"
           }
         ],
         "markers": [
           {
             "name": "legendRings",
-            "start": 114292,
-            "end": 117156,
-            "line": 1603,
-            "bytes": 2864,
-            "sha256": "afc282dfae451961aa417c833d4191b782269f7dc6f3b9742fbe8ff62e7ab815",
-            "bodySha256": "f057302f5011d71f3efca6a982c30e18f1c0f5b43a8c1f49cdf277cec8e55839"
+            "start": 120575,
+            "end": 124053,
+            "line": 1672,
+            "bytes": 3478,
+            "sha256": "9b38416707fca1915a2fa35ae13316ba6a59fe77549454afa99f86a3ba91fd09",
+            "bodySha256": "88f986a6e85bfcbb1521b63e74fae172a6df0ca901476fb3058c64565f0bfdb7"
           },
           {
             "name": "pin",
-            "start": 42322,
-            "end": 42536,
-            "line": 650,
+            "start": 44836,
+            "end": 45050,
+            "line": 685,
             "bytes": 214,
             "sha256": "9e4a8663efd685bcae6eec2269afdcd072dfee365a010afb9c1eadaa2aeb58e3",
             "bodySha256": "4aa130c199c30575ea9f8f756c695f7aef2d18086ca261fe5da04be69129dae7"
           },
           {
             "name": "inviteStart",
-            "start": 45457,
-            "end": 45673,
-            "line": 693,
+            "start": 47971,
+            "end": 48187,
+            "line": 728,
             "bytes": 216,
             "sha256": "62e47264d3e75220f117a8d199a75a8075e59c09babcb871b4697666c181926f",
             "bodySha256": "55bc5945bf05b541f6a60e27d626dc10c9a55c975914fc67c3a9fefe3355024f"
@@ -405,27 +459,27 @@
         "atmosphere": [
           {
             "name": "updateMoon",
-            "start": 107512,
-            "end": 108278,
-            "line": 1512,
+            "start": 111850,
+            "end": 112616,
+            "line": 1561,
             "bytes": 766,
             "sha256": "4b9df9e3b21d6308ed79bfc4e4577e53f618041f6a61e555ba8504ca54e8907c",
             "bodySha256": "e9402433590b8865354ee06ee60ddea62edaa964288c9e83dd8d6116ff94e12d"
           },
           {
             "name": "updateSteam",
-            "start": 108403,
-            "end": 108858,
-            "line": 1523,
+            "start": 112741,
+            "end": 113196,
+            "line": 1572,
             "bytes": 455,
             "sha256": "aa2f27fb05573a8640a475beb3a6029d65f7a0b95714b726ae7e0ed673133f5d",
             "bodySha256": "104b1bac0384cd11ff129e56eb64d2265acccbcf84579fea1624bbdb99d2779f"
           },
           {
             "name": "updateSmoke",
-            "start": 109000,
-            "end": 109995,
-            "line": 1533,
+            "start": 113338,
+            "end": 114333,
+            "line": 1582,
             "bytes": 995,
             "sha256": "36f77fa3ed896e39ae1467dcf5c00b782229f51bb2b6de113fd343ff7f5ba6fb",
             "bodySha256": "b46b18e26e4a4d8191ae4ca0e57326093f9d4403928f18feda0497adfc12ec83"
@@ -434,108 +488,108 @@
         "readiness": [
           {
             "name": "readyPrograms",
-            "start": 24183,
-            "end": 24533,
-            "line": 392,
+            "start": 25144,
+            "end": 25494,
+            "line": 407,
             "bytes": 350,
             "sha256": "f8d0c1b893f063a6ed4122a4ccbda3d25120eef1a674d39216367290e34b416d",
             "bodySha256": "93fec4edf59ecf5a3db10acecef62e4a0947f266803e0fdc4acaec42becd59a7"
           },
           {
             "name": "landingWakeReady",
-            "start": 24776,
-            "end": 25237,
-            "line": 406,
+            "start": 25986,
+            "end": 26447,
+            "line": 424,
             "bytes": 461,
             "sha256": "a8e9865f7138028b7c98340a244db507eab9faebb7f3aecbf8c5e46f42d6a3a9",
             "bodySha256": "855f0f350423bdf2527daafdcb3ebc8b0a2ac033ccaa936ad90fb25350665af7"
           },
           {
             "name": "beginLandingShaders",
-            "start": 25240,
-            "end": 25497,
-            "line": 412,
-            "bytes": 257,
-            "sha256": "0cdbe53d8967530fd7b15e2cd237f50c9c3c13271b35f98457c5fc4c2865d395",
-            "bodySha256": "060adc2047fa8ce3557a48a9fa62c27b5cfe4b70a11972b69f24d01fb86c2bde"
+            "start": 26450,
+            "end": 26739,
+            "line": 430,
+            "bytes": 289,
+            "sha256": "7992962810e32e0a7ec2a8c1b7e185b244b75eb675bdb86efdd5ce22529be99c",
+            "bodySha256": "bf55303550bcc1d0595262e182ac69a6bcf3298e738946bce16bc6cbd941b9b4"
           },
           {
             "name": "armLimitedLanding",
-            "start": 25500,
-            "end": 25702,
-            "line": 413,
+            "start": 26742,
+            "end": 26944,
+            "line": 431,
             "bytes": 202,
             "sha256": "8b404e2a5fad8c10edca44610078491d24b0b01ce89bd8430e6ad7a644e600df",
             "bodySha256": "ee94761010d408525613f4b8d9919d5974ebb5d5f2fc8c3e470f780b46d181c4"
           },
           {
             "name": "limitedLandingReady",
-            "start": 25705,
-            "end": 26299,
-            "line": 418,
+            "start": 26947,
+            "end": 27541,
+            "line": 436,
             "bytes": 594,
             "sha256": "020dfa20280ac90625f85ce475ff3d33f1c7142458d6328e7155c331e4c95d83",
             "bodySha256": "51a8dd8cf7221d2010afa9534c6217080a77bf7ad725351c12db527d389b0fa8"
           },
           {
             "name": "waitForLandingWitch",
-            "start": 26302,
-            "end": 26567,
-            "line": 426,
+            "start": 27544,
+            "end": 27809,
+            "line": 444,
             "bytes": 265,
             "sha256": "3a0b7dfa0dc3d844d494a8748dc6bf4ca9ee95ee9fd1eb0639f1d14d8b016d8d",
             "bodySha256": "634b9a5e950aad1117df93ab540355f3042b7b5712203ba35c97a154983ce069"
           },
           {
             "name": "startLandingShaderGrace",
-            "start": 26570,
-            "end": 26832,
-            "line": 432,
+            "start": 27812,
+            "end": 28074,
+            "line": 450,
             "bytes": 262,
             "sha256": "8e0842cff548de1984ac53a0682f43b5ca0bd6aa6f83d5f9e900978f4fd7f8ea",
             "bodySha256": "8bd0fcb3e4f6b9f4f7e778f86fc0502e059d79f2ee3458b99f4a64527bfbfdda"
           },
           {
             "name": "compileAll",
-            "start": 80756,
-            "end": 88737,
-            "line": 1160,
-            "bytes": 7981,
-            "sha256": "a9d72681d43c598bd35ab362c782e4f1f2493796c7b6519653d699bcb7d05957",
-            "bodySha256": "53033e4f1356a09c872c82f340a43324c1e89bd9671e7956edae2aa942c58402"
+            "start": 83744,
+            "end": 91957,
+            "line": 1191,
+            "bytes": 8213,
+            "sha256": "a3fc8408b30bb2428a8ee2df46db2900ac1bd3ffe3b3f913f843c71cc38ff19f",
+            "bodySha256": "28534191a8eedaeb19bd5bb9d1f6675d85648e0ae40eb7326abd7c5097074742"
           },
           {
             "name": "gpuCaughtUp",
-            "start": 89373,
-            "end": 89879,
-            "line": 1262,
+            "start": 92593,
+            "end": 93099,
+            "line": 1296,
             "bytes": 506,
             "sha256": "9014b827dd4211864e6c7216ff7084469516078b6e72a0d058f65f52e3da3b6d",
             "bodySha256": "9006b725d035716686d9e969018223c7eed008a7ca378f89c15f765e4be15544"
           },
           {
             "name": "warmDraws",
-            "start": 90374,
-            "end": 92401,
-            "line": 1277,
+            "start": 93594,
+            "end": 95621,
+            "line": 1311,
             "bytes": 2027,
             "sha256": "ffc7d153f65dabc03d8b9fbf710b45d17c1ce2d446480a1478d9af46b44e21c5",
             "bodySha256": "98193056d0c0f3a35fdfe1301f54b8b5b004d2ebbe1b58725e2d44b606dc3414"
           },
           {
             "name": "warmSteps",
-            "start": 78295,
-            "end": 78782,
-            "line": 1125,
+            "start": 80813,
+            "end": 81300,
+            "line": 1152,
             "bytes": 487,
             "sha256": "0845b5429d94f45ce3656f38ff225dca38bdf50d47bc3ce0fc9dc2c774b79a42",
             "bodySha256": "83c70bdf7672c2026fb0ff654e42661fef7dffcae909d764a6f0deb3f565dbc2"
           },
           {
             "name": "setReadiness",
-            "start": 80237,
-            "end": 80636,
-            "line": 1153,
+            "start": 82755,
+            "end": 83154,
+            "line": 1180,
             "bytes": 399,
             "sha256": "e78b72fd751b30f9cde528ffadba6a312b068a354c1aa5e1d218b64b1eb21052",
             "bodySha256": "5f7747fa15b72df36f968d8b0b800e736ddd618a208c6d95d3984bee9c6eba7b"
@@ -544,54 +598,45 @@
         "lifecycle": [
           {
             "name": "build",
-            "start": 55875,
-            "end": 65622,
-            "line": 809,
-            "bytes": 9749,
-            "sha256": "b85b48cc8fa0b1fd41142630a7492929d97a1f0eb8e6c794e766a9a6450c4bfc",
-            "bodySha256": "7ac7292b813b127b0e01b9b39db6354b1fb8a718835b6e4869cfe3df846b7651"
+            "start": 58687,
+            "end": 68476,
+            "line": 846,
+            "bytes": 9791,
+            "sha256": "98b1451164a5cadab9ac7b5c5a6f7914ef8db1280ff5a26684cce590fd182ad8",
+            "bodySha256": "7a236014f275ae8d7add8bdfc10dd288ed899c617c56ddd4810ae94bac4db94c"
           },
           {
             "name": "prepare",
-            "start": 68955,
-            "end": 73760,
-            "line": 1001,
-            "bytes": 4805,
-            "sha256": "331627534ca79ec577685b82b6b5667fc79667322d7136d555a0d26211d3412f",
-            "bodySha256": "5d38e8f1700b9da1b5c7e0891093d3dbae892473788d254d6ff52baf652c37b1"
-          },
-          {
-            "name": "treeExtent",
-            "start": 74135,
-            "end": 74946,
-            "line": 1069,
-            "bytes": 811,
-            "sha256": "f4f0edbe56b9bbb5de618a3359618eaaa191eda865c5b56254028d9aa33bce29",
-            "bodySha256": "c0f02219f3d44c60e1a8be7da651941b62efb469e7345cb02aeb36308adf2390"
+            "start": 72010,
+            "end": 77464,
+            "line": 1041,
+            "bytes": 5454,
+            "sha256": "ea5d3590ab7e0be9e0c64bff6d876dafc713142e5d1d63d3e3a09a36a1a310cb",
+            "bodySha256": "904c77f84845a324857ab77263ab0a13ba651171e7f63f17e3dc7fc2d7d1b847"
           },
           {
             "name": "askIsland",
-            "start": 92578,
-            "end": 94554,
-            "line": 1306,
+            "start": 95798,
+            "end": 97774,
+            "line": 1340,
             "bytes": 1976,
             "sha256": "987c005ce624af2af23c31d09a9bc31f52876e65294d0132fd04f23994e129cb",
             "bodySha256": "9f3ba406e97f4f1f70b68383b1fab6b4b61afa17dc4eb980d2db06b13e492fef"
           },
           {
             "name": "setGameSteps",
-            "start": 95897,
-            "end": 99981,
-            "line": 1338,
-            "bytes": 4084,
-            "sha256": "6343b2f900d01f3af64bc6c080ea5aea5046817ed882efeb32d95b7c461cf55d",
-            "bodySha256": "29797368b6e02c870cc97e2f7795eb2e41095fafc20867b67c856438b942164a"
+            "start": 99117,
+            "end": 103314,
+            "line": 1372,
+            "bytes": 4197,
+            "sha256": "ca0e32271840c9395d4a5e1aa6cf9835b8eb6d4f5fd0707154534bfb34fa0371",
+            "bodySha256": "bafe7b056ba0877af61d1fc08a24be57312f4af87cfc8cc6f172c038e6d3b266"
           },
           {
             "name": "retype",
-            "start": 100223,
-            "end": 100705,
-            "line": 1391,
+            "start": 103556,
+            "end": 104038,
+            "line": 1427,
             "bytes": 482,
             "sha256": "5aeb36d7a8402dc5b220eb11ca3da48404832875ed48f4220d5d88a03cd0f54d",
             "bodySha256": "b853eac075ed51b89b7039f307a14a04a01c61b6d77ce5056de3947642ce8ccd"
@@ -599,37 +644,46 @@
         ],
         "viewport": [
           {
+            "name": "landingShot",
+            "start": 116523,
+            "end": 116773,
+            "line": 1620,
+            "bytes": 250,
+            "sha256": "9552dbbc8848c24b96894e988054d166194a65814bdf3bb6b1ffd63e217621c1",
+            "bodySha256": "dc45fba5d3d7dba5c7062b699e28ec8d00e68ebd8cad59b31058c5dd14806582"
+          },
+          {
             "name": "scenePixelSize",
-            "start": 66784,
-            "end": 67182,
-            "line": 971,
+            "start": 69638,
+            "end": 70036,
+            "line": 1009,
             "bytes": 398,
             "sha256": "c5f3fe3be2aefe0cf3b100aff3a3ae6a3789654cb7b28022503323808634ffa6",
             "bodySha256": "25e14d075d8ae29d9a1b43913d5cd755c2851cb28473fc2c840eda727754e889"
           },
           {
             "name": "resize",
-            "start": 67288,
-            "end": 68171,
-            "line": 978,
+            "start": 70142,
+            "end": 71025,
+            "line": 1016,
             "bytes": 883,
             "sha256": "24eb7dea157fec098781b49d5f13fac3a11fabc037a35ea1c30f00a608e81744",
             "bodySha256": "4695ff3d95dd79fa3e6bb5362a128d85a71ff391e28196279ceed8eebdfbde08"
           },
           {
             "name": "screenOf",
-            "start": 105025,
-            "end": 105236,
-            "line": 1471,
+            "start": 108418,
+            "end": 108629,
+            "line": 1507,
             "bytes": 211,
             "sha256": "86dfa7d7a276a85f21d08b6392b09ff707e12152d82b34d170247e2728b7c0d2",
             "bodySha256": "d8c152a4d0f91a0bf6ccf3822238ac8f30b1b31ba2b4d3fee544482f51d97d59"
           },
           {
             "name": "aimAt",
-            "start": 112973,
-            "end": 113499,
-            "line": 1586,
+            "start": 119256,
+            "end": 119782,
+            "line": 1655,
             "bytes": 526,
             "sha256": "bcf480b9405f335a4362b96a2377db3512cfa6c745e5e1470acdfb6b4f08100e",
             "bodySha256": "d5dd4ea72543483e59e8e276a552c8297dc5c8e5855d8e7f6506d4fa4784b9ad"
@@ -641,6 +695,7 @@
         "readonly renderer: THREE.WebGLRenderer;",
         "scene = new THREE.Scene();",
         "readonly magic = fxFor(this.scene);",
+        "readonly partyStart = new PartyStartFx(this.scene);",
         "fxMock: FxMock | null = null;",
         "camera: THREE.PerspectiveCamera;",
         "hazeKept: THREE.Vector2 | null = null;",
@@ -650,6 +705,7 @@
         "shaderLandingLimited = false;",
         "landingHouseShare = 1;",
         "landingSleeping = false;",
+        "asleepInBed = false;",
         "landingWakeReady(): boolean",
         "beginLandingShaders(chart: boolean): void",
         "limitedLandingReady(now = performance.now()): boolean",
@@ -674,6 +730,7 @@
         "houseRooms: HouseRoomsView | null = null;",
         "zooExitTag: ZooExitTag | null = null;",
         "castTag: CastTag | null = null;",
+        "feedTag: FeedTag | null = null;",
         "crown: CrownView | null = null;",
         "partsFound: ReadonlySet<string> = new Set();",
         "get mapTable(): MapTable | null",
@@ -685,6 +742,8 @@
         "grass!: GrassView;",
         "spellFx = new SpellFx();",
         "get dodgeEchoes()",
+        "get trailPreset(): string | null",
+        "set trailPreset(id: string | null)",
         "shadow!: THREE.Mesh;",
         "mpp: number;",
         "sceneryFixed: number | null = null;",
@@ -739,6 +798,7 @@
         "lightRings: LightRings | null = null;",
         "loadingMist: LoadingMist | null = null;",
         "loadingMistLink: boolean | null = null;",
+        "landingPresentationMs = 0;",
         "width = 1;",
         "height = 1;",
         "debugCull = false;",
@@ -747,13 +807,12 @@
         "areaMoods: AreaMoods | null = null;",
         "stats: ViewStats = { berries: 0, forestMs: 0, forestMissing: 0, sceneryRadius: 0, fps: 0, gameplay: 0, scenery: 0, dropped: 0, trees: 0, bushes: 0, creatures: 0, batches: 0, drawCalls: 0, pendingArt: 0, pendingGround: 0, lights: 0 };",
         "constructor(readonly canvas: HTMLCanvasElement, public game: Game, readonly style: Style, witchGenome: unknown = null, sliced = false)",
-        "static async create(canvas: HTMLCanvasElement, game: Game, style: Style, witchGenome: unknown = null, budgetMs = 8): Promise<View>",
+        "static async create(canvas: HTMLCanvasElement, game: Game, style: Style, witchGenome: unknown = null, { budgetMs = 8, hatOff = false }: { budgetMs?: number; hatOff?: boolean } = {}): Promise<View>",
         "debugShadows(): void",
         "pixelScale = 1;",
         "cssPixel = 1;",
         "resize(cssW: number, cssH: number): void",
-        "async prepare(o: { sail?: boolean; dive?: (x: number, z: number) => number; track?: [number, number, number, number][] } = {}): Promise<void>",
-        "treeExtent(): TreeExtent | null",
+        "async prepare(o: { sail?: boolean; dive?: (x: number, z: number) => number; track?: [number, number, number, number][]; underDive?: boolean } = {}): Promise<void>",
         "homeDone = true;",
         "islandDrawn(): boolean",
         "readonly readiness: { stage: \"compile\" | \"programs\" | \"textures\" | \"draws\" | \"gpu\" | \"ready\"; done: number; total: number; share: number } = { stage: \"compile\", done: 0, total: 1, share: 0 };",
@@ -785,6 +844,7 @@
         "runeCyan = new THREE.Vector3(0.3, 0.9, 1);",
         "runeViolet = new THREE.Vector3(0.75, 0.45, 1);",
         "runeGreen = new THREE.Vector3(0.45, 1, 0.5);",
+        "replayPartyStart(): boolean",
         "edgeSparkle(x: number, z: number): void",
         "readonly waveNumbers = new WaveNumbers();",
         "ms: Record<string, number> = {};",
@@ -792,13 +852,15 @@
         "updateMoon(g: Game): MoonState",
         "time(part: string): void",
         "makeWitchBatch(bare = false): SpriteBatch",
-        "setWitch(genome: unknown): void",
+        "setWitch(genome: unknown, morning?: { hatOff: boolean }): void",
+        "landingShot(): Shot",
+        "get lookDrawn(): boolean",
         "overBulge(x: number, z: number, top: number): number",
         "aimAt(clientX: number, clientY: number): { x: number; z: number } | null",
         "drawEst = 0;",
-        "render(time: number, draw = true): void"
+        "render(time: number, draw = true, repaintHeld = false): void"
       ],
-      "publicApiSha256": "66233666c3b069114653fec5ce1b08bcbff79b7f79d584fb63774087ee8b1ff9"
+      "publicApiSha256": "b40214fc2a9550cc2d6daf7b069427fcceb79a92fa918a04b0edb21e4327ab64"
     }
   ]
 }

@@ -25,17 +25,12 @@ describe("legend circles sized to fit their legends (rules/legendFit.ts)", () =>
       const map = generateMap(seed, TUNING);
       for (const c of map.legendClearings) {
         const sp = AREA_TYPES[map.typeOf(c.cell[0], c.cell[1])].creature;
-        if (radiusToFit(sp, LC) > LC.fit!.max) continue; // (the giants: GIANTS below)
+        if (radiusToFit(sp, LC) > LC.fit!.max) continue; // (over-cap identities are in the informational report)
         if (c.r < legendRadius(sp, LC) - 1e-6) continue; // (a circle squeezed smaller to fit a tight area: rules/map.ts)
         expect(overflow(sp, c.r, LC), `${sp} in ${c.cell} (seed ${seed})`).toBeLessThanOrEqual(-LC.fit!.margin + 1e-6);
       }
     }
   });
-  it("lists the legends too big for any circle under the cap (waiting on Ed's call: drawn smaller asleep, or the circles allowed bigger)", () => {
-    const giants = Object.keys(LEGEND_SIZES).filter(sp => radiusToFit(sp, LC) > LC.fit!.max).sort();
-    expect(giants).toEqual(GIANTS);
-  });
 });
 
-/** Too wide asleep for a circle of fit.max (25 m) with the margin, at the legend's place (top 0.45). */
-const GIANTS = ["crocodile", "elephant", "elk", "frostwyrm", "griffin", "jaguar", "lion", "sphinx", "stegosaurus", "tiger", "unicorn"];
+// The old-cap giant identity baseline is informational in tools/behaviour/legends-fit.behaviour.ts.

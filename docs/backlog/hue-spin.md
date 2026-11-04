@@ -1,5 +1,14 @@
 # Hue Spin — recipe 108
 
+**Audit status (2026-11-01): Built in source: recipe 108 colour/audio rotation; subjective play review remains separate.**
+
+The status index checks the requests below against prototype `ab06904b` and cited history. **Built** means code is present, not a new play/audition/performance pass. **Partly built** states the missing part. An em dash leaves an unimplemented request unmarked. Versions are verified changelog build labels where available; “unverified” means no first-live number was established. Historical/superseded requests are preserved, not re-authorised. Repeated details/build-order summaries are counted with their feature group, not again.
+
+| Request / feature group | Status | Evidence and remaining gap |
+|---|---|---|
+| RGB rotation, synced sound, lab controls and final fade | **Built** | #1541, git b3118867a; registry recipe108 implemented, Post hue rotation and potionCycle audio phase. Fragment version null: first shipped version unverified. |
+
+
 Ed, 2026-10-31: "make a potion"; every potion must alter existing sounds throughout the trip.
 
 Build the existing Hue Spin proposal: pink + turquoise + white, every colour slowly turns into another. Reuse the composite screen pass for a colour rotation and the shared potion audio filter for a synchronised sweep. Expose cycle length, starting colour rotation, visual strength and sound sweep depth in the Potion Lab. Start full strength on waking; fade to the original picture and sound during the last two game minutes. Stop/replacement restores the default immediately through the normal envelope.

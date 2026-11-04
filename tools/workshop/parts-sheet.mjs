@@ -18,7 +18,7 @@ function png(w, h, rgba) { const crc = b => { let c, t = []; for (let n = 0; n <
   return Buffer.concat([Buffer.from([137, 80, 78, 71, 13, 10, 26, 10]), chunk("IHDR", hd), chunk("IDAT", zlib.deflateSync(raw)), chunk("IEND", Buffer.alloc(0))]); }
 // her broom's colours over the workshop's (the classic witch's: render/workshopArt.ts partColours)
 const wc = G.witchColours({}, G.genomeLook(G.WITCH_GENOME).outfit ?? undefined);
-const col = { ...furnitureColours({}, "workshop"), [M.BROOM]: wc[M.BROOM], [M.STRAW]: wc[M.STRAW] };
+const col = { ...furnitureColours({}), [M.BROOM]: wc[M.BROOM], [M.STRAW]: wc[M.STRAW] };
 const ids = Object.keys(PART_ART), house = 32 / 3;
 const one = (draw, o) => { const m = new Model({ blend: .02 }); draw(m); return modelSprite(m, o).sp; };
 // rows: the card (side on, pitch .3, scaled to about 60 px long), the room (the pegboard's: house ppm, pitch .6, the board's tilt)

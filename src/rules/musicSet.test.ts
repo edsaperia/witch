@@ -85,7 +85,7 @@ describe("a night's set", () => {
     expect(g.musicSet?.curated).toBe(true);
     expect(g.musicSet?.waves).toBe(10);
     expect(g.beat.segs.length).toBe(1); // (the tempo the gameplay's: Ed, "tempo is set by the gameplay")
-    for (const a of nightStyle(style, g.musicSet).arc) expect(a.bpm).toBeUndefined();
+    for (const a of nightStyle(style, g.musicSet).arc) expect(Object.hasOwn(a, "bpm")).toBe(false);
   });
 
   it("is the same for the same seed, island and waves, and different for another seed", () => {

@@ -2,7 +2,8 @@
 // bodies, zones, beams, telegraphs, its casters' tells and its events, every one dressed by the attack look (leash/attackLook.ts)
 // in its element (the attack's body.element tag, else its caster's) and, if it hunts her, warned of in the danger frame. The rules
 // never draw; this only reads them.
-import { elementOf } from "../../rules/attackLook";
+import { elementOf, magicNamed } from "../../rules/attackLook";
+import { SPECIES_ATTACKS } from "../../rules/attacks/species";
 import { huntsWitch, type State } from "../../rules/creatureStates";
 import type { SpellState, Telegraph } from "../../rules/attacks/engine";
 import type { Game } from "../../rules/game";
@@ -15,7 +16,11 @@ const dresses = new Map<string, Dress>();
 function dressOf(species: string, tag: string, level: number, tint: RGB | null, look = ""): Dress {
   const key = `${species}|${tag}|${level}|${look}|${tint ? `${tint.r},${tint.g},${tint.b}` : ""}`;
   let d = dresses.get(key);
-  if (!d) dresses.set(key, (d = { el: elementOf(species, undefined, undefined, tag || undefined), level, tint: tint ? [tint.r, tint.g, tint.b] : null, ...(look ? { look } : {}) }));
+  if (!d) {
+    // (its own magic colours, the rainbow's or the gold's: its tag's, else its species' own attack's)
+    const fx = magicNamed(tag || undefined) ?? magicNamed(SPECIES_ATTACKS[species]?.body?.element);
+    dresses.set(key, (d = { el: elementOf(species, undefined, undefined, tag || undefined), level, tint: tint ? [tint.r, tint.g, tint.b] : null, ...(look ? { look } : {}), ...(fx ? { fx } : {}) }));
+  }
   return d;
 }
 

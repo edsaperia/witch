@@ -26,6 +26,7 @@ import type { Style } from "../style";
 import { coatLuminance, legendFloor } from "../legendLight";
 import { legendGlow, outlineIn } from "../legendOutline";
 import { aggroAmount, aggroFadeOut, aggroGlow } from "../aggro";
+import { STATUE_TINT, setStatueTint, statueLook } from "../statues";
 import { cellKey } from "../../rules/party";
 import { legendRings } from "../../rules/slowTime";
 import { flightHeight } from "../../rules/movement";
@@ -139,6 +140,7 @@ export function drawCreatures(v: View, time = 0): void {
   v.rig?.begin(time, g.tuning.rig, g.witch.mode !== "rising" && g.witch.mode !== "treetop");
   if (v.rig && !v.rig.legendLook) v.rig.legendLook = sp => legendLook(sp, g.tuning, v.style);
   const WW = g.tuning.wildWatch?.on ? g.tuning.wildWatch : null; // (the wild watch's rising aggro)
+  setStatueTint(g.tuning); // (the challenge circle's statues' stone: render/statues.ts)
   const ringOf = RING_OF, rings = legendRings(g); // (each legend's circle: its outline shows only with her in it)
   for (let i = 0; i < rings.length; i++) ringOf.set(rings[i].id, rings[i]);
   // How far towards the camera a sprite's rows below its ground line land, a metre of rows (as soundsystemGen.ts stands them, #564).
@@ -152,6 +154,8 @@ export function drawCreatures(v: View, time = 0): void {
     // back, fading to it as it hides and back as it comes out (combat.packs.shadow); with no shadow look, out of sight as before.
     const hide = c.packHide, SH = g.tuning.combat.packs?.shadow;
     if (hide && !SH) continue;
+    // One of the challenge circle's statues (render/statues.ts): stone, drawn still and grey in a batch of its own; red as they wake.
+    const SL = c.statue ? statueLook(g, c) : null, stone = !!SL?.stone;
     const shadowK = hide && SH ? Math.max(0, Math.min(1, (g.clock.time - (hide.at ?? -Infinity)) / Math.max(1e-3, SH.fade), (hide.until - g.clock.time) / Math.max(1e-3, SH.fade))) : 0;
     // (its species' art asked for only once it may be on screen, by the biggest a creature is drawn, a legend's: the first
     // frame's creatures first, not every one within the haze; the island's own come ahead of need, view.ts askIsland)
@@ -180,7 +184,7 @@ export function drawCreatures(v: View, time = 0): void {
       if (!st && !napping && lying <= 0 && droop <= 0) v.legendSleeps.delete(c.id); // (up again: forgotten)
     }
     // Its expression, part of its face (art/genome/expressions.js; render/looks.ts expression): the party looks are happy and the woken one angry already.
-    const face = sleeping || lying > 0.5 ? "neutral" : expression(c, time), faced = !party && !woken && face !== "neutral" ? v.assets.faceArt(c.species, face) : undefined;
+    const face = sleeping || lying > 0.5 || stone ? "neutral" : expression(c, time), faced = !party && !woken && face !== "neutral" ? v.assets.faceArt(c.species, face) : undefined;
     // Asleep, its own sleeping form (art/legends.js), drawn once it's baked; until then the awake one sunk, as before.
     // (Ed's round 14 playtest, "it's hard to make out what it is at all": with wildLegends.seen.nap its nap, art/naps.js, the animal itself lying asleep, not a mound)
     const slept = sleeping ? (g.tuning.wildLegends.seen?.nap ? v.assets.napArt(c.species) : v.assets.sleepArt(c.species)) : undefined;
@@ -190,7 +194,7 @@ export function drawCreatures(v: View, time = 0): void {
     // IDLE_BUILDERS): while the quirk plays and it stands still, wild, its own baked frames stand in for the rig, as a nap's do. The
     // rattlesnake's "rattle" (Ed, 2026-10-13: "it rattles only near the witch, as a warning"): its rattle raised and shaking while she's
     // within RATTLE_NEAR metres of it or its area is watching her.
-    const ch0 = characterOf(c.species), still = !asleepArt && !party && !woken && !st && lying <= 0 && !c.moving && !c.charge && !c.leap;
+    const ch0 = characterOf(c.species), still = !stone && !asleepArt && !party && !woken && !st && lying <= 0 && !c.moving && !c.charge && !c.leap;
     const warns = ch0.quirk === "rattle" && ((c.watchUntil !== undefined && g.clock.time < c.watchUntil) || Math.hypot(c.x - g.witch.x, c.z - g.witch.z) < RATTLE_NEAR);
     const idlePose = still && ((ch0.quirk === "sentinel" && quirkAt(c.id, ch0, time) >= 0) || warns) ? v.assets.idleArt(c.species) : undefined;
     const napped = asleepArt ?? idlePose;
@@ -198,8 +202,8 @@ export function drawCreatures(v: View, time = 0): void {
     const glided = !napped && !st && !!c.leap && time >= c.leap.at && !!glideOf(c.species) ? v.assets.glideArt(c.species) : undefined;
     const art = glided ?? napped ?? party ?? woken ?? slept ?? faced ?? v.assets.creatureArt(c.species), key = glided ? keyOf("glide", c.species) : idlePose && !asleepArt ? keyOf("idle", c.species) : napped ? (party ? keyOf(keyOf(look === "happy" ? "nap-happy" : "nap-party", c.species), c.id) : keyOf("nap", c.species)) : party ? party.key! : slept ? keyOf("sleep", c.species) : sleeping ? keyOf("sunk", c.species) : woken ? keyOf("woken", c.species) : faced ? keyOf((FACE_KEY[face] ??= `face-${face}`), c.species) : c.species;
     if (!art) continue;
-    const lk = hide ? keyOf("shadow", key) : c.boss && !c.leashed && g.tuning.wildLegends.seen ? keyOf("legend", key) : key; // (a wild legend in a batch of its own: its rim and its light in steps; one hiding, in a shadow batch)
-    if (lk !== key) legendKeys.set(lk, c.species);
+    const lk = hide ? keyOf("shadow", key) : stone ? keyOf("statue", key) : c.boss && !c.leashed && g.tuning.wildLegends.seen ? keyOf("legend", key) : key; // (a wild legend in a batch of its own: its rim and its light in steps; one hiding, in a shadow batch)
+    if (lk !== key && !stone) legendKeys.set(lk, c.species);
     arts.set(lk, art);
     const gait = art.walk, fi = glided ? art.frame(c.level, Math.floor(time * 3 + c.id * 0.37) % 2) : slept || napped ? art.frame(c.level, Math.floor(time / (slept ? 2.5 : 1.8) + c.id * 0.37) % 2) : art.frame(c.level, strideFrame(v, c, time, art.atlas.frames[art.frame(c.level, 0, c.away)].w * v.mpp * (gait?.step ?? 0.3), gait?.frames ?? 2), c.away), frame = art.atlas.frames[fi]; // (walking: its cycle by the distance it's gone, a planted foot staying put) // (asleep: a slow breath, in and out)
     // A wild legend (Ed, 2026-10-04): bigger and imposing, swelling slowly as it breathes (slower asleep).
@@ -246,20 +250,21 @@ export function drawCreatures(v: View, time = 0): void {
       scale = 1 + 0.3 * Math.max(0, 1 - d / 0.5) ** 2;
     }
     // Wild creatures blink now and then: their eyeshine goes out about find.eyeshine.blink of the time (Ed, v244).
-    if (!c.leashed && lying <= 0) { const ph = time * 0.7 + c.id * 0.37; if (hash2(c.id, Math.floor(ph), 41) < g.tuning.find.eyeshine.blink * 6 && ph % 1 < 1 / 6) glow = -1; }
+    if (!c.leashed && lying <= 0 && !stone) { const ph = time * 0.7 + c.id * 0.37; if (hash2(c.id, Math.floor(ph), 41) < g.tuning.find.eyeshine.blink * 6 && ph % 1 < 1 / 6) glow = -1; }
     // Hit: a white flash; the blow's feel (render/attackFeel.ts): crouching in its wind-up, stretched in its lunge, squashed
     // and springing back when hit, tumbling when knocked back.
     if (c.hurtAt !== undefined && time - c.hurtAt < 0.25) glow = Math.max(glow, (1 - (time - c.hurtAt) / 0.25) * (c.level === 3 ? 0.5 : 1)); // (a legend's at half: whole, it whites out the screen; the contact star marks the blow)
     // A wild area watching her come down (rules/wildWatch.ts): its watchers redden together as their minds make up (render/aggro.ts).
     // When it ends (it attacks, is invited, gives up, she leaves), the red eases out from where it was (v.aggroLast).
-    if (glow <= 0 && WW) {
+    if (glow <= 0 && SL && SL.red > 0.001) { const r = v.aggroLast.get(c.id); if (r) { r.a = SL.red; r.at = time; } else v.aggroLast.set(c.id, { a: SL.red, at: time }); glow = aggroGlow(SL.red); } // (a statue waking: "all the animals glow red", eased out as they wake, below)
+    else if (glow <= 0 && WW) {
       const e = c.watchUntil !== undefined && g.clock.time < c.watchUntil ? g.wildEntry.get(cellKey(c.cell)) : undefined;
       if (e) { const a = aggroAmount(1 - (c.watchUntil! - g.clock.time) / Math.max(1e-6, WW.time), e.danger, WW.tint); const r = v.aggroLast.get(c.id); if (r) { r.a = a; r.at = time; } else v.aggroLast.set(c.id, { a, at: time }); glow = aggroGlow(a); }
       else { const l = v.aggroLast.get(c.id); if (l) { const a = aggroFadeOut(l.a, time - l.at, WW.fade); if (a > 0.005) glow = aggroGlow(a); else v.aggroLast.delete(c.id); } }
     }
     const feel = attackFeel(c, time, g.tuning.attackFx, FEEL);
     // A 💌 just landed on it (render/impact.ts): an instant's white flash and a little squash, springing back.
-    const imp = impactOf(c.id, g.tuning.invites.impact, IMPACT);
+    const imp = impactOf(g.clock, c.id, g.tuning.invites.impact, IMPACT);
     if (imp.flash > 0) glow = Math.max(glow, imp.flash);
     feel.sx *= imp.sx; feel.sy *= imp.sy;
     // Leaping (Stage 5: the toad): up in an arc over its shadow.
@@ -294,7 +299,7 @@ export function drawCreatures(v: View, time = 0): void {
     // fighting, dancing or asleep), and a happy creature's bounce now and then (a party or happy one not dancing).
     const ch = characterOf(c.species), standing = !c.moving && !c.charge && !c.leap && lying <= 0 && !party2 && !feel.crouch && !feel.lunging;
     const watching = c.watchUntil !== undefined && g.clock.time < c.watchUntil; // (a wild area watching her come down, rules/wildWatch.ts: still, no idle quirk, turned to her)
-    const quirkK = standing && !watching ? quirkAt(c.id, ch, time) : -1;
+    const quirkK = standing && !watching && !stone ? quirkAt(c.id, ch, time) : -1;
     if (standing && (look === "leashed" || look === "happy") && !c.boss) hop += bounceAt(c.id, time);
     // How its frame is drawn: mirrored for its facing (a nightmare tossing, a tumble, a look back turn it over), and how far its
     // body's middle lies from its place (a sleeping form's frame is often off-centre: a curl, a legend's tails).
@@ -302,7 +307,7 @@ export function drawCreatures(v: View, time = 0): void {
     let rigged = false;
     const heat = creatureHeat(c, feel.lunging || feel.crouch > 0);
     if (hide) glow = shadowK; // (a shadow batch's glow: how far gone to its shadow)
-    if (v.rig && !hide && (stilts.length > 1 || (!form && !idlePose && !glided))) { // the rig draws it, if it can (its look record filled in place: one for every creature)
+    if (v.rig && !hide && !stone && (stilts.length > 1 || (!form && !idlePose && !glided))) { // the rig draws it, if it can (its look record filled in place: one for every creature)
       const L = LOOK;
       L.heat = heat;
       L.stiltLength = stilts.length; L.stiltTip = stilts.tip; L.stiltStrength = stilts.strength;
@@ -340,6 +345,7 @@ export function drawCreatures(v: View, time = 0): void {
     v.creatureUsed.set(s, now); // (drawn: kept by the GPU budget, view/gpuBudget.ts)
     let b = v.creatureBatches.get(s);
     if (!b) {
+      if (s.startsWith("statue-")) { b = v.batchFor(v.creatureBatches, s, () => { const a = arts.get(s); return a && new SpriteBatch(a.atlas, v.mpp, { solid: true, rim: true, tint: STATUE_TINT }); }); b?.set(list); return; } // (the challenge's statues: stone grey, no eyeshine, render/statues.ts)
       if (s.startsWith("shadow-")) { b = v.batchFor(v.creatureBatches, s, () => { const a = arts.get(s); return a && new SpriteBatch(a.atlas, v.mpp, { solid: true, rim: true, shadow: true }); }); b?.set(list); return; } // (pack members hiding: render/sprites.ts SHADOW_LOOK)
       const k = legendKeys.has(s) ? s.slice(7) : s; // (a legend's batch: as its own key's, plus its look)
       b = v.batchFor(v.creatureBatches, s, () => { const a = arts.get(s); return a && new SpriteBatch(a.atlas, v.mpp, { solid: true, rim: true, find: !k.startsWith("party-") && !k.startsWith("happy-") && !k.startsWith("woken-") && !k.startsWith("sleep-") && !k.startsWith("nap-"), tint: k.startsWith("woken-") ? ENRAGED_TINT : undefined, ...(legendKeys.has(s) ? legendLook(legendKeys.get(s)!, v.game.tuning, v.style) : {}) }); }); // (enraged ones glow red-eyed already) creatures stay solid round her (Ed, v149); wild ones findable in the dark (Ed, v244)
@@ -355,8 +361,9 @@ export function drawCreatures(v: View, time = 0): void {
     v.shadows.set(all);
   }
 }
-/** A batch with no creature in it this frame shows nothing. */
-const clearUnused = (b: SpriteBatch, s: string): void => { const l = PER.get(s); if (!l || !l.length) b.set(NONE); };
+/** A batch with no creature in it this frame shows nothing (one already showing nothing left be: a batch a species and look, a big
+ *  crowd's every one emptied every frame otherwise; the challenge's 128-animal pack, 2026-11-03). */
+const clearUnused = (b: SpriteBatch, s: string): void => { const l = PER.get(s); if ((!l || !l.length) && b.count !== 0) b.set(NONE); };
 
 /** A wild legend's batch (Ed's round 14 playtest: "Legends in the circle are not very distinct"; "the same pixel density and palette
  *  discipline as the rest of the scene"): its sleeping outline in its sigil's neon (a little toward white, so a deep colour still shows

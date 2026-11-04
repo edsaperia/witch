@@ -1,9 +1,17 @@
 // A4 mechanical extraction from src/render/view.ts; body identity is checked by tools/refactor/a4-split.mjs.
 import type { View, ViewInternals, ViewShared } from "../view";
 import * as THREE from "three";
+import { poseOf } from "../../rules/game";
+import { type Shot } from "../../rules/arrive";
 import { bendPoint, groundHeight } from "../height";
 import { SPRITE_UNIFORMS } from "../sprites";
+import { gameAim, ridePoint } from "./camera";
 import { chunkyPixelSize, potionStrength } from "../potionEffects";
+
+export function landingShot(a4ViewHost: View, _a4PrivateHost: ViewInternals, _a4SharedHost: ViewShared): Shot {
+    const g = a4ViewHost.game, p = poseOf(g), R = ridePoint(a4ViewHost, p), a = gameAim(p, groundHeight(R.x, R.z), a4ViewHost.houseCam);
+    return { tx: a.x, ty: a.y, tz: a.z, angle: p.angle, distance: p.distance, fov: g.tuning.camera.fov };
+  }
 
 export function scenePixelSize(a4ViewHost: View, _a4PrivateHost: ViewInternals, _a4SharedHost: ViewShared): number {
     const t = a4ViewHost.game.tuning, dpr = typeof devicePixelRatio === 'number' && devicePixelRatio > 0 ? devicePixelRatio : 1;

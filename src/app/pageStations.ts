@@ -2,6 +2,8 @@
 import type { PageHost } from "../main";
 import { spinStep } from "../render/spin";
 import { bagOf, setBag } from "../rules/bags";
+import { stationLook } from "../platform/online/stationAppearance";
+
 import { startParty } from "../rules/wakeUp";
 import { wearFromStation } from "../rules/clothesPile";
 import { saveGenome } from "../ui/creator";
@@ -10,7 +12,7 @@ import { saveLoadout } from "./loadout";
 import { setParts } from "../rules/spells";
 import { changeLoadout } from "../rules/hatSpells";
 import { HOUSE_ROOMS } from "../rules/houseRooms";
-import { fitBroom } from "./broomSave";
+import { chooseTrail, fitBroom } from "./broomSave";
 import { loadOwned } from "./owned";
 import { partsToChoose, unlockAll } from "./debugUnlock";
 import { type FindsCtx } from "./finds";
@@ -22,6 +24,13 @@ import { chooseRecord } from "./recordSave";
 import { integratedGpu } from "./telescope";
 import { nightOver } from "./chartSave";
 
+export function reconcilePickers(pageHost: PageHost): void {
+  if (!pageHost.phone.active) return;
+  pageHost.stations.reconcile((pageHost.page.look() ?? pageHost.creator.genome()) as never, pageHost.menuWardrobe(), pageHost.workshopNow());
+  pageHost.booth.refresh(pageHost.menuRecords());
+  const witch = pageHost.N().game.witches[pageHost.phone.visiting ? 1 : 0]; if (witch) pageHost.creator.loadout = { hat: witch.spells.hat };
+}
+
 export function shutStation(pageHost: PageHost, why: string): void {
   pageHost.stationShuts.push({ why, at: Math.round(performance.now()), frozen: pageHost.freeze.frozen, station: pageHost.stations.station }); if (pageHost.stationShuts.length > 8) pageHost.stationShuts.shift();
   pageHost.stations.close();
@@ -29,14 +38,16 @@ export function shutStation(pageHost: PageHost, why: string): void {
 
 export function findsCtx(pageHost: PageHost): FindsCtx { return ({ spells: pageHost.N().game.spells, owned: () => (pageHost.owned ??= withLoan("wearable", loadOwned((pageHost.page.look() ?? pageHost.creator.genome()) as Record<string, unknown>), pageHost.loan)) }); }
 
-export function workshopNow(pageHost: PageHost): WorkshopCtx { const { game, tuning } = pageHost.N(), t = game.trunk; return { found: partsToChoose(pageHost.partsNow()), fitted: game.witches[0].spells.parts, tonight: t && t.kind === "part" && !t.found ? t.item : null, tuning }; }
+export function workshopNow(pageHost: PageHost): WorkshopCtx { const { game, tuning } = pageHost.N(), t = game.trunk; return { found: pageHost.phone.active ? new Set(pageHost.phone.catalogue?.parts ?? []) : partsToChoose(pageHost.partsNow()), fitted: pageHost.phone.active ? { ...pageHost.phone.presented(game).spells.parts } : game.witches[0].spells.parts, tonight: t && t.kind === "part" && !t.found ? t.item : null, tuning }; }
 
 export function useHouse(pageHost: PageHost, obj: string): void { return pageHost.mutate("house: use", () => {
   const { game, tuning, flags: { chartRecorded, overRecorded } } = pageHost.N();
+  if (obj === "slept" && pageHost.phone.visiting) { pageHost.sailing = true; pageHost.input.release(); pageHost.input.clearPresses(); return; } // The host rolls the shared world; Leave visit is the guest exit.
   if (obj === "slept") { if (!chartRecorded && !overRecorded) nightOver(tuning.map?.island ?? "", { won: false }, undefined, tuning.map?.world ?? 0); setTimeout(() => pageHost.newNight("bed"), 0); return; } // (the sea chart: played, as the afterparty records it; then a new seed: app/newForest.ts; after this frame, in place)
   const o = HOUSE_ROOMS.objects.find(q => q.id === obj);
-  if (!o || pageHost.creator.open || game.witches[0].ko) return;
+  if (!o || pageHost.creator.open || game.witches[pageHost.phone.visiting ? 1 : 0]?.ko) return;
   if (o.use.kind === "zoo") pageHost.zoo.open(); // (a station's E and an instrument's: their panels, below in the frame and app/studio.ts)
+  else if (o.use.kind === "telephone") pageHost.phone.use(game, o.id);
   else if (o.use.kind === "telescope" && tuning.telescope && !pageHost.telescope.on) { pageHost.scopeAt = o.id; pageHost.telescope.open(game, tuning.telescope); }
 }); }
 
@@ -49,7 +60,11 @@ pageHost.creator.hats = unlockAll() ? undefined : pageHost.N().game.spells.hats;
 }
 
 export function installStations3(pageHost: PageHost): void {
-pageHost.creator.onLoadout = l => pageHost.mutate("dressing: loadout", () => { const { game } = pageHost.N(); changeLoadout(game.witches[0], l.hat); saveLoadout({ hat: hatWithoutLoan(game.spells.hat, pageHost.loan) as typeof game.spells.hat }); pageHost.wearHat(pageHost.page.look()); });
+pageHost.creator.onLoadout = l => {
+  if (!pageHost.phone.active && pageHost.N().spec.borrowed) return;
+  if (pageHost.phone.active) { if (!pageHost.phone.choose({ kind: "hat", id: l.hat })) pageHost.reconcilePickers(); return; }
+  pageHost.mutate("dressing: loadout", () => { const { game } = pageHost.N(); changeLoadout(game.witches[0], l.hat); saveLoadout({ hat: hatWithoutLoan(game.spells.hat, pageHost.loan) as typeof game.spells.hat }); pageHost.wearHat(pageHost.page.look()); });
+};
 }
 
 export function installStations4(pageHost: PageHost): void {
@@ -57,13 +72,20 @@ pageHost.stations.preview = id => (BAGS.some(b => b.id === id) ? new BagPreview(
 }
 
 export function installStations5(pageHost: PageHost): void {
-pageHost.stations.onLook = g => pageHost.mutate("dressing: station look and bag", () => {
+pageHost.stations.onLook = g => {
+  if (!pageHost.phone.active && pageHost.N().spec.borrowed) return;
+  if (pageHost.phone.active) {
+    if (pageHost.stations.station) { const choice = stationLook(pageHost.stations.station, g); if (!choice || !pageHost.phone.choose(choice)) pageHost.reconcilePickers(); }
+    return; // No raw host/guest mutation or visitor wardrobe save before approval.
+  }
+  pageHost.mutate("dressing: station look and bag", () => {
   saveGenome(lookWithoutLoan(g as Record<string, unknown>, pageHost.loan) as never); pageHost.creator.adopt(g); // (saved without the loan: app/loan.ts)
   // (not yet dressed: a station's choice puts its piece on her, out of last night's pile: rules/clothesPile.ts; Ed, 2026-10-23)
   const w = pageHost.N().game.wake; if (w && pageHost.stations.station) wearFromStation(w, pageHost.stations.station);
   if (JSON.stringify(g) !== pageHost.lookNow) { pageHost.lookNow = JSON.stringify(g); pageHost.wearHat(g); setBag(pageHost.N().game.witches[0].spells, bagOf(g as Record<string, unknown>)); } // (her bag's 💌 stats follow the bag she wears: rules/bags.ts)
   pageHost.showLook();
-});
+  });
+};
 }
 
 export function installStations6(pageHost: PageHost): void {
@@ -75,7 +97,10 @@ pageHost.booth.onBack = () => pageHost.booth.close();
 }
 
 export function installStations8(pageHost: PageHost): void {
-pageHost.booth.onStart = r => pageHost.mutate("house: DJ party start", () => { chooseRecord(r.id); pageHost.booth.close(); startParty(pageHost.N().game, r.bpm); });
+pageHost.booth.onStart = r => {
+  if (pageHost.phone.active) { if (!pageHost.phone.choose({ kind: "party", id: r.id })) pageHost.reconcilePickers(); return; }
+  pageHost.mutate("house: DJ party start", () => { chooseRecord(r.id); pageHost.booth.close(); startParty(pageHost.N().game, r.bpm); });
+};
 }
 
 export function installStations9(pageHost: PageHost): void {
@@ -87,10 +112,18 @@ pageHost.stations.onDress = () => { pageHost.view.spin = spinStep(pageHost.view.
 }
 
 export function installStations11(pageHost: PageHost): void {
-pageHost.stations.onFit = f => pageHost.mutate("dressing: broom fitting", () => { const { game } = pageHost.N(); setParts(game.witches[0].spells, f); fitBroom(partsWithoutLoan(f, pageHost.loan)); });
+pageHost.stations.onFit = f => {
+  if (!pageHost.phone.active && pageHost.N().spec.borrowed) return;
+  if (pageHost.phone.active) { if (!pageHost.phone.choose({ kind: "broom", fitted: { ...f } })) pageHost.reconcilePickers(); return; }
+  pageHost.mutate("dressing: broom fitting", () => { const { game } = pageHost.N(); setParts(game.witches[0].spells, f); fitBroom(partsWithoutLoan(f, pageHost.loan)); });
+};
 }
 
 export function installStations12(pageHost: PageHost): void {
+pageHost.stations.onTrail = id => { pageHost.view.trailPreset = id; if (!pageHost.N().spec.borrowed) chooseTrail(id); };
+}
+
+export function installStations13(pageHost: PageHost): void {
 pageHost.telescope.onChange = on => {
   const T = pageHost.N().tuning.telescope, res = Number(new URLSearchParams(location.search).get("telescopeRes")) || (T && integratedGpu(pageHost.view.renderer.getContext()) ? T.lowGpuResolution : T?.resolution ?? 1);
   pageHost.view.pixelScale = on ? 1 / Math.max(0.25, Math.min(3, res)) : 1; // (finer than the game's pixels too: Ed, 2026-10-23, "too pixellated")
@@ -99,16 +132,17 @@ pageHost.telescope.onChange = on => {
 };
 }
 
-export function installStations13(pageHost: PageHost): void {
+export function installStations14(pageHost: PageHost): void {
 pageHost.creator.progress = () => { const a = pageHost.view.assets; return { done: a.done, total: a.done + a.pending, ready: !pageHost.sailing && pageHost.N().flags.ready }; };
 }
 
-export function installStations14(pageHost: PageHost): void {
+export function installStations15(pageHost: PageHost): void {
 pageHost.creator.onGesture = () => pageHost.sound.wake();
 }
 
-export function installStations15(pageHost: PageHost): void {
+export function installStations16(pageHost: PageHost): void {
 pageHost.creator.onStart = g => {
+  if (pageHost.phone.active || pageHost.N().spec.borrowed) return; // Also protects the asynchronous borrowed-return interval.
   const who = pageHost.playerPick?.value ?? "human"; // (the dev "Player:" pick: a bot plays the run instead of her)
   if (who !== "human" && BOT_KINDS.includes(who as BotKind)) { pageHost.botGame(who as BotKind); return; }
   if (JSON.stringify(g) !== pageHost.lookNow) { pageHost.lookNow = JSON.stringify(g); pageHost.showLook(); pageHost.wearHat(g); }
@@ -116,6 +150,6 @@ pageHost.creator.onStart = g => {
 };
 }
 
-export function installStations16(pageHost: PageHost): void {
+export function installStations17(pageHost: PageHost): void {
 pageHost.creator.spellSound = (cue, v) => pageHost.sound.sfx?.spell(cue, v);
 }

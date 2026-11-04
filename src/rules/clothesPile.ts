@@ -16,7 +16,8 @@ export const PILE_SLOTS: readonly PileSlot[] = ["top", "shoes", "cloak", "hat", 
 
 /** The piece each dressing station puts on (config/house/'s station ids). The dressing table (her hair, skin, face, earrings)
  *  dresses nothing: those are hers in the nightie too. */
-export const STATION_SLOT: Readonly<Record<string, PileSlot>> = { wardrobe: "top", shoeRack: "shoes", cloakPegs: "cloak", bags: "bits" };
+export const STATION_SLOT: Readonly<Record<string, PileSlot>> = { wardrobe: "top", bedroom2Wardrobe: "top", bedroom3Wardrobe: "top", shoeRack: "shoes", cloakPegs: "cloak", bags: "bits" };
+export const isDressingTable = (id: string | undefined): boolean => id === "dressingTable" || id === "bedroom2DressingTable" || id === "bedroom3DressingTable";
 
 /** She's dressed: nothing of last night's left in the pile (an old wake-up, with no pile, counts as dressed). */
 export const dressed = (w: { pile?: PileSlot[] } | null | undefined): boolean => !w?.pile?.length;
@@ -46,13 +47,25 @@ interface Genome { hat?: { shape?: string }; cloak?: string; backpackSize?: numb
 const BITS = ["phones", "shades", "glowsticks", "satchel", "pendant", "lantern", "vial", "book", "bumbag", "purse", "tote", "duffel", "briefcase", "clutch", "messenger", "wristband"];
 
 /** Her look with what's still in the pile taken off (the nightie for her top, bare feet for her shoes, and no cloak, scarf, hat or
- *  bits), for the page to draw her by; `pile` empty, her genome as it is. A null genome (the classic witch) is hers, art/witchGenome.js WITCH_GENOME. */
-export function wornGenome<G extends Genome | null>(g: G, pile: readonly PileSlot[] | undefined): G {
+ *  bits), for the page to draw her by; `pile` empty, her genome as it is. A null genome (the classic witch) is hers, art/witchGenome.js WITCH_GENOME.
+ *  `hatLying`: her hat lies somewhere (rules/hat.ts down: a game's first morning's on the hats' floor, rules/wakeUp.ts hatOnFloor), so it
+ *  keeps its shape: she's drawn without it all the same (her hat-off frames), and those frames' hat lying on the floor is drawn from it
+ *  (render/assets.ts witchHatFrame; with the shape "none" there was no hat to draw: Ed's playtest of v7061, "hat has not appeared"). */
+export function wornGenome<G extends Genome | null>(g: G, pile: readonly PileSlot[] | undefined, hatLying = false): G {
   if (!pile?.length) return g;
-  const base = (g ?? WITCH_GENOME) as Genome, acc: Record<string, unknown> = { ...(base.accessories ?? {}) }, has = (s: PileSlot) => pile.includes(s);
+  const base = (g ?? WITCH_GENOME) as Genome, acc: Record<string, unknown> = { ...(base.accessories ?? {}) }, has = (s: PileSlot) => pile.includes(s) && !(s === "hat" && hatLying);
   if (has("top")) acc.nightie = true;
   if (has("shoes")) { acc.barefoot = true; acc.chunky = false; }
   if (has("cloak")) { acc.scarf = false; acc.patches = false; }
   if (has("bits")) for (const k of BITS) acc[k] = false;
   return { ...base, accessories: acc, ...(has("hat") ? { hat: { ...(base.hat ?? {}), shape: "none" } } : {}), ...(has("cloak") ? { cloak: "none" } : {}), ...(has("bits") ? { backpackSize: 0 } : {}) } as G;
+}
+
+/** What of her outfit is off as the page draws her (main.ts showLook, for wornGenome): a wake-up's pile, her hat lying somewhere while
+ *  it's still to put on; before a game's first morning has started, `ahead`, that morning as it will start (rules/wakeUp.ts
+ *  firstMorning: the boot's, asleep under the loading screen), so the look her art is made in at the boot is the one she wakes in. */
+export function wornNow(wake: { pile?: readonly PileSlot[] } | undefined, hatDown: boolean, ahead?: { pile: readonly PileSlot[]; hatLying: boolean } | null): { pile: readonly PileSlot[] | undefined; hatLying: boolean } {
+  if (!wake && ahead) return { pile: ahead.pile, hatLying: ahead.hatLying };
+  const pile = wake?.pile;
+  return { pile, hatLying: !!pile?.includes("hat") && hatDown };
 }

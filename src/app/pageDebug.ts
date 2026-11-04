@@ -1,5 +1,8 @@
 // A4 mechanical extraction from src/main.ts; body identity is checked by tools/refactor/a4-split.mjs.
 import type { PageHost } from "../main";
+import { soloDiagnostic } from "./soloDiagnostic";
+
+import { chartOpen } from "../ui/chartOverlay";
 import { wakeInBedroom } from "../rules/opening";
 import { startWake } from "../rules/wakeUp";
 import { areaUnderWitch } from "../rules/game";
@@ -9,11 +12,13 @@ import { type BotKind } from "../rules/botKinds";
 
 import { pleasingWitch } from "../ui/looks";
 
-import { addFloorHat } from "../rules/houseRooms";
+import { HOUSE_ROOMS, addFloorHat, objectFront, roomAt, fromObject } from "../rules/houseRooms";
+import { remoteBodyBatch } from "../platform/online/otherWitches";
 import { FIND_KINDS, fillTrunk, spawnFind, spawnSpot, type FindKindId } from "../rules/finds";
 import { foundAll } from "./finds";
 import { lend } from "./loan";
 import { GUIDANCE_HOOKS } from "../rules/guidance";
+import { freshHref } from "../platform/storageScope";
 import { installHooks } from "./hooks";
 import { gpuSample } from "../render/view/gpuBudget";
 import { endNight, startNight } from "./night";
@@ -29,6 +34,7 @@ import { replayRecording } from "../platform/inputRecording";
 import { snapshotGame } from "../rules/nightSnapshot";
 
 export function botGame(pageHost: PageHost, kind: BotKind): void {
+  if (pageHost.phone.active || pageHost.N().spec.borrowed) return;
   if (pageHost.botKind) return;
   pageHost.botKind = kind;
   const look = pleasingWitch(pageHost.N().seed);
@@ -53,16 +59,20 @@ export async function saveComment(pageHost: PageHost, text: string): Promise<str
 }
 
 export async function restoreComment(pageHost: PageHost, file: File): Promise<void> {
+  soloDiagnostic(pageHost.phone.active, pageHost.N().spec.borrowed === true, () => {});
   if (file.size > LOG_EXPANDED_BYTES) throw Error("This log file is too large.");
   const comment = await parseCommentFile(await file.text(), pageHost.BUILD);
   // Validate the full graph before writing or navigating. Importing JSON never executes code.
   const replayed = comment.recording ? replayRecording(comment.recording, pageHost.BUILD) : restoreGame(comment.night.game);
   if (JSON.stringify(snapshotGame(replayed)) !== JSON.stringify(comment.night.game)) throw Error("Input replay differs from the saved comment moment. The log is kept; report this replay failure.");
+  soloDiagnostic(pageHost.phone.active, pageHost.N().spec.borrowed === true, () => {});
   await browserNightStore(location.pathname + ":comment-restore").write(comment.night);
-  const url = new URL(location.href); url.search = "?restore=comment&resume=1"; location.href = url.toString();
+  soloDiagnostic(pageHost.phone.active, pageHost.N().spec.borrowed === true, () => {});
+  const url = new URL(location.href); url.search = "?restore=comment&resume=1"; location.href = freshHref(url.toString());
 }
 
 export function spawnHere(pageHost: PageHost, kind: FindKindId | null, item: string | null): string {
+  if (pageHost.phone.active) return "Find spawning is unavailable during a call.";
   return pageHost.mutate("debug: spawn find", () => pageHost.spawnHereNow(kind, item));
 }
 
@@ -80,7 +90,7 @@ export function spawnHereNow(pageHost: PageHost, kind: FindKindId | null, item: 
 export function decidePanel(pageHost: PageHost, open: boolean): void {
   if (pageHost.decide || pageHost.decideLoading) return;
   pageHost.decideLoading = true;
-  void import("../ui/decide").then(({ DecidePanel }) => { pageHost.decide = new DecidePanel({ mutate: pageHost.mutate, get tuning() { return pageHost.N().game.tuning; }, get seed() { return pageHost.N().game.seed; }, version: pageHost.BUILD, live: pageHost.knobLive }, open); });
+  void import("../ui/decide").then(({ DecidePanel }) => { pageHost.decide = new DecidePanel({ mutate: pageHost.tuningMutation, get tuning() { return pageHost.phone.preferences(pageHost.N().game); }, get seed() { return pageHost.N().game.seed; }, version: pageHost.BUILD, live: pageHost.knobLive }, open); });
 }
 
 export function keyNow(pageHost: PageHost, spot?: string): ReturnType<typeof compareKey> { return compareKey({ build: pageHost.BUILD, game: pageHost.N().game, canvas: pageHost.canvas, window: { width: innerWidth, height: innerHeight }, renderer: rendererOf(pageHost.view.renderer.getContext()), changed: pageHost.repro.changed(), params: pageHost.N().params, spot, dpr: devicePixelRatio, nav: navigator as Navigator & { deviceMemory?: number } }); }
@@ -148,7 +158,7 @@ export function installDebug15(pageHost: PageHost): void {
 pageHost.view.onContextRestored = () => {
   pageHost.N().playtest.gpuEvent("context restored: the night loaded again");
   const link = pageHost.repro.link();
-  location.replace(pageHost.N().params.has("debug") ? link : link.replace(/&debug$/, ""));
+  location.replace(freshHref(pageHost.N().params.has("debug") ? link : link.replace(/&debug$/, "")));
 };
 }
 
@@ -161,14 +171,42 @@ pageHost.N().playtest.frameState = () => {
 }
 
 export function installDebug17(pageHost: PageHost): void {
-installHooks({ night: pageHost.N, view: pageHost.view, sound: pageHost.sound, meter: pageHost.meter, shake: pageHost.shake, frameStats: pageHost.frameStats, ladder: pageHost.ladder, loadTimes: pageHost.loadTimes, loop: pageHost.loop, advance: (game, controls, dt) => recordedStep(game, controls, dt, pageHost.BUILD, pageHost.captureRecording) });
+installHooks({ night: pageHost.N, view: pageHost.view, sound: pageHost.sound, meter: pageHost.meter, shake: pageHost.shake, frameStats: pageHost.frameStats, ladder: pageHost.ladder, loadTimes: pageHost.loadTimes, loop: pageHost.loop, advance: (game, controls, dt) => soloDiagnostic(pageHost.phone.active, pageHost.N().spec.borrowed === true, () => recordedStep(game, controls, dt, pageHost.BUILD, pageHost.captureRecording)) });
 }
 
 export function installDebug18(pageHost: PageHost): void {
-(window as unknown as { witch: Record<string, unknown> }).witch.compareKey = pageHost.keyNow;
+if (pageHost.phoneEnabled && pageHost.phoneCallsEnabled && pageHost.params.has("shot")) {
+  (window as unknown as { witch: Record<string, unknown> }).witch.telephoneReplayRecording = () => recordingFor(pageHost.N().game, pageHost.BUILD, pageHost.captureRecording).export();
+}
 }
 
 export function installDebug19(pageHost: PageHost): void {
+if (pageHost.phoneEnabled && pageHost.phoneCallsEnabled) (window as unknown as { witch: Record<string, unknown> }).witch.telephoneProof = () => ({
+  preparation: { ...pageHost.visitPreparation }, saveBoundaryReady: pageHost.ordinaryVisit !== null,
+  network: pageHost.phone.network(),
+  status: pageHost.phone.state.status, active: pageHost.phone.active, visiting: pageHost.phone.visiting,
+  seed: pageHost.N().game.seed, borrowed: pageHost.N().spec.borrowed === true, worldReady: pageHost.N().flags.ready,
+  viewSeed: pageHost.view.game.seed, viewUsesCanonicalMap: pageHost.view.game.map === pageHost.N().game.map,
+  seedLabel: pageHost.seedEl.textContent,
+  draw: { dressed: pageHost.telephoneBatchProof(pageHost.view.witchBatch), bare: pageHost.telephoneBatchProof(pageHost.view.bareBatch), remote: pageHost.telephoneBatchProof(remoteBodyBatch(pageHost.view)) },
+  players: pageHost.view.game.witches.map(w => ({ id: w.id, x: w.body.x, z: w.body.z, room: w.wake?.room,
+    atRoom: roomAt(pageHost.N().game.map.treehouse, w.body.x, w.body.z)?.id ?? null,
+    perched: !!w.body.perch, slept: w.house?.slept === true, wakeOpen: w.wake?.open,
+    pile: w.wake?.pile, lastBed: w.house?.lastBed,
+    nearObjects: HOUSE_ROOMS.objects.filter(o => fromObject(o, pageHost.N().game.map.treehouse, w.body.x, w.body.z) <= HOUSE_ROOMS.reach).map(o => o.id),
+    screen: pageHost.view.screenOf(w.body.x, w.body.perch ? pageHost.N().tuning.treehouse.house?.height ?? 0 : 0, w.body.z) })),
+  house: { at: pageHost.N().game.map.treehouse, turn: HOUSE_ROOMS.turn ?? 0, shape: HOUSE_ROOMS.shape, bedHold: HOUSE_ROOMS.bed.hold, terrace: HOUSE_ROOMS.terrace,
+    objects: HOUSE_ROOMS.objects.map(o => ({ id: o.id, use: o.use.kind, front: objectFront(o, pageHost.N().game.map.treehouse, .6) })) },
+  artPending: pageHost.view.assets.pending, artDone: pageHost.view.assets.done, paused: pageHost.freeze.frozen,
+  menus: { telephone: pageHost.phone.open, creator: pageHost.creator.open, station: pageHost.stations.station, chart: chartOpen() },
+});
+}
+
+export function installDebug20(pageHost: PageHost): void {
+(window as unknown as { witch: Record<string, unknown> }).witch.compareKey = pageHost.keyNow;
+}
+
+export function installDebug21(pageHost: PageHost): void {
 (window as unknown as { witch: Record<string, unknown> }).witch.take = (kind: FindKindId, id: string): boolean => {
   const { game } = pageHost.N(), k = FIND_KINDS.find(q => q.id === kind), W = game.witches[0];
   if (!k?.items.includes(id)) return false;
@@ -181,19 +219,19 @@ export function installDebug19(pageHost: PageHost): void {
 };
 }
 
-export function installDebug20(pageHost: PageHost): void {
+export function installDebug22(pageHost: PageHost): void {
 (window as unknown as { witch: Record<string, unknown> }).witch.wakeUp = (yesterday: boolean): boolean => { const { game } = pageHost.N(); return wakeInBedroom(game) && startWake(game, game.herTime, { yesterday }); };
 }
 
-export function installDebug21(pageHost: PageHost): void {
+export function installDebug23(pageHost: PageHost): void {
 (window as unknown as { witch: Record<string, unknown> }).witch.stationShuts = pageHost.stationShuts;
 }
 
-export function installDebug22(pageHost: PageHost): void {
+export function installDebug24(pageHost: PageHost): void {
 (window as unknown as { witch: Record<string, unknown> }).witch.guide = { save: pageHost.guide, pin: () => pageHost.guidePin.state, hooks: GUIDANCE_HOOKS, step: () => pageHost.stepGuide(performance.now()) };
 }
 
-export function installDebug23(pageHost: PageHost): void {
+export function installDebug25(pageHost: PageHost): void {
 (window as unknown as { witch: Record<string, unknown> }).witch.dream = (v: string, kind: FindKindId, id: string): boolean => {
   if (!FIND_KINDS.some(q => q.id === kind && q.items.includes(id))) return false;
   pageHost.startDream({ loan: lend(kind, id, { look: null, hat: "none", parts: pageHost.N().game.witches[0].spells.parts }), won: v === "won" }, true);
@@ -201,7 +239,7 @@ export function installDebug23(pageHost: PageHost): void {
 };
 }
 
-export function installDebug24(pageHost: PageHost): void {
+export function installDebug26(pageHost: PageHost): void {
 if (pageHost.params.get("debug") === "sail") (window as unknown as { witch: Record<string, unknown> }).witch.debugSwap = async (seed: number, island?: string): Promise<number> => {
   const p = new URLSearchParams(pageHost.params), was = pageHost.N().spec;
   p.set("seed", String(seed));
@@ -219,19 +257,19 @@ if (pageHost.params.get("debug") === "sail") (window as unknown as { witch: Reco
 };
 }
 
-export function installDebug25(pageHost: PageHost): void {
+export function installDebug27(pageHost: PageHost): void {
 (window as unknown as { witch: Record<string, unknown> }).witch.chart = () => pageHost.chartOverNight();
 }
 
-export function installDebug26(pageHost: PageHost): void {
+export function installDebug28(pageHost: PageHost): void {
 (window as unknown as { witch: Record<string, unknown> }).witch.zooOverlay = pageHost.zoo;
 }
 
-export function installDebug27(pageHost: PageHost): void {
+export function installDebug29(pageHost: PageHost): void {
 (window as unknown as { witch: Record<string, unknown> }).witch.studio = pageHost.studio;
 }
 
-export function installDebug28(pageHost: PageHost): void {
+export function installDebug30(pageHost: PageHost): void {
 (window as unknown as { witch: Record<string, unknown> }).witch.telescope = {
   look: (heading: number, zoom: number, elevation?: number) => { const { game, tuning } = pageHost.N(); if (!tuning.telescope) return false; pageHost.telescope.open(game, tuning.telescope); pageHost.telescope.point(heading, zoom, tuning.telescope, elevation); pageHost.view.telescope = pageHost.telescope.look(tuning.telescope); return true; },
   close: () => { pageHost.telescope.close(); pageHost.view.telescope = null; },
@@ -240,7 +278,7 @@ export function installDebug28(pageHost: PageHost): void {
 };
 }
 
-export function installDebug29(pageHost: PageHost): void {
+export function installDebug31(pageHost: PageHost): void {
 (window as unknown as { witch: Record<string, unknown> }).witch.sail = (island: string, seed: number, o: { end?: FlightEnd | null; fail?: boolean } = {}): Promise<boolean> => {
   pageHost.sailFail = !!o.fail && pageHost.params.get("debug") === "sail";
   const world = pageHost.chartWorldArg(), end = o.end === null ? undefined : o.end ?? { cam: { x: 0, z: 700, height: 260, pitch: 0.45, fov: 40, speed: 60 }, still: "" };
@@ -248,12 +286,20 @@ export function installDebug29(pageHost: PageHost): void {
 };
 }
 
-export function installDebug30(pageHost: PageHost): void {
+export function installDebug32(pageHost: PageHost): void {
 {
   const hooks = (window as unknown as { witch: Record<string, unknown> }).witch;
   for (const name of ["arena", "arenaAttack", "shot", "guest", "lose", "rainbow", "hit", "take", "wakeUp", "dream"]) {
     const action = hooks[name];
-    if (typeof action === "function") hooks[name] = (...args: unknown[]) => pageHost.mutate(`debug: ${name}`, () => Reflect.apply(action, hooks, args));
+    if (typeof action === "function") hooks[name] = (...args: unknown[]) => soloDiagnostic(pageHost.phone.active, pageHost.N().spec.borrowed === true, () => pageHost.mutate(`debug: ${name}`, () => Reflect.apply(action, hooks, args)));
   }
+  for (const name of ["debugSwap", "frame", "frameLive", "soundFrame"]) {
+    const action = hooks[name];
+    if (typeof action === "function") hooks[name] = (...args: unknown[]) => soloDiagnostic(pageHost.phone.active, pageHost.N().spec.borrowed === true, () => Reflect.apply(action, hooks, args));
+  }
+  const manual = Object.getOwnPropertyDescriptor(hooks, "manual");
+  if (manual?.set) Object.defineProperty(hooks, "manual", { ...manual, set: (on: unknown) => soloDiagnostic(pageHost.phone.active, pageHost.N().spec.borrowed === true, () => manual.set!.call(hooks, on)) });
+  const guideStep = (hooks.guide as { step?: () => void } | undefined)?.step;
+  if (guideStep) (hooks.guide as { step: () => void }).step = () => soloDiagnostic(pageHost.phone.active, pageHost.N().spec.borrowed === true, guideStep);
 }
 }

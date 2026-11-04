@@ -1,7 +1,7 @@
 # Finite allocated A4 proof step: idle/browser preflight, own process-tree exclusion, separate stop reasons, <=270 s watchdog.
 # powershell -File tools/refactor/a4-proof-step.ps1 -Step typecheck -GrantComment 6549116028 -PreviousDoneComment <actual1543id> -ExpectedSha <sha> -EvidenceDir <localpath>
 param(
-  [Parameter(Mandatory=$true)][ValidateSet('typecheck','unit-shard-1','unit-shard-2','unit-shard-3','unit-shard-4','build','bench-quick','compare')][string]$Step,
+  [Parameter(Mandatory=$true)][ValidateSet('typecheck','unit-shard-1','unit-shard-2','unit-shard-3','unit-shard-4','unit-shard-5','unit-shard-6','unit-shard-7','unit-shard-8','unit-shard-9','unit-shard-10','unit-shard-11','unit-shard-12','unit-shard-13','unit-shard-14','unit-shard-15','unit-shard-16','build','bench-quick','compare')][string]$Step,
   [Parameter(Mandatory=$true)][ValidatePattern('^[0-9]{10,}$')][string]$GrantComment,
   [Parameter(Mandatory=$true)][ValidatePattern('^[0-9]{10,}$')][string]$PreviousDoneComment,
   [Parameter(Mandatory=$true)][ValidatePattern('^[a-f0-9]{40}$')][string]$ExpectedSha,
@@ -21,10 +21,22 @@ if ($LASTEXITCODE -ne 0 -or $taskHead -ne $ExpectedSha) { throw 'Proof source SH
 # read both canonical comments and confirm the actual slot order before invocation.
 $taskCommands = @{
   'typecheck' = 'npm run typecheck'
-  'unit-shard-1' = 'npm test -- --shard=1/4 --maxWorkers=2'
-  'unit-shard-2' = 'npm test -- --shard=2/4 --maxWorkers=2'
-  'unit-shard-3' = 'npm test -- --shard=3/4 --maxWorkers=2'
-  'unit-shard-4' = 'npm test -- --shard=4/4 --maxWorkers=2'
+  'unit-shard-1' = 'npm test -- --shard=1/16 --maxWorkers=1'
+  'unit-shard-2' = 'npm test -- --shard=2/16 --maxWorkers=1'
+  'unit-shard-3' = 'npm test -- --shard=3/16 --maxWorkers=1'
+  'unit-shard-4' = 'npm test -- --shard=4/16 --maxWorkers=1'
+  'unit-shard-5' = 'npm test -- --shard=5/16 --maxWorkers=1'
+  'unit-shard-6' = 'npm test -- --shard=6/16 --maxWorkers=1'
+  'unit-shard-7' = 'npm test -- --shard=7/16 --maxWorkers=1'
+  'unit-shard-8' = 'npm test -- --shard=8/16 --maxWorkers=1'
+  'unit-shard-9' = 'npm test -- --shard=9/16 --maxWorkers=1'
+  'unit-shard-10' = 'npm test -- --shard=10/16 --maxWorkers=1'
+  'unit-shard-11' = 'npm test -- --shard=11/16 --maxWorkers=1'
+  'unit-shard-12' = 'npm test -- --shard=12/16 --maxWorkers=1'
+  'unit-shard-13' = 'npm test -- --shard=13/16 --maxWorkers=1'
+  'unit-shard-14' = 'npm test -- --shard=14/16 --maxWorkers=1'
+  'unit-shard-15' = 'npm test -- --shard=15/16 --maxWorkers=1'
+  'unit-shard-16' = 'npm test -- --shard=16/16 --maxWorkers=1'
   'build' = 'npm run build'
   'bench-quick' = 'npm run bench:quick'
   'compare' = 'node tools/refactor/a4-proof-artifacts.cjs && node tools/bench/compare.cjs .a4-baseline/bench-out bench-out'

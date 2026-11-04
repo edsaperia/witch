@@ -1,0 +1,21 @@
+import { expect, it } from "vitest";
+import { telephoneActor } from "./telephoneActor";
+import { localView } from "../platform/online/localView";
+import { newGame } from "../rules/game";
+import { TUNING } from "../rules/tuning";
+import { HOUSE_ROOMS, objectFront } from "../rules/houseRooms";
+import { newStudio, stepStudio } from "../rules/studio";
+import { snapshotGame } from "../rules/nightSnapshot";
+it("keeps telephone identity canonical and reads the visitor's Studio position without changing either witch", () => {
+  const tuning = structuredClone(TUNING); tuning.map!.island = "home"; tuning.map!.islandAreas = 4;
+  const game = newGame(123, tuning, 2), host = game.witches[0], visitor = game.witches[1];
+  expect(telephoneActor(game, false)).toBe(host); expect(telephoneActor(game, true)).toBe(visitor);
+  expect(telephoneActor(null, true)).toBeNull(); expect(telephoneActor({ ...game, witches: [host] }, true)).toBeNull();
+  const instrument = HOUSE_ROOMS.objects.find(o => o.use.kind === "instrument")!;
+  Object.assign(visitor.body, objectFront(instrument, game.map.treehouse, .1), { perch: true, mode: "ground", seated: false });
+  Object.assign(host.body, { x: visitor.body.x + 100, z: visitor.body.z + 100, perch: true, mode: "ground", seated: false });
+  const before = snapshotGame(game), facade = localView(game, 1).update(0), solo = newStudio(), guest = newStudio();
+  expect(stepStudio(solo, game, tuning, 0, instrument.id)).toBe(false);
+  expect(stepStudio(guest, facade, tuning, 0, instrument.id)).toBe(true); expect(guest.players[0].object).toBe(instrument.id);
+  expect(snapshotGame(game)).toEqual(before); expect(telephoneActor(game, true)).toBe(visitor);
+});

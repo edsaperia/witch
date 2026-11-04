@@ -43,7 +43,7 @@ describe('extracted page composition boundaries', () => {
     const view = { ms: {} as Record<string, number>, render: (_time: number) => { view.ms = { witch: 3 }; throw error; } };
     const data = { view, measuredDraw: 2, measuredParts: { 'draw.witch': 4 } };
     vi.spyOn(performance, 'now').mockReturnValueOnce(10).mockReturnValueOnce(15);
-    expect(() => drawFrame(data as unknown as PageHost, 12)).toThrow(error);
+    expect(() => drawFrame(data as unknown as PageHost, 12, false)).toThrow(error);
     expect(data.measuredDraw).toBe(7);
     expect(data.measuredParts['draw.witch']).toBe(7);
   });

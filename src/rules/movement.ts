@@ -8,6 +8,9 @@ import { sectionOf } from "./creatureConfig";
 import type { Creature } from "./creatures";
 import { hash2 } from "./random";
 import { limitTurn } from "./momentum";
+import { clearWaitingSlot, drawnRadius, hazardAvoidance, waitingAvoidance, waitingDrive, waitingProfile, type SpacingData, type WaitingHazard } from "./combatSpacing";
+import type { Tuning } from "./tuning";
+import { advanceMotion } from "./locomotion";
 
 export type BehaviourKind = "arrive" | "keepRange" | "orbit" | "strafe" | "slot" | "separation" | "cohesion" | "wander" | "dodge" | "light";
 export interface Behaviour { kind: BehaviourKind; w: number; near?: number; far?: number; radius?: number; swap?: number }
@@ -57,12 +60,15 @@ export const glideOf = (species: string): Profile["glide"] => MOVEMENT.profiles[
  *  charge or jump much further ... much more momentum, travelling in wide arcs") every species' charge
  *  and leap scaled: tuning fight.charge (reach: its run's time and overshoot, turn: its turn rate,
  *  brake: how hard it slows) and fight.leap (reach: how far off it leaps from, through: metres past
- *  its target it lands; less than 0, short of it). Set from the tuning each step (rules/combat.ts). */
-export const FIGHT: { scale: number; speed: number; momentum: number; charge: { reach: number; turn: number; brake: number; chase?: number; miss?: number }; leap: { reach: number; through: number; lead?: number }; walk: number } = { scale: 1, speed: 1, momentum: 1, charge: { reach: 1, turn: 1, brake: 1 }, leap: { reach: 1, through: -1.5 }, walk: 0 };
+ *  its target it lands; less than 0, short of it). Set from the tuning each step (rules/combat.ts).
+ *  And the difficulty (Ed, 2026-11-03: "the game is much too easy"; tuning difficulty): creature, every creature's movement speed in a
+ *  fight times it (its run, sprint, chase, charge, swoop and walk home; not her, not its shots, lunges or leaps); adult, an adult's
+ *  health and damage times it (rules/combat/data.ts adultMult). */
+export const FIGHT: { scale: number; speed: number; momentum: number; charge: { reach: number; turn: number; brake: number; chase?: number; miss?: number }; leap: { reach: number; through: number; lead?: number }; walk: number; creature: number; adult: number } = { scale: 1, speed: 1, momentum: 1, charge: { reach: 1, turn: 1, brake: 1 }, leap: { reach: 1, through: -1.5 }, walk: 0, creature: 1, adult: 1 };
 /** FIGHT as a page starts, put back by newGame, so a night begun after another starts as a fresh
  *  page's does (the first steps run before stepCombat sets it: docs/plans/sail-without-reload.md). */
 export function resetFight(): void {
-  Object.assign(FIGHT, { scale: 1, speed: 1, momentum: 1, charge: { reach: 1, turn: 1, brake: 1 }, leap: { reach: 1, through: -1.5 }, walk: 0 });
+  Object.assign(FIGHT, { scale: 1, speed: 1, momentum: 1, charge: { reach: 1, turn: 1, brake: 1 }, leap: { reach: 1, through: -1.5 }, walk: 0, creature: 1, adult: 1 });
 }
 
 export const profileOf = (species: string, data: MovementData = MOVEMENT): Profile | null => data.profiles[species] ?? null;
@@ -135,6 +141,8 @@ export interface SteerContext {
   /** The place its fight style gives it while it waits its turn, or a friend's place round its target (rules/combat.ts; packs.json
    *  _styles): it makes for this over its pack's tactic. */
   style?: { x: number; z: number } | null;
+  /** Opt-in waiting-only body-aware relief; the existing momentum/acceleration integration remains authoritative. */
+  spacing?: { tuning: Tuning; data: SpacingData; waiting: boolean; hazards?: WaitingHazard[] };
 }
 
 /** A hop under way (a hopper's bound: packs.json styles.hopper) flies on by the time, whatever holds the creature (Ed's playtest,
@@ -142,8 +150,7 @@ export interface SteerContext {
 export function advanceHop(c: Creature, time: number): boolean {
   const h = c.hop;
   if (!h) return false;
-  const k = Math.min(1, Math.max(0, (time - h.at) / Math.max(0.01, h.lands - h.at)));
-  c.x = h.fx + (h.tx - h.fx) * k; c.z = h.fz + (h.tz - h.fz) * k; c.moving = true;
+  const k = advanceMotion(c, { route: h, carry: 1 }, time, 0); c.moving = true;
   if (k >= 1) { c.hop = undefined; c.vx = 0; c.vz = 0; return false; }
   return true;
 }
@@ -204,6 +211,7 @@ export function steer(c: Creature, P: Profile, x: SteerContext): boolean {
     default: break;
   }
   if (x.style) slot = x.style; // (its style's place, or a friend's: over the tactic's)
+  if (x.spacing?.waiting && slot) slot = clearWaitingSlot(c, slot, [...x.neighbours], x.spacing.tuning, x.spacing.data);
   // Cutting off her retreat (dodge.c): a place ahead of her as she runs, to one side (by its id), making for it hard whatever
   // its tactic (or its kind's behaviours: a bat has no slot to keep), striking from there as she comes.
   const cut = x.cutoff && x.heading ? x.cutoff : null;
@@ -216,19 +224,19 @@ export function steer(c: Creature, P: Profile, x: SteerContext): boolean {
   for (const b of P.fight) {
     switch (b.kind) {
       case "arrive": { const k = Math.max(-0.4, Math.min(1, (d - (x.arriveAt ?? x.want)) / (4 * S))); if (!slot) add(ux, uz, b.w * k); break; }
-      case "keepRange": { const near = x.range * (b.near ?? 0.5), far = x.range * (b.far ?? 0.9); if (d < near) add(-ux, -uz, b.w); else if (d > far) add(ux, uz, b.w); break; }
-      case "orbit": { const dir = hash2(c.id, 5, 7) < 0.5 ? 1 : -1, R = x.range * (b.radius ?? 0.7); add(-uz * dir, ux * dir, b.w); add(ux * (d - R) / Math.max(1, R), uz * (d - R) / Math.max(1, R), b.w * 0.6); break; }
+      case "keepRange": { if (x.spacing?.waiting && slot) break; const near = x.range * (b.near ?? 0.5), far = x.range * (b.far ?? 0.9); if (d < near) add(-ux, -uz, b.w); else if (d > far) add(ux, uz, b.w); break; }
+      case "orbit": { const dir = hash2(c.id, 5, 7) < 0.5 ? 1 : -1, R = x.spacing?.waiting && slot ? Math.hypot(slot.x - x.px, slot.z - x.pz) : x.range * (b.radius ?? 0.7); add(-uz * dir, ux * dir, b.w); add(ux * (d - R) / Math.max(1, R), uz * (d - R) / Math.max(1, R), b.w * 0.6); break; }
       case "strafe": { const dir = hash2(c.id, Math.floor(x.time / (b.swap ?? 2)), 11) < 0.5 ? 1 : -1; add(-uz * dir, ux * dir, b.w); break; }
       case "slot": { if (slot && !cut) {
         // A slot round the far side: it goes round its target, not through it.
         const ac = Math.atan2(c.z - x.pz, c.x - x.px), as = Math.atan2(slot.z - x.pz, slot.x - x.px), da = ((as - ac + Math.PI * 3) % (Math.PI * 2)) - Math.PI;
         const sd = Math.hypot(slot.x - c.x, slot.z - c.z);
         let gx = slot.x, gz = slot.z;
-        if (Math.abs(da) > 0.9) { const a = ac + Math.sign(da) * 0.9, R = Math.max(x.want + 3 * S, Math.min(d, x.want + 10 * S)); gx = x.px + Math.cos(a) * R; gz = x.pz + Math.sin(a) * R; }
+        if (Math.abs(da) > 0.9) { const a = ac + Math.sign(da) * 0.9, R = x.spacing?.waiting ? Math.hypot(slot.x - x.px, slot.z - x.pz) : Math.max(x.want + 3 * S, Math.min(d, x.want + 10 * S)); gx = x.px + Math.cos(a) * R; gz = x.pz + Math.sin(a) * R; }
         const sx = gx - c.x, sz = gz - c.z, gd = Math.hypot(sx, sz) || 1e-6; if (sd > 0.6 * S) add(sx / gd, sz / gd, b.w * Math.min(1, sd / (4 * S)));
         // Surrounding or pincering, it takes its place before it strikes.
         if ((pack?.tactic === "surround" || pack?.tactic === "pincer") && sd > 3 * S) may = false; } break; }
-      case "separation": { const R = (b.radius ?? 7) * S; for (const o of x.neighbours) { if (o === c) continue; const ox = c.x - o.x, oz = c.z - o.z, od = Math.hypot(ox, oz); if (od < R && od > 1e-4) add(ox / od, oz / od, b.w * (1 - od / R)); } break; }
+      case "separation": { if (x.spacing?.waiting) break; const R = (b.radius ?? 7) * S; for (const o of x.neighbours) { if (o === c) continue; const ox = c.x - o.x, oz = c.z - o.z, od = Math.hypot(ox, oz); if (od < R && od > 1e-4) add(ox / od, oz / od, b.w * (1 - od / R)); } break; }
       case "cohesion": { if (pack && n > 1) { const cx = pack.cx - c.x, cz = pack.cz - c.z, cd = Math.hypot(cx, cz); if (cd > (b.radius ?? 14) * S) add(cx / cd, cz / cd, b.w); } break; }
       case "wander": { const a = hash2(c.id, Math.floor(x.time * 2), 13) * Math.PI * 2; add(Math.cos(a), Math.sin(a), b.w); break; }
       case "light": {
@@ -257,22 +265,31 @@ export function steer(c: Creature, P: Profile, x: SteerContext): boolean {
     }
   }
   // (its style's place pulls it there whether or not its kind keeps slots)
-  if (x.style && !cut && !P.fight.some(b => b.kind === "slot")) { const sx = x.style.x - c.x, sz = x.style.z - c.z, sd = Math.hypot(sx, sz) || 1e-6; if (sd > 0.6 * S) add(sx / sd, sz / sd, 1.3 * Math.min(1, sd / (4 * S))); }
+  const styleGoal = x.spacing?.waiting ? slot : x.style;
+  if (styleGoal && !cut && !P.fight.some(b => b.kind === "slot")) { const sx = styleGoal.x - c.x, sz = styleGoal.z - c.z, sd = Math.hypot(sx, sz) || 1e-6, weight = x.spacing?.waiting ? waitingProfile(c, x.spacing.data).pathWeight ?? 1.3 : 1.3; if (sd > 0.6 * S) add(sx / sd, sz / sd, weight * Math.min(1, sd / (4 * S))); }
   // A behaviour asking for more than full speed is held to it; then ease toward it at its acceleration.
+  if (x.spacing?.waiting) {
+    const force = waitingAvoidance(c, x.neighbours, x.spacing.tuning, x.spacing.data);
+    add(force.x, force.z, 1);
+    const danger = hazardAvoidance(c, x.spacing.hazards ?? [], x.spacing.tuning, x.spacing.data);
+    add(danger.x, danger.z, 1);
+    if (may) { const rc = drawnRadius(c, x.spacing.tuning, x.spacing.data), cl = x.spacing.data.clearance; for (const o of x.neighbours) { if (o === c) continue; const ox = c.x - o.x, oz = c.z - o.z, gap = rc + drawnRadius(o, x.spacing.tuning, x.spacing.data) + cl; if (ox * ox + oz * oz < gap * gap && Math.hypot(ox, oz) < gap) { may = false; break; } } } // (bodyGap's sum, its radius once; none to find once one's found)
+  }
   const m = Math.hypot(vx, vz);
   if (m > 1) { vx /= m; vz /= m; }
-  let tx = vx * x.speed, tz = vz * x.speed;
-  if (x.momentum) [tx, tz] = limitTurn(c.vx ?? 0, c.vz ?? 0, tx, tz, x.momentum, x.dt, FIGHT.momentum); // (momentum: rules/momentum.ts)
-  const ax = tx - (c.vx ?? 0), az = tz - (c.vz ?? 0), am = Math.hypot(ax, az), step = (P.accel * x.dt * FIGHT.speed) / FIGHT.momentum;
-  const k = am > step ? step / am : 1;
-  c.vx = (c.vx ?? 0) + ax * k; c.vz = (c.vz ?? 0) + az * k;
-  c.x += c.vx * x.dt; c.z += c.vz * x.dt;
-  const sp = Math.hypot(c.vx, c.vz);
+  const drive = x.spacing ? waitingDrive(c, x.time, x.spacing.data) : null;
+  // The gait applies to travel in every phase. Waiting changes its pace/turning;
+  // pursuit retains its own speed budget, with the same stride/rest schedule.
+  const pace = drive && x.spacing ? x.spacing.waiting ? drive.speed : drive.speed / Math.max(1e-6, waitingProfile(c, x.spacing.data).speed) : 1;
+  let tx = vx * x.speed * pace, tz = vz * x.speed * pace;
+  if (x.momentum) [tx, tz] = limitTurn(c.vx ?? 0, c.vz ?? 0, tx, tz, drive && x.spacing?.waiting ? { ...x.momentum, turn: x.momentum.turn * drive.turn } : x.momentum, x.dt, FIGHT.momentum); // (momentum: rules/momentum.ts)
+  advanceMotion(c, { vx: tx, vz: tz, acceleration: P.accel * FIGHT.speed / FIGHT.momentum }, x.time, x.dt);
+  const sp = Math.hypot(c.vx ?? 0, c.vz ?? 0);
   c.moving = sp > 0.15;
   if (c.moving) c.walk += x.dt * (2 + Math.min(sp, 8) * 1.5);
   // It faces its target while it fights (or the way it runs, when it's running fast away).
   // (with a margin either way, so it doesn't flicker left and right as it passes straight up or down the screen)
-  const fx = sp > 6 ? c.vx : dx;
+  const fx = sp > 6 ? c.vx ?? 0 : dx;
   if (Math.abs(fx) > (sp > 6 ? 1.5 : 1)) c.facing = fx > 0 ? 1 : -1;
   c.away = dz < -Math.abs(dx);
   return may;
@@ -300,7 +317,7 @@ export function stepCharge(c: Creature, mv: Move, px: number, pz: number, reach:
         // Lowering its head: easing to a stop, facing down its lane.
         const nv = Math.max(0, v - brake * dt); if (v > 1e-6) { vx *= nv / v; vz *= nv / v; } v = nv;
       }
-      c.vx = vx; c.vz = vz; c.x += vx * dt; c.z += vz * dt; c.moving = v > 0.3; c.facing = ch.dx >= 0 ? 1 : -1;
+      advanceMotion(c, { vx, vz }, time, dt); c.moving = v > 0.3; c.facing = ch.dx >= 0 ? 1 : -1;
       return "charging";
     }
     const tx = px - c.x, tz = pz - c.z, along = tx * ch.dx + tz * ch.dz;
@@ -317,9 +334,9 @@ export function stepCharge(c: Creature, mv: Move, px: number, pz: number, reach:
       const want = Math.atan2(tz, tx), da = ((want - h + Math.PI * 3) % (Math.PI * 2)) - Math.PI;
       h += Math.max(-turn * dt, Math.min(turn * dt, da));
       vx = Math.cos(h) * nv; vz = Math.sin(h) * nv; v = nv;
-      if (v <= Math.max(run, 1)) { c.vx = vx; c.vz = vz; c.x += vx * dt; c.z += vz * dt; c.charge = undefined; return "charging"; } // (its run takes over, with its velocity)
+      if (v <= Math.max(run, 1)) { advanceMotion(c, { vx, vz }, time, dt); c.charge = undefined; return "charging"; } // (its run takes over, with its velocity)
     }
-    c.vx = vx; c.vz = vz; c.x += vx * dt; c.z += vz * dt;
+    advanceMotion(c, { vx, vz }, time, dt);
     c.moving = true; c.walk += dt * (4 + Math.min(v, 30) * 0.3);
     if (Math.abs(vx) > 1.5) c.facing = vx > 0 ? 1 : -1;
     if (!ch.struck && !ch.braking && Math.hypot(tx, tz) <= reach) { ch.struck = true; return "hit"; } // (and it carries on through)
@@ -337,7 +354,7 @@ export function startCharge(c: Creature, mv: Move, px: number, pz: number, time:
   // times her walking speed, and it runs on until it has caught up with her walking straight down its lane (or
   // its own time, if longer), so only stepping out of the lane (or a blink, or the treetops) gets her clear.
   const d = Math.hypot(px - c.x, pz - c.z) || 1e-6, wind = mv.windup ?? 0.5, walk = FIGHT.walk * FIGHT.speed, chase = FIGHT.charge.chase ?? 0;
-  const s = Math.max((mv.speed ?? 28) * FIGHT.speed, chase * walk), accel = ((mv.accel ?? 40) * FIGHT.speed) / FIGHT.momentum;
+  const s = Math.max((mv.speed ?? 28) * FIGHT.speed, chase * walk) * FIGHT.creature, accel = ((mv.accel ?? 40) * FIGHT.speed) / FIGHT.momentum;
   const catchUp = chase > 0 && s > walk ? (d + walk * wind + (s * s) / (2 * accel)) / (s - walk) : 0; // (the gap she opens walking away during its windup and while it builds speed, closed at s - walk)
   c.charge = { dx: (px - c.x) / d, dz: (pz - c.z) / d, speed: s, from: time + wind, until: time + wind + Math.max((mv.time ?? 1.6) * FIGHT.charge.reach, catchUp), ...(mv.curl ? { curl: mv.curl } : {}) };
   c.moveReadyAt = time + mv.cooldown;
@@ -350,7 +367,7 @@ export function stepBurrow(c: Creature, mv: Move, px: number, pz: number, base: 
   const dx = px - c.x, dz = pz - c.z, d = Math.hypot(dx, dz);
   if (c.burrow) {
     const step = Math.min(d, base * (mv.speed ?? 1.5) * dt);
-    if (d > 1e-3) { c.x += (dx / d) * step; c.z += (dz / d) * step; c.facing = dx >= 0 ? 1 : -1; }
+    if (d > 1e-3) { advanceMotion(c, { vx: dx / d * step / dt, vz: dz / d * step / dt }, time, dt); c.facing = dx >= 0 ? 1 : -1; }
     c.moving = true; c.walk += dt * 6; c.vx = 0; c.vz = 0;
     if (d < 1.5 * FIGHT.scale || time >= c.burrow.until) { c.burrow = undefined; c.moveReadyAt = time + mv.cooldown; return "surfaced"; }
     return "under";
@@ -413,7 +430,7 @@ export function landSwoop(c: Creature, time: number): void {
  *  the bottom), else "air". */
 export function stepSwoop(c: Creature, mv: Move, px: number, pz: number, ready: boolean, time: number, dt: number, tvx = 0, tvz = 0, may: boolean | (() => boolean) = true, commit = 0): "tele" | "dive" | "low" | "air" {
   const mayNow = () => (typeof may === "function" ? may() : may); // (asked only as a telegraph would start: the cap's token is taken then)
-  const S = FIGHT.scale, V = FIGHT.speed, H = (mv.height ?? 8) * S, R = (mv.radius ?? 12) * S, cs = (mv.circle ?? 8) * V;
+  const S = FIGHT.scale, V = FIGHT.speed, VC = V * FIGHT.creature, H = (mv.height ?? 8) * S, R = (mv.radius ?? 12) * S, cs = (mv.circle ?? 8) * VC; // (VC: its speeds, with the difficulty's; V its times)
   let s = c.swoop;
   if (!s) {
     // Up it goes, from wherever it stands, round its target the shorter way.
@@ -427,7 +444,7 @@ export function stepSwoop(c: Creature, mv: Move, px: number, pz: number, ready: 
     const wob = (mv.jitter ?? 0) * Math.sin(time * 2.7 + c.id * 1.3), r = R * (0.8 + 0.4 * hash2(c.id, 7, 71)) * (1 + wob);
     s!.ang += (s!.dir * cs * slow * dt) / Math.max(1, r);
     const ox = px + Math.cos(s!.ang) * r, oz = pz + Math.sin(s!.ang) * r, dx = ox - c.x, dz = oz - c.z, d = Math.hypot(dx, dz), step = Math.min(d, cs * 1.8 * dt);
-    if (d > 1e-6) { c.x += (dx / d) * step; c.z += (dz / d) * step; c.vx = (dx / d) * (step / dt); c.vz = (dz / d) * (step / dt); c.facing = dx >= 0 ? 1 : -1; }
+    if (d > 1e-6) { advanceMotion(c, { vx: dx / d * step / dt, vz: dz / d * step / dt }, time, dt); c.facing = dx >= 0 ? 1 : -1; }
     c.moving = true; c.walk += dt * 6;
   };
   const done = time >= s.at + s.dur;
@@ -441,8 +458,8 @@ export function stepSwoop(c: Creature, mv: Move, px: number, pz: number, ready: 
     }
     case "climb": {
       // Pulling back up and away along its line, slowing, then round again.
-      const k = Math.max(0, 1 - (time - s.at) / s.dur), sp = (mv.speed ?? 24) * V * 0.35 * k + cs * (1 - k);
-      c.x += s.dx * sp * dt; c.z += s.dz * sp * dt; c.vx = s.dx * sp; c.vz = s.dz * sp; c.moving = true; c.walk += dt * 6;
+      const k = Math.max(0, 1 - (time - s.at) / s.dur), sp = (mv.speed ?? 24) * VC * 0.35 * k + cs * (1 - k);
+      advanceMotion(c, { vx: s.dx * sp, vz: s.dz * sp }, time, dt); c.moving = true; c.walk += dt * 6;
       if (done) {
         s.ang = Math.atan2(c.z - pz, c.x - px);
         if (s.left > 0 && mayNow()) { phase(s, "tele", time, (mv.windup ?? 1) / V, H * (mv.rise ?? 1)); return "tele"; }
@@ -455,7 +472,7 @@ export function stepSwoop(c: Creature, mv: Move, px: number, pz: number, ready: 
       circling(0.4); c.facing = px >= c.x ? 1 : -1;
       // Where she'll be when it gets there, as she's going now (lead of it: the dodge work's lead-at-release), and on past.
       // (the flight time to where she'll be: a few steps to the intercept, so lead 1 meets her walking straight on)
-      const sp = Math.max(1, (mv.speed ?? 24) * V), lead = mv.lead ?? 0;
+      const sp = Math.max(1, (mv.speed ?? 24) * VC), lead = mv.lead ?? 0;
       const aim = (): [number, number] => {
         let fly = Math.hypot(px - c.x, pz - c.z) / sp;
         for (let i = 0; i < 4; i++) fly = Math.hypot(px + tvx * fly * lead - c.x, pz + tvz * fly * lead - c.z) / sp;
@@ -472,15 +489,14 @@ export function stepSwoop(c: Creature, mv: Move, px: number, pz: number, ready: 
       return "dive";
     }
     case "dive": {
-      const k = Math.min(1, (time - s.at) / s.dur);
-      c.x = s.fx + (s.tx - s.fx) * k; c.z = s.fz + (s.tz - s.fz) * k; c.vx = (s.tx - s.fx) / s.dur; c.vz = (s.tz - s.fz) / s.dur; c.moving = true; c.walk += dt * 10;
+      advanceMotion(c, { route: { ...s, lands: s.at + s.dur }, carry: 1 }, time, dt); c.moving = true; c.walk += dt * 10;
       if (done) phase(s, "low", time, (mv.bottom ?? 0.5) / V, LOW);
       return "low";
     }
     case "low": {
       // Skimming the ground at the bottom, gliding on and slowing: the moment to catch it.
-      const sp = (mv.speed ?? 24) * V * 0.25;
-      c.x += s.dx * sp * dt; c.z += s.dz * sp * dt; c.vx = s.dx * sp; c.vz = s.dz * sp; c.moving = true;
+      const sp = (mv.speed ?? 24) * VC * 0.25;
+      advanceMotion(c, { vx: s.dx * sp, vz: s.dz * sp }, time, dt); c.moving = true;
       if (done) phase(s, "climb", time, (mv.climb ?? 1) / V, H);
       return "low";
     }
@@ -494,8 +510,7 @@ export function stepSwoop(c: Creature, mv: Move, px: number, pz: number, ready: 
 export function stepLeap(c: Creature, mv: Move, px: number, pz: number, ready: boolean, time: number, tvx = 0, tvz = 0): "none" | "leapt" | "air" | "landed" {
   const L = c.leap;
   if (L) {
-    const k = Math.min(1, (time - L.at) / Math.max(0.01, L.lands - L.at));
-    c.x = L.fx + (L.tx - L.fx) * k; c.z = L.fz + (L.tz - L.fz) * k; c.moving = false; c.vx = 0; c.vz = 0;
+    const k = advanceMotion(c, { route: L }, time, 0); c.moving = false;
     if (k >= 1) { c.leap = undefined; return "landed"; }
     return "air";
   }

@@ -13,6 +13,7 @@ import { isInside } from "./mapShape";
 import { crownReach, type Plant } from "./forest";
 import { cellKey } from "./party";
 import { hash2 } from "./random";
+import { lakeKnobs, roundLakes } from "./lakes";
 
 export interface LegendsData {
   angryAfter: number; check: number; placeRadius: number;
@@ -172,7 +173,7 @@ export function stepLegendStates(w: LegendWorld, ids: number[], data: LegendsDat
     const key = cellKey(c.cell), q = c.quest;
     // Going back to sleep away from where it lay (Ed, 2026-10-06: "they should go back to their
     // circle first and sleep in the spot where they spawned initially"): it walks home, then lies down.
-    if (c.homing) { walkHome(c, w.time, w.dt, data); continue; }
+    if (c.homing) { walkHome(c, w.time, w.dt, data, w.map); continue; }
     c.questOpen = !w.questsClosed && !!q && q.done === undefined && (c.legendState === "asleep" || c.legendState === "restless"); // (open while it sleeps, its soundsystem on or not: Ed, 2026-10-06; never once the party's over: Ed, 2026-10-18)
     // Every check seconds, each legend on its own beat (Ed, 2026-10-06: "the legends could check
     // for own species in area once every five seconds without issue"; staggered by its id, so they
@@ -200,11 +201,14 @@ function hasKin(w: LegendWorld, c: Creature, key: string): boolean {
   return false;
 }
 
-/** A step of a legend walking home to where it lay (c.lairX, lairZ: its spawn spot), then lying down there. */
-function walkHome(c: Creature, time: number, dt: number, data: LegendsData): void {
-  const hx = c.lairX ?? c.x, hz = c.lairZ ?? c.z, dx = hx - c.x, dz = hz - c.z, d = Math.hypot(dx, dz), step = data.homeSpeed * dt;
-  if (d <= step) { c.x = hx; c.z = hz; c.homing = undefined; c.moving = false; c.stateAt = time; return; } // (home: it settles and lies down)
-  c.x += (dx / d) * step; c.z += (dz / d) * step; c.moving = true;
+/** A step of a legend walking home to where it lay (c.lairX, lairZ: its spawn spot), then lying down there; round any lake in
+ *  the way, its shore's shorter way (rules/lakes.ts roundLakes, as combat's movement goes; Ed, 2026-11-03: "Legends walk round lakes"). */
+function walkHome(c: Creature, time: number, dt: number, data: LegendsData, map?: Pick<ForestMap, "bounds" | "tuning">): void {
+  const hx = c.lairX ?? c.x, hz = c.lairZ ?? c.z, home = Math.hypot(hx - c.x, hz - c.z), step = data.homeSpeed * dt;
+  if (home <= step) { c.x = hx; c.z = hz; c.homing = undefined; c.moving = false; c.stateAt = time; return; } // (home: it settles and lies down)
+  const via = map?.bounds.lakes ? roundLakes(map.bounds, c.x, c.z, hx, hz, lakeKnobs(map.tuning).shore + 4) : null;
+  const dx = (via?.x ?? hx) - c.x, dz = (via?.z ?? hz) - c.z, d = Math.hypot(dx, dz) || 1;
+  c.x += (dx / d) * Math.min(step, d); c.z += (dz / d) * Math.min(step, d); c.moving = true;
   if (Math.abs(dx) > 1e-6) c.facing = dx < 0 ? -1 : 1;
   c.away = dz < 0; // (walking north, up the screen: its back to us)
 }

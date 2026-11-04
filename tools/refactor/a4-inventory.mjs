@@ -9,19 +9,19 @@ const sourceArg = process.argv.slice(2).find(a => a.startsWith('--source='));
 const sourceCommit = execFileSync('git', ['rev-parse', '--verify', `${sourceArg ? sourceArg.slice('--source='.length) : 'HEAD'}^{commit}`], { encoding: 'utf8' }).trim();
 const main = {
   pagePause: ['openPotionLab', 'openMusicLab', 'pauseControls', 'updatePauseMenus'],
-  pageStations: ['findsCtx', 'workshopNow', 'useHouse', 'shutStation'],
-  pageNight: ['bedFirst', 'arrived', 'wakeArrival', 'wakeFirst', 'sailFromChart', 'recordSail', 'departFromChart', 'sailInPlace', 'makeSailNight', 'warmAt', 'newNight', 'nightInPlace', 'leaveBot'],
+  pageStations: ['reconcilePickers', 'findsCtx', 'workshopNow', 'useHouse', 'shutStation'],
+  pageNight: ['keepNightie', 'personalKit', 'hostCollections', 'traceVisit', 'aheadMorning', 'bedFirst', 'arrived', 'wakeArrival', 'wakeFirst', 'sailFromChart', 'recordSail', 'departFromChart', 'sailInPlace', 'makeSailNight', 'newNight', 'nightInPlace', 'leaveBot'],
   pageFinds: ['lendFind', 'settleLoan', 'settleLoanNow', 'startDream', 'herHead', 'stepGuide'],
   pageFrame: ['drawFrame', 'frame', 'frameBody', 'overlayHead'],
 };
 const view = {
-  frame: ['render'],
+  frame: ['render', 'replayPartyStart'],
   houseFrame: ['houseTilt', 'behindHouse', 'occluders', 'ensureCrown', 'buildHome', 'swapHomeArt'],
   markers: ['legendRings', 'pin', 'inviteStart'],
   atmosphere: ['updateMoon', 'updateSteam', 'updateSmoke'],
   readiness: ['readyPrograms', 'landingWakeReady', 'beginLandingShaders', 'armLimitedLanding', 'limitedLandingReady', 'waitForLandingWitch', 'startLandingShaderGrace', 'compileAll', 'gpuCaughtUp', 'warmDraws', 'warmSteps', 'setReadiness'],
-  lifecycle: ['build', 'prepare', 'treeExtent', 'askIsland', 'setGameSteps', 'retype'],
-  viewport: ['scenePixelSize', 'resize', 'screenOf', 'aimAt'],
+  lifecycle: ['build', 'prepare', 'askIsland', 'setGameSteps', 'retype'],
+  viewport: ['landingShot', 'scenePixelSize', 'resize', 'screenOf', 'aimAt'],
 };
 
 function inventory(file, groups, isView) {

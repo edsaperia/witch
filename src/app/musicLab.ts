@@ -10,6 +10,7 @@ import { newBeatClock, type BeatClock } from "../rules/beat";
 import type { MusicCue } from "../rules/musicPlan";
 import type { MusicStyle, PartUse } from "../rules/musicScore";
 import type { MusicEngine } from "../platform/audio/musicEngine";
+import { localStore } from "../platform/storageScope";
 
 const STORE = "witch.musicLab.pause";
 const clone = <T>(x: T): T => JSON.parse(JSON.stringify(x));
@@ -51,7 +52,7 @@ export class MusicLab {
     };
     this.state = this.fresh();
     this.freshKey = this.styleKey();
-    try { const t = localStorage.getItem(STORE); if (t) this.state = this.parse(t).state; } catch { /* none, or unreadable */ }
+    try { const t = localStore()?.getItem(STORE); if (t) this.state = this.parse(t).state; } catch { /* none, or unreadable */ }
   }
 
   /** The settings as the game plays: nothing forced, the music following the game's own wave and section. */
@@ -72,7 +73,7 @@ export class MusicLab {
   /** The keys that differ from the game, in words. */
   differs(): string[] { return Object.keys(JSON.parse(this.json()) as object).filter(k => k !== "lab"); }
 
-  save(): void { try { localStorage.setItem(STORE, this.json()); } catch { /* private window */ } }
+  save(): void { try { localStore()?.setItem(STORE, this.json()); } catch { /* private window */ } }
   reset(): void { this.state = this.fresh(); this.changed(); }
   load(state: LabState): void { this.state = state; this.changed(); }
 

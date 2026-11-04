@@ -6,11 +6,17 @@ interface JoinPreparation<T> {
   progress?(): number;
   stallMs?: number;
   absoluteMs?: number;
+  signal?: AbortSignal;
 }
 
 /** Every rejection and a never-settling async preparation get an attributed, bounded outcome. */
 export async function prepareJoin<T>(options: JoinPreparation<T>): Promise<boolean> {
   const controller = new AbortController();
+  let cancel: (() => void) | undefined;
+  const cancelled = new Promise<never>((_resolve, reject) => {
+    cancel = () => { controller.abort(); reject(new Error("Guest joining was cancelled")); };
+    if (options.signal?.aborted) cancel(); else options.signal?.addEventListener("abort", cancel, { once: true });
+  });
   let phase = "replay-restore", timer: ReturnType<typeof setInterval> | undefined;
   const started = Date.now();
   let advancedAt = started, progress = options.progress?.() ?? 0;
@@ -23,6 +29,7 @@ export async function prepareJoin<T>(options: JoinPreparation<T>): Promise<boole
     }, Math.min(1000, options.stallMs ?? 90000, options.absoluteMs ?? 600000));
   });
   const task = async () => {
+    controller.signal.throwIfAborted();
     options.trace("replay-restore:start");
     const value = await options.restore();
     controller.signal.throwIfAborted(); options.trace("replay-restore:done");
@@ -30,11 +37,11 @@ export async function prepareJoin<T>(options: JoinPreparation<T>): Promise<boole
     await options.prepare(value, controller.signal);
     controller.signal.throwIfAborted(); options.trace("prepare:resolved");
   };
-  try { await Promise.race([task(), deadline]); return true; }
+  try { await Promise.race([task(), deadline, cancelled]); return true; }
   catch (value) {
     controller.abort();
     const error = value instanceof Error ? value : new Error(String(value));
     options.trace(`${phase}:failed`, { message: error.message, stack: error.stack });
     options.fail(error); return false;
-  } finally { clearInterval(timer); }
+  } finally { clearInterval(timer); if (cancel) options.signal?.removeEventListener("abort", cancel); }
 }

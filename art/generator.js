@@ -12,7 +12,7 @@ import { PLANT_GENOMES, BUSH_GENOMES } from "./flora/genomes.js";
 import { MUSHROOM_TYPES, BIOME_MUSHROOMS, MUSHROOM_RANGES, mushroomRanges, mushroomGenome, mushroomColours, mushroomSprite, bakeMushroom } from "./mushrooms.js";
 export { MUSHROOM_TYPES, BIOME_MUSHROOMS, MUSHROOM_RANGES, mushroomRanges, mushroomGenome, mushroomColours, mushroomSprite, bakeMushroom };
 export { PLANT_GENOMES, BUSH_GENOMES };
-import { witchSprite, witchHatSprite, clothesPileSprite, witchColours, witchModel, WITCH_PARTS, DEFAULT_OUTFIT, WITCH_POSES, WITCH_FOOT_POSES, WITCH_SEAT_HEIGHT, WITCH_HEADINGS, witchPixelsPerUnit , WITCH_FLIGHT_POSES, WITCH_PAIRS, WITCH_LOOKS, DEFAULT_LOOK, PARTY_OUTFITS, PARTY_OUTFIT_BY_ID, partyWitch, cleanFlecks, LIMBO_BAR, DJ_DECKS, DJ_GESTURES, djFrame, djGesture } from "./witch.js";
+import { witchSprite, witchHatSprite, witchCardSprite, WITCH_CARD_ITEMS, clothesPileSprite, witchColours, witchModel, WITCH_PARTS, DEFAULT_OUTFIT, WITCH_POSES, WITCH_FOOT_POSES, WITCH_SEAT_HEIGHT, WITCH_HEADINGS, witchPixelsPerUnit , WITCH_FLIGHT_POSES, WITCH_PAIRS, WITCH_LOOKS, DEFAULT_LOOK, PARTY_OUTFITS, PARTY_OUTFIT_BY_ID, partyWitch, cleanFlecks, LIMBO_BAR, DJ_DECKS, DJ_GESTURES, djFrame, djGesture } from "./witch.js";
 import { treehouseSprite, treehouseColours, TREEHOUSE_STOREYS, DJ_FRAMES, CANDLE, candleSprite } from "./treehouse.js";
 import { entSprite, entColours, ENT, OAK_TERRACE } from "./ent.js";
 import { carrierSprite, CARRIER } from "./carrier.js";
@@ -66,11 +66,11 @@ export { LEGEND_STATES, LEGEND_FRAMES, LEGEND_POSES, LEGEND_IDS, legendForm, leg
 import { NAP_POSES, napPose, napForm } from "./naps.js";
 export { NAP_POSES, napPose, napForm };
 import { SCENES, SCENE_BY_ID, scenePiece, sceneLayout, scenePlacements, sceneRefExists } from "./scenes.js";
-import { PATH_KINDS, PATH_IDS, PATH_PPM, pathTextures, sweepPath, railPoints, railBrokenEnd, railCrossing, PATH_PIECES, PATH_PIECE_BY_ID, pathColours, pathPieceSprite, pathKindsByArea } from "./paths.js";
+import { PATH_KINDS, PATH_IDS, PATH_PPM, pathTextures, pathStrip, pathNormals, pathNormalCanvas, PATH_BUMP_SLOPE, sweepPath, railPoints, railBrokenEnd, railCrossing, PATH_PIECES, PATH_PIECE_BY_ID, pathColours, pathPieceSprite, pathKindsByArea } from "./paths.js";
 import { AREAS, AREA_BY_ID, SWAYING_PROPS, areaAssets, RIM_PIECES, WALLS_BLOCK, SET_PIECE_CHANCE, lightProps, runeStone, RUNESTONE_FORMS, runestoneForm, areaTreeVariants, TREE_HEIGHT_CLASSES, ART_PIXELS_PER_METRE, AREA_LAYOUTS, layoutProblems, LAYOUT_PATTERNS, LAYOUT_TERRAIN, LAYOUT_DECOR } from "./areas.js";
 import { SPECIES, SPECIES_BY_ID, FEATURE_NAMES, LEVELS, speciesColours, critter, withView, walkGait, levelHeight, partyGear, HAT_COLOURWAYS, SHOE_STYLES, GLASSES_STYLES } from "./creatures.js";
 export { LIMBO_BAR, DJ_DECKS, DJ_GESTURES, djFrame, djGesture, WITCH_FLIGHT_POSES, WITCH_PAIRS, WITCH_LOOKS, DEFAULT_LOOK, PARTY_OUTFITS, PARTY_OUTFIT_BY_ID, partyWitch, cleanFlecks };
-export { witchSprite, witchHatSprite, clothesPileSprite, witchColours, witchModel, WITCH_PARTS, DEFAULT_OUTFIT, WITCH_POSES, WITCH_FOOT_POSES, WITCH_SEAT_HEIGHT, WITCH_HEADINGS, treehouseSprite, treehouseColours, TREEHOUSE_STOREYS, DJ_FRAMES, CANDLE, candleSprite, entSprite, entColours, ENT, OAK_TERRACE, carrierSprite, CARRIER };
+export { witchSprite, witchHatSprite, witchCardSprite, WITCH_CARD_ITEMS, clothesPileSprite, witchColours, witchModel, WITCH_PARTS, DEFAULT_OUTFIT, WITCH_POSES, WITCH_FOOT_POSES, WITCH_SEAT_HEIGHT, WITCH_HEADINGS, treehouseSprite, treehouseColours, TREEHOUSE_STOREYS, DJ_FRAMES, CANDLE, candleSprite, entSprite, entColours, ENT, OAK_TERRACE, carrierSprite, CARRIER };
 export { NEW_SET_PIECES, SET_PIECE_KINDS, setPiece3d };
 export { RELICS, RELIC_BY_ID, relicSprite, relicColours, relicLayouts, groundOffset };
 export { BEACH_FINDS, BEACH_PRINTS, PRINT_HEADINGS, beachSprite, beachColours };
@@ -80,7 +80,7 @@ export { COUNTRY, COUNTRY_BY_ID, FIND_PARTS, countrySprite, countryColours };
 export { LANDMARKS, LANDMARK_BY_ID, LANDMARK_BUILDINGS, landmarkSprite, landmarkColours, witchPixelsPerUnit };
 export { PARTY_OBJECTS, PARTY_BY_ID, PARTY_CLASSES, PARTY_LIGHT_NEONS, PARTY_WARM, PARTY_CLUSTERS, PARTY_CLUSTER_BY_ID, partySprite, partyColours, partyPatch, BALLOON_PALETTES };
 export { SCENES, SCENE_BY_ID, scenePiece, sceneLayout, scenePlacements, sceneRefExists };
-export { PATH_KINDS, PATH_IDS, PATH_PPM, pathTextures, sweepPath, railPoints, railBrokenEnd, railCrossing, PATH_PIECES, PATH_PIECE_BY_ID, pathColours, pathPieceSprite };
+export { PATH_KINDS, PATH_IDS, PATH_PPM, pathTextures, pathStrip, pathNormals, pathNormalCanvas, PATH_BUMP_SLOPE, sweepPath, railPoints, railBrokenEnd, railCrossing, PATH_PIECES, PATH_PIECE_BY_ID, pathColours, pathPieceSprite };
 // The path kinds each area suits, its own extra kinds (stairs, bridges) included.
 export function areaPathKinds() { return pathKindsByArea(AREAS); }
 export { AREAS, AREA_BY_ID, SWAYING_PROPS, areaAssets, RIM_PIECES, WALLS_BLOCK, SET_PIECE_CHANCE, lightProps, runeStone, RUNESTONE_FORMS, runestoneForm, areaTreeVariants, TREE_HEIGHT_CLASSES, ART_PIXELS_PER_METRE, AREA_LAYOUTS, layoutProblems, LAYOUT_PATTERNS, LAYOUT_TERRAIN, LAYOUT_DECOR };

@@ -5,19 +5,25 @@ import { FxMock } from "../fxMock";
 import { beatTime } from "../../rules/beat";
 import * as THREE from "three";
 import { deckOf } from "../../rules/treehouse";
-import { HOUSE_ROOMS, toPlan } from "../../rules/houseRooms";
+import { approachStrength, houseApproachDistance } from "../../rules/treehouseLook";
+import { cutawayRadius } from "../crown";
+import { rooms as OUTLINE_ROOMS, branches as OUTLINE_BRANCHES } from "../../../config/house/outline.json";
+import { HOUSE_ROOMS } from "../../rules/houseRooms";
 import { sigilColour } from "../../../art/generator.js";
 import { tiltShareShown } from "../overlayTilt";
 import { blinkCharges, poseOf, witchTuning } from "../../rules/game";
 import { coolRoom, coolShare } from "../../rules/cooldown";
+import { buffsOf, speedBuff } from "../../rules/buffs";
+import { speedMultiplier } from "../../rules/spells";
 import { shotCamera } from "../../rules/arrive";
 import { AREA_TYPES, HOME_LOOK } from "../../rules/map";
 import { canopyShown, witchHeight } from "../../rules/witch";
 import { slowAmount, slowest } from "../slowtime";
 import { groundHeight } from "../height";
 import { LIGHT_UNIFORMS } from "../lighting";
+import { updateRefraction, captureRefractionCast } from "./refraction";
+import { MAKE_SOME_NOISE, partyStartOf, replayReady } from "../../rules/partyStart";
 import { partyOff, partyOverEase, updatePartyOver } from "../partyOver";
-import { LOAD_DEFAULT, loadView } from "../load";
 import { partyZones } from "../../rules/party";
 import { hasRune } from "../../rules/creatureStates";
 import { SHADOW_TINT } from "../shadows";
@@ -35,20 +41,24 @@ import { refresh } from "./scenery";
 import { drawBerries, drawCreatures } from "./creatures";
 import { drawHatArt } from "./hatArt";
 import { drawFinds, findClear } from "./finds";
+import { challengeCarving, challengeFloor, drawChallengeColumns, fireChallenge } from "../challenge";
 import { drawMarkers, drawSpeakers, placeTreehouse } from "./home";
 import { miniTreehouse, ZooExitTag } from "../zooExit";
 import { CastTag } from "../castTag";
+import { FeedTag } from "../feedTag";
 import { lanternLights, relicLights, setLights, sigilLights, updateSources } from "./lights";
 import { placeCamera } from "./camera";
 import { setFrameUniforms } from "./frameUniforms";
 import { setReveal } from "./reveal";
 import { drawWitch, houseShiftOf } from "./witch";
+import { MasterplanView } from "../masterplan";
+import { potionStrength } from "../potionEffects";
 import { drawPointers } from "./hud";
 import { workAhead } from "./ahead";
 import { winLit, winPulse, winPulseOut } from "../../rules/win";
 import { relicsOut } from "../../rules/partyOver";
 
-export function render(a4ViewHost: View, a4PrivateHost: ViewInternals, a4SharedHost: ViewShared, time: number, draw: NonNullable<Parameters<View["render"]>[1]>): void {
+export function render(a4ViewHost: View, a4PrivateHost: ViewInternals, a4SharedHost: ViewShared, time: number, draw: NonNullable<Parameters<View["render"]>[1]>, repaintHeld: NonNullable<Parameters<View["render"]>[2]>): void {
     // Allocate only when a whole display-pixel step changes, including Try/Stop and expiry.
     if (a4PrivateHost.pixelViewport.w > 0 && a4PrivateHost.scenePixelSize() !== a4ViewHost.cssPixel) a4ViewHost.resize(a4PrivateHost.pixelViewport.w, a4PrivateHost.pixelViewport.h);
     // Late art may introduce programs after compileAll's background pass has ended.
@@ -63,6 +73,8 @@ export function render(a4ViewHost: View, a4PrivateHost: ViewInternals, a4SharedH
     // Her clock (rules/slowTime.ts): she and everything of hers (her frames, blinks, trail, 💌s, sigils, the action bar) at full
     // speed, while the world (time) may run slow in a sleeping legend's circle; eased between steps as the world's is.
     const ht = Math.max(0, g.herTime - Math.max(0, g.clock.time - time) / Math.max(1e-3, g.timeScale));
+    // CPU effects read these too. Stamp them before drawing any markers or sparkles.
+    LIGHT_UNIFORMS.uTime.value = time; LIGHT_UNIFORMS.uRealTime.value = ht;
     a4ViewHost.magic.begin(ht, g.witch.x, g.witch.z, g);
     a4ViewHost.magic.batches.mpp.value = a4ViewHost.mpp;
     a4ViewHost.magic.batches.canopy = g.witch.lift > 0.5;
@@ -82,9 +94,9 @@ export function render(a4ViewHost: View, a4PrivateHost: ViewInternals, a4SharedH
     const canopyTo = TL ? TL.reach : g.witch.mode !== "ground" ? Math.min(t.haze.far, t.scenery.canopyReach ?? 0) : 0;
     a4ViewHost.canopyNow += (canopyTo - a4ViewHost.canopyNow) * (Math.abs(canopyTo - a4ViewHost.canopyNow) < 1 ? 1 : 0.08);
     LIGHT_UNIFORMS.uCanopyReach.value = a4ViewHost.canopyNow;
-    const up = placeCamera(a4ViewHost, time, pose);
+    const up = placeCamera(a4ViewHost, time, pose, repaintHeld);
 
-    a4PrivateHost.swapHomeArt();
+    if (!repaintHeld) a4PrivateHost.swapHomeArt();
     setFrameUniforms(a4ViewHost, time, up);
     setReveal(a4ViewHost, time);
     const w = g.witch;
@@ -95,12 +107,15 @@ export function render(a4ViewHost: View, a4PrivateHost: ViewInternals, a4SharedH
     // The party's over (render/partyOver.ts): its lights go out in a ripple from home.
     const over = updatePartyOver(g, partyOverEase(g, a4PrivateHost.overDebug), a4ViewHost.over), offAt = (x: number, z: number) => partyOff(over, x, z);
     a4ViewHost.leashView.partyOverEase = over.ease;
+    fireChallenge(g, a4ViewHost.fireworks); // (the cleared challenge circle's firework each bar: render/challenge.ts)
     a4ViewHost.fireworks.update(g.waveEvents, time, t, key => { const [cx, cy] = key.split(",").map(Number); return sigilColour(AREA_TYPES[g.map.typeOf(cx, cy)].creature) as number[]; }, at => !!g.win && g.win.lapAt !== undefined && at >= g.win.lapAt); // (the win's, from its victory lap on: the finale's palette; before the soundsystems: a celebrated one's lasers come on as its show starts)
     const party = a4PrivateHost.partyView.update(g, time, (x, z, ww, hh) => inView(a4ViewHost, x, z, ww, hh, 4), () => false, a4ViewHost.fireworks.celebrated, offAt);
     if (over.front > 0) { for (const l of party.lights) l.strength *= 1 - offAt(l.x, l.z); party.playing = party.playing.filter(p => offAt(p.x, p.z) < 0.98); party.projectors = party.projectors.filter(p => offAt(p.x, p.z) < 0.98); }
     a4PrivateHost.soundBatch.set(party.items);
     a4ViewHost.ground.setLegendRings(a4PrivateHost.legendRings(g, time), a4ViewHost.ringCount);
     a4ViewHost.ground.setLegendFloors(a4PrivateHost.floorItems, a4ViewHost.ringCount);
+    a4ViewHost.ground.setChallengeFloor(challengeFloor(g, g.witch.x, g.witch.z));
+    a4ViewHost.ground.setChallengeCarving(challengeCarving(g, g.witch.x, g.witch.z)); // (its sigil carved into its floor: render/challenge.ts) // (the challenge circle's dancefloor once cleared: render/challenge.ts)
     // (the zoo's undiscovered islands, rules/zooMap.ts: the nearest four lakes' sigils, faint on the water)
     if (g.map.zoo?.layout) {
       const L = g.map.zoo.layout, w = g.witch, items = a4PrivateHost.lakeSigils;
@@ -201,11 +216,13 @@ export function render(a4ViewHost: View, a4PrivateHost: ViewInternals, a4SharedH
       const dt = a4ViewHost.trailAt < 0 ? 0 : Math.min(0.1, Math.max(0, ht - a4ViewHost.trailAt)); a4ViewHost.trailAt = ht;
       const back = sp > 0.1 ? 0.6 / sp : 0, W0 = g.witches[0], D = W0.dash;
       // (and its length at least the shared cooldown's share: rules/cooldown.ts, Ed 2026-10-15; the ribbon along her blink's line)
-      const tw = witchTuning(g, W0), cool = tw.cooldown?.shared ? coolShare(W0.cool, coolRoom(tw, blinkCharges(g, W0))) : 0; // (her broom's parts: rules/broomParts.ts)
+      const tw = witchTuning(g, W0), room = coolRoom(tw, blinkCharges(g, W0)), cool = tw.cooldown?.shared ? coolShare(W0.cool, room) : 0; // (her broom's parts: rules/broomParts.ts)
+      // (the cooldown trail, render/trail.ts steps: the counter itself, and her top speed now, her broom's parts, a speed spell and
+      // Darters in; on a guest, her predicted witch's: render only)
+      a4PrivateHost.trail.counter = tw.cooldown?.shared ? { left: W0.cool.left, room, dash: tw.dash.cooldown, rise: tw.cooldown.rise ?? 0, landing: tw.riseCooldown ?? 0,
+        top: (tw.groundSpeed + (tw.treetopSpeed - tw.groundSpeed) * lift) * speedMultiplier(W0.spells, ht, tw) * speedBuff(buffsOf(W0.leash.stack, g.creatures, g.berries, g.tuning).stacks, g.tuning) } : null;
+      a4PrivateHost.trail.screen = { camera: a4ViewHost.camera, w: a4ViewHost.width, h: a4ViewHost.height };
       a4PrivateHost.trail.update(w.x - w.vx * back, witchHeight(w, t) + 0.25 + a4ViewHost.rideOff, w.z - w.vz * back, sp, top, lift, c, ht, dt, D.at, D, cool);
-      // the load she carries (render/load.ts): read once a frame, for the stack, the threads, her lean and her broom
-      loadView(g, t.load ?? LOAD_DEFAULT, dt, a4ViewHost.leashView.load);
-      const Bp = a4ViewHost.leashView.bristle; Bp.x = w.x - w.vx * back; Bp.y = witchHeight(w, t) + 0.25 + a4ViewHost.rideOff; Bp.z = w.z - w.vz * back;
     }
     // Tufts part round her and the three nearest creatures.
     // (only those within reach made into objects: mapping every creature, a thousand late in a run, every frame was much of the frame's garbage)
@@ -224,6 +241,7 @@ export function render(a4ViewHost: View, a4PrivateHost: ViewInternals, a4SharedH
     for (let i = 0; i < cs.length; i++) { const c = cs[i]; if (Math.abs(c.x - w.x) < GR && Math.abs(c.z - w.z) < GR && hasRune(c)) clear.push({ x: c.x, z: c.z, r: t.groundCover.sigilClear }); } // (a happy one's rune at its feet)
     for (const r of relicsOut(g)) if ((r.state === "lying" || r.state === "dropped") && Math.abs(r.sx - w.x) < GR && Math.abs(r.sz - w.z) < GR) clear.push({ x: r.sx, z: r.sz, r: Math.max(t.groundCover.sigilClear, 3.4 * 0.45) }); // (and a relic's sigil, south of it)
     { const F = findClear(a4ViewHost); if (F) clear.unshift(F); } // (tonight's find's patch, first: render/view/finds.ts)
+    { const ch = g.challenge; if (ch && Math.hypot(ch.x - w.x, ch.z - w.z) < GR + ch.radius) clear.unshift({ x: ch.x, z: ch.z, r: ch.radius }); } // (the challenge circle's stone floor: render/challenge.ts)
     a4ViewHost.time("markers");
     a4ViewHost.grass.update(w.x, w.z, 1 - canopyShown(w), parts, t.suspects.groundCover ? LIGHT_UNIFORMS.uGlowR.value * 1.05 : t.groundCover.radius, clear); // out to the canopy hole's edge
     const partyObjectLights = a4ViewHost.partyObjects.update(g, time, a4ViewHost.camera, (x, z, ww, hh) => inView(a4ViewHost, x, z, ww, hh, 4), a4ViewHost.worldFires, a4ViewHost.lastView);
@@ -265,30 +283,35 @@ export function render(a4ViewHost: View, a4PrivateHost: ViewInternals, a4SharedH
       }
     }
     a4ViewHost.time("grass+lights");
-    LIGHT_UNIFORMS.uTime.value = time; LIGHT_UNIFORMS.uRealTime.value = ht; // (the circle's motes and edge keep her clock)
     a4ViewHost.mist?.follow(pose.tx, pose.tz);
     if (a4ViewHost.loadingMist && draw) { // (on the page's own clock, a frame counting at most a tenth of a second: not the house's slowed time)
-      const now = performance.now(); a4PrivateHost.mistClock += a4PrivateHost.mistLast ? Math.min(0.1, (now - a4PrivateHost.mistLast) / 1000) : 0; a4PrivateHost.mistLast = now;
-      a4ViewHost.loadingMist.update(a4PrivateHost.mistClock, ty => a4ViewHost.assets.hasType(ty));
+      a4ViewHost.loadingMist.update(time, ty => a4ViewHost.assets.hasType(ty));
     }
     a4ViewHost.lightRings?.update(a4ViewHost.camera, w.x, witchHeight(w, t) + a4ViewHost.rideOff, w.z, canopyShown(w), time);
-    const hatTop = drawWitch(a4ViewHost, time, ht, onTreehouse);
+    const hatTop = drawWitch(a4ViewHost, time, ht, onTreehouse, repaintHeld);
+    a4ViewHost.partyStart.update(g.tuning, a4ViewHost.magic, ht, time);
+    updateRefraction(a4ViewHost, time);
     a4PrivateHost.mushroomView.update(a4ViewHost);
     a4ViewHost.ground.prepareCoast(a4ViewHost.renderer, a4ViewHost.camera, a4ViewHost.scene);
     a4ViewHost.houseRooms?.update(a4ViewHost, onTreehouse, ht);
     a4PrivateHost.potionObservers.update(a4ViewHost, onTreehouse);
-    if (a4ViewHost.crown && (a4ViewHost.crown.lights !== (t.treehouse.house?.crown?.lights ?? 1) || (a4ViewHost.crown.crown.wrap ?? 0) !== (t.treehouse.house?.crown?.wrap ?? 0))) a4PrivateHost.ensureCrown(a4ViewHost.game); // (its lights' density or their wrapping moved on the pause page: grown again)
+    const planStrength = potionStrength(g, "masterplan");
+    if (planStrength) (a4PrivateHost.masterplan ??= new MasterplanView(a4ViewHost)).update(planStrength);
+    else if (a4PrivateHost.masterplan) { a4PrivateHost.masterplan.dispose(); a4PrivateHost.masterplan = undefined; }
+    if (a4ViewHost.crown && (a4PrivateHost.crownNoNotch !== !!t.treehouse.house?.look?.noNotch || a4ViewHost.crown.lights !== (t.treehouse.house?.crown?.lights ?? 1) || (a4ViewHost.crown.crown.wrap ?? 0) !== (t.treehouse.house?.crown?.wrap ?? 0))) a4PrivateHost.ensureCrown(a4ViewHost.game); // (its lights' density or their wrapping moved on the pause page: grown again)
     if (a4ViewHost.crown && deck) { // (the crown: in the world, or laid over the floors with her indoors: render/crown.ts)
       const W = a4PrivateHost.crownWorld, a = ((HOUSE_ROOMS.turn ?? 0) * Math.PI) / 180, c = Math.cos(a), s = Math.sin(a);
       W.o.set(deck.x, groundHeight(deck.x, deck.z) + deck.h, deck.z); W.ex.set(c, 0, -s); W.ez.set(s, 0, c);
-      const plan = a4ViewHost.houseRooms?.plan ?? null, here = plan ? toPlan({ x: deck.x, z: deck.z }, w.x, w.z) : null;
+      const plan = a4ViewHost.houseRooms?.plan ?? null;
       const dt = Number.isFinite(a4PrivateHost.crownAt) ? Math.min(0.1, Math.max(0, ht - a4PrivateHost.crownAt)) : 0; a4PrivateHost.crownAt = ht;
       // (indoors, the forest's hole round her as it would be outdoors, its middle where she's drawn: render/view/witch.ts set uWitch
       // this frame, her house's slide in it; Ed, 2026-10-26: "The witch should have a canopy circle cut around her in the treehouse")
       const cut = t.canopyCutout, hw = SPRITE_UNIFORMS.uWitch.value, CR = t.treehouse.house?.crown;
-      const hole = { x: hw.x, y: hw.y, r: 0.5 * cut.screenFraction * (t.suspects.holeCut ? 1 : 0) * a4ViewHost.width, edge: cut.edge * a4ViewHost.width };
-      a4ViewHost.crown.uniforms.uWarmK.value = CR?.warm ?? 0; // (the house's warm light up into it, live from the pause page)
-      a4ViewHost.crown.update(a4ViewHost.camera, W, plan, here, dt, hole, CR?.cutFade ?? 0, { x: w.x, y: groundHeight(w.x, w.z) + witchHeight(w, t), z: w.z }); // (her: the oak hidden when she's behind it)
+      const hole = { x: hw.x, y: hw.y, r: cutawayRadius(cut, a4ViewHost.width) * (t.suspects.holeCut ? 1 : 0), edge: cut.edge * a4ViewHost.width };
+      a4ViewHost.crown.uniforms.uWarmK.value = CR?.warm ?? 0;
+      if (a4PrivateHost.crownFarSource) a4PrivateHost.crownFarSource.uniforms.uWarmK.value = CR?.warm ?? 0; // (the house's warm light up into it, live from the pause page)
+      a4ViewHost.crown.update(a4ViewHost.camera, W, plan, dt, hole, CR?.cutFade ?? 0, { x: w.x, y: groundHeight(w.x, w.z) + witchHeight(w, t), z: w.z }, t.treehouse.house?.look, t.treehouse.house?.look?.approach && !w.perch && w.mode !== "ground" ? approachStrength(true, true, deck.house?.rooms ? houseApproachDistance(w.x, w.z, deck.x, deck.z, HOUSE_ROOMS.turn ?? 0, OUTLINE_ROOMS, OUTLINE_BRANCHES) : Infinity, t.treehouse.house.look.radius) : 0); // (her: the oak hidden when she's behind it)
+      if (a4PrivateHost.crownFarSource) a4PrivateHost.crownFarSource.uniforms.uBack.value.copy(a4ViewHost.crown.uniforms.uBack.value);
       if (a4PrivateHost.crownFar) { // (and over the horizon from far off: its picture baked the first frame there is one)
         if (!a4ViewHost.shaderDrawStatus.active) a4PrivateHost.crownFar.bake(a4ViewHost.renderer);
         const at = g.party.spellAt;
@@ -307,6 +330,7 @@ export function render(a4ViewHost: View, a4PrivateHost: ViewInternals, a4SharedH
     drawBerries(a4ViewHost, time);
     drawHatArt(a4ViewHost); // (the Harvest hat's sprouts, the Cyclone's whirlwind: render/view/hatArt.ts)
     drawFinds(a4ViewHost); // (tonight's travel trunk: render/view/finds.ts)
+    drawChallengeColumns(a4ViewHost); // (the challenge circle's columns: render/challenge.ts)
     checkPops(a4ViewHost, "moving");
     a4ViewHost.time("creatures");
     a4ViewHost.rulers.update(a4ViewHost.camera, a4ViewHost.canvas.clientWidth || window.innerWidth, a4ViewHost.canvas.clientHeight || window.innerHeight, w.x, w.z);
@@ -316,11 +340,14 @@ export function render(a4ViewHost: View, a4PrivateHost: ViewInternals, a4SharedH
     a4ViewHost.time("hud");
     a4ViewHost.leashView.update(ht, a4ViewHost.camera, a4ViewHost.canvas.clientWidth || window.innerWidth, a4ViewHost.canvas.clientHeight || window.innerHeight, hatTop, a4ViewHost.witchBodyY, a4ViewHost.witchFeetY, a4ViewHost.witchFrameH);
     (a4ViewHost.castTag ??= new CastTag()).update(a4ViewHost); // (the spell's key prompt by its 🎶, drawn just now: render/castTag.ts)
+    (a4ViewHost.feedTag ??= new FeedTag()).update(a4ViewHost); // (the feed prompt by the berry a tap would feed: render/feedTag.ts)
     a4ViewHost.time("leash");
     a4ViewHost.magic.finish(t.lightBudget);
     a4ViewHost.stats.lights = LIGHT_UNIFORMS.uLightCount.value;
     if (a4SharedHost.FX_MOCK_MODE) (a4ViewHost.fxMock ??= new FxMock(a4ViewHost, a4SharedHost.FX_MOCK_MODE)).update(a4ViewHost, ht);
-    workAhead(a4ViewHost);
+    // A view-only repaint must not upload a new floor tile or height strip into
+    // the textures used for the picture. Continue that work at the next live frame.
+    if (!repaintHeld) workAhead(a4ViewHost);
     if (a4ViewHost.debugCull) drawGhosts(a4ViewHost, time);
     if (!draw) return;
     a4ViewHost.renderer.info.reset();
@@ -351,4 +378,13 @@ export function render(a4ViewHost: View, a4PrivateHost: ViewInternals, a4SharedH
     a4ViewHost.stats.sceneryRadius = a4ViewHost.budget.radius; a4ViewHost.stats.fps = a4ViewHost.budget.fps;
     a4ViewHost.stats.scenery = a4ViewHost.stats.trees + a4ViewHost.stats.bushes;
     a4ViewHost.stats.gameplay = a4ViewHost.stats.creatures + a4ViewHost.propBatch.count + a4PrivateHost.soundBatch.count + (a4PrivateHost.partyView.gen?.count ?? 0);
+  }
+
+export function replayPartyStart(a4ViewHost: View, _a4PrivateHost: ViewInternals, _a4SharedHost: ViewShared): boolean {
+    const P = a4ViewHost.partyStart, A = P.anchor ?? P.here, g = a4ViewHost.game;
+    if (!A || !replayReady(partyStartOf(g.tuning), P.showAt, P.now)) return false;
+    P.start(g.tuning, A.x, A.y, A.z, P.now);
+    captureRefractionCast(a4ViewHost, P.worldNow, A.x, A.y, A.z, true);
+    a4ViewHost.houseRooms?.sayAtDecks(MAKE_SOME_NOISE, P.now);
+    return true;
   }

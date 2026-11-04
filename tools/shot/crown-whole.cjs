@@ -3,6 +3,7 @@
 // the same frames with the switches on and off, for the report. From outside: flying over the house in the treetops, and from the
 // dancefloor on the ground looking north; then landing on the house (Space over the Terrace, frames as she comes down) and indoors on
 // the Terrace. Each frame named <scene>-<on|off>.png.
+//   LOOK=1 compares four Treehouse look switches separately and together (ONLY=off|indoor|notch|approach|walls|all).
 //   npm run build && node tools/shot/crown-whole.cjs [out dir]   (SEED=160271, SIZE=1280x720, DIST=dist, LINK= more of the link)
 const http = require("http"), fs = require("fs"), path = require("path");
 let playwright; try { playwright = require("playwright"); } catch { playwright = require("/opt/node22/lib/node_modules/playwright"); }
@@ -11,7 +12,7 @@ const SEED = process.env.SEED || "160271", [W, H] = (process.env.SIZE || "1280x7
 const out = path.resolve(process.argv[2] || path.join(__dirname, "../../previews/shot/crown-whole"));
 const types = { ".html": "text/html", ".js": "text/javascript", ".css": "text/css", ".json": "application/json", ".png": "image/png", ".wasm": "application/wasm", ".woff2": "font/woff2", ".ogg": "audio/ogg" };
 const t0 = Date.now(), log = (...a) => console.log(`[${((Date.now() - t0) / 1000).toFixed(0)} s]`, ...a);
-const ALL = { on: "", off: "d_crownWhole=0&d_terraceRoom=0" }, SWITCHES = process.env.ONLY ? { [process.env.ONLY]: ALL[process.env.ONLY] } : ALL; // (ONLY=on|off: one half)
+const ALL = process.env.LOOK ? { off: "", indoor: "d_lookIndoor=1", notch: "d_lookNoNotch=1", approach: "d_lookApproach=1", walls: "d_lookNoWalls=1", all: "d_lookIndoor=1&d_lookNoNotch=1&d_lookApproach=1&d_lookNoWalls=1" } : { on: "", off: "d_crownWhole=0&d_terraceRoom=0" }, SWITCHES = process.env.ONLY ? { [process.env.ONLY]: ALL[process.env.ONLY] } : ALL; // (ONLY=on|off: one half)
 
 (async () => {
   fs.mkdirSync(out, { recursive: true });
@@ -30,10 +31,11 @@ const ALL = { on: "", off: "d_crownWhole=0&d_terraceRoom=0" }, SWITCHES = proces
       if (await page.evaluate(() => window.witch.game.clock.paused)) { await page.keyboard.press("Enter"); await page.waitForFunction(() => !window.witch.game.clock.paused, null, { timeout: 60000 }).catch(() => {}); }
       const said = await page.evaluate(() => window.witch.lastShot ?? window.witch.shot("room:terrace"));
       if (!said.ok) throw new Error(said.say);
-      const step = (n, c = {}) => page.evaluate(([n, c]) => { const w = window.witch; for (let i = 0; i < n; i++) w.frame({ moveX: 0, moveZ: 0, toggleMode: false, zoom: 0, ...c }, 1 / 60, i === n - 1); }, [n, c]);
+      let heldPose = false;
+      const step = (n, c = {}) => page.evaluate(([n, c, held]) => { const w = window.witch; for (let i = 0; i < n; i++) w.frame({ moveX: 0, moveZ: 0, toggleMode: false, zoom: 0, ...c }, held ? 0 : 1 / 60, i === n - 1); }, [n, c, heldPose]);
       const settle = async () => { for (let round = 0, calm = 0; calm < 2 && round < 60; round++) { await step(10); if ((await page.evaluate(() => window.witch.view.assets.pending)) === 0) calm++; else { calm = 0; await page.waitForTimeout(1500); } } await step(30); };
       const put = (dx, dz, mode) => page.evaluate(([dx, dz, mode]) => { const g = window.witch.game, T = g.map.treehouse, b = g.witches[0].body; g.witches[0].body = { ...b, x: T.x + dx, z: T.z + dz, vx: 0, vz: 0, mode, lift: mode === "treetop" ? 1 : 0, perch: false, seated: false }; }, [dx, dz, mode]);
-      const shot = async scene => { await settle(); await page.screenshot({ path: path.join(out, `${scene}-${name}.png`), timeout: 300000 }); log(`${scene}-${name}`); };
+      const shot = async scene => { await settle(); await page.evaluate(() => window.witch.view.renderer.getContext().finish()); await page.screenshot({ path: path.join(out, `${scene}-${name}.png`), timeout: 300000 }); log(`${scene}-${name}`); };
       const map = await page.evaluate(() => { const m = window.witch.game.map; return { th: m.treehouse, df: m.dancefloor }; });
       log(name, JSON.stringify(map));
       // indoors on the Terrace (the shot's own place)
@@ -41,14 +43,32 @@ const ALL = { on: "", off: "d_crownWhole=0&d_terraceRoom=0" }, SWITCHES = proces
       // flying over the house in the treetops, south of it, then over it
       await put(0, 40, "treetop"); await shot("over-south");
       await put(0, 0, "treetop"); await shot("over");
+      if (process.env.LOOK) { await put(-30, 0, "treetop"); await shot("approach-west"); await put(30, 0, "treetop"); await shot("approach-east"); }
       // from the dancefloor's side, on the ground, looking north at the oak (two thirds of the way from the oak to the dancefloor)
       await page.evaluate(({ df, th }) => { const g = window.witch.game, b = g.witches[0].body; g.witches[0].body = { ...b, x: th.x + (df.x - th.x) * 0.66, z: th.z + (df.z - th.z) * 0.66, vx: 0, vz: 0, mode: "ground", lift: 0, perch: false, seated: false }; }, map);
       await shot("dancefloor");
       // landing: over the Terrace in the treetops, Space, frames as she comes down
       await put(0, 4, "treetop"); await settle();
       await step(1, { toggleMode: true });
-      for (const k of [6, 12, 24]) { await step(k === 6 ? 6 : 6); await page.screenshot({ path: path.join(out, `landing-${k}-${name}.png`), timeout: 300000 }); }
+      let prior = 0;
+      for (const k of [6, 12, 24]) { await step(k - prior); prior = k; await page.screenshot({ path: path.join(out, `landing-${k}-${name}.png`), timeout: 300000 }); }
       await shot("landed");
+      if (process.env.LOOK) {
+        const landing = await page.evaluate(() => window.witch.shot("room:parlour"));
+        if (!landing.ok) throw new Error(landing.say);
+        await page.evaluate(() => { const b = window.witch.game.witches[0].body; Object.assign(b, { perch: false, seated: false, mode: "treetop", lift: 1 }); });
+        await settle(); await step(1, { toggleMode: true }); await step(24); await shot("parlour-landed");
+        for (const room of ["parlour", "bedroom"]) {
+          const result = await page.evaluate(room => window.witch.shot("room:" + room), room);
+          if (!result.ok) throw new Error(result.say); await shot(room);
+        }
+        await step(1, { toggleMode: true }); await step(30); await shot("takeoff");
+        heldPose = true; // No coast clamp while drawing the far comparison pose. Fade already settled on takeoff.
+        for (const mode of ["treetop", "ground"]) {
+          const result = await page.evaluate(mode => { const w = window.witch, t = w.game.map.treehouse; return w.shot("at:" + t.x + "," + (t.z + 1200) + (mode === "treetop" ? ",treetop" : "")); }, mode);
+          if (!result.ok) throw new Error(result.say); await shot(mode === "treetop" ? "horizon-south" : "horizon-ground");
+        }
+      }
       if (errors.length) { failed = true; log(`page errors: ${errors.join(" | ")}`); }
       await page.close();
     }

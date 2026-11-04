@@ -7,12 +7,13 @@ import { ZOO_CONFIG } from "../../rules/zoo";
 import { groundHeight } from "../height";
 import { HAND, letterAt } from "../invites";
 import { Pin, type PinLook, type PinTarget } from "../pins";
+import { challengeRing } from "../challenge";
 
 export function legendRings(a4ViewHost: View, a4PrivateHost: ViewInternals, _a4SharedHost: ViewShared, g: Game, time: number): { x: number; z: number; r: number; edge: number; glow: number }[] {
     // (the zoo's plaza, Ed 2026-10-26: "Home appears as a stone plaza with the ent's sigil on it (drawn like the floor of a legend
     // circle)": a floor of its own round the dancefloor, the World Tree carved in, drawn after the legends' nearest five)
     const plaza = null as { x: number; z: number } | null; // (the zoo's plaza draws its own sigil now: render/ground.ts uZooPlaza)
-    const w = g.witch, dt = Math.min(0.1, Math.max(0, time - a4ViewHost.lastRingTime)), near = nearestClearings(g.map.legendClearings, w.x, w.z, a4PrivateHost.nearRings, plaza ? 5 : 6);
+    const w = g.witch, dt = Math.min(0.1, Math.max(0, time - a4ViewHost.lastRingTime)), ch = challengeRing(g, w.x, w.z), near = nearestClearings(g.map.legendClearings, w.x, w.z, a4PrivateHost.nearRings, plaza || ch ? 5 : 6);
     a4ViewHost.lastRingTime = time;
     for (const e of g.leashEvents) if (e.kind === "outsideCircle") {
       const L = g.creatures[e.id], c = L && g.map.legendClearing(L.cell[0], L.cell[1]);
@@ -41,6 +42,13 @@ export function legendRings(a4ViewHost: View, a4PrivateHost: ViewInternals, _a4S
       f.glint = glint > 0 && L && !L.gone && (L.legendState === "asleep" || L.legendState === "restless") ? glint : 0;
     }
     if (plaza) { const f = a4PrivateHost.floorItems[near.length]; f.species = "worldTree"; f.look = FALLBACK_LOOK; f.glint = 4; } // (its grooves glinting, so the World Tree reads)
+    // (the challenge circle, Ed 2026-11-03: "a large stone floor circle (like the legend circle) with the glowing sigil of the island
+    // carved into it": the last slot, its area's floor, the island's sigil, glowing; render/challenge.ts)
+    if (ch && a4ViewHost.ringCount < 6) {
+      const i = a4ViewHost.ringCount++, f = a4PrivateHost.floorItems[i];
+      Object.assign(out[i], { x: ch.x, z: ch.z, r: ch.r, edge: ch.edge, glow: ch.glow });
+      f.species = ch.species; f.look = floorLook(AREA_TYPES[g.map.typeOf(g.challenge!.cell[0], g.challenge!.cell[1])].id); f.glint = ch.glint;
+    }
     return out;
   }
 

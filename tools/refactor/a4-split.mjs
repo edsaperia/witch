@@ -250,20 +250,20 @@ function saveModule(ctx, destination, header, chunks) {
 
 const mainGroups = {
   pagePause: ['openPotionLab', 'pauseControls', 'updatePauseMenus'],
-  pageStations: ['shutStation'],
-  pageNight: ['revealArt', 'bedFirst', 'bedFirstNow', 'arrived', 'arrivedNow', 'wakeArrival', 'wakeArrivalNow', 'start', 'startDirect', 'dressCreator', 'chartOverNight', 'chartWorldArg', 'sailFromChart', 'recordSail', 'departFromChart', 'wakeFirst', 'wakeFirstNow', 'sailInPlace', 'makeSailNight', 'warmAt', 'newNight', 'nightInPlace', 'leaveBot'],
+  pageStations: ['reconcilePickers', 'shutStation'],
+  pageNight: ['keepNightie', 'personalKit', 'hostCollections', 'traceVisit', 'aheadMorning', 'revealArt', 'bedFirst', 'bedFirstNow', 'arrived', 'arrivedNow', 'wakeArrival', 'wakeArrivalNow', 'start', 'startDirect', 'dressCreator', 'chartOverNight', 'chartWorldArg', 'sailFromChart', 'recordSail', 'departFromChart', 'wakeFirst', 'wakeFirstNow', 'sailInPlace', 'makeSailNight', 'newNight', 'nightInPlace', 'leaveBot'],
   pageFinds: ['lendFind', 'settleLoan', 'settleLoanNow', 'startDream', 'herHead', 'stepGuide'],
   pageDebug: ['botGame', 'saveComment', 'restoreComment', 'spawnHere', 'spawnHereNow'],
   pageFrame: ['drawFrame', 'frame', 'frameBody', 'overlayHead'],
 };
 const viewGroups = {
-  frame: ['render'],
+  frame: ['render', 'replayPartyStart'],
   houseFrame: ['houseTilt', 'behindHouse', 'occluders', 'ensureCrown', 'buildHome', 'swapHomeArt'],
   markers: ['legendRings', 'pin', 'inviteStart'],
   atmosphere: ['updateMoon', 'updateSteam', 'updateSmoke'],
   readiness: ['readyPrograms', 'landingWakeReady', 'beginLandingShaders', 'armLimitedLanding', 'limitedLandingReady', 'waitForLandingWitch', 'startLandingShaderGrace', 'compileAll', 'gpuCaughtUp', 'warmDraws', 'warmSteps', 'setReadiness'],
-  lifecycle: ['build', 'prepare', 'treeExtent', 'askIsland', 'setGameSteps', 'retype'],
-  viewport: ['scenePixelSize', 'resize', 'screenOf', 'aimAt'],
+  lifecycle: ['build', 'prepare', 'askIsland', 'setGameSteps', 'retype'],
+  viewport: ['landingShot', 'scenePixelSize', 'resize', 'screenOf', 'aimAt'],
 };
 
 function splitMain() {
@@ -300,7 +300,7 @@ function splitMain() {
       const params = n.parameters.map((p, i) => p.initializer
         ? `${p.name.getText(ctx.ast)}: ${p.type ? p.type.getText(ctx.ast) : `NonNullable<Parameters<PageHost[${JSON.stringify(name)}]>[${i}]>`}`
         : p.getText(ctx.ast));
-      const prefix = `export ${n.modifiers?.some(m => m.kind === ts.SyntaxKind.AsyncKeyword) ? 'async ' : ''}function ${name}(pageHost: PageHost${params.length ? ', ' + params.join(', ') : ''}): ${n.type.getText(ctx.ast)} `;
+      const prefix = `export ${n.modifiers?.some(m => m.kind === ts.SyntaxKind.AsyncKeyword) ? 'async ' : ''}function ${name}(pageHost: PageHost${params.length ? ', ' + params.join(', ') : ''})${n.type ? ': ' + n.type.getText(ctx.ast) : ''} `;
       chunks.push({ name, prefix, changed, suffix: '' });
       // Preserve the single async boundary in the moved implementation, rather than
       // wrap its promise in a second async function. Defaults run in the wrapper once.

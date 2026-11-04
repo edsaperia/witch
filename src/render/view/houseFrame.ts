@@ -2,6 +2,7 @@
 import type { View, ViewInternals, ViewShared } from "../view";
 import * as THREE from "three";
 import { deckOf } from "../../rules/treehouse";
+import { crownLookInput } from "../../rules/treehouseLook";
 import { HOUSE_LAYER } from "../post";
 import { CrownView } from "../crown";
 import { CrownLandmark } from "../crownLandmark";
@@ -12,6 +13,7 @@ import { speakerRadius } from "../../rules/speakers";
 import { Hiz, HIZ_LAYER } from "../hiz";
 import type { Game } from "../../rules/game";
 import { stepTiltShare, tiltShareShown } from "../overlayTilt";
+import { forestShown, stepForestReveal, type RevealPlace } from "../forestReveal";
 import { nextFrame, runSliced, type Steps } from "../slices";
 import { refreshSteps } from "./scenery";
 
@@ -25,23 +27,22 @@ export function houseTilt(a4ViewHost: View, a4PrivateHost: ViewInternals, a4Shar
 export function behindHouse(a4ViewHost: View, a4PrivateHost: ViewInternals, _a4SharedHost: ViewShared, g: Game): void {
     // A late landing's house-only camera layer must still submit the critical ground to its readiness gate.
     a4ViewHost.ground.mesh.layers[a4ViewHost.shaderLandingLimited && a4ViewHost.shaderDrawStatus.active ? 'enable' : 'disable'](HOUSE_LAYER);
-    const D = a4PrivateHost.dark, T = g.tuning.treehouse.house?.dark, deck = deckOf(g.map, g.tuning), w = g.witch;
-    const inHouse = !!T?.on && !!deck?.house?.rooms && !!w.perch && w.mode === "ground" && !a4ViewHost.telescope; // (on foot: rising out of it, the forest comes back as she lifts off)
-    const enclosed = inHouse && !g.islandReady;
-    // (where it comes back from: the whole picture as the island's ready, or through the telescope; else where she left the house)
-    if (enclosed !== D.enclosed) { D.reveal = !enclosed && inHouse; D.door = (a4ViewHost.telescope || D.reveal) && !enclosed ? null : { x: w.x, z: w.z }; D.enclosed = enclosed; }
-    const dt = Number.isFinite(D.at) ? Math.max(0, Math.min(0.1, g.herTime - D.at)) : 1e9;
-    D.at = g.herTime;
-    const fade = Math.max(1e-3, (D.reveal && !enclosed ? T?.reveal : undefined) ?? T?.fade ?? 0.6);
-    D.k = enclosed ? Math.max(0, D.k - dt / fade) : Math.min(1, D.k + dt / fade);
-    if (!T?.on) D.k = 1;
+    const D = a4PrivateHost.dark, T = g.tuning.treehouse.house?.dark, deck = deckOf(g.map, g.tuning), w = g.witch, rooms = !!T?.on && !!deck?.house?.rooms;
+    // (on foot: rising out of it, the forest comes back as she lifts off)
+    const place: RevealPlace = a4ViewHost.fly && !a4ViewHost.fly.indoors ? "dive" : !rooms ? "out" : a4ViewHost.telescope ? "scope" : w.perch && w.mode === "ground" ? "house" : "out";
+    if (place !== D.place) { D.place = place; D.from = { x: w.x, z: w.z }; } // (where she came in, or left)
+    const R = D.reveal;
+    stepForestReveal(R, place, !!g.islandReady, g.herTime, T); // (a sail's dive, "dive": the whole picture, though she's in bed for its end; on its way down into her room, the house's as she'll wake in it)
     const P = a4ViewHost.post;
-    P.behind = D.k < 1 ? D.k * D.k * (3 - 2 * D.k) : 1; // (eased in and out)
-    if (D.k >= 1) return;
+    P.behind = forestShown(R.k);
+    if (R.k >= 1) return;
     // The house's own meshes on its layer as well as the scene's (they come and go: each frame).
     for (const o of [...(a4ViewHost.houseRooms?.meshes ?? []), ...(a4ViewHost.crown?.meshes ?? []), ...(a4PrivateHost.strings?.crownMeshes ?? []), ...a4ViewHost.treehouseBatch.meshes, ...a4ViewHost.witchBatch.meshes, ...(a4ViewHost.bareBatch?.meshes ?? [])]) o.traverse(c => c.layers.enable(HOUSE_LAYER));
-    if (D.door) {
-      const p = a4ViewHost.v3.set(D.door.x, a4ViewHost.witchFeetY, D.door.z).project(a4ViewHost.camera);
+    // (from a point: back from where she lifted off, or closing in round her as she comes into the house before it's ready; else the
+    // whole picture: the island's reveal, and the telescope)
+    const door = R.out || (place === "house" && !g.islandReady) ? D.from : null;
+    if (door) {
+      const p = a4ViewHost.v3.set(door.x, a4ViewHost.witchFeetY, door.z).project(a4ViewHost.camera);
       P.behindAt = D.uv.set(p.x * 0.5 + 0.5, p.y * 0.5 + 0.5);
     } else P.behindAt = null;
   }
@@ -57,20 +58,26 @@ export function occluders(a4ViewHost: View, a4PrivateHost: ViewInternals, a4Shar
 export function ensureCrown(a4ViewHost: View, a4PrivateHost: ViewInternals, _a4SharedHost: ViewShared, game: Game): void {
     const t = game.tuning, H = t.treehouse.house, want = !!(H?.on && H.crown?.on && deckOf(game.map, t)?.house?.rooms);
     // (the crown whole over the Terrace or with its gap, the pause page's switch: Ed, 2026-10-26, grown again when it's flipped)
-    const gap = H?.crown?.whole !== true, lights = H?.crown?.lights ?? 1, wrap = H?.crown?.wrap ?? 0;
-    if (a4ViewHost.crown && want && (a4ViewHost.crown.crown.gap !== gap || a4ViewHost.crown.lights !== lights || (a4ViewHost.crown.crown.wrap ?? 0) !== wrap)) { a4ViewHost.scene.remove(...a4ViewHost.crown.meshes); a4PrivateHost.strings?.setCrown(null); a4ViewHost.crown.dispose(); a4ViewHost.crown = null; if (a4PrivateHost.crownFar) { a4ViewHost.scene.remove(...a4PrivateHost.crownFar.meshes); a4PrivateHost.crownFar.dispose(); a4PrivateHost.crownFar = null; } }
+    const noNotch = !!H?.look?.noNotch, gap = H?.crown?.whole !== true, lights = H?.crown?.lights ?? 1, wrap = H?.crown?.wrap ?? 0;
+    if (a4ViewHost.crown && want && (a4PrivateHost.crownNoNotch !== noNotch || a4ViewHost.crown.crown.gap !== (noNotch ? false : gap) || a4ViewHost.crown.lights !== lights || (a4ViewHost.crown.crown.wrap ?? 0) !== wrap)) { a4ViewHost.scene.remove(...a4ViewHost.crown.meshes); a4PrivateHost.strings?.setCrown(null); a4ViewHost.crown.dispose(); a4ViewHost.crown = null; a4PrivateHost.crownFarSource?.dispose(); a4PrivateHost.crownFarSource = null; if (a4PrivateHost.crownFar) { a4ViewHost.scene.remove(...a4PrivateHost.crownFar.meshes); a4PrivateHost.crownFar.dispose(); a4PrivateHost.crownFar = null; } }
     if (want && !a4ViewHost.crown && H) {
       const outline = { rooms: OUTLINE_ROOMS, branches: OUTLINE_BRANCHES, stubs: OUTLINE_STUBS, takeoff: OUTLINE_TAKEOFF } as unknown as HouseOutline;
       // (the dancefloor and its speakers stay open to the sky as the Terrace does: it stands south-east of the house, under the crown's edge)
       const deck = deckOf(game.map, t)!, df = game.map.dancefloor, dp = toPlan({ x: deck.x, z: deck.z }, df.x, df.z);
       const open = [{ x: dp.x, z: dp.z, r: speakerRadius(t) + t.dancefloor.speakers.footprint + 4 }];
-      a4ViewHost.crown = new CrownView(makeCrown({ outline, floor: H.height, seed: H.crown!.seed, open, gap, wrap }), t.stringLights.bulbSpacing, outline, lights);
-      a4ViewHost.crown.drawMask = (key, box) => { const p = a4ViewHost.assets.oneOff({ kind: "crownMask", id: `${key}@${box.map(v => v.toFixed(4)).join(",")}`, style: a4ViewHost.assets.style, box: [...box] }).then(r => r.mask ?? Promise.reject(new Error("no mask"))); a4ViewHost.assets.track(`crownMask:${key}`, p); return p; };
+      a4PrivateHost.crownNoNotch = noNotch;
+      const input = { outline, floor: H.height, seed: H.crown!.seed, open, gap, wrap };
+      const original = makeCrown(input);
+      // The dancefloor open-sky sight extrusion removes a tall channel even with whole=true.
+      // Trial removes only that close-crown reservation; the horizon keeps its original source.
+      a4ViewHost.crown = new CrownView(noNotch ? makeCrown(crownLookInput(input, true)) : original, t.stringLights.bulbSpacing, outline, lights);
+      a4PrivateHost.crownFarSource = noNotch ? new CrownView(original, t.stringLights.bulbSpacing, outline, lights) : null;
       a4ViewHost.scene.add(...a4ViewHost.crown.meshes);
       a4PrivateHost.strings?.setCrown(a4ViewHost.crown); // (its string lights: render/strings.ts)
-      a4PrivateHost.crownFar = new CrownLandmark(a4ViewHost.crown, t.stringLights.palette.map(h => new THREE.Color(h))); a4ViewHost.scene.add(...a4PrivateHost.crownFar.meshes);
+      a4PrivateHost.crownFar = new CrownLandmark(a4PrivateHost.crownFarSource ?? a4ViewHost.crown, t.stringLights.palette.map(h => new THREE.Color(h))); a4ViewHost.scene.add(...a4PrivateHost.crownFar.meshes);
     } else if (!want && a4ViewHost.crown) {
       a4ViewHost.scene.remove(...a4ViewHost.crown.meshes); a4PrivateHost.strings?.setCrown(null); a4ViewHost.crown.dispose(); a4ViewHost.crown = null;
+      a4PrivateHost.crownFarSource?.dispose(); a4PrivateHost.crownFarSource = null;
       if (a4PrivateHost.crownFar) { a4ViewHost.scene.remove(...a4PrivateHost.crownFar.meshes); a4PrivateHost.crownFar.dispose(); a4PrivateHost.crownFar = null; }
     }
   }
@@ -93,7 +100,7 @@ export async function buildHome(a4ViewHost: View, a4PrivateHost: ViewInternals, 
 
 export function swapHomeArt(a4ViewHost: View, a4PrivateHost: ViewInternals, _a4SharedHost: ViewShared): void {
     const A = a4ViewHost.assets;
-    const now = performance.now();
+    const now = a4ViewHost.landingPresentationMs + a4ViewHost.game.clock.time * 1000;
     const previousHouseShare = a4ViewHost.landingHouseShare;
     a4ViewHost.landingHouseShare = a4PrivateHost.landingFades.share('treehouse', A.home.treehouse, now);
     if (a4ViewHost.shaderLandingLimited && previousHouseShare === 0 && a4ViewHost.landingHouseShare > 0) performance.mark('landing:house-fading');

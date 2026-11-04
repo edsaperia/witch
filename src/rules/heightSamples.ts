@@ -134,6 +134,8 @@ export class HeightSamples {
     // The sleeping legends' circles (Ed, 2026-10-06: "the legend circle ought to be mostly flat"): each on its own terrace,
     // its floor, rim kit, legend and baby level, eased into the hills round it like the rest.
     for (const c of m.legendClearings ?? []) add(c.x, c.z, c.r + 2);
+    // The challenge circle (rules/challenge.ts): its stone floor and ring of columns level, as a legend's circle is.
+    for (const sp of m.specialSites ?? []) if (sp.kind === "challenge") add(sp.x, sp.z, sp.r + 2);
     for (const [cx, cy] of m.cells) {
       const s = m.soundsystemSpot(cx, cy);
       if (cx !== m.centreCell[0] || cy !== m.centreCell[1]) add(s.x, s.z, Math.max(T.soundsystemFootprint, T.runeMarkers?.stump?.on ? T.runeMarkers.stump.clear : 0) + 2); // (home's has none; a great stump's roots lie level)

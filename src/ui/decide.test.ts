@@ -82,33 +82,32 @@ describe("the decisions panel", () => {
     expect(lines.filter(l => / = .* \(built /.test(l)).length).toBe(DECISION_LIST.length);
   });
   it("folds the pause page's groups (Ed, 2026-10-26): all folded at first, the opened ones remembered, each header counting its changed sliders", () => {
-    const store = new Map<string, string>(), was = (globalThis as { localStorage?: unknown }).localStorage;
-    (globalThis as { localStorage?: unknown }).localStorage = { getItem: (k: string) => store.get(k) ?? null, setItem: (k: string, v: string) => { store.set(k, v); } };
+    const store = new Map<string, string>();
+    vi.stubGlobal("localStorage", { getItem: (k: string) => store.get(k) ?? null, setItem: (k: string, v: string) => { store.set(k, v); } }); // (stubbed: unstubbing puts a missing one back as missing)
     try {
       expect(openGroups().size).toBe(0);
       saveOpenGroups(new Set([groupOf(DECISION_LIST[0])]));
       expect([...openGroups()]).toEqual([groupOf(DECISION_LIST[0])]);
       slotStorage.setItem("witch.pauseOpen", "not json"); // Corrupt the active slot, not the preserved legacy copy.
       expect(openGroups().size).toBe(0);
-    } finally { (globalThis as { localStorage?: unknown }).localStorage = was; }
+    } finally { vi.unstubAllGlobals(); }
     const [a, b] = DECISION_LIST, values = new Map<string, unknown>([[a.id, a.default], [b.id, b.default]]);
     expect(changedIn([a, b], values)).toBe(0);
     values.set(b.id, b.control.type === "toggle" ? !b.default : "changed");
     expect(changedIn([a, b], values)).toBe(1);
   });
   it("starts folded on a fresh page without browser storage, without carrying another page's memory fallback", async () => {
-    const was = (globalThis as { localStorage?: unknown }).localStorage;
     try {
-      (globalThis as { localStorage?: unknown }).localStorage = undefined;
+      vi.stubGlobal("localStorage", undefined);
       vi.resetModules(); // A new page has fresh adapter memory; restoring a backing object is not a page reload.
       const fresh = await import("./decisions");
       expect(fresh.openGroups().size).toBe(0);
-    } finally { (globalThis as { localStorage?: unknown }).localStorage = was; }
+    } finally { vi.unstubAllGlobals(); }
   });
   it("draws a colour's swatch as the light takes it (the Hidden witch group's glow; Ed, 2026-10-26)", () => {
     for (const [h, sv] of [[0.08, 0.55], [0.6, 1], [0.33, 0], [0.95, 0.3]]) expect(swatchCss(h, sv)).toBe(`rgb(${hsv2rgb(h, sv, 1).join(", ")})`);
     const glow = DECISION_LIST.filter(d => d.control.type === "slider" && d.control.swatch);
-    expect(glow.map(d => d.apply.knob).sort()).toEqual(["light.spooky.glowHue", "light.spooky.glowSat"]);
+    expect(glow.map(d => d.apply.knob).sort()).toEqual(["light.spooky.glowHue", "light.spooky.glowSat", "partyStart.sparkles.hueA", "partyStart.sparkles.hueB", "partyStart.sparkles.satA", "partyStart.sparkles.satB"]); // (and the party start's sparkles' two colours, Ed 2026-11-03)
   });
   it("shows \"Load latest version\" only while a newer build is out, with its number, and a click loads it (playtest 31 Oct item 11)", () => {
     const clicks: (() => void)[] = [];

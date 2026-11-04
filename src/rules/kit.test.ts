@@ -2,12 +2,13 @@
 // invitations her 💌s don't fly; without a broom she falls off the Terrace (a thud, then back at the magic circle); E takes each.
 import { describe, expect, it } from "vitest";
 import { TUNING, withTuning } from "./tuning";
-import { hitWitch, newGame as fullGame, stepGame, STEP, type Game } from "./game";
+import { hitWitch, stepGame, STEP, type Game } from "./game";
 import { smallWorld } from "../test/worlds";
-const newGame = smallWorld(fullGame, "Kit pickup and Terrace falls use one house and nearby open ground, independent of distant areas.");
+const newGame = smallWorld(preppedGame, "Kit pickup and Terrace falls use one house and nearby open ground, independent of distant areas.");
 import { deckOf } from "./treehouse";
 import { HOUSE_ROOMS, objectFront } from "./houseRooms";
 import { broomsLeft, hasBag, hasBroom, hasInvites, KIT_BROOMS, needsBag, newKit, takeBroom, takeInvites } from "./kit";
+import { preppedGame } from "../test/preppedGame"; // (games on a map made once a file from its prep)
 
 const run = (g: Game, secs: number, c: object = {}) => { for (let i = 0; i < Math.round(secs / STEP); i++) stepGame(g, { moveX: 0, moveZ: 0, toggleMode: false, zoom: 0, ...c } as Parameters<typeof stepGame>[1], STEP); };
 const events = (g: Game, kind: string) => g.leashEvents.filter(e => e.kind === kind);
@@ -82,14 +83,17 @@ describe("her night's kit", () => {
     expect(W.invites.letters.length).toBeGreaterThan(0);
   });
 
-  it("without a broom, off the Terrace's open rim she falls: a thud below, a beat, then back at the magic circle; with one, she flies", () => {
+  it("with shipped fall.on=false and open platforms, no broom falls and returns to the edge; with a broom she flies", () => {
     const out = { moveX: Math.cos(40 * DEG), moveZ: Math.sin(40 * DEG) }; // (south-east, past the desk's east end: treehouse.test.ts)
     const HS = JETS.treehouse.house!, along = 0.7 * 5 / HS.walk;
-    const g = night(), d = deckOf(g.map, g.tuning)!;
+    const g = night();
     run(g, 0.2, { moveZ: -1 }); run(g, along, { moveX: 1 });
     let falling = false;
     for (let i = 0; i < 600 && !falling; i++) { run(g, STEP, out); falling = g.witch.falling !== undefined; }
     expect(falling).toBe(true);
+    expect(HS.fall.on).toBe(false);
+    const origin = g.witch.fallOrigin!;
+    expect(origin).toBeDefined();
     let thud = 0, fell = 0, thudAt = -1, fellAt = -1;
     for (let i = 0; i < Math.round((HS.fall.time + (HS.fall.beat ?? 0) + 0.3) / STEP); i++) {
       run(g, STEP); if (events(g, "thud").length) { thud++; thudAt = i; } if (events(g, "fell").length) { fell++; fellAt = i; }
@@ -97,7 +101,7 @@ describe("her night's kit", () => {
     expect([thud, fell]).toEqual([1, 1]);
     expect((fellAt - thudAt) * STEP).toBeCloseTo(HS.fall.beat ?? 0, 1); // (the beat between the thud and her coming back)
     expect(g.witch.falling).toBeUndefined();
-    expect(g.witch.x).toBeCloseTo(d.house!.circle.x, 6); expect(g.witch.z).toBeCloseTo(d.house!.circle.z, 6);
+    expect(g.witch.x).toBeCloseTo(origin.x, 6); expect(g.witch.z).toBeCloseTo(origin.z, 6);
     // with a broom: the same walk takes her flying
     const g2 = night(); takeBroom(g2, g2.witches[0]);
     run(g2, 0.2, { moveZ: -1 }); run(g2, along, { moveX: 1 });

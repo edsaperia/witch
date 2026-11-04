@@ -51,14 +51,17 @@ function slotAt(i: number, j: number, make: boolean): number {
 }
 
 /** Ease the creatures in `list` apart for one step. `still` ones (a sleeping legend, say) push but aren't moved. */
-export function spaceOut(list: Creature[], dt: number, still: (c: Creature) => boolean, data: MovementData = MOVEMENT): void {
-  const B = data.bodies, size = B.cell, n = list.length;
+export function spaceOut(list: Creature[], dt: number, still: (c: Creature) => boolean, data: MovementData = MOVEMENT, opt?: { radius: (c: Creature) => number; steered: (c: Creature) => boolean }): void {
+  const B = data.bodies, n = list.length;
+  let size = B.cell;
   if (!n) return;
   grow(n);
+  // Larger calibrated discs must not disappear beyond the old 3x3-cell lookup.
+  if (opt) for (let a = 0; a < n; a++) { radius[a] = opt.radius(list[a]); size = Math.max(size, radius[a] * 2 * B.factor + B.margin); }
   used.fill(0);
   for (let a = 0; a < n; a++) {
     const c = list[a], i = Math.floor(c.x / size), j = Math.floor(c.z / size), h = slotAt(i, j, true);
-    radius[a] = spaceRadius(c, data); cellI[a] = i; cellJ[a] = j; slotOf[a] = h; count[h]++;
+    if (!opt) radius[a] = spaceRadius(c, data); cellI[a] = i; cellJ[a] = j; slotOf[a] = h; count[h]++;
   }
   // Each cell's run in `order`, in the list's order.
   let at = 0;
@@ -67,7 +70,7 @@ export function spaceOut(list: Creature[], dt: number, still: (c: Creature) => b
   let moved = 0;
   for (let a = 0; a < n; a++) {
     const c = list[a];
-    if (still(c)) { pushX[a] = NaN; continue; }
+    if (still(c) || opt?.steered(c)) { pushX[a] = NaN; continue; }
     const r = radius[a], ci = cellI[a], cj = cellJ[a];
     let px = 0, pz = 0, k = 0;
     for (let di = -1; di <= 1 && k < B.neighbours; di++) for (let dj = -1; dj <= 1 && k < B.neighbours; dj++) {

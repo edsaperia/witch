@@ -2,6 +2,18 @@
 const fs = require('node:fs'), vm = require('node:vm'), cp = require('node:child_process');
 const assert = require('node:assert/strict'), test = require('node:test');
 
+test('prepared serial shards cover the complete selection once with one worker', () => {
+  const source = fs.readFileSync('tools/refactor/a4-proof-step.ps1', 'utf8');
+  const commands = [...source.matchAll(/'unit-shard-(\d+)' = 'npm test -- --shard=(\d+)\/(\d+) --maxWorkers=(\d+)'/g)];
+  assert.equal(commands.length, 16);
+  assert.deepEqual(commands.map(m => Number(m[2])).sort((a, b) => a - b), Array.from({ length: 16 }, (_, i) => i + 1));
+  for (const m of commands) {
+    assert.equal(m[1], m[2]); assert.equal(m[3], '16'); assert.equal(m[4], '1');
+  }
+  const allowed = source.match(/ValidateSet\(([^)]+)\)\]\[string\]\$Step/)[1];
+  for (const m of commands) assert.ok(allowed.includes(`'unit-shard-${m[1]}'`));
+});
+
 test('record-only policy records input without a stop and never inventories external browsers', () => {
   const file = require('node:path').resolve('tools/refactor/a4-proof-step.ps1').replaceAll("'", "''");
   const source = fs.readFileSync(file, 'utf8');

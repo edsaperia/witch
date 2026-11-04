@@ -13,11 +13,13 @@
 //   flares, the friends' sigils arc down off the column to where they lie, the enemies' fade;
 // - the loose sigils lying on the ground, to pick up (a sleeping legend's tethers her: render/leash/stack.ts).
 import { NOTES, rainbow } from "../indicator";
-import { castingStone, castReady, castShown, castSpot, pastCasting, stoneStack, type StackEntry } from "../../rules/stoneStacks";
+import renderKnobs from "../../../config/playtest-render.json";
+import { castingStone, castOn, stoneOpen, hostileSigil, castShown, castSpot, stoneStack, type StackEntry } from "../../rules/stoneStacks";
 import { RUNE_SCALE, sigilSize } from "../../rules/runeOffset";
 import { hash2 } from "../../rules/random";
 import type { LeashView } from "../leash";
 import { SPRITE_UNIFORMS } from "../sprites";
+import type { Tuning } from "../../rules/tuning";
 import { groundHeight } from "../height";
 import { SLOT, SLOTS } from "./glyphs";
 import { asleepLegend, drawEmbers, legendShine, rankColour, rankKnobs, rankSize, sigilRankColour, standScale, stoneKnobs } from "./ranks";
@@ -35,7 +37,7 @@ function flipPop(id: number, friend: boolean, time: number): number {
 
 /** A rune stone drawn this frame: its area's key ("cx,cy"), where it stands and its stone's height (m, STONE_FACE of its drawn height;
  *  up its face: the sprites lean back toward the camera, render/sprites.ts uUp, and its column climbs on up that way, in its plane). */
-export interface StoneSpot { key: string; x: number; z: number; top: number; /** On a great stump: its root area's outline round the rings' middle (m, at even angles from east towards the camera: StumpArt.roots), and whether it's drawn mirrored. */ roots?: number[]; flip?: boolean }
+export interface StoneSpot { iconSize?: number; key: string; x: number; z: number; top: number; /** On a great stump: its root area's outline round the rings' middle (m, at even angles from east towards the camera: StumpArt.roots), and whether it's drawn mirrored. */ roots?: number[]; flip?: boolean }
 /** The share of a stone's drawn height (render/markers.ts MarkerArt.height: to the top of its rune's glow) that is the stone itself:
  *  measured in the game, 2026-10-28 (the column drawn at 1, 0.7, 0.5, 0.3 and 0 of it: 0.5 sits on the stone's top). */
 export const STONE_FACE = 0.5;
@@ -87,46 +89,62 @@ export function barLevel(bins: ArrayLike<number>, i: number, n: number): number 
 const hue = rainbow;
 const smooth = (k: number) => { const q = Math.max(0, Math.min(1, k)); return q * q * (3 - 2 * q); };
 
+/** A ready note is a billboard. Keep its normal size nearby and a readable pixel width far away. */
+export function stumpNoteSize(normal: number, pxPerMetre: number): number | undefined {
+  return pxPerMetre > 0 ? Math.max(normal, renderKnobs.stumpIconMinPixels / pxPerMetre) : undefined;
+}
+
+/** A column's sigil's size (m) by its rank: a stone's and the challenge's columns' alike (render/challenge.ts). */
+export const columnSigilSize = (t: Tuning, lvl: number): number => (2 + 2 * 0.4) * t.stack.scale * rankSize(t, lvl) * standScale(t);
+/** One sigil standing in a column (a stone's, or a challenge column's: render/challenge.ts): creature `id`'s bare glyph at rank
+ *  `level`, `size` m, in colour c, its backing behind it and its embers round it while it's mostly shown. */
+export function columnSigil(lv: LeashView, time: number, dot: number[], id: number, level: number, x: number, y: number, z: number, size: number, alpha: number, c: [number, number, number]): void {
+  const g = lv.game, S = g.tuning.stack, RK = rankKnobs(g.tuning), sp = g.creatures[id]?.species ?? "fox", uv = lv.uv(lv.bareSlot(sp, level >= 3)), sh = lv.shadeOf(uv);
+  if (sh) lv.stackBack.add(x, y, z, size, sh, 0.02, 0.02, 0.035, (S.backing ?? 0.6) * alpha);
+  lv.stackGlyphs.add(x, y, z, size, uv, c[0], c[1], c[2], alpha, 1, false, legendShine(level, time, id)); // (a legend's shiny: ranks.ts)
+  if (alpha > 0.5) drawEmbers(lv.stackGlyphs, dot, lv.glyphPts.get(`${uv[0]},${uv[1]}`) ?? [], x, y, z, size, false, level, c, time, id * 7 + 3, RK.embers, RK.embers.stack);
+}
+/** A point `h` m up a standing sprite's face from its foot at (x, z) (its sprite's up: leaning back toward the camera), a little in
+ *  front of it: where a column's sigils stand. (The batches stand things on the ground under them, render/height.ts onGround, and a
+ *  point up a face is over ground further north, maybe higher or lower on a hill: the difference taken off, so it's the foot's
+ *  ground it stands on.) */
+export const upZ = (z: number, h: number): number => z + 0.3 + h * SPRITE_UNIFORMS.uUp.value.z;
+export const upY = (x: number, z: number, h: number): number => h * SPRITE_UNIFORMS.uUp.value.y + groundHeight(x, z) - groundHeight(x, upZ(z, h));
+
 export function drawStones(lv: LeashView, time: number, dot: number[]): void {
-  const g = lv.game, t = g.tuning, V = lv.stoneView, K = stoneKnobs(t), RK = rankKnobs(t), w = g.witch, S = t.stack;
+  const g = lv.game, t = g.tuning, V = lv.stoneView, K = stoneKnobs(t), RK = rankKnobs(t), w = g.witch;
   if (!t.leash.ranks?.on) return;
-  const sizeOf = (lvl: number) => (2 + 2 * 0.4) * S.scale * rankSize(t, lvl) * standScale(t), notes = notesSlot(lv);
-  const sigil = (id: number, level: number, x: number, y: number, z: number, size: number, alpha: number, c: [number, number, number]) => {
-    const sp = g.creatures[id]?.species ?? "fox", uv = lv.uv(lv.bareSlot(sp, level >= 3)), sh = lv.shadeOf(uv);
-    if (sh) lv.stackBack.add(x, y, z, size, sh, 0.02, 0.02, 0.035, (S.backing ?? 0.6) * alpha);
-    lv.stackGlyphs.add(x, y, z, size, uv, c[0], c[1], c[2], alpha, 1, false, legendShine(level, time, id)); // (a legend's shiny: ranks.ts)
-    if (alpha > 0.5) drawEmbers(lv.stackGlyphs, dot, lv.glyphPts.get(`${uv[0]},${uv[1]}`) ?? [], x, y, z, size, false, level, c, time, id * 7 + 3, RK.embers, RK.embers.stack);
-  };
-  // A point `h` m up a stone's face (its sprite's up: leaning back toward the camera), a little in front of it.
-  // (The batches stand things on the ground under them, render/height.ts onGround, and a point up a stone's face is over ground
-  // further north, maybe higher or lower on a hill: the difference taken off, so it's the stone's foot's ground it stands on.)
-  const U = SPRITE_UNIFORMS.uUp.value, upZ = (z: number, h: number) => z + 0.3 + h * U.z;
-  const upY = (x: number, z: number, h: number) => h * U.y + groundHeight(x, z) - groundHeight(x, upZ(z, h));
+  const sizeOf = (lvl: number) => columnSigilSize(t, lvl), notes = notesSlot(lv);
+  const sigil = (id: number, level: number, x: number, y: number, z: number, size: number, alpha: number, c: [number, number, number]) => columnSigil(lv, time, dot, id, level, x, y, z, size, alpha, c);
   const shown = new Set<string>();
   V.notes = null;
+  const W0 = g.witches?.[0];
+  const castKey = W0 ? castingStone(g, W0)?.key : undefined;
   for (const st of lv.stones) {
+    if (!castOn(t) || !stoneOpen(g, st.key)) continue;
     const items = stoneStack(g, st.key);
-    if (!items.length) continue;
-    shown.add(st.key);
-    const P = columnOf(items, sizeOf);
-    V.last.set(st.key, { x: st.x, z: st.z, top: st.top, items: items.map((it, i) => ({ ...it, y: P[i].y, size: P[i].size })) });
-    // The column: the friends above the enemies, each side legend lowest, babies on top (stoneStack's order, bottom first).
     const vis = smooth((K.range - Math.hypot(st.x - w.x, st.z - w.z)) / Math.max(1, K.fade));
-    if (vis > 0.01) items.forEach((it, i) => { const h = st.top + P[i].y; sigil(it.id, it.level, st.x, upY(st.x, st.z, h), upZ(st.z, h), P[i].size * flipPop(it.id, it.friend, time), vis, sigilRankColour(t, it.level, it.friend, asleepLegend(g.creatures[it.id]))); });
-    // The spell's spot: south of the stone, only as she comes near it, and only once it can be cast (castReady: every wild fighter
-    // of its area invited; Ed, 2026-10-29).
-    // (on a great stump, only as she's on its cut, where she can cast: Ed, 2026-10-29, "The area in which I can cast the soundsystem
-    // spell should be the whole trunk"; fading in over its last metre)
-    const { x: sx, z: sz } = castSpot(st, t), cell = st.key.split(",").map(Number) as [number, number];
-    const on = t.runeMarkers.stump?.on ? smooth(1 - pastCasting(g, cell, w.x, w.z)) : smooth((K.far - Math.hypot(w.x - sx, w.z - sz)) / Math.max(0.1, K.far - K.near));
-    if (on > 0.01 && castReady(g, st.key)) {
-      const c = hue(time * 0.25);
-      lv.flat.add(sx, 0, sz, K.size * 1.9, dot, c[0], c[1], c[2], 0.22 * on, 1, true); // (its glow)
-      lv.ink.add(sx, 0, sz, K.size, notes, c[0] * on, c[1] * on, c[2] * on, on);
-      lv.flat.add(sx, 0, sz, K.size, notes, c[0], c[1], c[2], 0.6 * on);
-      const W0 = g.witches?.[0];
-      if (!V.notes || on > V.notes.on) V.notes = { x: sx, z: sz, size: K.size, on, casting: W0?.casting === st.key, here: !!W0 && castingStone(g, W0)?.key === st.key };
+    if (vis > 0.01 && items.length) {
+      shown.add(st.key);
+      const P = columnOf(items, sizeOf);
+      V.last.set(st.key, { x: st.x, z: st.z, top: st.top, items: items.map((it, i) => ({ ...it, y: P[i].y, size: P[i].size })) });
+      items.forEach((it, i) => { const h = st.top + P[i].y; sigil(it.id, it.level, st.x, upY(st.x, st.z, h), upZ(st.z, h), P[i].size * flipPop(it.id, it.friend, time), vis, sigilRankColour(t, it.level, it.friend, asleepLegend(g.creatures[it.id]))); });
     }
+    if (items.some(hostileSigil)) continue;
+    const { x: sx, z: sz } = castSpot(st, t), colour = hue(time * 0.25);
+    const stump = !!t.runeMarkers.stump?.on;
+    const on = stump ? (st.iconSize === undefined ? 0 : 1) : smooth((K.far - Math.hypot(w.x - sx, w.z - sz)) / Math.max(0.1, K.far - K.near));
+    if (on <= 0.01) continue;
+    const size = st.iconSize ?? K.size;
+    if (stump) {
+      lv.stackBack.add(sx, 0.3, sz, size, notes, ...colour, 1);
+    } else {
+      lv.flat.add(sx, 0, sz, size * 1.9, dot, ...colour, 0.22 * on, 1, true);
+      lv.ink.add(sx, 0, sz, size, notes, colour[0] * on, colour[1] * on, colour[2] * on, on);
+      lv.flat.add(sx, 0, sz, size, notes, ...colour, 0.6 * on);
+    }
+    // Only the local cast target gets the hold prompt, even if several ready stumps are visible.
+    if (castKey === st.key) V.notes = { x: sx, z: sz, size, on, casting: W0?.casting === st.key, here: true };
   }
   // The conversions: a stone's friend sigils newly loose, each from its slot in the stack (rules/game.ts, LooseSigil.from).
   const looseIds = new Set<number>();
@@ -264,7 +282,7 @@ export function drawStones(lv: LeashView, time: number, dot: number[]): void {
 }
 
 /** The music notes in the leash atlas (made once): the HUD's 🎶 (render/indicator.ts NOTES). */
-function notesSlot(lv: LeashView): number[] {
+export function notesSlot(lv: LeashView): number[] {
   const had = lv.slots.get("stone:notes");
   if (had !== undefined) return lv.uv(had);
   const s = lv.nextSlot++, g = lv.canvas.getContext("2d")!, ox = (s % SLOTS) * SLOT, oy = Math.floor(s / SLOTS) * SLOT;

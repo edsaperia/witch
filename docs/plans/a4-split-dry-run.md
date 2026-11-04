@@ -291,3 +291,43 @@ state or launching a browser (`node --test tools/refactor/a4-proof.test.cjs`).
 - Post SLOT DONE and exact results. Only after proof passes does the coordinator
   announce the fence and the source/ownership check run again on latest prototype.
   Release CI must still certify identical smoke/art; no local smoke/art run.
+
+## 4 November current-source redo (supersedes old slot instructions)
+
+Authority: #1476 comments 6643908630 and 6643311785 item 7. This remains an
+isolated rehearsal on #1562. Production APPLY requires the coordinator's fresh
+FENCE OPEN after the difficulty-curve batch; no fence is open, no lock is held,
+and no production branch is changed. Brooms will be a separate branch/PR.
+
+Pinned source: b29e5a3701aca479e95d5de3429042439963f002.
+The current inventory is a4-next-source-inventory.json: main 1,967 lines and
+View 2,040 (including final empty lines). Removed cuts: warmAt and treeExtent,
+which no longer exist. Added cuts: keepNightie, personalKit, hostCollections,
+traceVisit and aheadMorning in pageNight; reconcilePickers in pageStations;
+replayPartyStart in view/frame; landingShot in view/viewport. All other cuts use
+today's bodies. Existing camera, canopy and chart implementation stays intact.
+The extraction script now preserves inferred main-function return types too.
+
+The replay records 159 reversible cuts across 16 code files plus two regenerated
+link-switch metadata files. Its manifest retains every prior source identity.
+The old November 1 unit watchdog result is INCOMPLETE and is not evidence for
+this source. Its actual record-only policy bytes are preserved in fd29183a1.
+
+Prepared next proof: unit-shard-1 through unit-shard-16, each executing
+npm test -- --shard=N/16 --maxWorkers=1, serially on one exact head. All sixteen
+successful complete outputs are required; a timeout leaves full-suite evidence
+incomplete. This changes partition size only, never the full selection. The
+265-second watchdog, own-process cleanup and hardware-renderer requirement stay.
+Prestart idle is 120 seconds; input/CPU during a run are record-only; existing
+browsers are never inspected. Timing is labelled measured under load. Earlier
+five-minute idle, browser exclusion and CPU-stop prose above is historical.
+
+No full unit, build, benchmark, browser, smoke or art proof has run for this redo.
+Only typecheck, nearby single-worker tests and small mechanical/tool tests are
+permitted now. Bench equality and identical smoke/art remain proof gaps until a
+fresh authorized run and the coordinator's combined checks.
+
+View overlap ruling: #1556 comment 6644289136. Regenerate from prototype with
+#1556 if landed; otherwise use then-current prototype and #1556 adapts its two
+render hunks into view/frame.ts by normal merge. Preserve paused-repaint
+houseCamInput and early LIGHT_UNIFORMS ordering. This does not hold up prep.

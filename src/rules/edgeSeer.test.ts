@@ -4,13 +4,14 @@
 // put it, left behind, or while she's knocked out; nothing with any other hat.
 import { describe, expect, it } from "vitest";
 import { TUNING, type Tuning } from "./tuning";
-import { hitWitch, newGame as fullGame, stepGame, type Controls, type Game } from "./game";
+import { hitWitch, stepGame, type Controls, type Game } from "./game";
 import { smallWorld } from "../test/worlds";
 import { edgesSeen, routeSeen } from "./hatSpells";
 import { HAT_SPELLS, hatOf } from "./spells";
 import { wearing } from "./hat";
+import { preppedGame } from "../test/preppedGame"; // (games on a map made once a file from its prep)
 
-const newGame = smallWorld(fullGame, "Seer visibility depends on each player's hat state and local drop/pickup, independent of map extent.");
+const newGame = smallWorld(preppedGame, "Seer visibility depends on each player's hat state and local drop/pickup, independent of map extent.");
 const C: Controls = { moveX: 0, moveZ: 0, toggleMode: false, zoom: 0 };
 const wearingHat = (hat: string): Tuning => ({ ...TUNING, spells: { ...TUNING.spells, hat } });
 function game(t: Tuning): Game {

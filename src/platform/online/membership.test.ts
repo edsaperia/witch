@@ -1,8 +1,37 @@
 import { expect, it } from "vitest";
-import { newGame, newWitchPlayer } from "../../rules/game";
+import { newGame, newWitchPlayer, stepGame } from "../../rules/game";
 import { TUNING } from "../../rules/tuning";
 import { attachGuest, detachGuest } from "./membership";
 import { bedside } from "../../rules/opening";
+import { HOUSE_ROOMS, objectFront } from "../../rules/houseRooms";
+import { startWake, settleSleepingBed } from "../../rules/wakeUp";
+import { stepSigilButton } from "../../rules/sigilButton";
+import { restoreGame, snapshotGame } from "../../rules/nightSnapshot";
+import type { Controls } from "../../rules/game";
+
+it("lets a sleeping host get up and use her bed again after departure, including save/resume", () => {
+  const tuning = structuredClone(TUNING); tuning.map!.island = "home"; tuning.map!.islandAreas = 4;
+  const game = newGame(123, tuning), host = game.witches[0];
+  game.clock.paused = false; // The host was playing before the visit, not on the initial start screen.
+  attachGuest(game, newWitchPlayer(1, 0, 0, tuning));
+  startWake(game, 0, { yesterday: true });
+  host.house = { slept: true, lastBed: "bed" }; settleSleepingBed(game, host, "bed", 1);
+  detachGuest(game);
+  expect(host.house?.slept).not.toBe(true);
+  expect(game.wake?.beat).toBe("alarm");
+  for (const solo of [game, restoreGame(snapshotGame(game))]) {
+    solo.clock.paused = false; // Normal resume gesture releases restoreGame's intentional pause.
+    const move = {moveX:1,moveZ:0,zoom:0,toggleMode:false} as Controls;
+    for (let i = 0; i < 80; i++) stepGame(solo, move, .05);
+    expect(solo.wake?.open).toBe(true);
+    const witch = solo.witches[0], bed = HOUSE_ROOMS.objects.find(o => o.id === "bed")!;
+    Object.assign(witch.body, objectFront(bed, solo.map.treehouse, .1), {perch:true,mode:"ground",seated:false});
+    const controls = {moveX:0,moveZ:0,zoom:0,toggleMode:false,sigilHeld:true} as Controls;
+    const use = (time: number) => stepSigilButton(solo, controls, witch, tuning, time, .05, [], () => false, 0);
+    witch.leash.events = []; use(10); use(10 + HOUSE_ROOMS.bed.hold + .01);
+    expect(witch.leash.events.some(e => e.kind === "house" && e.obj === "slept")).toBe(true);
+  }
+});
 
 it("joins a running night in the approved bedroom without resetting world or host", () => {
   // Four-area home fixture: enough for bedroom joins and two creatures, independent of distant area count.
