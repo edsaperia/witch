@@ -49,6 +49,7 @@ Scripts for building, checking and measuring the game, run from the repository r
 - [`map/`](map/README.md): 5 scripts — leycurve.mjs, leydepart.mjs, leyroute.mjs, scenery.mjs, shape.mjs
 - [`mist/`](mist/README.md): 2 scripts — dive.cjs, frames.cjs
 - [`momentum/`](momentum/README.md): 1 script — strip.mjs
+- [`multiplayer/`](multiplayer/README.md): 2 scripts — floorPath.cjs, route.cjs
 - [`mushrooms/`](mushrooms/README.md): 9 scripts — brewing-check.mjs, build-preview.mjs, check.mjs, explorer.js, glow-check.mjs, ingame-check.cjs, lab-check.cjs, recipe-book.mjs, sheet.mjs
 - [`music-lab/`](music-lab/README.md): 28 scripts — ab.mjs, ab.ts, analyse.cjs, analyse.ts, boot.mjs, boot.ts, build.mjs, check.cjs, circles.mjs, circles.ts, cost.cjs, cost.ts, flight.cjs, form.mjs, form.ts, fxcost.cjs, fxcost.ts, ingredients.ts, lab.ts, latency.cjs, set.mjs, set.ts, silence.cjs, stems.cjs, stems.ts, tune.cjs, tune.ts, voices.mjs
 - [`music-studio/`](music-studio/README.md): 5 scripts — build.mjs, check.cjs, knobs.ts, main.ts, midi.ts
