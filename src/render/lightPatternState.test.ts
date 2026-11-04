@@ -7,6 +7,9 @@ it('has one explicit off switch and three repeatable soundsystem looks', () => {
   expect(patternOptions('?patternlight=unknown')).toBe('off');
   expect(patternOptions('')).toBe('off');
   expect(patternOptions('?patternlight=auto')).toBe('auto');
+  expect(patternOptions('?patternlight=colour-spokes')).toBe('colour-spokes');
+  expect(speakerPattern(clock, 10, 'colour-spokes', false)[0]).toBe(6);
+  expect(speakerPattern(clock, 10, 'colour-spokes', true)).toBe(IDENTITY_PATTERN);
   expect(speakerPattern(clock, 10, 'off', false)).toBe(IDENTITY_PATTERN);
   expect(speakerPattern(clock, 10, 'auto', true)).toBe(IDENTITY_PATTERN);
   expect(speakerPattern(clock, 10, 'stripes', false)[2]).toBe(.9);

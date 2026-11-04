@@ -2,7 +2,7 @@
 // Coordinates are light-local metres derived from WORLD positions, never camera or sprite UVs.
 import { beatAt, type BeatClock } from '../rules/beat';
 
-export const LIGHT_PATTERN = { none: 0, spokes: 1, stripes: 2, bands: 3, flicker: 4, rings: 5 } as const;
+export const LIGHT_PATTERN = { none: 0, spokes: 1, stripes: 2, bands: 3, flicker: 4, rings: 5, 'colour-spokes': 6 } as const;
 export type LightPatternKind = keyof typeof LIGHT_PATTERN;
 export interface LightPattern { kind: LightPatternKind; scale: number; contrast: number; angle: number; phase: number }
 export interface LightPoint { x: number; y: number; z: number }
@@ -42,10 +42,16 @@ export function lightPatternSample(point: LightPoint, origin: LightPoint, patter
   if (pattern.kind === 'bands') channels = [0, TAU / 3, 2 * TAU / 3].map(offset => .5 + .5 * Math.sin(stripe * TAU - phase + offset)) as [number, number, number];
   else {
     let wave = .5;
-    if (pattern.kind === 'spokes') {
+    if (pattern.kind === 'spokes' || pattern.kind === 'colour-spokes') {
       // Fade out the angular singularity right at the source: no centre sparkle/alias spike.
       const r = Math.hypot(x, z), blend = clamp(r / .3, 0, 1);
-      wave = 1 - blend + blend * (.5 + .5 * Math.sin(Math.atan2(z, x) * 4 - phase));
+      const angle = pattern.kind === 'colour-spokes' && r < .00001 ? 0 : Math.atan2(z, x);
+      if (pattern.kind === 'colour-spokes') {
+        const rotated = angle - phase / 4, spoke = .5 + .5 * Math.sin(rotated * 4);
+        return [0, TAU / 3, 2 * TAU / 3].map(offset =>
+          1 - contrast + contrast * (1 - blend + blend * spoke * (.5 + .5 * Math.sin(rotated + offset)))) as [number, number, number];
+      }
+      wave = 1 - blend + blend * (.5 + .5 * Math.sin(angle * 4 - phase));
     } else if (pattern.kind === 'stripes') wave = .5 + .5 * Math.sin(stripe * TAU - phase);
     else if (pattern.kind === 'rings') wave = .5 + .5 * Math.sin(Math.hypot(x, y, z) * TAU - phase);
     else if (pattern.kind === 'flicker') wave = .5 + .3 * Math.sin(phase) + .2 * Math.sin(phase * 1.73 + 1.2);
@@ -65,9 +71,15 @@ vec3 lightPattern(vec3 relativeWorld, vec4 pattern, vec2 rotation, float lightDi
   float stripe = p.x + 0.35 * p.y + 0.25 * p.z;
   float wave = 0.5;
   vec3 bands;
-  if (pattern.x < 1.5) {
+  if (pattern.x < 1.5 || pattern.x > 5.5) {
     float radius = length(p.xz), blend = clamp(radius / 0.3, 0.0, 1.0);
     float angle = radius < 0.00001 ? 0.0 : atan(p.z, p.x);
+    if (pattern.x > 5.5) {
+      float rotated = angle - pattern.w * 0.25;
+      float spoke = 0.5 + 0.5 * sin(rotated * 4.0);
+      bands = mix(vec3(1.0), spoke * (0.5 + 0.5 * sin(vec3(rotated) + vec3(0.0, 2.09439510239, 4.18879020479))), blend);
+      return mix(vec3(1.0), clamp(bands, 0.0, 1.0), clamp(pattern.z, 0.0, 1.0));
+    }
     wave = mix(1.0, 0.5 + 0.5 * sin(angle * 4.0 - pattern.w), blend);
   } else if (pattern.x < 2.5) wave = 0.5 + 0.5 * sin(stripe * 6.28318530718 - pattern.w);
   else if (pattern.x < 3.5) {

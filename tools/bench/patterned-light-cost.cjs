@@ -62,7 +62,7 @@ async function measure({scene,on,frames,remaining,diagnostic=false}){
     const count=U.uLightCount.value,patterns=U.uLightPattern.value.slice(0,count).map(p=>p.toArray());
     const active=patterns.filter(p=>p[0]>0&&p[2]>0);
     if(active.length>3||(!on&&active.length))throw Error('Slot cap or explicit off failed');
-    if(on){const kind=scene==='home'?4:scene==='blink'?5:1;if(!active.some(p=>kind===1?p[0]>=1&&p[0]<=3:p[0]===kind))throw Error('Requested real pattern missing');}
+    if(on){const kind=scene==='home'?4:scene==='blink'?5:6;if(!active.some(p=>p[0]===kind))throw Error('Requested real pattern missing');}
     if(scene==='home'&&on){const i=patterns.findIndex(p=>p[0]===4&&p[2]>0),p=U.uLightPos.value[i];if(p.y-W.groundHeight(p.x,p.z)<=3)throw Error('Home scene substituted a forest source');}
     const vector=a=>a.map(p=>p.toArray().map(round));
     return {scene,clock:round(g.clock.time),herTime:round(g.herTime),witch:[g.witch.x,g.witch.z,g.witch.lift].map(round),creatureHash,camera:v.camera.matrixWorld.elements.map(round),projection:v.camera.projectionMatrix.elements.map(round),lights:count,positions:vector(U.uLightPos.value.slice(0,count)),colours:vector(U.uLightCol.value.slice(0,count)),drawCalls:v.renderer.info.render.calls,triangles:v.renderer.info.render.triangles,passes:window.__patternCompletion.passes(),canvas:[gl.drawingBufferWidth,gl.drawingBufferHeight],scenery:120};
@@ -170,7 +170,7 @@ async function main(){
     for(const on of armOrder){phase='boot';phaseEpoch++;
       quietCheckpoint();const page=await context.newPage();activePage=page;await page.exposeFunction('__patternPhase',value=>{phase=value;phaseEpoch++;});let closing=false;page.setDefaultTimeout(30000);page.setDefaultNavigationTimeout(30000);
       page.on('pageerror',e=>{if(!closing){report.errors.push(String(e));fail(e);}});page.on('console',m=>{if(!closing){const location=m.location();(report.consoleMessages??=[]).push({type:m.type(),text:m.text(),location});if(m.type()==='error'&&location.url?.startsWith(base+'/')){report.errors.push(m.text());fail(Error(m.text()));}}});page.on('requestfailed',r=>{if(!closing){report.errors.push('Fetch failed '+r.url());fail(Error('Resource failure'));}});
-      await bounded(page.goto(base+'/?seed=123&world=0&island=10&wave=3&shot=room:terrace&ladder=off&px=1&recording=0&patternlight='+(on?'auto':'off')));
+      await bounded(page.goto(base+'/?seed=123&world=0&island=10&wave=3&shot=room:terrace&ladder=off&px=1&recording=0&patternlight='+(on?'colour-spokes':'off')));
       await bounded(page.waitForFunction(()=>{if(window.__patternStop)throw Error(window.__patternStop);return window.witch?.ready;},null,{timeout:remaining()}));
       await bounded(page.evaluate(()=>{window.__patternCompletion=window.__installPatternCompletion(window.witch.view.renderer);}));
       quietCheckpoint();

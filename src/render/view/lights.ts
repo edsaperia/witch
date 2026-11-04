@@ -99,7 +99,7 @@ export function setLights(v: View, all: ForestLight[], x: number, z: number, pat
     U.uLightPos.value[n].set(l.x, l.y + groundHeight(l.x, l.z), l.z, l.reach); // its height above the rolling ground
     U.uLightCol.value[n].set(l.rgb.x, l.rgb.y, l.rgb.z, l.strength * fade);
     // Only one selected soundsystem and one gentle source; selection/ranking/light count stay unchanged.
-    const pattern = l.pattern, speaker = pattern && pattern[0] >= 1 && pattern[0] <= 3, gentle = pattern?.[0] === 4;
+    const pattern = l.pattern, speaker = pattern && ((pattern[0] >= 1 && pattern[0] <= 3) || pattern[0] === 6), gentle = pattern?.[0] === 4;
     if (patternLook !== "off" && !comfort.reduceFlashing && pattern && ((speaker && !speakerPatternUsed) || (gentle && !gentlePatternUsed))) {
       writeLightPattern(n, pattern);
       if (speaker) speakerPatternUsed = true;

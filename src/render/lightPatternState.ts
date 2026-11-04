@@ -1,13 +1,13 @@
 // Frame-local bounded metadata for EXISTING light slots. No added lights, textures or simulation state.
 import { beatAt, type BeatClock } from '../rules/beat';
 import { LIGHT_PATTERN, lightPatternPhase, patternContrast, PATTERN_DEFAULTS, type LightPatternKind } from './lightPatterns';
-export type PatternLook = 'auto' | 'off' | 'spokes' | 'stripes' | 'bands';
+export type PatternLook = 'auto' | 'off' | 'spokes' | 'stripes' | 'bands' | 'colour-spokes';
 export type PackedPattern = readonly [number, number, number, number];
 export const IDENTITY_PATTERN: PackedPattern = [0, 1, 0, 0];
 export const patternOptions = (search: string): PatternLook => {
   const value = new URLSearchParams(search).get('patternlight');
   if (value === 'off') return 'off';
-  return value === 'auto' || value === 'spokes' || value === 'stripes' || value === 'bands' ? value : 'off';
+  return value === 'auto' || value === 'spokes' || value === 'stripes' || value === 'bands' || value === 'colour-spokes' ? value : 'off';
 };
 export const PATTERN_LOOK = patternOptions(globalThis.location?.search ?? '');
 const smooth = (x: number) => { x = Math.max(0, Math.min(1, x)); return x * x * (3 - 2 * x); };

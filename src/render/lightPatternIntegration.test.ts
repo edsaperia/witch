@@ -11,7 +11,18 @@ import { MagicFx } from './fx/system';
 vi.mock('./lightPatternState', async importOriginal => ({ ...await importOriginal<typeof import('./lightPatternState')>(), PATTERN_LOOK: 'auto' }));
 afterEach(() => { beginLightPatterns(); comfort.reduceFlashing = false; LIGHT_UNIFORMS.uLightCount.value = 0; });
 const view = (budget = 20) => ({ game: { tuning: { lightBudget: budget, lights: { knee: .9, ceiling: 1.1 } } }, stats: { lights: 0 } }) as unknown as View;
-const light = (x: number, kind: 1 | 2 | 4 = 1): ForestLight => ({ x, y: 3, z: 0, reach: 20, rgb: new THREE.Vector3(.4, .7, 1), strength: 1, pattern: [kind, 6, .3, .2] });
+const light = (x: number, kind: 1 | 2 | 4 | 6 = 1): ForestLight => ({ x, y: 3, z: 0, reach: 20, rgb: new THREE.Vector3(.4, .7, 1), strength: 1, pattern: [kind, 6, .3, .2] });
+it('uses one existing speaker slot for colour spokes and removes it for comfort/off', () => {
+  const v = view(4), lights = [light(0, 6), light(1), light(2, 4)];
+  setLights(v, lights, 0, 0, 'colour-spokes');
+  expect(LIGHT_PATTERN_UNIFORMS.uLightPattern.value.slice(0, 3).map(p => p.x)).toEqual([6, 0, 4]);
+  expect(v.stats.lights).toBe(3);
+  comfort.reduceFlashing = true;
+  setLights(v, lights, 0, 0, 'colour-spokes'); expect(patternedLightCount()).toBe(0);
+  comfort.reduceFlashing = false;
+  setLights(v, lights, 0, 0, 'off'); expect(patternedLightCount()).toBe(0);
+  expect(v.stats.lights).toBe(3);
+});
 it('uses an ordinary lit campfire for the gentle preview without requiring disabled magic stones', () => {
   const src = { x: 0, z: 0, kind: 'campfire', size: 1 }, fire = new THREE.Vector3(1, .5, .2);
   const v = { assets: { props: { frames: [] } }, sources: [src], forestLights: [], fireSparks: [], worldFires: [], sourceCell: new Map([[src, '0,0']]),

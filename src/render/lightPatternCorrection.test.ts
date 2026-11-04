@@ -3,7 +3,7 @@ import { expect, it } from 'vitest';
 import { lightPatternSample, type LightPattern, type LightPoint } from './lightPatterns';
 
 type Source = { origin: LightPoint; rgb: number[]; reach: number; pattern?: LightPattern };
-const kinds = ['spokes', 'stripes', 'bands', 'flicker', 'rings'] as const;
+const kinds = ['spokes', 'stripes', 'bands', 'flicker', 'rings', 'colour-spokes'] as const;
 function contribution(source: Source, point: LightPoint): number[] {
   const distance = Math.hypot(point.x - source.origin.x, point.y - source.origin.y, point.z - source.origin.z);
   const fall = Math.max(0, 1 - distance / source.reach);
