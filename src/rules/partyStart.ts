@@ -11,7 +11,6 @@ export const PARTY_START_DEFAULTS = structuredClone(raw.partyStart);
 export type PartyStartTuning = typeof PARTY_START_DEFAULTS;
 /** The pieces, by name, each with its own `on`. */
 export const PARTY_START_PIECES = ["sparkles", "pillar", "dome", "light", "shake", "ground", "refraction"] as const;
-export type PartyStartPiece = typeof PARTY_START_PIECES[number];
 
 /** What the DJ (she, at her decks) says as the replay plays (Ed's words, 2026-11-03). */
 export const MAKE_SOME_NOISE = "make some noise!!!";

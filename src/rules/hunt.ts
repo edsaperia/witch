@@ -11,7 +11,7 @@ import { clearableAt, holdsArea } from "./clear";
 import { stealthed } from "./spells";
 
 /** Whether c may hunt: one of its area's own wild young or adults, awake (not its legend, not its circle's baby). */
-export const hunter = (c: Creature): boolean => holdsArea(c) && c.level > 0 && c.level !== LEGEND && !c.enraged && !c.siege && !c.dazed && !c.asleep && !c.friendly;
+export const hunter = (c: Creature): boolean => holdsArea(c) && c.level > 0 && c.level !== LEGEND && !c.enraged && !c.siege && !c.dazed && !c.asleep && !c.friendly && !c.statue; // (the challenge's statues: rules/challengeStatues.ts)
 
 /** Each step, before the fights: start the hunt of the wild area a witch stands in once its watch is over, end the hunts
  *  that are over, and put every hunter in combat's busy set (stepped wherever it is). */

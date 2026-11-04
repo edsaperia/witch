@@ -149,6 +149,21 @@
       ],
       "notes": "letters to fill it, by level (baby, young, adult); it drains drain of a full meter a second when not being hit, from config/states.json's affection.drainDelay seconds after the last [1]. Every letter that lands on an invitable creature counts [2]: how fast she invites is her firing rate (burst, burstGap, cooldown), nothing adaptive. Enraged creatures and legends block letters; scenery never stops them (Ed)."
     },
+    "invites.wonAway": {
+      "what": "a creature she has won over whose sigil waits in its stone's stack roams its area with its happy roam and keeps `radius` m from any creature fighting her or with her, out of her fights' way.",
+      "decisions": [
+        {
+          "by": "Ed",
+          "date": "2026-11-04",
+          "quote": [
+            "they should roam the whole area, and avoid creatures that are fighting. Do this in a simple way - we just want them out of the way of the fight",
+            "Newly won creatures can't be grabbed until the spell is cast, so they don't need to be near"
+          ],
+          "rest": "on #1804, through the coordinator: first for the challenge circle's won ones, then every area's; happy ones defending their area against enraged attackers in a wave keep doing that; one shared helper with its own switch and radius slider, on by default."
+        }
+      ],
+      "notes": "The fighters are wild ones hunting a witch (rules/hunt.ts) and her followers with a fight's target; enraged besiegers aren't, so happy defenders aren't pushed off their defence, and one itself in a fight is moved by combat as ever. One within `radius` of a fighter walks straight away from the nearest at 1.5 times its pace; a roam target that near is drawn again in its area by its own seeded draws. Their sigils stay in the stack wherever they roam, so the spell (or the wave) scatters them round the stone as ever. Off: they roam as before, fights or no. rules/wonKeepAway.ts."
+    },
     "invites.fireSlow": {
       "what": "her ground speed while firing, times this."
     },

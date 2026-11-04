@@ -83,6 +83,8 @@ import { deckOf, onTreehouse } from "./treehouse";
 import { homeDown, startPartyOver, stepPartyOver, stepWorldAsleep, worldAsleep, type PartyOver } from "./partyOver";
 import { stepWin, winFlare, won, type WinState } from "./win";
 import { newChallenge, spawnPack, stepChallenge, type ChallengeState } from "./challenge";
+import { stepStatues, stepStatueWalk } from "./challengeStatues";
+import { stepWonAway } from "./wonKeepAway";
 import { hasBroom, hasInvites, type Kit } from "./kit";
 import { applyGuestEffects, guestEffectsEnabled, recordAutomaticHit } from "./guestEffects";
 import { guestCatchUpSteps, guestInputStep, guestMotionReady } from "./onlineInputSteps";
@@ -752,6 +754,7 @@ function fixedStep(g: Game, controls: readonly Controls[], guestCatchUp: readonl
     motion.LV = LV;
   }
   g.lod = newLodCounts();
+  stepStatues(g); // (the challenge circle's statues waking as she sets foot on its floor, stone again once it's left: rules/challengeStatues.ts)
   if (!still) stepWildWatch(g, t); // (before the fights: those just watching her hold off this very step)
   if (!still) stepHunts(g, t); // (then the woken areas' own hunt her: rules/hunt.ts)
   if (!still) stepFights(g, t, dt, busy);
@@ -765,6 +768,8 @@ function fixedStep(g: Game, controls: readonly Controls[], guestCatchUp: readonl
   }
   stepCreaturesNear(g.creatures, g.witch.x, g.witch.z, simRadius(g), dt, g.clock.time, g.map, c => !!c.partyLegend || !!c.bed || c.finale !== undefined || dormant(g, c), { ...g.tuning.simLod, full: fullRadius(g.tuning, g.witch.mode) }, g.lod, napRules(g), t.wildWatch?.on ? t.wildWatch : undefined, g.witches.length > 1 ? g.witches.map(W => ({ x: W.body.x, z: W.body.z, radius: simRadius(g), full: fullRadius(t, W.body.mode) })) : undefined);
   if (stepWanderers([...g.combat.busy].map(id => g.creatures[id]), g.map, dt)) g.byArea = null; // (those walking home are among combat's busy)
+  stepWonAway(g, dt); // (her won ones waiting for their stone's spell roam out of her fights' way: rules/wonKeepAway.ts)
+  stepStatueWalk(g, dt); // (the challenge's un-won walking back to their posts, the stone ones facing its middle: rules/challengeStatues.ts)
   // (A party animal in a fight is moved by combat, not its leash.)
   // Far from her on the ground, or from its sigil, a party animal travels (rules/travel.ts): quiet, along area borders.
   for (const motion of motions) {
@@ -1153,7 +1158,7 @@ function stepDancefloor(g: Game, waveBefore: number): void {
  *  fighting, nothing to invite (DESIGN.md, "Sleeping legends"). */
 /** The cue for something put down by a sleeping legend but outside its clearing: at its clearing's middle (or the legend). */
 
-export const dormant = (_g: Game, c: Creature): boolean => !!c.boss && !c.leashed && (c.legendState === "asleep" || c.legendState === "restless"); // (asleep or restless: scenery, untouchable)
+export const dormant = (_g: Game, c: Creature): boolean => (!!c.boss && !c.leashed && (c.legendState === "asleep" || c.legendState === "restless")) || !!c.statue; // (asleep or restless: scenery, untouchable; the challenge's statues likewise, rules/challengeStatues.ts)
 
 /** The legends' states (Ed, 2026-10-05, #87; rules/legends.ts): asleep, dreaming; restless while
  *  its area has none of its kind, angry once that's run its course; happy by a relic. Angry and
