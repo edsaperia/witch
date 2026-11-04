@@ -9,16 +9,17 @@ import { KINDS_TABLE } from "../kinds";
 import { actionReach } from "./actions";
 import { PACKS } from "./packs";
 import { FIGHT } from "../movement";
+import { outcome } from "../../test/outcome";
 
 const lateHome = (n: number, t: Tuning): Tuning => { const all = knownKinds(Object.keys(KINDS_TABLE)).slice(0, n); return { ...t, home: { ...t.home, challengeAt: 0 }, map: { ...t.map!, island: "home", islandAreas: all.length, found: all }, challenge: { ...t.challenge!, statues: { ...t.challenge!.statues!, on: false } } }; }; // (its statues off, rules/challengeStatues.ts: the pack wild from the start, the fight measured as before)
-// (the seeds: 4 for 128 and 1 for 64 till the challenge area went to the island's edge, Ed 2026-11-04: the pack's circle moved; on
-// the new circles, seeds 1 to 4 at 128 strike 23.8, 25.8, 17.9 and 17.9 a minute, and seeds 1 to 3 at 64 come 3.5, 30.0 and 13.9 m
-// nearer picked ahead; seed 3 for 64 till home's packs grew by the islands found, Ed 2026-11-04: 22 of 49 found, so its areas' swarms
-// 0.45 of the way, not 0.64, and the pack's ids and rounds with them; seeds 1 to 4 at 64 then come 7.2, 7.2, 6.0 and 8.6 m nearer)
-
-// nearer picked ahead. 128's seed 2 since each legend area got a pair of its own (Ed, 2026-11-04: "Please fix"): seed 1's late home
-// had two sharing one, and with its legends placed afresh it strikes 16.9 a minute; seeds 2 to 4 as they were)
-const SEED_128 = 2, SEED_64 = 4;
+// (the seeds the tests were written on, 4 for 128 and 1 for 64. When the challenge area went to the island's edge (Ed, 2026-11-04)
+// the pack's circle moved and they were swapped to 1 and 3 to stay over the old lines; on the new circles seeds 1 to 4 at 128
+// strike 23.8, 25.8, 17.9 and 17.9 a minute, and seeds 1 to 3 at 64 come 3.5, 30.0 and 13.9 m nearer picked ahead. Those numbers
+// are outcome statistics, reported and never failing (Ed, 2026-11-04: "Report only"; src/test/outcome.ts), so the seeds are back.)
+const SEED_128 = 4, SEED_64 = 1;
+/** The reported numbers as last measured (these seeds, 2026-11-04: on the restored seeds the 64-pack comes 3.55 m nearer picked
+ *  ahead, under the old line of 8, and the 128-pack strikes 17.85 a minute, under the old 18). */
+const WAS = { pastAhead: 11.64, pastBefore: 15.19, nearer: 3.55, strikesAhead: 9, strikesBefore: 7, perMinute: 17.85, nearPicks: 0 };
 const withAhead = (ahead: number): Tuning => ({ ...TUNING, teamRounds: { ...TUNING.teamRounds!, ahead } });
 
 /** The challenge's pack of `kinds` kinds (an adult and a youth each) hunting her as she walks slow circles in its middle (the pack
@@ -49,28 +50,32 @@ function fight(kinds: number, t: Tuning, secs: number, seed = 1) {
 }
 
 describe("roles decided in advance (Ed, 2026-11-03: 'have them move in sooner, in time for their attack')", () => {
-  it("a 64-animal pack's attackers are in place as their window opens, not starting their run then", () => {
+  it("a 64-animal pack's attackers are in place as their window opens, not starting their run then", ctx => {
     const before = fight(32, withAhead(0), 30, SEED_64), after = fight(32, TUNING, 30, SEED_64);
-    expect(after.over.length).toBeGreaterThan(10);
-    // (the middle attacker at its window's opening: within a few metres of where its action engages from, and much nearer than
-    // when they were picked only as their round began)
-    // (seed 4, 30 s: about 5.1 m past it picked ahead, 13.7 m picked as the round began; seed 3 before home's packs by the islands
-    // found 6.5 and 20, seed 1 on the old circle 9 and 24)
-    expect(after.median, "median metres past its engage distance, picked ahead").toBeLessThan(12);
-    expect(before.median - after.median).toBeGreaterThan(8);
-    expect(after.strikes).toBeGreaterThanOrEqual(before.strikes);
+    // (the rule: rounds open with picked attackers, both ways, and they strike)
+    expect(after.over.length, "attackers measured at their windows' openings, picked ahead").toBeGreaterThan(0);
+    expect(before.over.length, "the same, picked as the round began").toBeGreaterThan(0);
+    expect(after.strikes, "strikes begun, picked ahead").toBeGreaterThan(0);
+    // (reported: the middle attacker at its window's opening, how far past where its action engages from, and how much nearer than
+    // when they were picked only as their round began; seed 1 on the old circle 9 and 24 m)
+    outcome(ctx, "64-pack: median metres past its engage distance as its window opens, picked ahead", after.median, { unit: "m", was: WAS.pastAhead, near: 4, line: "< 12" });
+    outcome(ctx, "64-pack: the same, picked as the round began", before.median, { unit: "m", was: WAS.pastBefore, near: 6 });
+    outcome(ctx, "64-pack: metres nearer picked ahead", before.median - after.median, { unit: "m", was: WAS.nearer, near: 6, line: "> 8" });
+    outcome(ctx, "64-pack: strikes begun in 30 s, picked ahead", after.strikes, { unit: "strikes", was: WAS.strikesAhead, near: 5, line: ">= picked as the round began" });
+    outcome(ctx, "64-pack: strikes begun in 30 s, picked as the round began", before.strikes, { unit: "strikes", was: WAS.strikesBefore, near: 5 });
   }, 240000);
 
-  it("a 128-animal pack waits in rings of 20 and strikes at about a 20-pack's rate", () => {
+  it("a 128-animal pack waits in rings of 20 and strikes at about a 20-pack's rate", ctx => {
     // (Ed, 2026-11-04: "Resolve the attack rate limit for 128". The probe over 180 s and 4 seeds: about 20 a minute, the 20-pack's
-    // 19.4; here one seed over a minute)
+    // 19.4; here one seed over a minute, reported: its rate is an outcome statistic. The rings are the rule.)
     const big = fight(64, TUNING, 65, SEED_128);
     const team = [...big.g.combat.waitingTeams!.values()].sort((x, y) => y.members.length - x.members.length)[0], cap = TUNING.teamRounds!.ring!;
     expect(team.order).toHaveLength(team.members.length);
     const inner = team.order!.slice(0, cap);
     expect(inner.length).toBeLessThanOrEqual(cap);
     for (const id of team.members) if (team.actions[id] && !team.used.includes(id)) expect(inner).toContain(id);
-    expect(big.perMinute, "strikes begun at her a minute").toBeGreaterThanOrEqual(18);
+    expect(big.strikes, "strikes begun at her").toBeGreaterThan(0);
+    outcome(ctx, "128-pack: strikes begun at her a minute", big.perMinute, { unit: "a minute", was: WAS.perMinute, near: 3, line: ">= 18" });
   }, 600000);
 
   it("is the same on every run (lockstep)", () => {
@@ -83,7 +88,7 @@ describe("roles decided in advance (Ed, 2026-11-03: 'have them move in sooner, i
     expect(b.strikes).toBe(a.strikes);
   }, 240000);
 
-  it("she rises: the picks wait in the ring like the rest, nothing struck, and the round's picks hold for her landing", () => {
+  it("she rises: the picks wait in the ring like the rest, nothing struck, and the round's picks hold for her landing", ctx => {
     const { g } = fight(32, TUNING, 10);
     g.witch = { ...g.witch, mode: "treetop", lift: 1, vx: 0, vz: 0 };
     const team = () => [...g.combat.waitingTeams!.values()].sort((x, y) => y.members.length - x.members.length)[0];
@@ -92,10 +97,10 @@ describe("roles decided in advance (Ed, 2026-11-03: 'have them move in sooner, i
     for (let i = 0; i < 300; i++) { stepGame(g, { moveX: 0, moveZ: 0, toggleMode: false, zoom: 0 }, STEP); g.witches[0].health.hp = 1e9; for (const e of g.combat.events) if (e.kind === "windup" && ids.has(e.id)) strikes++; }
     expect(strikes).toBe(0);
     expect(team().phase).toBe("lull");
-    // (none of the picks stands at its ready spot under her: up there it waits in the ring)
+    // (none of the picks stands at its ready spot under her: up there it waits in the ring; how many come within 12 m is reported)
     const picks = (team().next ?? []).flatMap(n => Object.entries(n.actions).filter(([, a]) => a).map(([id]) => g.creatures[+id]));
     expect(picks.length).toBeGreaterThan(0);
     const near = picks.filter(c => Math.hypot(c.x - g.witch.x, c.z - g.witch.z) < 12).length;
-    expect(near).toBeLessThanOrEqual(1);
+    outcome(ctx, "64-pack aloft: picks within 12 m of the point under her after 5 s", near, { unit: "picks", was: WAS.nearPicks, near: 1, line: "<= 1" });
   }, 240000);
 });

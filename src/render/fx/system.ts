@@ -12,6 +12,8 @@ export const FX_QUALITY = { distortion:true, imprints:true, secondary:true, ligh
 type Light={x:number;y:number;z:number;reach:number;rgb:THREE.Vector3;strength:number;target:number;seen:number;score:number;fade:number};
 type Burst={element:string;form:FxForm;x:number;y:number;z:number;level:number;size:number;at:number;life:number;seed:number};
 const SYSTEMS=new WeakMap<THREE.Scene,MagicFx>();
+// The uniforms are shared: another scene's field must not be mistaken for our cached upload.
+let uploadedField:ImprintField|null=null;
 /** A trail's look, times the ribbon's own: width, opacity (its own 0.6), seconds of flight (its own up to 0.32 s) and glow. */
 export interface RibbonLook{width:number;alpha:number;life:number;glow:number}
 const PLAIN_RIBBON:RibbonLook={width:1,alpha:0.6,life:1,glow:1};
@@ -23,7 +25,7 @@ export class MagicFx {
   readonly fieldUniforms=FX_UNIFORMS;
   readonly batches:FxBatches;
   readonly field=new ImprintField();
-  readonly stats={lights:0,requests:0,instances:0,fieldBytes:settings.fieldSize**2*8};
+  readonly stats={lights:0,requests:0,instances:0,fieldBytes:settings.fieldSize**2*8,fieldCopyValues:0};
   enabled=new URLSearchParams(globalThis.location?.search??"").get("magic")!=="old";
   galleryPage=0;
   galleryElement:string|null=null;
@@ -156,14 +158,16 @@ export class MagicFx {
       this.draw(b.element,b.form,b.x,b.y,b.z,b.level,b.size,alpha,phase,b.seed);
     }
     this.bursts.length=used;this.batches.end();
-    this.field.publish();
-    const a=FX_UNIFORMS.uFxField.value.image.data as Uint8Array,b=FX_UNIFORMS.uFxExtra.value.image.data as Uint8Array;
-    let active=false;
-    for(let i=0,j=0;i<this.field.data.length;i+=8,j+=4)for(let c=0;c<4;c++){
-      const av=this.field.data[i+c],bv=this.field.data[i+c+4];if(av || bv)active=true;a[j+c]=av;b[j+c]=bv;
+    if(this.field.publish() || uploadedField!==this.field){
+      const a=FX_UNIFORMS.uFxField.value.image.data as Uint8Array,b=FX_UNIFORMS.uFxExtra.value.image.data as Uint8Array;
+      this.stats.fieldCopyValues+=this.field.data.length;
+      for(let i=0,j=0;i<this.field.data.length;i+=8,j+=4)for(let c=0;c<4;c++){
+        a[j+c]=this.field.data[i+c];b[j+c]=this.field.data[i+c+4];
+      }
+      FX_UNIFORMS.uFxField.value.needsUpdate=true;FX_UNIFORMS.uFxExtra.value.needsUpdate=true;
+      uploadedField=this.field;
     }
-    FX_UNIFORMS.uFxOn.value=active&&this.enabled&&FX_QUALITY.imprints?1:0;
-    FX_UNIFORMS.uFxField.value.needsUpdate=true;FX_UNIFORMS.uFxExtra.value.needsUpdate=true;
+    FX_UNIFORMS.uFxOn.value=this.field.active&&this.enabled&&FX_QUALITY.imprints?1:0;
     FX_UNIFORMS.uFxBox.value.set(this.field.x*this.field.cell,this.field.z*this.field.cell,this.field.metres,this.field.size);
     this.applyLights(budget);
   }

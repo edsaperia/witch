@@ -1,9 +1,13 @@
 // Travelling and posse (Ed, 2026-10-05; config/travel.json). A party animal near the witch on the
 // ground, or at its placed sigil, is in her posse: it fights as ever. Anywhere else it travels:
 // quiet both ways (combat.ts's fighting() leaves it out, so nothing notices it and it engages
-// nothing), no berries, and it walks a route planned along area borders rather than through
-// area middles, a little faster than its leash pace. The route is kept on the creature for the
-// view, which draws the leash along it. No drawing here.
+// nothing), and it walks a route planned along area borders rather than through area middles, a
+// little faster than its leash pace. The route is kept on the creature for the view, which draws
+// the leash along it. No drawing here.
+// Berries: "no berries" for travellers dates from 2026-10-05, when animals ate on their own. Since
+// 2026-11-03 feeding is by command (rules/berries.ts), and a press feeds the bottom of her stack
+// even if it's travelling: it walks to the berry quietly and back (Ed, 2026-11-04: allow it;
+// feeding.test.ts pins it). While it has berries queued, rules/berries.ts moves it, not this file.
 import { ashore, lakeKnobs, shoreDetours } from "./lakes";
 import raw from "../../config/travel.json";
 import type { Creature } from "./creatures";
