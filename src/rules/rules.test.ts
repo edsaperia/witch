@@ -15,7 +15,7 @@ import { keepsToCircle, population, spawnCreatures, stepCreature, stepCreaturesN
 import { hitWitch, newGame, simRadius, STEP, stepGame } from "./game";
 import { blinkGone, dashing, newDash, startDash } from "./dash";
 import { newParty, routeOf, spreadWave, stepParty, spawnMarkers, nextWave, pickSet, planAhead, speakersOn, waveCountdown, wavePlan } from "./party";
-import { countScale, routeIndex, routePopulation, startCount } from "./growth";
+import { countScale, islandReach, routeIndex, routePopulation, startCount } from "./growth";
 import { segmentsCross, stringsFor } from "./strings";
 import { wallFeatures } from "./walls";
 import { laserShow } from "./lasers";
@@ -498,7 +498,7 @@ describe("creatures", () => {
     for (const [cx, cy] of map.cells.filter((_, i) => i % 9 === 0)) {
       if (cx === mx && cy === my) continue;
       const here = inCell(cx, cy), species = AREA_TYPES[map.typeOf(cx, cy)].creature, k = countScale(species);
-      const want = routePopulation(at.get(`${cx},${cy}`)!, at.size, R, TUNING.population.swarm, S, species);
+      const want = routePopulation(at.get(`${cx},${cy}`)!, at.size, R, TUNING.population.swarm, S, species, islandReach(map));
       const n = (l: number) => here.filter(c => c.level === l && !c.circle).length; // (not its legend's clearing's baby: below)
       expect([n(0), n(1), n(2)]).toEqual(want);
       expect(n(0)).toBeLessThanOrEqual(R.babyCap);

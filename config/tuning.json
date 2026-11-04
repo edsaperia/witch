@@ -137,7 +137,14 @@
       "amp": 0.3,
       "harmonics": 4,
       "detail": 0.35
-    }
+    },
+    "phaseSizes": [
+      10,
+      15,
+      20,
+      25,
+      30
+    ]
   },
   "beach": {
     "on": true,
@@ -1470,7 +1477,7 @@
     "swarm": {
       "start": 1,
       "endAverage": 12,
-      "largestIsland": 50,
+      "fullPhase": 5,
       "curve": 0.8,
       "youngShare": [1, 0.2],
       "reference": "medium",

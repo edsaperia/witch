@@ -14,6 +14,7 @@ import { KINDS_TABLE, type KindInfo } from "./kinds";
 export type { KindInfo };
 import { AREAS } from "../../art/areas.js";
 import { hash2, rng } from "./random";
+import { TUNING } from "./tuning";
 
 export const KINDS: Record<string, KindInfo> = KINDS_TABLE;
 /** Every kind, placeholders too (about 64: one island each). */
@@ -30,8 +31,11 @@ export const playableIsland = (island: string): boolean => island === "home" || 
  *  seed (its shape and areas) and roster (each kind with how many areas it has, adding up to size). */
 export interface Island { kind: string; phase: number; bearing: number; size: number; seed: number; roster: { kind: string; areas: number }[]; /** its patch on the chart (rules/archipelago.ts): how far it may reach from its home's middle (m) by angle */ patch?: Float32Array; /** and how far its own shape is turned there (radians) */ turn?: number }
 
-/** Areas a phase's islands have (journey.md: 10 / 20 / 30 / 40 / 50). */
-export const sizeOfPhase = (p: number) => 10 * Math.max(1, p);
+/** Areas a phase's islands have (Ed, 2026-11-04: "We could make waves 5 / 10 / 15 / 20 / 25 / 30 / 64", "yes, start island sizes"):
+ *  the tuning's islands.phaseSizes, phase 1 first (10 / 15 / 20 / 25 / 30; 10 / 20 / 30 / 40 / 50 till then), the last for any
+ *  phase past it. */
+export const PHASE_SIZES: readonly number[] = TUNING.islands?.phaseSizes ?? [10, 15, 20, 25, 30];
+export const sizeOfPhase = (p: number, sizes: readonly number[] = PHASE_SIZES) => Math.max(1, Math.round(sizes[Math.min(sizes.length, Math.max(1, p)) - 1] ?? 10));
 /** Legends a night on an island of `size` areas: 1 in 5, at least one. */
 export const legendsFor = (size: number) => Math.max(1, Math.round(size / 5));
 
@@ -55,11 +59,12 @@ export function bearingOf(kind: string, world = 0): number {
   return world ? (((b + (hash2(KIND_NAMES.indexOf(kind), world, 7361) - 0.5) * 14) % 360) + 360) % 360 : b;
 }
 
-/** Kind K's island in the world: phase its kind's + 1, on its bearing; null for a kind not in the table. */
-export function islandOf(kind: string, world = 0): Island | null {
+/** Kind K's island in the world: phase its kind's + 1, on its bearing; null for a kind not in the table. (`sizes` a phase's areas:
+ *  the map's tuning's, where a decision's slider moved them; the chart foresees the built ones.) */
+export function islandOf(kind: string, world = 0, sizes: readonly number[] = PHASE_SIZES): Island | null {
   const info = KINDS[kind];
   if (!info) return null;
-  const phase = info.phase + 1, size = sizeOfPhase(phase), bearing = bearingOf(kind, world), seed = islandSeed(phase, bearing, world);
+  const phase = info.phase + 1, size = sizeOfPhase(phase, sizes), bearing = bearingOf(kind, world), seed = islandSeed(phase, bearing, world);
   return { kind, phase, bearing, size, seed, roster: rosterOf(kind, phase, bearing, size, seed), patch: worldOf(world).islands.get(kind)?.patch, turn: worldOf(world).islands.get(kind)?.turn };
 }
 
@@ -67,7 +72,7 @@ export function islandOf(kind: string, world = 0): Island | null {
 export const rememberWorld = (a: Archipelago): void => rememberArchipelago(a, KIND_NAMES.length);
 
 /** The world's archipelago (rules/archipelago.ts): every island's place on the chart and its patch. */
-export const worldOf = (world = 0) => archipelago(world, KIND_NAMES.map(k => { const phase = KINDS[k].phase + 1, bearing = bearingOf(k, world); return { id: k, phase, bearing, seed: islandSeed(phase, bearing, world) }; }), islandSeed(0, 0, world));
+export const worldOf = (world = 0) => archipelago(world, KIND_NAMES.map(k => { const phase = KINDS[k].phase + 1, bearing = bearingOf(k, world); return { id: k, phase, bearing, seed: islandSeed(phase, bearing, world), areas: sizeOfPhase(phase) }; }), islandSeed(0, 0, world));
 
 /** The kinds with an area type (art/areas.js: an area's creature): only they can have areas (every designed kind has one today;
  *  a kind designed before its area would wait for it). */
@@ -79,6 +84,13 @@ export function knownKinds(found: readonly string[] = []): string[] {
   const known = homeKinds();
   for (const k of found) if (KINDS[k] && !isPlaceholder(k) && AREA_KINDS.has(k) && !known.includes(k)) known.push(k);
   return known;
+}
+
+/** How far home's crowds have grown (Ed, 2026-11-04: home "reaching full packs only when all islands are found"): the share of the
+ *  islands she can find (the designed kinds with an area type, home's own aside) whose island she's found (knownKinds), 0 to 1. */
+export function foundShare(found: readonly string[] = []): number {
+  const base = homeKinds().length, all = knownKinds(REAL_KINDS).length - base;
+  return all > 0 ? Math.min(1, Math.max(0, (knownKinds(found).length - base) / all)) : 1;
 }
 
 /** Home's island (the Ent's) in the world: one area per kind she knows (knownKinds: 10 at first, growing as islands are found,

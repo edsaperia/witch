@@ -34,8 +34,10 @@ export const STRAIT = 400;
 /** How many angles a patch is given at. */
 export const PATCH_ANGLES = 96;
 /** An island's land by phase (km², as it grows free: tools/islands measurements), and home's at its full size (64 areas): the disc
- *  as big as they need over FILL (Ed, 2026-10-12: "you can make the sea larger so that they fit"; v3, "more open sea"). */
-export const LAND_KM2 = [3.74, 1.23, 1.83, 2.45, 2.8, 4.24];
+ *  as big as they need over FILL (Ed, 2026-10-12: "you can make the sea larger so that they fit"; v3, "more open sea"). Phases 2 to 5
+ *  scaled to their islands of 15 / 20 / 25 / 30 areas (Ed, 2026-11-04; 1.83 / 2.45 / 2.8 / 4.24 at 20 / 30 / 40 / 50) by their coasts'
+ *  land measured at both sizes, world 0. */
+export const LAND_KM2 = [3.74, 1.23, 1.53, 1.98, 2.2, 3.04];
 /** The share of the disc the islands' foreseen land (buffer rings and all) takes, for today's kinds: the rest open sea. */
 export const FILL = 0.42;
 /** The sea packed between two foreseen coasts, in straits: its least and most, by the sea's openness there (a slow seeded noise
@@ -81,7 +83,7 @@ const made = new Map<string, Archipelago>();
 export function rememberArchipelago(a: Archipelago, kinds: number): void { const key = `${a.world}|${kinds}`; if (!made.has(key)) made.set(key, a); }
 /** The archipelago of a world: `kinds` every island's kind with its phase (its kind's + 1), table bearing (degrees from north,
  *  clockwise) and seed (its shape's), home besides. Made once a world. */
-export function archipelago(world: number, kinds: readonly { id: string; phase: number; bearing: number; seed: number }[], homeSeed = 1): Archipelago {
+export function archipelago(world: number, kinds: readonly { id: string; phase: number; bearing: number; seed: number; /** its areas (rules/rosters.ts sizeOfPhase; 10 × its phase if not given) */ areas?: number }[], homeSeed = 1): Archipelago {
   const key = `${world}|${kinds.length}`, had = made.get(key);
   if (had) return had;
   const TAU = Math.PI * 2;
@@ -95,16 +97,16 @@ export function archipelago(world: number, kinds: readonly { id: string; phase: 
   for (let p = 0; p < 6; p++) { ring.push(p ? Math.sqrt(inside + byPhase[p] / 2) : 0); inside += byPhase[p]; }
   const ringGap = (ring[5] - ring[1]) / 4;
   // Each island: its shape (as it grows), scaled so its playable areas fill it, its coast past that, and where it starts.
-  const siteOf = (id: string, phase: number, bearing: number, seed: number): Site => {
+  const siteOf = (id: string, phase: number, bearing: number, seed: number, size = 10 * phase): Site => {
     const K = SHAPES[Math.min(5, phase)], reach = reachOf(K, seed).reach, table = new Float32Array(SHAPE_ANGLES);
     let I = 0;
     for (let a = 0; a < SHAPE_ANGLES; a++) { table[a] = reach((a / SHAPE_ANGLES) * TAU); I += table[a] ** 2 * (TAU / SHAPE_ANGLES); }
-    const areas = (phase ? 10 * phase : HOME_AREAS) + lakePlan(K, seed).reduce((t, n) => t + n, 0), k = AREA_METRES * Math.sqrt((2 * areas) / I), pad = COAST_PAD[Math.min(5, phase)];
+    const areas = (phase ? size : HOME_AREAS) + lakePlan(K, seed).reduce((t, n) => t + n, 0), k = AREA_METRES * Math.sqrt((2 * areas) / I), pad = COAST_PAD[Math.min(5, phase)];
     const h = Math.floor(seed * 7919) % 100003, aim = phase ? Math.max(ring[1] * 0.5, Math.min(0.95, ring[phase] + MINGLE * ringGap * (2 * hash2(h, 13, 9031 + world) - 1))) * R : 0;
     const b = (bearing * Math.PI) / 180, turn = phase ? hash2(h, 17, 9041 + world) * TAU : 0;
     return { id, phase, bearing, x: Math.sin(b) * aim, y: -Math.cos(b) * aim, turn, table, k, pad, most: k * Math.max(...table) + pad, core: k * [...table].sort((p, q) => p - q)[SHAPE_ANGLES >> 1] * CORE + pad, pr: new Float64Array(PROBE), px: new Float64Array(PROBE), py: new Float64Array(PROBE), pTurn: NaN, aim, mass: phase ? k * k : Infinity };
   };
-  const sites: Site[] = [siteOf("home", 0, 0, homeSeed), ...kinds.map(k => siteOf(k.id, k.phase, k.bearing, k.seed))];
+  const sites: Site[] = [siteOf("home", 0, 0, homeSeed), ...kinds.map(k => siteOf(k.id, k.phase, k.bearing, k.seed, k.areas))];
   // The sea wanted between two coasts (m): wider where the sea's open.
   const wantOf = (a: Site, b: Site) => STRAIT * (GAP[0] + (GAP[1] - GAP[0]) * vnoise(((a.x + b.x) / 2 / R) * OPEN_SCALE + 40, ((a.y + b.y) / 2 / R) * OPEN_SCALE + 40, 9021 + world));
   // How far a's coast comes inside b's coast and its wanted sea (m; under 0, that much more sea than wanted): a's coast probed.

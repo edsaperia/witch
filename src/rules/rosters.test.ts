@@ -1,7 +1,7 @@
 // The journey's rosters (Ed, 2026-10-11; docs/backlog/journey.md "Rosters", rules/rosters.ts): each kind's island, its roster
 // and its night's legends; and the map they make.
 import { describe, expect, it } from "vitest";
-import { dealLegends, OTHERS_MAX, homeKinds, isPlaceholder, islandOf, KIND_NAMES, KINDS, legendsFor, playableIsland, REAL_KINDS } from "./rosters";
+import { dealLegends, OTHERS_MAX, homeKinds, isPlaceholder, islandOf, KIND_NAMES, KINDS, legendsFor, playableIsland, REAL_KINDS, sizeOfPhase } from "./rosters";
 import { AREA_TYPES, generateMap } from "./map";
 import { TUNING, type Tuning } from "./tuning";
 import { newGame } from "./game";
@@ -17,7 +17,7 @@ describe("islands by kind (islandOf)", () => {
       const i = islandOf(k)!;
       expect(i.phase).toBe(KINDS[k].phase + 1);
       expect(i.bearing).toBe(KINDS[k].bearing);
-      expect(i.size).toBe(10 * i.phase);
+      expect(i.size).toBe([10, 15, 20, 25, 30][i.phase - 1]); // (Ed, 2026-11-04: islands.phaseSizes)
       expect(islandOf(k)).toEqual(i);
     }
     expect(islandOf("dragon")).toBeNull();
@@ -112,11 +112,11 @@ describe("an island's outline (rules/islandShape.ts) is the map's own coast", ()
 });
 
 describe("the islands of kinds not designed yet (placeholders, '?': Ed, 2026-10-11)", () => {
-  it("gives all 64 kinds an island with a seed, size and roster, 10 to 50 areas by phase", () => {
+  it("gives all 64 kinds an island with a seed, size and roster, 10 to 30 areas by phase", () => {
     expect(KIND_NAMES.length).toBe(64);
     for (const k of KIND_NAMES) {
       const i = islandOf(k)!;
-      expect(i.size).toBe(10 * i.phase);
+      expect(i.size).toBe(sizeOfPhase(i.phase));
       expect(i.roster.reduce((a, r) => a + r.areas, 0)).toBe(i.size);
     }
     expect(new Set(KIND_NAMES.map(k => islandOf(k)!.seed)).size).toBe(64);
