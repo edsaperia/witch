@@ -5,13 +5,14 @@
 import { describe, expect, it } from "vitest";
 import type { Creature, Level } from "./creatures";
 import { speedFactor, wanderRange } from "./creatures";
-import { hitWitch, newGame, stepGame, STEP, type Controls, type Game, type Witch } from "./game";
+import { hitWitch, stepGame, STEP, type Controls, type Game, type Witch } from "./game";
 import { queuedFor, toEvolve } from "./berries";
 import { pipCount, pipFuel } from "./buffs";
 import { hexCell, stackBottom } from "./leash";
 import { feedOffer } from "./sigilButton";
 import { TUNING, withTuning } from "./tuning";
 import { replayGuest, replayStart } from "../platform/online/replay";
+import { preppedGame } from "../test/preppedGame"; // (games on a map made once a file from its prep)
 
 const idle: Controls = { moveX: 0, moveZ: 0, toggleMode: false, zoom: 0, autoTalk: false };
 const T = withTuning({ witchHealth: { ...TUNING.witchHealth, hits: 1e6 }, invites: { ...TUNING.invites, on: false } });
@@ -22,7 +23,7 @@ const tap = (g: Game) => stepGame(g, { ...idle, place: true }, STEP); // (a pres
 /** She stands on the ground in a quiet wild area two out from home, hers following (on her stack in this order, the last the bottom),
  *  `berries` un-taken berries round her at 3 to 5 m and every other berry within 200 m taken. */
 function scene(levels: Level[], berries = 4, seed = 123, players = 1): { g: Game; W: Witch; mine: Creature[]; site: { x: number; z: number } } {
-  const g = newGame(seed, T, players), W = g.witches[0];
+  const g = preppedGame(seed, T, players), W = g.witches[0];
   g.clock.paused = false; g.party.paused = true; g.party.spellAt = -100; // (the party on: the world awake)
   const [hx, hy] = g.map.centreCell, cell: [number, number] = [hx + 2, hy], site = g.map.siteOf(cell[0], cell[1]);
   W.body = { ...W.body, seated: false, perch: false, mode: "ground", lift: 0, x: site.x, z: site.z };

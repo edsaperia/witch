@@ -1,14 +1,14 @@
 import { describe, expect, it } from "vitest";
-import { generateMap } from "./map";
 import { isInside } from "./mapShape";
 import { Forest, legendGrove } from "./forest";
 import { keepsToCircle, pointInArea, spawnCreatures, stepCreature } from "./creatures";
 import { rng } from "./random";
 import { soundsystemFor } from "./party";
 import { TUNING, withTuning } from "./tuning";
-import { joinParty, loseSoundsystem, newGame, stepGame, STEP, type Controls, type Game } from "./game";
+import { joinParty, loseSoundsystem, stepGame, STEP, type Controls, type Game } from "./game";
 import { befriend } from "./creatureStates";
 import { inviteCreature } from "./leash";
+import { preppedGame, sharedMap } from "../test/preppedGame"; // (games on a map made once a file from its prep)
 // (these test the areas clearing by themselves and the runes at the feet: the game as it was, ?cast=0, rules/stoneStacks.ts)
 const PEOPLED = withTuning({ population: { ...TUNING.population, start: { ...TUNING.population.start, young: 1 } }, cast: { ...TUNING.cast, on: false } }); // (a young in every area, whatever the tuning's curve: the mechanics, not the balance)
 
@@ -17,7 +17,7 @@ const PEOPLED = withTuning({ population: { ...TUNING.population, start: { ...TUN
 describe("legend clearings", () => {
   for (const seed of [1, 123, 4242, 90210]) {
     it(`every area with a legend has one (and only those), inside its own area, clear of trees, bushes, decor and the soundsystem, its legend near the top (seed ${seed})`, () => {
-      const map = generateMap(seed, TUNING), forest = new Forest(map), creatures = spawnCreatures(map);
+      const map = sharedMap(seed, TUNING), forest = new Forest(map), creatures = spawnCreatures(map);
       // every area with room for one has one: 4000 m² or more of its ground where she can fly (the rest: slivers at the map's edge, or absorbed by their neighbours)
       const B = map.bounds, ground = new Map<string, number>();
       for (let x = B.minX + 15; x < B.maxX - 15; x += 8) for (let z = B.minZ + 15; z < B.maxZ - 15; z += 8) if (isInside(B, x, z, 15)) { const k = map.areaAt(x, z).cell.join(","); ground.set(k, (ground.get(k) ?? 0) + 64); }
@@ -48,7 +48,7 @@ describe("legend clearings", () => {
   });
   // Ed (2026-10-06): "Legend circles should spawn with a wild baby in them, which tries to stay within the circle while it's wild."
   it("each holds a wild baby of its legend's kind, which keeps to the circle, comes back in if pushed out, and is free only while leashed", () => {
-    const map = generateMap(123, TUNING), creatures = spawnCreatures(map);
+    const map = sharedMap(123, TUNING), creatures = spawnCreatures(map);
     for (const c of map.legendClearings) {
       const L = creatures.find(o => o.boss && o.cell[0] === c.cell[0] && o.cell[1] === c.cell[1])!;
       const babies = creatures.filter(o => o.circle && o.cell[0] === c.cell[0] && o.cell[1] === c.cell[1]);
@@ -81,7 +81,7 @@ describe("legend clearings", () => {
   it("its befriended baby stays in the circle and dances there; only loose-sigil pickup makes it follow her", () => {
     const idle: Controls = { moveX: 0, moveZ: 0, toggleMode: false, zoom: 0, autoTalk: false };
     const run = (g: Game, secs: number, each?: () => void) => { for (let i = 0; i < Math.round(secs / STEP); i++) { stepGame(g, idle, STEP); each?.(); } };
-    const g = newGame(123, PEOPLED);
+    const g = preppedGame(123, PEOPLED);
     g.clock.paused = false;
     g.witches[0].health.hp = 1e6;
     const B = g.creatures.find(o => o.circle)!, k = B.circle!, dist = () => Math.hypot(B.x - k.x, B.z - k.z);
@@ -110,7 +110,7 @@ describe("legend clearings", () => {
   // waken the legend": "legends get angry when their area has no animals from its species".
   it("a fallen soundsystem's babies run off home and its besiegers march on: its legend, left without kin, grows restless, then angry", () => {
     const idle: Controls = { moveX: 0, moveZ: 0, toggleMode: false, zoom: 0, autoTalk: false };
-    const g = newGame(123, withTuning({ legends: { ...TUNING.legends, share: 1 }, cast: { ...TUNING.cast, on: false } })); // (babies with no loose sigils: the game without the stone stacks, ?cast=0; every area with its legend: at the usual share, none of seed 123's next areas has one)
+    const g = preppedGame(123, withTuning({ legends: { ...TUNING.legends, share: 1 }, cast: { ...TUNING.cast, on: false } })); // (babies with no loose sigils: the game without the stone stacks, ?cast=0; every area with its legend: at the usual share, none of seed 123's next areas has one)
     g.clock.paused = false;
     g.witches[0].health.hp = 1e6;
     g.witch = { ...g.witch, seated: false, mode: "treetop", lift: 1 };
@@ -157,7 +157,7 @@ describe("legend clearings", () => {
   // smoothly into the rest of the forest around this area, so it doesn't stand out too much".
   it("each swells the forest round it, strongest at its edge and easing smoothly out into the area's own, all the way round", () => {
     // (half the areas with legends, as when this was written: enough clearings to average the grove's shape over, whatever legends.share)
-    const map = generateMap(123, withTuning({ legends: { ...TUNING.legends, share: 0.5 } })), forest = new Forest(map), G = TUNING.legendClearing.grove, bins = 6, w = G.reach / bins;
+    const map = sharedMap(123, withTuning({ legends: { ...TUNING.legends, share: 0.5 } })), forest = new Forest(map), G = TUNING.legendClearing.grove, bins = 6, w = G.reach / bins;
     const sum = new Array(bins + 1).fill(0), n = new Array(bins + 1).fill(0);
     for (const lc of map.legendClearings) {
       for (const p of forest.treesNear(lc.x, lc.z, lc.r + 1.5 + G.reach + w)) {
@@ -184,7 +184,7 @@ describe("legend clearings", () => {
   // Art builder 3's rim kit (#262) round each: on its ring, never its floor, paths clear; all the way round, no way in left open to
   // the south (Ed, 2026-10-26: "legend circles should always be hidden by scenery around them").
   it("each is edged by the rim kit: small pieces just past its floor, all the way round", () => {
-    const map = generateMap(123, TUNING), forest = new Forest(map), R = TUNING.legendClearing.rim;
+    const map = sharedMap(123, TUNING), forest = new Forest(map), R = TUNING.legendClearing.rim;
     let edged = 0, south = 0;
     for (const lc of map.legendClearings) {
       const mine = forest.rimNear(lc.x, lc.z, lc.r + R.out + R.spread + 1).filter(p => Math.abs(Math.hypot(p.x - lc.x, p.z - lc.z) - lc.r - R.out - R.spread / 2) <= R.spread / 2 + 1e-6);
@@ -207,7 +207,7 @@ describe("legend clearings", () => {
     const D = TUNING.legendClearing.minFromStone;
     let n = 0, near = 0;
     for (const seed of [1, 42, 123, 2024, 90210]) {
-      const map = generateMap(seed, TUNING);
+      const map = sharedMap(seed, TUNING);
       for (const c of map.legendClearings) {
         const s = map.soundsystemSpot(c.cell[0], c.cell[1]), d = Math.hypot(c.x - s.x, c.z - s.z) - c.r;
         n++;

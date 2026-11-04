@@ -1,11 +1,12 @@
 // Legend circles slow time (rules/slowTime.ts; Ed, 2026-10-06): on the ground in a sleeping or restless legend's circle the
 // world runs at a tenth of its speed while she keeps hers; enraged creatures stay out of such a circle; a 💌 leaving it vanishes.
 import { describe, expect, it } from "vitest";
-import { newGame, stepGame, STEP, type Controls, type Game } from "./game";
+import { stepGame, STEP, type Controls, type Game } from "./game";
 import { TUNING } from "./tuning";
 import { legendRings, slowTarget, type Ring } from "./slowTime";
 import { napping } from "./creatures";
 import { newInvites, stepInvites, type Affection } from "./invites";
+import { preppedGame } from "../test/preppedGame"; // (games on a map made once a file from its prep)
 
 const idle: Controls = { moveX: 0, moveZ: 0, toggleMode: false, zoom: 0, autoTalk: false };
 const run = (g: Game, secs: number, c: Controls = idle) => { for (let i = 0; i < Math.round(secs / STEP); i++) stepGame(g, c, STEP); };
@@ -14,7 +15,7 @@ const S = TUNING.legendCircle!.slow;
 /** A game under way (the party spell cast), the witch on the ground in the middle of a sleeping legend's circle. */
 function inCircle(): { g: Game; ring: Ring } {
   // Keep the spatial fixture: the timing contrast needs a live creature 160–250 m away and a witch moved 500 m from the circle.
-  const g = newGame(123, TUNING);
+  const g = preppedGame(123, TUNING);
   g.clock.paused = false; g.party.spellAt = -100;
   g.clearedAt = Infinity; // (no area clears: this empties areas by hand; rules/clear.ts)
   const ring = legendRings(g).find(r => g.creatures[r.id].legendState === "asleep")!;

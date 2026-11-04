@@ -10,6 +10,7 @@ import { setupQuestDemo } from "./quest";
 import { inLegendClearing } from "./map";
 import { stateOf } from "./creatureStates";
 import { smallWorldTuning } from "../test/worlds";
+import { preppedGame } from "../test/preppedGame"; // (games on a map made once a file from its prep)
 const PEOPLED = withTuning({ population: { ...TUNING.population, start: { ...TUNING.population.start, young: 1 } } }); // (a young in every area, whatever the tuning's curve: the mechanics, not the balance)
 
 // Legends, redesigned (Ed, 2026-10-05; issue #87).
@@ -18,7 +19,7 @@ const run = (g: Game, secs: number, first: Controls = idle, each?: () => void) =
 /** The witch on the ground beside a sleeping legend, everything else round it gone but one of its kind. */
 function beside(kin = true, t: Tuning = NO_SLOW): { g: Game; L: Creature; mate: Creature | null } {
   // Retain >300 m recruits, 700 m neighbouring-legend exclusion and the second relic for the long-range combat fixtures.
-  const g = newGame(123, t);
+  const g = preppedGame(123, t);
   g.clock.paused = false; g.party.paused = true;
   g.clearedAt = Infinity; // (no area clears: this empties areas by hand; rules/clear.ts)
   const L = g.creatures.find(c => c.boss && c.legendState === "asleep" && !LEGENDS.charge.species.includes(c.species))!; // (one that lobs or beams: chargers below)
@@ -205,7 +206,7 @@ describe("legends, redesigned (Ed, 2026-10-05; #87)", () => {
 
   it("take a quest sigil only inside their clearing: the right creature put down elsewhere in its area does nothing but cue", () => {
     for (const inside of [false, true]) {
-      const g = newGame(123, NO_SLOW);
+      const g = preppedGame(123, NO_SLOW);
       g.clock.paused = false; g.party.paused = true;
       const L = setupQuestDemo(g, (x, z) => { g.witch = { ...g.witch, x, z, mode: "ground", lift: 0, seated: false, perch: undefined }; })!; // (on the ground: the oak's rooms spread over the forest round home)
       g.witches[0].health.hp = 1e6;
@@ -249,7 +250,7 @@ describe("legends, redesigned (Ed, 2026-10-05; #87)", () => {
   }, 60000);
 
   it("has the dream quest wake it happy, fighting for her, no buff (Ed, 2026-10-18; the creature stays hers), and stay open while it sleeps, soundsystem on or not (Ed, 2026-10-06)", () => {
-    const g = newGame(123, NO_SLOW);
+    const g = preppedGame(123, NO_SLOW);
     g.clock.paused = false; g.party.paused = true;
     const L = setupQuestDemo(g, (x, z) => { g.witch = { ...g.witch, x, z, mode: "ground", lift: 0, seated: false }; })!;
     g.witches[0].health.hp = 1e6;
@@ -276,7 +277,7 @@ describe("legends, redesigned (Ed, 2026-10-05; #87)", () => {
 
   it("glint only through a gap in the canopy from the treetops, always on the ground; lie out in the woods, some under gaps, some under closed canopy (Ed, 2026-10-05)", () => {
     for (const seed of [123, 7, 4242]) {
-      const g = newGame(seed, TUNING), covered = g.relics.map(r => canopyOver(g.forest, g.map, r.x, r.z));
+      const g = preppedGame(seed, TUNING), covered = g.relics.map(r => canopyOver(g.forest, g.map, r.x, r.z));
       expect(covered.some(c => c), `seed ${seed}: one under closed canopy`).toBe(true);
       expect(covered.some(c => !c), `seed ${seed}: one under a gap`).toBe(true);
       for (const r of g.relics) {
@@ -357,7 +358,7 @@ describe("charging legends' long charge (Ed, 2026-10-05; legends.json charge)", 
 
 describe("a wave on a legend's area (#87, found by the overnight playthrough)", () => {
   it("enrages its wild creatures into a siege, but leaves its legend asleep, neither enraged nor besieging", () => {
-    const g = newGame(123, withTuning({ ...PEOPLED, legends: { ...TUNING.legends, share: 1 } })); // (a young in it, and a legend in the woken area: with legends.share 0.5 the first wave's may have none)
+    const g = preppedGame(123, withTuning({ ...PEOPLED, legends: { ...TUNING.legends, share: 1 } })); // (a young in it, and a legend in the woken area: with legends.share 0.5 the first wave's may have none)
     g.clock.paused = false;
     const before = new Set(g.party.areas.keys());
     run(g, 0.1, { ...idle, nextWave: true });
@@ -393,7 +394,7 @@ describe("legends going back to sleep (Ed, 2026-10-06)", () => {
   it("look for their kind every legends.check seconds (5), each on its own beat, not all on one frame", () => {
     // Retain the full dealt legend population to check that independent looks do not bunch on one frame.
     expect(LEGENDS.check).toBe(5);
-    const g = newGame(123, NO_SLOW), ids = g.creatures.filter(c => c.boss).map(c => c.id).slice(0, 40);
+    const g = preppedGame(123, NO_SLOW), ids = g.creatures.filter(c => c.boss).map(c => c.id).slice(0, 40);
     for (const c of g.creatures) if (!c.boss) c.gone = true; // (none of anyone's kind anywhere: each turns restless on its first look)
     const firstLook = new Map<number, number>();
     for (let i = 1; i <= Math.round(6 / STEP); i++) {

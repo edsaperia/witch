@@ -6,10 +6,11 @@ import { describe, expect, it } from "vitest";
 import { TUNING, type Tuning } from "./tuning";
 import { groundedBy } from "./leashWeight";
 import { strengthOf } from "./combat";
-import { newGame as fullGame, stepGame, STEP, type Controls, type Game } from "./game";
+import { stepGame, STEP, type Controls, type Game } from "./game";
 import { smallWorld } from "../test/worlds";
-const newGame = smallWorld(fullGame, "Grounding checks a few creatures placed beside one witch on local open ground, independent of area count.");
+const newGame = smallWorld(preppedGame, "Grounding checks a few creatures placed beside one witch on local open ground, independent of area count.");
 import type { Creature } from "./creatures";
+import { preppedGame } from "../test/preppedGame"; // (games on a map made once a file from its prep)
 
 const idle: Controls = { moveX: 0, moveZ: 0, toggleMode: false, zoom: 0, autoTalk: false };
 const crit = (id: number, level: number, gone = false) => ({ id, x: 0, z: 0, level, species: "wolf", gone }) as unknown as Creature;

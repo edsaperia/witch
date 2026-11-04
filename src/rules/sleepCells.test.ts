@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { newGame, stepGame, STEP } from "./game";
+import { stepGame, STEP } from "./game";
 import { generateMap } from "./map";
 import { spawnCreatures } from "./creatures";
 import { TUNING } from "./tuning";
@@ -7,6 +7,7 @@ import { fillTrunk } from "./finds";
 import { endParty } from "./partyOver";
 import { largestWorldTuning } from "../test/worlds";
 import { sleepCellAudit } from "../test/sleepCells";
+import { preppedGame } from "../test/preppedGame"; // (games on a map made once a file from its prep)
 
 const idle = { moveX: 0, moveZ: 0, toggleMode: false, zoom: 0 };
 // (the largest island since the challenge circle's claim, 2026-11-03: its area takes the whole circle from the areas round it, so
@@ -39,12 +40,12 @@ describe("sleeping creatures' logical ownership areas", () => {
     };
     const map = generateMap(123, tuning);
     assertStage(map, spawnCreatures(map));
-    const g = newGame(123, tuning);
+    const g = preppedGame(123, tuning);
     assertStage(g.map, g.creatures);
     g.clock.paused = false; fillTrunk(g, {}); g.party.spellAt = null;
     for (let i = 0; i < 30; i++) stepGame(g, idle, STEP);
     assertStage(g.map, g.creatures);
-    const lost = newGame(123, tuning); lost.clock.paused = false; fillTrunk(lost, {}); endParty(lost);
+    const lost = preppedGame(123, tuning); lost.clock.paused = false; fillTrunk(lost, {}); endParty(lost);
     lost.witch = { ...lost.witch, x: lost.map.bounds.minX + 5, z: lost.map.bounds.minZ + 5, seated: false, perch: undefined };
     for (let i = 0; i < 30; i++) stepGame(lost, idle, STEP);
     assertStage(lost.map, lost.creatures);
@@ -52,7 +53,7 @@ describe("sleeping creatures' logical ownership areas", () => {
 
   it("rejects an unrelated area even for a boss, and rejects a non-circle wild creature in a paired legend area", () => {
     // (a boss lying in a paired legend area: since 2026-11-03's maps the first boss lies in its own area)
-    const g = newGame(123, largestWorldTuning(TUNING)), boss = g.creatures.find(c => c.boss && g.map.legendAreas.has(g.map.cellSafe(c.x, c.z).cell.join(",")))!;
+    const g = preppedGame(123, largestWorldTuning(TUNING)), boss = g.creatures.find(c => c.boss && g.map.legendAreas.has(g.map.cellSafe(c.x, c.z).cell.join(",")))!;
     const elsewhere = g.map.cells.map(([x, y]) => g.map.siteOf(x, y)).find(p => !g.map.sameArea(g.map.cellSafe(p.x, p.z).cell, boss.cell))!;
     const bad = { ...boss, x: elsewhere.x, z: elsewhere.z };
     expect(sleepCellAudit(g.map, [bad]).mismatches.map(c => c.id)).toEqual([boss.id]);

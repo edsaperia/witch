@@ -4,9 +4,9 @@
 // her clothes either, "I should be able to leave regardless").
 import { describe, expect, it } from "vitest";
 import { TUNING } from "./tuning";
-import { newGame as fullGame, stepGame, STEP, type Controls, type Game } from "./game";
+import { stepGame, STEP, type Controls, type Game } from "./game";
 import { smallWorld } from "../test/worlds";
-const newGame = smallWorld(fullGame, "Alarm, dressing, doors and DJ intro routines use one house, independent of distant areas.");
+const newGame = smallWorld(preppedGame, "Alarm, dressing, doors and DJ intro routines use one house, independent of distant areas.");
 import { HOUSE_ROOMS, floorHats, fromObject, installEdLayout, fromPlan, hatSlots, objectAt, objectFront, toPlan } from "./houseRooms";
 import { inRoom as inBlob } from "../../config/house/shape.js";
 import { wakeInBedroom } from "./opening";
@@ -14,6 +14,7 @@ import { atDecks, startParty, bedRoom, doorShut, endDream, firstMorning, morning
 import { dressed, pileOut, PILE_SLOTS, wearFromStation, wearPiece, wornGenome, wornNow } from "./clothesPile";
 import { deckOf, onTerrace } from "./treehouse";
 import { heldByRoutine } from "./djSet";
+import { preppedGame } from "../test/preppedGame"; // (games on a map made once a file from its prep)
 
 const idle: Controls = { moveX: 0, moveZ: 0, toggleMode: false, zoom: 0, autoTalk: false };
 const K = WAKE_DEFAULT;

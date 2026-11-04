@@ -1,13 +1,14 @@
 // The bots (rules/bot.ts): the balance tool's and the bot game's one player made of rules.
 import { describe, expect, it } from "vitest";
 import { TUNING } from "./tuning";
-import { hitWitch, newGame, stepGame, type Game } from "./game";
+import { hitWitch, stepGame, type Game } from "./game";
 import { article, BOT_GAME, newBot, plural, type BotKind, type BotOptions } from "./bot";
+import { preppedGame } from "../test/preppedGame"; // (games on a map made once a file from its prep)
 
 // Seeded movement and replay contracts remain here. Full-night/recruitment outcomes are tools/balance/bot-outcomes.mjs.
 /** A fresh game as the bot game starts one: unpaused, waiting for the party spell. */
 function fresh(seed = 123): Game {
-  const g = newGame(seed, TUNING);
+  const g = preppedGame(seed, TUNING);
   g.clock.paused = false;
   g.party.spellAt = null;
   return g;
