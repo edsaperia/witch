@@ -1,0 +1,1629 @@
+{
+  "_": "Creature actions: any number per animal. Movement is independent. delivery selects an executor, not a reserved pack role. Weights and cooldowns are independent.",
+  "species": {
+    "arcticfox": [
+      {
+        "id": "leap",
+        "delivery": "melee",
+        "weight": 0.3,
+        "youngWeight": 1,
+        "cooldown": 3.5
+      },
+      {
+        "id": "snow bolt",
+        "delivery": "ranged",
+        "weight": 0.3,
+        "youngWeight": 1.15
+      },
+      {
+        "id": "mirage",
+        "delivery": "effect",
+        "weight": 0.12,
+        "youngWeight": 0.6,
+        "cooldown": 10,
+        "effect": "mirage",
+        "parameters": {
+          "range": 24,
+          "time": 6,
+          "images": [
+            2,
+            3
+          ],
+          "ring": 1,
+          "cooldown": 10,
+          "tint": "violet"
+        }
+      }
+    ],
+    "armadillo": [
+      {
+        "id": "charge",
+        "delivery": "melee",
+        "weight": 0.36,
+        "youngWeight": 1,
+        "cooldown": 6
+      }
+    ],
+    "badger": [
+      {
+        "id": "dig",
+        "delivery": "melee",
+        "weight": 0.65,
+        "youngWeight": 1,
+        "cooldown": 4
+      },
+      {
+        "id": "stone shard",
+        "delivery": "ranged",
+        "weight": 0.15,
+        "youngWeight": 1.15
+      },
+      {
+        "id": "cover",
+        "delivery": "effect",
+        "weight": 0.2,
+        "youngWeight": 0.6,
+        "cooldown": 8,
+        "effect": "cover",
+        "parameters": {
+          "range": 20,
+          "time": 3,
+          "reach": 4,
+          "armour": 0.5,
+          "cooldown": 8,
+          "tint": "white"
+        }
+      }
+    ],
+    "bat": [
+      {
+        "id": "swoop",
+        "delivery": "melee",
+        "weight": 0.48,
+        "youngWeight": 1,
+        "cooldown": 2
+      },
+      {
+        "id": "screech bolt",
+        "delivery": "ranged",
+        "weight": 0.51,
+        "youngWeight": 1.15
+      },
+      {
+        "id": "confusion",
+        "delivery": "effect",
+        "weight": 0.12,
+        "youngWeight": 0.6,
+        "cooldown": 9,
+        "effect": "confusion",
+        "parameters": {
+          "range": 6,
+          "radius": 6,
+          "time": 2.5,
+          "drift": 60,
+          "cooldown": 9,
+          "tint": "violet",
+          "move": true
+        }
+      }
+    ],
+    "bear": [
+      {
+        "id": "strike",
+        "delivery": "melee",
+        "weight": 0.54,
+        "youngWeight": 1
+      },
+      {
+        "id": "cover",
+        "delivery": "effect",
+        "weight": 0.16,
+        "youngWeight": 0.6,
+        "cooldown": 8,
+        "effect": "cover",
+        "parameters": {
+          "range": 20,
+          "time": 3,
+          "reach": 4,
+          "armour": 0.5,
+          "cooldown": 8,
+          "tint": "white"
+        }
+      }
+    ],
+    "beaver": [
+      {
+        "id": "block",
+        "delivery": "melee",
+        "weight": 0.3,
+        "youngWeight": 1,
+        "cooldown": 3
+      },
+      {
+        "id": "wood chip",
+        "delivery": "ranged",
+        "weight": 0.37,
+        "youngWeight": 1.15
+      },
+      {
+        "id": "wall",
+        "delivery": "effect",
+        "weight": 0.2,
+        "youngWeight": 0.6,
+        "cooldown": 9,
+        "effect": "wall",
+        "parameters": {
+          "range": 24,
+          "length": 10,
+          "ahead": 4,
+          "radius": 1.5,
+          "time": 4,
+          "slow": 0.5,
+          "cooldown": 9,
+          "tint": "blue"
+        }
+      }
+    ],
+    "beetle": [
+      {
+        "id": "strike",
+        "delivery": "melee",
+        "weight": 0.36,
+        "youngWeight": 1
+      },
+      {
+        "id": "cover",
+        "delivery": "effect",
+        "weight": 0.12,
+        "youngWeight": 0.6,
+        "cooldown": 8,
+        "effect": "cover",
+        "parameters": {
+          "range": 20,
+          "time": 3,
+          "reach": 4,
+          "armour": 0.5,
+          "cooldown": 8,
+          "tint": "white",
+          "both": true
+        }
+      }
+    ],
+    "boar": [
+      {
+        "id": "charge",
+        "delivery": "melee",
+        "weight": 0.7,
+        "youngWeight": 1,
+        "cooldown": 5
+      }
+    ],
+    "cat": [
+      {
+        "id": "leap",
+        "delivery": "melee",
+        "weight": 0.48,
+        "youngWeight": 1,
+        "cooldown": 2.8
+      },
+      {
+        "id": "hiss bolt",
+        "delivery": "ranged",
+        "weight": 0.3,
+        "youngWeight": 1.15
+      },
+      {
+        "id": "sync",
+        "delivery": "effect",
+        "weight": 0.2,
+        "youngWeight": 0.6,
+        "cooldown": 9,
+        "effect": "sync",
+        "parameters": {
+          "range": 24,
+          "time": 5,
+          "count": 1,
+          "ring": 2.5,
+          "cooldown": 9,
+          "tint": "white"
+        }
+      }
+    ],
+    "cheetah": [
+      {
+        "id": "charge",
+        "delivery": "melee",
+        "weight": 0.54,
+        "youngWeight": 1,
+        "cooldown": 4
+      },
+      {
+        "id": "dust bolt",
+        "delivery": "ranged",
+        "weight": 0.37,
+        "youngWeight": 1.15
+      },
+      {
+        "id": "sync",
+        "delivery": "effect",
+        "weight": 0.12,
+        "youngWeight": 0.6,
+        "cooldown": 9,
+        "effect": "sync",
+        "parameters": {
+          "range": 24,
+          "time": 5,
+          "count": 1,
+          "ring": 2.5,
+          "cooldown": 9,
+          "tint": "white"
+        }
+      }
+    ],
+    "crab": [
+      {
+        "id": "strike",
+        "delivery": "melee",
+        "weight": 0.3,
+        "youngWeight": 1
+      },
+      {
+        "id": "cover",
+        "delivery": "effect",
+        "weight": 0.16,
+        "youngWeight": 0.6,
+        "cooldown": 8,
+        "effect": "cover",
+        "parameters": {
+          "range": 20,
+          "time": 3,
+          "reach": 4,
+          "armour": 0.5,
+          "cooldown": 8,
+          "tint": "white"
+        }
+      }
+    ],
+    "crocodile": [
+      {
+        "id": "ambush",
+        "delivery": "melee",
+        "weight": 0.36,
+        "youngWeight": 1,
+        "cooldown": 7
+      },
+      {
+        "id": "water jet",
+        "delivery": "ranged",
+        "weight": 0.51,
+        "youngWeight": 1.15
+      },
+      {
+        "id": "pull",
+        "delivery": "effect",
+        "weight": 0.2,
+        "youngWeight": 0.6,
+        "cooldown": 9,
+        "effect": "pull",
+        "parameters": {
+          "range": 18,
+          "pull": 5,
+          "reach": 14,
+          "cooldown": 9,
+          "tint": "violet"
+        }
+      }
+    ],
+    "dormouse": [
+      {
+        "id": "strike",
+        "delivery": "melee",
+        "weight": 0.2,
+        "youngWeight": 1
+      },
+      {
+        "id": "nut bolt",
+        "delivery": "ranged",
+        "weight": 0.65,
+        "youngWeight": 1.15
+      },
+      {
+        "id": "rally",
+        "delivery": "effect",
+        "weight": 0.15,
+        "youngWeight": 0.6,
+        "cooldown": 9,
+        "effect": "rally",
+        "parameters": {
+          "range": 24,
+          "radius": 12,
+          "heal": 1,
+          "cooldown": 9,
+          "tint": "green"
+        }
+      }
+    ],
+    "dragonfly": [
+      {
+        "id": "swoop",
+        "delivery": "melee",
+        "weight": 0.48,
+        "youngWeight": 1,
+        "cooldown": 2.5
+      },
+      {
+        "id": "water drop",
+        "delivery": "ranged",
+        "weight": 0.37,
+        "youngWeight": 1.15
+      },
+      {
+        "id": "sync",
+        "delivery": "effect",
+        "weight": 0.16,
+        "youngWeight": 0.6,
+        "cooldown": 9,
+        "effect": "sync",
+        "parameters": {
+          "range": 24,
+          "time": 5,
+          "count": 1,
+          "ring": 2.5,
+          "cooldown": 9,
+          "tint": "white"
+        }
+      }
+    ],
+    "elephant": [
+      {
+        "id": "charge",
+        "delivery": "melee",
+        "weight": 0.54,
+        "youngWeight": 1,
+        "cooldown": 7
+      }
+    ],
+    "elk": [
+      {
+        "id": "charge",
+        "delivery": "melee",
+        "weight": 0.3,
+        "youngWeight": 1,
+        "cooldown": 6
+      },
+      {
+        "id": "gust of breath",
+        "delivery": "ranged",
+        "weight": 0.51,
+        "youngWeight": 1.15
+      }
+    ],
+    "featheredserpent": [
+      {
+        "id": "ambush",
+        "delivery": "melee",
+        "weight": 0.36,
+        "youngWeight": 1,
+        "cooldown": 6
+      },
+      {
+        "id": "venom spit",
+        "delivery": "ranged",
+        "weight": 0.3,
+        "youngWeight": 1.15
+      },
+      {
+        "id": "mirage",
+        "delivery": "effect",
+        "weight": 0.16,
+        "youngWeight": 0.6,
+        "cooldown": 10,
+        "effect": "mirage",
+        "parameters": {
+          "range": 24,
+          "time": 6,
+          "images": [
+            2,
+            3
+          ],
+          "ring": 1,
+          "cooldown": 10,
+          "tint": "violet"
+        }
+      }
+    ],
+    "fennec": [
+      {
+        "id": "strike",
+        "delivery": "melee",
+        "weight": 0.42,
+        "youngWeight": 1
+      },
+      {
+        "id": "sand bolt",
+        "delivery": "ranged",
+        "weight": 0.37,
+        "youngWeight": 1.15
+      },
+      {
+        "id": "mirage",
+        "delivery": "effect",
+        "weight": 0.2,
+        "youngWeight": 0.6,
+        "cooldown": 10,
+        "effect": "mirage",
+        "parameters": {
+          "range": 24,
+          "time": 6,
+          "images": [
+            2,
+            3
+          ],
+          "ring": 1,
+          "cooldown": 10,
+          "tint": "violet"
+        }
+      }
+    ],
+    "flyingsquirrel": [
+      {
+        "id": "leap",
+        "delivery": "melee",
+        "weight": 0.48,
+        "youngWeight": 1,
+        "cooldown": 3.2
+      },
+      {
+        "id": "acorn bolt",
+        "delivery": "ranged",
+        "weight": 0.44,
+        "youngWeight": 1.15
+      },
+      {
+        "id": "scatter",
+        "delivery": "effect",
+        "weight": 0.12,
+        "youngWeight": 0.6,
+        "cooldown": 8,
+        "effect": "scatter",
+        "parameters": {
+          "range": 24,
+          "time": 0.6,
+          "ring": 1.1,
+          "cooldown": 8,
+          "tint": "white"
+        }
+      }
+    ],
+    "fox": [
+      {
+        "id": "strike",
+        "delivery": "melee",
+        "weight": 0.25,
+        "youngWeight": 1
+      },
+      {
+        "id": "fox-fire",
+        "delivery": "ranged",
+        "weight": 0.5,
+        "youngWeight": 1.15
+      }
+    ],
+    "frosttroll": [
+      {
+        "id": "strike",
+        "delivery": "melee",
+        "weight": 0.3,
+        "youngWeight": 1
+      },
+      {
+        "id": "cover",
+        "delivery": "effect",
+        "weight": 0.2,
+        "youngWeight": 0.6,
+        "cooldown": 8,
+        "effect": "cover",
+        "parameters": {
+          "range": 20,
+          "time": 3,
+          "reach": 4,
+          "armour": 0.5,
+          "cooldown": 8,
+          "tint": "white"
+        }
+      }
+    ],
+    "frostwyrm": [
+      {
+        "id": "strike",
+        "delivery": "melee",
+        "weight": 0.36,
+        "youngWeight": 1
+      },
+      {
+        "id": "frost beam",
+        "delivery": "ranged",
+        "weight": 0.37,
+        "youngWeight": 1.15
+      },
+      {
+        "id": "wall",
+        "delivery": "effect",
+        "weight": 0.12,
+        "youngWeight": 0.6,
+        "cooldown": 9,
+        "effect": "wall",
+        "parameters": {
+          "range": 24,
+          "length": 10,
+          "ahead": 4,
+          "radius": 1.5,
+          "time": 4,
+          "slow": 0.5,
+          "cooldown": 9,
+          "tint": "blue"
+        }
+      }
+    ],
+    "griffin": [
+      {
+        "id": "charge",
+        "delivery": "melee",
+        "weight": 0.42,
+        "youngWeight": 1,
+        "cooldown": 5
+      },
+      {
+        "id": "feather bolt",
+        "delivery": "ranged",
+        "weight": 0.44,
+        "youngWeight": 1.15
+      },
+      {
+        "id": "pull",
+        "delivery": "effect",
+        "weight": 0.16,
+        "youngWeight": 0.6,
+        "cooldown": 9,
+        "effect": "pull",
+        "parameters": {
+          "range": 18,
+          "pull": 6,
+          "reach": 18,
+          "cooldown": 9,
+          "tint": "violet"
+        }
+      }
+    ],
+    "hare": [
+      {
+        "id": "strike",
+        "delivery": "melee",
+        "weight": 0.25,
+        "youngWeight": 1
+      },
+      {
+        "id": "moon-dust bolt",
+        "delivery": "ranged",
+        "weight": 0.6,
+        "youngWeight": 1.15
+      },
+      {
+        "id": "call",
+        "delivery": "effect",
+        "weight": 0.15,
+        "youngWeight": 0.6,
+        "cooldown": 8,
+        "effect": "call",
+        "parameters": {
+          "range": 24,
+          "time": 2,
+          "cooldown": 8,
+          "tint": "white"
+        }
+      }
+    ],
+    "hedgehog": [
+      {
+        "id": "charge",
+        "delivery": "melee",
+        "weight": 0.65,
+        "youngWeight": 1,
+        "cooldown": 5
+      },
+      {
+        "id": "spine fan",
+        "delivery": "ranged",
+        "weight": 0.1,
+        "youngWeight": 1.15
+      }
+    ],
+    "heron": [
+      {
+        "id": "charge",
+        "delivery": "melee",
+        "weight": 0.3,
+        "youngWeight": 1,
+        "cooldown": 4
+      },
+      {
+        "id": "water jet",
+        "delivery": "ranged",
+        "weight": 0.37,
+        "youngWeight": 1.15
+      },
+      {
+        "id": "sync",
+        "delivery": "effect",
+        "weight": 0.16,
+        "youngWeight": 0.6,
+        "cooldown": 9,
+        "effect": "sync",
+        "parameters": {
+          "range": 24,
+          "time": 5,
+          "count": 1,
+          "ring": 2.5,
+          "cooldown": 9,
+          "tint": "white"
+        }
+      }
+    ],
+    "hydra": [
+      {
+        "id": "ambush",
+        "delivery": "melee",
+        "weight": 0.36,
+        "youngWeight": 1,
+        "cooldown": 7
+      },
+      {
+        "id": "head spit",
+        "delivery": "ranged",
+        "weight": 0.44,
+        "youngWeight": 1.15
+      },
+      {
+        "id": "rally",
+        "delivery": "effect",
+        "weight": 0.2,
+        "youngWeight": 0.6,
+        "cooldown": 9,
+        "effect": "rally",
+        "parameters": {
+          "range": 24,
+          "radius": 12,
+          "heal": 1,
+          "cooldown": 9,
+          "tint": "green"
+        }
+      }
+    ],
+    "ibex": [
+      {
+        "id": "charge",
+        "delivery": "melee",
+        "weight": 0.42,
+        "youngWeight": 1,
+        "cooldown": 5,
+        "knockback": 10
+      },
+      {
+        "id": "dislodged stone",
+        "delivery": "ranged",
+        "weight": 0.51,
+        "youngWeight": 1.15
+      }
+    ],
+    "jaguar": [
+      {
+        "id": "leap",
+        "delivery": "melee",
+        "weight": 0.48,
+        "youngWeight": 1,
+        "cooldown": 3
+      },
+      {
+        "id": "jaguar bolt",
+        "delivery": "ranged",
+        "weight": 0.3,
+        "youngWeight": 1.15
+      },
+      {
+        "id": "sync",
+        "delivery": "effect",
+        "weight": 0.16,
+        "youngWeight": 0.6,
+        "cooldown": 9,
+        "effect": "sync",
+        "parameters": {
+          "range": 24,
+          "time": 5,
+          "count": 1,
+          "ring": 2.5,
+          "cooldown": 9,
+          "tint": "white"
+        }
+      }
+    ],
+    "komodo": [
+      {
+        "id": "ambush",
+        "delivery": "melee",
+        "weight": 0.54,
+        "youngWeight": 1,
+        "cooldown": 9
+      },
+      {
+        "id": "venom spit",
+        "delivery": "ranged",
+        "weight": 0.37,
+        "youngWeight": 1.15
+      },
+      {
+        "id": "confusion",
+        "delivery": "effect",
+        "weight": 0.2,
+        "youngWeight": 0.6,
+        "cooldown": 9,
+        "effect": "confusion",
+        "parameters": {
+          "range": 6,
+          "radius": 6,
+          "time": 3,
+          "drift": 35,
+          "cooldown": 9,
+          "tint": "violet"
+        }
+      }
+    ],
+    "lion": [
+      {
+        "id": "charge",
+        "delivery": "melee",
+        "weight": 0.3,
+        "youngWeight": 1,
+        "cooldown": 5
+      },
+      {
+        "id": "roar bolt",
+        "delivery": "ranged",
+        "weight": 0.44,
+        "youngWeight": 1.15
+      },
+      {
+        "id": "call",
+        "delivery": "effect",
+        "weight": 0.12,
+        "youngWeight": 0.6,
+        "cooldown": 8,
+        "effect": "call",
+        "parameters": {
+          "range": 24,
+          "time": 2,
+          "cooldown": 8,
+          "tint": "white"
+        }
+      }
+    ],
+    "lynx": [
+      {
+        "id": "leap",
+        "delivery": "melee",
+        "weight": 0.36,
+        "youngWeight": 1,
+        "cooldown": 2.5
+      },
+      {
+        "id": "shriek bolt",
+        "delivery": "ranged",
+        "weight": 0.51,
+        "youngWeight": 1.15
+      }
+    ],
+    "marten": [
+      {
+        "id": "strike",
+        "delivery": "melee",
+        "weight": 0.3,
+        "youngWeight": 1
+      },
+      {
+        "id": "ember bolt",
+        "delivery": "ranged",
+        "weight": 0.45,
+        "youngWeight": 1.15
+      },
+      {
+        "id": "call",
+        "delivery": "effect",
+        "weight": 0.25,
+        "youngWeight": 0.6,
+        "cooldown": 8,
+        "effect": "call",
+        "parameters": {
+          "range": 24,
+          "time": 2,
+          "cooldown": 8,
+          "tint": "white"
+        }
+      }
+    ],
+    "meerkat": [
+      {
+        "id": "strike",
+        "delivery": "melee",
+        "weight": 0.48,
+        "youngWeight": 1
+      },
+      {
+        "id": "sand bolt",
+        "delivery": "ranged",
+        "weight": 0.37,
+        "youngWeight": 1.15
+      },
+      {
+        "id": "call",
+        "delivery": "effect",
+        "weight": 0.12,
+        "youngWeight": 0.6,
+        "cooldown": 8,
+        "effect": "call",
+        "parameters": {
+          "range": 24,
+          "time": 2,
+          "cooldown": 8,
+          "tint": "white"
+        }
+      }
+    ],
+    "mole": [
+      {
+        "id": "burrow",
+        "delivery": "melee",
+        "weight": 0.54,
+        "youngWeight": 1,
+        "cooldown": 4
+      },
+      {
+        "id": "earth bolt",
+        "delivery": "ranged",
+        "weight": 0.44,
+        "youngWeight": 1.15
+      },
+      {
+        "id": "cloud",
+        "delivery": "effect",
+        "weight": 0.16,
+        "youngWeight": 0.6,
+        "cooldown": 10,
+        "effect": "cloud",
+        "parameters": {
+          "range": 6,
+          "radius": 6,
+          "time": 4,
+          "cooldown": 10,
+          "tint": "grey"
+        }
+      }
+    ],
+    "moth": [
+      {
+        "id": "dust bolt",
+        "delivery": "ranged",
+        "weight": 0.51,
+        "youngWeight": 1.15
+      },
+      {
+        "id": "cloud",
+        "delivery": "effect",
+        "weight": 0.2,
+        "youngWeight": 0.6,
+        "cooldown": 10,
+        "effect": "cloud",
+        "parameters": {
+          "range": 6,
+          "radius": 5,
+          "time": 4,
+          "cooldown": 10,
+          "tint": "grey",
+          "flash": true
+        }
+      }
+    ],
+    "newt": [
+      {
+        "id": "spit",
+        "delivery": "ranged",
+        "weight": 0.3,
+        "youngWeight": 1.15
+      },
+      {
+        "id": "wall",
+        "delivery": "effect",
+        "weight": 0.12,
+        "youngWeight": 0.6,
+        "cooldown": 9,
+        "effect": "wall",
+        "parameters": {
+          "range": 24,
+          "length": 10,
+          "ahead": 4,
+          "radius": 1.5,
+          "time": 4,
+          "slow": 0.5,
+          "cooldown": 9,
+          "tint": "blue"
+        }
+      }
+    ],
+    "otter": [
+      {
+        "id": "strike",
+        "delivery": "melee",
+        "weight": 0.42,
+        "youngWeight": 1
+      },
+      {
+        "id": "water bolt",
+        "delivery": "ranged",
+        "weight": 0.37,
+        "youngWeight": 1.15
+      },
+      {
+        "id": "rally",
+        "delivery": "effect",
+        "weight": 0.16,
+        "youngWeight": 0.6,
+        "cooldown": 9,
+        "effect": "rally",
+        "parameters": {
+          "range": 24,
+          "radius": 12,
+          "heal": 1,
+          "cooldown": 9,
+          "tint": "green"
+        }
+      }
+    ],
+    "owl": [
+      {
+        "id": "swoop",
+        "delivery": "melee",
+        "weight": 0.48,
+        "youngWeight": 1,
+        "cooldown": 3
+      },
+      {
+        "id": "lob",
+        "delivery": "ranged",
+        "weight": 0.44,
+        "youngWeight": 1.15
+      },
+      {
+        "id": "mind",
+        "delivery": "effect",
+        "weight": 0.2,
+        "youngWeight": 0,
+        "cooldown": 10,
+        "effect": "mind",
+        "parameters": {
+          "range": 14,
+          "time": 3,
+          "radius": 14,
+          "drift": 30,
+          "cooldown": 10,
+          "tint": "violet"
+        }
+      }
+    ],
+    "penguin": [
+      {
+        "id": "charge",
+        "delivery": "melee",
+        "weight": 0.54,
+        "youngWeight": 1,
+        "cooldown": 5
+      },
+      {
+        "id": "ice pellet",
+        "delivery": "ranged",
+        "weight": 0.51,
+        "youngWeight": 1.15
+      }
+    ],
+    "polarbear": [
+      {
+        "id": "leap",
+        "delivery": "melee",
+        "weight": 0.3,
+        "youngWeight": 1,
+        "cooldown": 5
+      },
+      {
+        "id": "cover",
+        "delivery": "effect",
+        "weight": 0.16,
+        "youngWeight": 0.6,
+        "cooldown": 8,
+        "effect": "cover",
+        "parameters": {
+          "range": 20,
+          "time": 3,
+          "reach": 4,
+          "armour": 0.5,
+          "cooldown": 8,
+          "tint": "white"
+        }
+      }
+    ],
+    "raccoon": [
+      {
+        "id": "strike",
+        "delivery": "melee",
+        "weight": 0.36,
+        "youngWeight": 1
+      },
+      {
+        "id": "thrown stone",
+        "delivery": "ranged",
+        "weight": 0.37,
+        "youngWeight": 1.15
+      },
+      {
+        "id": "decoy",
+        "delivery": "effect",
+        "weight": 0.2,
+        "youngWeight": 0.6,
+        "cooldown": 9,
+        "effect": "decoy",
+        "parameters": {
+          "range": 24,
+          "time": 3,
+          "radius": 3,
+          "cooldown": 9,
+          "tint": "white"
+        }
+      }
+    ],
+    "ram": [
+      {
+        "id": "charge",
+        "delivery": "melee",
+        "weight": 0.42,
+        "youngWeight": 1,
+        "cooldown": 4.5,
+        "knockback": 10
+      },
+      {
+        "id": "dislodged stone",
+        "delivery": "ranged",
+        "weight": 0.44,
+        "youngWeight": 1.15
+      }
+    ],
+    "rattlesnake": [
+      {
+        "id": "ambush",
+        "delivery": "melee",
+        "weight": 0.48,
+        "youngWeight": 1,
+        "cooldown": 7
+      },
+      {
+        "id": "venom spit",
+        "delivery": "ranged",
+        "weight": 0.51,
+        "youngWeight": 1.15
+      },
+      {
+        "id": "confusion",
+        "delivery": "effect",
+        "weight": 0.16,
+        "youngWeight": 0.6,
+        "cooldown": 9,
+        "effect": "confusion",
+        "parameters": {
+          "range": 6,
+          "radius": 6,
+          "time": 2.5,
+          "drift": 35,
+          "cooldown": 9,
+          "tint": "violet",
+          "move": true
+        }
+      }
+    ],
+    "raven": [
+      {
+        "id": "swoop",
+        "delivery": "melee",
+        "weight": 0.54,
+        "youngWeight": 1,
+        "cooldown": 3
+      },
+      {
+        "id": "spit and barb",
+        "delivery": "ranged",
+        "weight": 0.3,
+        "youngWeight": 1.15
+      },
+      {
+        "id": "mirage",
+        "delivery": "effect",
+        "weight": 0.2,
+        "youngWeight": 0.6,
+        "cooldown": 10,
+        "effect": "mirage",
+        "parameters": {
+          "range": 24,
+          "time": 6,
+          "images": [
+            2,
+            3
+          ],
+          "ring": 1,
+          "cooldown": 10,
+          "tint": "violet"
+        }
+      }
+    ],
+    "redpanda": [
+      {
+        "id": "leap",
+        "delivery": "melee",
+        "weight": 0.3,
+        "youngWeight": 1,
+        "cooldown": 4.5
+      },
+      {
+        "id": "ember bolt",
+        "delivery": "ranged",
+        "weight": 0.37,
+        "youngWeight": 1.15
+      },
+      {
+        "id": "rally",
+        "delivery": "effect",
+        "weight": 0.12,
+        "youngWeight": 0.6,
+        "cooldown": 9,
+        "effect": "rally",
+        "parameters": {
+          "range": 24,
+          "radius": 12,
+          "heal": 1,
+          "cooldown": 9,
+          "tint": "green"
+        }
+      }
+    ],
+    "rhino": [
+      {
+        "id": "charge",
+        "delivery": "melee",
+        "weight": 0.36,
+        "youngWeight": 1,
+        "cooldown": 6,
+        "knockback": 12
+      },
+      {
+        "id": "dust bolt",
+        "delivery": "ranged",
+        "weight": 0.44,
+        "youngWeight": 1.15
+      }
+    ],
+    "roe": [
+      {
+        "id": "leap",
+        "delivery": "melee",
+        "weight": 0.42,
+        "youngWeight": 1,
+        "cooldown": 4
+      },
+      {
+        "id": "bolt of light",
+        "delivery": "ranged",
+        "weight": 0.51,
+        "youngWeight": 1.15
+      },
+      {
+        "id": "scatter",
+        "delivery": "effect",
+        "weight": 0.2,
+        "youngWeight": 0.6,
+        "cooldown": 8,
+        "effect": "scatter",
+        "parameters": {
+          "range": 24,
+          "time": 0.6,
+          "ring": 1.1,
+          "cooldown": 8,
+          "tint": "white"
+        }
+      }
+    ],
+    "salamander": [
+      {
+        "id": "fire beam",
+        "delivery": "ranged",
+        "weight": 0.3,
+        "youngWeight": 1.15
+      },
+      {
+        "id": "wall",
+        "delivery": "effect",
+        "weight": 0.12,
+        "youngWeight": 0.6,
+        "cooldown": 9,
+        "effect": "wall",
+        "parameters": {
+          "range": 24,
+          "length": 10,
+          "ahead": 4,
+          "radius": 1.5,
+          "time": 4,
+          "slow": 0.5,
+          "cooldown": 9,
+          "tint": "blue"
+        }
+      }
+    ],
+    "scorpion": [
+      {
+        "id": "venom bolt",
+        "delivery": "ranged",
+        "weight": 0.37,
+        "youngWeight": 1.15
+      },
+      {
+        "id": "wall",
+        "delivery": "effect",
+        "weight": 0.16,
+        "youngWeight": 0.6,
+        "cooldown": 9,
+        "effect": "wall",
+        "parameters": {
+          "range": 24,
+          "length": 10,
+          "ahead": 4,
+          "radius": 1.5,
+          "time": 3,
+          "slow": 0.5,
+          "cooldown": 9,
+          "tint": "blue"
+        }
+      }
+    ],
+    "snail": [
+      {
+        "id": "trail",
+        "delivery": "melee",
+        "weight": 0.3,
+        "youngWeight": 1
+      },
+      {
+        "id": "wall",
+        "delivery": "effect",
+        "weight": 0.2,
+        "youngWeight": 0.6,
+        "cooldown": 9,
+        "effect": "wall",
+        "parameters": {
+          "range": 24,
+          "length": 10,
+          "ahead": 4,
+          "radius": 1.5,
+          "time": 4,
+          "slow": 0.5,
+          "cooldown": 9,
+          "tint": "blue"
+        }
+      }
+    ],
+    "snake": [
+      {
+        "id": "ambush",
+        "delivery": "melee",
+        "weight": 0.36,
+        "youngWeight": 1,
+        "cooldown": 8
+      },
+      {
+        "id": "venom spit",
+        "delivery": "ranged",
+        "weight": 0.51,
+        "youngWeight": 1.15
+      },
+      {
+        "id": "confusion",
+        "delivery": "effect",
+        "weight": 0.12,
+        "youngWeight": 0.6,
+        "cooldown": 9,
+        "effect": "confusion",
+        "parameters": {
+          "range": 6,
+          "radius": 5,
+          "time": 2.5,
+          "drift": 35,
+          "cooldown": 9,
+          "tint": "violet",
+          "move": true
+        }
+      }
+    ],
+    "snowleopard": [
+      {
+        "id": "leap",
+        "delivery": "melee",
+        "weight": 0.42,
+        "youngWeight": 1,
+        "cooldown": 3
+      },
+      {
+        "id": "snow bolt",
+        "delivery": "ranged",
+        "weight": 0.3,
+        "youngWeight": 1.15
+      }
+    ],
+    "sphinx": [
+      {
+        "id": "strike",
+        "delivery": "melee",
+        "weight": 0.48,
+        "youngWeight": 1
+      },
+      {
+        "id": "sun bolt",
+        "delivery": "ranged",
+        "weight": 0.37,
+        "youngWeight": 1.15
+      },
+      {
+        "id": "confusion",
+        "delivery": "effect",
+        "weight": 0.2,
+        "youngWeight": 0.6,
+        "cooldown": 9,
+        "effect": "confusion",
+        "parameters": {
+          "range": 6,
+          "radius": 6,
+          "time": 3,
+          "drift": 40,
+          "cooldown": 9,
+          "tint": "violet"
+        }
+      }
+    ],
+    "spider": [
+      {
+        "id": "web shot",
+        "delivery": "ranged",
+        "weight": 0.44,
+        "youngWeight": 1.15
+      },
+      {
+        "id": "pull",
+        "delivery": "effect",
+        "weight": 0.12,
+        "youngWeight": 0.6,
+        "cooldown": 9,
+        "effect": "pull",
+        "parameters": {
+          "range": 18,
+          "pull": 6,
+          "reach": 22,
+          "cooldown": 9,
+          "tint": "violet"
+        }
+      }
+    ],
+    "squirrel": [
+      {
+        "id": "strike",
+        "delivery": "melee",
+        "weight": 0.2,
+        "youngWeight": 1
+      },
+      {
+        "id": "acorn bolts",
+        "delivery": "ranged",
+        "weight": 0.65,
+        "youngWeight": 1.15
+      },
+      {
+        "id": "scatter",
+        "delivery": "effect",
+        "weight": 0.15,
+        "youngWeight": 0.6,
+        "cooldown": 8,
+        "effect": "scatter",
+        "parameters": {
+          "range": 24,
+          "time": 0.6,
+          "ring": 1.1,
+          "cooldown": 8,
+          "tint": "white"
+        }
+      }
+    ],
+    "stag": [
+      {
+        "id": "charge",
+        "delivery": "melee",
+        "weight": 0.36,
+        "youngWeight": 1,
+        "cooldown": 6
+      },
+      {
+        "id": "antler light",
+        "delivery": "ranged",
+        "weight": 0.3,
+        "youngWeight": 1.15
+      }
+    ],
+    "stegosaurus": [
+      {
+        "id": "charge",
+        "delivery": "melee",
+        "weight": 0.42,
+        "youngWeight": 1,
+        "cooldown": 6
+      },
+      {
+        "id": "thrown stone",
+        "delivery": "ranged",
+        "weight": 0.37,
+        "youngWeight": 1.15
+      }
+    ],
+    "stoat": [
+      {
+        "id": "strike",
+        "delivery": "melee",
+        "weight": 0.35,
+        "youngWeight": 1
+      },
+      {
+        "id": "dart of light",
+        "delivery": "ranged",
+        "weight": 0.45,
+        "youngWeight": 1.15
+      },
+      {
+        "id": "confusion",
+        "delivery": "effect",
+        "weight": 0.2,
+        "youngWeight": 0.6,
+        "cooldown": 9,
+        "effect": "confusion",
+        "parameters": {
+          "range": 6,
+          "radius": 6,
+          "time": 2.5,
+          "drift": 35,
+          "cooldown": 9,
+          "tint": "violet"
+        }
+      }
+    ],
+    "tiger": [
+      {
+        "id": "leap",
+        "delivery": "melee",
+        "weight": 0.54,
+        "youngWeight": 1,
+        "cooldown": 3.2
+      },
+      {
+        "id": "growl bolt",
+        "delivery": "ranged",
+        "weight": 0.51,
+        "youngWeight": 1.15
+      }
+    ],
+    "toad": [
+      {
+        "id": "leap",
+        "delivery": "melee",
+        "weight": 0.3,
+        "youngWeight": 1,
+        "cooldown": 2.6
+      },
+      {
+        "id": "spore lob",
+        "delivery": "ranged",
+        "weight": 0.3,
+        "youngWeight": 1.15
+      },
+      {
+        "id": "cloud",
+        "delivery": "effect",
+        "weight": 0.12,
+        "youngWeight": 0.6,
+        "cooldown": 10,
+        "effect": "cloud",
+        "parameters": {
+          "range": 6,
+          "radius": 6,
+          "time": 4,
+          "cooldown": 10,
+          "tint": "grey",
+          "leap": true
+        }
+      }
+    ],
+    "unicorn": [
+      {
+        "id": "charge",
+        "delivery": "melee",
+        "weight": 0.36,
+        "youngWeight": 1,
+        "cooldown": 6
+      },
+      {
+        "id": "horn bolt",
+        "delivery": "ranged",
+        "weight": 0.37,
+        "youngWeight": 1.15
+      },
+      {
+        "id": "mind",
+        "delivery": "effect",
+        "weight": 0.16,
+        "youngWeight": 0,
+        "cooldown": 10,
+        "effect": "mind",
+        "parameters": {
+          "range": 14,
+          "time": 3,
+          "radius": 14,
+          "drift": 30,
+          "cooldown": 10,
+          "tint": "violet"
+        }
+      }
+    ],
+    "wolf": [
+      {
+        "id": "strike",
+        "delivery": "melee",
+        "weight": 0.45,
+        "youngWeight": 1
+      },
+      {
+        "id": "frost breath",
+        "delivery": "ranged",
+        "weight": 0.4,
+        "youngWeight": 1.15
+      },
+      {
+        "id": "call",
+        "delivery": "effect",
+        "weight": 0.15,
+        "youngWeight": 0.6,
+        "cooldown": 8,
+        "effect": "call",
+        "parameters": {
+          "range": 24,
+          "time": 2,
+          "cooldown": 8,
+          "tint": "white"
+        }
+      }
+    ],
+    "woodlouse": [
+      {
+        "id": "charge",
+        "delivery": "melee",
+        "weight": 0.48,
+        "youngWeight": 1,
+        "cooldown": 6
+      }
+    ]
+  }
+}

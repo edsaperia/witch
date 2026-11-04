@@ -1,5 +1,5 @@
 import { afterEach, expect, it, vi } from "vitest";
-import { newGame, newWitchPlayer, stepGame, type Controls, type Game } from "../../rules/game";
+import { newGame, newWitchPlayer, STEP, stepGame, type Controls, type Game } from "../../rules/game";
 import { TUNING } from "../../rules/tuning";
 import { snapshotGame } from "../../rules/nightSnapshot";
 import { attachGuest, detachGuest } from "./membership";
@@ -11,18 +11,359 @@ import { WITCH_GENOME } from "../../../art/witchGenome.js";
 import { appearance } from "./appearance";
 import { stationLook } from "./stationAppearance";
 import { SHELVES, wear } from "../../rules/wardrobe";
-import { startWake } from "../../rules/wakeUp";
+import { startWake, startWakeFor } from "../../rules/wakeUp";
 import { deckOf } from "../../rules/treehouse";
 import { RECORDS } from "../../rules/records";
 import { stationAuthority } from "./stationAuthority";
 import { bpmAt } from "../../rules/beat";
 import { ITEMS } from "../../rules/wardrobe";
 import { fillNightTrunk } from "../../app/nightFindBoundary";
+import { preppedGame } from "../../test/preppedGame"; // (games on a map made once a file from its prep)
+import { bareBroom, PARTS } from "../../rules/broomParts";
+import { HAT_SPELLS } from "../../rules/spells";
+import { HOUSE_ROOMS, installEdLayout, objectFront, roomAt } from "../../rules/houseRooms";
+import type { StationChoice } from "./stationChoice";
+import { continueSharedNight } from "../../app/sharedNight";
 
 const cleanups: (() => void)[] = [];
 afterEach(() => { for (const stop of cleanups.splice(0)) stop(); });
 const input = (moveX = 0): Controls => ({ moveX, moveZ: 0, zoom: 0, toggleMode: false, autoTalk: false });
 const turn = () => new Promise<void>(resolve => setTimeout(resolve, 0));
+it.each([60, 20])("advances two awake sessions at real time at %s fps with fake clocks and no network delay", async fps => {
+  const f = fixture(), { joined } = await f.start();
+  // Controlled clock-rate contract: authored treehouse/legend slow time is intentional,
+  // so exclude it here instead of mistaking that separate world-clock rule for network pacing.
+  f.hostGame.tuning.legendCircle!.slow.on = false;
+  f.hostGame.clock.paused = false;
+  for (const w of f.hostGame.witches) { delete w.wake; w.paused = false; delete w.house; }
+  await f.sync(); await joined;
+  const start = { world: f.hostGame.clock.time, guest: f.hostGame.witches[1].time! };
+  let sent = f.guestMessages.length, received = f.hostMessages.length;
+  const seconds = 5;
+  for (let frame = 0; frame < seconds * fps; frame++) {
+    f.advanceTime(1000 / fps);
+    f.guest.step(input(), 1 / fps);
+    for (const m of f.guestMessages.slice(sent)) f.host.message(m); sent = f.guestMessages.length;
+    f.host.step(input(), 1 / fps);
+    for (const m of f.hostMessages.slice(received)) f.guest.message(m); received = f.hostMessages.length;
+  }
+  expect(f.hostOptions.failed).not.toHaveBeenCalled(); expect(f.guestOptions.failed).not.toHaveBeenCalled();
+  const elapsed = { world: f.hostGame.clock.time - start.world, guest: f.hostGame.witches[1].time! - start.guest };
+  console.log(JSON.stringify({ evidence: "no-delay-clock-rate", fps, wallSeconds: seconds, ...elapsed, pending: f.guest.predictionStats!.pending, queued: f.host.inputStats!.queued }));
+  expect(elapsed.world).toBeCloseTo(seconds, 5);
+  expect(Math.abs(elapsed.guest - seconds)).toBeLessThanOrEqual(3 * STEP + 1e-8); // Initial jitter buffer only.
+  expect(snapshotGame(f.guest.game!)).toEqual(snapshotGame(f.hostGame));
+  expect(f.guest.predictionStats!.pendingCapSnaps).toBe(0); expect(f.host.inputStats!.discarded).toBe(0);
+});
+it("resets a guest bed hold when E is released on a real guest quantum", async () => {
+  const f=fixture(),{joined}=await f.start();await f.sync();await joined;
+  const guest=f.hostGame.witches[1],bed=HOUSE_ROOMS.objects.find(o=>o.id==="bedroom2Bed")!;
+  startWakeFor(f.hostGame,guest.time??f.hostGame.herTime,{yesterday:true},guest,{player:1,room:"bedroom2"});
+  guest.wake!.open=true;guest.wake!.beat="up";
+  Object.assign(guest.body,objectFront(bed,f.hostGame.map.treehouse,.1),{perch:true,mode:"ground",seated:false});
+  for(let sequence=0;sequence<12;sequence++){
+    f.advanceTime(16);f.host.message({type:"input",player:1,payload:{sequence,controls:{...input(),sigilHeld:true}}});f.host.step(input(),.1);
+  }
+  expect(guest.house?.bedFrom).toBeDefined();expect(guest.house?.slept).not.toBe(true);
+  f.advanceTime(16);f.host.message({type:"input",player:1,payload:{sequence:12,controls:{...input(),sigilHeld:false}}});f.host.step(input(),.1);
+  expect(guest.house?.bedFrom).toBeUndefined();expect(guest.house?.slept).not.toBe(true);
+});
+it.each([1/60,.1])("keeps an undressed guest bed hold with host frame duration %s", async dt => {
+  const f=fixture(),{joined}=await f.start();await f.sync();await joined;
+  const guest=f.hostGame.witches[1],bed=HOUSE_ROOMS.objects.find(o=>o.id==="bedroom2Bed")!;
+  startWakeFor(f.hostGame,guest.time??f.hostGame.herTime,{yesterday:true},guest,{player:1,room:"bedroom2"});
+  guest.wake!.open=true;guest.wake!.beat="up"; // The captured guest was awake and still had her clothes pile.
+  Object.assign(guest.body,objectFront(bed,f.hostGame.map.treehouse,.1),{perch:true,mode:"ground",seated:false});
+  for(let sequence=0;sequence<180&&!guest.house?.slept;sequence++){
+    f.advanceTime(16);
+    f.host.message({type:"input",player:1,payload:{sequence,controls:{...input(),sigilHeld:true}}});
+    f.host.step(input(),dt); // The slower host frame adds catch-up quanta without a new guest input.
+  }
+  expect(guest.wake!.pile!.length).toBeGreaterThan(0);
+  expect(guest.house?.slept).toBe(true);
+  expect(f.hostGame.witches[0].house?.slept).not.toBe(true);
+});
+it.each(["host frames", "guest quanta"] as const)("keeps a guest walking indoors to bedroom2Wardrobe on the floor when the relay holds her %s past the prediction cap", async held => {
+  // T5B run 4: three pending-cap snaps, then the guest flying at treetop speed far east of the treehouse.
+  installEdLayout(true); cleanups.push(() => installEdLayout(false)); // The ordinary page's house: tuning noWalls makes every floor edge a take-off.
+  const f = fixture(), { joined } = await f.start();
+  const host = f.hostGame, guest = host.witches[1], at = host.map.treehouse;
+  startWakeFor(host, guest.time ?? host.herTime, { yesterday: true }, guest, { player: 1, room: "bedroom2" });
+  guest.wake!.open = true; guest.wake!.beat = "up"; Object.assign(guest.body, { perch: true, mode: "ground", seated: false, vx: 0, vz: 0 });
+  await f.sync(); await joined;
+  const target = objectFront(HOUSE_ROOMS.objects.find(o => o.id === "bedroom2Wardrobe")!, at, .6); // telephoneProof's front
+  // The driver steers the guest's own predicted witch, which is what the guest page shows and reports.
+  const drive = (): Controls => {
+    const b = f.guest.predicted!.body, dx = target.x - b.x, dz = target.z - b.z;
+    return Math.hypot(dx, dz) < .6 ? input() : { ...input(), moveX: Math.max(-1, Math.min(1, dx)), moveZ: Math.max(-1, Math.min(1, dz)) };
+  };
+  // One relay stall of 2.8 s in one direction while the walk is under way; nothing is lost, only delayed.
+  const stall = { from: 30, to: 198 }, up: { at: number; message: Record<string, unknown> }[] = [], down: typeof up = [];
+  const deliver = (frame: number) => frame >= stall.from && frame < stall.to ? stall.to : frame;
+  let sent = f.guestMessages.length, received = f.hostMessages.length, left = 0;
+  for (let frame = 0; frame < 360; frame++) {
+    f.advanceTime(STEP * 1000);
+    while (down[0] && down[0].at <= frame) f.guest.message(down.shift()!.message);
+    f.guest.step(frame < 36 ? input() : drive(), STEP);
+    for (const message of f.guestMessages.slice(sent)) up.push({ at: held === "guest quanta" ? deliver(frame) : frame, message });
+    sent = f.guestMessages.length;
+    while (up[0] && up[0].at <= frame) f.host.message(up.shift()!.message);
+    f.host.step(input(), STEP);
+    for (const message of f.hostMessages.slice(received)) down.push({ at: held === "host frames" ? deliver(frame) : frame, message });
+    received = f.hostMessages.length;
+    if (!guest.body.perch || guest.body.mode !== "ground") left++;
+  }
+  expect(f.hostOptions.failed).not.toHaveBeenCalled(); expect(f.guestOptions.failed).not.toHaveBeenCalled();
+  const b = guest.body;
+  expect({ framesOffTheFloor: left, perch: !!b.perch, mode: b.mode, room: roomAt(at, b.x, b.z)?.id ?? null }).toEqual({ framesOffTheFloor: 0, perch: true, mode: "ground", room: "bedroom2" });
+  expect(Math.hypot(b.x - target.x, b.z - target.z)).toBeLessThan(1);
+  expect(Math.hypot(f.guest.predicted!.body.x - b.x, f.guest.predicted!.body.z - b.z)).toBeLessThan(.05);
+  expect(f.guest.predictionStats!.pendingCapSnaps).toBe(0); expect(f.host.inputStats!.discarded).toBe(0);
+});
+it.each(["guest quanta", "host frames"] as const)("drains the guest input backlog within seconds after the relay holds her %s for 2.8 s", async held => {
+  // After one stall the host used to apply one guest quantum per step for good: ~119 queued, two seconds of input lag.
+  installEdLayout(true); cleanups.push(() => installEdLayout(false));
+  const f = fixture(), { joined } = await f.start();
+  const host = f.hostGame, guest = host.witches[1], at = host.map.treehouse;
+  startWakeFor(host, guest.time ?? host.herTime, { yesterday: true }, guest, { player: 1, room: "bedroom2" });
+  guest.wake!.open = true; guest.wake!.beat = "up"; Object.assign(guest.body, { perch: true, mode: "ground", seated: false, vx: 0, vz: 0 });
+  await f.sync(); await joined;
+  const wardrobe = objectFront(HOUSE_ROOMS.objects.find(o => o.id === "bedroom2Wardrobe")!, at, .6), start = { x: guest.body.x, z: guest.body.z };
+  // The driver walks the shown witch to the wardrobe and back again, so she is still walking while the backlog drains.
+  let target = wardrobe;
+  const drive = (): Controls => {
+    const b = f.guest.predicted!.body, dx = target.x - b.x, dz = target.z - b.z;
+    if (Math.hypot(dx, dz) < .6) { target = target === wardrobe ? start : wardrobe; return input(); }
+    return { ...input(), moveX: Math.max(-1, Math.min(1, dx)), moveZ: Math.max(-1, Math.min(1, dz)) };
+  };
+  const stall = { from: 30, to: 198 }, up: { at: number; message: Record<string, unknown> }[] = [], down: typeof up = [];
+  const deliver = (frame: number) => frame >= stall.from && frame < stall.to ? stall.to : frame;
+  let sent = f.guestMessages.length, received = f.hostMessages.length, drainedAt = -1, worstAfter = 0;
+  for (let frame = 0; frame < stall.to + 360; frame++) {
+    f.advanceTime(STEP * 1000);
+    while (down[0] && down[0].at <= frame) f.guest.message(down.shift()!.message);
+    f.guest.step(frame < 36 || frame >= stall.to + 300 ? input() : drive(), STEP); // She stops for the last second.
+    for (const message of f.guestMessages.slice(sent)) up.push({ at: held === "guest quanta" ? deliver(frame) : frame, message });
+    sent = f.guestMessages.length;
+    while (up[0] && up[0].at <= frame) f.host.message(up.shift()!.message);
+    f.host.step(input(), STEP);
+    for (const message of f.hostMessages.slice(received)) down.push({ at: held === "host frames" ? deliver(frame) : frame, message });
+    received = f.hostMessages.length;
+    const pending = f.guest.predictionStats!.pending;
+    if (frame > stall.to && drainedAt < 0 && pending <= 6 && f.host.inputStats!.queued <= 4) drainedAt = frame;
+    if (drainedAt >= 0) worstAfter = Math.max(worstAfter, pending);
+    }
+  expect(f.hostOptions.failed).not.toHaveBeenCalled(); expect(f.guestOptions.failed).not.toHaveBeenCalled();
+  expect(drainedAt).toBeGreaterThan(stall.to);
+  expect((drainedAt - stall.to) * STEP).toBeLessThan(3);
+  expect(worstAfter).toBeLessThanOrEqual(6);
+  const stats = f.guest.predictionStats!;
+  expect({ pendingCapSnaps: stats.pendingCapSnaps, correctionSnaps: stats.correctionSnaps, discarded: f.host.inputStats!.discarded }).toEqual({ pendingCapSnaps: 0, correctionSnaps: 0, discarded: 0 });
+  // Every quantum the host applied, two to a step or one, landed where her shown witch had already walked it.
+  expect(stats.largest).toBeLessThan(.05);
+  expect(Math.hypot(f.guest.predicted!.body.x - guest.body.x, f.guest.predicted!.body.z - guest.body.z)).toBeLessThan(.05);
+  for (const { message } of down.splice(0)) f.guest.message(message);
+  expect(snapshotGame(f.guest.game!)).toEqual(snapshotGame(host)); // The replica replays the catch-up steps exactly.
+  expect({ perch: !!guest.body.perch, mode: guest.body.mode, room: roomAt(at, guest.body.x, guest.body.z)?.id ?? null }).toEqual({ perch: true, mode: "ground", room: "bedroom2" });
+});
+it("never lets the host apply a guest quantum her prediction did not record while her copy of the clock is paused", async () => {
+  // session.ts sent quanta while the guest's replica showed a shared pause, without recording them. Leaving the
+  // pause page before the host's frame arrived, her first steps were walked on the host but never shown until acknowledged.
+  const f = fixture(), { joined } = await f.start();
+  const host = f.hostGame, walker = host.witches[1];
+  startWakeFor(host, walker.time ?? host.herTime, { yesterday: true }, walker, { player: 1, room: "bedroom2" });
+  walker.wake!.open = true; walker.wake!.beat = "up"; Object.assign(walker.body, { perch: true, mode: "ground", seated: false, vx: 0, vz: 0 });
+  await f.sync(); await joined;
+  const latency = 6, down: { at: number; message: Record<string, unknown> }[] = [];
+  let received = f.hostMessages.length, sent = f.guestMessages.length;
+  const wardrobe = objectFront(HOUSE_ROOMS.objects.find(o => o.id === "bedroom2Wardrobe")!, host.map.treehouse, .6);
+  const drive = (): Controls => {
+    const b = f.guest.predicted!.body, dx = wardrobe.x - b.x, dz = wardrobe.z - b.z;
+    return Math.hypot(dx, dz) < .6 ? input() : { ...input(), moveX: Math.max(-1, Math.min(1, dx)), moveZ: Math.max(-1, Math.min(1, dz)) };
+  };
+  const run = (frames: number, hostPause: boolean, guest: () => Controls, from: number) => {
+    for (let frame = from; frame < from + frames; frame++) {
+      f.advanceTime(STEP * 1000);
+      while (down[0] && down[0].at <= frame) f.guest.message(down.shift()!.message);
+      f.guest.step(guest(), STEP);
+      for (const message of f.guestMessages.slice(sent)) f.host.message(message);
+      sent = f.guestMessages.length;
+      f.host.step({ ...input(), pausePage: hostPause }, STEP);
+      for (const message of f.hostMessages.slice(received)) down.push({ at: frame + latency, message });
+      received = f.hostMessages.length;
+    }
+    return from + frames;
+  };
+  let frame = run(30, true, () => ({ ...input(), pausePage: true }), 0);
+  expect(f.hostGame.clock.paused).toBe(true); expect(f.guest.game!.clock.paused).toBe(true);
+  const before = { ...f.hostGame.witches[1].body };
+  frame = run(150, true, drive, frame); // She leaves the pause page walking to the wardrobe; the host stays on it.
+  frame = run(60, true, input, frame);
+  expect(f.hostOptions.failed).not.toHaveBeenCalled(); expect(f.guestOptions.failed).not.toHaveBeenCalled();
+  expect(f.hostGame.clock.paused).toBe(false);
+  expect(Math.hypot(f.hostGame.witches[1].body.x - before.x, f.hostGame.witches[1].body.z - before.z)).toBeGreaterThan(1);
+  expect({ mode: walker.body.mode, perch: !!walker.body.perch, room: roomAt(host.map.treehouse, walker.body.x, walker.body.z)?.id ?? null }).toEqual({ mode: "ground", perch: true, room: "bedroom2" });
+  expect(f.guest.predictionStats!.largest).toBeLessThan(.05);
+  const shown = f.guest.predicted!.body, actual = f.hostGame.witches[1].body;
+  expect(Math.hypot(shown.x - actual.x, shown.z - actual.z)).toBeLessThan(.05);
+});
+it("keeps the guest visit when a failed send synchronously reports transport-away", async () => {
+  const f = fixture(); const { joined } = await f.start(); await f.sync(); await joined;
+  const game = f.guest.game;
+  f.guestConnection.sendInput = () => { f.guest.message({ type: "transport-away" }); return false; };
+  f.guest.step(input(1), 1/60);
+  expect(f.guestOptions.failed).not.toHaveBeenCalled();
+  expect(f.guestOptions.ended).not.toHaveBeenCalled();
+  expect(f.guest.game).toBe(game); expect(f.guest.ready).toBe(false);
+});
+it("recovers a station approval missed at disconnect only through the authenticated resume checkpoint",async()=>{
+  const f=fixture(),seen=vi.fn(),resolved=vi.fn();
+  f.hostOptions.appearance=f.guestOptions.appearance=()=>WITCH_GENOME;
+  f.guestOptions.appearanceApplied=seen;f.guestOptions.stationResolved=resolved;f.hostOptions.authorizeStation=()=>true;
+  const item=SHELVES.cloak.items.find(i=>i.set.cloak==="long")!;
+  f.hostOptions.wardrobe=()=>new Set([item.id]);
+  const {joined}=await f.start();await f.sync();await joined;seen.mockClear();
+  const choice=stationLook("cloakPegs",wear(appearance(WITCH_GENOME)!,item))!;
+  expect(f.guest.choose(choice)).toBe(true);f.host.message(f.guestMessages.at(-1)!);f.host.step(input(),.02);
+  // The host accepted the request, but its station/frame messages never reached this guest.
+  f.guest.message({type:"transport-away"});f.host.message({type:"peer-away"});
+  expect(resolved).toHaveBeenLastCalledWith(1,choice,false);
+  const at=f.hostMessages.length;f.guest.message({type:"transport-resumed"});f.host.message({type:"peer-resumed"});
+  for(const m of f.hostMessages.slice(at))f.guest.message(m);
+  expect(seen).toHaveBeenCalledWith(1,expect.objectContaining({cloak:"long"}));
+  expect(f.guest.ready).toBe(true);expect(f.guestOptions.failed).not.toHaveBeenCalled();
+  expect(snapshotGame(f.guest.game!)).toEqual(snapshotGame(f.hostGame));
+});
+it.each(["host", "guest"] as const)("resynchronizes the same room actors after %s transport replacement without another visit/save boundary", async lostRole => {
+  const f=fixture(); f.hostOptions.attach=vi.fn(f.hostOptions.attach);
+  const {joined}=await f.start();await f.sync();await joined;
+  const guestGame=f.guest.game!, ids=f.hostGame.witches.map(w=>w.id), prepared=vi.mocked(f.guestOptions.prepareGuest).mock.calls.length;
+  const attached=vi.mocked(f.hostOptions.attach).mock.calls.length;
+  f.guest.step(input(1),1/60);
+  f.host.message({type:lostRole==="host"?"transport-away":"peer-away"});
+  f.guest.message({type:lostRole==="guest"?"transport-away":"peer-away"});
+  expect(f.host.ready).toBe(false);expect(f.guest.ready).toBe(false);
+  f.hostGame.clock.paused=false;
+  f.host.step(input(),1/60);
+  const start=f.hostMessages.length;
+  f.host.message({type:lostRole==="host"?"transport-resumed":"peer-resumed"});
+  f.guest.message({type:lostRole==="guest"?"transport-resumed":"peer-resumed"});
+  for(const m of f.hostMessages.slice(start))f.guest.message(m);
+  expect(f.guest.game).toBe(guestGame);expect(f.hostGame.witches.map(w=>w.id)).toEqual(ids);
+  expect(snapshotGame(guestGame)).toEqual(snapshotGame(f.hostGame));
+  expect(f.guest.ready).toBe(true);expect(f.guest.predictionStats!.pending).toBe(0);
+  expect(vi.mocked(f.guestOptions.prepareGuest).mock.calls).toHaveLength(prepared);
+  expect(vi.mocked(f.hostOptions.attach).mock.calls).toHaveLength(attached);
+  expect(f.hostOptions.ended).not.toHaveBeenCalled();expect(f.guestOptions.ended).not.toHaveBeenCalled();
+  expect(f.guestOptions.failed).not.toHaveBeenCalled();expect(f.hostOptions.failed).not.toHaveBeenCalled();
+  const frameAt=f.hostMessages.length;f.guest.step(input(),1/60);f.host.message(f.guestMessages.at(-1)!);f.host.step(input(),1/60);
+  for(const m of f.hostMessages.slice(frameAt))f.guest.message(m);
+  expect(snapshotGame(guestGame)).toEqual(snapshotGame(f.hostGame));
+});
+it("latches session counters before teardown even if the private diagnostic sink throws", async () => {
+  const f = fixture();
+  f.hostOptions.lifecycleEvidence = () => { throw new Error("Broken private sink"); };
+  const { joined } = await f.start(); await f.sync(); await joined;
+  const before = structuredClone(f.host.inputStats);
+  f.host.nightChanged();
+  expect(f.host.role).toBeNull(); expect(f.host.inputStats).toBeNull();
+  expect(f.host.sessionEnd).toMatchObject({ stage: "session-end", role: "host", reason: "night-changed", inputs: before });
+  const end = f.host.sessionEnd;
+  f.host.disconnect(); expect(f.host.sessionEnd).toEqual(end);
+});
+it("emits guest fixed quanta and acknowledges each consumed host step instead of the newest packet", async () => {
+  const f = fixture(),timing=vi.fn();f.guestOptions.protocolEvidence=timing;
+  const { joined } = await f.start();
+  f.hostGame.clock.paused = false; Object.assign(f.hostGame.witches[1].body, { seated: false, perch: false });
+  delete f.hostGame.witches[1].wake; delete f.hostGame.witches[1].kit;
+  await f.sync(); await joined;
+  const before = f.guestMessages.length;
+  f.guest.step({ ...input(1), dash: true }, 3 / 60);
+  const packets = f.guestMessages.slice(before);
+  expect(packets.map(m => (m.payload as { sequence: number }).sequence)).toEqual([0, 1, 2]);
+  expect(packets.map(m => (m.payload as { controls: Controls }).controls.dash)).toEqual([true, false, false]);
+  packets.forEach(m => f.host.message(m));
+  f.host.step(input(), 2 / 60);
+  const frame = (f.hostMessages.at(-1)!.payload as { frame: import("./replay").ReplayFrame }).frame;
+  expect(frame.guestSteps?.map(step => step.sequence)).toEqual([0, 1]); expect(frame.guestSequence).toBe(1);
+  expect(f.hostOptions.advanceHost).toHaveBeenCalledTimes(1);
+  f.guest.message(f.hostMessages.at(-1)!);
+  expect(f.guestOptions.failed).not.toHaveBeenCalled();
+  expect(snapshotGame(f.guest.game!)).toEqual(snapshotGame(f.hostGame));
+  expect(timing.mock.calls.map(([proof])=>proof.stage)).toEqual(["guest-apply-start","guest-apply-end"]);
+  expect(timing.mock.calls[0][0]).toMatchObject({frameTick:frame.tick,sampledAtMs:expect.any(Number),sampledWallTimeMs:expect.any(Number)});
+  f.guestOptions.protocolEvidence=()=>{throw Error("Broken timing sink");};
+  f.host.step(input(),1/60);f.guest.message(f.hostMessages.at(-1)!);
+  expect(f.guestOptions.failed).not.toHaveBeenCalled();
+});
+it("shows guest movement and letter launch immediately while canonical simulation waits for host frames", async () => {
+  const f = fixture(), { joined } = await f.start();
+  f.hostGame.clock.paused = false;
+  Object.assign(f.hostGame.witches[1].body, { seated: false, perch: false });
+  delete f.hostGame.witches[1].wake; delete f.hostGame.witches[1].kit;
+  await f.sync(); await joined;
+  const canonical = snapshotGame(f.guest.game!), x = f.guest.game!.witches[1].body.x;
+  const sentAt = f.guestMessages.length;
+  f.guest.step({ ...input(1), fire: true, aimX: 1, aimZ: 0 }, 1 / 60);
+  expect(f.guest.predicted!.body.x).toBeGreaterThan(x);
+  expect(f.guest.predicted!.invites.events.some(e => e.kind === "shot")).toBe(true);
+  expect(snapshotGame(f.guest.game!)).toEqual(canonical);
+  const packets = f.guestMessages.slice(sentAt);
+  expect(packets.some(m => (m.payload as { kind?: string }).kind === "pve-cast")).toBe(true);
+  packets.forEach(m => f.host.message(m));
+  const hostAt = f.hostMessages.length; f.host.step(input(), 1 / 60);
+  const frames = f.hostMessages.slice(hostAt);
+  frames.forEach(m => f.guest.message(m));
+  expect(f.hostOptions.failed).not.toHaveBeenCalled(); expect(f.guestOptions.failed).not.toHaveBeenCalled();
+  expect(snapshotGame(f.guest.game!)).toEqual(snapshotGame(f.hostGame));
+});
+it("keeps the same visit across the host's new world and rebases after guest preparation", async () => {
+  const f = fixture(), { joined } = await f.start(); await f.sync(); await joined;
+  f.guest.step(input(1), .05); expect(f.guest.predictionStats!.pending).toBeGreaterThan(0);
+  f.hostGame.witches.forEach(w => { w.house = { slept: true, lastBed: "bed" }; });
+  const next = newGame(456, structuredClone(f.hostGame.tuning));
+  continueSharedNight(f.hostGame, next, { hats: new Set(), parts: new Set() });
+  const before = f.hostMessages.length;
+  expect(f.host.nextNight(next)).toBe(true); expect(f.host.role).toBe("host"); expect(f.host.ready).toBe(false);
+  for (const message of f.hostMessages.slice(before)) f.guest.message(message);
+  await vi.waitFor(() => expect(f.guestMessages.some(m => (m.payload as { kind?: string } | undefined)?.kind === "night-ready")).toBe(true));
+  expect(f.guestOptions.prepareGuest).toHaveBeenLastCalledWith(expect.objectContaining({ seed: 456 }), expect.any(AbortSignal), expect.any(Function), true);
+  const ready = f.guestMessages.find(m => (m.payload as { kind?: string } | undefined)?.kind === "night-ready")!;
+  f.host.message(ready); f.guest.message(f.hostMessages.at(-1)!);
+  expect(f.host.ready).toBe(true); expect(f.guest.ready).toBe(true); expect(f.guest.game!.seed).toBe(456);
+  expect(f.guest.predictionStats!.pending).toBe(0);
+  const index = f.hostMessages.length; f.host.step(input(), .02);
+  for (const message of f.hostMessages.slice(index)) f.guest.message(message);
+  expect(snapshotGame(f.guest.game!)).toEqual(snapshotGame(next));
+  expect(f.hostOptions.ended).not.toHaveBeenCalled(); expect(f.guestOptions.ended).not.toHaveBeenCalled();
+  expect(f.hostOptions.failed).not.toHaveBeenCalled(); expect(f.guestOptions.failed).not.toHaveBeenCalled();
+  // Travel/replacement outside the shared rollover ends this predictor rather than carrying its old inputs.
+  f.guest.step(input(1), .05); expect(f.guest.predictionStats!.pending).toBeGreaterThan(0);
+  f.guest.nightChanged(); expect(f.guest.role).toBeNull(); expect(f.guest.predictionStats).toBeNull();
+});
+it.each(["hat", "broom"] as const)("orders competing %s claims in one host step and permits acquisition after release", async kind => {
+  const f = fixture(), hat = HAT_SPELLS.find(h => h.built && h.id !== "none")!.id, part = PARTS[0];
+  const choice: StationChoice = kind === "hat" ? { kind, id: hat } : { kind, fitted: { ...bareBroom(), [part.slot]: part.id } };
+  const release: StationChoice = kind === "hat" ? { kind, id: "none" } : { kind, fitted: bareBroom() };
+  const at = objectFront(HOUSE_ROOMS.objects.find(o => o.id === (kind === "hat" ? "hats" : "lathe"))!, f.hostGame.map.treehouse, .1);
+  const place = (w: typeof f.hostGame.witches[number]) => {
+    Object.assign(w.body, at, { mode: "ground", perch: true, seated: false }); w.spells.hat = "none"; w.spells.parts = bareBroom();
+  };
+  place(f.hostGame.witches[0]);
+  f.hostOptions.attach = game => { const w = newWitchPlayer(1, 0, 0, game.tuning); attachGuest(game, w, () => true); place(w); };
+  f.hostOptions.authorizeStation = stationAuthority(() => ({ bags: new Set(), hats: new Set([hat]), parts: new Set([part.id]) }));
+  const { joined } = await f.start(); await f.sync(); await joined;
+  const pump = () => { const before = f.hostMessages.length; f.host.step(input(), .02); const updates = f.hostMessages.slice(before); for (const m of updates) f.guest.message(m); return updates; };
+  expect(f.host.choose(choice)).toBe(true); expect(f.guest.choose(choice)).toBe(true); f.host.message(f.guestMessages.at(-1)!);
+  const updates = pump(), result = updates.find(m => (m.payload as { kind: string }).kind === "station")!.payload as { results: { accepted: boolean }[] };
+  expect(result.results.map(r => r.accepted)).toEqual([false]);
+  const owns = (player: number) => kind === "hat" ? f.hostGame.witches[player].spells.hat === hat : Object.values(f.hostGame.witches[player].spells.parts).includes(part.id);
+  expect(owns(0)).toBe(true); expect(owns(1)).toBe(false);
+  expect(snapshotGame(f.guest.game!)).toEqual(snapshotGame(f.hostGame));
+  expect(f.host.choose(release)).toBe(true); expect(f.guest.choose(choice)).toBe(true); f.host.message(f.guestMessages.at(-1)!); pump();
+  expect(owns(0)).toBe(false); expect(owns(1)).toBe(true);
+  expect(snapshotGame(f.guest.game!)).toEqual(snapshotGame(f.hostGame));
+});
 it("resolves bounded guest choices by sequence, including rejection, and refuses stale results", async () => {
   const f = fixture(), resolved = vi.fn(); f.guestOptions.stationResolved = resolved;
   const { joined } = await f.start(); await f.sync(); await joined;
@@ -125,7 +466,7 @@ it("replicates only host-owned approved wardrobe changes before the next frame",
 function fixture() {
   // Four areas supply the existing test-only bedroom geometry; distant area count does not affect session replication.
   const tuning = structuredClone(TUNING); tuning.map!.island = "home"; tuning.map!.islandAreas = 4;
-  const hostGame = newGame(123, tuning);
+  const hostGame = preppedGame(123, tuning);
   let time = 1000;
   const hostMessages: Record<string, unknown>[] = [], guestMessages: Record<string, unknown>[] = [];
   const connection = (messages: Record<string, unknown>[]): SessionConnection => ({
@@ -142,10 +483,11 @@ function fixture() {
   const hostOptions = options(), guestOptions = options();
   hostOptions.advanceHost = vi.fn((g: Game, controls: readonly Controls[], dt: number) => stepGame(g, controls, dt));
   const host = onlineSession(hostOptions), guest = onlineSession(guestOptions), hostAbort = new AbortController(), guestAbort = new AbortController();
+  const guestConnection = connection(guestMessages);
   cleanups.push(host.disconnect, guest.disconnect);
   const start = async () => {
     await host.connect("host", connection(hostMessages), hostAbort.signal);
-    const joined = guest.connect("guest", connection(guestMessages), guestAbort.signal);
+    const joined = guest.connect("guest", guestConnection, guestAbort.signal);
     host.message({ type: "guest-joined", player: 1 });
     for (const message of guestMessages) if ((message.payload as { kind?: string } | undefined)?.kind === "appearance") host.message(message);
     const first = hostMessages.find(m => m.type === "state")!;
@@ -155,7 +497,7 @@ function fixture() {
     await turn(); expect(guestMessages.some(m => m.type === "ready")).toBe(true);
     host.message({ type: "guest-ready", player: 1 }); guest.message(hostMessages.at(-1)!);
   };
-  return { host, guest, hostGame, hostOptions, guestOptions, hostMessages, guestMessages, hostAbort, guestAbort, start, sync, advanceTime: (ms: number) => { time += ms; } };
+  return { host, guest, guestConnection, hostGame, hostOptions, guestOptions, hostMessages, guestMessages, hostAbort, guestAbort, start, sync, advanceTime: (ms: number) => { time += ms; } };
 }
 it("rebases after loading and advances the existing host only once through its recording callback", async () => {
   const f = fixture(), { joined } = await f.start();

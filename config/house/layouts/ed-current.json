@@ -195,15 +195,6 @@
       }
     },
     {
-      "id": "hats",
-      "x": 29.45,
-      "z": -9.54,
-      "rotation": 45.000000000000114,
-      "physicalRoom": "cloakroom",
-      "lightingRoom": "cloakroom",
-      "kind": "hat-spawn-zone"
-    },
-    {
       "id": "cloakPegs",
       "x": 2.69,
       "z": -12.64,
@@ -1584,5 +1575,8 @@
     "clutter:studio:mess:microphone",
     "clutter:solarium:rug:1706137703",
     "clutter:solarium:mess:mapTable"
+  ],
+  "removedObjects": [
+    "hats"
   ]
 }

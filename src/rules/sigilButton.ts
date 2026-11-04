@@ -3,7 +3,10 @@
 // growth spurt: every animal following her an adult at once; Ed, 2026-10-18), else the leash's own (put a sigil down, pick one up, a happy creature's rune;
 // rules/leash.ts); and a happy creature's rune near her trotting over to her. Then, after the 💌s, a sigil put down in
 // a legend's clearing finishing its quest (rules/quest.ts).
-import { wakeOf } from "./wakeUp";
+import { wakeOf, settleSleepingBed } from "./wakeUp";
+import { guestMotionReady } from "./onlineInputSteps";
+import { houseObjectFor } from "./guestFurniture";
+import { isDressingTable } from "./clothesPile";
 import { atZooExit } from "./zoo";
 import { mushroomButton } from "./mushrooms";
 import { needsBag, takeBroom, takeInvites } from "./kit";
@@ -15,20 +18,23 @@ import { relicsOut, worldAsleep } from "./partyOver";
 import type { Tuning } from "./tuning";
 import type { Creature } from "./creatures";
 import { heldByCombat } from "./creatures";
-import { stepLeash, type LeashEvent, type PlacedSigil } from "./leash";
+import { pressPicks, stackBottom, stepLeash, type LeashControls, type LeashEvent, type PlacedSigil } from "./leash";
 import { flaskUnder } from "./legends";
-import { growthSpurt } from "./berries";
+import { feedKnobs, feedTarget, growthSpurt, queueBerry } from "./berries";
+import { basketNear, mushroomNear } from "./mushrooms"; // (beside mushroomButton's import above: what the press takes first)
 import { findKind, trunkAt } from "./finds";
 import { runeNear } from "./creatureStates";
 import { spaceRadius } from "./spacing";
-import { hatButton, putHat, wearing } from "./hat";
+import { hatButton, hatWithin, putHat, wearing } from "./hat";
 import { setLoadout } from "./spells";
 import { questOutside, questPlaced } from "./quest";
 import { onAreaDone } from "./leylines";
 import { isInside } from "./mapShape";
 import { cellKey, clearArea } from "./party";
 import { castOn, castingStone, looseAt, looseNear, stepCast, stoneNear } from "./stoneStacks";
+import { chainLength } from "./chains";
 import { atDecks } from "./wakeUp";
+import { challengeCastAt, clearChallenge, lockedFind } from "./challenge";
 
 /** A legend's circle flashing: a sigil or relic put down outside its clearing (the leash's outsideCircle event). */
 /** How far in from the coast (m) a scattering baby stays (rules/leash.ts land). */
@@ -70,7 +76,8 @@ export function stepSigilButton(g: Game, c: Controls, W: Witch, t: Tuning, ht: n
     const inHouse = !!deck?.house?.rooms && W.body.mode === "ground" && !W.body.seated && !W.ko, x = W.body.x, z = W.body.z;
     // In the house's rooms (rules/houseRooms.ts; Ed, 2026-10-19): E at an object uses it (main.ts opens what it opens); the hats'
     // floor's hats are picked up and put down; E held at the bed fills its ring, and full, she sleeps: the night's over.
-    const at = inHouse ? objectAt(deck!, x, z) : null;
+    const candidate = inHouse ? objectAt(deck!, x, z) : null;
+    const at = candidate ? houseObjectFor(g, candidate) : null; // (in solo a guest's bedroom's piece only says it waits: rules/guestFurniture.ts)
     if (c.hat && inHouse && HOUSE_ROOMS.layout) {
       if (wearing(W.hat)) { W.hat.down = { x, z, at: ht }; delete W.hat.hold; reserveHatPoints(W, deck!); relicEvents.push({ kind: "hatPut", id: W.id, x, z, at: ht }); }
       else { const event = useHats(W, deck!, x, z, ht, t.leash.runeRadius, 0.9, g.witches.length > 1 ? id => g.witches.some(o => o !== W && o.spells.hat === id) : undefined); if (event) relicEvents.push(event); }
@@ -82,9 +89,12 @@ export function stepSigilButton(g: Game, c: Controls, W: Witch, t: Tuning, ht: n
       if (at.use.kind === "invites" && needsBag(W)) relicEvents.push({ kind: "needBag", id: W.id, x: deck!.x + at.x, z: deck!.z + at.z, at: ht, obj: at.id }); // (no bag to carry them: the desk says so, rules/kit.ts NEED_BAG)
       else if (at.use.kind === "invites" ? takeInvites(W) : at.id === "lathe" && takeBroom(g, W)) relicEvents.push({ kind: "kit", id: W.id, x: deck!.x + at.x, z: deck!.z + at.z, at: ht, obj: at.use.kind === "invites" ? "invites" : "broom" });
       relicEvents.push({ kind: "house", id: W.id, x: deck!.x + at.x, z: deck!.z + at.z, at: ht, obj: at.id });
-      const waking = wakeOf(g, W); if (at.id === "dressingTable" && waking) waking.styled = true; // (her skin and hair seen to: the first morning's first step, rules/guidance.ts)
+      const waking = wakeOf(g, W); if (isDressingTable(at.id) && waking) waking.styled = true; // (her skin and hair seen to: the first morning's first step, rules/guidance.ts)
     }
-    if ((inHouse || W.house) && stepBed(W, at?.use.kind === "bed", !!c.sigilHeld && inHouse, ht).slept && g.witches.every(w => w.house?.slept)) relicEvents.push({ kind: "house", id: W.id, x, z, at: ht, obj: "slept" });
+    // A missing guest quantum pauses her clock; it is not a released use key.
+    const slept = (W !== g.witches[1] || guestMotionReady(g)) && (inHouse || W.house) && stepBed(W, at?.use.kind === "bed", !!c.sigilHeld && inHouse, ht).slept;
+    if (slept && g.witches.length > 1 && at?.use.kind === "bed") settleSleepingBed(g, W, at.id, ht);
+    if (slept && g.witches.every(w => w.house?.slept)) relicEvents.push({ kind: "house", id: W.id, x, z, at: ht, obj: "slept" });
     sigil = false; place = false;
   } else if (W.house?.bedFrom !== undefined) delete W.house.bedFrom;
   // E at the zoo's little treehouse takes her out of the zoo (Ed, 2026-10-26; rules/zoo.ts atZooExit; app/zooExit.ts does the leaving).
@@ -108,7 +118,8 @@ export function stepSigilButton(g: Game, c: Controls, W: Witch, t: Tuning, ht: n
   }
   // Tonight's find (rules/finds.ts; Ed, 2026-10-21): the travel trunk, or a wreck (Ed, 2026-10-23); E at it while the party's on
   // takes what's in it, hers for the night (on loan till she sleeps: app/loan.ts; the kind's claim, if it has one: a broom part waits at the Workshop, not fitted).
-  const trunk = (sigil || place) && onFoot && !worldAsleep(g) ? trunkAt(g.trunk, W.body.x, W.body.z) : null; // (not there in the world asleep: the afterparty, or before the party, Ed 2026-10-26)
+  // (the challenge area's find is its reward, hers only as the circle's cleared: rules/challenge.ts)
+  const trunk = (sigil || place) && onFoot && !worldAsleep(g) && !lockedFind(g, g.trunk) ? trunkAt(g.trunk, W.body.x, W.body.z) : null; // (not there in the world asleep: the afterparty, or before the party, Ed 2026-10-26)
   if (trunk) {
     trunk.found = true; sigil = false; place = false;
     findKind(trunk.kind).claim?.(W.spells, trunk.item!);
@@ -117,15 +128,18 @@ export function stepSigilButton(g: Game, c: Controls, W: Witch, t: Tuning, ht: n
   }
   // At a runestone with its stack (rules/stoneStacks.ts; Ed, 2026-10-28): the sigil button held casts the soundsystem spell, and
   // nothing else is put down or picked up there (no hat put down by the hold, no run).
-  const stone = !perched && onFoot ? castingStone(g, W) : null;
-  stepCast(g, W, !!stone && (!!c.sigilHeld || sigil || place), ht, hdt, cell => {
+  // Or at the challenge circle, its pack all invited or run off (rules/challenge.ts; Ed, 2026-11-03: "you can go to the special place
+  // and cast the music spell"): the same spell, on the circle, clearing it.
+  const stone = !perched && onFoot ? castingStone(g, W) : null, ring = !stone && !perched && onFoot ? challengeCastAt(g, W) : null;
+  stepCast(g, W, !!(stone ?? ring) && (!!c.sigilHeld || sigil || place), ht, hdt, cell => {
+    if (ring) { clearChallenge(g); return; }
     const a = clearArea(g.party, g.map, cell, g.clock.time);
     if (a?.soundsystem) g.waveEvents.push({ kind: "areaCleared", key: cellKey(cell), x: a.soundsystem.x, z: a.soundsystem.z, at: g.clock.time });
-  }, relicEvents); // (after the leash's step, which starts its events afresh)
-  if (stone) { sigil = false; place = false; }
+  }, relicEvents, stone ?? ring); // (after the leash's step, which starts its events afresh)
+  if (stone || ring) { sigil = false; place = false; }
   // A run (rules/leash.ts, Ed 2026-10-15): the button held since a press that picked up keeps picking up (a lying relic's sigil too);
   // held since one that put down, nothing here (the leash puts the next down as she enters an empty hex).
-  const held = !!c.sigilHeld && onFoot && !stone, run = held && t.leash.runs !== false ? W.leash.run?.kind : undefined;
+  const held = !!c.sigilHeld && onFoot && !stone && !ring, run = held && t.leash.runs !== false ? W.leash.run?.kind : undefined;
   if ((sigil || place) && W.body.mode === "ground" && !run) {
     // A flask's sigil under her (Ed, 2026-10-18: "All flasks give growth spurt (all creatures following you become adults)"):
     // drunk on the spot, not carried. Every animal following her (on her stack, not parked at a sigil) younger than an adult
@@ -138,12 +152,21 @@ export function stepSigilButton(g: Game, c: Controls, W: Witch, t: Tuning, ht: n
       else relicEvents.push({ kind: "fizzled", id: f.id, x: W.body.x, z: W.body.z, at: ht });
     }
   }
-  const sharedPlaced = g.witches.length > 1 ? {
-    sigils: g.witches.flatMap(w => w === W ? [] : w.leash.placed),
-    take(id: number) { for (const w of g.witches) if (w !== W) { const i = w.leash.placed.findIndex(p => p.id === id); if (i >= 0) w.leash.placed.splice(i, 1); } },
-  } : undefined;
-  stepLeash(W.leash, g.creatures, { sigil, place, held, sharedPlaced, cycle: !!c.cycle && !W.ko, cycleBack: !!c.cycleBack && !W.ko, rune: (x, z, r) => runeNear(g.creatures, x, z, r, g.clock.time, undefined, k => runeOffset(k, t)), dropRelic: (id, x, z) => Object.assign(g.relics[id], { state: "dropped", sx: x, sz: z }), inviteNearest: c.inviteNearest, barred: (x, z) => sigilBarred(g, x, z, t) || looseAt(g.loose, x, z, t),
-    loose: (x, z, r) => { const i = looseNear(g.loose, x, z, r); if (i < 0) return null; const p = g.loose[i], L = g.creatures[p.id]; return { id: p.id, x: p.x, z: p.z, ...(p.legend ? { tether: Math.hypot(p.x - L.x, p.z - L.z) } : {}) }; },
+  // Feeding (Ed, 2026-11-03): a press that would feed the bottom of her stack waits to see whether it's a tap or a hold
+  // (LeashState.feedHold): let go before berries.feed.hold seconds, it queues one more berry; held that long, the sigil goes down
+  // (placeOnly), and, held on, a run starts as after any put-down. A press with nothing holding it (a bot's, a test's) is a tap.
+  const F = feedKnobs(t);
+  let placeOnly = false;
+  if (W.leash.feedHold !== undefined) {
+    if (!onFoot || stone || ring || run) delete W.leash.feedHold;
+    else if (!held) { delete W.leash.feedHold; feedBottom(g, W, t, ht, relicEvents); }
+    else if (ht - W.leash.feedHold >= F.hold - 1e-9) { delete W.leash.feedHold; placeOnly = true; }
+    if (!placeOnly) { sigil = false; place = false; } else { sigil = false; place = true; }
+  } else if ((sigil || place) && onFoot && !run && feedOffer(g, W, t)) {
+    if (held && F.hold > 0) W.leash.feedHold = ht; else feedBottom(g, W, t, ht, relicEvents);
+    sigil = false; place = false;
+  }
+  stepLeash(W.leash, g.creatures, { sigil, place, held, placeOnly, ...pickControls(g, W, t), cycle: !!c.cycle && !W.ko, cycleBack: !!c.cycleBack && !W.ko, dropRelic: (id, x, z) => Object.assign(g.relics[id], { state: "dropped", sx: x, sz: z }), inviteNearest: c.inviteNearest,
     takeLoose: id => { g.loose = g.loose.filter(p => p.id !== id); g.creatures[id].loose = undefined; },
     dropTether: (id, x, z) => { g.loose.push({ id, x, z, at: g.clock.time, legend: true }); g.creatures[id].loose = true; }, land: (x, z) => isInside(g.map.bounds, x, z, BABY_COAST), talk: !t.invites.on && (c.autoTalk !== false || !!c.talkHeld) }, W.body, W.body.mode === "ground" && !perched && !W.ko, ht, hdt, t, id => busy(id) || heldByCombat(g.creatures[id]) || !!g.creatures[id].travelling, guards);
   W.leash.events.push(...relicEvents);
@@ -151,12 +174,59 @@ export function stepSigilButton(g: Game, c: Controls, W: Witch, t: Tuning, ht: n
   // down at her feet (rules/hat.ts putHat).
   // Use at an unready stump still belongs to the stump. Entering its ground also cancels an idle hold begun outside.
   const useTarget = onFoot && !!(c.hatHold ?? c.sigilHeld) && (atDecks(g, W) || (castOn(t) && !!stoneNear(g, W.body.x, W.body.z, 0, false)));
-  const idle = pressed && !stone && !useTarget && !W.leash.events.some(e => e.at === ht && e.kind !== "invited" && e.kind !== "befriended" && e.kind !== "cancelled");
-  if (putHat(W.hat, idle, !!(c.hatHold ?? c.sigilHeld) && onFoot && !stone && !useTarget, W.body.x, W.body.z, ht, t.leash.hatHold))
+  const idle = pressed && !stone && !ring && !useTarget && W.leash.feedHold === undefined && !W.leash.events.some(e => e.at === ht && e.kind !== "invited" && e.kind !== "befriended" && e.kind !== "cancelled");
+  if (putHat(W.hat, idle, !!(c.hatHold ?? c.sigilHeld) && onFoot && !stone && !ring && !useTarget, W.body.x, W.body.z, ht, t.leash.hatHold))
     W.leash.events.push({ kind: "hatPut", id: W.id, x: W.body.x, z: W.body.z, at: ht });
   // A happy creature's rune near her on the ground comes to her (Ed's playtest, 2026-10-06: "Floor sigils of happy creatures ... are
   // difficult to pick up"): its creature trots over (leash.runePull), so she needn't stop dead on it.
   if (W.body.mode === "ground" && !W.body.seated && !perched && !W.ko) pullRune(g, t, step, W);
+}
+
+/** What the sigil button checks to pick up on the ground (rules/leash.ts): the floor's sigils (another witch's too, shared in co-op), the
+ *  happy creatures' runes, the loose sigils, and the cells barred to sigils. */
+function pickControls(g: Game, W: Witch, t: Tuning): Pick<LeashControls, "sharedPlaced" | "rune" | "loose" | "barred"> {
+  return {
+    sharedPlaced: g.witches.length > 1 ? {
+      sigils: g.witches.flatMap(w => w === W ? [] : w.leash.placed),
+      take(id: number) { for (const w of g.witches) if (w !== W) { const i = w.leash.placed.findIndex(p => p.id === id); if (i >= 0) w.leash.placed.splice(i, 1); } },
+    } : undefined,
+    rune: (x, z, r) => runeNear(g.creatures, x, z, r, g.clock.time, undefined, k => runeOffset(k, t)),
+    loose: (x, z, r) => { const i = looseNear(g.loose, x, z, r); if (i < 0) return null; const p = g.loose[i], L = g.creatures[p.id]; return { id: p.id, x: p.x, z: p.z, ...(p.legend ? { tether: Math.max(chainLength(g.tuning), Math.hypot(p.x - L.x, p.z - L.z)) } : {}) }; },
+    barred: (x, z) => sigilBarred(g, x, z, t) || looseAt(g.loose, x, z, t),
+  };
+}
+
+/** What a press of the sigil button would feed now (Ed, 2026-11-03): the animal at the bottom of her stack and the berry it would go to,
+ *  where it is, or null when the press would do something else. On foot on the ground, the bottom a creature's sigil with room to eat
+ *  (rules/berries.ts hasRoom) and an un-taken berry within berries.feed.reach of her; and nothing the press does first in the way, in
+ *  stepSigilButton's order: a mushroom or a basket, the zoo's way out, a hat of hers to pick up, tonight's find, a stump's or the
+ *  challenge circle's spell, a flask's sigil, a legend's sigil she carries, a run, or something to pick up (rules/leash.ts pressPicks).
+ *  The view makes that berry glow brighter and shows the key over it from this (render/feedTag.ts), so what's shown is what the press does. */
+export function feedOffer(g: Game, W: Witch, t: Tuning = g.tuning): { id: number; berry: number; x: number; z: number } | null {
+  const b = W.body;
+  if (W.ko || b.mode !== "ground" || b.seated || b.perch || W.leash.tether || W.leash.run) return null;
+  const bt = stackBottom(W.leash);
+  if (bt?.kind !== "creature") return null;
+  const berry = feedTarget(g.berries, g.creatures[bt.id], b.x, b.z, t);
+  if (!berry) return null;
+  if (!g.cauldron && (basketNear(g, W) || mushroomNear(g, W))) return null;
+  if (g.map.zoo?.layout && atZooExit(g.map, b)) return null;
+  if (hatWithin(W.hat, b.x, b.z, t.leash.runeRadius)) return null;
+  if (!worldAsleep(g) && !lockedFind(g, g.trunk) && trunkAt(g.trunk, b.x, b.z)) return null;
+  if (castingStone(g, W) || challengeCastAt(g, W)) return null;
+  if (flaskUnder(relicsOut(g), b.x, b.z, t.leash.runeRadius)) return null;
+  if (pressPicks(W.leash, pickControls(g, W, t), b, t)) return null;
+  const p = g.berries.bushes[berry.bush];
+  return { id: bt.id, berry: berry.id, x: p.x, z: p.z };
+}
+
+/** A tap that feeds: one more berry queued for the bottom of her stack (rules/berries.ts queueBerry), said by a "fed" event (or the
+ *  refusal's "fizzled" when it's gone in the meantime). */
+function feedBottom(g: Game, W: Witch, t: Tuning, ht: number, events: LeashEvent[]): void {
+  const bt = stackBottom(W.leash), c = bt?.kind === "creature" ? g.creatures[bt.id] : null;
+  const b = c ? queueBerry(g.berries, c, W.body.x, W.body.z, g.clock.time, t) : null;
+  if (b && c) { const p = g.berries.bushes[b.bush]; events.push({ kind: "fed", id: c.id, x: p.x, z: p.z, at: ht }); }
+  else events.push({ kind: "fizzled", id: c?.id ?? W.id, x: W.body.x, z: W.body.z, at: ht });
 }
 
 /** A sigil put down this step in a sleeping legend's clearing finishes its quest: only the drop does (Ed, 2026-10-19: "The reward should
@@ -191,6 +261,7 @@ export function befriendArea(g: Game, key: string): void {
     if (c.gone || c.leashed || c.boss || c.partyLegend || cellKey(c.cell) !== key) continue;
     c.friendly = true;
     c.enraged = false; c.fight = undefined; c.siege = undefined;
+    if (c.state === "enraged") c.state = undefined; // (else it kept the enraged look, red tint and all: rules/creatureCues.ts lookOf)
   }
   g.byArea = null;
 }

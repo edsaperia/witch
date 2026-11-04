@@ -5,11 +5,24 @@ import { bareBroom, PARTS } from "../../rules/broomParts";
 import { newGame } from "../../rules/game";
 import { TUNING } from "../../rules/tuning";
 import { setParts } from "../../rules/spells";
+import { HAT_SPELLS } from "../../rules/spells";
 it("copies only known station choices and rejects player/world/tuning fields", () => {
   const value = { kind: "broom", fitted: bareBroom() }, decoded = stationChoice(value);
   expect(decoded).toEqual(value); expect(decoded).not.toBe(value);
   expect(stationChoice({ kind: "bag", id: BAGS[0].id })).toEqual({ kind: "bag", id: BAGS[0].id });
   for (const bad of [null, [], { kind: "bag", id: "invented" }, { kind: "bag", id: BAGS[0].id, player: 0 }, { kind: "hat", id: "invented" }, { kind: "dress", station: "__proto__" }, { kind: "tuning", value: 999 }, { kind: "world", snapshot: {} }, { kind: "broom", fitted: { ...bareBroom(), extra: null } }, { kind: "broom", fitted: { tip: {}, chassis: null, exhaust: null } }]) expect(stationChoice(bad)).toBeNull();
+});
+
+it("reserves a worn hat until released, including competing sequential choices", () => {
+  const t = structuredClone(TUNING); t.map!.island = "home"; t.map!.islandAreas = 4;
+  const g = newGame(123, t, 2), id = HAT_SPELLS.find(h => h.built && h.id !== "none")!.id;
+  g.witches.forEach(w => { w.spells.hat = "none"; });
+  expect(applyStationChoice(g, 0, { kind: "hat", id })).toBe(true);
+  const before = structuredClone(g.witches[1]);
+  expect(applyStationChoice(g, 1, { kind: "hat", id })).toBe(false); expect(g.witches[1]).toEqual(before);
+  expect(applyStationChoice(g, 0, { kind: "hat", id: "none" })).toBe(true);
+  expect(applyStationChoice(g, 1, { kind: "hat", id })).toBe(true);
+  expect(applyStationChoice(g, 0, { kind: "hat", id })).toBe(false);
 });
 
 it("cannot fit the same shared broom part to both witches", () => {

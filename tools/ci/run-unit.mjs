@@ -29,16 +29,19 @@ export function parseShard(value) {
 }
 
 /** Split the full suite's files into `count` shards by measured seconds (tools/ci/unit-timings.json), largest first, each to the
- * shard whose estimated wall time (its longest file, or its total over `workers`) grows least. Vitest's own --shard splits by
+ * shard with the least total measured work. Vitest's own --shard splits by
  * count, which put the slowest files together (one shard took 11 minutes, the others 5). Unknown files cost the median.
  * Every file lands in exactly one shard; deterministic, so every shard computes the same split. */
 export function balancedShards(files, seconds, count, workers = 4) {
   const known = files.map(f => seconds[f]).filter(Number.isFinite).sort((a, b) => a - b);
-  const median = known.length ? known[Math.floor(known.length / 2)] : 1, cost = f => Number.isFinite(seconds[f]) ? seconds[f] : median;
+  // A file has collection/import overhead even when its assertions take <1ms.
+  const median = known.length ? known[Math.floor(known.length / 2)] : 1, cost = f => Math.max(0.25, Number.isFinite(seconds[f]) && seconds[f] >= 0 ? seconds[f] : median);
   const shards = Array.from({ length: count }, () => ({ files: [], sum: 0, max: 0 }));
   for (const f of [...new Set(files)].sort((a, b) => cost(b) - cost(a) || (a < b ? -1 : 1))) {
-    const c = cost(f), wall = s => Math.max(s.max, c, (s.sum + c) / workers);
-    const s = shards.reduce((best, x) => wall(x) < wall(best) - 1e-9 || (Math.abs(wall(x) - wall(best)) <= 1e-9 && x.sum < best.sum) ? x : best);
+    const c = cost(f);
+    // The previous max(longest,total/workers) objective hid extra work beneath a
+    // long file and packed heavy files together. LPT balances total work instead.
+    const s = shards.reduce((best, x) => x.sum < best.sum ? x : best);
     s.files.push(f); s.sum += c; s.max = Math.max(s.max, c);
   }
   return shards.map(s => ({ files: s.files.sort(), seconds: Math.round(Math.max(s.max, s.sum / workers)) }));
@@ -78,13 +81,15 @@ if (process.argv[1] && fileURLToPath(import.meta.url) === fs.realpathSync(proces
     .map(e => path.relative(process.cwd(), e.file).replaceAll("\\", "/"));
   let timings = {};
   try { timings = JSON.parse(fs.readFileSync("tools/ci/unit-timings.json", "utf8")).seconds ?? {}; } catch { /* unbalanced but complete */ }
-  // Opt-in (UNIT_BALANCE=1): on GitHub's 4-vCPU runners, shards packed with only heavy files ran 1.6-1.9x slower than the
-  // local timings predicted and one 18 s test hit its 60 s timeout (2026-11-01, #1592). Vitest's hashed --shard mixes light
-  // and heavy files; keep it until the model accounts for that contention.
+  // UNIT_BALANCE=1 enables cloud-derived LPT packing. The prior longest-file
+  // objective/local measurements caused contention (#1592); preserve opt-in for
+  // controlled cloud comparison before enabling the revised model in CI.
   const balanced = process.env.UNIT_BALANCE === "1" ? balancedSelection(selection, shard, listFiles, timings) : null;
   if (balanced) { Object.assign(selection, balanced); console.log(`Unit test shard ${shard.text}: ${balanced.balanced.files} of ${balanced.balanced.of} files by measured time, about ${balanced.balanced.estimate} s`); }
   else if (shard) console.log(`Unit test shard ${shard.text}${selection.tests.length && shard.index !== 1 ? ": related selection runs entirely in shard 1" : ""}`);
-  const testsAt = performance.now(), result = runTests(selection, args => spawnSync(process.execPath, [cli, ...args], { stdio: "inherit" }), githubActions, shard);
+  // Retain normal output/annotations and collect per-file cloud durations for a refreshable shard model.
+  const reporters = githubActions ? ["--reporter=default", "--reporter=./tools/ci/vitest-reporter.mjs", "--reporter=json", "--outputFile.json=ci-unit-timings.json"] : [];
+  const testsAt = performance.now(), result = runTests(selection, args => spawnSync(process.execPath, [cli, ...args, ...reporters], { stdio: "inherit" }), githubActions, shard);
   const report = { ...selection, shard: shard?.text ?? null, workers: githubActions ? "existing Vitest config" : 1, selectionMs, testMs: performance.now() - testsAt, totalMs: performance.now() - start, status: result.status, signal: result.signal, error: result.error?.message };
   fs.writeFileSync("ci-unit-results.json", JSON.stringify(report, null, 2) + "\n");
   // A readable check-run annotation (the coordinator can read annotations but not logs): was this the FULL suite?

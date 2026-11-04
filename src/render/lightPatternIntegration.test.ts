@@ -15,7 +15,7 @@ const light = (x: number, kind: 1 | 2 | 4 = 1): ForestLight => ({ x, y: 3, z: 0,
 it('uses an ordinary lit campfire for the gentle preview without requiring disabled magic stones', () => {
   const src = { x: 0, z: 0, kind: 'campfire', size: 1 }, fire = new THREE.Vector3(1, .5, .2);
   const v = { assets: { props: { frames: [] } }, sources: [src], forestLights: [], fireSparks: [], worldFires: [], sourceCell: new Map([[src, '0,0']]),
-    game: { party: { areas: new Map([['0,0', { at: 0 }]]) }, tuning: { party: { transition: 1 }, lights: { campfire: { reach: 25, strength: 1 }, find: {} } } },
+    game: { witch: { x: 0, z: 0 }, party: { areas: new Map([['0,0', { at: 0 }]]) }, tuning: { party: { transition: 1 }, lights: { campfire: { reach: 25, strength: 1 }, find: {} } } },
     over: { front: 0 }, fire, partyObjects: { ready: true }, beachView: { on: false }, propBatch: { set: () => {} } } as unknown as View;
   updateSources(v, 20);
   expect(v.forestLights).toHaveLength(1); expect(v.worldFires).toHaveLength(1);

@@ -5,19 +5,20 @@
 // never drops the hat.
 import { describe, expect, it } from "vitest";
 import { TUNING, type Tuning } from "./tuning";
-import { newGame, stepGame, type Game } from "./game";
+import { stepGame, type Game } from "./game";
 import { hexCell, hexCentre } from "./leash";
 import { wearing } from "./hat";
 import { deckOf } from "./treehouse";
 import { HOUSE_ROOMS, objectFront } from "./houseRooms";
 import { smallWorldTuning } from "../test/worlds";
+import { preppedGame } from "../test/preppedGame"; // (games on a map made once a file from its prep)
 
 const C = { moveX: 0, moveZ: 0, toggleMode: false, zoom: 0 };
 const H = TUNING.leash.hex!;
 
 function game(t: Tuning = TUNING, station = false): Game {
   // Run fixtures retain their 200 m displaced recruits and multi-hex terrain; station input stays inside home.
-  const g = newGame(123, station ? smallWorldTuning(t, "Holding Use at home stations depends on input handling, not the surrounding world.") : t);
+  const g = preppedGame(123, station ? smallWorldTuning(t, "Holding Use at home stations depends on input handling, not the surrounding world.") : t);
   g.clock.paused = false;
   g.party.spellAt = undefined;
   const d = g.map.dancefloor;

@@ -2,9 +2,9 @@
 // from berries"): each path sets healedAt through heal or healBy (rules/creatures.ts).
 import { describe, expect, it } from "vitest";
 import { heal, healBy, HEAL_TRICKLE_GAP, LEGEND, type Creature } from "./creatures";
-import { newGame as fullGame, type Game } from "./game";
+import { type Game } from "./game";
 import { smallWorld } from "../test/worlds";
-const newGame = smallWorld(fullGame, "Heal markers are checked on a few explicitly hurt creatures, independent of distant area diversity.");
+const newGame = smallWorld(preppedGame, "Heal markers are checked on a few explicitly hurt creatures, independent of distant area diversity.");
 import { TUNING } from "./tuning";
 import { feed } from "./berries";
 import { befriend } from "./creatureStates";
@@ -12,6 +12,7 @@ import { inviteCreature } from "./leash";
 import { anger, cheer, lull } from "./legends";
 import { startPartyOver } from "./partyOver";
 import { creatureMaxHp } from "./combat";
+import { preppedGame } from "../test/preppedGame"; // (games on a map made once a file from its prep)
 
 const game = (): Game => newGame(77, TUNING);
 const hurt = (g: Game, i: number, patch: Partial<Creature> = {}): Creature => { const c = g.creatures.filter(k => !k.gone)[i]; Object.assign(c, { healedAt: undefined, healedSmall: undefined, ...patch }); c.drops = 0.7; return c; }; // (its slots 70% 💧s: rules/orbit.ts)

@@ -1,5 +1,27 @@
 # The Workshop
 
+**Audit status (2026-11-01): Partly built: parts, sets, saves, fitting, finds and art shipped; creeper/welding, set trails, more parts and full multiplayer acceptance remain.**
+
+The status index checks the requests below against prototype `ab06904b` and cited history. **Built** means code is present, not a new play/audition/performance pass. **Partly built** states the missing part. An em dash leaves an unimplemented request unmarked. Versions are verified changelog build labels where available; “unverified” means no first-live number was established. Historical/superseded requests are preserved, not re-authorised. Repeated details/build-order summaries are counted with their feature group, not again.
+
+| Request / feature group | Status | Evidence and remaining gap |
+|---|---|---|
+| Three part slots, nine parts, stats/tradeoffs and five sets | **Built** | #1037; rules/broomParts.ts, config/broom-parts.json; first rules version unverified, room v4181. |
+| Bare broom baseline and passive stats moved to parts | **Built** | #1037; broomTuning/partsPull and spells.ts; first version unverified. |
+| Find pool and telescope constellation for parts | **Built** | #1037; rules/finds.ts, constellations.ts. #1109 v4406 later makes finds loans until a win; original keep-on-loss text is historical. |
+| Nine distinct wreck scenes and rare forest discovery | **Partly built** | Original wreck sprites existed; current finds use part objects (art/country.js), not full described crash scenes. #1056 v4221 covers part artwork, not every wreck story. Wreck narrative proposal remains unfulfilled as written. |
+| Pick up parts without towing; owned parts wait at Workshop | **Built** | #1037/#1040; finds part claim and broomSave. v4181 room; loan settlement #1109 v4406 supersedes permanent keep-on-loss. |
+| Fit cards, sets, stat detail, colours and Fit | **Built** | #1040 v4181; station-card follow-up v5440 combines all at one lathe, superseding independent bay menus. |
+| Pegboard collection and tonight's part indicator | **Built** | #1040 v4181/#1056 v4221; render/workshopArt.ts, stationLines.ts. Current panel includes board at lathe, not a pending separate station. |
+| Part artwork, assembled broom and board sprites | **Built** | #1056 v4221; art/broomParts.js and render/workshopArt.ts. |
+| Room furniture, dressing, creeper and welding | **Partly built** | Bay/lathe/board furniture and room clutter exist (#1040 v4181/#1056 v4221); no witch-under-broom creeper/welding animation found. |
+| Broom held on Terrace and shown at active work position | **Built** | #1040 v4181; rules/stations.ts broomWhere and render home/workshop art. Original separate-bay access changed with v5440 combined station. |
+| Retired shapes/Power and migrated saves | **Built** | #1037/#1040; broomSave/loadout and wardrobe station definitions, v4181 baseline; classic-debug details below are historical. |
+| Host-owned parts and exclusive multiplayer use | **Partly built** | #1538 typed equipment approval exists; ordinary calls remain off and full multi-client Workshop acceptance incomplete. No live multiplayer-Workshop version claimed. |
+| Next nine parts and new/silly sets | — | Current config contains original nine parts/five sets; no requested second batch found. |
+| Set-specific treetop trails | — | Current generic flight trail is not a set-specific trail implementation. |
+
+
 Proposal (2026-10-23); **Ed's go the same day; built (PR 1 the rules and finds, PR 2 the room)** (his decisions below win over the proposal where they differ). It takes [unlocks.md](unlocks.md)'s "The broom garage", renamed **the Workshop** and moved to the round room off the Terrace in the Ent's own house (v3: `tools/house/organic.mjs`, `config/house.json`, rules/houseRooms.ts), and fills it in with Ed's decisions of 2026-10-22/23, which win where they differ from unlocks.md:
 
 1. One broom, three slots: **tip, chassis, exhaust**. Parts replace today's 18 broom shapes; the shapes' looks become the parts' looks.
@@ -62,7 +84,7 @@ Every number below is measured against **the bare broom** (all three slots empty
 | Rise / come down | 0.7 s / 0.55 s | `riseTime`, `descendTime` |
 | Shared cooldown | take-off adds 1 s, landing 1.5 s (2 and 3 at the plain broom's ×0.5) | `cooldown.rise`, `riseCooldown`, `spells.plain` |
 | Dodge (blink) | 15 m; 2 charges, 1 s each | `dash.distance`, `charges`, `cooldown` |
-| Haul | sigils pull at full weight (the Haul broom: ×0.5) | `leash.weight`, `spells.haul.pull` |
+| Haul | sigils pull at full weight (the Haul broom: ×0.5; the sigil weight gone since 2026-11-03, #1731: the chains' drag instead) | `leash.weight`, `spells.haul.pull` (now `leash.chain.drag`) |
 | Speed spell | ×2.2 for 4 s, then 12 s | `spells.speed` |
 
 ## The parts (nine to start)
@@ -76,7 +98,7 @@ Slot themes, as unlocks.md proposed, so a slot tells you roughly what a part cha
 | Tip | **Hobby-horse head** | the hobby horse's head and mane, a figurehead | tight turns: 150 → 210°/s, and a sharp turn bleeds boost half as fast (`sharpTurnBleed` 3 → 1.5) | boost peaks lower: ×1.7 → ×1.5 | Ferry, Joust |
 | Chassis | **Jet-bike fairing** | the jet bike's fairing and windscreen | ground speed 19.25 → 22 m/s (+15%) | heavier off the mark: ground pick-up 28 → 20 | Rocket, Joust |
 | Chassis | **Ladder** | the ladder's rails and rungs | rises 0.7 → 0.45 s and comes down 0.55 → 0.35 s (the Mole's old boon) | ground speed 19.25 → 17.5 m/s (−10%) | Hedge, Pile driver |
-| Chassis | **Canoe hull** | the canoe's hull, its inside in the trim colour | hauls: her sigils pull ×0.65 (the Haul broom was ×0.5) | slow to cruise: treetop pick-up 0.3 → 0.4 s (`acceleration` 10 → 7.5) | Ferry |
+| Chassis | **Canoe hull** | the canoe's hull, its inside in the trim colour | hauls: her sigils pull ×0.65 (the Haul broom was ×0.5; since the chains, 2026-11-03, #1731, a youth's and an adult's chain drag ×0.65, a legend's still whole) | slow to cruise: treetop pick-up 0.3 → 0.4 s (`acceleration` 10 → 7.5) | Ferry |
 | Exhaust | **Jet nozzles** | the jet bike's twin glowing nozzles | take-off 1 → 0.5 s and landing 1.5 → 0.75 s on the shared cooldown | lets go slowly: glides 1 → 1.8 s to a stop | Rocket, Pile driver |
 | Exhaust | **Twig bristles** | the twig broom's long bundle and stray twigs | one more dodge: 2 → 3 charges (the Double blink broom) | boost builds slower: 2 → 3 s | Hedge |
 | Exhaust | **Oar blade** | the oar's flat blade | sharp on foot: ground pick-up 28 → 40 | blinks 15 → 12 m | Ferry |
@@ -116,7 +138,7 @@ Alternatives:
 - **By island**: each island holds a fixed kind (dealt like the hat shrines in unlocks.md), so a player learns where wrecks lie. This fights the "never two at once" rule less than it fights the one-a-night rhythm: some nights would have nothing to find.
 - **By canopy**: wrecks only in areas with thin canopy, trunks under thick. This is a placement rule more than a pick, and it could sit on top of the recommendation.
 
-Where a wreck stands: as `placeTrunk` does today (a seeded wild area, never home, in its woods round its middle, off clearings and the legend's circle, clear of the relics), with no glint, and drawn only within 120 m. It's the same `find` art job, keyed by the part. What's in the stars is the part's own outline (`OUTLINES` by its id: a nose cone, a ladder, a canoe).
+Where a wreck stands: as `placeTrunk` does (since 2026-11-03 at the site of an area of its own, where the footpaths lead: the find area, `docs/notes/house.md`; before, a seeded wild area, never home, in its woods round its middle, off clearings and the legend's circle, clear of the relics), with no glint, and drawn only within 120 m. It's the same `find` art job, keyed by the part. What's in the stars is the part's own outline (`OUTLINES` by its id: a nose cone, a ladder, a canoe).
 
 ## Wreck scenes
 

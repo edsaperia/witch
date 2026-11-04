@@ -2,6 +2,7 @@
 // the pack and seed it was found with and a ⭐, kept in this browser (localStorage, every touch of it in try/catch: a private window
 // or blocked storage keeps it for this page only), favourites first, then the newest. Copied out and pasted in as JSON (one attack,
 // or a whole library), so Ed can send the good ones on.
+import { localStore } from "../platform/storageScope";
 
 export interface Saved {
   name: string;
@@ -20,7 +21,7 @@ export const LIBRARY_KEY = "witch.fightArena.library";
 
 /** This browser's storage, or null where there's none to have. */
 export function browserStore(): Store | null {
-  try { return typeof localStorage === "undefined" ? null : localStorage; } catch { return null; }
+  return localStore();
 }
 
 const isSaved = (x: unknown): x is Saved => !!x && typeof x === "object" && typeof (x as Saved).name === "string" && (x as Saved).name.trim() !== "" && "attack" in (x as object);

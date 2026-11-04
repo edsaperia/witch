@@ -61,9 +61,9 @@ export class AimHud {
     this.dot.setAttribute("r", canThrow ? "1.4" : "2.2"); // (alone in the treetops: a little bigger, so the mouse isn't lost)
     // The dodge's recharge: an arc filling round the ring, a short flash as it comes ready.
     const tw = witchTuning(g, W), charge = tw.cooldown?.shared ? coolCharge(W.cool, tw.dash.cooldown, coolRoom(tw, blinkCharges(g, W))) : dashCharge(W.dash, time), charging = charge < 1 && b.mode === "ground" && !b.seated; // (the shared cooldown: rules/cooldown.ts)
-    if (this.wasCharging && !charging) this.flashUntil = performance.now() + 180;
+    if (this.wasCharging && !charging) this.flashUntil = time + 0.18;
     this.wasCharging = charging;
-    const flash = performance.now() < this.flashUntil;
+    const flash = time < this.flashUntil;
     if (charging || flash) {
       this.arc.style.opacity = "1";
       this.arc.setAttribute("stroke", flash ? "rgba(111,230,255,.95)" : "rgba(111,230,255,.7)");

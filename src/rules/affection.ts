@@ -44,8 +44,9 @@ export function hold(g: AffectionWorld, c: Creature, dt: number, time: number = 
 /** Whether a 💌 can affect c now (wild, or happy for its second step; not a legend, not gone). */
 export const invitable = (c: Creature): boolean => invitableNow(c);
 
-/** Whether c stops 💌s dead: enraged animals and legends (#87). */
-export const blocksLetters = (c: Creature): boolean => !c.gone && (stateOf(c) === "enraged" || c.level === LEGEND || !!c.boss);
+/** Whether c stops 💌s dead: enraged animals and legends (#87), and the challenge's statues (Ed, 2026-11-04: "The wild creatures
+ *  should somehow look like they're not invitable": refused as an enraged one refuses them; rules/challengeStatues.ts). */
+export const blocksLetters = (c: Creature): boolean => !c.gone && (stateOf(c) === "enraged" || c.level === LEGEND || !!c.boss || !!c.statue);
 
 /** The meter for the view: affection 0..1 (draining), or null when there is none. */
 export function affection(g: { time: number } | { clock: { time: number } }, c: Creature, data: StatesData = STATES): number | null {

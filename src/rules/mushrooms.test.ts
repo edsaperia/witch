@@ -71,10 +71,11 @@ describe('mushrooms and brewing', () => {
     expect(potionPhase(g, g.witches[1])).toBe('spin'); expect(g.mushrooms.affected[2]).toBeUndefined();
     const p = g.mushrooms.affected[0]; time(g, p.fallAt);
     expect(potionPhase(g)).toBe('fall'); expect(g.witch.perch).toBe(true);
-    expect(g.mushrooms.smoke).toBeNull(); expect(g.mushrooms.ingredients).toHaveLength(0);
+    expect(g.mushrooms.smoke?.until).toBeCloseTo(10.7, 12); // (it hangs ten seconds over the reach: Ed, 2026-11-03)
     time(g, p.landAt); expect(g.witch.perch).toBe(false); expect(g.witch.stargazing).toBe(true); expect(potionPhase(g)).toBe('sleep');
     time(g, p.wakeAt, 12); expect(potionPhase(g)).toBe('recover'); expect(g.mushrooms.trips[0].until).toBe(612);
     time(g, p.freeAt, 13); expect(potionPhase(g)).toBeNull(); expect(g.witch.stargazing).toBe(true);
+    expect(g.mushrooms.smoke).toBeNull(); expect(g.mushrooms.ingredients).toHaveLength(0);
   });
   it('replaces a trip and measures expiry on game time only', () => {
     const g = game(); g.mushrooms.trips[0] = { recipe: ['blue', 'blue', 'blue'], key: 'old', at: 0, until: 999 };

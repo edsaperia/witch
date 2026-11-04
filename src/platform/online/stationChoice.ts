@@ -31,7 +31,10 @@ export function applyStationChoice(game: Game, player: 0 | 1, choice: StationCho
   const witch = game.witches[player]; if (!witch || witch.id !== player) return false;
   if (choice.kind === "party") { const record = recordById(choice.id); return !!record && startParty(game, record.bpm, witch); }
   if (choice.kind === "bag") setBag(witch.spells, choice.id);
-  else if (choice.kind === "hat") changeLoadout(witch, choice.id);
+  else if (choice.kind === "hat") {
+    if (choice.id !== "none" && game.witches.some(other => other !== witch && other.spells.hat === choice.id)) return false;
+    changeLoadout(witch, choice.id);
+  }
   else if (choice.kind === "broom") {
     // Shared fitted parts cannot also be mounted on the other witch's broom.
     if (game.witches.some(other => other !== witch && Object.values(choice.fitted).some(id => id !== null && Object.values(other.spells.parts ?? {}).includes(id)))) return false;

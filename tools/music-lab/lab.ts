@@ -8,7 +8,7 @@ import { Music } from "../../src/platform/audio/music";
 import { Sfx } from "../../src/platform/audio/sfx";
 import { MusicEngine } from "../../src/platform/audio/musicEngine";
 import { mixAt, nearness } from "../../src/rules/music";
-import { beatAt, bpmAt, knockdownTempo, newBeatClock, rampTo, timeAt, waveArrived, waveTempo, type BeatClock } from "../../src/rules/beat";
+import { beatAt, bpmAt, knockdownTempo, newBeatClock, rampTo, timeAt, type BeatClock } from "../../src/rules/beat";
 import { barAt, barSeconds, planBlock, type MusicCue } from "../../src/rules/musicPlan";
 import { arcStep, checkStyle, resolveSection, type MusicStyle, type Patch } from "../../src/rules/musicScore";
 import { TUNING } from "../../src/rules/tuning";
@@ -26,16 +26,16 @@ let force: { section?: string; wave?: number } = {};
 let seed = 1;
 let ctx: AudioContext | null = null, music: Music | null = null, playing = false, lastAudio = 0;
 
-// the beat clock, as the game's: each wave's tempo from the style's arc, eased in from its block line
-const beatTuning = () => ({ beat: { bpm: style.bpm, tempos: style.arc.map(a => a.bpm ?? style.bpm), blockBars: style.blockBars, rampBars: style.tempoRampBars ?? 8 } });
-let clock: BeatClock = newBeatClock(style.bpm, waveTempo(beatTuning(), 0));
-const arrived = () => waveArrived(clock, beatTuning(), force.wave ?? run.waves.length, run.time);
+// the beat clock, as the game's: the style's tempo every wave (Ed, 2026-11-03: "the tempo (pulse speed) should stay the same
+// through the night, and only raises when you get knocked down")
+const beatTuning = () => ({ beat: { bpm: style.bpm } });
+let clock: BeatClock = newBeatClock(style.bpm);
 const bar = (time: number) => barAt(clock, time);
 const cue = (): MusicCue => ({ waves: run.waves.map(bar), nextAt: bar(run.nextAt), bootUntil: bar(run.bootUntil), knockedOut: hooks.knockedOut, siege: hooks.siege, party: hooks.party, forceSection: force.section, forceWave: force.wave });
 
 function restart(): void {
   Object.assign(run, { time: 0, bootUntil: run.boot, waves: [], nextAt: run.boot + run.interval });
-  clock = newBeatClock(style.bpm, waveTempo(beatTuning(), 0));
+  clock = newBeatClock(style.bpm);
   music?.engine?.reset();
 }
 
@@ -45,11 +45,10 @@ function jumpToWave(n: number): void {
   run.bootUntil = Math.min(run.bootUntil, t);
   run.waves = Array.from({ length: n }, (_, i) => t - (n - 1 - i) * run.interval);
   run.nextAt = t + run.interval;
-  arrived();
   renderButtons();
 }
 
-function nextWave(): void { run.waves = [...run.waves, run.time]; run.nextAt = run.time + run.interval; run.bootUntil = Math.min(run.bootUntil, run.time); arrived(); }
+function nextWave(): void { run.waves = [...run.waves, run.time]; run.nextAt = run.time + run.interval; run.bootUntil = Math.min(run.bootUntil, run.time); }
 
 function step(): void {
   requestAnimationFrame(step);
@@ -58,7 +57,7 @@ function step(): void {
   lastAudio = now;
   run.time += dt;
   if (run.paused) { run.nextAt += dt; if (run.time < run.bootUntil) run.bootUntil += dt; }
-  while (run.time >= run.nextAt && run.time >= run.bootUntil) { run.waves = [...run.waves, run.time]; run.nextAt += run.interval; arrived(); }
+  while (run.time >= run.nextAt && run.time >= run.bootUntil) { run.waves = [...run.waves, run.time]; run.nextAt += run.interval; }
   const M = TUNING.music, level = nearness(M, hooks.distance);
   const mix = mixAt(M, level, hooks.damage * level, hooks.distance);
   music.volume = hooks.volume;
@@ -146,12 +145,10 @@ function buildKnobs(): void {
   knob(fs, "Tempo (the whole run's, but for knockdowns)", style.bpm, 70, 180, 1, v => {
     const d = v - style.bpm;
     style.bpm = v;
-    for (const a of style.arc) if (a.bpm !== undefined) a.bpm += d;
-    // from the next beat, straight to the shifted tempo: the beat carries on
-    rampTo(clock, Math.ceil(beatAt(clock, run.time)) + 1, waveTempo(beatTuning(), force.wave ?? run.waves.length), 0);
+    // from the next beat, straight to the new tempo: the beat carries on
+    rampTo(clock, Math.ceil(beatAt(clock, run.time)) + 1, v + (clock.bonus ?? 0), 0);
     changed();
   }, { unit: " bpm" });
-  knob(fs, "Tempo ramp (bars)", style.tempoRampBars ?? 8, 0, 32, 4, v => { style.tempoRampBars = v; changed(); });
   knob(fs, "Swing", style.swing, 0, 0.5, 0.01, v => { style.swing = v; changed(); });
   const roots: [string, string][] = [];
   for (let m = 28; m <= 39; m++) roots.push([String(m), NOTE_NAMES[m % 12]]);
@@ -188,8 +185,7 @@ function buildKnobs(): void {
 function showJson(): void {
   const ta = $<HTMLTextAreaElement>("json");
   if (document.activeElement !== ta) ta.value = JSON.stringify(style, null, 2);
-  const bpms = style.arc.map(a => a.bpm ?? style.bpm);
-  $("style-name").textContent = `${style.name} · ${bpms[0]} to ${bpms[bpms.length - 1]} bpm · ${style.arc.length} waves of music`;
+  $("style-name").textContent = `${style.name} · ${style.bpm} bpm every wave · ${style.arc.length} waves of music`;
 }
 
 // ---- the offline check ----
@@ -229,10 +225,8 @@ async function musicLabCheck(bars = 2): Promise<{ ok: boolean; errors: string[];
     // in bar 14 (5 bpm faster from the next bar line, silent till her new record starts on bar 17, re-seeded); render bars 8
     // to 32 (the knockdown, the new record, the build, the drop), under siege
     const oc = new OfflineAudioContext(2, Math.ceil(rate * 24 * spBar), rate);
-    const e = new MusicEngine(oc, oc.destination, style, 7), c = newBeatClock(style.bpm, waveTempo(beatTuning(), 6));
-    c.wave = 6;
+    const e = new MusicEngine(oc, oc.destination, style, 7), c = newBeatClock(style.bpm);
     knockdownTempo(c, { ...beatTuning(), knockout: { bpmStep: 5 } }, 14.2 * spBar);
-    waveArrived(c, beatTuning(), 7, 20 * spBar);
     if (Math.abs(bpmAt(c, timeAt(c, 4 * 32)) - (bpmAt(c, 0) + 5)) > 1e-6) errors.push("the tempo isn't 5 bpm up after a knockdown, and steady through a wave");
     e.renderAhead({ waves: [], nextAt: 20, bootUntil: 0, knockedOut: false, siege: 0.5, knockdowns: [{ at: 14.2, back: 17 }] }, 8 * spBar, 24 * spBar, c);
     measure("run: into wave 7, a knockdown, siege", await oc.startRendering());
@@ -292,10 +286,10 @@ async function musicLabSail(fresh = true, aSec = 12, gapSec = 5, bSec = 14) {
   split.connect(merge, 0, 2); split.connect(merge, 1, 3); merge.connect(oc.destination);
   const sfx = new Sfx(oc, 0.5, TUNING.sfx, style.root + 24, split);
   // night A: two waves in, its tempo wave 2's; night B: the home speakers booting, one turning every half bar
-  const clockA = newBeatClock(style.bpm, waveTempo(beatTuning(), 2)), barA = (t: number) => barAt(clockA, t);
+  const clockA = newBeatClock(style.bpm), barA = (t: number) => barAt(clockA, t);
   const cueA: MusicCue = { waves: [barA(100), barA(200)], nextAt: barA(400), bootUntil: barA(30), knockedOut: false, siege: 0 };
   const styleB: MusicStyle = { ...style, arc: [...style.arc.slice(1), style.arc[0]] };
-  const clockB = newBeatClock(style.bpm, waveTempo(beatTuning(), 0)), barB = (t: number) => barAt(clockB, t);
+  const clockB = newBeatClock(style.bpm), barB = (t: number) => barAt(clockB, t);
   const cueB: MusicCue = { waves: [], nextAt: barB(90), bootUntil: barB(30), knockedOut: false, siege: 0, speakers: 12, speakerBars: Array.from({ length: 12 }, (_, i) => i * 0.5) };
   let night: "a" | "gap" | "fly" | "b" = "a", bStart = NaN, gameA = 300;
   const steps: { s: number; t: number }[] = [], flySec = 1.5;

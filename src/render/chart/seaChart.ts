@@ -118,7 +118,7 @@ void main() { vec4 w = modelMatrix * vec4(position, 1.0); vW = w.xyz; gl_Positio
 // The night sea: deep blue, darker toward the rim, small moving ripples catching the moon in a glitter path toward it (the
 // moon low in the north), the phases' rings faint on the water, and the rim where the sea pours off the world.
 const SEA_FRAG = /* glsl */ `
-uniform float uTime, uR, uRings; uniform vec3 uMoonDir; varying vec3 vW;
+uniform float uTime, uR, uRings; uniform vec3 uMoonDir, uToGame; varying vec3 vW;
 ${SHADOW_MAP}
 float h(vec2 p) { return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453); }
 float n(vec2 p) { vec2 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * f);
@@ -140,6 +140,7 @@ void main() {
     c += vec3(0.05, 0.08, 0.16) * (1.0 - smoothstep(0.0, 0.004, d)) * dash; }
   // the rim: lighter where the water gathers to pour off
   c += vec3(0.12, 0.2, 0.32) * smoothstep(0.965, 1.0, r);
+  c *= uToGame; // (a sail's flight coming down to the hand-off: the game's sea's colour, SeaChart.seaToGame)
   gl_FragColor = vec4(c, 1.0);
 }`;
 // The sea pouring off the world's edge: a skirt below the rim, streaks running down, fading into space.
@@ -326,6 +327,12 @@ const smoothstep = (u: number) => u * u * (3 - 2 * u), easeIn = (u: number) => u
  *  (s) `onward` metres, ending looking down just `inland` of the shore below its dancefloor (the camera `dist` m back, tilted `pitchDeg` down:
  *  the game's treetop view) and still moving north, for the game to carry on. */
 const FLY = { frame: 1.6, swoop: 2.8, run: 1.2, dist: 600, pitchDeg: 50, onward: 60, inland: 40 };
+/** The chart's sea's colour at a sail's hand-off, channel by channel, times its own (flyFrame), so the still the game's dive
+ *  cross-fades from is the game's own sea's blue (Ed, 2026-11-03: "we can fade between while looking at a simple blue texture").
+ *  Fitted on the cloud renderer, 2026-11-03, a chart sail to the fox's island: the game's sea at the hand-off's camera averages
+ *  about 7.5, 19.5, 35 (8-bit), the chart's 5, 15, 50 untinted and 8, 19, 34 with this (its post pass isn't linear: 1.6, 1.43,
+ *  0.71, the plain ratio, gave 14, 28, 30). */
+export const SEA_TO_GAME = [1.18, 1.18, 0.79] as const;
 /** How long (s) an island takes to rise out of the sea as its land arrives. */
 const RISE = 0.9;
 
@@ -549,6 +556,9 @@ const waterMat = (w: { deep: THREE.Color; pale: THREE.Color }, opaque: number) =
   private moonLast: number | undefined;
   private moonP = new THREE.Vector3();
   private seaMoon = { value: new THREE.Vector3(-0.3, 0.6, -0.9) };
+  /** The sea's colour turned toward the game's as a sail's flight comes down to the hand-off (flyFrame; SEA_TO_GAME): none (1, 1, 1)
+   *  but then. */
+  private seaToGame = { value: new THREE.Vector3(1, 1, 1) };
   /** A fixed bearing for the moon (degrees, 0 north, clockwise), risen; null (the default) for its way round. For previews. */
   stillMoon: number | null = null;
   // (each island's land drawn into the height map with its height as its colour: x across, z up the map, seen from below)
@@ -610,7 +620,7 @@ const waterMat = (w: { deep: THREE.Color; pale: THREE.Color }, opaque: number) =
     this.band = edgeBand(this.tuning as unknown as { chart?: ChartKnobs });
     const R = (this.seaR = CHART_SCALE * 1.02 * (1 + this.band));
     this.moonU.uHR.value = R; this.markHeights();
-    this.sea = new THREE.Mesh(new THREE.CircleGeometry(R, 160).rotateX(-Math.PI / 2), new THREE.ShaderMaterial({ vertexShader: SEA_VERT, fragmentShader: SEA_FRAG, uniforms: { ...this.moonU, uTime: this.uTime, uR: { value: R }, uRings: { value: CHART_SCALE * 1.02 }, uMoonDir: this.seaMoon } }));
+    this.sea = new THREE.Mesh(new THREE.CircleGeometry(R, 160).rotateX(-Math.PI / 2), new THREE.ShaderMaterial({ vertexShader: SEA_VERT, fragmentShader: SEA_FRAG, uniforms: { ...this.moonU, uTime: this.uTime, uR: { value: R }, uRings: { value: CHART_SCALE * 1.02 }, uMoonDir: this.seaMoon, uToGame: this.seaToGame } }));
     this.fall = new THREE.Mesh(new THREE.CylinderGeometry(R, R * 0.97, 40, 160, 1, true).translate(0, -20, 0), new THREE.ShaderMaterial({
       vertexShader: "varying vec2 vUv; void main() { vUv = uv; gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }",
       fragmentShader: FALL_FRAG, uniforms: { uTime: this.uTime }, transparent: true, depthWrite: false, side: THREE.DoubleSide }));
@@ -728,6 +738,10 @@ const waterMat = (w: { deep: THREE.Color; pale: THREE.Color }, opaque: number) =
     this.focus.set(L(a.x, b.x), 0, L(a.z, b.z)); this.aim.copy(this.focus); this.dist = this.distTo = L(a.dist, b.dist); this.pitch = L(a.pitch, b.pitch);
     const lowered = smoothstep(Math.min(1, Math.max(0, (f.t - f.keys[1].at) / (f.keys[2].at - f.keys[1].at))));
     i.group.scale.y = 1 + (1 / RELIEF - 1) * lowered; // (the chart's heights are drawn five times over; the game's are true)
+    // (and its sea toward the game's own colour as it comes down to the water, all of it by the hand-off: the still the game's flight
+    // cross-fades from is the same blue it fades into; Ed, 2026-11-03, "we can fade between while looking at a simple blue texture")
+    const toGame = smoothstep(Math.min(1, Math.max(0, (f.t - f.keys[1].at) / (end - f.keys[1].at))));
+    this.seaToGame.value.set(1 + (SEA_TO_GAME[0] - 1) * toGame, 1 + (SEA_TO_GAME[1] - 1) * toGame, 1 + (SEA_TO_GAME[2] - 1) * toGame);
     const settle = smoothstep(Math.min(1, f.t / f.keys[1].at));
     if (i.sigil) { const s = 1 + ((60 * K) / f.size - 1) * settle; i.sigil.scale.set(s, 1, s); i.glow?.scale.set(s, 1, s); }
     f.floor.rotation.y = time * 0.6; (f.floor.children[0] as THREE.Mesh).scale.setScalar(0.9 + 0.1 * Math.sin(time * 6));
@@ -807,7 +821,7 @@ const waterMat = (w: { deep: THREE.Color; pale: THREE.Color }, opaque: number) =
     this.uTime.value = time; this.now = time;
     const k = 1 - Math.exp(-dt * 3.2);
     if (this.flight) this.flyFrame(dt, time);
-    else { this.focus.lerp(this.aim, k); this.dist += (this.distTo - this.dist) * k; }
+    else { this.focus.lerp(this.aim, k); this.dist += (this.distTo - this.dist) * k; this.seaToGame.value.set(1, 1, 1); }
     // tilted down, looking north (-z), never turning (as the game's camera)
     this.yaw += dt * this.orbit;
     const back = Math.cos(this.pitch) * this.dist, sy = Math.sin(this.yaw), cy = Math.cos(this.yaw);

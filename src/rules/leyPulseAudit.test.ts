@@ -4,7 +4,7 @@
 // line's front (render/leylines.ts leyReveal). These hold it to the wave in each case: waves coming, an area cleared early,
 // a soundsystem lost, a knockout and respawn, and what a quest done does (Ed hasn't ruled: leyLines.advance).
 import { describe, expect, it } from "vitest";
-import { hitWitch, loseSoundsystem, newGame, stepGame, type Game } from "./game";
+import { hitWitch, loseSoundsystem, stepGame, type Game } from "./game";
 import { TUNING, withTuning } from "./tuning";
 // (these test the areas clearing by themselves and the runes at the feet: the game as it was, ?cast=0, rules/stoneStacks.ts)
 const NOCAST = { ...TUNING, cast: { ...TUNING.cast, on: false } };
@@ -16,6 +16,7 @@ import { behindLength } from "./pulseRoute";
 import { bootPath } from "./bootRing";
 import { holdsArea } from "./clear";
 import { leyReveal } from "../render/leylines";
+import { preppedGame } from "../test/preppedGame"; // (games on a map made once a file from its prep)
 
 const still = { moveX: 0, moveZ: 0, toggleMode: false, zoom: 0, autoTalk: false };
 const run = (g: Game, secs: number) => { for (let i = 0; i < Math.round(secs * 60); i++) stepGame(g, still, 1 / 60); };
@@ -23,7 +24,7 @@ const wave = (g: Game) => stepGame(g, { ...still, nextWave: true }, 1 / 60);
 /** A game under way, the boot over, the witch over the treetops at home (out of every fight). */
 function game(): Game {
   // Retain the full seeded route: six waves, farther objectives and lost/early soundsystems must remain on one line.
-  const g = newGame(123, NOCAST);
+  const g = preppedGame(123, NOCAST);
   g.clock.paused = false; g.party.spellAt = undefined;
   g.witch = { ...g.witch, seated: false, mode: "treetop", lift: 1 };
   g.witches[0].health.hp = 1e6;
@@ -127,7 +128,7 @@ describe("the pulse and the line's front never skip (Ed, 2026-10-08), at a const
   const FAST = withTuning({ leyLines: { ...TUNING.leyLines, pulseSpeed: 40 }, cast: { ...TUNING.cast, on: false } });
   function fast(extra?: Parameters<typeof withTuning>[0]): Game {
     // Retain enough route for five waves and two-stone waves at the actual seeded link lengths.
-    const g = newGame(123, extra ? withTuning({ ...FAST, ...extra } as never) : FAST);
+    const g = preppedGame(123, extra ? withTuning({ ...FAST, ...extra } as never) : FAST);
     g.clock.paused = false; g.party.spellAt = undefined;
     g.witch = { ...g.witch, seated: false, mode: "treetop", lift: 1 };
     g.witches[0].health.hp = 1e6;

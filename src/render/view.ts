@@ -17,18 +17,20 @@ import { installShaderDrawGate, materialProgramsReady, type ShaderDrawStatus } f
 import { LandingArtFade, lateLandingReady } from './landingReadiness';
 import { captureProgramUses, mapProgramUses } from "./programInventory";
 import { deckOf } from "../rules/treehouse";
+import { approachStrength, houseApproachDistance, crownLookInput } from "../rules/treehouseLook";
+
 import { HOUSE_LAYER } from "./post";
 import { StationBackdrop } from "./stationBackdrop";
 import type { MapTable } from "./mapTable";
 import { islandArtSeed } from "./artCache";
 import { biomeKey } from "../rules/lakeLooks";
 import { HouseRoomsView } from "./houseRooms";
-import { CrownView, type PlanMap } from "./crown";
+import { CrownView, cutawayRadius, type PlanMap } from "./crown";
 import { CrownLandmark } from "./crownLandmark";
 import { makeCrown, type HouseOutline } from "../rules/crown";
 // (the house's outline for the crown: only what it reads, so the floor's traced rings stay out of the bundle)
 import { rooms as OUTLINE_ROOMS, branches as OUTLINE_BRANCHES, stubs as OUTLINE_STUBS, takeoff as OUTLINE_TAKEOFF } from "../../config/house/outline.json";
-import { fromPlan, HOUSE_ROOMS, toPlan } from "../rules/houseRooms";
+import { HOUSE_ROOMS, toPlan } from "../rules/houseRooms";
 import { speakerRadius } from "../rules/speakers";
 import { Hiz, HIZ_LAYER } from "./hiz";
 /** How near the treehouse (m, the camera) its occluders are built (render/hiz.ts). */
@@ -40,9 +42,12 @@ import { carvingMask, warmCarvings } from "./legendCarving";
 import { sigilColour } from "../../art/generator.js";
 import type { Game } from "../rules/game";
 import { stepTiltShare, tiltShareShown } from "./overlayTilt";
+import { forestShown, newForestReveal, stepForestReveal, type RevealPlace } from "./forestReveal";
 import { blinkCharges, poseOf, witchTuning } from "../rules/game";
 import { coolRoom, coolShare } from "../rules/cooldown";
-import { shotCamera, type Shot, type TreeExtent } from "../rules/arrive";
+import { buffsOf, speedBuff } from "../rules/buffs";
+import { speedMultiplier } from "../rules/spells";
+import { shotCamera, type Shot } from "../rules/arrive";
 import { FALLBACK_LOOK, floorLook, type FloorLook } from "./legendFloor";
 import { AREA_TYPES, HOME_LOOK, nearestClearings, type LegendClearing } from "../rules/map";
 import { ZOO_CONFIG } from "../rules/zoo";
@@ -69,12 +74,13 @@ import { hsv2rgb } from "../../art/generator.js";
 import { Post } from "./post";
 import { GrassView } from "./grass";
 import { SpellFx } from "./spellfx";
-import { updateRefraction, resetRefraction } from "./view/refraction";
+import { updateRefraction, resetRefraction, captureRefractionCast } from "./view/refraction";
+import { PartyStartFx } from "./partyStart";
+import { MAKE_SOME_NOISE, partyStartOf, replayReady } from "../rules/partyStart";
 import { dodgeEchoesFor, resetDodgeEchoes } from "./view/dodgeEchoes";
 import { TRAIL_DEFAULT, WitchTrail } from "./trail";
 import { newPartyOverLook, partyOff, partyOverEase, updatePartyOver } from "./partyOver";
 import { SWOOP_TRAIL_DEFAULT, SwoopTrails } from "./swoopTrails";
-import { LOAD_DEFAULT, loadView } from "./load";
 import { HAND, InviteView, letterAt, type HerOffset } from "./invites";
 import { StateMarks } from "./looks";
 import type { Dancefloor } from "./dancefloor";
@@ -111,6 +117,7 @@ import { packAtlas } from "./atlas";
 import { GpuLedger } from "./gpuLedger";
 import { keepUnderBudget, newGpuState } from "./view/gpuBudget";
 import { berrySprite } from "./berries";
+import { berryColour } from "./colourGrammar";
 import { leyDrawnTo, RING_AFTER, shaderPulse, type LeyLines } from "./leylines";
 import { routeSeen } from "../rules/hatSpells";
 import { bootLineAt, bootPath, bootPulseAt } from "../rules/bootRing";
@@ -135,15 +142,18 @@ import { cancelRefresh, refresh, refreshSteps } from "./view/scenery";
 import { drawBerries, drawCreatures, resetCreatureCaches } from "./view/creatures";
 import { drawHatArt } from "./view/hatArt";
 import { drawFinds, findClear } from "./view/finds";
+import { challengeCarving, challengeFloor, challengeRing, drawChallengeColumns, fireChallenge } from "./challenge";
 import { drawMarkers, drawSpeakers, forgetCandles, placeTreehouse, entDeckDrawn } from "./view/home";
 import { miniTreehouse, ZooExitTag } from "./zooExit";
 import { CastTag } from "./castTag";
+import { FeedTag } from "./feedTag";
 import { lanternLights, relicLights, setLights, sigilLights, updateSources } from "./view/lights";
-import { placeCamera } from "./view/camera";
+import { gameAim, placeCamera, ridePoint } from "./view/camera";
 import { setFrameUniforms } from "./view/frameUniforms";
 import { newReveal, setReveal } from "./view/reveal";
 import { drawWitch, houseShiftOf } from "./view/witch";
 import { MushroomView } from './mushrooms';
+import { MasterplanView } from "./masterplan";
 import { PotionObserversView } from './potionObservers';
 import { chunkyPixelSize, potionStrength } from './potionEffects';
 import { drawPointers } from "./view/hud";
@@ -208,6 +218,8 @@ function nightState(t: Tuning) {
     numbersAt: 0,
     /** How far the camera is lifted to see her over a hill in between (metres, eased). */
     camLift: 0,
+    camLiftTime: Number.NaN,
+    houseCamInput: new THREE.Vector3(),
     /** The charcoal huts' smouldering mounds near her (looked up when she has moved far), for the smoke. */
     mounds: [] as number[],
     moundsAt: { x: Infinity, z: Infinity },
@@ -382,6 +394,8 @@ export class View {
   readonly renderer: THREE.WebGLRenderer;
   scene = new THREE.Scene();
   readonly magic = fxFor(this.scene);
+  /** The party start's pieces (render/partyStart.ts; Ed, 2026-11-03), drawn over the house at her decks. */
+  readonly partyStart = new PartyStartFx(this.scene);
   private magicBlink = -Infinity;
   /** Stage 0 art review only; absent in ordinary play. */
   fxMock: FxMock | null = null;
@@ -408,13 +422,16 @@ export class View {
   private landingFades = new LandingArtFade();
   landingHouseShare = 1;
   landingSleeping = false;
+  /** Put to bed before a sail's dive (main.ts bedFirst, rules/wakeUp.ts tuckIn), the wake-up not started till it lands: drawn asleep
+   *  in her bed as its first beats have her (render/view/witch.ts), not standing in it. */
+  asleepInBed = false;
   landingWakeReady(): boolean {
     const A = this.assets;
     return A.fullWitchReady && A.home.treehouse && this.treehouseBatch.atlas === A.treehouse.atlas && this.landingHouseShare === 1 &&
       [...this.witchBatch.meshes, ...this.treehouseBatch.meshes].every(o => ([] as THREE.Material[]).concat((o as THREE.Mesh).material ?? []).every(m => materialProgramsReady(this.renderer.properties.get(m)))) &&
       !!this.houseRooms?.landingReady(this.renderer);
   }
-  beginLandingShaders(chart: boolean): void { this.shaderEpoch++; this.shaderLandingDeadline = Infinity; this.shaderChartLanding = chart; this.shaderLandingLimited = false; this.landingSleeping = false; this.landingFades.reset(); this.landingHouseShare = 1; }
+  beginLandingShaders(chart: boolean): void { this.landingPresentationMs = 0; this.shaderEpoch++; this.shaderLandingDeadline = Infinity; this.shaderChartLanding = chart; this.shaderLandingLimited = false; this.landingSleeping = false; this.landingFades.reset(); this.landingHouseShare = 1; }
   private armLimitedLanding(): void {
     if (this.shaderLandingLimited) return;
     this.shaderLandingLimited = true; this.landingFades.arm(this.assets.home);
@@ -454,12 +471,14 @@ export class View {
   private smoke!: Smoke;
   /** The dark behind the house till the forest has loaded (Ed, 2026-10-26: "When the forest has loaded, fade it in gradually behind
    *  the whole treehouse"; it was dark behind the enclosed rooms always, Ed 2026-10-23; the tuning's treehouse.house.dark;
-   *  render/post.ts Post.behind): on foot in the house, any room or the Terrace, while the island isn't ready yet (g.islandReady:
-   *  its own art drawn, main.ts), only the house's own meshes are drawn (its rooms, the Ent's art with its crowns, her), over black;
-   *  the scenery is still listed and its art still asked for, only not drawn. As it's ready the forest fades in behind the whole
-   *  house, the whole picture at once, over dark.reveal seconds, and stays behind every room after. Leaving the house before
-   *  then (lifting off), it comes back from where she stands over dark.fade seconds; through the telescope, the whole picture over
-   *  the same. Eased on her clock (g.herTime: full speed in the house's slowed time, and the same on any machine). */
+   *  render/post.ts Post.behind; the reveal's own steps render/forestReveal.ts): on foot in the house, any room or the Terrace, or
+   *  through its telescope, while the island isn't ready yet (g.islandReady: its own art drawn, main.ts), only the house's own meshes
+   *  are drawn (its rooms, the Ent's art with its crowns, her), over black; the scenery is still listed and its art still asked for,
+   *  only not drawn. From the first frame it's ready the forest fades in, the whole picture at once, over dark.reveal seconds of her
+   *  clock, the same reveal in the house and through the telescope (Ed, 2026-11-02: no black then all at once, no sudden light through
+   *  the telescope), and stays after. Lifting off before then, it comes back from where she stands over dark.fade seconds. Eased on
+   *  her clock (g.herTime: full speed in the house's slowed time, and the same on any machine), a drawn frame counting at most
+   *  REVEAL_STEP_MAX of it. */
   /** No tilt-shift in the treehouse (Ed, 2026-10-26: "No tilt shift while you're in the treehouse"): on the house (its rooms,
    *  branches and Terrace, the stations' close-ups; her perch) the blur eases out over HOUSE_TILT_EASE seconds of her clock, and back
    *  in as she leaves; through the telescope it stays as it was (its own view of the island). Once a frame (render/view/witch.ts), its
@@ -472,27 +491,26 @@ export class View {
     this.tiltK = stepTiltShare(this.tiltK, want, dt, HOUSE_TILT_EASE);
     return tiltShareShown(this.tiltK);
   }
-  private dark = { k: 1, at: NaN, door: null as { x: number; z: number } | null, enclosed: false, reveal: false, uv: new THREE.Vector2() };
+  private dark = { reveal: newForestReveal(), place: null as RevealPlace | null, from: { x: 0, z: 0 }, uv: new THREE.Vector2() };
   private behindHouse(g: Game): void {
     // A late landing's house-only camera layer must still submit the critical ground to its readiness gate.
     this.ground.mesh.layers[this.shaderLandingLimited && this.shaderDrawStatus.active ? 'enable' : 'disable'](HOUSE_LAYER);
-    const D = this.dark, T = g.tuning.treehouse.house?.dark, deck = deckOf(g.map, g.tuning), w = g.witch;
-    const inHouse = !!T?.on && !!deck?.house?.rooms && !!w.perch && w.mode === "ground" && !this.telescope; // (on foot: rising out of it, the forest comes back as she lifts off)
-    const enclosed = inHouse && !g.islandReady;
-    // (where it comes back from: the whole picture as the island's ready, or through the telescope; else where she left the house)
-    if (enclosed !== D.enclosed) { D.reveal = !enclosed && inHouse; D.door = (this.telescope || D.reveal) && !enclosed ? null : { x: w.x, z: w.z }; D.enclosed = enclosed; }
-    const dt = Number.isFinite(D.at) ? Math.max(0, Math.min(0.1, g.herTime - D.at)) : 1e9;
-    D.at = g.herTime;
-    const fade = Math.max(1e-3, (D.reveal && !enclosed ? T?.reveal : undefined) ?? T?.fade ?? 0.6);
-    D.k = enclosed ? Math.max(0, D.k - dt / fade) : Math.min(1, D.k + dt / fade);
-    if (!T?.on) D.k = 1;
+    const D = this.dark, T = g.tuning.treehouse.house?.dark, deck = deckOf(g.map, g.tuning), w = g.witch, rooms = !!T?.on && !!deck?.house?.rooms;
+    // (on foot: rising out of it, the forest comes back as she lifts off)
+    const place: RevealPlace = this.fly && !this.fly.indoors ? "dive" : !rooms ? "out" : this.telescope ? "scope" : w.perch && w.mode === "ground" ? "house" : "out";
+    if (place !== D.place) { D.place = place; D.from = { x: w.x, z: w.z }; } // (where she came in, or left)
+    const R = D.reveal;
+    stepForestReveal(R, place, !!g.islandReady, g.herTime, T); // (a sail's dive, "dive": the whole picture, though she's in bed for its end; on its way down into her room, the house's as she'll wake in it)
     const P = this.post;
-    P.behind = D.k < 1 ? D.k * D.k * (3 - 2 * D.k) : 1; // (eased in and out)
-    if (D.k >= 1) return;
+    P.behind = forestShown(R.k);
+    if (R.k >= 1) return;
     // The house's own meshes on its layer as well as the scene's (they come and go: each frame).
     for (const o of [...(this.houseRooms?.meshes ?? []), ...(this.crown?.meshes ?? []), ...(this.strings?.crownMeshes ?? []), ...this.treehouseBatch.meshes, ...this.witchBatch.meshes, ...(this.bareBatch?.meshes ?? [])]) o.traverse(c => c.layers.enable(HOUSE_LAYER));
-    if (D.door) {
-      const p = this.v3.set(D.door.x, this.witchFeetY, D.door.z).project(this.camera);
+    // (from a point: back from where she lifted off, or closing in round her as she comes into the house before it's ready; else the
+    // whole picture: the island's reveal, and the telescope)
+    const door = R.out || (place === "house" && !g.islandReady) ? D.from : null;
+    if (door) {
+      const p = this.v3.set(door.x, this.witchFeetY, door.z).project(this.camera);
       P.behindAt = D.uv.set(p.x * 0.5 + 0.5, p.y * 0.5 + 0.5);
     } else P.behindAt = null;
   }
@@ -518,6 +536,7 @@ export class View {
   readonly assets: AssetLibrary;
   typeBatches = new Map<number, SpriteBatch>();
   private readonly mushroomView = new MushroomView();
+  private masterplan?: MasterplanView;
   private readonly potionObservers = new PotionObserversView();
   decorBatches = new Map<string, SpriteBatch>();
   /** The biome the ground cover's tufts were drawn in (none: temperate): drawn again for a night on an island in another. */
@@ -539,31 +558,41 @@ export class View {
   zooExitTag: ZooExitTag | null = null;
   /** The spell's key prompt by its 🎶 (render/castTag.ts), made the first frame. */
   castTag: CastTag | null = null;
+  /** The feed prompt by the berry a tap would feed (render/feedTag.ts; Ed, 2026-11-03), made the first frame. */
+  feedTag: FeedTag | null = null;
   /** The great oak's crown over the house (render/crown.ts), with the house's rooms and treehouse.house.crown on. */
   crown: CrownView | null = null;
   /** The crown seen over the horizon from far off (render/crownLandmark.ts). */
   private crownFar: CrownLandmark | null = null;
   private crownAt = Number.NaN;
+  private crownNoNotch = false;
+  private crownFarSource: CrownView | null = null;
   private crownDrawn = true;
   private readonly crownWorld: PlanMap = { o: new THREE.Vector3(), ex: new THREE.Vector3(), ey: new THREE.Vector3(0, 1, 0), ez: new THREE.Vector3() };
   /** The crown for a house with rooms (made once: the same oak over any island's treehouse), or none. */
   private ensureCrown(game: Game): void {
     const t = game.tuning, H = t.treehouse.house, want = !!(H?.on && H.crown?.on && deckOf(game.map, t)?.house?.rooms);
     // (the crown whole over the Terrace or with its gap, the pause page's switch: Ed, 2026-10-26, grown again when it's flipped)
-    const gap = H?.crown?.whole !== true, lights = H?.crown?.lights ?? 1, wrap = H?.crown?.wrap ?? 0;
-    if (this.crown && want && (this.crown.crown.gap !== gap || this.crown.lights !== lights || (this.crown.crown.wrap ?? 0) !== wrap)) { this.scene.remove(...this.crown.meshes); this.strings?.setCrown(null); this.crown.dispose(); this.crown = null; if (this.crownFar) { this.scene.remove(...this.crownFar.meshes); this.crownFar.dispose(); this.crownFar = null; } }
+    const noNotch = !!H?.look?.noNotch, gap = H?.crown?.whole !== true, lights = H?.crown?.lights ?? 1, wrap = H?.crown?.wrap ?? 0;
+    if (this.crown && want && (this.crownNoNotch !== noNotch || this.crown.crown.gap !== (noNotch ? false : gap) || this.crown.lights !== lights || (this.crown.crown.wrap ?? 0) !== wrap)) { this.scene.remove(...this.crown.meshes); this.strings?.setCrown(null); this.crown.dispose(); this.crown = null; this.crownFarSource?.dispose(); this.crownFarSource = null; if (this.crownFar) { this.scene.remove(...this.crownFar.meshes); this.crownFar.dispose(); this.crownFar = null; } }
     if (want && !this.crown && H) {
       const outline = { rooms: OUTLINE_ROOMS, branches: OUTLINE_BRANCHES, stubs: OUTLINE_STUBS, takeoff: OUTLINE_TAKEOFF } as unknown as HouseOutline;
       // (the dancefloor and its speakers stay open to the sky as the Terrace does: it stands south-east of the house, under the crown's edge)
       const deck = deckOf(game.map, t)!, df = game.map.dancefloor, dp = toPlan({ x: deck.x, z: deck.z }, df.x, df.z);
       const open = [{ x: dp.x, z: dp.z, r: speakerRadius(t) + t.dancefloor.speakers.footprint + 4 }];
-      this.crown = new CrownView(makeCrown({ outline, floor: H.height, seed: H.crown!.seed, open, gap, wrap }), t.stringLights.bulbSpacing, outline, lights);
-      this.crown.drawMask = (key, box) => { const p = this.assets.oneOff({ kind: "crownMask", id: `${key}@${box.map(v => v.toFixed(4)).join(",")}`, style: this.assets.style, box: [...box] }).then(r => r.mask ?? Promise.reject(new Error("no mask"))); this.assets.track(`crownMask:${key}`, p); return p; };
+      this.crownNoNotch = noNotch;
+      const input = { outline, floor: H.height, seed: H.crown!.seed, open, gap, wrap };
+      const original = makeCrown(input);
+      // The dancefloor open-sky sight extrusion removes a tall channel even with whole=true.
+      // Trial removes only that close-crown reservation; the horizon keeps its original source.
+      this.crown = new CrownView(noNotch ? makeCrown(crownLookInput(input, true)) : original, t.stringLights.bulbSpacing, outline, lights);
+      this.crownFarSource = noNotch ? new CrownView(original, t.stringLights.bulbSpacing, outline, lights) : null;
       this.scene.add(...this.crown.meshes);
       this.strings?.setCrown(this.crown); // (its string lights: render/strings.ts)
-      this.crownFar = new CrownLandmark(this.crown, t.stringLights.palette.map(h => new THREE.Color(h))); this.scene.add(...this.crownFar.meshes);
+      this.crownFar = new CrownLandmark(this.crownFarSource ?? this.crown, t.stringLights.palette.map(h => new THREE.Color(h))); this.scene.add(...this.crownFar.meshes);
     } else if (!want && this.crown) {
       this.scene.remove(...this.crown.meshes); this.strings?.setCrown(null); this.crown.dispose(); this.crown = null;
+      this.crownFarSource?.dispose(); this.crownFarSource = null;
       if (this.crownFar) { this.scene.remove(...this.crownFar.meshes); this.crownFar.dispose(); this.crownFar = null; }
     }
   }
@@ -581,8 +610,13 @@ export class View {
   spellFx = new SpellFx();
   /** Opt-in world-pose echo preview, also exposed to the existing capture/debug tools. */
   get dodgeEchoes() { return dodgeEchoesFor(this); }
-  /** Her flight trail: a ribbon of glow in the colour of the area she's over (render/trail.ts). */
+  /** Her flight trail: the cooldown trail's dotted sections in her preset's colours (trail.steps; with it off, a ribbon of glow in the
+   *  colour of the area she's over: render/trail.ts). */
   private trail!: WitchTrail;
+  /** Her cooldown trail's colour preset (config/trail-colours.json; chosen at the Broom station, kept with her broom: main.ts). */
+  private trailPresetId: string | null = null;
+  get trailPreset(): string | null { return this.trailPresetId; }
+  set trailPreset(id: string | null) { this.trailPresetId = id; if (this.trail) this.trail.preset = id; }
   private trailRgb = new THREE.Vector3();
   shadow!: THREE.Mesh;
   mpp: number; // metres per art pixel
@@ -721,8 +755,8 @@ export class View {
   loadingMist: LoadingMist | null = null;
   /** ?loadmist=1|0 (app/viewParams.ts): the loading mist on or off whatever the tuning and ?quick=1 say; null as they say. */
   loadingMistLink: boolean | null = null;
-  private mistClock = 0;
-  private mistLast = 0;
+  // Only the arrival presentation advances while the loading sleep holds game time.
+  landingPresentationMs = 0;
   width = 1;
   height = 1;
   /** ?debug=cull: tint anything that has just appeared bright red, and mark where anything has
@@ -801,9 +835,11 @@ export class View {
   /** A View whose island is built a frame's budget at a time (render/slices.ts; Ed's laptop, 2026-10-20: the build was one 10 s
    *  task, the bedroom's alarm, its music and every animation stopped): the same steps in the same order as `new View`, the page
    *  given its frames between them. Nothing is drawn until it's whole (the caller waits for it). */
-  static async create(canvas: HTMLCanvasElement, game: Game, style: Style, witchGenome: unknown = null, budgetMs = 8): Promise<View> {
+  /** `hatOff`: her hat-off frames are the start's own art too (a game's first morning, her hat on the hats' floor: main.ts). */
+  static async create(canvas: HTMLCanvasElement, game: Game, style: Style, witchGenome: unknown = null, { budgetMs = 8, hatOff = false }: { budgetMs?: number; hatOff?: boolean } = {}): Promise<View> {
     await nextFrame(); // (a turn of its own: the renderer and the light made apart from whatever came before, the night's map)
     const v = new View(canvas, game, style, witchGenome, true);
+    if (hatOff) v.assets.askHatOff();
     await runSliced(v.build(), "view", budgetMs);
     return v;
   }
@@ -876,6 +912,7 @@ export class View {
     this.scene.add(this.spellFx.trail);
     this.magic.legacyParty=(x,y,z,age)=>{this.spellFx.reset();this.spellFx.partyBurst(x,y,z,this.game.herTime-age);this.spellFx.update(this.game,this.game.herTime,y);};
     this.trail = new WitchTrail(game.tuning.trail ?? TRAIL_DEFAULT);
+    this.trail.preset = this.trailPresetId;
     this.scene.add(this.trail.mesh);
     bridgeNativeObject(this.trail.mesh,"flightTrail");
     bridgeNativeObject(this.spellFx.trail,"broomSpark");
@@ -884,7 +921,7 @@ export class View {
     this.propBatch = new SpriteBatch(this.assets.props, this.mpp, { fade: true }).name("props");
     // Berries: a small shiny dark-red berry, drawn here (a highlight upper left, a darker side),
     // always drawn (gameplay), unlit so it reads at night; its halo and glints are in leash.ts.
-    this.berryBatch = new SpriteBatch(packAtlas([berrySprite(t.berries.colour)], 64), this.mpp, { unlit: true });
+    this.berryBatch = new SpriteBatch(packAtlas([berrySprite(berryColour(t))], 64), this.mpp, { unlit: true });
     this.scene.add(...this.berryBatch.meshes);
     this.scene.add(...this.propBatch.meshes);
     yield "party";
@@ -1002,8 +1039,10 @@ export class View {
    *  dive"; "the treehouse doesn't have to be ready at the start of the dive - only once it's in view"): metres from the dive's view
    *  (rules/arrive.ts diveReach): the area types drawn in that order, nearest first, under the loading mist; and the start waits only
    *  for the shaders (the hand-off's own ground is drawn by its first frames, main.ts warmAt): the house's art, the ground and the
-   *  forest round it are made on through the dive (`homeDone`; app/arrive.ts eases the dive if they're due in view before then). */
-  async prepare(o: { sail?: boolean; dive?: (x: number, z: number) => number; track?: [number, number, number, number][] } = {}): Promise<void> {
+   *  forest round it are made from the start, alongside them, and on through the dive if they're not done by its hand-off (`homeDone`;
+   *  app/arrive.ts eases the dive if they're due in view before then). */
+  /** `underDive` (with `dive`): the chart hands over at once, this going on under the dive (compileAll's `underDive`). */
+  async prepare(o: { sail?: boolean; dive?: (x: number, z: number) => number; track?: [number, number, number, number][]; underDive?: boolean } = {}): Promise<void> {
     performance.mark("witch:prep-start");
     if (o.sail) { this.homeDone = false; this.shaderDrawStatus.active = true; this.shaderDrawStatus.skipped = {}; this.shaderDrawStatus.fallback = {}; this.shaderDrawStatus.submitted = {}; if (!this.shaderChartLanding) this.startLandingShaderGrace(); }
     this.makeLoadingMist();
@@ -1027,7 +1066,13 @@ export class View {
       this.homeDone = false;
       this.prepared = true;
       this.askIsland(near); // (the workers drawing the dive's areas while the shaders link)
-      await this.compileAll(o.sail);
+      // The house, the forest round it and the legends' carvings made from here on, while the shaders link and the chart flies on
+      // down to the water (Ed, 2026-11-03: "The zoom into the sea chart can be quite a few seconds long, the idea is to build the
+      // island during this time"): made only once the dive began, a slice a dive frame, they took 14.5 s of his laptop's dive for
+      // what the boot makes in 0.6 s, the dive flying over a forest not there. What's left as it hands over goes on through the dive.
+      const compiled = this.compileAll(o.sail, !!o.underDive), homeEpoch = this.shaderEpoch; // (compileAll's epoch: buildHome stops only for a newer night)
+      void this.buildHome(homeEpoch).catch(e => { console.error("the house's start after a sail went wrong", e); }).finally(() => { if (homeEpoch === this.shaderEpoch) { this.homeDone = true; performance.mark('landing:house-complete'); } });
+      await compiled;
       // The ground where the dive first sees the island (Ed, 2026-10-24: the dive's view needs the ground; Echo's island black through
       // the descent, its tiles not drawn yet): the first TRACK_AHEAD metres of its track in from the sea, TRACK_REACH each side, a few
       // tiles a frame under the chart; the rest of it as the dive goes, the view's own each frame (render/view/ahead.ts).
@@ -1037,8 +1082,6 @@ export class View {
         while (this.ground.fill(this.renderer, r, x0, z0, 6) > 0) await nextFrame();
       }
       performance.mark("witch:prep-track");
-      const homeEpoch = this.shaderEpoch;
-      void this.buildHome(homeEpoch).catch(e => { console.error("the house's start after a sail went wrong", e); }).finally(() => { if (homeEpoch === this.shaderEpoch) { this.homeDone = true; performance.mark('landing:house-complete'); } });
       return;
     }
     await runSliced(this.warmSteps(), "warm"); // (the first frame's own lazy work made ahead, a slice at a time)
@@ -1066,23 +1109,6 @@ export class View {
     await this.compileAll(o.sail);
     this.askIsland(near);
     this.homeDone = true;
-  }
-
-  /** The treehouse tree as the dive's whole-tree shot frames it (rules/arrive.ts TreeExtent; the coordinator, 2026-10-24: the one
-   *  measure of it): the great oak's crown, from its lobes, where there is one (render/crown.ts; its middle, its top from the ground
-   *  and its width east to west), else the Ent's art at the treehouse once it's come; null till then. */
-  treeExtent(): TreeExtent | null {
-    const g = this.game, deck = deckOf(g.map, g.tuning);
-    if (this.crown && deck) {
-      let x0 = Infinity, x1 = -Infinity, z0 = Infinity, z1 = -Infinity, top = 0;
-      for (const l of this.crown.crown.lobes) {
-        const p = fromPlan({ x: deck.x, z: deck.z }, l.x, l.z);
-        x0 = Math.min(x0, p.x - l.r); x1 = Math.max(x1, p.x + l.r); z0 = Math.min(z0, p.z - l.r); z1 = Math.max(z1, p.z + l.r); top = Math.max(top, l.y + l.r);
-      }
-      if (Number.isFinite(x0)) return { x: (x0 + x1) / 2, z: (z0 + z1) / 2, height: deck.h + top, width: x1 - x0 };
-    }
-    const a = this.assets, th = g.map.treehouse;
-    return a.home.treehouse ? { x: th.x, z: th.z, height: a.treehouse.base.y * this.mpp, width: (a.treehouse.atlas.frames[0]?.w ?? 0) * this.mpp } : null;
   }
 
   /** Whether the start's house is made: its art (her, home, the soundsystems, the treehouse), the ground and the forest round it.
@@ -1162,7 +1188,11 @@ export class View {
   }
 
   /** Every shader the scene holds compiled, and their programs' logs read, ahead of their first draw (prepare). */
-  private async compileAll(allowPartial = false): Promise<void> {
+  /** `underDive` (a sail from the chart, Ed 2026-11-03: "zoom in over the map, switch to the island's sea, fly over the island, and
+   *  show whatever is built, with mist over it if it's not built"): nothing waited for; the dive flies while the programs link, the
+   *  draw gate keeping back what isn't ready yet (render/shaderDrawGate.ts), each uniform read once it is, the gate then let go; no
+   *  warm draws, uploads or GPU fence under the dive's own frames. */
+  private async compileAll(allowPartial = false, underDive = false): Promise<void> {
     const epoch = ++this.shaderEpoch;
     if (allowPartial && !this.shaderChartLanding) this.startLandingShaderGrace();
     this.setReadiness("compile", 0, 1);
@@ -1209,6 +1239,22 @@ export class View {
       return detail;
     };
     record('start');
+    // (the programs finished in the background: each uniform read once it's linked, then the draw gate let go)
+    const background = () => (async () => {
+      await waitForPrograms(allPrograms, compiled, () => {}, () => {}, undefined, undefined, () => epoch === this.shaderEpoch ? Infinity : -Infinity);
+      if (epoch !== this.shaderEpoch) return;
+      const programs = [...(this.renderer.info.programs ?? [])];
+      await runSliced((function* (view: View) {
+        for (const p of programs) {
+          if (epoch !== view.shaderEpoch) return;
+          if ((p as unknown as ReadyProgram).isReady()) p.getUniforms();
+          yield;
+        }
+      })(this), 'background-programs');
+      if (epoch !== this.shaderEpoch) return;
+      record('background-ready'); this.shaderDrawStatus.active = false; releaseDisposals();
+    })().catch(error => console.error('background shader readiness failed; retaining safe fallback', error));
+    if (underDive) { void background(); this.setReadiness('ready', 1, 1); return; }
     // Ed6520617385: a sail may land after its15s grace; unfinished programs must never force a uniform read or draw.
     const complete = await waitForPrograms(allPrograms, compiled, (ready, total) => this.setReadiness('compile', ready, total), (pending, elapsed) => {
       console.warn('view: shaders still pending; keeping the chart up', record('pending', pending, elapsed));
@@ -1216,20 +1262,7 @@ export class View {
     if (!complete) {
       this.armLimitedLanding();
       record('landing-limit', allPrograms().filter(p => !p.isReady()), performance.now() - this.shaderLandingDeadline + 15000);
-      void (async () => {
-        await waitForPrograms(allPrograms, compiled, () => {}, () => {}, undefined, undefined, () => epoch === this.shaderEpoch ? Infinity : -Infinity);
-        if (epoch !== this.shaderEpoch) return;
-        const programs = [...(this.renderer.info.programs ?? [])];
-        await runSliced((function* (view: View) {
-          for (const p of programs) {
-            if (epoch !== view.shaderEpoch) return;
-            if ((p as unknown as ReadyProgram).isReady()) p.getUniforms();
-            yield;
-          }
-        })(this), 'background-programs');
-        if (epoch !== this.shaderEpoch) return;
-        record('background-ready'); this.shaderDrawStatus.active = false; releaseDisposals();
-      })().catch(error => console.error('background shader readiness failed; retaining safe fallback', error));
+      void background();
       this.setReadiness('ready', 1, 1);
       return; // no unfinished uniform reads, warm draws, uploads or GPU fence on the landing path
     }
@@ -1346,6 +1379,7 @@ export class View {
     // The last night's: the scenery's rebuild under way, the creatures' caches, the candles; its area types' batches and their
     // shadows, and its soundsystems' (their atlases the art's: freed once, by reseat).
     cancelRefresh(this); resetCreatureCaches(); forgetCandles(this);
+    this.masterplan?.dispose(); this.masterplan = undefined;
     this.potionObservers.dispose(this);
     resetDodgeEchoes(this);
     for (const b of this.typeBatches.values()) { this.scene.remove(...b.meshes); b.release(); }
@@ -1387,7 +1421,7 @@ export class View {
     this.strings.setGame(game); this.leashView.setGame(game); this.lasers.setGame(game); this.borders.setGame(game); this.inviteView.setGame(game);
     this.partyObjects.reset(); this.rig?.reset(); this.holograms.reset(); this.glades.reset(); this.wisps?.reset();
     this.clouds.reseed(game.seed); this.lightRings?.reseed(game.map.seed);
-    this.fireworks.reset(); this.swoopTrails.reset(); this.spellFx.reset(); this.trail.newNight(); this.combatLight.reset(); this.occlusion.reset();
+    this.fireworks.reset(); this.swoopTrails.reset(); this.spellFx.reset(); this.partyStart.reset(); this.trail.newNight(); this.combatLight.reset(); this.occlusion.reset();
     resetRefraction(this);
     this.assets.prefetchType(HOME_LOOK); // home's meadow floor (no trees ask for it)
   }
@@ -1440,7 +1474,7 @@ export class View {
         b.name(`${map === this.typeBatches ? "type" : map === this.creatureBatches ? "creature" : "decor"} ${String(key)}`); // (the probes' draw-call names: tools/bench/gpu.cjs)
         // A set drawn after the start (flying toward an area whose art was still being drawn)
         // fades in rather than popping in.
-        if (this.prepared && !(map === this.typeBatches && this.noFade.delete(key))) { b.appearU.value = 0; this.appearing.set(b, performance.now()); }
+        if (this.prepared && !(map === this.typeBatches && this.noFade.delete(key)) && !this.game.clock.paused) { b.appearU.value = 0; this.appearing.set(b, this.game.clock.time * 1000); }
       }
     }
     return b;
@@ -1455,9 +1489,9 @@ export class View {
     for (const c of g.party.next) { const sp = AREA_TYPES[g.map.typeOf(c[0], c[1])]?.creature; if (sp) { this.assets.creatureArt(sp); this.assets.wokenArt(sp); } }
   }
   private easeAppearing(): void {
-    const now = performance.now();
+    const now = this.game.clock.time * 1000;
     for (const [b, at] of this.appearing) {
-      const k = Math.min(1, (now - at) / 800);
+      const k = Math.max(0, Math.min(1, (now - at) / 800));
       b.appearU.value = k * k * (3 - 2 * k);
       if (k >= 1) this.appearing.delete(b);
     }
@@ -1498,6 +1532,19 @@ export class View {
   runeCyan = new THREE.Vector3(0.3, 0.9, 1);
   runeViolet = new THREE.Vector3(0.75, 0.45, 1);
   runeGreen = new THREE.Vector3(0.45, 1, 0.5);
+  /** The party start played again at her decks (Ed, 2026-11-03: "press square at the decks after the party is started that replays
+   *  the visual effects ... (the dj says make some noise!!!)"): main.ts calls it on the use button there (rules/partyStart.ts
+   *  canReplayPartyStart). Every piece from the start where she was drawn seated, and her line over the decks; drawing only. Not
+   *  while a show's still playing, nor within a second of the last (rules/partyStart.ts replayReady): false then, or with no decks
+   *  to play it at. */
+  replayPartyStart(): boolean {
+    const P = this.partyStart, A = P.anchor ?? P.here, g = this.game;
+    if (!A || !replayReady(partyStartOf(g.tuning), P.showAt, P.now)) return false;
+    P.start(g.tuning, A.x, A.y, A.z, P.now);
+    captureRefractionCast(this, P.worldNow, A.x, A.y, A.z, true);
+    this.houseRooms?.sayAtDecks(MAKE_SOME_NOISE, P.now);
+    return true;
+  }
   /** A 💌 vanishes at a slowed circle's edge: a small sparkle there (its `vanished` invite event calls this, render/invites.ts). */
   edgeSparkle(x: number, z: number): void { if (this.edgeSparkles.length < 64) this.edgeSparkles.push({ x, z, at: LIGHT_UNIFORMS.uRealTime.value }); }
   /** ?bare: hide everything but the ground, the witch, soundsystems, the dancefloor and its
@@ -1505,7 +1552,7 @@ export class View {
   private hideForBare(): void {
     for (const b of [...this.typeBatches.values(), ...this.decorBatches.values(), ...this.creatureBatches.values(), this.treehouseBatch, this.propBatch, this.markerBatch])
       for (const m of b.meshes) m.visible = false;
-    for (const o of [this.grass.mesh, this.markerFx.group, this.borders.mesh, this.lasers.mesh, this.holograms.group, this.spellFx.trail, this.trail.mesh, this.swoopTrails.mesh]) o.visible = false;
+    for (const o of [this.grass.mesh, this.markerFx.group, this.borders.mesh, this.lasers.mesh, this.holograms.group, this.spellFx.trail, this.partyStart.sparkles, this.trail.mesh, this.swoopTrails.mesh]) o.visible = false;
   }
 
   readonly waveNumbers = new WaveNumbers();
@@ -1559,15 +1606,35 @@ export class View {
     this.scene.add(...b.meshes);
     return b;
   }
-  /** The character creator changed her look (her genome, art/witchGenome.js): her frames re-baked and her batch swapped. */
-  setWitch(genome: unknown): void {
-    this.assets.rebakeWitch(genome); // (drawn by an art worker: her batch takes the new frames when they arrive, swapHomeArt below)
+  /** The character creator changed her look (her genome, art/witchGenome.js): her frames re-baked and her batch swapped.
+   *  `morning`: her next morning's look, read ahead (main.ts showLook: a sail's, or the bed's next night): her whole set asked at
+   *  once, ahead of all but the start's own, and her hat-off frames too if her hat will lie on the floor (`hatOff`, as View.create's);
+   *  `lookDrawn` says when it's on her. */
+  setWitch(genome: unknown, morning?: { hatOff: boolean }): void {
+    this.lookHatOff = !!morning?.hatOff;
+    // (the look she has already, the boot's say (her nightie on a first morning, main.ts): nothing to redraw, her hat-off frames kept)
+    if (JSON.stringify(genome ?? null) === JSON.stringify(this.assets.witchGenome ?? null)) { if (morning?.hatOff) this.assets.askHatOff(); return; }
+    this.assets.rebakeWitch(genome, !!morning); // (drawn by an art worker: her batch takes the new frames when they arrive, swapHomeArt below)
     if (this.bareBatch) { this.scene.remove(...this.bareBatch.meshes); this.bareBatch = null; this.bareAsked = false; }
+    if (morning?.hatOff) this.assets.askHatOff();
   }
+  /** The game's own camera as it will be on the next frame drawn without the flight's (render/view/camera.ts gameAim: her pose's aim,
+   *  over the ground its ride reads, she lying still in bed, and moved to where she's drawn in the house, the last frame's), as a
+   *  flight's shot: a sail's dive ends on it (app/arrive.ts), so the game takes over with the camera the dive landed on. */
+  landingShot(): Shot {
+    const g = this.game, p = poseOf(g), R = ridePoint(this, p), a = gameAim(p, groundHeight(R.x, R.z), this.houseCam);
+    return { tx: a.x, ty: a.y, tz: a.z, angle: p.angle, distance: p.distance, fov: g.tuning.camera.fov };
+  }
+  /** Her look's hat-off frames are wanted with it (setWitch's `morning`). */
+  private lookHatOff = false;
+  /** Her look now is on her whole, not a preview nor the look before (render/assets.ts fullWitchReady), and its hat-off frames too if
+   *  its morning wants them: till it is, in bed, she's under her covers (render/view/witch.ts inCovers), never seen there in last
+   *  night's clothes; nothing waits for it. */
+  get lookDrawn(): boolean { return this.assets.fullWitchReady && (!this.lookHatOff || this.assets.bareFresh); }
   /** The start's own art, drawn by the art workers (fast start (b)): each batch built on a stand-in takes its set once it arrives. */
   private swapHomeArt(): void {
     const A = this.assets;
-    const now = performance.now();
+    const now = this.landingPresentationMs + this.game.clock.time * 1000;
     const previousHouseShare = this.landingHouseShare;
     this.landingHouseShare = this.landingFades.share('treehouse', A.home.treehouse, now);
     if (this.shaderLandingLimited && previousHouseShare === 0 && this.landingHouseShare > 0) performance.mark('landing:house-fading');
@@ -1610,7 +1677,7 @@ export class View {
     // (the zoo's plaza, Ed 2026-10-26: "Home appears as a stone plaza with the ent's sigil on it (drawn like the floor of a legend
     // circle)": a floor of its own round the dancefloor, the World Tree carved in, drawn after the legends' nearest five)
     const plaza = null as { x: number; z: number } | null; // (the zoo's plaza draws its own sigil now: render/ground.ts uZooPlaza)
-    const w = g.witch, dt = Math.min(0.1, Math.max(0, time - this.lastRingTime)), near = nearestClearings(g.map.legendClearings, w.x, w.z, this.nearRings, plaza ? 5 : 6);
+    const w = g.witch, dt = Math.min(0.1, Math.max(0, time - this.lastRingTime)), ch = challengeRing(g, w.x, w.z), near = nearestClearings(g.map.legendClearings, w.x, w.z, this.nearRings, plaza || ch ? 5 : 6);
     this.lastRingTime = time;
     for (const e of g.leashEvents) if (e.kind === "outsideCircle") {
       const L = g.creatures[e.id], c = L && g.map.legendClearing(L.cell[0], L.cell[1]);
@@ -1639,12 +1706,19 @@ export class View {
       f.glint = glint > 0 && L && !L.gone && (L.legendState === "asleep" || L.legendState === "restless") ? glint : 0;
     }
     if (plaza) { const f = this.floorItems[near.length]; f.species = "worldTree"; f.look = FALLBACK_LOOK; f.glint = 4; } // (its grooves glinting, so the World Tree reads)
+    // (the challenge circle, Ed 2026-11-03: "a large stone floor circle (like the legend circle) with the glowing sigil of the island
+    // carved into it": the last slot, its area's floor, the island's sigil, glowing; render/challenge.ts)
+    if (ch && this.ringCount < 6) {
+      const i = this.ringCount++, f = this.floorItems[i];
+      Object.assign(out[i], { x: ch.x, z: ch.z, r: ch.r, edge: ch.edge, glow: ch.glow });
+      f.species = ch.species; f.look = floorLook(AREA_TYPES[g.map.typeOf(g.challenge!.cell[0], g.challenge!.cell[1])].id); f.glint = ch.glint;
+    }
     return out;
   }
   private lakeSigils: { x: number; z: number; r: number; species: string; d: number }[] = [];
   private floorItems: { species: string; glint: number; look: FloorLook }[] = Array.from({ length: 6 }, () => ({ species: "", glint: 0, look: FALLBACK_LOOK }));
 
-  render(time: number, draw = true): void {
+  render(time: number, draw = true, repaintHeld = false): void {
     // Allocate only when a whole display-pixel step changes, including Try/Stop and expiry.
     if (this.pixelViewport.w > 0 && this.scenePixelSize() !== this.cssPixel) this.resize(this.pixelViewport.w, this.pixelViewport.h);
     // Late art may introduce programs after compileAll's background pass has ended.
@@ -1659,6 +1733,8 @@ export class View {
     // Her clock (rules/slowTime.ts): she and everything of hers (her frames, blinks, trail, 💌s, sigils, the action bar) at full
     // speed, while the world (time) may run slow in a sleeping legend's circle; eased between steps as the world's is.
     const ht = Math.max(0, g.herTime - Math.max(0, g.clock.time - time) / Math.max(1e-3, g.timeScale));
+    // CPU effects read these too. Stamp them before drawing any markers or sparkles.
+    LIGHT_UNIFORMS.uTime.value = time; LIGHT_UNIFORMS.uRealTime.value = ht;
     this.magic.begin(ht, g.witch.x, g.witch.z, g);
     this.magic.batches.mpp.value = this.mpp;
     this.magic.batches.canopy = g.witch.lift > 0.5;
@@ -1678,9 +1754,9 @@ export class View {
     const canopyTo = TL ? TL.reach : g.witch.mode !== "ground" ? Math.min(t.haze.far, t.scenery.canopyReach ?? 0) : 0;
     this.canopyNow += (canopyTo - this.canopyNow) * (Math.abs(canopyTo - this.canopyNow) < 1 ? 1 : 0.08);
     LIGHT_UNIFORMS.uCanopyReach.value = this.canopyNow;
-    const up = placeCamera(this, time, pose);
+    const up = placeCamera(this, time, pose, repaintHeld);
 
-    this.swapHomeArt();
+    if (!repaintHeld) this.swapHomeArt();
     setFrameUniforms(this, time, up);
     setReveal(this, time);
     const w = g.witch;
@@ -1691,12 +1767,15 @@ export class View {
     // The party's over (render/partyOver.ts): its lights go out in a ripple from home.
     const over = updatePartyOver(g, partyOverEase(g, this.overDebug), this.over), offAt = (x: number, z: number) => partyOff(over, x, z);
     this.leashView.partyOverEase = over.ease;
+    fireChallenge(g, this.fireworks); // (the cleared challenge circle's firework each bar: render/challenge.ts)
     this.fireworks.update(g.waveEvents, time, t, key => { const [cx, cy] = key.split(",").map(Number); return sigilColour(AREA_TYPES[g.map.typeOf(cx, cy)].creature) as number[]; }, at => !!g.win && g.win.lapAt !== undefined && at >= g.win.lapAt); // (the win's, from its victory lap on: the finale's palette; before the soundsystems: a celebrated one's lasers come on as its show starts)
     const party = this.partyView.update(g, time, (x, z, ww, hh) => inView(this, x, z, ww, hh, 4), () => false, this.fireworks.celebrated, offAt);
     if (over.front > 0) { for (const l of party.lights) l.strength *= 1 - offAt(l.x, l.z); party.playing = party.playing.filter(p => offAt(p.x, p.z) < 0.98); party.projectors = party.projectors.filter(p => offAt(p.x, p.z) < 0.98); }
     this.soundBatch.set(party.items);
     this.ground.setLegendRings(this.legendRings(g, time), this.ringCount);
     this.ground.setLegendFloors(this.floorItems, this.ringCount);
+    this.ground.setChallengeFloor(challengeFloor(g, g.witch.x, g.witch.z));
+    this.ground.setChallengeCarving(challengeCarving(g, g.witch.x, g.witch.z)); // (its sigil carved into its floor: render/challenge.ts) // (the challenge circle's dancefloor once cleared: render/challenge.ts)
     // (the zoo's undiscovered islands, rules/zooMap.ts: the nearest four lakes' sigils, faint on the water)
     if (g.map.zoo?.layout) {
       const L = g.map.zoo.layout, w = g.witch, items = this.lakeSigils;
@@ -1798,11 +1877,13 @@ export class View {
       const dt = this.trailAt < 0 ? 0 : Math.min(0.1, Math.max(0, ht - this.trailAt)); this.trailAt = ht;
       const back = sp > 0.1 ? 0.6 / sp : 0, W0 = g.witches[0], D = W0.dash;
       // (and its length at least the shared cooldown's share: rules/cooldown.ts, Ed 2026-10-15; the ribbon along her blink's line)
-      const tw = witchTuning(g, W0), cool = tw.cooldown?.shared ? coolShare(W0.cool, coolRoom(tw, blinkCharges(g, W0))) : 0; // (her broom's parts: rules/broomParts.ts)
+      const tw = witchTuning(g, W0), room = coolRoom(tw, blinkCharges(g, W0)), cool = tw.cooldown?.shared ? coolShare(W0.cool, room) : 0; // (her broom's parts: rules/broomParts.ts)
+      // (the cooldown trail, render/trail.ts steps: the counter itself, and her top speed now, her broom's parts, a speed spell and
+      // Darters in; on a guest, her predicted witch's: render only)
+      this.trail.counter = tw.cooldown?.shared ? { left: W0.cool.left, room, dash: tw.dash.cooldown, rise: tw.cooldown.rise ?? 0, landing: tw.riseCooldown ?? 0,
+        top: (tw.groundSpeed + (tw.treetopSpeed - tw.groundSpeed) * lift) * speedMultiplier(W0.spells, ht, tw) * speedBuff(buffsOf(W0.leash.stack, g.creatures, g.berries, g.tuning).stacks, g.tuning) } : null;
+      this.trail.screen = { camera: this.camera, w: this.width, h: this.height };
       this.trail.update(w.x - w.vx * back, witchHeight(w, t) + 0.25 + this.rideOff, w.z - w.vz * back, sp, top, lift, c, ht, dt, D.at, D, cool);
-      // the load she carries (render/load.ts): read once a frame, for the stack, the threads, her lean and her broom
-      loadView(g, t.load ?? LOAD_DEFAULT, dt, this.leashView.load);
-      const Bp = this.leashView.bristle; Bp.x = w.x - w.vx * back; Bp.y = witchHeight(w, t) + 0.25 + this.rideOff; Bp.z = w.z - w.vz * back;
     }
     // Tufts part round her and the three nearest creatures.
     // (only those within reach made into objects: mapping every creature, a thousand late in a run, every frame was much of the frame's garbage)
@@ -1821,6 +1902,7 @@ export class View {
     for (let i = 0; i < cs.length; i++) { const c = cs[i]; if (Math.abs(c.x - w.x) < GR && Math.abs(c.z - w.z) < GR && hasRune(c)) clear.push({ x: c.x, z: c.z, r: t.groundCover.sigilClear }); } // (a happy one's rune at its feet)
     for (const r of relicsOut(g)) if ((r.state === "lying" || r.state === "dropped") && Math.abs(r.sx - w.x) < GR && Math.abs(r.sz - w.z) < GR) clear.push({ x: r.sx, z: r.sz, r: Math.max(t.groundCover.sigilClear, 3.4 * 0.45) }); // (and a relic's sigil, south of it)
     { const F = findClear(this); if (F) clear.unshift(F); } // (tonight's find's patch, first: render/view/finds.ts)
+    { const ch = g.challenge; if (ch && Math.hypot(ch.x - w.x, ch.z - w.z) < GR + ch.radius) clear.unshift({ x: ch.x, z: ch.z, r: ch.radius }); } // (the challenge circle's stone floor: render/challenge.ts)
     this.time("markers");
     this.grass.update(w.x, w.z, 1 - canopyShown(w), parts, t.suspects.groundCover ? LIGHT_UNIFORMS.uGlowR.value * 1.05 : t.groundCover.radius, clear); // out to the canopy hole's edge
     const partyObjectLights = this.partyObjects.update(g, time, this.camera, (x, z, ww, hh) => inView(this, x, z, ww, hh, 4), this.worldFires, this.lastView);
@@ -1862,31 +1944,35 @@ export class View {
       }
     }
     this.time("grass+lights");
-    LIGHT_UNIFORMS.uTime.value = time; LIGHT_UNIFORMS.uRealTime.value = ht; // (the circle's motes and edge keep her clock)
     this.mist?.follow(pose.tx, pose.tz);
     if (this.loadingMist && draw) { // (on the page's own clock, a frame counting at most a tenth of a second: not the house's slowed time)
-      const now = performance.now(); this.mistClock += this.mistLast ? Math.min(0.1, (now - this.mistLast) / 1000) : 0; this.mistLast = now;
-      this.loadingMist.update(this.mistClock, ty => this.assets.hasType(ty));
+      this.loadingMist.update(time, ty => this.assets.hasType(ty));
     }
     this.lightRings?.update(this.camera, w.x, witchHeight(w, t) + this.rideOff, w.z, canopyShown(w), time);
-    const hatTop = drawWitch(this, time, ht, onTreehouse);
+    const hatTop = drawWitch(this, time, ht, onTreehouse, repaintHeld);
+    this.partyStart.update(g.tuning, this.magic, ht, time);
     updateRefraction(this, time);
     this.mushroomView.update(this);
     this.ground.prepareCoast(this.renderer, this.camera, this.scene);
     this.houseRooms?.update(this, onTreehouse, ht);
     this.potionObservers.update(this, onTreehouse);
-    if (this.crown && (this.crown.lights !== (t.treehouse.house?.crown?.lights ?? 1) || (this.crown.crown.wrap ?? 0) !== (t.treehouse.house?.crown?.wrap ?? 0))) this.ensureCrown(this.game); // (its lights' density or their wrapping moved on the pause page: grown again)
+    const planStrength = potionStrength(g, "masterplan");
+    if (planStrength) (this.masterplan ??= new MasterplanView(this)).update(planStrength);
+    else if (this.masterplan) { this.masterplan.dispose(); this.masterplan = undefined; }
+    if (this.crown && (this.crownNoNotch !== !!t.treehouse.house?.look?.noNotch || this.crown.lights !== (t.treehouse.house?.crown?.lights ?? 1) || (this.crown.crown.wrap ?? 0) !== (t.treehouse.house?.crown?.wrap ?? 0))) this.ensureCrown(this.game); // (its lights' density or their wrapping moved on the pause page: grown again)
     if (this.crown && deck) { // (the crown: in the world, or laid over the floors with her indoors: render/crown.ts)
       const W = this.crownWorld, a = ((HOUSE_ROOMS.turn ?? 0) * Math.PI) / 180, c = Math.cos(a), s = Math.sin(a);
       W.o.set(deck.x, groundHeight(deck.x, deck.z) + deck.h, deck.z); W.ex.set(c, 0, -s); W.ez.set(s, 0, c);
-      const plan = this.houseRooms?.plan ?? null, here = plan ? toPlan({ x: deck.x, z: deck.z }, w.x, w.z) : null;
+      const plan = this.houseRooms?.plan ?? null;
       const dt = Number.isFinite(this.crownAt) ? Math.min(0.1, Math.max(0, ht - this.crownAt)) : 0; this.crownAt = ht;
       // (indoors, the forest's hole round her as it would be outdoors, its middle where she's drawn: render/view/witch.ts set uWitch
       // this frame, her house's slide in it; Ed, 2026-10-26: "The witch should have a canopy circle cut around her in the treehouse")
       const cut = t.canopyCutout, hw = SPRITE_UNIFORMS.uWitch.value, CR = t.treehouse.house?.crown;
-      const hole = { x: hw.x, y: hw.y, r: 0.5 * cut.screenFraction * (t.suspects.holeCut ? 1 : 0) * this.width, edge: cut.edge * this.width };
-      this.crown.uniforms.uWarmK.value = CR?.warm ?? 0; // (the house's warm light up into it, live from the pause page)
-      this.crown.update(this.camera, W, plan, here, dt, hole, CR?.cutFade ?? 0, { x: w.x, y: groundHeight(w.x, w.z) + witchHeight(w, t), z: w.z }); // (her: the oak hidden when she's behind it)
+      const hole = { x: hw.x, y: hw.y, r: cutawayRadius(cut, this.width) * (t.suspects.holeCut ? 1 : 0), edge: cut.edge * this.width };
+      this.crown.uniforms.uWarmK.value = CR?.warm ?? 0;
+      if (this.crownFarSource) this.crownFarSource.uniforms.uWarmK.value = CR?.warm ?? 0; // (the house's warm light up into it, live from the pause page)
+      this.crown.update(this.camera, W, plan, dt, hole, CR?.cutFade ?? 0, { x: w.x, y: groundHeight(w.x, w.z) + witchHeight(w, t), z: w.z }, t.treehouse.house?.look, t.treehouse.house?.look?.approach && !w.perch && w.mode !== "ground" ? approachStrength(true, true, deck.house?.rooms ? houseApproachDistance(w.x, w.z, deck.x, deck.z, HOUSE_ROOMS.turn ?? 0, OUTLINE_ROOMS, OUTLINE_BRANCHES) : Infinity, t.treehouse.house.look.radius) : 0); // (her: the oak hidden when she's behind it)
+      if (this.crownFarSource) this.crownFarSource.uniforms.uBack.value.copy(this.crown.uniforms.uBack.value);
       if (this.crownFar) { // (and over the horizon from far off: its picture baked the first frame there is one)
         if (!this.shaderDrawStatus.active) this.crownFar.bake(this.renderer);
         const at = g.party.spellAt;
@@ -1905,6 +1991,7 @@ export class View {
     drawBerries(this, time);
     drawHatArt(this); // (the Harvest hat's sprouts, the Cyclone's whirlwind: render/view/hatArt.ts)
     drawFinds(this); // (tonight's travel trunk: render/view/finds.ts)
+    drawChallengeColumns(this); // (the challenge circle's columns: render/challenge.ts)
     checkPops(this, "moving");
     this.time("creatures");
     this.rulers.update(this.camera, this.canvas.clientWidth || window.innerWidth, this.canvas.clientHeight || window.innerHeight, w.x, w.z);
@@ -1914,11 +2001,14 @@ export class View {
     this.time("hud");
     this.leashView.update(ht, this.camera, this.canvas.clientWidth || window.innerWidth, this.canvas.clientHeight || window.innerHeight, hatTop, this.witchBodyY, this.witchFeetY, this.witchFrameH);
     (this.castTag ??= new CastTag()).update(this); // (the spell's key prompt by its 🎶, drawn just now: render/castTag.ts)
+    (this.feedTag ??= new FeedTag()).update(this); // (the feed prompt by the berry a tap would feed: render/feedTag.ts)
     this.time("leash");
     this.magic.finish(t.lightBudget);
     this.stats.lights = LIGHT_UNIFORMS.uLightCount.value;
     if (FX_MOCK_MODE) (this.fxMock ??= new FxMock(this, FX_MOCK_MODE)).update(this, ht);
-    workAhead(this);
+    // A view-only repaint must not upload a new floor tile or height strip into
+    // the textures used for the picture. Continue that work at the next live frame.
+    if (!repaintHeld) workAhead(this);
     if (this.debugCull) drawGhosts(this, time);
     if (!draw) return;
     this.renderer.info.reset();

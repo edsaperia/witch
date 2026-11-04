@@ -10,9 +10,10 @@ import { polylinesMeet } from "./crossing";
 import { bootPath } from "./bootRing";
 import { speakerCircle } from "./departure";
 import { leyRadius } from "./leyroute";
+import { sharedMap } from "../test/preppedGame"; // (maps the tests only read, made once a file)
 
 // Retain the full route: seven distinct stones and five/six advancing waves must not exhaust the fixture.
-const map = generateMap(123, TUNING);
+const map = sharedMap(123, TUNING);
 /** The same map with leyLines.advance "first": a quest done moves the line on (the default since Ed, 2026-10-08, is "wave": it doesn't). */
 const firstMap = generateMap(123, withTuning({ leyLines: { ...TUNING.leyLines, advance: "first" } }));
 const keys = (c: { cell: readonly [number, number] }[]) => c.map(s => cellKey(s.cell));
@@ -100,14 +101,14 @@ describe("the first ley line leaves the treehouse's front, towards the dancefloo
   // Retain seeded first objectives: the departure sweeps are checked against their actual bearings and boot paths.
   const D = TUNING.leyLines.depart;
   it("starts at the treehouse's front at the start of a run", () => {
-    const m = generateMap(123, TUNING), p = newParty(m), first = ahead(p, m, 2)[0];
+    const m = sharedMap(123, TUNING), p = newParty(m), first = ahead(p, m, 2)[0];
     expect(first.depart).toBe(true);
     expect([first.x, first.z]).toEqual([m.treehouseFront.x, m.treehouseFront.z]);
     expect(m.treehouseFront.z).toBeGreaterThan(m.treehouse.z); // (south: towards the camera)
   });
   it("stands north-west of the dancefloor (Ed, 2026-10-24; due north from 2026-10-05), its footprint gap metres outside the ring of speakers", () => {
     for (const seed of [123, 293912, 31337]) {
-      const m = generateMap(seed, TUNING), d = m.dancefloor, th = m.treehouse, S = TUNING.dancefloor.speakers, a = (TUNING.treehouse.angle * Math.PI) / 180, L = Math.hypot(th.x - d.x, th.z - d.z);
+      const m = sharedMap(seed, TUNING), d = m.dancefloor, th = m.treehouse, S = TUNING.dancefloor.speakers, a = (TUNING.treehouse.angle * Math.PI) / 180, L = Math.hypot(th.x - d.x, th.z - d.z);
       expect((th.x - d.x) / L).toBeCloseTo(Math.cos(a), 6); expect((th.z - d.z) / L).toBeCloseTo(Math.sin(a), 6);
       expect(th.x).toBeLessThan(d.x); expect(th.z).toBeLessThan(d.z); // (north-west: up the screen and to the left)
       const edge = Math.hypot(th.x - d.x, th.z - d.z) - TUNING.treehouse.clear, ring = TUNING.dancefloor.radius * S.radiusFactor + S.footprint;
@@ -117,7 +118,7 @@ describe("the first ley line leaves the treehouse's front, towards the dancefloo
   it("never crosses the dancefloor: on from where the boot's lap ends, round the speakers the same way (clockwise) till the objective lies out to the side, then off and round to it, smoothly, never across the boot's way down (Ed, 2026-10-06; 2026-10-29)", () => {
     // (The noisy picker's first objective lies anywhere round home.)
     for (const T of [TUNING, { ...TUNING, party: { ...TUNING.party, picker: "noisy" } }]) for (const seed of [123, 293912, 7, 1000, 42, 31337, 5, 99]) {
-      const m = generateMap(seed, T), p = newParty(m), [, b] = ahead(p, m, 2), d = m.dancefloor, Q = bootPath(m);
+      const m = sharedMap(seed, T), p = newParty(m), [, b] = ahead(p, m, 2), d = m.dancefloor, Q = bootPath(m);
       const pts = departureRoute(m, b, D.avoid, 4), R = speakerCircle(m) - 0.6; // (on the speakers' own circle at the closest: the boot ring's, Ed 2026-10-07)
       expect(pts[0]).toEqual(Q.path[Q.path.length - 1]); // (from where the boot's lap ends)
       const last = pts[pts.length - 1];
@@ -148,7 +149,7 @@ describe("the first ley line leaves the treehouse's front, towards the dancefloo
     };
     let tightest = Infinity;
     for (const T of [TUNING, { ...TUNING, party: { ...TUNING.party, picker: "noisy" } }]) for (const seed of [123, 293912, 7, 1000, 42, 31337, 5, 99]) {
-      const m = generateMap(seed, T), p = newParty(m), [, b] = ahead(p, m, 2), d = m.dancefloor, rho = speakerCircle(m), R = leyRadius(m);
+      const m = sharedMap(seed, T), p = newParty(m), [, b] = ahead(p, m, 2), d = m.dancefloor, rho = speakerCircle(m), R = leyRadius(m);
       const pts = departureRoute(m, b, D.avoid, 4), k = 3;
       // (where it leaves the speakers' circle: its last point on it, or, where it only touches it, its nearest to home)
       let off = 0, near = Infinity;

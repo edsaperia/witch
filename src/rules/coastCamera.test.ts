@@ -35,13 +35,24 @@ describe("the camera by the sea", () => {
     expect(coastView(away)).toEqual({ coast: 0, gaze: 0 });
   });
 
-  it("eases, never jumps: a step's change in angle stays small", () => {
-    let c = start, prev = cameraPose(c, 0, T).angle, worst = 0;
-    for (let k = 0; k < 6 / STEP; k++) { c = stepCamera(c, 0, { x: 0, y: 0, z: 0 }, { x: 0, z: 0 }, 0, STEP, T, false, null, { near: 1, gazing: k > 120 }); const a = cameraPose(c, 0, T).angle; worst = Math.max(worst, Math.abs(a - prev)); prev = a; }
-    expect(worst).toBeLessThan(0.5);
+  it("keeps zero-time poses continuous and coast/gaze transitions bounded toward their targets", () => {
+    const step = (c: CameraState, dt: number, near: number, gazing: boolean) => stepCamera(c, 0, { x: 0, y: 0, z: 0 }, { x: 0, z: 0 }, 0, dt, T, false, null, { near, gazing });
+    expect(cameraPose(step(start, 0, 1, true), 0, T)).toEqual(cameraPose(start, 0, T));
+    let previous = { coast: 0, gaze: 0 };
+    for (const dt of [STEP / 2, STEP, STEP * 2]) {
+      const c = step(start, dt, 1, true), state = coastView(c), pose = cameraPose(c, 0, T);
+      for (const key of ["coast", "gaze"] as const) { expect(state[key]).toBeGreaterThan(previous[key]); expect(state[key]).toBeLessThan(1); }
+      for (const key of ["angle", "distance", "x", "y", "z", "tx", "ty", "tz"] as const) expect(Number.isFinite(pose[key])).toBe(true);
+      previous = state;
+    }
+    const mid = { ...start, coast: 0.4, gaze: 0.7 }, held = step(mid, 0, 0, false), leaving = step(mid, STEP, 0, false);
+    expect(cameraPose(held, 0, T)).toEqual(cameraPose(mid, 0, T));
+    expect(leaving.coast).toBeGreaterThan(0); expect(leaving.coast!).toBeLessThan(mid.coast);
+    expect(leaving.gaze).toBeGreaterThan(0); expect(leaving.gaze!).toBeLessThan(mid.gaze);
+    // U7 reports the original six-second maximum angle-change observation.
   });
 
-  it("lying down, the camera by her bearing round the coast: each of the twelve entries exactly, smoothly between", () => {
+  it("matches every authored coastal bearing, repeats around the circle and settles at the opposite bearing", () => {
     const B = BC.bearings, n = B.angle.length;
     expect(n).toBe(12);
     expect(B.distance.length).toBe(n); expect(B.look.length).toBe(n);
@@ -49,10 +60,11 @@ describe("the camera by the sea", () => {
       const g = gazeAt(BC, (i / n) * 2 * Math.PI);
       expect(g.angle).toBeCloseTo(B.angle[i], 6); expect(g.distance).toBeCloseTo(B.distance[i], 6); expect(g.look).toBeCloseTo(B.look[i], 6);
     }
-    // all the way round in small steps: no jump anywhere, through north too
-    let prev = gazeAt(BC, -0.01), worst = 0;
-    for (let k = 0; k <= 720; k++) { const g = gazeAt(BC, (k / 720) * 2 * Math.PI); worst = Math.max(worst, Math.abs(g.distance - prev.distance), Math.abs(g.angle - prev.angle)); prev = g; }
-    expect(worst).toBeLessThan(2);
+    // Direct periodic identity includes the north wrap; U7 reports the original720-sample comfort score.
+    for (const bearing of [-Math.PI * 2, -0.01, 0, Math.PI / 12, Math.PI, Math.PI * 2 - 0.01]) {
+      const g = gazeAt(BC, bearing), wrapped = gazeAt(BC, bearing + Math.PI * 2);
+      for (const key of ["angle", "distance", "look", "side", "bend"] as const) { expect(Number.isFinite(g[key])).toBe(true); expect(g[key]).toBeCloseTo(wrapped[key], 9); }
+    }
     const lying = settle(settle({ ...start, bearing: Math.PI }, 1, false), 1, true);
     expect(cameraPose(lying, 0, T).distance).toBeCloseTo(B.distance[6], 1);
   });

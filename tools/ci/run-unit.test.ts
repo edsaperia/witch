@@ -2,6 +2,8 @@ import { describe, expect, it, vi } from "vitest";
 import path from "node:path";
 // @ts-expect-error plain JavaScript CI runner
 import { balancedSelection, balancedShards, parseShard, runTests, selectedTests } from "./run-unit.mjs";
+// @ts-expect-error plain JavaScript timing refresh tool
+import { reportTimings } from "./unit-timings.mjs";
 
 const scope = { mode: "related", base: "abc", reason: "small PR" }, file = path.resolve("src/render/character.test.ts");
 describe("CI related-test execution safety", () => {
@@ -75,5 +77,21 @@ describe("CI related-test execution safety", () => {
     const fs = await import("node:fs"), seconds = JSON.parse(fs.readFileSync("tools/ci/unit-timings.json", "utf8")).seconds;
     for (const f of Object.keys(seconds)) expect(f).toMatch(/\.test\.ts$/);
     expect(seconds["src/rules/combat/packsLull1.test.ts"]).toBeGreaterThan(0);
+  });
+  it("does not hide extra heavy work underneath the longest file", () => {
+    const files = ["a.test.ts", "b.test.ts", "c.test.ts", "d.test.ts", "e.test.ts"];
+    const seconds = Object.fromEntries(files.map((f, i) => [f, [100, 80, 70, 60, 50][i]]));
+    const split = balancedShards(files, seconds, 2);
+    const totals = split.map((s: any) => s.files.reduce((sum: number, f: string) => sum + seconds[f], 0));
+    expect(Math.max(...totals) - Math.min(...totals)).toBeLessThanOrEqual(40);
+    expect(split.flatMap((s: any) => s.files).sort()).toEqual(files);
+  });
+  it("refreshes portable cloud timings and rejects failures, duplicate files and invalid durations", () => {
+    const report = { success: true, testResults: [{ name: "/home/runner/work/witch/witch/src/rules/a.test.ts", status: "passed", startTime: 1000, endTime: 2500 }] };
+    expect(reportTimings(JSON.stringify(report))).toEqual({ "src/rules/a.test.ts": 1.5 });
+    expect(() => reportTimings(JSON.stringify({ ...report, success: false }))).toThrow();
+    expect(() => reportTimings(JSON.stringify({ ...report, testResults: [...report.testResults, ...report.testResults] }))).toThrow(/Duplicate/);
+    expect(() => reportTimings(JSON.stringify({ ...report, testResults: [{ ...report.testResults[0], endTime: 0 }] }))).toThrow(/Invalid/);
+    expect(reportTimings("unit tests (1/4)\tSTEP\tdate ✓ src/rules/a.test.ts (2 tests) 1234ms", true)).toEqual({ "src/rules/a.test.ts": 1.234 });
   });
 });

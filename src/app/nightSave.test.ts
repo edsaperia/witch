@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { borrowedNightSaves, captureNight, nightHasStarted, NightAutosave, savedNight, savedNightResumeLink, nightLinkConflicts, savesEnabled, type NightStore, type SavedNight } from "./nightSave";
+import { borrowedNightSaves, captureNight, nightHasStarted, nightOfSlot, NightAutosave, savedNight, savedNightResumeLink, nightLinkConflicts, savesEnabled, type NightStore, type SavedNight } from "./nightSave";
 import { applySettings, DEFAULTS } from "./playerSettings";
 import { restoreGame, snapshotGame } from "../rules/nightSnapshot";
 import { newGame as fullGame, stepGame, STEP } from "../rules/game";
@@ -153,5 +153,22 @@ describe("resumable night storage", () => {
     expect(await active).toBe(true); expect(await flushed).toBe(true); expect(writes).toBe(2);
     const empty = new NightAutosave(memory(), () => null, () => {});
     expect(await empty.flush(0)).toBe(true);
+  });
+  // (Ed, 2026-11-02: hold to delete; Reset everything)
+  it("finds a slot's nights on any path, slot 1's the bare paths, and every night for a reset", () => {
+    expect(nightOfSlot("/witch/", "s1")).toBe(true); expect(nightOfSlot("/witch/pr-9/", "s1")).toBe(true);
+    expect(nightOfSlot("/witch/#save=s12345", "s1")).toBe(false); expect(nightOfSlot("/witch/#save=s12345", "s12345")).toBe(true);
+    expect(nightOfSlot("/witch/#save=s123456", "s12345")).toBe(false); expect(nightOfSlot("/witch/:comment-restore", "s1")).toBe(false);
+    for (const key of ["/witch/", "/witch/#save=s12345", "/witch/:comment-restore"]) expect(nightOfSlot(key, null)).toBe(true);
+  });
+  it("a stopped autosave waits for its write in flight and then saves nothing, pagehide included, until resumed", async () => {
+    let release!: () => void, writes = 0;
+    const store: NightStore = { read: async () => undefined, write: () => { writes++; return new Promise<void>(r => { release = r; }); }, clear: async () => {} };
+    const a = new NightAutosave(store, saved, () => {}), pending = a.save(0);
+    let stopped = false; const stopping = a.stop().then(() => { stopped = true; });
+    await Promise.resolve(); expect(stopped).toBe(false);
+    release(); await stopping; expect(await pending).toBe(false);
+    expect(await a.save(10_000, true)).toBe(false); expect(await a.flush(20_000)).toBe(false); expect(writes).toBe(1);
+    a.resume(); const again = a.save(30_000, true); release(); expect(await again).toBe(true); expect(writes).toBe(2);
   });
 });

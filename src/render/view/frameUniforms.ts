@@ -4,6 +4,8 @@ import * as THREE from "three";
 import type { View } from "../view";
 import { potionStrength, potionWatching } from "../potionEffects";
 import { potionSettings } from "../../rules/potionSettings";
+import { borrowedClock, LANDSCAPE_POTIONS } from "../../rules/landscapePotions";
+import { landscapeUniform } from "../landscapeUniforms";
 import { forestCountTime } from "../../rules/forestCounts";
 import { AREA_TYPES } from "../../rules/map";
 import { coastView } from "../../rules/camera";
@@ -17,6 +19,8 @@ import { hsvInto, moodOf } from "../mood";
 import { cellKey, partifiedKey } from "../../rules/party";
 import { biomeJitter } from "../../../art/flora/biomes.js";
 import { FADE_MATERIALS, FADE_MESHES, SPRITE_UNIFORMS } from "../sprites";
+import { cutawayRadius } from "../crown";
+import { PATH_UNIFORMS } from "../paths";
 
 /** Sets this frame's sprite and light uniforms, after the camera (`up`, its tilted up). */
 /** How far her glow is cooled toward the wild's teal (0 to 1, eased) and when it was last eased (light.spooky.wildGlow). */
@@ -56,7 +60,7 @@ export function setFrameUniforms(v: View, time: number, up: THREE.Vector3): void
   }
   v.holeAt = time;
   const S = t.suspects; // (the circle-bug suspects: tuning.json _suspects, the pause page's toggles)
-  SPRITE_UNIFORMS.uCutout.value.set(hx, hy, 0.5 * cut.screenFraction * (S.holeCut ? 1 : 0) * v.width * (1 - lifted), Math.max(1, cut.edge * v.width * edgeGrow));
+  SPRITE_UNIFORMS.uCutout.value.set(hx, hy, cutawayRadius(cut, v.width) * (S.holeCut ? 1 : 0) * (1 - lifted), Math.max(1, cut.edge * v.width * edgeGrow));
   SPRITE_UNIFORMS.uCutWhole.value = t.suspects.cutWhole ? cut.whole ?? 0 : 0;
   SPRITE_UNIFORMS.uCutShape.value.set(cut.wobble ?? 0, cut.outer ?? 0.35, cut.ragged ?? 0, cut.spread ?? 0.2);
   SPRITE_UNIFORMS.uTopFade.value = lifted;
@@ -101,12 +105,15 @@ export function setFrameUniforms(v: View, time: number, up: THREE.Vector3): void
   // Each tree's own leaf colour (Ed, 2026-10-16 and 2026-10-19; the tuning's leafJitter: the autumn share, the value share and the hue degrees; render/sprites.ts).
   // The island's biome keeps its share of the autumn and the hue turn (art/flora/biomes.js: none under snow, so it stays white).
   const LJ = t.leafJitter, bj = biomeJitter(v.assets.style.biome ?? v.assets.typeBiome);
+  PATH_UNIFORMS.uPathBump.value = t.pathLook?.bump ?? 0; // the paths' bump maps (Ed, 2026-11-03; render/paths.ts)
   SPRITE_UNIFORMS.uLeafJitter.value.set(LJ ? LJ.autumn * bj : 0, LJ ? LJ.value : 0, LJ ? ((LJ.hue ?? 0) / 360) * bj : 0);
   // The wind: gentler over the treetops (Ed, v171: "gentle and lovely").
   const W = t.wind;
-  const counting = potionStrength(g, 'the-forest-counts'), sceneryTime = forestCountTime(g, time, counting);
+  const counting = potionStrength(g, 'the-forest-counts'), trip = landscapeUniform.value;
+  const offClock = trip.x === LANDSCAPE_POTIONS['out-of-time'].id;
+  const sceneryTime = offClock ? borrowedClock(time, trip.y, trip.z) : forestCountTime(g, time, counting);
   SPRITE_UNIFORMS.uWind.value.set(W.on ? W.strength * (1 + (W.treetop - 1) * lifted) : 0, W.speed, W.gustScale, sceneryTime);
-  v.mist?.setTimeOverride(counting > 0 ? sceneryTime : -1);
+  v.mist?.setTimeOverride(counting > 0 || offClock ? sceneryTime : -1);
   // The trees watching her (Ed, 2026-10-07; render/sprites.ts uWatch): where she was a beat ago, eased lag seconds behind.
   const Wt = potionWatching(t.watching, potionStrength(g, 'the-audience')), at = v.watch;
   if (Wt?.on) {

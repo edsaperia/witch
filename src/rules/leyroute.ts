@@ -16,6 +16,7 @@ import { departureClear, departureRoute } from "./departure";
 import { polylinesMeet, segmentsMeet, type P2 } from "./crossing";
 import { rng } from "./random";
 import { fitWays } from "./leycurve";
+import { lineGap, PLACE } from "./challengePlace";
 
 export type { P2 };
 
@@ -65,7 +66,8 @@ export function leyRoute(map: ForestMap, initial: () => string[], fallback?: () 
     }
     // A link straight over the dancefloor (Ed, 2026-10-06: never; a smaller map's first ring can leave a gap round home
     // that the spiral jumps across): the other orders planned, the first that keeps clear of it and Ed's crossing rules kept.
-    const overIt = (q: LeyRoute) => q.stones.some((s, i) => i > 0 && overHome(map, q.stones[i - 1], s));
+    // (and, the backstop to where the map puts it, over the challenge circle: overChallenge)
+    const overIt = (q: LeyRoute) => q.stones.some((s, i) => i > 0 && (overHome(map, q.stones[i - 1], s) || overChallenge(map, q.stones[i - 1], s)));
     if (others && overIt(r)) for (const o of others()) { const q = planRoute(map, o); if (!overIt(q) && withinCrossingRules(q.links) && routeShape(map, q.stones).lateDip <= SPIRAL_RULES.maxDip) { r = q; break; } }
     if (finish && withinCrossingRules(r.links)) r = finish(r);
     if (fallback && !withinCrossingRules(r.links)) r = planRoute(map, fallback());
@@ -141,7 +143,7 @@ export function curved(map: ForestMap, r: LeyRoute): LeyRoute {
           if (++tried > 60 || spent >= CURVE_WORK) break;
           const lo = Math.min(a, b) - 2, hi = Math.max(a, b) + 1, o = make({ order: keys, stones: st, links: straight }, [lo, hi]), ps = pairsAfter(o.links, lo, hi + 1), c = ps.length;
           const ok = withinCrossingRules(o.links, CROSSING_RULES, ps);
-          if (((ok && !bestOk) || (ok === bestOk && c < bestC)) && routeShape(map, st).lateDip <= Math.max(dip, SPIRAL_RULES.dip)) { best = o; bestPairs = ps; bestC = c; bestOk = ok; improved = true; keepWays(o); break; }
+          if (((ok && !bestOk) || (ok === bestOk && c < bestC)) && routeShape(map, st).lateDip <= Math.max(dip, SPIRAL_RULES.dip) && overChallengeCount(map, straight) <= overChallengeCount(map, best.straight!)) { best = o; bestPairs = ps; bestC = c; bestOk = ok; improved = true; keepWays(o); break; }
         }
         if (improved) break;
       }
@@ -188,6 +190,16 @@ export function overHome(map: ForestMap, a: P2, b: P2): boolean {
   const t = Math.max(0, Math.min(1, ((d.x - a[0]) * vx + (d.z - a[1]) * vz) / l2));
   return Math.hypot(a[0] + vx * t - d.x, a[1] + vz * t - d.z) < R;
 }
+
+/** Whether straight link a-b passes over the challenge circle (Ed, 2026-11-04: "The route should avoid going through the challenge
+ *  area"): within its clearing, its radius and margin (map.specialSites' r). The map chooses the challenge area so the route needn't
+ *  (rules/challengePlace.ts); this is the backstop: the route's untangling counts such a link PLACE.weight crossings. */
+export function overChallenge(map: ForestMap, a: P2, b: P2): boolean {
+  const sp = map.specialSites?.find(q => q.kind === "challenge");
+  return !!sp && lineGap([sp.x, sp.z], a, b) < sp.r + PLACE.swing;
+}
+/** How many of these links (straight, stone to stone; the first, the departure, not counted) pass over the challenge circle. */
+export const overChallengeCount = (map: ForestMap, links: readonly (readonly P2[])[]): number => links.reduce((t, l, i) => t + (i > 0 && l.length === 2 && overChallenge(map, l[0], l[1]) ? 1 : 0), 0);
 
 /** Where two segments cross (null if they don't, or only touch end to end). */
 function segmentPoint(a: P2, b: P2, c: P2, d: P2): P2 | null {
@@ -375,7 +387,7 @@ export function addCrossings(map: ForestMap, route: LeyRoute): LeyRoute {
   // order, the list made afresh after each one kept.
   while (count < target && tries < SPIRAL_RULES.tries) {
     const cap = SPIRAL_RULES.stretch * meanLen, pairs: [number, number][] = [];
-    for (let i = 1; i < n; i++) for (let j = CROSSING_RULES.pace * (i + 1) + CROSSING_RULES.margin; j < n; j++) if (len(st[i - 1], st[j - 1]) <= cap && len(st[i], st[j]) <= cap && !overHome(map, st[i - 1], st[j - 1]) && !overHome(map, st[i], st[j])) pairs.push([i, j]);
+    for (let i = 1; i < n; i++) for (let j = CROSSING_RULES.pace * (i + 1) + CROSSING_RULES.margin; j < n; j++) if (len(st[i - 1], st[j - 1]) <= cap && len(st[i], st[j]) <= cap && !overHome(map, st[i - 1], st[j - 1]) && !overHome(map, st[i], st[j]) && !overChallenge(map, st[i - 1], st[j - 1]) && !overChallenge(map, st[i], st[j])) pairs.push([i, j]);
     for (let k = pairs.length - 1; k > 0; k--) { const r = Math.floor(R() * (k + 1)); [pairs[k], pairs[r]] = [pairs[r], pairs[k]]; }
     let kept = false;
     for (const [i, j] of pairs) {
@@ -396,12 +408,14 @@ export function addCrossings(map: ForestMap, route: LeyRoute): LeyRoute {
 const TRIES = 30;
 
 export function planRoute(map: ForestMap, order: string[]): LeyRoute {
-  let best = untangle(map, order) ?? { order: [], stones: [], links: [] }, bestC = crossingsOf(best.links);
+  // (each judged by its crossings, a link over the challenge circle counting PLACE.weight of them: overChallenge)
+  const cost = (links: readonly (readonly P2[])[]) => crossingsOf(links) + PLACE.weight * overChallengeCount(map, links);
+  let best = untangle(map, order) ?? { order: [], stones: [], links: [] }, bestC = cost(best.links);
   const R = rng(map.seed * 4099 + 17);
   for (let t = 1; t <= TRIES && bestC > 0; t++) {
     const o = [...order];
     for (let k = 0; k < 3 + t; k++) { const i = 1 + Math.floor(R() * (o.length - 2)); [o[i], o[i + 1]] = [o[i + 1], o[i]]; }
-    const r = untangle(map, o), c = r ? crossingsOf(r.links) : Infinity;
+    const r = untangle(map, o), c = r ? cost(r.links) : Infinity;
     if (r && c < bestC) { best = r; bestC = c; }
   }
   return best;
@@ -462,7 +476,46 @@ export function untangle(map: ForestMap, order: readonly string[]): LeyRoute | n
     if (!moved) break;
     twoOpt();
   }
+  goRound(map, st, keys, depart);
   const links: P2[][] = [depart];
   for (let i = 1; i < n; i++) links.push([st[i - 1], st[i]]);
   return { order: keys, stones: st, links };
+}
+
+/** The backstop (Ed, 2026-11-04: "The route should avoid going through the challenge area"): while a link of the route (stones
+ *  `st`, keys `keys`, in place; the first stays first) passes over the challenge circle (overChallenge), the move that leaves the
+ *  route cheapest, its crossings and PLACE.weight a link over the circle: a stone near the circle put between that link's ends,
+ *  either end moved elsewhere, or the stones from one end to anywhere further turned round (2-opt); kept only if it's cheaper. */
+function goRound(map: ForestMap, st: P2[], keys: string[], depart: P2[]): void {
+  const sp = map.specialSites?.find(q => q.kind === "challenge"), n = st.length;
+  if (!sp || n < 4) return;
+  const over = (s: readonly P2[], i: number) => i > 0 && overChallenge(map, s[i - 1], s[i]);
+  if (!st.some((_, i) => over(st, i))) return;
+  const cost = (s: readonly P2[]) => {
+    let c = 0;
+    for (let i = 1; i < n; i++) {
+      if (over(s, i)) c += PLACE.weight;
+      if (polylinesMeet(depart, [s[i - 1], s[i]])) c++;
+      for (let j = i + 1; j < n; j++) if (segmentsMeet(s[i - 1], s[i], s[j - 1], s[j], j === i + 1)) c++;
+    }
+    return c;
+  };
+  const moveTo = (from: number, to: number) => { const s = [...st], k = [...keys], [sv] = s.splice(from, 1), [kv] = k.splice(from, 1); s.splice(to, 0, sv); k.splice(to, 0, kv); return { s, k }; };
+  let now = cost(st);
+  for (let round = 0; round < 6; round++) {
+    const g = st.findIndex((_, i) => over(st, i));
+    if (g < 0) return;
+    const tries: { s: P2[]; k: string[] }[] = [];
+    // (the stones nearest the circle, each put between the link's ends)
+    const near = st.map((p, i) => ({ i, d: Math.hypot(p[0] - sp.x, p[1] - sp.z) })).filter(q => q.i > 0 && q.i !== g - 1 && q.i !== g).sort((a, b) => a.d - b.d).slice(0, 12);
+    for (const { i } of near) tries.push(moveTo(i, i < g ? g - 1 : g));
+    // (either end moved anywhere)
+    for (const e of [g - 1, g]) if (e > 0) for (let p = 1; p < n; p++) if (p !== e) tries.push(moveTo(e, p));
+    // (the stones from the link's end on turned round, to anywhere further)
+    for (let j = g + 2; j <= n; j++) tries.push({ s: [...st.slice(0, g), ...st.slice(g, j).reverse(), ...st.slice(j)], k: [...keys.slice(0, g), ...keys.slice(g, j).reverse(), ...keys.slice(j)] });
+    let best: { s: P2[]; k: string[] } | null = null, bestC = now;
+    for (const t of tries) { const c = cost(t.s); if (c < bestC) { bestC = c; best = t; } }
+    if (!best) return;
+    st.splice(0, n, ...best.s); keys.splice(0, n, ...best.k); now = bestC;
+  }
 }

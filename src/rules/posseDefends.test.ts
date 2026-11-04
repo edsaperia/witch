@@ -3,10 +3,12 @@
 // her takes the nearest attacker not already taken (spread out, not all on one), within its pursuit of her; with none on her,
 // they go back to what they did (her animals' attackers, or nothing).
 import { describe, expect, it } from "vitest";
+import { queueCombatHit } from "../test/combatHit";
 import type { Creature, Level } from "./creatures";
 import { speedFactor, wanderRange } from "./creatures";
-import { newGame, stepGame, STEP, type Controls, type Game } from "./game";
+import { stepGame, STEP, type Controls, type Game } from "./game";
 import { TUNING, withTuning } from "./tuning";
+import { preppedGame } from "../test/preppedGame"; // (games on a map made once a file from its prep)
 
 // Keep the radius fight fixture: two-cell-away arena recruits beyond 300 m and tests an uninvolved defender parked 120 m away.
 const idle: Controls = { moveX: 0, moveZ: 0, toggleMode: false, zoom: 0, autoTalk: false };
@@ -15,7 +17,7 @@ const T = withTuning({ witchHealth: { ...TUNING.witchHealth, hits: 1e6 }, invite
 /** She stands in a wild area two out from home, `wild` of its creatures (young) set on her from 18 m, and `mine` of hers (young,
  *  leashed and following) 8 m behind her, so the attackers reach her first. */
 export function scene(wild: string[], mine: string[], seed = 123): { g: Game; attackers: Creature[]; posse: Creature[] } {
-  const g = newGame(seed, T), w = g.witches[0];
+  const g = preppedGame(seed, T), w = g.witches[0];
   g.clock.paused = false; g.party.paused = true;
   const [hx, hy] = g.map.centreCell, cell: [number, number] = [hx + 2, hy], site = g.map.siteOf(cell[0], cell[1]);
   w.body = { ...w.body, seated: false, mode: "ground", lift: 0, x: site.x, z: site.z };
@@ -101,7 +103,7 @@ describe("her posse defends her", () => {
     const hold = () => { if (badger.fight) { badger.fight.readyAt = 1e9; badger.fight.windupUntil = 0; } };
     let at = -1, held = true, until = 0;
     run(g, 6, () => {
-      if (at < 0) hold();
+      if (at < 0) { hold(); if (badger.fight?.target?.kind === "witch") queueCombatHit(g, wolf, badger, 0.1); }
       if (at < 0 && badger.taunt) { at = g.clock.time; until = badger.taunt.until; }
       if (at >= 0 && badger.taunt && g.clock.time > at + 0.1 && g.clock.time < until - 0.05 && !badger.fight?.lunge && on(badger) !== null && on(badger) !== wolf.id) held = false;
     });

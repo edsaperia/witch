@@ -17,12 +17,13 @@ import { rng, rngState } from "./random";
 import { newLodCounts } from "./simLod";
 import { stepWildWatch, watcher } from "./wildWatch";
 import { keepIn } from "./mapShape";
+import { preppedGame } from "../test/preppedGame"; // (games on a map made once a file from its prep)
 
 const idle: Controls = { moveX: 0, moveZ: 0, toggleMode: false, zoom: 0, autoTalk: false };
 function fresh(players = 2): Game {
   // Four authored areas retain three occupied wild watches and complete seeded multiplayer replay coverage.
   const t = structuredClone(TUNING); t.map!.island = "home"; t.map!.islandAreas = 4;
-  const g = newGame(123, t, players);
+  const g = preppedGame(123, t, players);
   g.clock.paused = false; g.party.spellAt = -100;
   g.witches.forEach((W, i) => {
     W.body = { ...W.body, seated: false, perch: false, x: g.map.dancefloor.x + (i ? 15 : -15), z: g.map.dancefloor.z + 40, mode: "ground", lift: 0 };
@@ -163,17 +164,22 @@ describe("several witches in one deterministic night", () => {
     expect(g.witches[0].house?.slept).toBe(true);
     expect(g.witches[1].house?.slept).not.toBe(true);
     expect(g.leashEvents.some(e => e.obj === "slept")).toBe(false);
-    const sleeping = { ...g.witches[0].body };
     run(g, 20, [{ ...idle, moveX: 1, fire: true, dash: true, spell: true, sigil: true }, idle]);
-    expect(g.witches[0].body).toEqual(sleeping);
+    expect(g.witches[0].house?.slept).toBe(false); // Ed: movement gets only this sleeper up while another is awake.
     expect(g.witches[0].invites.letters).toHaveLength(0);
     expect(g.leashEvents.some(e => e.obj === "slept")).toBe(false);
+    run(g, Math.ceil(3.2 / STEP), [idle, idle]);
+    Object.assign(g.witches[0].body, p);
+    run(g, Math.ceil((HOUSE_ROOMS.bed.hold + .1) / STEP), [{ ...idle, sigilHeld: true }, idle]);
+    expect(g.witches[0].house?.slept).toBe(true);
     let ended = 0;
     for (let i = 0; i < Math.ceil((HOUSE_ROOMS.bed.hold + 0.1) / STEP); i++) {
       run(g, 1, [idle, { ...idle, sigilHeld: true }]);
       ended += g.leashEvents.filter(e => e.obj === "slept").length;
     }
     expect(ended).toBe(1);
+    run(g, 20, [{ ...idle, moveX: 1 }, { ...idle, moveX: -1 }]);
+    expect(g.witches.every(w => w.house?.slept)).toBe(true); // All-asleep transition has already begun.
   });
 
   it("keeps all three occupied wild watches until each area's last witch leaves", () => {

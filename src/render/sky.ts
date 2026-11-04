@@ -32,6 +32,7 @@ uniform float uTime;
 uniform vec4 uSky;     // stars, moon, the moon's size (times the old)
 uniform vec4 uCam;     // the camera's focus x, z; how far ahead the top of the screen looks (m); width there (m)
 uniform vec4 uMoonAt;  // the moon (rules/moon.ts): x, y on the screen (fractions), its phase (0 new, 0.5 full), how much of it is lit
+uniform vec3 uMirrorMoon;
 uniform vec3 uMoonRgb; // its colour (plain, or a red, blue or gold moon)
 // The sky's view (look()): the telescope's own, or for the game's camera its sky as if looking north just over the horizon.
 uniform vec3 uSkyR, uSkyU, uSkyF; // the sky's view: right, up, forward
@@ -140,7 +141,17 @@ void main() {
       float limb = uMoonAt.z < 0.5 ? step(rim, n.x + step1) : step(n.x - step1, -rim);
       lit = max(lit, limb * step(abs(n.y), 0.92) * step(0.02, min(uMoonAt.z, 1.0 - uMoonAt.z)));
       vec3 face = uMoonRgb * sea * shade * uSky.y;
-      col = mix(col * 0.4 + face * 0.07, face, lit); // the dark side: the sky dimmed behind it, a little earthshine
+      col = mix(col * 0.4 + face * 0.07, face, lit);
+      if (uMirrorMoon.x > 0.0) {
+        vec2 disc = md / mr;
+        vec3 normal = vec3(disc, sqrt(max(0., 1. - dot(disc, disc))));
+        vec2 grid = vec2((atan(normal.x, normal.z) + uMirrorMoon.y) * 3.82, asin(normal.y) * 3.82);
+        vec2 facet = floor(grid), edge = fract(grid);
+        float glint = pow(max(0., cos((facet.x + .5) / 3.82 - uMirrorMoon.y - .4)), 12.);
+        vec3 silver = vec3(.36, .45, .57) + .25 * normal.z + glint * vec3(.95, .83, .61);
+        silver *= mix(.42, 1., step(.12, min(edge.x, edge.y)));
+        col = mix(col, silver, uMirrorMoon.x);
+      } // the dark side: the sky dimmed behind it, a little earthshine
     }
   }
   if (uThermalStrength > 0.0) col = mix(col, thermalCold(col), uThermalStrength);
@@ -168,7 +179,7 @@ export class Sky {
     geo.setAttribute("position", new THREE.Float32BufferAttribute([-1, -1, 0, 3, -1, 0, -1, 3, 0], 3)); // one triangle over the screen
     this.u = {
       ...THERMAL_UNIFORMS,
-      uRes: SPRITE_UNIFORMS.uRes, uHazeColour: LIGHT_UNIFORMS.uHazeColour, uMoon: LIGHT_UNIFORMS.uMoon, uMoonDir: LIGHT_UNIFORMS.uMoonDir, uTime: LIGHT_UNIFORMS.uTime,
+      uRes: SPRITE_UNIFORMS.uRes, uHazeColour: LIGHT_UNIFORMS.uHazeColour, uMoon: LIGHT_UNIFORMS.uMoon, uMoonDir: LIGHT_UNIFORMS.uMoonDir, uTime: LIGHT_UNIFORMS.uTime, uMirrorMoon: LIGHT_UNIFORMS.uMirrorMoon,
       uSky: { value: new THREE.Vector4(T.stars, T.moon, disc, 0) },
       uCam: { value: new THREE.Vector4() },
       uMoonAt: { value: new THREE.Vector4(0.25, 0.86, 0.5, 1) }, uMoonRgb: { value: new THREE.Vector3(0.92, 0.94, 0.86) },

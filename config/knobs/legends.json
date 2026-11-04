@@ -62,7 +62,7 @@
       "decisions": [{ "by": "Ed", "date": "2026-10-31", "quote": "about the average radius of an area", "rest": "85 m; replaces happyRange 420 m. Defend, engage, then walk the route towards its drawing tip." }]
     },
     "legends": {
-      "what": "Which areas have a legend, and how far a happy one reaches.",
+      "what": "Which areas have a legend (a happy one's reach is legends.friendRange).",
       "decisions": [
         {
           "by": "Ed",
@@ -78,7 +78,7 @@
           "date": "2026-10-06"
         }
       ],
-      "notes": ". The rest have no legend: no clearing, quest, restlessness or legend music. Read as the map is made: the decisions panel reloads. Ed's answers on #259 [2]: happyRange, a happy legend's reach in metres (relic allies: \"They stay home, but if they're not useful enough right now, make their range longer\")."
+      "notes": ". The rest have no legend: no clearing, quest, restlessness or legend music. Read as the map is made: the decisions panel reloads. Ed's answers on #259 [2]: happyRange, a happy legend's reach in metres (relic allies: \"They stay home, but if they're not useful enough right now, make their range longer\"); since Ed, 2026-10-31, legends.friendRange (85 m) instead, the friendly legend walking the ley line."
     },
     "legends.earlyQuest": {
       "what": "One of the first areas the waves wake has a legend dreaming of a creature from a nearby area, so there's an early quest.",
@@ -155,7 +155,7 @@
       "links": [
         "rules/partyLegend.ts"
       ],
-      "notes": "on, a legend turning angry while its own area's soundsystem stands destroys it at once (ruined, as any fallen one), and legends are restless angryAfter seconds before they anger (legends.json angryAfter otherwise). The party-legend Easter egg [2]: partyEgg turns it on; a happy legend (by its relic or its quest) then takes 💌s, its meter partyHits long, draining partyDrain of a full meter a second; full, it's a party legend (it dances in place, fights no one, its rune at its feet); picked up, she can go anywhere within partyReach metres of it (the leash's slack: 0.85 of leash.length) and not a step further, and it never comes to her; put down (E), it's let go where it stands. questNear: 0, a legend dreams of any kind on the map [3]; N, one of the N nearest other kinds round it, an area nearer home counting as nearer (a knob for trying it)."
+      "notes": "on, a legend turning angry while its own area's soundsystem stands destroys it at once (ruined, as any fallen one), and legends are restless angryAfter seconds before they anger (legends.json angryAfter otherwise). The party-legend Easter egg [2]: partyEgg turns it on; a happy legend (by its quest) then takes 💌s, its meter partyHits long, draining partyDrain of a full meter a second; full, it's a party legend (it dances in place, fights no one, its rune at its feet); picked up, she can go anywhere within partyReach metres of it (the leash's slack: 0.85 of leash.length) and not a step further, and it never comes to her; put down (E), it's let go where it stands. questNear: 0, a legend dreams of any kind on the map [3]; N, one of the N nearest other kinds round it, an area nearer home counting as nearer (a knob for trying it)."
     },
     "wildLegends": {
       "what": "What legends are for: optional quests, relics for powerful allies, and danger to her babies in sieges.",
@@ -188,7 +188,7 @@
       "links": [
         "config/legends.json"
       ],
-      "notes": "What legends are for [1]: a mostly optional layer of tasks; quick players do their quests (open as long as a legend sleeps; legend buffs designed 5 Oct, #87, removed 28 Oct), lucky ones find relics for powerful allies, and a losing player sees their babies hurt in sieges and them enraged, the loss spiral faster and more dramatic (his words in DESIGN.md, \"Legends, redesigned\", and config/legends.json). Area legends [2][3]: about a fifth of the areas [4] have one legend of its kind, sleeping, sunk into the ground like scenery (sink: the share of it under the ground, moss: how far its colours go toward moss). Waves no longer wake it: it grows restless, then angry, while its area has none of its kind, and a relic by it makes it happy (config/legends.json). A happy legend defends against the enraged within guard metres of where it stands; worn down, it goes back to sleep, any buff it gave kept. wake and heal are the first design's [5]; the redesigned rules don't read them (a happy one heals over legends.json healTime). Drawn scale times a legend's size, swelling by breathe as it breathes (once every breathEvery seconds); awake, an aura on the ground aura metres across and, from the treetops, a glow over the canopy (glow its strength) in a dark mix of its sigil's colour."
+      "notes": "What legends are for [1]: a mostly optional layer of tasks; quick players do their quests (open as long as a legend sleeps; legend buffs designed 5 Oct, #87, removed 28 Oct), lucky ones find relics for powerful allies (since Ed, 2026-10-18, relics are flasks, a growth spurt for her followers, and a quest done wakes its legend as her ally), and a losing player sees their babies hurt in sieges and them enraged, the loss spiral faster and more dramatic (his words in DESIGN.md, \"Legends, redesigned\", and config/legends.json). Area legends [2][3]: about a fifth of the areas [4] have one legend of its kind, sleeping, sunk into the ground like scenery (sink: the share of it under the ground, moss: how far its colours go toward moss). Waves no longer wake it: it grows restless, then angry, while its area has none of its kind, and its quest done wakes it happy (rules/quest.ts; a relic no longer does, Ed 2026-10-18). A happy legend defends her within legends.friendRange, else engages enemies in range, else walks the ley line towards its tip (Ed's 31 Oct playtest); worn down, it goes back to sleep. It gives no buff (legend buffs removed 28 Oct). wake and heal are the first design's [5]; the redesigned rules don't read them (a happy one heals over legends.json healTime). Drawn scale times a legend's size, swelling by breathe as it breathes (once every breathEvery seconds); awake, an aura on the ground aura metres across and, from the treetops, a glow over the canopy (glow its strength) in a dark mix of its sigil's colour."
     },
     "wildLegends.seen.dark": {
       "what": "a legend whose floored look (seen.floor times its coat's luminance, its body colour as baked: render/legendLight.ts) is under seen.dark has its floor raised to seen.dark over that luminance, at most seen.liftMax; the bear, the boar and the others as dark are caught, lighter legends stay as they are.",

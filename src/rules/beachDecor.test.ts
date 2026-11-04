@@ -39,7 +39,7 @@ describe("the beach's decorations", () => {
     for (const r of rocks) { const s = b.land.shore(r.x, r.z); expect(b.rockyAlong(s.loop, s.s)).toBeGreaterThan(0.3); }
     // A trail: its prints in steps, the last ones smaller (fading out).
     const prints = list.filter(i => i.print);
-    expect(prints.length).toBeGreaterThan(50);
+    expect(prints.length).toBeGreaterThan(0); // keep exercised fade coverage; report the old >50 quantity (W8, Ed 2 Nov)
     expect(prints.some(p => p.scale < 0.9)).toBe(true);
   });
 

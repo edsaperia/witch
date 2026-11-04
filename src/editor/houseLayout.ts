@@ -8,10 +8,11 @@ import identities from "../../config/house/layouts/editor-v2-identities.json";
 import current from "../../config/house/layouts/ed-current.json";
 import { kitchenPlan, type MushroomColour } from "../rules/mushrooms";
 import { HOUSE_CONFIG } from "../rules/houseConfig";
+import { migratedGuestFurnitureId } from "../rules/guestFurnitureMigration";
 export const EDITOR_HOUSE = HOUSE_CONFIG as HouseConfig;
 
 export interface Placement { id: string; x: number; z: number; rotation: number }
-export interface Layout { version: 2; floorplan: string; objects: Placement[]; removed?: string[]; migration?: { from: 1; cameraPreserved: true; held: Placement[] } }
+export interface Layout { version: 2; floorplan: string; objects: Placement[]; removed?: string[]; /** objects removed outright: the old hats' area */ removedObjects?: string[]; migration?: { from: 1; cameraPreserved: true; held: Placement[] } }
 export interface LayoutItem extends HouseObject {
   anchor: { x: number; z: number }; synthetic?: boolean;
   facing: { yaw: number; foot: { w: number; d: number; h: number }; curve: number };
@@ -74,19 +75,33 @@ export function defaultLayout(items: LayoutItem[], floorplan: string): Layout {
 }
 /** Model yaw and plan rotation have the same clockwise convention (art/model3d.ts toWorld). */
 export const cameraYaw = (p: Placement): number => p.rotation * Math.PI / 180;
+/** The room whose floor a placement stands on, by name, for the editor's room list and the export (a label only: no rule reads it
+ *  since Ed, 2026-11-03, the house one room). */
 export const physicalRoom = (p: Pick<Placement, "x" | "z">, H = HOUSE_ROOMS): string | null => shapeRoomAt(H.shape, p.x, p.z)?.id ?? null;
-export const lightingRoom = (p: Pick<Placement, "x" | "z">, H = HOUSE_ROOMS): string => physicalRoom(p, H) ?? [...H.rooms].sort((a, b) => Math.hypot(a.x - p.x, a.z - p.z) - Math.hypot(b.x - p.x, b.z - p.z))[0].id;
-export const artKey = (o: LayoutItem, p: Placement, H = HOUSE_ROOMS): string => `${o.id}:${p.rotation}:${lightingRoom(p, H)}`;
+/** A piece's picture by its pose (one palette for the whole house, art/furniture.js: where it stands doesn't change it). */
+export const artKey = (o: LayoutItem, p: Placement): string => `${o.id}:${p.rotation}`;
+/** Objects gone from the house that an older layout still places: the guests' bedrooms' doors (Ed, 2026-11-03: the bedrooms open).
+ *  Their placements are dropped on import, so his layouts from before still load. */
+export const RETIRED_OBJECTS: readonly string[] = ["bedroom2Door", "bedroom3Door"];
 export function parseLayout(raw: unknown, items: LayoutItem[], floorplan: string): Layout {
   if ((raw as { version?: unknown } | null)?.version === 1) return migrateCameraV1(raw, items, floorplan);
-  const l = raw as Layout;
+  let l = raw as Layout;
+  if (Array.isArray(l?.objects) && l.objects.some(p => RETIRED_OBJECTS.includes(p?.id))) l = { ...l, objects: l.objects.filter(p => !RETIRED_OBJECTS.includes(p?.id)) };
+  // Explicit source-catalogue upgrade: Ed replaced the two unused guest chests in place.
+  if (floorplan === identities.canonical && identities.legacy.includes(l?.floorplan) && Array.isArray(l.objects))
+    l = { ...l, objects: l.objects.map(p => ({ ...p, id: migratedGuestFurnitureId(p.id) })) };
   const matchingSource = l?.floorplan === floorplan || (floorplan === identities.canonical && identities.legacy.includes(l?.floorplan));
   const removed = l?.removed ?? [];
   if (!Array.isArray(removed) || removed.some(id => typeof id !== "string" || !id.startsWith("clutter:") || !items.some(o => o.id === id)) || new Set(removed).size !== removed.length) throw Error("Only known clutter may be explicitly removed.");
-  if (!l || l.version !== 2 || !matchingSource || !Array.isArray(l.objects) || l.objects.length + removed.length !== items.length) throw Error("This layout does not match the current house. Export it again from the matching editor.");
+  // An object removed outright: only the old hats' area (Ed, 2026-11-02: "we should remove the old cloakroom hats area"; its hats
+  // lie on the spawn points). Not in the house at all (rules/housePlacement.ts applyEdLayout).
+  const removedObjects = l?.removedObjects ?? [];
+  if (!Array.isArray(removedObjects) || removedObjects.some(id => typeof id !== "string" || !items.some(o => o.id === id && isHatZone(o))) || new Set(removedObjects).size !== removedObjects.length) throw Error("Only the old hats area may be removed as an object.");
+  const gone = [...removed, ...removedObjects];
+  if (!l || l.version !== 2 || !matchingSource || !Array.isArray(l.objects) || l.objects.length + gone.length !== items.length) throw Error("This layout does not match the current house. Export it again from the matching editor.");
   const seen = new Set<string>(), ids = new Set(items.map(o => o.id));
   const objects = l.objects.map(p => {
-    if (!p || !ids.has(p.id) || removed.includes(p.id) || seen.has(p.id) || ![p.x, p.z, p.rotation].every(v => typeof v === "number" && Number.isFinite(v)) || Math.abs(p.x) > 10000 || Math.abs(p.z) > 10000 || Math.abs(p.rotation) > 360000) throw Error("Each object must have one known ID and finite coordinates and angle.");
+    if (!p || !ids.has(p.id) || gone.includes(p.id) || seen.has(p.id) || ![p.x, p.z, p.rotation].every(v => typeof v === "number" && Number.isFinite(v)) || Math.abs(p.x) > 10000 || Math.abs(p.z) > 10000 || Math.abs(p.rotation) > 360000) throw Error("Each object must have one known ID and finite coordinates and angle.");
     const pose = { id: p.id, x: p.x, z: p.z, rotation: normalAngle(p.rotation) };
     const supplied = (p as Placement & { useAnchor?: { x: number; z: number } }).useAnchor;
     if (supplied !== undefined) {
@@ -95,7 +110,7 @@ export function parseLayout(raw: unknown, items: LayoutItem[], floorplan: string
     }
     seen.add(p.id); return pose;
   });
-  const result: Layout = { version: 2, floorplan, objects: items.filter(o => !removed.includes(o.id)).map(o => objects.find(p => p.id === o.id)!), ...(removed.length ? { removed: [...removed] } : {}) };
+  const result: Layout = { version: 2, floorplan, objects: items.filter(o => !gone.includes(o.id)).map(o => objects.find(p => p.id === o.id)!), ...(removed.length ? { removed: [...removed] } : {}), ...(removedObjects.length ? { removedObjects: [...removedObjects] } : {}) };
   if (l.migration !== undefined) {
     const m = l.migration;
     if (!m || m.from !== 1 || m.cameraPreserved !== true || !Array.isArray(m.held) || m.held.some(p => !legacy.items.some(o => o.id === p?.id) || ![p.x, p.z, p.rotation].every(Number.isFinite))) throw Error("Invalid version-1 conversion record.");
@@ -109,12 +124,15 @@ export function migrateCameraV1(raw: unknown, items: LayoutItem[], floorplan: st
   if (!l || l.version !== 1 || l.floorplan !== legacy.floorplan || !Array.isArray(l.objects) || l.objects.length !== legacy.items.length) throw Error("Only the recorded version-1 house can be converted. Its camera appearance is preserved explicitly.");
   const result = defaultLayout(items, floorplan), seen = new Set<string>(), held: Placement[] = [];
   for (const p of l.objects) {
-    const old = legacy.items.find(o => o.id === p?.id), current = items.find(o => o.id === p?.id);
+    const id = migratedGuestFurnitureId(p?.id);
+    const old = legacy.items.find(o => o.id === p?.id), current = items.find(o => o.id === id);
     if (!old || seen.has(p.id) || ![p.x, p.z, p.rotation].every(v => typeof v === "number" && Number.isFinite(v)) || Math.abs(p.x) > 10000 || Math.abs(p.z) > 10000 || Math.abs(p.rotation) > 360000) throw Error("Invalid version-1 object ID, coordinate or angle.");
     seen.add(p.id);
+    if (RETIRED_OBJECTS.includes(p.id)) continue; // (gone from the house: nothing to place)
     // A changed object (notably the working mushroom kitchen) is not overwritten by its stale placeholder.
-    if (!current || ["w", "d", "h"].some(k => old[k as "w" | "d" | "h"] !== current[k as "w" | "d" | "h"])) { held.push({ id: p.id, x: p.x, z: p.z, rotation: p.rotation }); continue; }
-    const target = result.objects.find(q => q.id === p.id)!;
+    // The named chest→table upgrade keeps horizontal footprint/placement; its new mirror height is authored.
+    if (!current || (id === p.id ? ["w", "d", "h"] : ["w", "d"]).some(k => old[k as "w" | "d" | "h"] !== current[k as "w" | "d" | "h"])) { held.push({ id: p.id, x: p.x, z: p.z, rotation: p.rotation }); continue; }
+    const target = result.objects.find(q => q.id === id)!;
     // Legacy proxies (decks/clothes pile) already used the plan's +angle in the camera canvas.
     const angle = FURNITURE_IDS.includes(old.id) ? old.facing.yaw * 180 / Math.PI - p.rotation : p.rotation;
     Object.assign(target, { x: p.x, z: p.z, rotation: normalAngle(angle) });
@@ -141,7 +159,7 @@ export function exportLayout(layout: Layout, items: LayoutItem[]): object {
     hatSpawnPoints: items.filter(o => o.hatPoint).map(o => { const p = layout.objects.find(p => p.id === o.id)!; return { id: o.hatPoint!, x: p.x, z: p.z }; }).sort((a, b) => a.id - b.id),
     objects: layout.objects.map(p => {
       const item = items.find(o => o.id === p.id)!;
-      return { ...p, physicalRoom: physicalRoom(p), lightingRoom: lightingRoom(p), ...(item.hatPoint ? { kind: "hat-spawn-point", order: item.hatPoint } : isHatZone(item) ? { kind: "hat-spawn-zone" } : { useAnchor: attachedPoint(item, p) }) };
+      return { ...p, physicalRoom: physicalRoom(p), ...(item.hatPoint ? { kind: "hat-spawn-point", order: item.hatPoint } : isHatZone(item) ? { kind: "hat-spawn-zone" } : { useAnchor: attachedPoint(item, p) }) };
     }) };
 }
 /** Future spawn positions, not hats or interaction points. Keep runtime's slot identities/order. */
