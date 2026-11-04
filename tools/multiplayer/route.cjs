@@ -8,7 +8,6 @@
 const fs = require("node:fs");
 const path = require("node:path");
 const { planFloorPath } = require("./floorPath.cjs");
-let playwright; try { playwright = require("playwright"); } catch { playwright = require("/opt/node22/lib/node_modules/playwright"); }
 
 const DEFAULT_ENDPOINT = "wss://witch-relay-playtest.onrender.com"; // the game's built-in relay (src/app/telephone.ts)
 const READY_TEXT = "The line is ready.";
@@ -52,12 +51,17 @@ function initScript({ from, to }) {
     constructor(url, protocols) {
       const target = from && String(url).startsWith(from) ? to + String(url).slice(from.length) : url;
       super(target, protocols);
-      const u = new URL(String(target)), entry = { id: rec.sockets.length, url: u.origin + u.pathname, created: Date.now(), opened: null, closed: null, code: null, wasClean: null, reason: null, errors: 0, sent: 0, received: 0 };
+      const u = new URL(String(target)), entry = { id: rec.sockets.length, url: u.origin + u.pathname, created: Date.now(), opened: null, closed: null, code: null, wasClean: null, reason: null, errors: 0, sent: 0, received: 0, lastSend: null, lastReceive: null, sendGapAtCloseMs: null, receiveGapAtCloseMs: null };
       rec.sockets.push(entry); live.set(this, entry);
       this.addEventListener("open", () => { entry.opened = Date.now(); });
-      this.addEventListener("close", e => { entry.closed = Date.now(); entry.code = e.code; entry.wasClean = e.wasClean; entry.reason = String(e.reason ?? "").slice(0, 80); live.delete(this); });
+      this.addEventListener("close", e => {
+        entry.closed = Date.now(); entry.code = e.code; entry.wasClean = e.wasClean; entry.reason = String(e.reason ?? "").slice(0, 80);
+        entry.sendGapAtCloseMs = Math.max(0, entry.closed - (entry.lastSend ?? entry.opened ?? entry.created));
+        entry.receiveGapAtCloseMs = Math.max(0, entry.closed - (entry.lastReceive ?? entry.opened ?? entry.created));
+        live.delete(this);
+      });
       this.addEventListener("error", () => { entry.errors++; });
-      this.addEventListener("message", e => { entry.received++; const t = typeOf(e.data); bump("in:" + t); if (marked.includes(t)) rec.events.push({ at: Date.now(), socket: entry.id, dir: "in", type: t }); });
+      this.addEventListener("message", e => { entry.lastReceive = Date.now(); entry.received++; const t = typeOf(e.data); bump("in:" + t); if (marked.includes(t)) rec.events.push({ at: Date.now(), socket: entry.id, dir: "in", type: t }); });
     }
     send(data) {
       const entry = live.get(this); if (entry) entry.sent++;
@@ -65,7 +69,11 @@ function initScript({ from, to }) {
       if (marked.includes(t)) rec.events.push({ at: Date.now(), socket: entry?.id ?? -1, dir: "out", type: t });
       if (t === "state:frame") { const n = (data.match(/"catchUp":true/g) ?? []).length; if (n) { rec.catchUpSteps += n; rec.catchUpFrames++; } }
       if (t === "input" && data.includes('"hold":true')) rec.holds++;
-      return super.send(data);
+      const open = this.readyState === 1;
+      const result = super.send(data);
+      // A closing socket silently drops sends; a thrown send was not queued either.
+      if (entry && open) entry.lastSend = Date.now();
+      return result;
     }
   }
   window.WebSocket = Tracked;
@@ -150,6 +158,7 @@ const houseOf = page => page.evaluate(() => { const p = window.witch.telephonePr
 async function main() {
   const args = parseArgs(process.argv.slice(2));
   if (args.help || !args.build || !args.relay || !args.out) { console.log(USAGE); process.exitCode = args.help ? 0 : 2; return; }
+  let playwright; try { playwright = require("playwright"); } catch { playwright = require("/opt/node22/lib/node_modules/playwright"); }
   const out = path.resolve(args.out);
   if (fs.existsSync(out) && fs.readdirSync(out).length) throw Error(`Output directory ${out} is not empty (one run per directory; nothing is retried)`);
   fs.mkdirSync(path.join(out, "screenshots"), { recursive: true });
@@ -685,6 +694,10 @@ function summary(R) {
   if (R.transportResumes) lines.push(`- transport resumes: host ${R.transportResumes.host}, guest ${R.transportResumes.guest} (forced closes: ${R.transportResumes.forced})`);
   const ws = role => R.sockets[role].map(s => `${s.code ?? "open"}`).join(", ");
   lines.push(`- relay sockets: host ${R.sockets.host.length} (closes ${ws("host") || "-"}), guest ${R.sockets.guest.length} (closes ${ws("guest") || "-"})`);
+  for (const role of ["host", "guest"]) for (const socket of R.sockets[role]) {
+    const line = socketCloseLine(role, socket); if (line) lines.push(line);
+  }
+  if ([...R.sockets.host, ...R.sockets.guest].some(s => Number.isFinite(s.closed))) lines.push("- Socket gaps are browser observations (successfully queued sends and dispatched receives), not proof of relay receipt, a server timeout, or its cause.");
   const fr = R.frameRate.map(f => `${f.role} ${f.framesPerSecond}/s (game ${f.gameSecondsPerSecond} s/s) at ${f.at}`).join("; ");
   if (fr) lines.push(`- frame rate samples: ${fr}`);
   const errs = ["host", "guest"].map(r => `${r} ${R.errors[r].length}`).join(", ");
@@ -694,5 +707,13 @@ function summary(R) {
   return lines.join("\n") + "\n";
 }
 
+function socketCloseLine(role, s) {
+  if (!Number.isFinite(s.closed)) return null;
+  const stamp = key => !Object.hasOwn(s, key) ? "unavailable" : Number.isFinite(s[key]) ? new Date(s[key]).toISOString() : "none since open";
+  const send = Number.isFinite(s.sendGapAtCloseMs) ? s.sendGapAtCloseMs : null, receive = Number.isFinite(s.receiveGapAtCloseMs) ? s.receiveGapAtCloseMs : null;
+  const gaps = [send !== null && send >= 20000 ? "send" : null, receive !== null && receive >= 20000 ? "receive" : null].filter(Boolean);
+  return `- ${role} socket #${s.id} closed ${s.code ?? "?"}: last send ${stamp("lastSend")}; last receive ${stamp("lastReceive")}; gaps at close send ${send === null ? "unavailable" : send + " ms"}, receive ${receive === null ? "unavailable" : receive + " ms"}${gaps.length ? ` [GAP >=20s: ${gaps.join(", ")}]` : ""}`;
+}
+
 if (require.main === module) main().catch(e => { console.error(e.stack ?? e); process.exitCode = 1; });
-module.exports = { parseArgs, summary };
+module.exports = { parseArgs, summary, initScript, socketCloseLine };

@@ -105,7 +105,10 @@ half. The guest's own bedroom counts as open for her route, as the rules open it
 - the host's guest-input queue (`network.inputs`): discarded, longest hold, underruns, queued peak;
 - catch-up steps, counted from the host's sent frames (`guestSteps` marked `catchUp`), and the guest's `hold` inputs (counts only);
 - WebSocket events (`page.on("websocket")`: URL, open, close, errors) and, from the in-page wrapper, each socket's close code,
-  wasClean and message counts by type; plus the times of lifecycle messages (resume, resumed, start checkpoints, peer-away...). No
+  wasClean, message counts by type, `lastSend` (successfully queued on an open socket), `lastReceive`, and frozen
+  `sendGapAtCloseMs`/`receiveGapAtCloseMs`. Closed-socket summary lines flag either gap of at least20 seconds. A socket with no traffic
+  uses its open time (or creation if never opened); older records without these fields stay unavailable. These are browser
+  observations, not proof of relay receipt or its timeout decision. Plus the times of lifecycle messages (resume, resumed, start checkpoints, peer-away...). No
   payloads, telephone numbers or tickets are kept;
 - transport resumes per page: beyond the forced close, each is a socket the page replaced itself (a silence of two heartbeats);
 - page errors and console errors, frame rate and game pace samples.
