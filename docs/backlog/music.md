@@ -179,6 +179,10 @@ Ed is starting to work with a musician: "we can keep the current music and start
 - Should witchiness vary by context (more ritual in legend circles and at home, more rave on the dancefloor)?
 - Which genres make the first set of records?
 
+## The first home night's set (Ed, 2026-11-04)
+
+The first home night has a hand-picked set (the style's `curated`, 10 waves plus the boot's warm-up; `src/rules/musicSet.ts`, docs/notes/config-history/music-style.md#curated). With home starting at **5 waves** (PR #1810, not yet released) that set no longer fits, and Ed (2026-11-04): **"Generated is fine."** So the first home night's music is generated like every other night's; no new hand-picked 5-wave set is wanted. No code change for it here: `isCurated` applies the set only to a home night of exactly `curated.waves` (10) waves, so a 5-wave home already gets the generated set once #1810 lands; whether to delete `curated` from `config/music-style.json` afterwards is left to that PR or a later tidy.
+
 ## Challenge area music (note for later)
 
 Ed, 2026-11-04: "We should have some special spooky music for the challenge area before the fight starts, and some special challenge music for while you're in the challenge area and the creatures are awake, before you've won."
