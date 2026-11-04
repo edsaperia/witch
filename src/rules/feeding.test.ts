@@ -11,6 +11,8 @@ import { pipCount, pipFuel } from "./buffs";
 import { hexCell, stackBottom } from "./leash";
 import { feedOffer } from "./sigilButton";
 import { TUNING, withTuning } from "./tuning";
+import { TRAVEL } from "./travel";
+import { FIGHT } from "./movement";
 import { replayGuest, replayStart } from "../platform/online/replay";
 import { preppedGame } from "../test/preppedGame"; // (games on a map made once a file from its prep)
 
@@ -218,6 +220,24 @@ describe("fed before fighting (Ed, 2026-11-03: \"if you have given the instructi
     let back = false;
     if (!boar.gone && boar.enraged) run(g, 6, idle, () => { back ||= y.fight?.target?.kind === "creature" && y.fight.target.id === boar.id; });
     expect(back || boar.gone || !boar.enraged, "fighting again (or the boar's done for)").toBe(true);
+  }, 60000);
+
+  // Travellers ate no berries from 2026-10-05, when animals ate on their own (rules/travel.ts). Since feeding became a command (3 Nov),
+  // a press feeds the bottom of her stack even if it's travelling (Ed, 2026-11-04: allow it): it walks to the berry quietly and back.
+  it("feeds the bottom one even while it's travelling: it walks to its berry quietly, eats, and is hers still", () => {
+    const { g, W, mine } = scene([1], 1), [y] = mine, far = TRAVEL.posse * TRAVEL.leave * FIGHT.scale + 20; // (past where it leaves her posse)
+    Object.assign(y, { x: W.body.x - far, z: W.body.z, tx: W.body.x - far, tz: W.body.z });
+    run(g, 0.2);
+    expect(y.travelling, "far behind her: travelling").toBe(true);
+    expect(feedOffer(g, W)?.id).toBe(y.id);
+    tap(g);
+    expect(g.berries.feeding.has(y.id), "the press feeds it").toBe(true);
+    let fought = false;
+    run(g, 60, idle, () => { if (y.fight?.target) fought = true; });
+    expect(fed(g, y), "it walked in and ate").toBe(1);
+    expect(fought, "quiet: no fight on the way").toBe(false);
+    expect(W.leash.stack).toContain(y.id);
+    expect(y.leashed).toBe(true);
   }, 60000);
 });
 

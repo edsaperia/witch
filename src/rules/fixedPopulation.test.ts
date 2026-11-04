@@ -13,11 +13,14 @@ import { runAway } from "./orbit";
 import { runawaySpot } from "./runaway";
 import type { Creature, Level } from "./creatures";
 import { stepWin } from "./win";
+import { outcome } from "../test/outcome";
 
 /** The night's tuning: ten areas, the stacks off, and the party's generated pieces as the game always has them (app/viewParams.ts
  *  styleFromLink; with them this night's badger #11 once walked on the spot by its bed for good, game.ts stepSpacing). */
 const nightTuning = () => withTuning({ map: { ...TUNING.map!, islandAreas: 10 }, cast: { ...TUNING.cast!, on: false }, partyObjects: { ...TUNING.partyObjects, generated: true } });
 // Keep the seed-22 ten-area bot night and seed-77 radius fight: these cover complete win/loss population conservation and real beach return travel.
+/** The reported numbers as last measured (src/test/outcome.ts; seed 22, 2026-11-04). */
+const WAS = { asleepAfter: 208.55 };
 /** Every one gone is asleep on the beach. */
 const allBeached = (g: Game) => { for (const c of g.creatures.filter(c => c.gone)) { expect(c.beached, `#${c.id} gone, not on the beach`).toBe(true); expect(c.asleep).toBe(true); } };
 
@@ -62,14 +65,18 @@ it("explicit runaways remain asleep on the beach at victory, with the population
     allBeached(g);
   });
 
-  it("the party lost mid-night: nobody gone, every one asleep, those from the beach at home", () => {
+  it("the party lost mid-night: nobody gone, every one asleep, those from the beach at home", ctx => {
     const { g, bot, start, ran } = night(200);
     expect(g.partyOver).toBeTruthy();
     expect(ran.size).toBeGreaterThan(0);
     expect(g.creatures.filter(c => c.gone || c.beached).map(c => c.id)).toEqual([]); // (up off the beach at once)
     // (then home at their own pace, those in her sight walking: one caught mid-run takes minutes)
     // (the challenge circle's statues stay stone at their posts through the afterparty, their sleep: rules/challengeStatues.ts)
-    for (let i = 0; i < 600 * 60 && g.creatures.some(c => !c.asleep && !c.partyLegend && !c.statue); i++) stepGame(g, bot.decide(g), 1 / 60);
+    // (how long that takes is an outcome statistic, reported (Ed, 2026-11-04: "Report only"; src/test/outcome.ts); that they all get
+    // there is the rule: the walk is given half an hour of game time, far past any slow walk home, so only one stuck awake fails it)
+    let steps = 0;
+    for (; steps < 1800 * 60 && g.creatures.some(c => !c.asleep && !c.partyLegend && !c.statue); steps++) stepGame(g, bot.decide(g), 1 / 60);
+    outcome(ctx, "seconds from the party lost (game time 200 s) to every one asleep", steps / 60, { unit: "s", was: WAS.asleepAfter, near: 60, line: "< 600" });
     expect(g.creatures.length).toBe(start);
     expect(g.creatures.filter(c => c.gone || c.beached).map(c => c.id)).toEqual([]);
     expect(g.creatures.filter(c => !c.asleep && !c.partyLegend && !c.statue).map(c => c.id)).toEqual([]);
