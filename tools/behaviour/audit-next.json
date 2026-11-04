@@ -15,5 +15,11 @@
   "remainingSystems": ["art AR1/AR2/AR4", "house H1/H2/H-R2-1/H-R2-2", "UI U-TIME/U7", "legends L3/L5"],
   "remainingCondition": "After this concrete U1 milestone is reported, continue the coordinator-authorized next small system slice; do not bundle unreviewed callbacks into this checkpoint.",
   "timing": "No savings claim without comparable medians from at least two runs per side. Local checks and historical overlapping file costs are not CI savings.",
-  "status": "PLAN; no original test changed or removed yet"
+  "status": "U1 source checkpoint: three original callbacks split; no original registration removed; two unowned callbacks unchanged",
+  "sourceReport": "ui-preview.behaviour.ts preserves full original loops, original far-dummy cases and worlds0/1/2 distributions. Numeric predicates remain informational. Bag rate uses a supplied single-volley cadence with the preview's real bag cooldown; reach keeps the original full-loop bound and supplied hit/fizzle states. Chart identity, containment and every pairwise patch exclusion remain unchanged. All8 prior providers and T6 retained.",
+  "remainingQuestions": [],
+  "scopeProof": {"changedOriginalCallbacks": 3, "unchangedCallbacks": 2, "removedRegistrations": 0, "base": "483801b44244f34f2f54c22e9f4ba8ea95b929a0"},
+  "localValidation": {"typecheck": "PASS", "surveyTypecheck": "PASS", "inventoryCheck": "PASS", "decisionsCheck": "PASS:67 fragments/248 entries", "configCheck": "PASS", "touchedAndHarnessTests": "14 PASS, one worker", "singleUiProvider": "PASS; original loops/worlds only, no browser/game/hardware run", "diffCheck": "PASS"},
+  "integration": "Refresh #1609 head and perform merge-tree on committed source before push; actual SHA/result recorded on PR. All8 prior providers and T6 remain intact.",
+  "evidenceLimits": "No cloud report execution, controlled timing comparison or CI/savings/release claim. Local provider measurements do not prove nightly dispatch. Root owns CI watching."
 }
