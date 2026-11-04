@@ -16,6 +16,7 @@ import { loanFind, nightFind } from "../../rules/finds";
 import { creaseHeight, groundHeight, HEIGHT_UNIFORMS } from "../height";
 import { SPRITE_UNIFORMS } from "../sprites";
 import { updateFrustum } from "./culling";
+import type { Ride, RideTuning } from "../ride";
 import { potionBend, potionStrength, potionCamera, vertigoAmount, tripIndicatorStrength, wormsEyeCamera } from "../potionEffects";
 import { potionSettings } from "../../rules/potionSettings";
 import { hueSpinPhase } from "../../rules/potionCycle";
@@ -36,6 +37,29 @@ function wholeAtStation(v: View, pose: ReturnType<typeof poseOf>): ReturnType<ty
   return { ...pose, distance, tx: pose.tx - (W.at - 0.5) * across * k, aim: (k * v.witchFeetTop) / (2 * v.witchTall) };
 }
 
+/** The game's own camera's aim for `pose` (placeCamera's, before a station's aim up her and the pixel snap), in the world's heights:
+ *  the pose's aim over the ground it rides (`ride`: camRide's height), and in the house off its hub, moved to where she's drawn
+ *  (`houseCam`, render/view/witch.ts: placeCamera reads the last frame's). A sail's dive ends on exactly this (View.landingShot,
+ *  app/arrive.ts), so the flight hands the game the camera it then has, with no jump as it lands (it had aimed at her place in the
+ *  rules over the ground there, and the game's camera then jumped here: the house's offset and the ride's ground both). */
+export function gameAim(pose: { tx: number; ty: number; tz: number }, ride: number, houseCam: { x: number; y: number; z: number }): THREE.Vector3 {
+  return new THREE.Vector3(pose.tx + houseCam.x, pose.ty + ride + houseCam.y, pose.tz + houseCam.z);
+}
+/** Where the camera's ride (camRide) reads the ground for `pose`: in the house (View.herOffset on) its middle, else the pose's aim. */
+export function ridePoint(v: Pick<View, "herOffset" | "game">, pose: { tx: number; tz: number }): { x: number; z: number } {
+  const D = v.herOffset.on ? deckOf(v.game.map, v.game.tuning) : null;
+  return D ? { x: D.x, z: D.z } : { x: pose.tx, z: pose.tz };
+}
+
+/** The camera's ride over the ground this frame (placeCamera's), at `R` (ridePoint). During a sail's dive (`flying`) the ground there
+ *  afresh each frame (nothing to smooth: the dive's shot is its own), so the game's first frame after it starts from the ground the
+ *  dive's last shot aimed by (View.landingShot): the dive is drawn with the night's clock still, and the ride kept the first ground it
+ *  read there, before the island's heights were in, 8.6 m below the house's, for the frame it landed (the cloud capture of the fix). */
+export function rideCamera(ride: Ride, flying: boolean, dt: number, R: { x: number; z: number }, W: { vx: number; vz: number }, full: number, ground: (x: number, z: number) => number, T: RideTuning): number {
+  if (flying) ride.h = Number.NaN;
+  return ride.update(dt, R.x, R.z, W.vx, W.vz, full, ground, T, Infinity);
+}
+
 /** Hill clearance used to ease by these fractions per frame at 60 Hz. */
 export function easeCameraLift(current: number, need: number, seconds: number): number {
   const fraction = need > current ? 0.35 : 0.06;
@@ -43,7 +67,7 @@ export function easeCameraLift(current: number, need: number, seconds: number): 
 }
 
 /** Places the camera for this frame; returns the camera's up (tilted with its pitch), for the sprites' facing. */
-export function placeCamera(v: View, time: number, pose: ReturnType<typeof poseOf>): THREE.Vector3 {
+export function placeCamera(v: View, time: number, pose: ReturnType<typeof poseOf>, repaint = false): THREE.Vector3 {
   const g = v.game, t = g.tuning;
   const trip = landscapeState(g);
   if (trip) landscapeUniform.value.set(trip.id, trip.amount, trip.setting, trip.phase);
@@ -51,7 +75,10 @@ export function placeCamera(v: View, time: number, pose: ReturnType<typeof poseO
   const liftDt = Number.isFinite(v.camLiftTime) ? time - v.camLiftTime : 0;
   // drawWitch computes the house offset after camera placement. Repainting the
   // same instant must use the offset its first camera placement actually saw.
-  if (time !== v.camLiftTime) v.houseCamInput.copy(v.houseCam as THREE.Vector3Like);
+  // (only a repaint of a held world keeps it, `repaint`: a sail's dive and the first frames of a night are drawn with its clock
+  // still, new frames all the same, and took a stale offset, the last night's or the dive's first frame's; now each takes the last
+  // drawn, so the game's camera takes over from the dive with the one its last shot aimed by, View.landingShot)
+  if (time !== v.camLiftTime || !repaint) v.houseCamInput.copy(v.houseCam as THREE.Vector3Like);
   v.camLiftTime = time;
   pose = wholeAtStation(v, pose);
   const vertigo = v.fly || v.telescope ? 0 : vertigoAmount(potionStrength(g, 'vertigo'), g.witch.lift);
@@ -105,12 +132,10 @@ export function placeCamera(v: View, time: number, pose: ReturnType<typeof poseO
     // plane, wherever they lie (render/view/witch.ts, render/houseRooms.ts); under the rules' place a room far from the Terrace had the
     // ground of 60 m away, the camera metres above or below her: Ed's playtest, 2026-10-25, "it doesn't seem to accurately know where
     // the witch is")
-    const D = v.herOffset.on ? deckOf(g.map, t) : null;
-    v.camRide.update(rdt, D ? D.x : pose.tx, D ? D.z : pose.tz, W.vx, W.vz, full, groundHeight, t.witch, Infinity);
+    rideCamera(v.camRide, !!F, rdt, ridePoint(v, pose), W, full, groundHeight, t.witch);
     v.rideOff = W.seated || W.perch ? 0 : v.ride.h - groundHeight(W.x, W.z); // (on the treehouse deck: its floor is flat)
   }
-  const target = new THREE.Vector3(pose.tx, F ? F.ty : pose.ty + v.camRide.h, pose.tz); // (the flight's aim is in the world's heights)
-  if (!F) target.add(v.houseCamInput);
+  const target = F ? new THREE.Vector3(F.tx, F.ty, F.tz) : gameAim(pose, v.camRide.h, v.houseCamInput); // (the flight's aim is in the world's heights)
   // At a station, aimed up her to the part being chosen (rules/camera.ts aim: a share of her height as drawn), along the way her
   // sprite stands (up the screen), so that part stays in the middle at any zoom.
   // From her feet as she's drawn (the last frame's: she stands still at a station), not the rules' height: indoors that's
