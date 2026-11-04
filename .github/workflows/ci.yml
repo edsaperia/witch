@@ -19,15 +19,35 @@ permissions:
 jobs:
   build:
     runs-on: ubuntu-latest
+    outputs:
+      reuse: ${{ steps.reuse.outputs.reuse }}
+      source: ${{ steps.reuse.outputs.source }}
+      release: ${{ steps.release.outputs.candidate }}
     permissions:
       contents: read
       pull-requests: read
+      actions: read
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
           node-version: 22
           cache: npm
+      - name: Identify release proof candidates
+        id: release
+        continue-on-error: true
+        run: node tools/ci/release-reuse.mjs candidate
+      - name: Look for identical successful release validation
+        id: reuse
+        timeout-minutes: 2
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        # Optional cache: an API/download failure must take the existing full-validation path.
+        continue-on-error: true
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const { lookup } = await import(`${process.env.GITHUB_WORKSPACE}/tools/ci/release-reuse.mjs`);
+            await lookup({ github, core });
       - run: npm ci
       - name: List the work in flight
         uses: actions/github-script@v7
@@ -58,6 +78,18 @@ jobs:
           name: game-dist
           path: dist
           retention-days: 3
+          if-no-files-found: error
+      - name: Record successful release build
+        continue-on-error: true
+        if: steps.release.outputs.candidate == 'true'
+        run: node tools/ci/release-reuse.mjs record build
+      - uses: actions/upload-artifact@v4
+        if: steps.release.outputs.candidate == 'true'
+        continue-on-error: true
+        with:
+          name: ci-validation-build-${{ github.run_attempt }}
+          path: ci-validation/validation-build.json
+          retention-days: 14
           if-no-files-found: error
   deploy:
     if: ${{ github.ref == 'refs/heads/main' }}
@@ -214,26 +246,35 @@ jobs:
       - name: Require the build and main publication
         if: ${{ needs.build.result != 'success' || (github.ref == 'refs/heads/main' && needs.deploy.result != 'success') }}
         run: exit 1
+      - name: Reuse successful full release validation
+        if: needs.build.outputs.reuse == 'true'
+        env:
+          RELEASE_VALIDATION_SOURCE: ${{ needs.build.outputs.source }}
+        run: echo "Reusing full release validation from $RELEASE_VALIDATION_SOURCE; fresh main build and publication succeeded."
       - uses: actions/checkout@v4
+        if: needs.build.outputs.reuse != 'true'
         with:
           # PR merge checkout includes both parents: the event base and tested head.
           # Missing or older ancestry still makes test-scope run the complete suite.
           fetch-depth: 2
       - uses: actions/setup-node@v4
+        if: needs.build.outputs.reuse != 'true'
         with:
           node-version: 22
           cache: npm
       - run: npm ci
+        if: needs.build.outputs.reuse != 'true'
       - name: Full or related unit tests (this shard)
+        if: needs.build.outputs.reuse != 'true'
         run: node tools/ci/run-unit.mjs
         env:
           VITEST_SHARD: ${{ matrix.shard }}/4
           UNIT_BALANCE: "1"
       - name: Failure annotation totals
-        if: always()
+        if: always() && needs.build.outputs.reuse != 'true'
         run: node tools/ci/annotations.cjs --summary
       - name: Unit selection and wall-clock evidence
-        if: always()
+        if: always() && needs.build.outputs.reuse != 'true'
         uses: actions/upload-artifact@v4
         with:
           name: unit-selection-${{ matrix.shard }}
@@ -243,6 +284,18 @@ jobs:
             ci-unit-outcomes.json
           if-no-files-found: ignore
           retention-days: 14
+      - name: Record successful release validation
+        if: needs.build.outputs.release == 'true'
+        continue-on-error: true
+        run: node tools/ci/release-reuse.mjs record unit-${{ matrix.shard }}
+      - uses: actions/upload-artifact@v4
+        if: needs.build.outputs.release == 'true'
+        continue-on-error: true
+        with:
+          name: ci-validation-unit-${{ matrix.shard }}-${{ github.run_attempt }}
+          path: ci-validation/validation-unit-${{ matrix.shard }}.json
+          retention-days: 14
+          if-no-files-found: error
     needs:
       - build
       - deploy
@@ -253,20 +306,43 @@ jobs:
       - name: Require the build and main publication
         if: ${{ needs.build.result != 'success' || (github.ref == 'refs/heads/main' && needs.deploy.result != 'success') }}
         run: exit 1
+      - name: Reuse successful full release validation
+        if: needs.build.outputs.reuse == 'true'
+        env:
+          RELEASE_VALIDATION_SOURCE: ${{ needs.build.outputs.source }}
+        run: echo "Reusing full release validation from $RELEASE_VALIDATION_SOURCE; fresh main build and publication succeeded."
       - uses: actions/checkout@v4
+        if: needs.build.outputs.reuse != 'true'
       - uses: actions/setup-node@v4
+        if: needs.build.outputs.reuse != 'true'
         with:
           node-version: 22
           cache: npm
       - run: npm ci
+        if: needs.build.outputs.reuse != 'true'
       - name: Reporting and checked-tree safety fixtures
+        if: needs.build.outputs.reuse != 'true'
         run: node --test tools/ci/reporting.test.cjs tools/ci/pages-policy.test.cjs
       - name: Relay protocol and admission tests
+        if: needs.build.outputs.reuse != 'true'
         run: npm --prefix server ci && npm --prefix server test
       - run: npm run typecheck
+        if: needs.build.outputs.reuse != 'true'
       - name: Failure annotation totals
-        if: always()
+        if: always() && needs.build.outputs.reuse != 'true'
         run: node tools/ci/annotations.cjs --summary
+      - name: Record successful release validation
+        if: needs.build.outputs.release == 'true'
+        continue-on-error: true
+        run: node tools/ci/release-reuse.mjs record check-work
+      - uses: actions/upload-artifact@v4
+        if: needs.build.outputs.release == 'true'
+        continue-on-error: true
+        with:
+          name: ci-validation-check-work-${{ github.run_attempt }}
+          path: ci-validation/validation-check-work.json
+          retention-days: 14
+          if-no-files-found: error
     needs:
       - build
       - deploy
@@ -291,24 +367,36 @@ jobs:
     env:
       PLAYWRIGHT_VERSION: 1.56.1
     steps:
+      - name: Reuse successful full release validation
+        if: needs.build.outputs.reuse == 'true'
+        env:
+          RELEASE_VALIDATION_SOURCE: ${{ needs.build.outputs.source }}
+        run: echo "Reusing full release validation from $RELEASE_VALIDATION_SOURCE; fresh main build and publication succeeded."
       - uses: actions/checkout@v4
+        if: needs.build.outputs.reuse != 'true'
       - uses: actions/setup-node@v4
+        if: needs.build.outputs.reuse != 'true'
         with:
           node-version: 22
           cache: npm
       - run: npm ci
+        if: needs.build.outputs.reuse != 'true'
       - name: Download the shared game build
+        if: needs.build.outputs.reuse != 'true'
         uses: actions/download-artifact@v4
         with:
           name: game-dist
           path: dist
       - uses: actions/cache@v4
+        if: needs.build.outputs.reuse != 'true'
         with:
           path: ~/.cache/ms-playwright
           key: playwright-${{ runner.os }}-${{ env.PLAYWRIGHT_VERSION }}
       - run: npm install --prefix .pw --no-save --no-package-lock playwright@${{ env.PLAYWRIGHT_VERSION }}
+        if: needs.build.outputs.reuse != 'true'
       # A hung apt/browser download once held smoke for its whole 20 min timeout: bound each attempt and retry once.
       - name: Install Chromium (bounded, one retry)
+        if: needs.build.outputs.reuse != 'true'
         shell: bash
         run: |
           for try in 1 2; do
@@ -317,23 +405,38 @@ jobs:
           done
           exit 1
       - name: Quick smoke test
+        if: needs.build.outputs.reuse != 'true'
         shell: bash
         run: |
           mkdir -p quick
           NODE_PATH=$PWD/.pw/node_modules QUICK_OUT=quick/quick.png node tools/ci/report-command.cjs --kind smoke -- node tools/smoke/quick.cjs 2>&1 | tee quick/log.txt
       - name: Music check
+        if: needs.build.outputs.reuse != 'true'
         run: NODE_PATH=$PWD/.pw/node_modules node tools/ci/report-command.cjs --kind smoke -- node tools/music-lab/check.cjs
       - name: Pause over the overlays
+        if: needs.build.outputs.reuse != 'true'
         run: NODE_PATH=$PWD/.pw/node_modules node tools/ci/report-command.cjs --kind smoke -- node tools/smoke/pause-on-top.cjs dist
       - name: Failure annotation totals
-        if: always()
+        if: always() && needs.build.outputs.reuse != 'true'
         run: node tools/ci/annotations.cjs --summary
       - uses: actions/upload-artifact@v4
-        if: always()
+        if: always() && needs.build.outputs.reuse != 'true'
         with:
           name: smoke-quick
           path: quick
           retention-days: 14
+      - name: Record successful release validation
+        if: needs.build.outputs.release == 'true'
+        continue-on-error: true
+        run: node tools/ci/release-reuse.mjs record smoke
+      - uses: actions/upload-artifact@v4
+        if: needs.build.outputs.release == 'true'
+        continue-on-error: true
+        with:
+          name: ci-validation-smoke-${{ github.run_attempt }}
+          path: ci-validation/validation-smoke.json
+          retention-days: 14
+          if-no-files-found: error
     needs:
       - build
       - deploy
@@ -396,23 +499,35 @@ jobs:
     env:
       PLAYWRIGHT_VERSION: 1.56.1
     steps:
+      - name: Reuse successful full release validation
+        if: needs.build.outputs.reuse == 'true'
+        env:
+          RELEASE_VALIDATION_SOURCE: ${{ needs.build.outputs.source }}
+        run: echo "Reusing full release validation from $RELEASE_VALIDATION_SOURCE; fresh main build and publication succeeded."
       - uses: actions/checkout@v4
+        if: needs.build.outputs.reuse != 'true'
       - uses: actions/setup-node@v4
+        if: needs.build.outputs.reuse != 'true'
         with:
           node-version: 22
           cache: npm
       - run: npm ci
+        if: needs.build.outputs.reuse != 'true'
       - uses: actions/download-artifact@v4
+        if: needs.build.outputs.reuse != 'true'
         with:
           name: game-dist
           path: dist
       - uses: actions/cache@v4
+        if: needs.build.outputs.reuse != 'true'
         with:
           path: ~/.cache/ms-playwright
           key: playwright-${{ runner.os }}-${{ env.PLAYWRIGHT_VERSION }}
       - run: npm install --prefix .pw --no-save --no-package-lock playwright@${{ env.PLAYWRIGHT_VERSION }}
+        if: needs.build.outputs.reuse != 'true'
       # A hung apt/browser download once held smoke for its whole 20 min timeout: bound each attempt and retry once.
       - name: Install Chromium (bounded, one retry)
+        if: needs.build.outputs.reuse != 'true'
         shell: bash
         run: |
           for try in 1 2; do
@@ -421,19 +536,62 @@ jobs:
           done
           exit 1
       - name: Load and draw diverse art on the largest shipped world
+        if: needs.build.outputs.reuse != 'true'
         env:
           EXPECTED_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
         run: NODE_PATH=$PWD/.pw/node_modules node tools/ci/report-command.cjs --kind smoke -- node tools/smoke/large-world.cjs
       - name: Failure annotation totals
-        if: always()
+        if: always() && needs.build.outputs.reuse != 'true'
         run: node tools/ci/annotations.cjs --summary
-      - if: always()
+      - if: always() && needs.build.outputs.reuse != 'true'
         uses: actions/upload-artifact@v4
         with:
           name: largest-world-art
           path: large-world/evidence.json
           if-no-files-found: ignore
           retention-days: 14
+      - name: Record successful release validation
+        if: needs.build.outputs.release == 'true'
+        continue-on-error: true
+        run: node tools/ci/release-reuse.mjs record large-world
+      - uses: actions/upload-artifact@v4
+        if: needs.build.outputs.release == 'true'
+        continue-on-error: true
+        with:
+          name: ci-validation-large-world-${{ github.run_attempt }}
+          path: ci-validation/validation-large-world.json
+          retention-days: 14
+          if-no-files-found: error
+  # Optional reuse evidence, never a substitute for the source run's full successful jobs.
+  release-proof:
+    name: release validation proof
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    # Failure to create optional reuse evidence only disables reuse, never source validation.
+    continue-on-error: true
+    needs: [build, unit, check-work, check, smoke, large-world]
+    if: ${{ !cancelled() && needs.build.outputs.release == 'true' && needs.build.result == 'success' && needs.unit.result == 'success' && needs.check-work.result == 'success' && needs.check.result == 'success' && needs.smoke.result == 'success' && needs.large-world.result == 'success' }}
+    permissions:
+      contents: read
+      actions: read
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: ci-validation-*-${{ github.run_attempt }}
+          path: ci-validation
+          merge-multiple: true
+      - name: Require matching environments and four full successful unit shards
+        run: node tools/ci/release-reuse.mjs assemble
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ci-release-proof-${{ github.run_attempt }}
+          path: ci-release-proof.json
+          retention-days: 14
+          if-no-files-found: ignore
   game-unchanged:
     name: game unchanged (bench:quick)
     runs-on: ubuntu-latest

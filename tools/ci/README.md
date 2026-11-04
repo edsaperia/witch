@@ -30,6 +30,10 @@ Canonical/cloud only.
 
 Canonical/cloud program-count evidence only, not latency or native-route acceptance.
 
+## `release-reuse.mjs`
+
+Reuse full release-PR validation only for an identical main tree and execution environment.
+
 ## `report-command.cjs`
 
 Stream a check unchanged, annotating named failures or its crash reason only when it exits unsuccessfully.
@@ -93,6 +97,7 @@ Inventory real world-constructor calls and explicit small-fixture reasons; comme
 - `pages-policy.test.cjs`
 - `proofs.json`
 - `proofs.test.cjs`
+- `release-reuse.test.ts`
 - `reporting.test.cjs`
 - `run-unit.test.ts`
 - `same-game.test.ts`
