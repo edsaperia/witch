@@ -3,7 +3,7 @@
   "branch": "codex/behaviour-audit-next",
   "worktree": "work/behaviour-audit-next",
   "base": "483801b44244f34f2f54c22e9f4ba8ea95b929a0",
-  "milestone": "U1 and house H2 preserved; U7 complete with remaining three camera/input callbacks",
+  "milestone": "U1/house descriptions/U7 preserved; H1/H-R2 house group complete; U-TIME KEEP",
   "scope": [
     {"audit": "bagSim:24", "file": "src/ui/bagSim.test.ts", "report": "original complete-loop throw totals, bag ordering and minimum counts", "keep": "configured preview cooldown through controlled fixed steps, no early shot, exact existing loop replay"},
     {"audit": "bagSim:31", "file": "src/ui/bagSim.test.ts", "report": "original complete-loop landed counts and far-dummy hit outcomes", "keep": "every measured letter stays within configured reach; controlled in/out-of-range letter eligibility"},
@@ -12,10 +12,10 @@
   "implementation": "Independent ui-preview behaviour provider with original loops/worlds and informational references; preserve all existing providers and T6. Own only the three listed callbacks plus necessary supplied fixtures, provider registration and tool index.",
   "constraints": "No docs/** edits, game/MP/appearance/on-screen text changes, GPU/per-frame work, speed/flake work, Render, browser or hardware run. Canonical owns full CI, smoke and release; root watches exact PR.",
   "validation": ["npm run typecheck", "npx tsc -p tools/behaviour/tsconfig.json", "node tools/inventory.mjs --check", "node tools/data.mjs decisions check", "node tools/config/check.mjs", "touched tests with maxWorkers1", "git merge-tree --write-tree HEAD <fresh1609head>"],
-  "remainingSystems": ["art AR1/AR2/AR4", "house H1/H-R2-1/H-R2-2", "UI U-TIME", "legends L3/L5"],
-  "remainingCondition": "After the current concrete milestone is reported, continue the coordinator-authorized next small system slice; preserve earlier checkpoints and publish exact ownership before edits.",
+  "remainingSystems": ["art AR1/AR2/AR4","legends L3/L5"],
+  "remainingCondition": "Root reviews this concrete house milestone and assigns the next authorized art/legend slice; preserve earlier checkpoints and publish exact ownership before edits.",
   "timing": "No savings claim without comparable medians from at least two runs per side. Local checks and historical overlapping file costs are not CI savings.",
-  "status": "U1 and house H2 checkpoints preserved; all five U7 callbacks split",
+  "status": "U1, house H2 and U7 checkpoints preserved; H1/H-R2 house group split; U-TIME KEEP audit complete",
   "sourceReport": "ui-preview.behaviour.ts preserves full original loops, original far-dummy cases and worlds0/1/2 distributions. Numeric predicates remain informational. Bag rate uses a supplied single-volley cadence with the preview's real bag cooldown; reach keeps the original full-loop bound and supplied hit/fizzle states. Chart identity, containment and every pairwise patch exclusion remain unchanged. All8 prior providers and T6 retained.",
   "remainingQuestions": [],
   "scopeProof": {"changedOriginalCallbacks": 3, "unchangedCallbacks": 2, "removedRegistrations": 0, "base": "483801b44244f34f2f54c22e9f4ba8ea95b929a0"},
@@ -51,6 +51,28 @@
     ],
     "reportObservations": "No outcome measurement moved in this description-only group; no new provider or index edit.",
     "validation": "PASS: normal typecheck, inventory --check, decisions check, config/check,11 touched tests with one worker, diff check. AST:3 titles renamed,11 identical bodies,0 changed bodies/removed registrations. Fresh committed1609 merge-tree result recorded on PR before push.",
+    "remainingQuestions": []
+  },
+  "houseRemaining": {
+    "plan": "1787#6619899990",
+    "baseCheckpoint": "d4483ec8795812736db72a21171d94bc68653a6e",
+    "scope": [
+      "houseGuard39/57",
+      "houseRooms66",
+      "crown19/56/81/101/127",
+      "finds40/47/187",
+      "finds150/159 wording only",
+      "wardrobeShelves90 wording only"
+    ],
+    "report": "Original seed77/four-area40-world-second guard and40+1+90+20 reunion journeys; original seed123 smallWorld bed-to-Terrace route/controls; original seed1 crown/open/whole geometry samples and bulb spacing0.8; six trunk seeds1..6,60 draws1..60 and seed123 five original offsets.",
+    "retained": "Direct virtual sigil assignment, home/dancefloor geometry, guarding and release modes, stack identity/order and no real sigils; complete floor route/arrival/takeoff; crown nonempty structure/thick+thin/upper bounds/all geometry and string identities; same-seed replay, valid-pool/owned/forced-kind eligibility/all-owned/one-find identity and every spawn clearance assertion.",
+    "uTime": {
+      "audit": "src/app/playtestComments.test.ts:69",
+      "disposition": "KEEP; audit complete, source unchanged",
+      "reason": "Declared production-pressure fixture tests legacy text retention, migration, attachment limits, reload, replay and both export/restore formats. Size bounds establish the intended pressure fixture rather than an emergent outcome; shrinking or moving it would weaken direct integrity coverage and enter separate speed work."
+    },
+    "wording": "Current lathe descriptions; all three bodies retain exact assertion logic.",
+    "validation": "PASS: normal/report typechecks, inventory --check, decisions check (67 fragments/248 entries), config/check,45 touched/harness tests with one worker (32 unrelated skipped), two bounded providers with14 finite observations/0 outside references, scope/diff checks. AST:11 changed bodies,3 wording-only bodies with identical assertion logic,53 unchanged registrations,0 removed. Original guard fixture/clock helper copied exactly; U-TIME source unchanged. Long original travel provider not executed locally. Fresh committed1609 merge-tree and actual head recorded on PR before push.",
     "remainingQuestions": []
   }
 }

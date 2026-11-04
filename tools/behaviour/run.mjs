@@ -8,7 +8,7 @@ import {summary} from './results.mjs';
 import {runFixtureChecks} from './fixture.mjs';
 
 const out=path.resolve(process.argv[2]??'out/behaviour'),started=performance.now();
-const registered=['music','world','world-rules','invites-placement','invites-actors','creatures-placement','creatures-motion','creatures-finale','ui-preview','camera-comfort','camera-travel'];
+const registered=['music','world','world-rules','invites-placement','invites-actors','creatures-placement','creatures-motion','creatures-finale','ui-preview','camera-comfort','camera-travel','house-travel','house-canopy','house-finds'];
 fs.mkdirSync(out,{recursive:true});
 // Fixed explicit filenames prevent a previous survey result from masquerading as this attempt.
 for(const name of [...registered.map(id=>`${id}.json`),'report-fixture-sanity.json','report.json','summary.md','run.log'])fs.rmSync(path.join(out,name),{force:true});
