@@ -26,7 +26,7 @@ The status index checks the requests below against prototype `ab06904b` and cite
 | Four tutorial recipes | **Partly built** | Superhot/Orbit/Drift remain comingSoon in registry; Mirror Floor only legacy cauldron preview #1472 v5764, not the modern assigned tutorial. Full four-recipe loop missing. |
 | Collectible records as an upgrade axis | **Partly built** | rules/records.ts/config/records.json and DJ booth offer BPM100–200 in10 steps, starting100/120. Original quest-complete biome/genre record rewards are not built; originating record PR/version unverified. |
 | Earn each island's genre record by every legend quest in one night | — | Registry records have BPM, no island genre/quest-unlock reward found. |
-| Tempo/difficulty and farther records faster | **Partly built** | Pulse responds to BPM; record tempo selectable, but record availability is a find pool rather than distance/biome genre progression. #527/#953, first versions unverified. |
+| Tempo/difficulty and farther records faster | **Partly built** | Pulse responds to BPM (since 2026-11-03 a straight line, 1.0 m/s at 100 bpm to 5.0 at 200, #1701; the record's tempo held all night, only knockdowns raising it, #1730); record tempo selectable, but record availability is a find pool rather than distance/biome genre progression. #527/#953, first versions unverified. |
 | Early quest stays gentle | **Built** | rules/quest.ts early quest case and related tests; #1552 retains no-cap correction v6736. Original easy-quest PR/version unverified. |
 | Treehouse and rooms on the Ent | **Built** | House/oak/wake source; v4094/v4439/v4240, #1565 v6713 layout. Original implementation PR unverified. |
 | Ent carried by island legend / arrival carrier | **Partly built** | Old carrier was implemented then removed by #1552 (v6736); continuous chart travel supersedes the voyage. No current carried-Ent travel claim. |
@@ -162,7 +162,7 @@ A third axis of progress, separate from the other two:
 
 - She starts with two records: **Slow** and **Normal**.
 - **An island's record** (its genre, matching its biome) is earned by completing **every legend quest dealt that night, in a single run** (Ed, 2026-10-11). A player can win an island first and come back another night for its record.
-- **Tempo = difficulty.** The record's bpm drives the music *and* the pulse's speed (pulse speed = 4 m/s × bpm / 120; replaces today's separate Waves menu). Knockdowns still add 5 bpm. **Open (2026-10-18):** Ed set the wave speed to 1 m/s by default, on a pause-page slider (built, #953), for slow early nights; how a record's tempo and the wave speed relate is to decide.
+- **Tempo = difficulty.** The record's bpm drives the music *and* the pulse's speed (pulse speed = 4 m/s × bpm / 120; replaces today's separate Waves menu). Knockdowns still add 5 bpm. **Open (2026-10-18):** Ed set the wave speed to 1 m/s by default, on a pause-page slider (built, #953), for slow early nights; how a record's tempo and the wave speed relate is to decide. **Decided (Ed, 2026-11-03):** the spark's speed is a straight line in the tempo, 1.0 m/s at 100 bpm to 5.0 at 200, `pulseSpeed` a multiplier on it (#1701), and the night keeps its record's tempo from wave to wave, only knockdowns raising it (#1730).
 - **Records from further islands are faster.** A fast record played on an easy island makes a hard night: difficulty becomes a choice.
 - Keep the first island's quests gentle enough that a new player can finish them (the early easy quest helps).
 

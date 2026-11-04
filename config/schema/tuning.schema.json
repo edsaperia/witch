@@ -3755,7 +3755,7 @@
         "steps"
       ],
       "additionalProperties": false,
-      "description": "Her flight trail: a glowing ribbon along her path in the colour of the area she's over."
+      "description": "Her flight trail: the cooldown trail's dotted sections in her preset's colours (trail.steps, on); with that off, a glowing ribbon along her path in the colour of the area she's over."
     },
     "swoopTrail": {
       "type": "object",
