@@ -334,6 +334,7 @@ says what each note covers.
 
 ## [Testing tools](testing.md)
 
+- Identical-tree release validation reuse
 - A quick proof shot
 - Publishing previews
 

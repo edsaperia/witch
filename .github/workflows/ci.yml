@@ -252,6 +252,7 @@ jobs:
           RELEASE_VALIDATION_SOURCE: ${{ needs.build.outputs.source }}
         run: echo "Reusing full release validation from $RELEASE_VALIDATION_SOURCE; fresh main build and publication succeeded."
       - uses: actions/checkout@v4
+        id: source
         if: needs.build.outputs.reuse != 'true'
         with:
           # PR merge checkout includes both parents: the event base and tested head.
@@ -271,7 +272,7 @@ jobs:
           VITEST_SHARD: ${{ matrix.shard }}/4
           UNIT_BALANCE: "1"
       - name: Failure annotation totals
-        if: always() && needs.build.outputs.reuse != 'true'
+        if: always() && needs.build.outputs.reuse != 'true' && steps.source.outcome == 'success'
         run: node tools/ci/annotations.cjs --summary
       - name: Unit selection and wall-clock evidence
         if: always() && needs.build.outputs.reuse != 'true'
@@ -312,6 +313,7 @@ jobs:
           RELEASE_VALIDATION_SOURCE: ${{ needs.build.outputs.source }}
         run: echo "Reusing full release validation from $RELEASE_VALIDATION_SOURCE; fresh main build and publication succeeded."
       - uses: actions/checkout@v4
+        id: source
         if: needs.build.outputs.reuse != 'true'
       - uses: actions/setup-node@v4
         if: needs.build.outputs.reuse != 'true'
@@ -329,7 +331,7 @@ jobs:
       - run: npm run typecheck
         if: needs.build.outputs.reuse != 'true'
       - name: Failure annotation totals
-        if: always() && needs.build.outputs.reuse != 'true'
+        if: always() && needs.build.outputs.reuse != 'true' && steps.source.outcome == 'success'
         run: node tools/ci/annotations.cjs --summary
       - name: Record successful release validation
         if: needs.build.outputs.release == 'true'

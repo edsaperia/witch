@@ -5,6 +5,19 @@ import { parse } from "yaml";
 const workflow = (name: string) => parse(fs.readFileSync(`.github/workflows/${name}.yml`, "utf8"));
 const ci = workflow("ci"), jobs = ci.jobs;
 describe("identical-tree release validation reuse", () => {
+  it("does not run checkout-dependent cleanup after a prerequisite failure skipped checkout", () => {
+    for (const name of ["unit", "check-work"]) {
+      const steps = jobs[name].steps;
+      const checkout = steps.find((s: any) => s.uses === "actions/checkout@v4");
+      const cleanup = steps.find((s: any) => s.name === "Failure annotation totals");
+      expect(checkout.id).toBe("source");
+      expect(cleanup.if).toBe("always() && needs.build.outputs.reuse != 'true' && steps.source.outcome == 'success'");
+      // A failed build/publication still fails this job; only redundant cleanup is skipped.
+      expect(steps[0].run).toBe("exit 1");
+      expect(steps[0].if).toContain("needs.build.result != 'success'");
+      expect(steps[0].if).toContain("needs.deploy.result != 'success'");
+    }
+  });
   it("limits lookup to main pushes with read-only Actions access and a full fallback", () => {
     const lookup = jobs.build.steps.find((s: any) => s.id === "reuse");
     expect(lookup.if).toBe("github.event_name == 'push' && github.ref == 'refs/heads/main'");
