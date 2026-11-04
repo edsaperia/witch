@@ -12,5 +12,7 @@
   "tools/mushrooms/explorer.js": "Runs the browser mushroom explorer and its drawing controls.",
   "tools/mushrooms/sheet.mjs": "Captures the mushroom explorer grid as a preview sheet.",
   "tools/robustness/poll.mjs": "Polls robustness pull-request coordination and records receipts.",
-  "tools/robustness/rules-layer.mjs": "Reports rules-layer dependency boundaries."
+  "tools/robustness/rules-layer.mjs": "Reports rules-layer dependency boundaries.",
+  "tools/changelogBatches.ts": "Build helper imported by Vite: emits hashed changelog batches and their index; not a standalone command.",
+  "tools/houseStanding.ts": "Build helper imported by Vite: packs fixed house uprights into a lossless virtual module; not a standalone command."
 }

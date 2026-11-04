@@ -118,5 +118,3 @@ export interface AttackSpec {
   pack?: { chain?: { n: number; range: number; hop?: number }; relay?: { n: number; hop?: number }; amplify?: { r: number; per: number; max: number }; tether?: { time: number; width: number }; triangulate?: { delay: number; r: number } };
 }
 
-/** The attacks file: each by name (keys starting "_" are notes). */
-export type AttackFile = Record<string, AttackSpec | string>;

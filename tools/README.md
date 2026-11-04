@@ -4,6 +4,66 @@
 
 Scripts for building, checking and measuring the game, run from the repository root. Each directory has a README listing its scripts (from their own header comments, with how to run them).
 
+Do not assume `--help` or `--check` is safe: scripts without a help handler may run their normal workload, and some checks open a browser. Read the entry point and its imports before invoking it. See [the health sweep](health-sweep.md) for checked commands and deferred workloads.
+
+## Root scripts and build helpers
+
+### [`artDependencies.ts`](artDependencies.ts)
+
+Conservative runtime-import graph, shared by cache fingerprints and affected-job tools.
+
+### [`artHash.ts`](artHash.ts)
+
+Legacy global hash for diagnostics/comparison.
+
+### [`artJobFingerprints.ts`](artJobFingerprints.ts)
+
+Per-job roots from the real dispatcher, plus conservative module-initialization inputs.
+
+### [`changelogBatches.ts`](changelogBatches.ts)
+
+Build helper imported by Vite: emits hashed changelog batches and their index; not a standalone command.
+
+### [`creatures.mjs`](creatures.mjs)
+
+The creatures' data, one folder a species, and the index that assembles them.
+
+```
+node tools/creatures.mjs list            every species: id, name, template, builder, levels, its folder's files
+node tools/creatures.mjs index           writes art/creatures/index.js (the species sorted by id) from the folders
+node tools/creatures.mjs check           fails if the index is stale, a folder's record has another id, or a genome has problems
+node tools/creatures.mjs adopt           moves any record still written in the old registries (art/genome/species.js's
+node tools/creatures.mjs show <id>       everything the game knows about one species, section by section
+```
+
+### [`data.mjs`](data.mjs)
+
+The game's split registries besides the creatures': one small file each, assembled by the readers, so builders stop colliding on one shared file.
+
+```
+node tools/data.mjs decisions list|check|adopt     the pause page's test sliders and the decisions panel (src/ui/decisions.ts):
+node tools/data.mjs flora list|check|adopt         the tree species' genomes (art/flora/genomes.js PLANT_GENOMES): one file a
+node tools/data.mjs flora index                     writes art/flora/species/index.js from the folder
+node tools/data.mjs areas list|check|adopt         the areas (art/areas/<id>/): recipe.js (art/recipes.js's recipes), kind.json
+node tools/data.mjs areas index                     writes art/areas/index.js from the folders
+node tools/data.mjs adopt                           every domain's adopt, the creatures' too
+node tools/data.mjs check                           every domain's check
+```
+
+### [`houseStanding.ts`](houseStanding.ts)
+
+Build helper imported by Vite: packs fixed house uprights into a lossless virtual module; not a standalone command.
+
+### [`inventory.mjs`](inventory.mjs)
+
+The tools' inventory: writes tools/README.md and a README.md in each tools/ directory that has none of its own, from each script's own header comment: its first sentence, and its usage line.
+
+```
+node tools/inventory.mjs [--check]
+```
+
+## Directories
+
 - [`arrive/`](arrive/README.md): 2 scripts — boot.cjs, time.cjs
 - [`art-cache/`](art-cache/README.md): 4 scripts — history.mjs, load.mjs, map.mjs, parity.mjs
 - [`art-check/`](art-check/README.md): 3 scripts — affected.mjs, checked-tree.mjs, scope.mjs
@@ -49,6 +109,7 @@ Scripts for building, checking and measuring the game, run from the repository r
 - [`map/`](map/README.md): 5 scripts — leycurve.mjs, leydepart.mjs, leyroute.mjs, scenery.mjs, shape.mjs
 - [`mist/`](mist/README.md): 2 scripts — dive.cjs, frames.cjs
 - [`momentum/`](momentum/README.md): 1 script — strip.mjs
+- [`multiplayer/`](multiplayer/README.md): 2 scripts — floorPath.cjs, route.cjs
 - [`mushrooms/`](mushrooms/README.md): 9 scripts — brewing-check.mjs, build-preview.mjs, check.mjs, explorer.js, glow-check.mjs, ingame-check.cjs, lab-check.cjs, recipe-book.mjs, sheet.mjs
 - [`music-lab/`](music-lab/README.md): 28 scripts — ab.mjs, ab.ts, analyse.cjs, analyse.ts, boot.mjs, boot.ts, build.mjs, check.cjs, circles.mjs, circles.ts, cost.cjs, cost.ts, flight.cjs, form.mjs, form.ts, fxcost.cjs, fxcost.ts, ingredients.ts, lab.ts, latency.cjs, set.mjs, set.ts, silence.cjs, stems.cjs, stems.ts, tune.cjs, tune.ts, voices.mjs
 - [`music-studio/`](music-studio/README.md): 5 scripts — build.mjs, check.cjs, knobs.ts, main.ts, midi.ts
@@ -84,3 +145,16 @@ Scripts for building, checking and measuring the game, run from the repository r
 - [`witch/`](witch/README.md): 10 scripts — bags-sheet.mjs, brooms-gif.mjs, brooms-sheet.mjs, hats-sheet.mjs, longwear-sheet.mjs, nightie-sheet.mjs, slider-audit.mjs, sliders-sheet.mjs, thickness-sheet.mjs, walk-sheet.mjs
 - [`workshop/`](workshop/README.md): 2 scripts — parts-sheet.mjs, shots.cjs
 - [`zoo/`](zoo/README.md): 7 scripts — coasts.cjs, map.mjs, order.mjs, perf.cjs, shots.cjs, trees.cjs, versailles-tall-mock.cjs
+
+## Nested scripts and browser entries
+
+- [`music-lab/live/build.mjs`](music-lab/live/build.mjs)
+- [`music-lab/live/main.ts`](music-lab/live/main.ts)
+- [`music-lab/live/player.ts`](music-lab/live/player.ts)
+- [`music-lab/live/ptWorker.ts`](music-lab/live/ptWorker.ts)
+- [`music-lab/live/settings.ts`](music-lab/live/settings.ts)
+- [`voice/fof/build.mjs`](voice/fof/build.mjs)
+- [`voice/pink-trombone/Noise.js`](voice/pink-trombone/Noise.js)
+- [`voice/pink-trombone/index.js`](voice/pink-trombone/index.js)
+- [`voice/tract/build.mjs`](voice/tract/build.mjs)
+- [`voice/tract/worklet.js`](voice/tract/worklet.js)
