@@ -220,7 +220,7 @@
         "rules/rosters.ts",
         "rules/archipelago.ts"
       ],
-      "notes": "10 / 15 / 20 / 25 / 30 for phases 1 to 5 (10 / 20 / 30 / 40 / 50 till 2026-11-04); home is its own, 5 at first growing to 64. A phase past the list takes its last. What follows the size follows it: the night's legends (1 in 5 areas, rules/rosters.ts legendsFor), the roster's kinds and so the challenge's pack, and each island's foreseen coast on the sea chart (rules/archipelago.ts). The sea chart always foresees the built sizes; the decisions panel's sliders change the island played."
+      "notes": "10 / 15 / 20 / 25 / 30 for phases 1 to 5 (10 / 20 / 30 / 40 / 50 till 2026-11-04); home is its own, 5 at first growing to 64. A phase past the list takes its last. What follows the size follows it: the night's legends (1 in 5 areas, rules/rosters.ts legendsFor), the roster's kinds and so the challenge's pack. The sea chart's layout keeps the room it gave 10 × phase areas (rules/archipelago.ts: every island where it was, more sea round it, home unchanged), and its outlines draw the built sizes; the decisions panel's sliders change the island played."
     },
     "beach": {
       "what": "The strip of sand round the island's edge, where she can lie down to stargaze and meet other witches.",

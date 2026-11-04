@@ -636,7 +636,7 @@
         "rules/growth.ts",
         "rules/rosters.ts"
       ],
-      "notes": "5: a phase 5 island's last area fields the full swarm whatever its size, a phase 1 island's a fifth of the way (rules/swarm.ts phaseReach, rules/growth.ts islandReach). Home's reach is the share of the islands she's found (rules/rosters.ts foundShare: none at first, every island at the end); a map that's no island by roster plays the whole curve. It replaces swarm.largestIsland (50, 2026-11-03 to 11-04: an island's size over it, which only the 50-area phase 5 islands reached)."
+      "notes": "5: a phase 5 island's last area fields the full swarm whatever its size, a phase 1 island's a fifth of the way (rules/swarm.ts phaseReach, rules/growth.ts islandReach). Home's reach is the share of the islands she's found (rules/rosters.ts foundShare: none at first, every island at the end); a map that's no island by roster plays the whole curve. It replaces the largest island's areas (largestIsland 50, 2026-11-03 to 11-04: an island's size over it, which only the 50-area phase 5 islands reached)."
     },
     "creatureSimRadius": {
       "see": "population"

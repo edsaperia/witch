@@ -140,7 +140,7 @@ Code: `rules/islandShape.ts`, `art/islands.js`, `docs/backlog/journey.md`
 
 - **`islands.phaseSizes`**: How many areas (stumps and waves) each phase's islands have, phase 1 first.
   1. Ed, 2026-11-04: "We could make waves 5 / 10 / 15 / 20 / 25 / 30 / 64" (then "yes, start island sizes")
-  10 / 15 / 20 / 25 / 30 for phases 1 to 5 (10 / 20 / 30 / 40 / 50 till 2026-11-04); home is its own, 5 at first growing to 64. A phase past the list takes its last. What follows the size follows it: the night's legends (1 in 5 areas, rules/rosters.ts legendsFor), the roster's kinds and so the challenge's pack, and each island's foreseen coast on the sea chart (rules/archipelago.ts). The sea chart always foresees the built sizes; the decisions panel's sliders change the island played.
+  10 / 15 / 20 / 25 / 30 for phases 1 to 5 (10 / 20 / 30 / 40 / 50 till 2026-11-04); home is its own, 5 at first growing to 64. A phase past the list takes its last. What follows the size follows it: the night's legends (1 in 5 areas, rules/rosters.ts legendsFor), the roster's kinds and so the challenge's pack. The sea chart's layout keeps the room it gave 10 × phase areas (rules/archipelago.ts: every island where it was, more sea round it, home unchanged), and its outlines draw the built sizes; the decisions panel's sliders change the island played.
   Code: `rules/rosters.ts`, `rules/archipelago.ts`
 
 | knob | type | range |
@@ -2371,7 +2371,7 @@ Code: `rules/growth.ts`, `rules/swarm.ts`, `config/swarm-power.json`, `tools/bal
   Code: `rules/combat/data.ts`
 - **`population.swarm.fullPhase`**: the phase whose islands reach the full swarm at their last area; an island of an earlier phase its phase over this of the way along the curve.
   1. Ed, 2026-11-04: "we should rebalance this so phase 5 islands get to full packs"
-  5: a phase 5 island's last area fields the full swarm whatever its size, a phase 1 island's a fifth of the way (rules/swarm.ts phaseReach, rules/growth.ts islandReach). Home's reach is the share of the islands she's found (rules/rosters.ts foundShare: none at first, every island at the end); a map that's no island by roster plays the whole curve. It replaces swarm.largestIsland (50, 2026-11-03 to 11-04: an island's size over it, which only the 50-area phase 5 islands reached).
+  5: a phase 5 island's last area fields the full swarm whatever its size, a phase 1 island's a fifth of the way (rules/swarm.ts phaseReach, rules/growth.ts islandReach). Home's reach is the share of the islands she's found (rules/rosters.ts foundShare: none at first, every island at the end); a map that's no island by roster plays the whole curve. It replaces the largest island's areas (largestIsland 50, 2026-11-03 to 11-04: an island's size over it, which only the 50-area phase 5 islands reached).
   Code: `rules/growth.ts`, `rules/rosters.ts`
 
 | knob | type | range |

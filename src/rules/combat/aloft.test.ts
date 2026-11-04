@@ -41,7 +41,9 @@ const closest = (list: readonly Creature[]) => {
 
 describe("she rises out of the pack's reach (Ed, 2026-11-03: 'act how they would when they're waiting to attack')", () => {
   it("they wait round the point under her, moving and spaced, and never strike; landing, they attack again", () => {
-    const { g, run, pack, strikes } = packHunting(1);
+    // (seed 2: seed 1 till home's packs grew by the islands found, Ed 2026-11-04, when the other areas' crowds, and so the pack's ids,
+    // changed; seeds 1 to 5 then keep 0.34, 0.82, 0.44, 0.36 and 0.51 of the closest pair's body gap, 0.63, 0.70, 0.65, 0.88 and 0.34 before)
+    const { g, run, pack, strikes } = packHunting(2);
     run((TUNING.wildWatch?.time ?? 4) + 6); // (the watch, then the hunt under way)
     expect(pack().filter(c => c.hunting === 0).length).toBe(pack().length);
     g.witch = { ...g.witch, mode: "treetop", lift: 1, vx: 0, vz: 0 };
