@@ -92,7 +92,8 @@ describe("treehouse authoring layouts", () => {
     expect(converted.version).toBe(2); expect(converted.objects).toHaveLength(items.length - current.removed.length);
     expect(converted.migration?.held.map(p => p.id)).toEqual(["cauldron"]);
     for (const old of supplied.objects.filter(p => p.id !== "cauldron")) {
-      const base = legacy.items.find(o => o.id === old.id)!, p = converted.objects.find(p => p.id === old.id)!;
+      const id = old.id === "bedroom2Chest" ? "bedroom2DressingTable" : old.id === "bedroom3Chest" ? "bedroom3DressingTable" : old.id;
+      const base = legacy.items.find(o => o.id === old.id)!, p = converted.objects.find(p => p.id === id)!;
       expect(p.x).toBe(old.x); expect(p.z).toBe(old.z);
       const yaw = FURNITURE_IDS.includes(old.id) ? base.facing.yaw - old.rotation * Math.PI / 180 : old.rotation * Math.PI / 180;
       expect(Math.sin(cameraYaw(p))).toBeCloseTo(Math.sin(yaw), 12);
@@ -104,7 +105,7 @@ describe("treehouse authoring layouts", () => {
     expect(converted.objects.find(p => p.id === "terrace:decks")!.rotation).toBe(45); // camera proxy was already +45, not a model using subtraction
     expect(parseLayout(exportLayout(converted, items), items, key)).toEqual(converted);
     // The retained proposal uses the registered pre-canonical identity; poses and all other metadata stay exact.
-    expect({ ...proposal, floorplan: key, removed: current.removed, objects: proposal.objects.filter(p => !current.removed.includes(p.id)) }).toEqual(exportLayout(converted, items));
+    expect({ ...proposal, floorplan: key, removed: current.removed, objects: proposal.objects.filter(p => !current.removed.includes(p.id)).map(p => ({ ...p, id: p.id === "bedroom2Chest" ? "bedroom2DressingTable" : p.id === "bedroom3Chest" ? "bedroom3DressingTable" : p.id })) }).toEqual(exportLayout(converted, items));
   });
   it("separates clutter into stable selectable/exportable pieces and changes room lighting identity without changing station function", () => {
     const clutter = items.filter(o => o.decor), repeated = layoutItems().filter(o => o.decor);

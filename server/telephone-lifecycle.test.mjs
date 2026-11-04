@@ -68,7 +68,8 @@ async function fixture(t, options = {}) {
     const ready = p.next('telephone-ready'); send(p, { type: 'telephone', publicKey: p.keys.publicKey });
     p.number = (await ready).number; assert.equal(p.number, telephoneIdentity(p.keys.publicKey).number); return p;
   };
-  return { relay, url, phone };
+  const raw = async () => { const p=mailbox(new WebSocket(url));clients.push(p);await once(p.ws,'open');return p; };
+  return { relay, url, phone, raw };
 }
 async function ring(a, b) {
   const out = a.next('call-ringing'), incoming = b.next('incoming-call'); send(a, { type: 'dial', number: b.number });
@@ -98,6 +99,23 @@ async function admitted(a, b) {
   assert.equal(x.role, 'host'); assert.equal(x.player, 0); assert.equal(y.role, 'guest'); assert.equal(y.player, 1); assert.equal(n.player, 1);
 }
 async function complete(a, b) { await ring(a, b); const pair = await challenge(a, b); await proofs(a, b, pair); await admitted(a, b); return pair; }
+
+for (const side of ['host','guest']) run(`telephone ${side} resumes with its original actor and transfers exclusive directory ownership`,async t=>{
+  const f=await fixture(t),a=await f.phone(801),b=await f.phone(802);await complete(a,b);
+  const hr=a.next('ready-accepted');send(a,{type:'ready'});await hr;
+  const gr=b.next('ready-accepted'),gn=a.next('guest-ready');send(b,{type:'ready'});await gr;await gn;
+  send(b,{type:'active'});await barrier(b);
+  const old=side==='host'?a:b,peer=side==='host'?b:a,credential=old.history.find(m=>m.type==='call-connected').resume;
+  const away=peer.next('peer-away');old.ws.terminate();await old.closed;await away;
+  await assert.rejects(()=>f.phone(old.label),/closed/i);
+  const fresh=await f.raw(),back=fresh.next('resumed'),notice=peer.next('peer-resumed');send(fresh,{type:'resume',...credential});
+  const resumed=await back;await notice;assert.equal(resumed.role,side);assert.equal(resumed.player,credential.player);
+  await assert.rejects(()=>f.phone(old.label),/closed/i);
+  const delivered=peer.next(side==='host'?'state':'input');send(fresh,{type:side==='host'?'state':'input',payload:{sameActor:credential.player}});
+  assert.equal((await delivered).payload.sameActor,credential.player);
+  send(fresh,{type:'leave'});await fresh.closed;if(side==='host')await peer.closed;
+  const again=await f.phone(old.label);assert.equal(again.number,old.number);
+});
 // Same-socket frame order proves the prior synchronous message was handled, without spending the dial bucket.
 async function barrier(p) {
   const payload = Buffer.from('lifecycle-order');

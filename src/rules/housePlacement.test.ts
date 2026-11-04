@@ -29,6 +29,13 @@ describe("explicit opt-in house placement", () => {
     expect(inBed.x).toBeCloseTo(bed.x + local.x); expect(inBed.z).toBeCloseTo(bed.z + local.z);
     expect(placementFacing(90).heading).toBe("down"); expect(placementFacing(-90).heading).toBe("up");
     expect(hatSlots({ x: 10, z: 20 }, H)[0]).toEqual({ x: H.layout!.hatPoints[0].x + 10, z: H.layout!.hatPoints[0].z + 20 });
+    for (const room of ["bedroom2", "bedroom3"]) {
+      const table = H.objects.find(o => o.id === `${room}DressingTable`)!;
+      const chest = proposal.objects.find(o => o.id === `${room}Chest`)!;
+      expect([table.x, table.z, table.placement?.rotation]).toEqual([chest.x, chest.z, chest.rotation]);
+      expect(table.placement?.foot.h).toBe(table.h);
+      expect(table.use.kind).toBe("creator");
+    }
   });
   it("provides a potion-owner position hook without changing colour identity, state or default kitchen geometry", () => {
     const base = kitchenPlan(), before = JSON.stringify(base);
