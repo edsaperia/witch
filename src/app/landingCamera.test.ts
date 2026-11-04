@@ -58,17 +58,18 @@ it("the dive lands on the game's own camera: its last frame and the game's first
   expect(last!.bend ?? 0).toBe(0); // (the dive's own bend relaxed to none: the night's own)
 });
 
-// Ed, 2026-11-03, of the dive waiting for her nightie: "it's the same nightie on every island every morning". The dive never waits
-// for her look: it flies the same with it drawn or not, and in bed without it she's under her covers (render/view/witch.ts), never
-// in last night's clothes.
-it("the dive never waits for her look; without it she's under her covers in bed", () => {
+// Ed, 2026-11-03, of the dive waiting for her nightie: "it's the same nightie on every island every morning"; and 2026-11-04,
+// "remove the house guard too". The dive never waits: it flies the same whether her look is drawn or not, and whether the house is
+// made or not (what isn't shows as it's made, under the loading mist); in bed without her look she's under her covers
+// (render/view/witch.ts), never in last night's clothes.
+it("the dive never waits for her look or the house; without her look she's under her covers in bed", () => {
   vi.stubGlobal("document", { getElementById: () => null });
   vi.stubGlobal("innerWidth", 960); vi.stubGlobal("innerHeight", 540);
   const g = newGame(456, TUNING);
   g.party.spellAt = null;
   expect(tuckIn(g)).toBe(true);
-  const frames = (drawn: boolean) => {
-    const v = Object.assign(Object.create(View.prototype) as View, { game: g, fly: null as Shot | null, homeDone: true, limitedLandingReady: () => false, houseCam: { x: 0, y: 0, z: 0 }, herOffset: { on: false, x: 0, y: 0, z: 0 } });
+  const frames = (drawn: boolean, house = true) => {
+    const v = Object.assign(Object.create(View.prototype) as View, { game: g, fly: null as Shot | null, homeDone: house, limitedLandingReady: () => false, houseCam: { x: 0, y: 0, z: 0 }, herOffset: { on: false, x: 0, y: 0, z: 0 } });
     Object.defineProperty(v, "lookDrawn", { value: drawn });
     const f = new ArrivalFlight({ v: 1, island: "fox", world: 0, at: 0, still: "", cam: { x: 0, z: 700, height: 260, pitch: 0.45, fov: 40, speed: 60 } } as unknown as Arrival, TUNING.arrive!, null);
     f.begin(g, true);
@@ -76,7 +77,10 @@ it("the dive never waits for her look; without it she's under her covers in bed"
     while (!f.frame(v, g, (now += 50))) if (++n > 20000) throw Error("never landed");
     return n;
   };
-  expect(frames(false)).toBe(frames(true));
+  const n = frames(true);
+  expect(frames(false)).toBe(n);
+  expect(frames(true, false)).toBe(n); // (the house not made: no slower)
+  expect(frames(false, false)).toBe(n);
   expect(inCovers("sit", false)).toBe(true); // (asleep, her nightie still being drawn: under the covers)
   expect(inCovers("sit", true)).toBe(false);
   expect(inCovers(null, false)).toBe(false); // (up and about: drawn as she is)
