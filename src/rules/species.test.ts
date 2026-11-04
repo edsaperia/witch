@@ -1,19 +1,20 @@
 import { describe, expect, it } from "vitest";
 import { type Level } from "./creatures";
-import { newGame, stepGame, STEP, type Controls, type Game } from "./game";
+import { stepGame, STEP, type Controls, type Game } from "./game";
 import { MOVEMENT } from "./movement";
 import { TUNING, type Tuning } from "./tuning";
 import { attackOf, guardOf } from "./combat";
 import { ARENA_PRESETS, setupArena } from "./arena";
 import type { Creature } from "./creatures";
 import { withCombatRoles } from "../test/combatRoles";
+import { preppedGame } from "../test/preppedGame"; // (games on a map made once a file from its prep)
 
 // Ed's species pass (2026-10-05): a fight profile for every species, and the new signature moves.
 const idle: Controls = { moveX: 0, moveZ: 0, toggleMode: false, zoom: 0, autoTalk: false };
 /** A quiet game, the witch on the ground away from everything, too tough to knock out. */
 function quiet(seed = 77, t: Tuning = TUNING): Game {
   // Retain distant recruits (>150 m), seeded terrain and the multi-seed arena fights for movement comparisons.
-  const g = newGame(seed, t);
+  const g = preppedGame(seed, t);
   g.clock.paused = false;
   const d = g.map.dancefloor;
   g.witch = { ...g.witch, seated: false, x: d.x, z: d.z + 20, mode: "ground", lift: 0 };

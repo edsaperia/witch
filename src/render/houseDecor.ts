@@ -93,3 +93,21 @@ export function placedDecorPlan(room: Rect & { id: string; r?: number; locked?: 
 
 /** The rooms dressed (those with any), for render/houseRooms.ts. */
 export const DECOR_ROOMS = decorOn ? HOUSE_ROOMS.rooms.filter(r => decorPlan(r).length) : [];
+
+/** The last placed layout's dressed rooms, and what they were worked out from. */
+let placedRooms: { H: HouseConfig; layout: HouseConfig["layout"]; rooms: HouseConfig["rooms"]; list: HouseConfig["rooms"] } | null = null;
+/** How many times the placed layout's dressed rooms have been worked out (for the tests). */
+export let placedDecorWorkedOut = 0;
+/** The rooms dressed as the house is laid out now (render/houseRooms.ts, each frame the house shows): under a placed layout (Ed's,
+ *  rules/housePlacement.ts) those any placed piece lands in, else DECOR_ROOMS. Kept till the layout changes (installEdLayout puts in
+ *  a new one, or takes it away): worked out each frame it was every room's plan for every room, a few milliseconds a frame (the
+ *  frame-sync hunt, 2026-11-04: 2% of a two-player visit's JavaScript). */
+export function placedDecorRooms(H: HouseConfig = HOUSE_ROOMS): HouseConfig["rooms"] {
+  if (!H.layout) return DECOR_ROOMS;
+  const c = placedRooms;
+  if (c && c.H === H && c.layout === H.layout && c.rooms === H.rooms) return c.list;
+  placedDecorWorkedOut++;
+  const list = H.rooms.filter(r => placedDecorPlan(r, H).length);
+  placedRooms = { H, layout: H.layout, rooms: H.rooms, list };
+  return list;
+}

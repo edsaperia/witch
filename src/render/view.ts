@@ -148,7 +148,7 @@ import { miniTreehouse, ZooExitTag } from "./zooExit";
 import { CastTag } from "./castTag";
 import { FeedTag } from "./feedTag";
 import { lanternLights, relicLights, setLights, sigilLights, updateSources } from "./view/lights";
-import { placeCamera } from "./view/camera";
+import { gameAim, placeCamera, ridePoint } from "./view/camera";
 import { setFrameUniforms } from "./view/frameUniforms";
 import { newReveal, setReveal } from "./view/reveal";
 import { drawWitch, houseShiftOf } from "./view/witch";
@@ -418,6 +418,9 @@ export class View {
   private landingFades = new LandingArtFade();
   landingHouseShare = 1;
   landingSleeping = false;
+  /** Put to bed before a sail's dive (main.ts bedFirst, rules/wakeUp.ts tuckIn), the wake-up not started till it lands: drawn asleep
+   *  in her bed as its first beats have her (render/view/witch.ts), not standing in it. */
+  asleepInBed = false;
   landingWakeReady(): boolean {
     const A = this.assets;
     return A.fullWitchReady && A.home.treehouse && this.treehouseBatch.atlas === A.treehouse.atlas && this.landingHouseShare === 1 &&
@@ -604,7 +607,8 @@ export class View {
   spellFx = new SpellFx();
   /** Opt-in world-pose echo preview, also exposed to the existing capture/debug tools. */
   get dodgeEchoes() { return dodgeEchoesFor(this); }
-  /** Her flight trail: a ribbon of glow in the colour of the area she's over (render/trail.ts). */
+  /** Her flight trail: the cooldown trail's dotted sections in her preset's colours (trail.steps; with it off, a ribbon of glow in the
+   *  colour of the area she's over: render/trail.ts). */
   private trail!: WitchTrail;
   /** Her cooldown trail's colour preset (config/trail-colours.json; chosen at the Broom station, kept with her broom: main.ts). */
   private trailPresetId: string | null = null;
@@ -1032,8 +1036,10 @@ export class View {
    *  dive"; "the treehouse doesn't have to be ready at the start of the dive - only once it's in view"): metres from the dive's view
    *  (rules/arrive.ts diveReach): the area types drawn in that order, nearest first, under the loading mist; and the start waits only
    *  for the shaders (the hand-off's own ground is drawn by its first frames, main.ts warmAt): the house's art, the ground and the
-   *  forest round it are made on through the dive (`homeDone`; app/arrive.ts eases the dive if they're due in view before then). */
-  async prepare(o: { sail?: boolean; dive?: (x: number, z: number) => number; track?: [number, number, number, number][] } = {}): Promise<void> {
+   *  forest round it are made from the start, alongside them, and on through the dive if they're not done by its hand-off (`homeDone`;
+   *  app/arrive.ts eases the dive if they're due in view before then). */
+  /** `underDive` (with `dive`): the chart hands over at once, this going on under the dive (compileAll's `underDive`). */
+  async prepare(o: { sail?: boolean; dive?: (x: number, z: number) => number; track?: [number, number, number, number][]; underDive?: boolean } = {}): Promise<void> {
     performance.mark("witch:prep-start");
     if (o.sail) { this.homeDone = false; this.shaderDrawStatus.active = true; this.shaderDrawStatus.skipped = {}; this.shaderDrawStatus.fallback = {}; this.shaderDrawStatus.submitted = {}; if (!this.shaderChartLanding) this.startLandingShaderGrace(); }
     this.makeLoadingMist();
@@ -1057,7 +1063,13 @@ export class View {
       this.homeDone = false;
       this.prepared = true;
       this.askIsland(near); // (the workers drawing the dive's areas while the shaders link)
-      await this.compileAll(o.sail);
+      // The house, the forest round it and the legends' carvings made from here on, while the shaders link and the chart flies on
+      // down to the water (Ed, 2026-11-03: "The zoom into the sea chart can be quite a few seconds long, the idea is to build the
+      // island during this time"): made only once the dive began, a slice a dive frame, they took 14.5 s of his laptop's dive for
+      // what the boot makes in 0.6 s, the dive flying over a forest not there. What's left as it hands over goes on through the dive.
+      const compiled = this.compileAll(o.sail, !!o.underDive), homeEpoch = this.shaderEpoch; // (compileAll's epoch: buildHome stops only for a newer night)
+      void this.buildHome(homeEpoch).catch(e => { console.error("the house's start after a sail went wrong", e); }).finally(() => { if (homeEpoch === this.shaderEpoch) { this.homeDone = true; performance.mark('landing:house-complete'); } });
+      await compiled;
       // The ground where the dive first sees the island (Ed, 2026-10-24: the dive's view needs the ground; Echo's island black through
       // the descent, its tiles not drawn yet): the first TRACK_AHEAD metres of its track in from the sea, TRACK_REACH each side, a few
       // tiles a frame under the chart; the rest of it as the dive goes, the view's own each frame (render/view/ahead.ts).
@@ -1067,8 +1079,6 @@ export class View {
         while (this.ground.fill(this.renderer, r, x0, z0, 6) > 0) await nextFrame();
       }
       performance.mark("witch:prep-track");
-      const homeEpoch = this.shaderEpoch;
-      void this.buildHome(homeEpoch).catch(e => { console.error("the house's start after a sail went wrong", e); }).finally(() => { if (homeEpoch === this.shaderEpoch) { this.homeDone = true; performance.mark('landing:house-complete'); } });
       return;
     }
     await runSliced(this.warmSteps(), "warm"); // (the first frame's own lazy work made ahead, a slice at a time)
@@ -1175,7 +1185,11 @@ export class View {
   }
 
   /** Every shader the scene holds compiled, and their programs' logs read, ahead of their first draw (prepare). */
-  private async compileAll(allowPartial = false): Promise<void> {
+  /** `underDive` (a sail from the chart, Ed 2026-11-03: "zoom in over the map, switch to the island's sea, fly over the island, and
+   *  show whatever is built, with mist over it if it's not built"): nothing waited for; the dive flies while the programs link, the
+   *  draw gate keeping back what isn't ready yet (render/shaderDrawGate.ts), each uniform read once it is, the gate then let go; no
+   *  warm draws, uploads or GPU fence under the dive's own frames. */
+  private async compileAll(allowPartial = false, underDive = false): Promise<void> {
     const epoch = ++this.shaderEpoch;
     if (allowPartial && !this.shaderChartLanding) this.startLandingShaderGrace();
     this.setReadiness("compile", 0, 1);
@@ -1222,6 +1236,22 @@ export class View {
       return detail;
     };
     record('start');
+    // (the programs finished in the background: each uniform read once it's linked, then the draw gate let go)
+    const background = () => (async () => {
+      await waitForPrograms(allPrograms, compiled, () => {}, () => {}, undefined, undefined, () => epoch === this.shaderEpoch ? Infinity : -Infinity);
+      if (epoch !== this.shaderEpoch) return;
+      const programs = [...(this.renderer.info.programs ?? [])];
+      await runSliced((function* (view: View) {
+        for (const p of programs) {
+          if (epoch !== view.shaderEpoch) return;
+          if ((p as unknown as ReadyProgram).isReady()) p.getUniforms();
+          yield;
+        }
+      })(this), 'background-programs');
+      if (epoch !== this.shaderEpoch) return;
+      record('background-ready'); this.shaderDrawStatus.active = false; releaseDisposals();
+    })().catch(error => console.error('background shader readiness failed; retaining safe fallback', error));
+    if (underDive) { void background(); this.setReadiness('ready', 1, 1); return; }
     // Ed6520617385: a sail may land after its15s grace; unfinished programs must never force a uniform read or draw.
     const complete = await waitForPrograms(allPrograms, compiled, (ready, total) => this.setReadiness('compile', ready, total), (pending, elapsed) => {
       console.warn('view: shaders still pending; keeping the chart up', record('pending', pending, elapsed));
@@ -1229,20 +1259,7 @@ export class View {
     if (!complete) {
       this.armLimitedLanding();
       record('landing-limit', allPrograms().filter(p => !p.isReady()), performance.now() - this.shaderLandingDeadline + 15000);
-      void (async () => {
-        await waitForPrograms(allPrograms, compiled, () => {}, () => {}, undefined, undefined, () => epoch === this.shaderEpoch ? Infinity : -Infinity);
-        if (epoch !== this.shaderEpoch) return;
-        const programs = [...(this.renderer.info.programs ?? [])];
-        await runSliced((function* (view: View) {
-          for (const p of programs) {
-            if (epoch !== view.shaderEpoch) return;
-            if ((p as unknown as ReadyProgram).isReady()) p.getUniforms();
-            yield;
-          }
-        })(this), 'background-programs');
-        if (epoch !== this.shaderEpoch) return;
-        record('background-ready'); this.shaderDrawStatus.active = false; releaseDisposals();
-      })().catch(error => console.error('background shader readiness failed; retaining safe fallback', error));
+      void background();
       this.setReadiness('ready', 1, 1);
       return; // no unfinished uniform reads, warm draws, uploads or GPU fence on the landing path
     }
@@ -1586,13 +1603,31 @@ export class View {
     this.scene.add(...b.meshes);
     return b;
   }
-  /** The character creator changed her look (her genome, art/witchGenome.js): her frames re-baked and her batch swapped. */
-  setWitch(genome: unknown): void {
+  /** The character creator changed her look (her genome, art/witchGenome.js): her frames re-baked and her batch swapped.
+   *  `morning`: her next morning's look, read ahead (main.ts showLook: a sail's, or the bed's next night): her whole set asked at
+   *  once, ahead of all but the start's own, and her hat-off frames too if her hat will lie on the floor (`hatOff`, as View.create's);
+   *  `lookDrawn` says when it's on her. */
+  setWitch(genome: unknown, morning?: { hatOff: boolean }): void {
+    this.lookHatOff = !!morning?.hatOff;
     // (the look she has already, the boot's say (her nightie on a first morning, main.ts): nothing to redraw, her hat-off frames kept)
-    if (JSON.stringify(genome ?? null) === JSON.stringify(this.assets.witchGenome ?? null)) return;
-    this.assets.rebakeWitch(genome); // (drawn by an art worker: her batch takes the new frames when they arrive, swapHomeArt below)
+    if (JSON.stringify(genome ?? null) === JSON.stringify(this.assets.witchGenome ?? null)) { if (morning?.hatOff) this.assets.askHatOff(); return; }
+    this.assets.rebakeWitch(genome, !!morning); // (drawn by an art worker: her batch takes the new frames when they arrive, swapHomeArt below)
     if (this.bareBatch) { this.scene.remove(...this.bareBatch.meshes); this.bareBatch = null; this.bareAsked = false; }
+    if (morning?.hatOff) this.assets.askHatOff();
   }
+  /** The game's own camera as it will be on the next frame drawn without the flight's (render/view/camera.ts gameAim: her pose's aim,
+   *  over the ground its ride reads, she lying still in bed, and moved to where she's drawn in the house, the last frame's), as a
+   *  flight's shot: a sail's dive ends on it (app/arrive.ts), so the game takes over with the camera the dive landed on. */
+  landingShot(): Shot {
+    const g = this.game, p = poseOf(g), R = ridePoint(this, p), a = gameAim(p, groundHeight(R.x, R.z), this.houseCam);
+    return { tx: a.x, ty: a.y, tz: a.z, angle: p.angle, distance: p.distance, fov: g.tuning.camera.fov };
+  }
+  /** Her look's hat-off frames are wanted with it (setWitch's `morning`). */
+  private lookHatOff = false;
+  /** Her look now is on her whole, not a preview nor the look before (render/assets.ts fullWitchReady), and its hat-off frames too if
+   *  its morning wants them: till it is, in bed, she's under her covers (render/view/witch.ts inCovers), never seen there in last
+   *  night's clothes; nothing waits for it. */
+  get lookDrawn(): boolean { return this.assets.fullWitchReady && (!this.lookHatOff || this.assets.bareFresh); }
   /** The start's own art, drawn by the art workers (fast start (b)): each batch built on a stand-in takes its set once it arrives. */
   private swapHomeArt(): void {
     const A = this.assets;
@@ -1716,7 +1751,7 @@ export class View {
     const canopyTo = TL ? TL.reach : g.witch.mode !== "ground" ? Math.min(t.haze.far, t.scenery.canopyReach ?? 0) : 0;
     this.canopyNow += (canopyTo - this.canopyNow) * (Math.abs(canopyTo - this.canopyNow) < 1 ? 1 : 0.08);
     LIGHT_UNIFORMS.uCanopyReach.value = this.canopyNow;
-    const up = placeCamera(this, time, pose);
+    const up = placeCamera(this, time, pose, repaintHeld);
 
     if (!repaintHeld) this.swapHomeArt();
     setFrameUniforms(this, time, up);

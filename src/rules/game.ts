@@ -818,7 +818,9 @@ function stepSpacing(g: Game, dt: number): void {
     if (c.gone || c.burrow || c.leap || c.swoop) continue; // (a flyer swooping: rules/movement.ts stepSwoop)
     for (const w of ws) if (Math.abs(c.x - w.x) < R && Math.abs(c.z - w.z) < R) { list.push(c); break; }
   }
-  spaceOut(list, dt, c => !!c.homeGuard || !!c.partyLegend || dormant(g, c) || !!c.asleep || (c.stunUntil !== undefined && g.clock.time < c.stunUntil), MOVEMENT,
+  // (one walking home to bed in the afterparty, rules/partyOver.ts, keeps its line too: the sleepers hold their ground, so one whose
+  // bed lay in a sleeper's room was eased back as fast as it walked, awake for good, walking on the spot while she watched)
+  spaceOut(list, dt, c => !!c.homeGuard || !!c.partyLegend || dormant(g, c) || !!c.asleep || !!c.bed || (c.stunUntil !== undefined && g.clock.time < c.stunUntil), MOVEMENT,
     spacingOn(g.tuning) && list.some(c => c.level >= 1 && c.level <= 2 && c.fight?.target)
       ? { radius: c => spaceRadius(c), steered: c => c.level >= 1 && c.level <= 2 && !!c.fight?.target } : undefined);
   list.length = 0; // (let them go)
@@ -901,7 +903,7 @@ function stepFights(g: Game, t: Tuning, dt: number, busy: (id: number) => boolea
     // (cleared before its wave: a rainbow wave down the ley line, Ed 2026-10-29, rules/rainbow.ts)
     if (a.early) { g.rainbows = liveRainbows(g.party, g.map, g.rainbows ?? [], time); sendRainbow(g.rainbows, t, time, stoneMetres(g.party, g.map, a.cell) ?? pulseRouteMetres(g.party, g.map, time)); } // (from its own stone: Ed, 2026-10-29)
     for (const c of g.creatures) if (!c.gone && !c.leashed && !c.dropped && c.state === "happy" && c.cell[0] === a.cell[0] && c.cell[1] === a.cell[1]) joinParty(g, c, a.soundsystem, a.cell);
-    // (one let go here at her knockout stays where it was dropped, dancing now: rules/knockout.ts letGoHappy)
+    // (one let go here, by a guest leaving an online night, stays where it was dropped, dancing now: rules/knockout.ts letGoHappy)
     for (const c of g.creatures) if (c.dropped && !c.gone && !c.leashed && cellKey(c.dropped.cell) === key) c.dancing = true;
   }
   // Only creatures with something to fight near them take part: wild ones in or next to the area

@@ -1,15 +1,16 @@
 // Arriving on an island from the sea chart (rules/arrive.ts): the flight from the chart's hand-off (app/arrival.ts reads it) to her decks.
 import { describe, expect, it } from "vitest";
 import { TUNING } from "./tuning";
-import { newGame, poseOf } from "./game";
+import { poseOf } from "./game";
 import { arrivePlan, diveBend, diveIndoors, diveReach, dueAt, dueRate, handoffShot, inShot, newFlightClock, planLength, shotAt, shotCamera, southCoast, stepFlightClock, type Handoff, type Shot } from "./arrive";
+import { preppedGame } from "../test/preppedGame"; // (games on a map made once a file from its prep)
 
 const A = TUNING.arrive!;
 // Keep this seeded spatial fixture: arrival duration and framing depend on its real south coast and treehouse distance.
 
 describe("arriving from the sea chart", () => {
   it("flies on from the chart's own camera, down low over the forest, up to frame the dancefloor and the Ent's spot, and down to her decks", () => {
-    const g = newGame(123, TUNING), map = g.map, d = map.dancefloor, th = map.treehouse, ground = () => 0;
+    const g = preppedGame(123, TUNING), map = g.map, d = map.dancefloor, th = map.treehouse, ground = () => 0;
     const coast = southCoast(map);
     expect(coast).toBeGreaterThan(d.z + 100); // (the south coast, well south of home)
     // (Charlie's hand-off, as the chart makes it: high over the south coast, its aim 40 m inland, heading north at 100 m/s)
@@ -64,7 +65,7 @@ describe("arriving from the sea chart", () => {
 
 describe("the dive's view first (Ed, 2026-10-24: \"we only really need the scenery south of the treehouse for the dive\")", () => {
   it("counts the land along the dive's track, south of the treehouse, nearer than the land north of it", () => {
-    const g = newGame(123, TUNING), map = g.map, d = map.dancefloor, th = map.treehouse, near = diveReach(map, A), coast = southCoast(map);
+    const g = preppedGame(123, TUNING), map = g.map, d = map.dancefloor, th = map.treehouse, near = diveReach(map, A), coast = southCoast(map);
     // on the track: the coast below the dancefloor, halfway up, the treehouse itself
     expect(near(d.x, coast)).toBeLessThan(1);
     expect(near(d.x, (coast + d.z) / 2)).toBeLessThan(1);
@@ -85,7 +86,7 @@ describe("the house due in view (Ed, 2026-10-24: \"the treehouse doesn't have to
     expect(inShot(shot, { x: 0, y: 0, z: 200 }, 16 / 9)).toBe(false); // (behind the camera)
     expect(inShot(shot, { x: 300, y: 0, z: 0 }, 16 / 9)).toBe(false); // (far off to the side)
     expect(inShot(shot, { x: 0, y: 0, z: -1000 }, 16 / 9)).toBe(false); // (far ahead, above the top of the frame at this tilt)
-    const g = newGame(123, TUNING), map = g.map, d = map.dancefloor, th = map.treehouse, coast = southCoast(map);
+    const g = preppedGame(123, TUNING), map = g.map, d = map.dancefloor, th = map.treehouse, coast = southCoast(map);
     const pitch = 0.66, back = 520, hand: Handoff = { cam: { x: 0, z: coast + 420 - d.z + Math.cos(pitch) * back, height: Math.sin(pitch) * back, pitch, fov: 20, speed: 100 } };
     const p0 = poseOf(g), end: Shot = { tx: p0.tx, ty: p0.ty, tz: p0.tz, angle: p0.angle, distance: p0.distance, fov: TUNING.camera.fov };
     const plan = arrivePlan(hand, map, A, () => 0, end), T = planLength(plan), house = { x: th.x, y: 8, z: th.z };
@@ -104,7 +105,7 @@ describe("the house due in view (Ed, 2026-10-24: \"the treehouse doesn't have to
 // can get the 'Coming round to the treehouse' effect by using the bend shader rather than using the camera angle; I want to see the
 // treehouse crown coming over the horizon, and this will achieve that straightforwardly."
 describe("the sail's hand-off over the water and the crown over the bent horizon (Ed, 2026-11-03)", () => {
-  const g = newGame(123, TUNING), map = g.map, d = map.dancefloor, th = map.treehouse, coast = southCoast(map), ground = () => 0;
+  const g = preppedGame(123, TUNING), map = g.map, d = map.dancefloor, th = map.treehouse, coast = southCoast(map), ground = () => 0;
   // (the chart's hand-off as its flight makes it from the tuning's arrive.handoff: render/chart/seaChart.ts flightEnd)
   const H = A.handoff!, pitch = (H.pitchDeg * Math.PI) / 180;
   const hand: Handoff = { cam: { x: 0, z: coast + H.sea - d.z + Math.cos(pitch) * H.dist, height: Math.sin(pitch) * H.dist, pitch, fov: TUNING.camera.fov, speed: 100 } };

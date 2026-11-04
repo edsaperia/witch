@@ -2,7 +2,7 @@
 // only celebrate at a stone that already plays; every area is peopled from the start by its place on the route, and
 // nothing grows on a clock.
 import { describe, expect, it } from "vitest";
-import { affectionOf, loseSoundsystem, newGame, stepGame, type Controls, type Game } from "./game";
+import { affectionOf, loseSoundsystem, stepGame, type Controls, type Game } from "./game";
 import { TUNING } from "./tuning";
 import { cellKey, routeOf } from "./party";
 import { clearCue, clearableAt, clearedAreas, holdsArea, wildLeft } from "./clear";
@@ -16,6 +16,7 @@ import { leyChain, waveReached } from "./leylines";
 import { leyPulse, leyReachTimes, straightLink } from "./leypulse";
 import { leyReveal } from "../render/leylines";
 import { smallWorldTuning } from "../test/worlds";
+import { preppedGame } from "../test/preppedGame"; // (games on a map made once a file from its prep)
 
 const still: Controls = { moveX: 0, moveZ: 0, toggleMode: false, zoom: 0, autoTalk: false };
 const run = (g: Game, secs: number, c: Controls = still) => { for (let i = 0; i < Math.round(secs * 60); i++) stepGame(g, c, 1 / 60); };
@@ -23,7 +24,7 @@ const run = (g: Game, secs: number, c: Controls = still) => { for (let i = 0; i 
 /** A game under way, the witch high over home (out of every fight), the boot long done. */
 function game(seed = 123, t = TUNING, fullRoute = false): Game {
   const fixture = fullRoute ? t : smallWorldTuning(t, "Local clearing and wave-state transitions need only the first few route stops.");
-  const g = newGame(seed, { ...fixture, cast: { ...t.cast, on: false } }); // (these test the areas clearing by themselves and the runes at the feet: the game as it was, ?cast=0, rules/stoneStacks.ts)
+  const g = preppedGame(seed, { ...fixture, cast: { ...t.cast, on: false } }); // (these test the areas clearing by themselves and the runes at the feet: the game as it was, ?cast=0, rules/stoneStacks.ts)
   g.clock.paused = false; g.party.spellAt = undefined;
   g.witch = { ...g.witch, seated: false, mode: "treetop", lift: 1 };
   g.witches[0].health.hp = 1e6;

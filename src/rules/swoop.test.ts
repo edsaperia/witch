@@ -3,18 +3,19 @@
 // dive and at its bottom.
 import { describe, expect, it } from "vitest";
 import { setupArena } from "./arena";
-import { newGame, stepGame, STEP, type Controls, type Game } from "./game";
+import { stepGame, STEP, type Controls, type Game } from "./game";
 import { TUNING } from "./tuning";
 import { targetable } from "./combat";
 import { invitableNow } from "./creatureStates";
 import { MOVEMENT, stepSwoop, swoopHeight, swoopStriking } from "./movement";
+import { preppedGame } from "../test/preppedGame"; // (games on a map made once a file from its prep)
 
 // Keep seed 5's radius arena: the straight-walk lead-at-release hit regression changes outcome on the small fixture (zero hits instead of one).
 const idle: Controls = { moveX: 0, moveZ: 0, toggleMode: false, zoom: 0, autoTalk: false };
 
 /** Her against one wild flyer (or a few) in the arena, nothing of hers there. */
 function arena(spec: string, seed = 5): { g: Game; ids: number[] } {
-  const g = newGame(seed, TUNING);
+  const g = preppedGame(seed, TUNING);
   g.clock.paused = false; g.party.paused = true;
   setupArena(g, `hare*1@1,${spec}`);
   const [hare, ...ids] = g.arena!.ids;
@@ -123,7 +124,7 @@ describe("wild flyers swoop (owl, bat, raven)", () => {
   }, 60000);
 
   it("hers don't swoop: a leashed owl fights on the ground as before", () => {
-    const g = newGame(5, TUNING);
+    const g = preppedGame(5, TUNING);
     g.clock.paused = false; g.party.paused = true;
     setupArena(g, "owl*1@2,wolf*2@2");
     const owl = g.creatures[g.arena!.ids[0]];

@@ -3,9 +3,10 @@
 import { describe, expect, it } from "vitest";
 import { napper, napping, stepCreaturesNear, type Creature, type NapRules } from "./creatures";
 import type { ForestMap } from "./map";
-import { newGame, stepGame, STEP, type Controls, type Game } from "./game";
+import { stepGame, STEP, type Controls, type Game } from "./game";
 import { TUNING, type Tuning } from "./tuning";
 import { cellKey } from "./party";
+import { preppedGame } from "../test/preppedGame"; // (games on a map made once a file from its prep)
 
 const idle: Controls = { moveX: 0, moveZ: 0, toggleMode: false, zoom: 0, autoTalk: false };
 const run = (g: Game, secs: number, each?: () => void) => { for (let i = 0; i < Math.round(secs / STEP); i++) { stepGame(g, idle, STEP); each?.(); } };
@@ -13,7 +14,7 @@ const run = (g: Game, secs: number, each?: () => void) => { for (let i = 0; i < 
 /** A wild area away from home, the witch high over it in the treetops, the game running. */
 function overWild(t: Tuning = TUNING): { g: Game; key: string; at: { x: number; z: number } } {
   // Retain seed 77's populated wild areas and border geometry for the long nap/wake population checks.
-  const g = newGame(77, t);
+  const g = preppedGame(77, t);
   g.clock.paused = false;
   g.witches[0].health.hp = 1e6;
   // (the wild area with the most wild creatures in it)
@@ -126,7 +127,7 @@ describe("a legend circle's baby naps most of the time (Ed, 2026-10-07)", () => 
   /** The wild circle baby nearest home, the witch high over it in the treetops. */
   function overBaby(): { g: Game; c: Creature } {
     // Retain seed 77's nearest wild circle and its surrounding area for the 300-second nap ratio.
-    const g = newGame(77, TUNING), d = g.map.dancefloor;
+    const g = preppedGame(77, TUNING), d = g.map.dancefloor;
     g.clock.paused = false;
     g.witches[0].health.hp = 1e6;
     const c = g.creatures.filter(c => c.circle && !c.boss && !c.leashed && !c.gone && !g.party.areas.has(cellKey(c.cell)))

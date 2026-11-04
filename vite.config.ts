@@ -1,10 +1,11 @@
-import { defineConfig } from "vitest/config";
+import { configDefaults, defineConfig } from "vitest/config";
 import { existsSync, readFileSync } from "node:fs";
 import { availableParallelism } from "node:os";
 import { readPng } from "./tools/overrides/png";
 import { artHash as artHashOf, artFingerprintMap, overrideFiles as overridesAt } from "./tools/artHash";
 import { changelogBatches } from "./tools/changelogBatches";
 import { houseStanding } from "./tools/houseStanding";
+import { mockingTests } from "./tools/ci/mockingTests.mjs";
 
 // base "./": the same build works at the site's root and under /pr-<number>/.
 // The build's version, shown in the corner: the Pages workflow sets these; local builds say "dev".
@@ -58,18 +59,38 @@ const versionFile = () => ({
   },
 });
 
+const TESTS = ["src/**/*.test.ts", "tools/bench/*.test.ts", "tools/shots/*.test.ts", "tools/docs/*.test.ts", "tools/config/*.test.ts", "tools/ci/*.test.ts"];
+const mocking = mockingTests(".").filter(f => !f.startsWith("tools/") || /^tools\/(bench|shots|docs|config|ci)\/[^/]+$/.test(f));
+const define = () => ({ __BUILD__: JSON.stringify(sha ? `${version} · ${sha}` : version), __BUILD_DATE__: JSON.stringify(new Date().toISOString().slice(0, 10)), __UPCOMING__: JSON.stringify(upcoming), __ART_HASH__: JSON.stringify(artHash), __ART_KIND_HASHES__: JSON.stringify(artKindHashes) });
+const plugins = () => [artOverrides(), configNotes(), versionFile(), changelogBatches(), houseStanding()];
+const worker = () => ({ format: "es" as const, plugins: () => [artOverrides(), configNotes()] });
+// The rules tests build whole maps and play out fights and waves: CPU-bound seconds each, many more
+// under load (a smoke run or CI's busy runners), so vitest's 5 s default made them time out at random.
+// One generous limit for all (a hung test still fails, after a minute).
+// Tests (overnight phase 1, test speed): a worker per core (Vitest leaves one idle by default) and one module load per
+// worker rather than per file (isolate false: no test file leaves module state changed; the few that change it put it
+// back in afterEach). 281 s to 216 s locally on 4 cores, the same 758 tests.
+// Two projects (test health, 2026-11-04): "shared", every file but those that vi.mock a module, unisolated as above; and
+// "isolated", those files, each with its own module cache, since a mocked module leaks into later files through the modules
+// that imported it (tools/ci/mockingTests.mjs: the zooPad flake). Found by reading the files, so a new mocking test is isolated
+// without a list to keep. Each project is the game's config written out, not `extends: true`: a project's own maxWorkers wins
+// over the command line's (--maxWorkers=1, tools/ci/run-unit.mjs), and extends would hand each the root's; without one they
+// take the root's, the command line's when given.
+// (a fresh define each, and so the rest: Vitest moves a config's define into the test globals by deleting its keys, so a
+// shared one reached the second config empty)
+const project = (name: string, test: Record<string, unknown>) => ({ define: define(), plugins: plugins(), worker: worker(),
+  test: { name, environment: "node" as const, setupFiles: ["src/test/radiusMap.ts"], testTimeout: 60_000, hookTimeout: 60_000, isolate: false, ...test } });
+
 export default defineConfig({
   base: "./",
-  define: { __BUILD__: JSON.stringify(sha ? `${version} · ${sha}` : version), __BUILD_DATE__: JSON.stringify(new Date().toISOString().slice(0, 10)), __UPCOMING__: JSON.stringify(upcoming), __ART_HASH__: JSON.stringify(artHash), __ART_KIND_HASHES__: JSON.stringify(artKindHashes) },
+  define: define(),
   // (two pages: the game, and the sea chart: chart.html, wave 2 part C)
   build: { target: "es2022", chunkSizeWarningLimit: 1200, rollupOptions: { input: { main: "index.html", chart: "chart.html", treehouseEditor: "treehouse-editor.html" } } },
-  plugins: [artOverrides(), configNotes(), versionFile(), changelogBatches(), houseStanding()],
-  worker: { format: "es", plugins: () => [artOverrides(), configNotes()] },
-  // The rules tests build whole maps and play out fights and waves: CPU-bound seconds each, many more
-  // under load (a smoke run or CI's busy runners), so vitest's 5 s default made them time out at random.
-  // One generous limit for all (a hung test still fails, after a minute).
-  // Tests (overnight phase 1, test speed): a worker per core (Vitest leaves one idle by default) and one module load per
-  // worker rather than per file (isolate false: no test file leaves module state changed; the few that change it put it
-  // back in afterEach). 281 s to 216 s locally on 4 cores, the same 758 tests.
-  test: { reporters: process.env.GITHUB_ACTIONS === "true" ? ["default", "./tools/ci/vitest-reporter.mjs"] : ["default"], include: ["src/**/*.test.ts", "tools/bench/*.test.ts", "tools/shots/*.test.ts", "tools/docs/*.test.ts", "tools/config/*.test.ts", "tools/ci/*.test.ts"], environment: "node", setupFiles: ["src/test/radiusMap.ts"], testTimeout: 60_000, hookTimeout: 60_000, maxWorkers: availableParallelism(), isolate: false },
+  plugins: plugins(),
+  worker: worker(),
+  test: { reporters: process.env.GITHUB_ACTIONS === "true" ? ["default", "./tools/ci/vitest-reporter.mjs"] : ["default"], maxWorkers: availableParallelism(),
+    projects: [
+      project("shared", { include: TESTS, exclude: [...configDefaults.exclude, ...mocking] }),
+      project("isolated", { include: mocking, isolate: true }),
+    ] },
 });

@@ -14,6 +14,10 @@ node tools/ci/annotations.cjs --summary
 
 Only the separate, frozen prototype checkout is built.
 
+## `mockingTests.mjs`
+
+Test files that mock a module with vi.mock, run apart in Vitest's isolated project.
+
 ## `pages-policy.cjs`
 
 Pages publication policy: debounce previews outside the publisher lock; live requests preempt older publication.
@@ -77,6 +81,7 @@ Inventory real world-constructor calls and explicit small-fixture reasons; comme
 - `PROOF-PLAN.md`
 - `behaviour-report.test.ts`
 - `effects-scene.test.ts`
+- `mockingTests.test.ts`
 - `pages-policy.test.cjs`
 - `proofs.json`
 - `proofs.test.cjs`

@@ -17,12 +17,13 @@ import { rng, rngState } from "./random";
 import { newLodCounts } from "./simLod";
 import { stepWildWatch, watcher } from "./wildWatch";
 import { keepIn } from "./mapShape";
+import { preppedGame } from "../test/preppedGame"; // (games on a map made once a file from its prep)
 
 const idle: Controls = { moveX: 0, moveZ: 0, toggleMode: false, zoom: 0, autoTalk: false };
 function fresh(players = 2): Game {
   // Four authored areas retain three occupied wild watches and complete seeded multiplayer replay coverage.
   const t = structuredClone(TUNING); t.map!.island = "home"; t.map!.islandAreas = 4;
-  const g = newGame(123, t, players);
+  const g = preppedGame(123, t, players);
   g.clock.paused = false; g.party.spellAt = -100;
   g.witches.forEach((W, i) => {
     W.body = { ...W.body, seated: false, perch: false, x: g.map.dancefloor.x + (i ? 15 : -15), z: g.map.dancefloor.z + 40, mode: "ground", lift: 0 };

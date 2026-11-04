@@ -84,7 +84,7 @@ Every number below is measured against **the bare broom** (all three slots empty
 | Rise / come down | 0.7 s / 0.55 s | `riseTime`, `descendTime` |
 | Shared cooldown | take-off adds 1 s, landing 1.5 s (2 and 3 at the plain broom's ×0.5) | `cooldown.rise`, `riseCooldown`, `spells.plain` |
 | Dodge (blink) | 15 m; 2 charges, 1 s each | `dash.distance`, `charges`, `cooldown` |
-| Haul | sigils pull at full weight (the Haul broom: ×0.5) | `leash.weight`, `spells.haul.pull` |
+| Haul | sigils pull at full weight (the Haul broom: ×0.5; the sigil weight gone since 2026-11-03, #1731: the chains' drag instead) | `leash.weight`, `spells.haul.pull` (now `leash.chain.drag`) |
 | Speed spell | ×2.2 for 4 s, then 12 s | `spells.speed` |
 
 ## The parts (nine to start)
@@ -98,7 +98,7 @@ Slot themes, as unlocks.md proposed, so a slot tells you roughly what a part cha
 | Tip | **Hobby-horse head** | the hobby horse's head and mane, a figurehead | tight turns: 150 → 210°/s, and a sharp turn bleeds boost half as fast (`sharpTurnBleed` 3 → 1.5) | boost peaks lower: ×1.7 → ×1.5 | Ferry, Joust |
 | Chassis | **Jet-bike fairing** | the jet bike's fairing and windscreen | ground speed 19.25 → 22 m/s (+15%) | heavier off the mark: ground pick-up 28 → 20 | Rocket, Joust |
 | Chassis | **Ladder** | the ladder's rails and rungs | rises 0.7 → 0.45 s and comes down 0.55 → 0.35 s (the Mole's old boon) | ground speed 19.25 → 17.5 m/s (−10%) | Hedge, Pile driver |
-| Chassis | **Canoe hull** | the canoe's hull, its inside in the trim colour | hauls: her sigils pull ×0.65 (the Haul broom was ×0.5) | slow to cruise: treetop pick-up 0.3 → 0.4 s (`acceleration` 10 → 7.5) | Ferry |
+| Chassis | **Canoe hull** | the canoe's hull, its inside in the trim colour | hauls: her sigils pull ×0.65 (the Haul broom was ×0.5; since the chains, 2026-11-03, #1731, a youth's and an adult's chain drag ×0.65, a legend's still whole) | slow to cruise: treetop pick-up 0.3 → 0.4 s (`acceleration` 10 → 7.5) | Ferry |
 | Exhaust | **Jet nozzles** | the jet bike's twin glowing nozzles | take-off 1 → 0.5 s and landing 1.5 → 0.75 s on the shared cooldown | lets go slowly: glides 1 → 1.8 s to a stop | Rocket, Pile driver |
 | Exhaust | **Twig bristles** | the twig broom's long bundle and stray twigs | one more dodge: 2 → 3 charges (the Double blink broom) | boost builds slower: 2 → 3 s | Hedge |
 | Exhaust | **Oar blade** | the oar's flat blade | sharp on foot: ground pick-up 28 → 40 | blinks 15 → 12 m | Ferry |

@@ -1,7 +1,7 @@
 import { partySpots } from "./partyGuests";
 import { describe, expect, it } from "vitest";
 import type { Creature, Level } from "./creatures";
-import { affectionOf, newGame, stepGame, STEP, type Controls, type Game } from "./game";
+import { affectionOf, stepGame, STEP, type Controls, type Game } from "./game";
 import { TUNING, type Tuning } from "./tuning";
 import { foes, stateOf, STATES, type State } from "./creatureStates";
 import { affection, blocksLetters, hit, hold, invitable } from "./affection";
@@ -10,13 +10,14 @@ import { startSiege } from "./combat";
 import { cellKey } from "./party";
 import { smallWorldTuning } from "../test/worlds";
 import { queueCombatHit } from "../test/combatHit";
+import { preppedGame } from "../test/preppedGame"; // (games on a map made once a file from its prep)
 
 // Creature states (Ed, 2026-10-05; issue #87).
 const idle: Controls = { moveX: 0, moveZ: 0, toggleMode: false, zoom: 0, autoTalk: false };
 const run = (g: Game, secs: number, each?: () => void) => { for (let i = 0; i < Math.round(secs / STEP); i++) { stepGame(g, idle, STEP); each?.(); } };
 function quiet(t: Tuning = TUNING, meters = false): Game {
   // Combat cases retain >200 m recruits, area-edge searches and seeded party-place geometry.
-  const g = newGame(77, meters ? smallWorldTuning(t, "Direct affection meter and hold-time checks do not simulate combat or cross-area routes.") : t);
+  const g = preppedGame(77, meters ? smallWorldTuning(t, "Direct affection meter and hold-time checks do not simulate combat or cross-area routes.") : t);
   g.clock.paused = false;
   const d = g.map.dancefloor;
   g.witch = { ...g.witch, seated: false, x: d.x, z: d.z + 20, mode: "treetop", lift: 1 }; // (out of every fight herself)

@@ -1,6 +1,6 @@
 {
   "section": "army",
-  "about": "Inviting and the army: the 💌s, the leash and sigil weight, the bond, berries.",
+  "about": "Inviting and the army: the 💌s, the leash and its chains, the bond, berries, follower buffs.",
   "knobs": {
     "berries": {
       "what": "Berries on the bushes of every area, which her creatures eat to evolve.",
@@ -484,7 +484,7 @@
             "adults are slow and heavy; you should be able to move within a reasonable distance from them (the size of a typical fight), but when the chain gets to its max length you can't move further until they move.",
             "fine to start with"
           ],
-          "rest": "30 m to start; she can't take off while an adult is leashed (docs/plans/follower-buffs-and-challenge-areas.md)"
+          "rest": "30 m to start, an anchor round each adult (replaced the same day by the 80 m chains, below); she can't take off while an adult is leashed (docs/plans/follower-buffs-and-challenge-areas.md)"
         },
         {
           "by": "Ed",
@@ -566,7 +566,7 @@
       "links": [
         "render/leash/ranks.ts"
       ],
-      "notes": "on [2], every leash sigil (her stack, placed sigils, happy runes, the ghost, the treetop projection, the bond) is its bare glyph, no ring or disc, glyph metres across on the ground, in its rank's colour (colours: baby, youth, adult, legend; the species' neon stays the world's: borders, stones, fireworks, dancefloor, holograms, chart), with embers rising off its strokes (embers.count at once, each size metres, rising rise metres, by rank; in her stack stack of that), under a dark shade in the glyph's own shape (not a disc); a youth in her stack shows two rows of round dots off to its right, one a berry it eats on the move (toEvolve less the last, eaten at a placed sigil), at most dotsPerRow a row, bright eaten and dim not, pulsing when ready; and the hex grid is hex metres (leash.hex.size)."
+      "notes": "on [2], every leash sigil (her stack, placed sigils, happy runes, the ghost, the treetop projection, the bond) is its bare glyph, no ring or disc, glyph metres across on the ground, in its rank's colour (colours: baby, youth, adult, legend; the species' neon stays the world's: borders, stones, fireworks, dancefloor, holograms, chart), with embers rising off its strokes (embers.count at once, each size metres, rising rise metres, by rank; in her stack stack of that), under a dark shade in the glyph's own shape (not a disc); a baby or a youth in her stack shows two rows of round dots off to its right, one a berry it needs to grow (toEvolve, every one fed by her since 2026-11-03; before, the last was eaten only at a placed sigil), at most dotsPerRow a row, bright eaten and dim not, pulsing when ready, the next twinkling while a berry is queued for it; and the hex grid is hex metres (leash.hex.size)."
     },
     "bond": {
       "what": "How a leashed creature shows its tie to its sigil: a glow at its feet, sparks, and a thread when the leash is strained.",

@@ -7,7 +7,7 @@
 // skips it). Any key or tap skips to the end. main.ts starts the night (her clock, the party spell's cast) when it lands.
 import type { Game } from "../rules/game";
 import { poseOf } from "../rules/game";
-import { arrivePlan, diveBend, diveIndoors, dueAt, dueRate, newFlightClock, planLength, shotAt, stepFlightClock, type ArrivePlan, type ArriveTuning, type FlightClock, type Shot } from "../rules/arrive";
+import { arrivePlan, diveBend, diveIndoors, dueAt, newFlightClock, planLength, shotAt, stepFlightClock, type ArrivePlan, type ArriveTuning, type FlightClock, type Shot } from "../rules/arrive";
 import type { Arrival } from "./arrival";
 import { groundHeight } from "../render/height";
 import type { View } from "../render/view";
@@ -32,8 +32,11 @@ export class ArrivalFlight {
     img.style.display = "block";
   }
 
-  /** The opening shot at her decks as a flight's shot (the game's camera now: its aim in the world's heights). */
-  private end(g: Game): Shot {
+  /** The opening shot (her in bed, or at her decks) as a flight's shot: the game's camera as it will be on the first frame after
+   *  the landing, its aim in the world's heights (View.landingShot: where she's drawn in the house, over the ground its ride reads),
+   *  so the flight lands on exactly the camera the game takes over with; without a view (begin), her pose's aim over the ground. */
+  private end(g: Game, v?: Pick<View, "landingShot">): Shot {
+    if (v?.landingShot) return v.landingShot();
     const p = poseOf(g);
     return { tx: p.tx, ty: p.ty + groundHeight(p.tx, p.tz), tz: p.tz, angle: p.angle, distance: p.distance, fov: g.tuning.camera.fov };
   }
@@ -46,55 +49,39 @@ export class ArrivalFlight {
     this.plan = arrivePlan(this.rec, g.map, this.A, groundHeight, this.end(g), this.frameAt);
   }
 
-  /** Any key or tap: straight to her decks (once the art is ready, and the house, if they aren't yet). */
+  /** Any key or tap: straight to her bed (or her decks), at once, whatever's built (Ed, 2026-11-04: "remove the house guard too"). */
   skip(): void { this.skipped = true; }
 
-  /** The guard (Ed, 2026-10-24: "the treehouse doesn't have to be ready at the start of the dive - only once it's in view"): when
-   *  the house or the dancefloor first comes on screen (seconds into the flight; computed as it begins), the flight's pace (eased),
-   *  and when it eased and the house came ready (ms), for the log. */
+  /** When the house or the dancefloor first comes on screen (seconds into the flight; computed as it begins), for the log only
+   *  (dive:house-due, dive:house-ready). Nothing waits on the house: Ed, 2026-11-04, "remove the house guard too", in place of his
+   *  2026-10-24 "the treehouse doesn't have to be ready at the start of the dive - only once it's in view" (the dive eased into a
+   *  hover short of it till it was made); not made yet as the dive comes to it, it shows as it's made, under the loading mist. */
   private due = Infinity;
-  private rate = 1;
-  private easedAt = -1;
   private dueMarked = false;
   private readyMarked = false;
+  /** The flight's last frame, on its end shot, drawn: the next lands. */
+  private ended = false;
 
   /** A frame (`now`, ms): the flight's shot put on the view, or, landed, the view's own camera back. True once landed. */
   frame(v: View, g: Game, now: number): boolean {
     if (this.done) { v.fly = null; return true; }
     if (!this.plan) return false;
     if (v.limitedLandingReady(now)) { performance.mark('landing:early-land'); this.land(v); return true; }
-    this.plan.keys[this.plan.keys.length - 1] = this.end(g); // (the opening shot as the game's camera has it now)
+    const end = this.plan.keys[this.plan.keys.length - 1] = this.end(g, v); // (the opening shot as the game's camera has it now)
     if (this.due === Infinity) this.due = dueAt(this.plan, homeSpots(g), innerWidth / Math.max(1, innerHeight));
     if (v.homeDone && !this.readyMarked) { this.readyMarked = true; performance.mark("dive:house-ready"); }
-    if (this.skipped && v.homeDone) { this.land(v); return true; }
-    if (this.skipped) return false; // (skipped with the house still to come: held where it is till it's ready)
-    const before = this.clock.s;
+    if (this.skipped) { this.land(v); return true; }
     if (stepFlightClock(this.clock, now, this.warmT).faded) this.fadeStill();
-    this.guard(v, before, now);
-    if (this.clock.s >= planLength(this.plan)) { this.land(v); return true; }
+    if (!this.dueMarked && this.clock.s >= this.due) { this.dueMarked = true; performance.mark("dive:house-due"); }
+    // (at the end: the flight's last frame drawn on the end shot itself, then the game's camera from the next, the same shot: the
+    // frame that passed the end used to land at once, the last drawn being a step short of it)
+    if (this.clock.s >= planLength(this.plan)) {
+      if (this.ended) { this.land(v); return true; }
+      this.ended = true; v.fly = { ...end, indoors: diveIndoors(this.plan, this.clock.s) };
+      return false;
+    }
     v.fly = { ...shotAt(this.plan, this.clock.s), bend: diveBend(this.plan, this.clock.s, this.A.bend), indoors: diveIndoors(this.plan, this.clock.s) }; // (warming up: the hand-off's own shot, behind the still, unbent; the dive's bend: the crown over the horizon)
     return false;
-  }
-
-  /** The house not made yet as it's due in view: the flight eased from `GUARD_LEAD` seconds short of it into a hover there, never
-   *  shown half-built; on, its pace eased back, once it's ready. Logged (the marks dive:eased, dive:house-due, dive:on; the console). */
-  private guard(v: View, before: number, now: number): void {
-    const ds = this.clock.s - before;
-    if (ds <= 0) return;
-    const ready = v.homeDone, target = ready ? 1 : dueRate(before, this.due, GUARD_LEAD);
-    this.rate += (target - this.rate) * (1 - Math.exp(-ds / GUARD_EASE));
-    if (!ready) this.rate = Math.min(this.rate, target);
-    this.clock.s = before + ds * this.rate;
-    if (!ready && target < 1 && this.easedAt < 0) {
-      this.easedAt = now; performance.mark("dive:eased");
-      console.info(`arrival: the dive eased, ${(this.due - before).toFixed(1)} s short of the house coming into view, which isn't made yet`);
-    }
-    if (ready && this.easedAt >= 0) {
-      performance.mark("dive:on");
-      console.info(`arrival: the house made, the dive on after ${((now - this.easedAt) / 1000).toFixed(1)} s eased`);
-      this.easedAt = -2; // (logged once)
-    }
-    if (!this.dueMarked && this.clock.s >= this.due) { this.dueMarked = true; performance.mark("dive:house-due"); }
   }
 
   /** Still warming up behind the chart's last frame (the camera there, waiting for the frames to come calm). */
@@ -122,10 +109,7 @@ export class ArrivalFlight {
   }
 }
 
-/** The guard's lead (seconds of the flight before the house is due in view that it starts to ease) and its pace's ease (s). */
-const GUARD_LEAD = 2.5, GUARD_EASE = 0.4;
-
-/** What comes into view as the house (the guard's): the treehouse and the dancefloor, a few metres up. */
+/** What comes into view as the house (dive:house-due's): the treehouse and the dancefloor, a few metres up. */
 const homeSpots = (g: Game) => [g.map.treehouse, g.map.dancefloor].map(p => ({ x: p.x, y: groundHeight(p.x, p.z) + 6, z: p.z }));
 
 /** index.html's still, as its own script makes it for a sail that loads the page (its look and the push-in's and the "landing…"'s

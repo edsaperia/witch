@@ -1,5 +1,5 @@
 import { expect, it, vi } from "vitest";
-import { newGame, newWitchPlayer } from "../../rules/game";
+import { newWitchPlayer } from "../../rules/game";
 import { TUNING } from "../../rules/tuning";
 import { bareBroom } from "../../rules/broomParts";
 import { setParts } from "../../rules/spells";
@@ -7,11 +7,12 @@ import { guestArrival, type GuestRoomHooks } from "./guestArrival";
 import { HOUSE_ROOMS } from "../../rules/houseRooms";
 import { bedFor, wakeOf } from "../../rules/wakeUp";
 import { objectWorld } from "../../rules/houseRooms";
+import { preppedGame } from "../../test/preppedGame"; // (games on a map made once a file from its prep)
 const geometry = HOUSE_ROOMS.objects[0]; // Injected geometry; no copied wake implementation.
 
 it("binds the released guest wake exports to the assigned real bedroom without changing the host", () => {
   const tuning = structuredClone(TUNING); tuning.map!.island = "home"; tuning.map!.islandAreas = 4;
-  const game = newGame(123, tuning), host = game.witches[0], body = structuredClone(host.body);
+  const game = preppedGame(123, tuning), host = game.witches[0], body = structuredClone(host.body);
   const guest = newWitchPlayer(1, 0, 0, tuning), equipment = structuredClone(guest.spells);
   const arrival = guestArrival({ room: "bedroom2", equipment: () => guest });
   arrival.attach(game);
@@ -26,7 +27,7 @@ it("binds the released guest wake exports to the assigned real bedroom without c
 it("requires the assigned room hooks, supplies separate equipment and leaves host identity/time intact", () => {
   // Four-area fixture: arrival ownership does not depend on distant map size; injected hooks supply all guest geometry.
   const tuning = structuredClone(TUNING); tuning.map!.island = "home"; tuning.map!.islandAreas = 4;
-  const game = newGame(123, tuning), host = game.witches[0], body = host.body, spells = host.spells;
+  const game = preppedGame(123, tuning), host = game.witches[0], body = host.body, spells = host.spells;
   game.herTime = 45; game.clock.paused = true; game.pending = { dash: true };
   const guest = newWitchPlayer(1, 0, 0, tuning); setParts(guest.spells, bareBroom()); guest.spells.hat = "none";
   const rooms: GuestRoomHooks = {
@@ -49,7 +50,7 @@ it("requires the assigned room hooks, supplies separate equipment and leaves hos
 
 it("rolls back a refused or thrown room wake and can retry without a phantom guest", () => {
   const tuning = structuredClone(TUNING); tuning.map!.island = "home"; tuning.map!.islandAreas = 4;
-  const game = newGame(123, tuning), host = game.witches[0]; game.clock.paused = true;
+  const game = preppedGame(123, tuning), host = game.witches[0]; game.clock.paused = true;
   const rooms: GuestRoomHooks = { bedFor: () => geometry, doorFor: () => geometry, startWakeFor: () => false };
   const arrival = guestArrival({ room: "bedroom3", rooms, equipment: () => newWitchPlayer(1, 0, 0, tuning) });
   expect(() => arrival.attach(game)).toThrow("wake geometry"); expect(game.witches).toEqual([host]); expect(host.time).toBeUndefined(); expect(game.clock.paused).toBe(true);

@@ -1,15 +1,16 @@
 import { expect, it, vi } from "vitest";
-import { newGame, stepGame, STEP, type Controls } from "../rules/game";
+import { stepGame, STEP, type Controls } from "../rules/game";
 import { TUNING } from "../rules/tuning";
 import { snapshotGame } from "../rules/nightSnapshot";
 import { captureNight } from "../app/nightSave";
 import { restoreSettingsBase } from "../app/playerSettings";
 import { InputRecorder, localControls, replayRecording, type InputRecording, type RecordedEvent } from "./inputRecording";
 import { packLog, unpackLog } from "./logCodec";
+import { preppedGame } from "../test/preppedGame"; // (games on a map made once a file from its prep)
 
 function fixture(persist?: (kind: string, payload: unknown, context: { build: string; t: number; island: string }) => void) {
   const t = structuredClone(TUNING); t.map!.islandAreas = 4;
-  const game = newGame(123, t); game.clock.paused = false;
+  const game = preppedGame(123, t); game.clock.paused = false;
   restoreSettingsBase(game.tuning, { voices: {}, shake: 1, legendFlash: 1 });
   const capture = () => captureNight(game, { build: "test", params: "seed=123", look: null, loan: null, flags: { chartRecorded: false, overRecorded: false } });
   return { game, recorder: new InputRecorder(game, "test", capture, persist) };

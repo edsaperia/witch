@@ -19,6 +19,7 @@ import { leyChain } from "./leylines";
 import { fillTrunk } from "./finds";
 import { pulseLinks } from "./leypulse";
 import { bootPath } from "./bootRing";
+import { preppedGame } from "../test/preppedGame"; // (games on a map made once a file from its prep)
 
 const idle = { moveX: 0, moveZ: 0, toggleMode: false, zoom: 0, autoTalk: false };
 const W = { ...WIN_DEFAULT, ...(TUNING.win ?? {}) };
@@ -27,7 +28,7 @@ const run = (g: Game, secs: number, each?: () => void) => { for (let i = 0; i < 
 /** A 10-area island, waves held, every wave brought on (the last noted when it's the final stone); she hovers out of it all. */
 function toTheEnd(seed = 7): { g: Game; finalSeen: boolean } {
   // Retain ten authored areas for the complete reverse victory lap, dealt legends and population-sized conga.
-  const g = newGame(seed, withTuning({ map: { ...TUNING.map!, islandAreas: 10 } }));
+  const g = preppedGame(seed, withTuning({ map: { ...TUNING.map!, islandAreas: 10 } }));
   g.clock.paused = false; g.party.spellAt = undefined; g.party.paused = true;
   g.witch = { ...g.witch, seated: false, mode: "treetop", lift: 1 };
   stepGame(g, idle, STEP);
@@ -120,7 +121,7 @@ describe("the end of the route (rules/win.ts)", () => {
   }, 60000);
 
   it("the island cleared before the route's end (Ed, 2026-10-12): the lap sets off at once, from where the wave's pulse is, one pulse home and one on to the route's end, each stone firing once; the waves stop", () => {
-    const g = newGame(7, withTuning({ map: { ...TUNING.map!, islandAreas: 10 } }));
+    const g = preppedGame(7, withTuning({ map: { ...TUNING.map!, islandAreas: 10 } }));
     g.clock.paused = false; g.party.spellAt = undefined; g.party.paused = true;
     g.witch = { ...g.witch, seated: false, mode: "treetop", lift: 1 };
     stepGame(g, idle, STEP);
@@ -387,7 +388,7 @@ describe("the win and the rosters (rules/rosters.ts)", () => {
   it("the night's legends are the dealt kinds' (map.legendKinds); the island's sigil is its island's kind's, home's the World Tree", async () => {
     const { dealtLegends, islandSigil } = await import("./win");
     const { islandOf } = await import("./dancefloor");
-    const g = newGame(7, withTuning({ map: { ...TUNING.map!, islandAreas: 10 } }));
+    const g = preppedGame(7, withTuning({ map: { ...TUNING.map!, islandAreas: 10 } }));
     const K = g.map.legendKinds ?? [];
     for (const c of dealtLegends(g)) if (K.length) expect(K).toContain(c.species);
     const kind = islandOf(g.map);
@@ -399,9 +400,9 @@ describe("the win and the rosters (rules/rosters.ts)", () => {
 
   it("a kind's island flares its own sigil at the win, home the World Tree (art4: art/sigils.js islandSigil)", async () => {
     const { islandSigil } = await import("./win");
-    const fox = newGame(7, withTuning({ map: { ...TUNING.map!, island: "fox" } }));
+    const fox = preppedGame(7, withTuning({ map: { ...TUNING.map!, island: "fox" } }));
     expect(fox.map.island?.kind).toBe("fox");
     expect(islandSigil(fox)).toBe("fox");
-    expect(islandSigil(newGame(7, withTuning({ map: { ...TUNING.map!, island: "home" } })))).toBe("worldTree");
+    expect(islandSigil(preppedGame(7, withTuning({ map: { ...TUNING.map!, island: "home" } })))).toBe("worldTree");
   }, 60000);
 });

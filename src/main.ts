@@ -38,11 +38,11 @@ import { sharedFindLoan, withSharedFind, type PersonalKit } from "./app/sharedFi
 import { chartOpen, closeChart, openChart, prepareChart, finishChartFlight, type Sailed } from "./ui/chartOverlay";
 import { openingWay, opensDirectly, opensInBedroom, opensWithCreator, sailLandsInBed } from "./app/opening";
 import { wakeInBedroom } from "./rules/opening";
-import { endDream, firstMorning, startParty, startWake } from "./rules/wakeUp";
+import { endDream, firstMorning, morningAfter, startParty, startWake, tuckIn } from "./rules/wakeUp";
 import { replayWanted } from "./rules/partyStart";
 import { WorldDrawGate } from "./app/worldDrawGate";
 import { LandingSleep } from './app/landingSleep';
-import { STATION_SLOT, wearFromStation, wornGenome, wornNow } from "./rules/clothesPile";
+import { STATION_SLOT, wearFromStation, wornGenome, wornNow, type PileSlot } from "./rules/clothesPile";
 import { WakeCard } from "./render/wakeUp";
 import { toggleCornerPanel, closeCornerPanel, cornerPanelRoot } from "./ui/cornerPanel";
 import { MenuFocus } from "./ui/menuFocus";
@@ -53,9 +53,8 @@ import { gpuName, QualityLadder } from "./app/ladder";
 import { musicCue } from "./rules/musicPlan";
 import { areaUnderWitch, interpolated, newWitchPlayer, STEP, type Game } from "./rules/game";
 import { enableCauldron, homeMushroomPickups } from "./rules/cauldronNight";
-import { TUNING, type Tuning } from "./rules/tuning";
-import { diveReach, diveTrack, handoffShot, newFlightClock, stepFlightClock, type Shot } from "./rules/arrive";
-import { nextFrame, runSliced } from "./render/slices";
+import { TUNING } from "./rules/tuning";
+import { diveReach, diveTrack } from "./rules/arrive";
 import { compareKey, rendererOf, sceneMode } from "./app/compareKey";
 import { debugText, machineLines, precisionLines, reproLine, reproQuery, reproState, tuningDiff } from "./app/repro";
 import { currentValue, DECISION_LIST, valuesText } from "./ui/decisions";
@@ -252,12 +251,23 @@ function showLook(): void {
   const canonical = (page.night ?? page.last)?.game;
   const shown = canonical ? page.presentationGame?.(canonical) ?? canonical : undefined;
   // (her hat still to put on but lying on the floor, the first morning's: its shape kept, so its frame lying there is drawn; asleep
-  // under the loading screen before a first morning, that morning's as it will start: `firstAhead`)
-  const { pile, hatLying: lying } = wornNow(shown?.wake, !!shown?.witches[0]?.hat.down, firstAhead), key = `${lookNow}|${pile?.join() ?? ""}|${lying}`;
+  // under the loading screen before a first morning, or before a sail's or the bed's next morning, that morning's as it will start,
+  // not the night's she's leaving: `morningAhead`)
+  const { pile, hatLying: lying } = wornNow(morningAhead ? undefined : shown?.wake, !!shown?.witches[0]?.hat.down, morningAhead), key = `${lookNow}|${pile?.join() ?? ""}|${lying}`;
   if (key === shownLook) return;
   const look = JSON.parse(lookNow) as unknown;
   if (view.houseRooms) view.houseRooms.outfit = look;
-  shownLook = key; view.setWitch(wornGenome(look as never, pile, lying));
+  shownLook = key; view.setWitch(wornGenome(look as never, pile, lying), morningAhead ? { hatOff: lying } : undefined); // (a morning ahead: her whole set at once, urgent)
+  keepNightie(look);
+}
+/** Her nightie for every morning after a night played (rules/wakeUp.ts morningAfter: her hat in the pile, so no hat-off frames: those
+ *  are a first morning's only), drawn in the background from the first night on and kept for good (AssetLibrary.keepLook; Ed,
+ *  2026-11-03: "it's the same nightie on every island every morning. Why do we need to keep re-drawing it?"): the same genome
+ *  each morning while her look is, so a sail or the bed puts it on at once. Drawn again only when her look changes (its genome
+ *  carries her whole outfit, the hidden pieces too, so the art cache keys it anew). */
+function keepNightie(look: unknown): void {
+  const after = morningAfter();
+  view.assets.keepLook(wornGenome(look as never, after.pile, after.hatLying));
 }
 // The page and the night (app/night.ts; docs/plans/sail-without-reload.md B): the page made once, the night (its link, tuning,
 // game, playtest run, HUD, arrival and flags) held in `page.night`, read there by everything that needs it, never captured.
@@ -283,11 +293,15 @@ const { tuning: bootTuning } = N();
 // there (wakeFirst); ?opening=old for the old start (the character creator as the loading cover).
 const inBedroom = !resumeGame && opensInBedroom(bootLink, bootTuning);
 if (!inBedroom) (window as unknown as { witchLoading?: { cancel(): void } }).witchLoading?.cancel();
-/** The first morning she'll wake to (rules/wakeUp.ts firstMorning), read ahead while she sleeps under the loading screen, till it
- *  starts (wakeFirst): her art is made in her nightie with the start's own, and the loading screen waits for it (her hat-off frames
- *  too, her hat lying on the hats' floor), so she's never drawn in her clothes first (Ed, 2026-11-03: "after the loading screen I look
- *  at the bed and see the witch in her default clothes instead of in her nightie, and then after a second or two she's in her nightie"). */
-let firstAhead = inBedroom ? firstMorning(N().game) : null;
+/** The next morning she'll wake to, read ahead till its wake-up starts. The first (rules/wakeUp.ts firstMorning), while she sleeps
+ *  under the loading screen (wakeFirst): her art is made in her nightie with the start's own, and the loading screen waits for it
+ *  (her hat-off frames too, her hat lying on the hats' floor), so she's never drawn in her clothes first (Ed, 2026-11-03: "after the
+ *  loading screen I look at the bed and see the witch in her default clothes instead of in her nightie, and then after a second or
+ *  two she's in her nightie"). A sail's or the bed's (rules/wakeUp.ts morningAfter), from the moment she sails or sleeps (aheadMorning):
+ *  her nightie put on (kept since the first night: keepNightie), or its whole set asked then if it isn't yet; the sleep's dark waits
+ *  for it (view.prepare's wait for the urgent sets), the dive never does: in bed she's under her covers till it's on her
+ *  (render/view/witch.ts inCovers), never seen there in last night's clothes. */
+let morningAhead: { pile: PileSlot[]; hatLying: boolean } | null = inBedroom ? firstMorning(N().game) : null;
 if (N().game.map.zoo) void import("./zoo/panel").then(({ ZooPanel }) => { zooPanel = new ZooPanel(N().game); });
 // The settings as built (the tuning file's), for the debug overlay's and the playtest log's list of what's changed (app/repro.ts).
 const BUILT = JSON.parse(JSON.stringify(TUNING)) as object;
@@ -310,8 +324,8 @@ let dreamNext: { loan: Loan; won: boolean } | null = null;
 let dreamAfterDive: { loan: Loan; won: boolean } | null = null;
 /** The broom parts she has tonight: those she's found, and a part on loan. */
 const partsNow = (): Set<string> => withLoan("part", new Set(loadBroom().found), loan);
-const bootLook = firstAhead ? wornGenome(JSON.parse(lookNow) as never, firstAhead.pile, firstAhead.hatLying) : savedLook; // (in her nightie on a first morning: firstAhead)
-const view = page.view = await View.create(canvas, N().game, gameStyle(style, bootTuning), bootLook, { hatOff: !!firstAhead?.hatLying }); // (built a frame's budget at a time: the bedroom's frames go on meanwhile, render/slices.ts)
+const bootLook = morningAhead ? wornGenome(JSON.parse(lookNow) as never, morningAhead.pile, morningAhead.hatLying) : savedLook; // (in her nightie on a first morning: morningAhead)
+const view = page.view = await View.create(canvas, N().game, gameStyle(style, bootTuning), bootLook, { hatOff: !!morningAhead?.hatLying }); // (built a frame's budget at a time: the bedroom's frames go on meanwhile, render/slices.ts)
 let onlineFocus = () => false;
 view.setIntroFocus = (game, focus) => introFocus(game, N().game, focus, onlineFocus(), pageFocus);
 // The loading screen (src/loading.js, src/ui/loadingScreen.js), up since the first paint: given the view for its count of the art
@@ -569,8 +583,17 @@ function bedFirst(n: Night): void {
   pageMutation(n.game, "wake: bed arrival", () => bedFirstNow(n));
 }
 function bedFirstNow(n: Night): void {
-  n.flags.inBed = sailLandsInBed(n.params, n.tuning) && wakeInBedroom(n.game);
-  if (!n.flags.inBed) dreamAfterDive = null;
+  n.flags.inBed = sailLandsInBed(n.params, n.tuning) && tuckIn(n.game); // (in her bed as the wake-up will have her: nothing moves as it lands)
+  view.asleepInBed = n.flags.inBed;
+  if (n.flags.inBed) aheadMorning(true); // (asked as she sailed in place already; the island's link loaded anew, &arrive=1: now)
+  else { dreamAfterDive = null; aheadMorning(false); } // (no morning in bed after all: her look as it is)
+}
+/** A sail's or the bed's next morning read ahead from the moment she sails or sleeps (`morningAhead`: her nightie, rules/wakeUp.ts
+ *  morningAfter), its whole set asked at once (showLook); off (`on` false) as its wake-up starts, or if there's to be none. */
+function aheadMorning(on: boolean): void {
+  if (!on && !morningAhead) return;
+  morningAhead = on ? morningAfter() : null;
+  showLook();
 }
 /** It's landed: in her bed, she wakes as after the bed (the one wake-up, every morning: Ed, 2026-10-26, in place of his decision 10's shorter one), dreaming
  *  first of a find on loan; at her decks (?opening=old), the night starts, the party spell cast, as the bedroom's scroll would. */
@@ -584,7 +607,7 @@ function arrivedNow(): void {
   sound.sailing(0); // (sailed in place: the sea and the wind fade as the night's start comes in)
   const n = N();
   if (view.shaderLandingLimited && n.flags.inBed && !view.landingWakeReady()) {
-    startWake(n.game, n.game.herTime, { dreaming: true, mirrored: mirrored(), yesterday: true });
+    startWake(n.game, n.game.herTime, { dreaming: true, mirrored: mirrored(), yesterday: true }); aheadMorning(false); view.asleepInBed = false; // (the morning's own pile from here: the same look)
     landingSleep.begin(n.game); view.landingSleeping = true; view.foot = 1; view.seatK = 0; n.game.clock.paused = true;
     input.release(); input.clearPresses(); (wakeCard ??= new WakeCard()).sleep();
     mark('landing:asleep'); return;
@@ -593,11 +616,12 @@ function arrivedNow(): void {
 }
 function wakeArrival(): void { mutate("wake: arrival", wakeArrivalNow); }
 function wakeArrivalNow(): void {
-  view.landingSleeping = false;
+  view.landingSleeping = false; view.asleepInBed = false; // (the wake-up has her in bed from here)
   // (landed asleep in her bed: with a loan settled, dreaming it, the alarm when it ends; else the alarm at once: rules/wakeUp.ts, render/dream.ts)
   const dd = dreamAfterDive;
   dreamAfterDive = null;
   if (N().flags.inBed && startWake(N().game, N().game.herTime, { dreaming: !!dd, mirrored: mirrored(), yesterday: true }) && dd) startDream(dd); // (a sail: a night played, last night's clothes in their pile)
+  aheadMorning(false); // (the morning's own pile from here: the look read ahead, so nothing's redrawn)
   if (start()) queueCast(); // (woken in her bedroom, the dive's landing: not yet, rules/wakeUp.ts)
   if (N().game.wake) mark("opening:alarm");
   if (!gestured) soundNote(); else sound.wake();
@@ -1253,8 +1277,13 @@ function chartOverNight(table?: string): void {
   const here = island ? { island, world: n.tuning.map?.world ?? 0, label: stayLabel(n.game.partyOver ? "over" : n.game.win?.phase === "won" ? "won" : "on") } : undefined;
   if (table) chartAt = table;
   openChart((href, to) => { chartAt = null; void sailFromChart(href, to).catch(error => logCaughtError(error, "chart departure")); }, chartWorldArg(), { here, onDepart: departFromChart, onStay: () => console.info(`sea chart: ${island} chosen, she's there: back to the night (seed ${N().seed}, game time ${N().game.clock.time.toFixed(1)} s)`),
-    onFly: () => view.beginLandingShaders(true),
-    onLandingDue: dueAt => view.startLandingShaderGrace(dueAt),
+    // (she sails: her next morning's look asked for at once, as the island's build starts: aheadMorning)
+    onFly: () => { view.beginLandingShaders(true); if (sailLandsInBed(new URLSearchParams(location.search), N().tuning)) aheadMorning(true); },
+    // (the chart down at the water: no deadline for the island's shaders from here, Ed, 2026-11-03: "Don't limit the time, we have to
+    // wait for the island to be build anyway; zoom in over the map, switch to the island's sea, fly over the island, and show whatever
+    // is built, with mist over it if it's not built". The chart stays up, animated, till they're linked (app/chartView.ts hold); a
+    // 15 s grace from here used to cut them short, the dive skipped and the night drawn without what wasn't ready: his v7295 sail.)
+    onLandingDue: dueAt => performance.mark("chart:landing-due", { detail: { at: dueAt } }),
     ...(table ? { table: { onLeave: () => { chartAt = null; closeChart(); } } } : {}) });
 }
 /** The map table's chart (Ed, 2026-10-23: "Map menu slides in from the bottom when you go near it, like the clothes stations"; since
@@ -1324,7 +1353,7 @@ function wakeFirst(): void {
 }
 function wakeFirstNow(): void {
   const n = N();
-  bootAsleep = false; firstAhead = null; // (the morning itself from here on: its wake-up's pile)
+  bootAsleep = false; morningAhead = null; // (the morning itself from here on: its wake-up's pile)
   firstEver = !wokenBefore();
   if (!wakeInBedroom(n.game) || !startWake(n.game, n.game.herTime, { mirrored: mirrored() })) { wakeCard?.hide(); dressCreator(); creator.show(); return; }
   mark("opening:wake");
@@ -1358,17 +1387,20 @@ async function sailInPlace(to: Sailed, made?: Promise<Night>): Promise<void> {
 /** A sail's night made (sailInPlace, or under the chart's flight: departFromChart): the old night's music fading to the sea and the
  *  wind, the old night ended, the night's link pushed (and Back's guard), the night made (startNight) and its start readied: the
  *  ground, the house and the shaders, not the trees (Ed, 2026-10-24: "Don't wait for the trees": they come under the loading mist,
- *  the dive's own areas first, rules/arrive.ts diveReach); `at`, the chart's hand-off, its first frames drawn there ahead. */
+ *  the dive's own areas first, rules/arrive.ts diveReach); `at`, the chart's hand-off: made under its flight, nothing but the night
+ *  itself waited for. */
 async function makeSailNight(to: Sailed, arrival?: Arrival, at?: FlightEnd["cam"] | null): Promise<Night> {
   if (sailFail) throw new Error("?debug=sail: the sail in place made to fail"); // (window.witch.sail's test of the fallback)
   if (at === undefined) view.beginLandingShaders(false);
   sailing = true;
   gestured = true; // (she's played: the sound's woken already)
   sound.sailing(1);
+  const p = sailParams(new URLSearchParams(location.search), to.island, to.seed, to.world);
+  // (she'll land asleep in her bed: her next morning's look, her nightie, asked for now, while the chart flies and the night's made)
+  if (sailLandsInBed(p, N().tuning)) aheadMorning(true);
   forgetArrival(); // (the reload's copy, sessionStorage's: a reload later doesn't fly again)
   chartHeld = false; view.assets.hold(false); // (the chart closed, or flying in: the art workers free for the next island)
   endNight(page, params.get("debug") === "sail");
-  const p = sailParams(new URLSearchParams(location.search), to.island, to.seed, to.world);
   backGuard.sailed("?" + p.toString() + location.hash);
   armBack();
   const n = await startNight(page, { how: "sail", island: to.island, seed: to.seed, world: to.world, arrival, params: p });
@@ -1376,34 +1408,22 @@ async function makeSailNight(to: Sailed, arrival?: Arrival, at?: FlightEnd["cam"
   bedFirst(n); // (the flight in ends on her asleep in her bedroom, rules/opening.ts)
   worldDraw = new WorldDrawGate();
   displayedStep = -1;
-  const A = n.tuning.arrive;
-  await view.prepare({ sail: true, ...(A && at !== undefined ? { dive: diveReach(n.game.map, A), track: diveTrack(n.game.map, A) } : {}) });
-  if (at && A && !view.shaderLandingLimited) await warmAt(n, handoffShot({ cam: at }, n.game.map), A);
-  if (view.shaderLandingLimited) await view.waitForLandingWitch();
-  if (view.shaderLandingLimited) finishChartFlight();
+  const A = n.tuning.arrive, underChart = !!A && at !== undefined;
+  const prep = view.prepare({ sail: true, ...(underChart ? { dive: diveReach(n.game.map, A), track: diveTrack(n.game.map, A), underDive: true } : {}) });
+  if (underChart) {
+    // Made under the chart's flight: it hands over as soon as the night is (its map, and the island's layers the view draws), and
+    // the rest is built on under the dive: the shaders, the house, the forest, the ground along its track, shown as they're
+    // made, the loading mist over what isn't (Ed, 2026-11-03: "zoom in over the map, switch to the island's sea, fly over the
+    // island, and show whatever is built, with mist over it if it's not built"). It used to wait under the chart for the shaders,
+    // the track's ground and the hand-off's first frames.
+    void prep.catch(e => console.error("the island's build under the dive went wrong", e));
+  } else {
+    await prep;
+    if (view.shaderLandingLimited) await view.waitForLandingWitch();
+    if (view.shaderLandingLimited) finishChartFlight();
+  }
   mark("sail:ready");
   return n;
-}
-/** The night's first frames drawn at `shot` (the chart's hand-off), under the chart, until they come calm as the flight's warm-up
- *  waits for (rules/arrive.ts stepFlightClock): the heavy ones over before the dive, not at its start. */
-async function warmAt(n: Night, shot: Shot, A: NonNullable<Tuning["arrive"]>): Promise<void> {
-  await runSliced(view.heights.fillSteps(shot.tx, shot.tz), "handoff-heights");
-  const c = newFlightClock();
-  view.fly = shot;
-  view.assets.hold(true); // (the art workers paused for them: the first draws not fighting them for the machine)
-  try {
-    while (!stepFlightClock(c, performance.now(), A).faded) {
-      view.limitedLandingReady();
-      if (view.shaderLandingLimited) break;
-      const t0 = performance.now();
-      view.render(n.game.clock.time);
-      try {
-      stallLog.frame({ t: n.game.clock.time, gap: 0, work: performance.now() - t0, step: 0, draw: performance.now() - t0, measured: { step: false, draw: true }, parts: Object.fromEntries(Object.entries(view.ms).map(([name, ms]) => [`draw.${name}`, ms])), source: "warm-draw", loading: { phase: "handoff-warm", ready: n.flags.ready, ...view.readiness }, mode: n.game.witch.mode, x: n.game.witch.x, z: n.game.witch.z, wave: n.game.party.wave, creatures: n.game.creatures.length });
-      } catch (error) { logCaughtError(error, "warm-draw observation"); }
-      if (TIMING) console.info(`sail-timing: warm frame ${Math.round(performance.now() - t0)} ms`, JSON.stringify(Object.fromEntries(Object.entries(view.ms).filter(([, v]) => v > 20).map(([k, v]) => [k, Math.round(v)]))));
-      await nextFrame();
-    }
-  } finally { view.fly = null; view.assets.hold(false); }
 }
 /** Another way to a new night (the plan's PR 6: the bed, the bot game's exit): in place as a sail is (the tuning's sail.inPlace,
  *  ?sail=), else, in a bot game for any but its exit (the bot's on the old night), or on anything going wrong, the link loaded as
@@ -1430,6 +1450,11 @@ async function nightInPlace(spec: NightSpec, href: string): Promise<void> {
   if (sailFail) throw new Error("?debug=sail: the night in place made to fail");
   if (freeze.frozen) freeze.toggle(); // (a fresh page isn't paused: the bot game's Esc out pauses it too, the freeze's key first)
   sailing = true;
+  // After the bed in the new opening (Ed's decision 10): asleep in the dark while the next island's made, then the wake-up (one for every morning since Ed, 2026-10-26)
+  // in her bedroom, its curtains waiting on that island's build (rules/wakeUp.ts); else the bedroom as the loading screen, as before.
+  // Her next morning's look, her nightie, asked for as she falls asleep (aheadMorning): the start below waits for it (view.prepare).
+  const wakes = spec.how === "bed" && openingWay(spec.params, N().tuning) === "bedroom";
+  if (wakes) aheadMorning(true);
   sound.music?.fadeOut(N().tuning.sfx.sail?.fade ?? 1.5); // (a fresh page's music is silent till the home speakers boot)
   chartHeld = false; view.assets.hold(false);
   endNight(page, params.get("debug") === "sail");
@@ -1437,9 +1462,6 @@ async function nightInPlace(spec: NightSpec, href: string): Promise<void> {
   const u = new URL(href);
   backGuard.sailed(u.search + u.hash);
   armBack();
-  // After the bed in the new opening (Ed's decision 10): asleep in the dark while the next island's made, then the wake-up (one for every morning since Ed, 2026-10-26)
-  // in her bedroom, its curtains waiting on that island's build (rules/wakeUp.ts); else the bedroom as the loading screen, as before.
-  const wakes = spec.how === "bed" && openingWay(spec.params, N().tuning) === "bedroom";
   const room = !wakes && spec.params.get("creator") !== "0";
   startEl.classList.add("loading");
   startEl.style.display = "none";
@@ -1452,6 +1474,7 @@ async function nightInPlace(spec: NightSpec, href: string): Promise<void> {
   creator.loadout = { hat: n.game.spells.hat }; creator.hats = unlockAll() ? undefined : n.game.spells.hats;
   worldDraw = new WorldDrawGate();
   displayedStep = -1;
+  if (wakes) tuckIn(n.game); // (in her bed before the start's made round her: its first frames have her drawn there, and the camera on her, as the wake-up will)
   await view.prepare();
   n.flags.ready = true;
   startEl.classList.remove("loading");
@@ -1459,6 +1482,8 @@ async function nightInPlace(spec: NightSpec, href: string): Promise<void> {
   sailing = false;
   if (wakes && wakeInBedroom(n.game) && startWake(n.game, n.game.herTime, { dreaming: !!dream && !dream.over, mirrored: mirrored(), yesterday: true })) { mark("opening:bed"); start(); } // (after the bed: last night's clothes in their pile)
   else if (!room && !wakes) startDirect();
+  if (wakes && n.game.wake) tuckIn(n.game); // (the camera settled on her in her bed again, where the wake-up has her: wakeInBedroom put it beside the bed)
+  aheadMorning(false); // (woken, the morning's own pile from here: the look read ahead, so nothing's redrawn)
 }
 /** The bot game left (its exit in place): the bot and its tag gone, her own look back (the creator's, as a fresh page has it). */
 function leaveBot(): void {

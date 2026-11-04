@@ -35,7 +35,7 @@ import { broomWhere, stationOf } from "../rules/stations";
 import * as Art from "../../art/generator.js";
 import { witchLookOf } from "./artBuild";
 import { pileOut } from "../rules/clothesPile";
-import { DECOR_ROOMS, placedDecorPlan } from "./houseDecor";
+import { placedDecorRooms } from "./houseDecor";
 import { Spotlight } from "./spotlight";
 import { LoanSparkle } from "./loanSparkle";
 import { UseGlow } from "./useGlow";
@@ -555,7 +555,7 @@ export class HouseRoomsView {
     const here = toPlanAt0(w.x - D.x, w.z - D.z), pitch = Math.asin(Math.min(.95, Math.max(.2, ky * v.mpp))), ppm = 1 / v.mpp;
     const wanted: { key: string; x: number; z: number }[] = [];
     for (const o of HOUSE_ROOMS.objects) if (FURNITURE.has(o.id)) wanted.push({ key: pieceKey(o), x: o.x, z: o.z });
-    const decorRooms = HOUSE_ROOMS.layout ? HOUSE_ROOMS.rooms.filter(r => placedDecorPlan(r).length) : DECOR_ROOMS;
+    const decorRooms = placedDecorRooms();
     for (const r of decorRooms) wanted.push({ key: `decor:${r.id}`, x: (r.x0 + r.x1) / 2, z: (r.z0 + r.z1) / 2 });
     // (and every other state a piece can be in, after the rest: rules/kit.ts's desk and lathe, swapped at once when she takes from them)
     const spare = HOUSE_ROOMS.objects.filter(o => FURNITURE.has(o.id)).flatMap(o => furnitureStates(o.id).map(st => ({ key: `${o.id}|${st}`, x: o.x, z: o.z })).filter(q => !wanted.some(w => w.key === q.key)));
