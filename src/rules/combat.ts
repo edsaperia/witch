@@ -16,7 +16,7 @@ import { type Tuning } from "./tuning";
 import { hash2 } from "./random";
 import { isHomeKey } from "./speakers";
 import { type Attack, type CombatData, COMBAT, type CombatState, attackOf, attackNamed, type CombatWorld, type Target } from "./combat/data";
-import { fighting, targetable, sideOf, truce, targetPos, headingOf, lightsNear, sheltered, gaveUp, valid, acquire, Grid, moveToward, nearestSound } from "./combat/targeting";
+import { fighting, targetable, sideOf, truce, targetPos, headingOf, lightsNear, sheltered, gaveUp, valid, acquire, Grid, moveToward, nearestSound, aloftHunted } from "./combat/targeting";
 import { contacted, touch, land, area, stepKnock, useData } from "./combat/hits";
 import { stepLegendAttack, stepLegend } from "./combat/legend";
 import { ATTACK_LIB } from "./attacks/index";
@@ -86,6 +86,11 @@ export function lungeOf(c: Creature, A: Attack, reach: number, chasing: boolean,
   const ad = Math.hypot(aimX - c.x, aimZ - c.z), short = chasing ? 0 : A.range * 0.5, far = chasing ? Math.max(reach, Math.min(reach * 1.25, ad)) : reach;
   return c.dug !== undefined && time < c.dug ? 0 : Math.min(far, Math.max(0, ad - short));
 }
+/** How much of its top waiting pace a pick for a coming round counts on making good toward its ready spot (rules/combat.ts movingGoal):
+ *  the crowd's avoidance, its path's curve and its gait's turns cost the rest (measured in the challenge's 128-animal pack, 2026-11-04:
+ *  about 8 m/s made good against 15 to 20 m/s top). Low, so it sets off early rather than late: waiting at its ready spot commits it
+ *  to nothing. */
+const SET_OFF_PACE = 0.4;
 /** A lunge wound up now: how far it will go (m), reckoned as the strike will (lungeOf), at her with dodge.a's longer reach and her momentum. */
 export function lungeLength(c: Creature, A: Attack, atWitch: boolean, t: Tuning, time: number, aimX: number, aimZ: number): number {
   const DA = t.dodge?.a.on ? t.dodge.a : null, chasing = atWitch && c.level !== LEGEND && !!momentumOf(c.species, t);
@@ -293,6 +298,9 @@ export function stepCombat(s: CombatState, w: CombatWorld, data: CombatData = CO
   // (a team's widest body, for its members' waiting gap: max of bodyGap over the members is its own radius plus the widest's, the
   // same sum; worked out once a members list, not once a member)
   const widest = new Map<readonly number[], number>();
+  // (a ring's gap: its members' bodies and clearances round its circle, shared out; worked out once a ring a step)
+  const ringGaps = new Map<string, number>();
+  const ringGap = (ring: readonly number[]) => { const key = ring.join(","); let g = ringGaps.get(key); if (g === undefined) { g = 0; for (const id of ring) { const o = w.creatures[id]; if (o) g += 2 * drawnRadius(o, t) + SPACING.clearance; } g /= Math.max(1, ring.length); ringGaps.set(key, g); } return g; };
   const widestOf = (members: readonly number[]) => { let r = widest.get(members); if (r === undefined) { r = -Infinity; for (const id of members) { const o = w.creatures[id]; if (o) r = Math.max(r, drawnRadius(o, t)); } widest.set(members, r); } return r; };
   for (const c of w.active) {
     if (c.cheerUntil !== undefined && time >= c.cheerUntil) c.cheerUntil = undefined; // (its celebration over: back in the fight, rules/affection.ts)
@@ -431,7 +439,16 @@ export function stepCombat(s: CombatState, w: CombatWorld, data: CombatData = CO
       c.dug = undefined; c.brace = undefined; // (a digger comes up, a blocker lowers its tail)
       continue;
     }
-    const p = targetPos(w, s, f.target);
+    // Up out of its reach over its area (a hunter after her: rules/combat/targeting.ts aloftHunted): it waits round the point under
+    // her (below), whatever it was doing given up as when it lost her before (a strike, a dive, a burrow, a leap, a charge).
+    const herAloft = aloftHunted(w, c, f.target), under = herAloft ? w.witches[(f.target as { id: number }).id] : null;
+    if (herAloft) {
+      f.windupUntil = 0; f.lunge = undefined; c.charge = undefined; c.sprung = undefined; c.dug = undefined; c.brace = undefined;
+      if (c.swoop) landSwoop(c, time);
+      if (c.burrow) c.burrow = undefined;
+      if (c.leap && advanceMotion(c, { route: c.leap }, time, 0) >= 1) c.leap = undefined;
+    }
+    const p = targetPos(w, s, f.target) ?? (under ? { x: under.x, z: under.z, r: 0.5 } : null);
     if (!p) { f.target = null; f.windupUntil = 0; continue; } // (it fell this very step)
     const d = Math.hypot(p.x - c.x, p.z - c.z), A = spell ? thrown(spell, f.target).attack : reachOf(atk.attack, f.target), K = data.kite, kites = A.delivery === "shot" && K.species.includes(c.species);
     // Momentum chasing her (tuning creatureMomentum; rules/momentum.ts): its turn limit and reaction delay, and its telegraphed
@@ -447,10 +464,32 @@ export function stepCombat(s: CombatState, w: CombatWorld, data: CombatData = CO
       const gap = wide > -Infinity ? Math.max(0, drawnRadius(c, t) + wide + SPACING.clearance) : 0;
       const tell = pd ? PACKS.rhythms[packKindOf(c.species)?.rhythm ?? "steady"].tell : 0;
       const selected = !team || !!team.actions[c.id] && !team.used.includes(c.id) && pd?.role !== "hurt";
-      const until = !selected ? Infinity : pd?.phase === "lull" ? pd.state.until + tell : pd?.phase === "tell" || pd?.phase === "combo" ? pd.state.until : Infinity;
+      // (picked for the next round, a big team's, rules/combat/teams.ts: it closes in to be ready as that round's window opens, setting
+      // off by its own speed: waitingSlot's return; aloft, no directive, it only waits)
+      const coming = !selected && !!pd && pd.role !== "hurt" ? team?.next?.find(n => n.actions[c.id]) : undefined, nextPick = !!coming;
+      if (nextPick) {
+        // Its ready spot: in the reach its next action engages from (not where its present role waits, a shooter's), on its own bearing
+        // from her, re-aimed at her each step. It leaves the ring when, at its own waiting pace (its stride's share of the time on the
+        // move), it would only just get there by its round's window opening (its readyBy), with its return lead to spare; till then, its
+        // place in the ring. Only a goal: nothing's committed, it strikes only when its round comes.
+        const m = waitingProfile(c), ready = Math.max(Math.min(range, actionReach(c, coming!.actions[c.id]!, PACKS) + PACKS.limits.engage * FIGHT.scale * 0.5), drawnRadius(c, t) + p.r + SPACING.clearance);
+        const pace = SET_OFF_PACE * speed * m.speed * (m.lift > 0 || m.cadence > 0 ? m.duty + (1 - m.duty) * m.restSpeed : 1), off = Math.hypot(c.x - origin.x, c.z - origin.z);
+        if (time >= coming!.readyBy - Math.max(0, off - ready) / Math.max(1, pace) - m.returnLead) {
+          const k = off > SPACING.epsilon ? ready / off : 0, a = hash2(c.id, 29, 1620) * Math.PI * 2;
+          return off > SPACING.epsilon ? { x: origin.x + (c.x - origin.x) * k, z: origin.z + (c.z - origin.z) * k } : { x: origin.x + Math.cos(a) * ready, z: origin.z + Math.sin(a) * ready };
+        }
+      }
+      const until = nextPick ? Infinity : !selected ? Infinity : pd?.phase === "lull" ? pd.state.until + tell : pd?.phase === "tell" || pd?.phase === "combo" ? pd.state.until : Infinity;
       const seed = team ? hash2(team.seed, 1620, 17) : pd?.state.seed;
       const retreat = pd?.role === "hurt" ? waitingProfile(c).radius * FIGHT.scale : 0;
-      return waitingSlot(c, origin, range + retreat, time, FIGHT.scale, SPACING, waitingHeading?.(), seed !== undefined ? { seed, index: Math.max(0, members.indexOf(c.id)), count: members.length, gap, until, minimum: drawnRadius(c, t) + p.r + SPACING.clearance } : undefined,
+      // (a big team's rings: its place among the `ring` sharing its ring, and which ring: rules/combat/teams.ts order)
+      // (its index in its ring by id among those sharing it, so a ring's places don't all shift as its picks change)
+      const cap = Math.floor(t.teamRounds?.ring ?? 20), at = team?.order ? team.order.indexOf(c.id) : -1, rank = at >= 0 ? Math.floor(at / cap) : 0;
+      const ring = at >= 0 ? team!.order!.slice(rank * cap, rank * cap + cap) : null;
+      // (and its ring's own gap: the room its members' bodies take round it, each its width and the clearance, shared out, not the
+      // widest of all 128 for everyone, which made each ring as wide as one ring of all of them)
+      const place = ring ? { index: ring.filter(id => id < c.id).length, count: ring.length, rank, gap: ringGap(ring) } : { index: Math.max(0, members.indexOf(c.id)), count: members.length, gap };
+      return waitingSlot(c, origin, range + retreat, time, FIGHT.scale, SPACING, waitingHeading?.(), seed !== undefined ? { seed, ...place, until, minimum: drawnRadius(c, t) + p.r + SPACING.clearance } : undefined,
         { dashReach: t.dash.distance * (t.dash.charges ?? 1), inviteReach: t.invites.range, areaRadius: w.areaAt?.(c.homeX, c.homeZ)?.r ?? 0, speed: speed * waitingProfile(c).speed, parameters: t.combatWaiting });
     } : undefined;
     const waitingHazards: WaitingHazard[] = spacing ? [{ x: p.x, z: p.z, radius: p.r }] : [];
@@ -505,6 +544,27 @@ export function stepCombat(s: CombatState, w: CombatWorld, data: CombatData = CO
     // A pack member falling back in its lull, a hurt one keeping away (rules/combat/packs.ts); dug in (the badger's cover, its hold), it
     // stands, biting what comes in reach when its pack lets it.
     if (!pd?.slot || pd.phase !== "lull") c.packProwl = undefined; // (a new lull's prowl starts from its place)
+    /** Its waiting movement round her (the combat spacing's): its place in its team's moving formation (movingGoal), kept clear of its
+     *  neighbours and of telegraphed harm, steered to with its momentum, a lifted stride launched toward a clear landing. */
+    const waitRound = (hers: boolean): void => {
+      const origin = mo && f.target!.kind === "witch" ? chaseAt(s, f.target!.id, time, mo) ?? p : p;
+      const goal = clearWaitingSlot(c, safeWaitingGoal(movingGoal!(origin, want)), grid.near(c.x, c.z, spacingSearch), t);
+      const profile = profileOf(c.species) ?? { accel: SPACING.fallbackAccel, fight: [{ kind: "arrive" as const, w: 1 }] };
+      steer(c, profile, { px: origin.x, pz: origin.z, pr: p.r, want: 0, range: 0, speed, time, dt, pack: null, neighbours: grid.near(c.x, c.z, spacingSearch), threats: s.shots, side: sideOf(c), ready: false, beat: 60 / t.beat.bpm, momentum: mo, style: goal, lights: profile.fight.some(b => b.kind === "light") ? lightsNear(w, s, c, 40 * S) : undefined, spacing: { tuning: t, data: SPACING, waiting: true } });
+      if (waitingDrive(c, time).airborne && f.target!.kind === "witch" && !hers) {
+        // Launch in its already momentum-limited heading, toward a clear landing disc.
+        const v = Math.hypot(c.vx ?? 0, c.vz ?? 0), length = hopOf(speed, c).length * S;
+        if (v > SPACING.epsilon) {
+          const landing = { x: c.x + c.vx! / v * length, z: c.z + c.vz! / v * length };
+          const safe = clearWaitingSlot(c, landing, grid.near(c.x, c.z, spacingSearch), t);
+          if (Math.hypot(safe.x - landing.x, safe.z - landing.z) <= SPACING.epsilon && waitingHazards.every(h => pathClearsHazard(c, landing, h, t))) startHop(c, landing.x, landing.z, time, hopOf(speed, c));
+        }
+      }
+    };
+    // She's up out of reach over its area (herAloft, above): it does as it would waiting its turn to attack, round the point under
+    // her, and nothing else; none of its strikes start (Ed, 2026-11-03: "I suggest that they just act how they would when they're
+    // waiting to attack"). Its team holds in its lull meanwhile (rules/combat/teams.ts), so her landing starts a fresh round.
+    if (herAloft) { if (!c.hop && !c.leap) waitRound(false); continue; }
     if (pd && f.windupUntil === 0 && !c.charge && !c.leap && !c.burrow && !swoops(c)) { // (a flyer in a pack circles aloft through its lull: below)
       if (c.dug !== undefined && time < c.dug) {
         c.moving = false; c.vx = 0; c.vz = 0; c.facing = p.x >= c.x ? 1 : -1;
@@ -525,22 +585,7 @@ export function stepCombat(s: CombatState, w: CombatWorld, data: CombatData = CO
           if (Math.hypot(tx - c.x, tz - c.z) <= PW.near * S) { a += (c.id % 2 ? 1 : -1) * (speed * PW.pace * dt) / R; c.packProwl = a; [tx, tz] = at(a); }
         }
         if (c.hop) continue; // (in the air: rules/movement.ts)
-        if (spacing && !pd.freeze) {
-          const origin = mo && f.target.kind === "witch" ? chaseAt(s, f.target.id, time, mo) ?? p : p;
-          const goal = clearWaitingSlot(c, safeWaitingGoal(movingGoal!(origin, want)), grid.near(c.x, c.z, spacingSearch), t);
-          const profile = profileOf(c.species) ?? { accel: SPACING.fallbackAccel, fight: [{ kind: "arrive" as const, w: 1 }] };
-          steer(c, profile, { px: origin.x, pz: origin.z, pr: p.r, want: 0, range: 0, speed, time, dt, pack: null, neighbours: grid.near(c.x, c.z, spacingSearch), threats: s.shots, side: sideOf(c), ready: false, beat: 60 / t.beat.bpm, momentum: mo, style: goal, lights: profile.fight.some(b => b.kind === "light") ? lightsNear(w, s, c, 40 * S) : undefined, spacing: { tuning: t, data: SPACING, waiting: true } });
-          if (waitingDrive(c, time).airborne && f.target.kind === "witch" && !pd.state.hers) {
-            // Launch in its already momentum-limited heading, toward a clear landing disc.
-            const v = Math.hypot(c.vx ?? 0, c.vz ?? 0), length = hopOf(speed, c).length * S;
-            if (v > SPACING.epsilon) {
-              const landing = { x: c.x + c.vx! / v * length, z: c.z + c.vz! / v * length };
-              const safe = clearWaitingSlot(c, landing, grid.near(c.x, c.z, spacingSearch), t);
-              if (Math.hypot(safe.x - landing.x, safe.z - landing.z) <= SPACING.epsilon && waitingHazards.every(h => pathClearsHazard(c, landing, h, t))) startHop(c, landing.x, landing.z, time, hopOf(speed, c));
-            }
-          }
-          continue;
-        }
+        if (spacing && !pd.freeze) { waitRound(pd.state.hers); continue; }
         if (styleOf(c.species) === "hopper" && f.target.kind === "witch" && !pd.state.hers) { if (pd.freeze || !startHop(c, tx, tz, time, hopOf(speed))) { c.moving = false; c.vx = 0; c.vz = 0; c.facing = p.x >= c.x ? 1 : -1; } continue; } // (a hopper bounds round its lull ring, a beat on the ground between)
         moveToward(c, tx, tz, 0.1, speed, dt);
         continue;

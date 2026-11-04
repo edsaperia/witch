@@ -1,0 +1,9 @@
+{
+  "reason": "Big packs (Ed, 2026-11-03): a team of more than 20 animals on one target gets shorter attack rounds, smoothly with its size (the tuning's teamRounds: (20 / size) ^ 0.5, at least 0.4 of today's); and hunters whose witch rises out of reach over their area keep her as their target and wait round the point under her in their moving formation instead of standing still where they were (\"I suggest that they just act how they would when they're waiting to attack\"). Such a team also keeps its 3 s attack window, waits in rings of 20 (Ed, 2026-11-04: \"Resolve the attack rate limit for 128\"), picks its attackers three rounds ahead and they leave the waiting ring in time to be ready as their window opens (\"can we decide the roles in advance and have them move in sooner, in time for their attack?\"). Teams of 20 or fewer, and fights while she's on the ground, are otherwise as before.",
+  "rules": {
+    "*": "wherever more than 20 animals fight one target (a big wave on her or on one of her party, the challenge's pack): its rounds' timing, its strikes and where its members stand; and wherever she's up over an area whose animals were hunting her: where they move, their targets and their team's phase"
+  },
+  "frames": {
+    "*": "the same places: where those animals are drawn, and their attacks"
+  }
+}
