@@ -6,15 +6,10 @@
 //   node tools/config/schema.mjs --init      (re)infer every schema from its file as it stands, with TUNING_OVER and CONFIGS' records and choices
 //   node tools/config/schema.mjs --add       add the knobs the file has and the schema lacks (inferred), drop the ones it no longer has, keep the rest
 // After adding a knob to config/tuning.json: its entry in config/knobs/<section>.json, --add (or edit the schema), then --docs.
-import { createServer } from "vite";
+import { schemaRuntime } from "./schema-runtime.mjs";
 import { readFileSync, writeFileSync } from "node:fs";
 
-const server = await createServer({ server: { middlewareMode: true, hmr: false, ws: false }, appType: "custom", logLevel: "error", optimizeDeps: { noDiscovery: true, include: [] } });
-const { validate, inferSchema } = await server.ssrLoadModule("/src/rules/schema.ts");
-const { knobsReference, describeSchema } = await server.ssrLoadModule("/src/rules/knobDocs.ts");
-const { TUNING_OVER } = await server.ssrLoadModule("/src/rules/tuningSchema.ts");
-const { CONFIGS } = await server.ssrLoadModule("/src/rules/configSchemas.ts");
-const { configData } = await server.ssrLoadModule("/src/rules/configData.ts"); // (combat, movement with their per-species entries from art/creatures/<id>/creature.js)
+const { validate, inferSchema, knobsReference, describeSchema, TUNING_OVER, CONFIGS, configData } = schemaRuntime();
 const FILE = "config/tuning.json", SCHEMA = "config/schema/tuning.schema.json", DOCS = "config/KNOBS.md";
 const tuning = JSON.parse(readFileSync(FILE, "utf8"));
 const write = (p, o) => writeFileSync(p, JSON.stringify(o, null, 2) + "\n");
@@ -56,4 +51,3 @@ if (has("check") || !process.argv.slice(2).length) {
     if (errs.length) process.exitCode = 1;
   }
 }
-await server.close();

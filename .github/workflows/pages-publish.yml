@@ -40,8 +40,10 @@ jobs:
     runs-on: ubuntu-latest
     concurrency:
       group: pages-snapshot-publisher
-      # Previews cannot cancel a running live publisher; newer live requests can preempt older work.
-      cancel-in-progress: ${{ github.event_name == 'workflow_dispatch' || github.event.action == 'pages-live' }}
+      # Finish the running publication. GitHub keeps only the newest pending job.
+      # Whichever request wins that slot checks out latest gh-pages AFTER acquiring
+      # this lock, so preview churn cannot keep a newly committed live root out.
+      cancel-in-progress: false
     permissions:
       contents: read
       pages: write

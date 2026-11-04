@@ -1,5 +1,7 @@
 # Config files
 
+The schema command bundles its existing TypeScript validators and assembled config readers in memory (`tools/config/schema-runtime.mjs`), without a Vite server or module RPC. This removes the Windows SSR fetchModule60s timeout path rather than raising its deadline. The same config validation and knob-document freshness checks remain strict; `tools/config/schema-runtime.test.ts` checks assembled-data parity and real CLI rejection of invalid values and stale docs. No temporary bundle, listener or generated config is written by the loader.
+
 PR1538/canonical6552743521 registers proof-only `telephone=1` in app/telephoneSwitch.ts; omitted/0/other values keep the original quiet-line use and no panel or identity work. The registry and LINK-SWITCHES page are refreshed through their existing generator. This is panel visibility only, never permission to enable calls or deploy a relay.
 
 The link-switch scanner records paths with forward slashes on every OS. Its generated-document check ignores checkout CRLF versus LF only; all text and spacing must still match.

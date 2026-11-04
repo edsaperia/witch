@@ -20,7 +20,7 @@ Test files that mock a module with vi.mock, run apart in Vitest's isolated proje
 
 ## `pages-policy.cjs`
 
-Pages publication policy: debounce previews outside the publisher lock; live requests preempt older publication.
+Pages publication policy: debounce previews outside the lock; finish every started publication.
 
 ## `perch-profile.cjs`
 
