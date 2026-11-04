@@ -15,9 +15,12 @@ node tools/multiplayer/route.cjs --build <game URL> --relay <ws:// or wss:// rel
   diagnosis: [--watch <seconds>] [--profile <seconds>] [--trace] [--stop-after <stage>]
 ```
 
-`--watch 25 --stop-after call-and-consent` samples both pages once a second from the dial to 25 s after connecting: three.js
+`--watch 25 --stop-after call-and-consent` samples both pages once a second from the dial to 25 s after connecting: the clocks
+(world, her own, each witch's, the time scale and who is perched), frames with the sum of raw frame gaps and of the gaps capped at
+0.1 s, draw and long-frame milliseconds, the step pipeline (guest steps sent, received and applied, empty host steps, catch-up,
+holds, frames sent and received); three.js
 `renderer.info` (calls, triangles, programs, geometries, textures), canvas and drawing-buffer sizes, the view's render targets,
-and per-context WebGL counts (draws, instances, viewport pixels drawn, clears, read-backs, texture uploads and their sources),
+and, with `--gl`, per-context WebGL counts (draws, instances, viewport pixels drawn, clears, read-backs, texture uploads and their sources),
 plus the visible scene grouped by mesh before and after (`watch`, `sceneBefore`, `sceneAfter` in result.json; counts only).
 `--profile 20 --stop-after call-and-consent` writes both pages' CPU profiles (`host.cpuprofile`, `guest.cpuprofile`, for DevTools)
 for 20 s right after the visit starts, and `--trace` adds a Chrome trace of the host page (`host-trace.json`, which also holds the

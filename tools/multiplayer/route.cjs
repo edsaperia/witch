@@ -21,6 +21,7 @@ function parseArgs(argv) {
     const key = k.slice(2);
     if (key === "headed") { a.headed = true; continue; }
     if (key === "trace") { a.trace = true; continue; }
+    if (key === "gl") { a.gl = true; continue; }
     if (key === "help") { a.help = true; continue; }
     const v = argv[++i]; if (v === undefined) throw Error(`${k} needs a value`);
     a[key] = ["seed", "build", "relay", "out", "viewport", "link", "stop-after", "expect-version", "expect-relay-build"].includes(key) ? v : Number(v);
@@ -32,7 +33,7 @@ const USAGE = `Usage: node tools/multiplayer/route.cjs --build <game URL> --rela
   [--seed 123] [--link "px=6"] [--expect-version <text in version.json>] [--expect-relay-build <relay build prefix>] [--viewport 960x540] [--headed]
   bounds in seconds: [--overall 480] [--load 180] [--phone 20] [--wardrobe 16] [--rejoin 20] [--bedHold 15] [--walk 30]
                      [--join 150] [--rollover 90] [--leave 90] [--redial 150] [--wake 25]
-  diagnosis: [--watch <seconds>: once a second, both pages' renderer.info, canvas sizes and WebGL counts, from the dial to that long after connecting] [--profile <seconds>: CPU profiles of both pages for that long once the visit starts] [--trace: and a Chrome trace of the host page] [--stop-after <stage>]`;
+  diagnosis: [--watch <seconds>: once a second, both pages' clocks, step pipeline counts, renderer.info and canvas sizes, from the dial to that long after connecting] [--gl: with WebGL call counts] [--profile <seconds>: CPU profiles of both pages for that long once the visit starts] [--trace: and a Chrome trace of the host page] [--stop-after <stage>]`;
 
 const sleep = ms => new Promise(r => setTimeout(r, ms));
 const now = () => Date.now();
@@ -74,6 +75,13 @@ function initScript({ from, to }) {
     const [ws, entry] = open[open.length - 1]; ws.close(); return { closed: true, socket: entry.id, at: Date.now() };
   };
   window.__mpRoute = rec;
+  // Frames, and the sum of raw frame gaps and of the gaps capped at 0.1 s (the page's own cap on a rules step: app/telephoneStation.ts).
+  rec.frames = 0; rec.rawDt = 0; rec.cappedDt = 0; rec.drawMs = 0; rec.frameMs = 0; let lastFrame = 0;
+  const tick = t => { rec.frames++; if (lastFrame) { const d = (t - lastFrame) / 1000; rec.rawDt += d; rec.cappedDt += Math.min(0.1, d); } lastFrame = t; requestAnimationFrame(tick); }; requestAnimationFrame(tick);
+  try { new PerformanceObserver(list => { for (const e of list.getEntries()) rec.frameMs += e.duration; }).observe({ type: "long-animation-frame", buffered: false }); } catch { /* not supported */ }
+  // The view's draw, timed by wrapping its render once the page has one (the rest of a long frame is mostly stepping).
+  const wrapDraw = () => { const v = window.witch?.view; if (!v || v.__mpTimed) { if (!v) setTimeout(wrapDraw, 1000); return; } const orig = v.render; v.render = function (...a) { const t0 = performance.now(); try { return orig.apply(this, a); } finally { rec.drawMs += performance.now() - t0; } }; v.__mpTimed = true; };
+  setTimeout(wrapDraw, 1000);
   // Rendered positions (the local view, the guest's prediction) without the whole telephone proof.
   window.__mpPos = id => { const w = window.witch?.view?.game?.witches?.find(q => q.id === id); return w ? { x: w.body.x, z: w.body.z, perched: !!w.body.perch } : null; };
 }
@@ -362,7 +370,7 @@ async function main() {
       const make = async role => {
         const context = await browser.newContext({ viewport: { width: vw, height: vh } });
         await context.addInitScript(initScript, rewrite);
-        if (args.watch) await context.addInitScript(glStatsScript);
+        if (args.watch && args.gl) await context.addInitScript(glStatsScript);
         const page = await context.newPage(); watch(role, page); return page;
       };
       host = await make("host"); guest = await make("guest");
@@ -401,7 +409,8 @@ async function main() {
         try { scan(v, "view", 0); } catch { /* best effort */ }
         return { info: r && { calls: r.info.render.calls, triangles: r.info.render.triangles, points: r.info.render.points, lines: r.info.render.lines, programs: r.info.programs?.length, geometries: r.info.memory.geometries, textures: r.info.memory.textures },
           canvas: c && { w: c.width, h: c.height, cssW: c.clientWidth, cssH: c.clientHeight, dbW: gl?.drawingBufferWidth, dbH: gl?.drawingBufferHeight }, pixelRatio: r?.getPixelRatio?.(), pixelScale: v?.pixelScale, dpr: devicePixelRatio,
-          witches: v?.game?.witches?.length, canvases: document.getElementsByTagName("canvas").length, targets: targets.slice(0, 60), gl: (window.__mpGl ?? []).map(x => ({ ...x })) };
+          witches: v?.game?.witches?.length, canvases: document.getElementsByTagName("canvas").length, targets: targets.slice(0, 60), gl: (window.__mpGl ?? []).map(x => ({ ...x })),
+          clock: (() => { const g = window.witch?.game; if (!g) return null; const net = window.witch.telephoneProof?.().network; const m = window.__mpRoute; return { wall: performance.now(), world: g.clock.time, her: g.herTime, timeScale: g.timeScale, paused: g.clock.paused, witchTimes: g.witches.map(w => w.time ?? null), bodies: g.witches.map(w => ({ id: w.id, mode: w.body.mode, perch: !!w.body.perch, seated: !!w.body.seated, ko: !!w.ko, paused: !!w.paused, wake: (w.wake ?? (w.id === 0 ? g.wake : null))?.beat ?? null })), slow: g.tuning.legendCircle?.slow ?? null, rawDt: m?.rawDt, cappedDt: m?.cappedDt, drawMs: m?.drawMs, frameMs: m?.frameMs, viewTimed: !!window.witch?.view?.__mpTimed, frames: m?.frames, tick: net?.tick, inputs: net?.inputs ?? null, prediction: net?.prediction && { pending: net.prediction.pending, acknowledged: net.prediction.acknowledged }, outInput: m?.types["out:input"] ?? 0, inInput: m?.types["in:input"] ?? 0, outFrame: m?.types["out:state:frame"] ?? 0, inFrame: m?.types["in:state:frame"] ?? 0, catchUpSteps: m?.catchUpSteps ?? 0, holds: m?.holds ?? 0 }; })() };
       }).catch(e => ({ unavailable: e.message.split("\n")[0] }));
       const [h, g] = await Promise.all([one(host), one(guest)]);
       (R.watch ??= []).push({ t: round((at - startedAt) / 1000, 1), label, host: h, guest: g });
