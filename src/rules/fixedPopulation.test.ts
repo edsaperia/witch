@@ -68,10 +68,12 @@ it("explicit runaways remain asleep on the beach at victory, with the population
     expect(ran.size).toBeGreaterThan(0);
     expect(g.creatures.filter(c => c.gone || c.beached).map(c => c.id)).toEqual([]); // (up off the beach at once)
     // (then home at their own pace, those in her sight walking: one caught mid-run takes minutes)
-    for (let i = 0; i < 600 * 60 && g.creatures.some(c => !c.asleep && !c.partyLegend); i++) stepGame(g, bot.decide(g), 1 / 60);
+    // (the challenge circle's statues stay stone at their posts through the afterparty, their sleep: rules/challengeStatues.ts)
+    for (let i = 0; i < 600 * 60 && g.creatures.some(c => !c.asleep && !c.partyLegend && !c.statue); i++) stepGame(g, bot.decide(g), 1 / 60);
     expect(g.creatures.length).toBe(start);
     expect(g.creatures.filter(c => c.gone || c.beached).map(c => c.id)).toEqual([]);
-    expect(g.creatures.filter(c => !c.asleep && !c.partyLegend).map(c => c.id)).toEqual([]);
+    expect(g.creatures.filter(c => !c.asleep && !c.partyLegend && !c.statue).map(c => c.id)).toEqual([]);
+    expect(g.creatures.filter(c => c.statue).every(c => c.statue === "stone" || c.statue === "back")).toBe(true);
   }, 400000);
 
   it("a party animal knocked down runs off its leash to sleep on the beach", () => {

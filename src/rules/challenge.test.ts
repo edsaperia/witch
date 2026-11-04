@@ -14,6 +14,8 @@ import { fillTrunk, FIND_KINDS, nightPick, type FindKindId, type Found } from ".
 import { FIND_SETS, allFinds, bandOf, biomeOf, islandSet, setPick } from "./findSets";
 import { flaskUnder } from "./legends";
 import { routeOf } from "./party";
+import { lineGap, placeChallenge, PLACE } from "./challengePlace";
+import { overChallenge, overChallengeCount, untangle, type P2 } from "./leyroute";
 import { KINDS_TABLE } from "./kinds";
 import { knownKinds } from "./rosters";
 import { restoreGame, snapshotGame } from "./nightSnapshot";
@@ -95,6 +97,79 @@ describe("where it is (Ed, 2026-11-03: \"The challenge area shouldn't be adjacen
   }, 60000);
 });
 
+describe("where it goes (Ed, 2026-11-04: \"The route should avoid going through the challenge area\"; \"ideally it should be on the edge, and far from the home area\")", () => {
+  it("asks each candidate: on the edge? clear of the route? in the island's outer half? those answering yes to more first, the night's order kept among equals", () => {
+    // (a strip of areas 5 by 3, 100 m apart, home at its west end's middle, touching each other side to side; round it the buffer)
+    const playable = new Set<string>(), nb = new Map<string, Set<string>>(), link = (a: string, b: string) => { for (const [p, q] of [[a, b], [b, a]]) (nb.get(p) ?? nb.set(p, new Set()).get(p)!).add(q); };
+    for (let x = 0; x < 5; x++) for (let y = 0; y < 3; y++) playable.add(`${x},${y}`);
+    for (let x = -1; x <= 5; x++) for (let y = -1; y <= 3; y++) { link(`${x},${y}`, `${x + 1},${y}`); link(`${x},${y}`, `${x},${y + 1}`); }
+    const ask = (lakes: string[], legends: string[] = []) => ({ home: "0,1", playable, neighbours: nb, lakes: new Set(lakes), legends: new Set(legends), site: (k: string) => { const [x, y] = k.split(",").map(Number); return { x: x * 100, z: y * 100 }; }, clear: 39 });
+    const cands = ["4,1", "2,0", "1,2", "4,0", "3,1", "4,2", "2,2"]; // (the night's seeded order; home's neighbours never among them)
+    const placed = placeChallenge(cands, ask(["5,1"])), of = (k: string) => placed.find(q => q.key === k)!;
+    // (the far corners: on the rim, the line between their two neighbours 71 m off, the farthest from home)
+    expect(of("4,0")).toEqual({ key: "4,0", edge: true, clear: true, far: true, steps: 5 });
+    // (the rim's middle: the line between its neighbours along the rim runs over it)
+    expect(of("2,0")).toMatchObject({ edge: true, clear: false, far: true, steps: 3 });
+    expect(of("1,2")).toMatchObject({ edge: true, clear: false, far: false, steps: 2 }); // (under halfway out: 2 of 5)
+    expect(of("3,1")).toMatchObject({ edge: false, clear: false, far: true }); // (inland)
+    expect(of("4,1").edge).toBe(false); // (its only area past the island's a lake: not the rim)
+    expect(placed.map(q => q.key)).toEqual(["4,0", "4,2", "2,0", "2,2", "1,2", "4,1", "3,1"]);
+    expect(placeChallenge(cands, ask([])).map(q => q.key)).toEqual(["4,0", "4,2", "4,1", "2,0", "2,2", "1,2", "3,1"]); // (by the sea: the rim)
+    // (a legend area isn't the edge: 4,2 with only legend areas past it is inland)
+    expect(placeChallenge(["4,2"], ask([], ["4,3", "5,2"]))[0]).toMatchObject({ edge: false, clear: true, far: true });
+    expect(PLACE.far).toBe(0.5);
+  });
+
+  /** On map m: its challenge area on the island's edge (touching an area past the playable ones that isn't a lake), in its outer half
+   *  (areas crossed from home), and no link of the ley route over its circle and margin, straight or as drawn. */
+  const placedWell = (m: ForestMap, what: string) => {
+    const sp = challengeSite(m)!, k = key(sp.cell), home = key(m.centreCell), cells = new Set([...m.cells.map(key), k]);
+    const edge = [...(m.neighbours.get(k) ?? [])].some(q => { const [x, y] = q.split(",").map(Number); return !cells.has(q) && !m.isLake(x, y); });
+    const steps = new Map([[home, 0]]), todo = [home];
+    for (let i = 0; i < todo.length; i++) for (const q of m.neighbours.get(todo[i]) ?? []) if (cells.has(q) && !steps.has(q)) { steps.set(q, steps.get(todo[i])! + 1); todo.push(q); }
+    const r = routeOf(m), p: P2 = [sp.x, sp.z];
+    let gap = Infinity;
+    for (const l of [...r.links, ...(r.straight ?? [])]) for (let i = 0; i + 1 < l.length; i++) gap = Math.min(gap, lineGap(p, l[i], l[i + 1]));
+    expect({ edge, far: steps.get(k)! >= PLACE.far * Math.max(...steps.values()), clear: gap >= sp.r }, `${what}: ${k}, ${steps.get(k)} of ${Math.max(...steps.values())} areas out, the route ${gap.toFixed(0)} m from its middle`).toEqual({ edge: true, far: true, clear: true });
+  };
+  it("on 10-area islands: on the edge, in the outer half, the route clear of its circle", () => {
+    for (const [kind, seed] of [["home", 1], ["home", 5], ["fox", 2], ["fox", 3]] as const) placedWell(sharedMap(seed, islandOf(kind)), `${kind} ${seed}`);
+  }, 120000);
+  it("on 31 and 51-area islands and the late home of 64", () => {
+    for (const [kind, seed] of [["owl", 1], ["owl", 2], ["griffin", 1], ["griffin", 2]] as const) placedWell(sharedMap(seed, islandOf(kind)), `${kind} ${seed}`);
+    placedWell(sharedMap(1, lateHome(64)), "home 64");
+  }, 300000);
+  it("still moves night to night: more than one area over a few nights of a 51-area island", () => {
+    const at = new Set([1, 2, 3, 4, 5].map(seed => key(challengeSite(seed <= 2 ? sharedMap(seed, islandOf("griffin")) : generateMap(seed, islandOf("griffin")))!.cell)));
+    expect(at.size).toBeGreaterThan(1);
+  }, 300000);
+  it("is the same for a seed every time, and so is the route", () => {
+    const a = generateMap(3, islandOf("owl")), b = generateMap(3, islandOf("owl"));
+    expect(challengeSite(b)).toEqual(challengeSite(a));
+    expect(routeOf(b).order).toEqual(routeOf(a).order);
+  }, 120000);
+  it("the backstop: an order that would run a link over its circle is untangled round it", () => {
+    // (the shortest line between two of the route's stones that crosses the circle, those two taken one after the other; on the
+    // first of these maps with one: where the map puts it, most have none)
+    let m: ForestMap | null = null, r: ReturnType<typeof routeOf> | null = null, best: [number, number] | null = null, len = Infinity;
+    for (const map of [sharedMap(1, lateHome(64)), sharedMap(1, islandOf("owl")), sharedMap(2, islandOf("owl")), sharedMap(1, islandOf("home"))]) {
+      const q = routeOf(map);
+      for (let i = 1; i < q.stones.length; i++) for (let j = 1; j < q.stones.length; j++) if (i !== j && overChallenge(map, q.stones[i], q.stones[j])) { const d = Math.hypot(q.stones[i][0] - q.stones[j][0], q.stones[i][1] - q.stones[j][1]); if (d < len) { len = d; best = [i, j]; } }
+      if (best) { m = map; r = q; break; }
+    }
+    expect(best).not.toBeNull();
+    m = m!; r = r!;
+    const [i, j] = best!, order = r.order.filter((_, k) => k !== j);
+    order.splice(order.indexOf(r.order[i]) + 1, 0, r.order[j]);
+    const straight = (o: string[]): P2[][] => o.slice(1).map((q, k) => [o[k], q].map(c => { const [x, y] = c.split(",").map(Number), s = m.soundsystemSpot(x, y); return [s.x, s.z] as P2; }));
+    expect(overChallengeCount(m, [[], ...straight(order)])).toBeGreaterThan(0);
+    const u = untangle(m, order)!;
+    expect(overChallengeCount(m, u.links)).toBe(0);
+    expect([...u.order].sort()).toEqual([...order].sort());
+    expect(u.order[0]).toBe(order[0]); // (the first kept first: the departure leads to it)
+  }, 120000);
+});
+
 describe("its pack (Ed: \"one adult and one youth of every creature kind on the island\")", () => {
   it("is an adult and a youth of every kind on the island's roster, wild creatures of its area", () => {
     for (const [kind, seed] of [["home", 1], ["fox", 2]] as const) {
@@ -117,15 +192,14 @@ describe("its pack (Ed: \"one adult and one youth of every creature kind on the 
     expect(P.every(c => c.level === 2)).toBe(true);
   }, 60000);
 
-  it("watches her come down among them and attacks after the wild watch's warning", () => {
+  it("stands stone till she comes down on its floor, then wakes over its bars and attacks, no wild watch (Ed, 2026-11-04; rules/challengeStatues.test.ts has the rest)", () => {
     const g = game("home", 1), ch = g.challenge!;
     g.witch = { ...g.witch, x: ch.x, z: ch.z, mode: "ground", lift: 0, seated: false, perch: undefined };
     run(g, 0.2);
-    const e = g.wildEntry.get(ch.key);
-    expect(e).toBeTruthy();
-    expect(e!.until - e!.at).toBeCloseTo(TUNING.wildWatch!.time, 6);
-    // (awake by then: napping ones roused by her coming down in their area)
-    run(g, TUNING.wildWatch!.time + 1);
+    expect(g.wildEntry.get(ch.key)).toBeUndefined();
+    expect(ch.statues!.phase).toBe("waking");
+    run(g, (TUNING.challenge!.statues!.bars + 1) * 4 * 60 / TUNING.beat.bpm + 1);
+    expect(ch.statues!.phase).toBe("awake");
     expect(pack(g).some(c => c.hunting === 0)).toBe(true);
   }, 60000);
 });

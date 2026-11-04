@@ -37,7 +37,8 @@ function active(source: string, defines: Record<string, string>): string {
 // The challenge circle's dancefloor (#1725, Ed 2026-11-03: "it can look the same as the home dancefloor"): an intentional addition
 // under GROUND_DANCEFLOOR, its two uniforms and its block before home's floor; present exactly, then left out of the frozen hash.
 const squash = (t: string) => t.replace(/\/\*[\s\S]*?\*\//g, '').replace(/\/\/[^\n]*/g, '').replace(/\s+/g, '');
-const floor2Uniforms = 'uniformvec4uFloor2;uniformsampler2DuDiscoTiles2;uniformvec4uChallengeCarve;uniformsampler2DuChallengeCarveMap;';
+// (uChallengeLook, #1804, Ed 2026-11-04: the carving's colour following the fight and the moonlight on its floor)
+const floor2Uniforms = 'uniformvec4uFloor2;uniformsampler2DuDiscoTiles2;uniformvec4uChallengeCarve;uniformvec4uChallengeLook;uniformsampler2DuChallengeCarveMap;';
 // (and its sigil carved into its floor, under GROUND_LEGENDS: Ed, "it should look like it's carved into the circle")
 const carveBlock = (() => { const m = current.match(/\/\/ The challenge circle's carving \(uChallengeCarve\)[^\n]*\n(?:\s*\/\/[^\n]*\n)*#if[^\n]*\n([\s\S]*?)\n#endif/); if (!m) throw Error('challenge carving marker changed'); return squash(m[1]); })();
 const floor2Block = (() => { const m = current.match(/\/\/ The challenge circle's dancefloor \(uFloor2\)[^\n]*\n#if[^\n]*\n([\s\S]*?)\n#endif/); if (!m) throw Error('challenge floor marker changed'); return squash(m[1]); })();

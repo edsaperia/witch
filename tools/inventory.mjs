@@ -39,6 +39,17 @@ for (const d of dirs) {
   const md = [`# tools/${d}`, "", MARK, "", ...rows.flatMap(r => [`## \`${r.f}\``, "", r.first || "(no header comment)", "", ...(r.usage.length ? ["```", ...r.usage, "```", ""] : [])]), ...(others.length ? ["## Also here", "", ...others.map(o => `- \`${o}\``), ""] : [])].join("\n");
   write(path.join(dir, "README.md"), md);
 }
-write(path.join(ROOT, "README.md"), ["# tools", "", MARK, "", "Scripts for building, checking and measuring the game, run from the repository root. Each directory has a README listing its scripts (from their own header comments, with how to run them).", "", ...index, ""].join("\n"));
+const rootScripts = fs.readdirSync(ROOT).filter(f => SCRIPT.test(f) && fs.statSync(path.join(ROOT, f)).isFile()).sort();
+const rootRows = rootScripts.map(f => { const h = header(path.join(ROOT, f)); if (!h.first) { console.error(`no header comment: ${ROOT}/${f}`); stale++; } return { f, ...h }; });
+const nested = [];
+function nestedScripts(dir, depth = 0) {
+  for (const entry of fs.readdirSync(dir, { withFileTypes: true }).sort((a, b) => a.name < b.name ? -1 : a.name > b.name ? 1 : 0)) {
+    const file = join(dir, entry.name);
+    if (entry.isDirectory() && !ignored(file)) nestedScripts(file, depth + 1);
+    else if (entry.isFile() && depth > 1 && SCRIPT.test(entry.name) && !ignored(file)) nested.push(file.slice(ROOT.length + 1));
+  }
+}
+nestedScripts(ROOT);
+write(path.join(ROOT, "README.md"), ["# tools", "", MARK, "", "Scripts for building, checking and measuring the game, run from the repository root. Each directory has a README listing its scripts (from their own header comments, with how to run them).", "", "Do not assume `--help` or `--check` is safe: scripts without a help handler may run their normal workload, and some checks open a browser. Read the entry point and its imports before invoking it. See [the health sweep](health-sweep.md) for checked commands and deferred workloads.", "", "## Root scripts and build helpers", "", ...rootRows.flatMap(r => [`### [\`${r.f}\`](${r.f})`, "", r.first || "(no header comment)", "", ...(r.usage.length ? ["```", ...r.usage, "```", ""] : [])]), "## Directories", "", ...index, "", "## Nested scripts and browser entries", "", ...nested.map(f => `- [\`${f}\`](${f})`), ""].join("\n"));
 function write(f, s) { const was = fs.existsSync(f) ? fs.readFileSync(f, "utf8").replace(/\r\n/g, "\n") : null; if (was === s) return; if (check) { console.error(`out of date: ${f}; fix: node tools/inventory.mjs`); stale++; return; } fs.writeFileSync(f, s); console.log(`wrote ${f}`); }
 if (check && stale) process.exit(1);

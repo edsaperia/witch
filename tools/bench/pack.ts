@@ -17,10 +17,11 @@ const pct = (s: number[], p: number) => s[Math.min(s.length - 1, Math.floor(p * 
 const r3 = (x: number) => +x.toFixed(3);
 const stats = (times: number[]) => { const s = [...times].sort((a, b) => a - b), sum = times.reduce((a, b) => a + b, 0); return { mean: r3(sum / times.length), p50: r3(pct(s, 0.5)), p95: r3(pct(s, 0.95)), p99: r3(pct(s, 0.99)), worst: r3(s[s.length - 1]), over4: times.filter(t => t > 4).length, over16: times.filter(t => t > 1000 / 60).length }; };
 
-/** The late home: `n` kinds known (home's 10 first, then the rest in the table's order), an area each. */
+/** The late home: `n` kinds known (home's 10 first, then the rest in the table's order), an area each; the challenge's statues off
+ *  (rules/challengeStatues.ts), so its pack is wild from the start, the fight measured as before. */
 export function lateHome(n: number, t: Tuning = TUNING): Tuning {
   const all = knownKinds(Object.keys(KINDS_TABLE)).slice(0, n);
-  return { ...t, map: { ...t.map!, island: "home", islandAreas: all.length, found: all } };
+  return { ...t, map: { ...t.map!, island: "home", islandAreas: all.length, found: all }, challenge: { ...t.challenge!, statues: { ...t.challenge!.statues!, on: false } } };
 }
 
 function packFight(): unknown {

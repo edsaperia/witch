@@ -34,13 +34,6 @@ export function chainDrag(c: Pick<Creature, "level">, t: Tuning): number {
   return Math.max(0, Math.min(1, c.level >= LEGEND ? D.legend : c.level === ADULT ? D.adult : c.level === 1 ? D.youth : 0));
 }
 
-/** The adults on her leash. */
-export function adultsOf(stack: readonly number[], creatures: readonly Creature[]): Creature[] {
-  const out: Creature[] = [];
-  for (const id of stack) { const c = creatures[id]; if (chained(c) && c.level === ADULT) out.push(c); }
-  return out;
-}
-
 /** How near the chain's end (m) still reads as taut. */
 export const AT_END = 0.25;
 

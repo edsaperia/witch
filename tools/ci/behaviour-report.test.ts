@@ -89,7 +89,7 @@ test('summary shows actual values and observations without calling them executio
   assert.match(text,/0 cues/);assert.match(text,/outside reference/);assert.doesNotMatch(text,/Execution error:/);
   assert.match(text,/conditional: No balloon share: original conditional sample was empty/);
 });
-test('workflow stays nightly/manual and survey discovery stays outside release tests',()=>{
+test('workflow stays nightly/manual and survey discovery stays outside release tests',async()=>{
   const workflow=YAML.parse(fs.readFileSync('.github/workflows/behaviour-report.yml','utf8'));
   assert.deepEqual(Object.keys(workflow.on).sort(),['schedule','workflow_dispatch']);
   assert.equal(workflow.jobs.report.needs,undefined);
@@ -99,6 +99,10 @@ test('workflow stays nightly/manual and survey discovery stays outside release t
   assert.match(steps.find(s=>s.name==='Update one standing nightly observation').if,/outputs.run != 'false'/);
   const config=fs.readFileSync('tools/behaviour/config.mjs','utf8');
   assert.match(config,/maxWorkers:1/);assert.match(config,/\.behaviour\.ts/);
+  const {default:resolved}=await import('../behaviour/config.mjs');
+  assert.deepEqual(resolved.test.include,['tools/behaviour/*.behaviour.ts']);
+  assert.equal(resolved.test.maxWorkers,1);
+  assert.equal(resolved.plugins.some(plugin=>plugin?.name==='art-overrides'),true);
   assert.doesNotMatch(fs.readFileSync('vite.config.ts','utf8'),/behaviour/);
   assert.doesNotMatch(fs.readFileSync('.github/workflows/ci.yml','utf8'),/behaviour-report/);
 });

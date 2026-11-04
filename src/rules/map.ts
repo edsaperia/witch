@@ -10,6 +10,7 @@ import { areaIdOf } from "../../art/areaRenames.js";
 import { SCENES as SCENES_RAW, SCENE_BY_ID as SCENE_BY_ID_RAW } from "../../art/scenes.js";
 import { claimable, makePartition, type Cell, type Claim, type Partition } from "./partition";
 import { challengeCircle } from "./challengeCircle";
+import { placeChallenge } from "./challengePlace";
 import { hash2, rng, smoothstep, vnoise } from "./random";
 import type { Tuning } from "./tuning";
 import { floorClearing, speakerRadius, speakerRing, type Speaker } from "./speakers";
@@ -789,9 +790,17 @@ export function generateMap(runSeed: number, tuning: Tuning, only?: { landStep: 
       }
       return null;
     };
+    // Where the challenge area goes (Ed, 2026-11-04: "The route should avoid going through the challenge area"; "ideally it should
+    // be on the edge, and far from the home area"; rules/challengePlace.ts): the candidates each asked, on the island's edge (the
+    // buffer ring past it)? clear of the route (every line between two of its neighbours round its circle)? in the island's outer
+    // half? those answering yes to more first, in that order, the night's seeded order among equals. One that misses any is logged.
+    const placed = CH ? placeChallenge(cand.filter(ok).map(([x, y]) => cellKey(x, y)), { home: homeKey, playable: keys, neighbours, lakes: lakeCells, legends: new Set(legendAreas.keys()), site: q => { const [x, y] = q.split(",").map(Number); return siteOf(x, y); }, clear: clearR }) : null;
+    if (placed) { const of = new Map(cand.map(c => [cellKey(c[0], c[1]), c])); cand.splice(0, cand.length, ...placed.map(q => of.get(q.key)!)); }
     let at: Cell | undefined, fit: ReturnType<typeof fitClaim> = null;
     if (CH) for (const c of cand) if (ok(c) && (fit = fitClaim(c))) { at = c; break; }
     if (!at) at = cand.find(ok);
+    const how = at && placed?.find(q => q.key === cellKey(at![0], at![1]));
+    if (how && !(how.edge && how.clear && how.far)) console.info(`challenge area: seed ${seed}: ${how.key}, not ${[how.edge ? "" : "on the edge", how.clear ? "" : "clear of the route", how.far ? "" : "far from home"].filter(Boolean).join(", ")} (no area that is holds its circle)`);
     if (!at) {
       const far = cells.filter(([x, y]) => cellKey(x, y) !== homeKey).map(c => ({ c, d: Math.hypot(siteOf(c[0], c[1]).x - centre.x, siteOf(c[0], c[1]).z - centre.z) })).sort((a, b) => b.d - a.d).map(o => o.c);
       at = far.find(ok) ?? far[0];

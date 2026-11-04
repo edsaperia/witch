@@ -2,7 +2,7 @@
 import annotations from './annotations.cjs';
 import path from 'node:path';
 const firstLine = e => String(e?.message ?? e).split('\n').find(s => s.trim()) ?? 'Test failed';
-export function assertionLocation(error, file, fallback) {
+function assertionLocation(error, file, fallback) {
   const frame = error?.stacks?.find(s => path.resolve(s.file) === path.resolve(file));
   const escaped = file.replaceAll('\\', '/').replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
   const line = String(error?.stack ?? error?.stackStr ?? '').replaceAll('\\', '/').match(new RegExp(`${escaped}:(\\d+)(?::\\d+)?`))?.[1];

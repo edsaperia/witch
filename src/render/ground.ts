@@ -163,6 +163,7 @@ uniform sampler2D uDiscoTiles2;
 // The challenge circle's sigil carved into its stone floor (render/challenge.ts; Ed, 2026-11-03, on #1725: "it should look like it's
 // carved into the circle"): its middle x, z, its circle's radius (m; 0 none) and the soft moonlit glow in its grooves; its mask.
 uniform vec4 uChallengeCarve;
+uniform vec4 uChallengeLook; // its grooves' glow colour (rgb) and the moonlight on its stone floor (w): render/challenge.ts carvingLook
 uniform sampler2D uChallengeCarveMap;
 uniform vec4 uDiscoGeom;
 uniform float uDiscoRim;
@@ -532,6 +533,8 @@ void main() {
   // shadow and its far lip catching the light; a soft moonlit glow living in the grooves.
 #if !defined(GROUND_SPECIALIZED) || defined(GROUND_LEGENDS)
   if (uChallengeCarve.z > 0.0) {
+    // (a little moonlight on its stone floor, so the circle reads as a circle before she steps in: Ed, 2026-11-04, on #1804)
+    if (uChallengeLook.w > 0.0) { float fr = length(p - uChallengeCarve.xy) / uChallengeCarve.z; c *= 1.0 + uChallengeLook.w * (1.0 - smoothstep(0.97, 1.0, fr)); }
     vec2 cuv = (p - uChallengeCarve.xy) / (uChallengeCarve.z * 0.92) * 0.5 + 0.5;
     if (cuv.x > 0.0 && cuv.x < 1.0 && cuv.y > 0.0 && cuv.y < 1.0) {
       vec2 mo = normalize(uMoonDir.xz + vec2(1e-4)) * (uPixel * 1.5) / (uChallengeCarve.z * 1.84);
@@ -539,7 +542,7 @@ void main() {
       float toward = smoothstep(0.3, 0.7, texture2D(uChallengeCarveMap, cuv - mo).r), away = smoothstep(0.3, 0.7, texture2D(uChallengeCarveMap, cuv + mo).r);
       float lipLit = max(0.0, toward - cg), wall = max(0.0, cg - away);
       c *= (1.0 - 0.5 * cg) * (1.0 - 0.35 * wall) * (1.0 + 0.45 * lipLit);
-      c += vec3(0.35, 0.72, 0.8) * cg * (1.0 - 0.5 * wall) * uChallengeCarve.w * 0.34;
+      c += uChallengeLook.rgb * cg * (1.0 - 0.5 * wall) * uChallengeCarve.w * 0.34;
     }
   }
 #endif
@@ -893,7 +896,7 @@ export class Ground {
         uLegendDebris: { value: Array.from({ length: 6 }, () => new THREE.Vector4()) },
         uLegendGrowth: { value: Array.from({ length: 6 }, () => new THREE.Vector4()) },
         uClearing: { value: new THREE.Vector2(map.tuning.clearingSize, map.tuning.clearingFalloff) },
-        uDiscoBase: { value: disco.base }, uDiscoLit: { value: disco.lit }, uDiscoTiles: { value: this.discoTiles }, uDiscoTiles2: { value: this.discoTiles2 }, uFloor2: { value: new THREE.Vector4() }, uChallengeCarve: { value: new THREE.Vector4() }, uChallengeCarveMap: { value: this.challengeCarve },
+        uDiscoBase: { value: disco.base }, uDiscoLit: { value: disco.lit }, uDiscoTiles: { value: this.discoTiles }, uDiscoTiles2: { value: this.discoTiles2 }, uFloor2: { value: new THREE.Vector4() }, uChallengeCarve: { value: new THREE.Vector4() }, uChallengeLook: { value: new THREE.Vector4(0.35, 0.72, 0.8, 0) }, uChallengeCarveMap: { value: this.challengeCarve },
         uDiscoGeom: { value: new THREE.Vector4(disco.tileM, disco.pitch, disco.size, disco.gridOrigin) }, uDiscoRim: { value: disco.rimOuter },
         ...pavement,
         uZooPlaza: { value: new THREE.Vector4(map.zoo?.layout?.home.x ?? 0, map.zoo?.layout?.home.z ?? 0, ZOO_CONFIG.plaza ?? 60, map.zoo?.layout ? 1 : 0) }, uPlazaSigil: { value: this.plazaSigil },
@@ -959,8 +962,9 @@ export class Ground {
 
   /** The challenge circle's carved sigil (render/challenge.ts challengeCarving): its middle, radius (0: none) and grooves' glow, and the
    *  species whose sigil it is (its mask written once a species: render/legendCarving.ts bigCarvingMask). */
-  setChallengeCarving(f: { x: number; z: number; r: number; glow: number; species: string } | null): void {
-    const v = (this.mesh.material as THREE.ShaderMaterial).uniforms.uChallengeCarve.value as THREE.Vector4;
+  setChallengeCarving(f: { x: number; z: number; r: number; glow: number; rgb?: readonly number[]; floor?: number; species: string } | null): void {
+    const U = (this.mesh.material as THREE.ShaderMaterial).uniforms, v = U.uChallengeCarve.value as THREE.Vector4;
+    (U.uChallengeLook.value as THREE.Vector4).set(f?.rgb?.[0] ?? 0.35, f?.rgb?.[1] ?? 0.72, f?.rgb?.[2] ?? 0.8, f?.floor ?? 0);
     if (!f) { v.set(0, 0, 0, 0); return; }
     if (this.challengeCarveOf !== f.species) {
       this.challengeCarveOf = f.species;

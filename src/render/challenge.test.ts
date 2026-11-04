@@ -8,7 +8,10 @@ import { TUNING, type Tuning } from "../rules/tuning";
 import { befriend } from "../rules/creatureStates";
 import { islandSigilOf } from "../rules/dancefloor";
 import { startPartyOver } from "../rules/partyOver";
-import { challengeCarving, challengeFloor, challengeRing, challengeShot, columnTop } from "./challenge";
+import { MOONLIT, carvingLook, challengeCarving, challengeFloor, challengeRing, challengeShot, columnTop } from "./challenge";
+import { DANGER } from "./leash/attackLook";
+import { wakeK } from "../rules/challengeStatues";
+import { hitWitch } from "../rules/game";
 import { challengeColumns, challengeReady } from "../rules/challenge";
 import { rankColour } from "./leash/ranks";
 import { NO_CARVING } from "./legendCarving";
@@ -20,8 +23,8 @@ import { preppedGame } from "../test/preppedGame"; // (games on a map made once 
 const still: Controls = { moveX: 0, moveZ: 0, toggleMode: false, zoom: 0, autoTalk: false };
 const T: Tuning = { ...TUNING, map: { ...TUNING.map!, island: "fox", islandAreas: 10 } };
 
-function game(): Game {
-  const g = preppedGame(2, T);
+function game(t: Tuning = T): Game {
+  const g = preppedGame(2, t);
   g.clock.paused = false; g.party.spellAt = undefined; g.party.paused = true;
   g.witches[0].health.hp = 1e6;
   return g;
@@ -39,7 +42,7 @@ describe("the challenge circle's light", () => {
     expect([carved.x, carved.z, carved.r]).toEqual([ch.x, ch.z, ch.radius]);
     expect(carved.glow).toBeGreaterThan(0);
     g.witch = { ...g.witch, x: ch.x + 3, z: ch.z, mode: "ground", lift: 0, seated: false, perch: undefined };
-    expect(challengeCarving(g, ch.x, ch.z)!.glow).toBeGreaterThan(carved.glow); // (brighter with her in it)
+    expect(challengeCarving(g, ch.x, ch.z)!.glow).toBe(carved.glow); // (its statues asleep till a step wakes them: dark still, carvingLook)
     expect(at().r).toBe(T.challenge!.radius);
     expect(challengeFloor(g, ch.x, ch.z)).toBeNull(); // (no dancefloor before it's cleared)
     // cleared: the spell cast on it
@@ -131,5 +134,59 @@ describe("the challenge circle's light", () => {
     for (let i = 0; i < 60 * 4; i++) stepGame(g, still, 1 / 60);
     expect(ch.closedAt).not.toBeNull();
     expect(challengeShot(g)).toBeNull();
+  }, 60000);
+});
+
+describe("the floor's carved sigil follows the fight (Ed, 2026-11-04, on #1804; carvingLook, by the colour grammar)", () => {
+  const C = T.challenge!.carving!, near = (a: readonly number[], b: readonly number[]) => a.every((v, i) => Math.abs(v - b[i]) < 1e-6);
+  const STEP = 1 / 60;
+  /** Witch 0 on its floor (or up over it), stepped till `f` holds. */
+  const stepTill = (g: Game, f: () => boolean, secs = 14) => { for (let i = 0; i < secs * 60 && !f(); i++) stepGame(g, still, STEP); expect(f()).toBe(true); };
+  it("asleep: dark but readable, a little moonlight, not glowing; and a little moonlight on its floor", () => {
+    const g = game(), ch = g.challenge!, L = carvingLook(g), cv = challengeCarving(g, ch.x, ch.z)!;
+    expect(L.state).toBe("stone");
+    expect(L.glow).toBeCloseTo(C.stone, 6); expect(L.glow).toBeLessThan(0.7); // (dimmer than the old waiting glow)
+    expect(near(L.rgb, MOONLIT)).toBe(true);
+    expect(cv.floor).toBeCloseTo(C.floor, 6); expect(cv.rgb).toEqual(L.rgb);
+  });
+  it("waking: the warning's red, rising over the bars, brighter on the beat; awake: a steady cold wild glow; back to stone: fading to dark", () => {
+    const g = game(), ch = g.challenge!;
+    g.witch = { ...g.witch, x: ch.x, z: ch.z, mode: "ground", lift: 0, seated: false, perch: undefined };
+    stepTill(g, () => carvingLook(g).state === "waking");
+    expect(near(carvingLook(g).rgb, DANGER)).toBe(true);
+    const early = carvingLook(g).glow;
+    stepTill(g, () => (wakeK(g) ?? 0) > 0.9);
+    expect(carvingLook(g).glow).toBeGreaterThan(early);
+    expect(carvingLook(g).glow).toBeLessThanOrEqual(C.red + 1e-9);
+    stepTill(g, () => ch.statues!.phase === "awake");
+    const fight = carvingLook(g);
+    expect(fight.state).toBe("fight"); expect(fight.glow).toBe(C.wild);
+    expect(near(fight.rgb, rankColour(T, 2, false))).toBe(true); // (the wild adult's cold blue)
+    // Up and away outside its area (rules/challengeStatues.ts: the fight's end): back to stone, the glow fading.
+    g.witches[0].health.hp = 1; g.witches[0].health.hurtAt = -Infinity; hitWitch(g, 0, g.clock.time); // (knocked down: it ends too)
+    stepGame(g, still, STEP);
+    expect(ch.statues!.phase).toBe("stone");
+    const fading = carvingLook(g);
+    expect(fading.state).toBe("fading"); expect(fading.glow).toBeGreaterThan(C.stone);
+    for (let i = 0; i < Math.ceil((C.fade + 0.1) * 60); i++) stepGame(g, still, STEP);
+    expect(carvingLook(g).state).toBe("stone"); expect(carvingLook(g).glow).toBeCloseTo(C.stone, 6);
+  }, 60000);
+  it("won: warm, the party adult's colour; then the dancefloor covers it; closed: dark", () => {
+    const g = game(), ch = g.challenge!;
+    for (const id of ch.pack) befriend(g.creatures[id], g.clock.time);
+    expect(challengeReady(g)).toBe(true);
+    const won = carvingLook(g);
+    expect(won.state).toBe("won"); expect(near(won.rgb, rankColour(T, 2, true))).toBe(true);
+    expect(won.glow).toBeGreaterThan(C.wild * 0.9);
+    const h = game(), hc = h.challenge!;
+    startPartyOver(h, h.clock.time); stepGame(h, still, STEP);
+    expect(carvingLook(h).state).toBe("dark"); expect(challengeCarving(h, hc.x, hc.z)!.glow).toBe(0);
+  }, 60000);
+  it("with the statues off, the carving as before: moonlit, brighter with her in it, no extra floor light", () => {
+    const g = game(withTuning({ ...T, challenge: { ...T.challenge!, statues: { ...T.challenge!.statues!, on: false } } })), ch = g.challenge!;
+    const a = challengeCarving(g, ch.x, ch.z)!;
+    expect([a.glow, a.floor]).toEqual([0.7, 0]);
+    g.witch = { ...g.witch, x: ch.x + 3, z: ch.z, mode: "ground", lift: 0, seated: false, perch: undefined };
+    expect(challengeCarving(g, ch.x, ch.z)!.glow).toBe(1.2);
   }, 60000);
 });

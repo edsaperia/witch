@@ -178,3 +178,12 @@ Ed is starting to work with a musician: "we can keep the current music and start
 
 - Should witchiness vary by context (more ritual in legend circles and at home, more rave on the dancefloor)?
 - Which genres make the first set of records?
+
+## Challenge area music (note for later)
+
+Ed, 2026-11-04: "We should have some special spooky music for the challenge area before the fight starts, and some special challenge music for while you're in the challenge area and the creatures are awake, before you've won."
+
+| Request | Status | Notes |
+|---|---|---|
+| Spooky music at the challenge area before the fight (statues asleep) | — | Postponed by Ed. Ties in with the statues and the 4-bar wake-up (claude/challenge-statues). |
+| Challenge fight music while the pack is awake, until it is won | — | Postponed by Ed. Ends when the area is won, or when the pack goes back to stone. |
