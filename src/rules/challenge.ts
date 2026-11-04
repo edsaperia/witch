@@ -14,8 +14,8 @@
 //     it; a column with none left is that kind won, lit; every column lit, the pack's cleared and the spell can be cast.
 //   Its pack: "one adult and one youth of every creature kind on the island" (`adults` and `youths` of each kind of its roster:
 //     packKinds), wild animals of the challenge area (their cell its cell; spawnPack, appended after every other creature): stone
-//     statues at their posts till she sets foot on its floor, then waking over 4 bars into a wild pack that hunts her till she leaves
-//     the floor, going back to stone, whole, when she does (Ed, 2026-11-04; rules/challengeStatues.ts), at the difficulty as every
+//     statues at their posts till she sets foot on its floor, then waking over 4 bars into a wild pack that hunts her, going back to
+//     stone, whole, only once she's knocked down or up in the treetops outside its area (Ed, 2026-11-04; rules/challengeStatues.ts), at the difficulty as every
 //     wild creature (tuning difficulty, in combat); with the statues off, they watch her come down anywhere in its area as before. They can't be leashed: one invited is happy where it
 //     stands, no rune at its feet (c.atStone; stepChallenge).
 //   Clearing it: "When they're all invited or have run off, you can go to the special place and cast the music spell" (challengeReady):
@@ -59,10 +59,14 @@ import type { StackEntry } from "./stoneStacks";
 /** Its statues' knobs (rules/challengeStatues.ts; Ed, 2026-11-04): on; the wake-up's length in bars; the posts, `first` m in from
  *  their column and each next `gap` m further in; the walk back at `walkBack` times their pace; drawn `tint` of the way to `grey`,
  *  `red` the red they reach as they wake. */
-export interface StatueTuning { on: boolean; bars: number; first: number; gap: number; walkBack: number; grey: number[]; tint: number; red: number }
-export interface ChallengeTuning { on: boolean; radius: number; margin: number; spacing: number; adults: number; youths: number; castReach: number; findSets: boolean; fireworks: { on: boolean; height: number; burst: number }; statues: StatueTuning; analyser: { bars: number; steps: number; fill: number } }
-export const CHALLENGE_DEFAULT: ChallengeTuning = { on: false, radius: 36, margin: 3, spacing: 7.5, adults: 1, youths: 1, castReach: 5, findSets: false, fireworks: { on: true, height: 24, burst: 8 }, statues: { on: false, bars: 4, first: 3.5, gap: 3.5, walkBack: 1.5, grey: [0.6, 0.6, 0.63], tint: 0.9, red: 1 }, analyser: { bars: 72, steps: 36, fill: 0.94 } };
-export const challengeOf = (t: Tuning): ChallengeTuning => ({ ...CHALLENGE_DEFAULT, ...t.challenge, fireworks: { ...CHALLENGE_DEFAULT.fireworks, ...t.challenge?.fireworks }, statues: { ...CHALLENGE_DEFAULT.statues, ...t.challenge?.statues }, analyser: { ...CHALLENGE_DEFAULT.analyser, ...t.challenge?.analyser } });
+export interface StatueTuning { on: boolean; bars: number; first: number; gap: number; walkBack: number; keepOut: number; grey: number[]; tint: number; red: number }
+/** Its floor's look (render/challenge.ts carvingLook; Ed, 2026-11-04, on #1804): its carved sigil's glow while the statues are stone
+ *  (`stone`: a little moonlight), waking (`red`, at the wake-up's end), awake (`wild`, steady and cold), won (`warm`), going back to
+ *  stone over `fade` seconds; and the moonlight on its stone floor (`floor`). */
+export interface CarvingTuning { stone: number; red: number; wild: number; warm: number; fade: number; floor: number }
+export interface ChallengeTuning { carving: CarvingTuning; on: boolean; radius: number; margin: number; spacing: number; adults: number; youths: number; castReach: number; findSets: boolean; fireworks: { on: boolean; height: number; burst: number }; statues: StatueTuning; analyser: { bars: number; steps: number; fill: number } }
+export const CHALLENGE_DEFAULT: ChallengeTuning = { on: false, radius: 36, margin: 3, spacing: 7.5, adults: 1, youths: 1, castReach: 5, findSets: false, fireworks: { on: true, height: 24, burst: 8 }, statues: { on: false, bars: 4, first: 3.5, gap: 3.5, walkBack: 1.5, keepOut: 2, grey: [0.6, 0.6, 0.63], tint: 0.9, red: 1 }, analyser: { bars: 72, steps: 36, fill: 0.94 }, carving: { stone: 0.35, red: 2.2, wild: 1.2, warm: 1.8, fade: 2, floor: 0.3 } };
+export const challengeOf = (t: Tuning): ChallengeTuning => ({ ...CHALLENGE_DEFAULT, ...t.challenge, fireworks: { ...CHALLENGE_DEFAULT.fireworks, ...t.challenge?.fireworks }, statues: { ...CHALLENGE_DEFAULT.statues, ...t.challenge?.statues }, analyser: { ...CHALLENGE_DEFAULT.analyser, ...t.challenge?.analyser }, carving: { ...CHALLENGE_DEFAULT.carving, ...t.challenge?.carving } });
 
 /** What the page says of it (under the clock: main.ts): the pack all won over or gone (ready to cast), cleared (and its reward),
  *  closed (the final wave coming, or the night over). This frame's, emptied each frame as the waves' are. */
@@ -80,7 +84,7 @@ export interface ChallengeState {
   /** Its pack's statues (rules/challengeStatues.ts; Ed, 2026-11-04): stone at their posts till a witch sets foot on its floor, then
    *  waking from beat `wake` (a bar line) for the tuning's `statues.bars` bars, then awake (a wild pack) till every witch is off its
    *  floor; null `wake` unless waking. Unset: the statues off, or a night saved before them (its pack wild from the start). */
-  statues?: { phase: "stone" | "waking" | "awake"; wake: number | null };
+  statues?: { phase: "stone" | "waking" | "awake"; wake: number | null; /** when it woke, or last went back to stone (game time), and whether that was from a fight (`back`): for the floor's sigil fading (render/challenge.ts carvingLook) */ at?: number; back?: boolean };
   /** When its reward lands on its dancefloor (game time: clearedAt + FIND_DESCENT), and the flask laid then (its relic's id). */
   landsAt?: number | null;
   flask?: number | null;

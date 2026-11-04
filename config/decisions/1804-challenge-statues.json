@@ -75,7 +75,7 @@
       "pr": 1804,
       "group": "Challenge statues",
       "label": "Challenge statues: walk back pace",
-      "note": "How fast the un-won walk back to their posts when every witch leaves the circle, times their own pace, before turning to stone again.",
+      "note": "How fast the un-won walk back to their posts once every witch is knocked down or up in the treetops outside the challenge area, times their own pace, before turning to stone again.",
       "control": {
         "type": "slider",
         "min": 0.5,
@@ -85,6 +85,54 @@
       "default": 1.5,
       "apply": {
         "knob": "challenge.statues.walkBack"
+      }
+    },
+    {
+      "id": "challengeKeepOut",
+      "pr": 1804,
+      "group": "Challenge statues",
+      "label": "Challenge: won ones keep out of the circle (m)",
+      "note": "While the fight's on, how far off the circle's edge the won (invited) challenge animals keep as they roam its area (Ed, 2026-11-04: \"While the fight is going on, won creatures should avoid the circle\").",
+      "control": {
+        "type": "slider",
+        "min": 0,
+        "max": 12,
+        "step": 0.5
+      },
+      "default": 2,
+      "apply": {
+        "knob": "challenge.statues.keepOut"
+      }
+    },
+    {
+      "id": "wonAway",
+      "pr": 1804,
+      "group": "Challenge statues",
+      "label": "Won ones keep out of her fights' way",
+      "note": "A creature she's won over whose sigil waits in its stone's stack roams its area clear of her fights (Ed, 2026-11-04: \"they should roam the whole area, and avoid creatures that are fighting\"; \"Newly won creatures can't be grabbed until the spell is cast, so they don't need to be near\"). Off: they roam as before.",
+      "control": {
+        "type": "toggle"
+      },
+      "default": true,
+      "apply": {
+        "knob": "invites.wonAway.on"
+      }
+    },
+    {
+      "id": "wonAwayRadius",
+      "pr": 1804,
+      "group": "Challenge statues",
+      "label": "Won ones: keep from fighters (m)",
+      "note": "How far her won-over creatures waiting for their stone's spell keep from any creature fighting her or with her, in every area and the challenge circle.",
+      "control": {
+        "type": "slider",
+        "min": 0,
+        "max": 20,
+        "step": 1
+      },
+      "default": 6,
+      "apply": {
+        "knob": "invites.wonAway.radius"
       }
     },
     {
@@ -170,6 +218,108 @@
       "default": 0.94,
       "apply": {
         "knob": "challenge.analyser.fill"
+      }
+    },
+    {
+      "id": "challengeCarveStone",
+      "pr": 1804,
+      "group": "Challenge statues",
+      "label": "Challenge floor sigil: asleep",
+      "note": "How much the circle's carved sigil catches the moonlight while its statues sleep: dark but readable, not glowing.",
+      "control": {
+        "type": "slider",
+        "min": 0,
+        "max": 1.5,
+        "step": 0.05
+      },
+      "default": 0.35,
+      "apply": {
+        "knob": "challenge.carving.stone"
+      }
+    },
+    {
+      "id": "challengeCarveRed",
+      "pr": 1804,
+      "group": "Challenge statues",
+      "label": "Challenge floor sigil: waking red",
+      "note": "How bright the carved sigil glows red by the end of the statues' wake-up (it rises over the bars, brighter on each beat).",
+      "control": {
+        "type": "slider",
+        "min": 0,
+        "max": 4,
+        "step": 0.1
+      },
+      "default": 2.2,
+      "apply": {
+        "knob": "challenge.carving.red"
+      }
+    },
+    {
+      "id": "challengeCarveWild",
+      "pr": 1804,
+      "group": "Challenge statues",
+      "label": "Challenge floor sigil: fight",
+      "note": "The carved sigil's steady cold glow while the pack is awake.",
+      "control": {
+        "type": "slider",
+        "min": 0,
+        "max": 4,
+        "step": 0.1
+      },
+      "default": 1.2,
+      "apply": {
+        "knob": "challenge.carving.wild"
+      }
+    },
+    {
+      "id": "challengeCarveWarm",
+      "pr": 1804,
+      "group": "Challenge statues",
+      "label": "Challenge floor sigil: won",
+      "note": "The carved sigil's warm glow once every column is lit, before the spell's dancefloor covers it.",
+      "control": {
+        "type": "slider",
+        "min": 0,
+        "max": 4,
+        "step": 0.1
+      },
+      "default": 1.8,
+      "apply": {
+        "knob": "challenge.carving.warm"
+      }
+    },
+    {
+      "id": "challengeCarveFade",
+      "pr": 1804,
+      "group": "Challenge statues",
+      "label": "Challenge floor sigil: fade to dark (s)",
+      "note": "How long the carved sigil takes to fade back to dark when the pack goes back to stone.",
+      "control": {
+        "type": "slider",
+        "min": 0,
+        "max": 8,
+        "step": 0.25
+      },
+      "default": 2,
+      "apply": {
+        "knob": "challenge.carving.fade"
+      }
+    },
+    {
+      "id": "challengeFloorLight",
+      "pr": 1804,
+      "group": "Challenge statues",
+      "label": "Challenge floor: moonlight",
+      "note": "A little more moonlight on the challenge circle's stone floor, so it reads as a circle before she steps in (keep it subtle).",
+      "control": {
+        "type": "slider",
+        "min": 0,
+        "max": 1,
+        "step": 0.05
+      },
+      "default": 0.3,
+      "apply": {
+        "knob": "challenge.carving.floor"
       }
     }
   ]

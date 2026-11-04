@@ -84,6 +84,7 @@ import { homeDown, startPartyOver, stepPartyOver, stepWorldAsleep, worldAsleep, 
 import { stepWin, winFlare, won, type WinState } from "./win";
 import { newChallenge, spawnPack, stepChallenge, type ChallengeState } from "./challenge";
 import { stepStatues, stepStatueWalk } from "./challengeStatues";
+import { stepWonAway } from "./wonKeepAway";
 import { hasBroom, hasInvites, type Kit } from "./kit";
 import { applyGuestEffects, guestEffectsEnabled, recordAutomaticHit } from "./guestEffects";
 import { guestCatchUpSteps, guestInputStep, guestMotionReady } from "./onlineInputSteps";
@@ -767,6 +768,7 @@ function fixedStep(g: Game, controls: readonly Controls[], guestCatchUp: readonl
   }
   stepCreaturesNear(g.creatures, g.witch.x, g.witch.z, simRadius(g), dt, g.clock.time, g.map, c => !!c.partyLegend || !!c.bed || c.finale !== undefined || dormant(g, c), { ...g.tuning.simLod, full: fullRadius(g.tuning, g.witch.mode) }, g.lod, napRules(g), t.wildWatch?.on ? t.wildWatch : undefined, g.witches.length > 1 ? g.witches.map(W => ({ x: W.body.x, z: W.body.z, radius: simRadius(g), full: fullRadius(t, W.body.mode) })) : undefined);
   if (stepWanderers([...g.combat.busy].map(id => g.creatures[id]), g.map, dt)) g.byArea = null; // (those walking home are among combat's busy)
+  stepWonAway(g, dt); // (her won ones waiting for their stone's spell roam out of her fights' way: rules/wonKeepAway.ts)
   stepStatueWalk(g, dt); // (the challenge's un-won walking back to their posts, the stone ones facing its middle: rules/challengeStatues.ts)
   // (A party animal in a fight is moved by combat, not its leash.)
   // Far from her on the ground, or from its sigil, a party animal travels (rules/travel.ts): quiet, along area borders.

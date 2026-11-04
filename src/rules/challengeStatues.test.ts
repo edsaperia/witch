@@ -9,6 +9,7 @@ import { befriend, invitableNow, stateOf } from "./creatureStates";
 import { challengeColumns, columnKinds, columnSpots, statuePosts } from "./challenge";
 import { onFloor, postsOf, wakeAggro, wakeK } from "./challengeStatues";
 import { beatAt, timeAt } from "./beat";
+import { areaCellAt } from "./map";
 import { hunter } from "./hunt";
 import { watcher } from "./wildWatch";
 import { restoreGame, snapshotGame } from "./nightSnapshot";
@@ -163,18 +164,56 @@ describe("the wake-up (Ed: \"all the animals glow red, the sigils start glowing,
   }, 60000);
 });
 
-describe("back to stone (Ed, through the coordinator: leaving mid-fight or knocked down, the un-won go back to their posts as stone, reset to full)", () => {
-  /** Awake, her on its floor. */
-  const awake = (g: Game) => { put(g, 0, 0); runUntil(g, () => phase(g) === "awake", 14); expect(phase(g)).toBe("awake"); run(g, 0.5); };
+/** Where (dx, dz from the circle's middle) the challenge area ends, due south, and 15 m on: ground outside its area. */
+function outside(g: Game): [number, number] {
+  const ch = g.challenge!;
+  for (let d = ch.radius; d < ch.radius + 600; d += 2) if (cellKey(areaCellAt(g.map, ch.x, ch.z + d)) !== ch.key) return [0, d + 15];
+  throw new Error("no edge to the challenge area due south");
+}
+/** Awake, her on its floor. */
+const awake = (g: Game) => { put(g, 0, 0); runUntil(g, () => phase(g) === "awake", 14); expect(phase(g)).toBe("awake"); run(g, 0.5); };
+const hunting = (g: Game) => pack(g).filter(c => c.hunting !== undefined).length;
 
-  it("flying off mid-fight: the un-won walk back to their posts and turn to stone, whole; the invited stay won", () => {
-    const g = game(), ch = g.challenge!, P = pack(g), won = P[0], hurt = P[1], loved = P[2];
+describe("the fight goes on (Ed, 2026-11-04, on #1804: \"only being in the outside of the area while at treetops should end the fight, otherwise they pursue you and don't reset\")", () => {
+  it("stepping off the floor, walking its area outside the circle, or in the treetops over its area: they keep after her, no reset", () => {
+    const g = game(), ch = g.challenge!;
+    awake(g);
+    for (const [dx, dz, mode] of [[0, -(ch.radius + 2), "ground"], [0, ch.radius + 1, "ground"], [0, 0, "treetop"]] as const) {
+      put(g, dx, dz, mode); run(g, 1);
+      expect(phase(g), `${dx},${dz} ${mode}`).toBe("awake");
+      expect(pack(g).every(c => c.statue === undefined), `${dx},${dz} ${mode}`).toBe(true);
+    }
+  }, 60000);
+
+  it("knocked out of the circle (thrown off its floor), they keep after her", () => {
+    const g = game(), ch = g.challenge!;
+    awake(g);
+    put(g, 0, ch.radius + 4); // (where a blow threw her, past its edge, on her feet)
+    run(g, 2);
+    expect(phase(g)).toBe("awake");
+    expect(hunting(g)).toBeGreaterThan(0);
+  }, 60000);
+
+  it("on the ground outside its area, they pursue her there and don't reset", () => {
+    const g = game(), [dx, dz] = outside(g);
+    awake(g);
+    expect(hunting(g)).toBeGreaterThan(0);
+    put(g, dx, dz); run(g, 3);
+    expect(phase(g)).toBe("awake");
+    expect(hunting(g)).toBeGreaterThan(0);
+    expect(pack(g).every(c => c.statue === undefined)).toBe(true);
+  }, 60000);
+});
+
+describe("back to stone (Ed, 2026-11-04: up in the treetops outside its area, or knocked down; the un-won to their posts as stone, reset to full)", () => {
+  it("flying off outside its area mid-fight: the un-won walk back to their posts and turn to stone, whole; the invited stay won", () => {
+    const g = game(), ch = g.challenge!, P = pack(g), won = P[0], hurt = P[1], loved = P[2], [dx, dz] = outside(g);
     awake(g);
     befriend(won, g.clock.time);
     hurt.hp = 1; hurt.hurtAt = g.clock.time; loved.affection = 0.6; loved.affectionAt = g.clock.time;
     P[3].dazed = true; P[3].dazedUntil = g.clock.time + 5; // (knocked down, waiting for her 💌)
     const left = challengeColumns(g).reduce((n, col) => n + col.sigils.length, 0);
-    put(g, 0, 0, "treetop");
+    put(g, dx, dz, "treetop");
     stepGame(g, still, STEP);
     expect(phase(g)).toBe("stone");
     expect(g.wildEntry.has(ch.key)).toBe(false);
@@ -196,16 +235,7 @@ describe("back to stone (Ed, through the coordinator: leaving mid-fight or knock
     expect(phase(g)).toBe("waking");
   }, 90000);
 
-  it("stepping out of the circle mid-fight does the same", () => {
-    const g = game(), ch = g.challenge!;
-    awake(g);
-    put(g, 0, -(ch.radius + 2));
-    stepGame(g, still, STEP);
-    expect(phase(g)).toBe("stone");
-    expect(pack(g).every(c => c.statue !== undefined && c.hunting === undefined)).toBe(true);
-  }, 60000);
-
-  it("knocked down inside the circle does the same, her sigils falling as ever", () => {
+  it("knocked down in the circle does the same, her sigils falling as ever", () => {
     const g = game(), W = g.witches[0];
     awake(g);
     W.health.hp = 1; W.health.hurtAt = -Infinity;
@@ -217,9 +247,35 @@ describe("back to stone (Ed, through the coordinator: leaving mid-fight or knock
   }, 90000);
 });
 
-describe("two witches (either starts it; stone again only once both are off its floor)", () => {
-  it("starts for either, and holds while one stays on the floor", () => {
-    const g = game(), ch = g.challenge!;
+describe("its won ones out of the fight's way (Ed, 2026-11-04, on #1804: \"they should roam the whole area, and avoid creatures that are fighting\")", () => {
+  it("while it's on, walk off the circle and roam its area clear of the circle and of the fighters; stone again, they're left be", () => {
+    const g = game(), ch = g.challenge!, S = TUNING.challenge!.statues!, A = TUNING.invites.wonAway!.radius, P = pack(g);
+    awake(g);
+    const won = P.slice(0, 3);
+    for (const c of won) befriend(c, g.clock.time);
+    const spots: string[] = [];
+    let samples = 0, close = 0;
+    const out = runUntil(g, () => won.every(c => Math.hypot(c.x - ch.x, c.z - ch.z) >= ch.radius + S.keepOut - 0.1), 30); // (walking out at its pace: a snail's slow)
+    expect(out).not.toBeNull();
+    for (let i = 0; i < 12 * 60; i++) {
+      stepGame(g, still, STEP);
+      for (const c of won) {
+        expect(Math.hypot(c.x - ch.x, c.z - ch.z), `${c.id}`).toBeGreaterThanOrEqual(ch.radius + S.keepOut - 0.1);
+        let m = Infinity;
+        for (const f of P) if (f.hunting !== undefined || f.fight?.target) m = Math.min(m, Math.hypot(f.x - c.x, f.z - c.z));
+        samples++; if (m < A) close++;
+        if (i % 60 === 0) spots.push(`${Math.round(c.x)},${Math.round(c.z)}`);
+      }
+    }
+    expect(phase(g)).toBe("awake");
+    expect(close / samples).toBeLessThan(0.1); // (kept from the fighters: one passing close, it backs off at its pace)
+    expect(new Set(spots).size).toBeGreaterThan(3); // (roaming, not waiting in one place)
+  }, 90000);
+});
+
+describe("two witches (either starts it; stone again only once both are out of the fight)", () => {
+  it("starts for either, and holds till both are knocked down or up in the treetops outside its area", () => {
+    const g = game(), ch = g.challenge!, [dx, dz] = outside(g);
     const W = newWitchPlayer(1, ch.x + ch.radius + 30, ch.z, TUNING, false);
     W.body.perch = undefined; W.health.hp = 1e6; g.witches.push(W);
     const two = (): Controls[] => [still, still];
@@ -228,10 +284,9 @@ describe("two witches (either starts it; stone again only once both are off its 
     expect(phase(g)).toBe("waking");
     runUntil(g, () => phase(g) === "awake", 14, two());
     expect(phase(g)).toBe("awake");
-    put(g, -1, 0, "ground", 0); stepGame(g, two(), STEP); // (the first joins her)
-    put(g, 0, 0, "treetop", 1); stepGame(g, two(), STEP); // (the second flies off: the first's still on the floor)
+    put(g, dx, dz, "treetop", 0); stepGame(g, two(), STEP); // (the first flies off outside its area: the second's still in it)
     expect(phase(g)).toBe("awake");
-    put(g, 0, -(ch.radius + 3), "ground", 0); stepGame(g, two(), STEP); // (and the first steps out: both off)
+    put(g, dx + 3, dz, "treetop", 1); stepGame(g, two(), STEP); // (and the second: both out)
     expect(phase(g)).toBe("stone");
   }, 90000);
 });
@@ -242,7 +297,8 @@ describe("lockstep", () => {
       const g = game();
       const ch = g.challenge!;
       put(g, 0, 0); runUntil(g, () => phase(g) === "awake", 14); run(g, 2);
-      put(g, 0, 0, "treetop"); run(g, 3); put(g, 2, 2); run(g, 1);
+      befriend(pack(g)[0], g.clock.time); run(g, 2); const [dx, dz] = outside(g);
+      put(g, dx, dz, "treetop"); run(g, 3); put(g, 2, 2); run(g, 1);
       return JSON.stringify({ st: ch.statues, pack: pack(g).map(c => [c.id, c.statue, +c.x.toFixed(6), +c.z.toFixed(6), c.hp, c.hunting]) , t: g.clock.time });
     };
     expect(play()).toBe(play());

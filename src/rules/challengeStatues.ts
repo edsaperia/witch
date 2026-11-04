@@ -14,11 +14,17 @@
 //     (beats on the beat clock, rules/beat.ts, so a tempo change keeps it on a bar). The wild watch's rising warning plays over it
 //     (platform/audio/sfxCues.ts, wakeAggro). Every witch off the floor before then (stepped or flown off, knocked down), it stops
 //     and they stay stone.
-//   - Awake: a wild pack as before, its watch already over (the hunt at once: rules/hunt.ts), invitable, hitting and hit.
-//   - Every witch off the floor while they're awake (stepped or flown off, knocked down): the ones not yet won walk back to their posts
-//     (`walkBack` times their pace) and turn to stone there, reset to full (no hurt, hearts or 💌s kept); the invited stay won (their
-//     columns stay as they were). Stepping in again starts a fresh wake-up. With two witches, either starts it; they go back to stone
-//     only once both are off the floor.
+//   - Awake: a wild pack as before, its watch already over (the hunt at once: rules/hunt.ts; kept over while they're awake, so coming
+//     back there's no warning), invitable, hitting and hit, pursuing her on the ground wherever she goes as any wild pack does. Its won
+//     ones roam its area out of the fight's way while it's on (Ed, 2026-11-04, on #1804: "they should roam the whole area, and avoid
+//     creatures that are fighting. Do this in a simple way - we just want them out of the way of the fight"): off the circle by
+//     `keepOut` m (keepWonOut), and clear of the fighters as every waiting won one is (rules/wonKeepAway.ts).
+//   - The fight's end (Ed, 2026-11-04, on #1804: "only being in the outside of the area while at treetops should end the fight,
+//     otherwise they pursue you and don't reset"; a knockdown still ends it): only once every witch is knocked down or up in the
+//     treetops outside the challenge area do the ones not yet won walk back to their posts (`walkBack` times their pace) and turn to stone there, reset to full (no hurt, hearts, daze
+//     or 💌s kept); the invited stay won (their columns stay as they were). Stepping off the floor, knocked out of the circle, walking
+//     its area or on the ground outside it: they keep after her, no reset. Stepping in again starts a fresh wake-up. With two
+//     witches, either starts it.
 // Deterministic (online lockstep): only the beat clock, the game's time and the witches' bodies. No drawing here.
 import type { Game, Witch } from "./game";
 import type { Creature } from "./creatures";
@@ -26,6 +32,10 @@ import { beatAt } from "./beat";
 import { holdsArea } from "./clear";
 import { challengeOf, challengeOpen, columnKinds, faceMiddle, statuePosts, type ChallengeState } from "./challenge";
 import { creatureValue } from "./power";
+import { areaCellAt } from "./map";
+import { cellKey } from "./party";
+import { stateOf } from "./creatureStates";
+import { pointInArea } from "./creatures";
 
 /** Beats in a bar (the music's 4/4, as rules/game.ts reckons bars). */
 const BAR = 4;
@@ -39,6 +49,14 @@ export function onFloor(ch: Pick<ChallengeState, "x" | "z" | "radius">, W: Witch
 
 /** Whether any witch stands on its floor (two players: either). */
 export const floorTaken = (g: Game, ch: ChallengeState): boolean => g.witches.some(W => onFloor(ch, W));
+
+/** Whether witch W is out of the fight (Ed, 2026-11-04, on #1804: "only being in the outside of the area while at treetops should end
+ *  the fight, otherwise they pursue you and don't reset"; and a knockdown still ends it): knocked down, or up in the treetops (not
+ *  rising or coming down) over ground outside the challenge area. */
+export function leftFight(g: Pick<Game, "map">, ch: Pick<ChallengeState, "key">, W: Witch): boolean {
+  const b = W.body;
+  return !!W.ko || (b.mode === "treetop" && cellKey(areaCellAt(g.map, b.x, b.z)) !== ch.key);
+}
 
 /** Where each of its pack stands as a statue (rules/challenge.ts statuePosts), by id. */
 export function postsOf(g: Pick<Game, "challenge" | "creatures" | "map" | "tuning">): Map<number, { x: number; z: number }> {
@@ -65,8 +83,8 @@ export function wakeAggro(g: Game, i = 0): { k: number; danger: number } | null 
 }
 
 /** Each step, before the wild watch and the hunt (rules/game.ts): stone to waking as a witch sets foot on its floor (from the next bar
- *  line), waking to stone as the floor's left, waking to awake on its bar, awake to stone (the un-won walking back, whole) as the floor's
- *  left. Nothing once it's cleared or closed (a wake-up under way stops). */
+ *  line), waking to stone as the floor's left, waking to awake on its bar, awake to stone (the un-won walking back, whole) once every
+ *  witch is knocked down or up in the treetops outside its area (leftFight). Nothing once it's cleared or closed (a wake-up under way stops). */
 export function stepStatues(g: Game): void {
   const ch = g.challenge, st = ch?.statues;
   if (!ch || !st) return;
@@ -81,7 +99,9 @@ export function stepStatues(g: Game): void {
     if (st.wake !== null && beat >= st.wake + BAR * Math.max(1, challengeOf(g.tuning).statues.bars) - 1e-9) awaken(g, ch);
     return;
   }
-  if (!on) backToStone(g, ch);
+  if (g.witches.every(W => leftFight(g, ch, W))) { backToStone(g, ch); return; }
+  // (still on: its watch kept over, so a witch coming back after a knockdown, rules/hunt.ts forgetting it, is hunted at once, no warning)
+  if (!g.wildEntry.has(ch.key)) { const time = g.clock.time; g.wildEntry.set(ch.key, { at: time, until: time, last: time, danger: 1 }); }
 }
 
 /** They wake: wild, where they stand, the area's watch already over (no warning: the wake-up was it), so the hunt's at once. */
@@ -95,7 +115,7 @@ function awaken(g: Game, ch: ChallengeState): void {
     F += creatureValue(c);
   }
   g.wildEntry.set(ch.key, { at: time, until: time, last: time, danger: Math.min(1, F / Math.max(1, W?.dangerF ?? 90)) });
-  ch.statues = { phase: "awake", wake: null };
+  ch.statues = { phase: "awake", wake: null, at: time };
   g.byArea = null;
 }
 
@@ -103,9 +123,9 @@ function awaken(g: Game, ch: ChallengeState): void {
  *  invited, not run off nor running off), not besieging. */
 const unwon = (c: Creature | undefined): c is Creature => !!c && holdsArea(c) && !c.siege && !c.enraged && (c.fleeUntil === undefined || !!c.dazed);
 
-/** Every witch off its floor while they're awake: the un-won give up the fight and walk back to their posts, whole again (Ed,
- *  through the coordinator: "reset to full", no hurt, hearts, 💌s or daze kept), to turn to stone there (stepStatueWalk). The invited
- *  stay won. Its watch forgotten, its hunt over. */
+/** Every witch knocked down or up in the treetops outside its area while they're awake: the un-won give up the fight and walk back to their posts,
+ *  whole again (Ed, through the coordinator: "reset to full", no hurt, hearts, 💌s or daze kept), to turn to stone there
+ *  (stepStatueWalk). The invited stay won. Its watch forgotten, its hunt over. */
 function backToStone(g: Game, ch: ChallengeState): void {
   for (const id of ch.pack) {
     const c = g.creatures[id];
@@ -122,14 +142,43 @@ function backToStone(g: Game, ch: ChallengeState): void {
     g.hunts?.delete(id);
   }
   g.wildEntry.delete(ch.key);
-  ch.statues = { phase: "stone", wake: null };
+  ch.statues = { phase: "stone", wake: null, at: g.clock.time, back: true };
   g.byArea = null;
 }
 
+/** Whether one of its pack is won over and free to walk (happy, not leashed, gone, running off or dancing at its cleared floor). */
+const wonFree = (c: Creature | undefined): c is Creature => !!c && !c.gone && !c.leashed && !c.statue && c.fleeUntil === undefined && stateOf(c) === "happy";
+/** While they're awake (the fight on), its won ones keep off the circle (Ed, 2026-11-04, on #1804: "While the fight is going on, won
+ *  creatures should avoid the circle"; "they should roam the whole area, and avoid creatures that are fighting"): their own happy roam
+ *  (rules/creatures.ts), out of the fight's way as every waiting won one is (rules/wonKeepAway.ts), its targets kept `keepOut` m off
+ *  the circle (one there redrawn in its area by its own seeded draws, c.rand, the same in lockstep; after 8 tries, out on the ring on
+ *  its own bearing), and one on the circle walks straight out at `walkBack` times its pace. */
+function keepWonOut(g: Game, ch: ChallengeState, dt: number): void {
+  const S = challengeOf(g.tuning).statues, R = ch.radius + Math.max(0, S.keepOut);
+  const off = (x: number, z: number) => Math.hypot(x - ch.x, z - ch.z) >= R;
+  for (const id of ch.pack) {
+    const c = g.creatures[id];
+    if (!wonFree(c)) continue;
+    if (!off(c.tx, c.tz)) {
+      let ok = false;
+      for (let i = 0; i < 8 && !ok; i++) { const [x, z] = pointInArea(g.map, c, c.rand); if (off(x, z)) { c.tx = x; c.tz = z; ok = true; } }
+      if (!ok) { const dx = c.x - ch.x, dz = c.z - ch.z, d = Math.hypot(dx, dz) || 1; c.tx = ch.x + (dx / d) * (R + 1); c.tz = ch.z + (dz / d) * (R + 1); }
+    }
+    const dx = c.x - ch.x, dz = c.z - ch.z, d = Math.hypot(dx, dz);
+    if (d >= R) continue;
+    const ux = d > 1e-6 ? dx / d : 0, uz = d > 1e-6 ? dz / d : 1, step = Math.min(R - d + 0.05, c.speed * Math.max(1, S.walkBack) * dt);
+    c.x += ux * step; c.z += uz * step;
+    if (Math.abs(ux) > 0.02) c.facing = ux > 0 ? 1 : -1;
+    c.away = uz < -Math.abs(ux); c.moving = true; c.walk += dt * 4; c.rest = 0;
+  }
+}
+
 /** Each step, after the creatures' roam (rules/game.ts): those walking back go on toward their posts at `walkBack` times their pace,
- *  turning to stone on arriving; the stone ones stand at theirs, facing the middle. */
+ *  turning to stone on arriving; the stone ones stand at theirs, facing the middle; while they're awake, its won ones keep out of the
+ *  circle (keepWonOut). */
 export function stepStatueWalk(g: Game, dt: number): void {
   const ch = g.challenge;
+  if (ch?.statues?.phase === "awake" && challengeOpen(g)) keepWonOut(g, ch, dt);
   if (!ch?.statues || !ch.pack.some(id => g.creatures[id]?.statue)) return;
   const posts = postsOf(g), S = challengeOf(g.tuning).statues;
   for (const id of ch.pack) {

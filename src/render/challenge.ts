@@ -5,7 +5,9 @@
 //     (art/sigils.js islandSigil: home's the World Tree) carved into it by the ground's own pass (Ed, 2026-11-03, on #1725: "it
 //     should look like it's carved into the circle", not a pixellated glyph over it): its legendary sigil's mask at 768 px across
 //     the circle (render/legendCarving.ts bigCarvingMask), grooves with clean edges, shadowed walls and lit lips, a soft moonlit
-//     glow in them, brighter while she's in it or it's ready to cast (challengeCarving; render/ground.ts uChallengeCarve);
+//     glow in them following the fight (carvingLook; Ed, 2026-11-04, on #1804: asleep a little moonlight, waking red, fighting cold,
+//     won warm, back to stone fading to dark; challengeCarving; render/ground.ts uChallengeCarve, uChallengeLook), and a little
+//     moonlight on its stone floor so it reads as a circle (challenge.carving.floor);
 //   - the columns: the classical ruins' standing column (art/landmarks.js "column"), drawn alone (a "find" art job, as tonight's find
 //     is: render/view/finds.ts), round its edge (rules/challenge.ts columnSpots), one a kind of the island's roster;
 //   - the columns are its sigil stack (Ed, 2026-11-03: "the sigils are on top of the columns, one type per column"): on each column's
@@ -48,6 +50,8 @@ import { SpriteBatch, type SpriteInstance } from "./sprites";
 import type { LeashView } from "./leash";
 import { barLevel, columnOf, columnSigil, columnSigilSize, notesSlot, upY, upZ } from "./leash/stones";
 import { statueSigilColour } from "./statues";
+import { wakeK } from "../rules/challengeStatues";
+import { DANGER } from "./leash/attackLook";
 import { rankColour, sigilRankColour, stoneKnobs } from "./leash/ranks";
 import { NO_CARVING } from "./legendCarving";
 import type { View } from "./view";
@@ -80,15 +84,45 @@ export function challengeRing(g: Game, x: number, z: number): { x: number; z: nu
   return { x: ch.x, z: ch.z, r: ch.radius, edge: g.tuning.legendClearing.edge, glow, species: NO_CARVING, glint: 0 };
 }
 
-/** The island's sigil carved into the circle's floor (render/ground.ts setChallengeCarving): its middle, radius, whose sigil, and the
- *  soft moonlit glow in its grooves (brighter with her in it, brighter still and breathing once it's ready to cast; none once closed);
- *  null with none, cleared (its dancefloor covers it), or far off. */
-export function challengeCarving(g: Game, x: number, z: number): { x: number; z: number; r: number; glow: number; species: string } | null {
+/** The moonlit glow in its grooves (the carving's own, before the statues). */
+export const MOONLIT: [number, number, number] = [0.35, 0.72, 0.8];
+
+/** Its carved sigil's look as the fight goes (Ed, 2026-11-04, on #1804, by the colour grammar, render/colourGrammar.ts: red the
+ *  warning, cold the wild, warm the won; challenge.carving): its glow's strength and colour, and which state that is.
+ *  - "stone" (its statues asleep): dark but readable, a carving catching a little moonlight (`stone`), not glowing;
+ *  - "waking": glowing red with the statues over the wake-up's bars, rising to `red`, brighter on each beat (the danger red);
+ *  - "fight" (the pack awake): a steady cold wild glow (`wild`, the wild adult's colour);
+ *  - "won" (every column lit, the spell to cast): warm (`warm`, the party adult's colour), breathing; the dancefloor covers it once cast;
+ *  - "fading" (back to stone after a fight): from the cold glow back to dark over `fade` seconds;
+ *  - "dark" (closed): nothing; "moonlit" (the statues off, or a night from before them): the carving's glow as it was (brighter with
+ *    her in it, brighter still ready to cast). */
+export function carvingLook(g: Game): { glow: number; rgb: [number, number, number]; state: "stone" | "waking" | "fight" | "won" | "fading" | "dark" | "moonlit" } {
+  const ch = g.challenge!, t = g.tuning, C = challengeOf(t).carving, st = ch.statues, time = g.clock.time;
+  if (ch.closedAt !== null) return { glow: 0, rgb: MOONLIT, state: "dark" };
+  if (!st) {
+    const inside = g.witch.mode === "ground" && Math.hypot(g.witch.x - ch.x, g.witch.z - ch.z) <= ch.radius;
+    return { glow: challengeReady(g) ? 1.6 + 0.3 * Math.sin(time * 3) : inside ? 1.2 : 0.7, rgb: MOONLIT, state: "moonlit" };
+  }
+  if (challengeReady(g)) return { glow: C.warm * (0.9 + 0.1 * Math.sin(time * 3)), rgb: rankColour(t, 2, true), state: "won" };
+  const k = wakeK(g);
+  if (st.phase === "waking" && k !== null) return { glow: C.stone + (C.red - C.stone) * k * (0.75 + 0.25 * beatPulse(g)), rgb: [...DANGER], state: "waking" };
+  if (st.phase === "awake") return { glow: C.wild, rgb: rankColour(t, 2, false), state: "fight" };
+  const f = st.back && st.at !== undefined ? (time - st.at) / Math.max(0.05, C.fade) : 1;
+  if (f < 1) {
+    const e = smooth(f), w = rankColour(t, 2, false);
+    return { glow: C.wild + (C.stone - C.wild) * e, rgb: [w[0] + (MOONLIT[0] - w[0]) * e, w[1] + (MOONLIT[1] - w[1]) * e, w[2] + (MOONLIT[2] - w[2]) * e], state: "fading" };
+  }
+  return { glow: C.stone, rgb: MOONLIT, state: "stone" };
+}
+
+/** The island's sigil carved into the circle's floor (render/ground.ts setChallengeCarving): its middle, radius, whose sigil, the glow
+ *  in its grooves and its colour (carvingLook), and the moonlight on its stone floor (challenge.carving.floor: so the circle reads as
+ *  a circle before she steps in); null with none, cleared (its dancefloor covers it), or far off. */
+export function challengeCarving(g: Game, x: number, z: number): { x: number; z: number; r: number; glow: number; rgb: [number, number, number]; floor: number; species: string } | null {
   const ch = g.challenge;
   if (!ch || ch.clearedAt !== null || Math.hypot(ch.x - x, ch.z - z) > NEAR + ch.radius) return null;
-  const inside = g.witch.mode === "ground" && Math.hypot(g.witch.x - ch.x, g.witch.z - ch.z) <= ch.radius;
-  const glow = ch.closedAt !== null ? 0 : challengeReady(g) ? 1.6 + 0.3 * Math.sin(g.clock.time * 3) : inside ? 1.2 : 0.7;
-  return { x: ch.x, z: ch.z, r: ch.radius, glow, species: islandSigilOf(g.map) };
+  const L = carvingLook(g), floor = ch.closedAt !== null || !ch.statues ? 0 : Math.max(0, challengeOf(g.tuning).carving.floor);
+  return { x: ch.x, z: ch.z, r: ch.radius, glow: L.glow, rgb: L.rgb, floor, species: islandSigilOf(g.map) };
 }
 
 /** A waiting column's top light (Ed, 2026-11-03: a column with no sigils left is that kind finished): lit, steady and warm (the

@@ -459,6 +459,7 @@ export type SchemaTuning = {
       "first": number;
       "gap": number;
       "walkBack": number;
+      "keepOut": number;
       "grey": Array<number>;
       "tint": number;
       "red": number;
@@ -467,6 +468,14 @@ export type SchemaTuning = {
       "bars": number;
       "steps": number;
       "fill": number;
+    };
+    "carving": {
+      "stone": number;
+      "red": number;
+      "wild": number;
+      "warm": number;
+      "fade": number;
+      "floor": number;
     };
   };
   "treeMarginFromSoundsystem": number;
@@ -838,6 +847,10 @@ export type SchemaTuning = {
       "homing": number;
       "cone": number;
       "range": number;
+    };
+    "wonAway": {
+      "on": boolean;
+      "radius": number;
     };
   };
   "cast": {
