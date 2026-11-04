@@ -6,8 +6,9 @@ import { describe, expect, it } from "vitest";
 import { queueCombatHit } from "../test/combatHit";
 import type { Creature, Level } from "./creatures";
 import { speedFactor, wanderRange } from "./creatures";
-import { newGame, stepGame, STEP, type Controls, type Game } from "./game";
+import { stepGame, STEP, type Controls, type Game } from "./game";
 import { TUNING, withTuning } from "./tuning";
+import { preppedGame } from "../test/preppedGame"; // (games on a map made once a file from its prep)
 
 // Keep the radius fight fixture: two-cell-away arena recruits beyond 300 m and tests an uninvolved defender parked 120 m away.
 const idle: Controls = { moveX: 0, moveZ: 0, toggleMode: false, zoom: 0, autoTalk: false };
@@ -16,7 +17,7 @@ const T = withTuning({ witchHealth: { ...TUNING.witchHealth, hits: 1e6 }, invite
 /** She stands in a wild area two out from home, `wild` of its creatures (young) set on her from 18 m, and `mine` of hers (young,
  *  leashed and following) 8 m behind her, so the attackers reach her first. */
 export function scene(wild: string[], mine: string[], seed = 123): { g: Game; attackers: Creature[]; posse: Creature[] } {
-  const g = newGame(seed, T), w = g.witches[0];
+  const g = preppedGame(seed, T), w = g.witches[0];
   g.clock.paused = false; g.party.paused = true;
   const [hx, hy] = g.map.centreCell, cell: [number, number] = [hx + 2, hy], site = g.map.siteOf(cell[0], cell[1]);
   w.body = { ...w.body, seated: false, mode: "ground", lift: 0, x: site.x, z: site.z };

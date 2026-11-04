@@ -1,0 +1,9 @@
+{
+  "reason": "The path network (Ed, 2026-11-03): every map changes. Each island grows one area more for tonight's find, which sits at the site of an area of its own (never home or next to it) with no stump, wave or creatures, so its coast, areas, route and waves move; stumps at least 40 m apart; every site joined to its neighbours' by a footpath of straight runs and gentle curves, with no trees on it.",
+  "frames": {
+    "*": "a different island and forest: other coast and areas, stumps in other places, footpaths from stump to stump through the woods, the find in a clearing of its own"
+  },
+  "rules": {
+    "*": "a different map: other areas, stones, route, waves, creatures and their fights, the find's place"
+  }
+}

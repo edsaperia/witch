@@ -196,6 +196,25 @@ export function thud(K: SfxKit, pan = 0): void {
   depth.gain.value = f * 0.06; depth.connect(o.frequency); K.osc("sine", 16, at + 0.07, 0.34, depth); // (the boing's wobble)
 }
 
+/** Her chains rattling (Ed, 2026-11-03: "When you try and take off but you're weighed down by creatures, the chains rattle"; the
+ *  "grounded" leash event): a short metallic jangle, clinks of three inharmonic partials over band-passed noise, spread over about
+ *  half a second, more of them and louder for more chains (`chains`: how many rattle). The tuning's sfx.rattle. */
+export function rattle(K: SfxKit, pan = 0, chains = 1): void {
+  const R = K.T.rattle;
+  if (!R || chains <= 0 || !K.ready("rattle", R.gap)) return;
+  const c = K.ctx, at = c.currentTime + 0.005, out = K.voice(pan, 0.8), n = Math.min(18, 5 + 3 * chains), loud = R.volume * Math.min(1.6, Math.sqrt(chains));
+  for (let i = 0; i < n; i++) {
+    const h = Math.sin(i * 12.9898 + chains * 4.1) * 43758.5453, r = h - Math.floor(h), t0 = at + (i / n) * 0.45 + r * 0.03, v = loud * (1 - 0.6 * i / n) * (0.6 + 0.4 * r);
+    const bp = c.createBiquadFilter(), ng = c.createGain();
+    bp.type = "bandpass"; bp.frequency.value = 3200 + 2400 * r; bp.Q.value = 6; bp.connect(ng); ng.connect(out);
+    K.env(ng, t0, v * 0.5, 0.001, 0.05); K.noiseBurst(t0, 0.06, bp, r * 7);
+    for (const [m, l] of [[1, 1], [2.76, 0.5], [5.4, 0.25]] as const) {
+      const g = c.createGain(); g.connect(out); K.env(g, t0, v * 0.18 * l, 0.001, 0.07);
+      K.osc("sine", (1700 + 900 * r) * m, t0, 0.09, g);
+    }
+  }
+}
+
 /** Her phone's alarm (the new opening's wake-up, Ed 2026-10-20: "a plain modern phone alarm, for the joke"; rules/wakeUp.ts): one
  *  ring, a bright marimba-ish run of six plucks up and down the key's triad and back (sine and a quiet octave, fast decay, a soft
  *  click on each), about a second; the page rings it again every gap seconds while the alarm's ringing. The tuning's sfx.alarm. */

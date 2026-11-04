@@ -1,0 +1,4 @@
+{
+  "reason": "her trail no longer takes the frame she's drawn part-way along a blink into her path (render/trail.ts), so after a blink its dots run along the blink's line once, not folded back over it; the rules are unchanged",
+  "frames": { "wave-fight": "after a blink in the fight, her trail's dots along the blink's line, not doubled back over it" }
+}

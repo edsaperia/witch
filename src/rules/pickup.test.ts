@@ -5,10 +5,11 @@
 import { afterEach, describe, expect, it } from "vitest";
 // Keep this spatial regression fixture: directional rune-pull cases recruit untouched creatures more than 200 m away.
 import { TUNING } from "./tuning";
-import { affectionOf, newGame, stepGame, type Game } from "./game";
+import { affectionOf, stepGame, type Game } from "./game";
 import { hasRune, runeNear, stateOf, STATES } from "./creatureStates";
 import type { Creature } from "./creatures";
 import { runeOffset } from "./runeOffset";
+import { preppedGame } from "../test/preppedGame"; // (games on a map made once a file from its prep)
 
 const C = { moveX: 0, moveZ: 0, toggleMode: false, zoom: 0 };
 const saved = { leash: STATES.leash, delay: STATES.pickupDelay };
@@ -19,7 +20,7 @@ afterEach(() => { STATES.leash = saved.leash; STATES.pickupDelay = saved.delay; 
 const OLD_GRID = { ...TUNING, leash: { ...TUNING.leash, hex: { ...TUNING.leash.hex!, size: 4 } }, cast: { ...TUNING.cast, on: false } };
 
 function game(): Game {
-  const g = newGame(123, OLD_GRID);
+  const g = preppedGame(123, OLD_GRID);
   g.clock.paused = false;
   g.party.spellAt = undefined;
   return g;

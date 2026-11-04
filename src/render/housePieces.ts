@@ -47,9 +47,9 @@ export function placedStanding(o: HouseObject): { yaw: number; foot: { w: number
 const roomLight = (st: Style): Style => ({ ...st, ambient: .85, ambientHue: .09, moon: .4, shafts: 0, dither: 0 } as Style);
 
 /** A drawn piece (art/furniture.js modelSprite's), baked in the house's one palette (times `dim`: a rug, flat to the light, darker) and
- *  lit by its own lights: its canvas. `over`: colours by material over the palette's (her broom's, render/workshopArt.ts). */
-export function litCanvas(d: Drawn, st: Style, mk: MakeCanvas, dim = 1, id = "", over: Record<string, number[]> = {}): AnyCanvas {
-  const colours = Object.fromEntries(Object.entries({ ...furnitureColours(st, id), ...over }).map(([k, c]) => [k, dim === 1 ? c : (c as number[]).map(v => Math.round(v * dim))]));
+ *  lit by its own lights: its canvas. `over`: colours by material over the palette's (her broom's, render/workshopArt.ts); `state`: the piece's (a guest's piece uncovered drops its dust sheet's colours). */
+export function litCanvas(d: Drawn, st: Style, mk: MakeCanvas, dim = 1, id = "", over: Record<string, number[]> = {}, state?: string): AnyCanvas {
+  const colours = Object.fromEntries(Object.entries({ ...furnitureColours(st, id, state), ...over }).map(([k, c]) => [k, dim === 1 ? c : (c as number[]).map(v => Math.round(v * dim))]));
   const b = (Art.bake as (sp: unknown, c: object, st: Style, outline: unknown, mk: MakeCanvas) => { A: AnyCanvas; N: AnyCanvas; w: number; h: number })(d.sp, colours, { ...st, styleInterior: false } as unknown as Style, (st as unknown as { cOutline: unknown }).cOutline, mk);
   const lit = mk(b.w, b.h);
   shade({ a: ctx2d(b.A), n: ctx2d(b.N), w: b.w, h: b.h }, lit, roomLight(st), d.lights, null);
@@ -68,7 +68,7 @@ export function furniturePiece(id: string, st: Style, ppm: number, pitch: number
   const o = H.objects.find(q => q.id === id);
   if (!o) return null;
   const { yaw, foot, curve } = placedStanding(o);
-  const d = furnitureSprite(o.id, foot, st, { ppm, pitch, yaw, state, curve }) as Drawn, lit = litCanvas(d, st, mk, 1, o.id);
+  const d = furnitureSprite(o.id, foot, st, { ppm, pitch, yaw, state, curve }) as Drawn, lit = litCanvas(d, st, mk, 1, o.id, {}, state);
   return { px: pixelsOf(lit), w: lit.width, h: lit.height, ox: d.origin.x, oy: d.origin.y, marks: d.marks ?? {} };
 }
 

@@ -30,6 +30,7 @@ import { chartOrder, islandPhase, OUTLINE_STEP } from "./chartWarm";
 import { chartChoice, chartOpensOn, type ChartHere } from "./sail";
 import { bindings, type ActionId } from "../platform/bindings";
 import { chartHint, type HintDevice } from "../ui/deviceHints";
+import { freshHref, localStore } from "../platform/storageScope";
 
 export type ChartMode = "look" | "sail" | "miniature";
 /** Where the chart's flight hands over to the game's dive (the tuning's arrive.handoff; Ed, 2026-10-24: "maybe it comes from further
@@ -42,6 +43,8 @@ const diveOptions = (): FlyOptions => {
 };
 /** The testing toggle's key (this browser): sail to any island with a creature. */
 const SAIL_ANY = "witch.chart.sailAnywhere";
+/** How long (ms) the landing bake's workers wait for the island's map before they start anyway (bakeFor): the map first. */
+const MAP_FIRST = 8000;
 export interface ChartViewOptions {
   mode: ChartMode;
   /** What she's found, won and sailed (default: loadSave()). */
@@ -202,11 +205,11 @@ export function mountChart(host: HTMLElement, opts: ChartViewOptions): ChartView
   // A 🧭 over each island she's found and not been to (Ed, 2026-10-26: "you see one per unvisited island"; render/chart/chartPin.ts),
   // till she's been there. Not on the map table's miniature.
   const pins = new Map<string, ChartPin>();
-  let sailAny = (() => { try { return localStorage.getItem(SAIL_ANY) === "1"; } catch { return false; } })();
+  let sailAny = (() => { try { return localStore()?.getItem(SAIL_ANY) === "1"; } catch { return false; } })();
   const worldNow = () => opts.world ?? save.world;
   /** The island she's on (in the world shown): choosing it takes her back to the night, not a new one. */
   const isHere = (id: string | null) => !!id && chartChoice(opts.here, id, worldNow()) === "stay";
-  const sailHref = (island: string) => `./?island=${island}${opts.world != null ? `&world=${worldNow()}` : ""}`;
+  const sailHref = (island: string) => freshHref(`./?island=${island}${opts.world != null ? `&world=${worldNow()}` : ""}`); // (a fresh game's ?fresh= carried: platform/storageScope.ts)
   // Sailing: the chart flies in to the island (Ed, 2026-10-12: "you zoom into the map into the island you chose"), then sails,
   // its flight's end kept for the game to carry on from (app/arrival.ts); any key or tap skips to the end.
   // The night's seed is chosen as the island is (app/landingBake.ts): its area types drawn ahead while she looks and flies in.
@@ -223,8 +226,13 @@ export function mountChart(host: HTMLElement, opts: ChartViewOptions): ChartView
     void bake?.job.then(b => b?.stop());
     void bake?.map.then(m => m?.stop());
     if (!id || !islands.find(i => i.id === id)?.sail || opts.noBake?.(id) || isHere(id)) { bake = null; return; } // (the island she's on: never sailed to from here)
-    const job = import("./landingBake").then(m => m.bakeLanding(id, opts.world, seedOf(id))).catch(() => null);
-    bake = { island: id, job, map: job.then(b => (b ? import("./mapPrep").then(m => m.startMapPrep(id, opts.world, b.seed)) : null)).catch(() => null) };
+    // (the map first, with the night's seed, chosen here: the night can't be made without it, and it waited on the bake's module and
+    // shared the cores with its up to six workers; the bake once the map's made, or MAP_FIRST on: Ed, 2026-11-03, the sail's wait)
+    const seed = seedOf(id), mine = { island: id } as NonNullable<typeof bake>;
+    const map = import("./mapPrep").then(m => m.startMapPrep(id, opts.world, seed)).catch(() => null);
+    const job = map.then(m => (m ? Promise.race([m.done, new Promise(res => setTimeout(res, MAP_FIRST))]) : null))
+      .then(() => (bake === mine ? import("./landingBake").then(m => m.bakeLanding(id, opts.world, seed)) : null)).catch(() => null);
+    bake = Object.assign(mine, { job, map });
   };
   /** Where she'll likely sail: her last voyage's island, else the nearest she's found, else home (her first game). */
   const likely = (): string => {
@@ -237,8 +245,7 @@ export function mountChart(host: HTMLElement, opts: ChartViewOptions): ChartView
   // The night made under the chart as it flies (onDepart): the island and seed it's for, and whether it's ready for the dive.
   let departed: { island: string; seed: number; ready: boolean } | null = null;
   const depart = async (id: string) => {
-    const b = bake?.island === id ? await bake.job : null, seed = b?.seed ?? seedOf(id);
-    await b?.settle();
+    const seed = seedOf(id); // (the bake's too: not waited for, the night only needs its map)
     const m = bake?.island === id ? await bake.map : null; // (its map, made in a worker: the night takes it, as go's does)
     if (m) await Promise.race([m.done, new Promise(res => setTimeout(res, 8000))]);
     const d: NonNullable<typeof departed> = departed = { island: id, seed, ready: false };
@@ -452,7 +459,7 @@ export function mountChart(host: HTMLElement, opts: ChartViewOptions): ChartView
   const showSailAny = () => { const b = $("sail-any"); b.setAttribute("aria-pressed", String(sailAny)); b.textContent = sailAny ? "🧪 Test: sailing anywhere (on)" : "🧪 Test: sail anywhere"; };
   showSailAny();
   $("sail-any").addEventListener("click", () => {
-    sailAny = !sailAny; try { localStorage.setItem(SAIL_ANY, sailAny ? "1" : "0"); } catch { /* storage blocked */ }
+    sailAny = !sailAny; try { localStore()?.setItem(SAIL_ANY, sailAny ? "1" : "0"); } catch { /* storage blocked */ }
     showSailAny(); const was = chart.selected; build(); choose(was);
   });
 

@@ -1,13 +1,15 @@
-// Berries and evolving (Ed, 2026-10-04). Every area has berry bushes; a small glowing berry grows
-// on some of them, one per bush, berries.perArea of them in each area at the start. Party animals
-// (invited creatures, following the witch or held at a sigil; never wild ones, never legends)
-// take a berry on their way: within berries.detour of the line to where they're heading (the witch,
-// or their sigil) or of their sigil, never beyond their leash; they nip over, eat it, and carry on.
-// Bushes grow in patches (berries.patch), so a sigil set in the middle of one is a feeding spot.
-// An eaten berry grows again at once on a free berry bush somewhere else on the map, so the number
-// of berries never changes. A party animal that has eaten enough evolves: the berries its next
-// level's strength costs (toEvolve: 4 and 4 for a species of normal strength); evolving stops at adult (Ed, 2026-10-04: legends are the areas'
-// own, never grown). It evolves on the next bar line of the music, so the view can make a show of it. No drawing here.
+// Berries and evolving (Ed, 2026-10-04). Every area has berry bushes; a small glowing berry grows on some of them, one per bush,
+// berries.perArea of them in each area at the start. Bushes grow in patches (berries.patch). An eaten berry grows again at once on
+// a free berry bush somewhere else on the map, so the number of berries never changes.
+// Feeding on command (Ed, 2026-11-03: berry feeding is something she does deliberately and accurately, under time pressure): no
+// animal eats on its own. Only the animal at the bottom of her sigil stack eats, and only when she presses the sigil button with a
+// berry within berries.feed.reach of her (rules/sigilButton.ts): each press queues one more berry for it, while one is in reach and
+// it has room (a youth's growth unfinished, an adult's pips under the most, or hurt; never a legend). It walks to each in order, at
+// its own leash pace times berries.feed.speed (Ed: "otherwise feeding berries becomes a way of moving creatures quickly rather than
+// levelling them up"), eats it, and goes back to her, or to its sigil if she has parked it meanwhile. A party animal that has eaten
+// enough evolves on the next bar line of the music, so the view can make a show of it: the berries its next level's strength costs
+// (toEvolve); a baby's one berry makes it a youth; evolving stops at adult (Ed, 2026-10-04: legends are the areas' own, never
+// grown). An adult's berry is a buff pip (rules/buffs.ts); a hurt one's heals it, and gives no pip. No drawing here.
 import { combatProfile } from "./combat";
 import { beatAt, timeAt, type BeatClock } from "./beat";
 import { LEGEND, heal, type Creature, type Level } from "./creatures";
@@ -15,6 +17,8 @@ import { gaitRate, leashSpeed } from "./leash";
 import type { ForestMap } from "./map";
 import { rng } from "./random";
 import type { Tuning } from "./tuning";
+import { addPip, pipCount, pipFuel, wantsPip } from "./buffs";
+import { chainLength } from "./chains";
 
 /** A berry bush: where it stands, and its area's type (it's one of that area's own bushes). */
 export interface BerryBush { x: number; z: number; type: number; variant: number; flip: boolean; /** a spot of the Harvest hat's ring (rules/spells.ts): no bush drawn, and never a regrown berry's */ harvest?: boolean }
@@ -23,7 +27,7 @@ export interface Berry {
   id: number;
   /** The bush it grows on (an index into bushes). */
   bush: number;
-  /** The party animal on its way to eat it, if any. */
+  /** The party animal it's queued for (on its way to eat it, or to after the one it's on), if any: taken. */
   claimedBy: number | null;
   /** One of the Harvest hat's ring (rules/spells.ts): eaten, it's gone (not grown again elsewhere) till the hat grows the ring again. */
   once?: boolean;
@@ -31,7 +35,7 @@ export interface Berry {
   gone?: boolean;
 }
 
-/** A party animal busy with a berry: walking to it, or eating it (eatLeft counts down). */
+/** A party animal busy with a berry she fed it: walking to it, or eating it (eatLeft counts down). */
 export interface Feeding { berry: number; eating: boolean; eatLeft: number }
 
 export interface Evolving { from: Level; to: Level; /** game time of the bar line it evolves on */ at: number; /** when it began */ since: number }
@@ -47,7 +51,12 @@ export interface BerryState {
   /** Berries eaten towards the next level, per creature. */
   fed: Map<number, number>;
   feeding: Map<number, Feeding>;
+  /** Berries queued after the one it's on, per creature, in order (Ed, 2026-11-03: each press of the sigil button queues one more). Made
+   *  at the first queued; game state, so lockstep play and a guest's queue replay alike. */
+  queue?: Map<number, number[]>;
   evolving: Map<number, Evolving>;
+  /** Follower buffs (rules/buffs.ts): each adult's berry pips, as seconds of buff left (none kept yet: buffs.pips.start). */
+  pips?: Map<number, number>;
   /** Game time each creature last ate (for the view's progress ring). */
   ateAt: Map<number, number>;
   events: BerryEvent[];
@@ -75,15 +84,76 @@ export const toEvolve = (level: Level, t: Tuning, species?: string): number => {
   const C = t.berries.cost;
   return Math.max(1, Math.round(strengthGain(level, species, t) / C.per));
 };
-/** Who may eat berries: party animals that aren't legends (and aren't already evolving). */
-/** Whether a party animal goes for berries: not mid-fight or evolving; still able to evolve
- *  (below adult), or hurt (a berry heals it to full, Ed 2026-10-04: so a hurt one wants one whatever its level). */
-export const canEat = (c: Creature, s: BerryState): boolean => c.leashed && !c.travelling && !s.evolving.has(c.id) && !c.fight?.target && (c.level < TOP_LEVEL || hurtNow(c));
 const hurtNow = (c: Creature) => !!c.drops; // (its 💧s: rules/orbit.ts)
-/** Whether its next berry would make it an adult (Ed, 2026-10-27: adults are strong and heavy, she can't fly with one, so "a youth
- *  eats up until it's one berry away from adult, and that last berry has to be manual"): following her, it leaves that berry,
- *  hurt or not; only at a sigil she's put down does it eat it. */
-export const lastBerry = (c: Creature, s: BerryState, t: Tuning): boolean => c.level > 0 && c.level < TOP_LEVEL && (s.fed.get(c.id) ?? 0) + 1 >= toEvolve(c.level, t, c.species);
+
+/** The feeding knobs (berries.feed), with their first values for an older tuning. */
+export const feedKnobs = (t: Tuning): { reach: number; speed: number; hold: number } => t.berries.feed ?? { reach: 15, speed: 1, hold: 0.3 };
+
+/** How many berries a party animal could eat now, before any queued (Ed, 2026-11-03: "not full"): a youth's or a baby's to finish its
+ *  growing, an adult's to its most pips (rules/buffs.ts), and one more if it's hurt (that berry heals it and counts for nothing else);
+ *  none for a legend, one evolving, or one not hers. */
+export function feedRoom(c: Creature, s: BerryState, t: Tuning): number {
+  if (!c || c.gone || !c.leashed || c.boss || c.partyLegend || c.level >= LEGEND || s.evolving.has(c.id)) return 0;
+  const hurt = hurtNow(c) ? 1 : 0;
+  if (c.level < TOP_LEVEL) return hurt + Math.max(0, Math.ceil(toEvolve(c.level, t, c.species) - (s.fed.get(c.id) ?? 0)));
+  const P = t.buffs?.pips;
+  return hurt + (P && wantsPip(c, s, t) ? Math.max(0, P.max - pipCount(pipFuel(s, c.id, t), t)) : 0);
+}
+/** Berries queued for it: the one it's on and those after. */
+export const queuedFor = (s: BerryState, id: number): number => (s.feeding.has(id) ? 1 : 0) + (s.queue?.get(id)?.length ?? 0);
+/** Whether a press would queue it one more: it has room left after what's queued. */
+export const hasRoom = (c: Creature, s: BerryState, t: Tuning): boolean => feedRoom(c, s, t) - queuedFor(s, c.id) > 0;
+/** Who may eat berries at all now (the debug key, B): a party animal with room. */
+export const canEat = (c: Creature, s: BerryState, t: Tuning): boolean => feedRoom(c, s, t) > 0;
+
+/** The nearest berry no one has taken within `reach` metres of (x, z), or null. */
+export function nearestBerry(s: BerryState, x: number, z: number, reach: number): Berry | null {
+  let best: Berry | null = null, bd = reach * reach;
+  for (const b of s.berries) {
+    if (b.claimedBy !== null || b.gone) continue;
+    const p = s.bushes[b.bush];
+    if (Math.abs(p.x - x) > reach || Math.abs(p.z - z) > reach) continue;
+    const d = (p.x - x) ** 2 + (p.z - z) ** 2;
+    if (d <= bd) { bd = d; best = b; }
+  }
+  return best;
+}
+
+/** The berry a press would queue for `c` with her at (x, z): the nearest un-taken one within berries.feed.reach of her, while it has
+ *  room; else null. (The view makes this one glow brighter, the key over it: render/feedTag.ts.) */
+export const feedTarget = (s: BerryState, c: Creature | undefined, x: number, z: number, t: Tuning): Berry | null =>
+  c && hasRoom(c, s, t) ? nearestBerry(s, x, z, feedKnobs(t).reach) : null;
+
+/** A press of the sigil button feeding `c` (her at x, z): one more berry queued for it, taken, if there's one in reach and it has room.
+ *  Returns it, or null. */
+export function queueBerry(s: BerryState, c: Creature, x: number, z: number, time: number, t: Tuning): Berry | null {
+  const b = feedTarget(s, c, x, z, t);
+  if (!b) return null;
+  b.claimedBy = c.id;
+  if (!s.feeding.has(c.id)) s.feeding.set(c.id, { berry: b.id, eating: false, eatLeft: 0 });
+  else { const q = (s.queue ??= new Map()), l = q.get(c.id); if (l) l.push(b.id); else q.set(c.id, [b.id]); }
+  const p = s.bushes[b.bush];
+  s.events.push({ kind: "claimed", id: c.id, x: p.x, z: p.z, at: time });
+  return b;
+}
+
+/** Its queue cancelled (a knockdown, Ed 2026-11-03; or it can't go on): the berry it's on and those after let go. */
+export function cancelFeeding(s: BerryState, id: number): void {
+  const f = s.feeding.get(id);
+  if (f) { const b = s.berries[f.berry]; if (b?.claimedBy === id) b.claimedBy = null; s.feeding.delete(id); }
+  const l = s.queue?.get(id);
+  if (l) { for (const bid of l) { const b = s.berries[bid]; if (b?.claimedBy === id) b.claimedBy = null; } s.queue!.delete(id); }
+}
+
+/** The next berry of its queue (still there and still its), else it's done. */
+function nextQueued(s: BerryState, id: number): void {
+  const l = s.queue?.get(id);
+  while (l?.length) {
+    const bid = l.shift()!, b = s.berries[bid];
+    if (b && !b.gone && b.claimedBy === id) { s.feeding.set(id, { berry: bid, eating: false, eatLeft: 0 }); break; }
+  }
+  if (l && !l.length) s.queue!.delete(id);
+}
 
 /** The berry bushes and the berries on them, from the seed: in every area of the playable map,
  *  berries.bushesPerArea bushes at spots a bush may grow (in its own area, not on a path or in a
@@ -143,31 +213,6 @@ function regrow(s: BerryState, b: Berry): void {
   b.claimedBy = null;
 }
 
-/** How far (x, z) is from the line from a to b. */
-function offPath(x: number, z: number, ax: number, az: number, bx: number, bz: number): number {
-  const vx = bx - ax, vz = bz - az, l2 = vx * vx + vz * vz;
-  const k = l2 > 0 ? Math.max(0, Math.min(1, ((x - ax) * vx + (z - az) * vz) / l2)) : 0;
-  return Math.hypot(x - ax - vx * k, z - az - vz * k);
-}
-
-/** The nearest unclaimed berry a party animal at (x, z), leashed at lp, would go for (Ed, v233): one
- *  on its way, within berries.detour of the line from it to its leash point (where it's heading), or
- *  of the leash point itself; and never beyond its leash's length (plus the detour) from that point. */
-function berryFor(s: BerryState, x: number, z: number, lp: { x: number; z: number }, t: Tuning): Berry | null {
-  const D = t.berries.detour, reach = t.leash.length + D;
-  let best: Berry | null = null, bd = Infinity;
-  for (const b of s.berries) {
-    if (b.claimedBy !== null || b.gone) continue;
-    const p = s.bushes[b.bush];
-    if (Math.abs(p.x - x) > reach * 2 || Math.abs(p.z - z) > reach * 2) continue;
-    if (Math.hypot(p.x - lp.x, p.z - lp.z) > reach || offPath(p.x, p.z, x, z, lp.x, lp.z) > D) continue;
-    const d = (p.x - x) ** 2 + (p.z - z) ** 2;
-    if (d < bd) { bd = d; best = b; }
-  }
-  return best;
-}
-
-/** Let go of a creature's claim (pulled away, or no longer a party animal). */
 /** A growth spurt (a flask drunk, Ed 2026-10-18: "all creatures following you become adults"): each of these party animals
  *  younger than an adult becomes one at once (the evolving's flash and burst on the next step, as a berry's evolving ends);
  *  any berry it had is let go. Returns how many grow. */
@@ -176,16 +221,11 @@ export function growthSpurt(s: BerryState, creatures: Creature[], ids: readonly 
   for (const id of ids) {
     const c = creatures[id];
     if (!c || c.gone || c.boss || c.level >= 2) continue;
-    release(s, id); s.fed.set(id, 0);
+    cancelFeeding(s, id); s.fed.set(id, 0);
     s.evolving.set(id, { from: c.level, to: 2 as Level, at: time, since: time });
     n++;
   }
   return n;
-}
-
-function release(s: BerryState, id: number): void {
-  const f = s.feeding.get(id);
-  if (f) { const b = s.berries[f.berry]; if (b.claimedBy === id) b.claimedBy = null; s.feeding.delete(id); }
 }
 
 /** Count one berry eaten; at the threshold, start evolving on the next bar line. */
@@ -193,6 +233,7 @@ export function feed(s: BerryState, c: Creature, time: number, t: Tuning, clock?
   // A berry heals a party animal to full (Ed, 2026-10-04), as well as counting toward evolving.
   // (Ed, 2026-10-28: one berry takes all its 💧s, and counts toward growing up only when it had none)
   if (c.leashed && hurtNow(c)) { heal(c, time); return; }
+  if (c.level === TOP_LEVEL && !c.boss) { addPip(s, c.id, t); s.ateAt.set(c.id, time); return; } // (an adult's berry: a buff pip, rules/buffs.ts)
   if (c.level >= TOP_LEVEL || s.evolving.has(c.id)) return;
   const n = (s.fed.get(c.id) ?? 0) + 1;
   s.ateAt.set(c.id, time);
@@ -201,30 +242,17 @@ export function feed(s: BerryState, c: Creature, time: number, t: Tuning, clock?
     // a whole bar of build-up, then the bar line (on the beat clock when there is one)
     const at = clock ? timeAt(clock, (Math.floor(beatAt(clock, time) / 4) + 2) * 4) : (Math.floor(time / ((60 / t.beat.bpm) * 4)) + 2) * ((60 / t.beat.bpm) * 4);
     s.evolving.set(c.id, { from: c.level, to: (c.level + 1) as Level, at, since: time });
-    release(s, c.id);
+    cancelFeeding(s, c.id);
     s.events.push({ kind: "evolving", id: c.id, x: c.x, z: c.z, at: time });
   } else s.fed.set(c.id, n);
 }
 
-/** One step. `leashPointOf` says where each party animal's leash is fixed (the witch, or its
- *  sigil); a feeding animal is moved here (the leash leaves it alone while it has a berry). */
-/** The nearest unclaimed berry within `reach` metres of a baby's placed sigil at (sx, sz) (Ed, 2026-10-11: a baby eats only there). */
-export function babyBerry(s: BerryState, sx: number, sz: number, reach: number): Berry | null {
-  let best: Berry | null = null, bd = reach * reach;
-  for (const b of s.berries) {
-    if (b.claimedBy !== null || b.gone) continue;
-    const p = s.bushes[b.bush], d = (p.x - sx) ** 2 + (p.z - sz) ** 2;
-    if (d <= bd) { bd = d; best = b; }
-  }
-  return best;
-}
-
-/** One step. `leashPointOf` says where each party animal's leash is fixed (the witch, or its
- *  sigil); a feeding animal is moved here (the leash leaves it alone while it has a berry). `sigilOf` says where its
- *  sigil lies when it's put down (null while it follows her): a baby eats only then (Ed, 2026-10-11). */
-export function stepBerries(s: BerryState, creatures: Creature[], leashPointOf: (id: number) => { x: number; z: number } | null, time: number, dt: number, t: Tuning, clock?: BeatClock, sigilOf?: (id: number) => { x: number; z: number } | null): void {
+/** One step: animals evolving on their bar lines, and each fed one walking to the berry it's on, eating it, then on to the next it has
+ *  queued; done, it goes back to its leash point (her, or its sigil: rules/leash.ts moves it, the berries leave it then). `leashPointOf`
+ *  says where each one's leash is fixed; one whose berry has fallen beyond her chain from there gives up its queue. */
+export function stepBerries(s: BerryState, creatures: Creature[], leashPointOf: (id: number) => { x: number; z: number } | null, time: number, dt: number, t: Tuning, clock?: BeatClock): void {
   s.events = [];
-  const B = t.berries;
+  const B = t.berries, F = feedKnobs(t), far = Math.max(chainLength(t), F.reach + t.leash.length);
   // Evolving: on its bar line, it goes up a level (and stays a party animal, legends too).
   for (const [id, e] of s.evolving) if (time >= e.at) {
     const c = creatures[id];
@@ -233,14 +261,14 @@ export function stepBerries(s: BerryState, creatures: Creature[], leashPointOf: 
     s.evolving.delete(id);
     s.events.push({ kind: "evolved", id, x: c.x, z: c.z, at: time });
   }
-  // Animals busy with a berry: give it up if pulled away or no longer a party animal; else walk to it and eat it.
+  // Animals fed a berry: walk to it at their own pace (Ed, 2026-11-03: not much faster than they travel), eat it, then the next queued.
   for (const [id, f] of s.feeding) {
     const c = creatures[id], b = s.berries[f.berry], p = s.bushes[b.bush], lp = leashPointOf(id);
-    if (!canEat(c, s) || !lp || b.gone || Math.hypot(p.x - lp.x, p.z - lp.z) > t.leash.length + B.detour * 2 || (sigilOf && (c.level === 0 || lastBerry(c, s, t)) && !sigilOf(id))) { release(s, id); continue; } // left behind (or a baby, or a youth one short of adult, taken up again)
+    if (!c || c.gone || !c.leashed || s.evolving.has(id) || b.gone || b.claimedBy !== id || !lp || Math.hypot(p.x - lp.x, p.z - lp.z) > far) { cancelFeeding(s, id); continue; }
     const dx = p.x - c.x, dz = p.z - c.z + 0.6, d = Math.hypot(dx, dz); // it stands just in front of the bush
     if (!f.eating) {
       if (d > 0.3) {
-        const speed = leashSpeed(c, t), step = Math.min(d, speed * dt); // at its leash pace, not its idle amble (Ed, v233)
+        const speed = leashSpeed(c, t) * F.speed, step = Math.min(d, speed * dt);
         c.x += (dx / d) * step; c.z += (dz / d) * step;
         if (Math.abs(dx) > 0.02) c.facing = dx > 0 ? 1 : -1;
         c.away = dz < -0.3 && Math.abs(dz) > Math.abs(dx);
@@ -258,33 +286,17 @@ export function stepBerries(s: BerryState, creatures: Creature[], leashPointOf: 
       const q = s.bushes[b.bush];
       s.events.push({ kind: "regrew", id: b.id, x: q.x, z: q.z, at: time });
       feed(s, c, time, t, clock);
-      c.rest = 0.6; c.away = false; // a moment's pause, then back to following or dancing
+      c.rest = 0.6; c.away = false; // a moment's pause, then the next, or back to following or its sigil
+      if (!s.evolving.has(id) && feedRoom(c, s, t) > 0) nextQueued(s, id); else cancelFeeding(s, id);
     }
-  }
-  // Party animals with nothing to do take a berry on their way.
-  for (const c of creatures) {
-    if (!canEat(c, s) || s.feeding.has(c.id)) continue;
-    const lp = leashPointOf(c.id);
-    if (!lp) continue;
-    // A baby eats only at its placed sigil, a berry within berries.babyReach of it; following her, never (Ed, 2026-10-11).
-    const sg = sigilOf && c.level === 0 ? sigilOf(c.id) : null;
-    if (sigilOf && c.level === 0 && !sg) continue;
-    // A youth one berry short of adult eats that last one only at a sigil she's put down; following her, it leaves it (lastBerry).
-    if (sigilOf && lastBerry(c, s, t) && !sigilOf(c.id)) continue;
-    const b = sg ? babyBerry(s, sg.x, sg.z, B.babyReach ?? 10) : berryFor(s, c.x, c.z, lp, t);
-    if (!b) continue;
-    const p = s.bushes[b.bush];
-    b.claimedBy = c.id;
-    s.feeding.set(c.id, { berry: b.id, eating: false, eatLeft: 0 });
-    s.events.push({ kind: "claimed", id: c.id, x: p.x, z: p.z, at: time });
   }
 }
 
 /** Debug: the nearest party animal to (x, z) eats a berry at once (it must be one that can eat). */
 export function feedNearest(s: BerryState, creatures: Creature[], x: number, z: number, time: number, t: Tuning, clock?: BeatClock): Creature | null {
   let best: Creature | null = null, bd = Infinity;
-  for (const c of creatures) if (canEat(c, s)) { const d = Math.hypot(c.x - x, c.z - z); if (d < bd) { bd = d; best = c; } }
-  if (best) { release(s, best.id); feed(s, best, time, t, clock); s.events.push({ kind: "ate", id: best.id, x: best.x, z: best.z, at: time }); }
+  for (const c of creatures) if (canEat(c, s, t)) { const d = Math.hypot(c.x - x, c.z - z); if (d < bd) { bd = d; best = c; } }
+  if (best) { cancelFeeding(s, best.id); feed(s, best, time, t, clock); s.events.push({ kind: "ate", id: best.id, x: best.x, z: best.z, at: time }); }
   return best;
 }
 
@@ -309,7 +321,7 @@ export function growRing(s: BerryState, x: number, z: number, n: number, radius:
   s.harvest.forEach((id, i) => {
     const b = s.berries[id], p = s.bushes[b.bush], a = (i / s.harvest!.length) * Math.PI * 2 - Math.PI / 2;
     // (an animal on its way to one where it was lets it go: it's moved)
-    if (b.claimedBy !== null) { const f = s.feeding.get(b.claimedBy); if (f && f.berry === id) s.feeding.delete(b.claimedBy); b.claimedBy = null; }
+    if (b.claimedBy !== null) cancelFeeding(s, b.claimedBy);
     p.x = x + Math.cos(a) * radius; p.z = z + Math.sin(a) * radius;
     b.gone = false; s.onBush[b.bush] = id;
     s.events.push({ kind: "regrew", id, x: p.x, z: p.z, at: time });

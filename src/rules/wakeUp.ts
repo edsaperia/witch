@@ -15,12 +15,13 @@
 // itself (the page's endDream) or any key or move is pressed, her phone's alarm goes off and the wake-up goes on as ever.
 import type { Controls, Game, Witch } from "./game";
 import { castPartySpell } from "./party";
+import { wakeInBedroom } from "./opening"; // (tuckIn)
 import { recordTempo } from "./beat";
 import { deckOf } from "./treehouse";
-import { floorHats, hatSlots, HOUSE_ROOMS, objectAt, objectFront, objectWorld, reserveHatPoints } from "./houseRooms";
+import { floorHats, hatSlots, hatsOnFloor, HOUSE_ROOMS, objectAt, objectFront, objectWorld, reserveHatPoints } from "./houseRooms";
 import { placementFacing } from "./housePlacement";
 import { bedside } from "./opening";
-import { pileOut, PILE_SLOTS, type PileSlot } from "./clothesPile";
+import { pileOut, PILE_SLOTS, isDressingTable, type PileSlot } from "./clothesPile";
 
 export type WakeBeat = /** asleep, dreaming (finds on loan) */ "dream" | "alarm" | "snooze" | "stretch" | "up";
 /** Something that happened this step, for the page (its sound and cards). */
@@ -30,6 +31,8 @@ export interface WakeState {
   /** Explicit guest wake routing; absent on the unchanged host-default path. */
   player?: number;
   room?: string;
+  /** Actual last-slept bed; room above retains the arrival bedroom assignment. */
+  bed?: string;
   beat: WakeBeat;
   /** When the beat began (her clock). */
   at: number;
@@ -65,8 +68,11 @@ export const bedFor = (room: string) => HOUSE_ROOMS.objects.find(o => o.id === `
 export const homeBed = () => HOUSE_ROOMS.objects.find(o => o.id === "bed");
 
 /** The bed's middle, a little toward its head along its original local x axis. */
-function inBed(g: Game, bed = homeBed()): { x: number; z: number } | null {
-  return bed ? objectWorld(bed, g.map.treehouse, bed.w * 0.15, 0) : null;
+function inBed(g: Game, bed = homeBed(), W?: Witch): { x: number; z: number } | null {
+  if (!bed) return null;
+  const sharing = W ? g.witches.filter(w => w === W || w.house?.lastBed === bed.id).sort((a, b) => a.id - b.id) : [];
+  const across = W ? (sharing.indexOf(W) - (sharing.length - 1) / 2) * bed.d * .18 : 0;
+  return objectWorld(bed, g.map.treehouse, bed.w * .15, across);
 }
 
 /** Start the wake-up (the dive's landing, or a night after the bed; rules/opening.ts wakeInBedroom having put her in the bedroom):
@@ -78,17 +84,18 @@ function inBed(g: Game, bed = homeBed()): { x: number; z: number } | null {
 export const wakeOf = (g: Game, W: Witch = g.witches[0]): WakeState | undefined => W === g.witches[0] ? g.wake : W.wake;
 
 export interface WakeStart { dreaming?: boolean; mirrored?: boolean; yesterday?: boolean }
-export interface WakeTarget { player: number; room: string }
+export interface WakeTarget { player: number; room: string; bed?: string }
 /** Caller-selected player/room only: no equipment creation, room unlock or page/camera effects. */
 export function startWakeFor(g: Game, ht: number, options: WakeStart, W: Witch, target: WakeTarget): boolean {
-  const bed = bedFor(target.room);
+  const bed = target.bed ? HOUSE_ROOMS.objects.find(o => o.id === target.bed && o.use.kind === "bed") : bedFor(target.room);
   if (!Number.isInteger(target.player) || g.witches[target.player] !== W || !bed || !HOUSE_ROOMS.rooms.some(q => q.id === target.room)) return false;
-  const at = inBed(g, bed);
+  const at = inBed(g, bed, W);
   if (!at) return false;
   const { dreaming = false, mirrored = false, yesterday = false } = options;
   const placement = bed.placement;
   W.body = { ...W.body, x: at.x, z: at.z, vx: 0, vz: 0, seated: false, perch: true, mode: "ground", lift: 0, ...placementFacing(placement ? placement.rotation - placement.baseRotation : 0) };
   const wake: WakeState = { player: target.player, room: target.room, beat: dreaming ? "dream" : "alarm", at: ht, snoozes: 0, open: false, mirror: mirrored, events: [], pile: [...PILE_SLOTS], ...(yesterday ? { yesterday } : {}) };
+  if (target.bed) wake.bed = target.bed;
   if (W === g.witches[0]) g.wake = wake; else W.wake = wake;
   if (!yesterday) hatOnFloor(g, ht, W);
   return true;
@@ -97,8 +104,31 @@ export function startWakeFor(g: Game, ht: number, options: WakeStart, W: Witch, 
 function bedsideFor(g: Game, W: Witch): { x: number; z: number } | null {
   const room = wakeOf(g, W)?.room;
   if (room === undefined) return bedside(g);
-  const bed = bedFor(room), deck = deckOf(g.map, g.tuning);
+  const id = wakeOf(g, W)?.bed;
+  const bed = id ? HOUSE_ROOMS.objects.find(o => o.id === id && o.use.kind === "bed") : bedFor(room), deck = deckOf(g.map, g.tuning);
   return bed && deck?.house?.rooms ? objectFront(bed, g.map.treehouse, 1.4) : null;
+}
+
+/** Reuse the normal alarm/stretch at the actual slept-in bed, without changing arrival assignment. */
+export function startWakeInLastBed(g: Game, ht: number, options: WakeStart, W: Witch = g.witches[0]): boolean {
+  const bed = HOUSE_ROOMS.objects.find(o => o.id === W.house?.lastBed && o.use.kind === "bed");
+  if (!bed) return false;
+  const previous = wakeOf(g, W), room = previous?.room ?? bed.room;
+  if (!startWakeFor(g, ht, options, W, { player: W.id, room, bed: bed.id })) return false;
+  W.house!.slept = false; delete W.house!.bedFrom;
+  return true;
+}
+
+/** Reuse the normal bed pose, separating shared sleepers within the same bed footprint. */
+export function settleSleepingBed(g: Game, W: Witch, id: string, ht: number): void {
+  const bed = HOUSE_ROOMS.objects.find(o => o.id === id && o.use.kind === "bed"); if (!bed || !W.house?.slept) return;
+  W.house.lastBed = id;
+  for (const sleeper of g.witches.filter(w => w.house?.slept && w.house.lastBed === id)) {
+    const before = wakeOf(g, sleeper);
+    if (startWakeFor(g, ht, { yesterday: true, mirrored: before?.mirror }, sleeper, { player: sleeper.id, room: before?.room ?? bed.room, bed: id })) {
+      const wake = wakeOf(g, sleeper)!; wake.beat = "snooze";
+    }
+  }
 }
 
 export function startWake(g: Game, ht: number, { dreaming = false, mirrored = false, yesterday = false }: WakeStart = {}, W: Witch = g.witches[0]): boolean {
@@ -116,15 +146,60 @@ export function startWake(g: Game, ht: number, { dreaming = false, mirrored = fa
  *  head; picked up there, it's on (rules/houseRooms.ts useHats; rules/game.ts takes it out of what she has still to put on). No
  *  hat at all (the creator's "none": rules/hat.ts has), or no hats' floor, nothing. */
 function hatOnFloor(g: Game, ht: number, W: Witch): void {
+  const p = firstHatSpot(g, W, floorHats);
+  if (!p) return;
+  W.hat.down = { x: p.x, z: p.z, at: ht }; delete W.hat.hold;
+  reserveHatPoints(W, g.map.treehouse);
+}
+/** Where the first morning's hat lies (hatOnFloor): null, on her head (no hat, no hats' floor, or every point on it taken). `hats`:
+ *  the hats' floor's hats, laid out (floorHats) or as they'd be (hatsOnFloor, which changes nothing: firstMorning). */
+function firstHatSpot(g: Game, W: Witch, hats: (W: Witch) => string[]): { x: number; z: number } | null {
   // (Ed's arrangement has no hats' floor, Ed, 2026-11-02: on the first free spawn point)
   const o = HOUSE_ROOMS.objects.find(q => q.use.kind === "hats");
   const slots = HOUSE_ROOMS.layout ? hatSlots(g.map.treehouse) : [];
-  if ((!o && !slots.length) || !W.hat.has) return;
-  const hats = slots.length ? floorHats(W) : [];
-  const free = hats.findIndex(id => !id), p = free >= 0 ? slots[free] : o ? objectWorld(o, g.map.treehouse) : null;
-  if (!p) return; // (every point taken: on her head, as with no hats' floor)
-  W.hat.down = { x: p.x, z: p.z, at: ht }; delete W.hat.hold;
-  reserveHatPoints(W, g.map.treehouse);
+  if ((!o && !slots.length) || !W.hat.has) return null;
+  const laid = slots.length ? hats(W) : [];
+  const free = laid.findIndex(id => !id);
+  return free >= 0 ? slots[free] : o ? objectWorld(o, g.map.treehouse) : null;
+}
+
+/** A game's first morning as startWake (without `yesterday`) will start it, read ahead and changing nothing: every piece of her
+ *  outfit still to put on, and her hat lying on the hats' floor or not. The page makes her art in it with the start's own, so the
+ *  first frame after the loading screen draws her in her nightie (main.ts; Ed, 2026-11-03: "after the loading screen I look at the
+ *  bed and see the witch in her default clothes instead of in her nightie, and then after a second or two she's in her nightie"). */
+export function firstMorning(g: Game, W: Witch = g.witches[0]): { pile: PileSlot[]; hatLying: boolean } {
+  return { pile: [...PILE_SLOTS], hatLying: !!firstHatSpot(g, W, hatsOnFloor) };
+}
+
+/** A morning after a night played (a sail's landing, or the bed's next night: startWake with `yesterday`), read ahead before that
+ *  night is even made, so the page can make her art in it while the chart flies or she sleeps (main.ts showLook): every piece of
+ *  last night's outfit in the pile by her bed, her hat among them (not lying anywhere: she's drawn without it, clothesPile.ts
+ *  wornGenome), so her nightie. The same as the wake-up's own look when it starts, so she's drawn in it from the first frame she's
+ *  seen in her bed, as on a first morning (firstMorning; after a sail she'd landed in last night's clothes, the nightie asked for
+ *  only as the wake-up started). */
+export function morningAfter(): { pile: PileSlot[]; hatLying: boolean } {
+  return { pile: [...PILE_SLOTS], hatLying: false };
+}
+
+/** Her put in her bed, as the wake-up has her (startWake's place and facing, as it puts her there); false (nothing changed) without
+ *  her bed. */
+function intoBed(g: Game, W: Witch): boolean {
+  const at = inBed(g);
+  if (!at) return false;
+  const placement = homeBed()?.placement;
+  W.body = { ...W.body, x: at.x, z: at.z, vx: 0, vz: 0, seated: false, perch: true, mode: "ground", lift: 0, ...placementFacing(placement ? placement.rotation - placement.baseRotation : 0) };
+  return true;
+}
+
+/** Put to bed for a morning still to come (a sail's dive, main.ts bedFirst; the bed's next night as it's made): in her bed, where and
+ *  as startWake will have her, and the camera settled on her there (rules/opening.ts wakeInBedroom's), so nothing moves as the
+ *  wake-up starts: the dive's last shot is the game's camera as it lands (app/arrive.ts), with no ease across her room after (she was
+ *  put beside the bed, the camera settled there, then moved into it as the wake-up started, the camera following her 3 m and more).
+ *  False (nothing changed) without the house's bedroom. */
+export function tuckIn(g: Game, W: Witch = g.witches[0]): boolean {
+  const at = inBed(g);
+  if (!at) return false;
+  return wakeInBedroom(g, W, at) && intoBed(g, W);
 }
 
 /** The dream's over (the page's: it played to its end, or a key was pressed while the next island was still being made): her
@@ -150,7 +225,7 @@ export function stepWake(g: Game, c: Controls, ht: number, K: WakeTuning, W: Wit
     // first time she's at it; then out to her decks
     const d = deckOf(g.map, g.tuning), here = d ? objectAt(d, W.body.x, W.body.z) : null;
     if (press && pileOut(w) && here?.use.kind === "pile") { w.pile = []; w.events.push("dressed"); return used; }
-    if (!w.mirror && here?.id === "dressingTable") { w.mirror = true; w.events.push("mirror"); }
+    if (!w.mirror && isDressingTable(here?.id)) { w.mirror = true; w.events.push("mirror"); }
     if (g.party.spellAt !== null) return c;
     // (her bed before the party: held, she sleeps and the night counts as lost, as the bed after a loss does; main.ts "slept": Ed,
     // 2026-10-26, Q-e. Sleeping again and again till tonight's find in the sky is one she wants is fine: Ed)

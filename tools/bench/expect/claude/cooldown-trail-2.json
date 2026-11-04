@@ -1,0 +1,7 @@
+{
+  "reason": "her trail's buffer is now its first dotted section in her preset's first colour (no ribbon of glow in the area's colour), and the trail is depth-tested behind the scenery as she is, with a little more glow (trail.steps; render/trail.ts); the rules are unchanged",
+  "frames": {
+    "boot": "wherever she moves in the scene, her trail's first section as coloured pixel dots instead of the area-coloured glow",
+    "wave-fight": "the same, and her counter's sections behind it, hidden where the scenery stands in front"
+  }
+}

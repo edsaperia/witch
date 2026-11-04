@@ -2,14 +2,17 @@
 // the Terrace and out along every branch, kept in by its edge (no room locked since Ed, 2026-11-03), each object's E, the hats' floor, and the bed.
 import { describe, expect, it } from "vitest";
 import { TUNING } from "./tuning";
-import { newGame as fullGame, stepGame, STEP, type Controls, type Game } from "./game";
+import { stepGame, STEP, type Controls, type Game } from "./game";
 import { smallWorld } from "../test/worlds";
-const newGame = smallWorld(fullGame, "Room walls, furniture, doors and Terrace landings use one house's layout, independent of island extent.");
+const newGame = smallWorld(preppedGame, "Room walls, furniture, doors and Terrace landings use one house's layout, independent of island extent.");
 import { deckOf, keepInHouse, onFloor, onTerrace } from "./treehouse";
 import { HOUSE_ROOMS, floorHats, fromPlan, hatSlots, hatToTake, objectAt, objectFront, objectWorld, toPlan } from "./houseRooms";
 import { field, inRoom } from "../../config/house/shape.js";
 import { wearing } from "./hat";
 import { endParty } from "./partyOver";
+import { preppedGame } from "../test/preppedGame"; // (games on a map made once a file from its prep)
+import { houseObjectFor } from "./guestFurniture";
+import { stationOf } from "./stations";
 
 const idle: Controls = { moveX: 0, moveZ: 0, toggleMode: false, zoom: 0, autoTalk: false };
 const deck = (g: Game) => deckOf(g.map, g.tuning)!;
@@ -141,7 +144,7 @@ describe("the oak's rooms", () => {
     const cool = structuredClone(W.cool);
     const rise = (x: number, z: number) => {
       W.body = { ...W.body, x: d.x + x, z: d.z + z, vx: 0, vz: 0, perch: true, mode: "ground", lift: 0 };
-      W.cool = structuredClone(cool); W.landedAt = undefined; // (no rise cooldown between tries)
+      W.cool = structuredClone(cool); W.landedAt = undefined; W.body.perchCool = undefined; // (no rise cooldown between tries, nor the treehouse's landing one)
       stepGame(g, { ...idle, toggleMode: true }, STEP); for (let i = 0; i < 0.2 / STEP; i++) stepGame(g, idle, STEP);
       return W.body.mode;
     };
@@ -264,13 +267,14 @@ describe("the oak's rooms", () => {
     }
   });
 
-  it("the other bedrooms keep their placeholders under dust sheets (Ed, 2026-11-03: \"open and usable in solo, but still have dust sheets on the furniture\"): a bare bed, a sheeted wardrobe and chest, crates; no station, E only says they wait for their witch", () => {
+  it("the other bedrooms' furniture waits under dust sheets in solo (Ed, 2026-11-03: \"open and usable in solo, but still have dust sheets on the furniture\"): a bed, wardrobe and dressing table that work on a visit (rules/guestFurniture.ts), crates; no station, E only says they wait for their witch", () => {
     for (const id of ["bedroom2", "bedroom3"]) {
       const mine = HOUSE_ROOMS.objects.filter(o => o.room === id);
-      expect(mine.map(o => o.id).sort(), id).toEqual(["Bed", "Chest", "Crates", "Wardrobe"].map(k => id + k));
+      expect(mine.map(o => o.id).sort(), id).toEqual(["Bed", "Crates", "DressingTable", "Wardrobe"].map(k => id + k));
       for (const o of mine) {
-        expect(o.use, o.id).toEqual({ kind: "say", line: "Waiting for its witch." });
         const g = inHouse(0, 0), at = before(o); put(g, at.x, at.z);
+        expect(houseObjectFor(g, o).use, o.id).toEqual({ kind: "say", line: "Waiting for its witch." });
+        expect(stationOf(g, null)?.id, `${o.id}: no station`).not.toBe(o.id);
         expect(press(g).find(e => e.kind === "house")?.obj, `${o.id}: E there says its line`).toBe(o.id);
       }
     }
@@ -280,7 +284,8 @@ describe("the oak's rooms", () => {
     const d = deck(newGame(7, TUNING));
     for (const o of HOUSE_ROOMS.objects) {
       // (her bed in the corridor up to the Turret, Ed 2026-10-26: "it can go in the corridor": on the house's floor, not a room's)
-      for (const [dx, dz] of [[0, 0], [-1, -1], [1, -1], [1, 1], [-1, 1]]) expect(o.use.kind === "bed" ? field(S, o.x + (dx * o.w) / 2, o.z + (dz * o.d) / 2, true) : inRoom(S, o.room, o.x + (dx * o.w) / 2, o.z + (dz * o.d) / 2), `${o.id}: on ${o.room}'s floor`).toBeLessThan(0.6);
+      // (only her own bed stands in a corridor; the guests' beds in their rooms)
+      for (const [dx, dz] of [[0, 0], [-1, -1], [1, -1], [1, 1], [-1, 1]]) expect(o.id === "bed" ? field(S, o.x + (dx * o.w) / 2, o.z + (dz * o.d) / 2, true) : inRoom(S, o.room, o.x + (dx * o.w) / 2, o.z + (dz * o.d) / 2), `${o.id}: on ${o.room}'s floor`).toBeLessThan(0.6);
       const f = before(o), k = keepInHouse(d, d.x + f.x, d.z + f.z);
       expect(Math.hypot(k.x - d.x - f.x, k.z - d.z - f.z), `${o.id}: in front of it is floor`).toBeLessThan(0.05);
       expect(objectAt(d, d.x + f.x, d.z + f.z)?.id, `${o.id}: in reach from in front`).toBe(o.id);

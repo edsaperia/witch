@@ -44,3 +44,23 @@ export class NewBuildNotice {
     this.el.classList.toggle("on", want);
   }
 }
+
+/** The newest deploy for a fresh game (Ed, 2026-11-03: "a link that always starts a fresh game with the latest version"): as it boots,
+ *  ?fresh reads version.json (never from a cache) and, if a newer build is up than the one running (index.html cached by the browser,
+ *  up to Pages' ten minutes), gives the link to load instead: this one with ?latest=<its number>, a URL no cache holds, and ?fresh=1
+ *  again if this page began the fresh game (`restart`). Once at most: a link with ?latest gets none (null), whatever version.json says,
+ *  so a CDN still serving the old page can't loop. Null too for a local build, the latest, or no answer within `wait` ms. */
+export async function latestBuildLink(mine: string, href: string, opts: { restart?: boolean; url?: string; wait?: number; fetcher?: (url: string, init: RequestInit) => Promise<Pick<Response, "ok" | "json">> } = {}): Promise<string | null> {
+  const link = new URL(href);
+  if (buildNumber(mine) === null || link.searchParams.has("latest")) return null;
+  const { url = "version.json", wait = 3000, fetcher = fetch } = opts;
+  let timer: ReturnType<typeof setTimeout> | undefined;
+  const late = new Promise<null>(resolve => { timer = setTimeout(() => resolve(null), wait); });
+  const read = fetcher(`${url}?t=${Date.now()}`, { cache: "no-store" }).then(r => (r.ok ? r.json() : null)).then((v: { version?: unknown } | null) => (typeof v?.version === "string" ? v.version : null)).catch(() => null);
+  const latest = await Promise.race([read, late]);
+  clearTimeout(timer);
+  if (!latest || !isNewer(mine, latest)) return null;
+  link.searchParams.set("latest", String(buildNumber(latest)));
+  if (opts.restart) link.searchParams.set("fresh", "1");
+  return link.toString();
+}

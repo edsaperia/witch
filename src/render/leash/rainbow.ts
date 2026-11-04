@@ -12,9 +12,13 @@
 //   speakers and the route out from it are one line (render/leylines.ts dotLines: how far it's drawn and where its spark is, as the
 //   shader has them): bars behind the boot's pulse on the ring, then behind the wave's along the route, single dots ahead (Ed,
 //   2026-10-29: the ring showed neither, and the route only its glow, till the boot was over).
+// - ahead of the spark, a cold rainbow (Ed, 2026-11-03: "should be less colourful; a cold coloured rainbow, maybe just blue and purple
+//   and turquoise"; render/colourGrammar.ts coldRainbow): the single dots there run through blue, purple and turquoise only, drifting
+//   on as the rainbow does; the spark and the bars behind it keep the whole rainbow (colourGrammar "old": the whole rainbow ahead too).
 // Comfort's reduce-flashing slows the colours and calms the bars. lv.rainbowQuads counts what's drawn.
 import * as THREE from "three";
 import { rainbow } from "../indicator";
+import { coldRainbow, oldColours } from "../colourGrammar";
 import { comfort } from "../comfort";
 import { SPRITE_UNIFORMS } from "../sprites";
 import { bendPoint, groundHeight, groundSeenAt } from "../height";
@@ -66,6 +70,7 @@ export function drawRainbow(lv: LeashView, time: number, dot: number[], camera: 
   const place = (links: number, m: number) => (ley ? ley.placeAt(links, time, at) : routePoint(g.party, g.map, m));
   // (the one rainbow along the line, drifting on toward its tip: render/leylines.ts's shader, the dots and bars, the waves)
   const hueAt = (run: number) => rainbow(run / RAINBOW_M - time * (calm ? 0.04 : 0.12));
+  const cold = !oldColours(t), coldAt = (run: number) => coldRainbow(run / RAINBOW_M - time * (calm ? 0.04 : 0.12)); // (ahead of the spark: Ed, 2026-11-03)
   // The waves' rows: each bar from its run's head back toward where it set off, only on its stretch (rules/rainbow.ts).
   if (runs.length) {
     const lens = routeLengths(g.party, g.map);
@@ -91,9 +96,9 @@ export function drawRainbow(lv: LeashView, time: number, dot: number[], camera: 
       if (l > L.to) break;
       const p = L.place(l, time, at);
       if (!p) break;
-      const k = j % (ROUTE_BINS * 2), h = l > L.spark ? 1 : 1 + Math.round(routeLevels[k < ROUTE_BINS ? k : ROUTE_BINS * 2 - 1 - k] * R.height);
+      const ahead = l > L.spark, k = j % (ROUTE_BINS * 2), h = ahead ? 1 : 1 + Math.round(routeLevels[k < ROUTE_BINS ? k : ROUTE_BINS * 2 - 1 - k] * R.height);
       if (!seen(p.x, p.z, h * R.cell)) continue;
-      bar(p.x, p.z, h, R.cell, hueAt(B.run[j]), 0.9 * fade * L.strength * (l < L.ringLinks ? L.ringK : 1)); // (the ring's link faint once the boot's over)
+      bar(p.x, p.z, h, R.cell, ahead && cold ? coldAt(B.run[j]) : hueAt(B.run[j]), 0.9 * fade * L.strength * (l < L.ringLinks ? L.ringK : 1)); // (the ring's link faint once the boot's over)
     }
   }
 }

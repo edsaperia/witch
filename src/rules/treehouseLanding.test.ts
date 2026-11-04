@@ -22,7 +22,8 @@ describe("landing on the actual authorized treehouse floor (Ed, 2 November)", ()
     const down = stepWitch(half,NO_INTENT,H.landTime/2,TUNING,bounds,NO_LOAD,d);
     expect([down.mode,down.perch,down.lift]).toEqual(["ground",true,0]);
     expect(onFloor(d,down.x,down.z)).toBe(true);
-    const up = stepWitch(down,{ ...NO_INTENT,toggleMode:true },TUNING.riseTime,TUNING,bounds,NO_LOAD,d);
+    const rested = stepWitch(down,NO_INTENT,TUNING.treehouse.landCooldown ?? 0,TUNING,bounds,NO_LOAD,d); // (the landing's cooldown out: Ed, 2026-11-03)
+    const up = stepWitch(rested,{ ...NO_INTENT,toggleMode:true },TUNING.riseTime,TUNING,bounds,NO_LOAD,d);
     expect([up.mode,!!up.perch]).toEqual(["treetop",false]);
     const held = stepWitch(up,NO_INTENT,.1,TUNING,bounds,NO_LOAD,d);
     expect([held.mode,!!held.perch]).toEqual(["treetop",false]);

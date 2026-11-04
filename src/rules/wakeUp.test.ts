@@ -4,18 +4,20 @@
 // her clothes either, "I should be able to leave regardless").
 import { describe, expect, it } from "vitest";
 import { TUNING } from "./tuning";
-import { newGame as fullGame, stepGame, STEP, type Controls, type Game } from "./game";
+import { stepGame, STEP, type Controls, type Game } from "./game";
 import { smallWorld } from "../test/worlds";
-const newGame = smallWorld(fullGame, "Alarm, dressing, doors and DJ intro routines use one house, independent of distant areas.");
-import { HOUSE_ROOMS, floorHats, fromObject, fromPlan, hatSlots, objectAt, objectFront, toPlan } from "./houseRooms";
+const newGame = smallWorld(preppedGame, "Alarm, dressing, doors and DJ intro routines use one house, independent of distant areas.");
+import { HOUSE_ROOMS, floorHats, fromObject, installEdLayout, fromPlan, hatSlots, objectAt, objectFront, toPlan } from "./houseRooms";
 import { inRoom as inBlob } from "../../config/house/shape.js";
 import { wakeInBedroom } from "./opening";
-import { atDecks, startParty, doorShut, endDream, homeBed, startWake, WAKE_DEFAULT, type WakeEvent } from "./wakeUp";
+import { atDecks, startParty, doorShut, endDream, firstMorning, homeBed, morningAfter, startWake, WAKE_DEFAULT, type WakeEvent } from "./wakeUp";
 /** The room her bed stands in, to walk out of (the tests' own: no rule reads rooms since Ed, 2026-11-03). */
 const bedRoom = (): string => homeBed()!.room;
-import { dressed, pileOut, PILE_SLOTS, wearFromStation, wearPiece, wornGenome } from "./clothesPile";
+import { dressed, pileOut, PILE_SLOTS, wearFromStation, wearPiece, wornGenome, wornNow } from "./clothesPile";
 import { deckOf, onTerrace } from "./treehouse";
+import { furnitureFor } from "./guestFurniture";
 import { heldByRoutine } from "./djSet";
+import { preppedGame } from "../test/preppedGame"; // (games on a map made once a file from its prep)
 
 const idle: Controls = { moveX: 0, moveZ: 0, toggleMode: false, zoom: 0, autoTalk: false };
 const K = WAKE_DEFAULT;
@@ -94,7 +96,9 @@ describe("getting up", () => {
   });
 
   it("a rise does too, but she doesn't fly", () => {
-    const g = woken();
+    // (no broom yet, as on a night that waits for her: app/gameParams.ts newKit. With one she'd take off from any room, Ed 2026-10-26;
+    // a press every step used to look grounded only by flipping her up and down, which the treehouse cooldown now stops: Ed, 2026-11-03)
+    const g = woken(); g.witches[0].kit = { invites: false, broom: false };
     run(g, STEP, { toggleMode: true });
     expect(g.wake!.beat).toBe("stretch");
     run(g, K.stretch + 0.1); run(g, 1, { toggleMode: true });
@@ -303,7 +307,7 @@ describe("last night's clothes (Ed, 2026-10-23: \"When waking up she wears only 
 
 describe("dressing before the door (Ed, 2026-10-21: \"all of the customisation options (except for broom, hat, and bag) should be before the locked door\")", () => {
   it("every dressing station but the Cloakroom's (the hat's mirror, the cloak pegs), the bags and the Workshop's is in the bedroom", () => {
-    const st = HOUSE_ROOMS.objects.filter(o => o.use.kind === "creator");
+    const g = woken(false), st = HOUSE_ROOMS.objects.filter(o => o.use.kind === "creator" && furnitureFor(g, g.witches[0], o));
     expect(st.filter(o => o.room === "bedroom").map(o => o.id).sort()).toEqual(["dressingTable", "shoeRack", "wardrobe"]);
     expect(st.filter(o => o.room !== "bedroom").map(o => o.id).sort()).toEqual(["bags", "cloakPegs", "lathe", "mirror"]);
     expect(obj("cloakPegs").room).toBe("cloakroom");
@@ -543,5 +547,68 @@ describe("her bed before the party (Ed, 2026-10-26, Q-e: it counts as a lost nig
     expect(slept).toBe(1);
     expect(g.party.spellAt).toBeNull(); // (never cast, nor won: nothing of the party's ran)
     expect(g.win).toBeNull();
+  });
+});
+
+// Ed, 2026-11-03: "When I start a fresh game, after the loading screen I look at the bed and see the witch in her default clothes
+// instead of in her nightie, and then after a second or two she's in her nightie." The page makes her art at the boot in the look
+// firstMorning reads ahead (main.ts morningAhead, View.create), and draws her by wornNow: asleep under the loading screen and from the
+// wake-up's first frame on it's that same look, her nightie, so the view is never handed another to redraw in between.
+describe("a fresh game's first morning: her nightie from the first frame", () => {
+  const looks: [string, Record<string, unknown> | null][] = [["the classic witch", null], ["a look of her own", { hat: { shape: "sentry" }, cloak: "long", accessories: { phones: true, scarf: true } }]];
+  for (const layout of [false, true]) for (const [name, look] of looks) it(`${name}${layout ? ", Ed's arrangement" : ""}`, () => {
+    installEdLayout(layout);
+    try {
+      const g = newGame(123, TUNING), W = g.witches[0];
+      const before = JSON.stringify({ hat: W.hat, house: W.house ?? null });
+      const ahead = firstMorning(g);
+      expect(JSON.stringify({ hat: W.hat, house: W.house ?? null })).toBe(before); // (read ahead: nothing laid out or moved)
+      const boot = wornGenome(look as never, ahead.pile, ahead.hatLying) as unknown as { accessories: Record<string, unknown> };
+      expect(boot.accessories.nightie).toBe(true);
+      const shown = (w: ReturnType<typeof wornNow>) => JSON.stringify(wornGenome(look as never, w.pile, w.hatLying));
+      expect(shown(wornNow(g.wake, !!W.hat.down, ahead))).toBe(JSON.stringify(boot)); // (asleep under the loading screen)
+      g.party.spellAt = null; g.clock.paused = false;
+      wakeInBedroom(g);
+      expect(startWake(g, g.herTime, { mirrored: false })).toBe(true); // (main.ts wakeFirst: morningAhead let go)
+      expect(ahead.hatLying).toBe(!!W.hat.down);
+      expect(shown(wornNow(g.wake, !!W.hat.down, null))).toBe(JSON.stringify(boot)); // (the wake-up's first frame: the same look)
+    } finally { installEdLayout(false); }
+  });
+  it("and once a piece is on, her look is the pile's, not the morning read ahead", () => {
+    const g = woken();
+    wearPiece(g.wake!, "top");
+    expect(wornNow(g.wake, !!g.witches[0].hat.down, firstMorning(g)).pile).toEqual(g.wake!.pile);
+  });
+});
+
+// A sail's morning and the bed's next one, read ahead from the moment she sails or sleeps (main.ts morningAhead, aheadMorning; the
+// coordinator's brief, 2026-11-03: after a sail she landed asleep in bed in last night's clothes, the nightie asked for only as the
+// wake-up started, and on the cloud renderer not there 75 s later). The page asks for that look's art then, while the chart flies or
+// she sleeps, and draws her by wornNow with no wake (the night she's leaving is dressed: not its look) till the morning's own wake-up
+// starts, which is that same look, her nightie: the view is never handed another to redraw as she's first seen in bed.
+describe("a sailed morning, and the bed's next morning: her nightie from the first frame she's seen in bed", () => {
+  const looks: [string, Record<string, unknown> | null][] = [["the classic witch", null], ["a look of her own", { hat: { shape: "sentry" }, cloak: "long", accessories: { phones: true, scarf: true } }]];
+  const ways: [string, { dreaming: boolean }][] = [["a sail", { dreaming: false }], ["the bed, dreaming of a loan", { dreaming: true }]]; // (the rules' wake-up is the same either way: main.ts's routes differ)
+  for (const layout of [false, true]) for (const [name, look] of looks) for (const [way, o] of ways) it(`${way}: ${name}${layout ? ", Ed's arrangement" : ""}`, () => {
+    installEdLayout(layout);
+    try {
+      const last = up(true, true); // (the night she's leaving: up, last night's clothes put on)
+      last.wake!.pile = []; // (dressed)
+      const shown = (w: ReturnType<typeof wornNow>) => JSON.stringify(wornGenome(look as never, w.pile, w.hatLying));
+      const ahead = morningAfter(); // (main.ts aheadMorning: as she sails, or as she lies down)
+      const boot = wornGenome(look as never, ahead.pile, ahead.hatLying) as unknown as { hat?: { shape?: string }; accessories: Record<string, unknown> };
+      expect(boot.accessories.nightie).toBe(true);
+      expect(boot.hat?.shape).toBe("none"); // (her hat in the pile: not on her, and lying nowhere)
+      expect(shown(wornNow(last.wake, !!last.witches[0].hat.down, null))).not.toBe(JSON.stringify(boot)); // (the night she's leaving: dressed)
+      expect(shown(wornNow(undefined, !!last.witches[0].hat.down, ahead))).toBe(JSON.stringify(boot)); // (while the chart flies or she sleeps: the morning's)
+      const g = newGame(456, TUNING), W = g.witches[0];
+      g.party.spellAt = null;
+      expect(wakeInBedroom(g)).toBe(true); // (a sail: put to bed before the dive, main.ts bedFirst; the bed: as the night's made)
+      expect(shown(wornNow(g.wake, !!W.hat.down, ahead))).toBe(JSON.stringify(boot)); // (the dive, or the sleep's dark: no wake-up yet)
+      expect(startWake(g, g.herTime, { ...o, mirrored: true, yesterday: true })).toBe(true); // (it lands, or she wakes: main.ts lets the morning read ahead go)
+      expect(ahead.hatLying).toBe(!!W.hat.down);
+      expect(g.wake!.pile).toEqual(ahead.pile);
+      expect(shown(wornNow(g.wake, !!W.hat.down, null))).toBe(JSON.stringify(boot)); // (the wake-up's first frame: the same look)
+    } finally { installEdLayout(false); }
   });
 });

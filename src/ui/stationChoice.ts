@@ -6,12 +6,13 @@
 import { wear, wears, type Shelf } from "../rules/wardrobe";
 import type { Fitted } from "../rules/broomParts";
 import { canChoose, cardAt, choose, itemAt, stationLines, type Line } from "./stationLines";
+import { TRAIL_PRESETS, TRAIL_PRESET_DEFAULT } from "../render/trailColours";
 
 export type Genome = Record<string, unknown> & { palette: Record<string, number[]> | null; accessories: Record<string, unknown> };
 export interface At { line: number; col: number }
 
 /** What a choice changed: her look, her broom's parts, or nothing (a locked one: still to be found). */
-export interface Chosen { look?: Genome; fitted?: Fitted; locked: boolean }
+export interface Chosen { look?: Genome; fitted?: Fitted; /** her trail's colour preset (the Broom station's Trail row) */ trail?: string; locked: boolean }
 
 /** What the choices need from the page: the shelves' colour grids' sizes and swatches, and her whole palette as it is now. */
 export interface ChoiceCtx {
@@ -29,6 +30,8 @@ export class PanelChoice {
   readonly part = new Map<string, string>();
   /** A choice made on something still to be found: its place, till the focus moves (the panel says "Not found yet."). */
   nope: At | null = null;
+  /** Her trail's colour preset now (the Broom station's Trail row: render/trailColours.ts). */
+  trail = TRAIL_PRESET_DEFAULT;
 
   constructor(public shelves: Shelf[], public g: Genome, public owned: ReadonlySet<string>, public found: ReadonlySet<string>, public fitted: Fitted | null, private ctx: ChoiceCtx, public awaitingDress = false) {}
 
@@ -90,6 +93,7 @@ export class PanelChoice {
     }
     this.nope = null;
     if (l.kind === "parts") { this.part.set(s.id, s.colour![col]); return { locked: false }; }
+    if (l.kind === "trail") { const id = TRAIL_PRESETS[col]?.id; if (!id || id === this.trail) return { locked: false }; this.trail = id; return { trail: id, locked: false }; } // (cosmetic, every preset hers)
     if (l.kind === "grid") return this.set({ ...this.g, palette: { ...this.ctx.palette(this.g), [this.partOf(s)]: this.ctx.swatch(s, col, l.row!) } });
     if (l.kind === "cards" && s.slot && this.fitted) {
       if (!canChoose(s, l, col, this.found)) { this.nope = { ...this.at }; return { locked: true }; }

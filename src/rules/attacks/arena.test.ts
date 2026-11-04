@@ -3,15 +3,16 @@
 // on her party; the same run twice the same; and a creature with no such attack fighting exactly as before.
 import { describe, expect, it } from "vitest";
 import { arenaAttack, setupArena } from "../arena";
-import { newGame, stepGame, STEP, type Controls, type Game } from "../game";
+import { stepGame, STEP, type Controls, type Game } from "../game";
 import { TUNING, withTuning } from "../tuning";
 import { serialiseAttack, type AttackSpec } from "./index";
+import { preppedGame } from "../../test/preppedGame"; // (games on a map made once a file from its prep)
 
 // Keep the seeded real-fight arena: cat flanking/leap timing and old-versus-grammar combat comparisons cover its existing terrain setup.
 const idle: Controls = { moveX: 0, moveZ: 0, toggleMode: false, zoom: 0, autoTalk: false };
 
 function arena(spec: string, attack: string | null, secs: number, t = TUNING): { g: Game; notes: string[] } {
-  const g = newGame(5, t);
+  const g = preppedGame(5, t);
   g.clock.paused = false; g.party.paused = true;
   setupArena(g, spec);
   const notes = attack ? arenaAttack(g, attack) : [];
@@ -69,8 +70,10 @@ describe("attacks in the grammar in the real fight", () => {
   });
 
   it("lets a lone one of a pack kind throw its own attack, not its pack's lunge (Ed's playtest, 2026-10-29: no projectiles seen)", () => {
-    // (a fox alone is a pack of one, its own lunger: its bolt, not the fox pack's bite)
-    const g = newGame(5, TUNING);
+    // (a fox alone is a pack of one, its own lunger: its bolt, not the fox pack's bite; seed 6: the creatures the arena borrows follow the
+    // map's population, and since the swarms by island, Ed 2026-11-03, seed 5's fox is in among them biting before it bolts; seed 8 since
+    // the path network the same day moved the stones the creatures idle round, seed 6's fox biting too)
+    const g = preppedGame(8, TUNING);
     g.clock.paused = false; g.party.paused = true;
     setupArena(g, "wolf*3@2,fox*1@2");
     const fox = g.arena!.ids.find(id => g.creatures[id].species === "fox")!;

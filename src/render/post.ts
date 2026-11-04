@@ -62,7 +62,9 @@ const POOL_SPARE = 0.8;
 
 const COMPOSITE = /* glsl */ `
 uniform vec4 uPotionStyle; // saturation boost, edges, edge threshold, edge upper threshold
+uniform vec4 uSilentFilm; // envelope, grain, scratch probability, frame rate
 uniform float uPotionBackground, uPotionTime, uNightVision;
+uniform vec4 uPrintFold; // print amount, hatch spacing, folded view amount, wedge count
 uniform vec4 uPotionHue; // cyclic RGB rotation coefficients, blend strength
 uniform vec4 uPotionWobble; // amplitude in art pixels, speed, wave size, edge reach
 uniform sampler2D uScene, uBloom, uFx; uniform vec2 uLow; uniform float uBloomStrength, uBlack, uGamma, uFxOn, uKoDim, uBroken, uPotionFade; uniform vec4 uGrade, uPool, uIris, uIris2; uniform vec3 uGradeTint; varying vec2 vUv;
@@ -92,6 +94,16 @@ vec3 irisShade(vec2 q, vec3 base) {
 }
 void main() {
   vec2 p = (floor(vUv * uLow) + 0.5) / uLow;
+  vec2 sampleUv = vUv;
+  if (uPrintFold.z > 0.0) {
+    vec2 centre = uPool.z > 0.0 ? uPool.xy : vec2(0.5);
+    vec2 q = (p - centre) * uLow;
+    float wedge = 6.2831853 / uPrintFold.w;
+    float angle = abs(mod(atan(q.y, q.x) + wedge, 2.0 * wedge) - wedge);
+    vec2 folded = centre + length(q) * vec2(cos(angle), sin(angle)) / uLow;
+    sampleUv = mix(vUv, clamp(folded, 0.5 / uLow, 1.0 - 0.5 / uLow), uPrintFold.z);
+    p = (floor(sampleUv * uLow) + 0.5) / uLow;
+  }
   p = refractScene(p);
   if (uPotionWobble.x > 0.0 && uPotionWobble.w > 0.0) {
     float edge = smoothstep(1.0 - uPotionWobble.w, 1.0, max(abs(vUv.x * 2.0 - 1.0), abs(vUv.y * 2.0 - 1.0)));
@@ -101,7 +113,7 @@ void main() {
   vec3 c = texture2D(uScene, p).rgb;
   // (the circle hunt: a scene pixel that's not a number, infinite or negative shows red, magenta or yellow)
   if (uBroken > 0.5) { bool nan = !(c.r == c.r) || !(c.g == c.g) || !(c.b == c.b) || any(isnan(c)); if (nan) { gl_FragColor = vec4(1.0, 0.0, 0.0, 1.0); return; } if (any(isinf(c)) || max(c.r, max(c.g, c.b)) > 60000.0) { gl_FragColor = vec4(1.0, 0.0, 1.0, 1.0); return; } if (min(c.r, min(c.g, c.b)) < 0.0) { gl_FragColor = vec4(1.0, 1.0, 0.0, 1.0); return; } }
-  if (uFxOn > 0.5) { vec4 f = texture2D(uFx, vUv); c = c * (1.0 - f.a) + f.rgb; }
+  if (uFxOn > 0.5) { vec4 f = texture2D(uFx, sampleUv); c = c * (1.0 - f.a) + f.rgb; }
   // Levels: a black point and a gamma, so the shade goes near-black and the lit stays bright.
   c = pow(clamp((c - uBlack) / (1.0 - uBlack), 0.0, 1.0), vec3(uGamma));
   // The mood's grade (render/mood.ts; spooky): the dark and middle tones drained of colour toward
@@ -112,10 +124,10 @@ void main() {
     float l = dot(c, vec3(0.3, 0.55, 0.15));
     // Her light's pool spared (uPool: its centre and half-widths on screen; render/view.ts), so her warm light still shows
     // on a dark floor (the art director's round 3: in the fern forest "her light doesn't show").
-    float pool = uPool.z > 0.0 ? 1.0 - smoothstep(0.35, 1.0, length((vUv - uPool.xy) / uPool.zw)) : 0.0;
+    float pool = uPool.z > 0.0 ? 1.0 - smoothstep(0.35, 1.0, length((sampleUv - uPool.xy) / uPool.zw)) : 0.0;
     c = mix(c, mix(c, vec3(l), uGrade.y) * uGradeTint, uGrade.x * (1.0 - smoothstep(0.0, uGrade.z, l)) * (1.0 - ${POOL_SPARE.toFixed(2)} * pool));
   }
-  c += texture2D(uBloom, uPotionWobble.x > 0.0 ? p : vUv).rgb * uBloomStrength;
+  c += texture2D(uBloom, uPotionWobble.x > 0.0 ? p : sampleUv).rgb * uBloomStrength;
   if (uPotionStyle.x != 0.0) c = max(vec3(0.0), mix(vec3(dot(c, vec3(0.3, 0.55, 0.15))), c, 1.0 + uPotionStyle.x));
   if (uPotionStyle.y > 0.0) {
     float edge = potionEdge(p);
@@ -126,10 +138,28 @@ void main() {
     vec3 spun = vec3(dot(c, uPotionHue.xyz), dot(c, uPotionHue.zxy), dot(c, uPotionHue.yzx));
     c = mix(c, max(vec3(0.0), spun), uPotionHue.w);
   }
+  if (uPrintFold.x > 0.0) {
+    vec2 px = floor(p * uLow);
+    float tone = sqrt(clamp(dot(c, vec3(.30, .55, .15)), 0.0, 1.0));
+    float ink = max(step(tone * uPrintFold.y, mod(px.x + px.y, uPrintFold.y)),
+      step(min(1.0, tone * 2.0) * uPrintFold.y, mod(px.x - px.y, uPrintFold.y)));
+    ink = max(ink, smoothstep(.12, .35, potionEdge(p)));
+    c = mix(c, mix(vec3(.98, .95, .85), vec3(.055, .042, .065), ink), uPrintFold.x);
+  }
   if (uNightVision > 0.0) {
     float phosphor = clamp(dot(c, vec3(0.3, 0.55, 0.15)), 0.0, 1.0);
     vec3 green = mix(vec3(0.025, 0.95, 0.12) * phosphor, vec3(0.78, 1.0, 0.72), smoothstep(0.65, 1.0, phosphor));
     c = mix(c, green, uNightVision);
+  }
+  if (uSilentFilm.x > 0.0) {
+    float frame = floor(uPotionTime * uSilentFilm.w);
+    vec2 px = floor(vUv * uLow);
+    float grain = irisHash(dot(px, vec2(1., 93.)) + frame * 57.) - .5;
+    float exposure = sqrt(clamp(dot(c, vec3(.299, .587, .114)), 0., 1.));
+    float scratchX = floor(irisHash(floor(frame / 4.)) * uLow.x);
+    float scratch = (1. - step(.5, abs(px.x - scratchX))) * step(1. - uSilentFilm.z, irisHash(frame + 11.));
+    vec3 printColour = vec3(1., .83, .58) * clamp(exposure + grain * uSilentFilm.y + .27 * scratch, 0., 1.);
+    c = mix(c, printColour, uSilentFilm.x);
   }
   // Knocked down with her hat on (Ed, 2026-10-07): the rest of the screen dims, her spot and her hat floating down left lit
   // (round her light's pool, uPool, and well above it, where the hat starts).
@@ -182,6 +212,8 @@ export class Post {
   /** First visual-response slice: opt-in until canonical's comparison/GPU review. No extra render targets. */
   readonly refraction = new Refraction();
   refractionEnabled = new URLSearchParams(globalThis.location?.search ?? "").get("refraction") === "1";
+  /** The party start's own ripple on without ?refraction=1 (its knob, partyStart.refraction.on: render/view/refraction.ts): only its rings. */
+  refractionParty = false;
   /** The scene is drawn into this, at low resolution. */
   readonly scene: THREE.WebGLRenderTarget;
   private bright = target(1, 1, THREE.LinearFilter);
@@ -225,7 +257,9 @@ export class Post {
     this.mats.composite.uniforms.uPotionFade = { value: 0 };
     this.mats.composite.uniforms.uPotionStyle = { value: new THREE.Vector4() };
     this.mats.composite.uniforms.uPotionBackground = { value: .035 };
+    this.mats.composite.uniforms.uPrintFold = { value: new THREE.Vector4(0, 5, 0, 6) };
     this.mats.composite.uniforms.uPotionHue = { value: new THREE.Vector4(1, 0, 0, 0) };
+    this.mats.composite.uniforms.uSilentFilm = { value: new THREE.Vector4() };
     this.mats.composite.uniforms.uNightVision = { value: 0 };
     this.mats.composite.uniforms.uPotionTime = { value: 0 };
     this.mats.composite.uniforms.uPotionWobble = { value: new THREE.Vector4() };
@@ -245,10 +279,13 @@ export class Post {
   potionNightVision = 0;
   potionVertigo = 0;
   potionMiniature = 0;
+  potionWoodcut = 0;
+  potionFold = 0;
   potionHue = 0;
   potionHuePhase = 0;
   potionEdges = 0;
   potionWobble = 0;
+  potionSilentFilm = 0;
   potionTime = 0;
   /** How much of the tilt-shift's blur is on (0 none, 1 all): none in the treehouse (render/view.ts houseTilt). */
   tilt = 1;
@@ -387,15 +424,18 @@ export class Post {
     const effectiveTilt = miniatureTilt(t.tiltShift, this.potionMiniature);
     const tilt = (effectiveTilt.on && effectiveTilt.strength > 0 || this.potionVertigo > 0) && this.tilt > 0;
     this.pass("composite", tilt ? this.a : out, u => {
-      u.uRefractionCount.value = this.refractionEnabled ? this.refraction.count : 0;
+      u.uRefractionCount.value = this.refractionEnabled || this.refractionParty ? this.refraction.count : 0;
       u.uScene.value = this.scene.texture; u.uBloom.value = this.bright.texture; u.uLow.value.copy(this.low); u.uBloomStrength.value = bloomOn ? bloom.strength : 0;
       const levels = potionLevels(t.tone.black, t.tone.gamma, this.potionCanopy);
       u.uBlack.value = levels.black; u.uGamma.value = levels.gamma;
       const edges = potionSettings('aurora-outlines'), wobble = potionSettings('trip-indicator');
       u.uPotionStyle.value.set(levels.saturation - 1, this.potionEdges * edges.strength, edges.edgeLow, edges.edgeHigh);
       u.uPotionBackground.value = edges.background;
+      const film = potionSettings('silent-film');
+      u.uSilentFilm.value.set(this.potionSilentFilm, film.grain, film.scratches, film.rate);
       u.uNightVision.value = this.potionNightVision;
       u.uPotionTime.value = this.potionTime;
+      u.uPrintFold.value.set(this.potionWoodcut, potionSettings('woodcut').spacing, this.potionFold, Math.round(potionSettings('kaleidoscope').sectors / 2) * 2);
       const hue = hueRotation(this.potionHuePhase);
       u.uPotionHue.value.set(...hue, this.potionHue * potionSettings('hue-spin').strength);
       u.uPotionWobble.value.set(wobble.strength * this.potionWobble, wobble.speed, wobble.waveSize, wobble.reach);

@@ -817,6 +817,19 @@ const PIECES = {
   // the two guests' bedrooms' placeholders, under dust sheets (art/sheeted.js)
   ...SHEETED_PIECES,
 };
+// The guests' bedrooms' working furniture (Ed 1609#6557564092, 2026-11-01): home's bed, wardrobe and dressing table, with their own
+// footprints, drawn so ("open") while a visit is on; in solo still under dust sheets ("sheeted", art/sheeted.js; Ed, 2026-11-03:
+// "Bedrooms 2 and 3: open and usable in solo, but still have dust sheets on the furniture"), the dressing table a lump under one as
+// the chest it replaced was. Both baked up front (render/houseFurniture.ts furnitureStates), so the visit only swaps which is shown.
+/** The guests' bedrooms' pieces drawn in two states, by object id. */
+export const GUEST_FURNITURE = new Set();
+for (const room of ["bedroom2", "bedroom3"]) {
+  for (const [kind, home, sheeted] of [["Bed", "bed", "Bed"], ["Wardrobe", "wardrobe", "Wardrobe"], ["DressingTable", "dressingTable", "Chest"]]) {
+    const working = PIECES[home], covered = SHEETED_PIECES[room + sheeted], id = room + kind;
+    PIECES[id] = (m, foot, state) => (state === "open" ? working(m, foot) : covered(m, foot));
+    GUEST_FURNITURE.add(id);
+  }
+}
 
 /** The pieces' helpers, for the rooms' dressing (art/houseDecor.js): a light, a bulb, a candle, a sprig, ivy, a pot, a disc. */
 export const PARTS = { light, bulb, candle, sprig, ivy, can, disc, planks, WARM, FAIRY, MAGICL, SCREEN, GREEN };
@@ -824,7 +837,7 @@ export const PARTS = { light, bulb, candle, sprig, ivy, can, disc, planks, WARM,
 /** The ids drawn as art (every interactive object of the house; the hats on the hats' floor are its own, render/houseRooms.ts). */
 export const FURNITURE_IDS = Object.keys(PIECES);
 /** Each piece's states, drawn once each (the first the default). */
-export const FURNITURE_STATES = { curtains: ["open", "shut"], invitations: ["8,8,8", "4,8,8", "0,8,8", "8,3,0", "0,0,0"], lathe: ["3", "2", "1", "0"] };
+export const FURNITURE_STATES = { curtains: ["open", "shut"], invitations: ["8,8,8", "4,8,8", "0,8,8", "8,3,0", "0,0,0"], lathe: ["3", "2", "1", "0"], ...Object.fromEntries([...GUEST_FURNITURE].map(id => [id, ["sheeted", "open"]])) };
 
 // ---------- colours: one palette for the whole house ----------
 // One palette (Ed, 2026-11-03: the house one room, "I don't think the zones are doing anything"; it was one a room, Ed's "per room"
@@ -854,8 +867,11 @@ const PIECE_COLOURS = { ...SHEETED_COLOURS, invitations: { [M.BELLY]: [228, 222,
 /** Pieces mostly flat to the light, their colours times this (as render/houseDecor.ts RUG_DIM a rug's): the invitations desk, its top
  *  and its letters lying face up, lit to a glare that bloomed at the house's camera (2026-10-26). */
 const PIECE_DIM = { invitations: .62 };
-export function furnitureColours(st = {}, id = "") {
-  const c = { ...BASE, ...(PIECE_COLOURS[id] ?? {}) }, k = PIECE_DIM[id];
+/** `state`: the piece's (FURNITURE_STATES); a guest's piece uncovered ("open") wears the house's palette, not its dust sheet's.
+ *  @param {object} [st] @param {string} [id] @param {string} [state] */
+export function furnitureColours(st = {}, id = "", state = undefined) {
+  const own = state === "open" && GUEST_FURNITURE.has(id) ? {} : PIECE_COLOURS[id] ?? {};
+  const c = { ...BASE, ...own }, k = PIECE_DIM[id];
   return k ? Object.fromEntries(Object.entries(c).map(([m, rgb]) => [m, rgb.map(v => Math.round(v * k))])) : c;
 }
 

@@ -361,6 +361,17 @@
       ],
       "notes": "(0-1) makes areas vary in size, some small, some large. borderLayers sets how wiggly borders are. Ed [1]: 14 x 14 areas of 168 m (areaScale 6), about the same world as 20 x 112 m."
     },
+    "siteMargin": {
+      "what": "how far every area's site (its middle) is kept in from its cell's sides, as a share of the cell (0 to 0.5), so sites, stumps and the paths joining them spread out.",
+      "decisions": [
+        {
+          "by": "Ed",
+          "date": "2026-11-03",
+          "quote": "Minimum distance between stumps; it's just a bit strange finding two right next to each other; at least their clearings shouldn't overlap"
+        }
+      ],
+      "notes": "0 (off) for now: any margin reshapes every island, and with it a dozen seeded gameplay tests' layouts (combat, brooms, swoops...) that other builders were changing at the time. 0.15 keeps two sites at least 0.3 of an area apart before the warp (about 50 m). stoneMinGap makes sure of the stones either way."
+    },
     "borderLayers": {},
     "clearingSize": {
       "what": "(0-1): how far out from an area's centre the ground stays fully open."
@@ -755,8 +766,18 @@
       ],
       "notes": "Paths, roads and railways (Ed): far fewer since 2026-10-11 [1]. rails [min,max] railway lines edge to edge in wide curves (one with a branch); roads [min,max] broad sweeping old roads (0: Ed, round 13, \"remove the paths that are roads: only the kind that cars might drive on\"; footpaths, railways and streams stay)."
     },
+    "paths.network": {
+      "what": "every area with a site (a stump, a special site, home's dancefloor) joined by a footpath to every touching area's site, from the edge of one clearing to the other's, round the lakes; no trees on them.",
+      "decisions": [
+        {
+          "by": "Ed",
+          "date": "2026-11-03",
+          "quote": "Path network - Each non-lake area has a stump site or a special site (find and challenge areas); paths link each of these sites to the sites in adjacent areas. Paths don't have trees on them."
+        }
+      ]
+    },
     "paths.linkChance": {
-      "what": "the share of neighbouring areas joined by a meandering path."
+      "what": "the share of the other neighbouring pairs (one an area with no site: the buffer's or a legend area's, never a lake) joined by a footpath, the odd path out into the buffer ring; with paths.network off, of every neighbouring pair."
     },
     "paths.deadEndChance": {
       "what": "the share of areas with a path out to nothing."
@@ -826,8 +847,75 @@
         }
       ]
     },
+    "stoneMinGap": {
+      "what": "the least distance between two areas' stones (great stumps or runestones), metres; a stone that would stand nearer one placed before it moves, in its own area, to the nearest spot far enough off.",
+      "decisions": [
+        {
+          "by": "Ed",
+          "date": "2026-11-03",
+          "quote": "Min 40 m between stumps."
+        }
+      ],
+      "notes": "The special sites (tonight's find's) count as stones here. Placed all at once in a fixed order (rules/map.ts placeSites), so the same whichever is asked for first."
+    },
+    "findArea": {
+      "what": "tonight's find in an area of its own, at its site, in a clearing `clear` metres round it; that area has no stump or wave, and no creatures but the challenge area's pack (challenge on), and every touching area's path leads to it.",
+      "decisions": [
+        {
+          "by": "Ed",
+          "date": "2026-11-03",
+          "quote": [
+            "We can also have finds be at the site of their own area rather than in a random place, and then the path network can lead you to them.",
+            "Each non-lake area has a stump site or a special site (find and challenge areas)"
+          ]
+        }
+      ],
+      "notes": "The area is seeded by the night (never home, an area touching home's (Ed, 2026-11-03: \"The challenge area shouldn't be adjacent to the home area\"; an island with none such takes its area farthest from home), a legend area's pair, or one whose going would cut the island in two) and is not playable, like a legend area; the island grows one area more for it, which takes its kind, so the island keeps its playable areas and roster. Off: the find as before, in a wild area's woods."
+    },
+    "challenge": {
+      "what": "the challenge area: a stone circle at least `radius` m round with a column a roster kind `spacing` m apart, the woods `margin` m past it, guarded by `adults` adults and `youths` youths a kind; the spell cast within `castReach` m of its middle clears it.",
+      "decisions": [
+        {
+          "by": "Ed",
+          "date": "2026-11-03",
+          "quote": [
+            "a large stone floor circle (like the legend circle) with the glowing sigil of the island carved into it, with a circle of stone columns around the edge (we already have art for this)",
+            "When they're all invited or have run off, you can go to the special place and cast the music spell",
+            "when you clear it you get the find. Each phase and biome have different set of finds; when you have them all you get a flask instead."
+          ]
+        },
+        {
+          "by": "Ed",
+          "date": "2026-11-03",
+          "quote": "for now just make it one find selected at random and we will adjust later",
+          "rest": "his rulings on #1725, through the coordinator: the circle three times wider (radius 12 to 36, columns 10 to 30, the sigil filling the floor); trees close to its edge, a few metres' margin; the find the night's one draw (findSets off); closed only once the night is won or lost, not at last call."
+        },
+        {
+          "by": "Ed",
+          "date": "2026-11-03",
+          "quote": [
+            "The challenge area has no sigil stack, so you can't see how many wild creatures still standing. How about there are the same number of columns as creature types, and the sigils are on top of the columns, one type per column?",
+            "few is ok",
+            "128 animal pack is the ultimate challenge … A place to use all those stacked buffs that melt waves! Also the area will have to be big to fit a huge circle."
+          ],
+          "rest": "the fixed `columns` (30) replaced by a column a roster kind, `spacing` 7.5 m apart along the edge: the radius the larger of `radius` and kinds x spacing / 2 pi (36 m to about 30 kinds; 76 m at the late home's 64), its margin, cast reach, dancefloor and carved sigil grown with it, its area claiming the whole circle (rules/map.ts)."
+        }
+      ],
+      "notes": "The circle grows to fit its columns (radius the larger of `radius` and kinds x `spacing` / 2 pi), its margin and the spell's reach with it; the island's sigil is carved in it, and clearing it gives the find. Each column carries its kind's wild fighters still standing (adult below, youth above, the rune stones' sizes, colours and embers), drawn within the stones' columns' range (leash.ranks.stones.range); one invited or run off leaves its column; a column with none left lights steadily warm, and every column lit, the spell can be cast. The find is the night's one draw over everything she hasn't found; `findSets` on, the island's own set (config/find-sets.json) instead. Nothing left to give, a flask. Cleared, home's dancefloor fills the circle and each bar one column fires a firework, the next clockwise each bar (Ed, 2026-11-03: \"fireworks start coming out of one column at the start of each bar, going around the circle clockwise\"): `fireworks.on`, its burst `fireworks.height` m up and `fireworks.burst` m round; the find comes down from the sky onto the floor, picked up with E. Its pack aggro as any wild area's (wildWatch); it closes only once the night is won or lost (the pack calm, the find gone); it never counts toward winning the island and gives no boon. Off: the find's area as before, its find to pick up with E."
+    },
     "treeMarginFromSoundsystem": {
       "see": "setPieceFootprint"
+    },
+    "treehouse.landCooldown": {
+      "what": "Seconds after she leaves a treehouse floor (rising or stepping off) before she can land on one, and after she lands before she can leave: meanwhile she flies on over its floors, and its open edges keep her in. 0: no wait.",
+      "decisions": [
+        {
+          "by": "Ed",
+          "date": "2026-11-03",
+          "quote": "Taking off from the treehouse and landing on the treehouse; there should be a minimum time between which either these things can happen, perhaps 3 seconds, because it's easy to e.g. take off from a branch and land immediately on the next branch, which is probably not what the player intends to do."
+        }
+      ],
+      "notes": "Her own clock (rules/witch.ts perchCool), each witch her own. Landing blocked: the auto-landing flying onto a floor doesn't happen, and her press to come down over a floor (or rising off one) is dropped. Leaving blocked: her press to rise is dropped and the open edges hold her as a rail would (no fall either)."
     },
     "treehouse.house.look.indoor": {
       "what": "Fade the entire crown and its string lights indoors.",
@@ -891,9 +979,14 @@
           "by": "Ed",
           "date": "2026-11-02",
           "quote": "The treehouse/tree needs work. It looks good on the horizon but weird to fly to and from."
+        },
+        {
+          "by": "Ed",
+          "date": "2026-11-03",
+          "quote": "bark off indoors"
         }
       ],
-      "notes": "Treehouse look settings; all four switches on by default, chosen by Ed on 2 November."
+      "notes": "Off (0) since Ed, 3 November: at 0.18 the oak's limbs lay a dark patch over the Dining room's cauldron and a dark band across the floor, drawn over the furniture and her (render/crown.ts, indoors after the house). The pause page's slider still brings it back."
     },
     "treehouse.house.look.radius": {
       "what": "Metres from the floor outline at which the flight reveal begins, and its local radius.",

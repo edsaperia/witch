@@ -182,11 +182,22 @@ const PAUSE_CSS = `
 #pause-sliders .copyall.reset { color: #ff9a8a; border-color: #ff9a8a; margin-top: 6px; touch-action: none; -webkit-touch-callout: none; background-image: linear-gradient(to right, rgba(255,154,138,.6) calc(var(--hold, 0) * 100%), transparent 0); }
 #pause-sliders .copyall.reset:hover { background-color: rgba(255,154,138,.18); color: #ff9a8a; text-shadow: inherit; }
 #pause-sliders .status { color: var(--accent, #e8b46a); font-size: 11px; min-height: 1em; margin-top: 3px; white-space: pre-wrap; }
-#pause-sliders .list { flex: 1; overflow-y: auto; direction: rtl; padding: 0 10px 8px 6px; scrollbar-color: var(--accent, #e8b46a) rgba(0,0,0,.35); scrollbar-width: thin; }
-#pause-sliders .list > * { direction: ltr; }
-#pause-sliders .list::-webkit-scrollbar { width: 8px; }
-#pause-sliders .list::-webkit-scrollbar-track { background: rgba(0,0,0,.35); }
-#pause-sliders .list::-webkit-scrollbar-thumb { background: var(--accent, #e8b46a); border-radius: 4px; border: 1px solid #000; }
+#pause-sliders .pane { overflow-x: hidden; overflow-y: auto; scrollbar-gutter: stable; scrollbar-color: #b89767 #21192c; scrollbar-width: thin; }
+#pause-sliders .left { direction: rtl; }
+#pause-sliders .left > * { direction: ltr; }
+#pause-sliders .list { padding: 0 10px 8px 6px; }
+@supports selector(::-webkit-scrollbar) {
+  #pause-sliders .pane { scrollbar-color: auto; scrollbar-width: auto; }
+  #pause-sliders .pane::-webkit-scrollbar { width: 12px; }
+  #pause-sliders .pane::-webkit-scrollbar-track { background: #21192c; }
+  #pause-sliders .pane::-webkit-scrollbar-thumb { min-height: 30px; background: #b89767; border: 3px solid #21192c; border-radius: 6px; }
+  #pause-sliders .pane::-webkit-scrollbar-thumb:hover { background: #edc78b; }
+}
+@media (forced-colors: active) {
+  #pause-sliders .pane { scrollbar-color: auto; }
+  #pause-sliders .pane::-webkit-scrollbar-track { background: Canvas; }
+  #pause-sliders .pane::-webkit-scrollbar-thumb { background: ButtonText; border-color: Canvas; }
+}
 #pause-sliders .gh { display: flex; width: 100%; gap: 6px; align-items: baseline; margin: 6px 0 0; padding: 3px 4px; font: inherit; font-size: 12px; font-weight: 700; text-shadow: inherit; text-align: left; color: var(--accent, #e8b46a); letter-spacing: .04em; background: none; border: 0; border-bottom: 1px solid rgba(232,180,106,.35); cursor: pointer; }
 #pause-sliders .gh:hover, #pause-sliders .gh:focus-visible { background: rgba(232,180,106,.14); outline: none; }
 #pause-sliders .gh .mark { width: 1em; flex: none; }
@@ -268,35 +279,31 @@ export class PauseSliders {
       this.status.textContent = "Deleting every save…";
       void R.run().then(err => { this.status.textContent = err ?? "Starting a fresh game…"; }, () => { this.status.textContent = "The saves could not be deleted. Please try again."; });
     }, { class: "copyall reset", title: "Hold to delete every save and start a fresh game: progress, settings and controls (this device's playtest logs and quality stay)", label: "Hold to delete every save and start a fresh game" }), this.status);
-    const choices = h("div", { class: "list" });
+    const comments = h("div", { class: "list" });
     const sliders = h("div", { class: "list" });
-    if (host.saveComment && host.restoreComment) choices.append(commentControls(host.saveComment, host.restoreComment));
+    if (host.saveComment && host.restoreComment) comments.append(commentControls(host.saveComment, host.restoreComment));
     // (by the PR that added them, newest first: Ed, 2026-10-12, "The panel shows all the sliders in PR order")
     const ordered = byPr(list);
     // (each PR's group under a header that folds it, every one folded at first: Ed, 2026-10-26, "Can all the menu settings be grouped
     // by their title with the ability to fold, and start folded?"; the ones opened remembered on this browser)
     const open = openGroups();
-    const fillGroups = (body: HTMLElement, decisions: Decision[]) => {
-      for (const g of [...new Set(decisions.map(groupOf))]) {
-        const mine = decisions.filter(x => groupOf(x) === g), rows = h("div", { class: "rows" }, ...mine.map(d => this.row(d)));
-        const mark = h("span", { class: "mark" }), name = h("span", { class: "name", text: g }), count = h("span", { class: "count" });
-        const head = button("", () => { if (open.has(g)) open.delete(g); else open.add(g); saveOpenGroups(open); this.paintHeads(); }, { class: "gh", title: `Show or hide ${g}` });
-        head.append(mark, name, count);
-        const box = h("section", { class: "grp", data: { group: g } }, head, rows);
-        const fold = () => { const on = open.has(g); box.classList.toggle("folded", !on); head.setAttribute("aria-expanded", String(on)); mark.textContent = on ? "▾" : "▸"; };
-        this.heads.push(() => { fold(); const n = changedIn(mine, this.values); count.textContent = n ? ` ● ${n} changed` : ""; box.classList.toggle("changed", n > 0); });
-        body.append(box);
-      }
-    };
-    fillGroups(sliders, ordered.filter(d => d.control.type === "slider"));
-    fillGroups(choices, ordered.filter(d => d.control.type !== "slider"));
+    for (const g of [...new Set(ordered.map(groupOf))]) {
+      const mine = ordered.filter(x => groupOf(x) === g), rows = h("div", { class: "rows" }, ...mine.map(d => this.row(d)));
+      const mark = h("span", { class: "mark" }), name = h("span", { class: "name", text: g }), count = h("span", { class: "count" });
+      const head = button("", () => { if (open.has(g)) open.delete(g); else open.add(g); saveOpenGroups(open); this.paintHeads(); }, { class: "gh", title: `Show or hide ${g}` });
+      head.append(mark, name, count);
+      const box = h("section", { class: "grp", data: { group: g } }, head, rows);
+      const fold = () => { const on = open.has(g); box.classList.toggle("folded", !on); head.setAttribute("aria-expanded", String(on)); mark.textContent = on ? "▾" : "▸"; };
+      this.heads.push(() => { fold(); const n = changedIn(mine, this.values); count.textContent = n ? ` ● ${n} changed` : ""; box.classList.toggle("changed", n > 0); });
+      sliders.append(box);
+    }
     this.paintHeads();
     // (the quality ladder: where it is and why, and a rung to pin or the ladder off; app/ladder.ts)
     const Q = host.quality, quality = Q ? this.qualityBlock(Q) : null;
     const left = h("section", { class: "pane left" }, intro, sliders, this.stamp);
-    const right = h("section", { class: "pane right" }, top, ...(quality ? [quality] : []), choices);
-    left.setAttribute("aria-label", "Sliders");
-    right.setAttribute("aria-label", "Actions and switches");
+    const right = h("section", { class: "pane right" }, top, ...(quality ? [quality] : []), comments);
+    left.setAttribute("aria-label", "Settings groups");
+    right.setAttribute("aria-label", "Actions");
     this.el.append(left, right);
     for (const ev of ["pointerdown", "keydown", "keyup", "wheel", "contextmenu"]) this.el.addEventListener(ev, e => { if (!(e instanceof KeyboardEvent && (e.code === "Escape" || e.code === "Period"))) e.stopPropagation(); }); // (its own presses don't fly her; Esc and . still go to the freeze)
     document.body.append(this.el);

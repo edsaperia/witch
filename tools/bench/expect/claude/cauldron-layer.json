@@ -1,0 +1,7 @@
+{
+  "reason": "Ed, 2026-11-03: \"the cauldron should be drawn on top of the witch\" and \"witch is behind the floor\". The kitchen's cauldron and baskets whose foot lies south of hers are drawn after her; and walking on the house's floors off a room's walking inset (the Terrace, its edges) her see-through depth is taken where she's drawn on the house's plane, not at her flight's height, so her own sprite no longer counts as standing in front of her. The rules are untouched.",
+  "frames": {
+    "ground": "she walks on the Terrace from her decks: what fades round her is judged from where she's drawn (at most a few pixels round her, if any)",
+    "boot": "the same walk on the Terrace at the start"
+  }
+}

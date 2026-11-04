@@ -1,25 +1,26 @@
 // The finds' keepers (app/finds.ts) and the dev control's grants (Ed, 2026-10-23: "a debug control that allows devs to give
 // themselves collectible items"): a find given is exactly a find found, rules and saves alike.
-import { afterEach, beforeEach, describe, expect, it } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { TUNING } from "../rules/tuning";
-import { newGame as fullGame, stepGame, type Controls, type Game } from "../rules/game";
+import { stepGame, type Controls, type Game } from "../rules/game";
 import { smallWorld } from "../test/worlds";
-const newGame = smallWorld(fullGame, "Find grants and local pickup saves use one placed trunk, independent of area count.");
+const newGame = smallWorld(preppedGame, "Find grants and local pickup saves use one placed trunk, independent of area count.");
 import { FIND_KINDS, FINDABLE, fillTrunk, type FindKindId } from "../rules/finds";
 import { fitBroom, loadBroom } from "./broomSave";
 import { setParts } from "../rules/spells";
 import { loadOwned } from "./owned";
 import { KEEPERS, applyOwn, dropFind, grantAll, grantFind, keepFound, ownWanted, type FindsCtx } from "./finds";
 import { SLOT_INDEX } from "./saveSlots";
+import { preppedGame } from "../test/preppedGame"; // (games on a map made once a file from its prep)
 
 /** A localStorage of our own for each test (the saves are this browser's). */
 let store: Map<string, string>;
-const real = (globalThis as { localStorage?: Storage }).localStorage;
+// (stubbed, not assigned: unstubbing puts back a missing localStorage as missing, so no later file in the worker finds one set to undefined)
 beforeEach(() => {
   store = new Map();
-  (globalThis as { localStorage?: unknown }).localStorage = { getItem: (k: string) => store.get(k) ?? null, setItem: (k: string, v: string) => void store.set(k, String(v)), removeItem: (k: string) => void store.delete(k) };
+  vi.stubGlobal("localStorage", { getItem: (k: string) => store.get(k) ?? null, setItem: (k: string, v: string) => void store.set(k, String(v)), removeItem: (k: string) => void store.delete(k) });
 });
-afterEach(() => { (globalThis as { localStorage?: unknown }).localStorage = real; });
+afterEach(() => { vi.unstubAllGlobals(); });
 
 const C: Controls = { moveX: 0, moveZ: 0, toggleMode: false, zoom: 0 };
 /** A night whose find is `kind`'s `item`, her on foot by it. */

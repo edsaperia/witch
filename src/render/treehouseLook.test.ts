@@ -35,3 +35,14 @@ it.each([["bulbs", CROWN_BULB_FRAG], ["wire", CROWN_WIRE_FRAG]])("%s clearing ca
   expect(calls.length).toBeGreaterThan(0);
   for (const args of calls) expect(args.split(",").length).toBe(signature);
 });
+// Ed, 2026-11-03: "bark off indoors". At 0.18 the oak's limbs, drawn over the house after the furniture and her, laid a dark patch
+// over the Dining room's cauldron and a dark band across the floor; the pause page's slider still brings them back.
+it("leaves no bark indoors by default once the crown has faded, and the slider's value still reaches the shader", () => {
+  expect(H.look!.bark).toBe(0);
+  const c = new CrownView(makeCrown({ outline: O, floor: H.height, seed: 1 }), 2, O), camera = new THREE.PerspectiveCamera();
+  const p = { o: new THREE.Vector3(), ex: new THREE.Vector3(1,0,0), ey: new THREE.Vector3(0,1,0), ez: new THREE.Vector3(0,0,1) };
+  c.update(camera,p,p,H.look!.fade,null,0,{x:0,y:0,z:0},{ ...H.look!, indoor: true });
+  expect(c.uniforms.uLook.value.x).toBe(1); expect(c.uniforms.uLook.value.z).toBe(0);
+  c.update(camera,p,p,H.look!.fade,null,0,{x:0,y:0,z:0},{ ...H.look!, indoor: true, bark: 0.18 });
+  expect(c.uniforms.uLook.value.z).toBe(0.18);
+});

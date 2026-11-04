@@ -1,0 +1,9 @@
+{
+  "reason": "the game made harder (Ed, 2026-11-03: \"the game is much too easy\"): creatures run 20% faster in a fight (difficulty.creatureSpeed), ranged attacks reach 20% further (difficulty.rangedRange), adults are 1.3 times as strong (difficulty.adultStrength); each area's swarm by its place along its own island's route, scaled by the island's size over the largest island's (population.swarm.largestIsland 50, replacing swarm.waves 64), on a steeper curve (swarm.curve 1.3 to 0.8), so most areas hold more young and adults from the start; and the spark's speed by the tempo on a line from 1.0 m/s at 100 bpm to 5.0 at 200 (leyLines.pulseAt100, pulseAt200; pulseSpeed now its multiplier), so at the night's own 120 bpm it runs 1.8 m/s, not 1, and the waves come sooner",
+  "frames": {
+    "*": "more young and adults in most areas from the start (the swarm curve and island share), and creatures in a fight running faster and shooting from further, so where creatures stand and how many show differ wherever creatures are in view; the ley pulse further along and the waves sooner in any scene past the boot"
+  },
+  "rules": {
+    "*": "every area's starting creatures (more young and adults along the route), creatures' fight movement and ranged reach, adults' health and damage, so the creatures, the fights, her health, the soundsystems, the combat state and its spells, and the party's progress that follows them differ; the spark's speed (1.8 m/s at 120 bpm, not 1), so every wave lands sooner, the boot aside"
+  }
+}

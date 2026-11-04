@@ -80,8 +80,8 @@ export function telephoneDirectory({ send, stop, rooms, roomLimit, now }) {
         const room = reusable ? existing : { number: caller.telephone, host: caller, guest: null, token: null }; room.guest = answerer;
         pending.delete(call); caller.call = answerer.call = null; listed.delete(answerer.telephone);
         rooms.set(room.number, room); caller.assignRoom(room, 'host'); answerer.assignRoom(room, 'guest');
-        tell(caller, 'call-connected', { role: 'host', player: 0, number: answerer.telephone });
-        tell(answerer, 'call-connected', { role: 'guest', player: 1, number: caller.telephone });
+        tell(caller, 'call-connected', { role: 'host', player: 0, number: answerer.telephone, resume: caller.resumeTicket });
+        tell(answerer, 'call-connected', { role: 'guest', player: 1, number: caller.telephone, resume: answerer.resumeTicket });
         tell(caller, 'guest-joined', { player: 1 }); return true;
       }
       if (m.type === 'decline' || m.type === 'cancel-call') {
@@ -89,6 +89,11 @@ export function telephoneDirectory({ send, stop, rooms, roomLimit, now }) {
         return true;
       }
       return false;
+    },
+    resumed(previous, ws) {
+      for (const key of ['telephone', 'telephoneKey', 'dialAllowed']) ws[key] = previous[key];
+      if (owners.get(previous.telephone) === previous) owners.set(previous.telephone, ws);
+      if (listed.get(previous.telephone) === previous) listed.set(previous.telephone, ws);
     },
     closed(ws) { if (owners.get(ws.telephone) === ws) owners.delete(ws.telephone); if (listed.get(ws.telephone) === ws) listed.delete(ws.telephone); if (ws.call) finish(ws.call, 'call-cancelled'); },
     check() { for (const call of pending) if (now() - call.at >= 30000) finish(call, 'call-timeout'); },

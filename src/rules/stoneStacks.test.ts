@@ -1,8 +1,9 @@
 // The runestone stacks and the soundsystem spell (Ed, 2026-10-28; rules/stoneStacks.ts): every wild creature's sigil in its stone's
 // stack, friends above enemies; no auto-clearing; she converts a stone by holding the sigil button at it (a hit stops it, it drains
 // while she's away), or a wave does; either way its friend sigils scatter round it, loose for anyone; a legend's tethers her.
+import { chainLength } from "./chains";
 import { describe, expect, it } from "vitest";
-import { affectionOf, loseSoundsystem, newGame, newWitchPlayer, stepGame, type Controls, type Game } from "./game";
+import { affectionOf, loseSoundsystem, newWitchPlayer, stepGame, type Controls, type Game } from "./game";
 import { TUNING as BUILT, withTuning } from "./tuning";
 
 /** The tuning with the stacks on (they ship off till their view lands: ?cast=1). */
@@ -15,6 +16,7 @@ import { castingStone, castOf, castProgress, castReady, castShown, castSpot, hos
 import { hexCell } from "./leash";
 import { CUT_ANGLES, cutRadius, stumpCutOf } from "./stumps";
 import { smallWorldTuning } from "../test/worlds";
+import { preppedGame } from "../test/preppedGame"; // (games on a map made once a file from its prep)
 
 const still: Controls = { moveX: 0, moveZ: 0, toggleMode: false, zoom: 0, autoTalk: false };
 const hold: Controls = { ...still, sigilHeld: true };
@@ -24,7 +26,7 @@ const C = castOf(TUNING);
 /** A game under way, the boot long done, the witch high over home. */
 function game(seed = 123, t = TUNING, localCut = false): Game {
   // Retain roster/population geometry for legend stacks, circle sigils and the up-to-40-wave scan.
-  const g = newGame(seed, localCut ? smallWorldTuning(t, "Stump cut shape and casting bounds are local to one runestone.") : t);
+  const g = preppedGame(seed, localCut ? smallWorldTuning(t, "Stump cut shape and casting bounds are local to one runestone.") : t);
   g.clock.paused = false; g.party.spellAt = undefined; g.party.paused = true; // (no waves unless a test brings one)
   g.witch = { ...g.witch, seated: false, mode: "treetop", lift: 1 };
   g.witches[0].health.hp = 1e6;
@@ -384,7 +386,7 @@ describe("a legend's sigil in its stone's stack (Ed's playtest, 2026-10-29: \"I 
 });
 
 describe("loose sigils (Ed, 2026-10-28)", () => {
-  it("are picked up like any sigil, leashing the creature; a legend's tethers her at the distance it lay, till she puts it down", () => {
+  it("are picked up like any sigil, leashing the creature; a legend's tethers her at the chain's length (or the distance it lay, if further), till she puts it down", () => {
     const g = game(), a = area(g, true), W = g.witches[0];
     at(g, a);
     run(g, C.time + 0.5, hold);
@@ -401,13 +403,13 @@ describe("loose sigils (Ed, 2026-10-28)", () => {
     // the legend's
     const L = g.loose.find(q => q.legend);
     if (!L) return; // (an angry legend keeps its sigil)
-    const legend = g.creatures[L.id], len = Math.hypot(L.x - legend.x, L.z - legend.z);
+    const legend = g.creatures[L.id], len = Math.max(chainLength(g.tuning), Math.hypot(L.x - legend.x, L.z - legend.z)); // (the chain rework, Ed 2026-11-03: one length for every chain)
     g.witch = { ...g.witch, x: L.x, z: L.z };
     stepGame(g, { ...still, place: true }, 1 / 60);
     expect(W.leash.tether).toEqual({ id: L.id, length: len });
     expect(legend.leashed).toBeFalsy(); // (it sleeps on)
     expect(W.leash.stack).not.toContain(L.id);
-    run(g, 3, { ...still, moveX: 1 }); // (she walks away: held at its length)
+    run(g, 8, { ...still, moveX: 1 }); // (she walks away: held at its length)
     expect(Math.hypot(g.witch.x - legend.x, g.witch.z - legend.z)).toBeLessThanOrEqual(len + 0.05);
     stepGame(g, { ...still, place: true }, 1 / 60);
     expect(W.leash.tether).toBeNull();
@@ -419,7 +421,10 @@ describe("the bots and the spell", () => {
   it("the skilled bot converts a stone by casting it, then gathers its loose sigils (seed 11, the 10-area home)", async () => {
     // Retain the seeded ten-area route for this bot's conversion/gathering integration scenario.
     const { newBot } = await import("./bot");
-    const g = newGame(11, withTuning({ cast: { ...BUILT.cast, on: true }, map: { ...BUILT.map!, islandAreas: 10 } }));
+    // (the swarms as they were before Ed's 2026-11-03 bump, curve 1.3 and the old 64-wave scale: the bot's casting and gathering is
+    // what's watched here, not whether it wins the bigger fights the steeper curve now puts in the home island's first areas)
+    const swarm = { ...BUILT.population.swarm, curve: 1.3, largestIsland: 64 };
+    const g = preppedGame(11, withTuning({ cast: { ...BUILT.cast, on: true }, map: { ...BUILT.map!, islandAreas: 10 }, population: { ...BUILT.population, swarm } }));
     g.clock.paused = false; g.witch = { ...g.witch, seated: false, perch: false };
     const bot = newBot("skilled");
     let cast = false, gathered = false;

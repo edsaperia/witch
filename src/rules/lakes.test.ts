@@ -6,10 +6,10 @@ import { TUNING, type Tuning } from "./tuning";
 import { generateMap, type ForestMap } from "./map";
 import { soundsystemFor } from "./party";
 import { creaturesAshore, koiPonds, lakeDepth, lakeKnobs, roundLakes, stopAtShore } from "./lakes";
-import { newGame } from "./game";
 import { newWitch, stepWitch, NO_INTENT, type WitchState } from "./witch";
 import { planRoute, stepTraveller } from "./travel";
 import { lakePlan, placeLakes, SHAPES } from "./islandGrowth";
+import { preppedGame } from "../test/preppedGame"; // (games on a map made once a file from its prep)
 
 // Retain the 10–50-area phase matrix: inland lakes, connectivity, shoreline routes and chart loops depend on island extent.
 const isle = (phase: number): Tuning => ({ ...TUNING, map: { ...TUNING.map!, islandAreas: phase ? 10 * phase : 10, island: "", phase } });
@@ -126,7 +126,7 @@ describe("lakes", () => {
   }, 120000);
 
   it("a leashed animal travelling to her across a lake (Ed, 2026-10-12) walks round its shore, never on the water, and its drawn route is where it goes", () => {
-    const g = newGame(1, isle(4)), m = g.map, B = m.bounds, p = deepest(m), W = B.lakes!, s = W.shore(p.x, p.z);
+    const g = preppedGame(1, isle(4)), m = g.map, B = m.bounds, p = deepest(m), W = B.lakes!, s = W.shore(p.x, p.z);
     const a = { x: s.x + s.nx * 40, z: s.z + s.nz * 40 }, her = { x: p.x - (a.x - p.x), z: p.z - (a.z - p.z) };
     expect(wetMetres(B, [a, her])).toBeGreaterThan(20); // (the lake lies between them)
     const c = g.creatures.find(k => !k.boss && !k.gone)!;

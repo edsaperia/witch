@@ -3,7 +3,6 @@ import { COMBAT } from "./combat";
 import { simulate } from "./balance";
 import { generateMap } from "./map";
 import { lanchester, levelValue, powerReport } from "./power";
-import { newGame } from "./game";
 import { TUNING, withTuning } from "./tuning";
 
 /** Every species at strength 1 for these tests (Ed, 2026-10-08, gave the species strengths by class; these test other
@@ -12,6 +11,7 @@ const SAVED_STRENGTH = { ...COMBAT.strength!.species };
 const plainStrength = () => { for (const k of Object.keys(COMBAT.strength!.species)) delete COMBAT.strength!.species[k]; };
 const restoreStrength = () => Object.assign(COMBAT.strength!.species, SAVED_STRENGTH);
 import { homeHealth } from "./speakers";
+import { preppedGame, sharedMap } from "../test/preppedGame"; // (games on a map made once a file from its prep)
 // Keep the full seeded route/population: 20–40-wave survival and march/logistics comparisons require that pressure and travel-distance distribution.
 const PEOPLED = withTuning({ population: { ...TUNING.population, start: { ...TUNING.population.start, young: 1 } } }); // (a young in every area, whatever the tuning's curve: the mechanics, not the balance)
 
@@ -26,7 +26,7 @@ describe("fighting value (rules/power.ts)", () => {
   });
 
   it("reads the party and the sieges off a game", () => {
-    const g = newGame(123, TUNING), two = g.creatures.filter(c => !c.boss && !c.leashed), young = two[0], adult = two[1];
+    const g = preppedGame(123, TUNING), two = g.creatures.filter(c => !c.boss && !c.leashed), young = two[0], adult = two[1];
     young.level = 1; adult.level = 2; young.leashed = true; g.leash.stack.push(young.id);
     adult.siege = "home";
     const p = powerReport(g.creatures, g.witches, g.combat.sounds);
@@ -62,7 +62,7 @@ describe("the balance simulator (rules/balance.ts, tools/balance/sim.mjs)", () =
 
   it("gives every woken area its own legend, besieging only its own soundsystem (Ed, 2026-10-04)", () => {
     // (half the areas with legends, as when this was written: the mechanism, not legends.share's balance, Ed 2026-10-08's 0.2)
-    const half = withTuning({ population: PEOPLED.population, legends: { ...TUNING.legends, share: 0.5 } }), hmap = generateMap(1000, half);
+    const half = withTuning({ population: PEOPLED.population, legends: { ...TUNING.legends, share: 0.5 } }), hmap = sharedMap(1000, half);
     const plain = simulate(hmap, { interval: 60, maxWaves: 40 }), legends = simulate(hmap, { interval: 60, maxWaves: 40, areaLegends: true });
     // (legends.share leaves some areas without one, and a legend marches slowly: a 500-health soundsystem often falls before
     // it gets there, so it shows as a bigger siege somewhere in the first twenty waves, not always by its whole value)
@@ -70,7 +70,7 @@ describe("the balance simulator (rules/balance.ts, tools/balance/sim.mjs)", () =
     // A legend alone topples its soundsystem in about 5.6 minutes: over a few maps, the run is shorter
     // (one map can tie, or even last a wave longer: with home's forest mammals, 2026-10-12, seed 1000 did and 1001 and 1004 tied,
     // while 1002, 1003 and 1005 lost a wave each; so six maps).
-    const total = (areaLegends: boolean) => [1000, 1001, 1002, 1003, 1004, 1005].reduce((n, seed) => n + simulate(generateMap(seed, half), { interval: 60, maxWaves: 40, areaLegends }).survived, 0);
+    const total = (areaLegends: boolean) => [1000, 1001, 1002, 1003, 1004, 1005].reduce((n, seed) => n + simulate(sharedMap(seed, half), { interval: 60, maxWaves: 40, areaLegends }).survived, 0);
     expect(total(true)).toBeLessThan(total(false));
   }, 120000);
 

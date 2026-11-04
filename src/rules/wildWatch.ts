@@ -9,8 +9,8 @@
 // and the music's sting) is the area's, scaled by its danger: what its watchers are worth in a fight (wildWatch.dangerF).
 // The chase (Ed, 2026-10-13: "Animals should chase outside, and relatively far ... stop people just sitting near the edge of a
 // territory and sniping/kiting. However if you leave the area before the warning ends then they don't attack"): walked out of in
-// time, none comes after her (rules/combat/targeting.ts acquire); once they've attacked they follow her out to combat.leaveArea
-// past their edge; and a 💌 of hers provokes a wild one for wildWatch.provoked seconds, so it comes out after her across its edge.
+// time, none comes after her (rules/combat/targeting.ts acquire); once they've attacked they follow her anywhere on the ground
+// until she takes off (Ed, 2026-10-31; out to combat.leaveArea past their edge before); and a 💌 of hers provokes a wild one for wildWatch.provoked seconds, so it comes out after her across its edge.
 import { cellKey } from "./party";
 import { areaCellAt } from "./map";
 import { LEGEND, type Creature } from "./creatures";

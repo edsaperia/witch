@@ -2,16 +2,18 @@
 // is good; it's more important in rapid gameplay to be able to tell ranks apart than creatures"; tuning leash.ranks; the default since Ed, 2026-10-27:
 // "go ahead and push all the new sigil work"; ?sigils=old the old look):
 // every leash sigil (her stack, placed sigils, happy runes, the ghost, the treetop projection, the bond) is the bare glyph in its
-// rank's colour (a baby's purple on either side; a friend's three blues, an enemy's three reds: no ring, no disc), embers rising off its strokes (more,
-// bigger, brighter and higher each rank; a legend's white-hot), and a youth in her stack has two rows of round dots off to the
-// right of its glyph, one a berry it still eats on the move (bright eaten, dim not; all bright, they pulse: ready), the last berry
-// (eaten only at a sigil she's put down: rules/berries.ts lastBerry) its adult moment on the ground. Pure helpers here; the
+// rank's colour (Ed, 2026-11-03: "the forest is cold, the party is warm": hers pink, crimson, orange and gold, the wild's purple,
+// blue and turquoise, every baby's her pink, a sleeping legend's a pale lilac; render/colourGrammar.ts; no ring, no disc), embers rising off its strokes (more,
+// bigger, brighter and higher each rank; a legend's white-hot), and a baby or a youth in her stack has round dots off to the right
+// of its glyph, two rows, one a berry it needs to grow (bright eaten, dim not; all bright, they pulse: ready), the next empty one
+// twinkling while she has a berry queued for it (Ed, 2026-11-03; rules/berries.ts queueBerry). Pure helpers here; the
 // drawing is render/leash.ts's and render/leash/stack.ts's.
 import type { Creature } from "../../rules/creatures";
 import type { Tuning } from "../../rules/tuning";
 import { toEvolve } from "../../rules/berries";
 import { hash2 } from "../../rules/random";
 import type { Instances } from "./glyphs";
+import { OLD_RANK_COLOURS, oldColours } from "../colourGrammar";
 
 export interface RankKnobs {
   on: boolean;
@@ -19,15 +21,21 @@ export interface RankKnobs {
   hex: number;
   /** A placed sigil's glyph, across (m). */
   glyph: number;
-  /** A friend's colours (hers, and the invited), baby to legend (0-255): the baby's purple, then three blues by intensity, a youth's
-   *  muted, an adult's strong, a legend's the most saturated and vivid, pure brilliant blue, and shiny (legendShine) (Ed, 2026-10-29:
-   *  "more strictly do hostile reds vs friendly blues, no purples"; "baby sigils are purple (neither friend nor enemy)"; on the
-   *  legend: "the colour doesn't say 'elite' to me. It should be shiny or very saturated or clearly at the end of the colour
-   *  progression"; before, a lightness ramp to a pale legend, and before that pink, light purple, light blue and turquoise). */
+  /** A friend's colours (hers, and the invited), baby to legend (0-255), warm (Ed, 2026-11-03: "the forest is cold, the party is
+   *  warm"; his table: baby pink, youth red, adult orange, legend gold): a baby's pink, a youth's crimson (toward rose and darker than
+   *  the warnings' pure red, which stays theirs: "red telegraphs are right; red does mean warning"), an adult's orange, a legend's
+   *  gold, and shiny (legendShine). Before (colourGrammar "old", render/colourGrammar.ts OLD_RANK_COLOURS): the baby's purple, then
+   *  three blues by intensity (Ed, 2026-10-29: "more strictly do hostile reds vs friendly blues, no purples"). */
   colours: number[][];
-  /** An enemy's (the wild still at their stone), baby to legend: the same purple for a baby, then three reds by intensity, a youth's
-   *  muted, an adult's strong, a legend's a blazing red (no pink, magenta or purple). The baby's purple is the only purple there is. */
+  /** An enemy's (the wild still at their stone), baby to legend, cold (Ed, 2026-11-03: youth purple, adult blue, legend turquoise):
+   *  a youth's purple, an adult's blue, a legend's turquoise. A baby's is hers, the friend's pink, whatever its side (Ed, 2026-11-03,
+   *  on #1732: a wild baby waiting on a stone's column always joins the party at its conversion and can never be hostile; rankColour
+   *  takes `colours` for any baby, and this one's kept the same for the rune stones, which read this list). Before: the baby's purple,
+   *  then three reds. */
   enemy: number[][];
+  /** A sleeping legend's sigil (asleepLegend), "neutral, asleep": a pale frost lilac, its only use (Ed, 2026-11-03, on #1732); before
+   *  the grammar, the babies' purple (Ed, 2026-10-29: "Sleeping legend sigils should be purple, like babies, as they are neutral"). */
+  asleep?: number[];
   /** Each rank's sigil size, baby to legend, against an adult's (Ed, 2026-10-28: today's size the adult's, about 10% a step; a legend's
    *  1.35 since Ed's "I didn't notice any legends in any runestone sigil stacks", 2026-10-29: "Bigger is ok"). */
   sizes: number[];
@@ -47,19 +55,20 @@ export interface RankKnobs {
    *  `far`; the cast's ring of `bars` bars `radius` m round the stone's foot, each step `cell` m, stretched north-south by `ringTilt` against the camera's foreshortening; the conversion `convert` seconds. */
   stones?: { range: number; fade: number; size: number; near: number; far: number; bars: number; radius: number; cell: number; convert: number; ringTilt?: number };
   /** The leashes as chains (render/leash/chain.ts): a link's length (m) by rank, youth to legend (babies have no leash: Ed, 2026-10-11, and again 2026-10-28); a legend's tether's links `tether` times
-   *  its rank's; a slack leash `slack` longer than its span; and their motion (chain.ts ChainMotion: damping, gravity, arcPull,
-   *  iterations, jump); a travelling follower's chain hanging from its sigil reaches the ground `fall` m along its walking path for
+   *  its rank's; its verlet points `segment` m apart (each span drawn as links); and their motion (chain.ts ChainMotion: damping, gravity,
+   *  friction on the ground, iterations, jump); a travelling follower's chain hanging from its sigil reaches the ground `fall` m along its walking path for
    *  every metre it falls (travelPose.ts sigilPath). */
-  chain?: { link: number[]; tether: number; slack: number; damping: number; gravity: number; arcPull: number; iterations: number; jump: number; fall: number };
+  chain?: { link: number[]; tether: number; segment: number; damping: number; gravity: number; friction: number; iterations: number; jump: number; fall: number };
 }
 
 export const STONES_DEFAULT = { range: 90, fade: 20, size: 4.4, near: 5, far: 10, bars: 36, radius: 4.4, cell: 0.55, convert: 2.4, ringTilt: 1.6 };
-export const CHAIN_DEFAULT = { link: [0.62, 0.78, 1], tether: 1.3, slack: 0.12, damping: 0.96, gravity: 9.8, arcPull: 60, iterations: 6, jump: 8, fall: 0.5 };
+export const CHAIN_DEFAULT = { link: [0.62, 0.78, 1], tether: 1.3, segment: 2, damping: 0.96, gravity: 9.8, friction: 0.6, iterations: 6, jump: 8, fall: 0.5 };
 
 export const RANKS_DEFAULT: RankKnobs = {
   on: true, hex: 6, glyph: 5,
-  colours: [[180, 100, 255], [125, 145, 195], [55, 115, 220], [0, 135, 255]],
-  enemy: [[180, 100, 255], [190, 105, 100], [225, 45, 40], [255, 55, 15]],
+  colours: [[255, 130, 200], [190, 18, 64], [255, 140, 30], [255, 205, 40]],
+  enemy: [[255, 130, 200], [150, 80, 255], [45, 110, 255], [20, 230, 210]],
+  asleep: [200, 185, 240],
   sizes: [0.81, 0.9, 1, 1.35],
   embers: { count: [3, 5, 8, 12], size: [0.22, 0.26, 0.3, 0.36], rise: [1.6, 2.1, 2.8, 3.6], stack: 0.4 },
   dotsPerRow: 4, stoneGlow: 2.4, standScale: 1.5,
@@ -68,7 +77,7 @@ export const RANKS_DEFAULT: RankKnobs = {
 /** The leash hex grid's size (m) before the rank sigils (4: leash.spacing's density), as ?sigils=old brings it back. */
 export const OLD_HEX = 4;
 
-export const rankKnobs = (t: Tuning): RankKnobs => ({ ...RANKS_DEFAULT, ...(t.leash.ranks ?? {}) });
+export const rankKnobs = (t: Tuning): RankKnobs => { const K = { ...RANKS_DEFAULT, ...(t.leash.ranks ?? {}) }; return oldColours(t) ? { ...K, ...OLD_RANK_COLOURS } : K; }; // (the old colours: render/colourGrammar.ts)
 export const stoneKnobs = (t: Tuning): NonNullable<RankKnobs["stones"]> => ({ ...STONES_DEFAULT, ...(t.leash.ranks?.stones ?? {}) });
 export const chainKnobs = (t: Tuning): NonNullable<RankKnobs["chain"]> => ({ ...CHAIN_DEFAULT, ...(t.leash.ranks?.chain ?? {}) });
 export const ranksOn = (t: Tuning): boolean => !!t.leash.ranks?.on;
@@ -76,35 +85,45 @@ export const ranksOn = (t: Tuning): boolean => !!t.leash.ranks?.on;
 /** A rank: 0 baby, 1 youth, 2 adult, 3 legend (any higher level a legend's). */
 export const rankOf = (c: Pick<Creature, "level">): number => Math.max(0, Math.min(3, c.level));
 
-/** The rank's colour, 0 to 1: a friend's (hers, the invited) or an enemy's (the wild at their stone). */
+/** The rank's colour, 0 to 1: a friend's (hers, the invited) or an enemy's (the wild at their stone); a baby's always the friend's
+ *  (Ed, 2026-11-03: every baby sigil pink, on either side). */
 export function rankColour(t: Tuning, rank: number, friend = true): [number, number, number] {
-  const K = rankKnobs(t), c = (friend ? K.colours : K.enemy)[Math.max(0, Math.min(3, rank))] ?? [255, 255, 255];
+  const K = rankKnobs(t), r = Math.max(0, Math.min(3, rank)), c = (friend || r === 0 ? K.colours : K.enemy)[r] ?? [255, 255, 255];
   return [c[0] / 255, c[1] / 255, c[2] / 255];
 }
 
-/** Whether a creature is a sleeping legend: its sigil is neutral, the baby's purple (Ed, 2026-10-29: "Sleeping legend sigils should
- *  be purple, like babies, as they are neutral"), till it wakes (restless or angry, the enemy's; happy, the friend's). */
+/** Whether a creature is a sleeping legend: its sigil is neutral, leash.ranks.asleep (Ed, 2026-10-29: "Sleeping legend sigils should
+ *  be purple, like babies, as they are neutral"; a pale frost lilac of its own since the grammar, 2026-11-03, the babies pink), till it wakes (restless or angry, the enemy's; happy, the friend's). */
 export const asleepLegend = (c: { boss?: unknown; legendState?: string } | undefined): boolean => !!c?.boss && c.legendState === "asleep";
 /** Whether a creature's sigil wears the legend's crown (art/sigils.js LEGEND_CROWN; Ed, 2026-10-29): every legend's. */
 export const crowned = (c: Pick<Creature, "level"> & { boss?: unknown }): boolean => !!c.boss || rankOf(c) >= 3;
-/** A sigil's colour, 0 to 1: its rank's, a friend's or an enemy's, or a sleeping legend's purple (asleepLegend). */
-export const sigilRankColour = (t: Tuning, rank: number, friend: boolean, asleep: boolean): [number, number, number] => rankColour(t, asleep ? 0 : rank, friend);
+/** A sigil's colour, 0 to 1: its rank's, a friend's or an enemy's (any baby's the friend's pink), or a sleeping legend's neutral lilac whatever its side (asleepLegend, leash.ranks.asleep). */
+export function sigilRankColour(t: Tuning, rank: number, friend: boolean, asleep: boolean): [number, number, number] {
+  if (!asleep) return rankColour(t, rank, friend);
+  const c = rankKnobs(t).asleep ?? RANKS_DEFAULT.asleep!;
+  return [c[0] / 255, c[1] / 255, c[2] / 255];
+}
 
 /** The rank's sigil size against an adult's (Ed, 2026-10-28): 0.81, 0.9, 1, and a legend 1.35 (coordinator, 2026-10-29: unmistakable). */
 export const rankSize = (t: Tuning, rank: number): number => rankKnobs(t).sizes[Math.max(0, Math.min(3, rank))] ?? 1;
 /** How much bigger a rank sigil stands in her stack and a stone's column than at its rank's size (standScale). */
 export const standScale = (t: Tuning): number => rankKnobs(t).standScale ?? 1;
 
-/** A youth's dots in her stack: one for each berry it eats on the move (its cost to adult, less the last, eaten at a placed sigil:
- *  rules/berries.ts lastBerry), and how many it has eaten; none for any other rank. Read from the rules (toEvolve), so it follows
- *  the berry tuning. */
+/** A baby's or a youth's dots in her stack: one for each berry it needs to grow (a baby's one, a youth's cost to adult; since Ed's
+ *  2026-11-03 feeding on command every one is fed by her, the last too, so none is held back), and how many it has eaten; none for any
+ *  other rank. Read from the rules (toEvolve), so it follows the berry tuning. */
 export function youthDots(c: Pick<Creature, "level" | "species">, fed: number, t: Tuning): { n: number; lit: number } {
-  if (c.level !== 1) return { n: 0, lit: 0 };
-  const need = toEvolve(1, t, c.species);
+  if (c.level !== 0 && c.level !== 1) return { n: 0, lit: 0 };
+  const need = toEvolve(c.level, t, c.species);
   if (!Number.isFinite(need)) return { n: 0, lit: 0 };
-  const n = Math.max(0, Math.round(need) - 1);
+  const n = Math.max(0, Math.round(need));
   return { n, lit: Math.max(0, Math.min(n, Math.floor(fed))) };
 }
+
+/** Which of its berry dots twinkles (Ed, 2026-11-03: while a creature has a berry queued, "its next empty berry slot in the sigil stack
+ *  (the dot it will fill) twinkles"): the first unlit of the `n` shown, `lit` lit, while `queued` > 0; -1 for none (nothing queued, or
+ *  every dot lit). */
+export const queuedDot = (d: { n: number; lit: number }, queued: number): number => (queued > 0 && d.lit < d.n ? d.lit : -1);
 
 /** The dots drawn, two rows of at most `perRow`: a youth needing more (before the berry costs came down to 3 / 4 / 8, a strong
  *  one had 15 on the move) shows the most there's room for, lit in proportion. */

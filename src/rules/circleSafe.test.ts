@@ -2,11 +2,12 @@
 // shouldn't attack you from outside when you're in there"): standing in a calm legend's circle (the same test as slow time,
 // rules/slowTime.ts), nothing outside it goes for her, a shot already on its way doesn't land, and a chaser gives up and goes home.
 import { describe, expect, it } from "vitest";
-import { newGame, stepGame, STEP, type Controls, type Game } from "./game";
+import { stepGame, STEP, type Controls, type Game } from "./game";
 import { TUNING } from "./tuning";
 import { legendRings, type Ring } from "./slowTime";
 import { attackNamed, COMBAT } from "./combat/data";
 import { observingAttacks } from "./attackObservation";
+import { preppedGame } from "../test/preppedGame"; // (games on a map made once a file from its prep)
 
 // Keep the radius world: the ring fixture borrows six attackers more than 400 m away after clearing its surrounding 200 m.
 const idle: Controls = { moveX: 0, moveZ: 0, toggleMode: false, zoom: 0, autoTalk: false };
@@ -15,7 +16,7 @@ const run = (g: Game, secs: number) => { for (let i = 0; i < Math.round(secs / S
 /** Her on the ground at the edge of a sleeping legend's circle, `inside` it or just out of it, with six wild young of the
  *  circle's area crowding her from outside it. (Slow time off, so the world runs at full speed either way: a fair test.) */
 function crowd(inside: boolean): { g: Game; ring: Ring; hp: number; ids: number[] } {
-  const g = newGame(123, TUNING);
+  const g = preppedGame(123, TUNING);
   (g as { tuning: typeof TUNING }).tuning = { ...g.tuning, legendCircle: { ...g.tuning.legendCircle!, slow: { ...g.tuning.legendCircle!.slow, on: false } } };
   g.clock.paused = false; g.party.spellAt = -100;
   const ring = legendRings(g).find(r => g.creatures[r.id].legendState === "asleep")!;

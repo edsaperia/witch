@@ -2,8 +2,9 @@ import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { setCombatRoles } from "../test/combatRoles";
 import { FIGHT, profileOf, startCharge, stepLeap } from "./movement";
 import { type Creature, type Level } from "./creatures";
-import { newGame, stepGame, STEP, type Controls, type Game } from "./game";
+import { stepGame, STEP, type Controls, type Game } from "./game";
 import { TUNING, withTuning, type Tuning } from "./tuning";
+import { preppedGame } from "../test/preppedGame"; // (games on a map made once a file from its prep)
 
 // Ed's round 13 (2026-10-06): "Charging and jumping creatures should charge or jump much further. At
 // the moment it feels like they always stop short. They should be damaging whenever they're touched
@@ -21,7 +22,7 @@ const OLD = withTuning({ fight: { ...TUNING.fight, charge: { reach: 1, turn: 1, 
 /** A quiet game, the witch on the ground away from everything, too tough to knock out. */
 function quiet(t: Tuning = TUNING): Game {
   // Keep the spatial fixture: attacks recruit creatures over 200 m away and test pursuit across area edges.
-  const g = newGame(77, t);
+  const g = preppedGame(77, t);
   g.clock.paused = false;
   const d = g.map.dancefloor;
   g.witch = { ...g.witch, seated: false, x: d.x, z: d.z + 20, mode: "ground", lift: 0 };
@@ -59,7 +60,9 @@ function charge(t: Tuning) {
 
 describe("charges and leaps go further (Ed, 2026-10-06)", () => {
   it("runs a boar's charge much further past her, swinging out wider, with the knobs up", () => {
-    const before = charge(OLD), after = charge(TUNING);
+    // (at the speeds the knobs were tuned at: the difficulty's creatureSpeed, Ed 2026-11-03, aside; difficulty.test.ts has its own)
+    const calm = (t: Tuning) => withTuning({ ...t, difficulty: { ...TUNING.difficulty!, creatureSpeed: 1 } });
+    const before = charge(calm(OLD)), after = charge(calm(TUNING));
     expect(before.started && after.started).toBe(true);
     expect(TUNING.fight.charge.reach).toBeGreaterThan(1);
     expect(after.past).toBeGreaterThan(before.past * 1.5);
@@ -104,7 +107,7 @@ describe("charges and leaps go further (Ed, 2026-10-06)", () => {
 describe("a chase given up (Ed, 2026-10-06: 'pursue you 30 m outside of their area ... instead they should retreat and go back to idling')", () => {
   it("follows her on the ground past its old 30 m band, then retreats home after take-off (hunt off)", () => {
     expect(TUNING.combat.leaveArea).toBe(30);
-    const g = newGame(1000, { ...TUNING, hunt: { on: false } }), w = g.witches[0];
+    const g = preppedGame(1000, { ...TUNING, hunt: { on: false } }), w = g.witches[0];
     g.clock.paused = false; g.party.paused = true;
     const [hx, hy] = g.map.centreCell, cell: [number, number] = [hx + 2, hy], site = g.map.siteOf(cell[0], cell[1]);
     w.body = { ...w.body, seated: false, mode: "ground", lift: 0, x: site.x, z: site.z };

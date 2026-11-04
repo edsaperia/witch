@@ -8,6 +8,7 @@
 import { newTelescope, stepTelescope, telescopeFov, telescopeMagnification, turnTelescope, wrapBearing, type Telescope, type TelescopeTuning } from "../rules/telescope";
 import { bindings, type ActionId } from "../platform/bindings";
 import { telescopeHint, type HintDevice } from "../ui/deviceHints";
+import { glRendererName } from "../platform/glRenderer";
 
 /** The arrow keys, while she looks: the telescope's (taken before the game's input sees them, as a station's panel takes them). */
 const ARROWS: Record<string, [number, number]> = { ArrowLeft: [-1, 0], ArrowRight: [1, 0], ArrowUp: [0, -1], ArrowDown: [0, 1] };
@@ -152,7 +153,7 @@ export class TelescopeView {
 /** Whether the page draws on an integrated GPU (Intel's: Ed's laptop), where the telescope draws at lowGpuResolution. */
 export function integratedGpu(gl: WebGLRenderingContext | WebGL2RenderingContext): boolean {
   try {
-    const ext = gl.getExtension("WEBGL_debug_renderer_info"), name = String(gl.getParameter(ext ? ext.UNMASKED_RENDERER_WEBGL : gl.RENDERER) ?? "");
+    const name = String(glRendererName(gl) ?? "");
     return /intel/i.test(name);
   } catch { return false; }
 }

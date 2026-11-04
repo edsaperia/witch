@@ -14,6 +14,9 @@ import { runawaySpot } from "./runaway";
 import type { Creature, Level } from "./creatures";
 import { stepWin } from "./win";
 
+/** The night's tuning: ten areas, the stacks off, and the party's generated pieces as the game always has them (app/viewParams.ts
+ *  styleFromLink; with them this night's badger #11 once walked on the spot by its bed for good, game.ts stepSpacing). */
+const nightTuning = () => withTuning({ map: { ...TUNING.map!, islandAreas: 10 }, cast: { ...TUNING.cast!, on: false }, partyObjects: { ...TUNING.partyObjects, generated: true } });
 // Keep the seed-22 ten-area bot night and seed-77 radius fight: these cover complete win/loss population conservation and real beach return travel.
 /** Every one gone is asleep on the beach. */
 const allBeached = (g: Game) => { for (const c of g.creatures.filter(c => c.gone)) { expect(c.beached, `#${c.id} gone, not on the beach`).toBe(true); expect(c.asleep).toBe(true); } };
@@ -25,7 +28,7 @@ describe("a night's creatures (Ed, 2026-10-28)", () => {
   function night(loseAt = Infinity) {
     // (the stacks off, ?cast=0: with them a converted area's babies' sigils lie loose round it and they don't run off when it falls
     // (DESIGN.md, "Loose sigils stay"), so this night's lost soundsystem would only have had runaways by chance)
-    const g = newGame(22, withTuning({ map: { ...TUNING.map!, islandAreas: 10 }, cast: { ...TUNING.cast!, on: false } }));
+    const g = newGame(22, nightTuning());
     g.clock.paused = false; g.witch = { ...g.witch, seated: false, perch: false };
     const bot = newBot("skilled"), start = g.creatures.length, ran = new Set<number>();
     let most = start, dazed = 0, lost = 0;
@@ -47,7 +50,7 @@ describe("a night's creatures (Ed, 2026-10-28)", () => {
   }
 
 it("explicit runaways remain asleep on the beach at victory, with the population unchanged", () => {
-    const g = newGame(22, withTuning({ map: {...TUNING.map!, islandAreas: 10}, cast: {...TUNING.cast!, on: false} }));
+    const g = newGame(22, nightTuning());
     const ids = g.creatures.map(c => c.id), runners = g.creatures.filter(c => !c.boss && c.level > 0 && c.level < 3 && !c.leashed).slice(0, 3);
     expect(runners).toHaveLength(3);
     for (const c of runners) {const beach = runawaySpot(g, c); expect(beach).not.toBeNull(); runAway(c, beach, () => ({x: c.x, z: c.z}));}
@@ -72,7 +75,7 @@ it("explicit runaways remain asleep on the beach at victory, with the population
   }, 400000);
 
   it("a party animal knocked down runs off its leash to sleep on the beach", () => {
-    const g = newGame(77, TUNING), d = g.map.dancefloor;
+    const g = newGame(77, withTuning({ partyObjects: { ...TUNING.partyObjects, generated: true } })), d = g.map.dancefloor;
     g.clock.paused = false;
     g.witch = { ...g.witch, seated: false, x: d.x, z: d.z + 20, mode: "treetop", lift: 1 }; // (out of reach herself)
     for (const c of g.creatures) if (Math.hypot(c.x - g.witch.x, c.z - g.witch.z) < 60) c.gone = true; // (out of the way)

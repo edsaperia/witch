@@ -3,7 +3,8 @@
 import { describe, expect, it } from "vitest";
 import { decorSprite, DECOR_KINDS } from "../../art/houseDecor.js";
 import { HOUSE_ROOMS, fromObject } from "../rules/houseRooms";
-import { decorPlan, ROOM_DECOR } from "./houseDecor";
+import { applyEdLayout } from "../rules/housePlacement";
+import { DECOR_ROOMS, decorPlan, placedDecorPlan, placedDecorRooms, placedDecorWorkedOut, ROOM_DECOR } from "./houseDecor";
 
 describe("the treehouse's rooms dressed", () => {
   const rooms = HOUSE_ROOMS.rooms.filter(r => r.r);
@@ -41,5 +42,24 @@ describe("the treehouse's rooms dressed", () => {
       expect(d.sp.m.filter(Boolean).length, `${kind} ${k}`).toBeGreaterThan(20);
       if (["lamp", "candles", "lantern", "mushrooms", "neon", "shelf", "crates"].includes(kind)) expect(d.lights.length, `${kind}: lit`).toBeGreaterThan(0);
     }
+  });
+});
+
+describe("the placed layout's dressed rooms (the frame-sync hunt, 2026-11-04: worked out each frame the house showed)", () => {
+  it("are worked out once a layout and kept, the same as working them out afresh", () => {
+    const H = applyEdLayout(HOUSE_ROOMS, true), before = placedDecorWorkedOut;
+    const a = placedDecorRooms(H);
+    expect(a.map(r => r.id)).toEqual(H.rooms.filter(r => placedDecorPlan(r, H).length).map(r => r.id));
+    for (let f = 0; f < 100; f++) expect(placedDecorRooms(H)).toBe(a);
+    expect(placedDecorWorkedOut - before).toBe(1);
+  });
+  it("are worked out again when the layout changes, and are the classic rooms without one", () => {
+    const H = applyEdLayout(HOUSE_ROOMS, true), a = placedDecorRooms(H), before = placedDecorWorkedOut;
+    Object.assign(H, applyEdLayout(H, true)); // (as rules/houseRooms.ts installEdLayout puts a layout in: a new one)
+    const b = placedDecorRooms(H);
+    expect(placedDecorWorkedOut - before).toBe(1);
+    expect(b).not.toBe(a);
+    expect(b.map(r => r.id)).toEqual(a.map(r => r.id));
+    expect(placedDecorRooms({ ...H, layout: undefined })).toBe(DECOR_ROOMS);
   });
 });

@@ -80,14 +80,14 @@
       "pr": 1635,
       "group": "Treehouse look",
       "label": "Bark left indoors",
-      "note": "Adjusts the corresponding Treehouse look setting while it is enabled.",
+      "note": "Off by default (Ed, 3 November: \"bark off indoors\"); at 0.18 it laid a dark patch over the cauldron and the floor. The slider brings it back.",
       "control": {
         "type": "slider",
         "min": 0,
         "max": 0.5,
         "step": 0.01
       },
-      "default": 0.18,
+      "default": 0,
       "apply": {
         "knob": "treehouse.house.look.bark"
       }

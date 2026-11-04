@@ -92,7 +92,8 @@ describe("treehouse authoring layouts", () => {
     expect(converted.version).toBe(2); expect(converted.objects).toHaveLength(items.length - current.removed.length);
     expect(converted.migration?.held.map(p => p.id)).toEqual(["cauldron"]);
     for (const old of supplied.objects.filter(p => p.id !== "cauldron" && !RETIRED_OBJECTS.includes(p.id))) { // (the guests' bedrooms' doors: gone since Ed, 2026-11-03)
-      const base = legacy.items.find(o => o.id === old.id)!, p = converted.objects.find(p => p.id === old.id)!;
+      const id = old.id === "bedroom2Chest" ? "bedroom2DressingTable" : old.id === "bedroom3Chest" ? "bedroom3DressingTable" : old.id;
+      const base = legacy.items.find(o => o.id === old.id)!, p = converted.objects.find(p => p.id === id)!;
       expect(p.x).toBe(old.x); expect(p.z).toBe(old.z);
       const yaw = FURNITURE_IDS.includes(old.id) ? base.facing.yaw - old.rotation * Math.PI / 180 : old.rotation * Math.PI / 180;
       expect(Math.sin(cameraYaw(p))).toBeCloseTo(Math.sin(yaw), 12);
@@ -105,7 +106,7 @@ describe("treehouse authoring layouts", () => {
     expect(parseLayout(exportLayout(converted, items), items, key)).toEqual(converted);
     // The retained proposal uses the registered pre-canonical identity; poses and all other metadata stay exact (less the retired doors,
     // and each object's lighting room: one palette for the whole house since Ed, 2026-11-03).
-    const kept = proposal.objects.filter(p => !current.removed.includes(p.id) && !RETIRED_OBJECTS.includes(p.id)).map(p => { const { lightingRoom: _l, ...q } = p as typeof p & { lightingRoom?: string }; return q; });
+    const kept = proposal.objects.filter(p => !current.removed.includes(p.id) && !RETIRED_OBJECTS.includes(p.id)).map(p => { const { lightingRoom: _l, ...q } = p as typeof p & { lightingRoom?: string }; return { ...q, id: q.id === "bedroom2Chest" ? "bedroom2DressingTable" : q.id === "bedroom3Chest" ? "bedroom3DressingTable" : q.id }; });
     expect({ ...proposal, floorplan: key, removed: current.removed, objects: kept }).toEqual(exportLayout(converted, items));
   });
   it("separates clutter into stable selectable/exportable pieces; moving a piece to another room changes neither its picture nor its function", () => {

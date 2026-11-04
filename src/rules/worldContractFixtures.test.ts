@@ -11,7 +11,7 @@ const network = (fingerposts=false, rails=false, broken=0) => {
   const bounds={minX:-300,maxX:300,minZ:-300,maxZ:300};
   const map={seed:7,shape:"square",bounds,extent:bounds,cells:[],centreCell:[99,99],areaSize:200,
     tuning:{...TUNING,beach:{...TUNING.beach!,on:false},setPieceClear:0,setPieceScale:1,
-      paths:{...TUNING.paths,pieces:true,rails:rails?[1,1]:[0,0],roads:[0,0],streams:[0,0],linkChance:1,deadEndChance:0,fingerposts,railBroken:broken}},
+      paths:{...TUNING.paths,network:false,pieces:true,rails:rails?[1,1]:[0,0],roads:[0,0],streams:[0,0],linkChance:1,deadEndChance:0,fingerposts,railBroken:broken}},
     neighbours:rails?new Map():new Map([["-1,0",["1,0"]],["1,0",["-1,0"]],["0,-1",["0,1"]],["0,1",["0,-1"]]]),
     siteOf:(cx:number,cy:number)=>({x:cx*200,z:cy*200}),typeOf:(cx:number)=>cx===0?wet:dry,
     areaAt:(x:number,z:number)=>({cell:[Math.floor(x/200),Math.floor(z/200)],type:dry,look:dry,openness:1}),

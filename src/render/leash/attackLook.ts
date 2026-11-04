@@ -4,9 +4,11 @@
 // the treetops). Its parts, each placed by a delivery: core (what flies), trail (left behind it), impact (the hit: a flash, a
 // shock ring, its bits flying its element's way, and a mark left on the ground), beam (beads strung along it), area (a quake's or
 // a pulse's ground, its tiles spreading with the front) and motif (a side effect, by shape). And the shared DANGER FRAME every
-// wild attack wears, whatever its element (Ed, 2026-10-27: "composability and telegraphing"): white = warning, a dark edge each
-// side, marching = live, fill = the time left, a flash = now, brackets = you; its element shows only at the hit. Seeded from
-// each attack's id and time (hash2), so a shot or a replay draws the same.
+// wild attack wears, whatever its element (Ed, 2026-10-27: "composability and telegraphing"): red = warning (Ed, 2026-11-02: "the
+// telegraph should be red"), a dark edge each side, marching = live, fill = the time left, a flash = now, brackets = you; its
+// element shows only at the hit. Seeded from each attack's id and time (hash2), so a shot or a replay draws the same. How big,
+// solid, glowing and lasting the spells are is the tuning's attackFx.visibility (Visibility, below; Ed, 2026-11-03: "Let's dial up
+// current creature spell effects a lot so they're easier to see. Larger, extra Bloom. Don't bring back the flash and rings yet").
 import * as THREE from "three";
 import { attackLookAtlas } from "../../../art/attackLook.js";
 import { ATTACK_LOOK, elementOf, rgbOf, spellPower, type SpellElement } from "../../rules/attackLook";
@@ -20,19 +22,33 @@ import { Instances, VERT, FRAG, PIXEL_DOT_MAX } from "./glyphs";
 import { comfort } from "../comfort";
 import { indexedTexture } from "../atlas";
 import { fxFor, type MagicFx } from "../fx/system";
-import { FORM_KEYS } from "../fx/model";
+import { FORM_KEYS, elements as FX_ELEMENTS, fxElement } from "../fx/model";
+import { TUNING } from "../../rules/tuning";
 
 type RGB = [number, number, number];
 /** The danger frame's red (Ed, 2026-11-02: "the telegraph should be red"; art/attackLook.js RED). */
-const DANGER: RGB = [230 / 255, 40 / 255, 40 / 255];
+export const DANGER: RGB = [230 / 255, 40 / 255, 40 / 255];
 /** How an attack is dressed: its element, its creature's level, and (a party animal's) its neon, which tints the element's grey. */
 /** look: a body's look tag (config/attack-look.json looks: an acorn, a feather...), its core drawn as that thing. */
-export interface Dress { el: string; level: number; tint?: RGB | null; look?: string }
+/** fx: its magic's own colours where its element's atlas has none (config/attack-look.json magic: the rainbow's, the gold's). */
+export interface Dress { el: string; level: number; tint?: RGB | null; look?: string; fx?: string }
+
+/** How easy the creatures' spells are to see (the tuning's attackFx.visibility; Ed, 2026-11-03): size, times every part's size;
+ *  opacity, how far each part's own opacity is raised toward solid (0 none); bloom, its halo and extra glow times their own;
+ *  duration, its hits, marks, quakes and trails times their life; zoneDensity, the share of a lingering zone's tiles drawn;
+ *  groundMark, a hit's mark's opacity on the ground. */
+export interface Visibility { size: number; opacity: number; bloom: number; duration: number; zoneDensity: number; groundMark: number }
+/** The look before the 3 November dial-up: these draw every creature spell exactly as it was. */
+export const OLD_VISIBILITY: Readonly<Visibility> = { size: 1, opacity: 0, bloom: 1, duration: 1, zoneDensity: 0.25, groundMark: 0.12 };
+/** A rainbow's bands, outside in (red to violet). */
+export const RAINBOW: readonly RGB[] = [[1, 0.25, 0.25], [1, 0.6, 0.15], [1, 0.95, 0.25], [0.3, 0.95, 0.35], [0.3, 0.55, 1], [0.7, 0.35, 1]];
 
 const PPM = 16; // art pixels a metre (the atlas's)
 let K = 2; // whole art pixels an atlas pixel draws (config scale)
 const TAU = Math.PI * 2;
 const clamp01 = (v: number) => (v < 0 ? 0 : v > 1 ? 1 : v);
+/** A lingering zone draws every this-many'th of its tiles (zoneDensity 0.25: every fourth, the old look; 1: every one). */
+export const zoneEvery = (density: number): number => Math.max(1, Math.round(1 / Math.max(0.05, Math.min(1, density))));
 /** Who goes which way when an impact's bits fly: up (fire's tongues), out and falling (frost's shards, venom's drops, earth's
  *  rubble), rings (moonlight), forks (storm), in then out (shadow), drifting (bloom). */
 const FALLS: Record<string, number> = { burst: -3, shatter: 9, splash: 10, ring: -1.5, crackle: 0, rubble: 12, poof: -1, blossom: 1.2 };
@@ -54,7 +70,7 @@ export class AttackLook {
   readonly magic: MagicFx;
   /** light, added (glows); standing and on the ground */
   readonly glow: Instances; readonly glowFlat: Instances;
-  /** painted over (solid cores, rubble, smoke, marks, the danger frame's dark edges and white dashes) */
+  /** painted over (solid cores, rubble, smoke, marks, the danger frame's dark edges and red dashes) */
   readonly paint: Instances; readonly paintFlat: Instances;
   /** the danger frame from the treetops: over the crowns */
   readonly over: Instances;
@@ -66,6 +82,8 @@ export class AttackLook {
   /** Shots seen in flight last frame, by id: where each was and its dress (one gone has hit: leash/combat.ts). */
   readonly shots = new Map<number, { x: number; z: number; d: Dress }>();
   readonly cfg = ATTACK_LOOK;
+  /** this frame's attackFx.visibility (begin) */
+  vis: Visibility = TUNING.attackFx?.visibility ?? OLD_VISIBILITY;
 
   constructor(scene: THREE.Scene, game: Game) {
     this.magic = fxFor(scene);
@@ -89,7 +107,34 @@ export class AttackLook {
 
   /** Another night: the effects in flight forgotten. */
   reset(): void { this.fx = []; this.shots.clear(); }
-  begin(): void { for (const L of this.layers()) L.begin(); }
+  begin(vis: Visibility = this.vis): void { this.vis = vis; for (const L of this.layers()) L.begin(); }
+  /** A part's own opacity a, raised toward solid by the visibility's opacity. */
+  lift(a: number): number { const o = clamp01(this.vis.opacity); return a + (1 - a) * o; }
+  /** The magic's element for a dress (its own colours if it has some: Dress.fx). */
+  private fxEl(d: Dress): string { return d.fx ?? d.el; }
+  /** What tints its magic: a party animal's neon, else a rainbow's hue (cycling, by seed and time), else its element's own. */
+  private fxTint(d: Dress, seed: number, time = 0): RGB | null {
+    if (d.tint) return d.tint;
+    if (this.fxEl(d) === "rainbow") return RAINBOW[Math.floor(seed + time * 4) % RAINBOW.length];
+    return null;
+  }
+  private glowCols = new Map<string, RGB>();
+  /** Its magic's glow colour (its ramp's bright step; a tint over it). */
+  private glowOf(d: Dress, tint: RGB | null): RGB {
+    if (tint) return tint;
+    const key = fxElement(this.fxEl(d));
+    let c = this.glowCols.get(key);
+    if (!c) { const n = parseInt(FX_ELEMENTS[key].ramp[2].slice(1), 16); this.glowCols.set(key, (c = [(n >> 16) / 255, ((n >> 8) & 255) / 255, (n & 255) / 255])); }
+    return c;
+  }
+  /** The extra bloom round a bolt, a hit, a beam's bead or a zone: a smooth soft light, its strength the bloom over 1 (none at 1:
+   *  the old look). flat: on the ground. */
+  private bloomAt(d: Dress, tint: RGB | null, x: number, y: number, z: number, size: number, a: number, flat = false): void {
+    const extra = (this.vis.bloom - 1) * a * (comfort.reduceFlashing ? 0.5 : 1);
+    if (!this.magic.enabled || extra <= 0.01) return;
+    const c = this.glowOf(d, tint);
+    (flat ? this.glowFlat : this.glow).add(x, y, z, size, this.uv("dot"), c[0], c[1], c[2], Math.min(1.5, extra), 1, true);
+  }
   end(): void { for (const L of this.layers()) L.end(); }
   private layers(): Instances[] { return [this.glow, this.glowFlat, this.paint, this.paintFlat, this.over]; }
   /** How many quads it drew this frame (the cost, for the debug overlay and the bench). */
@@ -130,15 +175,17 @@ export class AttackLook {
 
   /** What flies: its core (in its frame), a halo of its light, and its trail behind it along -v (seconds of flight back). */
   core(d: Dress, x: number, y: number, z: number, vx: number, vy: number, vz: number, time: number, seed: number): void {
-    this.magic.draw(d.el, vy > 1 ? "lob" : "projectile", x, y, z, d.level, 1, d.look ? 0.45 : 1, 0, seed, d.tint);
+    const V = this.vis, mt = this.fxTint(d, seed, time);
+    this.magic.draw(this.fxEl(d), vy > 1 ? "lob" : "projectile", x, y, z, d.level, V.size, this.lift(d.look ? 0.45 : 1), 0, seed, mt, undefined, V.bloom);
     const P = this.colours(d), legend = d.level >= 3, pw = spellPower(d.level), f = Math.floor(time * 12 + seed) % 4, t = this.tinted(d);
+    this.bloomAt(d, mt, x, y, z, 1.6 * pw * V.size, 0.4);
     if (!this.magic.enabled) this.glow.add(x, y, z, 1.5 * pw, this.uv("dot"), P[1][0], P[1][1], P[1][2], 0.5);
     const L = d.look ? this.cfg.looks[d.look] : undefined;
     if (L) {
       // its look's own core (painted: a thing, not light), its own colours or its element's (a party animal's: its neon), facing its way
       const cell = `look.${d.look}.${L.palette && !d.tint ? "c" : "g"}.core.${legend ? "l" : "a"}.${f}`, R = SPRITE_UNIFORMS.uRight.value, left = vx * R.x + vz * R.z < 0;
       const tint: RGB = L.palette && !d.tint ? [1, 1, 1] : d.tint ? t : [Math.min(1, P[2][0] * 1.1), Math.min(1, P[2][1] * 1.1), Math.min(1, P[2][2] * 1.1)];
-      const uv = this.uv(cell), px = (this.px(cell) * K) / PPM;
+      const uv = this.uv(cell), px = (this.px(cell) * K * V.size) / PPM;
       this.paint.add(x, y, z, px, left ? this.flipped(cell, uv) : uv, tint[0], tint[1], tint[2], 1);
     } else if (!this.magic.enabled) {
       this.put(this.solid(d) ? this.paint : this.glow, this.name(d, `core.${legend ? "l" : "a"}.${f}`), x, y, z, 1, 1, t);
@@ -150,7 +197,7 @@ export class AttackLook {
   /** Bits left along its way, each born at a moment of its flight (whole steps of time, so they stay put as it flies on) and
    *  drifting its element's way: embers rise, drips fall, sparkles wink, smoke grows. */
   trail(d: Dress, x: number, y: number, z: number, vx: number, vy: number, vz: number, time: number, seed: number): void {
-    if(this.magic.enabled){this.magic.ribbon(d.el,x,y,z,vx,vy,vz,d.level,seed,d.tint);return;}
+    if(this.magic.enabled){const V=this.vis;this.magic.ribbon(this.fxEl(d),x,y,z,vx,vy,vz,d.level,seed,this.fxTint(d,seed,time),undefined,{width:V.size,alpha:this.lift(0.6),life:V.duration,glow:V.bloom});return;}
     const e = this.el(d), P = this.colours(d), n = Math.round(this.cfg.particles.trail * spellPower(d.level) * 0.35), dt = 1 / this.cfg.particles.trail, life = n * dt;
     const now = Math.floor(time / dt), solid = this.solid(d), t = this.tinted(d);
     for (let i = 1; i <= n; i++) {
@@ -171,8 +218,10 @@ export class AttackLook {
 
   /** A hit, k 0 (the moment) to 1 (gone): a flash, a shock ring in its colours, its bits flying its element's way, a glow. */
   impact(d: Dress, x: number, y: number, z: number, k: number, seed: number, size = 1): void {
-    this.magic.draw(d.el, d.level >= 3 ? "eruption" : "burst", x, y, z, d.level, size, Math.min(1, k * 8, (1-k)*2), k, seed, d.tint);
-    if(this.magic.enabled)return;
+    const V = this.vis, mt = this.fxTint(d, seed);
+    this.magic.draw(this.fxEl(d), d.level >= 3 ? "eruption" : "burst", x, y, z, d.level, size * V.size, Math.min(1, k * 8, (1-k)*2), k, seed, mt, undefined, V.bloom);
+    // (with the new layers on, the old flash, shock rings and bits stay off: Ed, 2026-11-03, "Don't bring back the flash and rings yet")
+    if(this.magic.enabled){this.bloomAt(d, mt, x, y, z, 3.2 * spellPower(d.level) * size * V.size * (0.6 + k), 0.6 * (1 - k) * (1 - k));return;}
     const e = this.el(d), P = this.colours(d), pw = spellPower(d.level) * size, solid = this.solid(d), t = this.tinted(d);
     const n = Math.round(this.cfg.particles.impact * pw), fall = FALLS[e.impact] ?? 0;
     // the flash and its light (every element)
@@ -204,7 +253,7 @@ export class AttackLook {
 
   /** What a hit leaves on the ground, fading (k 0 to 1); its glowing marks (halo, rime, flowers) lit, the rest painted. */
   mark(d: Dress, x: number, z: number, k: number, size = 1): void {
-    if(this.magic.enabled){this.magic.draw(d.el,"zone",x,0,z,d.level,size,0.12*(1-k),k,0,d.tint);return;}
+    if(this.magic.enabled){const V=this.vis;this.magic.draw(this.fxEl(d),"zone",x,0,z,d.level,size*V.size,clamp01(V.groundMark)*(1-k),k,0,this.fxTint(d,0),undefined,V.bloom);return;}
     const m = this.el(d).mark, lit = m === "halo" || m === "rime" || m === "flowers", a = (1 - k) * (lit ? 0.9 : 0.8);
     this.put(lit ? this.glowFlat : this.paintFlat, this.name(d, "mark"), x, 0.02, z, size * spellPower(d.level), a, this.tinted(d));
   }
@@ -212,8 +261,7 @@ export class AttackLook {
   /** A beam from (x0, z0) to (x1, z1), width wide: a hot core line, its element's beads strung along it (scrolling, licking,
    *  forking, dripping its way), a glow as wide as it hurts, a flare at its mouth and sparks where it ends. */
   beam(d: Dress, x0: number, z0: number, x1: number, z1: number, y: number, width: number, time: number, seed: number, fade = 1): void {
-    this.magic.beam(d.el, x0, z0, x1, z1, y, width, d.level, fade*0.65, seed, d.tint);
-    if(this.magic.enabled)return;
+    if (this.magic.enabled) { this.beamFx(d, x0, z0, x1, z1, y, width, time, seed, fade); return; }
     const e = this.el(d), P = this.colours(d), t = this.tinted(d), solid = this.solid(d), pw = spellPower(d.level);
     const dx = x1 - x0, dz = z1 - z0, L = Math.hypot(dx, dz) || 1, ux = dx / L, uz = dz / L, fl = comfort.reduceFlashing ? 1 : 0.9 + 0.1 * Math.sin(time * 3 + seed);
     for (let s = 0.4; s < L; s += 0.6) this.glow.add(x0 + ux * s, y, z0 + uz * s, Math.max(0.7, width) * 1.1, this.uv("dot"), P[1][0], P[1][1], P[1][2], 0.16 * fl * fade);
@@ -238,11 +286,27 @@ export class AttackLook {
     for (let i = 0; i < 4; i++) { const q = hash2(seed, ft, i), a = q * TAU, r = 0.3 + q * 0.6 * pw; this.put(this.glow, this.name(d, `bit.${i % 3}.${(ft + i) % 2}`), x1 + Math.cos(a) * r, y + Math.sin(a) * r * 0.6 + 0.2, z1, 1, fade, t); }
   }
 
+  /** A beam in the new magic layers: wider and more solid by the visibility, beads of extra bloom along it; a rainbow's in its six
+   *  bands side by side (red outside to violet), each its own thin beam. */
+  private beamFx(d: Dress, x0: number, z0: number, x1: number, z1: number, y: number, width: number, time: number, seed: number, fade: number): void {
+    const V = this.vis, W = width * V.size, a = this.lift(0.65) * fade, el = this.fxEl(d);
+    const dx = x1 - x0, dz = z1 - z0, L = Math.hypot(dx, dz) || 1, nx = -dz / L, nz = dx / L;
+    if (el === "rainbow" && !d.tint) {
+      const n = RAINBOW.length, band = W / n;
+      // (yellow drawn last: the bands share their lights' slots, so the beam lights the ground in its middle colour)
+      for (const i of [0, 1, 3, 4, 5, 2]) { const o = (i - (n - 1) / 2) * band; this.magic.beam(el, x0 + nx * o, z0 + nz * o, x1 + nx * o, z1 + nz * o, y, band * 1.6, d.level, a, seed, RAINBOW[i], undefined, V.bloom); }
+    } else this.magic.beam(el, x0, z0, x1, z1, y, W, d.level, a, seed, d.tint ?? null, undefined, V.bloom);
+    const step = Math.max(1.2, W * 1.5), mt = this.fxTint(d, seed, time);
+    for (let s = step / 2, j = 0; s < L; s += step, j++) this.bloomAt(d, el === "rainbow" && !d.tint ? RAINBOW[j % RAINBOW.length] : mt, x0 + (dx * s) / L, y, z0 + (dz * s) / L, W * 2, 0.22 * fade);
+  }
+
   /** A quake's or a pulse's ground, k 0 (the moment) to 1 (gone): a front running out to R, its element's tiles spread behind it
    *  (scorch, rime, puddles, cracks...), a ring of its light on the front, and bits thrown up along it. */
   area(d: Dress, x: number, z: number, R: number, k: number, seed: number): void {
-    this.magic.draw(d.el, "zone", x, 0, z, d.level, R, Math.min(1,k*8,(1-k)*3), k, seed, d.tint);
-    if(this.magic.enabled)return;
+    const V = this.vis, mt = this.fxTint(d, seed), env = Math.min(1, k * 8, (1 - k) * 3);
+    // (its ground spreads a little past its true reach as it's made bigger: 40% of the extra; the telegraph showed the reach)
+    this.magic.draw(this.fxEl(d), "zone", x, 0, z, d.level, R * (1 + (V.size - 1) * 0.4), env, k, seed, mt, undefined, V.bloom);
+    if(this.magic.enabled){this.bloomAt(d, mt, x, 0, z, R * 2.2 * Math.min(1, Math.sqrt(k * 2.2)), 0.35 * env, true);return;}
     const P = this.colours(d), t = this.tinted(d), front = R * Math.min(1, Math.sqrt(k * 2.2)), fade = k < 0.6 ? 1 : 1 - (k - 0.6) / 0.4, m = this.el(d).area, lit = m === "halo" || m === "rime" || m === "flowers";
     const n = Math.min(70, Math.round(R * R * 0.9) + 6);
     for (let i = 0; i < n; i++) {
@@ -261,24 +325,26 @@ export class AttackLook {
   /** A side effect over a creature, by shape (slow chains at its feet, stun stars round its head, knockback's shock arcs, confuse's
    *  spiral), in its attacker's bright colour. */
   motif(effect: string, d: Dress | null, x: number, top: number, z: number, time: number, seed: number): void {
-    const m = this.cfg.effects[effect], c = d ? this.colours(d)[2] : ([0.85, 0.9, 1] as RGB), R = SPRITE_UNIFORMS.uRight.value;
-    if (m === "chains") for (let i = 0; i < 4; i++) { const a = time * 1.6 + (i / 4) * TAU; this.put(this.paint, `chain${(Math.floor(time * 6) + i) % 4}`, x + Math.cos(a) * 0.8, 0.25, z + Math.sin(a) * 0.55, 1, 0.95, c); }
-    else if (m === "stars") for (let i = 0; i < 3; i++) { const a = time * 5 + (i / 3) * TAU; this.put(this.glow, `star${Math.floor(time * 8 + i) % 2}`, x + Math.cos(a) * 0.6, top + 0.25 + Math.sin(a * 2) * 0.08, z + Math.sin(a) * 0.4, 1, 1, c); }
-    else if (m === "shockwave") this.put(this.glow, `shock${Math.floor(time * 10 + seed) % 3}`, x - R.x * 0.6, top * 0.5, z - R.z * 0.6, 1, 0.9, c);
-    else if (m === "spiral") this.put(this.glow, `spiral${Math.floor(time * 8) % 4}`, x, top + 0.45, z, 1, 1, c);
+    const m = this.cfg.effects[effect], c = d ? this.colours(d)[2] : ([0.85, 0.9, 1] as RGB), R = SPRITE_UNIFORMS.uRight.value, s = this.vis.size;
+    if (m === "chains") for (let i = 0; i < 4; i++) { const a = time * 1.6 + (i / 4) * TAU; this.put(this.paint, `chain${(Math.floor(time * 6) + i) % 4}`, x + Math.cos(a) * 0.8 * s, 0.25 * s, z + Math.sin(a) * 0.55 * s, s, this.lift(0.95), c); }
+    else if (m === "stars") for (let i = 0; i < 3; i++) { const a = time * 5 + (i / 3) * TAU; this.put(this.glow, `star${Math.floor(time * 8 + i) % 2}`, x + Math.cos(a) * 0.6 * s, top + 0.25 * s + Math.sin(a * 2) * 0.08 * s, z + Math.sin(a) * 0.4 * s, s, 1, c); }
+    else if (m === "shockwave") this.put(this.glow, `shock${Math.floor(time * 10 + seed) % 3}`, x - R.x * 0.6 * s, top * 0.5, z - R.z * 0.6 * s, s, this.lift(0.9), c);
+    else if (m === "spiral") this.put(this.glow, `spiral${Math.floor(time * 8) % 4}`, x, top + 0.45 * s, z, s, 1, c);
   }
 
   // ---- what's in flight: impacts, marks and areas, each drawn till its life is out ----
 
   /** A hit's impact and the mark it leaves. */
   hit(d: Dress, x: number, y: number, z: number, time: number, seed: number, size = 1): void {
-    this.fx.push({ kind: "impact", d, x, y, z, at: time, life: 0.75, seed, size });
-    this.fx.push({ kind: "mark", d, x, y: 0, z, at: time, life: 2.6, seed, size });
+    const D = this.vis.duration;
+    this.fx.push({ kind: "impact", d, x, y, z, at: time, life: 0.75 * D, seed, size });
+    this.fx.push({ kind: "mark", d, x, y: 0, z, at: time, life: 2.6 * D, seed, size });
   }
   /** A quake's or pulse's ground spreading out to R. */
   burst(d: Dress, x: number, z: number, R: number, time: number, seed: number): void {
-    this.fx.push({ kind: "area", d, x, y: 0, z, at: time, life: 1.4, seed, size: R });
-    this.fx.push({ kind: "impact", d, x, y: 0.6, z, at: time, life: 0.6, seed: seed + 1, size: 1.3 });
+    const D = this.vis.duration;
+    this.fx.push({ kind: "area", d, x, y: 0, z, at: time, life: 1.4 * D, seed, size: R });
+    this.fx.push({ kind: "impact", d, x, y: 0.6, z, at: time, life: 0.6 * D, seed: seed + 1, size: 1.3 });
   }
   drawFx(time: number): void {
     let j = 0;
@@ -324,7 +390,7 @@ export class AttackLook {
     const sc = up ? 2.6 : 1;
     for (const p of points) this.put(this.dl(up), "px", p.x, 0.03, p.z, sc * 0.65, 0.85, DANGER);
   }
-  /** A beam's line, thin to full: one dashed line, then wider dashes, then (the last warning) a solid white bar. */
+  /** A beam's line, thin to full: one dashed line, then wider dashes, then (the last warning) a solid red bar. */
   beamLine(x0: number, z0: number, x1: number, z1: number, half: number, k: number, left: number, time: number, up = false): void {
     const dx = x1 - x0, dz = z1 - z0, L = Math.hypot(dx, dz) || 1, ux = dx / L, uz = dz / L, a = this.blink(left, time), sc = up ? 2.6 : 1;
     if (k < 0.4) this.dashes(L, s => [x0 + ux * s, z0 + uz * s], time, a, up, sc);
@@ -411,19 +477,20 @@ export class AttackLook {
    *  and out; inside(x, z) says which of the tiles' places are in it (a ring's, a cone's, a polygon's shape). */
   zone(d: Dress, x: number, z: number, r: number, k: number, seed: number, inside: (x: number, z: number) => boolean, time: number): void {
     const P = this.colours(d), t = this.tinted(d), m = this.el(d).area, lit = m === "halo" || m === "rime" || m === "flowers", fade = Math.min(1, k * 6, (1 - k) * 4);
-    const n = Math.min(80, Math.round(r * r * 1.1) + 4);
+    const n = Math.min(80, Math.round(r * r * 1.1) + 4), V = this.vis, every = zoneEvery(V.zoneDensity), mt = this.fxTint(d, seed, time), ta = this.lift(0.6) * fade;
     for (let i = 0; i < n; i++) {
       const q = Math.sqrt(hash2(seed, i, 31)) * r, a = hash2(seed, i, 37) * TAU, X = x + Math.cos(a) * q, Z = z + Math.sin(a) * q;
       if (!inside(X, Z)) continue;
-      if (i % 4 === 0) this.magic.draw(d.el, "trap", X, 0, Z, d.level, 0.6, fade*0.6, k, seed+i, d.tint);
+      if (i % every === 0) this.magic.draw(this.fxEl(d), "trap", X, 0, Z, d.level, 0.6 * V.size, ta, k, seed+i, mt, undefined, V.bloom);
       if(this.magic.enabled)continue;
       this.put(lit ? this.glowFlat : this.paintFlat, this.name(d, `area.${i % 2}`), X, 0.02, Z, 1, fade * 0.85, t);
       if (i % 5 === 0) { const ph = (time * 0.7 + hash2(seed, i, 41)) % 1; this.put(this.solid(d) ? this.paint : this.glow, this.name(d, `bit.0.${Math.floor(time * 6 + i) % 2}`), X, 0.1 + ph * 0.8, Z, 1, fade * (1 - ph), t); }
     }
     if(!this.magic.enabled)this.glowFlat.add(x, 0, z, r * 2, this.uv("dot"), P[1][0], P[1][1], P[1][2], 0.18 * fade);
+    else this.bloomAt(d, mt, x, 0, z, r * 2, 0.2 * fade, true);
   }
 
-  /** The wind-up tell: a white ring at its feet tightening, and the "!" over its head as it's about to (k 0 to 1). */
+  /** The wind-up tell: a red ring at its feet tightening, and the "!" over its head as it's about to (k 0 to 1). */
   tell(x: number, z: number, top: number, r: number, k: number, time: number, up = false): void {
     const R = r * (1.6 - 0.6 * k), sc = up ? 2.6 : 1, n = Math.round((TAU * R) / ((3 * K * sc) / PPM));
     for (let i = 0; i < n; i++) { const q = (i / n) * TAU + time; this.put(this.dl(up), i % 2 ? "warn" : "px", x + Math.cos(q) * R, 0.03, z + Math.sin(q) * R, i % 2 ? sc : sc * 0.5, 0.4 + 0.6 * k, DANGER); }

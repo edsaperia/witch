@@ -9,8 +9,11 @@ import { newParty, spreadWave, wavePlan, cellKey, routeOf } from "./party";
 import { polylinesMeet, segmentsMeet, crossings } from "./crossing";
 import { CROSSING_RULES, CURVE_WORK, crossingPairs, meetPoint, overHome, routeShape, spiralOrder, withinCrossingRules } from "./leyroute";
 import { TIP_PACE } from "./leypulse";
+import { sharedMap } from "../test/preppedGame"; // (maps the tests only read, made once a file)
 
 // Keep the full radius seed matrix: crossing separation, spiral drift and historical slow-seed curve budgets depend on route extent and density.
+// (each seed's map made once for the file, as these tests only read it, and routeOf keeps a map's route with it: the seeds the
+// tests share are planned once; "the same for a seed every time" still makes two)
 describe("lines meeting", () => {
   it("counts crossing, touching and doubling back, not two links joined at their stone", () => {
     expect(segmentsMeet([0, 0], [10, 10], [0, 10], [10, 0])).toBe(true); // crossing
@@ -40,7 +43,7 @@ describe("the ley line's route (Ed, 2026-10-06)", () => {
   });
   it("keeps Ed's crossing rules on 40 seeds: at most 4 a map, none the pulse would pass over already drawn ahead of it, 350 m apart (Ed, 2026-10-06)", () => {
     for (let seed = 1; seed <= 40; seed++) {
-      const map = generateMap(seed, TUNING), r = routeOf(map), links = r.links, pairs = crossingPairs(links);
+      const map = sharedMap(seed, TUNING), r = routeOf(map), links = r.links, pairs = crossingPairs(links);
       // (and never over the dancefloor, Ed 2026-10-06: the line leaving home goes round it, rules/departure.ts; no link after it crosses home)
       for (let i = 1; i < r.stones.length; i++) expect(overHome(map, r.stones[i - 1], r.stones[i]), `seed ${seed}: link ${i} over the dancefloor`).toBe(false);
       expect(pairs.length, `seed ${seed}`).toBeLessThanOrEqual(CROSSING_RULES.max);
@@ -55,12 +58,12 @@ describe("the ley line's route (Ed, 2026-10-06)", () => {
     // budget is counted work, so the same on every machine, checked before each try: at most one try past it)
     const SLOW = [4, 84, 125, 135, 183, 185, 188];
     for (const seed of [...SLOW, ...Array.from({ length: 10 }, (_, i) => i + 1)]) {
-      const r = routeOf(generateMap(seed, TUNING));
+      const r = routeOf(sharedMap(seed, TUNING));
       expect(r.curveWork, `seed ${seed}`).toBeLessThan(2 * CURVE_WORK);
     }
     // and the cheap tries first find the ones that keep Ed's rules well inside it
     for (const seed of [4, 84, 125, 183]) {
-      const r = routeOf(generateMap(seed, TUNING));
+      const r = routeOf(sharedMap(seed, TUNING));
       expect(withinCrossingRules(r.links), `seed ${seed}`).toBe(true);
       expect(r.curveWork, `seed ${seed}`).toBeLessThan(CURVE_WORK);
     }
@@ -83,7 +86,7 @@ describe("the ley line's route (Ed, 2026-10-06)", () => {
   });
   it("spirals out (Ed, 2026-10-06): distance from home growing steadily with the wave, no late return toward home, the waves spread round home", () => {
     for (const seed of SEEDS.slice(0, 12)) {
-      const map = generateMap(seed, TUNING), sh = routeShape(map, routeOf(map).stones);
+      const map = sharedMap(seed, TUNING), sh = routeShape(map, routeOf(map).stones);
       expect(sh.drift, `seed ${seed}: drift`).toBeLessThan(160);
       expect(sh.oneSided, `seed ${seed}: one-sided`).toBeLessThan(0.7);
       expect(sh.lateDip, `seed ${seed}: late dip`).toBeLessThan(450);
@@ -103,7 +106,7 @@ describe("the ley line's route (Ed, 2026-10-06)", () => {
   }, 60_000);
   it("starts within the specified ring round home", () => {
     for (const seed of SEEDS.slice(0, 10)) {
-      const map = generateMap(seed, TUNING), r = routeOf(map), d = map.dancefloor, far = (q: readonly number[]) => Math.hypot(q[0] - d.x, q[1] - d.z);
+      const map = sharedMap(seed, TUNING), r = routeOf(map), d = map.dancefloor, far = (q: readonly number[]) => Math.hypot(q[0] - d.x, q[1] - d.z);
       const ring = Math.max(...[...(map.neighbours.get(cellKey(map.centreCell)) ?? [])].map(k => far(r.stones[r.order.indexOf(k)])));
       expect(far(r.stones[0]), `seed ${seed}`).toBeLessThan(ring * 1.3);
       // IP2 reports early-wave mean step length; start-by-home placement remains above.

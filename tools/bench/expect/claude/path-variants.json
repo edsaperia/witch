@@ -1,0 +1,6 @@
+{
+  "reason": "Footpath looks (Ed, 2026-11-03): each footpath kind has five variants, dealt one a line so neighbouring paths differ; the base art reworked (earthier dirt, calmer cobbles, roots crossing at angles, clearer animal tracks, stepping stones and magic trails); and bump maps lighting their relief (the tuning's pathLook.bump, 3). The same ribbons and draw calls (one mesh a kind); the rails' looks share one mesh now.",
+  "frames": {
+    "*": "wherever a footpath shows: its new look (texture and relief shading); the railway's three looks now one mesh"
+  }
+}

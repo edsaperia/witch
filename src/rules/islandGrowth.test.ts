@@ -21,9 +21,9 @@ const ragged = (L: { loops: { pts: ArrayLike<number>; sea: boolean }[] }) => {
 describe("islands grown from their areas", () => {
   for (const phase of [0, 3, 5]) it(`phase ${phase}: exactly its areas, joined, home inland, everything for play off the beach`, () => {
     for (const seed of [1, 2]) {
-      const map = generateMap(seed, isle(phase)), L = map.bounds.land!, home = map.centreCell, keys = new Set(map.cells.map(c => c.join(",")));
+      const map = generateMap(seed, isle(phase)), L = map.bounds.land!, home = map.centreCell, keys = new Set(map.cells.map(c => c.join(","))), areas = new Set([...keys, ...map.specialSites.map(s => s.cell.join(","))]);
       expect(map.cells.length).toBe((phase ? 10 * phase : 10) + 1);
-      for (const k of map.neighbours.get(home.join(",")) ?? []) { const [x, y] = k.split(",").map(Number); if (map.playable(x, y) || map.inBuffer(x, y)) expect(keys.has(k), `home's neighbour ${k}`).toBe(true); }
+      for (const k of map.neighbours.get(home.join(",")) ?? []) { const [x, y] = k.split(",").map(Number); if (map.playable(x, y) || map.inBuffer(x, y)) expect(areas.has(k), `home's neighbour ${k}`).toBe(true); } // (the island's own: playable, or tonight's find's area)
       // joined: every area reached from home over playable neighbours
       const seen = new Set([home.join(",")]), todo = [home.join(",")];
       while (todo.length) for (const k of map.neighbours.get(todo.pop()!) ?? []) if (keys.has(k) && !seen.has(k)) { seen.add(k); todo.push(k); }

@@ -1,0 +1,122 @@
+{
+  "pr": 1757,
+  "group": "Cooldown trail",
+  "decisions": [
+    {
+      "id": "trailSteps",
+      "pr": 1757,
+      "group": "Cooldown trail",
+      "label": "Cooldown trail (dots)",
+      "note": "On (Ed, 2026-11-03): her trail as dotted sections of pixels in her preset's colours: the first (the buffer) as long as her speed makes it, then one for each dodge's worth of the shared cooldown, the tail's dots going one at a time; each cooldown section showing is a dodge not ready, only the first means all ready; behind the scenery as she is. Off: the smooth trail exactly as before.",
+      "control": {
+        "type": "toggle"
+      },
+      "default": true,
+      "apply": {
+        "knob": "trail.steps.on"
+      }
+    },
+    {
+      "id": "trailDot",
+      "pr": 1757,
+      "group": "Cooldown trail",
+      "label": "Dot size (px)",
+      "note": "Each dot's size in the picture's pixels (1: Ed's \"a single pixel\").",
+      "control": {
+        "type": "slider",
+        "min": 1,
+        "max": 4,
+        "step": 1
+      },
+      "default": 1,
+      "apply": {
+        "knob": "trail.steps.dot"
+      }
+    },
+    {
+      "id": "trailGap",
+      "pr": 1757,
+      "group": "Cooldown trail",
+      "label": "Gap (px)",
+      "note": "The gap between dots in the picture's pixels (1: \"with a single pixel gap between\").",
+      "control": {
+        "type": "slider",
+        "min": 0,
+        "max": 4,
+        "step": 1
+      },
+      "default": 1,
+      "apply": {
+        "knob": "trail.steps.gap"
+      }
+    },
+    {
+      "id": "trailSection",
+      "pr": 1757,
+      "group": "Cooldown trail",
+      "label": "Section length (s × top speed)",
+      "note": "A section's length: this many seconds times her top speed now (about 6.7 m on the ground, 17 m over the treetops on a bare broom; longer with speed buffs). Each still drains in a dodge's cooldown.",
+      "control": {
+        "type": "slider",
+        "min": 0.1,
+        "max": 1,
+        "step": 0.05
+      },
+      "default": 0.35,
+      "apply": {
+        "knob": "trail.steps.section"
+      }
+    },
+    {
+      "id": "trailHalo",
+      "pr": 1757,
+      "group": "Cooldown trail",
+      "label": "Halo under the dots",
+      "note": "The faint halo of each section's colour under its dots (0 none).",
+      "control": {
+        "type": "slider",
+        "min": 0,
+        "max": 0.6,
+        "step": 0.02
+      },
+      "default": 0.16,
+      "apply": {
+        "knob": "trail.steps.halo"
+      }
+    },
+    {
+      "id": "trailGlow",
+      "pr": 1757,
+      "group": "Cooldown trail",
+      "label": "Dot glow",
+      "note": "Each dot's soft glow (Ed: \"these dots should glow a little\"; \"Increase the cooldown trail glow a little\"; 0 none). Strong merges the dots into a line.",
+      "control": {
+        "type": "slider",
+        "min": 0,
+        "max": 1.5,
+        "step": 0.05
+      },
+      "default": 0.5,
+      "apply": {
+        "knob": "trail.steps.glow"
+      }
+    },
+    {
+      "id": "trailGlowSize",
+      "pr": 1757,
+      "group": "Cooldown trail",
+      "label": "Dot glow size (px)",
+      "note": "Each dot's glow, the picture's pixels across.",
+      "control": {
+        "type": "slider",
+        "min": 2,
+        "max": 11,
+        "step": 1
+      },
+      "default": 5,
+      "apply": {
+        "knob": "trail.steps.glowSize"
+      }
+    }
+  ]
+}

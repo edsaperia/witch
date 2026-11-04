@@ -22,7 +22,7 @@ import { type Creature, type Level } from "../creatures";
 import { foes, huntsWitch } from "../creatureStates";
 import { hash2 } from "../random";
 import { FIGHT, type Move as OwnMove, profileOf, startCharge, swoopStriking } from "../movement";
-import { type Attack, COMBAT, combatProfile, type CombatState, type CombatWorld, type Target, scaled, stunWorth } from "./data";
+import { type Attack, COMBAT, adultMult, combatProfile, type CombatState, type CombatWorld, type Target, madeAttack, scaled, setAttackMaker, stunWorth } from "./data";
 import { fighting, sideOf, targetPos, targetable } from "./targeting";
 import { SPACING, bodyGap, drawnRadius, spacingOn } from "../combatSpacing";
 import type { Tuning } from "../tuning";
@@ -138,6 +138,10 @@ export interface Directive {
   freeze?: boolean;
 }
 
+// Masterplan can read the solver's last output. Never run the solver a second
+// time for a picture: it also advances the pack's decisions and cooldowns.
+export const observedPackPlans = new WeakMap<CombatState, ReadonlyMap<number, Directive> | null>();
+
 // ---- Moves on the level's budget -------------------------------------------------------------------------------------------
 
 /** A kind's move at a level: its attack (scaled to the fight), the name the shot carries, and its damage (the level's dps times its
@@ -145,33 +149,34 @@ export interface Directive {
 export function packAttack(species: string, level: Level, move: Move, data: PacksData = PACKS): { name: string; attack: Attack; damage: number; shots: number; spread: number } | null {
   const K = packKindOf(species, data);
   if (!K || level < 1 || level > 2) return null;
-  const young = level === 1 ? data.young : null, dps = combatProfile(species, level).damagePerSecond;
+  const young = level === 1 ? data.young : null, dps = combatProfile(species, level).damagePerSecond * adultMult(level);
   if (move === "melee") {
     if (!K.melee) return null;
     const base = K.melee.attacks?.[level] ?? (level === 1 ? "nip" : "maul");
     if (!base) return null;
     const name = `pack:${species}:melee:${level}`;
-    let A = COMBAT.attacks[name];
-    if (!A) {
+    const melee = K.melee, A = madeAttack(name, () => {
       const B = COMBAT.attacks[base];
-      A = { ...B, windup: B.windup * (young?.windup ?? 1), ...(K.melee.knockback ? { modifier: "knockback" as const, knockback: K.melee.knockback } : {}) };
-      COMBAT.attacks[name] = A;
-    }
+      return { ...B, windup: B.windup * (young?.windup ?? 1), ...(melee.knockback ? { modifier: "knockback" as const, knockback: melee.knockback } : {}) };
+    });
     const S = scaled(name, A);
     return { name, attack: S, damage: dps * S.cooldown * (S.factor ?? 1), shots: 1, spread: 0 };
   }
   const R = K.ranged;
   if (!R) return null;
   const shots = Math.max(1, R.shots[level] ?? 1), name = `pack:${species}:ranged:${level}`;
-  let A = COMBAT.attacks[name];
-  if (!A) {
+  const A = madeAttack(name, () => {
     const own = R.attacks?.[level], B: Attack = own && COMBAT.attacks[own] ? COMBAT.attacks[own] : R.delivery === "lob" ? { ...data.bolt, delivery: "lob", flight: R.flight ?? 1.1 } : data.bolt;
-    A = { ...B, range: R.range * (young?.range ?? 1), speed: (B.speed ?? 20) * (R.speed ?? 1) * (young?.speed ?? 1), windup: B.windup * (young?.windup ?? 1), radius: (B.radius ?? 0.6) * (R.size?.[level] ?? 1) };
-    COMBAT.attacks[name] = A;
-  }
+    return { ...B, range: R.range * (young?.range ?? 1), speed: (B.speed ?? 20) * (R.speed ?? 1) * (young?.speed ?? 1), windup: B.windup * (young?.windup ?? 1), radius: (B.radius ?? 0.6) * (R.size?.[level] ?? 1) };
+  });
   const S = scaled(name, A);
   return { name, attack: S, damage: (dps * S.cooldown) / shots, shots, spread: ((R.spread ?? 0) * Math.PI) / 180 };
 }
+// (a pack move asked for by its name before this page made it, `pack:<species>:<melee|ranged>:<level>`: made as packAttack makes it)
+setAttackMaker(name => {
+  const [pack, species, move, level] = name.split(":");
+  if (pack === "pack" && (move === "melee" || move === "ranged") && (level === "1" || level === "2")) packAttack(species, Number(level) as Level, move);
+});
 /** The move a member's wind-up or lunge uses now (for the view's telegraphs): its pack's, or null if it isn't in one. */
 export const packMoveOf = (c: Creature): { attack: Attack; name: string } | null => {
   const m = c.fight?.packMove;
@@ -262,6 +267,8 @@ export function stepPacks(s: CombatState, w: CombatWorld, pw: PackWorld = {}, da
   if (s.mirages?.length) s.mirages = s.mirages.filter(m => time < m.until);
   if (s.decoys?.length) s.decoys = s.decoys.filter(q => time < q.until && !!w.creatures[q.id] && !w.creatures[q.id].gone);
   for (const k of [...states.keys()]) if (!groups.has(k)) states.delete(k);
+  // (her party animals among them, the only ones a pack splits for: found once a step, not once a pack; the challenge's 64 packs)
+  const partyActive = w.active.filter(o => o.leashed);
   for (const [key, members] of groups) {
     members.sort((a, b) => a.id - b.id);
     const c0 = members[0], K = packKindOf(c0.species, data)!, R = rhythmOf(K, data), tg = c0.fight!.target!, p = targetPos(w, s, tg);
@@ -363,7 +370,7 @@ export function stepPacks(s: CombatState, w: CombatWorld, pw: PackWorld = {}, da
     // Her party animal engaging one of them: the pack splits, the half nearest it turning on it.
     if (!st.hers && st.split !== st.combo && st.phase !== "lull") {
       const side = sideOf(c0);
-      for (const o of w.active) {
+      for (const o of partyActive) {
         const ot = o.fight?.target;
         if (!o.leashed || ot?.kind !== "creature" || !members.some(m => m.id === ot.id) || !targetable(o) || !foes(sideOf(o), side)) continue;
         if (Math.hypot(o.x - w.creatures[ot.id].x, o.z - w.creatures[ot.id].z) > data.limits.split * FIGHT.scale || members.length < 2) continue;

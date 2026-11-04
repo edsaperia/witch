@@ -2,14 +2,15 @@
 // treetop height, and during the night time slower 10x"; rules/treehouse.ts).
 import { describe, expect, it } from "vitest";
 import { TUNING, withTuning } from "./tuning";
-import { newGame as fullGame, stepGame, STEP, type Game } from "./game";
+import { stepGame, STEP, type Game } from "./game";
 import { smallWorld } from "../test/worlds";
 import { atTakeoff, clearOfFurniture, deckOf, flyOnto, keepInHouse, keepOnDeck, landsOn, onFloor, onLandingTrunk, onTerrace, onTreehouse, seatOffset } from "./treehouse";
 import { hitWitch } from "./game";
 import { witchHeight } from "./witch";
 import { fromPlan, HOUSE_ROOMS, objectFront, roomAt } from "./houseRooms";
+import { preppedGame } from "../test/preppedGame"; // (games on a map made once a file from its prep)
 
-const newGame = smallWorld(fullGame, "House floors, landing, stations and recovery use home-local geometry, independent of surrounding world size.");
+const newGame = smallWorld(preppedGame, "House floors, landing, stations and recovery use home-local geometry, independent of surrounding world size.");
 const run = (g: Game, secs: number, c: object = {}) => { for (let i = 0; i < Math.round(secs / STEP); i++) stepGame(g, { moveX: 0, moveZ: 0, toggleMode: false, zoom: 0, ...c } as Parameters<typeof stepGame>[1], STEP); };
 const press = (g: Game, c: object) => run(g, STEP, c);
 const D = TUNING.treehouse.deck!, HS = TUNING.treehouse.house!;
@@ -20,6 +21,8 @@ const JETS = withTuning({ spells: { ...TUNING.spells, parts: "nozzles" } });
 const T0 = withTuning({ treehouse: { ...TUNING.treehouse, house: { ...HS, on: false } }, spells: JETS.spells });
 const game = (T = T0) => { const g = newGame(123, T); g.clock.paused = false; return g; };
 const events = (g: Game, kind: string) => g.leashEvents.filter(e => e.kind === kind);
+/** The treehouse's landing cooldown (Ed, 2026-11-03: rules/witch.ts perchCool): waited out between a take-off and a landing. */
+const COOL = TUNING.treehouse.landCooldown ?? 0;
 
 describe("the treehouse deck", () => {
   it("starts her at her decks on the deck, 22 m up, by the south rail behind the decks", () => {
@@ -67,6 +70,7 @@ describe("the treehouse deck", () => {
     expect(events(g, "perch").map(e => e.on)).toEqual([false]);
     run(g, 2);
     expect(g.witch.mode).toBe("treetop");
+    run(g, COOL); // (the take-off's cooldown out)
     press(g, { toggleMode: true });
     expect(events(g, "perch")).toEqual([]);
     run(g, 2);
@@ -85,7 +89,7 @@ describe("the treehouse deck", () => {
   it("tells of landing on it (the 'perch' event) and of E at the map table (the 'chart' event); nothing goes down up there", () => {
     const g = game(), d = deckOf(g.map, T0)!;
     run(g, 0.2, { moveX: 1 });
-    press(g, { toggleMode: true }); run(g, 2);
+    press(g, { toggleMode: true }); run(g, 2); run(g, COOL);
     press(g, { toggleMode: true });
     let landed = false;
     for (let i = 0; i < 200 && !landed; i++) { press(g, {}); landed = events(g, "perch").some(e => e.on); }
@@ -176,7 +180,7 @@ describe("the treehouse's house", () => {
 
   it("lands her when she flies onto the Terrace or Bedroom at treetop height, no button", () => {
     const g = game(JETS), d = deckOf(g.map, TUNING)!;
-    run(g, 0.2, { moveZ: -1 }); press(g, { toggleMode: true }); run(g, 2);
+    run(g, 0.2, { moveZ: -1 }); press(g, { toggleMode: true }); run(g, 2); run(g, COOL);
     expect(g.witch.mode).toBe("treetop"); expect(g.witch.perch).toBeFalsy();
     const a = K.angle * DEG;
     g.witch = { ...g.witch, x: d.x + Math.cos(a) * 60, z: d.z + Math.sin(a) * 60, vx: 0, vz: 0 };
@@ -188,7 +192,7 @@ describe("the treehouse's house", () => {
     expect(witchHeight(g.witch, TUNING)).toBeCloseTo(22 + TUNING.groundHeight, 6);
     expect(events(g, "perch").map(e => e.on)).toEqual([true]); // (the landing's step: its own events)
     // Ed, 2 November: flying onto the Bedroom floor now lands her too.
-    press(g, { toggleMode: true }); run(g, 2);
+    run(g, COOL); press(g, { toggleMode: true }); run(g, 2); run(g, COOL);
     const B = HOUSE_ROOMS.rooms.find(r => r.id === "bedroom")!;
     g.witch = { ...g.witch, x: d.x + B.x - 40, z: d.z + B.z, vx: 20, vz: 0, mode: "treetop", lift: 1, perch: undefined };
     for (let i = 0; i < 900 && !(g.witch.mode === "ground" && g.witch.perch); i++) press(g, { moveX: 1 });
@@ -265,6 +269,31 @@ describe("the treehouse's house", () => {
     expect(fell).toBe(1);
     expect(g2.witch.x).toBeCloseTo(d2.house!.circle.x, 6); expect(g2.witch.z).toBeCloseTo(d2.house!.circle.z, 6);
     expect([g2.witch.perch, g2.witch.mode]).toEqual([true, "ground"]);
+  });
+
+  it("stepping off with her broom she flies straight on from the floor's height: no drop and climb, the camera's aim never dipping (Ed, 2026-11-03)", () => {
+    const deckH = 22 + TUNING.groundHeight, out = { moveX: Math.cos(40 * DEG), moveZ: Math.sin(40 * DEG) };
+    for (const descend of [false, true]) {
+      const g = game(JETS), d = deckOf(g.map, TUNING)!;
+      g.witches[0].kit = { invites: true, broom: true }; // (the broom taken at the lathe)
+      run(g, 0.2, { moveZ: -1 }); run(g, 1);
+      let h = witchHeight(g.witch, TUNING), ty = g.camera.ty, left = -1, flew = false;
+      for (let i = 0; i < Math.round(3 / STEP) && !flew; i++) {
+        press(g, { ...out, toggleMode: descend && left >= 0 && i === left + 30 }); // (and once, changing her mind past the edge: coming down from where she is)
+        const nh = witchHeight(g.witch, TUNING);
+        if (left < 0 && !onFloor(d, g.witch.x, g.witch.z)) left = i;
+        if (left >= 0 && !descend) {
+          expect(nh, `step ${i - left}`).toBeGreaterThan(deckH - 0.05);
+          expect(g.camera.ty, `step ${i - left}`).toBeGreaterThan(ty - 1e-6); // (eased up, never down)
+        }
+        expect(Math.abs(nh - h), `step ${i}: no jump`).toBeLessThan(1.5); // (coming down at full pace is about 1 m a step; the drop was 13 m)
+        h = nh; ty = g.camera.ty;
+        flew = descend ? left >= 0 && i > left + 30 && g.witch.mode === "ground" : g.witch.mode === "treetop";
+      }
+      expect(left).toBeGreaterThanOrEqual(0);
+      expect(flew).toBe(true);
+      expect(g.witch.perch).toBeFalsy();
+    }
   });
 
   it("opens the chart with E at the map table (in the Solarium), and nothing goes down up there", () => {

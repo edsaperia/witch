@@ -16,7 +16,8 @@ export const PILE_SLOTS: readonly PileSlot[] = ["top", "shoes", "cloak", "hat", 
 
 /** The piece each dressing station puts on (config/house/'s station ids). The dressing table (her hair, skin, face, earrings)
  *  dresses nothing: those are hers in the nightie too. */
-export const STATION_SLOT: Readonly<Record<string, PileSlot>> = { wardrobe: "top", shoeRack: "shoes", cloakPegs: "cloak", bags: "bits" };
+export const STATION_SLOT: Readonly<Record<string, PileSlot>> = { wardrobe: "top", bedroom2Wardrobe: "top", bedroom3Wardrobe: "top", shoeRack: "shoes", cloakPegs: "cloak", bags: "bits" };
+export const isDressingTable = (id: string | undefined): boolean => id === "dressingTable" || id === "bedroom2DressingTable" || id === "bedroom3DressingTable";
 
 /** She's dressed: nothing of last night's left in the pile (an old wake-up, with no pile, counts as dressed). */
 export const dressed = (w: { pile?: PileSlot[] } | null | undefined): boolean => !w?.pile?.length;
@@ -58,4 +59,13 @@ export function wornGenome<G extends Genome | null>(g: G, pile: readonly PileSlo
   if (has("cloak")) { acc.scarf = false; acc.patches = false; }
   if (has("bits")) for (const k of BITS) acc[k] = false;
   return { ...base, accessories: acc, ...(has("hat") ? { hat: { ...(base.hat ?? {}), shape: "none" } } : {}), ...(has("cloak") ? { cloak: "none" } : {}), ...(has("bits") ? { backpackSize: 0 } : {}) } as G;
+}
+
+/** What of her outfit is off as the page draws her (main.ts showLook, for wornGenome): a wake-up's pile, her hat lying somewhere while
+ *  it's still to put on; before a game's first morning has started, `ahead`, that morning as it will start (rules/wakeUp.ts
+ *  firstMorning: the boot's, asleep under the loading screen), so the look her art is made in at the boot is the one she wakes in. */
+export function wornNow(wake: { pile?: readonly PileSlot[] } | undefined, hatDown: boolean, ahead?: { pile: readonly PileSlot[]; hatLying: boolean } | null): { pile: readonly PileSlot[] | undefined; hatLying: boolean } {
+  if (!wake && ahead) return { pile: ahead.pile, hatLying: ahead.hatLying };
+  const pile = wake?.pile;
+  return { pile, hatLying: !!pile?.includes("hat") && hatDown };
 }
