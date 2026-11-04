@@ -48,18 +48,16 @@ function put(g: Game, dx: number, dz: number, mode: "ground" | "treetop" = "grou
 const phase = (g: Game) => g.challenge!.statues!.phase;
 
 describe("stone at their posts (Ed, 2026-11-04: \"grey statues, all facing the centre of the circle\")", () => {
-  it("stand column / adult / youth / centre (column / youth / adult / centre south of the middle: the youth in front), each on its kind's column's radius, facing the middle", () => {
+  it("stand column / adult / youth / centre on every column, each on its kind's column's radius, facing the middle (Ed, 2026-11-04, on #1827: \"youths should be closer to the middle of the circle than the elder\")", () => {
     const g = game(), ch = g.challenge!, kinds = columnKinds(g), cols = columnSpots(ch, kinds.length), S = TUNING.challenge!.statues!;
     expect(phase(g)).toBe("stone");
-    expect(S.youthFront).toBe(true);
     kinds.forEach((kind, i) => {
       const col = cols[i], mine = pack(g).filter(c => c.species === kind), adult = mine.find(c => c.level === 2)!, youth = mine.find(c => c.level === 1)!;
       const from = (c: { x: number; z: number }) => Math.hypot(c.x - col.x, c.z - col.z), mid = (c: { x: number; z: number }) => Math.hypot(c.x - ch.x, c.z - ch.z);
-      const south = col.z > ch.z, [near, far] = south ? [youth, adult] : [adult, youth]; // (the game's camera looks north: south of the middle, the youth nearer the column is the one in front)
-      expect(from(near), kind).toBeCloseTo(S.first, 6);
-      expect(from(far) - from(near), kind).toBeCloseTo(S.gap, 6); // (Ed, 2026-11-04: "Further apart, same line")
-      expect(mid(near)).toBeLessThan(ch.radius); expect(mid(far)).toBeLessThan(mid(near));
-      expect(youth.z, kind).toBeGreaterThanOrEqual(adult.z - 1e-9); // (nearer the camera than its adult on every column)
+      expect(from(adult), kind).toBeCloseTo(S.first, 6);
+      expect(from(youth) - from(adult), kind).toBeCloseTo(S.gap, 6); // (Ed, 2026-11-04: "Further apart, same line")
+      expect(mid(youth), kind).toBeLessThan(mid(adult)); // (the youth nearer the middle, north or south of it)
+      expect(mid(adult)).toBeLessThan(ch.radius);
       for (const c of [adult, youth]) {
         // (on the column's radius: column, it and the middle in a line)
         const cross = (c.x - col.x) * (ch.z - col.z) - (c.z - col.z) * (ch.x - col.x);

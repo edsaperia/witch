@@ -2301,6 +2301,10 @@
           "type": "number",
           "minimum": 0
         },
+        "sigilGap": {
+          "type": "number",
+          "minimum": 0
+        },
         "adults": {
           "type": "number",
           "minimum": 0
@@ -2357,9 +2361,6 @@
               "type": "number",
               "minimum": 0
             },
-            "youthFront": {
-              "type": "boolean"
-            },
             "walkBack": {
               "type": "number",
               "minimum": 0
@@ -2395,7 +2396,6 @@
             "bars",
             "first",
             "gap",
-            "youthFront",
             "walkBack",
             "keepOut",
             "grey",
@@ -2483,6 +2483,7 @@
         "radius",
         "margin",
         "spacing",
+        "sigilGap",
         "adults",
         "youths",
         "castReach",

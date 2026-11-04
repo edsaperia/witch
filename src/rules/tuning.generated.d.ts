@@ -446,6 +446,7 @@ export type SchemaTuning = {
     "radius": number;
     "margin": number;
     "spacing": number;
+    "sigilGap": number;
     "adults": number;
     "youths": number;
     "castReach": number;
@@ -460,7 +461,6 @@ export type SchemaTuning = {
       "bars": number;
       "first": number;
       "gap": number;
-      "youthFront": boolean;
       "walkBack": number;
       "keepOut": number;
       "grey": Array<number>;

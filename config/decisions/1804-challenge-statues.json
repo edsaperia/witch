@@ -57,31 +57,16 @@
       "pr": 1804,
       "group": "Challenge statues",
       "label": "Challenge statues: gap between posts (m)",
-      "note": "How much further in each next statue of a kind stands (its youth after its adult), still nearer its column than the middle (Ed, 2026-11-04: \"Further apart, same line\": 12.5, the youth 16 m in on the 36 m circle, the most that keeps it nearer its column). A new night: it reloads.",
+      "note": "How much further in each next statue of a kind stands (its youth after its adult, nearer the middle on every column), still nearer its column than the middle (Ed, 2026-11-04: \"Further apart, same line\"; on #1827, \"youths should be closer to the middle of the circle than the elder. If this doesn't fit, make the circle bigger.\"): 21.5, the youth 25 m in on the 56 m circle, lifted past its adult's head up the screen on the column due south. A new night: it reloads.",
       "control": {
         "type": "slider",
         "min": 1,
-        "max": 14,
+        "max": 30,
         "step": 0.5
       },
-      "default": 12.5,
+      "default": 21.5,
       "apply": {
         "knob": "challenge.statues.gap",
-        "reload": true
-      }
-    },
-    {
-      "id": "challengeStatueYouthFront",
-      "pr": 1804,
-      "group": "Challenge statues",
-      "label": "Challenge statues: youth in front",
-      "note": "On the columns south of the circle's middle, the youth stands nearer the column than its adult, so it's in front of the adult as the camera sees it, never hidden behind it (Ed, 2026-11-04: \"Further apart, same line\"; the builder's choice, for Ed to judge). Off: the adult nearest the column on every column. A new night: it reloads.",
-      "control": {
-        "type": "toggle"
-      },
-      "default": true,
-      "apply": {
-        "knob": "challenge.statues.youthFront",
         "reload": true
       }
     },

@@ -43,14 +43,14 @@
       "pr": 1725,
       "group": "Challenge area",
       "label": "Challenge circle radius (m)",
-      "note": "The challenge area's stone floor circle (Ed, 2026-11-03: \"a large stone floor circle (like the legend circle)\"; on #1725, three times wider: 36 m), its columns round its edge, one a roster kind (the circle grows past this to keep them challenge.spacing apart: about 76 m on the late home). A legend's circle is about 9 m. A new map: it reloads.",
+      "note": "The challenge area's stone floor circle (Ed, 2026-11-03: \"a large stone floor circle (like the legend circle)\"; on #1725, three times wider: 36 m; on #1827, \"youths should be closer to the middle of the circle than the elder. If this doesn't fit, make the circle bigger.\": 56 m, room for its statues well apart, the most the smallest islands hold its claim at), its columns round its edge, one a roster kind (the circle grows past this to keep them challenge.spacing apart: about 76 m on the late home). A legend's circle is about 9 m. A new map: it reloads.",
       "control": {
         "type": "slider",
         "min": 12,
-        "max": 60,
+        "max": 80,
         "step": 2
       },
-      "default": 36,
+      "default": 56,
       "apply": {
         "knob": "challenge.radius",
         "reload": true
