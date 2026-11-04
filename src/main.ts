@@ -907,7 +907,11 @@ function pauseControls(on: boolean): void {
   pauseBtns.style.display = "";
   if (leaveVisitButton) leaveVisitButton.hidden = !phone.active;
 }
+/** The house's drawing as it stood the moment the pause page opened (for the Report: Ed, 2026-11-03, a floor missing on a fresh
+ *  link's first morning came back after a pause and unpause, so the Report's own reading, taken paused, could be after the cure). */
+let houseAtPause: Record<string, unknown> | null = null;
 freeze.onToggle = on => {
+  if (on) houseAtPause = view.houseRooms ? { at: Math.round(performance.now()), ...view.houseRooms.reportState(view) } : null;
   notable("screen", on ? "Paused" : "Resumed");
   input.release(); // Held keys and pending presses belong to the old input owner, never to the resumed game.
   settingsPage.gate(); // (suspended while paused, and muted in the background if so set: app/settingsPage.ts)
@@ -1184,7 +1188,7 @@ const reportHost = () => {
   return {
     canvas, gl: view.renderer.getContext(), tuning: game.tuning, seed: game.seed, version, link: repro.link, changed: repro.changed,
     witch: (): [number, number] | null => { const u = SPRITE_UNIFORMS.uWitch.value, low = view.post.lowSize; return low.x > 0 ? [u.x * canvas.width / low.x, (low.y - u.y) * canvas.height / low.y] : null; },
-    world: () => ({ x: w.x, z: w.z, mode: w.mode, lift: w.lift, area: game.map.areaAt(w.x, w.z).type, camera: { zoomStep: c.zoomStep, zoom: c.zoom, tx: c.tx, ty: c.ty, tz: c.tz }, ...(view.houseRooms ? { house: view.houseRooms.reportState(view) } : {}) }),
+    world: () => ({ x: w.x, z: w.z, mode: w.mode, lift: w.lift, area: game.map.areaAt(w.x, w.z).type, camera: { zoomStep: c.zoomStep, zoom: c.zoom, tx: c.tx, ty: c.ty, tz: c.tz }, ...(view.houseRooms ? { house: view.houseRooms.reportState(view) } : {}), ...(houseAtPause ? { houseAtPause } : {}) }),
   };
 };
 (window as unknown as { __neutralCheck: () => Promise<unknown> }).__neutralCheck = () => import("./ui/visualReport").then(({ neutralCheck }) => neutralCheck(reportHost()));

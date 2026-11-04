@@ -216,6 +216,9 @@ export class WitchTrail {
   private len = 0;
   private rgb = new THREE.Vector3(-1, 0, 0);
   private lastBlink = -Infinity;
+  /** A blink just laid (its line's ends and how long she's gone: dash.until): till she's drawn at its landing, the trail's head is
+   *  there and nothing she's drawn at goes into her path (below). */
+  private landing: { fromX: number; fromZ: number; toX: number; toZ: number; until: number } | null = null;
   /** The ribbon's points written so far this frame. */
   private n = 0;
   /** Writes the ribbon's next point (its two edges' vertices): where, its direction on the ground, metres from her, colour. */
@@ -268,7 +271,7 @@ export class WitchTrail {
   /** Forgets her path (a blink, a teleport home): the trail starts again from where she is. */
   reset(): void { this.count = 0; this.head = -1; this.len = 0; }
   /** Another night (View.setGame): no path, and its colour taken afresh. */
-  newNight(): void { this.reset(); this.rgb.set(-1, 0, 0); this.lastBlink = -Infinity; this.n = 0; this.geo.setDrawRange(0, 0); this.secLen = -1; this.nDots = 0; this.dotGeo.setDrawRange(0, 0); }
+  newNight(): void { this.reset(); this.rgb.set(-1, 0, 0); this.lastBlink = -Infinity; this.landing = null; this.n = 0; this.geo.setDrawRange(0, 0); this.secLen = -1; this.nDots = 0; this.dotGeo.setDrawRange(0, 0); }
 
   /** A point added to her path. */
   private point(x: number, y: number, z: number): void {
@@ -281,7 +284,7 @@ export class WitchTrail {
   /** x, y, z: where her broom's bristles are (y: metres over the ground); speed (m/s) and her top speed now; lift: 0 on the
    *  ground to 1 over the treetops; area: the colour (0..1) of the area she's over; blinkAt: her last blink's time, and blink
    *  its line (where she left and where she landed); cool: the shared cooldown counter's share in use, 0 to 1 (rules/cooldown.ts). */
-  update(x: number, y: number, z: number, speed: number, top: number, lift: number, area: THREE.Vector3, time: number, dt: number, blinkAt: number, blink: { fromX: number; fromZ: number; toX: number; toZ: number } | null = null, cool = 0): void {
+  update(x: number, y: number, z: number, speed: number, top: number, lift: number, area: THREE.Vector3, time: number, dt: number, blinkAt: number, blink: { fromX: number; fromZ: number; toX: number; toZ: number; until?: number } | null = null, cool = 0): void {
     const T = this.T;
     this.mesh.visible = T.on;
     if (!T.on) return;
@@ -296,8 +299,21 @@ export class WitchTrail {
         if (blink && ((T.cooldown ?? 0) > 0 || (T.steps?.on && this.counter))) {
           const d = Math.hypot(blink.toX - blink.fromX, blink.toZ - blink.fromZ), n = Math.max(1, Math.ceil(d / 0.5));
           for (let i = 0; i <= n; i++) { const k = i / n; this.point(blink.fromX + (blink.toX - blink.fromX) * k, y, blink.fromZ + (blink.toZ - blink.fromZ) * k); }
-        } else this.reset();
+          this.landing = { fromX: blink.fromX, fromZ: blink.fromZ, toX: blink.toX, toZ: blink.toZ, until: Math.max(blink.until ?? time, time + 1 / 30) };
+        } else { this.reset(); this.landing = null; }
       }
+    }
+    // Just after a blink (Ed, 2026-11-03, v7314: "when I dash in a ^ shape, the trail doesn't follow that shape"): the blink is a
+    // teleport in one rules step, but the view draws her eased between the last two steps (rules/game.ts interpolated), so for a frame
+    // or so she's drawn part-way back along the blink's line. Taken into her path, that place folded the trail back over the blink
+    // (the line, then back down it, then up it again), eating its length, so the leg before the blink went missing. Till she's drawn
+    // at the landing (past it, along the blink's way, her drawn place `back` behind her allowed for) or she's been gone the blink's
+    // time, the trail's head is the landing and nothing goes into her path.
+    const L = this.landing;
+    if (L) {
+      const dx = L.toX - L.fromX, dz = L.toZ - L.fromZ, d = Math.hypot(dx, dz) || 1, along = ((x - L.fromX) * dx + (z - L.fromZ) * dz) / d;
+      if (along >= d - 1 || time >= L.until) this.landing = null;
+      else { x = L.toX; z = L.toZ; }
     }
     const S = T.steps, C = this.counter;
     if (S?.on && C) { this.stepped(x, y, z, speed, top, lift, dt, { ...STEPS_DEFAULT, ...S }, C); return; }
