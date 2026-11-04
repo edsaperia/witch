@@ -547,7 +547,7 @@ export function stepLeashed(c: Creature, px: number, pz: number, dt: number, t: 
 }
 
 /** How fast a party animal runs to keep up with its leash (legends still slow); berries.ts uses
- *  it too, so a detour to a berry is a quick hop at the same pace (Ed, v233). */
+ *  it too (times berries.feed.speed), so a fed animal walks to its berry at that pace (Ed, v233; 2026-11-03). */
 export const leashSpeed = (c: Creature, t: Tuning): number => Math.max(c.speed, t.leash.runSpeed * speedFactor(c.species, c.level, t));
 /** Walk-cycle frames a second for a pace, so the gait matches the speed (7 at the leash's 4 m/s). */
 export const gaitRate = (speed: number): number => Math.max(4, speed * 1.75);

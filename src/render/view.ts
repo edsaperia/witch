@@ -607,7 +607,8 @@ export class View {
   spellFx = new SpellFx();
   /** Opt-in world-pose echo preview, also exposed to the existing capture/debug tools. */
   get dodgeEchoes() { return dodgeEchoesFor(this); }
-  /** Her flight trail: a ribbon of glow in the colour of the area she's over (render/trail.ts). */
+  /** Her flight trail: the cooldown trail's dotted sections in her preset's colours (trail.steps; with it off, a ribbon of glow in the
+   *  colour of the area she's over: render/trail.ts). */
   private trail!: WitchTrail;
   /** Her cooldown trail's colour preset (config/trail-colours.json; chosen at the Broom station, kept with her broom: main.ts). */
   private trailPresetId: string | null = null;

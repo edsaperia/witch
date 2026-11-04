@@ -2,7 +2,7 @@
 // pack in it, cleared by the music spell once they're all invited or run off, its find the reward (a flask once she owns the island's
 // set), only before the final wave, never toward the win.
 import { describe, expect, it } from "vitest";
-import { newGame, stepGame, type Controls, type Game } from "./game";
+import { stepGame, type Controls, type Game } from "./game";
 import { TUNING, withTuning, type Tuning } from "./tuning";
 import { AREA_TYPES, generateMap, hydrateMap, prepOf, type ForestMap } from "./map";
 import { cellKey, clearArea } from "./party";
@@ -19,6 +19,7 @@ import { knownKinds } from "./rosters";
 import { restoreGame, snapshotGame } from "./nightSnapshot";
 import { startPartyOver } from "./partyOver";
 import { Forest } from "./forest";
+import { preppedGame, sharedMap } from "../test/preppedGame"; // (games on a map made once a file from its prep)
 
 const islandOf = (kind: string, t: Tuning = TUNING): Tuning => ({ ...t, map: { ...t.map!, island: kind, islandAreas: 10 } });
 /** The late-campaign home: every kind known (home's 10 first), an area each (rules/rosters.ts homeIsland). */
@@ -29,7 +30,7 @@ const key = (c: readonly [number, number]) => `${c[0]},${c[1]}`;
 
 /** A night under way on an island (the party on, no waves unless a test brings one), her high over home, hard to knock out. */
 function game(kind = "home", seed = 1, t: Tuning = TUNING): Game {
-  const g = newGame(seed, islandOf(kind, t));
+  const g = preppedGame(seed, islandOf(kind, t));
   g.clock.paused = false; g.party.spellAt = undefined; g.party.paused = true;
   g.witch = { ...g.witch, seated: false, mode: "treetop", lift: 1 };
   g.witches[0].health.hp = 1e6;
@@ -49,7 +50,7 @@ const winAll = (g: Game) => { for (const c of pack(g)) befriend(c, g.clock.time)
 describe("where it is (Ed, 2026-11-03: \"The challenge area shouldn't be adjacent to the home area\")", () => {
   it("is the find's own area, one a map: not home, not touching it, off the route, at its site, themed on the island's animal", () => {
     for (const [kind, seed] of [["home", 1], ["home", 5], ["fox", 2], ["tiger", 1]] as const) {
-      const m = generateMap(seed, islandOf(kind)), sites = m.specialSites.filter(s => s.kind === "challenge"), sp = challengeSite(m)!;
+      const m = sharedMap(seed, islandOf(kind)), sites = m.specialSites.filter(s => s.kind === "challenge"), sp = challengeSite(m)!;
       expect(sites.length, `${kind} ${seed}`).toBe(1);
       expect(m.specialSites.filter(s => s.kind === "find")).toEqual([]); // (the find's area is the challenge area)
       const home = key(m.centreCell);
@@ -65,7 +66,7 @@ describe("where it is (Ed, 2026-11-03: \"The challenge area shouldn't be adjacen
   }, 120000);
 
   it("keeps its whole circle clear, the woods right up to a narrow margin past its edge (Ed, on #1725)", () => {
-    const t = islandOf("fox"), m = generateMap(2, t), sp = challengeSite(m)!, f = new Forest(m), C = TUNING.challenge!;
+    const t = islandOf("fox"), m = sharedMap(2, t), sp = challengeSite(m)!, f = new Forest(m), C = TUNING.challenge!;
     expect(sp.r).toBeCloseTo(C.radius + C.margin, 6);
     const near = f.treesNear(sp.x, sp.z, sp.r + 10).map(q => Math.hypot(q.x - sp.x, q.z - sp.z));
     expect(near.filter(d => d < sp.r)).toEqual([]); // (none in it, whichever area a tree's in)
@@ -199,14 +200,14 @@ describe("its circle grows with the roster (Ed, 2026-11-03: \"128 animal pack is
     const g = game("fox", 2);
     expect(g.challenge!.radius).toBe(TUNING.challenge!.radius);
     expect(castReachOf(g.challenge!, TUNING)).toBe(TUNING.challenge!.castReach);
-    const m = generateMap(1, lateHome(64)), sp = challengeSite(m)!;
+    const m = sharedMap(1, lateHome(64)), sp = challengeSite(m)!;
     expect(packKinds(m).length).toBe(64);
     expect(sp.radius).toBeCloseTo(76.4, 1);
     expect(sp.r).toBeCloseTo(challengeCircle(64, TUNING).radius + challengeCircle(64, TUNING).margin, 6);
   }, 120000);
 
   it("on the late home, casts from further out (its reach grown with it) and fills it with 128 animals", () => {
-    const g = newGame(1, lateHome(64)), ch = g.challenge!;
+    const g = preppedGame(1, lateHome(64)), ch = g.challenge!;
     expect(ch.pack.length).toBe(128);
     expect(challengeColumns(g).length).toBe(64);
     expect(challengeColumns(g).every(c => c.sigils.length === 2)).toBe(true);
@@ -260,12 +261,12 @@ describe("its area holds its whole circle (Ed, 2026-11-03: \"the area will have 
     expect([...m2.bounds.land!.dist.slice(0, 4000)]).toEqual([...m.bounds.land!.dist.slice(0, 4000)]);
     expect(bad).toEqual([]);
   };
-  it("on a 10-area island", () => { holds(generateMap(1, islandOf("home")), generateMap(2, islandOf("home")), "home 10"); holds(generateMap(2, islandOf("fox")), generateMap(3, islandOf("fox")), "fox"); }, 300000);
-  it("on a 50-area island", () => holds(generateMap(1, islandOf("griffin")), generateMap(2, islandOf("griffin")), "griffin"), 300000);
+  it("on a 10-area island", () => { holds(sharedMap(1, islandOf("home")), sharedMap(2, islandOf("home")), "home 10"); holds(sharedMap(2, islandOf("fox")), sharedMap(3, islandOf("fox")), "fox"); }, 300000);
+  it("on a 50-area island", () => holds(sharedMap(1, islandOf("griffin")), sharedMap(2, islandOf("griffin")), "griffin"), 300000);
   it("on the late home of 64 kinds, its circle about 76 m round", () => {
-    const m = generateMap(1, lateHome(64));
+    const m = sharedMap(1, lateHome(64));
     expect(challengeSite(m)!.radius).toBeCloseTo(76.4, 1);
-    holds(m, generateMap(2, lateHome(64)), "home 64");
+    holds(m, sharedMap(2, lateHome(64)), "home 64");
   }, 300000);
   it("comes out the same from its prep (another page's worker: the island grown from the partition as cut)", () => {
     const t = lateHome(64), m = generateMap(3, t), again = hydrateMap(3, t, prepOf(m)), sp = challengeSite(m)!;

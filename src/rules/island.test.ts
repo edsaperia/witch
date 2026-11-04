@@ -8,8 +8,9 @@ import { isInside } from "./mapShape";
 import { islandShare, referenceAt } from "./swarm";
 import { routeIndex, routePopulation } from "./growth";
 import { routeOf } from "./party";
-import { newGame, stepGame, STEP } from "./game";
+import { stepGame, STEP } from "./game";
 import { spawnCreatures } from "./creatures";
+import { preppedGame } from "../test/preppedGame"; // (games on a map made once a file from its prep)
 
 // Keep the explicit 10–50-area matrix: exact area counts, coast reach, route exhaustion and size-independent swarm scaling are tested against it.
 const island = (n: number): Tuning => ({ ...TUNING, map: { ...TUNING.map!, islandAreas: n } });
@@ -33,7 +34,7 @@ describe("islands by area count (map.islandAreas)", () => {
   }, 240000);
 
   it("plays the waves on any island, the pulse running out after the last stone", () => {
-    const g = newGame(123, island(10)), idle = { moveX: 0, moveZ: 0, toggleMode: false, zoom: 0 };
+    const g = preppedGame(123, island(10)), idle = { moveX: 0, moveZ: 0, toggleMode: false, zoom: 0 };
     g.clock.paused = false; g.party.spellAt = undefined; g.party.paused = true;
     g.witch = { ...g.witch, seated: false, mode: "treetop", lift: 1 };
     stepGame(g, idle, STEP);

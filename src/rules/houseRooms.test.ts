@@ -2,14 +2,15 @@
 // the Terrace and out along every branch, kept in by its edge, the locked rooms' doors, each object's E, the hats' floor, and the bed.
 import { describe, expect, it } from "vitest";
 import { TUNING, withTuning } from "./tuning";
-import { newGame as fullGame, stepGame, STEP, type Controls, type Game } from "./game";
+import { stepGame, STEP, type Controls, type Game } from "./game";
 import { smallWorld } from "../test/worlds";
-const newGame = smallWorld(fullGame, "Room walls, furniture, doors and Terrace landings use one house's layout, independent of island extent.");
+const newGame = smallWorld(preppedGame, "Room walls, furniture, doors and Terrace landings use one house's layout, independent of island extent.");
 import { deckOf, keepInHouse, onFloor, onTerrace } from "./treehouse";
 import { HOUSE_ROOMS, floorHats, fromPlan, hatSlots, hatToTake, objectAt, objectFront, objectWorld, toPlan } from "./houseRooms";
 import { field, inRoom } from "../../config/house/shape.js";
 import { wearing } from "./hat";
 import { endParty } from "./partyOver";
+import { preppedGame } from "../test/preppedGame"; // (games on a map made once a file from its prep)
 
 const idle: Controls = { moveX: 0, moveZ: 0, toggleMode: false, zoom: 0, autoTalk: false };
 const deck = (g: Game) => deckOf(g.map, g.tuning)!;

@@ -6,13 +6,14 @@ import { AREA_TYPES, generateMap } from "./map";
 import { cellKey, routeOf } from "./party";
 import { earlyQuest } from "./quest";
 import { TUNING, withTuning } from "./tuning";
+import { sharedMap } from "../test/preppedGame"; // (maps the tests only read, made once a file)
 
 // Keep the radius-world seed matrix: seeds 777/14 specifically reproduce first-three routes without an unforced legend.
 const kindOf = (map: ReturnType<typeof generateMap>, k: string) => { const [x, y] = k.split(",").map(Number); return AREA_TYPES[map.typeOf(x, y)].creature; };
 
 describe("the early easy quest", () => {
   for (const seed of [1, 2, 3, 7, 42, 123, 777, 2024, 31337, 871136]) it(`seed ${seed}: a legend among the first areas wants another first area's baby`, () => {
-    const map = generateMap(seed, TUNING), E = earlyQuest(map)!, first = routeOf(map).order.slice(0, 3);
+    const map = sharedMap(seed, TUNING), E = earlyQuest(map)!, first = routeOf(map).order.slice(0, 3);
     expect(E).not.toBeNull();
     expect(E.first).toEqual(first);
     expect(map.legendCells.has(E.host)).toBe(true);
@@ -29,9 +30,9 @@ describe("the early easy quest", () => {
   it("forces a legend circle into the first three where the share left them none", () => {
     const off = withTuning({ legends: { ...TUNING.legends, earlyQuest: false } } as never);
     for (const seed of [777, 14]) {
-      const bare = generateMap(seed, off);
+      const bare = sharedMap(seed, off);
       expect(routeOf(bare).order.slice(0, 3).some(k => bare.legendCells.has(k))).toBe(false);
-      const map = generateMap(seed, TUNING), first = routeOf(map).order.slice(0, 3), added = first.filter(k => map.legendCells.has(k));
+      const map = sharedMap(seed, TUNING), first = routeOf(map).order.slice(0, 3), added = first.filter(k => map.legendCells.has(k));
       expect(added).toHaveLength(1);
       expect(earlyQuest(map)!.host).toBe(added[0]);
     }
@@ -46,7 +47,7 @@ describe("the early easy quest", () => {
   });
 
   it("is off with legends.earlyQuest false: every dream as before", () => {
-    const off = withTuning({ legends: { ...TUNING.legends, earlyQuest: false } } as never), map = generateMap(123, off);
+    const off = withTuning({ legends: { ...TUNING.legends, earlyQuest: false } } as never), map = sharedMap(123, off);
     expect(earlyQuest(map)).toBeNull();
   });
 });

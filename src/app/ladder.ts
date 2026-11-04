@@ -8,6 +8,7 @@ import { clampRung, inEffect, loadEffects, newLadder, pending, RUNGS, setMode, s
 import type { Tuning } from "../rules/tuning";
 import { FX_QUALITY } from "../render/fx/system";
 import { localStore } from "../platform/storageScope";
+import { glRendererName } from "../platform/glRenderer";
 
 /** A frame's budget (ms): 60 fps; at the steady-30 rung, 30. */
 const BUDGET = 1000 / 60, BUDGET30 = 1000 / 30;
@@ -158,7 +159,7 @@ function probeGpu(): string {
 
 /** The device's GPU by name, to remember its rung by (its renderer string; the browser's generic one where that's hidden). */
 export function gpuName(gl: WebGLRenderingContext | WebGL2RenderingContext): string {
-  try { const d = gl.getExtension("WEBGL_debug_renderer_info"); return String(d ? gl.getParameter(d.UNMASKED_RENDERER_WEBGL) : gl.getParameter(gl.RENDERER)); } catch { return "unknown"; }
+  try { return String(glRendererName(gl)); } catch { return "unknown"; }
 }
 
 /** A switch the rungs add to the tuning, left out while off (as the night was built), so a night off the ladder reads the same in

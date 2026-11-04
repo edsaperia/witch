@@ -4,17 +4,18 @@
 import { describe, expect, it } from "vitest";
 import { setupArena } from "./arena";
 import { stepCreaturesNear, type Creature } from "./creatures";
-import { newGame, STEP, stepGame, type Game } from "./game";
+import { STEP, stepGame, type Game } from "./game";
 import { marchSpeed } from "./combat";
 import { inFull } from "./simLod";
 import { TUNING } from "./tuning";
+import { preppedGame } from "../test/preppedGame"; // (games on a map made once a file from its prep)
 
 // Keep the radius world: coarse/full marching uses 600 m approaches and a witch 2000 m away, with a separate 5000 m freeze probe.
 const idle = { moveX: 0, moveZ: 0, toggleMode: false, zoom: 0 };
 const L = TUNING.simLod;
 
 describe("roaming creatures", () => {
-  const g = newGame(7, TUNING), c = g.creatures.find(k => !k.boss && k.level < 3)!;
+  const g = preppedGame(7, TUNING), c = g.creatures.find(k => !k.boss && k.level < 3)!;
 
   it("in full within full of her: a step every step", () => {
     c.seen = 0; c.lod = undefined; c.rest = 0; c.tx = c.x + 30; c.tz = c.z;
@@ -61,7 +62,7 @@ describe("no flicker at the line", () => {
 describe("marching besiegers", () => {
   /** Besiegers on home (its ring of speakers) put down `far` metres east of it, the witch over the treetops `away` metres west. */
   function siege(far: number, away: number): { g: Game; marchers: Creature[]; home: { x: number; z: number } } {
-    const g = newGame(7, TUNING);
+    const g = preppedGame(7, TUNING);
     g.clock.paused = false;
     stepGame(g, { ...idle, moveX: 1 }, STEP);
     setupArena(g, "wolf*1@2,boar*6@2!");

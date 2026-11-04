@@ -6,19 +6,20 @@ import { largestWorldTuning } from "../test/worlds";
 // Largest shipped world: pairwise visual diversity and near/far scaling must cover the full area allocation.
 const TUNING = largestWorldTuning(gameTuning);
 import { SOUNDSYSTEM_GEN_DEFAULT, soundsystemSpecs } from "./soundsystemGen";
+import { preppedGame } from "../test/preppedGame"; // (games on a map made once a file from its prep)
 
 type G = { seed: number; profile: string; crystal: string; stone: string; projector: string; tiers: { kind: string; n: number }[] };
 const diff = Art.soundsystemDiff as unknown as (a: G, b: G) => number;
 
 describe("the generated soundsystems (Ed, 2026-10-08)", () => {
   for (const seed of [123, 7, 2026]) it(`never deals two alike on a map (seed ${seed}): every pair differs in at least two visible traits`, () => {
-    const g = newGame(seed, TUNING), specs = [...soundsystemSpecs(g.map, SOUNDSYSTEM_GEN_DEFAULT).values()], gs = specs.map(s => s.genome as G);
+    const g = preppedGame(seed, TUNING), specs = [...soundsystemSpecs(g.map, SOUNDSYSTEM_GEN_DEFAULT).values()], gs = specs.map(s => s.genome as G);
     expect(specs.length).toBeGreaterThan(10);
     for (let i = 0; i < gs.length; i++) for (let j = i + 1; j < gs.length; j++) expect(diff(gs[i], gs[j]), `${specs[i].key} vs ${specs[j].key}`).toBeGreaterThanOrEqual(2);
     expect(new Set(specs.map(s => s.id)).size).toBe(specs.length);
   });
   it("turns each towards the dancefloor (never more than maxYaw from facing us) and makes the further ones bigger", () => {
-    const g = newGame(123, TUNING), specs = [...soundsystemSpecs(g.map, SOUNDSYSTEM_GEN_DEFAULT).values()];
+    const g = preppedGame(123, TUNING), specs = [...soundsystemSpecs(g.map, SOUNDSYSTEM_GEN_DEFAULT).values()];
     for (const s of specs) expect(Math.abs(s.yaw)).toBeLessThanOrEqual(SOUNDSYSTEM_GEN_DEFAULT.maxYaw);
     const near = specs.filter(s => s.far < 0.2), far = specs.filter(s => s.far > 0.8);
     expect(near.length && far.length).toBeTruthy();

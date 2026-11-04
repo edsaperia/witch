@@ -6,6 +6,7 @@ import { generateMap, type ForestMap } from "./map";
 import { drawnHills, layoutBias, lowlandDensity, terrainAt } from "./terrain";
 import { TUNING as gameTuning, withTuning } from "./tuning";
 import { largestWorldTuning } from "../test/worlds";
+import { sharedMap } from "../test/preppedGame"; // (maps the tests only read, made once a file)
 // Largest shipped world: terrain bias and tree-density samples must span the full area roster and its legend clearings.
 const TUNING = largestWorldTuning(gameTuning);
 
@@ -14,7 +15,7 @@ const ring = (m: ForestMap, x: number, z: number, r: number) => { let s = 0; for
 
 describe("the lie of the land (ground.layout)", () => {
   for (const seed of [123, 31337]) it(`seed ${seed}: every runestone on a rise, every legend clearing in a hollow`, () => {
-    const m = generateMap(seed, TUNING), [hx, hy] = m.centreCell;
+    const m = sharedMap(seed, TUNING), [hx, hy] = m.centreCell;
     for (const [cx, cy] of m.cells) if (cx !== hx || cy !== hy) { const s = m.soundsystemSpot(cx, cy); expect(terrainAt(m, s.x, s.z, H)).toBeGreaterThan(ring(m, s.x, s.z, 50)); }
     expect(m.legendClearings.length).toBeGreaterThan(10);
     for (const c of m.legendClearings) expect(terrainAt(m, c.x, c.z, H)).toBeLessThan(ring(m, c.x, c.z, 50));
@@ -29,7 +30,7 @@ describe("the lie of the land (ground.layout)", () => {
   });
 
   it("grows trees thicker in the low ground than on the high", () => {
-    const m = generateMap(123, TUNING), f = new Forest(m), { x, z } = m.dancefloor, R = 400;
+    const m = sharedMap(123, TUNING), f = new Forest(m), { x, z } = m.dancefloor, R = 400;
     const hs: number[] = [];
     for (let i = -R; i <= R; i += 10) for (let j = -R; j <= R; j += 10) if (i * i + j * j < R * R) hs.push(terrainAt(m, x + i, z + j, H));
     hs.sort((p, q) => p - q);

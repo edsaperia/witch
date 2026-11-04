@@ -3,7 +3,7 @@
 // carving glows while it waits; cleared, home's dancefloor fills it in place of the stone, coming in from the middle, its tiles lit
 // on the beat; closed uncleared, dark stone; no beam of light over it in any state (Ed, 2026-11-03: "remove the beam").
 import { describe, expect, it } from "vitest";
-import { newGame, stepGame, type Controls, type Game } from "../rules/game";
+import { stepGame, type Controls, type Game } from "../rules/game";
 import { TUNING, type Tuning } from "../rules/tuning";
 import { befriend } from "../rules/creatureStates";
 import { islandSigilOf } from "../rules/dancefloor";
@@ -15,12 +15,13 @@ import { NO_CARVING } from "./legendCarving";
 import { columnKinds, columnSpots } from "../rules/challenge";
 import { withTuning } from "../rules/tuning";
 import { readFileSync } from "node:fs";
+import { preppedGame } from "../test/preppedGame"; // (games on a map made once a file from its prep)
 
 const still: Controls = { moveX: 0, moveZ: 0, toggleMode: false, zoom: 0, autoTalk: false };
 const T: Tuning = { ...TUNING, map: { ...TUNING.map!, island: "fox", islandAreas: 10 } };
 
 function game(): Game {
-  const g = newGame(2, T);
+  const g = preppedGame(2, T);
   g.clock.paused = false; g.party.spellAt = undefined; g.party.paused = true;
   g.witches[0].health.hp = 1e6;
   return g;

@@ -265,8 +265,27 @@ export function scaled(name: string, A: Attack): Attack {
   return out;
 }
 const LAST_SCALED = new Map<string, { A: Attack; scale: number; speed: number; out: Attack }>();
-/** An attack by its name, at the fight's scale (for the view, and data lookups). */
-export const attackNamed = (name: string, data: CombatData = COMBAT): Attack => scaled(name, data.attacks[name]);
+/** Attacks made at run time from the file's (a pack's moves at a level: rules/combat/packs.ts packAttack), by name. Kept here,
+ *  never written into the combat file's `attacks`: the config is read-only at run time (it was once the cache, so a test's or a
+ *  tool's own combat data missed them, and a page that hadn't made one yet, a resumed night's shot in flight say, found none). */
+const MADE = new Map<string, Attack>();
+let maker: ((name: string) => void) | null = null;
+/** The attack made under `name`, made by `make` the first time it's asked for and the same object after. */
+export function madeAttack(name: string, make: () => Attack): Attack {
+  let A = MADE.get(name);
+  if (!A) MADE.set(name, (A = make()));
+  return A;
+}
+/** Who makes a made attack asked for by name before anything made it (rules/combat/packs.ts, for its `pack:` names). */
+export function setAttackMaker(make: (name: string) => void): void { maker = make; }
+function namedAttack(name: string, data: CombatData): Attack {
+  const A = data.attacks[name] ?? MADE.get(name);
+  if (A || !maker) return A;
+  maker(name);
+  return MADE.get(name) as Attack;
+}
+/** An attack by its name, at the fight's scale (for the view, and data lookups): the combat file's, else a made one. */
+export const attackNamed = (name: string, data: CombatData = COMBAT): Attack => scaled(name, namedAttack(name, data));
 
 export const maxHp = (level: Level, data: CombatData = COMBAT) => data.levels.hp[Math.min(level, data.levels.hp.length - 1)];
 /** A full 💌 ring's worth of blows' damage on c (levels.stun by its level, times its species' strength, as health was): a blow fills

@@ -92,6 +92,41 @@ describe("the GPU ledger", () => {
   });
 });
 
+describe("the budget's GL error read (the frame-sync hunt, 2026-11-04: each read waits on the GPU)", () => {
+  it("reads GL's error only when something has been allocated since the last read", () => {
+    const gl = fakeGL(), L = new GpuLedger(gl), t = {}, rb = {};
+    let reads = 0;
+    const get = gl.getError.bind(gl);
+    (gl as unknown as { getError: () => number }).getError = () => { reads++; return get(); };
+    expect(L.checkIfAllocated()).toBe(false);
+    expect(reads).toBe(0); // (nothing made yet: no wait on the GPU)
+    gl.bindTexture(GL.TEXTURE_2D, t as WebGLTexture);
+    gl.texImage2D(GL.TEXTURE_2D, 0, GL.RGBA8, 8, 8, 0, GL.RGBA, GL.UNSIGNED_BYTE, null);
+    gl.errors.push(0x0505);
+    expect(L.checkIfAllocated()).toBe(true);
+    expect(L.ooms).toBe(1);
+    const after = reads;
+    for (let i = 0; i < 100; i++) expect(L.checkIfAllocated()).toBe(false);
+    expect(reads).toBe(after); // (read once: not again till something new is made)
+    gl.bindRenderbuffer(GL.RENDERBUFFER, rb as WebGLRenderbuffer);
+    gl.renderbufferStorage(GL.RENDERBUFFER, GL.DEPTH24_STENCIL8, 4, 4);
+    L.checkIfAllocated();
+    expect(reads).toBe(after + 1);
+    expect(L.errorReads).toBe(2);
+  });
+
+  it("counts a buffer's allocation too", () => {
+    const gl = Object.assign(fakeGL(), { bufferData: () => {} }), L = new GpuLedger(gl);
+    let reads = 0;
+    (gl as unknown as { getError: () => number }).getError = () => { reads++; return 0; };
+    L.checkIfAllocated();
+    expect(reads).toBe(0);
+    gl.bufferData(0x8892, 64, 0x88e4);
+    L.checkIfAllocated();
+    expect(reads).toBe(1);
+  });
+});
+
 describe("the GPU budget", () => {
   const T = { mb: 1024, refWidth: 1920, refHeight: 1080, floor: 512, ceil: 2048 };
   it("goes with the window's pixels, between its floor and ceiling", () => {
