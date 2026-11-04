@@ -6,7 +6,7 @@ The status index checks the requests below against prototype `ab06904b` and cite
 
 | Request / feature group | Status | Evidence and remaining gap |
 |---|---|---|
-| Tempo scales pulse and pause-page wave speed | **Built** | `rules/beat.ts`, party step; #527/#953 (first build versions unverified). Since 2026-11-03 the speed is a straight line in the tempo (1.0 m/s at 100 bpm to 5.0 at 200, `leyLines.pulseAt100`/`pulseAt200`), `pulseSpeed`=1 a multiplier on it. |
+| Tempo scales pulse and pause-page wave speed | **Built** | `rules/beat.ts`, party step; #527/#953 (first build versions unverified). Since 2026-11-03 the speed is a straight line in the tempo (1.0 m/s at 100 bpm to 5.0 at 200, `leyLines.pulseAt100`/`pulseAt200`), `pulseSpeed`=1 a multiplier on it; and the tempo is the same all night, only knockdowns raising it (#1730). |
 | Invites block, refuse, vibrate and crumple on enraged | **Built** | #89/#923; `rules/invites.ts`, `render/invites.ts`, sfxCues; version unverified. |
 | Gamepad bindings, remapping and sigil runs | **Built** | #618/#649/#938; `platform/bindings.ts`, input.ts, rules/leash.ts. Dates/bindings below retain historical revisions; first versions unverified. |
 | Creator/treehouse and all menus on pad | **Partly built** | Ordinary station/chart/telescope/Studio/pause paths exist (#1076, #1456); old creator and all auxiliary panels are not certified complete. No browser acceptance claimed; versions unverified. |
@@ -15,9 +15,9 @@ The status index checks the requests below against prototype `ab06904b` and cite
 | Sigils defend whole area plus radius | **Built** | #941; rules/combat/targeting.ts and guard tests; version unverified. |
 | Higher leash arcs and visible stack | **Built** | #936/#937; renderer leash stack/ribbons; versions unverified. |
 | Pick up/place runs | **Built** | #938; rules/leash.ts run state; version unverified. |
-| One movement trail and shared cooldown | **Built** | #940; cooldown rise/dash rules and render/trail.ts; version unverified. |
+| One movement trail and shared cooldown | **Built** | #940; cooldown rise/dash rules and render/trail.ts; version unverified. Since 2026-11-03 the cooldown trail: dotted sections a dodge each behind a buffer, in her preset's colours (#1757, #1765, #1779). |
 | Envelope and ring scenery/smoke occlusion | **Built** | render/occlusion.ts, invites.ts, inviteRing.ts; 2026-10-19 source implementation, originating PR/version unverified. |
-| Baby trail, ground weight, placed-sigil feeding | **Built** | #648/#649/#666; rules/babies.ts, leashWeight.ts, berries.ts; versions unverified. |
+| Baby trail, ground weight, placed-sigil feeding | **Built; weight and feeding since replaced** | #648/#649/#666; rules/babies.ts, leashWeight.ts, berries.ts; versions unverified. 2026-11-03: the sigil weight gave way to the chains (#1731), feeding at a placed sigil to feeding on command (#1768), and the single file is spaced by size (#1740). |
 | Flasks grow followers to adult | **Built** | #954; rules/berries.ts growthSpurt; version unverified. |
 | Small flasks and one per ten areas | **Built** | #647/#650; partyRelics.js, legends.json/placeRelics; versions unverified. |
 | Longer flyer dive bottom | **Built** | #611; species movement.swoop and rules/movement.ts; version unverified. |
@@ -30,7 +30,7 @@ Backlog (Ed, 2026-10-09 to 10-10). **Mixed implementation status; see the audit 
 
 ## Tempo is difficulty — partly built
 
-- **Built:** the pulse runs at `leyLines.pulseSpeed` × the tempo's speed (`tempoRate` in `rules/beat.ts`, read by `stepParty` in `rules/party.ts`, #527; since Ed, 2026-11-03, a straight line from 1.0 m/s at 100 bpm to 5.0 at 200, `sparkSpeedAt`, #1701): a knockdown's +5 bpm speeds the pulse as it speeds the music.
+- **Built:** the pulse runs at `leyLines.pulseSpeed` × the tempo's speed (`tempoRate` in `rules/beat.ts`, read by `stepParty` in `rules/party.ts`, #527; since Ed, 2026-11-03, a straight line from 1.0 m/s at 100 bpm to 5.0 at 200, `sparkSpeedAt`, #1701): a knockdown's +5 bpm speeds the pulse as it speeds the music. **Built (#1730; Ed, 2026-11-03):** the night's tempo stays the same from wave to wave (her record's, 120 with none); only knockdowns raise it.
 - **Built (#953; Ed, 2026-10-18):** the wave speed defaults to **1 m/s** (was 4), set from a slider on the pause page; the bedroom's "Waves:" dropdown is gone (`leyLines.pulseSpeed`, `config/decisions/953-waves.json`). **Open:** how the records' "pulse speed from the bpm" (journey.md, section 2) fits a wave speed now set on its own; Ed wants the early nights slow.
 
 ## Invitations bounce off the enraged (Ed, 2026-10-12) — built
@@ -62,23 +62,23 @@ Backlog (Ed, 2026-10-09 to 10-10). **Mixed implementation status; see the audit 
 
 ## Open questions
 
-- Single-file tightness: shipped at 1.6 m, raised to 5 m by Ed (#666; `leash.babies.gap`). Settled unless Ed says otherwise.
+- Single-file tightness: shipped at 1.6 m, raised to 5 m by Ed (#666; `leash.babies.gap`). Settled unless Ed says otherwise. Since #1740 (Ed, 2026-11-03) each keeps its distance by its size, never under that 5 m.
 - The rest are answered: babies on the ground (the Decision below, built), the flying cooldown's length (3 s, a pause-page slider since #916), blink when standing still (her facing, #649).
 
 ## Decisions (Ed, 2026-10-11)
 
-- **Babies on the ground:** babies weigh **more on the ground than in the treetops**, so 8 fill the ground allowance (and 8 the treetops' too). Species strength still doesn't count for babies. — **Built** (#649, `leash.weight.babyGround` 0.56; `src/rules/leashWeight.ts`).
+- **Babies on the ground:** babies weigh **more on the ground than in the treetops**, so 8 fill the ground allowance (and 8 the treetops' too). Species strength still doesn't count for babies. — **Built** (#649, `leash.weight.babyGround` 0.56; `src/rules/leashWeight.ts`); **retired** with the sigil weight on 2026-11-03 (#1731: babies have no chain and weigh nothing).
 - **The Player dropdown** (human or bot) moves to the **debug overlay only**; players never see it. — **Built** (#649, `src/app/playerPick.ts`: shown only with the debug overlay on). The Waves menu goes. — **Built** (#953: a pause-page slider instead; see Tempo is difficulty).
 
 ## Built
 
-- **Babies** (#648, Ed's go on golf's plan; `src/rules/babies.ts`): single file along where she's been, in stack order, `leash.babies.gap` apart (1.6 m shipped, 5 m since #666); scatter in combat (8 m); no drawn leashes; very fast offscreen (past 35 m, 40 m/s); berries only at a placed sigil within `berries.babyReach` (10 m), the berry glowing while a baby's sigil is next down; one berry (`berries.babyCost`) makes a youth.
-- **Baby weight** (#611: baby 0.3, youth 0.8; #649: baby 0.56 on the ground, `leash.weight.babyGround`; strength never counts for a baby: `creatureWeight` in `src/rules/leashWeight.ts`).
+- **Babies** (#648, Ed's go on golf's plan; `src/rules/babies.ts`): single file along where she's been, in stack order, `leash.babies.gap` apart (1.6 m shipped, 5 m since #666); scatter in combat (8 m); no drawn leashes; very fast offscreen (past 35 m, 40 m/s); berries only at a placed sigil within `berries.babyReach` (10 m), the berry glowing while a baby's sigil is next down (till #1768, 2026-11-03: she feeds it on command now, and `babyReach` is gone); one berry (`berries.babyCost`) makes a youth. Spaced by size since #1740.
+- **Baby weight** (#611: baby 0.3, youth 0.8; #649: baby 0.56 on the ground, `leash.weight.babyGround`; strength never counts for a baby: `creatureWeight` in `src/rules/leashWeight.ts`). Retired 2026-11-03 with the whole sigil weight (#1731).
 - **Flasks: every flask is a growth spurt** (Ed, 2026-10-18; #954, `growthSpurt` in `src/rules/berries.ts`): everything following her becomes an adult; a flask no longer makes a legend happy.
 - **Flasks a third the size** (#647; `PARTY_RELIC_SIZE` in `art/partyRelics.js`, the light scaled with it) and the relic sigil's offset back to 6 m (`config/legends.json` `relics.sigilOffset`).
 - **Relics: one per 10 areas** (#650; `relics.perAreas` in `config/legends.json`, `placeRelics` in `src/rules/legends.ts`).
 - **Flyers' longer dive bottom** (#611, on #588's swoop): now 4 s for the owl, bat and raven (`movement.swoop.bottom` in each `art/creatures/<id>/creature.js`).
-- **Flying cooldown** (#649): after landing she can't rise for `riseCooldown` seconds (3; `src/rules/game.ts`, `riseCooldownOf` in `src/rules/spells.ts`; the plain broom halves it, `spells.plain.riseCooldown`, #695). A pause-page slider for it since #916.
+- **Flying cooldown** (#649): after landing she can't rise for `riseCooldown` seconds (3; `src/rules/game.ts`, `riseCooldown`, `rules/cooldown.ts`; the plain broom halved it, `spells.plain.riseCooldown`, #695, till the Workshop's bare broom: the Jet nozzles halve it now). A pause-page slider for it since #916.
 - **Enraged animals march inward** (#649): `nearestSound` in `src/rules/combat/targeting.ts` never picks a soundsystem further from the map's centre than the besieger (`INWARD_SLACK` 10 m; home always); `marchOn` in `src/rules/combat.ts`.
 - **Blink goes the way she's moving** (#649; `src/rules/dash.ts`).
 - **Controller bindings** (#618; `PAD` in `src/platform/input.ts`).

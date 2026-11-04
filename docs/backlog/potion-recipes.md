@@ -8,36 +8,36 @@ Built means implementation in this source checkpoint, not a new visual or audio 
 
 | Item | Status | Source / version |
 |---|---|---|
-| Recipe 6: Walking Wood | **Built** | Landscape perception, shared sound filter and Potion Lab control. |
+| Recipe 6: Walking Wood | **Built** | Landscape perception, shared sound filter and Potion Lab control. Shipped 2026-11-03, #1712. |
 | Recipe 7: Floor Becomes Sky | **Built** | #1523 current recipe/renderer implementation; `render/potionEffects.ts`, `rules/potionSettings.ts`; first live version unverified |
 | Recipe 9: Big Moon | **Built** | #1523 current recipe/renderer implementation; `render/potionEffects.ts`, `rules/potionSettings.ts`; first live version unverified |
 | Recipe 10: Ravine | **Built** | #1523 current recipe/renderer implementation; `render/potionEffects.ts`, `rules/potionSettings.ts`; first live version unverified |
 | Recipe 11: Chunky | **Built** | #1523 current recipe/renderer implementation; `render/potionEffects.ts`, `rules/potionSettings.ts`; first live version unverified |
-| Recipe 19: Mirrorball | **Built** | The sky moon and shared surface lighting use the trip envelope. |
-| Recipe 25: Giant Trees | **Built** | Landscape perception, shared sound filter and Potion Lab control. |
+| Recipe 19: Mirrorball | **Built** | The sky moon and shared surface lighting use the trip envelope. Shipped 2026-11-03, #1705. |
+| Recipe 25: Giant Trees | **Built** | Landscape perception, shared sound filter and Potion Lab control. Shipped 2026-11-03, #1712. |
 | Recipe 26: Night Vision | **Built** | #1531; `render/potionEffects.ts`, dedicated audio gates; first live version unverified |
 | Recipe 29: Stiltwalkers | **Built** | #1532; registry29/58, rig limb deformation; changelog v6523 |
 | Recipe 30: Thick Canopy | **Built** | #1523 current recipe/renderer implementation; `render/potionEffects.ts`, `rules/potionSettings.ts`; first live version unverified |
-| Recipe 34: Woodcut | **Built** | Recipe, Potion Lab controls and audio treatment implemented. |
-| Recipe 35: Kaleidoscope | **Built** | Recipe, Potion Lab controls and audio treatment implemented. |
+| Recipe 34: Woodcut | **Built** | Recipe, Potion Lab controls and audio treatment implemented. Shipped 2026-11-03, #1705. |
+| Recipe 35: Kaleidoscope | **Built** | Recipe, Potion Lab controls and audio treatment implemented. Shipped 2026-11-03, #1705. |
 | Recipe 45: Worm's Eye | **Built** | #1530; camera controls and shared audio; first live version unverified |
 | Recipe 52: Heat Vision | **Built** | #1531; semantic creature heat and octave/audio routing; first live version unverified |
-| Recipe 56: Silent Film | **Built** | Game-clock film grain, scratches, sepia and band-limited sound. |
-| Recipe 57: Masterplan | **Built** | Recipe, Potion Lab controls and audio treatment implemented. |
+| Recipe 56: Silent Film | **Built** | Game-clock film grain, scratches, sepia and band-limited sound. Shipped 2026-11-03, #1709. |
+| Recipe 57: Masterplan | **Built** | Recipe, Potion Lab controls and audio treatment implemented. Shipped 2026-11-03, #1705. |
 | Recipe 58: Stiltwalkers | **Built** | #1532; registry29/58, rig limb deformation; changelog v6523 |
-| Recipe 59: Contour Dream | **Built** | World-height lighting bands and height-sensitive sound. |
+| Recipe 59: Contour Dream | **Built** | World-height lighting bands and height-sensitive sound. Shipped 2026-11-03, #1709. |
 | Recipe 61: Aurora Outlines | **Built** | #1523 current recipe/renderer implementation; `render/potionEffects.ts`, `rules/potionSettings.ts`; first live version unverified |
-| Recipe 62: Folded Space | **Built** | Shared terrain bend and position-dependent sound. |
+| Recipe 62: Folded Space | **Built** | Shared terrain bend and position-dependent sound. Shipped 2026-11-03, #1709. |
 | Recipe 64: The Audience | **Built** | #1535; watching-tree lean/lag and shared audio; first live version unverified |
-| Recipe 65: Concertina | **Built** | Landscape perception, shared sound filter and Potion Lab control. |
+| Recipe 65: Concertina | **Built** | Landscape perception, shared sound filter and Potion Lab control. Shipped 2026-11-03, #1712. |
 | Recipe 73: The Forest Counts | **Built** | #1544; held beat scenery/audio; first live version unverified |
-| Recipe 75: Seeing Through Seeing | **Built** | Landscape perception, shared sound filter and Potion Lab control. |
-| Recipe 78: Held Breath | **Built** | Landscape perception, shared sound filter and Potion Lab control. |
-| Recipe 79: Out of Time | **Built** | Landscape perception, shared sound filter and Potion Lab control. |
-| Recipe 82: Distant Giants | **Built** | Landscape perception, shared sound filter and Potion Lab control. |
-| Recipe 89: Underwater Light | **Built** | Landscape perception, shared sound filter and Potion Lab control. |
-| Recipe 92: Inside-Out Relief | **Built** | Landscape perception, shared sound filter and Potion Lab control. |
-| Recipe 93: Living Bark | **Built** | Landscape perception, shared sound filter and Potion Lab control. |
+| Recipe 75: Seeing Through Seeing | **Built** | Landscape perception, shared sound filter and Potion Lab control. Shipped 2026-11-03, #1712. |
+| Recipe 78: Held Breath | **Built** | Landscape perception, shared sound filter and Potion Lab control. Shipped 2026-11-03, #1712. |
+| Recipe 79: Out of Time | **Built** | Landscape perception, shared sound filter and Potion Lab control. Shipped 2026-11-03, #1712. |
+| Recipe 82: Distant Giants | **Built** | Landscape perception, shared sound filter and Potion Lab control. Shipped 2026-11-03, #1712. |
+| Recipe 89: Underwater Light | **Built** | Landscape perception, shared sound filter and Potion Lab control. Shipped 2026-11-03, #1712. |
+| Recipe 92: Inside-Out Relief | **Built** | Landscape perception, shared sound filter and Potion Lab control. Shipped 2026-11-03, #1712. |
+| Recipe 93: Living Bark | **Built** | Landscape perception, shared sound filter and Potion Lab control. Shipped 2026-11-03, #1712. |
 | Recipe 101: Glow Up | **Built** | #1523 current recipe/renderer implementation; `render/potionEffects.ts`, `rules/potionSettings.ts`; first live version unverified |
 | Recipe 102: Miniature | **Built** | #1536; miniatureTilt and shared filtered audio; first live version unverified |
 | Recipe 103: Little Planet | **Built** | #1523 current recipe/renderer implementation; `render/potionEffects.ts`, `rules/potionSettings.ts`; first live version unverified |

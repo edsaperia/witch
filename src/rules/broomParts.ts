@@ -85,7 +85,7 @@ function changes(f: Fitted): Map<string, { k: number; add: number }> {
 }
 const apply = (base: number, c: { k: number; add: number }) => base * (1 + c.k) + c.add;
 
-/** How hard her sigils pull on her (rules/leashWeight.ts loadOf's pull): 1 on the bare broom, the Canoe hull's less. */
+/** How hard her sigils pull on her (rules/chains.ts dragWitch's pull: a youth's and an adult's chain drag times it): 1 on the bare broom, the Canoe hull's less. */
 export function partsPull(f: Fitted): number {
   const c = changes(f).get("pull");
   return c ? Math.max(0, apply(1, c)) : 1;

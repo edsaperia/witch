@@ -901,7 +901,7 @@ function stepFights(g: Game, t: Tuning, dt: number, busy: (id: number) => boolea
     // (cleared before its wave: a rainbow wave down the ley line, Ed 2026-10-29, rules/rainbow.ts)
     if (a.early) { g.rainbows = liveRainbows(g.party, g.map, g.rainbows ?? [], time); sendRainbow(g.rainbows, t, time, stoneMetres(g.party, g.map, a.cell) ?? pulseRouteMetres(g.party, g.map, time)); } // (from its own stone: Ed, 2026-10-29)
     for (const c of g.creatures) if (!c.gone && !c.leashed && !c.dropped && c.state === "happy" && c.cell[0] === a.cell[0] && c.cell[1] === a.cell[1]) joinParty(g, c, a.soundsystem, a.cell);
-    // (one let go here at her knockout stays where it was dropped, dancing now: rules/knockout.ts letGoHappy)
+    // (one let go here, by a guest leaving an online night, stays where it was dropped, dancing now: rules/knockout.ts letGoHappy)
     for (const c of g.creatures) if (c.dropped && !c.gone && !c.leashed && cellKey(c.dropped.cell) === key) c.dancing = true;
   }
   // Only creatures with something to fight near them take part: wild ones in or next to the area

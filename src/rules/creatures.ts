@@ -197,8 +197,8 @@ export interface Creature {
    *  tries to stay within the circle"): it roams the circle's open floor and walks back in if it's out, dancing there
    *  once its area's party comes; leashed, it follows her (keepsToCircle). */
   circle?: { x: number; z: number; r: number; legendX: number; legendZ: number };
-  /** Let go happy at her knockout (Ed, 2026-10-26: "they should idle near where they were dropped, not walk back to their
-   *  area"; rules/knockout.ts letGoHappy): it idles within r metres of (x, z) in place of its own area, till she leashes it again. */
+  /** Let go happy (rules/knockout.ts letGoHappy: by a guest leaving an online night; at her knockout from Ed, 2026-10-26, "they should
+   *  idle near where they were dropped, not walk back to their area", till 2026-11-03, when her carried sigils fall parked instead): it idles within r metres of (x, z) in place of its own area, till she leashes it again. */
   dropped?: { x: number; z: number; r: number; /** the area it was dropped in */ cell: [number, number] };
   /** When it was last healed (heal or healBy: a berry, invited, leashed, a happy legend mending...): the view's green "+"s. */
   healedAt?: number;
