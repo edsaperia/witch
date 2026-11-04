@@ -835,7 +835,7 @@ The special sites (tonight's find's) count as stones here. Placed all at once in
 
 ### `findArea`
 
-tonight's find in an area of its own, at its site, in a clearing `clear` metres round it; that area has no stump, wave or creatures, and every touching area's path leads to it.
+tonight's find in an area of its own, at its site, in a clearing `clear` metres round it; that area has no stump or wave, and no creatures but the challenge area's pack (challenge on), and every touching area's path leads to it.
 
 1. Ed, 2026-11-03: "We can also have finds be at the site of their own area rather than in a random place, and then the path network can lead you to them." … "Each non-lake area has a stump site or a special site (find and challenge areas)"
 The area is seeded by the night (never home, an area touching home's (Ed, 2026-11-03: "The challenge area shouldn't be adjacent to the home area"; an island with none such takes its area farthest from home), a legend area's pair, or one whose going would cut the island in two) and is not playable, like a legend area; the island grows one area more for it, which takes its kind, so the island keeps its playable areas and roster. Off: the find as before, in a wild area's woods.
