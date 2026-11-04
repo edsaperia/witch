@@ -5,7 +5,7 @@
 // a legend's clearing finishing its quest (rules/quest.ts).
 import { wakeOf, settleSleepingBed } from "./wakeUp";
 import { guestMotionReady } from "./onlineInputSteps";
-import { furnitureFor } from "./guestFurniture";
+import { houseObjectFor } from "./guestFurniture";
 import { isDressingTable } from "./clothesPile";
 import { atZooExit } from "./zoo";
 import { mushroomButton } from "./mushrooms";
@@ -77,7 +77,7 @@ export function stepSigilButton(g: Game, c: Controls, W: Witch, t: Tuning, ht: n
     // In the house's rooms (rules/houseRooms.ts; Ed, 2026-10-19): E at an object uses it (main.ts opens what it opens); the hats'
     // floor's hats are picked up and put down; E held at the bed fills its ring, and full, she sleeps: the night's over.
     const candidate = inHouse ? objectAt(deck!, x, z) : null;
-    const at = candidate && furnitureFor(g, W, candidate) ? candidate : null;
+    const at = candidate ? houseObjectFor(g, candidate) : null; // (in solo a guest's bedroom's piece only says it waits: rules/guestFurniture.ts)
     if (c.hat && inHouse && HOUSE_ROOMS.layout) {
       if (wearing(W.hat)) { W.hat.down = { x, z, at: ht }; delete W.hat.hold; reserveHatPoints(W, deck!); relicEvents.push({ kind: "hatPut", id: W.id, x, z, at: ht }); }
       else { const event = useHats(W, deck!, x, z, ht, t.leash.runeRadius, 0.9, g.witches.length > 1 ? id => g.witches.some(o => o !== W && o.spells.hat === id) : undefined); if (event) relicEvents.push(event); }

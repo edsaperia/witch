@@ -38,8 +38,8 @@ function inspector(): void {
   for (const k of ["x", "z", "rotation"] as const) get<HTMLInputElement>(k).value = String(+p[k].toFixed(4));
   get<HTMLInputElement>("rotation").disabled = !!o.hatPoint; get<HTMLButtonElement>("left").disabled = !!o.hatPoint; get<HTMLButtonElement>("right").disabled = !!o.hatPoint;
   get("anchor").textContent = o.kitchen ? `Current potion kitchen: ${o.kitchen.kind === "basket" ? `${o.kitchen.colour} mushrooms · unload / ingredient use` : "large cauldron · ingredients and smoke follow its centre"}. Preview shows empty containers. Placement is exported for runtime review.` : o.hatPoint ? `Spawn point ${o.hatPoint}. A new hat takes the lowest empty point. Each hat is picked up separately; this is not a station.` : o.decor ? "Room clutter has no station interaction. Its identity stays the same when moved to another room." : `Use position: X ${a.x.toFixed(2)}, Z ${a.z.toFixed(2)} m. Rotation is clockwise; 0° faces south. Room names do not change its function.`;
-  const potRoom = physicalRoom(history.value.objects.find(p => p.id === "cauldron")!);
-  get("warning").textContent = field(HOUSE_ROOMS.shape, p.x, p.z, true) > 0 ? "Outside the walkable floor. You can keep arranging it or move it back inside." : o.kitchen && destination !== potRoom ? "Outside the cauldron's room. Potion interactions require the cauldron's room; review this placement before adoption." : "";
+  // (no room warning: the potion reaches a radius round the pot and a basket works wherever it stands, Ed 2026-11-03)
+  get("warning").textContent = field(HOUSE_ROOMS.shape, p.x, p.z, true) > 0 ? "Outside the walkable floor. You can keep arranging it or move it back inside." : "";
 }
 function draw(): void {
   map = preview.draw(plan, items, history.value, selected, frame, false, zoom);

@@ -8,12 +8,12 @@ import { houseWitchOverlay, setHouseWitchPass, HOUSE_FLOOR_OVERLAY_ORDER } from 
 import { deckOf } from "../rules/treehouse";
 import * as THREE from "three";
 
-it("puts the recorded T4 local guest in the home-bedroom depth pass despite the canonical lock", () => {
+it("puts the recorded T4 local guest in the home-bedroom depth pass, her guest bedroom on the walking floor (open since Ed, 2026-11-03)", () => {
   const at = { x: 3166.43871836629, z: 2786.926777190793 };
   const game = { map: { treehouse: at }, tuning: TUNING } as unknown as Game;
   const guest = { body: { x: 3191.9412858783257, z: 2726.613175427364, perch: true } } as Witch;
   const before = JSON.stringify(HOUSE_ROOMS.shape);
-  expect(onRoomFloor(floorRects(at), guest.body.x, guest.body.z)).toBe(false); // The old local predicate failed here.
+  expect(onRoomFloor(floorRects(at), guest.body.x, guest.body.z)).toBe(true); // (the old local predicate failed here while the room was locked)
   expect(witchRoomPass(game, guest)).toBe(true); expect(remoteRoomPass(game, guest)).toBe(true);
   const bedroom = HOUSE_ROOMS.rooms.find(r => r.id === "bedroom")!;
   const host = { body: { ...fromPlan(at, bedroom.x, bedroom.z), perch: true } } as Witch;

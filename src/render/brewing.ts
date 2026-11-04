@@ -3,7 +3,7 @@
 import * as THREE from 'three';
 import { paintKitchenCauldron, paintMushroomBasket } from './brewingProps';
 import type { View } from './view';
-import { kitchenPlan, basketNear } from '../rules/mushrooms';
+import { kitchenPlan, basketNear, cauldronReach } from '../rules/mushrooms';
 import { fromPlan, toPlan } from '../rules/houseRooms';
 import { deckOf } from '../rules/treehouse';
 import { MUSHROOM_COLOURS } from './mushroomArt';
@@ -29,6 +29,21 @@ function panel(order: number) {
 const rgba = (hex: string, alpha: number) => {
   const n = parseInt(hex.slice(1), 16); return `rgba(${n >> 16},${(n >> 8) & 255},${n & 255},${alpha})`;
 };
+/** The smoke's puffs (Ed, 2026-11-03: "The cauldron smoke effect should cover the 10m area for ten seconds or so"): `age` seconds
+ *  since the third mushroom, `remaining` till it clears; spread out from the pot over its first 2.5 s to fill a disc of `reach` metres
+ *  round it (the potion's reach, rules/mushrooms.ts), each puff drifting and hanging up to 3 m over the floor, all fading in and out
+ *  over 1.2 s. Metres on the plan from the pot (x east, z south, h up), radii and alpha. */
+export function smokePuffs(age: number, remaining: number, reach: number): { i: number; x: number; z: number; h: number; rx: number; ry: number; alpha: number }[] {
+  const opacity = Math.max(0, Math.min(1, age / 1.2, remaining / 1.2)), spread = Math.max(0, Math.min(1, age / 2.5)), n = Math.max(32, Math.round(reach * reach * .75));
+  const out = [];
+  for (let i = 0; i < n; i++) {
+    // (evenly over the disc: the golden angle round, the square root out, the outermost a puff's width in from the edge)
+    const angle = i * 2.399 + age * .1, r = Math.sqrt((i + .5) / n) * Math.max(0, reach - 1.2) * spread;
+    out.push({ i, x: Math.cos(angle) * r, z: Math.sin(angle) * r, h: 1 + (i % 7) * .35 + Math.sin(age * .7 + i) * .4,
+      rx: 1.8 + (i % 3) * .5, ry: 1.25 + (i % 4) * .2, alpha: opacity * .65 });
+  }
+  return out;
+}
 export class BrewingView {
   readonly group = new THREE.Group();
   private readonly back = panel(19.943);
@@ -44,7 +59,7 @@ export class BrewingView {
     if (!state || !layout || g.cauldron) { this.group.visible = false; return; }
     this.group.visible = true;
     const ppm = 1 / v.mpp, room = layout.room;
-    const { width, height, ox, oy } = brewingFrame(layout, ppm, pitch, edLayoutRequested());
+    const reach = cauldronReach(g.tuning), { width, height, ox, oy } = brewingFrame(layout, ppm, pitch, edLayoutRequested(), reach);
     for (const p of this.panels) {
       if (p.canvas.width !== width || p.canvas.height !== height) {
         // A warm draw may already have allocated immutable GPU storage at the old size.
@@ -59,7 +74,7 @@ export class BrewingView {
     const selected = basketNear(g)?.type ?? '';
     const herSouth = her ? south(her.x, her.z) : null, inFront = (q: { x: number; z: number }) => inFrontOfHer(south(q.x, q.z), herSouth);
     const potOver = inFront(layout.cauldron), basketsOver = layout.baskets.map(inFront);
-    const key = `${Math.floor(g.herTime * 12)}:${width}:${height}:${ox}:${oy}:${pitch.toFixed(3)}:${selected}:${+potOver}${basketsOver.map(Number).join('')}`;
+    const key = `${Math.floor(g.herTime * 12)}:${width}:${height}:${ox}:${oy}:${pitch.toFixed(3)}:${selected}:${reach}:${+potOver}${basketsOver.map(Number).join('')}`;
     if (this.lastFrame === key) return;
     this.lastFrame = key;
     const c = this.back.canvas.getContext('2d')!, o = this.over.canvas.getContext('2d')!, f = this.front.canvas.getContext('2d')!, halo = this.halo.canvas.getContext('2d')!;
@@ -95,16 +110,8 @@ export class BrewingView {
       ellipse(f, x, y, .5 * ppm, .3 * ppm, MUSHROOM_COLOURS[flight.type]);
       ellipse(f, x - .15 * ppm, y - .09 * ppm, .10 * ppm, .08 * ppm, '#fff9da');
     }
-    if (smoke) {
-      const age = g.herTime - smoke.at, remaining = smoke.until - g.herTime;
-      const opacity = Math.min(1, age / 1.2, remaining / 1.2);
-      for (let i = 0; i < 32; i++) {
-        const angle = i * 2.399, spread = Math.min(1, age / 2.5), radius = (2 + (i % 5)) * spread;
-        const x = cx + Math.cos(angle + age * .10) * radius * ppm;
-        const y = cy + (3 * spread - (i % 7) * 1.5 + Math.sin(age * .7 + i) * .4) * ppm;
-        ellipse(f, x, y, (1.8 + (i % 3) * .5) * ppm, (1.25 + (i % 4) * .2) * ppm, rgba(colours[i % colours.length], opacity * .65));
-      }
-    }
+    if (smoke) for (const q of smokePuffs(g.herTime - smoke.at, smoke.until - g.herTime, reach))
+      ellipse(f, cx + q.x * ppm, cy + (q.z * pitch - q.h) * ppm, q.rx * ppm, q.ry * ppm, rgba(colours[q.i % colours.length], q.alpha));
     // Snap the physical artwork to whole opaque pixels. Smoke keeps its translucent pixel coverage.
     for (const ctx of [c, o]) {
       const pixels = ctx.getImageData(0, 0, width, height);

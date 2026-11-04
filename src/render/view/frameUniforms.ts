@@ -19,6 +19,7 @@ import { hsvInto, moodOf } from "../mood";
 import { cellKey, partifiedKey } from "../../rules/party";
 import { biomeJitter } from "../../../art/flora/biomes.js";
 import { FADE_MATERIALS, FADE_MESHES, SPRITE_UNIFORMS } from "../sprites";
+import { cutawayRadius } from "../crown";
 import { PATH_UNIFORMS } from "../paths";
 
 /** Sets this frame's sprite and light uniforms, after the camera (`up`, its tilted up). */
@@ -59,7 +60,7 @@ export function setFrameUniforms(v: View, time: number, up: THREE.Vector3): void
   }
   v.holeAt = time;
   const S = t.suspects; // (the circle-bug suspects: tuning.json _suspects, the pause page's toggles)
-  SPRITE_UNIFORMS.uCutout.value.set(hx, hy, 0.5 * cut.screenFraction * (S.holeCut ? 1 : 0) * v.width * (1 - lifted), Math.max(1, cut.edge * v.width * edgeGrow));
+  SPRITE_UNIFORMS.uCutout.value.set(hx, hy, cutawayRadius(cut, v.width) * (S.holeCut ? 1 : 0) * (1 - lifted), Math.max(1, cut.edge * v.width * edgeGrow));
   SPRITE_UNIFORMS.uCutWhole.value = t.suspects.cutWhole ? cut.whole ?? 0 : 0;
   SPRITE_UNIFORMS.uCutShape.value.set(cut.wobble ?? 0, cut.outer ?? 0.35, cut.ragged ?? 0, cut.spread ?? 0.2);
   SPRITE_UNIFORMS.uTopFade.value = lifted;

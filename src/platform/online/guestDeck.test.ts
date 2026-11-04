@@ -18,12 +18,8 @@ it("preserves solo/default deck identity and lets both witches enter an occupied
   expect(access.roomAccessFor).toHaveBeenNthCalledWith(1, floor, 1, { player: 1, room: "bedroom2" });
   expect(view).not.toBe(deck); expect(view.house!.rooms).toBe(alternate); expect(JSON.stringify(deck)).toBe(before);
   expect(deck.house!.rooms).toBe(floor); expect(deckOf(game.map, game.tuning)!.house!.rooms!.shape).toBe(floor.shape);
-  const assigned = guestDeck(deck, game, guest)!;
-  expect(assigned).not.toBe(deck); expect(assigned.house!.rooms!.shape.branches.find(r => r.id === "bedroom2")!.locked).toBe(false);
-  expect(floor.shape.branches.find(r => r.id === "bedroom2")!.locked).toBe(true);
-  const hostFloor = guestDeck(deck, game, game.witches[0])!.house!.rooms!;
-  expect(hostFloor.shape.branches.find(r => r.id === "bedroom2")!.locked).toBe(false);
-  expect(hostFloor.shape.branches.find(r => r.id === "bedroom3")!.locked).toBe(false);
+  // (with the real hook every witch walks the one floor: nothing's locked since Ed, 2026-11-03, so there's no guest floor to copy)
+  expect(guestDeck(deck, game, guest)).toBe(deck); expect(guestDeck(deck, game, game.witches[0])).toBe(deck);
   game.witches.pop(); expect(guestDeck(deck, game, game.witches[0])).toBe(deck);
 });
 it("leaves a solo stepGame replay byte-identical after movement adapter reads", () => {
