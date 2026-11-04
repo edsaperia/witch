@@ -77,14 +77,16 @@
     #sigil { right: 126px; bottom: 30px; }
     #spell { right: 200px; bottom: 30px; }
     #bubbles { position: fixed; inset: 0; pointer-events: none; overflow: hidden; }
-    /* Pixel speech bubbles: an outline only (no fill), one game pixel thick (--px), its corners
-       notched, a stepped tail; the emoji in it are pixel sprites (see src/render/leash.ts). */
+    /* Pixel speech bubbles: the emoji alone, no outline or tail (Ed, 2026-11-02: "Remove the white box around emoji when
+       the witch and animals speak"); the emoji in it are pixel sprites (see src/render/leash.ts). The outline and its
+       stepped tail are kept below, switched off, so they are one line to bring back. */
     .bubble { --px: 3px; --ink: rgba(240, 232, 255, .9); position: absolute; transform: translate(-50%, calc(-100% - var(--px) * 3)); color: var(--ink); padding: calc(var(--px) * 2) calc(var(--px) * 3); font-size: 15px; line-height: 1.2; white-space: nowrap; display: none; text-shadow: 0 1px 0 #000; }
     .bubble::before { content: ""; position: absolute; inset: 0; border: var(--px) solid var(--ink);
       clip-path: polygon(var(--px) 0, calc(100% - var(--px)) 0, 100% var(--px), 100% calc(100% - var(--px)), calc(100% - var(--px)) 100%, var(--px) 100%, 0 calc(100% - var(--px)), 0 var(--px)); }
     .bubble::after { content: ""; position: absolute; left: 50%; top: 100%; width: var(--px); height: var(--px); background: var(--ink); box-shadow: 0 var(--px) 0 var(--ink), calc(var(--px) * -1) calc(var(--px) * 2) 0 var(--ink); }
     .bubble canvas { display: block; image-rendering: pixelated; }
     .bubble.on { display: block; }
+    .bubble::before, .bubble::after { display: none; }
     /* the legend circle's explainer (render/leash.ts drawCirclePanel; Ed, 2026-10-06) */
     .deck-bpm { position: absolute; transform: translate(-50%, -100%); padding: 1px 5px 0; border: 1px solid rgba(120, 255, 200, .45); border-radius: 2px; background: rgba(6, 14, 12, .82); color: rgb(120, 255, 200); font: 14px "Tiny5", ui-monospace, monospace; line-height: 14px; white-space: nowrap; pointer-events: none; z-index: 2; text-shadow: 0 0 4px rgba(120, 255, 200, .7); -webkit-font-smoothing: none; } /* the party's tempo over her decks, a DJ controller's display (render/leash/deckBpm.ts) */
     .deck-bpm .u { font-size: 9px; margin-left: 3px; opacity: .75; }
@@ -137,35 +139,34 @@
     .bubble .bar { position: absolute; left: 6px; right: 6px; bottom: calc(var(--px) * -5); height: 3px; background: rgba(255,255,255,.2); border-radius: 2px; overflow: hidden; }
     .bubble .bar i { display: block; height: 100%; background: var(--love); }
   </style>
-  <script type="module" crossorigin src="./assets/main-BlPHJPc0.js"></script>
+  <script type="module" crossorigin src="./assets/main-8Ygp8tkX.js"></script>
   <link rel="modulepreload" crossorigin href="./assets/modulepreload-polyfill-B5Qt9EMX.js">
-  <link rel="modulepreload" crossorigin href="./assets/witch-Cz5T9dyy.js">
-  <link rel="modulepreload" crossorigin href="./assets/party-Dw8E8rRw.js">
-  <link rel="modulepreload" crossorigin href="./assets/forest-Dnj_LQMg.js">
-  <link rel="modulepreload" crossorigin href="./assets/finds-DymDfgQC.js">
-  <link rel="modulepreload" crossorigin href="./assets/saveSlots-Z9oplkuS.js">
-  <link rel="modulepreload" crossorigin href="./assets/decisions-C_aHMX4K.js">
-  <link rel="modulepreload" crossorigin href="./assets/generator-CkoCI6pk.js">
-  <link rel="modulepreload" crossorigin href="./assets/potionSettings-BJW2Ha-p.js">
-  <link rel="modulepreload" crossorigin href="./assets/mushrooms-LGzu3MaN.js">
-  <link rel="modulepreload" crossorigin href="./assets/storageFallback-KKnOllmF.js">
-  <link rel="modulepreload" crossorigin href="./assets/chartView-Dcv1vglm.js">
-  <link rel="modulepreload" crossorigin href="./assets/beat-CkslUQXH.js">
-  <link rel="modulepreload" crossorigin href="./assets/stoneStacks-DmY8wWFe.js">
-  <link rel="modulepreload" crossorigin href="./assets/opening-CWmvWUHT.js">
-  <link rel="modulepreload" crossorigin href="./assets/linkParams-BJvC_qRQ.js">
-  <link rel="modulepreload" crossorigin href="./assets/settings-Ck492Ved.js">
-  <link rel="modulepreload" crossorigin href="./assets/housePieces-ChRzrmvP.js">
-  <link rel="modulepreload" crossorigin href="./assets/mapPrep-COwPuAZo.js">
-  <link rel="modulepreload" crossorigin href="./assets/mushroomArt-C5i9kEX2.js">
-  <link rel="modulepreload" crossorigin href="./assets/brewingProps-DmAIyXZh.js">
-  <link rel="modulepreload" crossorigin href="./assets/botKinds-DSaXdE8-.js">
-  <link rel="modulepreload" crossorigin href="./assets/zooControls-CMqpa_4G.js">
+  <link rel="modulepreload" crossorigin href="./assets/witch-DT_Ne75G.js">
+  <link rel="modulepreload" crossorigin href="./assets/party-Bnf3AUth.js">
+  <link rel="modulepreload" crossorigin href="./assets/mushrooms-BU1BDKDe.js">
+  <link rel="modulepreload" crossorigin href="./assets/finds-DfCbDIdV.js">
+  <link rel="modulepreload" crossorigin href="./assets/storageScope-eLqWSAgV.js">
+  <link rel="modulepreload" crossorigin href="./assets/saveSlots-CckapAt4.js">
+  <link rel="modulepreload" crossorigin href="./assets/decisions-9qdMlgv_.js">
+  <link rel="modulepreload" crossorigin href="./assets/generator-HUIY7RC8.js">
+  <link rel="modulepreload" crossorigin href="./assets/potionSettings-CfWLdOs4.js">
+  <link rel="modulepreload" crossorigin href="./assets/storageFallback-CwG8Iu4h.js">
+  <link rel="modulepreload" crossorigin href="./assets/chartView-CfoAGijR.js">
+  <link rel="modulepreload" crossorigin href="./assets/playerSettings-DgbVvQ1O.js">
+  <link rel="modulepreload" crossorigin href="./assets/musicSet-CNZJnPe8.js">
+  <link rel="modulepreload" crossorigin href="./assets/game-0wO7DwRx.js">
   <link rel="modulepreload" crossorigin href="./assets/dom-D4rI-PaU.js">
   <link rel="modulepreload" crossorigin href="./assets/houseLayout-6b5l2G2Y.js">
-  <link rel="modulepreload" crossorigin href="./assets/style-CclvLsOY.js">
-  <link rel="modulepreload" crossorigin href="./assets/viewParams-Via2VieB.js">
-  <link rel="modulepreload" crossorigin href="./assets/playtestComments-C_1TFBZE.js">
+  <link rel="modulepreload" crossorigin href="./assets/playtestComments-ClX1Gq1H.js">
+  <link rel="modulepreload" crossorigin href="./assets/linkParams-CG0cM_Ho.js">
+  <link rel="modulepreload" crossorigin href="./assets/housePieces-Bs3BGhua.js">
+  <link rel="modulepreload" crossorigin href="./assets/mapPrep-D9ueOA_r.js">
+  <link rel="modulepreload" crossorigin href="./assets/mushroomArt-BtGLS3NX.js">
+  <link rel="modulepreload" crossorigin href="./assets/brewingProps-DgNvPpHZ.js">
+  <link rel="modulepreload" crossorigin href="./assets/botKinds-B9u97NO4.js">
+  <link rel="modulepreload" crossorigin href="./assets/zooControls-oRN7jHC-.js">
+  <link rel="modulepreload" crossorigin href="./assets/style-Bm8AL3bi.js">
+  <link rel="modulepreload" crossorigin href="./assets/viewParams-DeiMLRx2.js">
 </head>
 <body>
   <canvas id="game"></canvas>
@@ -174,7 +175,7 @@
   <!-- (its push-in a CSS animation, so it moves from the first paint even while the page is busy making the night; and a word that it's landing, so the wait doesn't read as a hang: Ed's playtest, 2026-10-12) -->
   <style>@keyframes arrive-push { from { transform: scale(1) } to { transform: scale(1.06) } } #arrive-still { animation: arrive-push 8s cubic-bezier(.2,.6,.3,1) forwards } @keyframes arrive-breathe { 50% { opacity: .45 } } #arrive-landing { display: none; position: fixed; left: 0; right: 0; bottom: 14%; z-index: 41; text-align: center; font: 15px ui-monospace, monospace; letter-spacing: .3em; color: #e8e2f4; text-shadow: 0 0 8px #05060e; animation: arrive-breathe 2.4s ease-in-out infinite; pointer-events: none }</style>
   <div id="arrive-landing">landing…</div>
-  <script>(function () { try { if (new URLSearchParams(location.search).get("arrive") !== "1") return; var r = JSON.parse(sessionStorage.getItem("witch.arrive") || "null"); if (!r || !r.cam || Date.now() - r.at > 30000) return; var i = document.getElementById("arrive-still"); if (r.still) i.src = r.still; i.style.display = "block"; document.getElementById("arrive-landing").style.display = "block"; } catch (e) {} })();</script>
+  <script>(function () { try { var params = new URLSearchParams(location.search), f = params.get("fresh"); if (params.get("arrive") !== "1") return; var r = JSON.parse(sessionStorage.getItem((f && /^[a-z0-9]{8}$/.test(f) ? "witch.fresh." + f + "." : "") + "witch.arrive") || "null"); if (!r || !r.cam || Date.now() - r.at > 30000) return; var i = document.getElementById("arrive-still"); if (r.still) i.src = r.still; i.style.display = "block"; document.getElementById("arrive-landing").style.display = "block"; } catch (e) {} })();</script>
   <div id="seed"></div>
   <div id="version"></div>
   <div id="new-build">A newer version (<b></b>) is out <button type="button">reload</button></div>
