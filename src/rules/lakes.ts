@@ -151,7 +151,16 @@ export function roundLakes(b: Bounds, x: number, z: number, tx: number, tz: numb
   }
   if (inAt < 0) return null;
   if (outAt < 0) { outAt = Math.min(d, look); for (let u = outAt; u < d; u += 6) if (lakeDepth(b, x + (dx / d) * u, z + (dz / d) * u) <= 0) { outAt = u; break; } }
-  const me = L.shore(x, z), out = L.shore(x + (dx / d) * outAt, z + (dz / d) * outAt);
+  const me = L.shore(x, z);
+  // (and where it last comes out of this same water on the way: a cove by her and the lake past it are one crossing, the far side
+  // the lake's, so a line that clips the cove one step and not the next doesn't turn her back and forth at the shore, stuck there:
+  // 2026-11-04, a phase-4 island's lake once its areas grew)
+  for (let u = outAt + 6, wet = false; u < d; u += 6) {
+    const px = x + (dx / d) * u, pz = z + (dz / d) * u;
+    if (lakeDepth(b, px, pz) > 0) wet = true;
+    else if (wet) { wet = false; if (L.shore(px, pz).loop === me.loop) outAt = u; }
+  }
+  const out = L.shore(x + (dx / d) * outAt, z + (dz / d) * outAt);
   if (me.loop !== out.loop) return null; // (a different water: let the shore stop sort it)
   const len = L.loops[me.loop].length, fwd = (((out.s - me.s) % len) + len) % len, way = fwd <= len - fwd ? 1 : -1;
   const p = L.along(me.loop, me.s + way * Math.min(ahead, way > 0 ? fwd : len - fwd));

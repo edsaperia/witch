@@ -17,10 +17,11 @@ it('retains the original quantised windows at arrival and after small and large 
   // the challenge area (rules/challenge.ts): its stone circle a terrace of its own, as a legend's circle is; and for its claim on the
   // whole circle (rules/map.ts: the areas round it cut afresh, so their stones, paths and hills move), the code unchanged; and for the fox island's
   // roster (Ed, 2026-11-04, rules/rosters.ts: one area a kind while its compass neighbourhood lasts: its areas' types, and so their hills, dealt afresh);
-  // and for Ed's 2026-11-04 home (5 areas at the start, no find or challenge area till every island is found), the code unchanged.
+  // and for Ed's 2026-11-04 home (5 areas at the start, no find or challenge area till every island is found), the code unchanged; and for
+  // areas 196 m across with every two sites 50 m apart (#1807, 2026-11-04: the map a sixth bigger, its stones moved), the code unchanged.
   for (const [seed, island, expected] of [
-    [123, 'home', ['e34953736d39c235f0423ca63c9deb47268f2068da20b6c86f70447809092fd6', '3c1ba7467d5c06b68b64fb3b74c6a78a3947bd1241c4e5e975be6361f1267a9d', '211c9e70da0879e0d83ef85f17394c85dedb41623ac8517b46d774cb0cafaef2']],
-    [424242, 'fox', ['f3f754d71d592b5d1c8bbf80324f5b56e8ec0332cca2f2fc57d0bce76444a0b6', '4f7d593fab4a6eb4b93d40fb2cc663b2cbcb93471ed4e124372bc095c75ccece', '211c9e70da0879e0d83ef85f17394c85dedb41623ac8517b46d774cb0cafaef2']],
+    [123, 'home', ['b0892bb5e9cc26c3adc0ffd1b91de065a1537fa3f8c1a3b5c837e01b57bd3694', '255f8e0781bac2ec9e8ec4dda08a6606157e32dab1e59ca37382fad03956bc0b', '211c9e70da0879e0d83ef85f17394c85dedb41623ac8517b46d774cb0cafaef2']],
+    [424242, 'fox', ['4d4009901fb048c137eeefd0ef420024d694c876aad5ea22808d6021da2b020f', 'd3fef02ee414e4db9ca87dfebcf631d992168d8b3e4218020d122081532ee72d', '211c9e70da0879e0d83ef85f17394c85dedb41623ac8517b46d774cb0cafaef2']],
   ] as const) {
     const map = generateMap(seed, tuning(island)), H = arrivalHills(map.tuning), field = new HeightSamples(map, new Forest(map), H, DataUtils);
     const { x, z } = map.start;

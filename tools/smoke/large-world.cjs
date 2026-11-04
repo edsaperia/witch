@@ -32,7 +32,7 @@ const server=http.createServer((req,res)=>{let file=path.resolve(dist,'.'+decode
   const shot=await page.evaluate(site=>window.witch.shot(`at:${site.x},${site.z}`),site);if(!shot.ok)throw Error(shot.say);
   for(let stage=0;stage<4;stage++){
    await page.evaluate(()=>{const w=window.witch;for(let i=0;i<20;i++)w.frame({moveX:0,moveZ:0,toggleMode:false,zoom:0},1/60,i===19);});
-   await page.waitForFunction(()=>window.witch.view.assets.pending===0,null,{timeout:180000});
+   await page.waitForFunction(()=>window.witch.view.assets.pending===0,null,{timeout:420000}); // (7 min: a site in sight of the challenge's whole pack loads every kind's art, 305 s on a laptop's swiftshader once areas grew to 196 m)
   }
   const result=await page.evaluate(()=>{const v=window.witch.view;return{loaded:[...v.typeBatches.keys()].filter(t=>v.assets.hasType(t)),drawn:[...v.typeBatches.entries()].filter(([,b])=>b.count>0&&b.meshes.some(m=>m.visible)).map(([t])=>t),calls:v.renderer.info.render.calls,triangles:v.renderer.info.render.triangles};});
   for(const type of result.loaded)loaded.add(type);for(const type of result.drawn)drawn.add(type);

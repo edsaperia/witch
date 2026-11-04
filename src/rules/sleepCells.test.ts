@@ -11,11 +11,12 @@ import { preppedGame } from "../test/preppedGame"; // (games on a map made once 
 
 const idle = { moveX: 0, moveZ: 0, toggleMode: false, zoom: 0 };
 // (the largest island since the challenge area went to its edge, 2026-11-04 (Ed: "The route should avoid going through the challenge
-// area"), the circle's claim before that, 2026-11-03: the route and the night's deal move with it, and its legends with them: eight
-// paired; the ids follow how many creatures the areas before them hold; six since Ed's 2026-11-04 home, its first 5 areas the
-// starting home's and its kinds dealt each night)
-const expected = [[46, "crab", true], [47, "crab", false], [113, "griffin", true], [114, "griffin", false], [180, "hedgehog", true], [181, "hedgehog", false],
-  [383, "bear", true], [384, "bear", false], [508, "squirrel", true], [509, "squirrel", false], [519, "toad", true], [520, "toad", false]];
+// area"), the circle's claim before that, 2026-11-03: the route and the night's deal move with it, and its legends with them; and since
+// its areas grew to 196 m and every two sites keep 50 m, 2026-11-04 (#1807): seven paired; the ids follow how many creatures the areas
+// before them hold; six since Ed's 2026-11-04 home, its first 5 areas the starting home's and its kinds dealt each night, with home's
+// crowds by the islands found and the islands' sizes by phase, #1818)
+const expected = [[20, "squirrel", true], [21, "squirrel", false], [44, "snowleopard", true], [45, "snowleopard", false], [280, "newt", true], [281, "newt", false],
+  [338, "polarbear", true], [339, "polarbear", false], [490, "fennec", true], [491, "fennec", false], [505, "griffin", true], [506, "griffin", false]];
 // Largest roster reproduces the paired legend areas; small/radius fixtures guard the original non-paired contract.
 const fixtures = [
   { name: "largest", tuning: largestWorldTuning(TUNING), raw: 12, cells: 65 },

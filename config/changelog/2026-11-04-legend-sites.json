@@ -1,0 +1,9 @@
+{
+  "version": null,
+  "items": [
+    "A legend's circle is always in its own legend area: two legend areas no longer share one area, so a circle no longer turns up in the wrong one.",
+    "Stumps, legend circles, the challenge circle and home now keep at least 50 m apart, and 10 m from any lake: stumps no longer crowd each other or stand in the water.",
+    "Areas are bigger (about 196 m across, not 168) to make room, so islands are about a sixth larger and the sea chart with them.",
+    "Creatures and legends heading across a lake no longer get stuck turning back and forth at its shore, and the beach witches always sit on sand with room for their campfire."
+  ]
+}

@@ -15,7 +15,10 @@ const lateHome = (n: number, t: Tuning): Tuning => { const all = knownKinds(Obje
 // the new circles, seeds 1 to 4 at 128 strike 23.8, 25.8, 17.9 and 17.9 a minute, and seeds 1 to 3 at 64 come 3.5, 30.0 and 13.9 m
 // nearer picked ahead; seed 3 for 64 till home's packs grew by the islands found, Ed 2026-11-04: 22 of 49 found, so its areas' swarms
 // 0.45 of the way, not 0.64, and the pack's ids and rounds with them; seeds 1 to 4 at 64 then come 7.2, 7.2, 6.0 and 8.6 m nearer)
-const SEED_128 = 1, SEED_64 = 4;
+
+// nearer picked ahead. 128's seed 2 since each legend area got a pair of its own (Ed, 2026-11-04: "Please fix"): seed 1's late home
+// had two sharing one, and with its legends placed afresh it strikes 16.9 a minute; seeds 2 to 4 as they were)
+const SEED_128 = 2, SEED_64 = 4;
 const withAhead = (ahead: number): Tuning => ({ ...TUNING, teamRounds: { ...TUNING.teamRounds!, ahead } });
 
 /** The challenge's pack of `kinds` kinds (an adult and a youth each) hunting her as she walks slow circles in its middle (the pack
