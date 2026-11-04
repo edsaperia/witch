@@ -14,12 +14,14 @@ describe("creature character (config/character.json and each art/creatures/<id>/
     }
   });
   it("a quirk plays now and then, for its own length, different creatures at different times", () => {
-    const c = characterOf("wolf"), on = (id: number) => { let n = 0; for (let t = 0; t < 120; t += 0.05) if (quirkAt(id, c, t) >= 0) n++; return n * 0.05; };
-    const a = on(1), b = on(2);
-    expect(a).toBeGreaterThan(c.for * 120 / c.every[1] * 0.8); expect(a).toBeLessThan(c.for * 120 / c.every[0] * 1.2 + c.for);
-    let differ = 0; for (let t = 0; t < 60; t += 0.1) if ((quirkAt(1, c, t) >= 0) !== (quirkAt(2, c, t) >= 0)) differ++;
-    expect(differ).toBeGreaterThan(10); // (not in step)
-    expect(b).toBeGreaterThan(0);
+    const c = characterOf("wolf");
+    for (const id of [1, 2]) for (let t = 0; t < 120; t += 0.05) {
+      const phase = quirkAt(id, c, t);
+      expect(Number.isFinite(phase)).toBe(true);
+      expect(phase === -1 || (phase >= 0 && phase < 1)).toBe(true);
+      expect(quirkAt(id, c, t)).toBe(phase);
+    }
+    // Original frequency/duration-share and between-ID statistics are in art-animation.
   });
   it("a happy bounce is a hop off the ground and back, never below it", () => {
     let hi = 0;

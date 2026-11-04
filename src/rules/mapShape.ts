@@ -112,15 +112,19 @@ export interface Beach {
  *  (0 to 1) a stretch turns rocky, narrowing to rockyWidth metres; min, the narrowest it ever is. */
 export interface BeachVary { amp: number; harmonics: number; rocky: number; rockyWidth: number; min: number }
 type BeachKnobs = { on: boolean; width: number; shore: number; vary?: BeachVary };
-const beaches = new WeakMap<LandMap, { knobs: BeachKnobs; seed: number; beach: Beach }>();
+const beaches = new WeakMap<LandMap, { key: string; beach: Beach }>();
 /** The beach round these bounds' island (made once for its land map and tuning, then remembered: the witch asks every step). */
 export function beachOf(b: Bounds, t: { beach?: BeachKnobs }): Beach | null {
   const L = b.land, B = t.beach;
   if (!L || !B?.on) return null;
-  const had = beaches.get(L), seed = b.seed ?? 0;
-  if (had && had.knobs === B && had.seed === seed) return had.beach; // (nothing made a step)
+  const seed = b.seed ?? 0, V = B.vary;
+  // Replay and personal presentation use distinct tuning objects for the same island.
+  // Capture values, not their identity, also detecting edits made in place by tuning tools.
+  const key = `${seed}|${B.width}|${B.shore}|${V ? `${V.amp}|${V.harmonics}|${V.rocky}|${V.rockyWidth}|${V.min}` : "none"}`;
+  const had = beaches.get(L);
+  if (had?.key === key) return had.beach; // (nothing made a step)
   const beach = makeBeach(L, seed, B);
-  beaches.set(L, { knobs: B, seed, beach });
+  beaches.set(L, { key, beach });
   return beach;
 }
 /** The sand's width along a loop of coast (N samples evenly round it) and how rocky each stretch is: `width` times e to the
