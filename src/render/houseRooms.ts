@@ -256,6 +256,8 @@ export class HouseRoomsView {
   private floorArt: FloorPixels | null = null;
   /** The floor being painted off the page's thread (render/houseFloor.ts), and what came back. */
   private floorAsked = false;
+  /** The floor's paint as asked (the view's metres a pixel then) and whether its workers failed: for reportState. */
+  private floorPaint = { mpp: NaN, failed: false };
   private floorCame: FloorPixels | null = null;
   // (the Terrace's own floor apart, in the solid pass, depth-tested, the same grid: she and the Ent's near half, its decks, stand on
   // it in front, where in the see-through pass it would be drawn over them; render/view/witch.ts draws her there, on the Terrace)
@@ -322,7 +324,9 @@ export class HouseRoomsView {
    *  landing, or faded to nothing by the landing's clocks. */
   reportState(v: View): Record<string, unknown> {
     const m = this.floor.material as THREE.MeshBasicMaterial, r = (n: number) => Math.round(n);
-    return { floor: { shown: this.floor.visible, asked: this.floorAsked, painted: !!this.floorCame, art: !!this.floorArt, compiled: this.floorCompiled, opacity: +m.opacity.toFixed(3), arrivalAt: Number.isFinite(this.floorArrivalAt) ? r(this.floorArrivalAt) : null },
+    const A = this.floorArt, pos = this.floor.geometry.getAttribute("position") as THREE.BufferAttribute | undefined, first = pos ? [pos.getX(0), pos.getY(0), pos.getZ(0)] : null;
+    return { floor: { shown: this.floor.visible, asked: this.floorAsked, painted: !!this.floorCame, art: !!A, compiled: this.floorCompiled, opacity: +m.opacity.toFixed(3), arrivalAt: Number.isFinite(this.floorArrivalAt) ? r(this.floorArrivalAt) : null,
+        paintMpp: +this.floorPaint.mpp.toFixed(4), mpp: +v.mpp.toFixed(4), paintFailed: this.floorPaint.failed, size: A ? [A.w, A.h] : null, map: !!m.map, mat: [m.transparent ? 1 : 0, m.depthTest ? 1 : 0, m.depthWrite ? 1 : 0, m.side, m.alphaTest].join(","), layers: this.floor.layers.mask, inScene: !!this.floor.parent, corner: first && first.every(Number.isFinite) ? first.map(r) : first },
       loading: this.loadingFloor.visible, furniture: this.furniture.visible, pieces: this.pieces.size, rooms: this.parts.map(p => p.mesh.visible ? 1 : 0).join(""),
       landing: { late: v.shaderLandingLimited, share: +v.landingHouseShare.toFixed(3), sleeping: v.landingSleeping, now: r(v.landingPresentationMs + v.game.clock.time * 1000) }, behind: +v.post.behind.toFixed(3) };
   }
@@ -488,7 +492,7 @@ export class HouseRoomsView {
     // (each point of the plan turned into the house's metres first: rules/houseRooms.ts fromPlan)
     if (this.floor.visible && !this.floorArt) {
       // (painted by workers, the first time it's shown: the boot freeze, 2026-10-25; the floor shows once it's come)
-      if (!this.floorAsked) { this.floorAsked = true; const p = paintFloorOff(v.mpp).then(F => { this.floorCame = F; }); v.assets.track("houseFloor", p); }
+      if (!this.floorAsked) { this.floorAsked = true; this.floorPaint = { mpp: v.mpp, failed: false }; const p = paintFloorOff(v.mpp).then(F => { this.floorCame = F; }, e => { this.floorPaint.failed = true; throw e; }); v.assets.track("houseFloor", p); }
       if (!this.floorCame) this.floor.visible = this.terraceFloor.visible = false;
     }
     let floorCreated = false;

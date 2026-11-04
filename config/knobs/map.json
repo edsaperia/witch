@@ -979,9 +979,14 @@
           "by": "Ed",
           "date": "2026-11-02",
           "quote": "The treehouse/tree needs work. It looks good on the horizon but weird to fly to and from."
+        },
+        {
+          "by": "Ed",
+          "date": "2026-11-03",
+          "quote": "bark off indoors"
         }
       ],
-      "notes": "Treehouse look settings; all four switches on by default, chosen by Ed on 2 November."
+      "notes": "Off (0) since Ed, 3 November: at 0.18 the oak's limbs lay a dark patch over the Dining room's cauldron and a dark band across the floor, drawn over the furniture and her (render/crown.ts, indoors after the house). The pause page's slider still brings it back."
     },
     "treehouse.house.look.radius": {
       "what": "Metres from the floor outline at which the flight reveal begins, and its local radius.",
