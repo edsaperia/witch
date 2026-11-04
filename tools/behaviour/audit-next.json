@@ -1,0 +1,19 @@
+{
+  "assignment": "H4, coordinator1476#6619102474, 2026-11-04",
+  "branch": "codex/behaviour-audit-next",
+  "worktree": "work/behaviour-audit-next",
+  "base": "483801b44244f34f2f54c22e9f4ba8ea95b929a0",
+  "milestone": "U1 preview/chart outcome split; three audited declarations",
+  "scope": [
+    {"audit": "bagSim:24", "file": "src/ui/bagSim.test.ts", "report": "original complete-loop throw totals, bag ordering and minimum counts", "keep": "configured preview cooldown through controlled fixed steps, no early shot, exact existing loop replay"},
+    {"audit": "bagSim:31", "file": "src/ui/bagSim.test.ts", "report": "original complete-loop landed counts and far-dummy hit outcomes", "keep": "every measured letter stays within configured reach; controlled in/out-of-range letter eligibility"},
+    {"audit": "chartLayout:15", "file": "src/app/chartLayout.test.ts", "report": "worlds0/1/2 bearing median/max, phase-radius differences and quadrant shares", "keep": "home identity, unknown island rejection, disc containment and every original patch-exclusion pair"}
+  ],
+  "implementation": "Independent ui-preview behaviour provider with original loops/worlds and informational references; preserve all existing providers and T6. Own only the three listed callbacks plus necessary supplied fixtures, provider registration and tool index.",
+  "constraints": "No docs/** edits, game/MP/appearance/on-screen text changes, GPU/per-frame work, speed/flake work, Render, browser or hardware run. Canonical owns full CI, smoke and release; root watches exact PR.",
+  "validation": ["npm run typecheck", "npx tsc -p tools/behaviour/tsconfig.json", "node tools/inventory.mjs --check", "node tools/data.mjs decisions check", "node tools/config/check.mjs", "touched tests with maxWorkers1", "git merge-tree --write-tree HEAD <fresh1609head>"],
+  "remainingSystems": ["art AR1/AR2/AR4", "house H1/H2/H-R2-1/H-R2-2", "UI U-TIME/U7", "legends L3/L5"],
+  "remainingCondition": "After this concrete U1 milestone is reported, continue the coordinator-authorized next small system slice; do not bundle unreviewed callbacks into this checkpoint.",
+  "timing": "No savings claim without comparable medians from at least two runs per side. Local checks and historical overlapping file costs are not CI savings.",
+  "status": "PLAN; no original test changed or removed yet"
+}
