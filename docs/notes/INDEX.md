@@ -413,6 +413,7 @@ says what each note covers.
 - Stone keep-clear zone
 - Site paths
 - Stone spacing
+- Site gaps
 - Set-piece generator (legacy art)
 - Area recipe
 - Area folder

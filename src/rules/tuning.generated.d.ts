@@ -435,6 +435,7 @@ export type SchemaTuning = {
   "reserveMargin": number;
   "stoneKeepClear": number;
   "stoneMinGap": number;
+  "siteGap": number;
   "findArea": {
     "on": boolean;
     "clear": number;

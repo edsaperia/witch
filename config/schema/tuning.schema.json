@@ -2253,6 +2253,11 @@
       "minimum": 0,
       "description": "the least distance between two areas' stones (great stumps or runestones), metres; a stone that would stand nearer one placed before it moves, in its own area, to the nearest spot far enough off."
     },
+    "siteGap": {
+      "type": "number",
+      "minimum": 0,
+      "description": "the least gap, metres edge to edge, between two sites' footprints that aren't two stones': a legend's circle from every other legend's circle, the challenge circle's claim (or the find's clearing), home's dancefloor clearing and the treehouse; a stone's clearing from home's dancefloor clearing and treehouse."
+    },
     "findArea": {
       "type": "object",
       "properties": {
@@ -14547,6 +14552,7 @@
     "reserveMargin",
     "stoneKeepClear",
     "stoneMinGap",
+    "siteGap",
     "findArea",
     "challenge",
     "treeMarginFromSoundsystem",

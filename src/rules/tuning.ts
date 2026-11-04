@@ -312,6 +312,10 @@ export interface Tuning {
   /** The least distance between two areas' stones (their great stumps or runestones), metres (Ed, 2026-11-03: "Min 40 m between
    *  stumps"): a stone that would stand nearer an earlier one is moved, in its own area (map.soundsystemSpot). Absent: 0. */
   stoneMinGap?: number;
+  /** The least gap between two sites' footprints that aren't two stones', edge to edge, metres (Ed, 2026-11-04: "Look at minimum
+   *  distances between sites too"): a legend's circle from every other legend's circle, the challenge's claim (the find's clearing)
+   *  and home's dancefloor clearing and treehouse; a stone's clearing from home's two (map.ts placeSites). Absent: 0. */
+  siteGap?: number;
   /** The night's find in an area of its own (Ed, 2026-11-03: "Each non-lake area has a stump site or a special site (find and
    *  challenge areas)"): on, one seeded area holds tonight's find at its site, in a clearing `clear` metres round it, with no
    *  stump, wave or creatures of its own (map.specialSites); off, the find as before, in a wild area's woods. */

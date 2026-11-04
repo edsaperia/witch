@@ -1,0 +1,7 @@
+{
+  "version": null,
+  "items": [
+    "A legend's circle is always in its own legend area: two legend areas no longer share one area, so a circle no longer turns up in the wrong one.",
+    "Stumps beside a lake no longer stand in the water: each stump's clearing keeps to dry ground, clear of the lake's shore."
+  ]
+}

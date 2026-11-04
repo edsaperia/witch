@@ -591,6 +591,7 @@
   "reserveMargin": 3,
   "stoneKeepClear": 40,
   "stoneMinGap": 40,
+  "siteGap": 25,
   "findArea": {
     "on": true,
     "clear": 6
