@@ -88,6 +88,7 @@ says what each note covers.
 - Combat waiting movement
 - Waiting under her
 - Big teams' shorter rounds
+- Roles decided in advance
 - Attack target identity
 - Sheltered attack effects
 - Momentum class selection
