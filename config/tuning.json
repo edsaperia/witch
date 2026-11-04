@@ -3092,7 +3092,7 @@
     "headroom": 0.85,
     "keep": 3,
     "every": 1,
-    "errorEvery": 5
+    "errorEvery": 60
   },
   "mist": {
     "on": true,
