@@ -25,8 +25,8 @@ export function nullFragments(dir = join(ROOT, DIR)) {
 
 /** The fragment file names in a commit's config/changelog/. */
 export function fragmentsAt(ref, root = ROOT) {
-  const out = execFileSync("git", ["ls-tree", "--name-only", `${ref}:${DIR}`], { cwd: root, encoding: "utf8" });
-  return new Set(out.split("\n").map(s => s.trim()).filter(f => f.endsWith(".json")));
+  const out = execFileSync("git", ["ls-tree", "--name-only", ref, `${DIR}/`], { cwd: root, encoding: "utf8" }); // (none in a commit before the changelog)
+  return new Set(out.split("\n").map(s => s.trim().slice(DIR.length + 1)).filter(f => f.endsWith(".json")));
 }
 
 /** The null fragments in `dir` that `present` (a release's fragments) holds: those already live and still unstamped. */

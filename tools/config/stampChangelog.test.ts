@@ -54,4 +54,13 @@ describe("stampChangelog", () => {
     expect(JSON.parse(readFileSync(join(dir, "2026-11-04-next.json"), "utf8")).version).toBeNull();
     expect(JSON.parse(readFileSync(join(dir, "2026-11-02-old.json"), "utf8")).version).toBe(7100);
   });
+
+  it("finds nothing to stamp in a release from before the changelog", () => {
+    const { root } = repo({ "2026-11-03-live.json": '{ "version": null, "items": ["live"] }' });
+    git(root, "init", "-q");
+    writeFileSync(join(root, "README.md"), "early\n");
+    git(root, "add", "README.md");
+    git(root, "commit", "-q", "-m", "before the changelog");
+    expect(stampRelease("HEAD", 15, root)).toEqual([]);
+  });
 });
