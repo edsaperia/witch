@@ -1,18 +1,19 @@
 import { describe, expect, it } from "vitest";
 import type { Creature, Level } from "./creatures";
-import { newGame, stepGame, STEP, type Controls, type Game } from "./game";
+import { stepGame, STEP, type Controls, type Game } from "./game";
 import { TUNING } from "./tuning";
 import { planRoute, TRAVEL, updateMode } from "./travel";
 import { setupArena } from "./arena";
 import { canEat } from "./berries";
 import { smallWorldTuning } from "../test/worlds";
+import { preppedGame } from "../test/preppedGame"; // (games on a map made once a file from its prep)
 
 // Travelling and posse (Ed, 2026-10-05).
 const idle: Controls = { moveX: 0, moveZ: 0, toggleMode: false, zoom: 0, autoTalk: false };
 const run = (g: Game, secs: number, each?: () => void, c: Controls = idle) => { for (let i = 0; i < Math.round(secs / STEP); i++) { stepGame(g, c, STEP); each?.(); } };
 function quiet(local = false): Game {
   // Retain the multi-area route: recruits start over 300 m away, travellers cover 120–200 m and cross area borders.
-  const g = newGame(77, local ? smallWorldTuning(TUNING, "Posse hysteresis sets one creature's distances directly and does not simulate a route.") : TUNING);
+  const g = preppedGame(77, local ? smallWorldTuning(TUNING, "Posse hysteresis sets one creature's distances directly and does not simulate a route.") : TUNING);
   g.clock.paused = false;
   const d = g.map.dancefloor;
   g.witch = { ...g.witch, seated: false, x: d.x, z: d.z + 20, mode: "ground", lift: 0 };
@@ -133,14 +134,12 @@ describe("travelling and posse (Ed, 2026-10-05)", () => {
     expect(updateMode(c, { ...a, ground: false }, g.map, t + 10)).toBe(false);
   });
 
-  it("has only party animals in her posse eat berries: not travellers, not wild ones (Ed, 2026-10-05)", () => {
+  it("has only party animals eat berries, never wild ones; and none on its own, so a traveller passing ripe bushes claims none (Ed, 2026-11-03)", () => {
     const g = quiet(), c = g.creatures[0];
     Object.assign(c, { level: 1, leashed: true, travelling: false, fight: undefined });
-    expect(canEat(c, g.berries)).toBe(true);
-    c.travelling = true;
-    expect(canEat(c, g.berries)).toBe(false);
+    expect(canEat(c, g.berries, g.tuning)).toBe(true);
     Object.assign(c, { leashed: false, travelling: false });
-    expect(canEat(c, g.berries)).toBe(false);
+    expect(canEat(c, g.berries, g.tuning)).toBe(false);
     // In play: a traveller passing ripe bushes claims none.
     used.clear();
     const h = quiet(), w = h.witch;

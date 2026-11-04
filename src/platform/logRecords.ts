@@ -23,7 +23,7 @@ export class LogRecords {
   private seq = 0;
   bytes = 0;
   readonly dropped: Record<LogLevel | "invalid", number> = { debug: 0, info: 0, warn: 0, error: 0, invalid: 0 };
-  constructor(readonly maxBytes = 8 * 1024 * 1024, readonly maxCount = 10_000) {}
+  constructor(readonly maxBytes = 8 * 1024 * 1024, readonly maxCount = 10_000, private preserveImportant = false) {}
   get count(): number { return this.rows.size; }
   has(seq: number): boolean { return this.rows.has(seq); }
   get(seq: number): LogRecord | undefined { const row = this.rows.get(seq); return row && structuredClone(row); }
@@ -48,7 +48,8 @@ export class LogRecords {
     this.priority[level].set(row.seq, true); this.recent.set(key, row.seq); this.keys.set(row.seq, key);
     const removed: number[] = [];
     while (this.bytes > this.maxBytes || this.rows.size > this.maxCount) {
-      const victimLevel = levels.find(l => this.priority[l].size)!;
+      const victimLevel = levels.find(l => (!this.preserveImportant || l === "debug" || l === "info") && this.priority[l].size);
+      if (!victimLevel) break; // Warnings/errors may exceed the low-priority budget; never evict them for debug traffic.
       const id = this.priority[victimLevel].keys().next().value!;
       this.priority[victimLevel].delete(id); this.bytes -= this.sizes.get(id)!; this.sizes.delete(id); this.rows.delete(id);
       const oldKey = this.keys.get(id)!; if (this.recent.get(oldKey) === id) this.recent.delete(oldKey); this.keys.delete(id);

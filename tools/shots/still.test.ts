@@ -66,6 +66,9 @@ it('asserts exact OFF-return, makes a nonempty actor mask and restores toggle/ho
     await capture.step(2, { dash: true });
     const result = await capture.compare({ output, read: () => window.on, write: (on: boolean) => { window.on = on; }, actors: (w: any) => [w.view.actor] });
     expect(result.noise.count).toBe(0); expect(result.full.count).toBe(1); expect(result.masked.maskPixels).toBe(1); expect(result.masked.count).toBe(0);
+    const saved = JSON.parse(await fs.readFile(join(output, 'capture.json'), 'utf8'));
+    expect(saved.masked.opaqueCoverage).toBe('UNPROVEN');
+    expect(saved.masked.method).toBe('actor-removal colour contrast');
     expect(f.actor.visible).toBe(true); expect(f.root.on).toBe(true); expect(f.view.render).toBe(f.render);
     const updates = f.counts().updates;
     await capture.compare({ output: join(output, 'reuse'), prepareFrame: false, read: () => window.on, write: (on: boolean) => { window.on = on; } });

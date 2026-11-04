@@ -7,10 +7,31 @@ import type { Sfx } from "../platform/audio/sfx";
 import { TUNING, type Tuning } from "../rules/tuning";
 import type { MusicStyle } from "../rules/musicScore";
 import type { PlaytestLog } from "../platform/playtestLog";
-import type { Game } from '../rules/game';
+import { newGame, type Game } from "../rules/game";
+import { shiftBeat } from "../rules/beat";
+import { musicCue } from "../rules/musicPlan";
 import { POTION_RECIPES } from '../rules/potionRecipes';
 
 const style = styleJson as unknown as MusicStyle;
+
+it("a guest follows the host beat without keepBeat changing it; the absent option retains solo behavior", () => {
+  // The audio authority boundary needs one small island; no real audio output is claimed from this fake context.
+  const tuning = structuredClone(TUNING); tuning.map!.island = "home"; tuning.map!.islandAreas = 4;
+  const game = newGame(123, tuning), { sound, ctx } = made(123); game.clock.paused = false;
+  sound.sfx = null; sound.sfxCues = null; ctx.currentTime = 100;
+  const update = vi.spyOn(sound.music!, "update").mockImplementation(() => {});
+  const keep = vi.spyOn(sound.music!, "keepBeat").mockImplementation((time, clock) => { shiftBeat(clock, time, 1.5); return 1.5; });
+  const before = structuredClone(game.beat), cue = musicCue(game);
+  try {
+    sound.update(game, cue, false, { shareBeat: true });
+    expect(keep).not.toHaveBeenCalled(); expect(game.beat).toEqual(before);
+    expect(update.mock.calls[0][3]).toBe(game.beat); // the music receives the current authoritative anchor
+    sound.update(game, cue, false); expect(keep).toHaveBeenCalledOnce();
+    const solo = structuredClone(game.beat); expect(solo).not.toEqual(before);
+    game.beat = structuredClone(before); sound.update(game, cue, false, { shareBeat: false });
+    expect(game.beat).toEqual(solo);
+  } finally { vi.restoreAllMocks(); }
+});
 
 describe('potion audio isolation', () => {
   it('isolates ordinary audio at wake, restores it over the final two game minutes, and starts only once', () => {

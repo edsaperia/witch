@@ -1,0 +1,9 @@
+{
+  "reason": "The challenge circle's pack as statues (Ed, 2026-11-04: \"the creatures around it only start to aggro you when you go into the challenge circle\"): spawned grey stone at posts by their columns facing its middle, waking over 4 bars once a witch sets foot on its floor, stone again, whole, once every witch has left it; the music spell's analyser filling the circle as it's cast. Also every area's won-over animals waiting for their stone's spell roam out of the way of her fights (Ed, 2026-11-04: \"they should roam the whole area, and avoid creatures that are fighting\").",
+  "frames": {
+    "*": "where the challenge circle is in view: its pack standing grey and still at their posts by the columns (not roaming its area), their column sigils grey; in a fight, her won-over animals standing further off it"
+  },
+  "rules": {
+    "*": "the challenge pack's places (at their posts from the start, not at random in its area) and states (stone: no roaming, watch or hunt till a witch is on its floor), and what follows from those near it; and, in any area with a fight on, where her won-over animals waiting for their stone's spell stand (backing off from the fighters)"
+  }
+}

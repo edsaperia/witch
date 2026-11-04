@@ -16,12 +16,13 @@ import { reconcileHatPoints, spawnAtLowestEmpty } from "./hatFloorPoints";
 
 /** A rectangle of floor on the house's plan (config/house/): metres from the hub's centre along the plan's axes (x, z: east and
  *  south, turned by the plan's `turn`: fromPlan). */
-export interface Rect { x0: number; x1: number; z0: number; z1: number; /** a round room (Ed, 2026-10-23: "the rooms are probably round"): its radius about the rectangle's middle */ r?: number; /** a branch (Ed: "the corridors are tree branches"): its middle line on the plan and its width, the rectangle its bounds */ pts?: [number, number][]; w?: number; /** a room drawn but not walked yet (Bedrooms 2 and 3: Ed, 2026-10-23, "locked. The branch stops at the door") */ locked?: boolean }
+export interface Rect { x0: number; x1: number; z0: number; z1: number; /** a round room (Ed, 2026-10-23: "the rooms are probably round"): its radius about the rectangle's middle */ r?: number; /** a branch (Ed: "the corridors are tree branches"): its middle line on the plan and its width, the rectangle its bounds */ pts?: [number, number][]; w?: number }
 /** What E does at an object (config/house/ `use`). */
 export type HouseUse =
   | { kind: "creator"; axes: string[]; wear: string[]; parts: string[]; spell?: "hat" | "broom" }
   /** Only to look at (Ed, 2026-10-29: the Workshop's bay and pegboard, since the broom is one station at the lathe): no prompt, E does nothing. */
   | { kind: "scenery" }
+  | { kind: "telephone" }
   | { kind: "hats" } | { kind: "bed" } | { kind: "zoo" } | { kind: "telescope" } | { kind: "say"; line: string } | /** the invitations desk (rules/kit.ts) */ { kind: "invites" }
   /** The map table (Ed, 2026-10-24: the Solarium's): E opens the sea chart (rules/treehouse.ts atMapTable). */
   | { kind: "chart" }
@@ -31,10 +32,10 @@ export type HouseUse =
   | { kind: "pile" };
 export interface HouseObject { id: string; room: string; label: string; x: number; z: number; w: number; d: number; h: number; use: HouseUse; placement?: ObjectPlacement }
 /** A room of the oak (config/house/rooms/): its middle and size, a trunk room or the trunk room its branch leaves, its bounds. */
-export type HouseRoom = Rect & { id: string; label: string; x: number; z: number; r: number; trunk?: boolean; from?: string; locked?: boolean };
+export type HouseRoom = Rect & { id: string; label: string; x: number; z: number; r: number; trunk?: boolean; from?: string };
 /** The floor's one shape (config/house/shape.js; assemble.js makes it): the trunk's rooms, the branch rooms, the stubs, and where the
  *  plan's 0 lay on the mock's own plan (its noise seeded there). */
-export interface HouseShape { noiseAt: [number, number]; trunk: { id: string; x: number; z: number; r: number }[]; branches: { id: string; from: string; x: number; z: number; r: number; bend: number; locked?: boolean }[]; stubs: { room: string; a: { x: number; z: number }; b: { x: number; z: number }; w0: number; w1: number }[] }
+export interface HouseShape { noiseAt: [number, number]; trunk: { id: string; x: number; z: number; r: number }[]; branches: { id: string; from: string; x: number; z: number; r: number; bend: number }[]; stubs: { room: string; a: { x: number; z: number }; b: { x: number; z: number }; w0: number; w1: number }[] }
 /** The Terrace's own layout (config/house/base.json terrace), metres from its middle: the open rim's angle and half-span (degrees round
  *  from east, clockwise), the decks' desk, her seat behind it, the magic circle. */
 export interface TerraceLayout { takeoff: { angle: number; half: number }; decks: { x: number; z: number; w: number; d: number; rotation?: number }; seat: { x: number; z: number }; circle: { x: number; z: number; r: number } }
@@ -57,7 +58,7 @@ export function installEdLayout(on: boolean): void {
 
 /** Her business in the house's rooms: the bed's hold (since when E has been held at it) and the hats lying on the hats' floor
  *  (their spells, by slot: "" an empty one), laid out the first time she comes in. */
-export interface HouseState { bedFrom?: number; hats?: string[]; hatFloorVersion?: 2; hatOverflow?: string[]; hatReserved?: number[]; hatPointOrigin?: { x: number; z: number }; /** she's slept: the night's over (once) */ slept?: boolean }
+export interface HouseState { bedFrom?: number; lastBed?: string; hats?: string[]; hatFloorVersion?: 2; hatOverflow?: string[]; hatReserved?: number[]; hatPointOrigin?: { x: number; z: number }; /** she's slept: the night's over (once) */ slept?: boolean }
 
 /** The hub's centre in the world, for the rooms' metres. */
 interface At { x: number; z: number }
@@ -82,6 +83,12 @@ export interface RoomFloor { at: At; turn: number; shape: HouseShape; inset: num
 /** The house's floor at the Terrace's middle `at`, kept `inset` metres in from its edge. */
 export function floorRects(at: At, inset = 0, H = HOUSE_ROOMS): RoomFloor {
   return { at: { x: at.x, z: at.z }, turn: H.turn ?? 0, shape: H.shape, inset };
+}
+/** The floor a witch walks, given her guest assignment: the same floor for every witch, host or guest, assigned or not. Nothing is
+ *  locked (Ed, 2026-11-03: "can we join it all into one room? ... it's ok if they're open before being occupied"), so there's no
+ *  bedroom left to open for a guest; kept as the multiplayer seam's hook (rules/guestDeck.ts, platform/online/guestAccess.ts). */
+export function roomAccessFor(floor: RoomFloor, _player: number, _assignment?: { player: number; room: string }): RoomFloor {
+  return floor;
 }
 /** The nearest point of a floor shape to (x, z) on the plan, and how far (0 inside). */
 export function nearestIn(r: Rect, x: number, z: number): { x: number; z: number; d: number } {
@@ -177,6 +184,18 @@ export function floorHats(W: Witch): string[] {
   return (H.hats ??= hatsOnFloor(W));
 }
 const hatsElsewhere = (W: Witch) => new Set([W.spells.hat, ...W.hat.left.map(q => q.spell)]);
+/** Explicit ownership rollback/return cleanup. Never called by the solo pickup path.
+ * Keep the currently worn hat; remove unowned physical/cached copies without compacting floor slots. */
+export function syncFloorHats(W: Witch): void {
+  if (!W.spells.hats) return; // Unrestricted ownership: no cleanup or initialization.
+  const keep = (id: string) => ownsHat(W.spells, id) || (wearing(W.hat) && id === W.spells.hat);
+  const H = W.house;
+  if (H?.hats) H.hats.forEach((id, i) => { if (id && !keep(id)) H.hats![i] = ""; });
+  if (H?.hatOverflow) H.hatOverflow.splice(0, H.hatOverflow.length, ...H.hatOverflow.filter(keep));
+  W.hat.left.splice(0, W.hat.left.length, ...W.hat.left.filter(h => keep(h.spell)));
+  if (W.hat.down && !keep(W.spells.hat)) { W.hat.down = null; setLoadout(W.spells, "none"); }
+  if (H?.hatPointOrigin && HOUSE_ROOMS.layout?.hatPoints.length) reserveHatPoints(W, H.hatPointOrigin);
+}
 /** The hats on the hats' floor as they are, or as they'd be laid out, without laying them (for the view). */
 export function hatsOnFloor(W: Witch): string[] {
   if (HOUSE_ROOMS.layout?.hatPoints.length) {
@@ -221,6 +240,16 @@ export function reserveHatPoints(W: Witch, at: At): void {
   reconcileHatPoints(H, slots.length, hatsElsewhere(W));
 }
 
+/** What the use prompt by a hat lying at (x, z) on the plan answers to: id "hats", which the guidance pin keeps clear of
+ *  (render/view/guidance.ts). The hats' floor itself, moved there, in the classic house; in Ed's arrangement, which has no hats'
+ *  floor (Ed, 2026-11-02: "we should remove the old cloakroom hats area"), a stand-in of no size with its id, label and use. */
+export function hatPromptAt(x: number, z: number, H = HOUSE_ROOMS): HouseObject {
+  const area = H.objects.find(o => o.use.kind === "hats");
+  if (area) return { ...area, x, z };
+  const was = H.layout?.baseline.objects.find(o => o.use.kind === "hats");
+  return { id: was?.id ?? "hats", label: was?.label ?? "Hats", room: shapeRoomAt(H.shape, x, z)?.id ?? was?.room ?? "", x, z, w: 0, d: 0, h: 0, use: { kind: "hats" } };
+}
+
 /** The hat E would take, standing at (x, z) on the hats' floor (Ed, 2026-10-29: "The floor hats are not a separate station; it's
  *  just an area where normal hat objects are placed when they spawn"): the nearest hat lying in its slot within `reach` (`slot`), or
  *  else her own lying within `radius` (her first morning's, in the floor's middle); null by none (the floor itself does nothing).
@@ -249,16 +278,23 @@ export function hatToTake(W: Witch, at: At, x: number, z: number, radius: number
  *  takes it: the one she wore goes down in its place, and bare-headed, her own lying elsewhere stays where it lies (rules/hat.ts
  *  leaveHat). By her own lying there, she picks it up. Nowhere near a hat, nothing. Returns the leash event, or null when the press
  *  did nothing. */
-export function useHats(W: Witch, at: At, x: number, z: number, time: number, radius: number, reach = 0.9): LeashEvent | null {
+export function useHats(W: Witch, at: At, x: number, z: number, time: number, radius: number, reach = 0.9, taken?: (id: string) => boolean): LeashEvent | null {
   const h = hatToTake(W, at, x, z, radius, reach);
   if (!h) return null;
   if (h.slot !== undefined) {
     const hats = floorHats(W), took = hats[h.slot], worn = wearing(W.hat);
+    if (taken?.(took)) return null;
     if (!worn) leaveHat(W.hat, W.spells.hat);
     hats[h.slot] = worn && W.spells.hat !== "none" ? W.spells.hat : "";
     setLoadout(W.spells, took);
     if (HOUSE_ROOMS.layout?.hatPoints.length) reconcileHatPoints(W.house!, HOUSE_ROOMS.layout.hatPoints.length, hatsElsewhere(W));
     return { kind: "hatPicked", id: W.id, x: h.x, z: h.z, at: time };
+  }
+  if (taken) {
+    // Probe the existing exact pickup priority on a copy, before changing a dropped/left hat.
+    const probe = { ...W.hat, down: W.hat.down ? { ...W.hat.down } : null, left: W.hat.left.map(q => ({ ...q })) };
+    const id = HOUSE_ROOMS.layout ? hatButton(probe, h.x, h.z, 0, W.spells.hat) : hatButton(probe, x, z, radius, W.spells.hat);
+    if (id !== null && taken(id)) return null;
   }
   const own = HOUSE_ROOMS.layout ? hatButton(W.hat, h.x, h.z, 0, W.spells.hat) : hatButton(W.hat, x, z, radius, W.spells.hat);
   if (own === null) return null;

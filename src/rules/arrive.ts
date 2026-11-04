@@ -3,8 +3,8 @@
 // in sessionStorage ("witch.arrive") before loading ./?island=X&arrive=1. The game shows that still while the night builds,
 // then takes over at the same camera and flies the rest (Ed: "fly from the south end of the island, over the sea and over the
 // forest, to give a taste of the terrain, before settling on the home area"; "make sure the camera path shows the dancefloor
-// and the island legend under the Ent"), looking north the whole way, down to today's opening shot at her decks (Ed: "Land at
-// the decks"). Any key skips to the end. Here: the flight's path from the chart's hand-off (app/arrival.ts reads it), in the camera's own terms
+// and the island legend under the Ent"), looking north the whole way, down to the shot it's given to end on (her asleep in bed since Ed, 2026-10-25; at first her
+// decks, Ed: "Land at the decks"). Any key skips to the end. Here: the flight's path from the chart's hand-off (app/arrival.ts reads it), in the camera's own terms
 // (rules/camera.ts: a target, an angle down to it and a distance back). Pure: no clock, no page.
 import type { ForestMap } from "./map";
 import type { Tuning } from "./tuning";
@@ -16,7 +16,9 @@ export interface Handoff { cam: { x: number; z: number; height: number; pitch: n
 
 /** A camera shot as the game's camera is posed (render/view/culling.ts poseCamera): looking north at (tx, ty, tz) from angle
  *  degrees above it and distance metres back; ty in the world's heights (not over the ground); fov degrees, vertical. */
-export interface Shot { tx: number; ty: number; tz: number; angle: number; distance: number; fov: number }
+export interface Shot { tx: number; ty: number; tz: number; angle: number; distance: number; fov: number;
+  /** the dive's own bend (diveBend: curvature per metre), on top of the night's; none if absent */ bend?: number;
+  /** the dive on its way down into her room (diveIndoors): the house drawn as from inside; absent or false, the oak from outside */ indoors?: boolean }
 
 /** The flight: its shots and the seconds at which it passes each (times[0] = 0). */
 export interface ArrivePlan { keys: Shot[]; times: number[]; /** the target's speed north at the start (m/s): the chart's, carried on */ v0: number }
@@ -44,7 +46,7 @@ export function handoffShot(rec: Handoff, map: ForestMap): Shot {
 /** The flight from the chart's hand-off to `end` (the game's own opening shot at her decks, or her in her bedroom): over the sea to the south coast and
  *  low over the forest north at `A.speed` m/s, then up to frame the dancefloor and the treehouse's spot (where the island's
  *  legend will carry the Ent) together, then down into `end`. `ground(x, z)`: the ground's height there. */
-export function arrivePlan(rec: Handoff, map: ForestMap, A: ArriveTuning, ground: (x: number, z: number) => number, end: Shot, frameAt?: { x: number; z: number }, tree0?: TreeExtent | null, aspect = 16 / 9): ArrivePlan {
+export function arrivePlan(rec: Handoff, map: ForestMap, A: ArriveTuning, ground: (x: number, z: number) => number, end: Shot, frameAt?: { x: number; z: number }): ArrivePlan {
   const d = map.dancefloor, th = map.treehouse, fov = end.fov;
   const k0 = handoffShot(rec, map);
   // low over the land: aimed `ahead` metres north of the camera's ground point
@@ -55,8 +57,8 @@ export function arrivePlan(rec: Handoff, map: ForestMap, A: ArriveTuning, ground
   // the frame: the dancefloor and the treehouse's spot together, from the south and up (or `frameAt`: the new opening's bedroom window)
   const fx = frameAt?.x ?? (d.x + th.x) / 2, fz = frameAt?.z ?? (d.z + th.z) / 2;
   const k3: Shot = { tx: fx, ty: ground(fx, fz) + A.frame.lift, tz: fz, angle: A.frame.angle, distance: A.frame.distance, fov };
-  const tree = A.tree ? treeShot(A.tree, ground, fov, tree0 ?? defaultTree(map, A.tree), aspect) : null;
-  const keys = tree ? [k0, ...lows, k3, tree, end] : [k0, ...lows, k3, end];
+  // (no swing round to the whole tree since Ed, 2026-11-03: its crown comes up over the bent horizon instead, diveBend)
+  const keys = [k0, ...lows, k3, end];
   // the times: the legs down to the forest by their length at A.speed (at least the chart's own pace), the rise and the
   // settle their own seconds
   const cam = (s: Shot) => { const c = shotCamera(s); return c; };
@@ -65,26 +67,28 @@ export function arrivePlan(rec: Handoff, map: ForestMap, A: ArriveTuning, ground
   const times = [0];
   for (let i = 1; i <= lows.length; i++) times.push(times[i - 1] + Math.max(A.minLeg, leg(keys[i - 1], keys[i])));
   times.push(times[times.length - 1] + A.rise);
-  if (tree) times.push(times[times.length - 1] + A.tree!.time);
   times.push(times[times.length - 1] + A.settle);
   return { keys, times, v0: Math.max(0, rec.cam.speed ?? 0) };
 }
 
-/** The treehouse tree as the dive sees it (the whole-tree shot's): its middle on the ground (x, z), its height from the ground and
- *  its width east to west (metres). render/view.ts treeExtent measures it: the great oak's crown (rules/crown.ts) where there is one,
- *  else the Ent's art; till either's known, defaultTree. */
-export interface TreeExtent { x: number; z: number; height: number; width: number }
-/** Before the tree's measured: at the treehouse, the tuning's height, as wide as it's tall. */
-export const defaultTree = (map: ForestMap, T: NonNullable<ArriveTuning["tree"]>): TreeExtent => ({ x: map.treehouse.x, z: map.treehouse.z, height: T.height, width: T.height });
-
-/** The whole treehouse tree, from the south (Ed, 2026-10-24: "pan up to see the whole treehouse tree before we fly into her
- *  bedroom"): aimed at its middle, `angle` degrees up, back far enough that it fills `fill` of the frame, its height or its width
- *  (on a screen `aspect` wide), whichever needs the further. */
-export function treeShot(T: NonNullable<ArriveTuning["tree"]>, ground: (x: number, z: number) => number, fov: number, tree: TreeExtent, aspect = 16 / 9): Shot {
-  const t = Math.tan(((fov * Math.PI) / 180) / 2), f = Math.max(0.05, T.fill), h = Math.max(1, tree.height);
-  const distance = Math.max(h / f / (2 * t), Math.max(1, tree.width) / f / (2 * t * Math.max(0.2, aspect)));
-  return { tx: tree.x, ty: ground(tree.x, tree.z) + h / 2, tz: tree.z, angle: T.angle, distance, fov };
+/** The dive's bend (Ed, 2026-11-03: "I want to see the treehouse crown coming over the horizon, and this will achieve that
+ *  straightforwardly", by the bend shader rather than a swing of the camera): the world's curvature (per metre, render/height.ts
+ *  bendPoint, uBend) the flight adds on top of the night's own, `s` seconds into plan `p`. None at the hand-off (the chart's sea is
+ *  flat: the crossfade over water stays seamless), growing to `B.curve` over `B.grow` seconds as the camera comes down over the sea,
+ *  so the island sits below the horizon, held while it flies straight in (the treehouse's crown rising over the curve of the world as
+ *  it nears), then easing back over the flight's last `B.relax` seconds to none at all as it lands: the night's own bend exactly. */
+export function diveBend(p: ArrivePlan, s: number, B: ArriveTuning["bend"]): number {
+  const T = planLength(p);
+  if (!B || !(B.curve > 0) || s <= 0 || s >= T) return 0;
+  const grow = B.grow > 0 ? smooth(s / B.grow) : 1, relax = B.relax > 0 ? 1 - smooth((s - (T - B.relax)) / B.relax) : 1;
+  return B.curve * grow * relax;
 }
+/** Whether the dive's camera is on its way down into her room, `s` seconds into plan `p`: its last leg, from the frame over the
+ *  dancefloor and the treehouse down into her bedroom. From there the house is drawn as from inside (its rooms, the crown laid open
+ *  over them), as when she walks in; before it, the oak as from outside, standing in the world and bent with it, so its crown can come
+ *  up over the horizon (Ed, 2026-11-03, diveBend). */
+export const diveIndoors = (p: ArrivePlan, s: number): boolean => s >= p.times[Math.max(0, p.times.length - 2)];
+const smooth = (u: number): number => { const x = Math.max(0, Math.min(1, u)); return x * x * (3 - 2 * x); };
 
 /** How far a spot is from the dive's view (Ed, 2026-10-24, the sail's transition: "we only really need the scenery south of the
  *  treehouse for the dive"): metres from its track over the land, due north from the south coast below the dancefloor (where the

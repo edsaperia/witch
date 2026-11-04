@@ -8,6 +8,17 @@ in parallel.” Owner: chat 01a18d4a-9d53-72b2-a6ed-ce68c4e64e56, branch
 
 ## Current checkpoint and finite gate
 
+2026-11-04 resume: canonical #1476 comments 6643311785 item 4 and
+6643908630 explicitly reopen both the shared still harness and elapsed-time
+camera/canopy integration on current prototype. #1556 comment 6644289136
+settles overlap order: finish this integration first, preserving paused-repaint
+`houseCamInput` and early `LIGHT_UNIFORMS` stamps; A4 regenerates its dry run
+afterwards. If A4 lands first, normally merge and move these two hunks to
+`view/frame.ts`. This is source-only work with nearby one-worker tests and
+typecheck. No browser, capture, full suite, smoke, art or performance allocation.
+Ed must feel-check the easing before release. Earlier measurements, product
+SHAs, grants and slot dispositions below are historical, not renewed permission.
+
 The finite implementation gate OPENED with canonical6547931572: the #1543 rerun
 on exact580fcb83 completed and its resource-drift findings landed. That run was session
 `session_018uvzSLocq4FtBSmPmAvHfK`, results expected at

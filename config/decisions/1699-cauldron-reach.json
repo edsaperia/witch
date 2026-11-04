@@ -1,0 +1,40 @@
+{
+  "pr": 1699,
+  "group": "Cauldron reach",
+  "decisions": [
+    {
+      "id": "cauldronReach",
+      "pr": 1699,
+      "group": "Cauldron reach",
+      "label": "Cauldron reach (m)",
+      "note": "How far round the pot its smoke reaches: every witch on foot in the house within it while the smoke lasts takes the potion (Ed, 2026-11-03: \"10m cauldron reach is fine\"). It replaced the pot's room.",
+      "control": {
+        "type": "slider",
+        "min": 2,
+        "max": 30,
+        "step": 0.5
+      },
+      "default": 10,
+      "apply": {
+        "knob": "treehouse.house.cauldronReach"
+      }
+    },
+    {
+      "id": "cauldronSmoke",
+      "pr": 1699,
+      "group": "Cauldron reach",
+      "label": "Smoke lasts (s)",
+      "note": "How long the brew's smoke hangs over the reach; anyone who walks into it meanwhile takes the potion, once (Ed, 2026-11-03: \"for ten seconds or so, and if you walk into it you are affected by the potion\").",
+      "control": {
+        "type": "slider",
+        "min": 1,
+        "max": 30,
+        "step": 0.5
+      },
+      "default": 10,
+      "apply": {
+        "knob": "treehouse.house.cauldronSmoke"
+      }
+    }
+  ]
+}

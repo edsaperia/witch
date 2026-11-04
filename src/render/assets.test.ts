@@ -7,6 +7,7 @@ import { loadStyle } from "./style";
 import type { ArtJob, ArtResult } from "./artBuild";
 import { partyGearOf } from "./creatureArt";
 import { partySheetKey } from "./partySheet";
+import { PILE_SLOTS, wornGenome } from "../rules/clothesPile";
 
 type Lib = { queue: (ArtJob & { gen?: number })[]; inFlight: Set<string>; receive(r: { job: ArtJob; result?: ArtResult }): void };
 const inner = (a: AssetLibrary) => a as unknown as Lib;
@@ -156,5 +157,93 @@ describe("AssetLibrary: a set asked ahead, then wanted on screen", () => {
     a.typeArt(28);
     expect(sent.map(j => `${j.kind}:${j.id}`)).toEqual(["type:28"]);
     expect(inner(a).queue.map(j => `${j.kind}:${j.id}`)).toEqual(["type:20"]);
+  });
+});
+
+// Ed, 2026-11-03: "after the loading screen I look at the bed and see the witch in her default clothes instead of in her nightie":
+// on a game's first morning her art is made in her nightie with the start's own (main.ts firstAhead), her hat-off frames too, the
+// loading screen waiting for them (prepare's whenIdle: the urgent sets), so nothing older is drawn on her meanwhile.
+describe("AssetLibrary: a first morning's nightie, made with the start's own art", () => {
+  const style = loadStyle(), nightie = wornGenome(null, PILE_SLOTS, true); // (the classic witch's, her hat lying on the hats' floor)
+  type Witchy = { urgentKeys: Set<string> };
+  const witchJobs = (a: AssetLibrary) => inner(a).queue.filter((j): j is Extract<ArtJob, { kind: "witch" }> => j.kind === "witch");
+  it("asks her nightie's whole set first, and her hat-off frames in it, urgent, ahead of everything but the start's own", () => {
+    const a = new AssetLibrary(style, 11, 4, nightie);
+    a.prefetchType(3); // (the island's trees, asked ahead)
+    a.askHatOff();
+    const jobs = witchJobs(a);
+    expect(jobs.map(j => ({ genome: j.genome, bare: j.bare, quick: !!j.quick }))).toEqual([{ genome: nightie, bare: false, quick: false }, { genome: nightie, bare: true, quick: false }]);
+    const q = inner(a).queue, bare = q.indexOf(jobs[1]);
+    expect(q.slice(0, bare).every(j => (j as { home?: boolean }).home)).toBe(true); // (behind the start's own sets only)
+    expect(q.findIndex(j => j.kind === "type")).toBeGreaterThan(bare);
+    expect((a as unknown as Witchy).urgentKeys.size).toBeGreaterThan(0);
+    expect([...(a as unknown as Witchy).urgentKeys].some(k => k.includes("-bare"))).toBe(true); // (the loading screen waits for it)
+    a.askHatOff(); expect(witchJobs(a)).toHaveLength(2); // (once)
+  });
+});
+
+// A sail's morning and the bed's next one (main.ts aheadMorning, View.setWitch's `morning`): her nightie read ahead as she sails or
+// sleeps, its whole set asked at once, urgent, ahead of everything but the start's own (no preview first: its standing frames are no
+// way to be seen asleep in bed); the sleep's dark waits for it (view.prepare's wait for the urgent sets), the dive doesn't (she's under
+// her covers till it's on her); her hat-off frames with it when the morning has her hat lying on the floor.
+describe("AssetLibrary: a morning read ahead, before the landing", () => {
+  const style = loadStyle(), dressed = null; // (the classic witch, dressed)
+  type Witchy = { urgentKeys: Set<string>; bare: unknown; bareStale: boolean };
+  const witchJobs = (a: AssetLibrary) => inner(a).queue.filter((j): j is Extract<ArtJob, { kind: "witch" }> => j.kind === "witch");
+  const urgent = (a: AssetLibrary, j: ArtJob) => (a as unknown as Witchy).urgentKeys.has(`${j.kind}:${j.id}`);
+  it("asks her nightie's whole set, urgent, ahead of the island's sets asked ahead, and she isn't dressed in it till it lands", () => {
+    const a = new AssetLibrary(style, 11, 4, dressed); // (the night she's leaving, in her clothes)
+    a.prefetchType(3);
+    const night = wornGenome(dressed, PILE_SLOTS, false); // (rules/wakeUp.ts morningAfter: her hat in the pile)
+    a.rebakeWitch(night, true);
+    const jobs = witchJobs(a);
+    expect(jobs.map(j => ({ genome: j.genome, bare: j.bare, quick: !!j.quick }))).toEqual([{ genome: night, bare: false, quick: false }]); // (last night's look let go)
+    expect(urgent(a, jobs[0])).toBe(true);
+    expect((jobs[0] as { home?: boolean }).home).toBe(true);
+    const q = inner(a).queue;
+    expect(q.indexOf(jobs[0])).toBeLessThan(q.findIndex(j => j.kind === "type"));
+    expect(a.fullWitchReady).toBe(false); // (in bed she's under her covers till it is: render/view/witch.ts inCovers)
+  });
+  it("and her hat-off frames too, urgent, when the morning has her hat lying, though last night's look had its own", () => {
+    const a = new AssetLibrary(style, 11, 4, dressed);
+    (a as unknown as Witchy).bare = {}; // (last night's hat-off frames, drawn)
+    a.prefetchType(3);
+    const lying = wornGenome(dressed, PILE_SLOTS, true);
+    a.rebakeWitch(lying, true); a.askHatOff(); // (View.setWitch with { hatOff: true })
+    const jobs = witchJobs(a);
+    expect(jobs.map(j => ({ genome: j.genome, bare: j.bare, quick: !!j.quick }))).toEqual([{ genome: lying, bare: false, quick: false }, { genome: lying, bare: true, quick: false }]);
+    expect(jobs.every(j => urgent(a, j))).toBe(true);
+    const q = inner(a).queue;
+    expect(q.indexOf(jobs[1])).toBeLessThan(q.findIndex(j => j.kind === "type"));
+    expect(a.bareFresh).toBe(false);
+  });
+});
+
+// Ed, 2026-11-03: "it's the same nightie on every island every morning. Why do we need to keep re-drawing it?" Her nightie after a
+// night played (main.ts keepNightie) is drawn once in the background and kept: never let go from her last few looks, nor dropped from
+// the queue when she changes look before it's drawn, so every sail and every bed after puts it on at once.
+describe("AssetLibrary: her nightie kept for good", () => {
+  const style = loadStyle();
+  const night = wornGenome(null, PILE_SLOTS, false) as unknown as Record<string, unknown>;
+  const looks = [1, 2, 3, 4, 5, 6].map(n => ({ ...night, accessories: {}, n })); // (her day looks, a station's choices)
+  const result = (): ArtResult => ({ ...typeResult(), ours: { grounds: [] } } as unknown as ArtResult);
+  const witchJob = (a: AssetLibrary, g: unknown) => inner(a).queue.find((j): j is Extract<ArtJob, { kind: "witch" }> => j.kind === "witch" && !j.bare && !j.quick && JSON.stringify(j.genome) === JSON.stringify(g));
+  it("asks for it in the background, behind what's asked already, and keeps it through any number of other looks and nights", () => {
+    const a = new AssetLibrary(style, 11, 4, null);
+    a.prefetchType(3);
+    a.keepLook(night);
+    const job = witchJob(a, night)!;
+    expect(job).toBeDefined();
+    expect(inner(a).queue.indexOf(job)).toBeGreaterThan(inner(a).queue.findIndex(j => j.kind === "type")); // (not ahead of the island)
+    a.rebakeWitch({ ...looks[0], n: 99 }); // (she changes her look before it's drawn: still asked)
+    expect(witchJob(a, night)).toBe(job);
+    inner(a).receive({ job, result: result() });
+    expect(a.hasLook(night)).toBe(true);
+    for (const g of looks) inner(a).receive({ job: { kind: "witch", id: `look-${(g as { n: number }).n}`, style, genome: g, bare: false } as ArtJob, result: result() });
+    expect(a.hasLook(night)).toBe(true); // (six looks since: four kept, and the nightie)
+    expect(a.hasLook(looks[0])).toBe(false);
+    a.reseat({ seed: 12, typeSeed: 12, treehouse: "home" }); // (a sail: another island)
+    expect(a.hasLook(night)).toBe(true);
+    const n = inner(a).queue.length; a.keepLook(night); a.keepLook(JSON.parse(JSON.stringify(night))); expect(inner(a).queue.length).toBe(n); // (kept: never asked again)
   });
 });

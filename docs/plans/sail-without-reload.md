@@ -458,3 +458,19 @@ Each is shippable. Nothing a player sees changes until PR 5, which turns the new
    - Sailing back redraws it from the IndexedDB art cache.
    - The creature species' art stays page-wide, as it is now (Ed, 2026-10-20): it isn't evicted per island, so the leak test (C3) lets it warm up over the first rounds.
 7. **chart.html stays, as a link that opens the game on the chart** (PR 7).
+
+---
+
+## G. The dive in from the chart (Ed, 2026-11-03)
+
+Ed ruled on the flight from the chart into the next night:
+
+1. **The sea is where the scenes change.** "The reason why we fly out over the sea is to do the transition between these scenes while looking at the water, which should make the transition less obvious because we can fade between while looking at a simple blue texture."
+   - **What it did before** (a real chart sail filmed on the cloud renderer, #1754): the chart's last frame, its navy sea, cross-faded into **black**, and the dive stayed black till the island was ready. She's put in bed before the dive (`bedFirst`), so the dark behind the house (`treehouse.house.dark`, for being in the house before the island's ready) blacked out all but the house the whole way in. The legend's edge pointer also showed over the water.
+   - **Now:** the dive is a reveal place of its own (`render/forestReveal.ts` `"dive"`): the whole picture from the hand-off, the loading mist over what isn't drawn yet. The chart's sea turns to the game's sea's colour as its flight comes down to the water (`SEA_TO_GAME`, `render/chart/seaChart.ts`), so the still and the game's first frame are one blue; the crossfade is 1 s (`arrive.fade`); no edge pointers in the dive (`render/view/hud.ts`). The camera already matched: the same place, tilt and field of view, the game's flight starting at the chart's speed.
+2. **The crown rises over the horizon, by the bend shader, not a swing of the camera.** "I think we can get the 'Coming round to the treehouse' effect by using the bend shader rather than using the camera angle; I want to see the treehouse crown coming over the horizon, and this will achieve that straightforwardly."
+   - The swing round to the whole tree is gone (`treeShot`, `arrive.tree`, `View.treeExtent`). The flight is straight in: over the sea, low over the forest, up to frame the dancefloor and the treehouse, into her bedroom.
+   - The world's bend (`render/height.ts`, the treetops' curvature, CPU and shader both reading `uBend`) gets the dive's own on top of the night's (`rules/arrive.ts diveBend`, `Shot.bend`, `render/view/camera.ts`): none at the hand-off, growing over `arrive.bend.grow` seconds as the camera comes down, held at `arrive.bend.curve` (stronger than the treetops') so the island sits under the horizon and the crown rises over it as the camera flies in, then eased back over the flight's last `arrive.bend.relax` seconds to exactly the night's own. The pause page's "Sail bend" sliders set all three.
+   - Till the last leg down into her room the oak is drawn as from outside, standing in the world and bent with it (`diveIndoors`, `Shot.indoors`, `render/houseRooms.ts`); the house opens up as from inside only as the camera comes down into it (the dark behind the house closing in from there if the island isn't ready).
+   - Not fixed here: the flight's last shot aims at her place in the rules, not where she's drawn in her room (the game's camera adds `houseCamInput`, render/view/camera.ts), so the camera can jump as it lands; it did before too, hidden in black. Before, with her already in bed, the house's rooms and the crown laid open over them were drawn the whole way in, floating over the forest once the dark was gone.
+   - Camera and render only: the rules never see it, and a potion's bend is the night's own, under the dive's.

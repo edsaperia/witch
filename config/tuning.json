@@ -1,4 +1,13 @@
 {
+  "mushroomLight": {
+    "haloStrength": 0.3,
+    "poolStrength": 0.1,
+    "capGlow": 4.7,
+    "radius": 2.35,
+    "height": 1.2,
+    "complement": 0.1,
+    "testRow": false
+  },
   "mapAreas": 10,
   "map": {
     "shape": "circle",
@@ -285,6 +294,7 @@
     "curve": "linear"
   },
   "areaSizeVariance": 0.7,
+  "siteMargin": 0,
   "borderLayers": 4,
   "clearingSize": 0.2,
   "clearingFalloff": 0.18,
@@ -371,6 +381,7 @@
     "clear": 9,
     "lightReach": 16,
     "lightStrength": 0.6,
+    "landCooldown": 3,
     "deck": {
       "on": true,
       "radius": 7,
@@ -393,8 +404,10 @@
       "grace": 2,
       "rail": 0.45,
       "landTime": 0.35,
-      "walk": 7.5,
+      "walk": 9,
       "stride": 5,
+      "cauldronReach": 10,
+      "cauldronSmoke": 10,
       "fall": {
         "on": false,
         "time": 0.9,
@@ -414,7 +427,18 @@
         "warm": 1,
         "wrap": 2
       },
-      "terraceRoom": true
+      "terraceRoom": true,
+      "look": {
+        "indoor": true,
+        "noNotch": true,
+        "approach": true,
+        "noWalls": true,
+        "fade": 0.75,
+        "bark": 0,
+        "radius": 40,
+        "softness": 0.25,
+        "ragged": 0.12
+      }
     }
   },
   "home": {
@@ -542,6 +566,7 @@
   "paths": {
     "rails": [0, 1],
     "roads": [0, 0],
+    "network": true,
     "linkChance": 0.1,
     "deadEndChance": 0,
     "pathHalf": 2.2,
@@ -567,6 +592,50 @@
   "soundsystemFootprint": 6,
   "reserveMargin": 3,
   "stoneKeepClear": 40,
+  "stoneMinGap": 40,
+  "findArea": {
+    "on": true,
+    "clear": 6
+  },
+  "challenge": {
+    "on": true,
+    "radius": 36,
+    "margin": 3,
+    "spacing": 7.5,
+    "adults": 1,
+    "youths": 1,
+    "castReach": 5,
+    "findSets": false,
+    "fireworks": {
+      "on": true,
+      "height": 24,
+      "burst": 8
+    },
+    "statues": {
+      "on": true,
+      "bars": 4,
+      "first": 3.5,
+      "gap": 3.5,
+      "walkBack": 1.5,
+      "keepOut": 2,
+      "grey": [0.6, 0.6, 0.63],
+      "tint": 0.9,
+      "red": 1
+    },
+    "analyser": {
+      "bars": 72,
+      "steps": 36,
+      "fill": 0.94
+    },
+    "carving": {
+      "stone": 0.35,
+      "red": 2.2,
+      "wild": 1.2,
+      "warm": 1.8,
+      "fade": 2,
+      "floor": 0.3
+    }
+  },
   "treeMarginFromSoundsystem": 1.5,
   "treeDensity": 1,
   "leafJitter": {
@@ -839,7 +908,17 @@
     "colourEase": 0.6,
     "sparks": true,
     "cooldown": 24,
-    "bySpeed": true
+    "bySpeed": true,
+    "steps": {
+      "on": true,
+      "dot": 1,
+      "gap": 1,
+      "section": 0.35,
+      "halo": 0.16,
+      "glow": 0.5,
+      "glowSize": 5,
+      "preset": "warm"
+    }
   },
   "swoopTrail": {
     "on": true,
@@ -859,16 +938,20 @@
       "bushes": [4, 7],
       "radius": 3.5
     },
-    "detour": 4.5,
     "eatTime": 0.25,
     "cost": {
       "by": "value",
       "per": 7.25
     },
-    "colour": "#9e1024",
+    "colour": "#c8228c",
     "glow": 0.8,
-    "babyReach": 10,
-    "babyCost": 1
+    "babyCost": 1,
+    "feed": {
+      "reach": 15,
+      "speed": 1,
+      "hold": 0.3,
+      "glow": 2.5
+    }
   },
   "invites": {
     "on": true,
@@ -922,6 +1005,10 @@
       "homing": 420,
       "cone": 80,
       "range": 18
+    },
+    "wonAway": {
+      "on": true,
+      "radius": 6
     }
   },
   "cast": {
@@ -967,6 +1054,7 @@
     "flare": 16,
     "retarget": 0.25
   },
+  "colourGrammar": "new",
   "leash": {
     "length": 8,
     "runSpeed": 4,
@@ -1001,45 +1089,48 @@
       "speed": 1.5,
       "stop": 1.5
     },
-    "grounded": {
-      "weight": 2
-    },
-    "weight": {
-      "free": 2.5,
-      "levels": [0.3, 0.8, 2, 3],
-      "drag": 0.35,
-      "drift": 0.12,
-      "rise": 0.3,
-      "sink": 0.05,
-      "sinkMax": 0.12,
-      "floor": 0.75,
-      "extreme": 8,
-      "maxTension": 1,
-      "babyGround": 0.56
+    "chain": {
+      "length": 80,
+      "drag": {
+        "youth": 0.3,
+        "adult": 0.7,
+        "legend": 1
+      },
+      "fadeFrom": 0.3,
+      "glow": 0.6,
+      "rattle": {
+        "strength": 1,
+        "time": 0.5
+      },
+      "youthRise": 0.85
     },
     "babies": {
       "gap": 5,
       "scatter": 55,
       "calm": 3,
       "farAt": 35,
-      "farSpeed": 40
+      "farSpeed": 40,
+      "margin": 1,
+      "size": 0.75,
+      "her": 1.75
     },
     "ranks": {
       "on": true,
       "hex": 6,
       "glyph": 5,
       "colours": [
-        [180, 100, 255],
-        [125, 145, 195],
-        [55, 115, 220],
-        [0, 135, 255]
+        [255, 130, 200],
+        [190, 18, 64],
+        [255, 140, 30],
+        [255, 205, 40]
       ],
       "enemy": [
-        [180, 100, 255],
-        [190, 105, 100],
-        [225, 45, 40],
-        [255, 55, 15]
+        [255, 130, 200],
+        [150, 80, 255],
+        [45, 110, 255],
+        [20, 230, 210]
       ],
+      "asleep": [200, 185, 240],
       "sizes": [0.81, 0.9, 1, 1.35],
       "embers": {
         "count": [4, 6, 9, 12],
@@ -1068,12 +1159,13 @@
       "chain": {
         "link": [0.62, 0.78, 1],
         "tether": 1.3,
-        "slack": 0.12,
+        "segment": 2,
         "damping": 0.96,
         "gravity": 9.8,
-        "arcPull": 60,
+        "friction": 0.6,
         "iterations": 6,
-        "jump": 8
+        "jump": 8,
+        "fall": 0.5
       }
     }
   },
@@ -1085,6 +1177,76 @@
     "threadArcSlack": 0.8,
     "threadArcTaut": 0.02,
     "threadArcMax": 8
+  },
+  "buffs": {
+    "groups": {
+      "climbers": [
+        "trees",
+        "branches",
+        "swirl"
+      ],
+      "darters": [
+        "zigzagApart",
+        "leapfrog",
+        "arcs"
+      ],
+      "stalkers": [
+        "freeze"
+      ],
+      "heavies": [
+        "backLine",
+        "hold"
+      ],
+      "packHunters": [
+        "flanks",
+        "splitBack",
+        "circle"
+      ],
+      "shells": [
+        "rollApart",
+        "huddle",
+        "shell",
+        "burrowApart",
+        "water"
+      ]
+    },
+    "legend": 3,
+    "pips": {
+      "max": 5,
+      "life": 120,
+      "warn": 10,
+      "start": 1
+    },
+    "climbers": {
+      "dash": 1
+    },
+    "darters": {
+      "speed": 0.2
+    },
+    "stalkers": {
+      "speed": 0.2,
+      "range": 0.2
+    },
+    "heavies": {
+      "shots": 1
+    },
+    "packHunters": {
+      "rate": 0.1,
+      "spread": 3
+    },
+    "shells": {
+      "chain": 1
+    },
+    "icons": {
+      "blue": [0.176, 0.431, 1],
+      "pink": [0.784, 0.133, 0.549],
+      "twinkle": 0.8
+    }
+  },
+  "difficulty": {
+    "creatureSpeed": 1.2,
+    "rangedRange": 1.2,
+    "adultStrength": 1.3
   },
   "fight": {
     "scale": 1,
@@ -1104,6 +1266,20 @@
       "contact": true,
       "lead": 1
     }
+  },
+  "combatWaiting": {
+    "reachScale": 0.8,
+    "areaGrowth": 0.2,
+    "passPower": 12,
+    "passDepth": 1
+  },
+  "teamRounds": {
+    "reference": 20,
+    "strength": 0.5,
+    "floor": 0.4,
+    "ahead": 3,
+    "ring": 20,
+    "window": 1
   },
   "creatureMomentum": {
     "on": true,
@@ -1140,7 +1316,15 @@
     "tumbleSecs": 0.5,
     "turnFrom": 0.3,
     "turnTo": 0.7,
-    "legendFlash": 0.5
+    "legendFlash": 0.5,
+    "visibility": {
+      "size": 1.75,
+      "opacity": 0.9,
+      "bloom": 2,
+      "duration": 1.5,
+      "zoneDensity": 0.5,
+      "groundMark": 0.45
+    }
   },
   "combat": {
     "packs": {
@@ -1255,7 +1439,7 @@
     "hangBack": 4,
     "dangerF": 90,
     "tint": 0.8,
-    "fade": 0.7
+    "fade": 1.5
   },
   "hunt": {
     "on": true
@@ -1288,8 +1472,8 @@
     "swarm": {
       "start": 1,
       "endAverage": 12,
-      "waves": 64,
-      "curve": 1.3,
+      "largestIsland": 50,
+      "curve": 0.8,
       "youngShare": [1, 0.2],
       "reference": "medium",
       "classes": {
@@ -1473,6 +1657,8 @@
   "leyLines": {
     "on": true,
     "pulseSpeed": 1,
+    "pulseAt100": 1,
+    "pulseAt200": 5,
     "reveal": 2.5,
     "far": [1, 1],
     "behindBright": 1,
@@ -1897,6 +2083,10 @@
       "volume": 0.6,
       "gap": 0.5
     },
+    "rattle": {
+      "volume": 0.4,
+      "gap": 0.3
+    },
     "alarm": {
       "volume": 0.3,
       "gap": 1.2
@@ -2069,6 +2259,55 @@
     "lightReach": 30,
     "lightStrength": 1.6
   },
+  "partyStart": {
+    "overHouse": true,
+    "sparkles": {
+      "on": true,
+      "count": 96,
+      "size": 9,
+      "opacity": 0.9,
+      "core": 0.7,
+      "life": 1.8,
+      "speed": 1.2,
+      "hueA": 0.1,
+      "satA": 0.55,
+      "hueB": 0.93,
+      "satB": 0.45
+    },
+    "pillar": {
+      "on": true,
+      "height": 30,
+      "width": 4,
+      "rise": 0.35,
+      "duration": 2.4,
+      "strength": 1
+    },
+    "dome": {
+      "on": true,
+      "size": 1,
+      "duration": 1.8,
+      "fill": 0.4
+    },
+    "light": {
+      "on": true,
+      "reach": 24,
+      "strength": 1.2,
+      "duration": 2.4
+    },
+    "shake": {
+      "on": true,
+      "amount": 0.18,
+      "duration": 0.5
+    },
+    "ground": {
+      "on": true,
+      "alpha": 0.35,
+      "size": 10
+    },
+    "refraction": {
+      "on": true
+    }
+  },
   "blood": {
     "on": true,
     "style": "prints+drops",
@@ -2184,7 +2423,7 @@
     "flash": 0.6,
     "ghost": 0,
     "nova": 2.6,
-    "clear": 1.2,
+    "fadeOut": 2.5,
     "fps": 10
   },
   "opening": {
@@ -2202,7 +2441,7 @@
       "max": 8
     },
     "maxStep": 0.05,
-    "fade": 0.6,
+    "fade": 1,
     "speed": 110,
     "minLeg": 1.5,
     "low": {
@@ -2227,11 +2466,10 @@
       "dist": 520,
       "pitchDeg": 38
     },
-    "tree": {
-      "height": 34,
-      "angle": 10,
-      "fill": 0.8,
-      "time": 3.5
+    "bend": {
+      "curve": 0.0025,
+      "grow": 4,
+      "relax": 3
     }
   },
   "camera": {
@@ -2443,6 +2681,9 @@
     "metres": 6,
     "dither": true
   },
+  "pathLook": {
+    "bump": 3
+  },
   "trunkFade": {
     "metres": 2.5,
     "share": 0.3,
@@ -2450,18 +2691,6 @@
     "lightFloor": 0.8,
     "rim": 0.5,
     "crownShare": 0.85
-  },
-  "load": {
-    "on": true,
-    "full": 6,
-    "stackSag": 0.4,
-    "stackLean": 0.35,
-    "threadFrom": 0.45,
-    "threadBright": 1.2,
-    "witchLean": 0.16,
-    "broomTilt": 0.12,
-    "broomBow": 1.5,
-    "sparks": 14
   },
   "canopyCutout": {
     "screenFraction": 0.4,

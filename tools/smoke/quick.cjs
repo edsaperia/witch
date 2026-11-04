@@ -15,6 +15,7 @@ const http = require("http");
 const fs = require("fs");
 const path = require("path");
 const { houseRoute, walkHouse } = require("../bench/house-route.cjs");
+const { activeBedStart } = require("./house-bed-start.cjs");
 let playwright;
 try { playwright = require("playwright"); } catch { playwright = require("/opt/node22/lib/node_modules/playwright"); }
 
@@ -168,17 +169,20 @@ async function main() {
       // The bed (main.ts useHouse "slept", newNight "bed"; the afterparty's 💤 pin leads her there: Ed, 2026-10-21): the party
       // over, she's put by the treehouse's bed and holds E; the next night on this island starts in place, a new seed, as a fresh load.
       const ta = Date.now();
+      log("starting bed/new-night interaction");
       const over = await page.evaluate(() => { window.witch.lose("home"); return true; });
       await page.waitForFunction(() => !!window.witch.game.partyOver, null, { timeout: 120000, polling: 100 }).catch(() => {});
       const po = await page.evaluate(() => !!window.witch.game.partyOver);
-      // (config/house/'s bed, 0.4 m off its near side, on the house's plan turned about the hub: rules/houseRooms.ts fromPlan)
-      const H = require("../../config/house/load.mjs").loadHouse(), bed = H.objects.find(o => o.use.kind === "bed");
-      const A = ((H.turn || 0) * Math.PI) / 180, u = bed.x, v = bed.z + bed.d / 2 + 0.4, by = [u * Math.cos(A) + v * Math.sin(A), -u * Math.sin(A) + v * Math.cos(A)];
-      await page.evaluate(([bx, bz]) => {
-        const g = window.witch.game, W = g.witches[0], t = g.map.treehouse;
+      // The current page's selected layout and the same rotated object-front/interaction rules as gameplay.
+      const hub = await page.evaluate(() => ({ x: window.witch.game.map.treehouse.x, z: window.witch.game.map.treehouse.z }));
+      const bedStart = activeBedStart(page.url(), hub);
+      log("bed interaction fixture", JSON.stringify(bedStart));
+      await page.evaluate(({ x, z }) => {
+        const g = window.witch.game, W = g.witches[0];
         window.__lastGame = g;
-        W.body = { ...W.body, x: t.x + bx, z: t.z + bz, vx: 0, vz: 0, perch: true, mode: "ground", lift: 0, seated: false };
-      }, by);
+        W.body = { ...W.body, x, z, vx: 0, vz: 0, perch: true, mode: "ground", lift: 0, seated: false };
+      }, bedStart);
+      log("holding E at the active bed");
       await page.keyboard.down("KeyE");
       await page.waitForFunction(() => window.witch.game !== window.__lastGame, null, { timeout: 600000, polling: 200 }).catch(() => {});
       await page.keyboard.up("KeyE");

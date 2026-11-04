@@ -136,7 +136,9 @@ export async function loadStill(page, { url, expectedSha, seed = 12345, wallMs =
             for (let i = 0; i < mask.length; i++) { maskRgba[i * 4] = maskRgba[i * 4 + 2] = mask[i] ? 255 : 0; maskRgba[i * 4 + 3] = 255; }
             await fs.writeFile(path.join(output, 'actor-mask.png'), encodePng({ width: off.width, height: off.height, data: maskRgba }));
             masked = await writeComparison(path.join(output, 'actor-on-off'), off, on, { mask });
-            masked = { ...masked, threshold: maskThreshold, envelope, maskPixels: [...mask].reduce((a, b) => a + b, 0) };
+            masked = { ...masked, threshold: maskThreshold, envelope, maskPixels: [...mask].reduce((a, b) => a + b, 0),
+              method: 'actor-removal colour contrast', opaqueCoverage: 'UNPROVEN',
+              limitation: 'Low-contrast and translucent actor pixels may be absent; this mask cannot establish foreground depth coverage.' };
             if (!masked.maskPixels) throw Error('Actor mask empty: comparison does not establish occlusion');
           }
           const after = await servedVersion(page); if (JSON.stringify(after) !== JSON.stringify(served)) throw Error('Served build changed during comparison');

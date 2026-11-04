@@ -1,6 +1,7 @@
 node_modules/
 node_modules
 /dist/
+/dist-same/
 *.log
 tools/smoke/out/
 art/out/
@@ -16,3 +17,4 @@ tools/art-lab/dist/
 tools/music-lab/dist/
 dist-*/
 /.art-check-results/
+/out/behaviour/

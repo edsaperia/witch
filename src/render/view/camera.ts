@@ -1,8 +1,12 @@
 // The camera each frame (moved out of view.ts's render, unchanged): the hills' window and the ride under her and the camera,
 // the world's bend, the camera snapped to the pixel grid along the screen's axes, lifted over hills and shaken by a legend's quake.
 import * as THREE from "three";
+import { landscapeState } from "../../rules/landscapePotions";
+import { landscapeUniform } from "../landscapeUniforms";
 import type { View } from "../view";
 import { easeCameraLift } from "../renderEasing";
+export { easeCameraLift } from "../renderEasing";
+import { LIGHT_UNIFORMS } from "../lighting";
 import { poseOf } from "../../rules/game";
 import { coastView, gazeAt } from "../../rules/camera";
 import { witchHeight } from "../../rules/witch";
@@ -11,9 +15,10 @@ import { moonInSky, skyDirection, skyOnScreen } from "../../rules/telescope";
 import { moonKnobs, type ChartKnobs } from "../chart/moon";
 import { constellationFor } from "../../rules/constellations";
 import { loanFind, nightFind } from "../../rules/finds";
-import { groundHeight, HEIGHT_UNIFORMS } from "../height";
+import { creaseHeight, groundHeight, HEIGHT_UNIFORMS } from "../height";
 import { SPRITE_UNIFORMS } from "../sprites";
 import { updateFrustum } from "./culling";
+import type { Ride, RideTuning } from "../ride";
 import { potionBend, potionStrength, potionCamera, vertigoAmount, tripIndicatorStrength, wormsEyeCamera } from "../potionEffects";
 import { potionSettings } from "../../rules/potionSettings";
 import { hueSpinPhase } from "../../rules/potionCycle";
@@ -34,9 +39,42 @@ function wholeAtStation(v: View, pose: ReturnType<typeof poseOf>): ReturnType<ty
   return { ...pose, distance, tx: pose.tx - (W.at - 0.5) * across * k, aim: (k * v.witchFeetTop) / (2 * v.witchTall) };
 }
 
+/** The game's own camera's aim for `pose` (placeCamera's, before a station's aim up her and the pixel snap), in the world's heights:
+ *  the pose's aim over the ground it rides (`ride`: camRide's height), and in the house off its hub, moved to where she's drawn
+ *  (`houseCam`, render/view/witch.ts: placeCamera reads the last frame's). A sail's dive ends on exactly this (View.landingShot,
+ *  app/arrive.ts), so the flight hands the game the camera it then has, with no jump as it lands (it had aimed at her place in the
+ *  rules over the ground there, and the game's camera then jumped here: the house's offset and the ride's ground both). */
+export function gameAim(pose: { tx: number; ty: number; tz: number }, ride: number, houseCam: { x: number; y: number; z: number }): THREE.Vector3 {
+  return new THREE.Vector3(pose.tx + houseCam.x, pose.ty + ride + houseCam.y, pose.tz + houseCam.z);
+}
+/** Where the camera's ride (camRide) reads the ground for `pose`: in the house (View.herOffset on) its middle, else the pose's aim. */
+export function ridePoint(v: Pick<View, "herOffset" | "game">, pose: { tx: number; tz: number }): { x: number; z: number } {
+  const D = v.herOffset.on ? deckOf(v.game.map, v.game.tuning) : null;
+  return D ? { x: D.x, z: D.z } : { x: pose.tx, z: pose.tz };
+}
+
+/** The camera's ride over the ground this frame (placeCamera's), at `R` (ridePoint). During a sail's dive (`flying`) the ground there
+ *  afresh each frame (nothing to smooth: the dive's shot is its own), so the game's first frame after it starts from the ground the
+ *  dive's last shot aimed by (View.landingShot): the dive is drawn with the night's clock still, and the ride kept the first ground it
+ *  read there, before the island's heights were in, 8.6 m below the house's, for the frame it landed (the cloud capture of the fix). */
+export function rideCamera(ride: Ride, flying: boolean, dt: number, R: { x: number; z: number }, W: { vx: number; vz: number }, full: number, ground: (x: number, z: number) => number, T: RideTuning): number {
+  if (flying) ride.h = Number.NaN;
+  return ride.update(dt, R.x, R.z, W.vx, W.vz, full, ground, T, Infinity);
+}
+
 /** Places the camera for this frame; returns the camera's up (tilted with its pitch), for the sprites' facing. */
-export function placeCamera(v: View, time: number, pose: ReturnType<typeof poseOf>): THREE.Vector3 {
+export function placeCamera(v: View, time: number, pose: ReturnType<typeof poseOf>, repaint = false): THREE.Vector3 {
   const g = v.game, t = g.tuning;
+  const trip = landscapeState(g);
+  if (trip) landscapeUniform.value.set(trip.id, trip.amount, trip.setting, trip.phase);
+  else landscapeUniform.value.set(0, 0, 0, 0);
+  // drawWitch computes the house offset after camera placement. Repainting the
+  // same instant must use the offset its first camera placement actually saw.
+  // (only a repaint of a held world keeps it, `repaint`: a sail's dive and the first frames of a night are drawn with its clock
+  // still, new frames all the same, and took a stale offset, the last night's or the dive's first frame's; now each takes the last
+  // drawn, so the game's camera takes over from the dive with the one its last shot aimed by, View.landingShot)
+  if (time !== v.camLiftTime || !repaint) v.houseCamInput.copy(v.houseCam as THREE.Vector3Like);
+  v.camLiftTime = time;
   pose = wholeAtStation(v, pose);
   const vertigo = v.fly || v.telescope ? 0 : vertigoAmount(potionStrength(g, 'vertigo'), g.witch.lift);
   const tripCamera = potionCamera(pose.angle, pose.distance, t.camera.fov, vertigo);
@@ -54,7 +92,16 @@ export function placeCamera(v: View, time: number, pose: ReturnType<typeof poseO
   THERMAL_UNIFORMS.uThermalColdBrightness.value = thermal.coldBrightness;
   THERMAL_UNIFORMS.uThermalDangerGain.value = thermal.dangerGain;
   v.ground.thermalVision(heat);
+  const mirror = potionStrength(g, 'mirrorball'), mirrorSettings = potionSettings('mirrorball');
+  LIGHT_UNIFORMS.uMirrorMoon.value.set(mirror, time * mirrorSettings.spin, mirrorSettings.spots);
+  v.post.potionWoodcut = potionStrength(g, 'woodcut');
+  v.post.potionFold = potionStrength(g, 'kaleidoscope');
   v.post.potionEdges = potionStrength(g, 'aurora-outlines');
+  v.post.potionSilentFilm = potionStrength(g, 'silent-film');
+  const folds = potionSettings('folded-space'), height = potionStrength(g, 'folded-space') * folds.height;
+  HEIGHT_UNIFORMS.uWorldFold.value.set(height, folds.period, height ? creaseHeight(g.witch.x, g.witch.z, height, folds.period) : 0);
+  const contour = potionSettings('contour-dream');
+  LIGHT_UNIFORMS.uContourDream.value.set(potionStrength(g, 'contour-dream'), contour.interval, contour.width);
   v.post.potionWobble = tripIndicatorStrength(g);
   v.post.potionTime = g.clock.time;
   const a = (pose.angle * Math.PI) / 180;
@@ -80,12 +127,10 @@ export function placeCamera(v: View, time: number, pose: ReturnType<typeof poseO
     // plane, wherever they lie (render/view/witch.ts, render/houseRooms.ts); under the rules' place a room far from the Terrace had the
     // ground of 60 m away, the camera metres above or below her: Ed's playtest, 2026-10-25, "it doesn't seem to accurately know where
     // the witch is")
-    const D = v.herOffset.on ? deckOf(g.map, t) : null;
-    v.camRide.update(rdt, D ? D.x : pose.tx, D ? D.z : pose.tz, W.vx, W.vz, full, groundHeight, t.witch, Infinity);
+    rideCamera(v.camRide, !!F, rdt, ridePoint(v, pose), W, full, groundHeight, t.witch);
     v.rideOff = W.seated || W.perch ? 0 : v.ride.h - groundHeight(W.x, W.z); // (on the treehouse deck: its floor is flat)
   }
-  const target = new THREE.Vector3(pose.tx, F ? F.ty : pose.ty + v.camRide.h, pose.tz); // (the flight's aim is in the world's heights)
-  if (!F) target.add(v.houseCam as THREE.Vector3Like); // (off the treehouse's hub: where she's drawn, render/view/witch.ts)
+  const target = F ? new THREE.Vector3(F.tx, F.ty, F.tz) : gameAim(pose, v.camRide.h, v.houseCamInput); // (the flight's aim is in the world's heights)
   // At a station, aimed up her to the part being chosen (rules/camera.ts aim: a share of her height as drawn), along the way her
   // sprite stands (up the screen), so that part stays in the middle at any zoom.
   // From her feet as she's drawn (the last frame's: she stands still at a station), not the rules' height: indoors that's
@@ -119,11 +164,14 @@ export function placeCamera(v: View, time: number, pose: ReturnType<typeof poseO
     SPRITE_UNIFORMS.uNearCut.value = V.gaze > 0.01 ? V.gaze * Math.max(0, pose.distance - 12) : 0; // (lying down, the camera low behind her: what's between it and her, from 12 m before her, dithers away)
     const ravine = potionStrength(g, 'ravine'), planet = potionStrength(g, 'little-planet');
     const k = potionBend(Math.max(C.ground + (C.treetop - C.ground) * m * m * (3 - 2 * m), gk), C.treetop, ravine, planet);
-    HEIGHT_UNIFORMS.uBend.value.set(k, pose.tx, pose.tz, t.ground.hills.on ? t.ground.hills.amplitude : 0); // (w: the hills' amplitude, for the horizon test)
+    const breath = trip?.effect === "held-breath" ? trip.phase * trip.amount * trip.setting : 0;
+    // (arriving from the sea chart: the dive's own bend on top, rules/arrive.ts diveBend; none once it lands, the night's as it was)
+    const dive = F?.bend ?? 0;
+    HEIGHT_UNIFORMS.uBend.value.set(k + breath + dive, pose.tx, pose.tz, t.ground.hills.on ? t.ground.hills.amplitude : 0); // (w: the hills' amplitude, for the horizon test)
     // Keep ordinary geometry in the culling bounds throughout the fade back to normal.
     v.bendTo = Math.max(0, g.witch.mode === "rising" || g.witch.mode === "treetop" ? C.treetop : C.ground, gk, v.beachView.gazing ? C.treetop * (B?.stargazeCurve ?? 0) * seaKeep : 0);
     v.post.potionGlow = potionStrength(g, 'glow-up');
-    v.sky.potionMoon = 1 + (potionSettings('big-moon').size - 1) * potionStrength(g, 'big-moon');
+    v.sky.potionMoon = 1 + (potionSettings('big-moon').size - 1) * potionStrength(g, 'big-moon') + mirror * (mirrorSettings.size - 1);
     v.sky.potionMoonGlow = 1 + (potionSettings('big-moon').glow - 1) * potionStrength(g, 'big-moon');
     const floorSky = potionStrength(g, 'skylight');
     v.sky.potionFloor = floorSky;
@@ -137,7 +185,7 @@ export function placeCamera(v: View, time: number, pose: ReturnType<typeof poseO
     const lit = litConstellation(v, { fov, pitch: 12 });
     if (lit) v.sky.constellation(lit.stars, lit.lines, lit.lineStrength, 1);
     else v.sky.constellation(NO_STARS, NO_LINES, 0, 0);
-    v.sky.update(Math.max(k, V.coast + V.gaze > 0.01 ? 1e-5 : 0), pose.tx, pose.tz, far, // (by the sea the sky shows over the flat water even unbent)
+    v.sky.update(Math.max(k + dive, V.coast + V.gaze > 0.01 ? 1e-5 : 0), pose.tx, pose.tz, far, // (by the sea the sky shows over the flat water even unbent)
       2 * far * Math.tan((t.camera.fov * Math.PI) / 360) * (v.width / v.height), moonNow);
     v.ground.moonRoad(moonNow.x, v.width, moonNow.lit > 0.02);
   }

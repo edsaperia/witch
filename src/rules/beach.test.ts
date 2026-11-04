@@ -11,6 +11,7 @@ import { facing } from "../test/coast";
 import { newWitch, stepWitch, NO_INTENT, type Intent, type WitchState } from "./witch";
 import { newBeachWitches, stepBeachWitches, SEQUENCE } from "./beach";
 import { TUNING, type Tuning } from "./tuning";
+import { sharedMap } from "../test/preppedGame"; // (maps the tests only read, made once a file)
 
 // Retain the full seeded coast: circumference sampling, separated beach spots and 400–1000 m inland probes are the subject.
 const SEEDS = [1, 123, 4242];
@@ -19,7 +20,7 @@ const STEP = 1 / 60;
 describe("the beach", () => {
   for (const seed of SEEDS) {
     it(`nothing grows, stands or runs on the sand or in the sea (seed ${seed})`, () => {
-      const map = generateMap(seed, TUNING), b = beachOf(map.bounds, TUNING)!, forest = new Forest(map), L = b.land, sea = L.loops.findIndex(l => l.sea);
+      const map = sharedMap(seed, TUNING), b = beachOf(map.bounds, TUNING)!, forest = new Forest(map), L = b.land, sea = L.loops.findIndex(l => l.sea);
       const p = facing(L, 0), w = b.sandAt(p.x - p.nx, p.z - p.nz), mid = { x: p.x - p.nx * w / 2, z: p.z - p.nz * w / 2 }; // (an eastward stretch of coast, halfway across the sand there)
       expect(b.intoSand(mid.x, mid.z)).toBeGreaterThan(0); // the sand inside the edge, the sea beyond it
       expect(b.intoSea(mid.x, mid.z)).toBeLessThan(0);
@@ -42,7 +43,7 @@ describe("the beach", () => {
 
   it("varies in width round the coast (Ed, 2026-10-06: \"more irregularly shaped\"): wide bays, narrows, rocky stretches", () => {
     for (const seed of SEEDS) {
-      const b = beachOf(generateMap(seed, TUNING).bounds, TUNING)!, V = TUNING.beach!.vary!, L = b.land, sea = L.loops.findIndex(l => l.sea), len = L.loops[sea].length;
+      const b = beachOf(sharedMap(seed, TUNING).bounds, TUNING)!, V = TUNING.beach!.vary!, L = b.land, sea = L.loops.findIndex(l => l.sea), len = L.loops[sea].length;
       const w = Array.from({ length: 512 }, (_, k) => b.sandAlong(sea, (k / 512) * len));
       expect(Math.max(...w)).toBeGreaterThan(b.width * 1.8);
       expect(Math.min(...w)).toBeLessThan(b.width * 0.3);
@@ -59,7 +60,7 @@ describe("the beach", () => {
     // How far in or out is a true distance anywhere, deep inland too (the waves' loudness, the hills' easing and the paths'
     // clipping read it as a distance): the land map's against the nearest point of its coast, measured outright.
     for (const seed of SEEDS) {
-      const b = beachOf(generateMap(seed, TUNING).bounds, TUNING)!, L = b.land;
+      const b = beachOf(sharedMap(seed, TUNING).bounds, TUNING)!, L = b.land;
       for (let k = 0; k < 200; k++) {
         const x = L.box.minX + ((k * 0.618) % 1) * (L.box.maxX - L.box.minX), z = L.box.minZ + ((k * 0.381) % 1) * (L.box.maxZ - L.box.minZ), s = L.shore(x, z);
         expect(Math.abs(L.distAt(x, z)) - Math.abs(s.dist)).toBeLessThan(1.5);
@@ -79,7 +80,7 @@ describe("the beach", () => {
 });
 
 describe("flying on past the beach, she lands and stargazes", () => {
-  const map = generateMap(123, TUNING), p = facing(map.bounds.land!, Math.atan2(0.8, 0.6)), out = { x: p.nx, z: p.nz }; // (a straight stretch of coast facing out that way)
+  const map = sharedMap(123, TUNING), p = facing(map.bounds.land!, Math.atan2(0.8, 0.6)), out = { x: p.nx, z: p.nz }; // (a straight stretch of coast facing out that way)
   const at = (d: number, mode: WitchState["mode"]): WitchState => ({ ...newWitch(p.x - out.x * d, p.z - out.z * d), mode, lift: mode === "treetop" ? 1 : 0 });
   const edge = 0, c = { x: p.x - out.x * 1000, z: p.z - out.z * 1000 }; // (distances in from the coast; a point well inland, for "back inland")
   const seaward: Intent = { moveX: out.x, moveZ: out.z, toggleMode: false }, inland: Intent = { moveX: -out.x, moveZ: -out.z, toggleMode: false };
@@ -123,7 +124,7 @@ describe("witches on the beach", () => {
   it("in every run, a handful of spots spread round the whole coast, never bunched (Ed, 2026-10-06: \"always ... only a handful spread around it\")", () => {
     const [lo, hi] = TUNING.beach!.spots!;
     for (const seed of [1, 123, 4242, 90210, 925469]) {
-      const map = generateMap(seed, TUNING), b = beachOf(map.bounds, TUNING)!, spots = newBeachWitches(seed, map.bounds, TUNING)!;
+      const map = sharedMap(seed, TUNING), b = beachOf(map.bounds, TUNING)!, spots = newBeachWitches(seed, map.bounds, TUNING)!;
       expect(spots, `seed ${seed}`).not.toBeNull();
       expect(spots.length).toBeGreaterThanOrEqual(lo);
       expect(spots.length).toBeLessThanOrEqual(hi);
@@ -140,12 +141,12 @@ describe("witches on the beach", () => {
         for (const w of s.list) expect(b.intoSand(w.x, w.z)).toBeGreaterThan(0);
       }
     }
-    const map = generateMap(123, TUNING);
+    const map = sharedMap(123, TUNING);
     expect(newBeachWitches(123, map.bounds, chanced(false))).toBeNull(); // (witchChance 0: none)
   });
 
   it("each spot left alone unless she's near it", () => {
-    const map = generateMap(123, TUNING), spots = newBeachWitches(123, map.bounds, TUNING)!, s0 = spots[0];
+    const map = sharedMap(123, TUNING), spots = newBeachWitches(123, map.bounds, TUNING)!, s0 = spots[0];
     const before = JSON.stringify(spots.map(s => s.list));
     let time = 0;
     const me = { x: s0.x, z: s0.z, onFoot: true, moving: false };

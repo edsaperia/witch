@@ -4,11 +4,14 @@ import path from "node:path";
 import ts from "typescript";
 import { fileURLToPath } from "node:url";
 
+// (and the test fixtures that make one: src/test/preppedGame.ts, a game on a hydrated map, and its read-only shared map)
+const WORLD_BUILDERS = ["newGame", "generateMap", "preppedGame", "sharedMap"];
+
 export function worldCalls(source, file = "test.ts") {
   const tree = ts.createSourceFile(file, source, ts.ScriptTarget.Latest, true), builders = new Set(), reasons = [];
   for (const node of tree.statements) if (ts.isImportDeclaration(node) && !node.importClause?.isTypeOnly) {
     const names = node.importClause?.namedBindings;
-    if (names && ts.isNamedImports(names)) for (const entry of names.elements) if (!entry.isTypeOnly && ["newGame", "generateMap"].includes(entry.propertyName?.text ?? entry.name.text)) builders.add(entry.name.text);
+    if (names && ts.isNamedImports(names)) for (const entry of names.elements) if (!entry.isTypeOnly && WORLD_BUILDERS.includes(entry.propertyName?.text ?? entry.name.text)) builders.add(entry.name.text);
   }
   const findFactories = node => {
     if (ts.isVariableDeclaration(node) && ts.isIdentifier(node.name) && node.initializer && ts.isCallExpression(node.initializer) && node.initializer.expression.getText(tree) === "smallWorld") {
@@ -30,7 +33,7 @@ export function worldCalls(source, file = "test.ts") {
   return { calls, reasons };
 }
 
-export function auditWorlds(root = process.cwd()) {
+function auditWorlds(root = process.cwd()) {
   const rows = [];
   const walk = dir => { for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
     const full = path.join(dir, entry.name);

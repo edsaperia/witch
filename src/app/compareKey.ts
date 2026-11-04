@@ -3,6 +3,7 @@
 // tested. In the playtest log's run (the pause page's Download log, platform/playtestLog.ts) and every browser bench's result (window.witch.compareKey).
 import type { Game } from "../rules/game";
 import { browserOs } from "./repro";
+import { glRendererName } from "../platform/glRenderer";
 
 export interface CompareKey {
   /** The build's label (vite.config.ts: v4871 and its commit). */
@@ -52,6 +53,5 @@ export function compareKey(o: { build: string; game: Game; canvas: { width: numb
 
 /** The GPU's name as WebGL gives it (unmasked where the browser allows). */
 export function rendererOf(gl: WebGLRenderingContext | WebGL2RenderingContext): string {
-  const dbg = gl.getExtension("WEBGL_debug_renderer_info");
-  return `${gl.getParameter(dbg ? dbg.UNMASKED_RENDERER_WEBGL : gl.RENDERER)}`;
+  return `${glRendererName(gl)}`; // (asked once a context: platform/glRenderer.ts)
 }

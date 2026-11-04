@@ -109,35 +109,3 @@ export function inferSchema(value: unknown, over: Record<string, Partial<Schema>
   return { ...s, ...o };
 }
 
-const range = (s: Schema) => (s.enum ? s.enum.map(e => JSON.stringify(e)).join(" / ") : s.minimum !== undefined || s.maximum !== undefined ? `${s.minimum ?? "…"} to ${s.maximum ?? "…"}` : "");
-const esc = (s: string) => s.replace(/\|/g, "\\|").replace(/\n/g, " ");
-
-/** The knob reference: the file's knobs in its own order, grouped under the note that comes before
- *  them (a group runs from one note to the next), a row for every knob: its path, type and range
- *  (and unit, if the schema gives one; not its value, so changing a value never needs the docs redone: the file has them). */
-export function knobsMarkdown(file: Record<string, unknown>, schema: Schema, title: string, source: string): string {
-  const lines = [`# ${title}`, "", `Generated from \`${source}\` and its schema by \`node tools/config/schema.mjs --docs\`; don't edit by hand. A test fails if it's out of date.`, ""];
-  const rows = (v: unknown, s: Schema | undefined, path: string): string[] => {
-    if (s?.type === "object" && s.properties && kind(v) === "object") return Object.keys(s.properties).flatMap(k => rows((v as Record<string, unknown>)[k], s.properties![k], `${path}.${k}`));
-    const type = s?.type === "array" ? `array of ${s.items?.type ?? "any"}` : s?.type === "object" ? "record" : (s?.type ?? kind(v));
-    return [`| \`${path}\` | ${type} | ${esc([s ? range(s) : "", s?.unit ?? ""].filter(Boolean).join(", "))} |`];
-  };
-  // Groups: a note and the knobs after it (the file's first knobs may have none).
-  // A "__name" note opens a section (config/tuning.json's, housekeeping 2026-10-07): a heading of its own.
-  const groups: { note: string | null; keys: string[]; section?: string }[] = [];
-  for (const k of Object.keys(file)) {
-    if (k.startsWith("__")) { groups.push({ note: file[k] as string, keys: [], section: k.slice(2) }); continue; }
-    if (k.startsWith("_")) { groups.push({ note: file[k] as string, keys: [] }); continue; }
-    if (!groups.length) groups.push({ note: null, keys: [] });
-    groups[groups.length - 1].keys.push(k);
-  }
-  const sections = groups.some(g => g.section);
-  for (const g of groups) {
-    if (g.section) { lines.push(`## ${g.section[0].toUpperCase()}${g.section.slice(1)}`, "", esc(g.note ?? ""), ""); continue; }
-    if (!g.keys.length) continue;
-    lines.push(`${sections ? "###" : "##"} ${g.keys.map(k => `\`${k}\``).join(", ")}`, "");
-    if (g.note) lines.push(esc(g.note), "");
-    lines.push("| knob | type | range |", "|---|---|---|", ...g.keys.flatMap(k => rows(file[k], schema.properties?.[k], k)), "");
-  }
-  return lines.join("\n");
-}

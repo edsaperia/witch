@@ -27,10 +27,11 @@ describe("her 💌s' accuracy", () => {
     for (const x of a) expect(Math.abs(x)).toBeLessThan(1e-9);
   });
 
-  it("strays each letter within inaccuracy degrees, both ways, and the same every time", () => {
+  it("bounds every letter by inaccuracy and repeats exactly", () => {
     const t = aim({ inaccuracy: 6 }), a = angles(t);
+    expect(a.length).toBeGreaterThan(0);
     for (const x of a) expect(Math.abs(x)).toBeLessThanOrEqual(6 + 1e-9);
-    expect(Math.min(...a)).toBeLessThan(-1); expect(Math.max(...a)).toBeGreaterThan(1);
+    // IP2, Ed 2026-11-02: sampled extrema on both sides are informational.
     expect(angles(t)).toEqual(a);
   });
 

@@ -64,7 +64,7 @@ function standInView(g: Game, log: string[]): View {
     assets: { reseat: (o: { seed: number; typeSeed: number }) => log.push(`assets.reseat(${o.seed},${o.typeSeed})`), prefetchType: () => {} },
     partyView: { gen: recorder("soundsystemGen", log) }, houseRooms: null, potionObservers: recorder("potionObservers", log),
   });
-  for (const k of ["beachView", "grass", "strings", "leashView", "lasers", "borders", "inviteView", "partyObjects", "rig", "holograms", "glades", "wisps", "clouds", "lightRings", "fireworks", "swoopTrails", "spellFx", "trail", "combatLight", "occlusion"])
+  for (const k of ["beachView", "grass", "strings", "leashView", "lasers", "borders", "inviteView", "partyObjects", "rig", "holograms", "glades", "wisps", "clouds", "lightRings", "fireworks", "swoopTrails", "spellFx", "partyStart", "trail", "combatLight", "occlusion"])
     v[k] = recorder(k, log);
   // (when the old island is let go, and what's in the scene then)
   const dispose = island.dispose.bind(island);
@@ -82,6 +82,8 @@ describe("View.setGame (another night in the same view)", () => {
     vi.stubGlobal("document", { createElement: () => fakeEl(), body: fakeEl() }); // (the house's rooms' labels)
     standInBuilds(log);
     const v = standInView(a, log), old = v.island;
+    v.renderEaseAt = 50; v.renderEaseDt = 0.1; v.camLift = 12;
+    v.camLiftTime = 50; v.houseCamInput = new THREE.Vector3(4, 5, 6);
     v.setGame(b);
     const at = (s: string) => log.findIndex(l => l.startsWith(s));
     // the order: the art reseated, the new island built (not yet in the scene), swapped in, then the old let go
@@ -107,12 +109,15 @@ describe("View.setGame (another night in the same view)", () => {
     expect(log).toContain("potionObservers.dispose");
     // its own records afresh, and the game re-pointed everywhere
     expect(v.game).toBe(b);
+    expect(v.renderEaseAt).toBeNaN(); expect(v.renderEaseDt).toBe(0);
+    expect(v.camLift).toBe(0); expect(v.camLiftTime).toBeNaN();
+    expect(v.houseCamInput.toArray()).toEqual([0, 0, 0]);
     expect(v.markerCache.wave).toBe(-1);
     expect(v.plan.key).toBe("");
     expect(v.appearing.size).toBe(0);
     expect(creatureCacheSizes()).toEqual([0, 0, 0, 0]);
     for (const k of ["strings", "leashView", "lasers", "borders", "inviteView"]) expect(log).toContain(`${k}.setGame(456)`);
-    for (const k of ["partyObjects", "rig", "holograms", "glades", "wisps", "fireworks", "swoopTrails", "spellFx", "combatLight", "occlusion"]) expect(log).toContain(`${k}.reset`);
+    for (const k of ["partyObjects", "rig", "holograms", "glades", "wisps", "fireworks", "swoopTrails", "spellFx", "partyStart", "combatLight", "occlusion"]) expect(log).toContain(`${k}.reset`);
     for (const k of ["beachView.setGround", "grass.setMap", "clouds.reseed", "lightRings.reseed", "trail.newNight"]) expect(at(k)).toBeGreaterThan(-1);
     expect(at("beachView.setGround")).toBeLessThan(at("old.dispose")); // (off the old ground before it's let go)
     // this island's treehouse has the house's rooms: made, in the scene

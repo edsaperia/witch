@@ -2,7 +2,7 @@
 import { describe, expect, it, beforeAll, afterAll } from "vitest";
 import { COMBAT } from "./combat";
 import { isInside } from "./mapShape";
-import { newGame, newWitchPlayer, stepGame, STEP, type Controls, type Game } from "./game";
+import { newWitchPlayer, stepGame, STEP, type Controls, type Game } from "./game";
 import { TUNING } from "./tuning";
 import { cellKey } from "./party";
 import { aggroOf, watcher } from "./wildWatch";
@@ -10,6 +10,7 @@ import { legendRings } from "./slowTime";
 import { napping } from "./creatures";
 import { hit } from "./affection";
 import { smallWorldTuning } from "../test/worlds";
+import { preppedGame } from "../test/preppedGame"; // (games on a map made once a file from its prep)
 
 /** Every species at strength 1 for these tests (Ed, 2026-10-08, gave the species strengths by class; these test other
  *  mechanics, written when every species was 1): combat.json strength.species emptied for the block, put back after. */
@@ -23,7 +24,7 @@ const run = (g: Game, secs: number, each?: () => void) => { for (let i = 0; i < 
 /** A wild area with young or adults in it, the witch high over it in the treetops, the game running. */
 function overWild(): { g: Game; key: string; at: { x: number; z: number } } {
   // Retain seed 77's populated wild area and an inland neighbour beyond its chase band/400 m border search.
-  const g = newGame(77, TUNING);
+  const g = preppedGame(77, TUNING);
   g.clock.paused = false;
   g.witches[0].health.hp = 1e6;
   const home = cellKey(g.map.centreCell), rings = legendRings(g);
@@ -116,10 +117,13 @@ describe("the wild watch (Ed, 2026-10-07)", () => {
     expect(onHer(), "not provoked: it leaves her be").toBe(false);
     // her 💌 lands on it: provoked, it comes out across its edge after her
     expect(hit({ time: g.clock.time, leash: () => {} }, c, 1)).toBe(true);
-    let left = false;
-    run(g, 3, () => { place(6); left ||= !inside(); });
+    run(g, STEP, () => place(6));
     expect(onHer(), "provoked: after her").toBe(true);
-    expect(left, "out of its area after her").toBe(true);
+    // Exercise the boundary directly rather than pinning a close run within three seconds.
+    c.x = ex + dx; c.z = ez + dz;
+    expect(inside(), "fixture is beyond its area").toBe(false);
+    run(g, STEP, () => place(6));
+    expect(onHer(), "keeps pursuing beyond its area").toBe(true);
     // she backs off to half its band past the edge: it keeps after her
     run(g, 2, () => place(band * 0.5));
     expect(onHer(), "still after her within its band").toBe(true);
@@ -167,7 +171,7 @@ describe("the wild watch (Ed, 2026-10-07)", () => {
   }, 120_000);
 
   it("does nothing with wildWatch off", () => {
-    const t = { ...TUNING, wildWatch: { ...TUNING.wildWatch!, on: false } }, g = newGame(77, smallWorldTuning(t, "The disabled watch must leave every creature's watch state unset, independent of map size."));
+    const t = { ...TUNING, wildWatch: { ...TUNING.wildWatch!, on: false } }, g = preppedGame(77, smallWorldTuning(t, "The disabled watch must leave every creature's watch state unset, independent of map size."));
     g.clock.paused = false; g.witch = { ...g.witch, seated: false, mode: "ground", lift: 0 };
     run(g, 1);
     expect(g.wildEntry.size).toBe(0);

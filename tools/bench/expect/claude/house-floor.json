@@ -1,0 +1,9 @@
+{
+  "reason": "Ed, 2026-11-03: \"bark off indoors\". treehouse.house.look.bark goes from 0.18 to 0, so inside the treehouse the oak's faint limbs are no longer drawn over the floor, the furniture and her. The rules are untouched.",
+  "frames": {
+    "booth": "in the house: the faint bark over the floor gone",
+    "ground": "the same while she walks on the Terrace",
+    "boot": "the same at the start, in the house",
+    "bedroom": "the same in her bedroom"
+  }
+}

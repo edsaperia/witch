@@ -61,6 +61,14 @@ export function hatButton(h: HatState, x: number, z: number, radius: number, spe
   return q.spell;
 }
 
+/** Whether a press of the sigil button at (x, z) would pick a hat of hers up (hatButton, without doing it): her own lying within `radius`,
+ *  or, bare-headed, one she left there. */
+export function hatWithin(h: HatState, x: number, z: number, radius: number): boolean {
+  const d = h.down;
+  if (d && Math.hypot(d.x - x, d.z - z) <= radius) return true;
+  return !!h.has && !!d && h.left.some(q => Math.hypot(q.x - x, q.z - z) <= radius);
+}
+
 /** Where the marker points (her hat on the ground), or null when there's nothing to find. */
 export const hatMarker = (h: HatState | undefined): { x: number; z: number } | null => (h?.has && h.down ? { x: h.down.x, z: h.down.z } : null);
 

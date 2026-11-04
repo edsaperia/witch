@@ -197,8 +197,8 @@ export interface Creature {
    *  tries to stay within the circle"): it roams the circle's open floor and walks back in if it's out, dancing there
    *  once its area's party comes; leashed, it follows her (keepsToCircle). */
   circle?: { x: number; z: number; r: number; legendX: number; legendZ: number };
-  /** Let go happy at her knockout (Ed, 2026-10-26: "they should idle near where they were dropped, not walk back to their
-   *  area"; rules/knockout.ts letGoHappy): it idles within r metres of (x, z) in place of its own area, till she leashes it again. */
+  /** Let go happy (rules/knockout.ts letGoHappy: by a guest leaving an online night; at her knockout from Ed, 2026-10-26, "they should
+   *  idle near where they were dropped, not walk back to their area", till 2026-11-03, when her carried sigils fall parked instead): it idles within r metres of (x, z) in place of its own area, till she leashes it again. */
   dropped?: { x: number; z: number; r: number; /** the area it was dropped in */ cell: [number, number] };
   /** When it was last healed (heal or healBy: a berry, invited, leashed, a happy legend mending...): the view's green "+"s. */
   healedAt?: number;
@@ -208,6 +208,10 @@ export interface Creature {
   boss?: boolean;
   /** The island-kind friendly home defender, never a dealt/quest/party legend (Ed, 2026-10-31). */
   homeGuard?: boolean;
+  /** One of the challenge circle's pack as a statue (rules/challengeStatues.ts; Ed, 2026-11-04: "grey statues, all facing the centre
+   *  of the circle"): stone at its post, or walking back to it to turn to stone; either way out of everything (no roam, fight, 💌 or
+   *  hit: rules/game.ts dormant). Unset: itself. */
+  statue?: "stone" | "back";
   /** A legend's state (DESIGN.md, "Sleeping legends"): asleep (sunk in the ground, scenery) →
    *  its area's wave → waking (wildLegends.wake seconds, untouchable) → awake (angry, guarding its
    *  area) → beaten → slept (asleep for good). Asleep or awake → (later: mollified) → happy (at
@@ -290,7 +294,7 @@ export function makeCreature(map: ForestMap, cell: [number, number], level: Leve
     wanderTo: undefined, circle: undefined, dropped: undefined, healedAt: undefined, healedSmall: undefined, boss: undefined, legendState: undefined,
     stateAt: undefined, quest: undefined, friendly: undefined, asleep: undefined, napUntil: undefined, lulled: undefined,
     wakeUntil: undefined, safeX: undefined, safeZ: undefined, safeR: undefined, watchUntil: undefined, hunting: undefined, taunt: undefined, swoop: undefined, finale: undefined,
-    packGlow: undefined, packHide: undefined, packShell: undefined, packProwl: undefined, feintUntil: undefined, coverBy: undefined, packSync: undefined, packThrow: undefined, mind: undefined, spell: undefined, hop: undefined, hopNext: undefined, homeGuard: undefined,
+    packGlow: undefined, packHide: undefined, packShell: undefined, packProwl: undefined, feintUntil: undefined, coverBy: undefined, packSync: undefined, packThrow: undefined, mind: undefined, spell: undefined, hop: undefined, hopNext: undefined, homeGuard: undefined, statue: undefined,
   };
   if (level === LEGEND) { c.boss = true; c.legendState = "asleep"; c.stateAt = 0; }
   return c;
@@ -298,7 +302,7 @@ export function makeCreature(map: ForestMap, cell: [number, number], level: Leve
 
 /** Every optional field of a Creature, in the order makeCreature's literal lists them (one shape for all; creatures.test.ts checks the order). A field added to
  *  Creature and not here fails the typecheck (OptionalMissing). */
-export const CREATURE_OPTIONAL = ["lod", "hp", "hurtAt", "kx", "kz", "slowUntil", "stunUntil", "burrow", "leap", "fight", "fleeUntil", "retreat", "retreatFrom", "fleeX", "fleeZ", "vx", "vz", "run", "lairX", "lairZ", "homing", "charge", "dug", "travelling", "state", "happyAt", "partyLegend", "dazed", "dancing", "restlessness", "questOpen", "atStone", "loose", "aims", "dazedUntil", "affection", "affectionAt", "fills", "drops", "ranOff", "cheerUntil", "holdT", "holdAt", "route", "engagedUntil", "brace", "legend", "moveReadyAt", "sprung", "enraged", "asleepAt", "bed", "gone", "beach", "beached", "siege", "wanderTo", "circle", "dropped", "healedAt", "healedSmall", "boss", "legendState", "stateAt", "quest", "friendly", "asleep", "napUntil", "lulled", "wakeUntil", "safeX", "safeZ", "safeR", "watchUntil", "hunting", "taunt", "swoop", "finale", "packGlow", "packHide", "packShell", "packProwl", "feintUntil", "coverBy", "packSync", "packThrow", "mind", "spell", "hop", "hopNext", "homeGuard"] as const satisfies readonly (keyof Creature)[];
+export const CREATURE_OPTIONAL = ["lod", "hp", "hurtAt", "kx", "kz", "slowUntil", "stunUntil", "burrow", "leap", "fight", "fleeUntil", "retreat", "retreatFrom", "fleeX", "fleeZ", "vx", "vz", "run", "lairX", "lairZ", "homing", "charge", "dug", "travelling", "state", "happyAt", "partyLegend", "dazed", "dancing", "restlessness", "questOpen", "atStone", "loose", "aims", "dazedUntil", "affection", "affectionAt", "fills", "drops", "ranOff", "cheerUntil", "holdT", "holdAt", "route", "engagedUntil", "brace", "legend", "moveReadyAt", "sprung", "enraged", "asleepAt", "bed", "gone", "beach", "beached", "siege", "wanderTo", "circle", "dropped", "healedAt", "healedSmall", "boss", "legendState", "stateAt", "quest", "friendly", "asleep", "napUntil", "lulled", "wakeUntil", "safeX", "safeZ", "safeR", "watchUntil", "hunting", "taunt", "swoop", "finale", "packGlow", "packHide", "packShell", "packProwl", "feintUntil", "coverBy", "packSync", "packThrow", "mind", "spell", "hop", "hopNext", "homeGuard", "statue"] as const satisfies readonly (keyof Creature)[];
 type RequiredKeys = "id" | "species" | "cell" | "level" | "homeX" | "homeZ" | "range" | "anchorX" | "anchorZ" | "x" | "z" | "tx" | "tz" | "rest" | "speed" | "facing" | "away" | "moving" | "walk" | "seen" | "leashed" | "rand";
 type OptionalMissing = Exclude<keyof Creature, RequiredKeys | (typeof CREATURE_OPTIONAL)[number]>;
 const _everyField: [OptionalMissing] extends [never] ? true : OptionalMissing = true;
@@ -511,7 +515,7 @@ export const heldByCombat = (c: Creature) => !!(c.gone || c.fleeUntil || c.wande
  *  over `wake` seconds (a stretch, so landing isn't an instant pounce). Tuning: naps. */
 export interface NapRules { chance: number; length: readonly number[]; wake: number; /** a legend circle's baby's own chance and length (tuning naps.circle) */ circle?: { chance: number; length: readonly number[] }; /** its area still wild (no soundsystem yet) */ wild: (c: Creature) => boolean; /** a witch on the ground in its area */ roused: (c: Creature) => boolean }
 /** May nap at all: a wild idler, not a legend, besieging, fleeing, dazed, marching, fighting or happy. */
-export const napper = (c: Creature): boolean => !c.leashed && !c.gone && !c.boss && !c.enraged && c.state !== "happy" && !c.siege && !c.fleeUntil && !c.dazedUntil && !c.wanderTo && !c.fight?.target && !c.retreat;
+export const napper = (c: Creature): boolean => !c.leashed && !c.gone && !c.boss && !c.statue && !c.enraged && c.state !== "happy" && !c.siege && !c.fleeUntil && !c.dazedUntil && !c.wanderTo && !c.fight?.target && !c.retreat;
 /** Asleep or still getting up: out of fights. */
 export const napping = (c: Creature, time: number): boolean => !!c.asleep || (c.wakeUntil !== undefined && time < c.wakeUntil);
 /** Up from a nap, slowly: `wake` seconds getting up. */

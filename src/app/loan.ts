@@ -62,10 +62,6 @@ export function withLoan(kind: FindKindId, saved: ReadonlySet<string>, loan: Loa
   return out;
 }
 
-/** The loan's verdict as she sleeps: the night won, kept (the caller's keepFound); else gone back to the sky. */
-export type Verdict = "kept" | "lost";
-export const verdictOf = (won: boolean): Verdict => (won ? "kept" : "lost");
-
 /** Its name as the dream says it ("the Sentry hat", "the Velvet jacket", "the Missile nose"). */
 export function loanName(loan: Pick<Loan, "kind" | "id">): string {
   const n = loan.kind === "part" ? partById(loan.id)?.name : loan.kind === "hat" ? `${hatSpell(loan.id)?.name ?? loan.id} hat` : itemById(loan.id)?.name;

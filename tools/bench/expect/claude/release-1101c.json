@@ -1,0 +1,5 @@
+{
+  "reason": "Release 1101c = release 1101b + #1572 (written playtest reports always retained; only replay attachments are bounded) + #1566 (wild-watch red fade 0.7 -> ~1.5 s, Ed's 'Slower'). Both PRs passed bench:quick on their own branches with no declared difference. No frame or rules difference is waived.",
+  "frames": {},
+  "rules": {}
+}

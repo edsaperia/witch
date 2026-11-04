@@ -77,6 +77,28 @@ test('real isolated Vitest failure reports its test name, file and assertion lin
   } finally { fs.rmSync(dir,{recursive:true,force:true}); }
 });
 
+test('reported outcome statistics reach the step summary and a warning when moved, and never fail the run', () => {
+  fs.mkdirSync(path.join(process.cwd(), 'previews'), {recursive:true});
+  const dir = fs.mkdtempSync(path.join(process.cwd(), 'previews/outcome-fixture-'));
+  try {
+    const fixture = path.join(dir, 'outcome.test.ts'), config = path.join(dir, 'config.mjs'), summary = path.join(dir, 'summary.md'), rows = path.join(dir, 'outcomes.json');
+    const helper = path.resolve('src/test/outcome.ts').replaceAll('\\','/');
+    fs.writeFileSync(fixture, `import {it} from "vitest";\nimport {outcome} from "${helper}";\nit("pack fixture", ctx => {\noutcome(ctx, "strikes a minute", 12, {unit: "a minute", was: 20, near: 3, line: ">= 18"});\noutcome(ctx, "closest share", 0.7, {unit: "share", was: 0.65, near: 0.15});\n});\n`);
+    fs.writeFileSync(config, `export default ${JSON.stringify({test:{include:[fixture.replaceAll('\\','/')],reporters:['default',path.resolve('tools/ci/vitest-reporter.mjs').replaceAll('\\','/')],maxWorkers:1}})};`);
+    const cli = ['node_modules/vitest/vitest.mjs','../../node_modules/vitest/vitest.mjs'].map(p=>path.resolve(p)).find(fs.existsSync);
+    const run = spawnSync(process.execPath,[cli,'run','--config',config],{encoding:'utf8',timeout:20000,env:{...process.env,GITHUB_ACTIONS:'true',GITHUB_STEP_SUMMARY:summary,WITCH_OUTCOME_FILE:rows,WITCH_ANNOTATION_FILE:path.join(dir,'budget.json')}});
+    assert.equal(run.status,0,run.stderr); // (12 a minute, under the old line of 18: reported, not failed)
+    assert.match(run.stdout, /outcome \(report only\): strikes a minute = 12 a minute \(was 20, ±3; old line >= 18\) MOVED/);
+    assert.match(run.stdout, /::warning title=outcome moved \(report only\),file=.*outcome.test.ts::pack fixture: strikes a minute = 12 a minute, was 20 ±3/);
+    assert.doesNotMatch(run.stdout, /::warning[^\n]*closest share/);
+    const text = fs.readFileSync(summary,'utf8');
+    assert.match(text, /Outcome statistics \(report only/);
+    assert.match(text, /\| pack fixture \| strikes a minute \| 12 a minute \| 20 ±3 \| >= 18 \| \*\*moved\*\* \|/);
+    assert.match(text, /\| pack fixture \| closest share \| 0.7 share \| 0.65 ±0.15 \|  \|  \|/);
+    assert.deepEqual(JSON.parse(fs.readFileSync(rows,'utf8')).map(r => [r.id, r.moved]), [['strikes a minute', true], ['closest share', false]]);
+  } finally { fs.rmSync(dir,{recursive:true,force:true}); }
+});
+
 test('release imports only successful matching-environment task results; changed fingerprints remain misses', async () => {
   const { importPassedResults } = await import('../art-check/checked-tree.mjs');
   const environment={node:'v22',os:'Linux',arch:'x64',browser:'1.56.1'}, key='a'.repeat(64), saved=[];
@@ -88,6 +110,14 @@ test('release imports only successful matching-environment task results; changed
   assert.equal(saved.some(r=>r.key==='d'.repeat(64)),false); // Actual changed task is not manufactured into a cache hit.
   assert.equal(await importPassedResults({...options,environment:{...environment,node:'v24'}}),0);
   run.conclusion='failure'; assert.equal(await importPassedResults(options),0);
+  run.conclusion='success';
+  // Runs are taken by FINISH time from the latest 100: an old long run that just finished is read before newer quick ones.
+  const quick=Array.from({length:30},(_,i)=>({id:100+i,conclusion:'success',head_repository:{full_name:'o/r'},updated_at:`2026-11-01T02:${String(10+i).padStart(2,'0')}:00Z`}));
+  const long={...run,updated_at:'2026-11-01T02:56:00Z'}, read=[], perPage=[];
+  const many={rest:{actions:{listWorkflowRuns:async q=>{perPage.push(q.per_page);return {data:{workflow_runs:[...quick.slice().reverse(),long]}};},listWorkflowRunArtifacts:async({run_id})=>({data:{artifacts:[{name:'art-check-tree',expired:false,run_id}]}})}}};
+  saved.length=0;
+  await importPassedResults({...options,github:many,readProof:async a=>{read.push(a.run_id);return a.run_id===7?proof:{...proof,runId:a.run_id,results:[]};}});
+  assert.deepEqual(perPage,[100]); assert.equal(read[0],7); assert.deepEqual(saved,[proof.results[0]]);
 });
 
 test('embedded GitHub scripts compile and neither workflow reruns on PR edits', () => {

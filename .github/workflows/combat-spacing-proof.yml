@@ -1,0 +1,52 @@
+name: Combat spacing proof
+on:
+  workflow_dispatch:
+    inputs:
+      phase:
+        type: choice
+        options: [calibrate, measure]
+        default: calibrate
+        description: Canonical-approved cloud CPU evidence only
+permissions:
+  contents: read
+concurrency:
+  group: combat-spacing-proof-${{ github.ref }}
+  cancel-in-progress: false
+jobs:
+  calibrate:
+    if: inputs.phase == 'calibrate'
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: node tools/combat-spacing/body-radii.mjs body-radii.json
+      - uses: actions/upload-artifact@v4
+        with:
+          name: combat-body-radii
+          path: body-radii.json
+          if-no-files-found: error
+          retention-days: 14
+  measure:
+    if: inputs.phase == 'measure'
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: node tools/combat-spacing/run.mjs --fights=20 --seconds=24 --out=spacing-measure.json
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: combat-spacing-measure
+          path: spacing-measure.json
+          if-no-files-found: warn
+          retention-days: 14

@@ -1,0 +1,5 @@
+{
+  "reason": "Release 1101d = release 1101c (#1572 report retention + #1566 slower watch fade) + #1582 CI speed 2a (CI-only: unit shards, bounded Chromium install, no preview on release PRs; no game change). Both PRs passed bench:quick on their own branches with no declared difference. No frame or rules difference is waived.",
+  "frames": {},
+  "rules": {}
+}

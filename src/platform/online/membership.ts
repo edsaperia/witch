@@ -1,27 +1,35 @@
 import { type Game, type Witch } from "../../rules/game";
-import { startWake } from "../../rules/wakeUp";
+import { startWake, startWakeInLastBed } from "../../rules/wakeUp";
 import { letGoHappy } from "../../rules/knockout";
-import { addFloorHat, roomAt } from "../../rules/houseRooms";
-import { bedRoom } from "../../rules/wakeUp";
+import { addFloorHat, onRoomFloor } from "../../rules/houseRooms";
+import { deckOf } from "../../rules/treehouse";
 
 /** Caller supplies equipment; this seam does not clone the host's equipped possessions. */
-export function attachGuest(game: Game, guest: Witch): void {
+export function attachGuest(game: Game, guest: Witch, wake: (game: Game, guest: Witch) => boolean = (g, W) => startWake(g, g.herTime, { yesterday: true }, W)): void {
   if (game.witches.length !== 1 || guest.id !== 1 || guest === game.witches[0]) throw new Error("Two-player room already occupied or invalid guest");
   const host = game.witches[0];
+  const previous = { time: host.time, paused: host.paused, pending: host.pending }, paused = game.clock.paused;
   host.time = game.herTime; host.paused = game.clock.paused; host.pending = game.pending;
   guest.time = game.herTime; guest.paused = false; guest.pending = {};
   game.witches.push(guest);
-  // Coordinator 6513359265: reuse the built host bedroom for this prototype, no house/art edits.
-  if (!startWake(game, game.herTime, { yesterday: true }, guest)) {
-    game.witches.pop(); delete host.time; delete host.paused; delete host.pending;
-    throw new Error("This island has no guest wake geometry");
+  // The separate prototype keeps its original default. Ordinary play must inject the approved guest-room wake.
+  try {
+    if (!wake(game, guest)) throw new Error("This island has no guest wake geometry");
+  } catch (error) {
+    game.witches.pop(); game.clock.paused = paused;
+    for (const key of ["time", "paused", "pending"] as const) {
+      if (previous[key] === undefined) delete host[key];
+      else Object.assign(host, { [key]: previous[key] });
+    }
+    throw error;
   }
   game.clock.paused = false;
   game.prev.witches = game.witches.map(w => ({ x: w.body.x, z: w.body.z, lift: w.body.lift }));
 }
 
 /** Restore one-witch ownership after a dropped line; existing placed sigils stay in the world. */
-export function detachGuest(game: Game): void {
+/** `_guestRoom`: her assigned bedroom, kept for the arrival seam (platform/online/guestArrival.ts); her hat no longer looks at it. */
+export function detachGuest(game: Game, _guestRoom?: string): void {
   if (game.witches.length !== 2) return;
   const [host, guest] = game.witches;
   for (const id of [...guest.leash.stack]) {
@@ -43,10 +51,18 @@ export function detachGuest(game: Game): void {
   host.hat.left.push(...guest.hat.left);
   if (guest.hat.has) {
     const at = guest.hat.down ?? { x: guest.body.x, z: guest.body.z, at: game.herTime };
-    if (game.map.bounds.lakes?.inside(at.x, at.z) || roomAt(game.map.treehouse, at.x, at.z)?.id === bedRoom()) addFloorHat(host, guest.spells.hat);
+    // (a hat she left anywhere on the house's floor goes to the hats' floor: the house one room, Ed 2026-11-03; it was her bedroom's only)
+    const floor = deckOf(game.map, game.tuning)?.house?.rooms;
+    if (game.map.bounds.lakes?.inside(at.x, at.z) || (floor && onRoomFloor(floor, at.x, at.z, floor.inset))) addFloorHat(host, guest.spells.hat);
     else host.hat.left.push({ ...at, spell: guest.spells.hat });
   }
   game.witches.pop();
+  if (host.house?.slept) {
+    // A shared sleeper returns to the ordinary alarm/get-up, not an un-clearable solo sleep latch.
+    host.house.slept = false; delete host.house.bedFrom;
+    const options = { yesterday: true, mirrored: game.wake?.mirror };
+    if (!startWakeInLastBed(game, host.time ?? game.herTime, options, host)) startWake(game, host.time ?? game.herTime, options, host);
+  }
   game.pending = host.pending ?? {}; game.clock.paused = !!host.paused;
   delete host.pending; delete host.time; delete host.paused;
   game.prev.witches = [{ x: host.body.x, z: host.body.z, lift: host.body.lift }];

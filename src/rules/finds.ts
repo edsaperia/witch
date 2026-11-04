@@ -2,7 +2,7 @@
 // permanent upgrades. Hints are given by the crystal ball"; his answers on the proposal, the same day): each night the island
 // she's on holds one wearable she hasn't found yet (the night's seed picks it from rules/wardrobe.ts's: never the brooms, which
 // come from the Workshop's parts, docs/backlog/workshop.md), in an old travel trunk half-sunk in a wild area's woods, under the
-// canopy (a ground-mode find, like the garage's wrecks: no glint). E at it while the party's on, and it's hers for the night (the
+// canopy (since 2026-11-03 at the site of an area of its own, where the paths lead: placeTrunk) (a ground-mode find, like the garage's wrecks: no glint). E at it while the party's on, and it's hers for the night (the
 // "found" leash event): on loan from the stars till she sleeps (Ed, 2026-10-24, below). Its hint is written in the stars (Ed, 2026-10-22):
 // the wearable's outline as a constellation, seen through the telescope at the trunk's bearing from the treehouse, never how far
 // (rules/constellations.ts; the crystal ball's vision is gone, the ball a placeholder again). Where the trunk stands is the night's (map.seed); what's in it
@@ -38,6 +38,7 @@ import { PART_IDS } from "./broomParts";
 import { HAT_SPELLS, type SpellState } from "./spells";
 import { deckOf, onFloor } from "./treehouse";
 import type { Game } from "./game";
+import { islandSet, setPick } from "./findSets";
 
 /** The kinds of permanent upgrade found in the forest, one a night across them all. */
 export type FindKindId = "wearable" | "part" | "hat" | "bag" | "record";
@@ -84,11 +85,15 @@ export function nightPick(seed: number, found: Found): { kind: FindKindId; item:
   return left[Math.floor(hash2(seed, left.length, 8123) * left.length) % left.length];
 }
 
-/** Where tonight's trunk stands (map.seed): in a seeded wild area (not home), in its woods round its middle, under the canopy
- *  if it can be (so the treetops hide it), off its clearings and its legend's circle, clear of the relics. Null on a map with
- *  nowhere for it (the zoo). */
+/** Where tonight's trunk stands (map.seed). In an area of its own (Ed, 2026-11-03: "We can also have finds be at the site of their
+ *  own area rather than in a random place, and then the path network can lead you to them"; tuning findArea): at that area's site,
+ *  on its clear patch (map.specialSites, "find"), the paths from every touching area's site leading to it. Else (findArea off) as
+ *  before: in a seeded wild area (not home), in its woods round its middle, under the canopy if it can be (so the treetops hide it),
+ *  off its clearings and its legend's circle, clear of the relics. Null on a map with nowhere for it (the zoo). */
 export function placeTrunk(map: ForestMap, forest: { treesNear(x: number, z: number, r: number): Plant[] }, relics: readonly Relic[]): Trunk | null {
   if (map.zoo) return null;
+  const own = map.specialSites?.find(sp => sp.kind === "find" || sp.kind === "challenge"); // (the challenge area's: its reward, rules/challenge.ts)
+  if (own) return { x: own.x, z: own.z, cell: [own.cell[0], own.cell[1]], kind: "wearable", item: null, found: false };
   const b = map.bounds, home = map.centreCell, s = map.seed + 8117;
   const cells = map.cells.filter(([cx, cy]) => !(cx === home[0] && cy === home[1]) && map.playable(cx, cy)).sort((a, c) => hash2(a[0], a[1], s) - hash2(c[0], c[1], s));
   const woods = (x: number, z: number) => forest.treesNear(x, z, 14).filter(t => Math.hypot(t.x - x, t.z - z) < 14).length >= 3;
@@ -110,10 +115,14 @@ export function placeTrunk(map: ForestMap, forest: { treesNear(x: number, z: num
 }
 
 /** Makes tonight's find what the night's draw says (main.ts, from what this browser says she has: nightPick), a trunk or a wreck
- *  where placeTrunk put it; nothing left to find, none. */
+ *  where placeTrunk put it; nothing left to find, none. In a challenge area (rules/challenge.ts) the draw is over the island's own
+ *  set of finds (rules/findSets.ts setPick; Ed, 2026-11-03: "Each phase and biome have different set of finds"): with the whole set
+ *  hers, none, and the challenge's reward is a flask instead. */
 export function fillTrunk(g: { trunk: Trunk | null; map: ForestMap }, found: Found): void {
   if (!g.trunk) return;
-  const pick = nightPick(g.map.seed, found);
+  const T = g.trunk, ch = g.map.specialSites?.find(sp => sp.kind === "challenge" && sp.cell[0] === T.cell[0] && sp.cell[1] === T.cell[1]);
+  const set = ch && g.map.tuning.challenge?.findSets ? islandSet(g.map.island) : null; // (the sets off for now, Ed 2026-11-03: the one draw over everything)
+  const pick = set ? setPick(g.map.seed, found, set) : nightPick(g.map.seed, found);
   if (pick) { g.trunk.kind = pick.kind; g.trunk.item = pick.item; } else g.trunk = null;
 }
 /** The art piece tonight's find is drawn as (the trunk, or the part's wreck). */
