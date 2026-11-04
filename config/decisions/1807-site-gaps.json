@@ -1,0 +1,24 @@
+{
+  "pr": 1807,
+  "group": "Site gaps",
+  "decisions": [
+    {
+      "id": "siteGap",
+      "pr": 1807,
+      "group": "Site gaps",
+      "label": "Least gap between sites (m)",
+      "note": "The least gap, edge to edge, between a legend's circle and every other site that isn't a stump (the other legends' circles, the challenge circle's ground, home's dancefloor and treehouse), and between a stump's clearing and home's two (Ed, 2026-11-04: \"Look at minimum distances between sites too\"). Stumps keep their own: 40 m between them, and a legend's circle 40 m from a stump's middle. 25 m held on every map measured; bigger moves legends' circles on the maps where it doesn't. A new map: it reloads.",
+      "control": {
+        "type": "slider",
+        "min": 0,
+        "max": 80,
+        "step": 5
+      },
+      "default": 25,
+      "apply": {
+        "knob": "siteGap",
+        "reload": true
+      }
+    }
+  ]
+}
