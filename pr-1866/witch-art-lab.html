@@ -9563,164 +9563,6 @@ function genomeHash(g, context = {}, level = null) {
 
 
 
-// ---- inlined from art/naps.js ----
-// Witch creatures asleep (Ed, 2026-10-06: "I guess we will need sleeping artwork for all the creatures"):
-// when the party's over every creature walks home, lies down and sleeps. Each species at each level
-// drawn from its own model, lying where it is: its body down on the ground (legs folded under it,
-// cut away below its ground line), its head down, eyes shut (the "asleep" expression,
-// genome/expressions.js), in 2 frames of a slow breath. Unlike a sleeping legend (legends.js) it is
-// itself: no moss, no mound, its own colours, nothing sunk. By species (NAP_POSES):
-//   lie:   the hoofed and the heavy (elk, stag, boar, bear, badger, ram, beaver, hare, otter, newt...):
-//          belly down, head laid forward on the ground;
-//   curl:  the foxes, cats and the like (fox, wolf, lynx, cat, marten, stoat, squirrel, dormouse): the body
-//          bent round into a C seen from above, head and tail meeting at the near side;
-//   tuck:  birds (owl, raven, heron): settled on their feet, head sunk into the shoulders
-//          (the heron folds its neck back, its builder's fold);
-//   coil:  the snake, round on itself;
-//   flat:  bugs and the low (beetle, woodlouse, spider, moth, snail, toad, mole, hedgehog):
-//          pressed to the ground, legs hidden; the bat and the moth wrap their wings round themselves.
-// napForm(S) is a form for withForm (creatures3d.js): critter(..., { nap: true }) draws a creature with it.
-
-
-
-// ground: the ground line as a share of the body's height from its lowest point (or, for the
-// four-legged, sink: a share from belly to back; 0 on its belly). droop: how far its head comes down
-// to the ground. curl: how far round its body bends (radians across its length). tuck: its head sunk
-// back into its body (a share of its head's size). drop: groups not drawn asleep (spread wings, spirit
-// parts). cloak: wings wrapped round it ({ c: centre, r: radii } in model units, as legends.js).
-const NAP_POSES = {
-  ...CREATURE_NAPS,
-};
-const DEFAULT = { kind: "lie", sink: .05, droop: 1 };
-const napPose = id => NAP_POSES[id] ?? DEFAULT;
-/** The breath's lift on the second frame (model units, as legends.js). */
-const BREATH = .02;
-
-// The body's bounds (its solid parts).
-function bounds(m) {
-  const b = { x0: Infinity, x1: -Infinity, y0: Infinity, y1: -Infinity, z0: Infinity, z1: -Infinity };
-  for (const q of m.parts) {
-    if (q.extra || q.cut) continue;
-    const pts = q.type === "cone" ? [[q.a, q.r1], [q.b, q.r2]] : [[q.c, Math.max(...(q.r || q.h))]];
-    for (const [c, rr] of pts) { b.x0 = Math.min(b.x0, c[0] - rr); b.x1 = Math.max(b.x1, c[0] + rr); b.y0 = Math.min(b.y0, c[1] - rr); b.y1 = Math.max(b.y1, c[1] + rr); b.z0 = Math.min(b.z0, c[2] - rr); b.z1 = Math.max(b.z1, c[2] + rr); }
-  }
-  return b;
-}
-// Moves every part by f(point, part) (each centre or end on its own; a flat by its centre).
-function move(m, f) {
-  for (const q of m.parts) { if (q.type === "cone") { q.a = f(q.a, q); q.b = f(q.b, q); } else q.c = f(q.c, q); }
-  for (const fl of m.flats) fl.c = f(fl.c, fl);
-  forAnchors(m, p => f(p, null));
-}
-// Every anchor point (a centre, the eyes' points, a top): the face is drawn at them once the scale is known, so they move with the body.
-function forAnchors(m, f) {
-  for (const a of Object.values(m.anchors || {})) for (const one of Array.isArray(a) ? a : [a]) {
-    if (!one || typeof one !== "object") continue;
-    if (Array.isArray(one.c)) one.c = f(one.c);
-    if (Array.isArray(one.top)) one.top = f(one.top);
-    if (Array.isArray(one.pts)) one.pts = one.pts.map(f);
-  }
-}
-
-// The body bent round in the ground plane: its length laid along an arc of `curl` radians about a
-// centre on its near side (+z), so head and tail come round toward each other (and the camera).
-// Each part's own axes turn with it.
-function curlBody(m, curl, cx, half) {
-  if (!(curl > 0) || half <= 0) return;
-  const rho = half / (curl / 2), turn = (v, t) => [v[0] * Math.cos(t) + v[2] * Math.sin(t), v[1], -v[0] * Math.sin(t) + v[2] * Math.cos(t)];
-  const at = p => { const t = (p[0] - cx) / rho; return [cx + (rho - p[2]) * Math.sin(t), p[1], rho - (rho - p[2]) * Math.cos(t)]; };
-  for (const q of m.parts) {
-    if (q.type === "cone") { q.a = at(q.a); q.b = at(q.b); continue; }
-    const t = (q.c[0] - cx) / rho;
-    q.c = at(q.c);
-    if (q.axes) q.axes = q.axes.map(a => turn(a, -t)); // (turned as the arc turns there: about y)
-  }
-  for (const f of m.flats) { const t = (f.c[0] - cx) / rho; f.c = at(f.c); if (f.u) f.u = turn(f.u, -t); if (f.v) f.v = turn(f.v, -t); }
-  forAnchors(m, at);
-}
-
-/** The form that lays species S down asleep (frame: 0 or 1, the breath). For withForm. */
-function napForm(S, { frame = 0 } = {}) {
-  const pose = napPose(S.id);
-  const form = (m, o) => {
-    const s = render(m, { ...o, measure: true }).s; // its scale standing: lying down it keeps its size (render would fit the lower shape to the height)
-    if (pose.drop?.length) { m.parts = m.parts.filter(q => !pose.drop.includes(q.group)); m.flats = m.flats.filter(f => !pose.drop.includes(f.group)); }
-    const b0 = bounds(m);
-    // the ground line it lies on: the four-legged on their bellies (their torso first), the rest by their height
-    const torso = m.parts[0], four = S.q && torso?.type === "ell";
-    const G = four ? (torso.c[1] - torso.r[1]) + (b0.y1 - (torso.c[1] - torso.r[1])) * (pose.sink ?? 0) : b0.y0 + (b0.y1 - b0.y0) * (pose.ground ?? 0);
-    // head down to the ground (or, a bird, sunk back into its shoulders)
-    const H = m.anchors.head?.c;
-    if (H && (pose.droop ?? 0) > 0) {
-      const nk = m.anchors.neck?.c || H, x0 = Math.min(H[0] - .05, H[0] - (H[0] - nk[0]) * 2.2), hr = m.anchors.head.r?.[1] ?? .08, dy = (G + hr * .6 - H[1]) * pose.droop;
-      if (dy < 0) move(m, (p, q) => { const t = q && [11, 12, 13].includes(q.group) ? 1 : Math.max(0, Math.min(1, (p[0] - x0) / Math.max(.05, H[0] - x0))); return [p[0], p[1] + dy * t * t * (3 - 2 * t), p[2]]; });
-    }
-    if (H && pose.tuck) {
-      const hr = m.anchors.head.r?.[1] ?? .08, dy = -hr * pose.tuck * 1.6, dx = -hr * pose.tuck;
-      move(m, p => { const t = Math.max(0, Math.min(1, 1 - Math.hypot(p[0] - H[0], p[1] - H[1]) / (hr * 2.2))); return [p[0] + dx * t, p[1] + dy * t, p[2]]; });
-    }
-    // its tail laid along the ground (curled up, it wraps round the body)
-    if (pose.tailDown) { const tl = m.parts.filter(q => q.part === "tail"); let top = -Infinity; for (const q of tl) top = Math.max(top, q.type === "cone" ? Math.max(q.a[1], q.b[1]) : q.c[1]); if (top > G) { const base = Math.min(...tl.map(q => q.type === "cone" ? Math.min(q.a[1], q.b[1]) : q.c[1])); const sq = p => [p[0], G + .02 + (p[1] - base) * pose.tailDown, p[2]]; for (const q of tl) { if (q.type === "cone") { q.a = sq(q.a); q.b = sq(q.b); } else q.c = sq(q.c); } } }
-    // round on itself (curled, coiled)
-    if (pose.curl) { const b = bounds(m); curlBody(m, pose.curl, (b.x0 + b.x1) / 2, (b.x1 - b.x0) / 2); }
-    // wings wrapped round it
-    if (pose.cloak) { const c = pose.cloak.c; m.ell([c[0], G + (c[1] - .3) + pose.cloak.r[1] * .9, c[2]], pose.cloak.r, M.BODY2, { group: 1, paint: p => Math.abs(Math.sin(Math.atan2(p[2], p[0] - c[0]) * 5)) > .85 ? M.BODY3 : undefined }); }
-    if (frame % 2) {
-      const lift = Math.max(BREATH, 1.8 / s), top = bounds(m).y1, k = lift / Math.max(.05, top - G);
-      move(m, p => [p[0], G + (p[1] - G) * (1 + k), p[2]]);
-      // A flat flyer's dominant volume can merely translate under the centre
-      // transform, then crop back to identical pixels. Its resting thorax and
-      // wrapped wings must swell too, rather than only moving their centres.
-      if (S.plan === "moth" || S.plan === "dragonfly") for (const q of m.parts) {
-        if (q.extra || q.cut || ![M.BODY,M.BODY2,M.BODY3,M.BELLY].includes(q.mat)) continue;
-        if (q.type === "ell") q.r = [q.r[0],q.r[1]+lift*.5,q.r[2]];
-        else if (q.type === "cone") { q.r1 += lift*.4; q.r2 += lift*.4; }
-      }
-    } // its breath: in, visibly swelling above the ground
-    const b = bounds(m), cx = (b.x0 + b.x1) / 2, cz = (b.z0 + b.z1) / 2; // (curled, its middle has moved toward the near side)
-    m.clipY = G;
-    let scale = s, sp;
-    const heightBudget = o.sizeTarget ?? null;
-    // Lying down can widen the model into the camera's vertical projection
-    // (especially a snail's shell). Keep the standing visible age budget after
-    // deformation and breathing, using native rays rather than resampling art.
-    for (let attempt = 0; attempt < 2; attempt++) {
-      const res = render(m, { scale, facing: o.facing });
-      res.sp.origin = res.project([cx, G, cz]);
-      res.sp.groundLine = G;
-      sp = crop(res.sp);
-      if (!heightBudget || sp.h <= heightBudget) break;
-      scale *= (heightBudget - .5) / sp.h;
-    }
-    return sp;
-  };
-  form.motes = false;
-  form.fold = pose.fold ?? 0;
-  return form;
-}
-
-// Cropped to what is drawn (what was cut under the ground leaves empty room), its origin moved with it.
-function crop(sp) {
-  let x0 = sp.w, x1 = -1, y0 = sp.h, y1 = -1;
-  for (let y = 0; y < sp.h; y++) for (let x = 0; x < sp.w; x++) if (sp.m[y * sp.w + x]) { x0 = Math.min(x0, x); x1 = Math.max(x1, x); y0 = Math.min(y0, y); y1 = Math.max(y1, y); }
-  if (x1 < 0) return sp;
-  // Retain native canvas below the occupied box when its projected ground
-  // centre lies lower. Preserve the actual anchor, never clamp or clip it.
-  if (sp.origin) y1 = Math.max(y1, Math.ceil(sp.origin[1] - 2));
-  // Cropping must retain enough native top margin to keep the actual ground
-  // anchor in the lower half. Do not move the world-space anchor to satisfy
-  // the crop: a low curled torso can straddle its projected ground centre.
-  if (sp.origin) y0 = Math.max(0, Math.min(y0, Math.floor(2 * sp.origin[1] - y1 - 1)));
-  const W = x1 - x0 + 1, H = y1 - y0 + 1, c = new sp.constructor(W, H);
-  for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) { if(y+y0>=sp.h)continue;const i = (y + y0) * sp.w + x + x0, j = y * W + x; c.m[j] = sp.m[i]; c.g[j] = sp.g[i]; for (let k = 0; k < 3; k++) c.n[j * 3 + k] = sp.n[i * 3 + k]; }
-  for (const k of Object.keys(sp)) if (!(k in c) && !["m", "g", "n", "w", "h"].includes(k)) c[k] = sp[k];
-  if (sp.origin) c.origin = [+(sp.origin[0] - x0).toFixed(1), +(sp.origin[1] - y0).toFixed(1)];
-  if(c.origin)c.anchors={...c.anchors,ground:c.origin};
-  return c;
-}
-
-
-const textureSeed = id => [...id].reduce((h, ch) => (h * 31 + ch.charCodeAt(0)) | 0, 7) & 0xffff;
 // ---- inlined from art/creatures3d.js ----
 // Witch creatures built in 3D (see model3d.js), so they stand in true three-quarter view.
 // Units: the shoulder is about 1 high; x forward, y up, z towards the near side.
@@ -9729,9 +9571,9 @@ const textureSeed = id => [...id].reduce((h, ch) => (h * 31 + ch.charCodeAt(0)) 
 
 
 // ---- inlined from art/body-graph/graph.js ----
-// Experimental model-space graph. No production imports: migration requires visual review.
+// Experimental model-space graph. Explicit acceptance selection requires visual review.
 // x forward, y up, z across, matching model3d. Socket offsets use model axes;
-// rotating spine frames and attaching sockets to other sockets are future work.
+// Parent sockets attach at neck tips; rotating spine frames remain future work.
 
 
 const LEG_FAMILIES = Object.freeze({
@@ -9739,7 +9581,7 @@ const LEG_FAMILIES = Object.freeze({
   digitigrade: { knee: .55, bend: -.16, foot: [.12, .06, .08] },
   hoof: { knee: .5, bend: .08, foot: [.08, .09, .07] },
 });
-const KINDS = new Set(["head", "leg", "wing", "tail", "shell"]);
+const KINDS = new Set(["head", "leg", "wing", "tail", "shell", "neck", "membrane"]);
 const vec = p => Array.isArray(p) && p.length === 3 && p.every(Number.isFinite);
 const positive = n => Number.isFinite(n) && n > 0;
 const radii = r => vec(r) && r.every(positive);
@@ -9768,16 +9610,20 @@ function validateGraph(graph) {
   assert(Array.isArray(graph.sockets), "sockets array required");
   for (const s of graph.sockets) {
     assert(typeof s.id === "string" && s.id.length > 0 && !sockets.has(s.id), "unique socket ids required");
-    assert(ids.has(s.station) && vec(s.offset), `${s.id}: known station and finite offset required`);
+    assert(vec(s.offset) && (s.parent ? sockets.has(s.parent) : ids.has(s.station)), `${s.id}: known station or preceding parent and finite offset required`);
     assert(KINDS.has(s.kind), `${s.id}: unknown socket kind`);
     sockets.add(s.id);
     if (s.kind === "leg") {
       assert(Object.hasOwn(LEG_FAMILIES, s.family), `${s.id}: unknown leg family`);
       assert(vec(s.foot) && positive(s.radius), `${s.id}: foot and positive radius required`);
       assert(s.phase == null || Number.isFinite(s.phase), `${s.id}: finite gait offset required`);
-    } else if (s.kind === "tail") {
+    } else if (s.kind === "tail" || s.kind === "neck") {
       assert(Array.isArray(s.points) && s.points.length >= 2, `${s.id}: tail needs at least two points`);
       for (const p of s.points) assert(Array.isArray(p) && p.length === 4 && p.every(Number.isFinite) && positive(p[3]), `${s.id}: tail points are [x,y,z,radius]`);
+    } else if (s.kind === "membrane") {
+      assert(Array.isArray(s.vertices) && s.vertices.length === 3 && s.vertices.every(vec), `${s.id}: three finite membrane vertices required`);
+      const [a,b,c] = s.vertices;
+      assert(Math.hypot(...v3.cross(v3.sub(b,a),v3.sub(c,a))) > 1e-8, `${s.id}: degenerate membrane`);
     } else assert(radii(s.r), `${s.id}: positive part radii required`);
   }
   return graph;
@@ -9789,12 +9635,14 @@ function validateGraph(graph) {
 function compileGraph(graph, { blend = graph.blend ?? .07 } = {}) {
   validateGraph({ ...graph, blend });
   const model = new Model({ blend }), stations = new Map(graph.spine.map(s => [s.id, s]));
-  const sockets = {}, legs = [];
-  for (const s of graph.spine) model.ell(s.at.slice(), s.r.slice(), M.BODY, { part: "body" });
+  /** @type {Record<string, number[]>} */
+  const sockets = {};
+  const legs = [];
+  for (const s of graph.spine) model.ell(s.at.slice(), s.r.slice(), s.mat ?? M.BODY, { part: "body" });
   for (const [index, s] of graph.sockets.entries()) {
-    const root = v3.add(stations.get(s.station).at, s.offset);
+    const root = v3.add(s.parent ? sockets[s.parent] : stations.get(s.station).at, s.offset);
     sockets[s.id] = root;
-    const options = { part: s.id, group: s.kind === "shell" || s.kind === "wing" ? index + 2 : 1 };
+    const options = { part: s.part ?? s.id, group: s.kind === "shell" || s.kind === "wing" || s.kind === "membrane" ? index + 2 : 1 };
     if (s.kind === "leg") {
       const f = LEG_FAMILIES[s.family], end = s.foot.slice();
       assert(distance(root, end) > s.radius * 2, `${s.id}: leg too short`);
@@ -9806,16 +9654,252 @@ function compileGraph(graph, { blend = graph.blend ?? .07 } = {}) {
       model.ell(foot, footR, s.family === "hoof" ? M.ACCENT : M.BODY, options);
       model.anchors.feet.push({ c: foot, r: footR[0], group: options.group, fit: s.family === "hoof" ? "hoof" : "paw" });
       legs.push({ id: s.id, family: s.family, root, knee, end, radii: [s.radius, s.radius * .72, s.radius * .45] });
-    } else if (s.kind === "tail") {
+    } else if (s.kind === "tail" || s.kind === "neck") {
       const pts = s.points.map(p => [...v3.add(root, p.slice(0, 3)), p[3]]);
       assert(distance(pts[0].slice(0, 3), root) < 1e-8, `${s.id}: tail must begin at socket`);
       for (let i = 1; i < pts.length; i++) assert(distance(pts[i - 1].slice(0, 3), pts[i].slice(0, 3)) > Math.abs(pts[i - 1][3] - pts[i][3]), `${s.id}: degenerate tapered segment`);
-      model.chain(pts, M.BODY, options);
+      model.chain(pts, s.mat ?? M.BODY, options);
+      if (s.kind === "neck") sockets[s.id] = pts.at(-1).slice(0,3);
+    } else if (s.kind === "membrane") {
+      const [a,b,c] = s.vertices.map(p=>v3.add(root,p)), u=v3.norm(v3.sub(b,a));
+      const normal=v3.norm(v3.cross(v3.sub(b,a),v3.sub(c,a))), v=v3.norm(v3.cross(normal,u));
+      const length=distance(a,b), cx=v3.dot(v3.sub(c,a),u), cy=v3.dot(v3.sub(c,a),v);
+      const lo=Math.min(0,cx),hi=Math.max(length,cx),height=Math.abs(cy),centre=v3.add(a,v3.add(v3.mul(u,(lo+hi)/2),v3.mul(v,cy/2)));
+      model.flat(centre,u,v,(hi-lo)/2,height/2,(s0,t0)=>{
+        const x=lo+(s0+1)*(hi-lo)/2,y=(t0+1)*cy/2, f=y/cy;
+        return f>=0&&f<=1&&x>=cx*f&&x<=length*(1-f)+cx*f ? s.mat??M.BODY3 : null;
+      },{...options,bend:0});
     } else {
-      model.ell(root, s.r.slice(), s.kind === "shell" ? M.ACCENT : M.BODY, options);
+      model.ell(root, s.r.slice(), s.mat ?? (s.kind === "shell" ? M.ACCENT : M.BODY), options);
     }
   }
   return { model, sockets, legs };
+}
+
+
+// ---- inlined from art/body-graph/acceptance.js ----
+// First acceptance pack only; complete records travel through creatureVariants.
+// No implicit selection, mutable global registry, or production-default change.
+
+
+
+// ---- inlined from art/body-graph/gait.js ----
+// Experimental straight-line gait, independent of the production live rig.
+// Uses the same distance/duty relationship documented in render/rig/rig.ts.
+
+
+const gaitLength = v => Math.hypot(...v);
+const gaitVector = v => Array.isArray(v) && v.length === 3 && v.every(Number.isFinite);
+const gaitPositive = v => Number.isFinite(v) && v > 0;
+const gaitCheck = (ok, text) => { if (!ok) throw new Error(`Body gait: ${text}`); };
+const gaitCycle = p => ((p % 1) + 1) % 1;
+function gaitParameters(stride, duty, lift) {
+  gaitCheck(gaitPositive(stride) && Number.isFinite(duty) && duty > 0 && duty < 1 && Number.isFinite(lift) && lift >= 0, "invalid stride, duty or lift");
+}
+
+// Travel is signed distance in model units. Callers own accumulated distance;
+// this stateless clock freezes at rest and is independent of frame rate.
+function gaitPhase(travel, { stride = .16, duty = .65 } = {}) {
+  gaitParameters(stride, duty, 0);
+  gaitCheck(Number.isFinite(travel), "finite travel required");
+  return gaitCycle(travel * duty / stride);
+}
+
+// General three-dimensional two-bone solve. The knee lies towards bendHint in
+// the plane normal to the root-target axis. Unreachable targets are clamped
+// and explicitly reported; they are never described as ground contact.
+function solveLeg(root, target, upper, lower, bendHint = [1, 0, 0]) {
+  gaitCheck(gaitVector(root) && gaitVector(target) && gaitVector(bendHint) && gaitPositive(upper) && gaitPositive(lower), "finite vectors and positive bone lengths required");
+  const delta = v3.sub(target, root), requested = gaitLength(delta);
+  const axis = requested > 1e-10 ? v3.mul(delta, 1 / requested) : [0, -1, 0];
+  const minimum = Math.max(1e-10, Math.abs(upper - lower)), maximum = upper + lower;
+  const distance = Math.max(minimum, Math.min(maximum, requested));
+  let bend = v3.sub(bendHint, v3.mul(axis, v3.dot(bendHint, axis)));
+  if (gaitLength(bend) < 1e-8) {
+    const fallback = Math.abs(axis[0]) < .8 ? [1, 0, 0] : [0, 0, 1];
+    bend = v3.sub(fallback, v3.mul(axis, v3.dot(fallback, axis)));
+  }
+  bend = v3.norm(bend);
+  const along = (upper * upper - lower * lower + distance * distance) / (2 * distance);
+  const height = Math.sqrt(Math.max(0, upper * upper - along * along));
+  const knee = v3.add(root, v3.add(v3.mul(axis, along), v3.mul(bend, height)));
+  const end = v3.add(root, v3.mul(axis, distance));
+  return { root: root.slice(), knee, end, reachable: requested >= minimum && requested <= maximum };
+}
+
+function sampleLeg(leg, phase, { stride = .16, duty = .65, lift = .1, offset = 0 } = {}) {
+  gaitParameters(stride, duty, lift);
+  gaitCheck(Number.isFinite(phase) && Number.isFinite(offset), "finite phase and offset required");
+  const p = gaitCycle(phase + offset), planted = p < duty;
+  const swing = planted ? 0 : (p - duty) / (1 - duty);
+  // Linear stance cancels constant forward travel exactly. Smoothstep swing
+  // and sin^2 lift return to the ground continuously at both boundaries.
+  const forward = planted ? .5 - p / duty : -.5 + swing * swing * (3 - 2 * swing);
+  const target = v3.add(leg.end, [stride * forward, lift * Math.sin(swing * Math.PI) ** 2, 0]);
+  const upper = gaitLength(v3.sub(leg.knee, leg.root)), lower = gaitLength(v3.sub(leg.end, leg.knee));
+  const solved = solveLeg(leg.root, target, upper, lower, v3.sub(leg.knee, v3.lerp(leg.root, leg.end, .5)));
+  return { ...solved, target, planted: planted && solved.reachable };
+}
+
+// Poses a fresh compiled diagnostic model. The graph and the production rig are
+// untouched. Travel affects the clock; the model remains centred for strips.
+function poseGraph(graph, travel, options = {}) {
+  const result = compileGraph(graph), phase = gaitPhase(travel, options);
+  for (const leg of result.legs) {
+    const socket = graph.sockets.find(s => s.id === leg.id);
+    const pose = sampleLeg(leg, phase, { ...options, offset: socket.phase ?? 0 });
+    const parts = result.model.parts.filter(p => p.part === leg.id), cones = parts.filter(p => p.type === "cone");
+    const foot = parts.find(p => p.type === "ell");
+    cones[0].a = pose.root; cones[0].b = pose.knee;
+    cones[1].a = pose.knee; cones[1].b = pose.end;
+    const shift = v3.sub(pose.end, leg.end);
+    const anchor = result.model.anchors.feet.find(a => a.c === foot.c);
+    foot.c = v3.add(foot.c, shift);
+    anchor.c = foot.c;
+    Object.assign(leg, pose);
+  }
+  return { ...result, phase };
+}
+
+
+const ACCEPTANCE_IDS = Object.freeze(["bear","wolf","stag","bat","snail","hydra"]);
+const ACCEPTANCE_PLANS = {
+  bear:{family:"quadruped",feet:"plantigrade",width:.33,depth:.31,leg:.53,head:.27,muzzle:.26,ears:"round",tail:.17},
+  wolf:{family:"quadruped",feet:"digitigrade",width:.22,depth:.25,leg:.66,head:.22,muzzle:.32,ears:"point",tail:.58},
+  stag:{family:"quadruped",feet:"hoof",width:.21,depth:.25,leg:.86,head:.19,muzzle:.29,ears:"point",tail:.18,neck:.37,antlers:true},
+  bat:{family:"winged",width:.15,depth:.22,head:.15,muzzle:.17,ears:"round",wing:1.15},
+  snail:{family:"gastropod",width:.25,depth:.09,shell:.34},
+  hydra:{family:"branching",width:.12,depth:.09,head:.075,fan:1.65},
+};
+function acceptanceGraphGenome(base){
+  if(!ACCEPTANCE_IDS.includes(base.id))throw Error("Outside body-graph acceptance batch");
+  const out=structuredClone(base);
+  out.look={...out.look,bodyGraphAcceptance:{version:1,...ACCEPTANCE_PLANS[base.id]}};
+  return out;
+}
+function createAcceptanceVariants(genomes){
+  return Object.fromEntries(genomes.filter(g=>ACCEPTANCE_IDS.includes(g.id)).map(g=>[g.id,{graph:acceptanceGraphGenome(g)}]));
+}
+
+function stations(length,y,width,depth,count=15){
+  return Array.from({length:count},(_,i)=>{
+    const t=i/(count-1),k=.78+.22*Math.sin(t*Math.PI);
+    return {id:`spine-${i}`,at:[(t-.5)*length,y,0],r:[length/(count-1)*1.6,depth*k,width*k]};
+  });
+}
+const socket=(id,kind,station,offset,rest)=>({id,kind,station,offset,...rest});
+function neck(graph,id,station,offset,tip,r0,r1){
+  graph.sockets.push(socket(id,"neck",station,offset,{part:"head",points:[[0,0,0,r0],[tip[0]*.4,tip[1]*.45,tip[2]*.35,(r0+r1)/2],[...tip,r1]]}));
+}
+function head(graph,id,parent,r,offset=[0,0,0]){
+  graph.sockets.push({id,kind:"head",parent,offset,r,part:"head"});
+}
+
+/** A complete graph description, without rendering, globals or old builders. */
+function acceptanceGraph(S,age,frame=0){
+  const p=S.look?.bodyGraphAcceptance;
+  if(p?.version!==1)throw Error("Selected acceptance graph required");
+  if(!Number.isInteger(age)||age<0||age>3)throw Error("Graph age must be 0..3");
+  const baby=age===0,young=age===1,graph={blend:.07,spine:[],sockets:[]};
+  const meta={family:p.family,heads:[],ears:p.ears,headRadius:p.head??.1,age,frame};
+  if(p.family==="quadruped"){
+    const leg=p.leg*(baby?.65:1),depth=p.depth*(baby?1.08:young?.9:1),length=baby?.75:young?1.04:1.12;
+    graph.spine=stations(length,leg+depth,p.width,depth);
+    const first=graph.spine[0].id,last=graph.spine.at(-1).id;
+    const hr=p.head*(baby?1.18:1),tip=[.15,p.neck??.16,0];
+    neck(graph,"neck",last,[0,.04,0],tip,hr*.8,hr*.65);
+    head(graph,"head","neck",[hr*1.1,hr,hr*.88]);meta.heads.push({id:"head",r:hr,muzzle:p.muzzle*(baby?.65:1)});
+    graph.sockets.push(socket("tail","tail",first,[-.04,0,0],{part:"tail",points:[[0,0,0,p.width*.25],[-p.tail*.5,-.1,.02,p.width*.2],[-p.tail,-.14,frame?.06:-.03,.025]]}));
+    for(const fore of [false,true])for(const side of [-1,1]){
+      const station=fore?graph.spine.at(-2):graph.spine[1],x=station.at[0],family=p.feet;
+      graph.sockets.push(socket(`${fore?"fore":"hind"}-${side}`,"leg",station.id,[0,-depth*.4,side*p.width*.7],{
+        family,foot:[x+(fore?0:.06),LEG_FAMILIES[family].foot[1],side*p.width*.9],radius:(baby?.085:.065)*(family==="plantigrade"?1.4:1),
+        phase:fore===(side>0)?0:.5,
+      }));
+    }
+    Object.assign(meta,{length,top:leg+depth*2,width:p.width,depth,antlers:p.antlers});
+  }else if(p.family==="winged"){
+    graph.spine=stations(.45,.38,p.width,p.depth);
+    neck(graph,"neck","spine-14",[0,.08,0],[.1,.13,0],.12,.1);
+    head(graph,"head","neck",[p.head*1.15,p.head,p.head*.85]);meta.heads.push({id:"head",r:p.head,muzzle:p.muzzle});
+    const flap=frame?.18:-.1,span=p.wing*(baby?.7:1);
+    for(const side of [-1,1]){
+      graph.sockets.push(socket(`hindlimb-${side}`,"tail","spine-1",[0,-.06,side*.1],{part:"body",points:[[0,0,0,.026],[-.12,-.18,side*.09,.018],[-.19,-.23,side*.12,.012]]}));
+      const shoulder=[.13,.43,side*.13],elbow=[-.02,.43+flap,side*span*.52],wrist=[.24,.38+flap,side*span];
+      const root=graph.spine[10],offset=v3.sub(shoulder,root.at),id=`arm-${side}`;
+      graph.sockets.push(socket(id,"tail",root.id,offset,{part:"body",points:[[0,0,0,.025],[...v3.sub(elbow,shoulder),.02],[...v3.sub(wrist,shoulder),.013]]}));
+      const tips=[wrist,[-.08,.28+flap,side*span*.95],[-.37,.2+flap,side*span*.72],[-.44,.23,side*.27]];
+      for(let i=0;i<tips.length-1;i++){
+        graph.sockets.push(socket(`membrane-${side}-${i}`,"membrane",root.id,offset,{part:"body",vertices:[[0,0,0],v3.sub(tips[i],shoulder),v3.sub(tips[i+1],shoulder)],mat:M.BODY3}));
+        graph.sockets.push(socket(`finger-${side}-${i}`,"tail",root.id,offset,{part:"body",points:[[0,0,0,.012],[...v3.sub(tips[i],shoulder),.007]],mat:M.BODY2}));
+      }
+    }
+  }else if(p.family==="gastropod"){
+    graph.spine=stations(.95,.11,p.width,p.depth);
+    graph.sockets.push(socket("shell","shell","spine-6",[0,.28,0],{part:"body",r:[p.shell,p.shell*(baby?.85:1.1),p.shell*.72],mat:M.BODY2}));
+    for(const side of [-1,1]){
+      const tip=[.2,.3*(baby?1.1:1+age*.15),side*.11];
+      neck(graph,`stalk-${side}`,"spine-14",[0,.01,side*.06],tip,.025,.016);
+      head(graph,`eye-${side}`,`stalk-${side}`,[.027,.027,.027]);
+      graph.sockets.at(-1).mat=age===3?M.MAGIC2:M.EYE;
+    }
+  }else if(p.family==="branching"){
+    graph.spine=stations(.9,.11,p.width,p.depth);
+    const heads=[1,3,5,7][age];
+    for(let i=0;i<heads;i++){
+      const u=heads===1?0:i/(heads-1)-.5;
+      const tip=[.2-Math.abs(u)*.2,.42-Math.abs(u)*.12,u*.85*p.fan],id=`neck-${i}`;
+      neck(graph,id,"spine-14",[0,.02,0],tip,.042,.029);
+      head(graph,`head-${i}`,id,[p.head*1.2,p.head*.8,p.head*.8]);
+      meta.heads.push({id:`head-${i}`,r:p.head,muzzle:.11});
+    }
+  }else throw Error("Unknown acceptance graph family");
+  return {graph,meta};
+}
+
+// Shared anatomical head/ear/antler families. No expression heads are built.
+function attachHead(model,at,r,muzzle,ears,age){
+  const sn=v3.add(at,[r+muzzle*.35,-r*.2,0]);
+  model.ell(sn,[muzzle,r*.42,r*.5],M.BODY,{part:"head"});
+  model.ell(v3.add(sn,[muzzle*.85,0,0]),[r*.17,r*.15,r*.3],M.NOSE,{part:"head"});
+  for(const side of [-1,1]){
+    model.ell(v3.add(at,[r*.55,r*.2,side*r*.73]),[r*.09,r*.09,r*.09],M.EYE,{part:"head"});
+    if(ears==="round")model.ell(v3.add(at,[-r*.25,r*.87,side*r*.65]),[r*.3,r*.34,r*.18],M.BODY,{part:"head"});
+    if(ears==="point")model.chain([[at[0]-r*.2,at[1]+r*.5,at[2]+side*r*.65,r*.23],[at[0]-r*.3,at[1]+r*(age===0?1.15:1.7),at[2]+side*r*.8,r*.015]],M.BODY,{part:"head"});
+  }
+  return {sn};
+}
+
+/** Produces model/landmarks through the same graph compiler and gait clock. */
+function buildAcceptanceModel(S,age,frame=0){
+  const {graph,meta}=acceptanceGraph(S,age,frame);
+  const compiled=meta.family==="quadruped"?poseGraph(graph,frame*.16,{stride:.16,duty:.65,lift:.075}):compileGraph(graph);
+  const m=compiled.model,heads=[];
+  for(const h of meta.heads){const at=compiled.sockets[h.id];attachHead(m,at,h.r,h.muzzle,meta.ears,age);heads.push({c:at,r:[h.r,h.r,h.r]});}
+  if(heads.length){m.anchors.head=heads[0];m.anchors.neck={c:heads[0].c,r:heads[0].r[0]*.8,dir:[1,.2,0]};}
+  if(meta.antlers&&age>0){const H=heads[0].c,r=heads[0].r[0];
+    for(const side of [-1,1]){const a=v3.add(H,[-r*.3,r*.8,side*r*.5]),b=v3.add(a,[-.1,.4+age*.1,side*.2]);
+      m.seg(a,b,.04,.015,M.ACCENT,{part:"head",extra:true});
+      for(let i=0;i<age+1;i++){const at=v3.lerp(a,b,(i+1)/(age+2));m.seg(at,v3.add(at,[.16,.1,side*.08]),.022,.005,M.ACCENT,{part:"head",extra:true});}
+    }
+  }
+  if(meta.family==="gastropod"){
+    const at=graph.spine.at(-1).at;
+    m.anchors.head={c:at.slice(),r:[.12,.09,.12]};
+    m.anchors.neck={c:at.slice(),r:.09,dir:[1,0,0]};
+    const centre=compiled.sockets.shell,r=S.look.bodyGraphAcceptance.shell;
+    // Raised spiral along both shell flanks; an actual whorl, not stacked rings.
+    for(const side of [-1,1]){const pts=[];for(let i=0;i<=72;i++){const t=i/72,a=t*Math.PI*2*(1.2+age*.7),R=r*(.08+.8*t);pts.push([centre[0]+Math.cos(a)*R,centre[1]+Math.sin(a)*R,side*r*.73,.014]);}m.chain(pts,age===3?M.GLINT:M.ACCENT,{part:"body"});}
+  }
+  if(meta.family==="quadruped"){
+    const H=heads[0].c,hr=heads[0].r[0],nb=compiled.sockets.neck;
+    // Match existing rig attachment surface while keeping graph construction separate.
+    m.rig={head:{nb,H,hr},tail:compiled.sockets.tail,top:meta.top,len:meta.length/2,bw:meta.width,
+      legs:compiled.legs.map(l=>({name:l.id,fore:l.id.startsWith("fore"),side:l.root[2]>0?1:-1,hip:l.root,knee:l.knee,foot:l.end,r:l.radii,mat:M.BODY,fl:LEG_FAMILIES[l.family].foot[0],hoof:l.family==="hoof"}))};
+    for(const p of m.parts)if(compiled.legs.some(l=>p.part===l.id))p.part="legs";
+  }
+  m.bodyGraph=graph;
+  return {model:m,meta};
 }
 
 
@@ -11695,6 +11779,18 @@ const eyesOn = (m, c, r, dirs, size, mat, group = 1) => {
   m.anchors.head ||= { c, r, group }; m.anchors.eyes ||= { pts: dirs.map(d => Model.surface(c, r, v3.norm(d))), size }; // expressions follow the rendered smooth-union head surface
 };
 const shadow = (m, x, w) => m.ell([x, .005, 0], [w, .005, w * .6], M.NOSE, { group: 0 }); // a flyer's shadow on the ground
+// Only explicitly selected graph genomes reach this path. Legacy builders stay intact.
+function acceptanceGraph3d(S, level, frame, st, facing = "towards") {
+  const {model:m,meta}=buildAcceptanceModel(S,level,frame);
+  if(meta.family==="quadruped"&&S.levelFeatures?.[level]?.length){
+    const H=m.rig.head.H,hr=m.rig.head.hr,len=meta.length/2,top=meta.top,bw=meta.width;
+    const backAt=t=>[-len*.9+t*len*1.65,top,0];
+    evolve3d(m,S.levelFeatures[level],{H,hr,sn:v3.add(H,[hr,0,0]),L:hr,Dm:hr,nb:m.rig.head.nb,tb:m.rig.tail,
+      tuskTips:[],hornTips:[],tuskPaths:[],hornPaths:[],antlerPaths:[],earTips:[],
+      backAt,len,top,chest:top-meta.depth*2,tuck:top-meta.depth,bw,frame,front:1,level});
+  }
+  return finish(m,S,level,st,1,facing);
+}
 function finish(m, S, level, st, k, facing, ref = null, scaleOverride = null) {
   if (S.sizes.build[level] !== 1) beef(m, S.sizes.build[level]); // the adult's and legend's heavier build (its template's size curve)
   gearUp(m);
@@ -12662,6 +12758,165 @@ function spider3d(S, level, frame, st, facing = "towards") {
 }
 
 
+// ---- inlined from art/naps.js ----
+// Witch creatures asleep (Ed, 2026-10-06: "I guess we will need sleeping artwork for all the creatures"):
+// when the party's over every creature walks home, lies down and sleeps. Each species at each level
+// drawn from its own model, lying where it is: its body down on the ground (legs folded under it,
+// cut away below its ground line), its head down, eyes shut (the "asleep" expression,
+// genome/expressions.js), in 2 frames of a slow breath. Unlike a sleeping legend (legends.js) it is
+// itself: no moss, no mound, its own colours, nothing sunk. By species (NAP_POSES):
+//   lie:   the hoofed and the heavy (elk, stag, boar, bear, badger, ram, beaver, hare, otter, newt...):
+//          belly down, head laid forward on the ground;
+//   curl:  the foxes, cats and the like (fox, wolf, lynx, cat, marten, stoat, squirrel, dormouse): the body
+//          bent round into a C seen from above, head and tail meeting at the near side;
+//   tuck:  birds (owl, raven, heron): settled on their feet, head sunk into the shoulders
+//          (the heron folds its neck back, its builder's fold);
+//   coil:  the snake, round on itself;
+//   flat:  bugs and the low (beetle, woodlouse, spider, moth, snail, toad, mole, hedgehog):
+//          pressed to the ground, legs hidden; the bat and the moth wrap their wings round themselves.
+// napForm(S) is a form for withForm (creatures3d.js): critter(..., { nap: true }) draws a creature with it.
+
+
+
+// ground: the ground line as a share of the body's height from its lowest point (or, for the
+// four-legged, sink: a share from belly to back; 0 on its belly). droop: how far its head comes down
+// to the ground. curl: how far round its body bends (radians across its length). tuck: its head sunk
+// back into its body (a share of its head's size). drop: groups not drawn asleep (spread wings, spirit
+// parts). cloak: wings wrapped round it ({ c: centre, r: radii } in model units, as legends.js).
+const NAP_POSES = {
+  ...CREATURE_NAPS,
+};
+const DEFAULT = { kind: "lie", sink: .05, droop: 1 };
+const napPose = id => NAP_POSES[id] ?? DEFAULT;
+/** The breath's lift on the second frame (model units, as legends.js). */
+const BREATH = .02;
+
+// The body's bounds (its solid parts).
+function bounds(m) {
+  const b = { x0: Infinity, x1: -Infinity, y0: Infinity, y1: -Infinity, z0: Infinity, z1: -Infinity };
+  for (const q of m.parts) {
+    if (q.extra || q.cut) continue;
+    const pts = q.type === "cone" ? [[q.a, q.r1], [q.b, q.r2]] : [[q.c, Math.max(...(q.r || q.h))]];
+    for (const [c, rr] of pts) { b.x0 = Math.min(b.x0, c[0] - rr); b.x1 = Math.max(b.x1, c[0] + rr); b.y0 = Math.min(b.y0, c[1] - rr); b.y1 = Math.max(b.y1, c[1] + rr); b.z0 = Math.min(b.z0, c[2] - rr); b.z1 = Math.max(b.z1, c[2] + rr); }
+  }
+  return b;
+}
+// Moves every part by f(point, part) (each centre or end on its own; a flat by its centre).
+function move(m, f) {
+  for (const q of m.parts) { if (q.type === "cone") { q.a = f(q.a, q); q.b = f(q.b, q); } else q.c = f(q.c, q); }
+  for (const fl of m.flats) fl.c = f(fl.c, fl);
+  forAnchors(m, p => f(p, null));
+}
+// Every anchor point (a centre, the eyes' points, a top): the face is drawn at them once the scale is known, so they move with the body.
+function forAnchors(m, f) {
+  for (const a of Object.values(m.anchors || {})) for (const one of Array.isArray(a) ? a : [a]) {
+    if (!one || typeof one !== "object") continue;
+    if (Array.isArray(one.c)) one.c = f(one.c);
+    if (Array.isArray(one.top)) one.top = f(one.top);
+    if (Array.isArray(one.pts)) one.pts = one.pts.map(f);
+  }
+}
+
+// The body bent round in the ground plane: its length laid along an arc of `curl` radians about a
+// centre on its near side (+z), so head and tail come round toward each other (and the camera).
+// Each part's own axes turn with it.
+function curlBody(m, curl, cx, half) {
+  if (!(curl > 0) || half <= 0) return;
+  const rho = half / (curl / 2), turn = (v, t) => [v[0] * Math.cos(t) + v[2] * Math.sin(t), v[1], -v[0] * Math.sin(t) + v[2] * Math.cos(t)];
+  const at = p => { const t = (p[0] - cx) / rho; return [cx + (rho - p[2]) * Math.sin(t), p[1], rho - (rho - p[2]) * Math.cos(t)]; };
+  for (const q of m.parts) {
+    if (q.type === "cone") { q.a = at(q.a); q.b = at(q.b); continue; }
+    const t = (q.c[0] - cx) / rho;
+    q.c = at(q.c);
+    if (q.axes) q.axes = q.axes.map(a => turn(a, -t)); // (turned as the arc turns there: about y)
+  }
+  for (const f of m.flats) { const t = (f.c[0] - cx) / rho; f.c = at(f.c); if (f.u) f.u = turn(f.u, -t); if (f.v) f.v = turn(f.v, -t); }
+  forAnchors(m, at);
+}
+
+/** The form that lays species S down asleep (frame: 0 or 1, the breath). For withForm. */
+function napForm(S, { frame = 0 } = {}) {
+  const pose = napPose(S.id);
+  const form = (m, o) => {
+    const s = render(m, { ...o, measure: true }).s; // its scale standing: lying down it keeps its size (render would fit the lower shape to the height)
+    if (pose.drop?.length) { m.parts = m.parts.filter(q => !pose.drop.includes(q.group)); m.flats = m.flats.filter(f => !pose.drop.includes(f.group)); }
+    const b0 = bounds(m);
+    // the ground line it lies on: the four-legged on their bellies (their torso first), the rest by their height
+    const torso = m.parts[0], four = S.q && torso?.type === "ell";
+    const G = four ? (torso.c[1] - torso.r[1]) + (b0.y1 - (torso.c[1] - torso.r[1])) * (pose.sink ?? 0) : b0.y0 + (b0.y1 - b0.y0) * (pose.ground ?? 0);
+    // head down to the ground (or, a bird, sunk back into its shoulders)
+    const H = m.anchors.head?.c;
+    if (H && (pose.droop ?? 0) > 0) {
+      const nk = m.anchors.neck?.c || H, x0 = Math.min(H[0] - .05, H[0] - (H[0] - nk[0]) * 2.2), hr = m.anchors.head.r?.[1] ?? .08, dy = (G + hr * .6 - H[1]) * pose.droop;
+      if (dy < 0) move(m, (p, q) => { const t = q && [11, 12, 13].includes(q.group) ? 1 : Math.max(0, Math.min(1, (p[0] - x0) / Math.max(.05, H[0] - x0))); return [p[0], p[1] + dy * t * t * (3 - 2 * t), p[2]]; });
+    }
+    if (H && pose.tuck) {
+      const hr = m.anchors.head.r?.[1] ?? .08, dy = -hr * pose.tuck * 1.6, dx = -hr * pose.tuck;
+      move(m, p => { const t = Math.max(0, Math.min(1, 1 - Math.hypot(p[0] - H[0], p[1] - H[1]) / (hr * 2.2))); return [p[0] + dx * t, p[1] + dy * t, p[2]]; });
+    }
+    // its tail laid along the ground (curled up, it wraps round the body)
+    if (pose.tailDown) { const tl = m.parts.filter(q => q.part === "tail"); let top = -Infinity; for (const q of tl) top = Math.max(top, q.type === "cone" ? Math.max(q.a[1], q.b[1]) : q.c[1]); if (top > G) { const base = Math.min(...tl.map(q => q.type === "cone" ? Math.min(q.a[1], q.b[1]) : q.c[1])); const sq = p => [p[0], G + .02 + (p[1] - base) * pose.tailDown, p[2]]; for (const q of tl) { if (q.type === "cone") { q.a = sq(q.a); q.b = sq(q.b); } else q.c = sq(q.c); } } }
+    // round on itself (curled, coiled)
+    if (pose.curl) { const b = bounds(m); curlBody(m, pose.curl, (b.x0 + b.x1) / 2, (b.x1 - b.x0) / 2); }
+    // wings wrapped round it
+    if (pose.cloak) { const c = pose.cloak.c; m.ell([c[0], G + (c[1] - .3) + pose.cloak.r[1] * .9, c[2]], pose.cloak.r, M.BODY2, { group: 1, paint: p => Math.abs(Math.sin(Math.atan2(p[2], p[0] - c[0]) * 5)) > .85 ? M.BODY3 : undefined }); }
+    if (frame % 2) {
+      const lift = Math.max(BREATH, 1.8 / s), top = bounds(m).y1, k = lift / Math.max(.05, top - G);
+      move(m, p => [p[0], G + (p[1] - G) * (1 + k), p[2]]);
+      // A flat flyer's dominant volume can merely translate under the centre
+      // transform, then crop back to identical pixels. Its resting thorax and
+      // wrapped wings must swell too, rather than only moving their centres.
+      if (S.plan === "moth" || S.plan === "dragonfly") for (const q of m.parts) {
+        if (q.extra || q.cut || ![M.BODY,M.BODY2,M.BODY3,M.BELLY].includes(q.mat)) continue;
+        if (q.type === "ell") q.r = [q.r[0],q.r[1]+lift*.5,q.r[2]];
+        else if (q.type === "cone") { q.r1 += lift*.4; q.r2 += lift*.4; }
+      }
+    } // its breath: in, visibly swelling above the ground
+    const b = bounds(m), cx = (b.x0 + b.x1) / 2, cz = (b.z0 + b.z1) / 2; // (curled, its middle has moved toward the near side)
+    m.clipY = G;
+    let scale = s, sp;
+    const heightBudget = o.sizeTarget ?? null;
+    // Lying down can widen the model into the camera's vertical projection
+    // (especially a snail's shell). Keep the standing visible age budget after
+    // deformation and breathing, using native rays rather than resampling art.
+    for (let attempt = 0; attempt < 2; attempt++) {
+      const res = render(m, { scale, facing: o.facing });
+      res.sp.origin = res.project([cx, G, cz]);
+      res.sp.groundLine = G;
+      sp = crop(res.sp);
+      if (!heightBudget || sp.h <= heightBudget) break;
+      scale *= (heightBudget - .5) / sp.h;
+    }
+    return sp;
+  };
+  form.motes = false;
+  form.fold = pose.fold ?? 0;
+  return form;
+}
+
+// Cropped to what is drawn (what was cut under the ground leaves empty room), its origin moved with it.
+function crop(sp) {
+  let x0 = sp.w, x1 = -1, y0 = sp.h, y1 = -1;
+  for (let y = 0; y < sp.h; y++) for (let x = 0; x < sp.w; x++) if (sp.m[y * sp.w + x]) { x0 = Math.min(x0, x); x1 = Math.max(x1, x); y0 = Math.min(y0, y); y1 = Math.max(y1, y); }
+  if (x1 < 0) return sp;
+  // Retain native canvas below the occupied box when its projected ground
+  // centre lies lower. Preserve the actual anchor, never clamp or clip it.
+  if (sp.origin) y1 = Math.max(y1, Math.ceil(sp.origin[1] - 2));
+  // Cropping must retain enough native top margin to keep the actual ground
+  // anchor in the lower half. Do not move the world-space anchor to satisfy
+  // the crop: a low curled torso can straddle its projected ground centre.
+  if (sp.origin) y0 = Math.max(0, Math.min(y0, Math.floor(2 * sp.origin[1] - y1 - 1)));
+  const W = x1 - x0 + 1, H = y1 - y0 + 1, c = new sp.constructor(W, H);
+  for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) { if(y+y0>=sp.h)continue;const i = (y + y0) * sp.w + x + x0, j = y * W + x; c.m[j] = sp.m[i]; c.g[j] = sp.g[i]; for (let k = 0; k < 3; k++) c.n[j * 3 + k] = sp.n[i * 3 + k]; }
+  for (const k of Object.keys(sp)) if (!(k in c) && !["m", "g", "n", "w", "h"].includes(k)) c[k] = sp[k];
+  if (sp.origin) c.origin = [+(sp.origin[0] - x0).toFixed(1), +(sp.origin[1] - y0).toFixed(1)];
+  if(c.origin)c.anchors={...c.anchors,ground:c.origin};
+  return c;
+}
+
+
+const textureSeed = id => [...id].reduce((h, ch) => (h * 31 + ch.charCodeAt(0)) | 0, 7) & 0xffff;
+
 // Every species is built in 3D (true three-quarter view, Ed 2026-10-03): four-legged ones by
 // quad3d, the others by a builder per body plan.
 const MODELLED = new Map(Object.entries({ owl: owl3d, hedgehog: hedgehog3d, toad: toad3d, troll: troll3d, raven: raven3d, heron: heron3d, bat: bat3d, mole: mole3d, armadillo: armadillo3d, beetle: beetle3d, scarab: scarab3d, snail: snail3d, woodlouse: woodlouse3d, snake: snake3d, hydra: hydra3d, moth: moth3d, spider: spider3d, dragonfly: dragonfly3d, crab: crab3d, rattlesnake: rattlesnake3d, scorpion: scorpion3d, penguin: penguin3d, quetzal: quetzal3d })); // body plan -> 3D builder; four-legged species all use quad3d
@@ -12671,7 +12926,9 @@ const MODELLED = new Map(Object.entries({ owl: owl3d, hedgehog: hedgehog3d, toad
 const IDLE_BUILDERS = { sentinel: sentinel3d, rattle: rattle3d };
 
 // Builds one creature's sprite (uncached): its body plan's builder.
-const buildCreature = (S, level, frame, st, facing = "towards") => S.q ? quad3d(S, level, frame, st, facing) : MODELLED.get(S.plan)(S, level, frame, st, facing);
+const buildCreature = (S, level, frame, st, facing = "towards") => S.look?.bodyGraphAcceptance
+  ? acceptanceGraph3d(S,level,frame,st,facing)
+  : S.q ? quad3d(S, level, frame, st, facing) : MODELLED.get(S.plan)(S, level, frame, st, facing);
 
 // ================= the bestiary: 30 species, each a genome record (art/genome/species.js) =================
 // The records hold each species' template, palette, proportions and parts as data (#79 stage 1);
@@ -20669,6 +20926,7 @@ function rigShoe(leg, style, s, st) {
 // its sleeping look, not an expression; the rig keeps the plain head for the rest (render/rig/rigView.ts withFace).
 function rigFaces(id, level, st, pivot, s, gear, faces = true) {
   const out = {}, S = speciesFor(id, st, level);
+  if(S.look?.bodyGraphAcceptance)return out; // no expression-head construction in acceptance graphs
   for (const face of EXPRESSIONS) if (face !== "neutral" && (face !== "asleep" || level === 3) && (faces || face === "asleep")) out[face] = rigPiece(rigCapture(id, level, st, face, gear).m, ["head"], pivot, s, { S, level, st });
   if (faces && S?.plan === "quad" && !S?.q?.beak) for (const face of Object.keys(JAW_FACES)) out[face] = rigPiece(rigCapture(id, level, st, face, gear).m, ["head"], pivot, s, { S, level, st }); // (the open jaw: a bite, a roar, a yawn; the snouted four-legged ones)
   return out;
