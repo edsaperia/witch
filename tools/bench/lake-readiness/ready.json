@@ -31,7 +31,7 @@
   "driverFiles": [
     {
       "path": ".gitattributes",
-      "sha256": "81e04963f596ed905a4dab309b9d2b46887456406bb7437c571e13834942ecba"
+      "sha256": "74bdf9ddc4ab6715245181b6e335a4a895021f7da4e8eb5760d17aec38c0c645"
     },
     {
       "path": "README.md",
