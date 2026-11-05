@@ -37,3 +37,6 @@ Trees, grass, ground and lighting are freely available as visual outputs where t
 Light versions may strengthen ordinary communication: tense vegetation during a wind-up, atmosphere reflecting legend restlessness, vegetation responding to affection, or music quality affecting environmental clarity. These remain candidate mappings. Use consistent meanings in normal play; mushrooms can amplify, spread or misroute them.
 
 Projects are in [visual-response-projects.md](visual-response-projects.md); the growing effect catalogue and discovery rule are in [cauldron.md](cauldron.md).
+
+### CPU smoke dimming for markers (deferred, 2026-11-05)
+Optional nicety only: dim letters and animal rings using CPU puff math if Ed explicitly requests smoke matching again. Deferred because reproducing puff projection, world bending and opacity is not a trivial removal; PR1558 instead removes the GPU pass/readback at Ed's direction. No implementation authorized by this backlog entry.
