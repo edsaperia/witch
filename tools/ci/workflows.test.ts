@@ -43,7 +43,12 @@ describe("shared CI game build", () => {
     expect(builds[1].step.run).toContain("cd base && npm ci && npm run build");
     expect(builds[1].step.run).toContain("mv dist dist-same");
     expect(builds[1].step.env).toEqual({ WITCH_VERSION: "${{ github.run_number }}", WITCH_SHA: "${{ github.event.pull_request.head.sha }}" });
-    expect(jobs["game-unchanged"].steps.find((s: any) => s.with?.path === "base").with.ref).toContain("pull_request.base.sha");
+    // The base is the tested merge commit's first parent (the base-branch tip it was merged against), not the stale event base.sha.
+    const steps = jobs["game-unchanged"].steps, resolve = steps.find((s: any) => s.id === "base");
+    expect(steps.find((s: any) => s.with?.path === "head").with["fetch-depth"]).toBe(2);
+    expect(resolve.run).toContain("HEAD^1");
+    expect(resolve.env.PR_HEAD).toContain("pull_request.head.sha");
+    expect(steps.find((s: any) => s.with?.path === "base").with.ref).toBe("${{ steps.base.outputs.sha }}");
   });
   it("skips only the benchmark itself when the game build is byte-identical to base", () => {
     const steps = jobs["game-unchanged"].steps, same = steps.findIndex((s: any) => s.id === "same");
