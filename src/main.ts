@@ -427,6 +427,7 @@ function updateChartWarm(): void {
 requestAnimationFrame(() => setTimeout(async () => {
   const night = N();
   if (night.arrival) bedFirst(night); // (the island's link loaded anew, &arrive=1: in bed before the dive, as a sail in place)
+  else if (inBedroom) view.asleepInBed = mutate("wake: first bed", () => tuckIn(night.game)); // (in her bed, the camera on her, before the start's made round her, as the bed's next night: nightInPlace; drawn there under the loading screen, never at her decks first)
   await view.prepare();
   night.flags.ready = true;
   // The sea chart's renderer and shaders made ahead, while the start screen shows (ui/chartOverlay.ts prepareChart): E at the map
@@ -1399,9 +1400,10 @@ function wakeFirst(): void {
 }
 function wakeFirstNow(): void {
   const n = N();
-  bootAsleep = false; morningAhead = null; // (the morning itself from here on: its wake-up's pile)
+  bootAsleep = false; morningAhead = null; view.asleepInBed = false; // (the morning itself from here on: its wake-up's pile; the wake-up has her in bed)
   firstEver = !wokenBefore();
-  if (!wakeInBedroom(n.game) || !startWake(n.game, n.game.herTime, { mirrored: mirrored() })) { wakeCard?.hide(); dressCreator(); creator.show(); return; }
+  // (tucked in, not beside her bed: the camera settled on her in it, so nothing moves as the loading screen fades; Ed, 2026-11-05)
+  if (!tuckIn(n.game) || !startWake(n.game, n.game.herTime, { mirrored: mirrored() })) { wakeCard?.hide(); dressCreator(); creator.show(); return; }
   mark("opening:wake");
   start();
   if (!gestured) soundNote(); else sound.wake(); // (the alarm heard once she's pressed something: browsers keep sound off till then)
