@@ -1783,7 +1783,7 @@
         "minFromStone": {
           "type": "number",
           "minimum": 0,
-          "description": "its edge at least this many metres from its area's runestone (where the soundsystem comes), clear of the stone's clearing and the party's dance space; a small area with no such spot takes the farthest that fits (logged)."
+          "description": "its edge at least this many metres from its area's runestone (where the soundsystem comes), clear of the stone's clearing and the party's dance space; a small area with no such spot grows to hold one (logged)."
         },
         "minFromOtherStones": {
           "type": "number",
