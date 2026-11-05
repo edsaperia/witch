@@ -336,6 +336,7 @@ says what each note covers.
 
 ## [Testing tools](testing.md)
 
+- Identical-tree release validation reuse
 - Shared still capture harness
 - A quick proof shot
 - Publishing previews

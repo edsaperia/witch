@@ -55,10 +55,12 @@ function rigShoe(leg, style, s, st) {
   return RIG_HEADINGS.map(h => { const r = render(m, { scale: s, yaw: h, projected: true }), [px, py] = r.project([0, 0, 0]); return rigCropped(r.sp, px, py); });
 }
 // Its head piece in each expression but neutral (the head piece itself): { angry, happy, dazed }, a legend's asleep, and a snouted four-legged one's open jaw (bite, yawn).
-function rigFaces(id, level, st, pivot, s, gear) {
+// faces false (tuning looks.expressions off, Ed 2026-11-05: "Scrap animal expressions for now."): only a legend's asleep, part of
+// its sleeping look, not an expression; the rig keeps the plain head for the rest (render/rig/rigView.ts withFace).
+function rigFaces(id, level, st, pivot, s, gear, faces = true) {
   const out = {}, S = speciesFor(id, st, level);
-  for (const face of EXPRESSIONS) if (face !== "neutral" && (face !== "asleep" || level === 3)) out[face] = rigPiece(rigCapture(id, level, st, face, gear).m, ["head"], pivot, s, { S, level, st });
-  if (S?.plan === "quad" && !S?.q?.beak) for (const face of Object.keys(JAW_FACES)) out[face] = rigPiece(rigCapture(id, level, st, face, gear).m, ["head"], pivot, s, { S, level, st }); // (the open jaw: a bite, a roar, a yawn; the snouted four-legged ones)
+  for (const face of EXPRESSIONS) if (face !== "neutral" && (face !== "asleep" || level === 3) && (faces || face === "asleep")) out[face] = rigPiece(rigCapture(id, level, st, face, gear).m, ["head"], pivot, s, { S, level, st });
+  if (faces && S?.plan === "quad" && !S?.q?.beak) for (const face of Object.keys(JAW_FACES)) out[face] = rigPiece(rigCapture(id, level, st, face, gear).m, ["head"], pivot, s, { S, level, st }); // (the open jaw: a bite, a roar, a yawn; the snouted four-legged ones)
   return out;
 }
 // A model of only the primitives labelled with one of `labels`.
@@ -102,7 +104,8 @@ function rigDisc(r, mat, s, paint, rod = false) {
 // joints are in model units: legs [{ name, fore, side, hip, knee, foot, r: [hip, knee, foot] }],
 // head { nb, H }, tail (its base) for the four-legged; spine [[x, y, z, r]...] and head for a serpent.
 // gear (optional): a party animal's (art/creatures.js partyGear: collar, hat, glasses, shoes), baked on (shoes as pieces.shoe).
-export function rigParts(id, level, st, gear = null) {
+// faces: its expression heads too (rigFaces; the game passes tuning looks.expressions, off for now; the art's own tools keep them).
+export function rigParts(id, level, st, gear = null, faces = true) {
   const S = speciesFor(id, st, level);
   let tpl = S.q ? "quadruped" : S.plan === "snake" ? "serpent" : null;
   if (!tpl && !gear?.stilt) return null;
@@ -116,9 +119,9 @@ export function rigParts(id, level, st, gear = null) {
     for (const l of R.legs) discSet(l.mat, legR);
     const hoof = R.legs.find(l => l.hoof); if (hoof) discSet(M.NOSE, radii(R.legs.map(l => l.fl * .9)));
     else discSet(R.legs[0].mat, radii(R.legs.map(l => l.fl * .9)));
-    return { id, level, template: tpl, s, joints: { legs: R.legs, head: R.head, tail: R.tail, top: R.top, len: R.len, bw: R.bw }, discs, pieces: { shoe: gear?.shoes && !gear.woken ? rigShoe(R.legs[0], gear.shoes, s, st) : null, torso: rigPiece(m, ["body"], [0, 0, 0], s, { S, level, st }), head: rigPiece(m, ["head"], R.head.nb, s, { S, level, st }), tail: rigPiece(m, ["tail"], R.tail, s, { S, level, st }) }, faces: rigFaces(id, level, st, R.head.nb, s, gear) };
+    return { id, level, template: tpl, s, joints: { legs: R.legs, head: R.head, tail: R.tail, top: R.top, len: R.len, bw: R.bw }, discs, pieces: { shoe: gear?.shoes && !gear.woken ? rigShoe(R.legs[0], gear.shoes, s, st) : null, torso: rigPiece(m, ["body"], [0, 0, 0], s, { S, level, st }), head: rigPiece(m, ["head"], R.head.nb, s, { S, level, st }), tail: rigPiece(m, ["tail"], R.tail, s, { S, level, st }) }, faces: rigFaces(id, level, st, R.head.nb, s, gear, faces) };
   }
   // a serpent: its head baked, its body discs (speckled like its coat) by the spine's radii
   discSet(M.BODY, radii(R.spine.map(p => p[3])), p => spotty([p[0] * 1.5, p[1], p[2]], 14, .3) ? M.BODY3 : undefined);
-  return { id, level, template: tpl, s, joints: { spine: R.spine, head: R.head, hr: R.hr }, discs, pieces: { head: rigPiece(m, ["head"], R.head, s, { S, level, st }), wings: rigPiece(m, ["body"].filter(() => m.parts.some(q => q.part === "body" && q.extra)), [0, .2, 0], s, { S, level, st }) }, faces: rigFaces(id, level, st, R.head, s, gear) };
+  return { id, level, template: tpl, s, joints: { spine: R.spine, head: R.head, hr: R.hr }, discs, pieces: { head: rigPiece(m, ["head"], R.head, s, { S, level, st }), wings: rigPiece(m, ["body"].filter(() => m.parts.some(q => q.part === "body" && q.extra)), [0, .2, 0], s, { S, level, st }) }, faces: rigFaces(id, level, st, R.head, s, gear, faces) };
 }

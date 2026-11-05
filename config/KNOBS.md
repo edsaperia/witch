@@ -4929,9 +4929,9 @@ How strong the diagonal moonbeam bands are, times the style's Moonbeams knob: 0 
 
 ### `looks`
 
-How creatures look in their different states, such as the angry brows of an enraged one.
+How creatures look in their different states, such as an enraged one's red tint.
 
-The creature states' looks (Ed, issue #87; render/looks.ts). The angry brows are a stopgap for an expression the creature generator will draw (render/looks.ts expression).
+The creature states' looks (Ed, issue #87; render/looks.ts). Their faces (render/looks.ts expression, art/genome/expressions.js) are off for now: looks.expressions.
 Code: `render/looks.ts`
 
 - **`looks.enragedTint`**: An enraged creature's whole sprite is tinted toward a colour, keeping its shading.
@@ -4943,6 +4943,10 @@ Code: `render/looks.ts`
   a pixel 💢 beside an enraged creature's head on the side it faces, popping on a pulse, size times its level's bubble size (bubbles.levelScale). Tint and 💢 each on its own (amount 0 or on false turns one off); both for now [2].
 - **`looks.partyGlow`**: every happy and leashed animal has sparkles twinkling pixels round it, each lit for a moment about rate times a second, size times three game pixels, at strength brightness (additive); leashed ones keep their collar on top.
   1. Ed, 2026-10-05: "party animals could sparkle or glow a little"
+- **`looks.expressions`**: Whether creatures change their faces (angry, happy, dazed, a bite's or a yawn's open jaw); off, every creature keeps its plain face and none of those faces is drawn.
+  1. Ed, 2026-11-05: "Scrap animal expressions for now."
+  Measured first: at the game's zoom the faces didn't read (angry only by the enraged tint, red eyes and 💢; happy and dazed a few pixels in a 3 to 5 pixel eye; bite and yawn only as an open jaw on the snouted four-legged animals), and the face sets were about half of the creature art's drawing time at load. Off (false, the default): no face set is asked for or drawn (render/assets.ts faceArt answers nothing), the live rig's pages bake no expression heads (only a sleeping legend's asleep one, part of its sleeping look), a party sheet is drawn without its happy face and the woken (enraged) set without its angry face's narrowed eyes and brows. The enraged tint, its red eyes and 💢, party clothes and sparkles, dazed stars, bite lunges and the other body animations are not faces and stay. On (true): the faces as before.
+  Code: `art/genome/expressions.js`, `render/assets.ts`, `render/view/creatures.ts`
 
 | knob | type | range |
 |---|---|---|
@@ -4955,6 +4959,7 @@ Code: `render/looks.ts`
 | `looks.partyGlow.rate` | number | 0 to … |
 | `looks.partyGlow.size` | number | 0 to … |
 | `looks.partyGlow.strength` | number | 0 to … |
+| `looks.expressions` | boolean |  |
 
 ### `tone`
 

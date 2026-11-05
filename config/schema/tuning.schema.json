@@ -14596,15 +14596,20 @@
           ],
           "additionalProperties": false,
           "description": "every happy and leashed animal has sparkles twinkling pixels round it, each lit for a moment about rate times a second, size times three game pixels, at strength brightness (additive); leashed ones keep their collar on top."
+        },
+        "expressions": {
+          "type": "boolean",
+          "description": "Whether creatures change their faces (angry, happy, dazed, a bite's or a yawn's open jaw); off, every creature keeps its plain face and none of those faces is drawn."
         }
       },
       "required": [
         "enragedTint",
         "anger",
-        "partyGlow"
+        "partyGlow",
+        "expressions"
       ],
       "additionalProperties": false,
-      "description": "How creatures look in their different states, such as the angry brows of an enraged one."
+      "description": "How creatures look in their different states, such as an enraged one's red tint."
     },
     "tone": {
       "type": "object",

@@ -46,6 +46,10 @@ node tools/config/linkSwitches.mjs           refresh each record's readIn from t
 node tools/config/linkSwitches.mjs --check   say what's out of step (as the test does), change nothing
 ```
 
+## `schema-runtime.mjs`
+
+Load the schema gate's real TypeScript/data modules without a Vite server or SSR RPC timeout.
+
 ## `schema.mjs`
 
 The config schemas: writes and checks config/schema/*.schema.json and the knob reference config/KNOBS.md.
@@ -79,5 +83,6 @@ node tools/config/typegen.mjs --check
 
 - `format.test.ts`
 - `inventory.test.ts`
+- `schema-runtime.test.ts`
 - `stampChangelog.test.ts`
 - `typegen.test.ts`

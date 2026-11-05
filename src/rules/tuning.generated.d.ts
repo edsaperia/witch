@@ -2861,6 +2861,7 @@ export type SchemaTuning = {
       "size": number;
       "strength": number;
     };
+    "expressions": boolean;
   };
   "tone": {
     "black": number;

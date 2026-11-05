@@ -1,5 +1,9 @@
 # Testing tools
 
+Pages publication queue (Ed, 2026-11-04, coordinator1476#6643311785): a started snapshot publisher is never cancelled by another live, manual or preview request. GitHub's single pending concurrency slot coalesces arrivals; its eventual job checks out latest gh-pages after acquiring the shared lock, so even a preview request carries any live root committed before that checkout. Live requests bypass the preview debounce. Main content therefore progresses in the next started snapshot rather than depending on a live-labelled pending job surviving preview churn. Existing source activation and canonical public version.json verification remain separate; source tests do not measure hosted queue/deploy time.
+
+**Identical-tree release validation reuse** (CI item 2, 2026-11-04): only a main push may reuse full successful same-repository release/publish PR validation into main. `tools/ci/release-reuse.mjs` records the actual checkout commit/tree separately from the PR head, workflow workload fingerprint, exact Node/runner image and run attempt. Eight matching records include all four complete unit shards; lookup additionally verifies the merged PR, both checked/merged Git trees, completed successful source jobs and latest attempt. Missing, expired, malformed, partial or mismatched evidence runs full CI. PR/prototype never reuse. Build/config checks and main publication remain fresh for current version/SHA/upcoming metadata; validation jobs retain their status gates and name the reused source in logs. Synthetic safety coverage lives in `tools/ci/release-reuse.test.ts` and `workflows.test.ts`; no fight simulation is needed for this routing change.
+
 **Shared still capture harness** (#1556, canonical #1555, 2026-10-31):
 `tools/shots/still.mjs` loads a caller-owned allocated page, verifies its served
 version, seeds random and catches the manual hook before the game steps. Wall
