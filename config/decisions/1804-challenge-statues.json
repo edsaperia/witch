@@ -57,14 +57,14 @@
       "pr": 1804,
       "group": "Challenge statues",
       "label": "Challenge statues: gap between posts (m)",
-      "note": "How much further in each next statue of a kind stands (its youth after its adult), still nearer its column than the middle. A new night: it reloads.",
+      "note": "How much further in each next statue of a kind stands (its youth after its adult, nearer the middle on every column), still nearer its column than the middle (Ed, 2026-11-04: \"Further apart, same line\"; on #1827, \"youths should be closer to the middle of the circle than the elder. If this doesn't fit, make the circle bigger.\"): 19, the youth 22.5 m in on the 50 m circle, lifted past its adult's head up the screen on the column due south. A new night: it reloads.",
       "control": {
         "type": "slider",
         "min": 1,
-        "max": 10,
+        "max": 30,
         "step": 0.5
       },
-      "default": 3.5,
+      "default": 19,
       "apply": {
         "knob": "challenge.statues.gap",
         "reload": true

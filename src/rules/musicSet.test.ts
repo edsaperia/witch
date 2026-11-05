@@ -74,13 +74,14 @@ describe("a night's set", () => {
     expect(slow.steps.findIndex(s => s.role === "peak")).toBeLessThan(even.steps.findIndex(s => s.role === "peak"));
   });
 
-  it("is the hand-picked set on the first home night, and the game plays it", () => {
+  it("is the hand-picked set on a 10-wave home night, and the game plays it (the first home night's till Ed's 2026-11-04 home: 5 waves now, a set of its own)", () => {
     const n = planNight(style, { seed: 5, island: "home", waves: 10 });
     expect(n.curated).toBe(true);
     expect(n.steps.map(s => s.family)).toEqual(style.curated!.steps.map(c => c.family));
     expect(isCurated(style, { island: "home", waves: 20 })).toBe(false);
     expect(isCurated(style, { island: "fox", waves: 10 })).toBe(false);
-    const g = newGame(11, { ...TUNING, map: { ...TUNING.map, islandAreas: 10, island: "home" } } as typeof TUNING); // (the game's own map: the home island; the tests' is the radius map)
+    expect(isCurated(style, { island: "home", waves: 5 })).toBe(false); // (home at a campaign's start: 5 areas, so 5 waves)
+    const g = newGame(11, { ...TUNING, home: { ...TUNING.home, start: 10 }, map: { ...TUNING.map, islandAreas: 10, island: "home" } } as typeof TUNING); // (the game's own map: the home island, as big as the set's; the tests' is the radius map)
     expect(g.map.island?.kind).toBe("home");
     expect(g.musicSet?.curated).toBe(true);
     expect(g.musicSet?.waves).toBe(10);

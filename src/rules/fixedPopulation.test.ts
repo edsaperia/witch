@@ -66,7 +66,9 @@ it("explicit runaways remain asleep on the beach at victory, with the population
   });
 
   it("the party lost mid-night: nobody gone, every one asleep, those from the beach at home", ctx => {
-    const { g, bot, start, ran } = night(200);
+    // (lost at 150 s: 200 till home's packs grew by the islands found, Ed 2026-11-04: none found here so every area one young, and
+    // the bot wins this night at about 181 s)
+    const { g, bot, start, ran } = night(150);
     expect(g.partyOver).toBeTruthy();
     expect(ran.size).toBeGreaterThan(0);
     expect(g.creatures.filter(c => c.gone || c.beached).map(c => c.id)).toEqual([]); // (up off the beach at once)
@@ -76,7 +78,7 @@ it("explicit runaways remain asleep on the beach at victory, with the population
     // there is the rule: the walk is given half an hour of game time, far past any slow walk home, so only one stuck awake fails it)
     let steps = 0;
     for (; steps < 1800 * 60 && g.creatures.some(c => !c.asleep && !c.partyLegend && !c.statue); steps++) stepGame(g, bot.decide(g), 1 / 60);
-    outcome(ctx, "seconds from the party lost (game time 200 s) to every one asleep", steps / 60, { unit: "s", was: WAS.asleepAfter, near: 60, line: "< 600" });
+    outcome(ctx, "seconds from the party lost (game time 150 s) to every one asleep", steps / 60, { unit: "s", was: WAS.asleepAfter, near: 60, line: "< 600" });
     expect(g.creatures.length).toBe(start);
     expect(g.creatures.filter(c => c.gone || c.beached).map(c => c.id)).toEqual([]);
     expect(g.creatures.filter(c => !c.asleep && !c.partyLegend && !c.statue).map(c => c.id)).toEqual([]);

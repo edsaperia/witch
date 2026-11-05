@@ -1,0 +1,24 @@
+{
+  "pr": 1817,
+  "group": "Roster variety",
+  "decisions": [
+    {
+      "id": "rosterNeighbourhood",
+      "pr": 1817,
+      "group": "Roster variety",
+      "label": "Roster neighbourhood (degrees)",
+      "note": "How far either side of a kind's island's bearing its compass neighbourhood reaches: every other kind on one area while the neighbourhood has kinds, second areas only once it runs out (Ed, 2026-11-04: \"Now that islands have fewer areas, we can have fewer (none?) repeats of creature types on an island, besides the island of the creature type itself\"; the middle way). 0: the 2026-10-28 rule (every other kind on 2 areas); 180: the whole compass. Try it with ?island=fox. A new map: it reloads.",
+      "control": {
+        "type": "slider",
+        "min": 0,
+        "max": 180,
+        "step": 15
+      },
+      "default": 90,
+      "apply": {
+        "knob": "map.rosterNeighbourhood",
+        "reload": true
+      }
+    }
+  ]
+}

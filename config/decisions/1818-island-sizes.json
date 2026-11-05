@@ -1,0 +1,114 @@
+{
+  "pr": 1818,
+  "group": "Island sizes",
+  "decisions": [
+    {
+      "id": "phaseSize1",
+      "pr": 1818,
+      "group": "Island sizes",
+      "label": "Phase 1 island (areas)",
+      "note": "The areas (stumps and waves) a phase 1 island has (islands.phaseSizes; Ed, 2026-11-04: \"We could make waves 5 / 10 / 15 / 20 / 25 / 30 / 64\", \"yes, start island sizes\"; 10, as before). Its legends (1 in 5), roster and challenge pack follow. The sea chart keeps the built sizes. A new map: it reloads.",
+      "control": {
+        "type": "slider",
+        "min": 5,
+        "max": 64,
+        "step": 1
+      },
+      "default": 10,
+      "apply": {
+        "knob": "islands.phaseSizes.0",
+        "reload": true
+      }
+    },
+    {
+      "id": "phaseSize2",
+      "pr": 1818,
+      "group": "Island sizes",
+      "label": "Phase 2 island (areas)",
+      "note": "The areas (stumps and waves) a phase 2 island has (islands.phaseSizes; Ed, 2026-11-04: \"We could make waves 5 / 10 / 15 / 20 / 25 / 30 / 64\", \"yes, start island sizes\"; 15, 20 till then). Its legends (1 in 5), roster and challenge pack follow. The sea chart keeps the built sizes. A new map: it reloads.",
+      "control": {
+        "type": "slider",
+        "min": 5,
+        "max": 64,
+        "step": 1
+      },
+      "default": 15,
+      "apply": {
+        "knob": "islands.phaseSizes.1",
+        "reload": true
+      }
+    },
+    {
+      "id": "phaseSize3",
+      "pr": 1818,
+      "group": "Island sizes",
+      "label": "Phase 3 island (areas)",
+      "note": "The areas (stumps and waves) a phase 3 island has (islands.phaseSizes; Ed, 2026-11-04: \"We could make waves 5 / 10 / 15 / 20 / 25 / 30 / 64\", \"yes, start island sizes\"; 20, 30 till then). Its legends (1 in 5), roster and challenge pack follow. The sea chart keeps the built sizes. A new map: it reloads.",
+      "control": {
+        "type": "slider",
+        "min": 5,
+        "max": 64,
+        "step": 1
+      },
+      "default": 20,
+      "apply": {
+        "knob": "islands.phaseSizes.2",
+        "reload": true
+      }
+    },
+    {
+      "id": "phaseSize4",
+      "pr": 1818,
+      "group": "Island sizes",
+      "label": "Phase 4 island (areas)",
+      "note": "The areas (stumps and waves) a phase 4 island has (islands.phaseSizes; Ed, 2026-11-04: \"We could make waves 5 / 10 / 15 / 20 / 25 / 30 / 64\", \"yes, start island sizes\"; 25, 40 till then). Its legends (1 in 5), roster and challenge pack follow. The sea chart keeps the built sizes. A new map: it reloads.",
+      "control": {
+        "type": "slider",
+        "min": 5,
+        "max": 64,
+        "step": 1
+      },
+      "default": 25,
+      "apply": {
+        "knob": "islands.phaseSizes.3",
+        "reload": true
+      }
+    },
+    {
+      "id": "phaseSize5",
+      "pr": 1818,
+      "group": "Island sizes",
+      "label": "Phase 5 island (areas)",
+      "note": "The areas (stumps and waves) a phase 5 island has (islands.phaseSizes; Ed, 2026-11-04: \"We could make waves 5 / 10 / 15 / 20 / 25 / 30 / 64\", \"yes, start island sizes\"; 30, 50 till then). Its legends (1 in 5), roster and challenge pack follow. The sea chart keeps the built sizes. A new map: it reloads.",
+      "control": {
+        "type": "slider",
+        "min": 5,
+        "max": 64,
+        "step": 1
+      },
+      "default": 30,
+      "apply": {
+        "knob": "islands.phaseSizes.4",
+        "reload": true
+      }
+    },
+    {
+      "id": "fullPhase",
+      "pr": 1818,
+      "group": "Island sizes",
+      "label": "Full packs from phase",
+      "note": "The phase whose islands reach full packs at their last stump (population.swarm.fullPhase; Ed, 2026-11-04: \"we should rebalance this so phase 5 islands get to full packs\"): an island of phase p reaches p over this of the way along the curve; home by the share of the islands found. Lower: earlier islands reach fuller packs. A new map: it reloads.",
+      "control": {
+        "type": "slider",
+        "min": 1,
+        "max": 6,
+        "step": 1
+      },
+      "default": 5,
+      "apply": {
+        "knob": "population.swarm.fullPhase",
+        "reload": true
+      }
+    }
+  ]
+}

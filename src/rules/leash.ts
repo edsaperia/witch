@@ -15,6 +15,7 @@ import { befriend, inConga, invitableNow, stateOf } from "./creatureStates";
 import { facingAway } from "./witch";
 import { offSigils, onFloorSigil } from "./sigilAvoid";
 import { takePulled } from "./chains";
+import type { HomeArea } from "./homeArea";
 
 export interface PlacedSigil { id: number; x: number; z: number; /** game time it was put down */ at: number }
 
@@ -245,7 +246,7 @@ export function letPartyLegendGo(c: Creature): void {
  *  true only in ground mode (no inviting, placing or picking up from the treetops). `guards`: her stack's creatures seen as
  *  placed at home while she's in the treehouse (rules/houseGuard.ts): they rest by those spots as by a placed sigil, not by
  *  her; her stack itself is unchanged. */
-export function stepLeash(s: LeashState, creatures: Creature[], c: LeashControls, witch: { x: number; z: number }, onGround: boolean, time: number, dt: number, t: Tuning, busy: (id: number) => boolean = () => false, guards: PlacedSigil[] = []): void {
+export function stepLeash(s: LeashState, creatures: Creature[], c: LeashControls, witch: { x: number; z: number }, onGround: boolean, time: number, dt: number, t: Tuning, busy: (id: number) => boolean = () => false, guards: PlacedSigil[] = [], home: HomeArea | null = null): void {
   s.events = [];
   const T = t.invite, L = t.leash, byId = (id: number) => creatures[id];
   const away = (c: Creature) => Math.hypot(c.x - witch.x, c.z - witch.z);
@@ -363,7 +364,9 @@ export function stepLeash(s: LeashState, creatures: Creature[], c: LeashControls
   for (const id of s.stack) if (!busy(id) && !byId(id).partyLegend && !guarding.has(id) && !(babies.length && isBaby(byId(id)))) stepLeashed(byId(id), witch.x, witch.z, dt, t); // (a party legend never comes to her: rules/partyLegend.ts)
   // Parked, it rests north of its sigil (up the screen, -z), so the sigil stays in sight and easy to pick up (Ed, 2026-10-10: "Leashed
   // animals should come to rest 10m above their placed sigil"; 2026-10-13: the sigil's top just below its feet, by its size: rules/runeOffset.ts).
-  for (const p of guards.length ? [...s.placed, ...guards] : s.placed) if (!busy(p.id)) { const c = byId(p.id); stepLeashed(c, p.x, p.z - runeOffset(c, t, 1), dt, t); }
+  // (parked in the home area, it roams the whole of it freely, its sigil or spot anywhere in it: Ed, 2026-11-04, "Animals parked in
+  // the home area can roam it freely")
+  for (const p of guards.length ? [...s.placed, ...guards] : s.placed) if (!busy(p.id)) { const c = byId(p.id); if (home?.inside(p.x, p.z)) roamHome(c, home, p.x, p.z, dt, t); else stepLeashed(c, p.x, p.z - runeOffset(c, t, 1), dt, t); }
 }
 
 /** What a press of the sigil button at her feet finds: the hex cell (or spot) she stands on, her placed sigil there to pick up, a
@@ -544,6 +547,31 @@ export function stepLeashed(c: Creature, px: number, pz: number, dt: number, t: 
   c.away = facingAway(dx, dz, c.away, 0, t);
   c.moving = true;
   c.walk += dt * (far ? gaitRate(speed) : 4);
+}
+
+/** A creature parked in the home area (Ed, 2026-11-04: "Animals parked in the home area can roam it freely"): it walks from spot to
+ *  spot anywhere in the home area, resting a moment at each, as a happy creature roams its own; not yet in it (just parked, or
+ *  back from a fight), it runs in toward its sigil (px, pz) first. Its fights are combat's: it guards the whole home area. */
+export function roamHome(c: Creature, home: HomeArea, px: number, pz: number, dt: number, t: Tuning): void {
+  const out = !home.inside(c.x, c.z);
+  if (out) { c.tx = px; c.tz = pz; c.rest = 0; }
+  else if (c.rest > 0 && !onFloorSigil(c.x, c.z, c.id)) { c.rest -= dt; c.moving = false; c.away = false; return; }
+  else if (c.rest > 0 || !home.inside(c.tx, c.tz) || Math.hypot(c.tx - c.x, c.tz - c.z) < 0.05) {
+    const onSigil = c.rest > 0; c.rest = 0;
+    if (!onSigil && Math.hypot(c.tx - c.x, c.tz - c.z) < 0.05) c.rest = 1 + c.rand() * 4;
+    // (a spot anywhere in the home area, off the floor's sigils where it can: the first of a few tries inside it, else its sigil)
+    [c.tx, c.tz] = offSigils(() => { for (let k = 0; k < 12; k++) { const a = c.rand() * Math.PI * 2, r = Math.sqrt(c.rand()) * home.r, x = home.x + Math.cos(a) * r, z = home.z + Math.sin(a) * r; if (home.inside(x, z)) return [x, z]; } return [px, pz]; }, c.id)!;
+    if (c.rest > 0) { c.moving = false; c.away = false; return; }
+  }
+  const dx = c.tx - c.x, dz = c.tz - c.z, d = Math.hypot(dx, dz);
+  if (d < 1e-4) { c.moving = false; return; }
+  const speed = out ? leashSpeed(c, t) : c.speed;
+  const step = Math.min(d, Math.max(0, speed * dt - takePulled(c))); // (less what her chain pulled it this step: rules/chains.ts)
+  c.x += (dx / d) * step; c.z += (dz / d) * step;
+  if (Math.abs(dx) > 0.02) c.facing = dx > 0 ? 1 : -1;
+  c.away = facingAway(dx, dz, c.away, 0, t);
+  c.moving = true;
+  c.walk += dt * (out ? gaitRate(speed) : 4);
 }
 
 /** How fast a party animal runs to keep up with its leash (legends still slow); berries.ts uses

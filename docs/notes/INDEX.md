@@ -200,6 +200,7 @@ says what each note covers.
 - Beach
 - Island
 - Master curve
+- Island sizes by phase
 - Journey art kit
 - Kind table / roster / island by kind
 - Sea chart
@@ -418,6 +419,7 @@ says what each note covers.
 - Stone keep-clear zone
 - Site paths
 - Stone spacing
+- Site gaps
 - Set-piece generator (legacy art)
 - Area recipe
 - Area folder
