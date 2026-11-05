@@ -4,6 +4,62 @@ import { parse } from "yaml";
 
 const workflow = (name: string) => parse(fs.readFileSync(`.github/workflows/${name}.yml`, "utf8"));
 const ci = workflow("ci"), jobs = ci.jobs;
+describe("identical-tree release validation reuse", () => {
+  it("does not run checkout-dependent cleanup after a prerequisite failure skipped checkout", () => {
+    for (const name of ["unit", "check-work"]) {
+      const steps = jobs[name].steps;
+      const checkout = steps.find((s: any) => s.uses === "actions/checkout@v4");
+      const cleanup = steps.find((s: any) => s.name === "Failure annotation totals");
+      expect(checkout.id).toBe("source");
+      expect(cleanup.if).toBe("always() && needs.build.outputs.reuse != 'true' && steps.source.outcome == 'success'");
+      // A failed build/publication still fails this job; only redundant cleanup is skipped.
+      expect(steps[0].run).toBe("exit 1");
+      expect(steps[0].if).toContain("needs.build.result != 'success'");
+      expect(steps[0].if).toContain("needs.deploy.result != 'success'");
+    }
+  });
+  it("limits lookup to main pushes with read-only Actions access and a full fallback", () => {
+    const lookup = jobs.build.steps.find((s: any) => s.id === "reuse");
+    expect(lookup.if).toBe("github.event_name == 'push' && github.ref == 'refs/heads/main'");
+    expect(lookup["continue-on-error"]).toBe(true);
+    expect(lookup["timeout-minutes"]).toBe(2);
+    expect(jobs.build.permissions).toEqual({ contents: "read", "pull-requests": "read", actions: "read" });
+    expect(jobs.build.outputs.reuse).toBe("${{ steps.reuse.outputs.reuse }}");
+    // Build and publication always use the current source/version, never the source PR artifact.
+    for (const step of jobs.build.steps.filter((s: any) => /npm ci|npm run build/.test(s.run ?? "") || s.with?.name === "game-dist"))
+      expect(step.if).toBeUndefined();
+    expect(jobs.deploy.steps.some((s: any) => String(s.if).includes("reuse"))).toBe(false);
+  });
+  it("keeps required job statuses and build/publication gates while logging every reused result", () => {
+    for (const job of ["unit", "check-work", "smoke", "large-world"]) {
+      const steps = jobs[job].steps;
+      const log = steps.find((s: any) => s.name === "Reuse successful full release validation");
+      expect(log.if).toBe("needs.build.outputs.reuse == 'true'");
+      expect(log.env.RELEASE_VALIDATION_SOURCE).toBe("${{ needs.build.outputs.source }}");
+      for (const step of steps.filter((s: any) => s !== log && !s.name?.startsWith("Require the build") && !String(s.if).includes("outputs.release")))
+        expect(step.if, `${job}: ${step.name ?? step.uses ?? step.run}`).toContain("needs.build.outputs.reuse != 'true'");
+      expect(jobs[job].if).not.toContain("reuse");
+    }
+  });
+  it("only mints proof after all full release validations succeed, with attempt-specific records", () => {
+    const proof = jobs["release-proof"];
+    expect(proof.needs).toEqual(["build", "unit", "check-work", "check", "smoke", "large-world"]);
+    expect(proof.if).toContain("!cancelled()");
+    expect(proof.if).toContain("needs.build.outputs.release == 'true'");
+    for (const name of proof.needs) expect(proof.if).toContain(`needs.${name}.result == 'success'`);
+    expect(proof["continue-on-error"]).toBe(true);
+    const download = proof.steps.find((s: any) => s.uses === "actions/download-artifact@v4");
+    expect(download.with).toEqual({ pattern: "ci-validation-*-${{ github.run_attempt }}", path: "ci-validation", "merge-multiple": true });
+    for (const name of ["build", "unit", "check-work", "smoke", "large-world"]) {
+      const stamp = jobs[name].steps.find((s: any) => s.run?.includes("release-reuse.mjs record"));
+      expect(stamp.if).toContain(name === "build" ? "steps.release.outputs.candidate == 'true'" : "needs.build.outputs.release == 'true'");
+      expect(stamp["continue-on-error"]).toBe(true);
+      const upload = jobs[name].steps.find((s: any) => s.with?.name?.startsWith("ci-validation-"));
+      expect(upload.with.name).toContain("github.run_attempt");
+      expect(upload["continue-on-error"]).toBe(true);
+    }
+  });
+});
 describe("shared CI game build", () => {
   it("runs candidate-only fast proofs on PR artifacts with smoke Chromium", () => {
     const proof = jobs.proofs, steps = proof.steps;
