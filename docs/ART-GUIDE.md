@@ -10,7 +10,7 @@ Sources: #97 (art iterations; `tools/art-iterations/README.md`), #112 (art pass 
 
 Ed's main art feedback at this stage. Earlier, about the legends, he said "the more pixellated version is better". This section turns that into rules a generator can enforce. They apply to everything: creatures, plants, witches, props, ground and set pieces.
 
-**The ladder.** `tools/art-iterations/ladder.mjs <area> <dir>` draws one area's set at the current look and at each rung below, at the game's screen scale and at night. The examples are in `docs/art-guide/ladder/`. Ed picks the rung. Until he does, the rules below are a proposal and are marked (proposed).
+**The ladder.** `tools/art-iterations/ladder.mjs <area> <dir>` draws one area's set at the current look and at each rung below, at the game's screen scale and at night. The examples are in `docs/art-guide/ladder/`. Ed picked the look on 2026-10-31: **Bold at art pixel 3** (relayed by the coordinator on #1357). The rules below were written as a proposal while the choice was open, and some are still marked (proposed).
 
 | Rung | What changes |
 |---|---|
@@ -22,11 +22,11 @@ Ed's main art feedback at this stage. Earlier, about the legends, he said "the m
 | 5 Chunkier | Rung 3 at art pixel 5 |
 | 6 Reference | Ed's reference look (below): one tone family, cream light falling as a big shape over the top, red-brown shadow, a strong near-black outline, interior lines where parts overlap, clean clusters, pixel 4 |
 
-**Ed's decision (2026-10-05):** "4 or 5, but we will decide in playtesting", then "6 is also good". Two looks stay in the running, **Bold** (rung 3's treatment) and **Reference** (rung 6), each at **art pixel 4 or 5**. The final choice is made in playtesting, with a complete scene in motion ("trees, creatures, witch").
-- **In the game:** `?style=now|bold|ref` and `?px=3|4|5` choose one per load (`art/stylise.js`, applied in `bake`: the live preview PR, branch `claude/art-style-preview`). With neither, the game looks as it did. The generators' own version of the styles will keep these switch names.
+**Ed's decision (2026-10-05):** "4 or 5, but we will decide in playtesting", then "6 is also good". Two looks stayed in the running, **Bold** (rung 3's treatment) and **Reference** (rung 6), each at art pixel 4 or 5, for the final choice in playtesting. **Closed on 2026-10-31: Ed settled on Bold at art pixel 3** (relayed by the coordinator on #1357); `?style=ref` and `?px` stay as comparison switches.
+- **In the game:** Bold at art pixel 3 is the default (the tuning's `pixelSize` 3). `?style=ref` (Ed's reference treatment), the retired `?style=now` (the art before the pixel-art treatment) and `?px=2..6` change it for one load, for comparison (`art/stylise.js`, applied in `bake`; `docs/LINK-SWITCHES.md`).
 - **The comparison strips** (each style at 3, 4 and 5 px, a strip and the ground): on claude/ed-shots, [`previews/archive/art-guide/styles/`](https://github.com/edsaperia/witch/tree/claude/ed-shots/previews/archive/art-guide/styles) since the docs pass (2026-10-28).
 - **Either way the rest of the reference stands:** exaggerated silhouettes, an evolved design per level (0b), and texture as tone shapes.
-- **Until Ed decides,** the rules below hold for both looks except where marked bold-only or ref-only.
+- **Since Ed's choice** of Bold (2026-10-31), the rules below are Bold's; those marked ref-only describe the `?style=ref` comparison.
 
 ### Ed's reference: "three evolutions of a boar" (2026-10-05)
 The reference is someone else's work, so it's described in words only and never committed or fetched. **This is the target look.**
@@ -55,7 +55,7 @@ The reference is someone else's work, so it's described in words only and never 
 
 The ladder's rung 6 shows only the rendering half: palette, cel, outline and clusters. Exaggerated shapes and the redesigned stages need generator work: the creature genome's proportions and size curves, the texture work, and later the legend redesign.
 
-### The rules (proposed until Ed picks)
+### The rules (written as proposals before Ed picked Bold at art pixel 3, 2026-10-31)
 1. **One art-pixel size for everything.** Every asset is drawn at the same art pixel (style `pixel`; the tuning's `pixelSize`) and displayed at a whole multiple, never resampled. Nothing is drawn at half resolution or scaled by a fraction. Mixed resolutions are the clearest sign of "not pixel art". Check: every sprite is baked at the style's `pixel`, and the renderer draws sprites at whole-pixel scale.
 2. **3 tones per material, hue-shifted.** A material's ramp has 3 tones:
    - **shadow:** a deeper, more saturated tone, leaning red-brown for warm materials and blue-violet for cool ones, about half the base value;
@@ -276,5 +276,5 @@ From Ed's playtest notes and #334, #358, #325 and #363. The rules themselves are
 - **Nothing is cut by the ground.** Sinking into the floor slices a sprite along a straight line; lie it down instead. Flat things (floors, decals, mats) draw before actors and write no depth (`asFloor`).
 - **No outline on limbs.** The rig's leg discs carry no rim (Ed: "Animal legs have outlines on them; they'd look better without").
 - **Overlays belong to the world.** 💌s, hearts and bubbles standing in the world blur with the tilt-shift (#325) and hide past the bend (#358); only the HUD sits on top.
-- **Bold is the default style** (Ed, 2026-10-06), at art pixel 3 until Ed picks 4 or 5. With `fx: "smooth"` (the default) the game's moonlight isn't banded; under bold the bands are baked into the sprites instead (the Lab and `?fx=pixel` band the light itself).
+- **Bold is the default style** (Ed, 2026-10-06), at **art pixel 3** (settled by Ed, 2026-10-31, relayed by the coordinator on #1357). With `fx: "smooth"` (the default) the game's moonlight isn't banded; under bold the bands are baked into the sprites instead (the Lab and `?fx=pixel` band the light itself).
 - **Contact sheets for legends**: every state (asleep, restless, happy, angry) in the game at night, before and after, not only the art preview (`previews/legend-pixels/` on #363).
