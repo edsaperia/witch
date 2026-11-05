@@ -2,7 +2,8 @@
 // loading screen."; render/view.ts prepare, render/islandNeeds.ts): prepare asks for every area type's trees, every look the island's
 // creatures can wear and the coast's and lakes' dressing, makes the coast's program with the rest, and doesn't finish (the screen
 // doesn't fade) till they've landed; only this island's kinds, never another island's or every species'. Not the faces (Ed,
-// 2026-11-05: "Skip the animal faces"): asked for as prepare ends, not waited for. The game is only read.
+// 2026-11-05: "Skip the animal faces"): asked for as prepare ends, not waited for, and only while the faces are on at all (tuning
+// looks.expressions, off since Ed's 2026-11-05 "Scrap animal expressions for now."). The game is only read.
 // (Headless: the View a stand-in round its own prepare, with the real art library, its workers stand-ins: results handed in.)
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { View } from "./view";
@@ -100,12 +101,24 @@ describe("the island made under the loading screen", () => {
     inner(assets).receive({ job: last, result: pixel() });
     await prepared;
     expect(log).toEqual(["coast program made", "shaders compiled"]);
-    // The faces asked for as it ends (the loading screen fading), every kind's, none of them waited for.
-    const faces = inner(assets).queue.filter(j => j.kind === "face");
-    expect(new Set(faces.map(j => j.id))).toEqual(new Set(n.kinds.flatMap(sp => ISLAND_FACES.map(f => `face-${f}-${sp}`))));
+    // The faces off (tuning looks.expressions; Ed, 2026-11-05: "Scrap animal expressions for now."): nothing more asked for as it ends.
+    expect(assets.expressions).toBe(false);
+    expect(inner(assets).queue.some(j => j.kind === "face")).toBe(false);
     expect(performance.getEntriesByName("witch:prep-island").length).toBeGreaterThan(0);
     expect(JSON.stringify(snapshotGame(g))).toBe(before); // (the rules' state untouched: determinism)
   }, 60000);
+
+  it("with the faces on, asks for every kind's five as it ends (not waited for); with them off, none", () => {
+    const g = fox(), near = nearOf(g), n = islandNeeds(g.map, near);
+    for (const on of [true, false]) {
+      const assets = new AssetLibrary(loadStyle(), g.seed, g.tuning.pixelSize);
+      assets.expressions = on;
+      const v = Object.assign(Object.create(View.prototype) as object, { game: g, quick: false, assets }) as unknown as Record<string, (near: Map<number, number>) => void>;
+      v.islandFaces(near);
+      const faces = inner(assets).queue.filter(j => j.kind === "face").map(j => j.id);
+      expect(new Set(faces)).toEqual(new Set(on ? n.kinds.flatMap(sp => ISLAND_FACES.map(f => `face-${f}-${sp}`)) : []));
+    }
+  });
 
   it("under ?quick=1 asks for none of it ahead and waits for nothing", async () => {
     const g = fox(), assets = new AssetLibrary(loadStyle(), g.seed, g.tuning.pixelSize), n0 = inner(assets).queue.length;

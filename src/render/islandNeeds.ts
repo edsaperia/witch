@@ -57,7 +57,8 @@ export function askIslandArt(a: IslandArtAsks, n: IslandNeeds, o: IslandLooks): 
   if (o.coast) { a.beachEdgeArt(); if (o.beachDecor) a.beachArt(); a.partyWitchArt(null); } // (her lying-down art: render/beach.ts)
   if (o.lakes) a.lakeShoreArt();
 }
-/** The island's kinds' faces, asked for in the background (not waited for): as the loading screen fades, or with a sail's dive. */
+/** The island's kinds' faces, asked for in the background (not waited for): as the loading screen fades, or with a sail's dive. With
+ *  the faces off (tuning looks.expressions: off for now, #1860), faceArt asks for nothing. */
 export function askIslandFaces(a: Pick<IslandArtAsks, "faceArt">, n: IslandNeeds): void {
   for (const sp of n.kinds) for (const face of ISLAND_FACES) a.faceArt(sp, face);
 }
