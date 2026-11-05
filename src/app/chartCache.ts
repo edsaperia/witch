@@ -6,6 +6,7 @@
 // window, a full disk): as if nothing were kept, and the worker makes them as before.
 import { foundKinds } from "../rules/rosters";
 import { TUNING } from "../rules/tuning";
+import { coldLoad } from "../platform/storageScope";
 
 const DB = "witch-chart", STORE = "outlines";
 /** An island's ground, samples across its longer side (app/chartOutlines.worker.ts; its close-up's finer). */
@@ -25,7 +26,12 @@ export const cacheKey = (id: string, world: number, found: readonly string[], st
   `${CACHE_PREFIX}v${KEPT_VERSION}|${world}|${id}|${step}|${across}|${id === "home" ? foundKinds([...found]).join(",") : ""}`;
 
 let opened: Promise<IDBDatabase | null> | null = null;
+/** A cold load's (?cold=1, platform/storageScope.ts coldLoad): nothing read or kept. The page's own from its link; the chart's worker's
+ *  when its ask says so (chartOutlines.worker.ts). */
+let cold = false;
+export const coldCache = (): void => { cold = true; };
 function db(): Promise<IDBDatabase | null> {
+  if (cold || coldLoad()) return Promise.resolve(null);
   return (opened ??= new Promise(res => {
     try {
       const r = indexedDB.open(DB, 1);

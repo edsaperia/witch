@@ -8,6 +8,7 @@ import { emptySave, unlocked } from './chartSave';
 import { islandAt } from "./chartLayout";
 import type { OutlineAsk, WarmNote } from "./chartOutlines.worker";
 import { postTracedJob } from "./workerJobTrace";
+import { coldLoad } from "../platform/storageScope";
 
 /** The outlines' land sampled every so many metres: the chart's pixels are far coarser. */
 export const OUTLINE_STEP = 32;
@@ -60,7 +61,7 @@ export function warmChart(world: number, found: string[], done?: (made: number, 
     done?.(e.data.made, e.data.kept);
   };
   w.onerror = () => { if (running !== w) return; w.terminate(); running = null; failed?.(); };
-  postTracedJob(w, { world, found, ids, step: OUTLINE_STEP, warm: true } satisfies OutlineAsk, 'chart:request', 'warm', ids.length);
+  postTracedJob(w, { world, found, ids, step: OUTLINE_STEP, warm: true, cold: coldLoad() } satisfies OutlineAsk, 'chart:request', 'warm', ids.length);
 }
 
 /** Stop making them (the chart has opened and makes its own). */

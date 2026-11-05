@@ -15,6 +15,7 @@ import { applySavedSettings } from "./settings";
 import { applySettings, currentSettings } from "./playerSettings";
 import { applyLoadRungs } from "./ladder";
 import { getPrep, type PrepAsk, type PrepRecord } from "./mapPrepStore";
+import { coldLoad } from "../platform/storageScope";
 
 declare const __BUILD__: string;
 const BUILD = typeof __BUILD__ === "string" ? __BUILD__ : "dev";
@@ -97,7 +98,7 @@ function prepInWorker(seed: number, tuning: Tuning, send: boolean, keep = true):
     worker = new Worker(new URL("./mapPrep.worker.ts", import.meta.url), { type: "module" });
     worker.onmessage = (e: MessageEvent<{ ok: boolean; rec?: PrepRecord }>) => { finish(e.data.rec ?? e.data.ok); worker?.terminate(); worker = null; };
     worker.onerror = () => { finish(null); worker?.terminate(); worker = null; };
-    postTracedJob(worker, { key: prepKey(seed, tuning), seed, tuning, send, noKeep: !keep } satisfies PrepAsk, 'map-prep', seed);
+    postTracedJob(worker, { key: prepKey(seed, tuning), seed, tuning, send, noKeep: !keep || coldLoad() } satisfies PrepAsk, 'map-prep', seed);
   } catch { finish(null); }
   return { done, stop() { worker?.terminate(); worker = null; finish(null); } };
 }

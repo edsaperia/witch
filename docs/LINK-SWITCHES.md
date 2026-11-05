@@ -149,6 +149,7 @@ For the builders, the smoke and bench runs, the repro link and the arenas.
 | `zoo` | The zoo: every area an island laid out like the sea chart, home a plaza, no timer. | 2026-10-13 | app/linkParams.ts, main.ts |
 | `zoom=<n>` | The repro link: the camera's zoom step. | 2026-10-14 | app/repro.ts |
 | `newWitch=1` | This load as a brand-new witch (the pause page's Try as a new witch): the game's default look (config/default-look.json), the starting wardrobe, the default broom and no hats found, her saves of those neither read nor written. | 2026-10-29 | app/defaultLook.ts |
+| `cold=1` | A cold first load, every time: the derived caches (the art cache, the sea chart's islands and coasts, the map prep) neither read nor kept for that page load, on the page and in its workers, so everything is drawn and made again as on a first-ever visit; carried by the page's own links (a reload, sail or night in bed stays cold). With fresh=1, a brand-new player's first visit. The browser's own HTTP and GPU shader caches are outside the page's reach (docs/notes/run.md). *Decision: Ed, 2026-11-05 (through the coordinator): wants to easily test a cold first load every time..* | 2026-11-05 | platform/storageScope.ts |
 
 ## Compare with the old
 

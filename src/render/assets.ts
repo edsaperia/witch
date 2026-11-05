@@ -13,6 +13,7 @@ import { witchSprites, type SoundsystemGenArt, type WitchArt } from "./homeArt";
 import { creatureFrame, walkGait, runJob, stumpId, type StumpArt, type StumpSpec, type ArtJob, type ArtResult, type BeachArt, type BeachEdgeArt, type LakeShoreArt, type DecorPiece, type PartyWitchArt, type PartyArt, type PathPieceArt, type RelicArt, type RelicLayouts, type SceneArt, type SpeakerArt, type TilePixels, type TypeLayout } from "./artBuild";
 import type { Style } from "./style";
 import { artCacheKey, cachePut, hashText, type CacheHint } from "./artCache";
+import { coldLoad } from "../platform/storageScope";
 import { rigGearKey, type RigGear, type RigMeta } from "./rig/rigBuild";
 import { partyGearOf } from "./creatureArt";
 import { partySheetKey, partySheetFrame } from "./partySheet";
@@ -212,7 +213,7 @@ export class AssetLibrary {
     return j.kind + ":" + j.id + (j.kind === "type" && j.seed !== this.typeSeed ? `@${j.seed}` : "") + (layout ? `@layout:${layout.identity}` : "");
   }; // (tonight's sets apart from the island's; opt-in layouts never share a job)
   /** Where a set is kept between visits (render/artCache.ts). */
-  private cacheKey = (j: ArtJob) => artCacheKey(j, this.styleHash);
+  private cacheKey = (j: ArtJob) => (coldLoad() ? null : artCacheKey(j, this.styleHash)); // (a cold load, ?cold=1: no key, so the worker neither reads nor keeps it)
   /** Ask for a set: from the browser's store if it was drawn before, else drawn by a worker. An
    *  urgent ask (the view needs it now) goes ahead of the sets drawn ahead of need. */
   /** Waiting jobs already moved to the front of the queue by an urgent ask. */
@@ -224,6 +225,7 @@ export class AssetLibrary {
   private ask(job: ArtJob, urgent = false, home = false): void {
     if ((job.kind === "treehouse" || job.kind === "housePiece") && HOUSE_ROOMS.layout && !job.layout) job = { ...job, layout: houseArtLayout(HOUSE_ROOMS) };
     const k = this.key(job);
+    this.asked?.add(k); // (whenAsked's)
     if (this.inFlight.has(k)) {
       // (an urgent job asked for again while waiting is moved to the front once: asked for every creature every frame, searching
       // the queue each time cost creatures x queue while new art was baking)
@@ -808,6 +810,19 @@ export class AssetLibrary {
       made++;
     }
   }
+
+  /** The sets `ask` asks for, waited for (prepare: the island's own under the loading screen, render/islandNeeds.ts; Ed, 2026-11-05):
+   *  resolves once each has landed, or come back with nothing (a rig page a species hasn't), or been dropped with its island
+   *  (reseat). Those held already aren't asked for, so aren't waited on. */
+  whenAsked(ask: () => void): Promise<void> {
+    const keys = this.asked = new Set<string>();
+    try { ask(); } finally { this.asked = null; }
+    return new Promise(resolve => {
+      const check = () => { this.work(50); if (![...keys].some(k => this.inFlight.has(k))) resolve(); else setTimeout(check, 30); };
+      check();
+    });
+  }
+  private asked: Set<string> | null = null;
 
   /** Resolves once nothing is waiting to be drawn (`urgentOnly`: nothing the view asked for as needed now; the scenery kits and
    *  creatures asked ahead of need draw on, and fade in as they come: prepare). */

@@ -12,6 +12,7 @@ import { foundKinds, homeIsland, homeKinds, islandOf } from "../rules/rosters";
 import { loadSave } from "./chartSave";
 import { tuningFromLink } from "./linkParams";
 import { gameStyle, styleFromLink } from "./viewParams";
+import { coldLoad } from "../platform/storageScope";
 
 /** A night's seed, as the game picks one when its link has none (main.ts). */
 export const nightSeed = (): number => Math.floor(Math.random() * 1000000);
@@ -60,7 +61,7 @@ export function bakeLanding(island: string, world: number | undefined, seed = ni
     stop() { stopped = true; for (const wk of workers) wk.terminate(); workers.length = 0; },
     async settle() { /* (each set is written by its worker before it's reported made: nothing to wait for) */ },
   };
-  if (typeof Worker === "undefined" || typeof OffscreenCanvas === "undefined") return state;
+  if (typeof Worker === "undefined" || typeof OffscreenCanvas === "undefined" || coldLoad()) return state; // (a cold load, ?cold=1: nothing kept, so nothing to draw ahead into the cache)
   // (as many workers as the game's art: one per core but the page's own, up to six)
   const n = Math.max(1, Math.min(6, (navigator.hardwareConcurrency || 2) - 1, jobs.length));
   const next = async (wk: Worker): Promise<void> => {
