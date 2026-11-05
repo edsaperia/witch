@@ -623,8 +623,10 @@ Each sleeping legend lies in a small round clearing of its own, sized to fit it.
 1. Ed, 2026-10-06
 Each area's sleeping legend lies in a small circular clearing of its own [1], where no tree or decor stands: radius metres across from its middle (species: a radius for that legend, sized to fit it: half its sleeping width plus 4 m), a soft ring edge metres wide marking it on the ground, and the legend lying top x radius north of the middle (the circle's far side from the camera), the open floor in front. Quest sigils and relics take effect inside it.
 
-- **`legendClearing.minFromStone`**: its edge at least this many metres from its area's runestone (where the soundsystem comes), clear of the stone's clearing and the party's dance space; a small area with no such spot grows into the areas beside it to hold one (Ed, 2026-11-04: "make the last-resort placement grow the area instead of breaking the gap"; logged).
+- **`legendClearing.minFromStone`**: its edge at least this many metres from its area's runestone (where the soundsystem comes), clear of the stone's clearing and the party's dance space; a small area with no such spot grows to hold one (logged).
   1. Ed, 2026-10-06: "The legend circle shouldn't spawn near its runestone"
+  2. Ed, 2026-11-04: "make the last-resort placement grow the area instead of breaking the gap"
+  Its area grows into the areas beside it, claiming the circle's ground (rules/map.ts growClearing): docs/notes/world-art.md Site gaps.
 - **`legendClearing.minFromOtherStones`**: its edge at least this many metres from every neighbouring area's runestone too, always (not relaxed for a small area).
   1. Ed: "Legend and runestone in the same place" (v1628)
 - **`legendClearing.floor`**: on, old flagstones about slab metres across, the legend's sigil carved into them as dark grooves, overgrowth (0.5 as drawn, up to 1 for more) moss, grass and litter over them so the carving shows only in pieces.
