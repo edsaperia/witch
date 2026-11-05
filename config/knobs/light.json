@@ -935,6 +935,21 @@
     },
     "light.spooky.wildGlow.ease": {
       "what": "How long (s) her glow takes to cool or warm as she crosses into or out of the party's ground."
+    },
+    "patternLight.strength": {
+      "what": "How strongly coloured spokes shape existing lights, from 0 (ordinary lighting) to 4.",
+      "decisions": [
+        {
+          "by": "Ed",
+          "date": "2026-11-05",
+          "quote": "this is imperceptible atm; put it live with a strength slider and I'll just test it in game.",
+          "rest": "Colour spokes on by default; strength 0–4, default 3, at most three existing light slots and no extra lights."
+        }
+      ],
+      "notes": "Changes immediately from the pause page; reduced flashing disables all patterns. Strength 1 preserves original 0.9 contrast; default 3 brightens only the colour-spokes lit bands threefold, with dark gaps and centre fade preserved; at most three existing light slots, no added lights or shadows."
+    },
+    "patternLight": {
+      "what": "Drawing-only coloured patterns on existing lights, controlled from the pause page."
     }
   }
 }

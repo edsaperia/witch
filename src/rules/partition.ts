@@ -164,23 +164,31 @@ export interface Claim { cell: Cell; u: number; v: number; r: number }
 
 /** A partition over `base` with room for one claim (null: none, the base's own cuts everywhere), set once the map has chosen it:
  *  inside the claim's circle every point is its cell's; outside, the base's, its safe distance kept short of the circle's edge.
+ *  `grown`: more claims, each an area grown for a legend's circle where it had no room (rules/map.ts; Ed, 2026-11-04: "make the
+ *  last-resort placement grow the area instead of breaking the gap"), made after `claim` and never over it; the same rule.
  *  Everything else (sites, centreness, openness) is the base's. */
-export function claimable(base: Partition): Partition & { claim: Claim | null } {
-  const P: Partition & { claim: Claim | null } = {
+export function claimable(base: Partition): Partition & { claim: Claim | null; grown: Claim[] } {
+  const P: Partition & { claim: Claim | null; grown: Claim[] } = {
     ...base,
     claim: null,
+    grown: [],
     partition(px, py) {
       const c = P.claim;
       if (c) { const dx = px - c.u, dy = py - c.v; if (dx * dx + dy * dy < c.r * c.r) return c.cell; }
+      for (let i = 0; i < P.grown.length; i++) { const g = P.grown[i], dx = px - g.u, dy = py - g.v; if (dx * dx + dy * dy < g.r * g.r) return g.cell; }
       return base.partition(px, py);
     },
     partitionSafe(px, py) {
       const c = P.claim;
-      if (!c) return base.partitionSafe(px, py);
-      const d = Math.hypot(px - c.u, py - c.v);
-      if (d < c.r) return { cell: c.cell, safe: Math.min(c.r - d, Math.pow(2, -base.depth)) };
+      if (!c && !P.grown.length) return base.partitionSafe(px, py);
+      let out = Infinity;
+      for (const g of c ? [c, ...P.grown] : P.grown) {
+        const d = Math.hypot(px - g.u, py - g.v);
+        if (d < g.r) return { cell: g.cell, safe: Math.min(g.r - d, Math.pow(2, -base.depth)) };
+        out = Math.min(out, d - g.r);
+      }
       const b = base.partitionSafe(px, py);
-      return { cell: b.cell, safe: Math.min(b.safe, d - c.r) };
+      return { cell: b.cell, safe: Math.min(b.safe, out) };
     },
   };
   return P;

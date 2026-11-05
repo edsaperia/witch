@@ -1,0 +1,6 @@
+{
+  "version": 7523,
+  "items": [
+    "Smoke no longer dims hearts and rings, removing a graphics readback near fires."
+  ]
+}

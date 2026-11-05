@@ -159,6 +159,8 @@ import { PotionObserversView } from './potionObservers';
 import { chunkyPixelSize, potionStrength } from './potionEffects';
 import { drawPointers } from "./view/hud";
 import { workAhead } from "./view/ahead";
+import { setGentleLanternPattern, PATTERN_LOOK } from "./lightPatternState";
+import { comfort } from "./comfort";
 import { winLit, winPulse, winPulseOut } from "../rules/win";
 import { relicsOut } from "../rules/partyOver";
 
@@ -171,6 +173,8 @@ void main(){ vUv = uv; gl_Position = clipOf(onGround((modelMatrix * vec4(positio
 /** The zoo's plaza's own soft light over the World Tree (the legend circles' moonlit cyan). */
 const PLAZA_RGB = new THREE.Vector3(0.55, 0.85, 0.9);
 export interface ForestLight { x: number; y: number; z: number; reach: number; rgb: THREE.Vector3; strength: number;
+  /** Drawing-only modulation of an existing slot; never a new light or a shadow source. */
+  pattern?: import("./lightPatternState").PackedPattern;
   /** a light things cast shadows from (render/trunkShadows.ts), as a campfire's: where they're thrown from and how strongly (0 to 1);
    *  the soundsystems' and runestones' (Ed, 2026-10-13: "the light that soundsystems and runestones produce" casting shadows) */
   shadow?: { x: number; y: number; z: number; k: number } }
@@ -962,10 +966,10 @@ export class View {
     bridgeNativeObject(this.markerFx.group,"runestone");
     this.inviteView = new InviteView(game);
     this.inviteView.herOffset = this.herOffset;
-    // The 💌s and the invite rings hidden as the animals are, by what stands in front of them and the smoke (render/occlusion.ts;
+    // The 💌s and the invite rings hidden as the animals are, by the scenery that stands in front of them (render/occlusion.ts;
     // Ed, 2026-10-19). ?occlusion=off: drawn over everything, as before, to compare.
     yield "occlusion";
-    this.occlusion = new OcclusionProbes(this.scene, this.renderer, this.camera, this.smoke);
+    this.occlusion = new OcclusionProbes(this.scene, this.renderer, this.camera);
     this.occlusion.on = typeof location === "undefined" || new URLSearchParams(location.search).get("occlusion") !== "off";
     this.inviteView.probes = this.occlusion;
     this.inviteView.onVanished = (x, z) => this.edgeSparkle(x, z);
@@ -1865,6 +1869,7 @@ export class View {
       : T.lights.filter(l => l.kind === "lantern" || l.kind === "window").slice(0, 2).map(l => ({
         ...onTreehouse(l.x, l.y), reach: t.treehouse.lightReach, rgb: new THREE.Vector3(l.rgb[0] / 255, l.rgb[1] / 255, l.rgb[2] / 255), strength: t.treehouse.lightStrength * (0.92 + 0.08 * Math.sin(time * 3 + l.x)),
       }));
+    setGentleLanternPattern(thLights[0], time, PATTERN_LOOK, comfort.reduceFlashing);
     const markerLights = drawMarkers(this, time);
     const speakerLights = drawSpeakers(this, time, pose.angle);
     this.spellFx.update(g, ht, witchHeight(w, t) + 0.6 + this.rideOff);
@@ -2031,7 +2036,6 @@ export class View {
     this.post.render(this.scene, this.camera);
     this.cauldronLook?.finish(this);
     this.magic.restoreBackdrop(this.scene);
-    this.occlusion.veil(); // (the smoke over the 💌s, once the frame's smoke is drawn)
     this.time("draw");
     this.drawEst += (Math.min(8, this.ms.draw) - this.drawEst) * 0.1; // (eased; a stalled frame counts for at most 8 ms)
     // Anything set but not drawn (three.js capping a batch's instances) is a bug: count and log it.

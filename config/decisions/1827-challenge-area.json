@@ -1,0 +1,23 @@
+{
+  "pr": 1827,
+  "group": "Challenge area",
+  "decisions": [
+    {
+      "id": "challengeSigilGap",
+      "pr": 1827,
+      "group": "Challenge area",
+      "label": "Challenge columns: sigils over the top (m)",
+      "note": "How far the challenge columns' sigils float over the columns' tops, the lowest one's foot clear of the capital (Ed, 2026-11-04, on #1827: \"Statue sigils should sit comfortably above the top of their columns\"). Live.",
+      "control": {
+        "type": "slider",
+        "min": 0,
+        "max": 4,
+        "step": 0.25
+      },
+      "default": 1.5,
+      "apply": {
+        "knob": "challenge.sigilGap"
+      }
+    }
+  ]
+}

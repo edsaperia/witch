@@ -18,6 +18,7 @@ import { relicsOut, worldAsleep } from "./partyOver";
 import type { Tuning } from "./tuning";
 import type { Creature } from "./creatures";
 import { heldByCombat } from "./creatures";
+import { homeArea } from "./homeArea";
 import { pressPicks, stackBottom, stepLeash, type LeashControls, type LeashEvent, type PlacedSigil } from "./leash";
 import { flaskUnder } from "./legends";
 import { feedKnobs, feedTarget, growthSpurt, queueBerry } from "./berries";
@@ -168,7 +169,7 @@ export function stepSigilButton(g: Game, c: Controls, W: Witch, t: Tuning, ht: n
   }
   stepLeash(W.leash, g.creatures, { sigil, place, held, placeOnly, ...pickControls(g, W, t), cycle: !!c.cycle && !W.ko, cycleBack: !!c.cycleBack && !W.ko, dropRelic: (id, x, z) => Object.assign(g.relics[id], { state: "dropped", sx: x, sz: z }), inviteNearest: c.inviteNearest,
     takeLoose: id => { g.loose = g.loose.filter(p => p.id !== id); g.creatures[id].loose = undefined; },
-    dropTether: (id, x, z) => { g.loose.push({ id, x, z, at: g.clock.time, legend: true }); g.creatures[id].loose = true; }, land: (x, z) => isInside(g.map.bounds, x, z, BABY_COAST), talk: !t.invites.on && (c.autoTalk !== false || !!c.talkHeld) }, W.body, W.body.mode === "ground" && !perched && !W.ko, ht, hdt, t, id => busy(id) || heldByCombat(g.creatures[id]) || !!g.creatures[id].travelling, guards);
+    dropTether: (id, x, z) => { g.loose.push({ id, x, z, at: g.clock.time, legend: true }); g.creatures[id].loose = true; }, land: (x, z) => isInside(g.map.bounds, x, z, BABY_COAST), talk: !t.invites.on && (c.autoTalk !== false || !!c.talkHeld) }, W.body, W.body.mode === "ground" && !perched && !W.ko, ht, hdt, t, id => busy(id) || heldByCombat(g.creatures[id]) || !!g.creatures[id].travelling, guards, homeArea(g.map));
   W.leash.events.push(...relicEvents);
   // Held with nothing to do (no sigil, relic, rune or hat picked up or put down, nothing refused), on the ground: her hat goes
   // down at her feet (rules/hat.ts putHat).

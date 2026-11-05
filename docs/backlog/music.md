@@ -191,3 +191,5 @@ Ed, 2026-11-04: "We should have some special spooky music for the challenge area
 |---|---|---|
 | Spooky music at the challenge area before the fight (statues asleep) | — | Postponed by Ed. Ties in with the statues and the 4-bar wake-up (claude/challenge-statues). |
 | Challenge fight music while the pack is awake, until it is won | — | Postponed by Ed. Ends when the area is won, or when the pack goes back to stone. |
+| The music spell's symbol on the ground drawn isometric, lying on the ground like the other ground sigils (today it looks flat to the screen) | — | Ed, 2026-11-04. |
+| The party starts with a giant soundsystem spell: after she picks a record, a giant spell symbol appears on the dancefloor; while she casts, the dancefloor's stones turn into speakers as the audio analyser effect goes round | — | Ed, 2026-11-04: "the party should start with a giant version of the soundsystem spell". Knocked down, she still respawns and scratches as today. |

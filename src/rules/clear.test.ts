@@ -6,7 +6,7 @@ import { affectionOf, loseSoundsystem, stepGame, type Controls, type Game } from
 import { TUNING } from "./tuning";
 import { cellKey, routeOf } from "./party";
 import { clearCue, clearableAt, clearedAreas, holdsArea, wildLeft } from "./clear";
-import { routeIndex, routePopulation } from "./growth";
+import { islandReach, routeIndex, routePopulation } from "./growth";
 import { POWER_TABLE, buildSwarm, capAt, capOf, classOf, estimatedPower, powerOf, referenceAt, swarmTotals, targetPower, type PowerTable } from "./swarm";
 import { classStrengths, strengthOf } from "./combat/data";
 import { spawnCreatures } from "./creatures";
@@ -116,15 +116,18 @@ describe("the hostile swarms by the runestone order (Ed, 2026-10-08: the swarm p
   });
 
   it("peoples every area from the start by its place on the route, the later the more, the same from the same seed", () => {
-    // Retain the full route to compare disjoint first/last five-stop population samples.
-    const map = generateMap(123, TUNING), all = spawnCreatures(map), order = routeOf(map).order, at = routeIndex(order), T = TUNING.population;
+    // Retain the full route to compare disjoint first/last five-stop population samples. (An island of 10 areas not by roster, so
+    // its route plays the whole swarm curve: home's own reach is the share of the islands found, none in the built tuning; Ed, 2026-11-04.)
+    const T10 = { ...TUNING, map: { ...TUNING.map!, island: "" } };
+    const map = generateMap(123, T10), all = spawnCreatures(map), order = routeOf(map).order, at = routeIndex(order), T = TUNING.population;
     expect(order.length).toBe(map.cells.length - 1); // (every area but home)
     const levels = (key: string) => [0, 1, 2].map(l => all.filter(c => cellKey(c.cell) === key && !c.boss && !c.circle && c.level === l).length);
     const kind = (key: string) => { const [cx, cy] = key.split(",").map(Number); return AREA_TYPES[map.typeOf(cx, cy)].creature; };
-    for (const key of order) expect(levels(key), key).toEqual(routePopulation(at.get(key)!, at.size, T.byRoute, T.swarm, T.start, kind(key)));
+    for (const key of order) expect(levels(key), key).toEqual(routePopulation(at.get(key)!, at.size, T.byRoute, T.swarm, T.start, kind(key), islandReach(map)));
     const P = (keys: string[]) => keys.reduce((a, k) => { const [, y, ad] = levels(k); return a + estimatedPower(kind(k), y, ad); }, 0);
     expect(P(order.slice(-5))).toBeGreaterThan(P(order.slice(0, 5)) * 10);
-    expect(spawnCreatures(generateMap(123, TUNING)).map(c => [c.level, c.x, c.z])).toEqual(all.map(c => [c.level, c.x, c.z]));
+    expect(islandReach(map)).toBe(1);
+    expect(spawnCreatures(generateMap(123, T10)).map(c => [c.level, c.x, c.z])).toEqual(all.map(c => [c.level, c.x, c.z]));
   }, 60000);
 });
 

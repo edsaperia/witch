@@ -8,11 +8,11 @@ import { openRules, arg, nums } from "../balance/lib.mjs";
 
 const phases = nums(arg("phases", "0,1,2,3,4,5")), seeds = nums(arg("seeds", "1,2,3")), out = arg("out", "previews/islands/phases.png");
 const R = await openRules();
-const { TUNING } = await R.load("/src/rules/tuning.ts"), { generateMap } = await R.load("/src/rules/map.ts"), { soundsystemFor } = await R.load("/src/rules/party.ts");
+const { TUNING } = await R.load("/src/rules/tuning.ts"), { sizeOfPhase } = await R.load("/src/rules/rosters.ts"), { generateMap } = await R.load("/src/rules/map.ts"), { soundsystemFor } = await R.load("/src/rules/party.ts");
 const C = 300, S = 3800; // (a cell's pixels; metres across a cell, the biggest island's room)
 const cells = [], log = [];
 for (const phase of phases) for (const seed of seeds) {
-  const size = phase === 0 ? 10 : 10 * phase;
+  const size = phase === 0 ? 10 : sizeOfPhase(phase); // (Ed, 2026-11-04: 10 / 15 / 20 / 25 / 30, islands.phaseSizes)
   const t = { ...TUNING, map: { ...TUNING.map, islandAreas: size, island: "", phase } };
   const t0 = performance.now(), map = generateMap(seed, t), ms = performance.now() - t0, L = map.bounds.land, d = map.dancefloor;
   const k = C / S, X = x => (C / 2 + (x - d.x) * k).toFixed(1), Z = z => (C / 2 + (z - d.z) * k).toFixed(1);

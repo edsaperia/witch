@@ -390,7 +390,7 @@ jobs:
   large-world:
     name: largest shipped world art
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 30
     needs: [build, deploy]
     if: ${{ !cancelled() && needs.build.result == 'success' && (github.ref != 'refs/heads/main' || needs.deploy.result == 'success') }}
     env:
