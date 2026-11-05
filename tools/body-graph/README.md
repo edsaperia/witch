@@ -34,6 +34,10 @@ CLOUD ONLY after coordinator assignment.
 
 Source-only numeric allocation audit.
 
+## `shape-review-sheets.mjs`
+
+Canonical CI/cloud only.
+
 ## `size-candidate-audit.mjs`
 
 Canonical runner: full numerical coverage; no browser or screenshot job.

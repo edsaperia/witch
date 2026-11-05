@@ -2,6 +2,7 @@
 // No window/location/global registry: transport the same plain style data.
 import { GENOMES } from "./species.js";
 import { rosterVariant } from "../roster/presets.js";
+import { creatureShapeCandidate } from "./shape-candidates.js";
 // Ed's 6520690688 release set; parked candidates are intentionally absent.
 export const DEFAULT_ROSTER_IDS = ["fennec","dragonfly","wolf","dormouse","bat","woodlouse","frosttroll","hydra","crocodile","crab","meerkat","flyingsquirrel","marten","raccoon","badger","stoat","otter","jaguar","bear","arcticfox"];
 const canonicalGenomes = new WeakSet(GENOMES), defaults = new WeakMap();
@@ -29,7 +30,7 @@ export function selectedCreatureGenome(base, context = {}, level = null) {
   const mode = parseCreatureModels(context?.creatureModels)[base.id];
   if (mode === "current") return base;
   let selected;
-  if (!mode) selected = defaultGenome(base,level);
+  if (!mode) selected = creatureShapeCandidate(defaultGenome(base,level),context);
   else {
     const variants = context.creatureVariants;
     if (!variants || !Object.hasOwn(variants, base.id)) return base;
