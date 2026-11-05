@@ -246,6 +246,7 @@ says what each note covers.
 ## [Performance](performance.md)
 
 - Smoke veil readback (PR1558, pending hardware proof)
+- The whole island at load
 - House route profiling
 - Startup bundle baseline
 - Crash journal budget
@@ -272,6 +273,7 @@ says what each note covers.
 ## [The run](run.md)
 
 - Fresh game link
+- Cold load link
 - What's new in Settings
 - Direct play after loading
 - The phases of a run

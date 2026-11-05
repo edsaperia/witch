@@ -109,6 +109,8 @@ import { Rulers } from "./rulers";
 import { Mist } from "./mist";
 import { LightRings } from "./lightRings";
 import { LoadingMist } from "./loadingMist";
+import { askIslandArt, askIslandFaces, islandNeeds } from "./islandNeeds";
+import { beachOf } from "../rules/mapShape";
 import { typeReaches } from "./loadingFront";
 import { SHADOW_DEBUG, SHADOW_TINT, ShadowBatch, type ShadowInstance } from "./shadows";
 import { MAX_FIRES, TRUNK_SHADOW_UNIFORMS, type TrunkShadowBatch } from "./trunkShadows";
@@ -1051,6 +1053,7 @@ export class View {
     performance.mark("witch:prep-start");
     if (o.sail) { this.homeDone = false; this.shaderDrawStatus.active = true; this.shaderDrawStatus.skipped = {}; this.shaderDrawStatus.fallback = {}; this.shaderDrawStatus.submitted = {}; if (!this.shaderChartLanding) this.startLandingShaderGrace(); }
     this.makeLoadingMist();
+    this.coastAhead();
     { // tonight's own trees, if drawn ahead and kept (app/landingBake.ts), for the swap before she sees the island (retype)
       const m = this.game.map, types = new Set<number>();
       for (let y = m.first; y < m.first + m.n; y++) for (let x = m.first; x < m.first + m.n; x++) types.add(m.typeOf(x, y));
@@ -1071,6 +1074,7 @@ export class View {
       this.homeDone = false;
       this.prepared = true;
       this.askIsland(near); // (the workers drawing the dive's areas while the shaders link)
+      void this.islandAhead(near); this.islandFaces(near); // (the rest of the island's own asked too, not waited for: the dive shows what's built, Ed 2026-11-03)
       // The house, the forest round it and the legends' carvings made from here on, while the shaders link and the chart flies on
       // down to the water (Ed, 2026-11-03: "The zoom into the sea chart can be quite a few seconds long, the idea is to build the
       // island during this time"): made only once the dive began, a slice a dive frame, they took 14.5 s of his laptop's dive for
@@ -1102,7 +1106,7 @@ export class View {
         this.armLimitedLanding(); this.prepared = true; await this.compileAll(true);
         const homeEpoch = this.shaderEpoch;
         void this.buildHome(homeEpoch).catch(e => { console.error("the house's start after a sail went wrong", e); }).finally(() => { if (homeEpoch === this.shaderEpoch) { this.homeDone = true; performance.mark('landing:house-complete'); } });
-        this.askIsland(near); return;
+        this.askIsland(near); void this.islandAhead(near); this.islandFaces(near); return;
       }
     } else await this.assets.homeArt(); // initial boot still waits for all home art
     performance.mark("witch:prep-home");
@@ -1111,7 +1115,12 @@ export class View {
     // (its anchors set their pitch) and made into their meshes before the compile below uploads their textures; so the first time
     // she's in the house nothing's made. Kept across nights (HouseRoomsView.reset), so the bed's next night and a visit find it made.
     const house = this.houseRooms?.preload(this);
-    await this.assets.whenIdle(true); // (what the view asked for as needed now; the scenery kits and creatures draw on and fade in: the first-load hunt, 2026-10-20, half the cold load)
+    // And the island's own, every area type's trees and every look its creatures can wear (Ed, 2026-11-05: "Load the trees, creature
+    // art, and coast and lakes, during the loading screen."; but "Skip the animal faces": islandFaces, below): waited for here, so
+    // nothing on the island pops in after the screen fades (a sail's asked for, not waited for: below).
+    const island = this.islandAhead(near);
+    await this.assets.whenIdle(true); // (what the view asked for as needed now)
+    if (!o.sail) await island;
     performance.mark("witch:prep-idle");
     await house;
     performance.mark("witch:prep-rooms");
@@ -1120,6 +1129,7 @@ export class View {
     this.prepared = true;
     await this.compileAll(o.sail);
     this.askIsland(near);
+    this.islandFaces(near); // (as the loading screen fades: main.ts finishes it as prepare ends)
     this.homeDone = true;
   }
 
@@ -1161,6 +1171,22 @@ export class View {
     this.loadingMist = new LoadingMist(T, typeReaches(cells, m.treehouse, m.areaSize), m.treehouse, m.extent, A.uniforms, this.post.scene.depthTexture, this.post.fxSize, A.slots);
     (this.post.fxScene ??= new THREE.Scene()).add(this.loadingMist.mesh);
   }
+
+  /** The island's own asked for ahead (prepare; Ed, 2026-11-05: "Load the trees, creature art, and coast and lakes, during the
+   *  loading screen."): its area types' trees, every look its creatures can wear and the coast's and lakes' dressing (render/
+   *  islandNeeds.ts); resolves once they've landed. Not under ?quick=1 (only what's needed, as it's needed) or in the zoo (askIsland's). */
+  private islandAhead(near: Map<number, number>): Promise<void> {
+    const g = this.game;
+    if (this.quick || g.map.zoo?.layout) return Promise.resolve();
+    const needs = islandNeeds(g.map, near), looks = { legendNap: !!g.tuning.wildLegends.seen?.nap, coast: !!beachOf(g.map.bounds, g.tuning), beachDecor: !!g.tuning.beach?.decor?.on, lakes: !!g.map.bounds.lakes };
+    return this.assets.whenAsked(() => askIslandArt(this.assets, needs, looks)).then(() => { performance.mark("witch:prep-island"); });
+  }
+  /** The island's creatures' faces asked for in the background, not waited for (Ed, 2026-11-05: "Skip the animal faces"; render/
+   *  islandNeeds.ts askIslandFaces): till one's in, a creature making that face shows its plain look. Not under ?quick=1 or in the zoo. */
+  private islandFaces(near: Map<number, number>): void { const g = this.game; if (!this.quick && !g.map.zoo?.layout) askIslandFaces(this.assets, islandNeeds(g.map, near)); }
+  /** The coast's ground program made with the rest, under the loading screen (Ground.coastAhead; Ed, 2026-11-05), on an island with a
+   *  beach; not under ?quick=1. */
+  private coastAhead(): void { const b = this.quick ? null : beachOf(this.game.map.bounds, this.game.tuning); if (b) this.ground.coastAhead(b); }
 
   /** What the start's first frame would make the first time it's asked for, made ahead in steps (render/slices.ts; Ed's laptop,
    *  2026-10-20): the forest round her (the scenery's rebuild) and round the party's areas (their string lights), and the legends'

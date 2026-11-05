@@ -13,10 +13,10 @@ import { View } from "./view";
 function standIn(log: string[], houseAfterMs: number) {
   const v = Object.create(View.prototype) as Record<string, unknown>;
   const own = {
-    game: { map: { first: 0, n: 1, centreCell: [0, 0], treehouse: { x: 0, z: 0 }, typeOf: () => 0, siteOf: () => ({ x: 0, z: 0 }) }, witch: { x: 0, z: 0 }, tuning: { haze: { near: 10 } } },
+    game: { map: { first: 0, n: 1, centreCell: [0, 0], treehouse: { x: 0, z: 0 }, typeOf: () => 0, siteOf: () => ({ x: 0, z: 0 }), bounds: {}, legendKinds: [], specialSites: [] }, witch: { x: 0, z: 0 }, tuning: { haze: { near: 10 }, wildLegends: {} } },
     makeLoadingMist: () => {}, warmSteps: function* () {}, render: () => {}, askIsland: () => { log.push("island"); },
     ground: { fill: () => 0 },
-    assets: { tonight: () => {}, homeArt: async () => { log.push("home art"); }, whenIdle: async () => { log.push("idle"); } },
+    assets: { tonight: () => {}, homeArt: async () => { log.push("home art"); }, whenIdle: async () => { log.push("idle"); }, whenAsked: async () => { log.push("island's own asked"); } }, // (render/prepareIsland.test.ts has what it asks)
     compileAll: async () => { log.push("compile"); },
     houseRooms: { preload: () => { log.push("house asked"); return new Promise<void>(res => setTimeout(() => { log.push("house made"); res(); }, houseAfterMs)); } },
   };
@@ -28,7 +28,7 @@ describe("the night's preparation and the house", () => {
   it("asks for the house once the start's art is in, and compiles (uploading its textures) only once it's made", async () => {
     const log: string[] = [];
     await standIn(log, 30).prepare();
-    expect(log).toEqual(["home art", "house asked", "idle", "house made", "compile", "island"]);
+    expect(log).toEqual(["home art", "house asked", "island's own asked", "idle", "house made", "compile", "island"]);
   });
 
   it("ends only once the house is made, however long it takes", async () => {

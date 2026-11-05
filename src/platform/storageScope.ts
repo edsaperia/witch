@@ -12,7 +12,7 @@
 //
 // Not scoped: the derived caches (the art cache, render/artCacheStorage.ts; the chart's coasts, app/chartCache.ts; the map prep,
 // app/mapPrepStore.ts). They hold only what a build and a seed make, keyed by both, written and read by the art and map workers too,
-// and a fresh game reading one draws exactly what it would have made.
+// and a fresh game reading one draws exactly what it would have made. A cold load (?cold=1, coldLoad below) leaves them unread.
 
 /** The fresh games' namespace, in each store. */
 export const FRESH_PREFIX = "witch.fresh.";
@@ -140,10 +140,23 @@ export const pageIdb = (): IDBFactory | undefined => storageScope().idb();
 /** Whether this page plays a fresh game (?fresh=). */
 export const freshGame = (): boolean => storageScope().fresh !== null;
 
-/** A link this page goes to, its ?fresh=<token> carried (a fresh game's reload, sail or save switch stays in it); as it was otherwise. */
-export function freshHref(href: string, fresh: string | null = storageScope().fresh): string {
-  if (!fresh) return href;
+/** A link this page goes to, its ?fresh=<token> carried (a fresh game's reload, sail or save switch stays in it), and its ?cold=1
+ *  (a cold load's reload or sail is cold too); as it was otherwise. */
+export function freshHref(href: string, fresh: string | null = storageScope().fresh, cold = coldLoad()): string {
+  if (!fresh && !cold) return href;
   const u = new URL(href, typeof location === "undefined" ? "https://witch.invalid/" : location.href);
-  u.searchParams.set("fresh", fresh);
+  if (fresh) u.searchParams.set("fresh", fresh);
+  if (cold) u.searchParams.set("cold", "1");
   return u.toString();
 }
+
+/** The link's cold switch (Ed, 2026-11-05: test a cold first load every time): ?cold=1 (any value but 0) loads as a first-ever
+ *  visit does as far as the derived caches go (the art cache, render/artCacheStorage.ts; the chart's islands and coasts,
+ *  app/chartCache.ts; the map prep, app/mapPrepStore.ts): none read and nothing kept, for this page load, so every load of the link
+ *  draws and makes everything again. Bypassed, not cleared: a clear waits on every other tab's open connection (a game in another
+ *  tab would hold it, and this page's reads behind it), and would also cost the ordinary game its cache. With ?fresh=1 it makes a
+ *  brand-new player's first visit. The page's stores answer nothing (each one's open); the workers are told with their jobs. */
+export const coldLink = (search: string): boolean => { const v = new URLSearchParams(search).get("cold"); return v !== null && v !== "0"; };
+let cold: boolean | undefined;
+/** Whether this page loads cold (?cold=), read once from its link (a worker's own link never has it: its jobs say). */
+export const coldLoad = (): boolean => (cold ??= typeof location !== "undefined" && coldLink(location.search));
