@@ -30,7 +30,7 @@ import { chartOrder, islandPhase, OUTLINE_STEP } from "./chartWarm";
 import { chartChoice, chartOpensOn, type ChartHere } from "./sail";
 import { bindings, type ActionId } from "../platform/bindings";
 import { chartHint, type HintDevice } from "../ui/deviceHints";
-import { freshHref, localStore } from "../platform/storageScope";
+import { coldLoad, freshHref, localStore } from "../platform/storageScope";
 
 export type ChartMode = "look" | "sail" | "miniature";
 /** Where the chart's flight hands over to the game's dive (the tuning's arrive.handoff; Ed, 2026-10-24: "maybe it comes from further
@@ -328,7 +328,7 @@ export function mountChart(host: HTMLElement, opts: ChartViewOptions): ChartView
     const from = islands.find(i => i.id === (chart.selected ?? save.voyages.at(-1)?.to ?? "home")) ?? islands[0];
     const ids = chartOrder(islands.filter(i => !i.outline && !waiting.has(i.id)), from); // (home and hers first, then by phase, earliest first, the nearest the chosen first within one: Ed, 2026-10-19)
     if (!ids.length) { if (poll) { clearInterval(poll); poll = null; } return; }
-    const wk = make(); if (wk) postTracedJob(wk, { world: w, found, ids, step: OUTLINE_STEP, cacheOnly: mini } satisfies OutlineAsk, 'chart:request', 'outlines', ids.length);
+    const wk = make(); if (wk) postTracedJob(wk, { world: w, found, ids, step: OUTLINE_STEP, cacheOnly: mini, cold: coldLoad() } satisfies OutlineAsk, 'chart:request', 'outlines', ids.length);
     if (mini && !poll) poll = setInterval(outlines, 4000);
   }
 

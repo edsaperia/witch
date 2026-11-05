@@ -1,5 +1,6 @@
 // Storage only: cache hits must not initialize the drawing or rules modules.
 import type { ArtResult } from "./artBuild";
+import { coldLoad } from "../platform/storageScope";
 
 const DB = "witch-art", STORE = "sets", VERSION = 2;
 let opening: Promise<IDBDatabase | null> | null = null;
@@ -8,7 +9,7 @@ function open(): Promise<IDBDatabase | null> {
   if (opening) return opening;
   opening = new Promise<IDBDatabase | null>(resolve => {
     try {
-      if (typeof indexedDB === "undefined") return resolve(null);
+      if (typeof indexedDB === "undefined" || coldLoad()) return resolve(null); // (a cold load, ?cold=1: nothing read or kept on the page; its workers' jobs carry no key)
       const r = indexedDB.open(DB, VERSION);
       r.onupgradeneeded = () => { try { if (r.result.objectStoreNames.contains(STORE)) r.result.deleteObjectStore(STORE); r.result.createObjectStore(STORE); } catch { /* answered by onerror */ } };
       r.onsuccess = () => resolve(r.result);

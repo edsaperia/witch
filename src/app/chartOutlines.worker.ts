@@ -16,7 +16,7 @@ import { TUNING } from "../rules/tuning";
 import { lakeKnobs } from "../rules/lakes";
 import { islandBiome, lookOfLoop, loopMiddles, nearestLoop, LOOK_IDS, type Blend, type LakeLook } from "../rules/lakeLooks";
 import type { LandMap } from "../rules/land";
-import { CACHE_PREFIX, cacheGet, cacheKey, cachePrune, cachePut, keepCoast, OUTLINE_ACROSS, OUTLINE_DETAIL } from "./chartCache";
+import { CACHE_PREFIX, cacheGet, cacheKey, cachePrune, cachePut, coldCache, keepCoast, OUTLINE_ACROSS, OUTLINE_DETAIL } from "./chartCache";
 import { buildIslandMesh, meshBuffers, type IslandMesh } from "../render/chart/islandMesh";
 import { K, SIGIL_TIERS } from "../render/chart/chartScale";
 import { islandSigil } from "../../art/sigils.js";
@@ -27,7 +27,7 @@ import { readWorkerTrace, WorkerJobTrace, traceAsync, traceSync, workerEpoch, ty
 /** The islands for a world (the closest first), the kinds she's found (home's size), the grid; `warm`: make and keep them only
  *  (app/chartWarm.ts, in the night), answering { warmed } as each is kept and { warmDone } at the end. Or: this one next; this
  *  one's fine grid next. */
-export type OutlineAsk = { world: number; found: string[]; ids: string[]; step: number; warm?: boolean; /** only what's kept already: nothing made (the map table's miniature, Ed, 2026-10-13: never built while she's near the deck) */ cacheOnly?: boolean } | { first: string } | { detail: string };
+export type OutlineAsk = { world: number; found: string[]; ids: string[]; step: number; warm?: boolean; /** only what's kept already: nothing made (the map table's miniature, Ed, 2026-10-13: never built while she's near the deck) */ cacheOnly?: boolean; /** a cold load's (?cold=1): nothing read or kept */ cold?: boolean } | { first: string } | { detail: string };
 /** A warm job's progress: an island kept (made, or already kept), then the end (how many made, how many already kept). */
 export type WarmNote = { warmed: string; made: boolean } | { warmDone: true; made: number; kept: number };
 /** An island's ground on a grid (metres from home's middle): its first sample, the step, samples across and down; each sample's
@@ -289,6 +289,7 @@ self.onmessage = (e: MessageEvent<OutlineAsk>) => {
   if (meta) { const request = new WorkerJobTrace(meta); request.start(); request.finish('request-received'); }
   if ("detail" in m) { detailTrace?.finish('superseded'); detailTrace = childTrace(meta, m.detail, true, queue.length); detail = m.detail; if (!busy && job) { busy = true; setTimeout(next, 0); } return; }
   if ("first" in m) { const i = queue.indexOf(m.first); if (i > 0) { queue.splice(i, 1); queue.unshift(m.first); } return; }
+  if (m.cold) coldCache(); // (a cold page's worker: nothing read or kept from here on)
   job = { world: m.world, found: m.found, step: m.step, warm: m.warm, cacheOnly: m.cacheOnly }; queue = [...m.ids];
   for (const trace of queueTraces.values()) if (!trace.active) trace.finish('superseded'); queueTraces.clear();
   if (meta) for (const [index, id] of queue.entries()) { const trace = childTrace(meta, id, false, index + (detail ? 1 : 0))!; queueTraces.set(id, trace); }
