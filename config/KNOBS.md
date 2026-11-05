@@ -623,7 +623,7 @@ Each sleeping legend lies in a small round clearing of its own, sized to fit it.
 1. Ed, 2026-10-06
 Each area's sleeping legend lies in a small circular clearing of its own [1], where no tree or decor stands: radius metres across from its middle (species: a radius for that legend, sized to fit it: half its sleeping width plus 4 m), a soft ring edge metres wide marking it on the ground, and the legend lying top x radius north of the middle (the circle's far side from the camera), the open floor in front. Quest sigils and relics take effect inside it.
 
-- **`legendClearing.minFromStone`**: its edge at least this many metres from its area's runestone (where the soundsystem comes), clear of the stone's clearing and the party's dance space; a small area with no such spot takes the farthest that fits (logged).
+- **`legendClearing.minFromStone`**: its edge at least this many metres from its area's runestone (where the soundsystem comes), clear of the stone's clearing and the party's dance space; a small area with no such spot grows into the areas beside it to hold one (Ed, 2026-11-04: "make the last-resort placement grow the area instead of breaking the gap"; logged).
   1. Ed, 2026-10-06: "The legend circle shouldn't spawn near its runestone"
 - **`legendClearing.minFromOtherStones`**: its edge at least this many metres from every neighbouring area's runestone too, always (not relaxed for a small area).
   1. Ed: "Legend and runestone in the same place" (v1628)
@@ -826,7 +826,7 @@ See `setPieceFootprint`.
 The keep-clear zone round each area's stone (its great stump, or its runestone with the stumps off), in metres from its middle.
 
 1. Ed, 2026-10-29: "No special areas should appear so close to stump/runestone areas; no special scenery, no finds or flasks, no legend circles" (and the party relics, walls and ruins, ponds, picnics and campfires, and the playgrounds too)
-Nothing special within it: no scene or set piece, ruin or freak tree (the giant mushroom), modern relic, the night's find, flask (party relic), legend's clearing, wall or stone ring, pond, campfire or magic stone, the party's picnics, clusters, set dressing and campfires, or ground (playgrounds and sports grounds): each keeps its whole footprint out (clearOfStones in rules/map.ts). Ordinary trees, bushes, rocks and groundcover may stand in it; the stump's own clearing (runeMarkers.stump.clear) keeps the trees off its roots. A legend's clearing that can't fit out of it (a small area) goes at the farthest spot it fits, and the map says so in the log. The 40 m: the stump's 17 m clearing and a margin.
+Nothing special within it: no scene or set piece, ruin or freak tree (the giant mushroom), modern relic, the night's find, flask (party relic), legend's clearing, wall or stone ring, pond, campfire or magic stone, the party's picnics, clusters, set dressing and campfires, or ground (playgrounds and sports grounds): each keeps its whole footprint out (clearOfStones in rules/map.ts). Ordinary trees, bushes, rocks and groundcover may stand in it; the stump's own clearing (runeMarkers.stump.clear) keeps the trees off its roots. A legend's clearing that can't fit out of it (a small area) grows its area into the areas beside it to hold one, and the map says so in the log. The 40 m: the stump's 17 m clearing and a margin.
 
 | knob | type | range |
 |---|---|---|
@@ -838,7 +838,7 @@ the least gap, metres edge to edge, between any two sites' footprints: stones' c
 
 1. Ed, 2026-11-03: "Min 40 m between stumps." (folded in: two stones' middles now 2 x their clearing (runeMarkers.stump.clear) + siteGap apart (84 m))
 2. Ed, 2026-11-04: "minimum distance between sites/circles/dancefloor/treehouse of 50m, tunable. 10m from a lake edge. If this can't fit, increase area sizes."
-Placed in turn (rules/map.ts siteRules): the challenge's claim taking only ground that leaves room (fitClaim), then the stones (placeSites: one that would be nearer moves, in its own area, to the nearest spot that keeps every gap, logged where none does), then the legends' circles (their fits, shrinking in fine steps where they must; the last resort, logged, may break it). stoneKeepClear (40 m round a stone's middle) still keeps scenery off the stones; a legend's circle keeps the stricter siteGap from a stone's clearing (67 m from its middle). areaScale went 6 to 7 so it holds on every measured night but one: docs/notes/world-art.md Site gaps.
+Placed in turn (rules/map.ts siteRules): the challenge's claim taking only ground that leaves room (fitClaim), then the stones (placeSites: one that would be nearer moves, in its own area, to the nearest spot that keeps every gap, logged where none does), then the legends' circles (their fits, shrinking in fine steps where they must; failing that, another of its kind's areas; failing that, its area grown for it, claiming the circle's ground from the areas beside it, Ed 2026-11-04: "make the last-resort placement grow the area instead of breaking the gap"; logged; nothing breaks it). stoneKeepClear (40 m round a stone's middle) still keeps scenery off the stones; a legend's circle keeps the stricter siteGap from a stone's clearing (67 m from its middle). areaScale went 6 to 7 to make room: docs/notes/world-art.md Site gaps.
 
 | knob | type | range |
 |---|---|---|

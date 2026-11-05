@@ -1753,7 +1753,7 @@
         "minFromStone": {
           "type": "number",
           "minimum": 0,
-          "description": "its edge at least this many metres from its area's runestone (where the soundsystem comes), clear of the stone's clearing and the party's dance space; a small area with no such spot takes the farthest that fits (logged)."
+          "description": "its edge at least this many metres from its area's runestone (where the soundsystem comes), clear of the stone's clearing and the party's dance space; a small area with no such spot grows into the areas beside it to hold one (Ed, 2026-11-04: \"make the last-resort placement grow the area instead of breaking the gap\"; logged)."
         },
         "minFromOtherStones": {
           "type": "number",

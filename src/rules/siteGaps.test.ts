@@ -4,10 +4,12 @@
 // paired twice, so no legend's circle goes into another legend area), and every two sites' footprints keep siteGap apart and
 // siteLakeGap off a lake's water (rules/map.ts siteRules).
 import { describe, expect, it } from "vitest";
-import { generateMap, siteRules, type ForestMap } from "./map";
+import { generateMap, hydrateMap, prepOf, siteRules, type ForestMap } from "./map";
 import { lakeDepth } from "./lakes";
 import { floorClearing } from "./speakers";
 import { TUNING, type Tuning } from "./tuning";
+import { knownKinds } from "./rosters";
+import { KINDS_TABLE } from "./kinds";
 
 const islandOf = (kind: string): Tuning => ({ ...TUNING, map: { ...TUNING.map!, island: kind, islandAreas: 10 } });
 const key = (c: readonly [number, number]) => `${c[0]},${c[1]}`;
@@ -91,4 +93,47 @@ describe("the least gaps between sites", () => {
     expect([...b.legendAreas]).toEqual([...a.legendAreas]);
     expect(b.legendClearings).toEqual(a.legendClearings);
   }, 60000);
+});
+
+// Nights whose early quest's legend found no room keeping every gap, in its area beside home, and took the farthest spot that fit,
+// breaking the gap (the playtest build's coherence check, 4 Nov: home with 40 islands found, seeds 2, 4 and 7; tiger 6, griffin 2,
+// elephant 7; this branch's jaguar 1). Its area grows instead (Ed, 2026-11-04: "make the last-resort placement grow the area instead
+// of breaking the gap"): the circle wholly its area's, every gap kept.
+const homeFound = (n: number): Tuning => ({ ...TUNING, map: { ...TUNING.map!, island: "home", islandAreas: 10, found: knownKinds(Object.keys(KINDS_TABLE)).slice(0, n) } });
+const CRAMPED: [string, number, Tuning][] = [
+  ...[2, 4, 7].map((s): [string, number, Tuning] => ["home of 40", s, homeFound(40)]),
+  ...([["tiger", 6], ["griffin", 2], ["elephant", 7], ["jaguar", 1]] as const).map(([k, s]): [string, number, Tuning] => [k, s, islandOf(k)]),
+];
+
+describe("an area grown for its legend's circle", () => {
+  for (const [what, seed, t] of CRAMPED) {
+    it(`never breaks a gap for a legend's circle: ${what}, seed ${seed}`, () => {
+      const m = generateMap(seed, t), gap = siteRules(m.tuning).siteGap, lake = siteRules(m.tuning).lakeGap, all = sitesOf(m), near: string[] = [];
+      for (let i = 0; i < all.length; i++) for (let j = i + 1; j < all.length; j++) {
+        const a = all[i], b = all[j];
+        if (a.what.startsWith("home") && b.what.startsWith("home")) continue;
+        const g = Math.hypot(a.x - b.x, a.z - b.z) - a.r - b.r;
+        if (g < gap - 0.01) near.push(`${a.what} to ${b.what} ${g.toFixed(1)} m`);
+      }
+      if (m.bounds.lakes) for (const s of all) { const g = -lakeDepth(m.bounds, s.x, s.z) - s.r; if (g < lake - 0.5) near.push(`${s.what} ${g.toFixed(1)} m off a lake`); }
+      expect(near).toEqual([]);
+      // every legend tonight has its circle, its own area's
+      for (const lc of m.legendCells) {
+        const [x, y] = lc.split(",").map(Number), c = m.legendClearing(x, y);
+        expect(c, `${lc}'s circle`).toBeTruthy();
+        for (let i = 0; i < 16; i++) for (const f of [0, 1]) { // (its middle and the 16 points of its rim placing checks: the fractal borders wander between)
+          const a = (i / 16) * Math.PI * 2, q = key(m.areaAt(c!.x + Math.cos(a) * c!.r * f, c!.z + Math.sin(a) * c!.r * f).cell);
+          expect(q, `${lc}'s circle reaches ${q}`).toBe(key(c!.cell));
+        }
+      }
+    }, 180000);
+  }
+  it("grows the same from a map's prep, and the same from the same seed (jaguar 1, home of 40 seed 2)", () => {
+    for (const [seed, t] of [[1, islandOf("jaguar")], [2, homeFound(40)]] as const) {
+      const a = generateMap(seed, t), b = generateMap(seed, t), c = hydrateMap(seed, t, prepOf(a));
+      expect(b.legendClearings).toEqual(a.legendClearings);
+      expect(c.legendClearings).toEqual(a.legendClearings);
+      for (const m of [b, c]) for (const lc of a.legendClearings) expect(key(m.areaAt(lc.x, lc.z).cell)).toBe(key(lc.cell));
+    }
+  }, 180000);
 });
