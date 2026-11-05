@@ -6,6 +6,7 @@ export type PackedPattern = readonly [number, number, number, number];
 export const IDENTITY_PATTERN: PackedPattern = [0, 1, 0, 0];
 export const patternOptions = (search: string): PatternLook => {
   const value = new URLSearchParams(search).get('patternlight');
+  if (value === null) return 'colour-spokes';
   if (value === 'off') return 'off';
   return value === 'auto' || value === 'spokes' || value === 'stripes' || value === 'bands' || value === 'colour-spokes' ? value : 'off';
 };

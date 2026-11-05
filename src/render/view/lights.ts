@@ -78,7 +78,7 @@ export function updateSources(v: View, time: number): void {
  *  edge so none pops on or off. */
 const NEAR_L: ForestLight[] = [], NEAR_D: number[] = []; // (the nearest lights, kept sorted as they come: no record a light a frame)
 export function setLights(v: View, all: ForestLight[], x: number, z: number, patternLook: PatternLook = PATTERN_LOOK): void {
-  beginLightPatterns();
+  beginLightPatterns(v.game.tuning.patternLight?.strength ?? 1);
   const budget = Math.min(MAX_LIGHTS, v.game.tuning.lightBudget), keep = budget + 1;
   // The nearest keep of them by distance less reach, in the order a stable sort would give (an equal distance after the earlier).
   NEAR_L.length = 0; NEAR_D.length = 0;

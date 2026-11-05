@@ -12,7 +12,7 @@
     "bands",
     "colour-spokes"
    ],
-   "does": "Optional patterned lighting: auto cycles; spokes, stripes, bands and colour-spokes hold a look; off keeps original lighting. Omitted or unknown values stay off pending performance acceptance.",
+   "does": "Colour spokes by default; auto cycles, other named looks hold their pattern, off keeps original lighting, and unknown values stay off. Reduced flashing disables every pattern.",
    "group": "compare",
    "since": "2026-10-31",
    "readIn": [

@@ -156,7 +156,7 @@ Each brings back how something was before a change, to compare against what repl
 
 | switch | does | since | read in |
 |---|---|---|---|
-| `patternlight=off` / `patternlight=auto` / `patternlight=spokes` / `patternlight=stripes` / `patternlight=bands` / `patternlight=colour-spokes` | Optional patterned lighting: auto cycles; spokes, stripes, bands and colour-spokes hold a look; off keeps original lighting. Omitted or unknown values stay off pending performance acceptance. | 2026-10-31 | render/lightPatternState.ts |
+| `patternlight=off` / `patternlight=auto` / `patternlight=spokes` / `patternlight=stripes` / `patternlight=bands` / `patternlight=colour-spokes` | Colour spokes by default; auto cycles, other named looks hold their pattern, off keeps original lighting, and unknown values stay off. Reduced flashing disables every pattern. | 2026-10-31 | render/lightPatternState.ts |
 | `area=off` | Scenery isn't averaged where it shrinks (a performance suspect, to compare). | 2026-10-14 | app/linkParams.ts |
 | `attacks=old` | Every species fights with its old attacks from config/combat.json, not its own in the attack grammar. *Decision: Each species' own attack is the default (Ed, 2026-10-27, #1326).* | 2026-10-27 | app/linkParams.ts |
 | `snap=0` | The picture's pixels as the pixel size has them, not snapped to whole device pixels (pixels.snap), to compare. | 2026-10-29 | app/linkParams.ts |

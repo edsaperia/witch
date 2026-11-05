@@ -9,12 +9,15 @@ const slots = new PatternSlots(PATTERN_SLOT_CAPACITY);
 export const LIGHT_PATTERN_UNIFORMS = {
   uLightPattern: { value: Array.from({ length: PATTERN_SLOT_CAPACITY }, () => new THREE.Vector4()) },
 };
-export function beginLightPatterns(): void {
+let strength = 1;
+export function beginLightPatterns(value = 1): void {
+  strength = Number.isFinite(value) ? Math.max(0, Math.min(4, value)) : 0;
   slots.begin();
   for (const value of LIGHT_PATTERN_UNIFORMS.uLightPattern.value) value.set(0, 0, 0, 0);
 }
 export function writeLightPattern(slot: number, pattern?: PackedPattern): void {
-  slots.write(slot, pattern);
+  const scaled: PackedPattern | undefined = pattern ? [pattern[0], pattern[1], pattern[2] * strength, pattern[3]] : undefined;
+  slots.write(slot, scaled);
   if (!Number.isInteger(slot) || slot < 0 || slot >= PATTERN_SLOT_CAPACITY) return;
   const at = slot * 4, d = slots.data;
   const value = LIGHT_PATTERN_UNIFORMS.uLightPattern.value[slot];
