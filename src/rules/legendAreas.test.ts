@@ -83,8 +83,10 @@ describe("legend areas", () => {
     // area a kind while the compass neighbourhood lasts (Ed, 2026-11-04, rules/rosters.ts), nor the stumps keeping off its lakes
     // (#1807) deals it there. With all four together (the islands' sizes by phase, the rosters, home at 5 and areas 196 m across with
     // every two sites 50 m apart) the tiger island's seed 1, 25 areas, deals an elk a legend area whose room left by the 50 m gaps is a
-    // 21 m circle, 4.3 m short of its margin: the gaps' last resort, rules/map.ts, a smaller circle; every other legend fits)
-    expect(over.filter(s => !s.startsWith("elephant"))).toEqual(["elk 4.3 m (r 21, tiger 1)"]);
+    // 21 m circle, 4.3 m short of its margin. Since a legend's circle is tried at its full size everywhere before a smaller one, its
+    // legend area grown for it (Ed, 2026-11-05: "ideally from world generation all of the areas are large enough that this is not an
+    // issue"; #1807, rules/map.ts growClearing), it fits too: every legend but the elephant fits)
+    expect(over.filter(s => !s.startsWith("elephant"))).toEqual([]);
   });
 
   it("shows no border inside a pair: the legend area wears its pair's look everywhere, so the area blend has nothing to blend there", () => {

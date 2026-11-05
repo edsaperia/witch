@@ -122,7 +122,7 @@ describe("where it goes (Ed, 2026-11-04: \"The route should avoid going through 
 
   /** On map m: its challenge area on the island's edge (touching an area past the playable ones that isn't a lake), in its outer half
    *  (areas crossed from home), and no link of the ley route over its circle and margin, straight or as drawn. */
-  const placedWell = (m: ForestMap, what: string) => {
+  const placedWell = (m: ForestMap, what: string, far = true) => {
     const sp = challengeSite(m)!, k = key(sp.cell), home = key(m.centreCell), cells = new Set([...m.cells.map(key), k]);
     const edge = [...(m.neighbours.get(k) ?? [])].some(q => { const [x, y] = q.split(",").map(Number); return !cells.has(q) && !m.isLake(x, y); });
     const steps = new Map([[home, 0]]), todo = [home];
@@ -130,13 +130,16 @@ describe("where it goes (Ed, 2026-11-04: \"The route should avoid going through 
     const r = routeOf(m), p: P2 = [sp.x, sp.z];
     let gap = Infinity;
     for (const l of [...r.links, ...(r.straight ?? [])]) for (let i = 0; i + 1 < l.length; i++) gap = Math.min(gap, lineGap(p, l[i], l[i + 1]));
-    expect({ edge, far: steps.get(k)! >= PLACE.far * Math.max(...steps.values()), clear: gap >= sp.r }, `${what}: ${k}, ${steps.get(k)} of ${Math.max(...steps.values())} areas out, the route ${gap.toFixed(0)} m from its middle`).toEqual({ edge: true, far: true, clear: true });
+    expect({ edge, far: steps.get(k)! >= PLACE.far * Math.max(...steps.values()), clear: gap >= sp.r }, `${what}: ${k}, ${steps.get(k)} of ${Math.max(...steps.values())} areas out, the route ${gap.toFixed(0)} m from its middle`).toEqual({ edge: true, far, clear: true });
   };
   it("on 10-area islands: on the edge, in the outer half, the route clear of its circle", () => {
     for (const [kind, seed] of [["hare", 1], ["hare", 5], ["fox", 2], ["fox", 3]] as const) placedWell(sharedMap(seed, islandOf(kind)), `${kind} ${seed}`);
   }, 120000);
   it("on 31 and 51-area islands and the late home of 64", () => {
-    for (const [kind, seed] of [["owl", 1], ["owl", 2], ["griffin", 1], ["griffin", 2]] as const) placedWell(sharedMap(seed, islandOf(kind)), `${kind} ${seed}`);
+    // (the owl's island: since the circle went to 50 m, #1827, with every two sites 50 m apart, #1807, no area in its outer half holds
+    // the claim (logged "not far from home"): seeds 1 and 2 at 17,17, 2 of 5 out, still on the edge and clear of the route; with the
+    // 36 m circle 5 of 5; Ed, 2026-11-05: "it's okay")
+    for (const [kind, seed] of [["owl", 1], ["owl", 2], ["griffin", 1], ["griffin", 2]] as const) placedWell(sharedMap(seed, islandOf(kind)), `${kind} ${seed}`, kind !== "owl");
     placedWell(sharedMap(1, lateHome(64)), "home 64");
   }, 300000);
   it("the backstop holds for the line as drawn: no curved link inside its clearing where its straight line kept clear (elephant seed 2, #1827)", () => {
@@ -144,7 +147,9 @@ describe("where it goes (Ed, 2026-11-04: \"The route should avoid going through 
     // swinging 34 m off it, 48 m from its middle: inside. leyRoute plans afresh with that link counted over it: drawnOverChallenge)
     const m = sharedMap(2, islandOf("elephant"));
     expect(drawnOverChallenge(m, routeOf(m))).toEqual([]);
-    placedWell(m, "elephant 2");
+    // (and, the circle 50 m with every two sites 50 m apart, no area in its outer half holds its claim: 3 of 9 out, logged "not far from
+    // home"; on the edge and clear of the route still; with the 36 m circle 8 of 9; Ed, 2026-11-05: "it's okay")
+    placedWell(m, "elephant 2", false);
   }, 300000);
   it("still moves night to night: more than one area over a few nights of a 51-area island", () => {
     const at = new Set([1, 2, 3, 4, 5].map(seed => key(challengeSite(seed <= 2 ? sharedMap(seed, islandOf("griffin")) : generateMap(seed, islandOf("griffin")))!.cell)));
