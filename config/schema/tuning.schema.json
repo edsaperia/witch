@@ -95,6 +95,12 @@
           "minimum": 0,
           "description": "How an island grows out from home, its outline rounder or more lobed, bayed and armed the further out it is."
         },
+        "rosterNeighbourhood": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 180,
+          "description": "How many degrees either side of an island's bearing its compass neighbourhood reaches: the other kinds it takes one area each before any kind gets a second."
+        },
         "shapes": {
           "type": "array",
           "items": {
@@ -214,6 +220,7 @@
         "island",
         "found",
         "phase",
+        "rosterNeighbourhood",
         "shapes",
         "buffer",
         "push",
@@ -262,7 +269,7 @@
         "koi": {
           "type": "number",
           "minimum": 0,
-          "description": "the share of lakes with koi in them (DECISION FOR ED)."
+          "description": "the share of lakes with koi in them."
         },
         "biomeFrom": {
           "type": "number",
@@ -413,10 +420,19 @@
             "detail"
           ],
           "additionalProperties": false
+        },
+        "phaseSizes": {
+          "type": "array",
+          "items": {
+            "type": "number",
+            "minimum": 0
+          },
+          "description": "How many areas (stumps and waves) each phase's islands have, phase 1 first."
         }
       },
       "required": [
-        "coast"
+        "coast",
+        "phaseSizes"
       ],
       "additionalProperties": false,
       "description": "How the other islands look on the sea chart and in the dream bubbles: their coastlines and shapes."
@@ -1651,11 +1667,25 @@
         "gap": {
           "type": "number",
           "minimum": 0
+        },
+        "start": {
+          "type": "number",
+          "minimum": 1,
+          "maximum": 64,
+          "description": "How many areas home has at the start of a campaign: home grows by one area per island she's found, and while that's fewer than this, home's starting kinds whose islands she hasn't found fill it up to this, chosen at random each night."
+        },
+        "challengeAt": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 64,
+          "description": "How many islands she must have found before home gets its challenge area and its find: 64, every island on the chart; lower to bring home's endgame on early, to play it."
         }
       },
       "required": [
         "margin",
-        "gap"
+        "gap",
+        "start",
+        "challengeAt"
       ],
       "additionalProperties": false,
       "description": "Home's area: the map is cut with home first, a circle round the dancefloor out past the treehouse's footprint (its distance and clear) and margin metres more all home's; the areas round it are cut round it, their centres kept at least gap of an area beyond the circle."
@@ -1753,7 +1783,7 @@
         "minFromStone": {
           "type": "number",
           "minimum": 0,
-          "description": "its edge at least this many metres from its area's runestone (where the soundsystem comes), clear of the stone's clearing and the party's dance space; a small area with no such spot takes the farthest that fits (logged)."
+          "description": "its edge at least this many metres from its area's runestone (where the soundsystem comes), clear of the stone's clearing and the party's dance space; a small area with no such spot grows to hold one (logged)."
         },
         "minFromOtherStones": {
           "type": "number",
@@ -2260,10 +2290,15 @@
       "minimum": 0,
       "description": "The keep-clear zone round each area's stone (its great stump, or its runestone with the stumps off), in metres from its middle."
     },
-    "stoneMinGap": {
+    "siteGap": {
       "type": "number",
       "minimum": 0,
-      "description": "the least distance between two areas' stones (great stumps or runestones), metres; a stone that would stand nearer one placed before it moves, in its own area, to the nearest spot far enough off."
+      "description": "the least gap, metres edge to edge, between any two sites' footprints: stones' clearings, legends' circles, the challenge's claim or the find's clearing, home's dancefloor clearing and treehouse."
+    },
+    "siteLakeGap": {
+      "type": "number",
+      "minimum": 0,
+      "description": "the least gap, metres, between any site's footprint and a lake's water."
     },
     "findArea": {
       "type": "object",
@@ -2298,6 +2333,10 @@
           "minimum": 0
         },
         "spacing": {
+          "type": "number",
+          "minimum": 0
+        },
+        "sigilGap": {
           "type": "number",
           "minimum": 0
         },
@@ -2479,6 +2518,7 @@
         "radius",
         "margin",
         "spacing",
+        "sigilGap",
         "adults",
         "youths",
         "castReach",
@@ -6502,10 +6542,10 @@
               "type": "number",
               "minimum": 0
             },
-            "largestIsland": {
+            "fullPhase": {
               "type": "number",
               "minimum": 0,
-              "description": "the largest island's areas: an island this big or bigger reaches the final swarm at its last area, a smaller one its size over this of the way along the curve."
+              "description": "the phase whose islands reach the full swarm at their last area; an island of an earlier phase its phase over this of the way along the curve."
             },
             "curve": {
               "type": "number",
@@ -6556,7 +6596,7 @@
           "required": [
             "start",
             "endAverage",
-            "largestIsland",
+            "fullPhase",
             "curve",
             "youngShare",
             "reference",
@@ -9680,7 +9720,7 @@
             "balanced",
             "playback"
           ],
-          "description": "the audio context's latencyHint: interactive the smallest output buffer, balanced more room for the audio thread, playback the most (under-runs least likely, sound effects latest); ?latency= tries one for a load (DECISION FOR ED)."
+          "description": "the audio context's latencyHint: interactive the smallest output buffer, balanced more room for the audio thread, playback the most (under-runs least likely, sound effects latest); ?latency= tries one for a load."
         },
         "buffer": {
           "type": "number",
@@ -10844,7 +10884,7 @@
     "loading": {
       "type": "object",
       "properties": {
-        "edge": {
+        "sweep": {
           "type": "number",
           "minimum": 0
         },
@@ -10871,19 +10911,24 @@
         "fps": {
           "type": "number",
           "minimum": 0
+        },
+        "depth": {
+          "type": "number",
+          "minimum": 0
         }
       },
       "required": [
-        "edge",
+        "sweep",
         "rate",
         "flash",
         "ghost",
         "nova",
         "fadeOut",
-        "fps"
+        "fps",
+        "depth"
       ],
       "additionalProperties": false,
-      "description": "The loading screen: the World Tree and COVEN RUSH picked out in gold stars that light up as the game loads."
+      "description": "The loading screen: the World Tree as a Celtic knot in gold stars, COVEN and RUSH in the gaps either side of its trunk, lighting up as the game loads."
     },
     "opening": {
       "type": "object",
@@ -12966,6 +13011,22 @@
       "type": "number",
       "minimum": 0
     },
+    "patternLight": {
+      "type": "object",
+      "properties": {
+        "strength": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 4,
+          "description": "How strongly coloured spokes shape existing lights, from 0 (ordinary lighting) to 4."
+        }
+      },
+      "required": [
+        "strength"
+      ],
+      "additionalProperties": false,
+      "description": "Drawing-only coloured patterns on existing lights, controlled from the pause page."
+    },
     "lightBudget": {
       "type": "number",
       "minimum": 0,
@@ -14715,7 +14776,8 @@
     "soundsystemFootprint",
     "reserveMargin",
     "stoneKeepClear",
-    "stoneMinGap",
+    "siteGap",
+    "siteLakeGap",
     "findArea",
     "challenge",
     "treeMarginFromSoundsystem",
@@ -14845,6 +14907,7 @@
     "glowNear",
     "glowToCutout",
     "glowHeight",
+    "patternLight",
     "lightBudget",
     "lights",
     "glowPower",

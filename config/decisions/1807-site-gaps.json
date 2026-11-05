@@ -1,0 +1,42 @@
+{
+  "pr": 1807,
+  "group": "Site gaps",
+  "decisions": [
+    {
+      "id": "siteGap",
+      "pr": 1807,
+      "group": "Site gaps",
+      "label": "Least gap between sites (m)",
+      "note": "The least gap, edge to edge, between any two sites: stumps' clearings, legends' circles, the challenge circle's ground, the find's clearing, and home's dancefloor and treehouse as one (Ed, 2026-11-04: \"minimum distance between sites/circles/dancefloor/treehouse of 50m, tunable\"; \"The dancefloor and treehouse can be closer! they're a set piece\"). Two stumps' middles are 84 m apart at 50. Lower lets stumps and circles crowd; higher moves more of them, and a small area may not hold one (logged). A new map: it reloads.",
+      "control": {
+        "type": "slider",
+        "min": 0,
+        "max": 100,
+        "step": 5
+      },
+      "default": 50,
+      "apply": {
+        "knob": "siteGap",
+        "reload": true
+      }
+    },
+    {
+      "id": "siteLakeGap",
+      "pr": 1807,
+      "group": "Site gaps",
+      "label": "Least gap from a lake (m)",
+      "note": "The least gap between any site's footprint (a stump's clearing, a legend's circle, the challenge circle's ground) and a lake's water (Ed, 2026-11-04: \"10m from a lake edge\"). A new map: it reloads.",
+      "control": {
+        "type": "slider",
+        "min": 0,
+        "max": 40,
+        "step": 2
+      },
+      "default": 10,
+      "apply": {
+        "knob": "siteLakeGap",
+        "reload": true
+      }
+    }
+  ]
+}

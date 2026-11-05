@@ -1,0 +1,42 @@
+{
+  "pr": 1810,
+  "group": "Home start",
+  "decisions": [
+    {
+      "id": "homeStart",
+      "pr": 1810,
+      "group": "Home start",
+      "label": "Home's start (areas)",
+      "note": "How many areas home has at a campaign's start (Ed, 2026-11-04: \"home has 5 areas chosen at random from the phase 1 creatures, and grows as you unlock islands\"): home has one area per island she's found, and while that's fewer than this, home's starting kinds whose islands she hasn't found fill it up to this, a different choice each night. Its legends are 1 in 5 areas, as any island's (Ed: \"Home legends: Same as other islands, which I think is 1 in 5? But including undiscovered islands of phase 1 if possible\"). 10 was the old home. A new map: it reloads.",
+      "control": {
+        "type": "slider",
+        "min": 1,
+        "max": 10,
+        "step": 1
+      },
+      "default": 5,
+      "apply": {
+        "knob": "home.start",
+        "reload": true
+      }
+    },
+    {
+      "id": "homeChallengeAt",
+      "pr": 1810,
+      "group": "Home start",
+      "label": "Home's challenge at (islands found)",
+      "note": "How many islands she must have found before home gets its challenge area and its find (Ed, 2026-11-04: \"When you unlock every island, home gets a challenge area and you get a special reward for completing it\"; \"no find at home until endgame\"). 64 is every island on the chart; lower it to play home's endgame early. Its pack is an adult and a youth of each kind on home tonight. Its reward for now is the challenge's find (Ed: special reward to be decided). A new map: it reloads.",
+      "control": {
+        "type": "slider",
+        "min": 0,
+        "max": 64,
+        "step": 1
+      },
+      "default": 64,
+      "apply": {
+        "knob": "home.challengeAt",
+        "reload": true
+      }
+    }
+  ]
+}

@@ -4,7 +4,7 @@
 // Drawn by art/islands.js (islandPixels for a dream bubble, islandPath for the sea chart).
 import { makeCoast, type CoastKnobs } from "./mapShape";
 import { islandLand } from "./map";
-import type { Island } from "./rosters";
+import { sizeOfPhase, type Island } from "./rosters";
 import type { Tuning } from "./tuning";
 
 /** What an island's shape needs: its kind (a legend's species, or "home"), and, from the rosters (islandOf), its phase, seed
@@ -18,9 +18,9 @@ export function islandSeed(kind: string): number {
   return (h >>> 0) % 1000003;
 }
 
-/** An island's size in areas by its phase (journey.md, Ed 2026-10-10: phase islands are 10 / 20 / 30 / 40 / 50 areas; a kind of
- *  phase p, rosters' config/kinds.json, has its island in phase p + 1; home about 64 at the end). */
-export const islandAreas = (phase: number): number => 10 * Math.max(1, Math.min(5, Math.round(phase) + 1));
+/** An island's size in areas by its phase (rules/rosters.ts sizeOfPhase; Ed, 2026-11-04: 10 / 15 / 20 / 25 / 30 areas, 10 / 20 / 30 /
+ *  40 / 50 till then; a kind of phase p, rosters' config/kinds.json, has its island in phase p + 1; home about 64 at the end). */
+export const islandAreas = (phase: number): number => sizeOfPhase(Math.max(1, Math.min(5, Math.round(phase) + 1)));
 export const HOME_AREAS = 64;
 
 /** The coastline: `n` radii round the island (from east, clockwise as the map's angles run: atan2(z, x)), each as a share of

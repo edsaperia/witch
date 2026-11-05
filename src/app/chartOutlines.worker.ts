@@ -11,7 +11,7 @@
 import { generateMap, islandLand } from "../rules/map";
 import { beachOf } from "../rules/mapShape";
 import { drawnHills, hillsAt, lakeLevel, terrainAt } from "../rules/terrain";
-import { homeIsland, islandOf, isPlaceholder, knownKinds } from "../rules/rosters";
+import { foundKinds, homeShape, homeSize, islandOf, isPlaceholder } from "../rules/rosters";
 import { TUNING } from "../rules/tuning";
 import { lakeKnobs } from "../rules/lakes";
 import { islandBiome, lookOfLoop, loopMiddles, nearestLoop, LOOK_IDS, type Blend, type LakeLook } from "../rules/lakeLooks";
@@ -195,10 +195,10 @@ export function make(id: string, world: number, found: string[], step: number, a
   // by the kinds found (rules/rosters.ts dealLegends), moving a clearing or two: the chart draws it as before she found any, so it
   // stays the same through the whole campaign and is made once)
   if (id !== "home") found = [];
-  const key = `${id}|${world}|${found.length}`;
+  const key = `${id}|${world}|${foundKinds(found).join(",")}`;
   const had = made.get(key);
   if (had) return outlineOf(id, world, had, across);
-  const island = id === "home" ? homeIsland(world, knownKinds(found)) : islandOf(id, world);
+  const island = id === "home" ? homeShape(world, found, TUNING.home.start) : islandOf(id, world);
   if (!island) return null;
   const H = drawnHills(TUNING), seed = island.seed | 0;
   // its biomes by where it lies (rules/lakeLooks.ts: the game's lakes take the same)
@@ -208,7 +208,7 @@ export function make(id: string, world: number, found: string[], step: number, a
     const l = islandLand(island, TUNING, step), lakes = l.lakes ?? null;
     src = { land: l.land, lakes, centre: l.home, blend, lakeBlend, lakeShare, seed, heightAt: (x, z) => hillsAt(x, z, island.seed, H), levelAt: () => null, forest: () => 0, sand: (_x, _z, d) => d < (TUNING.beach?.width ?? 60) };
   } else { // its whole map, as the night plays it (the run's seed only places what's inside: its shape, areas and lakes are the world's)
-    const t = { ...TUNING, map: { ...TUNING.map, island: id, world, found, islandAreas: id === "home" ? knownKinds(found).length : TUNING.map?.islandAreas } };
+    const t = { ...TUNING, map: { ...TUNING.map, island: id, world, found, islandAreas: id === "home" ? homeSize(found, TUNING.home.start) : TUNING.map?.islandAreas } };
     const map = generateMap(1, t as typeof TUNING), L = map.bounds.land;
     if (!L) return null;
     const beach = beachOf(map.bounds, TUNING);

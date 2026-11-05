@@ -15,7 +15,7 @@ import { keepsToCircle, population, spawnCreatures, stepCreature, stepCreaturesN
 import { hitWitch, newGame, simRadius, STEP, stepGame } from "./game";
 import { blinkGone, dashing, newDash, startDash } from "./dash";
 import { newParty, routeOf, spreadWave, stepParty, spawnMarkers, nextWave, pickSet, planAhead, speakersOn, waveCountdown, wavePlan } from "./party";
-import { countScale, routeIndex, routePopulation, startCount } from "./growth";
+import { countScale, islandReach, routeIndex, routePopulation, startCount } from "./growth";
 import { segmentsCross, stringsFor } from "./strings";
 import { wallFeatures } from "./walls";
 import { laserShow } from "./lasers";
@@ -214,7 +214,7 @@ describe("the map", () => {
     // (Ed, 2026-10-05, at v473: the woods thin gradually across most of an area towards its runestone,
     // so as much lies on that gradient as in full woods; and there's real open ground.)
     expect(dense / n).toBeGreaterThan(0.35);
-    expect(between / n).toBeGreaterThan(0.25); // a long, soft gradient, not a step
+    expect(between / n).toBeGreaterThan(0.2); // a long, soft gradient, not a step (0.25 till areas grew to 196 m, 2026-11-04, Ed's band 50 m kept: 0.23 on this map, 0.28 before)
     expect(open / n).toBeGreaterThan(0.03);
   });
 
@@ -498,7 +498,7 @@ describe("creatures", () => {
     for (const [cx, cy] of map.cells.filter((_, i) => i % 9 === 0)) {
       if (cx === mx && cy === my) continue;
       const here = inCell(cx, cy), species = AREA_TYPES[map.typeOf(cx, cy)].creature, k = countScale(species);
-      const want = routePopulation(at.get(`${cx},${cy}`)!, at.size, R, TUNING.population.swarm, S, species);
+      const want = routePopulation(at.get(`${cx},${cy}`)!, at.size, R, TUNING.population.swarm, S, species, islandReach(map));
       const n = (l: number) => here.filter(c => c.level === l && !c.circle).length; // (not its legend's clearing's baby: below)
       expect([n(0), n(1), n(2)]).toEqual(want);
       expect(n(0)).toBeLessThanOrEqual(R.babyCap);

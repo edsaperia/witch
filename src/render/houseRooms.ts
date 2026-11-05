@@ -26,6 +26,7 @@ import { alongRay } from "./view/home";
 import type { FloorPixels } from "./houseArt";
 import houseStanding from "virtual:house-standing";
 import { paintFloorOff } from "./houseFloor";
+import { nextFrame } from "./slices";
 import type { PlanMap } from "./crown";
 import { bakePieceHere, furnitureState, furnitureStates, pieceArt, standing as facing, DRAWN_ELSEWHERE, FURNITURE, type FurnitureArt } from "./houseFurniture";
 import { BrewingView } from './brewing';
@@ -187,6 +188,15 @@ function programTwins(): THREE.Mesh[] {
     { map: tex, transparent: true, alphaTest: 0.5, side: THREE.DoubleSide, depthWrite: false, depthTest: false }, // (a piece of furniture's)
   ].map(o => { const m = new THREE.Mesh(geo, new THREE.MeshBasicMaterial(o)); m.visible = false; m.frustumCulled = false; return m; });
 }
+
+/** The floor's grid, cells a side, laid on the house's plane. */
+const FLOOR_GRID = 48;
+/** How far down the Ent's art (pixels) a metre of the house's plan goes (its deck's and her seat's anchors); 0 before its art is in. */
+const houseKy = (T: View["assets"]["treehouse"], d: Deck): number => (T.ent ? (T.seat.y - T.ent.deck.y) / Math.max(0.1, d.seat.z - d.z) : 0);
+/** The pictures' pixel (art pixels a metre) and the pitch the house's plane is seen at (asin(ky * mpp)). */
+const pictureScale = (ky: number, mpp: number) => ({ ppm: 1 / mpp, pitch: Math.asin(Math.min(.95, Math.max(.2, ky * mpp))) });
+/** A piece's key: its object's id and the state it's drawn in now. */
+const pieceKey = (o: HouseObject, g: View["game"]) => `${o.id}|${furnitureState(o.id, g) ?? ""}`;
 
 export class HouseRoomsView {
   /** Its meshes, for the scene: behind the hub, and in front. */
@@ -398,6 +408,104 @@ export class HouseRoomsView {
     return pic;
   }
 
+  /** Everything the house draws, made ahead under the loading screen (Ed, 2026-11-04: "why don't we do this during the loading
+   *  screen"; it was all asked the first time the house showed, and came in over the first seconds in it): its floor painted, every
+   *  piece of furniture in every state it can be drawn in (the guests' bedrooms' sheeted and open both, so a visit's start only swaps
+   *  which shows) and each room's dressing drawn by the art workers, each made into its mesh, hidden till the house shows; the
+   *  Workshop's pegboard; her hat if it's lying on the floor. Resolves once all are in, so View.prepare's compile uploads their
+   *  textures with the rest and nothing's made the first time she's in the house. It reads the game only to choose (her place for
+   *  the order the pieces are asked in, tonight's states), never changes it. At once for an island whose treehouse has no rooms. */
+  async preload(v: View): Promise<void> {
+    const g = v.game, d = deckOf(g.map, g.tuning), T = v.assets.treehouse;
+    if (!d?.house?.rooms || !T.ent) return; // (no rooms; or the Ent's art not in yet, whose anchors set the pictures' pitch)
+    const { ppm, pitch } = pictureScale(houseKy(T, d), v.mpp), w = g.witch, here = toPlanAt0(w.x - d.x, w.z - d.z);
+    this.askFloor(v);
+    for (const q of hatsOnHouseFloor(g.witches[0], d.house.rooms, g.herTime)) if (q.own) { const look = v.assets.witchGenome; this.hatPic(v, look, JSON.stringify(look ?? null)); }
+    for (;;) {
+      const wanted = this.askPieces(v, here, ppm, pitch);
+      this.adoptPieces(v, wanted, ppm, pitch, v.shaderLandingLimited, v.landingPresentationMs + g.clock.time * 1000);
+      this.workshopFrame(v, pitch, () => null, () => 19.94, g.herTime);
+      if (this.floorCame && !this.floorArt) this.makeFloor(-Infinity);
+      if (this.preloaded(wanted)) return;
+      await nextFrame();
+    }
+  }
+  /** Whether everything preload asks for is in: the floor (or its paint failed), each piece made into its mesh or come back empty,
+   *  and the Workshop's pictures. */
+  private preloaded(wanted: { key: string }[]): boolean {
+    return (!!this.floorArt || this.floorPaint.failed) && !this.came.length && !this.toBakeHere.length && wanted.every(q => this.pieces.has(q.key) || this.empty.has(q.key)) && !this.workshop.pending;
+  }
+  /** The floor asked of its painters (render/houseFloor.ts), once. */
+  private askFloor(v: View): void {
+    if (this.floorAsked) return;
+    this.floorAsked = true; this.floorPaint = { mpp: v.mpp, failed: false };
+    const p = paintFloorOff(v.mpp).then(F => { this.floorCame = F; }, e => { this.floorPaint.failed = true; throw e; });
+    v.assets.track("houseFloor", p);
+  }
+  /** The painted floor (come back) made into its two meshes' textures and grid, shown from `arrivalAt` (a late landing's fade). */
+  private makeFloor(arrivalAt: number): void {
+    const A = (this.floorArt = this.floorCame!), N = FLOOR_GRID;
+    this.floorArrivalAt = arrivalAt;
+    for (const [mesh, px] of [[this.floor, A.rest], [this.terraceFloor, A.terrace]] as const) {
+      const tex = gpuKind(new THREE.DataTexture(px, A.w, A.h, THREE.RGBAFormat), "house");
+      tex.magFilter = THREE.NearestFilter; tex.minFilter = THREE.NearestFilter; tex.generateMipmaps = false; tex.flipY = false; tex.colorSpace = THREE.NoColorSpace; tex.needsUpdate = true; // (its colours as the quads' vertex colours are: as they are)
+      (mesh.material as THREE.MeshBasicMaterial).map = tex; (mesh.material as THREE.MeshBasicMaterial).needsUpdate = true;
+    }
+    const uv: number[] = [], idx: number[] = [];
+    for (let j = 0; j <= N; j++) for (let i = 0; i <= N; i++) uv.push(i / N, j / N);
+    for (let j = 0; j < N; j++) for (let i = 0; i < N; i++) { const a = j * (N + 1) + i; idx.push(a, a + 1, a + N + 2, a, a + N + 2, a + N + 1); }
+    this.floor.geometry.setAttribute("position", new THREE.BufferAttribute(new Float32Array((N + 1) * (N + 1) * 3), 3));
+    this.floor.geometry.setAttribute("uv", new THREE.Float32BufferAttribute(uv, 2)); this.floor.geometry.setIndex(idx);
+  }
+  /** Every piece the house can show (each object drawn as art in the state it's drawn in now, each room's dressing, then every other
+   *  state each can be in: rules/kit.ts's desk and lathe, the guests' bedrooms' furniture), each with its middle on the plan; those
+   *  not asked yet asked of the art workers, the nearest `here` first, the other states after (a piece is tens of milliseconds to
+   *  bake, a room's dressing hundreds, on Ed's laptop well over 100 ms a frame each when they were baked on the page as she came near:
+   *  his playtest of v4515); each one tracked, so the shots and the bench wait for them. */
+  private askPieces(v: View, here: { x: number; z: number }, ppm: number, pitch: number): { key: string; x: number; z: number }[] {
+    const g = v.game, wanted: { key: string; x: number; z: number }[] = [];
+    for (const o of HOUSE_ROOMS.objects) if (FURNITURE.has(o.id)) wanted.push({ key: pieceKey(o, g), x: o.x, z: o.z });
+    for (const r of placedDecorRooms()) wanted.push({ key: `decor:${r.id}`, x: (r.x0 + r.x1) / 2, z: (r.z0 + r.z1) / 2 });
+    const spare = HOUSE_ROOMS.objects.filter(o => FURNITURE.has(o.id)).flatMap(o => furnitureStates(o.id).map(st => ({ key: `${o.id}|${st}`, x: o.x, z: o.z })).filter(q => !wanted.some(w => w.key === q.key)));
+    const near = (a: { x: number; z: number }) => Math.hypot(a.x - here.x, a.z - here.z);
+    wanted.push(...spare);
+    for (const q of wanted.filter(q => !this.asked.has(q.key)).sort((a, b) => (spare.includes(a) ? 1e6 : 0) + near(a) - (spare.includes(b) ? 1e6 : 0) - near(b))) {
+      this.asked.add(q.key);
+      const p = v.assets.oneOff({ kind: "housePiece", id: `${q.key}@${ppm.toFixed(4)}:${pitch.toFixed(4)}`, style: v.assets.style, ppm, pitch, ...(HOUSE_ROOMS.layout ? { layout: houseArtLayout(HOUSE_ROOMS) } : {}) })
+        .then(r => { this.came.push({ key: q.key, art: r.housePiece ? pieceArt(r.housePiece) : null }); }, () => { this.toBakeHere.push(q.key); });
+      v.assets.track(`housePiece:${q.key}`, p);
+    }
+    return wanted;
+  }
+  /** The pieces come back made into their meshes (hidden till the house shows them; without workers, one baked here a call): after
+   *  its part's floors and walls, before its near rails, nearer pieces later, a room's dressing before all furniture. */
+  private adoptPieces(v: View, wanted: { key: string; x: number; z: number }[], ppm: number, pitch: number, late: boolean, arrivalNow: number): void {
+    const bakedHere = this.toBakeHere.shift();
+    if (bakedHere) this.came.push({ key: bakedHere, art: bakePieceHere(bakedHere, v.assets.style, ppm, pitch) });
+    for (const { key, art } of this.came.splice(0)) {
+      if (!art) { this.empty.add(key); continue; }
+      const decor = key.startsWith("decor:"), id = decor ? key : key.split("|")[0], at = wanted.find(q => q.key === key);
+      if (!at || this.pieces.has(key)) { art.tex.dispose(); continue; }
+      const geo = new THREE.BufferGeometry(), pos = new Float32Array(12);
+      geo.setAttribute("position", new THREE.BufferAttribute(pos, 3));
+      geo.setAttribute("uv", new THREE.BufferAttribute(new Float32Array([0, 0, 1, 0, 1, 1, 0, 1]), 2));
+      geo.setIndex([0, 1, 2, 0, 2, 3]);
+      const mat = new THREE.MeshBasicMaterial({ map: art.tex, transparent: true, alphaTest: 0.5, side: THREE.DoubleSide, depthWrite: false, depthTest: false });
+      const mesh = new THREE.Mesh(geo, mat);
+      mesh.frustumCulled = false; mesh.renderOrder = furnitureOrder(south(at.x, at.z), decor);
+      if (late) mesh.userData.landingAppearAt = arrivalNow;
+      this.furniture.add(mesh); this.pieces.set(key, { art, mesh, pos, id, x: at.x, z: at.z });
+    }
+  }
+  /** The Workshop's pictures (render/workshopArt.ts): her broom on the bay or the lathe while she's at it, her parts on the pegboard,
+   *  laid on those pieces' marks (`markAt`; none yet under preload: asked and made, hidden). */
+  private workshopFrame(v: View, pitch: number, markAt: (id: string, mark: string, dx: number, dy: number) => V3 | null, orderOf: (id: string) => number, ht: number): void {
+    const g = v.game, t = g.tuning, W = g.witches[0], tr = g.trunk, tonight = tr && tr.kind === "part" && !tr.found ? tr.item : null, where = broomWhere(g, stationOf(g, null, t)?.id ?? null, t);
+    this.workshop.update({ fitted: W.spells.parts, found: v.partsFound, tonight, at: where === "bay" || where === "lathe" ? where : null, genome: v.assets.witchGenome }, v.assets.style, 1 / v.mpp, pitch,
+      id => { const o = HOUSE_ROOMS.objects.find(q => q.id === id); return o ? facing(o).yaw : 0; }, markAt, orderOf, ht,
+      (key, pic) => { const p = v.assets.oneOff({ kind: "workshopPic", id: key, style: v.assets.style, pic }).then(r => r.housePiece ?? Promise.reject(new Error("nothing drawn"))); v.assets.track(`workshopPic:${key}`, p); return p; });
+  }
+
   /** A frame: `onTreehouse` takes a point of the Ent's art (pixels) into the world (render/view.ts); `ht`, her clock. */
   update(v: View, onTreehouse: (px: number, py: number) => V3, ht: number): void {
     const g = v.game, w = g.witch, t = g.tuning, T = v.assets.treehouse, d = deckOf(g.map, t);
@@ -413,7 +521,7 @@ export class HouseRoomsView {
     const late = v.shaderLandingLimited, share = v.landingHouseShare, arrivalNow = v.landingPresentationMs + g.clock.time * 1000;
     const world = (px: number, pz: number, h: number): V3 => { const p = fromPlan(d!, px, pz); return { ...p, y: groundHeight(p.x, p.z) + d!.h + h }; };
     const g0 = d ? groundHeight(d.x, d.z) : 0;
-    const ky = T.ent && d ? (T.seat.y - T.ent.deck.y) / Math.max(0.1, d.seat.z - d.z) : 0;
+    const ky = d ? houseKy(T, d) : 0;
     const toWorld = (px: number, pz: number, h: number): V3 => {
       if (!T.ent || !inside) return world(px, pz, h);
       const { x, z } = fromPlan({ x: 0, z: 0 }, px, pz), p = onTreehouse(T.ent.deck.x + x / v.mpp, T.ent.deck.y + z * ky + v.houseShift - h / v.mpp);
@@ -492,29 +600,16 @@ export class HouseRoomsView {
     // the house's plane (render/view/witch.ts): x across the Ent's art in its pixels, z down it, h up it; along the ray by z
     // (each point of the plan turned into the house's metres first: rules/houseRooms.ts fromPlan)
     if (this.floor.visible && !this.floorArt) {
-      // (painted by workers, the first time it's shown: the boot freeze, 2026-10-25; the floor shows once it's come)
-      if (!this.floorAsked) { this.floorAsked = true; this.floorPaint = { mpp: v.mpp, failed: false }; const p = paintFloorOff(v.mpp).then(F => { this.floorCame = F; }, e => { this.floorPaint.failed = true; throw e; }); v.assets.track("houseFloor", p); }
+      // (painted by workers, ahead under the loading screen (preload) or else the first time it's shown: the boot freeze, 2026-10-25;
+      // the floor shows once it's come)
+      this.askFloor(v);
       if (!this.floorCame) this.floor.visible = this.terraceFloor.visible = false;
     }
     let floorCreated = false;
     if (this.floor.visible) {
-      const N = 48;
-      if (!this.floorArt) {
-        const A = (this.floorArt = this.floorCame!);
-        floorCreated = true;
-        this.floorArrivalAt = late ? arrivalNow : -Infinity;
-        for (const [mesh, px] of [[this.floor, A.rest], [this.terraceFloor, A.terrace]] as const) {
-          const tex = gpuKind(new THREE.DataTexture(px, A.w, A.h, THREE.RGBAFormat), "house");
-          tex.magFilter = THREE.NearestFilter; tex.minFilter = THREE.NearestFilter; tex.generateMipmaps = false; tex.flipY = false; tex.colorSpace = THREE.NoColorSpace; tex.needsUpdate = true; // (its colours as the quads' vertex colours are: as they are)
-          (mesh.material as THREE.MeshBasicMaterial).map = tex; (mesh.material as THREE.MeshBasicMaterial).needsUpdate = true;
-        }
-        const uv: number[] = [], idx: number[] = [];
-        for (let j = 0; j <= N; j++) for (let i = 0; i <= N; i++) uv.push(i / N, j / N);
-        for (let j = 0; j < N; j++) for (let i = 0; i < N; i++) { const a = j * (N + 1) + i; idx.push(a, a + 1, a + N + 2, a, a + N + 2, a + N + 1); }
-        this.floor.geometry.setAttribute("position", new THREE.BufferAttribute(new Float32Array((N + 1) * (N + 1) * 3), 3));
-        this.floor.geometry.setAttribute("uv", new THREE.Float32BufferAttribute(uv, 2)); this.floor.geometry.setIndex(idx);
-      }
-      const A = this.floorArt, pos = this.floor.geometry.getAttribute("position") as THREE.BufferAttribute;
+      const N = FLOOR_GRID;
+      if (!this.floorArt) { this.makeFloor(late ? arrivalNow : -Infinity); floorCreated = true; }
+      const A = this.floorArt!, pos = this.floor.geometry.getAttribute("position") as THREE.BufferAttribute;
       for (let j = 0, k = 0; j <= N; j++) for (let i = 0; i <= N; i++, k++) { const p = toWorld(A.x0 + (A.ww * i) / N, A.z0 + (A.hh * j) / N, 0); pos.setXYZ(k, p.x, p.y, p.z); }
       pos.needsUpdate = true;
     }
@@ -547,44 +642,11 @@ export class HouseRoomsView {
     }
     // the furniture: each piece baked by the art workers (the house's pixel and its view's pitch: its plane takes plan depth z to z * ky pixels down,
     // so the view looks down at asin(ky * mpp)), each laid as a picture its floor's middle on the object's middle, after its part's
-    // floors and walls and before its near rails (nearer pieces later)
-    // (each piece keyed by its id and the state it's drawn in now)
-    const pieceKey = (o: HouseObject) => `${o.id}|${furnitureState(o.id, g) ?? ""}`;
-    // (every piece asked of the art workers the first time the house shows, the nearest her first: a piece is tens of milliseconds to
-    // bake, a room's dressing hundreds, on Ed's laptop well over 100 ms a frame each when they were baked here as she came near (his
-    // playtest of v4515); each one tracked, so the shots and the bench wait for them; without workers, baked here, a frame each)
-    const here = toPlanAt0(w.x - D.x, w.z - D.z), pitch = Math.asin(Math.min(.95, Math.max(.2, ky * v.mpp))), ppm = 1 / v.mpp;
-    const wanted: { key: string; x: number; z: number }[] = [];
-    for (const o of HOUSE_ROOMS.objects) if (FURNITURE.has(o.id)) wanted.push({ key: pieceKey(o), x: o.x, z: o.z });
-    const decorRooms = placedDecorRooms();
-    for (const r of decorRooms) wanted.push({ key: `decor:${r.id}`, x: (r.x0 + r.x1) / 2, z: (r.z0 + r.z1) / 2 });
-    // (and every other state a piece can be in, after the rest: rules/kit.ts's desk and lathe, swapped at once when she takes from them)
-    const spare = HOUSE_ROOMS.objects.filter(o => FURNITURE.has(o.id)).flatMap(o => furnitureStates(o.id).map(st => ({ key: `${o.id}|${st}`, x: o.x, z: o.z })).filter(q => !wanted.some(w => w.key === q.key)));
-    const near = (a: { x: number; z: number }) => Math.hypot(a.x - here.x, a.z - here.z);
-    wanted.push(...spare);
-    for (const q of wanted.filter(q => !this.asked.has(q.key)).sort((a, b) => (spare.includes(a) ? 1e6 : 0) + near(a) - (spare.includes(b) ? 1e6 : 0) - near(b))) {
-      this.asked.add(q.key);
-      const p = v.assets.oneOff({ kind: "housePiece", id: `${q.key}@${ppm.toFixed(4)}:${pitch.toFixed(4)}`, style: v.assets.style, ppm, pitch, ...(HOUSE_ROOMS.layout ? { layout: houseArtLayout(HOUSE_ROOMS) } : {}) })
-        .then(r => { this.came.push({ key: q.key, art: r.housePiece ? pieceArt(r.housePiece) : null }); }, () => { this.toBakeHere.push(q.key); });
-      v.assets.track(`housePiece:${q.key}`, p);
-    }
-    const bakedHere = this.toBakeHere.shift();
-    if (bakedHere) this.came.push({ key: bakedHere, art: bakePieceHere(bakedHere, v.assets.style, ppm, pitch) });
-    for (const { key, art } of this.came.splice(0)) {
-      if (!art) { this.empty.add(key); continue; }
-      const decor = key.startsWith("decor:"), id = decor ? key : key.split("|")[0], at = wanted.find(q => q.key === key);
-      if (!at || this.pieces.has(key)) { art.tex.dispose(); continue; }
-      const geo = new THREE.BufferGeometry(), pos = new Float32Array(12);
-      geo.setAttribute("position", new THREE.BufferAttribute(pos, 3));
-      geo.setAttribute("uv", new THREE.BufferAttribute(new Float32Array([0, 0, 1, 0, 1, 1, 0, 1]), 2));
-      geo.setIndex([0, 1, 2, 0, 2, 3]);
-      const mat = new THREE.MeshBasicMaterial({ map: art.tex, transparent: true, alphaTest: 0.5, side: THREE.DoubleSide, depthWrite: false, depthTest: false });
-      // (after its part's floors and walls, before its near rails; nearer pieces later; a room's dressing before all furniture)
-      const mesh = new THREE.Mesh(geo, mat);
-      mesh.frustumCulled = false; mesh.renderOrder = furnitureOrder(south(at.x, at.z), decor);
-      if (late) mesh.userData.landingAppearAt = arrivalNow;
-      this.furniture.add(mesh); this.pieces.set(key, { art, mesh, pos, id, x: at.x, z: at.z });
-    }
+    // floors and walls and before its near rails (nearer pieces later); all asked and made ahead under the loading screen (preload),
+    // so here only what that missed
+    const here = toPlanAt0(w.x - D.x, w.z - D.z), { ppm, pitch } = pictureScale(ky, v.mpp);
+    const wanted = this.askPieces(v, here, ppm, pitch);
+    this.adoptPieces(v, wanted, ppm, pitch, late, arrivalNow);
     const pxWorld = (px: number, pz: number, dx: number, dy: number): V3 => {
       const { x, z } = fromPlan({ x: 0, z: 0 }, px, pz), p = onTreehouse(T.ent!.deck.x + x / v.mpp + dx, T.ent!.deck.y + z * ky + v.houseShift + dy);
       const b = alongRay(v, { x: p.x, y: p.y + g0, z: p.z }, z);
@@ -601,7 +663,7 @@ export class HouseRoomsView {
       if (mesh.userData.loadingOrder !== undefined) { mesh.renderOrder = mesh.userData.loadingOrder; delete mesh.userData.loadingOrder; }
       const o = HOUSE_ROOMS.objects.find(q => q.id === id);
       // (a piece in another state than now's, hidden, unless now's isn't in yet: the last one shown stays till it is; a room's dressing always)
-      const cur = o ? pieceKey(o) : k;
+      const cur = o ? pieceKey(o, g) : k;
       if (o && this.pieces.has(cur)) this.shownState.set(id, cur);
       mesh.visible = !o || k === (this.pieces.has(cur) ? cur : this.shownState.get(id) ?? cur);
       if (!mesh.visible) continue;
@@ -624,14 +686,8 @@ export class HouseRoomsView {
     if (floorOf) this.parts[4].mesh.renderOrder = hatsOrder(south(floorOf.x, floorOf.z), piece(floorOf.id)?.mesh.renderOrder ?? null);
     else if (points.length) this.parts[4].mesh.renderOrder = hatsOrder(points.reduce((s, p) => s + p.z, 0) / points.length, null);
     // (every frame the house shows, its pieces there or not: its pictures asked of the workers at once, laid once their pieces are in)
-    {
-      const tr = g.trunk, tonight = tr && tr.kind === "part" && !tr.found ? tr.item : null, where = broomWhere(g, stationOf(g, null, t)?.id ?? null, t);
-      this.workshop.update({ fitted: W.spells.parts, found: v.partsFound, tonight, at: where === "bay" || where === "lathe" ? where : null, genome: v.assets.witchGenome }, v.assets.style, 1 / v.mpp, pitch,
-        id => { const o = HOUSE_ROOMS.objects.find(q => q.id === id); return o ? facing(o).yaw : 0; },
-        (id, mark, dx, dy) => { const p = piece(id), q = p?.art.marks[mark]; return p && q ? pxWorld(p.x, p.z, q.x - p.art.ox + dx, q.y - p.art.oy + dy) : null; },
-        id => piece(id)?.mesh.renderOrder ?? 19.94, ht,
-        (key, pic) => { const p = v.assets.oneOff({ kind: "workshopPic", id: key, style: v.assets.style, pic }).then(r => r.housePiece ?? Promise.reject(new Error("nothing drawn"))); v.assets.track(`workshopPic:${key}`, p); return p; });
-    }
+    this.workshopFrame(v, pitch, (id, mark, dx, dy) => { const p = piece(id), q = p?.art.marks[mark]; return p && q ? pxWorld(p.x, p.z, q.x - p.art.ox + dx, q.y - p.art.oy + dy) : null; },
+      id => piece(id)?.mesh.renderOrder ?? 19.94, ht);
     // the mic's spotlight, from its lamp down to the floor round its foot (its `spot` mark: art/furniture.js)
     const mic = [...this.pieces.values()].find(p => p.id === "microphone" && p.mesh.visible && p.art.marks.spot);
     if (mic) { const s = mic.art.marks.spot; this.spot.place({ x: s.x - mic.art.ox, y: s.y - mic.art.oy }, 1 / v.mpp, ky, (dx, dy) => pxWorld(mic.x, mic.z, dx, dy), mic.mesh.renderOrder + 0.00001); }

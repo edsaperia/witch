@@ -58,33 +58,50 @@ describe("the legend circle's explainer", () => {
     expect(shown).toBe(0);
   });
 
-  it("shows for a legend in any state, and says what its state means, in Ed's plain words (2026-10-19)", () => {
+  it("shows for a legend in any state, and says what its state means, in Ed's words (2026-11-04)", () => {
     const { g, L } = setup(), at = { x: L.x, z: L.z, mode: "ground" };
-    const words = () => circleLines(L).map(l => l.text);
+    const words = (before: boolean | "zoo" = false) => circleLines(L, before).map(l => l.text);
     const name = L.species === "beetle" ? "stag beetle" : L.species === "cat" ? "wildcat" : L.species;
-    expect(words()).toEqual([`A sleeping legend: the ${name}.`, `Put down {sigil} ${sigilWords(L.quest!.species)}, any age, inside this circle.`, "It will wake, fight for you and show you its island.", "Leave none of its kind in its area and it grows restless."]);
+    const place = `If you place {sigil} ${sigilWords(L.quest!.species)} inside this circle it will join your party, and invite you to its island if you survive the night.`;
+    const unhappy = `An unhappy elder ${name}. Bring one of its children here to calm it.`;
+    // sleeping, its quest open
+    expect(words()).toEqual([`A sleeping elder ${name}!`, place, "Taking its children away will anger it."]);
+    // sleeping, its quest not open: before the party, after it and in the zoo all the same
+    expect(words(true)).toEqual([`A sleeping elder ${name}.`]);
+    expect(words("zoo")).toEqual([`A sleeping elder ${name}.`]);
     L.questOpen = false; // (the party's over: Ed, 2026-10-18, no quest taken)
-    expect(words()).toEqual([`A sleeping legend: the ${name}.`, "The party's over: it sleeps on."]);
-    expect(circleLines(L, "zoo").map(l => l.text)).toEqual([`A sleeping legend: the ${name}.`, "In the zoo it sleeps on, for you to see."]); // (the zoo's legends sleep for show: Ed, 2026-10-26)
+    expect(words()).toEqual([`A sleeping elder ${name}.`]);
     L.questOpen = true;
+    // restless, its quest open; then not open
     L.legendState = "restless";
     expect(legendCircleNear(g, at)?.legend).toBe(L);
-    expect(words()[0]).toBe(`A restless legend: the ${name}.`); expect(words()[1]).toContain("{sigil}"); expect(words().at(-1)).toBe("Bring one of its kind back to its area to calm it.");
+    expect(words()).toEqual([unhappy, place]);
+    expect(words(true)).toEqual([unhappy]);
+    expect(words("zoo")).toEqual([unhappy]);
+    L.questOpen = false; expect(words()).toEqual([unhappy]); L.questOpen = true;
+    // angry
     L.legendState = "angry";
     expect(legendCircleNear(g, at)?.legend).toBe(L);
-    expect(words()).toEqual([`An angry legend: the ${name}!`, "Wear it down, or bring one of its kind back to its area, and it will settle."]);
-    L.quest!.done = 10; L.legendState = "happy";
-    expect(words()).toEqual([`Your ally: the ${name}.`, "It fights for you and guards its area.", "Its island is found: win the night to keep it."]);
+    expect(words()).toEqual([`An angry elder ${name}!`, "Bring one of its children home to calm it."]);
+    // woken, your ally: its island line only once found, ticked
+    L.legendState = "happy";
+    expect(words()).toEqual([`A friendly elder ${name}!`]);
+    L.quest!.done = 10;
+    expect(words()).toEqual([`A friendly elder ${name}!`, "It will invite you to its island if you survive the night."]);
     expect(circleLines(L).at(-1)!.done).toBe(true);
-    for (const s of ["asleep", "restless", "angry", "happy"] as const) { L.legendState = s; for (const w of words()) { expect(w).not.toMatch(/kill|die|dead|elder|kin\b|slumber|boon|bring .* into/i); expect(w.length).toBeLessThan(90); } }
+    // no quest at all: the heading only
+    const q = L.quest; L.quest = undefined;
+    L.legendState = "asleep"; expect(words()).toEqual([`A sleeping elder ${name}.`]);
+    L.legendState = "restless"; expect(words()).toEqual([unhappy]);
+    L.quest = q;
+    for (const s of ["asleep", "restless", "angry", "happy"] as const) { L.legendState = s; for (const w of words()) { expect(w).not.toMatch(/kill|die|dead|kin\b|slumber|boon|any age/i); expect(w.length).toBeLessThan(160); } }
   });
 
-  it("asks for its kind with no age and names no boon (Ed, 2026-10-18)", () => {
+  it("asks for its kind's sigil with no age and names no boon (Ed, 2026-10-18; words Ed, 2026-11-04)", () => {
     const { L } = setup();
     L.quest!.done = undefined; L.legendState = "asleep";
     const line = circleLines(L).find(l => l.text.includes("{sigil}"))!.text;
-    expect(line).toMatch(/any age/);
-    expect(line).toMatch(/^Put down \{sigil\} an? [a-z ]+'s sigil, any age, inside this circle\.$/);
-    expect(line).not.toMatch(/\b(baby|young|adult)\b/);
+    expect(line).toMatch(/^If you place \{sigil\} an? [a-z ]+'s sigil inside this circle it will join your party, and invite you to its island if you survive the night\.$/);
+    expect(line).not.toMatch(/\b(baby|young|adult|boon)\b/);
   });
 });

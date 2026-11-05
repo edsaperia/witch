@@ -2,6 +2,89 @@
 
 **Identical-tree release validation reuse** (CI item 2, 2026-11-04): only a main push may reuse full successful same-repository release/publish PR validation into main. `tools/ci/release-reuse.mjs` records the actual checkout commit/tree separately from the PR head, workflow workload fingerprint, exact Node/runner image and run attempt. Eight matching records include all four complete unit shards; lookup additionally verifies the merged PR, both checked/merged Git trees, completed successful source jobs and latest attempt. Missing, expired, malformed, partial or mismatched evidence runs full CI. PR/prototype never reuse. Build/config checks and main publication remain fresh for current version/SHA/upcoming metadata; validation jobs retain their status gates and name the reused source in logs. Synthetic safety coverage lives in `tools/ci/release-reuse.test.ts` and `workflows.test.ts`; no fight simulation is needed for this routing change.
 
+**Shared still capture harness** (#1556, canonical #1555, 2026-10-31):
+`tools/shots/still.mjs` loads a caller-owned allocated page, verifies its served
+version, seeds random and catches the manual hook before the game steps. Wall
+clocks stay live until ready, then monotonic/epoch clocks are pinned separately
+and advance only with explicit steps. Loading mist remains a wall-time loading
+overlay in production; captures hold it through pinned time and prepared-scene
+redraw. Scenery budget already uses elapsed wall time; uGlowR follows camera
+geometry. No production budget/potion/animation freeze was added.
+
+```js
+export async function run({ page, loadStill, url, expectedSha, output }) {
+  const capture = await loadStill(page, { url, expectedSha });
+  try {
+    await capture.step(60);
+    await capture.compare({
+      output,
+      read: () => window.witch.view.post.refractionEnabled,
+      write: on => { window.witch.view.post.refractionEnabled = on; },
+      validate: () => {
+        if (!window.witch.view.post.refraction.count) throw Error('No live form');
+      },
+      actors: w => [w.view.witchBatch.meshes, w.view.bareBatch?.meshes ?? []],
+    });
+  } finally { await capture.release(); }
+}
+```
+
+The harness prepares ON once, then holds View updates and redraws existing Post
+at the same game/personal clock. It warms a screenshot and gives each screenshot
+120 seconds. Decoded OFF-return must equal OFF exactly: any changed pixel fails
+and writes its diff first. Teardown restores render descriptors (including runner
+wrappers), actors, toggle, manual mode, clocks and random. Nested holds/clock
+advancement fail. Actor masks hide actual prepared groups/meshes while updates
+are held, so SpriteBatch.set cannot undo hiding. Positive threshold/envelope are
+recorded; empty masks fail. Saved mask results explicitly label opaque coverage
+UNPROVEN: low-contrast or translucent pixels may be absent. Foreground protection
+requires an independent depth-coverage proof; effect/actor overlap and acceptance
+need real review.
+
+`pixels.mjs` validates CRC/filters for non-interlaced 8-bit RGB/RGBA screenshots,
+counts differing pixels (including alpha), max delta and inclusive bounds, and
+writes amplified PNG/side-by-side. Dimensions/unsupported PNGs fail. Explicit
+cross-build exclusions are recorded; OFF-return accepts none. Served version.json
+has seven SHA characters, not a full-SHA endpoint: also verify the CI artifact.
+
+`run.mjs`/`headless.mjs` require a real canonical grant and exact SHA, prior FREE
+comment, input idle>=5min and no-game-tab checks <=60s old, expiry and <=270s
+duration. Evidence is not self-issued permission.
+The explicitly named historical record-only policy #6555865819 instead accepts
+two-minute idle evidence and `unknown/untouched` browser-tab evidence; it does
+not inspect existing browser windows. Selecting that policy still requires the
+caller's actual canonical slot, prior FREE and fresh evidence. This resume grants
+no capture slot and renews none of the historical grants.
+
+They own one fresh headless
+Chromium BrowserServer, reserve teardown time and enforce an owned-process kill
+deadline. slot-receipt.json records PID/closure/failure; operator FREE verification
+and SLOT DONE are still required. No Ed browser/profile, automatic browser install
+or cloud-runner assumption. A canonical-approved Chromium-family executable can
+be named by chromiumExecutable in the evidence (fresh owned headless process and
+profile, never Ed's existing window). The caller supplies a Playwright runtime:
+
+```text
+node tools/shots/run.mjs SCENARIO URL FULL_SHA OUTPUT ACTUAL_SLOT_JSON PLAYWRIGHT_MODULE [SCENARIO_OPTIONS_JSON]
+```
+
+The dodge scenario uses captureVisible, not the invalid mesh.hide+View.update
+OFF method. If true default visibility is still zero, same-prepared-frame
+diagnostics isolate motes/ribbons, tone levels and draw order, then restore them;
+no alpha change is assumed. prepareFrame:false refuses a stale/unprepared clock.
+The refraction scenario wraps its still-owned driver by explicit path/SHA and
+measures witch and real-creature masks inside the plume. Migrate #1543/#1542 drivers only AFTER their
+PRs merge. Publication remains tools/shots/push.mjs.
+
+Bench declaration: camera/canopy frames intentionally change at non-60Hz and
+repeated timestamps. .35/.06 and .08 coefficients match a 1/60s step; tests cover
+60/144Hz and equal-total-time partitions. Both use her interpolated clock and
+reset the timestamp with the night. Canopy's last-metre snap is after the step,
+up to one 60Hz frame earlier at that boundary, to preserve partition behavior.
+No extra pass/texture/draw calls and no measured cost/visual acceptance claim.
+Allocated bench/captures remain pending. Nearby checks are renderEasing and
+tools/shots pixels/still/headless tests; fake Chromium/timers launch no browser.
+
 Unit-suite health (test health, 2026-11-04): the suite shares one module cache per worker (`vite.config.ts` isolate false), so three rules hold. (1) A test file that `vi.mock`s a module runs in Vitest's **isolated** project, found by reading the files (`tools/ci/mockingTests.mjs`, tested by `tools/ci/mockingTests.test.ts`): a mocked module otherwise leaks into later files through the modules that imported it, and a module cached before the mocking file never sees the mock (`nightSaveNotice.test.ts` failed whenever a file importing `ui/resumeNight` ran first; the zooPad flake). `vi.doMock` files reset modules themselves and stay shared. (2) No file may leave `TUNING` changed: the setup (`src/test/radiusMap.ts`) compares it after each file's last test and fails that file, naming what changed (`withTuning({})` shares TUNING's parts, so copy before changing one). Stub globals with `vi.stubGlobal`/`vi.unstubAllGlobals`, not assignment, so a missing one goes back missing. (3) Map building was about 40% of the suite's test time, half of it the same seed and tuning again in one file: `src/test/preppedGame.ts` gives `preppedGame(seed, tuning, players)`, a new game on a map hydrated from a prep made once a file (the sailing's path, `rules/mapPrep.test.ts` holding it the same map and play; `src/test/preppedGame.test.ts` checks the fixture), and `sharedMap(seed, tuning)` for tests that only read a map. Tests of the map's own making (the same map every time, determinism, mapPrep) keep `newGame`/`generateMap`.
 
 Nightly no-work policy (Ed, 2026-11-02; coordinator1632#6577571686): Behaviour report uses the permitted 24-hour shortcut. If prototype's latest commit is older than 24 hours, its scheduled report skips successfully without installation, survey, artifacts or a comment. Manual dispatch always runs. The exact decision and workflow guards have direct lightweight tests; source metadata errors do not silently become skips.
