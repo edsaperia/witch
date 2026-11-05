@@ -8,7 +8,7 @@
 import type { Tuning } from "./tuning";
 
 /** The knobs this reads (the tuning's `challenge`), with their defaults. */
-export const CIRCLE_DEFAULT = { radius: 36, margin: 3, castReach: 5, spacing: 7.5 };
+export const CIRCLE_DEFAULT = { radius: 50, margin: 3, castReach: 5, spacing: 7.5 };
 
 /** The circle for an island of `kinds` roster kinds: its radius (m), its clearing's margin past the edge (m), how near its middle
  *  the spell is cast (m), and the share they've grown by over the tuning's (1 at `radius` and below). */

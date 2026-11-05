@@ -56,22 +56,39 @@ export function leyRoute(map: ForestMap, initial: () => string[], fallback?: () 
     ROUTES.set(map, r);
   }
   if (!r) {
-    r = planRoute(map, initial());
-    // A route that turns back toward home late on (untangling can reverse a long run: seed 2 once the ghost areas went,
-    // Ed v1628; seed 32 before): the other orders planned too, the one with the least late dip that keeps Ed's crossing
-    // rules kept. (Most maps' routes are sound: nothing more to plan.)
-    if (others && routeShape(map, r.stones).lateDip > SPIRAL_RULES.maxDip) {
-      let dip = routeShape(map, r.stones).lateDip;
-      for (const o of others()) { const q = planRoute(map, o), d = routeShape(map, q.stones).lateDip; if (d < dip - 1 && withinCrossingRules(q.links)) { r = q; dip = d; } }
+    const plan = (): LeyRoute => {
+      let r = planRoute(map, initial());
+      // A route that turns back toward home late on (untangling can reverse a long run: seed 2 once the ghost areas went,
+      // Ed v1628; seed 32 before): the other orders planned too, the one with the least late dip that keeps Ed's crossing
+      // rules kept. (Most maps' routes are sound: nothing more to plan.)
+      if (others && routeShape(map, r.stones).lateDip > SPIRAL_RULES.maxDip) {
+        let dip = routeShape(map, r.stones).lateDip;
+        for (const o of others()) { const q = planRoute(map, o), d = routeShape(map, q.stones).lateDip; if (d < dip - 1 && withinCrossingRules(q.links)) { r = q; dip = d; } }
+      }
+      // A link straight over the dancefloor (Ed, 2026-10-06: never; a smaller map's first ring can leave a gap round home
+      // that the spiral jumps across): the other orders planned, the first that keeps clear of it and Ed's crossing rules kept.
+      // (and, the backstop to where the map puts it, over the challenge circle: overChallenge)
+      const overIt = (q: LeyRoute) => q.stones.some((s, i) => i > 0 && (overHome(map, q.stones[i - 1], s) || overChallenge(map, q.stones[i - 1], s)));
+      if (others && overIt(r)) for (const o of others()) { const q = planRoute(map, o); if (!overIt(q) && withinCrossingRules(q.links) && routeShape(map, q.stones).lateDip <= SPIRAL_RULES.maxDip) { r = q; break; } }
+      if (finish && withinCrossingRules(r.links)) r = finish(r);
+      if (fallback && !withinCrossingRules(r.links)) r = planRoute(map, fallback());
+      return curved(map, r);
+    };
+    r = plan();
+    // The backstop's last word (Ed, 2026-11-04: "The route should avoid going through the challenge area"): a drawn link that still
+    // comes inside its clearing though its straight line kept PLACE.swing clear (its curve swung further: elephant seed 2 on the 50 m
+    // circle, #1827, 34 m off its line), its two stones counted over the circle from then on (overChallenge) and the route planned
+    // afresh, kept if fewer of its drawn links come over it. Only such a map plans again.
+    for (let k = 0; k < 3; k++) {
+      const over = drawnOverChallenge(map, r);
+      if (!over.length) break;
+      const set = DRAWN_OVER.get(map) ?? new Set<string>();
+      DRAWN_OVER.set(map, set);
+      for (const [a, b] of over) set.add(pairKey(a, b));
+      const q = plan();
+      if (drawnOverChallenge(map, q).length >= over.length) break;
+      r = q;
     }
-    // A link straight over the dancefloor (Ed, 2026-10-06: never; a smaller map's first ring can leave a gap round home
-    // that the spiral jumps across): the other orders planned, the first that keeps clear of it and Ed's crossing rules kept.
-    // (and, the backstop to where the map puts it, over the challenge circle: overChallenge)
-    const overIt = (q: LeyRoute) => q.stones.some((s, i) => i > 0 && (overHome(map, q.stones[i - 1], s) || overChallenge(map, q.stones[i - 1], s)));
-    if (others && overIt(r)) for (const o of others()) { const q = planRoute(map, o); if (!overIt(q) && withinCrossingRules(q.links) && routeShape(map, q.stones).lateDip <= SPIRAL_RULES.maxDip) { r = q; break; } }
-    if (finish && withinCrossingRules(r.links)) r = finish(r);
-    if (fallback && !withinCrossingRules(r.links)) r = planRoute(map, fallback());
-    r = curved(map, r);
     ROUTES.set(map, r);
   }
   return r;
@@ -198,7 +215,22 @@ export function overHome(map: ForestMap, a: P2, b: P2): boolean {
  *  (rules/challengePlace.ts); this is the backstop: the route's untangling counts such a link PLACE.weight crossings. */
 export function overChallenge(map: ForestMap, a: P2, b: P2): boolean {
   const sp = map.specialSites?.find(q => q.kind === "challenge");
-  return !!sp && lineGap([sp.x, sp.z], a, b) < sp.r + PLACE.swing;
+  return !!sp && (lineGap([sp.x, sp.z], a, b) < sp.r + PLACE.swing || !!DRAWN_OVER.get(map)?.has(pairKey(a, b)));
+}
+/** Each map's stone pairs whose drawn link came over the challenge circle though their straight line didn't (leyRoute), counted
+ *  over it by overChallenge from then on. Either way round. */
+const DRAWN_OVER = new WeakMap<ForestMap, Set<string>>();
+const pairKey = (a: P2, b: P2): string => { const p = `${a[0]},${a[1]}`, q = `${b[0]},${b[1]}`; return p < q ? `${p}|${q}` : `${q}|${p}`; };
+/** The route's drawn links (curved; the departure, the first, not counted) that come inside the challenge circle's clearing (its
+ *  radius and margin, map.specialSites' r): each one's two stones. */
+export function drawnOverChallenge(map: ForestMap, r: LeyRoute): [P2, P2][] {
+  const sp = map.specialSites?.find(q => q.kind === "challenge"), out: [P2, P2][] = [];
+  if (!sp) return out;
+  for (let i = 1; i < r.links.length && i < r.stones.length; i++) {
+    const l = r.links[i];
+    for (let k = 0; k + 1 < l.length; k++) if (lineGap([sp.x, sp.z], l[k], l[k + 1]) < sp.r) { out.push([r.stones[i - 1], r.stones[i]]); break; }
+  }
+  return out;
 }
 /** How many of these links (straight, stone to stone; the first, the departure, not counted) pass over the challenge circle. */
 export const overChallengeCount = (map: ForestMap, links: readonly (readonly P2[])[]): number => links.reduce((t, l, i) => t + (i > 0 && l.length === 2 && overChallenge(map, l[0], l[1]) ? 1 : 0), 0);

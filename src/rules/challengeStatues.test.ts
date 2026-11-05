@@ -6,7 +6,8 @@ import { affectionOf, dormant, hitWitch, newWitchPlayer, stepGame, type Controls
 import { TUNING, withTuning, type Tuning } from "./tuning";
 import { cellKey } from "./party";
 import { befriend, invitableNow, stateOf } from "./creatureStates";
-import { challengeColumns, columnKinds, columnSpots, statuePosts } from "./challenge";
+import { challengeColumns, columnKinds, columnSpots, POST_REACH, statuePosts } from "./challenge";
+import { challengeCircle } from "./challengeCircle";
 import { onFloor, postsOf, wakeAggro, wakeK } from "./challengeStatues";
 import { beatAt, timeAt } from "./beat";
 import { areaCellAt } from "./map";
@@ -47,15 +48,16 @@ function put(g: Game, dx: number, dz: number, mode: "ground" | "treetop" = "grou
 const phase = (g: Game) => g.challenge!.statues!.phase;
 
 describe("stone at their posts (Ed, 2026-11-04: \"grey statues, all facing the centre of the circle\")", () => {
-  it("stand column / adult / youth / centre, each on its kind's column's radius, facing the middle", () => {
-    const g = game(), ch = g.challenge!, kinds = columnKinds(g), cols = columnSpots(ch, kinds.length);
+  it("stand column / adult / youth / centre on every column, each on its kind's column's radius, facing the middle (Ed, 2026-11-04, on #1827: \"youths should be closer to the middle of the circle than the elder\")", () => {
+    const g = game(), ch = g.challenge!, kinds = columnKinds(g), cols = columnSpots(ch, kinds.length), S = TUNING.challenge!.statues!;
     expect(phase(g)).toBe("stone");
     kinds.forEach((kind, i) => {
       const col = cols[i], mine = pack(g).filter(c => c.species === kind), adult = mine.find(c => c.level === 2)!, youth = mine.find(c => c.level === 1)!;
       const from = (c: { x: number; z: number }) => Math.hypot(c.x - col.x, c.z - col.z), mid = (c: { x: number; z: number }) => Math.hypot(c.x - ch.x, c.z - ch.z);
-      expect(from(adult), kind).toBeCloseTo(TUNING.challenge!.statues!.first, 6);
-      expect(from(youth) - from(adult), kind).toBeCloseTo(TUNING.challenge!.statues!.gap, 6);
-      expect(mid(adult)).toBeLessThan(ch.radius); expect(mid(youth)).toBeLessThan(mid(adult)); // (adult nearer the column, youth further in)
+      expect(from(adult), kind).toBeCloseTo(S.first, 6);
+      expect(from(youth) - from(adult), kind).toBeCloseTo(S.gap, 6); // (Ed, 2026-11-04: "Further apart, same line")
+      expect(mid(youth), kind).toBeLessThan(mid(adult)); // (the youth nearer the middle, north or south of it)
+      expect(mid(adult)).toBeLessThan(ch.radius);
       for (const c of [adult, youth]) {
         // (on the column's radius: column, it and the middle in a line)
         const cross = (c.x - col.x) * (ch.z - col.z) - (c.z - col.z) * (ch.x - col.x);
@@ -83,6 +85,83 @@ describe("stone at their posts (Ed, 2026-11-04: \"grey statues, all facing the c
     const site = { x: 0, z: 0, radius: 30 }, posts = statuePosts(site, ["fox"], [{ id: 5, species: "fox", level: 1 }, { id: 2, species: "fox", level: 2 }, { id: 3, species: "fox", level: 2 }], { first: 3, gap: 4 });
     expect([posts.get(2), posts.get(3), posts.get(5)]).toEqual([{ x: 0, z: -27 }, { x: 0, z: -23 }, { x: 0, z: -19 }].map(p => ({ x: expect.closeTo(p.x, 9), z: expect.closeTo(p.z, 9) })));
   });
+
+  it("spread well apart on the same line, the youth nearer the middle, both nearer their column than the middle, on every size of circle (Ed, 2026-11-04: \"Further apart, same line\"; on #1827, \"If this doesn't fit, make the circle bigger.\")", () => {
+    const S = TUNING.challenge!.statues!, C = TUNING.challenge!;
+    expect(S.gap).toBeGreaterThanOrEqual(18); // (3.5 before: the youth hidden behind its adult)
+    expect(C.radius).toBeGreaterThan(36); // (36 before: grown so the two fit)
+    expect(S.first + S.gap).toBeLessThanOrEqual(POST_REACH * C.radius); // (the circle fits them: the youth `gap` past its adult, not squeezed, on the smallest circle)
+    for (const n of [3, 6, 10, 26, 64]) {
+      const R = challengeCircle(n, TUNING).radius, site = { x: 100, z: -50, radius: R }, kinds = Array.from({ length: n }, (_, i) => `k${i}`);
+      for (const per of [[2, 1], [1, 1], [3, 3]] as const) {
+        const pk = kinds.flatMap((k, i) => [...Array(per[0]).fill(2), ...Array(per[1]).fill(1)].map((level, j) => ({ id: i * 10 + j, species: k, level })));
+        const posts = statuePosts(site, kinds, pk, S), cols = columnSpots(site, n);
+        kinds.forEach((k, i) => {
+          const mine = pk.filter(c => c.species === k), from = (c: { id: number }) => { const p = posts.get(c.id)!; return Math.hypot(p.x - cols[i].x, p.z - cols[i].z); };
+          for (const c of mine) {
+            const p = posts.get(c.id)!, toCol = from(c), toMid = Math.hypot(p.x - site.x, p.z - site.z);
+            expect(toCol, `${n} kinds, ${k}`).toBeLessThan(toMid); // (Ed: "closer to their column than to the centre")
+            expect(toMid, `${n} kinds, ${k}`).toBeLessThan(R); // (on the floor: inside the circle, so inside its clearing and its area's claim)
+            expect(Math.abs((p.x - cols[i].x) * (site.z - cols[i].z) - (p.z - cols[i].z) * (site.x - cols[i].x)) / R).toBeLessThan(1e-6); // (same line)
+          }
+          const adults = mine.filter(c => c.level === 2).map(from), youths = mine.filter(c => c.level === 1).map(from);
+          expect(Math.min(...youths), `${n} kinds, ${k}`).toBeGreaterThan(Math.max(...adults)); // (every youth nearer the middle than every adult, on every column)
+          const d = mine.map(from).sort((x, y) => x - y);
+          for (let j = 1; j < d.length; j++) expect(d[j] - d[j - 1], `${n} kinds, ${k}`).toBeGreaterThan(per[0] + per[1] > 2 ? 2 : S.gap - 1e-6); // (two a kind: `gap` apart; more: squeezed evenly, never piled up)
+        });
+      }
+    }
+  });
+
+  it("the youth lifted up the screen past its adult's head from the game's camera, even on the column due south (Ed, 2026-11-04: \"Further apart, same line\")", () => {
+    // The game's camera looks north (rules/camera.ts: it stands south of her, +z), pitched down by the ground camera's angle (its
+    // zoom's range, and the start's zoom). Each statue's sprite is a billboard standing up the screen from its foot: a box `w` wide
+    // and `h` tall on screen, its foot lifted z sin(pitch) up the screen for every metre north. On the columns south of the middle
+    // the youth, nearer the middle, stands north of its adult, behind it: only the spacing lifts it clear. The boxes: frames of the fox
+    // island's statues as drawn (seed 2, measured in the built game, 2026-11-04): the tallest adult drawn (the hare: frames 15.4 and
+    // 10.7 m tall), the next tallest (the badger: 10.6 and 7.7; the fox, 10.4 and 7.4), and the widest (the mole: 17 and 10.7 m wide).
+    const HARE = { adult: { h: 15.4, hw: 5.7 }, youth: { h: 10.7, hw: 4.0 } }, REST = { badger: { adult: { h: 10.6, hw: 8.3 }, youth: { h: 7.7, hw: 5.2 } }, fox: { adult: { h: 10.4, hw: 7.3 }, youth: { h: 7.4, hw: 5.4 } }, mole: { adult: { h: 9.2, hw: 8.5 }, youth: { h: 6.4, hw: 5.3 } } };
+    const CAM = TUNING.camera.ground, Z = TUNING.camera.startZoom / Math.max(1, TUNING.camera.zoomSteps - 1);
+    const start = CAM.angleIn + (CAM.angleOut - CAM.angleIn) * Z, flattest = CAM.angleIn;
+    /** How much of `back`'s box the box of `front` (nearer the camera) leaves clear, as a share. */
+    const clearOf = (back: { x: number; z: number; h: number; hw: number }, front: { x: number; z: number; h: number; hw: number }, pitch: number): number => {
+      const s = Math.sin((pitch * Math.PI) / 180), box = (b: typeof back) => ({ x0: b.x - b.hw, x1: b.x + b.hw, y0: -b.z * s, y1: -b.z * s + b.h });
+      const B = box(back), F = box(front), ox = Math.max(0, Math.min(B.x1, F.x1) - Math.max(B.x0, F.x0)), oy = Math.max(0, Math.min(B.y1, F.y1) - Math.max(B.y0, F.y0));
+      return 1 - (ox * oy) / ((B.x1 - B.x0) * (B.y1 - B.y0));
+    };
+    /** The least share of each youth (behind its adult) and adult (behind its youth) left clear, every column of a 10-kind circle. */
+    const look = (S: { first: number; gap: number }, pairs: Record<string, typeof HARE>, pitch: number, radius = challengeCircle(10, TUNING).radius) => {
+      const n = 10, site = { x: 0, z: 0, radius }, kinds = Array.from({ length: n }, (_, i) => `k${i}`);
+      const posts = statuePosts(site, kinds, kinds.flatMap((k, i) => [{ id: 2 * i, species: k, level: 2 }, { id: 2 * i + 1, species: k, level: 1 }]), S);
+      let youth = 1, adult = 1;
+      for (const P of Object.values(pairs)) for (let i = 0; i < n; i++) {
+        const a = { ...posts.get(2 * i)!, ...P.adult }, y = { ...posts.get(2 * i + 1)!, ...P.youth };
+        if (a.z > y.z + 1e-9) youth = Math.min(youth, clearOf(y, a, pitch)); else adult = Math.min(adult, clearOf(a, y, pitch));
+      }
+      return { youth, adult };
+    };
+    const S = TUNING.challenge!.statues!;
+    // (at the start camera and steeper, every youth whose adult is drawn up to about 10 m tall all but wholly clear of it, every column)
+    for (const pitch of [start, CAM.angleOut]) expect(look(S, REST, pitch).youth, `${pitch} degrees`).toBeGreaterThan(0.9);
+    // (the hare, the tallest adult drawn: half its youth showing at the start camera, a third at the flattest; as far as the circle
+    // can grow for Ed's "make the circle bigger" and the smallest islands still hold it, home's still moving night to night: #1827)
+    expect(look(S, { hare: HARE }, start).youth).toBeGreaterThan(0.5);
+    expect(look(S, { hare: HARE }, flattest).youth).toBeGreaterThan(0.33);
+    // (on the columns north of the middle the youth is in front, lower on the screen: its adult left mostly clear)
+    for (const pitch of [flattest, start]) expect(look(S, { hare: HARE, ...REST }, pitch).adult).toBeGreaterThan(0.85);
+    // And before (3.5 m apart on the 36 m circle): the youth due south hidden behind its adult.
+    expect(look({ first: S.first, gap: 3.5 }, { hare: HARE, ...REST }, start, 36).youth).toBeLessThan(0.05);
+  });
+
+  it("are the same posts for the same pack whatever order it comes in, night to night (deterministic)", () => {
+    const g1 = game(), g2 = game();
+    const at = (g: Game) => pack(g).map(c => [c.id, c.x, c.z]);
+    expect(at(g1)).toEqual(at(g2));
+    const ch = g1.challenge!, kinds = columnKinds(g1), list = pack(g1).map(c => ({ id: c.id, species: c.species, level: c.level }));
+    const a = statuePosts(ch, kinds, list, TUNING.challenge!.statues!), b = statuePosts(ch, kinds, [...list].reverse(), TUNING.challenge!.statues!);
+    expect([...b.entries()].sort((p, q) => p[0] - q[0])).toEqual([...a.entries()].sort((p, q) => p[0] - q[0]));
+    for (const c of pack(g1)) expect([c.x, c.z]).toEqual([a.get(c.id)!.x, a.get(c.id)!.z]);
+  }, 60000);
 
   it("can't be invited or hit while stone: 💌s refused as an enraged one refuses them, out of every fight", () => {
     const g = game(), A = affectionOf(g);
@@ -255,7 +334,7 @@ describe("its won ones out of the fight's way (Ed, 2026-11-04, on #1804: \"they 
     for (const c of won) befriend(c, g.clock.time);
     const spots: string[] = [];
     let samples = 0, close = 0;
-    const out = runUntil(g, () => won.every(c => Math.hypot(c.x - ch.x, c.z - ch.z) >= ch.radius + S.keepOut - 0.1), 30); // (walking out at its pace: a snail's slow)
+    const out = runUntil(g, () => won.every(c => Math.hypot(c.x - ch.x, c.z - ch.z) >= ch.radius + S.keepOut - 0.1), 60); // (walking out at its pace: a snail's slow; 30 s before the circle grew to 50 m, Ed on #1827)
     expect(out).not.toBeNull();
     for (let i = 0; i < 12 * 60; i++) {
       stepGame(g, still, STEP);

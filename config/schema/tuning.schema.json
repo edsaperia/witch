@@ -2336,6 +2336,10 @@
           "type": "number",
           "minimum": 0
         },
+        "sigilGap": {
+          "type": "number",
+          "minimum": 0
+        },
         "adults": {
           "type": "number",
           "minimum": 0
@@ -2514,6 +2518,7 @@
         "radius",
         "margin",
         "spacing",
+        "sigilGap",
         "adults",
         "youths",
         "castReach",

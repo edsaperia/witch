@@ -15,7 +15,7 @@ import { FIND_SETS, allFinds, bandOf, biomeOf, islandSet, setPick } from "./find
 import { flaskUnder } from "./legends";
 import { routeOf } from "./party";
 import { lineGap, placeChallenge, PLACE } from "./challengePlace";
-import { overChallenge, overChallengeCount, untangle, type P2 } from "./leyroute";
+import { drawnOverChallenge, overChallenge, overChallengeCount, untangle, type P2 } from "./leyroute";
 import { KINDS_TABLE } from "./kinds";
 import { knownKinds } from "./rosters";
 import { restoreGame, snapshotGame } from "./nightSnapshot";
@@ -138,6 +138,13 @@ describe("where it goes (Ed, 2026-11-04: \"The route should avoid going through 
   it("on 31 and 51-area islands and the late home of 64", () => {
     for (const [kind, seed] of [["owl", 1], ["owl", 2], ["griffin", 1], ["griffin", 2]] as const) placedWell(sharedMap(seed, islandOf(kind)), `${kind} ${seed}`);
     placedWell(sharedMap(1, lateHome(64)), "home 64");
+  }, 300000);
+  it("the backstop holds for the line as drawn: no curved link inside its clearing where its straight line kept clear (elephant seed 2, #1827)", () => {
+    // (elephant seed 2 on the 50 m circle: a link's straight line 82 m from its middle, PLACE.swing past its clearing, but its curve
+    // swinging 34 m off it, 48 m from its middle: inside. leyRoute plans afresh with that link counted over it: drawnOverChallenge)
+    const m = sharedMap(2, islandOf("elephant"));
+    expect(drawnOverChallenge(m, routeOf(m))).toEqual([]);
+    placedWell(m, "elephant 2");
   }, 300000);
   it("still moves night to night: more than one area over a few nights of a 51-area island", () => {
     const at = new Set([1, 2, 3, 4, 5].map(seed => key(challengeSite(seed <= 2 ? sharedMap(seed, islandOf("griffin")) : generateMap(seed, islandOf("griffin")))!.cell)));
@@ -288,7 +295,8 @@ describe("its circle grows with the roster (Ed, 2026-11-03: \"128 animal pack is
     for (const id of ch.pack) befriend(g.creatures[id], g.clock.time);
     g.clock.paused = false; g.party.spellAt = undefined;
     const reach = castReachOf(ch, g.tuning);
-    expect(reach).toBeGreaterThan(TUNING.challenge!.castReach * 2);
+    expect(reach).toBeCloseTo(TUNING.challenge!.castReach * ch.radius / TUNING.challenge!.radius, 6); // (grown by the share its circle has: 76 m over the 50 m knob, Ed on #1827)
+    expect(reach).toBeGreaterThan(TUNING.challenge!.castReach * 1.3);
     const W = g.witches[0];
     W.body = { ...W.body, x: ch.x + reach - 0.5, z: ch.z, mode: "ground", seated: false, perch: undefined };
     expect(challengeCastAt(g, W)).toBeTruthy();

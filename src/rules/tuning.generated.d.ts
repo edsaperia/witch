@@ -451,6 +451,7 @@ export type SchemaTuning = {
     "radius": number;
     "margin": number;
     "spacing": number;
+    "sigilGap": number;
     "adults": number;
     "youths": number;
     "castReach": number;
