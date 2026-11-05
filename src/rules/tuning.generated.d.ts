@@ -2122,13 +2122,14 @@ export type SchemaTuning = {
     "inPlace": boolean;
   };
   "loading": {
-    "edge": number;
+    "sweep": number;
     "rate": number;
     "flash": number;
     "ghost": number;
     "nova": number;
     "fadeOut": number;
     "fps": number;
+    "depth": number;
   };
   "opening": {
     "bedroom": boolean;

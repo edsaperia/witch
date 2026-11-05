@@ -10884,7 +10884,7 @@
     "loading": {
       "type": "object",
       "properties": {
-        "edge": {
+        "sweep": {
           "type": "number",
           "minimum": 0
         },
@@ -10911,19 +10911,24 @@
         "fps": {
           "type": "number",
           "minimum": 0
+        },
+        "depth": {
+          "type": "number",
+          "minimum": 0
         }
       },
       "required": [
-        "edge",
+        "sweep",
         "rate",
         "flash",
         "ghost",
         "nova",
         "fadeOut",
-        "fps"
+        "fps",
+        "depth"
       ],
       "additionalProperties": false,
-      "description": "The loading screen: the World Tree and COVEN RUSH picked out in gold stars that light up as the game loads."
+      "description": "The loading screen: the World Tree as a Celtic knot in gold stars, COVEN and RUSH in the gaps either side of its trunk, lighting up as the game loads."
     },
     "opening": {
       "type": "object",

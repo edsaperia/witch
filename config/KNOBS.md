@@ -3710,22 +3710,26 @@ Code: `docs/plans/sail-without-reload.md`, `app/sail.ts`
 
 ### `loading`
 
-The loading screen: the World Tree and COVEN RUSH picked out in gold stars that light up as the game loads.
+The loading screen: the World Tree as a Celtic knot in gold stars, COVEN and RUSH in the gaps either side of its trunk, lighting up as the game loads.
 
 1. Ed, 2026-10-26: src/ui/loadingScreen.js, before main.ts loads
 2. Ed, 2026-11-03: "can we fade from the loading screen to the bedroom over a few seconds" (fadeOut in place of the 1.2 s white clearing (clear), src/ui/loadingFade.js)
-The loading screen [1]: the World Tree and COVEN RUSH in gold stars, lighting as the game loads, edge first by edge (0 plain random), at most rate stars a second, each flashing for flash seconds; ghost how bright the stars not yet lit show (0: an empty sky, Ed's call); the heart's star last, its supernova to white over nova seconds, then the whole screen fading out over fadeOut seconds (eased out; at most 0.6 s with reduced motion) onto the bedroom, her wake-up starting as it begins [2]. It draws fps frames a second while the game loads (each frame costs the load a little), about 20 once it's ready. Read as the page opens, so the pause page's sliders (remembered on this browser) take effect on the next load.
-Code: `src/ui/loadingScreen.js`, `src/ui/loadingFade.js`
+3. Ed, 2026-11-05: "roughly left to right, with some random scatter" (his sketch: the World Tree's branches and roots sweeping round into two rings, COVEN and RUSH in them, level; sweep in place of edge; the game's darker night sky behind, src/ui/loadingSeal.js)
+4. Ed, 2026-11-05: "Loading screen: can you copy this for the sigil design" (his reference a Celtic-knot Tree of Life: its canopy and roots the ring; then "now turn this design into dots that are stars, and put the words into gaps, as per my diagram": the knot's ribbons outlined in stars, widened, COVEN and RUSH in the big gaps either side of the trunk, level, src/ui/loadingSeal.js)
+5. Ed, 2026-11-05: "2 with a touch of 3" (the seal's stars at random depths, the scatter tightening and the view turning head on as the load completes; "make the random depth scatter quite large", depth, src/ui/loadingScreen.js)
+The loading screen [1]: the World Tree as a Celtic knot in gold stars, COVEN and RUSH in the gaps either side of its trunk [4], lighting star by star as the game loads, left to right by sweep against a random scatter (0 plain random) [3], at most rate stars a second, each flashing for flash seconds; ghost how bright the stars not yet lit show (0: an empty sky, Ed's call); depth how far the seal's stars scatter in depth, a 3D cloud sliding past itself as the view sways, the words less, tightening to none and the seal turning to face her head on as the load completes [5]; the heart's star (the trunk's middle) last, its supernova to white over nova seconds, then the whole screen fading out over fadeOut seconds (eased out; at most 0.6 s with reduced motion) onto the bedroom, her wake-up starting as it begins [2]. It draws fps frames a second while the game loads (each frame costs the load a little), about 20 once it's ready. Read as the page opens, so the pause page's sliders (remembered on this browser) take effect on the next load.
+Code: `src/ui/loadingScreen.js`, `src/ui/loadingSeal.js`, `src/ui/loadingFade.js`
 
 | knob | type | range |
 |---|---|---|
-| `loading.edge` | number | 0 to … |
+| `loading.sweep` | number | 0 to … |
 | `loading.rate` | number | 0 to … |
 | `loading.flash` | number | 0 to … |
 | `loading.ghost` | number | 0 to … |
 | `loading.nova` | number | 0 to … |
 | `loading.fadeOut` | number | 0 to … |
 | `loading.fps` | number | 0 to … |
+| `loading.depth` | number | 0 to … |
 
 ### `opening`
 
