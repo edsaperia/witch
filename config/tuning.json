@@ -2430,13 +2430,14 @@
     "inPlace": true
   },
   "loading": {
-    "edge": 1,
+    "sweep": 3,
     "rate": 90,
     "flash": 0.6,
     "ghost": 0,
     "nova": 2.6,
     "fadeOut": 2.5,
-    "fps": 10
+    "fps": 10,
+    "depth": 0.6
   },
   "opening": {
     "bedroom": true,

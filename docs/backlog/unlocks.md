@@ -115,7 +115,7 @@ Ed's idea, superseding the achievements rule below for hats (kept for the record
 - **Achievements** then unlock nothing, or only trophies for the bedroom (treehouse.md). The afterparty's "new unlocks" card shows the hat she brought home and the broom she made.
 - **The first hat with a spell** could sit at a tutorial shrine on home, so a new player meets the loop on the first island.
 
-Open: which hat each island holds (fixed by kind, or dealt); whether a shrine is guarded or tested by its own power (sleeping animals round the Lullaby shrine, thorns round Bramble); what brooms cost; whether a hat left at a shrine for a later night is still the same one (it is, by this rule).
+Once open, now closed (2026-10-31: the game does it differently, and Ed's ruling retires such backlog items, "Game wins", relayed by the coordinator on #1357; hats are finds in the one draw, below, not shrines): which hat each island holds (fixed by kind, or dealt); whether a shrine is guarded or tested by its own power (sleeping animals round the Lullaby shrine, thorns round Bramble); what brooms cost; whether a hat left at a shrine for a later night is still the same one (it is, by this rule).
 
 ## Hats and bags found, one a night (built, Ed 2026-10-23)
 
@@ -128,7 +128,7 @@ Every spell hat, the bum bag and the backpack are finds in the one draw (rules/f
 - **A bag sets how she throws 💌s:** a shooting style (a shotgun spread, a sniper's long slow shot, and so on). She carries one at a time, so a bag is a deliberate choice of build. Easier to balance than the old legend boons, which stacked at random.
 - **Found like hats:** at a shrine themed on its power, picked up as a game object, by the same rules as hats (above).
 - **Where the old boons go** (proposed): the 💌 boons (Charm homing, Pierce, Spawn, Howl's ring...) are the first bags' behaviours; the movement boons (Hare's blink charges, Mole's fast rise, Raven's treetop speed) are broom components (the broom garage, below). Quests no longer give boons (Ed, 2026-10-18; built, #954), and the boons' code is removed (Ed, 2026-10-28): a bag or part rebuilds one from scratch.
-- Open: the first set of bags; whether bags share the hat shrines or have their own; where spare bags hang in the treehouse.
+- Once open, now closed (2026-10-31: the game does it differently, and Ed's ruling retires such backlog items, "Game wins", relayed by the coordinator on #1357; the starting and found bags are built, `docs/notes/house.md`, and found bags are finds in the one draw, not at shrines): the first set of bags; whether bags share the hat shrines or have their own; where spare bags hang in the treehouse.
 
 ## The crystal ball: where an upgrade lies (Ed, 2026-10-18)
 
@@ -138,7 +138,7 @@ Every spell hat, the bum bag and the backpack are finds in the one draw (rules/f
 - **Only islands she has unlocked**, so it points somewhere she can sail tonight.
 - **Appears late:** perhaps only once she has finished the second phase, home and the islands after it (Ed). Until then it isn't in the house.
 - **Where:** the treehouse's hub already has a crystal ball in the plan (treehouse.md: the run history); this gives it a job.
-- Open: what "finished" means for a phase (every island won, or found); whether it shows one upgrade at a time (and when it changes: each night, or once that one is found); whether it also keeps the run history.
+- Once open, now closed (2026-10-31: the game does it differently, and Ed's ruling retires such backlog items, "Game wins", relayed by the coordinator on #1357; tonight's find is hinted in the stars instead, Ed, 2026-10-22: "Instead of a crystal ball, the hint should be written in the stars as a constellation seen through the telescope in the direction of the item!", `rules/constellations.ts`): what "finished" means for a phase (every island won, or found); whether it shows one upgrade at a time (and when it changes: each night, or once that one is found); whether it also keeps the run history.
 
 ## Permanent unlocks only while the party is on (Ed, 2026-10-18)
 
@@ -187,7 +187,9 @@ Ed's design, from a conversation on 2026-10-16. **Not built; don't build without
 - The crystal ball could remember what she flew each night.
 - A short test loop round the Ent with a lap timer drawn as candles.
 
-### Open questions
+### Answered and parked questions
+
+Since built in its own form as the Workshop: the sets, the one draw and no biome lean were settled by Ed on 2026-10-23 (workshop.md, "Ed's decisions"); the rest of the broom mechanics is **parked for a future Workshop pass** (Ed, 2026-10-31, relayed by the coordinator on #1357). The questions as they were:
 
 - The sets: how many, which pieces, which abilities; which sets are two and which three.
 - Biome and phase locking: strict, or a lean.
@@ -211,10 +213,12 @@ Ed's design, from a conversation on 2026-10-16. **Not built; don't build without
 - **In the treehouse:** the hat room and the broom room show the ones she's unlocked; she picks one of each there, and spare hats wait there for swapping during the party (see [journey.md](journey.md), section 3). Locked ones show greyed with the achievement that unlocks them.
 - The older plan (choosing them in the character creator, and the bedroom rack) is superseded by the treehouse rooms.
 
-## Open questions
+## Answered and parked questions
+
+The hat and broom lists, passives, unlocks and cooldowns are **parked for a future Workshop pass** (Ed, 2026-10-31, relayed by the coordinator on #1357); achievements no longer unlock anything, as hats, bags and broom parts are finds, kept only on a won night (#1044, #1109). The questions as they were:
 
 - Final hat and broom lists; which brooms are passive and which active.
-- Which achievement unlocks which item.
+- Which achievement unlocks which item (retired: finds instead).
 - Cooldowns and durations.
 - Long broom: a broom component now that quest buffs are gone (2026-10-18).
 - Earlier hat ideas from before hats were placed (Berry patch, Mend, Second wind): drop, or rework as placed hats? (Harvest already covers berries.)

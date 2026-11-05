@@ -217,7 +217,9 @@ Only the host's found parts are in the Workshop, and each part is on one witch's
 3. **Finds**: `nightFind`'s draw over wearables and parts; `placeTrunk` places a wreck too; E picks up a part (`found`).
 4. **The Workshop**: the bay, lathe and pegboard stations, with Echo's panel kinds and Alpha's furniture; the broom stand retired; the save migration.
 
-## Open questions
+## Answered and parked questions
+
+Questions 6 and 7 are **parked for a future Workshop pass** (Ed, 2026-10-31, relayed by the coordinator on #1357: broom mechanics, set trails and more parts wait for it), not open questions for Ed now.
 
 Questions 1 to 5 were answered by Ed on 2026-10-23 (above): the sets as proposed, one draw, the pegboard its own read-only station, no biome lean, and the bare broom without the quick take-off.
 

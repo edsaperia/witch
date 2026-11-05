@@ -651,12 +651,17 @@
       "what": "the master."
     },
     "music.latency": {
-      "what": "the audio context's latencyHint [1]: interactive the smallest output buffer, balanced more room for the audio thread, playback the most (under-runs least likely, sound effects latest); ?latency= tries one for a load (DECISION FOR ED).",
+      "what": "the audio context's latencyHint [1]: interactive the smallest output buffer, balanced more room for the audio thread, playback the most (under-runs least likely, sound effects latest); ?latency= tries one for a load [2].",
       "decisions": [
         {
           "by": "Ed",
           "date": "2026-10-07",
           "quote": "the music is still cutting out"
+        },
+        {
+          "by": "Ed",
+          "date": "2026-10-31",
+          "rest": "balanced confirmed (relayed by the coordinator on #1357)"
         }
       ]
     },

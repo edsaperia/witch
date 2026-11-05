@@ -88,7 +88,8 @@ Code: `rules/lakes.ts`, `rules/islandGrowth.ts`, `render/lakeLooks.ts`
 
 - **`lakes.shore`**: metres of bare shore round the water (no trees, nothing placed).
 - **`lakes.pad`**: how far from the water anything on foot stops.
-- **`lakes.koi`**: the share of lakes with koi in them (DECISION FOR ED).
+- **`lakes.koi`**: the share of lakes with koi in them [1].
+  1. Ed, 2026-10-31: confirmed, 0.5 (relayed by the coordinator on #1357)
 - **`lakes.biomeFrom`**: the island phase from which its lakes take the look of its compass biomes on the sea chart (frozen, lava, oasis, sinkhole, glacial tarn, tar pit, rust pool, lily pond; app/chartOutlines.worker.ts), before it plain water [1].
   1. Ed, 2026-10-12: "biome lakes can start appearing one phase earlier" (3, it was 4, the first uncharted islands)
   Code: `app/chartOutlines.worker.ts`
@@ -1335,8 +1336,9 @@ The witch [1]: she takes hits (one point each, whatever hits her) before she's k
 1. Ed, 2026-10-04
 2. Ed, 2026-10-08: "three slashes, and then a final hit" (4)
 
-- **`witchHealth.grace`**: seconds after a hit in which no other blow lands, so a pack striking together takes one hit, not all three [1].
-  1. 2026-10-06: balance: DECISION FOR ED, 0.5
+- **`witchHealth.grace`**: seconds after a hit in which no other blow lands, so a pack striking together takes one hit, not all three [1][2].
+  1. 2026-10-06: balance: 0.5, put to Ed
+  2. Ed, 2026-10-31: confirmed, 0.5 (relayed by the coordinator on #1357)
 - **`witchHealth.slashScale`**: her claw slashes' size relative to her [1].
   1. Ed, 2026-10-08: "the slashes should be twice as large" (render/leash/bubbles.ts; 1 the drawing at her art pixel:, 2)
   Code: `render/leash/bubbles.ts`
@@ -2403,7 +2405,7 @@ How many wild creatures each area starts with, more along the waves' route so th
 2. Ed, 2026-10-05: one baby and one young:, 'actually, the game should start with one baby and one youth, otherwise you can't avoid enraging lots of legends', after 'the game is hard! we should start each area with just one baby'; before it, one young and one adult, and before that one baby and two adults
 3. Ed, 2026-10-07: "no population growth on a clock" (his new core design)
 4. Ed, 2026-10-08: the swarm plan's phase 1: its own young and adults, the ones a wave enrages and sets marching; rules/swarm.ts
-5. 2026-10-06: a fraction carries over: 0.5 is one every other wave; balance, DECISION FOR ED: 0.5, from 1, so a player's defence can hold the early sieges and playing well matters
+5. 2026-10-06: a fraction carries over: 0.5 is one every other wave; balance: 0.5, from 1, so a player's defence can hold the early sieges and playing well matters (put to Ed; moot since his 2026-10-28 ruling below turned growth off)
 6. Ed, 2026-10-28: "during a night, no creatures are created and none are destroyed" (growth.on off, so the balance simulators match the game; a creature that runs off sleeps on the beach (rules/runaway.ts))
 Wild creatures [1]: every area starts with the same population, population.start [2], and, from the start [3], more by its place on the waves' route (Balance 2's shape; rules/growth.ts routePopulation): byRoute's threat (since removed: the hostile swarm below does this now), [route index, F] points (1 the first wave's stone; straight lines between, flat past the ends), is the extra fighting value its young and adults add (F by Lanchester, young 11.6, adult 40, babies 0; about what an area woken at that wave grew to before); its kind spends it by its profile (byRoute's profiles by species (removed with it), else default: the shares of its extra creatures as babies, young and adults), so many more of a swarm's young than of a heavy kind's adults, at the same danger: count = threat ÷ the profile's mean F a creature × the area's count scale, rounded, split by the shares (largest remainder, ties by the seed). The hostile swarm [4]: its challenge grows with the area's place p in the runestone order (0 the first stone, 1 the last), whatever its species. Each area fields, of every size up to its species' cap (capScales: the cap grown along the same curve, at least 2) and every young/adult split, the one nearest the target; among those within swarm.mixTolerance (10%) of the nearest, a mix of young and adults first. A simulated power (config/swarm-power.json, empty in phase 1) stands in for the estimate where it has the swarm. So a default map (about 100 areas) holds about 540 hostiles: the curve's average, 5.8 an area. growth is the old growth on a clock, which the game no longer reads, off since [6] (the balance simulators read it only when on): every wave, each area the party hasn't reached gained growth.perWave more [5], each at a random level by growth.weights (baby, young, adult: equal thirds), so the areas the party reaches late are the ones to fear. Areas already partified don't grow. New ones arrive out of the witch's sight (beyond the haze's far edge plus growth.hide metres), never popping in on screen; areas far from every witch keep them as counts only, made real (from the seed) when a witch comes within creatureSimRadius of the area or it wakes. The home area holds none. Fighting value (DESIGN.md, Balance): a young is worth 15.5, an adult 29, a legend 76; so an area woken at wave n brings about 1 + n/3 young and 1 + n/3 adults (F about 44.5 + 14.8 n), besides its legend (wildLegends). Only creatures whose home is within creatureSimRadius metres of the witch move. node tools/balance/sim.mjs forecasts the sieges these numbers make.
 Code: `rules/growth.ts`, `rules/swarm.ts`, `config/swarm-power.json`, `tools/balance/sim.mjs`
@@ -3303,8 +3305,9 @@ Music by proximity [1]: one shared track, full and clear within nearDist metres 
 Code: `tools/music-lab/check.cjs`
 
 - **`music.volume`**: the master.
-- **`music.latency`**: the audio context's latencyHint [1]: interactive the smallest output buffer, balanced more room for the audio thread, playback the most (under-runs least likely, sound effects latest); ?latency= tries one for a load (DECISION FOR ED).
+- **`music.latency`**: the audio context's latencyHint [1]: interactive the smallest output buffer, balanced more room for the audio thread, playback the most (under-runs least likely, sound effects latest); ?latency= tries one for a load [2].
   1. Ed, 2026-10-07: "the music is still cutting out"
+  2. Ed, 2026-10-31: balanced confirmed (relayed by the coordinator on #1357)
 - **`music.buffer`**: How much audio the game buffers ahead, so the music stays on the beat without crackling.
   1. "music is still cutting out" (Ed's v3167 playtest,: 474 device under-runs, each one 10 ms buffer, on his busy laptop; balanced gives Chrome the same 10 ms as interactive)
   the audio output's buffer to ask for, in seconds [1], 0 for the latency category below; a browser that under-runs 20 times in a load asks for twice as much next load, up to 0.24 s (platform/audio/buffer.ts); the music goes out early by the context's latency so it stays on the beat shown, only the sound effects come later.
@@ -3707,22 +3710,26 @@ Code: `docs/plans/sail-without-reload.md`, `app/sail.ts`
 
 ### `loading`
 
-The loading screen: the World Tree and COVEN RUSH picked out in gold stars that light up as the game loads.
+The loading screen: the World Tree as a Celtic knot in gold stars, COVEN and RUSH in the gaps either side of its trunk, lighting up as the game loads.
 
 1. Ed, 2026-10-26: src/ui/loadingScreen.js, before main.ts loads
 2. Ed, 2026-11-03: "can we fade from the loading screen to the bedroom over a few seconds" (fadeOut in place of the 1.2 s white clearing (clear), src/ui/loadingFade.js)
-The loading screen [1]: the World Tree and COVEN RUSH in gold stars, lighting as the game loads, edge first by edge (0 plain random), at most rate stars a second, each flashing for flash seconds; ghost how bright the stars not yet lit show (0: an empty sky, Ed's call); the heart's star last, its supernova to white over nova seconds, then the whole screen fading out over fadeOut seconds (eased out; at most 0.6 s with reduced motion) onto the bedroom, her wake-up starting as it begins [2]. It draws fps frames a second while the game loads (each frame costs the load a little), about 20 once it's ready. Read as the page opens, so the pause page's sliders (remembered on this browser) take effect on the next load.
-Code: `src/ui/loadingScreen.js`, `src/ui/loadingFade.js`
+3. Ed, 2026-11-05: "roughly left to right, with some random scatter" (his sketch: the World Tree's branches and roots sweeping round into two rings, COVEN and RUSH in them, level; sweep in place of edge; the game's darker night sky behind, src/ui/loadingSeal.js)
+4. Ed, 2026-11-05: "Loading screen: can you copy this for the sigil design" (his reference a Celtic-knot Tree of Life: its canopy and roots the ring; then "now turn this design into dots that are stars, and put the words into gaps, as per my diagram": the knot's ribbons outlined in stars, widened, COVEN and RUSH in the big gaps either side of the trunk, level, src/ui/loadingSeal.js)
+5. Ed, 2026-11-05: "2 with a touch of 3" (the seal's stars at random depths, the scatter tightening and the view turning head on as the load completes; "make the random depth scatter quite large", depth, src/ui/loadingScreen.js)
+The loading screen [1]: the World Tree as a Celtic knot in gold stars, COVEN and RUSH in the gaps either side of its trunk [4], lighting star by star as the game loads, left to right by sweep against a random scatter (0 plain random) [3], at most rate stars a second, each flashing for flash seconds; ghost how bright the stars not yet lit show (0: an empty sky, Ed's call); depth how far the seal's stars scatter in depth, a 3D cloud sliding past itself as the view sways, the words less, tightening to none and the seal turning to face her head on as the load completes [5]; the heart's star (the trunk's middle) last, its supernova to white over nova seconds, then the whole screen fading out over fadeOut seconds (eased out; at most 0.6 s with reduced motion) onto the bedroom, her wake-up starting as it begins [2]. It draws fps frames a second while the game loads (each frame costs the load a little), about 20 once it's ready. Read as the page opens, so the pause page's sliders (remembered on this browser) take effect on the next load.
+Code: `src/ui/loadingScreen.js`, `src/ui/loadingSeal.js`, `src/ui/loadingFade.js`
 
 | knob | type | range |
 |---|---|---|
-| `loading.edge` | number | 0 to … |
+| `loading.sweep` | number | 0 to … |
 | `loading.rate` | number | 0 to … |
 | `loading.flash` | number | 0 to … |
 | `loading.ghost` | number | 0 to … |
 | `loading.nova` | number | 0 to … |
 | `loading.fadeOut` | number | 0 to … |
 | `loading.fps` | number | 0 to … |
+| `loading.depth` | number | 0 to … |
 
 ### `opening`
 

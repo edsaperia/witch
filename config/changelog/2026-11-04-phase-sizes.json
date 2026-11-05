@@ -1,5 +1,5 @@
 {
-  "version": null,
+  "version": 7537,
   "items": [
     "Islands grow by five areas a phase: 10, 15, 20, 25 and 30 (they were 10 to 50), so later nights are shorter",
     "Packs grow with the island's phase: a phase 5 island's last stump has full packs, a phase 1 island's a fifth of the way there",

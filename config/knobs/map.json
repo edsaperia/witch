@@ -155,7 +155,14 @@
       "what": "how far from the water anything on foot stops."
     },
     "lakes.koi": {
-      "what": "the share of lakes with koi in them (DECISION FOR ED)."
+      "what": "the share of lakes with koi in them [1].",
+      "decisions": [
+        {
+          "by": "Ed",
+          "date": "2026-10-31",
+          "rest": "confirmed, 0.5 (relayed by the coordinator on #1357)"
+        }
+      ]
     },
     "lakes.biomeFrom": {
       "what": "the island phase from which its lakes take the look of its compass biomes on the sea chart (frozen, lava, oasis, sinkhole, glacial tarn, tar pit, rust pool, lily pond; app/chartOutlines.worker.ts), before it plain water [1].",
