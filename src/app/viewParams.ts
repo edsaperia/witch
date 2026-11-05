@@ -3,6 +3,8 @@
 import { loadStyle } from "../render/style";
 import type { View } from "../render/view";
 import type { Tuning } from "../rules/tuning";
+import { GENOMES, selectedCreatureGenome } from "../../art/genome/index.js";
+import { createAcceptanceVariants } from "../../art/body-graph/acceptance.js";
 
 export function styleFromLink(params: URLSearchParams, tuning: Tuning) {
   const style = loadStyle();
@@ -12,6 +14,10 @@ export function styleFromLink(params: URLSearchParams, tuning: Tuning) {
   const creatures = Number(params.get("creatures")); // ?creatures=1: creatures (babies, young, adults) at another size than the style's (1.5: art/creatures3d.js drawHeight), for trying sizes; 1 is the size before Ed's +50%
   if (creatures > 0) (style as { creatureScale?: number }).creatureScale = creatures;
   if (params.get("creatureModels")) style.creatureModels = params.get("creatureModels"); // explicit per-species preview; absent/default stays current, carried to workers in style
+  if (style.creatureModels?.split(",").some((token: string)=>token.trim().endsWith(":graph"))) {
+    // Supply records to the existing selection mechanism; never select a graph implicitly.
+    style.creatureVariants=createAcceptanceVariants(GENOMES.map(g=>selectedCreatureGenome(g,{})));
+  }
   if (["0","1"].includes(params.get("creatureSizeCandidate") ?? "")) style.creatureSizeCandidate = Number(params.get("creatureSizeCandidate")); // Ed adopted revised sizes; =0 compares old sizes
   if (params.get("biome")) style.biome = params.get("biome"); // ?biome=<name>|<a|b|w>: every area's trees and props in that biome's look, over the island's own (art/flora/biomes.js)
   if (params.get("flora")) style.flora = params.get("flora"); // ?flora=new|fantasy|all|<ids>: every wooded area grows these tree species (art/flora), carried to the art worker in the style

@@ -3,34 +3,34 @@
 import { v3 } from "../model3d.js";
 import { compileGraph } from "./graph.js";
 
-const length = v => Math.hypot(...v);
-const vector = v => Array.isArray(v) && v.length === 3 && v.every(Number.isFinite);
-const positive = v => Number.isFinite(v) && v > 0;
-const check = (ok, text) => { if (!ok) throw new Error(`Body gait: ${text}`); };
-const cycle = p => ((p % 1) + 1) % 1;
-function parameters(stride, duty, lift) {
-  check(positive(stride) && Number.isFinite(duty) && duty > 0 && duty < 1 && Number.isFinite(lift) && lift >= 0, "invalid stride, duty or lift");
+const gaitLength = v => Math.hypot(...v);
+const gaitVector = v => Array.isArray(v) && v.length === 3 && v.every(Number.isFinite);
+const gaitPositive = v => Number.isFinite(v) && v > 0;
+const gaitCheck = (ok, text) => { if (!ok) throw new Error(`Body gait: ${text}`); };
+const gaitCycle = p => ((p % 1) + 1) % 1;
+function gaitParameters(stride, duty, lift) {
+  gaitCheck(gaitPositive(stride) && Number.isFinite(duty) && duty > 0 && duty < 1 && Number.isFinite(lift) && lift >= 0, "invalid stride, duty or lift");
 }
 
 // Travel is signed distance in model units. Callers own accumulated distance;
 // this stateless clock freezes at rest and is independent of frame rate.
 export function gaitPhase(travel, { stride = .16, duty = .65 } = {}) {
-  parameters(stride, duty, 0);
-  check(Number.isFinite(travel), "finite travel required");
-  return cycle(travel * duty / stride);
+  gaitParameters(stride, duty, 0);
+  gaitCheck(Number.isFinite(travel), "finite travel required");
+  return gaitCycle(travel * duty / stride);
 }
 
 // General three-dimensional two-bone solve. The knee lies towards bendHint in
 // the plane normal to the root-target axis. Unreachable targets are clamped
 // and explicitly reported; they are never described as ground contact.
 export function solveLeg(root, target, upper, lower, bendHint = [1, 0, 0]) {
-  check(vector(root) && vector(target) && vector(bendHint) && positive(upper) && positive(lower), "finite vectors and positive bone lengths required");
-  const delta = v3.sub(target, root), requested = length(delta);
+  gaitCheck(gaitVector(root) && gaitVector(target) && gaitVector(bendHint) && gaitPositive(upper) && gaitPositive(lower), "finite vectors and positive bone lengths required");
+  const delta = v3.sub(target, root), requested = gaitLength(delta);
   const axis = requested > 1e-10 ? v3.mul(delta, 1 / requested) : [0, -1, 0];
   const minimum = Math.max(1e-10, Math.abs(upper - lower)), maximum = upper + lower;
   const distance = Math.max(minimum, Math.min(maximum, requested));
   let bend = v3.sub(bendHint, v3.mul(axis, v3.dot(bendHint, axis)));
-  if (length(bend) < 1e-8) {
+  if (gaitLength(bend) < 1e-8) {
     const fallback = Math.abs(axis[0]) < .8 ? [1, 0, 0] : [0, 0, 1];
     bend = v3.sub(fallback, v3.mul(axis, v3.dot(fallback, axis)));
   }
@@ -43,15 +43,15 @@ export function solveLeg(root, target, upper, lower, bendHint = [1, 0, 0]) {
 }
 
 export function sampleLeg(leg, phase, { stride = .16, duty = .65, lift = .1, offset = 0 } = {}) {
-  parameters(stride, duty, lift);
-  check(Number.isFinite(phase) && Number.isFinite(offset), "finite phase and offset required");
-  const p = cycle(phase + offset), planted = p < duty;
+  gaitParameters(stride, duty, lift);
+  gaitCheck(Number.isFinite(phase) && Number.isFinite(offset), "finite phase and offset required");
+  const p = gaitCycle(phase + offset), planted = p < duty;
   const swing = planted ? 0 : (p - duty) / (1 - duty);
   // Linear stance cancels constant forward travel exactly. Smoothstep swing
   // and sin^2 lift return to the ground continuously at both boundaries.
   const forward = planted ? .5 - p / duty : -.5 + swing * swing * (3 - 2 * swing);
   const target = v3.add(leg.end, [stride * forward, lift * Math.sin(swing * Math.PI) ** 2, 0]);
-  const upper = length(v3.sub(leg.knee, leg.root)), lower = length(v3.sub(leg.end, leg.knee));
+  const upper = gaitLength(v3.sub(leg.knee, leg.root)), lower = gaitLength(v3.sub(leg.end, leg.knee));
   const solved = solveLeg(leg.root, target, upper, lower, v3.sub(leg.knee, v3.lerp(leg.root, leg.end, .5)));
   return { ...solved, target, planted: planted && solved.reachable };
 }
