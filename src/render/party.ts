@@ -10,6 +10,8 @@ import type { SpriteInstance } from "./sprites";
 import type { ForestLight } from "./view";
 import { moodOf } from "./mood";
 import { damageStage, genKnobs, type GenDraw, type SoundsystemGenView } from "./soundsystemGen";
+import { speakerPattern, PATTERN_LOOK } from "./lightPatternState";
+import { comfort } from "./comfort";
 
 const CRYSTAL = [new THREE.Vector3(0.25, 0.85, 1), new THREE.Vector3(0.7, 0.4, 1), new THREE.Vector3(1, 0.65, 0.2)];
 
@@ -79,7 +81,7 @@ export class PartyView {
       // Spooky (render/mood.ts): the party is the warm light in a cold wood, its pools wider and warmer.
       const rgb = warm ? warm[s.variant % 3] : I ? this.rgbOf(I.rgb) : CRYSTAL[s.variant % 3];
       // (and the trees, props and scenery round it cast shadows from it, as from a campfire: render/trunkShadows.ts; Ed, 2026-10-13)
-      if (rise > 0) lights.push({ x: s.x, y: 3, z: s.z, reach: t.lightReach * (M?.partyReach ?? 1), rgb, strength: t.lightStrength * (M?.partyStrength ?? 1) * beat * rise * (1 + (1 - p) * 2), shadow: { x: s.x, y: 3, z: s.z, k: rise } });
+      if (rise > 0) lights.push({ x: s.x, y: 3, z: s.z, reach: t.lightReach * (M?.partyReach ?? 1), rgb, strength: t.lightStrength * (M?.partyStrength ?? 1) * beat * rise * (1 + (1 - p) * 2), shadow: { x: s.x, y: 3, z: s.z, k: rise }, pattern: speakerPattern(g.beat, time, PATTERN_LOOK, comfort.reduceFlashing) });
     });
     return { items, lights, playing, projectors };
   }

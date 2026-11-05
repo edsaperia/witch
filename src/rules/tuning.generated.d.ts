@@ -2542,6 +2542,9 @@ export type SchemaTuning = {
   "glowNear": number;
   "glowToCutout": number;
   "glowHeight": number;
+  "patternLight": {
+    "strength": number;
+  };
   "lightBudget": number;
   "lights": {
     "find": {

@@ -4461,6 +4461,18 @@ the share of that reach where her light has fallen to dark [1].
 |---|---|---|
 | `glowHeight` | number | 0 to … |
 
+### `patternLight`
+
+Drawing-only coloured patterns on existing lights, controlled from the pause page.
+
+- **`patternLight.strength`**: How strongly coloured spokes shape existing lights, from 0 (ordinary lighting) to 4.
+  1. Ed, 2026-11-05: "this is imperceptible atm; put it live with a strength slider and I'll just test it in game." (Colour spokes on by default; strength 0–4, default 3, at most three existing light slots and no extra lights.)
+  Changes immediately from the pause page; reduced flashing disables all patterns. Strength 1 preserves original 0.9 contrast; default 3 brightens only the colour-spokes lit bands threefold, with dark gaps and centre fade preserved; at most three existing light slots, no added lights or shadows.
+
+| knob | type | range |
+|---|---|---|
+| `patternLight.strength` | number | 0 to 4 |
+
 ### `lightBudget`
 
 how many of the nearest point lights (campfires, magic stones, the dancefloor) light the scene at once.
@@ -4769,7 +4781,8 @@ Code: `docs/plans/attack-grammar.md`
 How much graphics memory the game lets itself use, letting go of the art used longest ago when it's over.
 
 1. the coordinator's ask, 2026-10-26: Ed-approved; render/gpuLedger.ts counts every texture and render buffer at the GL calls, render/view/gpuBudget.ts keeps it
-The game-wide GPU memory budget [1]: mb MB for a window of refWidth x refHeight physical pixels, scaled by this window's (Google Maps' rule), never under floor nor over ceil. Every every seconds, over it, the art used longest ago (an area type's trees, a creature set, a rig page) is let go till it's under headroom of the budget, nothing used in the last keep seconds (what's on screen is used every frame); it comes back from the art cache when wanted. GL's out-of-memory error, read every errorEvery seconds if anything was allocated since the last read (each read waits on the GPU), lowers the budget to headroom of what was held then.
+2. Ed, 2026-11-04: the graphics error check (errorEvery) "Once a minute": 60 s, was 5 (games normally check only in debug builds; he chose the middle ground). ?set=gpu.errorEvery=<s> checks more often
+The game-wide GPU memory budget [1]: mb MB for a window of refWidth x refHeight physical pixels, scaled by this window's (Google Maps' rule), never under floor nor over ceil. Every every seconds, over it, the art used longest ago (an area type's trees, a creature set, a rig page) is let go till it's under headroom of the budget, nothing used in the last keep seconds (what's on screen is used every frame); it comes back from the art cache when wanted. GL's out-of-memory error, read every errorEvery seconds (once a minute, Ed's [2]) if anything was allocated since the last read (each read waits on the GPU), lowers the budget to headroom of what was held then.
 Code: `render/gpuLedger.ts`, `render/view/gpuBudget.ts`
 
 | knob | type | range |
