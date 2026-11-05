@@ -30,8 +30,10 @@ const GAMES: Record<string, string> = { "1": "f32b65b969a1a5b1bf756d064ad01db325
 // Compatible additive migration, not a replacement of the historical v1 contract:
 // restoreGame seeds missing mushrooms from newGame; existing mushroom state is kept exactly.
 // Runtime proof: nightSnapshot.test.ts "migrates older nights without mushroom state...".
+// And the challenge area (rules/challenge.ts): restoreGame gives an older night none (its creatures have no pack);
+// runtime proof: challenge.test.ts "restores a night saved before the challenge area".
 const GAME_MIGRATIONS: Record<string, { fingerprint: string; addedFields: readonly string[] }> = {
-  "1": { fingerprint: "c25636f8dab4e815d2a4f5b6274e6f9df0b8017933c430b53df59f02dd53abf3", addedFields: ["mushrooms"] },
+  "1": { fingerprint: "63a02d0f12677b3e7b93d5e98ec15d5455f69eaf3a7144ade71798be553e6f5a", addedFields: ["mushrooms", "challenge"] },
 };
 describe("saved format contracts", () => {
   it("requires an explicit envelope-format review when SavedNight changes", () => {

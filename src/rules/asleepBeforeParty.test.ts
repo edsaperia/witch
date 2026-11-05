@@ -7,12 +7,13 @@ import { describe, expect, it } from "vitest";
 import { TUNING } from "./tuning";
 // Keep this existing sleep fixture until the separately assigned largest-world cell-placement bug is fixed (docs/notes/testing.md).
 import { cellKey } from "./party";
-import { newGame, stepGame, STEP, type Controls, type Game } from "./game";
+import { stepGame, STEP, type Controls, type Game } from "./game";
 import { fillTrunk } from "./finds";
 import { endParty, nightEase, relicsOut, worldAsleep } from "./partyOver";
 import type { Creature } from "./creatures";
 import { circleLines } from "./legendCircle";
 import { sleepCellAudit } from "../test/sleepCells";
+import { preppedGame } from "../test/preppedGame"; // (games on a map made once a file from its prep)
 
 const C: Controls = { moveX: 0, moveZ: 0, toggleMode: false, zoom: 0 };
 const run = (g: Game, s: number, c: Partial<Controls> = {}) => { for (let i = 0; i < Math.round(s / STEP); i++) stepGame(g, { ...C, ...c }, STEP); };
@@ -24,7 +25,7 @@ const them = (g: Game) => g.creatures.filter(c => !c.gone && !c.leashed);
 
 /** A night waiting for the spell (as every night from her bedroom: app/gameParams.ts), its find in the trunk, a moment on. */
 function beforeParty(): Game {
-  const g = newGame(123, TUNING);
+  const g = preppedGame(123, TUNING);
   g.party.spellAt = null; g.clock.paused = false;
   fillTrunk(g, {});
   run(g, 0.5);
@@ -32,7 +33,7 @@ function beforeParty(): Game {
 }
 /** The same night lost (the home ring down: the afterparty), every creature in bed. */
 function lost(): Game {
-  const g = newGame(123, TUNING);
+  const g = preppedGame(123, TUNING);
   g.clock.paused = false;
   fillTrunk(g, {});
   endParty(g);
@@ -98,7 +99,7 @@ describe("the world before the party is the afterparty's (Ed, 2026-10-26)", () =
     const castAt = g.party.spellAt;
     expect(typeof g.party.spellAt).toBe("number");
     expect(worldAsleep(g)).toBe(false);
-    const never = newGame(123, TUNING);
+    const never = preppedGame(123, TUNING);
     never.clock.paused = false;
     run(never, 0.5);
     expect(them(g).filter(deepAsleep).length).toBe(them(never).filter(deepAsleep).length); // (none asleep for good: naps are their own)
@@ -153,13 +154,13 @@ describe("the world before the party is the afterparty's (Ed, 2026-10-26)", () =
     g.clock.time = at + 2; expect(nightEase(g, 0)).toBeCloseTo(0.5);
     g.clock.time = at + 10; expect(nightEase(g, 0)).toBe(0);
     expect(nightEase(g, 0.7)).toBe(0.7); // (a lost night later on: the party's over's own ease)
-    const never = newGame(123, TUNING);
+    const never = preppedGame(123, TUNING);
     expect(nightEase(never, 0)).toBe(0);
     expect(nightEase(lost(), 1)).toBe(1);
   });
 
   it("a night that never waits for the spell (the tools, the bots) is as before: awake from the start", () => {
-    const g = newGame(123, TUNING);
+    const g = preppedGame(123, TUNING);
     g.clock.paused = false;
     run(g, 0.5);
     expect(worldAsleep(g)).toBe(false);

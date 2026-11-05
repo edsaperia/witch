@@ -623,13 +623,18 @@
           "by": "the coordinator's ask",
           "date": "2026-10-26",
           "rest": "Ed-approved; render/gpuLedger.ts counts every texture and render buffer at the GL calls, render/view/gpuBudget.ts keeps it"
+        },
+        {
+          "by": "Ed",
+          "date": "2026-11-04",
+          "rest": "the graphics error check (errorEvery) \"Once a minute\": 60 s, was 5 (games normally check only in debug builds; he chose the middle ground). ?set=gpu.errorEvery=<s> checks more often"
         }
       ],
       "links": [
         "render/gpuLedger.ts",
         "render/view/gpuBudget.ts"
       ],
-      "notes": "The game-wide GPU memory budget [1]: mb MB for a window of refWidth x refHeight physical pixels, scaled by this window's (Google Maps' rule), never under floor nor over ceil. Every every seconds, over it, the art used longest ago (an area type's trees, a creature set, a rig page) is let go till it's under headroom of the budget, nothing used in the last keep seconds (what's on screen is used every frame); it comes back from the art cache when wanted. GL's out-of-memory error, read every errorEvery seconds (each read waits on the GPU), lowers the budget to headroom of what was held then."
+      "notes": "The game-wide GPU memory budget [1]: mb MB for a window of refWidth x refHeight physical pixels, scaled by this window's (Google Maps' rule), never under floor nor over ceil. Every every seconds, over it, the art used longest ago (an area type's trees, a creature set, a rig page) is let go till it's under headroom of the budget, nothing used in the last keep seconds (what's on screen is used every frame); it comes back from the art cache when wanted. GL's out-of-memory error, read every errorEvery seconds (once a minute, Ed's [2]) if anything was allocated since the last read (each read waits on the GPU), lowers the budget to headroom of what was held then."
     },
     "mist": {
       "what": "A low mist drifting just above the ground.",

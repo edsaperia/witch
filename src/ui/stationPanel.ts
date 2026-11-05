@@ -16,12 +16,13 @@ import { bareHeadAt, CLOTH_COLS, CLOTH_ROWS, GRID_ROWS, shownItems, SKIN_COLS, s
 import { BOARD, partById, type Fitted } from "../rules/broomParts";
 import type { Tuning } from "../rules/tuning";
 import { broomColours, partCanvas } from "../render/workshopArt";
-import { broomSummary, cardAt, itemAt, panelPad, partStats, partsFound, setChips, setsOf, spellLine, type Line } from "./stationLines";
+import { broomSummary, CARD_SHOW, cardAt, itemAt, panelPad, partStats, partsFound, setChips, setsOf, spellLine, type Line } from "./stationLines";
 import { PanelChoice } from "./stationChoice";
 import { bindings } from "../platform/bindings";
 import { classicPalette, cpuCanvas, slot, swatchAt } from "./creator";
 import { SlideIn } from "./slideIn";
 import { glyphOf, keycapHtml } from "./keyHint";
+import { TRAIL_PRESETS, TRAIL_PRESET_DEFAULT, sectionColours, trailPreset } from "../render/trailColours";
 
 type Genome = Record<string, unknown> & { palette: Record<string, number[]> | null; accessories: Record<string, unknown> };
 type Sprite = { A: HTMLCanvasElement; w: number; h: number };
@@ -44,8 +45,6 @@ const SLOT_ROLE: Record<string, string> = { tip: "steering", chassis: "body", ex
  *  (the night's find when it's a part, not yet taken: one's out there, never where) and the tuning her parts change. */
 export interface WorkshopCtx { found: ReadonlySet<string>; fitted: Fitted; tonight: string | null; tuning: Tuning }
 const PART_NAMES: Record<string, string> = { broom: "handle", bristles: "bristles", hat: "hat", plume: "band" };
-/** Where an item's picture is cut from her sprite (shares of its height; the broom's, her flying frame whole). */
-const CROP: Record<string, [number, number]> = { hair: [.1, .52], face: [.16, .5], earrings: [.14, .5], jacket: [.33, .8], shoes: [.72, 1], cloak: [.1, 1], scarf: [.1, .8], bag: [.25, 1], backpack: [.1, 1] };
 
 
 /** A list card's live picture (ui/bagPreview.ts BagPreview): its element, run or stopped, freed. */
@@ -59,6 +58,11 @@ export class StationPanel {
   onChange: () => void = () => {};
   /** A step changed her look (not her broom's parts): she twirls while it draws (render/spin.ts). */
   onDress: () => void = () => {};
+  /** Her trail's colours chosen at the Broom station's Trail row (a preset's id: main.ts keeps it with her broom and draws it at once). */
+  onTrail: (id: string) => void = () => {};
+  /** Her trail's colour preset now (main.ts sets it as the game starts). */
+  private trailNow = TRAIL_PRESET_DEFAULT;
+  setTrail(id: string | null): void { this.trailNow = trailPreset(id).id; if (this.id && this.c) { this.c.trail = this.trailNow; this.paint(); } }
   /** Her broom's parts changed at the bay (a card chosen: fitted at once). */
   onFit: (f: Fitted) => void = () => {};
   /** Back (platform/bindings.ts menu.back: E, the pad's circle) pressed while it's open: main.ts closes it (the pad's goes through padControls). */
@@ -153,6 +157,7 @@ export class StationPanel {
       palette: g2 => ({ ...classicPalette(this.st), ...g2.palette }),
       fitOn: (a, g2) => !FIT_NEEDS[a] || FIT_NEEDS[a](g2 as Genome),
     }, awaitingDress);
+    this.c.trail = this.trailNow;
     this.navAt = -1e9; this.hover = null;
     this.padChoose = true; // (the pad's use button that opened it is held: let go first, then a press chooses)
     const L = this.lines(), first = L.findIndex(l => l.kind === "items" || (l.kind === "cards" && !l.readOnly));
@@ -186,6 +191,21 @@ export class StationPanel {
   /** Tonight's loan (its id, or null): its card sparkles, the panel repainted if it's open and that changed. */
   setLoaned(id: string | null): void { if (id !== this.loaned) { this.loaned = id; if (this.id) this.paint(); } }
   setLook(g: Genome): void { if (this.id && JSON.stringify(g) !== JSON.stringify(this.g)) { this.g = clone(g); this.paint(); } }
+  /** Optional online boundary: replace optimistic data without reopening/sliding or emitting another choice. */
+  reconcile(g: Genome, owned: ReadonlySet<string>, workshop?: WorkshopCtx | null): void {
+    if (!this.id) return;
+    clearTimeout(this.lookTimer); this.lookTimer = 0;
+    const at = { ...this.at }, previous = this.lines()[at.line];
+    this.g = clone(g); this.c.owned = new Set(owned);
+    if (workshop !== undefined) {
+      this.ws = workshop; this.c.found = workshop?.found ?? new Set(); this.c.fitted = workshop ? { ...workshop.fitted } : null;
+    }
+    const lines = this.lines();
+    const same = previous ? lines.findIndex(l => l.shelf === previous.shelf && l.kind === previous.kind && l.item === previous.item && l.axis === previous.axis && l.row === previous.row) : -1;
+    const line = same >= 0 ? same : Math.max(0, Math.min(at.line, lines.length - 1));
+    this.c.focus(line, Math.max(0, Math.min(at.col, (lines[line]?.n ?? 1) - 1)));
+    this.paint();
+  }
   /** Each frame while open: the pad's d-pad or right stick moves, its bottom face button chooses (the left stick walks her, circle closes it:
    *  platform/input.ts padControls leaves the rest of the pad to the panel). */
   update(time: number): void {
@@ -243,6 +263,7 @@ export class StationPanel {
     const r = this.c.choose();
     if (r.look) this.change(r.look);
     if (r.fitted && this.ws) { this.ws = { ...this.ws, fitted: r.fitted }; this.onFit(r.fitted); this.onChange(); }
+    if (r.trail) { this.trailNow = r.trail; this.onTrail(r.trail); }
     this.paint();
   }
   private tried(at: { line: number; col: number }): boolean { const n = this.c.nope; return !!n && n.line === at.line && n.col === at.col; }
@@ -283,9 +304,9 @@ export class StationPanel {
       if (l.shelf !== shelf) {
         if (shelf >= 0) html += shut(shelf);
         shelf = l.shelf;
-        const worn = s.slot ? partById(this.ws?.fitted[s.slot])?.name ?? "Empty" : shownItems(s).find(it => this.c.wears(it))?.name;
+        const worn = s.slot ? partById(this.ws?.fitted[s.slot])?.name ?? "Empty" : s.trail ? trailPreset(this.trailNow).name : shownItems(s).find(it => this.c.wears(it))?.name;
         const note = s.always ? "every colour" : s.slot ? SLOT_ROLE[s.slot] : s.board ? "north up" : "";
-        html += `<div class="sp-shelf${L[at.line]?.shelf === l.shelf ? " on" : ""}" data-shelf="${l.shelf}"><div class="sp-lab" data-card="${i}"><b>${esc(s.label)}</b>${worn ? `<span>${esc(worn)}</span>` : ""}${note ? `<em>${esc(note)}</em>` : ""}</div>`;
+        html += `<div class="sp-shelf${L[at.line]?.shelf === l.shelf ? " on" : ""}" data-shelf="${l.shelf}"><div class="sp-lab" data-card="${i}">${s.id === "hat" && (this.g.hat as { shape?: string } | undefined)?.shape !== "none" ? `<span class="sp-hatpic" data-thumb="hatpic:now:${hash(JSON.stringify(this.g))}"></span>` : ""}<b>${esc(s.label)}</b>${worn ? `<span>${esc(worn)}</span>` : ""}${note ? `<em>${esc(note)}</em>` : ""}</div>`;
       }
       const f = (c: number) => at.line === i && at.col === c ? " focus" : "";
       if (l.kind === "items" && l.item !== undefined) { const it = itemAt(s, l, 0), own = this.owned.has(it.id), on = this.c.wears(it), stat = own ? statOf(it) : ""; html += `<div class="sp-card sp-listrow${own ? "" : " locked"}${on ? " worn" : ""}${it.id === this.loaned ? " loaned" : ""}${f(0)}" data-line="${i}" data-col="0">${none(it) ? `<i class="sp-none">∅</i>` : `<span class="sp-pic" data-thumb="${this.thumbKey(it, s)}"></span>`}<span class="sp-stat"><b>${own ? esc(it.name) : "🔒"}</b>${esc(stat)}</span>${own && !none(it) && this.preview ? `<span class="sp-preview" data-preview="${esc(it.id)}"></span>` : ""}${on ? `<b class="sp-tick">✓</b>` : ""}</div>`; }
@@ -298,6 +319,7 @@ export class StationPanel {
         const id = cardAt(s, l, c), own = id === null || this.found_().has(id), on = (this.ws?.fitted[s.slot!] ?? null) === id;
         return `<div class="sp-card sp-wide${own ? "" : " locked"}${on ? " worn" : ""}${id !== null && id === this.loaned ? " loaned" : ""}${f(c)}" data-line="${i}" data-col="${c}">${id === null ? `<i class="sp-none">∅</i>` : `<span data-thumb="${this.partKey(id)}"></span>`}${on ? `<b class="sp-tick">✓</b>` : ""}${own ? "" : `<b class="sp-lock">🔒</b>`}</div>`;
       }).join("")}</div>`;
+      else if (l.kind === "trail") html += `<div class="sp-row">${TRAIL_PRESETS.map((p, c) => `<div class="sp-card sp-trail${p.id === this.trailNow ? " worn" : ""}${f(c)}" data-line="${i}" data-col="${c}" data-trail="${esc(p.id)}"><span data-thumb="trail:${esc(p.id)}:1"></span>${p.id === this.trailNow ? `<b class="sp-tick">✓</b>` : ""}</div>`).join("")}</div>`;
       else if (l.kind === "chips") html += `<div class="sp-chips">${setChips(this.ws?.fitted ?? { tip: null, chassis: null, exhaust: null }).map((x, c) => `<span class="${x.whole ? "whole" : x.fitted ? "some" : ""}${f(c)}" data-line="${i}" data-col="${c}">${x.whole ? "✦ " : ""}${esc(x.name)} ${x.fitted}/${x.of} · ${esc(x.spell)}</span>`).join("")}</div>`;
       else if (l.kind === "parts") html += `<div class="sp-parts">${s.colour!.map((p, c) => `<span class="${p === this.partOf(s) ? "on" : ""}${f(c)}" data-line="${i}" data-col="${c}"><i style="background:${css(this.colourOf(p))}"></i>${esc(PART_NAMES[p] ?? p)}</span>`).join("")}</div>`;
       else if (l.kind === "grid") { const [sc, sr] = this.chosenSwatch(s); html += `<div class="sp-grid" style="grid-template-columns:repeat(${l.n},1fr)">${Array.from({ length: l.n }, (_, c) => `<i class="${!this.c.awaitingDress && sc === c && sr === l.row ? "sel" : ""}${f(c)}" data-line="${i}" data-col="${c}" style="background:${css(this.swatch(s, c, l.row!))}"></i>`).join("")}</div>`; }
@@ -362,6 +384,7 @@ export class StationPanel {
         else if (!this.found_().has(p.id)) { title = "🔒"; locked = true; if (this.tried(at)) text = "Not found yet."; } // (unfound: a silhouette, no hint)
         else { title = p.name; sub = `${p.slot}${setsOf(p.id).length ? ` · ${setsOf(p.id).join(", ")} set${setsOf(p.id).length > 1 ? "s" : ""}` : ""}`; stats = this.ws ? partStats(p.id, this.ws.tuning) : []; text = this.ws?.fitted[p.slot] === p.id ? "On her broom." : "Choose it to fit it."; }
       } else if (l.kind === "chips") { const x = setChips(this.ws?.fitted ?? { tip: null, chassis: null, exhaust: null })[at.col]; title = `${x.name} · ${x.spell}`; text = x.whole ? `Whole: R casts ${x.spell}.` : `${x.fitted} of its ${x.of} parts on her broom.`; }
+      else if (l.kind === "trail") { const p = TRAIL_PRESETS[at.col]; title = `${p.name} ${p.emoji}`; text = p.id === this.trailNow ? "Her trail's colours, front to back: the first band as she flies, then a band for each dodge still to come back." : "Choose it for her trail's colours."; }
       else if (l.kind === "parts") { const p = s.colour![at.col]; title = `Colour: ${PART_NAMES[p] ?? p}`; text = p === this.partOf(s) ? "The colours below are for this." : "Choose it to colour it below."; }
       else if (l.kind === "grid") { const [sc, sr] = this.chosenSwatch(s); title = `${s.label}: colour`; text = !this.c.awaitingDress && sc === at.col && sr === l.row ? "Wearing." : "Every colour is hers: choose to put it on."; }
       else { const on = !FIT_NEEDS[l.axis!] || FIT_NEEDS[l.axis!](this.g); title = FIT_NAMES[l.axis!] ?? l.axis!; text = on ? "◀ ▶ or drag to change it." : "Put it on first."; }
@@ -371,7 +394,7 @@ export class StationPanel {
     box.innerHTML = `<h3>${esc(title)}${sub ? `<small>${esc(sub)}</small>` : ""}</h3>${stats.map(r => `<p class="${r.better ? "up" : "down"}">${r.better ? "▲" : "▼"} ${esc(r.name)} ${esc(r.from)} → ${esc(r.to)}</p>`).join("")}<p>${esc(text)}</p>`;
   }
 
-  // ---- the items' pictures: her, as she is, with each one on (baked a few a frame, kept by look) ----
+  // ---- the items' pictures: each one as its shelf shows it, on her as she is (baked a few a frame, kept by look) ----
   private thumbKey(it: WardrobeItem, s: Shelf): string { return `${s.id}:${it.id}:${hash(JSON.stringify(wear(this.g, it)))}`; }
   /** A broom part's picture (the bay's and the pegboard's cards: render/workshopArt.ts), in her broom's colours. */
   private partKey(id: string): string { const c = broomColours(this.st, this.g); return `part:${id}:${hash(JSON.stringify([c[ART_M.BROOM], c[ART_M.STRAW]]))}`; }
@@ -381,7 +404,9 @@ export class StationPanel {
     const was = this.lastThumb.get(key.slice(0, key.lastIndexOf(":"))); if (was) el.replaceChildren(was); // (the last one shown, till the new one's baked)
     if (!this.queue.some(q => q.key === key)) {
       const [sid, iid] = key.split(":"), s = this.shelves.find(q => q.id === sid), it = s?.items.find(i => i.id === iid);
-      if (sid === "part" && partById(iid)) { const g = this.g; this.queue.push({ key, make: () => partCanvas(this.st, broomColours(this.st, g), iid, { fit: 58 }).c }); }
+      if (sid === "trail") this.queue.push({ key, make: () => trailTile(trailPreset(iid).colours) });
+      else if (sid === "hatpic") { const g = this.g; this.queue.push({ key, make: () => hatPicture(this.st, g) ?? document.createElement("canvas") }); } // (the mirror's Hat card: her hat as it is now)
+      else if (sid === "part" && partById(iid)) { const g = this.g; this.queue.push({ key, make: () => partCanvas(this.st, broomColours(this.st, g), iid, { fit: 58 }).c }); }
       else if (s && it) this.queue.push({ key, make: () => wearPicture(this.st, this.g, it, s.id) });
     }
     if (!this.raf) this.raf = requestAnimationFrame(() => this.bakeSome());
@@ -400,18 +425,34 @@ export class StationPanel {
 
 }
 
-/** A picture of her (genome `g`) wearing `it`, cut to the part it's worn on (its shelf `shelf`'s; a broom, her whole flying
- *  frame): the panel's cards. */
+/** An item card's picture of `it` (her genome `g` with it on), as its shelf `shelf` shows it (CARD_SHOW: her head and shoulders, her
+ *  legs, her from behind, or the item alone; art/witch.js witchCardSprite), cut to what's drawn; a shelf with no way of its own (a
+ *  broom: her whole flying frame), her whole, standing. */
 export function wearPicture(st: Style, g: Record<string, unknown>, it: WardrobeItem, shelf: string): HTMLCanvasElement {
   const look = (Art.genomeLook as (g: unknown) => { look: object; outfit: object | null })(wear(g, it));
   const colours = (Art.witchColours as (st: Style, o?: object, x?: object) => object)(st, look.outfit ?? undefined, look.outfit ? { styleHues: false } : undefined);
+  const bake = (sp: unknown) => (Art.bake as (sp: unknown, c: object, st: Style, outline: unknown, mk: typeof cpuCanvas) => Sprite)(sp, colours, st, (st as unknown as { cOutline: unknown }).cOutline, cpuCanvas);
+  const show = CARD_SHOW[shelf], card = show ? (Art.witchCardSprite as (st: Style, o: object) => unknown)(st, { look: look.look, show }) : null;
+  if (card) return drawnPart(bake(card).A);
   const broom = shelf === "broom";
-  const sp = (Art.witchSprite as (st: Style, o: object) => unknown)(st, broom ? { look: look.look, frame: 0 } : { look: look.look, pose: "stand", frame: 0, heading: "towards" });
-  const b = (Art.bake as (sp: unknown, c: object, st: Style, outline: unknown, mk: typeof cpuCanvas) => Sprite)(sp, colours, st, (st as unknown as { cOutline: unknown }).cOutline, cpuCanvas);
-  const [y0, y1] = broom ? [0, 1] : CROP[shelf] ?? [0, 1];
-  const sy = Math.floor(b.h * y0), sh = Math.max(1, Math.ceil(b.h * y1) - sy), sw = broom ? b.w : Math.min(b.w, Math.ceil(b.w * .62));
-  const out = document.createElement("canvas"); out.width = sw; out.height = sh;
-  out.getContext("2d")!.drawImage(b.A, 0, sy, sw, sh, 0, 0, sw, sh);
+  return drawnPart(bake((Art.witchSprite as (st: Style, o: object) => unknown)(st, broom ? { look: look.look, frame: 0 } : { look: look.look, pose: "stand", frame: 0, heading: "towards" })).A);
+}
+/** Her hat alone (the mirror's Hat card: art/witch.js witchHatSprite), as she has it now, or null with none on. */
+function hatPicture(st: Style, g: Record<string, unknown>): HTMLCanvasElement | null {
+  const look = (Art.genomeLook as (g: unknown) => { look: object; outfit: object | null })(g);
+  const sp = (Art.witchHatSprite as (st: Style, o: object) => unknown)(st, { look: look.look });
+  if (!sp) return null;
+  const colours = (Art.witchColours as (st: Style, o?: object, x?: object) => object)(st, look.outfit ?? undefined, look.outfit ? { styleHues: false } : undefined);
+  return drawnPart((Art.bake as (sp: unknown, c: object, st: Style, outline: unknown, mk: typeof cpuCanvas) => Sprite)(sp, colours, st, (st as unknown as { cOutline: unknown }).cOutline, cpuCanvas).A);
+}
+/** A canvas cut to the box of what's drawn on it (its empty margins off), so the card's picture fills the card. */
+function drawnPart(c: HTMLCanvasElement): HTMLCanvasElement {
+  const { width: w, height: h } = c, d = c.getContext("2d")!.getImageData(0, 0, w, h).data;
+  let x0 = w, x1 = -1, y0 = h, y1 = -1;
+  for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) if (d[(y * w + x) * 4 + 3]) { if (x < x0) x0 = x; if (x > x1) x1 = x; if (y < y0) y0 = y; if (y > y1) y1 = y; }
+  if (x1 < 0) return c;
+  const out = document.createElement("canvas"); out.width = x1 - x0 + 1; out.height = y1 - y0 + 1;
+  out.getContext("2d")!.drawImage(c, x0, y0, out.width, out.height, 0, 0, out.width, out.height);
   return out;
 }
 
@@ -430,7 +471,7 @@ export const footHtml = (device: "keys" | "pad" | "touch"): string =>
   : `${(["menu.up", "menu.left", "menu.down", "menu.right"] as const).map(id => keycapHtml(glyphOf(id, "keys"))).join("")} · ${keycapHtml(glyphOf("menu.choose", "keys"))} · ${keycapHtml(glyphOf("menu.back", "keys"))}`;
 // (the keys and the pad as bound now, platform/bindings.ts: a remap shows here too, Ed 2026-10-28)
 const PAD_DIRS: Record<string, [number, number]> = { left: [-1, 0], right: [1, 0], up: [0, -1], down: [0, 1] };
-const STATION_NAMES: Record<string, string> = { mirror: "Mirror", dressingTable: "Dressing table", wardrobe: "Wardrobe", cloakPegs: "Cloak pegs", shoeRack: "Shoe rack", bags: "Bags", broomBay: "The bay", lathe: "Broom", pegboard: "Pegboard" };
+const STATION_NAMES: Record<string, string> = { mirror: "Mirror", dressingTable: "Dressing table", wardrobe: "Wardrobe", bedroom2Wardrobe: "Wardrobe", bedroom3Wardrobe: "Wardrobe", bedroom2DressingTable: "Dressing table", bedroom3DressingTable: "Dressing table", cloakPegs: "Cloak pegs", shoeRack: "Shoe rack", bags: "Bags", broomBay: "The bay", lathe: "Broom", pegboard: "Pegboard" };
 const ART_M = Art.M as Record<string, number>;
 /** An item's stat line, on its card (Juliet's two bags, 2026-10-29: "faster throws, shorter reach"; config/wardrobe.json `stat`,
  *  rules/bags.ts), or "". */
@@ -456,10 +497,12 @@ body.paused #station-panel { visibility: hidden; }
 #station-panel .sp-shelf.on { background: rgba(38,26,62,.94); box-shadow: inset 0 0 0 2px rgba(232,180,106,.85), 0 2px 14px rgba(0,0,0,.45); }
 #station-panel .sp-lab { display: flex; gap: .6em; align-items: baseline; cursor: pointer; }
 #station-panel .sp-lab b { font-size: 1.15em; letter-spacing: .5px; } #station-panel .sp-shelf.on .sp-lab b { color: var(--gold); }
+#station-panel .sp-lab .sp-hatpic { align-self: center; display: inline-flex; opacity: 1; } #station-panel .sp-hatpic canvas { image-rendering: pixelated; height: 2.2em; width: auto; max-width: 3.2em; object-fit: contain; }
 #station-panel .sp-lab span { font-size: .85em; opacity: .9; } #station-panel .sp-lab em { margin-left: auto; font-style: normal; font-size: .75em; opacity: .75; }
 #station-panel .sp-sub { font-size: .8em; display: flex; gap: .5em; opacity: .9; } #station-panel .sp-sub em { margin-left: auto; font-style: normal; opacity: .75; }
 #station-panel .sp-row { display: flex; flex-wrap: wrap; gap: .45em; }
 #station-panel .sp-card { position: relative; width: 4.6em; height: 4.6em; border-radius: .5em; background: rgba(11,7,22,.55); box-shadow: inset 0 0 0 1px rgba(232,226,244,.14); display: grid; place-items: center; cursor: pointer; box-sizing: border-box; }
+#station-panel .sp-card.sp-trail { width: 6.4em; } #station-panel .sp-card.sp-trail canvas { height: 1.5em; width: 6em; max-width: 6em; }
 #station-panel .sp-card canvas { image-rendering: pixelated; width: auto; height: 4.2em; max-width: 4.3em; object-fit: contain; filter: drop-shadow(1px 0 0 var(--ol)) drop-shadow(-1px 0 0 var(--ol)) drop-shadow(0 1px 0 var(--ol)) drop-shadow(0 -1px 0 var(--ol)); }
 #station-panel .sp-card.locked { cursor: default; } #station-panel .sp-card.locked canvas { filter: brightness(0) invert(.22) drop-shadow(1px 0 0 rgba(232,226,244,.5)) drop-shadow(-1px 0 0 rgba(232,226,244,.5)) drop-shadow(0 1px 0 rgba(232,226,244,.5)) drop-shadow(0 -1px 0 rgba(232,226,244,.5)); }
 #station-panel .focus { outline: 3px solid #fff; outline-offset: 2px; box-shadow: 0 0 12px rgba(255,255,255,.75), inset 0 0 0 1px var(--ol); }
@@ -504,4 +547,25 @@ body.paused #station-panel { visibility: hidden; }
 #station-panel .sp-foot img.kc { transform: scale(1.4); margin: 0 .3em; }
 `;
   document.head.append(s);
+}
+
+/** The Trail row's tile (Ed, 2026-11-03): a little picture of her cooldown trail in a preset's colours, on the night's dark: her broom's
+ *  end on the right, then four to six sections (its colours' count; the first the buffer, as in play: render/trail.ts) of
+ *  single-pixel dots a pixel apart, each a little aglow, in the preset's colours front to back (render/trailColours.ts: spread over its
+ *  gradient). Drawn a pixel a pixel, shown pixelated. */
+export function trailTile(colours: readonly string[], w = 60, h = 15): HTMLCanvasElement {
+  const c = document.createElement("canvas"); c.width = w; c.height = h;
+  const x = c.getContext("2d");
+  if (!x) return c;
+  x.fillStyle = "#0b0716"; x.fillRect(0, 0, w, h);
+  const n = Math.max(4, Math.min(6, colours.length)), y = Math.floor(h / 2), per = n > 4 ? 4 : 6, secs = sectionColours(colours, n);
+  let px = w - 3;
+  secs.forEach(([r, g, b]) => {
+    for (let d = 0; d < per && px >= 1; d++, px -= 2) {
+      x.fillStyle = `rgba(${r},${g},${b},0.3)`; x.fillRect(px - 1, y - 1, 3, 3); // (its glow)
+      x.fillStyle = `rgb(${r},${g},${b})`; x.fillRect(px, y, 1, 1);
+    }
+    px -= 1;
+  });
+  return c;
 }

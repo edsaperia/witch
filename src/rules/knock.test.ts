@@ -4,7 +4,8 @@ import { describe, expect, it } from "vitest";
 import { knockOf, knockWitch, newKnock, stepWitchKnock, stunned } from "./knock";
 import { newWitch } from "./witch";
 import { TUNING } from "./tuning";
-import { STEP, hitWitch, newGame, stepGame } from "./game";
+import { STEP, hitWitch, stepGame } from "./game";
+import { preppedGame } from "../test/preppedGame"; // (games on a map made once a file from its prep)
 
 const B = { minX: -1e4, maxX: 1e4, minZ: -1e4, maxZ: 1e4 };
 /** Throw her from (0, 0) by a blow from (fx, fz), and let it play out. */
@@ -51,7 +52,7 @@ describe("the witch knocked back and staggered (Ed, 2026-10-05)", () => {
 
   it("carries her straight through a tree, and leaves her clear of it (Ed: \"don't make it stop at scenery\")", () => {
     // Keep the seeded spatial fixture: this regression knocks her through its actual tree 120 m east and south of home.
-    const g = newGame(77, TUNING), d = g.map.dancefloor, tree = g.forest.treesNear(d.x + 120, d.z + 120, 60)[0];
+    const g = preppedGame(77, TUNING), d = g.map.dancefloor, tree = g.forest.treesNear(d.x + 120, d.z + 120, 60)[0];
     expect(tree).toBeDefined();
     g.clock.paused = false;
     const W = g.witches[0];
@@ -71,7 +72,7 @@ describe("the witch knocked back and staggered (Ed, 2026-10-05)", () => {
   });
 
   it("does nothing to her mid-blink, and nothing on the blow that knocks her out", () => {
-    const g = newGame(77, TUNING), W = g.witches[0];
+    const g = preppedGame(77, TUNING), W = g.witches[0];
     g.clock.paused = false;
     g.witch = { ...g.witch, seated: false, mode: "ground", lift: 0 };
     const t0 = g.clock.time, hp = W.health.hp;
@@ -86,7 +87,7 @@ describe("the witch knocked back and staggered (Ed, 2026-10-05)", () => {
   });
 
   it("staggers her: no moving while it lasts", () => {
-    const g = newGame(77, TUNING), W = g.witches[0];
+    const g = preppedGame(77, TUNING), W = g.witches[0];
     g.clock.paused = false;
     g.witch = { ...g.witch, seated: false, mode: "ground", lift: 0, vx: 0, vz: 0 };
     W.health.hp = 1e6;
@@ -102,13 +103,13 @@ describe("a moment's grace after a hit (witchHealth.grace)", () => {
   it("lets no second blow land within grace seconds of the last, and lands the next one after", async () => {
     const { withTuning } = await import("./tuning");
     const t = withTuning({ witchHealth: { ...TUNING.witchHealth, grace: 0.5 } });
-    const g = newGame(7, t), W = g.witches[0], H = t.witchHealth.hits;
+    const g = preppedGame(7, t), W = g.witches[0], H = t.witchHealth.hits;
     g.witch = { ...g.witch, seated: false };
     hitWitch(g, 0, 10, t); hitWitch(g, 0, 10, t); hitWitch(g, 0, 10.3, t); // (a pack's blows together: one counts)
     expect(W.health.hp).toBe(H - 1);
     hitWitch(g, 0, 10.6, t);
     expect(W.health.hp).toBe(H - 2);
-    const off = newGame(7, withTuning({ witchHealth: { ...TUNING.witchHealth, grace: 0 } }));
+    const off = preppedGame(7, withTuning({ witchHealth: { ...TUNING.witchHealth, grace: 0 } }));
     hitWitch(off, 0, 10, off.tuning); hitWitch(off, 0, 10, off.tuning);
     expect(off.witches[0].health.hp).toBe(H - 2); // (no grace: both land)
   });

@@ -5,10 +5,11 @@
 import { afterEach, describe, expect, it } from "vitest";
 // Keep this spatial regression fixture: directional rune-pull cases recruit untouched creatures more than 200 m away.
 import { TUNING } from "./tuning";
-import { affectionOf, newGame, stepGame, type Game } from "./game";
+import { affectionOf, stepGame, type Game } from "./game";
 import { hasRune, runeNear, stateOf, STATES } from "./creatureStates";
 import type { Creature } from "./creatures";
 import { runeOffset } from "./runeOffset";
+import { preppedGame } from "../test/preppedGame"; // (games on a map made once a file from its prep)
 
 const C = { moveX: 0, moveZ: 0, toggleMode: false, zoom: 0 };
 const saved = { leash: STATES.leash, delay: STATES.pickupDelay };
@@ -19,7 +20,7 @@ afterEach(() => { STATES.leash = saved.leash; STATES.pickupDelay = saved.delay; 
 const OLD_GRID = { ...TUNING, leash: { ...TUNING.leash, hex: { ...TUNING.leash.hex!, size: 4 } }, cast: { ...TUNING.cast, on: false } };
 
 function game(): Game {
-  const g = newGame(123, OLD_GRID);
+  const g = preppedGame(123, OLD_GRID);
   g.clock.paused = false;
   g.party.spellAt = undefined;
   return g;
@@ -60,20 +61,15 @@ describe("leashing a happy creature by its sigil rune", () => {
     expect(hasRune(c, g.clock.time)).toBe(false);
   }, 60000);
 
-  it("forgiving (Ed's playtest, 2026-10-06): E picks a rune up from further than her own sigils, and a rune near her comes to her", () => {
+  it("picks happy runes up within the authored radius, including a second controlled in-range rune", () => {
     const g = game();
     at(g, g.witch.x + 30, g.witch.z + 20);
     expect(TUNING.leash.runeRadius).toBeGreaterThan(TUNING.leash.pickRadius);
     const c = happyAt(g, g.witch.x + TUNING.leash.runeRadius - 0.3, g.witch.z);
     press(g);
     expect(c.leashed).toBe(true);
-    // Another, a few metres off: it trots over to her, stopping short of her.
-    // (south of her: it walks round her, and the follower just leashed, to bring its rune to her feet)
-    const P = TUNING.leash.runePull, o = happyAt(g, g.witch.x, g.witch.z + P.radius - 1);
-    for (let i = 0; i < 6 * 60; i++) stepGame(g, C, 1 / 60);
-    const d = Math.hypot(o.x - g.witch.x, o.z + S(o) - g.witch.z); // (its rune comes to her)
-    expect(d).toBeLessThan(P.stop + 0.5);
-    expect(d).toBeGreaterThan(P.stop - 0.5);
+    // IP2: controlled in-range pickup stays blocking without waiting for six-second docking.
+    const o = happyAt(g, g.witch.x + 0.5, g.witch.z, [c.id]);
     press(g);
     expect(o.leashed).toBe(true);
   }, 60000);

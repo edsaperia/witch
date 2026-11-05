@@ -48,8 +48,9 @@ export function startKnobs(n: KnobNight, WORLD_DEFAULT: World, params: URLSearch
 }
 
 /** Wires the knobs' keys up, once a page, on whichever night is on (`at`); returns the pause page's live setters for them, by the link's param. */
-export function setupKnobs(at: () => KnobNight, mutate: (label: string, action: () => void) => void = (_label, action) => action()): Record<string, (v: string) => void> {
+export function setupKnobs(at: () => KnobNight, mutate: (label: string, action: () => void) => void = (_label, action) => action(), enabled: () => boolean = () => true): Record<string, (v: string) => void> {
   window.addEventListener("keydown", e => {
+    if (!enabled()) return;
     const k = { BracketLeft: [1 / 1.1, 1, 1], BracketRight: [1.1, 1, 1], Semicolon: [1, 1 / 1.1, 1], Quote: [1, 1.1, 1], Comma: [1, 1, 1 / 1.1], Period: [1, 1, 1.1] }[e.code];
     if (!k) return;
     const n = at(), { tuning } = n, FIGHT_DEFAULT = fightDefault();
@@ -57,10 +58,11 @@ export function setupKnobs(at: () => KnobNight, mutate: (label: string, action: 
     keep("fightScale", tuning.fight.scale, FIGHT_DEFAULT.scale); keep("fightSpeed", tuning.fight.speed, FIGHT_DEFAULT.speed); keep("fightMomentum", tuning.fight.momentum, FIGHT_DEFAULT.momentum);
   });
   const f = () => at().tuning.fight;
+  const live = (action: (v: string) => void) => (v: string) => { if (enabled()) action(v); };
   return {
-    fightScale: v => mutate("fight scale", () => setFight(at(), +v, f().speed)),
-    fightSpeed: v => mutate("fight speed", () => setFight(at(), f().scale, +v)),
-    fightMomentum: v => mutate("fight momentum", () => setFight(at(), f().scale, f().speed, true, +v)),
-    treetopSpeed: v => mutate("treetop speed", () => setTreetop(at(), +v)),
+    fightScale: live(v => mutate("fight scale", () => setFight(at(), +v, f().speed))),
+    fightSpeed: live(v => mutate("fight speed", () => setFight(at(), f().scale, +v))),
+    fightMomentum: live(v => mutate("fight momentum", () => setFight(at(), f().scale, f().speed, true, +v))),
+    treetopSpeed: live(v => mutate("treetop speed", () => setTreetop(at(), +v))),
   };
 }

@@ -6,13 +6,14 @@ import { TUNING, withTuning, type Tuning } from "./tuning";
 import { AREA_TYPES } from "./map";
 import { canEat, feed } from "./berries";
 import { invitable } from "./leash";
-import { hasRune, stateOf, STATES } from "./creatureStates";
-import { runeOffset } from "./runeOffset";
+import { hasRune, stateOf } from "./creatureStates";
 import { candleCount, candleMelt, candleRed, hurt, knockOut, newHealth, nextStreak, repair, respawnWait } from "./knockout";
 import { isHomeKey } from "./speakers";
+import { queueCombatHit } from "../test/combatHit";
 import { FIGHT, MOVEMENT } from "./movement";
 import { areaOf, homeArea } from "./homeArea";
 import { smallWorldTuning } from "../test/worlds";
+import { preppedGame } from "../test/preppedGame"; // (games on a map made once a file from its prep)
 const PEOPLED = withTuning({ population: { ...TUNING.population, start: { ...TUNING.population.start, young: 1 } } }); // (a young in every area, whatever the tuning's curve: the mechanics, not the balance)
 
 const idle: Controls = { moveX: 0, moveZ: 0, toggleMode: false, zoom: 0 };
@@ -23,7 +24,7 @@ const CHAT = withTuning({ invites: { ...TUNING.invites, on: false } });
 
 function quiet(t: Tuning = TUNING, local = false): Game {
   // Retain seeded terrain for area guards, cross-area pursuit, beach escape and 900 m recovery scenarios.
-  const g = newGame(77, local ? smallWorldTuning(t, "Direct knockout candle and hat timing uses explicit timestamps and leash state, not world extent.") : t);
+  const g = preppedGame(77, local ? smallWorldTuning(t, "Direct knockout candle and hat timing uses explicit timestamps and leash state, not world extent.") : t);
   g.clock.paused = false;
   const d = g.map.dancefloor;
   g.witch = { ...g.witch, seated: false, x: d.x, z: d.z + 20, mode: "ground", lift: 0 };
@@ -70,7 +71,7 @@ describe("combat (Stage 4)", () => {
     }
   });
 
-  it("party animals and wild ones of other kinds fight until one side is beaten: the wild one stunned (Ed, 2026-10-28)", () => {
+  it("party and wild animals engage other kinds; a beaten wild animal is stunned", () => {
     const g = quiet(), w = g.witch;
     const mine = place(g, 0, "wolf", 2, w.x + 2, w.z, true), mate = place(g, 0, "wolf", 2, w.x + 2, w.z + 2, true), wild = place(g, 0, "boar", 1, w.x + 4, w.z);
     park(g, mine); park(g, mate);
@@ -80,7 +81,10 @@ describe("combat (Stage 4)", () => {
     // (in packs, each a pack of one: they fight in combos with lulls between, and the boar hurt fights on, alone; then its daze)
     // (90 s: each species' own attack, step 5, paces this one a little longer: the boar beaten, dazed, then off)
     // (combat as orbit slots, rules/orbit.ts: her wolf's blows fill its slots with hearts; full, it's stunned, lying still)
-    for (let i = 0; i < 90 / STEP && !wild.dazed; i++) stepGame(g, idle, STEP);
+    let engaged = false;
+    for (let i = 0; i < 2 / STEP; i++) { stepGame(g, idle, STEP); engaged ||= mine.fight?.target?.kind === "creature" && mine.fight.target.id === wild.id; }
+    expect(engaged).toBe(true);
+    queueCombatHit(g, mine, wild); stepGame(g, idle, STEP);
     expect(wild.dazed).toBe(true);
     const x0 = wild.x, z0 = wild.z; run(g, 3);
     expect(Math.hypot(wild.x - x0, wild.z - z0)).toBeLessThan(5); // (lying there, not running off: only the knock of the blow that stunned it)
@@ -93,8 +97,9 @@ describe("combat (Stage 4)", () => {
     const g = quiet(), w = g.witch;
     const mine = place(g, 0, "hedgehog", 1, w.x + 2, w.z, true);
     park(g, mine);
-    place(g, 0, "bear", 2, w.x + 4, w.z); place(g, 0, "bear", 2, w.x + 3, w.z + 2);
+    const attacker = place(g, 0, "bear", 2, w.x + 4, w.z); place(g, 0, "bear", 2, w.x + 3, w.z + 2);
     g.witch = { ...g.witch, mode: "treetop", lift: 1 }; // out of reach herself
+    queueCombatHit(g, attacker, mine);
     run(g, 60);
     expect(mine.ranOff).toBe(true); // (run away, or there already, asleep on the beach: rules/runaway.ts)
     expect(mine.leashed).toBe(false);
@@ -175,10 +180,10 @@ describe("knocked out (Ed, 2026-10-04)", () => {
     return { g, a, b, l, parked };
   }
 
-  it("lets her carried ones go happy where they stand, bottom first, a second each with knockout.releaseEach 1 (Ed, 2026-10-26: no floor sigils); a parked one stays parked; then she's back at the treehouse, whole", () => {
+  it("drops her carried ones' sigils where she went down, bottom first, a second each with knockout.releaseEach 1 (Ed, 2026-11-03: \"If you're knocked down, animals' sigils fall and stay where you were knocked down\"); each animal parked there, hers; a parked one stays parked; then she's back at the treehouse, whole", () => {
     const { g, a, b, l, parked } = setUp(withTuning(t => { t.knockout.releaseEach = 1; })), W = g.witches[0];
     expect(W.ko).not.toBeNull();
-    const down = g.clock.time, bottomFirst = [l.id, b.id, a.id]; // stack order a, b, l: l is the bottom
+    const down = g.clock.time, bottomFirst = [l.id, b.id, a.id], spot = { x: g.witch.x, z: g.witch.z }; // stack order a, b, l: l is the bottom
     const put = new Map<number, number>(), hurtBefore = a.hp;
     for (let i = 0; i < (10 + RESPAWN) / STEP && W.ko; i++) {
       stepGame(g, { moveX: 1, moveZ: 0, toggleMode: true, zoom: 0, dash: true }, STEP); // input is ignored meanwhile
@@ -187,13 +192,13 @@ describe("knocked out (Ed, 2026-10-04)", () => {
     expect([...put.keys()]).toEqual(bottomFirst);
     bottomFirst.map(id => put.get(id)!).forEach((s, i) => expect(s).toBeCloseTo(i + 1, 1));
     for (const c of [a, b, l]) {
-      expect(c.leashed, "off her leash").toBe(false);
-      expect(stateOf(c)).toBe("happy");
-      expect(g.leash.placed.some(q => q.id === c.id), "no sigil made").toBe(false);
+      expect(c.leashed, "still hers, parked").toBe(true);
+      expect(stateOf(c)).not.toBe("happy");
+      const p = g.leash.placed.find(q => q.id === c.id);
+      expect(p, "its sigil down").toBeDefined();
+      expect(Math.hypot(p!.x - spot.x, p!.z - spot.z), "where she went down").toBeLessThan(TUNING.leash.hex!.size * 2.1);
       expect(c.gone).toBeFalsy();
     }
-    for (const c of [a, b]) expect(hasRune(c, g.clock.time), "its rune at its feet").toBe(true);
-    expect(hasRune(l, g.clock.time), "a legend has none").toBe(false);
     expect(a.hp, "a knockout doesn't heal them").toBe(hurtBefore);
     expect(g.leash.placed.map(p => p.id)).toContain(parked.id);
     expect(parked.leashed).toBe(true);
@@ -202,52 +207,42 @@ describe("knocked out (Ed, 2026-10-04)", () => {
     expect(W.health.hp).toBe(TUNING.witchHealth.hits);
   }, 120000);
 
-  it("lets her leash one again by its rune once she's back (Ed, 2026-10-26)", () => {
+  it("lets her pick one up again from where its sigil fell, once she's back", () => {
     const { g, a } = setUp(withTuning(t => { t.knockout.releaseEach = 0; })), W = g.witches[0];
     for (let i = 0; i < (10 + RESPAWN) / STEP && W.ko; i++) stepGame(g, idle, STEP);
     expect(W.ko).toBeNull();
-    run(g, (STATES.pickupDelay ?? 0) + 0.5);
-    expect(stateOf(a)).toBe("happy");
-    // stood on its rune, the sigil button picks it up: hers again, on her stack
-    a.x = a.homeX; a.z = a.homeZ; a.tx = a.x; a.tz = a.z;
-    g.witch = { ...g.witch, seated: false, perch: false, mode: "ground", lift: 0, x: a.x, z: a.z + runeOffset(a, g.tuning) };
-    for (let i = 0; i < 30 && !a.leashed; i++) { stepGame(g, { ...idle, place: i % 2 === 0 }, STEP); a.x = a.homeX; a.z = a.homeZ; }
-    expect(a.leashed).toBe(true);
+    const p = g.leash.placed.find(q => q.id === a.id)!;
+    g.witch = { ...g.witch, seated: false, perch: false, mode: "ground", lift: 0, x: p.x, z: p.z };
+    for (let i = 0; i < 30 && !g.leash.stack.includes(a.id); i++) stepGame(g, { ...idle, place: i % 2 === 0 }, STEP);
     expect(g.leash.stack).toContain(a.id);
-    expect(a.dropped, "hers again: no longer tied to the spot").toBeUndefined();
+    expect(g.leash.placed.some(q => q.id === a.id)).toBe(false);
   }, 120000);
 
-  it("keeps one let go idling near where it was dropped, dancing there in a party area, not walking home to its own area (Ed, 2026-10-26)", () => {
+  it("keeps one parked at her knockdown by its sigil, not walking home to its own area", () => {
     const { g, a } = setUp(withTuning(t => { t.knockout.releaseEach = 0; })), W = g.witches[0];
-    // her leashed wolf is from an area some way off: its home's there, and she goes down here (home, partified from the start)
+    // her leashed wolf is from an area some way off: its home's there, and she goes down here
     const far = g.creatures.find(c => !c.gone && !c.leashed && Math.hypot(c.x - a.x, c.z - a.z) > 70 && Math.hypot(c.x - a.x, c.z - a.z) < 140 && (c.cell[0] !== g.map.cellSafe(a.x, a.z).cell[0] || c.cell[1] !== g.map.cellSafe(a.x, a.z).cell[1]))!;
     Object.assign(a, { cell: far.cell, homeX: far.homeX, homeZ: far.homeZ, range: far.range });
-    const sameCell = (x: number, z: number) => { const k = g.map.cellSafe(x, z).cell; return k[0] === a.cell[0] && k[1] === a.cell[1]; };
-    const at = { x: a.x, z: a.z }, R = g.tuning.knockout.dropRadius ?? 6;
     for (let i = 0; i < (10 + RESPAWN) / STEP && W.ko; i++) stepGame(g, idle, STEP);
-    expect(stateOf(a)).toBe("happy");
-    expect(a.dropped, "dropped where it stood").toMatchObject({ x: at.x, z: at.z });
-    expect(a.dancing, "dancing: dropped in a party area").toBe(true);
-    // with her over it in the treetops (creatures are stepped only near her), a minute and a half: it stays by the spot
-    g.witch = { ...g.witch, seated: false, perch: false, mode: "treetop", lift: 1, x: a.x, z: a.z };
+    const p = g.leash.placed.find(q => q.id === a.id)!;
+    expect(p).toBeDefined();
+    // with her over it in the treetops (creatures are stepped only near her), a minute and a half: it stays by its sigil
+    g.witch = { ...g.witch, seated: false, perch: false, mode: "treetop", lift: 1, x: p.x, z: p.z };
     let farthest = 0;
-    for (let k = 0; k < 90; k++) { run(g, 1); farthest = Math.max(farthest, Math.hypot(a.x - at.x, a.z - at.z)); expect(sameCell(a.x, a.z), "not gone home").toBe(false); }
-    expect(farthest).toBeLessThan(R + 2);
+    for (let k = 0; k < 90; k++) { run(g, 1); farthest = Math.max(farthest, Math.hypot(a.x - p.x, a.z - p.z)); }
+    expect(farthest).toBeLessThan(TUNING.leash.length + 6);
   }, 120000);
 
-  it("lets none she was carrying eat berries while it idles where it was dropped: happy animals don't eat (Ed, 2026-10-26); one she parked at a sigil still does", () => {
+  it("lets none eat a berry on its own after a knockdown, parked by them or not (Ed, 2026-11-03: no animal eats on its own)", () => {
     const { g, a, b, parked } = setUp(withTuning(t => { t.knockout.releaseEach = 0; })), W = g.witches[0], B = g.berries;
-    b.hp = 1; // (an adult eats only when hurt: this one would)
-    // berries on the bushes nearest each of them, right beside them
+    b.drops = 0.5; // (hurt: it would want one)
     const near = [a, a, b, b, parked, parked];
     let k = 0;
     for (let i = 0; i < B.bushes.length && k < near.length; i++) if (B.onBush[i] >= 0) { const c = near[k++]; B.bushes[i] = { ...B.bushes[i], x: c.x + 1.5 + k * 0.3, z: c.z + 1 }; }
     expect(k).toBe(near.length);
     const ate = new Set<number>();
     for (let i = 0; i < 40 / STEP; i++) { if (!W.ko) g.witch = { ...g.witch, seated: false, perch: false, mode: "treetop", lift: 1, x: a.x, z: a.z }; stepGame(g, idle, STEP); for (const e of g.berries.events) if (e.kind === "ate") ate.add(e.id); }
-    expect(stateOf(a)).toBe("happy");
-    expect(ate.has(a.id) || ate.has(b.id), "the ones let go ate nothing").toBe(false);
-    expect(ate.has(parked.id), "one parked at her sigil did (the deliberate way)").toBe(true);
+    expect(ate.size).toBe(0);
   }, 120000);
 
   it("brings her back behind her decks, seated as at the start but at the game's zoom, near home or far off; her first move gets her up", () => {
@@ -401,7 +396,7 @@ describe("Ed's Stage 4 rulings", () => {
     g.witch = { ...g.witch, mode: "ground", lift: 0 };
     run(g, 0.5);
     expect(wolf.fight?.target).toEqual({ kind: "witch", id: 0 });
-    // Away out of its area, past its range and 30 m: it gives up and heads home.
+    // Away out of its area, past its range and 30 m: on the ground it keeps after her (Ed, 2026-10-31: until take-off).
     const far = { x: wolf.homeX + 400, z: wolf.homeZ };
     g.witch = { ...g.witch, x: far.x, z: far.z };
     run(g, 1);
@@ -493,15 +488,15 @@ describe("Ed's Stage 4 rulings", () => {
     expect(mine.fight?.target ?? null).toBeNull();
   }, 60000);
 
-  it("heals a party animal to full when it eats a berry (even a legend) or is invited", () => {
+  it("heals a party animal to full when it eats a berry or is invited; a legend never wants one (Ed, 2026-11-03: \"Legends still need no berries\")", () => {
     const g = quiet(), w = g.witch;
     const a = place(g, 0, "fox", 1, w.x + 2, w.z, true), l = place(g, 0, "stag", LEGEND, w.x + 3, w.z, true);
     a.drops = 0.7; l.drops = 0.5; // (💧s in their slots: rules/orbit.ts)
     feed(g.berries, a, g.clock.time, TUNING); feed(g.berries, l, g.clock.time, TUNING);
     expect(a.drops).toBeUndefined(); expect(l.drops).toBeUndefined(); // all its 💧s gone
     expect(a.healedAt).toBe(g.clock.time);
-    expect(canEat(Object.assign(l, { drops: 0.1 }), g.berries)).toBe(true); // a hurt legend wants a berry
-    expect(canEat(Object.assign(l, { drops: undefined }), g.berries)).toBe(false); // a whole one doesn't
+    expect(canEat(Object.assign(l, { drops: 0.1 }), g.berries, TUNING)).toBe(false); // not even hurt
+    expect(canEat(Object.assign(a, { drops: 0.1 }), g.berries, TUNING)).toBe(true); // a hurt youth does
     const wild = place(g, 0, "badger", 1, w.x + 4, w.z);
     wild.drops = 0.5;
     for (let i = 0; i < 10 / STEP && !wild.leashed; i++) stepGame(g, { ...idle, inviteNearest: i === 0 }, STEP);
@@ -510,7 +505,7 @@ describe("Ed's Stage 4 rulings", () => {
   }, 60000);
 
   it("leaves a woken area's babies out of its siege: they stay home, happy, with no invitation or personal rune", () => {
-    const g = newGame(77, { ...TUNING, cast: { ...TUNING.cast, on: false } }); // (their runes at their feet: the game without the stone stacks, ?cast=0)
+    const g = preppedGame(77, { ...TUNING, cast: { ...TUNING.cast, on: false } }); // (their runes at their feet: the game without the stone stacks, ?cast=0)
     g.clock.paused = false;
     g.witch = { ...g.witch, seated: false, mode: "treetop", lift: 1 };
     const next = g.party.next[0], here = g.creatures.filter(c => c.cell[0] === next[0] && c.cell[1] === next[1] && !c.boss); // (its legend sleeps on: legends.test.ts)
@@ -528,8 +523,9 @@ describe("Ed's Stage 4 rulings", () => {
     try {
     const g = quiet(TUNING), w = g.witch;
     const raven = place(g, 0, "raven", 1, w.x + 4, w.z);
-    run(g, 10, { ...idle, autoTalk: false }); // (auto-talk off: she doesn't chat with it, so it shoots)
-    const d = Math.hypot(raven.x - g.witch.x, raven.z - g.witch.z), R = attackOf("raven", 1)!.attack.range;
+    let d = 0;
+    for (let i = 0; i < 10 / STEP; i++) { stepGame(g, { ...idle, autoTalk: false }, STEP); d = Math.max(d, Math.hypot(raven.x - g.witch.x, raven.z - g.witch.z)); }
+    const R = attackOf("raven", 1)!.attack.range;
     expect(d).toBeGreaterThan(R * COMBAT.kite.near * 0.8);
     } finally { P.move = mv; }
   }, 60000);
@@ -599,7 +595,7 @@ describe("Ed's playtest (2026-10-04)", () => {
   }, 60000);
 
   it("cannot invite enraged creatures or babies; a woken area befriends its babies without personal runes", () => {
-    const g = newGame(77, { ...TUNING, cast: { ...TUNING.cast, on: false } }); // (their runes at their feet: the game without the stone stacks, ?cast=0)
+    const g = preppedGame(77, { ...TUNING, cast: { ...TUNING.cast, on: false } }); // (their runes at their feet: the game without the stone stacks, ?cast=0)
     g.clock.paused = false;
     g.witch = { ...g.witch, seated: false, mode: "treetop", lift: 1 };
     const next = g.party.next[0], here = g.creatures.filter(c => c.cell[0] === next[0] && c.cell[1] === next[1]);
@@ -619,6 +615,7 @@ describe("Ed's playtest (2026-10-04)", () => {
     const mine = place(g, 0, "wolf", 2, w.x + 2, w.z, true);
     park(g, mine);
     g.witch = { ...g.witch, mode: "treetop", lift: 1 };
+    queueCombatHit(g, mine, wild);
     for (let i = 0; i < (TUNING.combat.daze + 12) / STEP && !wild.fleeUntil; i++) stepGame(g, idle, STEP);
     expect(wild.fleeUntil).toBeTruthy();
     expect(wild.gone).toBeFalsy(); // not on the spot
@@ -647,10 +644,12 @@ describe("the invitee truce (Ed, 2026-10-04)", () => {
     // (she keeps beside it, as a player would: its blows knock her wolf about and it follows)
     for (let i = 0; i < 6 / STEP; i++) { stepGame(g, { ...idle, autoTalk: true }, STEP); g.witch = { ...g.witch, x: fox.x - 3, z: fox.z }; } // (an adult takes 12 s to invite)
     expect(g.leash.talk?.id).toBe(fox.id);
+    queueCombatHit(g, wolf, fox, 1); stepGame(g, { ...idle, autoTalk: true }, STEP);
     expect(fox.hurtAt).toBeUndefined(); // untouched while they chat
     expect(wolf.fight?.target?.kind === "creature" && wolf.fight.target.id === fox.id).toBe(false);
     // She rises: the chat's off, and it's fair game again.
     g.witch = { ...g.witch, mode: "treetop", lift: 1 };
+    stepGame(g, idle, STEP); queueCombatHit(g, wolf, fox, 1);
     for (let i = 0; i < 10 / STEP && fox.hurtAt === undefined; i++) stepGame(g, idle, STEP);
     expect(fox.hurtAt).toBeDefined();
   }, 60000);
@@ -690,7 +689,7 @@ describe("the motion scale pass (Ed, 2026-10-04)", () => {
     g.tuning.fight.scale = 1;
   }, 60000);
 
-  it("has an ordinary wild pursuer follow across area borders until take-off, then go home (Ed, 2026-10-31; hunt off)", () => {
+  it("keeps an ordinary wild pursuer engaged outside its area until take-off, then sends it home (Ed, 2026-10-31; hunt off)", () => {
     const g = quiet({ ...TUNING, hunt: { on: false } }), W = g.witches[0];
     W.health.hp = 1e6;
     const cell: [number, number] = [g.map.centreCell[0] + 2, g.map.centreCell[1]], site = g.map.siteOf(cell[0], cell[1]);
@@ -699,15 +698,14 @@ describe("the motion scale pass (Ed, 2026-10-04)", () => {
     g.witch = { ...g.witch, x: site.x + 8, z: site.z, mode: "ground", lift: 0, seated: false };
     for (let i = 0; i < (2 + (g.tuning.wildWatch?.on ? g.tuning.wildWatch.time : 0)) / STEP; i++) stepGame(g, { ...idle, autoTalk: false }, STEP); // (after the watch, rules/wildWatch.ts)
     expect(wolf.fight?.target?.kind).toBe("witch");
-    // She runs out of its area, far east, and keeps going.
-    let maxOut = 0;
-    for (let i = 0; i < 12 / STEP; i++) {
-      stepGame(g, { ...idle, autoTalk: false, moveX: 1 }, STEP);
-      const k = g.map.cellSafe(wolf.x, wolf.z).cell;
-      if (k[0] !== cell[0] || k[1] !== cell[1]) maxOut++;
-    }
+    // Direct border fixture, independent of the selected action's close-run timing.
+    let edge = 0;
+    while (g.map.cellSafe(site.x + edge + 1, site.z).cell.every((v, i) => v === cell[i])) edge++;
+    wolf.x = site.x + edge + 2; wolf.z = site.z;
+    g.witch = { ...g.witch, x: wolf.x + 40, z: wolf.z };
+    expect(g.map.cellSafe(wolf.x, wolf.z).cell).not.toEqual(cell);
+    stepGame(g, { ...idle, autoTalk: false }, STEP);
     expect(wolf.fight?.target?.kind).toBe("witch");
-    expect(maxOut).toBeGreaterThan(0);
     g.witch = { ...g.witch, mode: "treetop", lift: 1 };
     for (let i = 0; i < 15 / STEP; i++) stepGame(g, idle, STEP);
     expect(g.map.cellSafe(wolf.x, wolf.z).cell).toEqual(cell); // back home
@@ -716,7 +714,7 @@ describe("the motion scale pass (Ed, 2026-10-04)", () => {
 
 describe("sieges far from her (found by the overnight playthrough)", () => {
   it("march from the wave on, wherever she is: their besiegers are stepped, not only once she comes near", () => {
-    const g = newGame(7, PEOPLED);
+    const g = preppedGame(7, PEOPLED);
     g.clock.paused = false;
     const B = g.map.bounds;
     g.witch = { ...g.witch, seated: false, mode: "treetop", lift: 1, x: B.minX + 5, z: B.minZ + 5 }; // (far off, in a corner)

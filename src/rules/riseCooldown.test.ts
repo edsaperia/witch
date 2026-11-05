@@ -9,6 +9,8 @@ import { TUNING, withTuning } from "./tuning";
 const idle: Controls = { moveX: 0, moveZ: 0, toggleMode: false, zoom: 0, autoTalk: false };
 
 function landed(t = TUNING) {
+  // (she lands back on the treehouse she starts on: its own landing cooldown, treehouse.landCooldown, off here, Ed 2026-11-03)
+  t = { ...t, treehouse: { ...t.treehouse, landCooldown: 0 } };
   const g = newGame(7, t), W = g.witches[0];
   g.clock.paused = false; g.party.paused = true;
   W.body = { ...W.body, seated: false, mode: "treetop", lift: 1 };

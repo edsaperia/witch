@@ -31,8 +31,11 @@ describe("affected art checks", () => {
     expect(() => taskDispatcher(source.replace('task("species-sprites", async', 'task(name, async'))).toThrow();
     expect(() => taskDispatcher(source.replace('task("species-sprites", async', 'if (true) task("species-sprites", async'))).toThrow();
     const workflow = readFileSync(".github/workflows/art-check.yml", "utf8");
-    expect(workflow).toContain("branches: [claude/prototype, main]");
-    expect(workflow).toContain("types: [opened, synchronize, reopened]");
+    expect(workflow).toContain("  schedule:");
+    expect(workflow).toContain("cron: '17 3 * * *'");
+    expect(workflow).toContain("  workflow_dispatch:");
+    expect(workflow).not.toMatch(/^  pull_request:/m);
+    expect(workflow).not.toMatch(/^  push:/m);
     expect(workflow).not.toContain("claude/rel-*");
     expect(workflow).toContain('if: steps.checked.outputs.run == \'\'');
   });

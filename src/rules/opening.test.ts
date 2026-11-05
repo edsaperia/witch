@@ -1,7 +1,7 @@
 // The new opening's wake-up spot (rules/opening.ts; Ed, 2026-10-20): the chart's dive ends in her bedroom, beside her bed, on the
 // house's floor, the camera settled indoors on her; and from there she walks on as anywhere in the house.
 import { describe, expect, it } from "vitest";
-import { TUNING } from "./tuning";
+import { TUNING, withTuning } from "./tuning";
 import { newGame as fullGame, stepGame, STEP, poseOf, type Controls } from "./game";
 import { smallWorld } from "../test/worlds";
 const newGame = smallWorld(fullGame, "Bedroom placement, indoor camera and walls use one treehouse, independent of distant areas.");
@@ -32,7 +32,8 @@ describe("waking in her bedroom", () => {
   });
 
   it("and she walks on from there, held in the house's walls", () => {
-    const g = newGame(123, TUNING);
+    // (walls on explicitly: with the open-edged house, the default since v7005, she steps off the edge instead)
+    const g = newGame(123, withTuning({ treehouse: { ...TUNING.treehouse, house: { ...TUNING.treehouse.house!, look: { ...TUNING.treehouse.house!.look!, noWalls: false } } } }));
     wakeInBedroom(g);
     g.clock.paused = false; g.party.spellAt = undefined; // (play on: no spell to wait for)
     const x0 = g.witch.x;

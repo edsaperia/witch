@@ -1,4 +1,9 @@
 import { describe, expect, it } from "vitest";
+import { execFileSync } from "node:child_process";
+import fs from "node:fs";
+import os from "node:os";
+import path from "node:path";
+import { pathToFileURL } from "node:url";
 // @ts-expect-error the CI tool is plain JavaScript
 import { changedScope, testScope } from "./test-scope.mjs";
 
@@ -27,5 +32,32 @@ describe("conservative PR unit-test selection", () => {
   });
   it("falls back on a shallow or broken git history", () => {
     expect(changedScope({ event: "pull_request", payload, git: () => { throw Error("missing history"); } }).mode).toBe("full");
+  });
+  it("selects safely from a real two-parent depth-two PR checkout and falls back at depth one", () => {
+    const dir = fs.mkdtempSync(path.join(os.tmpdir(), "witch-shallow-"));
+    const source = path.join(dir, "source");
+    fs.mkdirSync(source);
+    const gitAt = (cwd: string, args: string[]) => execFileSync("git", args, { cwd, encoding: "utf8", stdio: ["ignore", "pipe", "pipe"] });
+    try {
+      gitAt(source, ["init", "-b", "base"]);
+      gitAt(source, ["config", "user.name", "fixture"]);
+      gitAt(source, ["config", "user.email", "fixture@example.invalid"]);
+      fs.mkdirSync(path.join(source, "src/render"), { recursive: true });
+      fs.writeFileSync(path.join(source, "src/render/houseFurniture.ts"), "export const x = 1;\n");
+      gitAt(source, ["add", "."]); gitAt(source, ["commit", "-m", "base"]);
+      const base = gitAt(source, ["rev-parse", "HEAD"]).trim();
+      gitAt(source, ["checkout", "-b", "feature"]);
+      fs.writeFileSync(path.join(source, "src/render/houseFurniture.ts"), "export const x = 2;\n");
+      gitAt(source, ["commit", "-am", "feature"]);
+      gitAt(source, ["checkout", "base"]);
+      gitAt(source, ["merge", "--no-ff", "feature", "-m", "PR merge"]);
+      for (const depth of [1, 2]) {
+        const clone = path.join(dir, `depth-${depth}`);
+        gitAt(dir, ["clone", "--depth", String(depth), pathToFileURL(source).href, clone]);
+        const result = changedScope({ event: "pull_request", payload: { ...payload, pull_request: { ...payload.pull_request, base: { sha: base } } }, git: (args: string[]) => gitAt(clone, args) });
+        expect(result.mode).toBe(depth === 2 ? "related" : "full");
+        if (depth === 2) expect(result.files).toEqual(pr.files);
+      }
+    } finally { fs.rmSync(dir, { recursive: true, force: true }); }
   });
 });

@@ -11,6 +11,7 @@ import { PadNav, firstRow, keyInput, navigate, stepChoice, stepSlider, type NavI
 import { DEFAULTS as ACTIONS, bindings, keysName, type ActionId } from "../platform/bindings";
 import { SLOTS, assign, clashes, clearSlot, inputName, inputsOf, padIdle, padPress, withSlot, type Device } from "./rebind";
 import type { SavesHost } from "../app/saveSlots";
+import { Hold } from "./hold";
 
 /** What the page needs of the game. */
 export interface SettingsHost {
@@ -29,7 +30,7 @@ export interface SettingsHost {
   saves?: SavesHost;
 }
 
-type Row = NavRow & { label: string; sub?: string; note?: string; /** a heading over it */ group?: string };
+type Row = NavRow & { label: string; sub?: string; note?: string; /** a heading over it */ group?: string; /** a save's own name */ name?: string };
 /** A slot waiting for its new input (on the pad: armed once everything's let go; given up at `until`). */
 interface Listen { id: ActionId; slot: number; device: Device; armed: boolean; until: number }
 /** A new input another action has: Swap, Use both or Cancel (`focus` the one highlighted; Swap left out where it would leave Pause
@@ -41,6 +42,8 @@ const PAD_WAIT = 6;
 const TAB_NAMES = ["Controls", "Sound", "Display", "Accessibility", "What's new", "Saves"];
 const NEWS_TAB = 4;
 const SAVES_TAB = 5;
+/** How long a save's 🗑️ is held to delete it (ms; Ed, 2026-11-02: "hold to delete"). */
+export const DELETE_HOLD = 1200;
 const escape = (text: string): string => text.replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]!);
 const pct = (v: number) => `${Math.round(v * 100)}%`;
 
@@ -100,6 +103,8 @@ const CSS = `
 #settings-page .clash .btns span.on { background: var(--gold); color: var(--ink); }
 #settings-page .win { position: relative; }
 #settings-page .status { color: var(--gold); min-height: calc(var(--u) * 7); font-size: calc(var(--u) * 6); padding: 0 calc(var(--u) * 10); }
+#settings-page .trash { flex: 0 0 auto; margin-left: auto; padding: 0 calc(var(--u) * 3); line-height: calc(var(--u) * 11); cursor: pointer; touch-action: none; -webkit-touch-callout: none; font-family: system-ui, sans-serif; background: linear-gradient(to top, #ff9a8a calc(var(--hold, 0) * 100%), var(--tab) 0); box-shadow: inset 0 calc(var(--u) * -1) 0 var(--ink); }
+#settings-page .row.focus .trash { box-shadow: inset 0 0 0 var(--u) #ff9a8a; }
 #settings-page .news-entry { display: block; cursor: default; padding: calc(var(--u) * 3) calc(var(--u) * 4); }
 #settings-page .news-entry h2 { color: var(--gold); font-size: inherit; margin: 0 0 calc(var(--u) * 2); }
 #settings-page .news-entry small { color: var(--dim); }
@@ -111,6 +116,8 @@ export class SettingsMenu {
   readonly el = document.createElement("div");
   private state: NavState = { tab: 1, row: 0 };
   private switchingSave = false;
+  /** A save's 🗑️ being held (the mouse on it, Delete or the pad's △ on its row), and its fill now. */
+  private holdSave: { id: string; via: "pointer" | "keys" | "pad"; hold: Hold; fill: number } | null = null;
   private pad = new PadNav();
   private screens: string[] | null = null;
   private status = "";
@@ -142,7 +149,7 @@ export class SettingsMenu {
       const i = keyInput(e.code, e.shiftKey);
       if (i && !(e.repeat && (i === "back" || i === "choose" || i === "tabPrev" || i === "tabNext"))) { this.mode = "keys"; this.input(i); }
     }, { capture: true });
-    window.addEventListener("keyup", e => { if (this.open) { e.stopImmediatePropagation(); } }, { capture: true });
+    window.addEventListener("keyup", e => { if (this.open) { e.stopImmediatePropagation(); if (e.code === "Delete" && this.holdSave?.via === "keys") this.cancelHold(); } }, { capture: true });
     // the mouse: tabs, rows (click to choose; a slider's track sets it where clicked), the foot's buttons; right click goes back
     this.el.addEventListener("pointerdown", e => {
       e.stopPropagation();
@@ -156,6 +163,8 @@ export class SettingsMenu {
       if (e.button === 2) { this.close(); return; }
       if (tab) { this.state = { tab: Number(tab.dataset.tab), row: firstRow(this.tabs()[Number(tab.dataset.tab)]) }; this.render(); return; }
       if (act) { if (act.dataset.act === "done") this.close(); else if (act.dataset.act === "resetAll") this.resetAll(); return; }
+      const trash = t.closest<HTMLElement>("[data-trash]");
+      if (trash && row && e.button === 0) { if (this.state.row !== Number(row.dataset.row)) { this.state = { ...this.state, row: Number(row.dataset.row) }; this.render(); } this.startHold(trash.dataset.trash!, "pointer"); return; }
       if (row) {
         this.state = { ...this.state, row: Number(row.dataset.row) };
         const r = this.tabs()[this.state.tab][this.state.row], track = t.closest<HTMLElement>(".track");
@@ -168,6 +177,12 @@ export class SettingsMenu {
       }
     });
     this.el.addEventListener("contextmenu", e => e.preventDefault());
+    // (let go, or off the 🗑️, before it's full: nothing deleted)
+    for (const ev of ["pointerup", "pointercancel"]) this.el.addEventListener(ev, () => { if (this.holdSave?.via === "pointer") this.cancelHold(); });
+    this.el.addEventListener("pointerout", e => {
+      const from = (e.target as HTMLElement).closest?.<HTMLElement>("[data-trash]"), to = (e.relatedTarget as HTMLElement | null)?.closest?.<HTMLElement>("[data-trash]");
+      if (from && from.dataset.trash !== to?.dataset.trash && this.holdSave?.via === "pointer") this.cancelHold();
+    });
     this.el.addEventListener("mousedown", e => e.preventDefault()); // (the click redraws it: the browser's focus would fall from the gone target to the page's body, and the freeze then keeps the keys from it)
     this.el.addEventListener("wheel", e => {
       e.preventDefault(); this.mode = "mouse";
@@ -187,7 +202,7 @@ export class SettingsMenu {
     if (!rows[this.state.row] || rows[this.state.row].hidden) this.state = { ...this.state, row: firstRow(rows) };
     this.render();
   }
-  close(): void { if (!this.open) return; this.listen = this.clash = null; this.el.classList.remove("open"); this.onClose(); }
+  close(): void { if (!this.open) return; this.cancelHold(); this.listen = this.clash = null; this.el.classList.remove("open"); this.onClose(); }
 
   /** Each frame while open: the pad's presses. */
   update(now: number): void {
@@ -195,6 +210,7 @@ export class SettingsMenu {
     const p = this.host.pad();
     if (!p) return;
     const buttons = p.buttons.map(b => b.pressed), axes = [...p.axes];
+    if (this.holdSave?.via === "pad" && !buttons[3]) this.cancelHold();
     const ins = this.pad.read(buttons, axes[0] ?? 0, axes[1] ?? 0, now); // (read while listening too, so the press that ends it isn't taken again)
     const l = this.listen;
     if (l?.device === "pad") {
@@ -215,6 +231,10 @@ export class SettingsMenu {
     if (this.listen) return;
     if (this.clash) { this.clashInput(i); return; }
     if (this.state.tab === NEWS_TAB && (i === "left" || i === "right")) { this.scrollNews(i === "right" ? 1 : -1); return; }
+    // (a save's row: reset held is its 🗑️ held, Delete on the keys, △ / Y on the pad; anything else lets it go)
+    const focused = this.tabs()[this.state.tab]?.[this.state.row];
+    if (i === "reset" && this.state.tab === SAVES_TAB) { if (focused?.name !== undefined) this.startHold(focused.id.slice(5), this.mode === "pad" ? "pad" : "keys"); return; }
+    if (this.holdSave) this.cancelHold();
     const before = this.state.row, { state, action } = navigate(this.state, this.tabs(), i);
     this.state = state;
     if (state.row !== before) this.slot = Math.min(this.slot, SLOTS - 1);
@@ -279,7 +299,7 @@ export class SettingsMenu {
         { id: "news-more", kind: "button", label: this.news?.busy || this.newsLoading || !this.news && !this.newsImportError ? "Loading update notes…" : this.news?.error || this.newsImportError ? "Try again" : "Load more", hidden: this.news?.done },
       ],
       [
-        ...(this.host.saves?.list() ?? []).map((slot): Row => ({ id: `save:${slot.id}`, kind: "button", label: `${slot.name}${slot.id === this.host.saves?.active() ? " · Current" : ""}`,
+        ...(this.host.saves?.list() ?? []).map((slot): Row => ({ id: `save:${slot.id}`, kind: "button", name: slot.name, label: `${slot.name}${slot.id === this.host.saves?.active() ? " · Current" : ""}`,
           sub: `${slot.island ?? "New night"} · ${slot.nights === undefined ? "Earlier nights not counted" : `${slot.nights} night${slot.nights === 1 ? "" : "s"} recorded`} · ${new Date(slot.updated).toLocaleString()}` })),
         { id: "save:new", kind: "button", label: "New save", sub: "Start with fresh progress and default settings", hidden: !this.host.saves },
       ],
@@ -330,6 +350,36 @@ export class SettingsMenu {
     }
     if (id === "screen") { this.screens = (await this.host.screens()) ?? []; this.render(); }
   }
+  // ---- the Saves tab: a save's 🗑️ held to delete it ----
+
+  private canDelete(): boolean { return !!this.host.saves?.delete && !this.host.saves.locked?.() && !this.switchingSave; }
+  private startHold(id: string, via: "pointer" | "keys" | "pad"): void {
+    if (this.holdSave?.id === id || !this.canDelete()) return;
+    this.cancelHold();
+    const hold = new Hold(DELETE_HOLD, fill => {
+      if (this.holdSave?.hold === hold) this.holdSave.fill = fill;
+      this.el.querySelector<HTMLElement>(`[data-trash="${id}"]`)?.style.setProperty("--hold", String(fill));
+    }, () => { this.holdSave = null; void this.deleteSave(id); });
+    this.holdSave = { id, via, hold, fill: 0 };
+    hold.start();
+  }
+  private cancelHold(): void { const h = this.holdSave; this.holdSave = null; h?.hold.cancel(); }
+  /** Held long enough: the save gone (the current one reloads into the most recent left, or a fresh one: app/saveSlots.ts deleteSave). */
+  async deleteSave(id: string): Promise<void> {
+    const saves = this.host.saves;
+    if (!saves?.delete || !this.canDelete()) return;
+    const name = saves.list().find(s => s.id === id)?.name ?? "That save", current = id === saves.active();
+    this.switchingSave = true; this.status = `Deleting ${name}…`; this.render();
+    try { this.status = await saves.delete(id) ?? (current ? `${name} deleted. Opening your most recent save…` : `${name} deleted.`); }
+    catch (error) { console.warn("[saves] Could not delete save", error); this.status = "The save could not be deleted. Please try again."; }
+    finally {
+      this.switchingSave = false;
+      const rows = this.tabs()[SAVES_TAB];
+      if (this.state.tab === SAVES_TAB && (!rows[this.state.row] || rows[this.state.row].hidden)) this.state = { ...this.state, row: Math.max(firstRow(rows), Math.min(this.state.row, rows.length - 1)) };
+      this.render();
+    }
+  }
+
   /** The tab's things back to their defaults: on Controls every binding and the pad's names; elsewhere that tab's settings. */
   private resetAll(): void {
     if (this.state.tab === NEWS_TAB || this.state.tab === SAVES_TAB) return;
@@ -400,6 +450,7 @@ export class SettingsMenu {
     const xbox = !ps, shared = new Map<string, ActionId[]>();
     for (const c of bindings.conflicts()) for (const a of c.actions) shared.set(a, [...(shared.get(a) ?? []), ...c.actions.filter(o => o !== a)]);
     const newsItems = this.state.tab === NEWS_TAB ? this.newsChanges() : [];
+    const deletable = this.state.tab === SAVES_TAB && !!this.host.saves?.delete && !this.host.saves.locked?.();
     const rowHtml = rows.map((r, i) => {
       if (r.hidden) return "";
       if (this.state.tab === NEWS_TAB) {
@@ -407,7 +458,11 @@ export class SettingsMenu {
         const item = newsItems[i], version = item.version === null ? this.host.version : `v${item.version}`;
         return `<article class="row news-entry ${i === this.state.row ? "focus" : ""}" data-row="${i}"><h2>${escape(version)}${item.change.title ? ` · ${escape(item.change.title)}` : ""}</h2>${item.date ? `<small>${escape(item.date)}</small>` : ""}<ul>${item.change.items.map(text => `<li>${escape(text)}</li>`).join("")}</ul></article>`;
       }
-      if (this.state.tab === SAVES_TAB) return `<div class="row ${i === this.state.row ? "focus" : ""}" data-row="${i}" aria-disabled="${this.switchingSave}"><span class="lab">${escape(r.label)}${r.sub ? `<small>${escape(r.sub)}</small>` : ""}</span><span class="btn">${r.id === "save:new" ? "Create" : "Open"}</span></div>`;
+      if (this.state.tab === SAVES_TAB) {
+        const id = r.id.slice(5), held = this.holdSave?.id === id ? this.holdSave.fill : 0, what = escape(`Hold to delete ${r.name}`);
+        const trash = r.name !== undefined && deletable ? `<span class="trash" data-trash="${escape(id)}" role="button" aria-label="${what}" title="${what}" style="--hold:${held}">🗑️</span>` : "";
+        return `<div class="row ${i === this.state.row ? "focus" : ""}" data-row="${i}" aria-disabled="${this.switchingSave}"><span class="lab">${escape(r.label)}${r.sub ? `<small>${escape(r.sub)}</small>` : ""}</span><span class="btn">${r.id === "save:new" ? "Create" : "Open"}</span>${trash}</div>`;
+      }
       const head = r.group === "play" ? `<div class="group">In play</div>` : r.group === "menu" ? `<div class="group">In menus<small>a station, the sea chart, the telescope, the Studio · this page keeps its own: arrows, Enter, Esc</small></div>` : "";
       if (r.kind === "bind") {
         const id = r.id as ActionId, list = inputsOf(bindings.get(id), this.device), focus = i === this.state.row, l = this.listen;
@@ -431,10 +486,10 @@ export class SettingsMenu {
       <div class="why">${c.choices.includes("swap") ? `Swap: ${c.others.map(o => ACTION_NAME.get(o)).join(" and ")} takes ${inputsOf(bindings.get(c.id), c.device)[c.slot] ? inputName(inputsOf(bindings.get(c.id), c.device)[c.slot], xbox) : "nothing"} instead. ` : ""}Use both: one press does both.</div>
       <div class="btns">${c.choices.map((h, k) => `<span data-clash="${k}" class="${k === c.focus ? "on" : ""}">${word(h)}</span>`).join("")}</div></div></div>` : "";
     const foot = pad
-      ? `<span>${g("✕", "A")}choose</span><span>${g("○", "B")}back</span><span>${g("L1", "LB")}${g("R1", "RB")}tabs</span>${(this.state.tab === NEWS_TAB || this.state.tab === SAVES_TAB) ? "" : `<span>${g("△", "Y")}reset</span>`}`
+      ? `<span>${g("✕", "A")}choose</span><span>${g("○", "B")}back</span><span>${g("L1", "LB")}${g("R1", "RB")}tabs</span>${this.state.tab === NEWS_TAB ? "" : this.state.tab === SAVES_TAB ? (deletable ? `<span>${g("△", "Y")}hold: delete</span>` : "") : `<span>${g("△", "Y")}reset</span>`}`
       : this.mode === "keys"
-        ? `<span><span class="key">↑↓</span><span class="key">←→</span></span><span><span class="key">Enter</span>choose</span><span><span class="key">Esc</span>back</span><span><span class="key">Q</span><span class="key">E</span>tabs</span>${(this.state.tab === NEWS_TAB || this.state.tab === SAVES_TAB) ? "" : `<span><span class="key">Del</span>reset</span>`}`
-        : `<span>click to choose · right click: back</span>`;
+        ? `<span><span class="key">↑↓</span><span class="key">←→</span></span><span><span class="key">Enter</span>choose</span><span><span class="key">Esc</span>back</span><span><span class="key">Q</span><span class="key">E</span>tabs</span>${this.state.tab === NEWS_TAB ? "" : this.state.tab === SAVES_TAB ? (deletable ? `<span><span class="key">Del</span>hold: delete</span>` : "") : `<span><span class="key">Del</span>reset</span>`}`
+        : `<span>click to choose · right click: back${deletable ? " · hold 🗑️ to delete" : ""}</span>`;
     this.el.innerHTML = `<div class="win cut"><div class="in">
       <div class="title"><h1>Settings</h1><span class="ver">Witch · ${this.host.version}</span></div>
       <div class="tabs">${pad ? `<span class="bump">${g("L1", "LB")}</span>` : ""}${TAB_NAMES.map((t, i) => `<button type="button" data-tab="${i}" class="${i === this.state.tab ? "on" : ""}">${t}</button>`).join("")}${pad ? `<span class="bump">${g("R1", "RB")}</span>` : ""}</div>

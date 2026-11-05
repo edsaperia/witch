@@ -20,7 +20,7 @@ export function metresPerArtPixel(t: { artPixelsPerMetre: number; pixelSize: num
 }
 
 /** Shared by every sprite batch: the camera's right and (tilted) up, and the canopy fade. */
-export interface SpriteInstance { /** Bushes and low foliage, hidden by Floor Becomes Sky. */ small?: boolean; /** Semantic creature temperature; absent/zero is scenery. */ heat?: number }
+export interface SpriteInstance { /** Bushes and low foliage, hidden by Floor Becomes Sky. */ small?: boolean; tree?: boolean; /** Semantic creature temperature; absent/zero is scenery. */ heat?: number }
 export const SPRITE_UNIFORMS = {
   ...THERMAL_UNIFORMS,
   uPotionSky: { value: 0 },
@@ -177,21 +177,33 @@ void main() {
   float fw = max(min(iSize.x * 0.45, 5.0), iSize.z);
   float gl = min(min(groundH(iPos.xz), min(groundH((iPos - uRight * fw).xz), groundH((iPos + uRight * fw).xz))), min(groundH((iPos - uRight * fw * 0.5).xz), groundH((iPos + uRight * fw * 0.5).xz)));
   vec3 base = iPos + vec3(0.0, uAbsolute > 0.5 ? 0.0 : gl, 0.0);
+  vec3 drawSize = iSize;
+  if (iFlags.z >= 4.0 && uLandscapeTrip.x == TRIP_GIANT_TREES) {
+    drawSize.y *= mix(1., uLandscapeTrip.z, uLandscapeTrip.y);
+  } else if (uIsScenery > .5 && uLandscapeTrip.x == TRIP_DISTANT_GIANTS) {
+    float farK = smoothstep(3., 75., length(base.xz - uHazeCentre));
+    drawSize.xy *= mix(1., mix(.3, uLandscapeTrip.z, farK), uLandscapeTrip.y);
+  } else if (iFlags.z >= 4.0 && uLandscapeTrip.x == TRIP_WALKING_WOOD) {
+    float seed = dot(base.xz, vec2(.73, .31));
+    float stride = uLandscapeTrip.w * 1.3 + seed;
+    base.xz += vec2(cos(seed), sin(seed)) * sin(stride) * uLandscapeTrip.z * uLandscapeTrip.y;
+    base.y += abs(cos(stride * 3.)) * .18 * uLandscapeTrip.z * uLandscapeTrip.y;
+  }
   // Tall and nearer the camera than the witch: it may stand in front of her.
   // Eased over a few metres of depth and of height, so nothing snaps into the fade as she moves.
-  vFront = smoothstep(0.0, 3.0, uWitchDepth - 0.5 + (viewMatrix * vec4(base, 1.0)).z) * smoothstep(uOcc.z * 0.7, uOcc.z * 1.3, iSize.y);
+  vFront = smoothstep(0.0, 3.0, uWitchDepth - 0.5 + (viewMatrix * vec4(base, 1.0)).z) * smoothstep(uOcc.z * 0.7, uOcc.z * 1.3, drawSize.y);
   // Lying on the ground (a great stump, render/view/home.ts): its rows away from the camera, as the art's camera saw them, so every
   // pixel of its ground is on the ground at any pitch, bent with it (Ed, 2026-10-29: "Stumps do not sit on the ground").
   vec3 upv = uLie > 0.0 ? cross(vec3(0.0, 1.0, 0.0), uRight) * uLie : uUp;
-  vec3 w = base + uRight * (position.x * iSize.x) + upv * (position.y * iSize.y);
-  w += uRight * (uLean.x * position.y * iSize.y) + uUp * (uLean.y * position.x * iSize.x);
+  vec3 w = base + uRight * (position.x * drawSize.x) + upv * (position.y * drawSize.y);
+  w += uRight * (uLean.x * position.y * drawSize.y) + uUp * (uLean.y * position.x * drawSize.x);
   // Wind (Ed, v171): leafy things lean with gusts travelling across the forest, anchored at their
   // base (a crown at its foot, a trunk barely), so the trunks stay put and the foliage moves.
   if (iFlags.w > 0.0 && uWind.x > 0.0) {
     vec2 q = iPos.xz / uWind.z - vec2(0.8, 0.35) * uWind.w * uWind.y / uWind.z;
     float gust = windGust(q);
     float flutter = sin(uWind.w * 1.7 + dot(iPos.xz, vec2(0.31, 0.17))) * 0.35;
-    w += uRight * (uWind.x * iFlags.w * uv.y * uv.y * (gust * 0.9 + flutter)) * min(1.0, iSize.y / 8.0);
+    w += uRight * (uWind.x * iFlags.w * uv.y * uv.y * (gust * 0.9 + flutter)) * min(1.0, drawSize.y / 8.0);
   }
   // With a sway mask (#34; negative sway), the quad stays put and the fragment shader moves its leaves.
   vFxBase = iPos.xz;
@@ -204,7 +216,7 @@ void main() {
     vec2 q = iPos.xz / uWind.z - vec2(0.8, 0.35) * uWind.w * uWind.y / uWind.z;
     float gust = windGust(q);
     float flutter = sin(uWind.w * 1.7 + dot(iPos.xz, vec2(0.31, 0.17))) * 0.35;
-    vSwayM = uWind.x * -iFlags.w * (gust * 0.9 + flutter) * min(1.0, iSize.y / 8.0);
+    vSwayM = uWind.x * -iFlags.w * (gust * 0.9 + flutter) * min(1.0, drawSize.y / 8.0);
   }
   // The trees watching her (Ed, 2026-10-07, the wild forest eerier: \"canopy tips within a few metres of her sway a beat late
   // and slightly towards her, as if the trees lean in to watch\"): a leafy thing near where she was a moment ago (uWatch,
@@ -212,7 +224,7 @@ void main() {
   if (uWatch.w > 0.0 && iFlags.w != 0.0) {
     vec2 d = uWatch.xy - iPos.xz;
     float r = length(d), k = (1.0 - smoothstep(uWatch.z * 0.4, uWatch.z, r)) * smoothstep(0.3, 1.2, r);
-    float lean = uWatch.w * k * dot(d / max(r, 1e-3), normalize(uRight.xz + vec2(1e-6, 0.0))) * abs(iFlags.w) * min(1.0, iSize.y / 8.0);
+    float lean = uWatch.w * k * dot(d / max(r, 1e-3), normalize(uRight.xz + vec2(1e-6, 0.0))) * abs(iFlags.w) * min(1.0, drawSize.y / 8.0);
     if (iFlags.w > 0.0) w += uRight * (lean * uv.y * uv.y);
     else vSwayM += lean;
   }
@@ -220,14 +232,14 @@ void main() {
   float u = iFlags.x > 0.5 ? 1.0 - uv.x : uv.x;
   vUv = vec2(mix(iUv.x, iUv.z, u), mix(iUv.w, iUv.y, uv.y));
   vFlags = iFlags.xyz;
-  vFlags.z = mod(iFlags.z, 2.0); vSmall = step(1.5, iFlags.z);
+  vFlags.z = mod(iFlags.z, 2.0); vSmall = mod(floor(iFlags.z / 2.0), 2.0);
   vGlow = iGlow;
   vJitter = iJitter.xy;
   vThermalHeat = iJitter.z;
   vLocal = uv;
-  vSizeY = iSize.y;
+  vSizeY = drawSize.y;
   vWorld = w;
-  vGround = uLie > 0.0 ? w.xz : (iPos + uRight * (position.x * iSize.x)).xz;
+  vGround = uLie > 0.0 ? w.xz : (iPos + uRight * (position.x * drawSize.x)).xz;
   gl_Position = clipOf(w);
   vNear = uNearCut > 0.0 ? smoothstep(uNearCut * 0.75, uNearCut, -(viewMatrix * vec4(base, 1.0)).z) : 1.0;
   // Snap the whole sprite by its base to the pixel grid, so it moves a whole pixel at a time and
@@ -238,10 +250,10 @@ void main() {
   // nearer or further than the next, so no line runs across the canopy, and fades over a wide band.
   vHole = 1.0; vOverHer = 0.0; vCrownD = 0.0;
   // Its rectangle on screen (pixels): its middle and half-widths, from its foot and its top.
-  vec4 c0 = clipOf(base), c1 = clipOf(base + upv * iSize.y);
+  vec4 c0 = clipOf(base), c1 = clipOf(base + upv * drawSize.y);
   vec2 s0 = (c0.xy / c0.w * 0.5 + 0.5) * uRes, s1 = (c1.xy / c1.w * 0.5 + 0.5) * uRes;
-  float hh = abs(s1.y - s0.y) * 0.5 + 1.0, hw = hh * iSize.x / max(iSize.y, 0.01);
-  if (uLie > 0.0) { vec4 c2 = clipOf(base + uRight * (iSize.x * 0.5)); hw = abs(c2.x / c2.w - c0.x / c0.w) * 0.5 * uRes.x + 1.0; } // (lying, not square to the camera)
+  float hh = abs(s1.y - s0.y) * 0.5 + 1.0, hw = hh * drawSize.x / max(drawSize.y, 0.01);
+  if (uLie > 0.0) { vec4 c2 = clipOf(base + uRight * (drawSize.x * 0.5)); hw = abs(c2.x / c2.w - c0.x / c0.w) * 0.5 * uRes.x + 1.0; } // (lying, not square to the camera)
   vec2 cc = (s0 + s1) * 0.5;
   float wob = 0.5 * uCutout.w * uCutShape.x; // (the hole's edge wobbles this far either way)
   // The place she stands in (uCircleFade.y, eased in and out: a legend's circle, a runestone, the find, a flask): anything standing
@@ -282,8 +294,8 @@ void main() {
   // 2026-10-13: the scenery's quads rasterised twice over, the see-through pass discarding nearly every pixel after its taps). Its
   // rectangle with a margin for the wind, the lean, the watch and the snap, in pixels. Conservative: a quad kept whenever any of
   // its pixels might be drawn, so the picture is the same to the pixel (tools/bench).
-  float pxm = 2.0 * hh / max(iSize.y, 0.01); // (screen pixels a metre, up the sprite)
-  vec2 halfPx = vec2(hw, hh) + 4.0 + pxm * (abs(uWind.x) * abs(iFlags.w) * 1.3 * min(1.0, iSize.y / 8.0) + abs(uLean.x) * iSize.y + abs(uLean.y) * iSize.x + abs(uWatch.w) * abs(iFlags.w));
+  float pxm = 2.0 * hh / max(drawSize.y, 0.01); // (screen pixels a metre, up the sprite)
+  vec2 halfPx = vec2(hw, hh) + 4.0 + pxm * (abs(uWind.x) * abs(iFlags.w) * 1.3 * min(1.0, drawSize.y / 8.0) + abs(uLean.x) * drawSize.y + abs(uLean.y) * drawSize.x + abs(uWatch.w) * abs(iFlags.w));
   // Behind the treehouse's own solid pixels, every pixel of it (render/hiz.ts: the perf pass, 2026-10-23): its nearest point (its
   // foot or its top: across, it's square to the camera) farther than the farthest occluder pixel its rectangle could touch.
   if (uIsScenery > 0.5 && uHizOn > 0.5 && hizHidden(cc - halfPx, cc + halfPx, min(c0.z / c0.w, c1.z / c1.w) * 0.5 + 0.5)) { gl_Position = vec4(2.0, 2.0, 2.0, 1.0); return; }
@@ -311,7 +323,7 @@ void main() {
     }
     if (uIsScenery > 0.5 && uEdgeDither < 0.5) { // (dithered in the solid pass instead: not kept for these passes)
       float r = max(uScenery.x, iFlags.y > 0.5 ? uCanopyReach : 0.0);
-      if (length(iPos.xz - uHazeCentre) + iSize.x * 0.5 + 2.0 > r - uScenery.y && mod(floor(dbg / 4.0), 2.0) > 0.5) part = true;
+      if (length(iPos.xz - uHazeCentre) + drawSize.x * 0.5 + 2.0 > r - uScenery.y && mod(floor(dbg / 4.0), 2.0) > 0.5) part = true;
     }
     // Each pass by the kind it keeps (the perf pass's A2, 2026-10-24: in a dense wood most of these passes' cost was the big trees
     // over her circle, drawn again in the half-faded pass that never keeps their pixels): with her see-through in a pass of its
@@ -435,7 +447,7 @@ float screenDist(vec2 a, vec2 b) { return length(clamp((a - b) / 256.0, -100.0, 
 // passes): false where it's another pass's or cut away. Nothing here reads the art, so the see-through passes ask it first, before
 // the sway's and the art's taps (the perf pass, 2026-10-23: in a dense wood those passes kept most quads, and each pixel paid every
 // tap before it was thrown away); the solid pass asks it where it always has.
-float occl, shown, trunkA;
+float occl, shown, trunkA, hiddenCrown;
 bool passOf() {
   float e = screenDist(gl_FragCoord.xy, uWitch.xy) / max(max(uWitch.z, uWitch.w) * 1.2, 1.0);
   occl = uFlat > 0.5 ? 0.0 : uOcc.w * uSeeDbg.x * vFront * (1.0 - smoothstep(0.3, 1.0 + uOcc.y, e));
@@ -456,8 +468,12 @@ bool passOf() {
   float hole = smoothstep(vHole - uCutout.w, vHole + uCutout.w * uCutShape.y, cutD);
   if (uHoleHard > 0.0) hole = step(uHoleHard, hole); // (the quality ladder's hard cut-away: cut or whole)
   shown = 1.0;
+  hiddenCrown = 0.0;
   if (vFlags.y > 0.5) {
     shown = max(hole, uTopFade);
+    hiddenCrown = 1.0 - shown;
+    if (uLandscapeTrip.x == TRIP_SEEING_THROUGH_SEEING)
+      shown += hiddenCrown * .3 * uLandscapeTrip.y * uLandscapeTrip.z;
     if (shown < 0.004) return false;
   }
   // A trunk cut from its crown (Ed, v149: "fade out instead of just stop"): where the crowns are
@@ -578,6 +594,10 @@ void shade() {
   if (areaOn) n = areaAvg(true, uvS, n);
   float nx = (n.r * 255.0 - 128.0) / 127.0, ny = (n.g * 255.0 - 128.0) / 127.0, nz = n.b;
   if (vFlags.x > 0.5) nx = -nx;
+  if (uLandscapeTrip.x == TRIP_INSIDE_OUT_RELIEF) {
+    float signK = mix(1., -uLandscapeTrip.z, uLandscapeTrip.y);
+    nx *= signK; ny *= signK; nz = max(nz, .0001);
+  }
   vec3 N = normalize(uRight * nx - uUp * ny + uFacing * nz);
   // Standing in a cast shadow (a trunk's, a palm's, scenery's: render/castShadows.ts), darkened and tinted by it where it falls on
   // this pixel's ground spot; not a crown up in the canopy, nor what lies flat on the ground (the shadow's drawn over that already).
@@ -642,6 +662,16 @@ void shade() {
   // A legend's light in a few steps (Ed's round 14 playtest: a legend at its size read airbrushed, "smooth gradients, glossy
   // highlights", beside the pixel art round it): banded by brightness, its hue kept, so its shading is a short ramp of tones.
   if (uSteps > 0.5) { float l = max(1e-3, dot(col, vec3(0.3, 0.55, 0.15))), q = (floor(l * uSteps) + 0.6) / uSteps; col *= min(q / l, 3.0); }
+  if (uLandscapeTrip.x == TRIP_LIVING_BARK && trunk) {
+    float band = vWorld.y - uLandscapeTrip.w * uLandscapeTrip.z + dot(vGround, vec2(.19, .27));
+    vec3 stripe = .55 + .45 * cos(band * 1.7 + vec3(0., 2.1, 4.2));
+    col = mix(col, stripe * (.2 + dot(col, vec3(.3,.55,.15))) * (1. + .45 * sin(band * 3.)), uLandscapeTrip.y);
+  }
+  if (uLandscapeTrip.x == TRIP_SEEING_THROUGH_SEEING && uIsScenery > .5) {
+    float masked = max(occl, hiddenCrown);
+    vec3 ink = mix(vec3(.12,.85,.75), vec3(1.,.18,.72), clamp(masked,0.,1.));
+    col = mix(col, ink, uLandscapeTrip.y * uLandscapeTrip.z * (.13 + .87 * clamp(masked,0.,1.)));
+  }
   gl_FragColor = vec4(haze(min(vec3(1.0), col) * castK, vWorld), alpha);
 }
 void main() {
@@ -904,7 +934,7 @@ export class SpriteBatch {
       if (S[j] !== w || S[j + 1] !== h || S[j + 2] !== ft) { S[j] = w; S[j + 1] = h; S[j + 2] = ft; dS.touch(i); }
       j = i * 4;
       if (U[j] !== uv[0] || U[j + 1] !== uv[1] || U[j + 2] !== uv[2] || U[j + 3] !== uv[3]) { U[j] = uv[0]; U[j + 1] = uv[1]; U[j + 2] = uv[2]; U[j + 3] = uv[3]; dU.touch(i); }
-      const f0 = it.flip ? 1 : 0, f1 = it.top ? 1 : it.cut ? -it.cut : 0, f2 = (it.fresh ? 1 : 0) + (it.small ? 2 : 0), f3 = (fr.masked ? -1 : 1) * (it.sway ?? 0);
+      const f0 = it.flip ? 1 : 0, f1 = it.top ? 1 : it.cut ? -it.cut : 0, f2 = (it.fresh ? 1 : 0) + (it.small ? 2 : 0) + (it.tree ? 4 : 0), f3 = (fr.masked ? -1 : 1) * (it.sway ?? 0);
       if (F[j] !== f0 || F[j + 1] !== f1 || F[j + 2] !== f2 || F[j + 3] !== f3) { F[j] = f0; F[j + 1] = f1; F[j + 2] = f2; F[j + 3] = f3; dF.touch(i); }
       const gl = it.glow ?? 0;
       if (G[i] !== gl) { G[i] = gl; dG.touch(i); }

@@ -10,6 +10,8 @@ import { emptySave, recordNight } from "./chartSave";
 // Keep explicit 10/11/13-area authored homes: persistence, outward growth, roster counts and coast scaling are the integration assertions.
 const home = (found: string[], world = 0): Tuning => ({ ...TUNING, map: { ...TUNING.map!, island: "home", islandAreas: 10, found, world } });
 /** Each of the map's areas but home's own, by cell, with its kind. */
+// (and every area of the island: those and tonight's find's, which moves each night: Ed, 2026-11-03, the path network's special sites)
+const allAreas = (map: ReturnType<typeof generateMap>) => new Set([...areas(map).keys(), ...map.specialSites.map(s => s.cell.join(","))]);
 const areas = (map: ReturnType<typeof generateMap>) => new Map(map.cells.filter(([x, y]) => x !== map.centreCell[0] || y !== map.centreCell[1]).map(([x, y]) => [`${x},${y}`, AREA_TYPES[map.typeOf(x, y)].creature]));
 
 describe("home grows with the kinds she knows", () => {
@@ -30,14 +32,15 @@ describe("home grows with the kinds she knows", () => {
     expect(m13.centreCell).toEqual(m10.centreCell);
     // the 10-area home's areas every night after (whatever the night's seed); which kind is where is the night's own (Ed,
     // 2026-10-28, rules/deal.ts: its types dealt along each night's route)
-    for (const k of a10.keys()) { expect(a11.has(k)).toBe(true); expect(a13.has(k)).toBe(true); }
-    for (const k of a11.keys()) expect(a13.has(k)).toBe(true);
+    const all10 = allAreas(m10), all11 = allAreas(m11), all13 = allAreas(m13);
+    for (const k of all10) { expect(all11.has(k)).toBe(true); expect(all13.has(k)).toBe(true); }
+    for (const k of all11) expect(all13.has(k)).toBe(true);
     // the new ones further out, along the island's shape (rules/islandGrowth.ts: each the next it takes from its edge): each
     // joined to the areas before it, and past home's own neighbours
     const ring = new Set(m13.neighbours.get(m13.centreCell.join(",")) ?? []);
-    for (const k of a13.keys()) if (!a10.has(k)) {
+    for (const k of all13) if (!all10.has(k)) {
       expect(ring.has(k), `${k} past home's neighbours`).toBe(false);
-      expect([...(m13.neighbours.get(k) ?? [])].some(q => a10.has(q) || q === m13.centreCell.join(",") || (a13.has(q) && q !== k)), `${k} joined to the island`).toBe(true);
+      expect([...(m13.neighbours.get(k) ?? [])].some(q => all10.has(q) || q === m13.centreCell.join(",") || (all13.has(q) && q !== k)), `${k} joined to the island`).toBe(true);
     }
     const landOf = (m: ReturnType<typeof generateMap>) => m.bounds.land!.dist.filter(d => d > 0).length; // (its land's samples: the island bigger)
     expect(landOf(m13)).toBeGreaterThan(landOf(m10));

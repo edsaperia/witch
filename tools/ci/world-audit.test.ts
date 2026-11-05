@@ -14,3 +14,7 @@ it("keeps each small-world factory reason with the calls it supplies", () => {
 it("does not treat type-only imports or unrelated methods as world creation", () => {
   expect(worldCalls('import type {newGame} from "../game"; object.newGame(1,t);').calls).toEqual([]);
 });
+it("counts the test fixtures' games and maps as world creation too (src/test/preppedGame.ts)", () => {
+  const got = worldCalls('import { preppedGame, sharedMap } from "../test/preppedGame"; const g = preppedGame(77, TUNING), m = sharedMap(5, T);');
+  expect(got.calls.map((c: { builder: string }) => c.builder)).toEqual(["preppedGame", "sharedMap"]);
+});

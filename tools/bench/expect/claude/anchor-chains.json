@@ -1,0 +1,9 @@
+{
+  "reason": "Anchor chains (Ed, 2026-11-03; docs/plans/follower-buffs-and-challenge-areas.md): each adult following her (its sigil in her stack) holds her within leash.anchor.length (30 m) of it, her motion away clamped along the chain and her motion round it kept, and while one follows her she can't take off (any adult, not only a heavy one). Parked adults, youths, babies and legends don't anchor her.",
+  "rules": {
+    "*": "wherever an adult follows her: her position (held within 30 m of it), her mode (no take-off) and what follows from them (who she meets, fights, invites)"
+  },
+  "frames": {
+    "*": "wherever an adult follows her: where she is, her staying on the ground, and its chain drawn taut and glowing at full length"
+  }
+}

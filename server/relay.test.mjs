@@ -13,11 +13,128 @@ async function fixture(t, options) {
 }
 const send = (ws, m) => ws.send(JSON.stringify({ protocol: 1, ...m }));
 const message = async ws => JSON.parse((await once(ws, 'message'))[0].toString());
+
+for (const lostRole of ['host', 'guest']) for (const closeKind of ['bare','abnormal']) test(`authenticated ${lostRole} ${closeKind} close resumes room/actor, rotates ticket and rejects reuse`, {timeout:5000}, async t => {
+  const connect=await fixture(t), h=await host(connect), g=await connect();
+  const joined=message(g), joinedNotice=message(h.ws);send(g,{type:'join',room:h.info.room,token:h.info.token});const gi=await joined;await joinedNotice;
+  const hr=message(h.ws);send(h.ws,{type:'ready'});await hr;
+  const gr=message(g), gn=message(h.ws);send(g,{type:'ready'});await gr;await gn;
+  send(g,{type:'active'});const ack=message(g);send(g,{type:'heartbeat'});await ack;
+  const lost=lostRole==='host'?h.ws:g, peer=lostRole==='host'?g:h.ws, credential=lostRole==='host'?h.info.resume:gi.resume;
+  const away=message(peer), closed=once(lost,'close');if(closeKind==='bare')lost.close();else lost.terminate();await closed;assert.equal((await away).type,'peer-away');
+  const fresh=await connect(), resumed=message(fresh), peerBack=message(peer);send(fresh,{type:'resume',...credential});
+  const result=await resumed;assert.equal(result.type,'resumed');assert.equal(result.role,lostRole);assert.equal(result.player,credential.player);
+  assert.notEqual(result.resume.token,credential.token);assert.equal((await peerBack).type,'peer-resumed');
+  const receiver=lostRole==='host'?g:h.ws, transported=message(receiver);
+  send(fresh,{type:lostRole==='host'?'state':'input',payload:{tick:42}});assert.equal((await transported).payload.tick,42);
+  const bad=await connect(), rejected=once(bad,'close');send(bad,{type:'resume',...credential});assert.equal((await rejected)[0],1008);
+});
+
+test('authenticated replacement of a half-open actor closes only its old socket', {timeout:5000}, async t=>{
+  const connect=await fixture(t),h=await host(connect),g=await connect();
+  const joined=message(g),notice=message(h.ws);send(g,{type:'join',room:h.info.room,token:h.info.token});const gi=await joined;await notice;
+  const gr=message(g),gn=message(h.ws);send(g,{type:'ready'});await gr;await gn;send(g,{type:'active'});
+  const ack=message(g);send(g,{type:'heartbeat'});await ack;
+  const replacement=await connect(),resumed=message(replacement),peer=message(h.ws),oldClosed=once(g,'close');
+  send(replacement,{type:'resume',...gi.resume});assert.equal((await resumed).player,1);await oldClosed;assert.equal((await peer).type,'peer-resumed');
+  const delivered=message(h.ws);send(replacement,{type:'input',payload:{sequence:99}});assert.equal((await delivered).payload.sequence,99);
+});
+
+test('reserved guest rejects wrong/expired tickets and retains the slot until its20s deadline', {timeout:5000}, async t=>{
+  let clock=0;const connect=await fixture(t,{now:()=>clock,checkMs:5}),h=await host(connect),g=await connect();
+  const joined=message(g),notice=message(h.ws);send(g,{type:'join',room:h.info.room,token:h.info.token});const gi=await joined;await notice;
+  const gr=message(g),gn=message(h.ws);send(g,{type:'ready'});await gr;await gn;send(g,{type:'active'});
+  const ack=message(g);send(g,{type:'heartbeat'});await ack;
+  const away=message(h.ws),closed=once(g,'close');g.terminate();await closed;await away;
+  const bad=await connect(),rejected=once(bad,'close');send(bad,{type:'resume',...gi.resume,token:'0'.repeat(64)});assert.equal((await rejected)[0],1008);
+  for(const patch of [{player:0},{room:'7654321'}]){
+    const stranger=await connect(),denied=once(stranger,'close');send(stranger,{type:'resume',...gi.resume,...patch});assert.equal((await denied)[0],1008);
+  }
+  clock=19999;const beat=message(h.ws);send(h.ws,{type:'heartbeat'});await beat;
+  const left=message(h.ws);clock=20000;assert.equal((await left).type,'guest-left');
+  const expired=await connect(),expiredClose=once(expired,'close');send(expired,{type:'resume',...gi.resume});assert.equal((await expiredClose)[0],1008);
+});
+
+test('reserved host expiry ends the guest and releases the old room without accepting an expired ticket', {timeout:5000},async t=>{
+  let clock=0;const connect=await fixture(t,{now:()=>clock,checkMs:5}),h=await host(connect),g=await connect();
+  const joined=message(g),notice=message(h.ws);send(g,{type:'join',room:h.info.room,token:h.info.token});await joined;await notice;
+  const hr=message(h.ws);send(h.ws,{type:'ready'});await hr;
+  const gr=message(g),gn=message(h.ws);send(g,{type:'ready'});await gr;await gn;send(g,{type:'active'});
+  const ack=message(g);send(g,{type:'heartbeat'});await ack;
+  const away=message(g),closed=once(h.ws,'close');h.ws.terminate();await closed;await away;
+  clock=19999;const beat=message(g);send(g,{type:'heartbeat'});await beat;assert.equal(g.readyState,WebSocket.OPEN);
+  const guestClosed=once(g,'close');clock=20000;await guestClosed;
+  const expired=await connect(),rejected=once(expired,'close');send(expired,{type:'resume',...h.info.resume});assert.equal((await rejected)[0],1008);
+  const replacement=await host(connect);assert.equal(replacement.info.room,h.info.room);
+});
+
+test('acknowledges every registered heartbeat without changing the room role', async t => {
+  const connect = await fixture(t), h = await host(connect);
+  for (let i = 0; i < 3; i++) {
+    const reply = message(h.ws); send(h.ws, { type: 'heartbeat' });
+    assert.deepEqual(await reply, { protocol: 1, type: 'heartbeat' });
+  }
+});
 async function host(connect) {
   const ws = await connect(), reply = message(ws);
   send(ws, { type: 'host', room: '1234567' });
   return { ws, info: await reply };
 }
+
+// Saved route v7425 observed host1006 then replacement1008. Characterize one possible
+// cause without assuming that unretained relay logs prove it happened in that run.
+for (const cause of ['transport', 'silence']) test(`correct host ticket after ${cause}: reservation versus expired room`, { timeout: 5000 }, async t => {
+  let clock = 0;
+  const logs = [], connect = await fixture(t, { now: () => clock, checkMs: 5, log: row => logs.push(row) });
+  const h = await host(connect), accepted = message(h.ws);
+  send(h.ws, { type: 'ready' }); await accepted;
+  const closed = once(h.ws, 'close');
+  if (cause === 'transport') { clock = 19999; h.ws.terminate(); }
+  else clock = 20000;
+  assert.equal((await closed)[0], 1006);
+  // The original close callback must finish before a replacement connects.
+  for (let i = 0; !logs.some(row => row.role === 'host') && i < 50; i++) await new Promise(resolve => setTimeout(resolve, 5));
+  const original = logs.find(row => row.role === 'host');
+  assert.equal(original.rule, cause === 'transport' ? 'client-close' : 'silence');
+  if (cause === 'silence') assert.equal(original.limitMs, 20000);
+  clock = 20001;
+  const replacement = await connect();
+  if (cause === 'transport') {
+    const resumed = message(replacement); send(replacement, { type: 'resume', ...h.info.resume });
+    assert.equal((await resumed).type, 'resumed');
+    const heartbeat = message(replacement); send(replacement, { type: 'heartbeat' });
+    assert.equal((await heartbeat).type, 'heartbeat');
+  } else {
+    const rejected = once(replacement, 'close'); send(replacement, { type: 'resume', ...h.info.resume });
+    const [code, reason] = await rejected;
+    assert.equal(code, 1008); assert.equal(reason.toString(), 'Resume unavailable');
+  }
+});
+
+test('three-Hz client activity is not20s silence and still delivers the resumed guest checkpoint', { timeout: 5000 }, async t => {
+  let clock = 0;
+  const logs = [], connect = await fixture(t, { now: () => clock, checkMs: 5, log: row => logs.push(row) });
+  const h = await host(connect), hostReady = message(h.ws); send(h.ws, { type: 'ready' }); await hostReady;
+  const guest = await connect(), joined = message(guest), notice = message(h.ws);
+  send(guest, { type: 'join', room: h.info.room, token: h.info.token }); const gi = await joined; await notice;
+  const ready = message(guest), readyNotice = message(h.ws); send(guest, { type: 'ready' }); await ready; await readyNotice;
+  send(guest, { type: 'active' });
+  // Model message activity at three frames/second, not an actual browser FPS claim.
+  for (let frame = 0; frame <= 180; frame++) {
+    clock = frame * (1000 / 3);
+    const hostBeat = message(h.ws); send(h.ws, { type: 'heartbeat' }); await hostBeat;
+    const guestBeat = message(guest); send(guest, { type: 'heartbeat' }); await guestBeat;
+  }
+  assert.equal(h.ws.readyState, WebSocket.OPEN); assert.equal(logs.some(row => row.rule === 'silence'), false);
+  const away = message(h.ws), closed = once(guest, 'close'); guest.terminate(); await closed; await away;
+  clock += 1000;
+  const replacement = await connect(), resumed = message(replacement), peerResumed = message(h.ws);
+  send(replacement, { type: 'resume', ...gi.resume }); assert.equal((await resumed).type, 'resumed');
+  assert.equal((await peerResumed).type, 'peer-resumed');
+  const received = message(replacement); send(h.ws, { type: 'state', payload: { kind: 'start', tick: 123 } });
+  assert.deepEqual((await received).payload, { kind: 'start', tick: 123 });
+  assert.equal(h.ws.readyState, WebSocket.OPEN);
+});
 
 test('joins a running host and relays state/input with connection-bound identities', { timeout: 5000 }, async t => {
   const connect = await fixture(t), h = await host(connect), guest = await connect();
@@ -65,7 +182,7 @@ test('slow joining guest survives five seconds, readiness restores normal timeou
   send(guest, { type: 'active' });
   // Ensure the active message reached the relay before advancing the fake clock.
   await new Promise(resolve => setTimeout(resolve, 10));
-  const guestClosed = once(guest, 'close'); clock = 11000; await guestClosed;
+  const guestClosed = once(guest, 'close'); clock = 26000; await guestClosed;
   assert.equal(h.ws.readyState, WebSocket.OPEN);
   const hostClosed = once(h.ws, 'close'); clock = 180000; await hostClosed;
 });
@@ -133,7 +250,7 @@ test('host survives bounded silence during guest loading and logs the exact dead
   const guest = await connect(), joined = message(guest), notice = message(h.ws);
   send(guest, { type: 'join', room: h.info.room, token: h.info.token }); await joined; await notice;
   clock = 10000;
-  // Round-trip guest input proves the host remains attached beyond the usual 5-second timeout.
+  // Round-trip guest input proves the host remains attached during loading.
   const input = message(h.ws); send(guest, { type: 'input', payload: {} }); await input;
   assert.equal(h.ws.readyState, WebSocket.OPEN);
   const closed = once(h.ws, 'close'); clock = 20000; await closed;
@@ -151,9 +268,11 @@ test('normal host silence deadline resumes after guest activation', { timeout: 5
   clock = 10000;
   const accepted = message(guest), readyNotice = message(h.ws); send(guest, { type: 'ready' }); await accepted; await readyNotice;
   send(guest, { type: 'active' }); await new Promise(resolve => setTimeout(resolve, 10));
-  const closed = once(h.ws, 'close'); clock = 15000; await closed;
+  clock = 29999; await new Promise(resolve => setTimeout(resolve, 10));
+  assert.equal(h.ws.readyState, WebSocket.OPEN);
+  const closed = once(h.ws, 'close'); clock = 30000; await closed;
   await new Promise(resolve => setTimeout(resolve, 10));
-  assert.equal(logs.find(row => row.role === 'host').limitMs, 5000);
+  assert.equal(logs.find(row => row.role === 'host').limitMs, 20000);
 });
 
 test('close logging distinguishes protocol, client close and joining-grace rules without payload secrets', { timeout: 5000 }, async t => {
@@ -163,6 +282,6 @@ test('close logging distinguishes protocol, client close and joining-grace rules
   const client = await connect(), clientClosed = once(client, 'close'); client.close(); await clientClosed;
   const silent = await connect(), silentClosed = once(silent, 'close'); clock = 180000; await silentClosed;
   await new Promise(resolve => setTimeout(resolve, 10));
-  assert.deepEqual(logs.map(row => row.rule).sort(), ['client-close', 'join-stall', 'protocol']);
+  assert.deepEqual(logs.map(row => row.rule).sort(), ['client-close', 'handshake', 'protocol']);
   assert.equal(JSON.stringify(logs).includes('secret-invalid-json'), false);
 });

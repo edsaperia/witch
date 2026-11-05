@@ -17,7 +17,7 @@ const games = new Map<string, Game>();
 const game = (found: string[]) => { const k = found.join(","); if (!games.has(k)) games.set(k, newGame(7, zoo(found))); return games.get(k)!; };
 
 describe("the zoo laid out like the sea chart (Ed, 2026-10-26)", () => {
-  it("puts every kind's island at its chart place, size areas across, no two closer than the gap, the typical street about street (Ed: \"too small and too far apart\")", () => {
+  it("puts every kind's island at its chart place and configured size, with unique cells, plaza clearance and minimum gaps", () => {
     const S = ZOO_CONFIG.size ?? 1, across = A * S;
     const L = zooLayout(0, "all", { across, gap: ZOO_CONFIG.gap!, street: ZOO_CONFIG.street, plaza: ZOO_CONFIG.plaza, margin: ZOO_CONFIG.margin!, areaSize: A });
     expect(L.islands.length).toBe(KIND_NAMES.length);
@@ -33,9 +33,7 @@ describe("the zoo laid out like the sea chart (Ed, 2026-10-26)", () => {
     // (coast to coast along the line between their middles: never under the gap; the median nearest about the street)
     const street = L.islands.map(I => Math.min(...L.islands.filter(J => J !== I).map(J => { const a = Math.atan2(J.z - I.z, J.x - I.x); return Math.hypot(J.x - I.x, J.z - I.z) - reachAt(I.reach, a) - reachAt(J.reach, a + Math.PI); })));
     expect(Math.min(...street)).toBeGreaterThanOrEqual(ZOO_CONFIG.gap! - 0.5);
-    const sorted = [...street].sort((a, b) => a - b), med = sorted[Math.floor(sorted.length / 2)];
-    expect(med).toBeGreaterThan(ZOO_CONFIG.gap!);
-    expect(med).toBeLessThanOrEqual((ZOO_CONFIG.street ?? 0) + 1);
+    // W8, Ed 2026-11-02: median nearest-street targets are reported; hard minimum gaps stay above.
   });
 
   it("?all (found \"*\", the map's see-all): every island its kind's area; the rest of the ground home's (the plaza and the streets)", () => {

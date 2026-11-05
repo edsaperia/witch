@@ -11,14 +11,14 @@ const http = require("http"), fs = require("fs"), path = require("path");
 let playwright; try { playwright = require("playwright"); } catch { playwright = require("/opt/node22/lib/node_modules/playwright"); }
 const root = path.resolve(process.argv[2] || "dist"), ONLY = process.env.ONLY ? process.env.ONLY.split(",") : null;
 const types = { ".html": "text/html", ".js": "text/javascript", ".css": "text/css", ".json": "application/json", ".png": "image/png", ".ogg": "audio/ogg", ".wasm": "application/wasm", ".woff2": "font/woff2" };
-const H = require("../../config/house/load.mjs").loadHouse();
+const { activeObjectStart } = require("./house-bed-start.cjs");
 const fail = [];
 const check = (ok, what) => { console.log(`${ok ? "ok  " : "FAIL"} ${what}`); if (!ok) fail.push(what); };
-/** Where she stands to use object `id`: on its side facing its room's middle (the hub's for the hub's), `gap` m off it. */
-const front = (id, gap = 0.7) => {
-  const o = H.objects.find(q => q.id === id), r = H.rooms.find(q => q.id === o.room); // (the oak's rooms' boxes overlap: its own)
-  const cx = r ? (r.x0 + r.x1) / 2 : 0, cz = r ? (r.z0 + r.z1) / 2 : 0, dx = cx - o.x, dz = cz - o.z, side = Math.abs(dx) > Math.abs(dz);
-  return side ? [o.x + Math.sign(dx || 1) * (o.w / 2 + gap), o.z] : [o.x, o.z + Math.sign(dz || 1) * (o.d / 2 + gap)];
+/** The selected layout's shared interaction side for object `id`, `gap` m off it. */
+const front = (id, url, gap = 0.7) => {
+  const p = activeObjectStart(url, { x: 0, z: 0 }, id, gap);
+  console.log(`info active overlay fixture ${JSON.stringify(p)}`);
+  return [p.x, p.z];
 };
 // Each case: how it opens, what of it shows, and something of it to compare before and after the pause (it mustn't change).
 const CASES = [
@@ -62,7 +62,7 @@ const CASES = [
   // Four-area world: pause/input shielding uses house overlays, not distant scenery or area diversity.
   await page.goto(`http://127.0.0.1:${server.address().port}/?creator=0&quick=1&seed=123&island=4&wave=off&debug`);
   await page.waitForFunction(() => window.witch && window.witch.ready, null, { timeout: 900000, polling: 1000 });
-  await page.addStyleTag({ content: "#pause-sliders { transition: none !important; }" }); // (where they rest, not mid-slide: a software GL draws a frame in seconds)
+  await page.emulateMedia({ reducedMotion: "reduce" }); // use the normal instant transition for deterministic hit tests
   await page.keyboard.press("Enter");
   await page.waitForFunction(() => window.witch.game.clock.time > 2, null, { timeout: 300000, polling: 500 });
   await timing("load and start", t0);
@@ -78,7 +78,7 @@ const CASES = [
     // open it
     const isOpen = () => C.on ? page.evaluate(C.on) : page.evaluate(([sel, shown]) => { const e = document.querySelector(sel); return !!e && (!shown || getComputedStyle(e).display !== "none"); }, [C.sel, !!C.shown]);
     // (a house object: stood at it, then E, pressed till the rules' step has seen her there: nothing opens by nearness, Ed's playtest of 2026-10-26)
-    if (C.at) { await put(front(C.at)); try { await page.waitForFunction(at => { const p = document.querySelector("#station-panel.in"); return !p || p.dataset.station === at; }, C.at, { timeout: 120000, polling: 250 }); } catch { /* (checked below: it opens) */ } /* (the last station's panel out, however slow the frame that sees her leave it) */ for (let i = 0; i < 5 && !(await isOpen()); i++) { await page.keyboard.press("KeyE"); for (let j = 0; j < 40 && !(await isOpen()); j++) await page.waitForTimeout(500); } /* (one E, then up to 20 s for a slow frame to see it: E closes it too) */ } else await C.open(page);
+    if (C.at) { await put(front(C.at, page.url())); try { await page.waitForFunction(at => { const p = document.querySelector("#station-panel.in"); return !p || p.dataset.station === at; }, C.at, { timeout: 120000, polling: 250 }); } catch { /* (checked below: it opens) */ } /* (the last station's panel out, however slow the frame that sees her leave it) */ for (let i = 0; i < 5 && !(await isOpen()); i++) { await page.keyboard.press("KeyE"); for (let j = 0; j < 40 && !(await isOpen()); j++) await page.waitForTimeout(500); } /* (one E, then up to 20 s for a slow frame to see it: E closes it too) */ } else await C.open(page);
     try { await page.waitForFunction(C.on ? C.on : ([sel, shown]) => { const e = document.querySelector(sel); return !!e && (!shown || getComputedStyle(e).display !== "none"); }, C.on ? null : [C.sel, !!C.shown], { timeout: 120000, polling: 250 }); }
     catch { check(false, `${C.id}: opens`); continue; }
     await page.waitForTimeout(1500); // (slid in)
@@ -95,7 +95,7 @@ const CASES = [
     if (C.state) check(await page.$eval(C.sel, e => getComputedStyle(e).visibility === "hidden"), `${C.id}: station text is hidden behind the transparent pause page`);
     if (!(await isOpen())) console.log(`  ${C.id}: closed by ${JSON.stringify(await page.evaluate(() => (window.witch.stationShuts ?? []).slice(-3)))}`);
     const top = await page.evaluate(() => {
-      const s = document.getElementById("pause-sliders")?.getBoundingClientRect(), mid = (x, y) => document.elementFromPoint(x, y);
+      const s = document.querySelector("#pause-sliders .left")?.getBoundingClientRect(), mid = (x, y) => document.elementFromPoint(x, y);
       const atSliders = s ? mid(s.left + s.width / 2, s.top + Math.min(200, s.height / 2)) : null;
       const atMiddle = mid(innerWidth * 0.62, innerHeight / 2);
       const under = ["#chart-overlay", "#station-panel", "#studio-panel", "#finds-dev", "canvas"];
@@ -164,6 +164,38 @@ const CASES = [
     if (await page.evaluate(() => !!document.querySelector("#chart-overlay"))) console.log(`info ${C.id}: a chart is still up after it`);
     await timing(C.id, tc);
   }
+  // Check the real registry against the built menu, including folded groups.
+  const registry = path.resolve(__dirname, "../../config/decisions");
+  const decisions = [require("../../config/decisions.json"), ...fs.readdirSync(registry)
+    .filter(f => f.endsWith(".json")).map(f => JSON.parse(fs.readFileSync(path.join(registry, f), "utf8")))]
+    .flatMap(group => group.decisions.map(d => d.id));
+  await page.keyboard.press("Escape");
+  await page.waitForSelector("#pause-sliders.open");
+  const panes = await page.evaluate(expected => {
+    const root = document.querySelector("#pause-sliders");
+    const rows = [...root.querySelectorAll(".s[data-id]")];
+    const groups = [...root.querySelectorAll(".grp")].map(group => group.dataset.group);
+    return groups.length === new Set(groups).size && rows.length === expected.length && expected.every(id => {
+      const hits = rows.filter(row => row.dataset.id === id);
+      return hits.length === 1 && !!hits[0].closest(".left");
+    }) && !root.querySelector(".right .grp, .right input[type=range]") && [...root.querySelectorAll(".copyall, select, textarea, #pause-btns button")].every(el => el.closest(".right"));
+  }, decisions);
+  check(panes, "every registered decision appears once, with every settings group on the left and actions on the right");
+  for (const [label, width, height] of [["desktop", 1280, 720], ["phone", 390, 844]]) {
+    await page.setViewportSize({ width, height });
+    const fits = await page.evaluate(() => {
+      const rect = side => document.querySelector("#pause-sliders ." + side).getBoundingClientRect();
+      const l = rect("left"), r = rect("right");
+      return document.documentElement.scrollWidth <= innerWidth && l.width > 0 && r.width > 0 &&
+        (l.right < r.left || l.bottom < r.top);
+    });
+    check(fits, label + ": both panes fit with visible space between them");
+  }
+  await page.keyboard.press("Escape");
+  await page.waitForFunction(() => !document.body.classList.contains("paused"));
+  check(await page.evaluate(() => document.querySelector("#pause-sliders").inert &&
+    [...document.querySelectorAll("#pause-sliders .pane")].every(el => getComputedStyle(el).visibility === "hidden")),
+  "both panes are hidden and unfocusable during play");
   check(errors.length === 0, `no page errors${errors.length ? ": " + errors.slice(0, 3).join("; ") : ""}`);
   await browser.close(); server.close();
   if (fail.length) { console.log(`FAILED (${fail.length}):\n` + fail.join("\n")); process.exit(1); }

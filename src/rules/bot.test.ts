@@ -1,13 +1,14 @@
 // The bots (rules/bot.ts): the balance tool's and the bot game's one player made of rules.
 import { describe, expect, it } from "vitest";
-import { TUNING, withTuning } from "./tuning";
-import { newGame, stepGame, type Game } from "./game";
+import { TUNING } from "./tuning";
+import { hitWitch, stepGame, type Game } from "./game";
 import { article, BOT_GAME, newBot, plural, type BotKind, type BotOptions } from "./bot";
+import { preppedGame } from "../test/preppedGame"; // (games on a map made once a file from its prep)
 
-// Keep the seeded radius runs and ten-area regressions: full-night wins, cross-area sleeper targeting and 150–200 s travel/landing behavior depend on their routes and populations.
+// Seeded movement and replay contracts remain here. Full-night/recruitment outcomes are tools/balance/bot-outcomes.mjs.
 /** A fresh game as the bot game starts one: unpaused, waiting for the party spell. */
 function fresh(seed = 123): Game {
-  const g = newGame(seed, TUNING);
+  const g = preppedGame(seed, TUNING);
   g.clock.paused = false;
   g.party.spellAt = null;
   return g;
@@ -42,35 +43,33 @@ describe("the bot", () => {
     const far = Math.max(...track.map(p => { const [x, z] = p.split(",").map(Number); return Math.hypot(x - home.x, z - home.z); }));
     expect(far).toBeGreaterThan(30);
     expect([...said].some(s => /^(flying to|inviting) the /.test(s))).toBe(true);
-    // (leashed: their runes picked up; or, knocked out lately, let go happy where they stood till she fetches them: rules/knockout.ts letGoHappy)
-    expect(g.leash.stack.length + g.leash.placed.length + g.creatures.filter(c => c.dropped && !c.gone).length).toBeGreaterThan(0);
+    // (leashed: their runes picked up; or, knocked out lately, parked where she went down till she fetches them: rules/knockout.ts)
+    expect(g.leash.stack.length + g.leash.placed.length).toBeGreaterThan(0);
   });
 
-  // (seeds 11 and 33: the two ways it stood idle with a full leash and never finished the night, 2026-10-26: on 11 its home guards
-  // turned the stack over every step and never went down, a fighter of the same level already at the bottom; on 33 it kept the
-  // last hare of an area with no legend, so the area could never be cleared, and had no one else to invite)
-  it.each([11, 22, 33])("plays the islands' pace (bots-again, 2026-10-11): on a 10-area home it recruits through the run and wins the night (seed %i)", seed => {
-    // (before: it stood at each next soundsystem before its wave, invited 3 to 5 all run and lost every night)
-    // (seed 11: 8919, which this run was tuned on, lost once the bare broom lost the plain broom's quick take-off, Ed 2026-10-23, a
-    // chaotic run; on the bare broom seeds 11, 22 and 33 win)
-    // (seed 22 since the legend circles were sized to their legends, 2026-10-26: their maps moved, and on seed 11 the bot then
-    // stood idle with a full leash from 6 minutes on, never finishing the night, as seed 33 already did before; both fixed in the
-    // bot since, above: all three run)
-    const g = newGame(seed, withTuning({ map: { ...TUNING.map!, islandAreas: 10 } }));
-    g.clock.paused = false; g.witch = { ...g.witch, seated: false, perch: false }; // (on the ground by the treehouse, as this run was tuned from; the deck's start shifts this chaotic run: 8 seeds from one spot invite about as many with it on as off)
-    const bot = newBot("skilled");
-    let invited = 0;
-    const babies = g.creatures.filter(c => c.level === 0), alreadyHappy = new Set(babies.filter(c => c.state === "happy").map(c => c.id));
-    const joinedBabies = new Set<number>(); // Ed, 2026-10-31: babies join through soundsystems, not invitation events.
-    for (let i = 0; i < 20 * 60 * 60 && g.win?.phase !== "won" && !g.partyOver; i++) {
-      stepGame(g, bot.decide(g), 1 / 60);
-      for (const e of g.witches[0].invites.events) if (e.kind === "happy") invited++;
-      for (const c of babies) if (c.state === "happy" && !alreadyHappy.has(c.id)) joinedBabies.add(c.id);
+  it("back from a knockout, the skilled bot goes back to where she went down and picks up the sigils that fell there (Ed, 2026-11-03)", () => {
+    const g = fresh(123), W = g.witches[0], d = g.map.dancefloor;
+    g.party.spellAt = -100; g.party.paused = true; // (the party on, no waves)
+    const spot = { x: d.x + 30, z: d.z + 40 };
+    W.body = { ...W.body, seated: false, perch: false, mode: "ground", lift: 0, x: spot.x, z: spot.z };
+    for (const c of g.creatures) if (!c.boss && Math.hypot(c.x - spot.x, c.z - spot.z) < 150) c.gone = true;
+    const mine = g.creatures.filter(c => !c.gone && !c.boss && !c.leashed && c.level === 1).slice(0, 2);
+    for (const c of mine) { Object.assign(c, { x: spot.x - 2, z: spot.z + 2, tx: spot.x - 2, tz: spot.z + 2, leashed: true, state: "leashed", fight: undefined, siege: undefined, enraged: false }); W.leash.stack.push(c.id); }
+    g.byArea = null;
+    const bot = newBot("skilled", { feed: false, quests: false, relics: false });
+    stepGame(g, bot.decide(g), 1 / 60); // (it notes what she carries)
+    W.health.hp = 1; hitWitch(g, 0, g.clock.time, g.tuning);
+    expect(W.ko).not.toBeNull();
+    const said = new Set<string>();
+    let fell = false;
+    for (let i = 0; i < 150 * 60 && (W.ko || !mine.every(c => W.leash.stack.includes(c.id))); i++) {
+      stepGame(g, bot.decide(g), 1 / 60); said.add(bot.doing);
+      fell ||= mine.every(c => W.leash.placed.some(p => p.id === c.id && Math.hypot(p.x - spot.x, p.z - spot.z) < 15));
     }
-    expect(g.partyOver).toBeFalsy();
-    expect(g.win?.phase).toBe("won");
-    // Count both supported recruitment paths; retain the 15-creature floor and the full-night victory requirement.
-    expect(invited + joinedBabies.size).toBeGreaterThanOrEqual(15);
+    expect(fell, "they fell where she went down").toBe(true);
+    expect(W.leash.placed.filter(p => mine.some(c => c.id === p.id)), "every fallen sigil picked up").toEqual([]);
+    expect(mine.every(c => W.leash.stack.includes(c.id))).toBe(true);
+    expect([...said].some(t => /^gathering her posse/.test(t))).toBe(true);
   }, 240000);
 
   it("is deterministic: the same game and steps give the same run", () => {
@@ -96,20 +95,6 @@ describe("the bot", () => {
     play(h, "hover", 10);
     expect(h.witch.mode).toBe("treetop");
   });
-
-  it("wins someone on the island it once won no one on (#650): its letters wake a napper from the next area (Ed, 2026-10-11: \"Letters wake them\")", () => {
-    // Seed 1000 on the 10-area island: its first target, an elk, naps across the border from where its area's site lets her land.
-    // When a sleeper took no 💌 till she was on the ground in its own area, the skilled bot fired at it from the next area all run.
-    const g = newGame(1000, withTuning({ map: { ...TUNING.map!, islandAreas: 10 } }));
-    g.clock.paused = false; g.witch = { ...g.witch, seated: false };
-    const bot = newBot("skilled"), w = g.witches[0];
-    let won = 0;
-    for (let i = 0; i < 40 * 60 && !won; i++) {
-      stepGame(g, bot.decide(g), 1 / 60);
-      won += w.invites.events.filter(e => e.kind === "happy").length;
-    }
-    expect(won).toBeGreaterThan(0);
-  }, 60000);
 
   it("names a species in the plural for its tag", () => {
     expect(plural("fox")).toBe("foxes");

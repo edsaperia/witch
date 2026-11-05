@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { PlaytestJournal, journalPrunePlan, type JournalEntry, type JournalMarker, type JournalPage, type JournalStore } from "./playtestJournal";
+import { PlaytestJournal, JOURNAL_DEBUG_BYTES, journalPrunePlan, type JournalEntry, type JournalMarker, type JournalPage, type JournalStore } from "./playtestJournal";
 
 function fixture() {
   const pages = new Map<string, JournalPage>(), entries = new Map<string, JournalEntry[]>();
@@ -22,6 +22,58 @@ function fixture() {
 }
 
 describe("incremental playtest journal", () => {
+  it("coalesces flushes behind a blocked store and reconciles evicted rows without queueing a batch per request", async () => {
+    const f = fixture(), journal = new PlaytestJournal("/test", "session", "blocked", "build", f.store, f.markers, 1, { bytes: 2000, count: 2 });
+    await journal.ready;
+    const append = f.store.append;
+    let release!: () => void, entered!: () => void, calls = 0;
+    const blocked = new Promise<void>(resolve => { release = resolve; });
+    const started = new Promise<void>(resolve => { entered = resolve; });
+    f.store.append = async (page, rows, removed) => {
+      if (++calls === 1) { entered(); await blocked; }
+      await append(page, rows, removed);
+    };
+    journal.append("error", "keep error"); journal.append("recording:event", "old input");
+    const first = journal.flush(); await started;
+    const waiting: Promise<void>[] = [];
+    for (let i = 0; i < 100; i++) {
+      journal.append("recording:event", { tick: i });
+      waiting.push(journal.flush());
+    }
+    expect(calls).toBe(1);
+    release(); await Promise.all([first, ...waiting]);
+    expect(calls).toBe(2);
+    expect(f.entries.get("blocked")?.map(row => row.data)).toEqual(["keep error", { tick: 99 }]);
+    expect(f.pages.get("blocked")!.bytes).toBeLessThan(2000);
+    await journal.close();
+  });
+  it("bounds durable debug growth across a long pause and reload while preserving warnings and errors", async () => {
+    const f = fixture(), journal = f.open("paused");
+    journal.append("error", { message: "before pause" });
+    journal.append("slowframe", { gap: 19533 });
+    for (let second = 0; second < 600; second++) {
+      journal.append("recording:event", { tick: second, debug: "x".repeat(2048) });
+      if (second % 10 === 0) await journal.flush();
+    }
+    await journal.flush();
+    const rows = f.entries.get("paused")!;
+    expect(f.pages.get("paused")!.bytes).toBeLessThan(JOURNAL_DEBUG_BYTES + 32 * rows.length);
+    expect(rows.some(r => r.level === "error" && (r.data as { message: string }).message === "before pause")).toBe(true);
+    expect(rows.some(r => r.level === "warn" && (r.data as { gap: number }).gap === 19533)).toBe(true);
+    const reloaded = f.open("reloaded", 2); expect((await reloaded.ready).unexpected).toBe(true);
+    const bundle = await reloaded.download() as { previous: { entries: JournalEntry[] }[] };
+    expect(bundle.previous[0].entries.filter(r => r.level === "error" || r.level === "warn")).toHaveLength(2);
+    await journal.close(); await reloaded.close();
+  });
+  it("does not evict important records even when they alone exceed the debug budget", async () => {
+    const f = fixture(), journal = new PlaytestJournal("/test", "session", "important", "build", f.store, f.markers, 1, { bytes: 400, count: 1 });
+    for (let i = 0; i < 8; i++) journal.append(i % 2 ? "error" : "slowframe", { index: i });
+    for (let i = 0; i < 20; i++) journal.append("recording:event", { tick: i });
+    await journal.flush();
+    expect(f.entries.get("important")).toHaveLength(8);
+    expect(f.entries.get("important")!.every(r => r.level === "warn" || r.level === "error")).toBe(true);
+    await journal.close();
+  });
   it("keeps committed records and the last fifty notable events after an unexpected reload", async () => {
     const f = fixture(), first = f.open("first");
     first.append("input", { tick: 1 });
@@ -43,6 +95,24 @@ describe("incremental playtest journal", () => {
     await second.close();
     const third = f.open("third", 3);
     expect((await third.ready).unexpected).toBe(false);
+    await third.close();
+  });
+  it("an ordinary reload is not an unexpected end even though its pagehide write never commits (crash1823)", async () => {
+    const f = fixture();
+    // Chromium: IndexedDB work a page starts in pagehide never commits before the unload.
+    let unloading = false;
+    const dying: JournalStore = { ...f.store, append: (page, rows, removed) => unloading ? new Promise<void>(() => {}) : f.store.append(page, rows, removed) };
+    const first = new PlaytestJournal("/test", "session", "first", "build", dying, f.markers, 1); await first.ready;
+    first.append("input", { tick: 1 }); await first.flush();
+    unloading = true; first.pageHidden();
+    const second = f.open("second", 2);
+    expect(await second.ready).toEqual({ unexpected: false, persistent: true });
+    expect(f.pages.get("first")!.closed).toBe(true);
+    expect(f.entries.get("first")).toHaveLength(1);
+    // A page that dies without pagehide (a renderer crash or kill) still reads as unexpected.
+    const third = f.open("third", 3);
+    expect((await third.ready).unexpected).toBe(true);
+    expect(f.pages.get("second")!.closed).toBe(false);
     await third.close();
   });
   it("leaves the unexpected-end marker after storage failure without throwing", async () => {

@@ -15,7 +15,7 @@ const COMBAT = path.join(root, "config/combat.json"), ATTACKS = path.join(root, 
 const check = process.argv.includes("--check");
 
 /** combat.json's text with its `attacks` block replaced by `attacks` (as the file writes it: one space a level). */
-export function withAttacks(text, attacks) {
+function withAttacks(text, attacks) {
   const at = text.indexOf('\n "attacks": {');
   if (at < 0) throw new Error("combat.json: no top-level attacks block");
   let i = text.indexOf("{", at), depth = 0, inStr = false;

@@ -4,18 +4,20 @@
 // one in a random order weighted toward the edge ("random, weighted towards the edge, filling the middle last"), each flashing as
 // it lights, all one warm gold, the star nearest the middle last. When the game is ready that last star goes supernova (after
 // Cassiopeia A, Ed's reference): a white flash, a ragged shell of red, blue, gold and green gas opening out from it, the screen
-// white, then the white falling away straight onto her dark bedroom and her alarm ("transitioning straight to the dark bedroom
-// and the alarm going off").
+// white, then the white falling away onto her dark bedroom and her alarm ("transitioning straight to the dark bedroom and the
+// alarm going off"): the whole screen fading out over a few seconds (Ed, 2026-11-03: "can we fade from the loading screen to the
+// bedroom over a few seconds"; src/ui/loadingFade.js), the wake-up starting behind it as it begins.
 // Plain JS on a 2D canvas at one art pixel a canvas pixel: no three.js, nothing to wait for, so it's up at the page's first paint
 // (src/loading.js starts it) while the game's code loads and its night is made. main.ts drives it through `window.witchLoading`:
-// `set(share)` as the load goes (0 to 1), `finish()` once the game's ready, `cancel()` for a start with no wake-up.
+// `set(share)` as the load goes (0 to 1), `finish(wake)` once the game's ready, `cancel()` for a start with no wake-up.
 import treeStrokes from "./loadingTree.json";
+import { FADE_OUT, fadeSeconds, prefersReducedMotion, revealGame } from "./loadingFade.js";
 
 const rand = seed => () => ((seed = (seed * 16807) % 2147483647) / 2147483647);
 
 /** How the stars light: the edge first by EDGE (0 plain random), RATE stars a second at most (a jump in the load fills over a
- *  moment), each flashing for FLASH s, the unlit ones at GHOST (0: an empty sky, Ed's call, the seal showing only as it lights); the supernova to white over NOVA s, the white clearing over CLEAR s. The tuning's loading block sets them (startLoadingScreen's knobs). */
-let EDGE = 1, RATE = 90, FLASH = 0.6, NOVA = 2.6, CLEAR = 1.2, GHOST = 0, FPS = 10;
+ *  moment), each flashing for FLASH s, the unlit ones at GHOST (0: an empty sky, Ed's call, the seal showing only as it lights); the supernova to white over NOVA s, the whole screen then fading out over FADE s. The tuning's loading block sets them (startLoadingScreen's knobs). */
+let EDGE = 1, RATE = 90, FLASH = 0.6, NOVA = 2.6, FADE = FADE_OUT, GHOST = 0, FPS = 10;
 const STAR = [255, 214, 140];
 
 /** The seal's stars, in seal units (its middle at 0, 0): the tree's strokes resampled every SP, each a little off its line, then the
@@ -150,9 +152,9 @@ function remnantPicture() {
 }
 
 /** Start the loading screen over the page; `font` the CSS font family for the words (loaded by the caller). */
-/** `knobs` the tuning's loading block (edge, rate, flash, ghost, nova, clear, fps), any left out as built. */
+/** `knobs` the tuning's loading block (edge, rate, flash, ghost, nova, fadeOut, fps), any left out as built. */
 export function startLoadingScreen(font, knobs = {}) {
-  ({ edge: EDGE = EDGE, rate: RATE = RATE, flash: FLASH = FLASH, ghost: GHOST = GHOST, nova: NOVA = NOVA, clear: CLEAR = CLEAR, fps: FPS = FPS } = knobs);
+  ({ edge: EDGE = EDGE, rate: RATE = RATE, flash: FLASH = FLASH, ghost: GHOST = GHOST, nova: NOVA = NOVA, fadeOut: FADE = FADE, fps: FPS = FPS } = knobs);
   const root = document.createElement("div");
   root.id = "loading-screen";
   root.style.cssText = "position:fixed;inset:0;z-index:1000;background:#05060e;pointer-events:none";
@@ -197,6 +199,8 @@ export function startLoadingScreen(font, knobs = {}) {
   const cross = (X, Y, r, g, b, a, reach) => { for (let i = 1; i <= reach; i++) { const f = a * (1 - (i - 1) / (reach + 0.5)); add(X + i, Y, r, g, b, f); add(X - i, Y, r, g, b, f); add(X, Y + i, r, g, b, f); add(X, Y - i, r, g, b, f); } };
 
   let share = 0, lit = 0, finishAt = -1, novaAt = -1, done = false, t0 = performance.now(), lastFrame = 0;
+  /** finish's: the game's start behind the white, and the screen's way there should its frames never get it there (a fault). */
+  let wake = null, fallback = 0;
   const litAt = [];
   // the heavy pictures made a little after the first paint, so the sky's up at once
   setTimeout(() => { gas = gasPicture(); gal = galaxyStars(); }, 50);
@@ -249,7 +253,8 @@ export function startLoadingScreen(font, knobs = {}) {
       if (O && Xa && Ya) { const k = 2 / GT, ax = (Xa[0] - O[0]) * k, ay = (Xa[1] - O[1]) * k, bx = (Ya[0] - O[0]) * k, by = (Ya[1] - O[1]) * k;
         x.save(); x.globalCompositeOperation = "lighter"; x.globalAlpha = 0.26; x.setTransform(ax, ay, bx, by, O[0] - (ax + bx) * GT / 2, O[1] - (ay + by) * GT / 2); x.drawImage(gas, 0, 0); x.restore(); }
     }
-    // the supernova: the last star's flash, then its remnant opening out, the screen to white, then the white clearing onto the game
+    // the supernova: the last star's flash, then its remnant opening out, the screen to white, then the game woken behind it and the
+    // screen fading out onto it (cover)
     if (novaAt >= 0) {
       const last = stars.find(s => s.at === N - 1), c = last && project(last.x, last.y, 0), m = Math.max(W, H);
       const k = Math.min(1, hand / NOVA), ease = 1 - Math.pow(1 - k, 2.2), f = Math.max(0, 1 - hand / 0.7);
@@ -258,12 +263,19 @@ export function startLoadingScreen(font, knobs = {}) {
       if (c && remnant) { const R = (0.04 + 0.9 * ease) * m * 0.62; x.save(); x.globalCompositeOperation = "lighter"; x.globalAlpha = Math.min(0.85, k * 2.2); x.translate(c[0], c[1]); x.rotate(k * 0.25); x.drawImage(remnant, -R, -R, 2 * R, 2 * R); x.restore(); }
       const w = hand < NOVA ? Math.pow(Math.max(0, (hand - NOVA * 0.72) / (NOVA * 0.28)), 1.6) : 1;
       white.style.opacity = w.toFixed(3);
-      if (hand >= NOVA) { cv.style.display = "none"; root.style.background = "transparent"; white.style.opacity = Math.max(0, 1 - (hand - NOVA) / CLEAR).toFixed(3); }
-      if (hand >= NOVA + CLEAR) close();
+      if (hand >= NOVA) cover();
     }
   };
   requestAnimationFrame(frame);
-  function close() { done = true; removeEventListener("resize", fit); root.remove(); }
+  function close() { done = true; clearTimeout(fallback); removeEventListener("resize", fit); root.remove(); }
+  /** The supernova's white full: its frames stopped, the game started behind it (finish's `wake`: main.ts wakeFirst, the alarm), and
+   *  once the game has drawn that, the screen fading out onto it over FADE s (src/ui/loadingFade.js; short under reduced motion). */
+  function cover() {
+    if (done) return;
+    done = true; clearTimeout(fallback); removeEventListener("resize", fit);
+    cv.style.display = "none"; root.style.background = "transparent"; white.style.opacity = "1";
+    revealGame(root, fadeSeconds(FADE, prefersReducedMotion()), { wake });
+  }
   // The load's progress: its phases by the game's timing marks, each its share of a cold load's time (the cloud's, 2026-10-26: the
   // code and the map 6%, the world's 19 build steps 13%, the ground round her 9%, the art workers' sets 66%, the shaders, textures
   // and first draws 6%: render/view.ts readiness), each filling by its own count.
@@ -282,8 +294,13 @@ export function startLoadingScreen(font, knobs = {}) {
     view: null,
     /** The load's progress, 0 to 1 (never going back). */
     set(s) { share = Math.max(share, Math.min(1, s)); },
-    /** The game's ready: the last stars light, the last goes supernova, and the screen clears onto the game. */
-    finish() { if (finishAt < 0) { remnant ??= remnantPicture(); finishAt = performance.now(); } },
+    /** The game's ready: the last stars light, the last goes supernova, and the screen, white, calls `start` (the wake-up) and fades
+     *  out onto the game. (Should its frames stall short of that, the white and the fade come anyway, NOVA + 15 s on.) */
+    finish(start) {
+      if (finishAt >= 0) return;
+      remnant ??= remnantPicture(); finishAt = performance.now(); wake = start ?? null;
+      fallback = setTimeout(cover, (NOVA + 15) * 1000);
+    },
     /** Gone at once (a start with no wake-up behind it). */
     cancel() { close(); },
   };

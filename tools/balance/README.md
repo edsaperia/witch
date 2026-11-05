@@ -10,6 +10,14 @@ Each bag's 💌s against one wild creature: the real rules headless, her standin
 node tools/balance/bagstun.mjs [--bags satchel,bumbag,...] [--species fox] [--levels 1,2] [--dists 10,20,30] [--seeds 2] [--time 60] [--pack 1]
 ```
 
+## `bot-outcomes.mjs`
+
+Optional observations, moved from bot.test.ts under Ed's 2 Nov outcome-statistics ruling.
+
+```
+node tools/balance/bot-outcomes.mjs > previews/bot-outcomes.json
+```
+
 ## `bottrace.mjs`
 
 A bot's run, as a trace: every change in what it's doing, with the clock, her place, mode, hits, stack, the wave and the soundsystems standing; for reading why a bot plays as it does.
@@ -199,6 +207,18 @@ node tools/balance/pulsegaps.mjs [--seeds 10] [--speed 4] [--interval 60] [--boo
 
 Observation and presentation only: no combat, progression or wave model lives here.
 
+## `report-fixture-sanity.mjs`
+
+Nonblocking T6 scenario observations; not a *.test file and not part of replay assertions.
+
+```
+node tools/balance/report-fixture-sanity.mjs [--out=previews/report-fixture-sanity.json]
+```
+
+## `report-replay.mjs`
+
+Integrity assertions only.
+
 ## `report-runtime.mjs`
 
 Real-rule runner and isolated invitation fixtures for report.mjs; no simulated combat model.
@@ -285,6 +305,7 @@ node tools/balance/waves.mjs --report a.json,b.json,...   (merge several runs' J
 - `expert-progress.test.mjs`
 - `expert-search-core.test.mjs`
 - `expert-space.test.mjs`
+- `report-fixture-split.test.mjs`
 - `report.test.mjs`
 - `survey.test.mjs`
 - `surveys`

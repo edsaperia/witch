@@ -3,15 +3,25 @@
 // items, its colours' parts, a row of its colour grid, a fit slider; and the Workshop's (Ed, 2026-10-22/23; docs/backlog/workshop.md):
 // a slot's part cards at the bay (the empty slot first, then the slot's parts, the ones she hasn't found greyed, no hint), the sets'
 // chips (their progress, lit when whole), and the pegboard's 3 × 3 board (read-only: fitting stays at the bay). The arrows and the
-// d-pad move along a line (its n cells) and between lines.
+// d-pad move along a line (its n cells) and between lines. And the Broom station's Trail row (Ed, 2026-11-03): her cooldown trail's
+// colour presets, a tile each (render/trailColours.ts).
 import { BOARD, PARTS, SETS, SLOTS, broomTuning, completeSet, emptySlot, fitPart, partById, partsFor, partsPull, setProgress, type BroomPart, type Fitted, type Slot } from "../rules/broomParts";
 import { broomSpell } from "../rules/spells";
 import { itemsToChoose, shownItems, type Shelf } from "../rules/wardrobe";
 import type { Tuning } from "../rules/tuning";
 import { bindings, type Bindings } from "../platform/bindings";
+import { TRAIL_PRESETS } from "../render/trailColours";
+
+/** How a shelf's item cards picture each item (Ed, 2026-11-02: "In treehouse stations: dressing, wardrobe, cloak, hat mirror: in the
+ *  preview boxes on the menu, show the clothing item alone instead of a portrait of the witch"; art/witch.js witchCardSprite, drawn by
+ *  ui/stationPanel.ts wearPicture): the dressing table's her head and shoulders, hat off ("for skin tone / hair / earrings / glasses,
+ *  render her from shoulders to top of her head, without hat"); the shoe rack's her legs ("shoes should show her legs, thighs down");
+ *  the cloak pegs' all of her from behind, hat off ("cloak should be shown 3/4 from the back, hat removed"); the wardrobe's top and
+ *  the bags alone ("include shoes and bags (though bags also has animations - keep those)"). A shelf not here: her whole. */
+export const CARD_SHOW: Readonly<Record<string, "bust" | "legs" | "back" | "jacket" | "bag">> = { hair: "bust", skin: "bust", face: "bust", earrings: "bust", shoes: "legs", cloak: "back", scarf: "back", jacket: "jacket", bag: "bag" };
 
 /** One focusable line of the panel. `readOnly`: focus only, nothing chosen (the pegboard). */
-export interface Line { shelf: number; kind: "items" | "parts" | "grid" | "fit" | "cards" | "chips"; n: number; row?: number; axis?: string; readOnly?: boolean; /** a list shelf's line: the one item it is (its index among the shown items) */ item?: number }
+export interface Line { shelf: number; kind: "items" | "parts" | "grid" | "fit" | "cards" | "chips" | "trail"; n: number; row?: number; axis?: string; readOnly?: boolean; /** a list shelf's line: the one item it is (its index among the shown items) */ item?: number }
 /** What the lines are made with: what she owns (items) and has found (parts), and which fit sliders mean anything on her now. */
 export interface LineCtx { owned: ReadonlySet<string>; fitOn(axis: string): boolean; grid(s: Shelf): { cols: number; rows: number } }
 
@@ -25,6 +35,7 @@ export function stationLines(shelves: readonly Shelf[], ctx: LineCtx): Line[] {
     if (s.slot) out.push({ shelf: i, kind: "cards", n: 1 + partsFor(s.slot).length });
     if (s.board) for (let r = 0; r < 3; r++) out.push({ shelf: i, kind: "cards", n: 3, row: r, readOnly: true });
     if (s.sets) out.push({ shelf: i, kind: "chips", n: SETS.length, readOnly: true });
+    if (s.trail) out.push({ shelf: i, kind: "trail", n: TRAIL_PRESETS.length }); // (her trail's colours, a preset a tile: Ed, 2026-11-03)
     if (itemsToChoose(s, ctx.owned)) {
       if (s.list) shownItems(s).forEach((_, k) => out.push({ shelf: i, kind: "items", n: 1, item: k })); // (a list: an item a line, up and down to choose)
       else out.push({ shelf: i, kind: "items", n: shownItems(s).length, ...(s.readOnly ? { readOnly: true } : {}) });

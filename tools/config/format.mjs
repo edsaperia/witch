@@ -5,7 +5,7 @@ import { readFileSync, writeFileSync } from 'node:fs';
 import { pathToFileURL } from 'node:url';
 import { isDeepStrictEqual } from 'node:util';
 
-export function formatJson(value, depth = 0) {
+function formatJson(value, depth = 0) {
   const pad = '  '.repeat(depth), next = pad + '  ';
   if (Array.isArray(value)) {
     if (!value.length) return '[]';

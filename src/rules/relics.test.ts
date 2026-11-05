@@ -8,10 +8,11 @@ import { generateMap } from "./map";
 import { Forest } from "./forest";
 import { LEGENDS, placeRelics, relicKinds } from "./legends";
 import { PARTY_RELICS } from "../../art/partyRelics.js";
-import { newGame as fullGame, stepGame } from "./game";
+import { stepGame } from "./game";
 import { smallWorld } from "../test/worlds";
+import { preppedGame, sharedMap } from "../test/preppedGame"; // (games on a map made once a file from its prep)
 
-const newGame = smallWorld(fullGame, "Drinking a relic checks one local flask/sigil and four relocated followers, independent of world extent.");
+const newGame = smallWorld(preppedGame, "Drinking a relic checks one local flask/sigil and four relocated followers, independent of world extent.");
 // Keep placement's radius seed matrix and explicit 10–64-area islands: remoteness, minimum gaps and relic counts depend on those sizes.
 const SEEDS = [1, 2, 3, 7, 42, 123, 999, 4242, 31337, 165272, 922199, 2026];
 
@@ -19,7 +20,7 @@ describe("legend relics on the map", () => {
   it("one of each kind, one just inside the home area's edge, the rest out in the map, every pair minGap apart", () => {
     const R = LEGENDS.relics;
     for (const seed of SEEDS) {
-      const map = generateMap(seed, TUNING), relics = placeRelics(map, new Forest(map));
+      const map = sharedMap(seed, TUNING), relics = placeRelics(map, new Forest(map));
       // One per relics.perAreas areas the waves reach (Ed, 2026-10-11), each its own kind while the twelve last.
       const count = Math.max(1, Math.round((map.cells.length - 1) / R.perAreas!));
       expect(relics.length, `seed ${seed}`).toBe(count);
@@ -73,7 +74,7 @@ describe("legend relics on the map", () => {
 
   it("one per relics.perAreas areas on the islands (Ed, 2026-10-11): 1 on 10, 2 on 20, 5 on 50, 6 on 64, no kind twice", () => {
     for (const [areas, want] of [[10, 1], [20, 2], [30, 3], [50, 5], [64, 6]]) for (const seed of [1, 123]) {
-      const map = generateMap(seed, { ...TUNING, map: { ...TUNING.map!, islandAreas: areas } }), relics = placeRelics(map, new Forest(map));
+      const map = sharedMap(seed, { ...TUNING, map: { ...TUNING.map!, islandAreas: areas } }), relics = placeRelics(map, new Forest(map));
       expect(relics.length, `${areas} areas, seed ${seed}`).toBe(want);
       const looks = new Map(relicKinds(LEGENDS.relics).map(k => [k.kind, k.look]));
       expect(new Set(relics.map(r => looks.get(r.kind))).size).toBe(want);
@@ -108,7 +109,7 @@ describe("legend relics on the map", () => {
   it("never lays a bottle and its mirror image in the same colour on one map (Ed, 2026-10-11), on 30 seeds of each size", () => {
     const looks = new Map(relicKinds(LEGENDS.relics).map(k => [k.kind, k.look]));
     for (const areas of [20, 50]) for (let seed = 1; seed <= 30; seed++) {
-      const map = generateMap(seed, { ...TUNING, map: { ...TUNING.map!, islandAreas: areas } }), relics = placeRelics(map, new Forest(map));
+      const map = sharedMap(seed, { ...TUNING, map: { ...TUNING.map!, islandAreas: areas } }), relics = placeRelics(map, new Forest(map));
       const seen = relics.map(r => looks.get(r.kind)!);
       expect(new Set(seen).size, `${areas} areas, seed ${seed}: ${relics.map(r => r.kind).join(", ")}`).toBe(seen.length);
     }

@@ -1,10 +1,10 @@
 // Finds on loan till she sleeps (app/loan.ts; Ed, 2026-10-24): a find taken is hers for the night, usable at once, but kept only if
 // the night is won. Its saves are this browser's (a localStorage of our own for each test), as app/finds.test.ts's.
-import { afterEach, beforeEach, describe, expect, it } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { TUNING } from "../rules/tuning";
-import { newGame as fullGame, stepGame, type Controls, type Game } from "../rules/game";
+import { stepGame, type Controls, type Game } from "../rules/game";
 import { smallWorld } from "../test/worlds";
-const newGame = smallWorld(fullGame, "Find loans and saved ownership use one placed trunk and witch, independent of island size.");
+const newGame = smallWorld(preppedGame, "Find loans and saved ownership use one placed trunk and witch, independent of island size.");
 import { FINDABLE, fillTrunk, loanFind, type FindKindId } from "../rules/finds";
 import { itemById, wear, wears } from "../rules/wardrobe";
 import { bareBroom, type Fitted } from "../rules/broomParts";
@@ -13,14 +13,15 @@ import { loadHats } from "./hatSave";
 import { loadOwned, saveOwned } from "./owned";
 import { keepFound, type FindsCtx } from "./finds";
 import { dreamsAfter, hatWithoutLoan, homeOf, lend, loanName, lookWithoutLoan, partsWithoutLoan, settle, withLoan, type Loan, type LoanSaves } from "./loan";
+import { preppedGame } from "../test/preppedGame"; // (games on a map made once a file from its prep)
 
 let store: Map<string, string>;
-const real = (globalThis as { localStorage?: Storage }).localStorage;
+// (stubbed, not assigned: unstubbing puts back a missing localStorage as missing, so no later file in the worker finds one set to undefined)
 beforeEach(() => {
   store = new Map();
-  (globalThis as { localStorage?: unknown }).localStorage = { getItem: (k: string) => store.get(k) ?? null, setItem: (k: string, v: string) => void store.set(k, String(v)), removeItem: (k: string) => void store.delete(k), clear: () => store.clear() };
+  vi.stubGlobal("localStorage", { getItem: (k: string) => store.get(k) ?? null, setItem: (k: string, v: string) => void store.set(k, String(v)), removeItem: (k: string) => void store.delete(k), clear: () => store.clear() });
 });
-afterEach(() => { (globalThis as { localStorage?: unknown }).localStorage = real; });
+afterEach(() => { vi.unstubAllGlobals(); });
 
 const C: Controls = { moveX: 0, moveZ: 0, toggleMode: false, zoom: 0 };
 type Genome = Record<string, unknown>;

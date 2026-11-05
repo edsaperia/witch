@@ -29,6 +29,7 @@ import { SfxKit, type SfxTuning } from "./sfxKit";
 import type { CreatureVoice, Mood } from "./voices";
 import { Whale } from "./whale";
 import { CreaturePitch, PotionAudio } from "./potionAudio";
+import { telephoneCue, type TelephoneCue } from "./telephone";
 
 export type { SfxTuning } from "./sfxKit";
 
@@ -110,8 +111,11 @@ export class Sfx {
   nope(pan = 0): void { chimes.nope(this.k, pan); }
   /** Her fall off the Terrace hitting the ground, unseen below (chimes.ts thud). */
   thud(pan = 0): void { chimes.thud(this.k, pan); }
+  /** A refused take-off's chains rattling, `chains` of them (chimes.ts rattle). */
+  rattle(pan = 0, chains = 1): void { chimes.rattle(this.k, pan, chains); }
   /** Her phone's alarm ringing once (the wake-up: chimes.ts alarm). */
   alarm(): void { chimes.alarm(this.k); }
+  telephone(cue: TelephoneCue, digit?: string): void { telephoneCue(this.k, cue, digit); }
   /** A 💌 refused by an enraged animal: its whine (chimes.ts refused). */
   refused(pan = 0, near = 1): void { chimes.refused(this.creatures, pan, near); }
   reply(v: CreatureVoice, amount: number, pan = 0, near = 1): void { this.creatureBabble.reply(v, amount, pan, near); }

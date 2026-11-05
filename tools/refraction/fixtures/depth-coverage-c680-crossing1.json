@@ -1,0 +1,190 @@
+{
+  "product": "c6803bc4a52624737aed3be2a125987c8fc4e2aa",
+  "crossing": 1,
+  "source": "1543-A saved hardware off-depth/off-nowitch-depth",
+  "width": 320,
+  "height": 180,
+  "canvasRect": {
+    "left": 0,
+    "top": 2,
+    "width": 960,
+    "height": 540
+  },
+  "devicePixelRatio": 1,
+  "cells": [
+    {
+      "x": 163,
+      "y": 93,
+      "offBits": 1065204077,
+      "absentBits": 1065210354
+    },
+    {
+      "x": 164,
+      "y": 93,
+      "offBits": 1065204077,
+      "absentBits": 1065205082
+    },
+    {
+      "x": 165,
+      "y": 93,
+      "offBits": 1065204077,
+      "absentBits": 1065210341
+    },
+    {
+      "x": 166,
+      "y": 93,
+      "offBits": 1065204077,
+      "absentBits": 1065210334
+    },
+    {
+      "x": 167,
+      "y": 93,
+      "offBits": 1065204077,
+      "absentBits": 1065210327
+    },
+    {
+      "x": 163,
+      "y": 94,
+      "offBits": 1065204076,
+      "absentBits": 1065210860
+    },
+    {
+      "x": 164,
+      "y": 94,
+      "offBits": 1065210853,
+      "absentBits": 1065210853
+    },
+    {
+      "x": 165,
+      "y": 94,
+      "offBits": 1065210846,
+      "absentBits": 1065210846
+    },
+    {
+      "x": 166,
+      "y": 94,
+      "offBits": 1065210839,
+      "absentBits": 1065210839
+    },
+    {
+      "x": 167,
+      "y": 94,
+      "offBits": 1065210832,
+      "absentBits": 1065210832
+    },
+    {
+      "x": 163,
+      "y": 95,
+      "offBits": 1065204075,
+      "absentBits": 1065211365
+    },
+    {
+      "x": 164,
+      "y": 95,
+      "offBits": 1065211358,
+      "absentBits": 1065211358
+    },
+    {
+      "x": 165,
+      "y": 95,
+      "offBits": 1065211351,
+      "absentBits": 1065211351
+    },
+    {
+      "x": 166,
+      "y": 95,
+      "offBits": 1065211345,
+      "absentBits": 1065211345
+    },
+    {
+      "x": 167,
+      "y": 95,
+      "offBits": 1065211338,
+      "absentBits": 1065211338
+    },
+    {
+      "x": 163,
+      "y": 96,
+      "offBits": 1065204074,
+      "absentBits": 1065211870
+    },
+    {
+      "x": 164,
+      "y": 96,
+      "offBits": 1065211864,
+      "absentBits": 1065211864
+    },
+    {
+      "x": 165,
+      "y": 96,
+      "offBits": 1065211857,
+      "absentBits": 1065211857
+    },
+    {
+      "x": 166,
+      "y": 96,
+      "offBits": 1065211850,
+      "absentBits": 1065211850
+    },
+    {
+      "x": 167,
+      "y": 96,
+      "offBits": 1065211843,
+      "absentBits": 1065211843
+    },
+    {
+      "x": 163,
+      "y": 97,
+      "offBits": 1065212378,
+      "absentBits": 1065212378
+    },
+    {
+      "x": 164,
+      "y": 97,
+      "offBits": 1065212371,
+      "absentBits": 1065212371
+    },
+    {
+      "x": 165,
+      "y": 97,
+      "offBits": 1065212364,
+      "absentBits": 1065212364
+    },
+    {
+      "x": 166,
+      "y": 97,
+      "offBits": 1065205078,
+      "absentBits": 1065205078
+    },
+    {
+      "x": 167,
+      "y": 97,
+      "offBits": 1065212350,
+      "absentBits": 1065212350
+    }
+  ],
+  "historicalScreenBox": {
+    "left": 495,
+    "top": 254,
+    "right": 497,
+    "bottom": 256
+  },
+  "offRGBA": [
+    215,
+    170,
+    115,
+    255
+  ],
+  "onRGBA": [
+    222,
+    181,
+    123,
+    255
+  ],
+  "absentRGBA": [
+    240,
+    193,
+    129,
+    255
+  ]
+}

@@ -1,0 +1,12 @@
+{
+  "_": "Her cooldown trail's colour presets (Ed, 2026-11-03: \"Perhaps you can set the colour set of your trail in the broom station and there are a few presets\"): each an ordered list of colours for the cooldown sections behind the buffer, front to back, as gradient stops (\"If you have more sections than colours, they spread out the gradient\": render/trailColours.ts). Chosen at the Broom station's Trail row, kept with her broom (app/broomSave.ts). The buffer keeps the area's colour. The warm red is a rose red, apart from the warning red #e62828 (render/colourGrammar.ts).",
+  "default": "warm",
+  "presets": [
+    { "id": "warm", "name": "Warm", "emoji": "🟥🟧🟨⬜", "colours": ["#dd2255", "#ff8811", "#ffdd22", "#ffffff"] },
+    { "id": "cool", "name": "Cool", "emoji": "🟪🟦🟩🟨", "colours": ["#9944ff", "#3377ff", "#22dd66", "#ffdd22"] },
+    { "id": "pastel", "name": "Pastel", "emoji": "🩷🍑🍋🌿", "colours": ["#ff99cc", "#ffbb88", "#ffee99", "#99eebb", "#bbaaff"] },
+    { "id": "party", "name": "Party", "emoji": "🌈", "colours": ["#ff2299", "#ff8800", "#ffee00", "#33dd55", "#22aaff", "#9955ff"] },
+    { "id": "gold", "name": "Gold", "emoji": "🟨🟨🟨", "colours": ["#ffee99", "#ffcc33", "#dd9911", "#aa6611"] },
+    { "id": "ice", "name": "Ice", "emoji": "⬜🩵🟦", "colours": ["#ffffff", "#bbeeff", "#66ccff", "#3377ee"] }
+  ]
+}

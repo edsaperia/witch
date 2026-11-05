@@ -6,6 +6,7 @@
 // and only with the debug overlay on (Ed, 2026-10-11: "the Player dropdown moves into the debug overlay only"; app/hud.ts setDebug).
 import { BOT_KINDS } from "../rules/bot";
 import type { Creator } from "../ui/creator";
+import { sessionStore } from "../platform/storageScope";
 
 export function playerPick(params: URLSearchParams, creator: Creator): HTMLSelectElement | null {
   if (params.get("dev") === "0") return null;
@@ -13,8 +14,8 @@ export function playerPick(params: URLSearchParams, creator: Creator): HTMLSelec
   box.id = "player-pick"; box.textContent = "Player: ";
   Object.assign(box.style, { position: "absolute", right: "8px", top: "8px", zIndex: "5", font: "12px sans-serif", color: "#ccc" });
   for (const k of ["human", ...BOT_KINDS]) { const o = document.createElement("option"); o.value = o.textContent = k; sel.append(o); }
-  try { const v = sessionStorage.getItem("witch.player"); if (v && [...sel.options].some(o => o.value === v)) sel.value = v; } catch { /* storage blocked */ }
-  sel.addEventListener("change", () => { try { sessionStorage.setItem("witch.player", sel.value); } catch { /* this load only */ } });
+  try { const v = sessionStore()?.getItem("witch.player"); if (v && [...sel.options].some(o => o.value === v)) sel.value = v; } catch { /* storage blocked */ }
+  sel.addEventListener("change", () => { try { sessionStore()?.setItem("witch.player", sel.value); } catch { /* this load only */ } });
   for (const ev of ["pointerdown", "click", "keydown"]) sel.addEventListener(ev, e => e.stopPropagation()); // (its own keys, not the room's)
   box.append(sel); creator.root.append(box);
   showPlayerPick(params.has("debug"));

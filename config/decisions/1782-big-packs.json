@@ -1,0 +1,96 @@
+{
+  "pr": 1782,
+  "group": "Big packs",
+  "decisions": [
+    {
+      "id": "teamRoundsReference",
+      "label": "Big packs: quicker from (animals)",
+      "note": "Ed, 3 November: \"how about we have the attack round length decrease gradually as the pack gets larger\". A team (every wild animal on one target) of this many or fewer keeps today's rounds (5 s, a 3 s attack window); bigger, its round time and least rest shrink by (this / its size) ^ strength, never under the floor. 20 by default.",
+      "control": {
+        "type": "slider",
+        "min": 4,
+        "max": 64,
+        "step": 1
+      },
+      "default": 20,
+      "apply": {
+        "knob": "teamRounds.reference"
+      }
+    },
+    {
+      "id": "teamRoundsStrength",
+      "label": "Big packs: how much quicker",
+      "note": "The curve's power: 0.5 by default (one over the square root of the size over the reference: four times the reference, half the round; 64 animals 2.8 s rounds). 0 turns it off; 1 makes the round shrink in proportion to the size.",
+      "control": {
+        "type": "slider",
+        "min": 0,
+        "max": 1.5,
+        "step": 0.05
+      },
+      "default": 0.5,
+      "apply": {
+        "knob": "teamRounds.strength"
+      }
+    },
+    {
+      "id": "teamRoundsFloor",
+      "label": "Big packs: shortest round (× today's)",
+      "note": "The least share of today's round a big pack gets, so it never gets frantic: 0.4 by default (a 2 s round, from 125 animals on; the attack window has its own least share, below). Her dodge token is unchanged: still one creature winding up or striking at her at once.",
+      "control": {
+        "type": "slider",
+        "min": 0.2,
+        "max": 1,
+        "step": 0.05
+      },
+      "default": 0.4,
+      "apply": {
+        "knob": "teamRounds.floor"
+      }
+    },
+    {
+      "id": "teamRoundsAhead",
+      "label": "Big packs: attackers picked rounds ahead",
+      "note": "Ed, 3 November: \"can we decide the roles in advance and have them move in sooner, in time for their attack?\" A pack bigger than the 'quicker from' size keeps its attackers picked this many rounds ahead, and each one picked leaves the waiting ring in time, at its own pace, to be within its attack's reach as its round's warning ends; the others keep circling. 0 turns it off (picked as the round starts, as before). 3 by default (Ed, 4 November, asked why not 3: at 128 it measured better than 2).",
+      "control": {
+        "type": "slider",
+        "min": 0,
+        "max": 4,
+        "step": 1
+      },
+      "default": 3,
+      "apply": {
+        "knob": "teamRounds.ahead"
+      }
+    },
+    {
+      "id": "teamRoundsRing",
+      "label": "Big packs: animals per waiting ring",
+      "note": "Ed, 4 November: \"Resolve the attack rate limit for 128\". A pack bigger than this waits in rings of this many round her instead of one ring that grows with its size: the inner ring holds this round's attackers and the next rounds' picks, the rest wait in rings further out and come in as those ahead strike, withdraw or are invited. 0: one ring of all of them, as before. 20 by default.",
+      "control": {
+        "type": "slider",
+        "min": 0,
+        "max": 64,
+        "step": 1
+      },
+      "default": 20,
+      "apply": {
+        "knob": "teamRounds.ring"
+      }
+    },
+    {
+      "id": "teamRoundsWindow",
+      "label": "Big packs: least attack window (× today's)",
+      "note": "The least share of today's 3 s attack window a big pack keeps while its rounds shorten. 1 by default (Ed, 4 November, to reach a 20-pack's rate at 128: a 1.2 s window let barely one strike a round through her dodge token); lower it to shorten the window with the round again.",
+      "control": {
+        "type": "slider",
+        "min": 0.3,
+        "max": 1,
+        "step": 0.05
+      },
+      "default": 1,
+      "apply": {
+        "knob": "teamRounds.window"
+      }
+    }
+  ]
+}

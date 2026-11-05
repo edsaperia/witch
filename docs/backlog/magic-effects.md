@@ -1,5 +1,28 @@
 # Magic effects pass: briefing
 
+**Audit status (2026-11-01): Partly built: the layered language and imprints are integrated; the full extended response catalogue and some authoring/distortion goals remain.**
+
+The status index checks the requests below against prototype `ab06904b` and cited history. **Built** means code is present, not a new play/audition/performance pass. **Partly built** states the missing part. An em dash leaves an unimplemented request unmarked. Versions are verified changelog build labels where available; “unverified” means no first-live number was established. Historical/superseded requests are preserved, not re-authorised. Repeated details/build-order summaries are counted with their feature group, not again.
+
+| Request / feature group | Status | Evidence and remaining gap |
+|---|---|---|
+| Element × form × intensity data language | **Built** | config/fx/{elements,forms,intensity}.json, render/fx/system.ts and AttackLook integration; #1468 (polish follow-up #1484), git3ac0b2dee/cbc67068f. Fragment layered-magic version null: first shipped version unverified. |
+| Dark base, core, halo, particles and secondary layers | **Built** | Nine bounded instanced draws in render/fx; #1468 (polish follow-up #1484), first version unverified. Existing small bloom retained; not every effect must use every layer. |
+| Capped eased effect lights | **Built** | fx light pool shares unchanged budget with up to six strong effects; #1468 (polish follow-up #1484), first version unverified. |
+| Ground marks and six scenery imprint channels | **Built** | fx imprint textures, ground/sprite readers, decay/window/reset; frost/scorch/wet/bloom/charge/push. #1468 (polish follow-up #1484), first version unverified. Visual-only, not frozen collision. |
+| All ten layers including heat/distortion and screen response | **Partly built** | Shared signature shake/comfort exists; #1543 opt-in campfire/party pressure refraction is a first slice, not all magic forms. Full general distortion layer and every proposed flash treatment not implemented as specified. Preview fragment v6587, first live version unverified. |
+| Isometric planes, beam and canopy treatment | **Built** | World-plane beams, ground/upright layers and canopy halo in #1468 (polish follow-up #1484); current source. First version unverified; subjective approval separate. |
+| Budgets, ledger, quality and reduce-flashing fallbacks | **Built** | fx bounded pools/light/imprint rungs and gpuLedger tags; #1468 (polish follow-up #1484), first version unverified. No claim of new hardware measurements. |
+| Authoring schema, preview grid and Fight Arena integration | **Partly built** | FX data validation, ?lookdemo=fx and mock/gallery exist; full proposed per-form authoring UI and arena panel/schema controls not all demonstrated. #1468 (polish follow-up #1484), first version unverified. |
+| Mock stage0 and later native adapters | **Built** | fxMock/fire/frost scenes, native ribbons/sigils/ley/hologram/water/firework adapters; #1468 (polish follow-up #1484), first version unverified. Stage0 gate superseded by explicit full-pass implementation in git history. |
+| Stage5 replacements throughout inventory | **Partly built** | Party pillar, stone vortex, Cyclone and many native adapters built; broad every-inventory-item polish is not certified complete. #1468 (polish follow-up #1484), first version unverified. |
+| Movement/footprint writers into common imprint field | **Partly built** | Field exists, movement/footfall memory writers do not. #1468 (polish follow-up #1484) foundation only; visual-response project1 remains incomplete. |
+| Shared visual-height landing ripples and coordinated earth response | — | Existing height renderer and attackFeel are not the proposed impact-wave implementation. |
+| Patterned light and soundsystem staging | **Partly built** | #1542 opt-in branch is parked outside current prototype; existing disco light is not the full proposed common pattern layer. No shipped completed version. |
+| Dodge/fast-spell pose echoes | **Partly built** | #1545 default dodge departure/arrival echoes exist, fragment v6727; fast-spell capture/reuse remains missing. |
+| General flowing beam/shield/water surfaces and full extended spell demonstrations | — | Some current shader motion exists; no complete project6 shared flow-field implementation or all six coordinated examples found. |
+
+
 Ed, 2026-10-28: "In the future we'll do a 'magic effects' pass where we look at all the magic effects in the game and make them look better. Maybe we can come up with a multi-layer system that also works with lighting and shaders, rather than just drawing and animating flat pixels."
 
 Then:
@@ -45,7 +68,7 @@ Each verdict is one honest line from the art director's chair.
 | Effect | Where | How it's drawn | Lights the world? | Verdict |
 |---|---|---|---|---|
 | **Attack look and elements** | `config/attack-look.json`, `config/attacks.json`, `src/rules/attackLook.ts` (`elementOf`, `spellPower`), `art/attackLook.js` (`attackLookAtlas`, a 768² atlas baked at load), `src/render/leash/attackLook.ts` (`AttackLook`: core, trail, impact, beam, area, burst, ring, lane, cone, telegraph, zone, tell, tether) | 5 instanced quad layers (glow and glowFlat additive, paint and paintFlat normal, `over` above the crowns). The atlas is stored indexed (R8 plus palette). | No | The best-organised effect code we have. It already has a grammar (bodies, zones, beams, telegraphs) and elements, but every element is the same flat stamp recoloured. Nothing lights or touches the ground, so a fireball crossing a dark forest doesn't light it. **The pass should grow from this.** |
-| **Danger frame and telegraphs** | Same atlas, `AttackLook` `telegraph`, `zone`, `tell`, `blink()`; `src/render/leash/attackSpells.ts` | White dashes marching, pips, brackets, chevrons, a hatch, a "now" blink | No | Clear and readable, which is its job. Keep it UI-like and apart from the effect itself; the pass shouldn't make it prettier at the cost of clarity. |
+| **Danger frame and telegraphs** | Same atlas, `AttackLook` `telegraph`, `zone`, `tell`, `blink()`; `src/render/leash/attackSpells.ts` | Red dashes marching (red since Ed, 2026-11-02: "the telegraph should be red"; white before), pips, brackets, chevrons, a hatch, a "now" blink; a lunge's warning runs its whole length | No | Clear and readable, which is its job. Keep it UI-like and apart from the effect itself; the pass shouldn't make it prettier at the cost of clarity. |
 | **Legends' exaggerated attacks** | Rules: `src/rules/attacks/species.ts` `legendOf`, `src/rules/combat/legend.ts`. Drawing: `src/render/leash/combat.ts` (legend lobs, `attackFx.legendFlash`, shockwave ring); camera shake `render/leash.ts` `shake()` | The same atlas cores at legend size, a bigger flash, a ring | No | Bigger but not grander. The same effect scaled up, with no extra layers. This is exactly what the intensity scalar is for. |
 | **Party spell** | `src/ui/spellScroll.ts` (DOM scroll); `src/render/spellfx.ts` `partyBurst` (64 amber and rose motes); the boot pulse round the ring (`render/view/home.ts`, `BOOT_RGB` point lights) | DOM, plus a points pool, plus speaker lights | Only the speakers | The scroll is good. The burst in the world is generic motes. It's the night's signature spell and deserves a pillar or eruption with real light. |
 | **Blink and broom sparks** | `src/render/spellfx.ts` (afterimage column, smears, ring, landing burst; pooled points, max 384) | Points | No | Fine as feel; would gain from a ground mark and a light flick. |
@@ -259,6 +282,8 @@ It touches only drawing, never rules: frozen trees aren't solid.
 - The quality ladder can drop the field entirely (3.5).
 
 ### 3.5 Budgets and settings
+
+Ed, 2026-11-04, on these budgets (and stage 6 below): not now.
 
 - **Palette-indexed art** (`render/palette.ts` `indexPlane`, `render/atlas.ts` `indexedTexture`, R8 plus a 256 × 1 palette): elements' ramps are palette rows.
   - An effect's core and halo are ramp lookups, so a new element is a new row, not new textures.

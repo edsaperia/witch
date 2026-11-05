@@ -93,24 +93,6 @@
       }
     },
     {
-      "id": "loadingClear",
-      "pr": 1194,
-      "group": "Loading screen",
-      "label": "White clearing",
-      "note": "The white clearing into the bedroom, seconds (loading.clear; 1.2 as built). Remembered on this browser; takes effect on the next load (the screen is over before the game can pause).",
-      "control": {
-        "type": "slider",
-        "min": 0.2,
-        "max": 4,
-        "step": 0.1
-      },
-      "default": 1.2,
-      "persist": true,
-      "apply": {
-        "knob": "loading.clear"
-      }
-    },
-    {
       "id": "loadingFps",
       "pr": 1194,
       "group": "Loading screen",

@@ -47,7 +47,10 @@ async function rulesBundle(checkout) {
 
 export async function sameGame(base, head) {
   if (!sameStamp(path.join(base, "dist"), path.join(head, "dist-same"))) return { same: false, reason: "builds not stamped alike" };
-  const bench = firstDifference(treeHashes(path.join(base, "tools/bench")), treeHashes(path.join(head, "tools/bench")));
+  // A branch's tools/bench/expect/<branch>.json only declares what that branch means to change (compare.cjs reads it); it is
+  // not part of the benchmark, and every release adds one, so it must not defeat the skip.
+  const benchTool = dir => new Map([...treeHashes(path.join(dir, "tools/bench"))].filter(([f]) => !f.startsWith("expect/")));
+  const bench = firstDifference(benchTool(base), benchTool(head));
   if (bench) return { same: false, reason: `benchmark tool ${bench}` };
   const dist = firstDifference(treeHashes(path.join(base, "dist"), IGNORED), treeHashes(path.join(head, "dist-same"), IGNORED));
   if (dist) return { same: false, reason: `build ${dist}` };

@@ -35,6 +35,7 @@ import { PARTY_CAST } from "../../rules/party";
 import { djGesture } from "../../../art/witch.js";
 import { djRoutineAt, djStrokes } from "../../rules/djSet";
 import { kitchenLayout } from "../../rules/mushrooms";
+import { weighingChains } from "../../rules/chains";
 
 /** ?partyover=<s>: the party over from that game time (debug; as the look's, render/view.ts). */
 export const OVER_DEBUG: number | null = (() => { const v = new URLSearchParams(globalThis.location?.search ?? "").get("partyover"); return v === null ? null : Number(v) || 0; })();
@@ -42,6 +43,7 @@ import { nightKind } from "./night";
 import { AREA_TYPES } from "../../rules/map";
 import { leyPulse, pointerShown, type P2 } from "../../rules/leypulse";
 import { aggroOf } from "../../rules/wildWatch";
+import { wakeAggro } from "../../rules/challengeStatues";
 import { fireworkShells, type Shell } from "../../rules/fireworks";
 
 /** The combat events that are a creature attacking (its id the attacker): each a burst of its speech. */
@@ -167,7 +169,11 @@ export class SfxCues {
       else if (e.kind === "lakeHold") S.nope(pan(e.x)); // (a coming-down refused over a lake: the same soft "nope"; Ed, 2026-10-23)
       else if (e.kind === "thud") S.thud(pan(e.x)); // (her fall off the Terrace with no broom hitting the ground: rules/kit.ts)
       else if (e.kind === "kit") { if (e.obj === "invites") S.invited(0, pan(e.x)); else S.hit(pan(e.x)); } // (her invitations or a broom taken)
-      else if (e.kind === "grounded") this.yank = { at: time + 0.38, pan: pan(e.x) }; // (a take-off her leashes won't allow: the thud as they pull her back down, render/view/witch.ts groundedHop; Ed, 2026-10-18)
+      else if (e.kind === "grounded") { // (a take-off her leashes won't allow: the thud as they pull her back down, render/view/witch.ts groundedHop; Ed, 2026-10-18)
+        this.yank = { at: time + 0.38, pan: pan(e.x) };
+        const W = g.witches.find(q => q.id === e.id); // (and the chains holding her rattle, once: Ed, 2026-11-03; rules/chains.ts weighingChains)
+        if (W) S.rattle(pan(e.x), weighingChains(W.leash.stack, g.creatures).length);
+      }
       else if (e.kind === "outsideCircle") S.land(pan(e.x), 0.5); // (put down outside a legend's circle: it does nothing; a soft thud, and the circle flashes)
   }
 
@@ -565,10 +571,11 @@ export class SfxCues {
   /** The wild watch's warning (art builder 3's aggroOf, rules/wildWatch.ts): rising while a wild area's watchers stare at
    *  her; when it ends, a hit if the watch ran its course (they attack) or a fall if it was called off (she rose, left or
    *  was knocked out). aggroOf goes null on the attack's own step too, so the last k tells which (art builder 3: k reaches
-   *  1 on the step the watch ends; a call-off leaves it below about 0.98). */
+   *  1 on the step the watch ends; a call-off leaves it below about 0.98). The challenge circle's wake-up plays it too (Ed, 2026-11-04:
+   *  "all the animals glow red ... and after 8 seconds, they all awaken"; a rising build over its bars, its hit on the bar they wake). */
   private aggro({ g }: Here): void {
     if (!g.tuning.sfx.aggro) return;
-    const a = aggroOf(g);
+    const a = aggroOf(g) ?? wakeAggro(g); // (or the challenge circle's statues waking, its warning: rules/challengeStatues.ts, Ed 2026-11-04)
     if (a) { this.aggroK = a.k; this.aggroDanger = a.danger; this.sfx.aggro(a.k, a.danger); return; }
     if (this.aggroK === null) return;
     const w = g.witches[0], attacked = this.aggroK >= 0.98 && !!w && w.body.mode === "ground" && !w.ko;

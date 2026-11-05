@@ -34,8 +34,11 @@ export interface Partition {
  *  circle, so the areas round it are made round it (partition units). */
 export interface HomeCircle { cell: Cell; radius: number; gap: number }
 
-/** grid: every layer-0 site at its cell's middle (the zoo's square blocks, rules/zoo.ts: with depth 0, an area is its cell). */
-export function makePartition(seed: number, depth: number, home?: HomeCircle, { grid = false }: { grid?: boolean } = {}): Partition {
+/** grid: every layer-0 site at its cell's middle (the zoo's square blocks, rules/zoo.ts: with depth 0, an area is its cell).
+ *  margin: every layer-0 site kept that share of its cell in from each side (0 to 0.5; Ed, 2026-11-03: "Minimum distance
+ *  between stumps", so two areas' sites are at least twice it apart in partition units, and the paths join well-spaced sites). */
+export function makePartition(seed: number, depth: number, home?: HomeCircle, { grid = false, margin = 0 }: { grid?: boolean; margin?: number } = {}): Partition {
+  const m0 = Math.max(0, Math.min(0.5, margin)), span = 1 - 2 * m0;
   const siteCache = new Map<number, [number, number]>();
   const rootCache = new Map<number, Cell>();
   // Integer keys: layers stay under 16 and cells within +-2^20, which a 20 x 20 map never nears.
@@ -48,7 +51,9 @@ export function makePartition(seed: number, depth: number, home?: HomeCircle, { 
     let s = siteCache.get(k);
     if (!s) {
       const c = Math.pow(2, -layer);
-      s = grid && layer === 0 ? [cx + 0.5, cy + 0.5] : [c * (cx + hash2(cx * 7 + layer, cy, seed)), c * (cy + hash2(cx, cy * 13 + layer, seed + 1))];
+      s = grid && layer === 0 ? [cx + 0.5, cy + 0.5]
+        : layer === 0 ? [cx + m0 + span * hash2(cx * 7, cy, seed), cy + m0 + span * hash2(cx, cy * 13, seed + 1)] // (kept in from the cell's sides by margin)
+        : [c * (cx + hash2(cx * 7 + layer, cy, seed)), c * (cy + hash2(cx, cy * 13 + layer, seed + 1))];
       // Home's neighbours keep their sites out past its circle (pushed straight out from its site).
       if (home && layer === 0 && !(cx === home.cell[0] && cy === home.cell[1])) {
         const h = site(0, home.cell[0], home.cell[1]), dx = s[0] - h[0], dy = s[1] - h[1], d = Math.hypot(dx, dy), R = home.radius + home.gap;
@@ -151,4 +156,32 @@ export function makePartition(seed: number, depth: number, home?: HomeCircle, { 
       return Math.min(1, (2 * d1) / (d1 + d2));
     },
   };
+}
+
+/** A circle of partition space given wholly to one area (rules/map.ts: the challenge area's circle and its margin, Ed 2026-11-03: "the
+ *  area will have to be big to fit a huge circle"): every point within r of (u, v) is cell's, however the partition would cut it. */
+export interface Claim { cell: Cell; u: number; v: number; r: number }
+
+/** A partition over `base` with room for one claim (null: none, the base's own cuts everywhere), set once the map has chosen it:
+ *  inside the claim's circle every point is its cell's; outside, the base's, its safe distance kept short of the circle's edge.
+ *  Everything else (sites, centreness, openness) is the base's. */
+export function claimable(base: Partition): Partition & { claim: Claim | null } {
+  const P: Partition & { claim: Claim | null } = {
+    ...base,
+    claim: null,
+    partition(px, py) {
+      const c = P.claim;
+      if (c) { const dx = px - c.u, dy = py - c.v; if (dx * dx + dy * dy < c.r * c.r) return c.cell; }
+      return base.partition(px, py);
+    },
+    partitionSafe(px, py) {
+      const c = P.claim;
+      if (!c) return base.partitionSafe(px, py);
+      const d = Math.hypot(px - c.u, py - c.v);
+      if (d < c.r) return { cell: c.cell, safe: Math.min(c.r - d, Math.pow(2, -base.depth)) };
+      const b = base.partitionSafe(px, py);
+      return { cell: b.cell, safe: Math.min(b.safe, d - c.r) };
+    },
+  };
+  return P;
 }

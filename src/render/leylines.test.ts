@@ -9,10 +9,11 @@ import { bootLineAt, bootPath, bootPulseAt, bootSeconds } from "../rules/bootRin
 import { metresToLinks, pulseRouteMetres, routeLengths } from "../rules/leypulse";
 import { speakerCircle } from "../rules/departure";
 import * as THREE from "three";
+import { preppedGame } from "../test/preppedGame"; // (games on a map made once a file from its prep)
 
 // Retain full seeded routes: geometry spans every stone, departure bearings and boot/route overlap are asserted in metres.
 /** A real game booted by 10 s, the ley pulse setting off then (Ed, 2026-10-09: "Pure constant speed"). */
-const g0 = newGame(123, TUNING), map = g0.map, v = TUNING.leyLines.pulseSpeed;
+const g0 = preppedGame(123, TUNING), map = g0.map, v = TUNING.leyLines.pulseSpeed;
 const party = (paused = false): PartyState => {
   const p = { ...g0.party, paused, bootFrom: 0, bootUntil: 10, spellAt: undefined } as PartyState;
   p.pulse = { ...g0.party.pulse, d: 0, at: 10, v };
@@ -118,7 +119,7 @@ describe("the line's front (Ed, 2026-10-06: \"Please come up with a better desig
 
 describe("the ring and the route are one path (Ed, 2026-10-29: \"the boot-line/leyline/pulse goes around the dancefloor and then should continue smoothly in the same direction\")", () => {
   // A real map: the boot's pulse goes round the home ring at its own speed; the route's first link goes on from where the lap ends.
-  const g = newGame(123, TUNING), p = g.party, map = g.map, P = bootPath(map), B = P.length, reveal = TUNING.leyLines.reveal ?? 3, v = TUNING.leyLines.pulseSpeed, vb = TUNING.boot.speed!;
+  const g = preppedGame(123, TUNING), p = g.party, map = g.map, P = bootPath(map), B = P.length, reveal = TUNING.leyLines.reveal ?? 3, v = TUNING.leyLines.pulseSpeed, vb = TUNING.boot.speed!;
   castPartySpell(p, map, 0); p.bootFrom = 0; p.bootUntil = bootSeconds(map); p.pulse.at = p.bootUntil; p.pulse.d = 0; p.pulse.v = v;
   const lens = routeLengths(p, map), C1 = lens[0], wave1 = p.bootUntil + C1 / v;
   it("isn't there till the tip, reveal times the boot's pulse, has been round the whole ring", () => {
@@ -195,7 +196,7 @@ describe("the ley line before the party (Ed, 2026-10-26: \"Before the party, the
 describe("the line as dots through the boot (Ed, 2026-10-29: \"The leyline does not show as dots, just a faint rainbow glow, until the boot-up period is finished. The boot-up period leyline did not show as dots or spectrum as it went round the circle\")", () => {
   // A real game, its line routed, the boot's pulse part way round the ring (as render/view.ts drives it each frame: pulse() with no
   // head, grow() by leyReveal, ring() by the boot's own progress, then front()).
-  const g = newGame(123, TUNING), p = g.party, map = g.map, P = bootPath(map), reveal = TUNING.leyLines.reveal ?? 3, v = TUNING.leyLines.pulseSpeed;
+  const g = preppedGame(123, TUNING), p = g.party, map = g.map, P = bootPath(map), reveal = TUNING.leyLines.reveal ?? 3, v = TUNING.leyLines.pulseSpeed;
   castPartySpell(p, map, 0); p.bootFrom = 0; p.bootUntil = bootSeconds(map); p.pulse.at = p.bootUntil; p.pulse.d = 0; p.pulse.v = v;
   const make = async () => {
     const { leyChain } = await import("../rules/leylines");

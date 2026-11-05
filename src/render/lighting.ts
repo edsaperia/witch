@@ -10,7 +10,9 @@ export const MAX_LIGHTS = 24;
 /** The sleeping legends' clearings lit at once, the nearest (render/glades.ts). */
 export const MAX_GLADES = 4;
 
+import { LANDSCAPE_GLSL, landscapeUniform } from "./landscapeUniforms";
 export const LIGHT_UNIFORMS = {
+  uLandscapeTrip: landscapeUniform,
   uAmb: { value: new THREE.Vector3() },
   /** What nothing lights, darkened: the ambient and the moonlight times this (the mood's unlit; 1 as they are). */
   uUnlitDim: { value: 1 },
@@ -61,8 +63,10 @@ export const LIGHT_UNIFORMS = {
   /** Real time (s), for what keeps its pace while the world slows (uTime slows with it: render/slowtime.ts). */
   uRealTime: { value: 0 },
   // The disco ball: position (w: 1 when present), and spin, speck density, brightness, reach.
+  uMirrorMoon: { value: new THREE.Vector3() }, // strength, rotation in radians, spot brightness
   uDisco: { value: new THREE.Vector4() },
   uDiscoParams: { value: new THREE.Vector4() },
+  uContourDream: { value: new THREE.Vector3(0, 1.5, .12) },
   uDiscoColour: { value: new THREE.Vector3(1, 1, 1) },
   // The scenery budget (view.ts): scenery fades out between radius - fade and radius metres
   // from the haze centre (the witch). x: radius, y: fade.
@@ -98,6 +102,7 @@ export function applyStyleLight(st: Style, glowReach: number, metresPerArtPixel:
 }
 
 export const LIGHT_GLSL = /* glsl */ `
+${LANDSCAPE_GLSL}
 uniform vec3 uAmb, uMoon, uMoonDir, uMoonBeam, uGlowPos, uGlowRgb;
 uniform float uUnlitDim;
 uniform vec4 uMoonUp;
@@ -117,8 +122,9 @@ uniform vec2 uLightKnee;
 uniform vec4 uPartyOver;
 // The party's over: how far switched off a party light at P is (0 on, 1 off), the front rippling out from home.
 float partyOff(vec3 P) { if (uPartyOver.z <= 0.0) return 0.0; return smoothstep(0.0, 1.0, (uPartyOver.z - distance(P.xz, uPartyOver.xy)) / uPartyOver.w); }
+uniform vec3 uMirrorMoon;
 uniform vec4 uDisco, uDiscoParams;
-uniform vec3 uDiscoColour;
+uniform vec3 uDiscoColour, uContourDream;
 uniform vec2 uScenery;
 uniform float uCanopyReach;
 
@@ -236,6 +242,30 @@ vec3 nightLightShaded(vec3 N, vec3 P, float moonK) {
       float spot = 0.18 * (1.0 - dd / uDiscoParams.w * 0.5);
       if (pick < uDiscoParams.y && dot(f, f) < spot * spot) l += uDiscoColour * uDiscoParams.z * (1.0 - dd / uDiscoParams.w);
     }
+  }
+  if (uMirrorMoon.x > 0.0 && uMirrorMoon.z > 0.0) {
+    // World metres: the same reflection sweeps over ground, tree trunks and animals.
+    vec2 uv = P.xz * .27 + P.y * vec2(.09, -.13);
+    uv += vec2(sin(uMirrorMoon.y), cos(uMirrorMoon.y)) * 2.2;
+    vec2 tile = floor(uv);
+    float seed = fract(sin(dot(tile, vec2(12.9898, 78.233))) * 43758.5453);
+    vec2 centre = .25 + .5 * vec2(seed, fract(seed * 19.1));
+    float spot = (1.0 - smoothstep(.08, .22, length(fract(uv) - centre))) * step(.58, seed);
+    vec3 tint = .65 + .35 * cos(seed * 6.2832 + vec3(0., 2.1, 4.2));
+    l += tint * (spot * uMirrorMoon.x * uMirrorMoon.z);
+  }
+  if (uContourDream.x > 0.) {
+    float level = P.y / uContourDream.y;
+    float line = 1. - smoothstep(0., uContourDream.z, abs(fract(level + .5) - .5));
+    vec3 ink = .55 + .45 * cos(floor(level + .5) * 1.17 + vec3(0., 2.1, 4.2));
+    l = mix(l, l * .5 + ink * (line * 3. + .12), uContourDream.x);
+  }
+  if (uLandscapeTrip.x == TRIP_UNDERWATER_LIGHT) {
+    vec2 q = P.xz * .42 + P.y * vec2(.19, -.15);
+    float t = uLandscapeTrip.w * .65;
+    float lattice = sin(q.x + .8 * sin(q.y + t)) + cos(q.y * 1.2 - t + .6 * sin(q.x - t));
+    float caustic = 1.0 - smoothstep(.025, .22, abs(lattice));
+    l += vec3(.25, .8, .94) * caustic * uLandscapeTrip.y * uLandscapeTrip.z;
   }
   return softKnee(l);
 }

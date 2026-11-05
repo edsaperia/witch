@@ -61,14 +61,14 @@ export class CauldronView {
     if (this.basketTexture) return;
     // Reuse the already-authored glowing mushroom/stump model with its existing variation seeds.
     for (const seed of [11, 29]) {
-      const canvas = litCanvas(decorSprite("mushrooms", seed, v.style, { ppm: 24 }) as Drawn, "kitchen", v.style);
+      const canvas = litCanvas(decorSprite("mushrooms", seed, v.style, { ppm: 24 }) as Drawn, v.style);
       const texture = new THREE.CanvasTexture(canvas);
       texture.magFilter = texture.minFilter = THREE.NearestFilter;
       texture.generateMipmaps = false;
       this.mushroomTextures.push(texture);
     }
     const canvas = document.createElement("canvas"); canvas.width = 24; canvas.height = 18;
-    const ctx = canvas.getContext("2d")!, colours = furnitureColours(v.style, "kitchen") as Record<string, number[]>;
+    const ctx = canvas.getContext("2d")!, colours = furnitureColours(v.style) as Record<string, number[]>;
     const rgb = (id: number) => `rgb(${colours[id].join(",")})`;
     ctx.fillStyle = rgb(M.BARKD); ctx.fillRect(1, 3, 22, 4); ctx.fillRect(3, 6, 18, 11);
     ctx.fillStyle = rgb(M.WOOD);

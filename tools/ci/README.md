@@ -10,9 +10,25 @@ Bounded GitHub failure annotations shared across commands in one job; logs/artif
 node tools/ci/annotations.cjs --summary
 ```
 
+## `build-proof-baseline.cjs`
+
+Only the separate, frozen prototype checkout is built.
+
+## `mockingTests.mjs`
+
+Test files that mock a module with vi.mock, run apart in Vitest's isolated project.
+
 ## `pages-policy.cjs`
 
 Pages publication policy: debounce previews outside the publisher lock; live requests preempt older publication.
+
+## `perch-profile.cjs`
+
+Canonical/cloud only.
+
+## `program-counts.cjs`
+
+Canonical/cloud program-count evidence only, not latency or native-route acceptance.
 
 ## `report-command.cjs`
 
@@ -21,6 +37,10 @@ Stream a check unchanged, annotating named failures or its crash reason only whe
 ```
 node tools/ci/report-command.cjs --kind art -- node art/check.mjs --times
 ```
+
+## `run-proofs.cjs`
+
+One foreground runner; servers close in finally, including assertion failures.
 
 ## `run-unit.mjs`
 
@@ -50,6 +70,11 @@ Conservative unit-test selection.
 
 Refresh tools/ci/unit-timings.json from a full Vitest JSON report; it only balances the CI shards.
 
+```
+node tools/ci/unit-timings.mjs <one or more downloaded ci-unit-timings.json files>
+node tools/ci/unit-timings.mjs --source <run URL> --ci-log <gh run view --log output>
+```
+
 ## `vitest-reporter.mjs`
 
 Extra CI-only Vitest reporter: test names, first assertion and source location, alongside the default reporter.
@@ -61,8 +86,13 @@ Inventory real world-constructor calls and explicit small-fixture reasons; comme
 ## Also here
 
 - `PLAN.md`
+- `PROOF-PLAN.md`
+- `behaviour-report.test.ts`
 - `effects-scene.test.ts`
+- `mockingTests.test.ts`
 - `pages-policy.test.cjs`
+- `proofs.json`
+- `proofs.test.cjs`
 - `reporting.test.cjs`
 - `run-unit.test.ts`
 - `same-game.test.ts`

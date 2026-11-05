@@ -7,8 +7,9 @@
 //     (the areas the next two waves wake first, sticking with an area while it has anyone), answers the sieges her posse
 //     can take (standing behind the soundsystem), picks up guards left stranded, blinks out of blows, kites fighters,
 //     rises to heal at her last hit (back down part healed), and at the route's end takes her posse to the stragglers;
-//     with feed, puts her babies' sigils down by ripe berries till they're youths (bots-again, 2026-10-11: the islands'
-//     minute-a-wave pace; before, it stood at each next soundsystem before its wave and barely invited);
+//     with feed, takes her babies and young to ripe berries and feeds them, a tap of the sigil button a berry (Ed, 2026-11-03:
+//     nothing eats on its own; bots-again, 2026-10-11: the islands' minute-a-wave pace; before, it stood at each next soundsystem
+//     before its wave and barely invited);
 //   idle: stands at home all run (the sieges alone);
 //   hover: idle, but over the treetops (nothing can go for her);
 //   crude: invites everything in the nearest wild area, area after area, and never parks, defends or heals (it does go
@@ -20,9 +21,11 @@ import { runeOffset } from "./runeOffset";
 import { AREA_TYPES } from "./map";
 import { cellKey } from "./party";
 import { hexSpot, stackBottom, toBottom } from "./leash";
+import { hasRoom } from "./berries";
+import { feedOffer } from "./sigilButton";
 import { groundedBy } from "./leashWeight";
-import { hasRune, runeNear, stateOf } from "./creatureStates";
-import { castingStone, castOf, castOn, castReady, castSpot, looseNear, stoneOpen } from "./stoneStacks";
+import { runeNear, stateOf } from "./creatureStates";
+import { castingStone, castOf, castOn, castReady, castSpot, looseNear, stackFriend, stoneOpen } from "./stoneStacks";
 import { creatureValue, sideValue } from "./power";
 import type { Controls, Game } from "./game";
 import type { Creature } from "./creatures";
@@ -204,11 +207,11 @@ export function newBot(kind: BotKind, o: BotOptions = {}): Bot {
   let legendOf: Map<string, number> | null = null;
   let qjob = null as QJob | null, questAgain = 0, questCount = 0, relicCount = 0, questTries = 0, relicTries = 0; // (tries, so a quest or relic that keeps failing doesn't eat the run)
   let rjob: { phase: "pick" | "place"; r?: { x: number; z: number; sx?: number; sz?: number; state: string }; since: number; n?: number } | null = null, relicAgain = 0;
-  // (a feeding stop: the patch, and, for her babies, the phase: putting their sigils down by it, waiting, picking them up)
-  let feeding: { x: number; z: number; until: number; phase?: "drop" | "wait" | "collect"; ids?: number[] } | null = null, feedAgain = 0, healing = false;
+  // (a feeding stop: the patch, and the phase: feeding them there, a tap a berry, then waiting while they eat)
+  let feeding: { x: number; z: number; until: number; phase?: "feed" | "wait" } | null = null, feedAgain = 0, healing = false;
   let target: Target | null = null, pickAt = -1, landWave = -1, lastWave = 0, seenWave = 0, lastWoken: Cell | null = null, steps = 0;
   const parkedAt = new Set<string>();
-  // (her stack as it was before a knockout, and so the ones it let go happy where they stood: Ed, 2026-10-26; she fetches them again by their runes)
+  // (her stack as it was before a knockout, and so the ones whose sigils fell where she went down: Ed, 2026-11-03; she fetches them again)
   let carried: number[] = [], letGo = new Set<number>(), fetching = -1, fetchSince = 0;
   let holding = null as string | null; // (the soundsystem the champion's holding)
   const seen = new Map<number, { x: number; z: number; at: number }>(); // (where she last saw each target: the champion leads moving ones)
@@ -247,14 +250,14 @@ export function newBot(kind: BotKind, o: BotOptions = {}): Bot {
       for (const c of g.creatures) if (!c.gone && !c.boss && !c.leashed && c.fleeUntil === undefined && cellKey(c.cell) === key && c.species === sp) kin++;
       for (const c of g.creatures) {
         if (c.gone || c.boss || c.leashed || c.fleeUntil !== undefined || c.enraged || cellKey(c.cell) !== key) continue;
-        if (stacks && stateOf(c) === "happy") continue; // (won over already: its sigil waits in the stone's stack till she casts there)
+        if (stacks && stackFriend(c)) continue; // (won over already, or its area friendly: its sigil waits in the stone's stack till she casts there)
         if (keepKin && c.species === sp && kin <= K.kinKeep) continue;
         out.push(c);
       }
       return out;
     };
     /** Whether an area's stone holds any friend sigils (won over, waiting for her spell). */
-    const friendsAt = (key: string): boolean => g.creatures.some(c => !c.gone && !c.leashed && !c.boss && c.atStone && cellKey(c.cell) === key);
+    const friendsAt = (key: string): boolean => g.creatures.some(c => !c.gone && !c.leashed && !c.boss && (c.atStone || (stacks && stackFriend(c))) && cellKey(c.cell) === key);
     /** Where to recruit next: the nearest wild area with someone she may invite (the careful ones: the next waves' first). */
     const ahead = new Set([...(g.party.next ?? []), ...(g.party.afterNext ?? [])].map(c => cellKey(c)));
     const pickRecruit = () => {
@@ -362,16 +365,18 @@ export function newBot(kind: BotKind, o: BotOptions = {}): Bot {
       }
       return best;
     }
-    let calm = null as ReturnType<typeof calmJob>, cycle = false, straggler = null as Creature | null, back = null as Creature | null;
+    let calm = null as ReturnType<typeof calmJob>, cycle = false, straggler = null as Creature | null, back = null as { id: number; x: number; z: number } | null;
     let front = null as ReturnType<typeof siegeFront>, stray = null as ReturnType<typeof strandedGuard>;
     let mx = 0, mz = 0, toggle = false, fire = false, aimX = 0, aimZ = 0, dash = false, sigil = false, place = false, held = false, looseAt = -1;
     // Putting one down: the button picks up a sigil of hers she's standing on before it puts one down (rules/leash.ts), so a
     // bot pressing it every step put one down and picked it straight back up (Balance 2, 2026-10-07: 3,760 a run); she steps
     // off her own first, clear of leash.spacing.
     const putDown = () => {
+      // (where a tap would feed the bottom one, Ed 2026-11-03, putting it down is a hold of the button: rules/sigilButton.ts)
+      if (w.leash.feedHold !== undefined) { held = true; return; }
       let near: { x: number; z: number } | null = null, nd = Math.max(t.leash.pickRadius, t.leash.spacing) * 1.1; // (and far enough that the next isn't blocked by it)
       for (const p of w.leash.placed) { const d = Math.hypot(p.x - b.x, p.z - b.z); if (d < nd) { nd = d; near = p; } }
-      if (!near) { if (stackBottom(w.leash)?.kind === "relic") cycle = true; else sigil = true; return; } // (a relic's sigil at the bottom: cycled past first)
+      if (!near) { if (stackBottom(w.leash)?.kind === "relic") cycle = true; else { sigil = true; if (feedOffer(g, w)) held = true; } return; } // (a relic's sigil at the bottom: cycled past first)
       if (nd > 0.01) { mx = (b.x - near.x) / nd; mz = (b.z - near.z) / nd; } else { mx = 1; mz = 0; }
     };
     /** Toward (x, z): over the treetops when far, landing there if `land`; true once on the ground within `within` m. */
@@ -385,15 +390,16 @@ export function newBot(kind: BotKind, o: BotOptions = {}): Bot {
       return b.mode === "ground" && d <= within; // (within: how near counts as there; a clearing's sigil, a few metres)
     };
     const there = (x: number, z: number) => Math.hypot(x - b.x, z - b.z) <= (b.mode === "treetop" ? NEAR : FAR);
-    /** The nearest of those a knockout let go whose rune is ready (rules/knockout.ts letGoHappy), or null; any leashed again or
-     *  gone are forgotten. */
-    const letGoRune = (): Creature | null => {
-      let best: Creature | null = null, bd = Infinity;
+    /** Her babies and young following her that can eat (rules/berries.ts hasRoom), top of the stack first. */
+    const hungry = (): number[] => w.leash.stack.filter(id => { const c = g.creatures[id]; return !!c && c.level < 2 && hasRoom(c, g.berries, t); });
+    /** The nearest sigil of those a knockout parked where she went down (rules/knockout.ts fallAtKnockdown), or null; any picked up
+     *  again or gone are forgotten. */
+    const fallenSigil = (): { id: number; x: number; z: number } | null => {
+      let best: { id: number; x: number; z: number } | null = null, bd = Infinity;
       for (const id of letGo) {
-        const c = g.creatures[id];
-        if (!c || c.leashed || c.gone || !c.dropped) { letGo.delete(id); continue; }
-        if (!hasRune(c, time)) continue;
-        const e = Math.hypot(c.x - b.x, c.z + runeOffset(c, t) - b.z); if (e < bd) { bd = e; best = c; }
+        const p = w.leash.placed.find(q => q.id === id);
+        if (!p || g.creatures[id]?.gone) { letGo.delete(id); continue; }
+        const e = Math.hypot(p.x - b.x, p.z - b.z); if (e < bd) { bd = e; best = p; }
       }
       return best;
     };
@@ -410,14 +416,13 @@ export function newBot(kind: BotKind, o: BotOptions = {}): Bot {
     if (w.ko) bot.doing = "knocked out";
     else if (g.party.spellAt === null) bot.doing = "casting the party spell";
     else if (kind === "idle") bot.doing = "waiting at home";
-    else if (kind !== "hover" && !(careful && (healing || w.health.hp <= K.healAt)) && (back = letGoRune())) {
-      // Back from a knockout: the ones it let go happy idle where they were dropped (rules/knockout.ts letGoHappy), each with
-      // its rune at its feet; she fetches them first, nearest first, picking each rune up (E) as she would a new friend's.
+    else if (kind !== "hover" && !(careful && (healing || w.health.hp <= K.healAt)) && (back = fallenSigil())) {
+      // Back from a knockout: her carried ones' sigils fell where she went down (rules/knockout.ts fallAtKnockdown), the animals
+      // parked there; she goes back for them first, picking each sigil up (E), nearest first.
       bot.doing = `gathering her posse (${letGo.size} to fetch)`;
       if (back.id !== fetching) { fetching = back.id; fetchSince = time; }
       else if (time - fetchSince > 60) { letGo.delete(back.id); fetching = -1; } // (one she can't get back, too heavy to carry or out of reach: left be)
-      const rx = back.x, rz = back.z + runeOffset(back, t), rd = Math.hypot(rx - b.x, rz - b.z); // (its rune lies south of it)
-      if (goTo(rx, rz, true, t.leash.pickRadius)) { if (rd > t.leash.pickRadius * 0.6) { mx = (rx - b.x) / rd; mz = (rz - b.z) / rd; } else if (step % 10 === 0) place = true; }
+      pickUp(back);
     }
     else if (kind !== "hover" && (straggler = winTarget(g)) && !(careful && (healing || w.health.hp <= K.healAt))) {
       // The win's stragglers (rules/win.ts, #675): nothing moves on while an enraged animal lives, and only her posse can
@@ -556,11 +561,11 @@ export function newBot(kind: BotKind, o: BotOptions = {}): Bot {
           const id = [...st].filter(fit).sort((a, c) => g.creatures[a].level - g.creatures[c].level)[0];
           if (id !== undefined) { if (bt?.kind === "creature" && fit(bt.id) && g.creatures[bt.id].level === g.creatures[id].level) putDown(); else toBottom(w.leash, id); }
         }
-      } else if (o.feed && careful && (feeding || (time >= feedAgain && w.leash.stack.filter(id => g.creatures[id].level === 0).length >= K.feedMin))) {
-        // Feeding her babies (Ed, 2026-10-11: "Babies don't defend, but they can be easily moved and cheaply levelled up to
-        // youths"; rules/berries.ts: a baby eats only at its placed sigil, a berry within berries.babyReach of it, and one berry
-        // makes it a youth): to the nearest patch of ripe berries, her babies' sigils put down by it, a few seconds while they
-        // eat, then picked up again, youths.
+      } else if (o.feed && careful && (feeding || (time >= feedAgain && hungry().length >= K.feedMin))) {
+        // Feeding her babies and young (Ed, 2026-10-11: "Babies don't defend, but they can be easily moved and cheaply levelled up to
+        // youths"; 2026-11-03: nothing eats on its own, only the bottom of her stack, a tap of the sigil button a berry within
+        // berries.feed.reach of her): to the nearest patch of ripe berries, each hungry one cycled to the bottom and fed a tap at a
+        // time, then a few seconds while they eat; they come back to her by themselves.
         if (!feeding) {
           const B = g.berries, ripe = B.berries.filter(r => r.claimedBy === null && !r.gone).map(r => B.bushes[r.bush]);
           let best: { x: number; z: number } | null = null, bs = -Infinity;
@@ -569,25 +574,19 @@ export function newBot(kind: BotKind, o: BotOptions = {}): Bot {
             const n = ripe.filter(q => Math.hypot(q.x - p.x, q.z - p.z) < 10).length, sc = n * 60 - d;
             if (n >= 3 && sc > bs) { bs = sc; best = p; }
           }
-          feeding = best ? { x: best.x, z: best.z, until: Infinity, phase: "drop", ids: [] } : null;
+          feeding = best ? { x: best.x, z: best.z, until: Infinity, phase: "feed" } : null;
           if (!feeding) feedAgain = time + 30;
         }
-        bot.doing = feeding?.phase === "collect" ? "gathering her youths" : "feeding her babies berries";
-        if (feeding && feeding.phase === "drop" && goTo(feeding.x, feeding.z, true, 4)) {
-          const B = g.berries, reach = (t.berries.babyReach ?? 10) * 0.8;
-          const ripeNear = B.berries.filter(r => r.claimedBy === null && !r.gone && Math.hypot(B.bushes[r.bush].x - feeding!.x, B.bushes[r.bush].z - feeding!.z) < reach).length;
-          const baby = w.leash.stack.filter(id => g.creatures[id].level === 0).pop(), bt = stackBottom(w.leash);
-          if (baby === undefined || feeding.ids!.length >= ripeNear || Math.hypot(b.x - feeding.x, b.z - feeding.z) > reach) { feeding.phase = "wait"; feeding.until = time + K.feedWait; }
-          else if (bt?.kind === "creature" && bt.id === baby) { putDown(); if (sigil) feeding.ids!.push(baby); }
-          else toBottom(w.leash, baby); // (cycled to the bottom, as the sigil button does in the treetops)
+        bot.doing = feeding?.phase === "wait" ? "waiting while they eat" : "feeding her young berries";
+        if (feeding && feeding.phase === "feed" && goTo(feeding.x, feeding.z, true, 4)) {
+          const want = hungry(), bt = stackBottom(w.leash), offer = feedOffer(g, w);
+          if (!want.length || (!offer && bt?.kind === "creature" && want.includes(bt.id))) { feeding.phase = "wait"; feeding.until = time + K.feedWait; } // (fed, or no berry left in reach)
+          else if (bt?.kind === "creature" && want.includes(bt.id)) { if (step % 4 === 0) sigil = true; } // (a tap a berry, each press one more)
+          else toBottom(w.leash, want[want.length - 1]); // (cycled to the bottom, as the sigil button does)
         } else if (feeding && feeding.phase === "wait") {
-          if (time >= feeding.until || feeding.ids!.every(id => g.creatures[id].level > 0)) feeding.phase = "collect";
-        } else if (feeding && feeding.phase === "collect") {
-          let pk = null as { x: number; z: number } | null, pd = Infinity;
-          for (const p of w.leash.placed) if (feeding.ids!.includes(p.id)) { const e = Math.hypot(p.x - b.x, p.z - b.z); if (e < pd) { pd = e; pk = p; } }
-          if (pk) pickUp(pk); else { feeding = null; feedAgain = time + 20; }
+          if (time >= feeding.until || !w.leash.stack.some(id => g.berries.feeding.has(id))) { feeding = null; feedAgain = time + 20; }
         }
-        if (feeding && time - (feeding.until === Infinity ? time : feeding.until) > 40) { feeding.phase = "collect"; } // (never stuck waiting)
+        if (feeding && feeding.until !== Infinity && time - feeding.until > 40) { feeding = null; feedAgain = time + 20; } // (never stuck waiting)
       } else if (stacks && b.mode === "ground" && !b.seated && (looseAt = looseNear(g.loose.filter(p => !p.legend), b.x, b.z, 25)) >= 0) {
         // A stone she's converted (rules/stoneStacks.ts): its friends' sigils lie scattered round it; she picks them up (E on each).
         const p = g.loose.filter(q => !q.legend)[looseAt], rd = Math.hypot(p.x - b.x, p.z - b.z);
@@ -640,6 +639,7 @@ export function newBot(kind: BotKind, o: BotOptions = {}): Bot {
     const deck = deckOf(g.map, t);
     if (deck && !b.seated && b.perch && b.mode === "ground") toggle = true;
     else if (deck && toggle && b.mode === "treetop" && landsOn(deck, b.x, b.z)) toggle = false;
+    if (w.leash.feedHold !== undefined) held = true; // (a press that would have fed, meant to put down: held till it does, rules/sigilButton.ts)
     return { moveX: mx, moveZ: mz, toggleMode: toggle, zoom: 0, fire, aimX, aimZ, dash, sigil, place, ...(held ? { sigilHeld: true } : {}), ...(cycle ? { cycle } : {}), castParty: g.party.spellAt === null };
   }
 }

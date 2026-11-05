@@ -1,0 +1,154 @@
+{
+  "assignment": "H4, coordinator1476#6619102474, 2026-11-04",
+  "branch": "codex/behaviour-audit-next",
+  "worktree": "work/behaviour-audit-next",
+  "base": "483801b44244f34f2f54c22e9f4ba8ea95b929a0",
+  "milestone": "H4 source audit complete: U1/U7, house H1/H2/H-R2, legends L3/L5 and art AR1/AR2/AR4; U-TIME KEEP",
+  "scope": [
+    {"audit": "bagSim:24", "file": "src/ui/bagSim.test.ts", "report": "original complete-loop throw totals, bag ordering and minimum counts", "keep": "configured preview cooldown through controlled fixed steps, no early shot, exact existing loop replay"},
+    {"audit": "bagSim:31", "file": "src/ui/bagSim.test.ts", "report": "original complete-loop landed counts and far-dummy hit outcomes", "keep": "every measured letter stays within configured reach; controlled in/out-of-range letter eligibility"},
+    {"audit": "chartLayout:15", "file": "src/app/chartLayout.test.ts", "report": "worlds0/1/2 bearing median/max, phase-radius differences and quadrant shares", "keep": "home identity, unknown island rejection, disc containment and every original patch-exclusion pair"}
+  ],
+  "implementation": "Independent ui-preview behaviour provider with original loops/worlds and informational references; preserve all existing providers and T6. Own only the three listed callbacks plus necessary supplied fixtures, provider registration and tool index.",
+  "constraints": "No docs/** edits, game/MP/appearance/on-screen text changes, GPU/per-frame work, speed/flake work, Render, browser or hardware run. Canonical owns full CI, smoke and release; root watches exact PR.",
+  "validation": ["npm run typecheck", "npx tsc -p tools/behaviour/tsconfig.json", "node tools/inventory.mjs --check", "node tools/data.mjs decisions check", "node tools/config/check.mjs", "touched tests with maxWorkers1", "git merge-tree --write-tree HEAD <fresh1609head>"],
+  "remainingSystems": [],
+  "remainingCondition": "No assigned H4 source slice remains. Root reviews the final checkpoint; canonical owns combined CI, full report including unrun house/legend travel, smokes and release. Builder does not start a watcher or dispatch checks.",
+  "timing": "No savings claim without comparable medians from at least two runs per side. Local checks and historical overlapping file costs are not CI savings.",
+  "status": "All assigned H4 source groups complete; existing direct integrity groups retained; canonical combined validation/release remain separate",
+  "sourceReport": "ui-preview.behaviour.ts preserves full original loops, original far-dummy cases and worlds0/1/2 distributions. Numeric predicates remain informational. Bag rate uses a supplied single-volley cadence with the preview's real bag cooldown; reach keeps the original full-loop bound and supplied hit/fizzle states. Chart identity, containment and every pairwise patch exclusion remain unchanged. All8 prior providers and T6 retained.",
+  "remainingQuestions": [],
+  "scopeProof": {"changedOriginalCallbacks": 3, "unchangedCallbacks": 2, "removedRegistrations": 0, "base": "483801b44244f34f2f54c22e9f4ba8ea95b929a0"},
+  "localValidation": {"typecheck": "PASS", "surveyTypecheck": "PASS", "inventoryCheck": "PASS", "decisionsCheck": "PASS:67 fragments/248 entries", "configCheck": "PASS", "touchedAndHarnessTests": "14 PASS, one worker", "singleUiProvider": "PASS; original loops/worlds only, no browser/game/hardware run", "diffCheck": "PASS"},
+  "integration": "Refresh #1609 head and perform merge-tree on committed source before push; actual SHA/result recorded on PR. All8 prior providers and T6 remain intact.",
+  "evidenceLimits": "No cloud report execution, controlled timing comparison or CI/savings/release claim. Local provider measurements do not prove nightly dispatch. Root owns CI watching.",
+  "cameraRulesU7": {
+    "plan": "1787#6619605405",
+    "baseCheckpoint": "aa70c482bb367f164599df5b4d7826221de6e3f4",
+    "scope": ["src/rules/rules.test.ts audit447", "src/rules/rules.test.ts audit481", "src/rules/rules.test.ts audit788"],
+    "report": "Original120 seated frames/half-ease midpoint;600-frame east-then-stop maxJerk multiplier; seed5 LOCAL_TUNING120-frame witch/camera travel. Configured opt-in scenery and original controls retained.",
+    "retained": "Shared test-only assertions retain seated framing, closer opening pose, intro termination/monotonic return, every no-overshoot sample, final0.5 settled tracking and look-ahead cap. Real single-step controlled input-to-witch/camera coupling replaces sampled2s success. Three supplied local fixtures execute the same assertions.",
+    "uTimeInspection": "Production-sized duplicated replay pressure inspected; integrity/retention/export assertions and original80k-frame fixture untouched in this milestone.",
+    "validation": "PASS: normal/report typechecks, inventory --check, decisions check, config/check;3 shared fixtures+9harness;3 actual edited rules callbacks (133unrelated skipped); isolated provider with4finite observations; diff/scope checks. AST3changed/133unchanged/0removed original callbacks,3new fixture cases. Fresh committed1609 merge-tree recorded on PR before push.",
+    "remainingQuestions": []
+  },
+  "coastalU7": {
+    "plan": "1787#6619447296",
+    "baseCheckpoint": "5afe2495dcea19196e5e320c9d9b406bfe2c3994",
+    "scope": ["src/rules/coastCamera.test.ts audit38", "src/rules/coastCamera.test.ts audit44"],
+    "report": "Original6s/60Hz maximum angle change with gazing k>120 and original720 inclusive bearing samples/initial-0.01; mixed distance/angle score preserved and labelled.",
+    "retained": "All twelve authored bearing values/array sizes, opposite-bearing settled distance, zero-time pose continuity, bounded coast/gaze transitions, finite poses and periodic bearing identity. Other three callbacks unchanged.",
+    "validation": "PASS: normal/report typechecks, inventory --check, decisions check, config/check,14 touched/harness tests with one worker, isolated provider1PASS, diff/scope checks. Two callbacks changed,three unchanged,zero removed. Local360 transition/721 bearing observations finite and within historical refs; not visual/cloud/performance acceptance.",
+    "remainingQuestions": []
+  },
+  "houseH2": {
+    "plan": "1787#6619376931, continuation under review6619359061",
+    "baseCheckpoint": "c5199463821479dbcce3bb948b3679f031b70377",
+    "scope": [
+      {"audit": "houseConfig:27", "file": "src/rules/houseConfig.test.ts", "change": "Replace obsolete93m title with actual99m authored route; retain every room/corridor/floor/route assertion"},
+      {"audit": "housePlacement:11", "file": "src/rules/housePlacement.test.ts", "change": "Name explicit Ed placement/source immutability without claiming the global default is opt-in; retain every identity/shape/placement assertion"},
+      {"audit": "housePlacement.runtime:75", "file": "src/rules/housePlacement.runtime.test.ts", "change": "Name version2 save-to-classic-slot migration without claiming classic is global default; retain all occupant/schema assertions"}
+    ],
+    "reportObservations": "No outcome measurement moved in this description-only group; no new provider or index edit.",
+    "validation": "PASS: normal typecheck, inventory --check, decisions check, config/check,11 touched tests with one worker, diff check. AST:3 titles renamed,11 identical bodies,0 changed bodies/removed registrations. Fresh committed1609 merge-tree result recorded on PR before push.",
+    "remainingQuestions": []
+  },
+  "houseRemaining": {
+    "plan": "1787#6619899990",
+    "baseCheckpoint": "d4483ec8795812736db72a21171d94bc68653a6e",
+    "scope": [
+      "houseGuard39/57",
+      "houseRooms66",
+      "crown19/56/81/101/127",
+      "finds40/47/187",
+      "finds150/159 wording only",
+      "wardrobeShelves90 wording only"
+    ],
+    "report": "Original seed77/four-area40-world-second guard and40+1+90+20 reunion journeys; original seed123 smallWorld bed-to-Terrace route/controls; original seed1 crown/open/whole geometry samples and bulb spacing0.8; six trunk seeds1..6,60 draws1..60 and seed123 five original offsets.",
+    "retained": "Direct virtual sigil assignment, home/dancefloor geometry, guarding and release modes, stack identity/order and no real sigils; complete floor route/arrival/takeoff; crown nonempty structure/thick+thin/upper bounds/all geometry and string identities; same-seed replay, valid-pool/owned/forced-kind eligibility/all-owned/one-find identity and every spawn clearance assertion.",
+    "uTime": {
+      "audit": "src/app/playtestComments.test.ts:69",
+      "disposition": "KEEP; audit complete, source unchanged",
+      "reason": "Declared production-pressure fixture tests legacy text retention, migration, attachment limits, reload, replay and both export/restore formats. Size bounds establish the intended pressure fixture rather than an emergent outcome; shrinking or moving it would weaken direct integrity coverage and enter separate speed work."
+    },
+    "wording": "Current lathe descriptions; all three bodies retain exact assertion logic.",
+    "validation": "PASS: normal/report typechecks, inventory --check, decisions check (67 fragments/248 entries), config/check,45 touched/harness tests with one worker (32 unrelated skipped), two bounded providers with14 finite observations/0 outside references, scope/diff checks. AST:11 changed bodies,3 wording-only bodies with identical assertion logic,53 unchanged registrations,0 removed. Original guard fixture/clock helper copied exactly; U-TIME source unchanged. Long original travel provider not executed locally. Fresh committed1609 merge-tree and actual head recorded on PR before push.",
+    "remainingQuestions": []
+  },
+  "legends": {
+    "plan": "1787#6620160122",
+    "baseCheckpoint": "3e586964865a39e29f7175f59f354d7c93bd437c",
+    "scope": [
+      "legendClearing50/81/111/158/186/206",
+      "quest119",
+      "questLater30",
+      "legendFit34"
+    ],
+    "retained": "Circle baby identity/species/placement, original60s wild and60+30s happy per-step containment, dancing/pickup/leash eligibility, soundsystem conversion/siege/loss/flee/retained follower, supplied inward/following/no-kin/restless->angry boundaries, every grove jitter/rim geometry/path/type/five-map stone exclusion, questCap0 and explicit6/finite/range/no-own-kind, all L2 fit contracts unchanged.",
+    "report": "All original nine sample inputs and20/25/150s windows,40-draw rng5 roam, grove/rim/stone bins/seeds, quest median/depth matrices and old-cap exact eleven identities retained across four providers. No new size policy or gameplay choice.",
+    "registrationDisposition": "Seven mixed unit callbacks split. Pure outcome questLater30 and legendFit34 move from unit discovery into informational report discovery; no direct assertion discarded.",
+    "validation": "PASS: normal/report typechecks, inventory --check, decisions check (67 fragments/248 entries), config/check,30 relevant/harness tests with maxWorkers1 (14 unrelated skipped),3 bounded report providers/22 finite observations/0 outside refs, scope/diff checks. AST:7 mixed callback bodies split,2 pure outcome registrations moved to reports,14 unchanged callback bodies; all prior14 providers/T6 and completed house/U-TIME checkpoints unchanged. Eight original L3 setup/loop bodies retained exactly after assertion evaluation conversion. Long legends-travel and prior house-travel reports UNRUN locally/canonical. Fresh committed1609 merge-tree and actual head recorded on PR before push.",
+    "remainingQuestions": []
+  },
+  "art": {
+    "plan": "1787#6620381739; refinement6620396794 before edits",
+    "baseCheckpoint": "0e7438c9c1f5eb9dcc6d043d6dd2084dd8be581d",
+    "scope": {
+      "character": [
+        "a quirk plays now and then"
+      ],
+      "sleepy": [
+        "is mostly",
+        "holds a face for a turn"
+      ],
+      "trail": [
+        "are drawn only for witches",
+        "gives each witch her own colours"
+      ],
+      "thought": [
+        "by turns: the emoji"
+      ],
+      "bark": [
+        "at most two trees an area"
+      ],
+      "beach": [
+        "lines the scalloped edge",
+        "follows the sand"
+      ],
+      "ride": [
+        "at full speed"
+      ],
+      "speakers": [
+        "turns each towards"
+      ],
+      "zoo": [
+        "every island in the zoo"
+      ],
+      "rosettes": [
+        "fills a stable share",
+        "varies size and gap"
+      ],
+      "rules": [
+        "put more ponds",
+        "hang as long runs",
+        "are seeded, on about",
+        "plays patterns on the beat",
+        "rises in level with the party"
+      ]
+    },
+    "disposition": "19 original callbacks:17 mixed split,2 pure moved to reports (swoopTrails40/rules605). AR3/AR5 direct integrity and supported comparisons KEEP unchanged.",
+    "retained": "Deterministic bounded quirk phases, configured face catalogue/hold, full dream alternation, bark allocation/replay, beach no-sea/grass/scallop/clearance, every600 ride-frame clearance, speaker yaw/ordered size, original120s finite trail/drawn cap, zoo fit/readable scale/exclusions, rosette endpoints/material channels/bounds/replay/ink, every string geometry/cap/crossing/replay, all144000 laser count/replay/fade checks, direct floor no-repeat/eligibility and exact level mappings.",
+    "providers": [
+      "art-animation",
+      "art-layout",
+      "art-motion",
+      "art-rosettes",
+      "art-rules"
+    ],
+    "originalInputs": "All original19 callback samples copied into providers with original time/seed/grid and evaluation of assertion inputs. Only explicit informational metrics appended. No rendered image/canvas/WebGLRenderer path invoked.",
+    "validation": "PASS: normal/report typechecks, inventory --check, decisions/config checks,55 unique relevant/harness tests maxWorkers1 (131 unrelated rules skipped;9 harness cases rerun after resolver support),5 bounded providers/55 finite observations/0 outside refs. AST17 changed bodies/2 pure moved/155 unchanged; all19 original sample bodies preserved after assertion evaluation conversion, prior18 providers/T6 and earlier checkpoints unchanged. Report config reuses real game virtual-module resolver/defines while replacing discovery completely; resolved-config harness checks exact report-only include and one worker. Ambient virtual module declaration added to report tsc. Initial missing-declaration report-tsc failure corrected; no test/provider failure. Fresh committed1609 merge-tree and actual head on PR before push.",
+    "unrun": "Long house-travel/legends-travel and full combined report/CI/smokes remain canonical; no art draw/browser/image/GPU check run.",
+    "remainingQuestions": [],
+    "consolidatedH4": {"base": "483801b44244f34f2f54c22e9f4ba8ea95b929a0", "originalMixedCallbacksSplit": 43, "wordingOnlyCallbacks": 6, "pureOutcomeCallbacksMovedToReports": 4, "newSuppliedCameraFixtures": 3, "existingSourceTestFiles": 26, "newH4Providers": 15, "totalProviders": 23, "separateT6": true, "sourceGroupsRemaining": []}
+  }
+}

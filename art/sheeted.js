@@ -54,12 +54,13 @@ const KINDS = {
   },
 };
 
-/** The rooms that hold placeholders: the two locked bedrooms. */
+/** The rooms that hold placeholders: the two guests' bedrooms (open since Ed, 2026-11-03, "but still have dust sheets on the
+ *  furniture"). */
 export const SHEETED_ROOMS = ["bedroom2", "bedroom3"];
 /** The placeholder kinds, each room's objects named `<room><Kind>`. */
 export const SHEETED_KINDS = Object.keys(KINDS);
 /** The pieces for art/furniture.js, by object id. */
 export const SHEETED_PIECES = Object.fromEntries(SHEETED_ROOMS.flatMap(r => SHEETED_KINDS.map(k => [r + k, KINDS[k]])));
-/** Their rooms' colours (art/furniture.js's per-room palettes): the dust sheets a dull, dusty grey, not the lit linen of hers (bright
- *  linen read as glowing under the house's lights), the wood unpolished. */
-export const SHEETED_COLOURS = Object.fromEntries(SHEETED_ROOMS.map(r => [r, { [M.BELLY]: [128, 124, 118], [M.WOOD]: [104, 80, 58], [M.HAIR]: [80, 62, 48] }]));
+/** Their own colours, by object id, over the house's one palette (art/furniture.js): the dust sheets a dull, dusty grey, not the lit
+ *  linen of hers (bright linen read as glowing under the house's lights), the wood unpolished. As their rooms' palettes were. */
+export const SHEETED_COLOURS = Object.fromEntries(Object.keys(SHEETED_PIECES).map(id => [id, { [M.BELLY]: [128, 124, 118], [M.WOOD]: [104, 80, 58], [M.HAIR]: [80, 62, 48] }]));

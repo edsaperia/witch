@@ -24,7 +24,7 @@ it("native slider changes notify both live-input and persisted-change listeners"
 
 it("opening a panel with choose held does not click through; hidden and disabled controls are skipped, Back stays in that panel", () => {
   vi.stubGlobal("document", { createElement: () => ({}), head: { append() {} } });
-  const control = (visible = true, disabled = false) => ({ tagName: "BUTTON", classList: { add: vi.fn(), remove: vi.fn() }, matches: () => disabled, getClientRects: () => visible ? [{}] : [], click: vi.fn(), focus: vi.fn(), scrollIntoView: vi.fn() });
+  const control = (visible = true, disabled = false) => ({ tagName: "BUTTON", classList: { add: vi.fn(), remove: vi.fn() }, matches: () => disabled, getClientRects: () => visible ? [{}] : [], click: vi.fn(), hasAttribute: () => false, focus: vi.fn(), scrollIntoView: vi.fn() });
   const first = control(), hidden = control(false), disabled = control(true, true), last = control();
   const root = { querySelectorAll: () => [first, hidden, disabled, last] } as unknown as HTMLElement;
   const pad = (button: number) => ({ buttons: Array.from({ length: 17 }, (_, i) => ({ pressed: i === button })), axes: [0, 0] }) as unknown as Gamepad;
@@ -80,4 +80,20 @@ it("a fresh pause snapshot resets old Back history even if no frame saw the menu
   nav.update([root], pad(-1), 31, back);
   nav.update([root], pad(1), 32, back);
   expect(back).toHaveBeenCalledTimes(3);
+});
+
+it("a hold-to-confirm control is held with choose, not clicked, and let go with it (Ed, 2026-11-02: hold to delete)", () => {
+  vi.stubGlobal("document", { createElement: () => ({}), head: { append() {} } });
+  const events: string[] = [];
+  const hold = { tagName: "BUTTON", classList: { add: vi.fn(), remove: vi.fn() }, matches: () => false, getClientRects: () => [{}], click: vi.fn(), focus: vi.fn(), scrollIntoView: vi.fn(), hasAttribute: (a: string) => a === "data-hold", dispatchEvent: (e: Event) => { events.push(e.type); return true; } };
+  const root = { querySelectorAll: () => [hold] } as unknown as HTMLElement;
+  const pad = (...down: number[]) => ({ buttons: Array.from({ length: 17 }, (_, i) => ({ pressed: down.includes(i) })), axes: [0, 0] }) as unknown as Gamepad;
+  const nav = new MenuFocus(), back = vi.fn();
+  nav.update([root], pad(), 0, back); nav.update([root], pad(13), 1, back);
+  nav.update([root], pad(0), 2, back); nav.update([root], pad(0), 3, back);
+  expect(events).toEqual(["hold:start"]); expect(hold.click).not.toHaveBeenCalled();
+  nav.update([root], pad(), 4, back);
+  expect(events).toEqual(["hold:start", "hold:end"]);
+  nav.update([root], pad(0), 5, back); nav.update([root], pad(0, 13), 6, back);
+  expect(events).toEqual(["hold:start", "hold:end", "hold:start", "hold:end"]);
 });

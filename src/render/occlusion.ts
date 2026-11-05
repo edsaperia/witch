@@ -100,6 +100,8 @@ export class OcclusionProbes {
   private probeVersions = new Map<Probe, number>();
   private veilVersions: number[] = [];
   private veilEpoch = 0;
+  /** The veil's passes read back since the start (each read waits on the GPU: for the checks). */
+  veilReads = 0;
   private veilScene = new THREE.Scene();
   private veilCam = new THREE.OrthographicCamera(-1, 1, 1, -1, 0, 1);
   private veilMat: THREE.ShaderMaterial | null = null;
@@ -173,13 +175,18 @@ export class OcclusionProbes {
   }
 
   /** Once a frame, after the scene is drawn: the smoke's veil over every probe in use (one draw, a texel each), read back when the
-   *  last one's in (never waiting on it), eased in as the queries' answers are. */
+   *  last one's in (never waiting on it), eased in as the queries' answers are. Not drawn nor read while no probe has a key (no 💌
+   *  nor ring about: in the house, most of the night): its answer would go to no one, and the read waits on the GPU (getBufferSubData
+   *  takes whatever's been drawn since: the frame-sync hunt, 2026-11-04, 15% of a guest's JavaScript in the cloud). */
   veil(): void {
     const S = this.smoke;
     if (!this.gl || !this.on || this.veilRead === "off" || !S || !S.mesh.visible || this.veilBusy) return;
     if (!this.pool.slice(0, VEIL_PROBES).some(p => p.key && p.used === this.frame)) return;
     const fires = S.drawnFires();
     if (!fires.n) return;
+    let any = false;
+    for (let i = 0; i < VEIL_PROBES && i < this.pool.length; i++) if (this.pool[i].key) { any = true; break; }
+    if (!any) return;
     if (!this.veilMat) {
       const U = S.uniforms;
       this.veilMat = new THREE.ShaderMaterial({ vertexShader: VEIL_VERT, fragmentShader: VEIL_FRAG, depthTest: false, depthWrite: false,
@@ -197,7 +204,7 @@ export class OcclusionProbes {
     const r = this.renderer, prev = r.getRenderTarget();
     r.setRenderTarget(this.veilRt);
     r.render(this.veilScene, this.veilCam);
-    this.veilBusy = true;
+    this.veilBusy = true; this.veilReads++;
     const keys = this.pool.slice(0, VEIL_PROBES).map(p => p.used === this.frame ? p.key : "");
     const versions = this.pool.slice(0, VEIL_PROBES).map(p => this.probeVersions.get(p) ?? 0);
     if (this.veilRead === "three") {

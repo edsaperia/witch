@@ -39,7 +39,7 @@ export function garlandPoint(s: Extract<CrownString, { kind: "garland" }>, u: nu
  *  branch leaves), each branch's middle line and width, the stubs where each branch room's limb carries on past its floor, and the
  *  Terrace's open rim (its point, its span in degrees round from east, clockwise). */
 export interface HouseOutline {
-  rooms: { id: string; x: number; z: number; r: number; trunk?: boolean; from?: string; locked?: boolean; outline: [number, number][] }[];
+  rooms: { id: string; x: number; z: number; r: number; trunk?: boolean; from?: string; outline: [number, number][] }[];
   branches: { id: string; w: number; pts: [number, number][] }[];
   stubs: { room: string; from: [number, number]; to: [number, number]; w0: number; w1: number }[];
   takeoff: { x: number; z: number; from: number; to: number };
