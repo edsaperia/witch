@@ -1,8 +1,8 @@
 # Getting dressed, the house and the end of the night
 
-**Audit status (2026-11-01): Partly built: wake/dressing stations, controls and stargazers exist; several older creator details and bedroom rewards do not.**
+**Audit status (2026-11-05): Partly built: wake/dressing stations, controls and stargazers exist; station cards now picture the item; several older creator details, bedroom rewards and Ed's 4 Nov proportions request do not.** (1 Nov audit: 21 items, before the proportions note)
 
-The status index checks the requests below against prototype `ab06904b` and cited history. **Built** means code is present, not a new play/audition/performance pass. **Partly built** states the missing part. An em dash leaves an unimplemented request unmarked. Versions are verified changelog build labels where available; “unverified” means no first-live number was established. Historical/superseded requests are preserved, not re-authorised. Repeated details/build-order summaries are counted with their feature group, not again.
+The status index checks the requests below against prototype `ab06904b` and cited history; re-checked on 2026-11-05 against prototype `26d69880` (live as v7569). **Built** means code is present, not a new play/audition/performance pass. **Partly built** states the missing part. An em dash leaves an unimplemented request unmarked. Versions are verified changelog build labels where available; “unverified” means no first-live number was established. Historical/superseded requests are preserved, not re-authorised. Repeated details/build-order summaries are counted with their feature group, not again.
 
 | Request / feature group | Status | Evidence and remaining gap |
 |---|---|---|
@@ -10,7 +10,7 @@ The status index checks the requests below against prototype `ab06904b` and cite
 | Next/Back dressing steps and proposed order | **Partly built** | The default uses walkable stations and first-morning pins, not the proposed Next/Back wizard. `ui/creator.ts` remains the old opening. #1076; station-card revision v5440. Exact original sequence not implemented. |
 | No same-again button | **Partly built** | No creator wizard button, but yesterday's pile now dresses her at once (`rules/clothesPile.ts`); the original next-next-next interaction is superseded. Wake-first v4240; original PR unverified. |
 | Options, Controls and What's new outside the creator | **Built** | Pause/Settings owns these ordinary views (`platform/freeze.ts`, `ui/settings.ts`); #1493. First shipped version unverified. |
-| Rotators, arrows and live preview | **Partly built** | Old creator supports rotators; ordinary stations now use cards and explicit Choose, not changing on focus. #1076; choose revision v5303, cards v5440. Original all-rotator presentation is not the default. |
+| Rotators, arrows and live preview | **Partly built** | Old creator supports rotators; ordinary stations now use cards and explicit Choose, not changing on focus. #1076; choose revision v5303, cards v5440. Since 2 Nov the station cards picture the item on her (#1695, v7125). The original all-rotator presentation with a spinning live preview is not the default. |
 | Every slider for every option | **Partly built** | Station Fit controls are real but conditional by item (for example cloak length); exact every-slider-for-every-option promise is not met. `ui/stationPanel.ts`, `config/wardrobe.json`; #1076, v5440 follow-up. |
 | Five-row colour grids | **Built** | `config/wardrobe.json`, `ui/stationPanel.ts`; #1076, station-rows fragment v4103. |
 | Hat shapes, fit and curl; Spartan helmet crest | **Partly built** | Hat fit/colour exists at mirror, power hats lie on floor; fit subset and fixed collectible identity replace the original 17-shape rotator/curl request. `art/witch.js`, wardrobe hatFit; #1044 v4187 and station cards v5440. Do not mark all original sliders complete. |
@@ -27,6 +27,7 @@ The status index checks the requests below against prototype `ab06904b` and cite
 | Visual representation of how many came | **Partly built** | Stargazing witches themselves are visible; no separate retained best-party picture/count reward found. `rules/partyWitches.ts`; originating PR/version unverified. |
 | Afterparty mushroom collection and brewing | **Built** | `rules/mushrooms.ts`, legacy cauldron compatibility; #1472 v5764 preview, current nine-colour work #1523 (first live version unverified). |
 | Bed, wake, dress and voyage | **Partly built** | Bed/new night and waking are built (#986 onward, v4466 sail-in-bed); legend-carries-house sleep voyage was explicitly superseded by continuous sailing, not an unbuilt next step. |
+| Her proportions (head, torso, legs) with clothes generated to fit (Ed, 2026-11-04) | — | Not built: no head/torso/leg genome values in `art/witch.js`; the coordinator's sizing note below is a plan. |
 
 
 Backlog (Ed, 2026-10-09). **Mixed implementation status; see the audit below. No unbuilt work is authorised by this page.** The treehouse's rooms (wardrobe, hat room, broom room, map room, studio, kitchen, DJ booth and the rest), the balcony shot and the octagon-for-now are in [journey.md](journey.md), section 3; this doc covers the character creator, the bedroom's objects and the end-of-night loop.
