@@ -1,0 +1,15 @@
+# Consumed-run fixture disposition
+
+Source-only audit of measured source f5b9ba7db946f33b8276dbe6a124cd0691462c11 (v7461). The completed run and its raw files remain unchanged. No product defect is established.
+
+In that source, `groundFamily` retains all nine lake defines under `lakelook=water`, but it does not request coast compilation. `BeachView.update` returns inland when `intoSand(witch) < -beach.shown` and no introductory camera sees the coast. On demand it calls `Ground.setBeach(b)`, which creates the beach material; `Ground.prepareCoast` submits it only when `coastReadiness.requested` is true. Sources: `src/render/groundFamily.ts`, `src/render/beach.ts`, `src/render/ground.ts`.
+
+The consumed driver only navigated to fox/world0/424242/lakelook=water, then waited. It never placed the witch at the coast. Saved metadata contains the full nine-kind plain program and the loading fallback, without a classified beach program. It did not save all unclassified links, coast demand marks, witch position or coast-request state. Therefore natural demand never occurring is consistent with the source, but cannot be proved retrospectively; a lost/unclassified observer row cannot be categorically excluded. The classifier recognizes the pinned beach transformation in a pure model check, and recognized the baseline beach in the real run; this supports the fixture explanation without proving it.
+
+## Disconnected proposal / READY delta
+
+`coast-fixture-proposal.cjs` is reviewable preparation, not wired into the driver or launcher. For a separately authorized single missing-variant run: unchanged immutable build/artifact and Intel/KHR gates; fox/world0/seed424242/lakelook=water, 960x540, quick/timing on, chart prep/warm off and ladder off. After startup readiness, use existing `coastFacing(0)` then `shot(at:x,z)` at that exact east-facing coast and one zero-time drawn `frame`. Fail closed on absent coast, failed shot or absent natural coast request; no alternate bearing/seed or direct material/compile calls. Existing hook definitions are in `src/app/hooks.ts`, placement in `src/app/shot.ts`, and coast geometry in `src/rules/land.ts`. Existing `tools/bench/ground.cjs` uses the same coast/shot hooks.
+
+A future driver integration would save demand/request/readiness and every link's classification status on failure, require all nine defines plus GROUND_BEACH and actual KHR completion, and retain the 230s driver / 250s watchdog / 270s total cap. It would measure only the missing variant; baseline and full-plain records would not be rewritten or represented as a newly paired comparison. No new run is authorized. The original READY manifest still describes the consumed driver; this proposal is NOT execution READY until integrated, freshly pinned and independently reviewed under a new grant/allocation.
+
+Pure proposal tests check hook ordering, fail-closed conditions and beach classification. They do not prove the fixture renders or the shader completes on Intel. No browser, build, heavy tests, product source or cache change was made during this audit.
