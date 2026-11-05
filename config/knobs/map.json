@@ -655,7 +655,7 @@
     },
     "legendClearing.minFromStone": {
       "what": "its edge at least this many metres from its area's runestone (where the soundsystem comes), clear of the stone's clearing and the party's dance space; a small area with no such spot grows to hold one (logged).",
-      "notes": "Its area grows into the areas beside it, claiming the circle's ground (rules/map.ts growClearing): docs/notes/world-art.md Site gaps.",
+      "notes": "Its area grows into the land round it, claiming a full-size circle's ground (rules/map.ts growClearing), before any circle is made smaller: docs/notes/world-art.md Site gaps.",
       "decisions": [
         {
           "by": "Ed",
@@ -666,6 +666,11 @@
           "by": "Ed",
           "date": "2026-11-04",
           "quote": "make the last-resort placement grow the area instead of breaking the gap"
+        },
+        {
+          "by": "Ed",
+          "date": "2026-11-05",
+          "quote": "ideally from world generation all of the areas are large enough that this is not an issue"
         }
       ]
     },
