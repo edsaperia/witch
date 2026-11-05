@@ -445,9 +445,26 @@ jobs:
       - uses: actions/checkout@v4
         with:
           path: head
+          fetch-depth: 2
+      # The base is the first parent of the merge commit this run tests (the base-branch tip GitHub merged against),
+      # not the event's base.sha, which goes stale as claude/prototype moves (#1844 was charged #1542's change).
+      - name: Resolve the bench base
+        id: base
+        shell: bash
+        working-directory: head
+        env:
+          PR_HEAD: ${{ github.event.pull_request.head.sha }}
+          EVENT_BASE: ${{ github.event.pull_request.base.sha }}
+        run: |
+          if [ "$(git rev-parse -q --verify 'HEAD^2' || true)" = "$PR_HEAD" ] && sha=$(git rev-parse -q --verify 'HEAD^1'); then
+            echo "Bench base: $sha (first parent of the tested merge $(git rev-parse HEAD); event base.sha $EVENT_BASE)"
+          else
+            sha=$EVENT_BASE; echo "Bench base: $sha (event base.sha: HEAD $(git rev-parse HEAD) is not a merge of $PR_HEAD)"
+          fi
+          echo "sha=$sha" >> "$GITHUB_OUTPUT"
       - uses: actions/checkout@v4
         with:
-          ref: ${{ github.event.pull_request.base.sha }}
+          ref: ${{ steps.base.outputs.sha }}
           path: base
       - uses: actions/setup-node@v4
         with:
