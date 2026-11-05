@@ -67,7 +67,8 @@ describe("dodging matters (Ed, 2026-10-08)", () => {
   });
 
   it("with all three, a pack catches her walking away, where before she was all but untouched", () => {
-    const before = backingOff(only(""), "wolf", 4, 30), after = backingOff(only("abc"), "wolf", 4, 30);
+    // (45 s: 30 before areas grew to 196 m, 2026-11-04, the area a sixth wider to back away in: 1 hit either way in 30 s; 1 and 3 in 45)
+    const before = backingOff(only(""), "wolf", 4, 45), after = backingOff(only("abc"), "wolf", 4, 45);
     expect(before).toBeLessThanOrEqual(3);
     expect(after).toBeGreaterThan(before); // Improved interception, independent of the chosen pack tempo/hit quota.
   }, 120000);

@@ -1,13 +1,13 @@
 // Test fixtures only. Do not mutate production tuning or the global Vitest setup.
 import type { Tuning } from "../rules/tuning";
 import type { newGame } from "../rules/game";
-import { REAL_KINDS, homeIsland, islandOf, knownKinds } from "../rules/rosters";
+import { REAL_KINDS, homeShape, islandOf } from "../rules/rosters";
 
 export const SMALL_WORLD_RADIUS = 2;
 
 /** Art loading/drawing across area types must cover the largest world shipped, not the small logic fixture. */
 export function largestShippedWorld() {
-  const found = [...REAL_KINDS], home = homeIsland(0, knownKinds(found));
+  const found = [...REAL_KINDS], home = homeShape(0, found);
   const candidates = [home, ...REAL_KINDS.map(kind => islandOf(kind)!).filter(Boolean)];
   const largest = candidates.sort((a, b) => b.size - a.size || a.kind.localeCompare(b.kind))[0];
   return { island: largest.kind, world: 0, seed: 123, shapeSeed: largest.seed, areas: largest.size, areaKinds: largest.roster.length, found,

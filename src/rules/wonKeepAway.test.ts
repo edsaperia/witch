@@ -46,7 +46,8 @@ const nearestFighter = (g: Game, c: Creature) => Math.min(...g.creatures.filter(
 describe("in an ordinary area", () => {
   it("her won ones roam clear of her fight, backing off from the wild hunting her", () => {
     const play = (t: Tuning) => {
-      const g = game(123, t), a = area(g), cs = own(g, a.key).filter(c => c.level > 0 && !c.boss);
+      // (seed 7: on 123 since areas grew to 196 m, 2026-11-04, her fight drifts off the won one with or without this, never near it)
+      const g = game(7, t), a = area(g), cs = own(g, a.key).filter(c => c.level > 0 && !c.boss);
       for (const c of g.creatures) if (!c.boss && cellKey(c.cell) !== a.key && Math.hypot(c.x - a.stone.x, c.z - a.stone.z) < 250) c.gone = true;
       g.byArea = null;
       const won = cs[0], spot = castSpot(a.stone, g.tuning);

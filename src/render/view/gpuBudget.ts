@@ -5,8 +5,9 @@
 // trees (an island she's left in the zoo, an area far behind her), a creature set none of tonight's creatures near her wears, a live
 // rig's page. Each comes back when it's wanted again, from the art cache in this browser (render/artCache.ts), fading in as any set
 // does. Nothing used in the last `gpu.keep` seconds goes (what's on screen is used every frame), so nothing vanishes in view. GL's
-// own out-of-memory error, read every `gpu.errorEvery` seconds (each read waits on the GPU) if anything was allocated since the last
-// read (GpuLedger.checkIfAllocated: only an allocation runs out of memory), lowers the budget to what was held then.
+// own out-of-memory error, read every `gpu.errorEvery` seconds (once a minute: Ed, 2026-11-04, "Once a minute"; each read waits on the
+// GPU) if anything was allocated since the last read (GpuLedger.checkIfAllocated: only an allocation runs out of memory), lowers the
+// budget to what was held then.
 import type { View } from "../view";
 import { gpuBudgetMB, ledgerLine } from "../gpuLedger";
 import type { SpriteBatch } from "../sprites";

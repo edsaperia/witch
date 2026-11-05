@@ -35,6 +35,7 @@ Discussion notes (Ed, 2026-10-09). **Mixed implementation status; see the audit 
 - **Steam (PC and Mac) and consoles.** Not web or mobile as targets: the browser stays the prototype.
 - Consoles justify a **Godot port**. Godot console exports go through porting partners (W4 Games and others, under platform NDAs); GDScript is the safer language there.
 - **Port only after the design settles.**
+- The engine port: not now (Ed, 2026-11-04).
 
 ## Sequence (proposed)
 

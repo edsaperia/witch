@@ -82,6 +82,8 @@ describe("View.setGame (another night in the same view)", () => {
     vi.stubGlobal("document", { createElement: () => fakeEl(), body: fakeEl() }); // (the house's rooms' labels)
     standInBuilds(log);
     const v = standInView(a, log), old = v.island;
+    v.renderEaseAt = 50; v.renderEaseDt = 0.1; v.camLift = 12;
+    v.camLiftTime = 50; v.houseCamInput = new THREE.Vector3(4, 5, 6);
     v.setGame(b);
     const at = (s: string) => log.findIndex(l => l.startsWith(s));
     // the order: the art reseated, the new island built (not yet in the scene), swapped in, then the old let go
@@ -107,6 +109,9 @@ describe("View.setGame (another night in the same view)", () => {
     expect(log).toContain("potionObservers.dispose");
     // its own records afresh, and the game re-pointed everywhere
     expect(v.game).toBe(b);
+    expect(v.renderEaseAt).toBeNaN(); expect(v.renderEaseDt).toBe(0);
+    expect(v.camLift).toBe(0); expect(v.camLiftTime).toBeNaN();
+    expect(v.houseCamInput.toArray()).toEqual([0, 0, 0]);
     expect(v.markerCache.wave).toBe(-1);
     expect(v.plan.key).toBe("");
     expect(v.appearing.size).toBe(0);

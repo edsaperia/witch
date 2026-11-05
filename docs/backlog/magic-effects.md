@@ -283,6 +283,8 @@ It touches only drawing, never rules: frozen trees aren't solid.
 
 ### 3.5 Budgets and settings
 
+Ed, 2026-11-04, on these budgets (and stage 6 below): not now.
+
 - **Palette-indexed art** (`render/palette.ts` `indexPlane`, `render/atlas.ts` `indexedTexture`, R8 plus a 256 × 1 palette): elements' ramps are palette rows.
   - An effect's core and halo are ramp lookups, so a new element is a new row, not new textures.
   - Imprints are row blends.

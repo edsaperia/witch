@@ -2,7 +2,7 @@
 // in a row, its roster's counts kept (its own about 1 in 6, the rest at most 2), the night's legends beside their kind, and the
 // island's shapes the same every night.
 import { describe, expect, it } from "vitest";
-import { dealAlongRoute, dealProblems, matchLegendAreas } from "./deal";
+import { dealAlongRoute, dealProblems, matchLegendAreas, pairLegendAreas } from "./deal";
 import { AREA_TYPES, generateMap, type ForestMap } from "./map";
 import { routeOf } from "./party";
 import { islandOf, OTHERS_MAX, ownAreas, playableIsland, REAL_KINDS } from "./rosters";
@@ -34,6 +34,26 @@ describe("dealing types along a route", () => {
     const m = matchLegendAreas(["a", "b", "c"], k => beside[k]);
     expect(m.size).toBe(3);
     expect(new Set(m.values()).size).toBe(3);
+  });
+
+  // (Ed, 2026-11-04: "Please fix": the re-pairing after the deal gave two legend areas one pair when the first's own was taken and
+  // nothing else beside it was free; tonight's legend's circle then went into the other one)
+  it("pairs every legend area with an area of its own, moving another on where that frees one", () => {
+    // s1 (a legend's) can take only A; s2 (empty) was grown beside A and also touches B; s3 (empty) touches only B
+    const wants: Record<string, string[]> = { s1: ["A"], s2: ["A", "B"], s3: ["B", "C"] };
+    expect([...pairLegendAreas(["s1", "s2", "s3"], s => wants[s])]).toEqual([["s1", "A"], ["s2", "B"], ["s3", "C"]]);
+    // (taken in order, each its first free one, so where nothing clashes nothing moves)
+    expect([...pairLegendAreas(["s2", "s3"], s => wants[s])]).toEqual([["s2", "A"], ["s3", "B"]]);
+    // a slot whose only areas are all held, with no way round, goes without (never sharing)
+    const tight: Record<string, string[]> = { s1: ["A"], s2: ["A"] };
+    const p = pairLegendAreas(["s1", "s2"], s => tight[s]);
+    expect([...p]).toEqual([["s1", "A"]]);
+    // and a longer chain: s4 needs C, held by s3, which can move on to B only once s2 moves off it to E (augmenting paths)
+    const chain: Record<string, string[]> = { s1: ["A"], s2: ["B", "E"], s3: ["C", "B"], s4: ["C"] };
+    const q = pairLegendAreas(["s1", "s2", "s3", "s4"], s => chain[s]);
+    expect(q.size).toBe(4);
+    expect(new Set(q.values()).size).toBe(4);
+    expect(q.get("s4")).toBe("C");
   });
 });
 

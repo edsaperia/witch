@@ -115,7 +115,7 @@ export function valid(w: CombatWorld, s: CombatState, c: Creature, tg: Target): 
  *  another kind, never a baby. A wild one goes for a witch on the ground once she's within its
  *  attack range or she's on the ground in its area (Ed's playtest, 2026-10-04). A party animal following her takes on only
  *  what attacks her or her party (Ed: they engage anything that attacks the witch or them); a
- *  parked one, anything within guard.radius of its sigil. */
+ *  parked one, anything within its guard radius of its sigil (rules/combat.ts guardRadius). */
 export function acquire(w: CombatWorld, c: Creature, x: number, z: number, range: number, attackRange: number, grid: Grid, guarding: boolean, keep?: (o: Creature) => boolean, claims?: Map<number, number>): Target | null {
   // Taunted (rules/combat/hits.ts; Ed, 2026-10-09): it goes for the one of hers that drew it off her till the taunt's over,
   // while that one's still there to fight (a lunge already under way keeps its line).

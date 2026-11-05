@@ -1,0 +1,14 @@
+{
+  "reason": "The combined playtest build (#1829): every PR merged into it that changes the game, each declared on its own branch too: #1807's bigger areas (196 m, every two sites 50 m apart, each legend area its own pair, legends' circles at full size, parked creatures guarding their chain's length), #1818's islands sized by phase, #1810's home of 5 areas, #1817's rosters, #1827's 50 m challenge circle, and the rest the build holds",
+  "frames": {
+    "*": "home and the island laid out afresh (bigger areas, home of 5 areas, a sixth bigger): the treehouse, where she starts, the stones, legends' circles, paths, woods and creatures all stand elsewhere"
+  },
+  "rules": {
+    "*": "the map laid out afresh, its stones, legends and creatures placed anew and fewer of them at home, so what she meets and everything after differs"
+  },
+  "start": {
+    "boot": "home laid out afresh (bigger areas): the treehouse, where she starts, lies elsewhere",
+    "bedroom": "home laid out afresh (bigger areas): the treehouse, where she starts, lies elsewhere",
+    "wave-fight": "home laid out afresh (bigger areas): the treehouse, where she starts, lies elsewhere"
+  }
+}

@@ -1,5 +1,6 @@
 // Stage 0: code-native effects in the game's forest/camera/post stack, ONLY behind ?fxmock.
 import * as THREE from "three";
+import { writeLightPattern } from "./lightPatternUniforms";
 import type { View } from "./view";
 import { LIGHT_UNIFORMS, MAX_LIGHTS } from "./lighting";
 import { groundHeight } from "./height";
@@ -143,6 +144,7 @@ export class FxMock {
       const e=candidates[i], x=this.origin.x+e.x,z=this.origin.y+e.z;
       U.uLightPos.value[base+i].set(x,groundHeight(x,z)+3,z,7+e.intensity*8);
       U.uLightCol.value[base+i].set(e.cold?0.3:1,e.cold?0.7:0.26,e.cold?1:0.035,envelope*e.intensity*(comfort.reduceFlashing?0.6:1));
+      writeLightPattern(base+i); // Diagnostic replacement must never inherit production pattern metadata.
     }
     U.uLightCount.value=base+n; this.lightsUsed=n; v.stats.lights=base+n;
     if(this.mode === "frost") this.updateTree(v);
