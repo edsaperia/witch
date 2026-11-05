@@ -1641,6 +1641,7 @@ export class View {
   private floorItems: { species: string; glint: number; look: FloorLook }[] = Array.from({ length: 6 }, () => ({ species: "", glint: 0, look: FALLBACK_LOOK }));
 
   render(time: number, draw = true): void {
+    this.occlusion.beginFrame();
     // Allocate only when a whole display-pixel step changes, including Try/Stop and expiry.
     if (this.pixelViewport.w > 0 && this.scenePixelSize() !== this.cssPixel) this.resize(this.pixelViewport.w, this.pixelViewport.h);
     // Late art may introduce programs after compileAll's background pass has ended.

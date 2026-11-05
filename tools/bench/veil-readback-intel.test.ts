@@ -8,11 +8,9 @@ it('imports without launching and requires real Intel/KHR telemetry with a clean
   expect(()=>hardware({gpu:'Intel UHD D3D11',khr:true,timer:true})).not.toThrow();
   for(const i of [{gpu:'SwiftShader',khr:true,timer:true},{gpu:'Intel D3D11',khr:false,timer:true},{gpu:'Intel D3D11',khr:true,timer:false}])expect(()=>hardware(i)).toThrow();
 });
-it('uses the five-minute idle and fail-closed external-browser proof',()=>{
-  const state={at:'now',idleMs:300000,processInventoryComplete:true,processes:[{Name:'node.exe',ProcessId:1,ParentProcessId:0}]};
-  expect(quietPolicy(state).externalBrowserCount).toBe(0);
-  expect(()=>quietPolicy({...state,idleMs:299999})).toThrow();
-  expect(()=>quietPolicy({...state,processes:[]})).toThrow();
-  expect(()=>quietPolicy({...state,processes:[...state.processes,{Name:'chrome.exe',ProcessId:2,ParentProcessId:1}]})).toThrow(/proof unavailable/);
-  expect(()=>quietPolicy(state,undefined,{idleMs:300001})).toThrow();
+it('records runtime input without inspecting browsers or stopping the run',()=>{
+  const state={at:'now',idleMs:120000,lastInputTick:1};
+  expect(quietPolicy(state).inputChanged).toBe(false);
+  expect(quietPolicy({...state,idleMs:0,lastInputTick:2},undefined,state).inputChanged).toBe(true);
+  expect(()=>quietPolicy({...state,idleMs:NaN})).toThrow();
 });

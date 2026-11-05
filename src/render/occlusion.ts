@@ -16,7 +16,7 @@ import * as THREE from "three";
 import { GROUND_SEEN_GLSL, HEIGHT_UNIFORMS, HEIGHT_VERT_GLSL } from "./height";
 import { SMOKE_PUFF_GLSL, type Smoke } from "./smoke";
 import { SPRITE_UNIFORMS } from "./sprites";
-import { VeilReadback } from "./veilReadback";
+import { emptyVeilReadTiming, VeilReadback } from "./veilReadback";
 
 /** Between the solid pass (and the smoke at 9.4) and the see-through passes round her (10.9, 11, 19.9). */
 export const PROBE_ORDER = 10.5;
@@ -91,6 +91,9 @@ export class OcclusionProbes {
   private veilBusy = false;
   veilRead: "fence" | "three" | "off" = "fence";
   readMs = 0;
+  private readFrame = 0;
+  private emptyReadTiming = emptyVeilReadTiming();
+  get readTiming() { return this.veilReader?.timing ?? this.emptyReadTiming; }
   private veilReader: VeilReadback | null = null;
   private veilKeys: string[] = [];
   private probeSerial = 0;
@@ -136,15 +139,25 @@ export class OcclusionProbes {
   /** How much of it shows (0 hidden to 1 seen), eased, its smoke's veil taken off; 1 for anything never asked about. */
   shown(key: string): number { const p = this.on ? this.byKey.get(key) : undefined; return p ? p.shown * (1 - p.veil) : 1; }
 
+  /** First operation of View.render: before resize, shader work or this frame's GPU draws. */
+  beginFrame(): void {
+    this.readFrame++;
+    const start = performance.now();
+    if (this.veilReader?.poll(this.veilBuf, this.readFrame)) {
+      const applyStart = performance.now();
+      this.heardVeil(this.veilKeys, this.veilVersions, this.veilBuf);
+      this.veilReader.timing.applyMs = performance.now() - applyStart;
+    }
+    this.readMs = performance.now() - start;
+    this.readTiming.totalMs = this.readMs;
+  }
+
   /** Once a frame, before the scene is drawn: the answers that have come back, eased in; unused probes hidden, old ones let go. */
   update(time: number): void {
     const gl = this.gl, dt = this.lastTime < 0 ? 0 : Math.max(0, Math.min(0.1, time - this.lastTime));
     this.lastTime = time;
     this.frame++;
     if (!gl) return;
-    const readStart = performance.now();
-    if (this.veilReader?.poll(this.veilBuf)) this.heardVeil(this.veilKeys, this.veilVersions, this.veilBuf);
-    this.readMs = performance.now() - readStart;
     for (const p of this.pool) {
       while (p.pending.length && gl.getQueryParameter(p.pending[0], gl.QUERY_RESULT_AVAILABLE)) {
         const q = p.pending.shift()!;
@@ -195,7 +208,7 @@ export class OcclusionProbes {
       }, () => { if (epoch === this.veilEpoch) this.veilBusy = false; });
     } else {
       this.veilReader ??= new VeilReadback(this.gl, this.veilBuf.length);
-      try { this.veilBusy = this.veilReader.issue(VEIL_PROBES); this.veilKeys = keys; this.veilVersions = versions; }
+      try { this.veilBusy = this.veilReader.issue(VEIL_PROBES, this.readFrame); this.veilKeys = keys; this.veilVersions = versions; }
       finally { r.setRenderTarget(prev); }
     }
   }
