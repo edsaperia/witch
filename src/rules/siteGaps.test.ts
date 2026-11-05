@@ -4,7 +4,8 @@
 // paired twice, so no legend's circle goes into another legend area), and every two sites' footprints keep siteGap apart and
 // siteLakeGap off a lake's water (rules/map.ts siteRules).
 import { describe, expect, it } from "vitest";
-import { generateMap, hydrateMap, prepOf, siteRules, type ForestMap } from "./map";
+import { AREA_TYPES, generateMap, hydrateMap, prepOf, siteRules, type ForestMap } from "./map";
+import { legendRadius } from "./legendFit";
 import { lakeDepth } from "./lakes";
 import { floorClearing } from "./speakers";
 import { TUNING, type Tuning } from "./tuning";
@@ -117,10 +118,12 @@ describe("an area grown for its legend's circle", () => {
       }
       if (m.bounds.lakes) for (const s of all) { const g = -lakeDepth(m.bounds, s.x, s.z) - s.r; if (g < lake - 0.5) near.push(`${s.what} ${g.toFixed(1)} m off a lake`); }
       expect(near).toEqual([]);
-      // every legend tonight has its circle, its own area's
+      // every legend tonight has its circle at its full size (Ed, 2026-11-05: "ideally from world generation all of the areas are
+      // large enough that this is not an issue"), its own area's
       for (const lc of m.legendCells) {
         const [x, y] = lc.split(",").map(Number), c = m.legendClearing(x, y);
         expect(c, `${lc}'s circle`).toBeTruthy();
+        expect(c!.r, `${lc}'s circle's size`).toBeGreaterThanOrEqual(legendRadius(AREA_TYPES[m.typeOf(x, y)].creature, m.tuning.legendClearing) - 0.01);
         for (let i = 0; i < 16; i++) for (const f of [0, 1]) { // (its middle and the 16 points of its rim placing checks: the fractal borders wander between)
           const a = (i / 16) * Math.PI * 2, q = key(m.areaAt(c!.x + Math.cos(a) * c!.r * f, c!.z + Math.sin(a) * c!.r * f).cell);
           expect(q, `${lc}'s circle reaches ${q}`).toBe(key(c!.cell));
@@ -128,6 +131,13 @@ describe("an area grown for its legend's circle", () => {
       }
     }, 180000);
   }
+  it("keeps the island's coast and lakes the same every night, grown or not (griffin 1 and 2, elephant 7 and 8)", () => {
+    for (const [kind, a, b] of [["griffin", 1, 2], ["elephant", 7, 8]] as const) {
+      const p = prepOf(generateMap(a, islandOf(kind))), q = prepOf(generateMap(b, islandOf(kind)));
+      expect(q.land).toEqual(p.land);
+      expect(q.lakes).toEqual(p.lakes);
+    }
+  }, 180000);
   it("grows the same from a map's prep, and the same from the same seed (jaguar 1, home of 40 seed 2)", () => {
     for (const [seed, t] of [[1, islandOf("jaguar")], [2, homeFound(40)]] as const) {
       const a = generateMap(seed, t), b = generateMap(seed, t), c = hydrateMap(seed, t, prepOf(a));
