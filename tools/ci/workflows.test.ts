@@ -4,6 +4,62 @@ import { parse } from "yaml";
 
 const workflow = (name: string) => parse(fs.readFileSync(`.github/workflows/${name}.yml`, "utf8"));
 const ci = workflow("ci"), jobs = ci.jobs;
+describe("identical-tree release validation reuse", () => {
+  it("does not run checkout-dependent cleanup after a prerequisite failure skipped checkout", () => {
+    for (const name of ["unit", "check-work"]) {
+      const steps = jobs[name].steps;
+      const checkout = steps.find((s: any) => s.uses === "actions/checkout@v4");
+      const cleanup = steps.find((s: any) => s.name === "Failure annotation totals");
+      expect(checkout.id).toBe("source");
+      expect(cleanup.if).toBe("always() && needs.build.outputs.reuse != 'true' && steps.source.outcome == 'success'");
+      // A failed build/publication still fails this job; only redundant cleanup is skipped.
+      expect(steps[0].run).toBe("exit 1");
+      expect(steps[0].if).toContain("needs.build.result != 'success'");
+      expect(steps[0].if).toContain("needs.deploy.result != 'success'");
+    }
+  });
+  it("limits lookup to main pushes with read-only Actions access and a full fallback", () => {
+    const lookup = jobs.build.steps.find((s: any) => s.id === "reuse");
+    expect(lookup.if).toBe("github.event_name == 'push' && github.ref == 'refs/heads/main'");
+    expect(lookup["continue-on-error"]).toBe(true);
+    expect(lookup["timeout-minutes"]).toBe(2);
+    expect(jobs.build.permissions).toEqual({ contents: "read", "pull-requests": "read", actions: "read" });
+    expect(jobs.build.outputs.reuse).toBe("${{ steps.reuse.outputs.reuse }}");
+    // Build and publication always use the current source/version, never the source PR artifact.
+    for (const step of jobs.build.steps.filter((s: any) => /npm ci|npm run build/.test(s.run ?? "") || s.with?.name === "game-dist"))
+      expect(step.if).toBeUndefined();
+    expect(jobs.deploy.steps.some((s: any) => String(s.if).includes("reuse"))).toBe(false);
+  });
+  it("keeps required job statuses and build/publication gates while logging every reused result", () => {
+    for (const job of ["unit", "check-work", "smoke", "large-world"]) {
+      const steps = jobs[job].steps;
+      const log = steps.find((s: any) => s.name === "Reuse successful full release validation");
+      expect(log.if).toBe("needs.build.outputs.reuse == 'true'");
+      expect(log.env.RELEASE_VALIDATION_SOURCE).toBe("${{ needs.build.outputs.source }}");
+      for (const step of steps.filter((s: any) => s !== log && !s.name?.startsWith("Require the build") && !String(s.if).includes("outputs.release")))
+        expect(step.if, `${job}: ${step.name ?? step.uses ?? step.run}`).toContain("needs.build.outputs.reuse != 'true'");
+      expect(jobs[job].if).not.toContain("reuse");
+    }
+  });
+  it("only mints proof after all full release validations succeed, with attempt-specific records", () => {
+    const proof = jobs["release-proof"];
+    expect(proof.needs).toEqual(["build", "unit", "check-work", "check", "smoke", "large-world"]);
+    expect(proof.if).toContain("!cancelled()");
+    expect(proof.if).toContain("needs.build.outputs.release == 'true'");
+    for (const name of proof.needs) expect(proof.if).toContain(`needs.${name}.result == 'success'`);
+    expect(proof["continue-on-error"]).toBe(true);
+    const download = proof.steps.find((s: any) => s.uses === "actions/download-artifact@v4");
+    expect(download.with).toEqual({ pattern: "ci-validation-*-${{ github.run_attempt }}", path: "ci-validation", "merge-multiple": true });
+    for (const name of ["build", "unit", "check-work", "smoke", "large-world"]) {
+      const stamp = jobs[name].steps.find((s: any) => s.run?.includes("release-reuse.mjs record"));
+      expect(stamp.if).toContain(name === "build" ? "steps.release.outputs.candidate == 'true'" : "needs.build.outputs.release == 'true'");
+      expect(stamp["continue-on-error"]).toBe(true);
+      const upload = jobs[name].steps.find((s: any) => s.with?.name?.startsWith("ci-validation-"));
+      expect(upload.with.name).toContain("github.run_attempt");
+      expect(upload["continue-on-error"]).toBe(true);
+    }
+  });
+});
 describe("shared CI game build", () => {
   it("runs candidate-only fast proofs on PR artifacts with smoke Chromium", () => {
     const proof = jobs.proofs, steps = proof.steps;
@@ -43,7 +99,12 @@ describe("shared CI game build", () => {
     expect(builds[1].step.run).toContain("cd base && npm ci && npm run build");
     expect(builds[1].step.run).toContain("mv dist dist-same");
     expect(builds[1].step.env).toEqual({ WITCH_VERSION: "${{ github.run_number }}", WITCH_SHA: "${{ github.event.pull_request.head.sha }}" });
-    expect(jobs["game-unchanged"].steps.find((s: any) => s.with?.path === "base").with.ref).toContain("pull_request.base.sha");
+    // The base is the tested merge commit's first parent (the base-branch tip it was merged against), not the stale event base.sha.
+    const steps = jobs["game-unchanged"].steps, resolve = steps.find((s: any) => s.id === "base");
+    expect(steps.find((s: any) => s.with?.path === "head").with["fetch-depth"]).toBe(2);
+    expect(resolve.run).toContain("HEAD^1");
+    expect(resolve.env.PR_HEAD).toContain("pull_request.head.sha");
+    expect(steps.find((s: any) => s.with?.path === "base").with.ref).toBe("${{ steps.base.outputs.sha }}");
   });
   it("skips only the benchmark itself when the game build is byte-identical to base", () => {
     const steps = jobs["game-unchanged"].steps, same = steps.findIndex((s: any) => s.id === "same");
@@ -133,8 +194,22 @@ describe("shared CI game build", () => {
   });
   it("does not make the independent art generator consume a nonexistent game build", () => {
     const art = workflow("art-check");
-    expect(Object.keys(art.jobs)).toEqual(["art"]);
-    expect(art.jobs.art.needs).toBeUndefined();
+    expect(Object.keys(art.jobs)).toEqual(["plan", "shards", "art"]);
+    expect(art.jobs.plan.needs).toBeUndefined();
+    expect(art.jobs.shards.needs).toBe("plan");
+    expect(art.jobs.art.needs).toEqual(["plan", "shards"]);
+    expect(art.jobs.shards.strategy).toMatchObject({ "fail-fast": false, matrix: { shard: "${{ fromJSON(needs.plan.outputs.shards) }}" } });
+    expect(art.jobs.art.if).toBe("${{ always() }}");
+    const requireCoverage = art.jobs.art.steps.find((s: any) => s.name === "Require successful planning and every needed shard");
+    expect(requireCoverage.env).toEqual({ PLAN_RESULT: "${{ needs.plan.result }}", MODE: "${{ needs.plan.outputs.mode }}", SHARDS_RESULT: "${{ needs.shards.result }}" });
+    expect(requireCoverage.run).toContain('test "$PLAN_RESULT" = success');
+    expect(requireCoverage.run).toContain('affected|full) test "$SHARDS_RESULT" = success');
+    expect(requireCoverage.run).toContain('exact|cached) test "$SHARDS_RESULT" = skipped');
+    const combined = art.jobs.art.steps.findIndex((s: any) => s.name === "Validate complete coverage and combine proof");
+    const publish = art.jobs.art.steps.findIndex((s: any) => s.with?.name === "art-check-tree");
+    expect(combined).toBeGreaterThan(-1);
+    expect(publish).toBeGreaterThan(combined);
+    expect(art.jobs.art.steps[combined].run).toContain("shards.mjs combine");
     for (const job of Object.values(art.jobs) as any[]) {
       expect(job.steps.some((s: any) => /npm run build/.test(s.run ?? ""))).toBe(false);
       for (const step of job.steps.filter((s: any) => s.uses?.startsWith("actions/download-artifact@"))) {
@@ -144,20 +219,33 @@ describe("shared CI game build", () => {
       }
     }
   });
-  it("runs advisory art only nightly on prototype or manually on the selected exact ref", () => {
-    const art = workflow("art-check"), steps = art.jobs.art.steps;
+  it("runs advisory art only nightly on prototype or manually on the selected exact ref", async () => {
+    const art = workflow("art-check"), steps = art.jobs.plan.steps;
     expect(Object.keys(art.on).sort()).toEqual(["schedule", "workflow_dispatch"]);
     expect(art.on.schedule).toEqual([{ cron: "17 3 * * *" }]);
     expect(steps.find((s: any) => s.id === "source").with.script).toContain("context.eventName === 'schedule' ? 'claude/prototype' : context.sha");
     expect(steps.find((s: any) => s.uses === "actions/checkout@v4").with.ref).toBe("${{ steps.source.outputs.sha }}");
     expect(steps.find((s: any) => s.id === "checked").if).toBeUndefined();
-    const notify = steps.find((s: any) => s.name === "Update the single nightly art result on issue 1476");
+    expect(art.jobs.plan.outputs.sha).toBe("${{ steps.source.outputs.sha }}");
+    for (const job of [art.jobs.shards, art.jobs.art])
+      expect(job.steps.find((s: any) => s.uses === "actions/checkout@v4").with.ref).toBe("${{ needs.plan.outputs.sha }}");
+    const AsyncFunction = Object.getPrototypeOf(async function () {}).constructor;
+    for (const eventName of ["schedule", "workflow_dispatch"]) {
+      const refs: string[] = [], outputs: any = {}, sha = "c".repeat(40);
+      await new AsyncFunction("context", "github", "core", steps.find((s: any) => s.id === "source").with.script)(
+        { eventName, sha, repo: { owner: "edsaperia", repo: "witch" } },
+        { rest: { repos: { getCommit: async ({ ref }: { ref: string }) => { refs.push(ref); return { data: { sha } }; } } } },
+        { setOutput: (key: string, value: string) => { outputs[key] = value; }, info: () => {} });
+      expect(refs).toEqual([eventName === "schedule" ? "claude/prototype" : sha]);
+      expect(outputs).toEqual({ sha });
+    }
+    const notify = art.jobs.art.steps.find((s: any) => s.name === "Update the single nightly art result on issue 1476");
     expect(notify.if).toContain("always()");
     expect(notify.if).toContain("github.event_name == 'schedule'");
-    expect(notify.env.ART_SOURCE).toBe("${{ steps.source.outputs.sha }}");
+    expect(notify.env.ART_SOURCE).toBe("${{ needs.plan.outputs.sha }}");
     expect(notify.with.script).toContain("issue_number = 1476");
     expect(notify.with.script).toContain("issues.updateComment");
-    expect(notify.with.script).toContain("Failed/unproven task batch");
+    expect(notify.with.script).toContain("Failed/unproven shard coverage");
     expect(art.permissions.issues).toBe("write");
     for (const job of Object.values(jobs) as any[]) {
       const needs = Array.isArray(job.needs) ? job.needs : [job.needs];
@@ -165,10 +253,16 @@ describe("shared CI game build", () => {
       expect(needs).not.toContain("art-check");
     }
   });
-  it("creates or updates one nightly failure comment with source and failed batch, and quietly resolves it", async () => {
+  it("creates or updates one nightly failure comment with source and unproven shard coverage, and quietly resolves it", async () => {
     const script = workflow("art-check").jobs.art.steps.find((s: any) => s.name === "Update the single nightly art result on issue 1476").with.script;
     const AsyncFunction = Object.getPrototypeOf(async function () {}).constructor;
-    for (const [result, prior, log] of [["failure", false, "checking art: rig-parts,treehouse\nFAIL treehouse pixels"], ["failure", true, "checking art: auxiliary-and-labs\nError: lab failed"], ["success", true, ""], ["success", false, ""], ["failure", false, ""]] as const) {
+    for (const [result, prior, log, mode, missing] of [
+      ["failure", false, "checking art: rig-parts,treehouse\nFAIL treehouse pixels", "affected", [1]],
+      ["failure", true, "checking art: auxiliary-and-labs\nError: lab failed", "full", [0]],
+      ["failure", true, "Error: invalid combined coverage", "affected", []],
+      ["success", true, "", "cached", []], ["success", false, "", "exact", []],
+      ["failure", false, "", null, []],
+    ] as const) {
       const writes: any[] = [], issues = {
         listComments: () => {},
         updateComment: async (x: any) => writes.push({ kind: "update", ...x }),
@@ -176,19 +270,29 @@ describe("shared CI game build", () => {
       };
       const github = { rest: { issues }, paginate: async () => prior ? [{ id: 77, user: { login: "github-actions[bot]" }, body: "<!-- witch-art-check-nightly-result -->" }] : [] };
       await new AsyncFunction("require", "context", "github", "process", script)(
-        () => ({ readFileSync: () => log }), { repo: { owner: "edsaperia", repo: "witch" }, runId: 123 }, github,
+        () => ({
+          readFileSync: (file: string) => {
+            if (file === "out/log.txt") return log;
+            if (file === "out/art-check-plan.json" && mode) return JSON.stringify({ mode, shardCount: 3 });
+            throw Error("No such fixture file: " + file);
+          },
+          existsSync: (file: string) => !missing.some(i => file === `out/shards/shard-${i}.json`),
+        }), { repo: { owner: "edsaperia", repo: "witch" }, runId: 123 }, github,
         { env: { ART_RESULT: result, ART_SOURCE: "a".repeat(40) } });
       if (result === "success" && !prior) { expect(writes).toEqual([]); continue; }
       expect(writes).toHaveLength(1);
       expect(writes[0].kind).toBe(prior ? "update" : "create");
       expect(writes[0].body).toContain("a".repeat(40));
-      expect(writes[0].body).toContain(result === "success" ? "RECOVERED / PASS" : log ? "Failed/unproven task batch" : "Setup/planning failed");
-      if (log) expect(writes[0].body).toContain(log.split("\n")[0].replace("checking art: ", ""));
+      expect(writes[0].body).toContain(result === "success" ? "RECOVERED / PASS" : missing.length ? `Failed/unproven shard coverage: ${missing.join(", ")}` : "Setup, art coverage, proof aggregation or artifact handling was not successful");
+      if (missing.length) expect(writes[0].body).toContain("no individual task is inferred to have failed");
+      if (result === "failure" && log) expect(writes[0].body).toContain(log.split("\n").at(-1));
+      expect(writes[0].body).toContain("actions/runs/123");
+      expect(writes[0].body).toContain("Art is advisory; build, deploy and release do not wait for it.");
       expect(writes[0].issue_number ?? 1476).toBe(1476);
     }
   });
   it("reuses a scheduled proof's actual checkout tree even when workflow metadata names another SHA", async () => {
-    const script = workflow("art-check").jobs.art.steps.find((s: any) => s.id === "checked").with.script;
+    const script = workflow("art-check").jobs.plan.steps.find((s: any) => s.id === "checked").with.script;
     const actualProof = await import("../art-check/checked-tree.mjs");
     // Vitest's VM cannot dynamically import inside a generated Function; bridge only the loader.
     const executable = script.replace("await import(pathToFileURL(path.resolve('tools/art-check/checked-tree.mjs')).href)", "await loadProof()");
@@ -206,8 +310,9 @@ describe("shared CI game build", () => {
         downloadArtifact: async () => ({ data: Buffer.from("zip mock") }),
       };
       const github = { rest: { actions, git: { getCommit: async () => ({ data: { tree: { sha: "b".repeat(40) } } }) } } };
+      const written: Record<string, string> = {};
       const modules: any = {
-        fs: { writeFileSync: () => {}, unlinkSync: () => {} },
+        fs: { mkdirSync: () => {}, writeFileSync: (file: string, value: string) => { written[file] = value; }, unlinkSync: () => {} },
         path: { resolve: (p: string) => p, join: (...p: string[]) => p.join("/") },
         child_process: { execFileSync: (cmd: string) => cmd === "git" ? tree : cmd === "node" ? env.node : JSON.stringify(proof) },
         url: { pathToFileURL: () => ({ href: new URL("../art-check/checked-tree.mjs", import.meta.url).href }) },
@@ -217,12 +322,14 @@ describe("shared CI game build", () => {
         { info: () => {}, setOutput: (k: string, v: any) => { outputs[k] = v; } },
         { env: { RUNNER_OS: env.os, PLAYWRIGHT_VERSION: env.browser, RUNNER_TEMP: "mock-temp" }, arch: env.arch }, () => actualProof);
       expect(outputs.run).toBe(scenario === "matching" ? 99 : "");
+      if (scenario === "matching") expect(JSON.parse(written["out/exact-proof.json"])).toEqual(proof);
+      else expect(written["out/exact-proof.json"]).toBeUndefined();
     }
   });
   it("keeps real largest-world drawing coverage separate from small unit worlds", () => {
     expect(jobs["large-world"].steps.some((s: any) => s.run?.includes("tools/smoke/large-world.cjs"))).toBe(true);
     expect(jobs["large-world"].steps.find((s: any) => s.uses === "actions/download-artifact@v4").with.name).toBe("game-dist");
-    expect(jobs["large-world"]["timeout-minutes"]).toBe(20);
+    expect(jobs["large-world"]["timeout-minutes"]).toBe(30); // (20 till areas went 196 m across: the second sampled site then loads every kind's art, tools/smoke/large-world.cjs)
   });
   it("allows cancellation of stale consumer jobs rather than always keeping them alive", () => {
     for (const name of ["check", "smoke", "large-world"]) {

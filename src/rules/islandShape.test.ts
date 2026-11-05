@@ -17,7 +17,7 @@ describe("islands' shapes and pictures (the wave 2 finale's dream bubbles, the s
     expect(islandSeed("wolf")).not.toBe(islandSeed("fox"));
     const size = Math.sqrt(islandAreas(0) / 64);
     for (const r of a.radii) { expect(r).toBeGreaterThanOrEqual(size * (1 - knobs.amp) - 1e-6); expect(r).toBeLessThanOrEqual(size * (1 + knobs.amp) + 1e-6); }
-    expect(islandAreas(0)).toBe(10); expect(islandAreas(2)).toBe(30);
+    expect(islandAreas(0)).toBe(10); expect(islandAreas(2)).toBe(20); expect(islandAreas(4)).toBe(30); // (Ed, 2026-11-04: 10 / 15 / 20 / 25 / 30)
     expect(Math.max(...islandCoast({ kind: "wolf", phase: 2 }, knobs).radii)).toBeGreaterThan(Math.max(...a.radii)); // a later phase's island is bigger
     expect(islandCoast({ kind: "wolf", seed: 7, areas: 40 }, knobs).areas).toBe(40); // the rosters' own numbers when given
   });

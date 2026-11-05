@@ -97,6 +97,13 @@ export function lungeLength(c: Creature, A: Attack, atWitch: boolean, t: Tuning,
   return lungeOf(c, A, (A.lunge ?? 0) * (DA && atWitch ? DA.lunge : 1), chasing, time, aimX, aimZ);
 }
 
+/** How far round its sigil a parked party animal guards (m, before FIGHT.scale), past its sigil's area (Ed, 2026-11-04: "A parked
+ *  creature should guard its chain length, now that's a fixed number, with home area an exception"): its chain's length
+ *  (leash.chain.length, 80), derived from it. Parked in the home area it guards the whole home area and nothing outside it (Ed,
+ *  2026-10-11), roaming it freely (Ed, 2026-11-04: rules/leash.ts roamHome), so the radius isn't used there: guard.radius (40)
+ *  where asked. No chains (length 0): guard.radius everywhere. */
+export const guardRadius = (t: Tuning, inHome: boolean): number => (inHome ? t.guard.radius : t.leash.chain?.length || t.guard.radius);
+
 export function stepCombat(s: CombatState, w: CombatWorld, data: CombatData = COMBAT): void {
   // (Events gather over a frame's steps: stepGame clears them once a frame, for the view.)
   const { time, dt, t } = w, C = t.combat;
@@ -384,9 +391,11 @@ export function stepCombat(s: CombatState, w: CombatWorld, data: CombatData = CO
     // (parked with its sigil in the home area, it guards all of that area and nothing outside it: Ed, 2026-10-11; parked in any
     // other area, all of that area plus guard.radius round its sigil: Ed, 2026-10-15, "Placing a sigil in any area should work as
     // home does: the creatures defend the whole area, plus a radius round the sigil")
-    const S = FIGHT.scale, parkedIn = c.leashed && guarding && lp ? (w.home?.inside(lp.x, lp.z) ? w.home : w.areaAt?.(lp.x, lp.z) ?? null) : null, atHome = !!parkedIn && parkedIn === w.home;
-    const H = parkedIn && lp ? (atHome ? parkedIn : { x: parkedIn.x, z: parkedIn.z, r: Math.max(parkedIn.r, Math.hypot(lp.x - parkedIn.x, lp.z - parkedIn.z) + t.guard.radius * S), inside: (x: number, z: number) => parkedIn.inside(x, z) || Math.hypot(x - lp.x, z - lp.z) <= t.guard.radius * S }) : null; // (the circle covers the area and the radius round the sigil, so acquire finds everything in either)
-    const reachX = H ? H.x : lp ? lp.x : c.x, reachZ = H ? H.z : lp ? lp.z : c.z, reach = H ? H.r : (lp ? (happy ? t.wildLegends.guard : guarding ? t.guard.radius : C.pursuit) : C.aggro) * S;
+    // (the radius round its sigil its chain's length off home, Ed 2026-11-04: "A parked creature should guard its chain length, now
+    // that's a fixed number, with home area an exception": guardRadius)
+    const S = FIGHT.scale, inHome = !!lp && !!w.home?.inside(lp.x, lp.z), parkedIn = c.leashed && guarding && lp ? (inHome ? w.home! : w.areaAt?.(lp.x, lp.z) ?? null) : null, atHome = !!parkedIn && parkedIn === w.home, GR = guardRadius(t, inHome) * S;
+    const H = parkedIn && lp ? (atHome ? parkedIn : { x: parkedIn.x, z: parkedIn.z, r: Math.max(parkedIn.r, Math.hypot(lp.x - parkedIn.x, lp.z - parkedIn.z) + GR), inside: (x: number, z: number) => parkedIn.inside(x, z) || Math.hypot(x - lp.x, z - lp.z) <= GR }) : null; // (the circle covers the area and the radius round the sigil, so acquire finds everything in either)
+    const reachX = H ? H.x : lp ? lp.x : c.x, reachZ = H ? H.z : lp ? lp.z : c.z, reach = H ? H.r : lp ? (happy ? t.wildLegends.guard * S : guarding ? GR : C.pursuit * S) : C.aggro * S;
     if (f.target && !valid(w, s, c, f.target)) {
       // Lost her (or her party) past its band, or she rose (Ed, 2026-10-06: "instead they should retreat
       // and go back to idling"): a wild one that isn't besieging gives up and heads home.

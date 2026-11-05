@@ -184,7 +184,8 @@ export function drawCreatures(v: View, time = 0): void {
       if (!st && !napping && lying <= 0 && droop <= 0) v.legendSleeps.delete(c.id); // (up again: forgotten)
     }
     // Its expression, part of its face (art/genome/expressions.js; render/looks.ts expression): the party looks are happy and the woken one angry already.
-    const face = sleeping || lying > 0.5 || stone ? "neutral" : expression(c, time), faced = !party && !woken && face !== "neutral" ? v.assets.faceArt(c.species, face) : undefined;
+    // (the faces off, tuning looks.expressions, Ed 2026-11-05: "Scrap animal expressions for now.": its plain face; a sleeping legend's asleep head on the rig is its sleeping look, below)
+    const face = sleeping || lying > 0.5 || stone || !v.assets.expressions ? "neutral" : expression(c, time), faced = !party && !woken && face !== "neutral" ? v.assets.faceArt(c.species, face) : undefined;
     // Asleep, its own sleeping form (art/legends.js), drawn once it's baked; until then the awake one sunk, as before.
     // (Ed's round 14 playtest, "it's hard to make out what it is at all": with wildLegends.seen.nap its nap, art/naps.js, the animal itself lying asleep, not a mound)
     const slept = sleeping ? (g.tuning.wildLegends.seen?.nap ? v.assets.napArt(c.species) : v.assets.sleepArt(c.species)) : undefined;

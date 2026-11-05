@@ -63,16 +63,16 @@ export interface TypeLayout {
 export interface ArtDef { id: string; leaf: number; big: [string, Record<string, unknown>][]; small: [string, Record<string, unknown>][]; set?: [string, Record<string, unknown>] }
 export type TreeOpts = { type: string; minor?: boolean; dark?: boolean; gnarl?: number; bare?: boolean; trunks?: number; lean?: number; thick?: boolean; thin?: boolean; hollow?: boolean; webs?: boolean; scale?: number };
 
-export type ArtJob = { kind: "type"; id: number; style: Style; seed: number; K: number; /** the island's biome blend's key (rules/lakeLooks.ts biomeKey), its look over the area's trees and props; none, temperate */ biome?: string } | { kind: "creature"; id: string; style: Style } | { kind: "rig"; id: string; species: string; level: number; style: Style; /** a party animal's gear, baked on */ gear?: RigGear }
+export type ArtJob = { kind: "type"; id: number; style: Style; seed: number; K: number; /** the island's biome blend's key (rules/lakeLooks.ts biomeKey), its look over the area's trees and props; none, temperate */ biome?: string } | { kind: "creature"; id: string; style: Style } | { kind: "rig"; id: string; species: string; level: number; style: Style; /** a party animal's gear, baked on */ gear?: RigGear; /** its expression heads too (tuning looks.expressions, off for now) */ faces?: boolean }
   /** A creature enraged by a wave (Stage 4 playtest): angry glowing red eyes and a darker tint. */
-  | { kind: "woken"; id: string; species: string; style: Style }
+  | { kind: "woken"; id: string; species: string; style: Style; /** with its angry face (tuning looks.expressions, off for now): narrowed eyes and brows */ faces?: boolean }
   /** An area legend asleep (art/legends.js legendForm): its two breathing frames, sunk and grown over. */
   | { kind: "sleep"; id: string; species: string; style: Style }
   | { kind: "glide"; id: string; species: string; style: Style }
   | { kind: "nap"; id: string; species: string; style: Style; /** its idle pose instead (art/creatures.js IDLE_BUILDERS: the meerkat sat up as a sentinel), each level in its 2 frames */ idle?: boolean; /** a party animal's (or a happy one's) own gear, by its seed and collar colour (null: none), worn asleep */ dressed?: { seed: number; colour: number[] | null } }
   | { kind: "face"; id: string; species: string; face: string; style: Style }
   /** One current age in an outfit selected by the creature's seed, shared by identical looks. */
-  | { kind: "party"; id: string; species: string; level: number; gear: RigGear; style: Style }
+  | { kind: "party"; id: string; species: string; level: number; gear: RigGear; style: Style; /** smiling (tuning looks.expressions, off for now): its happy face */ faces?: boolean }
   /** Every decoration (ruins in both conditions, rocks, freak trees), split as trees are. */
   | { kind: "decor"; id: string; style: Style; /** the island's biome key (its look over the rocks, ruins and freak trees); id is the same, or "all" */ biome?: string }
   /** The beach's edge of the woods (render/beach.ts): palms (split as trees are), beach shrubs and grass clumps, each with its sway mask. */
@@ -199,7 +199,7 @@ export function runJob(job: ArtJob, mk: MakeCanvas): ArtResult {
   if (job.kind === "partyObjects") { const { sprites, party } = partyObjectSprites(job.style, mk); return { px: packPixels(sprites, 2048), party }; }
   if (job.kind === "partyWitch") { const { sprites, witch } = partyWitchSprites(job.style, job.seed, mk, job.genome ?? null); return { px: packPixels(sprites, 2048), witch }; }
   if (job.kind === "creature") return { px: packPixels(creatureSprites(job.style, job.id, mk), 2048) };
-  if (job.kind === "rig") { const r = rigSprites(job.style, job.species, job.level, mk, job.gear ?? null); return r ? { px: r.px, rig: r.meta } : { px: packPixels([], 16) }; }
+  if (job.kind === "rig") { const r = rigSprites(job.style, job.species, job.level, mk, job.gear ?? null, job.faces === true); return r ? { px: r.px, rig: r.meta } : { px: packPixels([], 16) }; }
   if (job.kind === "beach") { const { sprites, beach } = beachSprites(job.style, mk); return { px: packPixels(sprites, 1024), beach }; }
   if (job.kind === "relics") { const { sprites, relics, layouts } = relicSprites(job.style, mk); return { px: packPixels(sprites, 2048), relics, layouts }; }
   if (job.kind === "pathPieces") { const { sprites, pieces } = pathPieceSprites(job.style, mk); return { px: packPixels(sprites, 2048), pieces }; }
@@ -208,7 +208,7 @@ export function runJob(job: ArtJob, mk: MakeCanvas): ArtResult {
   if (job.kind === "decor") { const { sprites, decor } = decorSprites(job.style, mk, job.style.biome ?? job.biome); return { px: packPixels(sprites, 2048), decor }; }
   if (job.kind === "beachEdge") { const { sprites, beach } = beachEdgeSprites(job.style, job.K, mk); return { px: packPixels(sprites, 2048), beachEdge: beach }; }
   if (job.kind === "lakeShore") { const { sprites, shore } = lakeShoreSprites(job.style, job.K, mk, job.style.biome ?? job.biome); return { px: packPixels(sprites, 2048), lakeShore: shore }; }
-  // (enraged: red eyes and the angry face; dressed up: the happy face; art/genome/expressions.js)
+  // (enraged: red eyes, and the angry face; dressed up: the happy face; the faces only while tuning looks.expressions is on; art/genome/expressions.js)
   if (job.kind === "sleep") {
     const sprites: Baked[] = [], ground: number[] = [], centre: number[] = [];
     for (let f = 0; f < 2; f++) {
@@ -239,11 +239,11 @@ export function runJob(job: ArtJob, mk: MakeCanvas): ArtResult {
     }
     return { px: packPixels(sprites, 2048) };
   }
-  if (job.kind === "woken") return { px: packPixels(creatureSprites(job.style, job.species, mk, { woken: true, face: "angry" }), 2048) };
+  if (job.kind === "woken") return { px: packPixels(creatureSprites(job.style, job.species, mk, job.faces ? { woken: true, face: "angry" } : { woken: true }), 2048) }; // (red eyes and its darker coat always; its angry face only with the faces on: Ed, 2026-11-05, "Scrap animal expressions for now.")
   if (job.kind === "face") return { px: packPixels(creatureSprites(job.style, job.species, mk, { face: job.face }), 2048) };
   if (job.kind === "party") {
     if (!Number.isInteger(job.level) || job.level < 0 || job.level > 3) throw new Error("Invalid party sheet age");
-    const gear = { ...job.gear, face: "happy" }; // (both smiling)
+    const gear = job.faces ? { ...job.gear, face: "happy" } : job.gear; // (both smiling, with the faces on; off, Ed 2026-11-05: "Scrap animal expressions for now.", its plain face)
     return { px: packPixels(creatureSprites(job.style, job.species, mk, gear, job.level), 2048) };
   }
   const { sprites, layout, floor } = typeSprites(job.biome && !job.style.biome ? ({ ...job.style, biome: job.biome } as unknown as Style) : job.style, job.seed, job.id, job.K, mk); // (the island's biome over its areas' trees and props; ?biome= over it)

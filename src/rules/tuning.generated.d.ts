@@ -18,6 +18,7 @@ export type SchemaTuning = {
     "island": string;
     "found": Array<typeof raw["map"]["found"][number]>;
     "phase": number;
+    "rosterNeighbourhood": number;
     "shapes": Array<{
       "lobes": number;
       "harmonics": number;
@@ -78,6 +79,7 @@ export type SchemaTuning = {
       "harmonics": number;
       "detail": number;
     };
+    "phaseSizes": Array<number>;
   };
   "beach": {
     "on": boolean;
@@ -319,6 +321,8 @@ export type SchemaTuning = {
   "home": {
     "margin": number;
     "gap": number;
+    "start": number;
+    "challengeAt": number;
   };
   "scenes": {
     "chance": number;
@@ -436,7 +440,8 @@ export type SchemaTuning = {
   "soundsystemFootprint": number;
   "reserveMargin": number;
   "stoneKeepClear": number;
-  "stoneMinGap": number;
+  "siteGap": number;
+  "siteLakeGap": number;
   "findArea": {
     "on": boolean;
     "clear": number;
@@ -446,6 +451,7 @@ export type SchemaTuning = {
     "radius": number;
     "margin": number;
     "spacing": number;
+    "sigilGap": number;
     "adults": number;
     "youths": number;
     "castReach": number;
@@ -1267,7 +1273,7 @@ export type SchemaTuning = {
     "swarm": {
       "start": number;
       "endAverage": number;
-      "largestIsland": number;
+      "fullPhase": number;
       "curve": number;
       "youngShare": Array<number>;
       "reference": string;
@@ -2116,13 +2122,14 @@ export type SchemaTuning = {
     "inPlace": boolean;
   };
   "loading": {
-    "edge": number;
+    "sweep": number;
     "rate": number;
     "flash": number;
     "ghost": number;
     "nova": number;
     "fadeOut": number;
     "fps": number;
+    "depth": number;
   };
   "opening": {
     "bedroom": boolean;
@@ -2854,6 +2861,7 @@ export type SchemaTuning = {
       "size": number;
       "strength": number;
     };
+    "expressions": boolean;
   };
   "tone": {
     "black": number;

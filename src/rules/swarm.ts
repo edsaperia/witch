@@ -1,6 +1,6 @@
 // An area's hostile swarm (Ed, 2026-10-08, the swarm plan's phase 1): its own young and adults, the ones a wave enrages and
 // sets marching on a soundsystem. Its challenge grows with the area's place in the runestone order (p, 0 at the first stone,
-// 1 at the last; times its island's size over the largest island's, Ed 2026-11-03: islandShare), and picking a species never changes it: "Our goal is to be able to have any species at any point along the
+// 1 at the last; times its island's reach, its phase over the last phase's, Ed 2026-11-04: islandShare), and picking a species never changes it: "Our goal is to be able to have any species at any point along the
 // wave and create a swarm that is close to the challenge we want. The fixed points are creature number caps."
 //
 // - Classes (population.swarm.classes): strong (cap 6), medium (cap 12, every species not listed) and light (cap 16; Ed: "a
@@ -26,12 +26,12 @@ export interface SwarmTuning {
   start: number;
   /** Its size at the last (the end of the game): what a medium species fields there, the swarms' average. */
   endAverage: number;
-  /** The largest island's areas (Ed, 2026-11-03: "Pack growth: grows along each island's own length, scaled by the island's size, so
-   *  only the largest islands reach full packs"): an area's p is (its place − 1)/(its island's route length − 1) times that length
-   *  over this (at most 1; islandShare), so the last area of an island this big or bigger fields the final swarm and a smaller
-   *  island's last its share of the way along the curve. 50, the phase-5 islands (rules/rosters.ts sizeOfPhase); left out, every
-   *  island its whole curve. */
-  largestIsland?: number;
+  /** The phase whose islands reach the full swarm (Ed, 2026-11-04: "we should rebalance this so phase 5 islands get to full packs"):
+   *  an area's p is (its place − 1)/(its island's route length − 1) times its island's reach, its phase over this (at most 1;
+   *  islandShare, rules/growth.ts islandReach), so a phase-5 island's last area fields the final swarm whatever its size, a phase-1
+   *  island's a fifth of the way along the curve. Home's reach is the share of the islands she's found (rules/rosters.ts
+   *  foundShare). Left out, every island its whole curve. */
+  fullPhase?: number;
   /** The size curve's power k: n(p) = start + (endAverage − start)·p^k. */
   curve: number;
   /** The reference swarm's young share at the first runestone and at the last (the rest adults). */
@@ -53,10 +53,13 @@ export const POWER_TABLE: PowerTable = SIM as PowerTable;
 /** How far along the route (0 the first runestone, 1 the last) an area at route index `index` of `length` is. */
 export const routeShare = (index: number, length: number): number => Math.max(0, Math.min(1, (index - 1) / Math.max(1, length - 1)));
 
-/** An area's p on the swarm curve (Ed, 2026-11-03): its share along its own island's route (routeShare), times the island's size
- *  (its route's length) over swarm.largestIsland, at most 1; so only the largest islands reach the final swarm. */
-export const islandShare = (index: number, length: number, S: Pick<SwarmTuning, "largestIsland">): number =>
-  routeShare(index, length) * (S.largestIsland ? Math.min(1, length / S.largestIsland) : 1);
+/** An area's p on the swarm curve (Ed, 2026-11-04): its share along its own island's route (routeShare), times the island's reach
+ *  (0 to 1: how far along the curve its last area comes; rules/growth.ts islandReach), so an island of reach 1 ends at the final swarm. */
+export const islandShare = (index: number, length: number, reach = 1): number =>
+  routeShare(index, length) * Math.max(0, Math.min(1, reach));
+/** An island's reach by its phase (Ed, 2026-11-04): its phase over swarm.fullPhase, at most 1 (every phase the whole curve if unset). */
+export const phaseReach = (phase: number, S: Pick<SwarmTuning, "fullPhase">): number =>
+  S.fullPhase ? Math.max(0, Math.min(1, phase / S.fullPhase)) : 1;
 
 /** The reference swarm at route share `p`: its size (fractional) and young share. */
 export function referenceAt(p: number, S: SwarmTuning): { size: number; young: number } {

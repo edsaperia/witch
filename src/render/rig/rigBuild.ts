@@ -35,8 +35,9 @@ type Parts = { template: "quadruped" | "serpent"; s: number; pieces: Record<stri
 export interface RigGear { collar?: number[] | null; hat?: number | null; glasses?: string | null; /** little party shoes (art/creatures.js SHOE_STYLES) */ shoes?: string | null; /** enraged: red eyes, a darker coat */ woken?: boolean; /** Optional all-legged-body extraction for Stiltwalkers; separate from ordinary rig caches. */ stilt?: boolean }
 export const rigGearKey = (g: RigGear): string => (g.woken ? "woken" : `${g.collar ? g.collar.join(".") : "-"}|${g.hat ?? "-"}|${g.glasses ?? "-"}|${g.shoes ?? "-"}`) + (g.stilt ? "|stilt" : "");
 
-export function rigSprites(st: Style, species: string, level: number, mk: MakeCanvas, gear: RigGear | null = null): { px: AtlasPixels; meta: RigMeta } | null {
-  const P = (rigParts as (id: string, level: number, st: Style, gear: RigGear | null) => unknown)(species, level, st, gear) as Parts | null;
+/** `faces`: its expression heads baked too (tuning looks.expressions; off for now, Ed 2026-11-05: "Scrap animal expressions for now."). */
+export function rigSprites(st: Style, species: string, level: number, mk: MakeCanvas, gear: RigGear | null = null, faces = false): { px: AtlasPixels; meta: RigMeta } | null {
+  const P = (rigParts as (id: string, level: number, st: Style, gear: RigGear | null, faces: boolean) => unknown)(species, level, st, gear, faces) as Parts | null;
   if (!P) return null;
   const colours = Art.speciesColours(species, st, gear as null, level), sprites: Baked[] = [];
   const add = (p: Part, outline = st.cOutline): RigPiece | null => p ? { frame: sprites.push(Art.bake(p.sp, colours, st, outline, mk) as Baked) - 1, px: p.px, py: p.py } : null;

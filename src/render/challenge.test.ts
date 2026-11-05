@@ -8,7 +8,10 @@ import { TUNING, type Tuning } from "../rules/tuning";
 import { befriend } from "../rules/creatureStates";
 import { islandSigilOf } from "../rules/dancefloor";
 import { startPartyOver } from "../rules/partyOver";
-import { MOONLIT, carvingLook, challengeCarving, challengeFloor, challengeRing, challengeShot, columnTop } from "./challenge";
+import { COLUMN_TOP, MOONLIT, carvingLook, challengeCarving, challengeFloor, challengeRing, challengeShot, columnSigilsAt, columnTop } from "./challenge";
+import * as Art from "./artBuild.primitives";
+import { loadStyle } from "./style";
+import { metresPerArtPixel } from "./sprites";
 import { DANGER } from "./leash/attackLook";
 import { wakeK } from "../rules/challengeStatues";
 import { hitWitch } from "../rules/game";
@@ -82,6 +85,28 @@ describe("the challenge circle's light", () => {
     expect(challengeColumns(g).every(c => columnTop(c, T).lit)).toBe(true);
     expect(challengeReady(g)).toBe(true); // (every column lit: the spell's notes at its middle)
   }, 60000);
+
+  it("floats its sigils comfortably over each column's top, every column, every size of circle (Ed, 2026-11-04, on #1827: \"Statue sigils should sit comfortably above the top of their columns\")", () => {
+    // (the column's top: its art as baked, art/landmarks.js "column", its highest drawn pixel over its foot, in metres as the view draws it)
+    const mk = (w: number, h: number) => { let img: ImageData | null = null; const ctx = { createImageData: (cw: number, chh: number) => ({ width: cw, height: chh, data: new Uint8ClampedArray(cw * chh * 4) }), putImageData: (d: ImageData) => { img = d; }, getImageData: () => img, drawImage: () => {} }; return { width: w, height: h, getContext: () => ctx, get img() { return img; } }; };
+    const st = loadStyle(), piece = Art.scenePiece("column", st) as { sprite: { whole: unknown; origin: { y: number } }; colours: unknown };
+    const img = (Art.bake(piece.sprite.whole, piece.colours, st, "none", mk as never) as unknown as { A: { img: ImageData } }).A.img, mpp = metresPerArtPixel(T);
+    let row = 0; while (row < img.height && !Array.from({ length: img.width }, (_, x) => img.data[(row * img.width + x) * 4 + 3]).some(a => a > 0)) row++;
+    expect(Math.abs((piece.sprite.origin.y - row) * mpp - COLUMN_TOP)).toBeLessThan(mpp); // (to the pixel)
+    const gap = T.challenge!.sigilGap;
+    expect(gap).toBeGreaterThanOrEqual(1); // (comfortably: clear air between, not touching)
+    for (const t of [T, { ...T, challenge: { ...T.challenge!, adults: 3, youths: 3 } }, { ...T, challenge: { ...T.challenge!, radius: 36 } }]) {
+      const cols = challengeColumns(game(t));
+      expect(cols.length).toBeGreaterThan(0);
+      for (const col of cols) {
+        const P = columnSigilsAt(col.sigils, t);
+        expect(P).toHaveLength(col.sigils.length);
+        expect(P[0].y - P[0].size / 2).toBeCloseTo(COLUMN_TOP + gap, 9); // (the lowest one's foot `sigilGap` over the top)
+        for (const q of P) expect(q.y - q.size / 2).toBeGreaterThanOrEqual(COLUMN_TOP + gap - 1e-9);
+        for (let i = 1; i < P.length; i++) expect(P[i].y - P[i].size / 2).toBeGreaterThan(P[i - 1].y + P[i - 1].size / 2); // (stacked, apart)
+      }
+    }
+  }, 120000);
 
   it("puts no beam of light over it, waiting, cleared or closed (Ed: \"remove the beam\")", () => {
     // (its only light is its own floor's, columns' and dancefloor's: nothing of it among the markers' beacons and lasers)

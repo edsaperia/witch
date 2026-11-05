@@ -835,6 +835,7 @@ export class View {
     this.assets.typeBiome = biomeKey(t.map?.island ?? "home", t.map?.world ?? 0, t.biomeLooks); // (the island's biome: its forests' look, art/flora/biomes.js) // (the island's own trees: kept, so a revisit draws them at once; tonight's swapped in unseen, revealArt)
     this.assets.crownShare = t.trunkFade.crownShare;
     this.assets.stoneScale = t.runeMarkers.scale;
+    this.assets.expressions = t.looks?.expressions === true; // (creatures' faces: off for now, Ed 2026-11-05: "Scrap animal expressions for now.")
     if (!sliced) runSync(this.build());
   }
 

@@ -1,5 +1,15 @@
 # The witch's art
 
+The legacy broom kinds keep `art/brooms.js` as their public entry point. Its
+decorative nose bodies live in `art/brooms/tips.js`, vehicle/frame bodies in
+`chassis.js`, rear effects in `exhausts.js`, and shared geometry in `common.js`
+(Ed-approved mechanical source split, 2026-11-04). Their drawing functions,
+metadata and kind/member order are unchanged; oar, mop and pitchfork still share
+one stick function. The Classic and Workshop assembly in `art/witch.js` and
+`art/broomParts.js` are unchanged. `src/render/broomsSplit.test.ts` compares
+literal methods/helpers and 144 ordered geometry transcripts per drawing method
+against prototype `a36373cae`; this CPU check does not replace nightly art checks.
+
 PR1538 under6552151018 adds remoteWitch/remoteEquipment render modules: assigned-actor pose/pile/hat reads, separately leased approved clothing and existing Workshop assembled-broom worker pictures. Shared local drawWitch/view.ts and generators are unchanged. Hat art uses the existing shared cache and hatFlight; remote batches never dispose those shared textures. Gear owns only its picture texture/mesh and discards stale/in-flight outputs after release. Tiny pose/fake-worker tests do not establish visual alignment or normal-renderer parity; canonical two-client artwork checks remain required.
 
 Remote look leases (PR #1538, canonical6549338847/6549394067): AssetLibrary.leaseWitchLook uses existing oneOff witch jobs and unchanged generator/worker dispatch, with distinct remote job IDs and a private four-entry genome-hash/refcount cache. Its atlases/pose tables never enter the local witchLooks map. Last release frees only the lease's albedo/normal planes (and their owned palettes), never the local/shared atlas; aborting while drawing lets the registered oneOff finish and immediately drops its late textures. The only local rebake change is the approved supersession-predicate exception for registered oneOff witch jobs. No queue order, dispatch, generator or view.ts edits. Tiny fake-worker tests cover local pixel/table identity, one bake shared by two leases, bounded pending work and exact texture release. These are resource/byte unit checks, not a full visual/art bake or browser acceptance.

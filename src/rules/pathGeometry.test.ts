@@ -14,10 +14,11 @@ const finish = <T>(steps: Generator<undefined, T>): T => { for (;;) { const n = 
 it('retains exact pre-extraction ribbon arrays on a fixed map and a coastal island', () => {
   // Generated from a4aad736d PathView.prep's original geometry loop, before extraction; re-pinned 2026-11-03 for the path network's maps (site-to-site, straight runs, wide bends) and when footpaths took
   // their looks (art/paths.js variants, dealt one a line: the same ribbons, keyed kind:variant, so split among more keys); re-pinned
-  // for the challenge area (rules/challenge.ts): its clearing wider (the 36 m stone circle and its margin), so the footpaths end further out; and for its claim on the whole circle (the areas round it cut afresh, the lines crossing it cut short).
+  // for the challenge area (rules/challenge.ts): its clearing wider (the 36 m stone circle and its margin), so the footpaths end further out; and for its claim on the whole circle (the areas round it cut afresh, the lines crossing it cut short); and for the fox island's roster (Ed, 2026-11-04,
+  // rules/rosters.ts: one area a kind while its compass neighbourhood lasts), its areas' types and so their paths dealt afresh; and for Ed's 2026-11-04 home (5 areas at the start, no find's area); and for areas 196 m across with every two sites 50 m apart (#1807, 2026-11-04: the map a sixth bigger, its stones moved); and for the challenge circle 36 to 50 m (#1827, Ed: "If this doesn't fit, make the circle bigger.": its clearing wider, the footpaths ending further out).
   for (const [seed, island, hash] of [
-    [123, null, '6c54a11da73b236fe477592826c9ac27e4e7c591d26358d11256c65d529c4fde'],
-    [424242, 'fox', '89151c379549772af7fccfd3317c2e5834605c9678bfa8b12d7befb9c6793e50'],
+    [123, null, '7df0d50659e34f046e547d235b7a9b96cd604f9d9fbccaa2cdf00c4205993304'],
+    [424242, 'fox', '4e8ed159622560e6207154a4a430201ca48c9eaf351a577f4202bcc9deab1154'],
   ] as const) {
     // Override the suite's radius-map setup: the frozen reference uses shipped tuning.
     const tuning = { ...TUNING, map: { ...TUNING.map!, island: island ?? 'home', islandAreas: 10, world: 0 } };

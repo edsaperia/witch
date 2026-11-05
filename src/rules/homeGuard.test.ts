@@ -13,7 +13,8 @@ import { hit } from "./affection";
 import { inviteCreature, newLeash, talkTarget } from "./leash";
 import { legendOf } from "./quest";
 import { stepLegendStates } from "./legends";
-import { cellKey } from "./party";
+import { cellKey, routeOf } from "./party";
+import { rememberRoute } from "./leyroute";
 import { friendSigils, stoneStack } from "./stoneStacks";
 import { preppedGame } from "../test/preppedGame"; // (games on a map made once a file from its prep)
 
@@ -25,7 +26,9 @@ describe("the island-kind home guard", () => {
     // for this table instead of generating every island on the shared laptop.
     const base = mapOf("tiger");
     for (const kind of REAL_KINDS.filter(playableIsland)) {
-      const map = { ...base, island: { ...base.island!, kind } }, creatures = spawnCreatures(map), guards = creatures.filter(c => c.homeGuard);
+      const map = { ...base, island: { ...base.island!, kind } };
+      rememberRoute(map, routeOf(base)); // (the base's route, worked out once: the copy has the same stones. Since Ed 2026-11-04's site gaps moved two of tiger 11's, fitting its route takes about 1.3 s, not 30 ms, and the copy would fit it again for every kind)
+      const creatures = spawnCreatures(map), guards = creatures.filter(c => c.homeGuard);
       expect(guards, kind).toHaveLength(kind === "home" ? 0 : 1);
       if (kind === "home") continue;
       const c = guards[0];

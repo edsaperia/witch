@@ -18,7 +18,8 @@ The map and its places: the areas, their size and shape, the beach, glades, path
 
 The forest's size: how many areas there are and how big each one is.
 
-The forest: mapAreas x mapAreas areas cut by the fractal partition. An area is areaSize x areaScale metres across on average (areaScale 4 makes them four times as wide as the first 28 m areas; push it for bigger).
+1. Ed, 2026-11-04: "minimum distance between sites/circles/dancefloor/treehouse of 50m, tunable. 10m from a lake edge. If this can't fit, increase area sizes." (areaScale 6 to 7: areas about 196 m across, not 168, so the sites' gaps (siteGap, siteLakeGap) hold on every measured night but one; the sea chart grows with them (rules/archipelago.ts CHART_GROWTH))
+The forest: mapAreas x mapAreas areas cut by the fractal partition. An area is areaSize x areaScale metres across on average (areaScale 4 makes them four times as wide as the first 28 m areas; push it for bigger). The sea chart's every length scales with areaSize x areaScale over 168 (rules/archipelago.ts CHART_GROWTH), so islands keep their shapes in their patches.
 
 - **`map.shape`**: The map's shape [1].
   1. Ed, 2026-10-06: "The map as a whole should be circular rather than square, with a buffer zone with no runestones around the edge"
@@ -37,6 +38,10 @@ The forest: mapAreas x mapAreas areas cut by the fractal partition. An area is a
   1. Ed, 2026-10-11: the journey's irregular islands: rules/islandGrowth.ts
   an island grows out from home over its areas' neighbours, each step the area nearest home for the island's reach that way, by its phase's shape (shapes[phase], index 0 home: near-round; 1 gently lobed; 2 bays and a peninsula; 3 arms and inlets; 4 and 5 strongly irregular): lobes, how far its outline swells and shrinks round home (a share of its reach) over harmonics bumps; arms, how far its peninsulas reach past it (a share), armCount[0] to [1] of them, each armWidth radians across; bays, how deep its bays cut in, bayCount[0] to [1] of them; jitter, each area's own seeded nudge in areas (ragged edges). Home's neighbours are always its first. an island's phase when it isn't one by roster (?phase=0 to 5; a kind's island takes its own).
   Code: `rules/islandGrowth.ts`
+- **`map.rosterNeighbourhood`**: How many degrees either side of an island's bearing its compass neighbourhood reaches: the other kinds it takes one area each before any kind gets a second.
+  1. Ed, 2026-11-04: "Now that islands have fewer areas, we can have fewer (none?) repeats of creature types on an island, besides the island of the creature type itself." (offered no repeats at all, a middle way or keep; he chose the middle way: no repeats (each other kind on one area) wherever a kind from the island's own compass neighbourhood is still available, 2 areas a kind only when the neighbourhood runs out. Before: every other kind on up to 2 areas by weight (Ed, 2026-10-28: "Of other kinds, there should be no more than 2"), so a phase-1 island had its own kind and 4 others, 2 areas each.)
+  90: the half of the compass the island faces (its other kinds' mean bearing about 45 to 50 degrees off its own, as before; none past 90 unless the neighbourhood runs out). A phase-1 island (10 areas) then has 6 or 7 kinds, not 5. 0 is the 2026-10-28 rule exactly (every other kind on 2 areas, by weight); 180 the whole compass (still weighted toward near bearings). The 1-3 kinds new to the island's phase come first whatever it is. The night's map reads it (a new map: it reloads); the sea chart's island pictures keep the file's.
+  Code: `rules/rosters.ts`
 - **`map.coast`**: How irregular the island's coastline is, with gentle bays and headlands rather than a perfect circle.
   1. Ed, 2026-10-06: "The island shouldn't be a totally perfect circle; make the coast slightly irregular"
   which areas are playable and which the buffer's goes by their centres' distance from home over the same seeded coast, up to amp of its radius in or out (0 for a perfect circle): harmonics gentle bays and headlands (from two round the island up), plus detail (a share) of finer wobble. shape square: mapAreas x mapAreas as before (?shape=square to compare). ?mapAreas=<n> on the circular map sets the radius for about n x n areas.
@@ -49,6 +54,7 @@ The forest: mapAreas x mapAreas areas cut by the fractal partition. An area is a
 | `map.island` | string |  |
 | `map.found` | array of any |  |
 | `map.phase` | number | 0 to … |
+| `map.rosterNeighbourhood` | number | 0 to 180 |
 | `map.shapes` | array of object |  |
 | `map.buffer` | number | 0 to … |
 | `map.push` | number | 0 to … |
@@ -82,7 +88,8 @@ Code: `rules/lakes.ts`, `rules/islandGrowth.ts`, `render/lakeLooks.ts`
 
 - **`lakes.shore`**: metres of bare shore round the water (no trees, nothing placed).
 - **`lakes.pad`**: how far from the water anything on foot stops.
-- **`lakes.koi`**: the share of lakes with koi in them (DECISION FOR ED).
+- **`lakes.koi`**: the share of lakes with koi in them [1].
+  1. Ed, 2026-10-31: confirmed, 0.5 (relayed by the coordinator on #1357)
 - **`lakes.biomeFrom`**: the island phase from which its lakes take the look of its compass biomes on the sea chart (frozen, lava, oasis, sinkhole, glacial tarn, tar pit, rust pool, lily pond; app/chartOutlines.worker.ts), before it plain water [1].
   1. Ed, 2026-10-12: "biome lakes can start appearing one phase earlier" (3, it was 4, the first uncharted islands)
   Code: `app/chartOutlines.worker.ts`
@@ -138,11 +145,17 @@ How the other islands look on the sea chart and in the dream bubbles: their coas
 Islands other than home (the wave 2 finale's dream bubbles and the sea chart; rules/islandShape.ts, art/islands.js; Ed, docs/backlog/journey.md): coast, the coastline's knobs as map.coast's (amp, the most it strays from round, a share of the radius; harmonics, how many bays and headlands; detail, the finer wobble), stronger than home's so every island has a shape of its own, read at a bubble's 30 pixels.
 Code: `rules/islandShape.ts`, `art/islands.js`, `docs/backlog/journey.md`
 
+- **`islands.phaseSizes`**: How many areas (stumps and waves) each phase's islands have, phase 1 first.
+  1. Ed, 2026-11-04: "We could make waves 5 / 10 / 15 / 20 / 25 / 30 / 64" (then "yes, start island sizes")
+  10 / 15 / 20 / 25 / 30 for phases 1 to 5 (10 / 20 / 30 / 40 / 50 till 2026-11-04); home is its own, 5 at first growing to 64. A phase past the list takes its last. What follows the size follows it: the night's legends (1 in 5 areas, rules/rosters.ts legendsFor), the roster's kinds and so the challenge's pack. The sea chart's layout keeps the room it gave 10 × phase areas (rules/archipelago.ts: every island where it was, more sea round it, home unchanged), and its outlines draw the built sizes; the decisions panel's sliders change the island played.
+  Code: `rules/rosters.ts`, `rules/archipelago.ts`
+
 | knob | type | range |
 |---|---|---|
 | `islands.coast.amp` | number | 0 to … |
 | `islands.coast.harmonics` | number | 0 to … |
 | `islands.coast.detail` | number | 0 to … |
+| `islands.phaseSizes` | array of number |  |
 
 ### `beach`
 
@@ -279,7 +292,7 @@ every area is mostly open within radius metres of its centre and its soundsystem
 How much areas vary in size, some small and some large.
 
 1. 2026-10-05: "make areas larger; each is effectively a fighting arena"
-(0-1) makes areas vary in size, some small, some large. borderLayers sets how wiggly borders are. Ed [1]: 14 x 14 areas of 168 m (areaScale 6), about the same world as 20 x 112 m.
+(0-1) makes areas vary in size, some small, some large. borderLayers sets how wiggly borders are. Ed [1]: 14 x 14 areas of 168 m (areaScale 6), about the same world as 20 x 112 m; areaScale 7 (196 m) since 2026-11-04 (map).
 
 | knob | type | range |
 |---|---|---|
@@ -290,7 +303,7 @@ How much areas vary in size, some small and some large.
 how far every area's site (its middle) is kept in from its cell's sides, as a share of the cell (0 to 0.5), so sites, stumps and the paths joining them spread out.
 
 1. Ed, 2026-11-03: "Minimum distance between stumps; it's just a bit strange finding two right next to each other; at least their clearings shouldn't overlap"
-0 (off) for now: any margin reshapes every island, and with it a dozen seeded gameplay tests' layouts (combat, brooms, swoops...) that other builders were changing at the time. 0.15 keeps two sites at least 0.3 of an area apart before the warp (about 50 m). stoneMinGap makes sure of the stones either way.
+0 (off) for now: any margin reshapes every island, and with it a dozen seeded gameplay tests' layouts (combat, brooms, swoops...) that other builders were changing at the time. 0.15 keeps two sites at least 0.3 of an area apart before the warp (about 50 m). siteGap makes sure of the stones either way.
 
 | knob | type | range |
 |---|---|---|
@@ -577,10 +590,21 @@ Home's area [1]: the map is cut with home first, a circle round the dancefloor o
 
 1. Ed, 2026-10-05: "Home area should be big enough that the whole circle, centre the dancefloor, edge the treehouse, is within it"
 
+- **`home.start`**: How many areas home has at the start of a campaign [1]: home grows by one area per island she's found, and while that's fewer than this, home's starting kinds whose islands she hasn't found fill it up to this, chosen at random each night.
+  1. Ed, 2026-11-04: "home has 5 areas chosen at random from the phase 1 creatures, and grows as you unlock islands, and has no challenge area. When you unlock every island, home gets a challenge area and you get a special reward for completing it." … "Home legends: Same as other islands, which I think is 1 in 5? But including undiscovered islands of phase 1 if possible."
+  rules/rosters.ts homeRoster: one area per kind whose island she's found (map.found, any kind), then home's starting kinds whose islands are unfound, by the night's seed, up to this; while any phase-1 island is unfound at least one such kind is on, one area more past the found ones where it must. Its legends as any island's (1 in 5 areas), an unfound phase-1 island's among them while there is one. No find and no challenge area at home till every island on the chart is found; then its challenge area with the full pack (an adult and a youth of each kind). Its places grow outward from the starting home's; which kind is on which area is the night's deal (rules/deal.ts). A new map: it reloads.
+  Code: `rules/rosters.ts`, `rules/map.ts`
+- **`home.challengeAt`**: How many islands she must have found before home gets its challenge area and its find [1]: 64, every island on the chart; lower to bring home's endgame on early, to play it.
+  1. Ed, 2026-11-04: "When you unlock every island, home gets a challenge area and you get a special reward for completing it." … "no find at home until endgame"
+  rules/rosters.ts homeEndgame: on once every island on the chart is found, or this many. Then home's find goes in its challenge area, its pack an adult and a youth of each kind on tonight's roster (the full 128 at 64). Its reward for now is the challenge's find, as on any island: Ed, special reward to be decided ("we'll figure this out later"). A new map: it reloads.
+  Code: `rules/rosters.ts`, `rules/map.ts`, `rules/finds.ts`
+
 | knob | type | range |
 |---|---|---|
 | `home.margin` | number | 0 to … |
 | `home.gap` | number | 0 to … |
+| `home.start` | number | 1 to 64 |
+| `home.challengeAt` | number | 0 to 64 |
 
 ### `scenes`
 
@@ -622,8 +646,11 @@ Each sleeping legend lies in a small round clearing of its own, sized to fit it.
 1. Ed, 2026-10-06
 Each area's sleeping legend lies in a small circular clearing of its own [1], where no tree or decor stands: radius metres across from its middle (species: a radius for that legend, sized to fit it: half its sleeping width plus 4 m), a soft ring edge metres wide marking it on the ground, and the legend lying top x radius north of the middle (the circle's far side from the camera), the open floor in front. Quest sigils and relics take effect inside it.
 
-- **`legendClearing.minFromStone`**: its edge at least this many metres from its area's runestone (where the soundsystem comes), clear of the stone's clearing and the party's dance space; a small area with no such spot takes the farthest that fits (logged).
+- **`legendClearing.minFromStone`**: its edge at least this many metres from its area's runestone (where the soundsystem comes), clear of the stone's clearing and the party's dance space; a small area with no such spot grows to hold one (logged).
   1. Ed, 2026-10-06: "The legend circle shouldn't spawn near its runestone"
+  2. Ed, 2026-11-04: "make the last-resort placement grow the area instead of breaking the gap"
+  3. Ed, 2026-11-05: "ideally from world generation all of the areas are large enough that this is not an issue"
+  Its area grows into the land round it, claiming a full-size circle's ground (rules/map.ts growClearing), before any circle is made smaller: docs/notes/world-art.md Site gaps.
 - **`legendClearing.minFromOtherStones`**: its edge at least this many metres from every neighbouring area's runestone too, always (not relaxed for a small area).
   1. Ed: "Legend and runestone in the same place" (v1628)
 - **`legendClearing.floor`**: on, old flagstones about slab metres across, the legend's sigil carved into them as dark grooves, overgrowth (0.5 as drawn, up to 1 for more) moss, grass and litter over them so the carving shows only in pieces.
@@ -825,22 +852,34 @@ See `setPieceFootprint`.
 The keep-clear zone round each area's stone (its great stump, or its runestone with the stumps off), in metres from its middle.
 
 1. Ed, 2026-10-29: "No special areas should appear so close to stump/runestone areas; no special scenery, no finds or flasks, no legend circles" (and the party relics, walls and ruins, ponds, picnics and campfires, and the playgrounds too)
-Nothing special within it: no scene or set piece, ruin or freak tree (the giant mushroom), modern relic, the night's find, flask (party relic), legend's clearing, wall or stone ring, pond, campfire or magic stone, the party's picnics, clusters, set dressing and campfires, or ground (playgrounds and sports grounds): each keeps its whole footprint out (clearOfStones in rules/map.ts). Ordinary trees, bushes, rocks and groundcover may stand in it; the stump's own clearing (runeMarkers.stump.clear) keeps the trees off its roots. A legend's clearing that can't fit out of it (a small area) goes at the farthest spot it fits, and the map says so in the log. The 40 m: the stump's 17 m clearing and a margin.
+Nothing special within it: no scene or set piece, ruin or freak tree (the giant mushroom), modern relic, the night's find, flask (party relic), legend's clearing, wall or stone ring, pond, campfire or magic stone, the party's picnics, clusters, set dressing and campfires, or ground (playgrounds and sports grounds): each keeps its whole footprint out (clearOfStones in rules/map.ts). Ordinary trees, bushes, rocks and groundcover may stand in it; the stump's own clearing (runeMarkers.stump.clear) keeps the trees off its roots. A legend's clearing that can't fit out of it (a small area) grows its area into the areas beside it to hold one, and the map says so in the log. The 40 m: the stump's 17 m clearing and a margin.
 
 | knob | type | range |
 |---|---|---|
 | `stoneKeepClear` | number | 0 to … |
 
-### `stoneMinGap`
+### `siteGap`
 
-the least distance between two areas' stones (great stumps or runestones), metres; a stone that would stand nearer one placed before it moves, in its own area, to the nearest spot far enough off.
+the least gap, metres edge to edge, between any two sites' footprints: stones' clearings, legends' circles, the challenge's claim or the find's clearing, home's dancefloor clearing and treehouse.
 
-1. Ed, 2026-11-03: "Min 40 m between stumps."
-The special sites (tonight's find's) count as stones here. Placed all at once in a fixed order (rules/map.ts placeSites), so the same whichever is asked for first.
+1. Ed, 2026-11-03: "Min 40 m between stumps." (folded in: two stones' middles now 2 x their clearing (runeMarkers.stump.clear) + siteGap apart (84 m))
+2. Ed, 2026-11-04: "minimum distance between sites/circles/dancefloor/treehouse of 50m, tunable. 10m from a lake edge. If this can't fit, increase area sizes."
+Placed in turn (rules/map.ts siteRules): the challenge's claim taking only ground that leaves room (fitClaim), then the stones (placeSites: one that would be nearer moves, in its own area, to the nearest spot that keeps every gap, logged where none does), then the legends' circles (their fits, shrinking in fine steps where they must; failing that, another of its kind's areas; failing that, its area grown for it, claiming the circle's ground from the areas beside it, Ed 2026-11-04: "make the last-resort placement grow the area instead of breaking the gap"; logged; nothing breaks it). stoneKeepClear (40 m round a stone's middle) still keeps scenery off the stones; a legend's circle keeps the stricter siteGap from a stone's clearing (67 m from its middle). areaScale went 6 to 7 to make room: docs/notes/world-art.md Site gaps.
 
 | knob | type | range |
 |---|---|---|
-| `stoneMinGap` | number | 0 to … |
+| `siteGap` | number | 0 to … |
+
+### `siteLakeGap`
+
+the least gap, metres, between any site's footprint and a lake's water.
+
+1. Ed, 2026-11-04: "10m from a lake edge."
+Stones' clearings (placeSites), legends' circles (their fits) and the challenge's claim (fitClaim). Home never has a lake beside it.
+
+| knob | type | range |
+|---|---|---|
+| `siteLakeGap` | number | 0 to … |
 
 ### `findArea`
 
@@ -861,13 +900,16 @@ the challenge area: a stone circle at least `radius` m round with a column a ros
 1. Ed, 2026-11-03: "a large stone floor circle (like the legend circle) with the glowing sigil of the island carved into it, with a circle of stone columns around the edge (we already have art for this)" … "When they're all invited or have run off, you can go to the special place and cast the music spell" … "when you clear it you get the find. Each phase and biome have different set of finds; when you have them all you get a flask instead."
 2. Ed, 2026-11-03: "for now just make it one find selected at random and we will adjust later" (his rulings on #1725, through the coordinator: the circle three times wider (radius 12 to 36, columns 10 to 30, the sigil filling the floor); trees close to its edge, a few metres' margin; the find the night's one draw (findSets off); closed only once the night is won or lost, not at last call.)
 3. Ed, 2026-11-03: "The challenge area has no sigil stack, so you can't see how many wild creatures still standing. How about there are the same number of columns as creature types, and the sigils are on top of the columns, one type per column?" … "few is ok" … "128 animal pack is the ultimate challenge … A place to use all those stacked buffs that melt waves! Also the area will have to be big to fit a huge circle." (the fixed `columns` (30) replaced by a column a roster kind, `spacing` 7.5 m apart along the edge: the radius the larger of `radius` and kinds x spacing / 2 pi (36 m to about 30 kinds; 76 m at the late home's 64), its margin, cast reach, dancefloor and carved sigil grown with it, its area claiming the whole circle (rules/map.ts).)
-The circle grows to fit its columns (radius the larger of `radius` and kinds x `spacing` / 2 pi), its margin and the spell's reach with it; the island's sigil is carved in it, and clearing it gives the find. Each column carries its kind's wild fighters still standing (adult below, youth above, the rune stones' sizes, colours and embers), drawn within the stones' columns' range (leash.ranks.stones.range); one invited or run off leaves its column; a column with none left lights steadily warm, and every column lit, the spell can be cast. The find is the night's one draw over everything she hasn't found; `findSets` on, the island's own set (config/find-sets.json) instead. Nothing left to give, a flask. Cleared, home's dancefloor fills the circle and each bar one column fires a firework, the next clockwise each bar (Ed, 2026-11-03: "fireworks start coming out of one column at the start of each bar, going around the circle clockwise"): `fireworks.on`, its burst `fireworks.height` m up and `fireworks.burst` m round; the find comes down from the sky onto the floor, picked up with E. Its pack aggro as any wild area's (wildWatch); it closes only once the night is won or lost (the pack calm, the find gone); it never counts toward winning the island and gives no boon. Off: the find's area as before, its find to pick up with E.
+4. Ed, 2026-11-04: "youths should be closer to the middle of the circle than the elder. If this doesn't fit, make the circle bigger." … "Statue sigils should sit comfortably above the top of their columns" (his rulings on #1827, through the coordinator: `radius` 36 to 50 m, room for its statues well apart (challenge.statues.gap), short of where the smallest islands' areas stop holding its claim or it stops moving night to night; its columns' sigils float `sigilGap` (1.5 m) over the columns' tops, the lowest one's foot clear of the capital (they stood from 4.6 m, inside the 7.05 m column).)
+Its columns' sigils float `sigilGap` m over the columns' tops (render/challenge.ts columnSigilsAt). The circle grows to fit its columns (radius the larger of `radius` (50 m) and kinds x `spacing` / 2 pi), its margin and the spell's reach with it; the island's sigil is carved in it, and clearing it gives the find. Each column carries its kind's wild fighters still standing (adult below, youth above, the rune stones' sizes, colours and embers), drawn within the stones' columns' range (leash.ranks.stones.range); one invited or run off leaves its column; a column with none left lights steadily warm, and every column lit, the spell can be cast. The find is the night's one draw over everything she hasn't found; `findSets` on, the island's own set (config/find-sets.json) instead. Nothing left to give, a flask. Cleared, home's dancefloor fills the circle and each bar one column fires a firework, the next clockwise each bar (Ed, 2026-11-03: "fireworks start coming out of one column at the start of each bar, going around the circle clockwise"): `fireworks.on`, its burst `fireworks.height` m up and `fireworks.burst` m round; the find comes down from the sky onto the floor, picked up with E. Its pack aggro as any wild area's (wildWatch); it closes only once the night is won or lost (the pack calm, the find gone); it never counts toward winning the island and gives no boon. Off: the find's area as before, its find to pick up with E.
 
 - **`challenge.statues`**: its pack stand as grey stone statues by their columns (`first` m in, each next `gap` m on) till a witch steps onto its floor, wake wild after `bars` bars, and turn back to stone, whole, once every witch is down or in the treetops outside its area.
   1. Ed, 2026-11-04: "taking on the challenge area is more intentional; the creatures around it only start to aggro you when you go into the challenge circle. The wild creatures should somehow look like they're not invitable." … "grey statues, all facing the centre of the circle" … "landing in the circle is the same as walking in" … "all the animals glow red, the sigils start glowing, and after 8 seconds, they all awaken and become wild animals" (through the coordinator: posts column / adult / youth / centre; the wake-up starts on the next bar line and lasts 4 bars at the steady 120 bpm, landing on a bar; leaving the circle before then stops it; leaving mid-fight or knocked down, the un-won go back to their posts as stone, reset to full, the invited staying won; with two witches, stone again only once both are off the floor. Its sigils on the columns grey while stone, glowing as they wake.)
   2. Ed, 2026-11-04: "they should be closer to their column than to the centre" (through the coordinator: both posts in the outer part of the radius, near their column, the middle open for her to step into; the post distances knobs with sliders.)
   3. Ed, 2026-11-04: "only being in the outside of the area while at treetops should end the fight, otherwise they pursue you and don't reset." … "While the fight is going on, won creatures should avoid the circle." … "they should roam the whole area, and avoid creatures that are fighting. Do this in a simple way - we just want them out of the way of the fight" (his rulings on #1804, through the coordinator: before, stepping or flying off the floor reset them; now only every witch knocked down (as built) or up in the treetops outside the area ends the fight; dazed ones reset with the rest and ones running off are left be; the analyser lingers and fades; the statues keep the moonlit rim; the won ones roam the area off the circle (`keepOut`) and away from fighters (`avoid`), both sliders.)
-  Posts: column / adult / youth / centre, all facing its middle, always nearer their column than the middle (never past 0.45 of the way in: Ed, 2026-11-04, "they should be closer to their column than to the centre"), the middle left open. The wake-up starts on the next bar line; they glow red (up to `red`) and their sigils on the columns glow from grey as it goes, and they wake on the bar `bars` bars on. Leaving the floor (stepping or flying off, or knocked down) before then stops it. Once awake they pursue her as any wild pack, on the ground anywhere, stepped off the floor or knocked out of the circle; only when every witch is knocked down or up in the treetops outside the challenge area do the ones not yet won walk back at `walkBack` times their pace and turn to stone again, reset to full (dazed ones too; ones running off left be), the invited staying won. While the fight's on, the won ones roam its area with their own happy roam out of the fight's way: `keepOut` m off the circle, and clear of the fighters as every area's won ones are (invites.wonAway) (Ed, 2026-11-04: "they should roam the whole area, and avoid creatures that are fighting. Do this in a simple way - we just want them out of the way of the fight"). Drawn `tint` of the way to the stone colour `grey`, with the moonlit rim. rules/challengeStatues.ts (the phases, the walk back, the reset, keeping the won out), rules/challenge.ts statuePosts and spawnPack (the posts), render/view/creatures.ts and render/statues.ts (the stone look, the wild watch's red over it while it wakes), render/challenge.ts (the grey sigils), platform/audio/sfxCues.ts (the wild watch's rising warning over the wake-up, its hit as they wake). Off: the pack wild from the start, watching her come down anywhere in its area as any wild area's.
+  4. Ed, 2026-11-04: "Further apart, same line" (through the coordinator, the adult hiding the smaller youth behind it from most camera angles: keep both on the column-to-centre line, spread so the youth is well clear of the adult and visible, both still nearer their column than the centre.)
+  5. Ed, 2026-11-04: "youths should be closer to the middle of the circle than the elder. If this doesn't fit, make the circle bigger." (his ruling on #1827, through the coordinator: column / adult / youth / centre on every column (no swap south of the middle), the youth lifted clear of its adult up the screen by the spacing, the circle grown to fit rather than either rule broken. `gap` 19 m on a 50 m circle (`challenge.radius`), the youth 22.5 m in, at the 0.45 reach: on #1807's 196 m areas the most at which it still moves night to night on home's 10-area island (one area from 54 m) and a 51-area one (from 51 m), every island holding its claim (the stoat island's misses from 58 m). On the column due south, at the start camera, every youth whose adult is drawn up to 10 m tall is all but clear of it (over 90%); the hare's (its adult 15.4 m) about half showing, about a third at the flattest camera.)
+  Posts: column / adult / youth / centre on every column, `first` and `first` + `gap` m in (squeezed evenly to fit with more than two a kind), all facing its middle, always nearer their column than the middle (never past 0.45 of the way in: Ed, 2026-11-04, "they should be closer to their column than to the centre"), the middle left open. The wake-up starts on the next bar line; they glow red (up to `red`) and their sigils on the columns glow from grey as it goes, and they wake on the bar `bars` bars on. Leaving the floor (stepping or flying off, or knocked down) before then stops it. Once awake they pursue her as any wild pack, on the ground anywhere, stepped off the floor or knocked out of the circle; only when every witch is knocked down or up in the treetops outside the challenge area do the ones not yet won walk back at `walkBack` times their pace and turn to stone again, reset to full (dazed ones too; ones running off left be), the invited staying won. While the fight's on, the won ones roam its area with their own happy roam out of the fight's way: `keepOut` m off the circle, and clear of the fighters as every area's won ones are (invites.wonAway) (Ed, 2026-11-04: "they should roam the whole area, and avoid creatures that are fighting. Do this in a simple way - we just want them out of the way of the fight"). Drawn `tint` of the way to the stone colour `grey`, with the moonlit rim. rules/challengeStatues.ts (the phases, the walk back, the reset, keeping the won out), rules/challenge.ts statuePosts and spawnPack (the posts), render/view/creatures.ts and render/statues.ts (the stone look, the wild watch's red over it while it wakes), render/challenge.ts (the grey sigils), platform/audio/sfxCues.ts (the wild watch's rising warning over the wake-up, its hit as they wake). Off: the pack wild from the start, watching her come down anywhere in its area as any wild area's.
 - **`challenge.analyser`**: the music spell's analyser as she casts at the circle: `bars` bars from its middle out to `fill` of its radius at the music's loudest, `steps` dots a bar, grown with the circle.
   1. Ed, 2026-11-04: "should be larger, the audio analyser filling the whole stone circle" (the soundsystem spell cast at the challenge circle; before, a small ring of rainbow dots round her.)
   It fills round as the cast fills, each bar as far out as the music's level, and is held a moment as the circle clears.
@@ -882,6 +924,7 @@ The circle grows to fit its columns (radius the larger of `radius` and kinds x `
 | `challenge.radius` | number | 0 to … |
 | `challenge.margin` | number | 0 to … |
 | `challenge.spacing` | number | 0 to … |
+| `challenge.sigilGap` | number | 0 to … |
 | `challenge.adults` | number | 0 to … |
 | `challenge.youths` | number | 0 to … |
 | `challenge.castReach` | number | 0 to … |
@@ -1293,8 +1336,9 @@ The witch [1]: she takes hits (one point each, whatever hits her) before she's k
 1. Ed, 2026-10-04
 2. Ed, 2026-10-08: "three slashes, and then a final hit" (4)
 
-- **`witchHealth.grace`**: seconds after a hit in which no other blow lands, so a pack striking together takes one hit, not all three [1].
-  1. 2026-10-06: balance: DECISION FOR ED, 0.5
+- **`witchHealth.grace`**: seconds after a hit in which no other blow lands, so a pack striking together takes one hit, not all three [1][2].
+  1. 2026-10-06: balance: 0.5, put to Ed
+  2. Ed, 2026-10-31: confirmed, 0.5 (relayed by the coordinator on #1357)
 - **`witchHealth.slashScale`**: her claw slashes' size relative to her [1].
   1. Ed, 2026-10-08: "the slashes should be twice as large" (render/leash/bubbles.ts; 1 the drawing at her art pixel:, 2)
   Code: `render/leash/bubbles.ts`
@@ -2344,8 +2388,10 @@ Creatures parked at a sigil on the ground guard it, fighting any wild creature t
 1. Ed, 2026-10-04
 2. Ed, 2026-10-11: "Animals leashed inside the home area should aggro enemy creatures within that area"
 3. Ed, 2026-10-15: "Placing a sigil in any area should work as home does: the creatures defend the whole area, plus a radius round the sigil"
-Parked party animals (at a sigil on the ground) guard it [1]: they take on any wild creature of another kind within radius metres of the sigil, and come back to it. One parked with its sigil in the home area (the dancefloor's) guards all of that area instead [2]: any wild or enraged creature anywhere in it, never one outside it, whatever radius says. Parked in any other area [3], it guards all of its sigil's area and radius metres round the sigil besides (rules/homeArea.ts areaOf).
-Code: `rules/homeArea.ts`
+4. Ed, 2026-11-04: "A parked creature should guard its chain length, now that's a fixed number, with home area an exception"
+5. Ed, 2026-11-04: "Animals parked in the home area can roam it freely."
+Parked party animals (at a sigil on the ground) guard it [1]: they take on any wild creature of another kind near the sigil, and come back to it. One parked with its sigil in the home area (the dancefloor's) guards all of that area instead [2]: any wild or enraged creature anywhere in it, never one outside it; and it isn't held by its sigil there: it roams the whole home area freely [5] (rules/leash.ts roamHome); radius (40 m) is left only for a map with no home area or no chains. Parked in any other area [3], it guards all of its sigil's area and its chain's length round the sigil besides [4]: leash.chain.length (80 m), derived from it, not radius (rules/combat.ts guardRadius; with no chains, radius).
+Code: `rules/homeArea.ts`, `rules/combat.ts guardRadius`
 
 | knob | type | range |
 |---|---|---|
@@ -2359,7 +2405,7 @@ How many wild creatures each area starts with, more along the waves' route so th
 2. Ed, 2026-10-05: one baby and one young:, 'actually, the game should start with one baby and one youth, otherwise you can't avoid enraging lots of legends', after 'the game is hard! we should start each area with just one baby'; before it, one young and one adult, and before that one baby and two adults
 3. Ed, 2026-10-07: "no population growth on a clock" (his new core design)
 4. Ed, 2026-10-08: the swarm plan's phase 1: its own young and adults, the ones a wave enrages and sets marching; rules/swarm.ts
-5. 2026-10-06: a fraction carries over: 0.5 is one every other wave; balance, DECISION FOR ED: 0.5, from 1, so a player's defence can hold the early sieges and playing well matters
+5. 2026-10-06: a fraction carries over: 0.5 is one every other wave; balance: 0.5, from 1, so a player's defence can hold the early sieges and playing well matters (put to Ed; moot since his 2026-10-28 ruling below turned growth off)
 6. Ed, 2026-10-28: "during a night, no creatures are created and none are destroyed" (growth.on off, so the balance simulators match the game; a creature that runs off sleeps on the beach (rules/runaway.ts))
 Wild creatures [1]: every area starts with the same population, population.start [2], and, from the start [3], more by its place on the waves' route (Balance 2's shape; rules/growth.ts routePopulation): byRoute's threat (since removed: the hostile swarm below does this now), [route index, F] points (1 the first wave's stone; straight lines between, flat past the ends), is the extra fighting value its young and adults add (F by Lanchester, young 11.6, adult 40, babies 0; about what an area woken at that wave grew to before); its kind spends it by its profile (byRoute's profiles by species (removed with it), else default: the shares of its extra creatures as babies, young and adults), so many more of a swarm's young than of a heavy kind's adults, at the same danger: count = threat ÷ the profile's mean F a creature × the area's count scale, rounded, split by the shares (largest remainder, ties by the seed). The hostile swarm [4]: its challenge grows with the area's place p in the runestone order (0 the first stone, 1 the last), whatever its species. Each area fields, of every size up to its species' cap (capScales: the cap grown along the same curve, at least 2) and every young/adult split, the one nearest the target; among those within swarm.mixTolerance (10%) of the nearest, a mix of young and adults first. A simulated power (config/swarm-power.json, empty in phase 1) stands in for the estimate where it has the swarm. So a default map (about 100 areas) holds about 540 hostiles: the curve's average, 5.8 an area. growth is the old growth on a clock, which the game no longer reads, off since [6] (the balance simulators read it only when on): every wave, each area the party hasn't reached gained growth.perWave more [5], each at a random level by growth.weights (baby, young, adult: equal thirds), so the areas the party reaches late are the ones to fear. Areas already partified don't grow. New ones arrive out of the witch's sight (beyond the haze's far edge plus growth.hide metres), never popping in on screen; areas far from every witch keep them as counts only, made real (from the seed) when a witch comes within creatureSimRadius of the area or it wakes. The home area holds none. Fighting value (DESIGN.md, Balance): a young is worth 15.5, an adult 29, a legend 76; so an area woken at wave n brings about 1 + n/3 young and 1 + n/3 adults (F about 44.5 + 14.8 n), besides its legend (wildLegends). Only creatures whose home is within creatureSimRadius metres of the witch move. node tools/balance/sim.mjs forecasts the sieges these numbers make.
 Code: `rules/growth.ts`, `rules/swarm.ts`, `config/swarm-power.json`, `tools/balance/sim.mjs`
@@ -2370,11 +2416,12 @@ Code: `rules/growth.ts`, `rules/swarm.ts`, `config/swarm-power.json`, `tools/bal
   1. Ed, 2026-10-07: "every wild area has at least one hostile wild creature"
 - **`population.swarm.classes`**: Swarm species come in strong, medium and light classes, smaller swarms of stronger creatures.
   1. Ed, 2026-10-10: 2026-10-11
-  strong (cap 6), medium (cap 12: swarm.reference, and every species not listed) and light (cap 16; Ed: "a swarm of 20 is too many; cap it at 16"), each class's strength 12 / its cap on its creatures' health and damage (strong ×2, light ×0.75; rules/combat/data.ts), so moving a species is one line here. The target is the estimated power (Σhp × Σdps; the witch doesn't count: her three hits ignore damage) of a medium reference swarm of swarm.start + (swarm.endAverage − swarm.start)·p^swarm.curve creatures (1 + 11·p^0.8), its young share easing from swarm.youngShare[0] (1.0) to [1] (0.2). p is the area's place along its own island's route, (its place − 1)/(the route's length − 1), times the island's size (its route's length) over swarm.largestIsland, at most 1 (rules/swarm.ts islandShare), so the last area of the largest islands fields the final swarm and a smaller island's last its share of the way along the curve.
+  strong (cap 6), medium (cap 12: swarm.reference, and every species not listed) and light (cap 16; Ed: "a swarm of 20 is too many; cap it at 16"), each class's strength 12 / its cap on its creatures' health and damage (strong ×2, light ×0.75; rules/combat/data.ts), so moving a species is one line here. The target is the estimated power (Σhp × Σdps; the witch doesn't count: her three hits ignore damage) of a medium reference swarm of swarm.start + (swarm.endAverage − swarm.start)·p^swarm.curve creatures (1 + 11·p^0.8), its young share easing from swarm.youngShare[0] (1.0) to [1] (0.2). p is the area's place along its own island's route, (its place − 1)/(the route's length − 1), times its island's reach (its phase over swarm.fullPhase, at most 1; home's the share of the islands found: rules/swarm.ts islandShare, rules/growth.ts islandReach), so the last area of a phase 5 island fields the final swarm and an earlier phase's its share of the way along the curve.
   Code: `rules/combat/data.ts`
-- **`population.swarm.largestIsland`**: the largest island's areas: an island this big or bigger reaches the final swarm at its last area, a smaller one its size over this of the way along the curve.
-  1. Ed, 2026-11-03: "Pack growth: grows along each island's own length, scaled by the island's size, so only the largest islands reach full packs. The curve gets steeper (1.3 → 0.8) so packs grow sooner."
-  50: the phase-5 islands (rules/rosters.ts sizeOfPhase), the largest on the chart; home grows to 64 at the campaign's end and holds there. It replaces the master curve's length in waves (64, its old knob), under which a 10-area island's last area stopped at p 0.14.
+- **`population.swarm.fullPhase`**: the phase whose islands reach the full swarm at their last area; an island of an earlier phase its phase over this of the way along the curve.
+  1. Ed, 2026-11-04: "we should rebalance this so phase 5 islands get to full packs"
+  5: a phase 5 island's last area fields the full swarm whatever its size, a phase 1 island's a fifth of the way (rules/swarm.ts phaseReach, rules/growth.ts islandReach). Home's reach is the share of the islands she's found (rules/rosters.ts foundShare: none at first, every island at the end); a map that's no island by roster plays the whole curve. It replaces the largest island's areas (largestIsland 50, 2026-11-03 to 11-04: an island's size over it, which only the 50-area phase 5 islands reached).
+  Code: `rules/growth.ts`, `rules/rosters.ts`
 
 | knob | type | range |
 |---|---|---|
@@ -2386,7 +2433,7 @@ Code: `rules/growth.ts`, `rules/swarm.ts`, `config/swarm-power.json`, `tools/bal
 | `population.byRoute.minHostile` | number | 0 to … |
 | `population.swarm.start` | number | 0 to … |
 | `population.swarm.endAverage` | number | 0 to … |
-| `population.swarm.largestIsland` | number | 0 to … |
+| `population.swarm.fullPhase` | number | 0 to … |
 | `population.swarm.curve` | number | 0 to … |
 | `population.swarm.youngShare` | array of number |  |
 | `population.swarm.reference` | string |  |
@@ -3258,8 +3305,9 @@ Music by proximity [1]: one shared track, full and clear within nearDist metres 
 Code: `tools/music-lab/check.cjs`
 
 - **`music.volume`**: the master.
-- **`music.latency`**: the audio context's latencyHint [1]: interactive the smallest output buffer, balanced more room for the audio thread, playback the most (under-runs least likely, sound effects latest); ?latency= tries one for a load (DECISION FOR ED).
+- **`music.latency`**: the audio context's latencyHint [1]: interactive the smallest output buffer, balanced more room for the audio thread, playback the most (under-runs least likely, sound effects latest); ?latency= tries one for a load [2].
   1. Ed, 2026-10-07: "the music is still cutting out"
+  2. Ed, 2026-10-31: balanced confirmed (relayed by the coordinator on #1357)
 - **`music.buffer`**: How much audio the game buffers ahead, so the music stays on the beat without crackling.
   1. "music is still cutting out" (Ed's v3167 playtest,: 474 device under-runs, each one 10 ms buffer, on his busy laptop; balanced gives Chrome the same 10 ms as interactive)
   the audio output's buffer to ask for, in seconds [1], 0 for the latency category below; a browser that under-runs 20 times in a load asks for twice as much next load, up to 0.24 s (platform/audio/buffer.ts); the music goes out early by the context's latency so it stays on the beat shown, only the sound effects come later.
@@ -3662,22 +3710,26 @@ Code: `docs/plans/sail-without-reload.md`, `app/sail.ts`
 
 ### `loading`
 
-The loading screen: the World Tree and COVEN RUSH picked out in gold stars that light up as the game loads.
+The loading screen: the World Tree as a Celtic knot in gold stars, COVEN and RUSH in the gaps either side of its trunk, lighting up as the game loads.
 
 1. Ed, 2026-10-26: src/ui/loadingScreen.js, before main.ts loads
 2. Ed, 2026-11-03: "can we fade from the loading screen to the bedroom over a few seconds" (fadeOut in place of the 1.2 s white clearing (clear), src/ui/loadingFade.js)
-The loading screen [1]: the World Tree and COVEN RUSH in gold stars, lighting as the game loads, edge first by edge (0 plain random), at most rate stars a second, each flashing for flash seconds; ghost how bright the stars not yet lit show (0: an empty sky, Ed's call); the heart's star last, its supernova to white over nova seconds, then the whole screen fading out over fadeOut seconds (eased out; at most 0.6 s with reduced motion) onto the bedroom, her wake-up starting as it begins [2]. It draws fps frames a second while the game loads (each frame costs the load a little), about 20 once it's ready. Read as the page opens, so the pause page's sliders (remembered on this browser) take effect on the next load.
-Code: `src/ui/loadingScreen.js`, `src/ui/loadingFade.js`
+3. Ed, 2026-11-05: "roughly left to right, with some random scatter" (his sketch: the World Tree's branches and roots sweeping round into two rings, COVEN and RUSH in them, level; sweep in place of edge; the game's darker night sky behind, src/ui/loadingSeal.js)
+4. Ed, 2026-11-05: "Loading screen: can you copy this for the sigil design" (his reference a Celtic-knot Tree of Life: its canopy and roots the ring; then "now turn this design into dots that are stars, and put the words into gaps, as per my diagram": the knot's ribbons outlined in stars, widened, COVEN and RUSH in the big gaps either side of the trunk, level, src/ui/loadingSeal.js)
+5. Ed, 2026-11-05: "2 with a touch of 3" (the seal's stars at random depths, the scatter tightening and the view turning head on as the load completes; "make the random depth scatter quite large", depth, src/ui/loadingScreen.js)
+The loading screen [1]: the World Tree as a Celtic knot in gold stars, COVEN and RUSH in the gaps either side of its trunk [4], lighting star by star as the game loads, left to right by sweep against a random scatter (0 plain random) [3], at most rate stars a second, each flashing for flash seconds; ghost how bright the stars not yet lit show (0: an empty sky, Ed's call); depth how far the seal's stars scatter in depth, a 3D cloud sliding past itself as the view sways, the words less, tightening to none and the seal turning to face her head on as the load completes [5]; the heart's star (the trunk's middle) last, its supernova to white over nova seconds, then the whole screen fading out over fadeOut seconds (eased out; at most 0.6 s with reduced motion) onto the bedroom, her wake-up starting as it begins [2]. It draws fps frames a second while the game loads (each frame costs the load a little), about 20 once it's ready. Read as the page opens, so the pause page's sliders (remembered on this browser) take effect on the next load.
+Code: `src/ui/loadingScreen.js`, `src/ui/loadingSeal.js`, `src/ui/loadingFade.js`
 
 | knob | type | range |
 |---|---|---|
-| `loading.edge` | number | 0 to … |
+| `loading.sweep` | number | 0 to … |
 | `loading.rate` | number | 0 to … |
 | `loading.flash` | number | 0 to … |
 | `loading.ghost` | number | 0 to … |
 | `loading.nova` | number | 0 to … |
 | `loading.fadeOut` | number | 0 to … |
 | `loading.fps` | number | 0 to … |
+| `loading.depth` | number | 0 to … |
 
 ### `opening`
 
@@ -4877,9 +4929,9 @@ How strong the diagonal moonbeam bands are, times the style's Moonbeams knob: 0 
 
 ### `looks`
 
-How creatures look in their different states, such as the angry brows of an enraged one.
+How creatures look in their different states, such as an enraged one's red tint.
 
-The creature states' looks (Ed, issue #87; render/looks.ts). The angry brows are a stopgap for an expression the creature generator will draw (render/looks.ts expression).
+The creature states' looks (Ed, issue #87; render/looks.ts). Their faces (render/looks.ts expression, art/genome/expressions.js) are off for now: looks.expressions.
 Code: `render/looks.ts`
 
 - **`looks.enragedTint`**: An enraged creature's whole sprite is tinted toward a colour, keeping its shading.
@@ -4891,6 +4943,10 @@ Code: `render/looks.ts`
   a pixel 💢 beside an enraged creature's head on the side it faces, popping on a pulse, size times its level's bubble size (bubbles.levelScale). Tint and 💢 each on its own (amount 0 or on false turns one off); both for now [2].
 - **`looks.partyGlow`**: every happy and leashed animal has sparkles twinkling pixels round it, each lit for a moment about rate times a second, size times three game pixels, at strength brightness (additive); leashed ones keep their collar on top.
   1. Ed, 2026-10-05: "party animals could sparkle or glow a little"
+- **`looks.expressions`**: Whether creatures change their faces (angry, happy, dazed, a bite's or a yawn's open jaw); off, every creature keeps its plain face and none of those faces is drawn.
+  1. Ed, 2026-11-05: "Scrap animal expressions for now."
+  Measured first: at the game's zoom the faces didn't read (angry only by the enraged tint, red eyes and 💢; happy and dazed a few pixels in a 3 to 5 pixel eye; bite and yawn only as an open jaw on the snouted four-legged animals), and the face sets were about half of the creature art's drawing time at load. Off (false, the default): no face set is asked for or drawn (render/assets.ts faceArt answers nothing), the live rig's pages bake no expression heads (only a sleeping legend's asleep one, part of its sleeping look), a party sheet is drawn without its happy face and the woken (enraged) set without its angry face's narrowed eyes and brows. The enraged tint, its red eyes and 💢, party clothes and sparkles, dazed stars, bite lunges and the other body animations are not faces and stay. On (true): the faces as before.
+  Code: `art/genome/expressions.js`, `render/assets.ts`, `render/view/creatures.ts`
 
 | knob | type | range |
 |---|---|---|
@@ -4903,6 +4959,7 @@ Code: `render/looks.ts`
 | `looks.partyGlow.rate` | number | 0 to … |
 | `looks.partyGlow.size` | number | 0 to … |
 | `looks.partyGlow.strength` | number | 0 to … |
+| `looks.expressions` | boolean |  |
 
 ### `tone`
 

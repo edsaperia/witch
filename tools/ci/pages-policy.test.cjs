@@ -3,15 +3,21 @@
 const {test}=require('node:test'), assert=require('node:assert/strict'), fs=require('node:fs');
 const {publicationPolicy,publicationSnapshot}=require('./pages-policy.cjs');
 const workflow=fs.readFileSync('.github/workflows/pages-publish.yml','utf8');
-test('live publication bypasses preview debounce and only live may preempt a running publisher',()=>{
-  assert.deepEqual(publicationPolicy('repository_dispatch','pages-live'),{kind:'live',debounceSeconds:0,cancelPublisher:true});
-  assert.deepEqual(publicationPolicy('workflow_dispatch'),{kind:'live',debounceSeconds:0,cancelPublisher:true});
+const parsed=require('yaml').parse(workflow);
+test('live publication bypasses preview debounce and no request preempts a running publisher',()=>{
+  assert.deepEqual(publicationPolicy('repository_dispatch','pages-live'),{kind:'live',debounceSeconds:0,cancelPublisher:false});
+  assert.deepEqual(publicationPolicy('workflow_dispatch'),{kind:'live',debounceSeconds:0,cancelPublisher:false});
   assert.deepEqual(publicationPolicy('repository_dispatch','pages-preview'),{kind:'preview',debounceSeconds:60,cancelPublisher:false});
   assert.throws(()=>publicationPolicy('push','arbitrary'));
   const [debounce,publish]=workflow.split('  publish:');
   assert.match(debounce,/group: pages-preview-debounce/); assert.match(debounce,/sleep 60/);
   assert.doesNotMatch(publish,/sleep 60/); assert.match(publish,/needs.debounce.result == 'skipped'/);
-  assert.match(publish,/cancel-in-progress:.*workflow_dispatch.*pages-live/);
+  assert.match(publish,/group: pages-snapshot-publisher/);
+  assert.match(publish,/cancel-in-progress: false/);
+  assert.doesNotMatch(publish,/cancel-in-progress:.*(?:true|\$\{\{)/);
+  assert.ok(publish.indexOf('concurrency:') < publish.indexOf('ref: gh-pages'));
+  assert.deepEqual(parsed.jobs.publish.concurrency,{group:'pages-snapshot-publisher','cancel-in-progress':false});
+  assert.equal(parsed.concurrency,undefined); // No outer cancellation can kill a started publisher.
 });
 test('an old preview replacing a queued live job still publishes the newest live root, never its stale event snapshot',()=>{
   const oldPreview={source_sha:'old-preview',rootVersion:'v1'}, live={source_sha:'live-v2',rootVersion:'v2'};
