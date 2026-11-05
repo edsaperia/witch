@@ -52,17 +52,19 @@ describe("creatures' faces off (looks.expressions)", () => {
     expect(a.expressions).toBe(false);
     for (const face of ["angry", "happy", "dazed", "bite", "yawn"]) expect(a.faceArt("fox", face)).toBeUndefined();
     expect(inner(a).queue.some(j => j.kind === "face")).toBe(false);
-    a.rigArt("fox", 2); a.partyArt("fox", 7, [1, 0, 1], 2); a.happyArt("fox", 7, 2);
-    const rig = inner(a).queue.find(j => j.kind === "rig"), party = inner(a).queue.filter(j => j.kind === "party");
+    a.rigArt("fox", 2); a.partyArt("fox", 7, [1, 0, 1], 2); a.happyArt("fox", 7, 2); a.wokenArt("fox");
+    const rig = inner(a).queue.find(j => j.kind === "rig"), party = inner(a).queue.filter(j => j.kind === "party"), woken = inner(a).queue.find(j => j.kind === "woken");
     expect(rig && "faces" in rig).toBe(false);
+    expect(woken?.id).toBe("woken-fox"); expect(woken && "faces" in woken).toBe(false);
     expect(party).toHaveLength(2); expect(party.some(j => "faces" in j)).toBe(false);
   });
   it("asks for them, under keys of their own, while on", () => {
     const a = new AssetLibrary(loadStyle(), 11, 4); a.expressions = true;
     expect(a.faceArt("fox", "dazed")).toBeUndefined();
     expect(inner(a).queue.filter(j => j.kind === "face").map(j => j.id)).toEqual(["face-dazed-fox"]);
-    a.rigArt("fox", 2); a.partyArt("fox", 7, [1, 0, 1], 2);
-    const rig = inner(a).queue.find(j => j.kind === "rig")!, party = inner(a).queue.find(j => j.kind === "party")!;
+    a.rigArt("fox", 2); a.partyArt("fox", 7, [1, 0, 1], 2); a.wokenArt("fox");
+    const rig = inner(a).queue.find(j => j.kind === "rig")!, party = inner(a).queue.find(j => j.kind === "party")!, woken = inner(a).queue.find(j => j.kind === "woken")!;
+    expect(woken.id).toBe("woken-fox-faces"); expect(woken.kind === "woken" && woken.faces).toBe(true);
     expect(rig.kind === "rig" && rig.faces).toBe(true); expect(rig.id.endsWith("-faces")).toBe(true);
     expect(party.kind === "party" && party.faces).toBe(true); expect(party.id).toBe(partySheetKey("fox", 2, partyGearOf(7, [1, 0, 1]), true));
   });

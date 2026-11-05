@@ -65,7 +65,7 @@ export type TreeOpts = { type: string; minor?: boolean; dark?: boolean; gnarl?: 
 
 export type ArtJob = { kind: "type"; id: number; style: Style; seed: number; K: number; /** the island's biome blend's key (rules/lakeLooks.ts biomeKey), its look over the area's trees and props; none, temperate */ biome?: string } | { kind: "creature"; id: string; style: Style } | { kind: "rig"; id: string; species: string; level: number; style: Style; /** a party animal's gear, baked on */ gear?: RigGear; /** its expression heads too (tuning looks.expressions, off for now) */ faces?: boolean }
   /** A creature enraged by a wave (Stage 4 playtest): angry glowing red eyes and a darker tint. */
-  | { kind: "woken"; id: string; species: string; style: Style }
+  | { kind: "woken"; id: string; species: string; style: Style; /** with its angry face (tuning looks.expressions, off for now): narrowed eyes and brows */ faces?: boolean }
   /** An area legend asleep (art/legends.js legendForm): its two breathing frames, sunk and grown over. */
   | { kind: "sleep"; id: string; species: string; style: Style }
   | { kind: "glide"; id: string; species: string; style: Style }
@@ -208,7 +208,7 @@ export function runJob(job: ArtJob, mk: MakeCanvas): ArtResult {
   if (job.kind === "decor") { const { sprites, decor } = decorSprites(job.style, mk, job.style.biome ?? job.biome); return { px: packPixels(sprites, 2048), decor }; }
   if (job.kind === "beachEdge") { const { sprites, beach } = beachEdgeSprites(job.style, job.K, mk); return { px: packPixels(sprites, 2048), beachEdge: beach }; }
   if (job.kind === "lakeShore") { const { sprites, shore } = lakeShoreSprites(job.style, job.K, mk, job.style.biome ?? job.biome); return { px: packPixels(sprites, 2048), lakeShore: shore }; }
-  // (enraged: red eyes and the angry face; dressed up: the happy face while tuning looks.expressions is on; art/genome/expressions.js)
+  // (enraged: red eyes, and the angry face; dressed up: the happy face; the faces only while tuning looks.expressions is on; art/genome/expressions.js)
   if (job.kind === "sleep") {
     const sprites: Baked[] = [], ground: number[] = [], centre: number[] = [];
     for (let f = 0; f < 2; f++) {
@@ -239,7 +239,7 @@ export function runJob(job: ArtJob, mk: MakeCanvas): ArtResult {
     }
     return { px: packPixels(sprites, 2048) };
   }
-  if (job.kind === "woken") return { px: packPixels(creatureSprites(job.style, job.species, mk, { woken: true, face: "angry" }), 2048) };
+  if (job.kind === "woken") return { px: packPixels(creatureSprites(job.style, job.species, mk, job.faces ? { woken: true, face: "angry" } : { woken: true }), 2048) }; // (red eyes and its darker coat always; its angry face only with the faces on: Ed, 2026-11-05, "Scrap animal expressions for now.")
   if (job.kind === "face") return { px: packPixels(creatureSprites(job.style, job.species, mk, { face: job.face }), 2048) };
   if (job.kind === "party") {
     if (!Number.isInteger(job.level) || job.level < 0 || job.level > 3) throw new Error("Invalid party sheet age");

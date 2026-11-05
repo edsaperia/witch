@@ -153,7 +153,7 @@ export class AssetLibrary {
   stoneScale = 2.25;
   /** Creatures' faces (tuning looks.expressions; the view sets it). Off (Ed, 2026-11-05: "Scrap animal expressions for now."): no
    *  face set is asked for (faceArt answers nothing, so every ask, the view's or an island's ahead, is a no-op), rig pages bake no
-   *  expression heads, and a party sheet is drawn with its plain face. */
+   *  expression heads, and a party sheet and the woken look are drawn with their plain face (the woken look's red eyes kept). */
   expressions = false;
 
   /** The night's seed (its own trees, tonight); a new night's by reseat. */
@@ -558,10 +558,11 @@ export class AssetLibrary {
     if (!a) this.ask({ kind: "nap", id: k, species, style: this.style, idle: true });
     return a;
   }
-  /** A creature's enraged look (a wave woke its area: red eyes), or undefined (and asked for). */
+  /** A creature's enraged look (a wave woke its area: red eyes), or undefined (and asked for). Its angry face (narrowed eyes, brows)
+   *  only with the faces on (expressions), under a key of its own. */
   wokenArt(species: string): CreatureArt | undefined {
-    const k = `woken-${species}`, a = this.creatures.get(k);
-    if (!a) this.ask({ kind: "woken", id: k, species, style: this.style });
+    const faces = this.expressions, k = `woken-${species}${faces ? "-faces" : ""}`, a = this.creatures.get(k);
+    if (!a) this.ask({ kind: "woken", id: k, species, style: this.style, ...(faces ? { faces } : {}) });
     return a;
   }
   /** A creature in an expression (art/genome/expressions.js: happy, dazed...), or undefined (and asked for). With the faces off
