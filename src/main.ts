@@ -110,7 +110,8 @@ import { readZooCoasts } from "./app/zooCoasts";
 
 import { loadGuide } from "./app/guideSave";
 import { GuidePin } from "./render/view/guidance";
-import { warmChart } from "./app/chartWarm";
+import { stopWarmChart, warmChart } from "./app/chartWarm";
+import { ChartWarmSchedule } from './app/chartWarmSchedule';
 import { powerLines } from "./app/hud";
 import { latestBuildLink, NewBuildNotice } from "./app/newBuild";
 import { freshHref, localStore, storageScope } from "./platform/storageScope";
@@ -154,7 +155,7 @@ import { reconcilePickers as a4_reconcilePickers, shutStation as a4_shutStation,
 import { keepNightie as a4_keepNightie, personalKit as a4_personalKit, hostCollections as a4_hostCollections, traceVisit as a4_traceVisit, aheadMorning as a4_aheadMorning, revealArt as a4_revealArt, bedFirst as a4_bedFirst, bedFirstNow as a4_bedFirstNow, arrived as a4_arrived, arrivedNow as a4_arrivedNow, wakeArrival as a4_wakeArrival, wakeArrivalNow as a4_wakeArrivalNow, start as a4_start, startDirect as a4_startDirect, dressCreator as a4_dressCreator, chartOverNight as a4_chartOverNight, chartWorldArg as a4_chartWorldArg, sailFromChart as a4_sailFromChart, recordSail as a4_recordSail, departFromChart as a4_departFromChart, wakeFirst as a4_wakeFirst, wakeFirstNow as a4_wakeFirstNow, sailInPlace as a4_sailInPlace, makeSailNight as a4_makeSailNight, newNight as a4_newNight, nightInPlace as a4_nightInPlace, leaveBot as a4_leaveBot, chartWorld as a4_chartWorld, soundNote as a4_soundNote, armSkip as a4_armSkip, queueCast as a4_queueCast, armBack as a4_armBack, wokenBefore as a4_wokenBefore, woke as a4_woke, mirrored as a4_mirrored, sawMirror as a4_sawMirror } from "./app/pageNight";
 import { lendFind as a4_lendFind, settleLoan as a4_settleLoan, settleLoanNow as a4_settleLoanNow, startDream as a4_startDream, herHead as a4_herHead, stepGuide as a4_stepGuide, partsNow as a4_partsNow } from "./app/pageFinds";
 import { botGame as a4_botGame, saveComment as a4_saveComment, restoreComment as a4_restoreComment, spawnHere as a4_spawnHere, spawnHereNow as a4_spawnHereNow, decidePanel as a4_decidePanel, keyNow as a4_keyNow, installDebug1 as a4_installDebug1, installDebug2 as a4_installDebug2, installDebug3 as a4_installDebug3, installDebug4 as a4_installDebug4, installDebug5 as a4_installDebug5, installDebug6 as a4_installDebug6, installDebug7 as a4_installDebug7, installDebug8 as a4_installDebug8, installDebug9 as a4_installDebug9, installDebug10 as a4_installDebug10, installDebug11 as a4_installDebug11, installDebug12 as a4_installDebug12, installDebug13 as a4_installDebug13, installDebug14 as a4_installDebug14, installDebug15 as a4_installDebug15, installDebug16 as a4_installDebug16, installDebug17 as a4_installDebug17, installDebug18 as a4_installDebug18, installDebug19 as a4_installDebug19, installDebug20 as a4_installDebug20, installDebug21 as a4_installDebug21, installDebug22 as a4_installDebug22, installDebug23 as a4_installDebug23, installDebug24 as a4_installDebug24, installDebug25 as a4_installDebug25, installDebug26 as a4_installDebug26, installDebug27 as a4_installDebug27, installDebug28 as a4_installDebug28, installDebug29 as a4_installDebug29, installDebug30 as a4_installDebug30, installDebug31 as a4_installDebug31, installDebug32 as a4_installDebug32 } from "./app/pageDebug";
-import { drawFrame as a4_drawFrame, frame as a4_frame, frameBody as a4_frameBody, overlayHead as a4_overlayHead } from "./app/pageFrame";
+import { updateChartWarm as a4_updateChartWarm, drawFrame as a4_drawFrame, frame as a4_frame, frameBody as a4_frameBody, overlayHead as a4_overlayHead } from "./app/pageFrame";
 import { createBuildNotice as a4_createBuildNotice, installBuildNotice1 as a4_installBuildNotice1 } from "./app/pageBuildNotice";
 
 const pageHost = {
@@ -190,6 +191,8 @@ const pageHost = {
   get chartFound(): typeof chartFound { return chartFound; }, set chartFound(value: typeof chartFound) { chartFound = value; },
   get chartHeld(): typeof chartHeld { return chartHeld; }, set chartHeld(value: typeof chartHeld) { chartHeld = value; },
   get chartOverNight(): typeof chartOverNight { return chartOverNight; },
+  get chartWarmNextCheck(): typeof chartWarmNextCheck { return chartWarmNextCheck; }, set chartWarmNextCheck(value: typeof chartWarmNextCheck) { chartWarmNextCheck = value; },
+  get chartWarmer(): typeof chartWarmer { return chartWarmer; },
   get chartWasPaused(): typeof chartWasPaused { return chartWasPaused; }, set chartWasPaused(value: typeof chartWasPaused) { chartWasPaused = value; },
   get chartWorld(): typeof chartWorld { return chartWorld; },
   get chartWorldArg(): typeof chartWorldArg { return chartWorldArg; },
@@ -343,6 +346,7 @@ const pageHost = {
   get telephoneBatchProof(): typeof telephoneBatchProof { return telephoneBatchProof; },
   get telescope(): typeof telescope { return telescope; },
   get tuningMutation(): typeof tuningMutation { return tuningMutation; },
+  get updateChartWarm(): typeof updateChartWarm { return updateChartWarm; },
   get updatePauseMenus(): typeof updatePauseMenus { return updatePauseMenus; },
   get useHouse(): typeof useHouse { return useHouse; },
   get usedAt(): typeof usedAt { return usedAt; },
@@ -616,17 +620,15 @@ const showProgress = setInterval(() => {
   if (ready && !a.pending) { progressEl.classList.add("done"); clearInterval(showProgress); }
 }, 250);
 // The sea chart made ahead (app/chartWarm.ts; Ed, 2026-10-12: "can we do it earlier, before we need to show it?"): once the
-// forest has grown and the tab is in view, a worker makes and keeps the chart's islands, so the map table opens on them at once.
+// forest has grown, prepare only home and saved found islands while she's awake in the treehouse (Ed, 2026-11-04).
 // Not under automation (the smoke and bench runs time the game's own frames), unless ?warmChart=1.
 const chartWorld = (): number => a4_chartWorld(pageHost);
 const warmOn = params.get("warmChart") === "1" || (params.get("warmChart") !== "0" && !navigator.webdriver);
-const warmWhenSettled = warmOn ? setInterval(() => {
-  if (!N().flags.ready || view.assets.pending || document.hidden || chartOpen()) return;
-  clearInterval(warmWhenSettled);
-  const t0 = performance.now(), log = params.get("warmChart") === "1"; // (?warmChart=1: each island logged, for timing it)
-  if (log) console.info("sea chart: making ahead");
-  warmChart(chartWorld(), loadSave().found, (made, kept) => console.info(`sea chart made ahead: ${made} islands made, ${kept} already kept, ${((performance.now() - t0) / 1000).toFixed(1)} s`), log ? (id, made) => console.info(`sea chart: ${id} ${made ? "made" : "kept"} at ${((performance.now() - t0) / 1000).toFixed(1)} s`) : undefined);
-}, 3000) : 0;
+const chartWarmer = new ChartWarmSchedule(({ world, found, ids }, done) => {
+  warmChart(world, found, (made, kept) => { done(); if (params.get('warmChart') === '1') console.info(`sea chart made ahead: ${made} islands made, ${kept} already kept`); }, undefined, ids, done);
+}, stopWarmChart);
+let chartWarmNextCheck = 0;
+function updateChartWarm(): void { return a4_updateChartWarm(pageHost); }
 requestAnimationFrame(() => setTimeout(async () => {
   const night = N();
   if (night.arrival) bedFirst(night); // (the island's link loaded anew, &arrive=1: in bed before the dive, as a sail in place)
@@ -970,6 +972,7 @@ const decidePanel = (open: boolean): void => a4_decidePanel(pageHost, open);
 if (params.has("decide")) decidePanel(true);
 window.addEventListener("keydown", e => { if (e.code !== "F2") return; e.preventDefault(); if (decide) decide.toggle(); else decidePanel(true); });
 a4_installBuildNotice1(pageHost);
+addEventListener('pagehide', () => chartWarmer.pause());
 
 const endedNights = new WeakSet<Game>();
 const commentBook = new CommentBook(browserCommentStore()), breadcrumbs = new Breadcrumbs();
@@ -1057,6 +1060,7 @@ const chartDepartureBoundary = chartDeparture({
   returnOwn: () => ordinaryVisit?.end() ?? Promise.reject(new Error("This browser cannot restore your saved night.")),
 });
 page.onNightEnd = () => {
+  chartWarmer.pause();
   if (phone.active && !phone.visiting && !sharedNightChanging) phone.hangUp("host-night-ended"); // A shared bed rollover retains its call.
   if (!phone.visiting && page.night && !page.night.spec.borrowed && !endedNights.has(page.night.game)) {
     const hostOutcome = hostedUnlocks ?? (sharedNightChanging ? visitUnlocks(page.night.game, 0) : null);

@@ -64,8 +64,16 @@ const COLUMN = "column", ASK = 420;
 const FLOOR_RISE = 1.6;
 /** Its dancefloor's tiles a side (as home's: rules/dancefloor.ts GRID) and their lights this frame (reused). */
 const TILES = 32, FLOOR_RGBI = new Uint8Array(TILES * TILES * 4);
-/** A column's top (m), where its light sits. */
-const COLUMN_TOP = 4.6;
+/** A column's top (m), where its light sits and its fireworks go up from: the top of its art (art/landmarks.js "column", 75 px over
+ *  its foot at the view's 0.09375 m a pixel; render/challenge.test.ts measures it). */
+export const COLUMN_TOP = 7.05;
+/** Where a column's sigils stand (Ed, 2026-11-04, on #1827: "Statue sigils should sit comfortably above the top of their columns"):
+ *  stacked as a rune stone's (render/leash/stones.ts columnOf: adult below, youth above), the lowest one's foot `sigilGap` m over its
+ *  column's top. Each one's middle (m up the column's face) and size. */
+export function columnSigilsAt(sigils: readonly { level: number }[], t: Tuning): { y: number; size: number }[] {
+  const P = columnOf(sigils, lvl => columnSigilSize(t, lvl)), lift = P.length ? COLUMN_TOP + Math.max(0, challengeOf(t).sigilGap) - (P[0].y - P[0].size / 2) : 0;
+  return P.map(q => ({ y: q.y + lift, size: q.size }));
+}
 
 const smooth = (k: number) => { const q = Math.max(0, Math.min(1, k)); return q * q * (3 - 2 * q); };
 /** 1 on the beat, falling away before the next. */
@@ -182,8 +190,8 @@ export function drawChallenge(lv: LeashView, time: number, dot: number[]): void 
       if (lit) lv.flat.add(col.x, 0.03, col.z, 2.6, dot, top.rgb[0], top.rgb[1], top.rgb[2], 0.18, 1, true); // (and a little warm light at its foot)
       const vis = smooth((K.range - Math.hypot(col.x - w.x, col.z - w.z)) / Math.max(1, K.fade));
       if (lit || !sigils || vis <= 0.01) continue;
-      const P = columnOf(col.sigils, lvl => columnSigilSize(t, lvl));
-      col.sigils.forEach((it, i) => { const h = COLUMN_TOP + P[i].y; columnSigil(lv, time, dot, it.id, it.level, col.x, upY(col.x, col.z, h), upZ(col.z, h), P[i].size, vis, statueSigilColour(g, sigilRankColour(t, it.level, false, false))); }); // (grey while its pack's stone, glowing as they wake: render/statues.ts)
+      const P = columnSigilsAt(col.sigils, t);
+      col.sigils.forEach((it, i) => { const h = P[i].y; columnSigil(lv, time, dot, it.id, it.level, col.x, upY(col.x, col.z, h), upZ(col.z, h), P[i].size, vis, statueSigilColour(g, sigilRankColour(t, it.level, false, false))); }); // (grey while its pack's stone, glowing as they wake: render/statues.ts)
     }
     // Ready (every column lit): the spell's notes at its middle, and her fill round her as she casts.
     if (!challengeReady(g)) return;

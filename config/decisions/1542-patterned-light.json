@@ -1,0 +1,21 @@
+{
+  "pr": 1542,
+  "group": "Patterned light",
+  "decisions": [
+    {
+      "id": "patternLightStrength",
+      "label": "Patterned light strength",
+      "note": "0 keeps ordinary lighting; 1 is the original pattern strength; 3 is the stronger live-test default. Reduced flashing turns patterns off.",
+      "control": {
+        "type": "slider",
+        "min": 0,
+        "max": 4,
+        "step": 0.05
+      },
+      "default": 3,
+      "apply": {
+        "knob": "patternLight.strength"
+      }
+    }
+  ]
+}

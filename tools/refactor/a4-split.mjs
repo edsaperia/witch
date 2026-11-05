@@ -1,4 +1,4 @@
-// Rehearse A4 by named syntax boundaries; --apply writes once, --check verifies hashes and reversible body edits.
+// Apply A4 by named syntax boundaries; --replay --dry-run writes nothing, --check verifies hashes and reversible body edits.
 import fs from 'node:fs';
 import path from 'node:path';
 import crypto from 'node:crypto';
@@ -8,6 +8,8 @@ import { transformSync } from 'esbuild';
 
 const argv = process.argv.slice(2);
 const apply = argv.includes('--apply'), check = argv.includes('--check'), replay = argv.includes('--replay');
+const dryRun = argv.includes('--dry-run');
+if (dryRun && !replay) throw new Error('--dry-run requires --replay');
 if ([apply, check, replay].filter(Boolean).length !== 1) throw new Error('Choose exactly one of --apply, --replay or --check');
 const manifestPath = 'docs/plans/a4-dry-run-manifest.json';
 const hash = s => crypto.createHash('sha256').update(s).digest('hex');
@@ -94,7 +96,7 @@ if (previous) for (const [f, digest] of Object.entries(previous.outputs)) {
 if (!replay && fs.existsSync(manifestPath)) throw new Error('Already applied; use --check (never overwrite a rehearsal)');
 const manifest = { schema: 1, sourceCommit: adoptedCommit ?? previous?.sourceCommit ?? execFileSync('git', ['rev-parse', 'HEAD'], { encoding: 'utf8' }).trim(),
   ...(adoptedCommit || previous?.sourceHistory ? { sourceHistory: [...(previous?.sourceHistory ?? []), ...(adoptedCommit ? [{ from: previous.sourceCommit, to: adoptedCommit, reason: refreshArg ? 'reviewed prototype source refresh resolving owned cut-file conflicts' : 'merged prototype; both cut source hashes identical', ...(refreshArg ? { conflicts: [...refreshConflicts] } : {}) }] : [])] } : {}),
-  status: 'mechanical rehearsal; typecheck/unit/bench proof pending canonical slot', sources: [], cuts: [], outputs: {} };
+  status: 'mechanical split on own branch; exact-head CI/bench parity pending', sources: [], cuts: [], outputs: {} };
 const outputs = new Map();
 const importedSymbols = ast => {
   const map = new Map();
@@ -258,7 +260,7 @@ const mainGroups = {
   pageNight: ['keepNightie', 'personalKit', 'hostCollections', 'traceVisit', 'aheadMorning', 'revealArt', 'bedFirst', 'bedFirstNow', 'arrived', 'arrivedNow', 'wakeArrival', 'wakeArrivalNow', 'start', 'startDirect', 'dressCreator', 'chartOverNight', 'chartWorldArg', 'sailFromChart', 'recordSail', 'departFromChart', 'wakeFirst', 'wakeFirstNow', 'sailInPlace', 'makeSailNight', 'newNight', 'nightInPlace', 'leaveBot'],
   pageFinds: ['lendFind', 'settleLoan', 'settleLoanNow', 'startDream', 'herHead', 'stepGuide'],
   pageDebug: ['botGame', 'saveComment', 'restoreComment', 'spawnHere', 'spawnHereNow'],
-  pageFrame: ['drawFrame', 'frame', 'frameBody', 'overlayHead'],
+  pageFrame: ['updateChartWarm', 'drawFrame', 'frame', 'frameBody', 'overlayHead'],
 };
 const viewGroups = {
   frame: ['render', 'replayPartyStart'],
@@ -266,7 +268,7 @@ const viewGroups = {
   markers: ['legendRings', 'pin', 'inviteStart'],
   atmosphere: ['updateMoon', 'updateSteam', 'updateSmoke'],
   readiness: ['readyPrograms', 'landingWakeReady', 'beginLandingShaders', 'armLimitedLanding', 'limitedLandingReady', 'waitForLandingWitch', 'startLandingShaderGrace', 'compileAll', 'gpuCaughtUp', 'warmDraws', 'warmSteps', 'setReadiness'],
-  lifecycle: ['build', 'prepare', 'askIsland', 'setGameSteps', 'retype'],
+  lifecycle: ['build', 'prepare', 'islandAhead', 'islandFaces', 'coastAhead', 'askIsland', 'setGameSteps', 'retype'],
   viewport: ['landingShot', 'scenePixelSize', 'resize', 'screenOf', 'aimAt'],
 };
 
@@ -473,6 +475,10 @@ for (const [file, text] of outputs) {
   // Isolated in-memory syntax/lowering only: no bundling, graph, typecheck or game.
   transformSync(text, { loader: 'ts', sourcefile: file, target: 'es2022', logLevel: 'silent' });
   manifest.outputs[file] = hash(text);
+}
+if (dryRun) {
+  console.log(JSON.stringify({ status: 'DRY RUN; no file writes', sourceCommit: manifest.sourceCommit, cuts: manifest.cuts.length, viewApiSha256: manifest.viewApiSha256, sources: manifest.sources, outputs: manifest.outputs }));
+  process.exit(0);
 }
 for (const [file, text] of outputs) { fs.mkdirSync(path.dirname(file), { recursive: true }); fs.writeFileSync(file, text); }
 // The locations registry is derived metadata: refresh it after moves without

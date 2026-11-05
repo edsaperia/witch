@@ -24,7 +24,8 @@ describe("managed Pages publication", () => {
     expect(debounce.concurrency.group).not.toBe(publish.concurrency.group);
     expect(debounce.concurrency["cancel-in-progress"]).toBe(true);
     expect(publish.if).toContain("needs.debounce.result == 'skipped'");
-    expect(publish.concurrency["cancel-in-progress"]).toBe("${{ github.event_name == 'workflow_dispatch' || github.event.action == 'pages-live' }}");
+    expect(publish.concurrency).toEqual({ group: "pages-snapshot-publisher", "cancel-in-progress": false });
+    expect(publisher.concurrency).toBeUndefined(); // An outer policy must not cancel a running publisher either.
     expect(publish.steps.some((s: any) => /sleep/.test(s.run ?? ""))).toBe(false);
   });
   it("always packages the latest complete site rather than an old queued event snapshot", () => {

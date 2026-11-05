@@ -8,10 +8,11 @@ import type { ArtJob, ArtResult } from "../render/artBuild";
 import { artCacheKey, hashText, islandArtSeed } from "../render/artCache";
 import { biomeKey, type BiomeLooks } from "../rules/lakeLooks";
 import { AREA_TYPES, HOME_LOOK } from "../rules/map";
-import { homeIsland, islandOf, knownKinds } from "../rules/rosters";
+import { foundKinds, homeIsland, homeKinds, islandOf } from "../rules/rosters";
 import { loadSave } from "./chartSave";
 import { tuningFromLink } from "./linkParams";
 import { gameStyle, styleFromLink } from "./viewParams";
+import { coldLoad } from "../platform/storageScope";
 
 /** A night's seed, as the game picks one when its link has none (main.ts). */
 export const nightSeed = (): number => Math.floor(Math.random() * 1000000);
@@ -19,7 +20,8 @@ export const nightSeed = (): number => Math.floor(Math.random() * 1000000);
 /** The area types an island's night will ask for, the most needed first: home's meadow (where she lands), then the island's
  *  own kind, then the rest of its roster by how many areas each has. */
 export function landingTypes(island: string, world: number): number[] {
-  const isl = island === "home" ? homeIsland(world, knownKinds(loadSave().found)) : islandOf(island, world);
+  // (home's: every kind it could have tonight, the found ones and its starting ones: rules/rosters.ts homeRoster)
+  const isl = island === "home" ? homeIsland(world, [...new Set([...foundKinds(loadSave().found), ...homeKinds()])]) : islandOf(island, world);
   const typeOf = (k: string) => AREA_TYPES.findIndex(a => a.creature === k);
   const roster = [...(isl?.roster ?? [])].sort((a, b) => +(b.kind === island) - +(a.kind === island) || b.areas - a.areas);
   return [...new Set([HOME_LOOK, ...roster.map(r => typeOf(r.kind)).filter(t => t >= 0)])];
@@ -59,7 +61,7 @@ export function bakeLanding(island: string, world: number | undefined, seed = ni
     stop() { stopped = true; for (const wk of workers) wk.terminate(); workers.length = 0; },
     async settle() { /* (each set is written by its worker before it's reported made: nothing to wait for) */ },
   };
-  if (typeof Worker === "undefined" || typeof OffscreenCanvas === "undefined") return state;
+  if (typeof Worker === "undefined" || typeof OffscreenCanvas === "undefined" || coldLoad()) return state; // (a cold load, ?cold=1: nothing kept, so nothing to draw ahead into the cache)
   // (as many workers as the game's art: one per core but the page's own, up to six)
   const n = Math.max(1, Math.min(6, (navigator.hardwareConcurrency || 2) - 1, jobs.length));
   const next = async (wk: Worker): Promise<void> => {

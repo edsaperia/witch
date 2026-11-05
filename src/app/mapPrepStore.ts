@@ -3,6 +3,7 @@
 import type { Archipelago } from "../rules/archipelago";
 import type { MapPrep } from "../rules/map";
 import type { Tuning } from "../rules/tuning";
+import { coldLoad } from "../platform/storageScope";
 
 /** What the worker keeps: the map's prep and the world's archipelago, under the night's key (mapPrep.ts prepKey). */
 export interface PrepRecord { key: string; prep: MapPrep; arch: Archipelago; ms: number; /** the tuning it was made with (a stale one's differences logged: mapPrep.ts) */ tuning: Tuning }
@@ -11,6 +12,7 @@ export interface PrepAsk { key: string; seed: number; tuning: Tuning; /** post t
 
 const DB = "witch-mapprep", STORE = "prep", SLOT = "next";
 const open = (): Promise<IDBDatabase | null> => new Promise(res => {
+  if (coldLoad()) { res(null); return; } // (a cold load, ?cold=1: none read on the page; its worker's asks say noKeep, app/mapPrep.ts)
   try {
     const r = indexedDB.open(DB, 1);
     r.onupgradeneeded = () => r.result.createObjectStore(STORE);

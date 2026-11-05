@@ -14,7 +14,7 @@
 // model): no card, no buttons, no keys, the camera slowly circling. The save and what's unlocked are chartSave.ts's: this is
 // the view. Its own canvas and renderer, inside `host`; the caller's loop calls update() (no requestAnimationFrame of its own).
 import { islandCoast } from "../rules/islandShape";
-import { coastSpec, homeIsland, isPlaceholder, islandOf, KIND_NAMES, knownKinds, REAL_KINDS } from "../rules/rosters";
+import { coastSpec, homeShape, isPlaceholder, islandOf, KIND_NAMES, REAL_KINDS } from "../rules/rosters";
 import { TUNING } from "../rules/tuning";
 import { islandSigil } from "../../art/sigils.js";
 import { CHART_PIXEL, releaseSeaChart, SeaChart, takeSeaChart, type ChartIsland, type FlightEnd, type FlyOptions } from "../render/chart/seaChart";
@@ -30,7 +30,7 @@ import { chartOrder, islandPhase, OUTLINE_STEP } from "./chartWarm";
 import { chartChoice, chartOpensOn, type ChartHere } from "./sail";
 import { bindings, type ActionId } from "../platform/bindings";
 import { chartHint, type HintDevice } from "../ui/deviceHints";
-import { freshHref, localStore } from "../platform/storageScope";
+import { coldLoad, freshHref, localStore } from "../platform/storageScope";
 
 export type ChartMode = "look" | "sail" | "miniature";
 /** Where the chart's flight hands over to the game's dive (the tuning's arrive.handoff; Ed, 2026-10-24: "maybe it comes from further
@@ -328,7 +328,7 @@ export function mountChart(host: HTMLElement, opts: ChartViewOptions): ChartView
     const from = islands.find(i => i.id === (chart.selected ?? save.voyages.at(-1)?.to ?? "home")) ?? islands[0];
     const ids = chartOrder(islands.filter(i => !i.outline && !waiting.has(i.id)), from); // (home and hers first, then by phase, earliest first, the nearest the chosen first within one: Ed, 2026-10-19)
     if (!ids.length) { if (poll) { clearInterval(poll); poll = null; } return; }
-    const wk = make(); if (wk) postTracedJob(wk, { world: w, found, ids, step: OUTLINE_STEP, cacheOnly: mini } satisfies OutlineAsk, 'chart:request', 'outlines', ids.length);
+    const wk = make(); if (wk) postTracedJob(wk, { world: w, found, ids, step: OUTLINE_STEP, cacheOnly: mini, cold: coldLoad() } satisfies OutlineAsk, 'chart:request', 'outlines', ids.length);
     if (mini && !poll) poll = setInterval(outlines, 4000);
   }
 
@@ -339,7 +339,7 @@ export function mountChart(host: HTMLElement, opts: ChartViewOptions): ChartView
       const at = islandAt(id, w)!, unknown = isPlaceholder(id);
       return { id, x: at.x, y: at.y, phase: islandPhase(id, w), radii, sail: open.has(id) && !unknown, unknown, won: won.has(id), fresh: open.has(id) && !unknown && fresh.has(id), sigil };
     };
-    islands = [one("home", islandCoast(coastSpec(homeIsland(w, knownKinds(save.found))), TUNING.map?.coast).radii, islandSigil("home"))];
+    islands = [one("home", islandCoast(coastSpec(homeShape(w, save.found, TUNING.home.start)), TUNING.map?.coast).radii, islandSigil("home"))];
     for (const k of KIND_NAMES) islands.push(one(k, islandCoast(coastSpec(islandOf(k, w)!), TUNING.islands?.coast).radii, k));
     chart.set(islands, save.voyages);
     for (const p of pins.values()) p.dispose();

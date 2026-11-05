@@ -118,12 +118,17 @@
       ]
     },
     "witchHealth.grace": {
-      "what": "seconds after a hit in which no other blow lands, so a pack striking together takes one hit, not all three [1].",
+      "what": "seconds after a hit in which no other blow lands, so a pack striking together takes one hit, not all three [1][2].",
       "decisions": [
         {
           "by": null,
           "date": "2026-10-06",
-          "rest": "balance: DECISION FOR ED, 0.5"
+          "rest": "balance: 0.5, put to Ed"
+        },
+        {
+          "by": "Ed",
+          "date": "2026-10-31",
+          "rest": "confirmed, 0.5 (relayed by the coordinator on #1357)"
         }
       ]
     },

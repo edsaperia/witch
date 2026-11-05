@@ -352,3 +352,28 @@ old incomplete behavioral evidence remain intact. Early light uniforms, personal
 clock easing, paused-repaint `houseCamInput`, and the house preload/wait ordering
 come directly from the newly pinned source. No manual full-CI dispatch or local
 browser/full-suite/art proof is part of this refresh.
+
+## Fenced application, 5 November
+
+Canonical #1476 comment 6655305768 opens the fence after #1843 landed. This
+supersedes earlier closed-fence waits in this historical plan. The split is now
+applied on its own branch, from source26d69880ace2fcb8ae86a5220ff5382a0d57bf50;
+no prototype/main push, PR merge or publication is authorized.
+
+Current source main1983/View2083 lines including final empty lines. New lifecycle
+cuts: private islandAhead, islandFaces and coastAhead. New pageFrame cut:
+updateChartWarm. Scheduler construction and mutable state remain at their original
+initialization points. The current no-write --replay --dry-run validates generated
+syntax/lowering and the public View interface, then reports hashes without
+writing code, metadata or the manifest. All snapshotted outputs and the manifest
+were verified unchanged. Actual application used the same pinned source and
+reviewed hashes: all16 code hashes match the dry run, all163 moved bodies reverse
+exactly, and all18 generated output hashes pass. The public interface hash is
+unchanged from this source. Existing shader/preload waits, face/coast flags,
+easing, paused repaint and early light-clock updates preserve source order.
+
+No bench declaration is added. Exact-head CI, including undeclared bench:quick
+picture/rules parity, must pass before READY. Local browser/full-suite/heavy
+proof is unrun; the old incomplete evidence remains historical. Application
+receipt and no-write output hashes are retained locally in
+previews/a4-proof/fenced-apply-20261105.

@@ -3,6 +3,7 @@ import { mkdtempSync, mkdirSync, readFileSync, rmSync, writeFileSync } from "nod
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import ts from "typescript";
+import YAML from "yaml";
 import { artJobFingerprints, affectedArtJobs } from "../tools/artJobFingerprints";
 import { diskTree, type SourceTree } from "../tools/artDependencies";
 import { execute, fullCheck, resultHit, saveSuccess, sha, snapshotHash, taskDispatcher } from "../tools/art-check/affected.mjs";
@@ -31,11 +32,9 @@ describe("affected art checks", () => {
     expect(() => taskDispatcher(source.replace('task("species-sprites", async', 'task(name, async'))).toThrow();
     expect(() => taskDispatcher(source.replace('task("species-sprites", async', 'if (true) task("species-sprites", async'))).toThrow();
     const workflow = readFileSync(".github/workflows/art-check.yml", "utf8");
-    expect(workflow).toContain("  schedule:");
-    expect(workflow).toContain("cron: '17 3 * * *'");
-    expect(workflow).toContain("  workflow_dispatch:");
-    expect(workflow).not.toMatch(/^  pull_request:/m);
-    expect(workflow).not.toMatch(/^  push:/m);
+    const parsed = YAML.parse(workflow);
+    expect(Object.keys(parsed.on).sort()).toEqual(["schedule", "workflow_dispatch"]);
+    expect(parsed.on.schedule[0].cron).toBe("17 3 * * *");
     expect(workflow).not.toContain("claude/rel-*");
     expect(workflow).toContain('if: steps.checked.outputs.run == \'\'');
   });

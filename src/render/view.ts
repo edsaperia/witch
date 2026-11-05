@@ -109,6 +109,8 @@ import { Rulers } from "./rulers";
 import { Mist } from "./mist";
 import { LightRings } from "./lightRings";
 import { LoadingMist } from "./loadingMist";
+
+
 import { typeReaches } from "./loadingFront";
 import { SHADOW_DEBUG, ShadowBatch, type ShadowInstance } from "./shadows";
 import { type TrunkShadowBatch } from "./trunkShadows";
@@ -162,6 +164,8 @@ import { PotionObserversView } from './potionObservers';
 
 
 
+
+
 /** Her shadow, lying on the rolling ground corner by corner. */
 const SHADOW_VERT = `varying vec2 vUv;
 ${HEIGHT_VERT_GLSL}
@@ -171,6 +175,8 @@ void main(){ vUv = uv; gl_Position = clipOf(onGround((modelMatrix * vec4(positio
 /** The zoo's plaza's own soft light over the World Tree (the legend circles' moonlit cyan). */
 const PLAZA_RGB = new THREE.Vector3(0.55, 0.85, 0.9);
 export interface ForestLight { x: number; y: number; z: number; reach: number; rgb: THREE.Vector3; strength: number;
+  /** Drawing-only modulation of an existing slot; never a new light or a shadow source. */
+  pattern?: import("./lightPatternState").PackedPattern;
   /** a light things cast shadows from (render/trunkShadows.ts), as a campfire's: where they're thrown from and how strongly (0 to 1);
    *  the soundsystems' and runestones' (Ed, 2026-10-13: "the light that soundsystems and runestones produce" casting shadows) */
   shadow?: { x: number; y: number; z: number; k: number } }
@@ -393,7 +399,7 @@ import { houseTilt as a4_houseTilt, behindHouse as a4_behindHouse, occluders as 
 import { legendRings as a4_legendRings, pin as a4_pin, inviteStart as a4_inviteStart } from "./view/markers";
 import { updateMoon as a4_updateMoon, updateSteam as a4_updateSteam, updateSmoke as a4_updateSmoke } from "./view/atmosphere";
 import { readyPrograms as a4_readyPrograms, landingWakeReady as a4_landingWakeReady, beginLandingShaders as a4_beginLandingShaders, armLimitedLanding as a4_armLimitedLanding, limitedLandingReady as a4_limitedLandingReady, waitForLandingWitch as a4_waitForLandingWitch, startLandingShaderGrace as a4_startLandingShaderGrace, compileAll as a4_compileAll, gpuCaughtUp as a4_gpuCaughtUp, warmDraws as a4_warmDraws, warmSteps as a4_warmSteps, setReadiness as a4_setReadiness } from "./view/readiness";
-import { build as a4_build, prepare as a4_prepare, askIsland as a4_askIsland, setGameSteps as a4_setGameSteps, retype as a4_retype } from "./view/lifecycle";
+import { build as a4_build, prepare as a4_prepare, islandAhead as a4_islandAhead, islandFaces as a4_islandFaces, coastAhead as a4_coastAhead, askIsland as a4_askIsland, setGameSteps as a4_setGameSteps, retype as a4_retype } from "./view/lifecycle";
 import { landingShot as a4_landingShot, scenePixelSize as a4_scenePixelSize, resize as a4_resize, screenOf as a4_screenOf, aimAt as a4_aimAt } from "./view/viewport";
 
 export class View {
@@ -417,6 +423,7 @@ export class View {
       set castOn(value: View["castOn"]) { owner.castOn = value; },
       get cauldronLook(): View["cauldronLook"] { return owner.cauldronLook; },
       set cauldronLook(value: View["cauldronLook"]) { owner.cauldronLook = value; },
+      get coastAhead(): View["coastAhead"] { return owner.coastAhead.bind(owner); },
       get compileAll(): View["compileAll"] { return owner.compileAll.bind(owner); },
       get crownAt(): View["crownAt"] { return owner.crownAt; },
       set crownAt(value: View["crownAt"]) { owner.crownAt = value; },
@@ -447,6 +454,8 @@ export class View {
       get hizOff(): View["hizOff"] { return owner.hizOff; },
       get holograms(): View["holograms"] { return owner.holograms; },
       set holograms(value: View["holograms"]) { owner.holograms = value; },
+      get islandAhead(): View["islandAhead"] { return owner.islandAhead.bind(owner); },
+      get islandFaces(): View["islandFaces"] { return owner.islandFaces.bind(owner); },
       get lakeShore(): View["lakeShore"] { return owner.lakeShore; },
       set lakeShore(value: View["lakeShore"]) { owner.lakeShore = value; },
       get lakeSigils(): View["lakeSigils"] { return owner.lakeSigils; },
@@ -877,6 +886,7 @@ export class View {
     this.assets.typeBiome = biomeKey(t.map?.island ?? "home", t.map?.world ?? 0, t.biomeLooks); // (the island's biome: its forests' look, art/flora/biomes.js) // (the island's own trees: kept, so a revisit draws them at once; tonight's swapped in unseen, revealArt)
     this.assets.crownShare = t.trunkFade.crownShare;
     this.assets.stoneScale = t.runeMarkers.scale;
+    this.assets.expressions = t.looks?.expressions === true; // (creatures' faces: off for now, Ed 2026-11-05: "Scrap animal expressions for now.")
     if (!sliced) runSync(this.build());
   }
 
@@ -951,6 +961,17 @@ export class View {
     this.loadingMist = new LoadingMist(T, typeReaches(cells, m.treehouse, m.areaSize), m.treehouse, m.extent, A.uniforms, this.post.scene.depthTexture, this.post.fxSize, A.slots);
     (this.post.fxScene ??= new THREE.Scene()).add(this.loadingMist.mesh);
   }
+
+  /** The island's own asked for ahead (prepare; Ed, 2026-11-05: "Load the trees, creature art, and coast and lakes, during the
+   *  loading screen."): its area types' trees, every look its creatures can wear and the coast's and lakes' dressing (render/
+   *  islandNeeds.ts); resolves once they've landed. Not under ?quick=1 (only what's needed, as it's needed) or in the zoo (askIsland's). */
+  private islandAhead(near: Map<number, number>): Promise<void> { return a4_islandAhead(this, this.a4Internals, a4Shared, near); }
+  /** The island's creatures' faces asked for in the background, not waited for (Ed, 2026-11-05: "Skip the animal faces"; render/
+   *  islandNeeds.ts askIslandFaces): till one's in, a creature making that face shows its plain look. Not under ?quick=1 or in the zoo. */
+  private islandFaces(near: Map<number, number>): void { return a4_islandFaces(this, this.a4Internals, a4Shared, near); }
+  /** The coast's ground program made with the rest, under the loading screen (Ground.coastAhead; Ed, 2026-11-05), on an island with a
+   *  beach; not under ?quick=1. */
+  private coastAhead(): void { return a4_coastAhead(this, this.a4Internals, a4Shared); }
 
   /** What the start's first frame would make the first time it's asked for, made ahead in steps (render/slices.ts; Ed's laptop,
    *  2026-10-20): the forest round her (the scenery's rebuild) and round the party's areas (their string lights), and the legends'
@@ -1209,6 +1230,7 @@ export type ViewInternals = {
   castMap: View["castMap"];
   castOn: View["castOn"];
   cauldronLook: View["cauldronLook"];
+  coastAhead: View["coastAhead"];
   compileAll: View["compileAll"];
   crownAt: View["crownAt"];
   crownDrawn: View["crownDrawn"];
@@ -1228,6 +1250,8 @@ export type ViewInternals = {
   hiz: View["hiz"];
   hizOff: View["hizOff"];
   holograms: View["holograms"];
+  islandAhead: View["islandAhead"];
+  islandFaces: View["islandFaces"];
   lakeShore: View["lakeShore"];
   lakeSigils: View["lakeSigils"];
   landingFades: View["landingFades"];

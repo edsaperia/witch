@@ -4,8 +4,9 @@
 // the build, the world, the island and its grid (home also by the kinds she's found: its size). Made ahead in the night (app/
 // chartWarm.ts) or on the first visit, every later opening of the chart reads them back. Any failure (no IndexedDB, a private
 // window, a full disk): as if nothing were kept, and the worker makes them as before.
-import { knownKinds } from "../rules/rosters";
+import { foundKinds } from "../rules/rosters";
 import { TUNING } from "../rules/tuning";
+import { coldLoad } from "../platform/storageScope";
 
 const DB = "witch-chart", STORE = "outlines";
 /** An island's ground, samples across its longer side (app/chartOutlines.worker.ts; its close-up's finer). */
@@ -17,14 +18,20 @@ declare const __BUILD__: string;
 function hashOf(t: string): string { let h = 2166136261; for (let i = 0; i < t.length; i++) { h ^= t.charCodeAt(i); h = Math.imul(h, 16777619); } return (h >>> 0).toString(36); }
 export const CACHE_PREFIX = `${typeof __BUILD__ === "string" ? __BUILD__ : "dev"}|${hashOf(JSON.stringify(TUNING))}|`;
 /** What's kept with an island, numbered: 2 since its meshes come with its ground (render/chart/islandMesh.ts), 3 with its
- *  sigil's ink at each tier, so an older entry is made again. */
-export const KEPT_VERSION = 3;
+ *  sigil's ink at each tier, 4 since home is by the islands found (Ed, 2026-11-04: rules/rosters.ts homeRoster), so an older entry
+ *  is made again. */
+export const KEPT_VERSION = 4;
 /** An island's key: by the world, its grid (step, samples across) and, for home, the kinds she's found. */
 export const cacheKey = (id: string, world: number, found: readonly string[], step: number, across: number): string =>
-  `${CACHE_PREFIX}v${KEPT_VERSION}|${world}|${id}|${step}|${across}|${id === "home" ? knownKinds([...found]).join(",") : ""}`;
+  `${CACHE_PREFIX}v${KEPT_VERSION}|${world}|${id}|${step}|${across}|${id === "home" ? foundKinds([...found]).join(",") : ""}`;
 
 let opened: Promise<IDBDatabase | null> | null = null;
+/** A cold load's (?cold=1, platform/storageScope.ts coldLoad): nothing read or kept. The page's own from its link; the chart's worker's
+ *  when its ask says so (chartOutlines.worker.ts). */
+let cold = false;
+export const coldCache = (): void => { cold = true; };
 function db(): Promise<IDBDatabase | null> {
+  if (cold || coldLoad()) return Promise.resolve(null);
   return (opened ??= new Promise(res => {
     try {
       const r = indexedDB.open(DB, 1);

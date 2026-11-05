@@ -40,6 +40,8 @@ import { PartyObjectsView } from "../partyObjects";
 import { BorderView } from "../borders";
 import { Mist } from "../mist";
 import { LightRings } from "../lightRings";
+import { askIslandArt, askIslandFaces, islandNeeds } from "../islandNeeds";
+import { beachOf } from "../../rules/mapShape";
 import { SHADOW_DEBUG, ShadowBatch } from "../shadows";
 import { packAtlas } from "../atlas";
 import { berrySprite } from "../berries";
@@ -169,10 +171,10 @@ export function* build(a4ViewHost: View, a4PrivateHost: ViewInternals, a4SharedH
     bridgeNativeObject(a4ViewHost.markerFx.group,"runestone");
     a4ViewHost.inviteView = new InviteView(game);
     a4ViewHost.inviteView.herOffset = a4ViewHost.herOffset;
-    // The 💌s and the invite rings hidden as the animals are, by what stands in front of them and the smoke (render/occlusion.ts;
+    // The 💌s and the invite rings hidden as the animals are, by the scenery that stands in front of them (render/occlusion.ts;
     // Ed, 2026-10-19). ?occlusion=off: drawn over everything, as before, to compare.
     yield "occlusion";
-    a4ViewHost.occlusion = new OcclusionProbes(a4ViewHost.scene, a4ViewHost.renderer, a4ViewHost.camera, a4PrivateHost.smoke);
+    a4ViewHost.occlusion = new OcclusionProbes(a4ViewHost.scene, a4ViewHost.renderer, a4ViewHost.camera);
     a4ViewHost.occlusion.on = typeof location === "undefined" || new URLSearchParams(location.search).get("occlusion") !== "off";
     a4ViewHost.inviteView.probes = a4ViewHost.occlusion;
     a4ViewHost.inviteView.onVanished = (x, z) => a4ViewHost.edgeSparkle(x, z);
@@ -205,6 +207,7 @@ export async function prepare(a4ViewHost: View, a4PrivateHost: ViewInternals, a4
     performance.mark("witch:prep-start");
     if (o.sail) { a4ViewHost.homeDone = false; a4ViewHost.shaderDrawStatus.active = true; a4ViewHost.shaderDrawStatus.skipped = {}; a4ViewHost.shaderDrawStatus.fallback = {}; a4ViewHost.shaderDrawStatus.submitted = {}; if (!a4PrivateHost.shaderChartLanding) a4ViewHost.startLandingShaderGrace(); }
     a4PrivateHost.makeLoadingMist();
+    a4PrivateHost.coastAhead();
     { // tonight's own trees, if drawn ahead and kept (app/landingBake.ts), for the swap before she sees the island (retype)
       const m = a4ViewHost.game.map, types = new Set<number>();
       for (let y = m.first; y < m.first + m.n; y++) for (let x = m.first; x < m.first + m.n; x++) types.add(m.typeOf(x, y));
@@ -225,6 +228,7 @@ export async function prepare(a4ViewHost: View, a4PrivateHost: ViewInternals, a4
       a4ViewHost.homeDone = false;
       a4ViewHost.prepared = true;
       a4PrivateHost.askIsland(near); // (the workers drawing the dive's areas while the shaders link)
+      void a4PrivateHost.islandAhead(near); a4PrivateHost.islandFaces(near); // (the rest of the island's own asked too, not waited for: the dive shows what's built, Ed 2026-11-03)
       // The house, the forest round it and the legends' carvings made from here on, while the shaders link and the chart flies on
       // down to the water (Ed, 2026-11-03: "The zoom into the sea chart can be quite a few seconds long, the idea is to build the
       // island during this time"): made only once the dive began, a slice a dive frame, they took 14.5 s of his laptop's dive for
@@ -256,7 +260,7 @@ export async function prepare(a4ViewHost: View, a4PrivateHost: ViewInternals, a4
         a4PrivateHost.armLimitedLanding(); a4ViewHost.prepared = true; await a4PrivateHost.compileAll(true);
         const homeEpoch = a4PrivateHost.shaderEpoch;
         void a4PrivateHost.buildHome(homeEpoch).catch(e => { console.error("the house's start after a sail went wrong", e); }).finally(() => { if (homeEpoch === a4PrivateHost.shaderEpoch) { a4ViewHost.homeDone = true; performance.mark('landing:house-complete'); } });
-        a4PrivateHost.askIsland(near); return;
+        a4PrivateHost.askIsland(near); void a4PrivateHost.islandAhead(near); a4PrivateHost.islandFaces(near); return;
       }
     } else await a4ViewHost.assets.homeArt(); // initial boot still waits for all home art
     performance.mark("witch:prep-home");
@@ -265,7 +269,12 @@ export async function prepare(a4ViewHost: View, a4PrivateHost: ViewInternals, a4
     // (its anchors set their pitch) and made into their meshes before the compile below uploads their textures; so the first time
     // she's in the house nothing's made. Kept across nights (HouseRoomsView.reset), so the bed's next night and a visit find it made.
     const house = a4ViewHost.houseRooms?.preload(a4ViewHost);
-    await a4ViewHost.assets.whenIdle(true); // (what the view asked for as needed now; the scenery kits and creatures draw on and fade in: the first-load hunt, 2026-10-20, half the cold load)
+    // And the island's own, every area type's trees and every look its creatures can wear (Ed, 2026-11-05: "Load the trees, creature
+    // art, and coast and lakes, during the loading screen."; but "Skip the animal faces": islandFaces, below): waited for here, so
+    // nothing on the island pops in after the screen fades (a sail's asked for, not waited for: below).
+    const island = a4PrivateHost.islandAhead(near);
+    await a4ViewHost.assets.whenIdle(true); // (what the view asked for as needed now)
+    if (!o.sail) await island;
     performance.mark("witch:prep-idle");
     await house;
     performance.mark("witch:prep-rooms");
@@ -274,8 +283,20 @@ export async function prepare(a4ViewHost: View, a4PrivateHost: ViewInternals, a4
     a4ViewHost.prepared = true;
     await a4PrivateHost.compileAll(o.sail);
     a4PrivateHost.askIsland(near);
+    a4PrivateHost.islandFaces(near); // (as the loading screen fades: main.ts finishes it as prepare ends)
     a4ViewHost.homeDone = true;
   }
+
+export function islandAhead(a4ViewHost: View, _a4PrivateHost: ViewInternals, _a4SharedHost: ViewShared, near: Map<number, number>): Promise<void> {
+    const g = a4ViewHost.game;
+    if (a4ViewHost.quick || g.map.zoo?.layout) return Promise.resolve();
+    const needs = islandNeeds(g.map, near), looks = { legendNap: !!g.tuning.wildLegends.seen?.nap, coast: !!beachOf(g.map.bounds, g.tuning), beachDecor: !!g.tuning.beach?.decor?.on, lakes: !!g.map.bounds.lakes };
+    return a4ViewHost.assets.whenAsked(() => askIslandArt(a4ViewHost.assets, needs, looks)).then(() => { performance.mark("witch:prep-island"); });
+  }
+
+export function islandFaces(a4ViewHost: View, _a4PrivateHost: ViewInternals, _a4SharedHost: ViewShared, near: Map<number, number>): void { const g = a4ViewHost.game; if (!a4ViewHost.quick && !g.map.zoo?.layout) askIslandFaces(a4ViewHost.assets, islandNeeds(g.map, near)); }
+
+export function coastAhead(a4ViewHost: View, _a4PrivateHost: ViewInternals, _a4SharedHost: ViewShared): void { const b = a4ViewHost.quick ? null : beachOf(a4ViewHost.game.map.bounds, a4ViewHost.game.tuning); if (b) a4ViewHost.ground.coastAhead(b); }
 
 export function askIsland(a4ViewHost: View, _a4PrivateHost: ViewInternals, _a4SharedHost: ViewShared, near: Map<number, number>): void {
     // Each legend's carving (render/legendCarving.ts: 10-80 ms a kind) made in idle time now, not the first time she comes near one.

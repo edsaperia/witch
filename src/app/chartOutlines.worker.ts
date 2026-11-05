@@ -11,12 +11,12 @@
 import { generateMap, islandLand } from "../rules/map";
 import { beachOf } from "../rules/mapShape";
 import { drawnHills, hillsAt, lakeLevel, terrainAt } from "../rules/terrain";
-import { homeIsland, islandOf, isPlaceholder, knownKinds } from "../rules/rosters";
+import { foundKinds, homeShape, homeSize, islandOf, isPlaceholder } from "../rules/rosters";
 import { TUNING } from "../rules/tuning";
 import { lakeKnobs } from "../rules/lakes";
 import { islandBiome, lookOfLoop, loopMiddles, nearestLoop, LOOK_IDS, type Blend, type LakeLook } from "../rules/lakeLooks";
 import type { LandMap } from "../rules/land";
-import { CACHE_PREFIX, cacheGet, cacheKey, cachePrune, cachePut, keepCoast, OUTLINE_ACROSS, OUTLINE_DETAIL } from "./chartCache";
+import { CACHE_PREFIX, cacheGet, cacheKey, cachePrune, cachePut, coldCache, keepCoast, OUTLINE_ACROSS, OUTLINE_DETAIL } from "./chartCache";
 import { buildIslandMesh, meshBuffers, type IslandMesh } from "../render/chart/islandMesh";
 import { K, SIGIL_TIERS } from "../render/chart/chartScale";
 import { islandSigil } from "../../art/sigils.js";
@@ -27,7 +27,7 @@ import { readWorkerTrace, WorkerJobTrace, traceAsync, traceSync, workerEpoch, ty
 /** The islands for a world (the closest first), the kinds she's found (home's size), the grid; `warm`: make and keep them only
  *  (app/chartWarm.ts, in the night), answering { warmed } as each is kept and { warmDone } at the end. Or: this one next; this
  *  one's fine grid next. */
-export type OutlineAsk = { world: number; found: string[]; ids: string[]; step: number; warm?: boolean; /** only what's kept already: nothing made (the map table's miniature, Ed, 2026-10-13: never built while she's near the deck) */ cacheOnly?: boolean } | { first: string } | { detail: string };
+export type OutlineAsk = { world: number; found: string[]; ids: string[]; step: number; warm?: boolean; /** only what's kept already: nothing made (the map table's miniature, Ed, 2026-10-13: never built while she's near the deck) */ cacheOnly?: boolean; /** a cold load's (?cold=1): nothing read or kept */ cold?: boolean } | { first: string } | { detail: string };
 /** A warm job's progress: an island kept (made, or already kept), then the end (how many made, how many already kept). */
 export type WarmNote = { warmed: string; made: boolean } | { warmDone: true; made: number; kept: number };
 /** An island's ground on a grid (metres from home's middle): its first sample, the step, samples across and down; each sample's
@@ -195,10 +195,10 @@ export function make(id: string, world: number, found: string[], step: number, a
   // by the kinds found (rules/rosters.ts dealLegends), moving a clearing or two: the chart draws it as before she found any, so it
   // stays the same through the whole campaign and is made once)
   if (id !== "home") found = [];
-  const key = `${id}|${world}|${found.length}`;
+  const key = `${id}|${world}|${foundKinds(found).join(",")}`;
   const had = made.get(key);
   if (had) return outlineOf(id, world, had, across);
-  const island = id === "home" ? homeIsland(world, knownKinds(found)) : islandOf(id, world);
+  const island = id === "home" ? homeShape(world, found, TUNING.home.start) : islandOf(id, world);
   if (!island) return null;
   const H = drawnHills(TUNING), seed = island.seed | 0;
   // its biomes by where it lies (rules/lakeLooks.ts: the game's lakes take the same)
@@ -208,7 +208,7 @@ export function make(id: string, world: number, found: string[], step: number, a
     const l = islandLand(island, TUNING, step), lakes = l.lakes ?? null;
     src = { land: l.land, lakes, centre: l.home, blend, lakeBlend, lakeShare, seed, heightAt: (x, z) => hillsAt(x, z, island.seed, H), levelAt: () => null, forest: () => 0, sand: (_x, _z, d) => d < (TUNING.beach?.width ?? 60) };
   } else { // its whole map, as the night plays it (the run's seed only places what's inside: its shape, areas and lakes are the world's)
-    const t = { ...TUNING, map: { ...TUNING.map, island: id, world, found, islandAreas: id === "home" ? knownKinds(found).length : TUNING.map?.islandAreas } };
+    const t = { ...TUNING, map: { ...TUNING.map, island: id, world, found, islandAreas: id === "home" ? homeSize(found, TUNING.home.start) : TUNING.map?.islandAreas } };
     const map = generateMap(1, t as typeof TUNING), L = map.bounds.land;
     if (!L) return null;
     const beach = beachOf(map.bounds, TUNING);
@@ -289,6 +289,7 @@ self.onmessage = (e: MessageEvent<OutlineAsk>) => {
   if (meta) { const request = new WorkerJobTrace(meta); request.start(); request.finish('request-received'); }
   if ("detail" in m) { detailTrace?.finish('superseded'); detailTrace = childTrace(meta, m.detail, true, queue.length); detail = m.detail; if (!busy && job) { busy = true; setTimeout(next, 0); } return; }
   if ("first" in m) { const i = queue.indexOf(m.first); if (i > 0) { queue.splice(i, 1); queue.unshift(m.first); } return; }
+  if (m.cold) coldCache(); // (a cold page's worker: nothing read or kept from here on)
   job = { world: m.world, found: m.found, step: m.step, warm: m.warm, cacheOnly: m.cacheOnly }; queue = [...m.ids];
   for (const trace of queueTraces.values()) if (!trace.active) trace.finish('superseded'); queueTraces.clear();
   if (meta) for (const [index, id] of queue.entries()) { const trace = childTrace(meta, id, false, index + (detail ? 1 : 0))!; queueTraces.set(id, trace); }

@@ -1,12 +1,14 @@
 // Making the sea chart ahead (Ed, 2026-10-12: "Generating the map on the map screen is slow; can we do it earlier, before we need
 // to show it? I believe it doesn't change through the entire campaign except for the home island"): once a night has started
-// and its forest is grown, a worker of its own makes every island the chart will show, one at a time and off the page's thread,
+// and its forest is grown, a worker of its own makes only home and found islands while she's awake in the treehouse (Ed, 2026-11-04),
 // and keeps each (app/chartCache.ts); the map table, and chart.html in this browser, then open on them at once. What's kept is
 // kept across visits, so later nights only check it (home again when what she's found grows: its size).
-import { islandOf, KIND_NAMES } from "../rules/rosters";
+import { islandOf, isPlaceholder, KIND_NAMES } from "../rules/rosters";
+import { emptySave, unlocked } from './chartSave';
 import { islandAt } from "./chartLayout";
 import type { OutlineAsk, WarmNote } from "./chartOutlines.worker";
 import { postTracedJob } from "./workerJobTrace";
+import { coldLoad } from "../platform/storageScope";
 
 /** The outlines' land sampled every so many metres: the chart's pixels are far coarser. */
 export const OUTLINE_STEP = 32;
@@ -37,22 +39,30 @@ export function chartIslandIds(world: number): string[] {
 
 let running: Worker | null = null;
 
+/** Only speculative work is restricted: chartIslandIds/chartOrder still include every demand island. */
+export function foundChartIslandIds(world: number, found: string[]): string[] {
+  const saved = new Set(unlocked({ ...emptySave(world), found }));
+  return chartIslandIds(world).filter(id => saved.has(id) && (id === 'home' || !isPlaceholder(id)));
+}
+
 /** Make and keep the chart's islands for `world` and what she's `found`, in the background; `done` with how many were made and
  *  how many were already kept; `progress` as each is kept. Once at a time (a second call while one runs does nothing). */
-export function warmChart(world: number, found: string[], done?: (made: number, kept: number) => void, progress?: (id: string, made: boolean) => void): void {
+export function warmChart(world: number, found: string[], done?: (made: number, kept: number) => void, progress?: (id: string, made: boolean) => void, ids = foundChartIslandIds(world, found), failed?: () => void): void {
   if (running) return;
+  const allowed = new Set(foundChartIslandIds(world, found));
+  ids = [...new Set(ids)].filter(id => allowed.has(id));
   let w: Worker;
-  try { w = new Worker(new URL("./chartOutlines.worker.ts", import.meta.url), { type: "module" }); } catch { return; }
+  try { w = new Worker(new URL("./chartOutlines.worker.ts", import.meta.url), { type: "module" }); } catch { failed?.(); return; }
   running = w;
   w.onmessage = (e: MessageEvent<WarmNote>) => {
+    if (running !== w) return;
     if (!("warmDone" in e.data)) { progress?.(e.data.warmed, e.data.made); return; }
     w.terminate(); running = null;
     done?.(e.data.made, e.data.kept);
   };
-  w.onerror = () => { w.terminate(); running = null; };
-  const ids = chartIslandIds(world);
-  postTracedJob(w, { world, found, ids, step: OUTLINE_STEP, warm: true } satisfies OutlineAsk, 'chart:request', 'warm', ids.length);
+  w.onerror = () => { if (running !== w) return; w.terminate(); running = null; failed?.(); };
+  postTracedJob(w, { world, found, ids, step: OUTLINE_STEP, warm: true, cold: coldLoad() } satisfies OutlineAsk, 'chart:request', 'warm', ids.length);
 }
 
 /** Stop making them (the chart has opened and makes its own). */
-export function stopWarmChart(): void { running?.terminate(); running = null; }
+export function stopWarmChart(): void { const worker = running; running = null; worker?.terminate(); }

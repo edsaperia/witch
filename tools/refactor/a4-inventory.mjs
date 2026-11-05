@@ -12,7 +12,7 @@ const main = {
   pageStations: ['reconcilePickers', 'findsCtx', 'workshopNow', 'useHouse', 'shutStation'],
   pageNight: ['keepNightie', 'personalKit', 'hostCollections', 'traceVisit', 'aheadMorning', 'bedFirst', 'arrived', 'wakeArrival', 'wakeFirst', 'sailFromChart', 'recordSail', 'departFromChart', 'sailInPlace', 'makeSailNight', 'newNight', 'nightInPlace', 'leaveBot'],
   pageFinds: ['lendFind', 'settleLoan', 'settleLoanNow', 'startDream', 'herHead', 'stepGuide'],
-  pageFrame: ['drawFrame', 'frame', 'frameBody', 'overlayHead'],
+  pageFrame: ['updateChartWarm', 'drawFrame', 'frame', 'frameBody', 'overlayHead'],
 };
 const view = {
   frame: ['render', 'replayPartyStart'],
@@ -20,7 +20,7 @@ const view = {
   markers: ['legendRings', 'pin', 'inviteStart'],
   atmosphere: ['updateMoon', 'updateSteam', 'updateSmoke'],
   readiness: ['readyPrograms', 'landingWakeReady', 'beginLandingShaders', 'armLimitedLanding', 'limitedLandingReady', 'waitForLandingWitch', 'startLandingShaderGrace', 'compileAll', 'gpuCaughtUp', 'warmDraws', 'warmSteps', 'setReadiness'],
-  lifecycle: ['build', 'prepare', 'askIsland', 'setGameSteps', 'retype'],
+  lifecycle: ['build', 'prepare', 'islandAhead', 'islandFaces', 'coastAhead', 'askIsland', 'setGameSteps', 'retype'],
   viewport: ['landingShot', 'scenePixelSize', 'resize', 'screenOf', 'aimAt'],
 };
 

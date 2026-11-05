@@ -20,7 +20,7 @@ node tools/refactor/a4-proof-artifacts.cjs <before-dir> <after-dir> <before-full
 
 ## `a4-split.mjs`
 
-Rehearse A4 by named syntax boundaries; --apply writes once, --check verifies hashes and reversible body edits.
+Apply A4 by named syntax boundaries; --replay --dry-run writes nothing, --check verifies hashes and reversible body edits.
 
 ## Also here
 

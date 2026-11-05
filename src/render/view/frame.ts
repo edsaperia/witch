@@ -56,6 +56,8 @@ import { MasterplanView } from "../masterplan";
 import { potionStrength } from "../potionEffects";
 import { drawPointers } from "./hud";
 import { workAhead } from "./ahead";
+import { setGentleLanternPattern, PATTERN_LOOK } from "../lightPatternState";
+import { comfort } from "../comfort";
 import { winLit, winPulse, winPulseOut } from "../../rules/win";
 import { relicsOut } from "../../rules/partyOver";
 
@@ -199,6 +201,7 @@ export function render(a4ViewHost: View, a4PrivateHost: ViewInternals, a4SharedH
       : T.lights.filter(l => l.kind === "lantern" || l.kind === "window").slice(0, 2).map(l => ({
         ...onTreehouse(l.x, l.y), reach: t.treehouse.lightReach, rgb: new THREE.Vector3(l.rgb[0] / 255, l.rgb[1] / 255, l.rgb[2] / 255), strength: t.treehouse.lightStrength * (0.92 + 0.08 * Math.sin(time * 3 + l.x)),
       }));
+    setGentleLanternPattern(thLights[0], time, PATTERN_LOOK, comfort.reduceFlashing);
     const markerLights = drawMarkers(a4ViewHost, time);
     const speakerLights = drawSpeakers(a4ViewHost, time, pose.angle);
     a4ViewHost.spellFx.update(g, ht, witchHeight(w, t) + 0.6 + a4ViewHost.rideOff);
@@ -365,7 +368,6 @@ export function render(a4ViewHost: View, a4PrivateHost: ViewInternals, a4SharedH
     a4ViewHost.post.render(a4ViewHost.scene, a4ViewHost.camera);
     a4PrivateHost.cauldronLook?.finish(a4ViewHost);
     a4ViewHost.magic.restoreBackdrop(a4ViewHost.scene);
-    a4ViewHost.occlusion.veil(); // (the smoke over the 💌s, once the frame's smoke is drawn)
     a4ViewHost.time("draw");
     a4ViewHost.drawEst += (Math.min(8, a4ViewHost.ms.draw) - a4ViewHost.drawEst) * 0.1; // (eased; a stalled frame counts for at most 8 ms)
     // Anything set but not drawn (three.js capping a batch's instances) is a bug: count and log it.

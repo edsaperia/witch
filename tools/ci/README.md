@@ -20,7 +20,7 @@ Test files that mock a module with vi.mock, run apart in Vitest's isolated proje
 
 ## `pages-policy.cjs`
 
-Pages publication policy: debounce previews outside the publisher lock; live requests preempt older publication.
+Pages publication policy: debounce previews outside the lock; finish every started publication.
 
 ## `perch-profile.cjs`
 
@@ -29,6 +29,10 @@ Canonical/cloud only.
 ## `program-counts.cjs`
 
 Canonical/cloud program-count evidence only, not latency or native-route acceptance.
+
+## `release-reuse.mjs`
+
+Reuse full release-PR validation only for an identical main tree and execution environment.
 
 ## `report-command.cjs`
 
@@ -93,6 +97,7 @@ Inventory real world-constructor calls and explicit small-fixture reasons; comme
 - `pages-policy.test.cjs`
 - `proofs.json`
 - `proofs.test.cjs`
+- `release-reuse.test.ts`
 - `reporting.test.cjs`
 - `run-unit.test.ts`
 - `same-game.test.ts`

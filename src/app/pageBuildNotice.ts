@@ -5,5 +5,5 @@ import { NewBuildNotice } from "./newBuild";
 export function createBuildNotice(pageHost: PageHost): NewBuildNotice { return new NewBuildNotice(pageHost.BUILD, document.getElementById("new-build")); }
 
 export function installBuildNotice1(pageHost: PageHost): void {
-document.addEventListener("visibilitychange", () => { if (document.hidden) pageHost.N().flags.last = 0; });
+document.addEventListener("visibilitychange", () => { if (document.hidden) { pageHost.N().flags.last = 0; pageHost.chartWarmer.pause(); } });
 }

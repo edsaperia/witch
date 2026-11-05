@@ -223,6 +223,7 @@ export async function sailInPlace(pageHost: PageHost, to: Sailed, made?: Promise
 }
 
 export async function makeSailNight(pageHost: PageHost, to: Sailed, arrival?: Arrival, at?: FlightEnd["cam"] | null): Promise<Night> {
+  pageHost.chartWarmer.pause();
   if (pageHost.sailFail) throw new Error("?debug=sail: the sail in place made to fail"); // (window.witch.sail's test of the fallback)
   if (at === undefined) pageHost.view.beginLandingShaders(false);
   pageHost.sailing = true;
@@ -279,6 +280,7 @@ export function newNight(pageHost: PageHost, how: NightWay): void {
 }
 
 export async function nightInPlace(pageHost: PageHost, spec: NightSpec, href: string): Promise<void> {
+  pageHost.chartWarmer.pause();
   if (pageHost.sailFail) throw new Error("?debug=sail: the night in place made to fail");
   if (pageHost.freeze.frozen) pageHost.freeze.toggle(); // (a fresh page isn't paused: the bot game's Esc out pauses it too, the freeze's key first)
   pageHost.sailing = true;

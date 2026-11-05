@@ -29,13 +29,27 @@ import { fightDt, fightFrame } from "./fightArena";
 import { lastRecord } from "./recordSave";
 import { leaveZoo } from "./zooExit";
 import { loadSave, nightOver } from "./chartSave";
-import { warmChart } from "./chartWarm";
+import { foundChartIslandIds } from "./chartWarm";
 import { gpuLine } from "../render/view/gpuBudget";
 import { debugBlows } from "../rules/alarms";
 import { SHED_STEPS } from "../platform/audio/shed";
 import { logCaughtError } from "../platform/playtestLog";
 import { notable } from "../platform/playtestJournal";
 import { recordedStep } from "./recordingHooks";
+
+export function updateChartWarm(pageHost: PageHost): void {
+  const n = pageHost.N();
+  if (!pageHost.chartWarmer.update({ enabled: pageHost.warmOn, ready: n.flags.ready, treehouse: !!n.game.witch.perch && n.game.witch.mode === 'ground', map: chartOpen(),
+    manual: pageHost.loop.manual, sailing: pageHost.sailing, hidden: document.hidden, paused: pageHost.freeze.frozen,
+    sleeping: pageHost.landingSleep.holds(n.game) || !!n.game.witches[0].house?.slept || n.game.wake?.open === false,
+    arriving: !!n.arrival && !n.flags.landed }, () => {
+    // Cancellation is per frame; reading the save and checking the cache can wait.
+    if (pageHost.view.assets.pending || performance.now() < pageHost.chartWarmNextCheck) return null;
+    pageHost.chartWarmNextCheck = performance.now() + 1000;
+    const world = pageHost.chartWorld(), found = loadSave().found;
+    return { world, found, ids: foundChartIslandIds(world, found) };
+  })) pageHost.chartWarmNextCheck = 0;
+}
 
 export function drawFrame(pageHost: PageHost, time: number, repaintHeld: NonNullable<Parameters<PageHost["drawFrame"]>[1]>): void {
   const start = performance.now(), previousParts = pageHost.view.ms;
@@ -53,6 +67,7 @@ export function frame(pageHost: PageHost, now: number): void {
   const n = pageHost.N(), phase = pageHost.sailing ? "sailing" : pageHost.landingSleep.holds(n.game) ? "landing-sleep" : !n.flags.ready ? "building" : n.arrival && !n.flags.landed ? "arrival" : "play";
   try { pageHost.frameBody(now); }
   finally {
+    try { pageHost.updateChartWarm(); } catch (error) { pageHost.chartWarmer.pause(); logCaughtError(error, 'chart background scheduling'); }
     try {
       const programs = pageHost.shotProgramCounts && programsBefore ? pageHost.shotProgramCounts.end(programsBefore) : null;
       if (pageHost.params.has("shot") && (gap >= 100 || performance.now() - start >= 100)) {
@@ -219,7 +234,7 @@ export function frameBody(pageHost: PageHost, now: number): void {
   // The night's end (Ed, 2026-10-26: "Remove the end cards"): no card, won or lost; the guidance pins lead her home (rules/guidance.ts).
   // The night won (rules/win.ts): the islands its woken legends showed recorded on the sea chart (app/chartSave.ts), once, as its
   // finale settles; the enraged legends' (win.lost) not.
-  if (!pageHost.N().spec.borrowed && game.win?.settled && !F.chartRecorded) { F.chartRecorded = true; nightOver(tuning.map?.island ?? "", { won: true, found: game.win.found }, undefined, tuning.map?.world ?? 0); if (pageHost.warmOn) warmChart(pageHost.chartWorld(), loadSave().found); } // Borrowed outcomes are kept only through the guarded shared-unlock return adapter.
+  if (!pageHost.N().spec.borrowed && game.win?.settled && !F.chartRecorded) { F.chartRecorded = true; nightOver(tuning.map?.island ?? "", { won: true, found: game.win.found }, undefined, tuning.map?.world ?? 0); } // Borrowed outcomes use the guarded shared-unlock return adapter; chart preparation waits for the treehouse.
   // The touch spell button only with a broom that has a spell to cast (rules/spells.ts castable).
   { const want = castable(houseGame.spells) ? "" : "none"; if (pageHost.spellButton && pageHost.spellButton.style.display !== want) pageHost.spellButton.style.display = want; }
   pageHost.newBuild.update(pageHost.creator.open || (pageHost.freeze.frozen && !pageHost.pauseSliders) || pageHost.menuGone); // (a newer build is out: in the bedroom, and on the pause page only until its panel, which has the button, loads)

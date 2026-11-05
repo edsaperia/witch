@@ -1060,6 +1060,11 @@ export class Ground {
     (u.uLandBox.value as THREE.Vector4).set(L.x0, L.z0, 1 / (L.step * L.cols), 1 / (L.step * L.rows));
     v.set(1, b.out, L.step / 2, v.w);
   }
+  /** The coast's program made ahead (Ed, 2026-11-05: "Load the trees, creature art, and coast and lakes, during the loading
+   *  screen"): its material (this island's lakes' defines and the beach's), its hidden surface and the land map's texture, made now
+   *  and the coast left off, so the view's compileAll links, uploads and warm-draws them with the rest and the first coast drawn finds
+   *  its program linked (prepareCoast: no stand-in, no first-use compile). Nothing drawn changes; once made, never again. */
+  coastAhead(b: Beach): void { if (this.beach) return; this.setBeach(b); this.setBeach(null); }
   /** Called after BeachView.update, before scene submission. No unfinished coast program reaches a draw. */
   prepareCoast(renderer: THREE.WebGLRenderer, camera: THREE.Camera, scene: THREE.Scene): void {
     const surface = this.coastSurface, coast = this.coastReadiness;
