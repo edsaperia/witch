@@ -1,0 +1,67 @@
+{
+  "status": "PREPARED; no execution allocation",
+  "pr": 1855,
+  "branch": "codex/lake-shader-measurement",
+  "target": {
+    "version": "v7461 · f5b9ba7",
+    "sha": "f5b9ba7db946f33b8276dbe6a124cd0691462c11",
+    "run": 41923303645,
+    "artifact": 13367159619,
+    "artifactSha256": "b50b7bccc13bc045f2363663f59d1461a6c4921ca454e515c27efd7a42d1d29e"
+  },
+  "legacyDriverSha256": "ac96c805df97c3dd5b6894901a2d675e22d925822a671987d6e809a9fd7daed2",
+  "artifactFiles": 1033,
+  "artifactFilesSha256": "eb05afd978a2fe28b0c5d679508e3226b847425c2ae2ae86fba15f32be2ce486",
+  "browserSha256": "409805a16d6416087e6b2f778df1cf8f7bbb267d6b99f6b5bb0a618eace234f2",
+  "playwrightPackageSha256": "07726a5a20b29123d85311af7d11b7de6bf00ddd03121d3c9061995043ebd261",
+  "nodeSha256": "9a4eb5f1c29c6a2e93852ead46b999e284a6a5ca8bab4d4e241d587d025a52de",
+  "runtimeFiles": 819,
+  "runtimeFilesSha256": "378db4c23fc14ec443f921859fd814da876cac06b046ef15c7ef47401043058e",
+  "watchdog": {
+    "owned-run-watchdog.cjs": "ab76356ec3314f1917f363c34da35370ad5b0c71309090fb50486690cba0bfb7",
+    "owned-process-identities.cjs": "90b9271bae392c9a4e9ef992086542d350bd982a5a6269df5b581958129bc6ec",
+    "owned-process-handshake.cjs": "34f5ba595b74a765f349ed64073213272a80d2f6b2bc00baf62e8238a3c3e70b",
+    "owned-job-controller.ps1": "ab0129ef88a58a426ef3e03f3a4cd366f983584ccdadb7a1bd1f440e40079abf"
+  },
+  "deadlines": {
+    "driverMs": 230000,
+    "watchdogMs": 250000,
+    "hardCapMs": 270000
+  },
+  "driverFiles": [
+    {
+      "path": ".gitattributes",
+      "sha256": "81e04963f596ed905a4dab309b9d2b46887456406bb7437c571e13834942ecba"
+    },
+    {
+      "path": "README.md",
+      "sha256": "7f51a1aa5b83bf49339404d4f31e8a5ea4040f87a183dce1f372e34cb1aa72a5"
+    },
+    {
+      "path": "contract.cjs",
+      "sha256": "5417ca94f7e48a7ff5ff9546362ad66b8e193d1b849a53dd83414bdd3b67e38a"
+    },
+    {
+      "path": "driver.cjs",
+      "sha256": "cad030d94544e42ce8f044b730fd574dd633851a65111e4ea3cdd11ad6a8b8bc"
+    },
+    {
+      "path": "legacy-probe.cjs",
+      "sha256": "ba873c4b24df55e0e7150d82c51f3a87e62cec286dc11c351c1df0e55c9e4054"
+    },
+    {
+      "path": "preflight.test.cjs",
+      "sha256": "0ae1e9293c8f96c7495c0bea9c5d1f688122e111704ceb11073de13c6071bf89"
+    },
+    {
+      "path": "run.cjs",
+      "sha256": "1e62ee8c198b047dc4cef250a176dd918116e64ff0f922289e2535dcab8800fe"
+    }
+  ],
+  "pending": [
+    "root READY review and exact-head serialized allocation",
+    "actual preceding-owner FREE report",
+    "fresh quiet evidence at launch",
+    "actual GPU/family/readiness measurements; no run yet"
+  ]
+}
