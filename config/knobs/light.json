@@ -779,11 +779,11 @@
       "what": "How strong the diagonal moonbeam bands are, times the style's Moonbeams knob: 0 is off (Ed, v108: they read as stripes over a dense canopy). ?moonbeams=on brings them back at 1."
     },
     "looks": {
-      "what": "How creatures look in their different states, such as the angry brows of an enraged one.",
+      "what": "How creatures look in their different states, such as an enraged one's red tint.",
       "links": [
         "render/looks.ts"
       ],
-      "notes": "The creature states' looks (Ed, issue #87; render/looks.ts). The angry brows are a stopgap for an expression the creature generator will draw (render/looks.ts expression)."
+      "notes": "The creature states' looks (Ed, issue #87; render/looks.ts). Their faces (render/looks.ts expression, art/genome/expressions.js) are off for now: looks.expressions."
     },
     "looks.enragedTint": {
       "what": "An enraged creature's whole sprite is tinted toward a colour, keeping its shading.",
@@ -822,6 +822,22 @@
           "quote": "party animals could sparkle or glow a little"
         }
       ]
+    },
+    "looks.expressions": {
+      "what": "Whether creatures change their faces (angry, happy, dazed, a bite's or a yawn's open jaw); off, every creature keeps its plain face and none of those faces is drawn.",
+      "decisions": [
+        {
+          "by": "Ed",
+          "date": "2026-11-05",
+          "quote": "Scrap animal expressions for now."
+        }
+      ],
+      "links": [
+        "art/genome/expressions.js",
+        "render/assets.ts",
+        "render/view/creatures.ts"
+      ],
+      "notes": "Measured first: at the game's zoom the faces didn't read (angry only by the enraged tint, red eyes and 💢; happy and dazed a few pixels in a 3 to 5 pixel eye; bite and yawn only as an open jaw on the snouted four-legged animals), and the face sets were about half of the creature art's drawing time at load. Off (false, the default): no face set is asked for or drawn (render/assets.ts faceArt answers nothing), the live rig's pages bake no expression heads (only a sleeping legend's asleep one, part of its sleeping look) and a party sheet is drawn without its happy face. The enraged tint, its red eyes and 💢, party clothes and sparkles, dazed stars, bite lunges and the other body animations are not faces and stay. The woken look's own set keeps the narrowed eyes and brows it is drawn with. On (true): the faces as before."
     },
     "tone": {
       "what": "Contrast: ambient scales the twilight fill (lower is darker shade under the canopy), moon the moonlight (both lowered for Ed's dark forest, v149); black is the black point and gamma the curve applied to the whole picture, so dark goes near-black and lit stays bright."

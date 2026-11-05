@@ -151,6 +151,10 @@ export class AssetLibrary {
   crownShare = 0.85;
   /** The areas' rune stones' bake scale (tuning runeMarkers.scale; the view sets it): the dancefloor ring's stones are baked at it. */
   stoneScale = 2.25;
+  /** Creatures' faces (tuning looks.expressions; the view sets it). Off (Ed, 2026-11-05: "Scrap animal expressions for now."): no
+   *  face set is asked for (faceArt answers nothing, so every ask, the view's or an island's ahead, is a no-op), rig pages bake no
+   *  expression heads, and a party sheet is drawn with its plain face. */
+  expressions = false;
 
   /** The night's seed (its own trees, tonight); a new night's by reseat. */
   seed: number;
@@ -478,13 +482,13 @@ export class AssetLibrary {
     const hashId = `${species}:${level}`;
     let h = this.genomeHashes.get(hashId);
     if (h === undefined) this.genomeHashes.set(hashId, (h = (g === base ? Art.genomeHash(base) : Art.genomeHash(base, this.style, level)) as string)); // selected genome and level, fixed for the run
-    const k = `rig-${species}-${level}-${h}${gear ? "-" + rigGearKey(gear) : ""}`, a = this.rigs.get(k);
+    const faces = this.expressions, k = `rig-${species}-${level}-${h}${gear ? "-" + rigGearKey(gear) : ""}${faces ? "-faces" : ""}`, a = this.rigs.get(k); // (faces: its expression heads too)
     if (a) { a.used = performance.now(); return a; }
     // Only the four-legged and the snakes have rig parts (art/genome/parts.js); a page that came back without any (a squat
     // mole's, say) was asked for again every frame, a job at the head of the queue each round for the whole night (2026-10-14).
     const template = (g as { template?: string }).template;
     if ((!gear?.stilt && template !== "quadruped" && template !== "serpent") || this.noRig.has(k)) return undefined;
-    this.ask({ kind: "rig", id: k, species, level, style: this.style, ...(gear ? { gear } : {}) }, true); // gameplay: ahead of the scenery
+    this.ask({ kind: "rig", id: k, species, level, style: this.style, ...(gear ? { gear } : {}), ...(faces ? { faces } : {}) }, true); // gameplay: ahead of the scenery
     return undefined;
   }
   /** Rig pages asked for that came back empty (no rig parts for the species): never asked for again. */
@@ -560,22 +564,24 @@ export class AssetLibrary {
     if (!a) this.ask({ kind: "woken", id: k, species, style: this.style });
     return a;
   }
-  /** A creature in an expression (art/genome/expressions.js: happy, dazed...), or undefined (and asked for). */
+  /** A creature in an expression (art/genome/expressions.js: happy, dazed...), or undefined (and asked for). With the faces off
+   *  (expressions, tuning looks.expressions), always undefined and nothing asked for: the caller draws its plain look. */
   faceArt(species: string, face: string): CreatureArt | undefined {
+    if (!this.expressions) return undefined;
     const k = `face-${face}-${species}`, a = this.creatures.get(k);
     if (!a) this.ask({ kind: "face", id: k, species, face, style: this.style });
     return a;
   }
   /** An invited creature's party look (its gear seeded by its id), or undefined (and asked for). */
   partyArt(species: string, id: number, colour: number[], level: number): CreatureArt | undefined {
-    const gear = partyGearOf(id, colour), k = partySheetKey(species, level, gear), a = this.creatures.get(k);
-    if (!a) this.ask({ kind: "party", id: k, species, level, gear, style: this.style });
+    const gear = partyGearOf(id, colour), faces = this.expressions, k = partySheetKey(species, level, gear, faces), a = this.creatures.get(k);
+    if (!a) this.ask({ kind: "party", id: k, species, level, gear, style: this.style, ...(faces ? { faces } : {}) });
     return a;
   }
   /** A happy creature's look (issue #87): party clothes, no glowing collar; or undefined (and asked for). */
   happyArt(species: string, id: number, level: number): CreatureArt | undefined {
-    const gear = partyGearOf(id, null), k = partySheetKey(species, level, gear), a = this.creatures.get(k);
-    if (!a) this.ask({ kind: "party", id: k, species, level, gear, style: this.style });
+    const gear = partyGearOf(id, null), faces = this.expressions, k = partySheetKey(species, level, gear, faces), a = this.creatures.get(k);
+    if (!a) this.ask({ kind: "party", id: k, species, level, gear, style: this.style, ...(faces ? { faces } : {}) });
     return a;
   }
   /** The party objects' art (#38), or undefined (and asked for). */

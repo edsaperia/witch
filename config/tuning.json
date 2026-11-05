@@ -3178,7 +3178,8 @@
       "rate": 0.9,
       "size": 1.4,
       "strength": 1
-    }
+    },
+    "expressions": false
   },
   "tone": {
     "black": 0.03,
