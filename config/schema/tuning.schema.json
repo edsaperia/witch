@@ -10844,7 +10844,7 @@
     "loading": {
       "type": "object",
       "properties": {
-        "edge": {
+        "sweep": {
           "type": "number",
           "minimum": 0
         },
@@ -10874,7 +10874,7 @@
         }
       },
       "required": [
-        "edge",
+        "sweep",
         "rate",
         "flash",
         "ghost",

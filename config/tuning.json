@@ -2418,7 +2418,7 @@
     "inPlace": true
   },
   "loading": {
-    "edge": 1,
+    "sweep": 3,
     "rate": 90,
     "flash": 0.6,
     "ghost": 0,
