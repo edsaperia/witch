@@ -1,3 +1,5 @@
+> Current ruling, 2026-11-05: Ed chose live testing with a pause-page strength slider (COORDINATOR1542#6647266320); the old blink rerun is CANCELLED and its gate overridden for now. Colour spokes default, strength 0–4/default3, original curve at1; approved lit-band gain above1, cap3 existing slots, no added lights/shadows. Reduced flashing/off/0 disable modulation. One ground still at the new exact-head default after CI and canonical allocation; no full set. Earlier plans/evidence below are historical, not current gates.
+
 # Patterned lighting: first slice
 
 Ed authorized implementation of visual-response-projects section 4 on 2026-10-31, then confirmed: “start with the first slice, and then evaluate these other ideas”. This is light texture/projection, not section 5 material/normal redesign or a new potion engine.

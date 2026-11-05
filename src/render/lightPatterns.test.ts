@@ -35,12 +35,28 @@ it('assigns the bands palette around coloured spokes and fades the source centre
   for (let spoke = 0; spoke < 4; spoke++) {
     const angle = (Math.PI / 2 + spoke * Math.PI * 2) / 4;
     const sampled = lightPatternSample({ x: Math.cos(angle), y: 0, z: Math.sin(angle) }, zero, pattern);
-    sampled.forEach((value, channel) => expect(value).toBeCloseTo(.5 + .5 * Math.sin(angle + channel * Math.PI * 2 / 3), 12));
+    sampled.forEach((value, channel) => expect(value).toBeCloseTo((.5 + .5 * Math.sin(angle + channel * Math.PI * 2 / 3)) / .9, 12));
     colours.push(sampled);
     const gap = angle + Math.PI / 4;
     lightPatternSample({ x: Math.cos(gap), y: 0, z: Math.sin(gap) }, zero, pattern).forEach(value => expect(value).toBeCloseTo(0, 12));
   }
   expect(new Set(colours.map(c => c.map(n => n.toFixed(6)).join(','))).size).toBe(4);
+});
+it('preserves original strength1 and brightens only lit colour-spoke bands above it',()=>{
+  const zero={x:0,y:0,z:0},angle=Math.PI/8;
+  const sample=(strength:number,a=angle)=>lightPatternSample({x:Math.cos(a),y:0,z:Math.sin(a)},zero,
+    {kind:'colour-spokes',scale:1,contrast:.9*strength,angle:0,phase:0});
+  const original=sample(1),strong=sample(3);
+  original.forEach((value,c)=>{
+    const palette=.5+.5*Math.sin(angle+c*Math.PI*2/3);
+    expect(value).toBeCloseTo(.1+.9*palette,12);
+    expect(strong[c]).toBeCloseTo(3*palette,12);
+  });
+  expect(Math.max(...strong)).toBeGreaterThan(2);
+  sample(3,angle+Math.PI/4).forEach(x=>expect(x).toBeCloseTo(0,12));
+  expect(lightPatternSample(zero,zero,{kind:'colour-spokes',scale:1,contrast:2.7,angle:0,phase:0})).toEqual([1,1,1]);
+  expect(sample(0)).toEqual([1,1,1]);
+  for(let i=0;i<100;i++)for(const x of sample(4,i/10)){expect(x).toBeGreaterThanOrEqual(0);expect(x).toBeLessThanOrEqual(4);}
 });
 it('rotates coloured spokes with absolute musical phase through tempo changes', () => {
   const clock = newBeatClock(120); rampTo(clock, 8, 140, 16);

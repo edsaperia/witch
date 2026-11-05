@@ -49,7 +49,7 @@ export function lightPatternSample(point: LightPoint, origin: LightPoint, patter
       if (pattern.kind === 'colour-spokes') {
         const rotated = angle - phase / 4, spoke = .5 + .5 * Math.sin(rotated * 4);
         return [0, TAU / 3, 2 * TAU / 3].map(offset =>
-          1 - contrast + contrast * (1 - blend + blend * spoke * (.5 + .5 * Math.sin(rotated + offset)))) as [number, number, number];
+          1 - contrast + contrast * (1 - blend + blend * spoke * (.5 + .5 * Math.sin(rotated + offset)) * Math.max(1, Math.min(4, pattern.contrast / .9)))) as [number, number, number];
       }
       wave = 1 - blend + blend * (.5 + .5 * Math.sin(angle * 4 - phase));
     } else if (pattern.kind === 'stripes') wave = .5 + .5 * Math.sin(stripe * TAU - phase);
@@ -77,8 +77,8 @@ vec3 lightPattern(vec3 relativeWorld, vec4 pattern, vec2 rotation, float lightDi
     if (pattern.x > 5.5) {
       float rotated = angle - pattern.w * 0.25;
       float spoke = 0.5 + 0.5 * sin(rotated * 4.0);
-      bands = mix(vec3(1.0), spoke * (0.5 + 0.5 * sin(vec3(rotated) + vec3(0.0, 2.09439510239, 4.18879020479))), blend);
-      return mix(vec3(1.0), clamp(bands, 0.0, 1.0), clamp(pattern.z, 0.0, 1.0));
+      bands = mix(vec3(1.0), spoke * (0.5 + 0.5 * sin(vec3(rotated) + vec3(0.0, 2.09439510239, 4.18879020479))) * max(1.0, min(4.0, pattern.z / 0.9)), blend);
+      return mix(vec3(1.0), bands, clamp(pattern.z, 0.0, 1.0));
     }
     wave = mix(1.0, 0.5 + 0.5 * sin(angle * 4.0 - pattern.w), blend);
   } else if (pattern.x < 2.5) wave = 0.5 + 0.5 * sin(stripe * 6.28318530718 - pattern.w);

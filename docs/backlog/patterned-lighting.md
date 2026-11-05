@@ -1,3 +1,5 @@
+> Current ruling, 2026-11-05: Ed chose live testing with a pause-page strength slider (COORDINATOR1542#6647266320); the old blink rerun is CANCELLED and its gate overridden for now. Colour spokes default, strength 0–4/default3, original curve at1; approved lit-band gain above1, cap3 existing slots, no added lights/shadows. Reduced flashing/off/0 disable modulation. One ground still at the new exact-head default after CI and canonical allocation; no full set. Earlier plans/evidence below are historical, not current gates.
+
 # Patterned lighting — parked
 
 Ed, 2026-11-01: “We can park patterned lighting for now.” Cost work, offline analysis, candidate implementation and measurement requests are stopped. Resume only after a new explicit Ed/coordinator assignment. PR [#1542](https://github.com/edsaperia/witch/pull/1542) stays draft; no default-on approval or release.
