@@ -1,14 +1,15 @@
 // The whole island made under the loading screen (Ed, 2026-11-05: "Load the trees, creature art, and coast and lakes, during the
 // loading screen."; render/view.ts prepare, render/islandNeeds.ts): prepare asks for every area type's trees, every look the island's
 // creatures can wear and the coast's and lakes' dressing, makes the coast's program with the rest, and doesn't finish (the screen
-// doesn't fade) till they've landed; only this island's kinds, never another island's or every species'. The game is only read.
+// doesn't fade) till they've landed; only this island's kinds, never another island's or every species'. Not the faces (Ed,
+// 2026-11-05: "Skip the animal faces"): asked for as prepare ends, not waited for. The game is only read.
 // (Headless: the View a stand-in round its own prepare, with the real art library, its workers stand-ins: results handed in.)
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { View } from "./view";
 import { AssetLibrary } from "./assets";
 import { loadStyle } from "./style";
 import { hasOverride } from "./overrides";
-import { ISLAND_FACES, askIslandArt, islandNeeds, type IslandArtAsks } from "./islandNeeds";
+import { ISLAND_FACES, askIslandArt, askIslandFaces, islandNeeds, type IslandArtAsks } from "./islandNeeds";
 import { newGame } from "../rules/game";
 import { AREA_TYPES } from "../rules/map";
 import { islandOf } from "../rules/rosters";
@@ -51,12 +52,15 @@ describe("the island made under the loading screen", () => {
     const asked: string[] = [], rec = new Proxy({}, { get: (_t, k) => (...a: unknown[]) => { asked.push(`${String(k)}:${a.join(",")}`); } }) as IslandArtAsks;
     askIslandArt(rec, n, { legendNap: false, coast: true, beachDecor: true, lakes: true });
     for (const sp of n.kinds) {
-      for (const want of [`creatureArt:${sp}`, `wokenArt:${sp}`, `napArt:${sp}`, ...ISLAND_FACES.map(f => `faceArt:${sp},${f}`)]) expect(asked).toContain(want);
+      for (const want of [`creatureArt:${sp}`, `wokenArt:${sp}`, `napArt:${sp}`]) expect(asked).toContain(want);
       for (const l of [0, 1, 2]) if (!hasOverride(sp, l)) expect(asked).toContain(`rigArt:${sp},${l}`); // (rigArt itself asks only for the kinds with rig parts)
     }
     for (const sp of n.legends) { expect(asked).toContain(`sleepArt:${sp}`); if (!hasOverride(sp, 3)) expect(asked).toContain(`rigArt:${sp},3`); }
     for (const a of asked) { const sp = /^(?:creature|woken|nap|face|idle|glide|sleep|rig)Art:([^,]+)/.exec(a)?.[1]; if (sp) expect(n.kinds, a).toContain(sp); }
     for (const want of ["beachEdgeArt:", "beachArt:", "lakeShoreArt:", "partyWitchArt:"]) expect(asked).toContain(want);
+    expect(asked.some(a => a.startsWith("faceArt:"))).toBe(false); // (the faces: askIslandFaces, not waited for)
+    const faces: string[] = []; askIslandFaces({ faceArt: (sp, f) => { faces.push(`${sp},${f}`); } }, n);
+    expect(faces.sort()).toEqual(n.kinds.flatMap(sp => ISLAND_FACES.map(f => `${sp},${f}`)).sort());
     const plain: string[] = []; askIslandArt(new Proxy({}, { get: (_t, k) => (...a: unknown[]) => { plain.push(`${String(k)}:${a.join(",")}`); } }) as IslandArtAsks, n, { legendNap: true, coast: false, beachDecor: true, lakes: false });
     expect(plain.some(a => /^(sleepArt|beachEdgeArt|beachArt|lakeShoreArt)/.test(a))).toBe(false);
   });
@@ -81,10 +85,11 @@ describe("the island made under the loading screen", () => {
     const near = nearOf(g), n = islandNeeds(g.map, near);
     const island = inner(assets).queue.filter(j => j.kind !== "treehouse" && j.kind !== "witch" && j.kind !== "soundsystems" && j.kind !== "props");
     expect(new Set(island.filter(j => j.kind === "type").map(j => j.id))).toEqual(new Set(n.types));
-    for (const sp of n.kinds) for (const kind of ["creature", "woken", "nap", "face"]) expect(island.some(j => j.kind === kind && speciesOf(j) === sp), `${kind} ${sp}`).toBe(true);
+    for (const sp of n.kinds) for (const kind of ["creature", "woken", "nap"]) expect(island.some(j => j.kind === kind && speciesOf(j) === sp), `${kind} ${sp}`).toBe(true);
     for (const j of island) { const sp = speciesOf(j); if (sp) expect(n.kinds, `${j.kind}:${j.id}`).toContain(sp); } // (only this island's kinds)
     expect(island.some(j => j.kind === "beachEdge")).toBe(true);
     if (g.map.bounds.lakes) expect(island.some(j => j.kind === "lakeShore")).toBe(true);
+    expect(island.some(j => j.kind === "face")).toBe(false); // (not waited for: asked as it ends)
     expect(log).toEqual(["coast program made"]); // (made first; the shaders not compiled while the island's art is out)
     expect(done).toBe(false);
     // All but one landed: still waiting.
@@ -95,6 +100,9 @@ describe("the island made under the loading screen", () => {
     inner(assets).receive({ job: last, result: pixel() });
     await prepared;
     expect(log).toEqual(["coast program made", "shaders compiled"]);
+    // The faces asked for as it ends (the loading screen fading), every kind's, none of them waited for.
+    const faces = inner(assets).queue.filter(j => j.kind === "face");
+    expect(new Set(faces.map(j => j.id))).toEqual(new Set(n.kinds.flatMap(sp => ISLAND_FACES.map(f => `face-${f}-${sp}`))));
     expect(performance.getEntriesByName("witch:prep-island").length).toBeGreaterThan(0);
     expect(JSON.stringify(snapshotGame(g))).toBe(before); // (the rules' state untouched: determinism)
   }, 60000);

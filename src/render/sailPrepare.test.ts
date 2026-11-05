@@ -19,7 +19,7 @@ it("a sail's dive: the house and forest are built while the shaders link, all of
   let linked!: () => void;
   const v: View = Object.assign(Object.create(View.prototype) as object, {
     game: newGame(456, TUNING), shaderDrawStatus: { active: false, skipped: {}, fallback: {} }, shaderChartLanding: true, shaderEpoch: 0, shaderLandingLimited: false,
-    assets: { tonight: () => {}, whenAsked: () => { log.push("the rest of the island's art asked"); return new Promise<void>(() => {}); } },
+    assets: { tonight: () => {}, whenAsked: () => { log.push("the rest of the island's art asked"); return new Promise<void>(() => {}); }, faceArt: () => { if (!log.includes("faces asked")) log.push("faces asked"); } },
     island: { ground: { fill: () => 0, coastAhead: () => log.push("coast program made") } },
   }) as unknown as View;
   const V = v as unknown as Record<string, unknown>;
@@ -30,7 +30,7 @@ it("a sail's dive: the house and forest are built while the shaders link, all of
   const prepared = v.prepare({ sail: true, dive: () => 0, track: [], underDive: true }); // (main.ts makeSailNight: not waited for)
   await Promise.resolve(); await Promise.resolve();
   // (the coast's program made with the rest, and the island's own art asked too, not waited for: Ed, 2026-11-05)
-  expect(log).toEqual(["coast program made", "island art asked", "the rest of the island's art asked", "shaders linking under the dive", "house and forest building (epoch current)"]); // (before the shaders are linked)
+  expect(log).toEqual(["coast program made", "island art asked", "the rest of the island's art asked", "faces asked", "shaders linking under the dive", "house and forest building (epoch current)"]); // (before the shaders are linked)
   expect(v.homeDone).toBe(false);
   let done = false; void prepared.then(() => { done = true; });
   await Promise.resolve();

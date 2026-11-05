@@ -1,6 +1,7 @@
 // The island's own art, made under the loading screen (Ed, 2026-11-05: "Load the trees, creature art, and coast and lakes, during the
 // loading screen."): what render/view.ts prepare asks for and waits for before the screen fades, so nothing on the island pops in
-// after it: every area type's trees, every look its creatures can wear tonight, and the coast's and the lakes' dressing. Only this
+// after it: every area type's trees, every look its creatures can wear tonight but their faces, and the coast's and the lakes'
+// dressing (Ed, 2026-11-05: "Skip the animal faces": asked for in the background as the screen fades, askIslandFaces). Only this
 // island's: its area types' kinds, its legends and its challenge circle's pack (rules/challenge.ts packKinds), never another
 // island's or every species' (Ed's log, 2026-10-14: the workers baking all sixty species starved the audio for minutes of play).
 import { AREA_TYPES, type ForestMap } from "../rules/map";
@@ -10,7 +11,8 @@ import { glideOf } from "../rules/movement";
 import { characterOf } from "./character";
 import { hasOverride } from "./overrides";
 
-/** The faces drawn as sets of their own (render/looks.ts expression: neutral is the plain look). */
+/** The faces drawn as sets of their own (render/looks.ts expression: neutral is the plain look). Not waited for (Ed, 2026-11-05: "Skip
+ *  the animal faces"): till one's in, render/view/creatures.ts draws the plain look (the rig its own head piece's face). */
 export const ISLAND_FACES = ["angry", "happy", "dazed", "bite", "yawn"] as const;
 /** The levels a wild creature of the island's kinds is drawn at (baby to adult); a legend's is LEGEND. */
 const WILD_LEVELS: readonly Level[] = [0, 1, 2];
@@ -39,13 +41,13 @@ export interface IslandArtAsks {
 export interface IslandLooks { legendNap: boolean; coast: boolean; beachDecor: boolean; lakes: boolean }
 
 /** Ask for everything `n` can show (render/view/creatures.ts's looks, the rig's pages, the coast's and lakes' dressing), the trees
- *  first, then each kind's plain look, then the rest. Not a party animal's own outfit (by its id, once it's invited) or a stilted rig. */
+ *  first, then each kind's plain look, then the rest. Not the faces (askIslandFaces), a party animal's own outfit (by its id, once
+ *  it's invited) or a stilted rig. */
 export function askIslandArt(a: IslandArtAsks, n: IslandNeeds, o: IslandLooks): void {
   for (const t of n.types) a.prefetchType(t);
   for (const sp of n.kinds) a.creatureArt(sp);
   for (const sp of n.kinds) {
     a.wokenArt(sp); a.napArt(sp);
-    for (const face of ISLAND_FACES) a.faceArt(sp, face);
     const q = characterOf(sp).quirk;
     if (q === "sentinel" || q === "rattle") a.idleArt(sp); // (its idle pose: render/view/creatures.ts)
     if (glideOf(sp)) a.glideArt(sp);
@@ -54,4 +56,8 @@ export function askIslandArt(a: IslandArtAsks, n: IslandNeeds, o: IslandLooks): 
   for (const sp of n.legends) { if (!o.legendNap) a.sleepArt(sp); if (!hasOverride(sp, LEGEND)) a.rigArt(sp, LEGEND); }
   if (o.coast) { a.beachEdgeArt(); if (o.beachDecor) a.beachArt(); a.partyWitchArt(null); } // (her lying-down art: render/beach.ts)
   if (o.lakes) a.lakeShoreArt();
+}
+/** The island's kinds' faces, asked for in the background (not waited for): as the loading screen fades, or with a sail's dive. */
+export function askIslandFaces(a: Pick<IslandArtAsks, "faceArt">, n: IslandNeeds): void {
+  for (const sp of n.kinds) for (const face of ISLAND_FACES) a.faceArt(sp, face);
 }
