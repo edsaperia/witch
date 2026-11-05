@@ -10883,7 +10883,7 @@
         "fps"
       ],
       "additionalProperties": false,
-      "description": "The loading screen: the World Tree as a gold Celtic knot, COVEN and RUSH in gold stars either side, lighting up as the game loads."
+      "description": "The loading screen: the World Tree as a Celtic knot in gold stars, COVEN and RUSH in the gaps either side of its trunk, lighting up as the game loads."
     },
     "opening": {
       "type": "object",
