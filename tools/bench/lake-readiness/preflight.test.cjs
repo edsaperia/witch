@@ -41,3 +41,32 @@ test('metadata observer delegates submitted source/compile/link calls without ch
     assert.ok(window.__intel.links[0].fragmentCompile.callMs>=0);
   } finally {[global.window,global.WebGLRenderingContext,global.WebGL2RenderingContext]=saved;}
 });
+test('validated allocation reaches the watchdog parent gate and driver, restoring parent values on success/failure',async()=>{
+  const {runAllocated}=require('./run.cjs'),now=Date.now(),head='a'.repeat(40);
+  const a={pr:1855,prepHead:head,targetSha:c.TARGET.sha,targetVersion:c.TARGET.version,slot:'authorized-slot',priorFree:'https://github.com/edsaperia/witch/issues/1476#issuecomment-1',allocatedAt:new Date(now).toISOString(),expiresAt:new Date(now+300000).toISOString(),quiet:{at:new Date(now).toISOString(),idleMs:60000,edInUse:false}};
+  const keys=['INTEL_SLOT','PRECEDING_RELEASE'],original=keys.map(key=>process.env[key]);
+  try {
+    process.env.INTEL_SLOT='existing-slot';process.env.PRECEDING_RELEASE='existing-release';
+    for(const fail of [false,true]) {
+      const watchdog=async spec=>{
+        assert.equal(process.env.INTEL_SLOT,a.slot);assert.equal(process.env.PRECEDING_RELEASE,a.priorFree);
+        assert.deepEqual(spec.env,{OTHER:'retained',INTEL_SLOT:a.slot,PRECEDING_RELEASE:a.priorFree});
+        await Promise.resolve();if(fail)throw Error('watchdog refused');return 'receipt';
+      };
+      if(fail)await assert.rejects(runAllocated(watchdog,{env:{OTHER:'retained'}},a,head,now),/watchdog refused/);
+      else assert.equal(await runAllocated(watchdog,{env:{OTHER:'retained'}},a,head,now),'receipt');
+      assert.equal(process.env.INTEL_SLOT,'existing-slot');assert.equal(process.env.PRECEDING_RELEASE,'existing-release');
+    }
+    let invoked=false;
+    await assert.rejects(runAllocated(()=>{invoked=true;},{},{...a,targetVersion:'wrong'},head,now));
+    assert.equal(invoked,false);assert.equal(process.env.INTEL_SLOT,'existing-slot');
+  } finally {keys.forEach((key,i)=>{if(original[i]===undefined)delete process.env[key];else process.env[key]=original[i];});}
+});
+test('only an absent optional favicon gets the harness empty response; real icons and other misses are untouched',()=>{
+  const fs=require('node:fs'),path=require('node:path'),os=require('node:os'),{absentFavicon}=require('./driver.cjs');
+  const root=fs.mkdtempSync(path.join(os.tmpdir(),'lake-preflight-')),icon=path.join(root,'favicon.ico');
+  try {
+    assert.equal(absentFavicon(root,'/favicon.ico'),true);assert.equal(absentFavicon(root,'/missing.js'),false);
+    fs.writeFileSync(icon,'fixture');assert.equal(absentFavicon(root,'/favicon.ico'),false);
+  } finally {if(fs.existsSync(icon))fs.unlinkSync(icon);fs.rmdirSync(root);}
+});
