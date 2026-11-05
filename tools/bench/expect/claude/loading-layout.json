@@ -1,0 +1,14 @@
+{
+  "reason": "Nothing of this PR's: it changes only the loading screen (src/ui/loadingScreen.js, src/ui/loadingSeal.js), which never runs under automation, and locally its build matches the base 2c9009ba3 to the pixel in all three quick scenes (with CI's Playwright 1.56.1 and its in-flight list too). The differences are claude/prototype's since: CI compares the PR's recorded base 2c9009ba3 with this branch merged into claude/prototype as it now stands, which has taken #1542 (soundsystems throw colour spokes: the decks' light in the boot shot, 1152 px by 2, as on #1849 itself) and #1829's difficulty-curve batch (home and the island laid out afresh)",
+  "frames": {
+    "*": "claude/prototype's since 2c9009ba3: #1542's colour spokes off the decks (the boot shot) and #1829's home and island laid out afresh"
+  },
+  "rules": {
+    "*": "claude/prototype's since 2c9009ba3: #1829's map laid out afresh, its stones, legends and creatures placed anew, so what she meets and everything after differs"
+  },
+  "start": {
+    "boot": "claude/prototype's since 2c9009ba3: #1829's home laid out afresh, the treehouse where she starts elsewhere",
+    "bedroom": "claude/prototype's since 2c9009ba3: #1829's home laid out afresh, the treehouse where she starts elsewhere",
+    "wave-fight": "claude/prototype's since 2c9009ba3: #1829's home laid out afresh, the treehouse where she starts elsewhere"
+  }
+}
