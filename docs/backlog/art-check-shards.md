@@ -1,4 +1,8 @@
-# Art-check sharding — parked
+# Art-check sharding
+
+**4 November follow-up — source implementation in draft [#1834](https://github.com/edsaperia/witch/pull/1834).** Ed: “split, keep nightly” (coordinator1476#6643311785 item5; routing6643908630). The advisory workflow now has an exact-source planning job, three duration-balanced task shards and strict final coverage/proof validation. It retains the nightly03:17UTC/manual-only triggers, task fingerprints/cache and exact-tree reuse, every named task and the atomic auxiliary/lab unit. Unknown analysis still runs the whole check once. No PR/push/build/release dependency was added. Focused orchestration tests use fake executors; actual nightly/browser execution and speed acceptance remain unverified. No cold run or auxiliary decomposition is requested.
+
+## Historical parked checkpoint (1 November)
 
 **Audit status (2026-11-01): Partly built / parked.** Status addition only; owner prose and historical measurements below are preserved.
 
