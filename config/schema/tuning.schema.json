@@ -269,7 +269,7 @@
         "koi": {
           "type": "number",
           "minimum": 0,
-          "description": "the share of lakes with koi in them (DECISION FOR ED)."
+          "description": "the share of lakes with koi in them."
         },
         "biomeFrom": {
           "type": "number",
@@ -9720,7 +9720,7 @@
             "balanced",
             "playback"
           ],
-          "description": "the audio context's latencyHint: interactive the smallest output buffer, balanced more room for the audio thread, playback the most (under-runs least likely, sound effects latest); ?latency= tries one for a load (DECISION FOR ED)."
+          "description": "the audio context's latencyHint: interactive the smallest output buffer, balanced more room for the audio thread, playback the most (under-runs least likely, sound effects latest); ?latency= tries one for a load."
         },
         "buffer": {
           "type": "number",
