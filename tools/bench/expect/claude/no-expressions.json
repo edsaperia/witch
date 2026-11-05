@@ -1,0 +1,6 @@
+{
+  "reason": "Ed, 2026-11-05: \"Scrap animal expressions for now.\" (tuning looks.expressions off): creatures keep their plain face, and no face set is asked for.",
+  "frames": {
+    "wave-fight": "The fight's creatures show their plain face instead of an angry, dazed or bite face (the rig's expression heads and the face sets are no longer drawn), so a few pixels at their heads differ; one set fewer is asked for and lands (the face set), so the art lands on frames one earlier."
+  }
+}
