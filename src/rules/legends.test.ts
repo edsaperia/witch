@@ -181,7 +181,9 @@ describe("legends, redesigned (Ed, 2026-10-05; #87)", () => {
     run(g, 1.2);
     expect(L.legendState).toBe("angry");
     L.affection = 0.999; L.affectionAt = g.clock.time; // (its slots nearly full of hearts: rules/orbit.ts)
-    const wolf = put(g, L.species === "wolf" ? "boar" : "wolf", 2, L.x + 2, L.z);
+    // (a bear, a wolf before areas grew to 196 m, 2026-11-04: on this map's moth a parked wolf (or boar, or badger) drifted ever farther
+    // off it as it fought, landing too few hits to wear it down in time)
+    const wolf = put(g, L.species === "bear" ? "stag" : "bear", 2, L.x + 2, L.z);
     wolf.leashed = true; g.leash.placed.push({ id: wolf.id, x: wolf.x, z: wolf.z, at: g.clock.time });
     let slept = false;
     run(g, 10, idle, () => { if (L.legendState === "asleep") slept = true; }); // (with none of its kind there it grows restless again: angryAfter is short here)
@@ -335,8 +337,10 @@ describe("charging legends' long charge (Ed, 2026-10-05; legends.json charge)", 
     const { g, L, target } = angryBoar(70);
     const lair = { x: L.x, z: L.z };
     target.z += 12; target.anchorZ = target.z; // (a little off its first lane: it curves)
+    const tx = target.x, tz = target.z;
     let windups = 0, maxAway = 0, bentBy = 0, a0: number | null = null, braking = false, home = false;
     run(g, 60, idle, () => {
+      Object.assign(target, { x: tx, z: tz, fight: undefined }); // (it stands where it was parked: the boar's lair is within its chain's length of its sigil, so it would go for the boar, Ed 2026-11-04 "A parked creature should guard its chain length")
       const r = L.run;
       if (r?.phase === "windup") { if (g.clock.time - r.at < 1e-6) { windups++; expect(Math.hypot(L.x - L.lairX!, L.z - L.lairZ!)).toBeLessThan(3); } a0 = r.angle; }
       if (r && a0 !== null && r.phase !== "windup") bentBy = Math.max(bentBy, Math.abs(Math.atan2(Math.sin(r.angle - a0), Math.cos(r.angle - a0))));

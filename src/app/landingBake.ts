@@ -8,7 +8,7 @@ import type { ArtJob, ArtResult } from "../render/artBuild";
 import { artCacheKey, hashText, islandArtSeed } from "../render/artCache";
 import { biomeKey, type BiomeLooks } from "../rules/lakeLooks";
 import { AREA_TYPES, HOME_LOOK } from "../rules/map";
-import { homeIsland, islandOf, knownKinds } from "../rules/rosters";
+import { foundKinds, homeIsland, homeKinds, islandOf } from "../rules/rosters";
 import { loadSave } from "./chartSave";
 import { tuningFromLink } from "./linkParams";
 import { gameStyle, styleFromLink } from "./viewParams";
@@ -19,7 +19,8 @@ export const nightSeed = (): number => Math.floor(Math.random() * 1000000);
 /** The area types an island's night will ask for, the most needed first: home's meadow (where she lands), then the island's
  *  own kind, then the rest of its roster by how many areas each has. */
 export function landingTypes(island: string, world: number): number[] {
-  const isl = island === "home" ? homeIsland(world, knownKinds(loadSave().found)) : islandOf(island, world);
+  // (home's: every kind it could have tonight, the found ones and its starting ones: rules/rosters.ts homeRoster)
+  const isl = island === "home" ? homeIsland(world, [...new Set([...foundKinds(loadSave().found), ...homeKinds()])]) : islandOf(island, world);
   const typeOf = (k: string) => AREA_TYPES.findIndex(a => a.creature === k);
   const roster = [...(isl?.roster ?? [])].sort((a, b) => +(b.kind === island) - +(a.kind === island) || b.areas - a.areas);
   return [...new Set([HOME_LOOK, ...roster.map(r => typeOf(r.kind)).filter(t => t >= 0)])];

@@ -80,3 +80,26 @@ export function matchLegendAreas(kinds: readonly string[], beside: (kind: string
   for (const k of kinds) tryKind(k, new Set());
   return slotOf;
 }
+
+/** Each legend area (`slots`, in order) paired with an area of its own beside it, no area paired twice (Ed, 2026-11-04: "Please
+ *  fix": two legend areas once shared a pair, and tonight's legend's circle went into the wrong one): `wants(slot)` the areas it
+ *  may take, the better first. Each takes the first of its own that's free; with none free, one is freed by moving whoever holds
+ *  it on to another of theirs (augmenting paths), so a slot goes without only when no pairing could give every one its own.
+ *  The slots that went without are left out of the map. */
+export function pairLegendAreas(slots: readonly string[], wants: (slot: string) => readonly string[]): Map<string, string> {
+  const pairOf = new Map<string, string>(), holder = new Map<string, string>();
+  const take = (s: string, a: string) => { holder.set(a, s); pairOf.set(s, a); };
+  // (one of its own that's free, else one freed by moving its holder on: the holder to one free of its own first, else on in turn)
+  const place = (s: string, seen: Set<string>): boolean => {
+    const f = wants(s).find(a => !holder.has(a));
+    if (f !== undefined) { take(s, f); return true; }
+    for (const a of wants(s)) {
+      if (seen.has(a)) continue;
+      seen.add(a);
+      if (place(holder.get(a)!, seen)) { take(s, a); return true; }
+    }
+    return false;
+  };
+  for (const s of slots) place(s, new Set());
+  return pairOf;
+}

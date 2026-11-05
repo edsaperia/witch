@@ -25,14 +25,14 @@ import { PathNetwork } from "./paths";
 import { knownPathGeometry, rememberPathGeometry, pathGeometryProblem, type PathGeometry } from "./pathGeometry";
 import { knownHeightPrep, rememberHeightPrep, heightPrepProblem, type HeightPrep } from "./heightSamples";
 import { routeOf } from "./party";
-import { dealAlongRoute, matchLegendAreas } from "./deal";
+import { dealAlongRoute, matchLegendAreas, pairLegendAreas } from "./deal";
 import { beachOf, isInside, makeCoast, type Bounds } from "./mapShape";
 import { landOf, makeLand, type LandData, type LandMap } from "./land";
 import { knownRoute, rememberRoute, type LeyRoute } from "./leyroute";
 import { lakeDepth, lakeKnobs } from "./lakes";
 import { growIsland, lakePlan, placeLakes, reachOf, shapeOf, type Candidate, type PatchGrowth } from "./islandGrowth";
 import { patchAt, STRAIT } from "./archipelago";
-import { dealLegends, homeIsland, homeKinds, islandOf, isPlaceholder, knownKinds, playableIsland, type Island } from "./rosters";
+import { dealLegends, foundKinds, HOME_START, homeEndgame, homeIsland, homeKinds, homeRoster, islandOf, isPlaceholder, knownKinds, playableIsland, REAL_KINDS, type Island } from "./rosters";
 import { CLASSIC_SLOTS, KIND_SLOTS } from "./kinds";
 import { ZOO_CONFIG, zooChartPlan, zooJunctions, type ZooPlan } from "./zoo";
 import { coastAlong, zooFence, zooLayout, zooPartition } from "./zooMap";
@@ -243,6 +243,16 @@ export interface SpecialSite {
 
 /** How far past the challenge circle's clearing (m) its area's claim reaches: the woods' edge round it its own too. */
 const CLAIM_PAD = 4;
+/** The sites' least gaps (Ed, 2026-11-04: "minimum distance between sites/circles/dancefloor/treehouse of 50m, tunable. 10m from a
+ *  lake edge. If this can't fit, increase area sizes."): stoneClear, a stone's clearing (m: the great stump's roots' ground, or a
+ *  runestone's soundsystem's with its margin); siteGap, the least gap edge to edge between any two sites' footprints (stones'
+ *  clearings, legends' circles, the challenge's claim or the find's clearing, home's dancefloor clearing and treehouse); lakeGap,
+ *  each footprint's from a lake's water; stoneSpacing, so two stones' middles (Ed's "Min 40 m between stumps" of 2026-11-03,
+ *  folded in: 84 m now). */
+export function siteRules(t: Tuning): { stoneClear: number; siteGap: number; lakeGap: number; stoneSpacing: number } {
+  const SM = t.runeMarkers?.stump, stoneClear = SM?.on ? SM.clear : t.soundsystemFootprint + t.treeMarginFromSoundsystem + 4, siteGap = t.siteGap ?? 0;
+  return { stoneClear, siteGap, lakeGap: t.siteLakeGap ?? 0, stoneSpacing: 2 * stoneClear + siteGap };
+}
 /** A claimed map's neighbours as the partition first cut them (by the map's neighbours), for its prep (prepOf: the island grows
  *  from those, the claim made again from them). */
 const BASE_NEIGHBOURS = new WeakMap<object, [string, string[]][]>();
@@ -352,6 +362,8 @@ export const hydrateMap = (seed: number, tuning: Tuning, prep: MapPrep): ForestM
 
 export function generateMap(runSeed: number, tuning: Tuning, only?: { landStep: number; island: Island }, prep?: MapPrep): ForestMap {
   const A = tuning.areaSize * tuning.areaScale;
+  // (the sites' least gaps, siteRules: a stone's clearing, the gap between any two sites' footprints and a site's from a lake's water)
+  const { stoneClear, siteGap, lakeGap: siteLake, stoneSpacing } = siteRules(tuning);
   // The circular map (Ed, 2026-10-06): playable areas those whose centres lie within radius areas of
   // home's; past them a buffer ring buffer areas deep, then the edge of her flight (from the
   // playable areas' outer edges, half an area past their centres). The grid of cells covers all of
@@ -372,9 +384,12 @@ export function generateMap(runSeed: number, tuning: Tuning, only?: { landStep: 
   // its own, from the campaign's world (map.world) and its kind, the same every night (shapeSeed); everything inside it (paths,
   // scenery, set pieces, creatures, the night's legends; map.seed) is the night's, the run's seed.
   const world = MS.world ?? 0;
-  // Home grows (Ed, 2026-10-10, journey.md "Home's size"): one area per kind she knows, home's 10 and every kind found since
-  // (map.found, the save's); islandAreas turns it on, and is its least (past one each, the kinds again in turn).
-  const rosterIsland = only ? only.island : !round || zoo ? null : MS.island === "home" ? ((MS.islandAreas ?? 0) > 0 ? homeIsland(world, knownKinds(MS.found ?? []), Math.round(MS.islandAreas!)) : null) : MS.island && playableIsland(MS.island) ? islandOf(MS.island, world) : null; // (never a placeholder's: rules/rosters.ts)
+  // Home (Ed, 2026-11-04: "home has 5 areas chosen at random from the phase 1 creatures, and grows as you unlock islands"; rules/
+  // rosters.ts homeRoster): one area per island found (map.found, the save's), at least home.start, filled each night with home's
+  // starting kinds whose islands are unfound, chosen by the night's seed; its legends as any island's (rules/rosters.ts dealLegends).
+  // islandAreas turns it on.
+  const homeStart = Math.max(1, Math.round(tuning.home.start ?? HOME_START));
+  const rosterIsland = only ? only.island : !round || zoo ? null : MS.island === "home" ? ((MS.islandAreas ?? 0) > 0 ? homeIsland(world, homeRoster(MS.found ?? [], runSeed, homeStart)) : null) : MS.island && playableIsland(MS.island) ? islandOf(MS.island, world, tuning.islands?.phaseSizes, MS.rosterNeighbourhood) : null; // (never a placeholder's: rules/rosters.ts; its size its phase's, islands.phaseSizes)
   const seed = runSeed, shapeSeed = rosterIsland ? rosterIsland.seed : runSeed;
   // An island of so many areas (Ed, 2026-10-11, the journey's first step: map.islandAreas): home and exactly that many more, the
   // nearest home's (found below, once the areas are cut); until then a radius sure to hold them sizes the grid and the forest.
@@ -395,9 +410,10 @@ export function generateMap(runSeed: number, tuning: Tuning, only?: { landStep: 
   const coast = round ? makeCoast(shapeSeed, coastKnobs) : () => 1, most = 1 + (round ? Math.max(0, coastKnobs?.amp ?? 0) : 0);
   const across = (r: number) => 2 * Math.ceil(r + 0.5 + MS.buffer + 1) + 1;
   const n = zoo ? zoo.n : round ? across(R) : tuning.mapAreas, margin = round ? Math.ceil(edgeK) : 2;
-  // Home grown (more kinds known than home's 10): its grid's middle stays where the 10-area home's is, so the partition, home's
-  // cell and its first areas are the same every night of the campaign; the grid reaches further round it (from cell `first`).
-  const homeBase = rosterIsland?.kind === "home" ? homeKinds().length : 0, grown = homeBase > 0 && island > homeBase;
+  // Home grown (more islands found than its start, home.start): its grid's middle stays where the starting home's is, so the
+  // partition, home's cell and its first areas are the same every night of the campaign; the grid reaches further round it (from
+  // cell `first`).
+  const homeBase = rosterIsland?.kind === "home" ? homeStart : 0, grown = homeBase > 0 && island > homeBase;
   // Areas vary in size: the world is warped smoothly before it is cut, so in some stretches of
   // the map the cells spread out (big areas) and in others they crowd (small ones). The warp
   // never folds (its slope stays under 1), so every area keeps its place and the map stays
@@ -495,7 +511,8 @@ export function generateMap(runSeed: number, tuning: Tuning, only?: { landStep: 
   // (tonight's find in an area of its own, tuning findArea, on an island grown from its areas (the game's: the radius and square
   // maps keep the find as before): the island grown one area more, its last, which takes the find's area's kind each night, below;
   // so the island keeps its playable areas and its roster whichever area holds the find)
-  const findOn = !zoo && !!tuning.findArea?.on && island > 0, findExtra = findOn ? 1 : 0;
+  // (none at home till every island on the chart is found, Ed 2026-11-04: "no find at home until endgame"; then its challenge area)
+  const findOn = !zoo && !!tuning.findArea?.on && island > 0 && (rosterIsland?.kind !== "home" || homeEndgame(MS.found ?? [], tuning.home.challengeAt)), findExtra = findOn ? 1 : 0;
   // (an area of the grid the island could have grown into, inside its patch: where a legend area may grow, below)
   let growable: (k: string) => boolean = () => false;
   if (island) {
@@ -530,17 +547,19 @@ export function generateMap(runSeed: number, tuning: Tuning, only?: { landStep: 
   // (the find's extra area, the last grown, apart till the find's area is known: it takes that area's kind, below)
   const extraKey = findExtra && growOrder.length > 1 ? growOrder[growOrder.length - 1] : null;
   let others = cells.filter(([x, y]) => (x !== centreCell[0] || y !== centreCell[1]) && cellKey(x, y) !== extraKey);
-  if (rosterIsland && !grown) assignRoster(rosterIsland, others, types, neighbours, shapeSeed);
+  // (home: its areas' kinds as made here are its world's, not the night's, so its legend areas, land and coast are the same every
+  // night for what she's found: the first home.start areas dealt as the world's own starting home, each area past them a kind of its
+  // own (the kinds found first, in the order found); tonight's kinds (homeRoster, the night's) are dealt onto them along tonight's
+  // route, below, as every island's are)
+  let shapeKinds: string[] | null = null;
+  if (rosterIsland && rosterIsland.kind !== "home") assignRoster(rosterIsland, others, types, neighbours, shapeSeed);
   else if (rosterIsland) {
-    // Home grown: its first 10 areas dealt as the 10-area home's (the same areas, the same kinds), then each kind found since
-    // given the next area out, in the order found.
     const at = new Map(growOrder.map((k, i) => [k, i])), inBase = (x: number, y: number) => (at.get(cellKey(x, y)) ?? Infinity) <= homeBase, extra = others.filter(([x, y]) => !inBase(x, y)).sort((a, b) => at.get(cellKey(a[0], a[1]))! - at.get(cellKey(b[0], b[1]))!);
-    assignRoster(homeIsland(world), others.filter(([x, y]) => inBase(x, y)), types, neighbours, shapeSeed);
-    const known = knownKinds(MS.found ?? []), more = known.slice(homeBase);
-    more.forEach((kind, i) => { const c = extra[i]; if (c) types.set(cellKey(c[0], c[1]), AREA_TYPES.findIndex(a => a.creature === kind)); });
-    // (past one area each, islandAreas's padding: the kinds again, dealt as any roster's)
-    const pad = extra.slice(more.length);
-    if (pad.length) assignRoster(homeIsland(world, known, known.length + pad.length), pad, types, neighbours, shapeSeed, known.length);
+    const base = homeRoster([], shapeSeed, homeStart);
+    assignRoster(homeIsland(world, base, homeStart), others.filter(([x, y]) => inBase(x, y)), types, neighbours, shapeSeed);
+    const more = [...new Set([...foundKinds(MS.found ?? []), ...homeKinds(), ...REAL_KINDS])].filter(k => !base.includes(k) && AREA_TYPES.some(a => a.creature === k));
+    extra.forEach((c, i) => { const kind = more[i % more.length]; types.set(cellKey(c[0], c[1]), AREA_TYPES.findIndex(a => a.creature === kind)); });
+    shapeKinds = [...base, ...more.slice(0, extra.length)];
   }
   // (an island by roster grows only its roster's species, Ed 2026-10-12: every area past its playable ones, the buffer ring's, the
   // sea's and the lakes', takes the type of the nearest playable area but home's, centre to centre, so its shore is its own forest)
@@ -598,7 +617,7 @@ export function generateMap(runSeed: number, tuning: Tuning, only?: { landStep: 
     // (one for every kind a night could deal here, not just tonight's: the island's shape, and so its land, coast and chart
     // outline, is its world's every night; tonight's legends take theirs, the rest stand empty. The early quest's kinds choose
     // first, then the rest in an order seeded by the island's own seed.)
-    const pool = [...new Set(rosterIsland.roster.map(r => r.kind))].filter(k => k !== rosterIsland.kind && !isPlaceholder(k)).sort();
+    const pool = [...new Set(shapeKinds ?? rosterIsland.roster.map(r => r.kind))].filter(k => k !== rosterIsland.kind && !isPlaceholder(k)).sort(); // (home's: its world's kinds as made above)
     const order = [...pool.filter(k => early.includes(k)), ...pool.filter(k => !early.includes(k)).sort((a, b) => hash2(pool.indexOf(a), 3, shapeSeed + 6153) - hash2(pool.indexOf(b), 3, shapeSeed + 6153))];
     order.forEach((kind, ki) => {
       const want = legendRadius(kind, LC0, areaMax);
@@ -740,11 +759,11 @@ export function generateMap(runSeed: number, tuning: Tuning, only?: { landStep: 
     // claimable), taken from the areas round it. Only where that keeps every promise the map makes: the circle wholly on the
     // island's playable ground (never home's, a legend area's, a lake's or the buffer's, so the land, coast and lakes made above
     // are the same every night), every area it takes from left most of its ground, not touching home's afterwards and the island
-    // still one piece, and each area it takes from keeping ground stoneMinGap past its clearing for its stone (placeSites moves a
+    // still one piece, and each area it takes from keeping ground siteGap past its claim for its stone's clearing (placeSites moves a
     // stone there if it must). The seeded candidates tried in turn (so it still moves night to night); none fits, the area as before
     // (its circle over its neighbours' ground), logged.
     const fitClaim = ([fx, fy]: Cell) => {
-      const k = cellKey(fx, fy), site = siteOf(fx, fy), rc = clearR + CLAIM_PAD, gap = tuning.stoneMinGap ?? 0;
+      const k = cellKey(fx, fy), site = siteOf(fx, fy), rc = clearR + CLAIM_PAD, gap = CLAIM_PAD + stoneClear + siteGap; // (a stone's middle from the circle's clearing: the claim's edge, a stone's clearing and siteGap)
       const [u0, v0] = toPart(site.x, site.z);
       let rp = 0;
       for (let i = 0; i < 48; i++) { const a = (i / 48) * Math.PI * 2, [u, v] = toPart(site.x + Math.cos(a) * rc, site.z + Math.sin(a) * rc); rp = Math.max(rp, Math.hypot(u - u0, v - v0)); }
@@ -759,6 +778,7 @@ export function generateMap(runSeed: number, tuning: Tuning, only?: { landStep: 
         if ((u - u0) ** 2 + (v - v0) ** 2 >= rp * rp) continue;
         const c = basePartition.partition(u, v), ck = cellKey(c[0], c[1]);
         if (!allowed(ck) || (land && land.distAt(site.x + dx, site.z + dz) < deep)) return null;
+        if (lakes && lakeDepth({ lakes } as Bounds, site.x + dx, site.z + dz) > -siteLake) return null; // (and siteLakeGap off a lake's water)
         touched.add(ck);
       }
       // (which areas touch which, afresh round it: findNeighbours' own samples, over a box holding every touched area's ground whole)
@@ -900,35 +920,73 @@ export function generateMap(runSeed: number, tuning: Tuning, only?: { landStep: 
     return spot;
   };
   // Every stone and special site placed at once, in a fixed order (the special sites, then the stones row by row), so each is
-  // the same whichever is asked for first: a special site at its area's site (off the corridors), and no stone nearer another
-  // stone or a special site than stoneMinGap (Ed, 2026-11-03: "Min 40 m between stumps"; "at least their clearings shouldn't
-  // overlap"): one that would be is moved to the nearest spot in its area that's far enough from all placed before it.
+  // the same whichever is asked for first: a special site at its area's site (off the corridors), and no stone's clearing nearer
+  // another stone's or a special site's footprint than siteGap (Ed, 2026-11-04: "minimum distance between sites/circles/dancefloor/
+  // treehouse of 50m"; before, Ed 2026-11-03: "Min 40 m between stumps"; "at least their clearings shouldn't overlap"): one that
+  // would be is moved to the nearest spot in its area that's far enough from all placed before it.
   let sited = false;
   const placeSites = () => {
     if (sited) return;
     sited = true;
-    // (a special site counts its clearing too: a stone stoneMinGap from its edge, not its middle, so a wide challenge circle keeps clear)
-    const gap = tuning.stoneMinGap ?? 0, placed: { x: number; z: number; r: number }[] = [], moved: string[] = [];
-    const farEnough = (x: number, z: number) => placed.every(q => Math.hypot(q.x - x, q.z - z) >= gap + q.r);
+    // (each placed one's footprint: a stone's clearing, the challenge's claim, the find's clearing; a stone siteGap from each edge to edge)
+    const placed: { x: number; z: number; r: number; cell?: Cell }[] = [], moved: string[] = [], wet: string[] = [], shifted: string[] = [];
+    let skip: ReadonlySet<number> = new Set(); // (placed ones left out of farEnough: the repair's, below)
+    const farEnough = (x: number, z: number) => placed.every((q, i) => skip.has(i) || Math.hypot(q.x - x, q.z - z) >= q.r + stoneClear + siteGap);
+    // (and its clearing siteLakeGap off a lake's water (Ed, 2026-11-04: "10m from a lake edge"), and siteGap from home's dancefloor
+    // clearing and treehouse; failing that, the stone's own footprint that far off the water, then as far from the others alone)
+    const dry = (x: number, z: number, r: number) => !lakes || lakeAt(x, z) <= -(r + siteLake);
+    const offHome = (x: number, z: number) => Math.hypot(x - centre.x, z - centre.z) >= floorClear + stoneClear + siteGap && Math.hypot(x - treehouse.x, z - treehouse.z) >= TH.clear + stoneClear + siteGap;
+    const tests = [(x: number, z: number) => farEnough(x, z) && dry(x, z, stoneClear) && offHome(x, z), (x: number, z: number) => farEnough(x, z) && dry(x, z, tuning.soundsystemFootprint), farEnough];
     for (const sp of specials.values()) {
       let p = ownGround(sp.cell[0], sp.cell[1]);
       // (a claimed challenge circle stays where its claim is, at its area's site: the lines that cross it are cut at its edge, rules/paths.ts)
       if (sp.claimed) p = { x: sp.x, z: sp.z };
       else if (onPath(p.x, p.z, sp.r)) p = nearestOk(p, sp.cell[0], sp.cell[1], (x, z) => !onPath(x, z, sp.r), A * 0.3, 2) ?? p;
       sp.x = p.x; sp.z = p.z;
-      placed.push({ x: p.x, z: p.z, r: sp.kind === "challenge" ? sp.r : 0 });
+      placed.push({ x: p.x, z: p.z, r: sp.r + (sp.claimed ? CLAIM_PAD : 0) });
     }
+    const short: number[] = []; // (the stones placed by a weaker test: the repair's, below)
     for (const [cx, cy] of cells) {
       if (cx === centreCell[0] && cy === centreCell[1]) continue;
       let p = stoneAlone(cx, cy);
-      if (gap > 0 && !farEnough(p.x, p.z)) {
-        const q = nearestOk(p, cx, cy, (x, z) => farEnough(x, z) && !onPath(x, z), A * 0.75);
-        if (q) p = q; else moved.push(`${cx},${cy}`);
+      if (!tests[0](p.x, p.z)) {
+        let q: { x: number; z: number } | null = null, i = 0;
+        for (; i < tests.length && !q; i++) q = tests[i](p.x, p.z) ? p : nearestOk(p, cx, cy, (x, z) => tests[i](x, z) && !onPath(x, z), A * 0.75);
+        if (q) p = q;
+        if (!q || i > 1) short.push(placed.length);
       }
       soundSpots.set(cellKey(cx, cy), p);
-      placed.push({ x: p.x, z: p.z, r: 0 });
+      placed.push({ x: p.x, z: p.z, r: stoneClear, cell: [cx, cy] });
     }
-    if (moved.length) console.info(`stones: seed ${seed}: ${moved.length} with no spot ${gap} m from the others in their areas: ${moved.join(", ")}`);
+    // The repair: a stone with no spot in its area keeping every gap makes room by moving a stone near it within that one's own area
+    // (to the nearest spots keeping every gap but with it), where that leaves it a spot that does.
+    for (const fi of short) {
+      const f = placed[fi], [fx, fy] = f.cell!, near = placed.map((q, i) => ({ q, i })).filter(({ q, i }) => i !== fi && q.cell && Math.hypot(q.x - f.x, q.z - f.z) < (stoneClear * 2 + siteGap) * 2).sort((a, b) => Math.hypot(a.q.x - f.x, a.q.z - f.z) - Math.hypot(b.q.x - f.x, b.q.z - f.z));
+      let done = false;
+      for (const { q, i: qi } of near) {
+        const [qx, qy] = q.cell!, was = { x: q.x, z: q.z };
+        // (its spots keeping every gap but with f, nearest first)
+        const spots: { x: number; z: number }[] = [];
+        skip = new Set([qi, fi]);
+        for (let d = 4; d < A * 0.75 && spots.length < 24; d += 4) for (let k = 0; k < 16 && spots.length < 24; k++) {
+          const a = (k / 16) * Math.PI * 2, x = was.x + Math.cos(a) * d, z = was.z + Math.sin(a) * d;
+          if (inCell(x, z, qx, qy) && tests[0](x, z) && !onPath(x, z)) spots.push({ x, z });
+        }
+        for (const sq of spots) {
+          q.x = sq.x; q.z = sq.z;
+          skip = new Set([fi]);
+          const g = nearestOk(f, fx, fy, (x, z) => tests[0](x, z) && !onPath(x, z), A * 0.75);
+          if (g) { f.x = g.x; f.z = g.z; soundSpots.set(cellKey(qx, qy), { x: q.x, z: q.z }); soundSpots.set(cellKey(fx, fy), { x: f.x, z: f.z }); shifted.push(`${cellKey(qx, qy)} for ${cellKey(fx, fy)}`); done = true; break; }
+        }
+        skip = new Set();
+        if (done) break;
+        q.x = was.x; q.z = was.z;
+      }
+      if (!done) (lakes && !dry(f.x, f.z, stoneClear) ? wet : moved).push(`${fx},${fy}`);
+    }
+    if (moved.length) console.info(`stones: seed ${seed}: ${moved.length} with no spot ${siteGap} m from the other sites (${stoneSpacing} m between stones) in their areas: ${moved.join(", ")}`);
+    if (wet.length) console.info(`stones: seed ${seed}: ${wet.length} with no spot whose clearing keeps off the water in their areas: ${wet.join(", ")}`);
+    if (shifted.length) console.info(`stones: seed ${seed}: ${shifted.length} moved to make room for another: ${shifted.join(", ")}`);
   };
   const soundsystemSpot = (cx: number, cy: number) => {
     const key = cellKey(cx, cy), had = soundSpots.get(key);
@@ -1102,7 +1160,9 @@ export function generateMap(runSeed: number, tuning: Tuning, only?: { landStep: 
     const order = routeOf(map as unknown as ForestMap).order, at = (k: string): Cell => { const [x, y] = k.split(",").map(Number); return [x, y]; };
     for (const k of order) { const [x, y] = at(k); soundsystemSpot(x, y); } // (kept: the route's stones)
     const kindOfType = (t: number) => AREA_TYPES[t]?.creature ?? "", own = rosterIsland.kind === "home" ? null : rosterIsland.kind;
-    const deck = order.map(k => types.get(k)!), found = new Set(MS.found ?? []), before = new Map(types);
+    // (home's deck tonight's kinds, homeRoster: one area each, whatever kinds its areas were made with above)
+    const homeDeck = rosterIsland.kind === "home" ? rosterIsland.roster.flatMap(q => Array.from({ length: q.areas }, () => AREA_TYPES.findIndex(a => a.creature === q.kind))) : null;
+    const deck = homeDeck && homeDeck.length ? order.map((_, i) => homeDeck[i % homeDeck.length]) : order.map(k => types.get(k)!), found = new Set(MS.found ?? []), before = new Map(types);
     // (the legend areas each of tonight's legends could have, given a deal: those beside one of its kind's areas, the roomiest
     // for it first; tonight's legends as the route's first three areas deal them, rules/rosters.ts dealLegends)
     const slots = [...legendAreas.keys()], homeKey = cellKey(centreCell[0], centreCell[1]);
@@ -1115,26 +1175,41 @@ export function generateMap(runSeed: number, tuning: Tuning, only?: { landStep: 
         byKind.set(kind, slots.filter(s => [...(neighbours.get(s) ?? [])].some(o => o !== homeKey && kindAt.get(o) === kind)).sort((a, b) => fits(b) - fits(a) || (a < b ? -1 : 1)));
       }
       const slotOf = matchLegendAreas(kinds, k => byKind.get(k) ?? []);
-      return { kinds, slotOf, kindAt };
+      // (each legend area paired with an area of its own beside it, never one two share, Ed 2026-11-04: "Please fix"; a legend's
+      // its kind's, nearest the route's start; an empty one's the area it was grown beside where it can, else any beside it. Where
+      // no pairing gives every legend area its own, the night's last legend dealt one keeps its legend in its own area instead,
+      // as a kind with no room beside its areas does, till one does: and the deal is scored by the legends that kept theirs)
+      const nextTo = (s: string) => [...(neighbours.get(s) ?? [])].filter(o => kindAt.has(o) && o !== homeKey).sort((a, b) => order.indexOf(a) - order.indexOf(b));
+      let pairOf = new Map<string, string>();
+      const dropped: string[] = [];
+      for (;;) {
+        const mine = new Map([...slotOf].map(([kind, s]) => [s, kind]));
+        const wants = (s: string) => { const kind = mine.get(s), near = nextTo(s); if (kind) return near.filter(o => kindAt.get(o) === kind); const was = legendAreas.get(s)!; return near.includes(was) ? [was, ...near.filter(o => o !== was)] : near; };
+        pairOf = pairLegendAreas([...slots.filter(s => mine.has(s)), ...slots.filter(s => !mine.has(s))], wants);
+        if (pairOf.size === slots.length || !slotOf.size) break;
+        const last = [...slotOf.keys()].pop()!;
+        slotOf.delete(last);
+        dropped.push(last);
+      }
+      return { kinds, slotOf, kindAt, pairOf, dropped };
     };
     const { types: dealt } = dealAlongRoute(deck, kindOfType, own, runSeed, d => legendsOf(d).slotOf.size);
     order.forEach((k, i) => types.set(k, dealt[i]));
     typeBeyond();
     themeSpecials();
     // (the legend areas paired again: tonight's legends each beside one of its kind's areas where the matching found one, the rest
-    // beside the area they were grown from, each taking its pair's look)
-    const { kinds, slotOf, kindAt } = legendsOf(dealt), mine = new Map([...slotOf].map(([kind, s]) => [s, kind]));
-    // (each pair its own: tonight's legends' first, then the rest, the area each was grown beside where it's free)
-    const used = new Set<string>(), nextTo = (s: string) => [...(neighbours.get(s) ?? [])].filter(o => kindAt.has(o) && !used.has(o)).sort((a, b) => order.indexOf(a) - order.indexOf(b));
-    const pairOf = new Map<string, string>();
-    for (const s of slots) { const kind = mine.get(s); if (!kind) continue; const p = nextTo(s).find(o => kindAt.get(o) === kind)!; pairOf.set(s, p); used.add(p); }
-    for (const s of slots) { if (mine.has(s)) continue; const was = legendAreas.get(s)!, p = !used.has(was) ? was : nextTo(s)[0] ?? was; pairOf.set(s, p); used.add(p); }
+    // beside the area they were grown from, each taking its pair's look; one no pairing could give an area of its own, the one it
+    // was grown beside, logged)
+    const { kinds, slotOf, pairOf, dropped } = legendsOf(dealt), lone: string[] = [];
+    if (dropped.length) console.info(`legend areas: seed ${seed}: ${dropped.join(", ")} in an area of its own kind, not a legend area: no pairing gave every legend area its own with it`);
     for (const s of slots) {
-      const pair = pairOf.get(s)!;
+      const pair = pairOf.get(s) ?? legendAreas.get(s)!;
+      if (!pairOf.has(s)) lone.push(s);
       legendAreas.set(s, pair);
       pairCells.set(s, at(pair));
       types.set(s, types.get(pair)!);
     }
+    if (lone.length) console.info(`legend areas: seed ${seed}: ${lone.join(", ")} with no area of its own to pair with`);
     dealtKinds = kinds;
     legendSlotOf = new Map([...slotOf].map(([kind, s]) => [kind, legendAreas.get(s)!]));
     pieceHome = null;
@@ -1149,7 +1224,6 @@ export function generateMap(runSeed: number, tuning: Tuning, only?: { landStep: 
   // the treehouse between (rules/paths.ts). Then the set pieces, grounds, scenes and legends' clearings keep off them, below.
   if (!zooAt) placeSites(); // (every stone and special site, now the lines they keep off are laid)
   if (tuning.paths.network && !zoo) {
-    const S = tuning.runeMarkers?.stump, stumpClear = S?.on ? S.clear : tuning.soundsystemFootprint + tuning.treeMarginFromSoundsystem + 4;
     const keepOut: { x: number; z: number; r: number; rim?: boolean }[] = [{ x: centre.x, z: centre.z, r: floorClear }, { x: treehouse.x, z: treehouse.z, r: TH.clear }];
     for (const sp of specials.values()) keepOut.push({ x: sp.x, z: sp.z, r: sp.r, ...(sp.kind === "challenge" ? { rim: true } : {}) });
     for (const [cx, cy] of cells) if (cx !== centreCell[0] || cy !== centreCell[1]) { const q = soundsystemSpot(cx, cy); keepOut.push({ x: q.x, z: q.z, r: tuning.soundsystemFootprint + 3 }); }
@@ -1159,7 +1233,7 @@ export function generateMap(runSeed: number, tuning: Tuning, only?: { landStep: 
       if (sp) return { x: sp.x, z: sp.z, r: sp.r + 1 };
       if (!playable(cx, cy)) return null;
       const q = soundsystemSpot(cx, cy);
-      return { x: q.x, z: q.z, r: stumpClear };
+      return { x: q.x, z: q.z, r: stoneClear };
     };
     map.paths = new PathNetwork(map, wetBefore, { ends, keepOut });
     pieceHome = null;
@@ -1248,10 +1322,24 @@ export function generateMap(runSeed: number, tuning: Tuning, only?: { landStep: 
       }
     }
   }
-  const LC = tuning.legendClearing, nearStone: string[] = [], SHRINK = [1, 0.92, 0.85, 0.78, 0.72, 0.65];
+  const LC = tuning.legendClearing, moved: string[] = [], SHRINK = [1, 0.92, 0.85, 0.78, 0.72, 0.65];
+  // (a legend's circle siteGap from every other site that isn't a stone, Ed 2026-11-04: "Look at minimum distances between sites
+  // too": the other legends' circles, the challenge's claim or the find's clearing, home's dancefloor clearing and treehouse; the
+  // stones keep theirs, stoneKeepClear)
+  const apart = (x: number, z: number, r: number) => {
+    if (Math.hypot(x - centre.x, z - centre.z) < r + floorClear + siteGap || Math.hypot(x - treehouse.x, z - treehouse.z) < r + TH.clear + siteGap) return false;
+    for (const c of clearings.values()) if (Math.hypot(x - c.x, z - c.z) < r + c.r + siteGap) return false;
+    for (const sp of specials.values()) if (Math.hypot(x - sp.x, z - sp.z) < r + sp.r + (sp.claimed ? CLAIM_PAD : 0) + siteGap) return false;
+    if (stoneGap(x, z) < r + stoneClear + siteGap) return false; // (every stone's clearing)
+    return !lakes || lakeAt(x, z) <= -(r + siteLake); // (and a lake's water)
+  };
   const legendAreaOfPair = new Map([...legendAreas].map(([k, p]) => [p, k]));
-  for (const [cx, cy] of cells) {
-    if (!legendCells.has(cellKey(cx, cy))) continue; // (no legend, no clearing: home, and the areas legends.share leaves out)
+  // (one legend's circle in the area at (cx, cy): true where one fits keeping every gap; full, only at its full size, legendRadius's for
+  // an area with a stone, never smaller: Ed, 2026-11-05, on a circle under its size, "ideally from world generation all of the areas are
+  // large enough that this is not an issue")
+  const fullOf = (cx: number, cy: number) => legendRadius(AREA_TYPES[typeOf(cx, cy)].creature, LC);
+  const placeClearing = (cx: number, cy: number, full = false): boolean => {
+    const need = full ? fullOf(cx, cy) - 0.01 : 0;
     // In its legend area (above): at its heart, where a runestone would stand, sized to fit its legend up to fit.areaMax; clear of
     // the runestones round it (its pair's among them) by minFromOtherStones; failing a full-size spot, smaller in fine steps.
     const la = legendAreaOfPair.get(cellKey(cx, cy));
@@ -1263,18 +1351,18 @@ export function generateMap(runSeed: number, tuning: Tuning, only?: { landStep: 
         if (!isInside(B, x, z, 15) || !inCell(x, z, lx, ly)) return false;
         if (!stones.every(q => Math.hypot(x - q.x, z - q.z) - r >= (LC.minFromOtherStones ?? 0)) || !clearOfStones(x, z, r)) return false;
         for (let k = 0; k < 16; k++) { const b = (k / 16) * Math.PI * 2; if (!inCell(x + Math.cos(b) * r, z + Math.sin(b) * r, lx, ly)) return false; }
-        return !reserved(x, z, r) && !map.paths.at(x, z, r * 0.6);
+        return !reserved(x, z, r) && apart(x, z, r) && !map.paths.at(x, z, r * 0.6);
       };
       const spots: [number, number][] = [[site.x, site.z]];
       for (const f of [0.05, 0.1, 0.15, 0.2, 0.25, 0.3, 0.4, 0.5]) for (let k = 0; k < 16; k++) { const b = a0 + (k / 16) * Math.PI * 2; spots.push([site.x + Math.cos(b) * A * f, site.z + Math.sin(b) * A * f]); }
-      placed: for (const k of [1, 0.92, 0.85, 0.78, 0.72, 0.65, 0.55, 0.45]) { const r = Math.max(LC.radius, r0 * k); for (const [x, z] of spots) if (fits(x, z, r)) { clearings.set(cellKey(cx, cy), { cell: [lx, ly], x, z, r, edge: LC.edge, legend: { x, z: z - r * LC.top } }); break placed; } }
-      if (clearings.has(cellKey(cx, cy))) continue;
+      placed: for (const k of [1, 0.92, 0.85, 0.78, 0.72, 0.65, 0.55, 0.45]) { const r = Math.max(LC.radius, r0 * k); if (r < need) break; for (const [x, z] of spots) if (fits(x, z, r)) { clearings.set(cellKey(cx, cy), { cell: [lx, ly], x, z, r, edge: LC.edge, legend: { x, z: z - r * LC.top } }); break placed; } }
+      if (clearings.has(cellKey(cx, cy))) return true;
     }
     const species = AREA_TYPES[typeOf(cx, cy)].creature, r0 = legendRadius(species, zooAt ? { ...LC, fit: { margin: LC.fit?.margin ?? 3, max: ZOO_CONFIG.legendCap ?? LC.fit?.max ?? 25 } } : LC); // (sized to fit its legend: rules/legendFit.ts; the zoo's cap its own)
     let r = r0;
     const site = siteOf(cx, cy), a0 = hash2(cx, cy, seed + 891) * Math.PI * 2;
     // (the zoo: at its island's middle, Ed 2026-10-26: "Each zoo area has the corresponding legend circle at the centre of it")
-    if (zooAt) { clearings.set(cellKey(cx, cy), { cell: [cx, cy], x: site.x, z: site.z, r, edge: LC.edge, legend: { x: site.x, z: site.z - r * LC.top } }); continue; }
+    if (zooAt) { clearings.set(cellKey(cx, cy), { cell: [cx, cy], x: site.x, z: site.z, r, edge: LC.edge, legend: { x: site.x, z: site.z - r * LC.top } }); return true; }
     // Away from its area's runestone (where its soundsystem comes; Ed, 2026-10-06: "The legend circle shouldn't spawn
     // near its runestone"): its edge at least minFromStone metres off, so the circle, its grove and its rim kit stand
     // clear of the stone's clearing and the party's dance space (and a siege gets no safe spot beside its soundsystem).
@@ -1282,8 +1370,8 @@ export function generateMap(runSeed: number, tuning: Tuning, only?: { landStep: 
     // (and every neighbouring area's runestone at least minFromOtherStones off its edge, always: none standing over the legend)
     const others = [...(neighbours.get(cellKey(cx, cy)) ?? [])].map(k => k.split(",").map(Number)).filter(([x, y]) => playable(x, y) && !(x === centreCell[0] && y === centreCell[1])).map(([x, y]) => soundsystemSpot(x, y));
     const clearOfOthers = (x: number, z: number) => others.every(q => Math.hypot(x - q.x, z - q.z) - r >= (LC.minFromOtherStones ?? 0));
-    let farEnough = (x: number, z: number) => fromStone(x, z) >= (LC.minFromStone ?? 0);
-    let keptClear = (x: number, z: number) => clearOfStones(x, z, r); // (and its whole circle out of every stone's keep-clear zone)
+    const farEnough = (x: number, z: number) => fromStone(x, z) >= (LC.minFromStone ?? 0);
+    const keptClear = (x: number, z: number) => clearOfStones(x, z, r) && apart(x, z, r); // (and its whole circle out of every stone's keep-clear zone, siteGap from the other sites)
     const B = map.bounds, fits = (x: number, z: number) => {
       if (!isInside(B, x, z, 15) || !inCell(x, z, cx, cy)) return false; // (its middle where she can fly)
       if (!farEnough(x, z) || !clearOfOthers(x, z) || !keptClear(x, z)) return false;
@@ -1306,18 +1394,120 @@ export function generateMap(runSeed: number, tuning: Tuning, only?: { landStep: 
       grid.sort((p, q) => p[2] - q[2]);
       pathK = 0.6;
       // (and in a tight area, a smaller circle: the legend fills it more; in fine steps, so a big legend's circle loses no more than it must)
-      sized: for (const k of SHRINK) { r = r0 * k; for (const [x, z] of grid) if (fits(x, z)) { clearings.set(cellKey(cx, cy), { cell: [cx, cy], x, z, r, edge: LC.edge, legend: { x, z: z - r * LC.top } }); break sized; } }
-      // A small area with no spot far enough from the stones: the farthest from any that fits (logged).
+      sized: for (const k of SHRINK) { r = r0 * k; if (r < need) break; for (const [x, z] of grid) if (fits(x, z)) { clearings.set(cellKey(cx, cy), { cell: [cx, cy], x, z, r, edge: LC.edge, legend: { x, z: z - r * LC.top } }); break sized; } }
+      // (still none: a grid twice as fine, and the smaller circles a legend area's may take, never under legendClearing.radius, so every
+      // site keeps its gap, Ed 2026-11-04: "minimum distance between sites/circles/dancefloor/treehouse of 50m")
       if (!clearings.has(cellKey(cx, cy))) {
-        farEnough = () => true; keptClear = () => true;
-        const off = (x: number, z: number) => Math.min(fromStone(x, z), stoneGap(x, z) - r);
-        let best: [number, number, number, number] | null = null; // x, z, distance off the nearest stone, radius
-        for (const k of SHRINK) { r = r0 * k; for (const [x, z] of grid) if (fits(x, z) && (!best || off(x, z) > best[2] + 2)) best = [x, z, off(x, z), r]; } // (a smaller circle only for a clearly better spot)
-        if (best) { const [x, z] = best; r = best[3]; clearings.set(cellKey(cx, cy), { cell: [cx, cy], x, z, r, edge: LC.edge, legend: { x, z: z - r * LC.top } }); nearStone.push(`${cx},${cy} ${best[2].toFixed(0)} m`); }
+        const fine: [number, number, number][] = [];
+        for (let i = -28; i <= 28; i++) for (let j = -28; j <= 28; j++) { const x = ox + i * A * 0.04, z = oz + j * A * 0.04; fine.push([x, z, Math.abs(Math.hypot(x - ox, z - oz) - A * 0.4)]); }
+        fine.sort((p, q) => p[2] - q[2]);
+        finer: for (const k of [...SHRINK, 0.55, 0.45]) { r = Math.max(LC.radius, r0 * k); if (r < need) break; for (const [x, z] of fine) if (fits(x, z)) { clearings.set(cellKey(cx, cy), { cell: [cx, cy], x, z, r, edge: LC.edge, legend: { x, z: z - r * LC.top } }); break finer; } }
       }
     }
+    return clearings.has(cellKey(cx, cy));
+  };
+  // Where an area has no room for its legend's circle keeping every gap, nor another of its kind's areas, the area grows (Ed,
+  // 2026-11-04: "make the last-resort placement grow the area instead of breaking the gap"; 2026-11-05, on circles still under
+  // their size: "you can expand the coastline during map generation"): the circle goes where it keeps every gap, as near the area's
+  // heart as it can, and the area claims a circle of ground round it (rules/partition.ts claimable, grown): the circle and CLAIM_PAD
+  // more, or as far as reaches the area's own ground, so it's one piece with it, never over another site's footprint (5 m short).
+  // The ground taken: the island's land (its playable areas', the buffer's, a legend area's with no legend tonight, or home's past
+  // its circle, homeRadius), never home's circle, a legend area's with one, the find's or the challenge's, a lake's or another grown area's, and the buffer's depth from
+  // the sea, so the land, coast and lakes are the same every night; each playable or legend area it takes from keeping 40% of its
+  // ground or more. An area it now touches becomes its neighbour. Logged.
+  const grownCells = new Set<string>(), grownLog: string[] = [], deepIn = MS.buffer * A * 0.85, homeOf = cellKey(centreCell[0], centreCell[1]);
+  const growClearing = (cx: number, cy: number, full = false): boolean => {
+    const need = full ? fullOf(cx, cy) - 0.01 : 0;
+    const k = cellKey(cx, cy), la = legendAreaOfPair.get(k), [gx, gy] = la ? la.split(",").map(Number) : [cx, cy], g = cellKey(gx, gy);
+    if (grownCells.has(g)) return false;
+    const species = AREA_TYPES[typeOf(cx, cy)].creature, r0 = la ? legendRadius(species, LC, areaMax) : legendRadius(species, LC);
+    const nb = neighbours.get(g) ?? new Set<string>(), site = siteOf(gx, gy), B = map.bounds, stone = la ? null : soundsystemSpot(cx, cy);
+    const isPlayable = (q: string) => { const [x, y] = q.split(",").map(Number); return playable(x, y); };
+    const emptyLegendArea = (q: string) => legendAreas.has(q) && !legendCells.has(legendAreas.get(q)!); // (one with no legend tonight)
+    const takes = (q: string) => q === g || (q !== homeOf && (!legendAreas.has(q) || emptyLegendArea(q)) && !grownCells.has(q) && !lakeCells.has(q) && !specials.has(q) && (isPlayable(q) || landCells.has(q)));
+    // (each area's ground round it, sampled every 8 m: what an area it takes from keeps)
+    const census = new Map<string, number>(), span = A * 2.2, ground: [number, number][] = [];
+    for (let dx = -span; dx <= span; dx += 8) for (let dz = -span; dz <= span; dz += 8) { const c = areaAt(site.x + dx, site.z + dz).cell, q = cellKey(c[0], c[1]); census.set(q, (census.get(q) ?? 0) + 64); if (q === g) ground.push([site.x + dx, site.z + dz]); }
+    // (round a point surely in the area, nearest it first)
+    let ox = site.x, oz = site.z;
+    if (!inCell(ox, oz, gx, gy)) found: for (let d = 4; d < A * 1.6; d += 4) for (let i = 0; i < 24; i++) { const b = (i / 24) * Math.PI * 2, x = site.x + Math.cos(b) * d, z = site.z + Math.sin(b) * d; if (inCell(x, z, gx, gy)) { ox = x; oz = z; break found; } }
+    const spots: [number, number, number][] = [];
+    for (let i = -26; i <= 26; i++) for (let j = -26; j <= 26; j++) { const x = ox + i * A * 0.04, z = oz + j * A * 0.04; spots.push([x, z, Math.hypot(x - ox, z - oz)]); }
+    spots.sort((p, q) => p[2] - q[2]);
+    const keeps = (x: number, z: number, r: number) => isInside(B, x, z, 15) && (!stone || Math.hypot(x - stone.x, z - stone.z) - r >= (LC.minFromStone ?? 0)) && clearOfStones(x, z, r) && apart(x, z, r) && !reserved(x, z, r) && !map.paths.at(x, z, r * 0.6);
+    const claimOf = (x: number, z: number, r: number): { claim: Claim; m2: number; from: string[] } | null => {
+      let reach = Infinity;
+      for (const [gx0, gz0] of ground) reach = Math.min(reach, Math.hypot(x - gx0, z - gz0));
+      const rc = Math.max(r + CLAIM_PAD, reach + 6), [u0, v0] = toPart(x, z);
+      // (never over another site's footprint, 5 m short of it: a stone's clearing, a legend's circle, the find's or challenge's, home's)
+      let most = Math.min(stoneGap(x, z) - stoneClear, Math.hypot(x - centre.x, z - centre.z) - floorClear, Math.hypot(x - treehouse.x, z - treehouse.z) - TH.clear);
+      for (const c of clearings.values()) most = Math.min(most, Math.hypot(x - c.x, z - c.z) - c.r);
+      for (const sp of specials.values()) most = Math.min(most, Math.hypot(x - sp.x, z - sp.z) - sp.r - (sp.claimed ? CLAIM_PAD : 0));
+      if (rc > most - 5) return null;
+      let rp = 0;
+      for (let i = 0; i < 48; i++) { const a = (i / 48) * Math.PI * 2, [u, v] = toPart(x + Math.cos(a) * rc, z + Math.sin(a) * rc); rp = Math.max(rp, Math.hypot(u - u0, v - v0)); }
+      rp *= 1.02;
+      const taken = new Map<string, number>();
+      let mine = false;
+      for (let dx = -rc * 1.3; dx <= rc * 1.3; dx += 4) for (let dz = -rc * 1.3; dz <= rc * 1.3; dz += 4) {
+        const [u, v] = toPart(x + dx, z + dz);
+        if ((u - u0) ** 2 + (v - v0) ** 2 >= rp * rp) continue;
+        const c = partition.partition(u, v), q = cellKey(c[0], c[1]);
+        if (!(takes(q) || (q === homeOf && Math.hypot(x + dx - centre.x, z + dz - centre.z) > homeRadius + 5)) || (land && land.distAt(x + dx, z + dz) < deepIn)) return null; // (home's: only past its circle, Ed's "the whole circle ... within it" kept)
+        if (q === g) mine = true;
+        else taken.set(q, (taken.get(q) ?? 0) + 16);
+      }
+      if (!mine) return null; // (the circle reaches the area's own ground: one piece with it)
+      for (const [q, m2] of taken) { const was = census.get(q) ?? 0; if ((isPlayable(q) || legendAreas.has(q) || q === homeOf) && was - m2 < 0.4 * was) return null; }
+      return { claim: { cell: [gx, gy], u: u0, v: v0, r: rp }, m2: [...taken.values()].reduce((a, b) => a + b, 0), from: [...taken.keys()] };
+    };
+    for (const r of new Set([...SHRINK, 0.55, 0.45].map(f => Math.max(LC.radius, r0 * f)).filter(r => r >= need))) for (const [x, z] of spots) {
+      if (!keeps(x, z, r)) continue;
+      const got = claimOf(x, z, r);
+      if (!got) continue;
+      partition.grown.push(got.claim);
+      // (an area it took ground from that didn't touch it now does: the two made neighbours, the map's prep keeping them as first cut)
+      if (got.from.some(q => !nb.has(q))) {
+        if (!BASE_NEIGHBOURS.has(neighbours)) BASE_NEIGHBOURS.set(neighbours, [...neighbours].map(([q, v]): [string, string[]] => [q, [...v]]));
+        for (const q of got.from) if (!nb.has(q)) { nb.add(q); let o = neighbours.get(q); if (!o) neighbours.set(q, (o = new Set())); o.add(g); }
+        if (!neighbours.has(g)) neighbours.set(g, nb);
+      }
+      grownCells.add(g);
+      clearings.set(k, { cell: [gx, gy], x, z, r, edge: LC.edge, legend: { x, z: z - r * LC.top } });
+      grownLog.push(`${g} by ${Math.round(got.m2)} m² of ${Math.round(census.get(g) ?? 0)} (its ${r.toFixed(0)} m circle ${Math.round(Math.hypot(x - ox, z - oz))} m off its heart)`);
+      return true;
+    }
+    return false;
+  };
+  // Each legend's circle (Ed, 2026-11-04: "minimum distance between sites/circles/dancefloor/treehouse of 50m ... If this can't fit,
+  // increase area sizes"): where its area has no room for one keeping every gap, the legend moves to another of its kind's areas
+  // that has (one of the route's first three for the early quest's, so its quest stays early), before the last resort.
+  const routeOrder = rosterIsland || tuning.legends?.earlyQuest !== false ? routeOf(map as unknown as ForestMap).order : [];
+  const kindOfCell = (k: string) => { const [x, y] = k.split(",").map(Number); return AREA_TYPES[typeOf(x, y)].creature; };
+  // (on a map by legends.share, the move keeps its spread: no more than two neighbouring legend areas together, chooseLegendCells)
+  const noRoom: string[] = [];
+  const runWith = (o: string, without: string) => { const seen = new Set([o]), todo = [o]; while (todo.length) for (const x of neighbours.get(todo.pop()!) ?? []) if (x !== without && legendCells.has(x) && !seen.has(x)) { seen.add(x); todo.push(x); } return seen.size; };
+  for (const [cx, cy] of cells) {
+    const k = cellKey(cx, cy);
+    if (!legendCells.has(k) || clearings.has(k)) continue; // (no legend, no clearing: home, and the areas legends.share leaves out)
+    const early = routeOrder.slice(0, 3).includes(k), kind = kindOfCell(k);
+    const alts = (routeOrder.length ? routeOrder : cells.map(c => cellKey(c[0], c[1]))).filter(o => o !== k && !legendCells.has(o) && kindOfCell(o) === kind && (!early || routeOrder.slice(0, 3).includes(o)) && (!!rosterIsland || runWith(o, k) <= 2));
+    // (at its full size first: in its area, or another of its kind's; else its area grown for it; else another of those grown; only
+    // then a smaller circle, the same way round; never a circle breaking a gap: failing everything, no circle, logged)
+    let at: string | undefined;
+    for (const full of [true, false]) {
+      for (const place of [placeClearing, growClearing]) {
+        at = [k, ...alts].find(o => { const [x, y] = o.split(",").map(Number); return place(x, y, full); });
+        if (at) break;
+      }
+      if (at) break;
+    }
+    if (!at) { noRoom.push(k); continue; }
+    if (at !== k) { legendCells.delete(k); legendCells.add(at); moved.push(`${k} to ${at}`); }
   }
-  if (nearStone.length) console.info(`legend clearings: seed ${seed}: ${nearStone.length} closer than minFromStone (${LC.minFromStone} m) to their runestone or inside a stone's keep-clear zone (${keepClear} m), at the farthest spot they fit: ${nearStone.join(", ")}`);
+  if (moved.length) console.info(`legend clearings: seed ${seed}: ${moved.length} moved to another of its kind's areas, its own having no room keeping every gap: ${moved.join(", ")}`);
+  if (grownLog.length) console.info(`legend clearings: seed ${seed}: ${grownLog.length} area${grownLog.length > 1 ? "s" : ""} grown for a legend's circle keeping every gap: ${grownLog.join(", ")}`);
+  if (noRoom.length) console.info(`legend clearings: seed ${seed}: no room for a circle keeping every gap, even grown: ${noRoom.join(", ")}`);
   map.legendClearings = [...clearings.values()];
   map.paths.placePieces();
   return map;

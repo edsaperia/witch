@@ -13,7 +13,7 @@ import type { Creature } from "../creatures";
 import { outcome } from "../../test/outcome";
 
 const idle: Controls = { moveX: 0, moveZ: 0, toggleMode: false, zoom: 0 };
-const lateHome = (n: number, t: Tuning = TUNING): Tuning => { const all = knownKinds(Object.keys(KINDS_TABLE)).slice(0, n); return { ...t, map: { ...t.map!, island: "home", islandAreas: all.length, found: all }, challenge: { ...t.challenge!, statues: { ...t.challenge!.statues!, on: false } } }; }; // (its statues off, rules/challengeStatues.ts: the pack wild from the start, the fight measured as before)
+const lateHome = (n: number, t: Tuning = TUNING): Tuning => { const all = knownKinds(Object.keys(KINDS_TABLE)).slice(0, n); return { ...t, home: { ...t.home, challengeAt: 0 }, map: { ...t.map!, island: "home", islandAreas: all.length, found: all }, challenge: { ...t.challenge!, statues: { ...t.challenge!.statues!, on: false } } }; }; // (its statues off, rules/challengeStatues.ts: the pack wild from the start, the fight measured as before)
 
 /** The challenge's pack (an adult and a youth of each of home's ten kinds: twenty, the round's reference size) hunting her in the
  *  middle of its circle, the pack bench's set-up (tools/bench/pack.ts), her health held; `strikes` counts the pack's wind-ups. */

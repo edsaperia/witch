@@ -9,7 +9,7 @@ import { watchStep } from "./wildWatch";
 import { coarseTurn, inFull, type LodCounts } from "./simLod";
 import { earlyQuest, questFor, type Quest } from "./quest";
 import { rng } from "./random";
-import { routeIndex, routePopulation } from "./growth";
+import { islandReach, routeIndex, routePopulation } from "./growth";
 import { routeOf } from "./party";
 import { AREA_TYPES, type ForestMap } from "./map";
 import { isInside } from "./mapShape";
@@ -410,7 +410,7 @@ export function spawnCreatures(map: ForestMap): Creature[] {
   const out: Creature[] = [], pop = population(map);
   // The home area holds no creatures (Ed, 2026-10-03) and no legend (Ed, 2026-10-05: "Home area
   // shouldn't have a legend"). The areas map.hasLegend picks (legends.share of them, Ed 2026-10-06) have their legend, sleeping in its clearing.
-  const [hx, hy] = map.centreCell, early = earlyQuest(map), route = routeIndex(routeOf(map).order);
+  const [hx, hy] = map.centreCell, early = earlyQuest(map), route = routeIndex(routeOf(map).order), reach = islandReach(map); // (how far along the swarm curve its last area comes: its phase's, home's by the islands found)
   for (const [cx, cy] of map.cells) {
     const home = cx === hx && cy === hy;
     const r = rng(map.seed * 7919 + cx * 131 + cy * 977 + 3), cell: [number, number] = [cx, cy], make = (level: Level) => out.push(makeCreature(map, cell, level, out.length, r));
@@ -421,7 +421,7 @@ export function spawnCreatures(map: ForestMap): Creature[] {
       // rules/growth.ts routePopulation.
       const species = AREA_TYPES[map.typeOf(cx, cy)].creature, at = route.get(`${cx},${cy}`) ?? route.size + 1;
       // (the zoo: every block its group, calm: rules/zoo.ts, config/zoo.json; Ed, 2026-10-13: "Default state: calm")
-      const [babies, young, adults] = map.zoo ? [map.zoo.group.babies, map.zoo.group.young, map.zoo.group.adults] : routePopulation(at, route.size, map.tuning.population.byRoute, map.tuning.population.swarm, pop, species);
+      const [babies, young, adults] = map.zoo ? [map.zoo.group.babies, map.zoo.group.young, map.zoo.group.adults] : routePopulation(at, route.size, map.tuning.population.byRoute, map.tuning.population.swarm, pop, species, reach);
       for (let i = 0; i < babies; i++) make(0);
       for (let i = 0; i < young; i++) make(1);
       for (let i = 0; i < adults; i++) make(2);

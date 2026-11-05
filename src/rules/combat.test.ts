@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { attackOf, COMBAT, strengthOf } from "./combat";
+import { attackOf, COMBAT, guardRadius, strengthOf } from "./combat";
 import { LEGEND, type Creature, type Level } from "./creatures";
 import { newGame, stepGame, STEP, type Controls, type Game } from "./game";
 import { TUNING, withTuning, type Tuning } from "./tuning";
@@ -226,11 +226,13 @@ describe("knocked out (Ed, 2026-10-04)", () => {
     for (let i = 0; i < (10 + RESPAWN) / STEP && W.ko; i++) stepGame(g, idle, STEP);
     const p = g.leash.placed.find(q => q.id === a.id)!;
     expect(p).toBeDefined();
-    // with her over it in the treetops (creatures are stepped only near her), a minute and a half: it stays by its sigil
+    // with her over it in the treetops (creatures are stepped only near her), a minute and a half: it stays by its sigil, or, its
+    // sigil in the home area, in the home area, roaming it (Ed, 2026-11-04: "Animals parked in the home area can roam it freely")
     g.witch = { ...g.witch, seated: false, perch: false, mode: "treetop", lift: 1, x: p.x, z: p.z };
-    let farthest = 0;
-    for (let k = 0; k < 90; k++) { run(g, 1); farthest = Math.max(farthest, Math.hypot(a.x - p.x, a.z - p.z)); }
-    expect(farthest).toBeLessThan(TUNING.leash.length + 6);
+    const H = homeArea(g.map), atHome = H.inside(p.x, p.z);
+    let farthest = 0, out = 0;
+    for (let k = 0; k < 90; k++) { run(g, 1); farthest = Math.max(farthest, Math.hypot(a.x - p.x, a.z - p.z)); if (!H.inside(a.x, a.z)) out++; }
+    if (atHome) expect(out).toBe(0); else expect(farthest).toBeLessThan(TUNING.leash.length + 6);
   }, 120000);
 
   it("lets none eat a berry on its own after a knockdown, parked by them or not (Ed, 2026-11-03: no animal eats on its own)", () => {
@@ -456,37 +458,72 @@ describe("Ed's Stage 4 rulings", () => {
     // sigil's whole area too: the next test)
   }, 60000);
 
-  it("has one parked in any other area guard the whole of that area plus guard.radius round its sigil (Ed, 2026-10-15)", () => {
-    const g = quiet(), R = TUNING.guard.radius * FIGHT.scale;
+  it("lets one parked in the home area roam all of it, past guard.radius from its sigil, never out of it (Ed, 2026-11-04)", () => {
+    // (Ed: "Animals parked in the home area can roam it freely"; it still guards the whole of it: the test before)
+    const g = quiet(), w = g.witch, H = homeArea(g.map);
     g.witch = { ...g.witch, mode: "treetop", lift: 1 }; // nothing attacks her up there
-    // an area two out from home: its site, the farthest point of it from there (well past guard.radius), and a point just outside
-    // it, more than guard.radius from the sigil
+    for (const c of g.creatures) if (!c.leashed && Math.hypot(c.x - H.x, c.z - H.z) < H.r + 80) c.gone = true; // (no foes to fight)
+    const mine = place(g, 0, "fox", 2, w.x, w.z, true);
+    g.leash.stack = g.leash.stack.filter(id => id !== mine.id); g.leash.placed.push({ id: mine.id, x: w.x, z: w.z, at: g.clock.time });
+    let farthest = 0, out = 0;
+    for (let k = 0; k < 240; k++) { run(g, 1); farthest = Math.max(farthest, Math.hypot(mine.x - w.x, mine.z - w.z)); if (!H.inside(mine.x, mine.z)) out++; }
+    expect(farthest).toBeGreaterThan(TUNING.guard.radius); // (past 40 m from its sigil)
+    expect(out).toBe(0); // (never out of the home area)
+  }, 120000);
+
+  // (parked off home, at an area's site two out from home: a foe at the far side of its area, and one just outside the area `off`
+  // metres from the sigil; true where the parked one goes for each)
+  const guardsOff = (t: Tuning, lo: number, hi: number) => {
+    const g = quiet(t);
+    g.witch = { ...g.witch, mode: "treetop", lift: 1 }; // nothing attacks her up there
     const cell: [number, number] = [g.map.centreCell[0] + 2, g.map.centreCell[1]], A = areaOf(g.map, cell), sx = A.x, sz = A.z;
     expect(A.inside(sx, sz)).toBe(true);
-    for (const c of g.creatures) if (!c.leashed && Math.hypot(c.x - sx, c.z - sz) < A.r + 60) c.gone = true;
+    for (const c of g.creatures) if (!c.leashed && Math.hypot(c.x - sx, c.z - sz) < A.r + 120) c.gone = true;
     let far = { x: sx, z: sz, d: 0 }, out: { x: number; z: number } | null = null;
-    for (let a = 0; a < 64; a++) for (let r = 4; r < A.r * 2; r += 4) {
+    for (let a = 0; a < 64; a++) for (let r = 4; r < A.r * 2 + hi; r += 2) {
       const x = sx + Math.cos(a / 64 * Math.PI * 2) * r, z = sz + Math.sin(a / 64 * Math.PI * 2) * r, inside = A.inside(x, z);
       if (inside && r > far.d) far = { x, z, d: r };
-      if (!inside && !out && r > R + 6 && r < R + 20) out = { x, z };
+      if (!inside && !out && r > lo && r < hi) out = { x, z };
     }
-    expect(far.d).toBeGreaterThan(R + 10);
-    expect(out).not.toBeNull();
+    expect(out, `a point outside the area ${lo} to ${hi} m off`).not.toBeNull();
     const park = (c: Creature, x: number, z: number) => { g.leash.stack = g.leash.stack.filter(id => id !== c.id); g.leash.placed.push({ id: c.id, x, z, at: g.clock.time }); };
     const mine = place(g, 0, "fox", 2, sx, sz, true);
     park(mine, sx, sz);
-    const foe = place(g, 0, "boar", 1, far.x, far.z); // at the far side of its area, well past guard.radius
+    const foe = place(g, 0, "boar", 1, far.x, far.z); // at the far side of its area
     foe.rest = 100;
     run(g, 3);
-    expect(mine.fight?.target).toEqual({ kind: "creature", id: foe.id });
-    // just outside its area and beyond guard.radius of the sigil: left be
+    const inArea = mine.fight?.target?.kind === "creature" && mine.fight.target.id === foe.id;
     foe.gone = true;
     Object.assign(mine, { fight: undefined, x: sx, z: sz, tx: sx, tz: sz });
     const near = place(g, 0, "boar", 1, out!.x, out!.z);
     near.rest = 100;
     run(g, 3);
-    expect(mine.fight?.target ?? null).toBeNull();
+    return { inArea, outside: mine.fight?.target?.kind === "creature" && mine.fight.target.id === near.id, farD: far.d };
+  };
+
+  it("has one parked in any other area guard the whole of that area plus guard.radius round its sigil (Ed, 2026-10-15)", () => {
+    // (the radius its chain's length since Ed, 2026-11-04: the next test)
+    const R = guardRadius(TUNING, false) * FIGHT.scale, r = guardsOff(TUNING, R + 6, R + 20);
+    expect(r.inArea).toBe(true);
+    expect(r.outside).toBe(false); // just outside its area and beyond the radius of the sigil: left be
   }, 60000);
+
+  it("guards its chain's length round its sigil off home, guard.radius in home's area, following the chain-length slider (Ed, 2026-11-04)", () => {
+    // (Ed: "A parked creature should guard its chain length, now that's a fixed number, with home area an exception")
+    expect(guardRadius(TUNING, false)).toBe(TUNING.leash.chain!.length);
+    expect(TUNING.leash.chain!.length).toBe(80);
+    expect(guardRadius(TUNING, true)).toBe(TUNING.guard.radius);
+    expect(TUNING.guard.radius).toBe(40);
+    // off home: a foe just outside its area, past 40 m but within 80 m of the sigil, is fought
+    const S = FIGHT.scale, mid = guardsOff(TUNING, 50 * S, 70 * S);
+    expect(mid.inArea).toBe(true);
+    expect(mid.outside).toBe(true);
+    // the slider: a 45 m chain guards 45 m round it, so the same band is left be
+    const short = withTuning({ leash: { ...TUNING.leash, chain: { ...TUNING.leash.chain!, length: 45 } } });
+    expect(guardRadius(short, false)).toBe(45);
+    expect(guardsOff(short, 50 * S, 70 * S).outside).toBe(false);
+    // (in home's area: the whole of it and nothing outside it, the test before last: guard.radius kept there)
+  }, 120000);
 
   it("heals a party animal to full when it eats a berry or is invited; a legend never wants one (Ed, 2026-11-03: \"Legends still need no berries\")", () => {
     const g = quiet(), w = g.witch;

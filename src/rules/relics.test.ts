@@ -74,7 +74,7 @@ describe("legend relics on the map", () => {
 
   it("one per relics.perAreas areas on the islands (Ed, 2026-10-11): 1 on 10, 2 on 20, 5 on 50, 6 on 64, no kind twice", () => {
     for (const [areas, want] of [[10, 1], [20, 2], [30, 3], [50, 5], [64, 6]]) for (const seed of [1, 123]) {
-      const map = sharedMap(seed, { ...TUNING, map: { ...TUNING.map!, islandAreas: areas } }), relics = placeRelics(map, new Forest(map));
+      const map = sharedMap(seed, { ...TUNING, map: { ...TUNING.map!, island: "", islandAreas: areas } }), relics = placeRelics(map, new Forest(map));
       expect(relics.length, `${areas} areas, seed ${seed}`).toBe(want);
       const looks = new Map(relicKinds(LEGENDS.relics).map(k => [k.kind, k.look]));
       expect(new Set(relics.map(r => looks.get(r.kind))).size).toBe(want);
@@ -109,7 +109,7 @@ describe("legend relics on the map", () => {
   it("never lays a bottle and its mirror image in the same colour on one map (Ed, 2026-10-11), on 30 seeds of each size", () => {
     const looks = new Map(relicKinds(LEGENDS.relics).map(k => [k.kind, k.look]));
     for (const areas of [20, 50]) for (let seed = 1; seed <= 30; seed++) {
-      const map = sharedMap(seed, { ...TUNING, map: { ...TUNING.map!, islandAreas: areas } }), relics = placeRelics(map, new Forest(map));
+      const map = sharedMap(seed, { ...TUNING, map: { ...TUNING.map!, island: "", islandAreas: areas } }), relics = placeRelics(map, new Forest(map));
       const seen = relics.map(r => looks.get(r.kind)!);
       expect(new Set(seen).size, `${areas} areas, seed ${seed}: ${relics.map(r => r.kind).join(", ")}`).toBe(seen.length);
     }

@@ -75,12 +75,15 @@ describe("feeding on command (Ed, 2026-11-03)", () => {
     // room: a youth a berry from adult takes one
     const s2 = scene([1], 5), [y2] = s2.mine;
     s2.g.berries.fed.set(y2.id, toEvolve(1, T, y2.species) - 1);
-    for (let i = 0; i < 4; i++) tap(s2.g);
+    tap(s2.g);
     expect(queuedFor(s2.g.berries, y2.id)).toBe(1);
     expect(feedOffer(s2.g, s2.W), "full: no feed on offer").toBeNull();
-    // a tap now puts it down, as ever
+    // a tap now puts it down, as ever (and further taps queue no more: they pick it up and put it down again where its sigil lies
+    // in her hex cell, as on seed 123 once areas grew to 196 m, 2026-11-04; three more taps here before, its sigil in the next cell)
     tap(s2.g);
     expect(s2.W.leash.placed.map(p => p.id)).toEqual([y2.id]);
+    for (let i = 0; i < 3; i++) tap(s2.g);
+    expect(queuedFor(s2.g.berries, y2.id)).toBe(1);
     void W;
   }, 60000);
 
