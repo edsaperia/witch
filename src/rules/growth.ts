@@ -10,7 +10,8 @@
 import { makeCreature, type Creature, type Level } from "./creatures";
 import { AREA_TYPES, type ForestMap } from "./map";
 import { COMBAT, strengthOf, type CombatData } from "./combat";
-import { buildSwarm, islandShare, POWER_TABLE, type PowerTable, type SwarmTuning } from "./swarm";
+import { buildSwarm, islandShare, phaseReach, POWER_TABLE, type PowerTable, type SwarmTuning } from "./swarm";
+import { foundShare } from "./rosters";
 import { hash2, rng } from "./random";
 
 export interface Pending { level: Level; wave: number; n: number }
@@ -65,11 +66,21 @@ export interface ByRoute {
   minHostile?: number;
 }
 
+/** How far along the swarm curve an island's last area comes (Ed, 2026-11-04: "we should rebalance this so phase 5 islands get to
+ *  full packs"): a kind's island its phase over swarm.fullPhase (rules/swarm.ts phaseReach), home the share of the islands she's
+ *  found (rules/rosters.ts foundShare: full packs only once every island is found), a map that's no island by roster (the radius
+ *  map, ?island=N) the whole curve. */
+export function islandReach(map: Pick<ForestMap, "island" | "tuning">): number {
+  const I = map.island;
+  if (!I) return 1;
+  return I.kind === "home" ? foundShare(map.tuning.map?.found ?? []) : phaseReach(I.phase, map.tuning.population.swarm);
+}
+
 /** An area's whole starting population [babies, young, adults] (its legend and its circle's baby aside), by its place on the
- *  route (`index` of `length`, its island's route: islandShare, the island's size over the largest's too): its hostile swarm (rules/swarm.ts buildSwarm) over population.start's young and adults (times
+ *  route (`index` of `length`, its island's route, as far along the curve as the island's `reach`: islandShare, islandReach): its hostile swarm (rules/swarm.ts buildSwarm) over population.start's young and adults (times
  *  its count scale), at least minHostile of them; and its babies, byRoute.babies (or start's, if more), at most babyCap. */
-export function routePopulation(index: number, length: number, R: ByRoute, S: SwarmTuning, start: { babies: number; young: number; adults: number }, species: string, table: PowerTable = POWER_TABLE, data: CombatData = COMBAT): [number, number, number] {
-  const scale = countScale(species), [sy, sa] = buildSwarm(islandShare(index, length, S), S, species, table, data); // (along its own island, scaled by its size: Ed, 2026-11-03)
+export function routePopulation(index: number, length: number, R: ByRoute, S: SwarmTuning, start: { babies: number; young: number; adults: number }, species: string, reach = 1, table: PowerTable = POWER_TABLE, data: CombatData = COMBAT): [number, number, number] {
+  const scale = countScale(species), [sy, sa] = buildSwarm(islandShare(index, length, reach), S, species, table, data); // (along its own island, as far as its phase: Ed, 2026-11-04)
   const babies = Math.min(Math.max(0, R.babyCap), Math.max(startCount(start.babies, scale), R.babies));
   const young = startCount(start.young, scale) + sy, adults = startCount(start.adults, scale) + sa;
   return [babies, young + Math.max(0, (R.minHostile ?? 0) - young - adults), adults]; // (at least minHostile young or adults: Ed, 2026-10-07)

@@ -53,8 +53,8 @@ describe("the beach", () => {
       for (let k = 0; k < 64; k++) {
         const q = L.along(sea, (k / 64) * len), ww = b.sandAlong(sea, (k / 64) * len), straight = [5, ww * 0.5, ww, ww + 10].every(d => Math.abs(L.distAt(q.x - q.nx * d, q.z - q.nz * d) - d) < 1);
         if (!straight) continue;
-        expect(b.intoSand(q.x - q.nx * (ww - 2.5), q.z - q.nz * (ww - 2.5))).toBeGreaterThan(0); // (within a few metres: eased between the land map's samples)
-        expect(b.intoSand(q.x - q.nx * (ww + 2.5), q.z - q.nz * (ww + 2.5))).toBeLessThan(0);
+        expect(b.intoSand(q.x - q.nx * (ww - 3), q.z - q.nz * (ww - 3))).toBeGreaterThan(0); // (within a few metres: eased between the land map's samples; 2.5 m before areas grew to 196 m, 2026-11-04)
+        expect(b.intoSand(q.x - q.nx * (ww + 3), q.z - q.nz * (ww + 3))).toBeLessThan(0);
       }
     }
     // How far in or out is a true distance anywhere, deep inland too (the waves' loudness, the hills' easing and the paths'
@@ -80,7 +80,7 @@ describe("the beach", () => {
 });
 
 describe("flying on past the beach, she lands and stargazes", () => {
-  const map = sharedMap(123, TUNING), p = facing(map.bounds.land!, Math.atan2(0.8, 0.6)), out = { x: p.nx, z: p.nz }; // (a straight stretch of coast facing out that way)
+  const map = sharedMap(123, TUNING), p = facing(map.bounds.land!, Math.atan2(0.6, -0.8)), out = { x: p.nx, z: p.nz }; // (a straight stretch of coast facing out that way; atan2(0.8, 0.6) before areas grew to 196 m, 2026-11-04, its stretch no longer straight)
   const at = (d: number, mode: WitchState["mode"]): WitchState => ({ ...newWitch(p.x - out.x * d, p.z - out.z * d), mode, lift: mode === "treetop" ? 1 : 0 });
   const edge = 0, c = { x: p.x - out.x * 1000, z: p.z - out.z * 1000 }; // (distances in from the coast; a point well inland, for "back inland")
   const seaward: Intent = { moveX: out.x, moveZ: out.z, toggleMode: false }, inland: Intent = { moveX: -out.x, moveZ: -out.z, toggleMode: false };

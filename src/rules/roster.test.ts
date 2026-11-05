@@ -6,7 +6,7 @@
 import { describe, expect, it } from "vitest";
 import { TUNING, withTuning } from "./tuning";
 import { newGame, stepGame, STEP, type Controls } from "./game";
-import { homeKinds, islandOf, knownKinds } from "./rosters";
+import { homeKinds, homeRoster, islandOf, knownKinds } from "./rosters";
 import { AREA_TYPES } from "./map";
 
 // Keep authored campaign/island sizes: each whole-night assertion checks that roster and its growth, including home's ten-to-eleven transition.
@@ -28,13 +28,13 @@ function nightSpecies(seed: number, island: string, found: string[] = [], waves 
 }
 
 describe("only the island's roster appears (rules/rosters.ts)", () => {
-  it("home at a campaign's start: every creature made over a night is one of its ten kinds (no flyers, no insects)", () => {
+  it("home at a campaign's start: every creature made over a night is one of its starting kinds, tonight's five (no flyers, no insects)", () => {
     const home = new Set(homeKinds());
     expect([...home].sort()).toEqual(["badger", "dormouse", "fox", "hare", "hedgehog", "marten", "mole", "snail", "squirrel", "stoat"]);
     for (const seed of [123, 7]) {
-      const seen = nightSpecies(seed, "home");
-      expect([...seen.keys()].filter(k => !home.has(k)), `seed ${seed}: outside home's roster`).toEqual([]);
-      expect(seen.size, `seed ${seed}: one area a kind`).toBe(home.size); // (every kind met: one area each)
+      const seen = nightSpecies(seed, "home"), tonight = new Set(homeRoster([], seed));
+      expect([...seen.keys()].filter(k => !tonight.has(k)), `seed ${seed}: outside home's roster`).toEqual([]);
+      expect(seen.size, `seed ${seed}: one area a kind`).toBe(5); // (every kind met: one area each, Ed 2026-11-04: "home has 5 areas")
       expect(seen.has("owl")).toBe(false);
     }
   }, 240000);

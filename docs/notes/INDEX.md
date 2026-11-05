@@ -200,6 +200,7 @@ says what each note covers.
 - Beach
 - Island
 - Master curve
+- Island sizes by phase
 - Journey art kit
 - Kind table / roster / island by kind
 - Sea chart
@@ -244,6 +245,7 @@ says what each note covers.
 
 ## [Performance](performance.md)
 
+- Smoke veil readback (PR1558, pending hardware proof)
 - House route profiling
 - Startup bundle baseline
 - Crash journal budget
@@ -334,11 +336,13 @@ says what each note covers.
 
 ## [Testing tools](testing.md)
 
+- Shared still capture harness
 - A quick proof shot
 - Publishing previews
 
 ## [The view](view.md)
 
+- Elapsed-time view easing
 - Heat/refraction preview
 - Dodge echoes
 - Night and Heat Vision
@@ -415,6 +419,7 @@ says what each note covers.
 - Stone keep-clear zone
 - Site paths
 - Stone spacing
+- Site gaps
 - Set-piece generator (legacy art)
 - Area recipe
 - Area folder

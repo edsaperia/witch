@@ -2,7 +2,7 @@
 // it, so neighbouring coasts keep a strait between them and follow each other across it.
 import { describe, expect, it } from "vitest";
 import { TUNING } from "./tuning";
-import { homeIsland, islandOf, REAL_KINDS, worldOf } from "./rosters";
+import { homeIsland, islandOf, REAL_KINDS, sizeOfPhase, worldOf } from "./rosters";
 import { islandOutline } from "./islandShape";
 import { CHART_METRES, STRAIT } from "./archipelago";
 
@@ -36,5 +36,23 @@ describe("the archipelago", () => {
       expect(d, `home and ${p.id}`).toBeGreaterThan(STRAIT - 8); // (a strait at least, less the outline's sampling)
     }
     // W8, Ed 2026-11-02: nearest-island aesthetic closeness is reported, not pinned.
+  }, 120000);
+
+  it("keeps a phase 5 island and its nearest neighbours a strait apart at their phases' sizes (Ed, 2026-11-04: 10 / 15 / 20 / 25 / 30)", () => {
+    const W = worldOf(0), M = W.metres, all = [...W.islands.values()].filter(p => p.id !== "home");
+    const p5 = all.find(p => p.phase === 5)!, near = all.filter(p => p !== p5).sort((a, b) => Math.hypot(a.x - p5.x, a.y - p5.y) - Math.hypot(b.x - p5.x, b.y - p5.y)).slice(0, 3);
+    const coast = (id: string, x: number, y: number) => {
+      const I = islandOf(id, 0)!, o = islandOutline(I, TUNING, 32), pts: number[] = [];
+      expect(I.size).toBe(sizeOfPhase(I.phase));
+      for (const l of o.loops) if (l.sea) for (let i = 0; i < l.pts.length; i += 2) pts.push(x * M + l.pts[i], y * M + l.pts[i + 1]);
+      return pts;
+    };
+    const A = coast(p5.id, p5.x, p5.y);
+    for (const p of near) {
+      const C = coast(p.id, p.x, p.y);
+      let d = Infinity;
+      for (let i = 0; i < A.length; i += 2) for (let j = 0; j < C.length; j += 2) d = Math.min(d, Math.hypot(A[i] - C[j], A[i + 1] - C[j + 1]));
+      expect(d, `${p5.id} and ${p.id}`).toBeGreaterThan(STRAIT - 8);
+    }
   }, 120000);
 });
