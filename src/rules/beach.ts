@@ -41,7 +41,12 @@ export function newBeachWitches(seed: number, bounds: Bounds, t: Tuning): BeachW
   if (loop < 0) return null;
   const r = rng(seed * 6007 + 13), [lo, hi] = B.spots ?? [1, 1], n = Math.max(1, Math.round(lo + r() * (hi - lo))), len = beach.land.loops[loop].length, gap = len / n, s0 = r() * len;
   const out: BeachWitches[] = [];
-  for (let k = 0; k < n; k++) out.push(beachSpot(r, loop, s0 + k * gap + (r() - 0.5) * gap * 0.66, beach, B));
+  // (on clear sand, room round them for their campfire, render/beach.ts beachFires: where the coast there has none (a spit too narrow
+  // for them, their spot out over the sea past it), the nearest stretch along it that has, within a sixth of the gap either way;
+  // 2026-11-04, on the largest world once its areas grew)
+  const ROOM = 12, clear = (at: number) => { const c = beach.land.along(loop, at), d = Math.min(30, beach.sandAlong(loop, at) * 0.4), x = c.x - c.nx * d, z = c.z - c.nz * d; return beach.intoSand(x, z) >= ROOM && beach.intoSea(x, z) <= -ROOM; };
+  const roomy = (at: number) => { if (clear(at)) return at; for (let d = 5; d <= gap / 6; d += 5) for (const q of [at + d, at - d]) if (clear(q)) return q; return at; };
+  for (let k = 0; k < n; k++) out.push(beachSpot(r, loop, roomy(s0 + k * gap + (r() - 0.5) * gap * 0.66), beach, B));
   return out;
 }
 

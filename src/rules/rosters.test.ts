@@ -1,7 +1,7 @@
 // The journey's rosters (Ed, 2026-10-11; docs/backlog/journey.md "Rosters", rules/rosters.ts): each kind's island, its roster
 // and its night's legends; and the map they make.
 import { describe, expect, it } from "vitest";
-import { dealLegends, OTHERS_MAX, homeKinds, isPlaceholder, islandOf, KIND_NAMES, KINDS, legendsFor, playableIsland, REAL_KINDS } from "./rosters";
+import { dealLegends, OTHERS_MAX, homeKinds, homeRoster, isPlaceholder, islandOf, islandSeed, KIND_NAMES, KINDS, legendsFor, ownAreas, playableIsland, REAL_KINDS, ROSTER_NEIGHBOURHOOD, rosterOf, sizeOfPhase } from "./rosters";
 import { AREA_TYPES, generateMap } from "./map";
 import { TUNING, type Tuning } from "./tuning";
 import { newGame } from "./game";
@@ -17,7 +17,7 @@ describe("islands by kind (islandOf)", () => {
       const i = islandOf(k)!;
       expect(i.phase).toBe(KINDS[k].phase + 1);
       expect(i.bearing).toBe(KINDS[k].bearing);
-      expect(i.size).toBe(10 * i.phase);
+      expect(i.size).toBe([10, 15, 20, 25, 30][i.phase - 1]); // (Ed, 2026-11-04: islands.phaseSizes)
       expect(islandOf(k)).toEqual(i);
     }
     expect(islandOf("dragon")).toBeNull();
@@ -31,7 +31,7 @@ describe("islands by kind (islandOf)", () => {
       expect(i.roster.reduce((a, r) => a + r.areas, 0)).toBe(i.size);
       expect(new Set(kinds).size).toBe(kinds.length);
       expect(own.areas).toBe(Math.max(2, Math.round(i.size / 6)));
-      expect(kinds.length).toBe(1 + Math.ceil((i.size - own.areas) / OTHERS_MAX));
+      expect(kinds.length).toBeGreaterThanOrEqual(1 + Math.ceil((i.size - own.areas) / OTHERS_MAX));
       for (const r of i.roster) if (r.kind !== k) expect(r.areas, `${k}'s island: ${r.kind}`).toBeLessThanOrEqual(OTHERS_MAX);
       for (const r of i.roster) { expect(KINDS[r.kind].phase).toBeLessThanOrEqual(i.phase); expect(r.areas).toBeGreaterThan(0); }
       const fresh = kinds.filter(x => x !== k && KINDS[x].phase === i.phase).length;
@@ -39,6 +39,74 @@ describe("islands by kind (islandOf)", () => {
       expect(fresh).toBeLessThanOrEqual(3);
       expect(fresh).toBe(Math.min(REAL_KINDS.filter(x => KINDS[x].phase === i.phase).length, Math.max(1, Math.min(3, Math.round(i.size / 15)))));
     }
+  });
+
+  // Ed, 2026-11-04 (the middle way): "Now that islands have fewer areas, we can have fewer (none?) repeats of creature types on an
+  // island, besides the island of the creature type itself": one area a kind while the island's compass neighbourhood has kinds,
+  // second areas (to the neighbourhood's kinds) only once it runs out, kinds from further round only past that.
+  describe("its compass neighbourhood (map.rosterNeighbourhood)", () => {
+    const apart = (a: number, b: number) => { const d = Math.abs(((a - b) % 360 + 360) % 360); return d > 180 ? 360 - d : d; };
+    // today's sizes (10 a phase) and Ed's proposed ones (10/15/20/25/30), at the default and a narrow and the whole compass
+    const sizes = { today: (p: number) => 10 * p, proposed: (p: number) => 5 + 5 * p };
+    const cases = Object.entries(sizes).flatMap(([scheme, size]) => [ROSTER_NEIGHBOURHOOD, 45, 180].flatMap(hood => REAL_KINDS.map(K => {
+      const phase = KINDS[K].phase + 1, bearing = KINDS[K].bearing, s = size(phase), seed = islandSeed(phase, bearing);
+      return { K, phase, bearing, size: s, seed, hood, label: `${K}'s island (${scheme}, ${s} areas, ±${hood}°)`, roster: rosterOf(K, phase, bearing, s, seed, hood) };
+    })));
+    const inHood = (k: string, c: (typeof cases)[number]) => apart(KINDS[k].bearing, c.bearing) <= c.hood;
+    // (the kinds the neighbourhood can give: before the island's phase, in the window; those new to its phase are only its 1-3 fresh)
+    const hoodKinds = (c: (typeof cases)[number]) => REAL_KINDS.filter(k => k !== c.K && KINDS[k].phase < c.phase && inHood(k, c));
+
+    it("keeps its own kind on ownAreas and shares the rest out, every other kind on 1 or 2 areas", () => {
+      for (const c of cases) {
+        expect(c.roster[0], c.label).toEqual({ kind: c.K, areas: ownAreas(c.size) });
+        expect(c.roster.reduce((a, r) => a + r.areas, 0), c.label).toBe(c.size);
+        for (const r of c.roster.slice(1)) expect([1, 2], `${c.label}: ${r.kind}`).toContain(r.areas);
+      }
+    });
+
+    it("repeats no kind while the neighbourhood still has kinds", () => {
+      let without = 0;
+      for (const c of cases) {
+        const on = new Set(c.roster.map(r => r.kind)), repeats = c.roster.slice(1).filter(r => r.areas > 1);
+        if (repeats.length) for (const k of hoodKinds(c)) expect(on.has(k), `${c.label} repeats ${repeats[0].kind} but leaves out ${k}`).toBe(true);
+        else without++;
+      }
+      expect(without).toBeGreaterThan(0); // (some islands have no repeats at all)
+    });
+
+    it("gives second areas only once it runs out, to its own kinds first, and reaches further round only past that", () => {
+      let fallback = 0;
+      for (const c of cases) {
+        const others = c.roster.slice(1), near = others.filter(r => inHood(r.kind, c)), far = others.filter(r => !inHood(r.kind, c));
+        const repeats = others.filter(r => r.areas > 1).length;
+        // as few repeats as the kinds allow: one area a kind, the rest second areas
+        expect(repeats, c.label).toBe(c.size - c.roster[0].areas - others.length);
+        if (repeats) fallback++;
+        // a far kind's second area only once every near kind has two
+        if (far.some(r => r.areas > 1)) for (const r of near) expect(r.areas, `${c.label}: ${r.kind}`).toBe(2);
+        // a far kind (not one of the 1-3 new to its phase) only once the neighbourhood's kinds are all on and doubled
+        if (far.some(r => KINDS[r.kind].phase < c.phase)) {
+          for (const k of hoodKinds(c)) expect(others.map(r => r.kind), `${c.label} reaches round the compass before taking ${k}`).toContain(k);
+          for (const r of near) expect(r.areas, `${c.label}: ${r.kind}`).toBe(2);
+        }
+      }
+      expect(fallback).toBeGreaterThan(0); // (and some still fall back to repeats)
+    });
+
+    it("has more kinds and fewer repeats on a phase-1 island than the 2026-10-28 rule (neighbourhood 0)", () => {
+      for (const K of homeKinds()) {
+        const i = islandOf(K)!, before = rosterOf(K, i.phase, i.bearing, i.size, i.seed, 0), after = i.roster;
+        expect(before.length, K).toBe(1 + Math.ceil((i.size - ownAreas(i.size)) / OTHERS_MAX)); // (0: the old rule, 2 areas a kind)
+        expect(after.length, K).toBeGreaterThan(before.length);
+        for (const r of after.slice(1)) expect(apart(KINDS[r.kind].bearing, i.bearing), `${K}'s island: ${r.kind}`).toBeLessThanOrEqual(ROSTER_NEIGHBOURHOOD);
+      }
+    });
+
+    it("is the same roster for the same island every time (seeded), and its map's neighbourhood the tuning's", () => {
+      for (const c of cases.slice(0, 64)) expect(rosterOf(c.K, c.phase, c.bearing, c.size, c.seed, c.hood), c.label).toEqual(c.roster);
+      for (const K of REAL_KINDS) for (const world of [0, 5]) expect(islandOf(K, world)!.roster).toEqual(islandOf(K, world, undefined, TUNING.map!.rosterNeighbourhood)!.roster);
+      expect(ROSTER_NEIGHBOURHOOD).toBe(TUNING.map!.rosterNeighbourhood);
+    });
   });
 
   it("deals 1 in 5 areas' legends a night from the roster, never its own kind, no two alike, the ones not found first", () => {
@@ -79,12 +147,14 @@ describe("the map of an island by roster", () => {
     }
   }, 120000);
 
-  it("plays home by default: one area per kind she knows, two legends a night among them", () => {
+  it("plays home by default: 5 of home's starting kinds at a campaign's start, an area each, one legend a night among them (Ed, 2026-11-04)", () => {
     const map = generateMap(123, { ...onIsland("home"), map: { ...onIsland("home").map!, islandAreas: 10 } }), home = map.centreCell;
     const kinds = map.cells.filter(([x, y]) => x !== home[0] || y !== home[1]).map(([x, y]) => AREA_TYPES[map.typeOf(x, y)].creature).sort();
-    expect(kinds).toEqual([...homeKinds()].sort());
-    expect(map.legendKinds.length).toBe(2);
-    expect(map.legendCells.size).toBe(2);
+    expect(kinds).toEqual([...homeRoster([], 123)].sort());
+    expect(kinds).toHaveLength(5);
+    for (const k of kinds) expect(homeKinds()).toContain(k);
+    expect(map.legendKinds.length).toBe(1);
+    expect(map.legendCells.size).toBe(1);
   }, 60000);
 
   it("has the game's legends the night's dealt kinds, favouring islands not yet found", () => {
@@ -112,11 +182,11 @@ describe("an island's outline (rules/islandShape.ts) is the map's own coast", ()
 });
 
 describe("the islands of kinds not designed yet (placeholders, '?': Ed, 2026-10-11)", () => {
-  it("gives all 64 kinds an island with a seed, size and roster, 10 to 50 areas by phase", () => {
+  it("gives all 64 kinds an island with a seed, size and roster, 10 to 30 areas by phase", () => {
     expect(KIND_NAMES.length).toBe(64);
     for (const k of KIND_NAMES) {
       const i = islandOf(k)!;
-      expect(i.size).toBe(10 * i.phase);
+      expect(i.size).toBe(sizeOfPhase(i.phase));
       expect(i.roster.reduce((a, r) => a + r.areas, 0)).toBe(i.size);
     }
     expect(new Set(KIND_NAMES.map(k => islandOf(k)!.seed)).size).toBe(64);

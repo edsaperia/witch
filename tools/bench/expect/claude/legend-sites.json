@@ -1,0 +1,14 @@
+{
+  "reason": "Every two sites keep 50 m apart and 10 m off a lake (Ed, 2026-11-04: \"minimum distance between sites/circles/dancefloor/treehouse of 50m, tunable. 10m from a lake edge. If this can't fit, increase area sizes.\"), so areas grow from 168 to 196 m across (areaScale 6 to 7, the sea chart and the arena's woods band with them); each legend area gets its own pair; and a parked creature guards its chain's length off home and roams the home area (Ed: \"A parked creature should guard its chain length, now that's a fixed number, with home area an exception\"; \"Animals parked in the home area can roam it freely\")",
+  "frames": {
+    "*": "the island a sixth bigger: home, its treehouse and where she starts, the stones, legends' circles, paths, woods and creatures all stand elsewhere"
+  },
+  "rules": {
+    "*": "the map a sixth bigger, its stones, legends and creatures placed afresh, so what she meets and everything after differs; parked creatures guard farther and roam the home area"
+  },
+  "start": {
+    "boot": "the island a sixth bigger: home's treehouse, where she starts, lies elsewhere",
+    "bedroom": "the island a sixth bigger: home's treehouse, where she starts, lies elsewhere",
+    "wave-fight": "the island a sixth bigger: home's treehouse, where she starts, lies elsewhere"
+  }
+}

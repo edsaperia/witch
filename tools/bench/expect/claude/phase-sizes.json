@@ -1,0 +1,9 @@
+{
+  "reason": "islands sized by phase, 10 / 15 / 20 / 25 / 30 areas (Ed, 2026-11-04: \"We could make waves 5 / 10 / 15 / 20 / 25 / 30 / 64\", \"yes, start island sizes\"; islands.phaseSizes), and packs grown by the island's phase, home's by the share of the islands found (\"we should rebalance this so phase 5 islands get to full packs\"; population.swarm.fullPhase replaces largestIsland). The bench plays home with none found, so every home area now holds the first stump's swarm (one young) where its later areas held more; home's size and shape are unchanged",
+  "frames": {
+    "*": "fewer young and adults in home's later areas, so where creatures stand and how many show differ wherever they're in view"
+  },
+  "rules": {
+    "*": "every home area's starting creatures (one young each, none found), so the creatures, the fights, her health, the soundsystems, the combat state and the party's progress that follows them differ"
+  }
+}

@@ -18,6 +18,12 @@
 // Units: the disc's radius is 1 (the chart's), CHART_METRES metres.
 import { hash2, vnoise } from "./random";
 import { lakePlan, reachOf, SHAPES } from "./islandGrowth";
+import { TUNING } from "./tuning";
+
+/** The chart's metres to the first chart's (laid out for areas 168 m across, areaScale 6): every length below is that times this, so
+ *  the islands, grown bigger with their areas (Ed, 2026-11-04: "If this can't fit, increase area sizes": areaScale 7, 196 m), keep
+ *  the same shapes in their patches and the same layout, the whole chart that much bigger. */
+export const CHART_GROWTH = (TUNING.areaSize * TUNING.areaScale) / 168;
 
 /** One island's place: where its home's middle lies (disc units, x east, y south), its share of the disc, its patch (how far from
  *  that middle its sea reaches, m, by angle: PATCH_ANGLES of them, from east, turning as atan2(z, x) does), and how far its own
@@ -28,9 +34,9 @@ export interface Archipelago { world: number; islands: Map<string, Placed>; /** 
 /** The disc's radius in metres (archipelago().metres): one true scale for every island and every world: the islands' bodies packed
  *  inside its last ARM_RING metres, their foreseen land FILL of that, and that ring left to the outer islands' arms out to sea (Ed,
  *  v3: "add back the arms towards the edges of the map, since there's nothing to fit with there"). */
-export const CHART_METRES = 14000, ARM_RING = 1000;
+export const CHART_METRES = 14000 * CHART_GROWTH, ARM_RING = 1000 * CHART_GROWTH;
 /** The least sea between two islands' coasts (m): each grows no nearer than half of it to its patch's edge (rules/map.ts). */
-export const STRAIT = 400;
+export const STRAIT = 400 * CHART_GROWTH;
 /** How many angles a patch is given at. */
 export const PATCH_ANGLES = 96;
 /** An island's land by phase (km², as it grows free: tools/islands measurements), and home's at its full size (64 areas): the disc
@@ -44,9 +50,9 @@ export const GAP: readonly [number, number] = [1.3, 3.2];
 export const OPEN_SCALE = 2.2;
 /** How far an island's real coast lies past its shape's reach scaled to its areas, by phase (m): its buffer ring and its areas' own
  *  ground (measured: the real coasts against the shapes, tools/islands). */
-export const COAST_PAD = [300, 305, 350, 400, 530, 640];
+export const COAST_PAD = [300, 305, 350, 400, 530, 640].map(m => m * CHART_GROWTH);
 /** An area's width (m: the tuning's areaSize × areaScale), and home's areas at its full size. */
-const AREA_METRES = 168, HOME_AREAS = 64;
+const AREA_METRES = 168 * CHART_GROWTH, HOME_AREAS = 64;
 /** How far each island's own distance strays from its phase's (a share of the gap between phase rings, either way), the pulls
  *  back toward its bearing and its distance (a share of the way, each round), the rounds (and the last ones with only the
  *  pushes), how often each is turned and among how many turns, how many angles its shape is kept at and how many points of its
@@ -99,6 +105,8 @@ export function archipelago(world: number, kinds: readonly { id: string; phase: 
     const K = SHAPES[Math.min(5, phase)], reach = reachOf(K, seed).reach, table = new Float32Array(SHAPE_ANGLES);
     let I = 0;
     for (let a = 0; a < SHAPE_ANGLES; a++) { table[a] = reach((a / SHAPE_ANGLES) * TAU); I += table[a] ** 2 * (TAU / SHAPE_ANGLES); }
+    // (the room the chart gives a phase's island: 10 × its phase areas, as the islands were till Ed's 2026-11-04 sizes, 10 / 15 / 20 / 25 / 30,
+    // rules/rosters.ts sizeOfPhase; the smaller islands grow in the same patches with more sea between, and home's patch, so home, is unchanged)
     const areas = (phase ? 10 * phase : HOME_AREAS) + lakePlan(K, seed).reduce((t, n) => t + n, 0), k = AREA_METRES * Math.sqrt((2 * areas) / I), pad = COAST_PAD[Math.min(5, phase)];
     const h = Math.floor(seed * 7919) % 100003, aim = phase ? Math.max(ring[1] * 0.5, Math.min(0.95, ring[phase] + MINGLE * ringGap * (2 * hash2(h, 13, 9031 + world) - 1))) * R : 0;
     const b = (bearing * Math.PI) / 180, turn = phase ? hash2(h, 17, 9041 + world) * TAU : 0;

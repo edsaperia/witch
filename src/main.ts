@@ -110,7 +110,8 @@ import { readZooCoasts } from "./app/zooCoasts";
 import { guidanceOf, seeGuide, GUIDANCE_HOOKS } from "./rules/guidance";
 import { addNew, dropNew, loadGuide, storeGuide } from "./app/guideSave";
 import { GuidePin } from "./render/view/guidance";
-import { warmChart } from "./app/chartWarm";
+import { foundChartIslandIds, stopWarmChart, warmChart } from "./app/chartWarm";
+import { ChartWarmSchedule } from './app/chartWarmSchedule';
 import { powerLines } from "./app/hud";
 import { latestBuildLink, NewBuildNotice } from "./app/newBuild";
 import { freshHref, localStore, storageScope } from "./platform/storageScope";
@@ -402,17 +403,27 @@ const showProgress = setInterval(() => {
   if (ready && !a.pending) { progressEl.classList.add("done"); clearInterval(showProgress); }
 }, 250);
 // The sea chart made ahead (app/chartWarm.ts; Ed, 2026-10-12: "can we do it earlier, before we need to show it?"): once the
-// forest has grown and the tab is in view, a worker makes and keeps the chart's islands, so the map table opens on them at once.
+// forest has grown, prepare only home and saved found islands while she's awake in the treehouse (Ed, 2026-11-04).
 // Not under automation (the smoke and bench runs time the game's own frames), unless ?warmChart=1.
 const chartWorld = () => (params.has("world") ? N().tuning.map?.world ?? 0 : loadSave().world);
 const warmOn = params.get("warmChart") === "1" || (params.get("warmChart") !== "0" && !navigator.webdriver);
-const warmWhenSettled = warmOn ? setInterval(() => {
-  if (!N().flags.ready || view.assets.pending || document.hidden || chartOpen()) return;
-  clearInterval(warmWhenSettled);
-  const t0 = performance.now(), log = params.get("warmChart") === "1"; // (?warmChart=1: each island logged, for timing it)
-  if (log) console.info("sea chart: making ahead");
-  warmChart(chartWorld(), loadSave().found, (made, kept) => console.info(`sea chart made ahead: ${made} islands made, ${kept} already kept, ${((performance.now() - t0) / 1000).toFixed(1)} s`), log ? (id, made) => console.info(`sea chart: ${id} ${made ? "made" : "kept"} at ${((performance.now() - t0) / 1000).toFixed(1)} s`) : undefined);
-}, 3000) : 0;
+const chartWarmer = new ChartWarmSchedule(({ world, found, ids }, done) => {
+  warmChart(world, found, (made, kept) => { done(); if (params.get('warmChart') === '1') console.info(`sea chart made ahead: ${made} islands made, ${kept} already kept`); }, undefined, ids, done);
+}, stopWarmChart);
+let chartWarmNextCheck = 0;
+function updateChartWarm(): void {
+  const n = N();
+  if (!chartWarmer.update({ enabled: warmOn, ready: n.flags.ready, treehouse: !!n.game.witch.perch && n.game.witch.mode === 'ground', map: chartOpen(),
+    manual: loop.manual, sailing, hidden: document.hidden, paused: freeze.frozen,
+    sleeping: landingSleep.holds(n.game) || !!n.game.witches[0].house?.slept || n.game.wake?.open === false,
+    arriving: !!n.arrival && !n.flags.landed }, () => {
+    // Cancellation is per frame; reading the save and checking the cache can wait.
+    if (view.assets.pending || performance.now() < chartWarmNextCheck) return null;
+    chartWarmNextCheck = performance.now() + 1000;
+    const world = chartWorld(), found = loadSave().found;
+    return { world, found, ids: foundChartIslandIds(world, found) };
+  })) chartWarmNextCheck = 0;
+}
 requestAnimationFrame(() => setTimeout(async () => {
   const night = N();
   if (night.arrival) bedFirst(night); // (the island's link loaded anew, &arrive=1: in bed before the dive, as a sail in place)
@@ -1007,7 +1018,8 @@ const decidePanel = (open: boolean) => {
 };
 if (params.has("decide")) decidePanel(true);
 window.addEventListener("keydown", e => { if (e.code !== "F2") return; e.preventDefault(); if (decide) decide.toggle(); else decidePanel(true); });
-document.addEventListener("visibilitychange", () => { if (document.hidden) N().flags.last = 0; });
+document.addEventListener("visibilitychange", () => { if (document.hidden) { N().flags.last = 0; chartWarmer.pause(); } });
+addEventListener('pagehide', () => chartWarmer.pause());
 
 const endedNights = new WeakSet<Game>();
 const commentBook = new CommentBook(browserCommentStore()), breadcrumbs = new Breadcrumbs();
@@ -1115,6 +1127,7 @@ const chartDepartureBoundary = chartDeparture({
   returnOwn: () => ordinaryVisit?.end() ?? Promise.reject(new Error("This browser cannot restore your saved night.")),
 });
 page.onNightEnd = () => {
+  chartWarmer.pause();
   if (phone.active && !phone.visiting && !sharedNightChanging) phone.hangUp("host-night-ended"); // A shared bed rollover retains its call.
   if (!phone.visiting && page.night && !page.night.spec.borrowed && !endedNights.has(page.night.game)) {
     const hostOutcome = hostedUnlocks ?? (sharedNightChanging ? visitUnlocks(page.night.game, 0) : null);
@@ -1423,6 +1436,7 @@ async function sailInPlace(to: Sailed, made?: Promise<Night>): Promise<void> {
  *  the dive's own areas first, rules/arrive.ts diveReach); `at`, the chart's hand-off: made under its flight, nothing but the night
  *  itself waited for. */
 async function makeSailNight(to: Sailed, arrival?: Arrival, at?: FlightEnd["cam"] | null): Promise<Night> {
+  chartWarmer.pause();
   if (sailFail) throw new Error("?debug=sail: the sail in place made to fail"); // (window.witch.sail's test of the fallback)
   if (at === undefined) view.beginLandingShaders(false);
   sailing = true;
@@ -1484,6 +1498,7 @@ function newNight(how: NightWay): void {
  *  start card under ?creator=0), the night made (startNight: the view taking it, the sliders carried), its start's art made;
  *  no flight in. The bot game's exit leaves the bot and her seeded look first. */
 async function nightInPlace(spec: NightSpec, href: string): Promise<void> {
+  chartWarmer.pause();
   if (sailFail) throw new Error("?debug=sail: the night in place made to fail");
   if (freeze.frozen) freeze.toggle(); // (a fresh page isn't paused: the bot game's Esc out pauses it too, the freeze's key first)
   sailing = true;
@@ -1567,6 +1582,7 @@ function frame(now: number): void {
   const n = N(), phase = sailing ? "sailing" : landingSleep.holds(n.game) ? "landing-sleep" : !n.flags.ready ? "building" : n.arrival && !n.flags.landed ? "arrival" : "play";
   try { frameBody(now); }
   finally {
+    try { updateChartWarm(); } catch (error) { chartWarmer.pause(); logCaughtError(error, 'chart background scheduling'); }
     try {
       const programs = shotProgramCounts && programsBefore ? shotProgramCounts.end(programsBefore) : null;
       if (params.has("shot") && (gap >= 100 || performance.now() - start >= 100)) {
@@ -1732,7 +1748,7 @@ function frameBody(now: number): void {
   // The night's end (Ed, 2026-10-26: "Remove the end cards"): no card, won or lost; the guidance pins lead her home (rules/guidance.ts).
   // The night won (rules/win.ts): the islands its woken legends showed recorded on the sea chart (app/chartSave.ts), once, as its
   // finale settles; the enraged legends' (win.lost) not.
-  if (!N().spec.borrowed && game.win?.settled && !F.chartRecorded) { F.chartRecorded = true; nightOver(tuning.map?.island ?? "", { won: true, found: game.win.found }, undefined, tuning.map?.world ?? 0); if (warmOn) warmChart(chartWorld(), loadSave().found); } // Borrowed outcomes are kept only through the guarded shared-unlock return adapter.
+  if (!N().spec.borrowed && game.win?.settled && !F.chartRecorded) { F.chartRecorded = true; nightOver(tuning.map?.island ?? "", { won: true, found: game.win.found }, undefined, tuning.map?.world ?? 0); } // Borrowed outcomes use the guarded shared-unlock return adapter; chart preparation waits for the treehouse.
   // The touch spell button only with a broom that has a spell to cast (rules/spells.ts castable).
   { const want = castable(houseGame.spells) ? "" : "none"; if (spellButton && spellButton.style.display !== want) spellButton.style.display = want; }
   newBuild.update(creator.open || (freeze.frozen && !pauseSliders) || menuGone); // (a newer build is out: in the bedroom, and on the pause page only until its panel, which has the button, loads)

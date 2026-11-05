@@ -58,6 +58,8 @@ export class WorkshopArt {
   private asked = new Set<string>();
   private came: { key: string; art: FurnitureArt }[] = [];
   private toDrawHere: string[] = [];
+  /** The pictures wanted (as of the last update) still to come and be made into their meshes (render/houseRooms.ts preload waits for none). */
+  get pending(): number { return this.want.filter(w => !this.pics.has(w.key)).length; }
 
   /** A frame: what to show (`s`), how to bake (the house's style, pixel and pitch; each host piece's yaw), who draws (`draw`: the art
    *  workers) and where (markAt). `order`: each host piece's draw order, its pictures just after it. `t`: her clock, for tonight's glow. */

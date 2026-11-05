@@ -1,7 +1,7 @@
 // The difficulty (Ed, 2026-11-03: "the game is much too easy"; tuning difficulty, the pause page's Difficulty sliders): creatures
 // faster in a fight (difficulty.creatureSpeed), ranged attacks reaching further (difficulty.rangedRange) and adults stronger
 // (difficulty.adultStrength), each by its knob, her own speed untouched; and the spark's speed by the tempo, linear
-// (leyLines.pulseAt100, pulseAt200: 1.0 m/s at 100 bpm to 5.0 at 200, linear). The swarm by island (population.swarm.largestIsland) is island.test.ts's.
+// (leyLines.pulseAt100, pulseAt200: 1.0 m/s at 100 bpm to 5.0 at 200, linear). The swarm by island (population.swarm.fullPhase) is island.test.ts's.
 import { afterEach, describe, expect, it } from "vitest";
 import { TUNING, type Tuning } from "./tuning";
 import { FIGHT, resetFight, startCharge, type Move } from "./movement";

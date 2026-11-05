@@ -121,7 +121,7 @@ describe("the world before the party is the afterparty's (Ed, 2026-10-26)", () =
       // (asleep, so render/leash/bubbles.ts gives it a snore; questOpen false, so render/leash.ts gives it no dream)
       expect(deepAsleep(c), `${c.species} ${c.id}`).toBe(true);
       expect(c.questOpen, `${c.species} ${c.id}`).toBe(false);
-      expect(circleLines(c, true).map(l => l.text)).toContain("It sleeps till the party starts.");
+      expect(circleLines(c, true).map(l => l.text).join(" ")).not.toContain("{sigil}"); // (no quest offered: its heading only)
     }
     for (const c of them(lost())) if (c.boss && c.quest && c.quest.done === undefined) expect(c.questOpen).toBe(false);
     stepGame(g, { ...C, castParty: true }, STEP);

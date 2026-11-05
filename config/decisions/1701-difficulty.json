@@ -72,24 +72,6 @@
       }
     },
     {
-      "id": "largestIsland",
-      "pr": 1701,
-      "group": "Difficulty",
-      "label": "Largest island (areas)",
-      "note": "An island this many areas or more reaches full packs at its last area; a smaller one its size over this of the way along the curve (population.swarm.largestIsland; Ed, 2026-11-03: \"only the largest islands reach full packs\"; 50, the phase-5 islands). Lower: smaller islands reach fuller packs. A new map: it reloads.",
-      "control": {
-        "type": "slider",
-        "min": 10,
-        "max": 64,
-        "step": 1
-      },
-      "default": 50,
-      "apply": {
-        "knob": "population.swarm.largestIsland",
-        "reload": true
-      }
-    },
-    {
       "id": "pulseAt100",
       "pr": 1701,
       "group": "Difficulty",
