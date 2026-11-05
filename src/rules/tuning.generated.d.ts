@@ -2123,6 +2123,7 @@ export type SchemaTuning = {
     "nova": number;
     "fadeOut": number;
     "fps": number;
+    "depth": number;
   };
   "opening": {
     "bedroom": boolean;

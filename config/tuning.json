@@ -2424,7 +2424,8 @@
     "ghost": 0,
     "nova": 2.6,
     "fadeOut": 2.5,
-    "fps": 10
+    "fps": 10,
+    "depth": 0.6
   },
   "opening": {
     "bedroom": true,

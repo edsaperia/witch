@@ -109,6 +109,24 @@
       "apply": {
         "knob": "loading.fps"
       }
+    },
+    {
+      "id": "loadingDepth",
+      "pr": 1194,
+      "group": "Loading screen",
+      "label": "Depth",
+      "note": "How far the seal's stars scatter in depth, seal units (loading.depth; 0.6 as built; Ed, 2026-11-05: \"2 with a touch of 3\", \"make the random depth scatter quite large\"): the knot's stars a 3D cloud sliding past each other as the view sways, the words' less, all of it at the start and none once every star's lit. Remembered on this browser; takes effect on the next load (the screen is over before the game can pause).",
+      "control": {
+        "type": "slider",
+        "min": 0,
+        "max": 4,
+        "step": 0.1
+      },
+      "default": 0.6,
+      "persist": true,
+      "apply": {
+        "knob": "loading.depth"
+      }
     }
   ]
 }
