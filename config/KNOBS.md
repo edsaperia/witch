@@ -3662,12 +3662,13 @@ Code: `docs/plans/sail-without-reload.md`, `app/sail.ts`
 
 ### `loading`
 
-The loading screen: the World Tree and COVEN RUSH picked out in gold stars that light up as the game loads.
+The loading screen: the World Tree as a gold Celtic knot, COVEN and RUSH in gold stars either side, lighting up as the game loads.
 
 1. Ed, 2026-10-26: src/ui/loadingScreen.js, before main.ts loads
 2. Ed, 2026-11-03: "can we fade from the loading screen to the bedroom over a few seconds" (fadeOut in place of the 1.2 s white clearing (clear), src/ui/loadingFade.js)
 3. Ed, 2026-11-05: "roughly left to right, with some random scatter" (his sketch: the World Tree's branches and roots sweeping round into two rings, COVEN and RUSH in them, level; sweep in place of edge; the game's darker night sky behind, src/ui/loadingSeal.js)
-The loading screen [1]: the World Tree and COVEN RUSH in gold stars, lighting as the game loads, left to right by sweep against a random scatter (0 plain random) [3], at most rate stars a second, each flashing for flash seconds; ghost how bright the stars not yet lit show (0: an empty sky, Ed's call); the heart's star last, its supernova to white over nova seconds, then the whole screen fading out over fadeOut seconds (eased out; at most 0.6 s with reduced motion) onto the bedroom, her wake-up starting as it begins [2]. It draws fps frames a second while the game loads (each frame costs the load a little), about 20 once it's ready. Read as the page opens, so the pause page's sliders (remembered on this browser) take effect on the next load.
+4. Ed, 2026-11-05: "Loading screen: can you copy this for the sigil design" (his reference a Celtic-knot Tree of Life: the tree a solid knot of ribbons in the middle, its canopy and roots the ring, COVEN and RUSH level either side, src/ui/loadingSeal.js)
+The loading screen [1]: the World Tree as a Celtic knot [4], COVEN and RUSH in gold stars either side of it, lighting piece by piece and star by star as the game loads, left to right by sweep against a random scatter (0 plain random) [3], at most rate a second, each flashing for flash seconds; ghost how bright the ones not yet lit show (0: an empty sky, Ed's call); the heart (the trunk's middle) last, its supernova to white over nova seconds, then the whole screen fading out over fadeOut seconds (eased out; at most 0.6 s with reduced motion) onto the bedroom, her wake-up starting as it begins [2]. It draws fps frames a second while the game loads (each frame costs the load a little), about 20 once it's ready. Read as the page opens, so the pause page's sliders (remembered on this browser) take effect on the next load.
 Code: `src/ui/loadingScreen.js`, `src/ui/loadingSeal.js`, `src/ui/loadingFade.js`
 
 | knob | type | range |

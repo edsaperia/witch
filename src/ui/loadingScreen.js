@@ -1,19 +1,21 @@
 // The loading screen (Ed, 2026-10-26; the mock and its notes on claude/ed-shots, previews/ed/loading-screen/): a night sky, the game's
 // own (Ed, 2026-11-05: "make the background darker, more like the game's night sky"), a dim irregular galaxy lying behind, and over
-// the whole screen the Ent's World Tree drawn in stars, as Ed sketched it on 2026-11-05 (src/ui/loadingSeal.js): its trunk down the
-// middle, its branches and roots sweeping round into two big rings either side, COVEN in the left ring and RUSH in the right, level,
-// in Cinzel Decorative (OFL); every star of them the load's progress: they light one by one roughly left to right ("roughly left to
-// right, with some random scatter"), each flashing as it lights, all one warm gold, the heart's star (the trunk's middle) last.
+// it the seal (src/ui/loadingSeal.js): the World Tree as a Celtic knot in the middle, after Ed's reference (2026-11-05: "copy this for
+// the sigil design"), solid gold ribbons weaving over and under, its canopy and roots the ring round it; COVEN to its left and RUSH to
+// its right, level, picked out in stars in Cinzel Decorative (OFL). Every piece of the knot and every star of the words is the load's
+// progress: they light one by one roughly left to right ("roughly left to right, with some random scatter"), each flashing as it
+// lights, all one warm gold, the heart (the trunk's middle) last.
 // When the game is ready that last star goes supernova (after Cassiopeia A, Ed's reference): a white flash, a ragged shell of red,
 // blue, gold and green gas opening out from it, the screen white, then the white falling away onto her dark bedroom and her alarm
 // ("transitioning straight to the dark bedroom and the alarm going off"): the whole screen fading out over a few seconds (Ed,
 // 2026-11-03: "can we fade from the loading screen to the bedroom over a few seconds"; src/ui/loadingFade.js), the wake-up starting
 // behind it as it begins.
-// Plain JS on a 2D canvas at one art pixel a canvas pixel: no three.js, nothing to wait for, so it's up at the page's first paint
+// Plain JS on a 2D canvas at one art pixel a canvas pixel (the knot on a canvas of its own over it, at the screen's own pixels, so it's
+// crisp at any size): no three.js, nothing to wait for, so it's up at the page's first paint
 // (src/loading.js starts it) while the game's code loads and its night is made. main.ts drives it through `window.witchLoading`:
 // `set(share)` as the load goes (0 to 1), `finish(wake)` once the game's ready, `cancel()` for a start with no wake-up.
 // Landscape only (Ed, 2026-11-05: "the game is designed for a wide screen"): a narrow or tall window shows the same seal scaled to fit.
-import { SEAL_H, SEAL_W, lightOrder, starsFor, treeStars, wordStars } from "./loadingSeal.js";
+import { SEAL_H, SEAL_W, lightOrder, sigilPieces, starsFor, wordStars } from "./loadingSeal.js";
 import { FADE_OUT, fadeSeconds, prefersReducedMotion, revealGame } from "./loadingFade.js";
 
 const rand = seed => () => ((seed = (seed * 16807) % 2147483647) / 2147483647);
@@ -22,6 +24,8 @@ const rand = seed => () => ((seed = (seed * 16807) % 2147483647) / 2147483647);
  *  moment), each flashing for FLASH s, the unlit ones at GHOST (0: an empty sky, Ed's call, the seal showing only as it lights); the supernova to white over NOVA s, the whole screen then fading out over FADE s. The tuning's loading block sets them (startLoadingScreen's knobs). */
 let SWEEP = 3, RATE = 90, FLASH = 0.6, NOVA = 2.6, FADE = FADE_OUT, GHOST = 0, FPS = 10;
 const STAR = [255, 214, 140];
+/** The knot's ribbons: the stars' pale gold (no glow round them: it greyed the black gaps at the crossings, an outline round each ribbon). */
+const RIBBON_FILL = "rgb(255,232,184)";
 /** The seal's margin on the screen: the camera's nearest (it comes 12% nearer as the load completes) and its sway, a little over. */
 const SEAL_FIT = 1.2;
 /** The game's night sky (src/render/sky.ts; Ed, 2026-11-05: "make the background darker, more like the game's night sky"): its deep
@@ -31,12 +35,14 @@ const SEAL_FIT = 1.2;
 const NIGHT = [3, 3, 9], HAZE = [21, 47, 38], HAZE_LOW = 0.16, MILKY = [26, 27, 36];
 const SKY_TINTS = [[0.12, [179, 204, 255]], [0.55, [242, 245, 255]], [0.8, [255, 240, 204]], [0.93, [255, 209, 153]], [1, [255, 168, 115]]];
 
-/** The seal's stars, in seal units (its middle at 0, 0): the tree's (src/ui/loadingSeal.js), then the two words in its rings, then
- *  their order. */
+/** The seal's pieces and stars, in seal units (its middle at 0, 0): the knot's pieces (src/ui/loadingSeal.js), each with its path,
+ *  then the two words' stars either side, then their order. */
 function makeSeal(font) {
   // the words: each drawn in the font, thinned to its strokes' centre lines (Zhang-Suen), a star every SPACING pixels along them
-  const stars = [...treeStars(), ...wordStars([word("COVEN", font), word("RUSH", font)])];
-  return lightOrder(stars, SWEEP);
+  const poly = q => { const path = new Path2D(); q.forEach(([px, py], i) => (i ? path.lineTo(px, py) : path.moveTo(px, py))); path.closePath(); return path; };
+  let trunk = null; // (the trunk's bands share its one outline, each with its band to show it in)
+  const pieces = sigilPieces().map(p => ({ ...p, path: p.band ? (trunk ??= poly(p.poly)) : poly(p.poly), clip: p.band && (r => (r.rect(-2, p.band[0], 4, p.band[1] - p.band[0]), r))(new Path2D()) }));
+  return lightOrder([...pieces, ...wordStars([word("COVEN", font), word("RUSH", font)])], SWEEP);
 }
 
 /** A word's stars: its centre lines' pixels, none nearer than SPACING to another (the font drawn at 190 px, thickened a little first
@@ -151,17 +157,22 @@ export function startLoadingScreen(font, knobs = {}) {
   root.style.cssText = "position:fixed;inset:0;z-index:1000;background:#030309;pointer-events:none";
   const cv = document.createElement("canvas");
   cv.style.cssText = "position:absolute;inset:0;width:100%;height:100%;image-rendering:pixelated";
+  // the knot over it at the screen's own pixels; the supernova over that (at the sky's pixels, as before)
+  const sg = document.createElement("canvas"), nv = document.createElement("canvas");
+  sg.style.cssText = "position:absolute;inset:0;width:100%;height:100%";
+  nv.style.cssText = cv.style.cssText;
   const white = document.createElement("div");
   white.style.cssText = "position:absolute;inset:0;background:#fffaf0;opacity:0";
-  root.append(cv, white);
+  root.append(cv, sg, nv, white);
   document.body.append(root);
-  const x = cv.getContext("2d");
+  const x = cv.getContext("2d"), kx = sg.getContext("2d"), nx = nv.getContext("2d");
   let W = 0, H = 0, sky = [], stars = [], N = 0, gas = null, gal = null, remnant = null, back = null, img = null;
   // the seal's scale, canvas pixels a seal unit: the whole of it on the screen, the camera's nearest included (SEAL_FIT); letterboxed
   // in a narrow or tall window
   const seal = () => Math.min(W / (2 * SEAL_W), H / (2 * SEAL_H)) / SEAL_FIT;
   const fit = () => {
-    const u = innerWidth < 700 ? 2 : 3; W = Math.ceil(innerWidth / u); H = Math.ceil(innerHeight / u); cv.width = W; cv.height = H;
+    const u = innerWidth < 700 ? 2 : 3; W = Math.ceil(innerWidth / u); H = Math.ceil(innerHeight / u); cv.width = nv.width = W; cv.height = nv.height = H;
+    const dpr = Math.min(3, globalThis.devicePixelRatio || 1); sg.width = Math.round(innerWidth * dpr); sg.height = Math.round(innerHeight * dpr);
     // the sky's stars at their depths (a few in front, most far behind), the Milky Way's band of fainter ones
     const r = rand(7), S = seal(), ax = (W / S) * 0.75, ay = (H / S) * 0.75, one = (z, x0, y0, band) => { const k = (8 + z) / 8; return { x: x0 * ax * k * 1.4, y: y0 * ay * k * 1.4, z, b: r(), tw: 1 + r() * 3, ph: r() * 6.28, hue: r(), band }; };
     sky = Array.from({ length: Math.round(W * H / 34) }, () => (r() < 0.05 ? one(-3.5 - r() * 2.5, (r() - 0.5) * 2, (r() - 0.5) * 2, false) : one(0.6 + Math.pow(r(), 0.7) * 30, (r() - 0.5) * 2, (r() - 0.5) * 2, false)));
@@ -185,7 +196,7 @@ export function startLoadingScreen(font, knobs = {}) {
     if (zz < 0.2) return null;
     const k = 8 / zz, S = seal(); return [W / 2 + x1 * S * k, H / 2 + y2 * S * k, k];
   };
-  const px = (X, Y, c) => { x.fillStyle = c; x.fillRect(Math.round(X), Math.round(Y), 1, 1); }; // (the supernova's, a few frames)
+  const px = (X, Y, c) => { nx.fillStyle = c; nx.fillRect(Math.round(X), Math.round(Y), 1, 1); }; // (the supernova's, a few frames)
   // the frame's own pixels: light added into a buffer (one array write a pixel; the canvas calls a pixel cost the game's load seconds
   // in the cloud's software renderer, 2026-10-26: 243 s to ready against 35 s without)
   const add = (X, Y, r, g, b, a) => {
@@ -198,9 +209,16 @@ export function startLoadingScreen(font, knobs = {}) {
   /** finish's: the game's start behind the white, and the screen's way there should its frames never get it there (a fault). */
   let wake = null, fallback = 0;
   const litAt = [];
+  // the knot's lit pieces, one path (each piece added as it lights; the trunk's bands one path of the bands lit, to show its outline
+  // in), the ones still flashing, all of it for the ghost; byAt the seal's pieces and stars in their order
+  let byAt = [], litPath = new Path2D(), litBands = new Path2D(), trunkPath = null, inPath = 0, fresh = [], allPath = null;
   // the heavy pictures made a little after the first paint, so the sky's up at once
   setTimeout(() => { gas = gasPicture(); gal = galaxyStars(); }, 50);
-  document.fonts.load(`190px ${font}`).catch(() => {}).then(() => { stars = makeSeal(font); N = stars.length; });
+  document.fonts.load(`190px ${font}`).catch(() => {}).then(() => {
+    stars = makeSeal(font); N = stars.length; byAt = []; for (const s of stars) byAt[s.at] = s;
+    allPath = new Path2D(); for (const s of stars) if (s.path && !s.clip) allPath.addPath(s.path);
+    trunkPath = stars.find(s => s.clip)?.path ?? null; if (trunkPath) allPath.addPath(trunkPath);
+  });
   (window.requestIdleCallback ?? (f => setTimeout(f, 1500)))(() => { remnant = remnantPicture(); });
 
   const frame = now => {
@@ -234,6 +252,7 @@ export function startLoadingScreen(font, knobs = {}) {
     // the seal: unlit stars a faint ghost, lit ones gold, each flashing as it lights; all brightening as the last one goes
     const flare = Math.min(1, hand / 0.5);
     for (const s of stars) {
+      if (s.path) continue; // (the knot's pieces: below, on its own canvas)
       const q = project(s.x, s.y, 0); if (!q) continue;
       const [X, Y] = q;
       if (s.at >= n) { if (GHOST > 0) add(X, Y, 150, 160, 210, GHOST); continue; }
@@ -249,10 +268,26 @@ export function startLoadingScreen(font, knobs = {}) {
       if (O && Xa && Ya) { const k = 2 / GT, ax = (Xa[0] - O[0]) * k, ay = (Xa[1] - O[1]) * k, bx = (Ya[0] - O[0]) * k, by = (Ya[1] - O[1]) * k;
         x.save(); x.globalCompositeOperation = "lighter"; x.globalAlpha = GAS; x.setTransform(ax, ay, bx, by, O[0] - (ax + bx) * GT / 2, O[1] - (ay + by) * GT / 2); x.drawImage(gas, 0, 0); x.restore(); }
     }
+    // the knot: its pieces lit so far added to its path as they light; drawn in the seal's plane (as the camera sways and nears),
+    // crisp on its own canvas at the screen's pixels; each piece flashing white as it lights, all brightening as the heart goes
+    for (; inPath < n && inPath < byAt.length; inPath++) { const s = byAt[inPath]; if (s?.path) { (s.clip ? litBands : litPath).addPath(s.clip ?? s.path); fresh.push(s); } }
+    fresh = fresh.filter(s => t - (litAt[s.at] ?? -99) < FLASH);
+    kx.setTransform(1, 0, 0, 1, 0, 0); kx.clearRect(0, 0, sg.width, sg.height);
+    const O = project(0, 0, 0), Xa = project(1, 0, 0), Ya = project(0, 1, 0);
+    if (O && Xa && Ya && N) {
+      const A = [Xa[0] - O[0], Xa[1] - O[1], Ya[0] - O[0], Ya[1] - O[1], O[0], O[1]], fx = sg.width / W, fy = sg.height / H;
+      kx.setTransform(A[0] * fx, A[1] * fy, A[2] * fx, A[3] * fy, A[4] * fx, A[5] * fy);
+      if (GHOST > 0 && allPath) { kx.fillStyle = `rgba(150,160,210,${GHOST})`; kx.fill(allPath); }
+      const knot = style => { kx.fillStyle = style; kx.fill(litPath); if (trunkPath) { kx.save(); kx.clip(litBands); kx.fill(trunkPath); kx.restore(); } };
+      knot(RIBBON_FILL);
+      for (const s of fresh) { kx.fillStyle = `rgba(255,255,255,${(1 - (t - litAt[s.at]) / FLASH).toFixed(3)})`; if (s.clip) { kx.save(); kx.clip(s.clip); kx.fill(s.path); kx.restore(); } else kx.fill(s.path); }
+      if (flare > 0) knot(`rgba(255,255,255,${(flare * 0.8).toFixed(3)})`);
+    }
     // the supernova: the last star's flash, then its remnant opening out, the screen to white, then the game woken behind it and the
     // screen fading out onto it (cover)
     if (novaAt >= 0) {
-      const last = stars.find(s => s.at === N - 1), c = last && project(last.x, last.y, 0), m = Math.max(W, H);
+      nx.clearRect(0, 0, W, H); // (on its own canvas over the knot)
+      const x = nx, last = byAt[N - 1], c = last && project(last.x, last.y, 0), m = Math.max(W, H);
       const k = Math.min(1, hand / NOVA), ease = 1 - Math.pow(1 - k, 2.2), f = Math.max(0, 1 - hand / 0.7);
       if (c && f > 0) { const r0 = 3 + (1 - f) * m * 0.05, g = x.createRadialGradient(c[0], c[1], 0, c[0], c[1], r0 * 3); g.addColorStop(0, `rgba(255,255,255,${f})`); g.addColorStop(1, "rgba(255,240,200,0)"); x.fillStyle = g; x.fillRect(c[0] - r0 * 3, c[1] - r0 * 3, r0 * 6, r0 * 6);
         const L = m * 0.35 * (1 - f * 0.5); for (let i = 1; i < L; i++) { const a = ((1 - i / L) * f).toFixed(2); for (const [dx, dy] of [[i, 0], [-i, 0], [0, i], [0, -i]]) px(c[0] + dx, c[1] + dy, `rgba(255,248,220,${a})`); } }
@@ -269,7 +304,7 @@ export function startLoadingScreen(font, knobs = {}) {
   function cover() {
     if (done) return;
     done = true; clearTimeout(fallback); removeEventListener("resize", fit);
-    cv.style.display = "none"; root.style.background = "transparent"; white.style.opacity = "1";
+    cv.style.display = sg.style.display = nv.style.display = "none"; root.style.background = "transparent"; white.style.opacity = "1";
     revealGame(root, fadeSeconds(FADE, prefersReducedMotion()), { wake });
   }
   // The load's progress: its phases by the game's timing marks, each its share of a cold load's time (the cloud's, 2026-10-26: the

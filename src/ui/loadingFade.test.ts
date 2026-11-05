@@ -21,6 +21,7 @@ function page(reduced = false) {
   vi.useFakeTimers({ toFake: ["setTimeout", "clearTimeout", "setInterval", "clearInterval"] });
   vi.stubGlobal("window", globalThis);
   vi.stubGlobal("document", { createElement: el, body: { append() {} }, fonts: { load: () => Promise.resolve([]) }, hidden: false });
+  vi.stubGlobal("Path2D", class { addPath() {} moveTo() {} lineTo() {} closePath() {} rect() {} }); // (the knot's paths: src/ui/loadingSeal.js)
   vi.stubGlobal("innerWidth", 960); vi.stubGlobal("innerHeight", 540);
   vi.stubGlobal("addEventListener", () => {}); vi.stubGlobal("removeEventListener", () => {});
   vi.stubGlobal("matchMedia", (q: string) => ({ matches: reduced && q.includes("reduced-motion") }));
@@ -76,7 +77,7 @@ describe("the loading screen's fade onto the bedroom", () => {
   it("on the real screen: no wake-up till its supernova's white is full, then the fade over loading.fadeOut", async () => {
     const { els, step } = page();
     const api = startLoadingScreen("serif", { ...tuning.loading, fadeOut: 3 });
-    const [root, , white] = els;
+    const [root, , , , white] = els; // (the screen, its sky, its knot, its supernova, its white)
     await Promise.resolve(); await Promise.resolve(); // (the font's promise: the seal's stars made)
     for (let i = 0; i < 20; i++) step(110); // (loading: the sky drawing)
     let woke = -1, frame = 0;

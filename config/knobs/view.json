@@ -47,7 +47,7 @@
       "notes": "Sailing from the map table's sea chart (docs/plans/sail-without-reload.md, app/sail.ts): inPlace, the next night started on the same page (the old night's music fading out as a quiet sea and wind come in, sfx.sail; Back then opens the pause menu; anything going wrong loads the page anew, quietly), and so the bed and the bot game's exit, and the cards' Sea chart opening the map table's chart over the game; else the page loaded anew on the island's link (or chart.html) as before. ?sail=inplace or ?sail=reload for one page."
     },
     "loading": {
-      "what": "The loading screen: the World Tree and COVEN RUSH picked out in gold stars that light up as the game loads.",
+      "what": "The loading screen: the World Tree as a gold Celtic knot, COVEN and RUSH in gold stars either side, lighting up as the game loads.",
       "decisions": [
         {
           "by": "Ed",
@@ -65,6 +65,12 @@
           "date": "2026-11-05",
           "quote": "roughly left to right, with some random scatter",
           "rest": "his sketch: the World Tree's branches and roots sweeping round into two rings, COVEN and RUSH in them, level; sweep in place of edge; the game's darker night sky behind, src/ui/loadingSeal.js"
+        },
+        {
+          "by": "Ed",
+          "date": "2026-11-05",
+          "quote": "Loading screen: can you copy this for the sigil design",
+          "rest": "his reference a Celtic-knot Tree of Life: the tree a solid knot of ribbons in the middle, its canopy and roots the ring, COVEN and RUSH level either side, src/ui/loadingSeal.js"
         }
       ],
       "links": [
@@ -72,7 +78,7 @@
         "src/ui/loadingSeal.js",
         "src/ui/loadingFade.js"
       ],
-      "notes": "The loading screen [1]: the World Tree and COVEN RUSH in gold stars, lighting as the game loads, left to right by sweep against a random scatter (0 plain random) [3], at most rate stars a second, each flashing for flash seconds; ghost how bright the stars not yet lit show (0: an empty sky, Ed's call); the heart's star last, its supernova to white over nova seconds, then the whole screen fading out over fadeOut seconds (eased out; at most 0.6 s with reduced motion) onto the bedroom, her wake-up starting as it begins [2]. It draws fps frames a second while the game loads (each frame costs the load a little), about 20 once it's ready. Read as the page opens, so the pause page's sliders (remembered on this browser) take effect on the next load."
+      "notes": "The loading screen [1]: the World Tree as a Celtic knot [4], COVEN and RUSH in gold stars either side of it, lighting piece by piece and star by star as the game loads, left to right by sweep against a random scatter (0 plain random) [3], at most rate a second, each flashing for flash seconds; ghost how bright the ones not yet lit show (0: an empty sky, Ed's call); the heart (the trunk's middle) last, its supernova to white over nova seconds, then the whole screen fading out over fadeOut seconds (eased out; at most 0.6 s with reduced motion) onto the bedroom, her wake-up starting as it begins [2]. It draws fps frames a second while the game loads (each frame costs the load a little), about 20 once it's ready. Read as the page opens, so the pause page's sliders (remembered on this browser) take effect on the next load."
     },
     "opening": {
       "what": "A plain first load wakes her in her bedroom on the home island while the night is made.",
