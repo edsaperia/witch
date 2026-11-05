@@ -77,12 +77,33 @@ with a raised heel; stag bears weight on paired hooves, with a narrow muzzle and
 age-dependent antlers. Bat membrane must read as supported fingers rather than
 feathered wings. Snail advances on its muscular foot beneath a single coiled
 shell. Hydra is a design choice, with separated neck silhouettes. The current
-two-segment leg approximation is not a real articulated hock; turning, slopes,
-natural coat markings and legend detail still need batch review before claiming
-anatomical or visual acceptance.
+wolf now has a distinct raised heel, with three preserved bone lengths and
+opposite elbow/stifle bend hints. Its distal toe segment keeps a fixed model
+orientation during the diagnostic cycle; turning and slope contact remain
+outside this milestone. This is not a promotion of graph animation into the
+existing production live rig. Its legacy three-radius attachment record remains
+compatible, with the extra heel landmark retained separately for review.
+
+The source follow-up adds bear muzzle, wolf saddle/underside and juvenile stag
+spot/rump painting; stag hooves are split into paired toes. Legend identity
+includes glowing stag antlers, bat sonar ears/rings, the snail's dark starry
+shell/runes and the hydra's crests and two healed cuts with paired regrowth.
+Bear/wolf evolution continues through the existing shared evolution kit. No
+expression heads are generated. These are source changes pending visual review,
+not claims of likeness or aesthetic acceptance.
 
 Deferred condition: canonical CI/cloud evidence must supply matching old/new
 native and 4x sheets, walk strips and measured frame cost for the exact source
 head. Full CI, including unchanged bench:quick, must pass. Only after those
 artifacts exist can Ed judge this acceptance batch; no further families or
 default activation before that verdict. This checkpoint is not READY to ship.
+
+Cloud command (do not run on the laptop): set WITCH_GRAPH_CLOUD=1 and WITCH_SHA
+to the exact clean pushed head, then run
+`node tools/body-graph/acceptance-review.mjs previews/body-graph-acceptance/<sha>`.
+The tool proves its served SHA, writes four-age/two-facing comparisons with both
+baked walk frames at native pixels and 4x, checks shipped cache restoration and
+finite normals, and records one cold construction+bake timing per cell. Those
+timings include native fitting and are not steady-state live-rig frame costs;
+the canonical bench must provide any runtime comparison. Publish only through
+`tools/shots/push.mjs` under the allocated creature-graph preview batch.

@@ -33,6 +33,17 @@ Part of Witch's notes (CLAUDE.md is the index): genomes and templates, textures 
 - **Live rig**: on by default (Ed, 2026-10-05: "let's put what we have live"; `?rig=0` turns it off to compare; #79 stages 4–5): four-legged creatures and snakes, wild, enraged (their own woken pages: red eyes, the red tint) and party animals (happy or leashed: their gear, collar, hat and glasses, baked on the head piece, a page per gear; shoes aren't, the legs being discs), on the ground when drawn at least `rig.minPx` (40) art pixels high, baked frames in the treetops, except the levels in `rig.alwaysLevels` (legends: rigged at any size), put together each frame from **rig parts** (`art/genome/parts.js` `rigParts`: torso, head and tail pieces baked at five headings, the other three mirrored, with their pivots, and discs to string legs and serpent bodies; a leg's discs lit as slices of an upright limb, not balls, so they read as one limb), baked by the art workers into one atlas page per species and level (`rig` jobs, keyed by the genome's hash, the least used let go past 48), and laid out by `src/render/rig/rig.ts`: legs as two-bone IK chains stepping on a trot's phases with a duty factor by speed, a serpent as a follow-the-leader chain weaving behind its head, the body leaning into acceleration, crouching before a charge or a leap, stretching in a charge, tucking its legs in the air, its tail swinging out on turns. `node tools/rig/strip.mjs wolf,snake` draws frame strips of a scripted run (`SHOES=boots` as a party animal in those shoes); `node tools/rig/demo.cjs` (ARENA=...) screenshots the game with it; `node tools/rig/perf.cjs` times 300 creatures with it off and on.
 # Revised body-size candidate (Ed, 2026-10-31)
 
+**Body-graph acceptance pack** (PR #1866): bear, wolf, stag, bat, snail and hydra
+only, explicitly selected by the existing `creatureModels=id:graph` and complete
+`creatureVariants` records. All remain off by default. The graph compiler supports
+parent neck tips, triangle membranes, optional raised heels and cloven hooves;
+the diagnostic gait preserves all three wolf bone lengths. Legacy graphs and
+builders retain their default path. No production live-rig migration is implied.
+Review plan, anatomy notes and pending acceptance conditions are in
+`docs/plans/body-graph-acceptance.md`; canonical cloud comparison tool is
+`tools/body-graph/acceptance-review.mjs`. Six-species sheets, walk strips, cost
+evidence, green CI/unchanged bench and Ed's verdict gate activation and expansion.
+
 Ed resolved the size-range hold: small adults must remain readable, babies and
 youths distinguishable, adults larger where useful, and legends notably larger
 within a species but smaller overall. The smallest legends may match the largest

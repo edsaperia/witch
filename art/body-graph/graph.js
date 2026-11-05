@@ -45,6 +45,9 @@ export function validateGraph(graph) {
       assert(Object.hasOwn(LEG_FAMILIES, s.family), `${s.id}: unknown leg family`);
       assert(vec(s.foot) && positive(s.radius), `${s.id}: foot and positive radius required`);
       assert(s.phase == null || Number.isFinite(s.phase), `${s.id}: finite gait offset required`);
+      assert(s.heel == null || (vec(s.heel) && s.heel[1] > 0), `${s.id}: raised heel offset required`);
+      assert(s.kneeBend == null || Number.isFinite(s.kneeBend), `${s.id}: finite knee bend required`);
+      assert(s.cloven == null || (s.cloven===true&&s.family==="hoof"), `${s.id}: cloven feet require hoof family`);
     } else if (s.kind === "tail" || s.kind === "neck") {
       assert(Array.isArray(s.points) && s.points.length >= 2, `${s.id}: tail needs at least two points`);
       for (const p of s.points) assert(Array.isArray(p) && p.length === 4 && p.every(Number.isFinite) && positive(p[3]), `${s.id}: tail points are [x,y,z,radius]`);
@@ -74,14 +77,16 @@ export function compileGraph(graph, { blend = graph.blend ?? .07 } = {}) {
     if (s.kind === "leg") {
       const f = LEG_FAMILIES[s.family], end = s.foot.slice();
       assert(distance(root, end) > s.radius * 2, `${s.id}: leg too short`);
-      const knee = v3.add(v3.lerp(root, end, f.knee), [f.bend, 0, 0]);
-      model.chain([[...root, s.radius], [...knee, s.radius * .72], [...end, s.radius * .45]], M.BODY, options);
+      const heel = s.heel ? v3.add(end,s.heel) : null;
+      const knee = v3.add(v3.lerp(root, heel??end, f.knee), [s.kneeBend??f.bend, 0, 0]);
+      model.chain([[...root, s.radius], [...knee, s.radius * .72], ...(heel?[[...heel,s.radius*.52]]:[]), [...end, s.radius * .45]], M.BODY, options);
       const footR = f.foot.slice(), foot = [end[0] + footR[0] * .35, footR[1], end[2]];
       // Diagnostic fixtures stand on y=0; do not silently snap arbitrary feet.
       assert(Math.abs(end[1] - footR[1]) < 1e-8, `${s.id}: foot centre must match family ground height`);
-      model.ell(foot, footR, s.family === "hoof" ? M.ACCENT : M.BODY, options);
+      if(s.cloven)for(const side of [-1,1])model.ell(v3.add(foot,[0,0,side*footR[2]*.53]),[footR[0],footR[1],footR[2]*.44],M.ACCENT,options);
+      else model.ell(foot, footR, s.family === "hoof" ? M.ACCENT : M.BODY, options);
       model.anchors.feet.push({ c: foot, r: footR[0], group: options.group, fit: s.family === "hoof" ? "hoof" : "paw" });
-      legs.push({ id: s.id, family: s.family, root, knee, end, radii: [s.radius, s.radius * .72, s.radius * .45] });
+      legs.push({ id: s.id, family: s.family, root, knee, end, ...(heel?{heel}:{}), radii: [s.radius, s.radius * .72, ...(heel?[s.radius*.52]:[]), s.radius * .45] });
     } else if (s.kind === "tail" || s.kind === "neck") {
       const pts = s.points.map(p => [...v3.add(root, p.slice(0, 3)), p[3]]);
       assert(distance(pts[0].slice(0, 3), root) < 1e-8, `${s.id}: tail must begin at socket`);

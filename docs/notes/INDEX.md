@@ -78,6 +78,7 @@ says what each note covers.
 - Open jaw
 - Silhouette check
 - Live rig
+- Body-graph acceptance pack
 
 ## [Expert search: implementation and fairness audit](expert-search.md)
 

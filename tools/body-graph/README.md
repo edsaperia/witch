@@ -2,6 +2,10 @@
 
 <!-- written by tools/inventory.mjs; edit the scripts' header comments, then run it again -->
 
+## `acceptance-review.mjs`
+
+Capture the six default-off body-graph comparisons; canonical cloud only.
+
 ## `age-size-audit.mjs`
 
 Numeric CPU render + real bake palette audit, no browser or image export.

@@ -1,6 +1,8 @@
 import {describe,expect,it} from "vitest";
 import {GENOMES,selectedCreatureGenome} from "../art/genome/index.js";
-import {ACCEPTANCE_IDS,createAcceptanceVariants,buildAcceptanceModel,acceptanceGraph} from "../art/body-graph/acceptance.js";
+import {ACCEPTANCE_IDS,createAcceptanceVariants,buildAcceptanceModel,acceptanceGraph,acceptanceCoat} from "../art/body-graph/acceptance.js";
+import {sampleLeg} from "../art/body-graph/gait.js";
+import {M} from "../art/core.js";
 import {compileGraph,validateGraph} from "../art/body-graph/graph.js";
 import {quadrupedFixture} from "../art/body-graph/fixtures.js";
 
@@ -39,10 +41,37 @@ describe("explicit body graph acceptance pack",()=>{
       expect(Object.hasOwn(model.anchors,"head")).toBe(true);
       expect(()=>validateGraph(graph)).not.toThrow();
       if(meta.family==="quadruped")expect(model.anchors.feet).toHaveLength(4);
-      if(id==="hydra")expect(meta.heads).toHaveLength([1,3,5,7][age]);
+      if(id==="hydra")expect(meta.heads).toHaveLength([1,3,5,11][age]);
       if(id==="bat")expect((graph.sockets as {kind:string}[]).filter(s=>s.kind==="membrane")).toHaveLength(6);
     }
     expect(JSON.stringify(record)).toBe(before);
+  });
+  it("keeps wolf heels raised and all three bone lengths throughout a cycle",()=>{
+    const {graph}=acceptanceGraph(pack.wolf.graph,2);
+    const {legs}=compileGraph(graph);
+    const length=(a:number[],b:number[])=>Math.hypot(...a.map((v,i)=>v-b[i]));
+    for(const leg of legs){
+      expect(leg.heel).toBeDefined();
+      if(!leg.heel)throw Error("Missing wolf heel");
+      for(let i=0;i<=100;i++){
+        const pose=sampleLeg(leg,i/100,{lift:.075});
+        if(!pose.heel)throw Error("Missing posed heel");
+        expect(pose.reachable).toBe(true);
+        expect(length(pose.root,pose.knee)).toBeCloseTo(length(leg.root,leg.knee),8);
+        expect(length(pose.knee,pose.heel)).toBeCloseTo(length(leg.knee,leg.heel),8);
+        expect(length(pose.heel,pose.end)).toBeCloseTo(length(leg.heel,leg.end),8);
+        expect(pose.heel[1]).toBeGreaterThan(pose.end[1]);
+        expect(pose.end[1]).toBeGreaterThanOrEqual(leg.end[1]-1e-9);
+      }
+    }
+  });
+  it("paints anatomical coat regions and limits fawn spots to juvenile ages",()=>{
+    const meta={headX:.7,headY:1.2,headRadius:.2,top:1,depth:.25,length:1,width:.2};
+    expect(acceptanceCoat({coat:"muzzle"},2,meta,[.9,1.1,0],"head")).toBe(M.BELLY);
+    expect(acceptanceCoat({coat:"saddle"},2,meta,[0,.95,.1],"body")).toBe(M.BODY3);
+    expect(acceptanceCoat({coat:"saddle"},2,meta,[0,.5,0],"body")).toBe(M.BELLY);
+    expect(acceptanceCoat({coat:"fawn"},0,meta,[0,.75,.2],"body")).toBe(M.BELLY);
+    expect(acceptanceCoat({coat:"fawn"},2,meta,[0,.75,.2],"body")).toBeUndefined();
   });
   it("attaches children at neck tips and rejects missing parents and collapsed membranes",()=>{
     const graph: {spine: ReturnType<typeof quadrupedFixture>["spine"]; sockets: Record<string,unknown>[]} = quadrupedFixture();

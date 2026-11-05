@@ -51,9 +51,12 @@ export function sampleLeg(leg, phase, { stride = .16, duty = .65, lift = .1, off
   // and sin^2 lift return to the ground continuously at both boundaries.
   const forward = planted ? .5 - p / duty : -.5 + swing * swing * (3 - 2 * swing);
   const target = v3.add(leg.end, [stride * forward, lift * Math.sin(swing * Math.PI) ** 2, 0]);
-  const upper = gaitLength(v3.sub(leg.knee, leg.root)), lower = gaitLength(v3.sub(leg.end, leg.knee));
-  const solved = solveLeg(leg.root, target, upper, lower, v3.sub(leg.knee, v3.lerp(leg.root, leg.end, .5)));
-  return { ...solved, target, planted: planted && solved.reachable };
+  // A raised heel keeps a third, fixed-length toe segment. Solve the two
+  // proximal bones to its ankle target; never flatten the heel onto the floor.
+  const distal=leg.heel??leg.end,heelOffset=v3.sub(distal,leg.end);
+  const upper = gaitLength(v3.sub(leg.knee, leg.root)), lower = gaitLength(v3.sub(distal, leg.knee));
+  const solved = solveLeg(leg.root, v3.add(target,heelOffset), upper, lower, v3.sub(leg.knee, v3.lerp(leg.root, distal, .5)));
+  return { ...solved, ...(leg.heel?{heel:solved.end,end:v3.sub(solved.end,heelOffset)}:{}), target, planted: planted && solved.reachable };
 }
 
 // Poses a fresh compiled diagnostic model. The graph and the production rig are
@@ -64,13 +67,14 @@ export function poseGraph(graph, travel, options = {}) {
     const socket = graph.sockets.find(s => s.id === leg.id);
     const pose = sampleLeg(leg, phase, { ...options, offset: socket.phase ?? 0 });
     const parts = result.model.parts.filter(p => p.part === leg.id), cones = parts.filter(p => p.type === "cone");
-    const foot = parts.find(p => p.type === "ell");
+    const feet = parts.filter(p => p.type === "ell");
     cones[0].a = pose.root; cones[0].b = pose.knee;
-    cones[1].a = pose.knee; cones[1].b = pose.end;
+    cones[1].a = pose.knee; cones[1].b = pose.heel??pose.end;
+    if(pose.heel){cones[2].a=pose.heel;cones[2].b=pose.end;}
     const shift = v3.sub(pose.end, leg.end);
-    const anchor = result.model.anchors.feet.find(a => a.c === foot.c);
-    foot.c = v3.add(foot.c, shift);
-    anchor.c = foot.c;
+    const anchor = result.model.anchors.feet[result.legs.indexOf(leg)];
+    for(const foot of feet)foot.c=v3.add(foot.c,shift);
+    anchor.c = v3.add(anchor.c,shift);
     Object.assign(leg, pose);
   }
   return { ...result, phase };

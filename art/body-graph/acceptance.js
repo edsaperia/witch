@@ -7,9 +7,9 @@ import {poseGraph} from "./gait.js";
 
 export const ACCEPTANCE_IDS = Object.freeze(["bear","wolf","stag","bat","snail","hydra"]);
 const ACCEPTANCE_PLANS = {
-  bear:{family:"quadruped",feet:"plantigrade",width:.33,depth:.31,leg:.53,head:.27,muzzle:.26,ears:"round",tail:.17},
-  wolf:{family:"quadruped",feet:"digitigrade",width:.22,depth:.25,leg:.66,head:.22,muzzle:.32,ears:"point",tail:.58},
-  stag:{family:"quadruped",feet:"hoof",width:.21,depth:.25,leg:.86,head:.19,muzzle:.29,ears:"point",tail:.18,neck:.37,antlers:true},
+  bear:{family:"quadruped",coat:"muzzle",feet:"plantigrade",width:.33,depth:.31,leg:.53,head:.27,muzzle:.26,ears:"round",tail:.17},
+  wolf:{family:"quadruped",coat:"saddle",feet:"digitigrade",width:.22,depth:.25,leg:.66,head:.22,muzzle:.32,ears:"point",tail:.58},
+  stag:{family:"quadruped",coat:"fawn",feet:"hoof",width:.21,depth:.25,leg:.86,head:.19,muzzle:.29,ears:"point",tail:.18,neck:.37,antlers:true},
   bat:{family:"winged",width:.15,depth:.22,head:.15,muzzle:.17,ears:"round",wing:1.15},
   snail:{family:"gastropod",width:.25,depth:.09,shell:.34},
   hydra:{family:"branching",width:.12,depth:.09,head:.075,fan:1.65},
@@ -58,6 +58,8 @@ export function acceptanceGraph(S,age,frame=0){
       graph.sockets.push(socket(`${fore?"fore":"hind"}-${side}`,"leg",station.id,[0,-depth*.4,side*p.width*.7],{
         family,foot:[x+(fore?0:.06),LEG_FAMILIES[family].foot[1],side*p.width*.9],radius:(baby?.085:.065)*(family==="plantigrade"?1.4:1),
         phase:fore===(side>0)?0:.5,
+        ...(family==="digitigrade"?{heel:[fore?-.035:-.1,leg*(fore?.18:.3),0],kneeBend:fore?-.1:.15}:{}),
+        ...(family==="hoof"?{cloven:true}:{}),
       }));
     }
     Object.assign(meta,{length,top:leg+depth*2,width:p.width,depth,antlers:p.antlers});
@@ -79,7 +81,8 @@ export function acceptanceGraph(S,age,frame=0){
     }
   }else if(p.family==="gastropod"){
     graph.spine=stations(.95,.11,p.width,p.depth);
-    graph.sockets.push(socket("shell","shell","spine-6",[0,.28,0],{part:"body",r:[p.shell,p.shell*(baby?.85:1.1),p.shell*.72],mat:M.BODY2}));
+    const shellHeight=p.shell*(baby?.85:age===1?1.1:1.65);
+    graph.sockets.push(socket("shell","shell","spine-6",[0,shellHeight*.9,0],{part:"body",r:[p.shell,shellHeight,p.shell*.72],mat:age===3?M.NIGHT:M.BODY2}));
     for(const side of [-1,1]){
       const tip=[.2,.3*(baby?1.1:1+age*.15),side*.11];
       neck(graph,`stalk-${side}`,"spine-14",[0,.01,side*.06],tip,.025,.016);
@@ -96,15 +99,46 @@ export function acceptanceGraph(S,age,frame=0){
       head(graph,`head-${i}`,id,[p.head*1.2,p.head*.8,p.head*.8]);
       meta.heads.push({id:`head-${i}`,r:p.head,muzzle:.11});
     }
+    if(age===3)for(let i=0;i<2;i++){
+      const id=`old-cut-${i}`;
+      neck(graph,id,"spine-12",[0,0,(i?1:-1)*.1],[.16,.18,(i?1:-1)*.18],.034,.03);
+      head(graph,`scar-${i}`,id,[.035,.012,.035]);graph.sockets.at(-1).mat=M.WEB;
+      for(const side of [-1,1]){
+        graph.sockets.push({id:`regrown-${i}-${side}`,kind:"neck",parent:id,offset:[0,.01,side*.015],part:"head",points:[[0,0,0,.018],[.08,.15,side*.09,.012]]});
+        const hid=`regrown-head-${i}-${side}`;
+        head(graph,hid,`regrown-${i}-${side}`,[.05,.035,.035]);
+        meta.heads.push({id:hid,r:.04,muzzle:.055,regrown:true});
+      }
+    }
   }else throw Error("Unknown acceptance graph family");
   return {graph,meta};
 }
 
+/** Material selection in model space; details add no silhouette or radii. */
+export function acceptanceCoat(plan,age,meta,point,part){
+  const [x,y,z]=point;
+  if(plan.coat==="muzzle"&&part==="head"&&x>meta.headX+meta.headRadius*.6&&y<meta.headY)return M.BELLY;
+  if(plan.coat==="saddle"){
+    if(part==="head"&&y<meta.headY-meta.headRadius*.18)return M.BELLY;
+    if(part==="body"&&y<meta.top-meta.depth*1.45)return M.BELLY;
+    if(part==="body"&&y>meta.top-meta.depth*.55&&Math.abs(x)<meta.length*.46)return M.BODY3;
+  }
+  if(plan.coat==="fawn"&&part==="body"){
+    if(x<-.32*meta.length||y<meta.top-meta.depth*1.5)return M.BELLY;
+    if(age<2&&Math.abs(z)>meta.width*.55){
+      const row=Math.round((y-(meta.top-meta.depth))/.075),column=Math.round((x+row*.04)/.15);
+      if(Math.hypot((x+row*.04-column*.15)/.035,(y-(meta.top-meta.depth)-row*.075)/.022)<1)return M.BELLY;
+    }
+  }
+  return undefined;
+}
+
 // Shared anatomical head/ear/antler families. No expression heads are built.
-function attachHead(model,at,r,muzzle,ears,age){
+function attachHead(model,at,r,muzzle,ears,age,reptile=false){
   const sn=v3.add(at,[r+muzzle*.35,-r*.2,0]);
   model.ell(sn,[muzzle,r*.42,r*.5],M.BODY,{part:"head"});
-  model.ell(v3.add(sn,[muzzle*.85,0,0]),[r*.17,r*.15,r*.3],M.NOSE,{part:"head"});
+  if(!reptile)model.ell(v3.add(sn,[muzzle*.85,0,0]),[r*.17,r*.15,r*.3],M.NOSE,{part:"head"});
+  else for(const side of [-1,1])model.ell(v3.add(sn,[muzzle*.7,r*.2,side*r*.24]),[r*.05,r*.035,r*.04],M.NOSE,{part:"head"});
   for(const side of [-1,1]){
     model.ell(v3.add(at,[r*.55,r*.2,side*r*.73]),[r*.09,r*.09,r*.09],M.EYE,{part:"head"});
     if(ears==="round")model.ell(v3.add(at,[-r*.25,r*.87,side*r*.65]),[r*.3,r*.34,r*.18],M.BODY,{part:"head"});
@@ -118,12 +152,16 @@ export function buildAcceptanceModel(S,age,frame=0){
   const {graph,meta}=acceptanceGraph(S,age,frame);
   const compiled=meta.family==="quadruped"?poseGraph(graph,frame*.16,{stride:.16,duty:.65,lift:.075}):compileGraph(graph);
   const m=compiled.model,heads=[];
-  for(const h of meta.heads){const at=compiled.sockets[h.id];attachHead(m,at,h.r,h.muzzle,meta.ears,age);heads.push({c:at,r:[h.r,h.r,h.r]});}
+  for(const h of meta.heads){const at=compiled.sockets[h.id];attachHead(m,at,h.r,h.muzzle,meta.ears,age,meta.family==="branching");heads.push({c:at,r:[h.r,h.r,h.r]});}
+  const plan=S.look.bodyGraphAcceptance;
+  if(heads.length)Object.assign(meta,{headX:heads[0].c[0],headY:heads[0].c[1]});
+  for(const part of m.parts)if(part.mat===M.BODY){const label=part.part;part.paint=p=>acceptanceCoat(plan,age,meta,p,label);}
   if(heads.length){m.anchors.head=heads[0];m.anchors.neck={c:heads[0].c,r:heads[0].r[0]*.8,dir:[1,.2,0]};}
   if(meta.antlers&&age>0){const H=heads[0].c,r=heads[0].r[0];
     for(const side of [-1,1]){const a=v3.add(H,[-r*.3,r*.8,side*r*.5]),b=v3.add(a,[-.1,.4+age*.1,side*.2]);
-      m.seg(a,b,.04,.015,M.ACCENT,{part:"head",extra:true});
-      for(let i=0;i<age+1;i++){const at=v3.lerp(a,b,(i+1)/(age+2));m.seg(at,v3.add(at,[.16,.1,side*.08]),.022,.005,M.ACCENT,{part:"head",extra:true});}
+      const mat=age===3?M.MAGIC2:M.ACCENT;
+      m.seg(a,b,.04,.015,mat,{part:"head",extra:true});
+      for(let i=0;i<age+1;i++){const at=v3.lerp(a,b,(i+1)/(age+2));m.seg(at,v3.add(at,[.16,.1,side*.08]),.022,.005,mat,{part:"head",extra:true});}
     }
   }
   if(meta.family==="gastropod"){
@@ -132,13 +170,38 @@ export function buildAcceptanceModel(S,age,frame=0){
     m.anchors.neck={c:at.slice(),r:.09,dir:[1,0,0]};
     const centre=compiled.sockets.shell,r=S.look.bodyGraphAcceptance.shell;
     // Raised spiral along both shell flanks; an actual whorl, not stacked rings.
-    for(const side of [-1,1]){const pts=[];for(let i=0;i<=72;i++){const t=i/72,a=t*Math.PI*2*(1.2+age*.7),R=r*(.08+.8*t);pts.push([centre[0]+Math.cos(a)*R,centre[1]+Math.sin(a)*R,side*r*.73,.014]);}m.chain(pts,age===3?M.GLINT:M.ACCENT,{part:"body"});}
+    const shell=graph.sockets.find(s=>s.id==="shell");
+    for(const side of [-1,1]){const pts=[];for(let i=0;i<=72;i++){const t=i/72,a=t*Math.PI*2*[1.2,2,3,4.2][age],R=(.08+.8*t);pts.push([centre[0]+Math.cos(a)*r*R,centre[1]+Math.sin(a)*shell.r[1]*R,side*r*.73,.014]);}m.chain(pts,age===3?M.WOOD:M.ACCENT,{part:"body"});}
+    if(age===3){
+      const shellPart=m.parts.find(p=>p.group!==1&&p.mat===M.NIGHT);
+      shellPart.paint=p=>Math.sin(p[0]*137+p[1]*311+p[2]*193)>.985?M.GLINT:undefined;
+      for(const side of [-1,1])for(let i=0;i<5;i++){
+        const a=i/5*Math.PI*2,c=[centre[0]+Math.cos(a)*r*.6,centre[1]+Math.sin(a)*shell.r[1]*.6,side*r*.75];
+        m.seg(v3.add(c,[0,-.025,0]),v3.add(c,[0,.025,0]),.005,.005,M.RUNE,{part:"body",extra:true});
+        m.seg(c,v3.add(c,[.02,.015,0]),.005,.005,M.RUNE,{part:"body",extra:true});
+      }
+    }
+  }
+  if(meta.family==="branching"&&S.hydra?.crest)for(const h of heads)for(let i=0;i<3;i++){
+    const at=v3.add(h.c,[-h.r[0]*i*.35,h.r[0]*.7,0]);
+    m.seg(at,v3.add(at,[-h.r[0]*.5,h.r[0]*(1.1-i*.2),0]),h.r[0]*.15,.003,M.BODY3,{part:"head",extra:true});
+  }
+  if(meta.family==="winged"){
+    if(S.look.fruit)for(const part of m.parts)if(part.part==="body"&&part.mat===M.BODY)part.paint=p=>p[1]>.4?M.BELLY:undefined;
+    if(age===3&&S.legend?.includes("sonar")){
+      const H=heads[0].c;
+      for(const side of [-1,1])m.ell(v3.add(H,[-.03,.23,side*.1]),[.075,.28,.025],M.EAR,{part:"head",extra:true,paint:p=>Math.abs((p[1]-H[1])*22-Math.round((p[1]-H[1])*22))<.16?M.MAGIC2:undefined});
+      for(let i=0;i<3;i++)for(let j=0;j<20;j++){
+        const a=j/20*Math.PI*2,b=(j+1)/20*Math.PI*2,r=.055+i*.025,c=v3.add(H,[.3+i*.09,-.02,0]);
+        m.seg(v3.add(c,[0,Math.cos(a)*r,Math.sin(a)*r]),v3.add(c,[0,Math.cos(b)*r,Math.sin(b)*r]),.004,.004,M.MAGIC2,{part:"head",extra:true});
+      }
+    }
   }
   if(meta.family==="quadruped"){
     const H=heads[0].c,hr=heads[0].r[0],nb=compiled.sockets.neck;
     // Match existing rig attachment surface while keeping graph construction separate.
     m.rig={head:{nb,H,hr},tail:compiled.sockets.tail,top:meta.top,len:meta.length/2,bw:meta.width,
-      legs:compiled.legs.map(l=>({name:l.id,fore:l.id.startsWith("fore"),side:l.root[2]>0?1:-1,hip:l.root,knee:l.knee,foot:l.end,r:l.radii,mat:M.BODY,fl:LEG_FAMILIES[l.family].foot[0],hoof:l.family==="hoof"}))};
+      legs:compiled.legs.map(l=>({name:l.id,fore:l.id.startsWith("fore"),side:l.root[2]>0?1:-1,hip:l.root,knee:l.knee,foot:l.end,heel:l.heel,r:[l.radii[0],l.radii[1],l.radii.at(-1)],mat:M.BODY,fl:LEG_FAMILIES[l.family].foot[0],hoof:l.family==="hoof"}))};
     for(const p of m.parts)if(compiled.legs.some(l=>p.part===l.id))p.part="legs";
   }
   m.bodyGraph=graph;
