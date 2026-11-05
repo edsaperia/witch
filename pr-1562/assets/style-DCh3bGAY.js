@@ -1,1 +1,0 @@
-import{cf as l}from"./mushrooms-BizQ-Thu.js";const f="Lab default",a={},r={name:f,style:a};function i(s=r){const t=s??{},n=t.style&&typeof t.style=="object"?t.style:t,e=l();for(const[o,c]of Object.entries(n))o in e&&(e[o]=c);return e}export{i as l};
