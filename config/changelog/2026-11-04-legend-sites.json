@@ -1,5 +1,5 @@
 {
-  "version": null,
+  "version": 7537,
   "items": [
     "A legend's circle is always in its own legend area: two legend areas no longer share one area, so a circle no longer turns up in the wrong one.",
     "Stumps, legend circles, the challenge circle and home now keep at least 50 m apart, and 10 m from any lake: stumps no longer crowd each other or stand in the water.",
