@@ -962,13 +962,11 @@ export class View {
     bridgeNativeObject(this.markerFx.group,"runestone");
     this.inviteView = new InviteView(game);
     this.inviteView.herOffset = this.herOffset;
-    // The 💌s and the invite rings hidden as the animals are, by what stands in front of them and the smoke (render/occlusion.ts;
+    // The 💌s and the invite rings hidden as the animals are, by the scenery that stands in front of them (render/occlusion.ts;
     // Ed, 2026-10-19). ?occlusion=off: drawn over everything, as before, to compare.
     yield "occlusion";
-    this.occlusion = new OcclusionProbes(this.scene, this.renderer, this.camera, this.smoke);
+    this.occlusion = new OcclusionProbes(this.scene, this.renderer, this.camera);
     this.occlusion.on = typeof location === "undefined" || new URLSearchParams(location.search).get("occlusion") !== "off";
-    const veilRead = typeof location === "undefined" ? null : new URLSearchParams(location.search).get("veilread");
-    if (veilRead === "three" || veilRead === "off") this.occlusion.veilRead = veilRead;
     this.inviteView.probes = this.occlusion;
     this.inviteView.onVanished = (x, z) => this.edgeSparkle(x, z);
     yield "stateMarks";
@@ -1728,7 +1726,6 @@ export class View {
   private floorItems: { species: string; glint: number; look: FloorLook }[] = Array.from({ length: 6 }, () => ({ species: "", glint: 0, look: FALLBACK_LOOK }));
 
   render(time: number, draw = true, repaintHeld = false): void {
-    this.occlusion.beginFrame();
     // Allocate only when a whole display-pixel step changes, including Try/Stop and expiry.
     if (this.pixelViewport.w > 0 && this.scenePixelSize() !== this.cssPixel) this.resize(this.pixelViewport.w, this.pixelViewport.h);
     // Late art may introduce programs after compileAll's background pass has ended.
@@ -2035,9 +2032,6 @@ export class View {
     this.cauldronLook?.finish(this);
     this.magic.restoreBackdrop(this.scene);
     this.time("draw");
-    this.occlusion.veil(); // (the smoke over the 💌s, once the frame's smoke is drawn)
-    this.time("veil");
-    this.ms.veilRead = this.occlusion.readMs;
     this.drawEst += (Math.min(8, this.ms.draw) - this.drawEst) * 0.1; // (eased; a stalled frame counts for at most 8 ms)
     // Anything set but not drawn (three.js capping a batch's instances) is a bug: count and log it.
     DROPPED = this.propBatch.dropped + this.soundBatch.dropped + (this.speakerBatch?.dropped ?? 0);

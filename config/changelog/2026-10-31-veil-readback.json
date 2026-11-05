@@ -1,1 +1,6 @@
-{ "version": 6820, "items": ["Smoke checks can finish between frames without repeatedly asking the graphics driver to hurry."] }
+{
+  "version": null,
+  "items": [
+    "Smoke no longer dims hearts and rings, removing a graphics readback near fires."
+  ]
+}

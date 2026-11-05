@@ -1,3 +1,5 @@
+> Current ruling, 2026-11-05: the readback optimization below is CLOSED, not awaiting acceptance. Ed chose removal of smoke marker dimming (COORDINATOR1558#6647177744). The smoke-only pass/readback and diagnostic switch are deleted; scenery depth queries remain. Historical measurements and plans below are retained for audit.
+
 # Smoke-veil readback: current-prototype replacement for PR1240
 
 Authorized by coordinator1476#6547335419, parent1555 / codex/ops-inbox d119c80f0173d2edd48841c1ecf117c81616e508,2026-10-31. Own branch codex/veil-readback; worktree C:/Users/edsap/Documents/ChatGPT/witch game/work/veil-readback. Lighting1542 remains held at3eff77ca95bc223c5a3f589f963d3a4653c2ec0a.

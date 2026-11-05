@@ -7,16 +7,9 @@
 // animal does. The answers come back a frame or two later (no stall: read only once available) and are eased, so nothing flickers
 // as a letter crosses a trunk's edge. Without WebGL2 queries nothing is ever hidden (as before).
 //
-// "Smoke also counts" (Ed): the smoke (render/smoke.ts) veils an animal behind it, soft and see-through, without writing depth, so
-// no query sees it. Each probe's veil comes from a pass of its own instead: one texel a probe, adding up every puff in front of it
-// by the smoke's own puff function (SMOKE_PUFF_GLSL: the very floats the smoke is drawn with), read back without waiting; a probe
-// shows by (1 - its veil). Nothing else that hides animals is drawn over the world: the mist and ground fog are an effects layer
-// laid over everything, the 💌s included, in the composite (render/post.ts).
+// Ed, 2026-11-05: smoke no longer dims indicators. Ordinary scenery depth still hides them.
 import * as THREE from "three";
-import { GROUND_SEEN_GLSL, HEIGHT_UNIFORMS, HEIGHT_VERT_GLSL } from "./height";
-import { SMOKE_PUFF_GLSL, type Smoke } from "./smoke";
-import { SPRITE_UNIFORMS } from "./sprites";
-import { emptyVeilReadTiming, VeilReadback } from "./veilReadback";
+import { HEIGHT_UNIFORMS, HEIGHT_VERT_GLSL } from "./height";
 
 /** Between the solid pass (and the smoke at 9.4) and the see-through passes round her (10.9, 11, 19.9). */
 export const PROBE_ORDER = 10.5;
@@ -32,49 +25,7 @@ ${HEIGHT_VERT_GLSL}
 void main() { vec4 c = clipOf(onGround(uProbe.xyz)); gl_Position = c + vec4(position.xy * 2.0 * uProbe.w * uPx * c.w, 0.0, 0.0); }`;
 const FRAG = "void main() { gl_FragColor = vec4(0.0); }";
 
-/** At most this many probes have a smoke veil worked out (one texel each); the nearest fires the smoke draws, and puffs a fire. */
-const VEIL_PROBES = 64, VEIL_FIRES = 32, VEIL_PUFFS = 16;
-const VEIL_VERT = "void main() { gl_Position = vec4(position.xy * 2.0, 0.0, 1.0); }";
-const VEIL_FRAG = /* glsl */ `
-uniform vec4 uProbes[${VEIL_PROBES}]; // x, y (above the ground), z, in use (1)
-uniform vec4 uFires[${VEIL_FIRES}];
-uniform int uFireCount;
-uniform mat4 uViewProj;
-uniform vec3 uRight, uUp;
-uniform float uOpacity;
-${SMOKE_PUFF_GLSL}
-${GROUND_SEEN_GLSL}
-vec4 clipW(vec3 w) { return uViewProj * vec4(bendW(w), 1.0); }
-void main() {
-  int i = int(gl_FragCoord.x);
-  vec4 P = vec4(0.0);
-  for (int j = 0; j < ${VEIL_PROBES}; j++) if (j == i) P = uProbes[j];
-  if (P.w < 0.5) { gl_FragColor = vec4(0.0); return; }
-  vec4 pc = clipW(onGround(P.xyz));
-  vec2 pn = pc.xy / pc.w;
-  float clear = 1.0; // how much of it gets through the puffs in front of it
-  for (int f = 0; f < ${VEIL_FIRES}; f++) {
-    if (f >= uFireCount) break;
-    for (int k = 0; k < ${VEIL_PUFFS}; k++) {
-      if (float(k) >= uPuffs) break;
-      vec3 c; float size, a, t, s;
-      smokePuff(uFires[f], float(k), c, size, a, t, s);
-      if (a <= 0.0) continue;
-      vec4 cc = clipW(c);
-      if (cc.w <= 0.0 || cc.w >= pc.w) continue; // (behind it, or behind the camera: no veil)
-      vec4 cr = clipW(c + uRight * size), cu = clipW(c + uUp * size);
-      vec2 o = cc.xy / cc.w, er = cr.xy / cr.w - o, eu = cu.xy / cu.w - o, d = pn - o;
-      float det = er.x * eu.y - er.y * eu.x;
-      if (abs(det) < 1e-9) continue;
-      vec2 q = vec2(d.x * eu.y - d.y * eu.x, er.x * d.y - er.y * d.x) / det; // (where it falls on the puff's quad, its side 1)
-      // (the puff's own shape, its lumps taken at their mean: render/smoke.ts)
-      clear *= 1.0 - smoothstep(0.5, 0.18, length(q)) * a * uOpacity * 0.85;
-    }
-  }
-  gl_FragColor = vec4(1.0 - clear, 0.0, 0.0, 1.0);
-}`;
-
-interface Probe { mesh: THREE.Mesh; u: THREE.Vector4; key: string; used: number; shown: number; answer: number; veil: number; pending: WebGLQuery[]; /** answered since it took its key */ heard: boolean }
+interface Probe { mesh: THREE.Mesh; u: THREE.Vector4; key: string; used: number; shown: number; answer: number; pending: WebGLQuery[]; /** answered since it took its key */ heard: boolean }
 
 export class OcclusionProbes {
   private gl: WebGL2RenderingContext | null;
@@ -85,28 +36,7 @@ export class OcclusionProbes {
   private lastTime = -1;
   /** ?occlusion=off: nothing hidden, to compare. */
   on = true;
-  /** The smoke's veil: its pass, target and what came back (r: the veil, a texel a probe in pool order). */
-  private veilRt = new THREE.WebGLRenderTarget(VEIL_PROBES, 1, { depthBuffer: false, stencilBuffer: false, generateMipmaps: false });
-  private veilBuf = new Uint8Array(VEIL_PROBES * 4);
-  private veilBusy = false;
-  veilRead: "fence" | "three" | "off" = "fence";
-  readMs = 0;
-  private readFrame = 0;
-  private emptyReadTiming = emptyVeilReadTiming();
-  get readTiming() { return this.veilReader?.timing ?? this.emptyReadTiming; }
-  private veilReader: VeilReadback | null = null;
-  private veilKeys: string[] = [];
-  private probeSerial = 0;
-  private probeVersions = new Map<Probe, number>();
-  private veilVersions: number[] = [];
-  private veilEpoch = 0;
-  /** The veil's passes read back since the start (each read waits on the GPU: for the checks). */
-  veilReads = 0;
-  private veilScene = new THREE.Scene();
-  private veilCam = new THREE.OrthographicCamera(-1, 1, 1, -1, 0, 1);
-  private veilMat: THREE.ShaderMaterial | null = null;
-
-  constructor(private scene: THREE.Scene, private renderer: THREE.WebGLRenderer, private camera: THREE.Camera, private smoke?: Smoke) {
+  constructor(private scene: THREE.Scene, renderer: THREE.WebGLRenderer, private camera: THREE.Camera) {
     const gl = renderer.getContext();
     this.gl = typeof WebGL2RenderingContext !== "undefined" && gl instanceof WebGL2RenderingContext ? gl : null;
   }
@@ -119,8 +49,7 @@ export class OcclusionProbes {
     if (!p) {
       p = this.pool.find(q => q.key === "" && !q.pending.length);
       if (!p) p = this.make();
-      p.key = key; p.shown = 1; p.answer = 1; p.veil = 0; p.heard = false;
-      this.probeVersions.set(p, ++this.probeSerial);
+      p.key = key; p.shown = 1; p.answer = 1; p.heard = false;
       this.byKey.set(key, p);
     }
     p.u.set(x, y, z, half);
@@ -130,29 +59,15 @@ export class OcclusionProbes {
 
   /** Another night (View.setGame): every probe let go of its key (those waiting on a query are taken again once it's answered). */
   reset(): void {
-    this.veilEpoch++; this.veilReader?.cancel(); this.veilBusy = false; this.veilKeys = [];
-    for (const p of this.pool) { p.key = ""; p.mesh.visible = false; p.shown = 1; p.answer = 1; p.veil = 0; p.heard = false; }
+    for (const p of this.pool) { p.key = ""; p.mesh.visible = false; p.shown = 1; p.answer = 1; p.heard = false; }
     this.byKey.clear(); this.lastTime = -1;
   }
 
   /** Whether every probe in use has had an answer back (for the checks: tools/occlusion). */
   get settled(): boolean { return this.pool.every(p => !p.key || p.heard); }
 
-  /** How much of it shows (0 hidden to 1 seen), eased, its smoke's veil taken off; 1 for anything never asked about. */
-  shown(key: string): number { const p = this.on ? this.byKey.get(key) : undefined; return p ? p.shown * (1 - p.veil) : 1; }
-
-  /** First operation of View.render: before resize, shader work or this frame's GPU draws. */
-  beginFrame(): void {
-    this.readFrame++;
-    const start = performance.now();
-    if (this.veilReader?.poll(this.veilBuf, this.readFrame)) {
-      const applyStart = performance.now();
-      this.heardVeil(this.veilKeys, this.veilVersions, this.veilBuf);
-      this.veilReader.timing.applyMs = performance.now() - applyStart;
-    }
-    this.readMs = performance.now() - start;
-    this.readTiming.totalMs = this.readMs;
-  }
+  /** How much of it shows (0 hidden to 1 seen), eased; 1 for anything never asked about. */
+  shown(key: string): number { const p = this.on ? this.byKey.get(key) : undefined; return p ? p.shown : 1; }
 
   /** Once a frame, before the scene is drawn: the answers that have come back, eased in; unused probes hidden, old ones let go. */
   update(time: number): void {
@@ -168,61 +83,9 @@ export class OcclusionProbes {
       }
       if (!p.key) continue;
       p.shown += (p.answer - p.shown) * Math.min(1, dt * EASE);
-      if (!this.smoke?.mesh.visible) p.veil += (0 - p.veil) * Math.min(1, dt * EASE);
       if (p.used < this.frame - 1) p.mesh.visible = false; // (not asked about last frame: not drawn)
       if (this.frame - p.used > FORGET * 60 && !p.pending.length) { this.byKey.delete(p.key); p.key = ""; }
     }
-  }
-
-  /** Once a frame, after the scene is drawn: the smoke's veil over every probe in use (one draw, a texel each), read back when the
-   *  last one's in (never waiting on it), eased in as the queries' answers are. Not drawn nor read while no probe has a key (no 💌
-   *  nor ring about: in the house, most of the night): its answer would go to no one, and the read waits on the GPU (getBufferSubData
-   *  takes whatever's been drawn since: the frame-sync hunt, 2026-11-04, 15% of a guest's JavaScript in the cloud). */
-  veil(): void {
-    const S = this.smoke;
-    if (!this.gl || !this.on || this.veilRead === "off" || !S || !S.mesh.visible || this.veilBusy) return;
-    if (!this.pool.slice(0, VEIL_PROBES).some(p => p.key && p.used === this.frame)) return;
-    const fires = S.drawnFires();
-    if (!fires.n) return;
-    let any = false;
-    for (let i = 0; i < VEIL_PROBES && i < this.pool.length; i++) if (this.pool[i].key) { any = true; break; }
-    if (!any) return;
-    if (!this.veilMat) {
-      const U = S.uniforms;
-      this.veilMat = new THREE.ShaderMaterial({ vertexShader: VEIL_VERT, fragmentShader: VEIL_FRAG, depthTest: false, depthWrite: false,
-        uniforms: { ...HEIGHT_UNIFORMS, uSmoke: U.uSmoke, uSmoke2: U.uSmoke2, uPuffs: U.uPuffs, uRight: SPRITE_UNIFORMS.uRight, uUp: SPRITE_UNIFORMS.uUp,
-          uProbes: { value: Array.from({ length: VEIL_PROBES }, () => new THREE.Vector4()) }, uFires: { value: Array.from({ length: VEIL_FIRES }, () => new THREE.Vector4()) },
-          uFireCount: { value: 0 }, uViewProj: { value: new THREE.Matrix4() }, uOpacity: { value: (U.uSmoke3.value as THREE.Vector2).x } } });
-      const quad = new THREE.Mesh(new THREE.PlaneGeometry(1, 1), this.veilMat); quad.frustumCulled = false;
-      this.veilScene.add(quad);
-    }
-    const u = this.veilMat.uniforms, P = u.uProbes.value as THREE.Vector4[], F = u.uFires.value as THREE.Vector4[], n = Math.min(fires.n, VEIL_FIRES);
-    for (let i = 0; i < VEIL_PROBES; i++) { const p = this.pool[i]; if (p?.key && p.used === this.frame) P[i].set(p.u.x, p.u.y, p.u.z, 1); else P[i].set(0, 0, 0, 0); }
-    for (let i = 0; i < n; i++) { const o = i * fires.stride; F[i].set(fires.a[o], fires.a[o + 1], fires.a[o + 2], fires.a[o + 3]); }
-    u.uFireCount.value = n;
-    (u.uViewProj.value as THREE.Matrix4).multiplyMatrices(this.camera.projectionMatrix, this.camera.matrixWorldInverse);
-    const r = this.renderer, prev = r.getRenderTarget();
-    r.setRenderTarget(this.veilRt);
-    r.render(this.veilScene, this.veilCam);
-    this.veilBusy = true; this.veilReads++;
-    const keys = this.pool.slice(0, VEIL_PROBES).map(p => p.used === this.frame ? p.key : "");
-    const versions = this.pool.slice(0, VEIL_PROBES).map(p => this.probeVersions.get(p) ?? 0);
-    if (this.veilRead === "three") {
-      r.setRenderTarget(prev);
-      const epoch = this.veilEpoch, pixels = new Uint8Array(this.veilBuf.length);
-      r.readRenderTargetPixelsAsync(this.veilRt, 0, 0, VEIL_PROBES, 1, pixels).then(() => {
-        if (epoch === this.veilEpoch) this.heardVeil(keys, versions, pixels);
-      }, () => { if (epoch === this.veilEpoch) this.veilBusy = false; });
-    } else {
-      this.veilReader ??= new VeilReadback(this.gl, this.veilBuf.length);
-      try { this.veilBusy = this.veilReader.issue(VEIL_PROBES, this.readFrame); this.veilKeys = keys; this.veilVersions = versions; }
-      finally { r.setRenderTarget(prev); }
-    }
-  }
-
-  private heardVeil(keys: string[], versions: number[], pixels: Uint8Array): void {
-    this.veilBusy = false;
-    keys.forEach((k, i) => { const p = this.pool[i]; if (k && p?.key === k && this.probeVersions.get(p) === versions[i]) p.veil += (pixels[i * 4] / 255 - p.veil) * 0.4; });
   }
 
   private make(): Probe {
@@ -232,7 +95,7 @@ export class OcclusionProbes {
       transparent: true, depthTest: true, depthWrite: false, colorWrite: false });
     const mesh = new THREE.Mesh(this.geo, mat);
     mesh.frustumCulled = false; mesh.renderOrder = PROBE_ORDER; mesh.visible = false;
-    const p: Probe = { mesh, u, key: "", used: -1, shown: 1, answer: 1, veil: 0, pending: [], heard: false };
+    const p: Probe = { mesh, u, key: "", used: -1, shown: 1, answer: 1, pending: [], heard: false };
     // (each probe's own draw between a query's begin and end: only the main view's, at most a few waiting)
     let q: WebGLQuery | null = null;
     mesh.onBeforeRender = (r, _s, cam) => {
