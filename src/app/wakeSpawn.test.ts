@@ -21,13 +21,13 @@ it("the first load wakes her where she was tucked in: in bed from the first fram
   const bed = { x: W.body.x, z: W.body.z }, pose0 = poseOf(g);
   expect(W.body.seated).toBe(false);
   // the first frame drawn after that (and so the first after prepare): no share of the decks' seat, however long she sat there
-  expect(seatShare(W.body.seated, true, 1, 0)).toBe(0);
+  expect(seatShare(!!W.body.seated, true, 1, 0)).toBe(0);
   // main.ts wakeFirst, under the loading screen's white: the wake-up starts where she lies, the camera where it was
   expect(tuckIn(g) && startWake(g, g.herTime, { mirrored: false })).toBe(true);
   expect({ x: W.body.x, z: W.body.z }).toEqual(bed);
   expect(poseOf(g)).toEqual(pose0);
   expect(g.wake?.beat).toBe("alarm");
-  expect(seatShare(W.body.seated, true, 1, 0.1)).toBe(0);
+  expect(seatShare(!!W.body.seated, true, 1, 0.1)).toBe(0);
 });
 
 it("the old wake-up order (beside the bed, then into it) moved the camera after her: the move the fade showed", () => {
