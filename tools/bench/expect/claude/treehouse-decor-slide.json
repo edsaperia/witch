@@ -1,0 +1,4 @@
+{
+  "reason": "the treehouse's furniture and rooms' dressing are drawn as flat pictures that stay on their own floor pixels (render/view/home.ts alongRayFlat): before, each picture's corners were pushed along their own rays, bending it, so a piece of dressing far from its picture's anchor (Ed's layout spreads a room's dressing across the house) was drawn off its spot by an amount that changed with the camera; the rules are untouched",
+  "frames": { "boot": "on the Terrace, the neon signs and their glow drawn where Ed placed them on the floor (one had stood over her hat, two were off by 10 to 25 px), and the glow on the table at the top a few pixels over" }
+}
