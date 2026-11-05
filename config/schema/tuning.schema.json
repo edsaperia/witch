@@ -12966,6 +12966,22 @@
       "type": "number",
       "minimum": 0
     },
+    "patternLight": {
+      "type": "object",
+      "properties": {
+        "strength": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 4,
+          "description": "How strongly coloured spokes shape existing lights, from 0 (ordinary lighting) to 4."
+        }
+      },
+      "required": [
+        "strength"
+      ],
+      "additionalProperties": false,
+      "description": "Drawing-only coloured patterns on existing lights, controlled from the pause page."
+    },
     "lightBudget": {
       "type": "number",
       "minimum": 0,
@@ -14845,6 +14861,7 @@
     "glowNear",
     "glowToCutout",
     "glowHeight",
+    "patternLight",
     "lightBudget",
     "lights",
     "glowPower",
