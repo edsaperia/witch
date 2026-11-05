@@ -83,7 +83,7 @@ node tools/inventory.mjs [--check]
 - [`chart/`](chart/README.md): 4 scripts — diff.cjs, emerge.cjs, open.cjs, profile.cjs
 - [`ci/`](ci/README.md): 15 scripts — annotations.cjs, build-proof-baseline.cjs, mockingTests.mjs, pages-policy.cjs, perch-profile.cjs, program-counts.cjs, report-command.cjs, run-proofs.cjs, run-unit.mjs, same-game.mjs, sleep-cell-repro.mjs, test-scope.mjs, unit-timings.mjs, vitest-reporter.mjs, world-audit.mjs
 - [`combat-spacing/`](combat-spacing/README.md): 6 scripts — body-radii.mjs, capture-fight.cjs, capture.cjs, diagnose.mjs, measure.ts, run.mjs
-- [`config/`](config/README.md): 8 scripts — check.mjs, format.mjs, generated.mjs, knob-docs.mjs, linkSwitches.mjs, schema.mjs, stampChangelog.mjs, typegen.mjs
+- [`config/`](config/README.md): 9 scripts — check.mjs, format.mjs, generated.mjs, knob-docs.mjs, linkSwitches.mjs, schema-runtime.mjs, schema.mjs, stampChangelog.mjs, typegen.mjs
 - [`dj/`](dj/README.md): 5 scripts — booth-sheet.mjs, booth.cjs, candles-sheet.mjs, respawn.cjs, strip.mjs
 - [`docs/`](docs/README.md): 2 scripts — glossary.mjs, tables.mjs
 - [`feel/`](feel/README.md): 1 script — trace.cjs

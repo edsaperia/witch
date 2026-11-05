@@ -1,5 +1,7 @@
 # Testing tools
 
+Pages publication queue (Ed, 2026-11-04, coordinator1476#6643311785): a started snapshot publisher is never cancelled by another live, manual or preview request. GitHub's single pending concurrency slot coalesces arrivals; its eventual job checks out latest gh-pages after acquiring the shared lock, so even a preview request carries any live root committed before that checkout. Live requests bypass the preview debounce. Main content therefore progresses in the next started snapshot rather than depending on a live-labelled pending job surviving preview churn. Existing source activation and canonical public version.json verification remain separate; source tests do not measure hosted queue/deploy time.
+
 **Shared still capture harness** (#1556, canonical #1555, 2026-10-31):
 `tools/shots/still.mjs` loads a caller-owned allocated page, verifies its served
 version, seeds random and catches the manual hook before the game steps. Wall
