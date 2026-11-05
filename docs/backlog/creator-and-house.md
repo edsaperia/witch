@@ -72,6 +72,12 @@ Backlog (Ed, 2026-10-09). **Mixed implementation status; see the audit below. No
 - After the party she can still pick mushrooms and brew ([cauldron.md](cauldron.md)).
 - **Bed, wake, dress** (Ed): she goes back to her room and goes to bed; on a win the voyage happens while she sleeps (journey.md); she wakes in her nightie and gets dressed.
 
+## Her proportions (Ed, 2026-11-04)
+
+Ed: "change the proportions of the witch (e.g. head size, torso length / width / depth, leg length - whatever makes sense); ideally clothes etc are generated".
+
+What the coordinator found (4 Nov, not built): she is built in code (`art/witch.js`) from shapes placed at a few joints (hips, chest, head, knees, shoulders), and her clothes, hair, hat, nightie, cloak and bags are shapes placed from the same joints, so they mostly follow a resized body. The easy path is genome values (head size, torso length/width/depth, leg and arm length) through the same route as `hatHeight`, so saves, the wardrobe, the art cache and multiplayer carry them; scale the joints in `witchModel`, `fastModel` and `footModel`; one helper for things placed from the head (hair, eyes, headphones, hat brim) scaled by head size; the cloak's knee worked out from her legs; and the world's art scale (`witchPixelsPerUnit`) pinned to a constant, since most of the world's art is sized from her default height. Size: medium (2–4 days) for head, torso and legs over the main flying and walking poses; large if every pose must hold at extremes (broom grip, DJ hands on the decks, sitting, limbo, pair dances use fixed hand and foot spots).
+
 ## Open questions
 
 - Confirm the step order, and where jeans (trousers) sit.
