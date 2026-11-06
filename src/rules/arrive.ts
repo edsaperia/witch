@@ -18,7 +18,9 @@ export interface Handoff { cam: { x: number; z: number; height: number; pitch: n
  *  degrees above it and distance metres back; ty in the world's heights (not over the ground); fov degrees, vertical. */
 export interface Shot { tx: number; ty: number; tz: number; angle: number; distance: number; fov: number;
   /** the dive's own bend (diveBend: curvature per metre), on top of the night's; none if absent */ bend?: number;
-  /** the dive on its way down into her room (diveIndoors): the house drawn as from inside; absent or false, the oak from outside */ indoors?: boolean }
+  /** the dive on its way down into her room (diveIndoors): the house drawn as from inside; absent or false, the oak from outside */ indoors?: boolean;
+  /** where the aim is heading (m a second of the flight's own clock, aimVelocity): the view's work ahead goes that way, not hers (she's in bed) */ vx?: number; vz?: number;
+  /** the dive's own light (diveMood: 0 the night's, 1 its darkest), from the hand-off easing back to none as it lands */ mood?: number }
 
 /** The flight: its shots and the seconds at which it passes each (times[0] = 0). */
 export interface ArrivePlan { keys: Shot[]; times: number[]; /** the target's speed north at the start (m/s): the chart's, carried on */ v0: number }
@@ -183,6 +185,14 @@ export function shotAt(p: ArrivePlan, s: number): Shot {
   const slope = (j: number, f: (k: Shot) => number, v0 = 0) => (j <= 0 ? v0 : j >= n - 1 ? 0 : (f(K[j + 1]) - f(K[j - 1])) / (T[j + 1] - T[j - 1]));
   const at = (f: (k: Shot) => number, v0 = 0) => h00 * f(K[i]) + h10 * h * slope(i, f, v0) + h01 * f(K[i + 1]) + h11 * h * slope(i + 1, f, v0);
   return { tx: at(k => k.tx), ty: at(k => k.ty), tz: at(k => k.tz, -p.v0), angle: at(k => k.angle), distance: Math.max(1, at(k => k.distance)), fov: at(k => k.fov) };
+}
+
+/** How fast the flight's aim is moving, `s` seconds into plan `p` (m a second of its own clock: a stalled frame holds it, as the
+ *  flight): over the next `ahead` seconds, so the work done ahead (render/view/ahead.ts) goes where the camera's going, not where she
+ *  is (Ed's dive plan, 2026-11-06, its step 8: the forest and the hills ahead were made along her movement, none in bed). */
+export function aimVelocity(p: ArrivePlan, s: number, ahead = 0.25): { vx: number; vz: number } {
+  const a = shotAt(p, s), b = shotAt(p, s + ahead);
+  return { vx: (b.tx - a.tx) / ahead, vz: (b.tz - a.tz) / ahead };
 }
 
 /** Where a shot's camera is (the world's metres): `distance` back from its target, `angle` up. */
