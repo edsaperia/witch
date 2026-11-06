@@ -23,6 +23,7 @@ import { unlockAll } from "./debugUnlock";
 import { ChartPin } from "../render/chart/chartPin";
 import { islandAt } from "./chartLayout";
 import { stepTo } from "./chartNav";
+import { ChartSail } from "./chartSail";
 import type { OutlineAsk, OutlineDone } from "./chartOutlines.worker";
 import { postTracedJob } from "./workerJobTrace";
 import { writeArrival } from "./arrival";
@@ -30,7 +31,6 @@ import { chartOrder, islandPhase, OUTLINE_STEP } from "./chartWarm";
 import { chartChoice, chartOpensOn, type ChartHere } from "./sail";
 import { bindings, type ActionId } from "../platform/bindings";
 import { chartHint, type HintDevice } from "../ui/deviceHints";
-import { keySkipsFlight, padSkipsFlight } from "./flightSkip";
 import { coldLoad, freshHref, localStore } from "../platform/storageScope";
 
 export type ChartMode = "look" | "sail" | "miniature";
@@ -59,7 +59,7 @@ export interface ChartViewOptions {
   /** Sail mode: the flight in to the island has begun (the chart over the game fills the screen for it). */
   onFly?: () => void;
   /** Sail mode, a sail in place (Ed, 2026-10-24, the sail's transition: "Never a frozen frame"): the next night made under the chart
-   *  as it flies, from the moment the island is chosen, with the night's seed and where the flight will hand over (`at`, for its
+   *  as it flies, from the end of its first leg (the sail committed then: till then its back stops it, app/chartSail.ts), with the night's seed and where the flight will hand over (`at`, for its
    *  first frames to be drawn there ahead); resolves once it's ready for the dive. The flight slows to wait for it (seaChart.ts
    *  FlyOptions, the tuning's arrive.hold), then `onSail` as ever. */
   onDepart?: (island: string, seed: number, at: FlightEnd["cam"] | null) => Promise<void>;
@@ -105,6 +105,8 @@ export interface ChartView {
   resize(cssW?: number, cssH?: number): void;
   /** Choose an island (null for none): the camera glides there and its card shows. */
   choose(id: string | null, instant?: boolean): void;
+  /** Whether it can be put down now: not once a sail's flight is committed, the next night being made (app/chartSail.ts). */
+  closable(): boolean;
   /** Take it down: its listeners, its worker, its GPU resources and its DOM. */
   dispose(): void;
 }
@@ -212,7 +214,7 @@ export function mountChart(host: HTMLElement, opts: ChartViewOptions): ChartView
   const isHere = (id: string | null) => !!id && chartChoice(opts.here, id, worldNow()) === "stay";
   const sailHref = (island: string) => freshHref(`./?island=${island}${opts.world != null ? `&world=${worldNow()}` : ""}`); // (a fresh game's ?fresh= carried: platform/storageScope.ts)
   // Sailing: the chart flies in to the island (Ed, 2026-10-12: "you zoom into the map into the island you chose"), then sails,
-  // its flight's end kept for the game to carry on from (app/arrival.ts); any key or tap skips to the end.
+  // its flight's end kept for the game to carry on from (app/arrival.ts); nothing skips it, its back stops it while it may (app/chartSail.ts).
   // The night's seed is chosen as the island is (app/landingBake.ts): its area types drawn ahead while she looks and flies in.
   // And its map (Ed, 2026-10-19, option 4: app/mapPrep.ts): made in a worker with that seed while she flies, for the page to take.
   let bake: { island: string; job: Promise<import("./landingBake").LandingBake | null>; map: Promise<{ done: Promise<unknown>; stop(): void } | null> } | null = null;
@@ -264,6 +266,9 @@ export function mountChart(host: HTMLElement, opts: ChartViewOptions): ChartView
     performance.mark("chart:go"); // (?timing=1: main.ts carries this page's steps to the next as it sails, app/timing.ts)
     if (opts.onSail) opts.onSail(id, seed, end); else location.href = `${sailHref(id)}&seed=${seed}&arrive=1`;
   };
+  // The flight to the island: nothing skips it; its back stops the sail till it's committed (app/chartSail.ts).
+  let flight: ChartSail | null = null;
+  const commitFrame = () => { if (flight?.frame(chart.flightFramed)) void depart(flight.island); }; // (from here the next night is made under it)
   const sailTo = (id: string | null) => {
     const isl = islands.find(i => i.id === id);
     if (!sailing || chart.flying) return;
@@ -274,8 +279,8 @@ export function mountChart(host: HTMLElement, opts: ChartViewOptions): ChartView
     bakeFor(id); // (sailing straight there: drawn through the flight)
     const early = !!opts.onDepart && !!opts.onSail && chart.flightEnd(id!, dive) !== null;
     const hold = early ? { hold: () => departed?.island !== id || !departed.ready, slow: TUNING.arrive?.hold, landingDue: opts.onLandingDue } : {};
-    if (!chart.fly(id!, end => { writeArrival(id!, w, end); void go(id!, end); }, { ...dive, ...hold })) { void go(id!); return; }
-    if (early) void depart(id!);
+    if (!chart.fly(id!, end => { flight?.handOver(); writeArrival(id!, w, end); void go(id!, end); }, { ...dive, ...hold })) { void go(id!); return; }
+    flight = new ChartSail(id!, early);
     root.classList.add("flying");
     opts.onFly?.();
     requestAnimationFrame(() => resize());
@@ -387,7 +392,7 @@ export function mountChart(host: HTMLElement, opts: ChartViewOptions): ChartView
   let pinch = 0, downAt: { x: number; y: number } | null = null;
   if (!mini) {
     canvas.addEventListener("pointerdown", e => {
-      if (chart.flying) { chart.skipFlight(); return; } // (a tap while it flies: on to its end; a press made now, not the hold that sailed: app/flightSkip.ts)
+      if (chart.flying) return; // (the flight: no tap skips it)
       if (table && !left && !chart.flying && e.isPrimary) { const id = chart.pick(e.clientX, e.clientY); if (id) { if (id !== chart.selected) choose(id); holdStart(id, "pointer", { x: e.clientX, y: e.clientY }); } } pointers.set(e.pointerId, { x: e.clientX, y: e.clientY }); downAt = { x: e.clientX, y: e.clientY }; if (pointers.size === 2) { const [a, b] = [...pointers.values()]; pinch = Math.hypot(a.x - b.x, a.y - b.y); } }, on);
     canvas.addEventListener("pointermove", e => {
       if (hold?.by === "pointer" && hold.at && Math.hypot(e.clientX - hold.at.x, e.clientY - hold.at.y) > 12) holdEnd("pointer"); // (a drag, not a hold)
@@ -398,7 +403,7 @@ export function mountChart(host: HTMLElement, opts: ChartViewOptions): ChartView
     canvas.addEventListener("pointerup", e => {
       holdEnd("pointer");
       if (left) return;
-      if (chart.flying) { pointers.delete(e.pointerId); return; } // (the release of the press that sailed, a held island's at a table: never a skip)
+      if (chart.flying) { pointers.delete(e.pointerId); return; } // (the flight: no click skips it)
       const tap = pointers.size === 1 && downAt && Math.hypot(e.clientX - downAt.x, e.clientY - downAt.y) < 8;
       pointers.delete(e.pointerId); if (pointers.size < 2) pinch = 0;
       if (!tap) return;
@@ -414,20 +419,29 @@ export function mountChart(host: HTMLElement, opts: ChartViewOptions): ChartView
 
   // Keys: the arrows step island to island, Enter or Space sails, + and - zoom, Esc closes.
   const step = (dx: number, dy: number) => { const next = stepTo(islands, chart.selected ?? "home", dx, dy); if (next) choose(next); };
+  /** The chart's back key: at a table E (its use key; Esc pauses over it), else Esc. */
+  const backKey = (e: KeyboardEvent) => table ? e.code === "KeyE" : e.key === "Escape";
+  /** Put the chart down (a table's slides away, else Close's), a sail under way with it while it isn't committed: false if it can't be. */
+  const putDown = (): boolean => {
+    if (flight?.committed) return false;
+    if (table) { leave(); return true; }
+    if (opts.onClose) { opts.onClose(); return true; }
+    return false;
+  };
   const onKey = (e: KeyboardEvent) => {
     useDevice("keys");
-    if (chart.flying) { e.preventDefault(); if (keySkipsFlight(e)) chart.skipFlight(); return; } // (any key pressed: on to the end of the flight; not the repeats of the key held to sail)
+    if (chart.flying) { e.preventDefault(); if (flight?.press(backKey(e), e.repeat) === "cancel") putDown(); return; } // (the flight: no key skips it; its back stops the sail till it's committed)
     if ((e.target as HTMLElement)?.closest?.("input")) return; // (typing a seed)
     if ((e.target as HTMLElement)?.closest?.("button, a") && (e.key === "Enter" || e.key === " ")) return; // (a focused button's own)
     const dir: Record<string, [number, number]> = { ArrowUp: [0, -1], ArrowDown: [0, 1], ArrowLeft: [-1, 0], ArrowRight: [1, 0], w: [0, -1], s: [0, 1], a: [-1, 0], d: [1, 0] };
     if (left) return;
-    if (table && (e.code === "KeyE" || e.key === "Escape")) { e.preventDefault(); if (!e.repeat) leave(); return; } // (E again, or Esc: it's put away; not the E that brought it up, still held)
+    if (table && backKey(e)) { e.preventDefault(); if (!e.repeat) leave(); return; } // (E again: it's put away; not the E that brought it up, still held)
     if (dir[e.key]) { e.preventDefault(); step(...dir[e.key]); }
     else if (table && (e.key === "Enter" || e.key === " ")) { e.preventDefault(); if (!e.repeat) holdStart(chart.selected, "key"); }
     else if (e.key === "Enter" || e.key === " ") { e.preventDefault(); sailTo(chart.selected); }
     else if (e.key === "+" || e.key === "=") chart.zoom(0.8);
     else if (e.key === "-" || e.key === "_") chart.zoom(1.25);
-    else if (e.key === "Escape" && opts.onClose) { e.preventDefault(); opts.onClose(); }
+    else if (backKey(e) && opts.onClose) { e.preventDefault(); opts.onClose(); }
   };
   if (!mini) addEventListener("keydown", onKey);
   const onKeyUp = (e: KeyboardEvent) => { if (table && (e.key === "Enter" || e.key === " ")) holdEnd("key"); };
@@ -439,11 +453,11 @@ export function mountChart(host: HTMLElement, opts: ChartViewOptions): ChartView
   function pad(dt: number): void {
     const p = [...(navigator.getGamepads?.() ?? [])].find(g => g?.connected); if (!p) return;
     const pressed = p.buttons.map(b => b.pressed);
-    const fresh = padSkipsFlight(pressed, padButtons); // (a button pressed this frame, not the cross still held from the sail)
-    if (fresh || p.axes.some(a => Math.abs(a) > 0.5)) useDevice("pad");
+    if (pressed.some((b, i) => b && !padButtons[i]) || p.axes.some(a => Math.abs(a) > 0.5)) useDevice("pad");
+    const back = bindings.padPressed("menu.back", pressed, p.axes, padButtons); // (its back pressed this frame)
     padButtons = pressed;
     padWait -= dt;
-    if (chart.flying) { if (fresh) chart.skipFlight(); return; }
+    if (chart.flying) { if (flight?.press(back) === "cancel") putDown(); return; } // (the flight: no button skips it; circle stops the sail till it's committed)
     if (left) return;
     const buttons = p.buttons.map(x => x.pressed), held = (id: ActionId) => bindings.padHeld(id, buttons, p.axes);
     const dx = held("menu.right") ? 1 : held("menu.left") ? -1 : 0, dy = held("menu.down") ? 1 : held("menu.up") ? -1 : 0;
@@ -486,8 +500,9 @@ export function mountChart(host: HTMLElement, opts: ChartViewOptions): ChartView
   return {
     canvas, chart,
     islands: () => islands,
-    update(dt, time) { if (!mini) { pad(dt); showHint(); } holdFrame(); wrapOne(); chart.frame(dt, time); const box = canvas.getBoundingClientRect(); for (const [id, p] of pins) p.update(!chart.flying && !left ? chart.screenTopOf(id) : null, box, time, id === chart.selected ? 0 : 1, dt); }, // (each 🧭 over its island's top, never on it; faded while its island's the one chosen)
+    update(dt, time) { if (!mini) { pad(dt); showHint(); } holdFrame(); wrapOne(); chart.frame(dt, time); commitFrame(); const box = canvas.getBoundingClientRect(); for (const [id, p] of pins) p.update(!chart.flying && !left ? chart.screenTopOf(id) : null, box, time, id === chart.selected ? 0 : 1, dt); }, // (each 🧭 over its island's top, never on it; faded while its island's the one chosen)
     resize, choose,
+    closable: () => !flight?.committed,
     dispose() {
       disposed = true; waiting.clear();
       removeEventListener("keydown", onKey); removeEventListener("keyup", onKeyUp);

@@ -27,9 +27,8 @@ describe('the chart keeps animating until its night is ready', () => {
     expect(f.t >= end && !f.held).toBe(true);
   });
 
-  it('keeps the readiness barrier when the player skips the camera flight', () => {
+  it('keeps the readiness barrier at the end of the flight with no slowdown left', () => {
     let ready = false;
-    // SeaChart.skipFlight removes the slowdown and jumps to the final shot.
     const f: ChartFlightClock = { t: 9, rate: 1, wall: 1, hold: () => !ready, slow: undefined, held: false };
     stepChartFlight(f, 0.1, 2, 9);
     expect(f.held).toBe(true);

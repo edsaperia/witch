@@ -68,6 +68,11 @@ export function arrivePlan(rec: Handoff, map: ForestMap, A: ArriveTuning, ground
   for (let i = 1; i <= lows.length; i++) times.push(times[i - 1] + Math.max(A.minLeg, leg(keys[i - 1], keys[i])));
   times.push(times[times.length - 1] + A.rise);
   times.push(times[times.length - 1] + A.settle);
+  // (the whole dive's length, if the tuning sets one, every leg scaled to it: arrive.dive; Ed, 2026-11-06, "Both the zoom and the
+  // dive are loading screens; they shouldn't be skippable because loading must happen. If it happens much faster than the two
+  // animations, we should be deciding their minimum length.")
+  const T = times[times.length - 1];
+  if (A.dive && A.dive > 0 && T > 0) for (let i = 0; i < times.length; i++) times[i] *= A.dive / T;
   return { keys, times, v0: Math.max(0, rec.cam.speed ?? 0) };
 }
 

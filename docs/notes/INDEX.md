@@ -251,6 +251,7 @@ says what each note covers.
 - Startup bundle baseline
 - Crash journal budget
 - Slow-frame summaries
+- The sail's loading against its two animations
 - Reused surface roughness (#1464, 2026-10-30):
 - Exact travel art profiles (2026-10-30, #1464):
 - Ordinary-play scenery stalls
