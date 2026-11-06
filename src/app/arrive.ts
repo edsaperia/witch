@@ -8,7 +8,7 @@
 // skippable because loading must happen"). main.ts starts the night (her clock, the party spell's cast) when it lands.
 import type { Game } from "../rules/game";
 import { poseOf } from "../rules/game";
-import { aimVelocity, arrivePlan, diveBend, diveIndoors, dueAt, newFlightClock, planLength, shotAt, stepFlightClock, type ArrivePlan, type ArriveTuning, type FlightClock, type Shot } from "../rules/arrive";
+import { aimVelocity, arrivePlan, diveBend, diveMood, diveIndoors, dueAt, newFlightClock, planLength, shotAt, stepFlightClock, type ArrivePlan, type ArriveTuning, type FlightClock, type Shot } from "../rules/arrive";
 import type { Arrival } from "./arrival";
 import { groundHeight } from "../render/height";
 import type { View } from "../render/view";
@@ -83,7 +83,7 @@ export class ArrivalFlight {
       this.ended = true; v.fly = { ...end, indoors: diveIndoors(this.plan, this.clock.s) };
       return false;
     }
-    v.fly = { ...shotAt(this.plan, this.clock.s), bend: diveBend(this.plan, this.clock.s, this.A.bend), indoors: diveIndoors(this.plan, this.clock.s), ...aimVelocity(this.plan, this.clock.s) }; // (warming up: the hand-off's own shot, behind the still, unbent; the dive's bend: the crown over the horizon)
+    v.fly = { ...shotAt(this.plan, this.clock.s), bend: diveBend(this.plan, this.clock.s, this.A.bend), indoors: diveIndoors(this.plan, this.clock.s), ...aimVelocity(this.plan, this.clock.s), mood: diveMood(this.plan, this.clock.s, this.A.bend?.grow ?? 0) }; // (warming up: the hand-off's own shot, behind the still, unbent; the dive's bend: the crown over the horizon)
     return false;
   }
 

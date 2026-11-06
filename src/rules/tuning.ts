@@ -495,7 +495,11 @@ export interface Tuning {
     /** where the chart's flight hands over: sea metres out to sea off the south coast, its camera dist metres back, pitchDeg down */
     handoff?: { sea: number; dist: number; pitchDeg: number };
     /** the dive's bend (rules/arrive.ts diveBend): the world's curvature at its strongest (per metre) on top of the night's, grown over grow seconds from the hand-off, eased back to none over the flight's last relax seconds */
-    bend?: { curve: number; grow: number; relax: number } };
+    bend?: { curve: number; grow: number; relax: number };
+    /** the dive's own light (rules/arrive.ts diveMood): strength of the blend (0 the night's own light), the ambient and moonlight times
+     *  dark at its fullest, and the haze from hazeNear metres, full by hazeFar; grown in with the bend, eased back to the night's over
+     *  the last leg */
+    mood?: { strength: number; dark: number; hazeNear: number; hazeFar: number } };
   treehouse: { /** metres from the speaker ring's outer edge to its footprint's nearest edge */ gap: number; angle: number; clear: number; lightReach: number; lightStrength: number;
     /** Seconds after she leaves a treehouse floor before she can land on one, and after she lands before she can leave (Ed, 2026-11-03; rules/witch.ts perchCool; 0 or absent: none). */
     landCooldown?: number;

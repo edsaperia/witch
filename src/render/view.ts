@@ -1059,6 +1059,8 @@ export class View {
     for (const m of [this.shadow.material, this.shadows.mesh.material] as THREE.Material[]) { m.blending = THREE.NormalBlending; m.transparent = true; m.needsUpdate = true; }
   }
 
+  /** The haze's range before a sail's dive brought it nearer (render/view/frameUniforms.ts diveLight; restored as it lands). */
+  diveHaze: THREE.Vector2 | null = null;
   /** The haze's range before the telescope widened it (restored as she looks away). */
   private hazeBeforeTelescope: THREE.Vector2 | null = null;
   /** The picture's pixels this many times the pixel size (the telescope: 1 over its resolution, finer below 1; main.ts resizes). */

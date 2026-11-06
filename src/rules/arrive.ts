@@ -90,6 +90,18 @@ export function diveBend(p: ArrivePlan, s: number, B: ArriveTuning["bend"]): num
   const grow = B.grow > 0 ? smooth(s / B.grow) : 1, relax = B.relax > 0 ? 1 - smooth((s - (T - B.relax)) / B.relax) : 1;
   return B.curve * grow * relax;
 }
+/** How much of the dive's own light there is (0 the night's own, 1 its fullest), `s` seconds into plan `p` (Ed's dive plan, 6 Nov,
+ *  its step 7: "a dive-only blend toward darker ambient light and nearer haze, easing back to the night's light over the last leg";
+ *  render/view/frameUniforms.ts applies it, times arrive.mood.strength): grown in from the hand-off over `grow` seconds (the bend's: the
+ *  chart's still fades meanwhile), full through the sea and the low leg and the rise, eased back to none over the last leg, down into
+ *  her room, so it lands on exactly the night's own light. */
+export function diveMood(p: ArrivePlan, s: number, grow = 0): number {
+  const T = planLength(p), from = p.times[Math.max(0, p.times.length - 2)];
+  if (!(s > 0) && grow > 0) return 0;
+  if (s >= T) return 0;
+  const inn = grow > 0 ? smooth(s / grow) : 1, out = T > from ? 1 - smooth((s - from) / (T - from)) : 1;
+  return inn * out;
+}
 /** Whether the dive's camera is on its way down into her room, `s` seconds into plan `p`: its last leg, from the frame over the
  *  dancefloor and the treehouse down into her bedroom. From there the house is drawn as from inside (its rooms, the crown laid open
  *  over them), as when she walks in; before it, the oak as from outside, standing in the world and bent with it, so its crown can come

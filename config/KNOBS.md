@@ -3769,6 +3769,16 @@ Code: `rules/arrive.ts`, `app/arrive.ts`, `app/arrival.ts`
   1. Ed, 2026-11-06: "Both the zoom and the dive are loading screens; they shouldn't be skippable because loading must happen. If it happens much faster than the two animations, we should be deciding their minimum length."
   Every leg scaled to it (rules/arrive.ts arrivePlan); 0: its legs as the rest of arrive sets them (the low legs by their length at speed, at least minLeg each, then rise and settle), so its length depends on the island. Nothing skips it.
   Code: `rules/arrive.ts`
+- **`arrive.low`**: The dive's low leg over the sea and the forest: angle degrees down to its aim, distance metres back (the camera about 110 m up), aimed offshore metres past the south coast at first.
+  1. Ed, 2026-11-06: "Dive: sounds good." (his approval of the dive plan's step 6, "Fly higher: for example ~30° at 220 m on the low leg, so the camera is ~110 m up and small things are half the size" (it was 20° at 110 m, ~38 m up))
+  Code: `rules/arrive.ts`
+- **`arrive.frame`**: The dive's rise: up to frame the dancefloor and the treehouse together, angle degrees down, distance metres back, aimed lift metres over the ground (about 156 m up).
+  1. Ed, 2026-11-06: "Dive: sounds good." (the dive plan's step 6, "Leg 3 higher too" (it was 34° at 170 m, ~103 m up); the landing into her bed as smooth as before (rules/arrive.test.ts))
+  Code: `rules/arrive.ts`
+- **`arrive.mood`**: The dive's own moodier light: what nothing lights darker and the haze nearer while it flies, back to the night's own as it lands; strength 0 is the night's light as before.
+  1. Ed, 2026-11-06: "Dive: sounds good." (the dive plan's step 7, "a dive-only blend toward darker ambient light and nearer haze (e.g. full by 140 m), easing back to the night's light over the last leg. Glowing things (the mist, the crown's lights, the runestones, the soundsystems) still read.")
+  strength: how much of it (0 to 1; 0 the night's own light); dark: the ambient and the moonlight times this at its fullest (the lights, her glow, the campfires, the runestones, the soundsystems, the crown's lights and the loading mist's glow are added after and read as ever); the haze from hazeNear metres from the camera's aim, full by hazeFar (the spooky night's own: 60, 200). Grown in from the hand-off with the bend (bend.grow seconds), full through the sea, the low leg and the rise, eased back to none over the last leg down into her room. Read every frame; ?set=arrive.mood.strength=0.5 for one load.
+  Code: `rules/arrive.ts`, `render/view/frameUniforms.ts`
 - **`arrive.handoff`**: where the chart hands over, sea metres out to sea off the south coast below the dancefloor (negative: inland), its camera dist metres back and pitchDeg degrees down (the first flight's: -40, 600, 50); ?dive=near\|far\|skim for one load (app/chartView.ts DIVES).
   Code: `app/chartView.ts`
 - **`arrive.bend`**: The dive's bend: the world curving away so the treehouse crown comes up over the horizon as the camera flies in.
@@ -3804,6 +3814,10 @@ Code: `rules/arrive.ts`, `app/arrive.ts`, `app/arrival.ts`
 | `arrive.bend.curve` | number | 0 to … |
 | `arrive.bend.grow` | number | 0 to … |
 | `arrive.bend.relax` | number | 0 to … |
+| `arrive.mood.strength` | number | 0 to … |
+| `arrive.mood.dark` | number | 0 to … |
+| `arrive.mood.hazeNear` | number | 0 to … |
+| `arrive.mood.hazeFar` | number | 0 to … |
 
 ### `camera`
 

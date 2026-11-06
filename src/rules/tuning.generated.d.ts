@@ -2178,6 +2178,12 @@ export type SchemaTuning = {
       "grow": number;
       "relax": number;
     };
+    "mood": {
+      "strength": number;
+      "dark": number;
+      "hazeNear": number;
+      "hazeFar": number;
+    };
   };
   "camera": {
     "fov": number;

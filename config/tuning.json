@@ -2460,13 +2460,13 @@
     "speed": 110,
     "minLeg": 1.5,
     "low": {
-      "angle": 20,
-      "distance": 110,
+      "angle": 30,
+      "distance": 220,
       "offshore": 60
     },
     "frame": {
-      "angle": 34,
-      "distance": 170,
+      "angle": 38,
+      "distance": 240,
       "lift": 8
     },
     "rise": 3.5,
@@ -2485,6 +2485,12 @@
       "curve": 0.0025,
       "grow": 4,
       "relax": 3
+    },
+    "mood": {
+      "strength": 1,
+      "dark": 0.6,
+      "hazeNear": 45,
+      "hazeFar": 150
     }
   },
   "camera": {

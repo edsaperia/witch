@@ -2,7 +2,7 @@
 import { describe, expect, it } from "vitest";
 import { TUNING } from "./tuning";
 import { poseOf } from "./game";
-import { arrivePlan, diveBend, diveIndoors, diveReach, dueAt, dueRate, handoffShot, inShot, newFlightClock, planLength, shotAt, shotCamera, southCoast, stepFlightClock, type Handoff, type Shot } from "./arrive";
+import { arrivePlan, diveBend, diveIndoors, diveMood, diveReach, dueAt, dueRate, handoffShot, inShot, newFlightClock, planLength, shotAt, shotCamera, southCoast, stepFlightClock, type Handoff, type Shot } from "./arrive";
 import { preppedGame } from "../test/preppedGame"; // (games on a map made once a file from its prep)
 
 const A = TUNING.arrive!;
@@ -32,8 +32,11 @@ describe("arriving from the sea chart", () => {
     const fi = plan.times.length - 2; // (the frame's key: then her decks)
     for (let s = 0; s <= plan.times[fi]; s += 0.1) { const c = shotCamera(shotAt(plan, s)); expect(c.z).toBeLessThanOrEqual(lastZ + 1e-6); lastZ = c.z; }
     for (let s = 0; s <= T; s += 0.1) expect(shotCamera(shotAt(plan, s)).y).toBeGreaterThan(8);
-    // down to treetop height over the forest: low there (the chart hands over high, over the coast)
-    expect(shotCamera(shotAt(plan, plan.times[1])).y).toBeLessThan(60);
+    // down over the forest, about 110 m up (Ed's dive plan, 6 Nov, its step 6: "~30° at 220 m on the low leg, so the camera is ~110 m
+    // up and small things are half the size"; it was ~38 m), never lower through the low leg and the rise
+    expect(shotCamera(shotAt(plan, plan.times[1])).y).toBeGreaterThan(95); expect(shotCamera(shotAt(plan, plan.times[1])).y).toBeLessThan(125);
+    for (let s = plan.times[1]; s <= plan.times[fi]; s += 0.1) expect(shotCamera(shotAt(plan, s)).y).toBeGreaterThan(90);
+    expect(shotCamera(shotAt(plan, plan.times[fi])).y).toBeGreaterThan(shotCamera(shotAt(plan, plan.times[1])).y + 20); // (the rise, higher to match)
     // the frame: the dancefloor and the treehouse's spot both inside the picture (its vertical half-angle, a margin kept)
     const f = shotAt(plan, plan.times[fi]), c = shotCamera(f), half = (TUNING.camera.fov / 2) * 0.9;
     for (const p of [{ x: d.x, y: 0, z: d.z }, { x: th.x, y: 22, z: th.z }]) {
@@ -154,7 +157,7 @@ describe("the sail's hand-off over the water and the crown over the bent horizon
     expect(plan.keys.at(-1)).toEqual(end);
     expect("tree" in A).toBe(false);
     // the camera's angle never comes down below the low passes' to look up at a tree (the old swing's 10 degrees)
-    for (let s = plan.times[1]; s <= T; s += 0.1) expect(shotAt(plan, s).angle).toBeGreaterThan(A.low.angle - 3);
+    for (let s = plan.times[1]; s <= T; s += 0.1) expect(shotAt(plan, s).angle).toBeGreaterThan(Math.min(A.low.angle, end.angle) - 3); // (nor below the shot it lands on: the low leg's 30 degrees is steeper than her pose's)
     // the bend: none at the hand-off, at its strongest as the camera's down low over the sea, back to none exactly as it lands
     expect(B.curve).toBeGreaterThan(TUNING.camera.curve.treetop); // (stronger than the treetops')
     const low = plan.times[1];
@@ -188,4 +191,29 @@ describe("the sail's hand-off over the water and the crown over the bent horizon
     expect(diveBend(plan, low, undefined)).toBe(0);
     expect(diveBend(plan, low, { ...B, curve: 0 })).toBe(0);
   });
+
+  // Ed's dive plan (6 Nov), its step 7: "a dive-only blend toward darker ambient light and nearer haze, easing back to the night's
+  // light over the last leg" (render/view/frameUniforms.ts diveLight, arrive.mood)
+  it("darkens the dive's light from the hand-off, full over the sea, the forest and the rise, and eases back to the night's own exactly as it lands", () => {
+    const grow = B.grow, down = plan.times.at(-2)!;
+    expect(diveMood(plan, 0, grow)).toBe(0); // (the chart's still crossfading: as the chart drew it)
+    for (let s = grow; s <= down; s += 0.1) expect(diveMood(plan, s, grow)).toBeCloseTo(1, 9);
+    expect(diveMood(plan, T, grow)).toBe(0); expect(diveMood(plan, T + 1, grow)).toBe(0);
+    for (let s = 0, last = 0; s <= T; s += 1 / 60) { const k = diveMood(plan, s, grow); expect(Math.abs(k - last)).toBeLessThan(0.05); last = k; } // (never a jump)
+  });
+  it("lands in her bed as smoothly as the lower flight did: the camera's speed and its changes over the last leg no worse", () => {
+    const old = { ...A, low: { ...A.low, angle: 20, distance: 110 }, frame: { ...A.frame, angle: 34, distance: 170 } }, was = arrivePlan(hand, map, old, ground, end);
+    const rough = (p: typeof plan) => {
+      const L = planLength(p), dt = 1 / 60; let v = 0, a = 0, prev: number[] | null = null;
+      for (let s = p.times.at(-2)! - 0.5; s < L; s += dt) {
+        const c0 = shotCamera(shotAt(p, s)), c1 = shotCamera(shotAt(p, s + dt)), u = [(c1.x - c0.x) / dt, (c1.y - c0.y) / dt, (c1.z - c0.z) / dt];
+        v = Math.max(v, Math.hypot(...u)); if (prev) a = Math.max(a, Math.hypot(u[0] - prev[0], u[1] - prev[1], u[2] - prev[2]) / dt); prev = u;
+      }
+      return { v, a, end: prev ? Math.hypot(...prev) : 0 };
+    };
+    const now = rough(plan), then = rough(was);
+    expect(now.v).toBeLessThanOrEqual(then.v * 1.05); expect(now.a).toBeLessThanOrEqual(then.a * 1.05);
+    expect(now.end).toBeLessThan(5); // (coming to rest on her bed)
+  });
 });
+
