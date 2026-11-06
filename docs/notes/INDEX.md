@@ -361,6 +361,7 @@ says what each note covers.
 - Default look
 - Smooth effects
 - Loading mist
+- The dive's look
 - Pop
 - Path network
 - Decor
