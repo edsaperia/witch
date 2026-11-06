@@ -30,6 +30,7 @@ import { chartOrder, islandPhase, OUTLINE_STEP } from "./chartWarm";
 import { chartChoice, chartOpensOn, type ChartHere } from "./sail";
 import { bindings, type ActionId } from "../platform/bindings";
 import { chartHint, type HintDevice } from "../ui/deviceHints";
+import { keySkipsFlight, padSkipsFlight } from "./flightSkip";
 import { coldLoad, freshHref, localStore } from "../platform/storageScope";
 
 export type ChartMode = "look" | "sail" | "miniature";
@@ -386,6 +387,7 @@ export function mountChart(host: HTMLElement, opts: ChartViewOptions): ChartView
   let pinch = 0, downAt: { x: number; y: number } | null = null;
   if (!mini) {
     canvas.addEventListener("pointerdown", e => {
+      if (chart.flying) { chart.skipFlight(); return; } // (a tap while it flies: on to its end; a press made now, not the hold that sailed: app/flightSkip.ts)
       if (table && !left && !chart.flying && e.isPrimary) { const id = chart.pick(e.clientX, e.clientY); if (id) { if (id !== chart.selected) choose(id); holdStart(id, "pointer", { x: e.clientX, y: e.clientY }); } } pointers.set(e.pointerId, { x: e.clientX, y: e.clientY }); downAt = { x: e.clientX, y: e.clientY }; if (pointers.size === 2) { const [a, b] = [...pointers.values()]; pinch = Math.hypot(a.x - b.x, a.y - b.y); } }, on);
     canvas.addEventListener("pointermove", e => {
       if (hold?.by === "pointer" && hold.at && Math.hypot(e.clientX - hold.at.x, e.clientY - hold.at.y) > 12) holdEnd("pointer"); // (a drag, not a hold)
@@ -396,7 +398,7 @@ export function mountChart(host: HTMLElement, opts: ChartViewOptions): ChartView
     canvas.addEventListener("pointerup", e => {
       holdEnd("pointer");
       if (left) return;
-      if (chart.flying) { pointers.delete(e.pointerId); chart.skipFlight(); return; }
+      if (chart.flying) { pointers.delete(e.pointerId); return; } // (the release of the press that sailed, a held island's at a table: never a skip)
       const tap = pointers.size === 1 && downAt && Math.hypot(e.clientX - downAt.x, e.clientY - downAt.y) < 8;
       pointers.delete(e.pointerId); if (pointers.size < 2) pinch = 0;
       if (!tap) return;
@@ -414,7 +416,7 @@ export function mountChart(host: HTMLElement, opts: ChartViewOptions): ChartView
   const step = (dx: number, dy: number) => { const next = stepTo(islands, chart.selected ?? "home", dx, dy); if (next) choose(next); };
   const onKey = (e: KeyboardEvent) => {
     useDevice("keys");
-    if (chart.flying) { e.preventDefault(); chart.skipFlight(); return; } // (any key: on to the end of the flight)
+    if (chart.flying) { e.preventDefault(); if (keySkipsFlight(e)) chart.skipFlight(); return; } // (any key pressed: on to the end of the flight; not the repeats of the key held to sail)
     if ((e.target as HTMLElement)?.closest?.("input")) return; // (typing a seed)
     if ((e.target as HTMLElement)?.closest?.("button, a") && (e.key === "Enter" || e.key === " ")) return; // (a focused button's own)
     const dir: Record<string, [number, number]> = { ArrowUp: [0, -1], ArrowDown: [0, 1], ArrowLeft: [-1, 0], ArrowRight: [1, 0], w: [0, -1], s: [0, 1], a: [-1, 0], d: [1, 0] };
@@ -437,10 +439,11 @@ export function mountChart(host: HTMLElement, opts: ChartViewOptions): ChartView
   function pad(dt: number): void {
     const p = [...(navigator.getGamepads?.() ?? [])].find(g => g?.connected); if (!p) return;
     const pressed = p.buttons.map(b => b.pressed);
-    if (pressed.some((b, i) => b && !padButtons[i]) || p.axes.some(a => Math.abs(a) > 0.5)) useDevice("pad");
+    const fresh = padSkipsFlight(pressed, padButtons); // (a button pressed this frame, not the cross still held from the sail)
+    if (fresh || p.axes.some(a => Math.abs(a) > 0.5)) useDevice("pad");
     padButtons = pressed;
     padWait -= dt;
-    if (chart.flying) { if (p.buttons.some(x => x.pressed)) chart.skipFlight(); return; }
+    if (chart.flying) { if (fresh) chart.skipFlight(); return; }
     if (left) return;
     const buttons = p.buttons.map(x => x.pressed), held = (id: ActionId) => bindings.padHeld(id, buttons, p.axes);
     const dx = held("menu.right") ? 1 : held("menu.left") ? -1 : 0, dy = held("menu.down") ? 1 : held("menu.up") ? -1 : 0;
