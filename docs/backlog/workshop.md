@@ -1,19 +1,19 @@
 # The Workshop
 
-**Audit status (2026-11-01): Partly built: parts, sets, saves, fitting, finds and art shipped; creeper/welding, set trails, more parts and full multiplayer acceptance remain.**
+**Audit status (2026-11-05): Partly built: parts, sets, saves, fitting, finds and art shipped (broom art now split by slot); creeper/welding, set trails, more parts and full multiplayer acceptance remain.** (1 Nov audit: unchanged since 1 Nov apart from evidence)
 
-The status index checks the requests below against prototype `ab06904b` and cited history. **Built** means code is present, not a new play/audition/performance pass. **Partly built** states the missing part. An em dash leaves an unimplemented request unmarked. Versions are verified changelog build labels where available; “unverified” means no first-live number was established. Historical/superseded requests are preserved, not re-authorised. Repeated details/build-order summaries are counted with their feature group, not again.
+The status index checks the requests below against prototype `ab06904b` and cited history; re-checked on 2026-11-05 against prototype `26d69880` (live as v7569). **Built** means code is present, not a new play/audition/performance pass. **Partly built** states the missing part. An em dash leaves an unimplemented request unmarked. Versions are verified changelog build labels where available; “unverified” means no first-live number was established. Historical/superseded requests are preserved, not re-authorised. Repeated details/build-order summaries are counted with their feature group, not again.
 
 | Request / feature group | Status | Evidence and remaining gap |
 |---|---|---|
 | Three part slots, nine parts, stats/tradeoffs and five sets | **Built** | #1037; rules/broomParts.ts, config/broom-parts.json; first rules version unverified, room v4181. |
 | Bare broom baseline and passive stats moved to parts | **Built** | #1037; broomTuning/partsPull and spells.ts; first version unverified. |
-| Find pool and telescope constellation for parts | **Built** | #1037; rules/finds.ts, constellations.ts. #1109 v4406 later makes finds loans until a win; original keep-on-loss text is historical. |
+| Find pool and telescope constellation for parts | **Built** | #1037; rules/finds.ts, constellations.ts. #1109 v4406 later makes finds loans until a win; original keep-on-loss text is historical. Since 3 Nov the find stands in its own area at the end of the footpaths (#1713, v7175) and is the challenge circle's reward (#1725, v7237). |
 | Nine distinct wreck scenes and rare forest discovery | **Partly built** | Original wreck sprites existed; current finds use part objects (art/country.js), not full described crash scenes. #1056 v4221 covers part artwork, not every wreck story. Wreck narrative proposal remains unfulfilled as written. |
 | Pick up parts without towing; owned parts wait at Workshop | **Built** | #1037/#1040; finds part claim and broomSave. v4181 room; loan settlement #1109 v4406 supersedes permanent keep-on-loss. |
 | Fit cards, sets, stat detail, colours and Fit | **Built** | #1040 v4181; station-card follow-up v5440 combines all at one lathe, superseding independent bay menus. |
 | Pegboard collection and tonight's part indicator | **Built** | #1040 v4181/#1056 v4221; render/workshopArt.ts, stationLines.ts. Current panel includes board at lathe, not a pending separate station. |
-| Part artwork, assembled broom and board sprites | **Built** | #1056 v4221; art/broomParts.js and render/workshopArt.ts. |
+| Part artwork, assembled broom and board sprites | **Built** | #1056 v4221; art/broomParts.js and render/workshopArt.ts. #1839 (released with #1861, v7564) splits the broom art source into tips, chassis and exhausts. |
 | Room furniture, dressing, creeper and welding | **Partly built** | Bay/lathe/board furniture and room clutter exist (#1040 v4181/#1056 v4221); no witch-under-broom creeper/welding animation found. |
 | Broom held on Terrace and shown at active work position | **Built** | #1040 v4181; rules/stations.ts broomWhere and render home/workshop art. Original separate-bay access changed with v5440 combined station. |
 | Retired shapes/Power and migrated saves | **Built** | #1037/#1040; broomSave/loadout and wardrobe station definitions, v4181 baseline; classic-debug details below are historical. |

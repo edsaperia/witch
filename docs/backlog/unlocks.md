@@ -1,8 +1,8 @@
 # Hats and brooms
 
-**Audit status (2026-11-01): Partly built: hats, broom sets, bags and shared finds exist; old achievement/shrine systems were superseded and several proposed extras remain absent.**
+**Audit status (2026-11-05): Partly built: hats, broom sets, bags and shared finds exist (finds now won at each island's challenge circle); old achievement/shrine systems were superseded and several proposed extras remain absent.** (1 Nov audit: unchanged since 1 Nov apart from evidence)
 
-The status index checks the requests below against prototype `ab06904b` and cited history. **Built** means code is present, not a new play/audition/performance pass. **Partly built** states the missing part. An em dash leaves an unimplemented request unmarked. Versions are verified changelog build labels where available; “unverified” means no first-live number was established. Historical/superseded requests are preserved, not re-authorised. Repeated details/build-order summaries are counted with their feature group, not again.
+The status index checks the requests below against prototype `ab06904b` and cited history; re-checked on 2026-11-05 against prototype `26d69880` (live as v7569). **Built** means code is present, not a new play/audition/performance pass. **Partly built** states the missing part. An em dash leaves an unimplemented request unmarked. Versions are verified changelog build labels where available; “unverified” means no first-live number was established. Historical/superseded requests are preserved, not re-authorised. Repeated details/build-order summaries are counted with their feature group, not again.
 
 | Request / feature group | Status | Evidence and remaining gap |
 |---|---|---|
@@ -15,7 +15,7 @@ The status index checks the requests below against prototype `ab06904b` and cite
 | Welcome mend: invite heals witch fully | — | Creature invitation heals that creature, not the proposed full-health witch power; no matching hat/bag/part found. |
 | Speed/Battering/Ley jump/Stealth/Ground pound | **Built** | #728 v2927 legacy brooms; current set spells in #1037/#1040 v4181. |
 | Long/Double blink/Haul as parts | **Built** | #1037; Curled tip/Twigs/Canoe stats in broom-parts.json, room v4181. Original standalone brooms are retired. |
-| Hats at themed shrines and carried home | **Partly built** | Hats found as shared draw objects #1044 v4187, kept on won night #1109 v4406; no themed shrine/carry-home loop. Historical request is not implemented as written. |
+| Hats at themed shrines and carried home | **Partly built** | Hats found as shared draw objects #1044 v4187, kept on won night #1109 v4406. Since 3 Nov tonight's find is won at the island's guarded challenge circle (#1725 v7237, statues #1804 v7412), not a themed shrine per hat. Historical request is not implemented as written. |
 | Bags change invitation weapon and are found | **Partly built** | Weapon multipliers/additions and bag finds are built; original themed shrines and every suggested old boon are not. rules/bags.ts, wardrobe.json; #1044 v4187, later bag work version unverified. |
 | Crystal-ball locator of upgrades on other unlocked islands | — | Telescope constellation shows tonight's find, not this remote-island locator. |
 | Permanent unlocks only during party, kept even on loss | **Partly built** | Claim-window behaviour exists; keep-on-loss explicitly superseded by #1109 v4406, only won-night loans persist. No outstanding instruction to restore old retention. |

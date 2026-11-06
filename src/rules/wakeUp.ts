@@ -202,6 +202,19 @@ export function tuckIn(g: Game, W: Witch = g.witches[0]): boolean {
   return wakeInBedroom(g, W, at) && intoBed(g, W);
 }
 
+/** She falls asleep in her bed at the night's end (the bed's way, main.ts nightInPlace): tucked in there (tuckIn: in bed, the camera
+ *  settled on her), and the moment drawn between the last two steps settled there too (no frame eased from where she stood to use the
+ *  bed), so the night's last picture, held under the sleep's veil while the next night is made, is framed as the next night's first,
+ *  tucked in at the same spot. Before, it held her standing beside the bed, the camera there, and the wake-up's first frame jumped to
+ *  the bed's framing under the veil (Ed's "Fix 2", 2026-11-06). False (nothing changed) without her bed. */
+export function fallAsleep(g: Game, W: Witch = g.witches[0]): boolean {
+  if (!tuckIn(g, W)) return false;
+  const i = g.witches.indexOf(W);
+  if (g.prev.witches[i]) g.prev.witches[i] = { x: W.body.x, z: W.body.z, lift: W.body.lift };
+  if (W === g.witches[0] && g.prev.camera) g.prev.camera = { ...g.camera };
+  return true;
+}
+
 /** The dream's over (the page's: it played to its end, or a key was pressed while the next island was still being made): her
  *  phone's alarm goes off, the wake-up's own first beat. Nothing if she isn't dreaming. */
 export function endDream(g: Game, ht: number, W: Witch = g.witches[0]): void {

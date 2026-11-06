@@ -2,6 +2,14 @@
 
 # Patterned lighting — parked
 
+**Audit status (2026-11-05): Partly built: the patterns are built and on by default for live testing; the cost reduction and its measurement plan are not built.** (1 Nov audit: parked on the unmerged #1542 branch, counted under visual-response-projects.md.) The title and the sections below are the 1 Nov parked record; the ruling above is current.
+
+| Request / feature group | Status | Evidence and remaining gap |
+|---|---|---|
+| Colour spokes by default with a pause-page strength slider (0–4, default 3) | **Built** | #1542 merged 2026-11-05, fragment pattern-strength v7527. `src/render/lightPatternState.ts` (no `?patternlight` gives `colour-spokes`), `patternLight.strength` 3, decision `patternLightStrength`; reduced flashing or 0 turns modulation off. Ed is testing it live; no performance pass. |
+| Opt-in looks: spokes, stripes, bands; gentle flicker on home/campfire/stone lights; rings on spell lights | **Built** | Same source: `?patternlight=` auto, spokes, stripes, bands or off; flicker and rings from `sourcePattern` in `render/view/lights.ts`, `render/fx/system.ts`; cap of three patterned slots (`PatternSlots`). |
+| Cost reduction candidate and the ABAB measurement plan (restart plan items 2–5) | — | Plan only; the 0.5 ms / 1 ms gate was overridden for live testing, not passed. |
+
 Ed, 2026-11-01: “We can park patterned lighting for now.” Cost work, offline analysis, candidate implementation and measurement requests are stopped. Resume only after a new explicit Ed/coordinator assignment. PR [#1542](https://github.com/edsaperia/witch/pull/1542) stays draft; no default-on approval or release.
 
 ## Existing opt-in slice

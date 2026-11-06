@@ -53,3 +53,31 @@ No runtime change, new hardware/browser run, audio audition or full test suite. 
 ## Evidence identity corrections
 
 PR metadata verified during audit: Stiltwalkers is #1532 (not publish PR1534); Worm's Eye is #1530 (not closed release-check1537); full layered magic is #1468, with M5 polish #1484. Mushroom brewing #1523, night save #1455 and multi-witch groundwork #1457 are merged. Graph generator #1470 remains an additive implementation, not universal migration. Gamepad rumble is real source in #1456 (git075f7ff7b), correcting the old “none yet” backlog line.
+
+## Re-audit, 2026-11-05
+
+Ed asked which backlog items have been done. Every page under `docs/backlog/` was re-checked against prototype `26d69880a` (the tree served as live v7569, `43ba4b2`), using the method above: source, merged PRs and changelog fragments. Versions are fragment stamps; #1834, #1839 and #1835 carry none of their own and are dated by their release (#1861, alongside the v7564 fragment). #1843 (whole island under the loading screen, `?cold=1`) has a null fragment at this head but is in the v7569 tree. Built still means code present, not Ed's acceptance in play. Ed's notes and superseded requests are kept as written; only status lines, table rows and index lines changed.
+
+| Page | 1 Nov items (B / P / N) | 5 Nov items (B / P / N) | What moved |
+|---|---|---|---|
+| [cauldron.md](../backlog/cauldron.md) | 131 (29 / 2 / 100) | 131 (46 / 2 / 83) | 17 trips shipped 3 Nov (#1705 v7175; #1709, #1712 v7197) |
+| [potion-recipes.md](../backlog/potion-recipes.md) | 165 (18 / 0 / 147) | 165 (35 / 0 / 130) | the same 17 recipe entries |
+| [music.md](../backlog/music.md) | 20 (10 / 8 / 2) | 25 (11 / 8 / 6) | 4 Nov notes: challenge music ×2, isometric spell symbol, giant party-start spell (not built); generated first home night (built via #1810) |
+| [journey.md](../backlog/journey.md) | 30 (18 / 9 / 3) | 31 (19 / 9 / 3) | home at the start row (#1810, v7537); sizes, rosters, sailing evidence |
+| [treehouse.md](../backlog/treehouse.md) | 24 (11 / 11 / 2) | 25 (11 / 11 / 3) | no candles on the decks (not built); one room #1699, house at load #1836 |
+| [creator-and-house.md](../backlog/creator-and-house.md) | 21 (7 / 12 / 2) | 22 (7 / 12 / 3) | her proportions (not built) |
+| [world-and-perception.md](../backlog/world-and-perception.md) | 4 (1 / 1 / 2) | 5 (1 / 1 / 3) | deferred CPU smoke dimming (context) |
+| [art-check-shards.md](../backlog/art-check-shards.md) | 3 (1 / 1 / 1) | 3 (2 / 0 / 1) | sharding merged (#1834) |
+| [patterned-lighting.md](../backlog/patterned-lighting.md) | not counted (in visual-response) | 3 (2 / 0 / 1) | #1542 merged, default on, v7527 |
+| [proof-loop.md](../backlog/proof-loop.md) | not counted | 6 (1 / 2 / 3) | first table |
+| [visual-response-projects.md](../backlog/visual-response-projects.md) | 7 (0 / 4 / 3) | 7 (0 / 4 / 3) | project 4 evidence: now merged, still missing trip controls |
+| [magic-effects.md](../backlog/magic-effects.md) | 15 (7 / 6 / 2) | 15 (7 / 6 / 2) | evidence only (#1542, #1718, #1721) |
+| [gameplay.md](../backlog/gameplay.md) | 18 (17 / 1 / 0) | 18 (17 / 1 / 0) | smoke veil removed (#1558, v7523); chain/feeding/trail versions |
+| [combat.md](../backlog/combat.md) | 15 (8 / 7 / 0) | 15 (8 / 7 / 0) | evidence only (#1622, #1654, #1701, #1782) |
+| [platform.md](../backlog/platform.md) | 20 (3 / 12 / 5) | 20 (3 / 12 / 5) | relay/reconnect evidence; calls still opt-in; port "not now" |
+| [workshop.md](../backlog/workshop.md), [unlocks.md](../backlog/unlocks.md) | 14 (9 / 3 / 2), 29 (12 / 6 / 11) | unchanged | evidence only (#1713, #1725, #1839) |
+| look, creatures, forest-counts, hue-spin, miniature-audio, mushroom-sparkle-shift, grass-repaint-noise | as 1 Nov | unchanged | grass page now on prototype; still not built |
+
+No status went backwards. Shipments with no backlog request of their own were not counted: colour grammar (#1732), the path network and path art (#1713, #1711), follower buffs and buff icons (#1722, #1728, #1735), the challenge area itself (#1725, #1749, #1804, #1806, #1827), legend sites (#1807), the new loading screen (#1844, #1752), whole island at load (#1843), creature expressions off (#1860), the Pages publish queue (#1833) and CI reuse (#1835, cited under proof-loop.md).
+
+Biggest gaps still open: ordinary multiplayer calls (still behind `telephone=1`); the body-graph creature generator replacing the old builders; island genre records; house rewards (trophies, skeletons, poster, mirror); landing ripples and footprints; most catalogue trips (130 recipe slots). Same limits as above: no browser run, audition or performance pass.

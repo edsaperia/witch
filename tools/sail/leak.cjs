@@ -1,6 +1,6 @@
 // Sails in place without growing (docs/plans/sail-without-reload.md, test C3; PR 5): serves the built game (dist/), loads
 // island A with ?quick=1&creator=0&debug=sail (the sail in place by default: the tuning's sail.inPlace), starts it, then sails A→B→C→A… fifteen times through the real sail path
-// (window.witch.sail: main.ts sailFromChart, as the map table's chart sails, its flight end given and its flight skipped), each
+// (window.witch.sail: main.ts sailFromChart, as the map table's chart sails, its flight end given and landed at once: window.witch.land), each
 // landing, its art let in, then a few drawn frames and about 5 s of play stepped; after each landing it records the renderer's live
 // textures, geometries and programs, the JS heap after a forced GC (CDP), the DOM's nodes, the listeners on window and document
 // (CDP DOMDebugger), the page's workers, and the scene's objects. Passes when, from sail 2 on, listeners, workers and DOM nodes are
@@ -124,7 +124,7 @@ async function main() {
     const inPlace = await page.evaluate(({ island, seed }) => window.witch.sail(island, seed), { island, seed });
     if (!inPlace) throw new Error(`sail ${s}: not in place`);
     await settled(page);
-    await page.keyboard.press("Shift"); // (skips the flight in: it lands her asleep in her bed, and the wake-up starts)
+    await page.evaluate(() => window.witch.land()); // (past the flight in, the tools' own way: it lands her asleep in her bed, and the wake-up starts)
     await page.waitForFunction(() => !window.witch.game.clock.paused, null, { timeout: 120000 });
     const ms = Date.now() - ts;
     await play(page);
