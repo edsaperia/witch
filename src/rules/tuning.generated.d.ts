@@ -2142,6 +2142,7 @@ export type SchemaTuning = {
   "arrive": {
     "zoom": number;
     "dive": number;
+    "buildSlice": number;
     "warm": {
       "frames": number;
       "ms": number;

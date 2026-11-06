@@ -129,7 +129,7 @@ import { Wisps } from "./wisps";
 import { leyChain, leyKey } from "../rules/leylines";
 import { SPRITE_UNIFORMS, SpriteBatch, metresPerArtPixel } from "./sprites";
 import type { Spin } from "./spin";
-import { nextFrame, runSliced, runSync, type Steps } from "./slices";
+import { nextFrame, runSliced, runSync, SLICE_MS, type Steps } from "./slices";
 import { holdDisposals, releaseDisposals } from "./retire";
 import { Fireworks } from "./fireworks";
 import type { Style } from "./style";
@@ -843,7 +843,7 @@ export class View {
    *  task, the bedroom's alarm, its music and every animation stopped): the same steps in the same order as `new View`, the page
    *  given its frames between them. Nothing is drawn until it's whole (the caller waits for it). */
   /** `hatOff`: her hat-off frames are the start's own art too (a game's first morning, her hat on the hats' floor: main.ts). */
-  static async create(canvas: HTMLCanvasElement, game: Game, style: Style, witchGenome: unknown = null, { budgetMs = 8, hatOff = false }: { budgetMs?: number; hatOff?: boolean } = {}): Promise<View> {
+  static async create(canvas: HTMLCanvasElement, game: Game, style: Style, witchGenome: unknown = null, { budgetMs = SLICE_MS, hatOff = false }: { budgetMs?: number; hatOff?: boolean } = {}): Promise<View> {
     await nextFrame(); // (a turn of its own: the renderer and the light made apart from whatever came before, the night's map)
     const v = new View(canvas, game, style, witchGenome, true);
     if (hatOff) v.assets.askHatOff();
@@ -1405,8 +1405,9 @@ export class View {
    *  and every part of the view that keeps something of a night re-pointed or reset. The caller runs prepare() for its start. */
   setGame(game: Game): void { runSync(this.setGameSteps(game)); }
   /** setGame a frame's budget at a time (render/slices.ts): the new island built off the scene in steps, the page's frames between
-   *  (the frame loop draws nothing meanwhile: main.ts, sailing), then swapped in at once. */
-  setGameSliced(game: Game, budgetMs = 8): Promise<void> {
+   *  (the frame loop draws nothing meanwhile: main.ts, sailing), then swapped in at once. `budgetMs`, a slice's: more under the
+   *  sea chart's zoom, nothing else happening then (app/night.ts buildSlice, the tuning's `arrive.buildSlice`). */
+  setGameSliced(game: Game, budgetMs = SLICE_MS): Promise<void> {
     holdDisposals(); // (the last night's materials kept till the new night's have their programs: render/retire.ts, compileAll)
     this.assets.early(MarkerArt.stoneJob(this.style, game.tuning, game.map).job); // (the new island's stones asked first, from the art workers)
     return runSliced(this.setGameSteps(game), "setGame", budgetMs);

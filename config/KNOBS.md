@@ -3769,6 +3769,10 @@ Code: `rules/arrive.ts`, `app/arrive.ts`, `app/arrival.ts`
   1. Ed, 2026-11-06: "Both the zoom and the dive are loading screens; they shouldn't be skippable because loading must happen. If it happens much faster than the two animations, we should be deciding their minimum length."
   Every leg scaled to it (rules/arrive.ts arrivePlan); 0: its legs as the rest of arrive sets them (the low legs by their length at speed, at least minLeg each, then rise and settle), so its length depends on the island. Nothing skips it.
   Code: `rules/arrive.ts`
+- **`arrive.buildSlice`**: How many milliseconds of each frame the next island's build may take while the sea chart's zoom plays over it.
+  1. Ed, 2026-11-06: "Give the scene build more time per frame while the zoom is playing, since nothing else is happening then. For example 14 ms instead of 8 ms." … "this we should do"
+  From the zoom's commit (the end of its first leg) the next night is made under the chart (app/night.ts buildSlice, main.ts makeSailNight): its map in a worker, then the View's build on the main thread a slice at a time (render/slices.ts), a slice of up to this many milliseconds each frame, the chart's own frame drawn between; it keeps it through the chart's hold short of the hand-off, till the night is made. Everywhere else a build is sliced (the first load, the bed's next night, a sail with no zoom, the dive's own preparation) it's 8 ms (SLICE_MS). A single step of the build longer than this still runs whole (docs/notes/performance.md).
+  Code: `app/night.ts`, `render/slices.ts`
 - **`arrive.handoff`**: where the chart hands over, sea metres out to sea off the south coast below the dancefloor (negative: inland), its camera dist metres back and pitchDeg degrees down (the first flight's: -40, 600, 50); ?dive=near\|far\|skim for one load (app/chartView.ts DIVES).
   Code: `app/chartView.ts`
 - **`arrive.bend`**: The dive's bend: the world curving away so the treehouse crown comes up over the horizon as the camera flies in.
@@ -3780,6 +3784,7 @@ Code: `rules/arrive.ts`, `app/arrive.ts`, `app/arrival.ts`
 |---|---|---|
 | `arrive.zoom` | number | 0 to … |
 | `arrive.dive` | number | 0 to … |
+| `arrive.buildSlice` | number | 1 to … |
 | `arrive.warm.frames` | number | 0 to … |
 | `arrive.warm.ms` | number | 0 to … |
 | `arrive.warm.max` | number | 0 to … |

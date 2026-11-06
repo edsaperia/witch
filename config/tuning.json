@@ -2450,6 +2450,7 @@
   "arrive": {
     "zoom": 5.6,
     "dive": 0,
+    "buildSlice": 14,
     "warm": {
       "frames": 3,
       "ms": 120,

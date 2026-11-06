@@ -52,9 +52,13 @@ export interface SliceStats { longest: number; longestAt: string; slices: number
 /** The last sliced builds' stats, newest last (the build-budget check reads them: tools/view/build-budget.cjs). */
 export const sliceLog: (SliceStats & { what: string })[] = [];
 
+/** A slice's budget, ms a frame: every sliced build's but the next night's under the sea chart's zoom (the tuning's
+ *  `arrive.buildSlice`: app/night.ts buildSlice). */
+export const SLICE_MS = 8;
+
 /** Run it a slice at a time: steps until `budgetMs` has gone (at least one), then the page's next frame, then on. `clock`, its
  *  milliseconds (the page's own; a test's, so its slicing doesn't hang on how loaded the machine is). */
-export async function runSliced<T>(steps: Steps<T>, what: string, budgetMs = 8, clock: () => number = now): Promise<T> {
+export async function runSliced<T>(steps: Steps<T>, what: string, budgetMs = SLICE_MS, clock: () => number = now): Promise<T> {
   const stats: SliceStats = { longest: 0, longestAt: "", slices: 0, ms: 0, slow: [] };
   await nextFrame(); // (a turn of its own: not run on at the end of whatever asked for it)
   let stage = "";

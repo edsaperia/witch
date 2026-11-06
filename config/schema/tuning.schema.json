@@ -10981,6 +10981,11 @@
           "minimum": 0,
           "description": "How many seconds the dive from the chart's hand-off down to her bed takes; 0 leaves it to its legs."
         },
+        "buildSlice": {
+          "type": "number",
+          "minimum": 1,
+          "description": "How many milliseconds of each frame the next island's build may take while the sea chart's zoom plays over it."
+        },
         "warm": {
           "type": "object",
           "properties": {
@@ -11148,6 +11153,7 @@
       "required": [
         "zoom",
         "dive",
+        "buildSlice",
         "warm",
         "maxStep",
         "fade",

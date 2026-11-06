@@ -13,6 +13,7 @@ import type { MusicStyle } from "../rules/musicScore";
 import { PlaytestLog } from "../platform/playtestLog";
 import type { Freeze } from "../platform/freeze";
 import type { View } from "../render/view";
+import { SLICE_MS } from "../render/slices";
 import { applyLoadRungs } from "./ladder";
 import { tuningFromLink } from "./linkParams";
 import { applySavedSettings, carryKnobs } from "./settings";
@@ -47,6 +48,16 @@ export interface NightSpec {
   resume?: Game;
   /** A friend's canonical night is borrowed: never register campaign-stock writes in this browser. */
   borrowed?: boolean;
+  /** Made under the sea chart's zoom as it flies (a sail from the map table: main.ts departFromChart): its view's build given
+   *  the tuning's `arrive.buildSlice` ms a frame (buildSlice). */
+  underChart?: boolean;
+}
+
+/** A night's view build's budget, ms a frame (render/slices.ts): under the sea chart's zoom, and its hold short of the hand-off,
+ *  the tuning's `arrive.buildSlice` (Ed, 2026-11-06: "Give the scene build more time per frame while the zoom is playing, since
+ *  nothing else is happening then"), else the page's own (SLICE_MS: the boot, the bed, the still's sail, the bot game's exit). */
+export function buildSlice(spec: Pick<NightSpec, "underChart">, tuning: Pick<Tuning, "arrive">): number {
+  return spec.underChart ? tuning.arrive?.buildSlice ?? SLICE_MS : SLICE_MS;
 }
 
 /** The night's own flags, fresh each night (a second night left with the first's would never record to the chart). */
@@ -195,7 +206,7 @@ export async function startNight(page: Page, spec: NightSpec): Promise<Night> {
   // The page's own switch the boot puts on its night's tuning once the night is made (main.ts styleFromLink: the prop generator's
   // party pieces, which the rules' party places and the view's dressings read), on each later night's at the same point.
   if (old && !old.spec.borrowed && !spec.borrowed) tuning.partyObjects.generated = old.tuning.partyObjects.generated;
-  if (old) await page.view?.setGameSliced(presentedGame(page, game)); // (the view's island and records, tonight's, built a frame's budget at a time: render/view.ts; its start's art is the caller's, view.prepare)
+  if (old) await page.view?.setGameSliced(presentedGame(page, game), buildSlice(spec, tuning)); // (the view's island and records, tonight's, built a frame's budget at a time: render/view.ts; its start's art is the caller's, view.prepare)
   page.night = night;
   page.last = undefined;
   return night;
