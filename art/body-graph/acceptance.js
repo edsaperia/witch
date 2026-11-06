@@ -81,6 +81,9 @@ export function acceptanceGraph(S,age,frame=0){
     }
   }else if(p.family==="gastropod"){
     graph.spine=stations(.95,.11,p.width,p.depth);
+    // The broad foot extends in the second baked crawl pose; the shell remains
+    // supported while the front and its stalks reach ahead with the body wave.
+    if(frame)for(let i=0;i<graph.spine.length;i++)graph.spine[i].at[0]+=.045*i/(graph.spine.length-1);
     const shellHeight=p.shell*(baby?.85:age===1?1.1:1.65);
     graph.sockets.push(socket("shell","shell","spine-6",[0,shellHeight*.9,0],{part:"body",r:[p.shell,shellHeight,p.shell*.72],mat:age===3?M.NIGHT:M.BODY2}));
     for(const side of [-1,1]){
@@ -91,10 +94,11 @@ export function acceptanceGraph(S,age,frame=0){
     }
   }else if(p.family==="branching"){
     graph.spine=stations(.9,.11,p.width,p.depth);
+    if(frame)for(let i=0;i<graph.spine.length;i++)graph.spine[i].at[2]=.035*Math.sin(i/(graph.spine.length-1)*Math.PI*1.6+.6);
     const heads=[1,3,5,7][age];
     for(let i=0;i<heads;i++){
       const u=heads===1?0:i/(heads-1)-.5;
-      const tip=[.2-Math.abs(u)*.2,.42-Math.abs(u)*.12,u*.85*p.fan],id=`neck-${i}`;
+      const tip=[.2-Math.abs(u)*.2+(frame?.035*Math.sin(i*1.7+.6):0),.42-Math.abs(u)*.12,u*.85*p.fan],id=`neck-${i}`;
       neck(graph,id,"spine-14",[0,.02,0],tip,.042,.029);
       head(graph,`head-${i}`,id,[p.head*1.2,p.head*.8,p.head*.8]);
       meta.heads.push({id:`head-${i}`,r:p.head,muzzle:.11});

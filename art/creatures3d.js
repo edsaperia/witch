@@ -1236,11 +1236,12 @@ export function acceptanceGraph3d(S, level, frame, st, facing = "towards") {
   return finish(m,S,level,st,1,facing);
 }
 function finish(m, S, level, st, k, facing, ref = null, scaleOverride = null) {
-  if (S.sizes.build[level] !== 1) beef(m, S.sizes.build[level]); // the adult's and legend's heavier build (its template's size curve)
+  const build = S.sizes.build?.[level] ?? 1;
+  if (build !== 1) beef(m, build); // absent bulk curve means the authored model, as on shipped quadrupeds
   gearUp(m);
   // ref: a model in the walk's first pose, its scale taken for every frame (a cycle's frames at one scale, not each fitted to its own height)
   let scale = scaleOverride ?? undefined;
-  if (ref) { if (S.sizes.build[level] !== 1) beef(ref, S.sizes.build[level]); scale = render(ref, { height: drawHeight(level, st, k), facing, measure: true }).s; }
+  if (ref) { if (build !== 1) beef(ref, build); scale = render(ref, { height: drawHeight(level, st, k), facing, measure: true }).s; }
   const sp = drawForm(m, { height: drawHeight(level, st, k), facing, scale }, S, level, st);
   return sp;
 }

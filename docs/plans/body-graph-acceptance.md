@@ -63,6 +63,17 @@ images. Publish review images only with `tools/shots/push.mjs` under the
 assigned preview path. No merge, release, old-builder removal, production
 default change, wider family implementation or visual-acceptance claim.
 
+6 November objective repair (coordinator1866#6684290270): the shared finish
+uses bulk1 when a template has no build curve, including its reference model.
+Each graph species now has a regression render through the actual `critter()`
+entry point. Snail foot/reach and hydra body/neck offsets vary between baked
+frames; the two crawl species also have real sprite-difference checks. Review
+columns say Graph selected. The earlier cloud sheets used an unpushed bulk1
+workaround and remain qualified evidence; corrected-head evidence is required.
+Look changes, cost and bounds tuning await Ed's separate verdict. The failed
+448f laptop fixture attempt and verified FREE report6684278805 are retained;
+no old measurement allocation automatically carries to the repaired source.
+
 ## Source checkpoint and review limits
 
 The first implementation compiles all six plans through shared spine, socket,

@@ -5,10 +5,26 @@ import {sampleLeg} from "../art/body-graph/gait.js";
 import {M} from "../art/core.js";
 import {compileGraph,validateGraph} from "../art/body-graph/graph.js";
 import {quadrupedFixture} from "../art/body-graph/fixtures.js";
+import {critter} from "../art/creatures.js";
+import {defaultStyle} from "../art/generator.js";
 
 describe("explicit body graph acceptance pack",()=>{
   const records=GENOMES.map(g=>selectedCreatureGenome(g,{}));
   const pack=createAcceptanceVariants(records);
+  it.each(ACCEPTANCE_IDS)("%s renders through the real selected critter entry point",id=>{
+    const style={...defaultStyle(),creatureModels:`${id}:graph`,creatureVariants:pack};
+    const sprite=critter(id,0,0,style);
+    expect(sprite.w).toBeGreaterThan(0);
+    expect(sprite.h).toBeGreaterThan(0);
+    expect(sprite.m.some((material:number)=>material!==0)).toBe(true);
+    expect(Array.from(sprite.n).every(Number.isFinite)).toBe(true);
+  });
+  it.each(["snail","hydra"])("%s has distinct real baked crawl frames",id=>{
+    const style={...defaultStyle(),creatureModels:`${id}:graph`,creatureVariants:pack};
+    const a=critter(id,0,0,style),b=critter(id,0,1,style);
+    expect({w:a.w,h:a.h,m:a.m,n:a.n}).not.toEqual({w:b.w,h:b.h,m:b.m,n:b.n});
+    for(let age=0;age<4;age++)expect(acceptanceGraph(pack[id].graph,age,0).graph).not.toEqual(acceptanceGraph(pack[id].graph,age,1).graph);
+  });
   it("uses only explicit graph selection and preserves Current and unavailable-mode fallbacks",()=>{
     for(const base of GENOMES){
       const shipped=selectedCreatureGenome(base,{});

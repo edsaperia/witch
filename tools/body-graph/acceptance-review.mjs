@@ -47,7 +47,7 @@ try{
       if(canvas.width*4>16384||canvas.height*4>16384)throw Error("Bounded sheet size exceeded");
       const c=canvas.getContext("2d");c.imageSmoothingEnabled=false;c.fillStyle="#272532";c.fillRect(0,0,canvas.width,canvas.height);c.font="12px sans-serif";c.fillStyle="#eee";
       c.fillText(`${id} ${sha.slice(0,12)} | native game pixels | two-frame walk strips`,10,17);
-      for(let j=0;j<4;j++)c.fillText(`${j<2?"Shipped":"Graph OFF"} frame ${j%2}`,j*col+10,38);
+      for(let j=0;j<4;j++)c.fillText(`${j<2?"Shipped":"Graph selected"} frame ${j%2}`,j*col+10,38);
       let y=60;rows.forEach((r,i)=>{r.images.forEach((im,j)=>{c.fillText(`age ${r.age} ${r.facing}`,j*col+10,y+12);c.drawImage(im,j*col+10,y+22);});y+=heights[i];});
       const close=document.createElement("canvas");close.width=canvas.width*4;close.height=canvas.height*4;
       const ctx=close.getContext("2d");ctx.imageSmoothingEnabled=false;ctx.drawImage(canvas,0,0,close.width,close.height);
